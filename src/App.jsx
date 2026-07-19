@@ -417,7 +417,10 @@ function sementeDe(ent) {
   return ent?.semente || ent?.nome || "herói";
 }
 
+/* ---------------- Overlay do dado ---------------- */
 
+function OverlayDado({ rolagem, modificador, aoConcluir }) {
+  const [faseD, setFaseD] = useState("rolando");
   const [valor, setValor] = useState(1);
   const lados = 20;
   useEffect(() => {
