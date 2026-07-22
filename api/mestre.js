@@ -1,4 +1,4 @@
-/* Função de servidor (Vercel) — Motor: Google Gemini 3.1 Pro.
+/* Função de servidor (Vercel) — Motor: Google Gemini (Flash 3.5+, com lista de fallback).
    A chave fica AQUI, na variável de ambiente GEMINI_API_KEY — nunca no navegador.
    O jogo chama POST /api/mestre com { system, messages, maxTokens, formato }.
    formato "json" liga o modo de saída JSON garantida do Gemini (adeus JSON quebrado). */
@@ -18,7 +18,6 @@ export default async function handler(req, res) {
 
     const generationConfig = {
       maxOutputTokens: Math.min(Math.max(Number(maxTokens) || 1000, 1200), 2048),
-      temperature: 1.0,
     };
     if (formato === "json") generationConfig.responseMimeType = "application/json";
 
@@ -30,26 +29,36 @@ export default async function handler(req, res) {
       "HARM_CATEGORY_DANGEROUS_CONTENT",
     ].map((category) => ({ category, threshold: "BLOCK_ONLY_HIGH" }));
 
-    const r = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-goog-api-key": process.env.GEMINI_API_KEY,
-        },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: system }] },
-          contents,
-          generationConfig,
-          safetySettings,
-        }),
-      }
-    );
+    /* Modelos em ordem de preferência: Pro primeiro (conta com faturamento),
+       Flash como reserva automática se o Pro estiver inacessível. */
+    const MODELOS = ["gemini-3.1-pro-preview", "gemini-3.5-flash", "gemini-3.6-flash"];
 
-    if (!r.ok) {
-      const t = await r.text();
-      res.status(502).json({ erro: `API ${r.status}: ${t.slice(0, 300)}` });
+    let r = null, ultimoErro = "";
+    for (const modelo of MODELOS) {
+      r = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-goog-api-key": process.env.GEMINI_API_KEY,
+          },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: system }] },
+            contents,
+            generationConfig,
+            safetySettings,
+          }),
+        }
+      );
+      if (r.ok) break;
+      ultimoErro = `${modelo}: ${r.status}`;
+      if (![404, 403, 429].includes(r.status)) break; /* indisponível/sem permissão/sem cota: tenta o próximo */
+    }
+
+    if (!r || !r.ok) {
+      const t = r ? await r.text() : "";
+      res.status(502).json({ erro: `API (${ultimoErro}): ${t.slice(0, 250)}` });
       return;
     }
 
