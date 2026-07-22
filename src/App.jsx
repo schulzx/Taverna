@@ -90,6 +90,7 @@ ROLAGENS (d20 + modificador vs Dificuldade):
 - Peça rolagem SÓ quando houver chance real de falha E consequência interessante. Ações triviais não precisam de dado.
 - Ao pedir rolagem, prepare a cena até o instante do teste e PARE ali. NUNCA narre o desfecho antes do resultado.
 - 20 natural = sucesso extraordinário (além do esperado); 1 natural = falha desastrosa (com complicação).
+- COLCHETES SÃO META: qualquer texto entre [colchetes] vindo do jogador ou do app (ex.: [seja mais direto], [não descreva sangue], [HABILIDADE], [ROLAGEM]) é instrução FORA do personagem. Obedeça ao conteúdo, mas NUNCA o trate como fala/ação do personagem e NUNCA o repita na narrativa.
 
 HABILIDADES E EFEITOS TEMPORÁRIOS:
 - O personagem tem habilidades/magias com custo em mana (PM). Na PRIMEIRA resposta, conceda 2-3 habilidades iniciais coerentes com o conceito (custo 1-5 PM). Conceda novas por marcos.
@@ -97,13 +98,16 @@ HABILIDADES E EFEITOS TEMPORÁRIOS:
 - Duração equilibrada (referência de mesa): buffs fortes duram pouco (2-3 turnos); utilitários médios 3-5; auras leves até 8-10. Nunca "permanente".
 - Bônus de buff equilibrado: um efeito que ajuda em testes soma +2 (NÃO +4 ou mais). Assim, atributo +4 com buff vira +6, não +8 — continua desafiador. Buffs muito fortes devem custar mais PM e durar menos.
 - Quando o jogador usar [HABILIDADE], a mana já foi descontada. Se a habilidade tem duração, DECLARE em "efeitos_adicionar" (nome, bônus, turnos, a que se aplica). O app conta os turnos e remove sozinho.
+- COBRANÇA ÚNICA (importante): ao responder a [HABILIDADE], NUNCA envie "mana" negativa em mudancas — o custo JÁ foi descontado; mana negativa nesse turno é cobrança dupla (bug). Só use mana positiva (recuperação) nesse turno.
 - Efeitos ativos aparecem na ficha; você os vê no histórico. Considere-os na narração e nos testes.
 
 COMBATE, ESPÓLIOS E ACHADOS:
-- Ao derrotar inimigos/monstros/pessoas, além de XP quase sempre há ESPÓLIOS: moedas, itens, equipamento, pistas. Um bandido cai com sua adaga e algumas moedas; um lobo rende peles; um mago, um pergaminho. Use "adicionar_itens", "adicionar_equipamento" e "moedas".
+- ESPÓLIOS COM IDENTIDADE: ao derrotar inimigos, a recompensa nasce da natureza do derrotado — o nigromante rende um grimório chamuscado e um anel de osso, não moedas genéricas; o lobo, peles e presas; o mercenário, a arma dele e um contrato comprometedor. Varie o TIPO a cada vitória: moedas, itens, UM equipamento ocasional ("adicionar_equipamento", com raridade honesta), pistas, mapas, informação — e às vezes nada material, só uma consequência. NUNCA repita o mesmo padrão de recompensa em vitórias seguidas.
 - ACHADOS ESPONTÂNEOS: o mundo está cheio de coisas. Ao explorar, o Mestre espontaneamente coloca descobertas — um guerreiro morto com uma bela armadura, um baú alagado, um altar com uma relíquia, uma bolsa esquecida. Nem tudo é seguro; alguns achados têm risco ou preço.
 
 FICHA DE INIMIGOS NO COMBATE (importante para a tática):
+- ABERTURA NO MESMO TURNO: no instante em que QUALQUER hostilidade começa (inimigo ataca ou embosca, OU o jogador ataca alguém), envie "combate_iniciar" NESSA MESMA resposta. É proibido narrar golpes, dano ou tentativas de ataque com o combate fechado.
+- Se algum dano legítimo ocorreu antes da abertura (ex.: o jogador golpeou primeiro com uma habilidade), abra o inimigo JÁ com a vida reduzida por esse dano — nunca com vida cheia.
 - Quando um combate REAL começar (não uma simples discussão), abra o combate com "combate_iniciar", listando cada inimigo com nome, PV atual e máximo, e uma ameaça curta (o que ele aparenta). Ex.: um chefe forte, dois lacaios fracos.
 - A cada golpe, ATUALIZE o PV dos inimigos com "combate_inimigo_vida" (nome + variação, ex.: -5). O app mostra as barras caindo em tempo real.
 - Use "combate_atualizar" para mudar a ameaça de um inimigo (ex.: "enfurecido", "cambaleando", "em fuga") ou revelar um novo inimigo que chega.
@@ -135,7 +139,7 @@ CONDUÇÃO E JORNADA (não seja vago):
 - O jogador pode se PERDER em encruzilhadas, MAS sempre semeie pistas para a escolha certa existir: um viajante que dá informação, placas, marcas no chão, o sol, um cheiro de fumaça. Perder-se deve ser resultado de ignorar pistas, não de azar cego.
 - Termine SEMPRE com uma situação aberta e, quando útil, 2-3 caminhos possíveis nas "sugestoes".
 
-COMPANHEIROS VIVOS (até ${MAX_COMPANHEIROS}): entram por "grupo_adicionar". São pessoas completas — agem sozinhos, opinam, discordam, evoluem ("grupo_atualizar") e podem partir ou trair ("grupo_remover") se maltratados.
+COMPANHEIROS VIVOS (até ${MAX_COMPANHEIROS}): entram por "grupo_adicionar". São pessoas completas — agem sozinhos, opinam, discordam, evoluem ("grupo_atualizar") e podem partir ou trair ("grupo_remover") se maltratados. Têm INICIATIVA PRÓPRIA: puxam assunto, comentam a cena, discordam do plano e agem SEM serem acionados pelo jogador — uma intervenção espontânea de vez em quando (não em todo turno) mantém o grupo vivo sem virar ruído. Um companheiro que só fala quando falam com ele é um companheiro-mobília: proibido.
 
 ECONOMIA: moeda com nome do mundo; valor numérico em "moedas". Mercadores com personalidade e preços coerentes. NUNCA desconte moedas sem o jogador aceitar a compra.
 
@@ -144,6 +148,11 @@ XP: só por conquistas reais (10-30 pequeno; 40-60 marco). Nunca por turno. O ap
 RESUMO: se receber [RESUMO DE SESSÃO], abra com "Anteriormente, em ${nomeCampanha}…", recapitule em até 120 palavras (tom de série), sem rolagem e sem mudanças.
 
 ESTILO: narração sensorial e cinematográfica, enxuta (~180-230 palavras). NPCs falam em 1ª pessoa ("—"). Nunca decida as ações do personagem do jogador.
+
+VARIEDADE DE LINGUAGEM (anti-repetição — leve a sério):
+- NUNCA recicle muletas verbais nem imagens já usadas na sessão. Se uma construção apareceu uma vez (ex.: "qualidade de", "algo muito antigo", "os olhos brilharam"), está PROIBIDA nas próximas — busque outro ângulo sensorial, outra metáfora, outro ritmo.
+- Varie aberturas de frase e de parágrafo; alterne frases curtas e longas. Nomes próprios e termos fixos de itens/lugares permanecem consistentes; a prosa AO REDOR é que muda.
+- REAÇÕES DE NPCs proporcionais e DIVERSAS: nem todos param o que fazem para reverenciar cada conquista do herói — alguns mal notam, outros desconfiam, invejam, zombam, seguem ocupados com a própria vida. Nunca repita o mesmo padrão de reação em momentos semelhantes.
 
 === FORMATO DA RESPOSTA ===
 Responda com UM ÚNICO objeto JSON válido, começando com { e terminando com }. SEM markdown, SEM crases, SEM texto fora do JSON. Todas as chaves entre aspas. Não repita chaves. Estrutura:
@@ -178,11 +187,11 @@ Regras do formato: "rolagem" e "mudancas" são null quando não há; nunca os co
 /* Ponte de produção: o navegador NUNCA vê a chave da API.
    A chamada vai para /api/mestre (função no servidor da Vercel),
    que fala com a Anthropic usando a chave guardada em variável de ambiente. */
-async function chamarModelo(system, messages, maxTokens = 1000) {
+async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto") {
   const response = await fetch("/api/mestre", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ system, messages, maxTokens }),
+    body: JSON.stringify({ system, messages, maxTokens, formato }),
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.erro || `HTTP ${response.status}`);
@@ -239,7 +248,7 @@ function sanearResposta(obj) {
 
 async function chamarMestre(system, historico) {
   /* histórico já está no formato Messages API: [{role, content}, ...] */
-  const texto = await chamarModelo(system, historico.slice(-40), 1000);
+  const texto = await chamarModelo(system, historico.slice(-40), 1000, "json");
   return extrairJSON(texto);
 }
 
@@ -251,7 +260,7 @@ ${livroAtual || "(vazio)"}
 NOVOS ACONTECIMENTOS (mais recentes):
 ${narrativas.slice(-16).join("\n\n")}`;
   try {
-    const r = await chamarModelo(system, [{ role: "user", content: conteudo }], 600);
+    const r = await chamarModelo(system, [{ role: "user", content: conteudo }], 600, "texto");
     return (r || "").trim();
   } catch {
     return livroAtual;
@@ -618,7 +627,7 @@ function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, de
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip }) {
   if (!aba) return null;
   const xpProx = XP_POR_NIVEL(personagem.nivel);
   const equipados = personagem.equipados || {};
@@ -700,6 +709,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar }) 
 
         {aba === "grupo" && (
           <>
+            <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Grupo · {1 + personagem.grupo.length} de {1 + MAX_COMPANHEIROS}</div>
             <CartaoMembro nome={personagem.nome} subtitulo={personagem.conceito} nivel={personagem.nivel} vida={personagem.vida} vidaMax={personagem.vidaMax} mana={personagem.mana} manaMax={personagem.manaMax} habilidades={personagem.habilidades} semente={sementeDe(personagem)} ehVoce />
             {personagem.grupo.length === 0 ? (
               <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você viaja sozinho — por enquanto. Aliados podem se juntar a você.</div>
@@ -761,7 +771,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar }) 
                           <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{it.nome}</div>
                           <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>{SLOT_ROTULO[it.tipo] || it.tipo} · {it.raridade}</div>
                         </div>
-                        <button onClick={() => equipar(it)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>equipar</button>
+                        <div className="flex items-center gap-1 shrink-0"><button onClick={() => descartarEquip(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title="Descartar">✕</button><button onClick={() => equipar(it)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>equipar</button></div>
                       </div>
                       {(it.atributos && Object.keys(it.atributos).length > 0) && (
                         <div className="flex flex-wrap gap-1.5 mt-2">
@@ -783,8 +793,12 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar }) 
               <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Bolsa</div>
               {personagem.inventario.length === 0 ? <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Bolsos vazios — explore, negocie ou saqueie.</div> : (
                 <ul className="space-y-2">
-                  {personagem.inventario.map((it, i) => (
-                    <li key={i} className="tv-body text-sm flex gap-2.5 rounded-lg px-3 py-2.5" style={{ color: T.ink, background: T.panelSoft }}><span style={{ color: T.amber }}>◆</span>{it}</li>
+                  {Object.entries(personagem.inventario.reduce((acc, it) => { acc[it] = (acc[it] || 0) + 1; return acc; }, {})).map(([it, qtd], i) => (
+                    <li key={i} className="tv-body text-sm flex items-center gap-2.5 rounded-lg px-3 py-2.5" style={{ color: T.ink, background: T.panelSoft }}>
+                      <span style={{ color: T.amber }}>◆</span>
+                      <span className="flex-1 min-w-0">{it}{qtd > 1 ? <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}> ×{qtd}</span> : null}</span>
+                      <button onClick={() => descartarItem(it)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>soltar</button>
+                    </li>
                   ))}
                 </ul>
               )}
@@ -946,7 +960,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v1.0</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v1.1 · mestre renovado</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1159,6 +1173,8 @@ export default function Taverna() {
   const saveRef = useRef(null);
   const combateRef = useRef(null);
   combateRef.current = combate;
+  const mensagensRef = useRef([]);
+  const habUsadaRef = useRef(false);
 
   useEffect(() => { fimRef.current?.scrollIntoView({ behavior: "smooth" }); }, [mensagens, carregando, rolagem]);
 
@@ -1170,10 +1186,22 @@ export default function Taverna() {
     } catch { /* save corrompido: ignora */ }
   }, []);
 
+  /* ao entrar no jogo, posiciona direto na última mensagem (sem animação) */
+  useEffect(() => {
+    if (fase !== "jogo") return;
+    const t = setTimeout(() => fimRef.current?.scrollIntoView({ behavior: "auto", block: "end" }), 80);
+    return () => clearTimeout(t);
+  }, [fase]);
+
+  const pushMsgs = useCallback((novas) => {
+    mensagensRef.current = [...mensagensRef.current, ...novas];
+    setMensagens(mensagensRef.current);
+  }, []);
+
   const salvar = useCallback((extra = {}) => {
     setStatusSave("salvando");
     const dados = {
-      nomeCampanha, mundo, personagem, mensagens, historico, sugestoes, rolagem,
+      nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico, sugestoes, rolagem,
       combate: combateRef.current, livro: livroRef.current, salvoEm: Date.now(), ...extra,
     };
     saveRef.current = dados;
@@ -1189,6 +1217,12 @@ export default function Taverna() {
   const aplicarResposta = useCallback((resp, persAtual) => {
     let pers = persAtual;
     const msgs = [];
+    /* trava anti-cobrança-dupla: no turno de [HABILIDADE] o custo já foi
+       descontado pelo app; qualquer mana negativa do Mestre é ignorada */
+    if (habUsadaRef.current) {
+      if (resp.mudancas && typeof resp.mudancas.mana === "number" && resp.mudancas.mana < 0) resp.mudancas.mana = 0;
+      habUsadaRef.current = false;
+    }
     /* passa 1 turno nos efeitos que já estavam ativos (os novos entram depois, com duração cheia) */
     const { efeitos, msgs: msgsTick } = tickEfeitos(pers);
     pers = { ...pers, efeitos };
@@ -1201,11 +1235,11 @@ export default function Taverna() {
       combateRef.current = novoCombate;
       setCombate(novoCombate);
     }
-    setMensagens((prev) => [...prev, { autor: "mestre", texto: resp.narrativa || "…" }, ...msgs.map((t) => ({ autor: "sistema", texto: t }))]);
+    pushMsgs([{ autor: "mestre", texto: resp.narrativa || "…" }, ...msgs.map((t) => ({ autor: "sistema", texto: t }))]);
     setSugestoes(resp.rolagem ? [] : (resp.sugestoes || []));
     setRolagem(resp.rolagem || null);
     return pers;
-  }, []);
+  }, [pushMsgs]);
 
   const enviar = useCallback(async (conteudo, persAtual, histBase) => {
     setCarregando(true); setFalha(null); setSugestoes([]);
@@ -1221,7 +1255,7 @@ export default function Taverna() {
       turnoContRef.current += 1;
       if (turnoContRef.current >= 8) {
         turnoContRef.current = 0;
-        const narrativas = [...mensagens, { autor: "mestre", texto: resp.narrativa }].filter((x) => x.autor === "mestre").map((x) => x.texto);
+        const narrativas = mensagensRef.current.filter((x) => x.autor === "mestre").map((x) => x.texto);
         gerarLivro(livroRef.current, narrativas).then((l) => {
           if (l) { livroRef.current = l; systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l); }
         });
@@ -1241,7 +1275,7 @@ export default function Taverna() {
     setPersonagem(pers);
     livroRef.current = ""; turnoContRef.current = 0;
     systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "");
-    setMensagens([]); setHistorico([]); setSugestoes([]); setRolagem(null);
+    mensagensRef.current = []; setMensagens([]); setHistorico([]); setSugestoes([]); setRolagem(null);
     setCombate(null); combateRef.current = null;
     setFase("jogo");
     enviar("Comece a aventura: apresente o mundo com riqueza, situe meu personagem numa cena de abertura marcante com pelo menos um NPC interessante, conceda minhas 2 ou 3 habilidades iniciais coerentes com meu conceito, e termine com um gancho que me convide a agir.", pers, []);
@@ -1251,7 +1285,7 @@ export default function Taverna() {
     const s = saveRef.current || temSave;
     if (!s) return;
     setMundo(s.mundo); setNomeCampanha(s.nomeCampanha); setPersonagem(s.personagem);
-    setMensagens(s.mensagens || []); setHistorico(s.historico || []);
+    mensagensRef.current = s.mensagens || []; setMensagens(mensagensRef.current); setHistorico(s.historico || []);
     setSugestoes(s.sugestoes || []); setRolagem(s.rolagem || null);
     setCombate(s.combate || null); combateRef.current = s.combate || null;
     livroRef.current = s.livro || ""; turnoContRef.current = 0;
@@ -1268,14 +1302,15 @@ export default function Taverna() {
     setEntrada(""); setHabAbertas(false);
     if (habSel) {
       const h = habSel; setHabSel(null);
-      if (personagem.mana < h.custo) { setMensagens((p) => [...p, { autor: "sistema", texto: `Mana insuficiente para ${h.nome}.` }]); return; }
+      if (personagem.mana < h.custo) { pushMsgs([{ autor: "sistema", texto: `Mana insuficiente para ${h.nome}.` }]); return; }
       const pers = { ...personagem, mana: personagem.mana - h.custo };
       setPersonagem(pers);
-      setMensagens((p) => [...p, { autor: "jogador", texto: `✦ ${h.nome} — ${acao}` }, { autor: "sistema", texto: `Você gastou ${h.custo} PM · restam ${pers.mana}/${pers.manaMax}` }]);
+      pushMsgs([{ autor: "jogador", texto: `✦ ${h.nome} — ${acao}` }, { autor: "sistema", texto: `Você gastou ${h.custo} PM · restam ${pers.mana}/${pers.manaMax}` }]);
+      habUsadaRef.current = true;
       enviar(`[HABILIDADE] Uso "${h.nome}" (custo ${h.custo} PM, já descontado; tenho ${pers.mana} PM). Efeito: ${h.descricao}. COMO eu a uso: ${acao}. Narre conforme minha intenção — se incerto, peça a rolagem apropriada.`, pers);
       return;
     }
-    setMensagens((p) => [...p, { autor: "jogador", texto: acao }]);
+    pushMsgs([{ autor: "jogador", texto: acao }]);
     enviar(acao, personagem);
   };
 
@@ -1291,7 +1326,7 @@ export default function Taverna() {
     setDadoRolando(false); setRolagem(null);
     const buffs = (personagem.efeitos || []).filter((e) => !e.aplica || e.aplica.toLowerCase() === (r.atributo || "").toLowerCase() || e.aplica.toLowerCase() === "testes");
     const notaBuff = buffs.length ? ` (inclui bônus de ${buffs.map((b) => b.nome).join(", ")})` : "";
-    setMensagens((p) => [...p, { autor: "sistema", texto: `🎲 d20 → ${valor}${mod ? ` + ${mod}` : ""} = ${total}${dc != null ? ` vs dif. ${dc}` : ""} · ${resultado}` }]);
+    pushMsgs([{ autor: "sistema", texto: `🎲 d20 → ${valor}${mod ? ` + ${mod}` : ""} = ${total}${dc != null ? ` vs dif. ${dc}` : ""} · ${resultado}` }]);
     enviar(`[ROLAGEM] Teste de ${r.atributo || "sorte"} (${r.motivo}): rolei ${valor}, modificador +${mod}${notaBuff}, total ${total}${dc != null ? `, dificuldade ${dc}` : ""}. Resultado: ${resultado}. Narre as consequências de forma coerente com o resultado.`, personagem);
   };
 
@@ -1300,7 +1335,7 @@ export default function Taverna() {
     const nomeAttr = ATRIBUTOS.find((a) => a.id === attrId)?.nome || attrId;
     setPersonagem((p) => ({ ...p, atributos: { ...p.atributos, [attrId]: nv }, nivelPendentes: Math.max(0, p.nivelPendentes - 1) }));
     notaRef.current = `[INFO] Subi para o nível ${personagem.nivel} e fortaleci ${nomeAttr} (agora +${nv}).`;
-    setMensagens((p) => [...p, { autor: "sistema", texto: `✦ ${nomeAttr} fortalecido: +${nv}` }]);
+    pushMsgs([{ autor: "sistema", texto: `✦ ${nomeAttr} fortalecido: +${nv}` }]);
   };
 
   const equipar = (item) => {
@@ -1310,7 +1345,7 @@ export default function Taverna() {
       equipados[slot] = item; // substitui o que estiver no mesmo slot (volta pra mochila automaticamente)
       return { ...p, equipados };
     });
-    setMensagens((p) => [...p, { autor: "sistema", texto: `⚔ Equipou: ${item.nome}` }]);
+    pushMsgs([{ autor: "sistema", texto: `⚔ Equipou: ${item.nome}` }]);
   };
 
   const desequipar = (slot) => {
@@ -1321,6 +1356,23 @@ export default function Taverna() {
     });
   };
 
+  const descartarItem = (nome) => {
+    setPersonagem((p) => {
+      const i = p.inventario.indexOf(nome);
+      if (i === -1) return p;
+      const inv = [...p.inventario]; inv.splice(i, 1);
+      return { ...p, inventario: inv };
+    });
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Descartei o item: ${nome}.`;
+    pushMsgs([{ autor: "sistema", texto: `Item descartado: ${nome}` }]);
+  };
+
+  const descartarEquip = (nome) => {
+    setPersonagem((p) => ({ ...p, equipamento: (p.equipamento || []).filter((e) => e.nome !== nome) }));
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Descartei o equipamento: ${nome}.`;
+    pushMsgs([{ autor: "sistema", texto: `Equipamento descartado: ${nome}` }]);
+  };
+
   const gerarCronica = async () => {
     const narrativas = mensagens.filter((m) => m.autor === "mestre").map((m) => m.texto).slice(-14).join("\n\n");
     if (!narrativas) return;
@@ -1329,7 +1381,8 @@ export default function Taverna() {
       const r = await chamarModelo(
         `Você é o cronista da Taverna. A partir dos trechos de uma campanha de RPG, escreva uma CRÔNICA épica e concisa (máx 130 palavras) em português, em tom de lenda contada à beira do fogo — heroica, evocativa. Destaque um momento marcante. Responda SOMENTE com JSON: {"titulo":"...","texto":"..."}.`,
         [{ role: "user", content: `Campanha: "${nomeCampanha}".\n\nTrechos:\n${narrativas}` }],
-        600
+        600,
+        "json"
       );
       const limpo = (r || "").replace(/```json/gi, "").replace(/```/g, "").trim();
       const i = limpo.indexOf("{"), f = limpo.lastIndexOf("}");
@@ -1451,7 +1504,7 @@ export default function Taverna() {
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={personagem.grupo.length} />
-          <PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} />
+          <PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} />
         </div>
       )}
 
