@@ -992,7 +992,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v1.2 · narrativa limpa</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v1.3 · saves seguros</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1175,6 +1175,28 @@ function processarCombate(combateAtual, m, msgs) {
 
 /* ---------------- App ---------------- */
 
+/* Normaliza personagem de saves antigos: preenche campos que versões novas
+   esperam mas que não existiam quando o save foi criado. Preserva tudo. */
+function migrarPersonagem(p) {
+  if (!p || typeof p !== "object") return p;
+  const atributosBase = { forca: 0, destreza: 0, vigor: 0, intelecto: 0, presenca: 0, percepcao: 0 };
+  return {
+    ...p,
+    atributos: { ...atributosBase, ...(p.atributos || {}) },
+    inventario: Array.isArray(p.inventario) ? p.inventario : [],
+    habilidades: Array.isArray(p.habilidades) ? p.habilidades : [],
+    grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}` })) : [],
+    efeitos: Array.isArray(p.efeitos) ? p.efeitos : [],
+    equipamento: Array.isArray(p.equipamento) ? p.equipamento : [],
+    equipados: p.equipados && typeof p.equipados === "object" ? p.equipados : {},
+    semente: p.semente || `${p.nome || "herói"}|${p.conceito || ""}|0`,
+    nivel: p.nivel || 1, xp: p.xp || 0, moedas: p.moedas ?? 0,
+    nivelPendentes: p.nivelPendentes || 0,
+    vida: p.vida ?? p.vidaMax ?? 10, vidaMax: p.vidaMax ?? 10,
+    mana: p.mana ?? p.manaMax ?? 8, manaMax: p.manaMax ?? 8,
+  };
+}
+
 export default function Taverna() {
   const [fase, setFase] = useState("menu"); // menu | mundo | personagem | jogo
   const [mundo, setMundo] = useState(null);
@@ -1214,7 +1236,7 @@ export default function Taverna() {
   useEffect(() => {
     try {
       const bruto = localStorage.getItem("taverna_save_v1");
-      if (bruto) { const sv = JSON.parse(bruto); saveRef.current = sv; setTemSave(sv); }
+      if (bruto) { const sv = JSON.parse(bruto); if (sv && sv.personagem) sv.personagem = migrarPersonagem(sv.personagem); saveRef.current = sv; setTemSave(sv); }
     } catch { /* save corrompido: ignora */ }
   }, []);
 
@@ -1314,17 +1336,24 @@ export default function Taverna() {
   };
 
   const continuar = (comResumo) => {
-    const s = saveRef.current || temSave;
-    if (!s) return;
-    setMundo(s.mundo); setNomeCampanha(s.nomeCampanha); setPersonagem(s.personagem);
-    mensagensRef.current = s.mensagens || []; setMensagens(mensagensRef.current); setHistorico(s.historico || []);
-    setSugestoes(s.sugestoes || []); setRolagem(s.rolagem || null);
-    setCombate(s.combate || null); combateRef.current = s.combate || null;
-    livroRef.current = s.livro || ""; turnoContRef.current = 0;
-    systemRef.current = montarSystemPrompt(s.nomeCampanha, s.mundo, s.personagem, s.livro || "");
-    setFase("jogo");
-    if (comResumo && !s.rolagem) {
-      enviar(`[RESUMO DE SESSÃO] Retomando "${s.nomeCampanha}". Abra com "Anteriormente, em ${s.nomeCampanha}…" e recapitule os principais acontecimentos em até 120 palavras, tom de série. Depois reapresente a cena atual e me convide a agir. Sem rolagem e sem mudanças nesta resposta.`, s.personagem, s.historico || []);
+    const sv = saveRef.current || temSave;
+    if (!sv) { pushMsgs([{ autor: "sistema", texto: "Nenhuma aventura salva encontrada." }]); return; }
+    try {
+      const pers = migrarPersonagem(sv.personagem);
+      setMundo(sv.mundo); setNomeCampanha(sv.nomeCampanha); setPersonagem(pers);
+      mensagensRef.current = Array.isArray(sv.mensagens) ? sv.mensagens : [];
+      setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
+      setSugestoes(sv.sugestoes || []); setRolagem(sv.rolagem || null);
+      setCombate(sv.combate || null); combateRef.current = sv.combate || null;
+      livroRef.current = sv.livro || ""; turnoContRef.current = 0;
+      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "");
+      setFase("jogo");
+      if (comResumo && !sv.rolagem) {
+        enviar(`[RESUMO DE SESSÃO] Retomando "${sv.nomeCampanha}". Abra com "Anteriormente, em ${sv.nomeCampanha}…" e recapitule os principais acontecimentos em até 120 palavras, tom de série. Depois reapresente a cena atual e me convide a agir. Sem rolagem e sem mudanças nesta resposta.`, pers, sv.historico || []);
+      }
+    } catch (e) {
+      setFase("menu");
+      pushMsgs([{ autor: "sistema", texto: "Não foi possível abrir a aventura salva: " + String((e && e.message) || e).slice(0, 120) }]);
     }
   };
 
