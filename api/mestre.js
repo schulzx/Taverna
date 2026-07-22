@@ -17,9 +17,12 @@ export default async function handler(req, res) {
     }));
 
     const generationConfig = {
-      maxOutputTokens: Math.min(Math.max(Number(maxTokens) || 1000, 2048), 8192),
+      maxOutputTokens: Math.min(Math.max(Number(maxTokens) || 1000, 4096), 16384),
     };
     if (formato === "json") generationConfig.responseMimeType = "application/json";
+    /* Gemini 3 Pro sempre "pensa"; o padrão HIGH consome o orçamento de saída e
+       trunca a narrativa. LOW deixa espaço para o texto completo (e é mais barato). */
+    generationConfig.thinkingConfig = { thinkingLevel: "LOW" };
 
     /* RPG tem combate; sem isto o filtro padrão pode bloquear narrativa de luta */
     const safetySettings = [
