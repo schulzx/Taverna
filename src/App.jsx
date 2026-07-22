@@ -198,35 +198,66 @@ async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto
   return data.texto || "";
 }
 
+/* decodifica escapes (\n, \", \t...) de um pedaço de string JSON */
+function decodificarTexto(str) {
+  if (!str) return "";
+  try { return JSON.parse(`"${String(str).replace(/"/g, '\\"').replace(/\n/g, "\\n")}"`); }
+  catch {
+    return String(str)
+      .replace(/\\n/g, "\n").replace(/\\t/g, " ")
+      .replace(/\\"/g, '"').replace(/\\\\/g, "\\").trim();
+  }
+}
+
+/* Extrai a resposta do Mestre de forma à prova de falhas.
+   Nunca deixa JSON cru, aspas ou \n escapar para a tela — mesmo que
+   a resposta venha truncada no meio (sem o } final). */
 function extrairJSON(texto) {
   const limpo = (texto || "").replace(/```json/gi, "").replace(/```/g, "").trim();
   const inicio = limpo.indexOf("{");
+  if (inicio === -1) {
+    return { narrativa: decodificarTexto(limpo) || "O Mestre hesita por um instante… (toque em Tentar de novo)", rolagem: null, mudancas: null, sugestoes: [] };
+  }
   const fim = limpo.lastIndexOf("}");
-  if (inicio === -1 || fim === -1) {
-    return { narrativa: limpo || "O Mestre hesita por um instante… (toque em Tentar de novo)", rolagem: null, mudancas: null, sugestoes: [] };
+  const bruto = fim > inicio ? limpo.slice(inicio, fim + 1) : limpo.slice(inicio);
+
+  // 1) tentativa direta (JSON bem formado)
+  if (fim > inicio) {
+    try { return sanearResposta(JSON.parse(bruto)); } catch { /* segue */ }
+    try { return sanearResposta(JSON.parse(bruto.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]"))); } catch { /* segue */ }
   }
-  const bruto = limpo.slice(inicio, fim + 1);
-  try {
-    const obj = JSON.parse(bruto);
-    return sanearResposta(obj);
-  } catch {
-    try {
-      return sanearResposta(JSON.parse(bruto.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]")));
-    } catch {
-      /* JSON malformado (ex.: objeto solto dentro da narrativa). Salva o que der. */
-      let narrativa = "";
-      const mNarr = bruto.match(/"narrativa"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-      if (mNarr) { try { narrativa = JSON.parse(`"${mNarr[1]}"`); } catch { narrativa = mNarr[1]; } }
-      let sugestoes = [];
-      const mSug = bruto.match(/"sugestoes"\s*:\s*(\[[^\]]*\])/);
-      if (mSug) { try { sugestoes = JSON.parse(mSug[1]); } catch { /* ignora */ } }
-      if (!narrativa) {
-        /* último recurso: usa o texto limpo sem chaves/campos técnicos */
-        narrativa = bruto.replace(/[{}]/g, "").replace(/"(narrativa|rolagem|mudancas|sugestoes)"\s*:/g, "").trim();
-      }
-      return { narrativa: narrativa || "O Mestre hesita…", rolagem: null, mudancas: null, sugestoes: Array.isArray(sugestoes) ? sugestoes : [] };
-    }
+
+  // 2) resgate por campo — funciona mesmo com JSON truncado/torto.
+  //    Pega tudo depois de "narrativa":" até a próxima chave conhecida ou o fim.
+  let narrativa = "";
+  const mNarr = bruto.match(/"narrativa"\s*:\s*"((?:[^"\\]|\\.)*)"?/);
+  if (mNarr && mNarr[1]) {
+    narrativa = decodificarTexto(mNarr[1]);
+  } else {
+    // sem sequer o campo: descarta chaves/rótulos e mostra o que sobrar legível
+    narrativa = decodificarTexto(
+      bruto.replace(/^\s*{/, "")
+           .replace(/"(narrativa|rolagem|mudancas|sugestoes)"\s*:/g, "")
+           .replace(/[{}]/g, "")
+           .replace(/^\s*"|"\s*$/g, "")
+           .trim()
+    );
   }
+
+  let sugestoes = [];
+  const mSug = bruto.match(/"sugestoes"\s*:\s*(\[[^\]]*\])/);
+  if (mSug) { try { sugestoes = JSON.parse(mSug[1]); } catch { /* ignora */ } }
+
+  // tenta recuperar rolagem/mudancas se estiverem completos no texto
+  let rolagem = null, mudancas = null;
+  const mRol = bruto.match(/"rolagem"\s*:\s*({[^}]*})/);
+  if (mRol) { try { rolagem = JSON.parse(mRol[1]); } catch { /* ignora */ } }
+
+  return {
+    narrativa: narrativa || "O Mestre hesita…",
+    rolagem, mudancas,
+    sugestoes: Array.isArray(sugestoes) ? sugestoes : [],
+  };
 }
 
 /* Garante que a narrativa é string e os campos têm o tipo certo,
@@ -240,6 +271,7 @@ function sanearResposta(obj) {
     else if (narrativa && typeof narrativa === "object" && typeof narrativa.texto === "string") narrativa = narrativa.texto;
     else narrativa = "";
   }
+  narrativa = decodificarTexto(narrativa);
   const rolagem = obj.rolagem && typeof obj.rolagem === "object" ? obj.rolagem : null;
   const mudancas = obj.mudancas && typeof obj.mudancas === "object" ? obj.mudancas : null;
   const sugestoes = Array.isArray(obj.sugestoes) ? obj.sugestoes.filter((s) => typeof s === "string") : [];
@@ -960,7 +992,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v1.1 · mestre renovado</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v1.2 · narrativa limpa</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
