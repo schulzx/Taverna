@@ -106,7 +106,8 @@ COMBATE, ESPÓLIOS E ACHADOS:
 - ACHADOS ESPONTÂNEOS: o mundo está cheio de coisas. Ao explorar, o Mestre espontaneamente coloca descobertas — um guerreiro morto com uma bela armadura, um baú alagado, um altar com uma relíquia, uma bolsa esquecida. Nem tudo é seguro; alguns achados têm risco ou preço.
 
 FICHA DE INIMIGOS NO COMBATE (importante para a tática):
-- ABERTURA NO MESMO TURNO: no instante em que QUALQUER hostilidade começa (inimigo ataca ou embosca, OU o jogador ataca alguém), envie "combate_iniciar" NESSA MESMA resposta. É proibido narrar golpes, dano ou tentativas de ataque com o combate fechado.
+- ABERTURA NO MESMO TURNO (PRIORIDADE MÁXIMA): no instante em que QUALQUER hostilidade começa — inimigo ameaça/ataca/embosca, OU o jogador ataca, OU alguém saca arma com intenção — envie "combate_iniciar" NESSA MESMA resposta, SEMPRE. Se a cena tem inimigo hostil presente, o combate já deve estar aberto. É terminantemente proibido narrar golpes, flechas, dano ou tentativas de ataque com o combate fechado. Na dúvida, ABRA o combate.
+- Em combate, mantenha a narrativa CURTA (2-4 frases) para não faltar espaço aos campos "combate_" no JSON.
 - Se algum dano legítimo ocorreu antes da abertura (ex.: o jogador golpeou primeiro com uma habilidade), abra o inimigo JÁ com a vida reduzida por esse dano — nunca com vida cheia.
 - Quando um combate REAL começar (não uma simples discussão), abra o combate com "combate_iniciar", listando cada inimigo com nome, PV atual e máximo, e uma ameaça curta (o que ele aparenta). Ex.: um chefe forte, dois lacaios fracos.
 - A cada golpe, ATUALIZE o PV dos inimigos com "combate_inimigo_vida" (nome + variação, ex.: -5). O app mostra as barras caindo em tempo real.
@@ -275,6 +276,11 @@ function sanearResposta(obj) {
   const rolagem = obj.rolagem && typeof obj.rolagem === "object" ? obj.rolagem : null;
   const mudancas = obj.mudancas && typeof obj.mudancas === "object" ? obj.mudancas : null;
   const sugestoes = Array.isArray(obj.sugestoes) ? obj.sugestoes.filter((s) => typeof s === "string") : [];
+  /* aviso discreto se a narrativa parece cortada (sem pontuação final) */
+  const fim = narrativa.trim().slice(-1);
+  if (narrativa.length > 40 && !".!?\"'»)…".includes(fim)) {
+    narrativa = narrativa.trim() + " […]";
+  }
   return { narrativa: narrativa || "…", rolagem, mudancas, sugestoes };
 }
 
@@ -992,7 +998,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v1.3 · saves seguros</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v1.4 · combate fluido</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
