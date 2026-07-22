@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     }));
 
     const generationConfig = {
-      maxOutputTokens: Math.min(Math.max(Number(maxTokens) || 1000, 1200), 2048),
+      maxOutputTokens: Math.min(Math.max(Number(maxTokens) || 1000, 2048), 8192),
     };
     if (formato === "json") generationConfig.responseMimeType = "application/json";
 
