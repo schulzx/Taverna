@@ -70,7 +70,26 @@ História: ${p.historia || "(desconhecida — revele aos poucos)"}
 Atributos: ${attrs} · PV máx ${p.vidaMax} · PM máx ${p.manaMax}`;
 }
 
-function montarSystemPrompt(nomeCampanha, mundo, personagem, livro) {
+function formatarCanone(canone) {
+  if (!canone || typeof canone !== "object") return "";
+  const linhas = [];
+  for (const [nome, f] of Object.entries(canone)) {
+    if (!f) continue;
+    const partes = [];
+    if (f.tipo) partes.push(f.tipo);
+    if (f.papel) partes.push(f.papel);
+    if (f.genero) partes.push(f.genero);
+    if (f.local) partes.push(`em ${f.local}`);
+    if (f.status) partes.push(f.status);
+    const desc = partes.length ? ` — ${partes.join(", ")}` : "";
+    const notas = f.notas ? `. ${f.notas}` : "";
+    linhas.push(`• ${nome}${desc}${notas}`);
+  }
+  return linhas.join("\n");
+}
+
+function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone) {
+  const canoneTexto = formatarCanone(canone);
   return `Você é o Mestre de um RPG de mesa por chat, em português brasileiro. Narre um mundo vivo, imprevisível e com vontade própria. Interprete TODOS os NPCs como pessoas reais (vozes, desejos, medos, segredos), crie eventos espontâneos, consequências e reviravoltas, e arbitre as regras com justiça.
 
 CAMPANHA: "${nomeCampanha}"
@@ -80,17 +99,25 @@ Descrição do mundo: ${mundo.descricao || "(crie os detalhes com riqueza)"}
 PERSONAGEM DO JOGADOR:
 ${fichaTexto(personagem)}
 Começa com ${MOEDAS_INICIAIS} moedas.
-${livro ? `\nLIVRO DA CAMPANHA (fatos estabelecidos — mantenha rigorosa continuidade; nunca contradiga):\n${livro}\n` : ""}
+${canoneTexto ? `\n═══ CÂNONE (VERDADES IMUTÁVEIS — nunca contradiga; se o jogador citar algo daqui, RECONHEÇA, não invente) ═══\n${canoneTexto}\n═══════════════════════════════════════\n` : ""}${livro ? `\nLIVRO DA CAMPANHA (resumo dos acontecimentos — o CÂNONE acima tem prioridade sobre este resumo):\n${livro}\n` : ""}
 === REGRAS DE JOGO (baseadas em RPGs de mesa clássicos) ===
 
 ROLAGENS (d20 + modificador vs Dificuldade):
 - Dificuldades: trivial 5, fácil 10, média 13, difícil 16, muito difícil 19, quase impossível 22.
 - O modificador é o atributo do personagem (varia de 0 a +5). Um buff ativo pode somar mais (veja EFEITOS).
+- VANTAGEM E DESVANTAGEM (D&D 5e): quando as circunstâncias claramente favorecem o jogador (ataque furtivo, terreno alto, inimigo cego/caído/distraído, ferramenta ideal), inclua "vantagem":true na rolagem — o app rola 2d20 e usa o MAIOR. Quando o prejudicam (às cegas, enfeitiçado, ferido grave, condição ruim, ação muito difícil sem preparo), inclua "desvantagem":true — rola 2d20 e usa o MENOR. Sinalize na narrativa o porquê ("a posição elevada te favorece"). Use com parcimônia: só quando a ficção justifica de verdade.
 - IMPORTANTE — equilíbrio: um teste deve ter incerteza real. Com atributo +4 e dificuldade 13, o jogador acerta ~60% das vezes: bom. Evite dificuldades que tornem tudo trivial (sem graça) ou impossível (frustrante). Calibre a dificuldade à ficção, não ao que é conveniente.
 - Peça rolagem SÓ quando houver chance real de falha E consequência interessante. Ações triviais não precisam de dado.
 - Ao pedir rolagem, prepare a cena até o instante do teste e PARE ali. NUNCA narre o desfecho antes do resultado.
 - 20 natural = sucesso extraordinário (além do esperado); 1 natural = falha desastrosa (com complicação).
+- CÂNONE (memória permanente que NUNCA se perde): sempre que você estabelecer ou descobrir um FATO DURÁVEL — um NPC (nome, se é mago/guerreiro/etc, papel, gênero, onde está), um lugar importante, um nome falso que o jogador usou, uma promessa, um vínculo, um segredo revelado — REGISTRE em "canone" (veja formato). Fatos no CÂNONE aparecem literais em toda resposta e são a VERDADE: jamais os contradiga. Se o jogador perguntar "X te lembra algo?" e X estiver no cânone, RECONHEÇA o que está lá — nunca invente uma versão nova. Se NÃO estiver no cânone e você não tem certeza, trate como algo que o personagem talvez não saiba, em vez de inventar um fato que possa colidir depois. Atualize uma ficha (ex.: o mago mudou de cidade) reescrevendo os campos que mudaram; NUNCA mude tipo/gênero/identidade de alguém já registrado.
 - COLCHETES SÃO META: qualquer texto entre [colchetes] vindo do jogador ou do app (ex.: [seja mais direto], [não descreva sangue], [HABILIDADE], [ROLAGEM]) é instrução FORA do personagem. Obedeça ao conteúdo, mas NUNCA o trate como fala/ação do personagem e NUNCA o repita na narrativa.
+
+CONDIÇÕES DE ESTADO (D&D/BG3 — dentro e fora de combate):
+- Personagens e inimigos podem receber condições com efeito mecânico real, via "condicoes_adicionar" (e "condicoes_remover"). Cada condição: {"alvo":"você"|nome do NPC/inimigo,"nome":"Envenenado","turnos":3,"efeito":"perde 2 PV por turno","tipo":"ruim"|"bom"}.
+- Condições comuns e o que fazem: Envenenado (perde PV por turno), Sangrando (perde PV por turno até estancar), Atordoado (perde a próxima ação), Amedrontado (desvantagem em ataques), Cego (desvantagem; quem o ataca tem vantagem), Caído/Derrubado (desvantagem corpo a corpo), Enfraquecido (dano reduzido), Abençoado/Inspirado (vantagem), Apressado (ação extra). Crie outras coerentes com a ficção.
+- Use condições para dar consequência: o veneno da aranha, a lama que prende, o grito que amedronta. Uma condição que dá vantagem/desvantagem deve refletir nas rolagens seguintes. O app conta os turnos e mostra as condições ativas; declare o efeito e deixe o app/ narrativa aplicarem.
+- Fora de combate também valem (envenenado numa trilha, abençoado por um templo). Condições "boas" e "ruins" coexistem.
 
 HABILIDADES E EFEITOS TEMPORÁRIOS:
 - O personagem tem habilidades/magias com custo em mana (PM). Na PRIMEIRA resposta, conceda 2-3 habilidades iniciais coerentes com o conceito (custo 1-5 PM). Conceda novas por marcos.
@@ -102,6 +129,7 @@ HABILIDADES E EFEITOS TEMPORÁRIOS:
 - Efeitos ativos aparecem na ficha; você os vê no histórico. Considere-os na narração e nos testes.
 
 COMBATE, ESPÓLIOS E ACHADOS:
+- ITENS COM DESCRIÇÃO: ao dar um item, use o formato objeto {"nome":"Frasco Rúnico","descricao":"o que é / o que faz"} em "adicionar_itens" (ou string simples se for trivial). A descrição diz a FUNÇÃO do item, não só a origem.
 - ESPÓLIOS COM IDENTIDADE: ao derrotar inimigos, a recompensa nasce da natureza do derrotado — o nigromante rende um grimório chamuscado e um anel de osso, não moedas genéricas; o lobo, peles e presas; o mercenário, a arma dele e um contrato comprometedor. Varie o TIPO a cada vitória: moedas, itens, UM equipamento ocasional ("adicionar_equipamento", com raridade honesta), pistas, mapas, informação — e às vezes nada material, só uma consequência. NUNCA repita o mesmo padrão de recompensa em vitórias seguidas.
 - ACHADOS ESPONTÂNEOS: o mundo está cheio de coisas. Ao explorar, o Mestre espontaneamente coloca descobertas — um guerreiro morto com uma bela armadura, um baú alagado, um altar com uma relíquia, uma bolsa esquecida. Nem tudo é seguro; alguns achados têm risco ou preço.
 
@@ -109,12 +137,14 @@ FICHA DE INIMIGOS NO COMBATE (importante para a tática):
 - ABERTURA NO MESMO TURNO (PRIORIDADE MÁXIMA): no instante em que QUALQUER hostilidade começa — inimigo ameaça/ataca/embosca, OU o jogador ataca, OU alguém saca arma com intenção — envie "combate_iniciar" NESSA MESMA resposta, SEMPRE. Se a cena tem inimigo hostil presente, o combate já deve estar aberto. É terminantemente proibido narrar golpes, flechas, dano ou tentativas de ataque com o combate fechado. Na dúvida, ABRA o combate.
 - Em combate, mantenha a narrativa CURTA (2-4 frases) para não faltar espaço aos campos "combate_" no JSON.
 - Se algum dano legítimo ocorreu antes da abertura (ex.: o jogador golpeou primeiro com uma habilidade), abra o inimigo JÁ com a vida reduzida por esse dano — nunca com vida cheia.
+- Cada inimigo tem competência implícita coerente com sua ameaça (um lacaio erra muito; um mestre-de-armas raramente erra). Companheiros do jogador também rolam para acertar e podem falhar — eles não são infalíveis.
 - Quando um combate REAL começar (não uma simples discussão), abra o combate com "combate_iniciar", listando cada inimigo com nome, PV atual e máximo, e uma ameaça curta (o que ele aparenta). Ex.: um chefe forte, dois lacaios fracos.
-- A cada golpe, ATUALIZE o PV dos inimigos com "combate_inimigo_vida" (nome + variação, ex.: -5). O app mostra as barras caindo em tempo real.
+- TEMPO REAL (importante): sempre que um golpe acerta um inimigo, envie "combate_inimigo_vida" na MESMA resposta em que narra o golpe — nunca deixe para o turno seguinte. Se o texto diz que a flecha acertou, o PV cai NESTE JSON. Vale também para dano ao jogador ("vida") e a companheiros ("grupo_vida"): aplique no mesmo turno do golpe.
 - Use "combate_atualizar" para mudar a ameaça de um inimigo (ex.: "enfurecido", "cambaleando", "em fuga") ou revelar um novo inimigo que chega.
 - Quando o combate acabar (todos derrotados, fuga, rendição, trégua), feche com "combate_encerrar": true e dê os espólios/XP na mesma resposta.
 - Calibre o PV dos inimigos ao desafio: um lacaio tem 6-10 PV, um guerreiro 12-20, um bruto 25-40, um chefe 50+. O dano do jogador costuma ser 3-8 por golpe bem-sucedido; ajuste para o combate durar alguns turnos, nem instantâneo nem interminável.
 - Inimigos também revidam: use "vida" (dano ao jogador) e "grupo_vida" (dano aos companheiros) conforme a ficção. Deixe claro na narrativa quem ataca quem.
+- REGRAS VALEM PARA TODOS (estilo Baldur's Gate 3): inimigos e companheiros também rolam o dado. Ao resolver um ataque de NPC (inimigo ou aliado) contra alguém, gere o resultado e REGISTRE em "rolagens_combate" (lista) para o app exibir: cada item tem {"quem":"Lobo","alvo":"você","d20":N,"mod":X,"total":N+X,"dificuldade":D,"resultado":"acerta"|"erra"|"crítico"|"desastre"}. Escolha o d20 (1-20) e o mod pela competência (fraco +1/+2, competente +3/+4, elite +5/+6); dificuldade de acertar: alvo comum 12, ágil 15, muito ágil 18. 20 natural = crítico (dano dobrado); 1 natural = desastre (0 dano + tropeço). Aplique o dano coerente (0 se errou) via combate_inimigo_vida/vida/grupo_vida NO MESMO turno. NPCs também podem ter vantagem/desvantagem: se favorecidos, use o maior de 2 rolagens; se atrapalhados, o menor — e mencione na narrativa. Varie: nem todo ataque acerta.
 
 MUNDO ESCALÁVEL (o desafio cresce com o herói):
 - O personagem fica mais forte com o tempo (sobe de nível: mais PV, PM e atributos). Os PERIGOS devem escalar junto, senão o jogo perde a graça.
@@ -146,6 +176,11 @@ ECONOMIA: moeda com nome do mundo; valor numérico em "moedas". Mercadores com p
 
 XP: só por conquistas reais (10-30 pequeno; 40-60 marco). Nunca por turno. O app calcula os níveis.
 
+DESCANSO (D&D 5e — recurso com custo):
+- DESCANSO CURTO (~1h de ficção): recupera parte do PV/PM e alivia cansaço leve; alguns efeitos passam. Baixo risco. Use "mudancas" com vida/mana positivas moderadas.
+- DESCANSO LONGO (uma noite): recupera todo o PV/PM e remove condições curáveis — MAS o mundo AVANÇA: o tempo passa, inimigos se movem, planos inimigos progridem, oportunidades podem escapar, e há risco de ser surpreendido (uma vigília/emboscada às vezes). Restaure vida/mana ao máximo e narre a consequência do tempo passar.
+- Quando o jogador pedir para descansar/dormir, pergunte ou deduza qual tipo pela ficção, aplique os ganhos e — no descanso longo — SEMPRE faça o mundo reagir ao tempo perdido. Descanso nunca é neutro: tem troca.
+
 RESUMO: se receber [RESUMO DE SESSÃO], abra com "Anteriormente, em ${nomeCampanha}…", recapitule em até 120 palavras (tom de série), sem rolagem e sem mudanças.
 
 ESTILO: narração sensorial e cinematográfica, enxuta (~180-230 palavras). NPCs falam em 1ª pessoa ("—"). Nunca decida as ações do personagem do jogador.
@@ -163,7 +198,7 @@ Responda com UM ÚNICO objeto JSON válido, começando com { e terminando com }.
   "mudancas": null,
   "sugestoes": ["opção 1","opção 2","opção 3"]
 }
-Quando um teste for necessário, "rolagem" é um objeto: {"dado":"d20","atributo":"Destreza","motivo":"escalar o muro","dificuldade":13}
+Quando um teste for necessário, "rolagem" é um objeto: {"dado":"d20","atributo":"Destreza","motivo":"escalar o muro","dificuldade":13,"vantagem":false,"desvantagem":false}
 Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
 {
   "vida": -3, "mana": 2, "xp": 25, "moedas": -10,
@@ -178,8 +213,16 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   "combate_iniciar": [{"nome":"Capitão Bandido","vida":28,"vidaMax":28,"ameaca":"espadachim veterano, cicatriz no rosto"},{"nome":"Lacaio","vida":8,"vidaMax":8,"ameaca":"nervoso, mal segura a lança"}],
   "combate_inimigo_vida": [{"nome":"Lacaio","vida":-8}],
   "combate_atualizar": [{"nome":"Capitão Bandido","ameaca":"enfurecido, sangrando"}],
-  "combate_encerrar": false
+  "combate_encerrar": false,
+  "rolagens_combate": [{"quem":"Lobo","alvo":"você","d20":8,"mod":2,"total":10,"dificuldade":15,"resultado":"erra"}],
+  "condicoes_adicionar": [{"alvo":"você","nome":"Envenenado","turnos":3,"efeito":"perde 2 PV por turno","tipo":"ruim"}],
+  "condicoes_remover": [{"alvo":"você","nome":"Envenenado"}],
+  "canone": {
+    "Cael": {"tipo":"pessoa","papel":"mago viajante","genero":"homem","local":"estrada para Dwen","status":"vivo","notas":"o herói se apresentou a ele com o nome falso Falkion"},
+    "Refúgio das Pedras": {"tipo":"local","notas":"esconderijo do grupo, a leste do rio"}
+  }
 }
+O campo "canone" é opcional: inclua-o só quando houver um fato durável a registrar ou atualizar. Cada chave é o NOME da entidade; os campos (tipo, papel, genero, local, status, notas) são todos opcionais — preencha os relevantes. Para atualizar, reenvie a mesma chave com os campos novos.
 Regras do formato: "rolagem" e "mudancas" são null quando não há; nunca os coloque dentro de "narrativa". "narrativa" é sempre uma string simples. Tipos de equipamento: arma, armadura, elmo, botas, anel, amuleto, escudo. Raridades: comum, incomum, raro, epico, lendario. Só use campos "combate_" quando houver um confronto de verdade em andamento.`;
 }
 
@@ -469,14 +512,25 @@ function sementeDe(ent) {
 function OverlayDado({ rolagem, modificador, aoConcluir }) {
   const [faseD, setFaseD] = useState("rolando");
   const [valor, setValor] = useState(1);
+  const [par, setPar] = useState(null); // [a,b] quando há vantagem/desvantagem
+  const vant = !!rolagem.vantagem, desv = !!rolagem.desvantagem;
+  const modo = vant && !desv ? "vantagem" : desv && !vant ? "desvantagem" : null;
   const lados = 20;
   useEffect(() => {
     const inicio = Date.now();
     const iv = setInterval(() => {
       setValor(1 + Math.floor(Math.random() * lados));
+      if (modo) setPar([1 + Math.floor(Math.random() * lados), 1 + Math.floor(Math.random() * lados)]);
       if (Date.now() - inicio > 1200) {
         clearInterval(iv);
-        const final = 1 + Math.floor(Math.random() * lados);
+        let final;
+        if (modo) {
+          const a = 1 + Math.floor(Math.random() * lados), b = 1 + Math.floor(Math.random() * lados);
+          setPar([a, b]);
+          final = modo === "vantagem" ? Math.max(a, b) : Math.min(a, b);
+        } else {
+          final = 1 + Math.floor(Math.random() * lados);
+        }
         setValor(final);
         setFaseD("resultado");
         setTimeout(() => aoConcluir(final), 1600);
@@ -495,6 +549,11 @@ function OverlayDado({ rolagem, modificador, aoConcluir }) {
         <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.violetSoft }}>
           Teste de {rolagem.atributo || "sorte"}{dc != null ? ` · dificuldade ${dc}` : ""}
         </div>
+        {modo && (
+          <div className="tv-mono text-[11px] uppercase tracking-widest mb-1 px-2 py-0.5 rounded-full" style={{ color: modo === "vantagem" ? T.ok : T.danger, border: `1px solid ${modo === "vantagem" ? T.ok : T.danger}` }}>
+            {modo === "vantagem" ? "✦ vantagem" : "✧ desvantagem"}{par ? ` · ${par[0]} / ${par[1]}` : ""}
+          </div>
+        )}
         <div className="tv-display text-2xl mb-8" style={{ color: T.ink }}>{rolagem.motivo}</div>
         <div className={`relative flex items-center justify-center ${faseD === "rolando" ? "tv-dice" : ""}`}
           style={{
@@ -694,6 +753,19 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
               <BarraMini rotulo="PM" atual={personagem.mana} max={personagem.manaMax} cor={T.violet} />
               <BarraMini rotulo="XP" atual={personagem.xp} max={xpProx} cor={T.ok} />
             </div>
+            {(personagem.condicoes || []).length > 0 && (
+              <div>
+                <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Condições</div>
+                <div className="space-y-1.5">
+                  {personagem.condicoes.map((c, i) => (
+                    <div key={i} className="rounded-lg px-3 py-2 flex items-center justify-between" style={{ background: T.panelSoft, border: `1px solid ${c.tipo === "bom" ? T.ok : T.danger}` }}>
+                      <span className="tv-body text-sm" style={{ color: T.ink }}>{c.tipo === "bom" ? "✦" : "⚠"} {c.nome} <span className="tv-body text-xs italic" style={{ color: T.inkDim }}>{c.efeito}</span></span>
+                      <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}>{c.turnos}t</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {(personagem.efeitos || []).length > 0 && (
               <div>
                 <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.violetSoft }}>Efeitos ativos</div>
@@ -831,11 +903,20 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
               <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Bolsa</div>
               {personagem.inventario.length === 0 ? <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Bolsos vazios — explore, negocie ou saqueie.</div> : (
                 <ul className="space-y-2">
-                  {Object.entries(personagem.inventario.reduce((acc, it) => { acc[it] = (acc[it] || 0) + 1; return acc; }, {})).map(([it, qtd], i) => (
-                    <li key={i} className="tv-body text-sm flex items-center gap-2.5 rounded-lg px-3 py-2.5" style={{ color: T.ink, background: T.panelSoft }}>
-                      <span style={{ color: T.amber }}>◆</span>
-                      <span className="flex-1 min-w-0">{it}{qtd > 1 ? <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}> ×{qtd}</span> : null}</span>
-                      <button onClick={() => descartarItem(it)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>soltar</button>
+                  {Object.values(personagem.inventario.reduce((acc, raw) => {
+                    const nome = typeof raw === "string" ? raw : (raw && raw.nome) || "item";
+                    const descricao = typeof raw === "object" && raw ? (raw.descricao || "") : "";
+                    if (!acc[nome]) acc[nome] = { nome, descricao, qtd: 0 };
+                    if (descricao && !acc[nome].descricao) acc[nome].descricao = descricao;
+                    acc[nome].qtd++; return acc;
+                  }, {})).map((it, i) => (
+                    <li key={i} className="rounded-lg px-3 py-2.5" style={{ background: T.panelSoft }}>
+                      <div className="tv-body text-sm flex items-center gap-2.5" style={{ color: T.ink }}>
+                        <span style={{ color: T.amber }}>◆</span>
+                        <span className="flex-1 min-w-0">{it.nome}{it.qtd > 1 ? <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}> ×{it.qtd}</span> : null}</span>
+                        <button onClick={() => descartarItem(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>soltar</button>
+                      </div>
+                      {it.descricao && <div className="tv-body text-xs mt-1 italic" style={{ color: T.inkDim, paddingLeft: "22px" }}>{it.descricao}</div>}
                     </li>
                   ))}
                 </ul>
@@ -888,12 +969,13 @@ function PainelHabilidades({ personagem, selecionar, fechar }) {
         <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você ainda não despertou nenhuma habilidade. Elas virão com a história.</div>
       ) : (
         <div className="grid md:grid-cols-2 gap-2">
-          {personagem.habilidades.map((h, i) => {
-            const semMana = personagem.mana < h.custo;
+          {(personagem.habilidades || []).filter((h) => h && h.nome).map((h, i) => {
+            const custo = Math.max(0, Number(h.custo) || 0);
+            const semMana = personagem.mana < custo;
             return (
               <button key={i} onClick={() => !semMana && selecionar(h)} disabled={semMana} className="text-left rounded-xl p-3 transition-all"
                 style={{ background: T.panelSoft, border: `1px solid ${semMana ? T.line : T.violet}`, opacity: semMana ? 0.45 : 1, cursor: semMana ? "not-allowed" : "pointer" }}>
-                <div className="flex items-baseline justify-between gap-2"><span className="tv-display text-lg leading-none" style={{ color: T.ink }}>{h.nome}</span><span className="tv-mono text-[10px] shrink-0" style={{ color: semMana ? T.danger : T.violetSoft }}>{h.custo} PM</span></div>
+                <div className="flex items-baseline justify-between gap-2"><span className="tv-display text-lg leading-none" style={{ color: T.ink }}>{h.nome}</span><span className="tv-mono text-[10px] shrink-0" style={{ color: semMana ? T.danger : T.violetSoft }}>{custo} PM</span></div>
                 <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{h.descricao}</div>
               </button>
             );
@@ -998,7 +1080,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v1.4 · combate fluido</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v1.7 · interface fixa</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1038,8 +1120,9 @@ function aplicarMudancas(pers, m, msgs) {
   let vida = Math.max(0, Math.min(pers.vidaMax, pers.vida + (m.vida || 0)));
   let mana = Math.max(0, Math.min(pers.manaMax, pers.mana + (m.mana || 0)));
   let moedas = Math.max(0, pers.moedas + (m.moedas || 0));
+  const nomeItem = (x) => (typeof x === "string" ? x : (x && x.nome) || "");
   let inv = [...pers.inventario, ...(m.adicionar_itens || [])];
-  inv = inv.filter((i) => !(m.remover_itens || []).some((r) => i.toLowerCase() === r.toLowerCase()));
+  inv = inv.filter((i) => !(m.remover_itens || []).some((r) => nomeItem(i).toLowerCase() === String(r).toLowerCase()));
   let habs = [...pers.habilidades];
   (m.adicionar_habilidades || []).forEach((h) => { if (h?.nome && !habs.some((x) => x.nome.toLowerCase() === h.nome.toLowerCase())) habs.push({ nome: h.nome, custo: Math.max(0, h.custo || 1), descricao: h.descricao || "" }); });
   habs = habs.filter((h) => !(m.remover_habilidades || []).some((r) => h.nome.toLowerCase() === r.toLowerCase()));
@@ -1190,9 +1273,10 @@ function migrarPersonagem(p) {
     ...p,
     atributos: { ...atributosBase, ...(p.atributos || {}) },
     inventario: Array.isArray(p.inventario) ? p.inventario : [],
-    habilidades: Array.isArray(p.habilidades) ? p.habilidades : [],
+    habilidades: Array.isArray(p.habilidades) ? p.habilidades.filter((h) => h && h.nome).map((h) => ({ nome: h.nome, custo: Math.max(0, Number(h.custo) || 0), descricao: h.descricao || "", duracao: h.duracao || 0 })) : [],
     grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}` })) : [],
     efeitos: Array.isArray(p.efeitos) ? p.efeitos : [],
+    condicoes: Array.isArray(p.condicoes) ? p.condicoes : [],
     equipamento: Array.isArray(p.equipamento) ? p.equipamento : [],
     equipados: p.equipados && typeof p.equipados === "object" ? p.equipados : {},
     semente: p.semente || `${p.nome || "herói"}|${p.conceito || ""}|0`,
@@ -1223,6 +1307,12 @@ export default function Taverna() {
   const [statusSave, setStatusSave] = useState(null);
   const [cronica, setCronica] = useState(null);
   const [verCena, setVerCena] = useState(false);
+  const [longeDoFim, setLongeDoFim] = useState(false);
+  const areaRef = useRef(null);
+  const [mostrarRolagens, setMostrarRolagens] = useState(() => {
+    try { const v = localStorage.getItem("taverna_cfg_rolagens"); return v === null ? true : v === "1"; } catch { return true; }
+  });
+  useEffect(() => { mostrarRolagensRef.current = mostrarRolagens; try { localStorage.setItem("taverna_cfg_rolagens", mostrarRolagens ? "1" : "0"); } catch {} }, [mostrarRolagens]);
   const [temSave, setTemSave] = useState(null);
 
   const systemRef = useRef("");
@@ -1235,8 +1325,14 @@ export default function Taverna() {
   combateRef.current = combate;
   const mensagensRef = useRef([]);
   const habUsadaRef = useRef(false);
+  const canoneRef = useRef({});
+  const mostrarRolagensRef = useRef(true);
 
-  useEffect(() => { fimRef.current?.scrollIntoView({ behavior: "smooth" }); }, [mensagens, carregando, rolagem]);
+  /* rola para o fim a cada novidade — mas respeita quem subiu para reler */
+  useEffect(() => {
+    if (longeDoFim) return;
+    fimRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [mensagens, carregando, rolagem, longeDoFim]);
 
   /* carrega o save deste dispositivo na abertura */
   useEffect(() => {
@@ -1253,6 +1349,19 @@ export default function Taverna() {
     return () => clearTimeout(t);
   }, [fase]);
 
+  const aoRolar = useCallback((e) => {
+    const el = e.currentTarget;
+    const distancia = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setLongeDoFim(distancia > 240);
+  }, []);
+
+  const irParaOFim = useCallback(() => {
+    const el = areaRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    else fimRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    setLongeDoFim(false);
+  }, []);
+
   const pushMsgs = useCallback((novas) => {
     mensagensRef.current = [...mensagensRef.current, ...novas];
     setMensagens(mensagensRef.current);
@@ -1262,7 +1371,7 @@ export default function Taverna() {
     setStatusSave("salvando");
     const dados = {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico, sugestoes, rolagem,
-      combate: combateRef.current, livro: livroRef.current, salvoEm: Date.now(), ...extra,
+      combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, salvoEm: Date.now(), ...extra,
     };
     saveRef.current = dados;
     setTemSave(dados);
@@ -1287,7 +1396,61 @@ export default function Taverna() {
     const { efeitos, msgs: msgsTick } = tickEfeitos(pers);
     pers = { ...pers, efeitos };
     msgs.push(...msgsTick);
+    /* tick das condições: decrementa e remove as que expiram */
+    if ((pers.condicoes || []).length) {
+      const vivas = [];
+      pers.condicoes.forEach((c) => {
+        const t = c.turnos - 1;
+        if (t <= 0) msgs.push(`✓ ${c.nome} passou`);
+        else vivas.push({ ...c, turnos: t });
+      });
+      pers = { ...pers, condicoes: vivas };
+    }
     if (resp.mudancas) pers = aplicarMudancas(pers, resp.mudancas, msgs);
+    /* CONDIÇÕES: adiciona/remove nos alvos (jogador ou NPCs do grupo/combate) */
+    if (resp.mudancas) {
+      const md = resp.mudancas;
+      (md.condicoes_adicionar || []).forEach((c) => {
+        if (!c || !c.nome) return;
+        const alvo = (c.alvo || "você").toLowerCase();
+        const cond = { nome: c.nome, turnos: Math.max(1, Math.min(20, Number(c.turnos) || 3)), efeito: c.efeito || "", tipo: c.tipo === "bom" ? "bom" : "ruim" };
+        if (alvo === "você" || alvo === "voce" || alvo === (pers.nome || "").toLowerCase()) {
+          const cs = (pers.condicoes || []).filter((x) => x.nome.toLowerCase() !== cond.nome.toLowerCase());
+          pers = { ...pers, condicoes: [...cs, cond] };
+          msgs.push(`${cond.tipo === "bom" ? "✦" : "⚠"} Você está ${cond.nome} (${cond.turnos}t)`);
+        } else {
+          msgs.push(`${cond.tipo === "bom" ? "✦" : "⚠"} ${c.alvo}: ${cond.nome}`);
+        }
+      });
+      (md.condicoes_remover || []).forEach((c) => {
+        if (!c || !c.nome) return;
+        const alvo = (c.alvo || "você").toLowerCase();
+        if (alvo === "você" || alvo === "voce" || alvo === (pers.nome || "").toLowerCase()) {
+          pers = { ...pers, condicoes: (pers.condicoes || []).filter((x) => x.nome.toLowerCase() !== c.nome.toLowerCase()) };
+          msgs.push(`✓ ${c.nome} passou`);
+        }
+      });
+      /* ROLAGENS DE COMBATE (visíveis, se ligado nas config) */
+      if (mostrarRolagensRef.current && Array.isArray(md.rolagens_combate)) {
+        md.rolagens_combate.forEach((r) => {
+          if (!r || !r.quem) return;
+          const ic = r.resultado === "crítico" ? "🎯" : r.resultado === "desastre" ? "💥" : r.resultado === "acerta" ? "⚔" : "🛡";
+          msgs.push(`${ic} ${r.quem} → ${r.alvo || "alvo"} · ${r.d20 ?? "?"}${r.mod ? `+${r.mod}` : ""}${r.total != null ? `=${r.total}` : ""}${r.dificuldade != null ? ` vs ${r.dificuldade}` : ""} · ${r.resultado || ""}`);
+        });
+      }
+    }
+    /* CÂNONE: mescla fatos duráveis; campos novos atualizam, nunca apagam a ficha */
+    if (resp.mudancas && resp.mudancas.canone && typeof resp.mudancas.canone === "object") {
+      const c = { ...canoneRef.current };
+      for (const [nome, ficha] of Object.entries(resp.mudancas.canone)) {
+        if (!nome || !ficha || typeof ficha !== "object") continue;
+        const nova = !c[nome];
+        c[nome] = { ...(c[nome] || {}), ...ficha };
+        if (nova) msgs.push(`📖 Registrado: ${nome}`);
+      }
+      canoneRef.current = c;
+      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c);
+    }
     setPersonagem(pers);
     /* combate: processa de forma síncrona (via ref) para as mensagens saírem na ordem certa */
     if (resp.mudancas) {
@@ -1317,7 +1480,7 @@ export default function Taverna() {
         turnoContRef.current = 0;
         const narrativas = mensagensRef.current.filter((x) => x.autor === "mestre").map((x) => x.texto);
         gerarLivro(livroRef.current, narrativas).then((l) => {
-          if (l) { livroRef.current = l; systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l); }
+          if (l) { livroRef.current = l; systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current); }
         });
       }
       setTimeout(() => salvar({ personagem: pers, historico: histFinal, rolagem: resp.rolagem || null, sugestoes: resp.rolagem ? [] : (resp.sugestoes || []) }), 0);
@@ -1334,7 +1497,8 @@ export default function Taverna() {
   const iniciar = (pers) => {
     setPersonagem(pers);
     livroRef.current = ""; turnoContRef.current = 0;
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "");
+    canoneRef.current = {};
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {});
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setSugestoes([]); setRolagem(null);
     setCombate(null); combateRef.current = null;
     setFase("jogo");
@@ -1352,7 +1516,8 @@ export default function Taverna() {
       setSugestoes(sv.sugestoes || []); setRolagem(sv.rolagem || null);
       setCombate(sv.combate || null); combateRef.current = sv.combate || null;
       livroRef.current = sv.livro || ""; turnoContRef.current = 0;
-      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "");
+      canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
+      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current);
       setFase("jogo");
       if (comResumo && !sv.rolagem) {
         enviar(`[RESUMO DE SESSÃO] Retomando "${sv.nomeCampanha}". Abra com "Anteriormente, em ${sv.nomeCampanha}…" e recapitule os principais acontecimentos em até 120 palavras, tom de série. Depois reapresente a cena atual e me convide a agir. Sem rolagem e sem mudanças nesta resposta.`, pers, sv.historico || []);
@@ -1369,12 +1534,13 @@ export default function Taverna() {
     setEntrada(""); setHabAbertas(false);
     if (habSel) {
       const h = habSel; setHabSel(null);
-      if (personagem.mana < h.custo) { pushMsgs([{ autor: "sistema", texto: `Mana insuficiente para ${h.nome}.` }]); return; }
-      const pers = { ...personagem, mana: personagem.mana - h.custo };
+      const custo = Math.max(0, Number(h.custo) || 0);
+      if (personagem.mana < custo) { pushMsgs([{ autor: "sistema", texto: `Mana insuficiente para ${h.nome}.` }]); return; }
+      const pers = { ...personagem, mana: personagem.mana - custo };
       setPersonagem(pers);
-      pushMsgs([{ autor: "jogador", texto: `✦ ${h.nome} — ${acao}` }, { autor: "sistema", texto: `Você gastou ${h.custo} PM · restam ${pers.mana}/${pers.manaMax}` }]);
+      pushMsgs([{ autor: "jogador", texto: `✦ ${h.nome} — ${acao}` }, { autor: "sistema", texto: `Você gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}` }]);
       habUsadaRef.current = true;
-      enviar(`[HABILIDADE] Uso "${h.nome}" (custo ${h.custo} PM, já descontado; tenho ${pers.mana} PM). Efeito: ${h.descricao}. COMO eu a uso: ${acao}. Narre conforme minha intenção — se incerto, peça a rolagem apropriada.`, pers);
+      enviar(`[HABILIDADE] Uso "${h.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). Efeito: ${h.descricao}. COMO eu a uso: ${acao}. Narre conforme minha intenção — se incerto, peça a rolagem apropriada.`, pers);
       return;
     }
     pushMsgs([{ autor: "jogador", texto: acao }]);
@@ -1394,7 +1560,8 @@ export default function Taverna() {
     const buffs = (personagem.efeitos || []).filter((e) => !e.aplica || e.aplica.toLowerCase() === (r.atributo || "").toLowerCase() || e.aplica.toLowerCase() === "testes");
     const notaBuff = buffs.length ? ` (inclui bônus de ${buffs.map((b) => b.nome).join(", ")})` : "";
     pushMsgs([{ autor: "sistema", texto: `🎲 d20 → ${valor}${mod ? ` + ${mod}` : ""} = ${total}${dc != null ? ` vs dif. ${dc}` : ""} · ${resultado}` }]);
-    enviar(`[ROLAGEM] Teste de ${r.atributo || "sorte"} (${r.motivo}): rolei ${valor}, modificador +${mod}${notaBuff}, total ${total}${dc != null ? `, dificuldade ${dc}` : ""}. Resultado: ${resultado}. Narre as consequências de forma coerente com o resultado.`, personagem);
+    const notaVant = r.vantagem ? " (com vantagem)" : r.desvantagem ? " (com desvantagem)" : "";
+    enviar(`[ROLAGEM] Teste de ${r.atributo || "sorte"} (${r.motivo})${notaVant}: rolei ${valor}, modificador +${mod}${notaBuff}, total ${total}${dc != null ? `, dificuldade ${dc}` : ""}. Resultado: ${resultado}. Narre as consequências de forma coerente com o resultado.`, personagem);
   };
 
   const escolherAtributo = (attrId) => {
@@ -1425,9 +1592,9 @@ export default function Taverna() {
 
   const descartarItem = (nome) => {
     setPersonagem((p) => {
-      const i = p.inventario.indexOf(nome);
-      if (i === -1) return p;
-      const inv = [...p.inventario]; inv.splice(i, 1);
+      const idx = p.inventario.findIndex((x) => (typeof x === "string" ? x : (x && x.nome)) === nome);
+      if (idx === -1) return p;
+      const inv = [...p.inventario]; inv.splice(idx, 1);
       return { ...p, inventario: inv };
     });
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Descartei o item: ${nome}.`;
@@ -1465,10 +1632,10 @@ export default function Taverna() {
   const bloqueado = carregando || !!rolagem;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: T.bg }}>
+    <div className="flex flex-col" style={{ background: T.bg, height: "100dvh", maxHeight: "100dvh", overflow: "hidden" }}>
       <style>{FONT_CSS}</style>
 
-      <header className="flex items-center justify-between px-4 md:px-5 py-3 shrink-0" style={{ borderBottom: `1px solid ${T.line}`, background: T.panel }}>
+      <header className="flex items-center justify-between px-4 md:px-5 py-3 shrink-0 sticky top-0 z-30" style={{ borderBottom: `1px solid ${T.line}`, background: T.panel }}>
         <div className="flex items-center gap-2 min-w-0">
           {fase !== "menu" && (
             <button onClick={irMenu} className="rounded-lg p-1.5 shrink-0" style={{ border: `1px solid ${T.line}` }} title="Início">
@@ -1485,19 +1652,20 @@ export default function Taverna() {
             </button>
           )}
           {fase === "jogo" && statusSave && <span className="tv-mono text-[10px] uppercase tracking-wider" style={{ color: statusSave === "erro" ? T.danger : T.inkDim }}>{statusSave === "salvando" ? "salvando…" : "✓ salvo"}</span>}
+          {fase === "jogo" && <button onClick={() => setMostrarRolagens((v) => !v)} className="rounded-lg p-1.5" style={{ border: `1px solid ${mostrarRolagens ? T.amber : T.line}` }} title={mostrarRolagens ? "Rolagens de combate: visíveis" : "Rolagens de combate: ocultas"}><span style={{ color: mostrarRolagens ? T.amberSoft : T.inkDim, fontSize: 13 }}>🎲</span></button>}
           {fase === "jogo" && <button onClick={() => setVerCena(true)} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Ver cena"><span style={{ color: T.violetSoft, fontSize: 15 }}>🎭</span></button>}
           {fase === "jogo" && <button onClick={gerarCronica} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Gerar crônica"><span style={{ color: T.amberSoft, fontSize: 15 }}>📜</span></button>}
         </div>
       </header>
 
-      {fase === "menu" && <TelaMenu irNovo={() => setFase("mundo")} continuar={continuar} temSave={temSave} />}
-      {fase === "mundo" && <TelaMundo concluir={(m, nome) => { setMundo(m); setNomeCampanha(nome); setFase("personagem"); }} />}
-      {fase === "personagem" && <TelaPersonagem mundo={mundo} concluir={iniciar} />}
+      {fase === "menu" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaMenu irNovo={() => setFase("mundo")} continuar={continuar} temSave={temSave} /></div>}
+      {fase === "mundo" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaMundo concluir={(m, nome) => { setMundo(m); setNomeCampanha(nome); setFase("personagem"); }} /></div>}
+      {fase === "personagem" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaPersonagem mundo={mundo} concluir={iniciar} /></div>}
 
       {fase === "jogo" && personagem && (
         <div className="flex flex-1 min-h-0 relative">
           <main className="flex-1 flex flex-col min-w-0">
-            <div className="tv-scroll flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-4" style={{ paddingRight: "68px" }}>
+            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-4" style={{ paddingRight: "68px" }}>
               {mensagens.map((m, i) => {
                 if (m.autor === "sistema") return <div key={i} className="tv-fade flex justify-center"><span className="tv-mono text-xs px-3 py-1.5 rounded-full text-center" style={{ background: T.panelSoft, color: T.violetSoft }}>{m.texto}</span></div>;
                 if (m.autor === "jogador") return <div key={i} className="tv-fade flex justify-end"><div className="max-w-[85%] md:max-w-[70%] rounded-2xl rounded-br-sm px-4 py-3 tv-body text-[15px]" style={{ background: T.panelSoft, color: T.ink, border: `1px solid ${T.line}` }}>{m.texto}</div></div>;
@@ -1520,6 +1688,12 @@ export default function Taverna() {
               )}
               <div ref={fimRef} />
             </div>
+
+            {longeDoFim && (
+              <button onClick={irParaOFim} className="tv-fade absolute rounded-full flex items-center justify-center"
+                style={{ right: "84px", bottom: "150px", width: 44, height: 44, background: T.panel, border: `1px solid ${T.amber}`, color: T.amberSoft, fontSize: 20, zIndex: 20, boxShadow: "0 4px 14px rgba(0,0,0,.45)" }}
+                title="Ir para a última mensagem">↓</button>
+            )}
 
             {combate && <PainelCombate combate={combate} />}
 
