@@ -1080,7 +1080,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v1.8 · leitura livre</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v1.9 · rolagem completa</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1686,8 +1686,6 @@ export default function Taverna() {
                   {falha.motivo && <span className="tv-mono text-[10px] px-4 text-center" style={{ color: T.inkDim }}>{falha.motivo}</span>}
                 </div>
               )}
-              <div ref={fimRef} />
-
             {combate && <PainelCombate combate={combate} />}
 
             {sugestoes.length > 0 && !carregando && !rolagem && !habAbertas && (
@@ -1706,6 +1704,13 @@ export default function Taverna() {
                 </div>
               </div>
             )}
+
+            <div className="px-4 md:px-8 flex items-center gap-3 md:gap-4 pb-1.5 flex-wrap" style={{ paddingRight: "68px" }}>
+              <BarraMini rotulo="PV" atual={personagem.vida} max={personagem.vidaMax} cor={T.amber} corBaixa={T.danger} />
+              <BarraMini rotulo="PM" atual={personagem.mana} max={personagem.manaMax} cor={T.violet} />
+              <span className="tv-mono text-[10px] shrink-0" style={{ color: T.amberSoft }}>NV {personagem.nivel}</span>
+              <BarraMini rotulo="XP" atual={personagem.xp} max={XP_POR_NIVEL(personagem.nivel)} cor={T.ok} />
+            </div>
 
             <div className="px-4 md:px-8 shrink-0 flex items-stretch gap-2" style={{ paddingRight: "68px", paddingBottom: rolagem ? "6px" : "20px" }}>
               <div className="flex flex-1 gap-2 rounded-2xl p-2 min-w-0" style={{ background: T.panel, border: `1px solid ${habSel ? T.violet : T.line}` }}>
@@ -1729,23 +1734,16 @@ export default function Taverna() {
               </div>
             )}
 
-              <div style={{ height: 8 }} />
+              <div ref={fimRef} style={{ height: 8 }} />
             </div>
 
             {/* botão flutuante: volta para a última mensagem / área de ação */}
             {longeDoFim && (
               <button onClick={irParaOFim} className="tv-fade absolute rounded-full flex items-center justify-center"
-                style={{ right: "84px", bottom: "56px", width: 46, height: 46, background: T.panel, border: `1px solid ${T.amber}`, color: T.amberSoft, fontSize: 21, zIndex: 25, boxShadow: "0 4px 14px rgba(0,0,0,.45)" }}
+                style={{ right: "84px", bottom: "28px", width: 46, height: 46, background: T.panel, border: `1px solid ${T.amber}`, color: T.amberSoft, fontSize: 21, zIndex: 25, boxShadow: "0 4px 14px rgba(0,0,0,.45)" }}
                 title="Ir para a última mensagem">↓</button>
             )}
 
-            {/* barra de status: única parte fixa do rodapé */}
-            <div className="px-4 md:px-8 py-2 shrink-0 flex items-center gap-3 md:gap-4 flex-wrap" style={{ paddingRight: "68px", borderTop: `1px solid ${T.line}`, background: T.panel }}>
-              <BarraMini rotulo="PV" atual={personagem.vida} max={personagem.vidaMax} cor={T.amber} corBaixa={T.danger} />
-              <BarraMini rotulo="PM" atual={personagem.mana} max={personagem.manaMax} cor={T.violet} />
-              <span className="tv-mono text-[10px] shrink-0" style={{ color: T.amberSoft }}>NV {personagem.nivel}</span>
-              <BarraMini rotulo="XP" atual={personagem.xp} max={XP_POR_NIVEL(personagem.nivel)} cor={T.ok} />
-            </div>
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={personagem.grupo.length} />
