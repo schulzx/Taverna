@@ -551,19 +551,42 @@ function OverlayDado({ rolagem, modificador, aoConcluir }) {
         </div>
         {modo && (
           <div className="tv-mono text-[11px] uppercase tracking-widest mb-1 px-2 py-0.5 rounded-full" style={{ color: modo === "vantagem" ? T.ok : T.danger, border: `1px solid ${modo === "vantagem" ? T.ok : T.danger}` }}>
-            {modo === "vantagem" ? "✦ vantagem" : "✧ desvantagem"}{par ? ` · ${par[0]} / ${par[1]}` : ""}
+            {modo === "vantagem" ? "✦ vantagem — pega o maior" : "✧ desvantagem — pega o menor"}
           </div>
         )}
         <div className="tv-display text-2xl mb-8" style={{ color: T.ink }}>{rolagem.motivo}</div>
-        <div className={`relative flex items-center justify-center ${faseD === "rolando" ? "tv-dice" : ""}`}
-          style={{
-            width: 148, height: 148,
-            clipPath: "polygon(50% 0%, 100% 27%, 100% 73%, 50% 100%, 0% 73%, 0% 27%)",
-            background: faseD === "resultado" ? (desastre ? T.danger : critico ? T.amberSoft : passou || dc == null ? T.amber : T.panelSoft) : T.panelSoft,
-            border: `2px solid ${T.amber}`, transition: "background .4s",
-          }}>
-          <span className="tv-mono font-semibold" style={{ fontSize: 52, color: faseD === "resultado" && (passou || critico || dc == null) && !desastre ? T.onAccent : T.ink }}>{valor}</span>
-        </div>
+        {modo ? (
+          /* VANTAGEM/DESVANTAGEM: dois dados; o escolhido brilha, o outro esmaece */
+          <div className="flex items-center gap-4">
+            {[0, 1].map((idx) => {
+              const v = par ? par[idx] : valor;
+              const escolhido = faseD === "resultado" && par && ((modo === "vantagem" && v === Math.max(par[0], par[1])) || (modo === "desvantagem" && v === Math.min(par[0], par[1])));
+              const outroDescartado = faseD === "resultado" && !escolhido;
+              return (
+                <div key={idx} className={`relative flex items-center justify-center ${faseD === "rolando" ? "tv-dice" : ""}`}
+                  style={{
+                    width: 104, height: 104,
+                    clipPath: "polygon(50% 0%, 100% 27%, 100% 73%, 50% 100%, 0% 73%, 0% 27%)",
+                    background: escolhido ? (modo === "vantagem" ? T.ok : T.danger) : T.panelSoft,
+                    border: `2px solid ${escolhido ? (modo === "vantagem" ? T.ok : T.danger) : T.line}`,
+                    opacity: outroDescartado ? 0.35 : 1, transition: "all .4s",
+                  }}>
+                  <span className="tv-mono font-semibold" style={{ fontSize: 38, color: escolhido ? T.onAccent : T.ink }}>{v}</span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className={`relative flex items-center justify-center ${faseD === "rolando" ? "tv-dice" : ""}`}
+            style={{
+              width: 148, height: 148,
+              clipPath: "polygon(50% 0%, 100% 27%, 100% 73%, 50% 100%, 0% 73%, 0% 27%)",
+              background: faseD === "resultado" ? (desastre ? T.danger : critico ? T.amberSoft : passou || dc == null ? T.amber : T.panelSoft) : T.panelSoft,
+              border: `2px solid ${T.amber}`, transition: "background .4s",
+            }}>
+            <span className="tv-mono font-semibold" style={{ fontSize: 52, color: faseD === "resultado" && (passou || critico || dc == null) && !desastre ? T.onAccent : T.ink }}>{valor}</span>
+          </div>
+        )}
         {faseD === "resultado" && (
           <div className="mt-6 tv-fade">
             <div className="tv-mono text-sm" style={{ color: T.inkDim }}>
@@ -959,17 +982,26 @@ function PainelCombate({ combate }) {
 }
 
 function PainelHabilidades({ personagem, selecionar, fechar }) {
+  const [busca, setBusca] = React.useState("");
+  const todas = (personagem.habilidades || []).filter((h) => h && h.nome);
+  const normal = (x) => (x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const lista = busca ? todas.filter((h) => normal(h.nome).includes(normal(busca)) || normal(h.descricao).includes(normal(busca))) : todas;
+  const muitas = todas.length > 6;
   return (
     <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.violet}`, marginRight: "68px" }}>
       <div className="flex items-center justify-between mb-3">
-        <div className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.violetSoft }}>Habilidades · {personagem.mana}/{personagem.manaMax} PM · toque para selecionar</div>
+        <div className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.violetSoft }}>Habilidades · {personagem.mana}/{personagem.manaMax} PM · {todas.length}</div>
         <button onClick={fechar} className="tv-mono text-sm px-1.5" style={{ color: T.inkDim }}>✕</button>
       </div>
-      {personagem.habilidades.length === 0 ? (
+      {muitas && (
+        <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar habilidade…"
+          className="w-full rounded-lg px-3 py-2 mb-3 tv-body text-sm outline-none" style={{ background: T.panelSoft, border: `1px solid ${T.line}`, color: T.ink }} />
+      )}
+      {todas.length === 0 ? (
         <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você ainda não despertou nenhuma habilidade. Elas virão com a história.</div>
       ) : (
-        <div className="grid md:grid-cols-2 gap-2">
-          {(personagem.habilidades || []).filter((h) => h && h.nome).map((h, i) => {
+        <div className="grid md:grid-cols-2 gap-2 tv-scroll" style={{ maxHeight: "38vh", overflowY: "auto" }}>
+          {lista.map((h, i) => {
             const custo = Math.max(0, Number(h.custo) || 0);
             const semMana = personagem.mana < custo;
             return (
@@ -1080,7 +1112,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v1.9 · rolagem completa</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.0 · lapidação</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1189,8 +1221,8 @@ function aplicarMudancas(pers, m, msgs) {
   if (m.moedas) msgs.push(m.moedas > 0 ? `◉ +${m.moedas} moedas` : `◉ −${-m.moedas} moedas`);
   if (m.xp) msgs.push(`✧ +${m.xp} XP`);
   if (novo.nivel > pers.nivel) msgs.push(`✦ NÍVEL ${novo.nivel} ALCANÇADO!`);
-  (m.adicionar_itens || []).forEach((i) => msgs.push(`Item obtido: ${i}`));
-  (m.remover_itens || []).forEach((i) => msgs.push(`Item perdido: ${i}`));
+  (m.adicionar_itens || []).forEach((i) => msgs.push(`Item obtido: ${nomeItem(i)}`));
+  (m.remover_itens || []).forEach((i) => msgs.push(`Item perdido: ${nomeItem(i)}`));
   (m.adicionar_habilidades || []).forEach((h) => h?.nome && msgs.push(`✦ Nova habilidade: ${h.nome} (${Math.max(0, h.custo || 1)} PM)`));
   return novo;
 }
@@ -1325,14 +1357,18 @@ export default function Taverna() {
   combateRef.current = combate;
   const mensagensRef = useRef([]);
   const habUsadaRef = useRef(false);
+  const rolagemConsumidaRef = useRef(null);
   const canoneRef = useRef({});
   const mostrarRolagensRef = useRef(true);
 
-  /* rola para o fim a cada novidade — mas respeita quem subiu para reler */
+  /* rola para o fim SÓ quando chega mensagem nova E o jogador já estava no fim.
+     Nunca reage a longeDoFim mudar (isso causava o "imã" ao subir lendo). */
+  const nMsgRef = useRef(0);
   useEffect(() => {
-    if (longeDoFim) return;
-    fimRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [mensagens, carregando, rolagem, longeDoFim]);
+    const cresceu = mensagens.length > nMsgRef.current;
+    nMsgRef.current = mensagens.length;
+    if (cresceu && !longeDoFim) fimRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [mensagens]); // eslint-disable-line
 
   /* carrega o save deste dispositivo na abertura */
   useEffect(() => {
@@ -1371,7 +1407,7 @@ export default function Taverna() {
     setStatusSave("salvando");
     const dados = {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico, sugestoes, rolagem,
-      combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, salvoEm: Date.now(), ...extra,
+      combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     saveRef.current = dados;
     setTemSave(dados);
@@ -1543,6 +1579,21 @@ export default function Taverna() {
       enviar(`[HABILIDADE] Uso "${h.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). Efeito: ${h.descricao}. COMO eu a uso: ${acao}. Narre conforme minha intenção — se incerto, peça a rolagem apropriada.`, pers);
       return;
     }
+    /* Detecta habilidade citada por texto (ex.: "uso Projétil Arcano") e desconta o PM
+       no app, para não depender do Mestre lembrar de cobrar. */
+    const normal = (x) => (x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const acaoN = normal(acao);
+    const habCitada = (personagem.habilidades || []).find((h) => h && h.nome && acaoN.includes(normal(h.nome)));
+    if (habCitada) {
+      const custo = Math.max(0, Number(habCitada.custo) || 0);
+      if (personagem.mana < custo) { pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `Mana insuficiente para ${habCitada.nome}.` }]); return; }
+      const pers = { ...personagem, mana: personagem.mana - custo };
+      setPersonagem(pers);
+      habUsadaRef.current = true;
+      pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `✦ ${habCitada.nome} · gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}` }]);
+      enviar(`[HABILIDADE] Uso "${habCitada.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). ${habCitada.descricao || ""} Ação: ${acao}`, pers);
+      return;
+    }
     pushMsgs([{ autor: "jogador", texto: acao }]);
     enviar(acao, personagem);
   };
@@ -1551,6 +1602,8 @@ export default function Taverna() {
 
   const concluirRolagem = (valor) => {
     const r = rolagem;
+    if (!r || rolagemConsumidaRef.current === r.motivo + r.dificuldade) { setDadoRolando(false); return; }
+    rolagemConsumidaRef.current = r.motivo + r.dificuldade;
     const mod = modPend;
     const total = valor + mod;
     const dc = r.dificuldade;
@@ -1729,7 +1782,7 @@ export default function Taverna() {
               <div className="tv-fade px-4 md:px-8 pb-5 flex justify-center" style={{ paddingRight: "68px" }}>
                 <div className="tv-pulse flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl px-4 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
                   <span className="tv-mono text-xs text-center" style={{ color: T.ink }}>🎲 Teste de {rolagem.atributo || "sorte"}{rolagem.dificuldade != null ? ` · dif. ${rolagem.dificuldade}` : ""} — <em className="tv-body" style={{ color: T.inkDim }}>{rolagem.motivo}</em></span>
-                  <Botao primario pequeno onClick={() => setDadoRolando(true)}>Rolar d20{modPend !== 0 ? ` (+${modPend})` : ""}</Botao>
+                  <Botao primario pequeno desativado={dadoRolando} onClick={() => { if (!dadoRolando) setDadoRolando(true); }}>Rolar d20{modPend !== 0 ? ` (+${modPend})` : ""}</Botao>
                 </div>
               </div>
             )}
