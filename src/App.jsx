@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear } from "./nomes.js";
+import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais } from "./classes.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -113,6 +114,9 @@ ROLAGENS (d20 + modificador vs Dificuldade):
 - Ao pedir rolagem, prepare a cena até o instante do teste e PARE ali. NUNCA narre o desfecho antes do resultado.
 - 20 natural = sucesso extraordinário (além do esperado); 1 natural = falha desastrosa (com complicação).
 - BANCO DE NOMES PRONTOS (use estes para economizar — quando precisar nomear uma cidade, pessoa ou taverna NOVA, PEGUE um desta lista em vez de inventar do zero; se nenhum servir, crie um coerente): Cidades: ${(bn.cidades || []).join(", ")}. Pessoas: ${(bn.pessoas || []).join(", ")}. Tavernas: ${(bn.tavernas || []).join(", ")}. Ao usar um nome daqui, ele vira canônico — registre no cânone se a entidade for relevante.
+- FICHA DE CAMINHO: ${personagem.raca ? `${personagem.raca}` : "origem indefinida"}${personagem.classe ? `, ${personagem.classe}` : ""}${personagem.subclasse ? ` (${personagem.subclasse})` : ""}${personagem.profissao ? `, de profissão ${personagem.profissao}` : ""}. Respeite isso na narrativa: um Mago não abre fechaduras como um Ladino; um Ferreiro repara equipamento; a raça/origem colore como o mundo o trata.
+- HABILIDADES SÃO ESCOLHIDAS PELO JOGADOR (não invente): o jogador aprende habilidades de uma árvore fixa da classe dele ao subir de nível. NUNCA envie "adicionar_habilidades" por conta própria — apenas descreva o uso das que ele já tem. Se a ficção pedir um poder novo, sugira que ele o escolherá ao evoluir. (Companheiros e inimigos NÃO seguem essa regra: você pode dar habilidades a eles livremente.)
+- PROFISSÃO: use a profissão do herói para abrir soluções e oportunidades (o Alquimista prepara poções em acampamento; o Cartógrafo lê rotas; o Mercador consegue preços). Deixe a profissão importar de verdade.
 - CÂNONE (memória permanente que NUNCA se perde): sempre que você estabelecer ou descobrir um FATO DURÁVEL — um NPC (nome, se é mago/guerreiro/etc, papel, gênero, onde está), um lugar importante, um nome falso que o jogador usou, uma promessa, um vínculo, um segredo revelado — REGISTRE em "canone" (veja formato). Fatos no CÂNONE aparecem literais em toda resposta e são a VERDADE: jamais os contradiga. Se o jogador perguntar "X te lembra algo?" e X estiver no cânone, RECONHEÇA o que está lá — nunca invente uma versão nova. Se NÃO estiver no cânone e você não tem certeza, trate como algo que o personagem talvez não saiba, em vez de inventar um fato que possa colidir depois. Atualize uma ficha (ex.: o mago mudou de cidade) reescrevendo os campos que mudaram; NUNCA mude tipo/gênero/identidade de alguém já registrado.
 - COLCHETES SÃO META: qualquer texto entre [colchetes] vindo do jogador ou do app (ex.: [seja mais direto], [não descreva sangue], [HABILIDADE], [ROLAGEM]) é instrução FORA do personagem. Obedeça ao conteúdo, mas NUNCA o trate como fala/ação do personagem e NUNCA o repita na narrativa.
 
@@ -668,6 +672,44 @@ function ModalCena({ personagem, combate, mundo, nomeCampanha, fechar }) {
 }
 
 function ModalNivel({ nivel, personagem, escolher }) {
+  const [etapa, setEtapa] = React.useState("atributo");
+  const [attrEscolhido, setAttrEscolhido] = React.useState(null);
+  const disponiveis = habilidadesDisponiveis(personagem.classe, nivel, personagem.habilidades || []);
+
+  /* passo 2: escolher uma habilidade da árvore da classe */
+  if (etapa === "habilidade") {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.9)", backdropFilter: "blur(4px)" }}>
+        <div className="tv-fade w-full max-w-md rounded-2xl p-6 tv-scroll overflow-y-auto" style={{ background: T.panel, border: `1px solid ${T.violet}`, maxHeight: "90vh" }}>
+          <div className="text-center mb-4">
+            <div className="tv-mono text-xs uppercase tracking-widest mb-1" style={{ color: T.violetSoft }}>✦ Nova habilidade ✦</div>
+            <div className="tv-display text-3xl" style={{ color: T.ink }}>{personagem.classe}{personagem.subclasse ? ` · ${personagem.subclasse}` : ""}</div>
+            <div className="tv-body text-sm mt-2" style={{ color: T.inkDim }}>Escolha uma habilidade do seu caminho:</div>
+          </div>
+          {disponiveis.length === 0 ? (
+            <div className="text-center">
+              <div className="tv-body text-sm mb-4" style={{ color: T.inkDim }}>Você já domina tudo que este nível oferece. Novas habilidades virão em níveis maiores.</div>
+              <Botao primario onClick={() => escolher(attrEscolhido, null)}>Continuar →</Botao>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {disponiveis.map((h) => (
+                <button key={h.nome} onClick={() => escolher(attrEscolhido, h)} className="w-full rounded-xl p-3 text-left transition-all"
+                  style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="tv-display text-lg" style={{ color: T.ink }}>{h.nome}</span>
+                    <span className="tv-mono text-[10px] shrink-0" style={{ color: T.violetSoft }}>{h.custo} PM · nv {h.nivel}</span>
+                  </div>
+                  <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{h.descricao}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.9)", backdropFilter: "blur(4px)" }}>
       <div className="tv-fade w-full max-w-md rounded-2xl p-6 tv-scroll overflow-y-auto" style={{ background: T.panel, border: `1px solid ${T.amber}`, maxHeight: "90vh" }}>
@@ -681,7 +723,7 @@ function ModalNivel({ nivel, personagem, escolher }) {
             const atual = personagem.atributos[a.id];
             const noMax = atual >= ATRIBUTO_MAX;
             return (
-              <button key={a.id} onClick={() => !noMax && escolher(a.id)} disabled={noMax}
+              <button key={a.id} onClick={() => { if (noMax) return; setAttrEscolhido(a.id); setEtapa("habilidade"); }} disabled={noMax}
                 className="rounded-xl p-3 text-left transition-all"
                 style={{ background: T.panelSoft, border: `1px solid ${noMax ? T.line : T.amber}`, opacity: noMax ? 0.4 : 1, cursor: noMax ? "not-allowed" : "pointer" }}>
                 <div className="flex items-baseline justify-between">
@@ -780,6 +822,12 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                 <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>{mundo.genero} · Nível {personagem.nivel}</div>
                 <div className="tv-display text-3xl leading-tight" style={{ color: T.ink }}>{personagem.nome}</div>
                 <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>{personagem.conceito}</div>
+                {(personagem.classe || personagem.raca) && (
+                  <div className="tv-mono text-[10px] uppercase tracking-widest mt-1" style={{ color: T.amberSoft }}>
+                    {[personagem.raca, personagem.classe, personagem.subclasse].filter(Boolean).join(" · ")}
+                    {personagem.profissao ? <span style={{ color: T.inkDim }}> · {personagem.profissao}</span> : null}
+                  </div>
+                )}
               </div>
             </div>
             <div className="space-y-2.5">
@@ -1065,11 +1113,21 @@ function TelaPersonagem({ mundo, concluir }) {
   const [nome, setNome] = useState("");
   const [conceito, setConceito] = useState("");
   const [historia, setHistoria] = useState("");
+  const racasDisp = racasDoGenero(mundo.genero);
+  const [raca, setRaca] = useState(racasDisp[0].nome);
+  const [classe, setClasse] = useState(CLASSES[0].nome);
+  const [subclasse, setSubclasse] = useState(CLASSES[0].subclasses[0].nome);
+  const [profissao, setProfissao] = useState(PROFISSOES[0].nome);
   const [atributos, setAtributos] = useState(Object.fromEntries(ATRIBUTOS.map((a) => [a.id, 0])));
   const usados = Object.values(atributos).reduce((s, v) => s + v, 0);
   const restantes = PONTOS_TOTAIS - usados;
-  const vidaMax = 10 + atributos.vigor * 2;
-  const manaMax = 8 + atributos.intelecto * 2;
+  const cObj = classePorNome(classe);
+  const rObj = racaPorNome(raca);
+  /* atributos finais = distribuídos + bônus racial */
+  const attrFinais = Object.fromEntries(ATRIBUTOS.map((a) => [a.id, (atributos[a.id] || 0) + ((rObj?.bonus || {})[a.id] || 0)]));
+  const vidaMax = (cObj?.vidaBase || 10) + attrFinais.vigor * 2;
+  const manaMax = (cObj?.manaBase || 8) + attrFinais.intelecto * 2;
+  const habsIniciais = habilidadesIniciais(classe).map((h) => ({ nome: h.nome, custo: h.custo, descricao: h.descricao }));
   const ajustar = (id, d) => {
     const nv = atributos[id] + d;
     if (nv < 0 || nv > ATRIBUTO_MAX_CRIACAO) return;
@@ -1090,6 +1148,47 @@ function TelaPersonagem({ mundo, concluir }) {
         <input value={conceito} onChange={(e) => setConceito(e.target.value)} placeholder="Conceito (ex.: ladra de relíquias arrependida)" className="rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
       </div>
       <textarea value={historia} onChange={(e) => setHistoria(e.target.value)} rows={3} placeholder="História e segredos (opcional) — o Mestre vai usar isso contra e a favor de você…" className="w-full rounded-xl p-4 tv-body text-sm outline-none resize-none mb-6" style={campo} />
+
+      <div className="grid md:grid-cols-2 gap-4 mb-2">
+        <div>
+          <div className="tv-mono text-xs uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>{["Ficção científica", "Cyberpunk", "Pós-apocalíptico"].includes(mundo.genero) ? "Origem" : "Raça"}</div>
+          <select value={raca} onChange={(e) => setRaca(e.target.value)} className="w-full rounded-xl p-3 tv-body text-sm outline-none" style={campo}>
+            {racasDisp.map((r) => <option key={r.nome} value={r.nome}>{r.nome}</option>)}
+          </select>
+          {rObj && <div className="tv-body text-xs mt-1.5" style={{ color: T.inkDim }}>{rObj.desc} <span style={{ color: T.amberSoft }}>{Object.entries(rObj.bonus).map(([k, v]) => `+${v} ${(ATRIBUTOS.find((a) => a.id === k) || {}).nome || k}`).join(", ")}</span></div>}
+        </div>
+        <div>
+          <div className="tv-mono text-xs uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Profissão</div>
+          <select value={profissao} onChange={(e) => setProfissao(e.target.value)} className="w-full rounded-xl p-3 tv-body text-sm outline-none" style={campo}>
+            {PROFISSOES.map((pr) => <option key={pr.nome} value={pr.nome}>{pr.nome}</option>)}
+          </select>
+          {(() => { const pr = PROFISSOES.find((x) => x.nome === profissao); return pr ? <div className="tv-body text-xs mt-1.5" style={{ color: T.inkDim }}>{pr.beneficio}</div> : null; })()}
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4 mb-6">
+        <div>
+          <div className="tv-mono text-xs uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Classe</div>
+          <select value={classe} onChange={(e) => { setClasse(e.target.value); setSubclasse(classePorNome(e.target.value).subclasses[0].nome); }} className="w-full rounded-xl p-3 tv-body text-sm outline-none" style={campo}>
+            {CLASSES.map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
+          </select>
+          {cObj && <div className="tv-body text-xs mt-1.5" style={{ color: T.inkDim }}>{cObj.desc}</div>}
+        </div>
+        <div>
+          <div className="tv-mono text-xs uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Caminho (subclasse)</div>
+          <select value={subclasse} onChange={(e) => setSubclasse(e.target.value)} className="w-full rounded-xl p-3 tv-body text-sm outline-none" style={campo}>
+            {(cObj?.subclasses || []).map((sc) => <option key={sc.nome} value={sc.nome}>{sc.nome}</option>)}
+          </select>
+          {(() => { const sc = (cObj?.subclasses || []).find((x) => x.nome === subclasse); return sc ? <div className="tv-body text-xs mt-1.5" style={{ color: T.inkDim }}>{sc.desc} <span style={{ color: T.violetSoft }}>Especializações: {sc.especializacoes.join(" · ")}</span></div> : null; })()}
+        </div>
+      </div>
+
+      {habsIniciais.length > 0 && (
+        <div className="rounded-xl p-3 mb-6" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+          <div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.violetSoft }}>Habilidades iniciais de {classe}</div>
+          <div className="tv-body text-xs" style={{ color: T.inkDim }}>{habsIniciais.map((h) => `${h.nome} (${h.custo} PM)`).join(" · ")}</div>
+        </div>
+      )}
       <div className="flex items-baseline justify-between mb-3">
         <div className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.inkDim }}>Atributos (0 a +{ATRIBUTO_MAX_CRIACAO})</div>
         <div className="tv-mono text-sm" style={{ color: restantes === 0 ? T.ok : T.amber }}>{restantes} ponto{restantes !== 1 ? "s" : ""} restante{restantes !== 1 ? "s" : ""}</div>
@@ -1111,11 +1210,12 @@ function TelaPersonagem({ mundo, concluir }) {
         <Botao primario desativado={!nome.trim() || !conceito.trim() || restantes !== 0}
           onClick={() => concluir({
             nome: nome.trim(), conceito: conceito.trim(), historia: historia.trim(),
+            raca, classe, subclasse, profissao,
             semente: `${nome.trim()}|${conceito.trim()}|${Math.floor(Math.random() * 100000)}`,
-            atributos, vida: vidaMax, vidaMax, mana: manaMax, manaMax,
+            atributos: attrFinais, vida: vidaMax, vidaMax, mana: manaMax, manaMax,
             nivel: 1, xp: 0, moedas: MOEDAS_INICIAIS, nivelPendentes: 0,
-            inventario: [], habilidades: [], grupo: [],
-            efeitos: [], equipamento: [], equipados: {},
+            inventario: [], habilidades: habsIniciais, grupo: [],
+            efeitos: [], condicoes: [], equipamento: [], equipados: {},
           })}>Começar aventura →</Botao>
       </div>
     </div>
@@ -1129,7 +1229,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.3 · nomes vivos</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.4 · classes e caminhos</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1366,6 +1466,7 @@ function migrarPersonagem(p) {
     condicoes: Array.isArray(p.condicoes) ? p.condicoes : [],
     equipamento: Array.isArray(p.equipamento) ? p.equipamento : [],
     equipados: p.equipados && typeof p.equipados === "object" ? p.equipados : {},
+    raca: p.raca || "", classe: p.classe || "", subclasse: p.subclasse || "", profissao: p.profissao || "",
     semente: p.semente || `${p.nome || "herói"}|${p.conceito || ""}|0`,
     nivel: p.nivel || 1, xp: p.xp || 0, moedas: p.moedas ?? 0,
     nivelPendentes: p.nivelPendentes || 0,
@@ -1406,6 +1507,10 @@ export default function Taverna() {
   const [longeDoFim, setLongeDoFim] = useState(false);
   const areaRef = useRef(null);
   const [acampado, setAcampado] = useState(false);
+  const acampadoRef = useRef(false);
+  /* mantém a ref em dia: o salvamento lê a ref, nunca o estado (que fica
+     defasado dentro de callbacks e gravava "acampado" errado no save) */
+  const definirAcampado = useCallback((v) => { acampadoRef.current = v; setAcampado(v); }, []);
   const [mostrarRolagens, setMostrarRolagens] = useState(() => {
     try { const v = localStorage.getItem("taverna_cfg_rolagens"); return v === null ? true : v === "1"; } catch { return true; }
   });
@@ -1473,7 +1578,7 @@ export default function Taverna() {
     setStatusSave("salvando");
     const dados = {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico, sugestoes, rolagem,
-      combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, acampado, rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
+      combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, acampado: acampadoRef.current, rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     saveRef.current = dados;
     setTemSave(dados);
@@ -1599,7 +1704,7 @@ export default function Taverna() {
   const iniciar = (pers) => {
     setPersonagem(pers);
     livroRef.current = ""; turnoContRef.current = 0;
-    canoneRef.current = {}; setAcampado(false);
+    canoneRef.current = {}; definirAcampado(false);
     bancoNomesRef.current = gerarBancoNomes(mundo);
     systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current);
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setSugestoes([]); setRolagem(null);
@@ -1620,7 +1725,7 @@ export default function Taverna() {
       setCombate(sv.combate || null); combateRef.current = sv.combate || null;
       livroRef.current = sv.livro || ""; turnoContRef.current = 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
-      setAcampado(!!sv.acampado);
+      definirAcampado(!!sv.acampado);
       bancoNomesRef.current = gerarBancoNomes(sv.mundo);
       systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current);
       setFase("jogo");
@@ -1686,12 +1791,18 @@ export default function Taverna() {
     enviar(`[ROLAGEM] Teste de ${r.atributo || "sorte"} (${r.motivo})${notaVant}: rolei ${valor}, modificador +${mod}${notaBuff}, total ${total}${dc != null ? `, dificuldade ${dc}` : ""}. Resultado: ${resultado}. Narre as consequências de forma coerente com o resultado.`, personagem);
   };
 
-  const escolherAtributo = (attrId) => {
+  const escolherAtributo = (attrId, hab) => {
     const nv = Math.min(ATRIBUTO_MAX, personagem.atributos[attrId] + 1);
     const nomeAttr = ATRIBUTOS.find((a) => a.id === attrId)?.nome || attrId;
-    setPersonagem((p) => ({ ...p, atributos: { ...p.atributos, [attrId]: nv }, nivelPendentes: Math.max(0, p.nivelPendentes - 1) }));
-    notaRef.current = `[INFO] Subi para o nível ${personagem.nivel} e fortaleci ${nomeAttr} (agora +${nv}).`;
-    pushMsgs([{ autor: "sistema", texto: `✦ ${nomeAttr} fortalecido: +${nv}` }]);
+    const msgs = [`✦ ${nomeAttr} fortalecido: +${nv}`];
+    setPersonagem((p) => {
+      const habs = [...(p.habilidades || [])];
+      if (hab && !habs.some((x) => (x.nome || x) === hab.nome)) habs.push({ nome: hab.nome, custo: hab.custo, descricao: hab.descricao });
+      return { ...p, atributos: { ...p.atributos, [attrId]: nv }, habilidades: habs, nivelPendentes: Math.max(0, p.nivelPendentes - 1) };
+    });
+    if (hab) msgs.push(`✦ Nova habilidade: ${hab.nome} (${hab.custo} PM)`);
+    notaRef.current = `[INFO] Subi para o nível ${personagem.nivel}, fortaleci ${nomeAttr} (agora +${nv})${hab ? ` e aprendi a habilidade "${hab.nome}" (${hab.custo} PM: ${hab.descricao})` : ""}.`;
+    pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
   };
 
   const equipar = (item) => {
@@ -1733,15 +1844,15 @@ export default function Taverna() {
      Ao sair, escolhe descanso curto/longo; o app reseta PV/PM (jogador+grupo) e o
      Mestre narra o que passou, proporcional ao tempo (nunca exagerado). */
   const acampar = () => {
-    if (acampado || bloqueado) return;
-    setAcampado(true);
+    if (acampadoRef.current || bloqueado) return;
+    definirAcampado(true);
     pushMsgs([{ autor: "sistema", texto: "⛺ Você montou acampamento. O tempo pausa — converse com o grupo à vontade. Escolha um descanso para retomar a jornada." }]);
     enviar("[ACAMPAMENTO] Montei acampamento. A partir de agora estamos em uma pausa segura: NÃO faça o mundo avançar, NÃO gere eventos externos nem passagem de tempo. Apenas conduza conversas de acampamento — companheiros podem puxar papo, revelar histórias, comentar a jornada. Descreva brevemente o acampamento sendo montado e deixe a cena aberta para conversa.", personagem);
   };
 
   const sairDoAcampamento = (tipo) => {
-    if (!acampado) return;
-    setAcampado(false);
+    if (!acampadoRef.current) return;
+    definirAcampado(false);
     const msgs = [];
     const pers = aplicarDescanso(personagem, tipo, msgs);
     setPersonagem(pers);
