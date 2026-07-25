@@ -800,7 +800,60 @@ function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, de
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip }) {
+function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar }) {
+  const racasDisp = racasDoGenero(mundo.genero);
+  const ehFuturista = ["Ficção científica", "Cyberpunk", "Pós-apocalíptico"].includes(mundo.genero);
+  const [raca, setRaca] = React.useState(atual.raca || racasDisp[0].nome);
+  const [classe, setClasse] = React.useState(atual.classe || CLASSES[0].nome);
+  const [subclasse, setSubclasse] = React.useState(atual.subclasse || CLASSES[0].subclasses[0].nome);
+  const [profissao, setProfissao] = React.useState(atual.profissao || PROFISSOES[0].nome);
+  const cObj = classePorNome(classe);
+  const jaTinha = !!atual.classe;
+  const custo = jaTinha ? 80 : 20;
+  const campo = { background: T.panelSoft, border: `1px solid ${T.line}`, color: T.ink };
+  return (
+    <div className="rounded-xl p-3 mt-2" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+      <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.amberSoft }}>{jaTinha ? "Trilhar novo caminho" : "Definir caminho"} · {custo} moedas</div>
+      {!acampado ? (
+        <div className="tv-body text-xs" style={{ color: T.danger }}>⛺ Você precisa estar acampado. Feche a ficha, monte acampamento e volte aqui.</div>
+      ) : (
+        <div className="space-y-2">
+          <div>
+            <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>{ehFuturista ? "Origem" : "Raça"}</div>
+            <select value={raca} onChange={(e) => setRaca(e.target.value)} className="w-full rounded-lg p-2 tv-body text-xs outline-none" style={campo}>
+              {racasDisp.map((r) => <option key={r.nome} value={r.nome}>{r.nome}</option>)}
+            </select>
+          </div>
+          <div>
+            <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>Classe</div>
+            <select value={classe} onChange={(e) => { setClasse(e.target.value); setSubclasse(classePorNome(e.target.value).subclasses[0].nome); }} className="w-full rounded-lg p-2 tv-body text-xs outline-none" style={campo}>
+              {CLASSES.map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
+            </select>
+          </div>
+          <div>
+            <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>Caminho</div>
+            <select value={subclasse} onChange={(e) => setSubclasse(e.target.value)} className="w-full rounded-lg p-2 tv-body text-xs outline-none" style={campo}>
+              {(cObj?.subclasses || []).map((sc) => <option key={sc.nome} value={sc.nome}>{sc.nome}</option>)}
+            </select>
+          </div>
+          <div>
+            <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>Profissão</div>
+            <select value={profissao} onChange={(e) => setProfissao(e.target.value)} className="w-full rounded-lg p-2 tv-body text-xs outline-none" style={campo}>
+              {PROFISSOES.map((pr) => <option key={pr.nome} value={pr.nome}>{pr.nome}</option>)}
+            </select>
+          </div>
+          <button onClick={() => { trocarCaminho(alvo, { raca, classe, subclasse, profissao }); fechar(); }}
+            className="w-full rounded-lg py-2 tv-mono text-xs" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>
+            Confirmar · {custo} moedas
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado }) {
+  const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
   if (!aba) return null;
   const xpProx = XP_POR_NIVEL(personagem.nivel);
   const equipados = personagem.equipados || {};
@@ -828,6 +881,9 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                     {personagem.profissao ? <span style={{ color: T.inkDim }}> · {personagem.profissao}</span> : null}
                   </div>
                 )}
+                <button onClick={() => setAbrirCaminho(abrirCaminho === "eu" ? null : "eu")} className="tv-mono text-[10px] mt-1.5 px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.violetSoft }}>
+                  {personagem.classe ? "⚔ trilhar novo caminho" : "⚔ escolher caminho"}
+                </button>
               </div>
             </div>
             <div className="space-y-2.5">
@@ -835,6 +891,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
               <BarraMini rotulo="PM" atual={personagem.mana} max={personagem.manaMax} cor={T.violet} />
               <BarraMini rotulo="XP" atual={personagem.xp} max={xpProx} cor={T.ok} />
             </div>
+            {abrirCaminho === "eu" && <SeletorCaminho mundo={mundo} alvo="eu" atual={personagem} acampado={acampado} trocarCaminho={trocarCaminho} fechar={() => setAbrirCaminho(null)} />}
             {(personagem.condicoes || []).length > 0 && (
               <div>
                 <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Condições</div>
@@ -865,7 +922,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
               <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Atributos</div>
               <div className="grid grid-cols-2 gap-2">
                 {ATRIBUTOS.map((a) => {
-                  const base = personagem.atributos[a.id] || 0;
+                  const base = (personagem.atributos || {})[a.id] || 0;
                   const efetivo = atributoEfetivo(personagem, a.id);
                   const bonus = efetivo - base;
                   return (
@@ -879,14 +936,16 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
             </div>
             <div>
               <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Habilidades</div>
-              {personagem.habilidades.length === 0 ? <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Nenhuma ainda.</div> : (
+              {(personagem.habilidades || []).length === 0 ? <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Nenhuma ainda.</div> : (
                 <ul className="space-y-2">
-                  {personagem.habilidades.map((h, i) => (
+                  {(personagem.habilidades || []).filter((h) => h).map((h, i) => {
+                    const hn = typeof h === "string" ? { nome: h, custo: 0, descricao: "" } : h;
+                    return (
                     <li key={i} className="rounded-lg px-3 py-2" style={{ background: T.panelSoft }}>
-                      <div className="flex items-baseline justify-between gap-2"><span className="tv-body text-sm" style={{ color: T.ink }}>{h.nome}</span><span className="tv-mono text-[10px]" style={{ color: T.violetSoft }}>{h.custo} PM</span></div>
-                      <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{h.descricao}</div>
+                      <div className="flex items-baseline justify-between gap-2"><span className="tv-body text-sm" style={{ color: T.ink }}>{hn.nome}</span><span className="tv-mono text-[10px]" style={{ color: T.violetSoft }}>{hn.custo || 0} PM</span></div>
+                      {hn.descricao && <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{hn.descricao}</div>}
                     </li>
-                  ))}
+                  ); })}
                 </ul>
               )}
             </div>
@@ -901,12 +960,18 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
 
         {aba === "grupo" && (
           <>
-            <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Grupo · {1 + personagem.grupo.length} de {1 + MAX_COMPANHEIROS}</div>
+            <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Grupo · {1 + (personagem.grupo || []).length} de {1 + MAX_COMPANHEIROS}</div>
             <CartaoMembro nome={personagem.nome} subtitulo={personagem.conceito} nivel={personagem.nivel} vida={personagem.vida} vidaMax={personagem.vidaMax} mana={personagem.mana} manaMax={personagem.manaMax} habilidades={personagem.habilidades} semente={sementeDe(personagem)} ehVoce />
-            {personagem.grupo.length === 0 ? (
+            {(personagem.grupo || []).length === 0 ? (
               <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você viaja sozinho — por enquanto. Aliados podem se juntar a você.</div>
-            ) : personagem.grupo.map((m, i) => (
-              <CartaoMembro key={i} nome={m.nome} subtitulo={m.conceito} nivel={m.nivel} vida={m.vida} vidaMax={m.vidaMax} descricao={m.descricao} habilidades={m.habilidades} semente={sementeDe(m)} xpComp={m.xp || 0} />
+            ) : (personagem.grupo || []).map((m, i) => (
+              <div key={i}>
+                <CartaoMembro nome={m.nome} subtitulo={[m.conceito, m.classe, m.subclasse].filter(Boolean).join(" · ")} nivel={m.nivel} vida={m.vida} vidaMax={m.vidaMax} descricao={m.descricao} habilidades={m.habilidades} semente={sementeDe(m)} xpComp={m.xp || 0} />
+                <button onClick={() => setAbrirCaminho(abrirCaminho === m.nome ? null : m.nome)} className="tv-mono text-[10px] mt-1 px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.violetSoft }}>
+                  {m.classe ? "⚔ trilhar novo caminho" : "⚔ definir caminho"}
+                </button>
+                {abrirCaminho === m.nome && <SeletorCaminho mundo={mundo} alvo={m.nome} atual={m} acampado={acampado} trocarCaminho={trocarCaminho} fechar={() => setAbrirCaminho(null)} />}
+              </div>
             ))}
           </>
         )}
@@ -1229,7 +1294,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.4 · classes e caminhos</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.5 · caminhos & ficha</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1473,6 +1538,28 @@ function migrarPersonagem(p) {
     vida: p.vida ?? p.vidaMax ?? 10, vidaMax: p.vidaMax ?? 10,
     mana: p.mana ?? p.manaMax ?? 8, manaMax: p.manaMax ?? 8,
   };
+}
+
+class LimiteErro extends React.Component {
+  constructor(props) { super(props); this.state = { erro: null }; }
+  static getDerivedStateFromError(erro) { return { erro }; }
+  componentDidCatch(erro, info) { console.error("Taverna erro:", erro, info); }
+  render() {
+    if (this.state.erro) {
+      return (
+        <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, background: "#0E0C15", zIndex: 100 }}>
+          <div style={{ maxWidth: 420, textAlign: "center", color: "#E8E2D0" }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🍺</div>
+            <div style={{ fontSize: 20, marginBottom: 8 }}>Algo tropeçou na taverna</div>
+            <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 16 }}>Um erro inesperado interrompeu a tela. Sua aventura está salva. Recarregue para voltar de onde parou.</div>
+            <div style={{ fontSize: 11, opacity: 0.5, marginBottom: 16, fontFamily: "monospace", wordBreak: "break-word" }}>{String((this.state.erro && this.state.erro.message) || this.state.erro).slice(0, 160)}</div>
+            <button onClick={() => location.reload()} style={{ padding: "10px 20px", borderRadius: 10, background: "#C9973F", color: "#1a1206", border: "none", fontWeight: 600, cursor: "pointer" }}>Recarregar</button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 function gerarBancoNomes(genero) {
@@ -1861,6 +1948,36 @@ export default function Taverna() {
     enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.`, pers);
   };
 
+  /* Escolher/trocar caminho (classe). Regras:
+     - só no acampamento (fora de perigo). Se não estiver acampado, avisa.
+     - custa moedas (definir/preencher em branco é barato; trocar é mais caro).
+     - vale para o jogador (alvo "eu") ou um companheiro (nome). */
+  const CUSTO_DEFINIR = 20, CUSTO_TROCAR = 80;
+  const trocarCaminho = (alvo, { raca, classe, subclasse, profissao }) => {
+    if (!acampadoRef.current) { pushMsgs([{ autor: "sistema", texto: "⛺ Você precisa estar acampado para refletir sobre um novo caminho. Monte acampamento primeiro." }]); return; }
+    const ehJogador = alvo === "eu";
+    const atual = ehJogador ? personagem : (personagem.grupo || []).find((g) => g.nome === alvo);
+    if (!atual) return;
+    const jaTinha = !!atual.classe;
+    const custo = jaTinha ? CUSTO_TROCAR : CUSTO_DEFINIR;
+    if (personagem.moedas < custo) { pushMsgs([{ autor: "sistema", texto: `Moedas insuficientes: definir custa ${CUSTO_DEFINIR}, trocar custa ${CUSTO_TROCAR}.` }]); return; }
+    const cObj = classePorNome(classe);
+    const habsIniciais = cObj ? cObj.habilidades.filter((h) => h.nivel === 1).map((h) => ({ nome: h.nome, custo: h.custo, descricao: h.descricao })) : [];
+    setPersonagem((p) => {
+      let np = { ...p, moedas: Math.max(0, p.moedas - custo) };
+      if (ehJogador) {
+        np = { ...np, raca: raca || p.raca, classe, subclasse, profissao: profissao || p.profissao,
+               habilidades: jaTinha ? p.habilidades : habsIniciais };
+      } else {
+        np = { ...np, grupo: (p.grupo || []).map((g) => g.nome === alvo ? { ...g, raca: raca || g.raca, classe, subclasse, profissao: profissao || g.profissao } : g) };
+      }
+      return np;
+    });
+    const quem = ehJogador ? "Você" : alvo;
+    pushMsgs([{ autor: "sistema", texto: `✦ ${quem} ${jaTinha ? "trilhou um novo caminho" : "definiu seu caminho"}: ${[raca, classe, subclasse].filter(Boolean).join(" · ")} (−${custo} moedas)` }]);
+    notaRef.current = `[INFO] ${quem} agora é ${[raca, classe, subclasse].filter(Boolean).join(", ")}${profissao ? `, profissão ${profissao}` : ""}. Reflita isso na narrativa daqui em diante.`;
+  };
+
   const gerarCronica = async () => {
     const narrativas = mensagens.filter((m) => m.autor === "mestre").map((m) => m.texto).slice(-14).join("\n\n");
     if (!narrativas) return;
@@ -2011,8 +2128,8 @@ export default function Taverna() {
 
           </main>
 
-          <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={personagem.grupo.length} />
-          <PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} />
+          <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} /></LimiteErro>
         </div>
       )}
 
