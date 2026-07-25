@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais } from "./classes.js";
+import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, RELACOES } from "./mapa.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -90,11 +91,12 @@ function formatarCanone(canone) {
   return linhas.join("\n");
 }
 
-function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone, bancoNomes) {
+function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone, bancoNomes, mapaInfo) {
   mundo = mundo || { genero: "Fantasia medieval" };
   personagem = personagem || {};
   const canoneTexto = formatarCanone(canone);
   const bn = bancoNomes || {};
+  const mapaTexto = mapaInfo || "";
   return `Você é o Mestre de um RPG de mesa por chat, em português brasileiro. Narre um mundo vivo, imprevisível e com vontade própria. Interprete TODOS os NPCs como pessoas reais (vozes, desejos, medos, segredos), crie eventos espontâneos, consequências e reviravoltas, e arbitre as regras com justiça.
 
 CAMPANHA: "${nomeCampanha}"
@@ -115,6 +117,12 @@ ROLAGENS (d20 + modificador vs Dificuldade):
 - Peça rolagem SÓ quando houver chance real de falha E consequência interessante. Ações triviais não precisam de dado.
 - Ao pedir rolagem, prepare a cena até o instante do teste e PARE ali. NUNCA narre o desfecho antes do resultado.
 - 20 natural = sucesso extraordinário (além do esperado); 1 natural = falha desastrosa (com complicação).
+- MAPA E FACÇÕES (mundo persistente — leia e RESPEITE; nunca recrie o que já existe): ${mapaTexto || "ainda vazio; ao apresentar uma cidade nova, registre-a."}
+  · Ao apresentar uma cidade NOVA, registre em "mapa_cidades" (nome, tipo vila/cidade/capital/fortaleza, regiao, faccao dominante, relacao com o jogador). Não invente uma cidade que já está no mapa — use a registrada.
+  · Facções em "mapa_faccoes" (nome, tipo, lider, relacao). A facção do JOGADOR: marque com "doJogador":true (ou envie "faccao_jogador").
+  · Quando o jogador se move, envie "cidade_atual" com o nome da cidade onde ele está.
+  · RELAÇÕES importam: em cidade de facção ALIADA o jogador é bem tratado; NEUTRA, indiferente; INIMIGA, hostil (guardas, preços altos, perigo). Se o jogador DOMINA a cidade (relacao "jogador"), ele é reconhecido como autoridade.
+  · Conquista: quando o jogador toma uma cidade/região, atualize a relacao para "jogador" e, se for a base dele, marque "sede":true.
 - BANCO DE NOMES PRONTOS (use estes para economizar — quando precisar nomear uma cidade, pessoa ou taverna NOVA, PEGUE um desta lista em vez de inventar do zero; se nenhum servir, crie um coerente): Cidades: ${(bn.cidades || []).join(", ")}. Pessoas: ${(bn.pessoas || []).join(", ")}. Tavernas: ${(bn.tavernas || []).join(", ")}. Ao usar um nome daqui, ele vira canônico — registre no cânone se a entidade for relevante.
 - FICHA DE CAMINHO: ${personagem.raca ? `${personagem.raca}` : "origem indefinida"}${personagem.classe ? `, ${personagem.classe}` : ""}${personagem.subclasse ? ` (${personagem.subclasse})` : ""}${personagem.profissao ? `, de profissão ${personagem.profissao}` : ""}. Respeite isso na narrativa: um Mago não abre fechaduras como um Ladino; um Ferreiro repara equipamento; a raça/origem colore como o mundo o trata.
 - HABILIDADES SÃO ESCOLHIDAS PELO JOGADOR (não invente): o jogador aprende habilidades de uma árvore fixa da classe dele ao subir de nível. NUNCA envie "adicionar_habilidades" por conta própria — apenas descreva o uso das que ele já tem. Se a ficção pedir um poder novo, sugira que ele o escolherá ao evoluir. (Companheiros e inimigos NÃO seguem essa regra: você pode dar habilidades a eles livremente.)
@@ -233,6 +241,9 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   "rolagens_combate": [{"quem":"Lobo","alvo":"você","d20":8,"mod":2,"total":10,"dificuldade":15,"resultado":"erra"}],
   "condicoes_adicionar": [{"alvo":"você","nome":"Envenenado","turnos":3,"efeito":"perde 2 PV por turno","tipo":"ruim"}],
   "condicoes_remover": [{"alvo":"você","nome":"Envenenado"}],
+  "mapa_cidades": [{"nome":"Pedravale","tipo":"capital","regiao":"Sul","faccao":"Guilda do Corvo","relacao":"jogador","sede":true}],
+  "mapa_faccoes": [{"nome":"Guilda do Corvo","tipo":"guilda","lider":"você","relacao":"jogador","doJogador":true}],
+  "cidade_atual": "Pedravale",
   "canone": {
     "Cael": {"tipo":"pessoa","papel":"mago viajante","genero":"homem","local":"estrada para Dwen","status":"vivo","notas":"o herói se apresentou a ele com o nome falso Falkion"},
     "Refúgio das Pedras": {"tipo":"local","notas":"esconderijo do grupo, a leste do rio"}
@@ -744,7 +755,7 @@ function ModalNivel({ nivel, personagem, escolher }) {
 
 /* ---------------- Painel lateral (Ficha/Grupo/Bolsa) ---------------- */
 
-const ABAS = [{ id: "ficha", rotulo: "Ficha", icone: "☰" }, { id: "grupo", rotulo: "Grupo", icone: "⚑" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }];
+const ABAS = [{ id: "ficha", rotulo: "Ficha", icone: "☰" }, { id: "grupo", rotulo: "Grupo", icone: "⚑" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }];
 
 const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D" };
 const SLOT_ROTULO = { arma: "Arma", armadura: "Armadura", elmo: "Elmo", botas: "Botas", anel: "Anel", amuleto: "Amuleto", escudo: "Escudo" };
@@ -855,8 +866,67 @@ function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar })
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado }) {
+function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
+  const cidades = (mapa?.cidades || []);
+  const dominadas = cidades.filter((c) => c.relacao === "jogador").length;
+  if (cidades.length === 0) {
+    return <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>O mapa ainda está em branco. Conforme você explora, cidades e territórios aparecem aqui — e ficam salvos, para o mundo nunca mais se perder.</div>;
+  }
+  return (
+    <div>
+      {faccaoJogador && (
+        <div className="rounded-xl p-3 mb-3" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+          <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.amberSoft }}>Sua facção</div>
+          <div className="tv-display text-xl" style={{ color: T.ink }}>{faccaoJogador}</div>
+          <div className="tv-body text-xs" style={{ color: T.inkDim }}>Domina {dominadas} {dominadas === 1 ? "cidade" : "cidades"}.</div>
+        </div>
+      )}
+      {/* mapa visual */}
+      <div className="relative rounded-xl mb-3" style={{ background: "radial-gradient(circle at 30% 20%, #1d2438, #12101a)", border: `1px solid ${T.line}`, aspectRatio: "4 / 3", overflow: "hidden" }}>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+          {cidades.map((c, i) => cidades.slice(i + 1).filter((o) => o.regiao && o.regiao === c.regiao).map((o, j) => (
+            <line key={`${i}-${j}`} x1={c.x} y1={c.y} x2={o.x} y2={o.y} stroke="#ffffff10" strokeWidth="0.4" />
+          )))}
+        </svg>
+        {cidades.map((c, i) => {
+          const rel = RELACOES[c.relacao] || RELACOES.neutra;
+          const atual = cidadeAtual && c.nome.toLowerCase() === String(cidadeAtual).toLowerCase();
+          return (
+            <div key={i} style={{ position: "absolute", left: `${c.x}%`, top: `${c.y}%`, transform: "translate(-50%,-50%)", textAlign: "center" }}>
+              <div style={{ width: c.sede ? 16 : 11, height: c.sede ? 16 : 11, borderRadius: c.tipo === "capital" || c.sede ? 3 : "50%", background: rel.cor, border: atual ? `2px solid ${T.amber}` : `1px solid #00000060`, boxShadow: atual ? `0 0 10px ${T.amber}` : "none", margin: "0 auto" }} />
+              <div className="tv-mono" style={{ fontSize: 6.5, color: atual ? T.amberSoft : "#cfc8d8", marginTop: 1, whiteSpace: "nowrap", textShadow: "0 1px 2px #000" }}>{c.nome}{c.sede ? " ★" : ""}</div>
+            </div>
+          );
+        })}
+      </div>
+      {/* legenda */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        {Object.entries(RELACOES).map(([k, v]) => (
+          <div key={k} className="flex items-center gap-1"><span style={{ width: 8, height: 8, borderRadius: "50%", background: v.cor, display: "inline-block" }} /><span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>{v.rotulo}</span></div>
+        ))}
+      </div>
+      {/* lista */}
+      <div className="space-y-2">
+        {cidades.map((c, i) => {
+          const rel = RELACOES[c.relacao] || RELACOES.neutra;
+          return (
+            <div key={i} className="rounded-lg px-3 py-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="tv-body text-sm" style={{ color: T.ink }}>{c.sede ? "★ " : ""}{c.nome}</span>
+                <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ color: rel.cor, border: `1px solid ${rel.cor}` }}>{rel.rotulo}</span>
+              </div>
+              <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{c.tipo}{c.regiao ? ` · ${c.regiao}` : ""}{c.faccao ? ` · ${c.faccao}` : ""}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual }) {
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
+  const [confirmarRemover, setConfirmarRemover] = React.useState(null);
   mundo = mundo || { genero: "Fantasia medieval" };
   if (!aba) return null;
   const xpProx = XP_POR_NIVEL(personagem.nivel);
@@ -867,7 +937,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
       <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,.45)" }} onClick={fechar} />
       <aside className="tv-slide tv-scroll fixed right-0 inset-y-0 z-40 w-80 max-w-[88vw] overflow-y-auto p-5 flex flex-col gap-5" style={{ background: T.panel, borderLeft: `1px solid ${T.line}` }}>
         <div className="flex items-center justify-between">
-          <h2 className="tv-display text-2xl" style={{ color: T.ink }}>{aba === "ficha" ? "Ficha" : aba === "grupo" ? "Grupo" : "Inventário"}</h2>
+          <h2 className="tv-display text-2xl" style={{ color: T.ink }}>{aba === "ficha" ? "Ficha" : aba === "grupo" ? "Grupo" : aba === "mapa" ? "Mapa" : "Inventário"}</h2>
           <button onClick={fechar} className="tv-mono text-lg px-2" style={{ color: T.inkDim }}>✕</button>
         </div>
 
@@ -962,6 +1032,8 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
           </>
         )}
 
+        {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} />}
+
         {aba === "grupo" && (
           <>
             <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Grupo · {1 + (personagem.grupo || []).length} de {1 + MAX_COMPANHEIROS}</div>
@@ -971,9 +1043,23 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
             ) : (personagem.grupo || []).map((m, i) => (
               <div key={i}>
                 <CartaoMembro nome={m.nome} subtitulo={[m.conceito, m.classe, m.subclasse].filter(Boolean).join(" · ")} nivel={m.nivel} vida={m.vida} vidaMax={m.vidaMax} descricao={m.descricao} habilidades={m.habilidades} semente={sementeDe(m)} xpComp={m.xp || 0} />
-                <button onClick={() => setAbrirCaminho(abrirCaminho === m.nome ? null : m.nome)} className="tv-mono text-[10px] mt-1 px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.violetSoft }}>
-                  {m.classe ? "⚔ trilhar novo caminho" : "⚔ definir caminho"}
-                </button>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  <button onClick={() => setAbrirCaminho(abrirCaminho === m.nome ? null : m.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.violetSoft }}>
+                    {m.classe ? "⚔ trilhar novo caminho" : "⚔ definir caminho"}
+                  </button>
+                  <button onClick={() => setConfirmarRemover(confirmarRemover === m.nome ? null : m.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>
+                    ✕ remover
+                  </button>
+                </div>
+                {confirmarRemover === m.nome && (
+                  <div className="rounded-lg p-2 mt-1 flex items-center justify-between gap-2" style={{ background: T.panelSoft, border: `1px solid ${T.danger}` }}>
+                    <span className="tv-body text-xs" style={{ color: T.inkDim }}>Remover {m.nome} do grupo?</span>
+                    <div className="flex gap-1 shrink-0">
+                      <button onClick={() => { removerDoGrupo(m.nome); setConfirmarRemover(null); }} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ background: T.danger, color: "#fff" }}>remover</button>
+                      <button onClick={() => setConfirmarRemover(null)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>cancelar</button>
+                    </div>
+                  </div>
+                )}
                 {abrirCaminho === m.nome && <SeletorCaminho mundo={mundo} alvo={m.nome} atual={m} acampado={acampado} trocarCaminho={trocarCaminho} fechar={() => setAbrirCaminho(null)} />}
               </div>
             ))}
@@ -1299,7 +1385,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.6 · combate ágil</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.8 · mapa & facções</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1629,6 +1715,10 @@ export default function Taverna() {
   const rolagemConsumidaRef = useRef(null);
   const canoneRef = useRef({});
   const bancoNomesRef = useRef(null);
+  const mapaRef = useRef({ cidades: [], faccoes: [] });
+  const [mapa, setMapa] = useState({ cidades: [], faccoes: [] });
+  const faccaoJogadorRef = useRef("");
+  const cidadeAtualRef = useRef("");
   const mostrarRolagensRef = useRef(true);
 
   /* rola para o fim SÓ quando chega mensagem nova E o jogador já estava no fim.
@@ -1745,6 +1835,30 @@ export default function Taverna() {
         });
       }
     }
+    /* MAPA E FACÇÕES: registra cidades e facções vindas do Mestre */
+    if (resp.mudancas) {
+      const md = resp.mudancas;
+      let mp = { cidades: [...(mapaRef.current.cidades || [])], faccoes: [...(mapaRef.current.faccoes || [])] };
+      let mudouMapa = false;
+      (md.mapa_cidades || []).forEach((cd) => {
+        if (!cd || !cd.nome) return;
+        const i = mp.cidades.findIndex((c) => c.nome.toLowerCase() === cd.nome.toLowerCase());
+        if (i === -1) { mp.cidades.push(criarCidade(cd.nome, cd)); msgs.push(`🗺 ${cd.nome} registrada no mapa`); }
+        else mp.cidades[i] = { ...mp.cidades[i], ...cd, x: mp.cidades[i].x, y: mp.cidades[i].y };
+        mudouMapa = true;
+      });
+      (md.mapa_faccoes || []).forEach((fc) => {
+        if (!fc || !fc.nome) return;
+        const i = mp.faccoes.findIndex((f) => f.nome.toLowerCase() === fc.nome.toLowerCase());
+        if (i === -1) mp.faccoes.push(criarFaccao(fc.nome, fc));
+        else mp.faccoes[i] = { ...mp.faccoes[i], ...fc };
+        if (fc.doJogador) faccaoJogadorRef.current = fc.nome;
+        mudouMapa = true;
+      });
+      if (md.cidade_atual) cidadeAtualRef.current = md.cidade_atual;
+      if (md.faccao_jogador) faccaoJogadorRef.current = md.faccao_jogador;
+      if (mudouMapa) { mapaRef.current = mp; setMapa(mp); }
+    }
     /* CÂNONE: mescla fatos duráveis; campos novos atualizam, nunca apagam a ficha */
     if (resp.mudancas && resp.mudancas.canone && typeof resp.mudancas.canone === "object") {
       const c = { ...canoneRef.current };
@@ -1755,7 +1869,7 @@ export default function Taverna() {
         if (nova) msgs.push(`📖 Registrado: ${nome}`);
       }
       canoneRef.current = c;
-      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current);
+      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current));
     }
     setPersonagem(pers);
     /* combate: processa de forma síncrona (via ref) para as mensagens saírem na ordem certa */
@@ -1791,7 +1905,7 @@ export default function Taverna() {
         turnoContRef.current = 0;
         const narrativas = mensagensRef.current.filter((x) => x.autor === "mestre").map((x) => x.texto);
         gerarLivro(livroRef.current, narrativas).then((l) => {
-          if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current); }
+          if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current)); }
         });
       }
       setTimeout(() => salvar({ personagem: pers, historico: histFinal, rolagem: resp.rolagem || null, sugestoes: resp.rolagem ? [] : (resp.sugestoes || []) }), 0);
@@ -1809,8 +1923,10 @@ export default function Taverna() {
     setPersonagem(pers);
     livroRef.current = ""; turnoContRef.current = 0;
     canoneRef.current = {}; definirAcampado(false);
+    mapaRef.current = { cidades: [], faccoes: [] }; setMapa(mapaRef.current);
+    faccaoJogadorRef.current = ""; cidadeAtualRef.current = "";
     bancoNomesRef.current = gerarBancoNomes(mundo);
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current);
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current));
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setSugestoes([]); setRolagem(null);
     setCombate(null); combateRef.current = null;
     setFase("jogo");
@@ -1830,8 +1946,12 @@ export default function Taverna() {
       livroRef.current = sv.livro || ""; turnoContRef.current = 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       definirAcampado(!!sv.acampado);
+      mapaRef.current = sv.mapa && sv.mapa.cidades ? sv.mapa : { cidades: [], faccoes: [] };
+      setMapa(mapaRef.current);
+      faccaoJogadorRef.current = sv.faccaoJogador || "";
+      cidadeAtualRef.current = sv.cidadeAtual || "";
       bancoNomesRef.current = gerarBancoNomes(sv.mundo);
-      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current);
+      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current));
       setFase("jogo");
       if (comResumo && !sv.rolagem) {
         enviar(`[RESUMO DE SESSÃO] Retomando "${sv.nomeCampanha}". Abra com "Anteriormente, em ${sv.nomeCampanha}…" e recapitule os principais acontecimentos em até 120 palavras, tom de série. Depois reapresente a cena atual e me convide a agir. Sem rolagem e sem mudanças nesta resposta.`, pers, sv.historico || []);
@@ -1950,8 +2070,15 @@ export default function Taverna() {
   const acampar = () => {
     if (acampadoRef.current || bloqueado) return;
     definirAcampado(true);
-    pushMsgs([{ autor: "sistema", texto: "⛺ Você montou acampamento. O tempo pausa — converse com o grupo à vontade. Escolha um descanso para retomar a jornada." }]);
-    enviar("[ACAMPAMENTO] Montei acampamento. A partir de agora estamos em uma pausa segura: NÃO faça o mundo avançar, NÃO gere eventos externos nem passagem de tempo. Apenas conduza conversas de acampamento — companheiros podem puxar papo, revelar histórias, comentar a jornada. Descreva brevemente o acampamento sendo montado e deixe a cena aberta para conversa.", personagem);
+    const local = localDeDescanso(mapaRef.current, cidadeAtualRef.current, faccaoJogadorRef.current);
+    const rotulo = local.tipo === "sede" ? "🏛 Você recolhe-se à sede da sua guilda"
+                 : local.tipo === "casa" ? "🏠 Você recolhe-se a uma casa da sua facção"
+                 : local.tipo === "aliada" ? "🤝 Você é acolhido por aliados"
+                 : local.tipo === "hostil" ? "⚠ Você se esconde em território hostil"
+                 : local.tipo === "estalagem" ? "🛏 Você aluga um quarto na estalagem"
+                 : "⛺ Você monta acampamento";
+    pushMsgs([{ autor: "sistema", texto: `${rotulo}. O tempo pausa — converse com o grupo à vontade. Escolha um descanso para retomar a jornada.` }]);
+    enviar(`[ACAMPAMENTO em ${local.texto}] Montei acampamento/descanso em: ${local.texto}. A partir de agora é uma pausa segura: NÃO faça o mundo avançar, NÃO gere eventos externos nem passagem de tempo. Conduza conversas — companheiros puxam papo, revelam histórias. Se for a sede da guilda ou casa da facção, reflita esse conforto/autoridade na cena. Descreva brevemente o local e deixe aberto para conversa.`, personagem);
   };
 
   const sairDoAcampamento = (tipo) => {
@@ -1993,6 +2120,12 @@ export default function Taverna() {
     const quem = ehJogador ? "Você" : alvo;
     pushMsgs([{ autor: "sistema", texto: `✦ ${quem} ${jaTinha ? "trilhou um novo caminho" : "definiu seu caminho"}: ${[raca, classe, subclasse].filter(Boolean).join(" · ")} (−${custo} moedas)` }]);
     notaRef.current = `[INFO] ${quem} agora é ${[raca, classe, subclasse].filter(Boolean).join(", ")}${profissao ? `, profissão ${profissao}` : ""}. Reflita isso na narrativa daqui em diante.`;
+  };
+
+  const removerDoGrupo = (nome) => {
+    setPersonagem((p) => ({ ...p, grupo: (p.grupo || []).filter((g) => g.nome !== nome) }));
+    pushMsgs([{ autor: "sistema", texto: `${nome} deixou o grupo.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] ${nome} saiu do meu grupo (removido pelo jogador). Reflita isso na narrativa: ${nome} não viaja mais comigo.`;
   };
 
   const gerarCronica = async () => {
@@ -2146,7 +2279,7 @@ export default function Taverna() {
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} /></LimiteErro>
         </div>
       )}
 
