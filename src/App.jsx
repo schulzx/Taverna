@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { nomeCidade, nomePessoa, nomeTaverna, sortear } from "./nomes.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -88,8 +89,9 @@ function formatarCanone(canone) {
   return linhas.join("\n");
 }
 
-function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone) {
+function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone, bancoNomes) {
   const canoneTexto = formatarCanone(canone);
+  const bn = bancoNomes || {};
   return `Você é o Mestre de um RPG de mesa por chat, em português brasileiro. Narre um mundo vivo, imprevisível e com vontade própria. Interprete TODOS os NPCs como pessoas reais (vozes, desejos, medos, segredos), crie eventos espontâneos, consequências e reviravoltas, e arbitre as regras com justiça.
 
 CAMPANHA: "${nomeCampanha}"
@@ -110,6 +112,7 @@ ROLAGENS (d20 + modificador vs Dificuldade):
 - Peça rolagem SÓ quando houver chance real de falha E consequência interessante. Ações triviais não precisam de dado.
 - Ao pedir rolagem, prepare a cena até o instante do teste e PARE ali. NUNCA narre o desfecho antes do resultado.
 - 20 natural = sucesso extraordinário (além do esperado); 1 natural = falha desastrosa (com complicação).
+- BANCO DE NOMES PRONTOS (use estes para economizar — quando precisar nomear uma cidade, pessoa ou taverna NOVA, PEGUE um desta lista em vez de inventar do zero; se nenhum servir, crie um coerente): Cidades: ${(bn.cidades || []).join(", ")}. Pessoas: ${(bn.pessoas || []).join(", ")}. Tavernas: ${(bn.tavernas || []).join(", ")}. Ao usar um nome daqui, ele vira canônico — registre no cânone se a entidade for relevante.
 - CÂNONE (memória permanente que NUNCA se perde): sempre que você estabelecer ou descobrir um FATO DURÁVEL — um NPC (nome, se é mago/guerreiro/etc, papel, gênero, onde está), um lugar importante, um nome falso que o jogador usou, uma promessa, um vínculo, um segredo revelado — REGISTRE em "canone" (veja formato). Fatos no CÂNONE aparecem literais em toda resposta e são a VERDADE: jamais os contradiga. Se o jogador perguntar "X te lembra algo?" e X estiver no cânone, RECONHEÇA o que está lá — nunca invente uma versão nova. Se NÃO estiver no cânone e você não tem certeza, trate como algo que o personagem talvez não saiba, em vez de inventar um fato que possa colidir depois. Atualize uma ficha (ex.: o mago mudou de cidade) reescrevendo os campos que mudaram; NUNCA mude tipo/gênero/identidade de alguém já registrado.
 - COLCHETES SÃO META: qualquer texto entre [colchetes] vindo do jogador ou do app (ex.: [seja mais direto], [não descreva sangue], [HABILIDADE], [ROLAGEM]) é instrução FORA do personagem. Obedeça ao conteúdo, mas NUNCA o trate como fala/ação do personagem e NUNCA o repita na narrativa.
 
@@ -1038,7 +1041,10 @@ function TelaMundo({ concluir }) {
       <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.violetSoft }}>Passo 1 de 2 · O mundo</div>
       <h1 className="tv-display text-4xl md:text-5xl mb-3" style={{ color: T.ink }}>Que realidade vamos criar?</h1>
       <p className="tv-body mb-6" style={{ color: T.inkDim }}>Dê um nome à campanha, escolha um gênero e descreva o que quiser. O Mestre preenche o resto com detalhes vivos.</p>
-      <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome da campanha (ex.: A Maré de Ferro)" maxLength={40} className="w-full rounded-xl p-4 tv-body text-sm outline-none mb-4" style={campo} />
+      <div className="flex gap-2 mb-4">
+        <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome da campanha (ex.: A Maré de Ferro)" maxLength={40} className="flex-1 rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
+        {genero && <button type="button" onClick={() => setNome(`As Crônicas de ${nomeCidade(genero.label)}`)} className="rounded-xl px-4 shrink-0" style={{ border: `1px solid ${T.line}`, color: T.amberSoft }} title="Sortear um nome">🎲</button>}
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
         {GENEROS.map((g) => (
           <button key={g.id} onClick={() => setGenero(g)} className="text-left rounded-xl p-4 transition-all" style={{ background: genero?.id === g.id ? T.panelSoft : T.panel, border: `1px solid ${genero?.id === g.id ? T.amber : T.line}` }}>
@@ -1077,7 +1083,10 @@ function TelaPersonagem({ mundo, concluir }) {
       <h1 className="tv-display text-4xl md:text-5xl mb-3" style={{ color: T.ink }}>Quem entra nesse mundo?</h1>
       <p className="tv-body mb-8" style={{ color: T.inkDim }}>Mundo: <em style={{ color: T.amberSoft }}>{mundo.genero}</em>. Dê nome, conceito e distribua {PONTOS_TOTAIS} pontos.</p>
       <div className="grid md:grid-cols-2 gap-4 mb-4">
-        <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do personagem" className="rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
+        <div className="flex gap-2">
+          <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do personagem" className="flex-1 rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
+          <button type="button" onClick={() => setNome(nomePessoa(mundo.genero))} className="rounded-xl px-4 shrink-0" style={{ border: `1px solid ${T.line}`, color: T.amberSoft }} title="Sortear um nome">🎲</button>
+        </div>
         <input value={conceito} onChange={(e) => setConceito(e.target.value)} placeholder="Conceito (ex.: ladra de relíquias arrependida)" className="rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
       </div>
       <textarea value={historia} onChange={(e) => setHistoria(e.target.value)} rows={3} placeholder="História e segredos (opcional) — o Mestre vai usar isso contra e a favor de você…" className="w-full rounded-xl p-4 tv-body text-sm outline-none resize-none mb-6" style={campo} />
@@ -1120,7 +1129,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.1 · acampamento</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.3 · nomes vivos</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1365,6 +1374,15 @@ function migrarPersonagem(p) {
   };
 }
 
+function gerarBancoNomes(genero) {
+  const g = (genero && genero.genero) || genero || "Fantasia medieval";
+  const cidades = [], pessoas = [], tavernas = [];
+  for (let i = 0; i < 8; i++) cidades.push(nomeCidade(g));
+  for (let i = 0; i < 10; i++) pessoas.push(nomePessoa(g));
+  for (let i = 0; i < 4; i++) tavernas.push(nomeTaverna(g));
+  return { cidades: [...new Set(cidades)], pessoas: [...new Set(pessoas)], tavernas: [...new Set(tavernas)] };
+}
+
 export default function Taverna() {
   const [fase, setFase] = useState("menu"); // menu | mundo | personagem | jogo
   const [mundo, setMundo] = useState(null);
@@ -1406,6 +1424,7 @@ export default function Taverna() {
   const habUsadaRef = useRef(false);
   const rolagemConsumidaRef = useRef(null);
   const canoneRef = useRef({});
+  const bancoNomesRef = useRef(null);
   const mostrarRolagensRef = useRef(true);
 
   /* rola para o fim SÓ quando chega mensagem nova E o jogador já estava no fim.
@@ -1532,7 +1551,7 @@ export default function Taverna() {
         if (nova) msgs.push(`📖 Registrado: ${nome}`);
       }
       canoneRef.current = c;
-      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c);
+      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current);
     }
     setPersonagem(pers);
     /* combate: processa de forma síncrona (via ref) para as mensagens saírem na ordem certa */
@@ -1563,7 +1582,7 @@ export default function Taverna() {
         turnoContRef.current = 0;
         const narrativas = mensagensRef.current.filter((x) => x.autor === "mestre").map((x) => x.texto);
         gerarLivro(livroRef.current, narrativas).then((l) => {
-          if (l) { livroRef.current = l; systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current); }
+          if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current); }
         });
       }
       setTimeout(() => salvar({ personagem: pers, historico: histFinal, rolagem: resp.rolagem || null, sugestoes: resp.rolagem ? [] : (resp.sugestoes || []) }), 0);
@@ -1581,7 +1600,8 @@ export default function Taverna() {
     setPersonagem(pers);
     livroRef.current = ""; turnoContRef.current = 0;
     canoneRef.current = {}; setAcampado(false);
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {});
+    bancoNomesRef.current = gerarBancoNomes(mundo);
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current);
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setSugestoes([]); setRolagem(null);
     setCombate(null); combateRef.current = null;
     setFase("jogo");
@@ -1601,7 +1621,8 @@ export default function Taverna() {
       livroRef.current = sv.livro || ""; turnoContRef.current = 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       setAcampado(!!sv.acampado);
-      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current);
+      bancoNomesRef.current = gerarBancoNomes(sv.mundo);
+      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current);
       setFase("jogo");
       if (comResumo && !sv.rolagem) {
         enviar(`[RESUMO DE SESSÃO] Retomando "${sv.nomeCampanha}". Abra com "Anteriormente, em ${sv.nomeCampanha}…" e recapitule os principais acontecimentos em até 120 palavras, tom de série. Depois reapresente a cena atual e me convide a agir. Sem rolagem e sem mudanças nesta resposta.`, pers, sv.historico || []);
@@ -1776,7 +1797,6 @@ export default function Taverna() {
           {fase === "jogo" && statusSave && <span className="tv-mono text-[10px] uppercase tracking-wider" style={{ color: statusSave === "erro" ? T.danger : T.inkDim }}>{statusSave === "salvando" ? "salvando…" : "✓ salvo"}</span>}
           {fase === "jogo" && !acampado && <button onClick={acampar} disabled={bloqueado} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Montar acampamento"><span style={{ color: T.amberSoft, fontSize: 15 }}>⛺</span></button>}
           {fase === "jogo" && <button onClick={() => setMostrarRolagens((v) => !v)} className="rounded-lg p-1.5" style={{ border: `1px solid ${mostrarRolagens ? T.amber : T.line}` }} title={mostrarRolagens ? "Rolagens de combate: visíveis" : "Rolagens de combate: ocultas"}><span style={{ color: mostrarRolagens ? T.amberSoft : T.inkDim, fontSize: 13 }}>🎲</span></button>}
-          {fase === "jogo" && <button onClick={() => setVerCena(true)} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Ver cena"><span style={{ color: T.violetSoft, fontSize: 15 }}>🎭</span></button>}
           {fase === "jogo" && <button onClick={gerarCronica} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Gerar crônica"><span style={{ color: T.amberSoft, fontSize: 15 }}>📜</span></button>}
         </div>
       </header>
