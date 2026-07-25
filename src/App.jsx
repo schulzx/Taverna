@@ -159,6 +159,11 @@ EQUIPAMENTOS (itens equipáveis que alteram atributos e concedem poderes):
 - Crie equipamentos com "adicionar_equipamento". Raridades (referência de mesa): comum (+1 num atributo), incomum (+1/+2), raro (+2 e um efeito), épico (+3 e um poder), lendário (+3/+4 e habilidade única). Quanto mais forte, mais raro e disputado deve ser — nunca dê um lendário de graça no começo. Itens melhores aparecem em regiões e chefes mais perigosos.
 - O JOGADOR decide equipar ou não (o app cuida disso). Você só concede o item; os bônus são aplicados quando ele equipa.
 
+TURNO DO MUNDO (o mundo AGE, não só reage — estilo Baldur's Gate 3):
+- FORA do acampamento, o mundo tem vida própria e AGE por conta a cada poucos turnos, mesmo que o jogador só observe: uma facção faz sua jogada, um NPC aparece com um pedido ou ameaça, o clima vira, uma perseguição se aproxima, algo que estava em curso avança, um companheiro toma uma iniciativa. Não espere o jogador provocar — injete acontecimentos de tempos em tempos (não em todo turno; dose para não virar ruído).
+- Consequências correm em segundo plano: se o jogador ignorou uma ameaça, ela cresce; se deixou um ferido, ele piora ou é ajudado por outro. O mundo não congela esperando o herói.
+- DENTRO do acampamento, o turno do mundo PARA (é uma pausa segura). Ele volta quando o acampamento termina.
+
 MUNDO VIVO E ESPONTÂNEO (essencial):
 - O jogador NÃO controla tudo. O mundo tem vontade própria: personagens surgem sem aviso, brigas estouram, o clima muda, facções agem fora de cena, uma emboscada acontece, um mercador ambulante cruza a estrada, alguém pede ajuda, um perseguidor aparece. Injete esses acontecimentos por conta própria, sem o jogador pedir.
 - Varie o ritmo: nem toda cena é perigo; há respiros, encontros curiosos, humor, mistério.
@@ -170,15 +175,16 @@ CONDUÇÃO E JORNADA (não seja vago):
 - O jogador pode se PERDER em encruzilhadas, MAS sempre semeie pistas para a escolha certa existir: um viajante que dá informação, placas, marcas no chão, o sol, um cheiro de fumaça. Perder-se deve ser resultado de ignorar pistas, não de azar cego.
 - Termine SEMPRE com uma situação aberta e, quando útil, 2-3 caminhos possíveis nas "sugestoes".
 
-COMPANHEIROS VIVOS (até ${MAX_COMPANHEIROS}): entram por "grupo_adicionar". São pessoas completas — agem sozinhos, opinam, discordam, evoluem ("grupo_atualizar") e podem partir ou trair ("grupo_remover") se maltratados. Têm INICIATIVA PRÓPRIA: puxam assunto, comentam a cena, discordam do plano e agem SEM serem acionados pelo jogador — uma intervenção espontânea de vez em quando (não em todo turno) mantém o grupo vivo sem virar ruído. Um companheiro que só fala quando falam com ele é um companheiro-mobília: proibido.
+COMPANHEIROS VIVOS (até ${MAX_COMPANHEIROS}): entram por "grupo_adicionar". São pessoas completas — agem sozinhos, opinam, discordam e podem partir ou trair ("grupo_remover") se maltratados.
+- EVOLUEM JUNTO: companheiros ganham XP e sobem de nível como o herói. Quando o grupo conquista algo, dê XP aos companheiros via "grupo_xp" (ex.: [{"nome":"Kael","xp":30}]) — o app cuida do nível e do PV. Use "grupo_atualizar" para melhorias narrativas (nova habilidade, mudança de descrição). Um companheiro que nunca evolui fica para trás e quebra a imersão. Têm INICIATIVA PRÓPRIA: puxam assunto, comentam a cena, discordam do plano e agem SEM serem acionados pelo jogador — uma intervenção espontânea de vez em quando (não em todo turno) mantém o grupo vivo sem virar ruído. Um companheiro que só fala quando falam com ele é um companheiro-mobília: proibido.
 
 ECONOMIA: moeda com nome do mundo; valor numérico em "moedas". Mercadores com personalidade e preços coerentes. NUNCA desconte moedas sem o jogador aceitar a compra.
 
 XP: só por conquistas reais (10-30 pequeno; 40-60 marco). Nunca por turno. O app calcula os níveis.
 
-DESCANSO (D&D 5e — recurso com custo):
-- DESCANSO CURTO (~1h de ficção): recupera parte do PV/PM e alivia cansaço leve; alguns efeitos passam. Baixo risco. Use "mudancas" com vida/mana positivas moderadas.
-- DESCANSO LONGO (uma noite): recupera todo o PV/PM e remove condições curáveis — MAS o mundo AVANÇA: o tempo passa, inimigos se movem, planos inimigos progridem, oportunidades podem escapar, e há risco de ser surpreendido (uma vigília/emboscada às vezes). Restaure vida/mana ao máximo e narre a consequência do tempo passar.
+DESCANSO E ACAMPAMENTO (o app controla os números; você narra):
+- Quando receber [ACAMPAMENTO], entre em modo de pausa: o tempo NÃO passa, o mundo NÃO age, não gere eventos externos. Conduza só conversas de acampamento — companheiros puxam papo, revelam histórias, comentam a jornada. É o momento de vínculo do grupo.
+- Quando receber [FIM DO ACAMPAMENTO — DESCANSO CURTO/LONGO], o app JÁ restaurou PV/PM do jogador e do grupo — NÃO envie vida/mana de cura (seria dobrado). Sua tarefa é só narrar, de forma PROPORCIONAL ao tempo (curto ~1h, longo ~1 noite), o que mudou nesse intervalo. Mudanças pequenas e plausíveis. JAMAIS exagere o tempo (nada de meses/anos, quedas de impérios) — foi só uma pausa.
 - Quando o jogador pedir para descansar/dormir, pergunte ou deduza qual tipo pela ficção, aplique os ganhos e — no descanso longo — SEMPRE faça o mundo reagir ao tempo perdido. Descanso nunca é neutro: tem troca.
 
 RESUMO: se receber [RESUMO DE SESSÃO], abra com "Anteriormente, em ${nomeCampanha}…", recapitule em até 120 palavras (tom de série), sem rolagem e sem mudanças.
@@ -210,6 +216,7 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   "grupo_adicionar": [{"nome":"Kael","conceito":"Batedor","vida":12,"vidaMax":12,"nivel":1,"descricao":"..."}],
   "grupo_remover": [], "grupo_vida": [{"nome":"Kael","vida":-4}],
   "grupo_atualizar": [{"nome":"Kael","nivel":2,"vidaMax":15,"descricao":"..."}],
+  "grupo_xp": [{"nome":"Kael","xp":30}],
   "combate_iniciar": [{"nome":"Capitão Bandido","vida":28,"vidaMax":28,"ameaca":"espadachim veterano, cicatriz no rosto"},{"nome":"Lacaio","vida":8,"vidaMax":8,"ameaca":"nervoso, mal segura a lança"}],
   "combate_inimigo_vida": [{"nome":"Lacaio","vida":-8}],
   "combate_atualizar": [{"nome":"Capitão Bandido","ameaca":"enfurecido, sangrando"}],
@@ -715,7 +722,7 @@ function TrilhoAbas({ abaAtiva, aoClicar, nGrupo }) {
   );
 }
 
-function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, descricao, habilidades, ehVoce, semente }) {
+function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, descricao, habilidades, ehVoce, semente, xpComp }) {
   return (
     <div className="rounded-xl p-4" style={{ background: T.panelSoft, border: `1px solid ${ehVoce ? T.amber : T.line}` }}>
       <div className="flex items-start gap-3">
@@ -734,6 +741,7 @@ function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, de
       <div className="space-y-2 mt-3">
         <BarraMini rotulo="PV" atual={vida} max={vidaMax} cor={T.amber} corBaixa={T.danger} />
         {manaMax != null && <BarraMini rotulo="PM" atual={mana} max={manaMax} cor={T.violet} />}
+        {!ehVoce && xpComp != null && <BarraMini rotulo="XP" atual={xpComp} max={XP_POR_NIVEL(nivel || 1)} cor={T.ok} />}
       </div>
       {habilidades && habilidades.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
@@ -847,7 +855,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
             {personagem.grupo.length === 0 ? (
               <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você viaja sozinho — por enquanto. Aliados podem se juntar a você.</div>
             ) : personagem.grupo.map((m, i) => (
-              <CartaoMembro key={i} nome={m.nome} subtitulo={m.conceito} nivel={m.nivel} vida={m.vida} vidaMax={m.vidaMax} descricao={m.descricao} habilidades={m.habilidades} semente={sementeDe(m)} />
+              <CartaoMembro key={i} nome={m.nome} subtitulo={m.conceito} nivel={m.nivel} vida={m.vida} vidaMax={m.vidaMax} descricao={m.descricao} habilidades={m.habilidades} semente={sementeDe(m)} xpComp={m.xp || 0} />
             ))}
           </>
         )}
@@ -1112,7 +1120,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.0 · lapidação</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.1 · acampamento</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1148,6 +1156,34 @@ function aplicarNivel(pers) {
   return { ...pers, xp, nivel, nivelPendentes, vidaMax, manaMax, vida, mana };
 }
 
+/* Evolução de companheiro por XP acumulado. Cada nível: +3 PV máx, e a cada
+   nível o app pode subir levemente a competência. Companheiros evoluem junto. */
+function evoluirCompanheiro(g) {
+  let { xp = 0, nivel = 1, vidaMax = 10 } = g;
+  let subiu = 0;
+  while (xp >= XP_POR_NIVEL(nivel)) { xp -= XP_POR_NIVEL(nivel); nivel += 1; vidaMax += 3; subiu++; }
+  return { ...g, xp, nivel, vidaMax, vida: subiu ? vidaMax : g.vida, _subiu: subiu };
+}
+
+/* Descanso aplicado por CÓDIGO — garante reset real do jogador E do grupo. */
+function aplicarDescanso(pers, tipo, msgs) {
+  const longo = tipo === "longo";
+  const frac = longo ? 1 : 0.5; // curto recupera metade, longo tudo
+  const novaVida = longo ? pers.vidaMax : Math.min(pers.vidaMax, pers.vida + Math.ceil(pers.vidaMax * frac));
+  const novaMana = longo ? pers.manaMax : Math.min(pers.manaMax, pers.mana + Math.ceil(pers.manaMax * frac));
+  // condições: descanso longo remove as ruins curáveis; curto alivia algumas
+  let condicoes = pers.condicoes || [];
+  if (longo) condicoes = condicoes.filter((c) => c.tipo === "bom");
+  else condicoes = condicoes.filter((c) => !(c.tipo !== "bom" && ["Cansado", "Enfraquecido", "Sangrando"].includes(c.nome)));
+  // grupo: cura junto (companheiros descansam também)
+  const grupo = (pers.grupo || []).map((gm) => ({
+    ...gm,
+    vida: longo ? gm.vidaMax : Math.min(gm.vidaMax, (gm.vida || 0) + Math.ceil((gm.vidaMax || 10) * frac)),
+  }));
+  msgs.push(longo ? "🌙 Descanso longo — você e o grupo recuperam PV e PM por completo." : "🔥 Descanso curto — você e o grupo recuperam parte do PV e PM.");
+  return { ...pers, vida: novaVida, mana: novaMana, condicoes, grupo };
+}
+
 function aplicarMudancas(pers, m, msgs) {
   let vida = Math.max(0, Math.min(pers.vidaMax, pers.vida + (m.vida || 0)));
   let mana = Math.max(0, Math.min(pers.manaMax, pers.mana + (m.mana || 0)));
@@ -1167,6 +1203,16 @@ function aplicarMudancas(pers, m, msgs) {
   });
   (m.grupo_remover || []).forEach((nome) => { if (grupo.some((g) => g.nome.toLowerCase() === nome.toLowerCase())) { grupo = grupo.filter((g) => g.nome.toLowerCase() !== nome.toLowerCase()); msgs.push(`⚑ ${nome} deixou o grupo.`); } });
   (m.grupo_vida || []).forEach((gv) => { grupo = grupo.map((g) => g.nome.toLowerCase() === (gv.nome || "").toLowerCase() ? { ...g, vida: Math.max(0, Math.min(g.vidaMax, g.vida + (gv.vida || 0))) } : g); });
+  /* XP de companheiros (evoluem junto com o herói) */
+  (m.grupo_xp || []).forEach((gx) => {
+    grupo = grupo.map((g) => {
+      if (g.nome.toLowerCase() !== (gx.nome || "").toLowerCase()) return g;
+      const antes = g.nivel ?? 1;
+      const ev = evoluirCompanheiro({ ...g, xp: (g.xp || 0) + Math.max(0, gx.xp || 0) });
+      if (ev.nivel > antes) msgs.push(`✦ ${g.nome} subiu para o nível ${ev.nivel}!`);
+      delete ev._subiu; return ev;
+    });
+  });
   (m.grupo_atualizar || []).forEach((ga) => {
     grupo = grupo.map((g) => {
       if (g.nome.toLowerCase() !== (ga.nome || "").toLowerCase()) return g;
@@ -1306,7 +1352,7 @@ function migrarPersonagem(p) {
     atributos: { ...atributosBase, ...(p.atributos || {}) },
     inventario: Array.isArray(p.inventario) ? p.inventario : [],
     habilidades: Array.isArray(p.habilidades) ? p.habilidades.filter((h) => h && h.nome).map((h) => ({ nome: h.nome, custo: Math.max(0, Number(h.custo) || 0), descricao: h.descricao || "", duracao: h.duracao || 0 })) : [],
-    grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}` })) : [],
+    grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, xp: g.xp || 0, nivel: g.nivel || 1, semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}` })) : [],
     efeitos: Array.isArray(p.efeitos) ? p.efeitos : [],
     condicoes: Array.isArray(p.condicoes) ? p.condicoes : [],
     equipamento: Array.isArray(p.equipamento) ? p.equipamento : [],
@@ -1341,6 +1387,7 @@ export default function Taverna() {
   const [verCena, setVerCena] = useState(false);
   const [longeDoFim, setLongeDoFim] = useState(false);
   const areaRef = useRef(null);
+  const [acampado, setAcampado] = useState(false);
   const [mostrarRolagens, setMostrarRolagens] = useState(() => {
     try { const v = localStorage.getItem("taverna_cfg_rolagens"); return v === null ? true : v === "1"; } catch { return true; }
   });
@@ -1407,7 +1454,7 @@ export default function Taverna() {
     setStatusSave("salvando");
     const dados = {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico, sugestoes, rolagem,
-      combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
+      combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, acampado, rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     saveRef.current = dados;
     setTemSave(dados);
@@ -1533,7 +1580,7 @@ export default function Taverna() {
   const iniciar = (pers) => {
     setPersonagem(pers);
     livroRef.current = ""; turnoContRef.current = 0;
-    canoneRef.current = {};
+    canoneRef.current = {}; setAcampado(false);
     systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {});
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setSugestoes([]); setRolagem(null);
     setCombate(null); combateRef.current = null;
@@ -1553,6 +1600,7 @@ export default function Taverna() {
       setCombate(sv.combate || null); combateRef.current = sv.combate || null;
       livroRef.current = sv.livro || ""; turnoContRef.current = 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
+      setAcampado(!!sv.acampado);
       systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current);
       setFase("jogo");
       if (comResumo && !sv.rolagem) {
@@ -1660,6 +1708,27 @@ export default function Taverna() {
     pushMsgs([{ autor: "sistema", texto: `Equipamento descartado: ${nome}` }]);
   };
 
+  /* ACAMPAMENTO: pausa o "turno do mundo" — você conversa à vontade, nada avança.
+     Ao sair, escolhe descanso curto/longo; o app reseta PV/PM (jogador+grupo) e o
+     Mestre narra o que passou, proporcional ao tempo (nunca exagerado). */
+  const acampar = () => {
+    if (acampado || bloqueado) return;
+    setAcampado(true);
+    pushMsgs([{ autor: "sistema", texto: "⛺ Você montou acampamento. O tempo pausa — converse com o grupo à vontade. Escolha um descanso para retomar a jornada." }]);
+    enviar("[ACAMPAMENTO] Montei acampamento. A partir de agora estamos em uma pausa segura: NÃO faça o mundo avançar, NÃO gere eventos externos nem passagem de tempo. Apenas conduza conversas de acampamento — companheiros podem puxar papo, revelar histórias, comentar a jornada. Descreva brevemente o acampamento sendo montado e deixe a cena aberta para conversa.", personagem);
+  };
+
+  const sairDoAcampamento = (tipo) => {
+    if (!acampado) return;
+    setAcampado(false);
+    const msgs = [];
+    const pers = aplicarDescanso(personagem, tipo, msgs);
+    setPersonagem(pers);
+    pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
+    const dur = tipo === "longo" ? "uma noite inteira" : "cerca de uma hora";
+    enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.`, pers);
+  };
+
   const gerarCronica = async () => {
     const narrativas = mensagens.filter((m) => m.autor === "mestre").map((m) => m.texto).slice(-14).join("\n\n");
     if (!narrativas) return;
@@ -1705,6 +1774,7 @@ export default function Taverna() {
             </button>
           )}
           {fase === "jogo" && statusSave && <span className="tv-mono text-[10px] uppercase tracking-wider" style={{ color: statusSave === "erro" ? T.danger : T.inkDim }}>{statusSave === "salvando" ? "salvando…" : "✓ salvo"}</span>}
+          {fase === "jogo" && !acampado && <button onClick={acampar} disabled={bloqueado} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Montar acampamento"><span style={{ color: T.amberSoft, fontSize: 15 }}>⛺</span></button>}
           {fase === "jogo" && <button onClick={() => setMostrarRolagens((v) => !v)} className="rounded-lg p-1.5" style={{ border: `1px solid ${mostrarRolagens ? T.amber : T.line}` }} title={mostrarRolagens ? "Rolagens de combate: visíveis" : "Rolagens de combate: ocultas"}><span style={{ color: mostrarRolagens ? T.amberSoft : T.inkDim, fontSize: 13 }}>🎲</span></button>}
           {fase === "jogo" && <button onClick={() => setVerCena(true)} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Ver cena"><span style={{ color: T.violetSoft, fontSize: 15 }}>🎭</span></button>}
           {fase === "jogo" && <button onClick={gerarCronica} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Gerar crônica"><span style={{ color: T.amberSoft, fontSize: 15 }}>📜</span></button>}
@@ -1754,6 +1824,17 @@ export default function Taverna() {
                 <div className="inline-flex items-center gap-2 rounded-full pl-3.5 pr-1.5 py-1.5" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
                   <span className="tv-mono text-xs" style={{ color: T.violetSoft }}>✦ {habSel.nome} · {habSel.custo} PM</span>
                   <button onClick={() => setHabSel(null)} className="tv-mono text-xs rounded-full w-5 h-5 flex items-center justify-center" style={{ background: T.line, color: T.inkDim }}>✕</button>
+                </div>
+              </div>
+            )}
+
+            {acampado && (
+              <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.amber}`, marginRight: "68px" }}>
+                <div className="tv-mono text-xs uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>⛺ Acampamento — o tempo está pausado</div>
+                <div className="tv-body text-sm mb-3" style={{ color: T.inkDim }}>Converse com o grupo à vontade. Quando quiser retomar a jornada, escolha um descanso:</div>
+                <div className="flex flex-wrap gap-2">
+                  <Botao pequeno onClick={() => sairDoAcampamento("curto")} desativado={bloqueado}>🔥 Descanso curto <span style={{ opacity: 0.7 }}>· recupera parte</span></Botao>
+                  <Botao primario pequeno onClick={() => sairDoAcampamento("longo")} desativado={bloqueado}>🌙 Descanso longo <span style={{ opacity: 0.7 }}>· recupera tudo</span></Botao>
                 </div>
               </div>
             )}
