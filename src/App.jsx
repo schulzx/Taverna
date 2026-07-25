@@ -91,6 +91,8 @@ function formatarCanone(canone) {
 }
 
 function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone, bancoNomes) {
+  mundo = mundo || { genero: "Fantasia medieval" };
+  personagem = personagem || {};
   const canoneTexto = formatarCanone(canone);
   const bn = bancoNomes || {};
   return `Você é o Mestre de um RPG de mesa por chat, em português brasileiro. Narre um mundo vivo, imprevisível e com vontade própria. Interprete TODOS os NPCs como pessoas reais (vozes, desejos, medos, segredos), crie eventos espontâneos, consequências e reviravoltas, e arbitre as regras com justiça.
@@ -146,7 +148,7 @@ FICHA DE INIMIGOS NO COMBATE (importante para a tática):
 - Se algum dano legítimo ocorreu antes da abertura (ex.: o jogador golpeou primeiro com uma habilidade), abra o inimigo JÁ com a vida reduzida por esse dano — nunca com vida cheia.
 - Cada inimigo tem competência implícita coerente com sua ameaça (um lacaio erra muito; um mestre-de-armas raramente erra). Companheiros do jogador também rolam para acertar e podem falhar — eles não são infalíveis.
 - Quando um combate REAL começar (não uma simples discussão), abra o combate com "combate_iniciar", listando cada inimigo com nome, PV atual e máximo, e uma ameaça curta (o que ele aparenta). Ex.: um chefe forte, dois lacaios fracos.
-- TEMPO REAL (importante): sempre que um golpe acerta um inimigo, envie "combate_inimigo_vida" na MESMA resposta em que narra o golpe — nunca deixe para o turno seguinte. Se o texto diz que a flecha acertou, o PV cai NESTE JSON. Vale também para dano ao jogador ("vida") e a companheiros ("grupo_vida"): aplique no mesmo turno do golpe.
+- TEMPO REAL (CRÍTICO): sempre que um golpe acerta um inimigo, envie "combate_inimigo_vida" na MESMA resposta em que narra o golpe — nunca no turno seguinte. Se a narrativa diz que acertou, o PV cai NESTE JSON. Se o golpe MATA o inimigo, mande a vida negativa suficiente para zerá-lo NESTE turno (o app fecha o combate sozinho e cobra os espólios). NUNCA descreva um inimigo morto/caído sem ter zerado o PV dele no mesmo JSON. Vale também para dano ao jogador ("vida") e a companheiros ("grupo_vida").
 - Use "combate_atualizar" para mudar a ameaça de um inimigo (ex.: "enfurecido", "cambaleando", "em fuga") ou revelar um novo inimigo que chega.
 - Quando o combate acabar (todos derrotados, fuga, rendição, trégua), feche com "combate_encerrar": true e dê os espólios/XP na mesma resposta.
 - Calibre o PV dos inimigos ao desafio: um lacaio tem 6-10 PV, um guerreiro 12-20, um bruto 25-40, um chefe 50+. O dano do jogador costuma ser 3-8 por golpe bem-sucedido; ajuste para o combate durar alguns turnos, nem instantâneo nem interminável.
@@ -629,7 +631,7 @@ function ModalCena({ personagem, combate, mundo, nomeCampanha, fechar }) {
     "Horror cósmico": "linear-gradient(160deg,#1a1420,#0a0a10)",
     "Pós-apocalíptico": "linear-gradient(160deg,#2b2418,#161208)",
     "Steampunk": "linear-gradient(160deg,#2a2018,#15100a)",
-  }[mundo.genero] || "linear-gradient(160deg,#241C33,#12101a)";
+  }[(mundo || {}).genero] || "linear-gradient(160deg,#241C33,#12101a)";
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.92)", backdropFilter: "blur(4px)" }} onClick={fechar}>
       <div className="tv-fade w-full max-w-lg rounded-2xl overflow-hidden" style={{ border: `1px solid ${T.amber}` }} onClick={(e) => e.stopPropagation()}>
@@ -663,7 +665,7 @@ function ModalCena({ personagem, combate, mundo, nomeCampanha, fechar }) {
           )}
         </div>
         <div className="p-4 flex items-center justify-between" style={{ background: T.panel, borderTop: `1px solid ${T.line}` }}>
-          <span className="tv-body text-xs italic" style={{ color: T.inkDim }}>{mundo.genero}</span>
+          <span className="tv-body text-xs italic" style={{ color: T.inkDim }}>{(mundo || {}).genero}</span>
           <Botao primario pequeno onClick={fechar}>Fechar</Botao>
         </div>
       </div>
@@ -801,6 +803,7 @@ function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, de
 }
 
 function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar }) {
+  mundo = mundo || { genero: "Fantasia medieval" };
   const racasDisp = racasDoGenero(mundo.genero);
   const ehFuturista = ["Ficção científica", "Cyberpunk", "Pós-apocalíptico"].includes(mundo.genero);
   const [raca, setRaca] = React.useState(atual.raca || racasDisp[0].nome);
@@ -854,6 +857,7 @@ function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar })
 
 function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado }) {
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
+  mundo = mundo || { genero: "Fantasia medieval" };
   if (!aba) return null;
   const xpProx = XP_POR_NIVEL(personagem.nivel);
   const equipados = personagem.equipados || {};
@@ -872,7 +876,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
             <div className="flex items-center gap-3">
               <Retrato semente={sementeDe(personagem)} tamanho={64} anel={T.amber} estado={estadoDe(personagem.vida, personagem.vidaMax)} />
               <div className="min-w-0">
-                <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>{mundo.genero} · Nível {personagem.nivel}</div>
+                <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>{(mundo || {}).genero} · Nível {personagem.nivel}</div>
                 <div className="tv-display text-3xl leading-tight" style={{ color: T.ink }}>{personagem.nome}</div>
                 <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>{personagem.conceito}</div>
                 {(personagem.classe || personagem.raca) && (
@@ -1175,6 +1179,7 @@ function TelaMundo({ concluir }) {
 }
 
 function TelaPersonagem({ mundo, concluir }) {
+  mundo = mundo || { genero: "Fantasia medieval" };
   const [nome, setNome] = useState("");
   const [conceito, setConceito] = useState("");
   const [historia, setHistoria] = useState("");
@@ -1294,7 +1299,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.5 · caminhos & ficha</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.6 · combate ágil</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1510,7 +1515,14 @@ function processarCombate(combateAtual, m, msgs) {
 
   if (m.combate_encerrar) { if (inimigos.length) msgs.push("⚔ O combate termina."); return null; }
   if (inimigos.length === 0) return combateAtual; // nada mudou de combate
-  /* se todos derrotados e o Mestre não encerrou, mantém visível até ele encerrar */
+  /* ENCERRAMENTO AUTOMÁTICO: se todos estão derrotados, o app fecha o combate
+     na hora — sem esperar o Mestre. Marca uma flag para pedir os espólios. */
+  const todosMortos = inimigos.length > 0 && inimigos.every((e) => e.derrotado || e.vida <= 0);
+  if (todosMortos) {
+    msgs.push("⚔ Todos os inimigos foram derrotados! O combate termina.");
+    m.__vitoriaAuto = true; // sinaliza para o app pedir espólios ao Mestre
+    return null;
+  }
   return { inimigos };
 }
 
@@ -1751,6 +1763,11 @@ export default function Taverna() {
       const novoCombate = processarCombate(combateRef.current, resp.mudancas, msgs);
       combateRef.current = novoCombate;
       setCombate(novoCombate);
+      /* vitória detectada por código: pede ao Mestre os espólios se ele ainda
+         não os deu neste turno (evita esperar ele "perceber" a morte) */
+      if (resp.mudancas.__vitoriaAuto && !resp.mudancas.adicionar_itens && !resp.mudancas.moedas && !resp.mudancas.adicionar_equipamento) {
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[COMBATE VENCIDO] Todos os inimigos caíram. Conceda AGORA os espólios e o XP desta vitória (moedas, itens, XP para mim e grupo_xp para os companheiros) coerentes com os inimigos derrotados, e narre o desfecho da luta em 2-3 frases.`;
+      }
     }
     pushMsgs([{ autor: "mestre", texto: resp.narrativa || "…" }, ...msgs.map((t) => ({ autor: "sistema", texto: t }))]);
     setSugestoes(resp.rolagem ? [] : (resp.sugestoes || []));
@@ -1805,7 +1822,7 @@ export default function Taverna() {
     if (!sv) { pushMsgs([{ autor: "sistema", texto: "Nenhuma aventura salva encontrada." }]); return; }
     try {
       const pers = migrarPersonagem(sv.personagem);
-      setMundo(sv.mundo); setNomeCampanha(sv.nomeCampanha); setPersonagem(pers);
+      setMundo(sv.mundo || { genero: "Fantasia medieval" }); setNomeCampanha(sv.nomeCampanha || "Aventura"); setPersonagem(pers);
       mensagensRef.current = Array.isArray(sv.mensagens) ? sv.mensagens : [];
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
       setSugestoes(sv.sugestoes || []); setRolagem(sv.rolagem || null);
