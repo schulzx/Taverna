@@ -85,3 +85,34 @@ export function resumoMapaParaPrompt(mapa, faccaoJogador) {
   const cab = faccaoJogador ? `Facção do jogador: ${faccaoJogador} (domina ${dominadas} cidade(s)).` : "";
   return `${cab}\n${linhas.join("\n")}`;
 }
+
+
+/* ---------------- ESTRADAS E DIVISAS (mapa mais realista) ----------------
+   Estradas ligam cada cidade às mais próximas; divisas agrupam cidades
+   da mesma região. Tudo derivado das posições determinísticas. */
+export function gerarEstradas(cidades) {
+  const rotas = [];
+  const cs = cidades || [];
+  for (let i = 0; i < cs.length; i++) {
+    // liga cada cidade às 2 mais próximas (cria uma malha de caminhos)
+    const dists = cs.map((o, j) => ({ j, d: Math.hypot(cs[i].x - o.x, cs[i].y - o.y) })).filter((o) => o.j !== i).sort((a, b) => a.d - b.d);
+    for (const { j } of dists.slice(0, 2)) {
+      const a = Math.min(i, j), b = Math.max(i, j);
+      if (!rotas.some((r) => r.a === a && r.b === b)) rotas.push({ a, b, mesmaRegiao: cs[i].regiao && cs[i].regiao === cs[j].regiao });
+    }
+  }
+  return rotas;
+}
+
+/* Centro aproximado de cada região (para desenhar o nome/divisa) */
+export function centrosDeRegiao(cidades) {
+  const grupos = {};
+  (cidades || []).forEach((c) => { if (!c.regiao) return; (grupos[c.regiao] = grupos[c.regiao] || []).push(c); });
+  return Object.entries(grupos).map(([regiao, cs]) => ({
+    regiao,
+    x: cs.reduce((s, c) => s + c.x, 0) / cs.length,
+    y: cs.reduce((s, c) => s + c.y, 0) / cs.length,
+    n: cs.length,
+    cor: cs.find((c) => c.relacao === "jogador") ? "#C9973F" : cs.find((c) => c.relacao === "inimiga") ? "#C0504D" : cs.find((c) => c.relacao === "aliada") ? "#6BbF59" : "#9A93A6",
+  }));
+}

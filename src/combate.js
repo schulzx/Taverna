@@ -130,3 +130,70 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [] }) {
   }
   return acoes;
 }
+
+/* ---------------- TESTES DE MORTE (D&D 5e) ----------------
+   A 0 PV o combatente cai inconsciente e "morrendo": a cada turno
+   rola um d20 puro. 10+ é sucesso, <10 é falha. 3 sucessos estabiliza
+   (vivo, inconsciente); 3 falhas morre. 20 natural revive com 1 PV.
+   Qualquer cura reergue na hora e zera os contadores. */
+export function testeDeMorte() {
+  const rolo = d(20);
+  if (rolo === 20) return { rolo, tipo: "revive", texto: "20 natural — volta à luta com 1 PV!" };
+  if (rolo === 1) return { rolo, tipo: "falha2", texto: "1 natural — duas falhas!" };
+  if (rolo >= 10) return { rolo, tipo: "sucesso", texto: `${rolo} — resiste (sucesso)` };
+  return { rolo, tipo: "falha", texto: `${rolo} — enfraquece (falha)` };
+}
+
+/* aplica o resultado a um estado {sucessos, falhas} e diz o desfecho */
+export function aplicarTesteMorte(estado, res) {
+  let { sucessos = 0, falhas = 0 } = estado || {};
+  if (res.tipo === "revive") return { sucessos: 0, falhas: 0, desfecho: "revive" };
+  if (res.tipo === "sucesso") sucessos += 1;
+  if (res.tipo === "falha") falhas += 1;
+  if (res.tipo === "falha2") falhas += 2;
+  if (sucessos >= 3) return { sucessos: 0, falhas: 0, desfecho: "estavel" };
+  if (falhas >= 3) return { sucessos, falhas, desfecho: "morto" };
+  return { sucessos, falhas, desfecho: "morrendo" };
+}
+
+/* ---------------- TURNO DOS COMPANHEIROS ----------------
+   Cada companheiro vivo age: se algum aliado está caído (0 PV/morrendo),
+   há chance de ir CURAR/estabilizar; senão, ATACA um inimigo. O app
+   resolve a matemática; a IA narra a decisão. */
+export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido = false, jogadorNome = "" }) {
+  const vivos = (grupo || []).filter((g) => (g.vida || 0) > 0 && !g.morrendo);
+  const inimigosVivos = (inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
+  const acoes = [];
+  for (const comp of vivos) {
+    // há alguém para socorrer? (jogador caído ou companheiro morrendo)
+    const aliadoCaido = jogadorCaido || (grupo || []).some((g) => g.morrendo);
+    const curador = /clérigo|clerigo|sacerdote|paladino|druida|bardo|curandeir/i.test(`${comp.classe || ""} ${comp.subclasse || ""} ${comp.conceito || ""}`);
+    if (aliadoCaido && (curador || Math.random() < 0.5)) {
+      const alvoNome = jogadorCaido ? jogadorNome : ((grupo || []).find((g) => g.morrendo)?.nome || jogadorNome);
+      acoes.push({ companheiro: comp.nome, tipo: "socorro", alvo: alvoNome });
+      continue;
+    }
+    if (inimigosVivos.length === 0) { acoes.push({ companheiro: comp.nome, tipo: "guarda" }); continue; }
+    // ataca um inimigo (o de menor PV, para ajudar a fechar a luta)
+    const alvo = [...inimigosVivos].sort((a, b) => (a.vida || 0) - (b.vida || 0))[0];
+    const r = resolverAtaque({
+      atacante: comp.nome, alvo, ehAtacanteInimigo: false,
+      bonusAtaque: 2 + (comp.nivel || 1), danoBase: 4 + (comp.nivel || 1) + d(4),
+      condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [],
+    });
+    acoes.push({ companheiro: comp.nome, tipo: "ataque", alvoNome: alvo.nome, r });
+  }
+  return acoes;
+}
+
+/* ---------------- BALANCEAMENTO: PV POR NÍVEL (referência D&D 5e) ----------------
+   Mantém o combate proporcional em vez de números inventados. */
+export function pvEsperadoJogador(nivel, vigor = 0) {
+  // ~ classe média: 8 + (nivel-1)*5 + vigor*nivel/2  (aproximação enxuta)
+  return Math.round(10 + (nivel - 1) * 6 + vigor * (1 + nivel * 0.3));
+}
+export function pvEsperadoInimigo(nivelJogador, ameaca = "comum") {
+  const base = pvEsperadoJogador(nivelJogador, 1);
+  const mult = { fraco: 0.35, comum: 0.7, competente: 1.0, elite: 1.6, lendario: 2.6 }[ameaca] || 0.7;
+  return Math.max(4, Math.round(base * mult));
+}

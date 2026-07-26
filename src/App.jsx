@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais } from "./classes.js";
-import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, RELACOES } from "./mapa.js";
-import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos } from "./combate.js";
+import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, RELACOES, gerarEstradas, centrosDeRegiao } from "./mapa.js";
+import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo } from "./combate.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -130,6 +130,7 @@ ROLAGENS (d20 + modificador vs Dificuldade):
 - HABILIDADES SÃO ESCOLHIDAS PELO JOGADOR (não invente): o jogador aprende habilidades de uma árvore fixa da classe dele ao subir de nível. NUNCA envie "adicionar_habilidades" por conta própria — apenas descreva o uso das que ele já tem. Se a ficção pedir um poder novo, sugira que ele o escolherá ao evoluir. (Companheiros e inimigos NÃO seguem essa regra: você pode dar habilidades a eles livremente.)
 - PROFISSÃO: use a profissão do herói para abrir soluções e oportunidades (o Alquimista prepara poções em acampamento; o Cartógrafo lê rotas; o Mercador consegue preços). Deixe a profissão importar de verdade.
 - REGISTRE LUGARES: sempre que apresentar uma cidade, vila ou local importante, registre-o no "canone" com "tipo" claro ("cidade", "vila", "capital", "local") — o app coloca no mapa automaticamente. Também pode usar "mapa_cidades" para detalhes de facção/relação.
+- NUNCA CONTRADIGA O CÂNONE: o cânone abaixo é a verdade absoluta e imutável do mundo. Um personagem registrado como mago é mago para sempre — jamais o transforme em outra coisa. Tipo, gênero, papel, nome e relações do que está no cânone NÃO MUDAM. Se você fica em dúvida sobre um fato, CONSULTE o cânone e siga-o à risca; na ausência de informação, é melhor ser vago do que inventar algo que o contradiga. Contradizer o cânone quebra a imersão e é o pior erro que você pode cometer.
 - CÂNONE (memória permanente que NUNCA se perde): sempre que você estabelecer ou descobrir um FATO DURÁVEL — um NPC (nome, se é mago/guerreiro/etc, papel, gênero, onde está), um lugar importante, um nome falso que o jogador usou, uma promessa, um vínculo, um segredo revelado — REGISTRE em "canone" (veja formato). Fatos no CÂNONE aparecem literais em toda resposta e são a VERDADE: jamais os contradiga. Se o jogador perguntar "X te lembra algo?" e X estiver no cânone, RECONHEÇA o que está lá — nunca invente uma versão nova. Se NÃO estiver no cânone e você não tem certeza, trate como algo que o personagem talvez não saiba, em vez de inventar um fato que possa colidir depois. Atualize uma ficha (ex.: o mago mudou de cidade) reescrevendo os campos que mudaram; NUNCA mude tipo/gênero/identidade de alguém já registrado.
 - COLCHETES SÃO META: qualquer texto entre [colchetes] vindo do jogador ou do app (ex.: [seja mais direto], [não descreva sangue], [HABILIDADE], [ROLAGEM]) é instrução FORA do personagem. Obedeça ao conteúdo, mas NUNCA o trate como fala/ação do personagem e NUNCA o repita na narrativa.
 
@@ -156,6 +157,7 @@ COMBATE, ESPÓLIOS E ACHADOS:
 - ACHADOS ESPONTÂNEOS: o mundo está cheio de coisas. Ao explorar, o Mestre espontaneamente coloca descobertas — um guerreiro morto com uma bela armadura, um baú alagado, um altar com uma relíquia, uma bolsa esquecida. Nem tudo é seguro; alguns achados têm risco ou preço.
 
 FICHA DE INIMIGOS NO COMBATE (importante para a tática):
+- BALANCEAMENTO DE PV (importante — não infle números!): o PV dos inimigos deve ser PROPORCIONAL ao meu nível. Referência por ameaça (para um herói do meu nível): inimigo "fraco" tem cerca de 35% do meu PV, "comum" ~70%, "competente" ~igual ao meu, "elite" ~1,6×, "lendário/chefe" ~2,6×. NUNCA dê a um inimigo comum 3× o meu PV — isso quebra o jogo. Um chefe pode ser forte, mas dentro dessa escala. Quando criar um inimigo, defina "combate_inimigo_vida"/PV coerente com essa tabela e com meu nível atual.
 - COMBATE RESOLVIDO PELO SISTEMA: quando você receber [COMBATE — RESOLVIDO PELO SISTEMA], o app JÁ rolou os dados, calculou e aplicou o dano do ataque do jogador. Sua função é APENAS narrar esse resultado (não recalcule, não invente outro número, não mude quem acertou). Depois, conduza a resposta dos inimigos: descreva os contra-ataques e aplique o dano deles a mim via "vida" e aos companheiros via "grupo_vida" — pode rolar mentalmente, mas mantenha coerência com a ameaça de cada um. Você continua no controle da FICÇÃO do combate (quem faz o quê, táticas, ambiente); o sistema cuida só da matemática dos ataques do jogador.
 - ABERTURA NO MESMO TURNO (PRIORIDADE MÁXIMA): no instante em que QUALQUER hostilidade começa — inimigo ameaça/ataca/embosca, OU o jogador ataca, OU alguém saca arma com intenção — envie "combate_iniciar" NESSA MESMA resposta, SEMPRE. Se a cena tem inimigo hostil presente, o combate já deve estar aberto. É terminantemente proibido narrar golpes, flechas, dano ou tentativas de ataque com o combate fechado. Na dúvida, ABRA o combate.
 - Em combate, mantenha a narrativa CURTA (2-4 frases) para não faltar espaço aos campos "combate_" no JSON.
@@ -187,6 +189,7 @@ TURNO DO MUNDO (o mundo AGE, não só reage — estilo Baldur's Gate 3):
 - Consequências correm em segundo plano: se o jogador ignorou uma ameaça, ela cresce; se deixou um ferido, ele piora ou é ajudado por outro. O mundo não congela esperando o herói.
 - DENTRO do acampamento, o turno do mundo PARA (é uma pausa segura). Ele volta quando o acampamento termina.
 
+DESFECHOS TÊM PESO (não seja insistente nem bobo): quando o jogador vence de forma DECISIVA — mata o último líder, toma a capital, destrói a base —, aquilo ACABA. Respeite a vitória. NÃO ressuscite a mesma ameaça repetidamente com desculpas ("sobraram alguns escondidos", "havia uma arma secreta", "um herdeiro oculto") — isso frustra e desvaloriza a conquista. Uma facção destruída fica destruída; se quiser um novo conflito, crie uma ameaça NOVA e diferente, com identidade própria, não a mesma reciclada. Consequências e rescaldo são bem-vindos; ressurreições baratas do mesmo inimigo, não.
 MUNDO VIVO E ESPONTÂNEO (essencial):
 - O jogador NÃO controla tudo. O mundo tem vontade própria: personagens surgem sem aviso, brigas estouram, o clima muda, facções agem fora de cena, uma emboscada acontece, um mercador ambulante cruza a estrada, alguém pede ajuda, um perseguidor aparece. Injete esses acontecimentos por conta própria, sem o jogador pedir.
 - Varie o ritmo: nem toda cena é perigo; há respiros, encontros curiosos, humor, mistério.
@@ -906,10 +909,22 @@ function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
       {/* mapa visual */}
       <div className="relative rounded-xl mb-3" style={{ background: "radial-gradient(circle at 30% 20%, #1d2438, #12101a)", border: `1px solid ${T.line}`, aspectRatio: "4 / 3", overflow: "hidden" }}>
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
-          {cidades.map((c, i) => cidades.slice(i + 1).filter((o) => o.regiao && o.regiao === c.regiao).map((o, j) => (
-            <line key={`${i}-${j}`} x1={c.x} y1={c.y} x2={o.x} y2={o.y} stroke="#ffffff10" strokeWidth="0.4" />
-          )))}
+          {/* divisas de região: halo suave ao redor do centro de cada região */}
+          {centrosDeRegiao(cidades).map((r, i) => (
+            <circle key={`reg-${i}`} cx={r.x} cy={r.y} r={14 + r.n * 3} fill={r.cor} opacity="0.07" stroke={r.cor} strokeOpacity="0.25" strokeWidth="0.3" strokeDasharray="1.5 1.5" />
+          ))}
+          {/* estradas: linha cheia dentro da região, tracejada entre regiões */}
+          {gerarEstradas(cidades).map((rt, i) => {
+            const a = cidades[rt.a], b = cidades[rt.b];
+            if (!a || !b) return null;
+            return <line key={`rd-${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={rt.mesmaRegiao ? "#d8c9a855" : "#d8c9a825"} strokeWidth={rt.mesmaRegiao ? 0.6 : 0.4} strokeDasharray={rt.mesmaRegiao ? "" : "1.2 1.2"} />;
+          })}
         </svg>
+        {centrosDeRegiao(cidades).map((r, i) => (
+          <div key={`rn-${i}`} style={{ position: "absolute", left: `${r.x}%`, top: `${r.y}%`, transform: "translate(-50%,-50%)", pointerEvents: "none" }}>
+            <div className="tv-mono" style={{ fontSize: 6, color: r.cor, opacity: 0.5, textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap" }}>{r.regiao}</div>
+          </div>
+        ))}
         {cidades.map((c, i) => {
           const rel = RELACOES[c.relacao] || RELACOES.neutra;
           const atual = cidadeAtual && c.nome.toLowerCase() === String(cidadeAtual).toLowerCase();
@@ -1433,7 +1448,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v3.5 · mundo pulsante</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v3.7 · mapa vivo</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2129,8 +2144,40 @@ export default function Taverna() {
         }
         if (linhasSis.length) pushMsgs(linhasSis);
         persAtual = { ...personagem, vida: Math.max(0, personagem.vida - danoNoJogador), grupo: grupoAtual };
+
+        /* TURNO DOS COMPANHEIROS: atacam inimigos ou socorrem quem caiu */
+        const jogadorCaido = persAtual.vida <= 0;
+        const acoesComp = turnoDosCompanheiros({ grupo: persAtual.grupo || [], inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome });
+        const partesComp = [];
+        for (const ac of acoesComp) {
+          if (ac.tipo === "ataque" && ac.r) {
+            if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: "⚔ " + resumoDoAtaque(ac.r) }]);
+            if (ac.r.dano > 0) {
+              combPos.inimigos = combPos.inimigos.map((e) => e.nome === ac.alvoNome ? { ...e, vida: Math.max(0, e.vida - ac.r.dano), derrotado: (e.vida - ac.r.dano) <= 0 } : e);
+            }
+            partesComp.push(`${ac.companheiro} atacou ${ac.alvoNome} (${ac.r.resultado === "acerta" || ac.r.resultado === "critico" ? ac.r.dano + " dano" : "errou"})`);
+          } else if (ac.tipo === "socorro") {
+            partesComp.push(`${ac.companheiro} corre para socorrer ${ac.alvo}`);
+          }
+        }
+        combateRef.current = combPos; setCombate({ ...combPos });
+
+        /* SISTEMA DE MORTE: se o jogador está a 0 PV, faz um teste de morte */
+        if (persAtual.vida <= 0) {
+          const estadoMorte = persAtual.morte || { sucessos: 0, falhas: 0 };
+          const res = testeDeMorte();
+          const ap = aplicarTesteMorte(estadoMorte, res);
+          pushMsgs([{ autor: "sistema", texto: `☠ Teste de morte: ${res.texto}` }]);
+          if (ap.desfecho === "revive") { persAtual = { ...persAtual, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } }; pushMsgs([{ autor: "sistema", texto: "✨ Você volta a si com 1 PV!" }]); }
+          else if (ap.desfecho === "estavel") { persAtual = { ...persAtual, morrendo: true, morte: { sucessos: 0, falhas: 0 } }; pushMsgs([{ autor: "sistema", texto: "Você estabiliza — inconsciente, mas vivo. Alguém precisa te ajudar." }]); }
+          else if (ap.desfecho === "morto") { persAtual = { ...persAtual, morrendo: false, morto: true, morte: ap }; pushMsgs([{ autor: "sistema", texto: "💀 Você tomba… mas enquanto houver esperança, a lenda não termina." }]); }
+          else { persAtual = { ...persAtual, morrendo: true, morte: ap }; }
+        }
+
         setPersonagem(persAtual);
-        resumoInimigos = ` Turno dos inimigos (resolvido pelo sistema, dano já aplicado — apenas narre as decisões, sem recalcular): ${partes.join("; ")}.`;
+        const compTxt = partesComp.length ? ` Meus companheiros agiram: ${partesComp.join("; ")}.` : "";
+        const morteTxt = persAtual.vida <= 0 ? ` ATENÇÃO: eu caí a 0 PV e estou ${persAtual.morto ? "à beira da morte" : "inconsciente, lutando pela vida (testes de morte). Um aliado pode me estabilizar ou curar para eu voltar"}.` : "";
+        resumoInimigos = ` Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ${partes.join("; ")}.${compTxt}${morteTxt}`;
       }
 
       enviar(`[COMBATE — RESOLVIDO PELO SISTEMA] Ataquei ${alvo.nome}: ${desfecho} (rolagem d20=${r.d20}${r.bonus ? `+${r.bonus}` : ""}=${r.total} vs defesa ${r.ca}). O dano já foi aplicado.${resumoInimigos} NÃO recalcule nem mude números — NARRE de forma vívida (2-4 frases) tanto o meu golpe quanto as decisões e reações dos inimigos: quem recuou, quem avançou, quem mudou de alvo. Ação declarada: ${acao}`, persAtual);
