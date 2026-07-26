@@ -127,10 +127,12 @@ ROLAGENS (d20 + modificador vs Dificuldade):
 - FICHA DE CAMINHO: ${personagem.raca ? `${personagem.raca}` : "origem indefinida"}${personagem.classe ? `, ${personagem.classe}` : ""}${personagem.subclasse ? ` (${personagem.subclasse})` : ""}${personagem.profissao ? `, de profissão ${personagem.profissao}` : ""}. Respeite isso na narrativa: um Mago não abre fechaduras como um Ladino; um Ferreiro repara equipamento; a raça/origem colore como o mundo o trata.
 - HABILIDADES SÃO ESCOLHIDAS PELO JOGADOR (não invente): o jogador aprende habilidades de uma árvore fixa da classe dele ao subir de nível. NUNCA envie "adicionar_habilidades" por conta própria — apenas descreva o uso das que ele já tem. Se a ficção pedir um poder novo, sugira que ele o escolherá ao evoluir. (Companheiros e inimigos NÃO seguem essa regra: você pode dar habilidades a eles livremente.)
 - PROFISSÃO: use a profissão do herói para abrir soluções e oportunidades (o Alquimista prepara poções em acampamento; o Cartógrafo lê rotas; o Mercador consegue preços). Deixe a profissão importar de verdade.
+- REGISTRE LUGARES: sempre que apresentar uma cidade, vila ou local importante, registre-o no "canone" com "tipo" claro ("cidade", "vila", "capital", "local") — o app coloca no mapa automaticamente. Também pode usar "mapa_cidades" para detalhes de facção/relação.
 - CÂNONE (memória permanente que NUNCA se perde): sempre que você estabelecer ou descobrir um FATO DURÁVEL — um NPC (nome, se é mago/guerreiro/etc, papel, gênero, onde está), um lugar importante, um nome falso que o jogador usou, uma promessa, um vínculo, um segredo revelado — REGISTRE em "canone" (veja formato). Fatos no CÂNONE aparecem literais em toda resposta e são a VERDADE: jamais os contradiga. Se o jogador perguntar "X te lembra algo?" e X estiver no cânone, RECONHEÇA o que está lá — nunca invente uma versão nova. Se NÃO estiver no cânone e você não tem certeza, trate como algo que o personagem talvez não saiba, em vez de inventar um fato que possa colidir depois. Atualize uma ficha (ex.: o mago mudou de cidade) reescrevendo os campos que mudaram; NUNCA mude tipo/gênero/identidade de alguém já registrado.
 - COLCHETES SÃO META: qualquer texto entre [colchetes] vindo do jogador ou do app (ex.: [seja mais direto], [não descreva sangue], [HABILIDADE], [ROLAGEM]) é instrução FORA do personagem. Obedeça ao conteúdo, mas NUNCA o trate como fala/ação do personagem e NUNCA o repita na narrativa.
 
-CONDIÇÕES DE ESTADO (D&D/BG3 — dentro e fora de combate):
+CONDIÇÕES DE ESTADO / BUFFS E DEBUFFS (D&D e MMORPGs — dentro e fora de combate):
+- Repertório sugerido (use os nomes consagrados): DEBUFFS — Envenenado (perde PV/turno), Sangrando (perde PV/turno até estancar), Queimando (dano de fogo/turno), Atordoado (perde a ação), Amedrontado (desvantagem em ataques), Cego (desvantagem; atacantes têm vantagem), Enraizado/Preso (não se move), Lento (perde velocidade), Silenciado (não usa habilidades mágicas), Enfraquecido (dano reduzido), Amaldiçoado (azar nas rolagens), Congelado (pula turnos), Confuso (pode errar o alvo). BUFFS — Abençoado (vantagem), Inspirado (bônus na próxima rolagem), Regeneração (recupera PV/turno), Apressado (ação extra), Fortalecido (dano aumentado), Protegido (reduz dano), Furtivo (difícil de acertar), Enfurecido (dano alto, defesa baixa).
 - Personagens e inimigos podem receber condições com efeito mecânico real, via "condicoes_adicionar" (e "condicoes_remover"). Cada condição: {"alvo":"você"|nome do NPC/inimigo,"nome":"Envenenado","turnos":3,"efeito":"perde 2 PV por turno","tipo":"ruim"|"bom"}.
 - Condições comuns e o que fazem: Envenenado (perde PV por turno), Sangrando (perde PV por turno até estancar), Atordoado (perde a próxima ação), Amedrontado (desvantagem em ataques), Cego (desvantagem; quem o ataca tem vantagem), Caído/Derrubado (desvantagem corpo a corpo), Enfraquecido (dano reduzido), Abençoado/Inspirado (vantagem), Apressado (ação extra). Crie outras coerentes com a ficção.
 - Use condições para dar consequência: o veneno da aranha, a lama que prende, o grito que amedronta. Uma condição que dá vantagem/desvantagem deve refletir nas rolagens seguintes. O app conta os turnos e mostra as condições ativas; declare o efeito e deixe o app/ narrativa aplicarem.
@@ -142,6 +144,7 @@ HABILIDADES E EFEITOS TEMPORÁRIOS:
 - Duração equilibrada (referência de mesa): buffs fortes duram pouco (2-3 turnos); utilitários médios 3-5; auras leves até 8-10. Nunca "permanente".
 - Bônus de buff equilibrado: um efeito que ajuda em testes soma +2 (NÃO +4 ou mais). Assim, atributo +4 com buff vira +6, não +8 — continua desafiador. Buffs muito fortes devem custar mais PM e durar menos.
 - Quando o jogador usar [HABILIDADE], a mana já foi descontada. Se a habilidade tem duração, DECLARE em "efeitos_adicionar" (nome, bônus, turnos, a que se aplica). O app conta os turnos e remove sozinho.
+- NÃO ATIVE HABILIDADE POR MENÇÃO: se o jogador apenas CITA o nome de uma habilidade numa conversa ("você conhece Bola de Fogo?", "aprendi Curar"), isso NÃO é usá-la — não gaste PM nem produza o efeito. Só trate como uso quando houver intenção clara de usar agora (o app sinaliza com [HABILIDADE], ou o jogador diz "uso/lanço/conjuro X").
 - COBRANÇA ÚNICA (importante): ao responder a [HABILIDADE], NUNCA envie "mana" negativa em mudancas — o custo JÁ foi descontado; mana negativa nesse turno é cobrança dupla (bug). Só use mana positiva (recuperação) nesse turno.
 - Efeitos ativos aparecem na ficha; você os vê no histórico. Considere-os na narração e nos testes.
 
@@ -540,6 +543,8 @@ function OverlayDado({ rolagem, modificador, aoConcluir }) {
   const [faseD, setFaseD] = useState("rolando");
   const [valor, setValor] = useState(1);
   const [par, setPar] = useState(null); // [a,b] quando há vantagem/desvantagem
+  const finalRef = useRef(null);
+  const setFinalRef = (v) => { finalRef.current = v; };
   const vant = !!rolagem.vantagem, desv = !!rolagem.desvantagem;
   const modo = vant && !desv ? "vantagem" : desv && !vant ? "desvantagem" : null;
   const lados = 20;
@@ -559,8 +564,8 @@ function OverlayDado({ rolagem, modificador, aoConcluir }) {
           final = 1 + Math.floor(Math.random() * lados);
         }
         setValor(final);
+        setFinalRef(final);
         setFaseD("resultado");
-        setTimeout(() => aoConcluir(final), 1600);
       }
     }, 70);
     return () => clearInterval(iv);
@@ -623,6 +628,9 @@ function OverlayDado({ rolagem, modificador, aoConcluir }) {
             <div className="tv-display text-3xl mt-1" style={{ color: desastre ? T.danger : critico ? T.amberSoft : passou || dc == null ? T.ok : T.danger }}>
               {critico ? "Crítico!" : desastre ? "Desastre!" : dc == null ? "Rolado" : passou ? "Sucesso" : "Falha"}
             </div>
+            <button onClick={() => aoConcluir(finalRef.current)} className="mt-5 rounded-xl px-6 py-2.5 tv-mono text-sm" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>
+              Continuar →
+            </button>
           </div>
         )}
       </div>
@@ -1385,7 +1393,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.8 · mapa & facções</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.9 · dado & aflições</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1727,7 +1735,9 @@ export default function Taverna() {
   useEffect(() => {
     const cresceu = mensagens.length > nMsgRef.current;
     nMsgRef.current = mensagens.length;
-    if (cresceu && !longeDoFim) fimRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    /* não rola sozinho se há uma rolagem pendente — o jogador quer ler a
+       narrativa do Mestre antes de rolar, sem a tela pular para o rodapé */
+    if (cresceu && !longeDoFim && !rolagem) fimRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [mensagens]); // eslint-disable-line
 
   /* carrega o save deste dispositivo na abertura */
@@ -1869,6 +1879,21 @@ export default function Taverna() {
         if (nova) msgs.push(`📖 Registrado: ${nome}`);
       }
       canoneRef.current = c;
+      /* rede de segurança do MAPA: se o cânone registra um lugar (tipo local/
+         cidade/vila/capital), garante que ele exista no mapa mesmo que o Mestre
+         não tenha enviado "mapa_cidades". Assim o mapa nunca fica vazio. */
+      let mp2 = mapaRef.current, tocouMapa = false;
+      for (const [nome, ficha] of Object.entries(c)) {
+        const tipo = (ficha.tipo || "").toLowerCase();
+        const ehLugar = ["local", "cidade", "vila", "capital", "fortaleza", "vilarejo", "povoado", "reduto", "ruína"].some((t) => tipo.includes(t));
+        if (!ehLugar) continue;
+        if (!(mp2.cidades || []).some((cc) => cc.nome.toLowerCase() === nome.toLowerCase())) {
+          if (!tocouMapa) { mp2 = { cidades: [...(mp2.cidades || [])], faccoes: [...(mp2.faccoes || [])] }; tocouMapa = true; }
+          mp2.cidades.push(criarCidade(nome, { tipo: tipo.includes("capital") ? "capital" : tipo.includes("vila") || tipo.includes("povoado") ? "vila" : "cidade", regiao: ficha.local || "", faccao: ficha.faccao || null, notas: ficha.notas || "" }));
+          msgs.push(`🗺 ${nome} surgiu no mapa`);
+        }
+      }
+      if (tocouMapa) { mapaRef.current = mp2; setMapa(mp2); }
       systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current));
     }
     setPersonagem(pers);
@@ -1981,7 +2006,10 @@ export default function Taverna() {
        no app, para não depender do Mestre lembrar de cobrar. */
     const normal = (x) => (x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const acaoN = normal(acao);
-    const habCitada = (personagem.habilidades || []).find((h) => h && h.nome && acaoN.includes(normal(h.nome)));
+    /* só considera USO se houver intenção clara (verbo de uso) + o nome da habilidade.
+       Assim "pergunto sobre Bola de Fogo" NÃO ativa, mas "uso Bola de Fogo" ativa. */
+    const temIntencao = /\b(uso|usar|lanco|lancar|conjuro|conjurar|invoco|invocar|ativo|ativar|executo|executar|realizo|disparo|disparar|aplico|aplicar|canalizo|uso a|uso o)\b/.test(acaoN);
+    const habCitada = temIntencao ? (personagem.habilidades || []).find((h) => h && h.nome && acaoN.includes(normal(h.nome))) : null;
     if (habCitada) {
       const custo = Math.max(0, Number(habCitada.custo) || 0);
       if (personagem.mana < custo) { pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `Mana insuficiente para ${habCitada.nome}.` }]); return; }
@@ -2243,6 +2271,17 @@ export default function Taverna() {
               <span className="tv-mono text-[10px] shrink-0" style={{ color: T.amberSoft }}>NV {personagem.nivel}</span>
               <BarraMini rotulo="XP" atual={personagem.xp} max={XP_POR_NIVEL(personagem.nivel)} cor={T.ok} />
             </div>
+
+            {(personagem.condicoes || []).length > 0 && (
+              <div className="px-4 md:px-8 flex items-center gap-1.5 pb-1.5 flex-wrap" style={{ paddingRight: "68px" }}>
+                {personagem.condicoes.map((c, i) => (
+                  <span key={i} className="tv-mono text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1" title={c.efeito}
+                    style={{ background: c.tipo === "bom" ? "#1f3320" : "#33201f", border: `1px solid ${c.tipo === "bom" ? T.ok : T.danger}`, color: c.tipo === "bom" ? T.ok : T.danger }}>
+                    {c.tipo === "bom" ? "✦" : "☠"} {c.nome} <span style={{ opacity: 0.7 }}>{c.turnos}t</span>
+                  </span>
+                ))}
+              </div>
+            )}
 
             <div className="px-4 md:px-8 shrink-0 flex items-stretch gap-2" style={{ paddingRight: "68px", paddingBottom: rolagem ? "6px" : "20px" }}>
               <div className="flex flex-1 gap-2 rounded-2xl p-2 min-w-0" style={{ background: T.panel, border: `1px solid ${habSel ? T.violet : T.line}` }}>
