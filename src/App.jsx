@@ -766,6 +766,14 @@ function ModalNivel({ nivel, personagem, escolher }) {
 
 /* ---------------- Painel lateral (Ficha/Grupo/Bolsa) ---------------- */
 
+/* Instrução central do "turno do mundo": CURTO NO TEMPO (o presente, sem pular
+   horas), mas PLENO DE VIDA — pessoas agem e conversam, coisas acontecem agora. */
+const INSTRUCAO_MUNDO_VIVO = `Agora o mundo VIVE este mesmo instante — não avance o tempo (nada de "horas depois"), fique no presente imediato, mas faça a cena PULSAR com vida real, com a mesma intensidade de uma ação minha:
+- Se há pessoas por perto, elas FALAM e AGEM: puxam conversa comigo ou entre si, discutem, brincam, negociam, reagem ao que acabou de acontecer. Dê falas reais aos NPCs (com nome), não só descrições de ambiente.
+- Companheiros do grupo se manifestam: opinam, provocam, contam algo, questionam uma decisão.
+- Algo ACONTECE no presente: uma pequena reviravolta, alguém chega ou parte, uma oferta, uma tensão, um pedido, uma fofoca relevante, um gesto inesperado.
+- NÃO seja tímido nem genérico: evite "um pássaro voa" ou "o vento sopra" como se fosse o evento. O mundo é feito de PESSOAS vivendo. Faça 2-4 frases densas de vida presente e devolva a vez a mim.`;
+
 const ABAS = [{ id: "ficha", rotulo: "Ficha", icone: "☰" }, { id: "grupo", rotulo: "Grupo", icone: "⚑" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }];
 
 const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D" };
@@ -1425,7 +1433,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v3.4 · diálogo livre</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v3.5 · mundo pulsante</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1757,7 +1765,6 @@ export default function Taverna() {
   const [aguardandoMundo, setAguardandoMundo] = useState(false);
   const [mostrarHoras, setMostrarHoras] = useState(false);
   const ehAcaoMundoRef = useRef(false); // marca que o próximo enviar é a vez do mundo
-  const dialogoSemMoverRef = useRef(false); // marca fala pura durante a espera do mundo
   const canoneRef = useRef({});
   const bancoNomesRef = useRef(null);
   const mapaRef = useRef({ cidades: [], faccoes: [] });
@@ -1965,14 +1972,11 @@ export default function Taverna() {
       /* ALTERNÂNCIA: se esta foi uma AÇÃO DO JOGADOR (não a vez do mundo, não combate,
          não acampamento), a próxima vez é OBRIGATORIAMENTE do mundo. */
       const foiVezDoMundo = ehAcaoMundoRef.current;
-      const eraDialogo = dialogoSemMoverRef.current;
       ehAcaoMundoRef.current = false;
-      dialogoSemMoverRef.current = false;
-      if (eraDialogo) {
-        /* foi só conversa durante a espera: mantém a espera do mundo ativa,
-           a menos que tenha surgido rolagem/combate */
-        if (!resp.rolagem && !combateRef.current) setAguardandoMundo(true); else setAguardandoMundo(false);
-      } else if (!foiVezDoMundo && !combateRef.current && !acampadoRef.current && !resp.rolagem) setAguardandoMundo(true);
+      /* após uma AÇÃO do jogador (que não seja já a vez do mundo), a próxima vez
+         é do mundo. Responder+mover já conta como vez do mundo, então cai aqui
+         como foiVezDoMundo=true e libera a barra normal. */
+      if (!foiVezDoMundo && !combateRef.current && !acampadoRef.current && !resp.rolagem) setAguardandoMundo(true);
       else setAguardandoMundo(false);
       turnoContRef.current += 1;
       if (turnoContRef.current >= 8) {
@@ -2136,25 +2140,25 @@ export default function Taverna() {
     enviar(acao, personagem);
   };
 
-  /* VEZ DO MUNDO (movimento CURTO, obrigatório após cada ação do jogador) */
+  /* VEZ DO MUNDO: o mundo vive o instante presente (curto no TEMPO, mas cheio
+     de vida — pessoas agem, falam, decidem; coisas acontecem agora). */
   const vezDoMundo = () => {
     if (bloqueado || acampadoRef.current) return;
     ehAcaoMundoRef.current = true;
     setAguardandoMundo(false);
-    pushMsgs([{ autor: "sistema", texto: "🌍 A vez do mundo…" }]);
-    enviar("[VEZ DO MUNDO — momento curto] É a vez do mundo agir, brevemente. Em 1-2 frases, mostre UM movimento momentâneo: um NPC próximo faz ou diz algo, um pequeno sinal do que está em curso, um companheiro reage, um detalhe do ambiente muda. Curto e vivo — nada de grandes saltos de tempo. Depois devolva a vez a mim.", personagem);
+    pushMsgs([{ autor: "sistema", texto: "🌍 O mundo vive…" }]);
+    enviar(`[VEZ DO MUNDO] ${INSTRUCAO_MUNDO_VIVO}`, personagem);
   };
 
-  /* FALAR durante a espera do mundo: é só diálogo, NÃO move o mundo (a espera
-     continua ativa depois). Marca ehAcaoMundo para não reativar a alternância. */
-  const falarSemMover = (texto) => {
+  /* RESPONDER + VEZ DO MUNDO ao mesmo tempo: sua fala é conduzida E o mundo
+     vive o mesmo instante (pessoas agem e falam, coisas acontecem no presente). */
+  const responderEMover = (texto) => {
     const fala = (texto || "").trim();
     if (!fala || bloqueado) return;
     setEntrada("");
-    ehAcaoMundoRef.current = true; // impede que esta fala reative nova espera
-    dialogoSemMoverRef.current = true;
+    ehAcaoMundoRef.current = true;
     pushMsgs([{ autor: "jogador", texto: fala }]);
-    enviar(`[DIÁLOGO — sem mover o mundo] Respondo/falo, apenas conversa: "${fala}". Isto é só diálogo: NÃO avance o tempo, NÃO gere eventos, NÃO faça o mundo agir — apenas conduza a conversa (o NPC responde/reage à minha fala). O mundo permanece pausado até eu decidir passar a vez.`, personagem);
+    enviar(`[RESPONDO E O MUNDO VIVE] Eu falo: "${fala}". ${INSTRUCAO_MUNDO_VIVO}`, personagem);
   };
 
   /* PASSAR O TEMPO (deliberado): simula N horas; quanto mais horas, mais o mundo muda */
@@ -2442,12 +2446,12 @@ export default function Taverna() {
 
             {aguardandoMundo && !bloqueado && !rolagem ? (
               <div className="px-4 md:px-8 shrink-0" style={{ paddingRight: "68px", paddingBottom: "20px" }}>
-                {/* caixa de fala: responder é só diálogo, não move o mundo */}
+                {/* responder move o mundo junto — você fala E o mundo vive o instante */}
                 <div className="flex gap-2 rounded-2xl p-2 min-w-0 mb-2" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
-                  <input value={entrada} onChange={(e) => setEntrada(e.target.value)} onKeyDown={(e) => e.key === "Enter" && falarSemMover(entrada)}
-                    placeholder="Responder ou conversar… (não move o mundo)"
+                  <input value={entrada} onChange={(e) => setEntrada(e.target.value)} onKeyDown={(e) => e.key === "Enter" && responderEMover(entrada)}
+                    placeholder="Responder / falar…"
                     className="flex-1 bg-transparent outline-none tv-body text-[15px] px-3 min-w-0" style={{ color: T.ink }} />
-                  <Botao pequeno desativado={!entrada.trim()} onClick={() => falarSemMover(entrada)}>Falar</Botao>
+                  <Botao primario pequeno desativado={!entrada.trim()} onClick={() => responderEMover(entrada)}>Responder →</Botao>
                 </div>
                 <div className="flex items-stretch gap-2">
                   <button onClick={vezDoMundo} className="tv-fade flex-1 rounded-2xl py-3 tv-mono text-sm flex items-center justify-center gap-2" style={{ background: T.amber, color: T.onAccent, fontWeight: 700, letterSpacing: "0.05em" }}>
