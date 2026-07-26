@@ -1425,7 +1425,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v3.3 · turnos vivos</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v3.4 · diálogo livre</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1757,6 +1757,7 @@ export default function Taverna() {
   const [aguardandoMundo, setAguardandoMundo] = useState(false);
   const [mostrarHoras, setMostrarHoras] = useState(false);
   const ehAcaoMundoRef = useRef(false); // marca que o próximo enviar é a vez do mundo
+  const dialogoSemMoverRef = useRef(false); // marca fala pura durante a espera do mundo
   const canoneRef = useRef({});
   const bancoNomesRef = useRef(null);
   const mapaRef = useRef({ cidades: [], faccoes: [] });
@@ -1964,8 +1965,14 @@ export default function Taverna() {
       /* ALTERNÂNCIA: se esta foi uma AÇÃO DO JOGADOR (não a vez do mundo, não combate,
          não acampamento), a próxima vez é OBRIGATORIAMENTE do mundo. */
       const foiVezDoMundo = ehAcaoMundoRef.current;
+      const eraDialogo = dialogoSemMoverRef.current;
       ehAcaoMundoRef.current = false;
-      if (!foiVezDoMundo && !combateRef.current && !acampadoRef.current && !resp.rolagem) setAguardandoMundo(true);
+      dialogoSemMoverRef.current = false;
+      if (eraDialogo) {
+        /* foi só conversa durante a espera: mantém a espera do mundo ativa,
+           a menos que tenha surgido rolagem/combate */
+        if (!resp.rolagem && !combateRef.current) setAguardandoMundo(true); else setAguardandoMundo(false);
+      } else if (!foiVezDoMundo && !combateRef.current && !acampadoRef.current && !resp.rolagem) setAguardandoMundo(true);
       else setAguardandoMundo(false);
       turnoContRef.current += 1;
       if (turnoContRef.current >= 8) {
@@ -2136,6 +2143,18 @@ export default function Taverna() {
     setAguardandoMundo(false);
     pushMsgs([{ autor: "sistema", texto: "🌍 A vez do mundo…" }]);
     enviar("[VEZ DO MUNDO — momento curto] É a vez do mundo agir, brevemente. Em 1-2 frases, mostre UM movimento momentâneo: um NPC próximo faz ou diz algo, um pequeno sinal do que está em curso, um companheiro reage, um detalhe do ambiente muda. Curto e vivo — nada de grandes saltos de tempo. Depois devolva a vez a mim.", personagem);
+  };
+
+  /* FALAR durante a espera do mundo: é só diálogo, NÃO move o mundo (a espera
+     continua ativa depois). Marca ehAcaoMundo para não reativar a alternância. */
+  const falarSemMover = (texto) => {
+    const fala = (texto || "").trim();
+    if (!fala || bloqueado) return;
+    setEntrada("");
+    ehAcaoMundoRef.current = true; // impede que esta fala reative nova espera
+    dialogoSemMoverRef.current = true;
+    pushMsgs([{ autor: "jogador", texto: fala }]);
+    enviar(`[DIÁLOGO — sem mover o mundo] Respondo/falo, apenas conversa: "${fala}". Isto é só diálogo: NÃO avance o tempo, NÃO gere eventos, NÃO faça o mundo agir — apenas conduza a conversa (o NPC responde/reage à minha fala). O mundo permanece pausado até eu decidir passar a vez.`, personagem);
   };
 
   /* PASSAR O TEMPO (deliberado): simula N horas; quanto mais horas, mais o mundo muda */
@@ -2422,13 +2441,22 @@ export default function Taverna() {
             )}
 
             {aguardandoMundo && !bloqueado && !rolagem ? (
-              <div className="px-4 md:px-8 shrink-0 flex items-stretch gap-2" style={{ paddingRight: "68px", paddingBottom: "20px" }}>
-                <button onClick={vezDoMundo} className="tv-fade flex-1 rounded-2xl py-3.5 tv-mono text-sm flex items-center justify-center gap-2" style={{ background: T.amber, color: T.onAccent, fontWeight: 700, letterSpacing: "0.05em" }}>
-                  🌍 VEZ DO MUNDO →
-                </button>
-                <button onClick={() => setMostrarHoras((v) => !v)} title="Passar mais tempo" className="tv-mono text-xs rounded-2xl px-4 shrink-0" style={{ background: T.panel, color: T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600 }}>
-                  🕐<span className="hidden md:inline"> Horas</span>
-                </button>
+              <div className="px-4 md:px-8 shrink-0" style={{ paddingRight: "68px", paddingBottom: "20px" }}>
+                {/* caixa de fala: responder é só diálogo, não move o mundo */}
+                <div className="flex gap-2 rounded-2xl p-2 min-w-0 mb-2" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
+                  <input value={entrada} onChange={(e) => setEntrada(e.target.value)} onKeyDown={(e) => e.key === "Enter" && falarSemMover(entrada)}
+                    placeholder="Responder ou conversar… (não move o mundo)"
+                    className="flex-1 bg-transparent outline-none tv-body text-[15px] px-3 min-w-0" style={{ color: T.ink }} />
+                  <Botao pequeno desativado={!entrada.trim()} onClick={() => falarSemMover(entrada)}>Falar</Botao>
+                </div>
+                <div className="flex items-stretch gap-2">
+                  <button onClick={vezDoMundo} className="tv-fade flex-1 rounded-2xl py-3 tv-mono text-sm flex items-center justify-center gap-2" style={{ background: T.amber, color: T.onAccent, fontWeight: 700, letterSpacing: "0.05em" }}>
+                    🌍 VEZ DO MUNDO →
+                  </button>
+                  <button onClick={() => setMostrarHoras((v) => !v)} title="Passar mais tempo" className="tv-mono text-xs rounded-2xl px-4 shrink-0" style={{ background: T.panel, color: T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600 }}>
+                    🕐<span className="hidden md:inline"> Horas</span>
+                  </button>
+                </div>
               </div>
             ) : (
             <div className="px-4 md:px-8 shrink-0 flex items-stretch gap-2" style={{ paddingRight: "68px", paddingBottom: rolagem ? "6px" : "20px" }}>
