@@ -104,3 +104,62 @@ export function nomePessoa(genero, sexo) {
   return comSobrenome ? `${primeiro} ${sortear(b.sobrenome)}` : primeiro;
 }
 export function generosDisponiveis() { return Object.keys(BANCO); }
+
+/* ---------------- ELENCO DIVERSO ----------------
+   Gera pessoas prontas com variedade real (gênero equilibrado, raças
+   variadas, traços), para o Mestre POVOAR o mundo sem cair em monotonia
+   (ex.: só homens humanos). O app sorteia; a IA usa. */
+
+const RACAS_POR_GENERO = {
+  "Fantasia medieval": ["humano", "humana", "elfo", "elfa", "anão", "anã", "halfling", "meio-orc", "tiefling", "gnomo", "draconato"],
+  "Ficção científica": ["humano", "humana", "sintético", "colono", "mutante", "ciborgue", "alienígena"],
+  "Cyberpunk": ["humano", "humana", "ciborgue", "androide", "modificado", "netrunner"],
+  "Horror cósmico": ["humano", "humana", "híbrido", "amaldiçoado", "cultista", "forasteiro"],
+  "Pós-apocalíptico": ["humano", "humana", "mutante", "sintético", "nômade", "ghoul"],
+  "Steampunk": ["humano", "humana", "autômato", "engenhoso", "aristocrata", "aeronauta"],
+};
+
+const TRACOS_PESSOA = [
+  "desconfiado", "acolhedor", "ambicioso", "melancólico", "brincalhão", "severo",
+  "curioso", "reservado", "leal", "oportunista", "orgulhoso", "gentil", "sarcástico",
+  "corajoso", "covarde", "sábio", "ingênuo", "vingativo", "generoso", "ganancioso",
+  "protetor", "solitário", "carismático", "rabugento", "sonhador", "pragmático",
+];
+
+const OCUPACOES = {
+  "Fantasia medieval": ["ferreiro", "taverneiro(a)", "guarda", "mercador", "curandeiro(a)", "caçador", "escriba", "sacerdote", "ladrão", "nobre", "bardo", "fazendeiro(a)", "estalajadeiro", "capitão(ã)", "aprendiz de mago"],
+  "Ficção científica": ["engenheiro(a)", "piloto", "médico(a)", "contrabandista", "cientista", "soldado", "mecânico(a)", "diplomata", "minerador(a)", "hacker"],
+  "Cyberpunk": ["fixer", "netrunner", "guarda-costas", "traficante", "médico(a) de rua", "corporativo", "mercenário(a)", "informante", "técnico", "dançarino(a)"],
+  "Horror cósmico": ["pescador", "bibliotecário(a)", "médico", "pastor", "professor(a)", "antiquário", "coveiro", "viúvo(a)", "detetive", "taverneiro"],
+  "Pós-apocalíptico": ["sucateiro", "curandeiro(a)", "batedor", "líder de posto", "mercador(a)", "caçador", "mecânico(a)", "guarda", "fazendeiro", "contrabandista"],
+  "Steampunk": ["inventor", "aeronauta", "relojoeiro(a)", "industrial", "detetive", "aristocrata", "maquinista", "cientista", "jornalista", "capitão(ã)"],
+};
+
+/* Uma pessoa completa e variada */
+export function pessoaDiversa(genero) {
+  const g = genero || "Fantasia medieval";
+  const sexo = Math.random() < 0.5 ? "masc" : "fem";
+  const racas = RACAS_POR_GENERO[g] || RACAS_POR_GENERO["Fantasia medieval"];
+  const ocupacoes = OCUPACOES[g] || OCUPACOES["Fantasia medieval"];
+  return {
+    nome: nomePessoa(g, sexo),
+    genero_pessoa: sexo === "masc" ? "homem" : "mulher",
+    raca: sortear(racas),
+    ocupacao: sortear(ocupacoes),
+    traco: sortear(TRACOS_PESSOA),
+  };
+}
+
+/* Um elenco pronto de N pessoas variadas, com gênero equilibrado */
+export function elencoDiverso(genero, n = 6) {
+  const g = genero || "Fantasia medieval";
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const p = pessoaDiversa(g);
+    // força alternância de gênero para garantir equilíbrio real
+    if (i % 2 === 0) { p.genero_pessoa = "mulher"; p.nome = nomePessoa(g, "fem"); }
+    else { p.genero_pessoa = "homem"; p.nome = nomePessoa(g, "masc"); }
+    out.push(p);
+  }
+  return out;
+}

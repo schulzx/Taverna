@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { nomeCidade, nomePessoa, nomeTaverna, sortear } from "./nomes.js";
+import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, RELACOES } from "./mapa.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos } from "./combate.js";
@@ -124,7 +124,8 @@ ROLAGENS (d20 + modificador vs Dificuldade):
   · Quando o jogador se move, envie "cidade_atual" com o nome da cidade onde ele está.
   · RELAÇÕES importam: em cidade de facção ALIADA o jogador é bem tratado; NEUTRA, indiferente; INIMIGA, hostil (guardas, preços altos, perigo). Se o jogador DOMINA a cidade (relacao "jogador"), ele é reconhecido como autoridade.
   · Conquista: quando o jogador toma uma cidade/região, atualize a relacao para "jogador" e, se for a base dele, marque "sede":true.
-- BANCO DE NOMES PRONTOS (use estes para economizar — quando precisar nomear uma cidade, pessoa ou taverna NOVA, PEGUE um desta lista em vez de inventar do zero; se nenhum servir, crie um coerente): Cidades: ${(bn.cidades || []).join(", ")}. Pessoas: ${(bn.pessoas || []).join(", ")}. Tavernas: ${(bn.tavernas || []).join(", ")}. Ao usar um nome daqui, ele vira canônico — registre no cânone se a entidade for relevante.
+- ELENCO DIVERSO PRONTO (use para POVOAR o mundo — economiza tokens e garante variedade): ${(bn.elenco || []).map((p) => `${p.nome} (${p.genero_pessoa}, ${p.raca}, ${p.ocupacao}, ${p.traco})`).join("; ")}. Cidades prontas: ${(bn.cidades || []).join(", ")}. Tavernas: ${(bn.tavernas || []).join(", ")}. Ao usar alguém do elenco, registre no cânone se for relevante.
+- DIVERSIDADE VIVA (o mundo é plural): como PADRÃO, povoe o mundo com homens E mulheres em igual medida e raças variadas conforme o cenário (humanos, elfos, anões, halflings, orcs, gnomos, tieflings — ou equivalentes). O mundo geral NUNCA deve ser só de homens ou só de humanos. NPCs têm vidas próprias: relações, amizades, rivalidades, romances, famílias. Varie gênero, idade, raça e temperamento. Se os últimos NPCs foram homens, incline o próximo para mulher, e vice-versa. EXCEÇÕES COM PROPÓSITO são bem-vindas e enriquecem: um pelotão só de homens numa cultura marcial, uma cidade que despreza certas raças por guerra ou preconceito, um convento só de mulheres — desde que seja uma escolha NARRATIVA consciente daquele lugar/grupo, não o padrão do mundo inteiro. Diversidade é a regra; a homogeneidade é a exceção que conta uma história.
 - FICHA DE CAMINHO: ${personagem.raca ? `${personagem.raca}` : "origem indefinida"}${personagem.classe ? `, ${personagem.classe}` : ""}${personagem.subclasse ? ` (${personagem.subclasse})` : ""}${personagem.profissao ? `, de profissão ${personagem.profissao}` : ""}. Respeite isso na narrativa: um Mago não abre fechaduras como um Ladino; um Ferreiro repara equipamento; a raça/origem colore como o mundo o trata.
 - HABILIDADES SÃO ESCOLHIDAS PELO JOGADOR (não invente): o jogador aprende habilidades de uma árvore fixa da classe dele ao subir de nível. NUNCA envie "adicionar_habilidades" por conta própria — apenas descreva o uso das que ele já tem. Se a ficção pedir um poder novo, sugira que ele o escolherá ao evoluir. (Companheiros e inimigos NÃO seguem essa regra: você pode dar habilidades a eles livremente.)
 - PROFISSÃO: use a profissão do herói para abrir soluções e oportunidades (o Alquimista prepara poções em acampamento; o Cartógrafo lê rotas; o Mercador consegue preços). Deixe a profissão importar de verdade.
@@ -877,8 +878,11 @@ function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar })
 }
 
 function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
+  const [selecionada, setSelecionada] = React.useState(null);
   const cidades = (mapa?.cidades || []);
+  const faccoes = (mapa?.faccoes || []);
   const dominadas = cidades.filter((c) => c.relacao === "jogador").length;
+  const regioes = [...new Set(cidades.map((c) => c.regiao).filter(Boolean))];
   if (cidades.length === 0) {
     return <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>O mapa ainda está em branco. Conforme você explora, cidades e territórios aparecem aqui — e ficam salvos, para o mundo nunca mais se perder.</div>;
   }
@@ -903,7 +907,7 @@ function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
           const atual = cidadeAtual && c.nome.toLowerCase() === String(cidadeAtual).toLowerCase();
           return (
             <div key={i} style={{ position: "absolute", left: `${c.x}%`, top: `${c.y}%`, transform: "translate(-50%,-50%)", textAlign: "center" }}>
-              <div style={{ width: c.sede ? 16 : 11, height: c.sede ? 16 : 11, borderRadius: c.tipo === "capital" || c.sede ? 3 : "50%", background: rel.cor, border: atual ? `2px solid ${T.amber}` : `1px solid #00000060`, boxShadow: atual ? `0 0 10px ${T.amber}` : "none", margin: "0 auto" }} />
+              <div onClick={() => setSelecionada(selecionada === c.nome ? null : c.nome)} style={{ width: c.sede ? 16 : 11, height: c.sede ? 16 : 11, borderRadius: c.tipo === "capital" || c.sede ? 3 : "50%", background: rel.cor, border: (atual || selecionada === c.nome) ? `2px solid ${T.amber}` : `1px solid #00000060`, boxShadow: (atual || selecionada === c.nome) ? `0 0 10px ${T.amber}` : "none", margin: "0 auto", cursor: "pointer" }} />
               <div className="tv-mono" style={{ fontSize: 6.5, color: atual ? T.amberSoft : "#cfc8d8", marginTop: 1, whiteSpace: "nowrap", textShadow: "0 1px 2px #000" }}>{c.nome}{c.sede ? " ★" : ""}</div>
             </div>
           );
@@ -915,17 +919,43 @@ function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
           <div key={k} className="flex items-center gap-1"><span style={{ width: 8, height: 8, borderRadius: "50%", background: v.cor, display: "inline-block" }} /><span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>{v.rotulo}</span></div>
         ))}
       </div>
-      {/* lista */}
+      {/* facções conhecidas */}
+      {faccoes.length > 0 && (
+        <div className="mb-3">
+          <div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Facções</div>
+          <div className="space-y-1.5">
+            {faccoes.map((f, i) => {
+              const rel = RELACOES[f.relacao] || RELACOES.neutra;
+              return (
+                <div key={i} className="rounded-lg px-3 py-2 flex items-center justify-between gap-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                  <div><span className="tv-body text-sm" style={{ color: T.ink }}>{f.nome}</span>{f.lider ? <span className="tv-body text-xs" style={{ color: T.inkDim }}> · {f.lider}</span> : null}</div>
+                  <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ color: rel.cor, border: `1px solid ${rel.cor}` }}>{rel.rotulo}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {/* lista de cidades por região */}
+      <div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Cidades ({cidades.length})</div>
       <div className="space-y-2">
         {cidades.map((c, i) => {
           const rel = RELACOES[c.relacao] || RELACOES.neutra;
+          const aberta = selecionada === c.nome;
+          const atual = cidadeAtual && c.nome.toLowerCase() === String(cidadeAtual).toLowerCase();
           return (
-            <div key={i} className="rounded-lg px-3 py-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+            <div key={i} className="rounded-lg px-3 py-2" style={{ background: T.panelSoft, border: `1px solid ${aberta ? T.amber : atual ? T.amberSoft : T.line}`, cursor: "pointer" }} onClick={() => setSelecionada(aberta ? null : c.nome)}>
               <div className="flex items-center justify-between gap-2">
-                <span className="tv-body text-sm" style={{ color: T.ink }}>{c.sede ? "★ " : ""}{c.nome}</span>
-                <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ color: rel.cor, border: `1px solid ${rel.cor}` }}>{rel.rotulo}</span>
+                <span className="tv-body text-sm" style={{ color: T.ink }}>{c.sede ? "★ " : ""}{atual ? "📍 " : ""}{c.nome}</span>
+                <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ color: rel.cor, border: `1px solid ${rel.cor}` }}>{rel.rotulo}</span>
               </div>
               <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{c.tipo}{c.regiao ? ` · ${c.regiao}` : ""}{c.faccao ? ` · ${c.faccao}` : ""}</div>
+              {aberta && (c.notas || (c.locais || []).length > 0) && (
+                <div className="mt-2 pt-2" style={{ borderTop: `1px solid ${T.line}` }}>
+                  {c.notas && <div className="tv-body text-xs" style={{ color: T.inkDim }}>{c.notas}</div>}
+                  {(c.locais || []).length > 0 && <div className="tv-body text-xs mt-1" style={{ color: T.violetSoft }}>Locais: {c.locais.join(", ")}</div>}
+                </div>
+              )}
             </div>
           );
         })}
@@ -1395,7 +1425,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v3.1 · mundo vivo</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v3.3 · turnos vivos</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1672,11 +1702,11 @@ class LimiteErro extends React.Component {
 
 function gerarBancoNomes(genero) {
   const g = (genero && genero.genero) || genero || "Fantasia medieval";
-  const cidades = [], pessoas = [], tavernas = [];
+  const cidades = [], tavernas = [];
   for (let i = 0; i < 8; i++) cidades.push(nomeCidade(g));
-  for (let i = 0; i < 10; i++) pessoas.push(nomePessoa(g));
   for (let i = 0; i < 4; i++) tavernas.push(nomeTaverna(g));
-  return { cidades: [...new Set(cidades)], pessoas: [...new Set(pessoas)], tavernas: [...new Set(tavernas)] };
+  const elenco = elencoDiverso(g, 6);
+  return { cidades: [...new Set(cidades)], tavernas: [...new Set(tavernas)], elenco };
 }
 
 export default function Taverna() {
@@ -1724,6 +1754,9 @@ export default function Taverna() {
   const habUsadaRef = useRef(false);
   const rolagemConsumidaRef = useRef(null);
   const mundoContRef = useRef(0);
+  const [aguardandoMundo, setAguardandoMundo] = useState(false);
+  const [mostrarHoras, setMostrarHoras] = useState(false);
+  const ehAcaoMundoRef = useRef(false); // marca que o próximo enviar é a vez do mundo
   const canoneRef = useRef({});
   const bancoNomesRef = useRef(null);
   const mapaRef = useRef({ cidades: [], faccoes: [] });
@@ -1920,19 +1953,7 @@ export default function Taverna() {
   const enviar = useCallback(async (conteudo, persAtual, histBase) => {
     setCarregando(true); setFalha(null); setSugestoes([]);
     const nota = notaRef.current; notaRef.current = "";
-    /* Turno do mundo (fora de combate e fora de acampamento): a cada poucas
-       ações, lembra o Mestre de fazer o mundo AGIR por conta própria. */
-    let empurraoMundo = "";
-    if (!acampadoRef.current && !combateRef.current) {
-      mundoContRef.current += 1;
-      if (mundoContRef.current >= 3) {
-        mundoContRef.current = 0;
-        empurraoMundo = "\n[TURNO DO MUNDO] Antes ou depois de responder à minha ação, faça o MUNDO agir por conta própria: um NPC toma uma iniciativa, uma facção se movimenta, algo que estava em curso avança, um acontecimento inesperado surge, ou um companheiro faz ou diz algo espontâneo. O mundo não espera por mim — ele vive. Seja orgânico, não force se acabou de acontecer algo intenso.";
-      }
-    } else {
-      mundoContRef.current = 0;
-    }
-    const corpo = (nota ? `${nota}\n${conteudo}` : conteudo) + empurraoMundo;
+    const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: corpo }];
     try {
@@ -1940,6 +1961,12 @@ export default function Taverna() {
       const histFinal = [...novoHist, { role: "assistant", content: JSON.stringify(resp) }];
       setHistorico(histFinal);
       const pers = aplicarResposta(resp, persAtual);
+      /* ALTERNÂNCIA: se esta foi uma AÇÃO DO JOGADOR (não a vez do mundo, não combate,
+         não acampamento), a próxima vez é OBRIGATORIAMENTE do mundo. */
+      const foiVezDoMundo = ehAcaoMundoRef.current;
+      ehAcaoMundoRef.current = false;
+      if (!foiVezDoMundo && !combateRef.current && !acampadoRef.current && !resp.rolagem) setAguardandoMundo(true);
+      else setAguardandoMundo(false);
       turnoContRef.current += 1;
       if (turnoContRef.current >= 8) {
         turnoContRef.current = 0;
@@ -2102,6 +2129,26 @@ export default function Taverna() {
     enviar(acao, personagem);
   };
 
+  /* VEZ DO MUNDO (movimento CURTO, obrigatório após cada ação do jogador) */
+  const vezDoMundo = () => {
+    if (bloqueado || acampadoRef.current) return;
+    ehAcaoMundoRef.current = true;
+    setAguardandoMundo(false);
+    pushMsgs([{ autor: "sistema", texto: "🌍 A vez do mundo…" }]);
+    enviar("[VEZ DO MUNDO — momento curto] É a vez do mundo agir, brevemente. Em 1-2 frases, mostre UM movimento momentâneo: um NPC próximo faz ou diz algo, um pequeno sinal do que está em curso, um companheiro reage, um detalhe do ambiente muda. Curto e vivo — nada de grandes saltos de tempo. Depois devolva a vez a mim.", personagem);
+  };
+
+  /* PASSAR O TEMPO (deliberado): simula N horas; quanto mais horas, mais o mundo muda */
+  const passarTempo = (horas) => {
+    if (bloqueado || acampadoRef.current) return;
+    setMostrarHoras(false);
+    ehAcaoMundoRef.current = true;
+    setAguardandoMundo(false);
+    const escala = horas <= 3 ? "algumas horas (mudanças pequenas)" : horas <= 8 ? "boa parte do dia (mudanças perceptíveis)" : horas <= 16 ? "quase um dia inteiro (mudanças significativas)" : "um dia completo (o mundo se move bastante)";
+    pushMsgs([{ autor: "sistema", texto: `🕐 Você deixa ${horas}h passarem…` }]);
+    enviar(`[PASSAR O TEMPO — ${horas} horas] Simule a passagem de ${horas} horas: ${escala}. Faça o mundo VIVER esse intervalo proporcionalmente — o que os NPCs e facções fizeram, o que avançou, o que mudou no ambiente e nas suas missões, notícias que chegaram. Quanto mais horas, mais coisas acontecem (mas sempre plausível, nunca absurdo tipo impérios caindo em 1 dia). Ao final, reapresente a cena atual e me convide a agir.`, personagem);
+  };
+
   const modPend = rolagem ? (() => { const a = ATRIBUTOS.find((x) => x.nome.toLowerCase() === (rolagem.atributo || "").toLowerCase()); return a && personagem ? atributoEfetivo(personagem, a.id) : 0; })() : 0;
 
   const concluirRolagem = (valor) => {
@@ -2175,6 +2222,7 @@ export default function Taverna() {
      Mestre narra o que passou, proporcional ao tempo (nunca exagerado). */
   const acampar = () => {
     if (acampadoRef.current || bloqueado) return;
+    setAguardandoMundo(false);
     definirAcampado(true);
     const local = localDeDescanso(mapaRef.current, cidadeAtualRef.current, faccaoJogadorRef.current);
     const rotulo = local.tipo === "sede" ? "🏛 Você recolhe-se à sede da sua guilda"
@@ -2361,6 +2409,28 @@ export default function Taverna() {
               </div>
             )}
 
+            {mostrarHoras && (
+              <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.amber}`, marginRight: "68px" }}>
+                <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.amberSoft }}>🕐 Passar o tempo · quanto o mundo se move</div>
+                <div className="flex flex-wrap gap-2">
+                  {[1, 2, 4, 6, 8, 12, 24].map((h) => (
+                    <button key={h} onClick={() => passarTempo(h)} className="tv-mono text-xs rounded-lg px-3 py-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}`, color: T.ink }}>{h}h</button>
+                  ))}
+                  <button onClick={() => setMostrarHoras(false)} className="tv-mono text-xs rounded-lg px-3 py-2" style={{ color: T.inkDim }}>cancelar</button>
+                </div>
+              </div>
+            )}
+
+            {aguardandoMundo && !bloqueado && !rolagem ? (
+              <div className="px-4 md:px-8 shrink-0 flex items-stretch gap-2" style={{ paddingRight: "68px", paddingBottom: "20px" }}>
+                <button onClick={vezDoMundo} className="tv-fade flex-1 rounded-2xl py-3.5 tv-mono text-sm flex items-center justify-center gap-2" style={{ background: T.amber, color: T.onAccent, fontWeight: 700, letterSpacing: "0.05em" }}>
+                  🌍 VEZ DO MUNDO →
+                </button>
+                <button onClick={() => setMostrarHoras((v) => !v)} title="Passar mais tempo" className="tv-mono text-xs rounded-2xl px-4 shrink-0" style={{ background: T.panel, color: T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600 }}>
+                  🕐<span className="hidden md:inline"> Horas</span>
+                </button>
+              </div>
+            ) : (
             <div className="px-4 md:px-8 shrink-0 flex items-stretch gap-2" style={{ paddingRight: "68px", paddingBottom: rolagem ? "6px" : "20px" }}>
               <div className="flex flex-1 gap-2 rounded-2xl p-2 min-w-0" style={{ background: T.panel, border: `1px solid ${habSel ? T.violet : T.line}` }}>
                 <input value={entrada} onChange={(e) => setEntrada(e.target.value)} onKeyDown={(e) => e.key === "Enter" && agir(entrada)}
@@ -2372,7 +2442,12 @@ export default function Taverna() {
                 style={{ background: habAbertas ? T.violet : T.panel, color: habAbertas ? T.onSecond : T.violetSoft, border: `1px solid ${T.violet}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
                 ✦<span className="hidden md:inline"> Habilidades</span>
               </button>
+              <button onClick={() => setMostrarHoras((v) => !v)} disabled={bloqueado || acampado} title="Passar o tempo" className="tv-mono text-xs rounded-2xl px-3 shrink-0"
+                style={{ background: mostrarHoras ? T.amber : T.panel, color: mostrarHoras ? T.onAccent : T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600, opacity: (bloqueado || acampado) ? 0.4 : 1 }}>
+                🕐<span className="hidden md:inline"> Tempo</span>
+              </button>
             </div>
+            )}
 
             {rolagem && !carregando && (
               <div className="tv-fade px-4 md:px-8 pb-5 flex justify-center" style={{ paddingRight: "68px" }}>
