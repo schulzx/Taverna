@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, RELACOES } from "./mapa.js";
+import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos } from "./combate.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -154,6 +155,7 @@ COMBATE, ESPÓLIOS E ACHADOS:
 - ACHADOS ESPONTÂNEOS: o mundo está cheio de coisas. Ao explorar, o Mestre espontaneamente coloca descobertas — um guerreiro morto com uma bela armadura, um baú alagado, um altar com uma relíquia, uma bolsa esquecida. Nem tudo é seguro; alguns achados têm risco ou preço.
 
 FICHA DE INIMIGOS NO COMBATE (importante para a tática):
+- COMBATE RESOLVIDO PELO SISTEMA: quando você receber [COMBATE — RESOLVIDO PELO SISTEMA], o app JÁ rolou os dados, calculou e aplicou o dano do ataque do jogador. Sua função é APENAS narrar esse resultado (não recalcule, não invente outro número, não mude quem acertou). Depois, conduza a resposta dos inimigos: descreva os contra-ataques e aplique o dano deles a mim via "vida" e aos companheiros via "grupo_vida" — pode rolar mentalmente, mas mantenha coerência com a ameaça de cada um. Você continua no controle da FICÇÃO do combate (quem faz o quê, táticas, ambiente); o sistema cuida só da matemática dos ataques do jogador.
 - ABERTURA NO MESMO TURNO (PRIORIDADE MÁXIMA): no instante em que QUALQUER hostilidade começa — inimigo ameaça/ataca/embosca, OU o jogador ataca, OU alguém saca arma com intenção — envie "combate_iniciar" NESSA MESMA resposta, SEMPRE. Se a cena tem inimigo hostil presente, o combate já deve estar aberto. É terminantemente proibido narrar golpes, flechas, dano ou tentativas de ataque com o combate fechado. Na dúvida, ABRA o combate.
 - Em combate, mantenha a narrativa CURTA (2-4 frases) para não faltar espaço aos campos "combate_" no JSON.
 - Se algum dano legítimo ocorreu antes da abertura (ex.: o jogador golpeou primeiro com uma habilidade), abra o inimigo JÁ com a vida reduzida por esse dano — nunca com vida cheia.
@@ -1393,7 +1395,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v2.9 · dado & aflições</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v3.1 · mundo vivo</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1721,6 +1723,7 @@ export default function Taverna() {
   const mensagensRef = useRef([]);
   const habUsadaRef = useRef(false);
   const rolagemConsumidaRef = useRef(null);
+  const mundoContRef = useRef(0);
   const canoneRef = useRef({});
   const bancoNomesRef = useRef(null);
   const mapaRef = useRef({ cidades: [], faccoes: [] });
@@ -1917,7 +1920,19 @@ export default function Taverna() {
   const enviar = useCallback(async (conteudo, persAtual, histBase) => {
     setCarregando(true); setFalha(null); setSugestoes([]);
     const nota = notaRef.current; notaRef.current = "";
-    const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
+    /* Turno do mundo (fora de combate e fora de acampamento): a cada poucas
+       ações, lembra o Mestre de fazer o mundo AGIR por conta própria. */
+    let empurraoMundo = "";
+    if (!acampadoRef.current && !combateRef.current) {
+      mundoContRef.current += 1;
+      if (mundoContRef.current >= 3) {
+        mundoContRef.current = 0;
+        empurraoMundo = "\n[TURNO DO MUNDO] Antes ou depois de responder à minha ação, faça o MUNDO agir por conta própria: um NPC toma uma iniciativa, uma facção se movimenta, algo que estava em curso avança, um acontecimento inesperado surge, ou um companheiro faz ou diz algo espontâneo. O mundo não espera por mim — ele vive. Seja orgânico, não force se acabou de acontecer algo intenso.";
+      }
+    } else {
+      mundoContRef.current = 0;
+    }
+    const corpo = (nota ? `${nota}\n${conteudo}` : conteudo) + empurraoMundo;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: corpo }];
     try {
@@ -1987,6 +2002,27 @@ export default function Taverna() {
     }
   };
 
+  /* Resolve por CÓDIGO um ataque do jogador contra um inimigo do combate ativo.
+     Devolve o texto-resultado para o Mestre narrar, ou null se não for ataque. */
+  const resolverAtaqueJogador = (acao, pers) => {
+    const comb = combateRef.current;
+    if (!comb || !(comb.inimigos || []).some((e) => !e.derrotado)) return null;
+    const acaoN = acao.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const verboAtaque = /\b(ataco|atacar|golpeio|golpear|acerto|acertar|bato|bater|corto|cortar|perfuro|estoco|disparo|atiro|atirar|flecho|soco|chuto|esfaqueio|abato|invisto|avanco|arremesso)\b/.test(acaoN);
+    if (!verboAtaque) return null;
+    const vivos = comb.inimigos.filter((e) => !e.derrotado);
+    // tenta achar o alvo citado pelo nome; senão, o primeiro vivo
+    let alvo = vivos.find((e) => acaoN.includes(e.nome.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""))) || vivos[0];
+    const bonusAtk = Math.max((pers.atributos?.forca || 0), (pers.atributos?.destreza || 0)) + 2;
+    const danoBase = danoDe(pers, false);
+    const r = resolverAtaque({
+      atacante: pers.nome, alvo, ehAtacanteInimigo: false,
+      bonusAtaque: bonusAtk, danoBase,
+      condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
+    });
+    return { r, alvo };
+  };
+
   const agir = (texto) => {
     const acao = texto.trim();
     if (!acao || carregando || rolagem) return;
@@ -2018,6 +2054,48 @@ export default function Taverna() {
       habUsadaRef.current = true;
       pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `✦ ${habCitada.nome} · gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}` }]);
       enviar(`[HABILIDADE] Uso "${habCitada.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). ${habCitada.descricao || ""} Ação: ${acao}`, pers);
+      return;
+    }
+    const ataque = resolverAtaqueJogador(acao, personagem);
+    if (ataque) {
+      const { r, alvo } = ataque;
+      const linha = mostrarRolagensRef.current ? [{ autor: "sistema", texto: "⚔ " + resumoDoAtaque(r) }] : [];
+      pushMsgs([{ autor: "jogador", texto: acao }, ...linha]);
+      // aplica o dano no inimigo por código (fonte da verdade)
+      if (r.dano > 0) {
+        const novo = { ...combateRef.current, inimigos: combateRef.current.inimigos.map((e) => e.nome === alvo.nome ? { ...e, vida: Math.max(0, e.vida - r.dano), derrotado: (e.vida - r.dano) <= 0 } : e) };
+        combateRef.current = novo; setCombate(novo);
+      }
+      const desfecho = r.resultado === "critico" ? `acerto CRÍTICO causando ${r.dano} de dano` : r.resultado === "acerta" ? `acerto causando ${r.dano} de dano` : r.resultado === "desastre" ? "erro desastroso" : "erro";
+
+      /* TURNO DO MUNDO (combate): os inimigos vivos revidam — o app rola e
+         calcula tudo; o Mestre só narra as DECISÕES deles. */
+      let persAtual = personagem;
+      const combPos = combateRef.current;
+      const inimigosVivos = (combPos?.inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
+      let resumoInimigos = "";
+      if (inimigosVivos.length > 0) {
+        const acoes = turnoDosInimigos({ inimigos: combPos.inimigos, jogador: personagem, grupo: personagem.grupo || [] });
+        const linhasSis = [];
+        let danoNoJogador = 0;
+        let grupoAtual = [...(personagem.grupo || [])];
+        const partes = [];
+        for (const a of acoes) {
+          if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: "🛡 " + resumoDoAtaque(a.r) });
+          if (a.r.dano > 0) {
+            if (a.alvoRef === "jogador") danoNoJogador += a.r.dano;
+            else grupoAtual = grupoAtual.map((g) => g.nome === a.alvoNome ? { ...g, vida: Math.max(0, (g.vida || 0) - a.r.dano) } : g);
+          }
+          const res = a.r.resultado === "critico" ? `acertou em cheio (${a.r.dano})` : a.r.resultado === "acerta" ? `acertou (${a.r.dano})` : a.r.resultado === "desastre" ? "falhou feio" : "errou";
+          partes.push(`${a.inimigo}→${a.alvoNome}: ${res}`);
+        }
+        if (linhasSis.length) pushMsgs(linhasSis);
+        persAtual = { ...personagem, vida: Math.max(0, personagem.vida - danoNoJogador), grupo: grupoAtual };
+        setPersonagem(persAtual);
+        resumoInimigos = ` Turno dos inimigos (resolvido pelo sistema, dano já aplicado — apenas narre as decisões, sem recalcular): ${partes.join("; ")}.`;
+      }
+
+      enviar(`[COMBATE — RESOLVIDO PELO SISTEMA] Ataquei ${alvo.nome}: ${desfecho} (rolagem d20=${r.d20}${r.bonus ? `+${r.bonus}` : ""}=${r.total} vs defesa ${r.ca}). O dano já foi aplicado.${resumoInimigos} NÃO recalcule nem mude números — NARRE de forma vívida (2-4 frases) tanto o meu golpe quanto as decisões e reações dos inimigos: quem recuou, quem avançou, quem mudou de alvo. Ação declarada: ${acao}`, persAtual);
       return;
     }
     pushMsgs([{ autor: "jogador", texto: acao }]);
