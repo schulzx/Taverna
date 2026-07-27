@@ -197,3 +197,23 @@ export function pvEsperadoInimigo(nivelJogador, ameaca = "comum") {
   const mult = { fraco: 0.35, comum: 0.7, competente: 1.0, elite: 1.6, lendario: 2.6 }[ameaca] || 0.7;
   return Math.max(4, Math.round(base * mult));
 }
+
+/* ---------------- ESPÓLIOS POR CÓDIGO ----------------
+   Moedas e XP calculados por tabela (por ameaça), como nos RPGs de
+   verdade — zero tokens e sempre proporcional. A IA só narra, e o
+   app decide SE cai um item (a identidade criativa do item fica
+   com a IA, que é onde ela vale a pena). */
+const XP_AMEACA = { fraco: 15, comum: 30, competente: 50, elite: 90, lendario: 160 };
+const MOEDAS_AMEACA = { fraco: [1, 6], comum: [4, 12], competente: [8, 20], elite: [15, 40], lendario: [40, 100] };
+const CHANCE_ITEM = { fraco: 0.05, comum: 0.12, competente: 0.25, elite: 0.45, lendario: 0.8 };
+
+export function gerarEspolios(inimigosDerrotados) {
+  let xp = 0, moedas = 0, chance = 0;
+  for (const e of inimigosDerrotados || []) {
+    xp += XP_AMEACA[e.ameaca] || 30;
+    const [a, b] = MOEDAS_AMEACA[e.ameaca] || [4, 12];
+    moedas += a + Math.floor(Math.random() * (b - a + 1));
+    chance = Math.max(chance, CHANCE_ITEM[e.ameaca] || 0.12);
+  }
+  return { xp, moedas, caiItem: Math.random() < chance };
+}

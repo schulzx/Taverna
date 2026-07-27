@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
-import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo } from "./combate.js";
+import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios } from "./combate.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -190,6 +190,7 @@ TURNO DO MUNDO (o mundo AGE, não só reage — estilo Baldur's Gate 3):
 - Consequências correm em segundo plano: se o jogador ignorou uma ameaça, ela cresce; se deixou um ferido, ele piora ou é ajudado por outro. O mundo não congela esperando o herói.
 - DENTRO do acampamento, o turno do mundo PARA (é uma pausa segura). Ele volta quando o acampamento termina.
 
+TAMANHO DAS RESPOSTAS (concisão é qualidade): narrativa padrão entre 60 e 140 palavras — densa, vívida, sem enrolação nem repetição do que o jogador já sabe. Reserve textos maiores (até ~220 palavras) APENAS para momentos raros e épicos: revelações, desfechos de arco, primeira chegada a um lugar extraordinário. Cortar gordura não é cortar vida: cada frase deve carregar cena, ação ou emoção.
 RITMO E VARIEDADE NARRATIVA (você é um HISTORIADOR, não uma máquina de sustos):
 - PROIBIDO o loop de urgências: NÃO repita a estrutura "momento calmo → alguém bate à porta/entra com urgência → nova ameaça". Se a última interrupção urgente foi há pouco, a próxima cena DEVE ser de outra natureza. Urgências são raras, ganham força justamente por serem raras, e precisam de sementes plantadas antes (prenúncios), não surgir do nada.
 - PALETA DE ELEMENTOS (alterne conscientemente entre eles): romance e intimidade; amizade e lealdade; política e intriga; comércio e prosperidade; mistério lento (pistas espalhadas por várias cenas); festividades e vida cotidiana; rivalidades não-letais; dilemas morais; construção e gestão; humor; descoberta e exploração; e sim, às vezes, guerra e traição. Uma grande história respira: tensão sobe E desce.
@@ -373,7 +374,10 @@ function sanearResposta(obj) {
 
 async function chamarMestre(system, historico) {
   /* histórico já está no formato Messages API: [{role, content}, ...] */
-  const texto = await chamarModelo(system, historico.slice(-40), 1000, "json");
+  /* 18 mensagens bastam: o cânone (fatos imutáveis) e o livro (resumo do arco)
+     vão no system prompt — o histórico bruto só precisa do contexto imediato.
+     Corta ~metade dos tokens de entrada por turno. */
+  const texto = await chamarModelo(system, historico.slice(-18), 1000, "json");
   return extrairJSON(texto);
 }
 
@@ -1555,7 +1559,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.0 · bolsas do grupo</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.1 · economia</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1788,7 +1792,8 @@ function processarCombate(combateAtual, m, msgs) {
   const todosMortos = inimigos.length > 0 && inimigos.every((e) => e.derrotado || e.vida <= 0);
   if (todosMortos) {
     msgs.push("⚔ Todos os inimigos foram derrotados! O combate termina.");
-    m.__vitoriaAuto = true; // sinaliza para o app pedir espólios ao Mestre
+    m.__vitoriaAuto = true;
+    m.__inimigosFinais = inimigos; // para o app calcular os espólios por código
     return null;
   }
   return { inimigos };
@@ -2082,8 +2087,18 @@ export default function Taverna() {
       setCombate(novoCombate);
       /* vitória detectada por código: pede ao Mestre os espólios se ele ainda
          não os deu neste turno (evita esperar ele "perceber" a morte) */
-      if (resp.mudancas.__vitoriaAuto && !resp.mudancas.adicionar_itens && !resp.mudancas.moedas && !resp.mudancas.adicionar_equipamento) {
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[COMBATE VENCIDO] Todos os inimigos caíram. Conceda AGORA os espólios e o XP desta vitória (moedas, itens, XP para mim e grupo_xp para os companheiros) coerentes com os inimigos derrotados, e narre o desfecho da luta em 2-3 frases.`;
+      if (resp.mudancas.__vitoriaAuto) {
+        /* ESPÓLIOS POR CÓDIGO: moedas e XP por tabela; nível sobe sozinho.
+           A IA só narra — e cria o item quando o app decide que caiu um. */
+        const esp = gerarEspolios(resp.mudancas.__inimigosFinais || []);
+        let p2 = { ...pers, moedas: (pers.moedas || 0) + esp.moedas, xp: (pers.xp || 0) + esp.xp };
+        let subiu = 0;
+        while (p2.xp >= XP_POR_NIVEL(p2.nivel)) { p2.xp -= XP_POR_NIVEL(p2.nivel); p2.nivel += 1; p2.nivelPendentes = (p2.nivelPendentes || 0) + 1; subiu++; }
+        p2.grupo = (p2.grupo || []).map((g) => { const ev = evoluirCompanheiro({ ...g, xp: (g.xp || 0) + esp.xp }); const m2 = ev._subiu; delete ev._subiu; if (m2) msgs.push(`✦ ${g.nome} subiu para o nível ${ev.nivel}!`); return ev; });
+        msgs.push(`◉ Espólios: +${esp.moedas} moedas · +${esp.xp} XP${subiu ? ` · ✦ NÍVEL ${p2.nivel}!` : ""}`);
+        pers = p2;
+        setPersonagem(p2);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — espólios já aplicados pelo sistema: +${esp.moedas} moedas e +${esp.xp} XP para todos] NÃO envie moedas nem xp (seria dobrado). Narre o desfecho da luta em 2-3 frases.${esp.caiItem ? ` UM ITEM CAIU: crie UM item coerente com os inimigos derrotados e envie via "adicionar_equipamento" (com raridade proporcional à ameaça) ou "adicionar_itens".` : " Nenhum item especial desta vez — não envie itens."}`;
       }
     }
     pushMsgs([{ autor: "mestre", texto: resp.narrativa || "…" }, ...msgs.map((t) => ({ autor: "sistema", texto: t }))]);
