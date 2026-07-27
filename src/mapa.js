@@ -116,3 +116,42 @@ export function centrosDeRegiao(cidades) {
     cor: cs.find((c) => c.relacao === "jogador") ? "#C9973F" : cs.find((c) => c.relacao === "inimiga") ? "#C0504D" : cs.find((c) => c.relacao === "aliada") ? "#6BbF59" : "#9A93A6",
   }));
 }
+
+/* ---------------- PERGAMINHO: geometria orgânica ----------------
+   Gera formas de "terra" (continente e territórios) como blobs suaves
+   ao redor das cidades — determinístico pela semente, como os retratos. */
+function rngDe(nome) {
+  let h = 2166136261;
+  for (let i = 0; i < nome.length; i++) { h ^= nome.charCodeAt(i); h = (h * 16777619) >>> 0; }
+  return () => { h = (h * 1664525 + 1013904223) >>> 0; return h / 4294967296; };
+}
+
+export function blobPath(pontos, raio, semente = "blob") {
+  const ps = (pontos || []).filter((p) => p && isFinite(p.x) && isFinite(p.y));
+  if (!ps.length) return "";
+  const rnd = rngDe(semente);
+  const cx = ps.reduce((s, p) => s + p.x, 0) / ps.length;
+  const cy = ps.reduce((s, p) => s + p.y, 0) / ps.length;
+  const N = 20, anel = [];
+  for (let k = 0; k < N; k++) {
+    const ang = (k / N) * Math.PI * 2;
+    let r = 0;
+    for (const p of ps) {
+      const proj = (p.x - cx) * Math.cos(ang) + (p.y - cy) * Math.sin(ang);
+      const perp = Math.abs(-(p.x - cx) * Math.sin(ang) + (p.y - cy) * Math.cos(ang));
+      const eff = proj + Math.max(0, raio - perp * 0.45);
+      if (eff > r) r = eff;
+    }
+    r = Math.max(r, raio * 0.75) + (rnd() - 0.5) * raio * 0.8;
+    anel.push({ x: cx + Math.cos(ang) * r, y: cy + Math.sin(ang) * r });
+  }
+  let d = "";
+  for (let i = 0; i < N; i++) {
+    const p0 = anel[(i - 1 + N) % N], p1 = anel[i], p2 = anel[(i + 1) % N], p3 = anel[(i + 2) % N];
+    const c1 = { x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6 };
+    const c2 = { x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6 };
+    if (i === 0) d = `M ${p1.x.toFixed(1)} ${p1.y.toFixed(1)} `;
+    d += `C ${c1.x.toFixed(1)} ${c1.y.toFixed(1)}, ${c2.x.toFixed(1)} ${c2.y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)} `;
+  }
+  return d + "Z";
+}

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais } from "./classes.js";
-import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, RELACOES, gerarEstradas, centrosDeRegiao } from "./mapa.js";
+import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo } from "./combate.js";
 
 /* ============================================================
@@ -900,6 +900,8 @@ function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
   const faccoes = (mapa?.faccoes || []);
   const dominadas = cidades.filter((c) => c.relacao === "jogador").length;
   const regioes = [...new Set(cidades.map((c) => c.regiao).filter(Boolean))];
+  const gruposRegiao = {};
+  cidades.forEach((c) => { if (c.regiao) (gruposRegiao[c.regiao] = gruposRegiao[c.regiao] || []).push(c); });
   if (cidades.length === 0) {
     return <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>O mapa ainda está em branco. Conforme você explora, cidades e territórios aparecem aqui — e ficam salvos, para o mundo nunca mais se perder.</div>;
   }
@@ -912,32 +914,78 @@ function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
           <div className="tv-body text-xs" style={{ color: T.inkDim }}>Domina {dominadas} {dominadas === 1 ? "cidade" : "cidades"}.</div>
         </div>
       )}
-      {/* mapa visual */}
-      <div className="relative rounded-xl mb-3" style={{ background: "radial-gradient(circle at 30% 20%, #1d2438, #12101a)", border: `1px solid ${T.line}`, aspectRatio: "4 / 3", overflow: "hidden" }}>
+      {/* mapa visual — pergaminho */}
+      <div className="relative rounded-xl mb-3" style={{ border: `1px solid ${T.line}`, aspectRatio: "4 / 3", overflow: "hidden", background: "#96b7ae" }}>
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
-          {/* divisas de região: halo suave ao redor do centro de cada região */}
-          {centrosDeRegiao(cidades).map((r, i) => (
-            <circle key={`reg-${i}`} cx={r.x} cy={r.y} r={14 + r.n * 3} fill={r.cor} opacity="0.07" stroke={r.cor} strokeOpacity="0.25" strokeWidth="0.3" strokeDasharray="1.5 1.5" />
-          ))}
-          {/* estradas: linha cheia dentro da região, tracejada entre regiões */}
+          <defs>
+            <filter id="tvPapel"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n" /><feColorMatrix in="n" type="matrix" values="0 0 0 0 0.45 0 0 0 0 0.38 0 0 0 0 0.26 0 0 0 0.28 0" /></filter>
+            <filter id="tvCosta" x="-25%" y="-25%" width="150%" height="150%"><feTurbulence type="fractalNoise" baseFrequency="0.055" numOctaves="3" seed="7" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="3.2" /></filter>
+          </defs>
+          {/* mar */}
+          <rect x="0" y="0" width="100" height="100" fill="#96b7ae" />
+          {/* continente (halo costeiro + terra) */}
+          {cidades.length > 0 && (() => {
+            const dCont = blobPath(cidades, 17, "continente|" + cidades.length);
+            return (
+              <g filter="url(#tvCosta)">
+                <path d={dCont} fill="none" stroke="#f0e7cf" strokeWidth="2.6" opacity="0.55" />
+                <path d={dCont} fill="#eadfc1" stroke="#6d5c40" strokeWidth="0.5" />
+              </g>
+            );
+          })()}
+          {/* territórios de região (tinta + divisa tracejada) */}
+          {Object.entries(gruposRegiao).map(([nomeR, csR], i) => {
+            const cor = (centrosDeRegiao(csR)[0] || {}).cor || "#9A93A6";
+            return (
+              <g key={`terr-${i}`} filter="url(#tvCosta)">
+                <path d={blobPath(csR, 8.5, "regiao|" + nomeR)} fill={cor} opacity="0.14" stroke="#6d5c40" strokeOpacity="0.55" strokeWidth="0.35" strokeDasharray="1.6 1.2" />
+              </g>
+            );
+          })}
+          {/* estradas */}
           {gerarEstradas(cidades).map((rt, i) => {
             const a = cidades[rt.a], b = cidades[rt.b];
             if (!a || !b) return null;
-            return <line key={`rd-${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={rt.mesmaRegiao ? "#d8c9a855" : "#d8c9a825"} strokeWidth={rt.mesmaRegiao ? 0.6 : 0.4} strokeDasharray={rt.mesmaRegiao ? "" : "1.2 1.2"} />;
+            return <line key={`rd-${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#7a5f3d" strokeOpacity={rt.mesmaRegiao ? 0.55 : 0.35} strokeWidth={rt.mesmaRegiao ? 0.5 : 0.4} strokeDasharray={rt.mesmaRegiao ? "" : "1.2 1.2"} />;
           })}
+          {/* montanhas decorativas por região */}
+          {centrosDeRegiao(cidades).map((r, i) => (
+            <g key={`mt-${i}`} stroke="#6d5c40" strokeWidth="0.4" fill="none" opacity="0.6">
+              <path d={`M ${r.x - 4.4} ${r.y - 4.6} L ${r.x - 3} ${r.y - 6.6} L ${r.x - 1.6} ${r.y - 4.6}`} />
+              <path d={`M ${r.x - 1.2} ${r.y - 4.4} L ${r.x + 0.4} ${r.y - 6.9} L ${r.x + 2} ${r.y - 4.4}`} />
+              <path d={`M ${r.x + 2.4} ${r.y - 4.6} L ${r.x + 3.8} ${r.y - 6.4} L ${r.x + 5.2} ${r.y - 4.6}`} />
+            </g>
+          ))}
+          {/* textura de papel sobre tudo */}
+          <rect x="0" y="0" width="100" height="100" filter="url(#tvPapel)" opacity="0.55" />
+          {/* rosa dos ventos */}
+          <g transform="translate(90.5,88)">
+            <path d="M0,-6.2 L1.3,-1.3 L6.2,0 L1.3,1.3 L0,6.2 L-1.3,1.3 L-6.2,0 L-1.3,-1.3 Z" fill="#5c4a30" opacity="0.85" />
+            <path d="M0,-3.6 L0.9,-0.9 L3.6,0 L0.9,0.9 L0,3.6 L-0.9,0.9 L-3.6,0 L-0.9,-0.9 Z" fill="#c9a45a" transform="rotate(45)" opacity="0.9" />
+            <circle r="0.7" fill="#eadfc1" />
+          </g>
+          {/* barra de escala */}
+          <g transform="translate(6,93.5)">
+            {[0, 1, 2, 3].map((k) => <rect key={k} x={k * 5} y="0" width="5" height="1.1" fill={k % 2 ? "#eadfc1" : "#5c4a30"} stroke="#5c4a30" strokeWidth="0.15" />)}
+          </g>
+          {/* moldura dupla */}
+          <rect x="0.8" y="0.8" width="98.4" height="98.4" fill="none" stroke="#5c4a30" strokeWidth="0.7" opacity="0.8" />
+          <rect x="2.2" y="2.2" width="95.6" height="95.6" fill="none" stroke="#5c4a30" strokeWidth="0.25" opacity="0.6" />
         </svg>
+        {/* nomes das regiões */}
         {centrosDeRegiao(cidades).map((r, i) => (
-          <div key={`rn-${i}`} style={{ position: "absolute", left: `${r.x}%`, top: `${r.y}%`, transform: "translate(-50%,-50%)", pointerEvents: "none" }}>
-            <div className="tv-mono" style={{ fontSize: 6, color: r.cor, opacity: 0.5, textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap" }}>{r.regiao}</div>
+          <div key={`rn-${i}`} style={{ position: "absolute", left: `${r.x}%`, top: `${r.y - 10}%`, transform: "translate(-50%,-50%)", pointerEvents: "none" }}>
+            <div className="tv-display" style={{ fontSize: 12, color: "#5c4a30", opacity: 0.75, letterSpacing: "0.06em", whiteSpace: "nowrap", textShadow: "0 1px 1px #f0e6cc" }}>{r.regiao}</div>
           </div>
         ))}
+        {/* cidades */}
         {cidades.map((c, i) => {
           const rel = RELACOES[c.relacao] || RELACOES.neutra;
           const atual = cidadeAtual && c.nome.toLowerCase() === String(cidadeAtual).toLowerCase();
           return (
             <div key={i} style={{ position: "absolute", left: `${c.x}%`, top: `${c.y}%`, transform: "translate(-50%,-50%)", textAlign: "center" }}>
-              <div onClick={() => setSelecionada(selecionada === c.nome ? null : c.nome)} style={{ width: c.sede ? 16 : 11, height: c.sede ? 16 : 11, borderRadius: c.tipo === "capital" || c.sede ? 3 : "50%", background: rel.cor, border: (atual || selecionada === c.nome) ? `2px solid ${T.amber}` : `1px solid #00000060`, boxShadow: (atual || selecionada === c.nome) ? `0 0 10px ${T.amber}` : "none", margin: "0 auto", cursor: "pointer" }} />
-              <div className="tv-mono" style={{ fontSize: 6.5, color: atual ? T.amberSoft : "#cfc8d8", marginTop: 1, whiteSpace: "nowrap", textShadow: "0 1px 2px #000" }}>{c.nome}{c.sede ? " ★" : ""}</div>
+              <div onClick={() => setSelecionada(selecionada === c.nome ? null : c.nome)} style={{ width: c.sede ? 15 : 10, height: c.sede ? 15 : 10, borderRadius: c.tipo === "capital" || c.sede ? 3 : "50%", background: rel.cor, border: (atual || selecionada === c.nome) ? `2px solid #3a2e1c` : `1.5px solid #3a2e1c`, boxShadow: (atual || selecionada === c.nome) ? `0 0 8px #c9a45a` : "0 1px 2px #00000040", margin: "0 auto", cursor: "pointer" }} />
+              <div className="tv-mono" style={{ fontSize: 7, color: "#3a2e1c", marginTop: 1, whiteSpace: "nowrap", fontWeight: 600, textShadow: "0 1px 2px #f0e6cc, 0 -1px 2px #f0e6cc" }}>{c.nome}{c.sede ? " ★" : ""}</div>
             </div>
           );
         })}
@@ -1454,7 +1502,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v3.8 · mestre historiador</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v3.9 · pergaminho</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
