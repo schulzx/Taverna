@@ -158,6 +158,7 @@ COMBATE, ESPÓLIOS E ACHADOS:
 - ACHADOS ESPONTÂNEOS: o mundo está cheio de coisas. Ao explorar, o Mestre espontaneamente coloca descobertas — um guerreiro morto com uma bela armadura, um baú alagado, um altar com uma relíquia, uma bolsa esquecida. Nem tudo é seguro; alguns achados têm risco ou preço.
 
 FICHA DE INIMIGOS NO COMBATE (importante para a tática):
+- NARRATIVA E NÚMEROS ANDAM JUNTOS: se você narrar que inimigos morreram/fugiram/se renderam, ZERE o PV deles com "combate_inimigo_vida" no MESMO JSON, ou envie "combate_encerrar". Nunca descreva um exército aniquilado deixando os PV intactos no sistema — isso trava o painel de combate. Do mesmo modo, só narre morte de quem o sistema realmente derrubou.
 - BALANCEAMENTO DE PV (importante — não infle números!): o PV dos inimigos deve ser PROPORCIONAL ao meu nível. Referência por ameaça (para um herói do meu nível): inimigo "fraco" tem cerca de 35% do meu PV, "comum" ~70%, "competente" ~igual ao meu, "elite" ~1,6×, "lendário/chefe" ~2,6×. NUNCA dê a um inimigo comum 3× o meu PV — isso quebra o jogo. Um chefe pode ser forte, mas dentro dessa escala. Quando criar um inimigo, defina "combate_inimigo_vida"/PV coerente com essa tabela e com meu nível atual.
 - COMBATE RESOLVIDO PELO SISTEMA: quando você receber [COMBATE — RESOLVIDO PELO SISTEMA], o app JÁ rolou os dados, calculou e aplicou o dano do ataque do jogador. Sua função é APENAS narrar esse resultado (não recalcule, não invente outro número, não mude quem acertou). Depois, conduza a resposta dos inimigos: descreva os contra-ataques e aplique o dano deles a mim via "vida" e aos companheiros via "grupo_vida" — pode rolar mentalmente, mas mantenha coerência com a ameaça de cada um. Você continua no controle da FICÇÃO do combate (quem faz o quê, táticas, ambiente); o sistema cuida só da matemática dos ataques do jogador.
 - ABERTURA NO MESMO TURNO (PRIORIDADE MÁXIMA): no instante em que QUALQUER hostilidade começa — inimigo ameaça/ataca/embosca, OU o jogador ataca, OU alguém saca arma com intenção — envie "combate_iniciar" NESSA MESMA resposta, SEMPRE. Se a cena tem inimigo hostil presente, o combate já deve estar aberto. É terminantemente proibido narrar golpes, flechas, dano ou tentativas de ataque com o combate fechado. Na dúvida, ABRA o combate.
@@ -783,11 +784,32 @@ function ModalNivel({ nivel, personagem, escolher }) {
 
 /* Instrução central do "turno do mundo": CURTO NO TEMPO (o presente, sem pular
    horas), mas PLENO DE VIDA — pessoas agem e conversam, coisas acontecem agora. */
-const INSTRUCAO_MUNDO_VIVO = `Agora o mundo VIVE este mesmo instante — não avance o tempo (nada de "horas depois"), fique no presente imediato, mas faça a cena PULSAR com vida real, com a mesma intensidade de uma ação minha:
-- Se há pessoas por perto, elas FALAM e AGEM: puxam conversa comigo ou entre si, discutem, brincam, negociam, reagem ao que acabou de acontecer. Dê falas reais aos NPCs (com nome), não só descrições de ambiente.
-- Companheiros do grupo se manifestam: opinam, provocam, contam algo, questionam uma decisão.
-- Algo ACONTECE no presente: uma pequena reviravolta, alguém chega ou parte, uma oferta, uma tensão, um pedido, uma fofoca relevante, um gesto inesperado.
-- NÃO seja tímido nem genérico: evite "um pássaro voa" ou "o vento sopra" como se fosse o evento. O mundo é feito de PESSOAS vivendo. Faça 2-4 frases densas de vida presente e devolva a vez a mim.`;
+/* MODOS DE CENA — o APP escolhe (rotação), não o Mestre. Isso quebra o vício
+   de sempre cair em "alguém irrompe com urgência": a variedade vira mecânica,
+   não pedido. Só 1 em 7 modos permite tensão/interrupção. */
+const MODOS_MUNDO = [
+  { id: "vinculo", texto: "VÍNCULO E CONVERSA — alguém próximo puxa papo pessoal: um companheiro revela algo de si, uma lembrança, um medo, uma piada interna, um afeto. Íntimo e humano. SEM ameaça, SEM notícia grave." },
+  { id: "entre_npcs", texto: "NPCs ENTRE SI — dois ou mais personagens interagem ENTRE ELES na sua frente, sem depender de você: discutem, fofocam, flertam, negociam, brincam. Você é testemunha, não alvo. SEM crise." },
+  { id: "governo", texto: "GOVERNO E ADMINISTRAÇÃO — assunto de gestão chega com calma e rotina: um relatório de colheita, uma disputa entre vassalos, um pedido de obra, um imposto, uma nomeação. Burocracia viva, SEM emergência." },
+  { id: "cotidiano", texto: "COTIDIANO E POVO — a vida comum aparece: mercado, oficinas, crianças, festa, música, um artesão orgulhoso do trabalho, o cheiro da cidade. Textura do mundo, SEM conflito." },
+  { id: "mundo", texto: "MUNDO E DESCOBERTA — algo do lugar se revela: um costume local, uma construção antiga, o clima mudando a rotina, uma história que contam por ali. Curiosidade, SEM perigo." },
+  { id: "consequencia", texto: "CONSEQUÊNCIA LENTA — um efeito DISCRETO de algo que o jogador fez cenas atrás se manifesta sem drama: alguém agradece, um preço mudou, uma reputação circula, um rosto conhecido reaparece em paz." },
+  { id: "tensao", texto: "TENSÃO (raro — este é o único modo em que algo pode apertar) — uma complicação surge, mas de forma ORGÂNICA e preparada: uma notícia que confirma algo já semeado, uma desconfiança, uma cobrança. Mesmo aqui: NADA de porta arrombada, mensageiro ofegante ou figura arrastada ao salão." },
+];
+
+function instrucaoMundo(modo, banirUrgencia) {
+  return `Agora o mundo VIVE este mesmo instante — não avance o tempo (nada de "horas depois"), fique no presente imediato, mas faça a cena PULSAR com vida real.
+
+MODO OBRIGATÓRIO DESTA CENA: ${modo.texto}
+Siga o modo acima à risca. Ele foi escolhido pelo sistema justamente para variar o ritmo — ignorá-lo torna a campanha repetitiva.
+
+- Pessoas FALAM e AGEM: dê falas reais aos NPCs (com nome), não só descrição de ambiente.
+- Companheiros se manifestam: opinam, provocam, contam algo.
+- 2-4 frases densas de vida presente, e devolva a vez a mim.
+${banirUrgencia ? `
+⛔ PROIBIDO NESTA CENA (você repetiu isso demais nas últimas cenas): alguém irromper/invadir o recinto; mensageiro ou arauto chegando ofegante; porta se abrindo com estrondo; figura arrastada por guardas; grito, súplica ou revelação urgente; qualquer nova ameaça anunciada. A cena precisa ser calma e cotidiana. Se sentir vontade de criar uma emergência, ESCOLHA outra coisa.` : `
+⛔ Não use "alguém irrompe com urgência" nem interrupção dramática — esse recurso está desgastado nesta campanha.`}`;
+}
 
 const ABAS = [{ id: "ficha", rotulo: "Ficha", icone: "☰" }, { id: "grupo", rotulo: "Grupo", icone: "⚑" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }];
 
@@ -1559,7 +1581,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.1 · economia</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.3 · golpe final</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1901,6 +1923,10 @@ export default function Taverna() {
   const habUsadaRef = useRef(false);
   const rolagemConsumidaRef = useRef(null);
   const mundoContRef = useRef(0);
+  const combateOciosoRef = useRef(0);      // turnos sem troca de golpes
+  const ataqueResolvidoRef = useRef(false); // marca ataque do jogador neste turno
+  const modoMundoRef = useRef(0);           // rotação de tipos de cena
+  const urgenciaRef = useRef(0);            // quantas cenas recentes usaram urgência
   const [aguardandoMundo, setAguardandoMundo] = useState(false);
   const [mostrarHoras, setMostrarHoras] = useState(false);
   const ehAcaoMundoRef = useRef(false); // marca que o próximo enviar é a vez do mundo
@@ -2082,9 +2108,26 @@ export default function Taverna() {
     setPersonagem(pers);
     /* combate: processa de forma síncrona (via ref) para as mensagens saírem na ordem certa */
     if (resp.mudancas) {
+      const combateAntes = combateRef.current;
       const novoCombate = processarCombate(combateRef.current, resp.mudancas, msgs);
       combateRef.current = novoCombate;
       setCombate(novoCombate);
+      /* HUD FANTASMA: se o painel de combate está aberto mas ninguém troca golpes
+         (o Mestre seguiu a narrativa sem encerrar), o app fecha sozinho após 2
+         turnos parados. Evita o combate "preso" na tela por vários turnos. */
+      if (combateRef.current) {
+        const houveIniciar = Array.isArray(resp.mudancas.combate_iniciar) && resp.mudancas.combate_iniciar.length > 0;
+        const houveDano = Array.isArray(resp.mudancas.combate_inimigo_vida) && resp.mudancas.combate_inimigo_vida.length > 0;
+        const houveAtaqueMeu = ataqueResolvidoRef.current;
+        if (houveIniciar || houveDano || houveAtaqueMeu) combateOciosoRef.current = 0;
+        else combateOciosoRef.current += 1;
+        if (combateOciosoRef.current >= 2) {
+          combateOciosoRef.current = 0;
+          combateRef.current = null; setCombate(null);
+          msgs.push("⚔ O confronto se dissolve — o painel de combate se fecha.");
+        }
+      } else combateOciosoRef.current = 0;
+      ataqueResolvidoRef.current = false;
       /* vitória detectada por código: pede ao Mestre os espólios se ele ainda
          não os deu neste turno (evita esperar ele "perceber" a morte) */
       if (resp.mudancas.__vitoriaAuto) {
@@ -2100,6 +2143,17 @@ export default function Taverna() {
         setPersonagem(p2);
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — espólios já aplicados pelo sistema: +${esp.moedas} moedas e +${esp.xp} XP para todos] NÃO envie moedas nem xp (seria dobrado). Narre o desfecho da luta em 2-3 frases.${esp.caiItem ? ` UM ITEM CAIU: crie UM item coerente com os inimigos derrotados e envie via "adicionar_equipamento" (com raridade proporcional à ameaça) ou "adicionar_itens".` : " Nenhum item especial desta vez — não envie itens."}`;
       }
+    }
+    /* detector de repetição: mede se o Mestre voltou a usar interrupção urgente */
+    {
+      const nrt = (resp.narrativa || "").toLowerCase();
+      const marcas = /irromp|invade o|invadem o|arromb/.test(nrt)
+        || /(porta|portas)[^.]{0,40}(se abre|se abrem|escancar)/.test(nrt)
+        || /(mensageiro|arauto|batedor|soldado)[^.]{0,40}(ofegante|corre|irrompe|chega gritando)/.test(nrt)
+        || /(arrast|jogam|atiram)[^.]{0,40}(aos seus pés|para dentro)/.test(nrt)
+        || /(urgênc|urgente|emergênc|com pressa|sem fôlego)/.test(nrt)
+        || /(interromp|é rompid|foi rompid|se lança (pelo|para)|surge de repente|de súbito)/.test(nrt);
+      urgenciaRef.current = marcas ? urgenciaRef.current + 1 : 0;
     }
     pushMsgs([{ autor: "mestre", texto: resp.narrativa || "…" }, ...msgs.map((t) => ({ autor: "sistema", texto: t }))]);
     setSugestoes(resp.rolagem ? [] : (resp.sugestoes || []));
@@ -2246,20 +2300,29 @@ export default function Taverna() {
     const ataque = resolverAtaqueJogador(acao, personagem);
     if (ataque) {
       const { r, alvo } = ataque;
-      const linha = mostrarRolagensRef.current ? [{ autor: "sistema", texto: "⚔ " + resumoDoAtaque(r) }] : [];
-      pushMsgs([{ autor: "jogador", texto: acao }, ...linha]);
+      ataqueResolvidoRef.current = true;
       // aplica o dano no inimigo por código (fonte da verdade)
+      let pvDepois = alvo.vida;
       if (r.dano > 0) {
-        const novo = { ...combateRef.current, inimigos: combateRef.current.inimigos.map((e) => e.nome === alvo.nome ? { ...e, vida: Math.max(0, e.vida - r.dano), derrotado: (e.vida - r.dano) <= 0 } : e) };
+        pvDepois = Math.max(0, alvo.vida - r.dano);
+        const novo = { ...combateRef.current, inimigos: combateRef.current.inimigos.map((e) => e.nome === alvo.nome ? { ...e, vida: pvDepois, derrotado: pvDepois <= 0, ultimoDano: r.dano } : e) };
         combateRef.current = novo; setCombate(novo);
       }
+      /* linha de dano SEMPRE visível (independe do interruptor de rolagens) */
+      const linhaDano = r.dano > 0
+        ? [{ autor: "sistema", texto: `⚔ ${personagem.nome} → ${alvo.nome}: ${r.critico ? "CRÍTICO! " : ""}${r.dano} de dano · ${alvo.nome} ${pvDepois}/${alvo.vidaMax || alvo.vida}${pvDepois <= 0 ? " ☠" : ""}` }]
+        : [{ autor: "sistema", texto: `⚔ ${personagem.nome} → ${alvo.nome}: ${r.desastre ? "erro desastroso" : "errou"}` }];
+      const linhaRol = mostrarRolagensRef.current ? [{ autor: "sistema", texto: "🎲 " + resumoDoAtaque(r) }] : [];
+      pushMsgs([{ autor: "jogador", texto: acao }, ...linhaRol, ...linhaDano]);
       const desfecho = r.resultado === "critico" ? `acerto CRÍTICO causando ${r.dano} de dano` : r.resultado === "acerta" ? `acerto causando ${r.dano} de dano` : r.resultado === "desastre" ? "erro desastroso" : "erro";
 
       /* TURNO DO MUNDO (combate): os inimigos vivos revidam — o app rola e
          calcula tudo; o Mestre só narra as DECISÕES deles. */
       let persAtual = personagem;
+      /* meu golpe pode ter encerrado a luta: fecha AGORA, no mesmo turno */
+      const fechouNoMeuGolpe = fecharSeTodosCairam();
       const combPos = combateRef.current;
-      const inimigosVivos = (combPos?.inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
+      const inimigosVivos = fechouNoMeuGolpe ? [] : (combPos?.inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
       let resumoInimigos = "";
       if (inimigosVivos.length > 0) {
         const acoes = turnoDosInimigos({ inimigos: combPos.inimigos, jogador: personagem, grupo: personagem.grupo || [] });
@@ -2268,7 +2331,8 @@ export default function Taverna() {
         let grupoAtual = [...(personagem.grupo || [])];
         const partes = [];
         for (const a of acoes) {
-          if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: "🛡 " + resumoDoAtaque(a.r) });
+          if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(a.r) });
+          linhasSis.push({ autor: "sistema", texto: a.r.dano > 0 ? `🛡 ${a.inimigo} → ${a.alvoNome}: ${a.r.critico ? "CRÍTICO! " : ""}${a.r.dano} de dano` : `🛡 ${a.inimigo} → ${a.alvoNome}: errou` });
           if (a.r.dano > 0) {
             if (a.alvoRef === "jogador") danoNoJogador += a.r.dano;
             else grupoAtual = grupoAtual.map((g) => g.nome === a.alvoNome ? { ...g, vida: Math.max(0, (g.vida || 0) - a.r.dano) } : g);
@@ -2285,16 +2349,19 @@ export default function Taverna() {
         const partesComp = [];
         for (const ac of acoesComp) {
           if (ac.tipo === "ataque" && ac.r) {
-            if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: "⚔ " + resumoDoAtaque(ac.r) }]);
+            if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: "🎲 " + resumoDoAtaque(ac.r) }]);
+            let pvAlvo = null;
             if (ac.r.dano > 0) {
-              combPos.inimigos = combPos.inimigos.map((e) => e.nome === ac.alvoNome ? { ...e, vida: Math.max(0, e.vida - ac.r.dano), derrotado: (e.vida - ac.r.dano) <= 0 } : e);
+              combPos.inimigos = combPos.inimigos.map((e) => { if (e.nome !== ac.alvoNome) return e; pvAlvo = Math.max(0, e.vida - ac.r.dano); return { ...e, vida: pvAlvo, derrotado: pvAlvo <= 0, ultimoDano: ac.r.dano }; });
             }
+            pushMsgs([{ autor: "sistema", texto: ac.r.dano > 0 ? `⚔ ${ac.companheiro} → ${ac.alvoNome}: ${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? " ☠" : ""}` : `⚔ ${ac.companheiro} → ${ac.alvoNome}: errou` }]);
             partesComp.push(`${ac.companheiro} atacou ${ac.alvoNome} (${ac.r.resultado === "acerta" || ac.r.resultado === "critico" ? ac.r.dano + " dano" : "errou"})`);
           } else if (ac.tipo === "socorro") {
             partesComp.push(`${ac.companheiro} corre para socorrer ${ac.alvo}`);
           }
         }
         combateRef.current = combPos; setCombate({ ...combPos });
+        fecharSeTodosCairam(); // companheiro pode ter dado o golpe final
 
         /* SISTEMA DE MORTE: se o jogador está a 0 PV, faz um teste de morte */
         if (persAtual.vida <= 0) {
@@ -2323,12 +2390,39 @@ export default function Taverna() {
 
   /* VEZ DO MUNDO: o mundo vive o instante presente (curto no TEMPO, mas cheio
      de vida — pessoas agem, falam, decidem; coisas acontecem agora). */
+  /* Fecha o combate IMEDIATAMENTE se todos os inimigos caíram. Necessário
+     porque o dano aplicado por código (meu golpe / turno dos companheiros)
+     não passa pelo processarCombate, onde ficava a única verificação. */
+  const fecharSeTodosCairam = () => {
+    const c = combateRef.current;
+    if (!c || !(c.inimigos || []).length) return false;
+    const todosCairam = c.inimigos.every((e) => e.derrotado || (e.vida || 0) <= 0);
+    if (!todosCairam) return false;
+    combateRef.current = null; setCombate(null); combateOciosoRef.current = 0;
+    const derrotados = c.inimigos;
+    const esp = gerarEspolios(derrotados);
+    setPersonagem((p) => {
+      let p2 = { ...p, moedas: (p.moedas || 0) + esp.moedas, xp: (p.xp || 0) + esp.xp };
+      while (p2.xp >= XP_POR_NIVEL(p2.nivel)) { p2.xp -= XP_POR_NIVEL(p2.nivel); p2.nivel += 1; p2.nivelPendentes = (p2.nivelPendentes || 0) + 1; }
+      p2.grupo = (p2.grupo || []).map((g) => { const ev = evoluirCompanheiro({ ...g, xp: (g.xp || 0) + esp.xp }); delete ev._subiu; return ev; });
+      return p2;
+    });
+    pushMsgs([
+      { autor: "sistema", texto: "⚔ Todos os inimigos caíram — o combate termina." },
+      { autor: "sistema", texto: `◉ Espólios: +${esp.moedas} moedas · +${esp.xp} XP` },
+    ]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — sistema já aplicou +${esp.moedas} moedas e +${esp.xp} XP] NÃO envie moedas nem xp. Narre o desfecho em 2-3 frases.${esp.caiItem ? " UM ITEM CAIU: crie um item coerente e envie em \"adicionar_equipamento\" ou \"adicionar_itens\"." : " Sem itens desta vez."}`;
+    return true;
+  };
+
   const vezDoMundo = () => {
     if (bloqueado || acampadoRef.current) return;
     ehAcaoMundoRef.current = true;
     setAguardandoMundo(false);
     pushMsgs([{ autor: "sistema", texto: "🌍 O mundo vive…" }]);
-    enviar(`[VEZ DO MUNDO] ${INSTRUCAO_MUNDO_VIVO}`, personagem);
+    const modo = MODOS_MUNDO[modoMundoRef.current % MODOS_MUNDO.length];
+    modoMundoRef.current += 1;
+    enviar(`[VEZ DO MUNDO] ${instrucaoMundo(modo, urgenciaRef.current >= 1)}`, personagem);
   };
 
   /* RESPONDER + VEZ DO MUNDO ao mesmo tempo: sua fala é conduzida E o mundo
@@ -2339,12 +2433,15 @@ export default function Taverna() {
     setEntrada("");
     ehAcaoMundoRef.current = true;
     pushMsgs([{ autor: "jogador", texto: fala }]);
-    enviar(`[RESPONDO E O MUNDO VIVE] Eu falo: "${fala}". ${INSTRUCAO_MUNDO_VIVO}`, personagem);
+    const modo = MODOS_MUNDO[modoMundoRef.current % MODOS_MUNDO.length];
+    modoMundoRef.current += 1;
+    enviar(`[RESPONDO E O MUNDO VIVE] Eu falo: "${fala}". ${instrucaoMundo(modo, urgenciaRef.current >= 1)}`, personagem);
   };
 
   /* PASSAR O TEMPO (deliberado): simula N horas; quanto mais horas, mais o mundo muda */
   const passarTempo = (horas) => {
     if (bloqueado || acampadoRef.current) return;
+    if (combateRef.current) { combateRef.current = null; setCombate(null); combateOciosoRef.current = 0; }
     setMostrarHoras(false);
     ehAcaoMundoRef.current = true;
     setAguardandoMundo(false);
@@ -2426,6 +2523,7 @@ export default function Taverna() {
      Mestre narra o que passou, proporcional ao tempo (nunca exagerado). */
   const acampar = () => {
     if (acampadoRef.current || bloqueado) return;
+    if (combateRef.current) { combateRef.current = null; setCombate(null); combateOciosoRef.current = 0; }
     setAguardandoMundo(false);
     definirAcampado(true);
     const local = localDeDescanso(mapaRef.current, cidadeAtualRef.current, faccaoJogadorRef.current);
