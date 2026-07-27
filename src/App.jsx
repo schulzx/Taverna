@@ -208,6 +208,7 @@ CONDUÇÃO E JORNADA (não seja vago):
 - Termine SEMPRE com uma situação aberta e, quando útil, 2-3 caminhos possíveis nas "sugestoes".
 
 COMPANHEIROS VIVOS (até ${MAX_COMPANHEIROS}): entram por "grupo_adicionar". São pessoas completas — agem sozinhos, opinam, discordam e podem partir ou trair ("grupo_remover") se maltratados.
+- BOLSAS PRÓPRIAS: cada companheiro tem a própria bolsa. Quando um companheiro pega, recebe ou usa um item, use "grupo_itens" (nunca "adicionar_itens", que é a bolsa do JOGADOR). O jogador também pode transferir itens pela interface — o app avisa quando isso acontece; respeite quem carrega o quê.
 - EVOLUEM JUNTO: companheiros ganham XP e sobem de nível como o herói. Quando o grupo conquista algo, dê XP aos companheiros via "grupo_xp" (ex.: [{"nome":"Kael","xp":30}]) — o app cuida do nível e do PV. Use "grupo_atualizar" para melhorias narrativas (nova habilidade, mudança de descrição). Um companheiro que nunca evolui fica para trás e quebra a imersão. Têm INICIATIVA PRÓPRIA: puxam assunto, comentam a cena, discordam do plano e agem SEM serem acionados pelo jogador — uma intervenção espontânea de vez em quando (não em todo turno) mantém o grupo vivo sem virar ruído. Um companheiro que só fala quando falam com ele é um companheiro-mobília: proibido.
 
 ECONOMIA: moeda com nome do mundo; valor numérico em "moedas". Mercadores com personalidade e preços coerentes. NUNCA desconte moedas sem o jogador aceitar a compra.
@@ -249,6 +250,7 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   "grupo_remover": [], "grupo_vida": [{"nome":"Kael","vida":-4}],
   "grupo_atualizar": [{"nome":"Kael","nivel":2,"vidaMax":15,"descricao":"..."}],
   "grupo_xp": [{"nome":"Kael","xp":30}],
+  "grupo_itens": [{"nome":"Kael","adicionar":[{"nome":"Poção de cura","descricao":"Recupera vida ao beber"}],"remover":["Tocha"]}],
   "combate_iniciar": [{"nome":"Capitão Bandido","vida":28,"vidaMax":28,"ameaca":"espadachim veterano, cicatriz no rosto"},{"nome":"Lacaio","vida":8,"vidaMax":8,"ameaca":"nervoso, mal segura a lança"}],
   "combate_inimigo_vida": [{"nome":"Lacaio","vida":-8}],
   "combate_atualizar": [{"nome":"Capitão Bandido","ameaca":"enfurecido, sangrando"}],
@@ -1041,7 +1043,8 @@ function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem }) {
+  const [invDe, setInvDe] = React.useState("eu");
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
   const [confirmarRemover, setConfirmarRemover] = React.useState(null);
   mundo = mundo || { genero: "Fantasia medieval" };
@@ -1185,6 +1188,43 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
 
         {aba === "inv" && (
           <>
+            {(personagem.grupo || []).length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {[{ id: "eu", rotulo: personagem.nome || "Você" }, ...(personagem.grupo || []).map((g) => ({ id: g.nome, rotulo: g.nome }))].map((op) => (
+                  <button key={op.id} onClick={() => setInvDe(op.id)} className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full" style={{ background: invDe === op.id ? T.amber : T.panelSoft, color: invDe === op.id ? T.onAccent : T.inkDim, border: `1px solid ${invDe === op.id ? T.amber : T.line}`, fontWeight: 600 }}>{op.rotulo}</button>
+                ))}
+              </div>
+            )}
+            {invDe !== "eu" ? (() => {
+              const comp = (personagem.grupo || []).find((g) => g.nome === invDe);
+              if (!comp) return <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Personagem não encontrado.</div>;
+              const itensComp = comp.inventario || [];
+              return (
+                <div>
+                  <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Bolsa de {comp.nome}</div>
+                  {itensComp.length === 0 ? <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Nada aqui ainda. Dê itens pela sua bolsa (botão "dar…").</div> : (
+                    <ul className="space-y-2">
+                      {itensComp.map((raw, i) => {
+                        const nomeIt = typeof raw === "string" ? raw : (raw && raw.nome) || "item";
+                        const desc = typeof raw === "object" && raw ? (raw.descricao || "") : "";
+                        const ehEquip = raw && typeof raw === "object" && raw.tipo && raw.raridade;
+                        return (
+                          <li key={i} className="rounded-lg px-3 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${ehEquip ? (RARIDADE_COR[raw.raridade] || T.line) : "transparent"}` }}>
+                            <div className="tv-body text-sm flex items-center gap-2.5" style={{ color: T.ink }}>
+                              <span style={{ color: T.amber }}>◆</span>
+                              <span className="flex-1 min-w-0">{nomeIt}{ehEquip ? <span className="tv-mono text-[9px]" style={{ color: RARIDADE_COR[raw.raridade] || T.inkDim }}> · {raw.raridade}</span> : null}</span>
+                              <button onClick={() => transferirItem(comp.nome, "eu", "inventario", nomeIt)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>← pegar</button>
+                            </div>
+                            {desc && <div className="tv-body text-xs mt-1 italic" style={{ color: T.inkDim, paddingLeft: "22px" }}>{desc}</div>}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              );
+            })() : (
+            <>
             <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
               <span className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.inkDim }}>Moedas</span>
               <span className="tv-mono text-xl font-semibold" style={{ color: T.amberSoft }}>◉ {personagem.moedas}</span>
@@ -1235,7 +1275,12 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                           <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{it.nome}</div>
                           <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>{SLOT_ROTULO[it.tipo] || it.tipo} · {it.raridade}</div>
                         </div>
-                        <div className="flex items-center gap-1 shrink-0"><button onClick={() => descartarEquip(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title="Descartar">✕</button><button onClick={() => equipar(it)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>equipar</button></div>
+                        <div className="flex items-center gap-1 shrink-0">{(personagem.grupo || []).length > 0 && (
+                          <select value="" onChange={(e) => { if (e.target.value) transferirItem("eu", e.target.value, "equipamento", it.nome); }} className="tv-mono text-[10px] rounded px-1 py-1" style={{ background: T.panel, color: T.violetSoft, border: `1px solid ${T.line}` }}>
+                            <option value="">dar…</option>
+                            {(personagem.grupo || []).map((g) => <option key={g.nome} value={g.nome}>{g.nome}</option>)}
+                          </select>
+                        )}<button onClick={() => descartarEquip(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title="Descartar">✕</button><button onClick={() => equipar(it)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>equipar</button></div>
                       </div>
                       {(it.atributos && Object.keys(it.atributos).length > 0) && (
                         <div className="flex flex-wrap gap-1.5 mt-2">
@@ -1268,6 +1313,12 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                       <div className="tv-body text-sm flex items-center gap-2.5" style={{ color: T.ink }}>
                         <span style={{ color: T.amber }}>◆</span>
                         <span className="flex-1 min-w-0">{it.nome}{it.qtd > 1 ? <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}> ×{it.qtd}</span> : null}</span>
+                        {(personagem.grupo || []).length > 0 && (
+                          <select value="" onChange={(e) => { if (e.target.value) transferirItem("eu", e.target.value, "inventario", it.nome); }} className="tv-mono text-[10px] rounded px-1 py-1 shrink-0" style={{ background: T.panel, color: T.violetSoft, border: `1px solid ${T.line}` }}>
+                            <option value="">dar…</option>
+                            {(personagem.grupo || []).map((g) => <option key={g.nome} value={g.nome}>{g.nome}</option>)}
+                          </select>
+                        )}
                         <button onClick={() => descartarItem(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>soltar</button>
                       </div>
                       {it.descricao && <div className="tv-body text-xs mt-1 italic" style={{ color: T.inkDim, paddingLeft: "22px" }}>{it.descricao}</div>}
@@ -1276,6 +1327,8 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                 </ul>
               )}
             </div>
+            </>
+            )}
           </>
         )}
       </aside>
@@ -1502,7 +1555,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v3.9 · pergaminho</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.0 · bolsas do grupo</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1593,6 +1646,16 @@ function aplicarMudancas(pers, m, msgs) {
       const ev = evoluirCompanheiro({ ...g, xp: (g.xp || 0) + Math.max(0, gx.xp || 0) });
       if (ev.nivel > antes) msgs.push(`✦ ${g.nome} subiu para o nível ${ev.nivel}!`);
       delete ev._subiu; return ev;
+    });
+  });
+  /* bolsas dos companheiros: o Mestre dá/tira itens deles por "grupo_itens" */
+  (m.grupo_itens || []).forEach((gi) => {
+    grupo = grupo.map((g) => {
+      if (g.nome.toLowerCase() !== (gi.nome || "").toLowerCase()) return g;
+      let inv2 = [...(g.inventario || [])];
+      (gi.adicionar || []).forEach((it) => { inv2.push(it); msgs.push(`◆ ${g.nome} obteve: ${nomeItem(it)}`); });
+      (gi.remover || []).forEach((r) => { const ix = inv2.findIndex((x) => nomeItem(x).toLowerCase() === String(r).toLowerCase()); if (ix >= 0) { msgs.push(`${g.nome} perdeu: ${nomeItem(inv2[ix])}`); inv2.splice(ix, 1); } });
+      return { ...g, inventario: inv2 };
     });
   });
   (m.grupo_atualizar || []).forEach((ga) => {
@@ -1743,7 +1806,7 @@ function migrarPersonagem(p) {
     atributos: { ...atributosBase, ...(p.atributos || {}) },
     inventario: Array.isArray(p.inventario) ? p.inventario : [],
     habilidades: Array.isArray(p.habilidades) ? p.habilidades.filter((h) => h && h.nome).map((h) => ({ nome: h.nome, custo: Math.max(0, Number(h.custo) || 0), descricao: h.descricao || "", duracao: h.duracao || 0 })) : [],
-    grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, xp: g.xp || 0, nivel: g.nivel || 1, semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}` })) : [],
+    grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, xp: g.xp || 0, nivel: g.nivel || 1, inventario: Array.isArray(g.inventario) ? g.inventario : [], semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}` })) : [],
     efeitos: Array.isArray(p.efeitos) ? p.efeitos : [],
     condicoes: Array.isArray(p.condicoes) ? p.condicoes : [],
     equipamento: Array.isArray(p.equipamento) ? p.equipamento : [],
@@ -2408,6 +2471,39 @@ export default function Taverna() {
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] ${nome} saiu do meu grupo (removido pelo jogador). Reflita isso na narrativa: ${nome} não viaja mais comigo.`;
   };
 
+  /* Transfere um item entre você e um companheiro (qualquer direção). */
+  const transferirItem = (de, para, origem, nomeIt) => {
+    const p = personagem;
+    const igual = (x) => ((typeof x === "string" ? x : (x && x.nome) || "").toLowerCase() === nomeIt.toLowerCase());
+    let np = { ...p, grupo: [...(p.grupo || [])] };
+    let item = null;
+    if (de === "eu") {
+      const arr = [...(np[origem] || [])];
+      const i = arr.findIndex(igual);
+      if (i < 0) return;
+      item = arr.splice(i, 1)[0];
+      np[origem] = arr;
+      const gi = np.grupo.findIndex((g) => g.nome === para);
+      if (gi < 0) return;
+      np.grupo[gi] = { ...np.grupo[gi], inventario: [...(np.grupo[gi].inventario || []), item] };
+    } else {
+      const gi = np.grupo.findIndex((g) => g.nome === de);
+      if (gi < 0) return;
+      const arr = [...(np.grupo[gi].inventario || [])];
+      const i = arr.findIndex(igual);
+      if (i < 0) return;
+      item = arr.splice(i, 1)[0];
+      np.grupo[gi] = { ...np.grupo[gi], inventario: arr };
+      const ehEquip = item && typeof item === "object" && item.tipo && item.raridade;
+      if (ehEquip) np.equipamento = [...(np.equipamento || []), item]; else np.inventario = [...(np.inventario || []), item];
+    }
+    setPersonagem(np);
+    const nomeFinal = typeof item === "string" ? item : (item && item.nome) || "item";
+    const deTxt = de === "eu" ? "você" : de, paraTxt = para === "eu" ? "você" : para;
+    pushMsgs([{ autor: "sistema", texto: `◆ ${nomeFinal}: ${deTxt} → ${paraTxt}` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Transferi "${nomeFinal}" de ${deTxt} para ${paraTxt}.`;
+  };
+
   const gerarCronica = async () => {
     const narrativas = mensagens.filter((m) => m.autor === "mestre").map((m) => m.texto).slice(-14).join("\n\n");
     if (!narrativas) return;
@@ -2606,7 +2702,7 @@ export default function Taverna() {
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} /></LimiteErro>
         </div>
       )}
 
