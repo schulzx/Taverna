@@ -433,7 +433,10 @@ async function chamarMestre(system, historico) {
   /* 18 mensagens bastam: o cânone (fatos imutáveis) e o livro (resumo do arco)
      vão no system prompt — o histórico bruto só precisa do contexto imediato.
      Corta ~metade dos tokens de entrada por turno. */
-  const texto = await chamarModelo(system, historico.slice(-18), 1000, "json");
+  /* Teto 2600: a resposta JSON carrega narrativa + mudancas + sugestões, e
+     narrações ricas (diálogos longos) passavam de 1000 e vinham CORTADAS no
+     meio da palavra. O teto não custa — só se paga pelo que é gerado. */
+  const texto = await chamarModelo(system, historico.slice(-18), 2600, "json");
   return extrairJSON(texto);
 }
 
