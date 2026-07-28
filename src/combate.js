@@ -217,3 +217,37 @@ export function gerarEspolios(inimigosDerrotados) {
   }
   return { xp, moedas, caiItem: Math.random() < chance };
 }
+
+/* ---------------- PATAMARES DE PODER ----------------
+   O nível define o PATAMAR do herói, e o patamar define a escala:
+   o que é trivial, o que é desafio digno e o que está acima. O
+   Mestre não precisa "pensar" — consulta a tabela. O jogador não
+   tem teto de progressão, mas cada patamar tem sua régua. */
+export const PATAMARES = [
+  { min: 1, nome: "Iniciante", desc: "Um mortal talentoso dando os primeiros passos. Um lobo é perigo real; um golem é morte certa.",
+    triviais: "animais pequenos, valentões de taverna", dignos: "lobos, bandidos, goblins (fracos/comuns)", acima: "golens, cavaleiros veteranos, magos formados, qualquer elite — fugir ou usar astúcia" },
+  { min: 3, nome: "Aventureiro", desc: "Nome conhecido na região. Resolve problemas que assustam gente comum.",
+    triviais: "bandidos comuns, animais selvagens", dignos: "ogros, capitães mercenários, feras grandes (comuns/competentes)", acima: "golens de guerra, dragões jovens, arquimagos (elites/lendários)" },
+  { min: 6, nome: "Herói", desc: "Canções falam de você. Cidades pedem sua ajuda pelo nome.",
+    triviais: "bandidos, soldados rasos, feras comuns — resolva em UMA frase, sem abrir combate", dignos: "golens, gigantes, campeões inimigos, pequenos grupos de elite", acima: "dragões adultos, avatares, exércitos inteiros" },
+  { min: 9, nome: "Campeão", desc: "Entre os mais poderosos da era. Reis o tratam como igual.",
+    triviais: "qualquer tropa comum, feras, golens menores — um gesto os resolve", dignos: "dragões, senhores da guerra lendários, horrores antigos (lendários)", acima: "semideuses, entidades primordiais" },
+  { min: 12, nome: "Lenda Viva", desc: "Seu nome molda o destino de reinos. Poucos mortais o desafiam.",
+    triviais: "praticamente qualquer ameaça mortal comum — inclusive golens; NUNCA abra combate por isso", dignos: "os maiores dragões, liches ancestrais, campeões divinos", acima: "deuses menores, forças cósmicas" },
+  { min: 16, nome: "Semideus", desc: "Meio lenda, meio mito. O mundo físico raramente o ameaça.",
+    triviais: "exércitos mortais inteiros, monstros lendários comuns", dignos: "avatares divinos, titãs, entidades primordiais", acima: "deuses maiores, o próprio tecido da realidade" },
+  { min: 20, nome: "Divindade Menor", desc: "Você transcendeu. Um golem é uma pedra que fala; mortais são história que você escreve.",
+    triviais: "TUDO que é mortal — jamais abra combate contra mortais; narre com um gesto", dignos: "outras divindades, conceitos encarnados, o impossível", acima: "os deuses primeiros — e mesmo esses, com astúcia…" },
+];
+
+export function patamarDe(nivel) {
+  let atual = PATAMARES[0];
+  for (const p of PATAMARES) if ((nivel || 1) >= p.min) atual = p;
+  return atual;
+}
+
+export function resumoPatamar(nivel) {
+  const p = patamarDe(nivel);
+  const prox = PATAMARES[PATAMARES.indexOf(p) + 1];
+  return `${p.nome} (nível ${nivel || 1}). ${p.desc} TRIVIAL para ele (resolva narrativamente num gesto, SEM abrir combate nem pedir rolagem difícil): ${p.triviais}. DESAFIO DIGNO (combate/rolagens valem a pena): ${p.dignos}. ACIMA dele (vitória direta é implausível — exija astúcia, aliados, preparação ou fuga): ${p.acima}.${prox ? ` Próximo patamar: ${prox.nome} no nível ${prox.min}.` : ""}`;
+}

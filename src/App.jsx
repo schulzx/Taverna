@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
-import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios } from "./combate.js";
+import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar } from "./combate.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./historia.js";
 
 /* ============================================================
@@ -166,6 +166,9 @@ COMBATE, ESPÓLIOS E ACHADOS:
 
 FICHA DE INIMIGOS NO COMBATE (importante para a tática):
 - NARRATIVA E NÚMEROS ANDAM JUNTOS: se você narrar que inimigos morreram/fugiram/se renderam, ZERE o PV deles com "combate_inimigo_vida" no MESMO JSON, ou envie "combate_encerrar". Nunca descreva um exército aniquilado deixando os PV intactos no sistema — isso trava o painel de combate. Do mesmo modo, só narre morte de quem o sistema realmente derrubou.
+- PATAMAR DE PODER DO HERÓI (a régua de TODAS as decisões — consulte antes de qualquer combate, rolagem ou feito): ${resumoPatamar(personagem.nivel || 1)}
+  · O jogador NÃO tem teto de progressão — mas cada patamar tem sua escala. Um Iniciante NUNCA derruba um golem num golpe (negue com a matemática); uma Divindade NUNCA sofre para vencer mortais (nem abra combate — narre o gesto). Ameaças novas devem ser escolhidas do patamar DIGNO; triviais se resolvem em uma frase; superiores exigem plano, aliados ou fuga.
+- PREÇOS PADRÃO (use esta tabela — não invente valores): item comum 10-25 moedas; incomum 40-80; raro 150-300; épico 600-1200; lendário 2500+. Vender rende METADE do valor. Estalagem 2-5/noite; refeição 1-2; poção de cura comum 40-60. Serviços simples 5-20; especializados 50-200. Mantenha a economia coerente com esses números.
 - BALANCEAMENTO DE PV (importante — não infle números!): o PV dos inimigos deve ser PROPORCIONAL ao meu nível. Referência por ameaça (para um herói do meu nível): inimigo "fraco" tem cerca de 35% do meu PV, "comum" ~70%, "competente" ~igual ao meu, "elite" ~1,6×, "lendário/chefe" ~2,6×. NUNCA dê a um inimigo comum 3× o meu PV — isso quebra o jogo. Um chefe pode ser forte, mas dentro dessa escala. Quando criar um inimigo, defina "combate_inimigo_vida"/PV coerente com essa tabela e com meu nível atual.
 - COMBATE RESOLVIDO PELO SISTEMA: quando você receber [COMBATE — RESOLVIDO PELO SISTEMA], o app JÁ rolou os dados, calculou e aplicou o dano do ataque do jogador. Sua função é APENAS narrar esse resultado (não recalcule, não invente outro número, não mude quem acertou). Depois, conduza a resposta dos inimigos: descreva os contra-ataques e aplique o dano deles a mim via "vida" e aos companheiros via "grupo_vida" — pode rolar mentalmente, mas mantenha coerência com a ameaça de cada um. Você continua no controle da FICÇÃO do combate (quem faz o quê, táticas, ambiente); o sistema cuida só da matemática dos ataques do jogador.
 - ABERTURA NO MESMO TURNO (PRIORIDADE MÁXIMA): no instante em que QUALQUER hostilidade começa — inimigo ameaça/ataca/embosca, OU o jogador ataca, OU alguém saca arma com intenção — envie "combate_iniciar" NESSA MESMA resposta, SEMPRE. Se a cena tem inimigo hostil presente, o combate já deve estar aberto. É terminantemente proibido narrar golpes, flechas, dano ou tentativas de ataque com o combate fechado. Na dúvida, ABRA o combate.
@@ -932,7 +935,8 @@ function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar })
   );
 }
 
-function PainelDiario({ historia, quests }) {
+function PainelDiario({ historia, quests, trocarArco }) {
+  const [trocando, setTrocando] = React.useState(false);
   const est = estruturaPorId((historia || {}).estrutura);
   const etapaIdx = Math.min((historia || {}).etapa || 0, est.etapas.length - 1);
   const ativas = (quests || []).filter((q) => q.status === "ativa");
@@ -952,8 +956,22 @@ function PainelDiario({ historia, quests }) {
   return (
     <div>
       <div className="rounded-xl p-4 mb-4" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
-        <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.violetSoft }}>Arco da campanha</div>
+        <div className="flex items-center justify-between mb-1">
+          <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>Arco da campanha</div>
+          <button onClick={() => setTrocando((v) => !v)} className="tv-mono text-[10px] px-2 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>↺ trocar arco</button>
+        </div>
         <div className="tv-display text-xl" style={{ color: T.ink }}>{est.nome}</div>
+        {trocando && (
+          <div className="mt-3 space-y-2">
+            <div className="tv-body text-xs" style={{ color: T.inkDim }}>Mudar a perspectiva da campanha — o mundo e a história vividos permanecem; só o rumo dramático muda.</div>
+            {ESTRUTURAS.filter((e) => e.id !== (historia || {}).estrutura).map((e) => (
+              <button key={e.id} onClick={() => { trocarArco(e.id); setTrocando(false); }} className="w-full text-left rounded-lg p-3" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
+                <div className="tv-display text-base" style={{ color: T.amberSoft }}>{e.nome}</div>
+                <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{e.desc}</div>
+              </button>
+            ))}
+          </div>
+        )}
         <div className="flex items-center gap-1.5 mt-2 flex-wrap">
           {est.etapas.map((et, i) => (
             <div key={i} className="flex items-center gap-1.5">
@@ -1118,7 +1136,7 @@ function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
   const [confirmarRemover, setConfirmarRemover] = React.useState(null);
@@ -1141,7 +1159,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
             <div className="flex items-center gap-3">
               <Retrato semente={sementeDe(personagem)} tamanho={64} anel={T.amber} estado={estadoDe(personagem.vida, personagem.vidaMax)} />
               <div className="min-w-0">
-                <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>{(mundo || {}).genero} · Nível {personagem.nivel}</div>
+                <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>{(mundo || {}).genero} · Nível {personagem.nivel} · <span style={{ color: T.amberSoft }}>{patamarDe(personagem.nivel).nome}</span></div>
                 <div className="tv-display text-3xl leading-tight" style={{ color: T.ink }}>{personagem.nome}</div>
                 <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>{personagem.conceito}</div>
                 {(personagem.classe || personagem.raca) && (
@@ -1227,7 +1245,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
           </>
         )}
 
-        {aba === "diario" && <PainelDiario historia={historia} quests={quests} />}
+        {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} />}
 
         {aba === "grupo" && (
@@ -1643,7 +1661,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.4 · missões e arcos</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.5 · patamares</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2357,7 +2375,7 @@ export default function Taverna() {
     const vivos = comb.inimigos.filter((e) => !e.derrotado);
     // tenta achar o alvo citado pelo nome; senão, o primeiro vivo
     let alvo = vivos.find((e) => acaoN.includes(e.nome.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""))) || vivos[0];
-    const bonusAtk = Math.max((pers.atributos?.forca || 0), (pers.atributos?.destreza || 0)) + 2;
+    const bonusAtk = Math.max((pers.atributos?.forca || 0), (pers.atributos?.destreza || 0)) + 2 + Math.floor(((pers.nivel || 1) - 1) / 4);
     const danoBase = danoDe(pers, false);
     const r = resolverAtaque({
       atacante: pers.nome, alvo, ehAtacanteInimigo: false,
@@ -2687,6 +2705,14 @@ export default function Taverna() {
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] ${nome} saiu do meu grupo (removido pelo jogador). Reflita isso na narrativa: ${nome} não viaja mais comigo.`;
   };
 
+  /* Troca o arco da campanha em andamento — sem reiniciar o mundo. */
+  const trocarArco = (id) => {
+    const est = estruturaPorId(id);
+    historiaRef.current = { estrutura: id, etapa: 0 };
+    pushMsgs([{ autor: "sistema", texto: `📖 Novo arco iniciado: ${est.nome} — "${est.etapas[0].nome}"` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[NOVO ARCO ESCOLHIDO PELO JOGADOR: ${est.nome}] NÃO reinicie o mundo: tudo que foi vivido permanece canônico. Costure a transição a partir da situação ATUAL — a campanha apenas muda de perspectiva dramática. Momento inicial do novo arco: "${est.etapas[0].nome}" — ${est.etapas[0].instrucao} Crie a nova missão principal coerente com este arco e com o que o herói já construiu; conclua ou adapte missões antigas que não façam mais sentido.`;
+  };
+
   /* Transfere um item entre você e um companheiro (qualquer direção). */
   const transferirItem = (de, para, origem, nomeIt) => {
     const p = personagem;
@@ -2918,7 +2944,7 @@ export default function Taverna() {
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} /></LimiteErro>
         </div>
       )}
 
