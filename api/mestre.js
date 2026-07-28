@@ -1,11 +1,14 @@
-/* Função de servidor (Vercel) — Motor: Google Gemini (Flash 3.5+, com lista de fallback).
+/* Função de servidor (Vercel) — Motor: Google Gemini (com lista de fallback).
    A chave fica AQUI, na variável de ambiente GEMINI_API_KEY — nunca no navegador.
-   O jogo chama POST /api/mestre com { system, messages, maxTokens, formato }.
-   formato "json" liga o modo de saída JSON garantida do Gemini (adeus JSON quebrado). */
+   O jogo chama POST /api/mestre com { system, messages, maxTokens, formato, tarefa }.
+   formato "json" liga o modo de saída JSON garantida do Gemini (adeus JSON quebrado).
+   ROTEAMENTO POR TAREFA: "leve" (livro/resumo/burocracia) vai SÓ para modelos Flash
+   (baratíssimos); "mestre" (padrão) tenta o Pro e cai para Flash se indisponível.
+   É o mesmo princípio do resto do app: nem toda tarefa merece o modelo caro. */
 export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).json({ erro: "Use POST" }); return; }
   try {
-    const { system, messages, maxTokens, formato } = req.body || {};
+    const { system, messages, maxTokens, formato, tarefa } = req.body || {};
     if (!system || !Array.isArray(messages) || messages.length === 0) {
       res.status(400).json({ erro: "Pedido inválido" }); return;
     }
@@ -16,8 +19,11 @@ export default async function handler(req, res) {
       parts: [{ text: String(m.content || "") }],
     }));
 
+    /* Respeita o teto pedido pelo app (padrão 1500). O mínimo de 800 evita
+       truncamento do JSON; o teto de 8192 barra respostas descontroladas.
+       Antes havia um piso de 4096 — todo turno pagava teto 4× maior que o necessário. */
     const generationConfig = {
-      maxOutputTokens: Math.min(Math.max(Number(maxTokens) || 1000, 4096), 16384),
+      maxOutputTokens: Math.min(Math.max(Number(maxTokens) || 1500, 800), 8192),
     };
     if (formato === "json") generationConfig.responseMimeType = "application/json";
     /* Gemini 3 Pro sempre "pensa"; o padrão HIGH consome o orçamento de saída e
@@ -32,9 +38,13 @@ export default async function handler(req, res) {
       "HARM_CATEGORY_DANGEROUS_CONTENT",
     ].map((category) => ({ category, threshold: "BLOCK_ONLY_HIGH" }));
 
-    /* Modelos em ordem de preferência: Pro primeiro (conta com faturamento),
-       Flash como reserva automática se o Pro estiver inacessível. */
-    const MODELOS = ["gemini-3.1-pro-preview", "gemini-3.5-flash", "gemini-3.6-flash"];
+    /* Modelos em ordem de preferência.
+       MESTRE (narração): Pro primeiro (conta com faturamento), Flash como reserva.
+       LEVE (livro/resumo/burocracia): só Flash — qualidade narrativa não importa,
+       custo quase zero. É aqui que mora a economia das assinaturas baratas. */
+    const MODELOS = tarefa === "leve"
+      ? ["gemini-3.5-flash", "gemini-3.6-flash"]
+      : ["gemini-3.1-pro-preview", "gemini-3.5-flash", "gemini-3.6-flash"];
 
     let r = null, ultimoErro = "";
     for (const modelo of MODELOS) {
