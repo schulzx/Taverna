@@ -4,6 +4,7 @@ import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilid
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar } from "./combate.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./historia.js";
+import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste } from "./bestiario.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -166,6 +167,11 @@ COMBATE, ESPÓLIOS E ACHADOS:
 
 FICHA DE INIMIGOS NO COMBATE (importante para a tática):
 - NARRATIVA E NÚMEROS ANDAM JUNTOS: se você narrar que inimigos morreram/fugiram/se renderam, ZERE o PV deles com "combate_inimigo_vida" no MESMO JSON, ou envie "combate_encerrar". Nunca descreva um exército aniquilado deixando os PV intactos no sistema — isso trava o painel de combate. Do mesmo modo, só narre morte de quem o sistema realmente derrubou.
+- SISTEMA DE TESTES (consulte a tabela — NÃO invente dificuldades):
+${TABELA_TESTES}
+  · O app converte automaticamente em SUCESSO SEM ROLAGEM os testes triviais para o herói — então peça rolagem apenas quando fizer sentido pela tabela e pelo patamar.
+- BESTIÁRIO (use-o ao criar inimigos — nomes conhecidos ganham números coerentes automaticamente): ${criaturasDoGenero((mundo || {}).genero).map((c) => `${c.nome} (${c.ameaca})`).join(", ")}. Ao iniciar combate você pode enviar SÓ o nome e a ameaça de cada inimigo — o sistema preenche PV, defesa e nível pela tabela, proporcionais ao herói. Prefira criaturas do bestiário; se inventar uma nova, dê-lhe uma ameaça da escala (fraco/comum/competente/elite/lendario) e deixe os números com o sistema.
+- ATAQUES MÚLTIPLOS DO HERÓI: a partir do nível 5 o herói realiza 2 ataques por turno (3 no nível 11, 4 no 20) — o SISTEMA resolve todos os golpes e envia a sequência; narre-a como uma combinação fluida (não recalcule nada).
 - PATAMAR DE PODER DO HERÓI (a régua de TODAS as decisões — consulte antes de qualquer combate, rolagem ou feito): ${resumoPatamar(personagem.nivel || 1)}
   · O jogador NÃO tem teto de progressão — mas cada patamar tem sua escala. Um Iniciante NUNCA derruba um golem num golpe (negue com a matemática); uma Divindade NUNCA sofre para vencer mortais (nem abra combate — narre o gesto). Ameaças novas devem ser escolhidas do patamar DIGNO; triviais se resolvem em uma frase; superiores exigem plano, aliados ou fuga.
 - PREÇOS PADRÃO (use esta tabela — não invente valores): item comum 10-25 moedas; incomum 40-80; raro 150-300; épico 600-1200; lendário 2500+. Vender rende METADE do valor. Estalagem 2-5/noite; refeição 1-2; poção de cura comum 40-60. Serviços simples 5-20; especializados 50-200. Mantenha a economia coerente com esses números.
@@ -572,6 +578,18 @@ function sementeDe(ent) {
 /* ---------------- Overlay do dado ---------------- */
 
 function OverlayDado({ rolagem, modificador, aoConcluir }) {
+  if (rolagem.auto) {
+    return (
+      <div className="fixed inset-0 z-40 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.85)", backdropFilter: "blur(3px)" }}>
+        <div className="tv-fade text-center">
+          <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.ok }}>✓ Trivial para seu patamar</div>
+          <div className="tv-display text-3xl mb-1" style={{ color: T.ink }}>{rolagem.motivo || "Você simplesmente consegue"}</div>
+          <div className="tv-body text-sm mb-5" style={{ color: T.inkDim }}>Sem rolagem necessária — sucesso.</div>
+          <button onClick={() => aoConcluir(0)} className="rounded-xl px-6 py-2.5 tv-mono text-sm" style={{ background: T.ok, color: "#0d1a0d", fontWeight: 600 }}>Continuar →</button>
+        </div>
+      </div>
+    );
+  }
   const [faseD, setFaseD] = useState("rolando");
   const [valor, setValor] = useState(1);
   const [par, setPar] = useState(null); // [a,b] quando há vantagem/desvantagem
@@ -800,6 +818,23 @@ function ModalNivel({ nivel, personagem, escolher }) {
 /* MODOS DE CENA — o APP escolhe (rotação), não o Mestre. Isso quebra o vício
    de sempre cair em "alguém irrompe com urgência": a variedade vira mecânica,
    não pedido. Só 1 em 7 modos permite tensão/interrupção. */
+/* AÇÕES PRONTAS (estilo BG3): um toque preenche a ação no campo — o jogador
+   completa o alvo/detalhe e envia. Zero tokens para "inventar" a ação. */
+const ACOES_PRONTAS = [
+  { icone: "⚔", rotulo: "Atacar", texto: "Ataco " },
+  { icone: "🛡", rotulo: "Esquivar", texto: "Fico em postura defensiva, esquivando e me protegendo neste turno" },
+  { icone: "✋", rotulo: "Empurrar", texto: "Empurro com força " },
+  { icone: "🦵", rotulo: "Derrubar", texto: "Tento derrubar no chão " },
+  { icone: "🏃", rotulo: "Correr", texto: "Corro em disparada para " },
+  { icone: "🤸", rotulo: "Saltar", texto: "Salto sobre " },
+  { icone: "🫥", rotulo: "Esconder", texto: "Me escondo nas sombras, buscando cobertura" },
+  { icone: "🔍", rotulo: "Procurar", texto: "Examino o lugar com atenção, procurando " },
+  { icone: "🤝", rotulo: "Ajudar", texto: "Ajudo " },
+  { icone: "😤", rotulo: "Intimidar", texto: "Intimido com olhar e presença " },
+  { icone: "🗣", rotulo: "Persuadir", texto: "Tento persuadir " },
+  { icone: "🎭", rotulo: "Enganar", texto: "Tento enganar " },
+];
+
 const MODOS_MUNDO = [
   { id: "vinculo", texto: "VÍNCULO E CONVERSA — alguém próximo puxa papo pessoal: um companheiro revela algo de si, uma lembrança, um medo, uma piada interna, um afeto. Íntimo e humano. SEM ameaça, SEM notícia grave." },
   { id: "entre_npcs", texto: "NPCs ENTRE SI — dois ou mais personagens interagem ENTRE ELES na sua frente, sem depender de você: discutem, fofocam, flertam, negociam, brincam. Você é testemunha, não alvo. SEM crise." },
@@ -1661,7 +1696,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.5 · patamares</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.6 · bestiário e ações</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1866,9 +1901,11 @@ function processarCombate(combateAtual, m, msgs) {
   (m.combate_iniciar || []).forEach((ini) => {
     if (!ini?.nome) return;
     if (inimigos.some((x) => x.nome.toLowerCase() === ini.nome.toLowerCase())) return;
-    const vidaMax = ini.vidaMax ?? ini.vida ?? 10;
-    inimigos.push({ nome: ini.nome, vida: ini.vida ?? vidaMax, vidaMax, ameaca: ini.ameaca || "", derrotado: false, semente: `inimigo|${ini.nome}|${ini.ameaca || ""}` });
-    msgs.push(`⚔ ${ini.nome} entra no combate!`);
+    /* BESTIÁRIO: completa PV/defesa/nível pela tabela (o Mestre pode mandar só
+       nome+ameaca; números coerentes com o nível do jogador saem do código) */
+    const comp = completarInimigo(ini, m.__nivelJogador || 1);
+    inimigos.push({ ...comp, derrotado: false, semente: `inimigo|${comp.nome}|${comp.ameaca || ""}` });
+    msgs.push(`⚔ ${comp.nome} entra no combate! (${comp.vida} PV)`);
   });
 
   (m.combate_inimigo_vida || []).forEach((cv) => {
@@ -1972,6 +2009,7 @@ export default function Taverna() {
   const [entrada, setEntrada] = useState("");
   const [aba, setAba] = useState(null);
   const [habAbertas, setHabAbertas] = useState(false);
+  const [acoesAbertas, setAcoesAbertas] = useState(false);
   const [habSel, setHabSel] = useState(null);
   const [dadoRolando, setDadoRolando] = useState(false);
   const [falha, setFalha] = useState(null);
@@ -2225,6 +2263,7 @@ export default function Taverna() {
     /* combate: processa de forma síncrona (via ref) para as mensagens saírem na ordem certa */
     if (resp.mudancas) {
       const combateAntes = combateRef.current;
+      resp.mudancas.__nivelJogador = pers.nivel || 1;
       const novoCombate = processarCombate(combateRef.current, resp.mudancas, msgs);
       combateRef.current = novoCombate;
       setCombate(novoCombate);
@@ -2272,8 +2311,16 @@ export default function Taverna() {
       urgenciaRef.current = marcas ? urgenciaRef.current + 1 : 0;
     }
     pushMsgs([{ autor: "mestre", texto: resp.narrativa || "…" }, ...msgs.map((t) => ({ autor: "sistema", texto: t }))]);
-    setSugestoes(resp.rolagem ? [] : (resp.sugestoes || []));
-    setRolagem(resp.rolagem || null);
+    /* decisor de testes por código: se a dificuldade é trivial para o herói
+       (modificador torna a falha impossível), nem mostra o dado — sucesso direto */
+    let rolagemFinal = resp.rolagem || null;
+    if (rolagemFinal && rolagemFinal.dificuldade != null) {
+      const attrT = ATRIBUTOS.find((x) => x.nome.toLowerCase() === (rolagemFinal.atributo || "").toLowerCase());
+      const modT = attrT ? atributoEfetivo(pers, attrT.id) : 0;
+      if (avaliarTeste(modT, rolagemFinal.dificuldade) === "auto") rolagemFinal = { ...rolagemFinal, auto: true };
+    }
+    setSugestoes(rolagemFinal ? [] : (resp.sugestoes || []));
+    setRolagem(rolagemFinal);
     return pers;
   }, [pushMsgs]);
 
@@ -2373,16 +2420,28 @@ export default function Taverna() {
     const verboAtaque = /\b(ataco|atacar|golpeio|golpear|acerto|acertar|bato|bater|corto|cortar|perfuro|estoco|disparo|atiro|atirar|flecho|soco|chuto|esfaqueio|abato|invisto|avanco|arremesso)\b/.test(acaoN);
     if (!verboAtaque) return null;
     const vivos = comb.inimigos.filter((e) => !e.derrotado);
-    // tenta achar o alvo citado pelo nome; senão, o primeiro vivo
-    let alvo = vivos.find((e) => acaoN.includes(e.nome.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""))) || vivos[0];
     const bonusAtk = Math.max((pers.atributos?.forca || 0), (pers.atributos?.destreza || 0)) + 2 + Math.floor(((pers.nivel || 1) - 1) / 4);
-    const danoBase = danoDe(pers, false);
-    const r = resolverAtaque({
-      atacante: pers.nome, alvo, ehAtacanteInimigo: false,
-      bonusAtaque: bonusAtk, danoBase,
-      condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
-    });
-    return { r, alvo };
+    /* ATAQUES MÚLTIPLOS (D&D): 2 ataques no nível 5, 3 no 11, 4 no 20 */
+    const nv = pers.nivel || 1;
+    const nAtaques = 1 + (nv >= 5 ? 1 : 0) + (nv >= 11 ? 1 : 0) + (nv >= 20 ? 1 : 0);
+    const normalizar = (x) => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const alvoCitado = vivos.find((e) => acaoN.includes(normalizar(e.nome)));
+    /* clone local para mirar corretamente entre golpes */
+    const locais = comb.inimigos.map((e) => ({ ...e }));
+    const resultados = [];
+    for (let i = 0; i < nAtaques; i++) {
+      const vivosAgora = locais.filter((e) => !e.derrotado && e.vida > 0);
+      if (!vivosAgora.length) break;
+      const alvo = (alvoCitado && vivosAgora.find((e) => e.nome === alvoCitado.nome)) || vivosAgora[0];
+      const r = resolverAtaque({
+        atacante: pers.nome, alvo, ehAtacanteInimigo: false,
+        bonusAtaque: bonusAtk, danoBase: danoDe(pers, false),
+        condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
+      });
+      if (r.dano > 0) { const l = locais.find((e) => e.nome === alvo.nome); l.vida = Math.max(0, l.vida - r.dano); if (l.vida <= 0) l.derrotado = true; }
+      resultados.push({ r, alvo: { ...alvo } });
+    }
+    return { resultados, nAtaques };
   };
 
   const agir = (texto) => {
@@ -2420,22 +2479,27 @@ export default function Taverna() {
     }
     const ataque = resolverAtaqueJogador(acao, personagem);
     if (ataque) {
-      const { r, alvo } = ataque;
+      const { resultados } = ataque;
       ataqueResolvidoRef.current = true;
-      // aplica o dano no inimigo por código (fonte da verdade)
-      let pvDepois = alvo.vida;
-      if (r.dano > 0) {
-        pvDepois = Math.max(0, alvo.vida - r.dano);
-        const novo = { ...combateRef.current, inimigos: combateRef.current.inimigos.map((e) => e.nome === alvo.nome ? { ...e, vida: pvDepois, derrotado: pvDepois <= 0, ultimoDano: r.dano } : e) };
-        combateRef.current = novo; setCombate(novo);
+      /* aplica cada golpe por código (fonte da verdade) e monta as linhas de dano */
+      const linhas = [{ autor: "jogador", texto: acao }];
+      const partesMeu = [];
+      for (const { r, alvo } of resultados) {
+        let pvDepois = alvo.vida;
+        if (r.dano > 0) {
+          const atualAlvo = (combateRef.current?.inimigos || []).find((e) => e.nome === alvo.nome);
+          pvDepois = Math.max(0, (atualAlvo ? atualAlvo.vida : alvo.vida) - r.dano);
+          const novo = { ...combateRef.current, inimigos: combateRef.current.inimigos.map((e) => e.nome === alvo.nome ? { ...e, vida: pvDepois, derrotado: pvDepois <= 0, ultimoDano: r.dano } : e) };
+          combateRef.current = novo; setCombate(novo);
+        }
+        if (mostrarRolagensRef.current) linhas.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(r) });
+        linhas.push({ autor: "sistema", texto: r.dano > 0
+          ? `⚔ ${personagem.nome} → ${alvo.nome}: ${r.critico ? "CRÍTICO! " : ""}${r.dano} de dano · ${alvo.nome} ${pvDepois}/${alvo.vidaMax || alvo.vida}${pvDepois <= 0 ? " ☠" : ""}`
+          : `⚔ ${personagem.nome} → ${alvo.nome}: ${r.desastre ? "erro desastroso" : "errou"}` });
+        partesMeu.push(`${alvo.nome} — ${r.resultado === "critico" ? `CRÍTICO, ${r.dano} de dano` : r.resultado === "acerta" ? `${r.dano} de dano` : r.resultado === "desastre" ? "erro desastroso" : "errou"} (d20=${r.d20}${r.bonus ? `+${r.bonus}` : ""}=${r.total} vs ${r.ca})${r.dano > 0 && pvDepois <= 0 ? " [CAIU]" : ""}`);
       }
-      /* linha de dano SEMPRE visível (independe do interruptor de rolagens) */
-      const linhaDano = r.dano > 0
-        ? [{ autor: "sistema", texto: `⚔ ${personagem.nome} → ${alvo.nome}: ${r.critico ? "CRÍTICO! " : ""}${r.dano} de dano · ${alvo.nome} ${pvDepois}/${alvo.vidaMax || alvo.vida}${pvDepois <= 0 ? " ☠" : ""}` }]
-        : [{ autor: "sistema", texto: `⚔ ${personagem.nome} → ${alvo.nome}: ${r.desastre ? "erro desastroso" : "errou"}` }];
-      const linhaRol = mostrarRolagensRef.current ? [{ autor: "sistema", texto: "🎲 " + resumoDoAtaque(r) }] : [];
-      pushMsgs([{ autor: "jogador", texto: acao }, ...linhaRol, ...linhaDano]);
-      const desfecho = r.resultado === "critico" ? `acerto CRÍTICO causando ${r.dano} de dano` : r.resultado === "acerta" ? `acerto causando ${r.dano} de dano` : r.resultado === "desastre" ? "erro desastroso" : "erro";
+      pushMsgs(linhas);
+      const desfecho = `${resultados.length} ${resultados.length > 1 ? "ataques" : "ataque"}: ${partesMeu.join("; ")}`;
 
       /* TURNO DO MUNDO (combate): os inimigos vivos revidam — o app rola e
          calcula tudo; o Mestre só narra as DECISÕES deles. */
@@ -2502,7 +2566,7 @@ export default function Taverna() {
         resumoInimigos = ` Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ${partes.join("; ")}.${compTxt}${morteTxt}`;
       }
 
-      enviar(`[COMBATE — RESOLVIDO PELO SISTEMA] Ataquei ${alvo.nome}: ${desfecho} (rolagem d20=${r.d20}${r.bonus ? `+${r.bonus}` : ""}=${r.total} vs defesa ${r.ca}). O dano já foi aplicado.${resumoInimigos} NÃO recalcule nem mude números — NARRE de forma vívida (2-4 frases) tanto o meu golpe quanto as decisões e reações dos inimigos: quem recuou, quem avançou, quem mudou de alvo. Ação declarada: ${acao}`, persAtual);
+      enviar(`[COMBATE — RESOLVIDO PELO SISTEMA] Minha sequência de ${desfecho}. O dano já foi aplicado.${resumoInimigos} NÃO recalcule nem mude números — NARRE de forma vívida (2-4 frases) a sequência dos meus golpes e as decisões e reações dos inimigos: quem recuou, quem avançou, quem mudou de alvo. Ação declarada: ${acao}`, persAtual);
       return;
     }
     pushMsgs([{ autor: "jogador", texto: acao }]);
@@ -2577,6 +2641,12 @@ export default function Taverna() {
     const r = rolagem;
     if (!r || rolagemConsumidaRef.current === r.motivo + r.dificuldade) { setDadoRolando(false); return; }
     rolagemConsumidaRef.current = r.motivo + r.dificuldade;
+    if (r.auto) {
+      setDadoRolando(false); setRolagem(null);
+      pushMsgs([{ autor: "sistema", texto: `✓ ${r.motivo || "Teste"}: trivial para seu patamar — sucesso sem rolagem` }]);
+      enviar(`[TESTE — SUCESSO AUTOMÁTICO] "${r.motivo || "ação"}": trivial para meu patamar (dificuldade ${r.dificuldade} vs minha competência). Narre o êxito com naturalidade, sem drama de dado.`, personagem);
+      return;
+    }
     const mod = modPend;
     const total = valor + mod;
     const dc = r.dificuldade;
@@ -2834,6 +2904,23 @@ export default function Taverna() {
             )}
 
             {habAbertas && <PainelHabilidades personagem={personagem} selecionar={(h) => { setHabSel(h); setHabAbertas(false); }} fechar={() => setHabAbertas(false)} />}
+            {acoesAbertas && (
+              <div className="px-4 md:px-8 pb-2 shrink-0" style={{ paddingRight: "68px" }}>
+                <div className="rounded-2xl p-3" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.amberSoft }}>Ações — toque para preencher e complete o alvo</span>
+                    <button onClick={() => setAcoesAbertas(false)} className="tv-mono text-[10px] px-2" style={{ color: T.inkDim }}>✕</button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {ACOES_PRONTAS.map((a) => (
+                      <button key={a.rotulo} onClick={() => { setEntrada(a.texto); setAcoesAbertas(false); }} className="tv-mono text-[11px] px-2.5 py-1.5 rounded-lg" style={{ background: T.panelSoft, color: T.ink, border: `1px solid ${T.line}` }}>
+                        {a.icone} {a.rotulo}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {habSel && !rolagem && (
               <div className="tv-fade px-4 md:px-8 pb-1.5" style={{ paddingRight: "68px" }}>
@@ -2911,7 +2998,11 @@ export default function Taverna() {
                   disabled={bloqueado} className="flex-1 bg-transparent outline-none tv-body text-[15px] px-3 min-w-0" style={{ color: T.ink }} />
                 <Botao primario pequeno desativado={bloqueado || !entrada.trim()} onClick={() => agir(entrada)}>Agir</Botao>
               </div>
-              <button onClick={() => setHabAbertas((v) => !v)} disabled={bloqueado} className="tv-mono text-xs rounded-2xl px-3 md:px-4 shrink-0"
+              <button onClick={() => { setAcoesAbertas((v) => !v); setHabAbertas(false); }} disabled={bloqueado} className="tv-mono text-xs rounded-2xl px-3 shrink-0"
+                style={{ background: acoesAbertas ? T.amber : T.panel, color: acoesAbertas ? T.onAccent : T.amberSoft, border: `1px solid ${T.amber}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
+                ⚔<span className="hidden md:inline"> Ações</span>
+              </button>
+              <button onClick={() => { setHabAbertas((v) => !v); setAcoesAbertas(false); }} disabled={bloqueado} className="tv-mono text-xs rounded-2xl px-3 md:px-4 shrink-0"
                 style={{ background: habAbertas ? T.violet : T.panel, color: habAbertas ? T.onSecond : T.violetSoft, border: `1px solid ${T.violet}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
                 ✦<span className="hidden md:inline"> Habilidades</span>
               </button>
