@@ -6,6 +6,7 @@ import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoD
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste } from "./bestiario.js";
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt } from "./npcs.js";
+import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, NIVEL_GUILD_MAX } from "./gestao.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -231,6 +232,7 @@ COMPANHEIROS VIVOS (até ${MAX_COMPANHEIROS}): entram por "grupo_adicionar". Sã
 - EVOLUEM JUNTO: companheiros ganham XP e sobem de nível como o herói. Quando o grupo conquista algo, dê XP aos companheiros via "grupo_xp" (ex.: [{"nome":"Kael","xp":30}]) — o app cuida do nível e do PV. Use "grupo_atualizar" para melhorias narrativas (nova habilidade, mudança de descrição). Um companheiro que nunca evolui fica para trás e quebra a imersão. Têm INICIATIVA PRÓPRIA: puxam assunto, comentam a cena, discordam do plano e agem SEM serem acionados pelo jogador — uma intervenção espontânea de vez em quando (não em todo turno) mantém o grupo vivo sem virar ruído. Um companheiro que só fala quando falam com ele é um companheiro-mobília: proibido.
 
 ECONOMIA: moeda com nome do mundo; valor numérico em "moedas". Mercadores com personalidade e preços coerentes. NUNCA desconte moedas sem o jogador aceitar a compra.
+- GESTÃO POR CÓDIGO (guilda, cofre, rendas, domínios): tudo isso é administrado pelo APP — NÃO calcule, NÃO envie e NÃO contradiga valores de gestão. Seu papel é só o da ficção: registrar fundações e conquistas (via "mapa_faccoes" com doJogador e "mapa_cidades" com relacao "jogador") e narrar a vida política e econômica (colheitas, impostos, obras, embaixadas). Os números o jogador vê no painel de Gestão.
 
 XP: só por conquistas reais (10-30 pequeno; 40-60 marco). Nunca por turno. O app calcula os níveis.
 
@@ -863,7 +865,10 @@ ${banirUrgencia ? `
 ⛔ Não use "alguém irrompe com urgência" nem interrupção dramática — esse recurso está desgastado nesta campanha.`}`;
 }
 
-const ABAS = [{ id: "ficha", rotulo: "Ficha", icone: "☰" }, { id: "diario", rotulo: "Diário", icone: "📜" }, { id: "grupo", rotulo: "Grupo", icone: "⚑" }, { id: "pessoas", rotulo: "Pessoas", icone: "👥" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }];
+/* Trilho enxuto (mobile): 4 abas. Ficha, Grupo, Pessoas, Guilda e Domínios
+   vivem como SUB-abas dentro de Gestão. */
+const ABAS = [{ id: "gestao", rotulo: "Gestão", icone: "🏛" }, { id: "diario", rotulo: "Diário", icone: "📜" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }];
+const SUBS_GESTAO = [{ id: "ficha", rotulo: "Ficha" }, { id: "grupo", rotulo: "Grupo" }, { id: "pessoas", rotulo: "Pessoas" }, { id: "guilda", rotulo: "Guilda" }, { id: "dominios", rotulo: "Domínios" }];
 
 const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D" };
 const SLOT_ROTULO = { arma: "Arma", armadura: "Armadura", elmo: "Elmo", botas: "Botas", anel: "Anel", amuleto: "Amuleto", escudo: "Escudo" };
@@ -880,7 +885,7 @@ function TrilhoAbas({ abaAtiva, aoClicar, nGrupo }) {
             style={{ width: 52, height: 58, background: ativa ? T.panelSoft : T.panel, border: `1px solid ${ativa ? T.amber : T.line}`, borderRight: "none", color: ativa ? T.amberSoft : T.inkDim }}>
             <span className="text-base leading-none">{aba.icone}</span>
             <span className="tv-mono text-[9px] uppercase tracking-wider">{aba.rotulo}</span>
-            {aba.id === "grupo" && nGrupo > 0 && <span className="tv-mono text-[9px] leading-none rounded-full px-1" style={{ background: T.violet, color: T.onSecond }}>{nGrupo}</span>}
+            {aba.id === "gestao" && nGrupo > 0 && <span className="tv-mono text-[9px] leading-none rounded-full px-1" style={{ background: T.violet, color: T.onSecond }}>{nGrupo}</span>}
           </button>
         );
       })}
@@ -1178,7 +1183,7 @@ function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
 /* Painel de PESSOAS: todo o elenco conhecido, com retrato determinístico,
    relação colorida e o que se sabe de cada um. Segredos ficam FORA da tela —
    são memória do Mestre, não spoiler para o jogador. */
-function PainelPessoas({ npcs, grupo }) {
+function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio }) {
   const lista = Object.values(npcs || {}).sort((a, b) => (b.ultimaVez || 0) - (a.ultimaVez || 0));
   const nomesGrupo = new Set((grupo || []).map((g) => (g.nome || "").toLowerCase()));
   if (!lista.length && !(grupo || []).length) {
@@ -1187,6 +1192,7 @@ function PainelPessoas({ npcs, grupo }) {
   const cartao = (n, ehGrupo) => {
     const rel = relacaoNPC(ehGrupo ? "companheiro" : n.relacao);
     const morto = (n.status || "").toLowerCase().includes("morto");
+    const convidavel = !ehGrupo && !morto && n.relacao !== "inimigo" && onConvidar;
     return (
       <div key={`${ehGrupo ? "g" : "n"}-${n.nome}`} className="rounded-xl p-3 flex items-start gap-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}`, opacity: morto ? 0.55 : 1 }}>
         <Retrato semente={n.semente || n.nome} tamanho={46} anel={rel.cor} estado={morto ? "grave" : "normal"} />
@@ -1197,6 +1203,13 @@ function PainelPessoas({ npcs, grupo }) {
           </div>
           <div className="tv-body text-xs italic truncate" style={{ color: T.inkDim }}>{[n.papel, n.genero, n.local ? `em ${n.local}` : ""].filter(Boolean).join(" · ") || "—"}</div>
           {n.notas && <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{n.notas}</div>}
+          {convidavel && (
+            <button onClick={() => onConvidar(n.nome)} disabled={grupoCheio}
+              className="tv-mono text-[10px] mt-1.5 px-2 py-1 rounded"
+              style={{ border: `1px solid ${T.violet}`, color: T.violetSoft, opacity: grupoCheio ? 0.4 : 1, cursor: grupoCheio ? "not-allowed" : "pointer" }}>
+              {grupoCheio ? "grupo cheio" : "⚑ convidar para o grupo"}
+            </button>
+          )}
         </div>
       </div>
     );
@@ -1209,10 +1222,11 @@ function PainelPessoas({ npcs, grupo }) {
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
   const [confirmarRemover, setConfirmarRemover] = React.useState(null);
+  const [subGestao, setSubGestao] = React.useState("ficha");    // sub-aba dentro de Gestão
   mundo = mundo || { genero: "Fantasia medieval" };
   if (!aba) return null;
   const xpProx = XP_POR_NIVEL(personagem.nivel);
@@ -1223,11 +1237,23 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
       <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,.45)" }} onClick={fechar} />
       <aside className="tv-slide tv-scroll fixed right-0 inset-y-0 z-40 w-80 max-w-[88vw] overflow-y-auto p-5 flex flex-col gap-5" style={{ background: T.panel, borderLeft: `1px solid ${T.line}` }}>
         <div className="flex items-center justify-between">
-          <h2 className="tv-display text-2xl" style={{ color: T.ink }}>{aba === "ficha" ? "Ficha" : aba === "diario" ? "Diário" : aba === "grupo" ? "Grupo" : aba === "pessoas" ? "Pessoas" : aba === "mapa" ? "Mapa" : "Inventário"}</h2>
+          <h2 className="tv-display text-2xl" style={{ color: T.ink }}>{aba === "gestao" ? "Gestão" : aba === "diario" ? "Diário" : aba === "mapa" ? "Mapa" : "Inventário"}</h2>
           <button onClick={fechar} className="tv-mono text-lg px-2" style={{ color: T.inkDim }}>✕</button>
         </div>
 
-        {aba === "ficha" && (
+        {aba === "gestao" && (
+          <div className="flex flex-wrap gap-1.5 -mt-2">
+            {SUBS_GESTAO.map((s) => (
+              <button key={s.id} onClick={() => setSubGestao(s.id)}
+                className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full"
+                style={{ background: subGestao === s.id ? T.amber : T.panelSoft, color: subGestao === s.id ? T.onAccent : T.inkDim, border: `1px solid ${subGestao === s.id ? T.amber : T.line}`, fontWeight: 600 }}>
+                {s.rotulo}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {aba === "gestao" && subGestao === "ficha" && (
           <>
             <div className="flex items-center gap-3">
               <Retrato semente={sementeDe(personagem)} tamanho={64} anel={T.amber} estado={estadoDe(personagem.vida, personagem.vidaMax)} />
@@ -1320,9 +1346,91 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
 
         {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} />}
-        {aba === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} />}
+        {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).length >= MAX_COMPANHEIROS} />}
 
-        {aba === "grupo" && (
+        {aba === "gestao" && subGestao === "guilda" && (() => {
+          const temGuilda = !!faccaoJogador;
+          const g = guilda || { nivel: 1, cofre: 0 };
+          const custo = custoUpgradeGuilda(g.nivel);
+          const rendaDia = rendaDiariaTotal(mapa, g.nivel, temGuilda);
+          if (!temGuilda) {
+            return <div className="tv-body text-sm italic text-center py-10" style={{ color: T.inkDim }}>Você ainda não lidera uma guilda. Funde uma na história — fale com o Mestre, reúna aliados e declare a fundação. Quando ela existir, a gestão aparece aqui.</div>;
+          }
+          return (
+            <>
+              <div className="rounded-xl p-4" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+                <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.amberSoft }}>Sua guilda</div>
+                <div className="tv-display text-2xl leading-tight" style={{ color: T.ink }}>{faccaoJogador}</div>
+                <div className="flex items-center gap-1 mt-1.5">
+                  {Array.from({ length: NIVEL_GUILD_MAX }).map((_, i) => (
+                    <span key={i} className="inline-block w-3.5 h-3.5 rounded-sm" style={{ background: i < g.nivel ? T.amber : T.panel, border: `1px solid ${T.amber}` }} />
+                  ))}
+                  <span className="tv-mono text-[10px] ml-1.5" style={{ color: T.inkDim }}>nível {g.nivel}{g.nivel >= NIVEL_GUILD_MAX ? " · máximo" : ""}</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-xl px-3 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                  <div className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>Cofre</div>
+                  <div className="tv-mono text-xl font-semibold" style={{ color: T.amberSoft }}>◉ {g.cofre}</div>
+                </div>
+                <div className="rounded-xl px-3 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                  <div className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>Renda/dia</div>
+                  <div className="tv-mono text-xl font-semibold" style={{ color: T.ok }}>+{rendaDia}</div>
+                </div>
+              </div>
+              <div className="tv-body text-xs" style={{ color: T.inkDim }}>
+                A renda cai no cofre a cada dia que passa na história (descanso longo ou passar o tempo). Suas moedas pessoais: ◉ {personagem.moedas}.
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => depositarCofre(25)} disabled={personagem.moedas < 25} className="flex-1 tv-mono text-[11px] px-2 py-2 rounded-lg" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft, opacity: personagem.moedas < 25 ? 0.4 : 1 }}>↓ depositar 25</button>
+                <button onClick={() => sacarCofre(25)} disabled={g.cofre < 1} className="flex-1 tv-mono text-[11px] px-2 py-2 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.ink, opacity: g.cofre < 1 ? 0.4 : 1 }}>↑ sacar {Math.min(25, g.cofre)}</button>
+              </div>
+              {custo != null ? (
+                <button onClick={melhorarGuilda} disabled={g.cofre < custo} className="w-full tv-mono text-xs px-3 py-2.5 rounded-lg" style={{ background: g.cofre >= custo ? T.amber : T.panelSoft, color: g.cofre >= custo ? T.onAccent : T.inkDim, border: `1px solid ${T.amber}`, fontWeight: 600, opacity: g.cofre >= custo ? 1 : 0.5 }}>
+                  ⚒ melhorar guilda para o nível {g.nivel + 1} · ◉ {custo} do cofre
+                </button>
+              ) : (
+                <div className="tv-body text-xs italic text-center" style={{ color: T.amberSoft }}>Sua guilda é lendária — nível máximo alcançado.</div>
+              )}
+              <div className="tv-body text-xs" style={{ color: T.inkDim }}>
+                Cada nível rende contratos maiores e melhora a administração dos domínios (+25% de renda por nível — nível {NIVEL_GUILD_MAX} dobra tudo).
+              </div>
+            </>
+          );
+        })()}
+
+        {aba === "gestao" && subGestao === "dominios" && (() => {
+          const { porCidade, total } = rendaDominios(mapa);
+          const g = guilda || { nivel: 1 };
+          const temGuilda = !!faccaoJogador;
+          if (!porCidade.length) {
+            return <div className="tv-body text-sm italic text-center py-10" style={{ color: T.inkDim }}>Nenhum domínio ainda. Conquiste ou funde cidades na história — cada uma que passar para a sua bandeira aparece aqui, produzindo renda todos os dias.</div>;
+          }
+          return (
+            <>
+              <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+                <span className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Renda total/dia</span>
+                <span className="tv-mono text-xl font-semibold" style={{ color: T.ok }}>+{Math.round(total * (temGuilda ? multGuilda(g.nivel) : 1))}</span>
+              </div>
+              <div className="space-y-2">
+                {porCidade.map((c) => (
+                  <div key={c.nome} className="rounded-xl px-3 py-2.5 flex items-center justify-between" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                    <div className="min-w-0">
+                      <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{c.nome} {c.sede && <span className="tv-mono text-[9px]" style={{ color: T.amberSoft }}>· SEDE</span>}</div>
+                      <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.inkDim }}>{c.tipo}</div>
+                    </div>
+                    <span className="tv-mono text-sm shrink-0" style={{ color: T.ok }}>+{Math.round(c.renda * (temGuilda ? multGuilda(g.nivel) : 1))}/dia</span>
+                  </div>
+                ))}
+              </div>
+              <div className="tv-body text-xs" style={{ color: T.inkDim }}>
+                Domínios rendem por tipo de cidade (vilas 5, cidades 12, capitais 25, fortalezas 15 — a sede rende o dobro).{temGuilda ? ` Sua guilda nível ${g.nivel} multiplica tudo por ${multGuilda(g.nivel).toFixed(2)}.` : " Fundar uma guilda multiplica essas rendas."} Expanda na ficção: cada cidade conquistada entra aqui automaticamente.
+              </div>
+            </>
+          );
+        })()}
+
+        {aba === "gestao" && subGestao === "grupo" && (
           <>
             <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Grupo · {1 + (personagem.grupo || []).length} de {1 + MAX_COMPANHEIROS}</div>
             <CartaoMembro nome={personagem.nome} subtitulo={personagem.conceito} nivel={personagem.nivel} vida={personagem.vida} vidaMax={personagem.vidaMax} mana={personagem.mana} manaMax={personagem.manaMax} habilidades={personagem.habilidades} semente={sementeDe(personagem)} ehVoce />
@@ -1735,7 +1843,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.9 · pessoas e memória</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v5.0 · gestão</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2099,6 +2207,9 @@ export default function Taverna() {
   const [mapa, setMapa] = useState({ cidades: [], faccoes: [] });
   const faccaoJogadorRef = useRef("");
   const cidadeAtualRef = useRef("");
+  /* GESTÃO: guilda (nível/cofre) — domínios se derivam do mapa por código */
+  const guildaRef = useRef({ nivel: 1, cofre: 0 });
+  const [guilda, setGuilda] = useState({ nivel: 1, cofre: 0 });
   const mostrarRolagensRef = useRef(true);
 
   /* rola para o fim SÓ quando chega mensagem nova E o jogador já estava no fim.
@@ -2150,7 +2261,7 @@ export default function Taverna() {
     const dados = {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico, sugestoes, rolagem,
       combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
-      mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current,
+      mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current,
       historia: historiaRef.current, quests: questsRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
@@ -2440,6 +2551,7 @@ export default function Taverna() {
     canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); npcTurnoRef.current = 0; definirAcampado(false);
     mapaRef.current = { cidades: [], faccoes: [] }; setMapa(mapaRef.current);
     faccaoJogadorRef.current = ""; cidadeAtualRef.current = "";
+    guildaRef.current = { nivel: 1, cofre: 0 }; setGuilda(guildaRef.current);
     historiaRef.current = { estrutura: (mundo && mundo.estrutura) || "jornada", etapa: 0 };
     questsRef.current = []; setQuests([]);
     bancoNomesRef.current = gerarBancoNomes(mundo);
@@ -2468,6 +2580,7 @@ export default function Taverna() {
       setMapa(mapaRef.current);
       faccaoJogadorRef.current = sv.faccaoJogador || "";
       cidadeAtualRef.current = sv.cidadeAtual || "";
+      guildaRef.current = sv.guilda && typeof sv.guilda === "object" ? { nivel: sv.guilda.nivel || 1, cofre: sv.guilda.cofre || 0 } : { nivel: 1, cofre: 0 }; setGuilda(guildaRef.current);
       historiaRef.current = sv.historia && sv.historia.estrutura ? sv.historia : { estrutura: (sv.mundo && sv.mundo.estrutura) || "jornada", etapa: 0 };
       questsRef.current = Array.isArray(sv.quests) ? sv.quests : [];
       setQuests([...questsRef.current]);
@@ -2704,6 +2817,8 @@ export default function Taverna() {
     setAguardandoMundo(false);
     const escala = horas <= 3 ? "algumas horas (mudanças pequenas)" : horas <= 8 ? "boa parte do dia (mudanças perceptíveis)" : horas <= 16 ? "quase um dia inteiro (mudanças significativas)" : "um dia completo (o mundo se move bastante)";
     pushMsgs([{ autor: "sistema", texto: `🕐 Você deixa ${horas}h passarem…` }]);
+    const diasPassados = Math.floor(horas / 24);
+    if (diasPassados > 0) coletarRenda(diasPassados);
     enviar(`[PASSAR O TEMPO — ${horas} horas] Simule a passagem de ${horas} horas: ${escala}. Faça o mundo VIVER esse intervalo proporcionalmente — o que os NPCs e facções fizeram, o que avançou, o que mudou no ambiente e nas suas missões, notícias que chegaram. Quanto mais horas, mais coisas acontecem (mas sempre plausível, nunca absurdo tipo impérios caindo em 1 dia). Ao final, reapresente a cena atual e me convide a agir.`, personagem);
   };
 
@@ -2807,6 +2922,7 @@ export default function Taverna() {
     const pers = aplicarDescanso(personagem, tipo, msgs);
     setPersonagem(pers);
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
+    if (tipo === "longo") coletarRenda(1); // uma noite inteira passou: as terras rendem
     const dur = tipo === "longo" ? "uma noite inteira" : "cerca de uma hora";
     enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.`, pers);
   };
@@ -2853,6 +2969,58 @@ export default function Taverna() {
     historiaRef.current = { estrutura: id, etapa: 0 };
     pushMsgs([{ autor: "sistema", texto: `📖 Novo arco iniciado: ${est.nome} — "${est.etapas[0].nome}"` }]);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[NOVO ARCO ESCOLHIDO PELO JOGADOR: ${est.nome}] NÃO reinicie o mundo: tudo que foi vivido permanece canônico. Costure a transição a partir da situação ATUAL — a campanha apenas muda de perspectiva dramática. Momento inicial do novo arco: "${est.etapas[0].nome}" — ${est.etapas[0].instrucao} Crie a nova missão principal coerente com este arco e com o que o herói já construiu; conclua ou adapte missões antigas que não façam mais sentido.`;
+  };
+
+  /* ---------------- GESTÃO POR CÓDIGO (zero tokens) ----------------
+     Rendas caem no COFRE quando o tempo passa na história. O Mestre
+     nunca calcula nada disso — só narra e registra conquistas. */
+  const coletarRenda = useCallback((dias) => {
+    const temGuilda = !!faccaoJogadorRef.current;
+    const nDominios = dominiosDe(mapaRef.current).length;
+    if ((!temGuilda && !nDominios) || dias <= 0) return 0;
+    const porDia = rendaDiariaTotal(mapaRef.current, guildaRef.current.nivel, temGuilda);
+    const ganho = porDia * dias;
+    if (ganho <= 0) return 0;
+    const g = { ...guildaRef.current, cofre: guildaRef.current.cofre + ganho };
+    guildaRef.current = g; setGuilda(g);
+    pushMsgs([{ autor: "sistema", texto: `🏛 Suas terras e contratos renderam ◉ ${ganho} (${dias} dia${dias > 1 ? "s" : ""}) — no cofre${temGuilda ? ` de ${faccaoJogadorRef.current}` : ""}.` }]);
+    return ganho;
+  }, [pushMsgs]);
+
+  const depositarCofre = (valor) => {
+    const v = Math.min(valor, personagem.moedas || 0);
+    if (v <= 0) return;
+    setPersonagem((p) => ({ ...p, moedas: p.moedas - v }));
+    const g = { ...guildaRef.current, cofre: guildaRef.current.cofre + v };
+    guildaRef.current = g; setGuilda(g);
+    pushMsgs([{ autor: "sistema", texto: `🏛 Você depositou ◉ ${v} no cofre da guilda.` }]);
+  };
+
+  const sacarCofre = (valor) => {
+    const v = Math.min(valor, guildaRef.current.cofre);
+    if (v <= 0) return;
+    const g = { ...guildaRef.current, cofre: guildaRef.current.cofre - v };
+    guildaRef.current = g; setGuilda(g);
+    setPersonagem((p) => ({ ...p, moedas: (p.moedas || 0) + v }));
+    pushMsgs([{ autor: "sistema", texto: `🏛 Você sacou ◉ ${v} do cofre da guilda.` }]);
+  };
+
+  const melhorarGuilda = () => {
+    const custo = custoUpgradeGuilda(guildaRef.current.nivel);
+    if (custo == null || guildaRef.current.cofre < custo) return;
+    const g = { nivel: guildaRef.current.nivel + 1, cofre: guildaRef.current.cofre - custo };
+    guildaRef.current = g; setGuilda(g);
+    pushMsgs([{ autor: "sistema", texto: `⚒ ${faccaoJogadorRef.current || "Sua guilda"} cresceu para o nível ${g.nivel}! Contratos maiores e domínios mais produtivos.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Minha guilda (${faccaoJogadorRef.current}) melhorou para o nível ${g.nivel} — maior, mais rica e mais respeitada. Reflita esse crescimento na ficção.`;
+  };
+
+  /* CONVITE AO GRUPO: o jogador convida um NPC conhecido; o Mestre decide
+     na ficção se ele aceita (a escolha é do personagem, não do jogador). */
+  const convidarNpc = (nome) => {
+    if (bloqueado || (personagem.grupo || []).length >= MAX_COMPANHEIROS) return;
+    setAba(null);
+    pushMsgs([{ autor: "jogador", texto: `Convido ${nome} para viajar comigo.` }]);
+    enviar(`[CONVITE AO GRUPO] Convido ${nome} para se juntar ao meu grupo. Decida pela personalidade, relação e momento dele(a): pode ACEITAR (use "grupo_adicionar" com a ficha completa), recusar com jeito, ou aceitar com uma condição. A escolha é dele(a), não minha — responda com as palavras e a reação dele(a) em 1ª pessoa.`, personagem);
   };
 
   /* Transfere um item entre você e um companheiro (qualquer direção). */
@@ -3111,7 +3279,7 @@ export default function Taverna() {
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} /></LimiteErro>
         </div>
       )}
 
