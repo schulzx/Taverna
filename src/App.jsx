@@ -5,6 +5,7 @@ import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapa
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar } from "./combate.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste } from "./bestiario.js";
+import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt } from "./npcs.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -94,12 +95,13 @@ function formatarCanone(canone) {
   return linhas.join("\n");
 }
 
-function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone, bancoNomes, mapaInfo, historiaInfo, questsInfo) {
+function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone, bancoNomes, mapaInfo, historiaInfo, questsInfo, npcsInfo) {
   mundo = mundo || { genero: "Fantasia medieval" };
   personagem = personagem || {};
   const canoneTexto = formatarCanone(canone);
   const bn = bancoNomes || {};
   const mapaTexto = mapaInfo || "";
+  const npcsTexto = npcsInfo || "";
   return `Você é o Mestre de um RPG de mesa por chat, em português brasileiro. Narre um mundo vivo, imprevisível e com vontade própria. Interprete TODOS os NPCs como pessoas reais (vozes, desejos, medos, segredos), crie eventos espontâneos, consequências e reviravoltas, e arbitre as regras com justiça.
 
 CAMPANHA: "${nomeCampanha}"
@@ -141,16 +143,17 @@ ${questsInfo || "Nenhuma missão registrada."}
 - NUNCA CONTRADIGA O CÂNONE: o cânone abaixo é a verdade absoluta e imutável do mundo. Um personagem registrado como mago é mago para sempre — jamais o transforme em outra coisa. Tipo, gênero, papel, nome e relações do que está no cânone NÃO MUDAM. Se você fica em dúvida sobre um fato, CONSULTE o cânone e siga-o à risca; na ausência de informação, é melhor ser vago do que inventar algo que o contradiga. Contradizer o cânone quebra a imersão e é o pior erro que você pode cometer.
 - CÂNONE (memória permanente que NUNCA se perde): sempre que você estabelecer ou descobrir um FATO DURÁVEL — um NPC (nome, se é mago/guerreiro/etc, papel, gênero, onde está), um lugar importante, um nome falso que o jogador usou, uma promessa, um vínculo, um segredo revelado — REGISTRE em "canone" (veja formato). Fatos no CÂNONE aparecem literais em toda resposta e são a VERDADE: jamais os contradiga. Se o jogador perguntar "X te lembra algo?" e X estiver no cânone, RECONHEÇA o que está lá — nunca invente uma versão nova. Se NÃO estiver no cânone e você não tem certeza, trate como algo que o personagem talvez não saiba, em vez de inventar um fato que possa colidir depois. Atualize uma ficha (ex.: o mago mudou de cidade) reescrevendo os campos que mudaram; NUNCA mude tipo/gênero/identidade de alguém já registrado.
 - COLCHETES SÃO META: qualquer texto entre [colchetes] vindo do jogador ou do app (ex.: [seja mais direto], [não descreva sangue], [HABILIDADE], [ROLAGEM]) é instrução FORA do personagem. Obedeça ao conteúdo, mas NUNCA o trate como fala/ação do personagem e NUNCA o repita na narrativa.
+- PESSOAS CONHECIDAS (registro persistente de NPCs — VERDADE sobre quem o herói já conheceu; nunca recrie, esqueça ou contradiga): ${npcsTexto || "ninguém registrado ainda."}
+  · Ao apresentar um NPC RELEVANTE pela primeira vez, ou quando algo sobre ele mudar (vínculo, local, segredo revelado, morte), registre/atualize em "npcs" dentro de mudancas: [{"nome","papel","relacao","genero","local","status","segredo","notas"}]. relacao: aliado | amigo | romance | familia | neutro | rival | inimigo. Preencha só os campos relevantes; segredos e vínculos valem ouro — são a memória do enredo. NPCs de passagem (vendedor anônimo, guarda qualquer) NÃO precisam de ficha.
 
 CONDIÇÕES DE ESTADO / BUFFS E DEBUFFS (D&D e MMORPGs — dentro e fora de combate):
 - Repertório sugerido (use os nomes consagrados): DEBUFFS — Envenenado (perde PV/turno), Sangrando (perde PV/turno até estancar), Queimando (dano de fogo/turno), Atordoado (perde a ação), Amedrontado (desvantagem em ataques), Cego (desvantagem; atacantes têm vantagem), Enraizado/Preso (não se move), Lento (perde velocidade), Silenciado (não usa habilidades mágicas), Enfraquecido (dano reduzido), Amaldiçoado (azar nas rolagens), Congelado (pula turnos), Confuso (pode errar o alvo). BUFFS — Abençoado (vantagem), Inspirado (bônus na próxima rolagem), Regeneração (recupera PV/turno), Apressado (ação extra), Fortalecido (dano aumentado), Protegido (reduz dano), Furtivo (difícil de acertar), Enfurecido (dano alto, defesa baixa).
 - Personagens e inimigos podem receber condições com efeito mecânico real, via "condicoes_adicionar" (e "condicoes_remover"). Cada condição: {"alvo":"você"|nome do NPC/inimigo,"nome":"Envenenado","turnos":3,"efeito":"perde 2 PV por turno","tipo":"ruim"|"bom"}.
-- Condições comuns e o que fazem: Envenenado (perde PV por turno), Sangrando (perde PV por turno até estancar), Atordoado (perde a próxima ação), Amedrontado (desvantagem em ataques), Cego (desvantagem; quem o ataca tem vantagem), Caído/Derrubado (desvantagem corpo a corpo), Enfraquecido (dano reduzido), Abençoado/Inspirado (vantagem), Apressado (ação extra). Crie outras coerentes com a ficção.
-- Use condições para dar consequência: o veneno da aranha, a lama que prende, o grito que amedronta. Uma condição que dá vantagem/desvantagem deve refletir nas rolagens seguintes. O app conta os turnos e mostra as condições ativas; declare o efeito e deixe o app/ narrativa aplicarem.
+- Use condições para dar consequência: o veneno da aranha, a lama que prende, o grito que amedronta. Uma condição que dá vantagem/desvantagem deve refletir nas rolagens seguintes. O app conta os turnos e mostra as condições ativas; declare o efeito e deixe o app/ narrativa aplicarem. Crie outras coerentes com a ficção além do repertório acima.
 - Fora de combate também valem (envenenado numa trilha, abençoado por um templo). Condições "boas" e "ruins" coexistem.
 
 HABILIDADES E EFEITOS TEMPORÁRIOS:
-- O personagem tem habilidades/magias com custo em mana (PM). Na PRIMEIRA resposta, conceda 2-3 habilidades iniciais coerentes com o conceito (custo 1-5 PM). Conceda novas por marcos.
+- O personagem tem habilidades/magias com custo em mana (PM), escolhidas pelo jogador numa árvore fixa — NUNCA conceda habilidades ao jogador (as iniciais já foram dadas pelo sistema; as novas ele escolhe ao subir de nível).
 - Habilidades podem ser INSTANTÂNEAS (efeito imediato) ou ter DURAÇÃO (ficam ativas por X turnos). O PM é gasto UMA vez, ao lançar; o efeito persiste pelos turnos seguintes sem novo custo.
 - Duração equilibrada (referência de mesa): buffs fortes duram pouco (2-3 turnos); utilitários médios 3-5; auras leves até 8-10. Nunca "permanente".
 - Bônus de buff equilibrado: um efeito que ajuda em testes soma +2 (NÃO +4 ou mais). Assim, atributo +4 com buff vira +6, não +8 — continua desafiador. Buffs muito fortes devem custar mais PM e durar menos.
@@ -185,14 +188,12 @@ ${TABELA_TESTES}
 - TEMPO REAL (CRÍTICO): sempre que um golpe acerta um inimigo, envie "combate_inimigo_vida" na MESMA resposta em que narra o golpe — nunca no turno seguinte. Se a narrativa diz que acertou, o PV cai NESTE JSON. Se o golpe MATA o inimigo, mande a vida negativa suficiente para zerá-lo NESTE turno (o app fecha o combate sozinho e cobra os espólios). NUNCA descreva um inimigo morto/caído sem ter zerado o PV dele no mesmo JSON. Vale também para dano ao jogador ("vida") e a companheiros ("grupo_vida").
 - Use "combate_atualizar" para mudar a ameaça de um inimigo (ex.: "enfurecido", "cambaleando", "em fuga") ou revelar um novo inimigo que chega.
 - Quando o combate acabar (todos derrotados, fuga, rendição, trégua), feche com "combate_encerrar": true e dê os espólios/XP na mesma resposta.
-- Calibre o PV dos inimigos ao desafio: um lacaio tem 6-10 PV, um guerreiro 12-20, um bruto 25-40, um chefe 50+. O dano do jogador costuma ser 3-8 por golpe bem-sucedido; ajuste para o combate durar alguns turnos, nem instantâneo nem interminável.
 - Inimigos também revidam: use "vida" (dano ao jogador) e "grupo_vida" (dano aos companheiros) conforme a ficção. Deixe claro na narrativa quem ataca quem.
 - REGRAS VALEM PARA TODOS (estilo Baldur's Gate 3): inimigos e companheiros também rolam o dado. Ao resolver um ataque de NPC (inimigo ou aliado) contra alguém, gere o resultado e REGISTRE em "rolagens_combate" (lista) para o app exibir: cada item tem {"quem":"Lobo","alvo":"você","d20":N,"mod":X,"total":N+X,"dificuldade":D,"resultado":"acerta"|"erra"|"crítico"|"desastre"}. Escolha o d20 (1-20) e o mod pela competência (fraco +1/+2, competente +3/+4, elite +5/+6); dificuldade de acertar: alvo comum 12, ágil 15, muito ágil 18. 20 natural = crítico (dano dobrado); 1 natural = desastre (0 dano + tropeço). Aplique o dano coerente (0 se errou) via combate_inimigo_vida/vida/grupo_vida NO MESMO turno. NPCs também podem ter vantagem/desvantagem: se favorecidos, use o maior de 2 rolagens; se atrapalhados, o menor — e mencione na narrativa. Varie: nem todo ataque acerta.
 
 MUNDO ESCALÁVEL (o desafio cresce com o herói):
 - O personagem fica mais forte com o tempo (sobe de nível: mais PV, PM e atributos). Os PERIGOS devem escalar junto, senão o jogo perde a graça.
 - IMPORTANTE (fidelidade de mesa): calibre os desafios pelo NÍVEL NATURAL do herói, NUNCA pelo equipamento. O equipamento é a recompensa — um item poderoso deve fazer o jogador sentir-se acima do desafio por um tempo; essa vantagem é o prêmio por tê-lo conquistado. Não anule o valor do loot escalando o mundo junto com ele.
-- Referência de escala pelo nível do herói: níveis 1-3 → lacaios 6-10 PV, chefes locais 25-40; níveis 4-6 → inimigos 15-30, chefes 50-80; níveis 7-10 → inimigos 30-60, chefes 90-150; além disso, proporcionalmente mais. O herói atual está no nível ${personagem.nivel}.
 - REGIÕES têm perigo próprio: cidades e vilarejos INICIAIS têm chefes mais fracos (bom para começar); regiões distantes, masmorras profundas e capitais inimigas são muito mais perigosas. Sinalize o perigo de uma região na ficção (rumores, avisos, o estado dos viajantes). Uma região NÃO muda de perigo porque o herói subiu de nível — voltar a um lugar antigo e se sentir poderoso É parte da diversão.
 - CONTEÚDO ESCONDIDO: semeie chefes ocultos e áreas secretas bem mais fortes que o normal daquele ponto — um chefe disfarçado de mendigo, uma cripta selada, um portão que só abre após certas conquistas/missões. Dê pistas sutis. Recompensas à altura (itens raros/épicos/lendários). NÃO empurre o jogador para lá cedo demais; deixe que ele descubra e decida arriscar.
 - Nunca deixe o combate trivial por muito tempo nem impossível de repente. Um bom pico de dificuldade é telegrafado (o jogador sente que aquilo é forte antes de entrar).
@@ -240,7 +241,7 @@ DESCANSO E ACAMPAMENTO (o app controla os números; você narra):
 
 RESUMO: se receber [RESUMO DE SESSÃO], abra com "Anteriormente, em ${nomeCampanha}…", recapitule em até 120 palavras (tom de série), sem rolagem e sem mudanças.
 
-ESTILO: narração sensorial e cinematográfica, enxuta (~180-230 palavras). NPCs falam em 1ª pessoa ("—"). Nunca decida as ações do personagem do jogador.
+ESTILO: narração sensorial e cinematográfica, enxuta (o tamanho exato está em TAMANHO DAS RESPOSTAS). NPCs falam em 1ª pessoa ("—"). Nunca decida as ações do personagem do jogador.
 
 VARIEDADE DE LINGUAGEM (anti-repetição — leve a sério):
 - NUNCA recicle muletas verbais nem imagens já usadas na sessão. Se uma construção apareceu uma vez (ex.: "qualidade de", "algo muito antigo", "os olhos brilharam"), está PROIBIDA nas próximas — busque outro ângulo sensorial, outra metáfora, outro ritmo.
@@ -276,6 +277,7 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   "rolagens_combate": [{"quem":"Lobo","alvo":"você","d20":8,"mod":2,"total":10,"dificuldade":15,"resultado":"erra"}],
   "condicoes_adicionar": [{"alvo":"você","nome":"Envenenado","turnos":3,"efeito":"perde 2 PV por turno","tipo":"ruim"}],
   "condicoes_remover": [{"alvo":"você","nome":"Envenenado"}],
+  "npcs": [{"nome":"Mestra Elira","papel":"ferreira","relacao":"aliado","genero":"mulher","local":"Pedravale","segredo":"esconde um mapa nas forjas"}],
   "quest_nova": [{"titulo":"O cerco de Pedravale","descricao":"Romper o bloqueio antes do inverno","tipo":"principal"}],
   "quest_atualizar": [{"titulo":"A caravana sumida","status":"concluida","nota":""}],
   "historia_avancar": false,
@@ -296,11 +298,11 @@ Regras do formato: "rolagem" e "mudancas" são null quando não há; nunca os co
 /* Ponte de produção: o navegador NUNCA vê a chave da API.
    A chamada vai para /api/mestre (função no servidor da Vercel),
    que fala com a Anthropic usando a chave guardada em variável de ambiente. */
-async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto") {
+async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto", tarefa = "mestre") {
   const response = await fetch("/api/mestre", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ system, messages, maxTokens, formato }),
+    body: JSON.stringify({ system, messages, maxTokens, formato, tarefa }),
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.erro || `HTTP ${response.status}`);
@@ -409,7 +411,9 @@ ${livroAtual || "(vazio)"}
 NOVOS ACONTECIMENTOS (mais recentes):
 ${narrativas.slice(-16).join("\n\n")}`;
   try {
-    const r = await chamarModelo(system, [{ role: "user", content: conteudo }], 600, "texto");
+    /* tarefa "leve": o livro é burocracia de arquivista, não narração —
+       vai para o modelo barato no servidor (roteamento por tarefa) */
+    const r = await chamarModelo(system, [{ role: "user", content: conteudo }], 600, "texto", "leve");
     return (r || "").trim();
   } catch {
     return livroAtual;
@@ -859,7 +863,7 @@ ${banirUrgencia ? `
 ⛔ Não use "alguém irrompe com urgência" nem interrupção dramática — esse recurso está desgastado nesta campanha.`}`;
 }
 
-const ABAS = [{ id: "ficha", rotulo: "Ficha", icone: "☰" }, { id: "diario", rotulo: "Diário", icone: "📜" }, { id: "grupo", rotulo: "Grupo", icone: "⚑" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }];
+const ABAS = [{ id: "ficha", rotulo: "Ficha", icone: "☰" }, { id: "diario", rotulo: "Diário", icone: "📜" }, { id: "grupo", rotulo: "Grupo", icone: "⚑" }, { id: "pessoas", rotulo: "Pessoas", icone: "👥" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }];
 
 const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D" };
 const SLOT_ROTULO = { arma: "Arma", armadura: "Armadura", elmo: "Elmo", botas: "Botas", anel: "Anel", amuleto: "Amuleto", escudo: "Escudo" };
@@ -1171,7 +1175,41 @@ function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco }) {
+/* Painel de PESSOAS: todo o elenco conhecido, com retrato determinístico,
+   relação colorida e o que se sabe de cada um. Segredos ficam FORA da tela —
+   são memória do Mestre, não spoiler para o jogador. */
+function PainelPessoas({ npcs, grupo }) {
+  const lista = Object.values(npcs || {}).sort((a, b) => (b.ultimaVez || 0) - (a.ultimaVez || 0));
+  const nomesGrupo = new Set((grupo || []).map((g) => (g.nome || "").toLowerCase()));
+  if (!lista.length && !(grupo || []).length) {
+    return <div className="tv-body text-sm italic text-center py-10" style={{ color: T.inkDim }}>Ninguém conhecido ainda. As pessoas marcantes que você encontrar aparecerão aqui — com rosto, relação e tudo que você sabe sobre elas.</div>;
+  }
+  const cartao = (n, ehGrupo) => {
+    const rel = relacaoNPC(ehGrupo ? "companheiro" : n.relacao);
+    const morto = (n.status || "").toLowerCase().includes("morto");
+    return (
+      <div key={`${ehGrupo ? "g" : "n"}-${n.nome}`} className="rounded-xl p-3 flex items-start gap-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}`, opacity: morto ? 0.55 : 1 }}>
+        <Retrato semente={n.semente || n.nome} tamanho={46} anel={rel.cor} estado={morto ? "grave" : "normal"} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="tv-display text-lg leading-tight truncate" style={{ color: T.ink }}>{n.nome}{morto ? " ☠" : ""}</span>
+            <span className="tv-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0" style={{ border: `1px solid ${rel.cor}`, color: rel.cor }}>{rel.rotulo}</span>
+          </div>
+          <div className="tv-body text-xs italic truncate" style={{ color: T.inkDim }}>{[n.papel, n.genero, n.local ? `em ${n.local}` : ""].filter(Boolean).join(" · ") || "—"}</div>
+          {n.notas && <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{n.notas}</div>}
+        </div>
+      </div>
+    );
+  };
+  return (
+    <div className="space-y-2">
+      {(grupo || []).map((g) => cartao({ nome: g.nome, papel: [g.classe, g.subclasse].filter(Boolean).join(" · ") || g.conceito, notas: g.descricao, semente: g.semente }, true))}
+      {lista.filter((n) => !nomesGrupo.has((n.nome || "").toLowerCase())).map((n) => cartao(n, false))}
+    </div>
+  );
+}
+
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
   const [confirmarRemover, setConfirmarRemover] = React.useState(null);
@@ -1185,7 +1223,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
       <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,.45)" }} onClick={fechar} />
       <aside className="tv-slide tv-scroll fixed right-0 inset-y-0 z-40 w-80 max-w-[88vw] overflow-y-auto p-5 flex flex-col gap-5" style={{ background: T.panel, borderLeft: `1px solid ${T.line}` }}>
         <div className="flex items-center justify-between">
-          <h2 className="tv-display text-2xl" style={{ color: T.ink }}>{aba === "ficha" ? "Ficha" : aba === "diario" ? "Diário" : aba === "grupo" ? "Grupo" : aba === "mapa" ? "Mapa" : "Inventário"}</h2>
+          <h2 className="tv-display text-2xl" style={{ color: T.ink }}>{aba === "ficha" ? "Ficha" : aba === "diario" ? "Diário" : aba === "grupo" ? "Grupo" : aba === "pessoas" ? "Pessoas" : aba === "mapa" ? "Mapa" : "Inventário"}</h2>
           <button onClick={fechar} className="tv-mono text-lg px-2" style={{ color: T.inkDim }}>✕</button>
         </div>
 
@@ -1282,6 +1320,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
 
         {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} />}
+        {aba === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} />}
 
         {aba === "grupo" && (
           <>
@@ -1696,7 +1735,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.7 · barra de ação</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.9 · pessoas e memória</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2052,6 +2091,9 @@ export default function Taverna() {
   const [mostrarHoras, setMostrarHoras] = useState(false);
   const ehAcaoMundoRef = useRef(false); // marca que o próximo enviar é a vez do mundo
   const canoneRef = useRef({});
+  const npcsRef = useRef({});                 // registro persistente de pessoas
+  const [npcs, setNpcs] = useState({});
+  const npcTurnoRef = useRef(0);              // marca "visto por último" de cada NPC
   const bancoNomesRef = useRef(null);
   const mapaRef = useRef({ cidades: [], faccoes: [] });
   const [mapa, setMapa] = useState({ cidades: [], faccoes: [] });
@@ -2107,7 +2149,7 @@ export default function Taverna() {
     setStatusSave("salvando");
     const dados = {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico, sugestoes, rolagem,
-      combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, acampado: acampadoRef.current,
+      combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current,
       historia: historiaRef.current, quests: questsRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
@@ -2257,7 +2299,32 @@ export default function Taverna() {
         }
       }
       if (tocouMapa) { mapaRef.current = mp2; setMapa(mp2); }
-      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current));
+      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
+    }
+    /* PESSOAS (registro de NPCs): o Mestre envia "npcs"; e como blindagem de
+       memória, qualquer PESSOA do cânone sem ficha entra no registro por código. */
+    if (resp.mudancas) {
+      npcTurnoRef.current += 1;
+      let reg = npcsRef.current;
+      let tocou = false;
+      [].concat(resp.mudancas.npcs || []).forEach((n) => {
+        if (!n || !n.nome) return;
+        const chave = Object.keys(reg).find((k) => k.toLowerCase() === String(n.nome).toLowerCase());
+        const ficha = chave ? mesclarNPC(reg[chave], { ...n, ultimaVez: npcTurnoRef.current }) : criarNPC(n.nome, { ...n, ultimaVez: npcTurnoRef.current });
+        if (!tocou) { reg = { ...reg }; tocou = true; }
+        reg[chave || n.nome] = ficha;
+        if (!chave) msgs.push(`👤 ${n.nome} entrou para o elenco`);
+      });
+      for (const [nome, f] of Object.entries(canoneRef.current || {})) {
+        if (!f || !String(f.tipo || "").toLowerCase().includes("pessoa")) continue;
+        if (Object.keys(reg).some((k) => k.toLowerCase() === nome.toLowerCase())) continue;
+        if (!tocou) { reg = { ...reg }; tocou = true; }
+        reg[nome] = criarNPC(nome, { papel: f.papel || "", genero: f.genero || "", local: f.local || "", status: f.status || "vivo", notas: f.notas || "", ultimaVez: npcTurnoRef.current });
+      }
+      if (tocou) {
+        npcsRef.current = reg; setNpcs(reg);
+        systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, canoneRef.current, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
+      }
     }
     setPersonagem(pers);
     /* combate: processa de forma síncrona (via ref) para as mensagens saírem na ordem certa */
@@ -2332,7 +2399,11 @@ export default function Taverna() {
     const novoHist = [...base, { role: "user", content: corpo }];
     try {
       const resp = await chamarMestre(systemRef.current, novoHist);
-      const histFinal = [...novoHist, { role: "assistant", content: JSON.stringify(resp) }];
+      /* MEMÓRIA ENXUTA: no histórico vai SÓ a narrativa (dentro do molde JSON,
+         para o modelo manter o formato). Antes ia o JSON completo com mudancas,
+         sugestões e campos de combate — ~3× mais tokens por mensagem antiga,
+         sem nenhum ganho de memória (os efeitos já vivem no estado do app). */
+      const histFinal = [...novoHist, { role: "assistant", content: JSON.stringify({ narrativa: resp.narrativa || "" }) }];
       setHistorico(histFinal);
       const pers = aplicarResposta(resp, persAtual);
       /* ALTERNÂNCIA: se esta foi uma AÇÃO DO JOGADOR (não a vez do mundo, não combate,
@@ -2349,7 +2420,7 @@ export default function Taverna() {
         turnoContRef.current = 0;
         const narrativas = mensagensRef.current.filter((x) => x.autor === "mestre").map((x) => x.texto);
         gerarLivro(livroRef.current, narrativas).then((l) => {
-          if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current)); }
+          if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current)); }
         });
       }
       setTimeout(() => salvar({ personagem: pers, historico: histFinal, rolagem: resp.rolagem || null, sugestoes: resp.rolagem ? [] : (resp.sugestoes || []) }), 0);
@@ -2366,17 +2437,17 @@ export default function Taverna() {
   const iniciar = (pers) => {
     setPersonagem(pers);
     livroRef.current = ""; turnoContRef.current = 0;
-    canoneRef.current = {}; definirAcampado(false);
+    canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); npcTurnoRef.current = 0; definirAcampado(false);
     mapaRef.current = { cidades: [], faccoes: [] }; setMapa(mapaRef.current);
     faccaoJogadorRef.current = ""; cidadeAtualRef.current = "";
     historiaRef.current = { estrutura: (mundo && mundo.estrutura) || "jornada", etapa: 0 };
     questsRef.current = []; setQuests([]);
     bancoNomesRef.current = gerarBancoNomes(mundo);
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current));
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setSugestoes([]); setRolagem(null);
     setCombate(null); combateRef.current = null;
     setFase("jogo");
-    enviar("Comece a aventura: apresente o mundo com riqueza, situe meu personagem numa cena de abertura marcante com pelo menos um NPC interessante, conceda minhas 2 ou 3 habilidades iniciais coerentes com meu conceito, e termine com um gancho que me convide a agir.", pers, []);
+    enviar(`Comece a aventura: apresente o mundo com riqueza, situe meu personagem numa cena de abertura marcante com pelo menos um NPC interessante, e termine com um gancho que me convide a agir. (Minhas habilidades iniciais já foram concedidas pelo SISTEMA: ${(pers.habilidades || []).map((h) => h.nome).join(", ") || "nenhuma"} — NÃO envie "adicionar_habilidades".)`, pers, []);
   };
 
   const continuar = (comResumo) => {
@@ -2391,6 +2462,7 @@ export default function Taverna() {
       setCombate(sv.combate || null); combateRef.current = sv.combate || null;
       livroRef.current = sv.livro || ""; turnoContRef.current = 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
+      npcsRef.current = sv.npcs && typeof sv.npcs === "object" ? sv.npcs : {}; setNpcs(npcsRef.current); npcTurnoRef.current = 0;
       definirAcampado(!!sv.acampado);
       mapaRef.current = sv.mapa && sv.mapa.cidades ? sv.mapa : { cidades: [], faccoes: [] };
       setMapa(mapaRef.current);
@@ -2400,7 +2472,7 @@ export default function Taverna() {
       questsRef.current = Array.isArray(sv.quests) ? sv.quests : [];
       setQuests([...questsRef.current]);
       bancoNomesRef.current = gerarBancoNomes(sv.mundo);
-      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current));
+      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
       setFase("jogo");
       if (comResumo && !sv.rolagem) {
         enviar(`[RESUMO DE SESSÃO] Retomando "${sv.nomeCampanha}". Abra com "Anteriormente, em ${sv.nomeCampanha}…" e recapitule os principais acontecimentos em até 120 palavras, tom de série. Depois reapresente a cena atual e me convide a agir. Sem rolagem e sem mudanças nesta resposta.`, pers, sv.historico || []);
@@ -3039,7 +3111,7 @@ export default function Taverna() {
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} /></LimiteErro>
         </div>
       )}
 
