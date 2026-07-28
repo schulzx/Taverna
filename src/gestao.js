@@ -39,9 +39,29 @@ export function multGuilda(nivel) { return 1 + 0.25 * ((nivel || 1) - 1); }  // 
 export function rendaContratos(nivel) { return RENDA_CONTRATOS * (nivel || 1); }
 export function custoUpgradeGuilda(nivel) { return nivel >= NIVEL_GUILD_MAX ? null : 150 * (nivel || 1); }
 
-/* Renda diária total = contratos da guilda + domínios × multiplicador */
+/* ---------------- TRATADOS AFETAM A ECONOMIA (por código) ----------------
+   comércio: +5% na renda por parceiro comercial (teto +25%)
+   aliança:  +5% também (aliados comerciam e protegem rotas)
+   vassalagem: o vassalo paga TRIBUTO fixo de 10/dia
+   guerra: sem bônus — os efeitos da guerra são ficção do Mestre */
+export const BONUS_COMERCIO_PCT = 0.05;
+export const BONUS_COMERCIO_TETO = 0.25;
+export const TRIBUTO_VASSALO = 10;
+
+export function efeitoTratados(mapa) {
+  const fs = mapa?.faccoes || [];
+  const parceiros = fs.filter((f) => f.tratado === "comercio" || f.tratado === "alianca").length;
+  const vassalos = fs.filter((f) => f.tratado === "vassalagem").length;
+  const bonusPct = Math.min(BONUS_COMERCIO_TETO, parceiros * BONUS_COMERCIO_PCT);
+  const tributo = vassalos * TRIBUTO_VASSALO;
+  return { parceiros, vassalos, bonusPct, tributo };
+}
+
+/* Renda diária total = (contratos da guilda + domínios) × multiplicadores + tributos */
 export function rendaDiariaTotal(mapa, nivel, temGuilda) {
   const { total } = rendaDominios(mapa);
   const contratos = temGuilda ? rendaContratos(nivel) : 0;
-  return Math.round((contratos + total) * (temGuilda ? multGuilda(nivel) : 1));
+  const mult = temGuilda ? multGuilda(nivel) : 1;
+  const { bonusPct, tributo } = efeitoTratados(mapa);
+  return Math.round((contratos + total) * mult * (1 + bonusPct)) + tributo;
 }

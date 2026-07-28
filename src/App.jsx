@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais } from "./classes.js";
-import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
+import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar } from "./combate.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste } from "./bestiario.js";
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt } from "./npcs.js";
-import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, NIVEL_GUILD_MAX } from "./gestao.js";
+import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -233,6 +233,7 @@ COMPANHEIROS VIVOS (até ${MAX_COMPANHEIROS}): entram por "grupo_adicionar". Sã
 
 ECONOMIA: moeda com nome do mundo; valor numérico em "moedas". Mercadores com personalidade e preços coerentes. NUNCA desconte moedas sem o jogador aceitar a compra.
 - GESTÃO POR CÓDIGO (guilda, cofre, rendas, domínios): tudo isso é administrado pelo APP — NÃO calcule, NÃO envie e NÃO contradiga valores de gestão. Seu papel é só o da ficção: registrar fundações e conquistas (via "mapa_faccoes" com doJogador e "mapa_cidades" com relacao "jogador") e narrar a vida política e econômica (colheitas, impostos, obras, embaixadas). Os números o jogador vê no painel de Gestão.
+- DIPLOMACIA: as potências conhecidas estão na lista acima com relação e tratados (comercio | alianca | vassalagem | guerra). A política é sua — negocie, ameace, traia na ficção — mas os EFEITOS econômicos dos tratados são calculados pelo app; nunca cite valores. Quando um tratado for firmado/rompido, atualize "mapa_faccoes" com os campos "tratado", "relacao", "notas" e, se fizer sentido, "poder" (menor|regional|grande|imperio). Pedidos do jogador marcados [DIPLOMACIA — facção]: o líder daquela potência decide na ficção (aceitar, exigir condições, adiar ou recusar) e você registra o desfecho. Potências novas e marcantes também entram em "mapa_faccoes".
 
 XP: só por conquistas reais (10-30 pequeno; 40-60 marco). Nunca por turno. O app calcula os níveis.
 
@@ -868,7 +869,7 @@ ${banirUrgencia ? `
 /* Trilho enxuto (mobile): 4 abas. Ficha, Grupo, Pessoas, Guilda e Domínios
    vivem como SUB-abas dentro de Gestão. */
 const ABAS = [{ id: "gestao", rotulo: "Gestão", icone: "🏛" }, { id: "diario", rotulo: "Diário", icone: "📜" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }];
-const SUBS_GESTAO = [{ id: "ficha", rotulo: "Ficha" }, { id: "grupo", rotulo: "Grupo" }, { id: "pessoas", rotulo: "Pessoas" }, { id: "guilda", rotulo: "Guilda" }, { id: "dominios", rotulo: "Domínios" }];
+const SUBS_GESTAO = [{ id: "ficha", rotulo: "Ficha" }, { id: "grupo", rotulo: "Grupo" }, { id: "pessoas", rotulo: "Pessoas" }, { id: "guilda", rotulo: "Guilda" }, { id: "dominios", rotulo: "Domínios" }, { id: "diplomacia", rotulo: "Diplomacia" }];
 
 const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D" };
 const SLOT_ROTULO = { arma: "Arma", armadura: "Armadura", elmo: "Elmo", botas: "Botas", anel: "Anel", amuleto: "Amuleto", escudo: "Escudo" };
@@ -1222,7 +1223,56 @@ function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio }) {
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc }) {
+/* Painel de DIPLOMACIA: as potências conhecidas (guildas, reinos, cultos…),
+   relação, tratado e ações de política. As propostas vão para a ficção —
+   o Mestre decide a resposta delas; o app só registra os tratados firmados. */
+function PainelDiplomacia({ mapa, faccaoJogador, onDiplomacia }) {
+  const fs = (mapa?.faccoes || []).filter((f) => f.nome !== faccaoJogador);
+  if (!fs.length) {
+    return <div className="tv-body text-sm italic text-center py-10" style={{ color: T.inkDim }}>Nenhuma potência conhecida ainda. Guildas, reinos e cultos que você encontrar na história aparecem aqui — e você poderá propor alianças, comércio, vassalagem… ou declarar guerra.</div>;
+  }
+  const ACOES = [
+    { id: "comercio", rotulo: "◉ propor comércio", dica: "+5% de renda por parceiro" },
+    { id: "alianca", rotulo: "🤝 propor aliança", dica: "+5% e apoio mútuo" },
+    { id: "vassalagem", rotulo: "♜ exigir vassalagem", dica: "tributo de 10/dia" },
+    { id: "guerra", rotulo: "⚔ declarar guerra", dica: "sem volta fácil", perigo: true },
+  ];
+  return (
+    <div className="space-y-2.5">
+      {fs.map((f) => {
+        const rel = RELACOES[f.relacao] || RELACOES.neutra;
+        const tr = TRATADOS[f.tratado] || TRATADOS.nenhum;
+        return (
+          <div key={f.nome} className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="tv-display text-lg leading-tight" style={{ color: T.ink }}>{f.nome}</span>
+              <div className="flex gap-1.5 shrink-0">
+                <span className="tv-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ border: `1px solid ${rel.cor}`, color: rel.cor }}>{rel.rotulo}</span>
+                {f.tratado && f.tratado !== "nenhum" && <span className="tv-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ border: `1px solid ${tr.cor}`, color: tr.cor }}>{tr.rotulo}</span>}
+              </div>
+            </div>
+            <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>{[f.tipo, f.lider ? `líder: ${f.lider}` : "", f.poder ? `poder ${f.poder}` : ""].filter(Boolean).join(" · ")}</div>
+            {f.notas && <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{f.notas}</div>}
+            {onDiplomacia && (
+              <div className="grid grid-cols-2 gap-1.5 mt-2">
+                {ACOES.map((a) => (
+                  <button key={a.id} onClick={() => onDiplomacia(f.nome, a.id)} title={a.dica}
+                    className="tv-mono text-[10px] px-1.5 py-1.5 rounded"
+                    style={{ border: `1px solid ${a.perigo ? T.danger : T.line}`, color: a.perigo ? T.danger : T.ink }}>
+                    {a.rotulo}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <div className="tv-body text-xs" style={{ color: T.inkDim }}>Propostas são decididas na história pelo Mestre (o líder pode aceitar, exigir algo, ou recusar). Tratados firmados têm efeito real e automático na sua renda.</div>
+    </div>
+  );
+}
+
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, recalibrarLenda }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
   const [confirmarRemover, setConfirmarRemover] = React.useState(null);
@@ -1278,6 +1328,13 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
               <BarraMini rotulo="XP" atual={personagem.xp} max={xpProx} cor={T.ok} />
             </div>
             {abrirCaminho === "eu" && <SeletorCaminho mundo={mundo} alvo="eu" atual={personagem} acampado={acampado} trocarCaminho={trocarCaminho} fechar={() => setAbrirCaminho(null)} />}
+            {recalibrarLenda && (
+              <button onClick={recalibrarLenda} className="w-full tv-mono text-[10px] px-2 py-1.5 rounded-lg"
+                style={{ border: `1px dashed ${T.line}`, color: T.inkDim }}
+                title="Se sua lenda cresceu mais que seus números (save antigo), o Mestre relê a campanha e propõe nível e atributos coerentes — você confirma antes de aplicar.">
+                ⚖ recalibrar lenda (save antigo)
+              </button>
+            )}
             {(personagem.condicoes || []).length > 0 && (
               <div>
                 <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Condições</div>
@@ -1347,6 +1404,8 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
         {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} />}
         {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).length >= MAX_COMPANHEIROS} />}
+
+        {aba === "gestao" && subGestao === "diplomacia" && <PainelDiplomacia mapa={mapa} faccaoJogador={faccaoJogador} onDiplomacia={onDiplomacia} />}
 
         {aba === "gestao" && subGestao === "guilda" && (() => {
           const temGuilda = !!faccaoJogador;
@@ -1843,7 +1902,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v5.0 · gestão</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v5.1 · diplomacia</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2410,7 +2469,7 @@ export default function Taverna() {
         }
       }
       if (tocouMapa) { mapaRef.current = mp2; setMapa(mp2); }
-      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
+      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
     }
     /* PESSOAS (registro de NPCs): o Mestre envia "npcs"; e como blindagem de
        memória, qualquer PESSOA do cânone sem ficha entra no registro por código. */
@@ -2434,7 +2493,7 @@ export default function Taverna() {
       }
       if (tocou) {
         npcsRef.current = reg; setNpcs(reg);
-        systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, canoneRef.current, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
+        systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
       }
     }
     setPersonagem(pers);
@@ -2531,7 +2590,7 @@ export default function Taverna() {
         turnoContRef.current = 0;
         const narrativas = mensagensRef.current.filter((x) => x.autor === "mestre").map((x) => x.texto);
         gerarLivro(livroRef.current, narrativas).then((l) => {
-          if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current)); }
+          if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current)); }
         });
       }
       setTimeout(() => salvar({ personagem: pers, historico: histFinal, rolagem: resp.rolagem || null, sugestoes: resp.rolagem ? [] : (resp.sugestoes || []) }), 0);
@@ -2555,7 +2614,7 @@ export default function Taverna() {
     historiaRef.current = { estrutura: (mundo && mundo.estrutura) || "jornada", etapa: 0 };
     questsRef.current = []; setQuests([]);
     bancoNomesRef.current = gerarBancoNomes(mundo);
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setSugestoes([]); setRolagem(null);
     setCombate(null); combateRef.current = null;
     setFase("jogo");
@@ -2585,7 +2644,7 @@ export default function Taverna() {
       questsRef.current = Array.isArray(sv.quests) ? sv.quests : [];
       setQuests([...questsRef.current]);
       bancoNomesRef.current = gerarBancoNomes(sv.mundo);
-      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
+      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
       setFase("jogo");
       if (comResumo && !sv.rolagem) {
         enviar(`[RESUMO DE SESSÃO] Retomando "${sv.nomeCampanha}". Abra com "Anteriormente, em ${sv.nomeCampanha}…" e recapitule os principais acontecimentos em até 120 palavras, tom de série. Depois reapresente a cena atual e me convide a agir. Sem rolagem e sem mudanças nesta resposta.`, pers, sv.historico || []);
@@ -3023,6 +3082,54 @@ export default function Taverna() {
     enviar(`[CONVITE AO GRUPO] Convido ${nome} para se juntar ao meu grupo. Decida pela personalidade, relação e momento dele(a): pode ACEITAR (use "grupo_adicionar" com a ficha completa), recusar com jeito, ou aceitar com uma condição. A escolha é dele(a), não minha — responda com as palavras e a reação dele(a) em 1ª pessoa.`, personagem);
   };
 
+  /* DIPLOMACIA: propostas a potências vão para a ficção; o Mestre decide a
+     resposta do líder e só registra o tratado firmado — os efeitos (renda,
+     tributo) são calculados pelo app. */
+  const diplomacia = (faccao, acao) => {
+    if (bloqueado) return;
+    const ROT = { comercio: "proponho um acordo comercial", alianca: "proponho uma aliança formal", vassalagem: "exijo que se tornem meus vassalos", guerra: "declaro guerra" };
+    if (!ROT[acao]) return;
+    setAba(null);
+    pushMsgs([{ autor: "jogador", texto: `[Diplomacia] ${ROT[acao]} a ${faccao}.` }]);
+    enviar(`[DIPLOMACIA — ${faccao}] Em nome ${faccaoJogadorRef.current ? `de ${faccaoJogadorRef.current} e dos meus domínios` : "do meu próprio nome"}, ${ROT[acao]} a ${faccao}. O líder de ${faccao} responde NA FICÇÃO conforme poder, personalidade, medos e ambições: pode aceitar, exigir condições (tributo, casamento, prova de força), adiar ou recusar — a decisão é dele(a). Se um acordo for firmado ou rompido, registre em "mapa_faccoes": [{"nome":"${faccao}","tratado":"comercio|alianca|vassalagem|guerra|nenhum","relacao":"aliada|neutra|inimiga","notas":"termos do acordo"}]. NÃO invente valores econômicos — os efeitos dos tratados são calculados pelo app.`, personagem);
+  };
+
+  /* RECALIBRAR LENDA: saves antigos ficaram para trás da própria história
+     (herói lendário com números de iniciante). O Mestre relê o livro e o
+     cânone e PROPÕE nível/atributos; o app calcula PV/PM pelas tabelas e
+     o jogador confirma. Uma chamada leve, sob demanda. */
+  const [recal, setRecal] = useState(null); // null | "pedindo" | { proposta, justificativa }
+  const recalibrarLenda = async () => {
+    if (bloqueado || recal === "pedindo") return;
+    setAba(null);
+    setRecal("pedindo");
+    try {
+      const sys = `Você é o ARQUIVISTA da campanha "${nomeCampanha}". Um save antigo deixou os números do herói para trás da lenda. Leia o LIVRO e o CÂNONE e proponha os números JUSTOS de hoje, baseando-se SÓ no que aconteceu na história (feitos, combates vencidos, anos de estrada). Responda SOMENTE JSON no formato: {"nivel": <inteiro 1-20>, "atributos": {"forca":0-5,"agilidade":0-5,"vigor":0-5,"intelecto":0-5,"vontade":0-5,"presenca":0-5}, "justificativa": "2-3 frases citando os feitos que sustentam a proposta"}.`;
+      const conteudo = `LIVRO DA CAMPANHA:\n${livroRef.current || "(vazio)"}\n\nCÂNONE:\n${formatarCanone(canoneRef.current)}\n\nHERÓI HOJE: nível ${personagem.nivel}; atributos ${JSON.stringify(personagem.atributos)}.`;
+      const r = await chamarModelo(sys, [{ role: "user", content: conteudo }], 500, "json", "leve");
+      const m = (r || "").match(/\{[\s\S]*\}/);
+      const j = m ? JSON.parse(m[0]) : null;
+      if (!j || j.nivel == null) throw new Error("o arquivista não respondeu com números");
+      const nivel = Math.min(20, Math.max(1, Math.round(j.nivel)));
+      const at = { ...personagem.atributos };
+      for (const k of Object.keys(at)) if (j.atributos && j.atributos[k] != null) at[k] = Math.min(5, Math.max(0, Math.round(j.atributos[k])));
+      const vidaMax = pvEsperadoJogador(nivel, at.vigor);
+      const manaMax = 8 + (nivel - 1) * 2 + at.intelecto * 2;
+      setRecal({ proposta: { nivel, atributos: at, vidaMax, manaMax }, justificativa: j.justificativa || "" });
+    } catch (e) {
+      pushMsgs([{ autor: "sistema", texto: `⚠ Não consegui recalibrar: ${e.message}` }]);
+      setRecal(null);
+    }
+  };
+  const aplicarRecalibragem = () => {
+    const p = recal && recal.proposta;
+    if (!p) return;
+    setPersonagem((old) => ({ ...old, nivel: p.nivel, atributos: p.atributos, vidaMax: p.vidaMax, manaMax: p.manaMax, vida: p.vidaMax, mana: p.manaMax }));
+    pushMsgs([{ autor: "sistema", texto: `⚖ Lenda recalibrada: nível ${p.nivel}, PV ${p.vidaMax}, PM ${p.manaMax}. Seus números agora honram seus feitos.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Recalibração de save: meus números oficiais agora são nível ${p.nivel}, PV ${p.vidaMax}, PM ${p.manaMax} — coerentes com tudo que já vivi. Trate-os como verdade daqui em diante.`;
+    setRecal(null);
+  };
+
   /* Transfere um item entre você e um companheiro (qualquer direção). */
   const transferirItem = (de, para, origem, nomeIt) => {
     const p = personagem;
@@ -3279,7 +3386,31 @@ export default function Taverna() {
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} recalibrarLenda={recalibrarLenda} /></LimiteErro>
+        {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
+        {recal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
+            <div className="rounded-2xl p-5 w-80 space-y-3" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
+              <h3 className="tv-display text-xl" style={{ color: T.ink }}>⚖ Recalibrar lenda</h3>
+              {recal === "pedindo" ? (
+                <p className="tv-body text-sm italic" style={{ color: T.inkDim }}>O arquivista relê o livro da campanha e os seus feitos…</p>
+              ) : (
+                <>
+                  <p className="tv-body text-sm" style={{ color: T.inkDim }}>{recal.justificativa}</p>
+                  <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                    <div className="tv-mono text-sm" style={{ color: T.amberSoft }}>Nível {personagem.nivel} → <b>{recal.proposta.nivel}</b></div>
+                    <div className="tv-mono text-sm" style={{ color: T.amberSoft }}>PV {personagem.vidaMax} → <b>{recal.proposta.vidaMax}</b> · PM {personagem.manaMax} → <b>{recal.proposta.manaMax}</b></div>
+                    <div className="tv-mono text-[10px] mt-1" style={{ color: T.inkDim }}>{Object.entries(recal.proposta.atributos).map(([k, v]) => `${k.slice(0, 3).toUpperCase()} ${v}`).join(" · ")}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => setRecal(null)} className="flex-1 tv-mono text-xs px-2 py-2 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>manter como está</button>
+                    <button onClick={aplicarRecalibragem} className="flex-1 tv-mono text-xs px-2 py-2 rounded-lg font-semibold" style={{ background: T.amber, color: T.onAccent, border: `1px solid ${T.amber}` }}>aplicar</button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
         </div>
       )}
 

@@ -44,15 +44,39 @@ function posDeterministica(nome) {
   return { x, y };
 }
 
-/* Cria/atualiza uma facção */
+/* Cria/atualiza uma facção. Uma "potência" cobre guildas E reinos —
+   o tipo é o rótulo; tratados e poder são a mecânica. */
 export function criarFaccao(nome, dados = {}) {
   return {
     nome,
-    relacao: dados.relacao || "neutra", // relação com o jogador
+    relacao: dados.relacao || "neutra",   // jogador | aliada | neutra | inimiga
     lider: dados.lider || "",
-    tipo: dados.tipo || "guilda",       // guilda | reino | culto | clã | corporação
+    tipo: dados.tipo || "guilda",         // guilda | reino | culto | clã | corporação
+    tratado: dados.tratado || "nenhum",   // nenhum | comercio | alianca | vassalagem | guerra
+    poder: dados.poder || "",             // menor | regional | grande | imperio
     notas: dados.notas || "",
+    doJogador: dados.doJogador || false,
   };
+}
+
+/* ---------------- DIPLOMACIA (potências) ---------------- */
+export const TRATADOS = {
+  nenhum: { rotulo: "—", cor: "#9A93A6" },
+  comercio: { rotulo: "Comércio", cor: "#E8A33D" },
+  alianca: { rotulo: "Aliança", cor: "#6BbF59" },
+  vassalagem: { rotulo: "Vassalo", cor: "#B0A5EC" },
+  guerra: { rotulo: "Guerra", cor: "#C0504D" },
+};
+
+/* Resumo diplomático para o prompt (compacto; só potências que importam) */
+export function resumoDiplomacia(mapa, faccaoJogador) {
+  const fs = (mapa?.faccoes || []).filter((f) => f.nome !== faccaoJogador);
+  if (!fs.length) return "";
+  const linhas = fs.map((f) => {
+    const t = f.tratado && f.tratado !== "nenhum" ? ` · tratado: ${f.tratado}` : "";
+    return `• ${f.nome} (${f.tipo || "facção"}${f.lider ? `, líder: ${f.lider}` : ""}${f.poder ? `, poder ${f.poder}` : ""}) — relação: ${f.relacao}${t}${f.notas ? ` — ${f.notas}` : ""}`;
+  });
+  return `Potências conhecidas:\n${linhas.join("\n")}`;
 }
 
 /* A partir do mundo salvo, quais cidades a facção do jogador domina */
