@@ -896,6 +896,7 @@ function TrilhoAbas({ abaAtiva, aoClicar, nGrupo }) {
 }
 
 function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, descricao, habilidades, ehVoce, semente, xpComp }) {
+  const [verHabs, setVerHabs] = React.useState(false); // habilidades sob demanda — cartão limpo
   return (
     <div className="rounded-xl p-4" style={{ background: T.panelSoft, border: `1px solid ${ehVoce ? T.amber : T.line}` }}>
       <div className="flex items-start gap-3">
@@ -917,10 +918,17 @@ function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, de
         {!ehVoce && xpComp != null && <BarraMini rotulo="XP" atual={xpComp} max={XP_POR_NIVEL(nivel || 1)} cor={T.ok} />}
       </div>
       {habilidades && habilidades.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {habilidades.map((h, i) => (
-            <span key={i} className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ background: T.panel, color: T.violetSoft, border: `1px solid ${T.line}` }} title={h.descricao}>{h.nome}{h.custo != null ? ` · ${h.custo}PM` : ""}</span>
-          ))}
+        <div className="mt-2.5">
+          <button onClick={() => setVerHabs((v) => !v)} className="tv-mono text-[9px] px-2 py-1 rounded" style={{ border: `1px dashed ${T.line}`, color: T.violetSoft }}>
+            {verHabs ? "▾ ocultar habilidades" : `▸ ver habilidades (${habilidades.length})`}
+          </button>
+          {verHabs && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {habilidades.map((h, i) => (
+                <span key={i} className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ background: T.panel, color: T.violetSoft, border: `1px solid ${T.line}` }} title={h.descricao}>{h.nome}{h.custo != null ? ` · ${h.custo}PM` : ""}</span>
+              ))}
+            </div>
+          )}
         </div>
       )}
       {descricao && <div className="tv-body text-xs mt-3" style={{ color: T.inkDim }}>{descricao}</div>}
@@ -1281,11 +1289,12 @@ function PainelDiplomacia({ mapa, faccaoJogador, onDiplomacia, onPresente, cofre
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
   const [confirmarRemover, setConfirmarRemover] = React.useState(null);
   const [subGestao, setSubGestao] = React.useState("ficha");    // sub-aba dentro de Gestão
+  const [verHabsFicha, setVerHabsFicha] = React.useState(false); // habilidades da ficha sob demanda
   mundo = mundo || { genero: "Fantasia medieval" };
   if (!aba) return null;
   const xpProx = XP_POR_NIVEL(personagem.nivel);
@@ -1344,6 +1353,13 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                 ⚖ recalibrar lenda (save antigo)
               </button>
             )}
+            {recalibrarMundo && (
+              <button onClick={recalibrarMundo} className="w-full tv-mono text-[10px] px-2 py-1.5 rounded-lg"
+                style={{ border: `1px dashed ${T.line}`, color: T.inkDim }}
+                title="O arquivista relê a campanha e propõe o estado dos sistemas que o save antigo não conhecia: companheiros (nível/classe), pessoas, potências e tratados, cidades dominadas e nível da guilda. Você confirma antes de aplicar.">
+                ⚖ recalibrar mundo · guilda, pessoas, domínios
+              </button>
+            )}
             {(personagem.condicoes || []).length > 0 && (
               <div>
                 <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Condições</div>
@@ -1387,8 +1403,15 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
               </div>
             </div>
             <div>
-              <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Habilidades</div>
-              {(personagem.habilidades || []).length === 0 ? <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Nenhuma ainda.</div> : (
+              <div className="flex items-center justify-between mb-2">
+                <div className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.inkDim }}>Habilidades</div>
+                {(personagem.habilidades || []).length > 0 && (
+                  <button onClick={() => setVerHabsFicha((v) => !v)} className="tv-mono text-[9px] px-2 py-1 rounded" style={{ border: `1px dashed ${T.line}`, color: T.violetSoft }}>
+                    {verHabsFicha ? "▾ ocultar" : `▸ ver habilidades (${(personagem.habilidades || []).length})`}
+                  </button>
+                )}
+              </div>
+              {(personagem.habilidades || []).length === 0 ? <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Nenhuma ainda.</div> : !verHabsFicha ? null : (
                 <ul className="space-y-2">
                   {(personagem.habilidades || []).filter((h) => h).map((h, i) => {
                     const hn = typeof h === "string" ? { nome: h, custo: 0, descricao: "" } : h;
@@ -1911,7 +1934,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v5.2 · estrada e presentes</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v5.3 · recalibração do mundo</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2061,7 +2084,21 @@ function aplicarMudancas(pers, m, msgs) {
   novo.equipamento = equip;
   if (!novo.equipados) novo.equipados = pers.equipados || {};
 
-  if (Math.max(0, m.xp || 0)) novo = aplicarNivel({ ...novo, xp: novo.xp + Math.max(0, m.xp || 0) });
+  if (Math.max(0, m.xp || 0)) {
+    novo = aplicarNivel({ ...novo, xp: novo.xp + Math.max(0, m.xp || 0) });
+    /* Companheiros evoluem JUNTOS por código: 60% do XP do herói, sempre.
+       (Antes dependia do Mestre enviar "grupo_xp" — e ele quase nunca enviava,
+       deixando companheiros congelados no nível 1.) */
+    const xpComp = Math.floor(Math.max(0, m.xp || 0) * 0.6);
+    if (xpComp > 0) {
+      novo.grupo = (novo.grupo || []).map((g) => {
+        const ev = evoluirCompanheiro({ ...g, xp: (g.xp || 0) + xpComp });
+        const subiu = ev._subiu; delete ev._subiu;
+        if (subiu) msgs.push(`✦ ${g.nome} subiu para o nível ${ev.nivel}! (no acampamento, "trilhar caminho" destrava novas habilidades)`);
+        return ev;
+      });
+    }
+  }
 
   if (m.vida) msgs.push(m.vida < 0 ? `Você perdeu ${-m.vida} PV.` : `Você recuperou ${m.vida} PV.`);
   if (m.mana) msgs.push(m.mana < 0 ? `Você gastou ${-m.mana} PM.` : `Você recuperou ${m.mana} PM.`);
@@ -3185,6 +3222,93 @@ Descreva o trecho da estrada sob esse clima e desenvolva o encontro acima, costu
     setRecal(null);
   };
 
+  /* RECALIBRAR MUNDO: o irmão do "recalibrar lenda" para os SISTEMAS que o
+     save antigo não conhecia — companheiros (nível/classe), pessoas (fichas),
+     potências e tratados, cidades dominadas e o nível da guilda. O arquivista
+     relê livro e cânone e PROPÕE o estado; o jogador confirma antes de aplicar. */
+  const [recalM, setRecalM] = useState(null); // null | "pedindo" | { proposta, justificativa }
+  const recalibrarMundo = async () => {
+    if (bloqueado || recalM === "pedindo") return;
+    setAba(null);
+    setRecalM("pedindo");
+    try {
+      const sys = `Você é o ARQUIVISTA da campanha "${nomeCampanha}". O save é antigo: os sistemas de gestão (guilda, domínios, diplomacia, fichas de pessoas) e os números dos companheiros ficaram para trás da história. Leia o LIVRO e o CÂNONE e proponha o estado JUSTO de hoje, baseando-se SÓ no que aconteceu. Responda SOMENTE JSON:
+{"justificativa":"2-3 frases",
+ "companheiros":[{"nome":"(exatamente como no grupo)","nivel":1-20,"classe":"","subclasse":"","conceito":""}],
+ "npcs":[{"nome":"","papel":"","relacao":"aliado|amigo|romance|familia|neutro|rival|inimigo","genero":"","local":"","status":"vivo|morto|desaparecido","notas":""}],
+ "faccoes":[{"nome":"","tipo":"guilda|reino|culto|cla|corporacao","lider":"","relacao":"jogador|aliada|neutra|inimiga","tratado":"nenhum|comercio|alianca|vassalagem|guerra","poder":"menor|regional|grande|imperio","notas":"","doJogador":false}],
+ "cidades":[{"nome":"","tipo":"vila|cidade|capital|fortaleza","regiao":"","relacao":"jogador|aliada|neutra|hostil","sede":false}],
+ "guildaNivel":1-5}
+Regras: nível dos companheiros coerente com o tempo de estrada e os feitos (quem acompanha um herói nível ${personagem.nivel} desde o início NÃO está no nível 1); marque doJogador=true SÓ na facção que o herói lidera; cidades com relacao "jogador" são as que ele domina; inclua só pessoas/facções/cidades que EXISTEM na história.`;
+      const conteudo = `LIVRO DA CAMPANHA:\n${livroRef.current || "(vazio)"}\n\nCÂNONE:\n${formatarCanone(canoneRef.current)}\n\nGRUPO HOJE: ${(personagem.grupo || []).map((g) => `${g.nome} (nível ${g.nivel ?? 1})`).join(", ") || "sem companheiros"}\nMAPA HOJE: ${(mapaRef.current.cidades || []).map((c) => c.nome).join(", ") || "vazio"}\nFACÇÕES HOJE: ${(mapaRef.current.faccoes || []).map((f) => f.nome).join(", ") || "nenhuma"}\nPESSOAS HOJE: ${Object.keys(npcsRef.current).join(", ") || "ninguém"}`;
+      const r = await chamarModelo(sys, [{ role: "user", content: conteudo }], 1500, "json", "leve");
+      const m = (r || "").match(/\{[\s\S]*\}/);
+      const j = m ? JSON.parse(m[0]) : null;
+      if (!j) throw new Error("o arquivista não respondeu com o estado do mundo");
+      setRecalM({ proposta: j, justificativa: j.justificativa || "" });
+    } catch (e) {
+      pushMsgs([{ autor: "sistema", texto: `⚠ Não consegui recalibrar o mundo: ${e.message}` }]);
+      setRecalM(null);
+    }
+  };
+
+  const aplicarRecalMundo = () => {
+    const j = recalM && recalM.proposta;
+    if (!j) return;
+    const msgs = [];
+    /* 1) Companheiros: nível, classe e ficha (PV recalculado pela mesma regra do grupo) */
+    if (Array.isArray(j.companheiros) && j.companheiros.length) {
+      setPersonagem((old) => ({
+        ...old,
+        grupo: (old.grupo || []).map((g) => {
+          const p = j.companheiros.find((x) => (x.nome || "").toLowerCase() === g.nome.toLowerCase());
+          if (!p) return g;
+          const nivel = Math.min(20, Math.max(1, Math.round(p.nivel || g.nivel || 1)));
+          const vidaMax = Math.max(g.vidaMax || 10, 10 + (nivel - 1) * 3);
+          msgs.push(`⚑ ${g.nome}: nível ${g.nivel ?? 1} → ${nivel}${p.classe ? `, ${p.classe}${p.subclasse ? ` ${p.subclasse}` : ""}` : ""}`);
+          return { ...g, nivel, vidaMax, vida: vidaMax, classe: p.classe || g.classe, subclasse: p.subclasse || g.subclasse, conceito: p.conceito || g.conceito };
+        }),
+      }));
+    }
+    /* 2) Pessoas: fichas dos NPCs importantes da história */
+    let reg = npcsRef.current, tocouN = false;
+    (j.npcs || []).forEach((n) => {
+      if (!n || !n.nome) return;
+      const chave = Object.keys(reg).find((k) => k.toLowerCase() === n.nome.toLowerCase());
+      const ficha = chave ? mesclarNPC(reg[chave], n) : criarNPC(n.nome, n);
+      if (!tocouN) { reg = { ...reg }; tocouN = true; }
+      reg[chave || n.nome] = ficha;
+    });
+    if (tocouN) { npcsRef.current = reg; setNpcs(reg); msgs.push(`👥 ${(j.npcs || []).filter((n) => n && n.nome).length} pessoa(s) recalibrada(s) no elenco`); }
+    /* 3) Potências e cidades: mesmo merge do mapa usado nas respostas do Mestre */
+    let mp = { cidades: [...(mapaRef.current.cidades || [])], faccoes: [...(mapaRef.current.faccoes || [])] };
+    (j.cidades || []).forEach((cd) => {
+      if (!cd || !cd.nome) return;
+      const i = mp.cidades.findIndex((c) => c.nome.toLowerCase() === cd.nome.toLowerCase());
+      if (i === -1) mp.cidades.push(criarCidade(cd.nome, cd));
+      else mp.cidades[i] = { ...mp.cidades[i], ...cd, x: mp.cidades[i].x, y: mp.cidades[i].y };
+    });
+    (j.faccoes || []).forEach((fc) => {
+      if (!fc || !fc.nome) return;
+      const i = mp.faccoes.findIndex((f) => f.nome.toLowerCase() === fc.nome.toLowerCase());
+      if (i === -1) mp.faccoes.push(criarFaccao(fc.nome, fc));
+      else mp.faccoes[i] = { ...mp.faccoes[i], ...fc };
+      if (fc.doJogador) faccaoJogadorRef.current = fc.nome;
+    });
+    mapaRef.current = mp; setMapa(mp);
+    if ((j.cidades || []).length || (j.faccoes || []).length) msgs.push(`🗺 ${(j.cidades || []).length} cidade(s) e ${(j.faccoes || []).length} potência(s) recalibradas`);
+    /* 4) Nível da guilda (cofre preservado) */
+    if (j.guildaNivel) {
+      const gn = Math.min(NIVEL_GUILD_MAX, Math.max(1, Math.round(j.guildaNivel)));
+      if (gn !== guildaRef.current.nivel) { const g = { ...guildaRef.current, nivel: gn }; guildaRef.current = g; setGuilda(g); msgs.push(`🏛 Guilda recalibrada para o nível ${gn}`); }
+    }
+    /* 5) O prompt precisa enxergar o mundo novo já no próximo turno */
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Recalibração de save: o estado do mundo (guilda, domínios, potências, pessoas, companheiros) foi atualizado para refletir tudo que já aconteceu. Trate os registros atuais como verdade.`;
+    pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })).concat([{ autor: "sistema", texto: "⚖ Mundo recalibrado. Confira Gestão: Grupo, Pessoas, Guilda, Domínios e Diplomacia agora contam a sua história." }]));
+    setRecalM(null);
+  };
+
   /* Transfere um item entre você e um companheiro (qualquer direção). */
   const transferirItem = (de, para, origem, nomeIt) => {
     const p = personagem;
@@ -3446,7 +3570,7 @@ Descreva o trecho da estrada sob esse clima e desenvolva o encontro acima, costu
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
@@ -3465,6 +3589,35 @@ Descreva o trecho da estrada sob esse clima e desenvolva o encontro acima, costu
                   <div className="flex gap-2">
                     <button onClick={() => setRecal(null)} className="flex-1 tv-mono text-xs px-2 py-2 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>manter como está</button>
                     <button onClick={aplicarRecalibragem} className="flex-1 tv-mono text-xs px-2 py-2 rounded-lg font-semibold" style={{ background: T.amber, color: T.onAccent, border: `1px solid ${T.amber}` }}>aplicar</button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+        {/* RECALIBRAGEM DO MUNDO: estado proposto dos sistemas, decisão do jogador */}
+        {recalM && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
+            <div className="rounded-2xl p-5 w-80 space-y-3 tv-scroll overflow-y-auto" style={{ background: T.panel, border: `1px solid ${T.amber}`, maxHeight: "80vh" }}>
+              <h3 className="tv-display text-xl" style={{ color: T.ink }}>⚖ Recalibrar mundo</h3>
+              {recalM === "pedindo" ? (
+                <p className="tv-body text-sm italic" style={{ color: T.inkDim }}>O arquivista relê o livro, o cânone e os registros — companheiros, pessoas, potências, cidades, guilda…</p>
+              ) : (
+                <>
+                  <p className="tv-body text-sm" style={{ color: T.inkDim }}>{recalM.justificativa}</p>
+                  <div className="rounded-xl p-3 space-y-1.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                    {(recalM.proposta.companheiros || []).length > 0 && (
+                      <div className="tv-mono text-[11px]" style={{ color: T.amberSoft }}>⚑ Companheiros: {recalM.proposta.companheiros.map((c) => `${c.nome} nv.${c.nivel}${c.classe ? ` (${c.classe})` : ""}`).join(" · ")}</div>
+                    )}
+                    {(recalM.proposta.npcs || []).length > 0 && <div className="tv-mono text-[11px]" style={{ color: T.amberSoft }}>👥 Pessoas: {(recalM.proposta.npcs || []).length} ficha(s)</div>}
+                    {(recalM.proposta.faccoes || []).length > 0 && <div className="tv-mono text-[11px]" style={{ color: T.amberSoft }}>⚜ Potências: {(recalM.proposta.faccoes || []).length}</div>}
+                    {(recalM.proposta.cidades || []).length > 0 && <div className="tv-mono text-[11px]" style={{ color: T.amberSoft }}>🗺 Cidades: {(recalM.proposta.cidades || []).length} ({(recalM.proposta.cidades || []).filter((c) => c.relacao === "jogador").length} dominada(s))</div>}
+                    {recalM.proposta.guildaNivel != null && <div className="tv-mono text-[11px]" style={{ color: T.amberSoft }}>🏛 Guilda nível {recalM.proposta.guildaNivel}</div>}
+                  </div>
+                  <p className="tv-body text-xs" style={{ color: T.inkDim }}>Aplicar mescla nos registros atuais — nada é apagado, só atualizado. O cofre da guilda é preservado.</p>
+                  <div className="flex gap-2">
+                    <button onClick={() => setRecalM(null)} className="flex-1 tv-mono text-xs px-2 py-2 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>manter como está</button>
+                    <button onClick={aplicarRecalMundo} className="flex-1 tv-mono text-xs px-2 py-2 rounded-lg font-semibold" style={{ background: T.amber, color: T.onAccent, border: `1px solid ${T.amber}` }}>aplicar</button>
                   </div>
                 </>
               )}
