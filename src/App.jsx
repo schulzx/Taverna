@@ -324,6 +324,36 @@ function decodificarTexto(str) {
   }
 }
 
+/* Analisa um OBJETO JSON vindo de chamadas auxiliares (arquivista etc.).
+   Tolera resposta truncada: corta no último ponto seguro e fecha as
+   estruturas abertas, em vez de falhar com "Expected ']'". */
+function parseObjetoTolerante(texto) {
+  const limpo = (texto || "").replace(/```json/gi, "").replace(/```/g, "").trim();
+  const inicio = limpo.indexOf("{");
+  if (inicio === -1) return null;
+  const s = limpo.slice(inicio);
+  try { return JSON.parse(s); } catch { /* segue para o resgate */ }
+  for (let corte = s.length; corte > 2; corte--) {
+    const ch = s[corte - 1];
+    if (ch !== "}" && ch !== "]" && ch !== ",") continue;
+    const cand = s.slice(0, ch === "," ? corte - 1 : corte);
+    const pilha = [];
+    let emStr = false, esc = false;
+    for (const c of cand) {
+      if (esc) { esc = false; continue; }
+      if (c === "\\") { esc = true; continue; }
+      if (c === '"') { emStr = !emStr; continue; }
+      if (emStr) continue;
+      if (c === "{" || c === "[") pilha.push(c);
+      else if (c === "}" || c === "]") pilha.pop();
+    }
+    if (emStr) continue; // corte no meio de uma string — tenta um ponto anterior
+    const fechamento = pilha.reverse().map((c) => (c === "{" ? "}" : "]")).join("");
+    try { return JSON.parse(cand + fechamento); } catch { /* tenta corte anterior */ }
+  }
+  return null;
+}
+
 /* Extrai a resposta do Mestre de forma à prova de falhas.
    Nunca deixa JSON cru, aspas ou \n escapar para a tela — mesmo que
    a resposta venha truncada no meio (sem o } final). */
@@ -3198,9 +3228,8 @@ Descreva o trecho da estrada sob esse clima e desenvolva o encontro acima, costu
     try {
       const sys = `Você é o ARQUIVISTA da campanha "${nomeCampanha}". Um save antigo deixou os números do herói para trás da lenda. Leia o LIVRO e o CÂNONE e proponha os números JUSTOS de hoje, baseando-se SÓ no que aconteceu na história (feitos, combates vencidos, anos de estrada). Responda SOMENTE JSON no formato: {"nivel": <inteiro 1-20>, "atributos": {"forca":0-5,"agilidade":0-5,"vigor":0-5,"intelecto":0-5,"vontade":0-5,"presenca":0-5}, "justificativa": "2-3 frases citando os feitos que sustentam a proposta"}.`;
       const conteudo = `LIVRO DA CAMPANHA:\n${livroRef.current || "(vazio)"}\n\nCÂNONE:\n${formatarCanone(canoneRef.current)}\n\nHERÓI HOJE: nível ${personagem.nivel}; atributos ${JSON.stringify(personagem.atributos)}.`;
-      const r = await chamarModelo(sys, [{ role: "user", content: conteudo }], 500, "json", "leve");
-      const m = (r || "").match(/\{[\s\S]*\}/);
-      const j = m ? JSON.parse(m[0]) : null;
+      const r = await chamarModelo(sys, [{ role: "user", content: conteudo }], 800, "json", "leve");
+      const j = parseObjetoTolerante(r);
       if (!j || j.nivel == null) throw new Error("o arquivista não respondeu com números");
       const nivel = Math.min(20, Math.max(1, Math.round(j.nivel)));
       const at = { ...personagem.atributos };
@@ -3239,11 +3268,11 @@ Descreva o trecho da estrada sob esse clima e desenvolva o encontro acima, costu
  "faccoes":[{"nome":"","tipo":"guilda|reino|culto|cla|corporacao","lider":"","relacao":"jogador|aliada|neutra|inimiga","tratado":"nenhum|comercio|alianca|vassalagem|guerra","poder":"menor|regional|grande|imperio","notas":"","doJogador":false}],
  "cidades":[{"nome":"","tipo":"vila|cidade|capital|fortaleza","regiao":"","relacao":"jogador|aliada|neutra|hostil","sede":false}],
  "guildaNivel":1-5}
-Regras: nível dos companheiros coerente com o tempo de estrada e os feitos (quem acompanha um herói nível ${personagem.nivel} desde o início NÃO está no nível 1); marque doJogador=true SÓ na facção que o herói lidera; cidades com relacao "jogador" são as que ele domina; inclua só pessoas/facções/cidades que EXISTEM na história.`;
+Regras: nível dos companheiros coerente com o tempo de estrada e os feitos (quem acompanha um herói nível ${personagem.nivel} desde o início NÃO está no nível 1); marque doJogador=true SÓ na facção que o herói lidera; cidades com relacao "jogador" são as que ele domina; inclua só pessoas/facções/cidades que EXISTEM na história.
+SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descrições longas; limites — até 12 npcs, 8 facções, 12 cidades. Se houver mais, escolha os mais importantes.`;
       const conteudo = `LIVRO DA CAMPANHA:\n${livroRef.current || "(vazio)"}\n\nCÂNONE:\n${formatarCanone(canoneRef.current)}\n\nGRUPO HOJE: ${(personagem.grupo || []).map((g) => `${g.nome} (nível ${g.nivel ?? 1})`).join(", ") || "sem companheiros"}\nMAPA HOJE: ${(mapaRef.current.cidades || []).map((c) => c.nome).join(", ") || "vazio"}\nFACÇÕES HOJE: ${(mapaRef.current.faccoes || []).map((f) => f.nome).join(", ") || "nenhuma"}\nPESSOAS HOJE: ${Object.keys(npcsRef.current).join(", ") || "ninguém"}`;
-      const r = await chamarModelo(sys, [{ role: "user", content: conteudo }], 1500, "json", "leve");
-      const m = (r || "").match(/\{[\s\S]*\}/);
-      const j = m ? JSON.parse(m[0]) : null;
+      const r = await chamarModelo(sys, [{ role: "user", content: conteudo }], 3000, "json", "leve");
+      const j = parseObjetoTolerante(r);
       if (!j) throw new Error("o arquivista não respondeu com o estado do mundo");
       setRecalM({ proposta: j, justificativa: j.justificativa || "" });
     } catch (e) {
