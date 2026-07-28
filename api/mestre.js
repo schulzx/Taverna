@@ -40,33 +40,48 @@ export default async function handler(req, res) {
 
     /* Modelos em ordem de preferência.
        MESTRE (narração): Pro primeiro (conta com faturamento), Flash como reserva.
-       LEVE (livro/resumo/burocracia): só Flash — qualidade narrativa não importa,
-       custo quase zero. É aqui que mora a economia das assinaturas baratas. */
+       LEVE (livro/resumo/burocracia): Flash primeiro (custo quase zero), MAS com
+       o Pro como última linha de defesa — em pico de demanda (503) do Flash a
+       burocracia não pode parar junto. */
     const MODELOS = tarefa === "leve"
-      ? ["gemini-3.5-flash", "gemini-3.6-flash"]
+      ? ["gemini-3.5-flash", "gemini-3.6-flash", "gemini-3.1-pro-preview"]
       : ["gemini-3.1-pro-preview", "gemini-3.5-flash", "gemini-3.6-flash"];
+
+    /* Erros transitórios (pico de demanda / cota momentânea / falha do Google)
+       merecem UMA retentativa com pausa antes de partir para o próximo modelo. */
+    const TRANSITORIOS = [429, 500, 502, 503, 504];
+    const pausa = (ms) => new Promise((ok) => setTimeout(ok, ms));
 
     let r = null, ultimoErro = "";
     for (const modelo of MODELOS) {
-      r = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`,
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            "x-goog-api-key": process.env.GEMINI_API_KEY,
-          },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: system }] },
-            contents,
-            generationConfig,
-            safetySettings,
-          }),
+      for (let tentativa = 0; tentativa < 2; tentativa++) {
+        r = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`,
+          {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "x-goog-api-key": process.env.GEMINI_API_KEY,
+            },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: system }] },
+              contents,
+              generationConfig,
+              safetySettings,
+            }),
+          }
+        );
+        if (r.ok) break;
+        ultimoErro = `${modelo}: ${r.status}`;
+        if (r.status === 404 || r.status === 403) break;           /* sem este modelo: vai direto ao próximo */
+        if (tentativa === 0 && TRANSITORIOS.includes(r.status)) {  /* pico temporário: respira e tenta de novo */
+          ultimoErro = `${modelo}: ${r.status} (retentando…)`;
+          await pausa(1200);
+          continue;
         }
-      );
-      if (r.ok) break;
-      ultimoErro = `${modelo}: ${r.status}`;
-      if (![404, 403, 429].includes(r.status)) break; /* indisponível/sem permissão/sem cota: tenta o próximo */
+        break;                                                     /* esgotou as tentativas deste modelo */
+      }
+      if (r && r.ok) break;
     }
 
     if (!r || !r.ok) {
