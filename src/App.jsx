@@ -7,6 +7,7 @@ import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./hist
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste } from "./bestiario.js";
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
+import { rolarClima, rolarEncontro } from "./encontros.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -143,7 +144,7 @@ ${questsInfo || "Nenhuma missão registrada."}
 - REGISTRE LUGARES: sempre que apresentar uma cidade, vila ou local importante, registre-o no "canone" com "tipo" claro ("cidade", "vila", "capital", "local") — o app coloca no mapa automaticamente. Também pode usar "mapa_cidades" para detalhes de facção/relação.
 - NUNCA CONTRADIGA O CÂNONE: o cânone abaixo é a verdade absoluta e imutável do mundo. Um personagem registrado como mago é mago para sempre — jamais o transforme em outra coisa. Tipo, gênero, papel, nome e relações do que está no cânone NÃO MUDAM. Se você fica em dúvida sobre um fato, CONSULTE o cânone e siga-o à risca; na ausência de informação, é melhor ser vago do que inventar algo que o contradiga. Contradizer o cânone quebra a imersão e é o pior erro que você pode cometer.
 - CÂNONE (memória permanente que NUNCA se perde): sempre que você estabelecer ou descobrir um FATO DURÁVEL — um NPC (nome, se é mago/guerreiro/etc, papel, gênero, onde está), um lugar importante, um nome falso que o jogador usou, uma promessa, um vínculo, um segredo revelado — REGISTRE em "canone" (veja formato). Fatos no CÂNONE aparecem literais em toda resposta e são a VERDADE: jamais os contradiga. Se o jogador perguntar "X te lembra algo?" e X estiver no cânone, RECONHEÇA o que está lá — nunca invente uma versão nova. Se NÃO estiver no cânone e você não tem certeza, trate como algo que o personagem talvez não saiba, em vez de inventar um fato que possa colidir depois. Atualize uma ficha (ex.: o mago mudou de cidade) reescrevendo os campos que mudaram; NUNCA mude tipo/gênero/identidade de alguém já registrado.
-- COLCHETES SÃO META: qualquer texto entre [colchetes] vindo do jogador ou do app (ex.: [seja mais direto], [não descreva sangue], [HABILIDADE], [ROLAGEM]) é instrução FORA do personagem. Obedeça ao conteúdo, mas NUNCA o trate como fala/ação do personagem e NUNCA o repita na narrativa.
+- COLCHETES SÃO META: qualquer texto entre [colchetes] vindo do jogador ou do app (ex.: [seja mais direto], [não descreva sangue], [HABILIDADE], [ROLAGEM]) é instrução FORA do personagem. Obedeça ao conteúdo, mas NUNCA o trate como fala/ação do personagem e NUNCA o repita na narrativa. Envelopes de tabela do app ([VIAGEM], [CLIMA], [PRESENTE DIPLOMÁTICO], [DIPLOMACIA], [CONVITE AO GRUPO]) trazem resultados JÁ ROLADOS pelo código — narre exatamente aqueles resultados, nunca os troque por outros.
 - PESSOAS CONHECIDAS (registro persistente de NPCs — VERDADE sobre quem o herói já conheceu; nunca recrie, esqueça ou contradiga): ${npcsTexto || "ninguém registrado ainda."}
   · Ao apresentar um NPC RELEVANTE pela primeira vez, ou quando algo sobre ele mudar (vínculo, local, segredo revelado, morte), registre/atualize em "npcs" dentro de mudancas: [{"nome","papel","relacao","genero","local","status","segredo","notas"}]. relacao: aliado | amigo | romance | familia | neutro | rival | inimigo. Preencha só os campos relevantes; segredos e vínculos valem ouro — são a memória do enredo. NPCs de passagem (vendedor anônimo, guarda qualquer) NÃO precisam de ficha.
 
@@ -1226,7 +1227,7 @@ function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio }) {
 /* Painel de DIPLOMACIA: as potências conhecidas (guildas, reinos, cultos…),
    relação, tratado e ações de política. As propostas vão para a ficção —
    o Mestre decide a resposta delas; o app só registra os tratados firmados. */
-function PainelDiplomacia({ mapa, faccaoJogador, onDiplomacia }) {
+function PainelDiplomacia({ mapa, faccaoJogador, onDiplomacia, onPresente, cofre }) {
   const fs = (mapa?.faccoes || []).filter((f) => f.nome !== faccaoJogador);
   if (!fs.length) {
     return <div className="tv-body text-sm italic text-center py-10" style={{ color: T.inkDim }}>Nenhuma potência conhecida ainda. Guildas, reinos e cultos que você encontrar na história aparecem aqui — e você poderá propor alianças, comércio, vassalagem… ou declarar guerra.</div>;
@@ -1262,6 +1263,14 @@ function PainelDiplomacia({ mapa, faccaoJogador, onDiplomacia }) {
                     {a.rotulo}
                   </button>
                 ))}
+                {onPresente && (
+                  <button onClick={() => onPresente(f.nome)} disabled={!faccaoJogador || (cofre || 0) < 40}
+                    title={faccaoJogador ? `◉ 40 do cofre — o líder reage na ficção (pode aquecer laços… ou se ofender)` : "Presentear exige uma guilda (o cofre e os mensageiros são dela)"}
+                    className="tv-mono text-[10px] px-1.5 py-1.5 rounded col-span-2"
+                    style={{ border: `1px solid ${T.amber}`, color: T.amberSoft, opacity: (!faccaoJogador || (cofre || 0) < 40) ? 0.4 : 1 }}>
+                    🎁 presentear · ◉ 40 do cofre
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -1272,7 +1281,7 @@ function PainelDiplomacia({ mapa, faccaoJogador, onDiplomacia }) {
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, recalibrarLenda }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
   const [confirmarRemover, setConfirmarRemover] = React.useState(null);
@@ -1405,7 +1414,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} />}
         {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).length >= MAX_COMPANHEIROS} />}
 
-        {aba === "gestao" && subGestao === "diplomacia" && <PainelDiplomacia mapa={mapa} faccaoJogador={faccaoJogador} onDiplomacia={onDiplomacia} />}
+        {aba === "gestao" && subGestao === "diplomacia" && <PainelDiplomacia mapa={mapa} faccaoJogador={faccaoJogador} onDiplomacia={onDiplomacia} onPresente={onPresente} cofre={guilda && guilda.cofre} />}
 
         {aba === "gestao" && subGestao === "guilda" && (() => {
           const temGuilda = !!faccaoJogador;
@@ -1902,7 +1911,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v5.1 · diplomacia</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v5.2 · estrada e presentes</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2269,6 +2278,9 @@ export default function Taverna() {
   /* GESTÃO: guilda (nível/cofre) — domínios se derivam do mapa por código */
   const guildaRef = useRef({ nivel: 1, cofre: 0 });
   const [guilda, setGuilda] = useState({ nivel: 1, cofre: 0 });
+  /* CLIMA: rolado por tabela; vai ao Mestre como envelope [CLIMA] */
+  const climaRef = useRef(null);
+  const [clima, setClima] = useState(null);
   const mostrarRolagensRef = useRef(true);
 
   /* rola para o fim SÓ quando chega mensagem nova E o jogador já estava no fim.
@@ -2320,7 +2332,7 @@ export default function Taverna() {
     const dados = {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico, sugestoes, rolagem,
       combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
-      mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current,
+      mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       historia: historiaRef.current, quests: questsRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
@@ -2640,6 +2652,7 @@ export default function Taverna() {
       faccaoJogadorRef.current = sv.faccaoJogador || "";
       cidadeAtualRef.current = sv.cidadeAtual || "";
       guildaRef.current = sv.guilda && typeof sv.guilda === "object" ? { nivel: sv.guilda.nivel || 1, cofre: sv.guilda.cofre || 0 } : { nivel: 1, cofre: 0 }; setGuilda(guildaRef.current);
+      climaRef.current = sv.clima && sv.clima.id ? sv.clima : null; setClima(climaRef.current);
       historiaRef.current = sv.historia && sv.historia.estrutura ? sv.historia : { estrutura: (sv.mundo && sv.mundo.estrutura) || "jornada", etapa: 0 };
       questsRef.current = Array.isArray(sv.quests) ? sv.quests : [];
       setQuests([...questsRef.current]);
@@ -2878,7 +2891,9 @@ export default function Taverna() {
     pushMsgs([{ autor: "sistema", texto: `🕐 Você deixa ${horas}h passarem…` }]);
     const diasPassados = Math.floor(horas / 24);
     if (diasPassados > 0) coletarRenda(diasPassados);
-    enviar(`[PASSAR O TEMPO — ${horas} horas] Simule a passagem de ${horas} horas: ${escala}. Faça o mundo VIVER esse intervalo proporcionalmente — o que os NPCs e facções fizeram, o que avançou, o que mudou no ambiente e nas suas missões, notícias que chegaram. Quanto mais horas, mais coisas acontecem (mas sempre plausível, nunca absurdo tipo impérios caindo em 1 dia). Ao final, reapresente a cena atual e me convide a agir.`, personagem);
+    const climaNovo = talvezMudarClima(horas >= 8 ? 0.65 : 0.35);
+    const climaMsg = climaNovo ? `\n[CLIMA] O tempo virou: agora está ${climaNovo.rotulo} — ${climaNovo.nota}. Use isso na cena.` : "";
+    enviar(`[PASSAR O TEMPO — ${horas} horas] Simule a passagem de ${horas} horas: ${escala}. Faça o mundo VIVER esse intervalo proporcionalmente — o que os NPCs e facções fizeram, o que avançou, o que mudou no ambiente e nas suas missões, notícias que chegaram. Quanto mais horas, mais coisas acontecem (mas sempre plausível, nunca absurdo tipo impérios caindo em 1 dia). Ao final, reapresente a cena atual e me convide a agir.${climaMsg}`, personagem);
   };
 
   const modPend = rolagem ? (() => { const a = ATRIBUTOS.find((x) => x.nome.toLowerCase() === (rolagem.atributo || "").toLowerCase()); return a && personagem ? atributoEfetivo(personagem, a.id) : 0; })() : 0;
@@ -2982,8 +2997,10 @@ export default function Taverna() {
     setPersonagem(pers);
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
     if (tipo === "longo") coletarRenda(1); // uma noite inteira passou: as terras rendem
+    const climaNovo = tipo === "longo" ? talvezMudarClima(0.6) : null;
+    const climaMsg = climaNovo ? `\n[CLIMA] O tempo virou durante a noite: agora está ${climaNovo.rotulo} — ${climaNovo.nota}.` : "";
     const dur = tipo === "longo" ? "uma noite inteira" : "cerca de uma hora";
-    enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.`, pers);
+    enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${climaMsg}`, pers);
   };
 
   /* Escolher/trocar caminho (classe). Regras:
@@ -3082,6 +3099,29 @@ export default function Taverna() {
     enviar(`[CONVITE AO GRUPO] Convido ${nome} para se juntar ao meu grupo. Decida pela personalidade, relação e momento dele(a): pode ACEITAR (use "grupo_adicionar" com a ficha completa), recusar com jeito, ou aceitar com uma condição. A escolha é dele(a), não minha — responda com as palavras e a reação dele(a) em 1ª pessoa.`, personagem);
   };
 
+  /* ---------------- VIAGEM E CLIMA POR TABELA (zero tokens) ----------------
+     A estrada rola por código: clima, encontro (perigo do bestiário, viajante,
+     achado das tabelas, cena de mundo). O Mestre só recebe o resultado e narra. */
+  const talvezMudarClima = (chance = 0.4) => {
+    if (Math.random() >= chance) return null;
+    const c = rolarClima(climaRef.current ? climaRef.current.id : null);
+    climaRef.current = c; setClima(c);
+    return c;
+  };
+
+  const viajar = () => {
+    if (bloqueado || acampadoRef.current) return;
+    if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para viajar no meio de um combate." }]); return; }
+    const c = rolarClima(climaRef.current ? climaRef.current.id : null);
+    climaRef.current = c; setClima(c);
+    const enc = rolarEncontro((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1, null);
+    pushMsgs([{ autor: "jogador", texto: `🧭 Sigo viagem pela estrada. ${c.icone} ${c.rotulo}` }]);
+    enviar(`[VIAGEM — tudo rolado pelas tabelas do app; você só NARRA, não invente outro resultado]
+CLIMA AGORA: ${c.rotulo} — ${c.nota}.
+ENCONTRO DO TRECHO (${enc.tipo}): ${enc.detalhe}
+Descreva o trecho da estrada sob esse clima e desenvolva o encontro acima, costurando com a cena atual${cidadeAtualRef.current ? ` (saímos de ${cidadeAtualRef.current})` : ""}. Se eu estiver a caminho de algum destino, aproxime-me dele. Termine me convidando a agir.`, personagem);
+  };
+
   /* DIPLOMACIA: propostas a potências vão para a ficção; o Mestre decide a
      resposta do líder e só registra o tratado firmado — os efeitos (renda,
      tributo) são calculados pelo app. */
@@ -3092,6 +3132,21 @@ export default function Taverna() {
     setAba(null);
     pushMsgs([{ autor: "jogador", texto: `[Diplomacia] ${ROT[acao]} a ${faccao}.` }]);
     enviar(`[DIPLOMACIA — ${faccao}] Em nome ${faccaoJogadorRef.current ? `de ${faccaoJogadorRef.current} e dos meus domínios` : "do meu próprio nome"}, ${ROT[acao]} a ${faccao}. O líder de ${faccao} responde NA FICÇÃO conforme poder, personalidade, medos e ambições: pode aceitar, exigir condições (tributo, casamento, prova de força), adiar ou recusar — a decisão é dele(a). Se um acordo for firmado ou rompido, registre em "mapa_faccoes": [{"nome":"${faccao}","tratado":"comercio|alianca|vassalagem|guerra|nenhum","relacao":"aliada|neutra|inimiga","notas":"termos do acordo"}]. NÃO invente valores econômicos — os efeitos dos tratados são calculados pelo app.`, personagem);
+  };
+
+  /* PRESENTE DIPLOMÁTICO: ◉ 40 do cofre da guilda, enviado na ficção.
+     O Mestre decide a reação (pode melhorar relação, abrir porta para
+     tratado, ou ofender se mal dado) — a decisão é do líder. */
+  const CUSTO_PRESENTE = 40;
+  const presentearFaccao = (faccao) => {
+    if (bloqueado) return;
+    if (!faccaoJogadorRef.current) { pushMsgs([{ autor: "sistema", texto: "🎁 Sem uma guilda, você não tem um cofre nem mensageiros para presentear potências." }]); return; }
+    if (guildaRef.current.cofre < CUSTO_PRESENTE) { pushMsgs([{ autor: "sistema", texto: `🎁 Presentear custa ◉ ${CUSTO_PRESENTE} do cofre — e o cofre tem ◉ ${guildaRef.current.cofre}.` }]); return; }
+    const g = { ...guildaRef.current, cofre: guildaRef.current.cofre - CUSTO_PRESENTE };
+    guildaRef.current = g; setGuilda(g);
+    setAba(null);
+    pushMsgs([{ autor: "sistema", texto: `🎁 ◉ ${CUSTO_PRESENTE} do cofre viram um presente digno para ${faccao}.` }]);
+    enviar(`[PRESENTE DIPLOMÁTICO — ${faccao}] Em nome de ${faccaoJogadorRef.current}, envio um presente suntuoso (◉ ${CUSTO_PRESENTE}, já descontados pelo sistema) ao líder de ${faccao}. Ele(a) reage NA FICÇÃO conforme a personalidade e a relação: pode se agradar e aquecer os laços (atualize "mapa_faccoes" com relacao/notas), pode devolver um gesto à altura, pode achar pouco, ou até se ofender se o presente soar como suborno. O efeito na relação é a SUA decisão narrativa; valores de gestão continuam por conta do app.`, personagem);
   };
 
   /* RECALIBRAR LENDA: saves antigos ficaram para trás da própria história
@@ -3293,6 +3348,7 @@ export default function Taverna() {
               <BarraMini rotulo="PV" atual={personagem.vida} max={personagem.vidaMax} cor={T.amber} corBaixa={T.danger} />
               <BarraMini rotulo="PM" atual={personagem.mana} max={personagem.manaMax} cor={T.violet} />
               <span className="tv-mono text-[10px] shrink-0" style={{ color: T.amberSoft }}>NV {personagem.nivel}</span>
+              {clima && <span className="tv-mono text-[10px] shrink-0" title={clima.nota} style={{ color: T.inkDim }}>{clima.icone} {clima.rotulo}</span>}
               <BarraMini rotulo="XP" atual={personagem.xp} max={XP_POR_NIVEL(personagem.nivel)} cor={T.ok} />
             </div>
 
@@ -3353,6 +3409,10 @@ export default function Taverna() {
                   style={{ background: mostrarHoras ? T.amber : "transparent", color: mostrarHoras ? T.onAccent : T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600, opacity: (bloqueado || acampado) ? 0.4 : 1 }}>
                   🕐 Tempo
                 </button>
+                <button onClick={viajar} disabled={bloqueado || acampado} title="Seguir viagem: clima e encontro rolados pelas tabelas" className="tv-mono text-[11px] rounded-full px-3 py-1.5"
+                  style={{ background: "transparent", color: T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600, opacity: (bloqueado || acampado) ? 0.4 : 1 }}>
+                  🧭 Viajar
+                </button>
               </div>
               {/* LINHA 2 — escrita: largura inteira, campo alto e confortável */}
               <div className="flex gap-2 rounded-2xl p-2 min-w-0" style={{ background: T.panel, border: `1px solid ${habSel ? T.violet : T.line}` }}>
@@ -3386,7 +3446,7 @@ export default function Taverna() {
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} recalibrarLenda={recalibrarLenda} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
