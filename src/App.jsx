@@ -1696,7 +1696,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.6 · bestiário e ações</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.7 · barra de ação</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2991,25 +2991,29 @@ export default function Taverna() {
                 </div>
               </div>
             ) : (
-            <div className="px-4 md:px-8 shrink-0 flex items-stretch gap-2" style={{ paddingRight: "68px", paddingBottom: rolagem ? "6px" : "20px" }}>
-              <div className="flex flex-1 gap-2 rounded-2xl p-2 min-w-0" style={{ background: T.panel, border: `1px solid ${habSel ? T.violet : T.line}` }}>
+            <div className="px-4 md:px-8 shrink-0" style={{ paddingRight: "68px", paddingBottom: rolagem ? "6px" : "20px" }}>
+              {/* LINHA 1 — ferramentas: rótulos sempre visíveis, sem roubar espaço da escrita */}
+              <div className="flex items-center gap-1.5 mb-2">
+                <button onClick={() => { setAcoesAbertas((v) => !v); setHabAbertas(false); }} disabled={bloqueado} className="tv-mono text-[11px] rounded-full px-3 py-1.5"
+                  style={{ background: acoesAbertas ? T.amber : "transparent", color: acoesAbertas ? T.onAccent : T.amberSoft, border: `1px solid ${T.amber}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
+                  ⚔ Ações
+                </button>
+                <button onClick={() => { setHabAbertas((v) => !v); setAcoesAbertas(false); }} disabled={bloqueado} className="tv-mono text-[11px] rounded-full px-3 py-1.5"
+                  style={{ background: habAbertas ? T.violet : "transparent", color: habAbertas ? T.onSecond : T.violetSoft, border: `1px solid ${T.violet}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
+                  ✦ Habilidades
+                </button>
+                <button onClick={() => setMostrarHoras((v) => !v)} disabled={bloqueado || acampado} title="Passar o tempo" className="tv-mono text-[11px] rounded-full px-3 py-1.5"
+                  style={{ background: mostrarHoras ? T.amber : "transparent", color: mostrarHoras ? T.onAccent : T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600, opacity: (bloqueado || acampado) ? 0.4 : 1 }}>
+                  🕐 Tempo
+                </button>
+              </div>
+              {/* LINHA 2 — escrita: largura inteira, campo alto e confortável */}
+              <div className="flex gap-2 rounded-2xl p-2 min-w-0" style={{ background: T.panel, border: `1px solid ${habSel ? T.violet : T.line}` }}>
                 <input value={entrada} onChange={(e) => setEntrada(e.target.value)} onKeyDown={(e) => e.key === "Enter" && agir(entrada)}
                   placeholder={rolagem ? "Role o dado abaixo…" : habSel ? `Como você usa ${habSel.nome}?` : "O que você faz? Fale, aja, explore…"}
-                  disabled={bloqueado} className="flex-1 bg-transparent outline-none tv-body text-[15px] px-3 min-w-0" style={{ color: T.ink }} />
-                <Botao primario pequeno desativado={bloqueado || !entrada.trim()} onClick={() => agir(entrada)}>Agir</Botao>
+                  disabled={bloqueado} className="flex-1 bg-transparent outline-none tv-body text-[15px] px-3 py-1.5 min-w-0" style={{ color: T.ink }} />
+                <Botao primario pequeno desativado={bloqueado || !entrada.trim()} onClick={() => agir(entrada)}>Agir →</Botao>
               </div>
-              <button onClick={() => { setAcoesAbertas((v) => !v); setHabAbertas(false); }} disabled={bloqueado} className="tv-mono text-xs rounded-2xl px-3 shrink-0"
-                style={{ background: acoesAbertas ? T.amber : T.panel, color: acoesAbertas ? T.onAccent : T.amberSoft, border: `1px solid ${T.amber}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
-                ⚔<span className="hidden md:inline"> Ações</span>
-              </button>
-              <button onClick={() => { setHabAbertas((v) => !v); setAcoesAbertas(false); }} disabled={bloqueado} className="tv-mono text-xs rounded-2xl px-3 md:px-4 shrink-0"
-                style={{ background: habAbertas ? T.violet : T.panel, color: habAbertas ? T.onSecond : T.violetSoft, border: `1px solid ${T.violet}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
-                ✦<span className="hidden md:inline"> Habilidades</span>
-              </button>
-              <button onClick={() => setMostrarHoras((v) => !v)} disabled={bloqueado || acampado} title="Passar o tempo" className="tv-mono text-xs rounded-2xl px-3 shrink-0"
-                style={{ background: mostrarHoras ? T.amber : T.panel, color: mostrarHoras ? T.onAccent : T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600, opacity: (bloqueado || acampado) ? 0.4 : 1 }}>
-                🕐<span className="hidden md:inline"> Tempo</span>
-              </button>
             </div>
             )}
 
