@@ -3,6 +3,7 @@ import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./n
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios } from "./combate.js";
+import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./historia.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -92,7 +93,7 @@ function formatarCanone(canone) {
   return linhas.join("\n");
 }
 
-function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone, bancoNomes, mapaInfo) {
+function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone, bancoNomes, mapaInfo, historiaInfo, questsInfo) {
   mundo = mundo || { genero: "Fantasia medieval" };
   personagem = personagem || {};
   const canoneTexto = formatarCanone(canone);
@@ -118,6 +119,12 @@ ROLAGENS (d20 + modificador vs Dificuldade):
 - Peça rolagem SÓ quando houver chance real de falha E consequência interessante. Ações triviais não precisam de dado.
 - Ao pedir rolagem, prepare a cena até o instante do teste e PARE ali. NUNCA narre o desfecho antes do resultado.
 - 20 natural = sucesso extraordinário (além do esperado); 1 natural = falha desastrosa (com complicação).
+- ESTRUTURA DA HISTÓRIA (o norte dramático — siga-a): ${historiaInfo || "arco livre."}
+- DIÁRIO DE MISSÕES (o norte prático — amarre os eventos a ele):
+${questsInfo || "Nenhuma missão registrada."}
+  · Crie missões via "quest_nova" {"titulo","descricao","tipo":"principal|secundaria"}. Mantenha SEMPRE 1 missão principal viva (a espinha do momento atual do arco) e no máximo 2-3 secundárias ativas.
+  · Quando o jogador CUMPRIR uma missão, envie "quest_atualizar" {"titulo","status":"concluida"} no mesmo turno (ou "falhada" se perdida; use "nota" para progresso parcial).
+  · Os eventos do mundo devem, na maior parte do tempo, TOCAR as missões ativas ou o momento do arco — nada de rumos aleatórios desconexos. A missão dá a direção; o como fica livre.
 - MAPA E FACÇÕES (mundo persistente — leia e RESPEITE; nunca recrie o que já existe): ${mapaTexto || "ainda vazio; ao apresentar uma cidade nova, registre-a."}
   · Ao apresentar uma cidade NOVA, registre em "mapa_cidades" (nome, tipo vila/cidade/capital/fortaleza, regiao, faccao dominante, relacao com o jogador). Não invente uma cidade que já está no mapa — use a registrada.
   · Facções em "mapa_faccoes" (nome, tipo, lider, relacao). A facção do JOGADOR: marque com "doJogador":true (ou envie "faccao_jogador").
@@ -260,6 +267,9 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   "rolagens_combate": [{"quem":"Lobo","alvo":"você","d20":8,"mod":2,"total":10,"dificuldade":15,"resultado":"erra"}],
   "condicoes_adicionar": [{"alvo":"você","nome":"Envenenado","turnos":3,"efeito":"perde 2 PV por turno","tipo":"ruim"}],
   "condicoes_remover": [{"alvo":"você","nome":"Envenenado"}],
+  "quest_nova": [{"titulo":"O cerco de Pedravale","descricao":"Romper o bloqueio antes do inverno","tipo":"principal"}],
+  "quest_atualizar": [{"titulo":"A caravana sumida","status":"concluida","nota":""}],
+  "historia_avancar": false,
   "mapa_cidades": [{"nome":"Pedravale","tipo":"capital","regiao":"Sul","faccao":"Guilda do Corvo","relacao":"jogador","sede":true}],
   "mapa_faccoes": [{"nome":"Guilda do Corvo","tipo":"guilda","lider":"você","relacao":"jogador","doJogador":true}],
   "cidade_atual": "Pedravale",
@@ -811,7 +821,7 @@ ${banirUrgencia ? `
 ⛔ Não use "alguém irrompe com urgência" nem interrupção dramática — esse recurso está desgastado nesta campanha.`}`;
 }
 
-const ABAS = [{ id: "ficha", rotulo: "Ficha", icone: "☰" }, { id: "grupo", rotulo: "Grupo", icone: "⚑" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }];
+const ABAS = [{ id: "ficha", rotulo: "Ficha", icone: "☰" }, { id: "diario", rotulo: "Diário", icone: "📜" }, { id: "grupo", rotulo: "Grupo", icone: "⚑" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }];
 
 const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D" };
 const SLOT_ROTULO = { arma: "Arma", armadura: "Armadura", elmo: "Elmo", botas: "Botas", anel: "Anel", amuleto: "Amuleto", escudo: "Escudo" };
@@ -918,6 +928,45 @@ function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar })
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function PainelDiario({ historia, quests }) {
+  const est = estruturaPorId((historia || {}).estrutura);
+  const etapaIdx = Math.min((historia || {}).etapa || 0, est.etapas.length - 1);
+  const ativas = (quests || []).filter((q) => q.status === "ativa");
+  const principais = ativas.filter((q) => q.tipo === "principal");
+  const secundarias = ativas.filter((q) => q.tipo !== "principal");
+  const encerradas = (quests || []).filter((q) => q.status !== "ativa");
+  const Missao = ({ q }) => (
+    <div className="rounded-lg px-3 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${q.status === "concluida" ? T.ok : q.status === "falhada" ? T.danger : q.tipo === "principal" ? T.amber : T.line}`, opacity: q.status === "ativa" ? 1 : 0.65 }}>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="tv-body text-sm" style={{ color: T.ink }}>{q.status === "concluida" ? "✓ " : q.status === "falhada" ? "✗ " : ""}{q.titulo}</span>
+        {q.tipo === "principal" && q.status === "ativa" && <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ color: T.amberSoft, border: `1px solid ${T.amber}` }}>PRINCIPAL</span>}
+      </div>
+      {q.descricao && <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{q.descricao}</div>}
+      {q.nota && <div className="tv-body text-xs mt-1 italic" style={{ color: T.violetSoft }}>» {q.nota}</div>}
+    </div>
+  );
+  return (
+    <div>
+      <div className="rounded-xl p-4 mb-4" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
+        <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.violetSoft }}>Arco da campanha</div>
+        <div className="tv-display text-xl" style={{ color: T.ink }}>{est.nome}</div>
+        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+          {est.etapas.map((et, i) => (
+            <div key={i} className="flex items-center gap-1.5">
+              <span className="tv-mono text-[10px] px-2 py-0.5 rounded-full" style={{ background: i === etapaIdx ? T.amber : i < etapaIdx ? T.panel : "transparent", color: i === etapaIdx ? T.onAccent : i < etapaIdx ? T.ok : T.inkDim, border: `1px solid ${i === etapaIdx ? T.amber : T.line}`, fontWeight: i === etapaIdx ? 700 : 400 }}>{i < etapaIdx ? "✓ " : ""}{et.nome}</span>
+              {i < est.etapas.length - 1 && <span style={{ color: T.inkDim, fontSize: 9 }}>→</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+      {ativas.length === 0 && <div className="tv-body text-sm italic mb-4" style={{ color: T.inkDim }}>Nenhuma missão ativa ainda — elas surgem conforme a história se abre.</div>}
+      {principais.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.amberSoft }}>Missão principal</div><div className="space-y-2 mb-4">{principais.map((q, i) => <Missao key={i} q={q} />)}</div></>)}
+      {secundarias.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Missões secundárias</div><div className="space-y-2 mb-4">{secundarias.map((q, i) => <Missao key={i} q={q} />)}</div></>)}
+      {encerradas.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Encerradas</div><div className="space-y-2">{encerradas.map((q, i) => <Missao key={i} q={q} />)}</div></>)}
     </div>
   );
 }
@@ -1069,7 +1118,7 @@ function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
   const [confirmarRemover, setConfirmarRemover] = React.useState(null);
@@ -1083,7 +1132,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
       <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,.45)" }} onClick={fechar} />
       <aside className="tv-slide tv-scroll fixed right-0 inset-y-0 z-40 w-80 max-w-[88vw] overflow-y-auto p-5 flex flex-col gap-5" style={{ background: T.panel, borderLeft: `1px solid ${T.line}` }}>
         <div className="flex items-center justify-between">
-          <h2 className="tv-display text-2xl" style={{ color: T.ink }}>{aba === "ficha" ? "Ficha" : aba === "grupo" ? "Grupo" : aba === "mapa" ? "Mapa" : "Inventário"}</h2>
+          <h2 className="tv-display text-2xl" style={{ color: T.ink }}>{aba === "ficha" ? "Ficha" : aba === "diario" ? "Diário" : aba === "grupo" ? "Grupo" : aba === "mapa" ? "Mapa" : "Inventário"}</h2>
           <button onClick={fechar} className="tv-mono text-lg px-2" style={{ color: T.inkDim }}>✕</button>
         </div>
 
@@ -1178,6 +1227,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
           </>
         )}
 
+        {aba === "diario" && <PainelDiario historia={historia} quests={quests} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} />}
 
         {aba === "grupo" && (
@@ -1434,6 +1484,7 @@ function TelaMundo({ concluir }) {
   const [nome, setNome] = useState("");
   const [genero, setGenero] = useState(null);
   const [descricao, setDescricao] = useState("");
+  const [estrutura, setEstrutura] = useState("jornada");
   const campo = { background: T.panel, border: `1px solid ${T.line}`, color: T.ink };
   return (
     <div className="tv-fade max-w-2xl mx-auto w-full px-6 py-10 overflow-y-auto tv-scroll">
@@ -1452,9 +1503,20 @@ function TelaMundo({ concluir }) {
           </button>
         ))}
       </div>
+      <div className="tv-mono text-xs uppercase tracking-widest mb-2 mt-2" style={{ color: T.violetSoft }}>Estrutura da história</div>
+      <p className="tv-body text-sm mb-3" style={{ color: T.inkDim }}>O arco que guiará a campanha — o Mestre segue essa espinha dramática, e as missões surgem dentro dela.</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+        {ESTRUTURAS.map((e) => (
+          <button key={e.id} onClick={() => setEstrutura(e.id)} className="text-left rounded-xl p-4 transition-all" style={{ background: estrutura === e.id ? T.panelSoft : T.panel, border: `1px solid ${estrutura === e.id ? T.amber : T.line}` }}>
+            <div className="tv-display text-lg" style={{ color: estrutura === e.id ? T.amberSoft : T.ink }}>{e.nome}</div>
+            <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{e.desc}</div>
+            <div className="tv-mono text-[9px] mt-1.5 uppercase tracking-widest" style={{ color: T.violetSoft }}>{e.etapas.map((x) => x.nome).join(" → ")}</div>
+          </button>
+        ))}
+      </div>
       <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={4} placeholder="Ex.: Um arquipélago flutuante onde a magia vem das marés. Piratas do céu disputam relíquias de um império afundado nas nuvens…" className="w-full rounded-xl p-4 tv-body text-sm outline-none resize-none" style={campo} />
       <div className="mt-6 flex justify-end">
-        <Botao primario desativado={!genero || !nome.trim()} onClick={() => concluir({ genero: genero.label, descricao }, nome.trim())}>Continuar →</Botao>
+        <Botao primario desativado={!genero || !nome.trim()} onClick={() => concluir({ genero: genero.label, descricao, estrutura }, nome.trim())}>Continuar →</Botao>
       </div>
     </div>
   );
@@ -1581,7 +1643,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.3 · golpe final</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v4.4 · missões e arcos</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -1927,6 +1989,9 @@ export default function Taverna() {
   const ataqueResolvidoRef = useRef(false); // marca ataque do jogador neste turno
   const modoMundoRef = useRef(0);           // rotação de tipos de cena
   const urgenciaRef = useRef(0);            // quantas cenas recentes usaram urgência
+  const historiaRef = useRef({ estrutura: "jornada", etapa: 0 });
+  const questsRef = useRef([]);
+  const [quests, setQuests] = useState([]);
   const [aguardandoMundo, setAguardandoMundo] = useState(false);
   const [mostrarHoras, setMostrarHoras] = useState(false);
   const ehAcaoMundoRef = useRef(false); // marca que o próximo enviar é a vez do mundo
@@ -1986,7 +2051,10 @@ export default function Taverna() {
     setStatusSave("salvando");
     const dados = {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico, sugestoes, rolagem,
-      combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, acampado: acampadoRef.current, rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
+      combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, acampado: acampadoRef.current,
+      mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current,
+      historia: historiaRef.current, quests: questsRef.current,
+      rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     saveRef.current = dados;
     setTemSave(dados);
@@ -2078,6 +2146,36 @@ export default function Taverna() {
       if (md.faccao_jogador) faccaoJogadorRef.current = md.faccao_jogador;
       if (mudouMapa) { mapaRef.current = mp; setMapa(mp); }
     }
+    /* MISSÕES E ARCO: registra quests e avanço de ato vindos do Mestre */
+    if (resp.mudancas) {
+      const md2 = resp.mudancas;
+      [].concat(md2.quest_nova || []).forEach((q) => {
+        if (!q || !q.titulo) return;
+        if (questsRef.current.some((x) => x.titulo.toLowerCase() === q.titulo.toLowerCase())) return;
+        questsRef.current = [...questsRef.current, { titulo: q.titulo, descricao: q.descricao || "", tipo: q.tipo === "principal" ? "principal" : "secundaria", status: "ativa", nota: "" }];
+        msgs.push(`📜 Nova missão${q.tipo === "principal" ? " PRINCIPAL" : ""}: ${q.titulo}`);
+      });
+      [].concat(md2.quest_atualizar || []).forEach((q) => {
+        if (!q || !q.titulo) return;
+        questsRef.current = questsRef.current.map((x) => {
+          if (x.titulo.toLowerCase() !== q.titulo.toLowerCase()) return x;
+          const nova = { ...x, status: q.status || x.status, nota: q.nota !== undefined ? q.nota : x.nota };
+          if (q.status === "concluida" && x.status !== "concluida") msgs.push(`✓ Missão concluída: ${x.titulo}`);
+          else if (q.status === "falhada" && x.status !== "falhada") msgs.push(`✗ Missão falhou: ${x.titulo}`);
+          else if (q.nota) msgs.push(`📜 ${x.titulo}: ${q.nota}`);
+          return nova;
+        });
+      });
+      if (md2.historia_avancar) {
+        const h = historiaRef.current;
+        const est = estruturaPorId(h.estrutura);
+        if ((h.etapa || 0) < est.etapas.length - 1) {
+          h.etapa = (h.etapa || 0) + 1;
+          msgs.push(`📖 A história avança — ${est.nome}: "${est.etapas[h.etapa].nome}" (${h.etapa + 1}/${est.etapas.length})`);
+        }
+      }
+      setQuests([...questsRef.current]);
+    }
     /* CÂNONE: mescla fatos duráveis; campos novos atualizam, nunca apagam a ficha */
     if (resp.mudancas && resp.mudancas.canone && typeof resp.mudancas.canone === "object") {
       const c = { ...canoneRef.current };
@@ -2103,7 +2201,7 @@ export default function Taverna() {
         }
       }
       if (tocouMapa) { mapaRef.current = mp2; setMapa(mp2); }
-      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current));
+      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current));
     }
     setPersonagem(pers);
     /* combate: processa de forma síncrona (via ref) para as mensagens saírem na ordem certa */
@@ -2186,7 +2284,7 @@ export default function Taverna() {
         turnoContRef.current = 0;
         const narrativas = mensagensRef.current.filter((x) => x.autor === "mestre").map((x) => x.texto);
         gerarLivro(livroRef.current, narrativas).then((l) => {
-          if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current)); }
+          if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current)); }
         });
       }
       setTimeout(() => salvar({ personagem: pers, historico: histFinal, rolagem: resp.rolagem || null, sugestoes: resp.rolagem ? [] : (resp.sugestoes || []) }), 0);
@@ -2206,8 +2304,10 @@ export default function Taverna() {
     canoneRef.current = {}; definirAcampado(false);
     mapaRef.current = { cidades: [], faccoes: [] }; setMapa(mapaRef.current);
     faccaoJogadorRef.current = ""; cidadeAtualRef.current = "";
+    historiaRef.current = { estrutura: (mundo && mundo.estrutura) || "jornada", etapa: 0 };
+    questsRef.current = []; setQuests([]);
     bancoNomesRef.current = gerarBancoNomes(mundo);
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current));
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current));
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setSugestoes([]); setRolagem(null);
     setCombate(null); combateRef.current = null;
     setFase("jogo");
@@ -2231,8 +2331,11 @@ export default function Taverna() {
       setMapa(mapaRef.current);
       faccaoJogadorRef.current = sv.faccaoJogador || "";
       cidadeAtualRef.current = sv.cidadeAtual || "";
+      historiaRef.current = sv.historia && sv.historia.estrutura ? sv.historia : { estrutura: (sv.mundo && sv.mundo.estrutura) || "jornada", etapa: 0 };
+      questsRef.current = Array.isArray(sv.quests) ? sv.quests : [];
+      setQuests([...questsRef.current]);
       bancoNomesRef.current = gerarBancoNomes(sv.mundo);
-      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current));
+      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current));
       setFase("jogo");
       if (comResumo && !sv.rolagem) {
         enviar(`[RESUMO DE SESSÃO] Retomando "${sv.nomeCampanha}". Abra com "Anteriormente, em ${sv.nomeCampanha}…" e recapitule os principais acontecimentos em até 120 palavras, tom de série. Depois reapresente a cena atual e me convide a agir. Sem rolagem e sem mudanças nesta resposta.`, pers, sv.historico || []);
@@ -2815,7 +2918,7 @@ export default function Taverna() {
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} /></LimiteErro>
         </div>
       )}
 
