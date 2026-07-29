@@ -9,6 +9,8 @@ import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt } from "./npcs.j
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
 import { rolarClima, rolarEncontro } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
+import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
+import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -76,7 +78,8 @@ const ATRIBUTOS = [
 function fichaTexto(p) {
   const attrs = ATRIBUTOS.map((a) => `${a.nome}: +${p.atributos[a.id]}`).join(", ");
   return `Nome: ${p.nome} · Conceito: ${p.conceito} · Nível ${p.nivel}
-História: ${p.historia || "(desconhecida — revele aos poucos)"}
+História: ${p.historia || "(desconhecida — revele aos poucos)"}${p.antecedente ? `
+Antecedente: ${p.antecedente}${p.antecedenteGancho ? ` — GANCHO (teça na ficção, cedo ou tarde): ${p.antecedenteGancho}` : ""}` : ""}
 Atributos: ${attrs} · PV máx ${p.vidaMax} · PM máx ${p.manaMax}`;
 }
 
@@ -929,7 +932,7 @@ function TrilhoAbas({ abaAtiva, aoClicar, nGrupo }) {
   );
 }
 
-function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, descricao, habilidades, ehVoce, semente, xpComp }) {
+function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, descricao, habilidades, ehVoce, semente, xpComp, vinculo }) {
   const [verHabs, setVerHabs] = React.useState(false); // habilidades sob demanda — cartão limpo
   return (
     <div className="rounded-xl p-4" style={{ background: T.panelSoft, border: `1px solid ${ehVoce ? T.amber : T.line}` }}>
@@ -951,6 +954,20 @@ function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, de
         {manaMax != null && <BarraMini rotulo="PM" atual={mana} max={manaMax} cor={T.violet} />}
         {!ehVoce && xpComp != null && <BarraMini rotulo="XP" atual={xpComp} max={XP_POR_NIVEL(nivel || 1)} cor={T.ok} />}
       </div>
+      {!ehVoce && vinculo != null && (() => {
+        const m = marcoDe(vinculo), prox = proximoMarco(vinculo);
+        return (
+          <div className="mt-2 rounded-lg px-2.5 py-2" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.inkDim }}>Vínculo {m ? `${m.icone} ${m.nome}` : "· conhecido"}</span>
+              <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}>{vinculo}/{VINCULO_MAX}{prox ? ` → ${prox.icone} ${prox.nome} em ${prox.valor}` : " · máximo"}</span>
+            </div>
+            <div className="h-1 rounded-full overflow-hidden" style={{ background: T.panelSoft }}>
+              <div className="h-full rounded-full" style={{ width: `${vinculo}%`, background: T.violet }} />
+            </div>
+          </div>
+        );
+      })()}
       {habilidades && habilidades.length > 0 && (
         <div className="mt-2.5">
           <button onClick={() => setVerHabs((v) => !v)} className="tv-mono text-[9px] px-2 py-1 rounded" style={{ border: `1px dashed ${T.line}`, color: T.violetSoft }}>
@@ -1329,7 +1346,7 @@ const ROTULO_AMEACA = { fraco: "fraca", comum: "comum", competente: "competente"
 const CATEGORIAS_CONQUISTA = [
   { id: "lamina", rotulo: "Lâmina", ids: ["primeiro_sangue", "dez_abatidos", "cinquenta_abatidos", "cem_abatidos", "matador_elite", "cinco_elites", "matador_lendario", "tres_lendarios", "primeiro_critico", "dez_criticos", "primeiro_desastre", "cinco_vitorias", "quinze_vitorias", "fio_da_morte"] },
   { id: "estrada", rotulo: "Estrada", ids: ["primeira_viagem", "dez_viagens", "vintecinco_viagens", "dez_perigos", "dez_criaturas", "vinte_criaturas"] },
-  { id: "coracao", rotulo: "Coração", ids: ["primeiro_companheiro", "tres_companheiros", "cinco_pessoas", "quinze_pessoas", "trinta_pessoas", "primeiro_presente", "cinco_presentes"] },
+  { id: "coracao", rotulo: "Coração", ids: ["primeiro_companheiro", "tres_companheiros", "cinco_pessoas", "quinze_pessoas", "trinta_pessoas", "primeiro_presente", "cinco_presentes", "vinculo_amizade", "vinculos_tres", "vinculo_profundo"] },
   { id: "ouro", rotulo: "Ouro", ids: ["cem_moedas", "quinhentas_moedas", "mil_moedas", "cofre_gordo"] },
   { id: "coroa", rotulo: "Coroa", ids: ["fundador", "primeira_cidade", "tres_dominios", "cinco_dominios", "guilda_nv3", "guilda_nv5", "primeira_alianca", "tres_tratados", "primeiro_vassalo", "primeira_guerra"] },
   { id: "lenda", rotulo: "Lenda", ids: ["nv5", "nv10", "nv15", "nv20"] },
@@ -1515,6 +1532,11 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                   <div className="tv-mono text-[10px] uppercase tracking-widest mt-1" style={{ color: T.amberSoft }}>
                     {[personagem.raca, personagem.classe, personagem.subclasse].filter(Boolean).join(" · ")}
                     {personagem.profissao ? <span style={{ color: T.inkDim }}> · {personagem.profissao}</span> : null}
+                  </div>
+                )}
+                {personagem.antecedente && (
+                  <div className="tv-mono text-[10px] uppercase tracking-widest mt-0.5" style={{ color: T.inkDim }} title={personagem.antecedenteGancho || ""}>
+                    🎭 {personagem.antecedente}
                   </div>
                 )}
                 <button onClick={() => setAbrirCaminho(abrirCaminho === "eu" ? null : "eu")} className="tv-mono text-[10px] mt-1.5 px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.violetSoft }}>
@@ -1712,7 +1734,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
               <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você viaja sozinho — por enquanto. Aliados podem se juntar a você.</div>
             ) : (personagem.grupo || []).map((m, i) => (
               <div key={i}>
-                <CartaoMembro nome={m.nome} subtitulo={[m.conceito, m.classe, m.subclasse].filter(Boolean).join(" · ")} nivel={m.nivel} vida={m.vida} vidaMax={m.vidaMax} descricao={m.descricao} habilidades={m.habilidades} semente={sementeDe(m)} xpComp={m.xp || 0} />
+                <CartaoMembro nome={m.nome} subtitulo={[m.conceito, m.classe, m.subclasse].filter(Boolean).join(" · ")} nivel={m.nivel} vida={m.vida} vidaMax={m.vidaMax} descricao={m.descricao} habilidades={m.habilidades} semente={sementeDe(m)} xpComp={m.xp || 0} vinculo={m.vinculo ?? VINCULO_INICIAL} />
                 <div className="flex flex-wrap gap-1 mt-1">
                   <button onClick={() => setAbrirCaminho(abrirCaminho === m.nome ? null : m.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.violetSoft }}>
                     {m.classe ? "⚔ trilhar novo caminho" : "⚔ definir caminho"}
@@ -2006,6 +2028,8 @@ function TelaPersonagem({ mundo, concluir }) {
   const [classe, setClasse] = useState(CLASSES[0].nome);
   const [subclasse, setSubclasse] = useState(CLASSES[0].subclasses[0].nome);
   const [profissao, setProfissao] = useState(PROFISSOES[0].nome);
+  const [antecedenteId, setAntecedenteId] = useState(ANTECEDENTES[0].id);
+  const antObj = antecedentePorId(antecedenteId);
   const [atributos, setAtributos] = useState(Object.fromEntries(ATRIBUTOS.map((a) => [a.id, 0])));
   const usados = Object.values(atributos).reduce((s, v) => s + v, 0);
   const restantes = PONTOS_TOTAIS - usados;
@@ -2054,6 +2078,20 @@ function TelaPersonagem({ mundo, concluir }) {
         </div>
       </div>
 
+      <div className="mb-6">
+        <div className="tv-mono text-xs uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Antecedente · quem você era antes</div>
+        <select value={antecedenteId} onChange={(e) => setAntecedenteId(e.target.value)} className="w-full rounded-xl p-3 tv-body text-sm outline-none" style={campo}>
+          {ANTECEDENTES.map((a) => <option key={a.id} value={a.id}>{a.icone} {a.nome}</option>)}
+        </select>
+        <div className="rounded-xl p-3 mt-1.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+          <div className="tv-body text-xs" style={{ color: T.ink }}>{antObj.desc}</div>
+          <div className="tv-body text-[11px] italic mt-1" style={{ color: T.inkDim }}>🎭 Gancho: {antObj.gancho}</div>
+          <div className="tv-mono text-[10px] mt-1.5" style={{ color: T.amberSoft }}>
+            {[antObj.item ? `◆ ${antObj.item}` : null, antObj.pv ? `+${antObj.pv} PV` : null, antObj.pm ? `+${antObj.pm} PM` : null, antObj.moedas ? `+${antObj.moedas} moedas` : null].filter(Boolean).join("  ·  ") || "—"}
+          </div>
+        </div>
+      </div>
+
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         <div>
           <div className="tv-mono text-xs uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Classe</div>
@@ -2099,10 +2137,11 @@ function TelaPersonagem({ mundo, concluir }) {
           onClick={() => concluir({
             nome: nome.trim(), conceito: conceito.trim(), historia: historia.trim(),
             raca, classe, subclasse, profissao,
+            antecedente: antObj.nome, antecedenteGancho: antObj.gancho,
             semente: `${nome.trim()}|${conceito.trim()}|${Math.floor(Math.random() * 100000)}`,
-            atributos: attrFinais, vida: vidaMax, vidaMax, mana: manaMax, manaMax,
-            nivel: 1, xp: 0, moedas: MOEDAS_INICIAIS, nivelPendentes: 0,
-            inventario: [], habilidades: habsIniciais, grupo: [],
+            atributos: attrFinais, vida: vidaMax + (antObj.pv || 0), vidaMax: vidaMax + (antObj.pv || 0), mana: manaMax + (antObj.pm || 0), manaMax: manaMax + (antObj.pm || 0),
+            nivel: 1, xp: 0, moedas: MOEDAS_INICIAIS + (antObj.moedas || 0), nivelPendentes: 0,
+            inventario: antObj.item ? [antObj.item] : [], habilidades: habsIniciais, grupo: [],
             efeitos: [], condicoes: [], equipamento: [], equipados: {},
           })}>Começar aventura →</Botao>
       </div>
@@ -2117,7 +2156,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.0 · códex</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.1 · vínculos</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2195,7 +2234,7 @@ function aplicarMudancas(pers, m, msgs) {
   (m.grupo_adicionar || []).forEach((g) => {
     if (!g?.nome || grupo.some((x) => x.nome.toLowerCase() === g.nome.toLowerCase())) return;
     if (grupo.length >= MAX_COMPANHEIROS) { msgs.push(`O grupo está cheio — ${g.nome} não pôde se juntar.`); return; }
-    grupo.push({ nome: g.nome, conceito: g.conceito || "", nivel: g.nivel ?? 1, vida: g.vida ?? 10, vidaMax: g.vidaMax ?? g.vida ?? 10, descricao: g.descricao || "", habilidades: g.habilidades || [], semente: `npc|${g.nome}|${g.conceito || ""}` });
+    grupo.push({ nome: g.nome, conceito: g.conceito || "", nivel: g.nivel ?? 1, vida: g.vida ?? 10, vidaMax: g.vidaMax ?? g.vida ?? 10, descricao: g.descricao || "", habilidades: g.habilidades || [], semente: `npc|${g.nome}|${g.conceito || ""}`, vinculo: VINCULO_INICIAL, marcos: [] });
     msgs.push(`⚑ ${g.nome} juntou-se ao grupo!`);
   });
   (m.grupo_remover || []).forEach((nome) => { if (grupo.some((g) => g.nome.toLowerCase() === nome.toLowerCase())) { grupo = grupo.filter((g) => g.nome.toLowerCase() !== nome.toLowerCase()); msgs.push(`⚑ ${nome} deixou o grupo.`); } });
@@ -2385,7 +2424,8 @@ function migrarPersonagem(p) {
     atributos: { ...atributosBase, ...(p.atributos || {}) },
     inventario: Array.isArray(p.inventario) ? p.inventario : [],
     habilidades: Array.isArray(p.habilidades) ? p.habilidades.filter((h) => h && h.nome).map((h) => ({ nome: h.nome, custo: Math.max(0, Number(h.custo) || 0), descricao: h.descricao || "", duracao: h.duracao || 0 })) : [],
-    grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, xp: g.xp || 0, nivel: g.nivel || 1, inventario: Array.isArray(g.inventario) ? g.inventario : [], semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}` })) : [],
+    grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, xp: g.xp || 0, nivel: g.nivel || 1, inventario: Array.isArray(g.inventario) ? g.inventario : [], semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}`, vinculo: g.vinculo ?? VINCULO_INICIAL, marcos: Array.isArray(g.marcos) ? g.marcos : [] })) : [],
+    antecedente: p.antecedente || "", antecedenteGancho: p.antecedenteGancho || "",
     efeitos: Array.isArray(p.efeitos) ? p.efeitos : [],
     condicoes: Array.isArray(p.condicoes) ? p.condicoes : [],
     equipamento: Array.isArray(p.equipamento) ? p.equipamento : [],
@@ -2788,6 +2828,10 @@ export default function Taverna() {
         bumpCont("inimigosDerrotados", fins.length);
         bumpCont("elitesDerrotados", fins.filter((e) => e.ameaca === "elite").length);
         bumpCont("lendariosDerrotados", fins.filter((e) => e.ameaca === "lendario").length);
+        /* VÍNCULO: sangue derramado junto aproxima (+2 para todo o grupo) */
+        p2 = { ...p2, grupo: aplicarVinculo(p2.grupo, "todos", 2, msgs) };
+        pers = p2;
+        setPersonagem(p2);
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — espólios já aplicados pelo sistema: +${esp.moedas} moedas e +${esp.xp} XP para todos] NÃO envie moedas nem xp (seria dobrado). Narre o desfecho da luta em 2-3 frases.${esp.caiItem ? ` UM ITEM CAIU: crie UM item coerente com os inimigos derrotados e envie via "adicionar_equipamento" (com raridade proporcional à ameaça) ou "adicionar_itens".` : " Nenhum item especial desta vez — não envie itens."}`;
       }
     }
@@ -2817,7 +2861,22 @@ export default function Taverna() {
     {
       const antes = (persAtual.grupo || []).length, agora = (pers.grupo || []).length;
       if (agora > antes) bumpCont("recrutados", agora - antes);
-      if ((persAtual.vida || 0) > 0 && (pers.vida || 0) <= 0) bumpCont("quaseMorte", 1);
+      let tocouVinculo = false;
+      /* VÍNCULO: chegar a 0 PV e sobreviver une o grupo (+4); deixar um
+         companheiro cair pesa (−6 só para quem caiu) */
+      if ((persAtual.vida || 0) > 0 && (pers.vida || 0) <= 0) {
+        bumpCont("quaseMorte", 1);
+        pers = { ...pers, grupo: aplicarVinculo(pers.grupo, "todos", 4, null) };
+        tocouVinculo = true;
+      }
+      (pers.grupo || []).forEach((g) => {
+        const antesG = (persAtual.grupo || []).find((a) => a.nome === g.nome);
+        if (antesG && (antesG.vida || 0) > 0 && (g.vida || 0) <= 0) {
+          pers = { ...pers, grupo: aplicarVinculo(pers.grupo, g.nome, -6, null) };
+          tocouVinculo = true;
+        }
+      });
+      if (tocouVinculo) setPersonagem(pers);
       checarConquistas(pers);
     }
     return pers;
@@ -3256,7 +3315,9 @@ export default function Taverna() {
     if (!acampadoRef.current) return;
     definirAcampado(false);
     const msgs = [];
-    const pers = aplicarDescanso(personagem, tipo, msgs);
+    let pers = aplicarDescanso(personagem, tipo, msgs);
+    /* VÍNCULO: conversas de fogueira aproximam (+3 para todo o grupo) */
+    pers = { ...pers, grupo: aplicarVinculo(pers.grupo, "todos", 3, msgs) };
     setPersonagem(pers);
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
     bumpCont("descansos"); checarConquistas(pers);
@@ -3367,8 +3428,26 @@ export default function Taverna() {
     enviar(`[CONVITE AO GRUPO] Convido ${nome} para se juntar ao meu grupo. Decida pela personalidade, relação e momento dele(a): pode ACEITAR (use "grupo_adicionar" com a ficha completa), recusar com jeito, ou aceitar com uma condição. A escolha é dele(a), não minha — responda com as palavras e a reação dele(a) em 1ª pessoa.`, personagem);
   };
 
-  /* ---------------- CONQUISTAS (100% por código, zero tokens) ---------------- */
+  /* ---------------- CONQUISTAS E VÍNCULOS (100% por código, zero tokens) ---------------- */
   const bumpCont = (campo, n = 1) => { contRef.current = { ...contRef.current, [campo]: (contRef.current[campo] || 0) + n }; };
+
+  /* VÍNCULO: aplica pontos a um companheiro (ou a todos). Se cruzar um MARCO,
+     o app concede +2 PV máx e deixa um bilhete para o Mestre criar o momento. */
+  const aplicarVinculo = (grupo, nomeOuTodos, pontos, msgs) => {
+    const batidos = [];
+    const novo = (grupo || []).map((g) => {
+      if (nomeOuTodos !== "todos" && g.nome !== nomeOuTodos) return g;
+      const r = ganharVinculo(g, pontos);
+      if (r.marcoNovo) batidos.push({ nome: g.nome, marco: r.marcoNovo });
+      return r.membro;
+    });
+    batidos.forEach(({ nome, marco }) => {
+      const linha = `${marco.icone} ${marco.nome}: seu vínculo com ${nome} se aprofundou — ${nome} ganha +2 PV máx`;
+      if (msgs) msgs.push(linha); else pushMsgs([{ autor: "sistema", texto: linha }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VÍNCULO — MARCO ${marco.nome.toUpperCase()}] ${nome} alcançou o vínculo "${marco.nome}" com o herói. No momento certo (na fogueira, na estrada, após a cena atual), crie um MOMENTO ÍNTIMO: ${nome} compartilha algo pessoal — uma história, um medo, um segredo, um pedido ou um presente simbólico. Se já estivermos conversando com ele(a), pode ser agora.`;
+    });
+    return novo;
+  };
 
   const checarConquistas = useCallback((pers) => {
     const p = pers || personagem;
@@ -3388,6 +3467,8 @@ export default function Taverna() {
       tratados: fs.filter((f) => f.tratado === "comercio" || f.tratado === "alianca").length,
       vassalos: fs.filter((f) => f.tratado === "vassalagem").length,
       guerras: fs.filter((f) => f.tratado === "guerra").length,
+      vinculoAmizade: (p.grupo || []).filter((g) => (g.vinculo || 0) >= 50).length,
+      vinculoProfundo: (p.grupo || []).filter((g) => (g.vinculo || 0) >= 100).length,
     };
     const novas = avaliarConquistas(stats, conqRef.current.desbloqueadas);
     if (!novas.length) return;
@@ -3612,6 +3693,8 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
       const ehEquip = item && typeof item === "object" && item.tipo && item.raridade;
       if (ehEquip) np.equipamento = [...(np.equipamento || []), item]; else np.inventario = [...(np.inventario || []), item];
     }
+    /* VÍNCULO: dar um item a um companheiro é um gesto que conta (+8) */
+    if (de === "eu" && para !== "eu") np = { ...np, grupo: aplicarVinculo(np.grupo, para, 8, null) };
     setPersonagem(np);
     const nomeFinal = typeof item === "string" ? item : (item && item.nome) || "item";
     const deTxt = de === "eu" ? "você" : de, paraTxt = para === "eu" ? "você" : para;

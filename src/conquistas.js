@@ -48,6 +48,9 @@ export const CONQUISTAS = [
   { id: "trinta_pessoas", icone: "🌟", nome: "Lenda Viva", titulo: "Lenda Viva", dica: "Conheça 30 pessoas marcantes.", quando: (s) => s.npcs >= 30 },
   { id: "primeiro_presente", icone: "🎁", nome: "Mãos Generosas", titulo: "o Generoso", dica: "Presenteie uma potência.", quando: (s) => s.presentes >= 1 },
   { id: "cinco_presentes", icone: "💝", nome: "O Magnânimo", titulo: "o Magnânimo", dica: "Presenteie 5 vezes.", quando: (s) => s.presentes >= 5 },
+  { id: "vinculo_amizade", icone: "🍻", nome: "Ombro Amigo", titulo: "Ombro Amigo", dica: "Alcance o vínculo Amizade com um companheiro.", quando: (s) => s.vinculoAmizade >= 1 },
+  { id: "vinculos_tres", icone: "❤️‍🔥", nome: "Coração do Grupo", titulo: "Coração do Grupo", dica: "Tenha 3 companheiros com vínculo de Amizade ou mais.", segredo: true, quando: (s) => s.vinculoAmizade >= 3 },
+  { id: "vinculo_profundo", icone: "💞", nome: "Almas Ligadas", titulo: "o Inseparável", dica: "Alcance o Vínculo Profundo com alguém.", quando: (s) => s.vinculoProfundo >= 1 },
 
   /* -------- OURO -------- */
   { id: "cem_moedas", icone: "🪙", nome: "Bolso Cheio", titulo: "Bolso Cheio", dica: "Junte 100 moedas.", quando: (s) => s.moedas >= 100 },
