@@ -12,6 +12,9 @@ import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } fr
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, valorDe } from "./loot.js";
+import { gerarMasmorra, recompensaChefe, ROTULO_SALA } from "./masmorras.js";
+import { gerarMural, gerarContrato, ICONE_CONTRATO } from "./contratos.js";
+import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -908,7 +911,7 @@ ${banirUrgencia ? `
 /* Trilho enxuto (mobile): 4 abas. Ficha, Grupo, Pessoas, Guilda e Domínios
    vivem como SUB-abas dentro de Gestão. */
 const ABAS = [{ id: "gestao", rotulo: "Gestão", icone: "🏛" }, { id: "diario", rotulo: "Diário", icone: "📜" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }, { id: "codex", rotulo: "Códex", icone: "📖" }];
-const SUBS_GESTAO = [{ id: "ficha", rotulo: "Ficha" }, { id: "grupo", rotulo: "Grupo" }, { id: "pessoas", rotulo: "Pessoas" }, { id: "guilda", rotulo: "Guilda" }, { id: "dominios", rotulo: "Domínios" }, { id: "diplomacia", rotulo: "Diplomacia" }];
+const SUBS_GESTAO = [{ id: "ficha", rotulo: "Ficha" }, { id: "grupo", rotulo: "Grupo" }, { id: "pessoas", rotulo: "Pessoas" }, { id: "guilda", rotulo: "Guilda" }, { id: "dominios", rotulo: "Domínios" }, { id: "diplomacia", rotulo: "Diplomacia" }, { id: "mural", rotulo: "Mural" }];
 
 const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D" };
 const SLOT_ROTULO = { arma: "Arma", armadura: "Armadura", elmo: "Elmo", botas: "Botas", anel: "Anel", amuleto: "Amuleto", escudo: "Escudo" };
@@ -1284,6 +1287,139 @@ function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio }) {
   );
 }
 
+/* Painel do MURAL DE CONTRATOS: serviços gerados por tabela (alvo, destino,
+   recompensa — tudo em código). Aceitar vira quest com a recompensa embutida;
+   o app paga sozinho quando o Mestre marca "concluida". O mural nunca fica
+   vazio: ao aceitar um, outro cartaz é pregado no lugar. */
+function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garantirMural, acampado, decretos, pregarDecreto, cancelarDecreto, moedas, cofre, nivel }) {
+  const ativos = (quests || []).filter((q) => q.contrato && q.status === "ativa");
+  const [formAberto, setFormAberto] = React.useState(false);
+  const [fTipo, setFTipo] = React.useState("cabeca");
+  const [fAlvo, setFAlvo] = React.useState("");
+  const [fRecompensa, setFRecompensa] = React.useState("");
+  const justa = recompensaJusta(fTipo, nivel || 1);
+  const totalOuro = (moedas || 0) + (cofre || 0);
+  const valorDecreto = Math.max(5, parseInt(fRecompensa || "", 10) || justa);
+  const cartazDecreto = (d) => {
+    const t = tipoDecreto(d.tipo);
+    const cor = d.status === "pregado" ? T.line : d.status === "aceito" ? T.violet : T.amber;
+    return (
+      <div key={d.id} className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${cor}`, opacity: d.status === "resolvido" ? 0.65 : 1 }}>
+        <div className="flex items-start justify-between gap-2">
+          <span className="tv-display text-base leading-tight" style={{ color: T.ink }}>{t.icone} {d.alvo}</span>
+          <span className="tv-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>◉ {d.recompensa}</span>
+        </div>
+        <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{d.descricao}</div>
+        <div className="tv-mono text-[9px] mt-1.5" style={{ color: d.status === "pregado" ? T.inkDim : d.status === "aceito" ? T.violetSoft : T.amberSoft }}>
+          {d.status === "pregado" && "📌 pregado — aguardando quem tope o serviço…"}
+          {d.status === "aceito" && `🗡 ${d.grupo ? d.grupo.bando : "um bando"} partiu para o serviço (dia ${(d.dias || 0) + 1})`}
+          {d.status === "resolvido" && ROTULO_DESFECHO[d.desfecho]}
+        </div>
+        {d.status === "pregado" && (
+          <button onClick={() => cancelarDecreto(d.id)} className="tv-mono text-[9px] mt-1.5 px-1.5 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>✕ retirar cartaz (devolve ◉ {d.recompensa})</button>
+        )}
+      </div>
+    );
+  };
+  const cartaz = (c) => {
+    const icone = ICONE_CONTRATO[c.tipo] || "📜";
+    return (
+      <div key={c.id} className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+        <div className="flex items-start justify-between gap-2">
+          <span className="tv-display text-base leading-tight" style={{ color: T.ink }}>{icone} {c.titulo}</span>
+          <span className="tv-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>◉ {c.recompensa.moedas} · {c.recompensa.xp} XP</span>
+        </div>
+        <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{c.descricao}</div>
+        <button onClick={() => aceitarContrato(c)}
+          className="tv-mono text-[10px] mt-2 px-2 py-1 rounded"
+          style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>
+          ✍ aceitar contrato
+        </button>
+      </div>
+    );
+  };
+  return (
+    <div className="space-y-3">
+      <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>
+        Cartazes pregados nos portões e tavernas da região. A recompensa é paga automaticamente quando o serviço é concluído de verdade na história. O mural é renovado a cada descanso longo.
+      </div>
+      {ativos.length > 0 && (
+        <div>
+          <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mb-1.5" style={{ color: T.amber }}>Contratos em andamento</p>
+          <div className="space-y-2">
+            {ativos.map((q) => (
+              <div key={q.titulo} className="rounded-xl p-3 flex items-start justify-between gap-2" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
+                <div className="min-w-0">
+                  <div className="tv-display text-base leading-tight" style={{ color: T.ink }}>🗡 {q.titulo}</div>
+                  <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{q.descricao}</div>
+                  <div className="tv-mono text-[9px] mt-1" style={{ color: T.violetSoft }}>recompensa: ◉ {q.contrato.moedas} · {q.contrato.xp} XP</div>
+                </div>
+                <button onClick={() => abandonarContrato(q.titulo)} className="tv-mono text-[9px] px-1.5 py-1 rounded shrink-0" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title="Abandonar">✕</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <div>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mb-1.5" style={{ color: T.amber }}>Cartazes disponíveis</p>
+        {(mural || []).length === 0 ? (
+          <div className="text-center py-6">
+            <div className="tv-body text-sm italic mb-3" style={{ color: T.inkDim }}>Nenhum cartaz por aqui…</div>
+            <button onClick={() => garantirMural(true)} className="tv-mono text-[10px] px-3 py-1.5 rounded" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>📌 procurar cartazes</button>
+          </div>
+        ) : (
+          <div className="space-y-2">{mural.map(cartaz)}</div>
+        )}
+      </div>
+      {acampado && <div className="tv-body text-[11px] italic text-center" style={{ color: T.inkDim }}>Dica: ao sair do acampamento com um descanso longo, cartazes novos aparecem no mural.</div>}
+
+      {/* SEUS DECRETOS: o reverso do mural — você oferece ouro, o mundo trabalha */}
+      <div>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mb-1.5" style={{ color: T.violetSoft }}>Seus decretos e recompensas</p>
+        <div className="tv-body text-xs italic mb-2" style={{ color: T.inkDim }}>
+          Pregue seus próprios cartazes: a recompensa fica retida na hora (bolso + cofre da guilda), aventureiros do mundo podem aceitar — e voltam em alguns dias com o resultado. Fracasso: o ouro volta todo para você.
+        </div>
+        {(decretos || []).length > 0 && <div className="space-y-2 mb-2">{decretos.map(cartazDecreto)}</div>}
+        {!formAberto ? (
+          <button onClick={() => { setFormAberto(true); setFRecompensa(String(recompensaJusta(fTipo, nivel || 1))); }} className="tv-mono text-[10px] px-3 py-1.5 rounded w-full" style={{ border: `1px solid ${T.violet}`, color: T.violetSoft }}>📣 pregar um decreto</button>
+        ) : (
+          <div className="rounded-xl p-3 space-y-2" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
+            <div className="flex gap-1.5 flex-wrap">
+              {TIPOS_DECRETO.map((t) => (
+                <button key={t.id} onClick={() => { setFTipo(t.id); setFRecompensa(String(recompensaJusta(t.id, nivel || 1))); }}
+                  className="tv-mono text-[9px] px-2 py-1 rounded"
+                  style={{ background: fTipo === t.id ? T.violet : "transparent", color: fTipo === t.id ? T.onAccent : T.inkDim, border: `1px solid ${fTipo === t.id ? T.violet : T.line}` }}>
+                  {t.icone} {t.rotulo}
+                </button>
+              ))}
+            </div>
+            <input value={fAlvo} onChange={(e) => setFAlvo(e.target.value)} placeholder="Alvo — ex.: o líder de Ferroval, a Cripta dos Sussurros, a caravana de Bruna…"
+              className="w-full tv-body text-sm rounded-lg px-3 py-2" style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.ink }} />
+            <div className="flex items-center gap-2">
+              <span className="tv-mono text-[10px] shrink-0" style={{ color: T.inkDim }}>◉ recompensa:</span>
+              <input value={fRecompensa} onChange={(e) => setFRecompensa(e.target.value.replace(/\D/g, ""))} inputMode="numeric"
+                className="w-24 tv-mono text-sm rounded-lg px-2 py-1.5 text-center" style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.amberSoft }} />
+              <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>justa ≈ ◉ {justa} · quanto mais generosa, mais chance de aceitarem</span>
+            </div>
+            <div className="tv-mono text-[9px]" style={{ color: totalOuro >= valorDecreto ? T.inkDim : "#e07070" }}>
+              Ouro disponível (bolso + cofre): ◉ {totalOuro}{totalOuro < valorDecreto ? " — insuficiente" : ""}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => { pregarDecreto({ tipo: fTipo, alvo: fAlvo, recompensa: valorDecreto }); setFormAberto(false); setFAlvo(""); }}
+                disabled={!fAlvo.trim() || totalOuro < valorDecreto}
+                className="flex-1 tv-mono text-[10px] px-3 py-2 rounded"
+                style={{ background: T.violet, color: T.onAccent, opacity: (!fAlvo.trim() || totalOuro < valorDecreto) ? 0.4 : 1 }}>
+                📣 pregar (retém ◉ {valorDecreto})
+              </button>
+              <button onClick={() => setFormAberto(false)} className="tv-mono text-[10px] px-3 py-2 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>cancelar</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* Painel de DIPLOMACIA: as potências conhecidas (guildas, reinos, cultos…),
    relação, tratado e ações de política. As propostas vão para a ficção —
    o Mestre decide a resposta delas; o app só registra os tratados firmados. */
@@ -1346,10 +1482,10 @@ function PainelDiplomacia({ mapa, faccaoJogador, onDiplomacia, onPresente, cofre
 const ROTULO_AMEACA = { fraco: "fraca", comum: "comum", competente: "competente", elite: "elite", lendario: "lendária" };
 const CATEGORIAS_CONQUISTA = [
   { id: "lamina", rotulo: "Lâmina", ids: ["primeiro_sangue", "dez_abatidos", "cinquenta_abatidos", "cem_abatidos", "matador_elite", "cinco_elites", "matador_lendario", "tres_lendarios", "primeiro_critico", "dez_criticos", "primeiro_desastre", "cinco_vitorias", "quinze_vitorias", "fio_da_morte"] },
-  { id: "estrada", rotulo: "Estrada", ids: ["primeira_viagem", "dez_viagens", "vintecinco_viagens", "dez_perigos", "dez_criaturas", "vinte_criaturas"] },
+  { id: "estrada", rotulo: "Estrada", ids: ["primeira_viagem", "dez_viagens", "vintecinco_viagens", "dez_perigos", "dez_criaturas", "vinte_criaturas", "primeira_masmorra", "cinco_masmorras", "primeiro_contrato", "dez_contratos"] },
   { id: "coracao", rotulo: "Coração", ids: ["primeiro_companheiro", "tres_companheiros", "cinco_pessoas", "quinze_pessoas", "trinta_pessoas", "primeiro_presente", "cinco_presentes", "vinculo_amizade", "vinculos_tres", "vinculo_profundo"] },
   { id: "ouro", rotulo: "Ouro", ids: ["cem_moedas", "quinhentas_moedas", "mil_moedas", "cofre_gordo", "primeiro_forjado", "dez_desmontados", "item_lendario"] },
-  { id: "coroa", rotulo: "Coroa", ids: ["fundador", "primeira_cidade", "tres_dominios", "cinco_dominios", "guilda_nv3", "guilda_nv5", "primeira_alianca", "tres_tratados", "primeiro_vassalo", "primeira_guerra"] },
+  { id: "coroa", rotulo: "Coroa", ids: ["fundador", "primeira_cidade", "tres_dominios", "cinco_dominios", "guilda_nv3", "guilda_nv5", "primeira_alianca", "tres_tratados", "primeiro_vassalo", "primeira_guerra", "primeiro_decreto", "cinco_decretos"] },
   { id: "lenda", rotulo: "Lenda", ids: ["nv5", "nv10", "nv15", "nv20"] },
 ];
 
@@ -1488,7 +1624,7 @@ function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, con
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1643,6 +1779,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
         {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} />}
+        {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} />}
         {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).length >= MAX_COMPANHEIROS} />}
 
         {aba === "gestao" && subGestao === "diplomacia" && <PainelDiplomacia mapa={mapa} faccaoJogador={faccaoJogador} onDiplomacia={onDiplomacia} onPresente={onPresente} cofre={guilda && guilda.cofre} />}
@@ -2263,7 +2400,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.2 · forja e loot</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.4 · decretos</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2664,6 +2801,14 @@ export default function Taverna() {
   const [tituloAtivo, setTituloAtivo] = useState("");
   const descobRef = useRef([]);
   const [descobertas, setDescobertas] = useState([]);
+  /* MASMORRA (v6.3): masmorra ativa gerada por tabela — o app resolve as salas */
+  const masmorraRef = useRef(null);
+  const [masmorra, setMasmorra] = useState(null);
+  /* MURAL DE CONTRATOS (v6.3): 3 trabalhos por tabela, recompensa paga por código */
+  const muralRef = useRef([]);
+  const [mural, setMural] = useState([]);
+  const decretosRef = useRef([]);
+  const [decretos, setDecretos] = useState([]);
   const mostrarRolagensRef = useRef(true);
 
   /* rola para o fim SÓ quando chega mensagem nova E o jogador já estava no fim.
@@ -2717,6 +2862,7 @@ export default function Taverna() {
       combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
+      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current,
       historia: historiaRef.current, quests: questsRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
@@ -2813,6 +2959,7 @@ export default function Taverna() {
     /* MISSÕES E ARCO: registra quests e avanço de ato vindos do Mestre */
     if (resp.mudancas) {
       const md2 = resp.mudancas;
+      let recompensaContrato = null; // contratos pagos por código ao concluir
       [].concat(md2.quest_nova || []).forEach((q) => {
         if (!q || !q.titulo) return;
         if (questsRef.current.some((x) => x.titulo.toLowerCase() === q.titulo.toLowerCase())) return;
@@ -2824,12 +2971,25 @@ export default function Taverna() {
         questsRef.current = questsRef.current.map((x) => {
           if (x.titulo.toLowerCase() !== q.titulo.toLowerCase()) return x;
           const nova = { ...x, status: q.status || x.status, nota: q.nota !== undefined ? q.nota : x.nota };
-          if (q.status === "concluida" && x.status !== "concluida") msgs.push(`✓ Missão concluída: ${x.titulo}`);
+          if (q.status === "concluida" && x.status !== "concluida") {
+            msgs.push(`✓ Missão concluída: ${x.titulo}`);
+            /* CONTRATO: o pagamento sai por CÓDIGO no momento da conclusão */
+            if (x.contrato && !recompensaContrato) recompensaContrato = x.contrato;
+          }
           else if (q.status === "falhada" && x.status !== "falhada") msgs.push(`✗ Missão falhou: ${x.titulo}`);
           else if (q.nota) msgs.push(`📜 ${x.titulo}: ${q.nota}`);
           return nova;
         });
       });
+      if (recompensaContrato) {
+        bumpCont("contratosConcluidos");
+        const r = recompensaContrato;
+        const p2 = aplicarNivel({ ...pers, moedas: (pers.moedas || 0) + r.moedas, xp: (pers.xp || 0) + r.xp });
+        msgs.push(`📋 Contrato pago pelo sistema: +${r.moedas} moedas · +${r.xp} XP`);
+        pers = p2; setPersonagem(p2);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONTRATO PAGO pelo sistema: +${r.moedas} moedas e +${r.xp} XP — NÃO envie moedas nem xp por esse serviço, seria dobrado.]`;
+        recompensaContrato = null;
+      }
       if (md2.historia_avancar) {
         const h = historiaRef.current;
         const est = estruturaPorId(h.estrutura);
@@ -2952,9 +3112,22 @@ export default function Taverna() {
           p2 = { ...p2, equipamento: [...(p2.equipamento || []), itemCaido] };
           msgs.push(`✦ Espólio raro: ${itemCaido.nome} (${RARIDADE_ROTULO[itemCaido.raridade] || itemCaido.raridade}) — na mochila de equipamentos`);
         }
+        /* MASMORRA: vitória na sala do CHEFE conclui a masmorra por código —
+           moedas do fundo + item épico/lendário garantido */
+        let chefeCaido = false;
+        if (masmorraRef.current && masmorraRef.current.salas[masmorraRef.current.idx] && masmorraRef.current.salas[masmorraRef.current.idx].tipo === "chefe") {
+          const mm = masmorraRef.current;
+          const sala = mm.salas[mm.idx];
+          const rec = recompensaChefe(p2.nivel || 1);
+          p2 = { ...p2, moedas: (p2.moedas || 0) + (sala.moedas || 0), equipamento: [...(p2.equipamento || []), rec.item] };
+          msgs.push(`🕳 ${mm.nome} CONCLUÍDA! Tesouro do fundo: +${sala.moedas} moedas · ✦ ${rec.item.nome} (${RARIDADE_ROTULO[rec.item.raridade] || rec.item.raridade})`);
+          masmorraRef.current = null; setMasmorra(null);
+          bumpCont("masmorrasConcluidas");
+          chefeCaido = true;
+        }
         pers = p2;
         setPersonagem(p2);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — espólios já aplicados pelo sistema: +${esp.moedas} moedas e +${esp.xp} XP para todos] NÃO envie moedas nem xp (seria dobrado). Narre o desfecho da luta em 2-3 frases.${itemCaido ? ` O SISTEMA derrubou um item: "${itemCaido.nome}" (${itemCaido.raridade}${itemCaido.poder ? `, poder: ${itemCaido.poder}` : ""}) — já está na minha mochila, NÃO envie "adicionar_equipamento" nem "adicionar_itens". Apenas descreva o achado com emoção, coerente com os inimigos derrotados.` : " Nenhum item especial desta vez — não envie itens."}`;
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — espólios já aplicados pelo sistema: +${esp.moedas} moedas e +${esp.xp} XP para todos] NÃO envie moedas nem xp (seria dobrado). Narre o desfecho da luta em 2-3 frases.${itemCaido ? ` O SISTEMA derrubou um item: "${itemCaido.nome}" (${itemCaido.raridade}${itemCaido.poder ? `, poder: ${itemCaido.poder}` : ""}) — já está na minha mochila, NÃO envie "adicionar_equipamento" nem "adicionar_itens". Apenas descreva o achado com emoção, coerente com os inimigos derrotados.` : " Nenhum item especial desta vez — não envie itens."}${chefeCaido ? " A MASMORRA FOI CONCLUÍDA e o tesouro do chefe já foi entregue pelo sistema — narre a saída triunfal e retome o mundo lá fora." : ""}`;
       }
     }
     /* detector de repetição: mede se o Mestre voltou a usar interrupção urgente */
@@ -3058,6 +3231,9 @@ export default function Taverna() {
     conqRef.current = { desbloqueadas: {}, ordem: [] }; setConquistas(conqRef.current);
     tituloAtivoRef.current = ""; setTituloAtivo("");
     descobRef.current = []; setDescobertas([]);
+    masmorraRef.current = null; setMasmorra(null);
+    muralRef.current = gerarMural((mundo && mundo.genero) || "Fantasia medieval", 1, { cidades: [], faccoes: [] }, 3); setMural(muralRef.current);
+    decretosRef.current = []; setDecretos(decretosRef.current);
     historiaRef.current = { estrutura: (mundo && mundo.estrutura) || "jornada", etapa: 0 };
     questsRef.current = []; setQuests([]);
     bancoNomesRef.current = gerarBancoNomes(mundo);
@@ -3094,6 +3270,10 @@ export default function Taverna() {
       setConquistas(conqRef.current);
       tituloAtivoRef.current = sv.tituloAtivo || ""; setTituloAtivo(tituloAtivoRef.current);
       descobRef.current = Array.isArray(sv.descobertas) ? sv.descobertas : []; setDescobertas(descobRef.current);
+      /* MASMORRA/MURAL (v6.3): saves antigos não conhecem — começam zerados */
+      masmorraRef.current = sv.masmorra && Array.isArray(sv.masmorra.salas) ? sv.masmorra : null; setMasmorra(masmorraRef.current);
+      muralRef.current = Array.isArray(sv.mural) ? sv.mural : []; setMural(muralRef.current);
+      decretosRef.current = Array.isArray(sv.decretos) ? sv.decretos : []; setDecretos(decretosRef.current);
       historiaRef.current = sv.historia && sv.historia.estrutura ? sv.historia : { estrutura: (sv.mundo && sv.mundo.estrutura) || "jornada", etapa: 0 };
       questsRef.current = Array.isArray(sv.quests) ? sv.quests : [];
       setQuests([...questsRef.current]);
@@ -3486,6 +3666,196 @@ export default function Taverna() {
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Forjei um item na forja: ${item.nome} (${item.raridade}${item.poder ? `, ${item.poder}` : ""}).`;
   };
 
+  /* ---------------- MASMORRAS (v6.3 · tabela + código, a IA só narra) ----------------
+     Entrar gera a masmorra; cada "avançar" rola a sala: combate (abre o painel
+     pela instrução ao Mestre), armadilha/tesouro/santuário (resolvidos por
+     código na hora), enigma (cena do Mestre) e o chefe no fundo. */
+  const entrarMasmorra = () => {
+    if (bloqueado || acampadoRef.current || masmorraRef.current) return;
+    if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para explorar uma masmorra no meio de um combate." }]); return; }
+    const mm = gerarMasmorra((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1);
+    masmorraRef.current = mm; setMasmorra(mm);
+    pushMsgs([{ autor: "jogador", texto: `🕳 Encontrei uma entrada: ${mm.nome}. Vou explorar.` }]);
+    enviar(`[MASMORRA — ENTRADA · ${mm.nome}] Descobri a entrada de uma masmorra: "${mm.nome}" (${mm.salas.length} salas — o SISTEMA rola cada sala; você só narra). Descreva a fachada/entrada e a atmosfera lá dentro em 2-4 frases, costurando com a cena atual${cidadeAtualRef.current ? ` (perto de ${cidadeAtualRef.current})` : ""}. NÃO crie encontros ainda — as salas vêm pelas instruções [MASMORRA — SALA]. Termine me convidando a avançar.`, personagem);
+  };
+
+  const avancarMasmorra = () => {
+    const mm = masmorraRef.current;
+    if (!mm || bloqueado || acampadoRef.current) return;
+    if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Termine o combate antes de avançar." }]); return; }
+    const idx = mm.idx + 1;
+    if (idx >= mm.salas.length) return;
+    const sala = mm.salas[idx];
+    const mm2 = { ...mm, idx };
+    masmorraRef.current = mm2; setMasmorra(mm2);
+    const pos = `SALA ${idx}/${mm.salas.length - 1} · ${mm.nome}`;
+    if (sala.tipo === "combate" || sala.tipo === "chefe") {
+      const lista = (sala.inimigos || []).map((i) => `${i.nome} (${i.ameaca})`).join(", ");
+      enviar(`[MASMORRA — ${pos} · ${sala.tipo === "chefe" ? "CHEFE" : "COMBATE"}] Avanço para a próxima sala. O SISTEMA rolou: ${sala.tipo === "chefe" ? "A SALA DO CHEFE — " : ""}inimigos à espreita: ${lista}. Descreva a sala em 1-2 frases e ABRA O COMBATE agora com "combate_iniciar" usando EXATAMENTE esses nomes e ameaças (o app completa os números).${sala.tipo === "chefe" ? " É o confronto final desta masmorra — narre à altura." : ""}`, personagem);
+    } else if (sala.tipo === "armadilha") {
+      /* dano por código: o herói (ou um companheiro, 30%) sofre a armadilha */
+      const emComp = (personagem.grupo || []).length > 0 && Math.random() < 0.3;
+      if (emComp) {
+        const alvo = personagem.grupo[Math.floor(Math.random() * personagem.grupo.length)];
+        setPersonagem((p) => ({ ...p, grupo: (p.grupo || []).map((g) => g.nome === alvo.nome ? { ...g, vida: Math.max(0, g.vida - sala.dano) } : g) }));
+        pushMsgs([{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nome} — ${alvo.nome} sofre ${sala.dano} de dano` }]);
+        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nome}). ${alvo.nome} já sofreu ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e como o grupo reage.`, personagem);
+      } else {
+        const p2 = { ...personagem, vida: Math.max(0, personagem.vida - sala.dano) };
+        setPersonagem(p2);
+        pushMsgs([{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nome} — você sofre ${sala.dano} de dano` }]);
+        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nome}). Eu já sofri ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e o estado em que fico.`, p2);
+      }
+    } else if (sala.tipo === "tesouro") {
+      let item = null;
+      let p2 = { ...personagem, moedas: (personagem.moedas || 0) + sala.moedas };
+      if (sala.caiItem) {
+        const rar = Math.random() < 0.5 ? "incomum" : Math.random() < 0.85 ? "raro" : "epico";
+        item = gerarLoot(rar, { nivel: personagem.nivel || 1 });
+        p2 = { ...p2, equipamento: [...(p2.equipamento || []), item] };
+      }
+      setPersonagem(p2);
+      pushMsgs([{ autor: "sistema", texto: `💰 Sala do tesouro: +${sala.moedas} moedas${item ? ` · ✦ ${item.nome} (${RARIDADE_ROTULO[item.raridade]})` : ""}` }]);
+      checarConquistas(p2);
+      enviar(`[MASMORRA — ${pos} · TESOURO RESOLVIDO PELO SISTEMA] A sala guardava um tesouro: ◉ ${sala.moedas}${item ? ` e o item "${item.nome}" (${item.raridade}${item.poder ? `, ${item.poder}` : ""})` : ""} — JÁ na minha posse (NÃO envie moedas nem "adicionar_equipamento"). Descreva o achado com emoção.`, p2);
+    } else if (sala.tipo === "santuario") {
+      const cura = (mx, v) => Math.min(mx, v + Math.max(1, Math.round(mx * (sala.curaPct || 0.25))));
+      const p2 = { ...personagem, vida: cura(personagem.vidaMax, personagem.vida), mana: cura(personagem.manaMax, personagem.mana), grupo: (personagem.grupo || []).map((g) => ({ ...g, vida: cura(g.vidaMax || g.vida, g.vida) })) };
+      setPersonagem(p2);
+      pushMsgs([{ autor: "sistema", texto: `⛲ Santuário: ${sala.cena} — todos recuperam ~25% de PV e PM` }]);
+      enviar(`[MASMORRA — ${pos} · SANTUÁRIO RESOLVIDO PELO SISTEMA] A sala é um refúgio: ${sala.cena}. O grupo inteiro já recuperou parte de PV e PM (aplicado pelo app — NÃO envie cura). Narre o respiro — é um bom momento para uma conversa curta do grupo.`, p2);
+    } else if (sala.tipo === "enigma") {
+      enviar(`[MASMORRA — ${pos} · ENIGMA] A sala trava o caminho com: ${sala.cena}. Apresente a cena e o desafio NA FICÇÃO — me deixe tentar resolver com palavras ou ações. Se eu travar, dê pistas; se eu resolver (ou der uma solução esperta), o caminho abre.`, personagem);
+    }
+  };
+
+  const sairDaMasmorra = () => {
+    const mm = masmorraRef.current;
+    if (!mm) return;
+    if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para fugir da masmorra no meio de um combate." }]); return; }
+    masmorraRef.current = null; setMasmorra(null);
+    pushMsgs([{ autor: "jogador", texto: `🚪 Desisto e saio de ${mm.nome}.` }]);
+    enviar(`[MASMORRA — SAÍDA] Abandono ${mm.nome} antes do fim (a masmorra e seus tesouros ficam para trás). Narre a retirada em 2-3 frases e retome a cena do mundo lá fora.`, personagem);
+  };
+
+  /* ---------------- MURAL DE CONTRATOS (v6.3 · recompensa paga por código) ---------------- */
+  const garantirMural = (forcar = false) => {
+    if (!forcar && (muralRef.current || []).length > 0) return;
+    muralRef.current = gerarMural((mundo && mundo.genero) || "Fantasia medieval", personagem ? personagem.nivel || 1 : 1, mapaRef.current, 3);
+    setMural(muralRef.current);
+  };
+
+  const aceitarContrato = (c) => {
+    if (!c) return;
+    /* sai do mural e entra outro no lugar — o mural nunca fica vazio */
+    muralRef.current = (muralRef.current || []).filter((x) => x.id !== c.id);
+    muralRef.current = [...muralRef.current, gerarContrato((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1, mapaRef.current)];
+    setMural(muralRef.current);
+    if (!questsRef.current.some((q) => q.titulo.toLowerCase() === c.titulo.toLowerCase())) {
+      questsRef.current = [...questsRef.current, { titulo: c.titulo, descricao: c.descricao, tipo: "secundaria", status: "ativa", nota: "", contrato: c.recompensa }];
+      setQuests([...questsRef.current]);
+    }
+    setAba(null);
+    pushMsgs([{ autor: "jogador", texto: `📋 Aceito o contrato: ${c.titulo} (◉ ${c.recompensa.moedas} + ${c.recompensa.xp} XP)` }]);
+    enviar(`[CONTRATO ACEITO — ${c.titulo}] Peguei no mural: "${c.descricao}" A recompensa (◉ ${c.recompensa.moedas} e ${c.recompensa.xp} XP) será paga PELO SISTEMA ao concluir — NÃO envie moedas/xp. Costure o serviço na ficção (o objetivo está alcançável a partir da situação atual) e, quando eu CUMPRIR de verdade, marque com "quest_atualizar" {"titulo":"${c.titulo}","status":"concluida"}.`, personagem);
+  };
+
+  const abandonarContrato = (titulo) => {
+    questsRef.current = questsRef.current.filter((q) => q.titulo !== titulo);
+    setQuests([...questsRef.current]);
+    pushMsgs([{ autor: "sistema", texto: `📋 Contrato abandonado: ${titulo}` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Abandonei o contrato "${titulo}" — ele não existe mais para mim.`;
+  };
+
+  /* DECRETOS E RECOMPENSAS (v6.4): o reverso do mural — VOCÊ prega cartazes
+     oferecendo ouro e o mundo responde. O código retém a recompensa, decide
+     quem aceita (generosidade × fama), gera o bando de aventureiros e rola o
+     desfecho após alguns dias. Sucesso: o ouro retido é pago. Fracasso: volta tudo. */
+  const famaJogador = () => Math.min(0.25, ((personagem && personagem.nivel) || 1) * 0.02 + ((guildaRef.current && guildaRef.current.nivel) || 1) * 0.02);
+
+  const pregarDecreto = ({ tipo, alvo, recompensa }) => {
+    const d = criarDecreto({ tipo, alvo, recompensa, nivel: personagem.nivel || 1 });
+    const total = (personagem.moedas || 0) + ((guildaRef.current && guildaRef.current.cofre) || 0);
+    if (total < d.recompensa) { pushMsgs([{ autor: "sistema", texto: `⚠️ Ouro insuficiente: o decreto custa ◉ ${d.recompensa} retidas na hora (bolso + cofre somados: ◉ ${total}).` }]); return; }
+    /* retém: tira do bolso primeiro, o resto do cofre da guilda */
+    let falta = d.recompensa;
+    const doBolso = Math.min(personagem.moedas || 0, falta); falta -= doBolso;
+    setPersonagem((p) => ({ ...p, moedas: (p.moedas || 0) - doBolso }));
+    if (falta > 0) {
+      guildaRef.current = { ...guildaRef.current, cofre: Math.max(0, (guildaRef.current.cofre || 0) - falta) };
+      setGuilda(guildaRef.current);
+    }
+    decretosRef.current = [...decretosRef.current, d];
+    setDecretos(decretosRef.current);
+    bumpCont("decretosPregados"); checarConquistas();
+    pushMsgs([{ autor: "jogador", texto: `📣 Preguei um decreto: ${d.descricao} — Recompensa: ◉ ${d.recompensa}` }]);
+    enviar(`[DECRETO PREGADO — ${tipoDecreto(d.tipo).rotulo.toUpperCase()}] Pus cartazes pela região: "${d.descricao}" Recompensa de ◉ ${d.recompensa} JÁ RETIDA pelo sistema (não envie moedas). Reaja na ficção: tavernas comentando, interessados medindo o cartaz, o alvo talvez ficando sabendo… QUEM aceita e o RESULTADO quem decide é o sistema — NÃO invente aventureiros cumprindo isso por conta própria; narre apenas a repercussão.`, personagem);
+  };
+
+  const cancelarDecreto = (id) => {
+    const d = decretosRef.current.find((x) => x.id === id);
+    if (!d || d.status !== "pregado") return;
+    decretosRef.current = decretosRef.current.filter((x) => x.id !== id);
+    setDecretos(decretosRef.current);
+    setPersonagem((p) => ({ ...p, moedas: (p.moedas || 0) + d.recompensa }));
+    pushMsgs([{ autor: "sistema", texto: `📣 Decreto retirado: "${d.alvo}" — ◉ ${d.recompensa} devolvidas ao seu bolso.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Retirei o decreto sobre "${d.alvo}" (ninguém havia aceitado). A recompensa foi devolvida.`;
+  };
+
+  /* O mundo responde aos decretos a cada dia passado (descanso longo):
+     pregados tentam achar quem aceite; aceitos avançam até o desfecho. */
+  const processarDecretos = (pers, msgs) => {
+    if (!decretosRef.current.length) return pers;
+    let p = pers;
+    const atualizados = [];
+    for (const d of decretosRef.current) {
+      if (d.status === "pregado") {
+        const grupo = tentarAceite(d, { genero: (mundo && mundo.genero) || "Fantasia medieval", nivel: p.nivel || 1, fama: famaJogador() });
+        if (grupo) {
+          const nd = { ...d, status: "aceito", grupo, dias: 0 };
+          atualizados.push(nd);
+          msgs.push(`📣 Seu decreto sobre "${d.alvo}" foi aceito: a ${grupo.bando} (liderada por ${grupo.lider}, força ${grupo.forca}) partiu para o serviço.`);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DECRETO ACEITO — ${d.alvo}] A ${grupo.bando} (${grupo.membros.map((m) => m.nome).join(", ")}, força ${grupo.forca}) aceitou meu decreto: "${d.descricao}" Recompensa de ◉ ${d.recompensa} já está retida pelo sistema. Eles partiram; o resultado chegará pelo sistema em alguns dias — até lá, eles estão FORA DE CENA, em missão.`;
+          /* o líder vira uma pessoa conhecida */
+          if (!npcsRef.current[grupo.lider]) {
+            npcsRef.current = { ...npcsRef.current, [grupo.lider]: { nome: grupo.lider, relacao: "aliado", papel: `líder da ${grupo.bando}`, genero: mundo && mundo.genero, notas: `Aceitou seu decreto sobre "${d.alvo}".`, ultimaVez: Date.now() } };
+            setNpcs(npcsRef.current);
+          }
+        } else {
+          atualizados.push(d);
+        }
+      } else if (d.status === "aceito") {
+        const dias = (d.dias || 0) + 1;
+        if (dias < 2) { atualizados.push({ ...d, dias }); continue; }
+        const r = resolverDecreto(d);
+        const t = tipoDecreto(d.tipo);
+        const grupo = d.grupo;
+        if (r.desfecho === "dizimado") {
+          p = { ...p, moedas: (p.moedas || 0) + d.recompensa };
+          msgs.push(`☠ A ${grupo.bando} não voltou de "${d.alvo}". ◉ ${d.recompensa} devolvidas — ninguém sobrou para cobrá-las.`);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DECRETO — DESFECHO: DIZIMADO] A ${grupo.bando} inteira morreu tentando cumprir meu decreto sobre "${d.alvo}" (o alvo continua como estava — isso é CANON). A recompensa voltou ao meu bolso. Narre a notícia chegando e o peso disso; o alvo pode ter ficado MAIS forte ou alerta.`;
+        } else if (r.desfecho === "fracasso") {
+          p = { ...p, moedas: (p.moedas || 0) + d.recompensa };
+          msgs.push(`✖ A ${grupo.bando} fracassou em "${d.alvo}" e voltou de rabo entre as pernas. ◉ ${d.recompensa} devolvidas.`);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DECRETO — DESFECHO: FRACASSO] A ${grupo.bando} não conseguiu cumprir meu decreto sobre "${d.alvo}" e voltou viva, envergonhada (o alvo continua como estava — isso é CANON). A recompensa voltou ao meu bolso. Narre o retorno deles; o alvo provavelmente sabe que foi visado.`;
+        } else {
+          const baixas = r.desfecho === "sucesso_baixas";
+          const mortos = baixas ? grupo.membros.filter(() => Math.random() < 0.4).map((m) => m.nome) : [];
+          msgs.push(`${baixas ? "⚑" : "✅"} A ${grupo.bando} cumpriu seu decreto sobre "${d.alvo}"${mortos.length ? ` — mas ${mortos.join(", ")} não voltaram` : ""}! ◉ ${d.recompensa} pagas.`);
+          bumpCont("decretosCumpridos");
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DECRETO — DESFECHO: CUMPRIDO${baixas ? " COM BAIXAS" : ""}] É CANON: meu decreto sobre "${d.alvo}" foi CUMPRIDO pela ${grupo.bando}${mortos.length ? ` (${mortos.join(", ")} morreram no serviço)` : ""}. "${d.descricao}" — feito. O sistema JÁ PAGOU ◉ ${d.recompensa} a eles (não envie moedas). Narre o retorno${mortos.length ? " ensanguentado" : " triunfal"} deles e as consequências reais do feito no mundo${d.tipo === "cabeca" ? " — mandei matar alguém: se o alvo era ligado a alguma facção, a relação despenca e pode haver represálias" : ""}.`;
+        }
+        atualizados.push({ ...d, status: "resolvido", desfecho: r.desfecho });
+      } else {
+        atualizados.push(d);
+      }
+    }
+    /* resolvidos ficam no histórico visual por um tempo, mas saem da lista ativa após o próximo ciclo */
+    decretosRef.current = atualizados.filter((d) => !(d.status === "resolvido" && (d.dias || 0) >= 2)).map((d) => d.status === "resolvido" ? { ...d, dias: (d.dias || 0) + 1 } : d);
+    setDecretos(decretosRef.current);
+    return p;
+  };
+
   /* ACAMPAMENTO: pausa o "turno do mundo" — você conversa à vontade, nada avança.
      Ao sair, escolhe descanso curto/longo; o app reseta PV/PM (jogador+grupo) e o
      Mestre narra o que passou, proporcional ao tempo (nunca exagerado). */
@@ -3516,6 +3886,12 @@ export default function Taverna() {
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
     bumpCont("descansos"); checarConquistas(pers);
     if (tipo === "longo") coletarRenda(1); // uma noite inteira passou: as terras rendem
+    if (tipo === "longo") garantirMural(true); // o mural de contratos acorda com trabalho novo
+    if (tipo === "longo") { // o mundo responde aos seus decretos: quem aceita, quem volta, quem não volta
+      const antes = msgs.length;
+      pers = processarDecretos(pers, msgs);
+      if (msgs.length > antes) { setPersonagem(pers); pushMsgs(msgs.slice(antes).map((t) => ({ autor: "sistema", texto: t }))); }
+    }
     const climaNovo = tipo === "longo" ? talvezMudarClima(0.6) : null;
     const climaMsg = climaNovo ? `\n[CLIMA] O tempo virou durante a noite: agora está ${climaNovo.rotulo} — ${climaNovo.nota}.` : "";
     const dur = tipo === "longo" ? "uma noite inteira" : "cerca de uma hora";
@@ -4023,6 +4399,24 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
               </div>
             )}
 
+            {masmorra && !acampado && (
+              <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-3.5" style={{ background: T.panel, border: `1px solid ${T.violet}`, marginRight: "68px" }}>
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="tv-mono text-[10px] uppercase tracking-widest truncate" style={{ color: T.violetSoft }}>🕳 {masmorra.nome}</div>
+                  <div className="tv-mono text-[10px] shrink-0" style={{ color: T.inkDim }}>sala {masmorra.idx}/{masmorra.salas.length - 1}{masmorra.salas[masmorra.idx] ? ` · ${(ROTULO_SALA[masmorra.salas[masmorra.idx].tipo] || "").toLowerCase()}` : ""}</div>
+                </div>
+                <div className="h-1 rounded-full overflow-hidden mb-2.5" style={{ background: T.panelSoft }}>
+                  <div className="h-full rounded-full" style={{ width: `${Math.round((masmorra.idx / (masmorra.salas.length - 1)) * 100)}%`, background: T.violet }} />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={avancarMasmorra} disabled={bloqueado || !!combate} className="flex-1 tv-mono text-[11px] px-3 py-2 rounded-lg" style={{ background: T.violet, color: T.onSecond, fontWeight: 600, opacity: bloqueado || combate ? 0.45 : 1 }}>
+                    ⛏ Avançar{masmorra.salas[masmorra.idx + 1] ? ` — ${(ROTULO_SALA[masmorra.salas[masmorra.idx + 1].tipo] || "").toLowerCase()}` : ""}
+                  </button>
+                  <button onClick={sairDaMasmorra} disabled={bloqueado || !!combate} className="tv-mono text-[11px] px-3 py-2 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim, opacity: bloqueado || combate ? 0.45 : 1 }}>🚪 sair</button>
+                </div>
+              </div>
+            )}
+
             {acampado && (
               <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.amber}`, marginRight: "68px" }}>
                 <div className="tv-mono text-xs uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>⛺ Acampamento — o tempo está pausado</div>
@@ -4103,6 +4497,10 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
                   style={{ background: "transparent", color: T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600, opacity: (bloqueado || acampado) ? 0.4 : 1 }}>
                   🧭 Viajar
                 </button>
+                <button onClick={entrarMasmorra} disabled={bloqueado || acampado || !!masmorra} title="Explorar uma masmorra: salas roladas por tabela, tesouro e chefe por código" className="tv-mono text-[11px] rounded-full px-3 py-1.5"
+                  style={{ background: "transparent", color: T.violetSoft, border: `1px solid ${T.line}`, fontWeight: 600, opacity: (bloqueado || acampado || masmorra) ? 0.4 : 1 }}>
+                  🕳 Masmorra
+                </button>
               </div>
               {/* LINHA 2 — escrita: largura inteira, campo alto e confortável */}
               <div className="flex gap-2 rounded-2xl p-2 min-w-0" style={{ background: T.panel, border: `1px solid ${habSel ? T.violet : T.line}` }}>
@@ -4136,7 +4534,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

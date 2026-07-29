@@ -12,6 +12,8 @@ export const CONTADORES_INICIAIS = {
   viagens: 0, perigosEstrada: 0, descansos: 0,
   presentes: 0, recrutados: 0,
   forjados: 0, desmontados: 0,
+  contratosConcluidos: 0, masmorrasConcluidas: 0,
+  decretosPregados: 0, decretosCumpridos: 0,
 };
 
 /* Cada conquista: quando(stats) dispara; titulo = o que se equipa na ficha.
@@ -40,6 +42,12 @@ export const CONQUISTAS = [
   { id: "dez_perigos", icone: "🌲", nome: "Sobrevivente das Rotas", titulo: "Sobrevivente das Rotas", dica: "Sobreviva a 10 encontros perigosos na estrada.", quando: (s) => s.perigosEstrada >= 10 },
   { id: "dez_criaturas", icone: "📖", nome: "Naturalista", titulo: "o Naturalista", dica: "Enfrente 10 criaturas diferentes.", quando: (s) => s.criaturasDescobertas >= 10 },
   { id: "vinte_criaturas", icone: "📚", nome: "Cronista de Feras", titulo: "Cronista de Feras", dica: "Enfrente 20 criaturas diferentes.", quando: (s) => s.criaturasDescobertas >= 20 },
+  { id: "primeira_masmorra", icone: "🕳", nome: "Pés na Escuridão", titulo: "Desbravador", dica: "Conclua sua primeira masmorra.", quando: (s) => s.masmorrasConcluidas >= 1 },
+  { id: "cinco_masmorras", icone: "⚰", nome: "Senhor das Profundezas", titulo: "Senhor das Profundezas", dica: "Conclua 5 masmorras.", segredo: true, quando: (s) => s.masmorrasConcluidas >= 5 },
+  { id: "primeiro_contrato", icone: "📋", nome: "Primeiro Bico", titulo: "o Mercenário", dica: "Conclua um contrato do mural.", quando: (s) => s.contratosConcluidos >= 1 },
+  { id: "dez_contratos", icone: "🗡", nome: "Espada de Aluguel", titulo: "Espada de Aluguel", dica: "Conclua 10 contratos.", quando: (s) => s.contratosConcluidos >= 10 },
+  { id: "primeiro_decreto", icone: "📣", nome: "Serviço Terceirizado", titulo: "o Suzerano", dica: "Pregue seu primeiro decreto oferecendo recompensa.", quando: (s) => s.decretosPregados >= 1 },
+  { id: "cinco_decretos", icone: "👑", nome: "Voz do Trono", titulo: "Voz do Trono", dica: "Tenha 5 decretos cumpridos pelos seus agentes.", segredo: true, quando: (s) => s.decretosCumpridos >= 5 },
 
   /* -------- CORAÇÃO (social) -------- */
   { id: "primeiro_companheiro", icone: "🤝", nome: "Líder Nato", titulo: "Líder Nato", dica: "Recrute seu primeiro companheiro.", quando: (s) => s.recrutados >= 1 },
