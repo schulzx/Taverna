@@ -11,6 +11,7 @@ import { rolarClima, rolarEncontro } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
+import { RARIDADES, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, valorDe } from "./loot.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -1347,7 +1348,7 @@ const CATEGORIAS_CONQUISTA = [
   { id: "lamina", rotulo: "Lâmina", ids: ["primeiro_sangue", "dez_abatidos", "cinquenta_abatidos", "cem_abatidos", "matador_elite", "cinco_elites", "matador_lendario", "tres_lendarios", "primeiro_critico", "dez_criticos", "primeiro_desastre", "cinco_vitorias", "quinze_vitorias", "fio_da_morte"] },
   { id: "estrada", rotulo: "Estrada", ids: ["primeira_viagem", "dez_viagens", "vintecinco_viagens", "dez_perigos", "dez_criaturas", "vinte_criaturas"] },
   { id: "coracao", rotulo: "Coração", ids: ["primeiro_companheiro", "tres_companheiros", "cinco_pessoas", "quinze_pessoas", "trinta_pessoas", "primeiro_presente", "cinco_presentes", "vinculo_amizade", "vinculos_tres", "vinculo_profundo"] },
-  { id: "ouro", rotulo: "Ouro", ids: ["cem_moedas", "quinhentas_moedas", "mil_moedas", "cofre_gordo"] },
+  { id: "ouro", rotulo: "Ouro", ids: ["cem_moedas", "quinhentas_moedas", "mil_moedas", "cofre_gordo", "primeiro_forjado", "dez_desmontados", "item_lendario"] },
   { id: "coroa", rotulo: "Coroa", ids: ["fundador", "primeira_cidade", "tres_dominios", "cinco_dominios", "guilda_nv3", "guilda_nv5", "primeira_alianca", "tres_tratados", "primeiro_vassalo", "primeira_guerra"] },
   { id: "lenda", rotulo: "Lenda", ids: ["nv5", "nv10", "nv15", "nv20"] },
 ];
@@ -1487,8 +1488,10 @@ function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, con
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar }) {
   const [invDe, setInvDe] = React.useState("eu");
+  const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
+  const [forjaSlot, setForjaSlot] = React.useState("arma");
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
   const [confirmarRemover, setConfirmarRemover] = React.useState(null);
   const [subGestao, setSubGestao] = React.useState("ficha");    // sub-aba dentro de Gestão
@@ -1770,30 +1773,98 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
             {invDe !== "eu" ? (() => {
               const comp = (personagem.grupo || []).find((g) => g.nome === invDe);
               if (!comp) return <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Personagem não encontrado.</div>;
-              const itensComp = comp.inventario || [];
+              const equipadosComp = comp.equipados || {};
+              const ehEquipRaw = (raw) => raw && typeof raw === "object" && raw.tipo && raw.raridade;
+              const mochilaEquip = [...(comp.equipamento || []), ...(comp.inventario || []).filter(ehEquipRaw)];
+              const itensComuns = (comp.inventario || []).filter((raw) => !ehEquipRaw(raw));
               return (
-                <div>
-                  <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Bolsa de {comp.nome}</div>
-                  {itensComp.length === 0 ? <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Nada aqui ainda. Dê itens pela sua bolsa (botão "dar…").</div> : (
-                    <ul className="space-y-2">
-                      {itensComp.map((raw, i) => {
-                        const nomeIt = typeof raw === "string" ? raw : (raw && raw.nome) || "item";
-                        const desc = typeof raw === "object" && raw ? (raw.descricao || "") : "";
-                        const ehEquip = raw && typeof raw === "object" && raw.tipo && raw.raridade;
-                        return (
-                          <li key={i} className="rounded-lg px-3 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${ehEquip ? (RARIDADE_COR[raw.raridade] || T.line) : "transparent"}` }}>
-                            <div className="tv-body text-sm flex items-center gap-2.5" style={{ color: T.ink }}>
-                              <span style={{ color: T.amber }}>◆</span>
-                              <span className="flex-1 min-w-0">{nomeIt}{ehEquip ? <span className="tv-mono text-[9px]" style={{ color: RARIDADE_COR[raw.raridade] || T.inkDim }}> · {raw.raridade}</span> : null}</span>
-                              <button onClick={() => transferirItem(comp.nome, "eu", "inventario", nomeIt)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>← pegar</button>
+                <>
+                  {/* Equipado pelo companheiro */}
+                  <div>
+                    <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>{comp.nome} · equipado</div>
+                    {Object.keys(equipadosComp).length === 0 ? (
+                      <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Nada equipado. Dê um equipamento e toque em "equipar" — os bônus já valem no combate.</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {SLOTS_ORDEM.filter((s) => equipadosComp[s]).map((slot) => {
+                          const it = equipadosComp[slot];
+                          return (
+                            <div key={slot} className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${RARIDADE_COR[it.raridade] || T.line}` }}>
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="min-w-0">
+                                  <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{it.nome}</div>
+                                  <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>{SLOT_ROTULO[it.tipo] || it.tipo} · {it.raridade}</div>
+                                </div>
+                                <button onClick={() => desequiparComp(comp.nome, slot)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>tirar</button>
+                              </div>
+                              {(it.atributos && Object.keys(it.atributos).length > 0) && (
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  {Object.entries(it.atributos).map(([k, v]) => (
+                                    <span key={k} className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ background: T.panel, color: T.ok }}>+{v} {k === "dano" ? "DANO" : k === "defesa" ? "DEF" : (ATRIBUTOS.find((a) => a.id === k)?.nome || k).slice(0, 3).toUpperCase()}</span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
-                            {desc && <div className="tv-body text-xs mt-1 italic" style={{ color: T.inkDim, paddingLeft: "22px" }}>{desc}</div>}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mochila de equipamentos do companheiro */}
+                  <div>
+                    <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Equipamentos de {comp.nome}</div>
+                    {mochilaEquip.length === 0 ? <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Nenhum equipamento. Use "dar…" na sua mochila para passar um item bom para ele(a).</div> : (
+                      <div className="space-y-2">
+                        {mochilaEquip.map((it, i) => (
+                          <div key={i} className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{it.nome}</div>
+                                <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>{SLOT_ROTULO[it.tipo] || it.tipo} · {it.raridade}</div>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button onClick={() => desmontarEquip(comp.nome, it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title={`Desmontar → +${essenciaDe(it)} essência`}>⚒</button>
+                                <button onClick={() => transferirItem(comp.nome, "eu", "inventario", it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>← pegar</button>
+                                <button onClick={() => equiparComp(comp.nome, it)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>equipar</button>
+                              </div>
+                            </div>
+                            {(it.atributos && Object.keys(it.atributos).length > 0) && (
+                              <div className="flex flex-wrap gap-1.5 mt-2">
+                                {Object.entries(it.atributos).map(([k, v]) => (
+                                  <span key={k} className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ background: T.panel, color: T.ok }}>+{v} {k === "dano" ? "DANO" : k === "defesa" ? "DEF" : (ATRIBUTOS.find((a) => a.id === k)?.nome || k).slice(0, 3).toUpperCase()}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Itens comuns do companheiro */}
+                  <div>
+                    <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Bolsa de {comp.nome}</div>
+                    {itensComuns.length === 0 ? <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Bolsos vazios.</div> : (
+                      <ul className="space-y-2">
+                        {itensComuns.map((raw, i) => {
+                          const nomeIt = typeof raw === "string" ? raw : (raw && raw.nome) || "item";
+                          const desc = typeof raw === "object" && raw ? (raw.descricao || "") : "";
+                          return (
+                            <li key={i} className="rounded-lg px-3 py-2.5" style={{ background: T.panelSoft }}>
+                              <div className="tv-body text-sm flex items-center gap-2.5" style={{ color: T.ink }}>
+                                <span style={{ color: T.amber }}>◆</span>
+                                <span className="flex-1 min-w-0">{nomeIt}</span>
+                                <button onClick={() => transferirItem(comp.nome, "eu", "inventario", nomeIt)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>← pegar</button>
+                              </div>
+                              {desc && <div className="tv-body text-xs mt-1 italic" style={{ color: T.inkDim, paddingLeft: "22px" }}>{desc}</div>}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                </>
               );
             })() : (
             <>
@@ -1852,7 +1923,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                             <option value="">dar…</option>
                             {(personagem.grupo || []).map((g) => <option key={g.nome} value={g.nome}>{g.nome}</option>)}
                           </select>
-                        )}<button onClick={() => descartarEquip(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title="Descartar">✕</button><button onClick={() => equipar(it)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>equipar</button></div>
+                        )}<button onClick={() => desmontarEquip("eu", it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title={`Desmontar → +${essenciaDe(it)} ⚗ essência`}>⚒</button><button onClick={() => descartarEquip(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title="Descartar">✕</button><button onClick={() => equipar(it)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>equipar</button></div>
                       </div>
                       {(it.atributos && Object.keys(it.atributos).length > 0) && (
                         <div className="flex flex-wrap gap-1.5 mt-2">
@@ -1868,6 +1939,42 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                 </div>
               </div>
             )}
+
+            {/* Forja — fabricação básica por código */}
+            <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.amberSoft }}>⚒ Forja</div>
+                <div className="tv-mono text-[11px]" style={{ color: T.violetSoft }}>⚗ {personagem.essencia || 0} essência</div>
+              </div>
+              {!forjaAberta ? (
+                <>
+                  <div className="tv-body text-[11px] mb-2" style={{ color: T.inkDim }}>Desmonte equipamentos (botão ⚒) para ganhar essência e forje peças novas — o item sai pela tabela, na hora, sem gastar tokens.</div>
+                  <button onClick={() => setForjaAberta(true)} className="w-full tv-mono text-[11px] px-3 py-2 rounded-lg" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>abrir a forja</button>
+                </>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <select value={forjaSlot} onChange={(e) => setForjaSlot(e.target.value)} className="flex-1 tv-mono text-[11px] rounded-lg px-2 py-2 outline-none" style={{ background: T.panel, color: T.ink, border: `1px solid ${T.line}` }}>
+                      {SLOTS_ORDEM.map((s) => <option key={s} value={s}>{SLOT_ROTULO[s] || s}</option>)}
+                    </select>
+                    <button onClick={() => setForjaAberta(false)} className="tv-mono text-[11px] px-2 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>✕</button>
+                  </div>
+                  {RARIDADES.map((rar) => {
+                    const c = CUSTO_FORJA[rar];
+                    const okE = (personagem.essencia || 0) >= c.essencia, okM = (personagem.moedas || 0) >= c.moedas;
+                    return (
+                      <button key={rar} onClick={() => { forjar(forjaSlot, rar); }} disabled={!okE || !okM}
+                        className="w-full rounded-lg px-3 py-2 flex items-center justify-between"
+                        style={{ border: `1px solid ${RARIDADE_COR[rar] || T.line}`, color: RARIDADE_COR[rar] || T.ink, opacity: okE && okM ? 1 : 0.45 }}>
+                        <span className="tv-mono text-[11px] font-semibold">{RARIDADE_ROTULO[rar]}</span>
+                        <span className="tv-mono text-[10px]">⚗ {c.essencia}{c.moedas ? ` · ◉ ${c.moedas}` : ""}</span>
+                      </button>
+                    );
+                  })}
+                  <div className="tv-body text-[10px] italic" style={{ color: T.inkDim }}>O item forjado cai na mochila de equipamentos — equipe você ou passe para o grupo.</div>
+                </div>
+              )}
+            </div>
 
             {/* Bolsa (itens comuns) */}
             <div>
@@ -2156,7 +2263,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.1 · vínculos</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.2 · forja e loot</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2254,9 +2361,15 @@ function aplicarMudancas(pers, m, msgs) {
     grupo = grupo.map((g) => {
       if (g.nome.toLowerCase() !== (gi.nome || "").toLowerCase()) return g;
       let inv2 = [...(g.inventario || [])];
-      (gi.adicionar || []).forEach((it) => { inv2.push(it); msgs.push(`◆ ${g.nome} obteve: ${nomeItem(it)}`); });
+      let eqp2 = [...(g.equipamento || [])];
+      (gi.adicionar || []).forEach((it) => {
+        const ehEquip = it && typeof it === "object" && it.tipo && it.raridade;
+        if (ehEquip) eqp2.push(it); else inv2.push(it);
+        msgs.push(`◆ ${g.nome} obteve: ${nomeItem(it)}`);
+      });
+      (gi.remover || []).forEach((r) => { const ix = eqp2.findIndex((x) => nomeItem(x).toLowerCase() === String(r).toLowerCase()); if (ix >= 0) { msgs.push(`${g.nome} perdeu: ${nomeItem(eqp2[ix])}`); eqp2.splice(ix, 1); } });
       (gi.remover || []).forEach((r) => { const ix = inv2.findIndex((x) => nomeItem(x).toLowerCase() === String(r).toLowerCase()); if (ix >= 0) { msgs.push(`${g.nome} perdeu: ${nomeItem(inv2[ix])}`); inv2.splice(ix, 1); } });
-      return { ...g, inventario: inv2 };
+      return { ...g, inventario: inv2, equipamento: eqp2 };
     });
   });
   (m.grupo_atualizar || []).forEach((ga) => {
@@ -2424,8 +2537,9 @@ function migrarPersonagem(p) {
     atributos: { ...atributosBase, ...(p.atributos || {}) },
     inventario: Array.isArray(p.inventario) ? p.inventario : [],
     habilidades: Array.isArray(p.habilidades) ? p.habilidades.filter((h) => h && h.nome).map((h) => ({ nome: h.nome, custo: Math.max(0, Number(h.custo) || 0), descricao: h.descricao || "", duracao: h.duracao || 0 })) : [],
-    grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, xp: g.xp || 0, nivel: g.nivel || 1, inventario: Array.isArray(g.inventario) ? g.inventario : [], semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}`, vinculo: g.vinculo ?? VINCULO_INICIAL, marcos: Array.isArray(g.marcos) ? g.marcos : [] })) : [],
+    grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, xp: g.xp || 0, nivel: g.nivel || 1, inventario: Array.isArray(g.inventario) ? g.inventario : [], equipamento: Array.isArray(g.equipamento) ? g.equipamento : [], equipados: g.equipados && typeof g.equipados === "object" ? g.equipados : {}, semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}`, vinculo: g.vinculo ?? VINCULO_INICIAL, marcos: Array.isArray(g.marcos) ? g.marcos : [] })) : [],
     antecedente: p.antecedente || "", antecedenteGancho: p.antecedenteGancho || "",
+    essencia: p.essencia || 0,
     efeitos: Array.isArray(p.efeitos) ? p.efeitos : [],
     condicoes: Array.isArray(p.condicoes) ? p.condicoes : [],
     equipamento: Array.isArray(p.equipamento) ? p.equipamento : [],
@@ -2830,9 +2944,17 @@ export default function Taverna() {
         bumpCont("lendariosDerrotados", fins.filter((e) => e.ameaca === "lendario").length);
         /* VÍNCULO: sangue derramado junto aproxima (+2 para todo o grupo) */
         p2 = { ...p2, grupo: aplicarVinculo(p2.grupo, "todos", 2, msgs) };
+        /* LOOT PROCEDURAL: quando cai item, o CÓDIGO gera pela tabela (a IA só
+           descreve o achado — não inventa mais equipamento de vitória) */
+        let itemCaido = null;
+        if (esp.caiItem) {
+          itemCaido = gerarEspolioItem(resp.mudancas.__inimigosFinais || [], p2.nivel || 1);
+          p2 = { ...p2, equipamento: [...(p2.equipamento || []), itemCaido] };
+          msgs.push(`✦ Espólio raro: ${itemCaido.nome} (${RARIDADE_ROTULO[itemCaido.raridade] || itemCaido.raridade}) — na mochila de equipamentos`);
+        }
         pers = p2;
         setPersonagem(p2);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — espólios já aplicados pelo sistema: +${esp.moedas} moedas e +${esp.xp} XP para todos] NÃO envie moedas nem xp (seria dobrado). Narre o desfecho da luta em 2-3 frases.${esp.caiItem ? ` UM ITEM CAIU: crie UM item coerente com os inimigos derrotados e envie via "adicionar_equipamento" (com raridade proporcional à ameaça) ou "adicionar_itens".` : " Nenhum item especial desta vez — não envie itens."}`;
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — espólios já aplicados pelo sistema: +${esp.moedas} moedas e +${esp.xp} XP para todos] NÃO envie moedas nem xp (seria dobrado). Narre o desfecho da luta em 2-3 frases.${itemCaido ? ` O SISTEMA derrubou um item: "${itemCaido.nome}" (${itemCaido.raridade}${itemCaido.poder ? `, poder: ${itemCaido.poder}` : ""}) — já está na minha mochila, NÃO envie "adicionar_equipamento" nem "adicionar_itens". Apenas descreva o achado com emoção, coerente com os inimigos derrotados.` : " Nenhum item especial desta vez — não envie itens."}`;
       }
     }
     /* detector de repetição: mede se o Mestre voltou a usar interrupção urgente */
@@ -3292,6 +3414,78 @@ export default function Taverna() {
     pushMsgs([{ autor: "sistema", texto: `Equipamento descartado: ${nome}` }]);
   };
 
+  /* ---------------- EQUIPAMENTO DOS COMPANHEIROS (100% app) ----------------
+     O jogador gerencia o que cada companheiro veste — nada de "dar o item e
+     ele não equipar". Bônus valem no combate por código (arma = dano, defesa = CA). */
+  const equiparComp = (nomeComp, item) => {
+    if (!item || !item.nome) return;
+    setPersonagem((p) => ({
+      ...p,
+      grupo: (p.grupo || []).map((g) => {
+        if (g.nome !== nomeComp) return g;
+        const slot = item.tipo || "arma";
+        let inv = (g.inventario || []).filter((x) => (typeof x === "string" ? x : (x && x.nome)) !== item.nome);
+        let eqp = (g.equipamento || []).filter((x) => x.nome !== item.nome);
+        const equipados = { ...(g.equipados || {}) };
+        const antigo = equipados[slot];
+        if (antigo) eqp = [...eqp, antigo]; // o que estava no slot volta para a mochila
+        equipados[slot] = item;
+        return { ...g, inventario: inv, equipamento: eqp, equipados };
+      }),
+    }));
+    pushMsgs([{ autor: "sistema", texto: `⚔ ${nomeComp} equipou: ${item.nome}` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] ${nomeComp} agora usa ${item.nome} (equipado pelo jogador). Reflita isso na ficção.`;
+  };
+
+  const desequiparComp = (nomeComp, slot) => {
+    setPersonagem((p) => ({
+      ...p,
+      grupo: (p.grupo || []).map((g) => {
+        if (g.nome !== nomeComp) return g;
+        const equipados = { ...(g.equipados || {}) };
+        const it = equipados[slot];
+        if (!it) return g;
+        delete equipados[slot];
+        return { ...g, equipados, equipamento: [...(g.equipamento || []), it] };
+      }),
+    }));
+  };
+
+  /* ---------------- FORJA (fabricação básica, 100% por código) ----------------
+     Desmontar equipamento → essência. Essência + moedas → item procedural novo. */
+  const desmontarEquip = (de, nome) => {
+    if (de === "eu") {
+      const it = (personagem.equipamento || []).find((e) => e.nome === nome);
+      if (!it) return;
+      const ganho = essenciaDe(it);
+      setPersonagem((p) => ({ ...p, equipamento: (p.equipamento || []).filter((e) => e.nome !== nome), essencia: (p.essencia || 0) + ganho }));
+      pushMsgs([{ autor: "sistema", texto: `⚒ Desmontado: ${nome} → +${ganho} ⚗ essência` }]);
+    } else {
+      const g = (personagem.grupo || []).find((x) => x.nome === de);
+      const it = g && (g.equipamento || []).find((e) => e.nome === nome);
+      if (!it) return;
+      const ganho = essenciaDe(it);
+      setPersonagem((p) => ({
+        ...p, essencia: (p.essencia || 0) + ganho,
+        grupo: (p.grupo || []).map((x) => x.nome === de ? { ...x, equipamento: (x.equipamento || []).filter((e) => e.nome !== nome) } : x),
+      }));
+      pushMsgs([{ autor: "sistema", texto: `⚒ Desmontado (${de}): ${nome} → +${ganho} ⚗ essência` }]);
+    }
+    bumpCont("desmontados"); checarConquistas();
+  };
+
+  const forjar = (slot, raridade) => {
+    const custo = CUSTO_FORJA[raridade];
+    if (!custo) return;
+    if ((personagem.essencia || 0) < custo.essencia) { pushMsgs([{ autor: "sistema", texto: `⚒ Essência insuficiente: forjar ${RARIDADE_ROTULO[raridade]} pede ⚗ ${custo.essencia} (você tem ${personagem.essencia || 0}). Desmonte equipamentos.` }]); return; }
+    if ((personagem.moedas || 0) < custo.moedas) { pushMsgs([{ autor: "sistema", texto: `⚒ Moedas insuficientes: forjar ${RARIDADE_ROTULO[raridade]} pede ◉ ${custo.moedas}.` }]); return; }
+    const item = gerarLoot(raridade, { tipo: slot, nivel: personagem.nivel || 1 });
+    setPersonagem((p) => ({ ...p, essencia: (p.essencia || 0) - custo.essencia, moedas: (p.moedas || 0) - custo.moedas, equipamento: [...(p.equipamento || []), item] }));
+    pushMsgs([{ autor: "sistema", texto: `⚒ Forjado: ${item.nome} (${RARIDADE_ROTULO[item.raridade] || item.raridade}) — na mochila de equipamentos` }]);
+    bumpCont("forjados"); checarConquistas();
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Forjei um item na forja: ${item.nome} (${item.raridade}${item.poder ? `, ${item.poder}` : ""}).`;
+  };
+
   /* ACAMPAMENTO: pausa o "turno do mundo" — você conversa à vontade, nada avança.
      Ao sair, escolhe descanso curto/longo; o app reseta PV/PM (jogador+grupo) e o
      Mestre narra o que passou, proporcional ao tempo (nunca exagerado). */
@@ -3469,6 +3663,7 @@ export default function Taverna() {
       guerras: fs.filter((f) => f.tratado === "guerra").length,
       vinculoAmizade: (p.grupo || []).filter((g) => (g.vinculo || 0) >= 50).length,
       vinculoProfundo: (p.grupo || []).filter((g) => (g.vinculo || 0) >= 100).length,
+      itemLendario: [...(p.equipamento || []), ...Object.values(p.equipados || {}), ...(p.grupo || []).flatMap((g) => [...(g.equipamento || []), ...Object.values(g.equipados || {})])].some((i) => i && i.raridade === "lendario"),
     };
     const novas = avaliarConquistas(stats, conqRef.current.desbloqueadas);
     if (!novas.length) return;
@@ -3681,15 +3876,26 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
       np[origem] = arr;
       const gi = np.grupo.findIndex((g) => g.nome === para);
       if (gi < 0) return;
-      np.grupo[gi] = { ...np.grupo[gi], inventario: [...(np.grupo[gi].inventario || []), item] };
+      /* equipamentos vão para a mochila de equipamentos do companheiro (ele pode equipar) */
+      const ehEquipDar = item && typeof item === "object" && item.tipo && item.raridade;
+      np.grupo[gi] = ehEquipDar
+        ? { ...np.grupo[gi], equipamento: [...(np.grupo[gi].equipamento || []), item] }
+        : { ...np.grupo[gi], inventario: [...(np.grupo[gi].inventario || []), item] };
     } else {
       const gi = np.grupo.findIndex((g) => g.nome === de);
       if (gi < 0) return;
-      const arr = [...(np.grupo[gi].inventario || [])];
-      const i = arr.findIndex(igual);
+      /* procura primeiro na bolsa comum, depois na mochila de equipamentos */
+      let arr = [...(np.grupo[gi].inventario || [])];
+      let i = arr.findIndex(igual);
+      let eraEquip = false;
+      if (i < 0) {
+        arr = [...(np.grupo[gi].equipamento || [])];
+        i = arr.findIndex(igual);
+        eraEquip = i >= 0;
+      }
       if (i < 0) return;
       item = arr.splice(i, 1)[0];
-      np.grupo[gi] = { ...np.grupo[gi], inventario: arr };
+      np.grupo[gi] = eraEquip ? { ...np.grupo[gi], equipamento: arr } : { ...np.grupo[gi], inventario: arr };
       const ehEquip = item && typeof item === "object" && item.tipo && item.raridade;
       if (ehEquip) np.equipamento = [...(np.equipamento || []), item]; else np.inventario = [...(np.inventario || []), item];
     }
@@ -3930,7 +4136,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

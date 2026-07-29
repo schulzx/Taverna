@@ -176,9 +176,11 @@ export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido =
     if (inimigosVivos.length === 0) { acoes.push({ companheiro: comp.nome, tipo: "guarda" }); continue; }
     // ataca um inimigo (o de menor PV, para ajudar a fechar a luta)
     const alvo = [...inimigosVivos].sort((a, b) => (a.vida || 0) - (b.vida || 0))[0];
+    /* arma equipada do companheiro soma dano (gestão de equipamento pelo app) */
+    const bonusArmaComp = (comp.equipados && comp.equipados.arma && comp.equipados.arma.atributos && comp.equipados.arma.atributos.dano) || 0;
     const r = resolverAtaque({
       atacante: comp.nome, alvo, ehAtacanteInimigo: false,
-      bonusAtaque: 2 + (comp.nivel || 1), danoBase: 4 + (comp.nivel || 1) + d(4),
+      bonusAtaque: 2 + (comp.nivel || 1), danoBase: 4 + (comp.nivel || 1) + bonusArmaComp + d(4),
       condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [],
     });
     acoes.push({ companheiro: comp.nome, tipo: "ataque", alvoNome: alvo.nome, r });

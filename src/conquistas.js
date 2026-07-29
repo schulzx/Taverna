@@ -11,6 +11,7 @@ export const CONTADORES_INICIAIS = {
   combatesVencidos: 0, criticos: 0, desastres: 0, quaseMorte: 0,
   viagens: 0, perigosEstrada: 0, descansos: 0,
   presentes: 0, recrutados: 0,
+  forjados: 0, desmontados: 0,
 };
 
 /* Cada conquista: quando(stats) dispara; titulo = o que se equipa na ficha.
@@ -57,6 +58,9 @@ export const CONQUISTAS = [
   { id: "quinhentas_moedas", icone: "💰", nome: "O Próspero", titulo: "o Próspero", dica: "Junte 500 moedas.", quando: (s) => s.moedas >= 500 },
   { id: "mil_moedas", icone: "🏆", nome: "Tesouro Ambulante", titulo: "Tesouro Ambulante", dica: "Junte 1000 moedas.", quando: (s) => s.moedas >= 1000 },
   { id: "cofre_gordo", icone: "🏦", nome: "O Tesoureiro", titulo: "o Tesoureiro", dica: "Tenha 500 no cofre da guilda.", quando: (s) => s.cofre >= 500 },
+  { id: "primeiro_forjado", icone: "⚒", nome: "Aprendiz de Forja", titulo: "Martelo Novo", dica: "Forje seu primeiro item.", quando: (s) => s.forjados >= 1 },
+  { id: "dez_desmontados", icone: "🔩", nome: "Sucateiro", titulo: "o Sucateiro", dica: "Desmonte 10 equipamentos por essência.", quando: (s) => s.desmontados >= 10 },
+  { id: "item_lendario", icone: "🌟", nome: "Dono de uma Lenda", titulo: "Portador da Lenda", dica: "Possua um equipamento lendário.", quando: (s) => s.itemLendario },
 
   /* -------- COROA (gestão) -------- */
   { id: "fundador", icone: "🏛", nome: "Fundador", titulo: "o Fundador", dica: "Funde sua própria guilda.", quando: (s) => s.temGuilda },
