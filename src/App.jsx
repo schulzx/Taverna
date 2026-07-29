@@ -8,6 +8,7 @@ import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste } from
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
 import { rolarClima, rolarEncontro } from "./encontros.js";
+import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -902,7 +903,7 @@ ${banirUrgencia ? `
 
 /* Trilho enxuto (mobile): 4 abas. Ficha, Grupo, Pessoas, Guilda e Domínios
    vivem como SUB-abas dentro de Gestão. */
-const ABAS = [{ id: "gestao", rotulo: "Gestão", icone: "🏛" }, { id: "diario", rotulo: "Diário", icone: "📜" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }];
+const ABAS = [{ id: "gestao", rotulo: "Gestão", icone: "🏛" }, { id: "diario", rotulo: "Diário", icone: "📜" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }, { id: "codex", rotulo: "Códex", icone: "📖" }];
 const SUBS_GESTAO = [{ id: "ficha", rotulo: "Ficha" }, { id: "grupo", rotulo: "Grupo" }, { id: "pessoas", rotulo: "Pessoas" }, { id: "guilda", rotulo: "Guilda" }, { id: "dominios", rotulo: "Domínios" }, { id: "diplomacia", rotulo: "Diplomacia" }];
 
 const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D" };
@@ -1322,7 +1323,154 @@ function PainelDiplomacia({ mapa, faccaoJogador, onDiplomacia, onPresente, cofre
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo }) {
+/* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
+   Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
+const ROTULO_AMEACA = { fraco: "fraca", comum: "comum", competente: "competente", elite: "elite", lendario: "lendária" };
+const CATEGORIAS_CONQUISTA = [
+  { id: "lamina", rotulo: "Lâmina", ids: ["primeiro_sangue", "dez_abatidos", "cinquenta_abatidos", "cem_abatidos", "matador_elite", "cinco_elites", "matador_lendario", "tres_lendarios", "primeiro_critico", "dez_criticos", "primeiro_desastre", "cinco_vitorias", "quinze_vitorias", "fio_da_morte"] },
+  { id: "estrada", rotulo: "Estrada", ids: ["primeira_viagem", "dez_viagens", "vintecinco_viagens", "dez_perigos", "dez_criaturas", "vinte_criaturas"] },
+  { id: "coracao", rotulo: "Coração", ids: ["primeiro_companheiro", "tres_companheiros", "cinco_pessoas", "quinze_pessoas", "trinta_pessoas", "primeiro_presente", "cinco_presentes"] },
+  { id: "ouro", rotulo: "Ouro", ids: ["cem_moedas", "quinhentas_moedas", "mil_moedas", "cofre_gordo"] },
+  { id: "coroa", rotulo: "Coroa", ids: ["fundador", "primeira_cidade", "tres_dominios", "cinco_dominios", "guilda_nv3", "guilda_nv5", "primeira_alianca", "tres_tratados", "primeiro_vassalo", "primeira_guerra"] },
+  { id: "lenda", rotulo: "Lenda", ids: ["nv5", "nv10", "nv15", "nv20"] },
+];
+
+function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, mundo, npcs, mapa, personagem }) {
+  const [subCodex, setSubCodex] = React.useState("conquistas");
+  const desb = (conquistas && conquistas.desbloqueadas) || {};
+  const nDesb = CONQUISTAS.filter((c) => desb[c.id]).length;
+  const criaturas = criaturasDoGenero((mundo || {}).genero || "Fantasia medieval");
+  const descNomes = (descobertas || []).map((d) => d.toLowerCase());
+  const achadas = criaturas.filter((c) => descNomes.some((d) => d.includes(c.nome.toLowerCase())));
+  const descExtra = (descobertas || []).filter((d) => !criaturas.some((c) => d.toLowerCase().includes(c.nome.toLowerCase())));
+  const cont = contadores || {};
+  const REGISTROS = [
+    ["☠ Abates", cont.inimigosDerrotados || 0], ["🐗 Elites", cont.elitesDerrotados || 0], ["🐉 Lendárias", cont.lendariosDerrotados || 0],
+    ["🛡 Vitórias", cont.combatesVencidos || 0], ["🎯 Críticos", cont.criticos || 0], ["💥 Desastres", cont.desastres || 0],
+    ["💀 Fio da morte", cont.quaseMorte || 0], ["🧭 Viagens", cont.viagens || 0], ["🌲 Perigos na estrada", cont.perigosEstrada || 0],
+    ["⛺ Descansos", cont.descansos || 0], ["🎁 Presentes", cont.presentes || 0], ["⚑ Recrutados", cont.recrutados || 0],
+  ];
+  const SUBS = [{ id: "conquistas", rotulo: `Títulos ${nDesb}/${CONQUISTAS.length}` }, { id: "bestiario", rotulo: `Bestiário ${achadas.length}/${criaturas.length}` }, { id: "registros", rotulo: "Registros" }];
+  return (
+    <>
+      <div className="flex flex-wrap gap-1.5 -mt-2">
+        {SUBS.map((s) => (
+          <button key={s.id} onClick={() => setSubCodex(s.id)}
+            className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full"
+            style={{ background: subCodex === s.id ? T.amber : T.panelSoft, color: subCodex === s.id ? T.onAccent : T.inkDim, border: `1px solid ${subCodex === s.id ? T.amber : T.line}`, fontWeight: 600 }}>
+            {s.rotulo}
+          </button>
+        ))}
+      </div>
+
+      {subCodex === "conquistas" && (
+        <>
+          <div className="rounded-xl px-4 py-3" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+            <div className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>Título equipado</div>
+            <div className="tv-display text-xl leading-tight" style={{ color: T.amberSoft }}>{tituloAtivo ? `❝ ${tituloAtivo} ❞` : "nenhum — toque num título desbloqueado"}</div>
+          </div>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: T.panelSoft }}>
+            <div className="h-full rounded-full" style={{ width: `${Math.round((nDesb / CONQUISTAS.length) * 100)}%`, background: T.amber }} />
+          </div>
+          {CATEGORIAS_CONQUISTA.map((cat) => (
+            <div key={cat.id}>
+              <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.violetSoft }}>{cat.rotulo}</div>
+              <div className="space-y-1.5">
+                {cat.ids.map((id) => {
+                  const c = conquistaPorId(id);
+                  if (!c) return null;
+                  const aberta = !!desb[c.id];
+                  const equipado = aberta && tituloAtivo === c.titulo;
+                  return (
+                    <button key={c.id} disabled={!aberta} onClick={() => escolherTitulo(c.id)}
+                      className="w-full text-left rounded-lg px-3 py-2 flex items-center gap-2.5"
+                      style={{ background: equipado ? T.panelSoft : "transparent", border: `1px solid ${equipado ? T.amber : aberta ? T.line : T.panelSoft}`, opacity: aberta ? 1 : 0.55 }}>
+                      <span style={{ fontSize: 18, filter: aberta ? "none" : "grayscale(1)" }}>{aberta || !c.segredo ? c.icone : "❔"}</span>
+                      <span className="flex-1 min-w-0">
+                        <span className="tv-body text-sm block truncate" style={{ color: aberta ? T.ink : T.inkDim }}>
+                          {aberta || !c.segredo ? c.nome : "???"}
+                          {aberta && <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}> · “{c.titulo}”</span>}
+                        </span>
+                        <span className="tv-body text-[11px] italic block truncate" style={{ color: T.inkDim }}>
+                          {aberta ? (equipado ? "equipado — toque para desequipar" : "toque para equipar o título") : c.segredo ? "conquista secreta" : c.dica}
+                        </span>
+                      </span>
+                      {aberta && <span className="tv-mono text-xs" style={{ color: equipado ? T.amber : T.ok }}>{equipado ? "★" : "✓"}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {subCodex === "bestiario" && (
+        <>
+          <div className="tv-body text-xs" style={{ color: T.inkDim }}>
+            Criaturas que você já enfrentou em combate. As desconhecidas aguardam na estrada…
+          </div>
+          <div className="space-y-1.5">
+            {criaturas.map((c) => {
+              const vista = descNomes.some((d) => d.includes(c.nome.toLowerCase()));
+              return (
+                <div key={c.nome} className="rounded-lg px-3 py-2 flex items-center gap-2.5" style={{ background: vista ? T.panelSoft : "transparent", border: `1px solid ${vista ? T.line : T.panelSoft}`, opacity: vista ? 1 : 0.5 }}>
+                  <span style={{ fontSize: 18 }}>{vista ? ({ fraco: "🐀", comum: "🐺", competente: "🐗", elite: "🦖", lendario: "🐉" })[c.ameaca] || "👹" : "❔"}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="tv-body text-sm block" style={{ color: vista ? T.ink : T.inkDim }}>{vista ? c.nome : "???"}</span>
+                    {vista && <span className="tv-body text-[11px] italic block truncate" style={{ color: T.inkDim }}>{c.desc}</span>}
+                  </span>
+                  {vista && <span className="tv-mono text-[9px] uppercase" style={{ color: c.ameaca === "lendario" ? T.amber : c.ameaca === "elite" ? T.violetSoft : T.inkDim }}>{ROTULO_AMEACA[c.ameaca] || c.ameaca}</span>}
+                </div>
+              );
+            })}
+            {descExtra.map((d) => (
+              <div key={d} className="rounded-lg px-3 py-2 flex items-center gap-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                <span style={{ fontSize: 18 }}>👹</span>
+                <span className="flex-1 min-w-0">
+                  <span className="tv-body text-sm block" style={{ color: T.ink }}>{d}</span>
+                  <span className="tv-body text-[11px] italic block" style={{ color: T.inkDim }}>criatura única desta história</span>
+                </span>
+                <span className="tv-mono text-[9px] uppercase" style={{ color: T.amberSoft }}>única</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {subCodex === "registros" && (
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            {REGISTROS.map(([rotulo, valor]) => (
+              <div key={rotulo} className="rounded-xl px-2.5 py-2.5 text-center" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                <div className="tv-mono text-lg font-semibold" style={{ color: T.amberSoft }}>{valor}</div>
+                <div className="tv-mono text-[8px] uppercase tracking-wider" style={{ color: T.inkDim }}>{rotulo}</div>
+              </div>
+            ))}
+          </div>
+          <div>
+            <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Mundo</div>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                ["👥 Pessoas conhecidas", Object.keys(npcs || {}).length],
+                ["🚩 Potências", ((mapa || {}).faccoes || []).length],
+                ["🏰 Cidades no mapa", ((mapa || {}).cidades || []).length],
+                ["⚑ Companheiros", ((personagem || {}).grupo || []).length],
+              ].map(([rotulo, valor]) => (
+                <div key={rotulo} className="rounded-xl px-3 py-2.5 flex items-center justify-between" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                  <span className="tv-body text-xs" style={{ color: T.inkDim }}>{rotulo}</span>
+                  <span className="tv-mono text-lg font-semibold" style={{ color: T.amberSoft }}>{valor}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
   const [confirmarRemover, setConfirmarRemover] = React.useState(null);
@@ -1338,7 +1486,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
       <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,.45)" }} onClick={fechar} />
       <aside className="tv-slide tv-scroll fixed right-0 inset-y-0 z-40 w-80 max-w-[88vw] overflow-y-auto p-5 flex flex-col gap-5" style={{ background: T.panel, borderLeft: `1px solid ${T.line}` }}>
         <div className="flex items-center justify-between">
-          <h2 className="tv-display text-2xl" style={{ color: T.ink }}>{aba === "gestao" ? "Gestão" : aba === "diario" ? "Diário" : aba === "mapa" ? "Mapa" : "Inventário"}</h2>
+          <h2 className="tv-display text-2xl" style={{ color: T.ink }}>{aba === "gestao" ? "Gestão" : aba === "diario" ? "Diário" : aba === "mapa" ? "Mapa" : aba === "codex" ? "Códex" : "Inventário"}</h2>
           <button onClick={fechar} className="tv-mono text-lg px-2" style={{ color: T.inkDim }}>✕</button>
         </div>
 
@@ -1362,6 +1510,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                 <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>{(mundo || {}).genero} · Nível {personagem.nivel} · <span style={{ color: T.amberSoft }}>{patamarDe(personagem.nivel).nome}</span></div>
                 <div className="tv-display text-3xl leading-tight" style={{ color: T.ink }}>{personagem.nome}</div>
                 <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>{personagem.conceito}</div>
+                {tituloAtivo ? <div className="tv-mono text-[11px] mt-0.5" style={{ color: T.amber }}>★ ❝ {tituloAtivo} ❞</div> : null}
                 {(personagem.classe || personagem.raca) && (
                   <div className="tv-mono text-[10px] uppercase tracking-widest mt-1" style={{ color: T.amberSoft }}>
                     {[personagem.raca, personagem.classe, personagem.subclasse].filter(Boolean).join(" · ")}
@@ -1468,6 +1617,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
 
         {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} />}
+        {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} />}
         {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).length >= MAX_COMPANHEIROS} />}
 
         {aba === "gestao" && subGestao === "diplomacia" && <PainelDiplomacia mapa={mapa} faccaoJogador={faccaoJogador} onDiplomacia={onDiplomacia} onPresente={onPresente} cofre={guilda && guilda.cofre} />}
@@ -1967,7 +2117,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v5.3 · recalibração do mundo</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.0 · códex</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2351,6 +2501,15 @@ export default function Taverna() {
   /* CLIMA: rolado por tabela; vai ao Mestre como envelope [CLIMA] */
   const climaRef = useRef(null);
   const [clima, setClima] = useState(null);
+  /* CONQUISTAS/CÓDEX: contadores de feitos, conquistas desbloqueadas,
+     título equipado e criaturas descobertas — tudo por código */
+  const contRef = useRef({ ...CONTADORES_INICIAIS });
+  const conqRef = useRef({ desbloqueadas: {}, ordem: [] });
+  const [conquistas, setConquistas] = useState({ desbloqueadas: {}, ordem: [] });
+  const tituloAtivoRef = useRef("");
+  const [tituloAtivo, setTituloAtivo] = useState("");
+  const descobRef = useRef([]);
+  const [descobertas, setDescobertas] = useState([]);
   const mostrarRolagensRef = useRef(true);
 
   /* rola para o fim SÓ quando chega mensagem nova E o jogador já estava no fim.
@@ -2403,6 +2562,7 @@ export default function Taverna() {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico, sugestoes, rolagem,
       combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
+      conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       historia: historiaRef.current, quests: questsRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
@@ -2586,6 +2746,13 @@ export default function Taverna() {
       const novoCombate = processarCombate(combateRef.current, resp.mudancas, msgs);
       combateRef.current = novoCombate;
       setCombate(novoCombate);
+      /* CÓDEX: toda criatura que entra em combate vira registro no bestiário */
+      (resp.mudancas.combate_iniciar || []).forEach((ini) => {
+        if (ini?.nome && !descobRef.current.some((d) => d.toLowerCase() === ini.nome.toLowerCase())) {
+          descobRef.current = [...descobRef.current, ini.nome];
+          setDescobertas(descobRef.current);
+        }
+      });
       /* HUD FANTASMA: se o painel de combate está aberto mas ninguém troca golpes
          (o Mestre seguiu a narrativa sem encerrar), o app fecha sozinho após 2
          turnos parados. Evita o combate "preso" na tela por vários turnos. */
@@ -2615,6 +2782,12 @@ export default function Taverna() {
         msgs.push(`◉ Espólios: +${esp.moedas} moedas · +${esp.xp} XP${subiu ? ` · ✦ NÍVEL ${p2.nivel}!` : ""}`);
         pers = p2;
         setPersonagem(p2);
+        /* CÓDEX: contabiliza a vitória — combate vencido + abates por ameaça */
+        const fins = resp.mudancas.__inimigosFinais || [];
+        bumpCont("combatesVencidos", 1);
+        bumpCont("inimigosDerrotados", fins.length);
+        bumpCont("elitesDerrotados", fins.filter((e) => e.ameaca === "elite").length);
+        bumpCont("lendariosDerrotados", fins.filter((e) => e.ameaca === "lendario").length);
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — espólios já aplicados pelo sistema: +${esp.moedas} moedas e +${esp.xp} XP para todos] NÃO envie moedas nem xp (seria dobrado). Narre o desfecho da luta em 2-3 frases.${esp.caiItem ? ` UM ITEM CAIU: crie UM item coerente com os inimigos derrotados e envie via "adicionar_equipamento" (com raridade proporcional à ameaça) ou "adicionar_itens".` : " Nenhum item especial desta vez — não envie itens."}`;
       }
     }
@@ -2640,6 +2813,13 @@ export default function Taverna() {
     }
     setSugestoes(rolagemFinal ? [] : (resp.sugestoes || []));
     setRolagem(rolagemFinal);
+    /* CÓDEX: novos companheiros, quase-morte e checagem de conquistas do turno */
+    {
+      const antes = (persAtual.grupo || []).length, agora = (pers.grupo || []).length;
+      if (agora > antes) bumpCont("recrutados", agora - antes);
+      if ((persAtual.vida || 0) > 0 && (pers.vida || 0) <= 0) bumpCont("quaseMorte", 1);
+      checarConquistas(pers);
+    }
     return pers;
   }, [pushMsgs]);
 
@@ -2693,6 +2873,10 @@ export default function Taverna() {
     mapaRef.current = { cidades: [], faccoes: [] }; setMapa(mapaRef.current);
     faccaoJogadorRef.current = ""; cidadeAtualRef.current = "";
     guildaRef.current = { nivel: 1, cofre: 0 }; setGuilda(guildaRef.current);
+    contRef.current = { ...CONTADORES_INICIAIS };
+    conqRef.current = { desbloqueadas: {}, ordem: [] }; setConquistas(conqRef.current);
+    tituloAtivoRef.current = ""; setTituloAtivo("");
+    descobRef.current = []; setDescobertas([]);
     historiaRef.current = { estrutura: (mundo && mundo.estrutura) || "jornada", etapa: 0 };
     questsRef.current = []; setQuests([]);
     bancoNomesRef.current = gerarBancoNomes(mundo);
@@ -2723,6 +2907,12 @@ export default function Taverna() {
       cidadeAtualRef.current = sv.cidadeAtual || "";
       guildaRef.current = sv.guilda && typeof sv.guilda === "object" ? { nivel: sv.guilda.nivel || 1, cofre: sv.guilda.cofre || 0 } : { nivel: 1, cofre: 0 }; setGuilda(guildaRef.current);
       climaRef.current = sv.clima && sv.clima.id ? sv.clima : null; setClima(climaRef.current);
+      /* CÓDEX (v6.0): saves antigos não têm conquistas — começam do zero sem quebrar */
+      contRef.current = { ...CONTADORES_INICIAIS, ...(sv.contadores && typeof sv.contadores === "object" ? sv.contadores : {}) };
+      conqRef.current = sv.conquistas && sv.conquistas.desbloqueadas ? sv.conquistas : { desbloqueadas: {}, ordem: [] };
+      setConquistas(conqRef.current);
+      tituloAtivoRef.current = sv.tituloAtivo || ""; setTituloAtivo(tituloAtivoRef.current);
+      descobRef.current = Array.isArray(sv.descobertas) ? sv.descobertas : []; setDescobertas(descobRef.current);
       historiaRef.current = sv.historia && sv.historia.estrutura ? sv.historia : { estrutura: (sv.mundo && sv.mundo.estrutura) || "jornada", etapa: 0 };
       questsRef.current = Array.isArray(sv.quests) ? sv.quests : [];
       setQuests([...questsRef.current]);
@@ -2983,6 +3173,9 @@ export default function Taverna() {
     const dc = r.dificuldade;
     const critico = valor === 20, desastre = valor === 1;
     const resultado = dc == null ? "resultado livre" : critico ? "SUCESSO CRÍTICO" : desastre ? "FALHA CRÍTICA" : total >= dc ? "sucesso" : "falha";
+    /* CÓDEX: 20 natural e 1 natural contam para as conquistas */
+    if (critico) { bumpCont("criticos"); checarConquistas(); }
+    if (desastre) { bumpCont("desastres"); checarConquistas(); }
     setDadoRolando(false); setRolagem(null);
     const buffs = (personagem.efeitos || []).filter((e) => !e.aplica || e.aplica.toLowerCase() === (r.atributo || "").toLowerCase() || e.aplica.toLowerCase() === "testes");
     const notaBuff = buffs.length ? ` (inclui bônus de ${buffs.map((b) => b.nome).join(", ")})` : "";
@@ -3066,6 +3259,7 @@ export default function Taverna() {
     const pers = aplicarDescanso(personagem, tipo, msgs);
     setPersonagem(pers);
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
+    bumpCont("descansos"); checarConquistas(pers);
     if (tipo === "longo") coletarRenda(1); // uma noite inteira passou: as terras rendem
     const climaNovo = tipo === "longo" ? talvezMudarClima(0.6) : null;
     const climaMsg = climaNovo ? `\n[CLIMA] O tempo virou durante a noite: agora está ${climaNovo.rotulo} — ${climaNovo.nota}.` : "";
@@ -3130,6 +3324,7 @@ export default function Taverna() {
     const g = { ...guildaRef.current, cofre: guildaRef.current.cofre + ganho };
     guildaRef.current = g; setGuilda(g);
     pushMsgs([{ autor: "sistema", texto: `🏛 Suas terras e contratos renderam ◉ ${ganho} (${dias} dia${dias > 1 ? "s" : ""}) — no cofre${temGuilda ? ` de ${faccaoJogadorRef.current}` : ""}.` }]);
+    checarConquistas();
     return ganho;
   }, [pushMsgs]);
 
@@ -3140,6 +3335,7 @@ export default function Taverna() {
     const g = { ...guildaRef.current, cofre: guildaRef.current.cofre + v };
     guildaRef.current = g; setGuilda(g);
     pushMsgs([{ autor: "sistema", texto: `🏛 Você depositou ◉ ${v} no cofre da guilda.` }]);
+    checarConquistas();
   };
 
   const sacarCofre = (valor) => {
@@ -3149,6 +3345,7 @@ export default function Taverna() {
     guildaRef.current = g; setGuilda(g);
     setPersonagem((p) => ({ ...p, moedas: (p.moedas || 0) + v }));
     pushMsgs([{ autor: "sistema", texto: `🏛 Você sacou ◉ ${v} do cofre da guilda.` }]);
+    checarConquistas();
   };
 
   const melhorarGuilda = () => {
@@ -3157,6 +3354,7 @@ export default function Taverna() {
     const g = { nivel: guildaRef.current.nivel + 1, cofre: guildaRef.current.cofre - custo };
     guildaRef.current = g; setGuilda(g);
     pushMsgs([{ autor: "sistema", texto: `⚒ ${faccaoJogadorRef.current || "Sua guilda"} cresceu para o nível ${g.nivel}! Contratos maiores e domínios mais produtivos.` }]);
+    checarConquistas();
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Minha guilda (${faccaoJogadorRef.current}) melhorou para o nível ${g.nivel} — maior, mais rica e mais respeitada. Reflita esse crescimento na ficção.`;
   };
 
@@ -3167,6 +3365,46 @@ export default function Taverna() {
     setAba(null);
     pushMsgs([{ autor: "jogador", texto: `Convido ${nome} para viajar comigo.` }]);
     enviar(`[CONVITE AO GRUPO] Convido ${nome} para se juntar ao meu grupo. Decida pela personalidade, relação e momento dele(a): pode ACEITAR (use "grupo_adicionar" com a ficha completa), recusar com jeito, ou aceitar com uma condição. A escolha é dele(a), não minha — responda com as palavras e a reação dele(a) em 1ª pessoa.`, personagem);
+  };
+
+  /* ---------------- CONQUISTAS (100% por código, zero tokens) ---------------- */
+  const bumpCont = (campo, n = 1) => { contRef.current = { ...contRef.current, [campo]: (contRef.current[campo] || 0) + n }; };
+
+  const checarConquistas = useCallback((pers) => {
+    const p = pers || personagem;
+    if (!p) return;
+    const fs = mapaRef.current.faccoes || [];
+    const stats = {
+      ...contRef.current,
+      nivel: p.nivel || 1,
+      moedas: p.moedas || 0,
+      companheiros: (p.grupo || []).length,
+      npcs: Object.keys(npcsRef.current || {}).length,
+      criaturasDescobertas: descobRef.current.length,
+      dominios: dominiosDe(mapaRef.current).length,
+      temGuilda: !!faccaoJogadorRef.current,
+      guildaNivel: guildaRef.current.nivel,
+      cofre: guildaRef.current.cofre,
+      tratados: fs.filter((f) => f.tratado === "comercio" || f.tratado === "alianca").length,
+      vassalos: fs.filter((f) => f.tratado === "vassalagem").length,
+      guerras: fs.filter((f) => f.tratado === "guerra").length,
+    };
+    const novas = avaliarConquistas(stats, conqRef.current.desbloqueadas);
+    if (!novas.length) return;
+    const c = { desbloqueadas: { ...conqRef.current.desbloqueadas }, ordem: [...conqRef.current.ordem] };
+    const msgs = novas.map((n) => {
+      c.desbloqueadas[n.id] = true; c.ordem.push(n.id);
+      return { autor: "sistema", texto: `🏆 Conquista desbloqueada: ${n.icone} ${n.nome} — título "${n.titulo}" (equipe no Códex)` };
+    });
+    conqRef.current = c; setConquistas(c);
+    pushMsgs(msgs);
+  }, [personagem, pushMsgs]);
+
+  const escolherTitulo = (id) => {
+    const cq = conquistaPorId(id);
+    if (!cq) return;
+    const novo = tituloAtivoRef.current === cq.titulo ? "" : cq.titulo;
+    tituloAtivoRef.current = novo; setTituloAtivo(novo);
   };
 
   /* ---------------- VIAGEM E CLIMA POR TABELA (zero tokens) ----------------
@@ -3185,6 +3423,10 @@ export default function Taverna() {
     const c = rolarClima(climaRef.current ? climaRef.current.id : null);
     climaRef.current = c; setClima(c);
     const enc = rolarEncontro((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1, null);
+    /* CÓDEX: viagens e perigos da estrada contam para as conquistas */
+    bumpCont("viagens");
+    if (enc.tipo === "perigo") bumpCont("perigosEstrada");
+    checarConquistas();
     pushMsgs([{ autor: "jogador", texto: `🧭 Sigo viagem pela estrada. ${c.icone} ${c.rotulo}` }]);
     enviar(`[VIAGEM — tudo rolado pelas tabelas do app; você só NARRA, não invente outro resultado]
 CLIMA AGORA: ${c.rotulo} — ${c.nota}.
@@ -3214,6 +3456,7 @@ Descreva o trecho da estrada sob esse clima e desenvolva o encontro acima, costu
     if (guildaRef.current.cofre < CUSTO_PRESENTE) { pushMsgs([{ autor: "sistema", texto: `🎁 Presentear custa ◉ ${CUSTO_PRESENTE} do cofre — e o cofre tem ◉ ${guildaRef.current.cofre}.` }]); return; }
     const g = { ...guildaRef.current, cofre: guildaRef.current.cofre - CUSTO_PRESENTE };
     guildaRef.current = g; setGuilda(g);
+    bumpCont("presentes"); checarConquistas();
     setAba(null);
     pushMsgs([{ autor: "sistema", texto: `🎁 ◉ ${CUSTO_PRESENTE} do cofre viram um presente digno para ${faccao}.` }]);
     enviar(`[PRESENTE DIPLOMÁTICO — ${faccao}] Em nome de ${faccaoJogadorRef.current}, envio um presente suntuoso (◉ ${CUSTO_PRESENTE}, já descontados pelo sistema) ao líder de ${faccao}. Ele(a) reage NA FICÇÃO conforme a personalidade e a relação: pode se agradar e aquecer os laços (atualize "mapa_faccoes" com relacao/notas), pode devolver um gesto à altura, pode achar pouco, ou até se ofender se o presente soar como suborno. O efeito na relação é a SUA decisão narrativa; valores de gestão continuam por conta do app.`, personagem);
@@ -3252,6 +3495,7 @@ Descreva o trecho da estrada sob esse clima e desenvolva o encontro acima, costu
     pushMsgs([{ autor: "sistema", texto: `⚖ Lenda recalibrada: nível ${p.nivel}, PV ${p.vidaMax}, PM ${p.manaMax}. Seus números agora honram seus feitos.` }]);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Recalibração de save: meus números oficiais agora são nível ${p.nivel}, PV ${p.vidaMax}, PM ${p.manaMax} — coerentes com tudo que já vivi. Trate-os como verdade daqui em diante.`;
     setRecal(null);
+    setTimeout(() => checarConquistas(), 0);
   };
 
   /* RECALIBRAR MUNDO: o irmão do "recalibrar lenda" para os SISTEMAS que o
@@ -3339,6 +3583,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Recalibração de save: o estado do mundo (guilda, domínios, potências, pessoas, companheiros) foi atualizado para refletir tudo que já aconteceu. Trate os registros atuais como verdade.`;
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })).concat([{ autor: "sistema", texto: "⚖ Mundo recalibrado. Confira Gestão: Grupo, Pessoas, Guilda, Domínios e Diplomacia agora contam a sua história." }]));
     setRecalM(null);
+    setTimeout(() => checarConquistas(), 0);
   };
 
   /* Transfere um item entre você e um companheiro (qualquer direção). */
@@ -3602,7 +3847,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
