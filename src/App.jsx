@@ -19,6 +19,7 @@ import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } fr
 import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano } from "./danos.js";
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, gerarNemesis, LIMIARES_NEMESIS, ACOES_NEMESIS, rumorDoDia } from "./fama.js";
+import { gerarCronica } from "./cronica.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -1506,10 +1507,10 @@ const CATEGORIAS_CONQUISTA = [
   { id: "coracao", rotulo: "Coração", ids: ["primeiro_companheiro", "tres_companheiros", "cinco_pessoas", "quinze_pessoas", "trinta_pessoas", "primeiro_presente", "cinco_presentes", "vinculo_amizade", "vinculos_tres", "vinculo_profundo"] },
   { id: "ouro", rotulo: "Ouro", ids: ["cem_moedas", "quinhentas_moedas", "mil_moedas", "cofre_gordo", "primeiro_forjado", "dez_desmontados", "item_lendario"] },
   { id: "coroa", rotulo: "Coroa", ids: ["fundador", "primeira_cidade", "tres_dominios", "cinco_dominios", "guilda_nv3", "guilda_nv5", "primeira_alianca", "tres_tratados", "primeiro_vassalo", "primeira_guerra", "primeiro_decreto", "cinco_decretos", "dez_eventos_reino"] },
-  { id: "lenda", rotulo: "Lenda", ids: ["nv5", "nv10", "nv15", "nv20", "nome_conhecido", "lenda_viva", "nemesis_surgida", "nemesis_vencida"] },
+  { id: "lenda", rotulo: "Lenda", ids: ["nv5", "nv10", "nv15", "nv20", "nome_conhecido", "lenda_viva", "nemesis_surgida", "nemesis_vencida", "primeiro_cronica"] },
 ];
 
-function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, mundo, npcs, mapa, personagem }) {
+function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, mundo, npcs, mapa, personagem, nomeCampanha, guilda, reino, dia, nemesis, faccaoJogador, onExportarCronica }) {
   const [subCodex, setSubCodex] = React.useState("conquistas");
   const desb = (conquistas && conquistas.desbloqueadas) || {};
   const nDesb = CONQUISTAS.filter((c) => desb[c.id]).length;
@@ -1524,7 +1525,7 @@ function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, con
     ["💀 Fio da morte", cont.quaseMorte || 0], ["🧭 Viagens", cont.viagens || 0], ["🌲 Perigos na estrada", cont.perigosEstrada || 0],
     ["⛺ Descansos", cont.descansos || 0], ["🎁 Presentes", cont.presentes || 0], ["⚑ Recrutados", cont.recrutados || 0],
   ];
-  const SUBS = [{ id: "conquistas", rotulo: `Títulos ${nDesb}/${CONQUISTAS.length}` }, { id: "bestiario", rotulo: `Bestiário ${achadas.length}/${criaturas.length}` }, { id: "registros", rotulo: "Registros" }];
+  const SUBS = [{ id: "conquistas", rotulo: `Títulos ${nDesb}/${CONQUISTAS.length}` }, { id: "bestiario", rotulo: `Bestiário ${achadas.length}/${criaturas.length}` }, { id: "registros", rotulo: "Registros" }, { id: "cronica", rotulo: "📜 Crônica" }];
   return (
     <>
       <div className="flex flex-wrap gap-1.5 -mt-2">
@@ -1640,11 +1641,34 @@ function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, con
           </div>
         </>
       )}
+      {subCodex === "cronica" && (() => {
+        /* CRÔNICA (v6.9): a saga formatada a partir dos registros — zero tokens. */
+        const md = gerarCronica({
+          nomeCampanha: nomeCampanha || "Campanha", mundo, personagem,
+          conquistasIds: Object.keys(desb), contadores: cont, npcs, mapa,
+          faccaoJogador, guilda, reino, dia: dia || 1, nemesis, tituloAtivo, descobertas,
+        });
+        return (
+          <>
+            <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>
+              A sua saga inteira — herói, feitos, cicatrizes, companheiros, domínios, pessoas e números — formatada a partir dos registros do app. Nada é inventado: é a memória de verdade.
+            </div>
+            <button onClick={() => onExportarCronica && onExportarCronica(md)}
+              className="w-full tv-mono text-xs px-3 py-2.5 rounded-lg font-semibold"
+              style={{ background: T.amber, color: T.onAccent, border: `1px solid ${T.amber}` }}>
+              📜 baixar crônica (.md)
+            </button>
+            <div className="rounded-xl p-3 max-h-72 overflow-y-auto" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+              <pre className="tv-body text-[11px] whitespace-pre-wrap" style={{ color: T.ink }}>{md}</pre>
+            </div>
+          </>
+        );
+      })()}
     </>
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1825,7 +1849,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
 
         {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} />}
-        {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} />}
+        {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} />}
         {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} />}
         {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} />}
 
@@ -2460,7 +2484,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.8 · nêmesis e fama</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.9 · crônica</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -3662,14 +3686,11 @@ export default function Taverna() {
     setAguardandoMundo(false);
     const escala = horas <= 3 ? "algumas horas (mudanças pequenas)" : horas <= 8 ? "boa parte do dia (mudanças perceptíveis)" : horas <= 16 ? "quase um dia inteiro (mudanças significativas)" : "um dia completo (o mundo se move bastante)";
     pushMsgs([{ autor: "sistema", texto: `🕐 Você deixa ${horas}h passarem…` }]);
+    /* RELÓGIO: "passar o tempo" agora move as horas de verdade — dias viram
+       por aqui também (reino, festivais, sono), não só a ficção. */
     const diasPassados = Math.floor(horas / 24);
     if (diasPassados > 0) coletarRenda(diasPassados);
-    let reinoMsg = "";
-    if (diasPassados > 0) {
-      const evs = avancarDiasReino(diasPassados);
-      evs.forEach((ev) => pushMsgs([{ autor: "sistema", texto: `👑 ${ev.evento.titulo} em ${ev.cidade}: ${ev.evento.txt(ev.cidade)}` }]));
-      reinoMsg = envelopeEventosReino(evs);
-    }
+    const reinoMsg = avancarMinutos(horas * 60);
     const climaNovo = talvezMudarClima(horas >= 8 ? 0.65 : 0.35);
     const climaMsg = climaNovo ? `\n[CLIMA] O tempo virou: agora está ${climaNovo.rotulo} — ${climaNovo.nota}. Use isso na cena.` : "";
     enviar(`[PASSAR O TEMPO — ${horas} horas] Simule a passagem de ${horas} horas: ${escala}. Faça o mundo VIVER esse intervalo proporcionalmente — o que os NPCs e facções fizeram, o que avançou, o que mudou no ambiente e nas suas missões, notícias que chegaram. Quanto mais horas, mais coisas acontecem (mas sempre plausível, nunca absurdo tipo impérios caindo em 1 dia). Ao final, reapresente a cena atual e me convide a agir.${climaMsg}${reinoMsg}`, personagem);
@@ -4113,6 +4134,19 @@ export default function Taverna() {
     return eventos;
   };
   const envelopeEventosReino = (evs) => !evs.length ? "" : "\n" + evs.map((ev) => `[EVENTO DE REINO — ${ev.evento.titulo.toUpperCase()} em ${ev.cidade}] ${ev.evento.txt(ev.cidade)} Os efeitos JÁ foram aplicados pelo sistema (${[ev.felDelta ? `felicidade ${ev.felDelta > 0 ? "+" : ""}${ev.felDelta}` : "", ev.popDelta ? `população ${ev.popDelta > 0 ? "+" : ""}${ev.popDelta}` : "", ev.cofreDelta ? `cofre ${ev.cofreDelta > 0 ? "+" : ""}${ev.cofreDelta}` : ""].filter(Boolean).join(", ")}) — NÃO os repita como números na ficção; narre como vida do reino${ev.evento.soSeInfeliz ? ". ATENÇÃO: o povo está à beira da revolta — isso é um problema REAL que exige resposta minha ou consequências" : ""}.`).join("\n");
+
+  /* CRÔNICA (v6.9): baixa a saga em Markdown — gerada por código dos registros. */
+  const exportarCronica = (md) => {
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `cronica-de-${(personagem.nome || "heroi").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-")}-dia-${diaRef.current}.md`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    bumpCont("cronicas"); checarConquistas();
+    pushMsgs([{ autor: "sistema", texto: "📜 Crônica exportada — sua saga, em letra de forma." }]);
+  };
 
   /* RELAÇÕES FORMAIS (v6.5): o jogador pode fixar a relação com qualquer
      pessoa conhecida — inclusive CÔNJUGE. Vira canon absoluto via envelope.
@@ -4854,7 +4888,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
