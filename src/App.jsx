@@ -15,6 +15,7 @@ import { RARIDADES, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, e
 import { gerarMasmorra, recompensaChefe, ROTULO_SALA } from "./masmorras.js";
 import { gerarMural, gerarContrato, ICONE_CONTRATO } from "./contratos.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
+import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -105,7 +106,7 @@ function formatarCanone(canone) {
   return linhas.join("\n");
 }
 
-function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone, bancoNomes, mapaInfo, historiaInfo, questsInfo, npcsInfo) {
+function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone, bancoNomes, mapaInfo, historiaInfo, questsInfo, npcsInfo, tempoInfo) {
   mundo = mundo || { genero: "Fantasia medieval" };
   personagem = personagem || {};
   const canoneTexto = formatarCanone(canone);
@@ -118,7 +119,7 @@ CAMPANHA: "${nomeCampanha}"
 Gênero: ${mundo.genero}
 Descrição do mundo: ${mundo.descricao || "(crie os detalhes com riqueza)"}
 
-PERSONAGEM DO JOGADOR:
+${tempoInfo ? `${tempoInfo}\n` : ""}PERSONAGEM DO JOGADOR:
 ${fichaTexto(personagem)}
 Começa com ${MOEDAS_INICIAIS} moedas.
 ${canoneTexto ? `\n═══ CÂNONE (VERDADES IMUTÁVEIS — nunca contradiga; se o jogador citar algo daqui, RECONHEÇA, não invente) ═══\n${canoneTexto}\n═══════════════════════════════════════\n` : ""}${livro ? `\nLIVRO DA CAMPANHA (resumo dos acontecimentos — o CÂNONE acima tem prioridade sobre este resumo):\n${livro}\n` : ""}
@@ -154,7 +155,9 @@ ${questsInfo || "Nenhuma missão registrada."}
 - CÂNONE (memória permanente que NUNCA se perde): sempre que você estabelecer ou descobrir um FATO DURÁVEL — um NPC (nome, se é mago/guerreiro/etc, papel, gênero, onde está), um lugar importante, um nome falso que o jogador usou, uma promessa, um vínculo, um segredo revelado — REGISTRE em "canone" (veja formato). Fatos no CÂNONE aparecem literais em toda resposta e são a VERDADE: jamais os contradiga. Se o jogador perguntar "X te lembra algo?" e X estiver no cânone, RECONHEÇA o que está lá — nunca invente uma versão nova. Se NÃO estiver no cânone e você não tem certeza, trate como algo que o personagem talvez não saiba, em vez de inventar um fato que possa colidir depois. Atualize uma ficha (ex.: o mago mudou de cidade) reescrevendo os campos que mudaram; NUNCA mude tipo/gênero/identidade de alguém já registrado.
 - COLCHETES SÃO META: qualquer texto entre [colchetes] vindo do jogador ou do app (ex.: [seja mais direto], [não descreva sangue], [HABILIDADE], [ROLAGEM]) é instrução FORA do personagem. Obedeça ao conteúdo, mas NUNCA o trate como fala/ação do personagem e NUNCA o repita na narrativa. Envelopes de tabela do app ([VIAGEM], [CLIMA], [PRESENTE DIPLOMÁTICO], [DIPLOMACIA], [CONVITE AO GRUPO]) trazem resultados JÁ ROLADOS pelo código — narre exatamente aqueles resultados, nunca os troque por outros.
 - PESSOAS CONHECIDAS (registro persistente de NPCs — VERDADE sobre quem o herói já conheceu; nunca recrie, esqueça ou contradiga): ${npcsTexto || "ninguém registrado ainda."}
-  · Ao apresentar um NPC RELEVANTE pela primeira vez, ou quando algo sobre ele mudar (vínculo, local, segredo revelado, morte), registre/atualize em "npcs" dentro de mudancas: [{"nome","papel","relacao","genero","local","status","segredo","notas"}]. relacao: aliado | amigo | romance | familia | neutro | rival | inimigo. Preencha só os campos relevantes; segredos e vínculos valem ouro — são a memória do enredo. NPCs de passagem (vendedor anônimo, guarda qualquer) NÃO precisam de ficha.
+  · Ao apresentar um NPC RELEVANTE pela primeira vez, ou quando algo sobre ele mudar (vínculo, local, segredo revelado, morte), registre/atualize em "npcs" dentro de mudancas: [{"nome","papel","relacao","genero","local","status","segredo","notas"}]. relacao: aliado | amigo | romance | conjuge | familia | neutro | rival | inimigo. Preencha só os campos relevantes; segredos e vínculos valem ouro — são a memória do enredo. NPCs de passagem (vendedor anônimo, guarda qualquer) NÃO precisam de ficha.
+  · DATAS DE ENCONTRO (BLINDAGEM DE MEMÓRIA — regra dura, sem exceção): o registro acima diz em que DIA cada pessoa ENTROU na história ("entrou na história no DIA X"; "antes do registro de dias" significa que já a conhecíamos quando o calendário começou — mas SÓ conviveu antes se as notas disserem). É TERMINANTEMENTE PROIBIDO inventar passado compartilhado entre o jogador e qualquer pessoa que NÃO esteja escrito nas notas/cânone dela: nada de infância juntos, crimes antigos em parceria, romances de outrora, promessas esquecidas, "lembra-se de quando nós…". Se não está escrito, NÃO aconteceu. Antes de fazer alguém evocar uma memória comum, VERIFIQUE as notas dessa pessoa: se o fato não estiver lá, troque por algo possível ("ouvi dizer que você…", "conheço sua fama desde…"). Se o jogador apontar uma contradição desse tipo, NÃO insista: corrija na ficção (a pessoa mentiu, confundiu o jogador com outro, exagerou na bebida) e siga em frente.
+  · RELAÇÕES FORMAIS REGISTRADAS PELO SISTEMA (ex.: cônjuge, aliado formal) são canon absoluto: trate-as como fato consumado e costure-os na ficção.
 
 CONDIÇÕES DE ESTADO / BUFFS E DEBUFFS (D&D e MMORPGs — dentro e fora de combate):
 - Repertório sugerido (use os nomes consagrados): DEBUFFS — Envenenado (perde PV/turno), Sangrando (perde PV/turno até estancar), Queimando (dano de fogo/turno), Atordoado (perde a ação), Amedrontado (desvantagem em ataques), Cego (desvantagem; atacantes têm vantagem), Enraizado/Preso (não se move), Lento (perde velocidade), Silenciado (não usa habilidades mágicas), Enfraquecido (dano reduzido), Amaldiçoado (azar nas rolagens), Congelado (pula turnos), Confuso (pode errar o alvo). BUFFS — Abençoado (vantagem), Inspirado (bônus na próxima rolagem), Regeneração (recupera PV/turno), Apressado (ação extra), Fortalecido (dano aumentado), Protegido (reduz dano), Furtivo (difícil de acertar), Enfurecido (dano alto, defesa baixa).
@@ -1248,7 +1251,7 @@ function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
 /* Painel de PESSOAS: todo o elenco conhecido, com retrato determinístico,
    relação colorida e o que se sabe de cada um. Segredos ficam FORA da tela —
    são memória do Mestre, não spoiler para o jogador. */
-function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio }) {
+function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio, onDefinirRelacao }) {
   const lista = Object.values(npcs || {}).sort((a, b) => (b.ultimaVez || 0) - (a.ultimaVez || 0));
   const nomesGrupo = new Set((grupo || []).map((g) => (g.nome || "").toLowerCase()));
   if (!lista.length && !(grupo || []).length) {
@@ -1266,8 +1269,20 @@ function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio }) {
             <span className="tv-display text-lg leading-tight truncate" style={{ color: T.ink }}>{n.nome}{morto ? " ☠" : ""}</span>
             <span className="tv-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0" style={{ border: `1px solid ${rel.cor}`, color: rel.cor }}>{rel.rotulo}</span>
           </div>
-          <div className="tv-body text-xs italic truncate" style={{ color: T.inkDim }}>{[n.papel, n.genero, n.local ? `em ${n.local}` : ""].filter(Boolean).join(" · ") || "—"}</div>
+          <div className="tv-body text-xs italic truncate" style={{ color: T.inkDim }}>{[n.papel, n.genero, n.local ? `em ${n.local}` : "", n.conhecidoEm != null ? (n.conhecidoEm > 0 ? `conhecido(a) no dia ${n.conhecidoEm}` : "antes do dia 1") : ""].filter(Boolean).join(" · ") || "—"}</div>
           {n.notas && <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{n.notas}</div>}
+          {!ehGrupo && onDefinirRelacao && (
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.inkDim }}>relação:</span>
+              <select value={(n.relacao || "neutro").toLowerCase()} onChange={(e) => onDefinirRelacao(n.nome, e.target.value)}
+                className="tv-mono text-[10px] rounded px-1.5 py-0.5"
+                style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.ink }}>
+                {["aliado", "amigo", "romance", "conjuge", "familia", "neutro", "rival", "inimigo"].map((r) => (
+                  <option key={r} value={r}>{relacaoNPC(r).rotulo}</option>
+                ))}
+              </select>
+            </div>
+          )}
           {convidavel && (
             <button onClick={() => onConvidar(n.nome)} disabled={grupoCheio}
               className="tv-mono text-[10px] mt-1.5 px-2 py-1 rounded"
@@ -1485,7 +1500,7 @@ const CATEGORIAS_CONQUISTA = [
   { id: "estrada", rotulo: "Estrada", ids: ["primeira_viagem", "dez_viagens", "vintecinco_viagens", "dez_perigos", "dez_criaturas", "vinte_criaturas", "primeira_masmorra", "cinco_masmorras", "primeiro_contrato", "dez_contratos"] },
   { id: "coracao", rotulo: "Coração", ids: ["primeiro_companheiro", "tres_companheiros", "cinco_pessoas", "quinze_pessoas", "trinta_pessoas", "primeiro_presente", "cinco_presentes", "vinculo_amizade", "vinculos_tres", "vinculo_profundo"] },
   { id: "ouro", rotulo: "Ouro", ids: ["cem_moedas", "quinhentas_moedas", "mil_moedas", "cofre_gordo", "primeiro_forjado", "dez_desmontados", "item_lendario"] },
-  { id: "coroa", rotulo: "Coroa", ids: ["fundador", "primeira_cidade", "tres_dominios", "cinco_dominios", "guilda_nv3", "guilda_nv5", "primeira_alianca", "tres_tratados", "primeiro_vassalo", "primeira_guerra", "primeiro_decreto", "cinco_decretos"] },
+  { id: "coroa", rotulo: "Coroa", ids: ["fundador", "primeira_cidade", "tres_dominios", "cinco_dominios", "guilda_nv3", "guilda_nv5", "primeira_alianca", "tres_tratados", "primeiro_vassalo", "primeira_guerra", "primeiro_decreto", "cinco_decretos", "dez_eventos_reino"] },
   { id: "lenda", rotulo: "Lenda", ids: ["nv5", "nv10", "nv15", "nv20"] },
 ];
 
@@ -1624,7 +1639,7 @@ function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, con
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1780,7 +1795,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} />}
         {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} />}
-        {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).length >= MAX_COMPANHEIROS} />}
+        {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} />}
 
         {aba === "gestao" && subGestao === "diplomacia" && <PainelDiplomacia mapa={mapa} faccaoJogador={faccaoJogador} onDiplomacia={onDiplomacia} onPresente={onPresente} cofre={guilda && guilda.cofre} />}
 
@@ -1849,18 +1864,31 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                 <span className="tv-mono text-xl font-semibold" style={{ color: T.ok }}>+{Math.round(total * (temGuilda ? multGuilda(g.nivel) : 1))}</span>
               </div>
               <div className="space-y-2">
-                {porCidade.map((c) => (
-                  <div key={c.nome} className="rounded-xl px-3 py-2.5 flex items-center justify-between" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-                    <div className="min-w-0">
-                      <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{c.nome} {c.sede && <span className="tv-mono text-[9px]" style={{ color: T.amberSoft }}>· SEDE</span>}</div>
-                      <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.inkDim }}>{c.tipo}</div>
+                {porCidade.map((c) => {
+                  const v = (reino || {})[c.nome];
+                  const fel = v ? v.felicidade : null;
+                  const corFel = fel == null ? T.inkDim : fel >= 70 ? T.ok : fel >= 40 ? T.amberSoft : T.danger;
+                  return (
+                    <div key={c.nome} className="rounded-xl px-3 py-2.5 flex items-center justify-between gap-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                      <div className="min-w-0 flex-1">
+                        <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{c.nome} {c.sede && <span className="tv-mono text-[9px]" style={{ color: T.amberSoft }}>· SEDE</span>}</div>
+                        <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.inkDim }}>{c.tipo}{v ? ` · ${v.populacao.toLocaleString("pt-BR")} almas` : ""}</div>
+                        {fel != null && (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: T.panel }}>
+                              <div className="h-full rounded-full" style={{ width: `${fel}%`, background: corFel }} />
+                            </div>
+                            <span className="tv-mono text-[9px] shrink-0" style={{ color: corFel }}>{fel >= 70 ? "😊" : fel >= 40 ? "😐" : "😠"} {fel}</span>
+                          </div>
+                        )}
+                      </div>
+                      <span className="tv-mono text-sm shrink-0" style={{ color: T.ok }}>+{Math.round(c.renda * (temGuilda ? multGuilda(g.nivel) : 1) * (v ? fatorFelicidade(v.felicidade) : 1))}/dia</span>
                     </div>
-                    <span className="tv-mono text-sm shrink-0" style={{ color: T.ok }}>+{Math.round(c.renda * (temGuilda ? multGuilda(g.nivel) : 1))}/dia</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="tv-body text-xs" style={{ color: T.inkDim }}>
-                Domínios rendem por tipo de cidade (vilas 5, cidades 12, capitais 25, fortalezas 15 — a sede rende o dobro).{temGuilda ? ` Sua guilda nível ${g.nivel} multiplica tudo por ${multGuilda(g.nivel).toFixed(2)}.` : " Fundar uma guilda multiplica essas rendas."} Expanda na ficção: cada cidade conquistada entra aqui automaticamente.
+                Domínios rendem por tipo de cidade (vilas 5, cidades 12, capitais 25, fortalezas 15 — a sede rende o dobro).{temGuilda ? ` Sua guilda nível ${g.nivel} multiplica tudo por ${multGuilda(g.nivel).toFixed(2)}.` : " Fundar uma guilda multiplica essas rendas."} Cada domínio tem população e felicidade vivas: povo feliz produz até +50% de renda; povo revoltado, metade. A cada dia passado, o reino vive — colheitas, caravanas, pragas e murmúrios saem por tabela e chegam à ficção. Expanda na ficção: cada cidade conquistada entra aqui automaticamente.
               </div>
             </>
           );
@@ -2400,7 +2428,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.4 · decretos</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.5 · cânone e reino</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2809,6 +2837,13 @@ export default function Taverna() {
   const [mural, setMural] = useState([]);
   const decretosRef = useRef([]);
   const [decretos, setDecretos] = useState([]);
+  const diaRef = useRef(1);
+  const [dia, setDia] = useState(1);
+  const reinoRef = useRef({});
+  const [reino, setReino] = useState({});
+  /* TEMPO DA CAMPANHA (v6.5): o app conta os dias — a âncora da memória.
+     "Nos conhecemos no dia X" vira fato verificável; antes dele, impossível. */
+  const tempoInfoPrompt = () => `TEMPO DA CAMPANHA: hoje é o DIA ${diaRef.current} (o app controla o calendário — nunca estime datas por conta própria).`;
   const mostrarRolagensRef = useRef(true);
 
   /* rola para o fim SÓ quando chega mensagem nova E o jogador já estava no fim.
@@ -2862,7 +2897,7 @@ export default function Taverna() {
       combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
-      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current,
+      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current,
       historia: historiaRef.current, quests: questsRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
@@ -3025,7 +3060,7 @@ export default function Taverna() {
         }
       }
       if (tocouMapa) { mapaRef.current = mp2; setMapa(mp2); }
-      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
+      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt());
     }
     /* PESSOAS (registro de NPCs): o Mestre envia "npcs"; e como blindagem de
        memória, qualquer PESSOA do cânone sem ficha entra no registro por código. */
@@ -3036,7 +3071,9 @@ export default function Taverna() {
       [].concat(resp.mudancas.npcs || []).forEach((n) => {
         if (!n || !n.nome) return;
         const chave = Object.keys(reg).find((k) => k.toLowerCase() === String(n.nome).toLowerCase());
-        const ficha = chave ? mesclarNPC(reg[chave], { ...n, ultimaVez: npcTurnoRef.current }) : criarNPC(n.nome, { ...n, ultimaVez: npcTurnoRef.current });
+        const ficha = chave
+          ? mesclarNPC(reg[chave], { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: reg[chave].conhecidoEm != null ? reg[chave].conhecidoEm : diaRef.current })
+          : criarNPC(n.nome, { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: n.conhecidoEm != null ? n.conhecidoEm : diaRef.current });
         if (!tocou) { reg = { ...reg }; tocou = true; }
         reg[chave || n.nome] = ficha;
         if (!chave) msgs.push(`👤 ${n.nome} entrou para o elenco`);
@@ -3045,11 +3082,11 @@ export default function Taverna() {
         if (!f || !String(f.tipo || "").toLowerCase().includes("pessoa")) continue;
         if (Object.keys(reg).some((k) => k.toLowerCase() === nome.toLowerCase())) continue;
         if (!tocou) { reg = { ...reg }; tocou = true; }
-        reg[nome] = criarNPC(nome, { papel: f.papel || "", genero: f.genero || "", local: f.local || "", status: f.status || "vivo", notas: f.notas || "", ultimaVez: npcTurnoRef.current });
+        reg[nome] = criarNPC(nome, { papel: f.papel || "", genero: f.genero || "", local: f.local || "", status: f.status || "vivo", notas: f.notas || "", ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });
       }
       if (tocou) {
         npcsRef.current = reg; setNpcs(reg);
-        systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
+        systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt());
       }
     }
     setPersonagem(pers);
@@ -3206,7 +3243,7 @@ export default function Taverna() {
         turnoContRef.current = 0;
         const narrativas = mensagensRef.current.filter((x) => x.autor === "mestre").map((x) => x.texto);
         gerarLivro(livroRef.current, narrativas).then((l) => {
-          if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current)); }
+          if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt()); }
         });
       }
       setTimeout(() => salvar({ personagem: pers, historico: histFinal, rolagem: resp.rolagem || null, sugestoes: resp.rolagem ? [] : (resp.sugestoes || []) }), 0);
@@ -3234,10 +3271,12 @@ export default function Taverna() {
     masmorraRef.current = null; setMasmorra(null);
     muralRef.current = gerarMural((mundo && mundo.genero) || "Fantasia medieval", 1, { cidades: [], faccoes: [] }, 3); setMural(muralRef.current);
     decretosRef.current = []; setDecretos(decretosRef.current);
+    diaRef.current = 1; setDia(1);
+    reinoRef.current = {}; setReino({});
     historiaRef.current = { estrutura: (mundo && mundo.estrutura) || "jornada", etapa: 0 };
     questsRef.current = []; setQuests([]);
     bancoNomesRef.current = gerarBancoNomes(mundo);
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setSugestoes([]); setRolagem(null);
     setCombate(null); combateRef.current = null;
     setFase("jogo");
@@ -3274,11 +3313,21 @@ export default function Taverna() {
       masmorraRef.current = sv.masmorra && Array.isArray(sv.masmorra.salas) ? sv.masmorra : null; setMasmorra(masmorraRef.current);
       muralRef.current = Array.isArray(sv.mural) ? sv.mural : []; setMural(muralRef.current);
       decretosRef.current = Array.isArray(sv.decretos) ? sv.decretos : []; setDecretos(decretosRef.current);
+      diaRef.current = sv.dia || 1; setDia(diaRef.current);
+      reinoRef.current = garantirReino(sv.reino && typeof sv.reino === "object" ? sv.reino : {}, mapaRef.current) || {}; setReino(reinoRef.current);
+      /* BLINDAGEM v6.5: pessoas de saves antigos sem data de encontro ganham
+         "dia 0" (= antes do registro de dias) — nunca um passado inventado. */
+      let regTocou = false;
+      const regNovo = Object.fromEntries(Object.entries(npcsRef.current).map(([k, n]) => {
+        if (n && n.conhecidoEm == null) { regTocou = true; return [k, { ...n, conhecidoEm: 0 }]; }
+        return [k, n];
+      }));
+      if (regTocou) { npcsRef.current = regNovo; setNpcs(regNovo); }
       historiaRef.current = sv.historia && sv.historia.estrutura ? sv.historia : { estrutura: (sv.mundo && sv.mundo.estrutura) || "jornada", etapa: 0 };
       questsRef.current = Array.isArray(sv.quests) ? sv.quests : [];
       setQuests([...questsRef.current]);
       bancoNomesRef.current = gerarBancoNomes(sv.mundo);
-      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
+      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt());
       setFase("jogo");
       if (comResumo && !sv.rolagem) {
         enviar(`[RESUMO DE SESSÃO] Retomando "${sv.nomeCampanha}". Abra com "Anteriormente, em ${sv.nomeCampanha}…" e recapitule os principais acontecimentos em até 120 palavras, tom de série. Depois reapresente a cena atual e me convide a agir. Sem rolagem e sem mudanças nesta resposta.`, pers, sv.historico || []);
@@ -3512,9 +3561,15 @@ export default function Taverna() {
     pushMsgs([{ autor: "sistema", texto: `🕐 Você deixa ${horas}h passarem…` }]);
     const diasPassados = Math.floor(horas / 24);
     if (diasPassados > 0) coletarRenda(diasPassados);
+    let reinoMsg = "";
+    if (diasPassados > 0) {
+      const evs = avancarDiasReino(diasPassados);
+      evs.forEach((ev) => pushMsgs([{ autor: "sistema", texto: `👑 ${ev.evento.titulo} em ${ev.cidade}: ${ev.evento.txt(ev.cidade)}` }]));
+      reinoMsg = envelopeEventosReino(evs);
+    }
     const climaNovo = talvezMudarClima(horas >= 8 ? 0.65 : 0.35);
     const climaMsg = climaNovo ? `\n[CLIMA] O tempo virou: agora está ${climaNovo.rotulo} — ${climaNovo.nota}. Use isso na cena.` : "";
-    enviar(`[PASSAR O TEMPO — ${horas} horas] Simule a passagem de ${horas} horas: ${escala}. Faça o mundo VIVER esse intervalo proporcionalmente — o que os NPCs e facções fizeram, o que avançou, o que mudou no ambiente e nas suas missões, notícias que chegaram. Quanto mais horas, mais coisas acontecem (mas sempre plausível, nunca absurdo tipo impérios caindo em 1 dia). Ao final, reapresente a cena atual e me convide a agir.${climaMsg}`, personagem);
+    enviar(`[PASSAR O TEMPO — ${horas} horas] Simule a passagem de ${horas} horas: ${escala}. Faça o mundo VIVER esse intervalo proporcionalmente — o que os NPCs e facções fizeram, o que avançou, o que mudou no ambiente e nas suas missões, notícias que chegaram. Quanto mais horas, mais coisas acontecem (mas sempre plausível, nunca absurdo tipo impérios caindo em 1 dia). Ao final, reapresente a cena atual e me convide a agir.${climaMsg}${reinoMsg}`, personagem);
   };
 
   const modPend = rolagem ? (() => { const a = ATRIBUTOS.find((x) => x.nome.toLowerCase() === (rolagem.atributo || "").toLowerCase()); return a && personagem ? atributoEfetivo(personagem, a.id) : 0; })() : 0;
@@ -3818,7 +3873,7 @@ export default function Taverna() {
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DECRETO ACEITO — ${d.alvo}] A ${grupo.bando} (${grupo.membros.map((m) => m.nome).join(", ")}, força ${grupo.forca}) aceitou meu decreto: "${d.descricao}" Recompensa de ◉ ${d.recompensa} já está retida pelo sistema. Eles partiram; o resultado chegará pelo sistema em alguns dias — até lá, eles estão FORA DE CENA, em missão.`;
           /* o líder vira uma pessoa conhecida */
           if (!npcsRef.current[grupo.lider]) {
-            npcsRef.current = { ...npcsRef.current, [grupo.lider]: { nome: grupo.lider, relacao: "aliado", papel: `líder da ${grupo.bando}`, genero: mundo && mundo.genero, notas: `Aceitou seu decreto sobre "${d.alvo}".`, ultimaVez: Date.now() } };
+            npcsRef.current = { ...npcsRef.current, [grupo.lider]: { nome: grupo.lider, relacao: "aliado", papel: `líder da ${grupo.bando}`, genero: mundo && mundo.genero, notas: `Aceitou seu decreto sobre "${d.alvo}".`, ultimaVez: Date.now(), conhecidoEm: diaRef.current } };
             setNpcs(npcsRef.current);
           }
         } else {
@@ -3854,6 +3909,48 @@ export default function Taverna() {
     decretosRef.current = atualizados.filter((d) => !(d.status === "resolvido" && (d.dias || 0) >= 2)).map((d) => d.status === "resolvido" ? { ...d, dias: (d.dias || 0) + 1 } : d);
     setDecretos(decretosRef.current);
     return p;
+  };
+
+  /* AVANÇO DE DIAS (v6.5): cada dia passado move o calendário e rola a vida
+     dos seus domínios (população, felicidade, eventos por tabela). Retorna os
+     eventos para o chamador virar envelope pro Mestre narrar. */
+  const avancarDiasReino = (n) => {
+    const eventos = [];
+    let cofreDeltaTotal = 0;
+    let r = reinoRef.current;
+    for (let i = 0; i < n; i++) {
+      diaRef.current += 1;
+      const { reino: nr, evento } = processarDiaReino(r, mapaRef.current);
+      r = nr;
+      if (evento) {
+        eventos.push(evento);
+        cofreDeltaTotal += evento.cofreDelta || 0;
+        bumpCont("eventosReino");
+      }
+    }
+    reinoRef.current = r; setReino(r); setDia(diaRef.current);
+    if (cofreDeltaTotal !== 0) {
+      guildaRef.current = { ...guildaRef.current, cofre: Math.max(0, (guildaRef.current.cofre || 0) + cofreDeltaTotal) };
+      setGuilda(guildaRef.current);
+    }
+    if (eventos.length) checarConquistas();
+    return eventos;
+  };
+  const envelopeEventosReino = (evs) => !evs.length ? "" : "\n" + evs.map((ev) => `[EVENTO DE REINO — ${ev.evento.titulo.toUpperCase()} em ${ev.cidade}] ${ev.evento.txt(ev.cidade)} Os efeitos JÁ foram aplicados pelo sistema (${[ev.felDelta ? `felicidade ${ev.felDelta > 0 ? "+" : ""}${ev.felDelta}` : "", ev.popDelta ? `população ${ev.popDelta > 0 ? "+" : ""}${ev.popDelta}` : "", ev.cofreDelta ? `cofre ${ev.cofreDelta > 0 ? "+" : ""}${ev.cofreDelta}` : ""].filter(Boolean).join(", ")}) — NÃO os repita como números na ficção; narre como vida do reino${ev.evento.soSeInfeliz ? ". ATENÇÃO: o povo está à beira da revolta — isso é um problema REAL que exige resposta minha ou consequências" : ""}.`).join("\n");
+
+  /* RELAÇÕES FORMAIS (v6.5): o jogador pode fixar a relação com qualquer
+     pessoa conhecida — inclusive CÔNJUGE. Vira canon absoluto via envelope.
+     É também o remendo para histórias já vividas (ex.: um casamento que a
+     ficção consumou mas o registro não sabia). */
+  const definirRelacao = (nome, relacao) => {
+    const reg = npcsRef.current;
+    const n = reg[nome];
+    if (!n || (n.relacao || "") === relacao) return;
+    const rotulo = relacaoNPC(relacao).rotulo;
+    npcsRef.current = { ...reg, [nome]: { ...n, relacao, ultimaVez: Date.now() } };
+    setNpcs(npcsRef.current);
+    pushMsgs([{ autor: "sistema", texto: `🤝 Relação formal registrada: ${nome} agora é ${rotulo}.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RELAÇÃO FORMAL — CANON ABSOLUTO] Eu declarei formalmente: minha relação com ${nome} é ${rotulo.toUpperCase()}${relacao === "conjuge" ? " — CÔNJUGE: somos casados, isso é fato consumado e permanente (trate como parte do nosso presente, sem inventar um passado longo que não esteja registrado)" : ""}. Registre no cânone e trate como verdade absoluta daqui em diante.`;
   };
 
   /* ACAMPAMENTO: pausa o "turno do mundo" — você conversa à vontade, nada avança.
@@ -3892,10 +3989,16 @@ export default function Taverna() {
       pers = processarDecretos(pers, msgs);
       if (msgs.length > antes) { setPersonagem(pers); pushMsgs(msgs.slice(antes).map((t) => ({ autor: "sistema", texto: t }))); }
     }
+    let reinoMsg = "";
+    if (tipo === "longo") { // um dia virou: o calendário anda e o reino vive
+      const evs = avancarDiasReino(1);
+      evs.forEach((ev) => pushMsgs([{ autor: "sistema", texto: `👑 ${ev.evento.titulo} em ${ev.cidade}: ${ev.evento.txt(ev.cidade)}` }]));
+      reinoMsg = envelopeEventosReino(evs);
+    }
     const climaNovo = tipo === "longo" ? talvezMudarClima(0.6) : null;
     const climaMsg = climaNovo ? `\n[CLIMA] O tempo virou durante a noite: agora está ${climaNovo.rotulo} — ${climaNovo.nota}.` : "";
     const dur = tipo === "longo" ? "uma noite inteira" : "cerca de uma hora";
-    enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${climaMsg}`, pers);
+    enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${climaMsg}${reinoMsg}`, pers);
   };
 
   /* Escolher/trocar caminho (classe). Regras:
@@ -3950,7 +4053,7 @@ export default function Taverna() {
     const nDominios = dominiosDe(mapaRef.current).length;
     if ((!temGuilda && !nDominios) || dias <= 0) return 0;
     const porDia = rendaDiariaTotal(mapaRef.current, guildaRef.current.nivel, temGuilda);
-    const ganho = porDia * dias;
+    const ganho = Math.round(porDia * dias * fatorMedioReino(reinoRef.current)); // povo feliz produz mais
     if (ganho <= 0) return 0;
     const g = { ...guildaRef.current, cofre: guildaRef.current.cofre + ganho };
     guildaRef.current = g; setGuilda(g);
@@ -4231,7 +4334,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
       if (gn !== guildaRef.current.nivel) { const g = { ...guildaRef.current, nivel: gn }; guildaRef.current = g; setGuilda(g); msgs.push(`🏛 Guilda recalibrada para o nível ${gn}`); }
     }
     /* 5) O prompt precisa enxergar o mundo novo já no próximo turno */
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current));
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt());
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Recalibração de save: o estado do mundo (guilda, domínios, potências, pessoas, companheiros) foi atualizado para refletir tudo que já aconteceu. Trate os registros atuais como verdade.`;
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })).concat([{ autor: "sistema", texto: "⚖ Mundo recalibrado. Confira Gestão: Grupo, Pessoas, Guilda, Domínios e Diplomacia agora contam a sua história." }]));
     setRecalM(null);
@@ -4432,6 +4535,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
               <BarraMini rotulo="PV" atual={personagem.vida} max={personagem.vidaMax} cor={T.amber} corBaixa={T.danger} />
               <BarraMini rotulo="PM" atual={personagem.mana} max={personagem.manaMax} cor={T.violet} />
               <span className="tv-mono text-[10px] shrink-0" style={{ color: T.amberSoft }}>NV {personagem.nivel}</span>
+              <span className="tv-mono text-[10px] shrink-0" title="Dia da campanha — o app controla o calendário" style={{ color: T.inkDim }}>📅 dia {dia}</span>
               {clima && <span className="tv-mono text-[10px] shrink-0" title={clima.nota} style={{ color: T.inkDim }}>{clima.icone} {clima.rotulo}</span>}
               <BarraMini rotulo="XP" atual={personagem.xp} max={XP_POR_NIVEL(personagem.nivel)} cor={T.ok} />
             </div>
@@ -4534,7 +4638,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

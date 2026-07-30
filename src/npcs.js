@@ -15,6 +15,7 @@ export const RELACOES_NPC = {
   aliado: { rotulo: "Aliado", cor: "#7BC98F" },
   amigo: { rotulo: "Amigo", cor: "#7BC98F" },
   romance: { rotulo: "Romance", cor: "#E88BA7" },
+  conjuge: { rotulo: "Cônjuge", cor: "#E88BA7" },
   familia: { rotulo: "Família", cor: "#B0A5EC" },
   companheiro: { rotulo: "Companheiro", cor: "#8B7BD8" },
   neutro: { rotulo: "Neutro", cor: "#9B93AC" },
@@ -62,7 +63,7 @@ export function resumoNPCsParaPrompt(npcs, limite = 22) {
   if (!lista.length) return "";
   const ord = [...lista].sort((a, b) => (b.ultimaVez || 0) - (a.ultimaVez || 0)).slice(0, limite);
   return ord.map((n) => {
-    const partes = [n.papel, n.relacao && n.relacao !== "desconhecido" ? `relação: ${n.relacao}` : "", n.genero, n.local ? `em ${n.local}` : "", n.status && n.status !== "vivo" ? n.status : ""].filter(Boolean);
+    const partes = [n.papel, n.relacao && n.relacao !== "desconhecido" ? `relação: ${n.relacao}` : "", n.genero, n.local ? `em ${n.local}` : "", n.status && n.status !== "vivo" ? n.status : "", n.conhecidoEm != null ? (n.conhecidoEm > 0 ? `entrou na história no DIA ${n.conhecidoEm}` : "entrou antes do registro de dias") : ""].filter(Boolean);
     const extra = [n.segredo ? `SEGREDO: ${n.segredo}` : "", n.notas].filter(Boolean).join(" · ");
     return `• ${n.nome}${partes.length ? ` (${partes.join(", ")})` : ""}${extra ? ` — ${extra}` : ""}`;
   }).join("\n");

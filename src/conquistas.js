@@ -13,7 +13,7 @@ export const CONTADORES_INICIAIS = {
   presentes: 0, recrutados: 0,
   forjados: 0, desmontados: 0,
   contratosConcluidos: 0, masmorrasConcluidas: 0,
-  decretosPregados: 0, decretosCumpridos: 0,
+  decretosPregados: 0, decretosCumpridos: 0, eventosReino: 0,
 };
 
 /* Cada conquista: quando(stats) dispara; titulo = o que se equipa na ficha.
@@ -48,6 +48,7 @@ export const CONQUISTAS = [
   { id: "dez_contratos", icone: "🗡", nome: "Espada de Aluguel", titulo: "Espada de Aluguel", dica: "Conclua 10 contratos.", quando: (s) => s.contratosConcluidos >= 10 },
   { id: "primeiro_decreto", icone: "📣", nome: "Serviço Terceirizado", titulo: "o Suzerano", dica: "Pregue seu primeiro decreto oferecendo recompensa.", quando: (s) => s.decretosPregados >= 1 },
   { id: "cinco_decretos", icone: "👑", nome: "Voz do Trono", titulo: "Voz do Trono", dica: "Tenha 5 decretos cumpridos pelos seus agentes.", segredo: true, quando: (s) => s.decretosCumpridos >= 5 },
+  { id: "dez_eventos_reino", icone: "🌾", nome: "O Povo Vive", titulo: "Coração do Reino", dica: "Presencie 10 eventos da vida dos seus domínios.", quando: (s) => s.eventosReino >= 10 },
 
   /* -------- CORAÇÃO (social) -------- */
   { id: "primeiro_companheiro", icone: "🤝", nome: "Líder Nato", titulo: "Líder Nato", dica: "Recrute seu primeiro companheiro.", quando: (s) => s.recrutados >= 1 },
