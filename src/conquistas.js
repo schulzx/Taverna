@@ -14,6 +14,7 @@ export const CONTADORES_INICIAIS = {
   forjados: 0, desmontados: 0,
   contratosConcluidos: 0, masmorrasConcluidas: 0,
   decretosPregados: 0, decretosCumpridos: 0, eventosReino: 0,
+  nemesisVencidas: 0,
 };
 
 /* Cada conquista: quando(stats) dispara; titulo = o que se equipa na ficha.
@@ -53,6 +54,10 @@ export const CONQUISTAS = [
   { id: "cinco_cicatrizes", icone: "⚔", nome: "Mapa de Batalhas", titulo: "Mapa de Batalhas", dica: "Acumule 5 cicatrizes.", segredo: true, quando: (s) => (s.cicatrizes || 0) >= 5 },
   { id: "trinta_dias", icone: "📅", nome: "Um Mês de Estrada", titulo: "Filho do Calendário", dica: "Sobreviva a 30 dias de campanha.", quando: (s) => (s.diasVividos || 0) >= 30 },
   { id: "ano_inteiro", icone: "🗓", nome: "As Quatro Estações", titulo: "o Perene", dica: "Complete um ano inteiro de campanha.", segredo: true, quando: (s) => (s.diasVividos || 0) >= 360 },
+  { id: "nome_conhecido", icone: "📣", nome: "Nome na Boca do Povo", titulo: "o Renomado", dica: "Alcance fama 25.", quando: (s) => (s.fama || 0) >= 25 },
+  { id: "lenda_viva", icone: "🌟", nome: "Lenda Viva", titulo: "Lenda Viva", dica: "Alcance fama 70.", segredo: true, quando: (s) => (s.fama || 0) >= 70 },
+  { id: "nemesis_surgida", icone: "🎭", nome: "Preço pela Cabeça", titulo: "Alvo de Ódio", dica: "Alguém jura seu fim.", quando: (s) => !!s.temNemesis },
+  { id: "nemesis_vencida", icone: "🕊", nome: "Fim da Perseguição", titulo: "Quem Ri por Último", dica: "Derrote sua nêmesis.", segredo: true, quando: (s) => (s.nemesisVencidas || 0) >= 1 },
 
   /* -------- CORAÇÃO (social) -------- */
   { id: "primeiro_companheiro", icone: "🤝", nome: "Líder Nato", titulo: "Líder Nato", dica: "Recrute seu primeiro companheiro.", quando: (s) => s.recrutados >= 1 },

@@ -18,6 +18,7 @@ import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
 import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano } from "./danos.js";
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, AMANHECER } from "./calendario.js";
+import { calcularFama, patamarFama, gerarNemesis, LIMIARES_NEMESIS, ACOES_NEMESIS, rumorDoDia } from "./fama.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -1505,7 +1506,7 @@ const CATEGORIAS_CONQUISTA = [
   { id: "coracao", rotulo: "Coração", ids: ["primeiro_companheiro", "tres_companheiros", "cinco_pessoas", "quinze_pessoas", "trinta_pessoas", "primeiro_presente", "cinco_presentes", "vinculo_amizade", "vinculos_tres", "vinculo_profundo"] },
   { id: "ouro", rotulo: "Ouro", ids: ["cem_moedas", "quinhentas_moedas", "mil_moedas", "cofre_gordo", "primeiro_forjado", "dez_desmontados", "item_lendario"] },
   { id: "coroa", rotulo: "Coroa", ids: ["fundador", "primeira_cidade", "tres_dominios", "cinco_dominios", "guilda_nv3", "guilda_nv5", "primeira_alianca", "tres_tratados", "primeiro_vassalo", "primeira_guerra", "primeiro_decreto", "cinco_decretos", "dez_eventos_reino"] },
-  { id: "lenda", rotulo: "Lenda", ids: ["nv5", "nv10", "nv15", "nv20"] },
+  { id: "lenda", rotulo: "Lenda", ids: ["nv5", "nv10", "nv15", "nv20", "nome_conhecido", "lenda_viva", "nemesis_surgida", "nemesis_vencida"] },
 ];
 
 function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, mundo, npcs, mapa, personagem }) {
@@ -1643,7 +1644,7 @@ function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, con
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1686,6 +1687,20 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                 <div className="tv-display text-3xl leading-tight" style={{ color: T.ink }}>{personagem.nome}</div>
                 <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>{personagem.conceito}</div>
                 {tituloAtivo ? <div className="tv-mono text-[11px] mt-0.5" style={{ color: T.amber }}>★ ❝ {tituloAtivo} ❞</div> : null}
+                {famaInfo && (
+                  <div className="mt-1.5 flex items-center gap-1.5" title={`Fama ${famaInfo.f}/100 — ${famaInfo.pf.nota}`}>
+                    <span className="tv-mono text-[9px] uppercase tracking-wider shrink-0" style={{ color: T.amberSoft }}>📣 {famaInfo.pf.rotulo}</span>
+                    <div className="w-16 h-1 rounded-full overflow-hidden" style={{ background: T.panel }}>
+                      <div className="h-full rounded-full" style={{ width: `${famaInfo.f}%`, background: T.amber }} />
+                    </div>
+                    <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>{famaInfo.f}</span>
+                  </div>
+                )}
+                {nemesis && nemesis.status !== "derrotada" && (
+                  <div className="tv-mono text-[10px] mt-1" style={{ color: T.danger }} title={`${nemesis.nome}, ${nemesis.titulo} — ${nemesis.motivo}. Ódio: ${nemesis.odio}/100`}>
+                    🎭 nêmesis: {nemesis.nome} · ódio {nemesis.odio}
+                  </div>
+                )}
                 {(personagem.classe || personagem.raca) && (
                   <div className="tv-mono text-[10px] uppercase tracking-widest mt-1" style={{ color: T.amberSoft }}>
                     {[personagem.raca, personagem.classe, personagem.subclasse].filter(Boolean).join(" · ")}
@@ -2445,7 +2460,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.7 · calendário</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.8 · nêmesis e fama</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2864,6 +2879,12 @@ export default function Taverna() {
   const minutoRef = useRef(AMANHECER + 60); // a aventura começa de manhã
   const [minuto, setMinuto] = useState(minutoRef.current);
   const acordouAbsRef = useRef(0); // minuto absoluto em que o herói acordou do último descanso longo
+  /* FAMA E NÊMESIS (v6.8): a fama é derivada das façanhas reais; a nêmesis
+     nasce por tabela quando o nome cresce — e cresce com cada dia. */
+  const nemesisRef = useRef(null);
+  const [nemesis, setNemesis] = useState(null);
+  const famaAtual = () => calcularFama(contRef.current, (personagem && personagem.nivel) || 1, dominiosDe(mapaRef.current).length);
+  const famaPatamarRef = useRef(0); // fama da última checagem, para detectar saltos de patamar
   const absMin = () => (diaRef.current - 1) * 1440 + minutoRef.current;
   const tempoInfoPrompt = () => {
     const est = estacaoDe(diaRef.current);
@@ -2954,7 +2975,7 @@ export default function Taverna() {
       combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
-      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current,
+      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current,
       historia: historiaRef.current, quests: questsRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
@@ -3197,6 +3218,7 @@ export default function Taverna() {
         bumpCont("inimigosDerrotados", fins.length);
         bumpCont("elitesDerrotados", fins.filter((e) => e.ameaca === "elite").length);
         bumpCont("lendariosDerrotados", fins.filter((e) => e.ameaca === "lendario").length);
+        checarFama(); tentarSurgirNemesis(); // grandes feitos fazem o nome correr — e atraem ódio
         /* VÍNCULO: sangue derramado junto aproxima (+2 para todo o grupo) */
         p2 = { ...p2, grupo: aplicarVinculo(p2.grupo, "todos", 2, msgs) };
         /* LOOT PROCEDURAL: quando cai item, o CÓDIGO gera pela tabela (a IA só
@@ -3342,6 +3364,8 @@ export default function Taverna() {
     diaRef.current = 1; setDia(1);
     minutoRef.current = AMANHECER + 60; setMinuto(minutoRef.current);
     acordouAbsRef.current = 0;
+    nemesisRef.current = null; setNemesis(null);
+    famaPatamarRef.current = 0;
     reinoRef.current = {}; setReino({});
     historiaRef.current = { estrutura: (mundo && mundo.estrutura) || "jornada", etapa: 0 };
     questsRef.current = []; setQuests([]);
@@ -3386,6 +3410,8 @@ export default function Taverna() {
       diaRef.current = sv.dia || 1; setDia(diaRef.current);
       minutoRef.current = sv.minuto != null ? sv.minuto : AMANHECER + 60; setMinuto(minutoRef.current);
       acordouAbsRef.current = sv.acordouAbs != null ? sv.acordouAbs : ((diaRef.current - 1) * 1440 + minutoRef.current); // saves antigos acordam descansados
+      nemesisRef.current = sv.nemesis && typeof sv.nemesis === "object" ? sv.nemesis : null; setNemesis(nemesisRef.current);
+      famaPatamarRef.current = sv.famaPatamar || 0;
       reinoRef.current = garantirReino(sv.reino && typeof sv.reino === "object" ? sv.reino : {}, mapaRef.current) || {}; setReino(reinoRef.current);
       /* BLINDAGEM v6.5: pessoas de saves antigos sem data de encontro ganham
          "dia 0" (= antes do registro de dias) — nunca um passado inventado. */
@@ -3990,6 +4016,66 @@ export default function Taverna() {
     return p;
   };
 
+  /* FAMA (v6.8): derivada das façanhas reais — a IA não infla nem esquece.
+     Quando o patamar sobe, o mundo muda o tratamento (envelope no próximo envio). */
+  const checarFama = () => {
+    const f = famaAtual();
+    const antes = patamarFama(famaPatamarRef.current), agora = patamarFama(f);
+    if (agora.min > antes.min) {
+      pushMsgs([{ autor: "sistema", texto: `📣 Sua fama cresce: agora você é ${agora.rotulo} — ${agora.nota}.` }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FAMA — NOVO PATAMAR, CANON] Minha fama subiu para ${Math.round(f)}: agora sou ${agora.rotulo.toUpperCase()} (${agora.nota}). O mundo passa a me tratar assim — reconhecimento em cidades, olhares, respeito ou medo. NPCs relevantes podem já ter ouvido meu nome.`;
+    }
+    famaPatamarRef.current = f;
+    return f;
+  };
+
+  /* NÊMESIS (v6.8): quando o nome cresce demais, alguém jura seu fim. */
+  const tentarSurgirNemesis = () => {
+    if (nemesisRef.current && nemesisRef.current.status !== "derrotada") return;
+    if (famaAtual() < 20) return;
+    if (Math.random() > 0.35) return;
+    const n = gerarNemesis(() => nomePessoa((mundo && mundo.genero) || "Fantasia medieval"), contRef.current, { dominios: dominiosDe(mapaRef.current).length }, diaRef.current);
+    nemesisRef.current = n; setNemesis(n);
+    npcsRef.current = { ...npcsRef.current, [n.nome]: criarNPC(n.nome, { papel: n.titulo, relacao: "inimigo", notas: `NÊMESIS do herói: ${n.motivo}. Ódio cresce a cada dia.`, conhecidoEm: diaRef.current, ultimaVez: Date.now() }) };
+    setNpcs(npcsRef.current);
+    pushMsgs([{ autor: "sistema", texto: `🎭 Alguém jurou seu fim: ${n.nome}, ${n.titulo} — ${n.motivo}.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[NÊMESIS — SURGIMENTO, CANON] Minha fama atraiu uma inimiga jurada: ${n.nome}, "${n.titulo}" — ${n.motivo}. Ela existe no mundo AGORA (ficha registrada), age nas sombras e o ódio dela cresce a cada dia (o sistema cuida dos números e dos ataques). Semeie a presença dela aos poucos: sinais, olhares, histórias — NÃO a confronte ainda.`;
+    checarConquistas();
+  };
+
+  const processarNemesisDiaria = () => {
+    const n = nemesisRef.current;
+    if (!n || n.status === "derrotada") return;
+    /* a nêmesis morreu na ficção? o registro de pessoas é a fonte da verdade */
+    const ficha = Object.values(npcsRef.current || {}).find((x) => (x.nome || "").toLowerCase() === (n.nome || "").toLowerCase());
+    if (ficha && (ficha.status || "").toLowerCase().includes("morto")) {
+      nemesisRef.current = { ...n, status: "derrotada" }; setNemesis(nemesisRef.current);
+      bumpCont("nemesisVencidas"); checarConquistas();
+      pushMsgs([{ autor: "sistema", texto: `🕊 A perseguição acabou: ${n.nome} não vai mais te caçar.` }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[NÊMESIS — FIM, CANON] ${n.nome} está morta (confirmado pelo registro). A perseguição contra mim ACABOU de verdade: sem sucessores, sem retorno, sem "plano póstumo". O mundo deve registrar o fim dessa sombra.`;
+      return;
+    }
+    const odio = Math.min(100, (n.odio || 0) + 2 + Math.floor(Math.random() * 4));
+    let atual = { ...n, odio, status: odio >= 30 ? "ativa" : n.status };
+    for (const lim of LIMIARES_NEMESIS) {
+      if (odio >= lim && (n.ultimoLimiar || 0) < lim) {
+        atual = { ...atual, ultimoLimiar: lim };
+        const acao = ACOES_NEMESIS[lim];
+        pushMsgs([{ autor: "sistema", texto: `🎭 ${acao.rotulo}: ${acao.txt(atual)}` }]);
+        if (acao.tipo === "sabotagem") {
+          const perda = Math.round((guildaRef.current.cofre || 0) * 0.1);
+          if (perda > 0) {
+            guildaRef.current = { ...guildaRef.current, cofre: guildaRef.current.cofre - perda }; setGuilda(guildaRef.current);
+            pushMsgs([{ autor: "sistema", texto: `🔥 A sabotagem custou ◉ ${perda} do cofre.` }]);
+          }
+        }
+        const instr = { difamacao: "Espalhe na ficção os efeitos dessa difamação: um olhar torto, um comerciante que hesita, um boato cruel sobre mim circulando.", sabotagem: "Narre as consequências da sabotagem chegando aos meus ouvidos (o prejuízo já foi aplicado pelo sistema).", assassinos: "Prepare o ataque: em breve (nesta sessão ou na próxima cena de estrada), assassinos a serviço dela me emboscam — quando acontecer, abra o combate com 'combate_iniciar' (assassinos de ameaça compatível com meu nível).", confronto: "É o confronto final: ela virá pessoalmente, com um desafio aberto ou uma armadilha mortal. Construa o encontro como clímax e, quando eu vencer (se vencer), registre-a como morta no registro de pessoas." }[acao.tipo];
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[NÊMESIS — ${acao.rotulo.toUpperCase()}] ${acao.txt(atual)} ${instr}`;
+      }
+    }
+    nemesisRef.current = atual; setNemesis(atual);
+  };
+
   /* AVANÇO DE DIAS (v6.5): cada dia passado move o calendário e rola a vida
      dos seus domínios (população, felicidade, eventos por tabela). Retorna os
      eventos para o chamador virar envelope pro Mestre narrar. */
@@ -4013,6 +4099,17 @@ export default function Taverna() {
       setGuilda(guildaRef.current);
     }
     if (eventos.length) checarConquistas();
+    /* por dia passado: fama recalculada, nêmesis cresce, rumores viajam */
+    for (let i = 0; i < n; i++) {
+      checarFama();
+      tentarSurgirNemesis();
+      processarNemesisDiaria();
+      if (Math.random() < 0.25) {
+        const boato = rumorDoDia({ ...contRef.current, cicatrizes: (personagem.cicatrizes || []).length, quaseMorte: contRef.current.quaseMorte || 0 }, personagem.nome, patamarFama(famaAtual()), !!(nemesisRef.current && nemesisRef.current.status !== "derrotada"));
+        pushMsgs([{ autor: "sistema", texto: `🗞 Corre a boca miúda: ${boato}…` }]);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RUMOR] Um boato chegou aos meus ouvidos: "${boato}". Se couber, deixe-o circular na ficção (taverna, estrada, mercado) — e decida se ele é só fumaça ou o rastro de algo real.`;
+      }
+    }
     return eventos;
   };
   const envelopeEventosReino = (evs) => !evs.length ? "" : "\n" + evs.map((ev) => `[EVENTO DE REINO — ${ev.evento.titulo.toUpperCase()} em ${ev.cidade}] ${ev.evento.txt(ev.cidade)} Os efeitos JÁ foram aplicados pelo sistema (${[ev.felDelta ? `felicidade ${ev.felDelta > 0 ? "+" : ""}${ev.felDelta}` : "", ev.popDelta ? `população ${ev.popDelta > 0 ? "+" : ""}${ev.popDelta}` : "", ev.cofreDelta ? `cofre ${ev.cofreDelta > 0 ? "+" : ""}${ev.cofreDelta}` : ""].filter(Boolean).join(", ")}) — NÃO os repita como números na ficção; narre como vida do reino${ev.evento.soSeInfeliz ? ". ATENÇÃO: o povo está à beira da revolta — isso é um problema REAL que exige resposta minha ou consequências" : ""}.`).join("\n");
@@ -4235,6 +4332,8 @@ export default function Taverna() {
       criaturasDescobertas: descobRef.current.length,
       cicatrizes: (p.cicatrizes || []).length,
       diasVividos: diaRef.current,
+      fama: famaAtual(),
+      temNemesis: !!(nemesisRef.current && nemesisRef.current.status !== "derrotada"),
       dominios: dominiosDe(mapaRef.current).length,
       temGuilda: !!faccaoJogadorRef.current,
       guildaNivel: guildaRef.current.nivel,
@@ -4755,7 +4854,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
