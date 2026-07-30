@@ -49,6 +49,8 @@ export const CONQUISTAS = [
   { id: "primeiro_decreto", icone: "📣", nome: "Serviço Terceirizado", titulo: "o Suzerano", dica: "Pregue seu primeiro decreto oferecendo recompensa.", quando: (s) => s.decretosPregados >= 1 },
   { id: "cinco_decretos", icone: "👑", nome: "Voz do Trono", titulo: "Voz do Trono", dica: "Tenha 5 decretos cumpridos pelos seus agentes.", segredo: true, quando: (s) => s.decretosCumpridos >= 5 },
   { id: "dez_eventos_reino", icone: "🌾", nome: "O Povo Vive", titulo: "Coração do Reino", dica: "Presencie 10 eventos da vida dos seus domínios.", quando: (s) => s.eventosReino >= 10 },
+  { id: "primeira_cicatriz", icone: "🩸", nome: "Marca de Guerra", titulo: "o Marcado", dica: "Sobreviva por um fio e ganhe sua primeira cicatriz.", quando: (s) => (s.cicatrizes || 0) >= 1 },
+  { id: "cinco_cicatrizes", icone: "⚔", nome: "Mapa de Batalhas", titulo: "Mapa de Batalhas", dica: "Acumule 5 cicatrizes.", segredo: true, quando: (s) => (s.cicatrizes || 0) >= 5 },
 
   /* -------- CORAÇÃO (social) -------- */
   { id: "primeiro_companheiro", icone: "🤝", nome: "Líder Nato", titulo: "Líder Nato", dica: "Recrute seu primeiro companheiro.", quando: (s) => s.recrutados >= 1 },

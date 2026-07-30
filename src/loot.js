@@ -177,7 +177,20 @@ export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1 } = {}) {
   if (comPrefixo) nome = `${concordancia(sortear(PREFIXOS), base.nome)} ${base.nome}`;
   if (tier >= 2) nome = `${nome} ${sortear(SUFIXOS)}`;
 
-  const poder = tier >= 2 ? sortear(PODERES_POR_SLOT[slot] || []) : "";
+  /* v6.6 — dano elemental em armas e resistência elemental em defesas (raro+) */
+  const ELEMENTOS = ["fogo", "gelo", "raio", "veneno", "sagrado", "sombrio", "arcano"];
+  const ROTULO_ELEM = { fogo: "chamas", gelo: "geada", raio: "tempestade", veneno: "toxinas", sagrado: "luz", sombrio: "trevas", arcano: "magia" };
+  const ehDefesa = ["escudo", "armadura", "elmo", "botas"].includes(slot);
+  let poder = tier >= 2 ? sortear(PODERES_POR_SLOT[slot] || []) : "";
+  if (tier >= 2 && slot === "arma" && Math.random() < 0.35) {
+    const el = sortear(ELEMENTOS);
+    atributos.elemento = el;
+    poder = poder || `A lâmina pulsa com ${ROTULO_ELEM[el]} — o dano é de ${el}.`;
+  } else if (tier >= 2 && ehDefesa && Math.random() < 0.35) {
+    const el = sortear(ELEMENTOS);
+    atributos.resist = [el];
+    poder = poder || `Protege contra ${ROTULO_ELEM[el]} — dano de ${el} reduzido à metade.`;
+  }
   const descricao = tier >= 3 ? "Uma peça que já sobreviveu a donos lendários." : tier === 2 ? "Trabalho de mestre artesão." : "";
 
   return { nome, tipo: slot, raridade, atributos, poder, descricao };

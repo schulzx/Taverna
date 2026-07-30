@@ -7,6 +7,8 @@
    vantagem/desvantagem, críticos e condições de estado.
    ============================================================ */
 
+import { perfilDeCriatura, multiplicadorDano, iconeDano, resistenciasEquipadas, elementoDaArma } from "./danos.js";
+
 export function d(n) { return 1 + Math.floor(Math.random() * n); }
 
 /* rola d20 com vantagem/desvantagem; devolve {valor, dados} */
@@ -44,7 +46,7 @@ export function modificadoresDeCondicao(condicoes = []) {
 }
 
 /* Resolve UM ataque. Devolve um objeto de resultado detalhado (sem narrar). */
-export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque, danoBase, vantagem, desvantagem, condAtacante = [], condAlvo = [] }) {
+export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque, danoBase, vantagem, desvantagem, condAtacante = [], condAlvo = [], tipoDano = "fisico", perfilAlvo = null, resistAlvo = [] }) {
   const modAtk = modificadoresDeCondicao(condAtacante);
   const modAlvo = modificadoresDeCondicao(condAlvo);
   if (modAtk.perdeAcao) return { tipo: "impedido", texto: `${atacante} está impossibilitado de agir` };
@@ -70,10 +72,23 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
   else { resultado = "erra"; dano = 0; }
   dano = Math.max(0, Math.round(dano));
 
+  /* TIPOS DE DANO (v6.6): fraqueza ×1,5 / resistido ×0,5 / imune 0 — por tabela */
+  let tagDano = "";
+  if (dano > 0 && (perfilAlvo || (resistAlvo && resistAlvo.length))) {
+    let mult = 1;
+    if (perfilAlvo) {
+      const m = multiplicadorDano(tipoDano, perfilAlvo);
+      mult = m.mult; tagDano = m.tag;
+    }
+    if (mult > 0 && resistAlvo.includes(tipoDano)) { mult = mult * 0.5; tagDano = `${iconeDano(tipoDano)} resistido ×0,5`; }
+    if (mult === 0) { dano = 0; resultado = "imune"; }
+    else if (mult !== 1) dano = Math.max(1, Math.round(dano * mult));
+  }
+
   return {
     tipo: "ataque", atacante, alvo: alvo.nome || alvo, resultado,
     d20: rolagem.valor, dados: rolagem.dados, modo: rolagem.modo,
-    bonus, total, ca, dano, critico, desastre,
+    bonus, total, ca, dano, critico, desastre, tipoDano, tagDano,
   };
 }
 
@@ -95,9 +110,10 @@ export function resumoDoAtaque(r) {
   if (r.tipo === "impedido") return r.texto;
   const dadosTxt = r.dados.length > 1 ? `${r.dados.join("/")}→${r.d20}` : `${r.d20}`;
   const base = `${r.atacante} → ${r.alvo}: d20 ${dadosTxt}${r.bonus ? `+${r.bonus}` : ""}=${r.total} vs ${r.ca}`;
-  if (r.resultado === "critico") return `${base} · CRÍTICO! ${r.dano} de dano`;
+  if (r.resultado === "critico") return `${base} · CRÍTICO! ${r.dano} de dano${r.tagDano ? ` ${r.tagDano}` : ""}`;
   if (r.resultado === "desastre") return `${base} · desastre (errou feio)`;
-  if (r.resultado === "acerta") return `${base} · acerta, ${r.dano} de dano`;
+  if (r.resultado === "acerta") return `${base} · acerta, ${r.dano} de dano${r.tagDano ? ` ${r.tagDano}` : ""}`;
+  if (r.resultado === "imune") return `${base} · ${r.tagDano || "sem efeito"}`;
   return `${base} · erra`;
 }
 
@@ -121,10 +137,12 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [] }) {
     } else {
       alvo = alvosPossiveis[0];
     }
+    const perfilInim = perfilDeCriatura(inim.nome, inim.desc);
     const r = resolverAtaque({
       atacante: inim.nome, alvo: alvo.ent, ehAtacanteInimigo: true,
       bonusAtaque: bonusDeAmeaca(inim.ameaca), danoBase: danoDe(inim, true),
       condAtacante: inim.condicoes || [], condAlvo: alvo.ent.condicoes || [],
+      tipoDano: perfilInim.ataque, resistAlvo: resistenciasEquipadas(alvo.ent),
     });
     acoes.push({ inimigo: inim.nome, alvoRef: alvo.ref, alvoNome: alvo.nome, r });
   }
@@ -182,6 +200,7 @@ export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido =
       atacante: comp.nome, alvo, ehAtacanteInimigo: false,
       bonusAtaque: 2 + (comp.nivel || 1), danoBase: 4 + (comp.nivel || 1) + bonusArmaComp + d(4),
       condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [],
+      tipoDano: elementoDaArma(comp), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
     });
     acoes.push({ companheiro: comp.nome, tipo: "ataque", alvoNome: alvo.nome, r });
   }

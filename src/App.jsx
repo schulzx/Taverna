@@ -16,6 +16,7 @@ import { gerarMasmorra, recompensaChefe, ROTULO_SALA } from "./masmorras.js";
 import { gerarMural, gerarContrato, ICONE_CONTRATO } from "./contratos.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
+import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano } from "./danos.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -1254,6 +1255,8 @@ function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
 function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio, onDefinirRelacao }) {
   const lista = Object.values(npcs || {}).sort((a, b) => (b.ultimaVez || 0) - (a.ultimaVez || 0));
   const nomesGrupo = new Set((grupo || []).map((g) => (g.nome || "").toLowerCase()));
+  /* membros do grupo também têm relação formal: puxa a ficha do registro se existir */
+  const fichaDe = (nome) => Object.values(npcs || {}).find((n) => (n.nome || "").toLowerCase() === (nome || "").toLowerCase());
   if (!lista.length && !(grupo || []).length) {
     return <div className="tv-body text-sm italic text-center py-10" style={{ color: T.inkDim }}>Ninguém conhecido ainda. As pessoas marcantes que você encontrar aparecerão aqui — com rosto, relação e tudo que você sabe sobre elas.</div>;
   }
@@ -1271,10 +1274,10 @@ function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio, onDefinirRelacao }
           </div>
           <div className="tv-body text-xs italic truncate" style={{ color: T.inkDim }}>{[n.papel, n.genero, n.local ? `em ${n.local}` : "", n.conhecidoEm != null ? (n.conhecidoEm > 0 ? `conhecido(a) no dia ${n.conhecidoEm}` : "antes do dia 1") : ""].filter(Boolean).join(" · ") || "—"}</div>
           {n.notas && <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{n.notas}</div>}
-          {!ehGrupo && onDefinirRelacao && (
+          {onDefinirRelacao && !morto && (
             <div className="flex items-center gap-1.5 mt-1.5">
               <span className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.inkDim }}>relação:</span>
-              <select value={(n.relacao || "neutro").toLowerCase()} onChange={(e) => onDefinirRelacao(n.nome, e.target.value)}
+              <select value={(n.relacao || (ehGrupo ? "aliado" : "neutro")).toLowerCase()} onChange={(e) => onDefinirRelacao(n.nome, e.target.value)}
                 className="tv-mono text-[10px] rounded px-1.5 py-0.5"
                 style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.ink }}>
                 {["aliado", "amigo", "romance", "conjuge", "familia", "neutro", "rival", "inimigo"].map((r) => (
@@ -1296,7 +1299,7 @@ function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio, onDefinirRelacao }
   };
   return (
     <div className="space-y-2">
-      {(grupo || []).map((g) => cartao({ nome: g.nome, papel: [g.classe, g.subclasse].filter(Boolean).join(" · ") || g.conceito, notas: g.descricao, semente: g.semente }, true))}
+      {(grupo || []).map((g) => { const f = fichaDe(g.nome) || {}; return cartao({ nome: g.nome, papel: [g.classe, g.subclasse].filter(Boolean).join(" · ") || g.conceito, notas: g.descricao, semente: g.semente, relacao: f.relacao, conhecidoEm: f.conhecidoEm != null ? f.conhecidoEm : 0 }, true); })}
       {lista.filter((n) => !nomesGrupo.has((n.nome || "").toLowerCase())).map((n) => cartao(n, false))}
     </div>
   );
@@ -1496,7 +1499,7 @@ function PainelDiplomacia({ mapa, faccaoJogador, onDiplomacia, onPresente, cofre
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 const ROTULO_AMEACA = { fraco: "fraca", comum: "comum", competente: "competente", elite: "elite", lendario: "lendária" };
 const CATEGORIAS_CONQUISTA = [
-  { id: "lamina", rotulo: "Lâmina", ids: ["primeiro_sangue", "dez_abatidos", "cinquenta_abatidos", "cem_abatidos", "matador_elite", "cinco_elites", "matador_lendario", "tres_lendarios", "primeiro_critico", "dez_criticos", "primeiro_desastre", "cinco_vitorias", "quinze_vitorias", "fio_da_morte"] },
+  { id: "lamina", rotulo: "Lâmina", ids: ["primeiro_sangue", "dez_abatidos", "cinquenta_abatidos", "cem_abatidos", "matador_elite", "cinco_elites", "matador_lendario", "tres_lendarios", "primeiro_critico", "dez_criticos", "primeiro_desastre", "cinco_vitorias", "quinze_vitorias", "fio_da_morte", "primeira_cicatriz", "cinco_cicatrizes"] },
   { id: "estrada", rotulo: "Estrada", ids: ["primeira_viagem", "dez_viagens", "vintecinco_viagens", "dez_perigos", "dez_criaturas", "vinte_criaturas", "primeira_masmorra", "cinco_masmorras", "primeiro_contrato", "dez_contratos"] },
   { id: "coracao", rotulo: "Coração", ids: ["primeiro_companheiro", "tres_companheiros", "cinco_pessoas", "quinze_pessoas", "trinta_pessoas", "primeiro_presente", "cinco_presentes", "vinculo_amizade", "vinculos_tres", "vinculo_profundo"] },
   { id: "ouro", rotulo: "Ouro", ids: ["cem_moedas", "quinhentas_moedas", "mil_moedas", "cofre_gordo", "primeiro_forjado", "dez_desmontados", "item_lendario"] },
@@ -1691,6 +1694,19 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                 {personagem.antecedente && (
                   <div className="tv-mono text-[10px] uppercase tracking-widest mt-0.5" style={{ color: T.inkDim }} title={personagem.antecedenteGancho || ""}>
                     🎭 {personagem.antecedente}
+                  </div>
+                )}
+                {(personagem.cicatrizes || []).length > 0 && (
+                  <div className="mt-2 rounded-xl p-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                    <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>🩸 Cicatrizes ({personagem.cicatrizes.length})</div>
+                    <div className="flex flex-wrap gap-1">
+                      {personagem.cicatrizes.map((c, i) => (
+                        <span key={i} title={`${c.descricao}${c.dia ? ` — desde o dia ${c.dia}` : ""}${c.vidaMax ? ` · −${-c.vidaMax} PV máx.` : ""}`}
+                          className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${T.danger}`, color: T.inkDim }}>
+                          {c.nome}{c.vidaMax ? ` −${-c.vidaMax}` : ""}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
                 <button onClick={() => setAbrirCaminho(abrirCaminho === "eu" ? null : "eu")} className="tv-mono text-[10px] mt-1.5 px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.violetSoft }}>
@@ -2428,7 +2444,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.5 · cânone e reino</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.6 · dano e cicatrizes</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2705,6 +2721,7 @@ function migrarPersonagem(p) {
     grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, xp: g.xp || 0, nivel: g.nivel || 1, inventario: Array.isArray(g.inventario) ? g.inventario : [], equipamento: Array.isArray(g.equipamento) ? g.equipamento : [], equipados: g.equipados && typeof g.equipados === "object" ? g.equipados : {}, semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}`, vinculo: g.vinculo ?? VINCULO_INICIAL, marcos: Array.isArray(g.marcos) ? g.marcos : [] })) : [],
     antecedente: p.antecedente || "", antecedenteGancho: p.antecedenteGancho || "",
     essencia: p.essencia || 0,
+    cicatrizes: Array.isArray(p.cicatrizes) ? p.cicatrizes : [],
     efeitos: Array.isArray(p.efeitos) ? p.efeitos : [],
     condicoes: Array.isArray(p.condicoes) ? p.condicoes : [],
     equipamento: Array.isArray(p.equipamento) ? p.equipamento : [],
@@ -3199,6 +3216,16 @@ export default function Taverna() {
       if ((persAtual.vida || 0) > 0 && (pers.vida || 0) <= 0) {
         bumpCont("quaseMorte", 1);
         pers = { ...pers, grupo: aplicarVinculo(pers.grupo, "todos", 4, null) };
+        /* CICATRIZ (v6.6): sobreviver por um fio pode deixar marca permanente */
+        if (Math.random() < 0.45 && (pers.cicatrizes || []).length < CICATRIZ_MAX) {
+          const c = sortearCicatriz(pers.cicatrizes || []);
+          if (c) {
+            const vidaMax = Math.max(5, (pers.vidaMax || 10) + (c.vidaMax || 0));
+            pers = { ...pers, cicatrizes: [...(pers.cicatrizes || []), { ...c, dia: diaRef.current }], vidaMax, vida: Math.min(pers.vida, vidaMax) };
+            pushMsgs([{ autor: "sistema", texto: `🩸 Cicatriz permanente: ${c.nome} — ${c.descricao}${c.vidaMax ? ` (−${-c.vidaMax} PV máx.)` : ""}` }]);
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CICATRIZ — CANON PERMANENTE] Quase morri e fiquei com uma marca para sempre: "${c.nome}" (${c.local}), no dia ${diaRef.current} da campanha. ${c.descricao} Isso agora faz parte do meu corpo e da minha história — pode ser lembrado, comentado e ter consequências na ficção, mas NUNCA some sozinho.`;
+          }
+        }
         tocouVinculo = true;
       }
       (pers.grupo || []).forEach((g) => {
@@ -3364,6 +3391,7 @@ export default function Taverna() {
         atacante: pers.nome, alvo, ehAtacanteInimigo: false,
         bonusAtaque: bonusAtk, danoBase: danoDe(pers, false),
         condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
+        tipoDano: elementoDaArma(pers), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
       });
       if (r.dano > 0) { const l = locais.find((e) => e.nome === alvo.nome); l.vida = Math.max(0, l.vida - r.dano); if (l.vida <= 0) l.derrotado = true; }
       resultados.push({ r, alvo: { ...alvo } });
@@ -3944,10 +3972,16 @@ export default function Taverna() {
      ficção consumou mas o registro não sabia). */
   const definirRelacao = (nome, relacao) => {
     const reg = npcsRef.current;
-    const n = reg[nome];
-    if (!n || (n.relacao || "") === relacao) return;
+    /* membro do grupo sem ficha? o app cria na hora — relação formal precisa de registro */
+    let n = reg[nome];
+    if (!n) {
+      const comp = (personagem.grupo || []).find((g) => (g.nome || "").toLowerCase() === nome.toLowerCase());
+      if (!comp) return;
+      n = criarNPC(comp.nome, { papel: [comp.classe, comp.subclasse].filter(Boolean).join(" · ") || "companheiro", relacao: "aliado", notas: comp.descricao || "", conhecidoEm: 0 });
+    }
+    if ((n.relacao || "") === relacao) return;
     const rotulo = relacaoNPC(relacao).rotulo;
-    npcsRef.current = { ...reg, [nome]: { ...n, relacao, ultimaVez: Date.now() } };
+    npcsRef.current = { ...reg, [nome]: { ...n, nome, relacao, ultimaVez: Date.now() } };
     setNpcs(npcsRef.current);
     pushMsgs([{ autor: "sistema", texto: `🤝 Relação formal registrada: ${nome} agora é ${rotulo}.` }]);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RELAÇÃO FORMAL — CANON ABSOLUTO] Eu declarei formalmente: minha relação com ${nome} é ${rotulo.toUpperCase()}${relacao === "conjuge" ? " — CÔNJUGE: somos casados, isso é fato consumado e permanente (trate como parte do nosso presente, sem inventar um passado longo que não esteja registrado)" : ""}. Registre no cânone e trate como verdade absoluta daqui em diante.`;
@@ -4133,6 +4167,7 @@ export default function Taverna() {
       companheiros: (p.grupo || []).length,
       npcs: Object.keys(npcsRef.current || {}).length,
       criaturasDescobertas: descobRef.current.length,
+      cicatrizes: (p.cicatrizes || []).length,
       dominios: dominiosDe(mapaRef.current).length,
       temGuilda: !!faccaoJogadorRef.current,
       guildaNivel: guildaRef.current.nivel,
