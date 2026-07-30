@@ -7,7 +7,7 @@ import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./hist
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste } from "./bestiario.js";
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
-import { rolarClima, rolarEncontro } from "./encontros.js";
+import { rolarClima, rolarEncontro, CLIMAS } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
@@ -17,6 +17,7 @@ import { gerarMural, gerarContrato, ICONE_CONTRATO } from "./contratos.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
 import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano } from "./danos.js";
+import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, AMANHECER } from "./calendario.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -1500,7 +1501,7 @@ function PainelDiplomacia({ mapa, faccaoJogador, onDiplomacia, onPresente, cofre
 const ROTULO_AMEACA = { fraco: "fraca", comum: "comum", competente: "competente", elite: "elite", lendario: "lendária" };
 const CATEGORIAS_CONQUISTA = [
   { id: "lamina", rotulo: "Lâmina", ids: ["primeiro_sangue", "dez_abatidos", "cinquenta_abatidos", "cem_abatidos", "matador_elite", "cinco_elites", "matador_lendario", "tres_lendarios", "primeiro_critico", "dez_criticos", "primeiro_desastre", "cinco_vitorias", "quinze_vitorias", "fio_da_morte", "primeira_cicatriz", "cinco_cicatrizes"] },
-  { id: "estrada", rotulo: "Estrada", ids: ["primeira_viagem", "dez_viagens", "vintecinco_viagens", "dez_perigos", "dez_criaturas", "vinte_criaturas", "primeira_masmorra", "cinco_masmorras", "primeiro_contrato", "dez_contratos"] },
+  { id: "estrada", rotulo: "Estrada", ids: ["primeira_viagem", "dez_viagens", "vintecinco_viagens", "dez_perigos", "dez_criaturas", "vinte_criaturas", "primeira_masmorra", "cinco_masmorras", "primeiro_contrato", "dez_contratos", "trinta_dias", "ano_inteiro"] },
   { id: "coracao", rotulo: "Coração", ids: ["primeiro_companheiro", "tres_companheiros", "cinco_pessoas", "quinze_pessoas", "trinta_pessoas", "primeiro_presente", "cinco_presentes", "vinculo_amizade", "vinculos_tres", "vinculo_profundo"] },
   { id: "ouro", rotulo: "Ouro", ids: ["cem_moedas", "quinhentas_moedas", "mil_moedas", "cofre_gordo", "primeiro_forjado", "dez_desmontados", "item_lendario"] },
   { id: "coroa", rotulo: "Coroa", ids: ["fundador", "primeira_cidade", "tres_dominios", "cinco_dominios", "guilda_nv3", "guilda_nv5", "primeira_alianca", "tres_tratados", "primeiro_vassalo", "primeira_guerra", "primeiro_decreto", "cinco_decretos", "dez_eventos_reino"] },
@@ -2444,7 +2445,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.6 · dano e cicatrizes</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.7 · calendário</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2860,7 +2861,46 @@ export default function Taverna() {
   const [reino, setReino] = useState({});
   /* TEMPO DA CAMPANHA (v6.5): o app conta os dias — a âncora da memória.
      "Nos conhecemos no dia X" vira fato verificável; antes dele, impossível. */
-  const tempoInfoPrompt = () => `TEMPO DA CAMPANHA: hoje é o DIA ${diaRef.current} (o app controla o calendário — nunca estime datas por conta própria).`;
+  const minutoRef = useRef(AMANHECER + 60); // a aventura começa de manhã
+  const [minuto, setMinuto] = useState(minutoRef.current);
+  const acordouAbsRef = useRef(0); // minuto absoluto em que o herói acordou do último descanso longo
+  const absMin = () => (diaRef.current - 1) * 1440 + minutoRef.current;
+  const tempoInfoPrompt = () => {
+    const est = estacaoDe(diaRef.current);
+    return `TEMPO DA CAMPANHA: hoje é ${dataTxt(diaRef.current)} — dia ${diaRef.current} da campanha —, ${horaTxt(minutoRef.current)}${ehNoite(minutoRef.current) ? " (NOITE)" : ""}, ${est.nome.toLowerCase()} ${est.icone} (${est.nota}). O app controla o relógio e o calendário: NUNCA estime datas ou horas por conta própria; use estas.`;
+  };
+  /* RELÓGIO (v6.7): o tempo corre sozinho. Cada chamada avança N minutos;
+     dias viram por aqui (com reino, festivais e sono a reboque). Retorna
+     texto de envelope para o chamador anexar ao envio do Mestre. */
+  const avancarMinutos = (n) => {
+    minutoRef.current += n;
+    const extras = [];
+    while (minutoRef.current >= 1440) {
+      minutoRef.current -= 1440;
+      const evs = avancarDiasReino(1);
+      evs.forEach((ev) => pushMsgs([{ autor: "sistema", texto: `👑 ${ev.evento.titulo} em ${ev.cidade}: ${ev.evento.txt(ev.cidade)}` }]));
+      extras.push(envelopeEventosReino(evs));
+      const fest = festivalDe(diaRef.current);
+      if (fest) {
+        const r = Object.fromEntries(Object.entries(reinoRef.current || {}).map(([k, v]) => [k, { ...v, felicidade: Math.min(100, (v.felicidade || 0) + fest.fel) }]));
+        reinoRef.current = r; setReino(r);
+        pushMsgs([{ autor: "sistema", texto: `${fest.icone} Hoje é ${fest.nome}: ${fest.descricao}.` }]);
+        extras.push(`[FESTIVAL — ${fest.nome.toUpperCase()}] Hoje (${dataTxt(diaRef.current)}) é ${fest.nome}: ${fest.descricao}. Nos meus domínios o povo celebra (a felicidade já subiu por código). Traga a festa para a ficção se couber na cena.`);
+      }
+    }
+    setMinuto(minutoRef.current);
+    /* Sono: o corpo cobra. 16h acordado = aviso; 20h = exaustão (condição por código). */
+    const acordadoH = (absMin() - acordouAbsRef.current) / 60;
+    const cansadoJa = (personagem.condicoes || []).some((c) => (c.nome || "").toLowerCase().includes("cansado"));
+    if (acordadoH >= HORAS_EXAUSTO && !cansadoJa) {
+      setPersonagem((p) => ({ ...p, condicoes: [...(p.condicoes || []), { nome: "Cansado", tipo: "ruim", nota: "exausto por vigília longa demais — só sai com descanso longo" }] }));
+      pushMsgs([{ autor: "sistema", texto: `🥱 Exaustão: ${Math.floor(acordadoH)}h acordado. Condição "Cansado" até um descanso longo.` }]);
+    } else if (acordadoH >= HORAS_AVISO_SONO && (acordadoH - n / 60) < HORAS_AVISO_SONO) {
+      pushMsgs([{ autor: "sistema", texto: `🌙 Você está acordado há ${Math.floor(acordadoH)}h. O corpo pede acampamento — além de ${HORAS_EXAUSTO}h vem a exaustão.` }]);
+    }
+    checarConquistas();
+    return extras.filter(Boolean).join("");
+  };
   const mostrarRolagensRef = useRef(true);
 
   /* rola para o fim SÓ quando chega mensagem nova E o jogador já estava no fim.
@@ -2914,7 +2954,7 @@ export default function Taverna() {
       combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
-      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current,
+      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current,
       historia: historiaRef.current, quests: questsRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
@@ -3153,6 +3193,7 @@ export default function Taverna() {
         /* CÓDEX: contabiliza a vitória — combate vencido + abates por ameaça */
         const fins = resp.mudancas.__inimigosFinais || [];
         bumpCont("combatesVencidos", 1);
+        avancarMinutos(MINUTOS_POS_COMBATE); // a luta em si é rápida; o rescaldo leva meia hora
         bumpCont("inimigosDerrotados", fins.length);
         bumpCont("elitesDerrotados", fins.filter((e) => e.ameaca === "elite").length);
         bumpCont("lendariosDerrotados", fins.filter((e) => e.ameaca === "lendario").length);
@@ -3299,6 +3340,8 @@ export default function Taverna() {
     muralRef.current = gerarMural((mundo && mundo.genero) || "Fantasia medieval", 1, { cidades: [], faccoes: [] }, 3); setMural(muralRef.current);
     decretosRef.current = []; setDecretos(decretosRef.current);
     diaRef.current = 1; setDia(1);
+    minutoRef.current = AMANHECER + 60; setMinuto(minutoRef.current);
+    acordouAbsRef.current = 0;
     reinoRef.current = {}; setReino({});
     historiaRef.current = { estrutura: (mundo && mundo.estrutura) || "jornada", etapa: 0 };
     questsRef.current = []; setQuests([]);
@@ -3341,6 +3384,8 @@ export default function Taverna() {
       muralRef.current = Array.isArray(sv.mural) ? sv.mural : []; setMural(muralRef.current);
       decretosRef.current = Array.isArray(sv.decretos) ? sv.decretos : []; setDecretos(decretosRef.current);
       diaRef.current = sv.dia || 1; setDia(diaRef.current);
+      minutoRef.current = sv.minuto != null ? sv.minuto : AMANHECER + 60; setMinuto(minutoRef.current);
+      acordouAbsRef.current = sv.acordouAbs != null ? sv.acordouAbs : ((diaRef.current - 1) * 1440 + minutoRef.current); // saves antigos acordam descansados
       reinoRef.current = garantirReino(sv.reino && typeof sv.reino === "object" ? sv.reino : {}, mapaRef.current) || {}; setReino(reinoRef.current);
       /* BLINDAGEM v6.5: pessoas de saves antigos sem data de encontro ganham
          "dia 0" (= antes do registro de dias) — nunca um passado inventado. */
@@ -3402,6 +3447,10 @@ export default function Taverna() {
   const agir = (texto) => {
     const acao = texto.trim();
     if (!acao || carregando || rolagem) return;
+    /* RELÓGIO: turnos de exploração/cons conversam ~45 min de mundo.
+       Combate, masmorra e acampamento têm tempo próprio (contado nesses fluxos). */
+    let extraTempo = "";
+    if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) extraTempo = avancarMinutos(MINUTOS_POR_TURNO);
     setEntrada(""); setHabAbertas(false);
     if (habSel) {
       const h = habSel; setHabSel(null);
@@ -3411,7 +3460,7 @@ export default function Taverna() {
       setPersonagem(pers);
       pushMsgs([{ autor: "jogador", texto: `✦ ${h.nome} — ${acao}` }, { autor: "sistema", texto: `Você gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}` }]);
       habUsadaRef.current = true;
-      enviar(`[HABILIDADE] Uso "${h.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). Efeito: ${h.descricao}. COMO eu a uso: ${acao}. Narre conforme minha intenção — se incerto, peça a rolagem apropriada.`, pers);
+      enviar(`[HABILIDADE] Uso "${h.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). Efeito: ${h.descricao}. COMO eu a uso: ${acao}. Narre conforme minha intenção — se incerto, peça a rolagem apropriada.${extraTempo}`, pers);
       return;
     }
     /* Detecta habilidade citada por texto (ex.: "uso Projétil Arcano") e desconta o PM
@@ -3429,7 +3478,7 @@ export default function Taverna() {
       setPersonagem(pers);
       habUsadaRef.current = true;
       pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `✦ ${habCitada.nome} · gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}` }]);
-      enviar(`[HABILIDADE] Uso "${habCitada.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). ${habCitada.descricao || ""} Ação: ${acao}`, pers);
+      enviar(`[HABILIDADE] Uso "${habCitada.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). ${habCitada.descricao || ""} Ação: ${acao}${extraTempo}`, pers);
       return;
     }
     const ataque = resolverAtaqueJogador(acao, personagem);
@@ -3525,7 +3574,7 @@ export default function Taverna() {
       return;
     }
     pushMsgs([{ autor: "jogador", texto: acao }]);
-    enviar(acao, personagem);
+    enviar(`${acao}${extraTempo}`, personagem);
   };
 
   /* VEZ DO MUNDO: o mundo vive o instante presente (curto no TEMPO, mas cheio
@@ -3759,7 +3808,8 @@ export default function Taverna() {
     const mm = gerarMasmorra((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1);
     masmorraRef.current = mm; setMasmorra(mm);
     pushMsgs([{ autor: "jogador", texto: `🕳 Encontrei uma entrada: ${mm.nome}. Vou explorar.` }]);
-    enviar(`[MASMORRA — ENTRADA · ${mm.nome}] Descobri a entrada de uma masmorra: "${mm.nome}" (${mm.salas.length} salas — o SISTEMA rola cada sala; você só narra). Descreva a fachada/entrada e a atmosfera lá dentro em 2-4 frases, costurando com a cena atual${cidadeAtualRef.current ? ` (perto de ${cidadeAtualRef.current})` : ""}. NÃO crie encontros ainda — as salas vêm pelas instruções [MASMORRA — SALA]. Termine me convidando a avançar.`, personagem);
+    const extraTempo = avancarMinutos(MINUTOS_SALA_MASMORRA);
+    enviar(`[MASMORRA — ENTRADA · ${mm.nome}] Descobri a entrada de uma masmorra: "${mm.nome}" (${mm.salas.length} salas — o SISTEMA rola cada sala; você só narra). Descreva a fachada/entrada e a atmosfera lá dentro em 2-4 frases, costurando com a cena atual${cidadeAtualRef.current ? ` (perto de ${cidadeAtualRef.current})` : ""}. NÃO crie encontros ainda — as salas vêm pelas instruções [MASMORRA — SALA]. Termine me convidando a avançar.${extraTempo}`, personagem);
   };
 
   const avancarMasmorra = () => {
@@ -3772,9 +3822,10 @@ export default function Taverna() {
     const mm2 = { ...mm, idx };
     masmorraRef.current = mm2; setMasmorra(mm2);
     const pos = `SALA ${idx}/${mm.salas.length - 1} · ${mm.nome}`;
+    const extraTempo = avancarMinutos(MINUTOS_SALA_MASMORRA);
     if (sala.tipo === "combate" || sala.tipo === "chefe") {
       const lista = (sala.inimigos || []).map((i) => `${i.nome} (${i.ameaca})`).join(", ");
-      enviar(`[MASMORRA — ${pos} · ${sala.tipo === "chefe" ? "CHEFE" : "COMBATE"}] Avanço para a próxima sala. O SISTEMA rolou: ${sala.tipo === "chefe" ? "A SALA DO CHEFE — " : ""}inimigos à espreita: ${lista}. Descreva a sala em 1-2 frases e ABRA O COMBATE agora com "combate_iniciar" usando EXATAMENTE esses nomes e ameaças (o app completa os números).${sala.tipo === "chefe" ? " É o confronto final desta masmorra — narre à altura." : ""}`, personagem);
+      enviar(`[MASMORRA — ${pos} · ${sala.tipo === "chefe" ? "CHEFE" : "COMBATE"}] Avanço para a próxima sala. O SISTEMA rolou: ${sala.tipo === "chefe" ? "A SALA DO CHEFE — " : ""}inimigos à espreita: ${lista}. Descreva a sala em 1-2 frases e ABRA O COMBATE agora com "combate_iniciar" usando EXATAMENTE esses nomes e ameaças (o app completa os números).${sala.tipo === "chefe" ? " É o confronto final desta masmorra — narre à altura." : ""}${extraTempo}`, personagem);
     } else if (sala.tipo === "armadilha") {
       /* dano por código: o herói (ou um companheiro, 30%) sofre a armadilha */
       const emComp = (personagem.grupo || []).length > 0 && Math.random() < 0.3;
@@ -3782,12 +3833,12 @@ export default function Taverna() {
         const alvo = personagem.grupo[Math.floor(Math.random() * personagem.grupo.length)];
         setPersonagem((p) => ({ ...p, grupo: (p.grupo || []).map((g) => g.nome === alvo.nome ? { ...g, vida: Math.max(0, g.vida - sala.dano) } : g) }));
         pushMsgs([{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nome} — ${alvo.nome} sofre ${sala.dano} de dano` }]);
-        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nome}). ${alvo.nome} já sofreu ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e como o grupo reage.`, personagem);
+        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nome}). ${alvo.nome} já sofreu ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e como o grupo reage.${extraTempo}`, personagem);
       } else {
         const p2 = { ...personagem, vida: Math.max(0, personagem.vida - sala.dano) };
         setPersonagem(p2);
         pushMsgs([{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nome} — você sofre ${sala.dano} de dano` }]);
-        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nome}). Eu já sofri ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e o estado em que fico.`, p2);
+        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nome}). Eu já sofri ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e o estado em que fico.${extraTempo}`, p2);
       }
     } else if (sala.tipo === "tesouro") {
       let item = null;
@@ -3800,15 +3851,15 @@ export default function Taverna() {
       setPersonagem(p2);
       pushMsgs([{ autor: "sistema", texto: `💰 Sala do tesouro: +${sala.moedas} moedas${item ? ` · ✦ ${item.nome} (${RARIDADE_ROTULO[item.raridade]})` : ""}` }]);
       checarConquistas(p2);
-      enviar(`[MASMORRA — ${pos} · TESOURO RESOLVIDO PELO SISTEMA] A sala guardava um tesouro: ◉ ${sala.moedas}${item ? ` e o item "${item.nome}" (${item.raridade}${item.poder ? `, ${item.poder}` : ""})` : ""} — JÁ na minha posse (NÃO envie moedas nem "adicionar_equipamento"). Descreva o achado com emoção.`, p2);
+      enviar(`[MASMORRA — ${pos} · TESOURO RESOLVIDO PELO SISTEMA] A sala guardava um tesouro: ◉ ${sala.moedas}${item ? ` e o item "${item.nome}" (${item.raridade}${item.poder ? `, ${item.poder}` : ""})` : ""} — JÁ na minha posse (NÃO envie moedas nem "adicionar_equipamento"). Descreva o achado com emoção.${extraTempo}`, p2);
     } else if (sala.tipo === "santuario") {
       const cura = (mx, v) => Math.min(mx, v + Math.max(1, Math.round(mx * (sala.curaPct || 0.25))));
       const p2 = { ...personagem, vida: cura(personagem.vidaMax, personagem.vida), mana: cura(personagem.manaMax, personagem.mana), grupo: (personagem.grupo || []).map((g) => ({ ...g, vida: cura(g.vidaMax || g.vida, g.vida) })) };
       setPersonagem(p2);
       pushMsgs([{ autor: "sistema", texto: `⛲ Santuário: ${sala.cena} — todos recuperam ~25% de PV e PM` }]);
-      enviar(`[MASMORRA — ${pos} · SANTUÁRIO RESOLVIDO PELO SISTEMA] A sala é um refúgio: ${sala.cena}. O grupo inteiro já recuperou parte de PV e PM (aplicado pelo app — NÃO envie cura). Narre o respiro — é um bom momento para uma conversa curta do grupo.`, p2);
+      enviar(`[MASMORRA — ${pos} · SANTUÁRIO RESOLVIDO PELO SISTEMA] A sala é um refúgio: ${sala.cena}. O grupo inteiro já recuperou parte de PV e PM (aplicado pelo app — NÃO envie cura). Narre o respiro — é um bom momento para uma conversa curta do grupo.${extraTempo}`, p2);
     } else if (sala.tipo === "enigma") {
-      enviar(`[MASMORRA — ${pos} · ENIGMA] A sala trava o caminho com: ${sala.cena}. Apresente a cena e o desafio NA FICÇÃO — me deixe tentar resolver com palavras ou ações. Se eu travar, dê pistas; se eu resolver (ou der uma solução esperta), o caminho abre.`, personagem);
+      enviar(`[MASMORRA — ${pos} · ENIGMA] A sala trava o caminho com: ${sala.cena}. Apresente a cena e o desafio NA FICÇÃO — me deixe tentar resolver com palavras ou ações. Se eu travar, dê pistas; se eu resolver (ou der uma solução esperta), o caminho abre.${extraTempo}`, personagem);
     }
   };
 
@@ -4028,11 +4079,26 @@ export default function Taverna() {
       const evs = avancarDiasReino(1);
       evs.forEach((ev) => pushMsgs([{ autor: "sistema", texto: `👑 ${ev.evento.titulo} em ${ev.cidade}: ${ev.evento.txt(ev.cidade)}` }]));
       reinoMsg = envelopeEventosReino(evs);
+      minutoRef.current = AMANHECER; setMinuto(minutoRef.current);
+      acordouAbsRef.current = absMin(); // o relógio do sono recomeça no amanhecer
+    } else {
+      minutoRef.current = (minutoRef.current + 60) % 1440; setMinuto(minutoRef.current); // cochilo de uma hora
+    }
+    /* SONHOS (v6.7): 25% das noites longas trazem um — presságio, memória ou
+       pesadelo. Alguns deixam condição no dia seguinte. O Mestre só tece. */
+    let sonhoMsg = "";
+    if (tipo === "longo" && Math.random() < 0.25) {
+      const sn = rolarSonho();
+      if (sn.efeito === "inspirado") pers = { ...pers, condicoes: [...(pers.condicoes || []), { nome: "Inspirado", tipo: "bom", nota: "acordou com o espírito leve — um bom sonho" }] };
+      if (sn.efeito === "perturbado") pers = { ...pers, condicoes: [...(pers.condicoes || []), { nome: "Perturbado", tipo: "ruim", nota: "noite mal dormida, sonhos ruins" }] };
+      setPersonagem(pers);
+      pushMsgs([{ autor: "sistema", texto: `💭 ${sn.texto}` }]);
+      sonhoMsg = `\n[SONHO] Esta noite eu sonhei: "${sn.texto}"${sn.efeito ? ` (acordei ${sn.efeito === "inspirado" ? "INSPIRADO" : "PERTURBADO"} — condição já aplicada pelo sistema)` : ""}. Teça o sonho na ficção se quiser — presságio, memória ou puro delírio, você decide o quanto ele significa.`;
     }
     const climaNovo = tipo === "longo" ? talvezMudarClima(0.6) : null;
     const climaMsg = climaNovo ? `\n[CLIMA] O tempo virou durante a noite: agora está ${climaNovo.rotulo} — ${climaNovo.nota}.` : "";
     const dur = tipo === "longo" ? "uma noite inteira" : "cerca de uma hora";
-    enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${climaMsg}${reinoMsg}`, pers);
+    enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${climaMsg}${reinoMsg}${sonhoMsg}`, pers);
   };
 
   /* Escolher/trocar caminho (classe). Regras:
@@ -4087,7 +4153,7 @@ export default function Taverna() {
     const nDominios = dominiosDe(mapaRef.current).length;
     if ((!temGuilda && !nDominios) || dias <= 0) return 0;
     const porDia = rendaDiariaTotal(mapaRef.current, guildaRef.current.nivel, temGuilda);
-    const ganho = Math.round(porDia * dias * fatorMedioReino(reinoRef.current)); // povo feliz produz mais
+    const ganho = Math.round(porDia * dias * fatorMedioReino(reinoRef.current) * estacaoDe(diaRef.current).fatorRenda); // povo feliz produz mais; inverno aperta
     if (ganho <= 0) return 0;
     const g = { ...guildaRef.current, cofre: guildaRef.current.cofre + ganho };
     guildaRef.current = g; setGuilda(g);
@@ -4168,6 +4234,7 @@ export default function Taverna() {
       npcs: Object.keys(npcsRef.current || {}).length,
       criaturasDescobertas: descobRef.current.length,
       cicatrizes: (p.cicatrizes || []).length,
+      diasVividos: diaRef.current,
       dominios: dominiosDe(mapaRef.current).length,
       temGuilda: !!faccaoJogadorRef.current,
       guildaNivel: guildaRef.current.nivel,
@@ -4200,9 +4267,23 @@ export default function Taverna() {
   /* ---------------- VIAGEM E CLIMA POR TABELA (zero tokens) ----------------
      A estrada rola por código: clima, encontro (perigo do bestiário, viajante,
      achado das tabelas, cena de mundo). O Mestre só recebe o resultado e narra. */
+  /* CLIMA SAZONAL (v6.7): a estação do ano pesa a tabela de clima —
+     inverno congela, verão torra, outono enevoa. Tudo por código. */
+  const rolarClimaEstacao = (atualId) => {
+    const bias = BIAS_CLIMA[estacaoDe(diaRef.current).id] || {};
+    const pool = CLIMAS.flatMap((c) => {
+      const mult = bias[c.id] != null ? bias[c.id] : 1;
+      if (mult === 0) return [];
+      return Array(Math.max(1, Math.round(c.peso * mult))).fill(c);
+    });
+    let c = pool[Math.floor(Math.random() * pool.length)];
+    if (atualId && c.id === atualId && pool.length > 1) c = pool[Math.floor(Math.random() * pool.length)];
+    return c;
+  };
+
   const talvezMudarClima = (chance = 0.4) => {
     if (Math.random() >= chance) return null;
-    const c = rolarClima(climaRef.current ? climaRef.current.id : null);
+    const c = rolarClimaEstacao(climaRef.current ? climaRef.current.id : null);
     climaRef.current = c; setClima(c);
     return c;
   };
@@ -4210,7 +4291,7 @@ export default function Taverna() {
   const viajar = () => {
     if (bloqueado || acampadoRef.current) return;
     if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para viajar no meio de um combate." }]); return; }
-    const c = rolarClima(climaRef.current ? climaRef.current.id : null);
+    const c = rolarClimaEstacao(climaRef.current ? climaRef.current.id : null);
     climaRef.current = c; setClima(c);
     const enc = rolarEncontro((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1, null);
     /* CÓDEX: viagens e perigos da estrada contam para as conquistas */
@@ -4218,10 +4299,11 @@ export default function Taverna() {
     if (enc.tipo === "perigo") bumpCont("perigosEstrada");
     checarConquistas();
     pushMsgs([{ autor: "jogador", texto: `🧭 Sigo viagem pela estrada. ${c.icone} ${c.rotulo}` }]);
+    const extraTempo = avancarMinutos(MINUTOS_VIAGEM); // estrada come horas
     enviar(`[VIAGEM — tudo rolado pelas tabelas do app; você só NARRA, não invente outro resultado]
 CLIMA AGORA: ${c.rotulo} — ${c.nota}.
 ENCONTRO DO TRECHO (${enc.tipo}): ${enc.detalhe}
-Descreva o trecho da estrada sob esse clima e desenvolva o encontro acima, costurando com a cena atual${cidadeAtualRef.current ? ` (saímos de ${cidadeAtualRef.current})` : ""}. Se eu estiver a caminho de algum destino, aproxime-me dele. Termine me convidando a agir.`, personagem);
+Descreva o trecho da estrada sob esse clima e desenvolva o encontro acima, costurando com a cena atual${cidadeAtualRef.current ? ` (saímos de ${cidadeAtualRef.current})` : ""}. Se eu estiver a caminho de algum destino, aproxime-me dele. Termine me convidando a agir.${extraTempo}`, personagem);
   };
 
   /* DIPLOMACIA: propostas a potências vão para a ficção; o Mestre decide a
@@ -4570,7 +4652,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
               <BarraMini rotulo="PV" atual={personagem.vida} max={personagem.vidaMax} cor={T.amber} corBaixa={T.danger} />
               <BarraMini rotulo="PM" atual={personagem.mana} max={personagem.manaMax} cor={T.violet} />
               <span className="tv-mono text-[10px] shrink-0" style={{ color: T.amberSoft }}>NV {personagem.nivel}</span>
-              <span className="tv-mono text-[10px] shrink-0" title="Dia da campanha — o app controla o calendário" style={{ color: T.inkDim }}>📅 dia {dia}</span>
+              <span className="tv-mono text-[10px] shrink-0" title={`${estacaoDe(dia).nome} — ${estacaoDe(dia).nota} · o app controla o relógio`} style={{ color: T.inkDim }}>📅 {dataTxt(dia)} · {horaTxt(minuto)}{ehNoite(minuto) ? " 🌙" : ""} {estacaoDe(dia).icone}</span>
               {clima && <span className="tv-mono text-[10px] shrink-0" title={clima.nota} style={{ color: T.inkDim }}>{clima.icone} {clima.rotulo}</span>}
               <BarraMini rotulo="XP" atual={personagem.xp} max={XP_POR_NIVEL(personagem.nivel)} cor={T.ok} />
             </div>

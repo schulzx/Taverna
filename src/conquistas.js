@@ -51,6 +51,8 @@ export const CONQUISTAS = [
   { id: "dez_eventos_reino", icone: "🌾", nome: "O Povo Vive", titulo: "Coração do Reino", dica: "Presencie 10 eventos da vida dos seus domínios.", quando: (s) => s.eventosReino >= 10 },
   { id: "primeira_cicatriz", icone: "🩸", nome: "Marca de Guerra", titulo: "o Marcado", dica: "Sobreviva por um fio e ganhe sua primeira cicatriz.", quando: (s) => (s.cicatrizes || 0) >= 1 },
   { id: "cinco_cicatrizes", icone: "⚔", nome: "Mapa de Batalhas", titulo: "Mapa de Batalhas", dica: "Acumule 5 cicatrizes.", segredo: true, quando: (s) => (s.cicatrizes || 0) >= 5 },
+  { id: "trinta_dias", icone: "📅", nome: "Um Mês de Estrada", titulo: "Filho do Calendário", dica: "Sobreviva a 30 dias de campanha.", quando: (s) => (s.diasVividos || 0) >= 30 },
+  { id: "ano_inteiro", icone: "🗓", nome: "As Quatro Estações", titulo: "o Perene", dica: "Complete um ano inteiro de campanha.", segredo: true, quando: (s) => (s.diasVividos || 0) >= 360 },
 
   /* -------- CORAÇÃO (social) -------- */
   { id: "primeiro_companheiro", icone: "🤝", nome: "Líder Nato", titulo: "Líder Nato", dica: "Recrute seu primeiro companheiro.", quando: (s) => s.recrutados >= 1 },
