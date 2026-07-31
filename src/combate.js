@@ -216,7 +216,13 @@ export function pvEsperadoJogador(nivel, vigor = 0) {
 export function pvEsperadoInimigo(nivelJogador, ameaca = "comum") {
   const base = pvEsperadoJogador(nivelJogador, 1);
   const mult = { fraco: 0.35, comum: 0.7, competente: 1.0, elite: 1.6, lendario: 2.6 }[ameaca] || 0.7;
-  return Math.max(4, Math.round(base * mult));
+  const pv = Math.max(4, Math.round(base * mult));
+  /* TETO DE VEROSSIMILHANÇA: bicho fraco/comum não vira saco de PV só porque
+     o herói está em nível alto (um rato gigante continua sendo um rato). A
+     escala grande fica para competente/elite/lendário, onde faz sentido. */
+  if (ameaca === "fraco") return Math.min(pv, 10 + nivelJogador * 4);
+  if (ameaca === "comum") return Math.min(pv, 16 + nivelJogador * 6);
+  return pv;
 }
 
 /* ---------------- ESPÓLIOS POR CÓDIGO ----------------

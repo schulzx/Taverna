@@ -20,6 +20,7 @@ import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeD
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, gerarNemesis, LIMIARES_NEMESIS, ACOES_NEMESIS, rumorDoDia } from "./fama.js";
 import { gerarCronica } from "./cronica.js";
+import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, processarDiaCorreio } from "./correio.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -140,7 +141,8 @@ ROLAGENS (d20 + modificador vs Dificuldade):
 - ESTRUTURA DA HISTÓRIA (o norte dramático — siga-a): ${historiaInfo || "arco livre."}
 - DIÁRIO DE MISSÕES (o norte prático — amarre os eventos a ele):
 ${questsInfo || "Nenhuma missão registrada."}
-  · Crie missões via "quest_nova" {"titulo","descricao","tipo":"principal|secundaria"}. Mantenha SEMPRE 1 missão principal viva (a espinha do momento atual do arco) e no máximo 2-3 secundárias ativas.
+  · Crie missões via "quest_nova" {"titulo","descricao","objetivo","tipo":"principal|secundaria"}. Mantenha SEMPRE 1 missão principal viva (a espinha do momento atual do arco) e no máximo 2-3 secundárias ativas.
+  · Toda missão PRECISA de "objetivo": ONDE ir e O QUE fazer, concreto e acionável (ex.: "ir ao Bosque Cinzento e destruir o altar", "encontrar a ferreira Bruna em Pedravale e perguntar sobre o contrato"). Missão sem rumo claro é missão quebrada — o jogador precisa saber o próximo passo.
   · Quando o jogador CUMPRIR uma missão, envie "quest_atualizar" {"titulo","status":"concluida"} no mesmo turno (ou "falhada" se perdida; use "nota" para progresso parcial).
   · Os eventos do mundo devem, na maior parte do tempo, TOCAR as missões ativas ou o momento do arco — nada de rumos aleatórios desconexos. A missão dá a direção; o como fica livre.
 - MAPA E FACÇÕES (mundo persistente — leia e RESPEITE; nunca recrie o que já existe): ${mapaTexto || "ainda vazio; ao apresentar uma cidade nova, registre-a."}
@@ -162,6 +164,10 @@ ${questsInfo || "Nenhuma missão registrada."}
   · Ao apresentar um NPC RELEVANTE pela primeira vez, ou quando algo sobre ele mudar (vínculo, local, segredo revelado, morte), registre/atualize em "npcs" dentro de mudancas: [{"nome","papel","relacao","genero","local","status","segredo","notas"}]. relacao: aliado | amigo | romance | conjuge | familia | neutro | rival | inimigo. Preencha só os campos relevantes; segredos e vínculos valem ouro — são a memória do enredo. NPCs de passagem (vendedor anônimo, guarda qualquer) NÃO precisam de ficha.
   · DATAS DE ENCONTRO (BLINDAGEM DE MEMÓRIA — regra dura, sem exceção): o registro acima diz em que DIA cada pessoa ENTROU na história ("entrou na história no DIA X"; "antes do registro de dias" significa que já a conhecíamos quando o calendário começou — mas SÓ conviveu antes se as notas disserem). É TERMINANTEMENTE PROIBIDO inventar passado compartilhado entre o jogador e qualquer pessoa que NÃO esteja escrito nas notas/cânone dela: nada de infância juntos, crimes antigos em parceria, romances de outrora, promessas esquecidas, "lembra-se de quando nós…". Se não está escrito, NÃO aconteceu. Antes de fazer alguém evocar uma memória comum, VERIFIQUE as notas dessa pessoa: se o fato não estiver lá, troque por algo possível ("ouvi dizer que você…", "conheço sua fama desde…"). Se o jogador apontar uma contradição desse tipo, NÃO insista: corrija na ficção (a pessoa mentiu, confundiu o jogador com outro, exagerou na bebida) e siga em frente.
   · RELAÇÕES FORMAIS REGISTRADAS PELO SISTEMA (ex.: cônjuge, aliado formal) são canon absoluto: trate-as como fato consumado e costure-os na ficção.
+- TEMPO É DO SISTEMA (regra dura, sem exceção): o relógio e o calendário da campanha pertencem ao APP. O TEMPO DA CAMPANHA informado é EXATO. Você NÃO pode avançar nem retroceder o tempo por conta própria: nada de "amanhece" sem que o sistema tenha passado a noite, nada de "dias depois", "horas se passaram" ou "ao entardecer" a menos que um envelope do app ([DESCANSO], [VIAGEM], [PASSAR O TEMPO], [MASMORRA] etc.) diga que isso aconteceu. A narração acompanha o relógio do sistema — nunca o contrário. Se a cena exige a passagem de tempo, insinue na ficção e o jogador decide (viajar, passar o tempo, descansar).
+- GUIA DE CENA (o jogador nunca fica perdido): ao fim de cada narração, deixe claras as SAÍDAS e os PONTOS DE INTERESSE da cena — portas, trilhas, escadas, pessoas com quem falar, o objeto óbvio a investigar — especialmente em masmorras e lugares amplos. Após uma vitória em masmorra, o sistema entrega os espólios: narre o baú/o corpo do chefe como origem do tesouro e indique o caminho de saída. Se há missão ativa, a cena deve apontar na direção dela (um rastro, um rumor, o destino no horizonte).
+- CORREIO DOS REINOS (atos oficiais de facções — regra dura): qualquer ato OFICIAL entre facções — declaração de guerra, aliança, tributo, decreto, proposta, ameaça formal — acontece APENAS pelo sistema de Correio/Mural (envelopes [CORREIO — …], [DECRETO …]). É TERMINANTEMENTE PROIBIDO inventar esses atos na ficção. Em particular: facções VASSALAS ou ALIADAS do jogador NUNCA agem contra ele, sua família ou seus domínios sem causa extrema registrada em tratados/cânone — jamais um vassalo pede a cabeça da esposa do próprio senhor. Rivalidades e tensões entre facções NEUTRAS/INIMIGAS continuam livres na ficção.
+- MUNDO POVOADO: mantenha o mapa rico — pelo menos 6 cidades e 4 facções registradas. Se o mapa estiver pobre, apresente novas potências, cidades e territórios naturalmente na ficção (e registre-os).
 
 CONDIÇÕES DE ESTADO / BUFFS E DEBUFFS (D&D e MMORPGs — dentro e fora de combate):
 - Repertório sugerido (use os nomes consagrados): DEBUFFS — Envenenado (perde PV/turno), Sangrando (perde PV/turno até estancar), Queimando (dano de fogo/turno), Atordoado (perde a ação), Amedrontado (desvantagem em ataques), Cego (desvantagem; atacantes têm vantagem), Enraizado/Preso (não se move), Lento (perde velocidade), Silenciado (não usa habilidades mágicas), Enfraquecido (dano reduzido), Amaldiçoado (azar nas rolagens), Congelado (pula turnos), Confuso (pode errar o alvo). BUFFS — Abençoado (vantagem), Inspirado (bônus na próxima rolagem), Regeneração (recupera PV/turno), Apressado (ação extra), Fortalecido (dano aumentado), Protegido (reduz dano), Furtivo (difícil de acertar), Enfurecido (dano alto, defesa baixa).
@@ -918,7 +924,7 @@ ${banirUrgencia ? `
 /* Trilho enxuto (mobile): 4 abas. Ficha, Grupo, Pessoas, Guilda e Domínios
    vivem como SUB-abas dentro de Gestão. */
 const ABAS = [{ id: "gestao", rotulo: "Gestão", icone: "🏛" }, { id: "diario", rotulo: "Diário", icone: "📜" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }, { id: "codex", rotulo: "Códex", icone: "📖" }];
-const SUBS_GESTAO = [{ id: "ficha", rotulo: "Ficha" }, { id: "grupo", rotulo: "Grupo" }, { id: "pessoas", rotulo: "Pessoas" }, { id: "guilda", rotulo: "Guilda" }, { id: "dominios", rotulo: "Domínios" }, { id: "diplomacia", rotulo: "Diplomacia" }, { id: "mural", rotulo: "Mural" }];
+const SUBS_GESTAO = [{ id: "ficha", rotulo: "Ficha" }, { id: "grupo", rotulo: "Grupo" }, { id: "pessoas", rotulo: "Pessoas" }, { id: "guilda", rotulo: "Guilda" }, { id: "dominios", rotulo: "Domínios" }, { id: "diplomacia", rotulo: "Diplomacia" }, { id: "correio", rotulo: "Correio" }, { id: "mural", rotulo: "Mural" }];
 
 const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D" };
 const SLOT_ROTULO = { arma: "Arma", armadura: "Armadura", elmo: "Elmo", botas: "Botas", anel: "Anel", amuleto: "Amuleto", escudo: "Escudo" };
@@ -1066,6 +1072,7 @@ function PainelDiario({ historia, quests, trocarArco }) {
         {q.tipo === "principal" && q.status === "ativa" && <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ color: T.amberSoft, border: `1px solid ${T.amber}` }}>PRINCIPAL</span>}
       </div>
       {q.descricao && <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{q.descricao}</div>}
+      {q.objetivo && q.status === "ativa" && <div className="tv-body text-xs mt-1" style={{ color: T.amberSoft }}>🎯 {q.objetivo}</div>}
       {q.nota && <div className="tv-body text-xs mt-1 italic" style={{ color: T.violetSoft }}>» {q.nota}</div>}
     </div>
   );
@@ -1498,6 +1505,105 @@ function PainelDiplomacia({ mapa, faccaoJogador, onDiplomacia, onPresente, cofre
   );
 }
 
+/* ---------------- CORREIO DOS REINOS (v7.0) ----------------
+   O jogador escreve para facções; respostas e petições chegam por tabela,
+   com prazo. Todo ato oficial entre facções passa por aqui. */
+function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPeticao }) {
+  const [para, setPara] = React.useState("");
+  const [tipo, setTipo] = React.useState("cortesia");
+  const [oferta, setOferta] = React.useState("");
+  const [mensagem, setMensagem] = React.useState("");
+  const c = correio || { enviadas: [], recebidas: [], historico: [], tratados: [] };
+  const pendentes = c.recebidas.filter((p) => p.status === "pendente");
+  const t = TIPOS_CARTA[tipo];
+  if (!faccoes.length && !pendentes.length && !c.tratados.length) {
+    return <div className="tv-body text-sm italic text-center py-10" style={{ color: T.inkDim }}>Nenhuma facção conhecida para escrever cartas. Quando o mundo crescer (reinos, guildas, cultos), o correio passa a correr por aqui.</div>;
+  }
+  const STATUS_ROTULO = { a_caminho: "a caminho", aceita: "aceita", recusada: "recusada", guerra: "guerra!", expirada: "expirada" };
+  return (
+    <div className="space-y-3">
+      {/* petições recebidas — exigem decisão */}
+      {pendentes.map((p) => (
+        <div key={p.id} className="rounded-xl p-3 tv-fade" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+          <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.amber }}>✉️ petição recebida · dia {p.recebidaEm} · prazo: dia {p.prazo}{dia >= p.prazo ? " (último dia!)" : ""}</div>
+          <div className="tv-body text-sm mt-1" style={{ color: T.ink }}>{p.icone} {p.texto}</div>
+          <div className="grid grid-cols-2 gap-1.5 mt-2">
+            <button onClick={() => responderPeticao(p.id, true)} className="tv-mono text-[10px] px-1.5 py-1.5 rounded font-bold" style={{ background: T.amber, color: T.onAccent }}>aceitar</button>
+            <button onClick={() => responderPeticao(p.id, false)} className="tv-mono text-[10px] px-1.5 py-1.5 rounded" style={{ border: `1px solid ${T.danger}`, color: T.danger }}>recusar</button>
+          </div>
+        </div>
+      ))}
+
+      {/* tratados firmados pelo correio */}
+      {c.tratados.length > 0 && (
+        <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+          <div className="tv-mono text-[9px] uppercase tracking-wider mb-1.5" style={{ color: T.inkDim }}>tratados em vigor</div>
+          <div className="flex flex-wrap gap-1.5">
+            {c.tratados.map((x, i) => (
+              <span key={i} className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${x.tratado === "guerra" ? T.danger : T.amber}`, color: x.tratado === "guerra" ? T.danger : T.amberSoft }}>
+                {x.rotulo} · {x.faccao}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* escrever carta */}
+      {faccoes.length > 0 && (
+        <div className="rounded-xl p-3 space-y-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+          <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.inkDim }}>escrever carta · ◉ {CUSTO_CARTA} (mensageiro)</div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <select value={para} onChange={(e) => setPara(e.target.value)} className="tv-mono text-xs rounded px-2 py-1.5" style={{ background: T.panel, color: T.ink, border: `1px solid ${T.line}` }}>
+              <option value="">para quem?</option>
+              {faccoes.map((f) => <option key={f} value={f}>{f}</option>)}
+            </select>
+            <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="tv-mono text-xs rounded px-2 py-1.5" style={{ background: T.panel, color: T.ink, border: `1px solid ${T.line}` }}>
+              {Object.entries(TIPOS_CARTA).map(([id, x]) => <option key={id} value={id}>{x.icone} {x.nome}</option>)}
+            </select>
+          </div>
+          <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>{t.desc}</div>
+          <input value={oferta} onChange={(e) => setOferta(e.target.value.replace(/[^0-9]/g, ""))} placeholder="oferta em moedas (opcional)"
+            className="w-full tv-mono text-xs rounded px-2 py-1.5" style={{ background: T.panel, color: T.ink, border: `1px solid ${T.line}` }} />
+          <textarea value={mensagem} onChange={(e) => setMensagem(e.target.value)} rows={2} placeholder="o que diz a carta… (opcional, o Mestre entrega suas palavras)"
+            className="w-full tv-body text-xs rounded px-2 py-1.5" style={{ background: T.panel, color: T.ink, border: `1px solid ${T.line}`, resize: "vertical" }} />
+          <button onClick={() => { enviarCarta(para, tipo, Number(oferta) || 0, mensagem); setMensagem(""); setOferta(""); }}
+            disabled={!para || moedas < CUSTO_CARTA}
+            className="w-full tv-mono text-xs py-2 rounded font-bold"
+            style={{ background: T.amber, color: T.onAccent, opacity: (!para || moedas < CUSTO_CARTA) ? 0.4 : 1 }}>
+            {t.icone} enviar por mensageiro · ◉ {CUSTO_CARTA}
+          </button>
+        </div>
+      )}
+
+      {/* enviadas aguardando resposta */}
+      {c.enviadas.length > 0 && (
+        <div className="space-y-1.5">
+          {c.enviadas.map((x) => (
+            <div key={x.id} className="rounded-xl p-2.5 flex items-center justify-between gap-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+              <div className="tv-body text-xs" style={{ color: T.ink }}>{TIPOS_CARTA[x.tipo]?.icone} {TIPOS_CARTA[x.tipo]?.nome} → <b>{x.para}</b>{x.oferta ? ` · ◉ ${x.oferta}` : ""}</div>
+              <div className="tv-mono text-[9px] shrink-0" style={{ color: T.inkDim }}>resposta até dia {x.chegaEm}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* histórico */}
+      {c.historico.length > 0 && (
+        <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+          <div className="tv-mono text-[9px] uppercase tracking-wider mb-1.5" style={{ color: T.inkDim }}>histórico do correio</div>
+          {c.historico.slice(0, 8).map((h, i) => (
+            <div key={i} className="tv-body text-xs py-0.5" style={{ color: T.inkDim }}>
+              {h.de === "jogador"
+                ? `${TIPOS_CARTA[h.tipo]?.icone || "✉️"} ${TIPOS_CARTA[h.tipo]?.nome || h.tipo} → ${h.para} — ${STATUS_ROTULO[h.status] || h.status} (dia ${h.respondidaEm || h.enviadaEm})`
+                : `${h.icone || "✉️"} ${h.de} — ${STATUS_ROTULO[h.status] || h.status} (dia ${h.respondidaEm || h.recebidaEm})`}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 const ROTULO_AMEACA = { fraco: "fraca", comum: "comum", competente: "competente", elite: "elite", lendario: "lendária" };
@@ -1854,6 +1960,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
         {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} />}
 
         {aba === "gestao" && subGestao === "diplomacia" && <PainelDiplomacia mapa={mapa} faccaoJogador={faccaoJogador} onDiplomacia={onDiplomacia} onPresente={onPresente} cofre={guilda && guilda.cofre} />}
+        {aba === "gestao" && subGestao === "correio" && <PainelCorreio correio={correio} faccoes={((mapa && mapa.faccoes) || []).filter((f) => f && f.nome && !f.doJogador && f.relacao !== "jogador").map((f) => f.nome)} dia={dia} moedas={personagem.moedas || 0} enviarCarta={enviarCarta} responderPeticao={responderPeticao} />}
 
         {aba === "gestao" && subGestao === "guilda" && (() => {
           const temGuilda = !!faccaoJogador;
@@ -2252,7 +2359,10 @@ function PainelCombate({ combate }) {
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="tv-display text-lg leading-tight truncate" style={{ color: e.derrotado ? T.inkDim : T.ink, textDecoration: e.derrotado ? "line-through" : "none" }}>{e.nome}</span>
-                  {e.derrotado && <span className="tv-mono text-[9px] uppercase shrink-0" style={{ color: T.inkDim }}>☠</span>}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {(e.nivel != null) && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>nv {e.nivel}</span>}
+                    {e.derrotado && <span className="tv-mono text-[9px] uppercase" style={{ color: T.inkDim }}>☠</span>}
+                  </div>
                 </div>
                 {!e.derrotado && <div className="mt-1"><BarraMini rotulo="PV" atual={e.vida} max={e.vidaMax} cor={T.danger} corBaixa={T.danger} /></div>}
               </div>
@@ -2484,7 +2594,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v6.9 · crônica</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.0 · mundo vivo</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2907,6 +3017,10 @@ export default function Taverna() {
      nasce por tabela quando o nome cresce — e cresce com cada dia. */
   const nemesisRef = useRef(null);
   const [nemesis, setNemesis] = useState(null);
+  /* CORREIO DOS REINOS (v7.0): cartas enviadas/recebidas, tratados firmados —
+     todo ato oficial de facção passa por aqui, nunca pela imaginação da IA. */
+  const correioRef = useRef({ enviadas: [], recebidas: [], historico: [], tratados: [], seq: 1 });
+  const [correio, setCorreio] = useState(correioRef.current);
   const famaAtual = () => calcularFama(contRef.current, (personagem && personagem.nivel) || 1, dominiosDe(mapaRef.current).length);
   const famaPatamarRef = useRef(0); // fama da última checagem, para detectar saltos de patamar
   const absMin = () => (diaRef.current - 1) * 1440 + minutoRef.current;
@@ -2999,7 +3113,7 @@ export default function Taverna() {
       combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
-      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current,
+      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current,
       historia: historiaRef.current, quests: questsRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
@@ -3100,7 +3214,7 @@ export default function Taverna() {
       [].concat(md2.quest_nova || []).forEach((q) => {
         if (!q || !q.titulo) return;
         if (questsRef.current.some((x) => x.titulo.toLowerCase() === q.titulo.toLowerCase())) return;
-        questsRef.current = [...questsRef.current, { titulo: q.titulo, descricao: q.descricao || "", tipo: q.tipo === "principal" ? "principal" : "secundaria", status: "ativa", nota: "" }];
+        questsRef.current = [...questsRef.current, { titulo: q.titulo, descricao: q.descricao || "", objetivo: q.objetivo || "", tipo: q.tipo === "principal" ? "principal" : "secundaria", status: "ativa", nota: "" }];
         msgs.push(`📜 Nova missão${q.tipo === "principal" ? " PRINCIPAL" : ""}: ${q.titulo}`);
       });
       [].concat(md2.quest_atualizar || []).forEach((q) => {
@@ -3435,6 +3549,7 @@ export default function Taverna() {
       minutoRef.current = sv.minuto != null ? sv.minuto : AMANHECER + 60; setMinuto(minutoRef.current);
       acordouAbsRef.current = sv.acordouAbs != null ? sv.acordouAbs : ((diaRef.current - 1) * 1440 + minutoRef.current); // saves antigos acordam descansados
       nemesisRef.current = sv.nemesis && typeof sv.nemesis === "object" ? sv.nemesis : null; setNemesis(nemesisRef.current);
+      correioRef.current = garantirCorreio(sv.correio); setCorreio(correioRef.current);
       famaPatamarRef.current = sv.famaPatamar || 0;
       reinoRef.current = garantirReino(sv.reino && typeof sv.reino === "object" ? sv.reino : {}, mapaRef.current) || {}; setReino(reinoRef.current);
       /* BLINDAGEM v6.5: pessoas de saves antigos sem data de encontro ganham
@@ -3677,6 +3792,30 @@ export default function Taverna() {
     enviar(`[RESPONDO E O MUNDO VIVE] Eu falo: "${fala}". ${instrucaoMundo(modo, urgenciaRef.current >= 1)}`, personagem);
   };
 
+  /* TURNO DO MUNDO SEMI-AUTOMÁTICO (v7.0): depois da sua ação o mundo fica
+     "na iminência" por 60s. Se você digitar, o relógio pausa — você sempre
+     tem a chance de responder. Se nada acontecer, o mundo vive sozinho.
+     Pode ser desligado no botão ao lado. */
+  const [autoMundo, setAutoMundo] = useState(true);
+  const mundoAutoDesdeRef = useRef(null);
+  const [tickMundo, setTickMundo] = useState(0);
+  useEffect(() => {
+    if (!aguardandoMundo) { mundoAutoDesdeRef.current = null; return; }
+    if (!mundoAutoDesdeRef.current) mundoAutoDesdeRef.current = Date.now();
+    if (!autoMundo) return;
+    const t = setInterval(() => {
+      setTickMundo((x) => x + 1);
+      if (bloqueado || rolagem || combateRef.current || acampadoRef.current) return;
+      if ((entrada || "").trim()) return; // você está digitando — o mundo espera
+      if (Date.now() - mundoAutoDesdeRef.current >= 60 * 1000) vezDoMundo();
+    }, 1000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aguardandoMundo, autoMundo, entrada, bloqueado, rolagem]);
+  const mundoRestante = (aguardandoMundo && autoMundo && mundoAutoDesdeRef.current)
+    ? Math.max(0, 60 - Math.floor((Date.now() - mundoAutoDesdeRef.current) / 1000))
+    : null;
+
   /* PASSAR O TEMPO (deliberado): simula N horas; quanto mais horas, mais o mundo muda */
   const passarTempo = (horas) => {
     if (bloqueado || acampadoRef.current) return;
@@ -3871,8 +4010,22 @@ export default function Taverna() {
     const pos = `SALA ${idx}/${mm.salas.length - 1} · ${mm.nome}`;
     const extraTempo = avancarMinutos(MINUTOS_SALA_MASMORRA);
     if (sala.tipo === "combate" || sala.tipo === "chefe") {
-      const lista = (sala.inimigos || []).map((i) => `${i.nome} (${i.ameaca})`).join(", ");
-      enviar(`[MASMORRA — ${pos} · ${sala.tipo === "chefe" ? "CHEFE" : "COMBATE"}] Avanço para a próxima sala. O SISTEMA rolou: ${sala.tipo === "chefe" ? "A SALA DO CHEFE — " : ""}inimigos à espreita: ${lista}. Descreva a sala em 1-2 frases e ABRA O COMBATE agora com "combate_iniciar" usando EXATAMENTE esses nomes e ameaças (o app completa os números).${sala.tipo === "chefe" ? " É o confronto final desta masmorra — narre à altura." : ""}${extraTempo}`, personagem);
+      /* COMBATE ABERTO PELO SISTEMA (v7.0): o app monta os inimigos pelo
+         bestiário e abre o HUD na hora — sem depender do Mestre lembrar. */
+      const inimigos = (sala.inimigos || []).map((i) => {
+        const comp = completarInimigo({ nome: i.nome, ameaca: i.ameaca }, personagem.nivel || 1);
+        return { ...comp, derrotado: false, semente: `inimigo|${comp.nome}|${comp.ameaca || ""}` };
+      });
+      combateRef.current = { inimigos }; setCombate(combateRef.current); combateOciosoRef.current = 0;
+      inimigos.forEach((comp) => {
+        if (comp.nome && !descobRef.current.some((d) => d.toLowerCase() === comp.nome.toLowerCase())) {
+          descobRef.current = [...descobRef.current, comp.nome];
+        }
+      });
+      setDescobertas(descobRef.current);
+      const lista = inimigos.map((i) => `${i.nome} (nv ${i.nivel || 1}, ${i.vida} PV)`).join(", ");
+      pushMsgs([{ autor: "sistema", texto: `⚔ ${sala.tipo === "chefe" ? "A sala do chefe!" : "Emboscada na masmorra!"} ${inimigos.map((i) => i.nome).join(", ")} — o combate está aberto.` }]);
+      enviar(`[MASMORRA — ${pos} · ${sala.tipo === "chefe" ? "CHEFE" : "COMBATE"} — COMBATE JÁ ABERTO PELO SISTEMA] Avanço para a próxima sala e os inimigos saltam das sombras: ${lista}. O HUD de combate JÁ ESTÁ ABERTO — NÃO envie "combate_iniciar". Descreva a sala e a investida inicial em 1-2 frases e me passe a vez (eu ajo pelos botões de combate).${sala.tipo === "chefe" ? " É o confronto final desta masmorra — narre à altura." : ""}${extraTempo}`, personagem);
     } else if (sala.tipo === "armadilha") {
       /* dano por código: o herói (ou um companheiro, 30%) sofre a armadilha */
       const emComp = (personagem.grupo || []).length > 0 && Math.random() < 0.3;
@@ -3915,8 +4068,8 @@ export default function Taverna() {
     if (!mm) return;
     if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para fugir da masmorra no meio de um combate." }]); return; }
     masmorraRef.current = null; setMasmorra(null);
-    pushMsgs([{ autor: "jogador", texto: `🚪 Desisto e saio de ${mm.nome}.` }]);
-    enviar(`[MASMORRA — SAÍDA] Abandono ${mm.nome} antes do fim (a masmorra e seus tesouros ficam para trás). Narre a retirada em 2-3 frases e retome a cena do mundo lá fora.`, personagem);
+    pushMsgs([{ autor: "jogador", texto: `🏃 Fugo de ${mm.nome}, deixando o resto para trás.` }]);
+    enviar(`[MASMORRA — FUGA] Eu ESCOLHI fugir de ${mm.nome} antes do fim — abandono conscientemente as salas e tesouros que ainda restavam (o que já conquistei, carrego comigo). Narre a retirada apressada em 2-3 frases e retome a cena do mundo lá fora.`, personagem);
   };
 
   /* ---------------- MURAL DE CONTRATOS (v6.3 · recompensa paga por código) ---------------- */
@@ -4100,6 +4253,7 @@ export default function Taverna() {
   /* AVANÇO DE DIAS (v6.5): cada dia passado move o calendário e rola a vida
      dos seus domínios (população, felicidade, eventos por tabela). Retorna os
      eventos para o chamador virar envelope pro Mestre narrar. */
+  const correioMsgsDiaRef = useRef([]); // envelopes do correio do(s) dia(s) processado(s)
   const avancarDiasReino = (n) => {
     const eventos = [];
     let cofreDeltaTotal = 0;
@@ -4113,6 +4267,22 @@ export default function Taverna() {
         cofreDeltaTotal += evento.cofreDelta || 0;
         bumpCont("eventosReino");
       }
+      /* CORREIO (v7.0): respostas chegam, petições surgem/expiram — por dia. */
+      const faccNomes = ((mapaRef.current && mapaRef.current.faccoes) || [])
+        .filter((f) => f && f.nome && !f.doJogador && f.relacao !== "jogador")
+        .map((f) => f.nome);
+      const pc = processarDiaCorreio(correioRef.current, {
+        dia: diaRef.current,
+        fama: famaAtual(),
+        ehLider: cidadesDominadas(mapaRef.current).length > 0 || !!(mapaRef.current.faccoes || []).some((f) => f.doJogador),
+        faccoes: faccNomes,
+      });
+      correioRef.current = pc.correio; setCorreio(pc.correio);
+      aplicarEfeitosCorreio(pc.efeitos);
+      pc.msgs.forEach((m) => {
+        pushMsgs([{ autor: "sistema", texto: `✉️ ${m.replace(/^\[CORREIO — [^\]]+\]\s*/, "")}` }]);
+        correioMsgsDiaRef.current.push(m);
+      });
     }
     reinoRef.current = r; setReino(r); setDia(diaRef.current);
     if (cofreDeltaTotal !== 0) {
@@ -4133,7 +4303,95 @@ export default function Taverna() {
     }
     return eventos;
   };
-  const envelopeEventosReino = (evs) => !evs.length ? "" : "\n" + evs.map((ev) => `[EVENTO DE REINO — ${ev.evento.titulo.toUpperCase()} em ${ev.cidade}] ${ev.evento.txt(ev.cidade)} Os efeitos JÁ foram aplicados pelo sistema (${[ev.felDelta ? `felicidade ${ev.felDelta > 0 ? "+" : ""}${ev.felDelta}` : "", ev.popDelta ? `população ${ev.popDelta > 0 ? "+" : ""}${ev.popDelta}` : "", ev.cofreDelta ? `cofre ${ev.cofreDelta > 0 ? "+" : ""}${ev.cofreDelta}` : ""].filter(Boolean).join(", ")}) — NÃO os repita como números na ficção; narre como vida do reino${ev.evento.soSeInfeliz ? ". ATENÇÃO: o povo está à beira da revolta — isso é um problema REAL que exige resposta minha ou consequências" : ""}.`).join("\n");
+  const envelopeEventosReino = (evs) => {
+    const correioEnv = correioMsgsDiaRef.current.length ? "\n" + correioMsgsDiaRef.current.join("\n") : "";
+    correioMsgsDiaRef.current = [];
+    const base = !evs.length ? "" : "\n" + evs.map((ev) => `[EVENTO DE REINO — ${ev.evento.titulo.toUpperCase()} em ${ev.cidade}] ${ev.evento.txt(ev.cidade)} Os efeitos JÁ foram aplicados pelo sistema (${[ev.felDelta ? `felicidade ${ev.felDelta > 0 ? "+" : ""}${ev.felDelta}` : "", ev.popDelta ? `população ${ev.popDelta > 0 ? "+" : ""}${ev.popDelta}` : "", ev.cofreDelta ? `cofre ${ev.cofreDelta > 0 ? "+" : ""}${ev.cofreDelta}` : ""].filter(Boolean).join(", ")}) — NÃO os repita como números na ficção; narre como vida do reino${ev.evento.soSeInfeliz ? ". ATENÇÃO: o povo está à beira da revolta — isso é um problema REAL que exige resposta minha ou consequências" : ""}.`).join("\n");
+    return base + correioEnv;
+  };
+
+  /* CORREIO (v7.0): efeitos concretos aplicados pelo app — felicidade nos
+     domínios, moedas no cofre/bolso, tratados gravados no mapa (ficção obedece). */
+  const aplicarEfeitosCorreio = (ef) => {
+    if (!ef) return;
+    if (ef.felicidade) {
+      const r = { ...reinoRef.current };
+      Object.keys(r).forEach((k) => { r[k] = { ...r[k], felicidade: Math.max(0, Math.min(100, (r[k].felicidade || 55) + ef.felicidade)) }; });
+      reinoRef.current = r; setReino(r);
+    }
+    if (ef.moedas) {
+      if (ef.moedas > 0) {
+        guildaRef.current = { ...guildaRef.current, cofre: (guildaRef.current.cofre || 0) + ef.moedas };
+        setGuilda(guildaRef.current);
+      } else {
+        let falta = -ef.moedas;
+        const doBolso = Math.min(personagem.moedas || 0, falta);
+        if (doBolso) setPersonagem((p) => ({ ...p, moedas: p.moedas - doBolso }));
+        falta -= doBolso;
+        if (falta > 0) {
+          guildaRef.current = { ...guildaRef.current, cofre: Math.max(0, (guildaRef.current.cofre || 0) - falta) };
+          setGuilda(guildaRef.current);
+        }
+      }
+    }
+    const ROTULO_TRATADO = { alianca: "Aliança", guerra: "Guerra", comercio: "Acordo comercial", casamento: "União por casamento", apoio: "Apoio militar" };
+    const MAPA_TRATADO = { alianca: "alianca", guerra: "guerra", comercio: "comercio", casamento: "alianca", apoio: "comercio" };
+    (ef.tratadosAdd || []).forEach(({ faccao, tratado }) => {
+      const rotulo = ROTULO_TRATADO[tratado] || tratado;
+      const c = garantirCorreio(correioRef.current);
+      if (!c.tratados.some((t) => t.faccao === faccao && t.tratado === tratado)) {
+        c.tratados = [...c.tratados, { faccao, tratado, rotulo, dia: diaRef.current }];
+        correioRef.current = c; setCorreio(c);
+      }
+      const m = mapaRef.current;
+      if (m && Array.isArray(m.faccoes)) {
+        m.faccoes = m.faccoes.map((f) => f.nome === faccao ? { ...f, tratado: MAPA_TRATADO[tratado] || f.tratado || "nenhum" } : f);
+        setMapa({ ...m });
+      }
+    });
+    (ef.tratadosRem || []).forEach(({ faccao, tratado }) => {
+      const c = garantirCorreio(correioRef.current);
+      c.tratados = c.tratados.filter((t) => !(t.faccao === faccao && t.tratado === tratado));
+      correioRef.current = c; setCorreio(c);
+      const m = mapaRef.current;
+      if (m && Array.isArray(m.faccoes) && tratado === "guerra") {
+        m.faccoes = m.faccoes.map((f) => f.nome === faccao && f.tratado === "guerra" ? { ...f, tratado: "nenhum" } : f);
+        setMapa({ ...m });
+      }
+    });
+  };
+
+  /* Enviar carta: custa ◉ 10 do bolso; a resposta chega em 1–3 dias por tabela. */
+  const enviarCarta = (para, tipo, oferta, mensagem) => {
+    if (!para || !TIPOS_CARTA[tipo]) return;
+    if ((personagem.moedas || 0) < CUSTO_CARTA) { pushMsgs([{ autor: "sistema", texto: `✉️ O mensageiro cobra ◉ ${CUSTO_CARTA} — você não tem no bolso.` }]); return; }
+    setPersonagem((p) => ({ ...p, moedas: p.moedas - CUSTO_CARTA }));
+    const c = garantirCorreio(correioRef.current);
+    const carta = criarCarta({ para, tipo, oferta, mensagem, dia: diaRef.current });
+    carta.id = `carta_${c.seq}`; c.seq += 1;
+    c.enviadas = [carta, ...c.enviadas];
+    correioRef.current = c; setCorreio(c);
+    const t = TIPOS_CARTA[tipo];
+    pushMsgs([{ autor: "sistema", texto: `✉️ ${t.icone} ${t.nome} enviada a ${para}${oferta ? ` (oferta de ◉ ${oferta})` : ""}. Resposta esperada até o dia ${carta.chegaEm}.` }]);
+    enviar(`[CORREIO — CARTA ENVIADA] Enviei a ${para}: ${t.icone} ${t.nome}${oferta ? ` com oferta de ◉ ${oferta}` : ""}${mensagem ? `. Diz a carta: "${mensagem}"` : ""}. Narre a partida do mensageiro e a expectativa — a RESPOSTA virá pelo sistema em 1–3 dias; NÃO antecipe nem decida a reação de ${para} agora.`);
+  };
+
+  /* Aceitar/recusar petição recebida — efeitos imediatos, IA só narra. */
+  const responderPeticao = (id, aceite) => {
+    const c = garantirCorreio(correioRef.current);
+    const p = c.recebidas.find((x) => x.id === id && x.status === "pendente");
+    if (!p) return;
+    const ef = resolverPeticao(p, aceite);
+    if (aceite && ef.moedas < 0 && (personagem.moedas || 0) + (guildaRef.current.cofre || 0) < -ef.moedas) {
+      pushMsgs([{ autor: "sistema", texto: `✉️ Aceitar custaria ◉ ${-ef.moedas} — você não tem (bolso + cofre).` }]); return;
+    }
+    c.recebidas = c.recebidas.filter((x) => x.id !== id);
+    c.historico = [{ ...p, status: aceite ? "aceita" : "recusada", respondidaEm: diaRef.current }, ...c.historico].slice(0, 12);
+    correioRef.current = c; setCorreio(c);
+    aplicarEfeitosCorreio(ef);
+    pushMsgs([{ autor: "sistema", texto: `✉️ Petição de ${p.de}: ${aceite ? "ACEITA" : "RECUSADA"}${ef.nota ? ` — ${ef.nota}` : ""}.` }]);
+    enviar(`[CORREIO — PETIÇÃO ${aceite ? "ACEITA" : "RECUSADA"}] ${p.texto} → EU DECIDI: ${aceite ? "ACEITEI" : "RECUSEI"}.${ef.nota ? ` Consequência (já aplicada pelo sistema): ${ef.nota}.` : ""}${ef.moedas ? ` Moedas: ${ef.moedas > 0 ? "+" : ""}${ef.moedas} (já aplicado).` : ""} Narre a reação de ${p.de} e as ondas que isso faz no mundo.`);
+  };
 
   /* CRÔNICA (v6.9): baixa a saga em Markdown — gerada por código dos registros. */
   const exportarCronica = (md) => {
@@ -4765,8 +5023,9 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
                   <button onClick={avancarMasmorra} disabled={bloqueado || !!combate} className="flex-1 tv-mono text-[11px] px-3 py-2 rounded-lg" style={{ background: T.violet, color: T.onSecond, fontWeight: 600, opacity: bloqueado || combate ? 0.45 : 1 }}>
                     ⛏ Avançar{masmorra.salas[masmorra.idx + 1] ? ` — ${(ROTULO_SALA[masmorra.salas[masmorra.idx + 1].tipo] || "").toLowerCase()}` : ""}
                   </button>
-                  <button onClick={sairDaMasmorra} disabled={bloqueado || !!combate} className="tv-mono text-[11px] px-3 py-2 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim, opacity: bloqueado || combate ? 0.45 : 1 }}>🚪 sair</button>
+                  <button onClick={sairDaMasmorra} disabled={bloqueado || !!combate} title="Fugir abandona a masmorra e tudo que ainda não foi conquistado" className="tv-mono text-[11px] px-3 py-2 rounded-lg" style={{ border: `1px solid ${T.danger}`, color: T.danger, opacity: bloqueado || combate ? 0.45 : 1 }}>🏃 fugir</button>
                 </div>
+                <div className="tv-body text-[11px] mt-1.5" style={{ color: T.inkDim }}>Os espólios de cada sala já entram na sua bolsa sozinhos. <b>Fugir</b> abandona a masmorra — e o que ainda resta nela fica para trás. Ao vencer o chefe, a masmorra se conclui e você sai com tudo.</div>
               </div>
             )}
 
@@ -4824,7 +5083,11 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
                 </div>
                 <div className="flex items-stretch gap-2">
                   <button onClick={vezDoMundo} className="tv-fade flex-1 rounded-2xl py-3 tv-mono text-sm flex items-center justify-center gap-2" style={{ background: T.amber, color: T.onAccent, fontWeight: 700, letterSpacing: "0.05em" }}>
-                    🌍 VEZ DO MUNDO →
+                    🌍 VEZ DO MUNDO →{autoMundo && mundoRestante != null && <span className="text-[10px] font-normal opacity-80">{entrada.trim() ? "auto pausado (você está digitando)" : `auto em ${mundoRestante}s`}</span>}
+                  </button>
+                  <button onClick={() => setAutoMundo((v) => !v)} title={autoMundo ? "Turno do mundo automático: LIGADO (60s parado = o mundo vive) — toque para desligar" : "Turno do mundo automático: desligado — toque para ligar"}
+                    className="tv-mono text-xs rounded-2xl px-3 shrink-0" style={{ background: T.panel, color: autoMundo ? T.ok : T.inkDim, border: `1px solid ${T.line}`, fontWeight: 600 }}>
+                    {autoMundo ? "⏳" : "✋"}
                   </button>
                   <button onClick={() => setMostrarHoras((v) => !v)} title="Passar mais tempo" className="tv-mono text-xs rounded-2xl px-4 shrink-0" style={{ background: T.panel, color: T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600 }}>
                     🕐<span className="hidden md:inline"> Horas</span>

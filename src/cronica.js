@@ -46,7 +46,7 @@ export function gerarCronica({ nomeCampanha, mundo, personagem: p, conquistasIds
     md += linha(`## Os Companheiros`);
     md += linha();
     p.grupo.forEach((m2) => {
-      const marco = marcoDe(m2.vinculo ?? 10);
+      const marco = marcoDe(m2.vinculo ?? 10) || { icone: "·", nome: "Conhecido(a)" };
       md += linha(`- **${m2.nome}**${[m2.classe, m2.subclasse].filter(Boolean).length ? ` (${[m2.classe, m2.subclasse].filter(Boolean).join(" · ")})` : ""}, nível ${m2.nivel || 1} — ${marco.icone} ${marco.nome}${m2.descricao ? `. *${m2.descricao}*` : ""}`);
     });
     md += linha();
