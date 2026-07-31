@@ -3811,7 +3811,7 @@ export default function Taverna() {
     }, 1000);
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aguardandoMundo, autoMundo, entrada, bloqueado, rolagem]);
+  }, [aguardandoMundo, autoMundo, entrada]); // bloqueado/rolagem lidos só no callback (declarados adiante no componente)
   const mundoRestante = (aguardandoMundo && autoMundo && mundoAutoDesdeRef.current)
     ? Math.max(0, 60 - Math.floor((Date.now() - mundoAutoDesdeRef.current) / 1000))
     : null;
