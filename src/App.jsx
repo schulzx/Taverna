@@ -346,12 +346,21 @@ async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto
 /* decodifica escapes (\n, \", \t...) de um pedaço de string JSON */
 function decodificarTexto(str) {
   if (!str) return "";
-  try { return JSON.parse(`"${String(str).replace(/"/g, '\\"').replace(/\n/g, "\\n")}"`); }
+  let saida;
+  try { saida = JSON.parse(`"${String(str).replace(/"/g, '\\"').replace(/\n/g, "\\n")}"`); }
   catch {
-    return String(str)
+    saida = String(str)
       .replace(/\\n/g, "\n").replace(/\\t/g, " ")
       .replace(/\\"/g, '"').replace(/\\\\/g, "\\").trim();
   }
+  /* LIMPEZA (v7.3.1): em temperatura alta o modelo às vezes vaza escapes
+     literais no meio da prosa — "t\u200bumulto", "aumentar\," — e caracteres
+     invisíveis (zero-width). Decodifica \uXXXX literais e some com o lixo
+     antes do texto chegar à tela. */
+  return saida
+    .replace(/\\u([0-9a-fA-F]{4})/g, (m, g) => String.fromCharCode(parseInt(g, 16)))
+    .replace(/​‌‍﻿/g, "")
+    .replace(/\\([,.!?;:*'"’])/g, "$1");
 }
 
 /* Analisa um OBJETO JSON vindo de chamadas auxiliares (arquivista etc.).
@@ -2649,7 +2658,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.3 · voz do mestre</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.3.1 · voz do mestre</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -3621,10 +3630,22 @@ export default function Taverna() {
   // ── Voz do Mestre (Fish Audio via /api/voz) ──
   const [voz, setVoz] = useState(null); // { i, status: "gerando" | "tocando" }
   const vozAudioRef = useRef(null);
-  const vozUrlRef = useRef(null);
   const vozCacheRef = useRef({}); // índice da mensagem -> objectURL (não cobra de novo)
+  /* DESBLOQUEIO iOS/SAFARI (v7.3.1): o Safari só permite som dentro do gesto
+     do toque — como o fetch da voz demora, o play() chegava "fora do gesto" e
+     era negado ("not allowed by the user agent"). Solução: UM elemento de
+     áudio persistente, destravado no instante do toque com um clique mudo de
+     50ms; depois só trocamos o src e mandamos tocar — elemento já liberado. */
+  const SILENT_WAV = "data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YSADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
+  const obterAudioVoz = () => {
+    if (!vozAudioRef.current) {
+      vozAudioRef.current = new Audio();
+      vozAudioRef.current.preload = "auto";
+    }
+    return vozAudioRef.current;
+  };
   const pararVoz = () => {
-    if (vozAudioRef.current) { try { vozAudioRef.current.pause(); } catch {} vozAudioRef.current = null; }
+    if (vozAudioRef.current) { try { vozAudioRef.current.pause(); } catch {} }
     setVoz(null);
   };
   const ouvirMestre = async (i, texto) => {
@@ -3632,6 +3653,17 @@ export default function Taverna() {
     pararVoz();
     setVoz({ i, status: "gerando" });
     try {
+      const audio = obterAudioVoz();
+      /* ainda DENTRO do toque: destrava o elemento no Safari */
+      try {
+        audio.src = SILENT_WAV;
+        audio.muted = true;
+        const p = audio.play();
+        if (p && p.catch) await p.catch(() => {});
+        audio.pause();
+        audio.muted = false;
+        audio.currentTime = 0;
+      } catch { /* segue — em desktop já funciona sem o truque */ }
       let url = vozCacheRef.current[i];
       if (!url) {
         const r = await fetch("/api/voz", {
@@ -3646,10 +3678,9 @@ export default function Taverna() {
         url = URL.createObjectURL(await r.blob());
         vozCacheRef.current[i] = url;
       }
-      const audio = new Audio(url);
-      vozAudioRef.current = audio;
-      audio.onended = () => { if (vozAudioRef.current === audio) { vozAudioRef.current = null; setVoz(null); } };
-      audio.onerror = () => { if (vozAudioRef.current === audio) { vozAudioRef.current = null; setVoz(null); } };
+      audio.onended = () => setVoz(null);
+      audio.onerror = () => setVoz(null);
+      audio.src = url;
       await audio.play();
       setVoz({ i, status: "tocando" });
     } catch (e) {
