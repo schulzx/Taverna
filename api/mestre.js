@@ -48,6 +48,13 @@ export default async function handler(req, res) {
               model: modelo,
               messages: msgs,
               max_tokens: teto,
+              /* TEMPERATURA POR TAREFA (v7.2.2): o mestre narra a 1.3 — a
+                 recomendação oficial para escrita criativa: prosa mais autêntica
+                 e imprevisível. A burocracia (livro/resumo) fica a 0.3: ali
+                 criatividade é defeito — queremos fidelidade aos fatos.
+                 A estrutura JSON não sofre: response_format garante a forma;
+                 a temperatura só mexe no CONTEÚDO. Override: DS_TEMPERATURA. */
+              temperature: tarefa === "leve" ? 0.3 : Number(process.env.DS_TEMPERATURA || 1.3),
               thinking: { type: "disabled" },
               ...(emJson ? { response_format: { type: "json_object" } } : {}),
             }),
