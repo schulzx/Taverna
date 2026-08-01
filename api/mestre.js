@@ -1,9 +1,14 @@
-/* Função de servidor (Vercel) — Motor: Google Gemini (com lista de fallback).
-   A chave fica AQUI, na variável de ambiente GEMINI_API_KEY — nunca no navegador.
+/* Função de servidor (Vercel) — Motor de IA com DOIS provedores:
+   DeepSeek (padrão, baratíssimo) e Google Gemini (reserva).
+   As chaves ficam AQUI, nas variáveis de ambiente — nunca no navegador:
+     DEEPSEEK_API_KEY · GEMINI_API_KEY · PROVEDOR ("deepseek" | "gemini")
+   Se PROVEDOR não existir, o app escolhe sozinho: DeepSeek se houver chave,
+   senão Gemini. Se o provedor escolhido falhar, o outro cobre (quando tem chave).
+
    O jogo chama POST /api/mestre com { system, messages, maxTokens, formato, tarefa }.
-   formato "json" liga o modo de saída JSON garantida do Gemini (adeus JSON quebrado).
-   ROTEAMENTO POR TAREFA: "leve" (livro/resumo/burocracia) vai SÓ para modelos Flash
-   (baratíssimos); "mestre" (padrão) tenta o Pro e cai para Flash se indisponível.
+   formato "json" liga saída JSON garantida (response_format / responseMimeType).
+   ROTEAMENTO POR TAREFA: "leve" (livro/resumo/burocracia) vai para o modelo
+   barato do provedor; "mestre" (padrão) vai para o modelo forte.
    É o mesmo princípio do resto do app: nem toda tarefa merece o modelo caro. */
 export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).json({ erro: "Use POST" }); return; }
@@ -12,101 +17,116 @@ export default async function handler(req, res) {
     if (!system || !Array.isArray(messages) || messages.length === 0) {
       res.status(400).json({ erro: "Pedido inválido" }); return;
     }
+    const teto = Math.min(Math.max(Number(maxTokens) || 1500, 800), 8192);
+    const emJson = formato === "json";
 
-    /* Formato Anthropic -> formato Gemini: assistant vira "model" */
-    const contents = messages.map((m) => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: String(m.content || "") }],
-    }));
-
-    /* Respeita o teto pedido pelo app (padrão 1500). O mínimo de 800 evita
-       truncamento do JSON; o teto de 8192 barra respostas descontroladas.
-       Antes havia um piso de 4096 — todo turno pagava teto 4× maior que o necessário. */
-    const generationConfig = {
-      maxOutputTokens: Math.min(Math.max(Number(maxTokens) || 1500, 800), 8192),
-    };
-    if (formato === "json") generationConfig.responseMimeType = "application/json";
-    /* Gemini 3 Pro sempre "pensa"; o padrão HIGH consome o orçamento de saída e
-       trunca a narrativa. LOW deixa espaço para o texto completo (e é mais barato). */
-    generationConfig.thinkingConfig = { thinkingLevel: "LOW" };
-
-    /* RPG tem combate; sem isto o filtro padrão pode bloquear narrativa de luta */
-    const safetySettings = [
-      "HARM_CATEGORY_HARASSMENT",
-      "HARM_CATEGORY_HATE_SPEECH",
-      "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-      "HARM_CATEGORY_DANGEROUS_CONTENT",
-    ].map((category) => ({ category, threshold: "BLOCK_ONLY_HIGH" }));
-
-    /* Modelos em ordem de preferência.
-       MESTRE (narração): Pro primeiro (conta com faturamento), Flash como reserva.
-       LEVE (livro/resumo/burocracia): Flash primeiro (custo quase zero), MAS com
-       o Pro como última linha de defesa — em pico de demanda (503) do Flash a
-       burocracia não pode parar junto. */
-    const MODELOS = tarefa === "leve"
-      ? ["gemini-3.5-flash", "gemini-3.6-flash", "gemini-3.1-pro-preview"]
-      : ["gemini-3.1-pro-preview", "gemini-3.5-flash", "gemini-3.6-flash"];
-
-    /* Erros transitórios (pico de demanda / cota momentânea / falha do Google)
-       merecem UMA retentativa com pausa antes de partir para o próximo modelo. */
+    /* Erros transitórios merecem UMA retentativa com pausa antes do próximo modelo. */
     const TRANSITORIOS = [429, 500, 502, 503, 504];
     const pausa = (ms) => new Promise((ok) => setTimeout(ok, ms));
 
-    let r = null, ultimoErro = "";
-    for (const modelo of MODELOS) {
-      for (let tentativa = 0; tentativa < 2; tentativa++) {
-        r = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`,
-          {
+    /* ---------- DeepSeek (OpenAI-compatível) ----------
+       MESTRE: deepseek-v4-pro (US$ 0,435/M in · 0,87/M out — ~14x mais barato
+       que o Gemini Pro na saída). LEVE: deepseek-v4-flash (quase de graça).
+       Thinking DESLIGADO: raciocínio oculto queima tokens de saída e atrasa a
+       narrativa sem ganho visível para mestre de RPG com regras por código. */
+    const chamarDeepSeek = async () => {
+      const MODELOS = tarefa === "leve"
+        ? ["deepseek-v4-flash", "deepseek-v4-pro"]
+        : ["deepseek-v4-pro", "deepseek-v4-flash"];
+      const msgs = [{ role: "system", content: String(system) },
+        ...messages.map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: String(m.content || "") }))];
+      let r = null, ultimoErro = "";
+      for (const modelo of MODELOS) {
+        for (let tentativa = 0; tentativa < 2; tentativa++) {
+          r = await fetch("https://api.deepseek.com/chat/completions", {
             method: "POST",
             headers: {
               "content-type": "application/json",
-              "x-goog-api-key": process.env.GEMINI_API_KEY,
+              "authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`,
             },
             body: JSON.stringify({
-              systemInstruction: { parts: [{ text: system }] },
-              contents,
-              generationConfig,
-              safetySettings,
+              model: modelo,
+              messages: msgs,
+              max_tokens: teto,
+              thinking: { type: "disabled" },
+              ...(emJson ? { response_format: { type: "json_object" } } : {}),
             }),
-          }
-        );
-        if (r.ok) break;
-        ultimoErro = `${modelo}: ${r.status}`;
-        if (r.status === 404 || r.status === 403) break;           /* sem este modelo: vai direto ao próximo */
-        if (tentativa === 0 && TRANSITORIOS.includes(r.status)) {  /* pico temporário: respira e tenta de novo */
-          ultimoErro = `${modelo}: ${r.status} (retentando…)`;
-          await pausa(1200);
-          continue;
+          });
+          if (r.ok) break;
+          ultimoErro = `${modelo}: ${r.status}`;
+          if (r.status === 404 || r.status === 403 || r.status === 401 || r.status === 402) break;
+          if (tentativa === 0 && TRANSITORIOS.includes(r.status)) { ultimoErro = `${modelo}: ${r.status} (retentando…)`; await pausa(1200); continue; }
+          break;
         }
-        break;                                                     /* esgotou as tentativas deste modelo */
+        if (r && r.ok) break;
       }
-      if (r && r.ok) break;
+      if (!r || !r.ok) return { erro: ultimoErro, corpo: r ? (await r.text()).slice(0, 250) : "" };
+      const data = await r.json();
+      const texto = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+      return texto ? { texto } : { erro: "resposta vazia", corpo: "" };
+    };
+
+    /* ---------- Google Gemini (reserva) ---------- */
+    const chamarGemini = async () => {
+      const contents = messages.map((m) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: String(m.content || "") }],
+      }));
+      const generationConfig = { maxOutputTokens: teto, thinkingConfig: { thinkingLevel: "LOW" } };
+      if (emJson) generationConfig.responseMimeType = "application/json";
+      const safetySettings = [
+        "HARM_CATEGORY_HARASSMENT", "HARM_CATEGORY_HATE_SPEECH",
+        "HARM_CATEGORY_SEXUALLY_EXPLICIT", "HARM_CATEGORY_DANGEROUS_CONTENT",
+      ].map((category) => ({ category, threshold: "BLOCK_ONLY_HIGH" }));
+      const MODELOS = tarefa === "leve"
+        ? ["gemini-3.5-flash", "gemini-3.6-flash", "gemini-3.1-pro-preview"]
+        : ["gemini-3.1-pro-preview", "gemini-3.5-flash", "gemini-3.6-flash"];
+      let r = null, ultimoErro = "";
+      for (const modelo of MODELOS) {
+        for (let tentativa = 0; tentativa < 2; tentativa++) {
+          r = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`,
+            {
+              method: "POST",
+              headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
+              body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, generationConfig, safetySettings }),
+            }
+          );
+          if (r.ok) break;
+          ultimoErro = `${modelo}: ${r.status}`;
+          if (r.status === 404 || r.status === 403) break;
+          if (tentativa === 0 && TRANSITORIOS.includes(r.status)) { ultimoErro = `${modelo}: ${r.status} (retentando…)`; await pausa(1200); continue; }
+          break;
+        }
+        if (r && r.ok) break;
+      }
+      if (!r || !r.ok) return { erro: ultimoErro, corpo: r ? (await r.text()).slice(0, 250) : "" };
+      const data = await r.json();
+      const cand = data.candidates && data.candidates[0];
+      const texto = ((cand && cand.content && cand.content.parts) || []).map((p) => p.text || "").filter(Boolean).join("\n");
+      if (!texto) return { erro: `sem texto (${(cand && cand.finishReason) || (data.promptFeedback && data.promptFeedback.blockReason) || "vazio"})`, corpo: "" };
+      return { texto };
+    };
+
+    /* ---------- Roteador de provedor ----------
+       Ordem: a da variável PROVEDOR; sem ela, DeepSeek primeiro (se houver
+       chave). Só entram na fila provedores COM chave configurada. */
+    const preferido = (process.env.PROVEDOR || "").toLowerCase();
+    const fila = [];
+    if (process.env.DEEPSEEK_API_KEY) fila.push({ id: "deepseek", fn: chamarDeepSeek });
+    if (process.env.GEMINI_API_KEY) fila.push({ id: "gemini", fn: chamarGemini });
+    if (preferido === "gemini" || preferido === "deepseek") {
+      fila.sort((a, b) => (a.id === preferido ? -1 : b.id === preferido ? 1 : 0));
     }
+    if (!fila.length) { res.status(500).json({ erro: "Nenhuma chave configurada (DEEPSEEK_API_KEY / GEMINI_API_KEY)" }); return; }
 
-    if (!r || !r.ok) {
-      const t = r ? await r.text() : "";
-      res.status(502).json({ erro: `API (${ultimoErro}): ${t.slice(0, 250)}` });
-      return;
+    const tentativas = [];
+    for (const p of fila) {
+      const out = await p.fn();
+      if (out.texto) { res.status(200).json({ texto: out.texto, provedor: p.id }); return; }
+      tentativas.push(`${p.id} (${out.erro}${out.corpo ? `: ${out.corpo}` : ""})`);
     }
-
-    const data = await r.json();
-    const cand = data.candidates && data.candidates[0];
-    const texto = ((cand && cand.content && cand.content.parts) || [])
-      .map((p) => p.text || "")
-      .filter(Boolean)
-      .join("\n");
-
-    if (!texto) {
-      const motivo =
-        (cand && cand.finishReason) ||
-        (data.promptFeedback && data.promptFeedback.blockReason) ||
-        "resposta vazia";
-      res.status(502).json({ erro: `Mestre sem texto (${motivo})` });
-      return;
-    }
-
-    res.status(200).json({ texto });
+    res.status(502).json({ erro: `Todos os provedores falharam — ${tentativas.join(" · ")}`.slice(0, 400) });
   } catch (e) {
     res.status(500).json({ erro: String((e && e.message) || e).slice(0, 200) });
   }
