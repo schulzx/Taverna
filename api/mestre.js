@@ -54,7 +54,7 @@ export default async function handler(req, res) {
                  criatividade é defeito — queremos fidelidade aos fatos.
                  A estrutura JSON não sofre: response_format garante a forma;
                  a temperatura só mexe no CONTEÚDO. Override: DS_TEMPERATURA. */
-              temperature: tarefa === "leve" ? 0.3 : Number(process.env.DS_TEMPERATURA || 1.3),
+              temperature: tarefa === "leve" ? 0.3 : Number(process.env.DS_TEMPERATURA || 1.2),
               thinking: { type: "disabled" },
               ...(emJson ? { response_format: { type: "json_object" } } : {}),
             }),
