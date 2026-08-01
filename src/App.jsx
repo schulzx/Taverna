@@ -2649,7 +2649,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.2 · geradores de vida</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.3 · voz do mestre</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -3617,6 +3617,47 @@ export default function Taverna() {
   }, [historico, mensagens, aplicarResposta, salvar, nomeCampanha, mundo]);
 
   const retentar = () => { if (!falha) return; const f = falha; setFalha(null); enviar(f.conteudo, f.persAtual, f.histBase); };
+
+  // ── Voz do Mestre (Fish Audio via /api/voz) ──
+  const [voz, setVoz] = useState(null); // { i, status: "gerando" | "tocando" }
+  const vozAudioRef = useRef(null);
+  const vozUrlRef = useRef(null);
+  const vozCacheRef = useRef({}); // índice da mensagem -> objectURL (não cobra de novo)
+  const pararVoz = () => {
+    if (vozAudioRef.current) { try { vozAudioRef.current.pause(); } catch {} vozAudioRef.current = null; }
+    setVoz(null);
+  };
+  const ouvirMestre = async (i, texto) => {
+    if (voz && voz.i === i) { pararVoz(); return; } // tocar de novo = parar
+    pararVoz();
+    setVoz({ i, status: "gerando" });
+    try {
+      let url = vozCacheRef.current[i];
+      if (!url) {
+        const r = await fetch("/api/voz", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ texto }),
+        });
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}));
+          throw new Error(j.erro || `falha (${r.status})`);
+        }
+        url = URL.createObjectURL(await r.blob());
+        vozCacheRef.current[i] = url;
+      }
+      const audio = new Audio(url);
+      vozAudioRef.current = audio;
+      audio.onended = () => { if (vozAudioRef.current === audio) { vozAudioRef.current = null; setVoz(null); } };
+      audio.onerror = () => { if (vozAudioRef.current === audio) { vozAudioRef.current = null; setVoz(null); } };
+      await audio.play();
+      setVoz({ i, status: "tocando" });
+    } catch (e) {
+      setVoz(null);
+      pushMsgs([{ autor: "sistema", texto: `🔇 ${(e && e.message) || "Não consegui dar voz ao Mestre agora."}` }]);
+    }
+  };
+  useEffect(() => () => { if (vozAudioRef.current) { try { vozAudioRef.current.pause(); } catch {} } Object.values(vozCacheRef.current).forEach((u) => { try { URL.revokeObjectURL(u); } catch {} }); }, []);
 
   const iniciar = (pers) => {
     setPersonagem(pers);
@@ -5142,7 +5183,23 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
                 if (m.autor === "jogador") return <div key={i} className="tv-fade flex justify-end"><div className="max-w-[85%] md:max-w-[70%] rounded-2xl rounded-br-sm px-4 py-3 tv-body text-[15px]" style={{ background: T.panelSoft, color: T.ink, border: `1px solid ${T.line}` }}>{m.texto}</div></div>;
                 return (
                   <div key={i} className="tv-fade max-w-[95%] md:max-w-[82%]">
-                    <div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5 flex items-center gap-1.5" style={{ color: T.amber }}><IconeD20 tamanho={13} /> Mestre</div>
+                    <div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5 flex items-center gap-1.5" style={{ color: T.amber }}>
+                      <IconeD20 tamanho={13} /> Mestre
+                      <button
+                        onClick={() => ouvirMestre(i, m.texto)}
+                        title={voz && voz.i === i ? (voz.status === "gerando" ? "Preparando a voz… (toque para cancelar)" : "Parar a leitura") : "Ouvir o Mestre narrar esta mensagem"}
+                        className="ml-1 normal-case tracking-normal rounded-full flex items-center justify-center"
+                        style={{
+                          width: 22, height: 22, fontSize: 12, lineHeight: 1,
+                          color: voz && voz.i === i ? T.onAccent : T.inkDim,
+                          background: voz && voz.i === i ? T.amber : "transparent",
+                          border: `1px solid ${voz && voz.i === i ? T.amber : T.line}`,
+                          opacity: 0.9,
+                        }}
+                      >
+                        {voz && voz.i === i ? (voz.status === "gerando" ? "…" : "⏸") : "🔊"}
+                      </button>
+                    </div>
                     <div className="tv-body text-[15px] leading-relaxed whitespace-pre-wrap rounded-2xl rounded-tl-sm px-5 py-4" style={{ background: T.panel, color: T.ink, borderLeft: `2px solid ${T.amber}` }}>{m.texto}</div>
                   </div>
                 );
