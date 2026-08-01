@@ -21,6 +21,7 @@ import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, ro
 import { calcularFama, patamarFama, gerarNemesis, LIMIARES_NEMESIS, ACOES_NEMESIS, rumorDoDia } from "./fama.js";
 import { gerarCronica } from "./cronica.js";
 import { ECONOMIA_PROMPT } from "./economia.js";
+import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, processarDiaCorreio } from "./correio.js";
 
 /* ============================================================
@@ -169,9 +170,11 @@ ${questsInfo || "Nenhuma missão registrada."}
 - GUIA DE CENA (o jogador nunca fica perdido): ao fim de cada narração, deixe claras as SAÍDAS e os PONTOS DE INTERESSE da cena — portas, trilhas, escadas, pessoas com quem falar, o objeto óbvio a investigar — especialmente em masmorras e lugares amplos. Após uma vitória em masmorra, o sistema entrega os espólios: narre o baú/o corpo do chefe como origem do tesouro e indique o caminho de saída. Se há missão ativa, a cena deve apontar na direção dela (um rastro, um rumor, o destino no horizonte).
 - CORREIO DOS REINOS (atos oficiais de facções — regra dura): qualquer ato OFICIAL entre facções — declaração de guerra, aliança, tributo, decreto, proposta, ameaça formal — acontece APENAS pelo sistema de Correio/Mural (envelopes [CORREIO — …], [DECRETO …]). É TERMINANTEMENTE PROIBIDO inventar esses atos na ficção. Em particular: facções VASSALAS ou ALIADAS do jogador NUNCA agem contra ele, sua família ou seus domínios sem causa extrema registrada em tratados/cânone — jamais um vassalo pede a cabeça da esposa do próprio senhor. Rivalidades e tensões entre facções NEUTRAS/INIMIGAS continuam livres na ficção.
 - MUNDO POVOADO: mantenha o mapa rico — pelo menos 6 cidades e 4 facções registradas. Se o mapa estiver pobre, apresente novas potências, cidades e territórios naturalmente na ficção (e registre-os).
+- LIBERDADE CRIATIVA (regra-mestra — vem ANTES de qualquer cautela): crie com ousadia total. Diálogos com alma: personagens engraçados que fazem piada no pior momento, calados que dizem tudo com um olhar, sábios, insolentes, tímidos, cruéis, apaixonados. Humor, ironia, tensão, ternura — o tom que cada cena pedir. Invente tramas, viradas, detalhes e gente nova à vontade: a imaginação é o seu trabalho. As ÚNICAS proibições deste jogo são fatuais: NÃO contradiga o cânone, o codex, os registros do sistema (calendário, relógio, local, economia, correio, eventos sorteados) nem invente passado compartilhado não registrado. Fora isso, tudo é permitido — e esperado. Regras de sistema existem para ancorar a verdade do mundo, nunca para podar sua criatividade.
 - PERSONAGENS SEM AMARRAS (emoções de verdade — regra de interpretação): cada personagem vive a própria natureza ATÉ O FIM, sem suavização. O vilão é mau de verdade: cruel, manipulador, capaz de atrocidades. A sedutora é ousada de verdade: flerta, provoca, insinua sem pudor. O covarde foge, o fanático não negocia, o ambicioso trai. É TERMINANTEMENTE PROIBIDO amansar, moralizar ou "limpar" a personalidade de alguém por cautela — isso mata o mundo vivo. Temas maduros (desejo, violência, crueldade, vício, política suja, preconceito, luto) fazem parte da ficção e devem ser narrados com a intensidade que a cena pede, sem eufemismo e sem censura — apenas sem descrição sexual gráfica detalhada (insinue com classe; o resto, mostre sem medo). Emoções são emoções de verdade: raiva que queima, desejo que constrange, medo que paralisa, alegria que transborda.
 - ONDE EU ESTOU É FATO (âncora de local — regra dura): o LOCAL ATUAL informado acima é onde eu estou de verdade. Se estou EM VIAGEM, NÃO estou em cidade nenhuma: o descanso acontece na estrada, no acampamento ou no meio de transporte em que viajo (a cabine do navio, o vagão da caravana) — JAMAIS me "acorde" em aposentos, estalagens ou palácios sem que eu tenha chegado lá. Descansar no meio do mar NÃO me devolve ao porto. Só me coloque numa cidade se o sistema registrar chegada ("cidade_atual") ou se a ficção me levou até lá com viagem narrada. Quando o meio de viagem mudar (a pé → navio → carroça → cavalo), registre "jornada_meio" nas mudanças (ex.: "jornada_meio":"navio").
 - ${ECONOMIA_PROMPT}
+- GERADORES DE VIDA (o app sorteia, você narra): envelopes [EVENTO LOCAL], [EVENTO GLOBAL] e [QUEST GERADA PELO SISTEMA] trazem material PRONTO — fios do dia a dia, arcos regionais que escalam por etapas e quests calibradas à fase do arco. Os FATOS sorteados (quem, raça, lugar, o quê) são fixos: os atores já vêm com nome, raça e ofício definidos pelo sistema — use-os exatamente como dados (a diversidade do mundo é responsabilidade do sistema, não mude raças nem troque personagens). O COMO (voz, cena, desdobramentos) é todo seu. Fios locais são pequenos e expiram se ignorados (o mundo se resolve sem o herói — narre o desfecho de passagem). O evento global é arco longo de fundo: escala quando o sistema anuncia nova etapa; quando o jogador o RESOLVER de fato, envie "evento_global_encerrar": true no JSON. Limites do sistema: no máx. 1 global e 3 locais por vez — nunca empilhe mais por conta própria.
 
 CONDIÇÕES DE ESTADO / BUFFS E DEBUFFS (D&D e MMORPGs — dentro e fora de combate):
 - Repertório sugerido (use os nomes consagrados): DEBUFFS — Envenenado (perde PV/turno), Sangrando (perde PV/turno até estancar), Queimando (dano de fogo/turno), Atordoado (perde a ação), Amedrontado (desvantagem em ataques), Cego (desvantagem; atacantes têm vantagem), Enraizado/Preso (não se move), Lento (perde velocidade), Silenciado (não usa habilidades mágicas), Enfraquecido (dano reduzido), Amaldiçoado (azar nas rolagens), Congelado (pula turnos), Confuso (pode errar o alvo). BUFFS — Abençoado (vantagem), Inspirado (bônus na próxima rolagem), Regeneração (recupera PV/turno), Apressado (ação extra), Fortalecido (dano aumentado), Protegido (reduz dano), Furtivo (difícil de acertar), Enfurecido (dano alto, defesa baixa).
@@ -310,6 +313,7 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   "quest_nova": [{"titulo":"O cerco de Pedravale","descricao":"Romper o bloqueio antes do inverno","tipo":"principal"}],
   "quest_atualizar": [{"titulo":"A caravana sumida","status":"concluida","nota":""}],
   "historia_avancar": false,
+  "evento_global_encerrar": false,
   "mapa_cidades": [{"nome":"Pedravale","tipo":"capital","regiao":"Sul","faccao":"Guilda do Corvo","relacao":"jogador","sede":true}],
   "mapa_faccoes": [{"nome":"Guilda do Corvo","tipo":"guilda","lider":"você","relacao":"jogador","doJogador":true}],
   "cidade_atual": "Pedravale",
@@ -1077,7 +1081,7 @@ function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar })
   );
 }
 
-function PainelDiario({ historia, quests, trocarArco }) {
+function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual }) {
   const [trocando, setTrocando] = React.useState(false);
   const est = estruturaPorId((historia || {}).estrutura);
   const etapaIdx = Math.min((historia || {}).etapa || 0, est.etapas.length - 1);
@@ -1128,6 +1132,37 @@ function PainelDiario({ historia, quests, trocarArco }) {
       {principais.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.amberSoft }}>Missão principal</div><div className="space-y-2 mb-4">{principais.map((q, i) => <Missao key={i} q={q} />)}</div></>)}
       {secundarias.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Missões secundárias</div><div className="space-y-2 mb-4">{secundarias.map((q, i) => <Missao key={i} q={q} />)}</div></>)}
       {encerradas.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Encerradas</div><div className="space-y-2">{encerradas.map((q, i) => <Missao key={i} q={q} />)}</div></>)}
+
+      {/* FIOS DO MUNDO (v7.2): evento global em curso + fios locais com prazo */}
+      {eventos && eventos.global && (
+        <>
+          <div className="tv-mono text-[10px] uppercase tracking-widest mt-5 mb-1.5" style={{ color: T.danger }}>🌍 Evento global em curso</div>
+          <div className="rounded-lg px-3 py-2.5 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.danger}` }}>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="tv-body text-sm font-bold" style={{ color: T.ink }}>{eventos.global.nome}</span>
+              <span className="tv-mono text-[9px] shrink-0" style={{ color: T.danger }}>etapa {eventos.global.etapa + 1}/{eventos.global.etapas.length}</span>
+            </div>
+            <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{eventos.global.semente}</div>
+            <div className="tv-body text-xs mt-1" style={{ color: T.amberSoft }}>▶ Agora: {eventos.global.etapas[eventos.global.etapa]}</div>
+          </div>
+        </>
+      )}
+      {eventos && (eventos.locais || []).length > 0 && (
+        <>
+          <div className="tv-mono text-[10px] uppercase tracking-widest mt-4 mb-1.5" style={{ color: T.inkDim }}>🌱 Fios do mundo (se resolvem sem você)</div>
+          <div className="space-y-2">
+            {eventos.locais.map((l) => (
+              <div key={l.id} className="rounded-lg px-3 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                <div className="tv-body text-xs" style={{ color: T.ink }}>{l.icone} {l.texto}</div>
+                <div className="flex items-baseline justify-between gap-2 mt-1">
+                  <span className="tv-body text-[11px] italic" style={{ color: T.violetSoft }}>{l.gancho}</span>
+                  <span className="tv-mono text-[9px] shrink-0" style={{ color: diaAtual >= l.expiraEm ? T.danger : T.inkDim }}>até dia {l.expiraEm}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -1973,7 +2008,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
           </>
         )}
 
-        {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} />}
+        {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} />}
         {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} />}
@@ -2614,7 +2649,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.1 · mundo sem amarras</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.2 · geradores de vida</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -3049,6 +3084,10 @@ export default function Taverna() {
      no meio do oceano). Limpa quando o sistema registra chegada (cidade_atual). */
   const jornadaRef = useRef(null); // { de, desde, meio } | null
   const [jornada, setJornada] = useState(null);
+  /* GERADORES DE VIDA (v7.2): eventos locais (máx. 3, expiram) e o evento
+     global (máx. 1, escala por etapas) — sorteados por código, o mestre só narra. */
+  const eventosRef = useRef({ locais: [], global: null, semGlobalDesde: 0, seq: 1 });
+  const [eventos, setEventos] = useState(eventosRef.current);
   const localAtualTxt = () => jornadaRef.current
     ? `EM VIAGEM desde ${jornadaRef.current.de || "a última parada"} (desde o dia ${jornadaRef.current.desde || "?"})${jornadaRef.current.meio ? `, viajando de ${jornadaRef.current.meio}` : ""} — não estou em cidade nenhuma`
     : (cidadeAtualRef.current ? `em ${cidadeAtualRef.current}` : "a sós, fora de cidade");
@@ -3144,7 +3183,7 @@ export default function Taverna() {
       combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
-      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current,
+      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, eventos: eventosRef.current,
       historia: historiaRef.current, quests: questsRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
@@ -3298,6 +3337,13 @@ export default function Taverna() {
         questsRef.current = [...questsRef.current, { titulo: q.titulo, descricao: q.descricao || "", objetivo: q.objetivo || "", tipo: q.tipo === "principal" ? "principal" : "secundaria", status: "ativa", nota: "" }];
         msgs.push(`📜 Nova missão${q.tipo === "principal" ? " PRINCIPAL" : ""}: ${q.titulo}`);
       });
+      /* EVENTO GLOBAL resolvido na ficção: o mestre encerra o arco maior */
+      if (md2.evento_global_encerrar && eventosRef.current.global) {
+        const g = eventosRef.current.global;
+        eventosRef.current = { ...eventosRef.current, global: null, semGlobalDesde: diaRef.current };
+        setEventos(eventosRef.current);
+        msgs.push(`🌍 ${g.nome}: desfecho alcançado — a região entra numa nova era.`);
+      }
       [].concat(md2.quest_atualizar || []).forEach((q) => {
         if (!q || !q.titulo) return;
         questsRef.current = questsRef.current.map((x) => {
@@ -3579,6 +3625,7 @@ export default function Taverna() {
     mapaRef.current = { cidades: [], faccoes: [] }; setMapa(mapaRef.current);
     faccaoJogadorRef.current = ""; cidadeAtualRef.current = "";
     jornadaRef.current = null; setJornada(null);
+    eventosRef.current = { locais: [], global: null, semGlobalDesde: 0, seq: 1 }; setEventos(eventosRef.current);
     guildaRef.current = { nivel: 1, cofre: 0 }; setGuilda(guildaRef.current);
     contRef.current = { ...CONTADORES_INICIAIS };
     conqRef.current = { desbloqueadas: {}, ordem: [] }; setConquistas(conqRef.current);
@@ -3639,6 +3686,7 @@ export default function Taverna() {
       nemesisRef.current = sv.nemesis && typeof sv.nemesis === "object" ? sv.nemesis : null; setNemesis(nemesisRef.current);
       correioRef.current = garantirCorreio(sv.correio); setCorreio(correioRef.current);
       jornadaRef.current = sv.jornada && typeof sv.jornada === "object" ? sv.jornada : null; setJornada(jornadaRef.current);
+      eventosRef.current = garantirEventos(sv.eventos); setEventos(eventosRef.current);
       famaPatamarRef.current = sv.famaPatamar || 0;
       reinoRef.current = garantirReino(sv.reino && typeof sv.reino === "object" ? sv.reino : {}, mapaRef.current) || {}; setReino(reinoRef.current);
       /* BLINDAGEM v6.5: pessoas de saves antigos sem data de encontro ganham
@@ -4555,6 +4603,39 @@ export default function Taverna() {
       pers = processarDecretos(pers, msgs);
       if (msgs.length > antes) { setPersonagem(pers); pushMsgs(msgs.slice(antes).map((t) => ({ autor: "sistema", texto: t }))); }
     }
+    /* GERADORES DE VIDA (v7.2): o descanso longo é quando o mundo sorteia —
+       fio local novo, quest da fase do arco, evento global nascendo ou
+       escalando. Tudo montado por código; o mestre recebe pronto e só narra. */
+    let eventosMsg = "";
+    if (tipo === "longo") {
+      const ctx = ctxMundo({ mundo, mapa: mapaRef.current, dia: diaRef.current });
+      ctx.fase = faseDoArco(historiaRef.current, ESTRUTURAS);
+      const secundarias = questsRef.current.filter((q) => q.status === "ativa" && q.tipo !== "principal").length;
+      const r = processarDescansoLongoEventos(eventosRef.current, ctx, { dia: diaRef.current, secundariasAtivas: secundarias });
+      eventosRef.current = r.eventos; setEventos(r.eventos);
+      const partes = [];
+      if (r.globalNovo) {
+        partes.push(`[EVENTO GLOBAL — NOVO ARCO MAIOR: ${r.globalNovo.nome.toUpperCase()}] O SISTEMA sorteou um acontecimento que abalará a região: ${r.globalNovo.semente} ETAPA 1/${r.globalNovo.etapas.length} agora: ${r.globalNovo.etapas[0]} Teça isso na ficção aos poucos — é um arco longo de fundo, coerente com o arco atual, NÃO uma quest para resolver hoje.`);
+        pushMsgs([{ autor: "sistema", texto: `🌍 Evento global: ${r.globalNovo.nome} — a região começa a mudar.` }]);
+      }
+      if (r.globalAvancou && r.eventos.global) {
+        const g = r.eventos.global;
+        partes.push(`[EVENTO GLOBAL — ${g.nome.toUpperCase()} · ETAPA ${g.etapa + 1}/${g.etapas.length}] A situação regional ESCALOU: ${g.etapas[g.etapa]} Mostre a escalada na ficção (notícias, medo, preços, movimentação de facções) sem resolvê-la ainda.`);
+        pushMsgs([{ autor: "sistema", texto: `🌍 ${g.nome}: a situação escalou (etapa ${g.etapa + 1}/${g.etapas.length}).` }]);
+      }
+      if (r.localNovo) {
+        partes.push(`[EVENTO LOCAL — FIO DO MUNDO] ${r.localNovo.icone} ${r.localNovo.texto} Gancho: ${r.localNovo.gancho} Apresente naturalmente (um grito, um boato, algo à vista). O jogador pode ignorar — se ignorar até o dia ${r.localNovo.expiraEm}, o fio se resolve sem ele.`);
+        pushMsgs([{ autor: "sistema", texto: `${r.localNovo.icone} Fio do mundo à vista — veja o Diário.` }]);
+      }
+      r.expirados.forEach((l) => partes.push(`[EVENTO LOCAL — EXPIRADO] O fio "${l.texto}" se resolveu SEM a minha intervenção (o mundo seguiu sem mim). Mencione o desfecho como notícia de passagem, se couber.`));
+      if (r.questNova) {
+        questsRef.current = [...questsRef.current, { titulo: r.questNova.titulo, descricao: r.questNova.descricao, objetivo: r.questNova.objetivo, tipo: "secundaria", status: "ativa", nota: "", sorteada: true }];
+        setQuests([...questsRef.current]);
+        partes.push(`[QUEST GERADA PELO SISTEMA — fase "${ctx.fase}" do arco] Nova missão secundária JÁ REGISTRADA no diário (NÃO envie "quest_nova" duplicando-a): "${r.questNova.titulo}" — ${r.questNova.descricao} Objetivo: ${r.questNova.objetivo}. Apresente-a na ficção com liberdade total de execução (quem procura, como, com que voz); os FATOS acima são fixos.`);
+        pushMsgs([{ autor: "sistema", texto: `📜 Fio de história: ${r.questNova.titulo}` }]);
+      }
+      if (partes.length) eventosMsg = "\n" + partes.join("\n");
+    }
     let reinoMsg = "";
     if (tipo === "longo") { // um dia virou: o calendário anda e o reino vive
       const evs = avancarDiasReino(1);
@@ -4582,7 +4663,7 @@ export default function Taverna() {
     const localMsg = jornadaRef.current
       ? `\n[ONDE ACORDO] Eu ainda estou EM VIAGEM (${localAtualTxt()}) — acordo no mesmo lugar em que dormi (acampamento na estrada, cabine do navio, etc.). A viagem CONTINUA de onde parou: proibido me colocar em cidade/aposentos; o destino ainda está adiante.`
       : "";
-    enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${localMsg}${climaMsg}${reinoMsg}${sonhoMsg}`, pers);
+    enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${localMsg}${climaMsg}${reinoMsg}${sonhoMsg}${eventosMsg}`, pers);
   };
 
   /* Escolher/trocar caminho (classe). Regras:
