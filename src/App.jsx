@@ -20,6 +20,7 @@ import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeD
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, gerarNemesis, LIMIARES_NEMESIS, ACOES_NEMESIS, rumorDoDia } from "./fama.js";
 import { gerarCronica } from "./cronica.js";
+import { ECONOMIA_PROMPT } from "./economia.js";
 import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, processarDiaCorreio } from "./correio.js";
 
 /* ============================================================
@@ -168,6 +169,9 @@ ${questsInfo || "Nenhuma missão registrada."}
 - GUIA DE CENA (o jogador nunca fica perdido): ao fim de cada narração, deixe claras as SAÍDAS e os PONTOS DE INTERESSE da cena — portas, trilhas, escadas, pessoas com quem falar, o objeto óbvio a investigar — especialmente em masmorras e lugares amplos. Após uma vitória em masmorra, o sistema entrega os espólios: narre o baú/o corpo do chefe como origem do tesouro e indique o caminho de saída. Se há missão ativa, a cena deve apontar na direção dela (um rastro, um rumor, o destino no horizonte).
 - CORREIO DOS REINOS (atos oficiais de facções — regra dura): qualquer ato OFICIAL entre facções — declaração de guerra, aliança, tributo, decreto, proposta, ameaça formal — acontece APENAS pelo sistema de Correio/Mural (envelopes [CORREIO — …], [DECRETO …]). É TERMINANTEMENTE PROIBIDO inventar esses atos na ficção. Em particular: facções VASSALAS ou ALIADAS do jogador NUNCA agem contra ele, sua família ou seus domínios sem causa extrema registrada em tratados/cânone — jamais um vassalo pede a cabeça da esposa do próprio senhor. Rivalidades e tensões entre facções NEUTRAS/INIMIGAS continuam livres na ficção.
 - MUNDO POVOADO: mantenha o mapa rico — pelo menos 6 cidades e 4 facções registradas. Se o mapa estiver pobre, apresente novas potências, cidades e territórios naturalmente na ficção (e registre-os).
+- PERSONAGENS SEM AMARRAS (emoções de verdade — regra de interpretação): cada personagem vive a própria natureza ATÉ O FIM, sem suavização. O vilão é mau de verdade: cruel, manipulador, capaz de atrocidades. A sedutora é ousada de verdade: flerta, provoca, insinua sem pudor. O covarde foge, o fanático não negocia, o ambicioso trai. É TERMINANTEMENTE PROIBIDO amansar, moralizar ou "limpar" a personalidade de alguém por cautela — isso mata o mundo vivo. Temas maduros (desejo, violência, crueldade, vício, política suja, preconceito, luto) fazem parte da ficção e devem ser narrados com a intensidade que a cena pede, sem eufemismo e sem censura — apenas sem descrição sexual gráfica detalhada (insinue com classe; o resto, mostre sem medo). Emoções são emoções de verdade: raiva que queima, desejo que constrange, medo que paralisa, alegria que transborda.
+- ONDE EU ESTOU É FATO (âncora de local — regra dura): o LOCAL ATUAL informado acima é onde eu estou de verdade. Se estou EM VIAGEM, NÃO estou em cidade nenhuma: o descanso acontece na estrada, no acampamento ou no meio de transporte em que viajo (a cabine do navio, o vagão da caravana) — JAMAIS me "acorde" em aposentos, estalagens ou palácios sem que eu tenha chegado lá. Descansar no meio do mar NÃO me devolve ao porto. Só me coloque numa cidade se o sistema registrar chegada ("cidade_atual") ou se a ficção me levou até lá com viagem narrada. Quando o meio de viagem mudar (a pé → navio → carroça → cavalo), registre "jornada_meio" nas mudanças (ex.: "jornada_meio":"navio").
+- ${ECONOMIA_PROMPT}
 
 CONDIÇÕES DE ESTADO / BUFFS E DEBUFFS (D&D e MMORPGs — dentro e fora de combate):
 - Repertório sugerido (use os nomes consagrados): DEBUFFS — Envenenado (perde PV/turno), Sangrando (perde PV/turno até estancar), Queimando (dano de fogo/turno), Atordoado (perde a ação), Amedrontado (desvantagem em ataques), Cego (desvantagem; atacantes têm vantagem), Enraizado/Preso (não se move), Lento (perde velocidade), Silenciado (não usa habilidades mágicas), Enfraquecido (dano reduzido), Amaldiçoado (azar nas rolagens), Congelado (pula turnos), Confuso (pode errar o alvo). BUFFS — Abençoado (vantagem), Inspirado (bônus na próxima rolagem), Regeneração (recupera PV/turno), Apressado (ação extra), Fortalecido (dano aumentado), Protegido (reduz dano), Furtivo (difícil de acertar), Enfurecido (dano alto, defesa baixa).
@@ -309,6 +313,7 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   "mapa_cidades": [{"nome":"Pedravale","tipo":"capital","regiao":"Sul","faccao":"Guilda do Corvo","relacao":"jogador","sede":true}],
   "mapa_faccoes": [{"nome":"Guilda do Corvo","tipo":"guilda","lider":"você","relacao":"jogador","doJogador":true}],
   "cidade_atual": "Pedravale",
+  "jornada_meio": "navio",
   "canone": {
     "Cael": {"tipo":"pessoa","papel":"mago viajante","genero":"homem","local":"estrada para Dwen","status":"vivo","notas":"o herói se apresentou a ele com o nome falso Falkion"},
     "Refúgio das Pedras": {"tipo":"local","notas":"esconderijo do grupo, a leste do rio"}
@@ -454,11 +459,26 @@ async function chamarMestre(system, historico) {
   /* 18 mensagens bastam: o cânone (fatos imutáveis) e o livro (resumo do arco)
      vão no system prompt — o histórico bruto só precisa do contexto imediato.
      Corta ~metade dos tokens de entrada por turno. */
-  /* Teto 2600: a resposta JSON carrega narrativa + mudancas + sugestões, e
-     narrações ricas (diálogos longos) passavam de 1000 e vinham CORTADAS no
-     meio da palavra. O teto não custa — só se paga pelo que é gerado. */
-  const texto = await chamarModelo(system, historico.slice(-18), 2600, "json");
-  return extrairJSON(texto);
+  /* Teto 3600: a resposta JSON carrega narrativa + mudancas + sugestões, e o
+     DeepSeek escreve prosa MAIS longa que o Gemini — com 2600 a resposta
+     truncava no meio do JSON e a tela mostrava "…". O teto não custa —
+     só se paga pelo que é gerado. */
+  let texto = await chamarModelo(system, historico.slice(-18), 3600, "json");
+  let resp = extrairJSON(texto);
+  /* REDE DE SEGURANÇA (v7.0.2): se veio JSON válido mas SEM narrativa (o "…"
+     na tela), tenta UMA segunda vez com um empurrão explícito antes de
+     desistir. */
+  if (!resp.narrativa || resp.narrativa === "…" || resp.narrativa.startsWith("O Mestre hesita")) {
+    const reforco = [...historico.slice(-18), { role: "user", content: "[SISTEMA] Sua resposta anterior chegou sem o campo \"narrativa\". Responda de novo, em JSON, com \"narrativa\" SEMPRE preenchida (é o texto que o jogador lê)." }];
+    texto = await chamarModelo(system, reforco, 3600, "json");
+    const resp2 = extrairJSON(texto);
+    if (resp2.narrativa && resp2.narrativa !== "…" && !resp2.narrativa.startsWith("O Mestre hesita")) {
+      /* mantém as mudanças da primeira resposta se a segunda não trouxer */
+      if (!resp2.mudancas && resp.mudancas) resp2.mudancas = resp.mudancas;
+      resp = resp2;
+    }
+  }
+  return resp;
 }
 
 async function gerarLivro(livroAtual, narrativas) {
@@ -2594,7 +2614,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.0 · mundo vivo</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.1 · mundo sem amarras</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2918,6 +2938,9 @@ function gerarBancoNomes(genero) {
 
 export default function Taverna() {
   const [fase, setFase] = useState("menu"); // menu | mundo | personagem | jogo
+  const faseRef = useRef(fase);
+  const avisoPodaRef = useRef(false);
+  const salvarRef2 = useRef(null);
   const [mundo, setMundo] = useState(null);
   const [nomeCampanha, setNomeCampanha] = useState("");
   const [personagem, setPersonagem] = useState(null);
@@ -3021,6 +3044,14 @@ export default function Taverna() {
      todo ato oficial de facção passa por aqui, nunca pela imaginação da IA. */
   const correioRef = useRef({ enviadas: [], recebidas: [], historico: [], tratados: [], seq: 1 });
   const [correio, setCorreio] = useState(correioRef.current);
+  /* JORNADA (v7.1): se estou em viagem, NÃO estou em cidade nenhuma — e o
+     mestre precisa saber disso em todo turno (fim do "acordar nos aposentos"
+     no meio do oceano). Limpa quando o sistema registra chegada (cidade_atual). */
+  const jornadaRef = useRef(null); // { de, desde, meio } | null
+  const [jornada, setJornada] = useState(null);
+  const localAtualTxt = () => jornadaRef.current
+    ? `EM VIAGEM desde ${jornadaRef.current.de || "a última parada"} (desde o dia ${jornadaRef.current.desde || "?"})${jornadaRef.current.meio ? `, viajando de ${jornadaRef.current.meio}` : ""} — não estou em cidade nenhuma`
+    : (cidadeAtualRef.current ? `em ${cidadeAtualRef.current}` : "a sós, fora de cidade");
   const famaAtual = () => calcularFama(contRef.current, (personagem && personagem.nivel) || 1, dominiosDe(mapaRef.current).length);
   const famaPatamarRef = useRef(0); // fama da última checagem, para detectar saltos de patamar
   const absMin = () => (diaRef.current - 1) * 1440 + minutoRef.current;
@@ -3113,19 +3144,57 @@ export default function Taverna() {
       combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
-      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current,
+      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current,
       historia: historiaRef.current, quests: questsRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
-    saveRef.current = dados;
-    setTemSave(dados);
-    try {
-      localStorage.setItem("taverna_save_v1", JSON.stringify(dados));
+    /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
+       incha o save (narrativas longas). O MUNDO, a ficha e o cânone NUNCA são
+       podados — só o scrollback de mensagens, que tem cópia viva na sessão e
+       memória permanente no cânone/livro. Se a quota estourar, poda mais. */
+    const historicoEnxuto = (nMsg) => ({
+      ...dados,
+      mensagens: mensagensRef.current.slice(-nMsg),
+      historico: Array.isArray(historico) && historico.length > nMsg * 2 ? historico.slice(-nMsg * 2) : historico,
+    });
+    const gravar = (d) => { try { localStorage.setItem("taverna_save_v1", JSON.stringify(d)); return true; } catch { return false; } };
+    let gravou = gravar(historicoEnxuto(250));
+    let podou = false;
+    if (!gravou) {
+      for (const n of [120, 60, 30]) {
+        if (gravar(historicoEnxuto(n))) { gravou = true; podou = true; break; }
+      }
+    }
+    if (gravou) {
+      saveRef.current = dados;
+      setTemSave(dados);
       setStatusSave("salvo");
-    } catch {
+      if (podou && !avisoPodaRef.current) {
+        avisoPodaRef.current = true;
+        pushMsgs([{ autor: "sistema", texto: "💾 O save estava grande demais para o navegador: poddo só o histórico antigo de mensagens (o mundo, a ficha, o cânone e as missões seguem intactos)." }]);
+      }
+    } else {
       setStatusSave("erro");
     }
   }, [nomeCampanha, mundo, personagem, mensagens, historico, sugestoes, rolagem]);
+
+  /* SEGURO CONTRA CRASH (v7.0.2): se a página vai para segundo plano (ou o
+     sistema derruba o Safari por memória), o save acontece ANTES. Assim, mesmo
+     num crash, o prejuízo máximo é o turno em andamento — nunca 90% da saga. */
+  useEffect(() => { salvarRef2.current = salvar; }, [salvar]);
+  useEffect(() => { faseRef.current = fase; }, [fase]);
+  useEffect(() => {
+    const aoEsconder = () => {
+      if (document.visibilityState !== "hidden" && !document.hidden) return;
+      if (faseRef.current === "jogo" && salvarRef2.current) salvarRef2.current();
+    };
+    document.addEventListener("visibilitychange", aoEsconder);
+    window.addEventListener("pagehide", aoEsconder);
+    return () => {
+      document.removeEventListener("visibilitychange", aoEsconder);
+      window.removeEventListener("pagehide", aoEsconder);
+    };
+  }, []);
 
   const aplicarResposta = useCallback((resp, persAtual) => {
     let pers = persAtual;
@@ -3203,7 +3272,19 @@ export default function Taverna() {
         if (fc.doJogador) faccaoJogadorRef.current = fc.nome;
         mudouMapa = true;
       });
-      if (md.cidade_atual) cidadeAtualRef.current = md.cidade_atual;
+      if (md.cidade_atual) {
+        cidadeAtualRef.current = md.cidade_atual;
+        /* CHEGADA: registrar uma cidade encerra a jornada — a partir daqui eu
+           ESTOU nessa cidade (e o descanso pode ser em estalagem/aposentos). */
+        if (jornadaRef.current) {
+          jornadaRef.current = null; setJornada(null);
+          msgs.push(`🧭 Chegada: agora você está em ${md.cidade_atual}.`);
+        }
+      }
+      if (md.jornada_meio && jornadaRef.current) {
+        jornadaRef.current = { ...jornadaRef.current, meio: String(md.jornada_meio).slice(0, 40) };
+        setJornada(jornadaRef.current);
+      }
       if (md.faccao_jogador) faccaoJogadorRef.current = md.faccao_jogador;
       if (mudouMapa) { mapaRef.current = mp; setMapa(mp); }
     }
@@ -3446,15 +3527,21 @@ export default function Taverna() {
     setCarregando(true); setFalha(null); setSugestoes([]);
     const nota = notaRef.current; notaRef.current = "";
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
+    /* RODAPÉ DO SISTEMA (v7.0.2): lembrete curto colado SÓ na mensagem atual
+       (não fica no histórico — custo ~zero) reforçando as regras que o
+       DeepSeek mais esquecia: relógio do sistema, proibição de inventar
+       memórias, obediência ao cânone e narrativa sempre preenchida. */
+    const estR = estacaoDe(diaRef.current);
+    const rodape = `[RODAPÉ DO SISTEMA] Agora: ${dataTxt(diaRef.current)} (dia ${diaRef.current}), ${horaTxt(minutoRef.current)}${ehNoite(minutoRef.current) ? " (noite)" : ""}, ${estR.nome.toLowerCase()}. Local: ${localAtualTxt()}. Inviolável: (1) o tempo SÓ muda por envelope do sistema — nunca narre amanhecer, anoitecer ou horas passando por conta própria; (2) NUNCA invente memórias nem passado compartilhado que não esteja no cânone/registro de pessoas; (3) siga o cânone e o registro à risca; (4) o campo "narrativa" vem SEMPRE preenchido; (5) descanso/sono acontecem ONDE EU ESTOU — jamais me teleporte para aposentos ou cidade sem viagem narrada.`;
     const base = histBase ?? historico;
-    const novoHist = [...base, { role: "user", content: corpo }];
+    const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
     try {
       const resp = await chamarMestre(systemRef.current, novoHist);
       /* MEMÓRIA ENXUTA: no histórico vai SÓ a narrativa (dentro do molde JSON,
          para o modelo manter o formato). Antes ia o JSON completo com mudancas,
          sugestões e campos de combate — ~3× mais tokens por mensagem antiga,
          sem nenhum ganho de memória (os efeitos já vivem no estado do app). */
-      const histFinal = [...novoHist, { role: "assistant", content: JSON.stringify({ narrativa: resp.narrativa || "" }) }];
+      const histFinal = [...base, { role: "user", content: corpo }, { role: "assistant", content: JSON.stringify({ narrativa: resp.narrativa || "" }) }];
       setHistorico(histFinal);
       const pers = aplicarResposta(resp, persAtual);
       /* ALTERNÂNCIA: se esta foi uma AÇÃO DO JOGADOR (não a vez do mundo, não combate,
@@ -3491,6 +3578,7 @@ export default function Taverna() {
     canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); npcTurnoRef.current = 0; definirAcampado(false);
     mapaRef.current = { cidades: [], faccoes: [] }; setMapa(mapaRef.current);
     faccaoJogadorRef.current = ""; cidadeAtualRef.current = "";
+    jornadaRef.current = null; setJornada(null);
     guildaRef.current = { nivel: 1, cofre: 0 }; setGuilda(guildaRef.current);
     contRef.current = { ...CONTADORES_INICIAIS };
     conqRef.current = { desbloqueadas: {}, ordem: [] }; setConquistas(conqRef.current);
@@ -3550,6 +3638,7 @@ export default function Taverna() {
       acordouAbsRef.current = sv.acordouAbs != null ? sv.acordouAbs : ((diaRef.current - 1) * 1440 + minutoRef.current); // saves antigos acordam descansados
       nemesisRef.current = sv.nemesis && typeof sv.nemesis === "object" ? sv.nemesis : null; setNemesis(nemesisRef.current);
       correioRef.current = garantirCorreio(sv.correio); setCorreio(correioRef.current);
+      jornadaRef.current = sv.jornada && typeof sv.jornada === "object" ? sv.jornada : null; setJornada(jornadaRef.current);
       famaPatamarRef.current = sv.famaPatamar || 0;
       reinoRef.current = garantirReino(sv.reino && typeof sv.reino === "object" ? sv.reino : {}, mapaRef.current) || {}; setReino(reinoRef.current);
       /* BLINDAGEM v6.5: pessoas de saves antigos sem data de encontro ganham
@@ -4442,8 +4531,11 @@ export default function Taverna() {
                  : local.tipo === "hostil" ? "⚠ Você se esconde em território hostil"
                  : local.tipo === "estalagem" ? "🛏 Você aluga um quarto na estalagem"
                  : "⛺ Você monta acampamento";
-    pushMsgs([{ autor: "sistema", texto: `${rotulo}. O tempo pausa — converse com o grupo à vontade. Escolha um descanso para retomar a jornada.` }]);
-    enviar(`[ACAMPAMENTO em ${local.texto}] Montei acampamento/descanso em: ${local.texto}. A partir de agora é uma pausa segura: NÃO faça o mundo avançar, NÃO gere eventos externos nem passagem de tempo. Conduza conversas — companheiros puxam papo, revelam histórias. Se for a sede da guilda ou casa da facção, reflita esse conforto/autoridade na cena. Descreva brevemente o local e deixe aberto para conversa.`, personagem);
+    const emViagem = !!jornadaRef.current;
+    pushMsgs([{ autor: "sistema", texto: `${emViagem ? "⛺ Você faz uma parada de descanso em plena viagem" : rotulo}. O tempo pausa — converse com o grupo à vontade. Escolha um descanso para retomar a jornada.` }]);
+    enviar(`[ACAMPAMENTO${emViagem ? " EM VIAGEM" : ` em ${local.texto}`}] ${emViagem
+      ? `Parei para descansar NO MEIO DA VIAGEM — local atual: ${localAtualTxt()}. O descanso acontece aqui mesmo: no acampamento à beira da estrada, na cabine do navio, no vagão da caravana — conforme o meio em que viajo. É TERMINANTEMENTE PROIBIDO me colocar em estalagem, aposentos ou cidade: eu NÃO cheguei a lugar nenhum ainda.`
+      : `Montei acampamento/descanso em: ${local.texto}.`} A partir de agora é uma pausa segura: NÃO faça o mundo avançar, NÃO gere eventos externos nem passagem de tempo. Conduza conversas — companheiros puxam papo, revelam histórias. ${emViagem ? "Reflita o descanso itinerante na cena (fogueira, balanço do mar, turnos de vigia)." : "Se for a sede da guilda ou casa da facção, reflita esse conforto/autoridade na cena."} Descreva brevemente o local e deixe aberto para conversa.`, personagem);
   };
 
   const sairDoAcampamento = (tipo) => {
@@ -4487,7 +4579,10 @@ export default function Taverna() {
     const climaNovo = tipo === "longo" ? talvezMudarClima(0.6) : null;
     const climaMsg = climaNovo ? `\n[CLIMA] O tempo virou durante a noite: agora está ${climaNovo.rotulo} — ${climaNovo.nota}.` : "";
     const dur = tipo === "longo" ? "uma noite inteira" : "cerca de uma hora";
-    enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${climaMsg}${reinoMsg}${sonhoMsg}`, pers);
+    const localMsg = jornadaRef.current
+      ? `\n[ONDE ACORDO] Eu ainda estou EM VIAGEM (${localAtualTxt()}) — acordo no mesmo lugar em que dormi (acampamento na estrada, cabine do navio, etc.). A viagem CONTINUA de onde parou: proibido me colocar em cidade/aposentos; o destino ainda está adiante.`
+      : "";
+    enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${localMsg}${climaMsg}${reinoMsg}${sonhoMsg}`, pers);
   };
 
   /* Escolher/trocar caminho (classe). Regras:
@@ -4690,11 +4785,18 @@ export default function Taverna() {
     if (enc.tipo === "perigo") bumpCont("perigosEstrada");
     checarConquistas();
     pushMsgs([{ autor: "jogador", texto: `🧭 Sigo viagem pela estrada. ${c.icone} ${c.rotulo}` }]);
+    /* JORNADA: partir marca que saímos da cidade — até o sistema registrar
+       chegada, eu estou NA ESTRADA (ou no mar), não em lugar nenhum. */
+    if (!jornadaRef.current) {
+      jornadaRef.current = { de: cidadeAtualRef.current || "a última parada", desde: diaRef.current, meio: "" };
+      setJornada(jornadaRef.current);
+    }
     const extraTempo = avancarMinutos(MINUTOS_VIAGEM); // estrada come horas
     enviar(`[VIAGEM — tudo rolado pelas tabelas do app; você só NARRA, não invente outro resultado]
+LOCAL ATUAL: ${localAtualTxt()}.
 CLIMA AGORA: ${c.rotulo} — ${c.nota}.
 ENCONTRO DO TRECHO (${enc.tipo}): ${enc.detalhe}
-Descreva o trecho da estrada sob esse clima e desenvolva o encontro acima, costurando com a cena atual${cidadeAtualRef.current ? ` (saímos de ${cidadeAtualRef.current})` : ""}. Se eu estiver a caminho de algum destino, aproxime-me dele. Termine me convidando a agir.${extraTempo}`, personagem);
+Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a cena atual. Lembre-se: estou EM VIAGEM — a cena acontece no caminho${jornadaRef.current.meio ? ` (seguimos de ${jornadaRef.current.meio})` : ""}, não em cidade. Se o meio de viagem mudar, registre "jornada_meio". Se chegarmos de fato a um destino, registre "cidade_atual". Se eu estiver a caminho de algum destino, aproxime-me dele. Termine me convidando a agir.${extraTempo}`, personagem);
   };
 
   /* DIPLOMACIA: propostas a potências vão para a ficção; o Mestre decide a
@@ -4939,7 +5041,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
               <Retrato semente={sementeDe(personagem)} tamanho={32} anel={T.amber} estado={estadoDe(personagem.vida, personagem.vidaMax)} />
             </button>
           )}
-          {fase === "jogo" && statusSave && <span className="tv-mono text-[10px] uppercase tracking-wider" style={{ color: statusSave === "erro" ? T.danger : T.inkDim }}>{statusSave === "salvando" ? "salvando…" : "✓ salvo"}</span>}
+          {fase === "jogo" && statusSave && <span className="tv-mono text-[10px] uppercase tracking-wider" style={{ color: statusSave === "erro" ? T.danger : T.inkDim }}>{statusSave === "salvando" ? "salvando…" : statusSave === "erro" ? "⚠ FALHA AO SALVAR" : "✓ salvo"}</span>}
           {fase === "jogo" && !acampado && <button onClick={acampar} disabled={bloqueado} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Montar acampamento"><span style={{ color: T.amberSoft, fontSize: 15 }}>⛺</span></button>}
           {fase === "jogo" && <button onClick={() => setMostrarRolagens((v) => !v)} className="rounded-lg p-1.5" style={{ border: `1px solid ${mostrarRolagens ? T.amber : T.line}` }} title={mostrarRolagens ? "Rolagens de combate: visíveis" : "Rolagens de combate: ocultas"}><span style={{ color: mostrarRolagens ? T.amberSoft : T.inkDim, fontSize: 13 }}>🎲</span></button>}
           {fase === "jogo" && <button onClick={gerarCronica} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Gerar crônica"><span style={{ color: T.amberSoft, fontSize: 15 }}>📜</span></button>}
