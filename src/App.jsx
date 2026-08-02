@@ -2658,7 +2658,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.3.2 · voz do mestre</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.3.3 · fiscal de missões</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -3578,6 +3578,69 @@ export default function Taverna() {
     return pers;
   }, [pushMsgs]);
 
+  /* FISCAL DE MISSÕES (v7.3.2): o Mestre às vezes esquece de mandar
+     "quest_atualizar" quando a missão se encerra na ficção — a criação ia bem,
+     mas o andamento e a conclusão morriam. Agora, depois de cada turno, um
+     juiz BARATO (modelo "leve", temperatura baixa) lê só as missões ativas +
+     a narrativa do turno e o SISTEMA decreta o que terminou. Conservador de
+     propósito: só conclui com cumprimento claro; listas vazias são comuns. */
+  const fiscalizarQuests = async (pers, narrativa) => {
+    const ativas = questsRef.current.filter((q) => q.status === "ativa");
+    if (!ativas.length || !narrativa || narrativa.length < 60) return;
+    try {
+      const sys = [
+        "Você é o FISCAL DE MISSÕES de um RPG. Você NÃO narra: apenas julga o destino das missões ativas com base na narrativa do turno.",
+        "Responda APENAS em JSON: {\"concluidas\":[\"titulo exato\"],\"falhadas\":[\"titulo exato\"],\"progresso\":[{\"titulo\":\"...\",\"nota\":\"resumo curto do avanço\"}]}",
+        "REGRAS: (1) só marque \"concluida\" se o objetivo foi CUMPRIDO de fato e sem dúvida na narrativa deste turno (ou em turnos recentes descritos nela); (2) \"falhada\" só se ficou impossível ou foi explicitamente perdida; (3) avanço parcial real vira \"progresso\" com nota curta; (4) na dúvida, NÃO marque nada — listas vazias são uma resposta válida e comum; (5) copie os títulos EXATAMENTE como listados.",
+      ].join("\n");
+      const lista = ativas.map((q) => `- "${q.titulo}" (${q.tipo}) — objetivo: ${q.objetivo || q.descricao || "—"}`).join("\n");
+      const user = `MISSÕES ATIVAS:\n${lista}\n\nNARRATIVA DO TURNO:\n${narrativa}`;
+      const txt = await chamarModelo(sys, [{ role: "user", content: user }], 350, "json", "leve");
+      const r = parseObjetoTolerante(txt);
+      if (!r) return;
+      const casar = (t) => {
+        const alvo = String(t || "").toLowerCase();
+        if (!alvo) return null;
+        return ativas.find((q) => q.titulo.toLowerCase() === alvo)
+          || (alvo.length > 8 ? ativas.find((q) => q.titulo.toLowerCase().includes(alvo) || alvo.includes(q.titulo.toLowerCase())) : null);
+      };
+      const msgs = [];
+      let p = pers;
+      let recompensa = null;
+      [].concat(r.concluidas || []).forEach((t) => {
+        const q = casar(t); if (!q) return;
+        questsRef.current = questsRef.current.map((x) => x.titulo === q.titulo ? { ...x, status: "concluida" } : x);
+        msgs.push(`✓ Missão concluída: ${q.titulo} (reconhecida pelo sistema)`);
+        if (q.contrato && !recompensa) recompensa = q.contrato;
+      });
+      [].concat(r.falhadas || []).forEach((t) => {
+        const q = casar(t); if (!q) return;
+        questsRef.current = questsRef.current.map((x) => x.titulo === q.titulo ? { ...x, status: "falhada" } : x);
+        msgs.push(`✗ Missão falhou: ${q.titulo} (reconhecida pelo sistema)`);
+      });
+      [].concat(r.progresso || []).forEach((pr) => {
+        if (!pr || !pr.titulo || !pr.nota) return;
+        const q = casar(pr.titulo); if (!q) return;
+        questsRef.current = questsRef.current.map((x) => x.titulo === q.titulo ? { ...x, nota: String(pr.nota).slice(0, 120) } : x);
+        msgs.push(`📜 ${q.titulo}: ${pr.nota}`);
+      });
+      if (recompensa) {
+        /* CONTRATO: mesmo pagamento por CÓDIGO do fluxo normal — nunca dobrado,
+           porque o Mestre é avisado na próxima mensagem via nota do sistema */
+        bumpCont("contratosConcluidos");
+        p = aplicarNivel({ ...p, moedas: (p.moedas || 0) + recompensa.moedas, xp: (p.xp || 0) + recompensa.xp });
+        msgs.push(`📋 Contrato pago pelo sistema: +${recompensa.moedas} moedas · +${recompensa.xp} XP`);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONTRATO PAGO pelo sistema: +${recompensa.moedas} moedas e +${recompensa.xp} XP — NÃO envie moedas nem xp por esse serviço, seria dobrado. A missão já consta como concluída no diário, não a conclua de novo.]`;
+      }
+      if (msgs.length) {
+        setQuests([...questsRef.current]);
+        setPersonagem(p);
+        pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
+        salvar({ personagem: p });
+      }
+    } catch { /* o fiscal NUNCA atrapalha o jogo — falhou, vida segue */ }
+  };
+
   const enviar = useCallback(async (conteudo, persAtual, histBase) => {
     setCarregando(true); setFalha(null); setSugestoes([]);
     const nota = notaRef.current; notaRef.current = "";
@@ -3617,6 +3680,8 @@ export default function Taverna() {
         });
       }
       setTimeout(() => salvar({ personagem: pers, historico: histFinal, rolagem: resp.rolagem || null, sugestoes: resp.rolagem ? [] : (resp.sugestoes || []) }), 0);
+      /* FISCAL DE MISSÕES: corre em paralelo, sem travar o próximo turno */
+      fiscalizarQuests(pers, resp.narrativa);
     } catch (e) {
       notaRef.current = nota;
       setFalha({ conteudo, persAtual, histBase: base, motivo: (e && e.message) ? String(e.message) : "erro desconhecido" });
