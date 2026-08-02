@@ -121,7 +121,7 @@ export function resumoDoAtaque(r) {
    Cada inimigo vivo age: escolhe um alvo (jogador ou companheiro)
    e ataca. O app resolve toda a matemática; devolve os resultados
    para o app aplicar o dano e o Mestre narrar as DECISÕES. */
-export function turnoDosInimigos({ inimigos, jogador, grupo = [] }) {
+export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0 }) {
   const vivos = (inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
   const alvosPossiveis = [
     { ref: "jogador", nome: jogador.nome, ent: jogador },
@@ -140,7 +140,8 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [] }) {
     const perfilInim = perfilDeCriatura(inim.nome, inim.desc);
     const r = resolverAtaque({
       atacante: inim.nome, alvo: alvo.ent, ehAtacanteInimigo: true,
-      bonusAtaque: bonusDeAmeaca(inim.ameaca), danoBase: danoDe(inim, true),
+      /* REGRA DO DEGRAU (v7.4): divindades ganham +2/degrau sobre o alvo */
+      bonusAtaque: bonusDeAmeaca(inim.ameaca) + 2 * ((inim.gd || 0) - (gdJogador || 0)), danoBase: danoDe(inim, true),
       condAtacante: inim.condicoes || [], condAlvo: alvo.ent.condicoes || [],
       tipoDano: perfilInim.ataque, resistAlvo: resistenciasEquipadas(alvo.ent),
     });
