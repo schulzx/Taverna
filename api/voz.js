@@ -25,11 +25,11 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         text: texto,
         /* VOZ pt-BR (v7.3.2): sem reference_id a Fish cai numa voz de
-           Portugal. Padrão: "narrador" — voz masculina brasileira feita para
-           narração/storytelling. Para trocar de voz SEM deploy: copie o ID de
-           qualquer voz brasileira em fish.audio (página da voz) e crie a
-           variável FISH_VOZ_ID na Vercel. */
-        reference_id: process.env.FISH_VOZ_ID || "e8cad1cf86da456f9170ea8e3176646a",
+           Portugal. Padrão: voz escolhida a dedo pelo autor do app
+           (fish.audio/m/f3f59da2d3164c05846421a20d087b62). Para trocar SEM
+           deploy: copie o ID de qualquer voz em fish.audio (página da voz)
+           e crie a variável FISH_VOZ_ID na Vercel. */
+        reference_id: process.env.FISH_VOZ_ID || "f3f59da2d3164c05846421a20d087b62",
         format: "mp3",
         mp3_bitrate: 128,
         normalize: true,
