@@ -4,7 +4,7 @@ import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilid
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar } from "./combate.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./historia.js";
-import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste } from "./bestiario.js";
+import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste, dificuldadePorPerfil } from "./bestiario.js";
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
 import { rolarClima, rolarEncontro, CLIMAS } from "./encontros.js";
@@ -20,7 +20,7 @@ import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeD
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, gerarNemesis, LIMIARES_NEMESIS, ACOES_NEMESIS, rumorDoDia } from "./fama.js";
 import { gerarCronica } from "./cronica.js";
-import { ECONOMIA_PROMPT } from "./economia.js";
+import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT } from "./divindades.js";
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, processarDiaCorreio } from "./correio.js";
@@ -158,6 +158,7 @@ ${questsInfo || "Nenhuma missão registrada."}
 - DIVERSIDADE VIVA (o mundo é plural): como PADRÃO, povoe o mundo com homens E mulheres em igual medida e raças variadas conforme o cenário (humanos, elfos, anões, halflings, orcs, gnomos, tieflings — ou equivalentes). O mundo geral NUNCA deve ser só de homens ou só de humanos. NPCs têm vidas próprias: relações, amizades, rivalidades, romances, famílias. Varie gênero, idade, raça e temperamento. Se os últimos NPCs foram homens, incline o próximo para mulher, e vice-versa. EXCEÇÕES COM PROPÓSITO são bem-vindas e enriquecem: um pelotão só de homens numa cultura marcial, uma cidade que despreza certas raças por guerra ou preconceito, um convento só de mulheres — desde que seja uma escolha NARRATIVA consciente daquele lugar/grupo, não o padrão do mundo inteiro. Diversidade é a regra; a homogeneidade é a exceção que conta uma história.
 - FICHA DE CAMINHO: ${personagem.raca ? `${personagem.raca}` : "origem indefinida"}${personagem.classe ? `, ${personagem.classe}` : ""}${personagem.subclasse ? ` (${personagem.subclasse})` : ""}${personagem.profissao ? `, de profissão ${personagem.profissao}` : ""}. Respeite isso na narrativa: um Mago não abre fechaduras como um Ladino; um Ferreiro repara equipamento; a raça/origem colore como o mundo o trata.
 - HABILIDADES SÃO ESCOLHIDAS PELO JOGADOR (não invente): o jogador aprende habilidades de uma árvore fixa da classe dele ao subir de nível. NUNCA envie "adicionar_habilidades" por conta própria — apenas descreva o uso das que ele já tem. Se a ficção pedir um poder novo, sugira que ele o escolherá ao evoluir. (Companheiros e inimigos NÃO seguem essa regra: você pode dar habilidades a eles livremente.)
+- RECARGA DE HABILIDADES (cobrada pelo SISTEMA): habilidades fortes entram em recarga após o uso (1-2 turnos, conforme o custo) — o sistema bloqueia e avisa. Na ficção, trate como fôlego/canalização: se o jogador tentar usar uma habilidade em recarga, o sistema já barrou — descreva o corpo dele ainda se recuperando.
 - PROFISSÃO: use a profissão do herói para abrir soluções e oportunidades (o Alquimista prepara poções em acampamento; o Cartógrafo lê rotas; o Mercador consegue preços). Deixe a profissão importar de verdade.
 - REGISTRE LUGARES: sempre que apresentar uma cidade, vila ou local importante, registre-o no "canone" com "tipo" claro ("cidade", "vila", "capital", "local") — o app coloca no mapa automaticamente. Também pode usar "mapa_cidades" para detalhes de facção/relação.
 - NUNCA CONTRADIGA O CÂNONE: o cânone abaixo é a verdade absoluta e imutável do mundo. Um personagem registrado como mago é mago para sempre — jamais o transforme em outra coisa. Tipo, gênero, papel, nome e relações do que está no cânone NÃO MUDAM. Se você fica em dúvida sobre um fato, CONSULTE o cânone e siga-o à risca; na ausência de informação, é melhor ser vago do que inventar algo que o contradiga. Contradizer o cânone quebra a imersão e é o pior erro que você pode cometer.
@@ -221,6 +222,7 @@ ${TABELA_TESTES}
 - Use "combate_atualizar" para mudar a ameaça de um inimigo (ex.: "enfurecido", "cambaleando", "em fuga") ou revelar um novo inimigo que chega.
 - Quando o combate acabar (todos derrotados, fuga, rendição, trégua), feche com "combate_encerrar": true e dê os espólios/XP na mesma resposta.
 - Inimigos também revidam: use "vida" (dano ao jogador) e "grupo_vida" (dano aos companheiros) conforme a ficção. Deixe claro na narrativa quem ataca quem.
+- DANO AMBIENTAL (quedas, fogo, veneno, armadilhas, magia de área fora de combate): NÃO invente números — envie "dano_ambiental": "leve"|"moderado"|"grave" e o SISTEMA calcula o valor proporcional ao PV do herói. "vida" segue para cura e dano de golpes diretos.
 - REGRAS VALEM PARA TODOS (estilo Baldur's Gate 3): inimigos e companheiros também rolam o dado. Ao resolver um ataque de NPC (inimigo ou aliado) contra alguém, gere o resultado e REGISTRE em "rolagens_combate" (lista) para o app exibir: cada item tem {"quem":"Lobo","alvo":"você","d20":N,"mod":X,"total":N+X,"dificuldade":D,"resultado":"acerta"|"erra"|"crítico"|"desastre"}. Escolha o d20 (1-20) e o mod pela competência (fraco +1/+2, competente +3/+4, elite +5/+6); dificuldade de acertar: alvo comum 12, ágil 15, muito ágil 18. 20 natural = crítico (dano dobrado); 1 natural = desastre (0 dano + tropeço). Aplique o dano coerente (0 se errou) via combate_inimigo_vida/vida/grupo_vida NO MESMO turno. NPCs também podem ter vantagem/desvantagem: se favorecidos, use o maior de 2 rolagens; se atrapalhados, o menor — e mencione na narrativa. Varie: nem todo ataque acerta.
 - ECONOMIA DE TURNO DO JOGADOR (o sistema controla — você narra): a cada rodada o jogador tem 2 movimentos (ação + ação extra). O HUD mostra o que resta e o sistema avisa "[TURNO AINDA MEU]" ou "nova rodada". Inimigos NUNCA agem antes da vez deles (o sistema rola a revide e te entrega o resumo). Se o inimigo é uma divindade, registre o GD dela no "combate_iniciar" (campo "gd", 0-4 — use o GD das divindades do panteão quando forem elas) — o sistema aplica a Regra do Degrau e a presença divina por código.
 
@@ -291,12 +293,12 @@ Responda com UM ÚNICO objeto JSON válido, começando com { e terminando com }.
   "mudancas": null,
   "sugestoes": ["opção 1","opção 2","opção 3"]
 }
-Quando um teste for necessário, "rolagem" é um objeto: {"dado":"d20","atributo":"Destreza","motivo":"escalar o muro","dificuldade":13,"vantagem":false,"desvantagem":false}
+Quando um teste for necessário, "rolagem" é um objeto: {"dado":"d20","atributo":"Destreza","motivo":"escalar o muro","perfil":"digno","vantagem":false,"desvantagem":false}. Use "perfil" ("facil"|"digno"|"dificil"|"formidavel") em vez de número — o SISTEMA calcula a dificuldade exata a partir do modificador do herói (não invente valores; se enviar "dificuldade" numérica, o sistema a recalibra quando estiver fora da janela de dado).
 Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
 {
-  "vida": -3, "mana": 2, "xp": 25, "moedas": -10,
+  "vida": -3, "mana": 2, "xp": 25, "moedas": -10, "dano_ambiental": null,
   "adicionar_itens": ["Corda"], "remover_itens": [],
-  "adicionar_habilidades": [{"nome":"Lâmina de Gelo","custo":3,"duracao":0,"descricao":"..."}],
+  "adicionar_habilidades": [{"nome":"Lâmina de Gelo","custo":3,"duracao":0,"recarga":1,"descricao":"..."}],
   "remover_habilidades": [],
   "efeitos_adicionar": [{"nome":"Mente Afiada","bonus":2,"turnos":3,"aplica":"Intelecto","descricao":"raciocínio acelerado"}],
   "adicionar_equipamento": [{"nome":"Cota de Malha Élfica","tipo":"armadura","raridade":"raro","atributos":{"vigor":2},"poder":"Reduz dano de flechas","descricao":"leve como seda"}],
@@ -2066,7 +2068,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                   {personagem.condicoes.map((c, i) => (
                     <div key={i} className="rounded-lg px-3 py-2 flex items-center justify-between" style={{ background: T.panelSoft, border: `1px solid ${c.tipo === "bom" ? T.ok : T.danger}` }}>
                       <span className="tv-body text-sm" style={{ color: T.ink }}>{c.tipo === "bom" ? "✦" : "⚠"} {c.nome} <span className="tv-body text-xs italic" style={{ color: T.inkDim }}>{c.efeito}</span></span>
-                      <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}>{c.turnos}t</span>
+                      <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}>{c.turnos != null && !isNaN(Number(c.turnos)) ? `${c.turnos}t` : "∞"}</span>
                     </div>
                   ))}
                 </div>
@@ -2565,6 +2567,13 @@ function PainelCombate({ combate, onEncerrarTurno }) {
           </div>
         ))}
       </div>
+      {(combate.log || []).length > 0 && (
+        <div className="mt-2 pt-2 space-y-0.5" style={{ borderTop: `1px solid ${T.line}` }}>
+          {combate.log.map((l, i) => (
+            <div key={i} className="tv-mono text-[10px]" style={{ color: T.inkDim, opacity: 0.5 + (0.5 * (i + 1)) / combate.log.length }}>🎲 {l}</div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -2592,11 +2601,20 @@ function PainelHabilidades({ personagem, selecionar, fechar }) {
           {lista.map((h, i) => {
             const custo = Math.max(0, Number(h.custo) || 0);
             const semMana = personagem.mana < custo;
+            const rec = (personagem.habRecarga || {})[(h.nome || "").toLowerCase()] || 0;
+            const travada = semMana || rec > 0;
             return (
-              <button key={i} onClick={() => !semMana && selecionar(h)} disabled={semMana} className="text-left rounded-xl p-3 transition-all"
-                style={{ background: T.panelSoft, border: `1px solid ${semMana ? T.line : T.violet}`, opacity: semMana ? 0.45 : 1, cursor: semMana ? "not-allowed" : "pointer" }}>
-                <div className="flex items-baseline justify-between gap-2"><span className="tv-display text-lg leading-none" style={{ color: T.ink }}>{h.nome}</span><span className="tv-mono text-[10px] shrink-0" style={{ color: semMana ? T.danger : T.violetSoft }}>{custo} PM</span></div>
+              <button key={i} onClick={() => !travada && selecionar(h)} disabled={travada} className="text-left rounded-xl p-3 transition-all"
+                style={{ background: T.panelSoft, border: `1px solid ${travada ? T.line : T.violet}`, opacity: travada ? 0.45 : 1, cursor: travada ? "not-allowed" : "pointer" }}>
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="tv-display text-lg leading-none" style={{ color: T.ink }}>{h.nome}</span>
+                  <span className="flex items-center gap-1.5 shrink-0">
+                    {rec > 0 && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>⏳ {rec}t</span>}
+                    <span className="tv-mono text-[10px]" style={{ color: semMana ? T.danger : T.violetSoft }}>{custo} PM</span>
+                  </span>
+                </div>
                 <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{h.descricao}</div>
+                {(() => { const r = h.recarga != null ? Math.max(0, Number(h.recarga) || 0) : recargaPadrao(custo); return r > 0 && rec === 0 ? <div className="tv-mono text-[9px] mt-1" style={{ color: T.inkDim }}>recarga: {r}t após o uso</div> : null; })()}
               </button>
             );
           })}
@@ -2788,7 +2806,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.4.1 · recalibração divina</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.4.3 · ferro e fôlego</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2852,15 +2870,56 @@ function aplicarDescanso(pers, tipo, msgs) {
   return { ...pers, vida: novaVida, mana: novaMana, condicoes, grupo };
 }
 
+/* RECARGA PADRÃO (v7.4.3): habilidade forte precisa de fôlego — o sistema
+   deriva a recarga do custo quando o Mestre não define (2t para 6+ PM,
+   1t para 3+ PM, livre abaixo disso). */
+function recargaPadrao(custo) { return custo >= 6 ? 2 : custo >= 3 ? 1 : 0; }
+
 function aplicarMudancas(pers, m, msgs) {
-  let vida = Math.max(0, Math.min(pers.vidaMax, pers.vida + (m.vida || 0)));
+  /* DANO AMBIENTAL PADRONIZADO (v7.4.2): queda, fogo, veneno, armadilha —
+     o Mestre envia só a SEVERIDADE e o código calcula pelo PV máximo do
+     herói. Acaba o "dragão cospe 8 de dano" no nível 20. */
+  let danoAmb = 0;
+  if (m.dano_ambiental) {
+    const SEV = { leve: 0.08, moderado: 0.18, grave: 0.3 };
+    const sev = SEV[String(m.dano_ambiental).toLowerCase()];
+    if (sev) danoAmb = Math.max(1, Math.round((pers.vidaMax || 10) * sev));
+  }
+  let vida = Math.max(0, Math.min(pers.vidaMax, pers.vida + (m.vida || 0) - danoAmb));
   let mana = Math.max(0, Math.min(pers.manaMax, pers.mana + (m.mana || 0)));
   let moedas = Math.max(0, pers.moedas + (m.moedas || 0));
   const nomeItem = (x) => (typeof x === "string" ? x : (x && x.nome) || "");
   let inv = [...pers.inventario, ...(m.adicionar_itens || [])];
+  /* COMÉRCIO AFERIDO PELO SISTEMA (v7.4.3): o Mestre negocia na ficção, mas
+     o número é do código — venda rende METADE do valor; compra fica presa na
+     faixa justa (0,5× a 2× a estimativa pela tabela). */
+  let moedasAferidas = false;
+  if (m.moedas > 0 && (m.remover_itens || []).length) {
+    const vendidos = (m.remover_itens || [])
+      .map((r) => pers.inventario.find((i) => nomeItem(i).toLowerCase() === String(r).toLowerCase()))
+      .filter(Boolean);
+    if (vendidos.length) {
+      const justo = Math.max(1, Math.round(vendidos.reduce((s, i) => s + valorDeItem(i), 0) * PRECO_VENDA));
+      if (m.moedas !== justo) { moedas = Math.max(0, pers.moedas + justo); msgs.push(`⚖ Venda aferida pelo sistema: ◉ ${justo} (metade do valor de tabela — o preço falado era ◉ ${m.moedas})`); moedasAferidas = true; }
+    }
+  }
+  if (m.moedas < 0) {
+    const comprados = [...(m.adicionar_itens || []), ...(m.adicionar_equipamento || [])];
+    if (comprados.length) {
+      const estima = comprados.reduce((s, i) => s + valorDeItem(i), 0);
+      const min = Math.max(1, Math.round(estima * FAIXA_COMPRA[0])), max = Math.max(2, Math.round(estima * FAIXA_COMPRA[1]));
+      const cobrado = -m.moedas;
+      if (cobrado < min || cobrado > max) {
+        const justo = Math.min(max, Math.max(min, cobrado));
+        moedas = Math.max(0, pers.moedas - justo);
+        msgs.push(`⚖ Preço aferido pelo sistema: ◉ ${justo} (faixa justa ◉ ${min}–${max} pela tabela — o cobrado era ◉ ${cobrado})`);
+        moedasAferidas = true;
+      }
+    }
+  }
   inv = inv.filter((i) => !(m.remover_itens || []).some((r) => nomeItem(i).toLowerCase() === String(r).toLowerCase()));
   let habs = [...pers.habilidades];
-  (m.adicionar_habilidades || []).forEach((h) => { if (h?.nome && !habs.some((x) => x.nome.toLowerCase() === h.nome.toLowerCase())) habs.push({ nome: h.nome, custo: Math.max(0, h.custo || 1), descricao: h.descricao || "" }); });
+  (m.adicionar_habilidades || []).forEach((h) => { if (h?.nome && !habs.some((x) => x.nome.toLowerCase() === h.nome.toLowerCase())) habs.push({ nome: h.nome, custo: Math.max(0, h.custo || 1), descricao: h.descricao || "", recarga: h.recarga != null ? Math.max(0, Number(h.recarga) || 0) : recargaPadrao(Math.max(0, h.custo || 1)) }); });
   habs = habs.filter((h) => !(m.remover_habilidades || []).some((r) => h.nome.toLowerCase() === r.toLowerCase()));
   let grupo = [...pers.grupo];
   (m.grupo_adicionar || []).forEach((g) => {
@@ -2960,9 +3019,10 @@ function aplicarMudancas(pers, m, msgs) {
     }
   }
 
+  if (danoAmb) msgs.push(`💥 Dano ambiental (${String(m.dano_ambiental).toLowerCase()}): −${danoAmb} PV (calculado pelo sistema)`);
   if (m.vida) msgs.push(m.vida < 0 ? `Você perdeu ${-m.vida} PV.` : `Você recuperou ${m.vida} PV.`);
   if (m.mana) msgs.push(m.mana < 0 ? `Você gastou ${-m.mana} PM.` : `Você recuperou ${m.mana} PM.`);
-  if (m.moedas) msgs.push(m.moedas > 0 ? `◉ +${m.moedas} moedas` : `◉ −${-m.moedas} moedas`);
+  if (m.moedas && !moedasAferidas) msgs.push(m.moedas > 0 ? `◉ +${m.moedas} moedas` : `◉ −${-m.moedas} moedas`);
   if (m.xp) msgs.push(`✧ +${m.xp} XP`);
   if (novo.nivel > pers.nivel) msgs.push(`✦ NÍVEL ${novo.nivel} ALCANÇADO!`);
   (m.adicionar_itens || []).forEach((i) => msgs.push(`Item obtido: ${nomeItem(i)}`));
@@ -3036,7 +3096,15 @@ function processarCombate(combateAtual, m, msgs) {
 
   (m.combate_remover || []).forEach((nome) => { inimigos = inimigos.filter((e) => e.nome.toLowerCase() !== (nome || "").toLowerCase()); });
 
-  if (m.combate_encerrar) { if (inimigos.length) msgs.push("⚔ O combate termina."); return null; }
+  if (m.combate_encerrar) {
+    /* ESPÓLIOS POR CÓDIGO TAMBÉM NO ENCERRAR MANUAL (v7.4.2): o Mestre fechava
+       o combate e o XP dos abatidos dependia da memória dele. Agora o sistema
+       paga pelos derrotados em qualquer encerramento (fuga/rendição inclusa). */
+    const caidos = inimigos.filter((e) => e.derrotado || e.vida <= 0);
+    if (caidos.length) { m.__vitoriaAuto = true; m.__inimigosFinais = caidos; }
+    if (inimigos.length) msgs.push("⚔ O combate termina.");
+    return null;
+  }
   if (inimigos.length === 0) return combateAtual; // nada mudou de combate
   /* ENCERRAMENTO AUTOMÁTICO: se todos estão derrotados, o app fecha o combate
      na hora — sem esperar o Mestre. Marca uma flag para pedir os espólios. */
@@ -3063,7 +3131,8 @@ function migrarPersonagem(p) {
     ...p,
     atributos: { ...atributosBase, ...(p.atributos || {}) },
     inventario: Array.isArray(p.inventario) ? p.inventario : [],
-    habilidades: Array.isArray(p.habilidades) ? p.habilidades.filter((h) => h && h.nome).map((h) => ({ nome: h.nome, custo: Math.max(0, Number(h.custo) || 0), descricao: h.descricao || "", duracao: h.duracao || 0 })) : [],
+    habilidades: Array.isArray(p.habilidades) ? p.habilidades.filter((h) => h && h.nome).map((h) => ({ nome: h.nome, custo: Math.max(0, Number(h.custo) || 0), descricao: h.descricao || "", duracao: h.duracao || 0, recarga: h.recarga != null ? Math.max(0, Number(h.recarga) || 0) : recargaPadrao(Math.max(0, Number(h.custo) || 0)) })) : [],
+    habRecarga: p.habRecarga && typeof p.habRecarga === "object" ? p.habRecarga : {},
     grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, xp: g.xp || 0, nivel: g.nivel || 1, inventario: Array.isArray(g.inventario) ? g.inventario : [], equipamento: Array.isArray(g.equipamento) ? g.equipamento : [], equipados: g.equipados && typeof g.equipados === "object" ? g.equipados : {}, semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}`, vinculo: g.vinculo ?? VINCULO_INICIAL, marcos: Array.isArray(g.marcos) ? g.marcos : [] })) : [],
     antecedente: p.antecedente || "", antecedenteGancho: p.antecedenteGancho || "",
     essencia: p.essencia || 0,
@@ -3403,11 +3472,20 @@ export default function Taverna() {
     if ((pers.condicoes || []).length) {
       const vivas = [];
       pers.condicoes.forEach((c) => {
-        const t = c.turnos - 1;
+        /* sem "turnos" = condição persistente (ex.: presença divina, cicatriz-
+           like) — não ticka; antes virava NaN e ficava eterna E bugada */
+        if (c.turnos == null || isNaN(Number(c.turnos))) { vivas.push({ ...c, turnos: null }); return; }
+        const t = Number(c.turnos) - 1;
         if (t <= 0) msgs.push(`✓ ${c.nome} passou`);
         else vivas.push({ ...c, turnos: t });
       });
       pers = { ...pers, condicoes: vivas };
+    }
+    /* tick das recargas de habilidade (v7.4.3): 1 turno por resposta */
+    if (pers.habRecarga && Object.keys(pers.habRecarga).length) {
+      const rec = {};
+      Object.entries(pers.habRecarga).forEach(([k, t]) => { const nt = (Number(t) || 0) - 1; if (nt > 0) rec[k] = nt; });
+      pers = { ...pers, habRecarga: rec };
     }
     if (resp.mudancas) pers = aplicarMudancas(pers, resp.mudancas, msgs);
     /* CONDIÇÕES: adiciona/remove nos alvos (jogador ou NPCs do grupo/combate) */
@@ -3730,9 +3808,18 @@ export default function Taverna() {
     /* decisor de testes por código: se a dificuldade é trivial para o herói
        (modificador torna a falha impossível), nem mostra o dado — sucesso direto */
     let rolagemFinal = resp.rolagem || null;
-    if (rolagemFinal && rolagemFinal.dificuldade != null) {
+    if (rolagemFinal && (rolagemFinal.dificuldade != null || rolagemFinal.perfil)) {
       const attrT = ATRIBUTOS.find((x) => x.nome.toLowerCase() === (rolagemFinal.atributo || "").toLowerCase());
       const modT = attrT ? atributoEfetivo(pers, attrT.id) : 0;
+      /* DIFICULDADE POR PERFIL (v7.4.2): o Mestre manda o perfil ("digno",
+         "dificil", "formidavel") e o CÓDIGO calcula o número a partir do
+         modificador do herói — desafio digno rola dado em qualquer nível */
+      const dcPerfil = dificuldadePorPerfil(modT, rolagemFinal.perfil);
+      if (dcPerfil != null) rolagemFinal = { ...rolagemFinal, dificuldade: dcPerfil };
+      /* janela rolável: dificuldade impossível (falha mesmo com 20) é
+         recalibrada para o teto formidável — teste impossível o Mestre nega,
+         não testa */
+      if (rolagemFinal.dificuldade != null && rolagemFinal.dificuldade > modT + 19) rolagemFinal = { ...rolagemFinal, dificuldade: modT + 14 };
       if (avaliarTeste(modT, rolagemFinal.dificuldade) === "auto") rolagemFinal = { ...rolagemFinal, auto: true };
     }
     setSugestoes(rolagemFinal ? [] : (resp.sugestoes || []));
@@ -3772,148 +3859,128 @@ export default function Taverna() {
     return pers;
   }, [pushMsgs]);
 
-  /* FISCAL DE MISSÕES (v7.3.2): o Mestre às vezes esquece de mandar
-     "quest_atualizar" quando a missão se encerra na ficção — a criação ia bem,
-     mas o andamento e a conclusão morriam. Agora, depois de cada turno, um
-     juiz BARATO (modelo "leve", temperatura baixa) lê só as missões ativas +
-     a narrativa do turno e o SISTEMA decreta o que terminou. Conservador de
-     propósito: só conclui com cumprimento claro; listas vazias são comuns. */
-  const fiscalizarQuests = async (pers, narrativa) => {
+  /* CRONISTA DO TURNO (v7.4.2): fusão do Fiscal de Missões com o Escriba —
+     UMA única chamada leve por turno (antes eram duas: metade do custo e da
+     latência) julga o turno inteiro de uma vez e devolve um JSON por seções.
+     O CÓDIGO aplica cada seção ISOLADAMENTE: se uma vier quebrada, as outras
+     ainda valem. Conservador de propósito: seções vazias são comuns. */
+  const cronistaDoTurno = async (pers, narrativa) => {
+    if (!narrativa || narrativa.length < 60) return;
     const ativas = questsRef.current.filter((q) => q.status === "ativa");
-    if (!ativas.length || !narrativa || narrativa.length < 60) return;
     try {
       const sys = [
-        "Você é o FISCAL DE MISSÕES de um RPG. Você NÃO narra: apenas julga o destino das missões ativas com base na narrativa do turno.",
-        "Responda APENAS em JSON: {\"concluidas\":[\"titulo exato\"],\"falhadas\":[\"titulo exato\"],\"progresso\":[{\"titulo\":\"...\",\"nota\":\"resumo curto do avanço\"}],\"global_encerrado\":false}",
-        "REGRAS: (1) só marque \"concluida\" se o objetivo foi CUMPRIDO de fato e sem dúvida na narrativa deste turno (ou em turnos recentes descritos nela); (2) \"falhada\" só se ficou impossível ou foi explicitamente perdida; (3) avanço parcial real vira \"progresso\" com nota curta; (4) na dúvida, NÃO marque nada — listas vazias são uma resposta válida e comum; (5) copie os títulos EXATAMENTE como listados; (6) \"global_encerrado\": true SÓ se o EVENTO GLOBAL listado (se houver) foi RESOLVIDO de fato e sem dúvida neste turno — a ameaça central derrotada/desfeita, não apenas um avanço.",
+        "Você é o CRONISTA de um RPG. Você NÃO narra: lê a narrativa do turno e julga, por seções, o que o SISTEMA deve registrar. Responda APENAS em JSON:",
+        "{\"missoes\":{\"concluidas\":[\"titulo exato\"],\"falhadas\":[\"titulo exato\"],\"progresso\":[{\"titulo\":\"...\",\"nota\":\"resumo curto\"}],\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\"}}",
+        "SEÇÃO missoes: (1) \"concluida\" SÓ com objetivo CUMPRIDO de fato e sem dúvida neste turno; (2) \"falhada\" só se impossível ou explicitamente perdida; (3) avanço parcial real vira \"progresso\"; (4) copie os títulos EXATAMENTE; (5) \"global_encerrado\": true SÓ se o EVENTO GLOBAL (se listado) foi RESOLVIDO de fato — a ameaça central derrotada/desfeita, não um avanço.",
+        "SEÇÃO canone: fatos DURÁVEIS — artefatos e objetos relevantes que o herói ganhou/achou/descobriu (com o que o objeto É de fato; saque comum não entra), lugares importantes, promessas, segredos. NÃO reescreva nem contradiga o CÂNONE ATUAL — só crie novo ou acrescente campo novo.",
+        "SEÇÃO pessoas: pessoas COM NOME e papel durável (aliados recorrentes, rivais, contatos) que ainda não estão no ELENCO — figurantes de cena única ficam de fora.",
+        "SEÇÃO fe: SÓ se o turno mostrou o nome do herói ganhando DEVOÇÃO real (preces em seu nome, santuário, conversões, milagre testemunhado) — fieis 10 a 500, pf 1 a 10; na dúvida, 0.",
+        "REGRA GERAL: na dúvida, NÃO marque — {\"missoes\":{\"concluidas\":[],\"falhadas\":[],\"progresso\":[],\"global_encerrado\":false},\"canone\":{},\"pessoas\":[],\"fe\":{\"fieis\":0,\"pf\":0}} é resposta válida e frequente.",
       ].join("\n");
       const lista = ativas.map((q) => `- "${q.titulo}" (${q.tipo}) — objetivo: ${q.objetivo || q.descricao || "—"}`).join("\n");
       const evG = eventosRef.current && eventosRef.current.global;
-      const user = `MISSÕES ATIVAS:\n${lista}\n\nEVENTO GLOBAL ATIVO:\n${evG ? `- "${evG.nome}" — ${(evG.etapas || [])[evG.etapa] || evG.descricao || "—"}` : "(nenhum)"}\n\nNARRATIVA DO TURNO:\n${narrativa}`;
-      const txt = await chamarModelo(sys, [{ role: "user", content: user }], 350, "json", "leve");
-      const r = parseObjetoTolerante(txt);
-      if (!r) return;
-      const casar = (t) => {
-        const alvo = String(t || "").toLowerCase();
-        if (!alvo) return null;
-        return ativas.find((q) => q.titulo.toLowerCase() === alvo)
-          || (alvo.length > 8 ? ativas.find((q) => q.titulo.toLowerCase().includes(alvo) || alvo.includes(q.titulo.toLowerCase())) : null);
-      };
-      const msgs = [];
-      let p = pers;
-      let recompensa = null;
-      [].concat(r.concluidas || []).forEach((t) => {
-        const q = casar(t); if (!q) return;
-        questsRef.current = questsRef.current.map((x) => x.titulo === q.titulo ? { ...x, status: "concluida" } : x);
-        msgs.push(`✓ Missão concluída: ${q.titulo} (reconhecida pelo sistema)`);
-        if (divindadeRef.current && divindadeRef.current.despertar) msgs.push(...ganharFe(q.tipo === "principal" ? 150 : 40, 2, "seu feito corre de boca em boca"));
-        if (q.contrato && !recompensa) recompensa = q.contrato;
-      });
-      [].concat(r.falhadas || []).forEach((t) => {
-        const q = casar(t); if (!q) return;
-        questsRef.current = questsRef.current.map((x) => x.titulo === q.titulo ? { ...x, status: "falhada" } : x);
-        msgs.push(`✗ Missão falhou: ${q.titulo} (reconhecida pelo sistema)`);
-      });
-      [].concat(r.progresso || []).forEach((pr) => {
-        if (!pr || !pr.titulo || !pr.nota) return;
-        const q = casar(pr.titulo); if (!q) return;
-        questsRef.current = questsRef.current.map((x) => x.titulo === q.titulo ? { ...x, nota: String(pr.nota).slice(0, 120) } : x);
-        msgs.push(`📜 ${q.titulo}: ${pr.nota}`);
-      });
-      /* EVENTO GLOBAL fechado POR CÓDIGO (v7.4.1): o Mestre esquecia de mandar
-         "evento_global_encerrar" e o arco de fundo nunca terminava */
-      if (r.global_encerrado === true && eventosRef.current && eventosRef.current.global) {
-        const g = eventosRef.current.global;
-        eventosRef.current = { ...eventosRef.current, global: null, semGlobalDesde: diaRef.current };
-        setEventos(eventosRef.current);
-        msgs.push(`🌍 ${g.nome}: desfecho alcançado (reconhecido pelo sistema) — a região entra numa nova era.`);
-        if (divindadeRef.current && divindadeRef.current.despertar) msgs.push(...ganharFe(500, 10, "uma era inteira reza seu nome"));
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[EVENTO GLOBAL "${g.nome}" ENCERRADO pelo sistema — NÃO o continue nem o encerre de novo: a região vive a nova era. O gerador semeará um arco novo quando chegar a hora.]`;
-      }
-      if (recompensa) {
-        /* CONTRATO: mesmo pagamento por CÓDIGO do fluxo normal — nunca dobrado,
-           porque o Mestre é avisado na próxima mensagem via nota do sistema */
-        bumpCont("contratosConcluidos");
-        p = aplicarNivel({ ...p, moedas: (p.moedas || 0) + recompensa.moedas, xp: (p.xp || 0) + recompensa.xp });
-        msgs.push(`📋 Contrato pago pelo sistema: +${recompensa.moedas} moedas · +${recompensa.xp} XP`);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONTRATO PAGO pelo sistema: +${recompensa.moedas} moedas e +${recompensa.xp} XP — NÃO envie moedas nem xp por esse serviço, seria dobrado. A missão já consta como concluída no diário, não a conclua de novo.]`;
-      }
-      if (msgs.length) {
-        setQuests([...questsRef.current]);
-        setPersonagem(p);
-        pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
-        salvar({ personagem: p });
-      }
-    } catch { /* o fiscal NUNCA atrapalha o jogo — falhou, vida segue */ }
-  };
-
-  /* ESCRIBA DO MUNDO (v7.3.4): o cânone só guardava o que o Mestre registrava
-     por vontade própria — e ele esquecia (o "Berço", disco de ossos da câmara,
-     virou "composição de 7 poderes" porque ninguém anotou). Agora um escriba
-     BARATO (modelo leve) lê a narrativa e REGISTRA POR CÓDIGO os fatos
-     duráveis: artefatos e objetos importantes (o que É, aparência, origem),
-     pessoas, lugares, promessas e segredos. Fusão conservadora: NUNCA
-     reescreve ficha existente — só cria novas ou preenche campos vazios. */
-  const escribaDoMundo = async (pers, narrativa) => {
-    if (!narrativa || narrativa.length < 80) return;
-    try {
-      const sys = [
-        "Você é o ESCRIBA de um RPG. Você NÃO narra: extrai FATOS DURÁVEIS da narrativa que merecem memória permanente.",
-        "Responda APENAS em JSON: {\"canone\":{\"Nome da Entidade\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, em 1 frase factual\",\"detalhes\":\"aparência/origem/dono, se houver\",\"local\":\"onde está, se fizer sentido\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\"}}",
-        "REGRAS: (1) registre ARTEFATOS e OBJETOS RELEVANTES que o herói ganhou, achou ou descobriu (reliquias, itens nomeados, mapas, chaves, documentos) — com o que o objeto É de fato; saque comum (poção genérica, moedas) NÃO entra; (2) \"pessoas\": registre pessoas COM NOME e papel durável na história (aliados recorrentes, rivais, contatos) — figurantes de cena única ficam de fora; (3) NÃO reescreva nem contradiga fichas que já existem no CÂNONE ATUAL ou no ELENCO — se já existe, só inclua se houver campo NOVO a acrescentar; (4) eventos passageiros, clima e cenas sem fato durável ficam de fora; (5) \"fe\": SÓ se a narrativa deste turno mostrou o nome do herói ganhando DEVOÇÃO real (gente rezando em seu nome, santuário erguido, conversões, milagre testemunhado por multidão) — fieis = novos devotos (10 a 500), pf = 1 a 10; na dúvida, deixe 0; (6) {\"canone\":{},\"pessoas\":[],\"fe\":{\"fieis\":0,\"pf\":0}} é resposta válida e frequente.",
-      ].join("\n");
-      const user = `CÂNONE ATUAL:\n${formatarCanone(canoneRef.current) || "(vazio)"}\n\nELENCO (pessoas já registradas):\n${Object.keys(npcsRef.current).join(", ") || "(ninguém)"}\n\nNARRATIVA DO TURNO:\n${narrativa}`;
-      const txt = await chamarModelo(sys, [{ role: "user", content: user }], 800, "json", "leve");
+      const user = `MISSÕES ATIVAS:\n${lista || "(nenhuma)"}\n\nEVENTO GLOBAL ATIVO:\n${evG ? `- "${evG.nome}" — ${(evG.etapas || [])[evG.etapa] || evG.descricao || "—"}` : "(nenhum)"}\n\nCÂNONE ATUAL:\n${formatarCanone(canoneRef.current) || "(vazio)"}\n\nELENCO (pessoas já registradas):\n${Object.keys(npcsRef.current).join(", ") || "(ninguém)"}\n\nNARRATIVA DO TURNO:\n${narrativa}`;
+      const txt = await chamarModelo(sys, [{ role: "user", content: user }], 900, "json", "leve");
       const r = parseObjetoTolerante(txt);
       if (!r || typeof r !== "object") return;
-      /* PESSOAS → ELENCO (v7.4.1): nomes importantes viram fichas do sistema,
-         não dependem da boa vontade do Mestre — fusão conservadora */
-      const msgsExtra = [];
-      if (Array.isArray(r.pessoas) && r.pessoas.length) {
-        let reg = npcsRef.current, tocou = false;
-        r.pessoas.slice(0, 4).forEach((n) => {
-          if (!n || !n.nome) return;
-          const chave = Object.keys(reg).find((k) => k.toLowerCase() === String(n.nome).toLowerCase());
-          if (!tocou) { reg = { ...reg }; tocou = true; }
-          if (chave) reg[chave] = mesclarNPC(reg[chave], n);
-          else { reg[String(n.nome).slice(0, 40)] = criarNPC(String(n.nome).slice(0, 40), { ...n, conhecidoEm: diaRef.current }); msgsExtra.push(`✒ Escriba registrou no elenco: ${n.nome}`); }
+      const msgs = [];
+      let p = pers;
+      /* ---- SEÇÃO missões (isolada) ---- */
+      try {
+        const rm = r.missoes && typeof r.missoes === "object" ? r.missoes : {};
+        const casar = (t) => {
+          const alvo = String(t || "").toLowerCase();
+          if (!alvo) return null;
+          return ativas.find((q) => q.titulo.toLowerCase() === alvo)
+            || (alvo.length > 8 ? ativas.find((q) => q.titulo.toLowerCase().includes(alvo) || alvo.includes(q.titulo.toLowerCase())) : null);
+        };
+        let recompensa = null;
+        [].concat(rm.concluidas || []).forEach((t) => {
+          const q = casar(t); if (!q) return;
+          questsRef.current = questsRef.current.map((x) => x.titulo === q.titulo ? { ...x, status: "concluida" } : x);
+          msgs.push(`✓ Missão concluída: ${q.titulo} (reconhecida pelo sistema)`);
+          if (divindadeRef.current && divindadeRef.current.despertar) msgs.push(...ganharFe(q.tipo === "principal" ? 150 : 40, 2, "seu feito corre de boca em boca"));
+          if (q.contrato && !recompensa) recompensa = q.contrato;
         });
-        if (tocou) { npcsRef.current = reg; setNpcs(reg); }
-      }
-      /* FÉ TESTEMUNHADA (v7.4.1): devoção narrada vira fiéis/PF por código */
-      if (r.fe && typeof r.fe === "object" && divindadeRef.current && divindadeRef.current.despertar) {
-        const f = Math.max(0, Math.min(500, Math.round(r.fe.fieis || 0)));
-        const p = Math.max(0, Math.min(10, Math.round(r.fe.pf || 0)));
-        if (f || p) msgsExtra.push(...ganharFe(f, p, String(r.fe.motivo || "sua fama vira prece").slice(0, 80)));
-      }
-      if (!r.canone || typeof r.canone !== "object") {
-        if (msgsExtra.length) { systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade()); pushMsgs(msgsExtra.map((t) => ({ autor: "sistema", texto: t }))); salvar({ personagem: pers }); }
-        return;
-      }
-      const c = { ...canoneRef.current };
-      const novos = [];
-      for (const [nome, ficha] of Object.entries(r.canone)) {
-        if (!nome || !ficha || typeof ficha !== "object") continue;
-        const chaveExistente = Object.keys(c).find((k) => k.toLowerCase() === String(nome).toLowerCase());
-        if (!chaveExistente) {
-          c[String(nome)] = { ...ficha, registradoDia: diaRef.current };
-          novos.push(nome);
-        } else {
-          /* só preenche o que estiver vazio — identidade NUNCA é reescrita */
-          const alvo = { ...c[chaveExistente] };
-          for (const [k, v] of Object.entries(ficha)) {
-            if (v && (alvo[k] === undefined || alvo[k] === "")) alvo[k] = v;
-          }
-          c[chaveExistente] = alvo;
+        [].concat(rm.falhadas || []).forEach((t) => {
+          const q = casar(t); if (!q) return;
+          questsRef.current = questsRef.current.map((x) => x.titulo === q.titulo ? { ...x, status: "falhada" } : x);
+          msgs.push(`✗ Missão falhou: ${q.titulo} (reconhecida pelo sistema)`);
+        });
+        [].concat(rm.progresso || []).forEach((pr) => {
+          if (!pr || !pr.titulo || !pr.nota) return;
+          const q = casar(pr.titulo); if (!q) return;
+          questsRef.current = questsRef.current.map((x) => x.titulo === q.titulo ? { ...x, nota: String(pr.nota).slice(0, 120) } : x);
+          msgs.push(`📜 ${q.titulo}: ${pr.nota}`);
+        });
+        if (rm.global_encerrado === true && eventosRef.current && eventosRef.current.global) {
+          const g = eventosRef.current.global;
+          eventosRef.current = { ...eventosRef.current, global: null, semGlobalDesde: diaRef.current };
+          setEventos(eventosRef.current);
+          msgs.push(`🌍 ${g.nome}: desfecho alcançado (reconhecido pelo sistema) — a região entra numa nova era.`);
+          if (divindadeRef.current && divindadeRef.current.despertar) msgs.push(...ganharFe(500, 10, "uma era inteira reza seu nome"));
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[EVENTO GLOBAL "${g.nome}" ENCERRADO pelo sistema — NÃO o continue nem o encerre de novo: a região vive a nova era. O gerador semeará um arco novo quando chegar a hora.]`;
         }
-      }
-      if (!novos.length && !msgsExtra.length) return;
-      canoneRef.current = c;
-      /* o prompt precisa enxergar o fato novo já no PRÓXIMO turno */
-      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade());
-      pushMsgs(novos.map((n) => ({ autor: "sistema", texto: `✒ Escriba registrou no cânone: ${n}` })).concat(msgsExtra.map((t) => ({ autor: "sistema", texto: t }))));
-      salvar({ personagem: pers });
-    } catch { /* o escriba NUNCA atrapalha o jogo */ }
+        if (recompensa) {
+          bumpCont("contratosConcluidos");
+          p = aplicarNivel({ ...p, moedas: (p.moedas || 0) + recompensa.moedas, xp: (p.xp || 0) + recompensa.xp });
+          msgs.push(`📋 Contrato pago pelo sistema: +${recompensa.moedas} moedas · +${recompensa.xp} XP`);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONTRATO PAGO pelo sistema: +${recompensa.moedas} moedas e +${recompensa.xp} XP — NÃO envie moedas nem xp por esse serviço, seria dobrado. A missão já consta como concluída no diário, não a conclua de novo.]`;
+        }
+        if (msgs.length) { setQuests([...questsRef.current]); setPersonagem(p); }
+      } catch { /* seção quebrada não derruba as outras */ }
+      /* ---- SEÇÃO pessoas (isolada) ---- */
+      try {
+        if (Array.isArray(r.pessoas) && r.pessoas.length) {
+          let reg = npcsRef.current, tocou = false;
+          r.pessoas.slice(0, 4).forEach((n) => {
+            if (!n || !n.nome) return;
+            const chave = Object.keys(reg).find((k) => k.toLowerCase() === String(n.nome).toLowerCase());
+            if (!tocou) { reg = { ...reg }; tocou = true; }
+            if (chave) reg[chave] = mesclarNPC(reg[chave], n);
+            else { reg[String(n.nome).slice(0, 40)] = criarNPC(String(n.nome).slice(0, 40), { ...n, conhecidoEm: diaRef.current }); msgs.push(`✒ Cronista registrou no elenco: ${n.nome}`); }
+          });
+          if (tocou) { npcsRef.current = reg; setNpcs(reg); }
+        }
+      } catch { /* seção quebrada não derruba as outras */ }
+      /* ---- SEÇÃO fé (isolada) ---- */
+      try {
+        if (r.fe && typeof r.fe === "object" && divindadeRef.current && divindadeRef.current.despertar) {
+          const f = Math.max(0, Math.min(500, Math.round(r.fe.fieis || 0)));
+          const pf = Math.max(0, Math.min(10, Math.round(r.fe.pf || 0)));
+          if (f || pf) msgs.push(...ganharFe(f, pf, String(r.fe.motivo || "sua fama vira prece").slice(0, 80)));
+        }
+      } catch { /* seção quebrada não derruba as outras */ }
+      /* ---- SEÇÃO cânone (isolada) ---- */
+      let tocouCanone = false;
+      try {
+        if (r.canone && typeof r.canone === "object") {
+          const c = { ...canoneRef.current };
+          const novos = [];
+          for (const [nome, ficha] of Object.entries(r.canone)) {
+            if (!nome || !ficha || typeof ficha !== "object") continue;
+            const chaveExistente = Object.keys(c).find((k) => k.toLowerCase() === String(nome).toLowerCase());
+            if (!chaveExistente) {
+              c[String(nome)] = { ...ficha, registradoDia: diaRef.current };
+              novos.push(nome);
+            } else {
+              /* só preenche o que estiver vazio — identidade NUNCA é reescrita */
+              const alvo = { ...c[chaveExistente] };
+              for (const [k, v] of Object.entries(ficha)) {
+                if (v && (alvo[k] === undefined || alvo[k] === "")) alvo[k] = v;
+              }
+              c[chaveExistente] = alvo;
+            }
+          }
+          if (novos.length) { canoneRef.current = c; tocouCanone = true; msgs.push(...novos.map((n) => `✒ Cronista registrou no cânone: ${n}`)); }
+        }
+      } catch { /* seção quebrada não derruba as outras */ }
+      if (!msgs.length) return;
+      /* o prompt precisa enxergar TUDO já no PRÓXIMO turno */
+      if (tocouCanone || msgs.length) systemRef.current = montarSystemPrompt(nomeCampanha, mundo, p, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade());
+      pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
+      salvar({ personagem: p });
+    } catch { /* o cronista NUNCA atrapalha o jogo — falhou, vida segue */ }
   };
 
   /* GANHO DE FÉ POR CÓDIGO (v7.4): fiéis e PF mudam por aqui — e cada degrau
@@ -4000,8 +4067,7 @@ export default function Taverna() {
       }
       setTimeout(() => salvar({ personagem: pers, historico: histFinal, rolagem: resp.rolagem || null, sugestoes: resp.rolagem ? [] : (resp.sugestoes || []) }), 0);
       /* FISCAL DE MISSÕES + ESCRIBA: correm em paralelo, sem travar o turno */
-      fiscalizarQuests(pers, resp.narrativa);
-      escribaDoMundo(pers, resp.narrativa);
+      cronistaDoTurno(pers, resp.narrativa);
       /* DESPERTAR: checa DEPOIS do turno (o XP do combate pode ter cruzado o nível) */
       setTimeout(() => checarDespertar(pers), 600);
     } catch (e) {
@@ -4224,6 +4290,9 @@ export default function Taverna() {
       const h = habSel; setHabSel(null);
       const custo = Math.max(0, Number(h.custo) || 0);
       if (personagem.mana < custo) { pushMsgs([{ autor: "sistema", texto: `Mana insuficiente para ${h.nome}.` }]); return; }
+      /* RECARGA (v7.4.3): habilidade em fôlego não dispara — nem gasta movimento */
+      const recSel = (personagem.habRecarga || {})[(h.nome || "").toLowerCase()] || 0;
+      if (recSel > 0) { pushMsgs([{ autor: "sistema", texto: `⏳ ${h.nome} está em recarga — pronta em ${recSel} turno${recSel > 1 ? "s" : ""}.` }]); return; }
       /* ECONOMIA (v7.4): em combate, habilidade gasta a ação (ou a extra) */
       if (combateRef.current && combateRef.current.economia) {
         const ecoH = combateRef.current.economia;
@@ -4231,9 +4300,10 @@ export default function Taverna() {
         if (ecoH.acao > 0) ecoH.acao -= 1; else ecoH.extra -= 1;
         combateRef.current = { ...combateRef.current, economia: { ...ecoH } }; setCombate(combateRef.current);
       }
-      const pers = { ...personagem, mana: personagem.mana - custo };
+      const recH = h.recarga != null ? Math.max(0, Number(h.recarga) || 0) : recargaPadrao(custo);
+      const pers = { ...personagem, mana: personagem.mana - custo, habRecarga: recH > 0 ? { ...(personagem.habRecarga || {}), [(h.nome || "").toLowerCase()]: recH } : (personagem.habRecarga || {}) };
       setPersonagem(pers);
-      pushMsgs([{ autor: "jogador", texto: `✦ ${h.nome} — ${acao}` }, { autor: "sistema", texto: `Você gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}` }]);
+      pushMsgs([{ autor: "jogador", texto: `✦ ${h.nome} — ${acao}` }, { autor: "sistema", texto: `Você gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}${recH > 0 ? ` · ⏳ recarga ${recH}t` : ""}` }]);
       habUsadaRef.current = true;
       enviar(`[HABILIDADE] Uso "${h.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). Efeito: ${h.descricao}. COMO eu a uso: ${acao}. Narre conforme minha intenção — se incerto, peça a rolagem apropriada.${extraTempo}`, pers);
       return;
@@ -4249,6 +4319,8 @@ export default function Taverna() {
     if (habCitada) {
       const custo = Math.max(0, Number(habCitada.custo) || 0);
       if (personagem.mana < custo) { pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `Mana insuficiente para ${habCitada.nome}.` }]); return; }
+      const recCit = (personagem.habRecarga || {})[(habCitada.nome || "").toLowerCase()] || 0;
+      if (recCit > 0) { pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `⏳ ${habCitada.nome} está em recarga — pronta em ${recCit} turno${recCit > 1 ? "s" : ""}.` }]); return; }
       /* ECONOMIA (v7.4): idem — habilidade citada por texto também gasta */
       if (combateRef.current && combateRef.current.economia) {
         const ecoH2 = combateRef.current.economia;
@@ -4256,10 +4328,11 @@ export default function Taverna() {
         if (ecoH2.acao > 0) ecoH2.acao -= 1; else ecoH2.extra -= 1;
         combateRef.current = { ...combateRef.current, economia: { ...ecoH2 } }; setCombate(combateRef.current);
       }
-      const pers = { ...personagem, mana: personagem.mana - custo };
+      const recC = habCitada.recarga != null ? Math.max(0, Number(habCitada.recarga) || 0) : recargaPadrao(custo);
+      const pers = { ...personagem, mana: personagem.mana - custo, habRecarga: recC > 0 ? { ...(personagem.habRecarga || {}), [(habCitada.nome || "").toLowerCase()]: recC } : (personagem.habRecarga || {}) };
       setPersonagem(pers);
       habUsadaRef.current = true;
-      pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `✦ ${habCitada.nome} · gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}` }]);
+      pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `✦ ${habCitada.nome} · gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}${recC > 0 ? ` · ⏳ recarga ${recC}t` : ""}` }]);
       enviar(`[HABILIDADE] Uso "${habCitada.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). ${habCitada.descricao || ""} Ação: ${acao}${extraTempo}`, pers);
       return;
     }
@@ -4287,6 +4360,7 @@ export default function Taverna() {
           const novo = { ...combateRef.current, inimigos: combateRef.current.inimigos.map((e) => e.nome === alvo.nome ? { ...e, vida: pvDepois, derrotado: pvDepois <= 0, ultimoDano: r.dano } : e) };
           combateRef.current = novo; setCombate(novo);
         }
+        logDadoCombate(resumoDoAtaque(r));
         if (mostrarRolagensRef.current) linhas.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(r) });
         linhas.push({ autor: "sistema", texto: r.escopoImune
           ? `⚔ ${personagem.nome} → ${alvo.nome}: o golpe atravessa sem encontrar carne — ${alvo.nome} é GD ${alvo.gd} (${tituloDe(alvo.gd)}), IMUNE ao seu dano comum`
@@ -4317,6 +4391,7 @@ export default function Taverna() {
         let grupoAtual = [...(personagem.grupo || [])];
         const partes = [];
         for (const a of acoes) {
+          logDadoCombate(resumoDoAtaque(a.r));
           if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(a.r) });
           linhasSis.push({ autor: "sistema", texto: a.r.dano > 0 ? `🛡 ${a.inimigo} → ${a.alvoNome}: ${a.r.critico ? "CRÍTICO! " : ""}${a.r.dano} de dano` : `🛡 ${a.inimigo} → ${a.alvoNome}: errou` });
           if (a.r.dano > 0) {
@@ -4335,6 +4410,7 @@ export default function Taverna() {
         const partesComp = [];
         for (const ac of acoesComp) {
           if (ac.tipo === "ataque" && ac.r) {
+            logDadoCombate(resumoDoAtaque(ac.r));
             if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: "🎲 " + resumoDoAtaque(ac.r) }]);
             let pvAlvo = null;
             if (ac.r.dano > 0) {
@@ -4389,6 +4465,15 @@ export default function Taverna() {
   /* Fecha o combate IMEDIATAMENTE se todos os inimigos caíram. Necessário
      porque o dano aplicado por código (meu golpe / turno dos companheiros)
      não passa pelo processarCombate, onde ficava a única verificação. */
+  /* LOG DE DADOS (v7.4.2): os d20 internos do combate ficam visíveis num
+     mini-log do painel — transparência de mesa, custo zero de token. */
+  const logDadoCombate = (txt) => {
+    const c = combateRef.current;
+    if (!c) return;
+    combateRef.current = { ...c, log: [...(c.log || []), txt].slice(-6) };
+    setCombate(combateRef.current);
+  };
+
   const fecharSeTodosCairam = () => {
     const c = combateRef.current;
     if (!c || !(c.inimigos || []).length) return false;
@@ -4429,6 +4514,7 @@ export default function Taverna() {
     let grupoAtual = [...(personagem.grupo || [])];
     const partes = [];
     for (const a of acoes) {
+      logDadoCombate(resumoDoAtaque(a.r));
       if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(a.r) });
       linhasSis.push({ autor: "sistema", texto: a.r.dano > 0 ? `🛡 ${a.inimigo} → ${a.alvoNome}: ${a.r.critico ? "CRÍTICO! " : ""}${a.r.dano} de dano` : `🛡 ${a.inimigo} → ${a.alvoNome}: errou` });
       if (a.r.dano > 0) {

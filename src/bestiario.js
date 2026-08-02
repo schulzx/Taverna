@@ -68,7 +68,8 @@ export const TABELA_TESTES = `AÇÕES QUE PEDEM TESTE (com dificuldade-base — 
 · AGILIDADE (Destreza): furtividade contra guardas atentos 12, escapar de agarrão 12, equilibrar-se em corda 12, abrir fechadura comum 12 / complexa 15, punga 15.
 · SOCIAL (Presença): persuadir neutro 12 / relutante 15, enganar desconfiado 15, intimidar alguém do MESMO patamar 15 / de patamar acima 18+, barganhar 12, inspirar multidão 15.
 · MENTE (Intelecto/Percepção): decifrar texto arcano 15, notar emboscada 12, rastrear na chuva 15, lembrar lore obscura 15, detectar mentira 12.
-QUANDO NÃO PEDIR TESTE: ação TRIVIAL para o patamar do herói (consulte o PATAMAR — um Herói não testa para intimidar um goblin, uma Lenda não testa para escalar um muro); ação sem consequência interessante em caso de falha; ação impossível (negue, não teste). Intimidar/enfrentar algo de patamar MUITO acima: dificuldade 18-21, e mesmo sucesso dá efeito parcial.
+QUANDO NÃO PEDIR TESTE: ação TRIVIAL para o patamar do herói (consulte o PATAMAR — um Herói não testa para intimidar um goblin, uma Lenda não testa para escalar um muro); ação sem consequência interessante em caso de falha; ação impossível (negue, não teste). Intimidar/enfrentar algo de patamar MUITO acima: perfil "formidavel", e mesmo sucesso dá efeito parcial.
+COMO MEDIR (NÃO invente números — use o PERFIL e o sistema calcula): "facil" = desafio leve, errar é azar; "digno" = desafio à altura do herói (o padrão); "dificil" = exige perícia real, falha provável sem preparo; "formidavel" = no limite do possível, sucesso é feito memorável. O sistema converte o perfil em dificuldade a partir do modificador do herói — um desafio "digno" é digno em qualquer nível.
 REGRA DE OURO: teste só quando o resultado é incerto E a falha gera história.`;
 
 /* Decisor por código: o app transforma testes triviais em sucesso automático. */
@@ -76,4 +77,15 @@ export function avaliarTeste(modificador, dificuldade) {
   const dc = Number(dificuldade) || 12;
   if (dc <= (modificador || 0) + 2) return "auto";   // não há como falhar de verdade
   return "rolar";
+}
+
+/* DIFICULDADE POR PERFIL (v7.4.2): a tabela fixa (12/15/18) ficava pequena
+   para heróis de nível alto — tudo virava sucesso automático e o d20 sumia.
+   Agora o Mestre diz só o PERFIL do desafio e o CÓDIGO calcula a dificuldade
+   a partir do modificador do herói: digno continua digno no nível 3 e no 20. */
+export const PERFIS_TESTE = { facil: 4, digno: 6, dificil: 10, formidavel: 14 };
+export function dificuldadePorPerfil(modificador, perfil) {
+  const delta = PERFIS_TESTE[String(perfil || "").toLowerCase()];
+  if (delta == null) return null;
+  return Math.max(6, (modificador || 0) + delta);
 }
