@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
-import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar } from "./combate.js";
+import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d } from "./combate.js";
+import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste, dificuldadePorPerfil } from "./bestiario.js";
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt } from "./npcs.js";
@@ -203,6 +204,7 @@ COMBATE, ESPÓLIOS E ACHADOS:
 
 FICHA DE INIMIGOS NO COMBATE (importante para a tática):
 - NARRATIVA E NÚMEROS ANDAM JUNTOS: se você narrar que inimigos morreram/fugiram/se renderam, ZERE o PV deles com "combate_inimigo_vida" no MESMO JSON, ou envie "combate_encerrar". Nunca descreva um exército aniquilado deixando os PV intactos no sistema — isso trava o painel de combate. Do mesmo modo, só narre morte de quem o sistema realmente derrubou.
+- COESÃO DE RESULTADO (regra absoluta): DANO E MORTE SÃO DECIDIDOS SÓ PELO SISTEMA (envelopes [COMBATE — RESOLVIDO] e o PV do painel). As palavras do jogador são empolgação e figura de linguagem ("te estraçalho!", "moro comigo!") — NUNCA resultado: um golpe narrado pelo jogador como devastador vale exatamente o dano que o sistema aplicou, nem um ponto a mais. Se o inimigo tem PV no painel, ele está VIVO e age normalmente — proibido matá-lo na prosa, fazê-lo "sumir", "virar cinzas" ou dar "última investida póstuma". Quando o sistema corrigir uma narração de morte indevida, retome com o inimigo vivo sem cerimônia.
 - SISTEMA DE TESTES (consulte a tabela — NÃO invente dificuldades):
 ${TABELA_TESTES}
   · O app converte automaticamente em SUCESSO SEM ROLAGEM os testes triviais para o herói — então peça rolagem apenas quando fizer sentido pela tabela e pelo patamar.
@@ -2806,7 +2808,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.4.3 · ferro e fôlego</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.4.4 · coesão e poder único</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -3775,6 +3777,9 @@ export default function Taverna() {
           p2 = { ...p2, equipamento: [...(p2.equipamento || []), itemCaido] };
           msgs.push(`✦ Espólio raro: ${itemCaido.nome} (${RARIDADE_ROTULO[itemCaido.raridade] || itemCaido.raridade}) — na mochila de equipamentos`);
         }
+        /* PODER ÚNICO (v7.4.4): vitória sobre elite/lendário pode despertar
+           uma habilidade só sua — gerada e limitada pelo sistema */
+        p2 = talvezDespertarUnica(p2, resp.mudancas.__inimigosFinais || [], msgs);
         /* MASMORRA: vitória na sala do CHEFE conclui a masmorra por código —
            moedas do fundo + item épico/lendário garantido */
         let chefeCaido = false;
@@ -3870,16 +3875,18 @@ export default function Taverna() {
     try {
       const sys = [
         "Você é o CRONISTA de um RPG. Você NÃO narra: lê a narrativa do turno e julga, por seções, o que o SISTEMA deve registrar. Responda APENAS em JSON:",
-        "{\"missoes\":{\"concluidas\":[\"titulo exato\"],\"falhadas\":[\"titulo exato\"],\"progresso\":[{\"titulo\":\"...\",\"nota\":\"resumo curto\"}],\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\"}}",
+        "{\"missoes\":{\"concluidas\":[\"titulo exato\"],\"falhadas\":[\"titulo exato\"],\"progresso\":[{\"titulo\":\"...\",\"nota\":\"resumo curto\"}],\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\"},\"combate\":{\"mortes_narradas\":[]}}",
         "SEÇÃO missoes: (1) \"concluida\" SÓ com objetivo CUMPRIDO de fato e sem dúvida neste turno; (2) \"falhada\" só se impossível ou explicitamente perdida; (3) avanço parcial real vira \"progresso\"; (4) copie os títulos EXATAMENTE; (5) \"global_encerrado\": true SÓ se o EVENTO GLOBAL (se listado) foi RESOLVIDO de fato — a ameaça central derrotada/desfeita, não um avanço.",
         "SEÇÃO canone: fatos DURÁVEIS — artefatos e objetos relevantes que o herói ganhou/achou/descobriu (com o que o objeto É de fato; saque comum não entra), lugares importantes, promessas, segredos. NÃO reescreva nem contradiga o CÂNONE ATUAL — só crie novo ou acrescente campo novo.",
         "SEÇÃO pessoas: pessoas COM NOME e papel durável (aliados recorrentes, rivais, contatos) que ainda não estão no ELENCO — figurantes de cena única ficam de fora.",
         "SEÇÃO fe: SÓ se o turno mostrou o nome do herói ganhando DEVOÇÃO real (preces em seu nome, santuário, conversões, milagre testemunhado) — fieis 10 a 500, pf 1 a 10; na dúvida, 0.",
+        "SEÇÃO combate (só se houver COMBATENTES listados): \"mortes_narradas\" = inimigos que a NARRATIVA declarou mortos/destruídos/desfeitos NESTE turno. Liste só nomes da lista de combatentes; se ninguém morreu na narração, [].",
         "REGRA GERAL: na dúvida, NÃO marque — {\"missoes\":{\"concluidas\":[],\"falhadas\":[],\"progresso\":[],\"global_encerrado\":false},\"canone\":{},\"pessoas\":[],\"fe\":{\"fieis\":0,\"pf\":0}} é resposta válida e frequente.",
       ].join("\n");
       const lista = ativas.map((q) => `- "${q.titulo}" (${q.tipo}) — objetivo: ${q.objetivo || q.descricao || "—"}`).join("\n");
       const evG = eventosRef.current && eventosRef.current.global;
-      const user = `MISSÕES ATIVAS:\n${lista || "(nenhuma)"}\n\nEVENTO GLOBAL ATIVO:\n${evG ? `- "${evG.nome}" — ${(evG.etapas || [])[evG.etapa] || evG.descricao || "—"}` : "(nenhum)"}\n\nCÂNONE ATUAL:\n${formatarCanone(canoneRef.current) || "(vazio)"}\n\nELENCO (pessoas já registradas):\n${Object.keys(npcsRef.current).join(", ") || "(ninguém)"}\n\nNARRATIVA DO TURNO:\n${narrativa}`;
+      const combatentes = (combateRef.current && combateRef.current.inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
+      const user = `MISSÕES ATIVAS:\n${lista || "(nenhuma)"}\n\nEVENTO GLOBAL ATIVO:\n${evG ? `- "${evG.nome}" — ${(evG.etapas || [])[evG.etapa] || evG.descricao || "—"}` : "(nenhum)"}\n\nCOMBATENTES AINDA DE PÉ (nome — PV):\n${combatentes.map((e) => `- ${e.nome} — ${e.vida} PV`).join("\n") || "(sem combate aberto)"}\n\nCÂNONE ATUAL:\n${formatarCanone(canoneRef.current) || "(vazio)"}\n\nELENCO (pessoas já registradas):\n${Object.keys(npcsRef.current).join(", ") || "(ninguém)"}\n\nNARRATIVA DO TURNO:\n${narrativa}`;
       const txt = await chamarModelo(sys, [{ role: "user", content: user }], 900, "json", "leve");
       const r = parseObjetoTolerante(txt);
       if (!r || typeof r !== "object") return;
@@ -3950,6 +3957,19 @@ export default function Taverna() {
           const pf = Math.max(0, Math.min(10, Math.round(r.fe.pf || 0)));
           if (f || pf) msgs.push(...ganharFe(f, pf, String(r.fe.motivo || "sua fama vira prece").slice(0, 80)));
         }
+      } catch { /* seção quebrada não derruba as outras */ }
+      /* ---- SEÇÃO combate: CÃO DE GUARDA DE COESÃO (v7.4.4) ----
+         O Mestre declarou morto quem o SISTEMA mantém de pé? Correção
+         pública + nota firme — o PV não muda, a NARRATIVA é que se alinha. */
+      try {
+        const mortes = (r.combate && Array.isArray(r.combate.mortes_narradas)) ? r.combate.mortes_narradas : [];
+        const vivosAgora = (combateRef.current && combateRef.current.inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
+        mortes.forEach((nome) => {
+          const alvo = vivosAgora.find((e) => (e.nome || "").toLowerCase() === String(nome || "").toLowerCase());
+          if (!alvo) return;
+          msgs.push(`⚖ Coesão do sistema: ${alvo.nome} NÃO morreu — ainda tem ${alvo.vida} PV. A narração da morte foi exagero; a luta continua.`);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CORREÇÃO DE COESÃO — REGRA ABSOLUTA] Você narrou a morte de ${alvo.nome}, mas o SISTEMA registra ${alvo.vida} PV: ele está VIVO e em combate. RETOME tratando-o como vivo — sem ressuscitar, sem cinzas, sem "última investida póstuma": ele simplesmente NÃO morreu. Dano e morte são decididos SÓ pelo sistema (envelopes [COMBATE — RESOLVIDO] e o PV do painel); palavras de empolgação do jogador ("estraçalho você!") são figura de linguagem, NUNCA resultado.`;
+        });
       } catch { /* seção quebrada não derruba as outras */ }
       /* ---- SEÇÃO cânone (isolada) ---- */
       let tocouCanone = false;
@@ -4278,6 +4298,90 @@ export default function Taverna() {
     return { resultados, nAtaques };
   };
 
+  /* HABILIDADE OFENSIVA RESOLVIDA PELO SISTEMA (v7.4.4): antes, o dano de
+     magia/técnica em combate era INVENTADO pelo Mestre — e ele podia matar
+     um monstro de 150 PV numa descrição bonita. Agora habilidade ofensiva
+     em combate é ataque do sistema: rola acerto, calcula dano, aplica PV. */
+  const HAB_OFENSIVA_RX = /dano|ataca|golpe|projetil|projétil|chama|gelo|raio|lamina|lâmina|fogo|destrui|ferir|maldic|explos|impacto|perfur|cort[ae]|drena|execut/i;
+  const resolverHabilidadeOfensiva = (h, acao, pers) => {
+    const comb = combateRef.current;
+    if (!comb || !(comb.inimigos || []).some((e) => !e.derrotado && e.vida > 0)) return null;
+    if (h.danoBase == null && !HAB_OFENSIVA_RX.test(`${h.nome || ""} ${h.descricao || ""}`)) return null;
+    const vivos = comb.inimigos.filter((e) => !e.derrotado && e.vida > 0);
+    const norm = (x) => (x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const acaoN = norm(acao);
+    const alvo = vivos.find((e) => acaoN.includes(norm(e.nome))) || vivos[0];
+    const atr = Math.max(pers.atributos?.intelecto || 0, pers.atributos?.presenca || 0, pers.atributos?.forca || 0, pers.atributos?.destreza || 0);
+    const bonusAtk = atr + 2 + Math.floor(((pers.nivel || 1) - 1) / 4);
+    let danoBase = h.danoBase != null ? h.danoBase + d(4) - 1 : (Math.max(0, Number(h.custo) || 0) * 2 + d(6) + atr);
+    /* molde EXECUÇÃO (únicas): dano dobrado em alvo com menos de metade dos PV */
+    if (h.molde === "execucao" && alvo.vidaMax && alvo.vida < alvo.vidaMax / 2) danoBase *= 2;
+    const r = resolverAtaque({
+      atacante: pers.nome, alvo, ehAtacanteInimigo: false,
+      bonusAtaque: bonusAtk, danoBase,
+      condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
+      tipoDano: "magico", perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
+    });
+    const linhasSis = [];
+    const partes = [];
+    logDadoCombate(resumoDoAtaque(r));
+    if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(r) });
+    let locais = comb.inimigos.map((e) => ({ ...e }));
+    if (r.dano > 0) {
+      locais = locais.map((e) => {
+        if (e.nome !== alvo.nome) return e;
+        const pv = Math.max(0, e.vida - r.dano);
+        return { ...e, vida: pv, derrotado: pv <= 0, ultimoDano: r.dano };
+      });
+      partes.push(`${alvo.nome} — ${r.resultado === "critico" ? `CRÍTICO, ${r.dano} de dano` : r.resultado === "acerta" ? `${r.dano} de dano` : "resistiu parcialmente"} (d20=${r.d20}${r.bonus ? `+${r.bonus}` : ""}=${r.total} vs ${r.ca})${(locais.find((e) => e.nome === alvo.nome) || {}).derrotado ? " [CAIU]" : ""}`);
+      /* ÁREA (únicas): metade do dano nos demais inimigos */
+      if (h.area) {
+        const splash = Math.max(1, Math.round(r.dano / 2));
+        locais = locais.map((e) => {
+          if (e.nome === alvo.nome || e.derrotado || e.vida <= 0) return e;
+          const pv = Math.max(0, e.vida - splash);
+          if (pv <= 0) partes.push(`${e.nome} — ${splash} de dano pela onda [CAIU]`);
+          else partes.push(`${e.nome} — ${splash} de dano pela onda`);
+          return { ...e, vida: pv, derrotado: pv <= 0, ultimoDano: splash };
+        });
+      }
+      /* CONDIÇÃO (únicas tipo sentença): aplica por código */
+      if (h.condicao && !(locais.find((e) => e.nome === alvo.nome) || {}).derrotado) {
+        locais = locais.map((e) => e.nome === alvo.nome ? { ...e, condicoes: [...(e.condicoes || []), { nome: h.condicao, turnos: 2, tipo: "ruim" }] } : e);
+        partes.push(`${alvo.nome} está ${h.condicao} (2t)`);
+      }
+      linhasSis.push({ autor: "sistema", texto: `✦ ${pers.nome} · ${h.nome} → ${alvo.nome}: ${r.critico ? "CRÍTICO! " : ""}${r.dano} de dano${h.area ? " (onda atinge os demais)" : ""}` });
+      /* molde DRENAGEM (únicas): recupera metade do dano causado */
+      if (h.molde === "drenagem") {
+        const cura = Math.max(1, Math.round(r.dano / 2));
+        setPersonagem((old) => ({ ...old, vida: Math.min(old.vidaMax, (old.vida || 0) + cura) }));
+        linhasSis.push({ autor: "sistema", texto: `🩸 ${h.nome} drena a essência: +${cura} PV` });
+        partes.push(`drenei ${cura} PV`);
+      }
+    } else {
+      partes.push(`${alvo.nome} — ${r.desastre ? "erro desastroso" : "errou"} (d20=${r.d20}${r.bonus ? `+${r.bonus}` : ""}=${r.total} vs ${r.ca})`);
+      linhasSis.push({ autor: "sistema", texto: `✦ ${pers.nome} · ${h.nome} → ${alvo.nome}: ${r.desastre ? "erro desastroso" : "errou"}` });
+    }
+    combateRef.current = { ...comb, inimigos: locais, economia: comb.economia, log: combateRef.current.log };
+    setCombate(combateRef.current);
+    if (linhasSis.length) pushMsgs(linhasSis);
+    fecharSeTodosCairam();
+    return partes.join("; ");
+  };
+
+  /* HABILIDADES ÚNICAS (v7.4.4): mesma lógica do loot — a árvore da classe é
+     tabela fixa, mas derrubar elite/lendário pode DESPERTAR uma técnica só
+     sua, gerada por código. A IA narra a epifania; o sistema cria e limita. */
+  const talvezDespertarUnica = (p2, inimigosFinais, msgs) => {
+    const ch = chanceUnica(inimigosFinais);
+    if (!ch || Math.random() >= ch) return p2;
+    const existentes = (p2.habilidades || []).map((x) => x.nome);
+    const hu = gerarHabilidadeUnica(p2.nivel || 1, existentes);
+    msgs.push(`🌟 PODER ÚNICO DESPERTOU: ${hu.nome} (${hu.custo} PM · recarga ${hu.recarga}t) — ${hu.descricao}`);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[PODER ÚNICO — REGISTRADO PELO SISTEMA] A vitória sobre ${((inimigosFinais || [])[0] || {}).nome || "o inimigo"} despertou em mim uma técnica só minha: "${hu.nome}" (${hu.descricao}). Já está na minha lista de habilidades — NÃO a crie de novo. Narre a epifania como um momento raro e marcante: o poder do derrotado deixou uma marca em mim.`;
+    return { ...p2, habilidades: [...(p2.habilidades || []), hu] };
+  };
+
   const agir = (texto) => {
     const acao = texto.trim();
     if (!acao || carregando || rolagem) return;
@@ -4305,7 +4409,10 @@ export default function Taverna() {
       setPersonagem(pers);
       pushMsgs([{ autor: "jogador", texto: `✦ ${h.nome} — ${acao}` }, { autor: "sistema", texto: `Você gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}${recH > 0 ? ` · ⏳ recarga ${recH}t` : ""}` }]);
       habUsadaRef.current = true;
-      enviar(`[HABILIDADE] Uso "${h.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). Efeito: ${h.descricao}. COMO eu a uso: ${acao}. Narre conforme minha intenção — se incerto, peça a rolagem apropriada.${extraTempo}`, pers);
+      const desfechoH = resolverHabilidadeOfensiva(h, acao, pers);
+      enviar(desfechoH
+        ? `[HABILIDADE — RESOLVIDA PELO SISTEMA] Usei "${h.nome}" (custo ${custo} PM, já descontado). O SISTEMA já rolou o acerto, calculou e APLICOU o resultado: ${desfechoH}. Sua função é APENAS narrar esse resultado exato — não recalcule, não mude quem acertou, NÃO declare a morte de quem ainda tem PV. Narre a técnica à altura da minha intenção: ${acao}`
+        : `[HABILIDADE] Uso "${h.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). Efeito: ${h.descricao}. COMO eu a uso: ${acao}. Narre conforme minha intenção — se incerto, peça a rolagem apropriada. LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte; se o inimigo ainda tiver PV, ele segue de pé.${extraTempo}`, pers);
       return;
     }
     /* Detecta habilidade citada por texto (ex.: "uso Projétil Arcano") e desconta o PM
@@ -4333,7 +4440,10 @@ export default function Taverna() {
       setPersonagem(pers);
       habUsadaRef.current = true;
       pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `✦ ${habCitada.nome} · gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}${recC > 0 ? ` · ⏳ recarga ${recC}t` : ""}` }]);
-      enviar(`[HABILIDADE] Uso "${habCitada.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). ${habCitada.descricao || ""} Ação: ${acao}${extraTempo}`, pers);
+      const desfechoC = resolverHabilidadeOfensiva(habCitada, acao, pers);
+      enviar(desfechoC
+        ? `[HABILIDADE — RESOLVIDA PELO SISTEMA] Usei "${habCitada.nome}" (custo ${custo} PM, já descontado). O SISTEMA já rolou o acerto, calculou e APLICOU o resultado: ${desfechoC}. Sua função é APENAS narrar esse resultado exato — não recalcule, NÃO declare a morte de quem ainda tem PV. Minha intenção: ${acao}`
+        : `[HABILIDADE] Uso "${habCitada.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). ${habCitada.descricao || ""} Ação: ${acao}. LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte; se o inimigo ainda tiver PV, ele segue de pé.${extraTempo}`, pers);
       return;
     }
     const ataque = resolverAtaqueJogador(acao, personagem);
@@ -4482,6 +4592,7 @@ export default function Taverna() {
     combateRef.current = null; setCombate(null); combateOciosoRef.current = 0;
     const derrotados = c.inimigos;
     const esp = gerarEspolios(derrotados);
+    const msgsU = [];
     setPersonagem((p) => {
       let p2 = { ...p, moedas: (p.moedas || 0) + esp.moedas, xp: (p.xp || 0) + esp.xp };
       while (p2.xp >= XP_POR_NIVEL(p2.nivel)) { p2.xp -= XP_POR_NIVEL(p2.nivel); p2.nivel += 1; p2.nivelPendentes = (p2.nivelPendentes || 0) + 1; }
@@ -4489,11 +4600,13 @@ export default function Taverna() {
       /* PRESENÇA DIVINA expira com o fim do combate — não vira debuff eterno */
       p2.condicoes = (p2.condicoes || []).filter((c) => !(c.origem || "").startsWith("presença de"));
       p2.grupo = (p2.grupo || []).map((g) => ({ ...g, condicoes: (g.condicoes || []).filter((c) => !(c.origem || "").startsWith("presença de")) }));
+      p2 = talvezDespertarUnica(p2, derrotados, msgsU);
       return p2;
     });
     pushMsgs([
       { autor: "sistema", texto: "⚔ Todos os inimigos caíram — o combate termina." },
       { autor: "sistema", texto: `◉ Espólios: +${esp.moedas} moedas · +${esp.xp} XP` },
+      ...msgsU.map((t) => ({ autor: "sistema", texto: t })),
     ]);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — sistema já aplicou +${esp.moedas} moedas e +${esp.xp} XP] NÃO envie moedas nem xp. Narre o desfecho em 2-3 frases.${esp.caiItem ? " UM ITEM CAIU: crie um item coerente e envie em \"adicionar_equipamento\" ou \"adicionar_itens\"." : " Sem itens desta vez."}`;
     return true;
