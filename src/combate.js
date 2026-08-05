@@ -279,3 +279,39 @@ export function resumoPatamar(nivel) {
   const prox = PATAMARES[PATAMARES.indexOf(p) + 1];
   return `${p.nome} (nível ${nivel || 1}) — isto é ESCALA DE COMBATE (o que ele aguenta), NÃO um título nem posição no cosmos: nível nenhum torna alguém divino, só a fé faz isso. ${p.desc} TRIVIAL para ele (resolva narrativamente num gesto, SEM abrir combate nem pedir rolagem difícil): ${p.triviais}. DESAFIO DIGNO (combate/rolagens valem a pena): ${p.dignos}. ACIMA dele (vitória direta é implausível — exija astúcia, aliados, preparação ou fuga): ${p.acima}.${prox ? ` Próximo patamar: ${prox.nome} no nível ${prox.min}.` : ""}`;
 }
+
+/* ---------------- SEVERIDADE (v7.7) — sinal do SISTEMA para o Mestre ----------------
+   O Mestre recebia só o número cru ("14 de dano") e não tinha como saber se
+   aquilo era um arranhão ou um golpe decisivo — daí narrar "estraçalhou" com
+   1 de dano. Aqui o código traduz o número em INTENSIDADE, medindo o dano
+   contra a vida máxima do alvo e o estado em que ele ficou. */
+export const SEVERIDADES = [
+  { max: 0.05, rotulo: "arranhão",   guia: "quase nada — a defesa aguentou, o alvo mal sente" },
+  { max: 0.15, rotulo: "golpe leve", guia: "acertou, mas é ferimento pequeno; o alvo segue firme" },
+  { max: 0.30, rotulo: "golpe sólido", guia: "dói de verdade e o alvo recua um passo" },
+  { max: 0.50, rotulo: "golpe pesado", guia: "estrago sério, sangue, o alvo perde postura" },
+  { max: 1.01, rotulo: "golpe devastador", guia: "brutal — quase o derruba de uma vez" },
+];
+
+export function severidadeDano(dano, alvoVidaMax, vidaDepois, critico) {
+  if (!dano || dano <= 0) return { rotulo: "erro", guia: "o golpe não conecta — narre a esquiva, o aparo ou a defesa" };
+  if (vidaDepois !== undefined && vidaDepois <= 0) {
+    return { rotulo: "abate", guia: "golpe final — o alvo cai; só aqui cabe linguagem de aniquilação" };
+  }
+  const frac = dano / Math.max(1, alvoVidaMax || dano);
+  const s = SEVERIDADES.find((x) => frac < x.max) || SEVERIDADES[SEVERIDADES.length - 1];
+  return { rotulo: critico ? `${s.rotulo} (crítico)` : s.rotulo, guia: s.guia, pct: Math.round(frac * 100) };
+}
+
+/* Linha pronta para o envelope do Mestre: número + intensidade + estado. */
+export function linhaParaMestre(atacante, alvoNome, r, alvoVidaMax, vidaDepois) {
+  if (!r || r.dano <= 0) {
+    const como = r && r.resultado === "desastre" ? "erro desastroso" : "errou";
+    return `${atacante}→${alvoNome}: ${como}`;
+  }
+  const sev = severidadeDano(r.dano, alvoVidaMax, vidaDepois, r.critico);
+  const estado = vidaDepois !== undefined
+    ? (vidaDepois <= 0 ? "CAIU" : `de pé com ${vidaDepois}/${alvoVidaMax}`)
+    : "";
+  return `${atacante}→${alvoNome}: ${r.dano} de dano = ${sev.rotulo}${sev.pct ? ` (${sev.pct}% da vida dele)` : ""}${estado ? `, ${estado}` : ""} [narre como: ${sev.guia}]`;
+}

@@ -335,7 +335,7 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   }
 }
 O campo "canone" é opcional: inclua-o só quando houver um fato durável a registrar ou atualizar. Cada chave é o NOME da entidade; os campos (tipo, papel, genero, local, status, notas) são todos opcionais — preencha os relevantes. Para atualizar, reenvie a mesma chave com os campos novos.
-SINAIS (canal barato — prefira-o sempre que existir): em vez de calcular e enviar números, mande um sinal curto e o SISTEMA resolve pela tabela. Sinais aceitos: "fe:sussurro|feito|proeza|marco" (o herói fez algo que rende fé — o sistema converte em fiéis conforme a fama dele; sussurro = notado por poucos, feito = a cidade comenta, proeza = a região conta, marco = muda a história); "milagre:<id>" (o herói gastou fé num milagre: bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar — o sistema cobra os PF e aplica o efeito); "dominio:<texto>" e "patrono:<texto>" (só na primeira vez que a ficção os revelar). Nunca invente PF nem número de fiéis: mande o sinal e narre a cena.
+SINAIS (canal barato — prefira-o sempre que existir): em vez de calcular e enviar números, mande um sinal curto e o SISTEMA resolve pela tabela. Sinais aceitos: "fe:sussurro|feito|proeza|marco" (o herói fez algo que rende fé — o sistema converte em fiéis conforme a fama dele; sussurro = notado por poucos, feito = a cidade comenta, proeza = a região conta, marco = muda a história); "milagre:<id>" (o herói gastou fé num milagre: bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar — o sistema cobra os PF e aplica o efeito); "loot:comum|incomum|raro|epico|lendario" (o herói encontrou um item — o sistema GERA o item com nome, afixos e poder, e te devolve os dados para você descrever o achado; NÃO escreva você o objeto de equipamento, é mais caro e sai incoerente); "dominio:<texto>" e "patrono:<texto>" (só na primeira vez que a ficção os revelar). Nunca invente PF nem número de fiéis: mande o sinal e narre a cena.
 Regras do formato: "rolagem" e "mudancas" são null quando não há; nunca os coloque dentro de "narrativa". "narrativa" é sempre uma string simples. Tipos de equipamento: arma, armadura, elmo, botas, anel, amuleto, escudo. Raridades: comum, incomum, raro, epico, lendario. Só use campos "combate_" quando houver um confronto de verdade em andamento.`;
 }
 
@@ -2845,7 +2845,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.6 · títulos, milagres e sinais</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.7 · sinais e harmonia</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -3270,7 +3270,8 @@ export default function Taverna() {
   const rolagemConsumidaRef = useRef(null);
   const mundoContRef = useRef(0);
   const combateOciosoRef = useRef(0);      // turnos sem troca de golpes
-  const ataqueResolvidoRef = useRef(false); // marca ataque do jogador neste turno
+  const ataqueResolvidoRef = useRef(false);
+  const danoJaAplicadoRef = useRef(false); // turno em que o sistema já cobrou dano // marca ataque do jogador neste turno
   const modoMundoRef = useRef(0);           // rotação de tipos de cena
   const urgenciaRef = useRef(0);            // quantas cenas recentes usaram urgência
   const historiaRef = useRef({ estrutura: "jornada", etapa: 0 });
@@ -3499,6 +3500,14 @@ export default function Taverna() {
     const msgs = [];
     /* trava anti-cobrança-dupla: no turno de [HABILIDADE] o custo já foi
        descontado pelo app; qualquer mana negativa do Mestre é ignorada */
+    /* TRAVA ANTI-DANO-DUPLO: se o sistema já cobrou o dano dos inimigos neste
+       turno, qualquer "vida"/"grupo_vida" negativo do Mestre é o MESMO golpe
+       chegando de novo — ignora (senão o herói morre pagando duas vezes). */
+    if (danoJaAplicadoRef.current && resp.mudancas) {
+      if (typeof resp.mudancas.vida === "number" && resp.mudancas.vida < 0) resp.mudancas.vida = 0;
+      if (Array.isArray(resp.mudancas.grupo_vida)) resp.mudancas.grupo_vida = resp.mudancas.grupo_vida.filter((g) => !(g && Number(g.vida) < 0));
+      danoJaAplicadoRef.current = false;
+    }
     if (habUsadaRef.current) {
       if (resp.mudancas && typeof resp.mudancas.mana === "number" && resp.mudancas.mana < 0) resp.mudancas.mana = 0;
       habUsadaRef.current = false;
@@ -3669,6 +3678,12 @@ export default function Taverna() {
           msgs.push(...ganharFe(ganho, 0, `${MAGNITUDE_FE[mag].rotulo} — ${MAGNITUDE_FE[mag].desc}`));
         } else if (chave === "milagre" && dvAtual && dvAtual.despertar) {
           invocarMilagre(arg.toLowerCase(), "mestre").forEach((m2) => msgs.push(m2.texto));
+        } else if (chave === "loot") {
+          const rar = ["comum", "incomum", "raro", "epico", "lendario"].includes(arg.toLowerCase()) ? arg.toLowerCase() : "comum";
+          const it = gerarLoot(rar, { nivel: personagem.nivel || 1 });
+          setPersonagem((p) => ({ ...p, equipamento: [...(p.equipamento || []), it] }));
+          msgs.push(`◆ Achado: ${it.nome} (${RARIDADE_ROTULO[it.raridade] || it.raridade})${it.poder ? ` — ${it.poder}` : ""}`);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ITEM GERADO PELO SISTEMA] ${it.nome}, ${it.raridade}${it.poder ? `, poder: ${it.poder}` : ""}. Já está na mochila do herói — descreva o achado usando ESTE nome e estas propriedades, sem inventar outras.`;
         } else if (chave === "dominio" && dvAtual && dvAtual.despertar && arg && !dvAtual.dominio) {
           const dv2 = { ...divindadeRef.current, dominio: arg.slice(0, 60) };
           divindadeRef.current = dv2; setDivindade(dv2);
@@ -4721,7 +4736,9 @@ export default function Taverna() {
           : r.dano > 0
           ? `⚔ ${personagem.nome} → ${alvo.nome}: ${r.critico ? "CRÍTICO! " : ""}${r.dano} de dano · ${alvo.nome} ${pvDepois}/${alvo.vidaMax || alvo.vida}${pvDepois <= 0 ? " ☠" : ""}`
           : `⚔ ${personagem.nome} → ${alvo.nome}: ${r.desastre ? "erro desastroso" : "errou"}` });
-        partesMeu.push(r.escopoImune ? `${alvo.nome} — IMUNE (GD ${alvo.gd} vs meu GD ${gdJ}; dano comum não fere divindades — preciso de artefato lendário, bênção ou enfraquecê-lo)` : `${alvo.nome} — ${r.resultado === "critico" ? `CRÍTICO, ${r.dano} de dano` : r.resultado === "acerta" ? `${r.dano} de dano` : r.resultado === "desastre" ? "erro desastroso" : "errou"} (d20=${r.d20}${r.bonus ? `+${r.bonus}` : ""}=${r.total} vs ${r.ca})${r.dano > 0 && pvDepois <= 0 ? " [CAIU]" : ""}`);
+        partesMeu.push(r.escopoImune
+          ? `${alvo.nome} — IMUNE (GD ${alvo.gd} vs meu GD ${gdJ}; dano comum não fere divindades — preciso de artefato lendário, bênção ou enfraquecê-lo)`
+          : linhaParaMestre(personagem.nome, alvo.nome, r, alvo.vidaMax || alvo.vida, r.dano > 0 ? pvDepois : undefined));
       }
       pushMsgs(linhas);
       const desfecho = `${resultados.length} ${resultados.length > 1 ? "ataques" : "ataque"}: ${partesMeu.join("; ")}`;
@@ -4752,10 +4769,14 @@ export default function Taverna() {
             if (a.alvoRef === "jogador") danoNoJogador += a.r.dano;
             else grupoAtual = grupoAtual.map((g) => g.nome === a.alvoNome ? { ...g, vida: Math.max(0, (g.vida || 0) - a.r.dano) } : g);
           }
-          const res = a.r.resultado === "critico" ? `acertou em cheio (${a.r.dano})` : a.r.resultado === "acerta" ? `acertou (${a.r.dano})` : a.r.resultado === "desastre" ? "falhou feio" : "errou";
-          partes.push(`${a.inimigo}→${a.alvoNome}: ${res}`);
+          const alvoMax = a.alvoRef === "jogador" ? (personagem.vidaMax || 1) : ((grupoAtual.find((g) => g.nome === a.alvoNome) || {}).vidaMax || 1);
+          const alvoDepois = a.r.dano > 0
+            ? (a.alvoRef === "jogador" ? Math.max(0, personagem.vida - danoNoJogador) : Math.max(0, ((grupoAtual.find((g) => g.nome === a.alvoNome) || {}).vida || 0)))
+            : undefined;
+          partes.push(linhaParaMestre(a.inimigo, a.alvoNome, a.r, alvoMax, alvoDepois));
         }
         if (linhasSis.length) pushMsgs(linhasSis);
+        if (danoNoJogador > 0) danoJaAplicadoRef.current = true;
         persAtual = { ...personagem, vida: Math.max(0, personagem.vida - danoNoJogador), grupo: grupoAtual };
 
         /* TURNO DOS COMPANHEIROS: atacam inimigos ou socorrem quem caiu */
@@ -4771,7 +4792,7 @@ export default function Taverna() {
               combPos.inimigos = combPos.inimigos.map((e) => { if (e.nome !== ac.alvoNome) return e; pvAlvo = Math.max(0, e.vida - ac.r.dano); return { ...e, vida: pvAlvo, derrotado: pvAlvo <= 0, ultimoDano: ac.r.dano }; });
             }
             pushMsgs([{ autor: "sistema", texto: ac.r.dano > 0 ? `⚔ ${ac.companheiro} → ${ac.alvoNome}: ${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? " ☠" : ""}` : `⚔ ${ac.companheiro} → ${ac.alvoNome}: errou` }]);
-            partesComp.push(`${ac.companheiro} atacou ${ac.alvoNome} (${ac.r.resultado === "acerta" || ac.r.resultado === "critico" ? ac.r.dano + " dano" : "errou"})`);
+            partesComp.push(linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined));
           } else if (ac.tipo === "socorro") {
             partesComp.push(`${ac.companheiro} corre para socorrer ${ac.alvo}`);
           }
