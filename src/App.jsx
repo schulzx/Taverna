@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
+import { gerarGeografia, garantirGeografia } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./historia.js";
@@ -2808,7 +2809,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.4.4 · coesão e poder único</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.5 · mapa, fé e prova</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -3525,7 +3526,7 @@ export default function Taverna() {
     /* MAPA E FACÇÕES: registra cidades e facções vindas do Mestre */
     if (resp.mudancas) {
       const md = resp.mudancas;
-      let mp = { cidades: [...(mapaRef.current.cidades || [])], faccoes: [...(mapaRef.current.faccoes || [])] };
+      let mp = { ...mapaRef.current, cidades: [...(mapaRef.current.cidades || [])], faccoes: [...(mapaRef.current.faccoes || [])] };
       let mudouMapa = false;
       (md.mapa_cidades || []).forEach((cd) => {
         if (!cd || !cd.nome) return;
@@ -3556,7 +3557,7 @@ export default function Taverna() {
         setJornada(jornadaRef.current);
       }
       if (md.faccao_jogador) faccaoJogadorRef.current = md.faccao_jogador;
-      if (mudouMapa) { mapaRef.current = mp; setMapa(mp); }
+      if (mudouMapa) { mp = garantirGeografia(mp, pers && pers.nome ? `taverna|${pers.nome}` : "taverna"); mapaRef.current = mp; setMapa(mp); }
     }
     /* MISSÕES E ARCO: registra quests e avanço de ato vindos do Mestre */
     if (resp.mudancas) {
@@ -3645,12 +3646,12 @@ export default function Taverna() {
         const ehLugar = ["local", "cidade", "vila", "capital", "fortaleza", "vilarejo", "povoado", "reduto", "ruína"].some((t) => tipo.includes(t));
         if (!ehLugar) continue;
         if (!(mp2.cidades || []).some((cc) => cc.nome.toLowerCase() === nome.toLowerCase())) {
-          if (!tocouMapa) { mp2 = { cidades: [...(mp2.cidades || [])], faccoes: [...(mp2.faccoes || [])] }; tocouMapa = true; }
+          if (!tocouMapa) { mp2 = { ...mp2, cidades: [...(mp2.cidades || [])], faccoes: [...(mp2.faccoes || [])] }; tocouMapa = true; }
           mp2.cidades.push(criarCidade(nome, { tipo: tipo.includes("capital") ? "capital" : tipo.includes("vila") || tipo.includes("povoado") ? "vila" : "cidade", regiao: ficha.local || "", faccao: ficha.faccao || null, notas: ficha.notas || "" }));
           msgs.push(`🗺 ${nome} surgiu no mapa`);
         }
       }
-      if (tocouMapa) { mapaRef.current = mp2; setMapa(mp2); }
+      if (tocouMapa) { mp2 = garantirGeografia(mp2, "taverna|canone"); mapaRef.current = mp2; setMapa(mp2); }
       systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade());
     }
     /* PESSOAS (registro de NPCs): o Mestre envia "npcs"; e como blindagem de
@@ -3875,11 +3876,13 @@ export default function Taverna() {
     try {
       const sys = [
         "Você é o CRONISTA de um RPG. Você NÃO narra: lê a narrativa do turno e julga, por seções, o que o SISTEMA deve registrar. Responda APENAS em JSON:",
-        "{\"missoes\":{\"concluidas\":[\"titulo exato\"],\"falhadas\":[\"titulo exato\"],\"progresso\":[{\"titulo\":\"...\",\"nota\":\"resumo curto\"}],\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\"},\"combate\":{\"mortes_narradas\":[]}}",
+        "{\"missoes\":{\"concluidas\":[\"titulo exato\"],\"falhadas\":[\"titulo exato\"],\"progresso\":[{\"titulo\":\"...\",\"nota\":\"resumo curto\"}],\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\",\"acontecimento\":null},\"grupo\":{\"entraram\":[]},\"teste_sugerido\":null,\"combate\":{\"mortes_narradas\":[]}}",
         "SEÇÃO missoes: (1) \"concluida\" SÓ com objetivo CUMPRIDO de fato e sem dúvida neste turno; (2) \"falhada\" só se impossível ou explicitamente perdida; (3) avanço parcial real vira \"progresso\"; (4) copie os títulos EXATAMENTE; (5) \"global_encerrado\": true SÓ se o EVENTO GLOBAL (se listado) foi RESOLVIDO de fato — a ameaça central derrotada/desfeita, não um avanço.",
         "SEÇÃO canone: fatos DURÁVEIS — artefatos e objetos relevantes que o herói ganhou/achou/descobriu (com o que o objeto É de fato; saque comum não entra), lugares importantes, promessas, segredos. NÃO reescreva nem contradiga o CÂNONE ATUAL — só crie novo ou acrescente campo novo.",
         "SEÇÃO pessoas: pessoas COM NOME e papel durável (aliados recorrentes, rivais, contatos) que ainda não estão no ELENCO — figurantes de cena única ficam de fora.",
-        "SEÇÃO fe: SÓ se o turno mostrou o nome do herói ganhando DEVOÇÃO real (preces em seu nome, santuário, conversões, milagre testemunhado) — fieis 10 a 500, pf 1 a 10; na dúvida, 0.",
+        "SEÇÃO fe: SÓ se o turno mostrou o nome do herói ganhando DEVOÇÃO real. Para gestos comuns, fieis 10 a 500, pf 1 a 10; na dúvida, 0. Para GRANDES acontecimentos de fé, NÃO chute números: preencha \"acontecimento\":{\"tipo\":\"alianca_reino|libertacao|milagre_publico|santuario|conversao_lider|vitoria_lendaria|pregacao\",\"local\":\"nome da cidade/reino\"} e deixe fieis/pf em 0 — o SISTEMA calcula pela população do local. Um povo/reino inteiro prometendo sua fé ao herói É \"alianca_reino\" (ou \"libertacao\", se o herói o libertou) — NUNCA deixe isso passar sem registrar.",
+        "SEÇÃO grupo: \"entraram\" = nomes de pessoas que ACEITARAM de fato acompanhar o herói como companheiros de jornada NESTE turno (o Mestre narrando \"vou com você\" conta). Se o convite foi recusado ou só um encontro casual, [].",
+        "SEÇÃO teste_sugerido: se o Mestre CONCEDEU de graça algo grande que deveria ter exigido convencimento — uma criatura anciã entregando seu poder, um rei cedendo o trono, um inimigo virando aliado do nada — preencha {\"atributo\":\"Presença|Intelecto|Força|Destreza|Vigor\",\"perfil\":\"dificil|formidavel\",\"motivo\":\"o que precisava ser provado\"}. Concessões pequenas e naturais da história NÃO entram. Na maioria dos turnos: null.",
         "SEÇÃO combate (só se houver COMBATENTES listados): \"mortes_narradas\" = inimigos que a NARRATIVA declarou mortos/destruídos/desfeitos NESTE turno. Liste só nomes da lista de combatentes; se ninguém morreu na narração, [].",
         "REGRA GERAL: na dúvida, NÃO marque — {\"missoes\":{\"concluidas\":[],\"falhadas\":[],\"progresso\":[],\"global_encerrado\":false},\"canone\":{},\"pessoas\":[],\"fe\":{\"fieis\":0,\"pf\":0}} é resposta válida e frequente.",
       ].join("\n");
@@ -3956,6 +3959,17 @@ export default function Taverna() {
           const f = Math.max(0, Math.min(500, Math.round(r.fe.fieis || 0)));
           const pf = Math.max(0, Math.min(10, Math.round(r.fe.pf || 0)));
           if (f || pf) msgs.push(...ganharFe(f, pf, String(r.fe.motivo || "sua fama vira prece").slice(0, 80)));
+          /* GRANDES ACONTECIMENTOS (v7.5): o Cronista classifica, a TABELA
+             DE FÉ calcula sobre a população real do local no mapa — assim
+             "o reino inteiro dos anões lhe devota fé" vira números de fato. */
+          const ac = r.fe.acontecimento;
+          if (ac && typeof ac === "object" && ac.tipo) {
+            const calc = fePorAcontecimento(String(ac.tipo), ac.local || "");
+            if (calc) {
+              msgs.push(...ganharFe(calc.fieis, calc.pf, `${calc.rotulo}${ac.local ? ` em ${ac.local}` : ""}${calc.pop ? ` (pop. ${calc.pop.toLocaleString("pt-BR")})` : ""}`));
+              notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FÉ — REGISTRO DO SISTEMA] ${calc.rotulo}${ac.local ? ` em ${ac.local}` : ""}: +${calc.fieis} fiéis, +${calc.pf} PF, calculados pela população do local. Isso já está contabilizado — narre a devoção chegando, não a negue.`;
+            }
+          }
         }
       } catch { /* seção quebrada não derruba as outras */ }
       /* ---- SEÇÃO combate: CÃO DE GUARDA DE COESÃO (v7.4.4) ----
@@ -3995,6 +4009,49 @@ export default function Taverna() {
           if (novos.length) { canoneRef.current = c; tocouCanone = true; msgs.push(...novos.map((n) => `✒ Cronista registrou no cânone: ${n}`)); }
         }
       } catch { /* seção quebrada não derruba as outras */ }
+      /* ---- SEÇÃO grupo: RECRUTAMENTO REAL (v7.5) ----
+         O Mestre narrava "vou com você" e o convite se perdia no ar — o
+         companheiro nunca entrava na ficha. Agora o Cronista aponta quem
+         aceitou e o CÓDIGO assina o registro (com os dados do elenco, se houver). */
+      try {
+        const entraram = (r.grupo && Array.isArray(r.grupo.entraram)) ? r.grupo.entraram : [];
+        if (entraram.length) {
+          const grupoAtual = [...(p.grupo || [])];
+          entraram.forEach((nome0) => {
+            const nome = String(nome0 || "").slice(0, 40).trim();
+            if (!nome) return;
+            if (grupoAtual.some((x) => (x.nome || "").toLowerCase() === nome.toLowerCase())) return;
+            if (grupoAtual.length >= MAX_COMPANHEIROS) { msgs.push(`O grupo está cheio — ${nome} não pôde se juntar.`); return; }
+            const fichaElenco = Object.values(npcsRef.current).find((n) => (n.nome || "").toLowerCase() === nome.toLowerCase());
+            const nivelC = Math.max(1, (p.nivel || 1) - 2);
+            const vidaMaxC = 10 + (nivelC - 1) * 3;
+            grupoAtual.push({ nome, conceito: (fichaElenco && fichaElenco.papel) || "", nivel: nivelC, vida: vidaMaxC, vidaMax: vidaMaxC, descricao: (fichaElenco && fichaElenco.notas) || "", habilidades: [], semente: `npc|${nome}|${(fichaElenco && fichaElenco.papel) || ""}`, vinculo: VINCULO_INICIAL, marcos: [] });
+            msgs.push(`⚑ ${nome} juntou-se ao grupo — ficha registrada pelo sistema.`);
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RECRUTAMENTO — REGISTRO DO SISTEMA] ${nome} agora FAZ PARTE do grupo do herói (nível ${nivelC}, ${vidaMaxC} PV — ficha criada pelo sistema, você não precisa mandar "grupo_adicionar"). Trate-o como companheiro presente nas cenas: opina, ajuda em combate, viaja junto.`;
+          });
+          if (grupoAtual.length !== (p.grupo || []).length) { p = { ...p, grupo: grupoAtual }; setPersonagem(p); }
+        }
+      } catch { /* seção quebrada não derruba as outras */ }
+      /* ---- SEÇÃO teste_sugerido: CONCESSÃO GRANDE EXIGE PROVA (v7.5) ----
+         O caso do lobo ancestral: o Mestre entregou de graça algo que deveria
+         ter sido conquistado. O Cronista sinaliza e o CÓDIGO abre um teste
+         real (dificuldade por perfil, calculada do modificador do herói) para
+         selar a concessão — se passar, o feito é canon; se falhar, o Mestre
+         narra a resistência (sem apagar o que já foi dito, o tom muda). */
+      try {
+        const ts = r.teste_sugerido;
+        if (ts && typeof ts === "object" && ts.atributo && !rolagem && !combateRef.current) {
+          const attrT = ATRIBUTOS.find((x) => x.nome.toLowerCase() === String(ts.atributo).toLowerCase());
+          if (attrT) {
+            const modT = atributoEfetivo(p, attrT.id);
+            const dc = dificuldadePorPerfil(modT, ts.perfil === "formidavel" ? "formidavel" : "dificil");
+            const motivo = String(ts.motivo || "concessão grande demais para ser de graça").slice(0, 120);
+            setRolagem({ atributo: attrT.nome, dificuldade: dc, motivo, origem: "cronista" });
+            msgs.push(`🎲 O sistema pediu prova — ${attrT.nome} (dificuldade ${dc}): ${motivo}`);
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[TESTE EXIGIDO PELO SISTEMA] A concessão que você narrou (${motivo}) é grande demais para ser de graça: o sistema abriu um teste de ${attrT.nome} (dificuldade ${dc}). Se o herói PASSAR, tudo que você narrou é canon e selado; se FALHAR, narre a concessão se complicando (condição, preço, resistência parcial) — sem apagar o que foi dito, mas sem entregar o ouro inteiro de bandeja.`;
+          }
+        }
+      } catch { /* seção quebrada não derruba as outras */ }
       if (!msgs.length) return;
       /* o prompt precisa enxergar TUDO já no PRÓXIMO turno */
       if (tocouCanone || msgs.length) systemRef.current = montarSystemPrompt(nomeCampanha, mundo, p, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade());
@@ -4005,6 +4062,37 @@ export default function Taverna() {
 
   /* GANHO DE FÉ POR CÓDIGO (v7.4): fiéis e PF mudam por aqui — e cada degrau
      de GD conquistado é anunciado e já entra no prompt do próximo turno. */
+  /* TABELA DE FÉ (v7.5): a fé deixou de ser chute do Mestre. Cada TIPO de
+     acontecimento rende uma FRAÇÃO da população do local como fiéis, mais
+     PF fixos — um milagre numa aldeia de 200 almas não pode render o mesmo
+     que numa metrópole de 200 mil. O Cronista só CLASSIFICA o acontecimento;
+     o CÓDIGO mede a população no mapa e faz a conta. */
+  const TABELA_FE = {
+    alianca_reino:    { frac: 0.04, pf: 10, rotulo: "aliança com um reino inteiro" },
+    libertacao:       { frac: 0.06, pf: 12, rotulo: "libertação de um povo oprimido" },
+    milagre_publico:  { frac: 0.02, pf: 6,  rotulo: "milagre testemunhado em público" },
+    santuario:        { fixo: 300, frac: 0.01, pf: 4, rotulo: "santuário erguido em seu nome" },
+    conversao_lider:  { frac: 0.03, pf: 6,  rotulo: "conversão de um líder local" },
+    vitoria_lendaria: { frac: 0.05, pf: 10, rotulo: "vitória sobre ameaça lendária" },
+    pregacao:         { frac: 0.005, pf: 2, rotulo: "pregação ou feito menor de fé" },
+  };
+  /* acha a cidade citada no mapa (exato ou por aproximação) e devolve a população */
+  const populacaoDe = (local) => {
+    if (!local) return 0;
+    const alvo = String(local).toLowerCase().trim();
+    const cidades = (mapaRef.current && mapaRef.current.cidades) || [];
+    const exata = cidades.find((c) => (c.nome || "").toLowerCase() === alvo);
+    const citada = exata || cidades.find((c) => alvo.includes((c.nome || "").toLowerCase()) || (c.nome || "").toLowerCase().includes(alvo));
+    return citada ? (citada.populacao || 0) : 0;
+  };
+  const fePorAcontecimento = (tipo, local) => {
+    const t = TABELA_FE[tipo];
+    if (!t) return null;
+    const pop = populacaoDe(local);
+    const fieis = Math.max(10, Math.round((t.fixo || 0) + pop * t.frac));
+    return { fieis: Math.min(fieis, 2000000), pf: t.pf, rotulo: t.rotulo, pop };
+  };
+
   const ganharFe = (fieis, pf, motivo) => {
     const dv = divindadeRef.current;
     if (!dv || !dv.despertar) return [];
@@ -4167,7 +4255,11 @@ export default function Taverna() {
     setPersonagem(pers);
     livroRef.current = ""; turnoContRef.current = 0;
     canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); npcTurnoRef.current = 0; definirAcampado(false);
-    mapaRef.current = { cidades: [], faccoes: [] }; setMapa(mapaRef.current);
+    /* GEOGRAFIA GERADA PELO SISTEMA (v7.5): o continente nasce PRONTO —
+       regiões com bioma, cidades com porte e população, rotas com dias de
+       viagem. O Mestre narra em cima de fatos fixos, não inventa caminhos. */
+    const geo = gerarGeografia(`${nomeCampanha || "aventura"}|${(mundo && mundo.genero) || ""}`);
+    mapaRef.current = { cidades: geo.cidades, faccoes: [], continente: geo.continente, regioes: geo.regioes, rotas: geo.rotas }; setMapa(mapaRef.current);
     faccaoJogadorRef.current = ""; cidadeAtualRef.current = "";
     jornadaRef.current = null; setJornada(null);
     eventosRef.current = { locais: [], global: null, semGlobalDesde: 0, seq: 1 }; setEventos(eventosRef.current);
@@ -4210,7 +4302,14 @@ export default function Taverna() {
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       npcsRef.current = sv.npcs && typeof sv.npcs === "object" ? sv.npcs : {}; setNpcs(npcsRef.current); npcTurnoRef.current = 0;
       definirAcampado(!!sv.acampado);
-      mapaRef.current = sv.mapa && sv.mapa.cidades ? sv.mapa : { cidades: [], faccoes: [] };
+      if (sv.mapa && sv.mapa.cidades && sv.mapa.cidades.length) {
+        mapaRef.current = sv.mapa;
+        mapaRef.current = garantirGeografia(mapaRef.current, `taverna|${sv.personagem && sv.personagem.nome ? sv.personagem.nome : "save"}`);
+      } else {
+        /* save antigo sem mapa: gera o mundo inteiro por código (v7.5) */
+        const geo = gerarGeografia(`taverna|${sv.personagem && sv.personagem.nome ? sv.personagem.nome : "save"}`);
+        mapaRef.current = { cidades: geo.cidades, faccoes: (sv.mapa && sv.mapa.faccoes) || [], continente: geo.continente, regioes: geo.regioes, rotas: geo.rotas };
+      }
       setMapa(mapaRef.current);
       faccaoJogadorRef.current = sv.faccaoJogador || "";
       cidadeAtualRef.current = sv.cidadeAtual || "";
@@ -5781,7 +5880,8 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
     });
     if (tocouN) { npcsRef.current = reg; setNpcs(reg); msgs.push(`👥 ${(j.npcs || []).filter((n) => n && n.nome).length} pessoa(s) recalibrada(s) no elenco`); }
     /* 3) Potências e cidades: mesmo merge do mapa usado nas respostas do Mestre */
-    let mp = { cidades: [...(mapaRef.current.cidades || [])], faccoes: [...(mapaRef.current.faccoes || [])] };
+    let mp = { ...mapaRef.current, cidades: [...(mapaRef.current.cidades || [])], faccoes: [...(mapaRef.current.faccoes || [])] };
+    mp = garantirGeografia(mp, "taverna|recal");
     (j.cidades || []).forEach((cd) => {
       if (!cd || !cd.nome) return;
       const i = mp.cidades.findIndex((c) => c.nome.toLowerCase() === cd.nome.toLowerCase());

@@ -98,16 +98,11 @@ export function localDeDescanso(mapa, cidadeAtual, faccaoJogador) {
 }
 
 /* Resumo do mapa para injetar no prompt (compacto, só o essencial) */
+/* O resumo do mapa para o prompt agora vem da GEOGRAFIA (v7.5): portes,
+   populações, biomas e rotas fixas — os mesmos fatos que o jogador vê. */
+import { resumoGeografiaPrompt } from "./geografia.js";
 export function resumoMapaParaPrompt(mapa, faccaoJogador) {
-  if (!mapa || !(mapa.cidades || []).length) return "";
-  const linhas = mapa.cidades.map((c) => {
-    const rel = c.relacao === "jogador" ? "SUA" : c.relacao;
-    const marca = c.sede ? " [SEDE]" : "";
-    return `• ${c.nome}${marca} (${c.tipo}${c.regiao ? `, ${c.regiao}` : ""}) — facção: ${c.faccao || "nenhuma"} [${rel}]`;
-  });
-  const dominadas = cidadesDominadas(mapa).length;
-  const cab = faccaoJogador ? `Facção do jogador: ${faccaoJogador} (domina ${dominadas} cidade(s)).` : "";
-  return `${cab}\n${linhas.join("\n")}`;
+  return resumoGeografiaPrompt(mapa, faccaoJogador);
 }
 
 
