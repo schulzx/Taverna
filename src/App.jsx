@@ -23,7 +23,7 @@ import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, ro
 import { calcularFama, patamarFama, gerarNemesis, LIMIARES_NEMESIS, ACOES_NEMESIS, rumorDoDia } from "./fama.js";
 import { gerarCronica } from "./cronica.js";
 import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
-import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT } from "./divindades.js";
+import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, decaimentoFe, MILAGRES, milagresDisponiveis, milagrePorId } from "./divindades.js";
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, processarDiaCorreio } from "./correio.js";
 
@@ -116,7 +116,7 @@ function formatarCanone(canone) {
   return linhas.join("\n");
 }
 
-function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone, bancoNomes, mapaInfo, historiaInfo, questsInfo, npcsInfo, tempoInfo, divindadeInfo = "") {
+function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone, bancoNomes, mapaInfo, historiaInfo, questsInfo, npcsInfo, tempoInfo, divindadeInfo = "", tituloInfo = "") {
   mundo = mundo || { genero: "Fantasia medieval" };
   personagem = personagem || {};
   const canoneTexto = formatarCanone(canone);
@@ -211,8 +211,10 @@ ${TABELA_TESTES}
   · O app converte automaticamente em SUCESSO SEM ROLAGEM os testes triviais para o herói — então peça rolagem apenas quando fizer sentido pela tabela e pelo patamar.
 - BESTIÁRIO (use-o ao criar inimigos — nomes conhecidos ganham números coerentes automaticamente): ${criaturasDoGenero((mundo || {}).genero).map((c) => `${c.nome} (${c.ameaca})`).join(", ")}. Ao iniciar combate você pode enviar SÓ o nome e a ameaça de cada inimigo — o sistema preenche PV, defesa e nível pela tabela, proporcionais ao herói. Prefira criaturas do bestiário; se inventar uma nova, dê-lhe uma ameaça da escala (fraco/comum/competente/elite/lendario) e deixe os números com o sistema.
 - ATAQUES MÚLTIPLOS DO HERÓI: a partir do nível 5 o herói realiza 2 ataques por turno (3 no nível 11, 4 no 20) — o SISTEMA resolve todos os golpes e envia a sequência; narre-a como uma combinação fluida (não recalcule nada).
-- PATAMAR DE PODER DO HERÓI (a régua de TODAS as decisões — consulte antes de qualquer combate, rolagem ou feito): ${resumoPatamar(personagem.nivel || 1)}
-  · O jogador NÃO tem teto de progressão — mas cada patamar tem sua escala. Um Iniciante NUNCA derruba um golem num golpe (negue com a matemática); uma Divindade NUNCA sofre para vencer mortais (nem abra combate — narre o gesto). Ameaças novas devem ser escolhidas do patamar DIGNO; triviais se resolvem em uma frase; superiores exigem plano, aliados ou fuga.
+- COMO O MUNDO O CHAMA (o título — use ESTE nome, e nenhum outro, ao falar do que ele é): ${tituloInfo || "Mortal"}
+  · Três medidas diferentes, NÃO as confunda: o TÍTULO acima diz o que ele é; o PATAMAR abaixo diz só o que ele aguenta em combate; a FAMA diz quanto o mundo o conhece. Palavras divinas (Semideus, Divindade) pertencem EXCLUSIVAMENTE à fé — nível alto não torna ninguém divino, e um herói poderoso sem fé é um mortal formidável. Nunca chame de deus quem o sistema não declarou deus.
+- PATAMAR DE COMBATE DO HERÓI (a régua de TODAS as decisões de perigo — consulte antes de qualquer combate, rolagem ou feito): ${resumoPatamar(personagem.nivel || 1)}
+  · O jogador NÃO tem teto de progressão — mas cada patamar tem sua escala. Um Iniciante NUNCA derruba um golem num golpe (negue com a matemática); um Titã NUNCA sofre para vencer mortais (nem abra combate — narre o gesto). Ameaças novas devem ser escolhidas do patamar DIGNO; triviais se resolvem em uma frase; superiores exigem plano, aliados ou fuga.
 - PREÇOS PADRÃO (use esta tabela — não invente valores): item comum 10-25 moedas; incomum 40-80; raro 150-300; épico 600-1200; lendário 2500+. Vender rende METADE do valor. Estalagem 2-5/noite; refeição 1-2; poção de cura comum 40-60. Serviços simples 5-20; especializados 50-200. Mantenha a economia coerente com esses números.
 - BALANCEAMENTO DE PV (importante — não infle números!): o PV dos inimigos deve ser PROPORCIONAL ao meu nível. Referência por ameaça (para um herói do meu nível): inimigo "fraco" tem cerca de 35% do meu PV, "comum" ~70%, "competente" ~igual ao meu, "elite" ~1,6×, "lendário/chefe" ~2,6×. NUNCA dê a um inimigo comum 3× o meu PV — isso quebra o jogo. Um chefe pode ser forte, mas dentro dessa escala. Quando criar um inimigo, defina "combate_inimigo_vida"/PV coerente com essa tabela e com meu nível atual.
 - COMBATE RESOLVIDO PELO SISTEMA: quando você receber [COMBATE — RESOLVIDO PELO SISTEMA], o app JÁ rolou os dados, calculou e aplicou o dano do ataque do jogador. Sua função é APENAS narrar esse resultado (não recalcule, não invente outro número, não mude quem acertou). Depois, conduza a resposta dos inimigos: descreva os contra-ataques e aplique o dano deles a mim via "vida" e aos companheiros via "grupo_vida" — pode rolar mentalmente, mas mantenha coerência com a ameaça de cada um. Você continua no controle da FICÇÃO do combate (quem faz o quê, táticas, ambiente); o sistema cuida só da matemática dos ataques do jogador.
@@ -326,13 +328,14 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   "mapa_faccoes": [{"nome":"Guilda do Corvo","tipo":"guilda","lider":"você","relacao":"jogador","doJogador":true}],
   "cidade_atual": "Pedravale",
   "jornada_meio": "navio",
-  "fe": {"fieis": 0, "pf": 0, "dominio": "", "patrono": ""},
+  "sinais": ["fe:proeza", "milagre:cura", "dominio:da Forja e do Fogo"],
   "canone": {
     "Cael": {"tipo":"pessoa","papel":"mago viajante","genero":"homem","local":"estrada para Dwen","status":"vivo","notas":"o herói se apresentou a ele com o nome falso Falkion"},
     "Refúgio das Pedras": {"tipo":"local","notas":"esconderijo do grupo, a leste do rio"}
   }
 }
 O campo "canone" é opcional: inclua-o só quando houver um fato durável a registrar ou atualizar. Cada chave é o NOME da entidade; os campos (tipo, papel, genero, local, status, notas) são todos opcionais — preencha os relevantes. Para atualizar, reenvie a mesma chave com os campos novos.
+SINAIS (canal barato — prefira-o sempre que existir): em vez de calcular e enviar números, mande um sinal curto e o SISTEMA resolve pela tabela. Sinais aceitos: "fe:sussurro|feito|proeza|marco" (o herói fez algo que rende fé — o sistema converte em fiéis conforme a fama dele; sussurro = notado por poucos, feito = a cidade comenta, proeza = a região conta, marco = muda a história); "milagre:<id>" (o herói gastou fé num milagre: bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar — o sistema cobra os PF e aplica o efeito); "dominio:<texto>" e "patrono:<texto>" (só na primeira vez que a ficção os revelar). Nunca invente PF nem número de fiéis: mande o sinal e narre a cena.
 Regras do formato: "rolagem" e "mudancas" são null quando não há; nunca os coloque dentro de "narrativa". "narrativa" é sempre uma string simples. Tipos de equipamento: arma, armadura, elmo, botas, anel, amuleto, escudo. Raridades: comum, incomum, raro, epico, lendario. Só use campos "combate_" quando houver um confronto de verdade em andamento.`;
 }
 
@@ -1395,7 +1398,7 @@ function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio, onDefinirRelacao }
 /* ---------------- ASCENSÃO (v7.4): escala GD, fé e o panteão ----------------
    Só aparece depois do despertar (nível NIVEL_DESPERTAR). Rastreável: o
    jogador VÊ a própria força e a de cada deus — e quando tem vantagem. */
-function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, recalibrando }) {
+function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, recalibrando, onMilagre }) {
   const dv = divindade || garantirDivindade(null);
   const gd = grauDe(dv);
   const prox = proximoPatamar(dv);
@@ -1442,8 +1445,32 @@ function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, recalibra
             <div className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>fiéis</div>
           </div>
           <div className="rounded-xl p-2.5 text-center" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-            <div className="tv-display text-xl" style={{ color: T.violetSoft }}>{dv.pf}</div>
-            <div className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>pontos de fé</div>
+            <div className="tv-display text-xl" style={{ color: T.violetSoft }}>{dv.pf}<span className="tv-mono text-[10px]" style={{ color: T.inkDim }}>/{pfMaximo(dv)}</span></div>
+            <div className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>pontos de fé · +{pfPorDia(dv)}/dia</div>
+          </div>
+        </div>
+        <div className="mt-4">
+          <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.violetSoft }}>Milagres — no que gastar a fé</div>
+          <div className="space-y-1.5">
+            {MILAGRES.map((m) => {
+              const liberado = m.gd <= gd;
+              const podePagar = (dv.pf || 0) >= m.pf;
+              const ativo = liberado && podePagar;
+              return (
+                <button key={m.id} disabled={!ativo} onClick={() => onMilagre && onMilagre(m.id)}
+                  className="w-full text-left rounded-lg px-3 py-2 flex items-center gap-2.5"
+                  style={{ background: ativo ? T.panelSoft : "transparent", border: `1px solid ${ativo ? T.violet : T.line}`, opacity: liberado ? 1 : 0.4, cursor: ativo ? "pointer" : "default" }}>
+                  <span style={{ fontSize: 15 }}>{m.icone}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="tv-body text-sm" style={{ color: T.ink }}>{m.nome}</span>
+                    <span className="tv-body text-xs block" style={{ color: T.inkDim }}>{m.desc}</span>
+                  </span>
+                  <span className="tv-mono text-[10px] shrink-0 text-right" style={{ color: podePagar && liberado ? T.violetSoft : T.inkDim }}>
+                    {m.pf} PF{!liberado && <span className="block" style={{ color: T.inkDim }}>GD {m.gd}</span>}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
         {prox ? (
@@ -1958,7 +1985,7 @@ function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, con
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1997,7 +2024,16 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
             <div className="flex items-center gap-3">
               <Retrato semente={sementeDe(personagem)} tamanho={64} anel={T.amber} estado={estadoDe(personagem.vida, personagem.vidaMax)} />
               <div className="min-w-0">
-                <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>{(mundo || {}).genero} · Nível {personagem.nivel} · <span style={{ color: T.amberSoft }}>{patamarDe(personagem.nivel).nome}</span>{divindade && divindade.despertar && <span style={{ color: T.violetSoft }}> · 🌟 GD {grauDe(divindade)} · {tituloDe(grauDe(divindade))}</span>}</div>
+                <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>
+                  {(() => {
+                    const t = tituloDoHeroi(divindade, (famaInfo && famaInfo.pf && famaInfo.pf.rotulo) || "", patamarDe(personagem.nivel).nome);
+                    return (<>
+                      <span style={{ color: t.divino ? T.violetSoft : T.amberSoft, fontWeight: 700 }}>{t.divino ? `🌟 ${t.titulo}` : t.titulo}</span>
+                      {t.divino && <span style={{ color: T.violetSoft }}> · GD {t.gd}</span>}
+                      <span style={{ color: T.inkDim }}> · {(mundo || {}).genero} · nv {personagem.nivel} · combate: {patamarDe(personagem.nivel).nome}</span>
+                    </>);
+                  })()}
+                </div>
                 <div className="tv-display text-3xl leading-tight" style={{ color: T.ink }}>{personagem.nome}</div>
                 <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>{personagem.conceito}</div>
                 {tituloAtivo ? <div className="tv-mono text-[11px] mt-0.5" style={{ color: T.amber }}>★ ❝ {tituloAtivo} ❞</div> : null}
@@ -2138,7 +2174,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
         )}
 
         {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} />}
-        {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"} />}
+        {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"}  onMilagre={onMilagreUI} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} />}
         {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} />}
@@ -2809,7 +2845,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.5 · mapa, fé e prova</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.6 · títulos, milagres e sinais</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -3614,9 +3650,37 @@ export default function Taverna() {
       }
       setQuests([...questsRef.current]);
     }
-    /* FÉ (v7.4): o Mestre registra ganhos narrados ("fe":{"fieis":N,"pf":N,
-       "dominio":"...","patrono":"..."}); o sistema soma, recalcula o GD e
-       anuncia degraus. PF negativo = milagre cobrado pelo sistema. */
+    /* SINAIS (v7.6): o Mestre não manda mais números — manda um sinal curto
+       ("fe:proeza", "milagre:cura", "dominio:da Forja") e o SISTEMA converte
+       usando as tabelas. Mais barato em tokens e impossível de inflacionar. */
+    if (resp.mudancas && Array.isArray(resp.mudancas.sinais)) {
+      for (const bruto of resp.mudancas.sinais.slice(0, 6)) {
+        const txt = String(bruto || "").trim();
+        if (!txt) continue;
+        const ix = txt.indexOf(":");
+        const chave = (ix < 0 ? txt : txt.slice(0, ix)).trim().toLowerCase();
+        const arg = ix < 0 ? "" : txt.slice(ix + 1).trim();
+        const dvAtual = divindadeRef.current;
+        if (chave === "fe" && dvAtual && dvAtual.despertar) {
+          const mag = MAGNITUDE_FE[arg.toLowerCase()] ? arg.toLowerCase() : "feito";
+          const ganho = fieisPorFeito(mag, famaAtual());
+          const dv2 = { ...divindadeRef.current, ultimoFeitoDia: diaRef.current };
+          divindadeRef.current = dv2; setDivindade(dv2);
+          msgs.push(...ganharFe(ganho, 0, `${MAGNITUDE_FE[mag].rotulo} — ${MAGNITUDE_FE[mag].desc}`));
+        } else if (chave === "milagre" && dvAtual && dvAtual.despertar) {
+          invocarMilagre(arg.toLowerCase(), "mestre").forEach((m2) => msgs.push(m2.texto));
+        } else if (chave === "dominio" && dvAtual && dvAtual.despertar && arg && !dvAtual.dominio) {
+          const dv2 = { ...divindadeRef.current, dominio: arg.slice(0, 60) };
+          divindadeRef.current = dv2; setDivindade(dv2);
+          msgs.push(`🌌 Domínio revelado: ${dv2.dominio}`);
+        } else if (chave === "patrono" && dvAtual && dvAtual.despertar && arg && !dvAtual.patrono) {
+          const dv2 = { ...divindadeRef.current, patrono: arg.slice(0, 60) };
+          divindadeRef.current = dv2; setDivindade(dv2);
+          msgs.push(`🕯 Patrono declarado: ${dv2.patrono}`);
+        }
+      }
+    }
+    /* COMPATIBILIDADE: formato antigo "fe":{fieis,pf} de saves/respostas v7.4-7.5 */
     if (resp.mudancas && resp.mudancas.fe && typeof resp.mudancas.fe === "object" && divindadeRef.current && divindadeRef.current.despertar) {
       const fe = resp.mudancas.fe;
       const fieis = Math.round(Number(fe.fieis) || 0), pf = Math.round(Number(fe.pf) || 0);
@@ -3652,7 +3716,7 @@ export default function Taverna() {
         }
       }
       if (tocouMapa) { mp2 = garantirGeografia(mp2, "taverna|canone"); mapaRef.current = mp2; setMapa(mp2); }
-      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade());
+      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     }
     /* PESSOAS (registro de NPCs): o Mestre envia "npcs"; e como blindagem de
        memória, qualquer PESSOA do cânone sem ficha entra no registro por código. */
@@ -3678,7 +3742,7 @@ export default function Taverna() {
       }
       if (tocou) {
         npcsRef.current = reg; setNpcs(reg);
-        systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade());
+        systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
       }
     }
     setPersonagem(pers);
@@ -4054,7 +4118,7 @@ export default function Taverna() {
       } catch { /* seção quebrada não derruba as outras */ }
       if (!msgs.length) return;
       /* o prompt precisa enxergar TUDO já no PRÓXIMO turno */
-      if (tocouCanone || msgs.length) systemRef.current = montarSystemPrompt(nomeCampanha, mundo, p, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade());
+      if (tocouCanone || msgs.length) systemRef.current = montarSystemPrompt(nomeCampanha, mundo, p, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
       pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
       salvar({ personagem: p });
     } catch { /* o cronista NUNCA atrapalha o jogo — falhou, vida segue */ }
@@ -4093,22 +4157,103 @@ export default function Taverna() {
     return { fieis: Math.min(fieis, 2000000), pf: t.pf, rotulo: t.rotulo, pop };
   };
 
+  /* TÍTULO ÚNICO (v7.6): resolve o nome que a ficha mostra e que o Mestre usa.
+     Fé tem precedência (é o que o herói É); sem fé, vale a fama. */
+  const infoTitulo = () => {
+    const t = tituloDoHeroi(divindadeRef.current, patamarFama(famaAtual()).rotulo, patamarDe(personagem.nivel || 1).nome);
+    if (t.divino) return `${t.titulo} (GD ${t.gd} — título DIVINO, conquistado por fé, não por nível)`;
+    return `${t.titulo} (mortal — reconhecimento do mundo; NÃO é título divino)`;
+  };
+
   const ganharFe = (fieis, pf, motivo) => {
     const dv = divindadeRef.current;
     if (!dv || !dv.despertar) return [];
     const antes = grauDe(dv);
     const novo = { ...dv, fieis: Math.max(0, dv.fieis + (fieis || 0)), pf: Math.max(0, dv.pf + (pf || 0)) };
     divindadeRef.current = novo; setDivindade(novo);
-    const depois = grauDe(novo);
+    const tetoGd = gdMaximoPorNivel(personagem.nivel || 1);
+    const depois = Math.min(grauDe(novo), tetoGd);
     const msgs = [];
     if (fieis) msgs.push(`${dv.iconeFe || "🙏"} ${fieis > 0 ? "+" : ""}${fieis} fiéis (${novo.fieis} no total)${motivo ? ` — ${motivo}` : ""}`);
+    if (fieis > 0 && grauDe(novo) > tetoGd) msgs.push(`⛓ A fé cresce além do que seu corpo suporta — é preciso mais poder (nível) para encarnar o próximo grau.`);
     if (pf) msgs.push(`✨ ${pf > 0 ? "+" : ""}${pf} Pontos de Fé (${novo.pf} PF)`);
     if (depois > antes) {
       msgs.push(`🌟 ASCENSÃO! Seu nome ganha peso no cosmos: agora você é ${tituloDe(depois)} (GD ${depois}).`);
-      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade());
+      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ASCENSÃO — REGISTRO DO SISTEMA] O jogador subiu para GD ${depois} (${tituloDe(depois)}). Isso é fato: narre os sinais dessa transformação aos poucos, à altura do marco.`;
     }
     return msgs;
+  };
+
+  /* MILAGRE (v7.6): gasta PF e o SISTEMA aplica o efeito. Serve tanto ao
+     botão do jogador quanto ao sinal "milagre:<id>" vindo do Mestre. */
+  const invocarMilagre = (id, origem = "jogador") => {
+    const dv = divindadeRef.current;
+    const mil = milagrePorId(id);
+    if (!dv || !dv.despertar || !mil) return [];
+    const gd = grauDe(dv);
+    if (mil.gd > gd) return [{ autor: "sistema", texto: `⛔ ${mil.nome} exige GD ${mil.gd} — você é GD ${gd}.` }];
+    if ((dv.pf || 0) < mil.pf) return [{ autor: "sistema", texto: `⛔ ${mil.nome} custa ${mil.pf} PF — você tem ${dv.pf}.` }];
+
+    const novo = { ...dv, pf: Math.max(0, dv.pf - mil.pf), ultimoFeitoDia: diaRef.current };
+    divindadeRef.current = novo; setDivindade(novo);
+    const msgs = [{ autor: "sistema", texto: `${mil.icone} MILAGRE — ${mil.nome} (−${mil.pf} PF · restam ${novo.pf})` }];
+    const ef = mil.efeito || {};
+    let notaMestre = `[MILAGRE INVOCADO — efeito JÁ APLICADO pelo sistema] "${mil.nome}": ${mil.desc} Custou ${mil.pf} PF${origem === "jogador" ? " (o jogador invocou)" : ""}. Narre a manifestação à altura do domínio${novo.dominio ? ` (${novo.dominio})` : ""} — visceral, pública, inesquecível. NÃO recalcule números.`;
+
+    if (ef.tipo === "cura") {
+      setPersonagem((p) => {
+        const cura = Math.round((p.vidaMax || 10) * (ef.fracao || 0.5));
+        const grupo = (p.grupo || []).map((g) => ({ ...g, vida: Math.min(g.vidaMax || g.vida, (g.vida || 0) + Math.round((g.vidaMax || 10) * (ef.fracao || 0.5))) }));
+        msgs.push({ autor: "sistema", texto: `🩶 +${cura} PV a você e ao grupo` });
+        return { ...p, vida: Math.min(p.vidaMax, (p.vida || 0) + cura), morrendo: false, morte: { sucessos: 0, falhas: 0 }, grupo };
+      });
+    } else if (ef.tipo === "efeito") {
+      setPersonagem((p) => {
+        const efeitos = (p.efeitos || []).filter((e) => e.nome !== ef.nome);
+        efeitos.push({ nome: ef.nome, bonus: ef.bonus || 2, turnos: ef.turnos || 5, aplica: "todos", descricao: mil.desc });
+        return { ...p, efeitos };
+      });
+      msgs.push({ autor: "sistema", texto: `✧ ${ef.nome} ativo por ${ef.turnos} turnos` });
+    } else if (ef.tipo === "dano_area" && combateRef.current) {
+      const c = combateRef.current;
+      const alvos = (c.inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
+      const novos = (c.inimigos || []).map((e) => {
+        if (e.derrotado || e.vida <= 0) return e;
+        const dano = Math.max(1, Math.round((e.vidaMax || e.vida) * (ef.fracao || 0.35)));
+        const pv = Math.max(0, e.vida - dano);
+        msgs.push({ autor: "sistema", texto: `⚡ ${e.nome}: ${dano} de dano · ${pv}/${e.vidaMax || e.vida}${pv <= 0 ? " ☠" : ""}` });
+        return { ...e, vida: pv, derrotado: pv <= 0 };
+      });
+      const nc = { ...c, inimigos: novos };
+      combateRef.current = nc; setCombate(nc);
+      notaMestre += ` Alvos atingidos: ${alvos.map((a) => a.nome).join(", ")}.`;
+    } else if (ef.tipo === "ressurreicao") {
+      setPersonagem((p) => {
+        const grupo = (p.grupo || []).map((g) => (g.vida <= 0 || g.morrendo) ? { ...g, vida: Math.max(1, Math.round((g.vidaMax || 10) / 2)), morrendo: false } : g);
+        return { ...p, grupo, vida: p.vida <= 0 ? Math.max(1, Math.round(p.vidaMax / 2)) : p.vida, morrendo: false, morte: { sucessos: 0, falhas: 0 } };
+      });
+      msgs.push({ autor: "sistema", texto: "🕯 Os caídos voltam — a morte devolve o que é seu." });
+    } else if (ef.tipo === "vinculo") {
+      notaMestre += " O NPC presente mais relevante jura lealdade de forma irreversível — trate como fato firmado.";
+    }
+    if (ef.fe) {
+      const g = fieisPorFeito(ef.fe, famaAtual());
+      msgs.push(...ganharFe(g, 0, `${mil.nome} — testemunhado por multidões`).map((t) => ({ autor: "sistema", texto: t })));
+    }
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaMestre}`;
+    return msgs;
+  };
+
+  /* Botão de milagre: invoca e deixa o Mestre narrar a manifestação. */
+  const usarMilagre = (id) => {
+    if (bloqueado) return;
+    const msgs = invocarMilagre(id, "jogador");
+    if (msgs.length) pushMsgs(msgs);
+    const mil = milagrePorId(id);
+    if (mil && (divindadeRef.current.pf >= 0)) {
+      enviar(`[MILAGRE] Invoco ${mil.nome}. O sistema já cobrou os PF e aplicou o efeito — narre a manifestação do meu domínio de forma inesquecível.`, personagem);
+    }
   };
 
   /* DESPERTAR (v7.4): ao cruzar o nível NIVEL_DESPERTAR, o céu se abre —
@@ -4120,7 +4265,7 @@ export default function Taverna() {
     const panteao = gerarPanteaoInicial(ctx, diaRef.current);
     divindadeRef.current = { ...dv, despertar: true, panteao, fieis: Math.max(dv.fieis, 50), pf: dv.pf };
     setDivindade(divindadeRef.current);
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade());
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     if (silencioso) {
       /* SAVE VETERANO (v7.4.1): nível alto carregado do disco — o sistema
          abre a ascensão SEM cutucar o Mestre (evita dupla narração com o
@@ -4170,7 +4315,7 @@ export default function Taverna() {
         turnoContRef.current = 0;
         const narrativas = mensagensRef.current.filter((x) => x.autor === "mestre").map((x) => x.texto);
         gerarLivro(livroRef.current, narrativas).then((l) => {
-          if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade()); }
+          if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo()); }
         });
       }
       setTimeout(() => salvar({ personagem: pers, historico: histFinal, rolagem: resp.rolagem || null, sugestoes: resp.rolagem ? [] : (resp.sugestoes || []) }), 0);
@@ -4281,7 +4426,7 @@ export default function Taverna() {
     questsRef.current = []; setQuests([]);
     divindadeRef.current = garantirDivindade(null); setDivindade(divindadeRef.current);
     bancoNomesRef.current = gerarBancoNomes(mundo);
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade());
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setSugestoes([]); setRolagem(null);
     setCombate(null); combateRef.current = null;
     setFase("jogo");
@@ -4348,7 +4493,7 @@ export default function Taverna() {
       questsRef.current = Array.isArray(sv.quests) ? sv.quests : [];
       setQuests([...questsRef.current]);
       bancoNomesRef.current = gerarBancoNomes(sv.mundo);
-      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade());
+      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
       setFase("jogo");
       /* DESPERTAR NO CARREGAMENTO (v7.4.1): save veterano nível ≥15 nunca
          disparava o despertar (ele só checava DEPOIS de um turno). */
@@ -5277,6 +5422,22 @@ export default function Taverna() {
         correioMsgsDiaRef.current.push(m);
       });
     }
+    /* FÉ POR DIA (v7.6): PF regenera proporcional aos fiéis (como a renda das
+       cidades) e a devoção míngua se o herói sumir do mundo. A IA não concede
+       mais PF — ela só gasta em milagres. */
+    {
+      const dv = divindadeRef.current;
+      if (dv && dv.despertar && dv.fieis > 0) {
+        const teto = pfMaximo(dv);
+        const ganho = pfPorDia(dv) * n;
+        const semAparecer = Math.max(0, diaRef.current - (dv.ultimoFeitoDia || 0));
+        const perda = decaimentoFe(dv, semAparecer);
+        const novo = { ...dv, pf: Math.min(teto, (dv.pf || 0) + ganho), fieis: Math.max(0, dv.fieis - perda) };
+        divindadeRef.current = novo; setDivindade(novo);
+        if (ganho > 0 && novo.pf > (dv.pf || 0)) pushMsgs([{ autor: "sistema", texto: `✨ As preces rendem ${novo.pf - (dv.pf || 0)} PF (${novo.pf}/${teto}).` }]);
+        if (perda > 0) pushMsgs([{ autor: "sistema", texto: `🕯 Sem sinais seus há ${semAparecer} dias, ${perda} fiéis deixam de rezar.` }]);
+      }
+    }
     reinoRef.current = r; setReino(r); setDia(diaRef.current);
     if (cofreDeltaTotal !== 0) {
       guildaRef.current = { ...guildaRef.current, cofre: Math.max(0, (guildaRef.current.cofre || 0) + cofreDeltaTotal) };
@@ -5903,7 +6064,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
       if (gn !== guildaRef.current.nivel) { const g = { ...guildaRef.current, nivel: gn }; guildaRef.current = g; setGuilda(g); msgs.push(`🏛 Guilda recalibrada para o nível ${gn}`); }
     }
     /* 5) O prompt precisa enxergar o mundo novo já no próximo turno */
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade());
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Recalibração de save: o estado do mundo (guilda, domínios, potências, pessoas, companheiros) foi atualizado para refletir tudo que já aconteceu. Trate os registros atuais como verdade.`;
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })).concat([{ autor: "sistema", texto: "⚖ Mundo recalibrado. Confira Gestão: Grupo, Pessoas, Guilda, Domínios e Diplomacia agora contam a sua história." }]));
     setRecalM(null);
@@ -5975,7 +6136,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     if (dv.dominio) msgs.push(`🌌 Domínio: ${dv.dominio}`);
     if (pan.length) msgs.push(`🏛 Panteão: ${pan.map((d) => `${d.nome} (GD ${d.gd})`).join(", ")}`);
     /* O Mestre precisa TRATAR isso como fato já no próximo turno */
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade());
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ASCENSÃO — RECALIBRAÇÃO DO SISTEMA] O estado divino do herói foi alinhado com a história já jogada: GD ${depois} (${tituloDe(depois)}), ${dv.fieis} fiéis, ${dv.pf} PF${dv.dominio ? `, domínio ${dv.dominio}` : ""}${dv.patrono ? `, patrono ${dv.patrono}` : ""}. Trate como verdade estabelecida — a história já o reconhecia assim.`;
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
     setRecalAsc(null);
@@ -6300,7 +6461,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

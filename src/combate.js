@@ -260,11 +260,11 @@ export const PATAMARES = [
     triviais: "bandidos, soldados rasos, feras comuns — resolva em UMA frase, sem abrir combate", dignos: "golens, gigantes, campeões inimigos, pequenos grupos de elite", acima: "dragões adultos, avatares, exércitos inteiros" },
   { min: 9, nome: "Campeão", desc: "Entre os mais poderosos da era. Reis o tratam como igual.",
     triviais: "qualquer tropa comum, feras, golens menores — um gesto os resolve", dignos: "dragões, senhores da guerra lendários, horrores antigos (lendários)", acima: "semideuses, entidades primordiais" },
-  { min: 12, nome: "Lenda Viva", desc: "Seu nome molda o destino de reinos. Poucos mortais o desafiam.",
+  { min: 12, nome: "Portento", desc: "Uma força da natureza em forma de gente. Poucos mortais o desafiam.",
     triviais: "praticamente qualquer ameaça mortal comum — inclusive golens; NUNCA abra combate por isso", dignos: "os maiores dragões, liches ancestrais, campeões divinos", acima: "deuses menores, forças cósmicas" },
-  { min: 16, nome: "Semideus", desc: "Meio lenda, meio mito. O mundo físico raramente o ameaça.",
+  { min: 16, nome: "Coloso", desc: "O mundo físico raramente o ameaça — mas ele segue mortal.",
     triviais: "exércitos mortais inteiros, monstros lendários comuns", dignos: "avatares divinos, titãs, entidades primordiais", acima: "deuses maiores, o próprio tecido da realidade" },
-  { min: 20, nome: "Divindade Menor", desc: "Você transcendeu. Um golem é uma pedra que fala; mortais são história que você escreve.",
+  { min: 20, nome: "Titã", desc: "Potência bruta no ápice mortal. Um golem é uma pedra que fala.",
     triviais: "TUDO que é mortal — jamais abra combate contra mortais; narre com um gesto", dignos: "outras divindades, conceitos encarnados, o impossível", acima: "os deuses primeiros — e mesmo esses, com astúcia…" },
 ];
 
@@ -277,5 +277,5 @@ export function patamarDe(nivel) {
 export function resumoPatamar(nivel) {
   const p = patamarDe(nivel);
   const prox = PATAMARES[PATAMARES.indexOf(p) + 1];
-  return `${p.nome} (nível ${nivel || 1}). ${p.desc} TRIVIAL para ele (resolva narrativamente num gesto, SEM abrir combate nem pedir rolagem difícil): ${p.triviais}. DESAFIO DIGNO (combate/rolagens valem a pena): ${p.dignos}. ACIMA dele (vitória direta é implausível — exija astúcia, aliados, preparação ou fuga): ${p.acima}.${prox ? ` Próximo patamar: ${prox.nome} no nível ${prox.min}.` : ""}`;
+  return `${p.nome} (nível ${nivel || 1}) — isto é ESCALA DE COMBATE (o que ele aguenta), NÃO um título nem posição no cosmos: nível nenhum torna alguém divino, só a fé faz isso. ${p.desc} TRIVIAL para ele (resolva narrativamente num gesto, SEM abrir combate nem pedir rolagem difícil): ${p.triviais}. DESAFIO DIGNO (combate/rolagens valem a pena): ${p.dignos}. ACIMA dele (vitória direta é implausível — exija astúcia, aliados, preparação ou fuga): ${p.acima}.${prox ? ` Próximo patamar: ${prox.nome} no nível ${prox.min}.` : ""}`;
 }

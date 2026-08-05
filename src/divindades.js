@@ -165,7 +165,102 @@ export const DIVINDADE_PROMPT = `ASCENSÃO E DIVINDADES (parâmetros do sistema 
 - A escala cósmica é GD 0–4: Mortal, Herói Lendário (1k fiéis), Semideus (10k), Divindade Menor (100k), Divindade Maior (1M+). O sistema rastreia fiéis e PF do jogador e avisa no rodapé; as divindades do mundo vêm prontas pelo sistema (GD, fiéis e culto JÁ DEFINIDOS — use-os como fato).
 - REGRA DO DEGRAU: cada degrau de diferença de GD dá +2 ao mais forte e −2 ao mais fraco em ataques, defesas e resistências — O SISTEMA APLICA nos dados, você só narra a disparidade (o golpe do mortal parece "invisível" ao deus, etc.).
 - Mortais (GD 0) não ferem de verdade divindades de GD 3+ sem artefato lendário ou bênção — se o jogador insistir, a ficção mostra a futilidade com honestidade (isso motiva a ascensão, não a punge).
-- GANHO DE FÉ: quando o jogador fizer algo que mereça fé (feito lendário testemunhado, milagre público, santuário erguido, NPC importante convertido), registre em "fe" no JSON: {"fieis": +N, "pf": +N} — santos pequenos 10–50 fiéis, feitos grandes 100–500, marcos de campanha 1000+. NÃO inflacione: fé é recurso escasso.
-- PF (Pontos de Fé) é o combustível de milagres: o jogador pode gastar PF pedindo intervenção (invocação). Milagre pequeno ~5 PF, médio ~20 PF, grande ~50 PF. Você narra o efeito; o SISTEMA cobra.
+- GANHO DE FÉ (por SINAL, nunca por número): quando o herói fizer algo que mereça fé, mande em "sinais" a magnitude — "fe:sussurro" (gesto notado por poucos), "fe:feito" (a cidade comenta), "fe:proeza" (a região conta), "fe:marco" (muda a história do mundo). O SISTEMA converte em fiéis levando a fama dele em conta. NÃO envie quantidade de fiéis nem de PF.
+- PF (Pontos de Fé) é o combustível de milagres e REGENERA SOZINHO por dia, proporcional aos fiéis — você nunca concede PF. Para gastar, mande "milagre:<id>" (bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar): o sistema cobra o custo, aplica o efeito e te avisa; você só narra a manifestação. Se o jogador pedir um milagre que ele ainda não pode pagar ou cujo grau não alcançou, o sistema recusa e você narra o silêncio do domínio.
+- FÉ MÍNGUA: devoção exige presença. Se o herói passar muito tempo sem se manifestar, o sistema tira fiéis dele automaticamente — use isso na ficção (templos vazios, profetas desanimados).
 - PRESENÇA DIVINA (com moderação!): perto de uma divindade GD 3+ manifesta, mortais podem tremer — o SISTEMA rola a resistência e aplica o efeito; você narra. NUNCA aplique efeitos de presença por conta própria, e fora de combate use o pavor divino só como tempero, nunca como rotina — o jogador e o grupo íntimo dele estão protegidos pela convivência.
 - ASCENSÃO É NARRATIVA: os três estágios (Servo Escolhido → Semideus/Receptáculo → Nova Divindade) avançam por FEITOS na ficção (acúmulo de fé, ritual do vazio, deicídio), guiados pelos números do sistema. Quando o jogador atingir um marco, celebre à altura — virar deus deve doer, custar e mudar o jogo.`;
+
+/* ═══════════════ v7.6 — TÍTULO ÚNICO, MILAGRES E ECONOMIA DE FÉ ═══════════════ */
+
+/* ---------------- TÍTULO ÚNICO DO HERÓI ----------------
+   Três escalas medem coisas diferentes e NÃO podem dividir vocabulário:
+   · patamar (nível)  = o que ele AGUENTA   → balanceamento de combate
+   · fama   (façanhas) = quanto o mundo o CONHECE
+   · GD     (fiéis)    = o que ele É no cosmos
+   Palavra divina só se conquista com fé. Nível nenhum, sozinho, faz
+   alguém ser chamado de Semideus. Esta função resolve o nome exibido. */
+export function tituloDoHeroi(divindade, patamarFamaRotulo, patamarNivelNome) {
+  const dv = divindade || {};
+  const gd = grauDe(dv);
+  if (dv.despertar && gd >= 1) {
+    return { titulo: tituloDe(gd), fonte: "fe", gd, divino: true };
+  }
+  return { titulo: patamarFamaRotulo || patamarNivelNome || "Mortal", fonte: patamarFamaRotulo ? "fama" : "nivel", gd: 0, divino: false };
+}
+
+/* Teto de GD por nível: fé sem poder não faz deus (evita GD 4 no nível 15). */
+export function gdMaximoPorNivel(nivel) {
+  const n = nivel || 1;
+  if (n < NIVEL_DESPERTAR) return 0;
+  if (n < 18) return 1;
+  if (n < 22) return 2;
+  if (n < 26) return 3;
+  return 4;
+}
+
+/* ---------------- FÉ POR CÓDIGO ----------------
+   O Mestre não manda mais números: manda um SINAL de magnitude e o
+   sistema converte, levando em conta a fama (quem é conhecido converte
+   mais gente por feito). Fé deixa de ser inflacionável ou esquecível. */
+export const MAGNITUDE_FE = {
+  sussurro: { rotulo: "sussurro", base: 15,   desc: "um gesto notado por poucos" },
+  feito:    { rotulo: "feito",    base: 120,  desc: "algo que a cidade comenta" },
+  proeza:   { rotulo: "proeza",   base: 600,  desc: "algo que a região inteira conta" },
+  marco:    { rotulo: "marco",    base: 3000, desc: "algo que muda a história do mundo" },
+};
+export function fieisPorFeito(magnitude, fama0a100) {
+  const m = MAGNITUDE_FE[magnitude] || MAGNITUDE_FE.feito;
+  const mult = 1 + (Math.max(0, Math.min(100, fama0a100 || 0)) / 100) * 2; // fama triplica no topo
+  return Math.round(m.base * mult);
+}
+
+/* PF regenera sozinho por dia, proporcional aos fiéis — como a renda das
+   cidades no reino. A IA só GASTA milagre; conceder deixou de ser dela. */
+export function pfPorDia(div) {
+  const f = (div && div.fieis) || 0;
+  if (!f) return 0;
+  return Math.max(1, Math.round(Math.sqrt(f) / 3));
+}
+export function pfMaximo(div) {
+  const f = (div && div.fieis) || 0;
+  return Math.max(10, Math.round(Math.sqrt(f) * 2));
+}
+
+/* Fé míngua se o herói some: devoção exige presença. */
+export function decaimentoFe(div, diasSemManifestacao) {
+  const f = (div && div.fieis) || 0;
+  if (!f || (diasSemManifestacao || 0) < 30) return 0;
+  const taxa = Math.min(0.03, 0.005 * Math.floor(diasSemManifestacao / 30));
+  return Math.round(f * taxa);
+}
+
+/* ---------------- MILAGRES: no que gastar os Pontos de Fé ----------------
+   Efeito RESOLVIDO PELO SISTEMA; o Mestre só narra. Cada milagre exige um
+   GD mínimo — o poder cresce junto com o que o herói é. */
+export const MILAGRES = [
+  { id: "bencao",    nome: "Bênção",             icone: "✨", pf: 5,  gd: 1, alvo: "grupo",
+    desc: "Vantagem nas próximas rolagens de todo o grupo.", efeito: { tipo: "efeito", nome: "Abençoado", bonus: 2, turnos: 5, aplica: "todos" } },
+  { id: "cura",      nome: "Toque Restaurador",  icone: "🩶", pf: 8,  gd: 1, alvo: "grupo",
+    desc: "Restaura a vida do herói e dos companheiros.",     efeito: { tipo: "cura", fracao: 0.5 } },
+  { id: "presagio",  nome: "Presságio",          icone: "🔮", pf: 6,  gd: 1, alvo: "mundo",
+    desc: "O domínio revela o que está por vir — uma verdade oculta da cena.", efeito: { tipo: "revelacao" } },
+  { id: "juramento", nome: "Juramento Selado",   icone: "⛓", pf: 15, gd: 2, alvo: "npc",
+    desc: "Um NPC presente jura lealdade — vínculo sobe ao máximo.",  efeito: { tipo: "vinculo", valor: 100 } },
+  { id: "furia",     nome: "Fúria do Domínio",   icone: "⚡", pf: 20, gd: 2, alvo: "combate",
+    desc: "O poder desaba sobre os inimigos: dano pesado em todos.",  efeito: { tipo: "dano_area", fracao: 0.35 } },
+  { id: "refugio",   nome: "Refúgio Sagrado",    icone: "🛡", pf: 18, gd: 2, alvo: "grupo",
+    desc: "Ninguém do grupo cai neste combate — o golpe fatal é negado uma vez.", efeito: { tipo: "efeito", nome: "Refúgio", bonus: 0, turnos: 6, aplica: "todos" } },
+  { id: "ressurgir", nome: "Chamar de Volta",    icone: "🕯", pf: 50, gd: 3, alvo: "grupo",
+    desc: "Traz de volta quem tombou — a morte devolve o que é seu.", efeito: { tipo: "ressurreicao" } },
+  { id: "decreto",   nome: "Decreto Divino",     icone: "📜", pf: 40, gd: 3, alvo: "mundo",
+    desc: "Sua vontade vira lei natural numa região: o mundo obedece.", efeito: { tipo: "mundo" } },
+  { id: "avatar",    nome: "Manifestação",       icone: "🌟", pf: 80, gd: 4, alvo: "mundo",
+    desc: "Você se manifesta em pessoa a todos de uma cidade inteira.", efeito: { tipo: "mundo", fe: "marco" } },
+];
+export function milagresDisponiveis(div) {
+  const gd = grauDe(div);
+  const pf = (div && div.pf) || 0;
+  return MILAGRES.filter((m) => m.gd <= gd).map((m) => ({ ...m, podeUsar: pf >= m.pf }));
+}
+export function milagrePorId(id) { return MILAGRES.find((m) => m.id === id) || null; }
