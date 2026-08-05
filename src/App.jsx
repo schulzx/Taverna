@@ -3,7 +3,7 @@ import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./n
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { gerarGeografia, garantirGeografia } from "./geografia.js";
-import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d } from "./combate.js";
+import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, danoDaClasse, ataquesDoInimigo } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste, dificuldadePorPerfil } from "./bestiario.js";
@@ -217,7 +217,9 @@ ${TABELA_TESTES}
   · O jogador NÃO tem teto de progressão — mas cada patamar tem sua escala. Um Iniciante NUNCA derruba um golem num golpe (negue com a matemática); um Titã NUNCA sofre para vencer mortais (nem abra combate — narre o gesto). Ameaças novas devem ser escolhidas do patamar DIGNO; triviais se resolvem em uma frase; superiores exigem plano, aliados ou fuga.
 - PREÇOS PADRÃO (use esta tabela — não invente valores): item comum 10-25 moedas; incomum 40-80; raro 150-300; épico 600-1200; lendário 2500+. Vender rende METADE do valor. Estalagem 2-5/noite; refeição 1-2; poção de cura comum 40-60. Serviços simples 5-20; especializados 50-200. Mantenha a economia coerente com esses números.
 - BALANCEAMENTO DE PV (importante — não infle números!): o PV dos inimigos deve ser PROPORCIONAL ao meu nível. Referência por ameaça (para um herói do meu nível): inimigo "fraco" tem cerca de 35% do meu PV, "comum" ~70%, "competente" ~igual ao meu, "elite" ~1,6×, "lendário/chefe" ~2,6×. NUNCA dê a um inimigo comum 3× o meu PV — isso quebra o jogo. Um chefe pode ser forte, mas dentro dessa escala. Quando criar um inimigo, defina "combate_inimigo_vida"/PV coerente com essa tabela e com meu nível atual.
-- COMBATE RESOLVIDO PELO SISTEMA: quando você receber [COMBATE — RESOLVIDO PELO SISTEMA], o app JÁ rolou os dados, calculou e aplicou o dano do ataque do jogador. Sua função é APENAS narrar esse resultado (não recalcule, não invente outro número, não mude quem acertou). Depois, conduza a resposta dos inimigos: descreva os contra-ataques e aplique o dano deles a mim via "vida" e aos companheiros via "grupo_vida" — pode rolar mentalmente, mas mantenha coerência com a ameaça de cada um. Você continua no controle da FICÇÃO do combate (quem faz o quê, táticas, ambiente); o sistema cuida só da matemática dos ataques do jogador.
+- COMBATE RESOLVIDO PELO SISTEMA: quando você receber [COMBATE — RESOLVIDO PELO SISTEMA], o app JÁ rolou tudo e JÁ aplicou o dano — do jogador, dos companheiros E dos inimigos. NUNCA envie "vida" negativa nem "grupo_vida" para representar golpes do turno (isso cobraria o dano DUAS VEZES e mataria o herói injustamente); use "vida" apenas para dano que NÃO veio de ataque (queda, veneno ambiental, armadilha narrativa). Sua função é só narrar o que o envelope descreve: quem acertou quem, com que intensidade, e as decisões táticas (quem recuou, avançou, mudou de alvo). Você comanda a FICÇÃO; o sistema cuida de toda a matemática.
+- INTENSIDADE FIEL (regra dura): cada linha de dano vem com o rótulo calculado pelo sistema (arranhão, golpe leve, golpe sólido, golpe pesado, golpe devastador, abate) e um guia de como narrar. OBEDEÇA ao rótulo. Um "arranhão" JAMAIS pode virar estraçalhar, dilacerar ou quase matar; "abate" é o único caso que autoriza linguagem de aniquilação. Narrar acima da intensidade real quebra a confiança do jogador nos números que ele vê na tela.
+- AÇÃO DE TURNO DO HERÓI (fiel ao D&D 5e — o sistema resolve, você narra): nem todo herói ataca várias vezes. Marciais ganham Ataque Extra com o nível (o Guerreiro é o único que chega a 4 golpes); conjuradores fazem UMA conjuração por turno, e o que cresce são os DADOS de dano; o Ladino dá um golpe só, somando dados de Ataque Furtivo. O envelope de combate informa quantos golpes saíram — narre exatamente essa quantidade, nunca invente golpes a mais nem transforme uma conjuração em rajada de ataques.
 - ABERTURA NO MESMO TURNO (PRIORIDADE MÁXIMA): no instante em que QUALQUER hostilidade começa — inimigo ameaça/ataca/embosca, OU o jogador ataca, OU alguém saca arma com intenção — envie "combate_iniciar" NESSA MESMA resposta, SEMPRE. Se a cena tem inimigo hostil presente, o combate já deve estar aberto. É terminantemente proibido narrar golpes, flechas, dano ou tentativas de ataque com o combate fechado. Na dúvida, ABRA o combate.
 - Em combate, mantenha a narrativa CURTA (2-4 frases) para não faltar espaço aos campos "combate_" no JSON.
 - Se algum dano legítimo ocorreu antes da abertura (ex.: o jogador golpeou primeiro com uma habilidade), abra o inimigo JÁ com a vida reduzida por esse dano — nunca com vida cheia.
@@ -335,7 +337,7 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   }
 }
 O campo "canone" é opcional: inclua-o só quando houver um fato durável a registrar ou atualizar. Cada chave é o NOME da entidade; os campos (tipo, papel, genero, local, status, notas) são todos opcionais — preencha os relevantes. Para atualizar, reenvie a mesma chave com os campos novos.
-SINAIS (canal barato — prefira-o sempre que existir): em vez de calcular e enviar números, mande um sinal curto e o SISTEMA resolve pela tabela. Sinais aceitos: "fe:sussurro|feito|proeza|marco" (o herói fez algo que rende fé — o sistema converte em fiéis conforme a fama dele; sussurro = notado por poucos, feito = a cidade comenta, proeza = a região conta, marco = muda a história); "milagre:<id>" (o herói gastou fé num milagre: bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar — o sistema cobra os PF e aplica o efeito); "loot:comum|incomum|raro|epico|lendario" (o herói encontrou um item — o sistema GERA o item com nome, afixos e poder, e te devolve os dados para você descrever o achado; NÃO escreva você o objeto de equipamento, é mais caro e sai incoerente); "dominio:<texto>" e "patrono:<texto>" (só na primeira vez que a ficção os revelar). Nunca invente PF nem número de fiéis: mande o sinal e narre a cena.
+SINAIS (canal barato — prefira-o sempre que existir): em vez de calcular e enviar números, mande um sinal curto e o SISTEMA resolve pela tabela. Sinais aceitos: "fe:sussurro|feito|proeza|marco" (o herói fez algo que rende fé — o sistema converte em fiéis conforme a fama dele; sussurro = notado por poucos, feito = a cidade comenta, proeza = a região conta, marco = muda a história); "milagre:<id>" (o herói gastou fé num milagre: bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar — o sistema cobra os PF e aplica o efeito); "viagem:<destino>" (o herói pôs o pé na estrada rumo a outro lugar — o sistema assume clima, encontros do trecho e passagem de tempo; NÃO narre a viagem inteira, só a partida); "masmorra:<nome>" (o herói vai enfrentar um covil, cripta, torre, fortaleza ou chefe — o sistema GERA as salas, os perigos e o chefe, e conduz sala a sala; você narra a entrada e depois só o que cada sala mandar); "loot:comum|incomum|raro|epico|lendario" (o herói encontrou um item — o sistema GERA o item com nome, afixos e poder, e te devolve os dados para você descrever o achado; NÃO escreva você o objeto de equipamento, é mais caro e sai incoerente); "dominio:<texto>" e "patrono:<texto>" (só na primeira vez que a ficção os revelar). Nunca invente PF nem número de fiéis: mande o sinal e narre a cena.
 Regras do formato: "rolagem" e "mudancas" são null quando não há; nunca os coloque dentro de "narrativa". "narrativa" é sempre uma string simples. Tipos de equipamento: arma, armadura, elmo, botas, anel, amuleto, escudo. Raridades: comum, incomum, raro, epico, lendario. Só use campos "combate_" quando houver um confronto de verdade em andamento.`;
 }
 
@@ -2845,7 +2847,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.7 · sinais e harmonia</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.8 · combate 5e e sinais de sistema</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -3271,7 +3273,9 @@ export default function Taverna() {
   const mundoContRef = useRef(0);
   const combateOciosoRef = useRef(0);      // turnos sem troca de golpes
   const ataqueResolvidoRef = useRef(false);
-  const danoJaAplicadoRef = useRef(false); // turno em que o sistema já cobrou dano // marca ataque do jogador neste turno
+  const danoJaAplicadoRef = useRef(false); // turno em que o sistema já cobrou dano
+  const sinalViagemRef = useRef(null);    // Mestre pediu para abrir viagem
+  const sinalMasmorraRef = useRef(null);  // Mestre pediu para abrir masmorra // marca ataque do jogador neste turno
   const modoMundoRef = useRef(0);           // rotação de tipos de cena
   const urgenciaRef = useRef(0);            // quantas cenas recentes usaram urgência
   const historiaRef = useRef({ estrutura: "jornada", etapa: 0 });
@@ -3678,6 +3682,15 @@ export default function Taverna() {
           msgs.push(...ganharFe(ganho, 0, `${MAGNITUDE_FE[mag].rotulo} — ${MAGNITUDE_FE[mag].desc}`));
         } else if (chave === "milagre" && dvAtual && dvAtual.despertar) {
           invocarMilagre(arg.toLowerCase(), "mestre").forEach((m2) => msgs.push(m2.texto));
+        } else if (chave === "viagem") {
+          if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) {
+            sinalViagemRef.current = arg || "";
+            msgs.push(`🧭 Viagem iniciada${arg ? ` rumo a ${arg}` : ""} — o sistema assume clima, encontros e tempo.`);
+          }
+        } else if (chave === "masmorra") {
+          if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) {
+            sinalMasmorraRef.current = arg || "";
+          }
         } else if (chave === "loot") {
           const rar = ["comum", "incomum", "raro", "epico", "lendario"].includes(arg.toLowerCase()) ? arg.toLowerCase() : "comum";
           const it = gerarLoot(rar, { nivel: personagem.nivel || 1 });
@@ -4174,10 +4187,27 @@ export default function Taverna() {
 
   /* TÍTULO ÚNICO (v7.6): resolve o nome que a ficha mostra e que o Mestre usa.
      Fé tem precedência (é o que o herói É); sem fé, vale a fama. */
+  /* VÍNCULOS (v7.8): o Mestre não sabia se um companheiro te adora ou te
+     tolera — então a intimidade das falas era chute. Agora ele sabe. */
+  const infoVinculos = () => {
+    const g = (personagem.grupo || []).filter((x) => x && x.nome);
+    if (!g.length) return "";
+    const linhas = g.map((c) => {
+      const v = typeof c.vinculo === "number" ? c.vinculo : VINCULO_INICIAL;
+      const m = marcoDe(v);
+      return `${c.nome}: ${v}/100 (${m ? m.rotulo : "conhecidos"})`;
+    });
+    return `VÍNCULOS DO GRUPO (trate cada um com a intimidade certa — quem tem vínculo baixo NÃO faz confidências nem se sacrifica; quem tem vínculo alto puxa assunto pessoal, discorda com liberdade e arrisca a pele por mim): ${linhas.join("; ")}.`;
+  };
+
   const infoTitulo = () => {
     const t = tituloDoHeroi(divindadeRef.current, patamarFama(famaAtual()).rotulo, patamarDe(personagem.nivel || 1).nome);
-    if (t.divino) return `${t.titulo} (GD ${t.gd} — título DIVINO, conquistado por fé, não por nível)`;
-    return `${t.titulo} (mortal — reconhecimento do mundo; NÃO é título divino)`;
+    const base = t.divino
+      ? `${t.titulo} (GD ${t.gd} — título DIVINO, conquistado por fé, não por nível)`
+      : `${t.titulo} (mortal — reconhecimento do mundo; NÃO é título divino)`;
+    const acao = resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1);
+    const vinc = infoVinculos();
+    return `${base}. AÇÃO DE TURNO EM COMBATE: ${acao.texto} (${perfilCombate(personagem.classe).nota}).${vinc ? ` ${vinc}` : ""}`;
   };
 
   const ganharFe = (fieis, pf, motivo) => {
@@ -4325,6 +4355,17 @@ export default function Taverna() {
          como foiVezDoMundo=true e libera a barra normal. */
       if (!foiVezDoMundo && !combateRef.current && !acampadoRef.current && !resp.rolagem) setAguardandoMundo(true);
       else setAguardandoMundo(false);
+      /* SINAIS DE SISTEMA (v7.8): o Mestre ativou viagem ou masmorra pela
+         narrativa — o app abre o sistema no turno seguinte, sem botão. */
+      if (sinalViagemRef.current !== null) {
+        const destino = sinalViagemRef.current; sinalViagemRef.current = null;
+        setAguardandoMundo(false);
+        setTimeout(() => viajar(destino), 400);
+      } else if (sinalMasmorraRef.current !== null) {
+        const nomeMm = sinalMasmorraRef.current; sinalMasmorraRef.current = null;
+        setAguardandoMundo(false);
+        setTimeout(() => entrarMasmorra(nomeMm), 400);
+      }
       turnoContRef.current += 1;
       if (turnoContRef.current >= 8) {
         turnoContRef.current = 0;
@@ -4535,7 +4576,9 @@ export default function Taverna() {
     const bonusAtkBase = Math.max((pers.atributos?.forca || 0), (pers.atributos?.destreza || 0)) + 2 + Math.floor(((pers.nivel || 1) - 1) / 4);
     /* ATAQUES MÚLTIPLOS (D&D): 2 ataques no nível 5, 3 no 11, 4 no 20 */
     const nv = pers.nivel || 1;
-    const nAtaques = 1 + (nv >= 5 ? 1 : 0) + (nv >= 11 ? 1 : 0) + (nv >= 20 ? 1 : 0);
+    /* 5e: marciais ganham Ataque Extra; conjuradores fazem UMA conjuração com
+       mais dados; ladino faz um golpe só, com Ataque Furtivo somando dados. */
+    const nAtaques = ataquesPorTurno(pers.classe, nv);
     const normalizar = (x) => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const alvoCitado = vivos.find((e) => acaoN.includes(normalizar(e.nome)));
     /* clone local para mirar corretamente entre golpes */
@@ -4547,7 +4590,7 @@ export default function Taverna() {
       const alvo = (alvoCitado && vivosAgora.find((e) => e.nome === alvoCitado.nome)) || vivosAgora[0];
       const r = resolverAtaque({
         atacante: pers.nome, alvo, ehAtacanteInimigo: false,
-        bonusAtaque: bonusAtk, danoBase: danoDe(pers, false),
+        bonusAtaque: bonusAtk, danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)),
         condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
         tipoDano: elementoDaArma(pers), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
       });
@@ -5147,10 +5190,11 @@ export default function Taverna() {
      Entrar gera a masmorra; cada "avançar" rola a sala: combate (abre o painel
      pela instrução ao Mestre), armadilha/tesouro/santuário (resolvidos por
      código na hora), enigma (cena do Mestre) e o chefe no fundo. */
-  const entrarMasmorra = () => {
-    if (bloqueado || acampadoRef.current || masmorraRef.current) return;
+  const entrarMasmorra = (nomeSugerido = "") => {
+    if (acampadoRef.current || masmorraRef.current) return;
     if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para explorar uma masmorra no meio de um combate." }]); return; }
-    const mm = gerarMasmorra((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1);
+    const mmBase = gerarMasmorra((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1);
+    const mm = nomeSugerido ? { ...mmBase, nome: nomeSugerido.slice(0, 50) } : mmBase;
     masmorraRef.current = mm; setMasmorra(mm);
     pushMsgs([{ autor: "jogador", texto: `🕳 Encontrei uma entrada: ${mm.nome}. Vou explorar.` }]);
     const extraTempo = avancarMinutos(MINUTOS_SALA_MASMORRA);
@@ -5913,8 +5957,8 @@ export default function Taverna() {
     return c;
   };
 
-  const viajar = () => {
-    if (bloqueado || acampadoRef.current) return;
+  const viajar = (destino = "") => {
+    if (acampadoRef.current) return;
     if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para viajar no meio de um combate." }]); return; }
     const c = rolarClimaEstacao(climaRef.current ? climaRef.current.id : null);
     climaRef.current = c; setClima(c);
@@ -5935,7 +5979,7 @@ export default function Taverna() {
 LOCAL ATUAL: ${localAtualTxt()}.
 CLIMA AGORA: ${c.rotulo} — ${c.nota}.
 ENCONTRO DO TRECHO (${enc.tipo}): ${enc.detalhe}
-Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a cena atual. Lembre-se: estou EM VIAGEM — a cena acontece no caminho${jornadaRef.current.meio ? ` (seguimos de ${jornadaRef.current.meio})` : ""}, não em cidade. Se o meio de viagem mudar, registre "jornada_meio". Se chegarmos de fato a um destino, registre "cidade_atual". Se eu estiver a caminho de algum destino, aproxime-me dele. Termine me convidando a agir.${extraTempo}`, personagem);
+Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a cena atual. Lembre-se: estou EM VIAGEM — a cena acontece no caminho${jornadaRef.current.meio ? ` (seguimos de ${jornadaRef.current.meio})` : ""}, não em cidade. Se o meio de viagem mudar, registre "jornada_meio". Se chegarmos de fato a um destino, registre "cidade_atual". ${destino ? `Estou a caminho de ${destino} — aproxime-me desse destino e, se chegarmos, registre "cidade_atual".` : "Se eu estiver a caminho de algum destino, aproxime-me dele."} Termine me convidando a agir.${extraTempo}`, personagem);
   };
 
   /* DIPLOMACIA: propostas a potências vão para a ficção; o Mestre decide a

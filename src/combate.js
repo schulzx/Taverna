@@ -315,3 +315,73 @@ export function linhaParaMestre(atacante, alvoNome, r, alvoVidaMax, vidaDepois) 
     : "";
   return `${atacante}→${alvoNome}: ${r.dano} de dano = ${sev.rotulo}${sev.pct ? ` (${sev.pct}% da vida dele)` : ""}${estado ? `, ${estado}` : ""} [narre como: ${sev.guia}]`;
 }
+
+/* ═══════════ v7.8 — PERFIL DE COMBATE POR CLASSE (fiel ao D&D 5e) ═══════════
+   No 5e, "mais ataques" NÃO é universal:
+   · Marciais ganham Ataque Extra: Guerreiro 2/3/4 (nv 5/11/20); Bárbaro,
+     Monge, Paladino e Patrulheiro só 2 (nv 5).
+   · Ladino NUNCA ganha ataque extra — cresce por Ataque Furtivo (dados
+     que aumentam a cada 2 níveis).
+   · Conjuradores fazem UMA conjuração; o que cresce são os DADOS do
+     truque: 2 dados no nv 5, 3 no 11, 4 no 17.
+   Aqui cada classe da Taverna recebe o perfil equivalente. */
+export const PERFIS_COMBATE = {
+  "Guerreiro":  { tipo: "marcial",     extras: [5, 11, 20], dadoBase: 8, nota: "mestre das armas: o único que chega a 4 golpes" },
+  "Monge":      { tipo: "marcial",     extras: [5],         dadoBase: 6, nota: "rajada de golpes desarmados" },
+  "Caçador":    { tipo: "marcial",     extras: [5],         dadoBase: 8, nota: "disparos precisos em sequência" },
+  "Engenheiro": { tipo: "marcial",     extras: [5],         dadoBase: 8, nota: "engenhocas e disparos calibrados" },
+  "Ladino":     { tipo: "furtivo",     extras: [],          dadoBase: 6, nota: "um golpe só, mas com Ataque Furtivo somando dados" },
+  "Mago":       { tipo: "conjurador",  extras: [],          dadoBase: 10, nota: "uma conjuração; os dados do truque crescem" },
+  "Feiticeiro": { tipo: "conjurador",  extras: [],          dadoBase: 10, nota: "magia bruta: dados crescentes" },
+  "Bruxo":      { tipo: "conjurador",  extras: [],          dadoBase: 10, nota: "explosão mística: feixes que se multiplicam" },
+  "Druida":     { tipo: "conjurador",  extras: [],          dadoBase: 8,  nota: "poder natural crescente" },
+  "Invocador":  { tipo: "conjurador",  extras: [],          dadoBase: 8,  nota: "conjura e comanda: as invocações agem à parte" },
+  "Clérigo":    { tipo: "misto",       extras: [5],         dadoBase: 8,  nota: "guerreiro sagrado: dois golpes ou uma prece" },
+  "Bardo":      { tipo: "misto",       extras: [6],         dadoBase: 6,  nota: "lâmina e canção" },
+};
+export function perfilCombate(classe) {
+  return PERFIS_COMBATE[classe] || { tipo: "marcial", extras: [5], dadoBase: 8, nota: "" };
+}
+
+/* Quantos ATAQUES o herói faz por turno (marciais e mistos). */
+export function ataquesPorTurno(classe, nivel) {
+  const p = perfilCombate(classe);
+  if (p.tipo === "conjurador" || p.tipo === "furtivo") return 1;
+  return 1 + (p.extras || []).filter((n) => (nivel || 1) >= n).length;
+}
+
+/* Quantos DADOS de dano a conjuração/golpe carrega (conjuradores e ladino). */
+export function dadosDeDano(classe, nivel) {
+  const p = perfilCombate(classe);
+  const nv = nivel || 1;
+  if (p.tipo === "conjurador") return 1 + (nv >= 5 ? 1 : 0) + (nv >= 11 ? 1 : 0) + (nv >= 17 ? 1 : 0);
+  if (p.tipo === "furtivo") return 1 + Math.floor(nv / 2); // Ataque Furtivo: +1 dado a cada 2 níveis
+  return 1;
+}
+
+/* Resumo pronto para a ficha e para o prompt. */
+export function resumoAcaoDeTurno(classe, nivel) {
+  const p = perfilCombate(classe);
+  const n = ataquesPorTurno(classe, nivel);
+  const dd = dadosDeDano(classe, nivel);
+  if (p.tipo === "conjurador") return { n: 1, dados: dd, texto: `1 conjuração por turno com ${dd}d${p.dadoBase} de dano`, tipo: p.tipo };
+  if (p.tipo === "furtivo") return { n: 1, dados: dd, texto: `1 golpe por turno com ${dd}d${p.dadoBase} (Ataque Furtivo)`, tipo: p.tipo };
+  return { n, dados: 1, texto: `${n} ataque${n > 1 ? "s" : ""} por turno`, tipo: p.tipo };
+}
+
+/* Dano por golpe já considerando os dados da classe. */
+export function danoDaClasse(classe, nivel, bonusAtributo = 0) {
+  const p = perfilCombate(classe);
+  const nd = dadosDeDano(classe, nivel);
+  let total = 0;
+  for (let i = 0; i < nd; i++) total += d(p.dadoBase);
+  return Math.max(1, total + bonusAtributo);
+}
+
+/* MULTIATAQUE DE INIMIGOS: elites e lendários agem mais de uma vez (como o
+   Multiattack dos monstros no 5e), proporcional à ameaça. */
+export function ataquesDoInimigo(ameaca, nivelInimigo) {
+  if (ameaca === "lendario") return (nivelInimigo || 1) >= 12 ? 3 : 2;
+  if (ameaca === "elite") return 2;
+  return 1;
+}
