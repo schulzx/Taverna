@@ -63,5 +63,9 @@ export const rolarSonho = () => SONHOS[Math.floor(Math.random() * SONHOS.length)
 
 /* Sono: limites de vigília (em horas) antes dos avisos e da penalidade. */
 export const HORAS_AVISO_SONO = 16, HORAS_EXAUSTO = 20;
-export const MINUTOS_POR_TURNO = 45, MINUTOS_VIAGEM = 180, MINUTOS_SALA_MASMORRA = 30, MINUTOS_POS_COMBATE = 30;
+/* ESCALAS DE TEMPO DO 5e (v8.1): rodada de combate = 6 segundos;
+   turno de exploração de masmorra = 10 minutos; viagem conta em horas.
+   Uma cena comum de conversa/ação leva alguns minutos. */
+export const MINUTOS_POR_TURNO = 5, MINUTOS_VIAGEM = 240, MINUTOS_SALA_MASMORRA = 10, MINUTOS_POS_COMBATE = 10;
+export const MINUTOS_RODADA_COMBATE = 0.1; // 6 segundos
 export const AMANHECER = 7 * 60; // descanso longo te acorda às 7h

@@ -14,17 +14,18 @@ import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } fr
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, valorDe } from "./loot.js";
-import { gerarMasmorra, recompensaChefe, ROTULO_SALA } from "./masmorras.js";
+import { gerarMasmorra, recompensaChefe, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro } from "./masmorras.js";
 import { gerarMural, gerarContrato, ICONE_CONTRATO } from "./contratos.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
 import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano } from "./danos.js";
-import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, AMANHECER } from "./calendario.js";
+import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, MINUTOS_RODADA_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, gerarNemesis, LIMIARES_NEMESIS, ACOES_NEMESIS, rumorDoDia } from "./fama.js";
 import { gerarCronica } from "./cronica.js";
 import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, decaimentoFe, MILAGRES, milagresDisponiveis, milagrePorId } from "./divindades.js";
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
+import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, sortearDadiva, resumoEpico } from "./regras.js";
 import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, processarDiaCorreio } from "./correio.js";
 
 /* ============================================================
@@ -37,7 +38,7 @@ import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, 
 const BRAND = "Taverna";
 const SLOGAN = "toda lenda começa aqui";
 
-const XP_POR_NIVEL = (nivel) => nivel * 100;
+const XP_POR_NIVEL = (nivel) => xpDoProximoNivel(nivel) ?? XP_POR_DADIVA;
 const MOEDAS_INICIAIS = 15;
 const PONTOS_TOTAIS = 6;
 const ATRIBUTO_MAX_CRIACAO = 3;
@@ -2086,6 +2087,25 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
               <BarraMini rotulo="PV" atual={personagem.vida} max={personagem.vidaMax} cor={T.amber} corBaixa={T.danger} />
               <BarraMini rotulo="PM" atual={personagem.mana} max={personagem.manaMax} cor={T.violet} />
               <BarraMini rotulo="XP" atual={personagem.xp} max={xpProx} cor={T.ok} />
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="tv-mono text-[10px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${T.violet}`, color: T.violetSoft }}>
+                  proficiência +{bonusProficiencia(personagem.nivel || 1)}
+                </span>
+                {(personagem.nivel || 1) >= 20 && (
+                  <span className="tv-mono text-[10px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>
+                    🌠 {(personagem.dadivas || []).length} dádiva{(personagem.dadivas || []).length === 1 ? "" : "s"} · {personagem.xp}/{XP_POR_DADIVA}
+                  </span>
+                )}
+              </div>
+              {(personagem.dadivas || []).length > 0 && (
+                <div className="rounded-lg px-2.5 py-2" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+                  <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>Dádivas épicas</div>
+                  {(personagem.dadivas || []).map((id) => {
+                    const d = DADIVAS_EPICAS.find((x) => x.id === id);
+                    return d ? <div key={id} className="tv-body text-xs" style={{ color: T.ink }}>🌠 {d.nome} <span style={{ color: T.inkDim }}>— {d.desc}</span></div> : null;
+                  })}
+                </div>
+              )}
             </div>
             {abrirCaminho === "eu" && <SeletorCaminho mundo={mundo} alvo="eu" atual={personagem} acampado={acampado} trocarCaminho={trocarCaminho} fechar={() => setAbrirCaminho(null)} />}
             {recalibrarLenda && (
@@ -2566,7 +2586,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
   );
 }
 
-function PainelCombate({ combate, onEncerrarTurno }) {
+function PainelCombate({ combate, onEncerrarTurno, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "" }) {
   if (!combate || !combate.inimigos || combate.inimigos.length === 0) return null;
   const eco = combate.economia || { acao: 1, extra: 1 };
   const chipMov = (ativo, rotulo) => (
@@ -2587,6 +2607,36 @@ function PainelCombate({ combate, onEncerrarTurno }) {
           )}
         </span>
       </div>
+      {nGolpes > 1 && combate.inimigos.filter((e) => !e.derrotado).length > 1 && (
+        <div className="rounded-xl p-2.5 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.amberSoft }}>
+              Declare seus {nGolpes} golpes{acaoTexto ? ` · ${acaoTexto}` : ""}
+            </span>
+            {alvosGolpe.length > 0 && (
+              <button onClick={onLimparAlvos} className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>limpar</button>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            {Array.from({ length: nGolpes }).map((_, gi) => (
+              <div key={gi} className="flex items-center gap-1.5 flex-wrap">
+                <span className="tv-mono text-[9px] shrink-0 w-12" style={{ color: T.inkDim }}>golpe {gi + 1}</span>
+                {combate.inimigos.filter((e) => !e.derrotado).map((e) => {
+                  const escolhido = alvosGolpe[gi] === e.nome;
+                  return (
+                    <button key={e.nome} onClick={() => onDeclararAlvo && onDeclararAlvo(gi, escolhido ? null : e.nome)}
+                      className="tv-mono text-[9px] px-2 py-1 rounded-full"
+                      style={{ background: escolhido ? T.danger : "transparent", color: escolhido ? "#fff" : T.inkDim, border: `1px solid ${escolhido ? T.danger : T.line}` }}>
+                      {e.nome}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+          <div className="tv-body text-[10px] mt-1.5" style={{ color: T.inkDim }}>Sem escolha, os golpes vão no alvo que você citar na ação. Se o alvo cair no meio da sequência, o golpe seguinte migra sozinho.</div>
+        </div>
+      )}
       <div className="grid sm:grid-cols-2 gap-2">
         {combate.inimigos.map((e, i) => (
           <div key={i} className="rounded-xl p-2.5" style={{ background: T.panelSoft, border: `1px solid ${e.derrotado ? T.line : T.danger}`, opacity: e.derrotado ? 0.5 : 1 }}>
@@ -2847,7 +2897,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v7.8 · combate 5e e sinais de sistema</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v8.1 · proficiência e ápice épico</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2876,11 +2926,23 @@ function TelaMenu({ irNovo, continuar, temSave }) {
 
 function aplicarNivel(pers) {
   let { xp, nivel, nivelPendentes, vidaMax, manaMax, vida, mana } = pers;
-  while (xp >= XP_POR_NIVEL(nivel)) {
-    xp -= XP_POR_NIVEL(nivel); nivel += 1; nivelPendentes += 1;
-    vidaMax += 3; manaMax += 2; vida = vidaMax; mana = manaMax;
+  let dadivas = [...(pers.dadivas || [])];
+  let dadivasPendentes = pers.dadivasPendentes || 0;
+  while (true) {
+    if (nivel >= 20) {
+      /* ÁPICE MORTAL: o nível para em 20, mas o XP continua — a cada
+         30.000 vem uma DÁDIVA ÉPICA (como no 5e). */
+      if (xp < XP_POR_DADIVA) break;
+      xp -= XP_POR_DADIVA;
+      dadivasPendentes += 1;
+      continue;
+    }
+    const custo = XP_POR_NIVEL(nivel);
+    if (xp < custo) break;
+    xp -= custo; nivel += 1; nivelPendentes += 1;
+    vidaMax += 6; manaMax += 4; vida = vidaMax; mana = manaMax;
   }
-  return { ...pers, xp, nivel, nivelPendentes, vidaMax, manaMax, vida, mana };
+  return { ...pers, xp, nivel, nivelPendentes, vidaMax, manaMax, vida, mana, dadivas, dadivasPendentes };
 }
 
 /* Evolução de companheiro por XP acumulado. Cada nível: +3 PV máx, e a cada
@@ -3086,10 +3148,14 @@ function bonusEfeito(pers, attrNome) {
   });
   return b;
 }
-const MOD_MAX_ROLAGEM = 8; // teto: mesmo um semideus precisa do dado
+const MOD_MAX_ROLAGEM = MOD_MAX_5E; // atributo +5, proficiência +6, mais itens
 function atributoEfetivo(pers, attrId) {
   const attr = ATRIBUTOS.find((a) => a.id === attrId);
-  const total = ((pers.atributos || {})[attrId] || 0) + bonusEquip(pers, attrId) + bonusEfeito(pers, attr?.nome || "");
+  /* 5e: o bônus não é só o atributo — soma a PROFICIÊNCIA no que a classe
+     domina (chega a +6 no nível 17+). Era isso que fazia um mago 20 rolar
+     só +5 no que deveria ser a especialidade dele. */
+  const prof = ehProficiente(pers.classe, attrId) ? bonusProficiencia(pers.nivel || 1) : 0;
+  const total = ((pers.atributos || {})[attrId] || 0) + prof + bonusEquip(pers, attrId) + bonusEfeito(pers, attr?.nome || "");
   return Math.min(MOD_MAX_ROLAGEM, total);
 }
 
@@ -3177,6 +3243,8 @@ function migrarPersonagem(p) {
     grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, xp: g.xp || 0, nivel: g.nivel || 1, inventario: Array.isArray(g.inventario) ? g.inventario : [], equipamento: Array.isArray(g.equipamento) ? g.equipamento : [], equipados: g.equipados && typeof g.equipados === "object" ? g.equipados : {}, semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}`, vinculo: g.vinculo ?? VINCULO_INICIAL, marcos: Array.isArray(g.marcos) ? g.marcos : [] })) : [],
     antecedente: p.antecedente || "", antecedenteGancho: p.antecedenteGancho || "",
     essencia: p.essencia || 0,
+    dadivas: Array.isArray(p.dadivas) ? p.dadivas : [],
+    dadivasPendentes: p.dadivasPendentes || 0,
     cicatrizes: Array.isArray(p.cicatrizes) ? p.cicatrizes : [],
     efeitos: Array.isArray(p.efeitos) ? p.efeitos : [],
     condicoes: Array.isArray(p.condicoes) ? p.condicoes : [],
@@ -3275,7 +3343,10 @@ export default function Taverna() {
   const ataqueResolvidoRef = useRef(false);
   const danoJaAplicadoRef = useRef(false); // turno em que o sistema já cobrou dano
   const sinalViagemRef = useRef(null);    // Mestre pediu para abrir viagem
-  const sinalMasmorraRef = useRef(null);  // Mestre pediu para abrir masmorra // marca ataque do jogador neste turno
+  const sinalMasmorraRef = useRef(null);  // Mestre pediu para abrir masmorra
+  const salaEmCursoRef = useRef(null);    // sala da masmorra cujo combate está aberto
+  const [alvosGolpe, setAlvosGolpe] = useState([]); // alvo escolhido para cada golpe do turno
+  const alvosGolpeRef = useRef([]); // marca ataque do jogador neste turno
   const modoMundoRef = useRef(0);           // rotação de tipos de cena
   const urgenciaRef = useRef(0);            // quantas cenas recentes usaram urgência
   const historiaRef = useRef({ estrutura: "jornada", etapa: 0 });
@@ -3540,6 +3611,7 @@ export default function Taverna() {
       pers = { ...pers, habRecarga: rec };
     }
     if (resp.mudancas) pers = aplicarMudancas(pers, resp.mudancas, msgs);
+    if ((pers.dadivasPendentes || 0) > 0) pers = concederDadivas(pers, msgs);
     /* CONDIÇÕES: adiciona/remove nos alvos (jogador ou NPCs do grupo/combate) */
     if (resp.mudancas) {
       const md = resp.mudancas;
@@ -3876,15 +3948,18 @@ export default function Taverna() {
         /* MASMORRA: vitória na sala do CHEFE conclui a masmorra por código —
            moedas do fundo + item épico/lendário garantido */
         let chefeCaido = false;
-        if (masmorraRef.current && masmorraRef.current.salas[masmorraRef.current.idx] && masmorraRef.current.salas[masmorraRef.current.idx].tipo === "chefe") {
+        const salaCorrente = masmorraRef.current ? masmorraRef.current.salas.find((x) => x.id === masmorraRef.current.atual) : null;
+        if (salaCorrente && salaCorrente.tipo === "chefe") {
           const mm = masmorraRef.current;
-          const sala = mm.salas[mm.idx];
+          const sala = salaCorrente;
           const rec = recompensaChefe(p2.nivel || 1);
           p2 = { ...p2, moedas: (p2.moedas || 0) + (sala.moedas || 0), equipamento: [...(p2.equipamento || []), rec.item] };
           msgs.push(`🕳 ${mm.nome} CONCLUÍDA! Tesouro do fundo: +${sala.moedas} moedas · ✦ ${rec.item.nome} (${RARIDADE_ROTULO[rec.item.raridade] || rec.item.raridade})`);
           masmorraRef.current = null; setMasmorra(null);
           bumpCont("masmorrasConcluidas");
           chefeCaido = true;
+        } else if (masmorraRef.current && salaEmCursoRef.current !== null) {
+          resolverSalaAposCombate();
         }
         pers = p2;
         setPersonagem(p2);
@@ -4200,6 +4275,14 @@ export default function Taverna() {
     return `VÍNCULOS DO GRUPO (trate cada um com a intimidade certa — quem tem vínculo baixo NÃO faz confidências nem se sacrifica; quem tem vínculo alto puxa assunto pessoal, discorda com liberdade e arrisca a pele por mim): ${linhas.join("; ")}.`;
   };
 
+  const infoRegras = () => {
+    const nv = personagem.nivel || 1;
+    const prof = bonusProficiencia(nv);
+    const chave = ATRIBUTOS.find((a) => ehProficiente(personagem.classe, a.id));
+    const ep = resumoEpico(personagem);
+    return `REGRAS DE PROGRESSÃO (o sistema calcula — não recalibre): proficiência +${prof} (nível ${nv}), somada automaticamente ao atributo que a classe domina${chave ? ` (${chave.nome})` : ""}. Um herói experiente rola alto no que é a especialidade dele — isso é esperado, não infle dificuldades para compensar. ESCALAS DE TEMPO (5e): uma rodada de combate dura 6 segundos; um turno de exploração de masmorra, 10 minutos; viagens contam em horas. Nunca descreva o tempo de forma incompatível com isso.${ep ? ` ESTADO ÉPICO: ${ep} — no ápice mortal o herói não sobe mais de nível; acumula XP e recebe dádivas épicas concedidas pelo sistema.` : ""}`;
+  };
+
   const infoTitulo = () => {
     const t = tituloDoHeroi(divindadeRef.current, patamarFama(famaAtual()).rotulo, patamarDe(personagem.nivel || 1).nome);
     const base = t.divino
@@ -4207,7 +4290,7 @@ export default function Taverna() {
       : `${t.titulo} (mortal — reconhecimento do mundo; NÃO é título divino)`;
     const acao = resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1);
     const vinc = infoVinculos();
-    return `${base}. AÇÃO DE TURNO EM COMBATE: ${acao.texto} (${perfilCombate(personagem.classe).nota}).${vinc ? ` ${vinc}` : ""}`;
+    return `${base}. AÇÃO DE TURNO EM COMBATE: ${acao.texto} (${perfilCombate(personagem.classe).nota}). ${infoRegras()}${vinc ? ` ${vinc}` : ""}`;
   };
 
   const ganharFe = (fieis, pf, motivo) => {
@@ -4288,6 +4371,34 @@ export default function Taverna() {
     }
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaMestre}`;
     return msgs;
+  };
+
+  /* DÁDIVA ÉPICA (v8.1): no ápice mortal, cada 30k XP rende uma dádiva.
+     O sistema sorteia da tabela; 15% das vezes o Mestre cria uma única. */
+  const concederDadivas = (pers, msgs) => {
+    let p = pers;
+    while ((p.dadivasPendentes || 0) > 0) {
+      const r = sortearDadiva(p.dadivas || []);
+      p = { ...p, dadivasPendentes: p.dadivasPendentes - 1 };
+      if (r.unica) {
+        msgs.push("🌠 DÁDIVA ÉPICA ÚNICA — algo que só existe na sua lenda desperta…");
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DÁDIVA ÉPICA ÚNICA — crie AGORA] O herói cruzou mais 30.000 XP no ápice mortal e conquistou uma dádiva épica EXCLUSIVA desta campanha. Invente uma bênção poderosa e memorável, coerente com tudo que ele viveu (feitos, domínio, cicatrizes, inimigos) — dê nome próprio e um efeito claro, e registre-a via "adicionar_habilidades" com custo 0. Narre a manifestação à altura: isto acontece pouquíssimas vezes numa vida.`;
+      } else {
+        const d = r.dadiva;
+        const ef = d.efeito || {};
+        p = {
+          ...p,
+          dadivas: [...(p.dadivas || []), d.id],
+          vidaMax: (p.vidaMax || 10) + (ef.vidaMax || 0),
+          vida: Math.min((p.vidaMax || 10) + (ef.vidaMax || 0), (p.vida || 0) + (ef.vidaMax || 0)),
+          manaMax: (p.manaMax || 8) + (ef.manaMax || 0),
+          mana: Math.min((p.manaMax || 8) + (ef.manaMax || 0), (p.mana || 0) + (ef.manaMax || 0)),
+        };
+        msgs.push(`🌠 DÁDIVA ÉPICA: ${d.nome} — ${d.desc}`);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DÁDIVA ÉPICA CONCEDIDA PELO SISTEMA] "${d.nome}": ${d.desc} Já aplicada — narre o momento em que esse poder desperta nele, com o peso que merece.`;
+      }
+    }
+    return p;
   };
 
   /* Botão de milagre: invoca e deixa o Mestre narrar a manifestação. */
@@ -4587,7 +4698,12 @@ export default function Taverna() {
     for (let i = 0; i < nAtaques; i++) {
       const vivosAgora = locais.filter((e) => !e.derrotado && e.vida > 0);
       if (!vivosAgora.length) break;
-      const alvo = (alvoCitado && vivosAgora.find((e) => e.nome === alvoCitado.nome)) || vivosAgora[0];
+      /* DECLARAÇÃO: se você escolheu o alvo deste golpe na interface, ele
+         manda; se aquele alvo já caiu, o golpe migra para o próximo vivo. */
+      const declarado = (alvosGolpeRef.current || [])[i];
+      const alvo = (declarado && vivosAgora.find((e) => e.nome === declarado))
+        || (alvoCitado && vivosAgora.find((e) => e.nome === alvoCitado.nome))
+        || vivosAgora[0];
       const r = resolverAtaque({
         atacante: pers.nome, alvo, ehAtacanteInimigo: false,
         bonusAtaque: bonusAtk, danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)),
@@ -4784,6 +4900,7 @@ export default function Taverna() {
           : linhaParaMestre(personagem.nome, alvo.nome, r, alvo.vidaMax || alvo.vida, r.dano > 0 ? pvDepois : undefined));
       }
       pushMsgs(linhas);
+      alvosGolpeRef.current = []; setAlvosGolpe([]);
       const desfecho = `${resultados.length} ${resultados.length > 1 ? "ataques" : "ataque"}: ${partesMeu.join("; ")}`;
 
       /* TURNO DO MUNDO (combate): os inimigos vivos revidam — o app rola e
@@ -5198,19 +5315,25 @@ export default function Taverna() {
     masmorraRef.current = mm; setMasmorra(mm);
     pushMsgs([{ autor: "jogador", texto: `🕳 Encontrei uma entrada: ${mm.nome}. Vou explorar.` }]);
     const extraTempo = avancarMinutos(MINUTOS_SALA_MASMORRA);
-    enviar(`[MASMORRA — ENTRADA · ${mm.nome}] Descobri a entrada de uma masmorra: "${mm.nome}" (${mm.salas.length} salas — o SISTEMA rola cada sala; você só narra). Descreva a fachada/entrada e a atmosfera lá dentro em 2-4 frases, costurando com a cena atual${cidadeAtualRef.current ? ` (perto de ${cidadeAtualRef.current})` : ""}. NÃO crie encontros ainda — as salas vêm pelas instruções [MASMORRA — SALA]. Termine me convidando a avançar.${extraTempo}`, personagem);
+    enviar(`[MASMORRA — ENTRADA · ${mm.nome}] Descobri a entrada de "${mm.nome}". O SISTEMA gerou a planta: ${mm.salas.length} câmaras em ${Math.max(...mm.salas.map((x) => x.camada))} níveis de profundidade, com passagens que se ramificam, um portão lacrado no fundo e a chave escondida com um guardião. Levo ${mm.tochas} tochas — cada passagem consome uma. Descreva a fachada e a atmosfera do primeiro salão em 2-4 frases, costurando com a cena atual${cidadeAtualRef.current ? ` (perto de ${cidadeAtualRef.current})` : ""}. Mencione que há mais de um caminho adiante. NÃO invente o que há nas salas — o sistema revela cada uma quando eu escolher a passagem.${extraTempo}`, personagem);
   };
 
-  const avancarMasmorra = () => {
+  const irParaSala = (id) => {
     const mm = masmorraRef.current;
     if (!mm || bloqueado || acampadoRef.current) return;
-    if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Termine o combate antes de avançar." }]); return; }
-    const idx = mm.idx + 1;
-    if (idx >= mm.salas.length) return;
-    const sala = mm.salas[idx];
-    const mm2 = { ...mm, idx };
+    if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Termine o combate antes de seguir." }]); return; }
+    const r = entrarNaSala(mm, id);
+    if (r.bloqueado) { pushMsgs(r.msgs.map((t) => ({ autor: "sistema", texto: t }))); return; }
+    const mm2 = r.mm, sala = r.sala;
     masmorraRef.current = mm2; setMasmorra(mm2);
-    const pos = `SALA ${idx}/${mm.salas.length - 1} · ${mm.nome}`;
+    if (r.msgs.length) pushMsgs(r.msgs.map((t) => ({ autor: "sistema", texto: t })));
+    const prog = progressoMasmorra(mm2);
+    const escuro = noEscuro(mm2) ? " NO ESCURO (a última tocha se apagou — descreva a cegueira e o perigo)." : "";
+    const pos = `${mm.nome} · camada ${sala.camada} · ${prog.visitadas}/${prog.total} salas${escuro}`;
+    /* se a sala não abre combate, ela se resolve agora */
+    if (sala.tipo !== "combate" && sala.tipo !== "chefe" && sala.tipo !== "chave" && sala.tipo !== "enigma") {
+      masmorraRef.current = marcarResolvida(mm2, id); setMasmorra(masmorraRef.current);
+    }
     const extraTempo = avancarMinutos(MINUTOS_SALA_MASMORRA);
     if (sala.tipo === "combate" || sala.tipo === "chefe") {
       /* COMBATE ABERTO PELO SISTEMA (v7.0): o app monta os inimigos pelo
@@ -5220,6 +5343,7 @@ export default function Taverna() {
         return { ...comp, derrotado: false, semente: `inimigo|${comp.nome}|${comp.ameaca || ""}` };
       });
       combateRef.current = { inimigos }; setCombate(combateRef.current); combateOciosoRef.current = 0;
+      salaEmCursoRef.current = id;
       inimigos.forEach((comp) => {
         if (comp.nome && !descobRef.current.some((d) => d.toLowerCase() === comp.nome.toLowerCase())) {
           descobRef.current = [...descobRef.current, comp.nome];
@@ -5235,13 +5359,13 @@ export default function Taverna() {
       if (emComp) {
         const alvo = personagem.grupo[Math.floor(Math.random() * personagem.grupo.length)];
         setPersonagem((p) => ({ ...p, grupo: (p.grupo || []).map((g) => g.nome === alvo.nome ? { ...g, vida: Math.max(0, g.vida - sala.dano) } : g) }));
-        pushMsgs([{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nome} — ${alvo.nome} sofre ${sala.dano} de dano` }]);
-        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nome}). ${alvo.nome} já sofreu ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e como o grupo reage.${extraTempo}`, personagem);
+        pushMsgs([{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha} — ${alvo.nome} sofre ${sala.dano} de dano` }]);
+        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nomeArmadilha}). ${alvo.nome} já sofreu ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e como o grupo reage.${extraTempo}`, personagem);
       } else {
         const p2 = { ...personagem, vida: Math.max(0, personagem.vida - sala.dano) };
         setPersonagem(p2);
-        pushMsgs([{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nome} — você sofre ${sala.dano} de dano` }]);
-        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nome}). Eu já sofri ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e o estado em que fico.${extraTempo}`, p2);
+        pushMsgs([{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha} — você sofre ${sala.dano} de dano` }]);
+        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nomeArmadilha}). Eu já sofri ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e o estado em que fico.${extraTempo}`, p2);
       }
     } else if (sala.tipo === "tesouro") {
       let item = null;
@@ -5263,6 +5387,22 @@ export default function Taverna() {
       enviar(`[MASMORRA — ${pos} · SANTUÁRIO RESOLVIDO PELO SISTEMA] A sala é um refúgio: ${sala.cena}. O grupo inteiro já recuperou parte de PV e PM (aplicado pelo app — NÃO envie cura). Narre o respiro — é um bom momento para uma conversa curta do grupo.${extraTempo}`, p2);
     } else if (sala.tipo === "enigma") {
       enviar(`[MASMORRA — ${pos} · ENIGMA] A sala trava o caminho com: ${sala.cena}. Apresente a cena e o desafio NA FICÇÃO — me deixe tentar resolver com palavras ou ações. Se eu travar, dê pistas; se eu resolver (ou der uma solução esperta), o caminho abre.${extraTempo}`, personagem);
+    }
+  };
+
+  /* Ao vencer o combate de uma sala, ela se resolve — e se guardava a chave,
+     o portão do chefe abre. */
+  const resolverSalaAposCombate = () => {
+    const mm = masmorraRef.current, id = salaEmCursoRef.current;
+    if (!mm || id === null) return;
+    const sala = mm.salas.find((x) => x.id === id);
+    salaEmCursoRef.current = null;
+    if (!sala) return;
+    const antes = mm.chave;
+    masmorraRef.current = marcarResolvida(mm, id); setMasmorra(masmorraRef.current);
+    if (!antes && masmorraRef.current.chave) {
+      pushMsgs([{ autor: "sistema", texto: "🗝 Entre os despojos: a CHAVE do portão lacrado. O caminho para o chefe se abre." }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MASMORRA] Achei a chave do portão do chefe entre os restos do guardião. Mencione isso na narração.`;
     }
   };
 
@@ -6349,7 +6489,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   {falha.motivo && <span className="tv-mono text-[10px] px-4 text-center" style={{ color: T.inkDim }}>{falha.motivo}</span>}
                 </div>
               )}
-            {combate && <PainelCombate combate={combate} onEncerrarTurno={encerrarTurnoCombate} />}
+            {combate && <PainelCombate combate={combate} onEncerrarTurno={encerrarTurnoCombate}
+              nGolpes={ataquesPorTurno(personagem.classe, personagem.nivel || 1)}
+              alvosGolpe={alvosGolpe}
+              acaoTexto={resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1).texto}
+              onDeclararAlvo={(i, nome) => { const a = [...alvosGolpeRef.current]; a[i] = nome; alvosGolpeRef.current = a; setAlvosGolpe([...a]); }}
+              onLimparAlvos={() => { alvosGolpeRef.current = []; setAlvosGolpe([]); }} />}
 
             {sugestoes.length > 0 && !carregando && !rolagem && !habAbertas && (
               <div className="px-4 md:px-8 pb-2 flex flex-wrap gap-2" style={{ paddingRight: "68px" }}>
@@ -6385,24 +6530,56 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               </div>
             )}
 
-            {masmorra && !acampado && (
-              <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-3.5" style={{ background: T.panel, border: `1px solid ${T.violet}`, marginRight: "68px" }}>
+            {masmorra && !acampado && (() => {
+              const prog = progressoMasmorra(masmorra);
+              const salaAtual = masmorra.salas.find((x) => x.id === masmorra.atual);
+              const saidas = saidasDe(masmorra);
+              const recuos = saidasDeRecuo(masmorra);
+              const escuro = noEscuro(masmorra);
+              return (
+              <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-3.5" style={{ background: T.panel, border: `1px solid ${escuro ? T.danger : T.violet}`, marginRight: "68px" }}>
                 <div className="flex items-center justify-between gap-2 mb-1.5">
                   <div className="tv-mono text-[10px] uppercase tracking-widest truncate" style={{ color: T.violetSoft }}>🕳 {masmorra.nome}</div>
-                  <div className="tv-mono text-[10px] shrink-0" style={{ color: T.inkDim }}>sala {masmorra.idx}/{masmorra.salas.length - 1}{masmorra.salas[masmorra.idx] ? ` · ${(ROTULO_SALA[masmorra.salas[masmorra.idx].tipo] || "").toLowerCase()}` : ""}</div>
+                  <div className="tv-mono text-[10px] shrink-0 flex items-center gap-2">
+                    <span style={{ color: escuro ? T.danger : T.amberSoft }}>🕯 {masmorra.tochas}</span>
+                    {masmorra.chave && <span style={{ color: T.amber }}>🗝</span>}
+                    <span style={{ color: T.inkDim }}>{prog.visitadas}/{prog.total}</span>
+                  </div>
                 </div>
-                <div className="h-1 rounded-full overflow-hidden mb-2.5" style={{ background: T.panelSoft }}>
-                  <div className="h-full rounded-full" style={{ width: `${Math.round((masmorra.idx / (masmorra.salas.length - 1)) * 100)}%`, background: T.violet }} />
+                <div className="tv-body text-[11px] mb-2" style={{ color: escuro ? T.danger : T.inkDim }}>
+                  {escuro ? "Sem tochas — vocês avançam às cegas, em desvantagem." : `Você está em: ${ICONE_SALA[salaAtual?.tipo] || ""} ${ROTULO_SALA[salaAtual?.tipo] || "—"}${salaAtual && !salaAtual.resolvida && salaAtual.tipo !== "entrada" ? " (ainda não resolvida)" : ""}`}
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={avancarMasmorra} disabled={bloqueado || !!combate} className="flex-1 tv-mono text-[11px] px-3 py-2 rounded-lg" style={{ background: T.violet, color: T.onSecond, fontWeight: 600, opacity: bloqueado || combate ? 0.45 : 1 }}>
-                    ⛏ Avançar{masmorra.salas[masmorra.idx + 1] ? ` — ${(ROTULO_SALA[masmorra.salas[masmorra.idx + 1].tipo] || "").toLowerCase()}` : ""}
-                  </button>
-                  <button onClick={sairDaMasmorra} disabled={bloqueado || !!combate} title="Fugir abandona a masmorra e tudo que ainda não foi conquistado" className="tv-mono text-[11px] px-3 py-2 rounded-lg" style={{ border: `1px solid ${T.danger}`, color: T.danger, opacity: bloqueado || combate ? 0.45 : 1 }}>🏃 fugir</button>
+                <div className="tv-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Passagens</div>
+                <div className="space-y-1.5">
+                  {saidas.length === 0 && <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>Sem saídas adiante — só resta voltar ou sair.</div>}
+                  {saidas.map((sd) => (
+                    <button key={sd.id} onClick={() => irParaSala(sd.id)} disabled={bloqueado || !!combate || sd.trancada}
+                      className="w-full text-left rounded-lg px-3 py-2 flex items-center gap-2.5"
+                      style={{ background: sd.trancada ? "transparent" : T.panelSoft, border: `1px solid ${sd.trancada ? T.line : T.violet}`, opacity: (bloqueado || combate) ? 0.45 : sd.trancada ? 0.55 : 1 }}>
+                      <span style={{ fontSize: 14 }}>{sd.visitada ? (ICONE_SALA[sd.tipo] || "·") : sd.trancada ? "🔒" : "❔"}</span>
+                      <span className="flex-1 min-w-0">
+                        <span className="tv-body text-sm block" style={{ color: T.ink }}>
+                          {sd.visitada ? (ROTULO_SALA[sd.tipo] || "Passagem") : "Passagem desconhecida"}
+                        </span>
+                        <span className="tv-body text-[11px] block" style={{ color: T.inkDim }}>
+                          {sd.trancada ? "portão lacrado — falta a chave" : sd.pista}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
                 </div>
-                <div className="tv-body text-[11px] mt-1.5" style={{ color: T.inkDim }}>Os espólios de cada sala já entram na sua bolsa sozinhos. <b>Fugir</b> abandona a masmorra — e o que ainda resta nela fica para trás. Ao vencer o chefe, a masmorra se conclui e você sai com tudo.</div>
+                <div className="flex gap-2 mt-2.5 flex-wrap">
+                  {recuos.map((rc) => (
+                    <button key={`v${rc.id}`} onClick={() => irParaSala(rc.id)} disabled={bloqueado || !!combate} className="tv-mono text-[10px] px-2.5 py-1.5 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim, opacity: (bloqueado || combate) ? 0.45 : 1 }}>
+                      ↩ voltar ({ROTULO_SALA[rc.tipo] || "sala"})
+                    </button>
+                  ))}
+                  <button onClick={sairDaMasmorra} disabled={bloqueado || !!combate} title="Sair leva o que você já conquistou; o resto fica para trás" className="tv-mono text-[10px] px-2.5 py-1.5 rounded-lg ml-auto" style={{ border: `1px solid ${T.danger}`, color: T.danger, opacity: (bloqueado || combate) ? 0.45 : 1 }}>🏃 sair</button>
+                </div>
+                <div className="tv-body text-[11px] mt-2" style={{ color: T.inkDim }}>Cada passagem gasta uma tocha. Você escolhe o caminho pelas pistas — e o portão do chefe só abre com a chave que alguém guarda lá dentro.</div>
               </div>
-            )}
+              );
+            })()}
 
             {acampado && (
               <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.amber}`, marginRight: "68px" }}>

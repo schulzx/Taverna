@@ -129,23 +129,29 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0 
   ];
   const acoes = [];
   for (const inim of vivos) {
-    // escolha de alvo: 65% no jogador, 35% num companheiro (se houver)
-    let alvo;
-    if (alvosPossiveis.length > 1 && Math.random() < 0.35) {
-      const comps = alvosPossiveis.filter((a) => a.ref === "grupo");
-      alvo = comps[Math.floor(Math.random() * comps.length)];
-    } else {
-      alvo = alvosPossiveis[0];
+    /* MULTIATAQUE (5e): elites agem 2 vezes, lendários até 3 — como o
+       Multiattack dos monstros. Cada golpe escolhe alvo de novo. */
+    const nGolpes = ataquesDoInimigo(inim.ameaca, inim.nivel);
+    for (let g = 0; g < nGolpes; g++) {
+      const vivosAlvo = alvosPossiveis.filter((a) => (a.ent.vida || 0) > 0);
+      if (!vivosAlvo.length) break;
+      let alvo;
+      if (vivosAlvo.length > 1 && Math.random() < 0.35) {
+        const comps = vivosAlvo.filter((a) => a.ref === "grupo");
+        alvo = comps.length ? comps[Math.floor(Math.random() * comps.length)] : vivosAlvo[0];
+      } else {
+        alvo = vivosAlvo[0];
+      }
+      const perfilInim = perfilDeCriatura(inim.nome, inim.desc);
+      const r = resolverAtaque({
+        atacante: inim.nome, alvo: alvo.ent, ehAtacanteInimigo: true,
+        /* REGRA DO DEGRAU (v7.4): divindades ganham +2/degrau sobre o alvo */
+        bonusAtaque: bonusDeAmeaca(inim.ameaca) + 2 * ((inim.gd || 0) - (gdJogador || 0)), danoBase: danoDe(inim, true),
+        condAtacante: inim.condicoes || [], condAlvo: alvo.ent.condicoes || [],
+        tipoDano: perfilInim.ataque, resistAlvo: resistenciasEquipadas(alvo.ent),
+      });
+      acoes.push({ inimigo: inim.nome, alvoRef: alvo.ref, alvoNome: alvo.nome, r, golpe: g + 1, deTotal: nGolpes });
     }
-    const perfilInim = perfilDeCriatura(inim.nome, inim.desc);
-    const r = resolverAtaque({
-      atacante: inim.nome, alvo: alvo.ent, ehAtacanteInimigo: true,
-      /* REGRA DO DEGRAU (v7.4): divindades ganham +2/degrau sobre o alvo */
-      bonusAtaque: bonusDeAmeaca(inim.ameaca) + 2 * ((inim.gd || 0) - (gdJogador || 0)), danoBase: danoDe(inim, true),
-      condAtacante: inim.condicoes || [], condAlvo: alvo.ent.condicoes || [],
-      tipoDano: perfilInim.ataque, resistAlvo: resistenciasEquipadas(alvo.ent),
-    });
-    acoes.push({ inimigo: inim.nome, alvoRef: alvo.ref, alvoNome: alvo.nome, r });
   }
   return acoes;
 }
