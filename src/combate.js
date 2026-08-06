@@ -391,3 +391,67 @@ export function ataquesDoInimigo(ameaca, nivelInimigo) {
   if (ameaca === "elite") return 2;
   return 1;
 }
+
+/* ═══════════ v8.9 — ECONOMIA DE AÇÃO (5e) ═══════════
+   O que faltava para o combate ser fiel: ORDEM de turno rolada por
+   iniciativa, AÇÃO BÔNUS e REAÇÃO como recursos separados (uma de
+   cada por rodada) e CONCENTRAÇÃO, que quebra quando você apanha. */
+
+/* INICIATIVA: d20 + Destreza. Empate desempata pelo modificador. */
+export function rolarIniciativa(combatentes) {
+  return (combatentes || []).map((c) => {
+    const mod = c.modDestreza || 0;
+    const rolo = d(20);
+    return { ...c, iniciativa: rolo + mod, rolo, mod };
+  }).sort((a, b) => (b.iniciativa - a.iniciativa) || (b.mod - a.mod) || (Math.random() - 0.5));
+}
+
+export function resumoIniciativa(ordem) {
+  return (ordem || []).map((c, i) => `${i + 1}º ${c.nome} (${c.iniciativa})`).join(" · ");
+}
+
+/* RECURSOS DO TURNO: ação, ação bônus e reação. Reação repõe no início
+   da SUA vez; ação e bônus repõem a cada turno seu. */
+export function novosRecursos() {
+  return { acao: true, bonus: true, reacao: true, movimento: true };
+}
+export function gastarRecurso(rec, tipo) {
+  const r = { ...novosRecursos(), ...(rec || {}) };
+  if (!r[tipo]) return { rec: r, ok: false };
+  r[tipo] = false;
+  return { rec: r, ok: true };
+}
+
+/* AÇÕES BÔNUS típicas por classe (5e) — o que a classe pode fazer
+   "de graça" no mesmo turno, além da ação principal. */
+export const ACOES_BONUS = {
+  "Guerreiro": [{ id: "surto", nome: "Surto de Ação", desc: "Uma ação inteira a mais neste turno.", nivel: 2 }],
+  "Ladino":    [{ id: "disparada", nome: "Ação Ardilosa", desc: "Disparar, desengajar ou esconder-se.", nivel: 2 }],
+  "Monge":     [{ id: "rajada", nome: "Rajada de Golpes", desc: "Dois ataques desarmados extras.", nivel: 1 }],
+  "Bárbaro":   [{ id: "furia", nome: "Fúria", desc: "Entra em fúria: mais dano e resistência.", nivel: 1 }],
+  "Bardo":     [{ id: "inspiracao", nome: "Inspiração de Bardo", desc: "Dá um dado de bônus a um aliado.", nivel: 1 }],
+  "Feiticeiro":[{ id: "metamagia", nome: "Metamagia Rápida", desc: "Conjura um truque como ação bônus.", nivel: 3 }],
+  "Clérigo":   [{ id: "bencao", nome: "Prece Rápida", desc: "Uma bênção menor num aliado.", nivel: 2 }],
+  "Druida":    [{ id: "forma", nome: "Forma Selvagem", desc: "Assume a forma de uma fera.", nivel: 2 }],
+};
+export function acoesBonusDe(classe, nivel) {
+  return (ACOES_BONUS[classe] || []).filter((a) => (nivel || 1) >= a.nivel);
+}
+
+/* REAÇÃO: ataque de oportunidade quando um inimigo foge do seu alcance. */
+export function ataqueDeOportunidade(atacante, alvo, bonusAtaque, danoBase) {
+  return resolverAtaque({
+    atacante: atacante.nome, alvo, ehAtacanteInimigo: false,
+    bonusAtaque, danoBase, condAtacante: [], condAlvo: alvo.condicoes || [],
+  });
+}
+
+/* CONCENTRAÇÃO: uma magia por vez; apanhar exige resistência de Vigor
+   com CD 10 ou metade do dano, o que for maior. */
+export function testeConcentracao(dano, modVigor) {
+  const cd = Math.max(10, Math.floor((dano || 0) / 2));
+  const rolo = d(20) + (modVigor || 0);
+  return { cd, rolo, manteve: rolo >= cd, texto: `Concentração: d20+${modVigor || 0}=${rolo} vs CD ${cd} → ${rolo >= cd ? "mantida" : "QUEBRADA"}` };
+}
+
+export const ECONOMIA_ACAO_PROMPT = `ECONOMIA DE AÇÃO (5e — o sistema controla, você narra): cada combatente tem por rodada UMA ação, UMA ação bônus (só se a classe conceder), UMA reação e seu movimento. A ordem dos turnos vem da INICIATIVA rolada no início do combate — respeite-a na narração (não faça um inimigo agir fora da vez dele). Ataque de oportunidade é REAÇÃO: só acontece quando alguém sai do alcance, e só uma vez por rodada. CONCENTRAÇÃO: um conjurador mantém no máximo UMA magia de duração por vez; se ele apanhar, o sistema testa e pode quebrar — quando quebrar, narre o efeito se desfazendo na hora.`;

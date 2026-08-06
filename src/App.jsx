@@ -3,7 +3,7 @@ import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./n
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { gerarGeografia, garantirGeografia } from "./geografia.js";
-import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, danoDaClasse, ataquesDoInimigo } from "./combate.js";
+import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, danoDaClasse, ataquesDoInimigo, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste, dificuldadePorPerfil } from "./bestiario.js";
@@ -1452,6 +1452,22 @@ function PainelCombate({ combate, onEncerrarTurno, nGolpes = 1, alvosGolpe = [],
           )}
         </span>
       </div>
+      {Array.isArray(combate.ordem) && combate.ordem.length > 0 && (
+        <div className="rounded-xl p-2 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+          <div className="tv-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Ordem de iniciativa</div>
+          <div className="flex items-center gap-1 flex-wrap">
+            {combate.ordem.map((c, i) => {
+              const caiu = (combate.inimigos || []).some((e) => e.nome === c.nome && (e.derrotado || e.vida <= 0));
+              const cor = c.lado === "inimigo" ? T.danger : c.lado === "heroi" ? T.amber : T.violetSoft;
+              return (
+                <span key={c.nome + i} className="tv-mono text-[10px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${cor}`, color: cor, opacity: caiu ? 0.35 : 1, textDecoration: caiu ? "line-through" : "none" }}>
+                  {c.iniciativa} {c.nome}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
       {nGolpes > 1 && combate.inimigos.filter((e) => !e.derrotado).length > 1 && (
         <div className="rounded-xl p-2.5 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
           <div className="flex items-center justify-between mb-1.5">
@@ -1742,7 +1758,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v8.8 · painéis modulares</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v8.9 · economia de ação</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -2426,6 +2442,19 @@ export default function Taverna() {
          turnos parados. Evita o combate "preso" na tela por vários turnos. */
       if (combateRef.current) {
         const houveIniciar = Array.isArray(resp.mudancas.combate_iniciar) && resp.mudancas.combate_iniciar.length > 0;
+      /* INICIATIVA (v8.9): combate novo → o sistema rola a ordem do turno. */
+      if (houveIniciar && combateRef.current && !combateRef.current.ordem) {
+        const participantes = [
+          { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") },
+          ...(pers.grupo || []).map((g) => ({ nome: g.nome, lado: "aliado", modDestreza: 1 })),
+          ...(combateRef.current.inimigos || []).map((e) => ({ nome: e.nome, lado: "inimigo", modDestreza: e.agil ? 2 : 0 })),
+        ];
+        const ordem = rolarIniciativa(participantes);
+        combateRef.current = { ...combateRef.current, ordem, rodada: 1, recursos: novosRecursos() };
+        setCombate(combateRef.current);
+        msgs.push(`🎲 Iniciativa — ${resumoIniciativa(ordem)}`);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INICIATIVA ROLADA PELO SISTEMA] Ordem do combate: ${resumoIniciativa(ordem)}. Respeite essa ordem ao narrar quem age quando.`;
+      }
         const houveDano = Array.isArray(resp.mudancas.combate_inimigo_vida) && resp.mudancas.combate_inimigo_vida.length > 0;
         const houveAtaqueMeu = ataqueResolvidoRef.current;
         if (houveIniciar || houveDano || houveAtaqueMeu) combateOciosoRef.current = 0;
@@ -2818,7 +2847,8 @@ export default function Taverna() {
     const vinc = infoVinculos();
     const bocas = 1 + (personagem.grupo || []).length;
     const ermos = resumoErmos(personagem.suprimentos, personagem.exaustao, personagem.ritmoViagem, bocas);
-    return `${base}. ${ermos} AÇÃO DE TURNO EM COMBATE: ${acao.texto} (${perfilCombate(personagem.classe).nota}). ${infoRegras()}${vinc ? ` ${vinc}` : ""}`;
+    const bonus = acoesBonusDe(personagem.classe, personagem.nivel || 1);
+    return `${base}. ${ermos} ${ECONOMIA_ACAO_PROMPT}${bonus.length ? ` AÇÕES BÔNUS DESTA CLASSE: ${bonus.map((b) => `${b.nome} (${b.desc})`).join("; ")}.` : " Esta classe não tem ação bônus própria — usa só a ação principal."} AÇÃO DE TURNO EM COMBATE: ${acao.texto} (${perfilCombate(personagem.classe).nota}). ${infoRegras()}${vinc ? ` ${vinc}` : ""}`;
   };
 
   const ganharFe = (fieis, pf, motivo) => {
@@ -3459,6 +3489,7 @@ export default function Taverna() {
         let danoNoJogador = 0;
         let grupoAtual = [...(personagem.grupo || [])];
         const partes = [];
+        let persConcQuebrada = null;
         for (const a of acoes) {
           logDadoCombate(resumoDoAtaque(a.r));
           if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(a.r) });
@@ -3474,8 +3505,21 @@ export default function Taverna() {
           partes.push(linhaParaMestre(a.inimigo, a.alvoNome, a.r, alvoMax, alvoDepois));
         }
         if (linhasSis.length) pushMsgs(linhasSis);
-        if (danoNoJogador > 0) danoJaAplicadoRef.current = true;
+        if (danoNoJogador > 0) {
+          danoJaAplicadoRef.current = true;
+          /* CONCENTRAÇÃO (5e): apanhou, testa para manter a magia de duração */
+          const concentrando = (personagem.efeitos || []).find((e) => e.concentracao);
+          if (concentrando) {
+            const tc = testeConcentracao(danoNoJogador, atributoEfetivo(personagem, "vigor"));
+            if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: `🎲 ${tc.texto}` });
+            if (!tc.manteve) {
+              linhasSis.push({ autor: "sistema", texto: `💢 Concentração quebrada — ${concentrando.nome} se desfaz.` });
+              persConcQuebrada = concentrando.nome;
+            }
+          }
+        }
         persAtual = { ...personagem, vida: Math.max(0, personagem.vida - danoNoJogador), grupo: grupoAtual };
+        if (persConcQuebrada) persAtual = { ...persAtual, efeitos: (persAtual.efeitos || []).filter((e) => e.nome !== persConcQuebrada) };
 
         /* TURNO DOS COMPANHEIROS: atacam inimigos ou socorrem quem caiu */
         const jogadorCaido = persAtual.vida <= 0;
