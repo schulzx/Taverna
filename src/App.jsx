@@ -14,7 +14,7 @@ import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } fr
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, valorDe } from "./loot.js";
-import { gerarMasmorra, recompensaChefe, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro } from "./masmorras.js";
+import { gerarMasmorra, recompensaChefe, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca } from "./masmorras.js";
 import { gerarMural, gerarContrato, ICONE_CONTRATO } from "./contratos.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
@@ -25,6 +25,7 @@ import { gerarCronica } from "./cronica.js";
 import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, decaimentoFe, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
+import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, consumirDia, RITMOS_VIAGEM, ritmoViagem, testarNavegacao, forragear, efeitoExaustao, recuperarExaustao, resumoErmos } from "./ermos.js";
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, sortearDadiva, resumoEpico } from "./regras.js";
 import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, processarDiaCorreio } from "./correio.js";
 
@@ -1988,7 +1989,7 @@ function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, con
   );
 }
 
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, bloqueado }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -2097,6 +2098,31 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                   </span>
                 )}
               </div>
+              {(() => {
+                const sup = garantirSuprimentos(personagem.suprimentos);
+                const bocas = 1 + (personagem.grupo || []).length;
+                const c = consumoDiario(bocas);
+                const dias = Math.min(Math.floor(sup.racoes / c.racoes), Math.floor(sup.agua / c.agua));
+                const ex = efeitoExaustao(personagem.exaustao || 0);
+                return (
+                  <div className="rounded-lg px-2.5 py-2" style={{ background: T.panelSoft, border: `1px solid ${dias <= 1 ? T.danger : T.line}` }}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: dias <= 1 ? T.danger : T.inkDim }}>Suprimentos · {bocas} boca{bocas > 1 ? "s" : ""}</span>
+                      <span className="tv-mono text-[9px]" style={{ color: dias <= 1 ? T.danger : T.inkDim }}>{dias} dia{dias === 1 ? "" : "s"}</span>
+                    </div>
+                    <div className="flex items-center gap-3 flex-wrap tv-mono text-[11px]" style={{ color: T.ink }}>
+                      <span>🥖 {sup.racoes}</span><span>💧 {sup.agua}</span><span>🕯 {sup.tochas}</span>
+                      <span style={{ color: sup.kit ? T.ok : T.inkDim }}>🎒 {sup.kit ? "kit" : "sem kit"}</span>
+                    </div>
+                    {ex.nivel > 0 && (
+                      <div className="tv-body text-[11px] mt-1.5" style={{ color: T.danger }}>😩 Exaustão {ex.nivel}/6 — {ex.efeito}</div>
+                    )}
+                    <button onClick={onForragear} disabled={bloqueado} className="w-full tv-mono text-[10px] px-2 py-1.5 rounded mt-1.5" style={{ border: `1px solid ${T.ok}`, color: T.ok, opacity: bloqueado ? 0.45 : 1 }}>
+                      🌿 Forragear <span style={{ color: T.inkDim }}>(meio dia · Percepção)</span>
+                    </button>
+                  </div>
+                );
+              })()}
               {(personagem.dadivas || []).length > 0 && (
                 <div className="rounded-lg px-2.5 py-2" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
                   <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>Dádivas épicas</div>
@@ -2897,7 +2923,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v8.3 · recalibração completa</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v8.5 · ermos e suprimentos</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -3243,6 +3269,9 @@ function migrarPersonagem(p) {
     grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, xp: g.xp || 0, nivel: g.nivel || 1, inventario: Array.isArray(g.inventario) ? g.inventario : [], equipamento: Array.isArray(g.equipamento) ? g.equipamento : [], equipados: g.equipados && typeof g.equipados === "object" ? g.equipados : {}, semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}`, vinculo: g.vinculo ?? VINCULO_INICIAL, marcos: Array.isArray(g.marcos) ? g.marcos : [] })) : [],
     antecedente: p.antecedente || "", antecedenteGancho: p.antecedenteGancho || "",
     essencia: p.essencia || 0,
+    suprimentos: p.suprimentos ? garantirSuprimentos(p.suprimentos) : { racoes: 10, agua: 10, tochas: 5, kit: true },
+    exaustao: p.exaustao || 0,
+    ritmoViagem: p.ritmoViagem || "normal",
     dadivas: Array.isArray(p.dadivas) ? p.dadivas : [],
     dadivasPendentes: p.dadivasPendentes || 0,
     cicatrizes: Array.isArray(p.cicatrizes) ? p.cicatrizes : [],
@@ -4304,7 +4333,9 @@ export default function Taverna() {
       : `${t.titulo} (mortal — reconhecimento do mundo; NÃO é título divino)`;
     const acao = resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1);
     const vinc = infoVinculos();
-    return `${base}. AÇÃO DE TURNO EM COMBATE: ${acao.texto} (${perfilCombate(personagem.classe).nota}). ${infoRegras()}${vinc ? ` ${vinc}` : ""}`;
+    const bocas = 1 + (personagem.grupo || []).length;
+    const ermos = resumoErmos(personagem.suprimentos, personagem.exaustao, personagem.ritmoViagem, bocas);
+    return `${base}. ${ermos} AÇÃO DE TURNO EM COMBATE: ${acao.texto} (${perfilCombate(personagem.classe).nota}). ${infoRegras()}${vinc ? ` ${vinc}` : ""}`;
   };
 
   const ganharFe = (fieis, pf, motivo) => {
@@ -5351,6 +5382,23 @@ export default function Taverna() {
     const mm2 = r.mm, sala = r.sala;
     masmorraRef.current = mm2; setMasmorra(mm2);
     if (r.msgs.length) pushMsgs(r.msgs.map((t) => ({ autor: "sistema", texto: t })));
+    /* PERCEPÇÃO PASSIVA (5e): o que estiver abaixo do seu limiar você nota
+       sozinho, sem rolar. O apressado enxerga menos; o cauteloso, mais. */
+    const modPerc = atributoEfetivo(personagem, "percepcao");
+    const passiva = percepcaoPassiva(modPerc, mm2.ritmo);
+    let avisoSegredo = "";
+    const cp = checarPassiva(sala, passiva);
+    if (cp.revelou) {
+      const salas2 = mm2.salas.map((x) => x.id === id ? { ...x, segredo: cp.segredo } : x);
+      masmorraRef.current = { ...mm2, salas: salas2 }; setMasmorra(masmorraRef.current);
+      pushMsgs([{ autor: "sistema", texto: cp.texto }]);
+      avisoSegredo = ` PERCEPÇÃO PASSIVA (${passiva}) revelou sem rolagem: ${cp.segredo.txt} (${cp.segredo.tipo.replace("_", " ")}). Narre a descoberta como mérito da atenção dele.`;
+    } else if (armadilhaDispara(sala)) {
+      avisoSegredo = ` ARMADILHA NÃO PERCEBIDA (passiva ${passiva} < ${sala.segredo.cd}): ${sala.segredo.txt} — dispara AGORA. Narre o susto; o sistema aplica o dano.`;
+    } else if (cp.quaseTexto) {
+      pushMsgs([{ autor: "sistema", texto: `👁 ${cp.quaseTexto}` }]);
+      avisoSegredo = ` O herói sente que algo escapa (passiva ${passiva}, perto do limiar) — dê um sinal sutil, sem entregar o que é.`;
+    }
     const prog = progressoMasmorra(mm2);
     const escuro = noEscuro(mm2) ? " NO ESCURO (a última tocha se apagou — descreva a cegueira e o perigo)." : "";
     const pos = `${mm.nome} · camada ${sala.camada} · ${prog.visitadas}/${prog.total} salas${escuro}`;
@@ -5358,7 +5406,7 @@ export default function Taverna() {
     if (sala.tipo !== "combate" && sala.tipo !== "chefe" && sala.tipo !== "chave" && sala.tipo !== "enigma") {
       masmorraRef.current = marcarResolvida(mm2, id); setMasmorra(masmorraRef.current);
     }
-    const extraTempo = avancarMinutos(MINUTOS_SALA_MASMORRA);
+    const extraTempo = avancarMinutos(ritmoPorId(mm2.ritmo).minutos);
     if (sala.tipo === "combate" || sala.tipo === "chefe") {
       /* COMBATE ABERTO PELO SISTEMA (v7.0): o app monta os inimigos pelo
          bestiário e abre o HUD na hora — sem depender do Mestre lembrar. */
@@ -5376,7 +5424,7 @@ export default function Taverna() {
       setDescobertas(descobRef.current);
       const lista = inimigos.map((i) => `${i.nome} (nv ${i.nivel || 1}, ${i.vida} PV)`).join(", ");
       pushMsgs([{ autor: "sistema", texto: `⚔ ${sala.tipo === "chefe" ? "A sala do chefe!" : "Emboscada na masmorra!"} ${inimigos.map((i) => i.nome).join(", ")} — o combate está aberto.` }]);
-      enviar(`[MASMORRA — ${pos} · ${sala.tipo === "chefe" ? "CHEFE" : "COMBATE"} — COMBATE JÁ ABERTO PELO SISTEMA] Avanço para a próxima sala e os inimigos saltam das sombras: ${lista}. O HUD de combate JÁ ESTÁ ABERTO — NÃO envie "combate_iniciar". Descreva a sala e a investida inicial em 1-2 frases e me passe a vez (eu ajo pelos botões de combate).${sala.tipo === "chefe" ? " É o confronto final desta masmorra — narre à altura." : ""}${extraTempo}`, personagem);
+      enviar(`[MASMORRA — ${pos} · ${sala.tipo === "chefe" ? "CHEFE" : "COMBATE"} — COMBATE JÁ ABERTO PELO SISTEMA] Avanço para a próxima sala e os inimigos saltam das sombras: ${lista}. O HUD de combate JÁ ESTÁ ABERTO — NÃO envie "combate_iniciar". Descreva a sala e a investida inicial em 1-2 frases e me passe a vez (eu ajo pelos botões de combate).${sala.tipo === "chefe" ? " É o confronto final desta masmorra — narre à altura." : ""}${avisoSegredo}${extraTempo}`, personagem);
     } else if (sala.tipo === "armadilha") {
       /* dano por código: o herói (ou um companheiro, 30%) sofre a armadilha */
       const emComp = (personagem.grupo || []).length > 0 && Math.random() < 0.3;
@@ -5384,12 +5432,12 @@ export default function Taverna() {
         const alvo = personagem.grupo[Math.floor(Math.random() * personagem.grupo.length)];
         setPersonagem((p) => ({ ...p, grupo: (p.grupo || []).map((g) => g.nome === alvo.nome ? { ...g, vida: Math.max(0, g.vida - sala.dano) } : g) }));
         pushMsgs([{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha} — ${alvo.nome} sofre ${sala.dano} de dano` }]);
-        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nomeArmadilha}). ${alvo.nome} já sofreu ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e como o grupo reage.${extraTempo}`, personagem);
+        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nomeArmadilha}). ${alvo.nome} já sofreu ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e como o grupo reage.${avisoSegredo}${extraTempo}`, personagem);
       } else {
         const p2 = { ...personagem, vida: Math.max(0, personagem.vida - sala.dano) };
         setPersonagem(p2);
         pushMsgs([{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha} — você sofre ${sala.dano} de dano` }]);
-        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nomeArmadilha}). Eu já sofri ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e o estado em que fico.${extraTempo}`, p2);
+        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nomeArmadilha}). Eu já sofri ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e o estado em que fico.${avisoSegredo}${extraTempo}`, p2);
       }
     } else if (sala.tipo === "tesouro") {
       let item = null;
@@ -5402,16 +5450,56 @@ export default function Taverna() {
       setPersonagem(p2);
       pushMsgs([{ autor: "sistema", texto: `💰 Sala do tesouro: +${sala.moedas} moedas${item ? ` · ✦ ${item.nome} (${RARIDADE_ROTULO[item.raridade]})` : ""}` }]);
       checarConquistas(p2);
-      enviar(`[MASMORRA — ${pos} · TESOURO RESOLVIDO PELO SISTEMA] A sala guardava um tesouro: ◉ ${sala.moedas}${item ? ` e o item "${item.nome}" (${item.raridade}${item.poder ? `, ${item.poder}` : ""})` : ""} — JÁ na minha posse (NÃO envie moedas nem "adicionar_equipamento"). Descreva o achado com emoção.${extraTempo}`, p2);
+      enviar(`[MASMORRA — ${pos} · TESOURO RESOLVIDO PELO SISTEMA] A sala guardava um tesouro: ◉ ${sala.moedas}${item ? ` e o item "${item.nome}" (${item.raridade}${item.poder ? `, ${item.poder}` : ""})` : ""} — JÁ na minha posse (NÃO envie moedas nem "adicionar_equipamento"). Descreva o achado com emoção.${avisoSegredo}${extraTempo}`, p2);
     } else if (sala.tipo === "santuario") {
       const cura = (mx, v) => Math.min(mx, v + Math.max(1, Math.round(mx * (sala.curaPct || 0.25))));
       const p2 = { ...personagem, vida: cura(personagem.vidaMax, personagem.vida), mana: cura(personagem.manaMax, personagem.mana), grupo: (personagem.grupo || []).map((g) => ({ ...g, vida: cura(g.vidaMax || g.vida, g.vida) })) };
       setPersonagem(p2);
       pushMsgs([{ autor: "sistema", texto: `⛲ Santuário: ${sala.cena} — todos recuperam ~25% de PV e PM` }]);
-      enviar(`[MASMORRA — ${pos} · SANTUÁRIO RESOLVIDO PELO SISTEMA] A sala é um refúgio: ${sala.cena}. O grupo inteiro já recuperou parte de PV e PM (aplicado pelo app — NÃO envie cura). Narre o respiro — é um bom momento para uma conversa curta do grupo.${extraTempo}`, p2);
+      enviar(`[MASMORRA — ${pos} · SANTUÁRIO RESOLVIDO PELO SISTEMA] A sala é um refúgio: ${sala.cena}. O grupo inteiro já recuperou parte de PV e PM (aplicado pelo app — NÃO envie cura). Narre o respiro — é um bom momento para uma conversa curta do grupo.${avisoSegredo}${extraTempo}`, p2);
     } else if (sala.tipo === "enigma") {
-      enviar(`[MASMORRA — ${pos} · ENIGMA] A sala trava o caminho com: ${sala.cena}. Apresente a cena e o desafio NA FICÇÃO — me deixe tentar resolver com palavras ou ações. Se eu travar, dê pistas; se eu resolver (ou der uma solução esperta), o caminho abre.${extraTempo}`, personagem);
+      enviar(`[MASMORRA — ${pos} · ENIGMA] A sala trava o caminho com: ${sala.cena}. Apresente a cena e o desafio NA FICÇÃO — me deixe tentar resolver com palavras ou ações. Se eu travar, dê pistas; se eu resolver (ou der uma solução esperta), o caminho abre.${avisoSegredo}${extraTempo}`, personagem);
     }
+  };
+
+  /* FORRAGEAR (5e): caçar e colher pela trilha. Gasta tempo, mas repõe. */
+  const forragearAqui = () => {
+    if (bloqueado || combateRef.current) return;
+    const bioma = (cidadeAtualRef.current && (mapaRef.current.cidades || []).find((c) => c.nome === cidadeAtualRef.current)?.bioma) || "planicie";
+    const r = forragear(bioma, atributoEfetivo(personagem, "percepcao"));
+    const extra = avancarMinutos(240);
+    if (r.achou) setPersonagem((pp) => ({ ...pp, suprimentos: { ...garantirSuprimentos(pp.suprimentos), racoes: garantirSuprimentos(pp.suprimentos).racoes + r.racoes, agua: garantirSuprimentos(pp.suprimentos).agua + r.agua } }));
+    pushMsgs([{ autor: "sistema", texto: `🌿 ${r.texto}` }]);
+    enviar(`[ERMOS — FORRAGEAMENTO] Passo metade do dia caçando e colhendo. ${r.achou ? `Consegui ${r.racoes} rações e ${r.agua} de água (o sistema já somou).` : "Não encontrei nada aproveitável."} Narre a busca em 2-3 frases, com o cheiro e o cansaço do trabalho.${extra}`, personagem);
+  };
+
+  const mudarRitmo = (id) => {
+    const mm = masmorraRef.current;
+    if (!mm) return;
+    masmorraRef.current = { ...mm, ritmo: id }; setMasmorra(masmorraRef.current);
+    const r = ritmoPorId(id);
+    pushMsgs([{ autor: "sistema", texto: `${r.icone} Marcha ${r.nome.toLowerCase()} — percepção passiva ${percepcaoPassiva(atributoEfetivo(personagem, "percepcao"), id)}, ${r.minutos} min por sala.` }]);
+  };
+
+  /* BUSCA ATIVA (5e): gasta 10 minutos de exploração e permite rolagem de
+     Percepção. É a ação que acha o que a passiva não pegou. */
+  const buscarNaSala = () => {
+    const mm = masmorraRef.current;
+    if (!mm || bloqueado || combateRef.current) return;
+    const sala = mm.salas.find((x) => x.id === mm.atual);
+    if (!sala) return;
+    const mod = atributoEfetivo(personagem, "percepcao");
+    const rolo = d(20);
+    const total = rolo + mod;
+    const r = resultadoBusca(sala, total);
+    avancarMinutos(custoBusca());
+    if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: `🎲 Busca: d20=${rolo}+${mod}=${total}` }]);
+    pushMsgs([{ autor: "sistema", texto: `🔎 ${r.texto}` }]);
+    if (r.achou) {
+      const salas2 = mm.salas.map((x) => x.id === sala.id ? { ...x, segredo: r.segredo } : x);
+      masmorraRef.current = { ...mm, salas: salas2 }; setMasmorra(masmorraRef.current);
+    }
+    enviar(`[MASMORRA — BUSCA ATIVA · ${mm.nome}] Vasculho a sala por dez minutos (Percepção ${total}${sala.segredo ? ` vs ${sala.segredo.cd}` : ""}). ${r.achou ? `ENCONTREI: ${r.segredo.txt} (${r.segredo.tipo.replace("_", " ")}). Narre a descoberta e o que ela abre.` : "Nada encontrado — narre a busca frustrada em 1-2 frases, sem inventar achados."} NÃO revele o que não foi achado.`, personagem);
   };
 
   /* Ao vencer o combate de uma sala, ela se resolve — e se guardava a chave,
@@ -5857,6 +5945,19 @@ export default function Taverna() {
       const ctx = ctxMundo({ mundo, mapa: mapaRef.current, dia: diaRef.current });
       ctx.fase = faseDoArco(historiaRef.current, ESTRUTURAS);
       const secundarias = questsRef.current.filter((q) => q.status === "ativa" && q.tipo !== "principal").length;
+      /* ERMOS (v8.5): um dia se passou — o grupo come, bebe e se cansa. */
+      {
+        const bocas = 1 + (personagem.grupo || []).length;
+        const cd = consumirDia(personagem.suprimentos, bocas);
+        const comeuEBebeu = cd.faltaComida === 0 && cd.faltaAgua === 0;
+        setPersonagem((pp) => ({
+          ...pp,
+          suprimentos: cd.suprimentos,
+          exaustao: comeuEBebeu ? recuperarExaustao(pp.exaustao || 0, true) : Math.min(6, (pp.exaustao || 0) + cd.exaustao),
+        }));
+        if (cd.msgs.length) pushMsgs(cd.msgs.map((t) => ({ autor: "sistema", texto: t })));
+        else if ((personagem.exaustao || 0) > 0) pushMsgs([{ autor: "sistema", texto: "🍲 Comida quente e água limpa — um nível de exaustão vai embora." }]);
+      }
       const r = processarDescansoLongoEventos(eventosRef.current, ctx, { dia: diaRef.current, secundariasAtivas: secundarias });
       eventosRef.current = r.eventos; setEventos(r.eventos);
       /* DADOS À VISTA (v8.2): o mundo não "acontece" por mágica — o Mestre
@@ -6128,6 +6229,19 @@ export default function Taverna() {
 
   const viajar = (destino = "") => {
     if (acampadoRef.current) return;
+    /* NAVEGAÇÃO (5e): terreno difícil pode fazer o grupo se perder. */
+    let notaErmos = "";
+    {
+      const bioma = (cidadeAtualRef.current && (mapaRef.current.cidades || []).find((c) => c.nome === cidadeAtualRef.current)?.bioma) || "planicie";
+      const nav = testarNavegacao(bioma, atributoEfetivo(personagem, "percepcao"), (mapaRef.current.cidades || []).length > 3);
+      if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: `🧭 ${nav.texto}` }]);
+      if (!nav.passou) {
+        pushMsgs([{ autor: "sistema", texto: `🧭 Vocês se perdem e queimam ${nav.horasPerdidas}h tentando reencontrar a rota.` }]);
+        notaErmos = ` O grupo SE PERDEU no caminho (${nav.horasPerdidas}h desperdiçadas) — narre a confusão de trilhas, o desânimo e como reencontram o rumo.`;
+      }
+      const ex = efeitoExaustao(personagem.exaustao || 0);
+      if (ex.nivel) notaErmos += ` EXAUSTÃO nível ${ex.nivel} (${ex.efeito}) — mostre o desgaste no corpo de todos.`;
+    }
     if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para viajar no meio de um combate." }]); return; }
     const c = rolarClimaEstacao(climaRef.current ? climaRef.current.id : null);
     climaRef.current = c; setClima(c);
@@ -6148,7 +6262,7 @@ export default function Taverna() {
 LOCAL ATUAL: ${localAtualTxt()}.
 CLIMA AGORA: ${c.rotulo} — ${c.nota}.
 ENCONTRO DO TRECHO (${enc.tipo}): ${enc.detalhe}
-Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a cena atual. Lembre-se: estou EM VIAGEM — a cena acontece no caminho${jornadaRef.current.meio ? ` (seguimos de ${jornadaRef.current.meio})` : ""}, não em cidade. Se o meio de viagem mudar, registre "jornada_meio". Se chegarmos de fato a um destino, registre "cidade_atual". ${destino ? `Estou a caminho de ${destino} — aproxime-me desse destino e, se chegarmos, registre "cidade_atual".` : "Se eu estiver a caminho de algum destino, aproxime-me dele."} Termine me convidando a agir.${extraTempo}`, personagem);
+Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a cena atual. Lembre-se: estou EM VIAGEM — a cena acontece no caminho${jornadaRef.current.meio ? ` (seguimos de ${jornadaRef.current.meio})` : ""}, não em cidade. Se o meio de viagem mudar, registre "jornada_meio". Se chegarmos de fato a um destino, registre "cidade_atual". ${destino ? `Estou a caminho de ${destino} — aproxime-me desse destino e, se chegarmos, registre "cidade_atual".` : "Se eu estiver a caminho de algum destino, aproxime-me dele."} Termine me convidando a agir.${notaErmos}${extraTempo}`, personagem);
   };
 
   /* DIPLOMACIA: propostas a potências vão para a ficção; o Mestre decide a
@@ -6604,6 +6718,24 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 <div className="tv-body text-[11px] mb-2" style={{ color: escuro ? T.danger : T.inkDim }}>
                   {escuro ? "Sem tochas — vocês avançam às cegas, em desvantagem." : `Você está em: ${ICONE_SALA[salaAtual?.tipo] || ""} ${ROTULO_SALA[salaAtual?.tipo] || "—"}${salaAtual && !salaAtual.resolvida && salaAtual.tipo !== "entrada" ? " (ainda não resolvida)" : ""}`}
                 </div>
+                <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                  {RITMOS.map((r) => (
+                    <button key={r.id} onClick={() => mudarRitmo(r.id)} disabled={bloqueado || !!combate}
+                      className="tv-mono text-[10px] px-2 py-1 rounded-full"
+                      style={{ background: masmorra.ritmo === r.id ? T.violet : "transparent", color: masmorra.ritmo === r.id ? T.onSecond : T.inkDim, border: `1px solid ${masmorra.ritmo === r.id ? T.violet : T.line}`, opacity: (bloqueado || combate) ? 0.45 : 1 }}
+                      title={`${r.desc} · ${r.minutos} min por sala`}>
+                      {r.icone} {r.nome}
+                    </button>
+                  ))}
+                  <span className="tv-mono text-[10px] ml-auto" style={{ color: T.amberSoft }}>
+                    👁 passiva {percepcaoPassiva(atributoEfetivo(personagem, "percepcao"), masmorra.ritmo)}
+                  </span>
+                </div>
+                <button onClick={buscarNaSala} disabled={bloqueado || !!combate}
+                  className="w-full tv-mono text-[11px] px-3 py-2 rounded-lg mb-2"
+                  style={{ background: T.panelSoft, color: T.amberSoft, border: `1px solid ${T.amber}`, opacity: (bloqueado || combate) ? 0.45 : 1 }}>
+                  🔎 Procurar nesta sala <span style={{ color: T.inkDim }}>(10 min · rolagem de Percepção)</span>
+                </button>
                 <div className="tv-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Passagens</div>
                 <div className="space-y-1.5">
                   {saidas.length === 0 && <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>Sem saídas adiante — só resta voltar ou sair.</div>}
@@ -6758,7 +6890,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} bloqueado={bloqueado} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
