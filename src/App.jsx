@@ -2897,7 +2897,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v8.2 · dados do mestre e ascensão</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v8.3 · recalibração completa</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -4648,7 +4648,17 @@ export default function Taverna() {
       tituloAtivoRef.current = sv.tituloAtivo || ""; setTituloAtivo(tituloAtivoRef.current);
       descobRef.current = Array.isArray(sv.descobertas) ? sv.descobertas : []; setDescobertas(descobRef.current);
       /* MASMORRA/MURAL (v6.3): saves antigos não conhecem — começam zerados */
-      masmorraRef.current = sv.masmorra && Array.isArray(sv.masmorra.salas) ? sv.masmorra : null; setMasmorra(masmorraRef.current);
+      /* MIGRAÇÃO v8.3: a masmorra antiga era um corredor {salas:[], idx}; a
+         nova é um grafo {salas com id/saidas, atual}. Uma masmorra antiga em
+         andamento quebraria a interface nova — encerra e avisa. */
+      {
+        const mmA = sv.masmorra;
+        const ehNova = mmA && Array.isArray(mmA.salas) && mmA.atual !== undefined;
+        if (mmA && Array.isArray(mmA.salas) && !ehNova) {
+          masmorraRef.current = null; setMasmorra(null);
+          setTimeout(() => pushMsgs([{ autor: "sistema", texto: "🕳 A masmorra em andamento era do formato antigo (corredor linear) e foi encerrada. As novas são ramificadas: passagens com pistas, chave escondida e tochas que se gastam." }]), 300);
+        } else { masmorraRef.current = ehNova ? mmA : null; setMasmorra(masmorraRef.current); }
+      }
       muralRef.current = Array.isArray(sv.mural) ? sv.mural : []; setMural(muralRef.current);
       decretosRef.current = Array.isArray(sv.decretos) ? sv.decretos : []; setDecretos(decretosRef.current);
       diaRef.current = sv.dia || 1; setDia(diaRef.current);
@@ -6179,8 +6189,9 @@ Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a
     setAba(null);
     setRecal("pedindo");
     try {
-      const sys = `Você é o ARQUIVISTA da campanha "${nomeCampanha}". Um save antigo deixou os números do herói para trás da lenda. Leia o LIVRO e o CÂNONE e proponha os números JUSTOS de hoje, baseando-se SÓ no que aconteceu na história (feitos, combates vencidos, anos de estrada). Responda SOMENTE JSON no formato: {"nivel": <inteiro 1-20>, "atributos": {"forca":0-5,"agilidade":0-5,"vigor":0-5,"intelecto":0-5,"vontade":0-5,"presenca":0-5}, "justificativa": "2-3 frases citando os feitos que sustentam a proposta"}.`;
-      const conteudo = `LIVRO DA CAMPANHA:\n${livroRef.current || "(vazio)"}\n\nCÂNONE:\n${formatarCanone(canoneRef.current)}\n\nHERÓI HOJE: nível ${personagem.nivel}; atributos ${JSON.stringify(personagem.atributos)}.`;
+      const sys = `Você é o ARQUIVISTA da campanha "${nomeCampanha}". Um save antigo deixou os números do herói para trás da lenda. Leia o LIVRO e o CÂNONE e proponha os números JUSTOS de hoje, baseando-se SÓ no que aconteceu na história (feitos, combates vencidos, anos de estrada). Responda SOMENTE JSON no formato: {"nivel": <inteiro 1-20>, "atributos": {"forca":0-5,"destreza":0-5,"vigor":0-5,"intelecto":0-5,"presenca":0-5,"percepcao":0-5}, "dadivas": <inteiro 0-6, só se nivel 20: quantas dádivas épicas os feitos justificam>, "justificativa": "2-3 frases citando os feitos que sustentam a proposta"}.
+REFERÊNCIAS DE ESCALA (novas regras): o nível 20 é o ápice mortal e custa 355.000 XP acumulados — só conceda se a lenda for realmente monumental (impérios, deuses enfrentados, décadas de estrada). Atributos vão de 0 a +5; a PROFICIÊNCIA (+2 a +6 pelo nível) é somada pelo sistema por cima, então não a embuta nos atributos. Se o herói estiver no nível 20 e a história sustentar feitos ainda maiores, proponha dádivas épicas (cada uma equivale a ~30.000 XP além do ápice).`;
+      const conteudo = `LIVRO DA CAMPANHA:\n${livroRef.current || "(vazio)"}\n\nCÂNONE:\n${formatarCanone(canoneRef.current)}\n\nHERÓI HOJE: nível ${personagem.nivel}; atributos ${JSON.stringify(personagem.atributos)}; classe ${personagem.classe || "—"}; ${(personagem.dadivas || []).length} dádivas épicas.\nCONTADORES REAIS DO SISTEMA (a verdade dos feitos): ${JSON.stringify(contRef.current)}\nDOMÍNIOS: ${dominiosDe(mapaRef.current).length} · fama ${Math.round(famaAtual())}/100 · dia ${diaRef.current} da campanha.`;
       const r = await chamarModelo(sys, [{ role: "user", content: conteudo }], 800, "json", "leve");
       const j = parseObjetoTolerante(r);
       if (!j || j.nivel == null) throw new Error("o arquivista não respondeu com números");
@@ -6189,7 +6200,10 @@ Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a
       for (const k of Object.keys(at)) if (j.atributos && j.atributos[k] != null) at[k] = Math.min(5, Math.max(0, Math.round(j.atributos[k])));
       const vidaMax = pvEsperadoJogador(nivel, at.vigor);
       const manaMax = 8 + (nivel - 1) * 2 + at.intelecto * 2;
-      setRecal({ proposta: { nivel, atributos: at, vidaMax, manaMax }, justificativa: j.justificativa || "" });
+      /* v8.3: a recalibração agora entende as regras novas — dádivas épicas
+         no ápice e a proficiência que o sistema soma por cima. */
+      const dadivas = nivel >= 20 ? Math.min(6, Math.max(0, Math.round(Number(j.dadivas) || 0))) : 0;
+      setRecal({ proposta: { nivel, atributos: at, vidaMax, manaMax, dadivas, prof: bonusProficiencia(nivel) }, justificativa: j.justificativa || "" });
     } catch (e) {
       pushMsgs([{ autor: "sistema", texto: `⚠ Não consegui recalibrar: ${e.message}` }]);
       setRecal(null);
@@ -6198,9 +6212,19 @@ Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a
   const aplicarRecalibragem = () => {
     const p = recal && recal.proposta;
     if (!p) return;
-    setPersonagem((old) => ({ ...old, nivel: p.nivel, atributos: p.atributos, vidaMax: p.vidaMax, manaMax: p.manaMax, vida: p.vidaMax, mana: p.manaMax }));
-    pushMsgs([{ autor: "sistema", texto: `⚖ Lenda recalibrada: nível ${p.nivel}, PV ${p.vidaMax}, PM ${p.manaMax}. Seus números agora honram seus feitos.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Recalibração de save: meus números oficiais agora são nível ${p.nivel}, PV ${p.vidaMax}, PM ${p.manaMax} — coerentes com tudo que já vivi. Trate-os como verdade daqui em diante.`;
+    const msgsRec = [];
+    setPersonagem((old) => {
+      let np = { ...old, nivel: p.nivel, atributos: p.atributos, vidaMax: p.vidaMax, manaMax: p.manaMax, vida: p.vidaMax, mana: p.manaMax, xp: 0 };
+      /* dádivas épicas propostas: concedidas pelo sistema, uma a uma */
+      const faltam = Math.max(0, (p.dadivas || 0) - (old.dadivas || []).length);
+      if (faltam > 0) { np.dadivasPendentes = (np.dadivasPendentes || 0) + faltam; np = concederDadivas(np, msgsRec); }
+      return np;
+    });
+    pushMsgs([
+      { autor: "sistema", texto: `⚖ Lenda recalibrada: nível ${p.nivel}, PV ${p.vidaMax}, PM ${p.manaMax}, proficiência +${p.prof}. Seus números agora honram seus feitos.` },
+      ...msgsRec.map((t) => ({ autor: "sistema", texto: t })),
+    ]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Recalibração de save: meus números oficiais agora são nível ${p.nivel}, PV ${p.vidaMax}, PM ${p.manaMax}, proficiência +${p.prof}${p.dadivas ? `, ${p.dadivas} dádivas épicas` : ""} — coerentes com tudo que já vivi. Trate-os como verdade daqui em diante.`;
     setRecal(null);
     setTimeout(() => checarConquistas(), 0);
   };
@@ -6298,6 +6322,8 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
   /* RECALIBRAR ASCENSÃO (v7.4.1): saves onde a história JÁ fez do herói uma
      divindade chegaram antes do sistema existir. O arquivista relê livro e
      cânone e propõe o estado divino JUSTO — o sistema aplica com tetos. */
+  /* v8.3: a recalibração de ascensão passa a conhecer os caminhos (fé,
+     deicídio, relíquia) e a régua nova de nível por grau. */
   const recalibrarAscensao = async () => {
     if (bloqueado || recalAsc === "pedindo") return;
     setAba(null);
@@ -6313,8 +6339,9 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
  "pf": número,
  "dominio": "uma palavra (ex.: Tempestade, Forja, Vingança) ou vazio",
  "patrono": "divindade que o patrocina, se houver, ou vazio",
+ "caminho": "fe" | "deicidio" | "reliquia" (COMO ele ascendeu — deicidio se matou uma divindade e tomou o domínio, reliquia se drenou uma fonte antiga por ritual, fe se acumulou culto),
  "divindades": [{"nome":"","dominio":"","gd":2-4,"temperamento":"","culto":""}]}
-ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói cultuado localmente (mil fiéis); gd 2 = semideus, cultos em várias cidades (10 mil); gd 3 = divindade menor, templos, milagres atendidos (100 mil); gd 4 = divindade maior, religião continental (1 milhão). Só marque desperto=true se o herói tem nível ${personagem.nivel} ≥ 15 E há sinais de culto/poder divino na história. fieis e pf coerentes com o gd proposto (mínimos: gd1≥1000, gd2≥10000, gd3≥100000, gd4≥1000000). Se a história NÃO mostra divindade nenhuma no mundo, devolva "divindades": []. Máx. 6 divindades, só as que EXISTEM na história.`;
+ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói cultuado localmente (mil fiéis); gd 2 = semideus, cultos em várias cidades (10 mil); gd 3 = divindade menor, templos, milagres atendidos (100 mil); gd 4 = divindade maior, religião continental (1 milhão). TETO POR NÍVEL (regra dura do sistema — nunca proponha acima disso): o herói é nível ${personagem.nivel}, então o GD máximo possível hoje é ${gdMaximoPorNivel(personagem.nivel || 1)} (nv15-16 → GD 1; nv17-18 → GD 2; nv19 → GD 3; nv20 → GD 4). Só marque desperto=true se o nível é ≥ 15 E há sinais de culto/poder divino na história. fieis e pf coerentes com o gd proposto (mínimos: gd1≥1000, gd2≥10000, gd3≥100000, gd4≥1000000). Se a história NÃO mostra divindade nenhuma no mundo, devolva "divindades": []. Máx. 6 divindades, só as que EXISTEM na história.`;
       const conteudo = `LIVRO DA CAMPANHA:\n${livroRef.current || "(vazio)"}\n\nCÂNONE:\n${formatarCanone(canoneRef.current)}\n\nHERÓI: ${personagem.nome}, nível ${personagem.nivel}, ${patamarDe(personagem.nivel).nome}\nASCENSÃO REGISTRADA HOJE: desperto=${dv.despertar ? "sim" : "não"}, ${dv.fieis} fiéis, ${dv.pf} PF, GD ${grauDe(dv)}, domínio "${dv.dominio || "—"}", patrono "${dv.patrono || "—"}", panteão: ${(dv.panteao || []).map((d) => `${d.nome} (GD ${d.gd})`).join(", ") || "vazio"}`;
       const r = await chamarModelo(sys, [{ role: "user", content: conteudo }], 2500, "json", "leve");
       const j = parseObjetoTolerante(r);
@@ -6334,6 +6361,15 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     /* TETO DE SEGURANÇA: gd 0-4, fiéis 0-2M, pf 0-500 — o mínimo do degrau é garantido por código */
     let gd = Math.max(0, Math.min(4, Math.round(j.gd || 0)));
     if (!j.desperto) gd = 0;
+    /* v8.3: o teto por nível vale também aqui — fé sem poder não faz deus */
+    const tetoGd = gdMaximoPorNivel(personagem.nivel || 1);
+    if (gd > tetoGd) { msgs.push(`⛓ O arquivista propôs GD ${gd}, mas o nível ${personagem.nivel} comporta no máximo GD ${tetoGd} — ajustado.`); gd = tetoGd; }
+    if (["fe", "deicidio", "reliquia"].includes(String(j.caminho || "").toLowerCase())) {
+      dv.caminho = String(j.caminho).toLowerCase();
+      if (dv.caminho !== "fe") msgs.push(`🌟 Caminho reconhecido: ${caminhoPorId(dv.caminho).nome}.`);
+    }
+    /* PF e fé passam a render por dia — alinha o marco para não minguar já */
+    dv.ultimoFeitoDia = diaRef.current;
     let fieis = Math.max(0, Math.min(2000000, Math.round(j.fieis || 0)));
     if (gd > 0) fieis = Math.max(fieis, GRAUS[gd].fieis);
     const pf = Math.max(0, Math.min(500, Math.round(j.pf || 0)));
