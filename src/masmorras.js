@@ -74,7 +74,7 @@ export function gerarMasmorra(genero, nivel, nomeSugerido = "") {
       const r = Math.random();
       const tipo = r < 0.40 ? "combate" : r < 0.56 ? "armadilha" : r < 0.74 ? "tesouro" : r < 0.88 ? "enigma" : "santuario";
       const profunda = c === nCamadas;
-      const sala = { id: idSeq++, tipo, camada: c, saidas: [], visitada: false, resolvida: false, pista: pistaDe(tipo), ...conteudoSala(tipo, genero, nivel, profunda) };
+      const sala = { id: idSeq++, tipo, camada: c, saidas: [], visitada: false, resolvida: false, pista: pistaDe(tipo), segredo: sortearSegredo(tipo), ...conteudoSala(tipo, genero, nivel, profunda) };
       salas.push(sala); atual.push(sala.id);
     }
     /* a CHAVE fica numa sala aleatória do miolo (nunca na primeira camada
@@ -100,7 +100,7 @@ export function gerarMasmorra(genero, nivel, nomeSugerido = "") {
   salas.push(chefe);
   for (const pid of anterior) salas.find((x) => x.id === pid).saidas.push(chefe.id);
 
-  return { nome, salas, atual: 0, tochas: 5 + d(3), chave: false, saques: { moedas: 0, itens: 0 }, encerrada: false };
+  return { nome, salas, atual: 0, tochas: 5 + d(3), chave: false, ritmo: "normal", saques: { moedas: 0, itens: 0 }, encerrada: false };
 }
 
 /* Saídas visíveis da sala atual, já com pista e estado. */
@@ -160,3 +160,71 @@ export function recompensaChefe(nivel) {
 
 export const ROTULO_SALA = { entrada: "Entrada", combate: "Combate", armadilha: "Armadilha", tesouro: "Tesouro", enigma: "Enigma", santuario: "Santuário", chave: "Guardião", chefe: "Chefe" };
 export const ICONE_SALA = { entrada: "🚪", combate: "⚔", armadilha: "🕸", tesouro: "💰", enigma: "🔮", santuario: "🕯", chave: "🗝", chefe: "💀" };
+
+/* ═══════════ v8.4 — DUNGEON CRAWL: PERCEPÇÃO E RITMO (5e) ═══════════
+   No 5e a exploração não é só andar: existe a PERCEPÇÃO PASSIVA (10 +
+   modificador), que revela sozinha o que estiver abaixo dela, e a BUSCA
+   ATIVA, que custa um turno de 10 minutos e permite rolagem. O ritmo da
+   marcha muda o que você enxerga e o que te enxerga. */
+
+export const RITMOS = [
+  { id: "cauteloso", nome: "Cauteloso", icone: "🐢", desc: "Avança devagar, examinando tudo.", percepcao: 5, tochaExtra: 1, surpresa: -4, minutos: 20 },
+  { id: "normal",    nome: "Normal",    icone: "🚶", desc: "Passo firme, atenção razoável.",   percepcao: 0, tochaExtra: 0, surpresa: 0,  minutos: 10 },
+  { id: "apressado", nome: "Apressado", icone: "🏃", desc: "Corre — e quem espreita agradece.", percepcao: -5, tochaExtra: 0, surpresa: 5, minutos: 5 },
+];
+export function ritmoPorId(id) { return RITMOS.find((r) => r.id === id) || RITMOS[1]; }
+
+/* Percepção passiva ao estilo 5e: 10 + modificador (o app já soma proficiência). */
+export function percepcaoPassiva(modPercepcao, ritmoId) {
+  return 10 + (modPercepcao || 0) + ritmoPorId(ritmoId).percepcao;
+}
+
+/* SEGREDOS: o que uma sala pode esconder, com a dificuldade de notar. */
+const SEGREDOS = [
+  { tipo: "armadilha_oculta", cd: 14, txt: "um fio quase invisível cruzando a passagem", perigo: true },
+  { tipo: "armadilha_oculta", cd: 16, txt: "lajotas que afundam um dedo a mais que as outras", perigo: true },
+  { tipo: "passagem_secreta", cd: 15, txt: "uma corrente de ar saindo de trás da estante", perigo: false },
+  { tipo: "passagem_secreta", cd: 18, txt: "marcas de arraste no chão, sob a tapeçaria", perigo: false },
+  { tipo: "esconderijo",      cd: 13, txt: "uma pedra solta na parede, mal recolocada", perigo: false },
+  { tipo: "esconderijo",      cd: 17, txt: "um alçapão sob a palha apodrecida", perigo: false },
+  { tipo: "emboscada",        cd: 15, txt: "respiração contida vindo das sombras altas", perigo: true },
+];
+
+/* Sorteia o segredo de uma sala (nem toda sala tem). */
+export function sortearSegredo(tipoSala) {
+  const chance = tipoSala === "tesouro" ? 0.55 : tipoSala === "armadilha" ? 0.6 : tipoSala === "combate" ? 0.3 : 0.4;
+  if (Math.random() > chance) return null;
+  const s = SEGREDOS[Math.floor(Math.random() * SEGREDOS.length)];
+  return { ...s, revelado: false, resolvido: false };
+}
+
+/* Ao ENTRAR: a percepção passiva revela sozinha o que estiver abaixo dela.
+   É a diferença entre um herói atento e um distraído — sem rolar nada. */
+export function checarPassiva(sala, passiva) {
+  if (!sala || !sala.segredo || sala.segredo.revelado) return { revelou: false };
+  if (passiva >= sala.segredo.cd) {
+    return {
+      revelou: true,
+      texto: `👁 Percepção passiva ${passiva} vs ${sala.segredo.cd} — você nota ${sala.segredo.txt}.`,
+      segredo: { ...sala.segredo, revelado: true },
+    };
+  }
+  return { revelou: false, quaseTexto: passiva >= sala.segredo.cd - 3 ? "Algo aqui te incomoda, mas você não sabe dizer o quê." : null };
+}
+
+/* BUSCA ATIVA: gasta um turno de exploração e permite rolagem. */
+export function custoBusca() { return 10; } // minutos
+
+export function resultadoBusca(sala, rolagemTotal) {
+  if (!sala || !sala.segredo) return { achou: false, texto: "Você vasculha por dez minutos e não encontra nada além de poeira." };
+  if (sala.segredo.revelado) return { achou: false, texto: "Você já sabe o que há para achar aqui." };
+  if (rolagemTotal >= sala.segredo.cd) {
+    return { achou: true, texto: `Depois de dez minutos, você encontra: ${sala.segredo.txt}.`, segredo: { ...sala.segredo, revelado: true } };
+  }
+  return { achou: false, texto: `Dez minutos de busca (${rolagemTotal} vs ${sala.segredo.cd}) — nada além de sombras.` };
+}
+
+/* Armadilha NÃO percebida dispara ao entrar; percebida pode ser evitada. */
+export function armadilhaDispara(sala) {
+  return !!(sala && sala.segredo && sala.segredo.perigo && !sala.segredo.revelado);
+}
