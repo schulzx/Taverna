@@ -193,10 +193,10 @@ export function tituloDoHeroi(divindade, patamarFamaRotulo, patamarNivelNome) {
 export function gdMaximoPorNivel(nivel) {
   const n = nivel || 1;
   if (n < NIVEL_DESPERTAR) return 0;
-  if (n < 18) return 1;
-  if (n < 22) return 2;
-  if (n < 26) return 3;
-  return 4;
+  if (n < 17) return 1;
+  if (n < 19) return 2;
+  if (n < 20) return 3;
+  return 4; // no ápice mortal (20) nada mais limita a ascensão
 }
 
 /* ---------------- FÉ POR CÓDIGO ----------------
@@ -264,3 +264,51 @@ export function milagresDisponiveis(div) {
   return MILAGRES.filter((m) => m.gd <= gd).map((m) => ({ ...m, podeUsar: pf >= m.pf }));
 }
 export function milagrePorId(id) { return MILAGRES.find((m) => m.id === id) || null; }
+
+
+/* ═══════════ v8.2 — CAMINHOS DE ASCENSÃO ═══════════
+   Fé não é a única estrada. Um herói pode roubar a divindade de quem já
+   a tem (deicídio) ou drenar uma fonte antiga por ritual. Cada caminho
+   tem exigências e testes; o sistema entrega os parâmetros prontos. */
+export const CAMINHOS_ASCENSAO = [
+  {
+    id: "fe",
+    nome: "A Via da Fé",
+    desc: "Acumular fiéis até o próprio nome virar oração. Lento, seguro e legítimo.",
+    exige: "fiéis suficientes para o grau seguinte",
+    risco: "nenhum — só tempo e feitos",
+    testes: [],
+  },
+  {
+    id: "deicidio",
+    nome: "Deicídio",
+    desc: "Matar uma divindade e tomar o domínio dela. Rápido, brutal e faz inimigos eternos.",
+    exige: "enfrentar um deus de GD igual ou maior — e vencer",
+    risco: "o culto do morto jura vingança; outros deuses passam a te vigiar",
+    testes: [
+      { nome: "Encontrar o corpo verdadeiro", atributo: "Percepção", dificuldade: 20, nota: "deuses não morrem onde parecem estar" },
+      { nome: "Romper a proteção divina", atributo: "Presença", dificuldade: 22, nota: "exige artefato lendário ou bênção rival" },
+      { nome: "Absorver o domínio no instante da morte", atributo: "Vontade", dificuldade: 24, nota: "falhar aqui dispersa o poder — e queima o herói" },
+    ],
+    ganho: { gd: 1, fieis: 0.5 },
+  },
+  {
+    id: "reliquia",
+    nome: "A Fonte Milenar",
+    desc: "Encontrar uma relíquia de energia primordial e drená-la num ritual longo.",
+    exige: "localizar a relíquia e reunir os componentes do ritual",
+    risco: "o ritual pode falhar catastroficamente; a fonte pode ter dono",
+    testes: [
+      { nome: "Decifrar o ritual", atributo: "Intelecto", dificuldade: 20, nota: "línguas que precedem a escrita" },
+      { nome: "Sustentar a canalização", atributo: "Vigor", dificuldade: 22, nota: "o corpo mortal não foi feito para isso" },
+      { nome: "Não se perder no que entra", atributo: "Vontade", dificuldade: 23, nota: "falhar aqui não mata — apaga quem você era" },
+    ],
+    ganho: { gd: 1, fieis: 0.3 },
+  },
+];
+export function caminhoPorId(id) { return CAMINHOS_ASCENSAO.find((c) => c.id === id) || CAMINHOS_ASCENSAO[0]; }
+
+export const CAMINHOS_PROMPT = `CAMINHOS DE ASCENSÃO (além da fé — o sistema fornece os parâmetros; você conduz a ficção):
+- DEICÍDIO: matar um deus e tomar seu domínio. Três provas, nesta ordem: achar o corpo verdadeiro (Percepção, dif. 20), romper a proteção divina (Presença, dif. 22 — exige artefato lendário ou bênção rival) e absorver o domínio no instante da morte (Vontade, dif. 24). Cada prova é uma CENA, não uma frase. Vencer sobe UM grau e transfere metade dos fiéis do morto; o culto dele jura vingança para sempre.
+- FONTE MILENAR: drenar uma relíquia primordial por ritual. Provas: decifrar o ritual (Intelecto, dif. 20), sustentar a canalização (Vigor, dif. 22) e não se perder no que entra (Vontade, dif. 23). Vencer sobe UM grau; falhar a última prova não mata — muda quem o herói é (proponha uma consequência permanente).
+- Estes caminhos exigem PREPARAÇÃO na ficção (encontrar o alvo, reunir componentes, aliados). Nunca os conceda de imediato porque o jogador pediu: construa a jornada. Quando as provas forem vencidas, mande o sinal "ascender:deicidio" ou "ascender:reliquia" e o SISTEMA aplica o grau.`;

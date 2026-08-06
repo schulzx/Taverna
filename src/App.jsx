@@ -23,7 +23,7 @@ import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, ro
 import { calcularFama, patamarFama, gerarNemesis, LIMIARES_NEMESIS, ACOES_NEMESIS, rumorDoDia } from "./fama.js";
 import { gerarCronica } from "./cronica.js";
 import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
-import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, decaimentoFe, MILAGRES, milagresDisponiveis, milagrePorId } from "./divindades.js";
+import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, decaimentoFe, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, sortearDadiva, resumoEpico } from "./regras.js";
 import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, processarDiaCorreio } from "./correio.js";
@@ -338,7 +338,7 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   }
 }
 O campo "canone" é opcional: inclua-o só quando houver um fato durável a registrar ou atualizar. Cada chave é o NOME da entidade; os campos (tipo, papel, genero, local, status, notas) são todos opcionais — preencha os relevantes. Para atualizar, reenvie a mesma chave com os campos novos.
-SINAIS (canal barato — prefira-o sempre que existir): em vez de calcular e enviar números, mande um sinal curto e o SISTEMA resolve pela tabela. Sinais aceitos: "fe:sussurro|feito|proeza|marco" (o herói fez algo que rende fé — o sistema converte em fiéis conforme a fama dele; sussurro = notado por poucos, feito = a cidade comenta, proeza = a região conta, marco = muda a história); "milagre:<id>" (o herói gastou fé num milagre: bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar — o sistema cobra os PF e aplica o efeito); "viagem:<destino>" (o herói pôs o pé na estrada rumo a outro lugar — o sistema assume clima, encontros do trecho e passagem de tempo; NÃO narre a viagem inteira, só a partida); "masmorra:<nome>" (o herói vai enfrentar um covil, cripta, torre, fortaleza ou chefe — o sistema GERA as salas, os perigos e o chefe, e conduz sala a sala; você narra a entrada e depois só o que cada sala mandar); "loot:comum|incomum|raro|epico|lendario" (o herói encontrou um item — o sistema GERA o item com nome, afixos e poder, e te devolve os dados para você descrever o achado; NÃO escreva você o objeto de equipamento, é mais caro e sai incoerente); "dominio:<texto>" e "patrono:<texto>" (só na primeira vez que a ficção os revelar). Nunca invente PF nem número de fiéis: mande o sinal e narre a cena.
+SINAIS (canal barato — prefira-o sempre que existir): em vez de calcular e enviar números, mande um sinal curto e o SISTEMA resolve pela tabela. Sinais aceitos: "fe:sussurro|feito|proeza|marco" (o herói fez algo que rende fé — o sistema converte em fiéis conforme a fama dele; sussurro = notado por poucos, feito = a cidade comenta, proeza = a região conta, marco = muda a história); "milagre:<id>" (o herói gastou fé num milagre: bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar — o sistema cobra os PF e aplica o efeito); "viagem:<destino>" (o herói pôs o pé na estrada rumo a outro lugar — o sistema assume clima, encontros do trecho e passagem de tempo; NÃO narre a viagem inteira, só a partida); "masmorra:<nome>" (o herói vai enfrentar um covil, cripta, torre, fortaleza ou chefe — o sistema GERA as salas, os perigos e o chefe, e conduz sala a sala; você narra a entrada e depois só o que cada sala mandar); "loot:comum|incomum|raro|epico|lendario" (o herói encontrou um item — o sistema GERA o item com nome, afixos e poder, e te devolve os dados para você descrever o achado; NÃO escreva você o objeto de equipamento, é mais caro e sai incoerente); "ascender:deicidio|reliquia" (o herói venceu TODAS as provas de um caminho de ascensão — o sistema aplica o grau e as consequências); "dominio:<texto>" e "patrono:<texto>" (só na primeira vez que a ficção os revelar). Nunca invente PF nem número de fiéis: mande o sinal e narre a cena.
 Regras do formato: "rolagem" e "mudancas" são null quando não há; nunca os coloque dentro de "narrativa". "narrativa" é sempre uma string simples. Tipos de equipamento: arma, armadura, elmo, botas, anel, amuleto, escudo. Raridades: comum, incomum, raro, epico, lendario. Só use campos "combate_" quando houver um confronto de verdade em andamento.`;
 }
 
@@ -2897,7 +2897,7 @@ function TelaMenu({ irNovo, continuar, temSave }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v8.1 · proficiência e ápice épico</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v8.2 · dados do mestre e ascensão</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -3375,7 +3375,7 @@ export default function Taverna() {
   const infoDivindade = () => {
     const dv = divindadeRef.current;
     if (!dv || !dv.despertar) return "";
-    return `${DIVINDADE_PROMPT}\nEstado atual do jogador: ${resumoAscensao(dv, 0)}${dv.panteao.length ? `\nPanteão conhecido: ${dv.panteao.map((d) => `${d.icone} ${d.nome} ${d.dominio} — GD ${d.gd} (${tituloDe(d.gd)}), culto: ${d.culto}`).join("; ")}.` : ""}`;
+    return `${DIVINDADE_PROMPT}\n${CAMINHOS_PROMPT}\nEstado atual do jogador: ${resumoAscensao(dv, 0)}${dv.panteao.length ? `\nPanteão conhecido: ${dv.panteao.map((d) => `${d.icone} ${d.nome} ${d.dominio} — GD ${d.gd} (${tituloDe(d.gd)}), culto: ${d.culto}`).join("; ")}.` : ""}`;
   };
   /* CLIMA: rolado por tabela; vai ao Mestre como envelope [CLIMA] */
   const climaRef = useRef(null);
@@ -3762,6 +3762,20 @@ export default function Taverna() {
         } else if (chave === "masmorra") {
           if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) {
             sinalMasmorraRef.current = arg || "";
+          }
+        } else if (chave === "ascender" && dvAtual && dvAtual.despertar) {
+          const cam = caminhoPorId(arg.toLowerCase());
+          const gdAtual = grauDe(dvAtual);
+          const teto = gdMaximoPorNivel(personagem.nivel || 1);
+          if (gdAtual >= teto) {
+            msgs.push(`⛓ ${cam.nome}: o poder existe, mas seu corpo mortal ainda não o comporta (nível ${personagem.nivel}).`);
+          } else {
+            const alvo = GRAUS[Math.min(4, gdAtual + 1)];
+            const fieisNovos = Math.max(alvo.fieis, Math.round(alvo.fieis * (1 + (cam.ganho?.fieis || 0))));
+            const dv2 = { ...divindadeRef.current, fieis: fieisNovos, ultimoFeitoDia: diaRef.current, caminho: cam.id };
+            divindadeRef.current = dv2; setDivindade(dv2);
+            msgs.push(`🌟 ASCENSÃO POR ${cam.nome.toUpperCase()} — você alcança GD ${grauDe(dv2)} (${tituloDe(grauDe(dv2))}).`);
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ASCENSÃO — ${cam.nome.toUpperCase()} — APLICADA PELO SISTEMA] O herói subiu para GD ${grauDe(dv2)} (${tituloDe(grauDe(dv2))}) por este caminho. ${cam.id === "deicidio" ? "O culto da divindade morta jura vingança eterna — registre isso no cânone e faça o mundo reagir: outros deuses passam a vigiá-lo." : cam.id === "reliquia" ? "A fonte primordial se apagou — registre no cânone o que restou dela e o preço que o ritual cobrou do herói." : ""} Narre a transformação à altura: virar deus deve doer, custar e mudar o jogo.`;
           }
         } else if (chave === "loot") {
           const rar = ["comum", "incomum", "raro", "epico", "lendario"].includes(arg.toLowerCase()) ? arg.toLowerCase() : "comum";
@@ -5835,6 +5849,11 @@ export default function Taverna() {
       const secundarias = questsRef.current.filter((q) => q.status === "ativa" && q.tipo !== "principal").length;
       const r = processarDescansoLongoEventos(eventosRef.current, ctx, { dia: diaRef.current, secundariasAtivas: secundarias });
       eventosRef.current = r.eventos; setEventos(r.eventos);
+      /* DADOS À VISTA (v8.2): o mundo não "acontece" por mágica — o Mestre
+         rola, e o jogador vê o dado e o alvo, como numa mesa de verdade. */
+      if (mostrarRolagensRef.current && (r.rolagens || []).length) {
+        pushMsgs((r.rolagens || []).map((x) => ({ autor: "sistema", texto: `🎲 ${x.texto}` })));
+      }
       const partes = [];
       if (r.globalNovo) {
         partes.push(`[EVENTO GLOBAL — NOVO ARCO MAIOR: ${r.globalNovo.nome.toUpperCase()}] O SISTEMA sorteou um acontecimento que abalará a região: ${r.globalNovo.semente} ETAPA 1/${r.globalNovo.etapas.length} agora: ${r.globalNovo.etapas[0]} Teça isso na ficção aos poucos — é um arco longo de fundo, coerente com o arco atual, NÃO uma quest para resolver hoje.`);

@@ -9,6 +9,24 @@ import { elencoDiverso } from "./nomes.js";
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+/* ---------------- DADOS DO MESTRE (v8.2) ----------------
+   Antes os eventos surgiam por sorteio invisível. Agora o Mestre ROLA,
+   como numa mesa de verdade: o dado aparece, o alvo aparece, e só
+   acontece se passar. Um mundo que se explica é mais confiável do que
+   um mundo que só acontece. */
+export const d20 = () => 1 + Math.floor(Math.random() * 20);
+
+export function rolarGatilho(rotulo, alvo, { vantagem = false, garantido = false } = {}) {
+  if (garantido) return { rotulo, alvo, d: 20, passou: true, garantido: true, texto: `${rotulo}: garantido pelo tempo decorrido` };
+  const a = d20(), b = vantagem ? d20() : null;
+  const d = b != null ? Math.max(a, b) : a;
+  const passou = d >= alvo;
+  return {
+    rotulo, alvo, d, passou, vantagem,
+    texto: `${rotulo}: d20 ${b != null ? `(${a}/${b}) ` : ""}= ${d} vs ${alvo} → ${passou ? "acontece" : "nada"}`,
+  };
+}
+
 /* ---------------- contexto comum ---------------- */
 export function ctxMundo({ mundo, mapa, dia }) {
   const genero = (mundo && mundo.genero) || "Fantasia medieval";
@@ -137,24 +155,36 @@ export function processarDescansoLongoEventos(ev, ctx, { dia, secundariasAtivas 
     return false;
   });
 
-  /* novo fio local */
-  if (e.locais.length < 3 && Math.random() < 0.55) out.localNovo = gerarEventoLocal(ctx, dia);
-  if (out.localNovo) e.locais.push(out.localNovo);
+  /* ROLAGENS DO MESTRE: cada possibilidade tem seu alvo no d20 e o
+     resultado fica registrado (out.rolagens) para o jogador ver. */
+  out.rolagens = [];
 
-  /* quest sorteada da fase do arco */
-  if (secundariasAtivas < 2 && Math.random() < 0.40) out.questNova = gerarQuestDeArco(ctx, ctx.fase || "meio");
+  /* novo fio local — alvo 10 (55% ≈ 10+ no d20) */
+  if (e.locais.length < 3) {
+    const r = rolarGatilho("Fio local", 10);
+    out.rolagens.push(r);
+    if (r.passou) { out.localNovo = gerarEventoLocal(ctx, dia); e.locais.push(out.localNovo); }
+  }
 
-  /* evento global */
+  /* quest da fase do arco — alvo 13 (mais rara) */
+  if (secundariasAtivas < 2) {
+    const r = rolarGatilho("Nova missão", 13);
+    out.rolagens.push(r);
+    if (r.passou) out.questNova = gerarQuestDeArco(ctx, ctx.fase || "meio");
+  }
+
+  /* evento global — alvo 17 (raro); garantido se faz 10 dias sem nenhum */
   if (!e.global) {
     e.semGlobalDesde = e.semGlobalDesde || dia;
     const garantia = dia - e.semGlobalDesde >= 10;
-    if (garantia || Math.random() < 0.20) {
-      out.globalNovo = gerarEventoGlobal(ctx, dia);
-      e.global = out.globalNovo;
-    }
+    const r = rolarGatilho("Arco regional", 17, { garantido: garantia });
+    out.rolagens.push(r);
+    if (r.passou) { out.globalNovo = gerarEventoGlobal(ctx, dia); e.global = out.globalNovo; }
   } else if (e.global.etapa < e.global.etapas.length - 1) {
-    e.global = { ...e.global, etapa: e.global.etapa + 1 };
-    out.globalAvancou = true;
+    /* o arco global só escala se o dado mandar — alvo 12 */
+    const r = rolarGatilho(`Escalada de "${e.global.nome}"`, 12);
+    out.rolagens.push(r);
+    if (r.passou) { e.global = { ...e.global, etapa: e.global.etapa + 1 }; out.globalAvancou = true; }
   }
 
   out.eventos = e;
