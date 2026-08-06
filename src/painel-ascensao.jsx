@@ -5,7 +5,7 @@
 import React from "react";
 import { T } from "./constantes.js";
 import { GRAUS, MILAGRES, NIVEL_DESPERTAR, grauDe, tituloDe, proximoPatamar, pfMaximo, pfPorDia } from "./divindades.js";
-import { Botao } from "./ui.js";
+import { Botao } from "./ui.jsx";
 
 export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, recalibrando, onMilagre }) {
   const dv = divindade || garantirDivindade(null);

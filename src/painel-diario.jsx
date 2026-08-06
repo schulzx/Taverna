@@ -92,4 +92,4 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual }
   );
 }
 
-/* PainelMapa extraído para ./painel-mapa.js (v8.8) */
+/* PainelMapa extraído para ./painel-mapa.jsx (v8.8) */

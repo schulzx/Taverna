@@ -5,7 +5,7 @@
 import React from "react";
 import { T } from "./constantes.js";
 import { RELACOES, TRATADOS } from "./mapa.js";
-import { Botao } from "./ui.js";
+import { Botao } from "./ui.jsx";
 
 export function PainelDiplomacia({ mapa, faccaoJogador, onDiplomacia, onPresente, cofre }) {
   const fs = (mapa?.faccoes || []).filter((f) => f.nome !== faccaoJogador);

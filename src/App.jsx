@@ -28,12 +28,12 @@ import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } 
 import { BRAND, SLOGAN, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, FONT_CSS, GENEROS, ATRIBUTOS } from "./constantes.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt } from "./prompt.js";
-import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./ui.js";
-import { PainelAscensao } from "./painel-ascensao.js";
-import { PainelCodex } from "./painel-codex.js";
-import { PainelDiario } from "./painel-diario.js";
-import { PainelDiplomacia } from "./painel-diplomacia.js";
-import { PainelMapa } from "./painel-mapa.js";
+import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./ui.jsx";
+import { PainelAscensao } from "./painel-ascensao.jsx";
+import { PainelCodex } from "./painel-codex.jsx";
+import { PainelDiario } from "./painel-diario.jsx";
+import { PainelDiplomacia } from "./painel-diplomacia.jsx";
+import { PainelMapa } from "./painel-mapa.jsx";
 import { aplicarNivel, evoluirCompanheiro, aplicarDescanso, recargaPadrao, aplicarMudancas, bonusEquip, bonusEfeito, MOD_MAX_ROLAGEM, atributoEfetivo, tickEfeitos, processarCombate, migrarPersonagem } from "./regras-jogo.js";
 import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, consumirDia, RITMOS_VIAGEM, ritmoViagem, testarNavegacao, forragear, efeitoExaustao, recuperarExaustao, resumoErmos } from "./ermos.js";
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, sortearDadiva, resumoEpico } from "./regras.js";
@@ -91,7 +91,7 @@ async function chamarMestre(system, historico) {
   return resp;
 }
 
-/* primitivas de interface extraídas para ./ui.js (v8.8) */
+/* primitivas de interface extraídas para ./ui.jsx (v8.8) */
 
 
 /* ---------------- Overlay do dado ---------------- */
@@ -514,7 +514,7 @@ function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar })
   );
 }
 
-/* PainelDiario extraído para ./painel-diario.js (v8.8) */
+/* PainelDiario extraído para ./painel-diario.jsx (v8.8) */
 function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio, onDefinirRelacao }) {
   const lista = Object.values(npcs || {}).sort((a, b) => (b.ultimaVez || 0) - (a.ultimaVez || 0));
   const nomesGrupo = new Set((grupo || []).map((g) => (g.nome || "").toLowerCase()));
@@ -575,7 +575,7 @@ function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio, onDefinirRelacao }
 /* ---------------- ASCENSÃO (v7.4): escala GD, fé e o panteão ----------------
    Só aparece depois do despertar (nível NIVEL_DESPERTAR). Rastreável: o
    jogador VÊ a própria força e a de cada deus — e quando tem vantagem. */
-/* PainelAscensao extraído para ./painel-ascensao.js (v8.8) */
+/* PainelAscensao extraído para ./painel-ascensao.jsx (v8.8) */
 function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garantirMural, acampado, decretos, pregarDecreto, cancelarDecreto, moedas, cofre, nivel }) {
   const ativos = (quests || []).filter((q) => q.contrato && q.status === "ativa");
   const [formAberto, setFormAberto] = React.useState(false);
@@ -708,7 +708,7 @@ function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garant
 /* Painel de DIPLOMACIA: as potências conhecidas (guildas, reinos, cultos…),
    relação, tratado e ações de política. As propostas vão para a ficção —
    o Mestre decide a resposta delas; o app só registra os tratados firmados. */
-/* PainelDiplomacia extraído para ./painel-diplomacia.js (v8.8) */
+/* PainelDiplomacia extraído para ./painel-diplomacia.jsx (v8.8) */
 function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPeticao }) {
   const [para, setPara] = React.useState("");
   const [tipo, setTipo] = React.useState("cortesia");
@@ -807,7 +807,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
-/* PainelCodex extraído para ./painel-codex.js (v8.8) */
+/* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
 function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, bloqueado }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
@@ -2042,7 +2042,7 @@ export default function Taverna() {
   const salvar = useCallback((extra = {}) => {
     setStatusSave("salvando");
     const dados = {
-      nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico, sugestoes, rolagem,
+      nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico, sugestoes,
       combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,

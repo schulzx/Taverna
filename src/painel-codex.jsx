@@ -6,7 +6,7 @@ import React from "react";
 import { T } from "./constantes.js";
 import { CONQUISTAS, conquistaPorId } from "./conquistas.js";
 import { criaturasDoGenero } from "./bestiario.js";
-import { Retrato, sementeDe, Botao } from "./ui.js";
+import { Retrato, sementeDe, Botao } from "./ui.jsx";
 
 const ROTULO_AMEACA = { fraco: "fraca", comum: "comum", competente: "competente", elite: "elite", lendario: "lendária" };
 const CATEGORIAS_CONQUISTA = [
