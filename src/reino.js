@@ -65,11 +65,13 @@ export function rolarEventoReino(reino, mapa) {
 
 /* Avança um dia no reino: deriva da felicidade + evento por tabela.
    Retorna { reino, evento } — o evento já vem com números prontos para narrar. */
-export function processarDiaReino(reinoAtual, mapa) {
+export function processarDiaReino(reinoAtual, mapa, alvosFelicidade) {
   let reino = garantirReino(reinoAtual, mapa) || {};
-  /* deriva: felicidade tende ao equilíbrio 55 (povo esquece glórias e perdoa desgraças) */
+  /* deriva: felicidade tende ao equilíbrio 55 (povo esquece glórias e perdoa desgraças).
+     TEMPLOS (v8.9): onde há para onde rezar, o equilíbrio é mais alto — um povo
+     com fé aguenta mais desgraça antes de virar murmúrio de revolta. */
   reino = Object.fromEntries(Object.entries(reino).map(([nome, v]) => {
-    const alvo = 55;
+    const alvo = (alvosFelicidade && alvosFelicidade[nome]) || 55;
     const d = v.felicidade < alvo ? 1 : v.felicidade > alvo ? -1 : 0;
     return [nome, { ...v, felicidade: Math.max(0, Math.min(100, v.felicidade + d)) }];
   }));

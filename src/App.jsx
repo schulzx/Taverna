@@ -23,7 +23,8 @@ import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, ro
 import { calcularFama, patamarFama, gerarNemesis, LIMIARES_NEMESIS, ACOES_NEMESIS, rumorDoDia } from "./fama.js";
 import { gerarCronica } from "./cronica.js";
 import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
-import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, decaimentoFe, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
+import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, perderFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
+import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { BRAND, SLOGAN, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, FONT_CSS, GENEROS, ATRIBUTOS } from "./constantes.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
@@ -808,7 +809,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, bloqueado }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, bloqueado }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1041,8 +1042,8 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
         )}
 
         {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} />}
-        {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"}  onMilagre={onMilagreUI} />}
-        {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} />}
+        {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"}  onMilagre={onMilagreUI} mapa={mapa} devocao={devocao} />}
+        {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} />}
         {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} />}
         {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} />}
@@ -1102,9 +1103,10 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
         })()}
 
         {aba === "gestao" && subGestao === "dominios" && (() => {
-          const { porCidade, total } = rendaDominios(mapa);
+          const { porCidade, total } = rendaDominios(mapa, devocao);
           const g = guilda || { nivel: 1 };
           const temGuilda = !!faccaoJogador;
+          const desperto = !!(divindade && divindade.despertar);
           if (!porCidade.length) {
             return <div className="tv-body text-sm italic text-center py-10" style={{ color: T.inkDim }}>Nenhum domínio ainda. Conquiste ou funde cidades na história — cada uma que passar para a sua bandeira aparece aqui, produzindo renda todos os dias.</div>;
           }
@@ -1119,27 +1121,59 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                   const v = (reino || {})[c.nome];
                   const fel = v ? v.felicidade : null;
                   const corFel = fel == null ? T.inkDim : fel >= 70 ? T.ok : fel >= 40 ? T.amberSoft : T.danger;
+                  /* TEMPLOS (v8.9): a construção que ancora a fé nesta cidade */
+                  const cidadeMapa = ((mapa && mapa.cidades) || []).find((x) => x.nome === c.nome);
+                  const nivelT = temploDaCidade(devocao, c.nome);
+                  const tAtual = temploDe(nivelT);
+                  const est = cidadeMapa && desperto ? estadoFe(cidadeMapa, devocao) : null;
+                  const chk = desperto ? podeErguerTemplo({ cidade: cidadeMapa, devocao, divindade, cofre: g.cofre || 0 }) : null;
+                  const alvo = chk && chk.alvo;
                   return (
-                    <div key={c.nome} className="rounded-xl px-3 py-2.5 flex items-center justify-between gap-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-                      <div className="min-w-0 flex-1">
-                        <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{c.nome} {c.sede && <span className="tv-mono text-[9px]" style={{ color: T.amberSoft }}>· SEDE</span>}</div>
-                        <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.inkDim }}>{c.tipo}{v ? ` · ${v.populacao.toLocaleString("pt-BR")} almas` : ""}</div>
-                        {fel != null && (
-                          <div className="flex items-center gap-1.5 mt-1">
-                            <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: T.panel }}>
-                              <div className="h-full rounded-full" style={{ width: `${fel}%`, background: corFel }} />
+                    <div key={c.nome} className="rounded-xl px-3 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{tAtual ? `${tAtual.icone} ` : ""}{c.nome} {c.sede && <span className="tv-mono text-[9px]" style={{ color: T.amberSoft }}>· SEDE</span>}</div>
+                          <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.inkDim }}>{c.tipo}{v ? ` · ${v.populacao.toLocaleString("pt-BR")} almas` : ""}</div>
+                          {fel != null && (
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: T.panel }}>
+                                <div className="h-full rounded-full" style={{ width: `${fel}%`, background: corFel }} />
+                              </div>
+                              <span className="tv-mono text-[9px] shrink-0" style={{ color: corFel }}>{fel >= 70 ? "😊" : fel >= 40 ? "😐" : "😠"} {fel}</span>
                             </div>
-                            <span className="tv-mono text-[9px] shrink-0" style={{ color: corFel }}>{fel >= 70 ? "😊" : fel >= 40 ? "😐" : "😠"} {fel}</span>
-                          </div>
-                        )}
+                          )}
+                          {est && (
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: T.panel }}>
+                                <div className="h-full rounded-full" style={{ width: `${Math.round(c.fe)}%`, background: est.cor }} />
+                              </div>
+                              <span className="tv-mono text-[9px] shrink-0" style={{ color: est.cor }}>{est.icone} {Math.round(c.fe)}%</span>
+                            </div>
+                          )}
+                        </div>
+                        <span className="tv-mono text-sm shrink-0" style={{ color: T.ok }}>+{Math.round(c.renda * (temGuilda ? multGuilda(g.nivel) : 1) * (v ? fatorFelicidade(v.felicidade) : 1))}/dia</span>
                       </div>
-                      <span className="tv-mono text-sm shrink-0" style={{ color: T.ok }}>+{Math.round(c.renda * (temGuilda ? multGuilda(g.nivel) : 1) * (v ? fatorFelicidade(v.felicidade) : 1))}/dia</span>
+                      {desperto && (
+                        <div className="mt-2 pt-2" style={{ borderTop: `1px solid ${T.line}` }}>
+                          {tAtual && <div className="tv-body text-[11px] mb-1" style={{ color: T.violetSoft }}>{tAtual.icone} {tAtual.nome} — +{tAtual.feDia.toFixed(1)}% de fé e +{tAtual.pf} PF por dia, felicidade de equilíbrio +{tAtual.felicidade}.</div>}
+                          {alvo ? (
+                            <button onClick={() => onErguerTemplo && onErguerTemplo(c.nome)} disabled={!chk.pode}
+                              className="w-full tv-mono text-[10px] px-3 py-2 rounded-lg"
+                              style={{ background: chk.pode ? T.violet : T.panel, color: chk.pode ? "#14101F" : T.inkDim, border: `1px solid ${chk.pode ? T.violet : T.line}`, fontWeight: 600, opacity: chk.pode ? 1 : 0.55 }}>
+                              {alvo.icone} erguer {alvo.nome.toLowerCase()} · ◉ {alvo.custo} do cofre{chk.pode ? "" : ` — ${chk.motivo}`}
+                            </button>
+                          ) : (
+                            <div className="tv-body text-[11px] italic" style={{ color: T.amberSoft }}>Catedral erguida — não há degrau acima deste.</div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
               <div className="tv-body text-xs" style={{ color: T.inkDim }}>
                 Domínios rendem por tipo de cidade (vilas 5, cidades 12, capitais 25, fortalezas 15 — a sede rende o dobro).{temGuilda ? ` Sua guilda nível ${g.nivel} multiplica tudo por ${multGuilda(g.nivel).toFixed(2)}.` : " Fundar uma guilda multiplica essas rendas."} Cada domínio tem população e felicidade vivas: povo feliz produz até +50% de renda; povo revoltado, metade. A cada dia passado, o reino vive — colheitas, caravanas, pragas e murmúrios saem por tabela e chegam à ficção. Expanda na ficção: cada cidade conquistada entra aqui automaticamente.
+                {desperto ? " Templos ancoram a sua fé na cidade: a devoção cresce todo dia, rende Pontos de Fé, segura a felicidade do povo mais alto e ainda soma até +25% de renda (dízimo e romaria). Sem templo, a fé daquele lugar míngua sozinha." : ""}
               </div>
             </>
           );
@@ -1826,6 +1860,12 @@ export default function Taverna() {
   const [mundo, setMundo] = useState(null);
   const [nomeCampanha, setNomeCampanha] = useState("");
   const [personagem, setPersonagem] = useState(null);
+  /* ESPELHO DA FICHA (v8.9): montarSystemPrompt roda DENTRO do clique que
+     carrega o save — antes de o React aplicar setPersonagem. Sem este espelho,
+     infoTitulo() lia `personagem` ainda null e "Continuar aventura" falhava
+     na primeira tentativa (só abria no segundo clique). */
+  const personagemRef = useRef(null);
+  useEffect(() => { if (personagem) personagemRef.current = personagem; }, [personagem]);
   const [mensagens, setMensagens] = useState([]);
   const [historico, setHistorico] = useState([]);
   const [sugestoes, setSugestoes] = useState([]);
@@ -1899,11 +1939,33 @@ export default function Taverna() {
      Travada até o nível NIVEL_DESPERTAR para não quebrar a história. */
   const divindadeRef = useRef(garantirDivindade(null));
   const [divindade, setDivindade] = useState(divindadeRef.current);
+  /* DEVOÇÃO (v8.9): a fé deixou de ser um número solto e passou a morar no
+     mapa — cada cidade tem devoção, templo e um culto rival para disputar.
+     Os "fiéis" da ascensão viraram a SOMA disso (ver sincronizarFieis). */
+  const devocaoRef = useRef({ cidades: {}, andarilhos: 0 });
+  const [devocao, setDevocao] = useState(devocaoRef.current);
   /* O que o Mestre recebe sobre o cosmos: regras só após o despertar (custo zero antes) */
   const infoDivindade = () => {
     const dv = divindadeRef.current;
     if (!dv || !dv.despertar) return "";
-    return `${DIVINDADE_PROMPT}\n${CAMINHOS_PROMPT}\nEstado atual do jogador: ${resumoAscensao(dv, 0)}${dv.panteao.length ? `\nPanteão conhecido: ${dv.panteao.map((d) => `${d.icone} ${d.nome} ${d.dominio} — GD ${d.gd} (${tituloDe(d.gd)}), culto: ${d.culto}`).join("; ")}.` : ""}`;
+    const fe = resumoFePrompt(mapaRef.current, devocaoRef.current, dv);
+    return `${DIVINDADE_PROMPT}\n${CAMINHOS_PROMPT}\n${DEVOCAO_PROMPT}\nEstado atual do jogador: ${resumoAscensao(dv, 0)}${dv.panteao.length ? `\nPanteão conhecido: ${dv.panteao.map((d) => `${d.icone} ${d.nome} ${d.dominio} — GD ${d.gd} (${tituloDe(d.gd)}), culto: ${d.culto}`).join("; ")}.` : ""}${fe ? `\n${fe}` : ""}`;
+  };
+  /* A ÚNICA FONTE DE VERDADE DOS FIÉIS: quem manda é o mapa. Sempre que a
+     devoção muda, o número da ascensão é RECALCULADO — nunca somado à mão. */
+  const sincronizarFieis = (dev) => {
+    const dv = divindadeRef.current;
+    const total = fieisTotais(mapaRef.current, dev || devocaoRef.current);
+    if (dv.fieis === total) return dv;
+    const novo = { ...dv, fieis: total };
+    divindadeRef.current = novo; setDivindade(novo);
+    return novo;
+  };
+  /* Cidades novas entram no registro de devoção sozinhas (zeradas) */
+  const casarDevocaoComMapa = () => {
+    const d = garantirDevocao(devocaoRef.current, mapaRef.current, divindadeRef.current);
+    devocaoRef.current = d; setDevocao(d);
+    return d;
   };
   /* CLIMA: rolado por tabela; vai ao Mestre como envelope [CLIMA] */
   const climaRef = useRef(null);
@@ -2047,7 +2109,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, eventos: eventosRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, quests: questsRef.current,
+      historia: historiaRef.current, quests: questsRef.current, devocao: devocaoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -2206,7 +2268,7 @@ export default function Taverna() {
         setJornada(jornadaRef.current);
       }
       if (md.faccao_jogador) faccaoJogadorRef.current = md.faccao_jogador;
-      if (mudouMapa) { mp = garantirGeografia(mp, pers && pers.nome ? `taverna|${pers.nome}` : "taverna"); mapaRef.current = mp; setMapa(mp); }
+      if (mudouMapa) { mp = garantirGeografia(mp, pers && pers.nome ? `taverna|${pers.nome}` : "taverna"); mapaRef.current = mp; setMapa(mp); casarDevocaoComMapa(); }
     }
     /* MISSÕES E ARCO: registra quests e avanço de ato vindos do Mestre */
     if (resp.mudancas) {
@@ -2300,7 +2362,12 @@ export default function Taverna() {
           } else {
             const alvo = GRAUS[Math.min(4, gdAtual + 1)];
             const fieisNovos = Math.max(alvo.fieis, Math.round(alvo.fieis * (1 + (cam.ganho?.fieis || 0))));
-            const dv2 = { ...divindadeRef.current, fieis: fieisNovos, ultimoFeitoDia: diaRef.current, caminho: cam.id };
+            /* v8.9: a fé tomada de um deus morto (ou drenada de uma fonte) não
+               nasce no vácuo — ela cai sobre o mapa, cidade a cidade. */
+            const faltando = Math.max(0, fieisNovos - fieisTotais(mapaRef.current, devocaoRef.current));
+            const devNova = espalharFieis(devocaoRef.current, mapaRef.current, faltando, 70);
+            devocaoRef.current = devNova; setDevocao(devNova);
+            const dv2 = { ...divindadeRef.current, fieis: fieisTotais(mapaRef.current, devNova), ultimoFeitoDia: diaRef.current, caminho: cam.id };
             divindadeRef.current = dv2; setDivindade(dv2);
             msgs.push(`🌟 ASCENSÃO POR ${cam.nome.toUpperCase()} — você alcança GD ${grauDe(dv2)} (${tituloDe(grauDe(dv2))}).`);
             notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ASCENSÃO — ${cam.nome.toUpperCase()} — APLICADA PELO SISTEMA] O herói subiu para GD ${grauDe(dv2)} (${tituloDe(grauDe(dv2))}) por este caminho. ${cam.id === "deicidio" ? "O culto da divindade morta jura vingança eterna — registre isso no cânone e faça o mundo reagir: outros deuses passam a vigiá-lo." : cam.id === "reliquia" ? "A fonte primordial se apagou — registre no cânone o que restou dela e o preço que o ritual cobrou do herói." : ""} Narre a transformação à altura: virar deus deve doer, custar e mudar o jogo.`;
@@ -2603,6 +2670,7 @@ export default function Taverna() {
         "SEÇÃO canone: fatos DURÁVEIS — artefatos e objetos relevantes que o herói ganhou/achou/descobriu (com o que o objeto É de fato; saque comum não entra), lugares importantes, promessas, segredos. NÃO reescreva nem contradiga o CÂNONE ATUAL — só crie novo ou acrescente campo novo.",
         "SEÇÃO pessoas: pessoas COM NOME e papel durável (aliados recorrentes, rivais, contatos) que ainda não estão no ELENCO — figurantes de cena única ficam de fora.",
         "SEÇÃO fe: SÓ se o turno mostrou o nome do herói ganhando DEVOÇÃO real. Para gestos comuns, fieis 10 a 500, pf 1 a 10; na dúvida, 0. Para GRANDES acontecimentos de fé, NÃO chute números: preencha \"acontecimento\":{\"tipo\":\"alianca_reino|libertacao|milagre_publico|santuario|conversao_lider|vitoria_lendaria|pregacao\",\"local\":\"nome da cidade/reino\"} e deixe fieis/pf em 0 — o SISTEMA calcula pela população do local. Um povo/reino inteiro prometendo sua fé ao herói É \"alianca_reino\" (ou \"libertacao\", se o herói o libertou) — NUNCA deixe isso passar sem registrar.",
+        "O CAMPO \"local\" É O MAIS IMPORTANTE DA SEÇÃO fe: a devoção mora em cidades reais do mapa, não no ar. Use SEMPRE o nome exato da cidade onde o feito foi testemunhado (vale também no campo \"local\" solto, junto de fieis/pf). Sem local reconhecível, a fé vira \"andarilhos\" — conta muito menos e míngua rápido.",
         "SEÇÃO grupo: \"entraram\" = nomes de pessoas que ACEITARAM de fato acompanhar o herói como companheiros de jornada NESTE turno (o Mestre narrando \"vou com você\" conta). Se o convite foi recusado ou só um encontro casual, [].",
         "SEÇÃO teste_sugerido: se o Mestre CONCEDEU de graça algo grande que deveria ter exigido convencimento — uma criatura anciã entregando seu poder, um rei cedendo o trono, um inimigo virando aliado do nada — preencha {\"atributo\":\"Presença|Intelecto|Força|Destreza|Vigor\",\"perfil\":\"dificil|formidavel\",\"motivo\":\"o que precisava ser provado\"}. Concessões pequenas e naturais da história NÃO entram. Na maioria dos turnos: null.",
         "SEÇÃO combate (só se houver COMBATENTES listados): \"mortes_narradas\" = inimigos que a NARRATIVA declarou mortos/destruídos/desfeitos NESTE turno. Liste só nomes da lista de combatentes; se ninguém morreu na narração, [].",
@@ -2680,7 +2748,7 @@ export default function Taverna() {
         if (r.fe && typeof r.fe === "object" && divindadeRef.current && divindadeRef.current.despertar) {
           const f = Math.max(0, Math.min(500, Math.round(r.fe.fieis || 0)));
           const pf = Math.max(0, Math.min(10, Math.round(r.fe.pf || 0)));
-          if (f || pf) msgs.push(...ganharFe(f, pf, String(r.fe.motivo || "sua fama vira prece").slice(0, 80)));
+          if (f || pf) msgs.push(...ganharFe(f, pf, String(r.fe.motivo || "sua fama vira prece").slice(0, 80), r.fe.local || ""));
           /* GRANDES ACONTECIMENTOS (v7.5): o Cronista classifica, a TABELA
              DE FÉ calcula sobre a população real do local no mapa — assim
              "o reino inteiro dos anões lhe devota fé" vira números de fato. */
@@ -2688,7 +2756,7 @@ export default function Taverna() {
           if (ac && typeof ac === "object" && ac.tipo) {
             const calc = fePorAcontecimento(String(ac.tipo), ac.local || "");
             if (calc) {
-              msgs.push(...ganharFe(calc.fieis, calc.pf, `${calc.rotulo}${ac.local ? ` em ${ac.local}` : ""}${calc.pop ? ` (pop. ${calc.pop.toLocaleString("pt-BR")})` : ""}`));
+              msgs.push(...ganharFe(calc.fieis, calc.pf, `${calc.rotulo}${calc.pop ? ` (pop. ${calc.pop.toLocaleString("pt-BR")})` : ""}`, ac.local || ""));
               notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FÉ — REGISTRO DO SISTEMA] ${calc.rotulo}${ac.local ? ` em ${ac.local}` : ""}: +${calc.fieis} fiéis, +${calc.pf} PF, calculados pela população do local. Isso já está contabilizado — narre a devoção chegando, não a negue.`;
             }
           }
@@ -2820,7 +2888,7 @@ export default function Taverna() {
   /* VÍNCULOS (v7.8): o Mestre não sabia se um companheiro te adora ou te
      tolera — então a intimidade das falas era chute. Agora ele sabe. */
   const infoVinculos = () => {
-    const g = (personagem.grupo || []).filter((x) => x && x.nome);
+    const g = ((personagem || personagemRef.current || {}).grupo || []).filter((x) => x && x.nome);
     if (!g.length) return "";
     const linhas = g.map((c) => {
       const v = typeof c.vinculo === "number" ? c.vinculo : VINCULO_INICIAL;
@@ -2831,36 +2899,65 @@ export default function Taverna() {
   };
 
   const infoRegras = () => {
-    const nv = personagem.nivel || 1;
+    const p = personagem || personagemRef.current || {};
+    const nv = p.nivel || 1;
     const prof = bonusProficiencia(nv);
-    const chave = ATRIBUTOS.find((a) => ehProficiente(personagem.classe, a.id));
-    const ep = resumoEpico(personagem);
+    const chave = ATRIBUTOS.find((a) => ehProficiente(p.classe, a.id));
+    const ep = resumoEpico(p);
     return `REGRAS DE PROGRESSÃO (o sistema calcula — não recalibre): proficiência +${prof} (nível ${nv}), somada automaticamente ao atributo que a classe domina${chave ? ` (${chave.nome})` : ""}. Um herói experiente rola alto no que é a especialidade dele — isso é esperado, não infle dificuldades para compensar. ESCALAS DE TEMPO (5e): uma rodada de combate dura 6 segundos; um turno de exploração de masmorra, 10 minutos; viagens contam em horas. Nunca descreva o tempo de forma incompatível com isso.${ep ? ` ESTADO ÉPICO: ${ep} — no ápice mortal o herói não sobe mais de nível; acumula XP e recebe dádivas épicas concedidas pelo sistema.` : ""}`;
   };
 
   const infoTitulo = () => {
-    const t = tituloDoHeroi(divindadeRef.current, patamarFama(famaAtual()).rotulo, patamarDe(personagem.nivel || 1).nome);
+    /* usa o espelho: no carregamento do save o estado ainda não chegou */
+    const p = personagem || personagemRef.current || {};
+    const t = tituloDoHeroi(divindadeRef.current, patamarFama(famaAtual()).rotulo, patamarDe(p.nivel || 1).nome);
     const base = t.divino
       ? `${t.titulo} (GD ${t.gd} — título DIVINO, conquistado por fé, não por nível)`
       : `${t.titulo} (mortal — reconhecimento do mundo; NÃO é título divino)`;
-    const acao = resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1);
+    const acao = resumoAcaoDeTurno(p.classe, p.nivel || 1);
     const vinc = infoVinculos();
-    const bocas = 1 + (personagem.grupo || []).length;
-    const ermos = resumoErmos(personagem.suprimentos, personagem.exaustao, personagem.ritmoViagem, bocas);
-    const bonus = acoesBonusDe(personagem.classe, personagem.nivel || 1);
-    return `${base}. ${ermos} ${ECONOMIA_ACAO_PROMPT}${bonus.length ? ` AÇÕES BÔNUS DESTA CLASSE: ${bonus.map((b) => `${b.nome} (${b.desc})`).join("; ")}.` : " Esta classe não tem ação bônus própria — usa só a ação principal."} AÇÃO DE TURNO EM COMBATE: ${acao.texto} (${perfilCombate(personagem.classe).nota}). ${infoRegras()}${vinc ? ` ${vinc}` : ""}`;
+    const bocas = 1 + (p.grupo || []).length;
+    const ermos = resumoErmos(p.suprimentos, p.exaustao, p.ritmoViagem, bocas);
+    const bonus = acoesBonusDe(p.classe, p.nivel || 1);
+    return `${base}. ${ermos} ${ECONOMIA_ACAO_PROMPT}${bonus.length ? ` AÇÕES BÔNUS DESTA CLASSE: ${bonus.map((b) => `${b.nome} (${b.desc})`).join("; ")}.` : " Esta classe não tem ação bônus própria — usa só a ação principal."} AÇÃO DE TURNO EM COMBATE: ${acao.texto} (${perfilCombate(p.classe).nota}). ${infoRegras()}${vinc ? ` ${vinc}` : ""}`;
   };
 
-  const ganharFe = (fieis, pf, motivo) => {
+  /* FÉ COM ENDEREÇO (v8.9): ganhar fiéis é ganhar DEVOÇÃO em algum lugar.
+     O local vem do acontecimento (o Mestre diz onde) ou, na falta dele, de
+     onde o herói está. Sem cidade nenhuma, vira andarilho — vale menos e
+     míngua mais rápido, que é exatamente o incentivo certo. */
+  const ganharFe = (fieis, pf, motivo, local) => {
     const dv = divindadeRef.current;
     if (!dv || !dv.despertar) return [];
     const antes = grauDe(dv);
-    const novo = { ...dv, fieis: Math.max(0, dv.fieis + (fieis || 0)), pf: Math.max(0, dv.pf + (pf || 0)) };
+    let onde = "";
+    let virada = null;
+    let dev = devocaoRef.current;
+    if (fieis > 0) {
+      const dep = depositarFieis(dev, mapaRef.current, local || cidadeAtualRef.current, fieis, diaRef.current);
+      dev = dep.devocao;
+      onde = dep.cidade
+        ? ` em ${dep.cidade.nome} (+${dep.pontos}% de devoção${dep.sobra ? `; ${dep.sobra} transbordam para as estradas` : ""})`
+        : " pelas estradas (andarilhos)";
+      /* virou de patamar? isso é notícia — para o jogador e para o Mestre */
+      if (dep.cidade && dep.estadoAntes && dep.estadoDepois && dep.estadoAntes.chave !== dep.estadoDepois.chave) {
+        virada = { cidade: dep.cidade.nome, de: dep.estadoAntes, para: dep.estadoDepois };
+      }
+    } else if (fieis < 0) {
+      dev = perderFieis(dev, mapaRef.current, -fieis);
+    }
+    if (fieis) { devocaoRef.current = dev; setDevocao(dev); }
+    const totalFieis = fieisTotais(mapaRef.current, dev);
+    const novo = { ...dv, fieis: totalFieis, pf: Math.max(0, dv.pf + (pf || 0)) };
     divindadeRef.current = novo; setDivindade(novo);
     const tetoGd = gdMaximoPorNivel(personagem.nivel || 1);
     const depois = Math.min(grauDe(novo), tetoGd);
     const msgs = [];
-    if (fieis) msgs.push(`${dv.iconeFe || "🙏"} ${fieis > 0 ? "+" : ""}${fieis} fiéis (${novo.fieis} no total)${motivo ? ` — ${motivo}` : ""}`);
+    if (fieis) msgs.push(`${dv.iconeFe || "🙏"} ${fieis > 0 ? "+" : ""}${fieis} fiéis${onde} (${novo.fieis} no total)${motivo ? ` — ${motivo}` : ""}`);
+    if (virada) {
+      msgs.push(`${virada.para.icone} ${virada.cidade} agora é ${virada.para.rotulo.toLowerCase()} — ${virada.para.recepcao}.`);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FÉ NA GEOGRAFIA — REGISTRO DO SISTEMA] ${virada.cidade} passou de "${virada.de.rotulo}" para "${virada.para.rotulo}" em relação ao herói. Daqui em diante o povo de lá ${virada.para.recepcao} — trate isso como fato ao narrar qualquer cena naquela cidade.`;
+    }
     if (fieis > 0 && grauDe(novo) > tetoGd) msgs.push(`⛓ A fé cresce além do que seu corpo suporta — é preciso mais poder (nível) para encarnar o próximo grau.`);
     if (pf) msgs.push(`✨ ${pf > 0 ? "+" : ""}${pf} Pontos de Fé (${novo.pf} PF)`);
     if (depois > antes) {
@@ -2977,7 +3074,10 @@ export default function Taverna() {
     if (!dv || dv.despertar || (pers.nivel || 1) < NIVEL_DESPERTAR) return;
     const ctx = ctxMundo({ mundo, mapa: mapaRef.current, dia: diaRef.current });
     const panteao = gerarPanteaoInicial(ctx, diaRef.current);
-    divindadeRef.current = { ...dv, despertar: true, panteao, fieis: Math.max(dv.fieis, 50), pf: dv.pf };
+    /* v8.9: os primeiros fiéis nascem ONDE o herói está — gente que o viu. */
+    const dep = depositarFieis(garantirDevocao(devocaoRef.current, mapaRef.current, dv), mapaRef.current, cidadeAtualRef.current, Math.max(0, 50 - fieisTotais(mapaRef.current, devocaoRef.current)), diaRef.current);
+    devocaoRef.current = dep.devocao; setDevocao(dep.devocao);
+    divindadeRef.current = { ...dv, despertar: true, panteao, fieis: Math.max(50, fieisTotais(mapaRef.current, dep.devocao)), pf: dv.pf };
     setDivindade(divindadeRef.current);
     systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     if (silencioso) {
@@ -3122,6 +3222,7 @@ export default function Taverna() {
   useEffect(() => () => { if (vozAudioRef.current) { try { vozAudioRef.current.pause(); } catch {} } Object.values(vozCacheRef.current).forEach((u) => { try { URL.revokeObjectURL(u); } catch {} }); }, []);
 
   const iniciar = (pers) => {
+    personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
     setPersonagem(pers);
     livroRef.current = ""; turnoContRef.current = 0;
     canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); npcTurnoRef.current = 0; definirAcampado(false);
@@ -3150,6 +3251,7 @@ export default function Taverna() {
     historiaRef.current = { estrutura: (mundo && mundo.estrutura) || "jornada", etapa: 0 };
     questsRef.current = []; setQuests([]);
     divindadeRef.current = garantirDivindade(null); setDivindade(divindadeRef.current);
+    devocaoRef.current = garantirDevocao(null, mapaRef.current, divindadeRef.current); setDevocao(devocaoRef.current);
     bancoNomesRef.current = gerarBancoNomes(mundo);
     systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setSugestoes([]); setRolagem(null);
@@ -3163,6 +3265,7 @@ export default function Taverna() {
     if (!sv) { pushMsgs([{ autor: "sistema", texto: "Nenhuma aventura salva encontrada." }]); return; }
     try {
       const pers = migrarPersonagem(sv.personagem);
+      personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
       setMundo(sv.mundo || { genero: "Fantasia medieval" }); setNomeCampanha(sv.nomeCampanha || "Aventura"); setPersonagem(pers);
       mensagensRef.current = Array.isArray(sv.mensagens) ? sv.mensagens : [];
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
@@ -3214,6 +3317,14 @@ export default function Taverna() {
       eventosRef.current = garantirEventos(sv.eventos); setEventos(eventosRef.current);
       /* MIGRAÇÃO (v7.4): saves antigos ganham a ascensão zerada — nada quebra */
       divindadeRef.current = garantirDivindade(sv.divindade); setDivindade(divindadeRef.current);
+      /* MIGRAÇÃO (v8.9): save antigo tem fiéis sem endereço — a fé é
+         DISTRIBUÍDA pelo mapa (proporcional à população) em vez de sumir.
+         Depois disso, o número da ascensão passa a ser a soma do mapa. */
+      devocaoRef.current = garantirDevocao(sv.devocao, mapaRef.current, divindadeRef.current); setDevocao(devocaoRef.current);
+      if (divindadeRef.current.despertar) {
+        divindadeRef.current = { ...divindadeRef.current, fieis: fieisTotais(mapaRef.current, devocaoRef.current) };
+        setDivindade(divindadeRef.current);
+      }
       famaPatamarRef.current = sv.famaPatamar || 0;
       reinoRef.current = garantirReino(sv.reino && typeof sv.reino === "object" ? sv.reino : {}, mapaRef.current) || {}; setReino(reinoRef.current);
       /* BLINDAGEM v6.5: pessoas de saves antigos sem data de encontro ganham
@@ -4242,7 +4353,9 @@ export default function Taverna() {
     let r = reinoRef.current;
     for (let i = 0; i < n; i++) {
       diaRef.current += 1;
-      const { reino: nr, evento } = processarDiaReino(r, mapaRef.current);
+      /* TEMPLOS (v8.9): onde há para onde rezar, o povo aguenta mais —
+         o equilíbrio da felicidade daquele domínio sobe com o templo. */
+      const { reino: nr, evento } = processarDiaReino(r, mapaRef.current, alvosFelicidade(mapaRef.current, devocaoRef.current));
       r = nr;
       if (evento) {
         eventos.push(evento);
@@ -4266,20 +4379,35 @@ export default function Taverna() {
         correioMsgsDiaRef.current.push(m);
       });
     }
-    /* FÉ POR DIA (v7.6): PF regenera proporcional aos fiéis (como a renda das
-       cidades) e a devoção míngua se o herói sumir do mundo. A IA não concede
-       mais PF — ela só gasta em milagres. */
+    /* O DIA DA FÉ (v8.9): a devoção agora vive NO MAPA — templos pregam,
+       a presença do herói converte, a fé viaja pelas estradas e míngua onde
+       não há nada disso. Os fiéis do painel são a soma de tudo isso; o PF
+       vem das preces (proporcional aos fiéis) mais o que os templos rendem.
+       A IA não concede PF nem fiéis: ela só gasta em milagres. */
     {
       const dv = divindadeRef.current;
-      if (dv && dv.despertar && dv.fieis > 0) {
-        const teto = pfMaximo(dv);
-        const ganho = pfPorDia(dv) * n;
-        const semAparecer = Math.max(0, diaRef.current - (dv.ultimoFeitoDia || 0));
-        const perda = decaimentoFe(dv, semAparecer);
-        const novo = { ...dv, pf: Math.min(teto, (dv.pf || 0) + ganho), fieis: Math.max(0, dv.fieis - perda) };
+      if (dv && dv.despertar) {
+        const fieisAntes = fieisTotais(mapaRef.current, devocaoRef.current);
+        let dev = devocaoRef.current;
+        let pfTemplos = 0;
+        const marcos = [];
+        for (let i = 0; i < n; i++) {
+          const passo = processarDiaFe({ mapa: mapaRef.current, devocao: dev, divindade: dv, dia: diaRef.current, cidadeAtual: cidadeAtualRef.current });
+          dev = passo.devocao; pfTemplos += passo.pf; marcos.push(...passo.marcos);
+        }
+        devocaoRef.current = dev; setDevocao(dev);
+        const fieisDepois = fieisTotais(mapaRef.current, dev);
+        const teto = pfMaximo({ ...dv, fieis: fieisDepois });
+        const ganho = pfPorDia({ ...dv, fieis: fieisDepois }) * n + pfTemplos;
+        const novo = { ...dv, fieis: fieisDepois, pf: Math.min(teto, (dv.pf || 0) + ganho) };
         divindadeRef.current = novo; setDivindade(novo);
-        if (ganho > 0 && novo.pf > (dv.pf || 0)) pushMsgs([{ autor: "sistema", texto: `✨ As preces rendem ${novo.pf - (dv.pf || 0)} PF (${novo.pf}/${teto}).` }]);
-        if (perda > 0) pushMsgs([{ autor: "sistema", texto: `🕯 Sem sinais seus há ${semAparecer} dias, ${perda} fiéis deixam de rezar.` }]);
+        if (novo.pf > (dv.pf || 0)) pushMsgs([{ autor: "sistema", texto: `✨ As preces rendem ${novo.pf - (dv.pf || 0)} PF${pfTemplos ? ` (${pfTemplos} vindos dos templos)` : ""} (${novo.pf}/${teto}).` }]);
+        if (fieisDepois < fieisAntes) pushMsgs([{ autor: "sistema", texto: `🕯 A fé míngua onde não há templo nem sinal seu: ${fieisAntes - fieisDepois} deixam de rezar.` }]);
+        /* marcos de fé viram notícia para o jogador E envelope para o Mestre */
+        marcos.slice(0, 3).forEach((m) => {
+          pushMsgs([{ autor: "sistema", texto: m.texto }]);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FÉ NA GEOGRAFIA — REGISTRO DO SISTEMA] ${m.cidade} passou de "${m.de.rotulo}" para "${m.para.rotulo}" (${m.fe}% de devoção ao herói). Isso é fato: ${m.subiu ? `daqui em diante o povo de ${m.cidade} ${m.para.recepcao} — mostre isso na primeira cena que se passar lá` : `a devoção recuou em ${m.cidade} — sacerdotes rivais ganharam espaço e o povo esfriou`}.`;
+        });
       }
     }
     reinoRef.current = r; setReino(r); setDia(diaRef.current);
@@ -4656,6 +4784,27 @@ export default function Taverna() {
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Minha guilda (${faccaoJogadorRef.current}) melhorou para o nível ${g.nivel} — maior, mais rica e mais respeitada. Reflita esse crescimento na ficção.`;
   };
 
+  /* ERGUER TEMPLO (v8.9): a fé vira obra. Sai do cofre da guilda, só em
+     domínio seu, e converte parte da cidade na inauguração — daí em diante
+     aquele lugar reza sozinho todo dia. É a única construção que o jogador
+     controla, e é ela que ancora a devoção na geografia. */
+  const erguerTemploUI = (nomeCidade) => {
+    const cidade = ((mapaRef.current && mapaRef.current.cidades) || []).find((c) => c.nome === nomeCidade);
+    const chk = podeErguerTemplo({ cidade, devocao: devocaoRef.current, divindade: divindadeRef.current, cofre: guildaRef.current.cofre || 0 });
+    if (!chk.pode || !chk.alvo) { pushMsgs([{ autor: "sistema", texto: `⛔ Não dá para erguer aqui: ${chk.motivo}.` }]); return; }
+    const custo = chk.alvo.custo;
+    guildaRef.current = { ...guildaRef.current, cofre: Math.max(0, (guildaRef.current.cofre || 0) - custo) };
+    setGuilda(guildaRef.current);
+    const { devocao: d, templo, salto } = erguerTemplo(devocaoRef.current, nomeCidade, diaRef.current);
+    devocaoRef.current = d; setDevocao(d);
+    sincronizarFieis(d);
+    const fe = Math.round(feDaCidade(d, nomeCidade));
+    pushMsgs([{ autor: "sistema", texto: `${templo.icone} ${templo.nome} erguido em ${nomeCidade} (−◉ ${custo}). A inauguração já converte +${salto}% da cidade — devoção agora em ${fe}%, +${templo.pf} PF por dia.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[TEMPLO ERGUIDO — REGISTRO DO SISTEMA] Um ${templo.nome.toLowerCase()} em nome do herói foi construído em ${nomeCidade}, pago do cofre (◉ ${custo}). A devoção da cidade subiu para ${fe}%. Narre a obra e o que ela cria: sacerdócio próprio, ofícios diários, gente que passa a rezar o nome dele — e a reação do culto que já estava ali, que não vai gostar. Os números já foram aplicados; não os recalcule.`;
+    salvar();
+    checarConquistas();
+  };
+
   /* CONVITE AO GRUPO: o jogador convida um NPC conhecido; o Mestre decide
      na ficção se ele aceita (a escolha é do personagem, não do jogador). */
   const convidarNpc = (nome) => {
@@ -5017,6 +5166,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     dv.despertar = !!j.desperto && (personagem.nivel || 1) >= NIVEL_DESPERTAR;
     if (!dv.despertar) { setRecalAsc(null); pushMsgs([{ autor: "sistema", texto: "⚖ O arquivista não encontrou sinais de divindade na sua lenda — a ascensão segue o curso normal." }]); return; }
     const antes = grauDe(dv);
+    /* v8.9: a fé que o arquivista encontrou na lenda é ANCORADA no mapa —
+       espalhada pelas cidades conforme a população, não guardada num número. */
+    {
+      const falta = Math.max(0, fieis - fieisTotais(mapaRef.current, devocaoRef.current));
+      const devNova = espalharFieis(garantirDevocao(devocaoRef.current, mapaRef.current, dv), mapaRef.current, falta, 70);
+      devocaoRef.current = devNova; setDevocao(devNova);
+      fieis = Math.max(fieis, fieisTotais(mapaRef.current, devNova));
+    }
     dv.fieis = fieis; dv.pf = pf;
     if (j.estagio != null) dv.estagio = Math.max(0, Math.min(3, Math.round(j.estagio)));
     if (j.dominio && !dv.dominio) dv.dominio = String(j.dominio).slice(0, 40);
@@ -5417,7 +5574,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} bloqueado={bloqueado} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} bloqueado={bloqueado} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

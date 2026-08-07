@@ -4,10 +4,10 @@
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
-import { GRAUS, MILAGRES, NIVEL_DESPERTAR, grauDe, tituloDe, proximoPatamar, pfMaximo, pfPorDia } from "./divindades.js";
-import { Botao } from "./ui.jsx";
+import { GRAUS, MILAGRES, NIVEL_DESPERTAR, grauDe, tituloDe, proximoPatamar, pfMaximo, pfPorDia, garantirDivindade, bonusDivino, imunePorEscopo } from "./divindades.js";
+import { estadoFe, feDaCidade, fieisDaCidade, temploDaCidade, temploDe, resumoNumerico } from "./devocao.js";
 
-export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, recalibrando, onMilagre }) {
+export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, recalibrando, onMilagre, mapa, devocao }) {
   const dv = divindade || garantirDivindade(null);
   const gd = grauDe(dv);
   const prox = proximoPatamar(dv);
@@ -106,6 +106,52 @@ export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, re
           Cada degrau de diferença de GD dá <b style={{ color: T.ink }}>+2 ao mais forte e −2 ao mais fraco</b> em ataques, defesas e resistências (o sistema aplica nos dados). Mortais não ferem divindades de GD 3+ sem artefato lendário ou bênção. Fé se ganha com feitos testemunhados, santuários e conversões — e se gasta em milagres (pequeno ~5 PF, médio ~20, grande ~50).
         </div>
       </div>
+
+      {/* A FÉ TEM ENDEREÇO (v8.9): de onde vem cada fiel do número acima. */}
+      {(() => {
+        const cidades = (mapa && mapa.cidades) || [];
+        if (!cidades.length) return null;
+        const dev = devocao || { cidades: {} };
+        const num = resumoNumerico(mapa, dev);
+        const ranking = cidades
+          .map((c) => ({ c, fe: feDaCidade(dev, c.nome), est: estadoFe(c, dev) }))
+          .filter((o) => o.fe >= 5 || o.est.chave === "herege" || o.est.chave === "hostil")
+          .sort((a, b) => b.fe - a.fe)
+          .slice(0, 8);
+        return (
+          <div className="rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
+            <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.violetSoft }}>A fé no mapa</div>
+            {!ranking.length ? (
+              <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>
+                Seu nome ainda não é rezado em cidade nenhuma{num.andarilhos ? ` — só ${num.andarilhos.toLocaleString("pt-BR")} andarilhos pelas estradas` : ""}. Erga um santuário num domínio seu (painel Gestão → Domínios) ou faça algo que uma cidade inteira testemunhe.
+              </div>
+            ) : (
+              <>
+                <div className="space-y-1.5">
+                  {ranking.map(({ c, fe, est }) => {
+                    const t = temploDe(temploDaCidade(dev, c.nome));
+                    return (
+                      <div key={c.nome} className="rounded-lg px-3 py-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="tv-body text-sm" style={{ color: T.ink }}>{t ? `${t.icone} ` : ""}{c.nome}</span>
+                          <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ color: est.cor, border: `1px solid ${est.cor}` }}>{est.rotulo}</span>
+                        </div>
+                        <div className="h-1 rounded-full overflow-hidden mt-1.5" style={{ background: T.panel }}>
+                          <div className="h-full rounded-full" style={{ width: `${Math.round(fe)}%`, background: est.cor }} />
+                        </div>
+                        <div className="tv-mono text-[9px] mt-0.5" style={{ color: T.inkDim }}>{Math.round(fe)}% · ≈{fieisDaCidade(c, dev).toLocaleString("pt-BR")} fiéis{t ? ` · ${t.nome} (+${t.pf} PF/dia)` : ""}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="tv-body text-xs mt-2" style={{ color: T.inkDim }}>
+                  {num.templos} templo(s) rendem {num.feDia} PF por dia. Onde há templo a fé cresce sozinha; onde não há, míngua. A devoção também viaja pelas estradas: cidade vizinha de cidade devota começa a ouvir falar.
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })()}
 
       <div className="rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
         <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.amberSoft }}>Panteão conhecido</div>

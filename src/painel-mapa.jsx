@@ -5,9 +5,19 @@
 import React from "react";
 import { T } from "./constantes.js";
 import { RELACOES, blobPath, centrosDeRegiao, gerarEstradas } from "./mapa.js";
+import { ESTADOS_FE, estadoFe, feDaCidade, temploDaCidade, temploDe, fieisDaCidade, heresiaDaCidade, patronoDaCidade, resumoNumerico } from "./devocao.js";
 
-export function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
+export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindade }) {
   const [selecionada, setSelecionada] = React.useState(null);
+  /* CAMADAS (v8.9): o mesmo pergaminho conta duas histórias — quem manda
+     (política) e quem reza (fé). A camada de fé só existe depois do despertar. */
+  const desperto = !!(divindade && divindade.despertar);
+  const [camada, setCamada] = React.useState("politica");
+  const verFe = desperto && camada === "fe";
+  const dev = devocao || { cidades: {} };
+  const panteao = (divindade && divindade.panteao) || [];
+  const numFe = desperto ? resumoNumerico(mapa, dev) : null;
+  const corDaCidade = (c) => (verFe ? estadoFe(c, dev).cor : (RELACOES[c.relacao] || RELACOES.neutra).cor);
   const cidades = (mapa?.cidades || []);
   const faccoes = (mapa?.faccoes || []);
   const dominadas = cidades.filter((c) => c.relacao === "jogador").length;
@@ -24,6 +34,28 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
           <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.amberSoft }}>Sua facção</div>
           <div className="tv-display text-xl" style={{ color: T.ink }}>{faccaoJogador}</div>
           <div className="tv-body text-xs" style={{ color: T.inkDim }}>Domina {dominadas} {dominadas === 1 ? "cidade" : "cidades"}.</div>
+        </div>
+      )}
+      {/* alternador de camadas: quem manda × quem reza */}
+      {desperto && (
+        <div className="flex gap-1.5 mb-2">
+          {[{ id: "politica", rotulo: "🏳 Política" }, { id: "fe", rotulo: "🙏 Fé" }].map((k) => (
+            <button key={k.id} onClick={() => setCamada(k.id)}
+              className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full"
+              style={{ background: camada === k.id ? T.amber : T.panelSoft, color: camada === k.id ? T.onAccent : T.inkDim, border: `1px solid ${camada === k.id ? T.amber : T.line}`, fontWeight: 600 }}>
+              {k.rotulo}
+            </button>
+          ))}
+        </div>
+      )}
+      {verFe && numFe && (
+        <div className="rounded-xl p-3 mb-3" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
+          <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>Onde o seu nome é rezado</div>
+          <div className="tv-display text-xl" style={{ color: T.ink }}>{numFe.fieis.toLocaleString("pt-BR")} fiéis</div>
+          <div className="tv-body text-xs" style={{ color: T.inkDim }}>
+            {numFe.lugares} lugar(es) · {numFe.templos} templo(s) · {numFe.santas} cidade(s) santa(s) · {numFe.heregias} onde você é herege
+            {numFe.andarilhos ? ` · ${numFe.andarilhos.toLocaleString("pt-BR")} andarilhos sem cidade` : ""}
+          </div>
         </div>
       )}
       {/* mapa visual — pergaminho */}
@@ -45,9 +77,12 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
               </g>
             );
           })()}
-          {/* territórios de região (tinta + divisa tracejada) */}
+          {/* territórios de região (tinta + divisa tracejada) —
+              na camada de fé a tinta é a da cidade mais devota da região */}
           {Object.entries(gruposRegiao).map(([nomeR, csR], i) => {
-            const cor = (centrosDeRegiao(csR)[0] || {}).cor || "#9A93A6";
+            const cor = verFe
+              ? corDaCidade([...csR].sort((a, b) => feDaCidade(dev, b.nome) - feDaCidade(dev, a.nome))[0])
+              : (centrosDeRegiao(csR)[0] || {}).cor || "#9A93A6";
             return (
               <g key={`terr-${i}`} filter="url(#tvCosta)">
                 <path d={blobPath(csR, 8.5, "regiao|" + nomeR)} fill={cor} opacity="0.14" stroke="#6d5c40" strokeOpacity="0.55" strokeWidth="0.35" strokeDasharray="1.6 1.2" />
@@ -92,19 +127,27 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
         ))}
         {/* cidades */}
         {cidades.map((c, i) => {
-          const rel = RELACOES[c.relacao] || RELACOES.neutra;
           const atual = cidadeAtual && c.nome.toLowerCase() === String(cidadeAtual).toLowerCase();
+          const cor = corDaCidade(c);
+          const est = verFe ? estadoFe(c, dev) : null;
+          const templo = verFe ? temploDe(temploDaCidade(dev, c.nome)) : null;
+          /* na camada de fé, cidade santa ganha halo dourado e herege, brasa vermelha */
+          const halo = est && (est.chave === "santa" || est.chave === "devota") ? `0 0 10px ${est.cor}`
+            : est && (est.chave === "hostil" || est.chave === "herege") ? `0 0 8px ${est.cor}`
+            : (atual || selecionada === c.nome) ? "0 0 8px #c9a45a" : "0 1px 2px #00000040";
           return (
             <div key={i} style={{ position: "absolute", left: `${c.x}%`, top: `${c.y}%`, transform: "translate(-50%,-50%)", textAlign: "center" }}>
-              <div onClick={() => setSelecionada(selecionada === c.nome ? null : c.nome)} style={{ width: c.sede ? 15 : 10, height: c.sede ? 15 : 10, borderRadius: c.tipo === "capital" || c.sede ? 3 : "50%", background: rel.cor, border: (atual || selecionada === c.nome) ? `2px solid #3a2e1c` : `1.5px solid #3a2e1c`, boxShadow: (atual || selecionada === c.nome) ? `0 0 8px #c9a45a` : "0 1px 2px #00000040", margin: "0 auto", cursor: "pointer" }} />
-              <div className="tv-mono" style={{ fontSize: 7, color: "#3a2e1c", marginTop: 1, whiteSpace: "nowrap", fontWeight: 600, textShadow: "0 1px 2px #f0e6cc, 0 -1px 2px #f0e6cc" }}>{c.nome}{c.sede ? " ★" : ""}</div>
+              <div onClick={() => setSelecionada(selecionada === c.nome ? null : c.nome)} style={{ width: c.sede ? 15 : 10, height: c.sede ? 15 : 10, borderRadius: c.tipo === "capital" || c.sede ? 3 : "50%", background: cor, border: (atual || selecionada === c.nome) ? `2px solid #3a2e1c` : `1.5px solid #3a2e1c`, boxShadow: halo, margin: "0 auto", cursor: "pointer" }} />
+              <div className="tv-mono" style={{ fontSize: 7, color: "#3a2e1c", marginTop: 1, whiteSpace: "nowrap", fontWeight: 600, textShadow: "0 1px 2px #f0e6cc, 0 -1px 2px #f0e6cc" }}>
+                {templo ? `${templo.icone} ` : ""}{c.nome}{c.sede ? " ★" : ""}{verFe && feDaCidade(dev, c.nome) >= 8 ? ` ${Math.round(feDaCidade(dev, c.nome))}%` : ""}
+              </div>
             </div>
           );
         })}
       </div>
-      {/* legenda */}
+      {/* legenda — muda com a camada */}
       <div className="flex flex-wrap gap-2 mb-3">
-        {Object.entries(RELACOES).map(([k, v]) => (
+        {(verFe ? Object.entries(ESTADOS_FE) : Object.entries(RELACOES)).map(([k, v]) => (
           <div key={k} className="flex items-center gap-1"><span style={{ width: 8, height: 8, borderRadius: "50%", background: v.cor, display: "inline-block" }} /><span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>{v.rotulo}</span></div>
         ))}
       </div>
@@ -132,15 +175,33 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual }) {
           const rel = RELACOES[c.relacao] || RELACOES.neutra;
           const aberta = selecionada === c.nome;
           const atual = cidadeAtual && c.nome.toLowerCase() === String(cidadeAtual).toLowerCase();
+          const est = desperto ? estadoFe(c, dev) : null;
+          const fe = desperto ? feDaCidade(dev, c.nome) : 0;
+          const templo = desperto ? temploDe(temploDaCidade(dev, c.nome)) : null;
+          const etiqueta = verFe && est ? { rotulo: est.rotulo, cor: est.cor } : { rotulo: rel.rotulo, cor: rel.cor };
+          const patrono = desperto ? patronoDaCidade(c, panteao) : null;
           return (
             <div key={i} className="rounded-lg px-3 py-2" style={{ background: T.panelSoft, border: `1px solid ${aberta ? T.amber : atual ? T.amberSoft : T.line}`, cursor: "pointer" }} onClick={() => setSelecionada(aberta ? null : c.nome)}>
               <div className="flex items-center justify-between gap-2">
-                <span className="tv-body text-sm" style={{ color: T.ink }}>{c.sede ? "★ " : ""}{atual ? "📍 " : ""}{c.nome}</span>
-                <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ color: rel.cor, border: `1px solid ${rel.cor}` }}>{rel.rotulo}</span>
+                <span className="tv-body text-sm" style={{ color: T.ink }}>{c.sede ? "★ " : ""}{atual ? "📍 " : ""}{templo ? `${templo.icone} ` : ""}{c.nome}</span>
+                <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ color: etiqueta.cor, border: `1px solid ${etiqueta.cor}` }}>{etiqueta.rotulo}</span>
               </div>
               <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{c.tipo}{c.regiao ? ` · ${c.regiao}` : ""}{c.faccao ? ` · ${c.faccao}` : ""}</div>
-              {aberta && (c.notas || (c.locais || []).length > 0) && (
+              {verFe && (
+                <div className="mt-1.5">
+                  <div className="h-1 rounded-full overflow-hidden" style={{ background: T.panel }}>
+                    <div className="h-full rounded-full" style={{ width: `${Math.round(fe)}%`, background: est.cor }} />
+                  </div>
+                  <div className="tv-mono text-[9px] mt-0.5" style={{ color: T.inkDim }}>
+                    {Math.round(fe)}% devotos · ≈{fieisDaCidade(c, dev).toLocaleString("pt-BR")} fiéis
+                    {templo ? ` · ${templo.nome}` : ""}
+                    {patrono && heresiaDaCidade(c, dev) >= 25 ? ` · culto de ${patrono.nome} resiste (${heresiaDaCidade(c, dev)}%)` : ""}
+                  </div>
+                </div>
+              )}
+              {aberta && (verFe || c.notas || (c.locais || []).length > 0) && (
                 <div className="mt-2 pt-2" style={{ borderTop: `1px solid ${T.line}` }}>
+                  {verFe && est && <div className="tv-body text-xs mb-1" style={{ color: est.cor }}>{est.icone} Ao chegar: {est.recepcao}.</div>}
                   {c.notas && <div className="tv-body text-xs" style={{ color: T.inkDim }}>{c.notas}</div>}
                   {(c.locais || []).length > 0 && <div className="tv-body text-xs mt-1" style={{ color: T.violetSoft }}>Locais: {c.locais.join(", ")}</div>}
                 </div>

@@ -7,6 +7,8 @@
    inconsistência, e o jogador administra de verdade.
    ============================================================ */
 
+import { feDaCidade, bonusRendaDevocao } from "./devocao.js";
+
 /* Renda diária base por tipo de cidade dominada */
 export const RENDA_CIDADE = { vila: 5, cidade: 12, capital: 25, fortaleza: 15, ruina: 2 };
 
@@ -22,9 +24,17 @@ export function dominiosDe(mapa) {
   return (mapa?.cidades || []).filter((c) => c.relacao === "jogador");
 }
 
-/* Detalhe da renda diária dos domínios, cidade a cidade */
-export function rendaDominios(mapa) {
-  const porCidade = dominiosDe(mapa).map((c) => ({ nome: c.nome, tipo: c.tipo || "cidade", sede: !!c.sede, renda: rendaDeCidade(c) }));
+/* Detalhe da renda diária dos domínios, cidade a cidade.
+   DEVOÇÃO (v8.9): povo que reza pelo herói dizima, peregrina e gasta na
+   cidade — até +25% de renda. O bônus é opcional: sem devoção passada,
+   a conta é exatamente a de antes. */
+export function rendaDominios(mapa, devocao) {
+  const porCidade = dominiosDe(mapa).map((c) => {
+    const base = rendaDeCidade(c);
+    const fe = devocao ? feDaCidade(devocao, c.nome) : 0;
+    const mult = devocao ? bonusRendaDevocao(fe) : 1;
+    return { nome: c.nome, tipo: c.tipo || "cidade", sede: !!c.sede, base, fe, multFe: mult, renda: base * mult };
+  });
   const total = porCidade.reduce((s, c) => s + c.renda, 0);
   return { porCidade, total };
 }
@@ -58,8 +68,8 @@ export function efeitoTratados(mapa) {
 }
 
 /* Renda diária total = (contratos da guilda + domínios) × multiplicadores + tributos */
-export function rendaDiariaTotal(mapa, nivel, temGuilda) {
-  const { total } = rendaDominios(mapa);
+export function rendaDiariaTotal(mapa, nivel, temGuilda, devocao) {
+  const { total } = rendaDominios(mapa, devocao);
   const contratos = temGuilda ? rendaContratos(nivel) : 0;
   const mult = temGuilda ? multGuilda(nivel) : 1;
   const { bonusPct, tributo } = efeitoTratados(mapa);
