@@ -8,6 +8,8 @@ import { TABELA_TESTES, criaturasDoGenero } from "./bestiario.js";
 import { resumoPatamar } from "./combate.js";
 import { ATRIBUTOS, MAX_COMPANHEIROS, MOEDAS_INICIAIS } from "./constantes.js";
 import { ECONOMIA_PROMPT } from "./economia.js";
+import { CONDICOES_PROMPT } from "./condicoes.js";
+import { AFLICOES_PROMPT } from "./aflicoes.js";
 
 export function fichaTexto(p) {
   const attrs = ATRIBUTOS.map((a) => `${a.nome}: +${p.atributos[a.id]}`).join(", ");
@@ -100,11 +102,10 @@ ${questsInfo || "Nenhuma missão registrada."}
 - ${ECONOMIA_PROMPT}
 ${divindadeInfo ? `- ${divindadeInfo}\n` : ""}- GERADORES DE VIDA (o app sorteia, você narra): envelopes [EVENTO LOCAL], [EVENTO GLOBAL] e [QUEST GERADA PELO SISTEMA] trazem material PRONTO — fios do dia a dia, arcos regionais que escalam por etapas e quests calibradas à fase do arco. Os FATOS sorteados (quem, raça, lugar, o quê) são fixos: os atores já vêm com nome, raça e ofício definidos pelo sistema — use-os exatamente como dados (a diversidade do mundo é responsabilidade do sistema, não mude raças nem troque personagens). O COMO (voz, cena, desdobramentos) é todo seu. Fios locais são pequenos e expiram se ignorados (o mundo se resolve sem o herói — narre o desfecho de passagem). O evento global é arco longo de fundo: escala quando o sistema anuncia nova etapa; quando o jogador o RESOLVER de fato, envie "evento_global_encerrar": true no JSON. Limites do sistema: no máx. 1 global e 3 locais por vez — nunca empilhe mais por conta própria.
 
-CONDIÇÕES DE ESTADO / BUFFS E DEBUFFS (D&D e MMORPGs — dentro e fora de combate):
-- Repertório sugerido (use os nomes consagrados): DEBUFFS — Envenenado (perde PV/turno), Sangrando (perde PV/turno até estancar), Queimando (dano de fogo/turno), Atordoado (perde a ação), Amedrontado (desvantagem em ataques), Cego (desvantagem; atacantes têm vantagem), Enraizado/Preso (não se move), Lento (perde velocidade), Silenciado (não usa habilidades mágicas), Enfraquecido (dano reduzido), Amaldiçoado (azar nas rolagens), Congelado (pula turnos), Confuso (pode errar o alvo). BUFFS — Abençoado (vantagem), Inspirado (bônus na próxima rolagem), Regeneração (recupera PV/turno), Apressado (ação extra), Fortalecido (dano aumentado), Protegido (reduz dano), Furtivo (difícil de acertar), Enfurecido (dano alto, defesa baixa).
-- Personagens e inimigos podem receber condições com efeito mecânico real, via "condicoes_adicionar" (e "condicoes_remover"). Cada condição: {"alvo":"você"|nome do NPC/inimigo,"nome":"Envenenado","turnos":3,"efeito":"perde 2 PV por turno","tipo":"ruim"|"bom"}.
-- Use condições para dar consequência: o veneno da aranha, a lama que prende, o grito que amedronta. Uma condição que dá vantagem/desvantagem deve refletir nas rolagens seguintes. O app conta os turnos e mostra as condições ativas; declare o efeito e deixe o app/ narrativa aplicarem. Crie outras coerentes com a ficção além do repertório acima.
-- Fora de combate também valem (envenenado numa trilha, abençoado por um templo). Condições "boas" e "ruins" coexistem.
+CONDIÇÕES DE ESTADO / BUFFS E DEBUFFS (dentro e fora de combate):
+${CONDICOES_PROMPT}
+${AFLICOES_PROMPT}
+- Registre com "condicoes_adicionar": [{"alvo":"você"|nome do companheiro|nome do inimigo,"nome":"Envenenado"}] — só alvo e nome; duração e efeito são do sistema. Use condições para dar consequência: o veneno da aranha, a lama que prende, o grito que amedronta. Valem fora de combate também (envenenado numa trilha, abençoado por um templo), e boas e ruins coexistem.
 
 HABILIDADES E EFEITOS TEMPORÁRIOS:
 - O personagem tem habilidades/magias com custo em mana (PM), escolhidas pelo jogador numa árvore fixa — NUNCA conceda habilidades ao jogador (as iniciais já foram dadas pelo sistema; as novas ele escolhe ao subir de nível).
@@ -238,7 +239,7 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   "combate_atualizar": [{"nome":"Capitão Bandido","ameaca":"enfurecido, sangrando"}],
   "combate_encerrar": false,
   "rolagens_combate": [{"quem":"Lobo","alvo":"você","d20":8,"mod":2,"total":10,"dificuldade":15,"resultado":"erra"}],
-  "condicoes_adicionar": [{"alvo":"você","nome":"Envenenado","turnos":3,"efeito":"perde 2 PV por turno","tipo":"ruim"}],
+  "condicoes_adicionar": [{"alvo":"você","nome":"Envenenado"}],
   "condicoes_remover": [{"alvo":"você","nome":"Envenenado"}],
   "npcs": [{"nome":"Mestra Elira","papel":"ferreira","relacao":"aliado","genero":"mulher","local":"Pedravale","segredo":"esconde um mapa nas forjas"}],
   "quest_nova": [{"titulo":"O cerco de Pedravale","descricao":"Romper o bloqueio antes do inverno","tipo":"principal"}],

@@ -8,6 +8,8 @@
    ============================================================ */
 
 import { perfilDeCriatura, multiplicadorDano, iconeDano, resistenciasEquipadas, elementoDaArma } from "./danos.js";
+import { mecanicaDe } from "./condicoes.js";
+import { golpeDaVez } from "./aflicoes.js";
 
 export function d(n) { return 1 + Math.floor(Math.random() * n); }
 
@@ -31,18 +33,12 @@ export function defesaDe(ent, ehInimigo = false) {
   return 10 + dex + bonusEquip;
 }
 
-/* condições afetam as rolagens (ex.: cego/amedrontado dão desvantagem) */
+/* Condições afetam as rolagens. A mecânica NÃO mora mais aqui: vem do
+   catálogo único (condicoes.js), o mesmo que o Mestre, o HUD e o descanso
+   leem. Antes, cada lugar adivinhava por substring e discordava do resto. */
 export function modificadoresDeCondicao(condicoes = []) {
-  let vantagem = false, desvantagem = false, danoExtra = 0, danoReduzido = 0, perdeAcao = false;
-  for (const c of condicoes) {
-    const n = (c.nome || "").toLowerCase();
-    if (["amedrontado", "cego", "confuso", "enfraquecido", "lento"].some((x) => n.includes(x))) desvantagem = true;
-    if (["abençoado", "abencoado", "inspirado", "furtivo", "apressado", "enfurecido"].some((x) => n.includes(x))) vantagem = true;
-    if (["atordoado", "congelado", "paralisado", "preso", "enraizado"].some((x) => n.includes(x))) perdeAcao = true;
-    if (["fortalecido", "enfurecido"].some((x) => n.includes(x))) danoExtra += 2;
-    if (["enfraquecido"].some((x) => n.includes(x))) danoReduzido += 2;
-  }
-  return { vantagem, desvantagem, danoExtra, danoReduzido, perdeAcao };
+  const m = mecanicaDe(condicoes);
+  return { vantagem: m.vantagem, desvantagem: m.desvantagem, danoExtra: m.danoExtra, danoReduzido: m.danoReduzido, perdeAcao: m.perdeAcao };
 }
 
 /* Resolve UM ataque. Devolve um objeto de resultado detalhado (sem narrar). */
@@ -150,7 +146,11 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0 
         condAtacante: inim.condicoes || [], condAlvo: alvo.ent.condicoes || [],
         tipoDano: perfilInim.ataque, resistAlvo: resistenciasEquipadas(alvo.ent),
       });
-      acoes.push({ inimigo: inim.nome, alvoRef: alvo.ref, alvoNome: alvo.nome, r, golpe: g + 1, deTotal: nGolpes });
+      /* GOLPE DO CATÁLOGO (v9.1): o bicho não "ataca" genericamente — ele usa
+         um golpe com nome, do repertório fixo dele. É esse nome que o Mestre
+         narra e é dele que o sistema tira a aflição que o golpe carrega. */
+      const golpeNome = golpeDaVez(inim.nome, perfilInim.ataque, inim.ameaca, g);
+      acoes.push({ inimigo: inim.nome, alvoRef: alvo.ref, alvoNome: alvo.nome, r, golpe: g + 1, deTotal: nGolpes, golpeNome });
     }
   }
   return acoes;

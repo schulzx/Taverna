@@ -10,6 +10,7 @@ import { bonusProficiencia, ehProficiente, MOD_MAX_5E, XP_POR_DADIVA } from "./r
 import { completarInimigo } from "./bestiario.js";
 import { elencoDiverso, nomeCidade, nomeTaverna } from "./nomes.js";
 import { garantirSuprimentos } from "./ermos.js";
+import { limparPorDescanso } from "./condicoes.js";
 import { valorDeItem } from "./economia.js";
 import { VINCULO_INICIAL } from "./vinculos.js";
 
@@ -49,14 +50,16 @@ export function aplicarDescanso(pers, tipo, msgs) {
   const frac = longo ? 1 : 0.5; // curto recupera metade, longo tudo
   const novaVida = longo ? pers.vidaMax : Math.min(pers.vidaMax, pers.vida + Math.ceil(pers.vidaMax * frac));
   const novaMana = longo ? pers.manaMax : Math.min(pers.manaMax, pers.mana + Math.ceil(pers.manaMax * frac));
-  // condições: descanso longo remove as ruins curáveis; curto alivia algumas
-  let condicoes = pers.condicoes || [];
-  if (longo) condicoes = condicoes.filter((c) => c.tipo === "bom");
-  else condicoes = condicoes.filter((c) => !(c.tipo !== "bom" && ["Cansado", "Enfraquecido", "Sangrando"].includes(c.nome)));
-  // grupo: cura junto (companheiros descansam também)
+  /* Condições: quem some com qual descanso é decisão do CATÁLOGO (v9.0) —
+     veneno e exaustão exigem noite inteira, sangramento estanca num curto. */
+  const lim = limparPorDescanso(pers.condicoes || [], longo ? "longo" : "curto");
+  const condicoes = lim.condicoes;
+  if (lim.removidas.length) msgs.push(`✓ Passou com o descanso: ${lim.removidas.map((c) => c.nome).join(", ")}.`);
+  // grupo: cura junto (companheiros descansam também) — e limpa as condições deles
   const grupo = (pers.grupo || []).map((gm) => ({
     ...gm,
     vida: longo ? gm.vidaMax : Math.min(gm.vidaMax, (gm.vida || 0) + Math.ceil((gm.vidaMax || 10) * frac)),
+    condicoes: limparPorDescanso(gm.condicoes || [], longo ? "longo" : "curto").condicoes,
   }));
   msgs.push(longo ? "🌙 Descanso longo — você e o grupo recuperam PV e PM por completo." : "🔥 Descanso curto — você e o grupo recuperam parte do PV e PM.");
   return { ...pers, vida: novaVida, mana: novaMana, condicoes, grupo };
