@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
-import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade } from "./classes.js";
+import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { gerarGeografia, garantirGeografia } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, danoDaClasse, ataquesDoInimigo, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
@@ -2002,7 +2002,6 @@ export default function Taverna() {
   useEffect(() => { if (personagem) personagemRef.current = personagem; }, [personagem]);
   const [mensagens, setMensagens] = useState([]);
   const [historico, setHistorico] = useState([]);
-  const [sugestoes, setSugestoes] = useState([]);
   const [rolagem, setRolagem] = useState(null);
   const [combate, setCombate] = useState(null); // null | { inimigos: [{nome, vida, vidaMax, ameaca}] }
   const [carregando, setCarregando] = useState(false);
@@ -2238,7 +2237,7 @@ export default function Taverna() {
   const salvar = useCallback((extra = {}) => {
     setStatusSave("salvando");
     const dados = {
-      nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico, sugestoes,
+      nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico,
       combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
@@ -2274,7 +2273,7 @@ export default function Taverna() {
     } else {
       setStatusSave("erro");
     }
-  }, [nomeCampanha, mundo, personagem, mensagens, historico, sugestoes, rolagem]);
+  }, [nomeCampanha, mundo, personagem, mensagens, historico, rolagem]);
 
   /* SEGURO CONTRA CRASH (v7.0.2): se a página vai para segundo plano (ou o
      sistema derruba o Safari por memória), o save acontece ANTES. Assim, mesmo
@@ -3015,7 +3014,6 @@ export default function Taverna() {
       if (rolagemFinal.dificuldade != null && rolagemFinal.dificuldade > modT + 19) rolagemFinal = { ...rolagemFinal, dificuldade: modT + 14 };
       if (avaliarTeste(modT, rolagemFinal.dificuldade) === "auto") rolagemFinal = { ...rolagemFinal, auto: true };
     }
-    setSugestoes(rolagemFinal ? [] : (resp.sugestoes || []));
     setRolagem(rolagemFinal);
     /* CÓDEX: novos companheiros, quase-morte e checagem de conquistas do turno */
     {
@@ -3551,7 +3549,7 @@ export default function Taverna() {
           if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo()); }
         });
       }
-      setTimeout(() => salvar({ personagem: pers, historico: histFinal, rolagem: resp.rolagem || null, sugestoes: resp.rolagem ? [] : (resp.sugestoes || []) }), 0);
+      setTimeout(() => salvar({ personagem: pers, historico: histFinal, rolagem: resp.rolagem || null }), 0);
       /* FISCAL DE MISSÕES + ESCRIBA: correm em paralelo, sem travar o turno */
       cronistaDoTurno(pers, resp.narrativa);
       /* DESPERTAR: checa DEPOIS do turno (o XP do combate pode ter cruzado o nível) */
@@ -3663,7 +3661,7 @@ export default function Taverna() {
     mercadoRef.current = { comprados: {}, ambulante: null }; setMercado(mercadoRef.current);
     bancoNomesRef.current = gerarBancoNomes(mundo);
     systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
-    mensagensRef.current = []; setMensagens([]); setHistorico([]); setSugestoes([]); setRolagem(null);
+    mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null);
     setCombate(null); combateRef.current = null;
     setFase("jogo");
     enviar(`Comece a aventura: apresente o mundo com riqueza, situe meu personagem numa cena de abertura marcante com pelo menos um NPC interessante, e termine com um gancho que me convide a agir. (Minhas habilidades iniciais já foram concedidas pelo SISTEMA: ${(pers.habilidades || []).map((h) => h.nome).join(", ") || "nenhuma"} — NÃO envie "adicionar_habilidades".)`, pers, []);
@@ -3678,7 +3676,7 @@ export default function Taverna() {
       setMundo(sv.mundo || { genero: "Fantasia medieval" }); setNomeCampanha(sv.nomeCampanha || "Aventura"); setPersonagem(pers);
       mensagensRef.current = Array.isArray(sv.mensagens) ? sv.mensagens : [];
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
-      setSugestoes(sv.sugestoes || []); setRolagem(sv.rolagem || null);
+      setRolagem(sv.rolagem || null);
       setCombate(sv.combate || null); combateRef.current = sv.combate || null;
       livroRef.current = sv.livro || ""; turnoContRef.current = 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
@@ -4391,14 +4389,17 @@ export default function Taverna() {
   const escolherAtributo = (attrId, hab) => {
     const nv = Math.min(ATRIBUTO_MAX, personagem.atributos[attrId] + 1);
     const nomeAttr = ATRIBUTOS.find((a) => a.id === attrId)?.nome || attrId;
-    const msgs = [`✦ ${nomeAttr} fortalecido: +${nv}`, "✦ +1 ponto de habilidade — gaste na árvore em Gestão › Talentos."];
+    /* o nível recém-alcançado é o que define quantos pontos ele rende (v9.4) */
+    const nivelNovo = (personagem.nivel || 1) - Math.max(0, (personagem.nivelPendentes || 1) - 1);
+    const ganho = hab ? 0 : pontosNoNivel(nivelNovo);
+    const msgs = [`✦ ${nomeAttr} fortalecido: +${nv}`, `✦ +${ganho} ponto${ganho > 1 ? "s" : ""} de habilidade — gaste na árvore em Gestão › Talentos.`];
     setPersonagem((p) => {
       const habs = [...(p.habilidades || [])];
       if (hab && !habs.some((x) => (x.nome || x) === hab.nome)) habs.push({ nome: hab.nome, custo: hab.custo, descricao: hab.descricao });
-      return { ...p, atributos: { ...p.atributos, [attrId]: nv }, habilidades: habs, pontosHab: (p.pontosHab || 0) + (hab ? 0 : 1), nivelPendentes: Math.max(0, p.nivelPendentes - 1) };
+      return { ...p, atributos: { ...p.atributos, [attrId]: nv }, habilidades: habs, pontosHab: (p.pontosHab || 0) + ganho, nivelPendentes: Math.max(0, p.nivelPendentes - 1) };
     });
     if (hab) msgs.push(`✦ Nova habilidade: ${hab.nome} (${hab.custo} PM)`);
-    notaRef.current = `[INFO] Subi para o nível ${personagem.nivel} e fortaleci ${nomeAttr} (agora +${nv}). Ganhei um ponto de habilidade para gastar na minha árvore.`;
+    notaRef.current = `[FICHA — REGISTRO DO SISTEMA] Subi para o nível ${personagem.nivel} e fortaleci ${nomeAttr} (agora +${nv}). É anotação de ficha: mencione o crescimento de passagem se couber, sem abrir cena de treinamento.`;
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
   };
 
@@ -6134,12 +6135,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               onLimparAlvos={() => { alvosGolpeRef.current = []; setAlvosGolpe([]); }}
               pocoes={pocoesNaBolsa} onUsarConsumivel={usarConsumivelUI} />}
 
-            {sugestoes.length > 0 && !carregando && !rolagem && !habAbertas && (
-              <div className="px-4 md:px-8 pb-2 flex flex-wrap gap-2" style={{ paddingRight: "68px" }}>
-                {sugestoes.map((s, i) => <button key={i} onClick={() => agir(s)} className="tv-body text-sm px-3.5 py-2 rounded-full" style={{ border: `1px solid ${T.line}`, color: T.amberSoft, background: "transparent" }}>{s}</button>)}
-              </div>
-            )}
-
+            {/* v9.4: as sugestões de ação saíram. Numa mesa de verdade o Mestre
+                não entrega três opções prontas — ele descreve a cena e espera. */}
             {habAbertas && <PainelHabilidades personagem={personagem} selecionar={(h) => { setHabSel(h); setHabAbertas(false); }} fechar={() => setHabAbertas(false)} />}
             {acoesAbertas && (
               <div className="px-4 md:px-8 pb-2 shrink-0" style={{ paddingRight: "68px" }}>

@@ -12,6 +12,7 @@ import { elencoDiverso, nomeCidade, nomeTaverna } from "./nomes.js";
 import { garantirSuprimentos } from "./ermos.js";
 import { limparPorDescanso } from "./condicoes.js";
 import { garantirFichaCompanheiro } from "./companheiros.js";
+import { pontosTotais, custoJaGasto } from "./classes.js";
 import { valorDeItem } from "./economia.js";
 import { VINCULO_INICIAL } from "./vinculos.js";
 
@@ -338,6 +339,12 @@ export function migrarPersonagem(p) {
     habilidades: Array.isArray(p.habilidades) ? p.habilidades.filter((h) => h && h.nome).map((h) => ({ nome: h.nome, custo: Math.max(0, Number(h.custo) || 0), descricao: h.descricao || "", duracao: h.duracao || 0, recarga: h.recarga != null ? Math.max(0, Number(h.recarga) || 0) : recargaPadrao(Math.max(0, Number(h.custo) || 0)) })) : [],
     habRecarga: p.habRecarga && typeof p.habRecarga === "object" ? p.habRecarga : {},
     grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, xp: g.xp || 0, nivel: g.nivel || 1, inventario: Array.isArray(g.inventario) ? g.inventario : [], equipamento: Array.isArray(g.equipamento) ? g.equipamento : [], equipados: g.equipados && typeof g.equipados === "object" ? g.equipados : {}, semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}`, vinculo: g.vinculo ?? VINCULO_INICIAL, marcos: Array.isArray(g.marcos) ? g.marcos : [] })).map(garantirFichaCompanheiro) : [],
+    /* v9.4: a curva de pontos de habilidade mudou (acelera a cada 5 níveis).
+       Recalcula UMA vez por ficha e marca a versão, para não inflar de novo a
+       cada carregamento. O que já foi gasto continua gasto. */
+    pontosHab: (p.pontosVersao || 1) >= 2 ? (p.pontosHab || 0) : Math.max(0, pontosTotais(p.nivel || 1) - custoJaGasto(p)),
+    pontosVersao: 2,
+    subclasses: p.subclasses && typeof p.subclasses === "object" ? p.subclasses : {},
     antecedente: p.antecedente || "", antecedenteGancho: p.antecedenteGancho || "",
     essencia: p.essencia || 0,
     suprimentos: p.suprimentos ? garantirSuprimentos(p.suprimentos) : { racoes: 10, agua: 10, tochas: 5, kit: true },

@@ -13,7 +13,7 @@
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
-import { CLASSES, classePorNome, arvoreDaClasse, arvoreDaSubclasse, ranksDoPersonagem, pontosDisponiveis, custoRespec, subclasseEscolhida, podeEscolherSubclasse, RANK_PARA_SUBCLASSE, habilidadesDaSubclasse } from "./classes.js";
+import { CLASSES, classePorNome, arvoreDaClasse, arvoreDaSubclasse, ranksDoPersonagem, pontosDisponiveis, pontosTotais, pontosNoNivel, custoRespec, subclasseEscolhida, podeEscolherSubclasse, RANK_PARA_SUBCLASSE, habilidadesDaSubclasse } from "./classes.js";
 
 export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSubclasse, grupo = [] }) {
   const [abaClasse, setAbaClasse] = React.useState(personagem.classe || (CLASSES[0] && CLASSES[0].nome));
@@ -117,7 +117,8 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
           <span className="tv-display text-2xl" style={{ color: pontos > 0 ? T.violetSoft : T.inkDim }}>{pontos}</span>
         </div>
         <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>
-          Um por nível. Degraus 1–3 custam 1 ponto, 4–7 custam 2, 8+ custam 3 — você <b>não</b> terá tudo, então escolha o que combina com o seu jeito de jogar. Habilidade de degrau N exige N−1 degraus naquela classe; com {RANK_PARA_SUBCLASSE} degraus abre a subclasse.
+          O ganho <b>acelera</b>: cada nível vale {pontosNoNivel(personagem.nivel || 1)} ponto{pontosNoNivel(personagem.nivel || 1) > 1 ? "s" : ""} agora (1 até o nível 5, 2 até o 10, 3 até o 15, 4 daí em diante) — {pontosTotais(personagem.nivel || 1)} acumulados no nível {personagem.nivel || 1}.
+          Gastar custa conforme o degrau: 1–3 custam 1 ponto, 4–7 custam 2, 8+ custam 3. Dá para dominar uma classe e mergulhar fundo noutra — nunca para ter tudo. Habilidade de degrau N exige N−1 degraus naquela classe; com {RANK_PARA_SUBCLASSE} degraus abre a subclasse.
         </div>
         {abertas.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2">

@@ -447,8 +447,30 @@ export function ranksDoPersonagem(pers) {
   return r;
 }
 
-/* Pontos que o herói ainda tem para gastar: um por nível, menos o CUSTO do
-   que já virou habilidade de catálogo (únicas e dádivas não contam). */
+/* ---------------- QUANTOS PONTOS CADA NÍVEL DÁ (v9.4) ----------------
+   Um ponto por nível envelhecia mal: no fim da progressão o herói tinha
+   gastado tudo no básico e na subclasse, e não sobrava nada para o terceiro
+   andar da árvore. Agora o ganho ACELERA — a cada 5 níveis, cada nível novo
+   vale um ponto a mais:
+
+     níveis  1–5  → 1 ponto cada  (5 acumulados)
+     níveis  6–10 → 2 pontos cada (15)
+     níveis 11–15 → 3 pontos cada (30)
+     níveis 16–20 → 4 pontos cada (50)
+
+   Cinquenta pontos no ápice: dá para dominar uma classe inteira com
+   subclasse e ainda mergulhar fundo numa segunda — mas nunca para ter tudo
+   que o jogo oferece (as doze classes somam mais de 500 pontos). A escolha
+   continua sendo escolha; ela só deixa de ser sufocante. */
+export function pontosNoNivel(n) { return 1 + Math.floor((Math.max(1, n || 1) - 1) / 5); }
+export function pontosTotais(nivel) {
+  let t = 0;
+  for (let n = 1; n <= Math.max(1, nivel || 1); n++) t += pontosNoNivel(n);
+  return t;
+}
+
+/* Pontos que o herói ainda tem para gastar: o total da curva, menos o CUSTO
+   do que já virou habilidade de catálogo (únicas e dádivas não contam). */
 export function custoJaGasto(pers) {
   let t = 0;
   for (const h of (pers && pers.habilidades) || []) {
@@ -462,7 +484,7 @@ export function custoJaGasto(pers) {
 export function pontosDisponiveis(pers) {
   if (!pers) return 0;
   if (typeof pers.pontosHab === "number") return Math.max(0, pers.pontosHab);
-  return Math.max(0, (pers.nivel || 1) - custoJaGasto(pers));
+  return Math.max(0, pontosTotais(pers.nivel) - custoJaGasto(pers));
 }
 
 /* A ficha de uma habilidade pelo nome, venha ela da classe ou da subclasse. */
