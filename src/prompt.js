@@ -10,6 +10,9 @@ import { ATRIBUTOS, MAX_COMPANHEIROS, MOEDAS_INICIAIS } from "./constantes.js";
 import { ECONOMIA_PROMPT } from "./economia.js";
 import { CONDICOES_PROMPT } from "./condicoes.js";
 import { AFLICOES_PROMPT } from "./aflicoes.js";
+import { CONSUMIVEIS_PROMPT } from "./pocoes.js";
+import { MERCADO_PROMPT } from "./mercado.js";
+import { COMPANHEIROS_PROMPT } from "./companheiros.js";
 
 export function fichaTexto(p) {
   const attrs = ATRIBUTOS.map((a) => `${a.nome}: +${p.atributos[a.id]}`).join(", ");
@@ -100,6 +103,9 @@ ${questsInfo || "Nenhuma missão registrada."}
 - PERSONAGENS SEM AMARRAS (emoções de verdade — regra de interpretação): cada personagem vive a própria natureza ATÉ O FIM, sem suavização. O vilão é mau de verdade: cruel, manipulador, capaz de atrocidades. A sedutora é ousada de verdade: flerta, provoca, insinua sem pudor. O covarde foge, o fanático não negocia, o ambicioso trai. É TERMINANTEMENTE PROIBIDO amansar, moralizar ou "limpar" a personalidade de alguém por cautela — isso mata o mundo vivo. Temas maduros (desejo, violência, crueldade, vício, política suja, preconceito, luto) fazem parte da ficção e devem ser narrados com a intensidade que a cena pede, sem eufemismo e sem censura — apenas sem descrição sexual gráfica detalhada (insinue com classe; o resto, mostre sem medo). Emoções são emoções de verdade: raiva que queima, desejo que constrange, medo que paralisa, alegria que transborda.
 - ONDE EU ESTOU É FATO (âncora de local — regra dura): o LOCAL ATUAL informado acima é onde eu estou de verdade. Se estou EM VIAGEM, NÃO estou em cidade nenhuma: o descanso acontece na estrada, no acampamento ou no meio de transporte em que viajo (a cabine do navio, o vagão da caravana) — JAMAIS me "acorde" em aposentos, estalagens ou palácios sem que eu tenha chegado lá. Descansar no meio do mar NÃO me devolve ao porto. Só me coloque numa cidade se o sistema registrar chegada ("cidade_atual") ou se a ficção me levou até lá com viagem narrada. Quando o meio de viagem mudar (a pé → navio → carroça → cavalo), registre "jornada_meio" nas mudanças (ex.: "jornada_meio":"navio").
 - ${ECONOMIA_PROMPT}
+${MERCADO_PROMPT}
+${CONSUMIVEIS_PROMPT}
+${COMPANHEIROS_PROMPT}
 ${divindadeInfo ? `- ${divindadeInfo}\n` : ""}- GERADORES DE VIDA (o app sorteia, você narra): envelopes [EVENTO LOCAL], [EVENTO GLOBAL] e [QUEST GERADA PELO SISTEMA] trazem material PRONTO — fios do dia a dia, arcos regionais que escalam por etapas e quests calibradas à fase do arco. Os FATOS sorteados (quem, raça, lugar, o quê) são fixos: os atores já vêm com nome, raça e ofício definidos pelo sistema — use-os exatamente como dados (a diversidade do mundo é responsabilidade do sistema, não mude raças nem troque personagens). O COMO (voz, cena, desdobramentos) é todo seu. Fios locais são pequenos e expiram se ignorados (o mundo se resolve sem o herói — narre o desfecho de passagem). O evento global é arco longo de fundo: escala quando o sistema anuncia nova etapa; quando o jogador o RESOLVER de fato, envie "evento_global_encerrar": true no JSON. Limites do sistema: no máx. 1 global e 3 locais por vez — nunca empilhe mais por conta própria.
 
 CONDIÇÕES DE ESTADO / BUFFS E DEBUFFS (dentro e fora de combate):

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
-import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais } from "./classes.js";
+import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { gerarGeografia, garantirGeografia } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, danoDaClasse, ataquesDoInimigo, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
@@ -24,6 +24,10 @@ import { calcularFama, patamarFama, gerarNemesis, LIMIARES_NEMESIS, ACOES_NEMESI
 import { gerarCronica } from "./cronica.js";
 import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { rolarAflicao, aflicaoDe } from "./aflicoes.js";
+import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara } from "./pocoes.js";
+import { mercadoresDaCidade, talvezAmbulante, precoDeCompra, resumoMercadoPrompt } from "./mercado.js";
+import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
+import { PainelTalentos } from "./painel-talentos.jsx";
 import { criarCondicao, tickCondicoes, detectarCondicoesNarradas, detectarAliviosNarrados, limparPorDescanso, resumoCondicoesPrompt, estadoDeRolagem, mecanicaDe } from "./condicoes.js";
 import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, perderFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
@@ -309,14 +313,14 @@ function ModalNivel({ nivel, personagem, escolher }) {
         <div className="text-center mb-5">
           <div className="tv-mono text-xs uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>✦ Nível alcançado ✦</div>
           <div className="tv-display text-5xl" style={{ color: T.ink }}>Nível {nivel}</div>
-          <div className="tv-body text-sm mt-2" style={{ color: T.inkDim }}>+3 PV máx · +2 PM máx · vida e mana restauradas.<br />Escolha um atributo para fortalecer:</div>
+          <div className="tv-body text-sm mt-2" style={{ color: T.inkDim }}>+3 PV máx · +2 PM máx · vida e mana restauradas · <b style={{ color: T.violetSoft }}>+1 ponto de habilidade</b> (gaste em Gestão › Talentos).<br />Escolha um atributo para fortalecer:</div>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {ATRIBUTOS.map((a) => {
             const atual = personagem.atributos[a.id];
             const noMax = atual >= ATRIBUTO_MAX;
             return (
-              <button key={a.id} onClick={() => { if (noMax) return; setAttrEscolhido(a.id); setEtapa("habilidade"); }} disabled={noMax}
+              <button key={a.id} onClick={() => { if (noMax) return; escolher(a.id, null); }} disabled={noMax}
                 className="rounded-xl p-3 text-left transition-all"
                 style={{ background: T.panelSoft, border: `1px solid ${noMax ? T.line : T.amber}`, opacity: noMax ? 0.4 : 1, cursor: noMax ? "not-allowed" : "pointer" }}>
                 <div className="flex items-baseline justify-between">
@@ -384,7 +388,7 @@ ${banirUrgencia ? `
 /* Trilho enxuto (mobile): 4 abas. Ficha, Grupo, Pessoas, Guilda e Domínios
    vivem como SUB-abas dentro de Gestão. */
 const ABAS = [{ id: "gestao", rotulo: "Gestão", icone: "🏛" }, { id: "diario", rotulo: "Diário", icone: "📜" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }, { id: "codex", rotulo: "Códex", icone: "📖" }, { id: "ascensao", rotulo: "Ascensão", icone: "🌟", soDesperto: true }];
-const SUBS_GESTAO = [{ id: "ficha", rotulo: "Ficha" }, { id: "grupo", rotulo: "Grupo" }, { id: "pessoas", rotulo: "Pessoas" }, { id: "guilda", rotulo: "Guilda" }, { id: "dominios", rotulo: "Domínios" }, { id: "diplomacia", rotulo: "Diplomacia" }, { id: "correio", rotulo: "Correio" }, { id: "mural", rotulo: "Mural" }];
+const SUBS_GESTAO = [{ id: "ficha", rotulo: "Ficha" }, { id: "grupo", rotulo: "Grupo" }, { id: "pessoas", rotulo: "Pessoas" }, { id: "talentos", rotulo: "Talentos" }, { id: "mercado", rotulo: "Mercado" }, { id: "guilda", rotulo: "Guilda" }, { id: "dominios", rotulo: "Domínios" }, { id: "diplomacia", rotulo: "Diplomacia" }, { id: "correio", rotulo: "Correio" }, { id: "mural", rotulo: "Mural" }];
 
 const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D" };
 const SLOT_ROTULO = { arma: "Arma", armadura: "Armadura", elmo: "Elmo", botas: "Botas", anel: "Anel", amuleto: "Amuleto", escudo: "Escudo" };
@@ -811,13 +815,14 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, bloqueado }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, bloqueado }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
   const [confirmarRemover, setConfirmarRemover] = React.useState(null);
   const [subGestao, setSubGestao] = React.useState("ficha");    // sub-aba dentro de Gestão
+  const [valorCofre, setValorCofre] = React.useState("");       // quanto depositar/sacar da guilda
   const [verHabsFicha, setVerHabsFicha] = React.useState(false); // habilidades da ficha sob demanda
   mundo = mundo || { genero: "Fantasia medieval" };
   if (!aba) return null;
@@ -1053,6 +1058,85 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
         {aba === "gestao" && subGestao === "diplomacia" && <PainelDiplomacia mapa={mapa} faccaoJogador={faccaoJogador} onDiplomacia={onDiplomacia} onPresente={onPresente} cofre={guilda && guilda.cofre} />}
         {aba === "gestao" && subGestao === "correio" && <PainelCorreio correio={correio} faccoes={((mapa && mapa.faccoes) || []).filter((f) => f && f.nome && !f.doJogador && f.relacao !== "jogador").map((f) => f.nome)} dia={dia} moedas={personagem.moedas || 0} enviarCarta={enviarCarta} responderPeticao={responderPeticao} />}
 
+        {/* MERCADO (v9.2): estoque e preço do sistema; a IA só narra a cena */}
+        {aba === "gestao" && subGestao === "talentos" && <PainelTalentos personagem={personagem} grupo={personagem.grupo || []} onAprender={onAprenderHab} onRespec={onRespec} />}
+
+        {aba === "gestao" && subGestao === "mercado" && (() => {
+          const bancas = mercadoAqui || [];
+          if (!bancas.length) {
+            return <div className="tv-body text-sm italic text-center py-10" style={{ color: T.inkDim }}>Nenhuma banca por perto. Mercadores existem nas cidades — e, com sorte, numa carroça de estrada.</div>;
+          }
+          return (
+            <>
+              <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+                <span className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Sua bolsa</span>
+                <span className="tv-mono text-xl font-semibold" style={{ color: T.amber }}>◉ {personagem.moedas || 0}</span>
+              </div>
+              {bancas.map((m) => (
+                <div key={m.id} className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                  <div className="tv-display text-lg" style={{ color: T.ink }}>{m.icone} {m.nome}</div>
+                  <div className="tv-body text-xs mb-2 italic" style={{ color: T.inkDim }}>{m.rotulo} — {m.desc}</div>
+                  {!m.estoque.length ? (
+                    <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>Prateleiras vazias. Volte noutra semana.</div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {m.estoque.map((it) => {
+                        const pode = (personagem.moedas || 0) >= it.preco;
+                        return (
+                          <div key={it.nome} className="rounded-lg px-2.5 py-2 flex items-center gap-2" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
+                            <div className="min-w-0 flex-1">
+                              <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{it.nome}</div>
+                              <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>
+                                {it.detalhe || (it.tipo === "curiosidade" ? "curiosidade" : `${SLOT_ROTULO[it.tipo] || it.tipo} · ${it.raridade}`)}
+                              </div>
+                            </div>
+                            <button onClick={() => onComprar && onComprar(m.id, it.nome)} disabled={!pode}
+                              className="tv-mono text-[10px] px-2.5 py-1.5 rounded-lg shrink-0"
+                              style={{ background: pode ? T.amber : T.panelSoft, color: pode ? T.onAccent : T.inkDim, border: `1px solid ${T.amber}`, fontWeight: 600, opacity: pode ? 1 : 0.45 }}>
+                              ◉ {it.preco}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {/* VENDER: o que está na bolsa e na mochila vale metade */}
+              {(() => {
+                const vendaveis = [
+                  ...(personagem.equipamento || []).map((it) => ({ it, origem: "equipamento", nome: it.nome })),
+                  ...(personagem.inventario || []).map((raw) => ({ it: typeof raw === "string" ? { nome: raw } : raw, origem: "inventario", nome: typeof raw === "string" ? raw : (raw && raw.nome) || "item" })),
+                ];
+                if (!vendaveis.length) return null;
+                const agrupado = Object.values(vendaveis.reduce((acc, v) => {
+                  const k = `${v.origem}|${v.nome}`;
+                  if (!acc[k]) acc[k] = { ...v, qtd: 0 };
+                  acc[k].qtd++; return acc;
+                }, {}));
+                return (
+                  <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                    <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Vender (metade do valor)</div>
+                    <div className="space-y-1.5">
+                      {agrupado.slice(0, 30).map((v) => (
+                        <div key={`${v.origem}|${v.nome}`} className="rounded-lg px-2.5 py-2 flex items-center gap-2" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
+                          <span className="tv-body text-sm flex-1 min-w-0 truncate" style={{ color: T.ink }}>{v.nome}{v.qtd > 1 ? <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}> ×{v.qtd}</span> : null}</span>
+                          <button onClick={() => onVender && onVender(v.nome, v.origem)} className="tv-mono text-[10px] px-2.5 py-1.5 rounded-lg shrink-0" style={{ border: `1px solid ${T.ok}`, color: T.ok }}>
+                            vender ◉ {precoDeCompra(v.it, cidadeMercado)}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+              <div className="tv-body text-xs" style={{ color: T.inkDim }}>
+                O estoque é do sistema e gira a cada semana de jogo — a mesma banca, no mesmo dia, tem sempre as mesmas coisas. Preços sobem em capitais e caem em vilas. O Mestre narra a conversa; quem cobra é o sistema.
+              </div>
+            </>
+          );
+        })()}
+
         {aba === "gestao" && subGestao === "guilda" && (() => {
           const temGuilda = !!faccaoJogador;
           const g = guilda || { nivel: 1, cofre: 0 };
@@ -1086,10 +1170,30 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
               <div className="tv-body text-xs" style={{ color: T.inkDim }}>
                 A renda cai no cofre a cada dia que passa na história (descanso longo ou passar o tempo). Suas moedas pessoais: ◉ {personagem.moedas}.
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => depositarCofre(25)} disabled={personagem.moedas < 25} className="flex-1 tv-mono text-[11px] px-2 py-2 rounded-lg" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft, opacity: personagem.moedas < 25 ? 0.4 : 1 }}>↓ depositar 25</button>
-                <button onClick={() => sacarCofre(25)} disabled={g.cofre < 1} className="flex-1 tv-mono text-[11px] px-2 py-2 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.ink, opacity: g.cofre < 1 ? 0.4 : 1 }}>↑ sacar {Math.min(25, g.cofre)}</button>
-              </div>
+              {/* CAIXA DA GUILDA (v9.2): a quantia é escolhida pelo jogador —
+                  depositar uma fortuna de 25 em 25 era um castigo. */}
+              {(() => {
+                const val = Math.max(0, Math.floor(Number(valorCofre) || 0));
+                const podeDep = val > 0 && val <= (personagem.moedas || 0);
+                const podeSac = val > 0 && val <= (g.cofre || 0);
+                return (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input type="number" inputMode="numeric" min="0" value={valorCofre}
+                        onChange={(e) => setValorCofre(e.target.value.replace(/[^\d]/g, ""))}
+                        placeholder="quanto?"
+                        className="tv-mono text-sm px-3 py-2 rounded-lg flex-1 min-w-0"
+                        style={{ background: T.bg, border: `1px solid ${T.line}`, color: T.ink }} />
+                      <button onClick={() => setValorCofre(String(personagem.moedas || 0))} className="tv-mono text-[10px] px-2 py-2 rounded-lg shrink-0" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>tudo que tenho</button>
+                      <button onClick={() => setValorCofre(String(g.cofre || 0))} className="tv-mono text-[10px] px-2 py-2 rounded-lg shrink-0" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>todo o cofre</button>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => { depositarCofre(val); setValorCofre(""); }} disabled={!podeDep} className="flex-1 tv-mono text-[11px] px-2 py-2 rounded-lg" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft, opacity: podeDep ? 1 : 0.4 }}>↓ depositar{val ? ` ◉ ${val}` : ""}</button>
+                      <button onClick={() => { sacarCofre(val); setValorCofre(""); }} disabled={!podeSac} className="flex-1 tv-mono text-[11px] px-2 py-2 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.ink, opacity: podeSac ? 1 : 0.4 }}>↑ sacar{val ? ` ◉ ${val}` : ""}</button>
+                    </div>
+                  </div>
+                );
+              })()}
               {custo != null ? (
                 <button onClick={melhorarGuilda} disabled={g.cofre < custo} className="w-full tv-mono text-xs px-3 py-2.5 rounded-lg" style={{ background: g.cofre >= custo ? T.amber : T.panelSoft, color: g.cofre >= custo ? T.onAccent : T.inkDim, border: `1px solid ${T.amber}`, fontWeight: 600, opacity: g.cofre >= custo ? 1 : 0.5 }}>
                   ⚒ melhorar guilda para o nível {g.nivel + 1} · ◉ {custo} do cofre
@@ -1439,11 +1543,16 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                     if (!acc[nome]) acc[nome] = { nome, descricao, qtd: 0 };
                     if (descricao && !acc[nome].descricao) acc[nome].descricao = descricao;
                     acc[nome].qtd++; return acc;
-                  }, {})).map((it, i) => (
+                  }, {})).map((it, i) => {
+                    const cons = comoConsumivel(it.nome);
+                    return (
                     <li key={i} className="rounded-lg px-3 py-2.5" style={{ background: T.panelSoft }}>
                       <div className="tv-body text-sm flex items-center gap-2.5" style={{ color: T.ink }}>
-                        <span style={{ color: T.amber }}>◆</span>
+                        <span style={{ color: T.amber }}>{cons ? cons.icone : "◆"}</span>
                         <span className="flex-1 min-w-0">{it.nome}{it.qtd > 1 ? <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}> ×{it.qtd}</span> : null}</span>
+                        {cons && onUsarConsumivel && (
+                          <button onClick={() => onUsarConsumivel(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ background: T.violet, color: "#14101F", fontWeight: 600 }} title={descricaoCurta(cons)}>usar</button>
+                        )}
                         {(personagem.grupo || []).length > 0 && (
                           <select value="" onChange={(e) => { if (e.target.value) transferirItem("eu", e.target.value, "inventario", it.nome); }} className="tv-mono text-[10px] rounded px-1 py-1 shrink-0" style={{ background: T.panel, color: T.violetSoft, border: `1px solid ${T.line}` }}>
                             <option value="">dar…</option>
@@ -1452,9 +1561,11 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                         )}
                         <button onClick={() => descartarItem(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>soltar</button>
                       </div>
+                      {cons && <div className="tv-mono text-[10px] mt-1" style={{ color: T.violetSoft, paddingLeft: "22px" }}>{descricaoCurta(cons)}</div>}
                       {it.descricao && <div className="tv-body text-xs mt-1 italic" style={{ color: T.inkDim, paddingLeft: "22px" }}>{it.descricao}</div>}
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
             </div>
@@ -1467,7 +1578,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
   );
 }
 
-function PainelCombate({ combate, onEncerrarTurno, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "" }) {
+function PainelCombate({ combate, onEncerrarTurno, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], onUsarConsumivel }) {
   if (!combate || !combate.inimigos || combate.inimigos.length === 0) return null;
   const eco = combate.economia || { acao: 1, extra: 1 };
   const chipMov = (ativo, rotulo) => (
@@ -1488,6 +1599,20 @@ function PainelCombate({ combate, onEncerrarTurno, nGolpes = 1, alvosGolpe = [],
           )}
         </span>
       </div>
+      {/* POÇÕES À MÃO (v9.2): beber é ação bônus — dá para tomar e atacar
+          no mesmo turno, sem abrir a bolsa no meio da luta. */}
+      {(pocoes || []).length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap mb-2">
+          <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>à mão</span>
+          {pocoes.map((p) => (
+            <button key={p.nome} onClick={() => onUsarConsumivel && onUsarConsumivel(p.nome)} title={p.detalhe}
+              className="tv-mono text-[10px] px-2 py-1 rounded-full" style={{ background: T.panelSoft, border: `1px solid ${T.violet}`, color: T.violetSoft }}>
+              {p.icone} {p.curto}{p.qtd > 1 ? ` ×${p.qtd}` : ""}
+            </button>
+          ))}
+          <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>· ação bônus</span>
+        </div>
+      )}
       {Array.isArray(combate.ordem) && combate.ordem.length > 0 && (
         <div className="rounded-xl p-2 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
           <div className="tv-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Ordem de iniciativa</div>
@@ -2111,7 +2236,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, eventos: eventosRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, quests: questsRef.current, devocao: devocaoRef.current,
+      historia: historiaRef.current, quests: questsRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -2247,6 +2372,78 @@ export default function Taverna() {
       pers: p,
       texto: `${res.cond.icone} ${h.nome}: ${res.cond.nome}${res.cond.turnos ? ` (${res.cond.turnos}t)` : ""}${port.alvo === "aliados" ? " — em você e no grupo" : ""} · ${res.cond.efeito}`,
       nota: `[EFEITO APLICADO PELO SISTEMA] "${h.nome}" deixou ${port.alvo === "aliados" ? "eu e meu grupo" : "eu"} ${res.cond.nome.toLowerCase()} (${res.cond.efeito}). Já está na ficha — narre a manifestação e não envie condição nenhuma por isso.`,
+    };
+  };
+
+  /* ---------------- O GRUPO AGINDO SOZINHO (v9.2) ----------------
+     Cura, poção e buff de companheiro deixam de ser mensagem bonita e viram
+     PV e condição de verdade na ficha. */
+  const gastarManaComp = (pers, nome, custo) => {
+    if (!custo) return pers;
+    return { ...pers, grupo: (pers.grupo || []).map((g) => (g.nome === nome ? { ...g, mana: Math.max(0, (g.mana != null ? g.mana : g.manaMax || 0) - custo) } : g)) };
+  };
+
+  const curarAliado = (pers, alvoNome, valor) => {
+    if (!alvoNome || alvoNome === pers.nome) {
+      const antes = pers.vida || 0;
+      const vida = Math.min(pers.vidaMax || antes, antes + valor);
+      return { pers: { ...pers, vida, morrendo: vida > 0 ? false : pers.morrendo, morte: vida > 0 ? { sucessos: 0, falhas: 0 } : pers.morte }, curado: vida - antes, texto: `${vida}/${pers.vidaMax}` };
+    }
+    let curado = 0, texto = "";
+    const grupo = (pers.grupo || []).map((g) => {
+      if (g.nome !== alvoNome) return g;
+      const antes = g.vida || 0;
+      const vida = Math.min(g.vidaMax || antes, antes + valor);
+      curado = vida - antes; texto = `${vida}/${g.vidaMax}`;
+      return { ...g, vida, morrendo: vida > 0 ? false : g.morrendo };
+    });
+    return { pers: { ...pers, grupo }, curado, texto };
+  };
+
+  const pocaoDeCompanheiro = (pers, ac) => {
+    const nomeItem = typeof ac.item === "string" ? ac.item : (ac.item && ac.item.nome) || (ac.consumivel && ac.consumivel.nome);
+    /* tira o frasco da bolsa de quem usou */
+    let p = { ...pers, grupo: (pers.grupo || []).map((g) => {
+      if (g.nome !== ac.companheiro) return g;
+      const idx = (g.inventario || []).findIndex((raw) => (typeof raw === "string" ? raw : (raw && raw.nome) || "") === nomeItem);
+      return idx < 0 ? g : { ...g, inventario: g.inventario.filter((_, i) => i !== idx) };
+    }) };
+    /* aplica no alvo (herói ou companheiro) */
+    if (!ac.alvo || ac.alvo === p.nome) {
+      const r = usarConsumivel(p, ac.consumivel ? ac.consumivel.id : nomeItem);
+      if (r) p = r.ent;
+      return { pers: p, texto: `🧪 ${ac.companheiro} te dá ${nomeItem}: ${r ? r.texto.replace(/^[^:]+: /, "") : "efeito aplicado"}`, paraMestre: `${ac.companheiro} usou ${nomeItem} em mim — o efeito JÁ está aplicado; narre o gesto, não o número` };
+    }
+    let txt = "";
+    p = { ...p, grupo: (p.grupo || []).map((g) => {
+      if (g.nome !== ac.alvo) return g;
+      const r = usarConsumivel(g, ac.consumivel ? ac.consumivel.id : nomeItem);
+      if (!r) return g;
+      txt = r.texto;
+      return r.ent;
+    }) };
+    return { pers: p, texto: `🧪 ${ac.companheiro} → ${ac.alvo}: ${txt || nomeItem}`, paraMestre: `${ac.companheiro} deu ${nomeItem} a ${ac.alvo} — efeito já aplicado pelo sistema` };
+  };
+
+  const buffDeCompanheiro = (pers, ac) => {
+    const port = aflicaoDe(`${ac.habilidade.nome} ${ac.habilidade.descricao || ""}`);
+    if (!port || port.alvo === "alvo") {
+      return { pers, texto: `✦ ${ac.companheiro} usa ${ac.habilidade.nome}`, paraMestre: `${ac.companheiro} usou ${ac.habilidade.nome} (efeito de apoio, sem números novos)` };
+    }
+    const res = rolarAflicao({ fonte: port, nomeFonte: ac.habilidade.nome, atacante: ac.companheiro, sempre: true });
+    if (!res || !res.aplicou) return { pers, texto: "", paraMestre: `${ac.companheiro} usou ${ac.habilidade.nome}` };
+    const semRepetir = (lista) => (lista || []).filter((x) => x.id !== res.cond.id);
+    let p = pers;
+    if (port.alvo === "aliados") {
+      p = { ...p, condicoes: [...semRepetir(p.condicoes), res.cond], grupo: (p.grupo || []).map((g) => ((g.vida || 0) > 0 ? { ...g, condicoes: [...semRepetir(g.condicoes), res.cond] } : g)) };
+    } else {
+      p = { ...p, grupo: (p.grupo || []).map((g) => (g.nome === ac.companheiro ? { ...g, condicoes: [...semRepetir(g.condicoes), res.cond] } : g)) };
+    }
+    const onde = port.alvo === "aliados" ? "no grupo inteiro" : `em ${ac.companheiro}`;
+    return {
+      pers: p,
+      texto: `${res.cond.icone} ${ac.companheiro} · ${ac.habilidade.nome}: ${res.cond.nome} ${onde} — ${res.cond.efeito}`,
+      paraMestre: `${ac.companheiro} usou ${ac.habilidade.nome} e deixou ${onde} ${res.cond.nome.toLowerCase()} — já aplicado, narre o gesto`,
     };
   };
 
@@ -2724,6 +2921,15 @@ export default function Taverna() {
           p2 = { ...p2, equipamento: [...(p2.equipamento || []), itemCaido] };
           msgs.push(`✦ Espólio raro: ${itemCaido.nome} (${RARIDADE_ROTULO[itemCaido.raridade] || itemCaido.raridade}) — na mochila de equipamentos`);
         }
+        /* CONSUMÍVEIS (v9.2): o que realmente enche a bolsa depois de uma luta */
+        const consCaidos = [];
+        for (let i = 0; i < (esp.consumiveis || 0); i++) {
+          const c = sortearConsumivel(p2.nivel || 1);
+          if (!c) continue;
+          consCaidos.push(c);
+          p2 = { ...p2, inventario: [...(p2.inventario || []), itemConsumivel(c.id)] };
+        }
+        if (consCaidos.length) msgs.push(`${consCaidos[0].icone} Na bolsa: ${consCaidos.map((c) => c.nome).join(", ")}`);
         /* PODER ÚNICO (v7.4.4): vitória sobre elite/lendário pode despertar
            uma habilidade só sua — gerada e limitada pelo sistema */
         p2 = talvezDespertarUnica(p2, resp.mudancas.__inimigosFinais || [], msgs);
@@ -2745,7 +2951,7 @@ export default function Taverna() {
         }
         pers = p2;
         setPersonagem(p2);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — espólios já aplicados pelo sistema: +${esp.moedas} moedas e +${esp.xp} XP para todos] NÃO envie moedas nem xp (seria dobrado). Narre o desfecho da luta em 2-3 frases.${itemCaido ? ` O SISTEMA derrubou um item: "${itemCaido.nome}" (${itemCaido.raridade}${itemCaido.poder ? `, poder: ${itemCaido.poder}` : ""}) — já está na minha mochila, NÃO envie "adicionar_equipamento" nem "adicionar_itens". Apenas descreva o achado com emoção, coerente com os inimigos derrotados.` : " Nenhum item especial desta vez — não envie itens."}${chefeCaido ? " A MASMORRA FOI CONCLUÍDA e o tesouro do chefe já foi entregue pelo sistema — narre a saída triunfal e retome o mundo lá fora." : ""}`;
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — espólios já aplicados pelo sistema: +${esp.moedas} moedas e +${esp.xp} XP para todos] NÃO envie moedas nem xp (seria dobrado). Narre o desfecho da luta em 2-3 frases.${itemCaido ? ` O SISTEMA derrubou um item: "${itemCaido.nome}" (${itemCaido.raridade}${itemCaido.poder ? `, poder: ${itemCaido.poder}` : ""}) — já está na minha mochila, NÃO envie "adicionar_equipamento" nem "adicionar_itens". Apenas descreva o achado com emoção, coerente com os inimigos derrotados.` : " Nenhum equipamento especial desta vez — não envie itens."}${consCaidos.length ? ` O sistema também colocou na minha bolsa: ${consCaidos.map((c) => c.nome).join(", ")} — já estão comigo, não envie itens por isso; mencione de passagem onde estavam (num cinto, numa sacola, no corpo de alguém).` : ""}${chefeCaido ? " A MASMORRA FOI CONCLUÍDA e o tesouro do chefe já foi entregue pelo sistema — narre a saída triunfal e retome o mundo lá fora." : ""}`;
       }
     }
     /* ---- CÃO DE GUARDA DE CONDIÇÕES (v9.0) ----
@@ -3295,7 +3501,9 @@ export default function Taverna() {
       const p = personagem || personagemRef.current || {};
       const cond = resumoCondicoesPrompt(p, p.grupo || []);
       const nem = infoNemesis();
-      return `${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}`;
+      const merc = resumoMercadoPrompt(mercadoAqui);
+      const grp = resumoGrupoPrompt(p.grupo || []);
+      return `${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -3445,6 +3653,7 @@ export default function Taverna() {
     questsRef.current = []; setQuests([]);
     divindadeRef.current = garantirDivindade(null); setDivindade(divindadeRef.current);
     devocaoRef.current = garantirDevocao(null, mapaRef.current, divindadeRef.current); setDevocao(devocaoRef.current);
+    mercadoRef.current = { comprados: {}, ambulante: null }; setMercado(mercadoRef.current);
     bancoNomesRef.current = gerarBancoNomes(mundo);
     systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setSugestoes([]); setRolagem(null);
@@ -3514,6 +3723,10 @@ export default function Taverna() {
          DISTRIBUÍDA pelo mapa (proporcional à população) em vez de sumir.
          Depois disso, o número da ascensão passa a ser a soma do mapa. */
       devocaoRef.current = garantirDevocao(sv.devocao, mapaRef.current, divindadeRef.current); setDevocao(devocaoRef.current);
+      mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
+        ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null }
+        : { comprados: {}, ambulante: null };
+      setMercado(mercadoRef.current);
       if (divindadeRef.current.despertar) {
         divindadeRef.current = { ...divindadeRef.current, fieis: fieisTotais(mapaRef.current, devocaoRef.current) };
         setDivindade(divindadeRef.current);
@@ -3859,7 +4072,7 @@ export default function Taverna() {
 
         /* TURNO DOS COMPANHEIROS: atacam inimigos ou socorrem quem caiu */
         const jogadorCaido = persAtual.vida <= 0;
-        const acoesComp = turnoDosCompanheiros({ grupo: persAtual.grupo || [], inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome });
+        const acoesComp = turnoDosCompanheiros({ grupo: persAtual.grupo || [], inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome, jogador: persAtual, rodada: (combPos.rodada || 1) });
         const partesComp = [];
         for (const ac of acoesComp) {
           if (ac.tipo === "ataque" && ac.r) {
@@ -3872,8 +4085,35 @@ export default function Taverna() {
             }
             pushMsgs([{ autor: "sistema", texto: ac.r.dano > 0 ? `⚔ ${ac.companheiro} → ${ac.alvoNome}: ${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? " ☠" : ""}` : `⚔ ${ac.companheiro} → ${ac.alvoNome}: errou` }]);
             partesComp.push(linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined));
-          } else if (ac.tipo === "socorro") {
-            partesComp.push(`${ac.companheiro} corre para socorrer ${ac.alvo}`);
+          } else if (ac.tipo === "habilidade" && ac.r) {
+            logDadoCombate(resumoDoAtaque(ac.r));
+            if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: "🎲 " + resumoDoAtaque(ac.r) }]);
+            let pvAlvo = null;
+            if (ac.r.dano > 0) {
+              combPos.inimigos = combPos.inimigos.map((e) => { if (e.nome !== ac.alvoNome) return e; pvAlvo = Math.max(0, e.vida - ac.r.dano); return { ...e, vida: pvAlvo, derrotado: pvAlvo <= 0, ultimoDano: ac.r.dano }; });
+              /* a habilidade do companheiro também aflige pelo catálogo */
+              const apH = aplicarAflicaoEmInimigo(combPos.inimigos, ac.alvoNome, { fonte: `${ac.habilidade.nome} ${ac.habilidade.descricao || ""}`, nomeFonte: `${ac.habilidade.nome} (${ac.companheiro})`, atacante: ac.companheiro, critico: ac.r.critico });
+              combPos.inimigos = apH.lista;
+              if (apH.res) { pushMsgs([{ autor: "sistema", texto: apH.res.texto }]); notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${apH.res.nota}`; }
+            }
+            persAtual = gastarManaComp(persAtual, ac.companheiro, ac.custo);
+            pushMsgs([{ autor: "sistema", texto: `✦ ${ac.companheiro} · ${ac.habilidade.nome} → ${ac.alvoNome}: ${ac.r.dano > 0 ? `${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? " ☠" : ""}` : "errou"}` }]);
+            partesComp.push(`${ac.companheiro} usou ${ac.habilidade.nome}: ${linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined)}`);
+          } else if (ac.tipo === "cura") {
+            const r2 = curarAliado(persAtual, ac.alvo, ac.valor);
+            persAtual = gastarManaComp(r2.pers, ac.companheiro, ac.custo);
+            pushMsgs([{ autor: "sistema", texto: `🩶 ${ac.companheiro} · ${ac.habilidade.nome} → ${ac.alvo}: +${r2.curado} PV (${r2.texto})` }]);
+            partesComp.push(`${ac.companheiro} lançou ${ac.habilidade.nome} em ${ac.alvo} (+${r2.curado} PV, agora ${r2.texto}) — o PV JÁ subiu, narre o gesto`);
+          } else if (ac.tipo === "pocao") {
+            const r3 = pocaoDeCompanheiro(persAtual, ac);
+            persAtual = r3.pers;
+            pushMsgs([{ autor: "sistema", texto: r3.texto }]);
+            partesComp.push(r3.paraMestre);
+          } else if (ac.tipo === "buff") {
+            const r4 = buffDeCompanheiro(persAtual, ac);
+            persAtual = gastarManaComp(r4.pers, ac.companheiro, ac.custo);
+            if (r4.texto) pushMsgs([{ autor: "sistema", texto: r4.texto }]);
+            partesComp.push(r4.paraMestre);
           }
         }
         combateRef.current = combPos; setCombate({ ...combPos });
@@ -3945,6 +4185,15 @@ export default function Taverna() {
       p2.condicoes = (p2.condicoes || []).filter((c) => !(c.origem || "").startsWith("presença de"));
       p2.grupo = (p2.grupo || []).map((g) => ({ ...g, condicoes: (g.condicoes || []).filter((c) => !(c.origem || "").startsWith("presença de")) }));
       p2 = talvezDespertarUnica(p2, derrotados, msgsU);
+      /* consumíveis também caem quando a luta fecha por código */
+      const caidos = [];
+      for (let i = 0; i < (esp.consumiveis || 0); i++) {
+        const cc = sortearConsumivel(p2.nivel || 1);
+        if (!cc) continue;
+        caidos.push(cc);
+        p2 = { ...p2, inventario: [...(p2.inventario || []), itemConsumivel(cc.id)] };
+      }
+      if (caidos.length) msgsU.push(`${caidos[0].icone} Na bolsa: ${caidos.map((cc) => cc.nome).join(", ")}`);
       return p2;
     });
     pushMsgs([
@@ -3986,7 +4235,7 @@ export default function Taverna() {
     persAtual = aplicarCondicoesDosGolpes(acoes, persAtual);
     /* companheiros agem como numa rodada normal */
     const jogadorCaido = persAtual.vida <= 0;
-    const acoesComp = turnoDosCompanheiros({ grupo: persAtual.grupo || [], inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome });
+    const acoesComp = turnoDosCompanheiros({ grupo: persAtual.grupo || [], inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome, jogador: persAtual, rodada: (combPos.rodada || 1) });
     const partesComp = [];
     for (const ac of acoesComp) {
       if (ac.tipo === "ataque" && ac.r) {
@@ -3997,10 +4246,36 @@ export default function Taverna() {
         }
         pushMsgs([{ autor: "sistema", texto: ac.r.dano > 0 ? `⚔ ${ac.companheiro} → ${ac.alvoNome}: ${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? " ☠" : ""}` : `⚔ ${ac.companheiro} → ${ac.alvoNome}: errou` }]);
         partesComp.push(`${ac.companheiro} atacou ${ac.alvoNome} (${ac.r.resultado === "acerta" || ac.r.resultado === "critico" ? ac.r.dano + " dano" : "errou"})`);
-      } else if (ac.tipo === "socorro") partesComp.push(`${ac.companheiro} corre para socorrer ${ac.alvo}`);
+      } else if (ac.tipo === "habilidade" && ac.r) {
+        let pvAlvo = null;
+        if (ac.r.dano > 0) {
+          combPos.inimigos = combPos.inimigos.map((e) => { if (e.nome !== ac.alvoNome) return e; pvAlvo = Math.max(0, e.vida - ac.r.dano); return { ...e, vida: pvAlvo, derrotado: pvAlvo <= 0, ultimoDano: ac.r.dano }; });
+          const apH = aplicarAflicaoEmInimigo(combPos.inimigos, ac.alvoNome, { fonte: `${ac.habilidade.nome} ${ac.habilidade.descricao || ""}`, nomeFonte: `${ac.habilidade.nome} (${ac.companheiro})`, atacante: ac.companheiro, critico: ac.r.critico });
+          combPos.inimigos = apH.lista;
+          if (apH.res) { pushMsgs([{ autor: "sistema", texto: apH.res.texto }]); notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${apH.res.nota}`; }
+        }
+        persAtual = gastarManaComp(persAtual, ac.companheiro, ac.custo);
+        pushMsgs([{ autor: "sistema", texto: `✦ ${ac.companheiro} · ${ac.habilidade.nome} → ${ac.alvoNome}: ${ac.r.dano > 0 ? `${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? " ☠" : ""}` : "errou"}` }]);
+        partesComp.push(`${ac.companheiro} usou ${ac.habilidade.nome} em ${ac.alvoNome} (${ac.r.dano > 0 ? ac.r.dano + " dano" : "errou"})`);
+      } else if (ac.tipo === "cura") {
+        const r2 = curarAliado(persAtual, ac.alvo, ac.valor);
+        persAtual = gastarManaComp(r2.pers, ac.companheiro, ac.custo);
+        pushMsgs([{ autor: "sistema", texto: `🩶 ${ac.companheiro} · ${ac.habilidade.nome} → ${ac.alvo}: +${r2.curado} PV (${r2.texto})` }]);
+        partesComp.push(`${ac.companheiro} curou ${ac.alvo} em ${r2.curado} PV com ${ac.habilidade.nome} — já aplicado`);
+      } else if (ac.tipo === "pocao") {
+        const r3 = pocaoDeCompanheiro(persAtual, ac);
+        persAtual = r3.pers;
+        pushMsgs([{ autor: "sistema", texto: r3.texto }]);
+        partesComp.push(r3.paraMestre);
+      } else if (ac.tipo === "buff") {
+        const r4 = buffDeCompanheiro(persAtual, ac);
+        persAtual = gastarManaComp(r4.pers, ac.companheiro, ac.custo);
+        if (r4.texto) pushMsgs([{ autor: "sistema", texto: r4.texto }]);
+        partesComp.push(r4.paraMestre);
+      }
     }
     /* nova rodada: movimentos renovados */
-    combateRef.current = { ...combPos, economia: { acao: 1, extra: 1 } };
+    combateRef.current = { ...combPos, economia: { acao: 1, extra: 1 }, rodada: (combPos.rodada || 1) + 1 };
     setCombate(combateRef.current);
     fecharSeTodosCairam();
     setPersonagem(persAtual);
@@ -4103,18 +4378,61 @@ export default function Taverna() {
     enviar(`[ROLAGEM] Teste de ${r.atributo || "sorte"} (${r.motivo})${notaVant}: rolei ${valor}, modificador +${mod}${notaBuff}, total ${total}${dc != null ? `, dificuldade ${dc}` : ""}. Resultado: ${resultado}. Narre as consequências de forma coerente com o resultado.`, personagem);
   };
 
+  /* SUBIR DE NÍVEL (v9.2): o atributo é escolhido aqui; a HABILIDADE virou
+     ponto, gasto na árvore (Gestão › Talentos) quando o jogador quiser — é o
+     que torna a multiclasse possível sem decidir tudo num modal apressado. */
   const escolherAtributo = (attrId, hab) => {
     const nv = Math.min(ATRIBUTO_MAX, personagem.atributos[attrId] + 1);
     const nomeAttr = ATRIBUTOS.find((a) => a.id === attrId)?.nome || attrId;
-    const msgs = [`✦ ${nomeAttr} fortalecido: +${nv}`];
+    const msgs = [`✦ ${nomeAttr} fortalecido: +${nv}`, "✦ +1 ponto de habilidade — gaste na árvore em Gestão › Talentos."];
     setPersonagem((p) => {
       const habs = [...(p.habilidades || [])];
       if (hab && !habs.some((x) => (x.nome || x) === hab.nome)) habs.push({ nome: hab.nome, custo: hab.custo, descricao: hab.descricao });
-      return { ...p, atributos: { ...p.atributos, [attrId]: nv }, habilidades: habs, nivelPendentes: Math.max(0, p.nivelPendentes - 1) };
+      return { ...p, atributos: { ...p.atributos, [attrId]: nv }, habilidades: habs, pontosHab: (p.pontosHab || 0) + (hab ? 0 : 1), nivelPendentes: Math.max(0, p.nivelPendentes - 1) };
     });
     if (hab) msgs.push(`✦ Nova habilidade: ${hab.nome} (${hab.custo} PM)`);
-    notaRef.current = `[INFO] Subi para o nível ${personagem.nivel}, fortaleci ${nomeAttr} (agora +${nv})${hab ? ` e aprendi a habilidade "${hab.nome}" (${hab.custo} PM: ${hab.descricao})` : ""}.`;
+    notaRef.current = `[INFO] Subi para o nível ${personagem.nivel} e fortaleci ${nomeAttr} (agora +${nv}). Ganhei um ponto de habilidade para gastar na minha árvore.`;
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
+  };
+
+  /* ---------------- ÁRVORE DE TALENTOS (v9.2) ---------------- */
+  const aprenderHabilidade = (classeNome, nomeHab) => {
+    const c = classePorNome(classeNome);
+    const hab = c && c.habilidades.find((h) => h.nome === nomeHab);
+    if (!hab) return;
+    const chk = podePegarHabilidade(personagem, classeNome, hab);
+    if (!chk.pode) { pushMsgs([{ autor: "sistema", texto: `⛔ ${nomeHab}: ${chk.motivo}.` }]); return; }
+    const eraNova = !ranksDoPersonagem(personagem)[classeNome] && classeNome !== personagem.classe;
+    const p = {
+      ...personagem,
+      habilidades: [...(personagem.habilidades || []), { nome: hab.nome, custo: hab.custo, descricao: hab.descricao, tipo: hab.tipo, recarga: recargaPadrao(hab.custo) }],
+      pontosHab: Math.max(0, pontosDisponiveis(personagem) - 1),
+      classes: { ...(personagem.classes || {}), [classeNome]: ((personagem.classes || {})[classeNome] || 0) + 1 },
+    };
+    setPersonagem(p);
+    pushMsgs([{ autor: "sistema", texto: `✦ Nova habilidade: ${hab.nome} (${hab.custo} PM) — ${classeNome}${eraNova ? " · segunda classe aberta!" : ""}` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Aprendi "${hab.nome}" (${hab.custo} PM: ${hab.descricao})${eraNova ? `, e com isso comecei a trilhar TAMBÉM o caminho de ${classeNome} — sou ${personagem.classe} e ${classeNome} agora` : ` na minha trilha de ${classeNome}`}. Reflita isso na ficção quando fizer sentido.`;
+    salvar({ personagem: p });
+    checarConquistas(p);
+  };
+
+  const respecHabilidades = () => {
+    const custo = custoRespec(personagem.nivel || 1);
+    if ((personagem.moedas || 0) < custo) { pushMsgs([{ autor: "sistema", texto: `⛔ A redistribuição custa ◉ ${custo}.` }]); return; }
+    /* só as habilidades DE CATÁLOGO voltam ao bolo: únicas e dádivas ficam */
+    const mantidas = (personagem.habilidades || []).filter((h) => !classeDaHabilidade(typeof h === "string" ? h : h.nome));
+    const devolvidos = (personagem.habilidades || []).length - mantidas.length;
+    const p = {
+      ...personagem,
+      moedas: (personagem.moedas || 0) - custo,
+      habilidades: mantidas,
+      classes: { [personagem.classe]: 0 },
+      pontosHab: pontosDisponiveis(personagem) + devolvidos,
+    };
+    setPersonagem(p);
+    pushMsgs([{ autor: "sistema", texto: `⟲ Redistribuição feita (−◉ ${custo}): ${devolvidos} ponto(s) de volta. Escolha de novo na árvore.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Passei por um treinamento longo e REFIZ meu caminho: desaprendi o que sabia de classe e vou reaprender diferente. Narre isso como semanas de treino/estudo ou um ritual, se couber na cena — mas o efeito mecânico já está aplicado.`;
+    salvar({ personagem: p });
   };
 
   const equipar = (item) => {
@@ -5140,6 +5458,108 @@ export default function Taverna() {
     enviar(`[CONVITE AO GRUPO] Convido ${nome} para se juntar ao meu grupo. Decida pela personalidade, relação e momento dele(a): pode ACEITAR (use "grupo_adicionar" com a ficha completa), recusar com jeito, ou aceitar com uma condição. A escolha é dele(a), não minha — responda com as palavras e a reação dele(a) em 1ª pessoa.`, personagem);
   };
 
+  /* ---------------- BEBER POÇÃO (v9.2) ----------------
+     Ação BÔNUS: gasta o movimento extra do turno, nunca a ação — dá para
+     tomar a poção e ainda atacar, como o jogador pediu. Fora de combate é
+     livre. O efeito é rolado pelo sistema; o Mestre só narra. */
+  const usarConsumivelUI = (nomeItem) => {
+    if (bloqueado) return;
+    const cons = comoConsumivel(nomeItem);
+    if (!cons) return;
+    const comb = combateRef.current;
+    if (comb && comb.economia) {
+      const eco = comb.economia;
+      if (eco.extra <= 0 && eco.acao <= 0) { pushMsgs([{ autor: "sistema", texto: "⏳ Sem movimentos neste turno — encerre o turno para beber." }]); return; }
+      if (eco.extra > 0) eco.extra -= 1; else eco.acao -= 1;   // prefere a ação bônus
+      combateRef.current = { ...comb, economia: { ...eco } }; setCombate(combateRef.current);
+    }
+    const r = usarConsumivel(personagem, nomeItem);
+    if (!r) return;
+    let p = r.ent;
+    if (r.gastou) {
+      /* tira UMA unidade da bolsa (o resto da pilha continua lá) */
+      const idx = (p.inventario || []).findIndex((raw) => (typeof raw === "string" ? raw : (raw && raw.nome) || "") === nomeItem);
+      if (idx >= 0) p = { ...p, inventario: p.inventario.filter((_, i) => i !== idx) };
+    }
+    setPersonagem(p);
+    pushMsgs([{ autor: "sistema", texto: r.texto }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONSUMÍVEL — JÁ APLICADO PELO SISTEMA] Bebi ${cons.nome}. ${r.texto.replace(/^[^ ]+ /, "")}. O número já foi rolado e aplicado: narre o gole e o alívio (ou o gosto), sem recalcular e sem me devolver PV/PM. ${comb ? "Isso foi ação BÔNUS — ainda posso agir neste turno." : ""}`;
+    salvar({ personagem: p });
+  };
+
+  /* ---------------- MERCADO (v9.2) ----------------
+     O estoque não mora no save: é derivado da cidade + semana. O save
+     guarda só o que JÁ FOI COMPRADO, para o item não voltar à prateleira,
+     e o ambulante da estrada enquanto ele estiver por perto. */
+  const mercadoRef = useRef({ comprados: {}, ambulante: null });
+  const [mercado, setMercado] = useState(mercadoRef.current);
+  const cidadeMercado = ((mapa && mapa.cidades) || []).find((c) => (c.nome || "").toLowerCase() === String(cidadeAtualRef.current || "").toLowerCase()) || null;
+  const mercadoAqui = (() => {
+    const comprados = (mercado && mercado.comprados) || {};
+    const semEstoqueGasto = (m) => ({ ...m, estoque: (m.estoque || []).filter((it) => !(comprados[m.id] || []).includes(it.nome)) });
+    const lista = [];
+    if (mercado && mercado.ambulante) lista.push(semEstoqueGasto(mercado.ambulante));
+    if (cidadeMercado) lista.push(...mercadoresDaCidade(cidadeMercado, diaRef.current, (personagem && personagem.nivel) || 1).map(semEstoqueGasto));
+    return lista;
+  })();
+
+  const comprarNoMercado = (mercadorId, nomeItem) => {
+    const m = mercadoAqui.find((x) => x.id === mercadorId);
+    const it = m && m.estoque.find((x) => x.nome === nomeItem);
+    if (!it) return;
+    if ((personagem.moedas || 0) < it.preco) { pushMsgs([{ autor: "sistema", texto: `◉ Moedas insuficientes para ${it.nome} (◉ ${it.preco}).` }]); return; }
+    const ehEquip = ["arma", "escudo", "armadura", "elmo", "botas", "anel", "amuleto"].includes(it.tipo);
+    const { preco, detalhe, ...limpo } = it;
+    const p = {
+      ...personagem,
+      moedas: (personagem.moedas || 0) - it.preco,
+      equipamento: ehEquip ? [...(personagem.equipamento || []), limpo] : (personagem.equipamento || []),
+      inventario: ehEquip ? (personagem.inventario || []) : [...(personagem.inventario || []), limpo],
+    };
+    setPersonagem(p);
+    const comprados = { ...(mercadoRef.current.comprados || {}) };
+    comprados[mercadorId] = [...(comprados[mercadorId] || []), it.nome];
+    mercadoRef.current = { ...mercadoRef.current, comprados }; setMercado(mercadoRef.current);
+    pushMsgs([{ autor: "sistema", texto: `🛒 Comprado: ${it.nome} por ◉ ${it.preco} (restam ◉ ${p.moedas}).` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[COMPRA — JÁ REGISTRADA PELO SISTEMA] Comprei "${it.nome}" de ${m.nome} por ◉ ${it.preco}. O item já está comigo e as moedas já saíram — não envie item nem moeda. Narre a troca e o vendedor, se a cena estiver acontecendo agora.`;
+    salvar({ personagem: p });
+    checarConquistas(p);
+  };
+
+  const venderNoMercado = (nomeItem, origem) => {
+    const lista = origem === "equipamento" ? (personagem.equipamento || []) : (personagem.inventario || []);
+    const idx = lista.findIndex((raw) => (typeof raw === "string" ? raw : (raw && raw.nome) || "") === nomeItem);
+    if (idx < 0) return;
+    const item = lista[idx];
+    /* o que está VESTIDO não vai para a banca por engano */
+    if (origem === "equipamento" && Object.values(personagem.equipados || {}).some((e) => e && e.nome === nomeItem)) {
+      pushMsgs([{ autor: "sistema", texto: `⛔ ${nomeItem} está equipado — desequipe antes de vender.` }]); return;
+    }
+    const valor = precoDeCompra(typeof item === "string" ? { nome: item } : item, cidadeMercado);
+    const p = {
+      ...personagem,
+      moedas: (personagem.moedas || 0) + valor,
+      [origem]: lista.filter((_, i) => i !== idx),
+    };
+    setPersonagem(p);
+    pushMsgs([{ autor: "sistema", texto: `🛒 Vendido: ${nomeItem} por ◉ ${valor} (bolsa: ◉ ${p.moedas}).` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VENDA — JÁ REGISTRADA PELO SISTEMA] Vendi "${nomeItem}" por ◉ ${valor}. O item saiu da minha bolsa e as moedas entraram — não repita os números.`;
+    salvar({ personagem: p });
+  };
+
+  /* O que dá para beber agora, agrupado por nome (vai para o painel de combate) */
+  const pocoesNaBolsa = (() => {
+    const mapa = {};
+    for (const raw of (personagem && personagem.inventario) || []) {
+      const c = comoConsumivel(raw);
+      if (!c) continue;
+      const nome = typeof raw === "string" ? raw : (raw && raw.nome) || c.nome;
+      if (!mapa[nome]) mapa[nome] = { nome, icone: c.icone, curto: c.nome.replace(/^(Poção de |Frasco de |Elixir de )/, ""), qtd: 0, detalhe: `${c.nome} — ${descricaoCurta(c)}` };
+      mapa[nome].qtd++;
+    }
+    return Object.values(mapa).slice(0, 6);
+  })();
+
   /* ---------------- CONQUISTAS E VÍNCULOS (100% por código, zero tokens) ---------------- */
   const bumpCont = (campo, n = 1) => { contRef.current = { ...contRef.current, [campo]: (contRef.current[campo] || 0) + n }; };
 
@@ -5260,11 +5680,25 @@ export default function Taverna() {
       setJornada(jornadaRef.current);
     }
     const extraTempo = avancarMinutos(MINUTOS_VIAGEM); // estrada come horas
+    /* MERCADOR AMBULANTE (v9.2): uma carroça na estrada, com estoque de
+       verdade. Sai por sorteio do sistema — sem envelope, não há mercador. */
+    let notaAmbulante = "";
+    {
+      const amb = talvezAmbulante(diaRef.current, personagem.nivel || 1);
+      if (amb) {
+        mercadoRef.current = { ...mercadoRef.current, ambulante: amb }; setMercado(mercadoRef.current);
+        pushMsgs([{ autor: "sistema", texto: `🐴 Uma carroça de mercador cruza seu caminho — veja o que ele traz em Gestão › Mercado.` }]);
+        notaAmbulante = ` UM MERCADOR AMBULANTE apareceu no trecho (sorteado pelo sistema): uma carroça com ${amb.estoque.slice(0, 4).map((it) => it.nome).join(", ")}. Apresente o vendedor e a carroça na cena — dê nome e jeito a ele —, mas NÃO invente estoque nem preço: o que ele vende está no painel de Mercado do jogador.`;
+      } else if (mercadoRef.current.ambulante) {
+        /* a carroça do trecho anterior seguiu viagem */
+        mercadoRef.current = { ...mercadoRef.current, ambulante: null }; setMercado(mercadoRef.current);
+      }
+    }
     enviar(`[VIAGEM — tudo rolado pelas tabelas do app; você só NARRA, não invente outro resultado]
 LOCAL ATUAL: ${localAtualTxt()}.
 CLIMA AGORA: ${c.rotulo} — ${c.nota}.
 ENCONTRO DO TRECHO (${enc.tipo}): ${enc.detalhe}
-Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a cena atual. Lembre-se: estou EM VIAGEM — a cena acontece no caminho${jornadaRef.current.meio ? ` (seguimos de ${jornadaRef.current.meio})` : ""}, não em cidade. Se o meio de viagem mudar, registre "jornada_meio". Se chegarmos de fato a um destino, registre "cidade_atual". ${destino ? `Estou a caminho de ${destino} — aproxime-me desse destino e, se chegarmos, registre "cidade_atual".` : "Se eu estiver a caminho de algum destino, aproxime-me dele."} Termine me convidando a agir.${notaErmos}${extraTempo}`, personagem);
+Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a cena atual. Lembre-se: estou EM VIAGEM — a cena acontece no caminho${jornadaRef.current.meio ? ` (seguimos de ${jornadaRef.current.meio})` : ""}, não em cidade. Se o meio de viagem mudar, registre "jornada_meio". Se chegarmos de fato a um destino, registre "cidade_atual". ${destino ? `Estou a caminho de ${destino} — aproxime-me desse destino e, se chegarmos, registre "cidade_atual".` : "Se eu estiver a caminho de algum destino, aproxime-me dele."} Termine me convidando a agir.${notaErmos}${notaAmbulante}${extraTempo}`, personagem);
   };
 
   /* DIPLOMACIA: propostas a potências vão para a ficção; o Mestre decide a
@@ -5673,7 +6107,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               alvosGolpe={alvosGolpe}
               acaoTexto={resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1).texto}
               onDeclararAlvo={(i, nome) => { const a = [...alvosGolpeRef.current]; a[i] = nome; alvosGolpeRef.current = a; setAlvosGolpe([...a]); }}
-              onLimparAlvos={() => { alvosGolpeRef.current = []; setAlvosGolpe([]); }} />}
+              onLimparAlvos={() => { alvosGolpeRef.current = []; setAlvosGolpe([]); }}
+              pocoes={pocoesNaBolsa} onUsarConsumivel={usarConsumivelUI} />}
 
             {sugestoes.length > 0 && !carregando && !rolagem && !habAbertas && (
               <div className="px-4 md:px-8 pb-2 flex flex-wrap gap-2" style={{ paddingRight: "68px" }}>
@@ -5930,7 +6365,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} bloqueado={bloqueado} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} bloqueado={bloqueado} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

@@ -5,12 +5,13 @@
    sem React e sem tocar na interface.
    Extraído do App.jsx na modularização.
    ============================================================ */
-import { ATRIBUTOS, XP_POR_NIVEL } from "./constantes.js";
+import { ATRIBUTOS, XP_POR_NIVEL, MAX_COMPANHEIROS } from "./constantes.js";
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, XP_POR_DADIVA } from "./regras.js";
 import { completarInimigo } from "./bestiario.js";
 import { elencoDiverso, nomeCidade, nomeTaverna } from "./nomes.js";
 import { garantirSuprimentos } from "./ermos.js";
 import { limparPorDescanso } from "./condicoes.js";
+import { garantirFichaCompanheiro } from "./companheiros.js";
 import { valorDeItem } from "./economia.js";
 import { VINCULO_INICIAL } from "./vinculos.js";
 
@@ -41,7 +42,9 @@ export function evoluirCompanheiro(g) {
   let { xp = 0, nivel = 1, vidaMax = 10 } = g;
   let subiu = 0;
   while (xp >= XP_POR_NIVEL(nivel)) { xp -= XP_POR_NIVEL(nivel); nivel += 1; vidaMax += 3; subiu++; }
-  return { ...g, xp, nivel, vidaMax, vida: subiu ? vidaMax : g.vida, _subiu: subiu };
+  /* subir de nível também abre habilidades novas do catálogo da classe dele */
+  const base = { ...g, xp, nivel, vidaMax, vida: subiu ? vidaMax : g.vida };
+  return { ...(subiu ? garantirFichaCompanheiro(base) : base), _subiu: subiu };
 }
 
 /* Descanso aplicado por CÓDIGO — garante reset real do jogador E do grupo. */
@@ -120,7 +123,9 @@ export function aplicarMudancas(pers, m, msgs) {
   (m.grupo_adicionar || []).forEach((g) => {
     if (!g?.nome || grupo.some((x) => x.nome.toLowerCase() === g.nome.toLowerCase())) return;
     if (grupo.length >= MAX_COMPANHEIROS) { msgs.push(`O grupo está cheio — ${g.nome} não pôde se juntar.`); return; }
-    grupo.push({ nome: g.nome, conceito: g.conceito || "", nivel: g.nivel ?? 1, vida: g.vida ?? 10, vidaMax: g.vidaMax ?? g.vida ?? 10, descricao: g.descricao || "", habilidades: g.habilidades || [], semente: `npc|${g.nome}|${g.conceito || ""}`, vinculo: VINCULO_INICIAL, marcos: [] });
+    /* v9.2: o companheiro entra COM CLASSE e habilidades do catálogo — é o
+       que permite o sistema jogar por ele (curar, dar buff, usar magia). */
+    grupo.push(garantirFichaCompanheiro({ nome: g.nome, conceito: g.conceito || "", nivel: g.nivel ?? 1, vida: g.vida ?? 10, vidaMax: g.vidaMax ?? g.vida ?? 10, descricao: g.descricao || "", habilidades: g.habilidades || [], classe: g.classe || "", semente: `npc|${g.nome}|${g.conceito || ""}`, vinculo: VINCULO_INICIAL, marcos: [], inventario: [] }));
     msgs.push(`⚑ ${g.nome} juntou-se ao grupo!`);
   });
   (m.grupo_remover || []).forEach((nome) => { if (grupo.some((g) => g.nome.toLowerCase() === nome.toLowerCase())) { grupo = grupo.filter((g) => g.nome.toLowerCase() !== nome.toLowerCase()); msgs.push(`⚑ ${nome} deixou o grupo.`); } });
@@ -332,7 +337,7 @@ export function migrarPersonagem(p) {
     inventario: Array.isArray(p.inventario) ? p.inventario : [],
     habilidades: Array.isArray(p.habilidades) ? p.habilidades.filter((h) => h && h.nome).map((h) => ({ nome: h.nome, custo: Math.max(0, Number(h.custo) || 0), descricao: h.descricao || "", duracao: h.duracao || 0, recarga: h.recarga != null ? Math.max(0, Number(h.recarga) || 0) : recargaPadrao(Math.max(0, Number(h.custo) || 0)) })) : [],
     habRecarga: p.habRecarga && typeof p.habRecarga === "object" ? p.habRecarga : {},
-    grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, xp: g.xp || 0, nivel: g.nivel || 1, inventario: Array.isArray(g.inventario) ? g.inventario : [], equipamento: Array.isArray(g.equipamento) ? g.equipamento : [], equipados: g.equipados && typeof g.equipados === "object" ? g.equipados : {}, semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}`, vinculo: g.vinculo ?? VINCULO_INICIAL, marcos: Array.isArray(g.marcos) ? g.marcos : [] })) : [],
+    grupo: Array.isArray(p.grupo) ? p.grupo.map((g) => ({ ...g, xp: g.xp || 0, nivel: g.nivel || 1, inventario: Array.isArray(g.inventario) ? g.inventario : [], equipamento: Array.isArray(g.equipamento) ? g.equipamento : [], equipados: g.equipados && typeof g.equipados === "object" ? g.equipados : {}, semente: g.semente || `npc|${g.nome || ""}|${g.conceito || ""}`, vinculo: g.vinculo ?? VINCULO_INICIAL, marcos: Array.isArray(g.marcos) ? g.marcos : [] })).map(garantirFichaCompanheiro) : [],
     antecedente: p.antecedente || "", antecedenteGancho: p.antecedenteGancho || "",
     essencia: p.essencia || 0,
     suprimentos: p.suprimentos ? garantirSuprimentos(p.suprimentos) : { racoes: 10, agua: 10, tochas: 5, kit: true },

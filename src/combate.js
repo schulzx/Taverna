@@ -10,6 +10,7 @@
 import { perfilDeCriatura, multiplicadorDano, iconeDano, resistenciasEquipadas, elementoDaArma } from "./danos.js";
 import { mecanicaDe } from "./condicoes.js";
 import { golpeDaVez } from "./aflicoes.js";
+import { decidirAcaoCompanheiro, valorDaCura, danoDaHabilidadeComp } from "./companheiros.js";
 
 export function d(n) { return 1 + Math.floor(Math.random() * n); }
 
@@ -185,24 +186,45 @@ export function aplicarTesteMorte(estado, res) {
    Cada companheiro vivo age: se algum aliado está caído (0 PV/morrendo),
    há chance de ir CURAR/estabilizar; senão, ATACA um inimigo. O app
    resolve a matemática; a IA narra a decisão. */
-export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido = false, jogadorNome = "" }) {
+export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido = false, jogadorNome = "", jogador = null, rodada = 1 }) {
   const vivos = (grupo || []).filter((g) => (g.vida || 0) > 0 && !g.morrendo);
-  const inimigosVivos = (inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
   const acoes = [];
   for (const comp of vivos) {
-    // há alguém para socorrer? (jogador caído ou companheiro morrendo)
-    const aliadoCaido = jogadorCaido || (grupo || []).some((g) => g.morrendo);
-    const curador = /clérigo|clerigo|sacerdote|paladino|druida|bardo|curandeir/i.test(`${comp.classe || ""} ${comp.subclasse || ""} ${comp.conceito || ""}`);
-    if (aliadoCaido && (curador || Math.random() < 0.5)) {
-      const alvoNome = jogadorCaido ? jogadorNome : ((grupo || []).find((g) => g.morrendo)?.nome || jogadorNome);
-      acoes.push({ companheiro: comp.nome, tipo: "socorro", alvo: alvoNome });
+    /* v9.2: o companheiro DECIDE (cura, poção, buff, magia ou arma) pelo
+       catálogo de classes — antes ele só sabia bater e "correr para socorrer",
+       o que não fazia nada na ficha de ninguém. */
+    const outros = (grupo || []).filter((g) => g.nome !== comp.nome);
+    const alvoJogador = jogador ? { ...jogador, nome: jogador.nome || jogadorNome, morrendo: jogadorCaido || jogador.morrendo } : null;
+    const plano = decidirAcaoCompanheiro(comp, { aliados: outros, inimigos, jogador: alvoJogador, rodada });
+
+    if (plano.tipo === "cura") {
+      acoes.push({ companheiro: comp.nome, tipo: "cura", alvo: plano.alvo, habilidade: plano.habilidade, custo: Number(plano.habilidade.custo) || 0, valor: valorDaCura(comp, plano.habilidade) });
       continue;
     }
-    if (inimigosVivos.length === 0) { acoes.push({ companheiro: comp.nome, tipo: "guarda" }); continue; }
-    // ataca um inimigo (o de menor PV, para ajudar a fechar a luta)
-    const alvo = [...inimigosVivos].sort((a, b) => (a.vida || 0) - (b.vida || 0))[0];
-    /* arma equipada do companheiro soma dano (gestão de equipamento pelo app) */
+    if (plano.tipo === "pocao") {
+      acoes.push({ companheiro: comp.nome, tipo: "pocao", alvo: plano.alvo, item: plano.item, consumivel: plano.consumivel });
+      continue;
+    }
+    if (plano.tipo === "buff") {
+      acoes.push({ companheiro: comp.nome, tipo: "buff", habilidade: plano.habilidade, custo: Number(plano.habilidade.custo) || 0 });
+      continue;
+    }
+    if (plano.tipo === "guarda") { acoes.push({ companheiro: comp.nome, tipo: "guarda" }); continue; }
+
+    const alvo = (inimigos || []).find((e) => e.nome === plano.alvoNome) || (inimigos || []).find((e) => !e.derrotado && e.vida > 0);
+    if (!alvo) { acoes.push({ companheiro: comp.nome, tipo: "guarda" }); continue; }
     const bonusArmaComp = (comp.equipados && comp.equipados.arma && comp.equipados.arma.atributos && comp.equipados.arma.atributos.dano) || 0;
+
+    if (plano.tipo === "habilidade") {
+      const r = resolverAtaque({
+        atacante: comp.nome, alvo, ehAtacanteInimigo: false,
+        bonusAtaque: 2 + (comp.nivel || 1), danoBase: danoDaHabilidadeComp(comp, plano.habilidade),
+        condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [],
+        tipoDano: "magico", perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
+      });
+      acoes.push({ companheiro: comp.nome, tipo: "habilidade", habilidade: plano.habilidade, custo: Number(plano.habilidade.custo) || 0, alvoNome: alvo.nome, r });
+      continue;
+    }
     const r = resolverAtaque({
       atacante: comp.nome, alvo, ehAtacanteInimigo: false,
       bonusAtaque: 2 + (comp.nivel || 1), danoBase: 4 + (comp.nivel || 1) + bonusArmaComp + d(4),
@@ -243,13 +265,22 @@ const CHANCE_ITEM = { fraco: 0.05, comum: 0.12, competente: 0.25, elite: 0.45, l
 
 export function gerarEspolios(inimigosDerrotados) {
   let xp = 0, moedas = 0, chance = 0;
-  for (const e of inimigosDerrotados || []) {
+  const lista = inimigosDerrotados || [];
+  for (const e of lista) {
     xp += XP_AMEACA[e.ameaca] || 30;
     const [a, b] = MOEDAS_AMEACA[e.ameaca] || [4, 12];
     moedas += a + Math.floor(Math.random() * (b - a + 1));
     chance = Math.max(chance, CHANCE_ITEM[e.ameaca] || 0.12);
   }
-  return { xp, moedas, caiItem: Math.random() < chance };
+  /* CONSUMÍVEIS (v9.2): equipamento é raro de propósito, mas voltar de toda
+     luta sem NADA na bolsa era o que fazia os espólios parecerem vazios.
+     Poção cai com frequência bem maior — e quanto mais gente derrubada,
+     mais chance de sair mais de uma. */
+  const chanceCons = Math.min(0.85, 0.32 + lista.length * 0.12 + (lista.some((e) => e.ameaca === "elite" || e.ameaca === "lendario") ? 0.2 : 0));
+  let consumiveis = 0;
+  if (Math.random() < chanceCons) consumiveis = 1;
+  if (consumiveis && lista.length >= 3 && Math.random() < 0.35) consumiveis = 2;
+  return { xp, moedas, caiItem: Math.random() < chance, consumiveis };
 }
 
 /* ---------------- PATAMARES DE PODER ----------------

@@ -142,7 +142,9 @@ function concordancia(par, baseNome) {
     else if (forma === "Celestial") forma = "Celestiais";
     else if (forma === "Abissal") forma = "Abissais";
     else if (forma === "Feroz") forma = "Ferozes";
-    else if (/[el]$/.test(forma)) forma += "is".slice(0, forma.endsWith("l") ? 2 : 0) || forma; // Leve→Leves, Elegante→Elegantes
+    /* v9.2: a linha antiga aqui fazia `forma += "" || forma` quando a palavra
+       terminava em "e" — e "Elegante" virava "EleganteElegante" na loja. Os
+       casos de plural já estão cobertos abaixo. */
     if (forma === "Leve") forma = "Leves";
     else if (["Elegante", "Radiante", "Flamejante"].includes(forma)) forma += "s";
   }
@@ -151,9 +153,14 @@ function concordancia(par, baseNome) {
 
 /* Gera UM equipamento. raridade: id · nivel: nível do herói (escala o bônus)
    tipo: força um slot ("arma", "anel"…) ou null para sortear. */
-export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1 } = {}) {
-  const slot = tipo && BASES[tipo] ? tipo : sortear(Object.keys(BASES));
-  const base = sortear(BASES[slot]);
+export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = null } = {}) {
+  /* rnd opcional (v9.2): com semente, o mesmo mercador tem sempre o mesmo
+     estoque — sem ela, o sorteio é aleatório como sempre foi. */
+  const rand = rnd || Math.random;
+  const dL = (n) => Math.floor(rand() * n);
+  const pickL = (arr) => arr[dL(arr.length)];
+  const slot = tipo && BASES[tipo] ? tipo : pickL(Object.keys(BASES));
+  const base = pickL(BASES[slot]);
   const tier = TIER[raridade] ?? 0;
   const escalaNivel = Math.min(3, Math.floor((nivel - 1) / 5)); // +1 a cada 5 níveis, teto +3
 
@@ -166,28 +173,28 @@ export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1 } = {}) {
     const qtd = ehAcessorio ? Math.max(1, tier) : tier >= 3 ? 2 : 1;
     const pool = [...ATRIBUTOS_PERSONAGEM];
     for (let i = 0; i < qtd && pool.length; i++) {
-      const a = pool.splice(d(pool.length), 1)[0];
+      const a = pool.splice(dL(pool.length), 1)[0];
       atributos[a] = (atributos[a] || 0) + Math.max(1, Math.min(3, tier + (tier >= 3 ? 1 : 0)));
     }
   }
 
   /* nome: comum/incomum = base [+ prefixo] · raro+ = prefixo + base + sufixo */
   let nome = base.nome;
-  const comPrefixo = tier >= 2 ? true : tier === 1 ? Math.random() < 0.6 : Math.random() < 0.15;
-  if (comPrefixo) nome = `${concordancia(sortear(PREFIXOS), base.nome)} ${base.nome}`;
-  if (tier >= 2) nome = `${nome} ${sortear(SUFIXOS)}`;
+  const comPrefixo = tier >= 2 ? true : tier === 1 ? rand() < 0.6 : rand() < 0.15;
+  if (comPrefixo) nome = `${concordancia(pickL(PREFIXOS), base.nome)} ${base.nome}`;
+  if (tier >= 2) nome = `${nome} ${pickL(SUFIXOS)}`;
 
   /* v6.6 — dano elemental em armas e resistência elemental em defesas (raro+) */
   const ELEMENTOS = ["fogo", "gelo", "raio", "veneno", "sagrado", "sombrio", "arcano"];
   const ROTULO_ELEM = { fogo: "chamas", gelo: "geada", raio: "tempestade", veneno: "toxinas", sagrado: "luz", sombrio: "trevas", arcano: "magia" };
   const ehDefesa = ["escudo", "armadura", "elmo", "botas"].includes(slot);
-  let poder = tier >= 2 ? sortear(PODERES_POR_SLOT[slot] || []) : "";
-  if (tier >= 2 && slot === "arma" && Math.random() < 0.35) {
-    const el = sortear(ELEMENTOS);
+  let poder = tier >= 2 ? pickL(PODERES_POR_SLOT[slot] || []) : "";
+  if (tier >= 2 && slot === "arma" && rand() < 0.35) {
+    const el = pickL(ELEMENTOS);
     atributos.elemento = el;
     poder = poder || `A lâmina pulsa com ${ROTULO_ELEM[el]} — o dano é de ${el}.`;
-  } else if (tier >= 2 && ehDefesa && Math.random() < 0.35) {
-    const el = sortear(ELEMENTOS);
+  } else if (tier >= 2 && ehDefesa && rand() < 0.35) {
+    const el = pickL(ELEMENTOS);
     atributos.resist = [el];
     poder = poder || `Protege contra ${ROTULO_ELEM[el]} — dano de ${el} reduzido à metade.`;
   }

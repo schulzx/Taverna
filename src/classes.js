@@ -384,3 +384,67 @@ export function habilidadesIniciais(classeNome) {
   const c = classePorNome(classeNome);
   return c ? c.habilidades.filter((h) => h.nivel === 1) : [];
 }
+
+/* ═══════════════ ÁRVORE, PONTOS E MULTICLASSE (v9.2) ═══════════════
+   Cada nível dá UM ponto de habilidade. O ponto é gasto onde o jogador
+   quiser: aprofundar a classe que já tem, ou abrir outra (multiclasse).
+
+   A regra da árvore é uma só e cabe numa frase: para pegar uma habilidade
+   de nível N numa classe, é preciso já ter N−1 habilidades DAQUELA classe.
+   Um mago/guerreiro 10/10 é isso — dez degraus de cada lado. */
+
+/* De qual classe é uma habilidade que já está na ficha (busca pelo nome). */
+export function classeDaHabilidade(nomeHab) {
+  const alvo = String(nomeHab || "").toLowerCase();
+  for (const c of CLASSES) if (c.habilidades.some((h) => h.nome.toLowerCase() === alvo)) return c.nome;
+  return null;
+}
+
+/* Quantos degraus o herói tem em cada classe (derivado das habilidades). */
+export function ranksDoPersonagem(pers) {
+  const r = {};
+  for (const h of (pers && pers.habilidades) || []) {
+    const nome = typeof h === "string" ? h : h.nome;
+    const cls = classeDaHabilidade(nome);
+    if (cls) r[cls] = (r[cls] || 0) + 1;
+  }
+  /* a classe de origem conta como aberta mesmo sem habilidade escolhida */
+  if (pers && pers.classe && r[pers.classe] == null) r[pers.classe] = 0;
+  return r;
+}
+
+/* Pontos que o herói ainda tem para gastar: um por nível, menos o que
+   já virou habilidade de catálogo (habilidades únicas e dádivas não contam). */
+export function pontosDisponiveis(pers) {
+  if (!pers) return 0;
+  if (typeof pers.pontosHab === "number") return Math.max(0, pers.pontosHab);
+  const gastos = ((pers.habilidades || []).filter((h) => classeDaHabilidade(typeof h === "string" ? h : h.nome))).length;
+  return Math.max(0, (pers.nivel || 1) - gastos);
+}
+
+/* Pode pegar esta habilidade? Devolve o motivo quando não pode. */
+export function podePegarHabilidade(pers, classeNome, hab) {
+  const ranks = ranksDoPersonagem(pers);
+  const rank = ranks[classeNome] || 0;
+  const jaTem = ((pers && pers.habilidades) || []).some((h) => (typeof h === "string" ? h : h.nome) === hab.nome);
+  if (jaTem) return { pode: false, motivo: "já dominada" };
+  if (pontosDisponiveis(pers) <= 0) return { pode: false, motivo: "sem pontos" };
+  if ((pers.nivel || 1) < hab.nivel) return { pode: false, motivo: `exige nível ${hab.nivel}` };
+  if (rank < hab.nivel - 1) return { pode: false, motivo: `exige ${hab.nivel - 1} de ${classeNome}` };
+  return { pode: true, motivo: "" };
+}
+
+/* A árvore inteira de uma classe, já marcada para a interface. */
+export function arvoreDaClasse(pers, classeNome) {
+  const c = classePorNome(classeNome);
+  if (!c) return [];
+  return c.habilidades.map((h) => {
+    const jaTem = ((pers && pers.habilidades) || []).some((x) => (typeof x === "string" ? x : x.nome) === h.nome);
+    const chk = podePegarHabilidade(pers, classeNome, h);
+    return { ...h, dominada: jaTem, pode: chk.pode, motivo: chk.motivo };
+  });
+}
+
+/* Custo em moedas para redistribuir tudo — caro o suficiente para pesar,
+   barato o suficiente para não travar quem errou a build. */
+export function custoRespec(nivel) { return 50 + 25 * Math.max(1, nivel || 1); }
