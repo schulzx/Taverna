@@ -35,6 +35,9 @@ export const ORIGENS = [
    tipo: "ataque" | "defesa" | "suporte" | "utilidade" | "passiva"
 --------------------------------------------------------- */
 
+import { SUBCLASSES, habilidadesDaSubclasse, subclasseDaHabilidade, RANK_PARA_SUBCLASSE } from "./subclasses.js";
+export { habilidadesDaSubclasse, subclasseDaHabilidade, RANK_PARA_SUBCLASSE };
+
 const HAB = (nome, nivel, custo, tipo, descricao) => ({ nome, nivel, custo, tipo, descricao });
 
 /* ---------------- CLASSES ---------------- */
@@ -393,11 +396,42 @@ export function habilidadesIniciais(classeNome) {
    de nível N numa classe, é preciso já ter N−1 habilidades DAQUELA classe.
    Um mago/guerreiro 10/10 é isso — dez degraus de cada lado. */
 
-/* De qual classe é uma habilidade que já está na ficha (busca pelo nome). */
+/* De qual classe é uma habilidade que já está na ficha (busca pelo nome).
+   v9.3: habilidade de SUBCLASSE conta como sendo da classe-mãe — quem
+   aprende "Fúria Sangrenta" está subindo Guerreiro. */
 export function classeDaHabilidade(nomeHab) {
   const alvo = String(nomeHab || "").toLowerCase();
   for (const c of CLASSES) if (c.habilidades.some((h) => h.nome.toLowerCase() === alvo)) return c.nome;
+  const sub = subclasseDaHabilidade(nomeHab);
+  if (sub) { const c = CLASSES.find((x) => (x.subclasses || []).some((s) => s.nome === sub)); if (c) return c.nome; }
   return null;
+}
+
+/* Classe dona de uma subclasse */
+export function classeDaSubclasse(nomeSub) {
+  const c = CLASSES.find((x) => (x.subclasses || []).some((s) => s.nome === nomeSub));
+  return c ? c.nome : null;
+}
+
+/* ---------------- CUSTO EM PONTOS ----------------
+   O que calibra a árvore: degrau baixo é barato, degrau alto pesa. Sem isso,
+   um nível 20 comprava a classe inteira e ainda sobravam pontos — e escolher
+   deixava de ser escolha. */
+export function custoEmPontos(hab) {
+  const n = (hab && hab.nivel) || 1;
+  return n >= 8 ? 3 : n >= 4 ? 2 : 1;
+}
+
+/* Qual subclasse o herói seguiu em cada classe (uma só por classe, para
+   sempre — trocar exige redistribuir tudo). */
+export function subclasseEscolhida(pers, classeNome) {
+  return ((pers && pers.subclasses) || {})[classeNome] || null;
+}
+export function podeEscolherSubclasse(pers, classeNome) {
+  const rank = ranksDoPersonagem(pers)[classeNome] || 0;
+  if (subclasseEscolhida(pers, classeNome)) return { pode: false, motivo: "já escolhida" };
+  if (rank < RANK_PARA_SUBCLASSE) return { pode: false, motivo: `exige ${RANK_PARA_SUBCLASSE} degraus de ${classeNome} (você tem ${rank})` };
+  return { pode: true, motivo: "" };
 }
 
 /* Quantos degraus o herói tem em cada classe (derivado das habilidades). */
@@ -413,13 +447,34 @@ export function ranksDoPersonagem(pers) {
   return r;
 }
 
-/* Pontos que o herói ainda tem para gastar: um por nível, menos o que
-   já virou habilidade de catálogo (habilidades únicas e dádivas não contam). */
+/* Pontos que o herói ainda tem para gastar: um por nível, menos o CUSTO do
+   que já virou habilidade de catálogo (únicas e dádivas não contam). */
+export function custoJaGasto(pers) {
+  let t = 0;
+  for (const h of (pers && pers.habilidades) || []) {
+    const nome = typeof h === "string" ? h : h.nome;
+    const cls = classeDaHabilidade(nome);
+    if (!cls) continue;
+    t += custoEmPontos(fichaDaHabilidade(nome) || { nivel: 1 });
+  }
+  return t;
+}
 export function pontosDisponiveis(pers) {
   if (!pers) return 0;
   if (typeof pers.pontosHab === "number") return Math.max(0, pers.pontosHab);
-  const gastos = ((pers.habilidades || []).filter((h) => classeDaHabilidade(typeof h === "string" ? h : h.nome))).length;
-  return Math.max(0, (pers.nivel || 1) - gastos);
+  return Math.max(0, (pers.nivel || 1) - custoJaGasto(pers));
+}
+
+/* A ficha de uma habilidade pelo nome, venha ela da classe ou da subclasse. */
+export function fichaDaHabilidade(nomeHab) {
+  const alvo = String(nomeHab || "").toLowerCase();
+  for (const c of CLASSES) {
+    const h = c.habilidades.find((x) => x.nome.toLowerCase() === alvo);
+    if (h) return h;
+  }
+  const sub = subclasseDaHabilidade(nomeHab);
+  if (sub) return habilidadesDaSubclasse(sub).find((x) => x.nome.toLowerCase() === alvo) || null;
+  return null;
 }
 
 /* Pode pegar esta habilidade? Devolve o motivo quando não pode. */
@@ -428,8 +483,18 @@ export function podePegarHabilidade(pers, classeNome, hab) {
   const rank = ranks[classeNome] || 0;
   const jaTem = ((pers && pers.habilidades) || []).some((h) => (typeof h === "string" ? h : h.nome) === hab.nome);
   if (jaTem) return { pode: false, motivo: "já dominada" };
-  if (pontosDisponiveis(pers) <= 0) return { pode: false, motivo: "sem pontos" };
+  const custo = custoEmPontos(hab);
+  const tem = pontosDisponiveis(pers);
+  if (tem < custo) return { pode: false, motivo: tem === 0 ? "sem pontos" : `custa ${custo} pontos (você tem ${tem})` };
   if ((pers.nivel || 1) < hab.nivel) return { pode: false, motivo: `exige nível ${hab.nivel}` };
+  /* habilidade de subclasse: só se aquela for a subclasse trilhada */
+  if (hab.subclasse) {
+    const escolhida = subclasseEscolhida(pers, classeNome);
+    if (!escolhida) return { pode: false, motivo: `escolha uma subclasse de ${classeNome} primeiro` };
+    if (escolhida !== hab.subclasse) return { pode: false, motivo: `você seguiu ${escolhida}` };
+    if (rank < hab.nivel) return { pode: false, motivo: `exige ${hab.nivel} degraus de ${classeNome} (você tem ${rank})` };
+    return { pode: true, motivo: "" };
+  }
   if (rank < hab.nivel - 1) return { pode: false, motivo: `exige ${hab.nivel - 1} de ${classeNome}` };
   return { pode: true, motivo: "" };
 }
@@ -438,11 +503,24 @@ export function podePegarHabilidade(pers, classeNome, hab) {
 export function arvoreDaClasse(pers, classeNome) {
   const c = classePorNome(classeNome);
   if (!c) return [];
-  return c.habilidades.map((h) => {
+  const marcar = (h) => {
     const jaTem = ((pers && pers.habilidades) || []).some((x) => (typeof x === "string" ? x : x.nome) === h.nome);
     const chk = podePegarHabilidade(pers, classeNome, h);
-    return { ...h, dominada: jaTem, pode: chk.pode, motivo: chk.motivo };
-  });
+    return { ...h, custoPontos: custoEmPontos(h), dominada: jaTem, pode: chk.pode, motivo: chk.motivo };
+  };
+  return c.habilidades.map(marcar);
+}
+
+/* A árvore da subclasse trilhada (vazia enquanto ele não escolher). */
+export function arvoreDaSubclasse(pers, classeNome) {
+  const sub = subclasseEscolhida(pers, classeNome);
+  if (!sub) return [];
+  const marcar = (h) => {
+    const jaTem = ((pers && pers.habilidades) || []).some((x) => (typeof x === "string" ? x : x.nome) === h.nome);
+    const chk = podePegarHabilidade(pers, classeNome, h);
+    return { ...h, custoPontos: custoEmPontos(h), dominada: jaTem, pode: chk.pode, motivo: chk.motivo };
+  };
+  return habilidadesDaSubclasse(sub).map(marcar);
 }
 
 /* Custo em moedas para redistribuir tudo — caro o suficiente para pesar,

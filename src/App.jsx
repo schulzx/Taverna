@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
-import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade } from "./classes.js";
+import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { gerarGeografia, garantirGeografia } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, danoDaClasse, ataquesDoInimigo, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
@@ -388,6 +388,13 @@ ${banirUrgencia ? `
 /* Trilho enxuto (mobile): 4 abas. Ficha, Grupo, Pessoas, Guilda e Domínios
    vivem como SUB-abas dentro de Gestão. */
 const ABAS = [{ id: "gestao", rotulo: "Gestão", icone: "🏛" }, { id: "diario", rotulo: "Diário", icone: "📜" }, { id: "inv", rotulo: "Bolsa", icone: "◆" }, { id: "mapa", rotulo: "Mapa", icone: "🗺" }, { id: "codex", rotulo: "Códex", icone: "📖" }, { id: "ascensao", rotulo: "Ascensão", icone: "🌟", soDesperto: true }];
+/* ---------------- CERCA DE ESCOPO (v9.3) ----------------
+   Um comando do painel é um comando, não um convite a inventar. "Convido
+   Fulano para o meu grupo" virava uma viagem inteira porque o envelope não
+   dizia onde ele terminava. Esta linha vai no fim de todo envelope
+   administrativo: o Mestre responde AQUILO e nada mais. */
+const SO_ISSO = ` ESCOPO DESTE TURNO (obrigatório): responda SOMENTE ao que este envelope pede, na cena e no lugar onde já estou. NÃO inicie viagem, combate, missão ou cena nova; NÃO mude de local; NÃO faça o tempo passar; NÃO invente personagem, item ou recompensa. Termine devolvendo a palavra para mim.`;
+
 const SUBS_GESTAO = [{ id: "ficha", rotulo: "Ficha" }, { id: "grupo", rotulo: "Grupo" }, { id: "pessoas", rotulo: "Pessoas" }, { id: "talentos", rotulo: "Talentos" }, { id: "mercado", rotulo: "Mercado" }, { id: "guilda", rotulo: "Guilda" }, { id: "dominios", rotulo: "Domínios" }, { id: "diplomacia", rotulo: "Diplomacia" }, { id: "correio", rotulo: "Correio" }, { id: "mural", rotulo: "Mural" }];
 
 const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D" };
@@ -815,7 +822,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, bloqueado }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, bloqueado }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1059,7 +1066,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
         {aba === "gestao" && subGestao === "correio" && <PainelCorreio correio={correio} faccoes={((mapa && mapa.faccoes) || []).filter((f) => f && f.nome && !f.doJogador && f.relacao !== "jogador").map((f) => f.nome)} dia={dia} moedas={personagem.moedas || 0} enviarCarta={enviarCarta} responderPeticao={responderPeticao} />}
 
         {/* MERCADO (v9.2): estoque e preço do sistema; a IA só narra a cena */}
-        {aba === "gestao" && subGestao === "talentos" && <PainelTalentos personagem={personagem} grupo={personagem.grupo || []} onAprender={onAprenderHab} onRespec={onRespec} />}
+        {aba === "gestao" && subGestao === "talentos" && <PainelTalentos personagem={personagem} grupo={personagem.grupo || []} onAprender={onAprenderHab} onRespec={onRespec} onEscolherSubclasse={onEscolherSubclasse} />}
 
         {aba === "gestao" && subGestao === "mercado" && (() => {
           const bancas = mercadoAqui || [];
@@ -3454,7 +3461,7 @@ export default function Taverna() {
     if (msgs.length) pushMsgs(msgs);
     const mil = milagrePorId(id);
     if (mil && (divindadeRef.current.pf >= 0)) {
-      enviar(`[MILAGRE] Invoco ${mil.nome}. O sistema já cobrou os PF e aplicou o efeito — narre a manifestação do meu domínio de forma inesquecível.`, personagem);
+      enviar(`[MILAGRE] Invoco ${mil.nome}. O sistema já cobrou os PF e aplicou o efeito — narre a manifestação do meu domínio de forma inesquecível.${SO_ISSO}`, personagem);
     }
   };
 
@@ -4359,7 +4366,7 @@ export default function Taverna() {
     if (r.auto) {
       setDadoRolando(false); setRolagem(null);
       pushMsgs([{ autor: "sistema", texto: `✓ ${r.motivo || "Teste"}: trivial para seu patamar — sucesso sem rolagem` }]);
-      enviar(`[TESTE — SUCESSO AUTOMÁTICO] "${r.motivo || "ação"}": trivial para meu patamar (dificuldade ${r.dificuldade} vs minha competência). Narre o êxito com naturalidade, sem drama de dado.`, personagem);
+      enviar(`[TESTE — SUCESSO AUTOMÁTICO] "${r.motivo || "ação"}": trivial para meu patamar (dificuldade ${r.dificuldade} vs minha competência). Narre o êxito com naturalidade, sem drama de dado.${SO_ISSO}`, personagem);
       return;
     }
     const mod = modPend;
@@ -4397,8 +4404,8 @@ export default function Taverna() {
 
   /* ---------------- ÁRVORE DE TALENTOS (v9.2) ---------------- */
   const aprenderHabilidade = (classeNome, nomeHab) => {
-    const c = classePorNome(classeNome);
-    const hab = c && c.habilidades.find((h) => h.nome === nomeHab);
+    /* a ficha vem da classe OU da subclasse — as duas árvores usam a mesma porta */
+    const hab = fichaDaHabilidade(nomeHab);
     if (!hab) return;
     const chk = podePegarHabilidade(personagem, classeNome, hab);
     if (!chk.pode) { pushMsgs([{ autor: "sistema", texto: `⛔ ${nomeHab}: ${chk.motivo}.` }]); return; }
@@ -4406,12 +4413,26 @@ export default function Taverna() {
     const p = {
       ...personagem,
       habilidades: [...(personagem.habilidades || []), { nome: hab.nome, custo: hab.custo, descricao: hab.descricao, tipo: hab.tipo, recarga: recargaPadrao(hab.custo) }],
-      pontosHab: Math.max(0, pontosDisponiveis(personagem) - 1),
+      pontosHab: Math.max(0, pontosDisponiveis(personagem) - custoEmPontos(hab)),
       classes: { ...(personagem.classes || {}), [classeNome]: ((personagem.classes || {})[classeNome] || 0) + 1 },
     };
     setPersonagem(p);
-    pushMsgs([{ autor: "sistema", texto: `✦ Nova habilidade: ${hab.nome} (${hab.custo} PM) — ${classeNome}${eraNova ? " · segunda classe aberta!" : ""}` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Aprendi "${hab.nome}" (${hab.custo} PM: ${hab.descricao})${eraNova ? `, e com isso comecei a trilhar TAMBÉM o caminho de ${classeNome} — sou ${personagem.classe} e ${classeNome} agora` : ` na minha trilha de ${classeNome}`}. Reflita isso na ficção quando fizer sentido.`;
+    pushMsgs([{ autor: "sistema", texto: `✦ Nova habilidade: ${hab.nome} (${hab.custo} PM) — ${classeNome}${hab.subclasse ? ` · ${hab.subclasse}` : ""}${eraNova ? " · segunda classe aberta!" : ""} — ${custoEmPontos(hab)} ponto(s)` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FICHA — REGISTRO DO SISTEMA] Aprendi a habilidade "${hab.nome}" (${hab.custo} PM: ${hab.descricao})${eraNova ? `, abrindo TAMBÉM o caminho de ${classeNome} — sou ${personagem.classe} e ${classeNome} agora` : ""}. Isso é só uma anotação de ficha: NÃO abra cena, não invente treinamento, mestre nem viagem por causa disso. Se couber naturalmente numa cena futura, deixe transparecer.`;
+    salvar({ personagem: p });
+    checarConquistas(p);
+  };
+
+  /* SUBCLASSE (v9.3): o caminho dentro da classe. Uma só por classe, e para
+     sempre — quem quiser trocar paga a redistribuição. */
+  const escolherSubclasseUI = (classeNome, subNome) => {
+    const chk = podeEscolherSubclasse(personagem, classeNome);
+    if (!chk.pode) { pushMsgs([{ autor: "sistema", texto: `⛔ ${chk.motivo}.` }]); return; }
+    const p = { ...personagem, subclasses: { ...(personagem.subclasses || {}), [classeNome]: subNome },
+      subclasse: classeNome === personagem.classe ? subNome : personagem.subclasse };
+    setPersonagem(p);
+    pushMsgs([{ autor: "sistema", texto: `✦ Caminho escolhido: ${subNome} (${classeNome}). Quatro habilidades exclusivas abrem nos degraus 3, 5, 7 e 9.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MARCO DE CAMINHO — REGISTRO DO SISTEMA] Escolhi a especialização "${subNome}" dentro de ${classeNome}. Isso é um marco da minha formação: mencione de passagem, quando couber, que meu jeito de lutar/agir mudou nessa direção. NÃO abra cena nova por causa disso nem invente mestres, rituais ou viagens — foi uma escolha minha de ficha.`;
     salvar({ personagem: p });
     checarConquistas(p);
   };
@@ -4422,12 +4443,15 @@ export default function Taverna() {
     /* só as habilidades DE CATÁLOGO voltam ao bolo: únicas e dádivas ficam */
     const mantidas = (personagem.habilidades || []).filter((h) => !classeDaHabilidade(typeof h === "string" ? h : h.nome));
     const devolvidos = (personagem.habilidades || []).length - mantidas.length;
+    /* devolve o CUSTO real do que estava gasto (degrau alto vale mais) */
     const p = {
       ...personagem,
       moedas: (personagem.moedas || 0) - custo,
       habilidades: mantidas,
       classes: { [personagem.classe]: 0 },
-      pontosHab: pontosDisponiveis(personagem) + devolvidos,
+      subclasses: {},
+      subclasse: "",
+      pontosHab: pontosDisponiveis(personagem) + custoJaGasto(personagem),
     };
     setPersonagem(p);
     pushMsgs([{ autor: "sistema", texto: `⟲ Redistribuição feita (−◉ ${custo}): ${devolvidos} ponto(s) de volta. Escolha de novo na árvore.` }]);
@@ -4654,7 +4678,7 @@ export default function Taverna() {
     const extra = avancarMinutos(240);
     if (r.achou) setPersonagem((pp) => ({ ...pp, suprimentos: { ...garantirSuprimentos(pp.suprimentos), racoes: garantirSuprimentos(pp.suprimentos).racoes + r.racoes, agua: garantirSuprimentos(pp.suprimentos).agua + r.agua } }));
     pushMsgs([{ autor: "sistema", texto: `🌿 ${r.texto}` }]);
-    enviar(`[ERMOS — FORRAGEAMENTO] Passo metade do dia caçando e colhendo. ${r.achou ? `Consegui ${r.racoes} rações e ${r.agua} de água (o sistema já somou).` : "Não encontrei nada aproveitável."} Narre a busca em 2-3 frases, com o cheiro e o cansaço do trabalho.${extra}`, personagem);
+    enviar(`[ERMOS — FORRAGEAMENTO] Passo metade do dia caçando e colhendo. ${r.achou ? `Consegui ${r.racoes} rações e ${r.agua} de água (o sistema já somou).` : "Não encontrei nada aproveitável."} Narre a busca em 2-3 frases, com o cheiro e o cansaço do trabalho.${extra}${SO_ISSO}`, personagem);
   };
 
   const mudarRitmo = (id) => {
@@ -4683,7 +4707,7 @@ export default function Taverna() {
       const salas2 = mm.salas.map((x) => x.id === sala.id ? { ...x, segredo: r.segredo } : x);
       masmorraRef.current = { ...mm, salas: salas2 }; setMasmorra(masmorraRef.current);
     }
-    enviar(`[MASMORRA — BUSCA ATIVA · ${mm.nome}] Vasculho a sala por dez minutos (Percepção ${total}${sala.segredo ? ` vs ${sala.segredo.cd}` : ""}). ${r.achou ? `ENCONTREI: ${r.segredo.txt} (${r.segredo.tipo.replace("_", " ")}). Narre a descoberta e o que ela abre.` : "Nada encontrado — narre a busca frustrada em 1-2 frases, sem inventar achados."} NÃO revele o que não foi achado.`, personagem);
+    enviar(`[MASMORRA — BUSCA ATIVA · ${mm.nome}] Vasculho a sala por dez minutos (Percepção ${total}${sala.segredo ? ` vs ${sala.segredo.cd}` : ""}). ${r.achou ? `ENCONTREI: ${r.segredo.txt} (${r.segredo.tipo.replace("_", " ")}). Narre a descoberta e o que ela abre.` : "Nada encontrado — narre a busca frustrada em 1-2 frases, sem inventar achados."} NÃO revele o que não foi achado.${SO_ISSO}`, personagem);
   };
 
   /* Ao vencer o combate de uma sala, ela se resolve — e se guardava a chave,
@@ -4730,7 +4754,7 @@ export default function Taverna() {
     }
     setAba(null);
     pushMsgs([{ autor: "jogador", texto: `📋 Aceito o contrato: ${c.titulo} (◉ ${c.recompensa.moedas} + ${c.recompensa.xp} XP)` }]);
-    enviar(`[CONTRATO ACEITO — ${c.titulo}] Peguei no mural: "${c.descricao}" A recompensa (◉ ${c.recompensa.moedas} e ${c.recompensa.xp} XP) será paga PELO SISTEMA ao concluir — NÃO envie moedas/xp. Costure o serviço na ficção (o objetivo está alcançável a partir da situação atual) e, quando eu CUMPRIR de verdade, marque com "quest_atualizar" {"titulo":"${c.titulo}","status":"concluida"}.`, personagem);
+    enviar(`[CONTRATO ACEITO — ${c.titulo}] Peguei no mural: "${c.descricao}" A recompensa (◉ ${c.recompensa.moedas} e ${c.recompensa.xp} XP) será paga PELO SISTEMA ao concluir — NÃO envie moedas/xp. Costure o serviço na ficção (o objetivo está alcançável a partir da situação atual) e, quando eu CUMPRIR de verdade, marque com "quest_atualizar" {"titulo":"${c.titulo}","status":"concluida"}.${SO_ISSO}`, personagem);
   };
 
   const abandonarContrato = (titulo) => {
@@ -4762,7 +4786,7 @@ export default function Taverna() {
     setDecretos(decretosRef.current);
     bumpCont("decretosPregados"); checarConquistas();
     pushMsgs([{ autor: "jogador", texto: `📣 Preguei um decreto: ${d.descricao} — Recompensa: ◉ ${d.recompensa}` }]);
-    enviar(`[DECRETO PREGADO — ${tipoDecreto(d.tipo).rotulo.toUpperCase()}] Pus cartazes pela região: "${d.descricao}" Recompensa de ◉ ${d.recompensa} JÁ RETIDA pelo sistema (não envie moedas). Reaja na ficção: tavernas comentando, interessados medindo o cartaz, o alvo talvez ficando sabendo… QUEM aceita e o RESULTADO quem decide é o sistema — NÃO invente aventureiros cumprindo isso por conta própria; narre apenas a repercussão.`, personagem);
+    enviar(`[DECRETO PREGADO — ${tipoDecreto(d.tipo).rotulo.toUpperCase()}] Pus cartazes pela região: "${d.descricao}" Recompensa de ◉ ${d.recompensa} JÁ RETIDA pelo sistema (não envie moedas). Reaja na ficção: tavernas comentando, interessados medindo o cartaz, o alvo talvez ficando sabendo… QUEM aceita e o RESULTADO quem decide é o sistema — NÃO invente aventureiros cumprindo isso por conta própria; narre apenas a repercussão.${SO_ISSO}`, personagem);
   };
 
   const cancelarDecreto = (id) => {
@@ -5143,7 +5167,7 @@ export default function Taverna() {
     correioRef.current = c; setCorreio(c);
     const t = TIPOS_CARTA[tipo];
     pushMsgs([{ autor: "sistema", texto: `✉️ ${t.icone} ${t.nome} enviada a ${para}${oferta ? ` (oferta de ◉ ${oferta})` : ""}. Resposta esperada até o dia ${carta.chegaEm}.` }]);
-    enviar(`[CORREIO — CARTA ENVIADA] Enviei a ${para}: ${t.icone} ${t.nome}${oferta ? ` com oferta de ◉ ${oferta}` : ""}${mensagem ? `. Diz a carta: "${mensagem}"` : ""}. Narre a partida do mensageiro e a expectativa — a RESPOSTA virá pelo sistema em 1–3 dias; NÃO antecipe nem decida a reação de ${para} agora.`);
+    enviar(`[CORREIO — CARTA ENVIADA] Enviei a ${para}: ${t.icone} ${t.nome}${oferta ? ` com oferta de ◉ ${oferta}` : ""}${mensagem ? `. Diz a carta: "${mensagem}"` : ""}. Narre a partida do mensageiro e a expectativa — a RESPOSTA virá pelo sistema em 1–3 dias; NÃO antecipe nem decida a reação de ${para} agora.${SO_ISSO}`);
   };
 
   /* Aceitar/recusar petição recebida — efeitos imediatos, IA só narra. */
@@ -5160,7 +5184,7 @@ export default function Taverna() {
     correioRef.current = c; setCorreio(c);
     aplicarEfeitosCorreio(ef);
     pushMsgs([{ autor: "sistema", texto: `✉️ Petição de ${p.de}: ${aceite ? "ACEITA" : "RECUSADA"}${ef.nota ? ` — ${ef.nota}` : ""}.` }]);
-    enviar(`[CORREIO — PETIÇÃO ${aceite ? "ACEITA" : "RECUSADA"}] ${p.texto} → EU DECIDI: ${aceite ? "ACEITEI" : "RECUSEI"}.${ef.nota ? ` Consequência (já aplicada pelo sistema): ${ef.nota}.` : ""}${ef.moedas ? ` Moedas: ${ef.moedas > 0 ? "+" : ""}${ef.moedas} (já aplicado).` : ""} Narre a reação de ${p.de} e as ondas que isso faz no mundo.`);
+    enviar(`[CORREIO — PETIÇÃO ${aceite ? "ACEITA" : "RECUSADA"}] ${p.texto} → EU DECIDI: ${aceite ? "ACEITEI" : "RECUSEI"}.${ef.nota ? ` Consequência (já aplicada pelo sistema): ${ef.nota}.` : ""}${ef.moedas ? ` Moedas: ${ef.moedas > 0 ? "+" : ""}${ef.moedas} (já aplicado).` : ""} Narre a reação de ${p.de} e as ondas que isso faz no mundo.${SO_ISSO}`);
   };
 
   /* CRÔNICA (v6.9): baixa a saga em Markdown — gerada por código dos registros. */
@@ -5454,8 +5478,8 @@ export default function Taverna() {
   const convidarNpc = (nome) => {
     if (bloqueado || (personagem.grupo || []).length >= MAX_COMPANHEIROS) return;
     setAba(null);
-    pushMsgs([{ autor: "jogador", texto: `Convido ${nome} para viajar comigo.` }]);
-    enviar(`[CONVITE AO GRUPO] Convido ${nome} para se juntar ao meu grupo. Decida pela personalidade, relação e momento dele(a): pode ACEITAR (use "grupo_adicionar" com a ficha completa), recusar com jeito, ou aceitar com uma condição. A escolha é dele(a), não minha — responda com as palavras e a reação dele(a) em 1ª pessoa.`, personagem);
+    pushMsgs([{ autor: "jogador", texto: `Convido ${nome} para se juntar ao meu grupo.` }]);
+    enviar(`[CONVITE AO GRUPO — ação de painel] Aqui, na cena atual, eu faço UM convite a ${nome}: juntar-se ao meu grupo. Sua resposta é SÓ a reação e as palavras de ${nome}, em 1ª pessoa, aí mesmo onde estamos. A decisão é dele(a): pode aceitar (registre em "grupo_adicionar" com a ficha completa), recusar com jeito, ou pedir uma condição — mas a condição é uma FALA, não uma missão nem uma viagem. Não narre partida, despedida, preparativos, estrada nem passagem de tempo: ninguém saiu do lugar por causa de um convite.${SO_ISSO}`, personagem);
   };
 
   /* ---------------- BEBER POÇÃO (v9.2) ----------------
@@ -5710,7 +5734,7 @@ Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a
     if (!ROT[acao]) return;
     setAba(null);
     pushMsgs([{ autor: "jogador", texto: `[Diplomacia] ${ROT[acao]} a ${faccao}.` }]);
-    enviar(`[DIPLOMACIA — ${faccao}] Em nome ${faccaoJogadorRef.current ? `de ${faccaoJogadorRef.current} e dos meus domínios` : "do meu próprio nome"}, ${ROT[acao]} a ${faccao}. O líder de ${faccao} responde NA FICÇÃO conforme poder, personalidade, medos e ambições: pode aceitar, exigir condições (tributo, casamento, prova de força), adiar ou recusar — a decisão é dele(a). Se um acordo for firmado ou rompido, registre em "mapa_faccoes": [{"nome":"${faccao}","tratado":"comercio|alianca|vassalagem|guerra|nenhum","relacao":"aliada|neutra|inimiga","notas":"termos do acordo"}]. NÃO invente valores econômicos — os efeitos dos tratados são calculados pelo app.`, personagem);
+    enviar(`[DIPLOMACIA — ${faccao}] Em nome ${faccaoJogadorRef.current ? `de ${faccaoJogadorRef.current} e dos meus domínios` : "do meu próprio nome"}, ${ROT[acao]} a ${faccao}. O líder de ${faccao} responde NA FICÇÃO conforme poder, personalidade, medos e ambições: pode aceitar, exigir condições (tributo, casamento, prova de força), adiar ou recusar — a decisão é dele(a). Se um acordo for firmado ou rompido, registre em "mapa_faccoes": [{"nome":"${faccao}","tratado":"comercio|alianca|vassalagem|guerra|nenhum","relacao":"aliada|neutra|inimiga","notas":"termos do acordo"}]. NÃO invente valores econômicos — os efeitos dos tratados são calculados pelo app.${SO_ISSO}`, personagem);
   };
 
   /* PRESENTE DIPLOMÁTICO: ◉ 40 do cofre da guilda, enviado na ficção.
@@ -5726,7 +5750,7 @@ Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a
     bumpCont("presentes"); checarConquistas();
     setAba(null);
     pushMsgs([{ autor: "sistema", texto: `🎁 ◉ ${CUSTO_PRESENTE} do cofre viram um presente digno para ${faccao}.` }]);
-    enviar(`[PRESENTE DIPLOMÁTICO — ${faccao}] Em nome de ${faccaoJogadorRef.current}, envio um presente suntuoso (◉ ${CUSTO_PRESENTE}, já descontados pelo sistema) ao líder de ${faccao}. Ele(a) reage NA FICÇÃO conforme a personalidade e a relação: pode se agradar e aquecer os laços (atualize "mapa_faccoes" com relacao/notas), pode devolver um gesto à altura, pode achar pouco, ou até se ofender se o presente soar como suborno. O efeito na relação é a SUA decisão narrativa; valores de gestão continuam por conta do app.`, personagem);
+    enviar(`[PRESENTE DIPLOMÁTICO — ${faccao}] Em nome de ${faccaoJogadorRef.current}, envio um presente suntuoso (◉ ${CUSTO_PRESENTE}, já descontados pelo sistema) ao líder de ${faccao}. Ele(a) reage NA FICÇÃO conforme a personalidade e a relação: pode se agradar e aquecer os laços (atualize "mapa_faccoes" com relacao/notas), pode devolver um gesto à altura, pode achar pouco, ou até se ofender se o presente soar como suborno. O efeito na relação é a SUA decisão narrativa; valores de gestão continuam por conta do app.${SO_ISSO}`, personagem);
   };
 
   /* RECALIBRAR LENDA: saves antigos ficaram para trás da própria história
@@ -6365,7 +6389,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} bloqueado={bloqueado} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} bloqueado={bloqueado} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

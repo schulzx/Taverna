@@ -13,9 +13,9 @@
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
-import { CLASSES, classePorNome, arvoreDaClasse, ranksDoPersonagem, pontosDisponiveis, custoRespec } from "./classes.js";
+import { CLASSES, classePorNome, arvoreDaClasse, arvoreDaSubclasse, ranksDoPersonagem, pontosDisponiveis, custoRespec, subclasseEscolhida, podeEscolherSubclasse, RANK_PARA_SUBCLASSE, habilidadesDaSubclasse } from "./classes.js";
 
-export function PainelTalentos({ personagem, onAprender, onRespec, grupo = [] }) {
+export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSubclasse, grupo = [] }) {
   const [abaClasse, setAbaClasse] = React.useState(personagem.classe || (CLASSES[0] && CLASSES[0].nome));
   const [verGrupo, setVerGrupo] = React.useState(false);
   const [confirmarRespec, setConfirmarRespec] = React.useState(false);
@@ -77,6 +77,37 @@ export function PainelTalentos({ personagem, onAprender, onRespec, grupo = [] })
   const arvore = arvoreDaClasse(personagem, abaClasse);
   const rankAtual = ranks[abaClasse] || 0;
 
+  /* o mesmo cartão serve para a árvore da classe e a da subclasse */
+  const cartaoHabilidades = (lista) => (
+    <div className="space-y-1.5">
+      {lista.map((h) => {
+        const cor = h.dominada ? T.ok : h.pode ? T.violet : T.line;
+        return (
+          <div key={h.nome} className="rounded-xl px-3 py-2.5" style={{ background: h.dominada ? T.panel : T.panelSoft, border: `1px solid ${cor}`, opacity: h.dominada || h.pode ? 1 : 0.55 }}>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="tv-display text-base" style={{ color: h.dominada ? T.ok : T.ink }}>
+                {h.dominada ? "✓ " : h.pode ? "" : "🔒 "}{h.nome}
+              </span>
+              <span className="tv-mono text-[9px] shrink-0" style={{ color: T.violetSoft }}>{h.custo} PM · degrau {h.nivel}</span>
+            </div>
+            <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{h.descricao}</div>
+            {!h.dominada && (
+              h.pode ? (
+                <button onClick={() => onAprender && onAprender(abaClasse, h.nome)}
+                  className="w-full tv-mono text-[10px] px-3 py-1.5 rounded-lg mt-2"
+                  style={{ background: T.violet, color: "#14101F", fontWeight: 600 }}>
+                  aprender · {h.custoPontos} ponto{h.custoPontos > 1 ? "s" : ""}
+                </button>
+              ) : (
+                <div className="tv-mono text-[10px] mt-1.5" style={{ color: T.inkDim }}>{h.motivo}</div>
+              )
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
     <>
       {/* cabeçalho: pontos e degraus por classe */}
@@ -86,7 +117,7 @@ export function PainelTalentos({ personagem, onAprender, onRespec, grupo = [] })
           <span className="tv-display text-2xl" style={{ color: pontos > 0 ? T.violetSoft : T.inkDim }}>{pontos}</span>
         </div>
         <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>
-          Um por nível. Gaste onde quiser: aprofunde a sua classe ou abra outra — habilidade de nível N exige N−1 degraus naquela classe.
+          Um por nível. Degraus 1–3 custam 1 ponto, 4–7 custam 2, 8+ custam 3 — você <b>não</b> terá tudo, então escolha o que combina com o seu jeito de jogar. Habilidade de degrau N exige N−1 degraus naquela classe; com {RANK_PARA_SUBCLASSE} degraus abre a subclasse.
         </div>
         {abertas.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2">
@@ -133,33 +164,61 @@ export function PainelTalentos({ personagem, onAprender, onRespec, grupo = [] })
       )}
 
       {/* a árvore */}
-      <div className="space-y-1.5">
-        {arvore.map((h) => {
-          const cor = h.dominada ? T.ok : h.pode ? T.violet : T.line;
+      {cartaoHabilidades(arvore)}
+
+      {/* ---- SUBCLASSE: o segundo andar ---- */}
+      {(() => {
+        const c = classePorNome(abaClasse);
+        if (!c || !(c.subclasses || []).length) return null;
+        const escolhida = subclasseEscolhida(personagem, abaClasse);
+        const chk = podeEscolherSubclasse(personagem, abaClasse);
+        if (escolhida) {
+          const ficha = c.subclasses.find((s) => s.nome === escolhida);
           return (
-            <div key={h.nome} className="rounded-xl px-3 py-2.5" style={{ background: h.dominada ? T.panel : T.panelSoft, border: `1px solid ${cor}`, opacity: h.dominada || h.pode ? 1 : 0.55 }}>
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="tv-display text-base" style={{ color: h.dominada ? T.ok : T.ink }}>
-                  {h.dominada ? "✓ " : h.pode ? "" : "🔒 "}{h.nome}
-                </span>
-                <span className="tv-mono text-[9px] shrink-0" style={{ color: T.violetSoft }}>{h.custo} PM · degrau {h.nivel}</span>
+            <>
+              <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+                <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.amberSoft }}>Caminho escolhido</div>
+                <div className="tv-display text-xl" style={{ color: T.ink }}>{escolhida}</div>
+                {ficha && <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{ficha.desc}</div>}
+                {ficha && (ficha.especializacoes || []).length > 0 && (
+                  <div className="tv-mono text-[10px] mt-1.5" style={{ color: T.inkDim }}>Ramos: {ficha.especializacoes.join(" · ")}</div>
+                )}
               </div>
-              <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{h.descricao}</div>
-              {!h.dominada && (
-                h.pode ? (
-                  <button onClick={() => onAprender && onAprender(abaClasse, h.nome)}
-                    className="w-full tv-mono text-[10px] px-3 py-1.5 rounded-lg mt-2"
-                    style={{ background: T.violet, color: "#14101F", fontWeight: 600 }}>
-                    aprender · 1 ponto
-                  </button>
-                ) : (
-                  <div className="tv-mono text-[10px] mt-1.5" style={{ color: T.inkDim }}>{h.motivo}</div>
-                )
-              )}
-            </div>
+              {cartaoHabilidades(arvoreDaSubclasse(personagem, abaClasse))}
+            </>
           );
-        })}
-      </div>
+        }
+        return (
+          <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${chk.pode ? T.amber : T.line}` }}>
+            <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: chk.pode ? T.amberSoft : T.inkDim }}>
+              Subclasse de {abaClasse}
+            </div>
+            {!chk.pode ? (
+              <div className="tv-body text-xs" style={{ color: T.inkDim }}>
+                Abre com {RANK_PARA_SUBCLASSE} degraus de {abaClasse} — {chk.motivo}. Cada subclasse traz quatro habilidades próprias, e você segue <b>uma só</b>: escolher é abrir mão do resto.
+              </div>
+            ) : (
+              <>
+                <div className="tv-body text-xs mb-2" style={{ color: T.inkDim }}>
+                  Escolha o caminho. É para sempre — só a redistribuição desfaz. Cada um abre quatro habilidades exclusivas nos degraus 3, 5, 7 e 9.
+                </div>
+                <div className="space-y-2">
+                  {c.subclasses.map((s) => (
+                    <button key={s.nome} onClick={() => onEscolherSubclasse && onEscolherSubclasse(abaClasse, s.nome)}
+                      className="w-full text-left rounded-xl p-3" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
+                      <div className="tv-display text-lg" style={{ color: T.ink }}>{s.nome}</div>
+                      <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{s.desc}</div>
+                      <div className="tv-mono text-[10px] mt-1.5" style={{ color: T.violetSoft }}>
+                        {habilidadesDaSubclasse(s.nome).map((h) => h.nome).join(" · ")}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })()}
 
       {/* respec */}
       <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
