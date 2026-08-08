@@ -54,6 +54,7 @@ export const CONSUMIVEIS = [
   { id: "antidoto",  nome: "Antídoto",           icone: "🌿", tipo: "limpa", remove: ["envenenado"], valor: 40, raridade: "comum", nivel: 1, desc: "Amargo como culpa, mas corta o veneno." },
   { id: "ataduras",  nome: "Ataduras de Linho",  icone: "🩹", tipo: "limpa", remove: ["sangrando"],  valor: 25, raridade: "comum", nivel: 1, desc: "Estanca o que não para sozinho." },
   { id: "sais",      nome: "Sais Aromáticos",    icone: "🧂", tipo: "limpa", remove: ["atordoado", "amedrontado"], valor: 45, raridade: "comum", nivel: 2, desc: "Um cheiro violento que traz a cabeça de volta." },
+  { id: "revigorante", nome: "Tônico Revigorante", icone: "☕", tipo: "limpa", remove: ["exausto"], valor: 60, raridade: "comum", nivel: 2, desc: "Amargo, quente e forte o bastante para roubar uma noite do corpo." },
 ];
 
 export const consumivelPorId = (id) => CONSUMIVEIS.find((c) => c.id === id) || null;

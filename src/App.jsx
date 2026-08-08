@@ -24,6 +24,7 @@ import { calcularFama, patamarFama, gerarNemesis, LIMIARES_NEMESIS, ACOES_NEMESI
 import { gerarCronica } from "./cronica.js";
 import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { rolarAflicao, aflicaoDe } from "./aflicoes.js";
+import { escolherReacao, resolverReacao, resumoReacoesPrompt } from "./reacoes.js";
 import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara } from "./pocoes.js";
 import { mercadoresDaCidade, talvezAmbulante, precoDeCompra, resumoMercadoPrompt } from "./mercado.js";
 import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
@@ -1698,7 +1699,7 @@ function PainelCombate({ combate, onEncerrarTurno, nGolpes = 1, alvosGolpe = [],
   );
 }
 
-function PainelHabilidades({ personagem, selecionar, fechar }) {
+function PainelHabilidades({ personagem, selecionar, fechar, escolhidas = [], limite = 1 }) {
   const [busca, setBusca] = React.useState("");
   const todas = (personagem.habilidades || []).filter((h) => h && h.nome);
   const normal = (x) => (x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -1707,7 +1708,10 @@ function PainelHabilidades({ personagem, selecionar, fechar }) {
   return (
     <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.violet}`, marginRight: "68px" }}>
       <div className="flex items-center justify-between mb-3">
-        <div className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.violetSoft }}>Habilidades · {personagem.mana}/{personagem.manaMax} PM · {todas.length}</div>
+        <div className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.violetSoft }}>
+          Habilidades · {personagem.mana}/{personagem.manaMax} PM
+          {limite > 1 ? ` · até ${limite} neste turno (${escolhidas.length} marcada${escolhidas.length === 1 ? "" : "s"})` : ` · ${todas.length}`}
+        </div>
         <button onClick={fechar} className="tv-mono text-sm px-1.5" style={{ color: T.inkDim }}>✕</button>
       </div>
       {muitas && (
@@ -1722,12 +1726,16 @@ function PainelHabilidades({ personagem, selecionar, fechar }) {
             const custo = Math.max(0, Number(h.custo) || 0);
             const semMana = personagem.mana < custo;
             const rec = (personagem.habRecarga || {})[(h.nome || "").toLowerCase()] || 0;
-            const travada = semMana || rec > 0;
+            const marcada = escolhidas.some((x) => x.nome === h.nome);
+            /* com dois movimentos dá para marcar duas magias e descrever as
+               duas de uma vez — o turno inteiro numa tacada só (v9.5) */
+            const cheio = !marcada && escolhidas.length >= limite;
+            const travada = semMana || rec > 0 || cheio;
             return (
               <button key={i} onClick={() => !travada && selecionar(h)} disabled={travada} className="text-left rounded-xl p-3 transition-all"
-                style={{ background: T.panelSoft, border: `1px solid ${travada ? T.line : T.violet}`, opacity: travada ? 0.45 : 1, cursor: travada ? "not-allowed" : "pointer" }}>
+                style={{ background: marcada ? T.violet : T.panelSoft, border: `1px solid ${marcada ? T.violet : travada ? T.line : T.violet}`, opacity: travada ? 0.45 : 1, cursor: travada ? "not-allowed" : "pointer" }}>
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="tv-display text-lg leading-none" style={{ color: T.ink }}>{h.nome}</span>
+                  <span className="tv-display text-lg leading-none" style={{ color: marcada ? "#14101F" : T.ink }}>{marcada ? "✓ " : ""}{h.nome}</span>
                   <span className="flex items-center gap-1.5 shrink-0">
                     {rec > 0 && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>⏳ {rec}t</span>}
                     <span className="tv-mono text-[10px]" style={{ color: semMana ? T.danger : T.violetSoft }}>{custo} PM</span>
@@ -2005,11 +2013,15 @@ export default function Taverna() {
   const [rolagem, setRolagem] = useState(null);
   const [combate, setCombate] = useState(null); // null | { inimigos: [{nome, vida, vidaMax, ameaca}] }
   const [carregando, setCarregando] = useState(false);
+  /* v9.5: marca as respostas que NÃO fecham a rodada (meu turno continua) —
+     nelas o relógio dos buffs e das condições fica parado. */
+  const pularTickRef = useRef(false);
   const [entrada, setEntrada] = useState("");
   const [aba, setAba] = useState(null);
   const [habAbertas, setHabAbertas] = useState(false);
   const [acoesAbertas, setAcoesAbertas] = useState(false);
-  const [habSel, setHabSel] = useState(null);
+  /* v9.5: um turno pode carregar mais de uma habilidade, uma por movimento */
+  const [habsSel, setHabsSel] = useState([]);
   const [dadoRolando, setDadoRolando] = useState(false);
   const [falha, setFalha] = useState(null);
   const [statusSave, setStatusSave] = useState(null);
@@ -2329,6 +2341,50 @@ export default function Taverna() {
      (do repertório da criatura), a arma equipada ou a habilidade usada dizem
      o que carregam; o sistema rola o teste do alvo e aplica. Vale para os
      três lados da mesa — herói, companheiros e inimigos. */
+  /* ---------------- REAÇÃO (v9.5) ----------------
+     Uma por rodada, decidida pelo sistema no instante do golpe: apara, ergue
+     escudo, esquiva ou revida. Corta o dano ANTES de ele virar PV e entrega
+     o envelope pronto para o Mestre narrar o gesto. */
+  const reacaoUsadaRef = useRef(false);
+  const pmReacaoRef = useRef(0);        // PM gasto em reações nesta rodada
+  const tentarReacaoNoGolpe = (a, pers) => {
+    if (reacaoUsadaRef.current || !a || !a.r) return null;
+    const gatilho = a.r.dano > 0 ? "sofre_dano" : "inimigo_erra";
+    const esc = escolherReacao({ pers, gatilho, dano: a.r.dano || 0, temReacao: true });
+    if (!esc) return null;
+    const res = resolverReacao(esc, { pers, dano: a.r.dano || 0, atacante: a.inimigo });
+    if (!res) return null;
+    reacaoUsadaRef.current = true;
+    pmReacaoRef.current += res.pm || 0;
+    pushMsgs([{ autor: "sistema", texto: res.texto }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${res.nota}`;
+    /* CONTRA-ATAQUE DE VERDADE: o revide rola e machuca, senão a reação seria
+       só uma frase bonita. O alvo é quem abriu a guarda. */
+    if (res.contraAtaca && combateRef.current) {
+      const comb = combateRef.current;
+      const alvo = (comb.inimigos || []).find((e) => e.nome === a.inimigo && !e.derrotado && e.vida > 0);
+      if (alvo) {
+        const nv = pers.nivel || 1;
+        const rr = resolverAtaque({
+          atacante: pers.nome, alvo, ehAtacanteInimigo: false,
+          bonusAtaque: Math.max(pers.atributos?.forca || 0, pers.atributos?.destreza || 0) + 2 + Math.floor((nv - 1) / 4),
+          danoBase: Math.round(danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)) * 0.6),
+          condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
+          tipoDano: elementoDaArma(pers), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
+        });
+        let pv = alvo.vida;
+        if (rr.dano > 0) {
+          pv = Math.max(0, alvo.vida - rr.dano);
+          combateRef.current = { ...comb, inimigos: comb.inimigos.map((e) => (e.nome !== alvo.nome ? e : { ...e, vida: pv, derrotado: pv <= 0, ultimoDano: rr.dano })) };
+          setCombate(combateRef.current);
+        }
+        pushMsgs([{ autor: "sistema", texto: rr.dano > 0 ? `${esc.icone} Revide em ${alvo.nome}: ${rr.dano} de dano (${pv}/${alvo.vidaMax})${pv <= 0 ? " ☠" : ""}` : `${esc.icone} Revide em ${alvo.nome}: errou` }]);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[REAÇÃO — REVIDE RESOLVIDO PELO SISTEMA] ${rr.dano > 0 ? `Meu contra-ataque acertou ${alvo.nome}: ${rr.dano} de dano (ele está com ${pv} de ${alvo.vidaMax}).` : `Meu contra-ataque passou de raspão em ${alvo.nome}.`} Narre o revide dentro do mesmo instante — não é um turno novo meu.`;
+      }
+    }
+    return res;
+  };
+
   const aplicarCondicoesDosGolpes = (acoes, persBase) => {
     let p = persBase;
     for (const a of (acoes || []).filter((x) => x.r && x.r.dano > 0 && x.alvoRef === "jogador")) {
@@ -2517,6 +2573,15 @@ export default function Taverna() {
       if (resp.mudancas && typeof resp.mudancas.mana === "number" && resp.mudancas.mana < 0) resp.mudancas.mana = 0;
       habUsadaRef.current = false;
     }
+    /* ---- O TURNO SÓ VIRA UMA VEZ POR RODADA (v9.5) ----
+       Buff de 3 turnos morria em uma rodada e meia: quem tem dois movimentos
+       (multiclasse) mandava DUAS respostas por rodada, e cada uma descontava
+       um turno. Agora, enquanto a rodada não fecha ("meu turno continua"), o
+       relógio dos efeitos e das condições não anda — o desconto acontece
+       quando a rodada inteira termina, como numa mesa. */
+    const contaTurno = !pularTickRef.current;
+    pularTickRef.current = false;
+    if (contaTurno) {
     /* passa 1 turno nos efeitos que já estavam ativos (os novos entram depois, com duração cheia) */
     const { efeitos, msgs: msgsTick } = tickEfeitos(pers);
     pers = { ...pers, efeitos };
@@ -2553,8 +2618,9 @@ export default function Taverna() {
       const nc = { ...comb, inimigos };
       combateRef.current = nc; setCombate(nc);
     }
-    /* tick das recargas de habilidade (v7.4.3): 1 turno por resposta */
-    if (pers.habRecarga && Object.keys(pers.habRecarga).length) {
+    }
+    /* tick das recargas de habilidade (v7.4.3): 1 turno por rodada */
+    if (contaTurno && pers.habRecarga && Object.keys(pers.habRecarga).length) {
       const rec = {};
       Object.entries(pers.habRecarga).forEach(([k, t]) => { const nt = (Number(t) || 0) - 1; if (nt > 0) rec[k] = nt; });
       pers = { ...pers, habRecarga: rec };
@@ -2876,6 +2942,7 @@ export default function Taverna() {
           ...(combateRef.current.inimigos || []).map((e) => ({ nome: e.nome, lado: "inimigo", modDestreza: e.agil ? 2 : 0 })),
         ];
         const ordem = rolarIniciativa(participantes);
+        reacaoUsadaRef.current = false;
         combateRef.current = { ...combateRef.current, ordem, rodada: 1, recursos: novosRecursos() };
         setCombate(combateRef.current);
         msgs.push(`🎲 Iniciativa — ${resumoIniciativa(ordem)}`);
@@ -2985,6 +3052,31 @@ export default function Taverna() {
       });
     } catch { /* o cão de guarda nunca derruba o turno */ }
     try { conferirNemesisNaNarrativa(resp.narrativa); } catch { /* idem */ }
+    /* ---- CÃO DE GUARDA DE MORTE NA PROSA (v9.5) ----
+       O anterior só pegava morte REGISTRADA em "combate.mortes_narradas". O
+       Mestre que mata na prosa e não registra passava batido — daí a criatura
+       de 320 PV "tombar" com 200 ainda na barra. Agora a narrativa é lida. */
+    try {
+      const comb = combateRef.current;
+      const vivos = (comb && comb.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
+      if (vivos.length) {
+        const semAc = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+        const MORTE = /(morre|morreu|mort[ao]\b|tomba|tombou|cai sem vida|sem vida|expira|ultimo suspiro|desaba (morto|sem vida)|e abatid|foi abatid|derrubad[oa] de vez|nao se levanta mais|corpo (dele|dela) )/i;
+        const NEGADO = /\b(nao|quase|ainda|se |como se|parece|fingi)\b/i;
+        const frases = String(resp.narrativa || "").split(/(?<=[.!?;])\s+|\n+/);
+        for (const e of vivos) {
+          const alvo = semAc(e.nome);
+          if (alvo.length < 3) continue;
+          const matou = frases.some((f) => {
+            const fs = semAc(f);
+            return fs.includes(alvo) && MORTE.test(fs) && !NEGADO.test(fs);
+          });
+          if (!matou) continue;
+          msgs.push(`⚖ Coesão do sistema: ${e.nome} NÃO morreu — ainda tem ${e.vida}/${e.vidaMax} PV. A luta continua.`);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CORREÇÃO DE COESÃO — MORTE INDEVIDA NA NARRAÇÃO] Você narrou a queda de ${e.nome}, mas o SISTEMA registra ${e.vida} de ${e.vidaMax} PV: ${e.nome} está DE PÉ e continua agindo. RETOME a cena tratando-o como vivo — sem ressurreição, sem "ele se ergue de novo", sem cinzas: ele simplesmente não caiu. E calibre a intensidade pelo dano REAL do envelope: ${e.vida} de ${e.vidaMax} PV significa que ele ainda tem ${Math.round((e.vida / (e.vidaMax || 1)) * 100)}% da vida — não descreva golpes pequenos como devastadores.`;
+        }
+      }
+    } catch { /* o cão de guarda nunca derruba o turno */ }
     /* detector de repetição: mede se o Mestre voltou a usar interrupção urgente */
     {
       const nrt = (resp.narrativa || "").toLowerCase();
@@ -3508,7 +3600,8 @@ export default function Taverna() {
       const nem = infoNemesis();
       const merc = resumoMercadoPrompt(mercadoAqui);
       const grp = resumoGrupoPrompt(p.grupo || []);
-      return `${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}`;
+      const rea = combateRef.current ? resumoReacoesPrompt(p) : "";
+      return `${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -3650,7 +3743,9 @@ export default function Taverna() {
     decretosRef.current = []; setDecretos(decretosRef.current);
     diaRef.current = 1; setDia(1);
     minutoRef.current = AMANHECER + 60; setMinuto(minutoRef.current);
-    acordouAbsRef.current = 0;
+    /* v9.5: o herói COMEÇA descansado. Com 0 aqui, o relógio do sono contava
+       desde a meia-noite do dia 1 e ele amanhecia exausto sem ter feito nada. */
+    acordouAbsRef.current = (diaRef.current - 1) * 1440 + minutoRef.current;
     nemesisRef.current = null; setNemesis(null);
     famaPatamarRef.current = 0;
     reinoRef.current = {}; setReino({});
@@ -3717,7 +3812,15 @@ export default function Taverna() {
       decretosRef.current = Array.isArray(sv.decretos) ? sv.decretos : []; setDecretos(decretosRef.current);
       diaRef.current = sv.dia || 1; setDia(diaRef.current);
       minutoRef.current = sv.minuto != null ? sv.minuto : AMANHECER + 60; setMinuto(minutoRef.current);
-      acordouAbsRef.current = sv.acordouAbs != null ? sv.acordouAbs : ((diaRef.current - 1) * 1440 + minutoRef.current); // saves antigos acordam descansados
+      /* RELÓGIO DO SONO (v9.5): saves antigos guardaram acordouAbs = 0 (bug do
+         início de campanha), o que fazia o herói "estar acordado há 250 horas"
+         e ficar exausto no meio de qualquer cena. Nada além de dois dias sem
+         dormir é plausível: acima disso, tratamos como descansado. */
+      {
+        const agoraAbs = (diaRef.current - 1) * 1440 + minutoRef.current;
+        const bruto = sv.acordouAbs != null ? sv.acordouAbs : agoraAbs;
+        acordouAbsRef.current = (agoraAbs - bruto) > 48 * 60 ? agoraAbs : bruto;
+      }
       nemesisRef.current = sv.nemesis && typeof sv.nemesis === "object" ? sv.nemesis : null; setNemesis(nemesisRef.current);
       correioRef.current = garantirCorreio(sv.correio); setCorreio(correioRef.current);
       jornadaRef.current = sv.jornada && typeof sv.jornada === "object" ? sv.jornada : null; setJornada(jornadaRef.current);
@@ -3821,7 +3924,15 @@ export default function Taverna() {
     const alvo = vivos.find((e) => acaoN.includes(norm(e.nome))) || vivos[0];
     const atr = Math.max(pers.atributos?.intelecto || 0, pers.atributos?.presenca || 0, pers.atributos?.forca || 0, pers.atributos?.destreza || 0);
     const bonusAtk = atr + 2 + Math.floor(((pers.nivel || 1) - 1) / 4);
-    let danoBase = h.danoBase != null ? h.danoBase + d(4) - 1 : (Math.max(0, Number(h.custo) || 0) * 2 + d(6) + atr);
+    /* DANO DE HABILIDADE (v9.5): a conta antiga era custo×2 + d6 + atributo —
+       ignorava o NÍVEL por completo, então um mago 20 lançava a mesma magia de
+       um mago 1 (uns 15 de dano contra chefes de 300 PV). Agora sai dos dados
+       da classe (que crescem com o nível, como no 5e) e o custo em PM é o que
+       separa um truque de uma magia de arrasar. */
+    const nvHab = pers.nivel || 1;
+    let danoBase = h.danoBase != null
+      ? h.danoBase + d(4) - 1
+      : danoDaClasse(pers.classe, nvHab, atr) + Math.max(0, Number(h.custo) || 0) * 3;
     /* molde EXECUÇÃO (únicas): dano dobrado em alvo com menos de metade dos PV */
     if (h.molde === "execucao" && alvo.vidaMax && alvo.vida < alvo.vidaMax / 2) danoBase *= 2;
     const r = resolverAtaque({
@@ -3909,33 +4020,57 @@ export default function Taverna() {
     let extraTempo = "";
     if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) extraTempo = avancarMinutos(MINUTOS_POR_TURNO);
     setEntrada(""); setHabAbertas(false);
-    if (habSel) {
-      const h = habSel; setHabSel(null);
-      const custo = Math.max(0, Number(h.custo) || 0);
-      if (personagem.mana < custo) { pushMsgs([{ autor: "sistema", texto: `Mana insuficiente para ${h.nome}.` }]); return; }
-      /* RECARGA (v7.4.3): habilidade em fôlego não dispara — nem gasta movimento */
-      const recSel = (personagem.habRecarga || {})[(h.nome || "").toLowerCase()] || 0;
-      if (recSel > 0) { pushMsgs([{ autor: "sistema", texto: `⏳ ${h.nome} está em recarga — pronta em ${recSel} turno${recSel > 1 ? "s" : ""}.` }]); return; }
-      /* ECONOMIA (v7.4): em combate, habilidade gasta a ação (ou a extra) */
-      if (combateRef.current && combateRef.current.economia) {
-        const ecoH = combateRef.current.economia;
-        if (ecoH.acao <= 0 && ecoH.extra <= 0) { pushMsgs([{ autor: "sistema", texto: "⏳ Sem movimentos neste turno — toque em Encerrar turno." }]); return; }
-        if (ecoH.acao > 0) ecoH.acao -= 1; else ecoH.extra -= 1;
-        combateRef.current = { ...combateRef.current, economia: { ...ecoH } }; setCombate(combateRef.current);
+    if (habsSel.length) {
+      /* ---- TURNO COM VÁRIAS HABILIDADES (v9.5) ----
+         Quem tem dois movimentos lança duas magias no MESMO turno e descreve
+         as duas de uma vez. O sistema resolve cada uma na ordem escolhida,
+         cobra PM e movimento de cada, e manda ao Mestre um envelope único. */
+      const escolhidas = [...habsSel]; setHabsSel([]);
+      let pers = { ...personagem };
+      const linhas = [];
+      const desfechos = [];
+      const usadas = [];
+      let custoTotal = 0;
+      for (const h of escolhidas) {
+        const custo = Math.max(0, Number(h.custo) || 0);
+        if (pers.mana < custo) { pushMsgs([{ autor: "sistema", texto: `Mana insuficiente para ${h.nome} — parei antes dela.` }]); break; }
+        const recSel = (pers.habRecarga || {})[(h.nome || "").toLowerCase()] || 0;
+        if (recSel > 0) { pushMsgs([{ autor: "sistema", texto: `⏳ ${h.nome} está em recarga (${recSel}t) — pulei.` }]); continue; }
+        /* ECONOMIA (v7.4): cada habilidade gasta um movimento (ação ou extra) */
+        if (combateRef.current && combateRef.current.economia) {
+          const ecoH = combateRef.current.economia;
+          if (ecoH.acao <= 0 && ecoH.extra <= 0) { pushMsgs([{ autor: "sistema", texto: `⏳ Sem movimentos para ${h.nome} — ficou para o próximo turno.` }]); break; }
+          if (ecoH.acao > 0) ecoH.acao -= 1; else ecoH.extra -= 1;
+          combateRef.current = { ...combateRef.current, economia: { ...ecoH } }; setCombate(combateRef.current);
+        } else if (usadas.length >= 1) {
+          /* fora de combate, uma por vez: não há economia de turno para gastar */
+          pushMsgs([{ autor: "sistema", texto: `✦ ${h.nome} fica para depois — fora de combate uso uma habilidade por vez.` }]);
+          break;
+        }
+        const recH = h.recarga != null ? Math.max(0, Number(h.recarga) || 0) : recargaPadrao(custo);
+        pers = { ...pers, mana: pers.mana - custo, habRecarga: recH > 0 ? { ...(pers.habRecarga || {}), [(h.nome || "").toLowerCase()]: recH } : (pers.habRecarga || {}) };
+        const buffH = aplicarBuffDeHabilidade(h, pers);
+        pers = buffH.pers;
+        if (buffH.texto) linhas.push(buffH.texto);
+        if (buffH.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${buffH.nota}`;
+        const desfechoH = resolverHabilidadeOfensiva(h, acao, pers);
+        if (desfechoH) desfechos.push(`"${h.nome}": ${desfechoH}`);
+        usadas.push({ h, custo, recH });
+        custoTotal += custo;
       }
-      const recH = h.recarga != null ? Math.max(0, Number(h.recarga) || 0) : recargaPadrao(custo);
-      let pers = { ...personagem, mana: personagem.mana - custo, habRecarga: recH > 0 ? { ...(personagem.habRecarga || {}), [(h.nome || "").toLowerCase()]: recH } : (personagem.habRecarga || {}) };
-      const buffH = aplicarBuffDeHabilidade(h, pers);
-      pers = buffH.pers;
-      if (buffH.texto) pushMsgs([{ autor: "sistema", texto: buffH.texto }]);
-      if (buffH.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${buffH.nota}`;
+      if (!usadas.length) return;
       setPersonagem(pers);
-      pushMsgs([{ autor: "jogador", texto: `✦ ${h.nome} — ${acao}` }, { autor: "sistema", texto: `Você gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}${recH > 0 ? ` · ⏳ recarga ${recH}t` : ""}` }]);
       habUsadaRef.current = true;
-      const desfechoH = resolverHabilidadeOfensiva(h, acao, pers);
-      enviar(desfechoH
-        ? `[HABILIDADE — RESOLVIDA PELO SISTEMA] Usei "${h.nome}" (custo ${custo} PM, já descontado). O SISTEMA já rolou o acerto, calculou e APLICOU o resultado: ${desfechoH}. Sua função é APENAS narrar esse resultado exato — não recalcule, não mude quem acertou, NÃO declare a morte de quem ainda tem PV. Narre a técnica à altura da minha intenção: ${acao}`
-        : `[HABILIDADE] Uso "${h.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). Efeito: ${h.descricao}. COMO eu a uso: ${acao}. Narre conforme minha intenção — se incerto, peça a rolagem apropriada. LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte; se o inimigo ainda tiver PV, ele segue de pé.${extraTempo}`, pers);
+      const nomes = usadas.map((u) => u.h.nome);
+      pushMsgs([
+        { autor: "jogador", texto: `✦ ${nomes.join(" + ")} — ${acao}` },
+        { autor: "sistema", texto: `Você gastou ${custoTotal} PM · restam ${pers.mana}/${pers.manaMax}${usadas.some((u) => u.recH > 0) ? ` · ⏳ recarga: ${usadas.filter((u) => u.recH > 0).map((u) => `${u.h.nome} ${u.recH}t`).join(", ")}` : ""}` },
+        ...linhas.map((t) => ({ autor: "sistema", texto: t })),
+      ]);
+      const listaTxt = usadas.map((u) => `"${u.h.nome}" (${u.custo} PM${u.h.descricao ? ` — ${u.h.descricao}` : ""})`).join(" e depois ");
+      enviar(desfechos.length
+        ? `[HABILIDADES — RESOLVIDAS PELO SISTEMA] No MESMO turno usei ${listaTxt}. O SISTEMA já rolou o acerto, calculou e APLICOU tudo: ${desfechos.join(" · ")}. Narre a sequência inteira como UM só turno meu — não recalcule, não mude quem acertou, NÃO declare a morte de quem ainda tem PV. Minha intenção: ${acao}`
+        : `[HABILIDADES] No MESMO turno uso ${listaTxt} (PM já descontados; tenho ${pers.mana}). COMO eu as uso: ${acao}. Narre a sequência conforme minha intenção — se incerto, peça a rolagem apropriada. LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte.${extraTempo}`, pers);
       return;
     }
     /* Detecta habilidade citada por texto (ex.: "uso Projétil Arcano") e desconta o PM
@@ -4047,6 +4182,11 @@ export default function Taverna() {
           logDadoCombate(resumoDoAtaque(a.r));
           if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(a.r) });
           linhasSis.push({ autor: "sistema", texto: a.r.dano > 0 ? `🛡 ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: ${a.r.critico ? "CRÍTICO! " : ""}${a.r.dano} de dano` : `🛡 ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: errou` });
+          /* REAÇÃO (v9.5): a janela acontece AQUI, antes do dano virar PV */
+          if (a.alvoRef === "jogador") {
+            const rc = tentarReacaoNoGolpe(a, personagem);
+            if (rc && rc.danoFinal != null) a.r.dano = rc.danoFinal;
+          }
           if (a.r.dano > 0) {
             if (a.alvoRef === "jogador") danoNoJogador += a.r.dano;
             else grupoAtual = grupoAtual.map((g) => g.nome === a.alvoNome ? { ...g, vida: Math.max(0, (g.vida || 0) - a.r.dano) } : g);
@@ -4071,7 +4211,8 @@ export default function Taverna() {
             }
           }
         }
-        persAtual = { ...personagem, vida: Math.max(0, personagem.vida - danoNoJogador), grupo: grupoAtual };
+        persAtual = { ...personagem, vida: Math.max(0, personagem.vida - danoNoJogador), mana: Math.max(0, (personagem.mana || 0) - pmReacaoRef.current), grupo: grupoAtual };
+        pmReacaoRef.current = 0;
         if (persConcQuebrada) persAtual = { ...persAtual, efeitos: (persAtual.efeitos || []).filter((e) => e.nome !== persConcQuebrada) };
         persAtual = aplicarCondicoesDosGolpes(acoes, persAtual);
 
@@ -4144,11 +4285,15 @@ export default function Taverna() {
         if (combateRef.current) {
           combateRef.current = { ...combateRef.current, economia: { acao: 1, extra: 1 } };
           setCombate(combateRef.current);
+          reacaoUsadaRef.current = false;   // nova rodada, reação de novo disponível
         }
       }
 
       if (!esgotouTurno && !fechouNoMeuGolpe) {
-        /* MEU TURNO CONTINUA: só narro meus golpes — o mundo ainda NÃO revida */
+        /* MEU TURNO CONTINUA: só narro meus golpes — o mundo ainda NÃO revida.
+           E a rodada NÃO fecha: buffs e condições não podem perder um turno só
+           porque eu ataquei duas vezes (v9.5). */
+        pularTickRef.current = true;
         enviar(`[COMBATE — MEU GOLPE RESOLVIDO PELO SISTEMA, TURNO AINDA MEU] Minha sequência de ${desfecho}. O dano já foi aplicado — NÃO recalcule. Narre SÓ os meus golpes e as reações instantâneas (1-3 frases: quem cambaleou, quem urrou) e PARE — NÃO faça os inimigos agirem nem contra-atacarem ainda: meu turno continua, ainda tenho ${ecoAgora ? ecoAgora.acao + ecoAgora.extra : 1} movimento(s). Ação declarada: ${acao}`, persAtual);
         return;
       }
@@ -4228,6 +4373,10 @@ export default function Taverna() {
       logDadoCombate(resumoDoAtaque(a.r));
       if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(a.r) });
       linhasSis.push({ autor: "sistema", texto: a.r.dano > 0 ? `🛡 ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: ${a.r.critico ? "CRÍTICO! " : ""}${a.r.dano} de dano` : `🛡 ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: errou` });
+      if (a.alvoRef === "jogador") {
+        const rc = tentarReacaoNoGolpe(a, personagem);
+        if (rc && rc.danoFinal != null) a.r.dano = rc.danoFinal;
+      }
       if (a.r.dano > 0) {
         if (a.alvoRef === "jogador") danoNoJogador += a.r.dano;
         else grupoAtual = grupoAtual.map((g) => g.nome === a.alvoNome ? { ...g, vida: Math.max(0, (g.vida || 0) - a.r.dano) } : g);
@@ -4236,7 +4385,8 @@ export default function Taverna() {
       partes.push(`${a.inimigo}${a.golpeNome ? ` (${a.golpeNome})` : ""}→${a.alvoNome}: ${res}`);
     }
     if (linhasSis.length) pushMsgs(linhasSis);
-    let persAtual = { ...personagem, vida: Math.max(0, personagem.vida - danoNoJogador), grupo: grupoAtual };
+    let persAtual = { ...personagem, vida: Math.max(0, personagem.vida - danoNoJogador), mana: Math.max(0, (personagem.mana || 0) - pmReacaoRef.current), grupo: grupoAtual };
+    pmReacaoRef.current = 0;
     persAtual = aplicarCondicoesDosGolpes(acoes, persAtual);
     /* companheiros agem como numa rodada normal */
     const jogadorCaido = persAtual.vida <= 0;
@@ -4280,6 +4430,7 @@ export default function Taverna() {
       }
     }
     /* nova rodada: movimentos renovados */
+    reacaoUsadaRef.current = false;   // nova rodada, reação de novo disponível
     combateRef.current = { ...combPos, economia: { acao: 1, extra: 1 }, rodada: (combPos.rodada || 1) + 1 };
     setCombate(combateRef.current);
     fecharSeTodosCairam();
@@ -5506,6 +5657,12 @@ export default function Taverna() {
       const idx = (p.inventario || []).findIndex((raw) => (typeof raw === "string" ? raw : (raw && raw.nome) || "") === nomeItem);
       if (idx >= 0) p = { ...p, inventario: p.inventario.filter((_, i) => i !== idx) };
     }
+    /* TÔNICO REVIGORANTE (v9.5): tirar a condição não basta — se o relógio do
+       sono continuasse estourado, a exaustão voltaria no turno seguinte. O
+       tônico compra horas, não substitui a noite. */
+    if ((cons.remove || []).includes("exausto")) {
+      acordouAbsRef.current = absMin() - Math.round((HORAS_AVISO_SONO - 4) * 60);
+    }
     setPersonagem(p);
     pushMsgs([{ autor: "sistema", texto: r.texto }]);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONSUMÍVEL — JÁ APLICADO PELO SISTEMA] Bebi ${cons.nome}. ${r.texto.replace(/^[^ ]+ /, "")}. O número já foi rolado e aplicado: narre o gole e o alívio (ou o gosto), sem recalcular e sem me devolver PV/PM. ${comb ? "Isso foi ação BÔNUS — ainda posso agir neste turno." : ""}`;
@@ -6052,7 +6209,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     }
   };
 
-  const irMenu = () => { setAba(null); setHabAbertas(false); setHabSel(null); setEntrada(""); setDadoRolando(false); setFase("menu"); };
+  const irMenu = () => { setAba(null); setHabAbertas(false); setHabsSel([]); setEntrada(""); setDadoRolando(false); setFase("menu"); };
 
   const bloqueado = carregando || !!rolagem;
 
@@ -6137,7 +6294,21 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
             {/* v9.4: as sugestões de ação saíram. Numa mesa de verdade o Mestre
                 não entrega três opções prontas — ele descreve a cena e espera. */}
-            {habAbertas && <PainelHabilidades personagem={personagem} selecionar={(h) => { setHabSel(h); setHabAbertas(false); }} fechar={() => setHabAbertas(false)} />}
+            {habAbertas && (() => {
+              /* quantas habilidades cabem no turno: uma por movimento (v9.5) */
+              const eco = combate && combate.economia;
+              const limite = eco ? Math.max(1, (eco.acao || 0) + (eco.extra || 0)) : 1;
+              return (
+                <PainelHabilidades personagem={personagem} escolhidas={habsSel} limite={limite}
+                  selecionar={(h) => {
+                    const ja = habsSel.some((x) => x.nome === h.nome);
+                    const nova = ja ? habsSel.filter((x) => x.nome !== h.nome) : [...habsSel, h];
+                    setHabsSel(nova);
+                    if (!ja && nova.length >= limite) setHabAbertas(false);
+                  }}
+                  fechar={() => setHabAbertas(false)} />
+              );
+            })()}
             {acoesAbertas && (
               <div className="px-4 md:px-8 pb-2 shrink-0" style={{ paddingRight: "68px" }}>
                 <div className="rounded-2xl p-3" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
@@ -6156,12 +6327,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               </div>
             )}
 
-            {habSel && !rolagem && (
-              <div className="tv-fade px-4 md:px-8 pb-1.5" style={{ paddingRight: "68px" }}>
-                <div className="inline-flex items-center gap-2 rounded-full pl-3.5 pr-1.5 py-1.5" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
-                  <span className="tv-mono text-xs" style={{ color: T.violetSoft }}>✦ {habSel.nome} · {habSel.custo} PM</span>
-                  <button onClick={() => setHabSel(null)} className="tv-mono text-xs rounded-full w-5 h-5 flex items-center justify-center" style={{ background: T.line, color: T.inkDim }}>✕</button>
-                </div>
+            {habsSel.length > 0 && !rolagem && (
+              <div className="tv-fade px-4 md:px-8 pb-1.5 flex flex-wrap gap-1.5" style={{ paddingRight: "68px" }}>
+                {habsSel.map((h, i) => (
+                  <div key={i} className="inline-flex items-center gap-2 rounded-full pl-3.5 pr-1.5 py-1.5" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
+                    <span className="tv-mono text-xs" style={{ color: T.violetSoft }}>✦ {h.nome} · {h.custo} PM</span>
+                    <button onClick={() => setHabsSel(habsSel.filter((x) => x.nome !== h.nome))} className="tv-mono text-xs rounded-full w-5 h-5 flex items-center justify-center" style={{ background: T.line, color: T.inkDim }}>✕</button>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -6355,9 +6528,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 </button>
               </div>
               {/* LINHA 2 — escrita: largura inteira, campo alto e confortável */}
-              <div className="flex gap-2 rounded-2xl p-2 min-w-0" style={{ background: T.panel, border: `1px solid ${habSel ? T.violet : T.line}` }}>
+              <div className="flex gap-2 rounded-2xl p-2 min-w-0" style={{ background: T.panel, border: `1px solid ${habsSel.length ? T.violet : T.line}` }}>
                 <input value={entrada} onChange={(e) => setEntrada(e.target.value)} onKeyDown={(e) => e.key === "Enter" && agir(entrada)}
-                  placeholder={rolagem ? "Role o dado abaixo…" : habSel ? `Como você usa ${habSel.nome}?` : "O que você faz? Fale, aja, explore…"}
+                  placeholder={rolagem ? "Role o dado abaixo…" : habsSel.length ? `Como você usa ${habsSel.map((h) => h.nome).join(" e ")}?` : "O que você faz? Fale, aja, explore…"}
                   disabled={bloqueado} className="flex-1 bg-transparent outline-none tv-body text-[15px] px-3 py-1.5 min-w-0" style={{ color: T.ink }} />
                 <Botao primario pequeno desativado={bloqueado || !entrada.trim()} onClick={() => agir(entrada)}>Agir →</Botao>
               </div>
