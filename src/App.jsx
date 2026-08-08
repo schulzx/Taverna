@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
-import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade } from "./classes.js";
+import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { gerarGeografia, garantirGeografia } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, danoDaClasse, ataquesDoInimigo, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
@@ -34,6 +34,10 @@ import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisT
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { BRAND, SLOGAN, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, FONT_CSS, GENEROS, ATRIBUTOS } from "./constantes.js";
+import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
+import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito, naturezaDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
+import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, detectarPedidoDeTeste, envelopeDoTeste, TESTES_PROMPT } from "./testes.js";
+import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, detectarAscensaoNarrada, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt } from "./prompt.js";
 import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./ui.jsx";
@@ -269,70 +273,42 @@ function ModalCena({ personagem, combate, mundo, nomeCampanha, fechar }) {
   );
 }
 
+/* MODAL DE NÍVEL (v9.6): deixou de exigir uma decisão apressada. O nível
+   entrega PONTOS — de habilidade e de atributo — e o jogador gasta quando
+   quiser, na ficha, olhando a build inteira. É o que torna a multiclasse
+   possível: ninguém planeja um mago-guerreiro num modal de meio segundo. */
 function ModalNivel({ nivel, personagem, escolher }) {
-  const [etapa, setEtapa] = React.useState("atributo");
-  const [attrEscolhido, setAttrEscolhido] = React.useState(null);
-  const disponiveis = habilidadesDisponiveis(personagem.classe, nivel, personagem.habilidades || []);
-
-  /* passo 2: escolher uma habilidade da árvore da classe */
-  if (etapa === "habilidade") {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.9)", backdropFilter: "blur(4px)" }}>
-        <div className="tv-fade w-full max-w-md rounded-2xl p-6 tv-scroll overflow-y-auto" style={{ background: T.panel, border: `1px solid ${T.violet}`, maxHeight: "90vh" }}>
-          <div className="text-center mb-4">
-            <div className="tv-mono text-xs uppercase tracking-widest mb-1" style={{ color: T.violetSoft }}>✦ Nova habilidade ✦</div>
-            <div className="tv-display text-3xl" style={{ color: T.ink }}>{personagem.classe}{personagem.subclasse ? ` · ${personagem.subclasse}` : ""}</div>
-            <div className="tv-body text-sm mt-2" style={{ color: T.inkDim }}>Escolha uma habilidade do seu caminho:</div>
-          </div>
-          {disponiveis.length === 0 ? (
-            <div className="text-center">
-              <div className="tv-body text-sm mb-4" style={{ color: T.inkDim }}>Você já domina tudo que este nível oferece. Novas habilidades virão em níveis maiores.</div>
-              <Botao primario onClick={() => escolher(attrEscolhido, null)}>Continuar →</Botao>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {disponiveis.map((h) => (
-                <button key={h.nome} onClick={() => escolher(attrEscolhido, h)} className="w-full rounded-xl p-3 text-left transition-all"
-                  style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="tv-display text-lg" style={{ color: T.ink }}>{h.nome}</span>
-                    <span className="tv-mono text-[10px] shrink-0" style={{ color: T.violetSoft }}>{h.custo} PM · nv {h.nivel}</span>
-                  </div>
-                  <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{h.descricao}</div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
+  const ganhoHab = pontosNoNivel(nivel);
+  const ganhoAtr = pontosAtributoNoNivel(nivel);
+  const teto = tetoAtributo(nivel);
+  const tetoAnterior = tetoAtributo(nivel - 1);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.9)", backdropFilter: "blur(4px)" }}>
       <div className="tv-fade w-full max-w-md rounded-2xl p-6 tv-scroll overflow-y-auto" style={{ background: T.panel, border: `1px solid ${T.amber}`, maxHeight: "90vh" }}>
         <div className="text-center mb-5">
           <div className="tv-mono text-xs uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>✦ Nível alcançado ✦</div>
           <div className="tv-display text-5xl" style={{ color: T.ink }}>Nível {nivel}</div>
-          <div className="tv-body text-sm mt-2" style={{ color: T.inkDim }}>+3 PV máx · +2 PM máx · vida e mana restauradas · <b style={{ color: T.violetSoft }}>+1 ponto de habilidade</b> (gaste em Gestão › Talentos).<br />Escolha um atributo para fortalecer:</div>
+          <div className="tv-body text-sm mt-2" style={{ color: T.inkDim }}>+3 PV máx · +2 PM máx · vida e mana restauradas.</div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          {ATRIBUTOS.map((a) => {
-            const atual = personagem.atributos[a.id];
-            const noMax = atual >= ATRIBUTO_MAX;
-            return (
-              <button key={a.id} onClick={() => { if (noMax) return; escolher(a.id, null); }} disabled={noMax}
-                className="rounded-xl p-3 text-left transition-all"
-                style={{ background: T.panelSoft, border: `1px solid ${noMax ? T.line : T.amber}`, opacity: noMax ? 0.4 : 1, cursor: noMax ? "not-allowed" : "pointer" }}>
-                <div className="flex items-baseline justify-between">
-                  <span className="tv-display text-lg" style={{ color: T.ink }}>{a.nome}</span>
-                  <span className="tv-mono text-xs" style={{ color: T.amber }}>+{atual} → +{Math.min(ATRIBUTO_MAX, atual + 1)}</span>
-                </div>
-                <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{a.desc}</div>
-              </button>
-            );
-          })}
+        <div className="space-y-2 mb-5">
+          <div className="rounded-xl p-3 flex items-center justify-between" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
+            <span className="tv-body text-sm" style={{ color: T.ink }}>Pontos de habilidade</span>
+            <span className="tv-mono text-sm font-semibold" style={{ color: T.violetSoft }}>+{ganhoHab}</span>
+          </div>
+          <div className="rounded-xl p-3 flex items-center justify-between" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+            <span className="tv-body text-sm" style={{ color: T.ink }}>Pontos de atributo</span>
+            <span className="tv-mono text-sm font-semibold" style={{ color: T.amber }}>+{ganhoAtr}</span>
+          </div>
+          {teto > tetoAnterior && (
+            <div className="rounded-xl p-3 tv-body text-xs" style={{ background: T.panelSoft, border: `1px dashed ${T.ok}`, color: T.ok }}>
+              O teto dos atributos subiu para +{teto}.
+            </div>
+          )}
         </div>
+        <div className="tv-body text-xs text-center mb-4" style={{ color: T.inkDim }}>
+          Gaste onde quiser em <b style={{ color: T.amberSoft }}>Gestão › Talentos</b> — habilidades da sua classe, de outra classe, ou nos atributos que a sua build pede.
+        </div>
+        <div className="text-center"><Botao primario onClick={() => escolher()}>Continuar →</Botao></div>
       </div>
     </div>
   );
@@ -823,7 +799,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, bloqueado }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onEncararProva, onDesistirRito, bloqueado }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1057,7 +1033,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
         )}
 
         {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} />}
-        {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"}  onMilagre={onMilagreUI} mapa={mapa} devocao={devocao} />}
+        {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"}  onMilagre={onMilagreUI} mapa={mapa} devocao={devocao} onEncararProva={onEncararProva} onDesistirRito={onDesistirRito} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} />}
         {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} />}
@@ -1067,7 +1043,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
         {aba === "gestao" && subGestao === "correio" && <PainelCorreio correio={correio} faccoes={((mapa && mapa.faccoes) || []).filter((f) => f && f.nome && !f.doJogador && f.relacao !== "jogador").map((f) => f.nome)} dia={dia} moedas={personagem.moedas || 0} enviarCarta={enviarCarta} responderPeticao={responderPeticao} />}
 
         {/* MERCADO (v9.2): estoque e preço do sistema; a IA só narra a cena */}
-        {aba === "gestao" && subGestao === "talentos" && <PainelTalentos personagem={personagem} grupo={personagem.grupo || []} onAprender={onAprenderHab} onRespec={onRespec} onEscolherSubclasse={onEscolherSubclasse} />}
+        {aba === "gestao" && subGestao === "talentos" && <PainelTalentos personagem={personagem} grupo={personagem.grupo || []} onAprender={onAprenderHab} onRespec={onRespec} onEscolherSubclasse={onEscolherSubclasse} onEscolherEspecializacao={onEscolherEspecializacao} onSubirAtributo={onSubirAtributo} onRespecAtributos={onRespecAtributos} />}
 
         {aba === "gestao" && subGestao === "mercado" && (() => {
           const bancas = mercadoAqui || [];
@@ -1918,6 +1894,8 @@ function TelaPersonagem({ mundo, concluir }) {
             antecedente: antObj.nome, antecedenteGancho: antObj.gancho,
             semente: `${nome.trim()}|${conceito.trim()}|${Math.floor(Math.random() * 100000)}`,
             atributos: attrFinais, vida: vidaMax + (antObj.pv || 0), vidaMax: vidaMax + (antObj.pv || 0), mana: manaMax + (antObj.pm || 0), manaMax: manaMax + (antObj.pm || 0),
+            /* a criação é o piso da ficha: nem o respec desce abaixo dela (v9.6) */
+            baseAtributos: { ...attrFinais }, pontosAtr: 0, atributosVersao: 1,
             nivel: 1, xp: 0, moedas: MOEDAS_INICIAIS + (antObj.moedas || 0), nivelPendentes: 0,
             inventario: antObj.item ? [antObj.item] : [], habilidades: habsIniciais, grupo: [],
             efeitos: [], condicoes: [], equipamento: [], equipados: {},
@@ -2430,10 +2408,22 @@ export default function Taverna() {
     if (port.alvo === "aliados") {
       p = { ...p, grupo: (p.grupo || []).map((g) => ((g.vida || 0) > 0 ? { ...g, condicoes: [...(g.condicoes || []).filter((c) => c.id !== res.cond.id), res.cond] } : g)) };
     }
+    /* BÔNUS DE DANO COM ESCOLA (v9.6): a condição já dava vantagem nas rolagens,
+       mas o dano não mudava — Fúria de Batalha era só uma palavra bonita. Agora
+       o buff vira também um efeito numérico, MARCADO com a natureza da
+       habilidade que o criou: fúria de guerreiro só levanta golpe físico. */
+    let extraEscopo = "";
+    if (res.cond.tipo === "bom") {
+      const forca = Math.max(1, Math.round((Number(h.custo) || 2) / 2));
+      const escopo = naturezaDaHabilidade(h, pers);
+      const efeito = { nome: h.nome, bonus: forca, turnos: res.cond.turnos || 3, aplica: "dano", escopo };
+      p = { ...p, efeitos: [...(p.efeitos || []).filter((e) => e.nome !== h.nome), efeito] };
+      extraEscopo = ` · +${forca} de dano ${escopo === "fisico" ? "físico" : "mágico"}`;
+    }
     return {
       pers: p,
-      texto: `${res.cond.icone} ${h.nome}: ${res.cond.nome}${res.cond.turnos ? ` (${res.cond.turnos}t)` : ""}${port.alvo === "aliados" ? " — em você e no grupo" : ""} · ${res.cond.efeito}`,
-      nota: `[EFEITO APLICADO PELO SISTEMA] "${h.nome}" deixou ${port.alvo === "aliados" ? "eu e meu grupo" : "eu"} ${res.cond.nome.toLowerCase()} (${res.cond.efeito}). Já está na ficha — narre a manifestação e não envie condição nenhuma por isso.`,
+      texto: `${res.cond.icone} ${h.nome}: ${res.cond.nome}${res.cond.turnos ? ` (${res.cond.turnos}t)` : ""}${port.alvo === "aliados" ? " — em você e no grupo" : ""} · ${res.cond.efeito}${extraEscopo}`,
+      nota: `[EFEITO APLICADO PELO SISTEMA] "${h.nome}" deixou ${port.alvo === "aliados" ? "eu e meu grupo" : "eu"} ${res.cond.nome.toLowerCase()} (${res.cond.efeito})${extraEscopo ? `, e o bônus de dano vale só para o que é ${extraEscopo.includes("físico") ? "físico" : "mágico"}` : ""}. Já está na ficha — narre a manifestação e não envie condição nenhuma por isso.`,
     };
   };
 
@@ -3024,6 +3014,13 @@ export default function Taverna() {
         }
         pers = p2;
         setPersonagem(p2);
+        /* DEICÍDIO (v9.6): um deus tombou nesta luta? O sistema reconhece e
+           abre o rito. Antes disso, "assimilar o poder" era só uma frase que o
+           Mestre escrevia e a ficha ignorava. */
+        {
+          const abatido = identificarDivindadeAbatida(resp.mudancas.__inimigosFinais || [], divindadeRef.current);
+          if (abatido) abrirRitoAscensao(abatido, p2.nivel || 1);
+        }
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — espólios já aplicados pelo sistema: +${esp.moedas} moedas e +${esp.xp} XP para todos] NÃO envie moedas nem xp (seria dobrado). Narre o desfecho da luta em 2-3 frases.${itemCaido ? ` O SISTEMA derrubou um item: "${itemCaido.nome}" (${itemCaido.raridade}${itemCaido.poder ? `, poder: ${itemCaido.poder}` : ""}) — já está na minha mochila, NÃO envie "adicionar_equipamento" nem "adicionar_itens". Apenas descreva o achado com emoção, coerente com os inimigos derrotados.` : " Nenhum equipamento especial desta vez — não envie itens."}${consCaidos.length ? ` O sistema também colocou na minha bolsa: ${consCaidos.map((c) => c.nome).join(", ")} — já estão comigo, não envie itens por isso; mencione de passagem onde estavam (num cinto, numa sacola, no corpo de alguém).` : ""}${chefeCaido ? " A MASMORRA FOI CONCLUÍDA e o tesouro do chefe já foi entregue pelo sistema — narre a saída triunfal e retome o mundo lá fora." : ""}`;
       }
     }
@@ -3052,6 +3049,18 @@ export default function Taverna() {
       });
     } catch { /* o cão de guarda nunca derruba o turno */ }
     try { conferirNemesisNaNarrativa(resp.narrativa); } catch { /* idem */ }
+    /* ---- CÃO DE GUARDA DE ASCENSÃO (v9.6) ----
+       O Mestre narrou o herói virando deus sem que o sistema tenha promovido
+       ninguém. É exatamente o que aconteceu com o Semideus que "assimilou" um
+       GD 3 e continuou GD 2 na ficha: a narração criava um fato que a mecânica
+       desconhecia. Aqui a ficha ganha, sempre. */
+    try {
+      const av = detectarAscensaoNarrada(resp.narrativa, divindadeRef.current, pers.nivel || 1);
+      if (av) {
+        msgs.push(`⚱ O Mestre narrou uma ascensão que o sistema não deu — você continua ${tituloDe(av.gd)} (GD ${av.gd}). ${av.emRito ? "O rito ainda está em curso." : "Ascender exige o rito."}`);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${av.nota}`;
+      }
+    } catch { /* idem */ }
     /* ---- CÃO DE GUARDA DE MORTE NA PROSA (v9.5) ----
        O anterior só pegava morte REGISTRADA em "combate.mortes_narradas". O
        Mestre que mata na prosa e não registra passava batido — daí a criatura
@@ -3601,7 +3610,12 @@ export default function Taverna() {
       const merc = resumoMercadoPrompt(mercadoAqui);
       const grp = resumoGrupoPrompt(p.grupo || []);
       const rea = combateRef.current ? resumoReacoesPrompt(p) : "";
-      return `${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}`;
+      /* v9.6: a ficha de atributos, os combos que a build permite e o rito de
+         ascensão em curso — os três lugares onde o Mestre inventava por não saber */
+      const atr = resumoAtributosPrompt(p);
+      const cmb = combateRef.current ? resumoCombosPrompt(p) : "";
+      const rit = resumoRitoPrompt(divindadeRef.current, p.nivel || 1);
+      return `${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -3878,6 +3892,8 @@ export default function Taverna() {
     const vivos = comb.inimigos.filter((e) => !e.derrotado);
     const gdJ = grauDe(divindadeRef.current);
     const bonusAtkBase = Math.max((pers.atributos?.forca || 0), (pers.atributos?.destreza || 0)) + 2 + Math.floor(((pers.nivel || 1) - 1) / 4);
+    /* buffs FÍSICOS somam no golpe de arma — os mágicos, não (v9.6) */
+    const bArma = bonusDeArma(pers);
     /* ATAQUES MÚLTIPLOS (D&D): 2 ataques no nível 5, 3 no 11, 4 no 20 */
     const nv = pers.nivel || 1;
     /* 5e: marciais ganham Ataque Extra; conjuradores fazem UMA conjuração com
@@ -3899,14 +3915,14 @@ export default function Taverna() {
         || vivosAgora[0];
       const r = resolverAtaque({
         atacante: pers.nome, alvo, ehAtacanteInimigo: false,
-        bonusAtaque: bonusAtkBase, danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)),
+        bonusAtaque: bonusAtkBase, danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)) + bArma.bonus,
         condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
         tipoDano: elementoDaArma(pers), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
       });
       if (r.dano > 0) { const l = locais.find((e) => e.nome === alvo.nome); l.vida = Math.max(0, l.vida - r.dano); if (l.vida <= 0) l.derrotado = true; }
       resultados.push({ r, alvo: { ...alvo } });
     }
-    return { resultados, nAtaques };
+    return { resultados, nAtaques, bonusArma: bArma };
   };
 
   /* HABILIDADE OFENSIVA RESOLVIDA PELO SISTEMA (v7.4.4): antes, o dano de
@@ -3914,7 +3930,7 @@ export default function Taverna() {
      um monstro de 150 PV numa descrição bonita. Agora habilidade ofensiva
      em combate é ataque do sistema: rola acerto, calcula dano, aplica PV. */
   const HAB_OFENSIVA_RX = /dano|ataca|golpe|projetil|projétil|chama|gelo|raio|lamina|lâmina|fogo|destrui|ferir|maldic|explos|impacto|perfur|cort[ae]|drena|execut/i;
-  const resolverHabilidadeOfensiva = (h, acao, pers) => {
+  const resolverHabilidadeOfensiva = (h, acao, pers, ctx = {}) => {
     const comb = combateRef.current;
     if (!comb || !(comb.inimigos || []).some((e) => !e.derrotado && e.vida > 0)) return null;
     if (h.danoBase == null && !HAB_OFENSIVA_RX.test(`${h.nome || ""} ${h.descricao || ""}`)) return null;
@@ -3922,7 +3938,12 @@ export default function Taverna() {
     const norm = (x) => (x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
     const acaoN = norm(acao);
     const alvo = vivos.find((e) => acaoN.includes(norm(e.nome))) || vivos[0];
-    const atr = Math.max(pers.atributos?.intelecto || 0, pers.atributos?.presenca || 0, pers.atributos?.forca || 0, pers.atributos?.destreza || 0);
+    /* ATRIBUTO DA HABILIDADE (v9.6): antes era o MAIOR número da ficha, o que
+       tornava a multiclasse gratuita — um mago pegava técnicas de guerreiro e
+       elas escalavam com intelecto. Agora cada habilidade usa o atributo-chave
+       da CLASSE dela: quem quiser ser mago-guerreiro precisa dos dois. */
+    const idAtr = atributoDaHabilidade(h.nome, pers);
+    const atr = valorParaHabilidade(pers, h);
     const bonusAtk = atr + 2 + Math.floor(((pers.nivel || 1) - 1) / 4);
     /* DANO DE HABILIDADE (v9.5): a conta antiga era custo×2 + d6 + atributo —
        ignorava o NÍVEL por completo, então um mago 20 lançava a mesma magia de
@@ -3930,11 +3951,23 @@ export default function Taverna() {
        da classe (que crescem com o nível, como no 5e) e o custo em PM é o que
        separa um truque de uma magia de arrasar. */
     const nvHab = pers.nivel || 1;
+    /* os dados são os da classe DONA da habilidade — um golpe de guerreiro na
+       ficha de um mago rola dados de guerreiro, com a força do mago */
+    const classeHab = classeDaHabilidade(h.nome) || pers.classe;
     let danoBase = h.danoBase != null
       ? h.danoBase + d(4) - 1
-      : danoDaClasse(pers.classe, nvHab, atr) + Math.max(0, Number(h.custo) || 0) * 3;
+      : danoDaClasse(classeHab, nvHab, atr) + Math.max(0, Number(h.custo) || 0) * 3;
     /* molde EXECUÇÃO (únicas): dano dobrado em alvo com menos de metade dos PV */
     if (h.molde === "execucao" && alvo.vidaMax && alvo.vida < alvo.vidaMax / 2) danoBase *= 2;
+    /* BUFFS DA ESCOLA CERTA (v9.6): até aqui os efeitos ativos não somavam a
+       nada. Agora somam — mas só os da natureza desta habilidade. Fúria de
+       Batalha levanta aço, não feitiço. */
+    const bd = bonusDeDano(pers, h);
+    if (bd.bonus) danoBase += bd.bonus;
+    const ignorados = buffsIgnorados(pers, h);
+    /* COMBO (v9.6): duas habilidades que conversam no mesmo turno */
+    const combo = ctx.combo || null;
+    if (combo) danoBase = Math.round(danoBase * combo.mult);
     const r = resolverAtaque({
       atacante: pers.nome, alvo, ehAtacanteInimigo: false,
       bonusAtaque: bonusAtk, danoBase,
@@ -3980,7 +4013,12 @@ export default function Taverna() {
           }
         }
       }
-      linhasSis.push({ autor: "sistema", texto: `✦ ${pers.nome} · ${h.nome} → ${alvo.nome}: ${r.critico ? "CRÍTICO! " : ""}${r.dano} de dano${h.area ? " (onda atinge os demais)" : ""}` });
+      const rotAtr = (ATRIBUTOS.find((a) => a.id === idAtr) || {}).nome || idAtr;
+      const detalhe = [`${rotAtr} +${atr}`, bd.bonus ? `+${bd.bonus} de ${bd.fontes.join(", ")}` : "", combo ? `${combo.icone} ${combo.nome} ×${combo.mult}` : ""].filter(Boolean).join(" · ");
+      linhasSis.push({ autor: "sistema", texto: `✦ ${pers.nome} · ${h.nome} → ${alvo.nome}: ${r.critico ? "CRÍTICO! " : ""}${r.dano} de dano${h.area ? " (onda atinge os demais)" : ""} · ${detalhe}` });
+      /* honestidade com o jogador: dizer o que NÃO somou é tão importante
+         quanto dizer o que somou — senão ele acha que o buff está valendo */
+      if (ignorados.length) linhasSis.push({ autor: "sistema", texto: `↯ ${ignorados.join(", ")} não soma aqui: é bônus ${escopoDoEfeito((pers.efeitos || []).find((e) => e.nome === ignorados[0]), pers) === "fisico" ? "físico" : "mágico"} e ${h.nome} é ${naturezaDaHabilidade(h, pers) === "fisico" ? "física" : "mágica"}.` });
       /* molde DRENAGEM (únicas): recupera metade do dano causado */
       if (h.molde === "drenagem") {
         const cura = Math.max(1, Math.round(r.dano / 2));
@@ -4028,6 +4066,18 @@ export default function Taverna() {
   const agirInterno = (texto) => {
     const acao = texto.trim();
     if (!acao || carregando || rolagem) return;
+    /* PEDIDO DE TESTE (v9.6): "peço um teste de percepção para ver se acho
+       algo aqui" é o jeito de mesa. O sistema intercepta antes de mandar ao
+       Mestre: fixa a dificuldade, rola, e o resultado é que vira envelope —
+       o Mestre nunca responde a pergunta antes do dado. */
+    {
+      const pedido = detectarPedidoDeTeste(acao);
+      if (pedido) {
+        setEntrada("");
+        pedirTeste(pedido.tipo, pedido.motivo);
+        return;
+      }
+    }
     /* RELÓGIO: turnos de exploração/cons conversam ~45 min de mundo.
        Combate, masmorra e acampamento têm tempo próprio (contado nesses fluxos). */
     let extraTempo = "";
@@ -4043,6 +4093,7 @@ export default function Taverna() {
       const linhas = [];
       const desfechos = [];
       const usadas = [];
+      const sequencia = [];   // ordem real de uso — é dela que o combo sai
       let custoTotal = 0;
       for (const h of escolhidas) {
         const custo = Math.max(0, Number(h.custo) || 0);
@@ -4066,9 +4117,17 @@ export default function Taverna() {
         pers = buffH.pers;
         if (buffH.texto) linhas.push(buffH.texto);
         if (buffH.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${buffH.nota}`;
-        const desfechoH = resolverHabilidadeOfensiva(h, acao, pers);
-        if (desfechoH) desfechos.push(`"${h.nome}": ${desfechoH}`);
-        usadas.push({ h, custo, recH });
+        /* COMBO (v9.6): a habilidade que acabou de sair conversa com a anterior?
+           O sistema reconhece, dá nome e multiplica — o Mestre recebe pronto. */
+        const combo = detectarCombo([...sequencia, h], pers);
+        if (combo) {
+          linhas.push(combo.texto);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${combo.nota}`;
+        }
+        sequencia.push(h);
+        const desfechoH = resolverHabilidadeOfensiva(h, acao, pers, { combo });
+        if (desfechoH) desfechos.push(`"${h.nome}"${combo ? ` [${combo.nome}]` : ""}: ${desfechoH}`);
+        usadas.push({ h, custo, recH, combo });
         custoTotal += custo;
       }
       if (!usadas.length) return;
@@ -4364,6 +4423,14 @@ export default function Taverna() {
       { autor: "sistema", texto: `◉ Espólios: +${esp.moedas} moedas · +${esp.xp} XP` },
       ...msgsU.map((t) => ({ autor: "sistema", texto: t })),
     ]);
+    /* DEICÍDIO (v9.6): esta é a vitória que o SISTEMA fecha sozinho (o golpe
+       que derruba o último inimigo). O outro caminho — vitória vinda da
+       resposta do Mestre — tem o mesmo gancho; um deus abatido abre o rito
+       nos dois, senão "assimilar o poder" volta a ser só uma frase. */
+    try {
+      const abatido = identificarDivindadeAbatida(derrotados, divindadeRef.current);
+      if (abatido) abrirRitoAscensao(abatido, (personagemRef.current || personagem || {}).nivel || 1);
+    } catch { /* o rito nunca derruba o fim de um combate */ }
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — sistema já aplicou +${esp.moedas} moedas e +${esp.xp} XP] NÃO envie moedas nem xp. Narre o desfecho em 2-3 frases.${esp.caiItem ? " UM ITEM CAIU: crie um item coerente e envie em \"adicionar_equipamento\" ou \"adicionar_itens\"." : " Sem itens desta vez."}`;
     return true;
   };
@@ -4544,27 +4611,135 @@ export default function Taverna() {
     const notaBuff = buffs.length ? ` (inclui bônus de ${buffs.map((b) => b.nome).join(", ")})` : "";
     pushMsgs([{ autor: "sistema", texto: `🎲 d20 → ${valor}${mod ? ` + ${mod}` : ""} = ${total}${dc != null ? ` vs dif. ${dc}` : ""} · ${resultado}` }]);
     const notaVant = r.vantagem ? " (com vantagem)" : r.desvantagem ? " (com desvantagem)" : "";
+    /* TESTE PEDIDO PELO JOGADOR (v9.6): envelope próprio e mais duro. Numa mesa,
+       falhar num teste de Percepção significa não saber — e o mestre não pode
+       consolar com meia-pista. A regra vai escrita dentro do envelope. */
+    if (r.origem === "pedido") {
+      const provaAsc = r.provaAscensao || null;
+      enviar(envelopeDoTeste({
+        tipo: r.tipo, motivo: r.motivo, valor, mod, total, dc,
+        resultado: critico ? "sucesso" : desastre ? "falha" : total >= dc ? "sucesso" : "falha",
+        critico, desastre,
+      }), personagem);
+      if (provaAsc) resolverProvaAscensao(provaAsc, critico || (!desastre && total >= dc));
+      return;
+    }
     enviar(`[ROLAGEM] Teste de ${r.atributo || "sorte"} (${r.motivo})${notaVant}: rolei ${valor}, modificador +${mod}${notaBuff}, total ${total}${dc != null ? `, dificuldade ${dc}` : ""}. Resultado: ${resultado}. Narre as consequências de forma coerente com o resultado.`, personagem);
   };
 
-  /* SUBIR DE NÍVEL (v9.2): o atributo é escolhido aqui; a HABILIDADE virou
-     ponto, gasto na árvore (Gestão › Talentos) quando o jogador quiser — é o
-     que torna a multiclasse possível sem decidir tudo num modal apressado. */
-  const escolherAtributo = (attrId, hab) => {
-    const nv = Math.min(ATRIBUTO_MAX, personagem.atributos[attrId] + 1);
-    const nomeAttr = ATRIBUTOS.find((a) => a.id === attrId)?.nome || attrId;
+  /* ---------------- PEDIR UM TESTE (v9.6) ----------------
+     Numa mesa quem pede o teste é o jogador. O sistema fixa a dificuldade
+     pelo contexto que conhece, rola, e o envelope prende o Mestre ao
+     resultado: falhou, ele não inventa nada. */
+  const pedirTeste = (tipoId, motivo, extra = {}) => {
+    if (rolagem) { pushMsgs([{ autor: "sistema", texto: "Termine a rolagem pendente antes de pedir outra." }]); return; }
+    const t = tipoTestePorId(tipoId);
+    const comb = combateRef.current;
+    const ameaca = comb ? Math.max(0, ...(comb.inimigos || []).map((e) => Number(e.nivel) || 0)) : 0;
+    const { dc, porque } = dificuldadeDoPedido({
+      emCombate: !!(comb && (comb.inimigos || []).some((e) => !e.derrotado)),
+      emMasmorra: !!masmorraRef.current,
+      nivelAmeaca: ameaca, tipo: tipoId, nivel: personagem.nivel || 1,
+    });
+    const attrNome = nomeDoAtributo(t.atributo);
+    /* provas de rito têm dificuldade fixa de catálogo — nada de escala */
+    const dcFinal = extra.dificuldade != null ? extra.dificuldade : dc;
+    const explic = extra.dificuldade != null ? "dificuldade fixa do rito" : porque;
+    pushMsgs([
+      { autor: "jogador", texto: `🎲 Peço um teste de ${attrNome}${motivo ? ` — ${motivo}` : ""}` },
+      { autor: "sistema", texto: `O sistema fixou a dificuldade em ${dcFinal} (${explic}). Role o dado.` },
+    ]);
+    setRolagem({ atributo: attrNome, motivo: motivo || t.pergunta, origem: "pedido", tipo: tipoId, ...extra, dificuldade: dcFinal });
+  };
+
+  /* ---------------- RITO DE ASCENSÃO (v9.6) ----------------
+     Matar um deus não faz de ninguém um deus. O rito faz — e o rito é
+     rolado aqui, não narrado lá. */
+  const abrirRitoAscensao = (alvo, nivelHeroi) => {
+    const nv = nivelHeroi || (personagemRef.current || personagem || {}).nivel || 1;
+    const chk = podeAbrirRito(divindadeRef.current, alvo, nv);
+    if (!chk.pode) {
+      pushMsgs([{ autor: "sistema", texto: `⚱ ${alvo.nome} tombou, mas o rito não abre: ${chk.motivo}.` }]);
+      return;
+    }
+    const dv = iniciarRito(divindadeRef.current, alvo, "deicidio");
+    divindadeRef.current = dv; setDivindade(dv);
+    const p = provaAtual(dv);
+    pushMsgs([
+      { autor: "sistema", texto: `⚱ RITO DO DEICÍDIO aberto — o domínio de ${alvo.nome} (GD ${alvo.gd}) está solto e ao alcance.` },
+      { autor: "sistema", texto: `Prova 1 de ${p.total}: ${p.nome} — ${p.nota}. Abra o painel de Ascensão para encará-la.` },
+    ]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RITO DE ASCENSÃO — ABERTO PELO SISTEMA] ${alvo.nome} caiu e o domínio ficou SOLTO. Eu ainda NÃO absorvi nada e continuo ${tituloDe(grauDe(dv, nv))}. Narre o corpo do deus e o poder pairando sem dono, e pare aí — as provas virão uma a uma, roladas pelo sistema.`;
+    salvar({ divindade: dv });
+  };
+
+  const encararProva = () => {
+    const p = provaAtual(divindadeRef.current);
+    if (!p) { pushMsgs([{ autor: "sistema", texto: "Não há prova pendente." }]); return; }
+    pedirTeste(p.teste, p.motivo, { dificuldade: p.dificuldade, provaAscensao: p.id });
+  };
+
+  const resolverProvaAscensao = (provaId, sucesso) => {
+    const dvAtual = divindadeRef.current;
+    const p = provaAtual(dvAtual);
+    if (!p || p.id !== provaId) return;
+    const res = registrarProva(dvAtual, sucesso, personagem.nivel || 1);
+    divindadeRef.current = res.divindade; setDivindade(res.divindade);
+    if (res.texto) pushMsgs([{ autor: "sistema", texto: res.texto }]);
+    if (res.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${res.nota}`;
+    if (res.desfecho === "ascendeu") { bumpCont("ascensoes"); checarConquistas(); }
+    salvar({ divindade: res.divindade });
+  };
+
+  const desistirDoRito = () => {
+    const dv = cancelarRito(divindadeRef.current);
+    divindadeRef.current = dv; setDivindade(dv);
+    pushMsgs([{ autor: "sistema", texto: "⚱ Rito abandonado — o domínio se dispersa sozinho." }]);
+    salvar({ divindade: dv });
+  };
+
+  /* SUBIR DE NÍVEL (v9.6): o nível não decide nada por você. Ele credita
+     pontos de habilidade E de atributo; a distribuição acontece na ficha,
+     com a build inteira à vista. Sem isso, planejar um mago-guerreiro
+     dependia de acertar seis escolhas cegas ao longo de vinte níveis. */
+  const confirmarNivel = () => {
     /* o nível recém-alcançado é o que define quantos pontos ele rende (v9.4) */
     const nivelNovo = (personagem.nivel || 1) - Math.max(0, (personagem.nivelPendentes || 1) - 1);
-    const ganho = hab ? 0 : pontosNoNivel(nivelNovo);
-    const msgs = [`✦ ${nomeAttr} fortalecido: +${nv}`, `✦ +${ganho} ponto${ganho > 1 ? "s" : ""} de habilidade — gaste na árvore em Gestão › Talentos.`];
-    setPersonagem((p) => {
-      const habs = [...(p.habilidades || [])];
-      if (hab && !habs.some((x) => (x.nome || x) === hab.nome)) habs.push({ nome: hab.nome, custo: hab.custo, descricao: hab.descricao });
-      return { ...p, atributos: { ...p.atributos, [attrId]: nv }, habilidades: habs, pontosHab: (p.pontosHab || 0) + ganho, nivelPendentes: Math.max(0, p.nivelPendentes - 1) };
-    });
-    if (hab) msgs.push(`✦ Nova habilidade: ${hab.nome} (${hab.custo} PM)`);
-    notaRef.current = `[FICHA — REGISTRO DO SISTEMA] Subi para o nível ${personagem.nivel} e fortaleci ${nomeAttr} (agora +${nv}). É anotação de ficha: mencione o crescimento de passagem se couber, sem abrir cena de treinamento.`;
+    const ganho = pontosNoNivel(nivelNovo);
+    const ganhoAtr = pontosAtributoNoNivel(nivelNovo);
+    const tetoNovo = tetoAtributo(nivelNovo);
+    const msgs = [
+      `✦ +${ganho} ponto${ganho > 1 ? "s" : ""} de habilidade e +${ganhoAtr} de atributo — gaste em Gestão › Talentos.`,
+    ];
+    if (tetoNovo > tetoAtributo(nivelNovo - 1)) msgs.push(`✦ O teto dos atributos subiu para +${tetoNovo}.`);
+    setPersonagem((p) => ({
+      ...p,
+      pontosHab: (p.pontosHab || 0) + ganho,
+      pontosAtr: (typeof p.pontosAtr === "number" ? p.pontosAtr : pontosAtributoDisponiveis(p)) + ganhoAtr,
+      nivelPendentes: Math.max(0, p.nivelPendentes - 1),
+    }));
+    notaRef.current = `[FICHA — REGISTRO DO SISTEMA] Subi para o nível ${personagem.nivel}. É anotação de ficha: mencione o crescimento de passagem se couber, sem abrir cena de treinamento e sem descrever poderes novos — o que eu de fato aprendi só existe depois que eu gastar os pontos.`;
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
+  };
+
+  /* ---------------- ATRIBUTOS (v9.6) ---------------- */
+  const gastarPontoAtributo = (attrId) => {
+    const r = subirAtributoFicha(personagem, attrId);
+    if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${(ATRIBUTOS.find((a) => a.id === attrId) || {}).nome || attrId}: ${r.motivo}.` }]); return; }
+    const nomeAttr = (ATRIBUTOS.find((a) => a.id === attrId) || {}).nome || attrId;
+    setPersonagem(r.pers);
+    salvar({ personagem: r.pers });
+    pushMsgs([{ autor: "sistema", texto: `✦ ${nomeAttr} → +${r.valor} (−${r.custo} ponto${r.custo > 1 ? "s" : ""}, restam ${r.pers.pontosAtr})` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FICHA — REGISTRO DO SISTEMA] Fortaleci ${nomeAttr} (agora +${r.valor}). É anotação de ficha: não abra cena, não invente treinamento nem mestre por causa disso.`;
+  };
+
+  const redistribuirAtributosFicha = () => {
+    const custo = custoRespec(personagem.nivel || 1);
+    if ((personagem.moedas || 0) < custo) { pushMsgs([{ autor: "sistema", texto: `⛔ Redistribuir atributos custa ${custo} moedas — você tem ${personagem.moedas || 0}.` }]); return; }
+    const p = { ...redistribuirAtributos(personagem), moedas: (personagem.moedas || 0) - custo };
+    setPersonagem(p);
+    salvar({ personagem: p });
+    pushMsgs([{ autor: "sistema", texto: `↺ Atributos redistribuídos por ${custo} moedas — ${p.pontosAtr} pontos de volta ao seu bolso.` }]);
   };
 
   /* ---------------- ÁRVORE DE TALENTOS (v9.2) ---------------- */
@@ -4602,6 +4777,19 @@ export default function Taverna() {
     checarConquistas(p);
   };
 
+  /* ESPECIALIZAÇÃO (v9.6): o terceiro andar. Uma por classe, dentro da
+     subclasse já trilhada, e só depois de dez degraus naquela classe. */
+  const escolherEspecializacaoUI = (classeNome, espNome) => {
+    const chk = podeEscolherEspecializacao(personagem, classeNome);
+    if (!chk.pode) { pushMsgs([{ autor: "sistema", texto: `⛔ ${chk.motivo}.` }]); return; }
+    const p = { ...personagem, especializacoes: { ...(personagem.especializacoes || {}), [classeNome]: espNome } };
+    setPersonagem(p);
+    pushMsgs([{ autor: "sistema", texto: `★ Especialização: ${espNome} (${classeNome}). Três habilidades exclusivas abrem nos degraus ${DEGRAUS_ESPECIALIZACAO.join(", ")}.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MARCO DE CAMINHO — REGISTRO DO SISTEMA] Escolhi a especialização "${espNome}" dentro de ${classeNome}: é a obsessão em que me tornei referência. Mencione de passagem, quando couber, que meu jeito de agir se estreitou nessa direção. NÃO abra cena, não invente mestre, ritual nem viagem — foi uma escolha minha de ficha.`;
+    salvar({ personagem: p });
+    checarConquistas(p);
+  };
+
   const respecHabilidades = () => {
     const custo = custoRespec(personagem.nivel || 1);
     if ((personagem.moedas || 0) < custo) { pushMsgs([{ autor: "sistema", texto: `⛔ A redistribuição custa ◉ ${custo}.` }]); return; }
@@ -4615,6 +4803,7 @@ export default function Taverna() {
       habilidades: mantidas,
       classes: { [personagem.classe]: 0 },
       subclasses: {},
+      especializacoes: {},
       subclasse: "",
       pontosHab: pontosDisponiveis(personagem) + custoJaGasto(personagem),
     };
@@ -6336,6 +6525,22 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                       </button>
                     ))}
                   </div>
+                  {/* PEDIR TESTE (v9.6): como numa mesa — você pede, o sistema
+                      fixa a dificuldade e rola. Falhou, o Mestre não inventa. */}
+                  <div className="mt-3 pt-3" style={{ borderTop: `1px dashed ${T.line}` }}>
+                    <div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.violetSoft }}>
+                      Pedir um teste {entrada.trim() ? "— usa o que você escreveu como motivo" : "— escreva o motivo antes, se quiser"}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {TIPOS_TESTE.map((t) => (
+                        <button key={t.id} title={t.desc}
+                          onClick={() => { const m = entrada.trim(); setEntrada(""); setAcoesAbertas(false); pedirTeste(t.id, m); }}
+                          className="tv-mono text-[11px] px-2.5 py-1.5 rounded-lg" style={{ background: T.panelSoft, color: T.ink, border: `1px solid ${T.violet}` }}>
+                          {t.icone} {t.rotulo}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -6572,7 +6777,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} bloqueado={bloqueado} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
@@ -6658,7 +6863,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
       {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} modificador={modPend} aoConcluir={concluirRolagem} />}
       {fase === "jogo" && personagem?.nivelPendentes > 0 && !carregando && !dadoRolando && (
-        <ModalNivel nivel={personagem.nivel - personagem.nivelPendentes + 1} personagem={personagem} escolher={escolherAtributo} />
+        <ModalNivel nivel={personagem.nivel - personagem.nivelPendentes + 1} personagem={personagem} escolher={confirmarNivel} />
       )}
 
       {verCena && personagem && <ModalCena personagem={personagem} combate={combate} mundo={mundo} nomeCampanha={nomeCampanha} fechar={() => setVerCena(false)} />}

@@ -69,8 +69,8 @@ export const SUBCLASSES = {
   ],
   "Batedor": [
     S("Passo de Sombra", 3, "utilidade", "Some de vista e reaparece onde quiser — fica furtivo."),
-    S("Tiro Preciso", 4, "ataque", "Um disparo calculado que ignora a armadura."),
-    S("Emboscada", 5, "ataque", "Abre a luta com vantagem e dano extra."),
+    S("Mira do Batedor", 4, "ataque", "Um disparo calculado que ignora a armadura."),
+    S("Tocaia do Batedor", 5, "ataque", "Abre a luta com vantagem e dano extra."),
     S("Olho de Falcão", 7, "utilidade", "Vê a fraqueza de todos: o grupo ganha vantagem."),
   ],
   "Trapaceiro": [
@@ -144,7 +144,7 @@ export const SUBCLASSES = {
   "Punho de Ferro": [
     S("Rajada de Golpes", 3, "ataque", "Uma sequência rápida de socos no mesmo alvo."),
     S("Palma Atordoante", 4, "ataque", "Um golpe seco que atordoa quem recebe."),
-    S("Quebra-Guarda", 5, "ataque", "Ignora a defesa do alvo neste ataque."),
+    S("Punho que Rompe", 5, "ataque", "Ignora a defesa do alvo neste ataque."),
     S("Punho da Montanha", 8, "ataque", "Um único impacto capaz de derrubar um gigante."),
   ],
   "Andarilho": [
@@ -168,7 +168,7 @@ export const SUBCLASSES = {
     S("Fera Primordial", 8, "ataque", "A forma ancestral: enorme, furiosa e devastadora."),
   ],
   "Xamã": [
-    S("Espírito Guardião", 4, "suporte", "Um espírito protege um aliado por alguns turnos."),
+    S("Espírito Vigia", 4, "suporte", "Um espírito protege um aliado por alguns turnos."),
     S("Chamado do Trovão", 5, "ataque", "Um raio cai sobre o alvo e atordoa quem está perto."),
     S("Vozes Ancestrais", 4, "utilidade", "Os antepassados respondem uma pergunta sobre este lugar."),
     S("Tempestade Ancestral", 8, "ataque", "Vento e raio castigam todos os inimigos."),

@@ -6,10 +6,11 @@ import React from "react";
 import { T } from "./constantes.js";
 import { GRAUS, MILAGRES, NIVEL_DESPERTAR, grauDe, tituloDe, proximoPatamar, pfMaximo, pfPorDia, garantirDivindade, bonusDivino, imunePorEscopo } from "./divindades.js";
 import { estadoFe, feDaCidade, fieisDaCidade, temploDaCidade, temploDe, resumoNumerico } from "./devocao.js";
+import { provaAtual, provasDoCaminho } from "./ascensao.js";
 
-export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, recalibrando, onMilagre, mapa, devocao }) {
+export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, recalibrando, onMilagre, mapa, devocao, onEncararProva, onDesistirRito }) {
   const dv = divindade || garantirDivindade(null);
-  const gd = grauDe(dv);
+  const gd = grauDe(dv, nivel);
   const prox = proximoPatamar(dv);
   const podeDespertar = (nivel || 1) >= NIVEL_DESPERTAR;
   const comparar = (gdOutro) => {
@@ -39,8 +40,54 @@ export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, re
       </div>
     );
   }
+  /* ---- RITO EM CURSO (v9.6) ----
+     O que faltava para "matei um deus" virar ficha. Cada prova é uma rolagem
+     de verdade; nenhuma delas é narrada em favor de ninguém. */
+  const rito = dv.rito;
+  const prova = rito ? provaAtual(dv) : null;
+  const blocoRito = rito && prova ? (
+    <div className="rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.danger}` }}>
+      <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.danger }}>
+        ⚱ Rito em curso — {rito.caminho === "reliquia" ? "Fonte Milenar" : "Deicídio"}
+      </div>
+      <div className="tv-display text-2xl" style={{ color: T.ink }}>{rito.alvo.nome}</div>
+      <div className="tv-body text-sm mt-1" style={{ color: T.inkDim }}>
+        GD {rito.alvo.gd}{rito.alvo.dominio ? ` · ${rito.alvo.dominio}` : ""} — o domínio está solto e ao alcance. Vencer as três provas sobe o seu grau; falhar em uma encerra tudo.
+      </div>
+      <div className="mt-3 space-y-1.5">
+        {provasDoCaminho(rito.caminho).map((p, i) => {
+          const feita = (rito.resultados || []).find((x) => x.id === p.id);
+          const agora = i === rito.etapa;
+          return (
+            <div key={p.id} className="rounded-lg px-3 py-2" style={{ background: T.panelSoft, border: `1px solid ${feita ? T.ok : agora ? T.danger : T.line}`, opacity: feita || agora ? 1 : 0.55 }}>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="tv-body text-sm" style={{ color: T.ink }}>{feita ? "✓ " : agora ? "▸ " : "🔒 "}{p.nome}</span>
+                <span className="tv-mono text-[9px] shrink-0" style={{ color: T.amberSoft }}>dif. {p.dificuldade}</span>
+              </div>
+              <div className="tv-body text-xs" style={{ color: T.inkDim }}>{p.nota}</div>
+            </div>
+          );
+        })}
+      </div>
+      <button onClick={onEncararProva} className="tv-btn w-full rounded-xl py-2.5 mt-3 tv-mono text-xs uppercase tracking-widest" style={{ background: T.danger, color: "#1A0F0D" }}>
+        🎲 Encarar: {prova.nome}
+      </button>
+      <button onClick={onDesistirRito} className="tv-btn w-full rounded-xl py-2 mt-1.5 tv-mono text-[10px]" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>
+        abandonar o rito
+      </button>
+    </div>
+  ) : null;
+
   return (
     <div className="p-4 md:p-6 space-y-4">
+      {blocoRito}
+      {!rito && (dv.deicidios || []).length > 0 && (
+        <div className="rounded-2xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+          <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>Deuses que você matou</div>
+          <div className="tv-body text-xs" style={{ color: T.ink }}>{dv.deicidios.map((d) => `${d.nome} (GD ${d.gd})`).join(" · ")}</div>
+          <div className="tv-body text-[11px] mt-1" style={{ color: T.inkDim }}>Cada culto desses jurou vingança. Eles não esquecem.</div>
+        </div>
+      )}
       <div className="rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
         <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>Seu lugar no cosmos</div>
         <div className="flex items-baseline gap-2 flex-wrap">

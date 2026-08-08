@@ -13,6 +13,7 @@ import { garantirSuprimentos } from "./ermos.js";
 import { limparPorDescanso } from "./condicoes.js";
 import { garantirFichaCompanheiro } from "./companheiros.js";
 import { pontosTotais, custoJaGasto } from "./classes.js";
+import { migrarAtributos } from "./atributos.js";
 import { valorDeItem } from "./economia.js";
 import { VINCULO_INICIAL } from "./vinculos.js";
 
@@ -332,6 +333,10 @@ export function processarCombate(combateAtual, m, msgs) {
 export function migrarPersonagem(p) {
   if (!p || typeof p !== "object") return p;
   const atributosBase = { forca: 0, destreza: 0, vigor: 0, intelecto: 0, presenca: 0, percepcao: 0 };
+  /* v9.6: atributo virou moeda com custo crescente. Congela a base de criação
+     da ficha antiga, cobra o que ela já gastou pela tabela nova e devolve o
+     troco — ninguém perde o que tinha, e quem gastou bem só não recebe extra. */
+  p = migrarAtributos({ ...p, atributos: { ...atributosBase, ...(p.atributos || {}) } });
   return {
     ...p,
     atributos: { ...atributosBase, ...(p.atributos || {}) },
@@ -345,6 +350,7 @@ export function migrarPersonagem(p) {
     pontosHab: (p.pontosVersao || 1) >= 2 ? (p.pontosHab || 0) : Math.max(0, pontosTotais(p.nivel || 1) - custoJaGasto(p)),
     pontosVersao: 2,
     subclasses: p.subclasses && typeof p.subclasses === "object" ? p.subclasses : {},
+    especializacoes: p.especializacoes && typeof p.especializacoes === "object" ? p.especializacoes : {},
     antecedente: p.antecedente || "", antecedenteGancho: p.antecedenteGancho || "",
     essencia: p.essencia || 0,
     suprimentos: p.suprimentos ? garantirSuprimentos(p.suprimentos) : { racoes: 10, agua: 10, tochas: 5, kit: true },

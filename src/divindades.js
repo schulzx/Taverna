@@ -15,13 +15,21 @@ export const GRAUS = [
   { gd: 4, titulo: "Divindade Maior", fieis: 1000000, desc: "Força cósmica — o mundo se curva." },
 ];
 
-export function grauDe(div) {
+export function grauDe(div, nivel) {
   const f = (div && div.fieis) || 0;
   let gd = 0;
   for (const g of GRAUS) if (f >= g.fieis) gd = g.gd;
   /* quem NÃO despertou é mortal, por mais famoso que seja */
   if (div && div.ehJogador && !div.despertar) return 0;
-  return gd;
+  /* v9.6: graus CONQUISTADOS (deicídio, relíquia) valem por si — a fé é só
+     um dos caminhos. Sem isso, matar um deus e tomar o domínio dele não
+     mudava nada na ficha, e o Mestre narrava uma ascensão que não existia. */
+  const ganhos = Math.max(0, Number(div && div.grausGanhos) || 0);
+  gd = Math.max(gd, ganhos);
+  /* o teto por nível NÃO entra aqui de propósito: ele guarda a PORTA da
+     ascensão (ver podeAbrirRito), não rebaixa quem já subiu. Se entrasse,
+     todo save existente entre os níveis 15 e 19 acordaria demovido. */
+  return Math.min(4, gd);
 }
 
 export function tituloDe(gd) { return (GRAUS[Math.max(0, Math.min(4, gd || 0))] || GRAUS[0]).titulo; }
@@ -62,6 +70,9 @@ export function garantirDivindade(dv) {
     patrono: d.patrono || "",                      // deus patrono, se houver
     estagio: d.estagio || "",                      // servo | semideus | divindade (rotulo narrativo)
     panteao: Array.isArray(d.panteao) ? d.panteao : [], // divindades conhecidas do mundo
+    grausGanhos: Math.max(0, Number(d.grausGanhos) || 0),  // graus tomados à força (v9.6)
+    rito: d.rito && typeof d.rito === "object" ? d.rito : null, // rito em curso
+    deicidios: Array.isArray(d.deicidios) ? d.deicidios : [],   // deuses que você matou
     seq: Number(d.seq) || 1,
   };
 }

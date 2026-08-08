@@ -13,27 +13,115 @@
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
-import { CLASSES, classePorNome, arvoreDaClasse, arvoreDaSubclasse, ranksDoPersonagem, pontosDisponiveis, pontosTotais, pontosNoNivel, custoRespec, subclasseEscolhida, podeEscolherSubclasse, RANK_PARA_SUBCLASSE, habilidadesDaSubclasse } from "./classes.js";
+import { CLASSES, classePorNome, arvoreDaClasse, arvoreDaSubclasse, ranksDoPersonagem, pontosDisponiveis, pontosTotais, pontosNoNivel, custoRespec, subclasseEscolhida, podeEscolherSubclasse, RANK_PARA_SUBCLASSE, habilidadesDaSubclasse, arvoreDaEspecializacao, especializacaoEscolhida, podeEscolherEspecializacao, especializacoesDaSubclasse, habilidadesDaEspecializacao, RANK_PARA_ESPECIALIZACAO, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
+import { tabelaDeAtributos, pontosAtributoDisponiveis, pontosAtributoNoNivel, pontosAtributoTotais, tetoAtributo, conselhoDeBuild, custoDoDegrau } from "./atributos.js";
 
-export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSubclasse, grupo = [] }) {
+export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, grupo = [] }) {
   const [abaClasse, setAbaClasse] = React.useState(personagem.classe || (CLASSES[0] && CLASSES[0].nome));
-  const [verGrupo, setVerGrupo] = React.useState(false);
+  const [aba, setAba] = React.useState("talentos");
   const [confirmarRespec, setConfirmarRespec] = React.useState(false);
+  const [confirmarRespecAtr, setConfirmarRespecAtr] = React.useState(false);
 
   const ranks = ranksDoPersonagem(personagem);
   const pontos = pontosDisponiveis(personagem);
   const abertas = Object.keys(ranks);
   const custo = custoRespec(personagem.nivel || 1);
   const podeRespec = (personagem.moedas || 0) >= custo;
+  const pontosAtr = pontosAtributoDisponiveis(personagem);
 
-  /* ---- habilidades dos companheiros ---- */
-  if (verGrupo) {
+  /* a mesma fileira de abas em todas as telas do painel */
+  const abas = (
+    <div className="flex gap-1.5 flex-wrap">
+      {[["talentos", "Habilidades"], ["atributos", `Atributos${pontosAtr > 0 ? ` (${pontosAtr})` : ""}`], ["grupo", "Do grupo"]].map(([id, rot]) => (
+        <button key={id} onClick={() => setAba(id)} className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full"
+          style={aba === id
+            ? { background: T.amber, color: T.onAccent, fontWeight: 600, border: `1px solid ${T.amber}` }
+            : { background: T.panelSoft, color: id === "atributos" && pontosAtr > 0 ? T.amberSoft : T.inkDim, border: `1px solid ${id === "atributos" && pontosAtr > 0 ? T.amber : T.line}` }}>
+          {rot}
+        </button>
+      ))}
+    </div>
+  );
+
+  /* ---- ATRIBUTOS: onde a multiclasse deixa de ser cosmética ---- */
+  if (aba === "atributos") {
+    const linhas = tabelaDeAtributos(personagem);
+    const teto = tetoAtributo(personagem.nivel || 1);
+    const conselho = conselhoDeBuild(personagem);
     return (
       <>
-        <div className="flex gap-1.5">
-          <button onClick={() => setVerGrupo(false)} className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full" style={{ background: T.panelSoft, color: T.inkDim, border: `1px solid ${T.line}` }}>← minhas</button>
-          <span className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>Do grupo</span>
+        {abas}
+        <div className="rounded-xl px-4 py-3" style={{ background: T.panelSoft, border: `1px solid ${pontosAtr > 0 ? T.amber : T.line}` }}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Pontos de atributo</span>
+            <span className="tv-display text-2xl" style={{ color: pontosAtr > 0 ? T.amber : T.inkDim }}>{pontosAtr}</span>
+          </div>
+          <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>
+            Cada nível rende {pontosAtributoNoNivel(Math.max(2, personagem.nivel || 2))} pontos — {pontosAtributoTotais(personagem.nivel || 1)} acumulados no nível {personagem.nivel || 1}.
+            Subir custa mais conforme o degrau: até +3 custa 1, +4 e +5 custam 2, +6 e +7 custam 3, +8 custa 4.
+            O teto do seu nível é <b style={{ color: T.amberSoft }}>+{teto}</b> (sobe no 10, no 15 e no 20). Levar os seis ao máximo nunca cabe: escolher é a graça.
+          </div>
         </div>
+
+        {conselho && (
+          <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px dashed ${T.violet}` }}>
+            <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.violetSoft }}>Sua build</div>
+            <div className="tv-body text-xs" style={{ color: T.inkDim }}>{conselho}</div>
+          </div>
+        )}
+
+        <div className="space-y-1.5">
+          {linhas.map((l) => (
+            <div key={l.id} className="rounded-xl px-3 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${l.chave ? T.amber : T.line}` }}>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="tv-display text-base" style={{ color: T.ink }}>
+                  {l.chave ? "★ " : ""}{l.nome}
+                </span>
+                <span className="tv-mono text-sm font-semibold" style={{ color: l.valor >= l.teto ? T.ok : T.amber }}>+{l.valor}<span className="text-[9px]" style={{ color: T.inkDim }}> / {l.teto}</span></span>
+              </div>
+              <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>
+                {l.desc}{l.chave ? ` — rege as habilidades de ${l.classesQueUsam.join(" e ")}.` : ""}
+              </div>
+              {l.pode ? (
+                <button onClick={() => onSubirAtributo && onSubirAtributo(l.id)}
+                  className="w-full tv-mono text-[10px] px-3 py-1.5 rounded-lg mt-2"
+                  style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>
+                  +1 · {l.custoProximo} ponto{l.custoProximo > 1 ? "s" : ""}
+                </button>
+              ) : (
+                <div className="tv-mono text-[10px] mt-1.5" style={{ color: T.inkDim }}>{l.motivo}</div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+          <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>Redistribuir atributos</div>
+          <div className="tv-body text-xs mb-2" style={{ color: T.inkDim }}>
+            Volta tudo à ficha de criação e devolve os {pontosAtributoTotais(personagem.nivel || 1)} pontos. Custa ◉ {custo} — você tem ◉ {personagem.moedas || 0}.
+          </div>
+          {!confirmarRespecAtr ? (
+            <button onClick={() => setConfirmarRespecAtr(true)} disabled={!podeRespec}
+              className="w-full tv-mono text-[10px] px-3 py-2 rounded-lg"
+              style={{ border: `1px solid ${T.danger}`, color: T.danger, opacity: podeRespec ? 1 : 0.45 }}>
+              ⟲ redistribuir atributos
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button onClick={() => { setConfirmarRespecAtr(false); onRespecAtributos && onRespecAtributos(); }} className="flex-1 tv-mono text-[10px] px-3 py-2 rounded-lg" style={{ background: T.danger, color: "#1A0F0D", fontWeight: 600 }}>confirmar ◉ {custo}</button>
+              <button onClick={() => setConfirmarRespecAtr(false)} className="flex-1 tv-mono text-[10px] px-3 py-2 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>cancelar</button>
+            </div>
+          )}
+        </div>
+      </>
+    );
+  }
+
+  /* ---- habilidades dos companheiros ---- */
+  if (aba === "grupo") {
+    return (
+      <>
+        {abas}
         {!grupo.length ? (
           <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você viaja sozinho. Companheiros trazem as próprias habilidades — e o sistema joga com elas.</div>
         ) : grupo.map((c) => (
@@ -108,6 +196,58 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
     </div>
   );
 
+  /* ---- ESPECIALIZAÇÃO: o terceiro andar (v9.6) ----
+     Só aparece depois que a subclasse existe. Ir fundo aqui consome quase
+     todo o orçamento de pontos: é a alternativa à multiclasse, não um extra. */
+  const blocoEspecializacao = (subEscolhida) => {
+    const opcoes = especializacoesDaSubclasse(subEscolhida);
+    if (!opcoes.length) return null;
+    const escolhida = especializacaoEscolhida(personagem, abaClasse);
+    const chk = podeEscolherEspecializacao(personagem, abaClasse);
+    if (escolhida) {
+      return (
+        <>
+          <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.ok}` }}>
+            <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.ok }}>Especialização</div>
+            <div className="tv-display text-xl" style={{ color: T.ink }}>★ {escolhida}</div>
+            <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>O que você fez tantas vezes que virou seu nome.</div>
+          </div>
+          {cartaoHabilidades(arvoreDaEspecializacao(personagem, abaClasse))}
+        </>
+      );
+    }
+    return (
+      <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${chk.pode ? T.ok : T.line}` }}>
+        <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: chk.pode ? T.ok : T.inkDim }}>
+          Especialização de {subEscolhida}
+        </div>
+        {!chk.pode ? (
+          <div className="tv-body text-xs" style={{ color: T.inkDim }}>
+            Abre com {RANK_PARA_ESPECIALIZACAO} degraus de {abaClasse} — {chk.motivo}. É o terceiro andar: três habilidades exclusivas nos degraus {DEGRAUS_ESPECIALIZACAO.join(", ")}.
+            Chegar aqui consome quase todo o seu orçamento de pontos — quem prefere multiclasse não chega, e tudo bem.
+          </div>
+        ) : (
+          <>
+            <div className="tv-body text-xs mb-2" style={{ color: T.inkDim }}>
+              Você foi fundo o bastante. Escolha o ramo — é para sempre, só a redistribuição desfaz.
+            </div>
+            <div className="space-y-2">
+              {opcoes.map((e) => (
+                <button key={e} onClick={() => onEscolherEspecializacao && onEscolherEspecializacao(abaClasse, e)}
+                  className="w-full text-left rounded-xl p-3" style={{ background: T.panel, border: `1px solid ${T.ok}` }}>
+                  <div className="tv-display text-lg" style={{ color: T.ink }}>{e}</div>
+                  <div className="tv-mono text-[10px] mt-1" style={{ color: T.violetSoft }}>
+                    {habilidadesDaEspecializacao(e).map((h) => h.nome).join(" · ")}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       {/* cabeçalho: pontos e degraus por classe */}
@@ -131,10 +271,7 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
         )}
       </div>
 
-      <div className="flex gap-1.5">
-        <span className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>Minhas</span>
-        <button onClick={() => setVerGrupo(true)} className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full" style={{ background: T.panelSoft, color: T.inkDim, border: `1px solid ${T.line}` }}>Do grupo →</button>
-      </div>
+      {abas}
 
       {/* seletor de classe: as abertas primeiro, depois as que dá para abrir */}
       <div className="flex flex-wrap gap-1.5">
@@ -181,11 +318,9 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
                 <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.amberSoft }}>Caminho escolhido</div>
                 <div className="tv-display text-xl" style={{ color: T.ink }}>{escolhida}</div>
                 {ficha && <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{ficha.desc}</div>}
-                {ficha && (ficha.especializacoes || []).length > 0 && (
-                  <div className="tv-mono text-[10px] mt-1.5" style={{ color: T.inkDim }}>Ramos: {ficha.especializacoes.join(" · ")}</div>
-                )}
               </div>
               {cartaoHabilidades(arvoreDaSubclasse(personagem, abaClasse))}
+              {blocoEspecializacao(escolhida)}
             </>
           );
         }

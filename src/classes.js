@@ -37,6 +37,8 @@ export const ORIGENS = [
 
 import { SUBCLASSES, habilidadesDaSubclasse, subclasseDaHabilidade, RANK_PARA_SUBCLASSE } from "./subclasses.js";
 export { habilidadesDaSubclasse, subclasseDaHabilidade, RANK_PARA_SUBCLASSE };
+import { ESPECIALIZACOES, habilidadesDaEspecializacao, especializacaoDaHabilidade, RANK_PARA_ESPECIALIZACAO, DEGRAUS_ESPECIALIZACAO } from "./especializacoes.js";
+export { habilidadesDaEspecializacao, especializacaoDaHabilidade, RANK_PARA_ESPECIALIZACAO, DEGRAUS_ESPECIALIZACAO };
 
 const HAB = (nome, nivel, custo, tipo, descricao) => ({ nome, nivel, custo, tipo, descricao });
 
@@ -404,7 +406,20 @@ export function classeDaHabilidade(nomeHab) {
   for (const c of CLASSES) if (c.habilidades.some((h) => h.nome.toLowerCase() === alvo)) return c.nome;
   const sub = subclasseDaHabilidade(nomeHab);
   if (sub) { const c = CLASSES.find((x) => (x.subclasses || []).some((s) => s.nome === sub)); if (c) return c.nome; }
+  /* v9.6: habilidade de ESPECIALIZAÇÃO também sobe a classe-mãe */
+  const esp = especializacaoDaHabilidade(nomeHab);
+  if (esp) { const c = CLASSES.find((x) => (x.subclasses || []).some((s) => (s.especializacoes || []).includes(esp))); if (c) return c.nome; }
   return null;
+}
+
+/* A subclasse dona de uma especialização, e as especializações de uma subclasse. */
+export function subclasseDaEspecializacao(nomeEsp) {
+  for (const c of CLASSES) for (const s of c.subclasses || []) if ((s.especializacoes || []).includes(nomeEsp)) return s.nome;
+  return null;
+}
+export function especializacoesDaSubclasse(nomeSub) {
+  for (const c of CLASSES) for (const s of c.subclasses || []) if (s.nome === nomeSub) return s.especializacoes || [];
+  return [];
 }
 
 /* Classe dona de uma subclasse */
@@ -431,6 +446,21 @@ export function podeEscolherSubclasse(pers, classeNome) {
   const rank = ranksDoPersonagem(pers)[classeNome] || 0;
   if (subclasseEscolhida(pers, classeNome)) return { pode: false, motivo: "já escolhida" };
   if (rank < RANK_PARA_SUBCLASSE) return { pode: false, motivo: `exige ${RANK_PARA_SUBCLASSE} degraus de ${classeNome} (você tem ${rank})` };
+  return { pode: true, motivo: "" };
+}
+
+/* ---------------- ESPECIALIZAÇÃO: o terceiro andar (v9.6) ----------------
+   Uma por classe, dentro da subclasse já trilhada, e só depois de dez
+   degraus naquela classe. É a recompensa de quem foi fundo em vez de largo. */
+export function especializacaoEscolhida(pers, classeNome) {
+  return ((pers && pers.especializacoes) || {})[classeNome] || null;
+}
+export function podeEscolherEspecializacao(pers, classeNome) {
+  const rank = ranksDoPersonagem(pers)[classeNome] || 0;
+  const sub = subclasseEscolhida(pers, classeNome);
+  if (especializacaoEscolhida(pers, classeNome)) return { pode: false, motivo: "já escolhida" };
+  if (!sub) return { pode: false, motivo: `escolha primeiro uma subclasse de ${classeNome}` };
+  if (rank < RANK_PARA_ESPECIALIZACAO) return { pode: false, motivo: `exige ${RANK_PARA_ESPECIALIZACAO} degraus de ${classeNome} (você tem ${rank})` };
   return { pode: true, motivo: "" };
 }
 
@@ -496,6 +526,8 @@ export function fichaDaHabilidade(nomeHab) {
   }
   const sub = subclasseDaHabilidade(nomeHab);
   if (sub) return habilidadesDaSubclasse(sub).find((x) => x.nome.toLowerCase() === alvo) || null;
+  const esp = especializacaoDaHabilidade(nomeHab);
+  if (esp) return habilidadesDaEspecializacao(esp).find((x) => x.nome.toLowerCase() === alvo) || null;
   return null;
 }
 
@@ -509,6 +541,14 @@ export function podePegarHabilidade(pers, classeNome, hab) {
   const tem = pontosDisponiveis(pers);
   if (tem < custo) return { pode: false, motivo: tem === 0 ? "sem pontos" : `custa ${custo} pontos (você tem ${tem})` };
   if ((pers.nivel || 1) < hab.nivel) return { pode: false, motivo: `exige nível ${hab.nivel}` };
+  /* habilidade de especialização: exige a especialização escolhida e o degrau */
+  if (hab.especializacao) {
+    const escolhida = especializacaoEscolhida(pers, classeNome);
+    if (!escolhida) return { pode: false, motivo: `escolha uma especialização de ${classeNome} primeiro` };
+    if (escolhida !== hab.especializacao) return { pode: false, motivo: `você seguiu ${escolhida}` };
+    if (rank < hab.nivel) return { pode: false, motivo: `exige ${hab.nivel} degraus de ${classeNome} (você tem ${rank})` };
+    return { pode: true, motivo: "" };
+  }
   /* habilidade de subclasse: só se aquela for a subclasse trilhada */
   if (hab.subclasse) {
     const escolhida = subclasseEscolhida(pers, classeNome);
@@ -543,6 +583,18 @@ export function arvoreDaSubclasse(pers, classeNome) {
     return { ...h, custoPontos: custoEmPontos(h), dominada: jaTem, pode: chk.pode, motivo: chk.motivo };
   };
   return habilidadesDaSubclasse(sub).map(marcar);
+}
+
+/* A árvore da especialização trilhada (v9.6). */
+export function arvoreDaEspecializacao(pers, classeNome) {
+  const esp = especializacaoEscolhida(pers, classeNome);
+  if (!esp) return [];
+  const marcar = (h) => {
+    const jaTem = ((pers && pers.habilidades) || []).some((x) => (typeof x === "string" ? x : x.nome) === h.nome);
+    const chk = podePegarHabilidade(pers, classeNome, h);
+    return { ...h, custoPontos: custoEmPontos(h), dominada: jaTem, pode: chk.pode, motivo: chk.motivo };
+  };
+  return habilidadesDaEspecializacao(esp).map(marcar);
 }
 
 /* Custo em moedas para redistribuir tudo — caro o suficiente para pesar,
