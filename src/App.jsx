@@ -3491,7 +3491,7 @@ export default function Taverna() {
   };
 
   const enviar = useCallback(async (conteudo, persAtual, histBase) => {
-    setCarregando(true); setFalha(null); setSugestoes([]);
+    setCarregando(true); setFalha(null);
     const nota = notaRef.current; notaRef.current = "";
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
     /* RODAPÉ DO SISTEMA (v7.0.2): lembrete curto colado SÓ na mensagem atual
