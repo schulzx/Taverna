@@ -3899,7 +3899,7 @@ export default function Taverna() {
         || vivosAgora[0];
       const r = resolverAtaque({
         atacante: pers.nome, alvo, ehAtacanteInimigo: false,
-        bonusAtaque: bonusAtk, danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)),
+        bonusAtaque: bonusAtkBase, danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)),
         condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
         tipoDano: elementoDaArma(pers), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
       });
@@ -4012,7 +4012,20 @@ export default function Taverna() {
     return { ...p2, habilidades: [...(p2.habilidades || []), hu] };
   };
 
+  /* REDE DE SEGURANÇA (v9.5.1): um erro dentro da resolução do turno abortava
+     tudo em silêncio — a ação sumia, os movimentos já tinham sido descontados
+     e a tela ficava parada sem explicação. Agora o erro aparece no chat, com
+     nome, e o turno segue para o Mestre em vez de morrer no meio. */
   const agir = (texto) => {
+    try { agirInterno(texto); }
+    catch (e) {
+      const msg = String((e && e.message) || e).slice(0, 160);
+      pushMsgs([{ autor: "sistema", texto: `⚠ O sistema tropeçou ao resolver este turno (${msg}). A ação foi enviada assim mesmo — se repetir, me mostre esta mensagem.` }]);
+      try { enviar(String(texto || "").trim(), personagem); } catch { /* nem isso deu: a falha já está na tela */ }
+    }
+  };
+
+  const agirInterno = (texto) => {
     const acao = texto.trim();
     if (!acao || carregando || rolagem) return;
     /* RELÓGIO: turnos de exploração/cons conversam ~45 min de mundo.
