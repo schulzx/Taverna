@@ -38,6 +38,9 @@ import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaD
 import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito, naturezaDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
 import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, detectarPedidoDeTeste, envelopeDoTeste, TESTES_PROMPT } from "./testes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, detectarAscensaoNarrada, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
+import { reconciliarGraus, resolverPresenca, PRESENCA_PROMPT } from "./presenca-divina.js";
+import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
+import { resumoCenaPrompt, detectarForaDeLugar, notaForaDeLugar, detectarVazamento, notaVazamento, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt } from "./prompt.js";
 import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./ui.jsx";
@@ -533,7 +536,10 @@ function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar })
 }
 
 /* PainelDiario extraído para ./painel-diario.jsx (v8.8) */
-function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio, onDefinirRelacao }) {
+function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio, onDefinirRelacao, mortosBase = [] }) {
+  /* o registro é a união de quem o Mestre anotou e de quem o SISTEMA matou:
+     alguém da base do mundo pode ter morrido sem nunca ter virado ficha */
+  const mortosSet = new Set((mortosBase || []).map((m) => String(m).toLowerCase()));
   const lista = Object.values(npcs || {}).sort((a, b) => (b.ultimaVez || 0) - (a.ultimaVez || 0));
   const nomesGrupo = new Set((grupo || []).map((g) => (g.nome || "").toLowerCase()));
   /* membros do grupo também têm relação formal: puxa a ficha do registro se existir */
@@ -543,14 +549,16 @@ function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio, onDefinirRelacao }
   }
   const cartao = (n, ehGrupo) => {
     const rel = relacaoNPC(ehGrupo ? "companheiro" : n.relacao);
-    const morto = (n.status || "").toLowerCase().includes("morto");
+    const morto = (n.status || "").toLowerCase().includes("morto") || mortosSet.has((n.nome || "").toLowerCase());
     const convidavel = !ehGrupo && !morto && n.relacao !== "inimigo" && onConvidar;
     return (
       <div key={`${ehGrupo ? "g" : "n"}-${n.nome}`} className="rounded-xl p-3 flex items-start gap-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}`, opacity: morto ? 0.55 : 1 }}>
         <Retrato semente={n.semente || n.nome} tamanho={46} anel={rel.cor} estado={morto ? "grave" : "normal"} />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="tv-display text-lg leading-tight truncate" style={{ color: T.ink }}>{n.nome}{morto ? " ☠" : ""}</span>
+            {/* v9.8: quem morreu fica com o nome RISCADO — é o jeito mais
+                direto de o jogador ver a marca que deixou no mundo */}
+            <span className="tv-display text-lg leading-tight truncate" style={{ color: T.ink, textDecoration: morto ? "line-through" : "none", textDecorationColor: T.danger, textDecorationThickness: "2px" }}>{n.nome}{morto ? " ☠" : ""}</span>
             <span className="tv-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0" style={{ border: `1px solid ${rel.cor}`, color: rel.cor }}>{rel.rotulo}</span>
           </div>
           <div className="tv-body text-xs italic truncate" style={{ color: T.inkDim }}>{[n.papel, n.genero, n.local ? `em ${n.local}` : "", n.conhecidoEm != null ? (n.conhecidoEm > 0 ? `conhecido(a) no dia ${n.conhecidoEm}` : "antes do dia 1") : ""].filter(Boolean).join(" · ") || "—"}</div>
@@ -826,7 +834,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onEncararProva, onDesistirRito, bloqueado }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onEncararProva, onDesistirRito, bloqueado }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1064,7 +1072,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} />}
         {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} />}
-        {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} />}
+        {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} mortosBase={mortosBase} />}
 
         {aba === "gestao" && subGestao === "diplomacia" && <PainelDiplomacia mapa={mapa} faccaoJogador={faccaoJogador} onDiplomacia={onDiplomacia} onPresente={onPresente} cofre={guilda && guilda.cofre} />}
         {aba === "gestao" && subGestao === "correio" && <PainelCorreio correio={correio} faccoes={((mapa && mapa.faccoes) || []).filter((f) => f && f.nome && !f.doJogador && f.relacao !== "jogador").map((f) => f.nome)} dia={dia} moedas={personagem.moedas || 0} enviarCarta={enviarCarta} responderPeticao={responderPeticao} />}
@@ -2093,6 +2101,22 @@ export default function Taverna() {
      mapa — cada cidade tem devoção, templo e um culto rival para disputar.
      Os "fiéis" da ascensão viraram a SOMA disso (ver sincronizarFieis). */
   const devocaoRef = useRef({ cidades: {}, andarilhos: 0 });
+  /* BASE DO MUNDO (v9.8): só o livro-razão mora aqui — o mundo em si é
+     recalculado da semente sempre que alguém pergunta. */
+  const [baseMundo, setBaseMundo] = useState(garantirBase(null));
+  const baseMundoRef = useRef(garantirBase(null));
+  const sementeMundo = () => `${nomeCampanha || "aventura"}|${(mundo && mundo.genero) || ""}`;
+  const generoMundo = () => (mundo && mundo.genero) || "Fantasia medieval";
+  /* CONFIDÊNCIAS (v9.9): o que o jogador contou, e para quem. É o registro
+     que impede um terceiro de "simplesmente saber". */
+  const confidenciasRef = useRef([]);
+  /* alguém morreu: sai da base viva e o nome fica riscado no registro */
+  const registrarMorte = (nome) => {
+    const n = String(nome || "").trim();
+    if (!n || estaMortoNaBase(baseMundoRef.current, n)) return;
+    baseMundoRef.current = matarNaBase(baseMundoRef.current, n);
+    setBaseMundo(baseMundoRef.current);
+  };
   const [devocao, setDevocao] = useState(devocaoRef.current);
   /* O que o Mestre recebe sobre o cosmos: regras só após o despertar (custo zero antes) */
   const infoDivindade = () => {
@@ -2259,7 +2283,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, eventos: eventosRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, quests: questsRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current,
+      historia: historiaRef.current, quests: questsRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, confidencias: confidenciasRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -2908,34 +2932,38 @@ export default function Taverna() {
          2+ degraus. Uma vez por combate, resistência por código. Proteções:
          itens consagrados/benção ajudam; companheiros de vínculo 4+ são
          imunes (a convivência com o herói os acostumou ao impossível). */
-      if (!combateAntes && combateRef.current && (combateRef.current.inimigos || []).some((e) => (e.gd || 0) >= 3)) {
-        const div = (combateRef.current.inimigos || []).filter((e) => (e.gd || 0) >= 3).sort((a, b) => (b.gd || 0) - (a.gd || 0))[0];
-        const gdJP = grauDe(divindadeRef.current);
-        if ((div.gd || 0) - gdJP >= 2) {
-          const cd = 10 + 2 * (div.gd || 0);
-          const rolo = () => 1 + Math.floor(Math.random() * 20);
-          const protegido = (ent) => [...(ent.equipados ? Object.values(ent.equipados) : []), ...(ent.inventario || [])].some((it) => it && /consagrad|abençoad|abencoad|sagrad|divin/i.test(it.nome || ""));
-          /* jogador */
-          const bonusJ = Math.max(pers.atributos?.vigor || 0, pers.atributos?.presenca || 0) + (protegido(pers) ? 4 : 0) + (pers.nivel >= 15 ? 2 : 0);
-          const rJ = rolo() + bonusJ;
-          if (rJ < cd) {
-            const cond = criarCondicao(["amedrontado", "cego", "enfeiticado"][Math.floor(Math.random() * 3)], { turnos: 3, origem: `presença de ${div.nome}` });
-            const efeito = cond.nome;
-            pers = { ...pers, condicoes: [...(pers.condicoes || []).filter((x) => x.id !== cond.id), cond] };
-            msgs.push(`🌑 A presença de ${div.nome} (GD ${div.gd}) esmaga o ar: você resiste (${rJ} vs ${cd})… e falha — ${efeito.toLowerCase()} neste combate (desvantagem).`);
-            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[PRESENÇA DIVINA — sistema rolou] Eu falhei na resistência contra a presença de ${div.nome} (GD ${div.gd}): estou ${efeito.toLowerCase()} (desvantagem) neste combate. Narre o peso avassalador da divindade — mas o efeito mecânico já foi aplicado, não aplique outro.`;
-          } else {
-            msgs.push(`🌑 A presença de ${div.nome} (GD ${div.gd}) pesa como chumbo — você firma os pés e RESISTE (${rJ} vs ${cd}).`);
+      if (!combateAntes && combateRef.current && (combateRef.current.inimigos || []).length) {
+        /* FICHA VINDA DA BASE (v9.8): se o inimigo é um chefe ou uma criatura
+           que o mundo já conhece, o nível e o GD saem do SISTEMA — não do que
+           o Mestre lembrou de escrever no combate_iniciar. E o GD, quando não
+           vem, é descoberto pelo panteão. Era isto que fazia um deus entrar
+           na luta como um orc qualquer: sem Regra do Degrau e sem presença. */
+        const comBase = (combateRef.current.inimigos || []).map((e) => {
+          const ficha = chefePorNome(sementeMundo(), mapaRef.current, generoMundo(), e.nome)
+            || criaturaPorNome(sementeMundo(), mapaRef.current, generoMundo(), e.nome);
+          if (!ficha) return e;
+          msgs.push(`📖 ${e.nome} está na base do mundo: nível ${ficha.nivel}${ficha.gd ? ` · GD ${ficha.gd}` : ""}${ficha.personalidade ? ` · ${ficha.personalidade}` : ""}.`);
+          return { ...e, nivel: ficha.nivel, gd: ficha.gd || e.gd || 0, ameaca: ficha.ameaca || e.ameaca };
+        });
+        const panteaoMundo = (divindadeRef.current && divindadeRef.current.panteao) || [];
+        const reconciliados = reconciliarGraus(comBase, panteaoMundo);
+        if (reconciliados.some((e, i) => e !== (combateRef.current.inimigos || [])[i])) {
+          combateRef.current = { ...combateRef.current, inimigos: reconciliados };
+          setCombate(combateRef.current);
+        }
+        reconciliados.filter((e) => e.gdPeloSistema).forEach((e) => msgs.push(`✦ O sistema reconheceu ${e.nome} como divindade de GD ${e.gd} — Regra do Degrau em vigor.`));
+        const div = reconciliados.filter((e) => (e.gd || 0) >= 3).sort((a, b) => (b.gd || 0) - (a.gd || 0))[0];
+        const res = div ? resolverPresenca({ fonte: div, jogador: pers, grupo: pers.grupo || [], gdJogador: grauDe(divindadeRef.current) }) : null;
+        if (res) {
+          if (res.condJogador) pers = { ...pers, condicoes: [...(pers.condicoes || []).filter((x) => x.id !== res.condJogador.id), res.condJogador] };
+          if (res.afetados.length) {
+            pers = { ...pers, grupo: (pers.grupo || []).map((g) => {
+              const a = res.afetados.find((x) => x.nome === g.nome);
+              return a ? { ...g, condicoes: [...(g.condicoes || []).filter((x) => x.id !== a.cond.id), a.cond] } : g;
+            }) };
           }
-          /* companheiros: vínculo 4+ imune; itens consagrados dão +4 */
-          const novosGrupo = (pers.grupo || []).map((g) => {
-            if ((g.vinculo ?? 0) >= 4) return g;
-            const rG = rolo() + Math.max(g.atributos?.vigor || 0, 1) + (protegido(g) ? 4 : 0);
-            if (rG >= cd) return g;
-            msgs.push(`🌑 ${g.nome} não suporta olhar para ${div.nome} — fica amedrontado neste combate.`);
-            return { ...g, condicoes: [...(g.condicoes || []).filter((x) => x.id !== "amedrontado"), criarCondicao("amedrontado", { turnos: 3, origem: `presença de ${div.nome}` })] };
-          });
-          pers = { ...pers, grupo: novosGrupo };
+          res.linhas.forEach((l) => msgs.push(l));
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${res.nota}`;
           setPersonagem(pers);
         }
       }
@@ -3076,6 +3104,23 @@ export default function Taverna() {
       });
     } catch { /* o cão de guarda nunca derruba o turno */ }
     try { conferirNemesisNaNarrativa(resp.narrativa); } catch { /* idem */ }
+    /* ---- CÃES DE GUARDA DE COERÊNCIA (v9.9) ----
+       O aliado que ficou a quatro dias de viagem não entra na taverna, e
+       ninguém sabe o que o jogador contou a outra pessoa. Os dois casos
+       quebram a experiência do mesmo jeito: o mundo deixa de ter regras. */
+    try {
+      const fora = detectarForaDeLugar(resp.narrativa, npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: pers.grupo || [] });
+      if (fora.length) {
+        msgs.push(`📍 ${fora.map((n) => `${n.nome} está em ${n.onde}, a ${n.dias} dia(s) daqui`).join("; ")} — o sistema avisou o Mestre que essa pessoa não podia estar na cena.`);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaForaDeLugar(fora, cidadeAtualRef.current)}`;
+      }
+      const presentes = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: pers.grupo || [] }).aqui;
+      const vaz = detectarVazamento(resp.narrativa, confidenciasRef.current, presentes);
+      if (vaz.length) {
+        msgs.push(`🤐 ${vaz.map((v) => `${v.quem} falou de algo que só ${v.sabiam.join(", ")} sabia`).join("; ")} — o sistema corrigiu.`);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaVazamento(vaz)}`;
+      }
+    } catch { /* coerência nunca derruba o turno */ }
     /* ---- CÃO DE GUARDA DE ASCENSÃO (v9.6) ----
        O Mestre narrou o herói virando deus sem que o sistema tenha promovido
        ninguém. É exatamente o que aconteceu com o Semideus que "assimilou" um
@@ -3642,7 +3687,15 @@ export default function Taverna() {
       const atr = resumoAtributosPrompt(p);
       const cmb = combateRef.current ? resumoCombosPrompt(p) : "";
       const rit = resumoRitoPrompt(divindadeRef.current, p.nivel || 1);
-      return `${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
+      /* BASE DO MUNDO (v9.8): o lugar onde o herói está já tem locais, gente e
+         segredos definidos. É isto que substitui a invenção a cada turno. */
+      const aqui = resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo());
+      const chefes = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo());
+      /* QUEM ESTÁ EM CENA (v9.9): presentes, ausentes com a distância em dias,
+         e o que foi dito em particular — as duas regras que impedem o aliado
+         de teletransportar e o estranho de saber o que não ouviu. */
+      const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current });
+      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -3804,6 +3857,8 @@ export default function Taverna() {
     questsRef.current = []; setQuests([]);
     divindadeRef.current = garantirDivindade(null); setDivindade(divindadeRef.current);
     devocaoRef.current = garantirDevocao(null, mapaRef.current, divindadeRef.current); setDevocao(devocaoRef.current);
+    baseMundoRef.current = garantirBase(null); setBaseMundo(baseMundoRef.current);
+    confidenciasRef.current = [];
     mercadoRef.current = { comprados: {}, ambulante: null }; setMercado(mercadoRef.current);
     bancoNomesRef.current = gerarBancoNomes(mundo);
     systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
@@ -3882,6 +3937,8 @@ export default function Taverna() {
          DISTRIBUÍDA pelo mapa (proporcional à população) em vez de sumir.
          Depois disso, o número da ascensão passa a ser a soma do mapa. */
       devocaoRef.current = garantirDevocao(sv.devocao, mapaRef.current, divindadeRef.current); setDevocao(devocaoRef.current);
+      baseMundoRef.current = garantirBase(sv.baseMundo); setBaseMundo(baseMundoRef.current);
+      confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
         ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null }
         : { comprados: {}, ambulante: null };
@@ -4115,6 +4172,22 @@ export default function Taverna() {
         return;
       }
     }
+    /* CONFIDÊNCIA (v9.9): "conto a Iris que matei o irmão do barão". O sistema
+       anota o assunto e QUEM ouviu; a partir daí, mais ninguém pode mencioná-lo
+       sem que a ficção mostre como a notícia viajou. */
+    try {
+      const contar = /\b(conto|contar|revelo|revelar|confesso|confessar|digo|dizer|falo|falar|explico|explicar|admito|confidencio)\b/i;
+      if (contar.test(acao)) {
+        const presentes = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (personagem && personagem.grupo) || [] }).aqui;
+        const ouvintes = presentes.filter((n) => n.nome && n.nome.length >= 3 && acao.toLowerCase().includes(n.nome.toLowerCase())).map((n) => n.nome);
+        if (ouvintes.length) {
+          const m = acao.match(/\b(que|sobre|de)\s+(.{8,80})/i);
+          const assunto = (m ? m[2] : acao).replace(/[.!?]+$/, "").trim();
+          confidenciasRef.current = registrarConfidencia(confidenciasRef.current, { assunto, ouvintes, dia: diaRef.current });
+          pushMsgs([{ autor: "sistema", texto: `🤐 Anotado: só ${ouvintes.join(", ")} sabe disso agora.` }]);
+        }
+      }
+    } catch { /* anotar segredo nunca pode travar o turno */ }
     /* RELÓGIO: turnos de exploração/cons conversam ~45 min de mundo.
        Combate, masmorra e acampamento têm tempo próprio (contado nesses fluxos). */
     let extraTempo = "";
@@ -4434,6 +4507,9 @@ export default function Taverna() {
     if (!todosCairam) return false;
     combateRef.current = null; setCombate(null); combateOciosoRef.current = 0;
     const derrotados = c.inimigos;
+    /* v9.8: quem cai sai da base do mundo para sempre — o nome fica riscado no
+       registro de pessoas e some do que o Mestre recebe no prompt. */
+    derrotados.forEach((e) => registrarMorte(e.nome));
     const esp = gerarEspolios(derrotados);
     const msgsU = [];
     setPersonagem((p) => {
@@ -6814,7 +6890,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

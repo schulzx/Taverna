@@ -14,6 +14,9 @@ import { CONSUMIVEIS_PROMPT } from "./pocoes.js";
 import { MERCADO_PROMPT } from "./mercado.js";
 import { COMPANHEIROS_PROMPT } from "./companheiros.js";
 import { REACOES_PROMPT } from "./reacoes.js";
+import { BASE_PROMPT } from "./mundo-base.js";
+import { PRESENCA_PROMPT } from "./presenca-divina.js";
+import { CENA_PROMPT } from "./cena.js";
 import { ATRIBUTOS_PROMPT } from "./atributos.js";
 import { COMBOS_PROMPT } from "./combos.js";
 import { TESTES_PROMPT } from "./testes.js";
@@ -114,6 +117,9 @@ ${MERCADO_PROMPT}
 ${CONSUMIVEIS_PROMPT}
 ${COMPANHEIROS_PROMPT}
 ${REACOES_PROMPT}
+${BASE_PROMPT}
+${PRESENCA_PROMPT}
+${CENA_PROMPT}
 ${ATRIBUTOS_PROMPT}
 ${ESPECIALIZACOES_PROMPT}
 ${COMBOS_PROMPT}

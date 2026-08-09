@@ -6,17 +6,19 @@
    ============================================================ */
 
 /* utilitário de sorteio determinístico opcional ou aleatório */
-export function sortear(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-export function sortearVarios(arr, n) {
+/* `rnd` opcional (v9.8): passando um gerador semeado, o mesmo mundo produz
+   sempre os mesmos nomes. Sem ele, continua aleatório como antes. */
+export function sortear(arr, rnd = Math.random) { return arr[Math.floor(rnd() * arr.length)]; }
+export function sortearVarios(arr, n, rnd = Math.random) {
   const copia = [...arr]; const out = [];
-  for (let i = 0; i < n && copia.length; i++) out.push(copia.splice(Math.floor(Math.random() * copia.length), 1)[0]);
+  for (let i = 0; i < n && copia.length; i++) out.push(copia.splice(Math.floor(rnd() * copia.length), 1)[0]);
   return out;
 }
 
 /* Combinador: gera nomes compostos a partir de partes (variedade enorme
    com poucas listas — dezenas de milhares de combinações possíveis). */
-export function combinar(pre, suf, { junta = "" } = {}) {
-  return `${sortear(pre)}${junta}${sortear(suf)}`;
+export function combinar(pre, suf, { junta = "", rnd = Math.random } = {}) {
+  return `${sortear(pre, rnd)}${junta}${sortear(suf, rnd)}`;
 }
 
 /* ---------------- FANTASIA MEDIEVAL ---------------- */
@@ -91,17 +93,17 @@ function bancoDe(genero) { return BANCO[genero] || FANTASIA; }
 
 /* API pública: gera nomes por gênero. Metade das cidades usa nome único
    da lista, metade combina prefixo+sufixo (variedade quase infinita). */
-export function nomeCidade(genero) {
+export function nomeCidade(genero, rnd = Math.random) {
   const b = bancoDe(genero);
-  if (Math.random() < 0.45 && b.cidadeUnica) return sortear(b.cidadeUnica);
-  return combinar(b.cidadePre, b.cidadeSuf);
+  if (rnd() < 0.45 && b.cidadeUnica) return sortear(b.cidadeUnica, rnd);
+  return combinar(b.cidadePre, b.cidadeSuf, { rnd });
 }
-export function nomeTaverna(genero) { return sortear(bancoDe(genero).taverna); }
-export function nomePessoa(genero, sexo) {
+export function nomeTaverna(genero, rnd = Math.random) { return sortear(bancoDe(genero).taverna, rnd); }
+export function nomePessoa(genero, sexo, rnd = Math.random) {
   const b = bancoDe(genero);
-  const primeiro = sexo === "fem" ? sortear(b.fem) : sexo === "masc" ? sortear(b.masc) : sortear(Math.random() < 0.5 ? b.masc : b.fem);
-  const comSobrenome = Math.random() < 0.6;
-  return comSobrenome ? `${primeiro} ${sortear(b.sobrenome)}` : primeiro;
+  const primeiro = sexo === "fem" ? sortear(b.fem, rnd) : sexo === "masc" ? sortear(b.masc, rnd) : sortear(rnd() < 0.5 ? b.masc : b.fem, rnd);
+  const comSobrenome = rnd() < 0.6;
+  return comSobrenome ? `${primeiro} ${sortear(b.sobrenome, rnd)}` : primeiro;
 }
 export function generosDisponiveis() { return Object.keys(BANCO); }
 
@@ -136,19 +138,20 @@ const OCUPACOES = {
 };
 
 /* Uma pessoa completa e variada */
-export function pessoaDiversa(genero) {
+export function pessoaDiversa(genero, rnd = Math.random) {
   const g = genero || "Fantasia medieval";
-  const sexo = Math.random() < 0.5 ? "masc" : "fem";
+  const sexo = rnd() < 0.5 ? "masc" : "fem";
   const racas = RACAS_POR_GENERO[g] || RACAS_POR_GENERO["Fantasia medieval"];
   const ocupacoes = OCUPACOES[g] || OCUPACOES["Fantasia medieval"];
   return {
-    nome: nomePessoa(g, sexo),
+    nome: nomePessoa(g, sexo, rnd),
     genero_pessoa: sexo === "masc" ? "homem" : "mulher",
-    raca: sortear(racas),
-    ocupacao: sortear(ocupacoes),
-    traco: sortear(TRACOS_PESSOA),
+    raca: sortear(racas, rnd),
+    ocupacao: sortear(ocupacoes, rnd),
+    traco: sortear(TRACOS_PESSOA, rnd),
   };
 }
+export { TRACOS_PESSOA };
 
 /* Um elenco pronto de N pessoas variadas, com gênero equilibrado */
 export function elencoDiverso(genero, n = 6) {

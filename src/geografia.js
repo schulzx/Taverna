@@ -54,7 +54,7 @@ const CONT_A = ["Aeth", "Kor", "Vald", "Oss", "Thar", "Bel", "Myr", "Dur"];
 const CONT_B = ["enia", "oria", "amar", "ênia", "gard", "lon", "wic", "dor"];
 
 /* RNG determinístico (mesma semente → mesmo mundo) */
-function rngDe(semente) {
+export function rngDe(semente) {
   let h = 2166136261;
   const s = String(semente || "taverna");
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h * 16777619) >>> 0; }
@@ -103,45 +103,92 @@ export function gerarRotas(cidades) {
 }
 
 /* ---------------- GERADOR DE MUNDO ----------------
-   Um continente, 3-5 regiões com bioma próprio, 8-14 cidades com
-   porte e população, e a malha de rotas. Determinístico pela semente. */
+   v9.9: o TAMANHO do mundo também é sorteado. Antes todo universo tinha
+   1 continente, 3-5 regiões e 8-14 cidades — a variação era só de nomes,
+   e dois mundos diferentes tinham sempre o mesmo esqueleto. Agora os
+   próprios números saem da semente, dentro de faixas base:
+
+     continentes  1–3     (arquipélago de impérios ou terra única)
+     regiões      2–9     por continente, proporcional ao tamanho dele
+     cidades      4–24    distribuídas pelas regiões
+     população    já era sorteada pelo porte
+
+   Uma vez gerado, não muda nunca: é sempre a mesma semente. */
+export const FAIXAS_MUNDO = {
+  continentes: [1, 3],
+  regioesPorContinente: [2, 6],
+  cidadesPorRegiao: [1, 4],
+  minCidades: 4,
+};
+const entreR = (rnd, a, b) => a + Math.floor(rnd() * (b - a + 1));
+
 export function gerarGeografia(semente) {
   const rnd = rngDe(semente);
-  const continente = `${pickR(rnd, CONT_A)}${pickR(rnd, CONT_B)}`;
-  const nRegioes = 3 + Math.floor(rnd() * 3);
-  const usadosR = new Set(), usadosC = new Set();
-  const regioes = [];
-  for (let i = 0; i < nRegioes; i++) {
+  const usadosR = new Set(), usadosC = new Set(), usadosK = new Set();
+  const F = FAIXAS_MUNDO;
+
+  /* continentes: quase sempre um, às vezes dois, raramente três */
+  const nCont = rnd() < 0.62 ? 1 : rnd() < 0.8 ? 2 : entreR(rnd, 2, F.continentes[1]);
+  const continentes = [];
+  for (let c = 0; c < nCont; c++) {
     let nome;
-    do { nome = `${pickR(rnd, REGIAO_A)} ${pickR(rnd, REGIAO_B)}`; } while (usadosR.has(nome));
-    usadosR.add(nome);
-    /* cada região ocupa um setor do mapa e tem um bioma dominante */
-    const ang = (Math.PI * 2 * i) / nRegioes + rnd() * 0.6;
-    const cx = 50 + Math.cos(ang) * (22 + rnd() * 12);
-    const cy = 50 + Math.sin(ang) * (22 + rnd() * 12);
-    regioes.push({ nome, bioma: pickR(rnd, BIOMAS), cx: Math.max(14, Math.min(86, cx)), cy: Math.max(14, Math.min(86, cy)) });
+    do { nome = `${pickR(rnd, CONT_A)}${pickR(rnd, CONT_B)}`; } while (usadosK.has(nome));
+    usadosK.add(nome);
+    continentes.push({ nome, regioes: [] });
   }
+
+  const regioes = [];
+  for (const cont of continentes) {
+    const nReg = entreR(rnd, F.regioesPorContinente[0], F.regioesPorContinente[1]);
+    for (let i = 0; i < nReg; i++) {
+      let nome;
+      do { nome = `${pickR(rnd, REGIAO_A)} ${pickR(rnd, REGIAO_B)}`; } while (usadosR.has(nome));
+      usadosR.add(nome);
+      regioes.push({ nome, continente: cont.nome, bioma: pickR(rnd, BIOMAS), cx: 0, cy: 0 });
+      cont.regioes.push(nome);
+    }
+  }
+  /* posiciona as regiões em coroa: continentes ocupam fatias do mapa */
+  regioes.forEach((r, i) => {
+    const ang = (Math.PI * 2 * i) / regioes.length + rnd() * 0.5;
+    const raio = 20 + rnd() * 14;
+    r.cx = Math.max(14, Math.min(86, 50 + Math.cos(ang) * raio));
+    r.cy = Math.max(14, Math.min(86, 50 + Math.sin(ang) * raio));
+  });
+
+  /* cidades: cada região recebe um punhado próprio, então o total varia
+     junto com o número de regiões — mundos pequenos e mundos enormes */
   const cidades = [];
-  const totalC = 8 + Math.floor(rnd() * 7);
-  /* garante ao menos 1 capital e 1-2 cidades grandes */
   const porteInicial = ["capital", "cidade", "cidade"];
-  for (let i = 0; i < totalC; i++) {
-    const reg = regioes[i % regioes.length];
-    const porte = i < porteInicial.length ? porteInicial[i] : pickR(rnd, ["aldeia", "vila", "vila", "cidade", "fortaleza"]);
-    const x = Math.max(6, Math.min(94, Math.round(reg.cx + (rnd() - 0.5) * 26)));
-    const y = Math.max(6, Math.min(94, Math.round(reg.cy + (rnd() - 0.5) * 26)));
+  for (const reg of regioes) {
+    const quantas = entreR(rnd, F.cidadesPorRegiao[0], F.cidadesPorRegiao[1]);
+    for (let i = 0; i < quantas; i++) {
+      const idx = cidades.length;
+      const porte = idx < porteInicial.length ? porteInicial[idx] : pickR(rnd, ["aldeia", "aldeia", "vila", "vila", "cidade", "fortaleza"]);
+      const x = Math.max(6, Math.min(94, Math.round(reg.cx + (rnd() - 0.5) * 24)));
+      const y = Math.max(6, Math.min(94, Math.round(reg.cy + (rnd() - 0.5) * 24)));
+      cidades.push({
+        nome: nomeCidade(rnd, usadosC),
+        tipo: porte, porte,
+        populacao: populacaoDe(porte, rnd),
+        regiao: reg.nome, continente: reg.continente, bioma: reg.bioma,
+        faccao: null, relacao: "neutra", locais: [], sede: false, notas: "",
+        x, y, descoberta: true,
+      });
+    }
+  }
+  /* piso de segurança: um mundo com uma cidade só não dá jogo */
+  while (cidades.length < F.minCidades) {
+    const reg = regioes[cidades.length % regioes.length];
     cidades.push({
-      nome: nomeCidade(rnd, usadosC),
-      tipo: porte,
-      porte,
-      populacao: populacaoDe(porte, rnd),
-      regiao: reg.nome,
-      bioma: reg.bioma,
+      nome: nomeCidade(rnd, usadosC), tipo: "vila", porte: "vila",
+      populacao: populacaoDe("vila", rnd), regiao: reg.nome, continente: reg.continente, bioma: reg.bioma,
       faccao: null, relacao: "neutra", locais: [], sede: false, notas: "",
-      x, y, descoberta: true,
+      x: Math.round(reg.cx), y: Math.round(reg.cy), descoberta: true,
     });
   }
-  return { continente, regioes, cidades, rotas: gerarRotas(cidades) };
+  /* `continente` (singular) fica para quem já lia o campo antigo */
+  return { continente: continentes[0].nome, continentes, regioes, cidades, rotas: gerarRotas(cidades) };
 }
 
 /* ---------------- MIGRAÇÃO DE SAVES ANTIGOS ----------------
