@@ -14,7 +14,7 @@ import { limparPorDescanso } from "./condicoes.js";
 import { garantirFichaCompanheiro } from "./companheiros.js";
 import { pontosTotais, custoJaGasto } from "./classes.js";
 import { migrarAtributos } from "./atributos.js";
-import { valorDeItem } from "./economia.js";
+import { valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { VINCULO_INICIAL } from "./vinculos.js";
 
 export function aplicarNivel(pers) {

@@ -130,21 +130,5 @@ export function sanearResposta(obj) {
 
 
 
-async function gerarLivro(livroAtual, narrativas) {
-  const system = `Você é o arquivista de uma campanha de RPG. Atualize o LIVRO DA CAMPANHA: um registro fiel e conciso dos FATOS que o Mestre precisa lembrar para manter continuidade. Em tópicos curtos: NPCs conhecidos e a relação com o herói; promessas/dívidas/juramentos; inimigos e aliados; locais importantes; itens/segredos; pontas soltas. Máx 220 palavras. Responda SOMENTE com o texto do livro em tópicos, sem preâmbulo.`;
-  const conteudo = `LIVRO ATUAL:
-${livroAtual || "(vazio)"}
-
-NOVOS ACONTECIMENTOS (mais recentes):
-${narrativas.slice(-16).join("\n\n")}`;
-  try {
-    /* tarefa "leve": o livro é burocracia de arquivista, não narração —
-       vai para o modelo barato no servidor (roteamento por tarefa) */
-    const r = await chamarModelo(system, [{ role: "user", content: conteudo }], 600, "texto", "leve");
-    return (r || "").trim();
-  } catch {
-    return livroAtual;
-  }
-}
-
-/* ---------------- UI básicos ---------------- */
+/* gerarLivro vivia aqui e foi para App.jsx (v9.7): ela chama o modelo, e este
+   arquivo é o pedaço puro — parsing, sem estado e sem rede. */

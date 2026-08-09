@@ -103,6 +103,33 @@ async function chamarMestre(system, historico) {
   return resp;
 }
 
+/* LIVRO DA CAMPANHA (v9.7) — a memória longa do Mestre.
+   A cada 8 turnos um arquivista relê as narrativas recentes e reescreve o
+   livro: NPCs, promessas, dívidas, pontas soltas. É o que o Mestre lembra
+   depois que o histórico bruto sai da janela.
+
+   Esta função morava em json.js desde a modularização — sem `export`, sem
+   ninguém a importar, e chamando `chamarModelo`, que vive AQUI. Ou seja:
+   estava quebrada nos dois sentidos e derrubava o fim de todo oitavo turno.
+   O lugar dela é junto de chamarMestre, porque ela fala com a rede — json.js
+   é o arquivo puro, sem estado e sem chamada externa. */
+async function gerarLivro(livroAtual, narrativas) {
+  const system = `Você é o arquivista de uma campanha de RPG. Atualize o LIVRO DA CAMPANHA: um registro fiel e conciso dos FATOS que o Mestre precisa lembrar para manter continuidade. Em tópicos curtos: NPCs conhecidos e a relação com o herói; promessas/dívidas/juramentos; inimigos e aliados; locais importantes; itens/segredos; pontas soltas. Máx 220 palavras. Responda SOMENTE com o texto do livro em tópicos, sem preâmbulo.`;
+  const conteudo = `LIVRO ATUAL:
+${livroAtual || "(vazio)"}
+
+NOVOS ACONTECIMENTOS (mais recentes):
+${narrativas.slice(-16).join("\n\n")}`;
+  try {
+    /* tarefa "leve": o livro é burocracia de arquivista, não narração —
+       vai para o modelo barato no servidor (roteamento por tarefa) */
+    const r = await chamarModelo(system, [{ role: "user", content: conteudo }], 600, "texto", "leve");
+    return (r || "").trim();
+  } catch {
+    return livroAtual;
+  }
+}
+
 /* primitivas de interface extraídas para ./ui.jsx (v8.8) */
 
 
@@ -3648,17 +3675,27 @@ export default function Taverna() {
         setAguardandoMundo(false);
         setTimeout(() => entrarMasmorra(nomeMm), 400);
       }
+      /* GRAVAR PRIMEIRO (v9.7). O que vem depois daqui é manutenção: o livro,
+         o escriba, o despertar. Nada disso pode custar o turno do jogador — e
+         custava: um erro no livro estourava antes do salvar e o turno inteiro
+         ia embora no recarregamento, com o Mestre "esquecendo" o que tinha
+         acabado de acontecer. Agora o save é a primeira coisa da fila, e cada
+         serviço de manutenção falha sozinho, sem levar os outros junto. */
+      setTimeout(() => salvar({ personagem: pers, historico: histFinal, rolagem: resp.rolagem || null }), 0);
       turnoContRef.current += 1;
       if (turnoContRef.current >= 8) {
         turnoContRef.current = 0;
-        const narrativas = mensagensRef.current.filter((x) => x.autor === "mestre").map((x) => x.texto);
-        gerarLivro(livroRef.current, narrativas).then((l) => {
-          if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo()); }
-        });
+        try {
+          const narrativas = mensagensRef.current.filter((x) => x.autor === "mestre").map((x) => x.texto);
+          gerarLivro(livroRef.current, narrativas).then((l) => {
+            if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo()); salvar({ livro: l }); }
+          }).catch(() => { /* o livro pode falhar; a campanha não */ });
+        } catch (e) {
+          pushMsgs([{ autor: "sistema", texto: `⚠ O arquivista tropeçou ao atualizar o livro da campanha (${String((e && e.message) || e).slice(0, 120)}). O turno está salvo; se repetir, me mostre esta mensagem.` }]);
+        }
       }
-      setTimeout(() => salvar({ personagem: pers, historico: histFinal, rolagem: resp.rolagem || null }), 0);
       /* FISCAL DE MISSÕES + ESCRIBA: correm em paralelo, sem travar o turno */
-      cronistaDoTurno(pers, resp.narrativa);
+      try { cronistaDoTurno(pers, resp.narrativa); } catch { /* idem */ }
       /* DESPERTAR: checa DEPOIS do turno (o XP do combate pode ter cruzado o nível) */
       setTimeout(() => checarDespertar(pers), 600);
     } catch (e) {
