@@ -25,7 +25,7 @@ import { gerarCronica } from "./cronica.js";
 import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { rolarAflicao, aflicaoDe } from "./aflicoes.js";
 import { escolherReacao, resolverReacao, resumoReacoesPrompt } from "./reacoes.js";
-import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara } from "./pocoes.js";
+import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara, CONSUMIVEIS } from "./pocoes.js";
 import { mercadoresDaCidade, talvezAmbulante, precoDeCompra, resumoMercadoPrompt } from "./mercado.js";
 import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
@@ -41,6 +41,7 @@ import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, re
 import { reconciliarGraus, resolverPresenca, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 import { resumoCenaPrompt, detectarForaDeLugar, notaForaDeLugar, detectarVazamento, notaVazamento, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
+import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt } from "./prompt.js";
 import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./ui.jsx";
@@ -2110,6 +2111,268 @@ export default function Taverna() {
   /* CONFIDÊNCIAS (v9.9): o que o jogador contou, e para quem. É o registro
      que impede um terceiro de "simplesmente saber". */
   const confidenciasRef = useRef([]);
+
+  /* ═══════════ MODO CRIATIVO (v9.10) ═══════════
+     Comandos "/..." digitados no campo de ação, interceptados antes de tudo:
+     o Mestre não vê, não gasta turno, não gasta token. Existe para testar o
+     topo do jogo (ascensão, milagres, presença divina, cidade dominada) sem
+     precisar jogar uma campanha inteira até lá. */
+  const godLinha = (t) => pushMsgs([{ autor: "sistema", texto: t }]);
+  const executarComando = (entrada) => {
+    const c = interpretar(entrada);
+    if (!c) return false;
+    if (!c.cmd) { godLinha(textoDesconhecido(c.desconhecido)); return true; }
+    const arg = (i) => c.args[i];
+    const resto = c.bruto;
+    const cidadeAqui = cidadeAtualRef.current || "";
+    const acharCidade = (nome) => ((mapaRef.current && mapaRef.current.cidades) || []).find((x) => x.nome.toLowerCase() === String(nome || "").toLowerCase());
+    try {
+      switch (c.cmd) {
+        case "ajuda": godLinha(textoDeAjuda()); return true;
+
+        /* ---- ficha ---- */
+        case "nivel": {
+          const n = lerNumero(arg(0));
+          if (!n.ok) { godLinha("⚡ /nivel <1-20>"); return true; }
+          const r = cravarNivel(personagem, n.valor, { pontosNoNivel, pontosAtributoNoNivel });
+          setPersonagem(r.pers); salvar({ personagem: r.pers });
+          godLinha(`⚡ Nível ${personagem.nivel} → ${r.pers.nivel} · PV ${r.pers.vidaMax} · PM ${r.pers.manaMax} · agora com ${r.pers.pontosHab} pontos de habilidade e ${r.pers.pontosAtr} de atributo.`);
+          return true;
+        }
+        case "xp": {
+          const n = lerNumero(arg(0));
+          if (!n.ok) { godLinha("⚡ /xp <n>"); return true; }
+          const p = aplicarNivel({ ...personagem, xp: (personagem.xp || 0) + n.valor });
+          setPersonagem(p); salvar({ personagem: p });
+          godLinha(`⚡ +${n.valor} XP · nível ${p.nivel}${p.nivelPendentes ? ` (${p.nivelPendentes} nível(is) a confirmar)` : ""}.`);
+          return true;
+        }
+        case "pontos": {
+          const tipo = String(arg(0) || "").toLowerCase();
+          const n = lerNumero(arg(1));
+          if (!n.ok || !["hab", "atr"].includes(tipo)) { godLinha("⚡ /pontos <hab|atr> <n>"); return true; }
+          const p = tipo === "hab"
+            ? { ...personagem, pontosHab: Math.max(0, (personagem.pontosHab || 0) + n.valor) }
+            : { ...personagem, pontosAtr: Math.max(0, pontosAtributoDisponiveis(personagem) + n.valor) };
+          setPersonagem(p); salvar({ personagem: p });
+          godLinha(`⚡ ${tipo === "hab" ? "Pontos de habilidade" : "Pontos de atributo"}: ${tipo === "hab" ? p.pontosHab : p.pontosAtr}.`);
+          return true;
+        }
+        case "atributo": {
+          const id = String(arg(0) || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+          const n = lerNumero(arg(1));
+          const attr = ATRIBUTOS.find((a) => a.id === id);
+          if (!attr || !n.ok) { godLinha(`⚡ /atributo <${ATRIBUTOS.map((a) => a.id).join("|")}> <0-8>`); return true; }
+          const v = Math.max(0, Math.min(8, Math.round(n.valor)));
+          const p = { ...personagem, atributos: { ...personagem.atributos, [attr.id]: v } };
+          setPersonagem(p); salvar({ personagem: p });
+          godLinha(`⚡ ${attr.nome} = +${v}.`);
+          return true;
+        }
+        case "hab": {
+          const h = fichaDaHabilidade(resto);
+          if (!h) { godLinha(`⚡ Habilidade "${resto}" não existe no catálogo.`); return true; }
+          if ((personagem.habilidades || []).some((x) => (x.nome || x) === h.nome)) { godLinha(`⚡ Você já tem ${h.nome}.`); return true; }
+          const cls = classeDaHabilidade(h.nome) || personagem.classe;
+          const p = {
+            ...personagem,
+            habilidades: [...(personagem.habilidades || []), { nome: h.nome, custo: h.custo, descricao: h.descricao, tipo: h.tipo, recarga: recargaPadrao(h.custo) }],
+            classes: { ...(personagem.classes || {}), [cls]: ((personagem.classes || {})[cls] || 0) + 1 },
+          };
+          setPersonagem(p); salvar({ personagem: p });
+          godLinha(`⚡ Aprendeu ${h.nome} (${h.custo} PM · ${cls}) de graça.`);
+          return true;
+        }
+        case "curar": {
+          const p = { ...personagem, vida: personagem.vidaMax, mana: personagem.manaMax, condicoes: [], efeitos: [], exaustao: 0, habRecarga: {} };
+          acordouAbsRef.current = (diaRef.current - 1) * 1440 + minutoRef.current;
+          setPersonagem(p); salvar({ personagem: p });
+          godLinha(`⚡ Curado: ${p.vidaMax} PV, ${p.manaMax} PM, sem condições e sem exaustão.`);
+          return true;
+        }
+        case "moedas": {
+          const n = lerNumero(arg(0));
+          if (!n.ok) { godLinha("⚡ /moedas <n>"); return true; }
+          const p = { ...personagem, moedas: Math.max(0, (personagem.moedas || 0) + n.valor) };
+          setPersonagem(p); salvar({ personagem: p });
+          godLinha(`⚡ Moedas: ◉ ${p.moedas}.`);
+          return true;
+        }
+        case "item": {
+          if (!resto) { godLinha("⚡ /item <nome>"); return true; }
+          const p = { ...personagem, inventario: [...(personagem.inventario || []), { nome: resto, qtd: 1 }] };
+          setPersonagem(p); salvar({ personagem: p });
+          godLinha(`⚡ "${resto}" foi para a bolsa.`);
+          return true;
+        }
+        case "pocao": {
+          const alvo = resto.toLowerCase();
+          /* aceita id exato ("cura_g"), nome ("Poção de Cura Grande") ou
+             qualquer forma solta ("cura grande") — é ferramenta de teste */
+          const palavras = alvo.normalize("NFD").replace(/[̀-ͯ]/g, "").split(/[\s_]+/).filter(Boolean);
+          const casa = (x) => { const alvoTxt = `${x.id} ${x.nome}`.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); return palavras.every((w) => alvoTxt.includes(w)); };
+          const cat = comoConsumivel(alvo) || CONSUMIVEIS.find(casa);
+          if (!cat) { godLinha(`⚡ Consumível "${resto}" não existe. Opções: ${CONSUMIVEIS.map((x) => x.id).join(", ")}`); return true; }
+          const p = { ...personagem, inventario: [...(personagem.inventario || []), itemConsumivel(cat.id)] };
+          setPersonagem(p); salvar({ personagem: p });
+          godLinha(`⚡ ${cat.icone} ${cat.nome} foi para a bolsa.`);
+          return true;
+        }
+
+        /* ---- divino ---- */
+        case "gd": {
+          const n = lerNumero(arg(0));
+          if (!n.ok) { godLinha("⚡ /gd <0-4>"); return true; }
+          const dv = cravarGD(garantirDivindade(divindadeRef.current), n.valor, { grausPorFieis: (g) => (GRAUS[g] || GRAUS[0]).fieis });
+          divindadeRef.current = dv; setDivindade(dv); salvar({ divindade: dv });
+          godLinha(`⚡ GD ${grauDe(dv)} — ${tituloDe(grauDe(dv))} · ${dv.fieis} fiéis. (Painel Ascensão liberado.)`);
+          return true;
+        }
+        case "fieis": case "pf": {
+          const n = lerNumero(arg(0));
+          if (!n.ok) { godLinha(`⚡ /${c.cmd} <n>`); return true; }
+          const dv = { ...garantirDivindade(divindadeRef.current), [c.cmd === "pf" ? "pf" : "fieis"]: Math.max(0, n.valor), despertar: true };
+          divindadeRef.current = dv; setDivindade(dv); salvar({ divindade: dv });
+          godLinha(`⚡ ${c.cmd === "pf" ? "Pontos de Fé" : "Fiéis"}: ${c.cmd === "pf" ? dv.pf : dv.fieis} · GD ${grauDe(dv)}.`);
+          return true;
+        }
+        case "deus": {
+          const n = lerNumero(arg(0), null);
+          const nova = gerarDivindade(ctxMundo({ mundo, mapa: mapaRef.current, dia: diaRef.current }), diaRef.current, n.ok ? { gdFixo: Math.max(0, Math.min(4, n.valor)) } : {});
+          const dv = { ...garantirDivindade(divindadeRef.current), despertar: true, panteao: [...((divindadeRef.current && divindadeRef.current.panteao) || []), nova] };
+          divindadeRef.current = dv; setDivindade(dv); salvar({ divindade: dv });
+          godLinha(`⚡ ${nova.icone} ${nova.nome} ${nova.dominio} — GD ${nova.gd}, ${nova.fieis} fiéis. Entrou no panteão. (Use /combate ${nova.nome} para enfrentá-la.)`);
+          return true;
+        }
+        case "rito": {
+          const pant = (divindadeRef.current && divindadeRef.current.panteao) || [];
+          if (!pant.length) { godLinha("⚡ Nenhum deus no panteão. Use /deus primeiro."); return true; }
+          const alvo = pant[0];
+          abrirRitoAscensao({ nome: alvo.nome, gd: alvo.gd, fieis: alvo.fieis, dominio: alvo.dominio, icone: alvo.icone }, personagem.nivel || 1);
+          return true;
+        }
+        case "templo": {
+          const nome = resto || cidadeAqui;
+          if (!nome) { godLinha("⚡ /templo [cidade] — e você não está em cidade nenhuma."); return true; }
+          const r = erguerTemplo(devocaoRef.current, nome, diaRef.current);
+          devocaoRef.current = r.devocao || r; setDevocao(devocaoRef.current); salvar({ devocao: devocaoRef.current });
+          godLinha(`⚡ Templo erguido em ${nome}.`);
+          return true;
+        }
+
+        /* ---- mundo ---- */
+        case "dominar": {
+          const nome = resto || cidadeAqui;
+          if (!nome) { godLinha("⚡ /dominar [cidade] — e você não está em cidade nenhuma."); return true; }
+          /* cidade que a ficção criou e o gerador não conhece entra no mapa
+             agora: numa ferramenta de teste, "não está na lista" é resposta
+             inútil — o que você quer é dominar o lugar onde está. */
+          let alvo = acharCidade(nome);
+          if (!alvo) {
+            alvo = criarCidade(nome, { tipo: "cidade", porte: "cidade", regiao: (mapaRef.current.regioes || [])[0]?.nome || "", descoberta: true, x: 50, y: 50 });
+            mapaRef.current = { ...mapaRef.current, cidades: [...(mapaRef.current.cidades || []), alvo] };
+            godLinha(`⚡ "${nome}" não estava no mapa — o sistema a registrou.`);
+          }
+          const m = { ...mapaRef.current, cidades: (mapaRef.current.cidades || []).map((x) => (x.nome === alvo.nome ? { ...x, relacao: "jogador", faccao: faccaoJogadorRef.current || x.faccao } : x)) };
+          mapaRef.current = m; setMapa(m); salvar({ mapa: m });
+          const dom = (m.cidades || []).find((x) => x.nome === alvo.nome) || alvo;
+          godLinha(`⚡ ${dom.nome}${dom.porte ? ` (${dom.porte}${dom.populacao ? `, ${dom.populacao} habitantes` : ""})` : ""} agora é sua. Veja em Gestão › Domínios.`);
+          return true;
+        }
+        case "tp": {
+          const alvo = acharCidade(resto);
+          if (!alvo) { godLinha(`⚡ Cidade "${resto}" não está no mapa. Use /mapa.`); return true; }
+          cidadeAtualRef.current = alvo.nome; salvar({ cidadeAtual: alvo.nome });
+          godLinha(`⚡ Você está em ${alvo.nome} (${alvo.regiao}, ${alvo.bioma}).`);
+          return true;
+        }
+        case "dia": {
+          const n = lerNumero(arg(0));
+          if (!n.ok) { godLinha("⚡ /dia <+n|n>"); return true; }
+          const novo = Math.max(1, n.relativo ? diaRef.current + n.valor : Math.round(n.valor));
+          diaRef.current = novo; setDia(novo); salvar({ dia: novo });
+          godLinha(`⚡ Dia ${novo}.`);
+          return true;
+        }
+        case "hora": {
+          const n = lerNumero(arg(0));
+          if (!n.ok) { godLinha("⚡ /hora <0-23>"); return true; }
+          const min = Math.max(0, Math.min(23, Math.round(n.valor))) * 60;
+          minutoRef.current = min; setMinuto(min); salvar({ minuto: min });
+          godLinha(`⚡ Agora são ${String(Math.floor(min / 60)).padStart(2, "0")}:00.`);
+          return true;
+        }
+        case "mapa": {
+          const m = mapaRef.current || {};
+          const conts = (m.continentes || []).map((k) => k.nome).join(", ") || m.continente || "—";
+          const cs = (m.cidades || []).map((x) => `${x.nome} (${x.porte}${x.relacao === "jogador" ? ", SUA" : ""})`).join(" · ");
+          godLinha(`⚡ Continentes: ${conts}\n⚡ Regiões (${(m.regioes || []).length}): ${(m.regioes || []).map((r) => `${r.nome} [${r.bioma}]`).join(" · ") || "—"}\n⚡ Cidades (${(m.cidades || []).length}): ${cs || "—"}`);
+          return true;
+        }
+        case "aqui": {
+          const t = resumoDaqui(sementeMundo(), mapaRef.current, cidadeAqui, baseMundoRef.current, generoMundo());
+          godLinha(t || "⚡ Sem base para este lugar (você não está numa cidade).");
+          return true;
+        }
+        case "chefes": {
+          const t = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo());
+          godLinha(t || "⚡ Nenhum chefe vivo neste mundo.");
+          return true;
+        }
+
+        /* ---- luta ---- */
+        case "combate": {
+          if (!resto) { godLinha("⚡ /combate <criatura> [nivel] [quantos]"); return true; }
+          const toks = c.args.slice();
+          let quantos = 1, nivel = null;
+          while (toks.length && /^\d+$/.test(toks[toks.length - 1])) {
+            const v = Number(toks.pop());
+            if (nivel == null) nivel = v; else quantos = v;
+          }
+          if (quantos > 1 && nivel != null && quantos > nivel) { const t2 = nivel; nivel = quantos; quantos = t2; }
+          const nomeC = toks.join(" ") || resto;
+          const msgs = [];
+          const lista = [];
+          for (let i = 0; i < Math.max(1, Math.min(6, quantos)); i++) {
+            lista.push({ nome: quantos > 1 ? `${nomeC} ${i + 1}` : nomeC, nivel: nivel || personagem.nivel || 1, ameaca: "" });
+          }
+          const novo = processarCombate(null, { combate_iniciar: lista, __nivelJogador: personagem.nivel || 1 }, msgs);
+          combateRef.current = novo; setCombate(novo);
+          godLinha(`⚡ Combate aberto: ${lista.map((x) => x.nome).join(", ")}${nivel ? ` (nível ${nivel})` : ""}.`);
+          if (msgs.length) pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
+          return true;
+        }
+        case "matar": {
+          const cb = combateRef.current;
+          if (!cb) { godLinha("⚡ Nenhum combate aberto."); return true; }
+          combateRef.current = { ...cb, inimigos: (cb.inimigos || []).map((e) => ({ ...e, vida: 0, derrotado: true })) };
+          setCombate(combateRef.current);
+          godLinha("⚡ Todos os inimigos derrubados.");
+          fecharSeTodosCairam();
+          return true;
+        }
+        case "companheiro": {
+          if (!resto) { godLinha("⚡ /companheiro <nome>"); return true; }
+          if ((personagem.grupo || []).length >= MAX_COMPANHEIROS) { godLinha(`⚡ O grupo já está cheio (${MAX_COMPANHEIROS}).`); return true; }
+          const nv = personagem.nivel || 1;
+          const novo = garantirFichaCompanheiro({
+            nome: resto, conceito: "aliado de testes", nivel: nv, xp: 0,
+            vida: 10 + nv * 5, vidaMax: 10 + nv * 5, mana: 8 + nv * 3, manaMax: 8 + nv * 3,
+            inventario: [], equipamento: [], equipados: {}, vinculo: 5, marcos: [],
+            semente: `npc|${resto}|teste`,
+          });
+          const p = { ...personagem, grupo: [...(personagem.grupo || []), novo] };
+          setPersonagem(p); salvar({ personagem: p });
+          godLinha(`⚡ ${resto} entrou no grupo — ${novo.classe || "aventureiro"}, nível ${nv}, ${novo.vidaMax} PV.`);
+          return true;
+        }
+        default: godLinha(textoDesconhecido(c.cmd)); return true;
+      }
+    } catch (e) {
+      godLinha(`⚡ O comando /${c.cmd} falhou: ${String((e && e.message) || e).slice(0, 140)}`);
+      return true;
+    }
+  };
   /* alguém morreu: sai da base viva e o nome fica riscado no registro */
   const registrarMorte = (nome) => {
     const n = String(nome || "").trim();
@@ -4160,6 +4423,9 @@ export default function Taverna() {
   const agirInterno = (texto) => {
     const acao = texto.trim();
     if (!acao || carregando || rolagem) return;
+    /* MODO CRIATIVO (v9.10): "/..." é comando de teste. Intercepta ANTES de
+       tudo — não vira ação, não vai ao Mestre, não gasta turno nem tokens. */
+    if (acao.startsWith("/")) { setEntrada(""); if (executarComando(acao)) return; }
     /* PEDIDO DE TESTE (v9.6): "peço um teste de percepção para ver se acho
        algo aqui" é o jeito de mesa. O sistema intercepta antes de mandar ao
        Mestre: fixa a dificuldade, rola, e o resultado é que vira envelope —
