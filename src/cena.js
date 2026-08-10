@@ -21,7 +21,37 @@
    corrigir quando ele escorregar.
    ============================================================ */
 
-const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+const semAcento = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "");
+const norm = (s) => semAcento(s).toLowerCase().trim();
+
+/* ONDE ESTE NOME APARECE DE FATO (v9.12) — e não como pedaço de outro.
+   O gerador repete nomes: o registro tem "Doran", e o gerador de chefes criou
+   "Doran Queima-Campos". Com um indexOf cru, toda aparição do chefe era lida
+   como o aliado teletransportando de Ponte do Sul. Isso já era um furo; virou
+   um furo CARO quando estes detectores passaram a rodar no PORTÃO, porque
+   agora um falso positivo paga uma chamada de conserto e reescreve uma cena
+   que estava certa. Preserva caso e comprimento para poder perguntar se a
+   palavra seguinte é nome próprio. */
+export function ocorrenciaDoNome(narrativa, nome) {
+  const cru = semAcento(narrativa);
+  const texto = cru.toLowerCase();
+  const alvo = norm(nome);
+  if (alvo.length < 4) return -1;
+  const letra = /[a-z0-9]/;
+  let i = texto.indexOf(alvo);
+  while (i >= 0) {
+    const antes = i > 0 ? texto[i - 1] : " ";
+    const fim = i + alvo.length;
+    const depois = fim < texto.length ? texto[fim] : " ";
+    if (!letra.test(antes) && !letra.test(depois)) {
+      const seguePropio = /^[ -][A-Z][a-zà-ÿA-Z-]{2,}/.test(cru.slice(fim, fim + 40));
+      const vemDePropio = /[A-Z][a-zà-ÿ]{2,}[ -]$/.test(cru.slice(Math.max(0, i - 30), i));
+      if (!seguePropio && !vemDePropio) return i;
+    }
+    i = texto.indexOf(alvo, i + 1);
+  }
+  return -1;
+}
 
 /* ---------------- ONDE CADA UM ESTÁ ---------------- */
 
@@ -80,10 +110,10 @@ export function detectarForaDeLugar(narrativa, npcs, cidadeAtual, mapa, { comGru
   const { longe } = elencoDaCena(npcs, cidadeAtual, mapa, { comGrupo });
   const achados = [];
   for (const n of longe) {
-    const alvo = norm(n.nome);
-    if (alvo.length < 3 || !texto.includes(alvo)) continue;
+    const pos = ocorrenciaDoNome(narrativa, n.nome);
+    if (pos < 0) continue;
     /* menção não é presença: só conta se o texto o coloca AGINDO na cena */
-    const janela = texto.slice(Math.max(0, texto.indexOf(alvo) - 90), texto.indexOf(alvo) + 160);
+    const janela = texto.slice(Math.max(0, pos - 90), pos + norm(n.nome).length + 160);
     const presente = /(entra|chega|aparece|surge|se aproxima|caminha ate|senta|estende|entrega|puxa|desenrola|diz|fala|sussurra|grita|cumprimenta|te encontra|esta ali|esta aqui|ao seu lado|na sua frente)/.test(janela);
     const explicado = /(carta|mensageiro|pombo|recado|bilhete|lembr|sonh|pensa|lembranca|falou uma vez|dias atras|de longe)/.test(janela);
     if (presente && !explicado) achados.push(n);
@@ -130,8 +160,10 @@ export function detectarVazamento(narrativa, confidencias, npcsPresentes = []) {
     if (chave.length < 6 || !texto.includes(chave)) continue;
     /* quem está falando disso? procura um nome de presente perto da menção */
     const pos = texto.indexOf(chave);
-    const janela = texto.slice(Math.max(0, pos - 160), pos + 60);
-    const falante = npcsPresentes.find((n) => norm(n.nome).length >= 3 && janela.includes(norm(n.nome)));
+    /* a janela sai do texto COM caso preservado — é o que deixa ocorrenciaDoNome
+       distinguir "Doran" de "Doran Queima-Campos" também aqui */
+    const janela = semAcento(narrativa).slice(Math.max(0, pos - 160), pos + 60);
+    const falante = npcsPresentes.find((n) => ocorrenciaDoNome(janela, n.nome) >= 0);
     if (!falante) continue;
     if (sabeDoAssunto(c, falante.nome)) continue;
     out.push({ assunto: c.assunto, quem: falante.nome, sabiam: c.ouvintes });

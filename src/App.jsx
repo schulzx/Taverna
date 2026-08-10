@@ -37,10 +37,12 @@ import { BRAND, SLOGAN, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_M
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
 import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito, naturezaDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
 import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, detectarPedidoDeTeste, envelopeDoTeste, TESTES_PROMPT } from "./testes.js";
-import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, detectarAscensaoNarrada, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
+import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
-import { resumoCenaPrompt, detectarForaDeLugar, notaForaDeLugar, detectarVazamento, notaVazamento, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
+/* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
+import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
+import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, avisoDeConserto, lembreteDoPortao } from "./portao.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { avaliarEquipar, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
@@ -2544,7 +2546,18 @@ export default function Taverna() {
     setLongeDoFim(false);
   }, []);
 
+  /* ---------------- O PORTÃO (v9.12) ----------------
+     Quando o portão segura um turno, TUDO que seria escrito na tela fica
+     preso aqui até o conserto voltar — senão a cicatriz e o aviso de nível
+     apareceriam ANTES da narrativa que os causou. Como pushMsgs é o funil
+     por onde todo mundo passa, reter aqui cobre o app inteiro de uma vez. */
+  const seguraRef = useRef(null);      // null = fluindo; array = retendo
+  const portaoRef = useRef(null);      // violações do turno à espera de conserto
+  const portaoCtxRef = useRef(null);   // o mesmo contexto, para a re-checagem
+  const entregaRef = useRef(null);     // as linhas do turno, prontas menos o texto
+
   const pushMsgs = useCallback((novas) => {
+    if (seguraRef.current) { seguraRef.current = [...seguraRef.current, ...novas]; return; }
     mensagensRef.current = [...mensagensRef.current, ...novas];
     setMensagens(mensagensRef.current);
   }, []);
@@ -2564,11 +2577,20 @@ export default function Taverna() {
        incha o save (narrativas longas). O MUNDO, a ficha e o cânone NUNCA são
        podados — só o scrollback de mensagens, que tem cópia viva na sessão e
        memória permanente no cânone/livro. Se a quota estourar, poda mais. */
-    const historicoEnxuto = (nMsg) => ({
-      ...dados,
-      mensagens: mensagensRef.current.slice(-nMsg),
-      historico: Array.isArray(historico) && historico.length > nMsg * 2 ? historico.slice(-nMsg * 2) : historico,
-    });
+    /* PODA A PARTIR DE `dados`, NÃO DO ESTADO (v9.12). Antes esta linha lia
+       `historico` do closure e sobrescrevia o que veio em `extra` — e como
+       TODO save passa por aqui, o histórico do turno recém-fechado ia embora
+       toda vez: quem chamava salvar({ historico: histFinal }) via o turno ser
+       gravado nas mensagens e sumir da memória do Mestre. Era esta a origem
+       de "o Mestre esqueceu o que acabou de acontecer" depois de recarregar. */
+    const historicoEnxuto = (nMsg) => {
+      const h = Array.isArray(dados.historico) ? dados.historico : [];
+      return {
+        ...dados,
+        mensagens: mensagensRef.current.slice(-nMsg),
+        historico: h.length > nMsg * 2 ? h.slice(-nMsg * 2) : h,
+      };
+    };
     const gravar = (d) => { try { localStorage.setItem("taverna_save_v1", JSON.stringify(d)); return true; } catch { return false; } };
     let gravou = gravar(historicoEnxuto(250));
     let podou = false;
@@ -3378,60 +3400,29 @@ export default function Taverna() {
       });
     } catch { /* o cão de guarda nunca derruba o turno */ }
     try { conferirNemesisNaNarrativa(resp.narrativa); } catch { /* idem */ }
-    /* ---- CÃES DE GUARDA DE COERÊNCIA (v9.9) ----
-       O aliado que ficou a quatro dias de viagem não entra na taverna, e
-       ninguém sabe o que o jogador contou a outra pessoa. Os dois casos
-       quebram a experiência do mesmo jeito: o mundo deixa de ter regras. */
+    /* ---- O PORTÃO (v9.12) ----
+       Aqui moravam três cães de guarda separados — coerência de cena (v9.9),
+       ascensão (v9.6) e morte na prosa (v9.5). Todos os três CONTRADIZEM o
+       Mestre, e é por isso que agora correm juntos e ANTES: o jogador não
+       precisa ler a besteira para o sistema poder consertá-la.
+
+       Note o que NÃO veio para cá: o cão de guarda de condições, logo acima.
+       Aquele RATIFICA — o Mestre narrou o veneno e o sistema aplica. Ali a
+       narrativa está certa; barrá-la seria transformar acerto em erro.
+
+       Esta parte custa ZERO: é função pura lendo texto. A única chamada é o
+       conserto, lá em enviar(), e só quando alguma coisa de fato quebrou. */
     try {
-      const fora = detectarForaDeLugar(resp.narrativa, npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: pers.grupo || [] });
-      if (fora.length) {
-        msgs.push(`📍 ${fora.map((n) => `${n.nome} está em ${n.onde}, a ${n.dias} dia(s) daqui`).join("; ")} — o sistema avisou o Mestre que essa pessoa não podia estar na cena.`);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaForaDeLugar(fora, cidadeAtualRef.current)}`;
-      }
-      const presentes = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: pers.grupo || [] }).aqui;
-      const vaz = detectarVazamento(resp.narrativa, confidenciasRef.current, presentes);
-      if (vaz.length) {
-        msgs.push(`🤐 ${vaz.map((v) => `${v.quem} falou de algo que só ${v.sabiam.join(", ")} sabia`).join("; ")} — o sistema corrigiu.`);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaVazamento(vaz)}`;
-      }
-    } catch { /* coerência nunca derruba o turno */ }
-    /* ---- CÃO DE GUARDA DE ASCENSÃO (v9.6) ----
-       O Mestre narrou o herói virando deus sem que o sistema tenha promovido
-       ninguém. É exatamente o que aconteceu com o Semideus que "assimilou" um
-       GD 3 e continuou GD 2 na ficha: a narração criava um fato que a mecânica
-       desconhecia. Aqui a ficha ganha, sempre. */
-    try {
-      const av = detectarAscensaoNarrada(resp.narrativa, divindadeRef.current, pers.nivel || 1);
-      if (av) {
-        msgs.push(`⚱ O Mestre narrou uma ascensão que o sistema não deu — você continua ${tituloDe(av.gd)} (GD ${av.gd}). ${av.emRito ? "O rito ainda está em curso." : "Ascender exige o rito."}`);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${av.nota}`;
-      }
-    } catch { /* idem */ }
-    /* ---- CÃO DE GUARDA DE MORTE NA PROSA (v9.5) ----
-       O anterior só pegava morte REGISTRADA em "combate.mortes_narradas". O
-       Mestre que mata na prosa e não registra passava batido — daí a criatura
-       de 320 PV "tombar" com 200 ainda na barra. Agora a narrativa é lida. */
-    try {
-      const comb = combateRef.current;
-      const vivos = (comb && comb.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
-      if (vivos.length) {
-        const semAc = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-        const MORTE = /(morre|morreu|mort[ao]\b|tomba|tombou|cai sem vida|sem vida|expira|ultimo suspiro|desaba (morto|sem vida)|e abatid|foi abatid|derrubad[oa] de vez|nao se levanta mais|corpo (dele|dela) )/i;
-        const NEGADO = /\b(nao|quase|ainda|se |como se|parece|fingi)\b/i;
-        const frases = String(resp.narrativa || "").split(/(?<=[.!?;])\s+|\n+/);
-        for (const e of vivos) {
-          const alvo = semAc(e.nome);
-          if (alvo.length < 3) continue;
-          const matou = frases.some((f) => {
-            const fs = semAc(f);
-            return fs.includes(alvo) && MORTE.test(fs) && !NEGADO.test(fs);
-          });
-          if (!matou) continue;
-          msgs.push(`⚖ Coesão do sistema: ${e.nome} NÃO morreu — ainda tem ${e.vida}/${e.vidaMax} PV. A luta continua.`);
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CORREÇÃO DE COESÃO — MORTE INDEVIDA NA NARRAÇÃO] Você narrou a queda de ${e.nome}, mas o SISTEMA registra ${e.vida} de ${e.vidaMax} PV: ${e.nome} está DE PÉ e continua agindo. RETOME a cena tratando-o como vivo — sem ressurreição, sem "ele se ergue de novo", sem cinzas: ele simplesmente não caiu. E calibre a intensidade pelo dano REAL do envelope: ${e.vida} de ${e.vidaMax} PV significa que ele ainda tem ${Math.round((e.vida / (e.vidaMax || 1)) * 100)}% da vida — não descreva golpes pequenos como devastadores.`;
-        }
-      }
-    } catch { /* o cão de guarda nunca derruba o turno */ }
+      portaoCtxRef.current = {
+        inimigos: (combateRef.current && combateRef.current.inimigos) || [],
+        npcs: npcsRef.current, cidadeAtual: cidadeAtualRef.current, mapa: mapaRef.current,
+        comGrupo: pers.grupo || [], confidencias: confidenciasRef.current,
+        presentes: elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: pers.grupo || [] }).aqui,
+        divindade: divindadeRef.current, nivel: pers.nivel || 1,
+        mortosBase: (baseMundoRef.current || {}).mortos || [], nemesis: nemesisRef.current,
+      };
+      portaoRef.current = violacoesDoTurno(resp.narrativa, portaoCtxRef.current);
+    } catch { portaoRef.current = null; /* o portão nunca derruba o turno */ }
     /* detector de repetição: mede se o Mestre voltou a usar interrupção urgente */
     {
       const nrt = (resp.narrativa || "").toLowerCase();
@@ -3443,7 +3434,14 @@ export default function Taverna() {
         || /(interromp|é rompid|foi rompid|se lança (pelo|para)|surge de repente|de súbito)/.test(nrt);
       urgenciaRef.current = marcas ? urgenciaRef.current + 1 : 0;
     }
-    pushMsgs([{ autor: "mestre", texto: resp.narrativa || "…" }, ...msgs.map((t) => ({ autor: "sistema", texto: t }))]);
+    /* A ENTREGA. Sem violação — o caso comum — sai na tela agora, exatamente
+       como sempre saiu. Com violação, as linhas ficam guardadas e a tela
+       trava até o conserto voltar: quem solta é passarPeloPortao(). */
+    {
+      const linhas = [{ autor: "mestre", texto: resp.narrativa || "…" }, ...msgs.map((t) => ({ autor: "sistema", texto: t }))];
+      if ((portaoRef.current || []).length) { seguraRef.current = []; entregaRef.current = linhas; }
+      else { entregaRef.current = null; pushMsgs(linhas); }
+    }
     /* decisor de testes por código: se a dificuldade é trivial para o herói
        (modificador torna a falha impossível), nem mostra o dado — sucesso direto */
     let rolagemFinal = resp.rolagem || null;
@@ -3937,6 +3935,47 @@ export default function Taverna() {
     salvar({ personagem: pers });
   };
 
+  /* ---------------- O PORTÃO: O CONSERTO (v9.12) ----------------
+     Só se chega aqui quando alguma coisa de fato quebrou — no caso comum
+     nada disto roda e o turno não custa um centavo a mais. Quando roda: UMA
+     chamada ao modelo BARATO (tarefa "leve"), carga minúscula (o trecho e a
+     regra violada, sem system prompt, sem histórico, sem cânone), e uma
+     re-checagem do que voltou. Reescrever pode quebrar outra coisa; por isso
+     o portão tem o direito de desistir e entregar o original com o aviso —
+     que é exatamente o que o app fazia antes de o portão existir. O turno do
+     jogador nunca fica preso esperando o Mestre acertar. */
+  const liberarPortao = (texto, extras = []) => {
+    const linhas = entregaRef.current;
+    const presos = seguraRef.current || [];
+    entregaRef.current = null; seguraRef.current = null; portaoRef.current = null;
+    if (!linhas) { if (presos.length) pushMsgs(presos); return; }
+    if (texto != null) linhas[0] = { ...linhas[0], texto };
+    pushMsgs([...linhas, ...extras.filter(Boolean).map((t) => ({ autor: "sistema", texto: t })), ...presos]);
+  };
+
+  const passarPeloPortao = async (original) => {
+    const vio = portaoRef.current || [];
+    if (!vio.length) { liberarPortao(null); return original; }
+    let limpo = null;
+    try {
+      const p = pedidoDeConserto(original, vio);
+      const bruto = await chamarModelo(p.system, p.messages, p.maxTokens, "texto", "leve");
+      const cand = aceitarConserto(bruto, original);
+      /* o conserto só vale se ele mesmo passar no portão */
+      if (cand && !violacoesDoTurno(cand, portaoCtxRef.current || {}).length) limpo = cand;
+    } catch { /* rede fora, modelo mudo, o que for: cai na desistência */ }
+    if (limpo) {
+      /* nada de acusação na volta: o histórico guarda o texto CORRIGIDO, então
+         "você narrou X" contradiria o próprio histórico. Vai o lembrete seco. */
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${lembreteDoPortao(vio)}`;
+      liberarPortao(limpo, [avisoDeConserto(vio)]);
+      return limpo;
+    }
+    for (const v of vio) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${v.nota}`;
+    liberarPortao(original, vio.map((v) => v.aviso));
+    return original;
+  };
+
   const enviar = useCallback(async (conteudo, persAtual, histBase) => {
     setCarregando(true); setFalha(null);
     const nota = notaRef.current; notaRef.current = "";
@@ -3981,9 +4020,16 @@ export default function Taverna() {
          para o modelo manter o formato). Antes ia o JSON completo com mudancas,
          sugestões e campos de combate — ~3× mais tokens por mensagem antiga,
          sem nenhum ganho de memória (os efeitos já vivem no estado do app). */
-      const histFinal = [...base, { role: "user", content: corpo }, { role: "assistant", content: JSON.stringify({ narrativa: resp.narrativa || "" }) }];
-      setHistorico(histFinal);
       const pers = aplicarResposta(resp, persAtual);
+      /* PORTÃO (v9.12): se algum cão de guarda duro mordeu, o conserto acontece
+         AQUI — antes de a narrativa chegar à tela e antes de ela entrar no
+         histórico. O que o Mestre lembra na próxima vez é o texto corrigido,
+         não o errado; era esse o furo de sempre corrigir só no turno seguinte. */
+      const narrativaFinal = (portaoRef.current || []).length
+        ? await passarPeloPortao(resp.narrativa || "")
+        : (resp.narrativa || "");
+      const histFinal = [...base, { role: "user", content: corpo }, { role: "assistant", content: JSON.stringify({ narrativa: narrativaFinal }) }];
+      setHistorico(histFinal);
       /* ALTERNÂNCIA: se esta foi uma AÇÃO DO JOGADOR (não a vez do mundo, não combate,
          não acampamento), a próxima vez é OBRIGATORIAMENTE do mundo. */
       const foiVezDoMundo = ehAcaoMundoRef.current;
@@ -4024,13 +4070,16 @@ export default function Taverna() {
         }
       }
       /* FISCAL DE MISSÕES + ESCRIBA: correm em paralelo, sem travar o turno */
-      try { cronistaDoTurno(pers, resp.narrativa); } catch { /* idem */ }
+      try { cronistaDoTurno(pers, narrativaFinal); } catch { /* idem */ }
       /* DESPERTAR: checa DEPOIS do turno (o XP do combate pode ter cruzado o nível) */
       setTimeout(() => checarDespertar(pers), 600);
     } catch (e) {
       notaRef.current = nota;
       setFalha({ conteudo, persAtual, histBase: base, motivo: (e && e.message) ? String(e.message) : "erro desconhecido" });
     } finally {
+      /* o portão jamais pode engolir um turno: se a tela ficou retida por
+         qualquer motivo, tudo o que estava preso sai aqui */
+      try { if (seguraRef.current || entregaRef.current) liberarPortao(null); } catch { }
       setCarregando(false);
     }
   }, [historico, mensagens, aplicarResposta, salvar, nomeCampanha, mundo]);

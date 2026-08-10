@@ -162,7 +162,12 @@ export function cancelarRito(divindade) {
    O Mestre narrou uma ascensão que o sistema não deu? Corrige na hora.
    É a mesma lógica dos cães de guarda de condição e de morte: a narração
    não pode criar fato mecânico. */
-const NARROU_ASCENSAO = /(voc[êe]|tu)\s+(agora\s+)?(se\s+)?(torn(a|ou|aste)|vira(ste|)|ascende(u|ste|)|[ée])\s+(um[a]?\s+)?(deus|deusa|divindade|semideus|ser divino)|ascendeu a (deus|divindade|semideus)|sua ascens[ãa]o (est[áa] )?(completa|consumada)|voc[êe] absorve(u)? o (poder|dom[íi]nio) (de|da|do)|assimil(a|ou) o (poder|dom[íi]nio)/i;
+/* A frase que abriu esta discussão — "Você ascende: agora é uma divindade de
+   grau 3" — passava batida: o padrão exigia o substantivo colado ao verbo, e
+   ali vinha dois-pontos no meio. As duas últimas alternativas fecham isso sem
+   abrir a porta para falso positivo: exigem palavra DIVINA na vizinhança, então
+   "ascende ao trono" ou "ascende a escadaria" continuam de fora. */
+const NARROU_ASCENSAO = /(voc[êe]|tu)\s+(agora\s+)?(se\s+)?(torn(a|ou|aste)|vira(ste|)|ascende(u|ste|)|[ée])\s+(um[a]?\s+)?(deus|deusa|divindade|semideus|ser divino)|ascendeu a (deus|divindade|semideus)|sua ascens[ãa]o (est[áa] )?(completa|consumada)|voc[êe] absorve(u)? o (poder|dom[íi]nio) (de|da|do)|assimil(a|ou) o (poder|dom[íi]nio)|voc[êe] ascende(u)?[^.!?]{0,70}(deus|deusa|divindade|semideus|divin[oa]|grau \d|gd ?\d)|(voc[êe]|tu) (agora )?[ée] (um[a]?\s+)?(deus|deusa|divindade|semideus)\b/i;
 
 export function detectarAscensaoNarrada(texto, divindade, nivel) {
   if (!texto || !NARROU_ASCENSAO.test(texto)) return null;
