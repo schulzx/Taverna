@@ -53,6 +53,74 @@ export function ocorrenciaDoNome(narrativa, nome) {
   return -1;
 }
 
+/* ---------------- MENÇÃO NÃO É PRESENÇA (v9.13) ----------------
+   O erro que este bloco existe para não cometer: o bardo canta uma
+   balada sobre a Loba Ferida, que está num templo a três dias daqui —
+   e o sistema "corrige" o Mestre, porque leu o nome dela perto de um
+   verbo de fala. Só que ninguém disse que ela ESTAVA ali. Ela foi
+   citada. Citar alguém é a coisa mais comum que se faz numa taverna.
+
+   Duas travas, nesta ordem:
+
+   1) A FRASE, NÃO A JANELA. Antes isto lia 90 caracteres para trás e
+      160 para frente, atravessando pontos finais: um "diz" da frase
+      anterior colava no nome da frase seguinte. Agora o contexto para
+      no ponto, no ponto e vírgula, na quebra de linha e no travessão
+      de diálogo. Verbo de outra frase não é verbo deste nome.
+
+   2) SUJEITO OU COMPLEMENTO. "Merlim entra" é presença. "uma canção
+      sobre Merlim" não é: ali ele vem depois de preposição, é
+      complemento do que outra pessoa está fazendo. A exceção são as
+      locuções que colocam alguém ao alcance da mão ("ao lado de
+      Merlim") — essas também vêm depois de preposição e são presença
+      pura.
+
+   Regra de desempate, a mesma do resto do portão: na dúvida, NÃO
+   morde. Deixar passar custa o comportamento antigo; morder errado
+   custa uma chamada e reescreve uma cena que estava boa. */
+
+const CORTE = /[.!?;:\n—–]/;
+
+/* O nome vem depois de uma locução que o coloca ao alcance do herói.
+   Isto é presença, mesmo com preposição no meio. */
+const LOCUCAO_DE_PRESENCA = /(ao lado de|ao lado da|junto de|junto a|junto ao|perto de|proximo de|proxima de|atras de|diante de|na frente de|em frente a|a frente de|ao pe de|na companhia de|acompanhad[oa] (de|por)|de pe (ao lado|atras|diante) de|com|entre|para|ate)\s+$/;
+
+/* O nome vem depois de preposição: ele é COMPLEMENTO da frase, não
+   sujeito dela. Quem age é outro. */
+const NOME_COMPLEMENTO = /\b(sobre|acerca de|a respeito de|em nome de|em homenagem a|em memoria de|por causa de|no lugar de|em vez de|contra|sem|de|do|da|dos|das|ao|aos|as|a)\s+$/;
+
+/* Verbos que colocam alguém AGINDO na cena. Serve tanto para dizer que
+   um nome é sujeito quanto para o portão inteiro — mora aqui para que
+   os quatro detectores usem exatamente a mesma régua. */
+export const AGINDO_NA_CENA = /(entra|chega|aparece|surge|se aproxima|caminha ate|senta|estende|entrega|puxa|desenrola|diz|dizia|fala|falava|responde|sussurra|grita|murmura|range|ri |ri\.|sorri|cumprimenta|acena|te encontra|esta ali|esta aqui|esta parad|ao seu lado|na sua frente|se levanta|se ergue|olha para voce|encara|saca|ataca|golpeia|avanca|recua|bate|toca|abre|fecha|serve|derrama|ergue|aponta|estala|inclina)/;
+
+/* Recorta a frase em que o nome aparece. Índices são os do texto
+   normalizado sem acento e em minúscula — os mesmos que
+   ocorrenciaDoNome devolve. */
+export function contextoDoNome(narrativa, pos, nome) {
+  const base = semAcento(narrativa).toLowerCase();
+  const len = norm(nome).length;
+  if (pos < 0) return { frase: "", antes: "", depois: "", mencao: false };
+  let ini = 0;
+  for (let i = pos - 1; i >= 0; i--) if (CORTE.test(base[i])) { ini = i + 1; break; }
+  let fim = base.length;
+  for (let i = pos + len; i < base.length; i++) if (CORTE.test(base[i])) { fim = i; break; }
+  const antes = base.slice(ini, pos);
+  const depois = base.slice(pos + len, fim);
+  const frase = base.slice(ini, fim);
+  /* menção: preposição colada no nome, sem locução de presença. A única
+     saída é ele retomar a frase como sujeito de uma relativa — "de
+     Merlim, QUE entra na sala". Sem o "que", o verbo seguinte é do
+     outro substantivo: em "a espada de Merlim está ali", quem está ali
+     é a espada. */
+  let mencao = false;
+  if (!LOCUCAO_DE_PRESENCA.test(antes) && NOME_COMPLEMENTO.test(antes)) {
+    const relativa = new RegExp(`^\\s*,?\\s*(que|quem|o qual|a qual)\\s+(${AGINDO_NA_CENA.source})`);
+    mencao = !relativa.test(depois);
+  }
+  return { frase, antes, depois, mencao };
+}
+
 /* ---------------- ONDE CADA UM ESTÁ ---------------- */
 
 /* Distância em dias entre duas cidades, pela malha de rotas do mapa.
@@ -103,6 +171,9 @@ export function elencoDaCena(npcs, cidadeAtual, mapa, { comGrupo = [] } = {}) {
   return { aqui, longe };
 }
 
+/* A ficção já explicou como aquele nome chegou até aqui sem o corpo junto. */
+const EXPLICADO_DE_LONGE = /(carta|missiva|pergaminho selado|mensageiro|pombo|recado|bilhete|lembr|sonh|pensa|visao|falou uma vez|dias atras|de longe|cant|canc|balada|verso|poema|hino|historia de|lenda de|rumor|boato|dizem que|contam que|ouviu falar|se diz)/;
+
 /* O cão de guarda: o Mestre pôs em cena alguém que está a dias daqui? */
 export function detectarForaDeLugar(narrativa, npcs, cidadeAtual, mapa, { comGrupo = [] } = {}) {
   const texto = norm(narrativa);
@@ -112,11 +183,11 @@ export function detectarForaDeLugar(narrativa, npcs, cidadeAtual, mapa, { comGru
   for (const n of longe) {
     const pos = ocorrenciaDoNome(narrativa, n.nome);
     if (pos < 0) continue;
-    /* menção não é presença: só conta se o texto o coloca AGINDO na cena */
-    const janela = texto.slice(Math.max(0, pos - 90), pos + norm(n.nome).length + 160);
-    const presente = /(entra|chega|aparece|surge|se aproxima|caminha ate|senta|estende|entrega|puxa|desenrola|diz|fala|sussurra|grita|cumprimenta|te encontra|esta ali|esta aqui|ao seu lado|na sua frente)/.test(janela);
-    const explicado = /(carta|mensageiro|pombo|recado|bilhete|lembr|sonh|pensa|lembranca|falou uma vez|dias atras|de longe)/.test(janela);
-    if (presente && !explicado) achados.push(n);
+    const { frase, mencao } = contextoDoNome(narrativa, pos, n.nome);
+    if (mencao) continue;                      // "uma canção sobre ela" não a traz para a taverna
+    if (!AGINDO_NA_CENA.test(frase)) continue; // sem verbo de ação na MESMA frase, é só o nome no ar
+    if (EXPLICADO_DE_LONGE.test(frase)) continue;
+    achados.push(n);
   }
   return achados;
 }

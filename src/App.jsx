@@ -42,7 +42,7 @@ import { reconciliarGraus, resolverPresenca, presencaDoHeroi, PRESENCA_PROMPT } 
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
-import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, avisoDeConserto, lembreteDoPortao } from "./portao.js";
+import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao } from "./portao.js";
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { avaliarEquipar, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
@@ -3788,7 +3788,7 @@ export default function Taverna() {
         mortes.forEach((nome) => {
           const alvo = vivosAgora.find((e) => (e.nome || "").toLowerCase() === String(nome || "").toLowerCase());
           if (!alvo) return;
-          msgs.push(`⚖ Coesão do sistema: ${alvo.nome} NÃO morreu — ainda tem ${alvo.vida} PV. A narração da morte foi exagero; a luta continua.`);
+          msgs.push(`⚔ ${alvo.nome} continua de pé — ${alvo.vida} PV. A luta não acabou.`);
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CORREÇÃO DE COESÃO — REGRA ABSOLUTA] Você narrou a morte de ${alvo.nome}, mas o SISTEMA registra ${alvo.vida} PV: ele está VIVO e em combate. RETOME tratando-o como vivo — sem ressuscitar, sem cinzas, sem "última investida póstuma": ele simplesmente NÃO morreu. Dano e morte são decididos SÓ pelo sistema (envelopes [COMBATE — RESOLVIDO] e o PV do painel); palavras de empolgação do jogador ("estraçalho você!") são figura de linguagem, NUNCA resultado.`;
         });
       } catch { /* seção quebrada não derruba as outras */ }
@@ -4144,7 +4144,10 @@ export default function Taverna() {
       /* nada de acusação na volta: o histórico guarda o texto CORRIGIDO, então
          "você narrou X" contradiria o próprio histórico. Vai o lembrete seco. */
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${lembreteDoPortao(vio)}`;
-      liberarPortao(limpo, [avisoDeConserto(vio)]);
+      /* CALADO (v9.13): conserto que deu certo não se anuncia. O jogador
+         não leu o erro — para ele a cena simplesmente saiu certa, que é
+         o que um sistema que funciona parece por fora. */
+      liberarPortao(limpo);
       return limpo;
     }
     for (const v of vio) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${v.nota}`;
@@ -4706,8 +4709,10 @@ export default function Taverna() {
         if (ouvintes.length) {
           const m = acao.match(/\b(que|sobre|de)\s+(.{8,80})/i);
           const assunto = (m ? m[2] : acao).replace(/[.!?]+$/, "").trim();
+          /* CALADO (v9.13): o segredo é anotado sem recibo na tela. Dizer
+             "anotado: só Iris sabe disso" é o sistema falando de si mesmo
+             no meio da ficção — e o jogador já sabe a quem contou. */
           confidenciasRef.current = registrarConfidencia(confidenciasRef.current, { assunto, ouvintes, dia: diaRef.current });
-          pushMsgs([{ autor: "sistema", texto: `🤐 Anotado: só ${ouvintes.join(", ")} sabe disso agora.` }]);
         }
       }
     } catch { /* anotar segredo nunca pode travar o turno */ }
