@@ -39,7 +39,7 @@ import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito
 import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, detectarPedidoDeTeste, envelopeDoTeste, TESTES_PROMPT } from "./testes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, PRESENCA_PROMPT } from "./presenca-divina.js";
-import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
+import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
 import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, avisoDeConserto, lembreteDoPortao } from "./portao.js";
@@ -2430,6 +2430,23 @@ export default function Taverna() {
     baseMundoRef.current = matarNaBase(baseMundoRef.current, n);
     setBaseMundo(baseMundoRef.current);
   };
+  /* CONSUMO PARA O CÂNONE (v9.14): o esconderijo esvazia de vez. Era a morte
+     a ÚNICA coisa que saía da base; agora o achado sai também, e é isso que
+     impede o Mestre de oferecer três vezes o mesmo baú. */
+  const registrarSaque = (id) => {
+    if (!id) return;
+    baseMundoRef.current = saquearNaBase(baseMundoRef.current, id);
+    setBaseMundo(baseMundoRef.current);
+    salvar({ baseMundo: baseMundoRef.current });
+  };
+  const registrarRevelacao = (ids) => {
+    const lista = [].concat(ids || []).filter(Boolean);
+    if (!lista.length) return;
+    let b = baseMundoRef.current;
+    for (const id of lista) b = revelarNaBase(b, id);
+    baseMundoRef.current = b;
+    setBaseMundo(b);
+  };
   const [devocao, setDevocao] = useState(devocaoRef.current);
   /* O que o Mestre recebe sobre o cosmos: regras só após o despertar (custo zero antes) */
   const infoDivindade = () => {
@@ -3443,6 +3460,36 @@ export default function Taverna() {
       });
     } catch { /* o cão de guarda nunca derruba o turno */ }
     try { conferirNemesisNaNarrativa(resp.narrativa); } catch { /* idem */ }
+    /* ---- DA BASE PARA O CÂNONE (v9.14) ----
+       O outro lado do consumo. Quando um local ou uma pessoa da base entra na
+       narrativa, ele deixa de ser estoque e vira história: o sistema marca
+       como revelado (o prompt passa a mostrar ✓, e o Mestre para de
+       reapresentar quem o herói já conhece) e a pessoa entra no registro do
+       códex por código — sem depender de o Mestre lembrar de enviá-la.
+
+       Isto RATIFICA a narração, não a contradiz: por isso continua aqui,
+       depois, e não no portão. */
+    try {
+      const m = mencionadosNaCena(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), resp.narrativa);
+      const ids = [
+        ...m.locais.map((l) => idDoLocal(cidadeAtualRef.current, l)),
+        ...m.gente.map((p) => idDaGente(cidadeAtualRef.current, p)),
+      ];
+      if (ids.length) {
+        registrarRevelacao(ids);
+        if (m.gente.length) {
+          let reg = npcsRef.current, tocou = false;
+          for (const p of m.gente) {
+            if (Object.keys(reg).some((k) => k.toLowerCase() === p.nome.toLowerCase())) continue;
+            if (!tocou) { reg = { ...reg }; tocou = true; }
+            reg[p.nome] = criarNPC(p.nome, { papel: p.papel, local: cidadeAtualRef.current, notas: `${p.traco}; quer ${p.vontade}`, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });
+          }
+          if (tocou) { npcsRef.current = reg; setNpcs(reg); }
+        }
+        const nomes = [...m.locais.map((l) => l.nome), ...m.gente.map((p) => p.nome)];
+        msgs.push(`📖 Entrou na história: ${nomes.join(", ")}${m.gente.length ? " — no registro de pessoas" : ""}.`);
+      }
+    } catch { /* o códex nunca derruba o turno */ }
     /* ---- O PORTÃO (v9.12) ----
        Aqui moravam três cães de guarda separados — coerência de cena (v9.9),
        ascensão (v9.6) e morte na prosa (v9.5). Todos os três CONTRADIZEM o
@@ -5030,8 +5077,14 @@ export default function Taverna() {
 
   const concluirRolagem = (valor) => {
     const r = rolagem;
-    if (!r || rolagemConsumidaRef.current === r.motivo + r.dificuldade) { setDadoRolando(false); return; }
-    rolagemConsumidaRef.current = r.motivo + r.dificuldade;
+    /* GUARDA POR IDENTIDADE (v9.14). Antes a chave era motivo+dificuldade —
+       texto. Só que "procurar algo escondido" com a mesma dificuldade é
+       exatamente o que o jogador repete: procurou, falhou, procura de novo. A
+       segunda rolagem batia na chave da primeira e morria em silêncio — o
+       dado rolava na tela e nada acontecia. A guarda existe para um objeto de
+       rolagem não ser consumido DUAS vezes; então a chave é o próprio objeto. */
+    if (!r || rolagemConsumidaRef.current === r) { setDadoRolando(false); return; }
+    rolagemConsumidaRef.current = r;
     if (r.auto) {
       setDadoRolando(false); setRolagem(null);
       pushMsgs([{ autor: "sistema", texto: `✓ ${r.motivo || "Teste"}: trivial para seu patamar — sucesso sem rolagem` }]);
@@ -5056,12 +5109,34 @@ export default function Taverna() {
        consolar com meia-pista. A regra vai escrita dentro do envelope. */
     if (r.origem === "pedido") {
       const provaAsc = r.provaAscensao || null;
-      enviar(envelopeDoTeste({
+      const passou = critico || (!desastre && total >= dc);
+      let env = envelopeDoTeste({
         tipo: r.tipo, motivo: r.motivo, valor, mod, total, dc,
-        resultado: critico ? "sucesso" : desastre ? "falha" : total >= dc ? "sucesso" : "falha",
-        critico, desastre,
-      }), personagem);
-      if (provaAsc) resolverProvaAscensao(provaAsc, critico || (!desastre && total >= dc));
+        resultado: passou ? "sucesso" : "falha", critico, desastre,
+      });
+      let persT = personagem;
+      /* ACHADO (v9.14): passou E havia mesmo algo aqui — o sistema entrega,
+         tira da base para sempre e escreve o fato no envelope. Falhou: nada
+         acontece e o esconderijo continua lá para a próxima tentativa. */
+      if (passou && r.achado) {
+        const rec = recompensaDoAchado(r.achado);
+        const extras = [];
+        persT = { ...persT, moedas: (persT.moedas || 0) + rec.moedas };
+        for (let i = 0; i < rec.componentes; i++) {
+          const c = colherComponentes(((mapaRef.current.cidades || []).find((x) => x.nome === cidadeAtualRef.current) || {}).bioma || "planicie", 0)[0];
+          if (c) { persT = { ...persT, inventario: [...(persT.inventario || []), itemComponente(c.id)] }; extras.push(`${c.icone} ${c.nome}`); }
+        }
+        for (let i = 0; i < rec.consumiveis; i++) {
+          const cc = sortearConsumivel(persT.nivel || 1);
+          if (cc) { persT = { ...persT, inventario: [...(persT.inventario || []), itemConsumivel(cc.id)] }; extras.push(`${cc.icone} ${cc.nome}`); }
+        }
+        setPersonagem(persT);
+        registrarSaque(r.achado.id);
+        pushMsgs([{ autor: "sistema", texto: `${r.achado.icone || "🧰"} Achado: ${r.achado.o} — ◉ ${rec.moedas} moedas${extras.length ? ` · ${extras.join(", ")}` : ""}` }]);
+        env = `${envelopeDoAchado(r.achado, rec)}\n${env}`;
+      }
+      enviar(env, persT);
+      if (provaAsc) resolverProvaAscensao(provaAsc, passou);
       return;
     }
     enviar(`[ROLAGEM] Teste de ${r.atributo || "sorte"} (${r.motivo})${notaVant}: rolei ${valor}, modificador +${mod}${notaBuff}, total ${total}${dc != null ? `, dificuldade ${dc}` : ""}. Resultado: ${resultado}. Narre as consequências de forma coerente com o resultado.`, personagem);
@@ -5082,14 +5157,24 @@ export default function Taverna() {
       nivelAmeaca: ameaca, tipo: tipoId, nivel: personagem.nivel || 1,
     });
     const attrNome = nomeDoAtributo(t.atributo);
+    /* ACHADO NA BASE (v9.14): existe algo de verdade escondido AQUI que este
+       atributo acharia? Então a dificuldade é a DELE, gerada na criação do
+       mundo — não a genérica do pedido. É a diferença entre procurar num
+       lugar que esconde algo e procurar no vazio: o sistema já sabe qual é
+       o caso, e o Mestre nunca precisa decidir se "tinha alguma coisa ali". */
+    const achado = (!extra.dificuldade && !combateRef.current)
+      ? achavelAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), t.atributo)
+      : null;
     /* provas de rito têm dificuldade fixa de catálogo — nada de escala */
-    const dcFinal = extra.dificuldade != null ? extra.dificuldade : dc;
-    const explic = extra.dificuldade != null ? "dificuldade fixa do rito" : porque;
+    const dcFinal = extra.dificuldade != null ? extra.dificuldade : achado ? achado.dc : dc;
+    const explic = extra.dificuldade != null ? "dificuldade fixa do rito"
+      : achado ? "há algo de fato escondido aqui — esta é a dificuldade dele"
+      : porque;
     pushMsgs([
       { autor: "jogador", texto: `🎲 Peço um teste de ${attrNome}${motivo ? ` — ${motivo}` : ""}` },
       { autor: "sistema", texto: `O sistema fixou a dificuldade em ${dcFinal} (${explic}). Role o dado.` },
     ]);
-    setRolagem({ atributo: attrNome, motivo: motivo || t.pergunta, origem: "pedido", tipo: tipoId, ...extra, dificuldade: dcFinal });
+    setRolagem({ atributo: attrNome, motivo: motivo || t.pergunta, origem: "pedido", tipo: tipoId, ...extra, dificuldade: dcFinal, achado });
   };
 
   /* ---------------- RITO DE ASCENSÃO (v9.6) ----------------

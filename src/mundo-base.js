@@ -369,6 +369,53 @@ export function estaMorto(base, nome) {
 export function foiRevelado(base, id) { return garantirBase(base).revelados.includes(id); }
 export function foiSaqueado(base, id) { return garantirBase(base).saqueados.includes(id); }
 
+/* ---------------- O QUE SE ACHA PROCURANDO (v9.14) ----------------
+   Este é o pedaço que fechava o ciclo e faltava. O filtro por `foiSaqueado`
+   sempre existiu logo abaixo, em oQueExisteAqui — mas nada nunca chamava
+   `saquear`, então a lista de saqueados jamais crescia e o filtro era letra
+   morta. Resultado: o Mestre recebia o MESMO baú escondido e o MESMO segredo
+   em todo turno, para sempre, mesmo depois de o jogador ter achado.
+
+   A peça que faltava é esta: quando o jogador pede um teste, o sistema olha
+   se existe algo procurável AQUI com aquele atributo, e é a dificuldade do
+   PRÓPRIO segredo que vale — não a genérica do pedido. Quem decide se achou
+   é o dado; o Mestre só narra o que já foi decidido. */
+export function achavelAqui(semente, mapa, nomeCidade, base, genero, atributo = "percepcao") {
+  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero);
+  if (!q) return null;
+  const cands = [
+    ...(q.segredos || []).map((s) => ({ ...s, especie: "segredo", onde: `em ${s.local}` })),
+    ...(q.tesouros || []).map((t) => ({ ...t, especie: "tesouro", o: t.conteudo })),
+  ].filter((x) => (x.acha || "percepcao") === atributo);
+  if (!cands.length) return null;
+  /* o mais fácil primeiro: procurar acha o que está mais à mão */
+  return cands.sort((a, b) => (a.dc || 0) - (b.dc || 0))[0];
+}
+
+/* O que o achado rende. Prosa vira coisa: o sistema lê o conteúdo e decide o
+   que entra na bolsa, para o Mestre não ter que arbitrar recompensa. */
+export function recompensaDoAchado(achado) {
+  if (!achado) return { moedas: 0, componentes: 0, consumiveis: 0 };
+  const dc = achado.dc || 14;
+  const txt = String(achado.o || achado.conteudo || "").toLowerCase();
+  const moedas = /moeda|joia|pagamento|escritura|contrato/.test(txt) ? dc * 12 : dc * 4;
+  const componentes = /componente|ritual|erva|ossos|relicário|relicario/.test(txt) ? 2 : 0;
+  const consumiveis = /frasco|poç|poc|elixir/.test(txt) ? 1 : 0;
+  return { moedas, componentes, consumiveis };
+}
+
+/* O envelope do achado: fato fixo, para o Mestre descrever sem inventar. */
+export function envelopeDoAchado(achado, rec) {
+  if (!achado) return "";
+  const onde = achado.especie === "tesouro" ? `${achado.onde} (perto de ${achado.perto})` : achado.onde;
+  const ganho = [
+    rec.moedas ? `◉ ${rec.moedas} moedas` : "",
+    rec.componentes ? `${rec.componentes} componente(s) de ofício` : "",
+    rec.consumiveis ? `${rec.consumiveis} consumível` : "",
+  ].filter(Boolean).join(", ");
+  return `[ACHADO — RESOLVIDO PELO SISTEMA] Procurei e ACHEI: ${achado.o}, ${onde}. Isto estava na base do mundo desde a criação — não é invenção sua e não pode virar outra coisa. O sistema já pôs na minha bolsa${ganho ? `: ${ganho}` : " o que havia de aproveitável"} — NÃO envie itens nem moedas. Descreva o momento da descoberta em 2-3 frases: o gesto que revelou, a poeira, o cheiro, o que aquilo sugere sobre quem escondeu. Este esconderijo agora está VAZIO: nunca mais ofereça este mesmo achado.`;
+}
+
 /* ---------------- CONSULTA ----------------
    O que o Mestre recebe quando o herói está numa cidade. Mortos saem da
    lista de gente viva; segredos já achados saem da lista de segredos. */
@@ -400,12 +447,46 @@ export function oQueExisteAqui(semente, mapa, nomeCidade, base, genero = "Fantas
   return { cidade, locais, gente, segredos, criaturas: bichos, regiao, masmorras: perto, tesouros: caches };
 }
 
+/* ---------------- QUEM JÁ ENTROU EM CENA (v9.14) ----------------
+   O outro lado do ciclo. Quando um local ou uma pessoa da base aparece na
+   narrativa, ela deixa de ser "estoque" e vira parte da história: o sistema
+   marca como revelada, e a pessoa entra no registro do códex por código —
+   sem depender de o Mestre lembrar de enviá-la. Daí em diante o prompt diz
+   "já apareceu", e ele para de reapresentar quem o jogador já conhece. */
+const semAcento = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+export function mencionadosNaCena(semente, mapa, nomeCidade, base, genero, narrativa) {
+  const texto = semAcento(narrativa);
+  if (!texto.trim()) return { locais: [], gente: [] };
+  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero);
+  if (!q) return { locais: [], gente: [] };
+  const cita = (nome) => {
+    const alvo = semAcento(nome);
+    if (alvo.length < 4) return false;
+    const i = texto.indexOf(alvo);
+    if (i < 0) return false;
+    const antes = i > 0 ? texto[i - 1] : " ";
+    const dep = i + alvo.length < texto.length ? texto[i + alvo.length] : " ";
+    return !/[a-z0-9]/.test(antes) && !/[a-z0-9]/.test(dep);
+  };
+  return {
+    locais: (q.locais || []).filter((l) => !foiRevelado(base, l.id || `${q.cidade.nome}|local|${l.nome}`) && cita(l.nome)),
+    gente: (q.gente || []).filter((p) => !foiRevelado(base, `${q.cidade.nome}|gente|${p.nome}`) && cita(p.nome)),
+  };
+}
+
+/* Os ids que o livro-razão guarda. Ficam aqui para os dois lados — quem
+   marca e quem consulta — nunca discordarem sobre a forma da chave. */
+export const idDoLocal = (cidade, l) => (l && l.id) || `${cidade}|local|${(l && l.nome) || ""}`;
+export const idDaGente = (cidade, p) => `${cidade}|gente|${(p && p.nome) || ""}`;
+
 /* O bloco que entra no prompt. Curto de propósito: é ficha, não literatura. */
 export function resumoDaqui(semente, mapa, nomeCidade, base, genero) {
   const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero);
   if (!q) return "";
-  const locais = q.locais.map((l) => `${l.icone} ${l.nome} (${l.tipo})`).join(" · ");
-  const gente = q.gente.map((p) => `${p.nome} — ${p.raca}, ${p.papel}, ${p.traco}, ${p.modo}; ${p.vontade}`).join(" | ");
+  const marca = (id) => (foiRevelado(base, id) ? " ✓" : "");
+  const locais = q.locais.map((l) => `${l.icone} ${l.nome} (${l.tipo})${marca(idDoLocal(q.cidade.nome, l))}`).join(" · ");
+  const gente = q.gente.map((p) => `${p.nome}${marca(idDaGente(q.cidade.nome, p))} — ${p.raca}, ${p.papel}, ${p.traco}, ${p.modo}; ${p.vontade}`).join(" | ");
   const seg = q.segredos.map((s) => `${s.icone} em ${s.local}: ${s.o} (só com teste de ${s.acha}, dif. ${s.dc})`).join(" · ");
   const bichos = q.criaturas.map((c) => `${c.nome} (nv ${c.nivel}, ${c.comportamento})`).join(" · ");
   const mms = (q.masmorras || []).map((m) => `${m.icone} ${m.nome} (${m.tipo}, nível ${m.nivel}, ${m.salas} salas — ${m.rumor})`).join(" · ");
@@ -413,6 +494,7 @@ export function resumoDaqui(semente, mapa, nomeCidade, base, genero) {
   return `O QUE EXISTE EM ${q.cidade.nome.toUpperCase()} (base do mundo — use ISTO, não invente):
 - Locais: ${locais || "—"}.
 - Gente (nomes, ofícios e o que cada um quer — são estas as pessoas da cidade; só crie alguém novo se a cena EXIGIR): ${gente || "—"}.
+- O ✓ marca quem/o que JÁ apareceu em cena: o herói conhece, então NUNCA reapresente ("um homem chamado…", "você nunca tinha visto…") — retome a relação de onde parou. Quem está sem ✓ ainda é novidade.
 ${seg ? `- Escondido (NUNCA revele sem que o jogador procure e passe no teste): ${seg}.\n` : ""}${mms ? `- Masmorras da região (já estão no chão; o povo daqui pode COMENTAR o rumor sem que ninguém tenha entrado): ${mms}.\n` : ""}${cofres ? `- Enterrado no ermo (segredo absoluto até alguém procurar e passar no teste): ${cofres}.\n` : ""}- Criaturas da região ${q.regiao ? q.regiao.nome : ""}: ${bichos || "—"}.`;
 }
 
