@@ -3,7 +3,7 @@ import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./n
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { gerarGeografia, garantirGeografia } from "./geografia.js";
-import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, danoDaClasse, ataquesDoInimigo, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
+import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste, dificuldadePorPerfil } from "./bestiario.js";
@@ -4808,11 +4808,34 @@ export default function Taverna() {
       return;
     }
     pushMsgs([{ autor: "jogador", texto: acao }]);
+    /* ---- SAIR DE PERTO CUSTA (v9.14) ----
+       Recuar era de graça, então recuar não era decisão. Agora cada inimigo
+       de pé leva UM golpe livre em quem dá as costas — reação, uma por
+       inimigo. Anunciar que a retirada é ordenada ("desengajo", "sem dar as
+       costas") evita, que é exatamente a ação de Desengajar do 5e. */
+    let persG = personagem, notaOp = "";
+    if (combateRef.current && ehRetirada(acao)) {
+      const ops = oportunidadesContraOJogador(combateRef.current.inimigos, persG, grauDe(divindadeRef.current));
+      let dano = 0;
+      const linhas = [];
+      for (const o of ops) {
+        logDadoCombate(resumoDoAtaque(o.r));
+        if (o.r.dano > 0) dano += o.r.dano;
+        linhas.push({ autor: "sistema", texto: o.r.dano > 0
+          ? `⚡ Oportunidade — ${o.inimigo} te acerta ao você sair: ${o.r.dano} de dano`
+          : `⚡ Oportunidade — ${o.inimigo} tenta te alcançar e erra` });
+      }
+      if (linhas.length) {
+        pushMsgs(linhas);
+        if (dano > 0) { persG = { ...persG, vida: Math.max(0, (persG.vida || 0) - dano) }; danoJaAplicadoRef.current = true; setPersonagem(persG); }
+        notaOp = ` [ATAQUES DE OPORTUNIDADE — ROLADOS PELO SISTEMA] Ao me afastar, dei as costas: ${ops.map((o) => `${o.inimigo} ${o.r.dano > 0 ? `acertou (${o.r.dano})` : "errou"}`).join("; ")}. Levei ${dano} de dano no total e já está aplicado — NÃO recalcule. Narre o preço da retirada.`;
+      }
+    }
     /* v9.13: em combate, até "recuo dois passos e observo" é um turno. É o que
        substitui o botão que sumiu — quem quer só ficar em guarda escreve isso,
        e o inimigo responde igual. */
-    const rvG = fecharMeuTurno(personagem);
-    enviar(`${acao}${rvG.texto}${extraTempo}`, rvG.pers);
+    const rvG = fecharMeuTurno(persG);
+    enviar(`${acao}${notaOp}${rvG.texto}${extraTempo}`, rvG.pers);
   };
 
   /* VEZ DO MUNDO: o mundo vive o instante presente (curto no TEMPO, mas cheio
@@ -4835,7 +4858,10 @@ export default function Taverna() {
     const todosCairam = c.inimigos.every((e) => e.derrotado || (e.vida || 0) <= 0);
     if (!todosCairam) return false;
     combateRef.current = null; setCombate(null); combateOciosoRef.current = 0;
-    const derrotados = c.inimigos;
+    /* quem FUGIU não tombou: não rende espólio, não conta abate e — o que
+       mais importaria — não tem o nome riscado no registro do mundo (v9.14) */
+    const derrotados = c.inimigos.filter((e) => !e.fugiu);
+    if (!derrotados.length) { pushMsgs([{ autor: "sistema", texto: "⚔ Não sobrou ninguém em pé para lutar — o combate termina sem espólios." }]); return true; }
     /* v9.8: quem cai sai da base do mundo para sempre — o nome fica riscado no
        registro de pessoas e some do que o Mestre recebe no prompt. */
     derrotados.forEach((e) => registrarMorte(e.nome));
@@ -4907,6 +4933,37 @@ export default function Taverna() {
     if (!combPos) return { pers: persBase, resumo: "" };
     const vivos = (combPos.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
     if (!vivos.length) { fecharSeTodosCairam(); return { pers: persBase, resumo: "" }; }
+
+    /* ---- QUEM ESTÁ MUITO FERIDO TENTA SAIR (v9.14) ----
+       E dar as costas custa: o herói leva um golpe livre — a reação que a
+       regra sempre prometeu e que nunca teve código. Quem sobrevive à
+       oportunidade sai da luta de verdade; quem não sobrevive cai ali. */
+    const fugas = [];
+    for (const e of vivos.filter((x) => querFugir(x))) {
+      const bonusOp = Math.max((persBase.atributos?.forca || 0), (persBase.atributos?.destreza || 0)) + 2 + Math.floor(((persBase.nivel || 1) - 1) / 4);
+      const dOp = danoDaClasse(persBase.classe, persBase.nivel || 1, Math.round(danoDe(persBase, false) / 2)) + bonusDeArma(persBase).bonus;
+      const r = ataqueDeOportunidade(persBase, e, bonusOp, dOp, { tipoDano: elementoDaArma(persBase) });
+      const pv = Math.max(0, (e.vida || 0) - (r.dano || 0));
+      const morreu = pv <= 0;
+      /* sai do combate nos dois casos; `fugiu` distingue quem escapou VIVO —
+         é o que impede o sistema de dar XP por ele e, pior, de riscar o nome
+         dele no registro do mundo como se tivesse morrido. */
+      combPos.inimigos = combPos.inimigos.map((x) => (x.nome !== e.nome ? x : { ...x, vida: pv, derrotado: true, fugiu: !morreu }));
+      logDadoCombate(resumoDoAtaque(r));
+      pushMsgs([{ autor: "sistema", texto: r.dano > 0
+        ? `🏃 ${e.nome} dá as costas e leva um golpe de oportunidade: ${r.dano} de dano${morreu ? " ☠ — cai antes de dar dois passos" : " — mas escapa"}`
+        : `🏃 ${e.nome} dá as costas; seu golpe de oportunidade passa raspando — ele escapa` }]);
+      fugas.push(`${e.nome} ${morreu ? `tentou fugir e CAIU com o golpe de oportunidade (${r.dano})` : `FUGIU da luta${r.dano > 0 ? ` levando ${r.dano} de dano ao dar as costas` : " ileso"}`}`);
+    }
+    if (fugas.length) {
+      combateRef.current = combPos; setCombate({ ...combPos });
+      if (fecharSeTodosCairam()) {
+        return { pers: persBase, resumo: ` ${fugas.join("; ")}. Com isso a luta ACABOU — narre a debandada e o silêncio depois.` };
+      }
+    }
+    const aindaVivos = (combPos.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
+    if (!aindaVivos.length) return { pers: persBase, resumo: fugas.length ? ` ${fugas.join("; ")}.` : "" };
+    const notaFuga = fugas.length ? ` ${fugas.join("; ")} (rolado pelo sistema — narre a fuga, não a impeça).` : "";
 
     const acoes = turnoDosInimigos({ inimigos: combPos.inimigos, jogador: persBase, grupo: persBase.grupo || [], gdJogador: grauDe(divindadeRef.current) });
     const linhasSis = [];
@@ -5023,7 +5080,7 @@ export default function Taverna() {
     }
     const compTxt = partesComp.length ? ` Meus companheiros agiram: ${partesComp.join("; ")}.` : "";
     const morteTxt = persAtual.vida <= 0 ? ` ATENÇÃO: eu caí a 0 PV e estou ${persAtual.morto ? "à beira da morte" : "inconsciente, lutando pela vida (testes de morte). Um aliado pode me estabilizar ou curar para eu voltar"}.` : "";
-    return { pers: persAtual, resumo: ` Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ${partes.join("; ")}.${compTxt}${morteTxt}` };
+    return { pers: persAtual, resumo: `${notaFuga} Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ${partes.join("; ")}.${compTxt}${morteTxt}` };
   };
 
   /* AGIR ENCERRA O TURNO (v9.13). Era isto que o botão "encerrar turno"

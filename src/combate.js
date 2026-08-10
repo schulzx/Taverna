@@ -469,12 +469,53 @@ export function acoesBonusDe(classe, nivel) {
   return (ACOES_BONUS[classe] || []).filter((a) => (nivel || 1) >= a.nivel);
 }
 
-/* REAÇÃO: ataque de oportunidade quando um inimigo foge do seu alcance. */
-export function ataqueDeOportunidade(atacante, alvo, bonusAtaque, danoBase) {
+/* ---------------- ATAQUE DE OPORTUNIDADE (v9.14) ----------------
+   A função abaixo existia desde a v8 e nunca foi chamada por ninguém: a
+   regra estava escrita no prompt do Mestre ("ataque de oportunidade é
+   REAÇÃO") sem uma linha de código atrás. Na prática, sair de perto de um
+   inimigo era de graça — dos dois lados.
+
+   Agora vale nos dois sentidos, que é o que torna a regra interessante:
+   recuar CUSTA, e por isso vira decisão; e o inimigo ferido que corre
+   também expõe as costas. */
+export function ataqueDeOportunidade(atacante, alvo, bonusAtaque, danoBase, { ehAtacanteInimigo = false, tipoDano } = {}) {
   return resolverAtaque({
-    atacante: atacante.nome, alvo, ehAtacanteInimigo: false,
-    bonusAtaque, danoBase, condAtacante: [], condAlvo: alvo.condicoes || [],
+    atacante: atacante.nome || atacante, alvo, ehAtacanteInimigo,
+    bonusAtaque, danoBase, condAtacante: atacante.condicoes || [], condAlvo: alvo.condicoes || [],
+    tipoDano, resistAlvo: resistenciasEquipadas(alvo),
   });
+}
+
+/* O jogador anunciou que vai sair de perto? Recuar ordenado ("desengajo")
+   NÃO conta — no 5e é justamente a ação de Desengajar que evita o golpe. */
+const RETIRADA = /\b(recuo|recuar|me afasto|afasto-me|me distancio|fujo|fugir|bato em retirada|dou meia.volta|saio de perto|corro para (fora|longe)|volto correndo)\b/;
+const DESENGAJA = /\b(desengaj|com cuidado|sem dar as costas|passo a passo|de guarda erguida|protegendo a retirada)\b/;
+export function ehRetirada(texto) {
+  const t = String(texto || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  return RETIRADA.test(t) && !DESENGAJA.test(t);
+}
+
+/* Cada inimigo de pé leva UM golpe livre em quem está saindo. É reação:
+   um por inimigo, independente de quantos ataques ele tenha na rodada. */
+export function oportunidadesContraOJogador(inimigos, jogador, gdJogador = 0) {
+  return (inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0).map((inim) => {
+    const perfil = perfilDeCriatura(inim.nome, inim.desc);
+    const r = ataqueDeOportunidade(inim, jogador,
+      bonusDeAmeaca(inim.ameaca) + 2 * ((inim.gd || 0) - (gdJogador || 0)),
+      danoDe(inim, true), { ehAtacanteInimigo: true, tipoDano: perfil.ataque });
+    return { inimigo: inim.nome, r };
+  });
+}
+
+/* O outro lado: quem está muito ferido tenta sair da luta. Chefe não foge —
+   um lendário que dá as costas estragaria a cena que ele mesmo é. */
+export const LIMIAR_FUGA = 0.2;
+export function querFugir(inimigo, { sorte = Math.random } = {}) {
+  if (!inimigo || inimigo.derrotado || (inimigo.vida || 0) <= 0) return false;
+  if (inimigo.ameaca === "lendario" || inimigo.chefe) return false;
+  const frac = (inimigo.vida || 0) / (inimigo.vidaMax || 1);
+  if (frac > LIMIAR_FUGA) return false;
+  return sorte() < (inimigo.ameaca === "elite" ? 0.25 : 0.5);
 }
 
 /* CONCENTRAÇÃO: uma magia por vez; apanhar exige resistência de Vigor
