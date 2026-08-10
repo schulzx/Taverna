@@ -38,6 +38,7 @@ import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaD
 import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito, naturezaDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
 import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, detectarPedidoDeTeste, envelopeDoTeste, TESTES_PROMPT } from "./testes.js";
 import { PERICIAS, periciaPorId, periciasDoAtributo, garantirPericias, periciasIniciais, bonusDePericia, passivoDe, resolucaoAutomatica, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente, resumoPericiasPrompt, PERICIAS_PROMPT } from "./pericias.js";
+import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, podeGastar, gastarHeroismo, validarDeclaracao, envelopeDeclaracao, envelopeRefazer, resumoHeroismoPrompt, HEROISMO_PROMPT } from "./heroismo.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
@@ -51,6 +52,7 @@ import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt } from "./prompt.js";
 import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./ui.jsx";
 import { FichaVisual } from "./painel-ficha.jsx";
+import { SeloHeroismo, PainelHeroismo } from "./painel-heroismo.jsx";
 import { PainelAscensao } from "./painel-ascensao.jsx";
 import { PainelCodex } from "./painel-codex.jsx";
 import { PainelDiario } from "./painel-diario.jsx";
@@ -145,7 +147,7 @@ ${narrativas.slice(-16).join("\n\n")}`;
 
 /* ---------------- Overlay do dado ---------------- */
 
-function OverlayDado({ rolagem, modificador, aoConcluir }) {
+function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, aoRefazer }) {
   if (rolagem.auto) {
     return (
       <div className="fixed inset-0 z-40 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.85)", backdropFilter: "blur(3px)" }}>
@@ -163,6 +165,12 @@ function OverlayDado({ rolagem, modificador, aoConcluir }) {
   const [par, setPar] = useState(null); // [a,b] quando há vantagem/desvantagem
   const finalRef = useRef(null);
   const setFinalRef = (v) => { finalRef.current = v; };
+  /* REFAZER (v9.16): o ponto de heroísmo comprado DEPOIS de ver o dado.
+     Um só por rolagem, e o segundo resultado vale mesmo se for pior —
+     sem risco isto seria um botão de desfazer, e o dado deixaria de
+     importar. `refeito` guarda o primeiro valor só para contar a história
+     ao Mestre ("insisti"), nunca para escolher entre os dois. */
+  const [refeito, setRefeito] = useState(null);
   const vant = !!rolagem.vantagem, desv = !!rolagem.desvantagem;
   const modo = vant && !desv ? "vantagem" : desv && !vant ? "desvantagem" : null;
   const lados = 20;
@@ -249,9 +257,29 @@ function OverlayDado({ rolagem, modificador, aoConcluir }) {
             <div className="tv-display text-3xl mt-1" style={{ color: desastre ? T.danger : critico ? T.amberSoft : passou || dc == null ? T.ok : T.danger }}>
               {critico ? "Crítico!" : desastre ? "Desastre!" : dc == null ? "Rolado" : passou ? "Sucesso" : "Falha"}
             </div>
-            <button onClick={() => aoConcluir(finalRef.current)} className="mt-5 rounded-xl px-6 py-2.5 tv-mono text-sm" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>
-              Continuar →
-            </button>
+            {refeito != null && (
+              <div className="tv-mono text-[10px] uppercase tracking-widest mt-1" style={{ color: T.violetSoft }}>
+                ✧ refeito — o primeiro dado deu {refeito}
+              </div>
+            )}
+            <div className="mt-5 flex items-center justify-center gap-2 flex-wrap">
+              {refeito == null && heroismo >= 1 && !rolagem.semHeroismo && (
+                <button
+                  onClick={() => {
+                    if (!aoRefazer || !aoRefazer()) return;
+                    const novo = 1 + Math.floor(Math.random() * lados);
+                    setRefeito(valor); setValor(novo); setFinalRef(novo);
+                  }}
+                  title="Gasta 1 ponto de heroísmo. O segundo dado vale — mesmo se for pior."
+                  className="rounded-xl px-4 py-2.5 tv-mono text-sm"
+                  style={{ background: "transparent", color: T.violetSoft, border: `1px solid ${T.violet}`, fontWeight: 600 }}>
+                  ✧ Refazer <span style={{ opacity: 0.7 }}>· 1 ponto</span>
+                </button>
+              )}
+              <button onClick={() => aoConcluir(finalRef.current, refeito)} className="rounded-xl px-6 py-2.5 tv-mono text-sm" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>
+                Continuar →
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -2124,6 +2152,11 @@ export default function Taverna() {
   const [aba, setAba] = useState(null);
   const [habAbertas, setHabAbertas] = useState(false);
   const [acoesAbertas, setAcoesAbertas] = useState(false);
+  /* v9.16: o painel de heroísmo e a memória do último golpe recebido —
+     é ela que dá janela ao gasto "Aguentar". Vive num ref porque não
+     precisa redesenhar nada: só existe para ser consultada no clique. */
+  const [heroAberto, setHeroAberto] = useState(false);
+  const golpeRecenteRef = useRef(null);
   /* v9.5: um turno pode carregar mais de uma habilidade, uma por movimento */
   const [habsSel, setHabsSel] = useState([]);
   const [dadoRolando, setDadoRolando] = useState(false);
@@ -2290,6 +2323,28 @@ export default function Taverna() {
           acordouAbsRef.current = (diaRef.current - 1) * 1440 + minutoRef.current;
           setPersonagem(p); salvar({ personagem: p });
           godLinha(`⚡ Curado: ${p.vidaMax} PV, ${p.manaMax} PM, sem condições e sem exaustão.`);
+          return true;
+        }
+        case "heroismo": {
+          const n = lerNumero(arg(0));
+          if (!n.ok) { godLinha(`⚡ /heroismo <0-${HEROISMO_MAX}>`); return true; }
+          const p = { ...personagem, heroismo: Math.max(0, Math.min(HEROISMO_MAX, n.valor)) };
+          setPersonagem(p); personagemRef.current = p; salvar({ personagem: p });
+          godLinha(`⚡ Pontos de heroísmo: ${p.heroismo}/${HEROISMO_MAX}.`);
+          return true;
+        }
+        case "pericia": {
+          const alvo = String(arg(0) || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+          const per = PERICIAS.find((x) => x.id === alvo || x.nome.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "") === alvo);
+          const n = lerNumero(arg(1));
+          if (!per || !n.ok) { godLinha(`⚡ /pericia <nome> <0|1|2> · ${PERICIAS.map((x) => x.id).join(", ")}`); return true; }
+          const at = garantirPericias(personagem);
+          const nivel = Math.max(0, Math.min(2, n.valor));
+          const treinadas = at.treinadas.filter((x) => x !== per.id).concat(nivel >= 1 ? [per.id] : []);
+          const especialistas = at.especialistas.filter((x) => x !== per.id).concat(nivel === 2 ? [per.id] : []);
+          const p = { ...personagem, pericias: { treinadas, especialistas } };
+          setPersonagem(p); personagemRef.current = p; salvar({ personagem: p });
+          godLinha(`⚡ ${per.icone} ${per.nome}: ${nivel === 2 ? "★★ especialista" : nivel === 1 ? "★ treinada" : "sem treino"} (ignora os limites de classe).`);
           return true;
         }
         case "moedas": {
@@ -3724,6 +3779,8 @@ export default function Taverna() {
           questsRef.current = questsRef.current.map((x) => x.titulo === q.titulo ? { ...x, status: "concluida" } : x);
           msgs.push(`✓ Missão concluída: ${q.titulo} (reconhecida pelo sistema)`);
           if (divindadeRef.current && divindadeRef.current.despertar) msgs.push(...ganharFe(q.tipo === "principal" ? 150 : 40, 2, "seu feito corre de boca em boca"));
+          /* v9.16: fechar uma missão rende um ponto de heroísmo */
+          { const rh = ganharHeroismo(p, "missao"); p = rh.pers; if (rh.msg) msgs.push(rh.msg); }
           if (q.contrato && !recompensa) recompensa = q.contrato;
         });
         [].concat(rm.falhadas || []).forEach((t) => {
@@ -4200,7 +4257,8 @@ export default function Taverna() {
          que decidem o que ele nota SEM rolar. Sem isto o Mestre inventa a
          competência do herói cena a cena, e sempre a favor da cena. */
       const per = resumoPericiasPrompt(p, (id) => atributoEfetivo(p, id));
-      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
+      const her = resumoHeroismoPrompt(p);
+      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -5082,6 +5140,12 @@ export default function Taverna() {
       partes.push(linhaParaMestre(a.golpeNome ? `${a.inimigo} (${a.golpeNome})` : a.inimigo, a.alvoNome, a.r, alvoMax, alvoDepois));
     }
     if (linhasSis.length) pushMsgs(linhasSis);
+    /* v9.16: guarda o golpe da rodada para o gasto "Aguentar". Vale a rodada
+       inteira, não o golpe isolado — o jogador não deveria precisar escolher
+       QUAL das três porradas absorver, isso é contabilidade, não decisão. */
+    golpeRecenteRef.current = danoNoJogador > 0
+      ? { dano: danoNoJogador, nome: (acoes.find((a) => a.alvoRef === "jogador") || {}).inimigo || "" }
+      : null;
     if (danoNoJogador > 0) {
       danoJaAplicadoRef.current = true;
       /* CONCENTRAÇÃO (5e): apanhou, testa para manter a magia de duração */
@@ -5156,7 +5220,15 @@ export default function Taverna() {
       const res = testeDeMorte();
       const ap = aplicarTesteMorte(estadoMorte, res);
       pushMsgs([{ autor: "sistema", texto: `☠ Teste de morte: ${res.texto}` }]);
-      if (ap.desfecho === "revive") { persAtual = { ...persAtual, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } }; pushMsgs([{ autor: "sistema", texto: "✨ Você volta a si com 1 PV!" }]); }
+      if (ap.desfecho === "revive") {
+        persAtual = { ...persAtual, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } };
+        pushMsgs([{ autor: "sistema", texto: "✨ Você volta a si com 1 PV!" }]);
+        /* v9.16: voltar de um 0 PV rende um ponto de heroísmo. Cair e levantar
+           é o momento mais heroico que a mesa produz sozinha — e é justo que
+           quem passou por isso saia com uma ficha na mão. */
+        const rh = ganharHeroismo(persAtual, "sobreviveu");
+        persAtual = rh.pers; if (rh.msg) pushMsgs([{ autor: "sistema", texto: rh.msg }]);
+      }
       else if (ap.desfecho === "estavel") { persAtual = { ...persAtual, morrendo: true, morte: { sucessos: 0, falhas: 0 } }; pushMsgs([{ autor: "sistema", texto: "Você estabiliza — inconsciente, mas vivo. Alguém precisa te ajudar." }]); }
       else if (ap.desfecho === "morto") { persAtual = { ...persAtual, morrendo: false, morto: true, morte: ap }; pushMsgs([{ autor: "sistema", texto: "💀 Você tomba… mas enquanto houver esperança, a lenda não termina." }]); }
       else { persAtual = { ...persAtual, morrendo: true, morte: ap }; }
@@ -5267,7 +5339,76 @@ export default function Taverna() {
     return a && personagem ? modDoTeste(personagem, a.id, rolagem.pericia).total : 0;
   })() : 0;
 
-  const concluirRolagem = (valor) => {
+  /* ---------------- PONTOS DE HEROÍSMO (v9.16) ----------------
+     Ganhar é sempre pelo sistema, nunca por julgamento do Mestre: aqui ele
+     se autoavaliaria, e "o mestre te dá quando você interpreta bem" viraria
+     "a IA te dá quando ela gosta de você". As quatro fontes são fatos que o
+     código enxerga sozinho, e o descanso longo é PISO — ninguém acorda sem
+     nenhuma chance. */
+  const premiarHeroismo = (pers, fonte) => {
+    const r = ganharHeroismo(pers, fonte);
+    if (r.msg) pushMsgs([{ autor: "sistema", texto: r.msg }]);
+    return r.pers;
+  };
+
+  /* O gasto que compra um segundo dado. Devolve true quando pagou — o
+     overlay só rola de novo se esta função autorizar. */
+  const pagarRefazer = () => {
+    const g = gastarHeroismo(personagemRef.current || personagem, "refazer");
+    if (!g.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ Refazer ${g.motivo}.` }]); return false; }
+    setPersonagem(g.pers); personagemRef.current = g.pers;
+    return true;
+  };
+
+  /* Os outros três gastos, todos pelo painel. Cada um cobra primeiro e age
+     depois: se a cobrança falhar, nada acontece e o jogador lê o porquê. */
+  const usarHeroismo = (gastoId, extra) => {
+    const base = personagemRef.current || personagem;
+    const g = gastarHeroismo(base, gastoId);
+    if (!g.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${gastoPorId(gastoId) ? gastoPorId(gastoId).rotulo : gastoId}: ${g.motivo}.` }]); return; }
+
+    if (gastoId === "vantagem") {
+      if (!rolagem) { pushMsgs([{ autor: "sistema", texto: "⛔ Vantagem: não há teste esperando o dado." }]); return; }
+      setPersonagem(g.pers); personagemRef.current = g.pers;
+      setRolagem({ ...rolagem, vantagem: true, desvantagem: false });
+      setHeroAberto(false);
+      pushMsgs([{ autor: "sistema", texto: `✧ Vantagem comprada — dois dados, vale o maior. Restam ${g.restam} ponto(s).` }]);
+      return;
+    }
+
+    if (gastoId === "aguentar") {
+      const golpe = golpeRecenteRef.current;
+      if (!golpe || !golpe.dano) { pushMsgs([{ autor: "sistema", texto: "⛔ Aguentar: nenhum golpe recente para absorver." }]); return; }
+      /* devolve METADE do que o golpe tirou — arredondando para cima, porque
+         o ponto foi pago e um gasto que devolve pouco é um gasto que ninguém
+         faz duas vezes. O golpe some da memória: um ponto, um golpe. */
+      const devolve = Math.ceil(golpe.dano / 2);
+      const p2 = { ...g.pers, vida: Math.min(g.pers.vidaMax || 0, (g.pers.vida || 0) + devolve) };
+      golpeRecenteRef.current = null;
+      setPersonagem(p2); personagemRef.current = p2; salvar({ personagem: p2 });
+      setHeroAberto(false);
+      pushMsgs([{ autor: "sistema", texto: `🛡 Você aguenta: o golpe de ${golpe.dano} vira ${golpe.dano - devolve} — ${p2.vida}/${p2.vidaMax} PV. Restam ${g.restam} ponto(s).` }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[AGUENTEI O GOLPE — RESOLVIDO PELO SISTEMA] O golpe de ${golpe.nome || "meu oponente"} me pegou de raspão: em vez de ${golpe.dano}, custou ${golpe.dano - devolve}. Narre a diferença como corpo e vontade — o giro do ombro, a armadura que aparou, os dentes cerrados. Não mencione sistema, ponto nem número.`;
+      return;
+    }
+
+    if (gastoId === "declarar") {
+      const v = validarDeclaracao(extra);
+      if (!v.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ Declarar: ${v.motivo}.` }]); return; }
+      setPersonagem(g.pers); personagemRef.current = g.pers;
+      setHeroAberto(false);
+      pushMsgs([
+        { autor: "jogador", texto: `📜 Declaro: ${v.texto}` },
+        { autor: "sistema", texto: `✧ Declaração paga (2 pontos) — isto agora é cânone. Restam ${g.restam} ponto(s).` },
+      ]);
+      enviar(envelopeDeclaracao(v.texto), g.pers);
+      return;
+    }
+
+    pushMsgs([{ autor: "sistema", texto: "⛔ Esse gasto não se usa por aqui." }]);
+  };
+
+  const concluirRolagem = (valor, dadoAnterior = null) => {
     const r = rolagem;
     /* GUARDA POR IDENTIDADE (v9.14). Antes a chave era motivo+dificuldade —
        texto. Só que "procurar algo escondido" com a mesma dificuldade é
@@ -5292,10 +5433,24 @@ export default function Taverna() {
     if (critico) { bumpCont("criticos"); checarConquistas(); }
     if (desastre) { bumpCont("desastres"); checarConquistas(); }
     setDadoRolando(false); setRolagem(null);
+    /* v9.16: o desastre paga um ponto. É a compensação mais antiga da mesa —
+       o azar puro fica te devendo — e ela existe também por desenho: o
+       jogador conhece o recurso na hora em que mais precisaria dele. Só que
+       um desastre COMPRADO não vale: refazer e cair no 1 é a aposta que ele
+       aceitou fazer, não um azar que o mundo lhe impôs. */
+    if (desastre && dadoAnterior == null) {
+      const pd = premiarHeroismo(personagemRef.current || personagem, "desastre");
+      if (pd !== (personagemRef.current || personagem)) { setPersonagem(pd); personagemRef.current = pd; }
+    }
     const buffs = (personagem.efeitos || []).filter((e) => !e.aplica || e.aplica.toLowerCase() === (r.atributo || "").toLowerCase() || e.aplica.toLowerCase() === "testes");
     const notaBuff = buffs.length ? ` (inclui bônus de ${buffs.map((b) => b.nome).join(", ")})` : "";
-    pushMsgs([{ autor: "sistema", texto: `🎲 d20 → ${valor}${mod ? ` + ${mod}` : ""} = ${total}${dc != null ? ` vs dif. ${dc}` : ""} · ${resultado}` }]);
+    pushMsgs([{ autor: "sistema", texto: `🎲 d20 → ${valor}${mod ? ` + ${mod}` : ""} = ${total}${dc != null ? ` vs dif. ${dc}` : ""} · ${resultado}${dadoAnterior != null ? ` ✧ (refeito — o primeiro deu ${dadoAnterior})` : ""}` }]);
     const notaVant = r.vantagem ? " (com vantagem)" : r.desvantagem ? " (com desvantagem)" : "";
+    /* v9.16: quando houve refazer, o Mestre recebe a história do segundo
+       fôlego junto do resultado — nunca a palavra "ponto" nem "sistema". */
+    const preRefazer = dadoAnterior != null
+      ? envelopeRefazer({ rotulo: r.rotulo || r.atributo || "sorte", primeiro: dadoAnterior, segundo: valor, mod, dc }) + "\n"
+      : "";
     /* TESTE PEDIDO PELO JOGADOR (v9.6): envelope próprio e mais duro. Numa mesa,
        falhar num teste de Percepção significa não saber — e o mestre não pode
        consolar com meia-pista. A regra vai escrita dentro do envelope. */
@@ -5306,7 +5461,9 @@ export default function Taverna() {
         tipo: r.tipo, pericia: r.pericia, nivelTreino: r.nivelTreino, motivo: r.motivo,
         valor, mod, total, dc, resultado: passou ? "sucesso" : "falha", critico, desastre,
       });
-      let persT = personagem;
+      /* base no REF, não no estado: o prêmio de heroísmo logo acima pode ter
+         acabado de mexer na ficha, e `personagem` ainda é o valor do render. */
+      let persT = personagemRef.current || personagem;
       /* ACHADO (v9.14): passou E havia mesmo algo aqui — o sistema entrega,
          tira da base para sempre e escreve o fato no envelope. Falhou: nada
          acontece e o esconderijo continua lá para a próxima tentativa. */
@@ -5327,11 +5484,11 @@ export default function Taverna() {
         pushMsgs([{ autor: "sistema", texto: `${r.achado.icone || "🧰"} Achado: ${r.achado.o} — ◉ ${rec.moedas} moedas${extras.length ? ` · ${extras.join(", ")}` : ""}` }]);
         env = `${envelopeDoAchado(r.achado, rec)}\n${env}`;
       }
-      enviar(env, persT);
+      enviar(preRefazer + env, persT);
       if (provaAsc) resolverProvaAscensao(provaAsc, passou);
       return;
     }
-    enviar(`[ROLAGEM] Teste de ${r.atributo || "sorte"} (${r.motivo})${notaVant}: rolei ${valor}, modificador +${mod}${notaBuff}, total ${total}${dc != null ? `, dificuldade ${dc}` : ""}. Resultado: ${resultado}. Narre as consequências de forma coerente com o resultado.`, personagem);
+    enviar(`${preRefazer}[ROLAGEM] Teste de ${r.atributo || "sorte"} (${r.motivo})${notaVant}: rolei ${valor}, modificador +${mod}${notaBuff}, total ${total}${dc != null ? `, dificuldade ${dc}` : ""}. Resultado: ${resultado}. Narre as consequências de forma coerente com o resultado.`, personagemRef.current || personagem);
   };
 
   /* ---------------- PEDIR UM TESTE (v9.6) ----------------
@@ -5467,8 +5624,15 @@ export default function Taverna() {
       `✦ +${ganho} ponto${ganho > 1 ? "s" : ""} de habilidade e +${ganhoAtr} de atributo — gaste em Gestão › Talentos.`,
     ];
     if (tetoNovo > tetoAtributo(nivelNovo - 1)) msgs.push(`✦ O teto dos atributos subiu para +${tetoNovo}.`);
+    /* v9.16: subir de nível também rende um ponto de heroísmo. */
+    {
+      const rh = ganharHeroismo(personagemRef.current || personagem, "nivel");
+      if (rh.msg) msgs.push(rh.msg);
+      if (rh.pers.heroismo != null) personagemRef.current = { ...(personagemRef.current || personagem), heroismo: rh.pers.heroismo };
+    }
     setPersonagem((p) => ({
       ...p,
+      heroismo: garantirHeroismo(personagemRef.current || p),
       pontosHab: (p.pontosHab || 0) + ganho,
       pontosAtr: (typeof p.pontosAtr === "number" ? p.pontosAtr : pontosAtributoDisponiveis(p)) + ganhoAtr,
       nivelPendentes: Math.max(0, p.nivelPendentes - 1),
@@ -6412,6 +6576,10 @@ export default function Taverna() {
     definirAcampado(false);
     const msgs = [];
     let pers = aplicarDescanso(personagem, tipo, msgs);
+    /* v9.16: o descanso longo garante PISO de 1 ponto de heroismo. Piso e
+       nao soma: quem chega com 3 nao vira 4, senao acampar viraria fabrica
+       de pontos e o recurso deixaria de ser escasso. */
+    if (tipo === "longo") { const rh = ganharHeroismo(pers, "descanso"); pers = rh.pers; if (rh.msg) msgs.push(rh.msg); }
     /* VÍNCULO: conversas de fogueira aproximam (+3 para todo o grupo) */
     pers = { ...pers, grupo: aplicarVinculo(pers.grupo, "todos", 3, msgs) };
     setPersonagem(pers);
@@ -7695,7 +7863,21 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   style={{ background: "transparent", color: T.violetSoft, border: `1px solid ${T.line}`, fontWeight: 600, opacity: (bloqueado || acampado || masmorra) ? 0.4 : 1 }}>
                   🕳 Masmorra
                 </button>
+                {/* v9.16: o selo fica SEMPRE visível, aceso ou apagado. Recurso
+                    que o jogador precisa abrir um painel para lembrar que tem
+                    é recurso que ele não gasta — e que portanto não existe. */}
+                <div className="ml-auto">
+                  <SeloHeroismo pontos={garantirHeroismo(personagem)} aceso={heroAberto} aoAbrir={() => setHeroAberto((v) => !v)} />
+                </div>
               </div>
+              {heroAberto && (
+                <PainelHeroismo
+                  pontos={garantirHeroismo(personagem)}
+                  contexto={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }}
+                  aoGastar={usarHeroismo}
+                  aoFechar={() => setHeroAberto(false)}
+                />
+              )}
               {/* LINHA 2 — escrita: largura inteira, campo alto e confortável */}
               <div className="flex gap-2 rounded-2xl p-2 min-w-0" style={{ background: T.panel, border: `1px solid ${habsSel.length ? T.violet : T.line}` }}>
                 <input value={entrada} onChange={(e) => setEntrada(e.target.value)} onKeyDown={(e) => e.key === "Enter" && agir(entrada)}
@@ -7812,7 +7994,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         </div>
       )}
 
-      {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} modificador={modPend} aoConcluir={concluirRolagem} />}
+      {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} modificador={modPend} aoConcluir={concluirRolagem} heroismo={garantirHeroismo(personagem)} aoRefazer={pagarRefazer} />}
       {fase === "jogo" && personagem?.nivelPendentes > 0 && !carregando && !dadoRolando && (
         <ModalNivel nivel={personagem.nivel - personagem.nivelPendentes + 1} personagem={personagem} escolher={confirmarNivel} />
       )}

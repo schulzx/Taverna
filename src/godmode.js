@@ -29,6 +29,8 @@ export const COMANDOS = [
   { cmd: "moedas", args: "<n>", grupo: "ficha", desc: "soma moedas (aceita negativo)" },
   { cmd: "item", args: "<nome>", grupo: "ficha", desc: "põe um item na bolsa" },
   { cmd: "pocao", args: "<id|nome>", grupo: "ficha", desc: "põe um consumível na bolsa (cura_p/m/g, mana_p/m/g, elixir_forca, revigorante…)" },
+  { cmd: "heroismo", args: "<0-3>", grupo: "ficha", desc: "crava os pontos de heroísmo" },
+  { cmd: "pericia", args: "<nome> <0|1|2>", grupo: "ficha", desc: "0 limpa, 1 treina, 2 torna especialista" },
 
   { cmd: "gd", args: "<0-4>", grupo: "divino", desc: "crava o Grau de Divindade (desperta se preciso)" },
   { cmd: "fieis", args: "<n>", grupo: "divino", desc: "define o número de fiéis" },

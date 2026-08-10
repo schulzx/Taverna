@@ -17,6 +17,7 @@ import { migrarAtributos } from "./atributos.js";
 import { valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { VINCULO_INICIAL } from "./vinculos.js";
 import { garantirPericias, periciasIniciais } from "./pericias.js";
+import { garantirHeroismo } from "./heroismo.js";
 
 export function aplicarNivel(pers) {
   let { xp, nivel, nivelPendentes, vidaMax, manaMax, vida, mana } = pers;
@@ -359,6 +360,12 @@ export function migrarPersonagem(p) {
        jogador redistribui no painel, como faz com atributos e talentos. */
     pericias: p.periciasVersao >= 1 ? garantirPericias(p) : periciasIniciais(p),
     periciasVersao: 1,
+    /* v9.16: a ficha antiga entra no sistema com um ponto na mão. Zero seria
+       tecnicamente correto e praticamente ruim — o jogador conheceria o
+       recurso só depois de uma falha crítica, que é a pior hora para
+       aprender uma mecânica nova. */
+    heroismo: p.heroismoVersao >= 1 ? garantirHeroismo(p) : 1,
+    heroismoVersao: 1,
     essencia: p.essencia || 0,
     suprimentos: p.suprimentos ? garantirSuprimentos(p.suprimentos) : { racoes: 10, agua: 10, tochas: 5, kit: true },
     exaustao: p.exaustao || 0,
