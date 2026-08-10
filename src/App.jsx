@@ -39,6 +39,7 @@ import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito
 import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, detectarPedidoDeTeste, envelopeDoTeste, TESTES_PROMPT } from "./testes.js";
 import { PERICIAS, periciaPorId, periciasDoAtributo, garantirPericias, periciasIniciais, bonusDePericia, passivoDe, resolucaoAutomatica, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente, resumoPericiasPrompt, PERICIAS_PROMPT } from "./pericias.js";
 import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, podeGastar, gastarHeroismo, validarDeclaracao, envelopeDeclaracao, envelopeRefazer, resumoHeroismoPrompt, HEROISMO_PROMPT } from "./heroismo.js";
+import { dadoDeVida, garantirDadosVida, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT } from "./descanso.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
@@ -2319,7 +2320,7 @@ export default function Taverna() {
           return true;
         }
         case "curar": {
-          const p = { ...personagem, vida: personagem.vidaMax, mana: personagem.manaMax, condicoes: [], efeitos: [], exaustao: 0, habRecarga: {} };
+          const p = { ...personagem, vida: personagem.vidaMax, mana: personagem.manaMax, condicoes: [], efeitos: [], exaustao: 0, habRecarga: {}, dadosVida: { total: personagem.nivel || 1, gastos: 0 }, ultimoLongo: null };
           acordouAbsRef.current = (diaRef.current - 1) * 1440 + minutoRef.current;
           setPersonagem(p); salvar({ personagem: p });
           godLinha(`⚡ Curado: ${p.vidaMax} PV, ${p.manaMax} PM, sem condições e sem exaustão.`);
@@ -4258,7 +4259,8 @@ export default function Taverna() {
          competência do herói cena a cena, e sempre a favor da cena. */
       const per = resumoPericiasPrompt(p, (id) => atributoEfetivo(p, id));
       const her = resumoHeroismoPrompt(p);
-      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
+      const dsc = resumoDescansoPrompt(p, diaRef.current);
+      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -6571,11 +6573,35 @@ export default function Taverna() {
       : `Montei acampamento/descanso em: ${local.texto}.`} A partir de agora é uma pausa segura: NÃO faça o mundo avançar, NÃO gere eventos externos nem passagem de tempo. Conduza conversas — companheiros puxam papo, revelam histórias. ${emViagem ? "Reflita o descanso itinerante na cena (fogueira, balanço do mar, turnos de vigia)." : "Se for a sede da guilda ou casa da facção, reflita esse conforto/autoridade na cena."} Descreva brevemente o local e deixe aberto para conversa.`, personagem);
   };
 
+  /* ---------------- DADOS DE VIDA (v9.17) ----------------
+     Um por clique, e o resultado aparece. Gastar três de uma vez seria mais
+     rápido e diria menos: a decisão inteira mora em ver o d8 dar 2 e ter que
+     escolher se queima outro. */
+  const queimarDadoDeVida = () => {
+    const p0 = personagemRef.current || personagem;
+    const cls = (CLASSES.find((c) => c.nome === p0.classe) || {});
+    const r = gastarDadoDeVida(p0, { lados: dadoDeVida(cls.vidaBase), modVigor: atributoEfetivo(p0, "vigor") });
+    if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${r.motivo}.` }]); return; }
+    setPersonagem(r.pers); personagemRef.current = r.pers; salvar({ personagem: r.pers });
+    pushMsgs([{ autor: "sistema", texto: r.texto }]);
+  };
+
   const sairDoAcampamento = (tipo) => {
     if (!acampadoRef.current) return;
+    /* UM LONGO POR DIA (v9.17): sem teto, acampar duas vezes seguidas é
+       sempre a jogada certa e o relógio do mundo deixa de significar nada.
+       O segundo do dia não é recusado — ele rende o benefício CURTO, que é
+       o comportamento honesto: você descansou, só não dormiu de novo. */
+    let tipoReal = tipo;
+    const chk = podeDescansoLongo(personagemRef.current || personagem, diaRef.current);
+    if (tipo === "longo" && !chk.pode) {
+      tipoReal = "curto";
+      pushMsgs([{ autor: "sistema", texto: `🌙 ${chk.motivo}. Este acampamento vale como descanso curto.` }]);
+    }
     definirAcampado(false);
     const msgs = [];
-    let pers = aplicarDescanso(personagem, tipo, msgs);
+    let pers = aplicarDescanso(personagemRef.current || personagem, tipoReal, msgs, diaRef.current);
+    tipo = tipoReal;
     /* v9.16: o descanso longo garante PISO de 1 ponto de heroismo. Piso e
        nao soma: quem chega com 3 nao vira 4, senao acampar viraria fabrica
        de pontos e o recurso deixaria de ser escasso. */
@@ -6670,6 +6696,14 @@ export default function Taverna() {
       reinoMsg = envelopeEventosReino(evs);
       minutoRef.current = AMANHECER; setMinuto(minutoRef.current);
       acordouAbsRef.current = absMin(); // o relógio do sono recomeça no amanhecer
+      /* v9.17: a noite fica marcada no dia em que o herói ACORDA, não naquele
+         em que deitou. Parece detalhe e é o teto inteiro: a noite longa avança
+         o calendário aqui em cima, então marcar o dia de ontem deixaria
+         `podeDescansoLongo` sempre liberado e a regra não morderia nunca.
+         Marcando o dia de hoje, um segundo acampamento antes do próximo
+         amanhecer vale como curto — que é exatamente o que se queria. */
+      pers = { ...pers, ultimoLongo: diaRef.current };
+      setPersonagem(pers);
     } else {
       minutoRef.current = (minutoRef.current + 60) % 1440; setMinuto(minutoRef.current); // cochilo de uma hora
     }
@@ -7745,9 +7779,51 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.amber}`, marginRight: "68px" }}>
                 <div className="tv-mono text-xs uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>⛺ Acampamento — o tempo está pausado</div>
                 <div className="tv-body text-sm mb-3" style={{ color: T.inkDim }}>Converse com o grupo à vontade. Quando quiser retomar a jornada, escolha um descanso:</div>
+                {/* v9.17: o PV do descanso curto sai daqui, um dado por vez.
+                    É a decisão que o acampamento não tinha — e ela precisa
+                    estar ANTES dos botões de sair, senão o jogador só
+                    descobre que podia ter curado depois de já ter ido. */}
+                {(() => {
+                  const cls = CLASSES.find((c) => c.nome === personagem.classe) || {};
+                  const lados = dadoDeVida(cls.vidaBase);
+                  const dv = garantirDadosVida(personagem);
+                  const livres = dv.total - dv.gastos;
+                  const cheio = (personagem.vida || 0) >= (personagem.vidaMax || 0);
+                  return (
+                    <div className="rounded-xl px-3 py-2 mb-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <div className="min-w-0">
+                          <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.amberSoft }}>
+                            🩹 Dados de vida · d{lados} + Vigor
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            {Array.from({ length: dv.total }).map((_, i) => (
+                              <span key={i} title={i < livres ? "disponível" : "gasto"} style={{
+                                width: 7, height: 7, borderRadius: 2, display: "inline-block",
+                                background: i < livres ? T.amber : "transparent",
+                                border: `1px solid ${i < livres ? T.amber : T.line}`,
+                              }} />
+                            ))}
+                            <span className="tv-mono text-[10px] ml-1.5" style={{ color: T.inkDim }}>{livres}/{dv.total}</span>
+                          </div>
+                        </div>
+                        <Botao pequeno onClick={queimarDadoDeVida} desativado={bloqueado || livres <= 0 || cheio}>
+                          🩹 Gastar 1
+                        </Botao>
+                      </div>
+                      <div className="tv-body text-[11px] mt-1.5" style={{ color: T.inkDim }}>
+                        {livres <= 0 ? "Nenhum dado sobrando — só uma noite inteira devolve (e devolve metade)."
+                          : cheio ? "PV cheio: guarde os dados para quando doer."
+                          : "O descanso curto não cura sozinho: o PV sai daqui, e estes dados só voltam pela metade no descanso longo."}
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="flex flex-wrap gap-2">
-                  <Botao pequeno onClick={() => sairDoAcampamento("curto")} desativado={bloqueado}>🔥 Descanso curto <span style={{ opacity: 0.7 }}>· recupera parte</span></Botao>
-                  <Botao primario pequeno onClick={() => sairDoAcampamento("longo")} desativado={bloqueado}>🌙 Descanso longo <span style={{ opacity: 0.7 }}>· recupera tudo</span></Botao>
+                  <Botao pequeno onClick={() => sairDoAcampamento("curto")} desativado={bloqueado}>🔥 Descanso curto <span style={{ opacity: 0.7 }}>· parte da mana</span></Botao>
+                  <Botao primario pequeno onClick={() => sairDoAcampamento("longo")} desativado={bloqueado}>
+                    🌙 Descanso longo <span style={{ opacity: 0.7 }}>· {podeDescansoLongo(personagem, dia).pode ? "tudo, uma vez por dia" : "já dormiu hoje — valerá como curto"}</span>
+                  </Botao>
                 </div>
               </div>
             )}

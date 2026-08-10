@@ -22,6 +22,7 @@ import { T, ATRIBUTOS } from "./constantes.js";
 import { Retrato, sementeDe, estadoDe } from "./ui.jsx";
 import { bonusProficiencia, ehProficiente } from "./regras.js";
 import { PERICIAS, garantirPericias, bonusDePericia, passivoDe, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente } from "./pericias.js";
+import { garantirDadosVida } from "./descanso.js";
 
 const sinal = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -199,6 +200,28 @@ export function FichaVisual({
         <div className="grid grid-cols-2 gap-3">
           <Barra atual={p.vida} max={p.vidaMax} cor={T.danger} rotulo="Vida" />
           <Barra atual={p.mana} max={p.manaMax} cor={T.violet} rotulo="Mana" />
+          {/* v9.17: o fôlego de reserva. Fica colado nas barras porque é a
+              mesma pergunta — "quanto ainda dá para aguentar?" — só que a
+              resposta de amanhã em vez da de agora. */}
+          {(() => {
+            const dv = garantirDadosVida(p);
+            const livres = dv.total - dv.gastos;
+            return (
+              <div className="flex items-center gap-2 flex-wrap" title="Dados de vida: o PV do descanso curto sai daqui. Só voltam pela metade numa noite inteira.">
+                <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>🩹 Fôlego</span>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(dv.total, 20) }).map((_, i) => (
+                    <span key={i} style={{
+                      width: 6, height: 6, borderRadius: 2, display: "inline-block",
+                      background: i < livres ? T.amber : "transparent",
+                      border: `1px solid ${i < livres ? T.amber : T.line}`,
+                    }} />
+                  ))}
+                </div>
+                <span className="tv-mono text-[9px]" style={{ color: livres ? T.amberSoft : T.danger }}>{livres}/{dv.total} dados</span>
+              </div>
+            );
+          })()}
         </div>
 
         {/* ---- atributos: modificador grande, valor pequeno ---- */}

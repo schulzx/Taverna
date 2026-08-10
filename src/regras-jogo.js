@@ -18,6 +18,7 @@ import { valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { VINCULO_INICIAL } from "./vinculos.js";
 import { garantirPericias, periciasIniciais } from "./pericias.js";
 import { garantirHeroismo } from "./heroismo.js";
+import { garantirDadosVida, aplicarCurto, aplicarLongo } from "./descanso.js";
 
 export function aplicarNivel(pers) {
   let { xp, nivel, nivelPendentes, vidaMax, manaMax, vida, mana } = pers;
@@ -52,24 +53,24 @@ export function evoluirCompanheiro(g) {
 }
 
 /* Descanso aplicado por CÓDIGO — garante reset real do jogador E do grupo. */
-export function aplicarDescanso(pers, tipo, msgs) {
+/* v9.17: a cura em si mudou de casa — foi para descanso.js, onde virou
+   ECONOMIA (dados de vida finitos, um longo por dia, PM preso à noite).
+   Aqui ficou só o que sempre foi daqui: as condições, que somem por regra
+   de catálogo e não por fração de PV. */
+export function aplicarDescanso(pers, tipo, msgs, dia = 0) {
   const longo = tipo === "longo";
-  const frac = longo ? 1 : 0.5; // curto recupera metade, longo tudo
-  const novaVida = longo ? pers.vidaMax : Math.min(pers.vidaMax, pers.vida + Math.ceil(pers.vidaMax * frac));
-  const novaMana = longo ? pers.manaMax : Math.min(pers.manaMax, pers.mana + Math.ceil(pers.manaMax * frac));
+  const r = longo ? aplicarLongo(pers, dia) : aplicarCurto(pers);
+  let p = r.pers;
+  r.msgs.forEach((m) => msgs.push(m));
   /* Condições: quem some com qual descanso é decisão do CATÁLOGO (v9.0) —
      veneno e exaustão exigem noite inteira, sangramento estanca num curto. */
-  const lim = limparPorDescanso(pers.condicoes || [], longo ? "longo" : "curto");
-  const condicoes = lim.condicoes;
+  const lim = limparPorDescanso(p.condicoes || [], longo ? "longo" : "curto");
   if (lim.removidas.length) msgs.push(`✓ Passou com o descanso: ${lim.removidas.map((c) => c.nome).join(", ")}.`);
-  // grupo: cura junto (companheiros descansam também) — e limpa as condições deles
-  const grupo = (pers.grupo || []).map((gm) => ({
+  const grupo = (p.grupo || []).map((gm) => ({
     ...gm,
-    vida: longo ? gm.vidaMax : Math.min(gm.vidaMax, (gm.vida || 0) + Math.ceil((gm.vidaMax || 10) * frac)),
     condicoes: limparPorDescanso(gm.condicoes || [], longo ? "longo" : "curto").condicoes,
   }));
-  msgs.push(longo ? "🌙 Descanso longo — você e o grupo recuperam PV e PM por completo." : "🔥 Descanso curto — você e o grupo recuperam parte do PV e PM.");
-  return { ...pers, vida: novaVida, mana: novaMana, condicoes, grupo };
+  return { ...p, condicoes: lim.condicoes, grupo };
 }
 
 /* RECARGA PADRÃO (v7.4.3): habilidade forte precisa de fôlego — o sistema
@@ -366,6 +367,14 @@ export function migrarPersonagem(p) {
        aprender uma mecânica nova. */
     heroismo: p.heroismoVersao >= 1 ? garantirHeroismo(p) : 1,
     heroismoVersao: 1,
+    /* v9.17: dados de vida. A ficha antiga acorda com todos na mão — cobrar
+       retroativamente um recurso que nunca existiu seria punir o jogador
+       por uma regra que ele não teve chance de administrar. `ultimoLongo`
+       fica nulo pelo mesmo motivo: a primeira noite depois da atualização
+       não pode chegar já bloqueada. */
+    dadosVida: p.dadosVidaVersao >= 1 ? garantirDadosVida(p) : { total: p.nivel || 1, gastos: 0 },
+    ultimoLongo: p.dadosVidaVersao >= 1 ? (p.ultimoLongo ?? null) : null,
+    dadosVidaVersao: 1,
     essencia: p.essencia || 0,
     suprimentos: p.suprimentos ? garantirSuprimentos(p.suprimentos) : { racoes: 10, agua: 10, tochas: 5, kit: true },
     exaustao: p.exaustao || 0,
