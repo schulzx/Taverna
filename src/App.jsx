@@ -38,7 +38,7 @@ import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaD
 import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito, naturezaDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
 import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, detectarPedidoDeTeste, envelopeDoTeste, TESTES_PROMPT } from "./testes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
-import { reconciliarGraus, resolverPresenca, PRESENCA_PROMPT } from "./presenca-divina.js";
+import { reconciliarGraus, resolverPresenca, presencaDoHeroi, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
@@ -2146,8 +2146,20 @@ export default function Taverna() {
      recalculado da semente sempre que alguém pergunta. */
   const [baseMundo, setBaseMundo] = useState(garantirBase(null));
   const baseMundoRef = useRef(garantirBase(null));
-  const sementeMundo = () => `${nomeCampanha || "aventura"}|${(mundo && mundo.genero) || ""}`;
-  const generoMundo = () => (mundo && mundo.genero) || "Fantasia medieval";
+  /* A SEMENTE PRECISA VIR DE REF (v9.14). Estas duas funções liam `mundo` e
+     `nomeCampanha` do estado — e são chamadas de dentro de aplicarResposta,
+     que é um useCallback com deps [pushMsgs]. Ou seja: a closure congelava os
+     valores da PRIMEIRA renderização, quando o save ainda não tinha sido
+     carregado. A semente saía errada, e tudo o que depende dela dentro do
+     turno consultava um mundo que não existe: a reconciliação de chefes pelo
+     nome nunca achava nada, e o reconhecimento de gente da base também não. */
+  const mundoRef = useRef(null);
+  const nomeCampanhaRef = useRef("");
+  useEffect(() => { if (mundo) mundoRef.current = mundo; }, [mundo]);
+  useEffect(() => { if (nomeCampanha) nomeCampanhaRef.current = nomeCampanha; }, [nomeCampanha]);
+  const mundoAtual = () => mundoRef.current || mundo || null;
+  const sementeMundo = () => `${nomeCampanhaRef.current || nomeCampanha || "aventura"}|${(mundoAtual() && mundoAtual().genero) || ""}`;
+  const generoMundo = () => (mundoAtual() && mundoAtual().genero) || "Fantasia medieval";
   /* CONFIDÊNCIAS (v9.9): o que o jogador contou, e para quem. É o registro
      que impede um terceiro de "simplesmente saber". */
   const confidenciasRef = useRef([]);
@@ -3488,6 +3500,24 @@ export default function Taverna() {
         }
         const nomes = [...m.locais.map((l) => l.nome), ...m.gente.map((p) => p.nome)];
         msgs.push(`📖 Entrou na história: ${nomes.join(", ")}${m.gente.length ? " — no registro de pessoas" : ""}.`);
+      }
+      /* ---- O PESO DO DEUS QUE ENTROU (v9.14) ----
+         `presencaDoHeroi` estava escrita e testada desde a v9.8, e nunca foi
+         importada: o herói virava GD 4 e ninguém na taverna sentia nada. O
+         gatilho certo é este — as pessoas que ACABARAM de entrar na cena são
+         exatamente quem ainda não convive com ele. Quem já tem vínculo não
+         se curva, e o grupo nunca entra na conta. */
+      if (m.gente.length) {
+        const gd = grauDe(divindadeRef.current, pers.nivel || 1);
+        const noGrupo = new Set((pers.grupo || []).map((g) => (g.nome || "").toLowerCase()));
+        const alvos = m.gente
+          .filter((p) => !noGrupo.has(p.nome.toLowerCase()))
+          .map((p) => ({ nome: p.nome, vinculo: 0, atributos: { vigor: 1 } }));
+        const pr = alvos.length ? presencaDoHeroi({ gdJogador: gd, alvos, nomeHeroi: pers.nome }) : null;
+        if (pr) {
+          msgs.push(pr.texto);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${pr.nota}`;
+        }
       }
     } catch { /* o códex nunca derruba o turno */ }
     /* ---- O PORTÃO (v9.12) ----

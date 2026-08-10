@@ -116,7 +116,7 @@ export function presencaDoHeroi({ gdJogador, alvos = [], nomeHeroi = "você", ro
   if (!dobrados.length) return null;
   return {
     dc, dobrados,
-    texto: `👁 A presença de ${nomeHeroi} pesa: ${dobrados.map((d) => d.nome).join(", ")} não conseguem encarar.`,
+    texto: `👁 A presença de ${nomeHeroi} pesa: ${dobrados.map((d) => d.nome).join(", ")} não ${dobrados.length > 1 ? "conseguem" : "consegue"} encarar.`,
     nota: `[PRESENÇA DIVINA DO HERÓI — SISTEMA ROLOU] Diante de mim, ${dobrados.map((d) => d.nome).join(", ")} falharam na resistência: desviam o olhar, baixam a voz, alguns se ajoelham sem decidir. Narre isso como cor da cena — não como controle mental e não como combate.`,
   };
 }
