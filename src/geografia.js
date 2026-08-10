@@ -173,7 +173,7 @@ export function gerarGeografia(semente) {
         populacao: populacaoDe(porte, rnd),
         regiao: reg.nome, continente: reg.continente, bioma: reg.bioma,
         faccao: null, relacao: "neutra", locais: [], sede: false, notas: "",
-        x, y, descoberta: true,
+        x, y, descoberta: false,
       });
     }
   }
@@ -184,7 +184,7 @@ export function gerarGeografia(semente) {
       nome: nomeCidade(rnd, usadosC), tipo: "vila", porte: "vila",
       populacao: populacaoDe("vila", rnd), regiao: reg.nome, continente: reg.continente, bioma: reg.bioma,
       faccao: null, relacao: "neutra", locais: [], sede: false, notas: "",
-      x: Math.round(reg.cx), y: Math.round(reg.cy), descoberta: true,
+      x: Math.round(reg.cx), y: Math.round(reg.cy), descoberta: false,
     });
   }
   /* `continente` (singular) fica para quem já lia o campo antigo */
@@ -209,21 +209,64 @@ export function garantirGeografia(mapa, semente) {
 /* ---------------- RESUMO PARA O PROMPT ----------------
    O Mestre recebe a geografia como FATO: quem mora onde, quantos são,
    e quanto tempo leva cada caminho. Ele narra a viagem; não a inventa. */
+/* ---------------- O QUE O JOGADOR JÁ CONHECE (v9.14) ----------------
+   O campo `descoberta` existia desde sempre e ninguém consultava: o mundo
+   inteiro ia no prompt e no painel desde o primeiro turno. Agora ele manda —
+   e o Mestre passa a receber SÓ o que o herói conhece, mais a contagem do
+   que falta, para poder falar de "cidades ao norte" sem entregar os nomes. */
+export const cidadesConhecidas = (mapa) => ((mapa && mapa.cidades) || []).filter((c) => c.descoberta !== false);
+
+export function descobrirCidade(mapa, nome) {
+  const alvo = String(nome || "").trim().toLowerCase();
+  if (!mapa || !alvo) return { mapa, nova: null };
+  const c = (mapa.cidades || []).find((x) => (x.nome || "").toLowerCase() === alvo);
+  if (!c || c.descoberta !== false) return { mapa, nova: null };
+  return { mapa: { ...mapa, cidades: mapa.cidades.map((x) => (x === c ? { ...x, descoberta: true } : x)) }, nova: c.nome };
+}
+
+/* Um mapa comprado abre a região inteira de uma vez — é para isso que
+   alguém paga por um mapa. */
+export function descobrirRegiao(mapa, regiao) {
+  const alvo = String(regiao || "").trim().toLowerCase();
+  if (!mapa || !alvo) return { mapa, novas: [] };
+  const novas = (mapa.cidades || []).filter((c) => c.descoberta === false && (c.regiao || "").toLowerCase() === alvo).map((c) => c.nome);
+  if (!novas.length) return { mapa, novas: [] };
+  return { mapa: { ...mapa, cidades: mapa.cidades.map((c) => (novas.includes(c.nome) ? { ...c, descoberta: true } : c)) }, novas };
+}
+
+/* Regiões que o herói já pisou, e as que ainda são boato — é o que a lista
+   de mapas à venda usa para não vender o que já está no bolso. */
+export function regioesDoMapa(mapa, { conhecidas = null } = {}) {
+  const rs = [...new Set(((mapa && mapa.cidades) || []).map((c) => c.regiao).filter(Boolean))];
+  if (conhecidas === null) return rs;
+  const abertas = new Set(cidadesConhecidas(mapa).map((c) => c.regiao));
+  return conhecidas ? rs.filter((r) => abertas.has(r)) : rs.filter((r) => !abertas.has(r));
+}
+
 export function resumoGeografiaPrompt(mapa, faccaoJogador) {
   if (!mapa || !(mapa.cidades || []).length) return "";
-  const dominadas = (mapa.cidades || []).filter((c) => c.relacao === "jogador").length;
+  const conhecidas = cidadesConhecidas(mapa);
+  if (!conhecidas.length) return "";
+  const ocultas = (mapa.cidades || []).length - conhecidas.length;
+  const dominadas = conhecidas.filter((c) => c.relacao === "jogador").length;
   const cab = faccaoJogador ? `Facção do jogador: ${faccaoJogador} (domina ${dominadas} cidade(s)).` : "";
-  const linhas = (mapa.cidades || []).map((c) => {
+  const linhas = conhecidas.map((c) => {
     const pop = c.populacao != null ? ` · ${Number(c.populacao).toLocaleString("pt-BR")} hab.` : "";
     const bio = c.bioma ? ` · ${BIOMA_ROTULO[c.bioma] || c.bioma}` : "";
     return `• ${c.nome} (${(PORTES[c.porte || c.tipo] || {}).rotulo || c.tipo}${c.regiao ? `, ${c.regiao}` : ""}${bio}${pop}) — facção: ${c.faccao || "nenhuma"} [${c.relacao === "jogador" ? "SUA" : c.relacao || "neutra"}]${c.sede ? " [SEDE]" : ""}`;
   });
-  const rotas = (mapa.rotas || []).map((r) => `• ${r.de} ↔ ${r.para}: ${(TERRENO_VIAGEM[r.terreno] || {}).rotulo || r.terreno}, ${r.km} km, ~${String(r.dias).replace(".", ",")} dia(s)`);
+  /* rota só aparece quando as DUAS pontas já são conhecidas: um caminho para
+     um lugar que o herói nunca ouviu falar entregaria o nome dele */
+  const nomesOk = new Set(conhecidas.map((c) => c.nome));
+  const rotas = (mapa.rotas || []).filter((r) => nomesOk.has(r.de) && nomesOk.has(r.para))
+    .map((r) => `• ${r.de} ↔ ${r.para}: ${(TERRENO_VIAGEM[r.terreno] || {}).rotulo || r.terreno}, ${r.km} km, ~${String(r.dias).replace(".", ",")} dia(s)`);
+  const regioesAbertas = new Set(conhecidas.map((c) => c.regiao).filter(Boolean));
   return [
     cab,
-    mapa.continente ? `CONTINENTE: ${mapa.continente}${(mapa.regioes || []).length ? ` — regiões: ${mapa.regioes.map((r) => `${r.nome} (${BIOMA_ROTULO[r.bioma] || r.bioma})`).join(", ")}` : ""}` : "",
-    "CIDADES (porte e população são fatos do sistema):",
+    mapa.continente ? `CONTINENTE: ${mapa.continente}${(mapa.regioes || []).length ? ` — regiões conhecidas: ${mapa.regioes.filter((r) => regioesAbertas.has(r.nome)).map((r) => `${r.nome} (${BIOMA_ROTULO[r.bioma] || r.bioma})`).join(", ") || "nenhuma ainda"}` : ""}` : "",
+    "CIDADES QUE O HERÓI CONHECE (porte e população são fatos do sistema — só estas existem para ele):",
     ...linhas,
+    ocultas > 0 ? `AINDA NO ESCURO: existem ${ocultas} lugar(es) neste mundo que o herói NUNCA visitou nem viu num mapa. Você pode dizer que há estrada seguindo adiante, que viajantes falam de terras a mais dias de marcha, que um mapa se compra com um cartógrafo — mas NUNCA invente o nome nem descreva uma dessas cidades. Elas se revelam viajando ou comprando o mapa da região.` : "",
     rotas.length ? "CAMINHOS (rotas fixas — use SEMPRE estes terrenos e tempos; não invente mar ou deserto onde não há):" : "",
     ...rotas,
   ].filter(Boolean).join("\n");

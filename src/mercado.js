@@ -105,6 +105,23 @@ function raridadeDaBanca(rnd, cidade) {
 }
 
 /* Um mercador completo: identidade + estoque com preço. */
+/* ---------------- O CARTÓGRAFO (v9.14) ----------------
+   O mundo passou a nascer no escuro, e viajar às cegas é caro. Um mapa
+   comprado abre uma região inteira — é a segunda porta da descoberta, e a
+   razão de alguém pagar por papel. Quem vende é o Armazém e a Casa de
+   Relíquias; o preço sobe com o tamanho da região, porque um mapa de terra
+   grande vale mais que o croqui de um vale. */
+export function mapasAVenda(regioesOcultas = [], cidadesPorRegiao = {}) {
+  return regioesOcultas.map((r) => {
+    const n = Math.max(1, cidadesPorRegiao[r] || 1);
+    return {
+      nome: `Mapa de ${r}`, tipo: "mapa", regiao: r, raridade: "incomum", icone: "🗺",
+      descricao: `Traçado à mão, com ${n === 1 ? "um povoado marcado" : `${n} povoados marcados`}. Abre a região no seu mapa.`,
+      preco: 60 + n * 45,
+    };
+  });
+}
+
 export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1 }) {
   const rnd = rngDe(semente);
   const t = tipo ? tipoMercador(tipo) : pick(rnd, TIPOS_MERCADOR.filter((x) => x.id !== "ambulante"));

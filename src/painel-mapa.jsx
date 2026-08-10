@@ -18,7 +18,12 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
   const panteao = (divindade && divindade.panteao) || [];
   const numFe = desperto ? resumoNumerico(mapa, dev) : null;
   const corDaCidade = (c) => (verFe ? estadoFe(c, dev).cor : (RELACOES[c.relacao] || RELACOES.neutra).cor);
-  const cidades = (mapa?.cidades || []);
+  /* NÉVOA (v9.14): o painel mostra só o que o herói conhece. O que falta vira
+     UM número no rodapé — saber que há mundo lá fora é parte da graça; saber
+     o nome dele sem nunca ter ido, não. */
+  const todas = (mapa?.cidades || []);
+  const cidades = todas.filter((c) => c.descoberta !== false);
+  const ocultas = todas.length - cidades.length;
   const faccoes = (mapa?.faccoes || []);
   const dominadas = cidades.filter((c) => c.relacao === "jogador").length;
   const regioes = [...new Set(cidades.map((c) => c.regiao).filter(Boolean))];
@@ -27,6 +32,11 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
   if (cidades.length === 0) {
     return <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>O mapa ainda está em branco. Conforme você explora, cidades e territórios aparecem aqui — e ficam salvos, para o mundo nunca mais se perder.</div>;
   }
+  const rodapeNevoa = ocultas > 0 ? (
+    <div className="tv-mono text-[10px] mt-2 px-2 py-1.5 rounded-lg" style={{ background: T.panelSoft, border: `1px dashed ${T.line}`, color: T.inkDim }}>
+      🌫 Há {ocultas} {ocultas === 1 ? "lugar" : "lugares"} neste mundo que você ainda não conhece. Viaje até eles, ou compre o mapa da região num armazém ou casa de relíquias.
+    </div>
+  ) : null;
   return (
     <div>
       {faccaoJogador && (
@@ -210,6 +220,7 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
           );
         })}
       </div>
+      {rodapeNevoa}
     </div>
   );
 }

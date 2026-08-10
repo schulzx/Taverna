@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
-import { gerarGeografia, garantirGeografia } from "./geografia.js";
+import { gerarGeografia, garantirGeografia, descobrirCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./historia.js";
@@ -26,7 +26,7 @@ import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./econo
 import { rolarAflicao, aflicaoDe } from "./aflicoes.js";
 import { escolherReacao, resolverReacao, resumoReacoesPrompt } from "./reacoes.js";
 import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara, CONSUMIVEIS } from "./pocoes.js";
-import { mercadoresDaCidade, talvezAmbulante, precoDeCompra, resumoMercadoPrompt } from "./mercado.js";
+import { mercadoresDaCidade, talvezAmbulante, precoDeCompra, mapasAVenda, resumoMercadoPrompt } from "./mercado.js";
 import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
 import { criarCondicao, tickCondicoes, detectarCondicoesNarradas, detectarAliviosNarrados, limparPorDescanso, resumoCondicoesPrompt, estadoDeRolagem, mecanicaDe } from "./condicoes.js";
@@ -2344,7 +2344,12 @@ export default function Taverna() {
         case "tp": {
           const alvo = acharCidade(resto);
           if (!alvo) { godLinha(`⚡ Cidade "${resto}" não está no mapa. Use /mapa.`); return true; }
-          cidadeAtualRef.current = alvo.nome; salvar({ cidadeAtual: alvo.nome });
+          cidadeAtualRef.current = alvo.nome;
+          /* modo criativo também abre a névoa: teleportar para um lugar é
+             conhecê-lo (v9.14) */
+          const dtp = descobrirCidade(mapaRef.current, alvo.nome);
+          if (dtp.nova) { mapaRef.current = dtp.mapa; setMapa(mapaRef.current); }
+          salvar({ cidadeAtual: alvo.nome, mapa: mapaRef.current });
           godLinha(`⚡ Você está em ${alvo.nome} (${alvo.regiao}, ${alvo.bioma}).`);
           return true;
         }
@@ -2367,7 +2372,7 @@ export default function Taverna() {
         case "mapa": {
           const m = mapaRef.current || {};
           const conts = (m.continentes || []).map((k) => k.nome).join(", ") || m.continente || "—";
-          const cs = (m.cidades || []).map((x) => `${x.nome} (${x.porte}${x.relacao === "jogador" ? ", SUA" : ""})`).join(" · ");
+          const cs = (m.cidades || []).map((x) => `${x.nome} (${x.porte}${x.relacao === "jogador" ? ", SUA" : ""}${x.descoberta === false ? ", no escuro" : ""})`).join(" · ");
           godLinha(`⚡ Continentes: ${conts}\n⚡ Regiões (${(m.regioes || []).length}): ${(m.regioes || []).map((r) => `${r.nome} [${r.bioma}]`).join(" · ") || "—"}\n⚡ Cidades (${(m.cidades || []).length}): ${cs || "—"}`);
           return true;
         }
@@ -2436,6 +2441,7 @@ export default function Taverna() {
     }
   };
   /* alguém morreu: sai da base viva e o nome fica riscado no registro */
+  const nevoaVersaoRef = useRef(0);   // 0 = save anterior a v9.14 (mapa todo revelado)
   const registrarMorte = (nome) => {
     const n = String(nome || "").trim();
     if (!n || estaMortoNaBase(baseMundoRef.current, n)) return;
@@ -2636,7 +2642,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, eventos: eventosRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, quests: questsRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, confidencias: confidenciasRef.current,
+      historia: historiaRef.current, quests: questsRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -3087,6 +3093,12 @@ export default function Taverna() {
         if (jornadaRef.current) {
           jornadaRef.current = null; setJornada(null);
           msgs.push(`🧭 Chegada: agora você está em ${md.cidade_atual}.`);
+        }
+        /* A NÉVOA ABRE ONDE O PÉ PISA (v9.14): chegar revela o lugar. */
+        const dsc = descobrirCidade(mapaRef.current, md.cidade_atual);
+        if (dsc.nova) {
+          mapaRef.current = dsc.mapa; setMapa(mapaRef.current);
+          msgs.push(`🗺 ${dsc.nova} entrou no seu mapa.`);
         }
       }
       if (md.jornada_meio && jornadaRef.current) {
@@ -4278,8 +4290,18 @@ export default function Taverna() {
        regiões com bioma, cidades com porte e população, rotas com dias de
        viagem. O Mestre narra em cima de fatos fixos, não inventa caminhos. */
     const geo = gerarGeografia(`${nomeCampanha || "aventura"}|${(mundo && mundo.genero) || ""}`);
-    mapaRef.current = { cidades: geo.cidades, faccoes: [], continente: geo.continente, regioes: geo.regioes, rotas: geo.rotas }; setMapa(mapaRef.current);
-    faccaoJogadorRef.current = ""; cidadeAtualRef.current = "";
+    /* NÉVOA (v9.14): o mundo nasce inteiro, mas o herói só conhece o chão em
+       que está. A primeira cidade é a casa dele — abre de saída, senão o
+       Mestre começaria sem lugar nenhum para narrar. O resto se descobre
+       viajando ou comprando o mapa da região. */
+    const inicial = geo.cidades[0];
+    mapaRef.current = {
+      cidades: geo.cidades.map((c) => (c === inicial ? { ...c, descoberta: true } : c)),
+      faccoes: [], continente: geo.continente, regioes: geo.regioes, rotas: geo.rotas,
+    };
+    setMapa(mapaRef.current);
+    nevoaVersaoRef.current = 1;
+    faccaoJogadorRef.current = ""; cidadeAtualRef.current = (inicial && inicial.nome) || "";
     jornadaRef.current = null; setJornada(null);
     eventosRef.current = { locais: [], global: null, semGlobalDesde: 0, seq: 1 }; setEventos(eventosRef.current);
     guildaRef.current = { nivel: 1, cofre: 0 }; setGuilda(guildaRef.current);
@@ -4336,6 +4358,15 @@ export default function Taverna() {
         const geo = gerarGeografia(`taverna|${sv.personagem && sv.personagem.nome ? sv.personagem.nome : "save"}`);
         mapaRef.current = { cidades: geo.cidades, faccoes: (sv.mapa && sv.mapa.faccoes) || [], continente: geo.continente, regioes: geo.regioes, rotas: geo.rotas };
       }
+      /* MIGRAÇÃO DA NÉVOA (v9.14). O mapa passou a nascer no escuro, mas
+         quem já jogou conhece o mundo dele: esconder cidades que o jogador
+         já visitou seria roubar o que ele conquistou. Save sem a marca de
+         versão tem TUDO revelado de uma vez; a névoa só vale para mundos
+         criados daqui em diante. */
+      if (!sv.nevoaVersao) {
+        mapaRef.current = { ...mapaRef.current, cidades: (mapaRef.current.cidades || []).map((c) => ({ ...c, descoberta: true })) };
+      }
+      nevoaVersaoRef.current = 1;
       setMapa(mapaRef.current);
       faccaoJogadorRef.current = sv.faccaoJogador || "";
       cidadeAtualRef.current = sv.cidadeAtual || "";
@@ -6582,6 +6613,20 @@ export default function Taverna() {
     const lista = [];
     if (mercado && mercado.ambulante) lista.push(semEstoqueGasto(mercado.ambulante));
     if (cidadeMercado) lista.push(...mercadoresDaCidade(cidadeMercado, diaRef.current, (personagem && personagem.nivel) || 1).map(semEstoqueGasto));
+    /* CARTÓGRAFO (v9.14): quem vende papel põe os mapas das regiões que o
+       herói ainda não conhece na banca. Some sozinho quando não há mais o que
+       revelar — não fica um item morto na prateleira. */
+    const ocultas = regioesDoMapa(mapaRef.current, { conhecidas: false });
+    if (ocultas.length) {
+      const porRegiao = {};
+      for (const c of (mapaRef.current.cidades || [])) if (c.regiao) porRegiao[c.regiao] = (porRegiao[c.regiao] || 0) + 1;
+      const mapas = mapasAVenda(ocultas, porRegiao);
+      for (const l of lista) {
+        if (l.tipo !== "geral" && l.tipo !== "relicario") continue;
+        const gastos = (mercado && mercado.comprados && mercado.comprados[l.id]) || [];
+        l.estoque = [...l.estoque, ...mapas.filter((mp) => !gastos.includes(mp.nome))];
+      }
+    }
     return lista;
   })();
 
@@ -6590,6 +6635,21 @@ export default function Taverna() {
     const it = m && m.estoque.find((x) => x.nome === nomeItem);
     if (!it) return;
     if ((personagem.moedas || 0) < it.preco) { pushMsgs([{ autor: "sistema", texto: `◉ Moedas insuficientes para ${it.nome} (◉ ${it.preco}).` }]); return; }
+    /* MAPA (v9.14): não vai para a bolsa — o que se compra é o CONHECIMENTO.
+       A região inteira abre na hora, e o Mestre passa a poder falar dela. */
+    if (it.tipo === "mapa") {
+      const dsc = descobrirRegiao(mapaRef.current, it.regiao);
+      const pm = { ...personagem, moedas: (personagem.moedas || 0) - it.preco };
+      setPersonagem(pm);
+      if (dsc.novas.length) { mapaRef.current = dsc.mapa; setMapa(mapaRef.current); }
+      const comprados2 = { ...(mercadoRef.current.comprados || {}) };
+      comprados2[mercadorId] = [...(comprados2[mercadorId] || []), it.nome];
+      mercadoRef.current = { ...mercadoRef.current, comprados: comprados2 }; setMercado(mercadoRef.current);
+      pushMsgs([{ autor: "sistema", texto: `🗺 ${it.nome} por ◉ ${it.preco} — ${dsc.novas.length ? `abriu ${dsc.novas.join(", ")} no seu mapa` : "a região já era conhecida"}.` }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MAPA COMPRADO — JÁ APLICADO PELO SISTEMA] Comprei o mapa de ${it.regiao} de ${m.nome} por ◉ ${it.preco}.${dsc.novas.length ? ` Agora conheço ${dsc.novas.join(", ")} — pode falar desses lugares a partir de agora, e eles estão no envelope de geografia.` : ""} Não envie item nem moeda. Narre o cartógrafo desenrolando o pergaminho e o que ele conta sobre a região.`;
+      salvar({ personagem: pm, mapa: mapaRef.current });
+      return;
+    }
     const ehEquip = ["arma", "escudo", "armadura", "elmo", "botas", "anel", "amuleto"].includes(it.tipo);
     const { preco, detalhe, ...limpo } = it;
     const p = {
