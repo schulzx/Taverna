@@ -17,6 +17,7 @@ import { REACOES_PROMPT } from "./reacoes.js";
 import { BASE_PROMPT } from "./mundo-base.js";
 import { PRESENCA_PROMPT } from "./presenca-divina.js";
 import { CENA_PROMPT } from "./cena.js";
+import { ITENS_PROMPT } from "./itens.js";
 import { ATRIBUTOS_PROMPT } from "./atributos.js";
 import { COMBOS_PROMPT } from "./combos.js";
 import { TESTES_PROMPT } from "./testes.js";
@@ -120,6 +121,7 @@ ${REACOES_PROMPT}
 ${BASE_PROMPT}
 ${PRESENCA_PROMPT}
 ${CENA_PROMPT}
+${ITENS_PROMPT}
 ${ATRIBUTOS_PROMPT}
 ${ESPECIALIZACOES_PROMPT}
 ${COMBOS_PROMPT}

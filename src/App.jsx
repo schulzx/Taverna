@@ -42,6 +42,7 @@ import { reconciliarGraus, resolverPresenca, PRESENCA_PROMPT } from "./presenca-
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 import { resumoCenaPrompt, detectarForaDeLugar, notaForaDeLugar, detectarVazamento, notaVazamento, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
+import { avaliarEquipar, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt } from "./prompt.js";
 import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./ui.jsx";
@@ -2200,9 +2201,19 @@ export default function Taverna() {
         }
         case "item": {
           if (!resto) { godLinha("⚡ /item <nome>"); return true; }
-          const p = { ...personagem, inventario: [...(personagem.inventario || []), { nome: resto, qtd: 1 }] };
+          /* arma/armadura/escudo vão para EQUIPAMENTO (onde dá para equipar);
+             o resto vai para a bolsa. Antes tudo caía na bolsa e não dava para
+             testar proficiência nenhuma. */
+          const f = fichaDoItem({ nome: resto });
+          const ehEquip = ["arma", "armadura", "escudo"].includes(f.familia);
+          const novo = ehEquip
+            ? { nome: resto, tipo: f.familia === "escudo" ? "escudo" : f.familia, raridade: "comum", atributos: {} }
+            : { nome: resto, qtd: 1 };
+          const p = ehEquip
+            ? { ...personagem, equipamento: [...(personagem.equipamento || []), novo] }
+            : { ...personagem, inventario: [...(personagem.inventario || []), novo] };
           setPersonagem(p); salvar({ personagem: p });
-          godLinha(`⚡ "${resto}" foi para a bolsa.`);
+          godLinha(`⚡ "${resto}" (${f.rotulo}) foi para ${ehEquip ? "o equipamento — dá para equipar em Bolsa" : "a bolsa"}.`);
           return true;
         }
         case "pocao": {
@@ -3958,7 +3969,9 @@ export default function Taverna() {
          e o que foi dito em particular — as duas regras que impedem o aliado
          de teletransportar e o estranho de saber o que não ouviu. */
       const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current });
-      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
+      /* PROFICIÊNCIA (v9.11): o que o herói sabe usar, e o que está pesando */
+      const eqp = resumoProficienciaPrompt(p, ranksDoPersonagem(p));
+      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -5193,13 +5206,22 @@ export default function Taverna() {
   };
 
   const equipar = (item) => {
+    /* PROFICIÊNCIA (v9.11): equipar o que você não sabe usar não é proibido —
+       é caro. O sistema deixa vestir e diz o preço na hora, em vez de esconder
+       a regra e deixar o jogador achar que está tudo bem. */
+    const av = avaliarEquipar(personagem, item, ranksDoPersonagem(personagem));
     setPersonagem((p) => {
-      const slot = item.tipo || "arma";
+      const slot = item.tipo || (av.ficha && av.ficha.familia === "arma" ? "arma" : "arma");
       const equipados = { ...(p.equipados || {}) };
       equipados[slot] = item; // substitui o que estiver no mesmo slot (volta pra mochila automaticamente)
       return { ...p, equipados };
     });
-    pushMsgs([{ autor: "sistema", texto: `⚔ Equipou: ${item.nome}` }]);
+    const linhas = [{ autor: "sistema", texto: `⚔ Equipou: ${item.nome}${av.ficha ? ` (${av.ficha.rotulo})` : ""}` }];
+    for (const p of av.penalidades) linhas.push({ autor: "sistema", texto: `⚠ ${p.texto}` });
+    pushMsgs(linhas);
+    if (av.penalidades.length) {
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[EQUIPAMENTO — REGISTRO DO SISTEMA] Equipei ${item.nome} (${av.ficha.rotulo}) sem ter treino: ${av.penalidades.map((p) => p.texto).join("; ")}. É fato mecânico e já está aplicado — narre o desconforto quando couber e NUNCA finja que está tudo bem.`;
+    }
   };
 
   const desequipar = (slot) => {
