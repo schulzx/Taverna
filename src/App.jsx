@@ -37,6 +37,7 @@ import { BRAND, SLOGAN, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_M
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
 import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito, naturezaDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
 import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, detectarPedidoDeTeste, envelopeDoTeste, TESTES_PROMPT } from "./testes.js";
+import { PERICIAS, periciaPorId, periciasDoAtributo, garantirPericias, periciasIniciais, bonusDePericia, passivoDe, resolucaoAutomatica, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente, resumoPericiasPrompt, PERICIAS_PROMPT } from "./pericias.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
@@ -196,8 +197,11 @@ function OverlayDado({ rolagem, modificador, aoConcluir }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.88)", backdropFilter: "blur(4px)" }}>
       <div className="tv-fade flex flex-col items-center text-center max-w-sm w-full">
         <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.violetSoft }}>
-          Teste de {rolagem.atributo || "sorte"}{dc != null ? ` · dificuldade ${dc}` : ""}
+          Teste de {rolagem.rotulo || rolagem.atributo || "sorte"}{dc != null ? ` · dificuldade ${dc}` : ""}
         </div>
+        {rolagem.nivelTreino === "especialista" && <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.amber }}>★★ especialista</div>}
+        {rolagem.nivelTreino === "treinada" && <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>★ treinado</div>}
+        {rolagem.nivelTreino === "leigo" && <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>sem treino</div>}
         {modo && (
           <div className="tv-mono text-[11px] uppercase tracking-widest mb-1 px-2 py-0.5 rounded-full" style={{ color: modo === "vantagem" ? T.ok : T.danger, border: `1px solid ${modo === "vantagem" ? T.ok : T.danger}` }}>
             {modo === "vantagem" ? "✦ vantagem — pega o maior" : "✧ desvantagem — pega o menor"}
@@ -840,7 +844,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onEncararProva, onDesistirRito, bloqueado }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onEncararProva, onDesistirRito, bloqueado }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -887,7 +891,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
               modDe={(id) => atributoEfetivo(personagem, id)}
               penalidades={penalidadesAtivas(personagem, ranksDoPersonagem(personagem))}
               proficiencias={proficienciasDoHeroi(personagem, ranksDoPersonagem(personagem))}
-              onSubirAtributo={onSubirAtributo} pontosAtr={personagem.pontosAtr || 0}
+              onSubirAtributo={onSubirAtributo} pontosAtr={personagem.pontosAtr || 0} onAlternarPericia={onAlternarPericia}
             />
             <div className="flex items-center gap-2 flex-wrap">
               {nemesis && nemesis.status !== "derrotada" && (
@@ -2019,6 +2023,9 @@ function TelaPersonagem({ mundo, concluir }) {
             nivel: 1, xp: 0, moedas: MOEDAS_INICIAIS + (antObj.moedas || 0), nivelPendentes: 0,
             inventario: antObj.item ? [antObj.item] : [], habilidades: habsIniciais, grupo: [],
             efeitos: [], condicoes: [], equipamento: [], equipados: {},
+            /* v9.15: nasce treinado no que a classe e o passado justificam.
+               Redistribui livremente na ficha depois — a criação não é armadilha. */
+            pericias: periciasIniciais({ classe, antecedente: antObj.nome }), periciasVersao: 1,
           })}>Começar aventura →</Botao>
       </div>
     </div>
@@ -4189,7 +4196,11 @@ export default function Taverna() {
       const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current });
       /* PROFICIÊNCIA (v9.11): o que o herói sabe usar, e o que está pesando */
       const eqp = resumoProficienciaPrompt(p, ranksDoPersonagem(p));
-      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
+      /* PERÍCIAS (v9.15): em que ele é treinado, em que é leigo, e os passivos —
+         que decidem o que ele nota SEM rolar. Sem isto o Mestre inventa a
+         competência do herói cena a cena, e sempre a favor da cena. */
+      const per = resumoPericiasPrompt(p, (id) => atributoEfetivo(p, id));
+      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -4694,7 +4705,7 @@ export default function Taverna() {
       const pedido = detectarPedidoDeTeste(acao);
       if (pedido) {
         setEntrada("");
-        pedirTeste(pedido.tipo, pedido.motivo);
+        pedirTeste(pedido.tipo, pedido.motivo, pedido.pericia ? { pericia: pedido.pericia } : {});
         return;
       }
     }
@@ -5240,7 +5251,21 @@ export default function Taverna() {
     enviar(`[PASSAR O TEMPO — ${horas} horas] Simule a passagem de ${horas} horas: ${escala}. Faça o mundo VIVER esse intervalo proporcionalmente — o que os NPCs e facções fizeram, o que avançou, o que mudou no ambiente e nas suas missões, notícias que chegaram. Quanto mais horas, mais coisas acontecem (mas sempre plausível, nunca absurdo tipo impérios caindo em 1 dia). Ao final, reapresente a cena atual e me convide a agir.${climaMsg}${reinoMsg}`, personagem);
   };
 
-  const modPend = rolagem ? (() => { const a = ATRIBUTOS.find((x) => x.nome.toLowerCase() === (rolagem.atributo || "").toLowerCase()); return a && personagem ? atributoEfetivo(personagem, a.id) : 0; })() : 0;
+  /* MODIFICADOR DE UM TESTE (v9.15) — atributo + treino da perícia.
+     `atributoEfetivo` já traz equipamento, efeitos e a proficiência do
+     atributo-chave da classe; a perícia entra por cima e é o que faz o
+     Ladino furtar melhor que o Monge de mesma Destreza. */
+  const modDoTeste = (pers, attrId, periciaId) => {
+    if (!pers || !attrId) return { total: 0, nivelTreino: "nenhum" };
+    const base = atributoEfetivo(pers, attrId);
+    if (!periciaId) return { total: base, nivelTreino: "nenhum" };
+    const b = bonusDePericia(pers, periciaId, base);
+    return { total: b.total, nivelTreino: b.nivelTreino };
+  };
+  const modPend = rolagem ? (() => {
+    const a = ATRIBUTOS.find((x) => x.nome.toLowerCase() === (rolagem.atributo || "").toLowerCase());
+    return a && personagem ? modDoTeste(personagem, a.id, rolagem.pericia).total : 0;
+  })() : 0;
 
   const concluirRolagem = (valor) => {
     const r = rolagem;
@@ -5278,8 +5303,8 @@ export default function Taverna() {
       const provaAsc = r.provaAscensao || null;
       const passou = critico || (!desastre && total >= dc);
       let env = envelopeDoTeste({
-        tipo: r.tipo, motivo: r.motivo, valor, mod, total, dc,
-        resultado: passou ? "sucesso" : "falha", critico, desastre,
+        tipo: r.tipo, pericia: r.pericia, nivelTreino: r.nivelTreino, motivo: r.motivo,
+        valor, mod, total, dc, resultado: passou ? "sucesso" : "falha", critico, desastre,
       });
       let persT = personagem;
       /* ACHADO (v9.14): passou E havia mesmo algo aqui — o sistema entrega,
@@ -5316,6 +5341,7 @@ export default function Taverna() {
   const pedirTeste = (tipoId, motivo, extra = {}) => {
     if (rolagem) { pushMsgs([{ autor: "sistema", texto: "Termine a rolagem pendente antes de pedir outra." }]); return; }
     const t = tipoTestePorId(tipoId);
+    const periciaId = extra.pericia || null;
     const comb = combateRef.current;
     const ameaca = comb ? Math.max(0, ...(comb.inimigos || []).map((e) => Number(e.nivel) || 0)) : 0;
     const { dc, porque } = dificuldadeDoPedido({
@@ -5337,11 +5363,48 @@ export default function Taverna() {
     const explic = extra.dificuldade != null ? "dificuldade fixa do rito"
       : achado ? "há algo de fato escondido aqui — esta é a dificuldade dele"
       : porque;
+    /* PERÍCIA (v9.15): o rótulo, o treino e o bônus saem daqui. Sem perícia
+       identificada, cai no comportamento antigo — atributo cru. */
+    const per = periciaId ? periciaPorId(periciaId) : null;
+    const { total: modT, nivelTreino } = modDoTeste(personagem, t.atributo, periciaId);
+    const selo = nivelTreino === "especialista" ? " ★★ especialista"
+      : nivelTreino === "treinada" ? " ★ treinado"
+      : per ? " · sem treino" : "";
+    const rotulo = per ? per.nome : attrNome;
+    /* SUCESSO/FALHA AUTOMÁTICOS (v9.15): quando o bônus decide sozinho, não se
+       rola. Um lendário não pode ter 20% de chance de cair de um muro — se o
+       dado ainda manda, crescer nunca significou nada.
+
+       Duas exceções, por motivos diferentes. A prova de ascensão é dramática
+       de propósito: o rito existe para ser enfrentado, não despachado. E o
+       ACHADO fica de fora por razão prosaica — a entrega do tesouro (moedas,
+       componentes, riscar da base) mora em concluirRolagem, e duplicá-la aqui
+       é como se cria a divergência que ninguém acha depois. Com bônus alto o
+       dado vira formalidade, e formalidade barata é melhor que código dobrado. */
+    const autoRes = resolucaoAutomatica(modT, dcFinal, { permitir: !extra.provaAscensao && !achado });
+    if (autoRes) {
+      const passouAuto = autoRes === "sucesso";
+      pushMsgs([
+        { autor: "jogador", texto: `🎲 Peço um teste de ${rotulo}${motivo ? ` — ${motivo}` : ""}` },
+        { autor: "sistema", texto: passouAuto
+          ? `✓ ${rotulo}${selo}: +${modT} contra dificuldade ${dcFinal} — isto está abaixo do seu patamar. Sucesso sem rolar.`
+          : `✗ ${rotulo}${selo}: +${modT} contra dificuldade ${dcFinal} — nem um 20 alcança. Falha sem rolar.` },
+      ]);
+      enviar(envelopeDoTeste({
+        tipo: tipoId, pericia: periciaId, motivo, mod: modT, dc: dcFinal,
+        resultado: autoRes, automatico: true, nivelTreino,
+      }), personagem);
+      return;
+    }
     pushMsgs([
-      { autor: "jogador", texto: `🎲 Peço um teste de ${attrNome}${motivo ? ` — ${motivo}` : ""}` },
-      { autor: "sistema", texto: `O sistema fixou a dificuldade em ${dcFinal} (${explic}). Role o dado.` },
+      { autor: "jogador", texto: `🎲 Peço um teste de ${rotulo}${motivo ? ` — ${motivo}` : ""}` },
+      { autor: "sistema", texto: `O sistema fixou a dificuldade em ${dcFinal} (${explic}). Seu bônus: +${modT}${selo}. Role o dado.` },
     ]);
-    setRolagem({ atributo: attrNome, motivo: motivo || t.pergunta, origem: "pedido", tipo: tipoId, ...extra, dificuldade: dcFinal, achado });
+    setRolagem({
+      atributo: attrNome, rotulo, pericia: periciaId,
+      nivelTreino: per && nivelTreino === "nenhum" ? "leigo" : nivelTreino,
+      motivo: motivo || t.pergunta, origem: "pedido", tipo: tipoId, ...extra, dificuldade: dcFinal, achado,
+    });
   };
 
   /* ---------------- RITO DE ASCENSÃO (v9.6) ----------------
@@ -5412,6 +5475,37 @@ export default function Taverna() {
     }));
     notaRef.current = `[FICHA — REGISTRO DO SISTEMA] Subi para o nível ${personagem.nivel}. É anotação de ficha: mencione o crescimento de passagem se couber, sem abrir cena de treinamento e sem descrever poderes novos — o que eu de fato aprendi só existe depois que eu gastar os pontos.`;
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
+  };
+
+  /* ---------------- PERÍCIAS (v9.15) ----------------
+     Um clique percorre o ciclo: leiga → treinada → especialista → leiga.
+     Livre para redistribuir, como atributos e talentos: o jogo não pune
+     quem escolheu antes de entender o sistema. Os limites (quantas cabem,
+     e especialista só do nível 6) são do catálogo, não desta função. */
+  const alternarPericia = (id) => {
+    const per = periciaPorId(id);
+    if (!per || !personagem) return;
+    const { treinadas, especialistas } = garantirPericias(personagem);
+    const maxT = limiteTreinadas(personagem);
+    const maxE = limiteEspecialistas(personagem.nivel || 1);
+    let nt = [...treinadas], ne = [...especialistas], msg;
+    if (especialistas.includes(id)) {
+      nt = nt.filter((x) => x !== id); ne = ne.filter((x) => x !== id);
+      msg = `${per.icone} ${per.nome}: treino removido.`;
+    } else if (treinadas.includes(id)) {
+      if (!maxE) { pushMsgs([{ autor: "sistema", texto: `⛔ Especialista só a partir do nível 6.` }]); return; }
+      if (ne.length >= maxE) {
+        nt = nt.filter((x) => x !== id);
+        msg = `${per.icone} ${per.nome}: treino removido (sem espaço para outro especialista).`;
+      } else { ne.push(id); msg = `${per.icone} ${per.nome} → ★★ ESPECIALISTA (bônus dobrado).`; }
+    } else {
+      if (nt.length >= maxT) { pushMsgs([{ autor: "sistema", texto: `⛔ ${treinadas.length}/${maxT} perícias treinadas. Destreine outra antes.` }]); return; }
+      nt.push(id); msg = `${per.icone} ${per.nome} → ★ treinada.`;
+    }
+    const p = { ...personagem, pericias: { treinadas: nt, especialistas: ne } };
+    setPersonagem(p); salvar({ personagem: p });
+    pushMsgs([{ autor: "sistema", texto: msg }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FICHA — REGISTRO DO SISTEMA] Ajustei meus treinos de perícia. É anotação de ficha: não abra cena, não invente mestre nem treinamento por causa disso.`;
   };
 
   /* ---------------- ATRIBUTOS (v9.6) ---------------- */
@@ -7615,7 +7709,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             {rolagem && !carregando && (
               <div className="tv-fade px-4 md:px-8 pb-5 flex justify-center" style={{ paddingRight: "68px" }}>
                 <div className="tv-pulse flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl px-4 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
-                  <span className="tv-mono text-xs text-center" style={{ color: T.ink }}>🎲 Teste de {rolagem.atributo || "sorte"}{rolagem.dificuldade != null ? ` · dif. ${rolagem.dificuldade}` : ""} — <em className="tv-body" style={{ color: T.inkDim }}>{rolagem.motivo}</em></span>
+                  <span className="tv-mono text-xs text-center" style={{ color: T.ink }}>🎲 Teste de {rolagem.rotulo || rolagem.atributo || "sorte"}{rolagem.dificuldade != null ? ` · dif. ${rolagem.dificuldade}` : ""} — <em className="tv-body" style={{ color: T.inkDim }}>{rolagem.motivo}</em></span>
                   <Botao primario pequeno desativado={dadoRolando} onClick={() => { if (!dadoRolando) setDadoRolando(true); }}>Rolar d20{modPend !== 0 ? ` (+${modPend})` : ""}</Botao>
                 </div>
               </div>
@@ -7634,7 +7728,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

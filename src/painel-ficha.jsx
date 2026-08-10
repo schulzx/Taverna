@@ -21,6 +21,7 @@ import React from "react";
 import { T, ATRIBUTOS } from "./constantes.js";
 import { Retrato, sementeDe, estadoDe } from "./ui.jsx";
 import { bonusProficiencia, ehProficiente } from "./regras.js";
+import { PERICIAS, garantirPericias, bonusDePericia, passivoDe, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente } from "./pericias.js";
 
 const sinal = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -75,10 +76,87 @@ function Barra({ atual, max, cor, rotulo }) {
 
 /* ---------------- a ficha ---------------- */
 
+/* ---------------- A LISTA DE PERÍCIAS (v9.15) ----------------
+   O bloco que faz a ficha parecer uma ficha. Três estados visuais e
+   nada mais: especialista (★★, âmbar cheio), treinada (★, âmbar
+   fraco), leiga (apagada). O número da direita é o que entra na
+   rolagem — é o único que o jogador precisa ler no meio de um turno.
+
+   Clicar treina ou destreina, respeitando o limite. É respec livre,
+   igual ao que a casa já faz com atributos e talentos: o jogo não
+   pune quem escolheu antes de entender o sistema. */
+function LinhaPericia({ per, mod, nivelTreino, onClick, travada }) {
+  const esp = nivelTreino === "especialista";
+  const tre = nivelTreino === "treinada";
+  const cor = esp ? T.amber : tre ? T.amberSoft : T.inkDim;
+  return (
+    <button
+      onClick={onClick} disabled={travada && !esp && !tre}
+      title={`${per.nome} — ${per.desc}${travada && !esp && !tre ? "\n\n(sem espaço: destreine outra antes)" : "\n\nclique para treinar / especializar / limpar"}`}
+      className="w-full flex items-center gap-1.5 px-1.5 py-1 rounded-lg text-left"
+      style={{
+        background: esp || tre ? T.panel : "transparent",
+        border: `1px solid ${esp ? T.amber : tre ? T.line : "transparent"}`,
+        opacity: travada && !esp && !tre ? 0.45 : 1,
+      }}>
+      <span className="text-[11px] w-4 text-center" style={{ opacity: esp || tre ? 1 : 0.4 }}>{per.icone}</span>
+      <span className="tv-body text-[11px] flex-1 truncate" style={{ color: esp || tre ? T.ink : T.inkDim }}>{per.nome}</span>
+      <span className="tv-mono text-[9px]" style={{ color: T.amber, minWidth: "18px", textAlign: "right" }}>{esp ? "★★" : tre ? "★" : ""}</span>
+      <span className="tv-mono text-[11px]" style={{ color: cor, fontWeight: esp || tre ? 700 : 400, minWidth: "26px", textAlign: "right" }}>{sinal(mod)}</span>
+    </button>
+  );
+}
+
+function BlocoPericias({ personagem, modDe, onAlternarPericia }) {
+  const p = personagem || {};
+  const { treinadas, especialistas } = garantirPericias(p);
+  const maxT = limiteTreinadas(p);
+  const maxE = limiteEspecialistas(p.nivel || 1);
+  const leque = lequeDaClasse(p.classe);
+  const doPassado = periciasDoAntecedente(p.antecedente);
+  const cheio = treinadas.length >= maxT;
+  const passivos = ["percepcao", "intuicao", "investigacao"];
+  return (
+    <div className="pt-2" style={{ borderTop: `1px solid ${T.line}` }}>
+      <div className="flex items-baseline justify-between mb-1.5">
+        <div className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.violetSoft }}>Perícias</div>
+        <div className="tv-mono text-[9px]" style={{ color: cheio ? T.amber : T.inkDim }}>
+          {treinadas.length}/{maxT} treinadas{maxE ? ` · ${especialistas.length}/${maxE} especialista${maxE > 1 ? "s" : ""}` : ""}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+        {ATRIBUTOS.map((a) => (
+          <div key={a.id} className="mb-1">
+            <div className="tv-mono text-[8px] uppercase tracking-widest mb-0.5 px-1.5" style={{ color: T.inkDim }}>{a.nome}</div>
+            {PERICIAS.filter((x) => x.atributo === a.id).map((per) => {
+              const b = bonusDePericia(p, per.id, modDe ? modDe(a.id) : 0);
+              return (
+                <LinhaPericia key={per.id} per={per} mod={b.total} nivelTreino={b.nivelTreino}
+                  travada={cheio} onClick={() => onAlternarPericia && onAlternarPericia(per.id)} />
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <div className="tv-mono text-[9px] mt-1.5 px-1.5 flex flex-wrap gap-x-3 gap-y-0.5" style={{ color: T.inkDim }}>
+        <span title="o que você nota sem rolar dado nenhum">PASSIVOS:</span>
+        {passivos.map((id) => {
+          const per = PERICIAS.find((x) => x.id === id);
+          return <span key={id} style={{ color: T.ink }}>{per.nome} {passivoDe(p, id, modDe ? modDe(per.atributo) : 0)}</span>;
+        })}
+      </div>
+      <div className="tv-body text-[10px] italic mt-1 px-1.5" style={{ color: T.inkDim }}>
+        {leque.escolhas} da classe + {doPassado.length} do passado{(p.classesExtras || []).length ? ` + ${(p.classesExtras || []).length} de multiclasse` : ""}.
+        Clique para treinar (★), de novo para especializar (★★, dobra o bônus), de novo para limpar.
+      </div>
+    </div>
+  );
+}
+
 export function FichaVisual({
   personagem, mundo, divindade, tituloAtivo, tituloInfo, famaInfo, patamarNome,
   defesa, iniciativa, ataques = 1, modDe, penalidades = [], proficiencias = null,
-  onSubirAtributo, pontosAtr = 0,
+  onSubirAtributo, pontosAtr = 0, onAlternarPericia,
 }) {
   const p = personagem || {};
   const nivel = p.nivel || 1;
@@ -193,6 +271,9 @@ export function FichaVisual({
             </div>
           </div>
         )}
+
+        {/* ---- perícias: quem ele é, e não só quanto ele tem ---- */}
+        <BlocoPericias personagem={p} modDe={modDe} onAlternarPericia={onAlternarPericia} />
 
         {/* ---- a linha do mundo: fama e cicatrizes ---- */}
         <div className="flex items-center gap-3 flex-wrap pt-1" style={{ borderTop: `1px solid ${T.line}` }}>

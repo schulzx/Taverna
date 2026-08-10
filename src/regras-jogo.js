@@ -16,6 +16,7 @@ import { pontosTotais, custoJaGasto } from "./classes.js";
 import { migrarAtributos } from "./atributos.js";
 import { valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { VINCULO_INICIAL } from "./vinculos.js";
+import { garantirPericias, periciasIniciais } from "./pericias.js";
 
 export function aplicarNivel(pers) {
   let { xp, nivel, nivelPendentes, vidaMax, manaMax, vida, mana } = pers;
@@ -352,6 +353,12 @@ export function migrarPersonagem(p) {
     subclasses: p.subclasses && typeof p.subclasses === "object" ? p.subclasses : {},
     especializacoes: p.especializacoes && typeof p.especializacoes === "object" ? p.especializacoes : {},
     antecedente: p.antecedente || "", antecedenteGancho: p.antecedenteGancho || "",
+    /* v9.15: perícias. Save antigo não pode acordar leigo em tudo — o sistema
+       nasceu depois dele, a culpa não é da ficha. `periciasIniciais` derruba
+       o treino que a classe e o passado JÁ justificavam; a partir daí o
+       jogador redistribui no painel, como faz com atributos e talentos. */
+    pericias: p.periciasVersao >= 1 ? garantirPericias(p) : periciasIniciais(p),
+    periciasVersao: 1,
     essencia: p.essencia || 0,
     suprimentos: p.suprimentos ? garantirSuprimentos(p.suprimentos) : { racoes: 10, agua: 10, tochas: 5, kit: true },
     exaustao: p.exaustao || 0,

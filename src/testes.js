@@ -16,6 +16,7 @@
    ============================================================ */
 
 import { ATRIBUTOS } from "./constantes.js";
+import { PERICIAS, periciaPorId } from "./pericias.js";
 
 /* ---------------- OS TIPOS DE TESTE ----------------
    Cada um amarra um atributo a um verbo. O jogador escolhe pelo verbo,
@@ -67,27 +68,72 @@ const MAPA_PALAVRA = [
   { id: "vigor", rx: /(vigor|constitui|fortitude|resist[êe]nc|aguent|f[ôo]lego|toler)/i },
 ];
 
-/* Devolve { tipo, motivo } quando a frase é mesmo um pedido de teste. */
+/* PERÍCIA PEDIDA PELO NOME (v9.15) — "peço um teste de Furtividade".
+   Vem ANTES do mapa por atributo: quem diz o nome da perícia quer aquela
+   perícia, não o atributo genérico dela. */
+const APELIDOS_PERICIA = {
+  atletismo: /(atletismo|escalar|nadar|saltar)/i,
+  intimidacao: /(intimida|amea[çc]ar|meter medo)/i,
+  arrombamento: /(arromb|for[çc]ar a porta|quebrar a fechadura)/i,
+  furtividade: /(furtiv|esgueir|sorrateir|sem ser vist|na surdina)/i,
+  acrobacia: /(acrobac|equil[íi]br|piruet|amortecer a queda)/i,
+  prestidigitacao: /(prestidigit|m[ãa]os leves|bater carteira|gazua|punga)/i,
+  fortitude: /(fortitude|aguentar|resistir ao veneno|constitui)/i,
+  sobrevivencia: /(sobreviv|rastrear|rastreio|ca[çc]ar|achar [áa]gua|orientar)/i,
+  montaria: /(montaria|cavalgar|conduzir a carro[çc]a|pilotar)/i,
+  arcanismo: /(arcanismo|arcano|magia antiga|reconhecer o feiti)/i,
+  saberes: /(saberes|hist[óo]ria|lore|religi[ãa]o|natureza|linhagem|heráldic)/i,
+  investigacao: /(investiga|vestígio|pistas|deduzir do|examinar a cena)/i,
+  persuasao: /(persuas|convencer|negociar|diploma)/i,
+  enganacao: /(engana|mentir|blefe|blefar|disfar[çc])/i,
+  atuacao: /(atua[çc]|cantar|tocar|apresenta[çc][ãa]o|encenar)/i,
+  percepcao: /(percep[çc][ãa]o|perceber|notar|reparar|observar)/i,
+  intuicao: /(intui[çc]|ler (a )?(gente|pessoa)|sentir se mente|discernir)/i,
+  medicina: /(medicina|estancar|estabilizar|diagnostic|curar o ferimento)/i,
+};
+
+export function detectarPericiaPedida(texto) {
+  const t = String(texto || "");
+  for (const p of PERICIAS) {
+    const rx = APELIDOS_PERICIA[p.id];
+    if (rx && rx.test(t)) return p.id;
+  }
+  return null;
+}
+
+/* Devolve { tipo, pericia, motivo } quando a frase é mesmo um pedido de teste. */
 export function detectarPedidoDeTeste(texto) {
   const t = String(texto || "");
   if (!t.trim()) return null;
   if (!/(teste|rolagem|rolar|checagem)/i.test(t)) return null;
   if (!VERBO_PEDIDO.test(t)) return null;
-  for (const m of MAPA_PALAVRA) if (m.rx.test(t)) {
-    /* o motivo é o que vem depois de "para" / "pra" / "de ver se" */
-    const mm = t.match(/\b(para|pra|a fim de|de ver se|ver se|se)\s+(.{4,140})/i);
-    return { tipo: m.id, motivo: mm ? mm[2].replace(/[.!?]+$/, "").trim() : "" };
-  }
+  /* o motivo é o que vem depois de "para" / "pra" / "de ver se" */
+  const mm = t.match(/\b(para|pra|a fim de|de ver se|ver se|se)\s+(.{4,140})/i);
+  const motivo = mm ? mm[2].replace(/[.!?]+$/, "").trim() : "";
+  const per = detectarPericiaPedida(t);
+  if (per) return { tipo: periciaPorId(per).atributo, pericia: per, motivo };
+  for (const m of MAPA_PALAVRA) if (m.rx.test(t)) return { tipo: m.id, pericia: null, motivo };
   return null;
 }
 
 /* ---------------- OS ENVELOPES ----------------
    O ponto inteiro do pedido: no fracasso o Mestre não pode ser generoso.
    "Se eu não passar no teste o mestre não inventa nada" — é regra, não estilo. */
-export function envelopeDoTeste({ tipo, motivo, valor, mod, total, dc, resultado, critico, desastre }) {
+export function envelopeDoTeste({ tipo, pericia, motivo, valor, mod, total, dc, resultado, critico, desastre, automatico, nivelTreino }) {
   const t = tipoTestePorId(tipo);
+  const per = pericia ? periciaPorId(pericia) : null;
   const attr = nomeDoAtributo(t.atributo);
-  const cabeca = `[TESTE PEDIDO POR MIM — ROLADO PELO SISTEMA] Pedi um teste de ${attr} (${t.rotulo.toLowerCase()})${motivo ? ` para ${motivo}` : ""}. O sistema fixou a dificuldade em ${dc} e rolou: d20 ${valor}${mod ? ` ${mod >= 0 ? "+" : "−"} ${Math.abs(mod)}` : ""} = ${total}. Resultado: ${resultado.toUpperCase()}.`;
+  const rotulo = per ? `${per.nome} (${attr})` : `${attr} (${t.rotulo.toLowerCase()})`;
+  const selo = nivelTreino === "especialista" ? " Sou ESPECIALISTA nisso."
+    : nivelTreino === "treinada" ? " Sou treinado nisso."
+    : per ? " NÃO tenho treino nisso." : "";
+  /* SEM DADO (v9.15): o bônus já batia a dificuldade com folga. O envelope
+     precisa dizer isso com todas as letras, senão o Mestre narra tensão
+     onde não havia — e a regra existe justamente para acabar com a tensão
+     falsa em coisa que está abaixo do herói. */
+  const cabeca = automatico
+    ? `[TESTE PEDIDO POR MIM — RESOLVIDO PELO SISTEMA SEM DADO] Pedi um teste de ${rotulo}${motivo ? ` para ${motivo}` : ""}. O sistema fixou a dificuldade em ${dc} e NÃO rolou: meu bônus é ${mod}, alto demais para que o acaso importe.${selo} Resultado: ${resultado.toUpperCase()} AUTOMÁTICO — isto está ${resultado === "sucesso" ? "abaixo do meu patamar" : "muito acima do meu patamar"}.`
+    : `[TESTE PEDIDO POR MIM — ROLADO PELO SISTEMA] Pedi um teste de ${rotulo}${motivo ? ` para ${motivo}` : ""}.${selo} O sistema fixou a dificuldade em ${dc} e rolou: d20 ${valor}${mod ? ` ${mod >= 0 ? "+" : "−"} ${Math.abs(mod)}` : ""} = ${total}. Resultado: ${resultado.toUpperCase()}.`;
   const passou = resultado === "sucesso" || critico;
   if (!passou) {
     return `${cabeca}
@@ -101,4 +147,5 @@ export const TESTES_PROMPT = `TESTES PEDIDOS PELO JOGADOR (v9.6 — como numa me
 - O jogador pode PEDIR um teste a qualquer momento ("peço um teste de Percepção para ver se acho algo aqui"). Quando isso acontece, o SISTEMA fixa a dificuldade e rola — você não escolhe o número, não rola, não antecipa o resultado e não responde a pergunta antes do dado.
 - O resultado chega num envelope "[TESTE PEDIDO POR MIM — ROLADO PELO SISTEMA]" com uma regra explícita. Cumpra-a ao pé da letra: em caso de FALHA você não revela nada, nem por descrição, nem por insinuação, nem "só um pedacinho". Silêncio é uma resposta legítima e é a resposta certa.
 - Em caso de SUCESSO, revele UMA coisa concreta que já existia — nunca invente um item, um aliado ou uma saída conveniente porque o dado foi bom.
-- Se o jogador perguntar algo que exigiria um teste e não pedir um, você pode dizer que aquilo pede um teste — mas NUNCA role por conta própria nem entregue a informação de graça.`;
+- Se o jogador perguntar algo que exigiria um teste e não pedir um, você pode dizer que aquilo pede um teste — mas NUNCA role por conta própria nem entregue a informação de graça.
+- O envelope pode chegar RESOLVIDO SEM DADO. Quando chegar, não invente tensão: aquilo estava abaixo (ou muito acima) do herói e o acaso não tinha o que decidir. Narre a competência com naturalidade — "você faz isso desde sempre" —, nunca como sorte.`;
