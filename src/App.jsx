@@ -43,11 +43,13 @@ import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, resum
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
 import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, avisoDeConserto, lembreteDoPortao } from "./portao.js";
+import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
-import { avaliarEquipar, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
+import { avaliarEquipar, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt } from "./prompt.js";
 import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./ui.jsx";
+import { FichaVisual } from "./painel-ficha.jsx";
 import { PainelAscensao } from "./painel-ascensao.jsx";
 import { PainelCodex } from "./painel-codex.jsx";
 import { PainelDiario } from "./painel-diario.jsx";
@@ -838,7 +840,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onEncararProva, onDesistirRito, bloqueado }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onEncararProva, onDesistirRito, bloqueado }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -875,73 +877,34 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
 
         {aba === "gestao" && subGestao === "ficha" && (
           <>
-            <div className="flex items-center gap-3">
-              <Retrato semente={sementeDe(personagem)} tamanho={64} anel={T.amber} estado={estadoDe(personagem.vida, personagem.vidaMax)} />
-              <div className="min-w-0">
-                <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>
-                  {(() => {
-                    const t = tituloDoHeroi(divindade, (famaInfo && famaInfo.pf && famaInfo.pf.rotulo) || "", patamarDe(personagem.nivel).nome);
-                    return (<>
-                      <span style={{ color: t.divino ? T.violetSoft : T.amberSoft, fontWeight: 700 }}>{t.divino ? `🌟 ${t.titulo}` : t.titulo}</span>
-                      {t.divino && <span style={{ color: T.violetSoft }}> · GD {t.gd}</span>}
-                      <span style={{ color: T.inkDim }}> · {(mundo || {}).genero} · nv {personagem.nivel} · combate: {patamarDe(personagem.nivel).nome}</span>
-                    </>);
-                  })()}
-                </div>
-                <div className="tv-display text-3xl leading-tight" style={{ color: T.ink }}>{personagem.nome}</div>
-                <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>{personagem.conceito}</div>
-                {tituloAtivo ? <div className="tv-mono text-[11px] mt-0.5" style={{ color: T.amber }}>★ ❝ {tituloAtivo} ❞</div> : null}
-                {famaInfo && (
-                  <div className="mt-1.5 flex items-center gap-1.5" title={`Fama ${famaInfo.f}/100 — ${famaInfo.pf.nota}`}>
-                    <span className="tv-mono text-[9px] uppercase tracking-wider shrink-0" style={{ color: T.amberSoft }}>📣 {famaInfo.pf.rotulo}</span>
-                    <div className="w-16 h-1 rounded-full overflow-hidden" style={{ background: T.panel }}>
-                      <div className="h-full rounded-full" style={{ width: `${famaInfo.f}%`, background: T.amber }} />
-                    </div>
-                    <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>{famaInfo.f}</span>
-                  </div>
-                )}
-                {nemesis && nemesis.status !== "derrotada" && (
-                  <div className="tv-mono text-[10px] mt-1" style={{ color: T.danger }} title={`${nemesis.nome}, ${nemesis.titulo} — ${nemesis.motivo}. Ódio: ${nemesis.odio}/100`}>
-                    🎭 nêmesis: {nemesis.nome} · ódio {nemesis.odio}
-                  </div>
-                )}
-                {(personagem.classe || personagem.raca) && (
-                  <div className="tv-mono text-[10px] uppercase tracking-widest mt-1" style={{ color: T.amberSoft }}>
-                    {[personagem.raca, personagem.classe, personagem.subclasse].filter(Boolean).join(" · ")}
-                    {personagem.profissao ? <span style={{ color: T.inkDim }}> · {personagem.profissao}</span> : null}
-                  </div>
-                )}
-                {personagem.antecedente && (
-                  <div className="tv-mono text-[10px] uppercase tracking-widest mt-0.5" style={{ color: T.inkDim }} title={personagem.antecedenteGancho || ""}>
-                    🎭 {personagem.antecedente}
-                  </div>
-                )}
-                {(personagem.cicatrizes || []).length > 0 && (
-                  <div className="mt-2 rounded-xl p-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-                    <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>🩸 Cicatrizes ({personagem.cicatrizes.length})</div>
-                    <div className="flex flex-wrap gap-1">
-                      {personagem.cicatrizes.map((c, i) => (
-                        <span key={i} title={`${c.descricao}${c.dia ? ` — desde o dia ${c.dia}` : ""}${c.vidaMax ? ` · −${-c.vidaMax} PV máx.` : ""}`}
-                          className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${T.danger}`, color: T.inkDim }}>
-                          {c.nome}{c.vidaMax ? ` −${-c.vidaMax}` : ""}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <button onClick={() => setAbrirCaminho(abrirCaminho === "eu" ? null : "eu")} className="tv-mono text-[10px] mt-1.5 px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.violetSoft }}>
-                  {personagem.classe ? "⚔ trilhar novo caminho" : "⚔ escolher caminho"}
-                </button>
-              </div>
+            <FichaVisual
+              personagem={personagem} mundo={mundo} divindade={divindade} tituloAtivo={tituloAtivo}
+              tituloInfo={tituloDoHeroi(divindade, (famaInfo && famaInfo.pf && famaInfo.pf.rotulo) || "", patamarDe(personagem.nivel).nome)}
+              famaInfo={famaInfo} patamarNome={patamarDe(personagem.nivel).nome}
+              defesa={defesaDe(personagem)}
+              iniciativa={atributoEfetivo(personagem, "destreza")}
+              ataques={ataquesPorTurno(personagem.classe, personagem.nivel || 1)}
+              modDe={(id) => atributoEfetivo(personagem, id)}
+              penalidades={penalidadesAtivas(personagem, ranksDoPersonagem(personagem))}
+              proficiencias={proficienciasDoHeroi(personagem, ranksDoPersonagem(personagem))}
+              onSubirAtributo={onSubirAtributo} pontosAtr={personagem.pontosAtr || 0}
+            />
+            <div className="flex items-center gap-2 flex-wrap">
+              {nemesis && nemesis.status !== "derrotada" && (
+                <span className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.danger}`, color: T.danger }} title={`${nemesis.nome}, ${nemesis.titulo} — ${nemesis.motivo}. Ódio: ${nemesis.odio}/100`}>
+                  🎭 nêmesis: {nemesis.nome} · ódio {nemesis.odio}
+                </span>
+              )}
+              {personagem.antecedente && (
+                <span className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title={personagem.antecedenteGancho || ""}>🎭 {personagem.antecedente}</span>
+              )}
+              <button onClick={() => setAbrirCaminho(abrirCaminho === "eu" ? null : "eu")} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.violetSoft }}>
+                {personagem.classe ? "⚔ trilhar novo caminho" : "⚔ escolher caminho"}
+              </button>
             </div>
             <div className="space-y-2.5">
-              <BarraMini rotulo="PV" atual={personagem.vida} max={personagem.vidaMax} cor={T.amber} corBaixa={T.danger} />
-              <BarraMini rotulo="PM" atual={personagem.mana} max={personagem.manaMax} cor={T.violet} />
               <BarraMini rotulo="XP" atual={personagem.xp} max={xpProx} cor={T.ok} />
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="tv-mono text-[10px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${T.violet}`, color: T.violetSoft }}>
-                  proficiência +{bonusProficiencia(personagem.nivel || 1)}
-                </span>
                 {(personagem.nivel || 1) >= 20 && (
                   <span className="tv-mono text-[10px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>
                     🌠 {(personagem.dadivas || []).length} dádiva{(personagem.dadivas || []).length === 1 ? "" : "s"} · {personagem.xp}/{XP_POR_DADIVA}
@@ -1024,22 +987,6 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                 </div>
               </div>
             )}
-            <div>
-              <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Atributos</div>
-              <div className="grid grid-cols-2 gap-2">
-                {ATRIBUTOS.map((a) => {
-                  const base = (personagem.atributos || {})[a.id] || 0;
-                  const efetivo = atributoEfetivo(personagem, a.id);
-                  const bonus = efetivo - base;
-                  return (
-                    <div key={a.id} className="rounded-lg px-3 py-2 flex items-center justify-between" style={{ background: T.panelSoft }}>
-                      <span className="tv-body text-sm" style={{ color: T.ink }}>{a.nome.slice(0, 3).toUpperCase()}</span>
-                      <span className="tv-mono text-sm font-semibold" style={{ color: bonus > 0 ? T.ok : T.amber }}>+{efetivo}{bonus > 0 ? <span className="text-[9px]" style={{ color: T.inkDim }}> ({base}+{bonus})</span> : null}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.inkDim }}>Habilidades</div>
@@ -1349,6 +1296,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                 ))}
               </div>
             )}
+            {invDe === "eu" && <PainelBancada bancada={bancada} despensa={despensa} onForjar={onForjar} bloqueado={bloqueado} />}
             {invDe !== "eu" ? (() => {
               const comp = (personagem.grupo || []).find((g) => g.nome === invDe);
               if (!comp) return <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Personagem não encontrado.</div>;
@@ -1601,30 +1549,97 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
   );
 }
 
-function PainelCombate({ combate, onEncerrarTurno, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], onUsarConsumivel }) {
+/* ============================================================
+   A BANCADA (v9.13) — o caderno de receitas dentro da Bolsa.
+   Mostra o que dá para fazer AGORA em cima, o que falta em cinza,
+   e a despensa do que se colheu. Quem rola é o sistema.
+   ============================================================ */
+function PainelBancada({ bancada = [], despensa = [], onForjar, bloqueado }) {
+  const [aberta, setAberta] = React.useState(false);
+  const prontas = bancada.filter((r) => r.pode).length;
+  return (
+    <div className="rounded-2xl" style={{ background: T.panelSoft, border: `1px solid ${prontas ? T.violet : T.line}` }}>
+      <button onClick={() => setAberta((v) => !v)} className="w-full flex items-center gap-2 px-3 py-2.5 text-left">
+        <span className="tv-mono text-sm">⚗</span>
+        <span className="tv-mono text-xs uppercase tracking-widest flex-1" style={{ color: T.ink }}>Bancada</span>
+        {prontas > 0 && <span className="tv-mono text-[10px] px-2 py-0.5 rounded-full" style={{ background: T.violet, color: T.panel }}>{prontas} pronta{prontas > 1 ? "s" : ""}</span>}
+        <span className="tv-mono text-[10px]" style={{ color: T.inkDim }}>{aberta ? "▲" : "▼"}</span>
+      </button>
+      {aberta && (
+        <div className="px-3 pb-3 space-y-3">
+          <div>
+            <div className="tv-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Despensa</div>
+            {despensa.length === 0 ? (
+              <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>Sem matéria-prima. Colher na estrada (Viajar → forragear) e esfolar o que cai em combate enchem a despensa.</div>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {despensa.map((c) => (
+                  <span key={c.id} title={c.desc} className="tv-mono text-[10px] px-2 py-1 rounded-full" style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.ink }}>
+                    {c.icone} {c.nome} ×{c.qtd}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            {bancada.map((r) => (
+              <div key={r.id} className="rounded-xl p-2.5" style={{ background: T.panel, border: `1px solid ${r.pode ? T.violet : T.line}`, opacity: r.pode ? 1 : 0.55 }}>
+                <div className="flex items-center gap-2">
+                  <span className="tv-mono text-sm shrink-0">{r.icone}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{r.nome}</div>
+                    <div className="tv-mono text-[9px]" style={{ color: T.inkDim }}>
+                      {(OFICIOS[r.oficio] || {}).nome} · dif. {r.dificuldade} vs {r.atributo} {r.mod >= 0 ? "+" : ""}{r.mod}
+                    </div>
+                  </div>
+                  <button disabled={!r.pode || bloqueado} onClick={() => onForjar && onForjar(r.id)}
+                    className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full shrink-0"
+                    style={{ background: r.pode && !bloqueado ? T.violet : T.panelSoft, color: r.pode && !bloqueado ? T.panel : T.inkDim, border: `1px solid ${r.pode && !bloqueado ? T.violet : T.line}`, fontWeight: 600 }}>
+                    forjar
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {r.custo.map((c) => (
+                    <span key={c.nome} className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ background: T.panelSoft, color: c.tem >= c.precisa ? T.ok : T.danger }}>
+                      {c.icone} {c.nome} {c.tem}/{c.precisa}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="tv-mono text-[9px]" style={{ color: T.inkDim }}>O sistema rola a bancada e consome o material. Falha comum salva metade; erro feio perde tudo. Uma hora de trabalho por tentativa.</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel }) {
+  const [bolsaAberta, setBolsaAberta] = useState(false);
   if (!combate || !combate.inimigos || combate.inimigos.length === 0) return null;
   const eco = combate.economia || { acao: 1, extra: 1 };
   const chipMov = (ativo, rotulo) => (
     <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${ativo ? T.amber : T.line}`, color: ativo ? T.amberSoft : T.inkDim, opacity: ativo ? 1 : 0.45, textDecoration: ativo ? "none" : "line-through" }}>{rotulo}</span>
   );
+  /* v9.13: o botão "encerrar turno" saiu. Agir É encerrar — o que está aqui
+     agora é só o lembrete de quantos movimentos cabem NESTA declaração. */
   return (
     <div className="tv-fade mx-4 md:mx-8 mt-1 mb-3 rounded-2xl p-3" style={{ background: T.panel, border: `1px solid ${T.danger}`, marginRight: "68px" }}>
       <div className="tv-mono text-[10px] uppercase tracking-widest mb-2 flex items-center gap-1.5 flex-wrap" style={{ color: T.danger }}>
         <span>⚔ Em combate</span>
         <span style={{ color: T.inkDim }}>· {combate.inimigos.filter((e) => !e.derrotado).length} de pé</span>
+        {combate.rodada > 1 && <span style={{ color: T.inkDim }}>· rodada {combate.rodada}</span>}
         <span className="flex items-center gap-1 ml-auto normal-case tracking-normal">
           {chipMov(eco.acao > 0, "⚔ ação")}
           {chipMov(eco.extra > 0, "✦ extra")}
-          {onEncerrarTurno && (
-            <button onClick={onEncerrarTurno} title="Passa a vez: os inimigos agem e a nova rodada começa" className="tv-mono text-[9px] px-2 py-0.5 rounded-full" style={{ background: T.panelSoft, border: `1px solid ${T.line}`, color: T.inkDim }}>
-              ⏭ encerrar turno
-            </button>
-          )}
+          <span className="tv-mono text-[9px]" style={{ color: T.inkDim }} title="Ao agir, o turno é encerrado sozinho e os inimigos respondem">· agir encerra o turno</span>
         </span>
       </div>
-      {/* POÇÕES À MÃO (v9.2): beber é ação bônus — dá para tomar e atacar
-          no mesmo turno, sem abrir a bolsa no meio da luta. */}
-      {(pocoes || []).length > 0 && (
+      {/* POÇÕES À MÃO (v9.2): as três mais úteis, a um toque.
+          v9.13: usar item da bolsa NÃO gasta mais o turno — o sistema aplica
+          na hora e o Mestre narra junto da ação que vier depois. */}
+      {((pocoes || []).length > 0 || (bolsa || []).length > 0) && (
         <div className="flex items-center gap-1.5 flex-wrap mb-2">
           <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>à mão</span>
           {pocoes.map((p) => (
@@ -1633,7 +1648,30 @@ function PainelCombate({ combate, onEncerrarTurno, nGolpes = 1, alvosGolpe = [],
               {p.icone} {p.curto}{p.qtd > 1 ? ` ×${p.qtd}` : ""}
             </button>
           ))}
-          <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>· ação bônus</span>
+          {(bolsa || []).length > 0 && (
+            <button onClick={() => setBolsaAberta((v) => !v)} title="Abre a bolsa inteira sem gastar o turno"
+              className="tv-mono text-[10px] px-2 py-1 rounded-full" style={{ background: bolsaAberta ? T.violet : T.panelSoft, border: `1px solid ${T.violet}`, color: bolsaAberta ? T.panel : T.violetSoft }}>
+              ◆ bolsa ({bolsa.length})
+            </button>
+          )}
+          <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>· não gasta o turno</span>
+        </div>
+      )}
+      {bolsaAberta && (bolsa || []).length > 0 && (
+        <div className="rounded-xl p-2 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
+          <div className="tv-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: T.violetSoft }}>Bolsa — use e continue agindo</div>
+          <div className="flex flex-col gap-1">
+            {bolsa.map((it) => (
+              <button key={it.nome} onClick={() => { onUsarConsumivel && onUsarConsumivel(it.nome); }}
+                className="flex items-center gap-2 text-left rounded-lg px-2 py-1.5" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
+                <span className="tv-mono text-sm shrink-0">{it.icone}</span>
+                <span className="flex-1 min-w-0">
+                  <span className="tv-mono text-[11px] block truncate" style={{ color: T.ink }}>{it.nome}{it.qtd > 1 ? ` ×${it.qtd}` : ""}</span>
+                  <span className="tv-mono text-[9px] block truncate" style={{ color: T.inkDim }}>{it.detalhe}</span>
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
       {Array.isArray(combate.ordem) && combate.ordem.length > 0 && (
@@ -2032,7 +2070,6 @@ export default function Taverna() {
   const [carregando, setCarregando] = useState(false);
   /* v9.5: marca as respostas que NÃO fecham a rodada (meu turno continua) —
      nelas o relógio dos buffs e das condições fica parado. */
-  const pularTickRef = useRef(false);
   const [entrada, setEntrada] = useState("");
   const [aba, setAba] = useState(null);
   const [habAbertas, setHabAbertas] = useState(false);
@@ -2910,15 +2947,13 @@ export default function Taverna() {
       if (resp.mudancas && typeof resp.mudancas.mana === "number" && resp.mudancas.mana < 0) resp.mudancas.mana = 0;
       habUsadaRef.current = false;
     }
-    /* ---- O TURNO SÓ VIRA UMA VEZ POR RODADA (v9.5) ----
-       Buff de 3 turnos morria em uma rodada e meia: quem tem dois movimentos
-       (multiclasse) mandava DUAS respostas por rodada, e cada uma descontava
-       um turno. Agora, enquanto a rodada não fecha ("meu turno continua"), o
-       relógio dos efeitos e das condições não anda — o desconto acontece
-       quando a rodada inteira termina, como numa mesa. */
-    const contaTurno = !pularTickRef.current;
-    pularTickRef.current = false;
-    if (contaTurno) {
+    /* ---- O TURNO VIRA UMA VEZ POR RODADA (v9.5, simplificado em v9.13) ----
+       Buff de 3 turnos morria em uma rodada e meia: quem tinha dois movimentos
+       mandava DUAS respostas por rodada, e cada uma descontava um turno. Havia
+       um freio (pularTickRef) para o caso "meu turno continua". Esse caso
+       deixou de existir: agir encerra o turno, então toda resposta É uma
+       rodada e o relógio anda exatamente uma vez. */
+    {
     /* passa 1 turno nos efeitos que já estavam ativos (os novos entram depois, com duração cheia) */
     const { efeitos, msgs: msgsTick } = tickEfeitos(pers);
     pers = { ...pers, efeitos };
@@ -2956,8 +2991,9 @@ export default function Taverna() {
       combateRef.current = nc; setCombate(nc);
     }
     }
-    /* tick das recargas de habilidade (v7.4.3): 1 turno por rodada */
-    if (contaTurno && pers.habRecarga && Object.keys(pers.habRecarga).length) {
+    /* tick das recargas de habilidade (v7.4.3): 1 turno por rodada — e desde
+       a v9.13 toda resposta É uma rodada, então não há mais o que checar */
+    if (pers.habRecarga && Object.keys(pers.habRecarga).length) {
       const rec = {};
       Object.entries(pers.habRecarga).forEach(([k, t]) => { const nt = (Number(t) || 0) - 1; if (nt > 0) rec[k] = nt; });
       pers = { ...pers, habRecarga: rec };
@@ -3344,6 +3380,13 @@ export default function Taverna() {
           p2 = { ...p2, inventario: [...(p2.inventario || []), itemConsumivel(c.id)] };
         }
         if (consCaidos.length) msgs.push(`${consCaidos[0].icone} Na bolsa: ${consCaidos.map((c) => c.nome).join(", ")}`);
+        /* DESPOJOS (v9.13): o corpo também é matéria-prima. Criatura mágica
+           deixa essência, peçonhenta deixa glândula, bicho deixa couro. */
+        const desp = despojosDe(resp.mudancas.__inimigosFinais || []);
+        if (desp.length) {
+          p2 = { ...p2, inventario: [...(p2.inventario || []), ...desp.map((c) => itemComponente(c.id)).filter(Boolean)] };
+          msgs.push(`🧺 Do corpo dá para tirar: ${desp.map((c) => `${c.icone} ${c.nome}`).join(", ")}`);
+        }
         /* PODER ÚNICO (v7.4.4): vitória sobre elite/lendário pode despertar
            uma habilidade só sua — gerada e limitada pelo sistema */
         p2 = talvezDespertarUnica(p2, resp.mudancas.__inimigosFinais || [], msgs);
@@ -4578,9 +4621,14 @@ export default function Taverna() {
         ...linhas.map((t) => ({ autor: "sistema", texto: t })),
       ]);
       const listaTxt = usadas.map((u) => `"${u.h.nome}" (${u.custo} PM${u.h.descricao ? ` — ${u.h.descricao}` : ""})`).join(" e depois ");
+      /* v9.13: a sequência de habilidades TAMBÉM é um turno inteiro. Antes ela
+         escapava do revide — dava para encadear magias a luta toda sem o
+         inimigo nunca responder, e só o botão "encerrar turno" quebrava isso. */
+      const fechouHab = fecharSeTodosCairam();
+      const rvH = fechouHab ? { pers, texto: "" } : fecharMeuTurno(pers);
       enviar(desfechos.length
-        ? `[HABILIDADES — RESOLVIDAS PELO SISTEMA] No MESMO turno usei ${listaTxt}. O SISTEMA já rolou o acerto, calculou e APLICOU tudo: ${desfechos.join(" · ")}. Narre a sequência inteira como UM só turno meu — não recalcule, não mude quem acertou, NÃO declare a morte de quem ainda tem PV. Minha intenção: ${acao}`
-        : `[HABILIDADES] No MESMO turno uso ${listaTxt} (PM já descontados; tenho ${pers.mana}). COMO eu as uso: ${acao}. Narre a sequência conforme minha intenção — se incerto, peça a rolagem apropriada. LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte.${extraTempo}`, pers);
+        ? `[HABILIDADES — RESOLVIDAS PELO SISTEMA] No MESMO turno usei ${listaTxt}. O SISTEMA já rolou o acerto, calculou e APLICOU tudo: ${desfechos.join(" · ")}.${rvH.texto} Narre a sequência inteira como UM só turno meu — não recalcule, não mude quem acertou, NÃO declare a morte de quem ainda tem PV. Minha intenção: ${acao}`
+        : `[HABILIDADES] No MESMO turno uso ${listaTxt} (PM já descontados; tenho ${rvH.pers.mana}). COMO eu as uso: ${acao}.${rvH.texto} Narre a sequência conforme minha intenção — se incerto, peça a rolagem apropriada. LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte.${extraTempo}`, rvH.pers);
       return;
     }
     /* Detecta habilidade citada por texto (ex.: "uso Projétil Arcano") e desconta o PM
@@ -4599,7 +4647,7 @@ export default function Taverna() {
       /* ECONOMIA (v7.4): idem — habilidade citada por texto também gasta */
       if (combateRef.current && combateRef.current.economia) {
         const ecoH2 = combateRef.current.economia;
-        if (ecoH2.acao <= 0 && ecoH2.extra <= 0) { pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: "⏳ Sem movimentos neste turno — toque em Encerrar turno." }]); return; }
+        if (ecoH2.acao <= 0 && ecoH2.extra <= 0) { pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: "⏳ Sem movimentos neste turno — ela fica para a próxima rodada." }]); return; }
         if (ecoH2.acao > 0) ecoH2.acao -= 1; else ecoH2.extra -= 1;
         combateRef.current = { ...combateRef.current, economia: { ...ecoH2 } }; setCombate(combateRef.current);
       }
@@ -4612,9 +4660,11 @@ export default function Taverna() {
       pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `✦ ${habCitada.nome} · gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}${recC > 0 ? ` · ⏳ recarga ${recC}t` : ""}` }, ...(buffC.texto ? [{ autor: "sistema", texto: buffC.texto }] : [])]);
       if (buffC.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${buffC.nota}`;
       const desfechoC = resolverHabilidadeOfensiva(habCitada, acao, pers);
+      const fechouCit = fecharSeTodosCairam();
+      const rvC = fechouCit ? { pers, texto: "" } : fecharMeuTurno(pers);
       enviar(desfechoC
-        ? `[HABILIDADE — RESOLVIDA PELO SISTEMA] Usei "${habCitada.nome}" (custo ${custo} PM, já descontado). O SISTEMA já rolou o acerto, calculou e APLICOU o resultado: ${desfechoC}. Sua função é APENAS narrar esse resultado exato — não recalcule, NÃO declare a morte de quem ainda tem PV. Minha intenção: ${acao}`
-        : `[HABILIDADE] Uso "${habCitada.nome}" (custo ${custo} PM, já descontado; tenho ${pers.mana} PM). ${habCitada.descricao || ""} Ação: ${acao}. LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte; se o inimigo ainda tiver PV, ele segue de pé.${extraTempo}`, pers);
+        ? `[HABILIDADE — RESOLVIDA PELO SISTEMA] Usei "${habCitada.nome}" (custo ${custo} PM, já descontado). O SISTEMA já rolou o acerto, calculou e APLICOU o resultado: ${desfechoC}.${rvC.texto} Sua função é APENAS narrar esse resultado exato — não recalcule, NÃO declare a morte de quem ainda tem PV. Minha intenção: ${acao}`
+        : `[HABILIDADE] Uso "${habCitada.nome}" (custo ${custo} PM, já descontado; tenho ${rvC.pers.mana} PM). ${habCitada.descricao || ""} Ação: ${acao}.${rvC.texto} LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte; se o inimigo ainda tiver PV, ele segue de pé.${extraTempo}`, rvC.pers);
       return;
     }
     const ataque = resolverAtaqueJogador(acao, personagem);
@@ -4623,7 +4673,7 @@ export default function Taverna() {
          o turno só vira quando os movimentos acabam ou o jogador encerra. */
       const eco = combateRef.current && combateRef.current.economia;
       if (eco && eco.acao <= 0) {
-        pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: "⏳ Você já usou sua ação neste turno — use a ação extra/movimento ou toque em Encerrar turno." }]);
+        pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: "⏳ Você já usou sua ação nesta rodada — o golpe fica para a próxima." }]);
         return;
       }
       if (eco) { eco.acao -= 1; combateRef.current = { ...combateRef.current, economia: { ...eco } }; setCombate(combateRef.current); }
@@ -4669,149 +4719,23 @@ export default function Taverna() {
       alvosGolpeRef.current = []; setAlvosGolpe([]);
       const desfecho = `${resultados.length} ${resultados.length > 1 ? "ataques" : "ataque"}: ${partesMeu.join("; ")}`;
 
-      /* TURNO DO MUNDO (combate): os inimigos vivos revidam — o app rola e
-         calcula tudo; o Mestre só narra as DECISÕES deles.
-         ECONOMIA (v7.4): a revide só acontece quando o jogador GASTOU os
-         movimentos ou encerrou o turno — antes disso, só os meus golpes. */
-      let persAtual = personagem;
-      /* meu golpe pode ter encerrado a luta: fecha AGORA, no mesmo turno */
+      /* AGIR ENCERRA O TURNO (v9.13): meu golpe sai, o inimigo responde, e a
+         rodada seguinte já abre renovada. Antes isto só acontecia quando os
+         movimentos se esgotavam OU quando o jogador apertava "encerrar turno" —
+         e por isso quem lutava só com habilidades nunca era revidado. */
       const fechouNoMeuGolpe = fecharSeTodosCairam();
-      const combPos = combateRef.current;
-      const ecoAgora = combPos && combPos.economia;
-      const esgotouTurno = !combPos || !ecoAgora || (ecoAgora.acao <= 0 && ecoAgora.extra <= 0);
-      const inimigosVivos = (fechouNoMeuGolpe || !esgotouTurno) ? [] : (combPos?.inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
-      let resumoInimigos = "";
-      if (inimigosVivos.length > 0) {
-        const acoes = turnoDosInimigos({ inimigos: combPos.inimigos, jogador: personagem, grupo: personagem.grupo || [], gdJogador: grauDe(divindadeRef.current) });
-        const linhasSis = [];
-        let danoNoJogador = 0;
-        let grupoAtual = [...(personagem.grupo || [])];
-        const partes = [];
-        let persConcQuebrada = null;
-        for (const a of acoes) {
-          logDadoCombate(resumoDoAtaque(a.r));
-          if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(a.r) });
-          linhasSis.push({ autor: "sistema", texto: a.r.dano > 0 ? `🛡 ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: ${a.r.critico ? "CRÍTICO! " : ""}${a.r.dano} de dano` : `🛡 ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: errou` });
-          /* REAÇÃO (v9.5): a janela acontece AQUI, antes do dano virar PV */
-          if (a.alvoRef === "jogador") {
-            const rc = tentarReacaoNoGolpe(a, personagem);
-            if (rc && rc.danoFinal != null) a.r.dano = rc.danoFinal;
-          }
-          if (a.r.dano > 0) {
-            if (a.alvoRef === "jogador") danoNoJogador += a.r.dano;
-            else grupoAtual = grupoAtual.map((g) => g.nome === a.alvoNome ? { ...g, vida: Math.max(0, (g.vida || 0) - a.r.dano) } : g);
-          }
-          const alvoMax = a.alvoRef === "jogador" ? (personagem.vidaMax || 1) : ((grupoAtual.find((g) => g.nome === a.alvoNome) || {}).vidaMax || 1);
-          const alvoDepois = a.r.dano > 0
-            ? (a.alvoRef === "jogador" ? Math.max(0, personagem.vida - danoNoJogador) : Math.max(0, ((grupoAtual.find((g) => g.nome === a.alvoNome) || {}).vida || 0)))
-            : undefined;
-          partes.push(linhaParaMestre(a.golpeNome ? `${a.inimigo} (${a.golpeNome})` : a.inimigo, a.alvoNome, a.r, alvoMax, alvoDepois));
-        }
-        if (linhasSis.length) pushMsgs(linhasSis);
-        if (danoNoJogador > 0) {
-          danoJaAplicadoRef.current = true;
-          /* CONCENTRAÇÃO (5e): apanhou, testa para manter a magia de duração */
-          const concentrando = (personagem.efeitos || []).find((e) => e.concentracao);
-          if (concentrando) {
-            const tc = testeConcentracao(danoNoJogador, atributoEfetivo(personagem, "vigor"));
-            if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: `🎲 ${tc.texto}` });
-            if (!tc.manteve) {
-              linhasSis.push({ autor: "sistema", texto: `💢 Concentração quebrada — ${concentrando.nome} se desfaz.` });
-              persConcQuebrada = concentrando.nome;
-            }
-          }
-        }
-        persAtual = { ...personagem, vida: Math.max(0, personagem.vida - danoNoJogador), mana: Math.max(0, (personagem.mana || 0) - pmReacaoRef.current), grupo: grupoAtual };
-        pmReacaoRef.current = 0;
-        if (persConcQuebrada) persAtual = { ...persAtual, efeitos: (persAtual.efeitos || []).filter((e) => e.nome !== persConcQuebrada) };
-        persAtual = aplicarCondicoesDosGolpes(acoes, persAtual);
-
-        /* TURNO DOS COMPANHEIROS: atacam inimigos ou socorrem quem caiu */
-        const jogadorCaido = persAtual.vida <= 0;
-        const acoesComp = turnoDosCompanheiros({ grupo: persAtual.grupo || [], inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome, jogador: persAtual, rodada: (combPos.rodada || 1) });
-        const partesComp = [];
-        for (const ac of acoesComp) {
-          if (ac.tipo === "ataque" && ac.r) {
-            logDadoCombate(resumoDoAtaque(ac.r));
-            if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: "🎲 " + resumoDoAtaque(ac.r) }]);
-            let pvAlvo = null;
-            if (ac.r.dano > 0) {
-              combPos.inimigos = combPos.inimigos.map((e) => { if (e.nome !== ac.alvoNome) return e; pvAlvo = Math.max(0, e.vida - ac.r.dano); return { ...e, vida: pvAlvo, derrotado: pvAlvo <= 0, ultimoDano: ac.r.dano }; });
-              combPos.inimigos = aflicaoDeCompanheiro(combPos.inimigos, ac, persAtual);
-            }
-            pushMsgs([{ autor: "sistema", texto: ac.r.dano > 0 ? `⚔ ${ac.companheiro} → ${ac.alvoNome}: ${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? " ☠" : ""}` : `⚔ ${ac.companheiro} → ${ac.alvoNome}: errou` }]);
-            partesComp.push(linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined));
-          } else if (ac.tipo === "habilidade" && ac.r) {
-            logDadoCombate(resumoDoAtaque(ac.r));
-            if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: "🎲 " + resumoDoAtaque(ac.r) }]);
-            let pvAlvo = null;
-            if (ac.r.dano > 0) {
-              combPos.inimigos = combPos.inimigos.map((e) => { if (e.nome !== ac.alvoNome) return e; pvAlvo = Math.max(0, e.vida - ac.r.dano); return { ...e, vida: pvAlvo, derrotado: pvAlvo <= 0, ultimoDano: ac.r.dano }; });
-              /* a habilidade do companheiro também aflige pelo catálogo */
-              const apH = aplicarAflicaoEmInimigo(combPos.inimigos, ac.alvoNome, { fonte: `${ac.habilidade.nome} ${ac.habilidade.descricao || ""}`, nomeFonte: `${ac.habilidade.nome} (${ac.companheiro})`, atacante: ac.companheiro, critico: ac.r.critico });
-              combPos.inimigos = apH.lista;
-              if (apH.res) { pushMsgs([{ autor: "sistema", texto: apH.res.texto }]); notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${apH.res.nota}`; }
-            }
-            persAtual = gastarManaComp(persAtual, ac.companheiro, ac.custo);
-            pushMsgs([{ autor: "sistema", texto: `✦ ${ac.companheiro} · ${ac.habilidade.nome} → ${ac.alvoNome}: ${ac.r.dano > 0 ? `${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? " ☠" : ""}` : "errou"}` }]);
-            partesComp.push(`${ac.companheiro} usou ${ac.habilidade.nome}: ${linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined)}`);
-          } else if (ac.tipo === "cura") {
-            const r2 = curarAliado(persAtual, ac.alvo, ac.valor);
-            persAtual = gastarManaComp(r2.pers, ac.companheiro, ac.custo);
-            pushMsgs([{ autor: "sistema", texto: `🩶 ${ac.companheiro} · ${ac.habilidade.nome} → ${ac.alvo}: +${r2.curado} PV (${r2.texto})` }]);
-            partesComp.push(`${ac.companheiro} lançou ${ac.habilidade.nome} em ${ac.alvo} (+${r2.curado} PV, agora ${r2.texto}) — o PV JÁ subiu, narre o gesto`);
-          } else if (ac.tipo === "pocao") {
-            const r3 = pocaoDeCompanheiro(persAtual, ac);
-            persAtual = r3.pers;
-            pushMsgs([{ autor: "sistema", texto: r3.texto }]);
-            partesComp.push(r3.paraMestre);
-          } else if (ac.tipo === "buff") {
-            const r4 = buffDeCompanheiro(persAtual, ac);
-            persAtual = gastarManaComp(r4.pers, ac.companheiro, ac.custo);
-            if (r4.texto) pushMsgs([{ autor: "sistema", texto: r4.texto }]);
-            partesComp.push(r4.paraMestre);
-          }
-        }
-        combateRef.current = combPos; setCombate({ ...combPos });
-        fecharSeTodosCairam(); // companheiro pode ter dado o golpe final
-
-        /* SISTEMA DE MORTE: se o jogador está a 0 PV, faz um teste de morte */
-        if (persAtual.vida <= 0) {
-          const estadoMorte = persAtual.morte || { sucessos: 0, falhas: 0 };
-          const res = testeDeMorte();
-          const ap = aplicarTesteMorte(estadoMorte, res);
-          pushMsgs([{ autor: "sistema", texto: `☠ Teste de morte: ${res.texto}` }]);
-          if (ap.desfecho === "revive") { persAtual = { ...persAtual, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } }; pushMsgs([{ autor: "sistema", texto: "✨ Você volta a si com 1 PV!" }]); }
-          else if (ap.desfecho === "estavel") { persAtual = { ...persAtual, morrendo: true, morte: { sucessos: 0, falhas: 0 } }; pushMsgs([{ autor: "sistema", texto: "Você estabiliza — inconsciente, mas vivo. Alguém precisa te ajudar." }]); }
-          else if (ap.desfecho === "morto") { persAtual = { ...persAtual, morrendo: false, morto: true, morte: ap }; pushMsgs([{ autor: "sistema", texto: "💀 Você tomba… mas enquanto houver esperança, a lenda não termina." }]); }
-          else { persAtual = { ...persAtual, morrendo: true, morte: ap }; }
-        }
-
-        setPersonagem(persAtual);
-        const compTxt = partesComp.length ? ` Meus companheiros agiram: ${partesComp.join("; ")}.` : "";
-        const morteTxt = persAtual.vida <= 0 ? ` ATENÇÃO: eu caí a 0 PV e estou ${persAtual.morto ? "à beira da morte" : "inconsciente, lutando pela vida (testes de morte). Um aliado pode me estabilizar ou curar para eu voltar"}.` : "";
-        resumoInimigos = ` Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ${partes.join("; ")}.${compTxt}${morteTxt}`;
-        /* NOVA RODADA: com a revide concluída, meus movimentos renovam */
-        if (combateRef.current) {
-          combateRef.current = { ...combateRef.current, economia: { acao: 1, extra: 1 } };
-          setCombate(combateRef.current);
-          reacaoUsadaRef.current = false;   // nova rodada, reação de novo disponível
-        }
-      }
-
-      if (!esgotouTurno && !fechouNoMeuGolpe) {
-        /* MEU TURNO CONTINUA: só narro meus golpes — o mundo ainda NÃO revida.
-           E a rodada NÃO fecha: buffs e condições não podem perder um turno só
-           porque eu ataquei duas vezes (v9.5). */
-        pularTickRef.current = true;
-        enviar(`[COMBATE — MEU GOLPE RESOLVIDO PELO SISTEMA, TURNO AINDA MEU] Minha sequência de ${desfecho}. O dano já foi aplicado — NÃO recalcule. Narre SÓ os meus golpes e as reações instantâneas (1-3 frases: quem cambaleou, quem urrou) e PARE — NÃO faça os inimigos agirem nem contra-atacarem ainda: meu turno continua, ainda tenho ${ecoAgora ? ecoAgora.acao + ecoAgora.extra : 1} movimento(s). Ação declarada: ${acao}`, persAtual);
-        return;
-      }
+      const rv = fechouNoMeuGolpe ? { pers: personagem, texto: "" } : fecharMeuTurno(personagem);
+      const persAtual = rv.pers;
+      const resumoInimigos = rv.texto;
       enviar(`[COMBATE — RESOLVIDO PELO SISTEMA] Minha sequência de ${desfecho}. O dano já foi aplicado.${resumoInimigos} NÃO recalcule nem mude números — NARRE de forma vívida (2-4 frases) a sequência dos meus golpes e as decisões e reações dos inimigos: quem recuou, quem avançou, quem mudou de alvo. Ação declarada: ${acao}`, persAtual);
       return;
     }
     pushMsgs([{ autor: "jogador", texto: acao }]);
-    enviar(`${acao}${extraTempo}`, personagem);
+    /* v9.13: em combate, até "recuo dois passos e observo" é um turno. É o que
+       substitui o botão que sumiu — quem quer só ficar em guarda escreve isso,
+       e o inimigo responde igual. */
+    const rvG = fecharMeuTurno(personagem);
+    enviar(`${acao}${rvG.texto}${extraTempo}`, rvG.pers);
   };
 
   /* VEZ DO MUNDO: o mundo vive o instante presente (curto no TEMPO, mas cheio
@@ -4840,8 +4764,16 @@ export default function Taverna() {
     derrotados.forEach((e) => registrarMorte(e.nome));
     const esp = gerarEspolios(derrotados);
     const msgsU = [];
-    setPersonagem((p) => {
-      let p2 = { ...p, moedas: (p.moedas || 0) + esp.moedas, xp: (p.xp || 0) + esp.xp };
+    /* CALCULA FORA DO UPDATER (v9.13). Isto morava dentro de
+       setPersonagem(p => …), e o updater do React só roda na renderização
+       SEGUINTE — então o pushMsgs logo abaixo sempre lia um `msgsU` vazio. O
+       resultado: item raro, poção e poder único caíam de verdade na ficha,
+       mas o jogador nunca via a linha dizendo que tinha caído. Agora a conta
+       é feita aqui, com a ficha viva do ref, e o estado recebe o resultado
+       pronto — as mensagens existem antes de serem lidas. */
+    {
+      const base = personagemRef.current || personagem || {};
+      let p2 = { ...base, moedas: (base.moedas || 0) + esp.moedas, xp: (base.xp || 0) + esp.xp };
       while (p2.xp >= XP_POR_NIVEL(p2.nivel)) { p2.xp -= XP_POR_NIVEL(p2.nivel); p2.nivel += 1; p2.nivelPendentes = (p2.nivelPendentes || 0) + 1; }
       p2.grupo = (p2.grupo || []).map((g) => { const ev = evoluirCompanheiro({ ...g, xp: (g.xp || 0) + esp.xp }); delete ev._subiu; return ev; });
       /* PRESENÇA DIVINA expira com o fim do combate — não vira debuff eterno */
@@ -4857,8 +4789,15 @@ export default function Taverna() {
         p2 = { ...p2, inventario: [...(p2.inventario || []), itemConsumivel(cc.id)] };
       }
       if (caidos.length) msgsU.push(`${caidos[0].icone} Na bolsa: ${caidos.map((cc) => cc.nome).join(", ")}`);
-      return p2;
-    });
+      /* DESPOJOS (v9.13): o corpo também é matéria-prima para a bancada */
+      const despU = despojosDe(derrotados);
+      if (despU.length) {
+        p2 = { ...p2, inventario: [...(p2.inventario || []), ...despU.map((c) => itemComponente(c.id)).filter(Boolean)] };
+        msgsU.push(`🧺 Do corpo dá para tirar: ${despU.map((c) => `${c.icone} ${c.nome}`).join(", ")}`);
+      }
+      personagemRef.current = p2;
+      setPersonagem(p2);
+    }
     pushMsgs([
       { autor: "sistema", texto: "⚔ Todos os inimigos caíram — o combate termina." },
       { autor: "sistema", texto: `◉ Espólios: +${esp.moedas} moedas · +${esp.xp} XP` },
@@ -4876,53 +4815,86 @@ export default function Taverna() {
     return true;
   };
 
-  /* ENCERRAR TURNO POR ESCOLHA (v7.4): o jogador pode passar a vez antes de
-     gastar os movimentos — os inimigos revidam (sistema rola), companheiros
-     agem, e a nova rodada começa com os movimentos renovados. */
-  const encerrarTurnoCombate = () => {
+  /* ---------------- O REVIDE (v9.13) ----------------
+     Esta função existia DUAS vezes, quase igual: uma no fim do ataque e outra
+     dentro do botão "encerrar turno". Eram ~80 linhas duplicadas, e por isso
+     usar só habilidades nunca fazia o inimigo reagir — o revide morava no
+     caminho do ataque, e o único outro jeito de acioná-lo era o botão.
+
+     Agora é UMA função e todo mundo passa por ela: inimigos rolam, reação do
+     herói acontece antes de o dano virar PV, concentração é testada, os
+     companheiros agem, o teste de morte roda, e a rodada seguinte abre com os
+     movimentos renovados. Devolve o resumo pronto para colar no envelope. */
+  const resolverRevide = (persBase) => {
     const combPos = combateRef.current;
-    if (!combPos || carregando) return;
-    pushMsgs([{ autor: "jogador", texto: "🛡 Encerro meu turno em guarda." }]);
-    const vivos = (combPos.inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
-    if (!vivos.length) { fecharSeTodosCairam(); return; }
-    const acoes = turnoDosInimigos({ inimigos: combPos.inimigos, jogador: personagem, grupo: personagem.grupo || [], gdJogador: grauDe(divindadeRef.current) });
+    if (!combPos) return { pers: persBase, resumo: "" };
+    const vivos = (combPos.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
+    if (!vivos.length) { fecharSeTodosCairam(); return { pers: persBase, resumo: "" }; }
+
+    const acoes = turnoDosInimigos({ inimigos: combPos.inimigos, jogador: persBase, grupo: persBase.grupo || [], gdJogador: grauDe(divindadeRef.current) });
     const linhasSis = [];
     let danoNoJogador = 0;
-    let grupoAtual = [...(personagem.grupo || [])];
+    let grupoAtual = [...(persBase.grupo || [])];
     const partes = [];
+    let persConcQuebrada = null;
     for (const a of acoes) {
       logDadoCombate(resumoDoAtaque(a.r));
       if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(a.r) });
       linhasSis.push({ autor: "sistema", texto: a.r.dano > 0 ? `🛡 ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: ${a.r.critico ? "CRÍTICO! " : ""}${a.r.dano} de dano` : `🛡 ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: errou` });
+      /* REAÇÃO (v9.5): a janela acontece AQUI, antes de o dano virar PV */
       if (a.alvoRef === "jogador") {
-        const rc = tentarReacaoNoGolpe(a, personagem);
+        const rc = tentarReacaoNoGolpe(a, persBase);
         if (rc && rc.danoFinal != null) a.r.dano = rc.danoFinal;
       }
       if (a.r.dano > 0) {
         if (a.alvoRef === "jogador") danoNoJogador += a.r.dano;
         else grupoAtual = grupoAtual.map((g) => g.nome === a.alvoNome ? { ...g, vida: Math.max(0, (g.vida || 0) - a.r.dano) } : g);
       }
-      const res = a.r.resultado === "critico" ? `acertou em cheio (${a.r.dano})` : a.r.resultado === "acerta" ? `acertou (${a.r.dano})` : a.r.resultado === "desastre" ? "falhou feio" : "errou";
-      partes.push(`${a.inimigo}${a.golpeNome ? ` (${a.golpeNome})` : ""}→${a.alvoNome}: ${res}`);
+      const alvoMax = a.alvoRef === "jogador" ? (persBase.vidaMax || 1) : ((grupoAtual.find((g) => g.nome === a.alvoNome) || {}).vidaMax || 1);
+      const alvoDepois = a.r.dano > 0
+        ? (a.alvoRef === "jogador" ? Math.max(0, persBase.vida - danoNoJogador) : Math.max(0, ((grupoAtual.find((g) => g.nome === a.alvoNome) || {}).vida || 0)))
+        : undefined;
+      partes.push(linhaParaMestre(a.golpeNome ? `${a.inimigo} (${a.golpeNome})` : a.inimigo, a.alvoNome, a.r, alvoMax, alvoDepois));
     }
     if (linhasSis.length) pushMsgs(linhasSis);
-    let persAtual = { ...personagem, vida: Math.max(0, personagem.vida - danoNoJogador), mana: Math.max(0, (personagem.mana || 0) - pmReacaoRef.current), grupo: grupoAtual };
+    if (danoNoJogador > 0) {
+      danoJaAplicadoRef.current = true;
+      /* CONCENTRAÇÃO (5e): apanhou, testa para manter a magia de duração */
+      const concentrando = (persBase.efeitos || []).find((e) => e.concentracao);
+      if (concentrando) {
+        const tc = testeConcentracao(danoNoJogador, atributoEfetivo(persBase, "vigor"));
+        const extra = [];
+        if (mostrarRolagensRef.current) extra.push({ autor: "sistema", texto: `🎲 ${tc.texto}` });
+        if (!tc.manteve) {
+          extra.push({ autor: "sistema", texto: `💢 Concentração quebrada — ${concentrando.nome} se desfaz.` });
+          persConcQuebrada = concentrando.nome;
+        }
+        if (extra.length) pushMsgs(extra);
+      }
+    }
+    let persAtual = { ...persBase, vida: Math.max(0, persBase.vida - danoNoJogador), mana: Math.max(0, (persBase.mana || 0) - pmReacaoRef.current), grupo: grupoAtual };
     pmReacaoRef.current = 0;
+    if (persConcQuebrada) persAtual = { ...persAtual, efeitos: (persAtual.efeitos || []).filter((e) => e.nome !== persConcQuebrada) };
     persAtual = aplicarCondicoesDosGolpes(acoes, persAtual);
-    /* companheiros agem como numa rodada normal */
+
+    /* TURNO DOS COMPANHEIROS: atacam inimigos ou socorrem quem caiu */
     const jogadorCaido = persAtual.vida <= 0;
     const acoesComp = turnoDosCompanheiros({ grupo: persAtual.grupo || [], inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome, jogador: persAtual, rodada: (combPos.rodada || 1) });
     const partesComp = [];
     for (const ac of acoesComp) {
       if (ac.tipo === "ataque" && ac.r) {
+        logDadoCombate(resumoDoAtaque(ac.r));
+        if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: "🎲 " + resumoDoAtaque(ac.r) }]);
         let pvAlvo = null;
         if (ac.r.dano > 0) {
           combPos.inimigos = combPos.inimigos.map((e) => { if (e.nome !== ac.alvoNome) return e; pvAlvo = Math.max(0, e.vida - ac.r.dano); return { ...e, vida: pvAlvo, derrotado: pvAlvo <= 0, ultimoDano: ac.r.dano }; });
-              combPos.inimigos = aflicaoDeCompanheiro(combPos.inimigos, ac, persAtual);
+          combPos.inimigos = aflicaoDeCompanheiro(combPos.inimigos, ac, persAtual);
         }
         pushMsgs([{ autor: "sistema", texto: ac.r.dano > 0 ? `⚔ ${ac.companheiro} → ${ac.alvoNome}: ${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? " ☠" : ""}` : `⚔ ${ac.companheiro} → ${ac.alvoNome}: errou` }]);
-        partesComp.push(`${ac.companheiro} atacou ${ac.alvoNome} (${ac.r.resultado === "acerta" || ac.r.resultado === "critico" ? ac.r.dano + " dano" : "errou"})`);
+        partesComp.push(linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined));
       } else if (ac.tipo === "habilidade" && ac.r) {
+        logDadoCombate(resumoDoAtaque(ac.r));
+        if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: "🎲 " + resumoDoAtaque(ac.r) }]);
         let pvAlvo = null;
         if (ac.r.dano > 0) {
           combPos.inimigos = combPos.inimigos.map((e) => { if (e.nome !== ac.alvoNome) return e; pvAlvo = Math.max(0, e.vida - ac.r.dano); return { ...e, vida: pvAlvo, derrotado: pvAlvo <= 0, ultimoDano: ac.r.dano }; });
@@ -4931,13 +4903,13 @@ export default function Taverna() {
           if (apH.res) { pushMsgs([{ autor: "sistema", texto: apH.res.texto }]); notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${apH.res.nota}`; }
         }
         persAtual = gastarManaComp(persAtual, ac.companheiro, ac.custo);
-        pushMsgs([{ autor: "sistema", texto: `✦ ${ac.companheiro} · ${ac.habilidade.nome} → ${ac.alvoNome}: ${ac.r.dano > 0 ? `${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? " ☠" : ""}` : "errou"}` }]);
-        partesComp.push(`${ac.companheiro} usou ${ac.habilidade.nome} em ${ac.alvoNome} (${ac.r.dano > 0 ? ac.r.dano + " dano" : "errou"})`);
+        pushMsgs([{ autor: "sistema", texto: `✦ ${ac.companheiro} · ${ac.habilidade.nome} → ${ac.alvoNome}: ${ac.r.dano > 0 ? `${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? " ☠" : ""}` : "errou"}` }]);
+        partesComp.push(`${ac.companheiro} usou ${ac.habilidade.nome}: ${linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined)}`);
       } else if (ac.tipo === "cura") {
         const r2 = curarAliado(persAtual, ac.alvo, ac.valor);
         persAtual = gastarManaComp(r2.pers, ac.companheiro, ac.custo);
         pushMsgs([{ autor: "sistema", texto: `🩶 ${ac.companheiro} · ${ac.habilidade.nome} → ${ac.alvo}: +${r2.curado} PV (${r2.texto})` }]);
-        partesComp.push(`${ac.companheiro} curou ${ac.alvo} em ${r2.curado} PV com ${ac.habilidade.nome} — já aplicado`);
+        partesComp.push(`${ac.companheiro} lançou ${ac.habilidade.nome} em ${ac.alvo} (+${r2.curado} PV, agora ${r2.texto}) — o PV JÁ subiu, narre o gesto`);
       } else if (ac.tipo === "pocao") {
         const r3 = pocaoDeCompanheiro(persAtual, ac);
         persAtual = r3.pers;
@@ -4950,16 +4922,43 @@ export default function Taverna() {
         partesComp.push(r4.paraMestre);
       }
     }
-    /* nova rodada: movimentos renovados */
-    reacaoUsadaRef.current = false;   // nova rodada, reação de novo disponível
-    combateRef.current = { ...combPos, economia: { acao: 1, extra: 1 }, rodada: (combPos.rodada || 1) + 1 };
-    setCombate(combateRef.current);
-    fecharSeTodosCairam();
+    combateRef.current = combPos; setCombate({ ...combPos });
+    fecharSeTodosCairam(); // companheiro pode ter dado o golpe final
+
+    /* SISTEMA DE MORTE: se o jogador está a 0 PV, faz um teste de morte */
+    if (persAtual.vida <= 0) {
+      const estadoMorte = persAtual.morte || { sucessos: 0, falhas: 0 };
+      const res = testeDeMorte();
+      const ap = aplicarTesteMorte(estadoMorte, res);
+      pushMsgs([{ autor: "sistema", texto: `☠ Teste de morte: ${res.texto}` }]);
+      if (ap.desfecho === "revive") { persAtual = { ...persAtual, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } }; pushMsgs([{ autor: "sistema", texto: "✨ Você volta a si com 1 PV!" }]); }
+      else if (ap.desfecho === "estavel") { persAtual = { ...persAtual, morrendo: true, morte: { sucessos: 0, falhas: 0 } }; pushMsgs([{ autor: "sistema", texto: "Você estabiliza — inconsciente, mas vivo. Alguém precisa te ajudar." }]); }
+      else if (ap.desfecho === "morto") { persAtual = { ...persAtual, morrendo: false, morto: true, morte: ap }; pushMsgs([{ autor: "sistema", texto: "💀 Você tomba… mas enquanto houver esperança, a lenda não termina." }]); }
+      else { persAtual = { ...persAtual, morrendo: true, morte: ap }; }
+    }
+
     setPersonagem(persAtual);
+    /* NOVA RODADA: revide concluído, meus movimentos renovam */
+    if (combateRef.current) {
+      combateRef.current = { ...combateRef.current, economia: { acao: 1, extra: 1 }, rodada: (combateRef.current.rodada || 1) + 1 };
+      setCombate(combateRef.current);
+      reacaoUsadaRef.current = false;   // nova rodada, reação de novo disponível
+    }
     const compTxt = partesComp.length ? ` Meus companheiros agiram: ${partesComp.join("; ")}.` : "";
-    const morteTxt = persAtual.vida <= 0 ? " ATENÇÃO: caí a 0 PV — um aliado precisa me estabilizar ou curar." : "";
-    enviar(`[COMBATE — TURNO ENCERRADO PELO JOGADOR, RESOLVIDO PELO SISTEMA] Escolhi encerrar meu turno em guarda. Turno dos inimigos (dano já aplicado — NÃO recalcule): ${partes.join("; ")}.${compTxt}${morteTxt} Narre as decisões e reações deles (2-4 frases) e me devolva a vez — nova rodada, meus movimentos estão renovados.`, persAtual);
+    const morteTxt = persAtual.vida <= 0 ? ` ATENÇÃO: eu caí a 0 PV e estou ${persAtual.morto ? "à beira da morte" : "inconsciente, lutando pela vida (testes de morte). Um aliado pode me estabilizar ou curar para eu voltar"}.` : "";
+    return { pers: persAtual, resumo: ` Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ${partes.join("; ")}.${compTxt}${morteTxt}` };
   };
+
+  /* AGIR ENCERRA O TURNO (v9.13). Era isto que o botão "encerrar turno"
+     resolvia à mão: em combate, TODA declaração minha é o turno inteiro, e o
+     oponente responde na sequência. Fora de combate não faz nada. A única
+     exceção é a bolsa — beber uma poção é gesto, não turno. */
+  const fecharMeuTurno = (pers) => {
+    if (!combateRef.current) return { pers, texto: "" };
+    const r = resolverRevide(pers);
+    return { pers: r.pers, texto: r.resumo };
+  };
+
 
   const vezDoMundo = () => {
     if (bloqueado || acampadoRef.current) return;
@@ -5480,9 +5479,24 @@ export default function Taverna() {
     const bioma = (cidadeAtualRef.current && (mapaRef.current.cidades || []).find((c) => c.nome === cidadeAtualRef.current)?.bioma) || "planicie";
     const r = forragear(bioma, atributoEfetivo(personagem, "percepcao"));
     const extra = avancarMinutos(240);
-    if (r.achou) setPersonagem((pp) => ({ ...pp, suprimentos: { ...garantirSuprimentos(pp.suprimentos), racoes: garantirSuprimentos(pp.suprimentos).racoes + r.racoes, agua: garantirSuprimentos(pp.suprimentos).agua + r.agua } }));
-    pushMsgs([{ autor: "sistema", texto: `🌿 ${r.texto}` }]);
-    enviar(`[ERMOS — FORRAGEAMENTO] Passo metade do dia caçando e colhendo. ${r.achou ? `Consegui ${r.racoes} rações e ${r.agua} de água (o sistema já somou).` : "Não encontrei nada aproveitável."} Narre a busca em 2-3 frases, com o cheiro e o cansaço do trabalho.${extra}${SO_ISSO}`, personagem);
+    /* OFÍCIO (v9.13): meio dia no mato não rende só comida. O que dá para
+       trabalhar depende do chão — mato rende erva, encosta rende pedra —, e é
+       daqui que sai a matéria-prima da bancada. */
+    const colhidos = colherComponentes(bioma, atributoEfetivo(personagem, "percepcao"));
+    /* A ficha nova é montada AQUI, não dentro do updater: o `enviar` logo
+       abaixo recebe a ficha como argumento e é ela que vira estado no fim do
+       turno. Montar dentro de setPersonagem faria o enviar levar a ficha
+       velha — e a colheita sumiria assim que o Mestre respondesse. */
+    const s = garantirSuprimentos(personagem.suprimentos);
+    const pColh = {
+      ...personagem,
+      suprimentos: r.achou ? { ...s, racoes: s.racoes + r.racoes, agua: s.agua + r.agua } : s,
+      inventario: [...(personagem.inventario || []), ...colhidos.map((c) => itemComponente(c.id)).filter(Boolean)],
+    };
+    setPersonagem(pColh);
+    const txtColh = colhidos.map((c) => `${c.icone} ${c.nome}`).join(" · ");
+    pushMsgs([{ autor: "sistema", texto: `🌿 ${r.texto}` }, { autor: "sistema", texto: `🧺 Também dá para aproveitar: ${txtColh} — na bolsa, para a bancada.` }]);
+    enviar(`[ERMOS — FORRAGEAMENTO] Passo metade do dia caçando e colhendo. ${r.achou ? `Consegui ${r.racoes} rações e ${r.agua} de água (o sistema já somou).` : "Não encontrei nada aproveitável de comida."} O sistema também colheu matéria-prima e JÁ pôs na minha bolsa: ${colhidos.map((c) => `${c.nome} (${c.desc})`).join("; ")} — NÃO envie itens por isso. Narre a busca em 2-3 frases, com o cheiro e o cansaço do trabalho, mencionando de passagem onde estava o que colhi.${extra}${SO_ISSO}`, pColh);
   };
 
   const mudarRitmo = (id) => {
@@ -6294,13 +6308,23 @@ export default function Taverna() {
     if (bloqueado) return;
     const cons = comoConsumivel(nomeItem);
     if (!cons) return;
-    const comb = combateRef.current;
-    if (comb && comb.economia) {
-      const eco = comb.economia;
-      if (eco.extra <= 0 && eco.acao <= 0) { pushMsgs([{ autor: "sistema", texto: "⏳ Sem movimentos neste turno — encerre o turno para beber." }]); return; }
-      if (eco.extra > 0) eco.extra -= 1; else eco.acao -= 1;   // prefere a ação bônus
-      combateRef.current = { ...comb, economia: { ...eco } }; setCombate(combateRef.current);
+    /* v9.13: agora que a bolsa inteira fica a um toque no meio da luta, um
+       clique errado torrava uma Cura Grande para curar zero. Beber cheio é
+       desperdício, não decisão — o sistema segura. */
+    if (cons.tipo === "cura" && (personagem.vida || 0) >= (personagem.vidaMax || 0)) {
+      pushMsgs([{ autor: "sistema", texto: `🧪 ${cons.nome} guardada — sua vida já está cheia.` }]); return;
     }
+    if (cons.tipo === "mana" && (personagem.mana || 0) >= (personagem.manaMax || 0)) {
+      pushMsgs([{ autor: "sistema", texto: `⚗ ${cons.nome} guardada — sua mana já está cheia.` }]); return;
+    }
+    const comb = combateRef.current;
+    /* v9.13: ABRIR A BOLSA NÃO É O TURNO. Enquanto agir encerrava o turno só
+       quando os movimentos acabavam, cobrar a ação bônus da poção fazia
+       sentido. Agora que qualquer ação fecha a rodada, cobrar movimento pela
+       poção significaria "bebi, logo perdi a vez" — o oposto do que o jogador
+       pediu: abrir a bolsa, curar, e AINDA assim usar as habilidades. O
+       sistema aplica o efeito na hora, sem chamar o Mestre; a narração vai
+       junto do turno, pelo envelope. Fora de combate, livre como sempre. */
     const r = usarConsumivel(personagem, nomeItem);
     if (!r) return;
     let p = r.ent;
@@ -6317,9 +6341,61 @@ export default function Taverna() {
     }
     setPersonagem(p);
     pushMsgs([{ autor: "sistema", texto: r.texto }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONSUMÍVEL — JÁ APLICADO PELO SISTEMA] Bebi ${cons.nome}. ${r.texto.replace(/^[^ ]+ /, "")}. O número já foi rolado e aplicado: narre o gole e o alívio (ou o gosto), sem recalcular e sem me devolver PV/PM. ${comb ? "Isso foi ação BÔNUS — ainda posso agir neste turno." : ""}`;
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONSUMÍVEL — JÁ APLICADO PELO SISTEMA] Usei ${cons.nome}. ${r.texto.replace(/^[^ ]+ /, "")}. O número já foi rolado e aplicado: narre o gesto e o efeito em UMA frase, junto do resto do turno, sem recalcular e sem me devolver PV/PM. ${comb ? "Abrir a bolsa NÃO gastou meu turno — a ação que vem a seguir é que é o meu turno; narre as duas coisas como uma sequência só." : ""}`;
     salvar({ personagem: p });
   };
+
+  /* ---------------- A BANCADA (v9.13) ----------------
+     Rola por código, consome o material por código, entrega (ou não) por
+     código. O Mestre recebe o desfecho pronto e narra o cheiro da oficina —
+     e é proibido de dar o item numa falha ou de duplicá-lo num sucesso. */
+  const forjarReceita = (idReceita) => {
+    if (bloqueado || combateRef.current) return;
+    const r = receitaPorId(idReceita);
+    if (!r) return;
+    const falta = faltaPara(r, personagem.inventario || []);
+    if (falta.length) {
+      pushMsgs([{ autor: "sistema", texto: `⚗ Falta material: ${falta.map((x) => `${x.nome} ${x.tem}/${x.precisa}`).join(", ")}.` }]);
+      return;
+    }
+    const mod = atributoEfetivo(personagem, r.atributo);
+    const res = forjarNaBancada(r, mod);
+    const p = aplicarCraft(personagem, r, res);
+    setPersonagem(p);
+    const extra = avancarMinutos(60);   // uma hora de bancada, dê certo ou não
+    pushMsgs([
+      { autor: "jogador", texto: `⚗ Trabalho na bancada: ${(produtoDaReceita(r) || {}).nome || r.produz}` },
+      { autor: "sistema", texto: textoDoCraft(r, res, mostrarRolagensRef.current) },
+    ]);
+    enviar(`${envelopeDoCraft(r, res)}${extra}${SO_ISSO}`, p);
+  };
+
+  /* O caderno de receitas com o estado de cada uma — vai para a Bolsa.
+     Roda a cada render, inclusive na tela de abertura, quando ainda não há
+     ficha nenhuma: sem esta guarda, atributoEfetivo lê `classe` de null e
+     derruba o app antes de o jogador clicar em "continuar". */
+  const bancadaAqui = !personagem ? [] : (() => {
+    const inv = (personagem && personagem.inventario) || [];
+    const tem = contarComponentes(inv);
+    const lista = receitasDisponiveis((personagem && personagem.nivel) || 1).map((r) => {
+      const p = produtoDaReceita(r);
+      return {
+        id: r.id, oficio: r.oficio, dificuldade: r.dificuldade, atributo: r.atributo,
+        nome: (p && p.nome) || r.produz, icone: (p && p.icone) || "⚗", desc: (p && p.desc) || "",
+        mod: atributoEfetivo(personagem, r.atributo),
+        custo: (r.custo || []).map(([cid, q]) => ({ nome: (componentePorId(cid) || {}).nome || cid, icone: (componentePorId(cid) || {}).icone || "·", precisa: q, tem: tem[cid] || 0 })),
+        pode: faltaPara(r, inv).length === 0,
+      };
+    });
+    /* o que dá para fazer agora vem primeiro: é a pergunta que o jogador faz */
+    return lista.sort((a, b) => (b.pode ? 1 : 0) - (a.pode ? 1 : 0) || a.dificuldade - b.dificuldade);
+  })();
+
+  /* Os componentes que estão na bolsa, agrupados (a despensa) */
+  const despensa = (() => {
+    const tem = contarComponentes((personagem && personagem.inventario) || []);
+    return Object.entries(tem).map(([id, qtd]) => ({ ...componentePorId(id), qtd })).filter((x) => x && x.nome);
+  })();
 
   /* ---------------- MERCADO (v9.2) ----------------
      O estoque não mora no save: é derivado da cidade + semana. O save
@@ -6381,18 +6457,23 @@ export default function Taverna() {
     salvar({ personagem: p });
   };
 
-  /* O que dá para beber agora, agrupado por nome (vai para o painel de combate) */
-  const pocoesNaBolsa = (() => {
+  /* O que dá para usar agora, agrupado por nome. `pocoesNaBolsa` são os atalhos
+     de cura que ficam à vista; `bolsaDeCombate` é a bolsa INTEIRA, que o
+     jogador abre no meio da luta sem gastar o turno (v9.13). */
+  const bolsaDeCombate = (() => {
     const mapa = {};
     for (const raw of (personagem && personagem.inventario) || []) {
       const c = comoConsumivel(raw);
       if (!c) continue;
       const nome = typeof raw === "string" ? raw : (raw && raw.nome) || c.nome;
-      if (!mapa[nome]) mapa[nome] = { nome, icone: c.icone, curto: c.nome.replace(/^(Poção de |Frasco de |Elixir de )/, ""), qtd: 0, detalhe: `${c.nome} — ${descricaoCurta(c)}` };
+      if (!mapa[nome]) mapa[nome] = { nome, icone: c.icone, curto: c.nome.replace(/^(Poção de |Frasco de |Elixir de )/, ""), qtd: 0, detalhe: descricaoCurta(c), cura: !!(c.cura || c.curaPct) };
       mapa[nome].qtd++;
     }
-    return Object.values(mapa).slice(0, 6);
+    return Object.values(mapa);
   })();
+  /* os atalhos: cura primeiro, porque é o que se procura com a barra no vermelho */
+  const pocoesNaBolsa = [...bolsaDeCombate].sort((a, b) => (b.cura ? 1 : 0) - (a.cura ? 1 : 0)).slice(0, 3)
+    .map((p) => ({ ...p, detalhe: `${p.nome} — ${p.detalhe}` }));
 
   /* ---------------- CONQUISTAS E VÍNCULOS (100% por código, zero tokens) ---------------- */
   const bumpCont = (campo, n = 1) => { contRef.current = { ...contRef.current, [campo]: (contRef.current[campo] || 0) + n }; };
@@ -6936,7 +7017,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   {falha.motivo && <span className="tv-mono text-[10px] px-4 text-center" style={{ color: T.inkDim }}>{falha.motivo}</span>}
                 </div>
               )}
-            {combate && <PainelCombate combate={combate} onEncerrarTurno={encerrarTurnoCombate}
+            {combate && <PainelCombate combate={combate} bolsa={bolsaDeCombate}
               nGolpes={ataquesPorTurno(personagem.classe, personagem.nivel || 1)}
               alvosGolpe={alvosGolpe}
               acaoTexto={resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1).texto}
@@ -7227,7 +7308,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

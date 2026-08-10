@@ -42,7 +42,7 @@
    ============================================================ */
 
 import { detectarForaDeLugar, notaForaDeLugar, detectarVazamento, notaVazamento, ocorrenciaDoNome } from "./cena.js";
-export { ocorrenciaDoNome };
+export { ocorrenciaDoNome } from "./cena.js";
 import { detectarAscensaoNarrada } from "./ascensao.js";
 import { tituloDe } from "./divindades.js";
 
