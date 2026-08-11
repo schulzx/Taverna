@@ -86,9 +86,9 @@ ROLAGENS (d20 + modificador vs Dificuldade):
 - ESTRUTURA DA HISTÓRIA (o norte dramático — siga-a): ${historiaInfo || "arco livre."}
 - DIÁRIO DE MISSÕES (o norte prático — amarre os eventos a ele):
 ${questsInfo || "Nenhuma missão registrada."}
-  · Crie missões via "quest_nova" {"titulo","descricao","objetivo","tipo":"principal|secundaria"}. Mantenha SEMPRE 1 missão principal viva (a espinha do momento atual do arco) e no máximo 2-3 secundárias ativas.
-  · Toda missão PRECISA de "objetivo": ONDE ir e O QUE fazer, concreto e acionável (ex.: "ir ao Bosque Cinzento e destruir o altar", "encontrar a ferreira Bruna em Pedravale e perguntar sobre o contrato"). Missão sem rumo claro é missão quebrada — o jogador precisa saber o próximo passo.
-  · Quando o jogador CUMPRIR uma missão, envie "quest_atualizar" {"titulo","status":"concluida"} no mesmo turno (ou "falhada" se perdida; use "nota" para progresso parcial).
+  · VOCÊ NÃO CRIA, NÃO AVANÇA E NÃO ENCERRA MISSÃO (v9.27). "quest_nova" e "quest_atualizar" saíram: quem abre, marca etapa, conclui e paga é o SISTEMA, que confere sozinho onde o herói está, quem ele derrotou e o que tem na bolsa. Missão resolvida não fica mais pendurada no diário porque você esqueceu de fechá-la.
+  · O que você PODE fazer é OFERECER trabalho quando a ficção pedir — um nobre desesperado na taverna, um capitão precisando de escolta — pelo campo "missao_oferecida" da sua resposta de bastidores. Proponha só o que vira etapa concreta: ir a um lugar, derrotar alguém, encontrar um objeto ou uma pessoa, entregar algo. "Ganhar a confiança de alguém" não é etapa, é cena — e cena você já sabe fazer.
+  · Oferta é oferta: narre a proposta e PARE. Não presuma que o jogador aceitou, não comece a missão e não empurre. As missões que o mundo impõe (nêmesis, evento global, abalo divino) chegam prontas e ativas — essas ele não escolhe.
   · Os eventos do mundo devem, na maior parte do tempo, TOCAR as missões ativas ou o momento do arco — nada de rumos aleatórios desconexos. A missão dá a direção; o como fica livre.
 - MAPA E FACÇÕES (mundo persistente — leia e RESPEITE; nunca recrie o que já existe): ${mapaTexto || "ainda vazio; ao apresentar uma cidade nova, registre-a."}
   · Ao apresentar uma cidade NOVA, registre em "mapa_cidades" (nome, tipo vila/cidade/capital/fortaleza, regiao, faccao dominante, relacao com o jogador). Não invente uma cidade que já está no mapa — use a registrada.
@@ -286,7 +286,6 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   "condicoes_adicionar": [{"alvo":"você","nome":"Envenenado"}],
   "condicoes_remover": [{"alvo":"você","nome":"Envenenado"}],
   "npcs": [{"nome":"Mestra Elira","papel":"ferreira","relacao":"aliado","genero":"mulher","local":"Pedravale","segredo":"esconde um mapa nas forjas"}],
-  "quest_nova": [{"titulo":"O cerco de Pedravale","descricao":"Romper o bloqueio antes do inverno","tipo":"principal"}],
   "quest_atualizar": [{"titulo":"A caravana sumida","status":"concluida","nota":""}],
   "historia_avancar": false,
   "evento_global_encerrar": false,

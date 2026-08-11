@@ -5,26 +5,111 @@
 import React from "react";
 import { T } from "./constantes.js";
 import { ESTRUTURAS, estruturaPorId } from "./historia.js";
+import { ativas as missoesAtivas, ofertas as missoesOferecidas, garantirMissoes, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao } from "./missoes.js";
 
-export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual }) {
+/* ---------------- O CARTÃO DA MISSÃO (v9.27) ----------------
+   A regra de desenho é uma só, e ela é de gameplay: mostrar o que
+   fazer AGORA e esconder o que vem depois. A etapa atual aparece
+   por inteiro, as cumpridas ficam riscadas, e as futuras são pontos
+   fechados — o jogador sabe quanto falta sem saber o quê.
+
+   Uma lista inteira aberta transformaria a aventura num checklist,
+   e um cartão sem etapa nenhuma é o que existia antes: um bilhete
+   que não dizia o que fazer. */
+function CartaoMissao({ m, aoResponder, aoEncerrarLegado }) {
+  const t = tipoMissao(m.tipo);
+  const p = progressoMissao(m);
+  const atual = etapaAtual(m);
+  const oferta = m.status === "oferecida";
+  const fim = m.status === "concluida" || m.status === "falhada" || m.status === "recusada";
+  const cor = m.status === "concluida" ? T.ok
+    : m.status === "falhada" ? T.danger
+    : oferta ? T.violet
+    : m.tipo === "principal" ? T.amber : T.line;
+  return (
+    <div className="rounded-lg px-3 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${cor}`, opacity: fim ? 0.6 : 1 }}>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="tv-body text-sm" style={{ color: T.ink }}>
+          {m.status === "concluida" ? "✓ " : m.status === "falhada" ? "✗ " : m.status === "recusada" ? "— " : `${t.icone} `}{m.titulo}
+        </span>
+        <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ color: cor === T.line ? T.inkDim : cor, border: `1px solid ${cor === T.line ? T.line : cor}` }}>
+          {oferta ? "OFERTA" : t.rotulo.toUpperCase()}
+        </span>
+      </div>
+      {m.dador && <div className="tv-body text-[11px] mt-0.5" style={{ color: T.inkDim }}>de {m.dador}</div>}
+      {m.descricao && <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{m.descricao}</div>}
+
+      {!fim && (m.etapas || []).length > 0 && (
+        <div className="mt-2">
+          <div className="flex items-center gap-1 mb-1.5">
+            {m.etapas.map((e, i) => (
+              <span key={i} title={e.feito ? "cumprida" : i === p.feitas ? "é o que falta agora" : "ainda por vir"}
+                style={{
+                  width: 7, height: 7, borderRadius: 99, display: "inline-block",
+                  background: e.feito ? T.ok : i === p.feitas ? T.amber : "transparent",
+                  border: `1px solid ${e.feito ? T.ok : i === p.feitas ? T.amber : T.line}`,
+                }} />
+            ))}
+            <span className="tv-mono text-[9px] ml-1" style={{ color: T.inkDim }}>{p.feitas}/{p.total}</span>
+          </div>
+          {atual ? (
+            <div className="tv-body text-xs" style={{ color: T.amberSoft }}>
+              {etapaDef(atual.tipo).icone} {textoDaEtapa(atual)}
+            </div>
+          ) : null}
+          {p.total - p.feitas > 1 && (
+            <div className="tv-body text-[10px] mt-0.5 italic" style={{ color: T.inkDim }}>
+              …e mais {p.total - p.feitas - 1} passo{p.total - p.feitas - 1 > 1 ? "s" : ""} depois deste.
+            </div>
+          )}
+        </div>
+      )}
+
+      {m.recompensa && !fim && (
+        <div className="tv-mono text-[10px] mt-1.5" style={{ color: T.inkDim }}>
+          paga ◉ {m.recompensa.moedas} · {m.recompensa.xp} XP{m.recompensa.item ? ` · item ${m.recompensa.item}` : ""}
+        </div>
+      )}
+
+      {m.legado && m.status === "ativa" && aoEncerrarLegado && (
+        <div className="mt-2">
+          <div className="tv-body text-[10px] mb-1.5" style={{ color: T.inkDim }}>
+            Esta missão vem de antes do sistema de etapas — o código não tem como saber se você a terminou. Quem sabe é você.
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => aoEncerrarLegado(m.id, "concluida")} className="tv-mono text-[10px] px-2.5 py-1 rounded-lg"
+              style={{ color: T.ok, border: `1px solid ${T.ok}` }}>✓ já terminei</button>
+            <button onClick={() => aoEncerrarLegado(m.id, "falhada")} className="tv-mono text-[10px] px-2.5 py-1 rounded-lg"
+              style={{ color: T.danger, border: `1px solid ${T.line}` }}>✗ ficou pelo caminho</button>
+          </div>
+        </div>
+      )}
+      {oferta && aoResponder && (
+        <div className="flex gap-2 mt-2">
+          <button onClick={() => aoResponder(m.id, true)} className="tv-mono text-[11px] px-3 py-1.5 rounded-lg"
+            style={{ background: T.violet, color: T.onSecond, fontWeight: 600 }}>Aceitar</button>
+          <button onClick={() => aoResponder(m.id, false)} className="tv-mono text-[11px] px-3 py-1.5 rounded-lg"
+            style={{ color: T.inkDim, border: `1px solid ${T.line}` }}>Recusar</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, missoes = [], aoResponderMissao, aoEncerrarLegado }) {
   const [trocando, setTrocando] = React.useState(false);
   const est = estruturaPorId((historia || {}).estrutura);
   const etapaIdx = Math.min((historia || {}).etapa || 0, est.etapas.length - 1);
-  const ativas = (quests || []).filter((q) => q.status === "ativa");
-  const principais = ativas.filter((q) => q.tipo === "principal");
-  const secundarias = ativas.filter((q) => q.tipo !== "principal");
-  const encerradas = (quests || []).filter((q) => q.status !== "ativa");
-  const Missao = ({ q }) => (
-    <div className="rounded-lg px-3 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${q.status === "concluida" ? T.ok : q.status === "falhada" ? T.danger : q.tipo === "principal" ? T.amber : T.line}`, opacity: q.status === "ativa" ? 1 : 0.65 }}>
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="tv-body text-sm" style={{ color: T.ink }}>{q.status === "concluida" ? "✓ " : q.status === "falhada" ? "✗ " : ""}{q.titulo}</span>
-        {q.tipo === "principal" && q.status === "ativa" && <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ color: T.amberSoft, border: `1px solid ${T.amber}` }}>PRINCIPAL</span>}
-      </div>
-      {q.descricao && <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{q.descricao}</div>}
-      {q.objetivo && q.status === "ativa" && <div className="tv-body text-xs mt-1" style={{ color: T.amberSoft }}>🎯 {q.objetivo}</div>}
-      {q.nota && <div className="tv-body text-xs mt-1 italic" style={{ color: T.violetSoft }}>» {q.nota}</div>}
-    </div>
-  );
+  const todas = garantirMissoes(missoes);
+  const ativasM = todas.filter((m) => m.status === "ativa");
+  const ofertasM = todas.filter((m) => m.status === "oferecida");
+  /* "o que o mundo impôs" x "o que você aceitou": a separação não é
+     cosmética. É ela que deixa claro, de relance, o que foi escolha do
+     jogador e o que foi consequência — a distinção que o sistema inteiro
+     de missões existe para tornar visível. */
+  const principaisM = ativasM.filter((m) => tipoMissao(m.tipo).forcada);
+  const secundariasM = ativasM.filter((m) => !tipoMissao(m.tipo).forcada);
+  const encerradasM = todas.filter((m) => ["concluida", "falhada", "recusada"].includes(m.status));
   return (
     <div>
       <div className="rounded-xl p-4 mb-4" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
@@ -53,10 +138,11 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual }
           ))}
         </div>
       </div>
-      {ativas.length === 0 && <div className="tv-body text-sm italic mb-4" style={{ color: T.inkDim }}>Nenhuma missão ativa ainda — elas surgem conforme a história se abre.</div>}
-      {principais.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.amberSoft }}>Missão principal</div><div className="space-y-2 mb-4">{principais.map((q, i) => <Missao key={i} q={q} />)}</div></>)}
-      {secundarias.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Missões secundárias</div><div className="space-y-2 mb-4">{secundarias.map((q, i) => <Missao key={i} q={q} />)}</div></>)}
-      {encerradas.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Encerradas</div><div className="space-y-2">{encerradas.map((q, i) => <Missao key={i} q={q} />)}</div></>)}
+      {ofertasM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.violetSoft }}>Ofereceram a você</div><div className="space-y-2 mb-4">{ofertasM.map((m) => <CartaoMissao key={m.id} m={m} aoResponder={aoResponderMissao} />)}</div></>)}
+      {ativasM.length === 0 && ofertasM.length === 0 && <div className="tv-body text-sm italic mb-4" style={{ color: T.inkDim }}>Nenhuma missão em curso — elas surgem conforme a história se abre, e você decide quais aceitar.</div>}
+      {principaisM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.amberSoft }}>O que o mundo impôs</div><div className="space-y-2 mb-4">{principaisM.map((m) => <CartaoMissao key={m.id} m={m} aoEncerrarLegado={aoEncerrarLegado} />)}</div></>)}
+      {secundariasM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>O que você aceitou</div><div className="space-y-2 mb-4">{secundariasM.map((m) => <CartaoMissao key={m.id} m={m} aoEncerrarLegado={aoEncerrarLegado} />)}</div></>)}
+      {encerradasM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Encerradas</div><div className="space-y-2">{encerradasM.slice(-8).reverse().map((m) => <CartaoMissao key={m.id} m={m} />)}</div></>)}
 
       {/* FIOS DO MUNDO (v7.2): evento global em curso + fios locais com prazo */}
       {eventos && eventos.global && (

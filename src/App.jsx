@@ -47,6 +47,7 @@ import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPr
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, ORACULO_PROMPT } from "./oraculo.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
+import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, relogioDaMissao, falharPorRelogio, recompensaDe, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeRecusa, resumoMissoesPrompt, MISSOES_PROMPT } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
@@ -947,7 +948,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onEncararProva, onDesistirRito, bloqueado }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1148,7 +1149,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
           </>
         )}
 
-        {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} />}
+        {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} />}
         {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"}  onMilagre={onMilagreUI} mapa={mapa} devocao={devocao} onEncararProva={onEncararProva} onDesistirRito={onDesistirRito} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} />}
@@ -2377,6 +2378,14 @@ export default function Taverna() {
   const urgenciaRef = useRef(0);            // quantas cenas recentes usaram urgência
   const historiaRef = useRef({ estrutura: "jornada", etapa: 0 });
   const questsRef = useRef([]);
+  /* MISSÕES (v9.27): a lista nova, com etapas que o sistema confere. As
+     `quests` antigas continuam existindo só o tempo da migração. */
+  const missoesRef = useRef([]);
+  const [missoes, setMissoes] = useState([]);
+  /* Quem caiu nesta sessão. `baseMundo.mortos` só guarda gente e chefes do
+     mundo; a etapa "derrotar 3 lobos" precisa dos bichos comuns também, e
+     esses o sistema só conhece no instante em que a luta acaba. */
+  const derrotadosDaSessaoRef = useRef([]);
   const [quests, setQuests] = useState([]);
   const [aguardandoMundo, setAguardandoMundo] = useState(false);
   const [mostrarHoras, setMostrarHoras] = useState(false);
@@ -3004,7 +3013,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, quests: questsRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current,
+      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -3474,12 +3483,12 @@ export default function Taverna() {
     if (resp.mudancas) {
       const md2 = resp.mudancas;
       let recompensaContrato = null; // contratos pagos por código ao concluir
-      [].concat(md2.quest_nova || []).forEach((q) => {
-        if (!q || !q.titulo) return;
-        if (questsRef.current.some((x) => x.titulo.toLowerCase() === q.titulo.toLowerCase())) return;
-        questsRef.current = [...questsRef.current, { titulo: q.titulo, descricao: q.descricao || "", objetivo: q.objetivo || "", tipo: q.tipo === "principal" ? "principal" : "secundaria", status: "ativa", nota: "" }];
-        msgs.push(`📜 Nova missão${q.tipo === "principal" ? " PRINCIPAL" : ""}: ${q.titulo}`);
-      });
+      /* v9.27: "quest_nova" morreu. O Mestre criava missão do nada, sem
+         etapa, sem recompensa e sem ninguém para encerrá-la — era a raiz de
+         metade da bagunça do diário. Se ele ainda mandar o campo (modelo
+         antigo, prompt em cache), o sistema IGNORA em silêncio: o caminho
+         de agora é "missao_oferecida", que passa pela validação e pelo
+         aceite do jogador. */
       /* EVENTO GLOBAL resolvido na ficção: o mestre encerra o arco maior */
       if (md2.evento_global_encerrar && eventosRef.current.global) {
         const g = eventosRef.current.global;
@@ -3773,6 +3782,11 @@ export default function Taverna() {
       if (resp.mudancas.__vitoriaAuto) {
         /* ESPÓLIOS POR CÓDIGO: moedas e XP por tabela; nível sobe sozinho.
            A IA só narra — e cria o item quando o app decide que caiu um. */
+        /* v9.27: os nomes dos caídos alimentam as etapas "derrotar" */
+        derrotadosDaSessaoRef.current = [
+          ...derrotadosDaSessaoRef.current,
+          ...(resp.mudancas.__inimigosFinais || []).map((e) => e && e.nome).filter(Boolean),
+        ].slice(-120);
         const esp = gerarEspolios(resp.mudancas.__inimigosFinais || []);
         let p2 = { ...pers, moedas: (pers.moedas || 0) + esp.moedas, xp: (pers.xp || 0) + esp.xp };
         let subiu = 0;
@@ -4043,6 +4057,7 @@ export default function Taverna() {
         "SEÇÃO grupo: \"entraram\" = nomes de pessoas que ACEITARAM de fato acompanhar o herói como companheiros de jornada NESTE turno (o Mestre narrando \"vou com você\" conta). Se o convite foi recusado ou só um encontro casual, [].",
         "SEÇÃO teste_sugerido: se o Mestre CONCEDEU de graça algo grande que deveria ter exigido convencimento — uma criatura anciã entregando seu poder, um rei cedendo o trono, um inimigo virando aliado do nada — preencha {\"atributo\":\"Presença|Intelecto|Força|Destreza|Vigor\",\"perfil\":\"dificil|formidavel\",\"motivo\":\"o que precisava ser provado\"}. Concessões pequenas e naturais da história NÃO entram. Na maioria dos turnos: null.",
         "SEÇÃO combate (só se houver COMBATENTES listados): \"mortes_narradas\" = inimigos que a NARRATIVA declarou mortos/destruídos/desfeitos NESTE turno. Liste só nomes da lista de combatentes; se ninguém morreu na narração, [].",
+        "SEÇÃO missao_oferecida (v9.27): se alguém em cena OFERECEU um trabalho ao herói — um nobre desesperado, um capitão precisando de escolta, um aldeão com um problema —, descreva a proposta em {\"titulo\":\"nome curto do trabalho\",\"tipo\":\"contrato|favor\",\"dador\":\"quem ofereceu\",\"descricao\":\"uma frase\",\"etapas\":[{\"tipo\":\"ir_a|derrotar|achar|falar_com|levar_a\",\"alvo\":\"nome exato de cidade, criatura, pessoa ou objeto\",\"item\":\"só para levar_a\",\"quantos\":1}]}. De 1 a 3 etapas, todas CONCRETAS e verificáveis — \"ganhar a confiança\" não é etapa. Só quando alguém de fato ofereceu algo NESTE turno; caso contrário, null.",
         "SEÇÃO relogio_novo (v9.18): se ALGO LONGO COMEÇOU DE FATO em cena — um ritual que passou a ser conduzido, uma perseguição que se iniciou, uma obra que o jogador pôs em marcha — proponha {\"nome\":\"frase curta no presente\",\"tipo\":\"ameaca|cacada|oportunidade|obra\",\"segmentos\":4|6|8,\"gatilho\":\"noite|turno_mundo|falha|sucesso|viagem\",\"consequencia\":\"o que acontece quando encher\"}. NO MÁXIMO UM por turno, e só quando de fato começou — intenção, ameaça verbal e possibilidade NÃO contam. Na esmagadora maioria dos turnos: null.",
         "REGRA GERAL: na dúvida, NÃO marque — {\"missoes\":{\"concluidas\":[],\"falhadas\":[],\"progresso\":[],\"global_encerrado\":false},\"canone\":{},\"pessoas\":[],\"fe\":{\"fieis\":0,\"pf\":0}} é resposta válida e frequente.",
       ].join("\n");
@@ -4055,6 +4070,23 @@ export default function Taverna() {
       if (!r || typeof r !== "object") return;
       const msgs = [];
       let p = pers;
+      /* ---- SEÇÃO missão oferecida (v9.27) ----
+         O Mestre traz o nobre desesperado; o sistema decide o que aquilo
+         vira. Proposta sem etapa verificável é recusada em silêncio — é a
+         trava que impede "ganhe a confiança do barão" de virar missão. */
+      try {
+        const prop = r.missao_oferecida;
+        if (prop && typeof prop === "object" && prop.titulo) {
+          const ac = ofertaDoMestre(missoesRef.current, prop, { nivel: p.nivel || 1, dia: diaRef.current });
+          if (ac.ok) {
+            missoesRef.current = ac.missoes; setMissoes(ac.missoes);
+            const et = etapaAtual(ac.missao);
+            msgs.push(`${tipoMissao(ac.missao.tipo).icone} Ofereceram um trabalho: ${ac.missao.titulo}${ac.missao.dador ? ` (${ac.missao.dador})` : ""} — abra o Diário para aceitar ou recusar.`);
+            if (et) msgs.push(`   primeiro passo: ${textoDaEtapa(et)} · paga ◉ ${ac.missao.recompensa.moedas} e ${ac.missao.recompensa.xp} XP`);
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeOferta(ac.missao)}`;
+          }
+        }
+      } catch { /* proposta malformada nunca derruba o turno */ }
       /* ---- SEÇÃO relógio proposto (v9.18) ----
          O Mestre conhece a ficção melhor que qualquer tabela, então PODE
          pedir um relógio. Propor não é criar: o sistema apara o tamanho,
@@ -4577,7 +4609,8 @@ export default function Taverna() {
       const mag = resumoMagiasPrompt(p);
       const sin = resumoSintoniaPrompt(p);
       const leg = resumoLegadoPrompt(p);
-      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
+      const mis = resumoMissoesPrompt(missoesRef.current);
+      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${mis ? `\n${mis}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -4636,6 +4669,10 @@ export default function Taverna() {
           pushMsgs([{ autor: "sistema", texto: `⚠ O arquivista tropeçou ao atualizar o livro da campanha (${String((e && e.message) || e).slice(0, 120)}). O turno está salvo; se repetir, me mostre esta mensagem.` }]);
         }
       }
+      /* MISSÕES (v9.27): o conferente roda DEPOIS de tudo aplicado — só aí o
+         estado do turno está completo (a cidade nova, o inimigo caído, o item
+         na bolsa). Custa zero: é comparação com o que já está na mão. */
+      try { pers = conferirAsMissoes(pers); } catch { /* nunca derruba o turno */ }
       /* FISCAL DE MISSÕES + ESCRIBA: correm em paralelo, sem travar o turno */
       try { cronistaDoTurno(pers, narrativaFinal); } catch { /* idem */ }
       /* DESPERTAR: checa DEPOIS do turno (o XP do combate pode ter cruzado o nível) */
@@ -4872,6 +4909,34 @@ export default function Taverna() {
       if (regTocou) { npcsRef.current = regNovo; setNpcs(regNovo); }
       historiaRef.current = sv.historia && sv.historia.estrutura ? sv.historia : { estrutura: (sv.mundo && sv.mundo.estrutura) || "jornada", etapa: 0 };
       questsRef.current = Array.isArray(sv.quests) ? sv.quests : [];
+      /* MIGRAÇÃO (v9.27): a quest antiga era um título e uma descrição, sem
+         etapas — não dá para inventar retroativamente onde o jogador estava
+         no meio dela. Então ela entra como missão de UMA etapa aberta ("levar
+         isto ao fim"), ativa, com recompensa: encerrar o que já estava em
+         curso passa a valer alguma coisa, que é mais do que valia antes. */
+      if (Array.isArray(sv.missoes)) {
+        missoesRef.current = garantirMissoes(sv.missoes);
+      } else {
+        missoesRef.current = garantirMissoes((sv.quests || [])
+          .filter((q) => q && q.titulo && q.status === "ativa")
+          .map((q) => ({
+            titulo: q.titulo, tipo: q.tipo === "principal" ? "principal" : "favor",
+            descricao: q.descricao || q.objetivo || "", status: "ativa",
+            /* a etapa fica num dia inalcançável DE PROPÓSITO. A quest antiga
+               não tem etapa verificável — não dá para inventar retroativamente
+               onde o jogador estava no meio dela. Se eu usasse o dia de hoje,
+               ela se completaria sozinha no primeiro turno e PAGARIA
+               recompensa por algo que ninguém fez (foi o que aconteceu no
+               primeiro teste). Fica aberta, marcada como legado, e o próprio
+               jogador a encerra pelo botão do diário — ele sabe se terminou;
+               o sistema não tem como saber. */
+            etapas: [{ tipo: "aguentar", dia: 999999, rotulo: q.objetivo || q.titulo, feito: false }],
+            legado: true,
+            recompensa: recompensaDe({ tipo: q.tipo === "principal" ? "principal" : "favor", nivel: (pers && pers.nivel) || 1, etapas: 1 }),
+            criadaEm: sv.dia || 0,
+          })));
+      }
+      setMissoes(missoesRef.current);
       setQuests([...questsRef.current]);
       bancoNomesRef.current = gerarBancoNomes(sv.mundo);
       systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
@@ -5809,6 +5874,83 @@ export default function Taverna() {
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MOVIMENTO — RESOLVIDO PELO SISTEMA] Eu me desloquei de ${nomeDaZona(campo, de)} para ${chk.zona.nome}${colados.length ? `, e ${colados.map((c) => c.nome).join(", ")} tentou me acertar na saída` : ""}. Narre o deslocamento usando os nomes dos lugares e nada mais: não mova ninguém junto comigo, não faça inimigo nenhum me alcançar de outro lugar.`;
   };
 
+  /* ---------------- MISSÕES (v9.27) ----------------
+     O conferente roda a cada turno e custa zero: é comparação com estado que
+     já está na mão. É ele que resolve a queixa mais antiga do diário —
+     missão resolvida ficando aberta para sempre porque o Mestre esqueceu de
+     encerrar. Agora não depende de ele lembrar.
+
+     A recompensa é paga AQUI, por código, e o envelope avisa o Mestre para
+     não pagar de novo. Antes, terminar uma missão da história era
+     exatamente igual a abandoná-la: nada acontecia dos dois jeitos. */
+  const conferirAsMissoes = (persAtual) => {
+    const p = persAtual || personagemRef.current || personagem || {};
+    const mundo = {
+      cidadeAtual: cidadeAtualRef.current,
+      derrotados: [...((baseMundoRef.current || {}).mortos || []), ...(derrotadosDaSessaoRef.current || [])],
+      inventario: p.inventario || [], equipamento: p.equipamento || [],
+      npcs: npcsRef.current, dia: diaRef.current, relogios: relogiosRef.current,
+    };
+    const r = conferirMissoes(missoesRef.current, mundo);
+    if (!r.avancos.length) return p;
+    missoesRef.current = r.missoes; setMissoes(r.missoes);
+    pushMsgs(r.avancos.map((a) => ({ autor: "sistema", texto: linhaEtapa(a) })));
+    for (const a of r.avancos) {
+      if (a.missao.status !== "concluida") {
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeAvanco(a)}`;
+      }
+    }
+    let pers = p;
+    for (const m of r.concluidas) {
+      const rec = m.recompensa || recompensaDe({ tipo: m.tipo, nivel: pers.nivel || 1, etapas: m.etapas.length });
+      pers = aplicarNivel({ ...pers, moedas: (pers.moedas || 0) + rec.moedas, xp: (pers.xp || 0) + rec.xp });
+      const linhas = [`${tipoMissao(m.tipo).icone} MISSÃO CONCLUÍDA: ${m.titulo} — +${rec.moedas} moedas · +${rec.xp} XP`];
+      if (rec.item) {
+        const it = gerarLoot(rec.item, { nivel: pers.nivel || 1 });
+        pers = { ...pers, equipamento: [...(pers.equipamento || []), it] };
+        linhas.push(`✦ Recompensa: ${it.nome} (${RARIDADE_ROTULO[it.raridade] || it.raridade})`);
+      }
+      pushMsgs(linhas.map((t) => ({ autor: "sistema", texto: t })));
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeConclusao(m, rec)}`;
+      bumpCont("contratosConcluidos");
+      /* o relógio de prazo morre junto com a missão que ele vigiava */
+      if (m.relogioId) {
+        const semRel = (relogiosRef.current || []).filter((x) => x.fonte !== `missao:${m.id}`);
+        if (semRel.length !== (relogiosRef.current || []).length) { relogiosRef.current = semRel; setRelogios(semRel); }
+      }
+    }
+    if (pers !== p) { setPersonagem(pers); personagemRef.current = pers; }
+    return pers;
+  };
+
+  /* A resposta do jogador a uma oferta. Recusar é uma resposta legítima, e o
+     envelope proíbe o Mestre de insistir ou de punir por isso. */
+  /* Só as de legado se encerram à mão. Nas outras quem marca é o código —
+     abrir essa porta desfaria a regra inteira. */
+  const encerrarMissaoAntiga = (id, comoFoi) => {
+    const r = encerrarLegado(missoesRef.current, id, comoFoi);
+    if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${r.motivo}.` }]); return; }
+    missoesRef.current = r.missoes; setMissoes(r.missoes);
+    pushMsgs([{ autor: "sistema", texto: `${comoFoi === "falhada" ? "✗" : "✓"} ${r.missao.titulo}: encerrada por você (missão anterior ao sistema de etapas — sem recompensa automática).` }]);
+    salvar({});
+  };
+
+  const responderMissao = (id, aceita) => {
+    const r = responderOferta(missoesRef.current, id, aceita);
+    if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${r.motivo}.` }]); return; }
+    missoesRef.current = r.missoes; setMissoes(r.missoes);
+    const m = r.missao;
+    if (aceita) {
+      const e = etapaAtual(m);
+      pushMsgs([{ autor: "sistema", texto: `${tipoMissao(m.tipo).icone} Missão aceita: ${m.titulo}${e ? ` — primeiro passo: ${textoDaEtapa(e)}` : ""}` }]);
+      enviar(`[MISSÃO ACEITA — REGISTRADA PELO SISTEMA] Aceitei "${m.titulo}"${m.dador ? ` de ${m.dador}` : ""}. O sistema já registrou as etapas e cuidará de marcá-las. Feche o acordo em duas ou três frases — o aperto de mão, a condição, o olhar de quem paga — e me devolva a palavra. NÃO resolva nada da missão agora.`, personagemRef.current || personagem);
+    } else {
+      pushMsgs([{ autor: "sistema", texto: `✕ Recusado: ${m.titulo}` }]);
+      enviar(envelopeDeRecusa(m), personagemRef.current || personagem);
+    }
+    salvar({});
+  };
+
   /* ---------------- RELÓGIOS (v9.18) ----------------
      Um lugar só para mexer no ponteiro, e ele faz três coisas sempre na
      mesma ordem: avança, conta ao jogador POR QUE avançou, e — se encheu —
@@ -5843,6 +5985,20 @@ export default function Taverna() {
     });
     if (!r.novos.length) return;
     relogiosRef.current = r.relogios; setRelogios(r.relogios);
+    /* v9.27: a nêmesis e o evento global viram MISSÃO junto do relógio. O
+       relógio conta o tempo; a missão diz o que fazer com ele — e as duas
+       coisas nasceram do mesmo estado, então nascem juntas. */
+    try {
+      const rm = semearMissoes(missoesRef.current, {
+        nemesis: nemesisRef.current, global: (eventosRef.current || {}).global,
+        relogioGlobalId: (r.relogios.find((x) => x.fonte === "global") || {}).id || "",
+        nivel: (personagemRef.current || personagem || {}).nivel || 1, dia: diaRef.current,
+      });
+      if (rm.novas.length) {
+        missoesRef.current = rm.missoes; setMissoes(rm.missoes);
+        rm.novas.forEach((m) => pushMsgs([{ autor: "sistema", texto: `${tipoMissao(m.tipo).icone} O mundo te impôs uma missão: ${m.titulo}` }]));
+      }
+    } catch { /* nunca derruba o turno */ }
     for (const n of r.novos) {
       pushMsgs([{ autor: "sistema", texto: `${tipoDe(n.tipo).icone} Começou a contar: ${n.nome} ${barraDe(n)} — ${tipoDe(n.tipo).desc}.` }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeNovo(n)}`;
@@ -6732,9 +6888,27 @@ export default function Taverna() {
     muralRef.current = (muralRef.current || []).filter((x) => x.id !== c.id);
     muralRef.current = [...muralRef.current, gerarContrato((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1, mapaRef.current)];
     setMural(muralRef.current);
-    if (!questsRef.current.some((q) => q.titulo.toLowerCase() === c.titulo.toLowerCase())) {
-      questsRef.current = [...questsRef.current, { titulo: c.titulo, descricao: c.descricao, tipo: "secundaria", status: "ativa", nota: "", contrato: c.recompensa }];
-      setQuests([...questsRef.current]);
+    /* v9.27: o contrato do mural vira MISSÃO com etapa de verdade. Antes ele
+       entrava como um título no diário e a recompensa dependia de o Mestre
+       lembrar de dizer que acabou. Agora a etapa vem do TIPO do contrato —
+       caçar é derrotar, entrega é chegar com a coisa — e o sistema fecha. */
+    {
+      const etapa = c.alvo
+        ? { tipo: "derrotar", alvo: c.alvo, quantos: c.tipo === "limpeza" ? 3 : 1 }
+        : c.tipo === "entrega" || c.tipo === "escolta"
+          ? { tipo: "ir_a", alvo: (String(c.titulo).split(" para ")[1] || String(c.descricao).match(/até ([A-ZÀ-Ý][\wÀ-ÿ\s]{2,24})/)?.[1] || "").trim() }
+          : { tipo: "achar", alvo: String(c.descricao).replace(/^.*?traga\s+/i, "").replace(/[.!?].*$/, "").trim() };
+      if (etapa.alvo) {
+        const m = criarMissao({
+          titulo: c.titulo, tipo: "contrato", status: "ativa", descricao: c.descricao,
+          etapas: [etapa], nivel: personagem.nivel || 1, dia: diaRef.current,
+        });
+        if (m && !missoesRef.current.some((x) => x.titulo.toLowerCase() === m.titulo.toLowerCase() && x.status === "ativa")) {
+          /* o contrato traz o próprio preço da tabela; o do sistema fica de fora */
+          const comPreco = { ...m, recompensa: { ...m.recompensa, ...(c.recompensa || {}) } };
+          missoesRef.current = [...missoesRef.current, comPreco]; setMissoes(missoesRef.current);
+        }
+      }
     }
     setAba(null);
     pushMsgs([{ autor: "jogador", texto: `📋 Aceito o contrato: ${c.titulo} (◉ ${c.recompensa.moedas} + ${c.recompensa.xp} XP)` }]);
@@ -8733,7 +8907,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
