@@ -6,8 +6,9 @@ import React from "react";
 import { T } from "./constantes.js";
 import { RELACOES, blobPath, centrosDeRegiao, gerarEstradas } from "./mapa.js";
 import { ESTADOS_FE, estadoFe, feDaCidade, temploDaCidade, temploDe, fieisDaCidade, heresiaDaCidade, patronoDaCidade, resumoNumerico } from "./devocao.js";
+import { ondeEstou, pontoDoHeroi } from "./rastro.js";
 
-export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindade }) {
+export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindade, jornada = null, masmorra = null }) {
   const [selecionada, setSelecionada] = React.useState(null);
   /* CAMADAS (v8.9): o mesmo pergaminho conta duas histórias — quem manda
      (política) e quem reza (fé). A camada de fé só existe depois do despertar. */
@@ -37,8 +38,20 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
       🌫 Há {ocultas} {ocultas === 1 ? "lugar" : "lugares"} neste mundo que você ainda não conhece. Viaje até eles, ou compre o mapa da região num armazém ou casa de relíquias.
     </div>
   ) : null;
+  /* ONDE VOCÊ ESTÁ (v9.29). O mapa mostrava o mundo e não mostrava o herói —
+     e na estrada ele sumia de vez: não estava mais na origem, não estava
+     ainda no destino, não estava em lugar nenhum que a tela soubesse
+     desenhar. Agora o ponto existe sempre, e no meio da viagem ele cai no
+     meio do trecho, com a estrada tracejada ligando as duas pontas. */
+  const onde = ondeEstou({ cidadeAtual, jornada, masmorra, mapa });
+  const eu = pontoDoHeroi({ cidadeAtual, jornada, mapa });
   return (
     <div>
+      <div className="rounded-xl px-3 py-2 mb-3 flex items-baseline gap-2" style={{ background: T.panelSoft, border: `1px solid ${onde.tipo === "estrada" ? T.violet : onde.tipo === "masmorra" ? T.danger : T.line}` }}>
+        <span style={{ fontSize: 13 }}>{onde.tipo === "estrada" ? "🧭" : onde.tipo === "masmorra" ? "🕳" : "📍"}</span>
+        <span className="tv-body text-sm" style={{ color: T.ink }}>{onde.rotulo}</span>
+        {onde.detalhe && <span className="tv-body text-[11px]" style={{ color: T.inkDim }}>· {onde.detalhe}</span>}
+      </div>
       {faccaoJogador && (
         <div className="rounded-xl p-3 mb-3" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
           <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.amberSoft }}>Sua facção</div>
@@ -125,6 +138,10 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
           <g transform="translate(6,93.5)">
             {[0, 1, 2, 3].map((k) => <rect key={k} x={k * 5} y="0" width="5" height="1.1" fill={k % 2 ? "#eadfc1" : "#5c4a30"} stroke="#5c4a30" strokeWidth="0.15" />)}
           </g>
+          {/* a estrada que está sendo percorrida agora */}
+          {eu && eu.naEstrada && eu.de && eu.para && (
+            <line x1={eu.de.x} y1={eu.de.y} x2={eu.para.x} y2={eu.para.y} stroke="#8a5a2b" strokeWidth="0.6" strokeDasharray="1.8 1.4" opacity="0.9" />
+          )}
           {/* moldura dupla */}
           <rect x="0.8" y="0.8" width="98.4" height="98.4" fill="none" stroke="#5c4a30" strokeWidth="0.7" opacity="0.8" />
           <rect x="2.2" y="2.2" width="95.6" height="95.6" fill="none" stroke="#5c4a30" strokeWidth="0.25" opacity="0.6" />
@@ -154,6 +171,15 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
             </div>
           );
         })}
+        {/* VOCÊ. Desenhado depois das cidades para nunca ficar por baixo de uma. */}
+        {eu && (
+          <div style={{ position: "absolute", left: `${eu.x}%`, top: `${eu.y}%`, transform: "translate(-50%,-50%)", pointerEvents: "none", textAlign: "center" }}>
+            <div style={{ width: 13, height: 13, borderRadius: "50%", background: "#f0e6cc", border: "2.5px solid #b4322e", boxShadow: "0 0 10px #b4322e", margin: "0 auto" }} />
+            <div className="tv-mono" style={{ fontSize: 7, color: "#b4322e", marginTop: 1, whiteSpace: "nowrap", fontWeight: 700, textShadow: "0 1px 2px #f0e6cc, 0 -1px 2px #f0e6cc" }}>
+              {eu.naEstrada ? "você (na estrada)" : "você"}
+            </div>
+          </div>
+        )}
       </div>
       {/* legenda — muda com a camada */}
       <div className="flex flex-wrap gap-2 mb-3">
