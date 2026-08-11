@@ -5,7 +5,7 @@ import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapa
 import { gerarGeografia, garantirGeografia, descobrirCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
-import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests } from "./historia.js";
+import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste, dificuldadePorPerfil } from "./bestiario.js";
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
@@ -2336,6 +2336,12 @@ export default function Taverna() {
   const golpeRecenteRef = useRef(null);
   /* v9.5: um turno pode carregar mais de uma habilidade, uma por movimento */
   const [habsSel, setHabsSel] = useState([]);
+  /* v9.28: o milagre agora é ARMADO, não disparado. Clicar nele no painel de
+     Ascensão só engatilha; quem diz COMO ele se manifesta é o jogador, no
+     campo de escrita — igual à habilidade. Antes o clique já mandava tudo ao
+     Mestre, e ele inventava o gesto, o alvo e o sentido do maior recurso do
+     jogo: dono da fé era o jogador, dono do milagre era a IA. */
+  const [milagreSel, setMilagreSel] = useState(null);
   const [dadoRolando, setDadoRolando] = useState(false);
   const [falha, setFalha] = useState(null);
   const [statusSave, setStatusSave] = useState(null);
@@ -2376,7 +2382,7 @@ export default function Taverna() {
   const alvosGolpeRef = useRef([]); // marca ataque do jogador neste turno
   const modoMundoRef = useRef(0);           // rotação de tipos de cena
   const urgenciaRef = useRef(0);            // quantas cenas recentes usaram urgência
-  const historiaRef = useRef({ estrutura: "jornada", etapa: 0 });
+  const historiaRef = useRef(garantirHistoria({ estrutura: "jornada", etapa: 0 }));
   const questsRef = useRef([]);
   /* MISSÕES (v9.27): a lista nova, com etapas que o sistema confere. As
      `quests` antigas continuam existindo só o tempo da migração. */
@@ -2556,6 +2562,23 @@ export default function Taverna() {
             return true;
           }
           godLinha("⚡ /relogio listar · /relogio + <nome> · /relogio ++ <id> · /relogio - <id>");
+          return true;
+        }
+        /* O único lugar do jogo onde o momento do arco aparece por escrito.
+           No modo criativo isso é ferramenta; na tela do jogador seria spoiler. */
+        case "arco": {
+          const empurra = lerNumero(arg(0), 0);
+          if (empurra.ok && empurra.valor > 0) {
+            for (let i = 0; i < Math.min(40, Math.round(empurra.valor)); i++) marcarNoArco("missao", "modo criativo");
+          }
+          const h = historiaRef.current;
+          const est = estruturaPorId(h.estrutura);
+          const chk = podeVirar(h, motorDoArco());
+          const mo = motorDoArco();
+          godLinha(`⚡ Arco: ${est.nome} · momento ${h.etapa + 1}/${est.etapas.length} "${est.etapas[h.etapa].nome}"
+  marcos: ${h.marcos}/${custoDaEtapa(est, h.etapa)}${chk.pode ? " — vira no próximo marco" : ` — ${chk.motivo}`}
+  motor: nêmesis ${mo.nemesis || "—"} · global ${mo.global || "—"} · impostas ${mo.impostas.length} · relógios ${mo.relogios.length}
+  ${h.feitos.length ? `andou por: ${h.feitos.join("; ")}` : "nada empurrou este momento ainda"}`);
           return true;
         }
         case "heroismo": {
@@ -3494,6 +3517,7 @@ export default function Taverna() {
         const g = eventosRef.current.global;
         eventosRef.current = { ...eventosRef.current, global: null, semGlobalDesde: diaRef.current };
         setEventos(eventosRef.current);
+        marcarNoArco("global", `${g.nome} chegou ao fim`);
         msgs.push(`🌍 ${g.nome}: desfecho alcançado — a região entra numa nova era.`);
       }
       [].concat(md2.quest_atualizar || []).forEach((q) => {
@@ -3524,14 +3548,12 @@ export default function Taverna() {
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONTRATO PAGO pelo sistema: +${r.moedas} moedas e +${r.xp} XP — NÃO envie moedas nem xp por esse serviço, seria dobrado.]`;
         recompensaContrato = null;
       }
-      if (md2.historia_avancar) {
-        const h = historiaRef.current;
-        const est = estruturaPorId(h.estrutura);
-        if ((h.etapa || 0) < est.etapas.length - 1) {
-          h.etapa = (h.etapa || 0) + 1;
-          msgs.push(`📖 A história avança — ${est.nome}: "${est.etapas[h.etapa].nome}" (${h.etapa + 1}/${est.etapas.length})`);
-        }
-      }
+      /* v9.28: "historia_avancar" morreu junto com "quest_nova", e pela mesma
+         razão. O Mestre virava o ato quando ACHAVA que o momento tinha se
+         cumprido, e o motor não tinha voto: dava o abismo da campanha com a
+         primeira missão ainda aberta. Se um modelo antigo mandar o campo, o
+         sistema IGNORA em silêncio — quem move o arco agora é `marcarNoArco`,
+         contando o que o motor resolveu de fato. */
       setQuests([...questsRef.current]);
     }
     /* SINAIS (v7.6): o Mestre não manda mais números — manda um sinal curto
@@ -3643,7 +3665,7 @@ export default function Taverna() {
         }
       }
       if (tocouMapa) { mp2 = garantirGeografia(mp2, "taverna|canone"); mapaRef.current = mp2; setMapa(mp2); }
-      systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, c, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+      systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, c, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     }
     /* PESSOAS (registro de NPCs): o Mestre envia "npcs"; e como blindagem de
        memória, qualquer PESSOA do cânone sem ficha entra no registro por código. */
@@ -3669,7 +3691,7 @@ export default function Taverna() {
       }
       if (tocou) {
         npcsRef.current = reg; setNpcs(reg);
-        systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+        systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
       }
     }
     setPersonagem(pers);
@@ -4137,6 +4159,7 @@ export default function Taverna() {
           const g = eventosRef.current.global;
           eventosRef.current = { ...eventosRef.current, global: null, semGlobalDesde: diaRef.current };
           setEventos(eventosRef.current);
+          marcarNoArco("global", `${g.nome} chegou ao fim`);
           msgs.push(`🌍 ${g.nome}: desfecho alcançado (reconhecido pelo sistema) — a região entra numa nova era.`);
           if (divindadeRef.current && divindadeRef.current.despertar) msgs.push(...ganharFe(500, 10, "uma era inteira reza seu nome"));
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[EVENTO GLOBAL "${g.nome}" ENCERRADO pelo sistema — NÃO o continue nem o encerre de novo: a região vive a nova era. O gerador semeará um arco novo quando chegar a hora.]`;
@@ -4264,7 +4287,7 @@ export default function Taverna() {
       } catch { /* seção quebrada não derruba as outras */ }
       if (!msgs.length) return;
       /* o prompt precisa enxergar TUDO já no PRÓXIMO turno */
-      if (tocouCanone || msgs.length) systemRef.current = montarSystemPrompt(nomeCampanha, mundo, p, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+      if (tocouCanone || msgs.length) systemRef.current = montarSystemPrompt(nomeCampanha, mundo, p, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
       pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
       salvar({ personagem: p });
     } catch { /* o cronista NUNCA atrapalha o jogo — falhou, vida segue */ }
@@ -4382,7 +4405,7 @@ export default function Taverna() {
     if (pf) msgs.push(`✨ ${pf > 0 ? "+" : ""}${pf} Pontos de Fé (${novo.pf} PF)`);
     if (depois > antes) {
       msgs.push(`🌟 ASCENSÃO! Seu nome ganha peso no cosmos: agora você é ${tituloDe(depois)} (GD ${depois}).`);
-      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ASCENSÃO — REGISTRO DO SISTEMA] O jogador subiu para GD ${depois} (${tituloDe(depois)}). Isso é fato: narre os sinais dessa transformação aos poucos, à altura do marco.`;
     }
     return msgs;
@@ -4476,15 +4499,35 @@ export default function Taverna() {
     return p;
   };
 
-  /* Botão de milagre: invoca e deixa o Mestre narrar a manifestação. */
+  /* Botão de milagre (v9.28): ARMA o milagre e devolve a palavra ao jogador.
+     A cobrança de PF e o efeito só acontecem quando ele disser como usa — se
+     cobrasse aqui, desistir de escrever custaria a fé à toa. A checagem de
+     grau e de fé, essa vem agora: descobrir que não podia pagar depois de
+     escrever a cena seria descobrir tarde demais. */
   const usarMilagre = (id) => {
     if (bloqueado) return;
-    const msgs = invocarMilagre(id, "jogador");
-    if (msgs.length) pushMsgs(msgs);
+    const dv = divindadeRef.current;
     const mil = milagrePorId(id);
-    if (mil && (divindadeRef.current.pf >= 0)) {
-      enviar(`[MILAGRE] Invoco ${mil.nome}. O sistema já cobrou os PF e aplicou o efeito — narre a manifestação do meu domínio de forma inesquecível.${SO_ISSO}`, personagem);
-    }
+    if (!dv || !dv.despertar || !mil) return;
+    const gd = grauDe(dv);
+    if (mil.gd > gd) { pushMsgs([{ autor: "sistema", texto: `⛔ ${mil.nome} exige GD ${mil.gd} — você é GD ${gd}.` }]); return; }
+    if ((dv.pf || 0) < mil.pf) { pushMsgs([{ autor: "sistema", texto: `⛔ ${mil.nome} custa ${mil.pf} PF — você tem ${dv.pf}.` }]); return; }
+    setMilagreSel(mil);
+    setAba(null); // sai do painel: a próxima coisa a fazer é escrever
+  };
+
+  /* O milagre sai. O efeito é do sistema; a MANIFESTAÇÃO é do jogador — e é
+     por isso que a intenção dele vai no envelope como fato, não como sugestão:
+     "canalizo pela lâmina" não pode virar "uma luz desce dos céus". */
+  const dispararMilagre = (mil, comoUso) => {
+    const msgs = invocarMilagre(mil.id, "jogador");
+    setMilagreSel(null);
+    if (!msgs.length) return;
+    const recusa = msgs.some((m) => String(m.texto || "").startsWith("⛔"));
+    pushMsgs([{ autor: "jogador", texto: `${mil.icone} ${mil.nome} — ${comoUso}` }, ...msgs]);
+    if (recusa) return;
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[COMO O MILAGRE SE MANIFESTA — DECISÃO MINHA, NÃO SUA] Eu invoquei "${mil.nome}" ASSIM: ${comoUso}. Essa é a forma do milagre e ela é canônica: use o gesto, o alvo e o veículo que EU descrevi. Não troque por outra imagem, não mude quem foi tocado e não acrescente uma manifestação diferente por cima da minha.`;
+    enviar(`[MILAGRE — EFEITO JÁ APLICADO PELO SISTEMA] Invoco ${mil.nome} (${mil.pf} PF, já cobrados). ${mil.desc} COMO eu o uso: ${comoUso}. Narre essa manifestação exata à altura do meu domínio — visceral, pública, inesquecível — sem recalcular nada e sem inventar um efeito além do que o sistema aplicou.${SO_ISSO}`, personagemRef.current || personagem);
   };
 
   /* DESPERTAR (v7.4): ao cruzar o nível NIVEL_DESPERTAR, o céu se abre —
@@ -4499,7 +4542,7 @@ export default function Taverna() {
     devocaoRef.current = dep.devocao; setDevocao(dep.devocao);
     divindadeRef.current = { ...dv, despertar: true, panteao, fieis: Math.max(50, fieisTotais(mapaRef.current, dep.devocao)), pf: dv.pf };
     setDivindade(divindadeRef.current);
-    systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+    systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     if (silencioso) {
       /* SAVE VETERANO (v7.4.1): nível alto carregado do disco — o sistema
          abre a ascensão SEM cutucar o Mestre (evita dupla narração com o
@@ -4620,7 +4663,16 @@ export default function Taverna() {
          para o modelo manter o formato). Antes ia o JSON completo com mudancas,
          sugestões e campos de combate — ~3× mais tokens por mensagem antiga,
          sem nenhum ganho de memória (os efeitos já vivem no estado do app). */
-      const pers = aplicarResposta(resp, persAtual);
+      let pers = aplicarResposta(resp, persAtual);
+      /* MISSÕES (v9.27): o conferente roda DEPOIS de tudo aplicado — só aí o
+         estado do turno está completo (a cidade nova, o inimigo caído, o item
+         na bolsa). Custa zero: é comparação com o que já está na mão.
+
+         v9.28: e roda ANTES do save. Estava depois, e `pers` era const: a
+         reatribuição estourava dentro de um try/catch mudo, e o save gravava a
+         ficha SEM a recompensa que a missão tinha acabado de pagar. O jogador
+         via "+144 moedas" na tela e recarregava sem elas. */
+      try { pers = conferirAsMissoes(pers) || pers; } catch { /* nunca derruba o turno */ }
       /* PORTÃO (v9.12): se algum cão de guarda duro mordeu, o conserto acontece
          AQUI — antes de a narrativa chegar à tela e antes de ela entrar no
          histórico. O que o Mestre lembra na próxima vez é o texto corrigido,
@@ -4663,16 +4715,12 @@ export default function Taverna() {
         try {
           const narrativas = mensagensRef.current.filter((x) => x.autor === "mestre").map((x) => x.texto);
           gerarLivro(livroRef.current, narrativas).then((l) => {
-            if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, l, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo()); salvar({ livro: l }); }
+            if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, l, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo()); salvar({ livro: l }); }
           }).catch(() => { /* o livro pode falhar; a campanha não */ });
         } catch (e) {
           pushMsgs([{ autor: "sistema", texto: `⚠ O arquivista tropeçou ao atualizar o livro da campanha (${String((e && e.message) || e).slice(0, 120)}). O turno está salvo; se repetir, me mostre esta mensagem.` }]);
         }
       }
-      /* MISSÕES (v9.27): o conferente roda DEPOIS de tudo aplicado — só aí o
-         estado do turno está completo (a cidade nova, o inimigo caído, o item
-         na bolsa). Custa zero: é comparação com o que já está na mão. */
-      try { pers = conferirAsMissoes(pers); } catch { /* nunca derruba o turno */ }
       /* FISCAL DE MISSÕES + ESCRIBA: correm em paralelo, sem travar o turno */
       try { cronistaDoTurno(pers, narrativaFinal); } catch { /* idem */ }
       /* DESPERTAR: checa DEPOIS do turno (o XP do combate pode ter cruzado o nível) */
@@ -4792,7 +4840,7 @@ export default function Taverna() {
     nemesisRef.current = null; setNemesis(null);
     famaPatamarRef.current = 0;
     reinoRef.current = {}; setReino({});
-    historiaRef.current = { estrutura: (mundo && mundo.estrutura) || "jornada", etapa: 0 };
+    historiaRef.current = garantirHistoria({ estrutura: (mundo && mundo.estrutura) || "jornada", etapa: 0 });
     questsRef.current = []; setQuests([]);
     divindadeRef.current = garantirDivindade(null); setDivindade(divindadeRef.current);
     devocaoRef.current = garantirDevocao(null, mapaRef.current, divindadeRef.current); setDevocao(devocaoRef.current);
@@ -4800,7 +4848,7 @@ export default function Taverna() {
     confidenciasRef.current = [];
     mercadoRef.current = { comprados: {}, ambulante: null }; setMercado(mercadoRef.current);
     bancoNomesRef.current = gerarBancoNomes(mundo);
-    systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+    systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null);
     setCombate(null); combateRef.current = null;
     setFase("jogo");
@@ -4907,7 +4955,10 @@ export default function Taverna() {
         return [k, n];
       }));
       if (regTocou) { npcsRef.current = regNovo; setNpcs(regNovo); }
-      historiaRef.current = sv.historia && sv.historia.estrutura ? sv.historia : { estrutura: (sv.mundo && sv.mundo.estrutura) || "jornada", etapa: 0 };
+      /* v9.28: o save antigo não tem contador de marcos. `garantirHistoria` o
+         cria zerado — o arco continua exatamente no momento em que estava e
+         passa a andar pelo motor daqui em diante. */
+      historiaRef.current = garantirHistoria(sv.historia && sv.historia.estrutura ? sv.historia : { estrutura: (sv.mundo && sv.mundo.estrutura) || "jornada", etapa: 0 });
       questsRef.current = Array.isArray(sv.quests) ? sv.quests : [];
       /* MIGRAÇÃO (v9.27): a quest antiga era um título e uma descrição, sem
          etapas — não dá para inventar retroativamente onde o jogador estava
@@ -4939,7 +4990,7 @@ export default function Taverna() {
       setMissoes(missoesRef.current);
       setQuests([...questsRef.current]);
       bancoNomesRef.current = gerarBancoNomes(sv.mundo);
-      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
       setFase("jogo");
       /* DESPERTAR NO CARREGAMENTO (v7.4.1): save veterano nível ≥15 nunca
          disparava o despertar (ele só checava DEPOIS de um turno). */
@@ -5230,6 +5281,10 @@ export default function Taverna() {
     let extraTempo = "";
     if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) extraTempo = avancarMinutos(MINUTOS_POR_TURNO);
     setEntrada(""); setHabAbertas(false);
+    /* MILAGRE ARMADO (v9.28): vem antes das habilidades porque um milagre É o
+       turno — não se encaixa numa sequência com magias, e deixá-lo depois
+       faria a habilidade selecionada roubar a descrição que era dele. */
+    if (milagreSel) { dispararMilagre(milagreSel, acao); return; }
     if (habsSel.length) {
       /* ---- TURNO COM VÁRIAS HABILIDADES (v9.5) ----
          Quem tem dois movimentos lança duas magias no MESMO turno e descreve
@@ -5475,6 +5530,12 @@ export default function Taverna() {
     /* v9.8: quem cai sai da base do mundo para sempre — o nome fica riscado no
        registro de pessoas e some do que o Mestre recebe no prompt. */
     derrotados.forEach((e) => registrarMorte(e.nome));
+    /* v9.28: os nomes dos caídos alimentam as etapas "derrotar" das missões.
+       Isto existia só no OUTRO caminho de vitória (a que vem declarada na
+       resposta do Mestre) — e este aqui é o caminho comum, o golpe que derruba
+       o último inimigo. Resultado: "derrotar 3 mercenários" ficava aberta para
+       sempre justamente quando o jogador matava os três. */
+    derrotadosDaSessaoRef.current = [...derrotadosDaSessaoRef.current, ...derrotados.map((e) => e && e.nome).filter(Boolean)].slice(-120);
     const esp = gerarEspolios(derrotados);
     const msgsU = [];
     /* CALCULA FORA DO UPDATER (v9.13). Isto morava dentro de
@@ -5874,6 +5935,52 @@ export default function Taverna() {
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MOVIMENTO — RESOLVIDO PELO SISTEMA] Eu me desloquei de ${nomeDaZona(campo, de)} para ${chk.zona.nome}${colados.length ? `, e ${colados.map((c) => c.nome).join(", ")} tentou me acertar na saída` : ""}. Narre o deslocamento usando os nomes dos lugares e nada mais: não mova ninguém junto comigo, não faça inimigo nenhum me alcançar de outro lugar.`;
   };
 
+  /* ---------------- O ARCO CASADO COM O MOTOR (v9.28) ----------------
+     O arco corria por opinião do Mestre ("historia_avancar") e o motor corria
+     por fato. Os dois descolavam: o jogador ficava em "O Abismo", com o Mestre
+     instruído a narrar a derrota mais escura da campanha, enquanto o motor
+     mostrava um mundo onde nada tinha acontecido ainda. O Mestre inventava o
+     abismo do nada, e a história saía sem saber que rumo tomar.
+
+     Agora o arco anda por MARCO, e marco é fato do motor: missão concluída,
+     relógio que encheu, evento global encerrado, nêmesis abatida. As mesmas
+     coisas que o jogador já viveu. */
+
+  /* O retrato do motor que o arco enxerga. Só refs — é chamado de dentro de
+     callbacks antigos, e ler estado aqui traria o valor do primeiro render. */
+  const motorDoArco = () => {
+    const n = nemesisRef.current;
+    const g = (eventosRef.current || {}).global;
+    const ms = missoesAtivas(missoesRef.current);
+    return {
+      nemesis: n && n.status !== "derrotada" && n.nome ? n.nome : null,
+      global: g && g.nome ? g.nome : null,
+      impostas: ms.filter((m) => tipoMissao(m.tipo).forcada).map((m) => `"${m.titulo}"`).slice(0, 3),
+      relogios: (relogiosRef.current || []).map((r) => `${r.nome} ${barraDe(r)}`).slice(0, 3),
+    };
+  };
+  const resumoDoArco = () => resumoHistoria(historiaRef.current, motorDoArco());
+
+  /* Um acontecimento do motor empurra o arco. Se o empurrão bastar, o momento
+     vira — em SILÊNCIO para o jogador: dizer "a história avança: Provações"
+     entrega o que ainda vem, e ele passa a esperar o abismo em vez de vivê-lo.
+     Quem recebe a virada é o Mestre, por envelope, e só como mudança de tom. */
+  const marcarNoArco = (tipo, rotulo) => {
+    try {
+      const r = registrarMarco(historiaRef.current, tipo, rotulo);
+      if (!r.ganhou) return;
+      historiaRef.current = r.historia;
+      const v = virarEtapa(historiaRef.current, motorDoArco());
+      if (v.virou) {
+        historiaRef.current = v.historia;
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeVirada(v)}`;
+        systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), personagemRef.current || personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+      }
+      /* sem salvar aqui de propósito: quem chamou está no meio de um turno e
+         vai gravar no fim dele, e `salvar` já leva historiaRef por padrão */
+    } catch { /* o arco nunca pode derrubar o turno */ }
+  };
+
   /* ---------------- MISSÕES (v9.27) ----------------
      O conferente roda a cada turno e custa zero: é comparação com estado que
      já está na mão. É ele que resolve a queixa mais antiga do diário —
@@ -5913,6 +6020,10 @@ export default function Taverna() {
       pushMsgs(linhas.map((t) => ({ autor: "sistema", texto: t })));
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeConclusao(m, rec)}`;
       bumpCont("contratosConcluidos");
+      /* v9.28: é aqui que o arco anda. Uma missão que o mundo impôs pesa três
+         vezes o que pesa um favor — não pelo trabalho que deu, mas pelo tanto
+         que virou a história. */
+      marcarNoArco(tipoMissao(m.tipo).forcada ? "missao_forcada" : "missao", `concluí "${m.titulo}"`);
       /* o relógio de prazo morre junto com a missão que ele vigiava */
       if (m.relogioId) {
         const semRel = (relogiosRef.current || []).filter((x) => x.fonte !== `missao:${m.id}`);
@@ -5968,6 +6079,8 @@ export default function Taverna() {
     for (const cheio of r.cheios) {
       pushMsgs([{ autor: "sistema", texto: `${tipoDe(cheio.tipo).icone} ${cheio.nome} — o tempo acabou. ${cheio.consequencia || ""}`.trim() }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeCheio(cheio)}`;
+      /* relógio cheio é consequência caindo no mundo — e consequência move o arco */
+      marcarNoArco("relogio", `o tempo de "${cheio.nome}" se esgotou`);
     }
   };
 
@@ -7085,6 +7198,7 @@ export default function Taverna() {
       setNpcs(npcsRef.current);
     }
     bumpCont("nemesisVencidas"); checarConquistas();
+    marcarNoArco("nemesis", `matei ${n.nome}, ${n.titulo}`);
     pushMsgs([{ autor: "sistema", texto: `🕊 A perseguição acabou: ${n.nome}, ${n.titulo}, está morta${causa ? ` — ${causa}` : ""}.` }]);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[NÊMESIS — FIM, CANON E IRREVERSÍVEL] ${n.nome}, "${n.titulo}", está MORTA${causa ? ` (${causa})` : ""}. A perseguição contra mim ACABOU: ela não aparece mais, não age, não manda agentes, não tem sucessor nem "plano póstumo" — e o registro de pessoas já a marca como morta. Narre a notícia chegando e o que esse fim significa para mim; daqui em diante ela só existe como memória ou legado.`;
     return true;
@@ -7615,9 +7729,11 @@ export default function Taverna() {
   /* Troca o arco da campanha em andamento — sem reiniciar o mundo. */
   const trocarArco = (id) => {
     const est = estruturaPorId(id);
-    historiaRef.current = { estrutura: id, etapa: 0 };
-    pushMsgs([{ autor: "sistema", texto: `📖 Novo arco iniciado: ${est.nome} — "${est.etapas[0].nome}"` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[NOVO ARCO ESCOLHIDO PELO JOGADOR: ${est.nome}] NÃO reinicie o mundo: tudo que foi vivido permanece canônico. Costure a transição a partir da situação ATUAL — a campanha apenas muda de perspectiva dramática. Momento inicial do novo arco: "${est.etapas[0].nome}" — ${est.etapas[0].instrucao} Crie a nova missão principal coerente com este arco e com o que o herói já construiu; conclua ou adapte missões antigas que não façam mais sentido.`;
+    historiaRef.current = garantirHistoria({ estrutura: id, etapa: 0 });
+    /* o nome do arco pode aparecer: foi o jogador que o escolheu. O nome do
+       MOMENTO dentro dele, não — esse continua sendo bastidor. */
+    pushMsgs([{ autor: "sistema", texto: `📖 Novo arco iniciado: ${est.nome} — ${est.desc}` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[NOVO ARCO ESCOLHIDO PELO JOGADOR: ${est.nome}] NÃO reinicie o mundo: tudo que foi vivido permanece canônico. Costure a transição a partir da situação ATUAL — a campanha apenas muda de perspectiva dramática. Direção do momento em que ele recomeça: ${est.etapas[0].instrucao} Trabalhe com as missões, ameaças e relógios que JÁ existem, adaptando o que não fizer mais sentido; e não me diga em que momento do arco eu estou.`;
   };
 
   /* ---------------- GESTÃO POR CÓDIGO (zero tokens) ----------------
@@ -8247,7 +8363,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
       if (gn !== guildaRef.current.nivel) { const g = { ...guildaRef.current, nivel: gn }; guildaRef.current = g; setGuilda(g); msgs.push(`🏛 Guilda recalibrada para o nível ${gn}`); }
     }
     /* 5) O prompt precisa enxergar o mundo novo já no próximo turno */
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Recalibração de save: o estado do mundo (guilda, domínios, potências, pessoas, companheiros) foi atualizado para refletir tudo que já aconteceu. Trate os registros atuais como verdade.`;
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })).concat([{ autor: "sistema", texto: "⚖ Mundo recalibrado. Confira Gestão: Grupo, Pessoas, Guilda, Domínios e Diplomacia agora contam a sua história." }]));
     setRecalM(null);
@@ -8339,7 +8455,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     if (dv.dominio) msgs.push(`🌌 Domínio: ${dv.dominio}`);
     if (pan.length) msgs.push(`🏛 Panteão: ${pan.map((d) => `${d.nome} (GD ${d.gd})`).join(", ")}`);
     /* O Mestre precisa TRATAR isso como fato já no próximo turno */
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ASCENSÃO — RECALIBRAÇÃO DO SISTEMA] O estado divino do herói foi alinhado com a história já jogada: GD ${depois} (${tituloDe(depois)}), ${dv.fieis} fiéis, ${dv.pf} PF${dv.dominio ? `, domínio ${dv.dominio}` : ""}${dv.patrono ? `, patrono ${dv.patrono}` : ""}. Trate como verdade estabelecida — a história já o reconhecia assim.`;
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
     setRecalAsc(null);
@@ -8543,6 +8659,15 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                       ))}
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {milagreSel && !rolagem && (
+              <div className="tv-fade px-4 md:px-8 pb-1.5" style={{ paddingRight: "68px" }}>
+                <div className="inline-flex items-center gap-2 rounded-full pl-3.5 pr-1.5 py-1.5" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+                  <span className="tv-mono text-xs" style={{ color: T.amber }}>{milagreSel.icone} {milagreSel.nome} · {milagreSel.pf} PF — diga como você o usa</span>
+                  <button onClick={() => setMilagreSel(null)} className="tv-mono text-xs rounded-full w-5 h-5 flex items-center justify-center" style={{ background: T.line, color: T.inkDim }}>✕</button>
                 </div>
               </div>
             )}
@@ -8876,9 +9001,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 />
               )}
               {/* LINHA 2 — escrita: largura inteira, campo alto e confortável */}
-              <div className="flex gap-2 rounded-2xl p-2 min-w-0" style={{ background: T.panel, border: `1px solid ${habsSel.length ? T.violet : T.line}` }}>
+              <div className="flex gap-2 rounded-2xl p-2 min-w-0" style={{ background: T.panel, border: `1px solid ${milagreSel ? T.amber : habsSel.length ? T.violet : T.line}` }}>
                 <input value={entrada} onChange={(e) => setEntrada(e.target.value)} onKeyDown={(e) => e.key === "Enter" && agir(entrada)}
-                  placeholder={rolagem ? "Role o dado abaixo…" : habsSel.length ? `Como você usa ${habsSel.map((h) => h.nome).join(" e ")}?` : "O que você faz? Fale, aja, explore…"}
+                  placeholder={rolagem ? "Role o dado abaixo…" : milagreSel ? `Como você manifesta ${milagreSel.nome}?` : habsSel.length ? `Como você usa ${habsSel.map((h) => h.nome).join(" e ")}?` : "O que você faz? Fale, aja, explore…"}
                   disabled={bloqueado} className="flex-1 bg-transparent outline-none tv-body text-[15px] px-3 py-1.5 min-w-0" style={{ color: T.ink }} />
                 <Botao primario pequeno desativado={bloqueado || !entrada.trim()} onClick={() => agir(entrada)}>Agir →</Botao>
               </div>

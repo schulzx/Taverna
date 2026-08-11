@@ -99,7 +99,6 @@ function CartaoMissao({ m, aoResponder, aoEncerrarLegado }) {
 export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, missoes = [], aoResponderMissao, aoEncerrarLegado }) {
   const [trocando, setTrocando] = React.useState(false);
   const est = estruturaPorId((historia || {}).estrutura);
-  const etapaIdx = Math.min((historia || {}).etapa || 0, est.etapas.length - 1);
   const todas = garantirMissoes(missoes);
   const ativasM = todas.filter((m) => m.status === "ativa");
   const ofertasM = todas.filter((m) => m.status === "oferecida");
@@ -118,6 +117,13 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
           <button onClick={() => setTrocando((v) => !v)} className="tv-mono text-[10px] px-2 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>↺ trocar arco</button>
         </div>
         <div className="tv-display text-xl" style={{ color: T.ink }}>{est.nome}</div>
+        {/* v9.28: a fila de etapas ("O Chamado → A Travessia → Provações…")
+            saiu daqui. Ver que você está em "Provações" é saber que ainda vem
+            "O Abismo" — o jogador passava a esperar a derrota em vez de
+            vivê-la, e o mesmo valia para o desfecho. O arco é uma promessa de
+            gênero, e é só isso que ele precisa ver; onde ele está dentro dele
+            é bastidor do sistema. */}
+        <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{est.desc}</div>
         {trocando && (
           <div className="mt-3 space-y-2">
             <div className="tv-body text-xs" style={{ color: T.inkDim }}>Mudar a perspectiva da campanha — o mundo e a história vividos permanecem; só o rumo dramático muda.</div>
@@ -129,14 +135,6 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
             ))}
           </div>
         )}
-        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-          {est.etapas.map((et, i) => (
-            <div key={i} className="flex items-center gap-1.5">
-              <span className="tv-mono text-[10px] px-2 py-0.5 rounded-full" style={{ background: i === etapaIdx ? T.amber : i < etapaIdx ? T.panel : "transparent", color: i === etapaIdx ? T.onAccent : i < etapaIdx ? T.ok : T.inkDim, border: `1px solid ${i === etapaIdx ? T.amber : T.line}`, fontWeight: i === etapaIdx ? 700 : 400 }}>{i < etapaIdx ? "✓ " : ""}{et.nome}</span>
-              {i < est.etapas.length - 1 && <span style={{ color: T.inkDim, fontSize: 9 }}>→</span>}
-            </div>
-          ))}
-        </div>
       </div>
       {ofertasM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.violetSoft }}>Ofereceram a você</div><div className="space-y-2 mb-4">{ofertasM.map((m) => <CartaoMissao key={m.id} m={m} aoResponder={aoResponderMissao} />)}</div></>)}
       {ativasM.length === 0 && ofertasM.length === 0 && <div className="tv-body text-sm italic mb-4" style={{ color: T.inkDim }}>Nenhuma missão em curso — elas surgem conforme a história se abre, e você decide quais aceitar.</div>}

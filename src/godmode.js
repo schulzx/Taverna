@@ -47,6 +47,7 @@ export const COMANDOS = [
   { cmd: "aqui", args: "", grupo: "mundo", desc: "mostra a base do lugar onde você está (locais, gente, segredos)" },
   { cmd: "chefes", args: "", grupo: "mundo", desc: "lista os chefes gerados neste mundo" },
   { cmd: "relogio", args: "<listar|+ nome|++ id|- id>", grupo: "mundo", desc: "lista, cria, avança ou apaga um relógio de progresso" },
+  { cmd: "arco", args: "[+n]", grupo: "mundo", desc: "mostra o momento do arco e quanto falta para virar; com +n, empurra n marcos" },
 
   { cmd: "combate", args: "<criatura> [nivel] [quantos]", grupo: "luta", desc: "abre uma luta contra a criatura pedida" },
   { cmd: "encontro", args: "<trivial|facil|medio|dificil|mortal> <criatura>", grupo: "luta", desc: "monta uma luta na dificuldade pedida — o sistema escolhe quantos" },

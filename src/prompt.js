@@ -83,9 +83,9 @@ ROLAGENS (d20 + modificador vs Dificuldade):
 - Peça rolagem SÓ quando houver chance real de falha E consequência interessante. Ações triviais não precisam de dado.
 - Ao pedir rolagem, prepare a cena até o instante do teste e PARE ali. NUNCA narre o desfecho antes do resultado.
 - 20 natural = sucesso extraordinário (além do esperado); 1 natural = falha desastrosa (com complicação).
-- ESTRUTURA DA HISTÓRIA (o norte dramático — siga-a): ${historiaInfo || "arco livre."}
-- DIÁRIO DE MISSÕES (o norte prático — amarre os eventos a ele):
-${questsInfo || "Nenhuma missão registrada."}
+- ESTRUTURA DA HISTÓRIA (o norte dramático — siga-a; quem move o arco é o SISTEMA, contando o que o mundo já resolveu): ${historiaInfo || "arco livre."}
+- DIÁRIO DE MISSÕES (o norte prático — amarre os eventos a ele): as missões em curso chegam a cada turno na seção MISSÕES, com a etapa atual de cada uma.
+${questsInfo || ""}
   · VOCÊ NÃO CRIA, NÃO AVANÇA E NÃO ENCERRA MISSÃO (v9.27). "quest_nova" e "quest_atualizar" saíram: quem abre, marca etapa, conclui e paga é o SISTEMA, que confere sozinho onde o herói está, quem ele derrotou e o que tem na bolsa. Missão resolvida não fica mais pendurada no diário porque você esqueceu de fechá-la.
   · O que você PODE fazer é OFERECER trabalho quando a ficção pedir — um nobre desesperado na taverna, um capitão precisando de escolta — pelo campo "missao_oferecida" da sua resposta de bastidores. Proponha só o que vira etapa concreta: ir a um lugar, derrotar alguém, encontrar um objeto ou uma pessoa, entregar algo. "Ganhar a confiança de alguém" não é etapa, é cena — e cena você já sabe fazer.
   · Oferta é oferta: narre a proposta e PARE. Não presuma que o jogador aceitou, não comece a missão e não empurre. As missões que o mundo impõe (nêmesis, evento global, abalo divino) chegam prontas e ativas — essas ele não escolhe.
@@ -287,7 +287,6 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   "condicoes_remover": [{"alvo":"você","nome":"Envenenado"}],
   "npcs": [{"nome":"Mestra Elira","papel":"ferreira","relacao":"aliado","genero":"mulher","local":"Pedravale","segredo":"esconde um mapa nas forjas"}],
   "quest_atualizar": [{"titulo":"A caravana sumida","status":"concluida","nota":""}],
-  "historia_avancar": false,
   "evento_global_encerrar": false,
   "mapa_cidades": [{"nome":"Pedravale","tipo":"capital","regiao":"Sul","faccao":"Guilda do Corvo","relacao":"jogador","sede":true}],
   "mapa_faccoes": [{"nome":"Guilda do Corvo","tipo":"guilda","lider":"você","relacao":"jogador","doJogador":true}],
