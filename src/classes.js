@@ -39,6 +39,10 @@ import { SUBCLASSES, habilidadesDaSubclasse, subclasseDaHabilidade, RANK_PARA_SU
 export { habilidadesDaSubclasse, subclasseDaHabilidade, RANK_PARA_SUBCLASSE };
 import { ESPECIALIZACOES, habilidadesDaEspecializacao, especializacaoDaHabilidade, RANK_PARA_ESPECIALIZACAO, DEGRAUS_ESPECIALIZACAO } from "./especializacoes.js";
 export { habilidadesDaEspecializacao, especializacaoDaHabilidade, RANK_PARA_ESPECIALIZACAO, DEGRAUS_ESPECIALIZACAO };
+/* GRIMÓRIO (v9.30): as magias clássicas entram na mesma árvore. grimorio.js
+   não importa nada daqui — a seta aponta num sentido só, e é isso que impede
+   o ciclo entre os dois catálogos. */
+import { magiaPorNome, magiasDisponiveis, classesDaMagia } from "./grimorio.js";
 
 const HAB = (nome, nivel, custo, tipo, descricao) => ({ nome, nivel, custo, tipo, descricao });
 
@@ -381,7 +385,13 @@ export function habilidadesDisponiveis(classeNome, nivel, jaTem = []) {
   const c = classePorNome(classeNome);
   if (!c) return [];
   const nomes = new Set(jaTem.map((h) => (typeof h === "string" ? h : h.nome)));
-  return c.habilidades.filter((h) => h.nivel <= nivel && !nomes.has(h.nome));
+  /* v9.30: a árvore da classe e o GRIMÓRIO saem pela mesma porta. O grimório
+     não é um sistema paralelo — é mais folha na mesma árvore, e por isso as
+     magias entram aqui em vez de ganharem uma tela só delas. */
+  return [
+    ...c.habilidades.filter((h) => h.nivel <= nivel && !nomes.has(h.nome)),
+    ...magiasDisponiveis(classeNome, nivel, jaTem),
+  ];
 }
 
 /* Habilidades iniciais sugeridas ao criar o personagem (as de nível 1) */
@@ -404,6 +414,12 @@ export function habilidadesIniciais(classeNome) {
 export function classeDaHabilidade(nomeHab) {
   const alvo = String(nomeHab || "").toLowerCase();
   for (const c of CLASSES) if (c.habilidades.some((h) => h.nome.toLowerCase() === alvo)) return c.nome;
+  /* v9.30: magia do grimório pertence à classe que a lança — é assim que ela
+     herda dado de dano, atributo-chave e escola sem nenhum caso especial. Uma
+     magia de várias classes fica com a primeira; a ficha do herói refina
+     depois, se ele for de uma delas. */
+  const mg = magiaPorNome(nomeHab);
+  if (mg && mg.classes.length) return mg.classes[0];
   const sub = subclasseDaHabilidade(nomeHab);
   if (sub) { const c = CLASSES.find((x) => (x.subclasses || []).some((s) => s.nome === sub)); if (c) return c.nome; }
   /* v9.6: habilidade de ESPECIALIZAÇÃO também sobe a classe-mãe */
@@ -524,6 +540,8 @@ export function fichaDaHabilidade(nomeHab) {
     const h = c.habilidades.find((x) => x.nome.toLowerCase() === alvo);
     if (h) return h;
   }
+  const mg = magiaPorNome(nomeHab);
+  if (mg) return mg;
   const sub = subclasseDaHabilidade(nomeHab);
   if (sub) return habilidadesDaSubclasse(sub).find((x) => x.nome.toLowerCase() === alvo) || null;
   const esp = especializacaoDaHabilidade(nomeHab);

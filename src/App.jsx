@@ -57,6 +57,7 @@ import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao }
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { detectarPartida, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra } from "./rastro.js";
+import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
 import { avaliarEquipar, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt } from "./prompt.js";
@@ -4655,6 +4656,7 @@ export default function Taverna() {
       const sin = resumoSintoniaPrompt(p);
       const leg = resumoLegadoPrompt(p);
       const mis = resumoMissoesPrompt(missoesRef.current);
+      const grm = resumoGrimorioPrompt(p);
       return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${mis ? `\n${mis}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
@@ -5160,16 +5162,51 @@ export default function Taverna() {
         return { ...e, vida: pv, derrotado: pv <= 0, ultimoDano: r.dano };
       });
       partes.push(`${alvo.nome} — ${r.resultado === "critico" ? `CRÍTICO, ${r.dano} de dano` : r.resultado === "acerta" ? `${r.dano} de dano` : "resistiu parcialmente"} (d20=${r.d20}${r.bonus ? `+${r.bonus}` : ""}=${r.total} vs ${r.ca})${(locais.find((e) => e.nome === alvo.nome) || {}).derrotado ? " [CAIU]" : ""}`);
-      /* ÁREA (únicas): metade do dano nos demais inimigos */
-      if (h.area) {
-        const splash = Math.max(1, Math.round(r.dano / 2));
+      /* ---------------- ÁREA COM FORMA (v9.30) ----------------
+         Antes: `h.area` espalhava metade do dano em TODO inimigo vivo, onde
+         quer que estivesse — o que dava no mesmo para uma Bola de Fogo e para
+         uma Chuva de Meteoros, e ignorava a zona que o combate já tinha.
+
+         Agora a forma decide. A esfera cai no alvo, o cone e a linha saem de
+         você, e o sistema devolve a lista de quem está dentro. Os inimigos
+         apanhados levam o dano cheio; os SEUS companheiros que estiverem lá
+         levam metade — e é essa metade que transforma "solto a bola de fogo"
+         numa decisão em vez de num botão. */
+      if (ehArea(h) || h.area) {
+        const totalZ = campoH ? campoH.zonas.length : 1;
+        const rA = alvosDaArea({
+          hab: h, totalZonas: totalZ,
+          zonaHeroi: campoH ? zHH : 0, zonaAlvo: campoH ? (alvo.zona ?? 0) : 0,
+          inimigos: locais, aliados: (pers.grupo || []).map((g) => ({ ...g, zona: g.zona ?? (campoH ? zHH : 0) })),
+        });
+        const pegos = new Set(rA.inimigos.map((e) => e.nome).filter((n) => n !== alvo.nome));
+        /* sem campo definido (save antigo, luta do modo criativo), a área volta
+           a valer para todos: a regra de ouro das zonas é não quebrar o que
+           existia antes delas */
+        const alcanceTodos = !campoH && (ehArea(h) || h.area);
         locais = locais.map((e) => {
           if (e.nome === alvo.nome || e.derrotado || e.vida <= 0) return e;
-          const pv = Math.max(0, e.vida - splash);
-          if (pv <= 0) partes.push(`${e.nome} — ${splash} de dano pela onda [CAIU]`);
-          else partes.push(`${e.nome} — ${splash} de dano pela onda`);
-          return { ...e, vida: pv, derrotado: pv <= 0, ultimoDano: splash };
+          if (!alcanceTodos && !pegos.has(e.nome)) return e;
+          const pv = Math.max(0, e.vida - r.dano);
+          partes.push(`${e.nome} — ${r.dano} de dano pela área${pv <= 0 ? " [CAIU]" : ""}`);
+          return { ...e, vida: pv, derrotado: pv <= 0, ultimoDano: r.dano };
         });
+        if (rA.aliados.length) {
+          const meio = Math.max(1, Math.round(r.dano / 2));
+          const nomes = new Set(rA.aliados.map((a) => a.nome));
+          setPersonagem((old) => ({
+            ...old,
+            grupo: (old.grupo || []).map((g) => (nomes.has(g.nome) ? { ...g, vida: Math.max(0, (g.vida || 0) - meio) } : g)),
+          }));
+          const lista = rA.aliados.map((a) => a.nome).join(", ");
+          linhasSis.push({ autor: "sistema", texto: `💢 FOGO AMIGO — ${lista} estava dentro da área: ${meio} de dano (metade).` });
+          partes.push(`${lista} apanhou ${meio} da minha própria ${h.nome}`);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FOGO AMIGO — APLICADO PELO SISTEMA] A área de "${h.nome}" pegou ${lista}, do meu próprio grupo, e o sistema já cobrou ${meio} de dano de cada. Narre isso: eles não são figurantes, e levar um golpe meu tem reação. Não desfaça, não conserte e não finja que eles se esquivaram.`;
+        }
+        {
+          const g = geometriaDe(h);
+          linhasSis.push({ autor: "sistema", texto: `${formaDef(g.forma).icone} ${h.nome}: ${formaDef(g.forma).nome}${g.raio ? ` de ${g.raio} m` : ""} — ${rA.zonas.length === totalZ && totalZ > 1 ? "o campo inteiro" : `${rA.zonas.length} zona${rA.zonas.length > 1 ? "s" : ""}`}.` });
+        }
       }
       /* AFLIÇÃO DA HABILIDADE (v9.1): a condição vem do CATÁLOGO — da tag
          explícita da habilidade única ou do que o nome/descrição dela carrega
@@ -5237,6 +5274,123 @@ export default function Taverna() {
     }
   };
 
+  /* ---------------- O PORTAL (v9.30) ----------------
+     A magia que pula a estrada. Só sai se o herói TIVER a magia na ficha:
+     citar o nome não conjura nada, senão qualquer um teleportaria escrevendo
+     "Teleporte". A regra de quem pode ir aonde mora em grimorio.js. */
+  const magiaDePortalNaAcao = (acao) => {
+    const n = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const t = n(acao);
+    if (!/\b(uso|usar|conjuro|conjurar|abro|abrir|invoco|invocar|lanco|lancar|ativo|ativar|atravesso|cruzo)\b/.test(t)) return null;
+    const p = personagemRef.current || personagem || {};
+    for (const h of (p.habilidades || [])) {
+      const m = magiaPorNome(typeof h === "string" ? h : h && h.nome);
+      if (m && m.funcao === "portal" && t.includes(n(m.nome))) return m;
+    }
+    /* selecionar a magia no painel também conta como conjurar */
+    for (const h of habsSel) {
+      const m = magiaPorNome(h && h.nome);
+      if (m && m.funcao === "portal") return m;
+    }
+    return null;
+  };
+
+  const abrirPortalUI = (mag, acao) => {
+    let p = personagemRef.current || personagem || {};
+    if ((p.mana || 0) < mag.custo) { pushMsgs([{ autor: "sistema", texto: `⛔ ${mag.nome} custa ${mag.custo} PM — você tem ${p.mana}.` }]); return true; }
+    if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para abrir passagem no meio de um combate." }]); return true; }
+    const cidades = ((mapaRef.current || {}).cidades || []);
+    const n = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const t = n(acao);
+    const alvo = cidades.filter((c) => c && c.nome && n(c.nome).length >= 3 && t.includes(n(c.nome)))
+      .sort((a, b) => b.nome.length - a.nome.length)[0];
+    const r = resolverPortal({
+      magia: mag, destino: alvo ? alvo.nome : "", cidades,
+      cidadeAtual: cidadeAtualRef.current, faccaoJogador: faccaoJogadorRef.current,
+    });
+    if (!r.ok) { pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `🌀 ${mag.nome}: ${r.motivo}.` }]); return true; }
+
+    const de = cidadeAtualRef.current || "";
+    /* A passagem TIRA o herói de onde ele estava — inclusive de dentro de uma
+       masmorra. Sem isto, o painel continuava dizendo "você está na Cripta"
+       enquanto o mapa já o mostrava do outro lado do continente; e as tochas
+       da expedição ficavam presas lá dentro para sempre. */
+    let saiuDe = "";
+    if (masmorraRef.current) {
+      const mm = masmorraRef.current;
+      saiuDe = mm.nome;
+      masmorraRef.current = null; setMasmorra(null);
+      p = { ...p, suprimentos: { ...garantirSuprimentos(p.suprimentos), tochas: Math.max(0, mm.tochas || 0) } };
+    }
+    const persP = { ...p, mana: Math.max(0, (p.mana || 0) - mag.custo) };
+    setPersonagem(persP); personagemRef.current = persP;
+    setHabsSel([]);
+    /* a passagem CANCELA a estrada: jornada some, e o sinal de viagem que o
+       rastro pudesse ter armado morre aqui */
+    sinalViagemRef.current = null; destinoViagemRef.current = "";
+    jornadaRef.current = null; setJornada(null);
+    cidadeAtualRef.current = r.destino;
+    const dsc = descobrirCidade(mapaRef.current, r.destino);
+    if (dsc.nova) { mapaRef.current = dsc.mapa; setMapa(mapaRef.current); }
+    const extra = avancarMinutos(10 + (r.horas || 0) * 60);
+    pushMsgs([
+      { autor: "jogador", texto: `🌀 ${mag.nome} — ${acao}` },
+      { autor: "sistema", texto: `🌀 A passagem se abre e fecha: ${de || "onde você estava"} → ${r.destino} · −${mag.custo} PM${r.percalco ? "" : " · a estrada inteira ficou para trás"}` },
+      ...(saiuDe ? [{ autor: "sistema", texto: `🕳 Você deixa ${saiuDe} pela passagem${(p.suprimentos || {}).tochas ? ` — ${p.suprimentos.tochas} tocha(s) voltam para a mochila` : ""}.` }] : []),
+      ...(r.percalco ? [{ autor: "sistema", texto: `⚠ ${r.percalco}.` }] : []),
+    ]);
+    salvar({ personagem: persP, cidadeAtual: r.destino });
+    enviar(`${envelopeDoPortal(mag, de, r.destino, r.percalco)}${extra}`, persP);
+    return true;
+  };
+
+  /* ---------------- ONDE O HERÓI VAI PARAR (v9.30) ----------------
+     Portal e rastro num lugar só, porque os dois respondem à mesma pergunta:
+     esta ação muda o LUGAR onde o herói está?
+
+     Existe como função separada porque há DOIS campos de escrita no jogo — o
+     "Agir" e o "Responder" da vez do mundo — e o segundo pulava a cadeia de
+     interceptação inteira. Era por isso que "sigo para Rio do Sul" digitado
+     ali não abria estrada nenhuma: o texto ia direto para o Mestre. A v9.18
+     já tinha remendado o sintoma para os comandos "/"; a causa é esta porta
+     dos fundos, e agora as duas passam pelo mesmo lugar.
+
+     Devolve true quando ela própria já resolveu o turno (o portal envia). */
+  const interceptarMovimento = (acao) => {
+    /* o portal vem antes do rastro: "abro um portal e sigo para Aldoria" tem
+       verbo de partida, e sem esta ordem o sistema abriria justamente a
+       estrada que a magia existe para pular */
+    try {
+      const mag = magiaDePortalNaAcao(acao);
+      if (mag) return abrirPortalUI(mag, acao);
+    } catch { /* conjurar nunca pode custar o turno */ }
+    try {
+      const ctxRastro = {
+        cidadeAtual: cidadeAtualRef.current,
+        cidades: ((mapaRef.current || {}).cidades || []).map((c) => c.nome),
+        emCombate: !!combateRef.current, acampado: !!acampadoRef.current,
+        emMasmorra: !!masmorraRef.current, emViagem: !!jornadaRef.current,
+      };
+      if (sinalViagemRef.current === null && sinalMasmorraRef.current === null) {
+        /* a masmorra vem primeiro: "desço na cripta fora da cidade" é entrar
+           num covil, não abrir estrada */
+        const mm = detectarEntradaEmMasmorra(acao, ctxRastro);
+        if (mm) {
+          sinalMasmorraRef.current = mm.nome || "";
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeMasmorra(mm.nome)}`;
+        } else {
+          const part = detectarPartida(acao, ctxRastro);
+          if (part) {
+            sinalViagemRef.current = part.destino || "";
+            destinoViagemRef.current = part.destino || "";
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(part.destino, cidadeAtualRef.current)}`;
+          }
+        }
+      }
+    } catch { /* ler intenção nunca pode custar o turno */ }
+    return false;
+  };
+
   const agirInterno = (texto) => {
     const acao = texto.trim();
     if (!acao || carregando || rolagem) return;
@@ -5282,38 +5436,7 @@ export default function Taverna() {
         }
       }
     } catch { /* anotar segredo nunca pode travar o turno */ }
-    /* ---------------- RASTRO (v9.29) ----------------
-       O sistema lê a intenção de movimento na própria ação do jogador e
-       arma o módulo, em vez de esperar o Mestre lembrar de mandar o sinal.
-       Ele esquecia — e quando esquecia, "sigo para Rio do Sul" chegava lá no
-       parágrafo seguinte, sem estrada, sem clima e sem um dia no calendário.
-
-       Arma o MESMO gatilho que o sinal do Mestre usa: a viagem/masmorra abre
-       depois que ele narrar a partida, não por cima dela. */
-    try {
-      const ctxRastro = {
-        cidadeAtual: cidadeAtualRef.current,
-        cidades: ((mapaRef.current || {}).cidades || []).map((c) => c.nome),
-        emCombate: !!combateRef.current, acampado: !!acampadoRef.current,
-        emMasmorra: !!masmorraRef.current, emViagem: !!jornadaRef.current,
-      };
-      if (sinalViagemRef.current === null && sinalMasmorraRef.current === null) {
-        /* a masmorra vem primeiro: "desço na cripta fora da cidade" é entrar
-           num covil, não abrir estrada */
-        const mm = detectarEntradaEmMasmorra(acao, ctxRastro);
-        if (mm) {
-          sinalMasmorraRef.current = mm.nome || "";
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeMasmorra(mm.nome)}`;
-        } else {
-          const part = detectarPartida(acao, ctxRastro);
-          if (part) {
-            sinalViagemRef.current = part.destino || "";
-            destinoViagemRef.current = part.destino || "";
-            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(part.destino, cidadeAtualRef.current)}`;
-          }
-        }
-      }
-    } catch { /* ler intenção nunca pode custar o turno */ }
+    if (interceptarMovimento(acao)) return;
     /* RELÓGIO: turnos de exploração/cons conversam ~45 min de mundo.
        Combate, masmorra e acampamento têm tempo próprio (contado nesses fluxos). */
     let extraTempo = "";
@@ -5411,7 +5534,17 @@ export default function Taverna() {
     /* só considera USO se houver intenção clara (verbo de uso) + o nome da habilidade.
        Assim "pergunto sobre Bola de Fogo" NÃO ativa, mas "uso Bola de Fogo" ativa. */
     const temIntencao = /\b(uso|usar|lanco|lancar|conjuro|conjurar|invoco|invocar|ativo|ativar|executo|executar|realizo|disparo|disparar|aplico|aplicar|canalizo|uso a|uso o)\b/.test(acaoN);
-    const habCitada = temIntencao ? (personagem.habilidades || []).find((h) => h && h.nome && acaoN.includes(normal(h.nome))) : null;
+    /* O NOME MAIS LONGO GANHA (v9.30). Isto pegava a PRIMEIRA habilidade da
+       ficha cujo nome aparecesse no texto — e "Chuva de Meteoros" contém
+       "Meteoro". Quem tinha as duas conjurava a magia de 9º círculo e via sair
+       a de 3º, com o custo e o dano da errada. Com o grimório, colisão de
+       nome deixou de ser exceção; a regra certa é sempre a correspondência
+       mais específica. */
+    const habCitada = temIntencao
+      ? (personagem.habilidades || [])
+        .filter((h) => h && h.nome && acaoN.includes(normal(h.nome)))
+        .sort((a, b) => normal(b.nome).length - normal(a.nome).length)[0] || null
+      : null;
     if (habCitada) {
       const custo = Math.max(0, Number(habCitada.custo) || 0);
       if (personagem.mana < custo) { pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `Mana insuficiente para ${habCitada.nome}.` }]); return; }
@@ -5865,7 +5998,11 @@ export default function Taverna() {
        mandava a barra literal para o Mestre. Comando é comando em qualquer
        campo; o Mestre nunca vê nenhum dos dois. */
     if (fala.startsWith("/")) { setEntrada(""); if (executarComando(fala)) return; }
+    /* v9.30: e o resto da cadeia também. Responder ao mundo dizendo "sigo para
+       Rio do Sul" ou "conjuro Teleporte para Aldoria" é a mesma coisa que
+       dizê-lo no campo de ação — só o rótulo do botão muda. */
     setEntrada("");
+    if (interceptarMovimento(fala)) return;
     ehAcaoMundoRef.current = true;
     pushMsgs([{ autor: "jogador", texto: fala }]);
     const modo = MODOS_MUNDO[modoMundoRef.current % MODOS_MUNDO.length];
