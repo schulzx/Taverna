@@ -42,6 +42,7 @@ import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, pod
 import { dadoDeVida, garantirDadosVida, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT } from "./descanso.js";
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, RELOGIOS_PROMPT } from "./relogios.js";
 import { avaliarEncontro, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
+import { montarCampo, garantirCampo, posicionarInimigos, ZONA_HEROI, alcanca, podeMover, inimigosNaZona, moverInimigos, nomeDaZona, zonaDe, mapaDoCampo, resumoZonasPrompt, bonusDefesaDaZona, ZONAS_PROMPT } from "./zonas.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
@@ -1694,7 +1695,7 @@ function PainelBancada({ bancada = [], despensa = [], onForjar, bloqueado }) {
   );
 }
 
-function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel }) {
+function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover }) {
   const [bolsaAberta, setBolsaAberta] = useState(false);
   if (!combate || !combate.inimigos || combate.inimigos.length === 0) return null;
   const eco = combate.economia || { acao: 1, extra: 1 };
@@ -1715,6 +1716,49 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
           <span className="tv-mono text-[9px]" style={{ color: T.inkDim }} title="Ao agir, o turno é encerrado sozinho e os inimigos respondem">· agir encerra o turno</span>
         </span>
       </div>
+      {/* TERRENO (v9.20): a linha de zonas. Cada botão é um lugar; o seu
+          está aceso. Clicar anda para lá — e o botão já avisa, antes do
+          clique, se sair dali vai custar um golpe livre. Mostrar o preço
+          ANTES é a diferença entre uma decisão e uma pegadinha. */}
+      {(() => {
+        const campo = garantirCampo(combate.campo);
+        if (!campo) return null;
+        const zh = combate.zonaHeroi ?? 0;
+        const colados = inimigosNaZona(combate.inimigos, zh).length;
+        return (
+          <div className="flex items-center gap-1.5 flex-wrap mb-2">
+            <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>terreno</span>
+            {campo.zonas.map((z) => {
+              const aqui = z.i === zh;
+              const inim = inimigosNaZona(combate.inimigos, z.i);
+              const dist = Math.abs(z.i - zh);
+              const pode = dist === 1 && (eco.movimento == null || eco.movimento > 0);
+              const titulo = aqui
+                ? `Você está aqui${z.cobertura ? " · cobertura: +2 de defesa" : ""}${inim.length ? ` · ${inim.length} inimigo(s) colado(s)` : ""}`
+                : dist > 1 ? `${z.nome} está a ${dist} lugares — atravesse um de cada vez`
+                : `Ir para ${z.nome}${z.cobertura ? " (cobertura: +2 de defesa)" : ""}${z.dificil ? " (terreno difícil: custa a ação)" : ""}${colados ? ` · ${colados === 1 ? "um inimigo colado leva" : `${colados} inimigos colados levam`} um golpe livre em você na saída` : ""}`;
+              return (
+                <button key={z.i} disabled={aqui || !pode} onClick={() => onMover && onMover(z.i)} title={titulo}
+                  className="tv-mono text-[10px] px-2 py-1 rounded-full flex items-center gap-1"
+                  style={{
+                    background: aqui ? T.amber : T.panelSoft,
+                    border: `1px solid ${aqui ? T.amber : pode ? T.line : "transparent"}`,
+                    color: aqui ? T.onAccent : pode ? T.ink : T.inkDim,
+                    opacity: !aqui && !pode ? 0.4 : 1,
+                  }}>
+                  {aqui ? "◉" : "○"} {z.nome}{z.cobertura ? " 🛡" : ""}{z.dificil ? " ⛰" : ""}
+                  {inim.length > 0 && <span style={{ color: aqui ? T.onAccent : T.danger, fontWeight: 700 }}>·{inim.length}</span>}
+                </button>
+              );
+            })}
+            {colados > 0 && (
+              <span className="tv-mono text-[9px]" style={{ color: T.danger }} title="Sair de perto de um inimigo dá a ele um golpe livre">
+                ⚡ sair custa {colados === 1 ? "um golpe livre" : `${colados} golpes livres`}
+              </span>
+            )}
+          </div>
+        );
+      })()}
       {/* POÇÕES À MÃO (v9.2): as três mais úteis, a um toque.
           v9.13: usar item da bolsa NÃO gasta mais o turno — o sistema aplica
           na hora e o Mestre narra junto da ação que vier depois. */}
@@ -3549,8 +3593,19 @@ export default function Taverna() {
            enfrentou. O selo vai para a tela e a faixa para o Mestre, para a
            prosa dele combinar com o perigo real; e o custo entra no dia. */
         const aval = avaliarEncontro(combateRef.current.inimigos, pers);
-        combateRef.current = { ...combateRef.current, ordem, rodada: 1, recursos: novosRecursos(), aval };
+        /* ZONAS (v9.20): o terreno nasce com a luta e vem do LUGAR — taverna,
+           masmorra, floresta. Derivar do cenário em vez de sortear faz o
+           combate herdar a ficção que já estava em jogo: quem lutou na
+           taverna luta entre as mesas, não numa arena genérica. */
+        const campo = montarCampo({
+          emMasmorra: !!masmorraRef.current,
+          local: localAtualTxt(),
+          bioma: ((mapaRef.current.cidades || []).find((c) => c.nome === cidadeAtualRef.current) || {}).bioma || "",
+        });
+        const comZona = posicionarInimigos(campo, combateRef.current.inimigos);
+        combateRef.current = { ...combateRef.current, inimigos: comZona, ordem, rodada: 1, recursos: novosRecursos(), aval, campo, zonaHeroi: ZONA_HEROI };
         setCombate(combateRef.current);
+        msgs.push(`🗺 Terreno: ${mapaDoCampo(campo, { zonaHeroi: ZONA_HEROI, inimigos: comZona, grupo: pers.grupo || [] })}`);
         if (aval) {
           diaLutaRef.current = gastarDoDia(diaLutaRef.current, aval.custoDoDia);
           msgs.push(selo(aval));
@@ -3739,6 +3794,8 @@ export default function Taverna() {
     try {
       portaoCtxRef.current = {
         inimigos: (combateRef.current && combateRef.current.inimigos) || [],
+        campo: (combateRef.current && combateRef.current.campo) || null,
+        zonaHeroi: (combateRef.current && combateRef.current.zonaHeroi) || 0,
         npcs: npcsRef.current, cidadeAtual: cidadeAtualRef.current, mapa: mapaRef.current,
         comGrupo: pers.grupo || [], confidencias: confidenciasRef.current,
         presentes: elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: pers.grupo || [] }).aqui,
@@ -4341,6 +4398,13 @@ export default function Taverna() {
       const merc = resumoMercadoPrompt(mercadoAqui);
       const grp = resumoGrupoPrompt(p.grupo || []);
       const rea = combateRef.current ? resumoReacoesPrompt(p) : "";
+      /* v9.20: o terreno é fato, e o Mestre precisa dele para não teleportar
+         ninguém pelo salão. Só existe durante a luta — fora dela, espaço é
+         livre e é ele quem descreve. */
+      const zon = combateRef.current ? resumoZonasPrompt(combateRef.current.campo, {
+        zonaHeroi: combateRef.current.zonaHeroi || 0,
+        inimigos: combateRef.current.inimigos || [], grupo: p.grupo || [],
+      }) : "";
       /* v9.6: a ficha de atributos, os combos que a build permite e o rito de
          ascensão em curso — os três lugares onde o Mestre inventava por não saber */
       const atr = resumoAtributosPrompt(p);
@@ -4363,7 +4427,7 @@ export default function Taverna() {
       const her = resumoHeroismoPrompt(p);
       const dsc = resumoDescansoPrompt(p, diaRef.current);
       const rel = resumoRelogiosPrompt(relogiosRef.current);
-      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
+      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -4699,6 +4763,7 @@ export default function Taverna() {
     const nAtaques = ataquesPorTurno(pers.classe, nv);
     const normalizar = (x) => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const alvoCitado = vivos.find((e) => acaoN.includes(normalizar(e.nome)));
+    const campoDaLuta = garantirCampo(comb.campo);
     /* clone local para mirar corretamente entre golpes */
     const locais = comb.inimigos.map((e) => ({ ...e }));
     const resultados = [];
@@ -4708,14 +4773,30 @@ export default function Taverna() {
       /* DECLARAÇÃO: se você escolheu o alvo deste golpe na interface, ele
          manda; se aquele alvo já caiu, o golpe migra para o próximo vivo. */
       const declarado = (alvosGolpeRef.current || [])[i];
-      const alvo = (declarado && vivosAgora.find((e) => e.nome === declarado))
-        || (alvoCitado && vivosAgora.find((e) => e.nome === alvoCitado.nome))
-        || vivosAgora[0];
+      /* ZONAS (v9.20): a mira respeita o alcance. Se o alvo declarado está
+         longe e a arma é de perto, o golpe MIGRA para alguém que dá para
+         acertar em vez de virar erro automático — errar por regra que o
+         jogador não viu é a pior forma de ensinar uma mecânica. Quando não
+         há ninguém ao alcance, aí sim o ataque é recusado, com o motivo. */
+      const zH = comb.zonaHeroi ?? ZONA_HEROI;
+      const armaLonge = !!(pers.equipados && pers.equipados.arma && pers.equipados.arma.distancia);
+      const podeBater = (e) => alcanca(campoDaLuta, e.zona ?? 0, zH, { distancia: armaLonge }).ok;
+      const aoAlcance = vivosAgora.filter(podeBater);
+      if (!aoAlcance.length) {
+        return { semAlcance: true, motivo: armaLonge
+          ? "não há ninguém à vista para acertar"
+          : `ninguém está ao alcance do seu golpe — ${vivosAgora.map((e) => `${e.nome} está em ${nomeDaZona(campoDaLuta, e.zona ?? 0)}`).join(", ")}. Aproxime-se primeiro.` };
+      }
+      const alvo = (declarado && aoAlcance.find((e) => e.nome === declarado))
+        || (alvoCitado && aoAlcance.find((e) => e.nome === alvoCitado.nome))
+        || aoAlcance[0];
+      const penal = alcanca(campoDaLuta, alvo.zona ?? 0, zH, { distancia: armaLonge }).penalidade || 0;
       const r = resolverAtaque({
         atacante: pers.nome, alvo, ehAtacanteInimigo: false,
-        bonusAtaque: bonusAtkBase, danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)) + bArma.bonus,
+        bonusAtaque: bonusAtkBase - penal, danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)) + bArma.bonus,
         condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
         tipoDano: elementoDaArma(pers), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
+        bonusDefesaAlvo: bonusDefesaDaZona(campoDaLuta, alvo.zona ?? 0),
       });
       if (r.dano > 0) { const l = locais.find((e) => e.nome === alvo.nome); l.vida = Math.max(0, l.vida - r.dano); if (l.vida <= 0) l.derrotado = true; }
       resultados.push({ r, alvo: { ...alvo } });
@@ -5006,6 +5087,13 @@ export default function Taverna() {
       return;
     }
     const ataque = resolverAtaqueJogador(acao, personagem);
+    /* ZONAS (v9.20): golpe sem alcance não gasta a ação. Cobrar o turno por
+       uma regra que o jogador acabou de descobrir seria punir a curiosidade;
+       o custo dele é o passo que ele vai ter que dar. */
+    if (ataque && ataque.semAlcance) {
+      pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `📏 ${ataque.motivo}` }]);
+      return;
+    }
     if (ataque) {
       /* ECONOMIA DE TURNO (v7.4): atacar gasta a AÇÃO. Sem ação, sem golpe —
          o turno só vira quando os movimentos acabam ou o jogador encerra. */
@@ -5226,7 +5314,27 @@ export default function Taverna() {
     if (!aindaVivos.length) return { pers: persBase, resumo: fugas.length ? ` ${fugas.join("; ")}.` : "" };
     const notaFuga = fugas.length ? ` ${fugas.join("; ")} (rolado pelo sistema — narre a fuga, não a impeça).` : "";
 
-    const acoes = turnoDosInimigos({ inimigos: combPos.inimigos, jogador: persBase, grupo: persBase.grupo || [], gdJogador: grauDe(divindadeRef.current) });
+    /* ZONAS (v9.20): antes de bater, quem não alcança ANDA — e, tendo
+       chegado, bate no mesmo turno. Mover e atacar juntos é a regra de mesa,
+       e testei a alternativa: fazer o bicho perder o turno para se aproximar
+       tornaria recuar a jogada dominante em toda luta, e o combate inteiro
+       viraria o jogador andando para trás enquanto atira. O que recuar
+       compra não é um turno de graça — é a posição, a cobertura e o golpe
+       livre que ele cobra de quem vier atrás. */
+    const campoAtual = garantirCampo(combPos.campo);
+    const zHeroi = combPos.zonaHeroi ?? ZONA_HEROI;
+    if (campoAtual) {
+      const mv = moverInimigos(campoAtual, combPos.inimigos, zHeroi);
+      if (mv.movimentos.length) {
+        combPos.inimigos = mv.inimigos;
+        combateRef.current = { ...combateRef.current, inimigos: mv.inimigos };
+        pushMsgs(mv.movimentos.map((m) => ({ autor: "sistema", texto: `👣 ${m.nome}: ${m.de} → ${m.para}` })));
+      }
+    }
+    const acoes = turnoDosInimigos({
+      inimigos: combPos.inimigos, jogador: persBase, grupo: persBase.grupo || [],
+      gdJogador: grauDe(divindadeRef.current), campo: campoAtual, zonaHeroi: zHeroi,
+    });
     const linhasSis = [];
     let danoNoJogador = 0;
     let grupoAtual = [...(persBase.grupo || [])];
@@ -5456,6 +5564,47 @@ export default function Taverna() {
     const a = ATRIBUTOS.find((x) => x.nome.toLowerCase() === (rolagem.atributo || "").toLowerCase());
     return a && personagem ? modDoTeste(personagem, a.id, rolagem.pericia).total : 0;
   })() : 0;
+
+  /* ---------------- MOVER-SE NA LUTA (v9.20) ----------------
+     Uma zona por vez, e sair de perto de quem está te batendo custa: cada
+     inimigo na sua zona leva um golpe livre. É a mesma função de oportunidade
+     que já existia — ela só nunca teve um "alcance" de verdade para vigiar.
+
+     O movimento gasta o MOVIMENTO, não a ação: recuar e atacar no mesmo turno
+     é o que faz posição valer a pena. Terreno difícil é a exceção e come a
+     ação também, que é a única coisa que dá peso a um mato fechado. */
+  const moverPara = (destino) => {
+    const comb = combateRef.current;
+    if (!comb) return;
+    const campo = garantirCampo(comb.campo);
+    if (!campo) { pushMsgs([{ autor: "sistema", texto: "📏 Esta luta não tem terreno definido." }]); return; }
+    const de = comb.zonaHeroi ?? ZONA_HEROI;
+    const chk = podeMover(campo, de, destino);
+    if (!chk.ok) { pushMsgs([{ autor: "sistema", texto: `📏 ${chk.motivo}.` }]); return; }
+    const eco = comb.economia;
+    if (eco && eco.movimento <= 0) { pushMsgs([{ autor: "sistema", texto: "⏳ Você já se moveu nesta rodada." }]); return; }
+    if (chk.custaAcao && eco && eco.acao <= 0) { pushMsgs([{ autor: "sistema", texto: `⏳ ${chk.zona.nome} é terreno difícil: entrar custa a ação, e você já usou a sua.` }]); return; }
+
+    const colados = inimigosNaZona(comb.inimigos, de);
+    let pers = personagemRef.current || personagem;
+    const linhas = [{ autor: "sistema", texto: `👣 Você vai de ${nomeDaZona(campo, de)} para ${chk.zona.nome}${chk.custaAcao ? " (terreno difícil: custa a ação)" : ""}.` }];
+    if (colados.length) {
+      const ops = oportunidadesContraOJogador(colados, pers, grauDe(divindadeRef.current));
+      let dano = 0;
+      for (const o of ops) {
+        if (mostrarRolagensRef.current) linhas.push({ autor: "sistema", texto: `🎲 ${resumoDoAtaque(o.r)}` });
+        if (o.r.dano > 0) { dano += o.r.dano; linhas.push({ autor: "sistema", texto: `⚡ Ataque de oportunidade — ${o.inimigo}: ${o.r.dano} de dano ao sair de perto` }); }
+        else linhas.push({ autor: "sistema", texto: `⚡ Ataque de oportunidade — ${o.inimigo}: errou` });
+      }
+      if (dano > 0) { pers = { ...pers, vida: Math.max(0, (pers.vida || 0) - dano) }; setPersonagem(pers); personagemRef.current = pers; }
+    }
+    const novaEco = eco ? { ...eco, movimento: 0, acao: chk.custaAcao ? Math.max(0, eco.acao - 1) : eco.acao } : eco;
+    combateRef.current = { ...comb, zonaHeroi: destino, economia: novaEco };
+    setCombate(combateRef.current);
+    pushMsgs(linhas);
+    salvar({ personagem: pers });
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MOVIMENTO — RESOLVIDO PELO SISTEMA] Eu me desloquei de ${nomeDaZona(campo, de)} para ${chk.zona.nome}${colados.length ? `, e ${colados.map((c) => c.nome).join(", ")} tentou me acertar na saída` : ""}. Narre o deslocamento usando os nomes dos lugares e nada mais: não mova ninguém junto comigo, não faça inimigo nenhum me alcançar de outro lugar.`;
+  };
 
   /* ---------------- RELÓGIOS (v9.18) ----------------
      Um lugar só para mexer no ponteiro, e ele faz três coisas sempre na
@@ -7828,6 +7977,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               acaoTexto={resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1).texto}
               onDeclararAlvo={(i, nome) => { const a = [...alvosGolpeRef.current]; a[i] = nome; alvosGolpeRef.current = a; setAlvosGolpe([...a]); }}
               onLimparAlvos={() => { alvosGolpeRef.current = []; setAlvosGolpe([]); }}
+              onMover={moverPara}
               pocoes={pocoesNaBolsa} onUsarConsumivel={usarConsumivelUI} />}
 
             {/* v9.4: as sugestões de ação saíram. Numa mesa de verdade o Mestre

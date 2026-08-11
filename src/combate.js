@@ -6,6 +6,7 @@
    Estilo D&D 5e / Baldur's Gate 3: todos rolam d20, com
    vantagem/desvantagem, críticos e condições de estado.
    ============================================================ */
+import { alcanca, bonusDefesaDaZona } from "./zonas.js";
 
 import { perfilDeCriatura, multiplicadorDano, iconeDano, resistenciasEquipadas, elementoDaArma } from "./danos.js";
 import { mecanicaDe } from "./condicoes.js";
@@ -43,7 +44,7 @@ export function modificadoresDeCondicao(condicoes = []) {
 }
 
 /* Resolve UM ataque. Devolve um objeto de resultado detalhado (sem narrar). */
-export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque, danoBase, vantagem, desvantagem, condAtacante = [], condAlvo = [], tipoDano = "fisico", perfilAlvo = null, resistAlvo = [] }) {
+export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque, danoBase, vantagem, desvantagem, condAtacante = [], condAlvo = [], tipoDano = "fisico", perfilAlvo = null, resistAlvo = [], bonusDefesaAlvo = 0 }) {
   const modAtk = modificadoresDeCondicao(condAtacante);
   const modAlvo = modificadoresDeCondicao(condAlvo);
   if (modAtk.perdeAcao) return { tipo: "impedido", texto: `${atacante} está impossibilitado de agir` };
@@ -58,7 +59,10 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
   const rolagem = d20(vant, desv);
   const bonus = bonusAtaque || 0;
   const total = rolagem.valor + bonus;
-  const ca = defesaDe(alvo, !ehAtacanteInimigo); // se o atacante é inimigo, o alvo é o jogador/aliado
+  /* v9.20: a cobertura do terreno soma na defesa do alvo. Fica AQUI e não
+     em defesaDe() porque cobertura é do lugar, não da pessoa: a mesma ficha
+     é mais difícil de acertar atrás do muro e mais fácil no campo aberto. */
+  const ca = defesaDe(alvo, !ehAtacanteInimigo) + (bonusDefesaAlvo || 0); // se o atacante é inimigo, o alvo é o jogador/aliado
   const critico = rolagem.valor === 20;
   const desastre = rolagem.valor === 1;
 
@@ -118,7 +122,7 @@ export function resumoDoAtaque(r) {
    Cada inimigo vivo age: escolhe um alvo (jogador ou companheiro)
    e ataca. O app resolve toda a matemática; devolve os resultados
    para o app aplicar o dano e o Mestre narrar as DECISÕES. */
-export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0 }) {
+export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0, campo = null, zonaHeroi = 0 }) {
   const vivos = (inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
   const alvosPossiveis = [
     { ref: "jogador", nome: jogador.nome, ent: jogador },
@@ -126,6 +130,17 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0 
   ];
   const acoes = [];
   for (const inim of vivos) {
+    /* ZONAS (v9.20): quem não alcança, não bate. Sem campo definido esta
+       conta devolve sempre "alcança, sem penalidade" — é o que mantém o
+       comportamento antigo intacto para combates sem terreno.
+
+       O grupo inteiro do herói conta como estando NA ZONA DELE, de
+       propósito: dar posição individual a cada companheiro dobraria o
+       estado e transferiria para o jogador uma contabilidade que não é
+       decisão dele — ele comanda a própria posição, não a de quatro. */
+    const alc = alcanca(campo, inim.zona ?? 0, zonaHeroi, { distancia: !!inim.distancia });
+    if (!alc.ok) continue;
+    const penalidadeZona = alc.penalidade || 0;
     /* MULTIATAQUE (5e): elites agem 2 vezes, lendários até 3 — como o
        Multiattack dos monstros. Cada golpe escolhe alvo de novo. */
     const nGolpes = ataquesDoInimigo(inim.ameaca, inim.nivel);
@@ -143,9 +158,13 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0 
       const r = resolverAtaque({
         atacante: inim.nome, alvo: alvo.ent, ehAtacanteInimigo: true,
         /* REGRA DO DEGRAU (v7.4): divindades ganham +2/degrau sobre o alvo */
-        bonusAtaque: bonusDeAmeaca(inim.ameaca) + 2 * ((inim.gd || 0) - (gdJogador || 0)), danoBase: danoDe(inim, true),
+        bonusAtaque: bonusDeAmeaca(inim.ameaca) + 2 * ((inim.gd || 0) - (gdJogador || 0)) - penalidadeZona,
+        danoBase: danoDe(inim, true),
         condAtacante: inim.condicoes || [], condAlvo: alvo.ent.condicoes || [],
         tipoDano: perfilInim.ataque, resistAlvo: resistenciasEquipadas(alvo.ent),
+        /* cobertura do herói e do grupo: quem luta atrás de alguma coisa é
+           mais difícil de acertar, e é isso que dá motivo para recuar */
+        bonusDefesaAlvo: bonusDefesaDaZona(campo, zonaHeroi),
       });
       /* GOLPE DO CATÁLOGO (v9.1): o bicho não "ataca" genericamente — ele usa
          um golpe com nome, do repertório fixo dele. É esse nome que o Mestre

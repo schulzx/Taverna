@@ -59,6 +59,7 @@
 import { detectarForaDeLugar, notaForaDeLugar, detectarVazamento, notaVazamento, ocorrenciaDoNome, contextoDoNome, AGINDO_NA_CENA } from "./cena.js";
 export { ocorrenciaDoNome } from "./cena.js";
 import { detectarAscensaoNarrada } from "./ascensao.js";
+import { detectarAlcanceImpossivel, notaAlcanceImpossivel, nomeDaZona } from "./zonas.js";
 import { tituloDe } from "./divindades.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -193,6 +194,19 @@ export function violacoesDoTurno(narrativa, ctx = {}) {
       nota: notaForaDeLugar(fora, ctx.cidadeAtual),
       regra: `${fora.map((n) => `${n.nome} está em ${n.onde}, a ${n.dias} dia(s) de viagem`).join("; ")} — essa pessoa NÃO pode estar nesta cena, e não teve tempo de chegar. Reescreva sem ela: ou é outra pessoa do lugar (dê outro nome, ou use um papel genérico como "o estalajadeiro"), ou o que chegou foi uma carta/recado, nunca o corpo dela.`,
       lembrete: "Só ponha em cena quem o envelope listou como PRESENTE. Quem está longe manda carta ou recado — nunca aparece.",
+    });
+  }
+
+  /* alcance: quem está a duas zonas não encosta em você (v9.20) */
+  const longe = detectarAlcanceImpossivel(texto, { campo: ctx.campo, zonaHeroi: ctx.zonaHeroi || 0, inimigos: ctx.inimigos });
+  if (longe.length) {
+    const onde = nomeDaZona(ctx.campo, ctx.zonaHeroi || 0);
+    v.push({
+      id: "alcance", rotulo: `${longe.map((a) => a.nome).join(", ")} encostou em você de outro lugar`,
+      aviso: "",
+      nota: notaAlcanceImpossivel(longe, ctx.campo, ctx.zonaHeroi || 0),
+      regra: `${longe.map((a) => `${a.nome} está em ${a.onde}, a ${a.distancia} lugar(es) de distância do herói, que está em ${onde}`).join("; ")}. Essa criatura NÃO alcança o herói: ninguém atravessa o terreno de graça. Reescreva a mesma cena com ela ameaçando, avançando ou atacando de longe — sem encostar, sem agarrar, sem chegar a um palmo. Mantenha o resto igual.`,
+      lembrete: "Ninguém alcança quem está em outro lugar do terreno. Quem se move, se move pelo sistema — você narra o movimento que o envelope trouxer, nunca um que você decidiu.",
     });
   }
 

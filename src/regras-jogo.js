@@ -324,9 +324,30 @@ export function processarCombate(combateAtual, m, msgs) {
     m.__inimigosFinais = inimigos; // para o app calcular os espólios por código
     return null;
   }
-  /* ECONOMIA DE TURNO (v7.4): 2 movimentos por rodada do jogador (ação +
-     ação extra/movimento). Sobrevive às reconstruções do objeto de combate. */
-  return { inimigos, economia: (combateAtual && combateAtual.economia) || { acao: 1, extra: 1 } };
+  /* O QUE SOBREVIVE À RECONSTRUÇÃO (v9.20) — e por que isto virou uma lista.
+     Esta função devolve um objeto NOVO a cada turno, e até aqui ela carregava
+     só a economia. O efeito colateral passou despercebido por versões: a
+     ORDEM DE INICIATIVA também morria, e o bloco que a rola só dispara quando
+     `!combate.ordem` — então ela era RE-ROLADA a cada resposta do Mestre que
+     tocasse no combate. A luta trocava de ordem no meio, e ninguém via porque
+     a linha nova parecia só mais uma mensagem de sistema.
+
+     Apareceu agora porque o terreno das zonas sumia junto, e terreno que some
+     dá na vista. Tudo que descreve a LUTA (e não os inimigos) precisa
+     atravessar: ordem, rodada, o peso do encontro e o campo com a posição do
+     herói. */
+  const anterior = combateAtual || {};
+  return {
+    inimigos,
+    economia: anterior.economia || { acao: 1, extra: 1 },
+    ordem: anterior.ordem,
+    rodada: anterior.rodada,
+    recursos: anterior.recursos,
+    aval: anterior.aval,
+    campo: anterior.campo,
+    zonaHeroi: anterior.zonaHeroi,
+    log: anterior.log,
+  };
 }
 
 /* ---------------- App ---------------- */
