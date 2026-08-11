@@ -12,6 +12,7 @@ import { perfilDeCriatura, multiplicadorDano, iconeDano, resistenciasEquipadas, 
 import { mecanicaDe } from "./condicoes.js";
 import { golpeDaVez } from "./aflicoes.js";
 import { decidirAcaoCompanheiro, valorDaCura, danoDaHabilidadeComp } from "./companheiros.js";
+import { tipoDeDanoDaHabilidade } from "./combos.js";
 
 export function d(n) { return 1 + Math.floor(Math.random() * n); }
 
@@ -239,7 +240,10 @@ export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido =
         atacante: comp.nome, alvo, ehAtacanteInimigo: false,
         bonusAtaque: 2 + (comp.nivel || 1), danoBase: danoDaHabilidadeComp(comp, plano.habilidade),
         condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [],
-        tipoDano: "magico", perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
+        /* v9.21: mesmo conserto do lado do jogador — "magico" nao e um tipo
+           de dano, e mandar isso fazia a habilidade do companheiro sair
+           rotulada como fisica e passar por cima de toda resistencia. */
+        tipoDano: tipoDeDanoDaHabilidade(plano.habilidade, comp), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
       });
       acoes.push({ companheiro: comp.nome, tipo: "habilidade", habilidade: plano.habilidade, custo: Number(plano.habilidade.custo) || 0, alvoNome: alvo.nome, r });
       continue;

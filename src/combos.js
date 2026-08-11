@@ -71,6 +71,34 @@ export function elementoDaHabilidade(hab) {
   return null;
 }
 
+/* ---------------- O TIPO DE DANO DE UMA HABILIDADE (v9.21) ----------------
+   Isto existe para consertar um bug que estava escondido à vista: o combate
+   mandava `tipoDano: "magico"` — e "magico" NÃO é um tipo de dano. A tabela
+   de TIPOS_DANO tem fisico, fogo, gelo, raio, veneno, sagrado, sombrio e
+   arcano; "magico" é a NATUREZA de uma escola, outra dimensão da mesma
+   ficha. O efeito era duplo e nenhum dos dois aparecia como erro:
+
+     1) `iconeDano("magico")` caía no padrão e toda magia era rotulada 🗡
+        FÍSICO na tela — o sintoma que dava para ver.
+     2) `multiplicadorDano` e as resistências nunca casavam, então fraqueza
+        a fogo, imunidade a sombrio e resistência mágica simplesmente NÃO
+        funcionavam para habilidades. Um elemental de fogo levava dano cheio
+        de uma bola de fogo.
+
+   A ordem é do específico para o geral: o elemento escrito no nome manda
+   (uma "Lança de Gelo" é gelo, não importa a classe); sem elemento, a
+   escola da classe decide; e o que não é mágico é físico, como sempre foi. */
+const DANO_DO_ELEMENTO = { fogo: "fogo", gelo: "gelo", raio: "raio", veneno: "veneno", sombra: "sombrio", luz: "sagrado" };
+const DANO_DA_ESCOLA = { arcano: "arcano", divino: "sagrado", natural: "veneno", sombrio: "sombrio", encanto: "arcano", invocacao: "arcano", fisico: "fisico" };
+
+export function tipoDeDanoDaHabilidade(hab, pers) {
+  const el = elementoDaHabilidade(hab);
+  if (el && DANO_DO_ELEMENTO[el]) return DANO_DO_ELEMENTO[el];
+  const escola = escolaDaHabilidade(hab, pers);
+  if ((ESCOLAS[escola] || ESCOLAS.fisico).natureza !== "magico") return "fisico";
+  return DANO_DA_ESCOLA[escola] || "arcano";
+}
+
 /* ---------------- BUFFS: o que cada um levanta ----------------
    O efeito guarda `escopo`: "fisico", "magico" ou "todos". Quando não guarda
    (efeito antigo, ou vindo do Mestre), a natureza da habilidade que o criou

@@ -19,6 +19,7 @@ import { VINCULO_INICIAL } from "./vinculos.js";
 import { garantirPericias, periciasIniciais } from "./pericias.js";
 import { garantirHeroismo } from "./heroismo.js";
 import { garantirDadosVida, aplicarCurto, aplicarLongo } from "./descanso.js";
+import { garantirPreparadas, preparadasIniciais, temCaderno } from "./magias.js";
 
 export function aplicarNivel(pers) {
   let { xp, nivel, nivelPendentes, vidaMax, manaMax, vida, mana } = pers;
@@ -393,6 +394,13 @@ export function migrarPersonagem(p) {
        por uma regra que ele não teve chance de administrar. `ultimoLongo`
        fica nulo pelo mesmo motivo: a primeira noite depois da atualização
        não pode chegar já bloqueada. */
+    /* v9.21: o caderno de magias. Save antigo acorda com o caderno CHEIO —
+       preparadasIniciais pega as maiores que couberem. Acordar sem magia
+       nenhuma seria transformar uma regra nova em punição retroativa, e o
+       jogador descobriria a mecânica no pior lugar possível: no meio de uma
+       luta, tentando lançar o que sempre lançou. */
+    preparadas: p.magiasVersao >= 1 ? garantirPreparadas(p) : preparadasIniciais(p),
+    magiasVersao: 1,
     dadosVida: p.dadosVidaVersao >= 1 ? garantirDadosVida(p) : { total: p.nivel || 1, gastos: 0 },
     ultimoLongo: p.dadosVidaVersao >= 1 ? (p.ultimoLongo ?? null) : null,
     dadosVidaVersao: 1,

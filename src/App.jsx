@@ -18,7 +18,7 @@ import { gerarMasmorra, recompensaChefe, ROTULO_SALA, ICONE_SALA, saidasDe, said
 import { gerarMural, gerarContrato, ICONE_CONTRATO } from "./contratos.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
-import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano } from "./danos.js";
+import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano, resistenciasEquipadas } from "./danos.js";
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, MINUTOS_RODADA_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, gerarNemesis, LIMIARES_NEMESIS, ACOES_NEMESIS, rumorDoDia } from "./fama.js";
 import { gerarCronica } from "./cronica.js";
@@ -35,7 +35,7 @@ import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, 
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { BRAND, SLOGAN, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, FONT_CSS, GENEROS, ATRIBUTOS } from "./constantes.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
-import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito, naturezaDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
+import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito, naturezaDaHabilidade, tipoDeDanoDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
 import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, detectarPedidoDeTeste, envelopeDoTeste, TESTES_PROMPT } from "./testes.js";
 import { PERICIAS, periciaPorId, periciasDoAtributo, garantirPericias, periciasIniciais, bonusDePericia, passivoDe, resolucaoAutomatica, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente, resumoPericiasPrompt, PERICIAS_PROMPT } from "./pericias.js";
 import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, podeGastar, gastarHeroismo, validarDeclaracao, envelopeDeclaracao, envelopeRefazer, resumoHeroismoPrompt, HEROISMO_PROMPT } from "./heroismo.js";
@@ -43,6 +43,7 @@ import { dadoDeVida, garantirDadosVida, dadosDisponiveis, gastarDadoDeVida, pode
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, RELOGIOS_PROMPT } from "./relogios.js";
 import { avaliarEncontro, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
 import { montarCampo, garantirCampo, posicionarInimigos, ZONA_HEROI, alcanca, podeMover, inimigosNaZona, moverInimigos, nomeDaZona, zonaDe, mapaDoCampo, resumoZonasPrompt, bonusDefesaDaZona, ZONAS_PROMPT } from "./zonas.js";
+import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPreparada, ehPreparavel, preparadasIniciais, alternarPreparada, podeLancar, ehRitual, MINUTOS_RITUAL, resumoMagiasPrompt, MAGIAS_PROMPT } from "./magias.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
@@ -1813,11 +1814,16 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
           </div>
         </div>
       )}
-      {nGolpes > 1 && combate.inimigos.filter((e) => !e.derrotado).length > 1 && (
+      {/* v9.21: esta linha só aparecia com MAIS DE UM golpe por turno — então um
+          conjurador, que tem um ataque só, nunca conseguia declarar alvo nenhum.
+          Não importava, porque a habilidade ignorava a declaração de qualquer
+          jeito; agora que ela obedece, a linha precisa existir para todo mundo.
+          Com um golpe só, o rótulo vira "alvo", que é o que ele é. */}
+      {combate.inimigos.filter((e) => !e.derrotado).length > 1 && (
         <div className="rounded-xl p-2.5 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
           <div className="flex items-center justify-between mb-1.5">
             <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.amberSoft }}>
-              Declare seus {nGolpes} golpes{acaoTexto ? ` · ${acaoTexto}` : ""}
+              {nGolpes > 1 ? `Declare seus ${nGolpes} golpes` : "Escolha o alvo"}{acaoTexto ? ` · ${acaoTexto}` : ""}
             </span>
             {alvosGolpe.length > 0 && (
               <button onClick={onLimparAlvos} className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>limpar</button>
@@ -1826,7 +1832,7 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
           <div className="space-y-1.5">
             {Array.from({ length: nGolpes }).map((_, gi) => (
               <div key={gi} className="flex items-center gap-1.5 flex-wrap">
-                <span className="tv-mono text-[9px] shrink-0 w-12" style={{ color: T.inkDim }}>golpe {gi + 1}</span>
+                <span className="tv-mono text-[9px] shrink-0 w-12" style={{ color: T.inkDim }}>{nGolpes > 1 ? `golpe ${gi + 1}` : "alvo"}</span>
                 {combate.inimigos.filter((e) => !e.derrotado).map((e) => {
                   const escolhido = alvosGolpe[gi] === e.nome;
                   return (
@@ -1906,7 +1912,12 @@ function PainelHabilidades({ personagem, selecionar, fechar, escolhidas = [], li
             /* com dois movimentos dá para marcar duas magias e descrever as
                duas de uma vez — o turno inteiro numa tacada só (v9.5) */
             const cheio = !marcada && escolhidas.length >= limite;
-            const travada = semMana || rec > 0 || cheio;
+            /* CADERNO (v9.21): magia guardada aparece na lista, apagada e com
+               o motivo. Esconder seria pior — o jogador procuraria a magia,
+               nao a acharia, e concluiria que perdeu a habilidade. */
+            const doCaderno = ehPreparavel(h, personagem);
+            const guardada = doCaderno && !estaPreparada(personagem, h);
+            const travada = semMana || rec > 0 || cheio || guardada;
             return (
               <button key={i} onClick={() => !travada && selecionar(h)} disabled={travada} className="text-left rounded-xl p-3 transition-all"
                 style={{ background: marcada ? T.violet : T.panelSoft, border: `1px solid ${marcada ? T.violet : travada ? T.line : T.violet}`, opacity: travada ? 0.45 : 1, cursor: travada ? "not-allowed" : "pointer" }}>
@@ -1914,6 +1925,8 @@ function PainelHabilidades({ personagem, selecionar, fechar, escolhidas = [], li
                   <span className="tv-display text-lg leading-none" style={{ color: marcada ? "#14101F" : T.ink }}>{marcada ? "✓ " : ""}{h.nome}</span>
                   <span className="flex items-center gap-1.5 shrink-0">
                     {rec > 0 && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>⏳ {rec}t</span>}
+                    {guardada && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title={ehRitual(h) ? "Não preparada hoje — fora de combate você ainda pode conduzi-la como ritual" : "Não preparada hoje. Prepare-a no próximo descanso longo."}>📕 guardada</span>}
+                    {doCaderno && !guardada && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" style={{ border: `1px solid ${T.violet}`, color: T.violetSoft }} title="Preparada hoje">📖</span>}
                     <span className="tv-mono text-[10px]" style={{ color: semMana ? T.danger : T.violetSoft }}>{custo} PM</span>
                   </span>
                 </div>
@@ -4427,7 +4440,8 @@ export default function Taverna() {
       const her = resumoHeroismoPrompt(p);
       const dsc = resumoDescansoPrompt(p, diaRef.current);
       const rel = resumoRelogiosPrompt(relogiosRef.current);
-      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
+      const mag = resumoMagiasPrompt(p);
+      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -4816,7 +4830,25 @@ export default function Taverna() {
     const vivos = comb.inimigos.filter((e) => !e.derrotado && e.vida > 0);
     const norm = (x) => (x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
     const acaoN = norm(acao);
-    const alvo = vivos.find((e) => acaoN.includes(norm(e.nome))) || vivos[0];
+    /* O ALVO DECLARADO MANDA (v9.21). Este era o bug: a habilidade só olhava
+       o TEXTO da ação atrás de um nome e, não achando, batia em `vivos[0]`.
+       O alvo que o jogador escolheu na interface — que o ataque de arma já
+       respeitava desde sempre — era simplesmente ignorado aqui. Quem
+       selecionava o quarto inimigo e lançava uma magia via o golpe cair no
+       primeiro, sem nenhuma explicação na tela.
+
+       A ordem é a mesma do ataque de arma: o que foi declarado no painel, o
+       que foi citado por nome na frase, e só então o primeiro de pé. E o
+       alcance é respeitado — magia alcança de longe, então a lista é a dos
+       que dá para atingir, não a de todos. */
+    const campoH = garantirCampo(comb.campo);
+    const zHH = comb.zonaHeroi ?? ZONA_HEROI;
+    const atingiveis = vivos.filter((e) => alcanca(campoH, e.zona ?? 0, zHH, { distancia: true }).ok);
+    const pool = atingiveis.length ? atingiveis : vivos;
+    const declaradoH = (alvosGolpeRef.current || []).find(Boolean);
+    const alvo = (declaradoH && pool.find((e) => e.nome === declaradoH))
+      || pool.find((e) => acaoN.includes(norm(e.nome)))
+      || pool[0];
     /* ATRIBUTO DA HABILIDADE (v9.6): antes era o MAIOR número da ficha, o que
        tornava a multiclasse gratuita — um mago pegava técnicas de guerreiro e
        elas escalavam com intelecto. Agora cada habilidade usa o atributo-chave
@@ -4851,7 +4883,12 @@ export default function Taverna() {
       atacante: pers.nome, alvo, ehAtacanteInimigo: false,
       bonusAtaque: bonusAtk, danoBase,
       condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
-      tipoDano: "magico", perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
+      /* v9.21: o tipo de dano sai da habilidade — elemento no nome, senão a
+         escola da classe. Antes ia "magico", que não existe na tabela: toda
+         magia era rotulada FÍSICA e nenhuma fraqueza ou resistência casava. */
+      tipoDano: tipoDeDanoDaHabilidade(h, pers), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
+      resistAlvo: resistenciasEquipadas(alvo),
+      bonusDefesaAlvo: bonusDefesaDaZona(campoH, alvo.zona ?? 0),
     });
     const linhasSis = [];
     const partes = [];
@@ -4997,6 +5034,20 @@ export default function Taverna() {
       let custoTotal = 0;
       for (const h of escolhidas) {
         const custo = Math.max(0, Number(h.custo) || 0);
+        /* CADERNO (v9.21): magia guardada não sai. A checagem vem ANTES do
+           custo em PM porque a mensagem certa é a que explica o motivo real —
+           dizer "mana insuficiente" para quem tem mana de sobra e só não
+           preparou a magia seria mentir sobre a regra. */
+        {
+          const lanc = podeLancar(pers, h, { emCombate: !!combateRef.current });
+          if (!lanc.ok) { pushMsgs([{ autor: "sistema", texto: `📕 ${lanc.motivo}` }]); continue; }
+          if (lanc.ritual) {
+            pushMsgs([{ autor: "sistema", texto: `📖 ${lanc.aviso}` }]);
+            const tx = avancarMinutos(lanc.minutos);
+            if (tx) pushMsgs([{ autor: "sistema", texto: tx }]);
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RITUAL — RESOLVIDO PELO SISTEMA] ${h.nome} não estava preparada, então eu a conduzi como ritual: ${lanc.minutos} minutos de preparo, círculo, voz e paciência. O efeito é o mesmo; o custo foi o tempo. Narre a demora e o esforço, nunca a mecânica.`;
+          }
+        }
         if (pers.mana < custo) { pushMsgs([{ autor: "sistema", texto: `Mana insuficiente para ${h.nome} — parei antes dela.` }]); break; }
         const recSel = (pers.habRecarga || {})[(h.nome || "").toLowerCase()] || 0;
         if (recSel > 0) { pushMsgs([{ autor: "sistema", texto: `⏳ ${h.nome} está em recarga (${recSel}t) — pulei.` }]); continue; }
@@ -5953,6 +6004,18 @@ export default function Taverna() {
     }));
     notaRef.current = `[FICHA — REGISTRO DO SISTEMA] Subi para o nível ${personagem.nivel}. É anotação de ficha: mencione o crescimento de passagem se couber, sem abrir cena de treinamento e sem descrever poderes novos — o que eu de fato aprendi só existe depois que eu gastar os pontos.`;
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
+  };
+
+  /* ---------------- O CADERNO (v9.21) ----------------
+     Um clique prepara ou guarda. Livre no acampamento, como tudo nesta casa:
+     a decisão que importa é O QUE levar, não em que instante decidir. */
+  const prepararMagia = (nome) => {
+    const p0 = personagemRef.current || personagem;
+    const r = alternarPreparada(p0, nome);
+    if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `📕 ${r.motivo}.` }]); return; }
+    const p = { ...p0, preparadas: r.preparadas };
+    setPersonagem(p); personagemRef.current = p; salvar({ personagem: p });
+    pushMsgs([{ autor: "sistema", texto: `${r.acao === "preparou" ? "📖" : "📕"} ${nome}: ${r.acao === "preparou" ? "preparada" : "guardada"} (${r.preparadas.length}/${limitePreparadas(p)}).` }]);
   };
 
   /* ---------------- PERÍCIAS (v9.15) ----------------
@@ -8151,6 +8214,39 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                         {livres <= 0 ? "Nenhum dado sobrando — só uma noite inteira devolve (e devolve metade)."
                           : cheio ? "PV cheio: guarde os dados para quando doer."
                           : "O descanso curto não cura sozinho: o PV sai daqui, e estes dados só voltam pela metade no descanso longo."}
+                      </div>
+                    </div>
+                  );
+                })()}
+                {/* CADERNO (v9.21): o acampamento é onde se decide o que levar.
+                    Fica ao lado dos dados de vida porque as duas perguntas são a
+                    mesma — quanto do amanhã eu gasto agora? */}
+                {temCaderno(personagem) && (() => {
+                  const prep = garantirPreparadas(personagem);
+                  const teto = limitePreparadas(personagem);
+                  const lista = preparaveisDe(personagem);
+                  return (
+                    <div className="rounded-xl px-3 py-2 mb-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                      <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                        <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>📖 Magias na cabeça</div>
+                        <div className="tv-mono text-[10px]" style={{ color: prep.length >= teto ? T.violet : T.inkDim }}>{prep.length}/{teto}</div>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {lista.map((h) => {
+                          const on = prep.includes(h.nome);
+                          return (
+                            <button key={h.nome} onClick={() => prepararMagia(h.nome)}
+                              title={`${h.descricao || ""}${ehRitual(h) ? "\n\nRitual: fora de combate dá para conduzi-la mesmo sem preparar, pagando tempo." : ""}`}
+                              className="tv-mono text-[10px] px-2 py-1 rounded-full"
+                              style={{ background: on ? T.violet : "transparent", color: on ? T.onSecond : T.inkDim, border: `1px solid ${on ? T.violet : T.line}` }}>
+                              {on ? "📖" : "📕"} {h.nome} <span style={{ opacity: 0.7 }}>{Math.max(0, Number(h.custo) || 0)}PM</span>{ehRitual(h) ? " ⏳" : ""}
+                            </button>
+                          );
+                        })}
+                        {!lista.length && <span className="tv-body text-[11px]" style={{ color: T.inkDim }}>Nenhuma magia de caderno na ficha ainda.</span>}
+                      </div>
+                      <div className="tv-body text-[10px] mt-1.5" style={{ color: T.inkDim }}>
+                        Só as preparadas saem em combate. As guardadas voltam a caber no próximo descanso longo — e as marcadas com ⏳ ainda podem ser conduzidas como ritual fora da luta.
                       </div>
                     </div>
                   );
