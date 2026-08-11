@@ -1696,7 +1696,7 @@ function PainelBancada({ bancada = [], despensa = [], onForjar, bloqueado }) {
   );
 }
 
-function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover }) {
+function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover, grupo = [] }) {
   const [bolsaAberta, setBolsaAberta] = useState(false);
   if (!combate || !combate.inimigos || combate.inimigos.length === 0) return null;
   const eco = combate.economia || { acao: 1, extra: 1 };
@@ -1795,6 +1795,50 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
                 </span>
               </button>
             ))}
+          </div>
+        </div>
+      )}
+      {/* O GRUPO (v9.22): PV e PM de quem luta ao seu lado, na tela da luta.
+          Estavam só na ficha, atrás de dois cliques — e é durante a batalha
+          que a informação decide alguma coisa: curar agora, recuar, gastar a
+          poção boa. Lutar sem saber se o companheiro está a um golpe de cair
+          é lutar às cegas. Barra vermelha quando abaixo de um terço, para o
+          alarme ser lido de relance, sem contas. */}
+      {(grupo || []).length > 0 && (
+        <div className="rounded-xl p-2 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+          <div className="tv-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Ao seu lado</div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {grupo.map((g) => {
+              const pv = Math.max(0, g.vida || 0), pvMax = Math.max(1, g.vidaMax || 1);
+              const pm = g.mana != null ? g.mana : (g.manaMax || 0), pmMax = g.manaMax || 0;
+              const frac = pv / pvMax;
+              const caido = pv <= 0;
+              const critico = !caido && frac <= 1 / 3;
+              const cor = caido ? T.inkDim : critico ? T.danger : T.ok;
+              return (
+                <div key={g.nome} className="rounded-lg px-2 py-1" title={`${g.nome}${g.classe ? ` · ${g.classe}` : ""} — ${pv}/${pvMax} PV${pmMax ? ` · ${pm}/${pmMax} PM` : ""}${caido ? " · caído" : critico ? " · à beira de cair" : ""}`}
+                  style={{ background: T.panel, border: `1px solid ${caido ? T.line : critico ? T.danger : T.line}`, opacity: caido ? 0.5 : 1, minWidth: 104 }}>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="tv-body text-[11px] truncate" style={{ color: caido ? T.inkDim : T.ink, maxWidth: 88, textDecoration: caido ? "line-through" : "none" }}>{g.nome}</span>
+                    {critico && <span className="tv-mono text-[9px]" style={{ color: T.danger }}>⚠</span>}
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <div className="h-1 rounded-full overflow-hidden" style={{ background: T.line, width: 44 }}>
+                      <div className="h-full rounded-full" style={{ width: `${Math.round(frac * 100)}%`, background: cor, transition: "width .3s" }} />
+                    </div>
+                    <span className="tv-mono text-[9px]" style={{ color: cor }}>{pv}/{pvMax}</span>
+                  </div>
+                  {pmMax > 0 && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <div className="h-1 rounded-full overflow-hidden" style={{ background: T.line, width: 44 }}>
+                        <div className="h-full rounded-full" style={{ width: `${Math.round((pm / pmMax) * 100)}%`, background: T.violet, transition: "width .3s" }} />
+                      </div>
+                      <span className="tv-mono text-[9px]" style={{ color: T.violetSoft }}>{pm}/{pmMax}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -2301,6 +2345,13 @@ export default function Taverna() {
   const nomeCampanhaRef = useRef("");
   useEffect(() => { if (mundo) mundoRef.current = mundo; }, [mundo]);
   useEffect(() => { if (nomeCampanha) nomeCampanhaRef.current = nomeCampanha; }, [nomeCampanha]);
+  /* v9.22: `mundoAtual()` e `nomeCampanhaRef` existem porque VÁRIOS callbacks
+     desta casa são useCallback de deps estreitas, criados no primeiro render —
+     quando mundo é null e o nome da campanha é "". Ler o estado direto lá
+     dentro devolve esses valores de nascimento para sempre. Aqui a
+     consequência era silenciosa e por isso pior: o system prompt era
+     remontado com campanha sem nome e mundo vazio toda vez que o cânone ou o
+     registro de pessoas mudava, e o Mestre perdia contexto sem ninguém ver. */
   const mundoAtual = () => mundoRef.current || mundo || null;
   const sementeMundo = () => `${nomeCampanhaRef.current || nomeCampanha || "aventura"}|${(mundoAtual() && mundoAtual().genero) || ""}`;
   const generoMundo = () => (mundoAtual() && mundoAtual().genero) || "Fantasia medieval";
@@ -3434,9 +3485,18 @@ export default function Taverna() {
         } else if (chave === "ascender" && dvAtual && dvAtual.despertar) {
           const cam = caminhoPorId(arg.toLowerCase());
           const gdAtual = grauDe(dvAtual);
-          const teto = gdMaximoPorNivel(personagem.nivel || 1);
+          /* v9.22: `personagem` aqui era o estado do PRIMEIRO render — e no
+             primeiro render ele é null. `aplicarResposta` é um useCallback com
+             deps [pushMsgs], então nasce uma vez e congela tudo o que fecha
+             sobre ele. `personagem.nivel || 1` NÃO protege contra isso: o `||`
+             cuida do campo faltando, não do objeto nulo, e o turno inteiro
+             morria com "null is not an object (evaluating 'l.nivel')".
+             É a mesma armadilha que derrubou sementeMundo() na v9.14 — a
+             leitura correta aqui é a ficha do turno, não a do render. */
+          const persTeto = pers || personagemRef.current || {};
+          const teto = gdMaximoPorNivel(persTeto.nivel || 1);
           if (gdAtual >= teto) {
-            msgs.push(`⛓ ${cam.nome}: o poder existe, mas seu corpo mortal ainda não o comporta (nível ${personagem.nivel}).`);
+            msgs.push(`⛓ ${cam.nome}: o poder existe, mas seu corpo mortal ainda não o comporta (nível ${persTeto.nivel || 1}).`);
           } else {
             const alvo = GRAUS[Math.min(4, gdAtual + 1)];
             const fieisNovos = Math.max(alvo.fieis, Math.round(alvo.fieis * (1 + (cam.ganho?.fieis || 0))));
@@ -3452,7 +3512,7 @@ export default function Taverna() {
           }
         } else if (chave === "loot") {
           const rar = ["comum", "incomum", "raro", "epico", "lendario"].includes(arg.toLowerCase()) ? arg.toLowerCase() : "comum";
-          const it = gerarLoot(rar, { nivel: personagem.nivel || 1 });
+          const it = gerarLoot(rar, { nivel: (pers || personagemRef.current || {}).nivel || 1 });
           setPersonagem((p) => ({ ...p, equipamento: [...(p.equipamento || []), it] }));
           msgs.push(`◆ Achado: ${it.nome} (${RARIDADE_ROTULO[it.raridade] || it.raridade})${it.poder ? ` — ${it.poder}` : ""}`);
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ITEM GERADO PELO SISTEMA] ${it.nome}, ${it.raridade}${it.poder ? `, poder: ${it.poder}` : ""}. Já está na mochila do herói — descreva o achado usando ESTE nome e estas propriedades, sem inventar outras.`;
@@ -3503,7 +3563,7 @@ export default function Taverna() {
         }
       }
       if (tocouMapa) { mp2 = garantirGeografia(mp2, "taverna|canone"); mapaRef.current = mp2; setMapa(mp2); }
-      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, c, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+      systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, c, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     }
     /* PESSOAS (registro de NPCs): o Mestre envia "npcs"; e como blindagem de
        memória, qualquer PESSOA do cânone sem ficha entra no registro por código. */
@@ -3529,7 +3589,7 @@ export default function Taverna() {
       }
       if (tocou) {
         npcsRef.current = reg; setNpcs(reg);
-        systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+        systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
       }
     }
     setPersonagem(pers);
@@ -4333,7 +4393,7 @@ export default function Taverna() {
     devocaoRef.current = dep.devocao; setDevocao(dep.devocao);
     divindadeRef.current = { ...dv, despertar: true, panteao, fieis: Math.max(50, fieisTotais(mapaRef.current, dep.devocao)), pf: dv.pf };
     setDivindade(divindadeRef.current);
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+    systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     if (silencioso) {
       /* SAVE VETERANO (v7.4.1): nível alto carregado do disco — o sistema
          abre a ascensão SEM cutucar o Mestre (evita dupla narração com o
@@ -4494,7 +4554,7 @@ export default function Taverna() {
         try {
           const narrativas = mensagensRef.current.filter((x) => x.autor === "mestre").map((x) => x.texto);
           gerarLivro(livroRef.current, narrativas).then((l) => {
-            if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, l, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo()); salvar({ livro: l }); }
+            if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, l, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo()); salvar({ livro: l }); }
           }).catch(() => { /* o livro pode falhar; a campanha não */ });
         } catch (e) {
           pushMsgs([{ autor: "sistema", texto: `⚠ O arquivista tropeçou ao atualizar o livro da campanha (${String((e && e.message) || e).slice(0, 120)}). O turno está salvo; se repetir, me mostre esta mensagem.` }]);
@@ -4627,7 +4687,7 @@ export default function Taverna() {
     confidenciasRef.current = [];
     mercadoRef.current = { comprados: {}, ambulante: null }; setMercado(mercadoRef.current);
     bancoNomesRef.current = gerarBancoNomes(mundo);
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+    systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoHistoria(historiaRef.current), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null);
     setCombate(null); combateRef.current = null;
     setFase("jogo");
@@ -8040,7 +8100,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               acaoTexto={resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1).texto}
               onDeclararAlvo={(i, nome) => { const a = [...alvosGolpeRef.current]; a[i] = nome; alvosGolpeRef.current = a; setAlvosGolpe([...a]); }}
               onLimparAlvos={() => { alvosGolpeRef.current = []; setAlvosGolpe([]); }}
-              onMover={moverPara}
+              onMover={moverPara} grupo={personagem.grupo || []}
               pocoes={pocoesNaBolsa} onUsarConsumivel={usarConsumivelUI} />}
 
             {/* v9.4: as sugestões de ação saíram. Numa mesa de verdade o Mestre

@@ -58,6 +58,7 @@
 
 import { detectarForaDeLugar, notaForaDeLugar, detectarVazamento, notaVazamento, ocorrenciaDoNome, contextoDoNome, AGINDO_NA_CENA } from "./cena.js";
 export { ocorrenciaDoNome } from "./cena.js";
+import { mesmoPapel, quemTemOPapel } from "./npcs.js";
 import { detectarAscensaoNarrada } from "./ascensao.js";
 import { detectarAlcanceImpossivel, notaAlcanceImpossivel, nomeDaZona } from "./zonas.js";
 import { tituloDe } from "./divindades.js";
@@ -163,6 +164,56 @@ export function detectarConhecidoComoEstranho(narrativa, npcs) {
   return out;
 }
 
+/* ---------------- 4. A PESSOA QUE TROCOU DE PAPEL ----------------
+   O caso que abriu isto: o Mestre apresentou Yorick como um velho
+   camponês e o capitão da guarda como um gnomo chamado Halvard.
+   Cenas depois, Yorick reapareceu como capitão da guarda — e o
+   registro aceitou, porque `mesclarNPC` sobrescrevia o papel como
+   sobrescreve qualquer campo.
+
+   É a mesma família do morto que age e do conhecido apresentado como
+   estranho: memória que não desacontece. Quem o jogador conheceu
+   como camponês é camponês; virar guarda é um ACONTECIMENTO, e
+   acontecimento passa pelo sistema.
+
+   A régua tem dois degraus, e o segundo é o que dá confiança:
+   1) o papel dito difere do registrado — suspeito;
+   2) o papel dito JÁ PERTENCE a outra pessoa do registro — provado.
+   Só o segundo morde sozinho; o primeiro exige o aposto colado no
+   nome ("Yorick, o capitão da guarda"), que é como o Mestre escreve
+   quando está de fato reatribuindo o cargo. */
+const APOSTO = /^\s*,\s*(?:o |a |um |uma )?([a-zà-ÿ][a-zà-ÿ\s-]{3,44})/i;
+const ANTES_DO_NOME = /(?:^|[.,;:!?]\s*)(?:o |a )([a-zà-ÿ][a-zà-ÿ\s-]{3,44}?)\s+$/i;
+/* Boca do povo não é cânone. "Contam que Yorick é o capitão" é uma coisa que
+   alguém DISSE, e gente diz coisa errada — inclusive de propósito. Só o
+   narrador afirmando morde; o boato passa, e é bom que passe: rumor falso é
+   material de aventura, não erro de sistema. */
+const RELATO = /(contam que|dizem que|dizia que|se diz|ouvi dizer|ouviu dizer|segundo (o|a|os|as)|ao que parece|corre o boato|espalharam|acham que|acreditam que|juram que|pelo que dizem)/;
+
+export function detectarPapelTrocado(narrativa, npcs) {
+  const texto = String(narrativa || "");
+  if (!texto.trim()) return [];
+  const out = [];
+  for (const n of Object.values(npcs || {})) {
+    if (!n || !n.nome || !n.papel) continue;
+    if (norm(n.status).includes("morto")) continue;
+    const pos = ocorrenciaDoNome(texto, n.nome);
+    if (pos < 0) continue;
+    const { antes, depois, mencao, frase } = contextoDoNome(texto, pos, n.nome);
+    if (mencao) continue;
+    if (RELATO.test(frase)) continue;
+    const mA = APOSTO.exec(depois);
+    const mB = ANTES_DO_NOME.exec(antes);
+    const dito = (mA && mA[1]) || (mB && mB[1]) || "";
+    if (!dito.trim()) continue;
+    if (mesmoPapel(n.papel, dito)) continue;
+    /* o degrau que prova: esse cargo já tem dono, e ele tem nome */
+    const dono = quemTemOPapel(npcs, dito, n.nome);
+    out.push({ nome: n.nome, registrado: n.papel, dito: dito.trim(), dono: dono ? dono.nome : null });
+  }
+  return out;
+}
+
 /* ---------------- O PORTÃO ----------------
    Uma única passada. Devolve violações DURAS, cada uma com três
    textos: o que o jogador lê se o conserto falhar (`aviso`), o
@@ -243,6 +294,19 @@ export function violacoesDoTurno(narrativa, ctx = {}) {
       nota: `[CORREÇÃO DO SISTEMA — CÂNONE: QUEM MORREU, MORREU] Você pôs ${mortos.join(", ")} agindo em cena. O registro da campanha marca essa pessoa como MORTA, e o nome está riscado no códex. Morte é fato consumado: não há retorno sem um evento de ressurreição criado pelo SISTEMA. Trate ${mortos.length > 1 ? "essas pessoas" : "essa pessoa"} como morta daqui em diante — pode aparecer em lembrança, em sonho, num retrato ou como corpo, nunca falando ou agindo no presente.`,
       regra: `${mortos.join(", ")} está MORTO(A) no cânone da campanha e não pode agir, falar nem aparecer viva. Reescreva a cena sem ela: ou é outra pessoa, ou é uma lembrança/menção explícita ao passado. Não ressuscite, não use gêmeo, sósia, fantasma nem "afinal ela sobreviveu".`,
       lembrete: "Quem o registro marca como morto está morto. Nunca traga de volta ninguém — só o sistema pode fazer isso.",
+    });
+  }
+
+  /* cânone: a pessoa que trocou de papel (v9.22) */
+  const trocados = detectarPapelTrocado(texto, ctx.npcs);
+  if (trocados.length) {
+    const desc = trocados.map((t) => `${t.nome} está no registro como ${t.registrado}, e você o chamou de "${t.dito}"${t.dono ? ` — cargo que pertence a ${t.dono}` : ""}`);
+    v.push({
+      id: "papel", rotulo: `${trocados.map((t) => t.nome).join(", ")} trocou de papel`,
+      aviso: "",
+      nota: `[CORREÇÃO DO SISTEMA — CÂNONE: QUEM É QUEM] ${desc.join("; ")}. O registro da campanha manda: essa pessoa continua sendo o que sempre foi. Ninguém troca de ofício ou de cargo entre uma cena e outra — se isso precisa acontecer na ficção, é um ACONTECIMENTO com causa e tempo, não uma reapresentação. Trate ${trocados.length > 1 ? "essas pessoas" : "essa pessoa"} pelo papel do registro daqui em diante.`,
+      regra: `${desc.join("; ")}. Reescreva o trecho tratando ${trocados.map((t) => `${t.nome} como ${t.registrado}`).join(" e ")}${trocados.some((t) => t.dono) ? `, e mantenha ${trocados.filter((t) => t.dono).map((t) => `${t.dono} no cargo que é dele`).join(" e ")}` : ""}. Não promova, não rebaixe e não troque o ofício de ninguém: mantenha o resto da cena igual.`,
+      lembrete: "O papel de cada pessoa está no registro e não muda por narração. Um camponês não vira capitão entre duas cenas — quem muda de vida muda por acontecimento, e o acontecimento vem do sistema.",
     });
   }
 

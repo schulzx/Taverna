@@ -44,16 +44,60 @@ export function criarNPC(nome, dados = {}) {
   };
 }
 
+const semAc = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const VAZIAS = new Set(["o", "a", "os", "as", "um", "uma", "de", "do", "da", "dos", "das", "e", "em", "no", "na", "velho", "velha", "jovem", "grande", "pequeno"]);
+
+/* As palavras que de fato dizem QUEM a pessoa é. "velho camponês" e "capitão
+   da guarda" não compartilham nenhuma; "capitão da guarda" e "o capitão"
+   compartilham. É a régua mais simples que separa uma reformulação de uma
+   troca de identidade. */
+export function palavrasDoPapel(papel) {
+  return semAc(papel).split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !VAZIAS.has(w));
+}
+export function mesmoPapel(a, b) {
+  const pa = palavrasDoPapel(a), pb = palavrasDoPapel(b);
+  if (!pa.length || !pb.length) return true;   // sem informação, não afirmo diferença
+  return pa.some((w) => pb.includes(w));
+}
+
 /* Mescla uma atualização numa ficha existente: campos novos sobrescrevem,
-   nunca apagam o que já existia (blindagem contra perda de memória). */
+   nunca apagam o que já existia (blindagem contra perda de memória).
+
+   EXCETO O PAPEL (v9.22). Este campo sobrescrevia como qualquer outro, e foi
+   assim que um velho camponês chamado Yorick virou capitão da guarda de uma
+   cena para a outra — sendo que a guarda já tinha capitão, um gnomo chamado
+   Halvard. Papel não é estado mutável como `local` ou `status`: é identidade,
+   e identidade não muda porque o Mestre esqueceu. Pode mudar na ficção (um
+   camponês VIRA guarda), mas isso é um acontecimento, e acontecimento passa
+   pelo sistema — não por uma sobrescrita silenciosa num merge.
+
+   Quem chama recebe o conflito em `_papelConflito` e decide o que fazer;
+   ignorar isso preserva o comportamento seguro, que é manter o que já
+   estava lá. */
 export function mesclarNPC(ficha, dados = {}) {
   const out = { ...ficha };
+  let conflito = null;
   for (const k of ["papel", "relacao", "genero", "local", "status", "segredo", "notas"]) {
-    if (dados[k] !== undefined && dados[k] !== null && String(dados[k]).trim() !== "") out[k] = dados[k];
+    if (dados[k] === undefined || dados[k] === null || String(dados[k]).trim() === "") continue;
+    if (k === "papel" && String(ficha && ficha.papel || "").trim() && !mesmoPapel(ficha.papel, dados.papel)) {
+      conflito = { nome: ficha.nome, antes: ficha.papel, agora: String(dados.papel) };
+      continue;   // o registro manda: o papel antigo fica
+    }
+    out[k] = dados[k];
   }
   if (dados.relacao) out.relacao = String(dados.relacao).toLowerCase();
   if (dados.ultimaVez) out.ultimaVez = dados.ultimaVez;
+  if (conflito) out._papelConflito = conflito;
   return out;
+}
+
+/* Quem já ocupa este papel no registro — é o que transforma "Yorick virou
+   capitão" numa contradição PROVÁVEL em vez de uma suspeita: a guarda já
+   tem capitão, e ele tem nome. */
+export function quemTemOPapel(npcs, papel, exceto = "") {
+  const alvo = semAc(exceto);
+  return Object.values(npcs || {}).find((n) =>
+    n && n.nome && n.papel && semAc(n.nome) !== alvo && mesmoPapel(n.papel, papel)) || null;
 }
 
 /* Resumo compacto do elenco para o prompt — UMA linha por pessoa, as mais
