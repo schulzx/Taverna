@@ -44,6 +44,9 @@ import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, 
 import { avaliarEncontro, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
 import { montarCampo, garantirCampo, posicionarInimigos, ZONA_HEROI, alcanca, podeMover, inimigosNaZona, moverInimigos, nomeDaZona, zonaDe, mapaDoCampo, resumoZonasPrompt, bonusDefesaDaZona, ZONAS_PROMPT } from "./zonas.js";
 import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPreparada, ehPreparavel, preparadasIniciais, alternarPreparada, podeLancar, ehRitual, MINUTOS_RITUAL, resumoMagiasPrompt, MAGIAS_PROMPT } from "./magias.js";
+import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
+import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, ORACULO_PROMPT } from "./oraculo.js";
+import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
@@ -152,6 +155,72 @@ ${narrativas.slice(-16).join("\n\n")}`;
 
 
 /* ---------------- Overlay do dado ---------------- */
+
+/* ---------------- Depois do último dado (v9.25) ----------------
+   Tela cheia, sem botão de fechar: a morte não é um aviso que se
+   dispensa. As duas saídas ficam lado a lado com o preço escrito, e
+   o herdeiro está sempre disponível — se voltar fosse a única opção
+   possível quando falta ouro, o jogador travaria a campanha por
+   estar pobre, que é a pior forma de acabar uma história. */
+function OverlayMorte({ estado, nomeMorto, aoVoltar, aoHerdar }) {
+  const [nome, setNome] = useState("");
+  const { formas, heranca: h } = estado;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(6,4,10,0.94)", backdropFilter: "blur(6px)" }}>
+      <div className="tv-fade w-full max-w-lg">
+        <div className="text-center mb-5">
+          <div className="tv-display text-4xl mb-1" style={{ color: T.danger }}>{nomeMorto} tomba.</div>
+          <div className="tv-body text-sm" style={{ color: T.inkDim }}>A campanha continua. O que ela custa daqui em diante é escolha sua.</div>
+        </div>
+
+        <div className="rounded-2xl p-4 mb-3" style={{ background: T.panel, border: `1px solid ${formas.possivel ? T.amber : T.line}` }}>
+          <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: formas.possivel ? T.amberSoft : T.inkDim }}>✨ Voltar</div>
+          {formas.possivel ? (
+            <>
+              <div className="tv-body text-xs mb-3" style={{ color: T.inkDim }}>
+                Você volta com uma fração do PV e uma cicatriz permanente — dessas que não saram. A próxima volta custará bem mais cara.
+              </div>
+              <div className="flex flex-col gap-2">
+                {formas.opcoes.map((o) => (
+                  <button key={o.id} onClick={() => aoVoltar(o.id)} className="text-left rounded-xl px-3 py-2"
+                    style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="tv-body text-sm" style={{ color: T.ink }}>{o.rotulo}</span>
+                      <span className="tv-mono text-xs" style={{ color: T.amber }}>{o.custo}</span>
+                    </div>
+                    <div className="tv-body text-[11px] mt-0.5" style={{ color: T.inkDim }}>{o.detalhe}</div>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="tv-body text-xs" style={{ color: T.inkDim }}>{formas.motivo}.</div>
+          )}
+        </div>
+
+        <div className="rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.violet}` }}>
+          <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.violetSoft }}>⚜ Passar o fio</div>
+          <div className="tv-body text-xs mb-2" style={{ color: T.inkDim }}>
+            Alguém pega a espada e continua — no <strong style={{ color: T.ink }}>mesmo mundo</strong>: as mesmas cidades, o mesmo mapa, a mesma gente.
+            Começa no nível {h.nivel} com ◉ {h.moedas}.
+            {h.guardado.length ? ` Os objetos de poder de ${nomeMorto} vão para o túmulo — ${h.guardado.join(", ")} — e podem virar tesouro de outra aventura.` : ""}
+          </div>
+          <div className="flex gap-2">
+            <input value={nome} onChange={(e) => setNome(e.target.value)} onKeyDown={(e) => e.key === "Enter" && nome.trim() && aoHerdar(nome)}
+              placeholder="Nome de quem continua…" maxLength={30}
+              className="flex-1 rounded-lg px-3 py-2 tv-body text-sm outline-none min-w-0"
+              style={{ background: T.panelSoft, border: `1px solid ${T.line}`, color: T.ink }} />
+            <button onClick={() => nome.trim() && aoHerdar(nome)} disabled={!nome.trim()}
+              className="rounded-lg px-4 tv-mono text-xs shrink-0"
+              style={{ background: nome.trim() ? T.violet : T.panelSoft, color: nome.trim() ? T.onSecond : T.inkDim, fontWeight: 600 }}>
+              Continuar →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, aoRefazer }) {
   if (rolagem.auto) {
@@ -2261,6 +2330,8 @@ export default function Taverna() {
      é ela que dá janela ao gasto "Aguentar". Vive num ref porque não
      precisa redesenhar nada: só existe para ser consultada no clique. */
   const [heroAberto, setHeroAberto] = useState(false);
+  /* v9.25: a tela de desfecho da morte — null quando o herói está vivo */
+  const [desfechoMorte, setDesfechoMorte] = useState(null);
   const golpeRecenteRef = useRef(null);
   /* v9.5: um turno pode carregar mais de uma habilidade, uma por movimento */
   const [habsSel, setHabsSel] = useState([]);
@@ -3759,8 +3830,11 @@ export default function Taverna() {
           const mm = masmorraRef.current;
           const sala = salaCorrente;
           const rec = recompensaChefe(p2.nivel || 1);
-          p2 = { ...p2, moedas: (p2.moedas || 0) + (sala.moedas || 0), equipamento: [...(p2.equipamento || []), rec.item] };
+          /* v9.26: a luz que sobrou volta com o herói, junto do tesouro */
+          p2 = { ...p2, moedas: (p2.moedas || 0) + (sala.moedas || 0), equipamento: [...(p2.equipamento || []), rec.item],
+                 suprimentos: { ...garantirSuprimentos(p2.suprimentos), tochas: Math.max(0, mm.tochas || 0) } };
           msgs.push(`🕳 ${mm.nome} CONCLUÍDA! Tesouro do fundo: +${sala.moedas} moedas · ✦ ${rec.item.nome} (${RARIDADE_ROTULO[rec.item.raridade] || rec.item.raridade})`);
+          if ((mm.tochas || 0) > 0) msgs.push(`🕯 ${mm.tochas} tocha(s) voltam para a mochila.`);
           masmorraRef.current = null; setMasmorra(null);
           bumpCont("masmorrasConcluidas");
           chefeCaido = true;
@@ -4501,7 +4575,9 @@ export default function Taverna() {
       const dsc = resumoDescansoPrompt(p, diaRef.current);
       const rel = resumoRelogiosPrompt(relogiosRef.current);
       const mag = resumoMagiasPrompt(p);
-      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
+      const sin = resumoSintoniaPrompt(p);
+      const leg = resumoLegadoPrompt(p);
+      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -5056,6 +5132,15 @@ export default function Taverna() {
         pedirTeste(pedido.tipo, pedido.motivo, pedido.pericia ? { pericia: pedido.pericia } : {});
         return;
       }
+      /* ORÁCULO (v9.24): pergunta FECHADA sobre o que o mundo ainda não
+         estabeleceu. Vem depois do pedido de teste de propósito — "peço um
+         teste de percepção?" é teste, não consulta. E fora de combate só:
+         no meio da luta, perguntar ao mundo é perder o turno. */
+      if (!combateRef.current && ehPerguntaAoMundo(acao)) {
+        setEntrada("");
+        consultarOMundo(acao);
+        return;
+      }
     }
     /* CONFIDÊNCIA (v9.9): "conto a Iris que matei o irmão do barão". O sistema
        anota o assunto e QUEM ouviu; a partir daí, mais ninguém pode mencioná-lo
@@ -5561,7 +5646,14 @@ export default function Taverna() {
         persAtual = rh.pers; if (rh.msg) pushMsgs([{ autor: "sistema", texto: rh.msg }]);
       }
       else if (ap.desfecho === "estavel") { persAtual = { ...persAtual, morrendo: true, morte: { sucessos: 0, falhas: 0 } }; pushMsgs([{ autor: "sistema", texto: "Você estabiliza — inconsciente, mas vivo. Alguém precisa te ajudar." }]); }
-      else if (ap.desfecho === "morto") { persAtual = { ...persAtual, morrendo: false, morto: true, morte: ap }; pushMsgs([{ autor: "sistema", texto: "💀 Você tomba… mas enquanto houver esperança, a lenda não termina." }]); }
+      else if (ap.desfecho === "morto") {
+        /* v9.25: aqui o jogo dizia "enquanto houver esperança, a lenda não
+           termina" — uma frase bonita para admitir que o sistema não sabia o
+           que fazer. Agora sabe: a morte abre uma escolha com preço. */
+        persAtual = { ...persAtual, morrendo: false, morto: true, morte: ap };
+        pushMsgs([{ autor: "sistema", texto: "💀 Você tomba. O que vem depois é escolha sua — e custa." }]);
+        setTimeout(() => abrirDesfechoDaMorte(), 400);
+      }
       else { persAtual = { ...persAtual, morrendo: true, morte: ap }; }
     }
 
@@ -6066,6 +6158,115 @@ export default function Taverna() {
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
   };
 
+  /* ---------------- DEPOIS DO ÚLTIMO DADO (v9.25) ----------------
+     Duas saídas, e as duas custam. Voltar cobra ouro (ou fé, para quem tem
+     grau divino) e deixa uma cicatriz que não sara; o herdeiro preserva o
+     MUNDO e cobra a ficha. A terceira volta é a última — em algum ponto a
+     resposta certa passa a ser o herdeiro, e o sistema diz isso na cara. */
+  const abrirDesfechoDaMorte = () => {
+    const p = personagemRef.current || personagem || {};
+    const dv = divindadeRef.current || {};
+    const g = guildaRef.current || {};
+    const f = formasDeVoltar(p, {
+      moedas: p.moedas || 0, cofre: g.cofre || 0,
+      pf: dv.pf || 0, gd: grauDe(dv),
+    });
+    setDesfechoMorte({ formas: f, heranca: heranca(p, { mapa: mapaRef.current, guilda: g, faccaoJogador: faccaoJogadorRef.current }) });
+  };
+
+  const voltarDosMortos = (via) => {
+    const p = personagemRef.current || personagem;
+    const c = custoDeVoltar(p);
+    let np = aplicarVolta(p);
+    if (via === "ouro") {
+      const doBolso = Math.min(p.moedas || 0, c.moedas);
+      const doCofre = c.moedas - doBolso;
+      np = { ...np, moedas: (p.moedas || 0) - doBolso };
+      if (doCofre > 0 && guildaRef.current) {
+        guildaRef.current = { ...guildaRef.current, cofre: Math.max(0, (guildaRef.current.cofre || 0) - doCofre) };
+        setGuilda(guildaRef.current);
+      }
+    } else if (via === "fe") {
+      const dv = divindadeRef.current;
+      const custoPf = 20 + 20 * c.voltas;
+      divindadeRef.current = { ...dv, pf: Math.max(0, (dv.pf || 0) - custoPf) };
+      setDivindade(divindadeRef.current);
+    }
+    const cic = (np.cicatrizes || []).slice(-1)[0] || {};
+    setPersonagem(np); personagemRef.current = np;
+    setDesfechoMorte(null);
+    pushMsgs([{ autor: "sistema", texto: `✨ Você volta — com ${np.vida}/${np.vidaMax} PV e uma marca que não sai: ${cic.nome} (${cic.descricao}).` }]);
+    salvar({ personagem: np });
+    enviar(`[VOLTA DOS MORTOS — RESOLVIDA PELO SISTEMA] Eu morri e voltei${via === "fe" ? " pela minha própria fé — meus fiéis rezaram e desta vez alguém escutou" : " pagando o preço em ouro"}. Foi a ${np.voltas}ª vez. O que ficou em mim: ${cic.nome} — ${cic.descricao}. Narre a volta como ela é: nem milagre alegre, nem horror gratuito. Alguém que voltou do outro lado volta diferente, e o corpo demora a acreditar. Não invente outro custo além deste, e não desfaça a cicatriz.`, np);
+  };
+
+  const seguirComHerdeiro = (nome) => {
+    const p = personagemRef.current || personagem;
+    const h = heranca(p, { mapa: mapaRef.current, guilda: guildaRef.current, faccaoJogador: faccaoJogadorRef.current });
+    const nomeNovo = String(nome || "").trim().slice(0, 30) || "O Herdeiro";
+    const base = {
+      ...p,
+      nome: nomeNovo, nivel: h.nivel, xp: 0, nivelPendentes: 0,
+      moedas: h.moedas, equipamento: h.equipamento, equipados: {},
+      sintonizados: [], preparadas: [], habilidades: [], pontosHab: 0, pontosAtr: 0,
+      dadivas: [], dadivasPendentes: 0, cicatrizes: [], voltas: 0,
+      morto: false, morrendo: false, morte: { sucessos: 0, falhas: 0 },
+      condicoes: [], efeitos: [], exaustao: 0, habRecarga: {},
+      semente: `${nomeNovo}|herdeiro|${Math.floor(Math.random() * 100000)}`,
+      grupo: (p.grupo || []),
+    };
+    /* recalcula PV/PM pelo nível novo e devolve os pontos daquele patamar */
+    const np = migrarPersonagem({ ...base, vidaMax: 10 + (h.nivel - 1) * 6, manaMax: 8 + (h.nivel - 1) * 4, vida: 10 + (h.nivel - 1) * 6, mana: 8 + (h.nivel - 1) * 4, pontosHab: pontosTotais(h.nivel), pontosAtr: pontosAtributoDisponiveis({ ...base, nivel: h.nivel }) });
+    setPersonagem(np); personagemRef.current = np;
+    setDesfechoMorte(null);
+    pushMsgs([
+      { autor: "sistema", texto: `⚜ ${p.nome} descansa. ${nomeNovo} pega o fio — nível ${h.nivel}, ◉ ${h.moedas}, e o mundo inteiro como estava.` },
+      ...(h.guardado.length ? [{ autor: "sistema", texto: `⚰ Enterrado com ${p.nome}: ${h.guardado.join(", ")} — pode virar tesouro de outra aventura.` }] : []),
+    ]);
+    salvar({ personagem: np });
+    enviar(envelopeDoHerdeiro(p.nome, nomeNovo, h), np);
+  };
+
+  /* ---------------- PERGUNTAR AO MUNDO (v9.24) ----------------
+     A chance não é sorteada: sai do que o sistema já sabe — fama, guerra,
+     domínio, grau divino, hora, exaustão, masmorra, relógios quase cheios.
+     Por isso a lista de motivos vai para a tela junto do número: chance sem
+     causa é dado disfarçado de sistema, e o jogador tem o direito de
+     discordar do raciocínio, não só do resultado. */
+  const consultarOMundo = (pergunta) => {
+    const p = personagemRef.current || personagem || {};
+    const faccaoEmGuerra = (((mapaRef.current || {}).faccoes) || []).find((f) => f.tratado === "guerra");
+    const cidade = ((mapaRef.current || {}).cidades || []).find((c) => c.nome === cidadeAtualRef.current);
+    const r = consultar(pergunta, {
+      fama: famaAtual(),
+      emGuerra: faccaoEmGuerra ? faccaoEmGuerra.nome : null,
+      dominaAqui: !!(cidade && cidade.faccao && cidade.faccao === faccaoJogadorRef.current),
+      gd: grauDe(divindadeRef.current),
+      noite: ehNoite(minutoRef.current),
+      exaustao: p.exaustao || 0,
+      emMasmorra: !!masmorraRef.current,
+      emCidade: !!cidadeAtualRef.current && !jornadaRef.current,
+      relogiosCheios: (relogiosRef.current || []).filter((x) => x.cheios >= x.segmentos - 1).length,
+    });
+    pushMsgs([
+      { autor: "jogador", texto: `🔮 ${r.pergunta}` },
+      { autor: "sistema", texto: linhaDaConsulta(r) + (r.porque.length ? `\n   ${r.porque.join(" · ")}` : "") },
+    ]);
+    enviar(envelopeDoOraculo(r), p);
+  };
+
+  /* ---------------- SINTONIA (v9.23) ----------------
+     Um clique liga ou solta. Livre no acampamento: a decisão que importa é
+     QUAIS três, não em que instante trocar. */
+  const alternarPoder = (nome) => {
+    const p0 = personagemRef.current || personagem;
+    const r = alternarSintonia(p0, nome);
+    if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${r.motivo}.` }]); return; }
+    const p = { ...p0, sintonizados: r.sintonizados };
+    setPersonagem(p); personagemRef.current = p; salvar({ personagem: p });
+    pushMsgs([{ autor: "sistema", texto: `${r.acao === "sintonizou" ? "✦" : "○"} ${nome}: ${r.acao === "sintonizou" ? "sintonizado — o poder responde" : "solto — o objeto dorme"} (${r.sintonizados.length}/${MAX_SINTONIA}).` }]);
+  };
+
   /* ---------------- O CADERNO (v9.21) ----------------
      Um clique prepara ou guarda. Livre no acampamento, como tudo nesta casa:
      a decisão que importa é O QUE levar, não em que instante decidir. */
@@ -6324,9 +6525,21 @@ export default function Taverna() {
     if (acampadoRef.current || masmorraRef.current) return;
     if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para explorar uma masmorra no meio de um combate." }]); return; }
     const mmBase = gerarMasmorra((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1);
-    const mm = nomeSugerido ? { ...mmBase, nome: nomeSugerido.slice(0, 50) } : mmBase;
+    /* LUZ DE VERDADE (v9.26): a masmorra inventava as próprias tochas, e as
+       que o jogador comprava no mercado não serviam para nada. Agora a luz
+       da expedição É a da mochila: as tochas saem dos suprimentos ao entrar
+       e o que sobrar volta ao sair. É o que liga o mercado à masmorra e
+       transforma "eu me abasteci?" numa pergunta com resposta. */
+    const pIn = personagemRef.current || personagem;
+    const supIn = garantirSuprimentos(pIn.suprimentos);
+    const mm = { ...(nomeSugerido ? { ...mmBase, nome: nomeSugerido.slice(0, 50) } : mmBase), tochas: supIn.tochas };
+    const persIn = { ...pIn, suprimentos: { ...supIn, tochas: 0 } };
+    setPersonagem(persIn); personagemRef.current = persIn;
     masmorraRef.current = mm; setMasmorra(mm);
     pushMsgs([{ autor: "jogador", texto: `🕳 Encontrei uma entrada: ${mm.nome}. Vou explorar.` }]);
+    pushMsgs([{ autor: "sistema", texto: mm.tochas > 0
+      ? `🕯 Você acende a primeira das suas ${mm.tochas} tochas. Cada passagem consome uma — o que sobrar volta para a mochila na saída.`
+      : `🕯 Você não tem uma única tocha. Vai entrar no escuro — desvantagem em tudo, e o que mora lá enxerga melhor que você.` }]);
     const extraTempo = avancarMinutos(MINUTOS_SALA_MASMORRA);
     enviar(`[MASMORRA — ENTRADA · ${mm.nome}] Descobri a entrada de "${mm.nome}". O SISTEMA gerou a planta: ${mm.salas.length} câmaras em ${Math.max(...mm.salas.map((x) => x.camada))} níveis de profundidade, com passagens que se ramificam, um portão lacrado no fundo e a chave escondida com um guardião. Levo ${mm.tochas} tochas — cada passagem consome uma. Descreva a fachada e a atmosfera do primeiro salão em 2-4 frases, costurando com a cena atual${cidadeAtualRef.current ? ` (perto de ${cidadeAtualRef.current})` : ""}. Mencione que há mais de um caminho adiante. NÃO invente o que há nas salas — o sistema revela cada uma quando eu escolher a passagem.${extraTempo}`, personagem);
   };
@@ -6496,7 +6709,13 @@ export default function Taverna() {
     if (!mm) return;
     if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para fugir da masmorra no meio de um combate." }]); return; }
     masmorraRef.current = null; setMasmorra(null);
+    /* v9.26: a luz que sobrou volta para a mochila — tocha não some porque a
+       expedição acabou. Vale para a fuga e para o fim normal. */
+    const pOut = personagemRef.current || personagem;
+    const persOut = { ...pOut, suprimentos: { ...garantirSuprimentos(pOut.suprimentos), tochas: Math.max(0, mm.tochas || 0) } };
+    setPersonagem(persOut); personagemRef.current = persOut;
     pushMsgs([{ autor: "jogador", texto: `🏃 Fugo de ${mm.nome}, deixando o resto para trás.` }]);
+    if ((mm.tochas || 0) > 0) pushMsgs([{ autor: "sistema", texto: `🕯 ${mm.tochas} tocha(s) voltam para a mochila.` }]);
     enviar(`[MASMORRA — FUGA] Eu ESCOLHI fugir de ${mm.nome} antes do fim — abandono conscientemente as salas e tesouros que ainda restavam (o que já conquistei, carrego comigo). Narre a retirada apressada em 2-3 frases e retome a cena do mundo lá fora.`, personagem);
   };
 
@@ -8311,6 +8530,36 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     </div>
                   );
                 })()}
+                {/* SINTONIA (v9.23): as três vagas. Fica ao lado do caderno
+                    porque a pergunta é a mesma — o que eu levo comigo hoje? */}
+                {itensDePoder(personagem).length > 0 && (() => {
+                  const sint = garantirSintonia(personagem);
+                  const lista = itensDePoder(personagem);
+                  return (
+                    <div className="rounded-xl px-3 py-2 mb-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                      <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                        <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.amberSoft }}>✦ Objetos de poder</div>
+                        <div className="tv-mono text-[10px]" style={{ color: sint.length >= MAX_SINTONIA ? T.amber : T.inkDim }}>{sint.length}/{MAX_SINTONIA} sintonizados</div>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {lista.map((it) => {
+                          const on = sint.includes(it.nome);
+                          return (
+                            <button key={it.nome} onClick={() => alternarPoder(it.nome)}
+                              title={`${it.nome} (${RARIDADE_ROTULO[it.raridade] || it.raridade})${it.poder ? `\n\n${it.poder}` : ""}\n\n${on ? "Sintonizado: o poder responde." : "Dormente: serve como arma ou armadura comum, mas a magia não acorda."}`}
+                              className="tv-mono text-[10px] px-2 py-1 rounded-full"
+                              style={{ background: on ? T.amber : "transparent", color: on ? T.onAccent : T.inkDim, border: `1px solid ${on ? T.amber : T.line}` }}>
+                              {on ? "✦" : "○"} {it.nome}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="tv-body text-[10px] mt-1.5" style={{ color: T.inkDim }}>
+                        Item dormente continua sendo aço e couro — o que dorme é o poder dele.
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="flex flex-wrap gap-2">
                   <Botao pequeno onClick={() => sairDoAcampamento("curto")} desativado={bloqueado}>🔥 Descanso curto <span style={{ opacity: 0.7 }}>· parte da mana</span></Botao>
                   <Botao primario pequeno onClick={() => sairDoAcampamento("longo")} desativado={bloqueado}>
@@ -8569,6 +8818,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       )}
 
       {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} modificador={modPend} aoConcluir={concluirRolagem} heroismo={garantirHeroismo(personagem)} aoRefazer={pagarRefazer} />}
+      {desfechoMorte && <OverlayMorte estado={desfechoMorte} nomeMorto={personagem.nome} aoVoltar={voltarDosMortos} aoHerdar={seguirComHerdeiro} />}
       {fase === "jogo" && personagem?.nivelPendentes > 0 && !carregando && !dadoRolando && (
         <ModalNivel nivel={personagem.nivel - personagem.nivelPendentes + 1} personagem={personagem} escolher={confirmarNivel} />
       )}

@@ -20,6 +20,7 @@ import { garantirPericias, periciasIniciais } from "./pericias.js";
 import { garantirHeroismo } from "./heroismo.js";
 import { garantirDadosVida, aplicarCurto, aplicarLongo } from "./descanso.js";
 import { garantirPreparadas, preparadasIniciais, temCaderno } from "./magias.js";
+import { garantirSintonia, sintoniaInicial, atributosValem } from "./sintonia.js";
 
 export function aplicarNivel(pers) {
   let { xp, nivel, nivelPendentes, vidaMax, manaMax, vida, mana } = pers;
@@ -241,7 +242,15 @@ export function aplicarMudancas(pers, m, msgs) {
 export function bonusEquip(pers, attrId) {
   let b = 0;
   const eqp = pers.equipados || {};
-  Object.values(eqp).forEach((it) => { if (it?.atributos?.[attrId]) b += it.atributos[attrId]; });
+  /* v9.23: só o item SINTONIZADO empresta atributo. O que não pede sintonia
+     (aço comum) passa direto; o que pede e não recebeu fica dormente — serve
+     de arma e de armadura, mas o poder não responde. É a divisão que impede
+     o teto de virar "seu equipamento não funciona". */
+  Object.values(eqp).forEach((it) => {
+    if (!it?.atributos?.[attrId]) return;
+    if (!atributosValem(pers, it)) return;
+    b += it.atributos[attrId];
+  });
   return b;
 }
 export function bonusEfeito(pers, attrNome) {
@@ -401,6 +410,11 @@ export function migrarPersonagem(p) {
        luta, tentando lançar o que sempre lançou. */
     preparadas: p.magiasVersao >= 1 ? garantirPreparadas(p) : preparadasIniciais(p),
     magiasVersao: 1,
+    /* v9.23: sintoniza sozinho os melhores que ja estao equipados. Ninguem
+       pode acordar com o equipamento apagado por uma regra que nao existia
+       quando ele conquistou aquilo. */
+    sintonizados: p.sintoniaVersao >= 1 ? garantirSintonia(p) : sintoniaInicial(p),
+    sintoniaVersao: 1,
     dadosVida: p.dadosVidaVersao >= 1 ? garantirDadosVida(p) : { total: p.nivel || 1, gastos: 0 },
     ultimoLongo: p.dadosVidaVersao >= 1 ? (p.ultimoLongo ?? null) : null,
     dadosVidaVersao: 1,
