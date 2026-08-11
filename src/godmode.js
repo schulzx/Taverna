@@ -49,6 +49,7 @@ export const COMANDOS = [
   { cmd: "relogio", args: "<listar|+ nome|++ id|- id>", grupo: "mundo", desc: "lista, cria, avança ou apaga um relógio de progresso" },
 
   { cmd: "combate", args: "<criatura> [nivel] [quantos]", grupo: "luta", desc: "abre uma luta contra a criatura pedida" },
+  { cmd: "encontro", args: "<trivial|facil|medio|dificil|mortal> <criatura>", grupo: "luta", desc: "monta uma luta na dificuldade pedida — o sistema escolhe quantos" },
   { cmd: "matar", args: "", grupo: "luta", desc: "derruba todos os inimigos do combate atual" },
   { cmd: "companheiro", args: "<nome>", grupo: "luta", desc: "põe alguém no seu grupo, pronto para lutar" },
 ];

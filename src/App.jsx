@@ -41,6 +41,7 @@ import { PERICIAS, periciaPorId, periciasDoAtributo, garantirPericias, periciasI
 import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, podeGastar, gastarHeroismo, validarDeclaracao, envelopeDeclaracao, envelopeRefazer, resumoHeroismoPrompt, HEROISMO_PROMPT } from "./heroismo.js";
 import { dadoDeVida, garantirDadosVida, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT } from "./descanso.js";
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, RELOGIOS_PROMPT } from "./relogios.js";
+import { avaliarEncontro, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
@@ -2554,7 +2555,29 @@ export default function Taverna() {
           }
           const novo = processarCombate(null, { combate_iniciar: lista, __nivelJogador: personagem.nivel || 1 }, msgs);
           combateRef.current = novo; setCombate(novo);
-          godLinha(`⚡ Combate aberto: ${lista.map((x) => x.nome).join(", ")}${nivel ? ` (nível ${nivel})` : ""}.`);
+          const avG = avaliarEncontro(novo.inimigos, personagem);
+          godLinha(`⚡ Combate aberto: ${lista.map((x) => x.nome).join(", ")}${nivel ? ` (nível ${nivel})` : ""}.${avG ? `\n⚡ ${selo(avG)} (peso ${avG.ajustado} vs capacidade ${avG.capacidade})` : ""}`);
+          if (msgs.length) pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
+          return true;
+        }
+        case "encontro": {
+          /* O caminho inverso do orçamento: em vez de "quantos ogros?", o
+             jogador diz a dificuldade e o sistema resolve a quantidade. É
+             assim que dá para calibrar o jogo sem chutar. */
+          const faixa = String(arg(0) || "").toLowerCase();
+          const nomeC = c.args.slice(1).join(" ").trim();
+          if (!["trivial", "facil", "medio", "dificil", "mortal"].includes(faixa) || !nomeC) {
+            godLinha("⚡ /encontro <trivial|facil|medio|dificil|mortal> <criatura>");
+            return true;
+          }
+          const modelo = completarInimigo({ nome: nomeC }, personagem.nivel || 1);
+          const n = quantosPara(modelo, personagem, faixa);
+          const lista = Array.from({ length: n }, (_, i) => ({ nome: n > 1 ? `${nomeC} ${i + 1}` : nomeC, ameaca: modelo.ameaca, nivel: modelo.nivel }));
+          const msgs = [];
+          const novo = processarCombate(null, { combate_iniciar: lista, __nivelJogador: personagem.nivel || 1 }, msgs);
+          combateRef.current = novo; setCombate(novo);
+          const av = avaliarEncontro(novo.inimigos, personagem);
+          godLinha(`⚡ ${n}× ${nomeC} (${modelo.ameaca}) para um encontro ${faixa}.\n⚡ ${selo(av)} — peso ${av.ajustado} (bruto ${av.bruto} × ${av.mult}) vs capacidade ${av.capacidade}.`);
           if (msgs.length) pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
           return true;
         }
@@ -2691,6 +2714,10 @@ export default function Taverna() {
      desta casa. O useState existe só para a tela redesenhar. */
   const relogiosRef = useRef([]);
   const [relogios, setRelogios] = useState([]);
+  /* ORÇAMENTO DO DIA (v9.19): quanto o grupo já enfrentou desde a última
+     noite. Zera no descanso longo — é o que dá sentido a "seguimos ou
+     acampamos?", porque agora a pergunta tem resposta calculada. */
+  const diaLutaRef = useRef({ gasto: 0, lutas: 0 });
   const localAtualTxt = () => jornadaRef.current
     ? `EM VIAGEM desde ${jornadaRef.current.de || "a última parada"} (desde o dia ${jornadaRef.current.desde || "?"})${jornadaRef.current.meio ? `, viajando de ${jornadaRef.current.meio}` : ""} — não estou em cidade nenhuma`
     : (cidadeAtualRef.current ? `em ${cidadeAtualRef.current}` : "a sós, fora de cidade");
@@ -2797,7 +2824,7 @@ export default function Taverna() {
       combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
-      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, divindade: divindadeRef.current,
+      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
       historia: historiaRef.current, quests: questsRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
@@ -3517,10 +3544,19 @@ export default function Taverna() {
         ];
         const ordem = rolarIniciativa(participantes);
         reacaoUsadaRef.current = false;
-        combateRef.current = { ...combateRef.current, ordem, rodada: 1, recursos: novosRecursos() };
+        /* ORÇAMENTO (v9.19): a luta é pesada AGORA, com a mesa cheia — depois
+           que os primeiros caem, a conta já não descreve o que o jogador
+           enfrentou. O selo vai para a tela e a faixa para o Mestre, para a
+           prosa dele combinar com o perigo real; e o custo entra no dia. */
+        const aval = avaliarEncontro(combateRef.current.inimigos, pers);
+        combateRef.current = { ...combateRef.current, ordem, rodada: 1, recursos: novosRecursos(), aval };
         setCombate(combateRef.current);
+        if (aval) {
+          diaLutaRef.current = gastarDoDia(diaLutaRef.current, aval.custoDoDia);
+          msgs.push(selo(aval));
+        }
         msgs.push(`🎲 Iniciativa — ${resumoIniciativa(ordem)}`);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INICIATIVA ROLADA PELO SISTEMA] Ordem do combate: ${resumoIniciativa(ordem)}. Respeite essa ordem ao narrar quem age quando.`;
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${aval ? resumoOrcamentoPrompt(aval, diaLutaRef.current) + "\n" : ""}[INICIATIVA ROLADA PELO SISTEMA] Ordem do combate: ${resumoIniciativa(ordem)}. Respeite essa ordem ao narrar quem age quando.`;
       }
         const houveDano = Array.isArray(resp.mudancas.combate_inimigo_vida) && resp.mudancas.combate_inimigo_vida.length > 0;
         const houveAtaqueMeu = ataqueResolvidoRef.current;
@@ -4593,6 +4629,7 @@ export default function Taverna() {
       jornadaRef.current = sv.jornada && typeof sv.jornada === "object" ? sv.jornada : null; setJornada(jornadaRef.current);
       eventosRef.current = garantirEventos(sv.eventos); setEventos(eventosRef.current);
       relogiosRef.current = garantirRelogios(sv.relogios); setRelogios(relogiosRef.current);
+      diaLutaRef.current = garantirDia(sv.diaLuta);
       /* MIGRAÇÃO (v7.4): saves antigos ganham a ascensão zerada — nada quebra */
       divindadeRef.current = garantirDivindade(sv.divindade); setDivindade(divindadeRef.current);
       /* MIGRAÇÃO (v8.9): save antigo tem fiéis sem endereço — a fé é
@@ -6843,6 +6880,14 @@ export default function Taverna() {
          este sistema quer dizer. */
       tiquear("noite", { porque: "mais uma noite passou" });
       semearRelogiosAgora();
+      /* v9.19: a noite zera o orçamento de lutas do dia — é o outro lado da
+         moeda do v9.17. O descanso longo devolve fôlego E devolve margem
+         para brigar; sem zerar aqui, o contador viraria um número que só
+         cresce e pararia de significar qualquer coisa. */
+      if (diaLutaRef.current.lutas > 0) {
+        msgs.push(`⚔ O dia virou: ${diaLutaRef.current.lutas} luta(s) para trás, orçamento de combate renovado.`);
+      }
+      diaLutaRef.current = zerarDia();
     } else {
       minutoRef.current = (minutoRef.current + 60) % 1440; setMinuto(minutoRef.current); // cochilo de uma hora
     }
