@@ -360,6 +360,78 @@ export function envelopeDoPortal(m, de, para, percalco) {
   return `[PORTAL — RESOLVIDO PELO SISTEMA] Eu conjurei "${m.nome}" e a passagem me tirou de ${de || "onde eu estava"} e me pôs em ${para}. Isso é fato consumado: a viagem NÃO aconteceu, não houve estrada, encontro nem dias de marcha, e eu estou em ${para} agora.${percalco ? ` MAS ${percalco} — narre o susto e o preço, sem desfazer o resultado.` : ""} Narre a abertura e a travessia em duas ou três frases — o que se vê do outro lado, quem estava lá para ver — e me devolva a palavra em ${para}.`;
 }
 
+/* ---------------- AS FUNÇÕES QUE O CÓDIGO EXECUTA (v9.31) ----------------
+   Declarar `funcao` já era melhor que adjetivo, mas ainda dependia do Mestre
+   narrar dentro da regra. Estas são as que o sistema resolve sozinho.
+
+   O critério para uma função entrar aqui é o de sempre: o código precisa
+   conseguir CONFERIR o resultado. "Identificar" cabe, porque a ficha do item
+   está na mão. "Desejo" não cabe, e continua sendo envelope — a realidade
+   obedecendo uma vez é exatamente o tipo de coisa que só a ficção resolve. */
+
+/* FALAR COM OS MORTOS: cinco perguntas, e a contagem é do sistema. Era isso
+   que faltava — sem contador, "cinco perguntas" virava conversa livre. */
+export const PERGUNTAS_AOS_MORTOS = 5;
+
+export function abrirInterrogatorio(morto, dia = 0) {
+  return { quem: String(morto || "").slice(0, 60), restam: PERGUNTAS_AOS_MORTOS, feitas: [], dia };
+}
+export function perguntarAoMorto(sessao, pergunta) {
+  const s = sessao && typeof sessao === "object" ? sessao : null;
+  if (!s) return { ok: false, motivo: "não há ninguém escutando do outro lado" };
+  if ((s.restam || 0) <= 0) return { ok: false, motivo: "o cadáver já respondeu as cinco perguntas e volta ao silêncio" };
+  const q = String(pergunta || "").trim();
+  if (q.length < 4) return { ok: false, motivo: "pergunte alguma coisa" };
+  const nova = { ...s, restam: s.restam - 1, feitas: [...(s.feitas || []), q.slice(0, 160)] };
+  return { ok: true, sessao: nova, restam: nova.restam, pergunta: q.slice(0, 160) };
+}
+export function envelopeDoMorto(sessao, pergunta) {
+  return `[FALAR COM OS MORTOS — REGRAS APLICADAS PELO SISTEMA] Eu perguntei ao cadáver de ${sessao.quem || "alguém"}: "${pergunta}". Restam ${sessao.restam} pergunta(s) depois desta — o sistema conta, você não.
+REGRAS DA MAGIA, sem exceção: (1) ele responde SÓ o que sabia EM VIDA; do que aconteceu depois da morte dele, não sabe nada, nem sobre quem o matou se não viu. (2) Ele não é obrigado a ser prestativo: responde curto, enviesado, às vezes evasivo, do jeito de quem foi arrancado do descanso. (3) Ele NÃO é onisciente e não adivinha o futuro. (4) Se a resposta honesta é "não sei", diga "não sei" — inventar é pior que o silêncio.
+Responda em uma ou duas frases, na voz dele.`;
+}
+
+/* IDENTIFICAR: a única magia do catálogo que o sistema resolve inteira, sem o
+   Mestre — a ficha do objeto já está no save; o que faltava era mostrá-la. */
+export function textoDeIdentificacao(item) {
+  if (!item) return null;
+  const it = typeof item === "string" ? { nome: item } : item;
+  const linhas = [`🔎 ${it.nome}${it.raridade ? ` · ${it.raridade}` : ""}`];
+  if (it.tipo) linhas.push(`tipo: ${it.tipo}`);
+  const atr = it.atributos && Object.entries(it.atributos).filter(([, v]) => v);
+  if (atr && atr.length) linhas.push(`atributos: ${atr.map(([k, v]) => `${k} ${v > 0 ? "+" : ""}${v}`).join(", ")}`);
+  if (it.dano) linhas.push(`dano: ${it.dano}`);
+  if (it.defesa) linhas.push(`defesa: ${it.defesa}`);
+  if (it.poder) linhas.push(`poder: ${it.poder}`);
+  if (it.resistencias) linhas.push(`resiste a: ${[].concat(it.resistencias).join(", ")}`);
+  if (it.descricao) linhas.push(it.descricao);
+  return linhas.join(" · ");
+}
+
+/* LOCALIZAR OBJETO: direção e distância saem do mapa, não do palpite. O
+   alcance da magia é lei — o que estiver além some do resultado, e é isso que
+   impede a magia de virar um GPS do continente inteiro. */
+export function localizarNoMapa(alvo, { cidades = [], cidadeAtual = "", alcanceM = 300 } = {}) {
+  const aqui = (cidades || []).find((c) => norm(c.nome) === norm(cidadeAtual));
+  const c = (cidades || []).find((x) => x && x.descoberta !== false && norm(x.nome).includes(norm(alvo)));
+  if (!c) return { achou: false, motivo: "nada que você conheça responde a esse nome" };
+  if (!aqui) return { achou: true, alvo: c.nome, direcao: "", km: null, dentroDoAlcance: false };
+  const dx = c.x - aqui.x, dy = c.y - aqui.y;
+  const km = Math.round(Math.sqrt(dx * dx + dy * dy) * 25);
+  const dir = [dy < -3 ? "norte" : dy > 3 ? "sul" : "", dx > 3 ? "leste" : dx < -3 ? "oeste" : ""].filter(Boolean).join("-") || "bem perto";
+  return { achou: true, alvo: c.nome, direcao: dir, km, dentroDoAlcance: km * 1000 <= alcanceM };
+}
+
+/* O QUE UMA FUNÇÃO FAZ, EM UMA PALAVRA — o despachante do App usa isto para
+   saber se resolve por código ou se manda envelope. */
+export const FUNCOES_DO_SISTEMA = new Set([
+  "cura", "curar_condicao", "reviver", "identificar", "localizar",
+  "consulta_mortos", "consulta_oraculo", "invisibilidade", "voo", "luz", "portal",
+]);
+export function resolvidaPeloSistema(m) {
+  return !!(m && m.funcao && FUNCOES_DO_SISTEMA.has(m.funcao));
+}
+
 /* ---------------- O QUE O MESTRE RECEBE ---------------- */
 export function fichaDaMagiaTexto(m) {
   if (!m) return "";

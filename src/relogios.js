@@ -70,7 +70,7 @@ export function tipoDe(id) { return TIPOS[id] || TIPOS.ameaca; }
    julgamento voltaria para a IA. */
 export const GATILHOS = {
   noite: { id: "noite", rotulo: "a cada noite inteira" },
-  turno_mundo: { id: "turno_mundo", rotulo: "a cada vez do mundo" },
+  turno_mundo: { id: "turno_mundo", rotulo: "conforme o mundo se move" },
   falha: { id: "falha", rotulo: "quando você falha feio" },
   sucesso: { id: "sucesso", rotulo: "quando você tem êxito" },
   viagem: { id: "viagem", rotulo: "a cada viagem" },

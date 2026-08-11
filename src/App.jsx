@@ -57,7 +57,7 @@ import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao }
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { detectarPartida, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra } from "./rastro.js";
-import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
+import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, resolvidaPeloSistema, PERGUNTAS_AOS_MORTOS, abrirInterrogatorio, perguntarAoMorto, envelopeDoMorto, textoDeIdentificacao, localizarNoMapa, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
 import { avaliarEquipar, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt } from "./prompt.js";
@@ -484,29 +484,10 @@ const ACOES_PRONTAS = [
   { icone: "🎭", rotulo: "Enganar", texto: "Tento enganar " },
 ];
 
-const MODOS_MUNDO = [
-  { id: "vinculo", texto: "VÍNCULO E CONVERSA — alguém próximo puxa papo pessoal: um companheiro revela algo de si, uma lembrança, um medo, uma piada interna, um afeto. Íntimo e humano. SEM ameaça, SEM notícia grave." },
-  { id: "entre_npcs", texto: "NPCs ENTRE SI — dois ou mais personagens interagem ENTRE ELES na sua frente, sem depender de você: discutem, fofocam, flertam, negociam, brincam. Você é testemunha, não alvo. SEM crise." },
-  { id: "governo", texto: "GOVERNO E ADMINISTRAÇÃO — assunto de gestão chega com calma e rotina: um relatório de colheita, uma disputa entre vassalos, um pedido de obra, um imposto, uma nomeação. Burocracia viva, SEM emergência." },
-  { id: "cotidiano", texto: "COTIDIANO E POVO — a vida comum aparece: mercado, oficinas, crianças, festa, música, um artesão orgulhoso do trabalho, o cheiro da cidade. Textura do mundo, SEM conflito." },
-  { id: "mundo", texto: "MUNDO E DESCOBERTA — algo do lugar se revela: um costume local, uma construção antiga, o clima mudando a rotina, uma história que contam por ali. Curiosidade, SEM perigo." },
-  { id: "consequencia", texto: "CONSEQUÊNCIA LENTA — um efeito DISCRETO de algo que o jogador fez cenas atrás se manifesta sem drama: alguém agradece, um preço mudou, uma reputação circula, um rosto conhecido reaparece em paz." },
-  { id: "tensao", texto: "TENSÃO (raro — este é o único modo em que algo pode apertar) — uma complicação surge, mas de forma ORGÂNICA e preparada: uma notícia que confirma algo já semeado, uma desconfiança, uma cobrança. Mesmo aqui: NADA de porta arrombada, mensageiro ofegante ou figura arrastada ao salão." },
-];
-
-function instrucaoMundo(modo, banirUrgencia) {
-  return `Agora o mundo VIVE este mesmo instante — não avance o tempo (nada de "horas depois"), fique no presente imediato, mas faça a cena PULSAR com vida real.
-
-MODO OBRIGATÓRIO DESTA CENA: ${modo.texto}
-Siga o modo acima à risca. Ele foi escolhido pelo sistema justamente para variar o ritmo — ignorá-lo torna a campanha repetitiva.
-
-- Pessoas FALAM e AGEM: dê falas reais aos NPCs (com nome), não só descrição de ambiente.
-- Companheiros se manifestam: opinam, provocam, contam algo.
-- 2-4 frases densas de vida presente, e devolva a vez a mim.
-${banirUrgencia ? `
-⛔ PROIBIDO NESTA CENA (você repetiu isso demais nas últimas cenas): alguém irromper/invadir o recinto; mensageiro ou arauto chegando ofegante; porta se abrindo com estrondo; figura arrastada por guardas; grito, súplica ou revelação urgente; qualquer nova ameaça anunciada. A cena precisa ser calma e cotidiana. Se sentir vontade de criar uma emergência, ESCOLHA outra coisa.` : `
-⛔ Não use "alguém irrompe com urgência" nem interrupção dramática — esse recurso está desgastado nesta campanha.`}`;
-}
+/* v9.31: MODOS_MUNDO e instrucaoMundo saíram junto com a vez do mundo.
+   Eram a rotação de cenas que a IA encenava quando o jogador pedia "faça o
+   mundo pulsar" — um turno inteiro gasto para simular vida que hoje o motor
+   produz sozinho, com relógios, missões, eventos e arco. */
 
 /* Trilho enxuto (mobile): 4 abas. Ficha, Grupo, Pessoas, Guilda e Domínios
    vivem como SUB-abas dentro de Gestão. */
@@ -2377,14 +2358,14 @@ export default function Taverna() {
   const combateOciosoRef = useRef(0);      // turnos sem troca de golpes
   const ataqueResolvidoRef = useRef(false);
   const danoJaAplicadoRef = useRef(false); // turno em que o sistema já cobrou dano
+  const mortosSessaoRef = useRef(null);   // as cinco perguntas em curso (v9.31)
+  const turnosDeMundoRef = useRef(0);     // cadência do relógio "turno_mundo" (v9.31)
   const sinalViagemRef = useRef(null);    // Mestre (ou o rastro) pediu para abrir viagem
   const sinalMasmorraRef = useRef(null);  // Mestre (ou o rastro) pediu para abrir masmorra
   const destinoViagemRef = useRef("");    // para onde o herói disse que ia — desenha a estrada no mapa
   const salaEmCursoRef = useRef(null);    // sala da masmorra cujo combate está aberto
   const [alvosGolpe, setAlvosGolpe] = useState([]); // alvo escolhido para cada golpe do turno
   const alvosGolpeRef = useRef([]); // marca ataque do jogador neste turno
-  const modoMundoRef = useRef(0);           // rotação de tipos de cena
-  const urgenciaRef = useRef(0);            // quantas cenas recentes usaram urgência
   const historiaRef = useRef(garantirHistoria({ estrutura: "jornada", etapa: 0 }));
   const questsRef = useRef([]);
   /* MISSÕES (v9.27): a lista nova, com etapas que o sistema confere. As
@@ -2396,9 +2377,7 @@ export default function Taverna() {
      esses o sistema só conhece no instante em que a luta acaba. */
   const derrotadosDaSessaoRef = useRef([]);
   const [quests, setQuests] = useState([]);
-  const [aguardandoMundo, setAguardandoMundo] = useState(false);
   const [mostrarHoras, setMostrarHoras] = useState(false);
-  const ehAcaoMundoRef = useRef(false); // marca que o próximo enviar é a vez do mundo
   const canoneRef = useRef({});
   const npcsRef = useRef({});                 // registro persistente de pessoas
   const [npcs, setNpcs] = useState({});
@@ -3991,16 +3970,6 @@ export default function Taverna() {
       portaoRef.current = violacoesDoTurno(resp.narrativa, portaoCtxRef.current);
     } catch { portaoRef.current = null; /* o portão nunca derruba o turno */ }
     /* detector de repetição: mede se o Mestre voltou a usar interrupção urgente */
-    {
-      const nrt = (resp.narrativa || "").toLowerCase();
-      const marcas = /irromp|invade o|invadem o|arromb/.test(nrt)
-        || /(porta|portas)[^.]{0,40}(se abre|se abrem|escancar)/.test(nrt)
-        || /(mensageiro|arauto|batedor|soldado)[^.]{0,40}(ofegante|corre|irrompe|chega gritando)/.test(nrt)
-        || /(arrast|jogam|atiram)[^.]{0,40}(aos seus pés|para dentro)/.test(nrt)
-        || /(urgênc|urgente|emergênc|com pressa|sem fôlego)/.test(nrt)
-        || /(interromp|é rompid|foi rompid|se lança (pelo|para)|surge de repente|de súbito)/.test(nrt);
-      urgenciaRef.current = marcas ? urgenciaRef.current + 1 : 0;
-    }
     /* A ENTREGA. Sem violação — o caso comum — sai na tela agora, exatamente
        como sempre saiu. Com violação, as linhas ficam guardadas e a tela
        trava até o conserto voltar: quem solta é passarPeloPortao(). */
@@ -4686,24 +4655,19 @@ export default function Taverna() {
         : (resp.narrativa || "");
       const histFinal = [...base, { role: "user", content: corpo }, { role: "assistant", content: JSON.stringify({ narrativa: narrativaFinal }) }];
       setHistorico(histFinal);
-      /* ALTERNÂNCIA: se esta foi uma AÇÃO DO JOGADOR (não a vez do mundo, não combate,
-         não acampamento), a próxima vez é OBRIGATORIAMENTE do mundo. */
-      const foiVezDoMundo = ehAcaoMundoRef.current;
-      ehAcaoMundoRef.current = false;
-      /* após uma AÇÃO do jogador (que não seja já a vez do mundo), a próxima vez
-         é do mundo. Responder+mover já conta como vez do mundo, então cai aqui
-         como foiVezDoMundo=true e libera a barra normal. */
-      if (!foiVezDoMundo && !combateRef.current && !acampadoRef.current && !resp.rolagem) setAguardandoMundo(true);
-      else setAguardandoMundo(false);
+      /* v9.31: a ALTERNÂNCIA morreu. Fora de combate não existe mais "vez do
+         mundo": o mundo vive pelos sistemas — relógios andam, missões conferem,
+         eventos nascem, o arco vira — e nada disso precisa de um turno vazio em
+         que o jogador pedia à IA para a cena pulsar. Dentro do combate a vez do
+         mundo continua, e ficou mais clara: é a fase em que os inimigos e o seu
+         grupo agem, e em que você só reage. */
       /* SINAIS DE SISTEMA (v7.8): o Mestre ativou viagem ou masmorra pela
          narrativa — o app abre o sistema no turno seguinte, sem botão. */
       if (sinalViagemRef.current !== null) {
         const destino = sinalViagemRef.current; sinalViagemRef.current = null;
-        setAguardandoMundo(false);
         setTimeout(() => viajar(destino), 400);
       } else if (sinalMasmorraRef.current !== null) {
         const nomeMm = sinalMasmorraRef.current; sinalMasmorraRef.current = null;
-        setAguardandoMundo(false);
         setTimeout(() => entrarMasmorra(nomeMm), 400);
       }
       /* GRAVAR PRIMEIRO (v9.7). O que vem depois daqui é manutenção: o livro,
@@ -5391,12 +5355,155 @@ export default function Taverna() {
     return false;
   };
 
+  /* ---------------- AS MAGIAS QUE O SISTEMA RESOLVE (v9.31) ----------------
+     Declarar `funcao` já era melhor que adjetivo, mas ainda dependia de o
+     Mestre narrar dentro da regra — e "cinco perguntas ao morto" sem contador
+     é conversa livre com um nome bonito. Estas o código executa. */
+  const magiaDeFuncaoNaAcao = (acao) => {
+    const n = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const t = n(acao);
+    if (!/\b(uso|usar|conjuro|conjurar|lanco|lancar|invoco|invocar|ativo|ativar|realizo|canalizo|pergunto ao|falo com)\b/.test(t)) return null;
+    const p = personagemRef.current || personagem || {};
+    const candidatas = [];
+    for (const h of (p.habilidades || [])) {
+      const m = magiaPorNome(typeof h === "string" ? h : h && h.nome);
+      if (m && resolvidaPeloSistema(m) && m.funcao !== "portal" && t.includes(n(m.nome))) candidatas.push(m);
+    }
+    for (const h of habsSel) {
+      const m = magiaPorNome(h && h.nome);
+      if (m && resolvidaPeloSistema(m) && m.funcao !== "portal") candidatas.push(m);
+    }
+    /* o nome mais longo ganha, mesma regra da habilidade citada */
+    return candidatas.sort((a, b) => b.nome.length - a.nome.length)[0] || null;
+  };
+
+  const usarFuncaoMagica = (m, acao) => {
+    const p0 = personagemRef.current || personagem || {};
+    if ((p0.mana || 0) < m.custo) { pushMsgs([{ autor: "sistema", texto: `⛔ ${m.nome} custa ${m.custo} PM — você tem ${p0.mana}.` }]); return true; }
+    const cobrar = (pers) => { const np = { ...pers, mana: Math.max(0, (pers.mana || 0) - m.custo) }; setPersonagem(np); personagemRef.current = np; setHabsSel([]); return np; };
+    const linhaJogador = { autor: "jogador", texto: `✦ ${m.nome} — ${acao}` };
+
+    if (m.funcao === "identificar") {
+      const bolsa = [...(p0.inventario || []), ...(p0.equipamento || [])];
+      const nn = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+      const alvo = bolsa.filter((i) => i && nn(acao).includes(nn(typeof i === "string" ? i : i.nome)))
+        .sort((a, b) => String(b.nome || b).length - String(a.nome || a).length)[0];
+      if (!alvo) { pushMsgs([linhaJogador, { autor: "sistema", texto: "🔎 Você não está com nada que responda a esse nome." }]); return true; }
+      const pers = cobrar(p0);
+      const ficha = textoDeIdentificacao(alvo);
+      pushMsgs([linhaJogador, { autor: "sistema", texto: `${ficha} · −${m.custo} PM` }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[IDENTIFICAR — RESOLVIDO PELO SISTEMA] A magia me revelou a ficha exata de "${typeof alvo === "string" ? alvo : alvo.nome}": ${ficha}. Esses números são fato e já estão na minha tela — NÃO os repita como se fossem descoberta sua, não invente poder nenhum além destes. Narre só a cena de leitura: o que a magia mostra, que sensação dá, o que o objeto conta de onde veio.`;
+      enviar(`[IDENTIFICAR] Usei "${m.nome}" sobre ${typeof alvo === "string" ? alvo : alvo.nome}. ${acao}`, pers);
+      return true;
+    }
+
+    if (m.funcao === "localizar") {
+      const r = localizarNoMapa(acao.replace(/.*\b(localizar|localizo|encontrar|acho|achar|procuro|procurar)\b/i, ""), {
+        cidades: ((mapaRef.current || {}).cidades || []), cidadeAtual: cidadeAtualRef.current, alcanceM: m.alcance || (m.raio * 1000),
+      });
+      const pers = cobrar(p0);
+      if (!r.achou) {
+        pushMsgs([linhaJogador, { autor: "sistema", texto: `🧭 ${m.nome}: ${r.motivo} · −${m.custo} PM` }]);
+        enviar(`[LOCALIZAR — SEM RESPOSTA] Usei "${m.nome}" e a agulha não apontou para lugar nenhum: ${r.motivo}. Narre o silêncio da magia em uma frase, sem inventar uma pista de consolação.`, pers);
+        return true;
+      }
+      const dentro = r.dentroDoAlcance;
+      pushMsgs([linhaJogador, { autor: "sistema", texto: dentro
+        ? `🧭 ${r.alvo}: ${r.direcao}, a cerca de ${r.km} km · −${m.custo} PM`
+        : `🧭 ${r.alvo} está a ~${r.km} km, muito além do alcance de ${m.nome} · −${m.custo} PM` }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[LOCALIZAR — RESOLVIDO PELO SISTEMA] ${dentro ? `A magia apontou: ${r.alvo}, a ${r.direcao}, a cerca de ${r.km} km.` : `${r.alvo} está a ~${r.km} km — ALÉM do alcance da magia, que é de ${m.alcance || m.raio * 1000} m. A agulha girou sem se fixar.`} Não mude a direção nem a distância, e não entregue de graça o que fica fora do alcance.`;
+      enviar(`[LOCALIZAR] Usei "${m.nome}". ${acao}`, pers);
+      return true;
+    }
+
+    if (m.funcao === "consulta_mortos") {
+      const pergunta = acao.replace(/^.*?(pergunto|perguntar|questiono)[^:]*:?\s*/i, "").trim() || acao;
+      let ses = mortosSessaoRef.current;
+      if (!ses || (ses.restam || 0) <= 0 || ses.dia !== diaRef.current) {
+        const morto = (derrotadosDaSessaoRef.current || []).slice(-1)[0] || "";
+        ses = abrirInterrogatorio(morto, diaRef.current);
+      }
+      const r = perguntarAoMorto(ses, pergunta);
+      if (!r.ok) { pushMsgs([linhaJogador, { autor: "sistema", texto: `🕯 ${r.motivo}.` }]); return true; }
+      /* só a PRIMEIRA pergunta custa PM: a magia foi conjurada uma vez */
+      const pers = ses.restam === PERGUNTAS_AOS_MORTOS ? cobrar(p0) : p0;
+      mortosSessaoRef.current = r.sessao;
+      pushMsgs([linhaJogador, { autor: "sistema", texto: `🕯 ${m.nome}${r.sessao.quem ? ` · ${r.sessao.quem}` : ""}: restam ${r.restam} pergunta${r.restam === 1 ? "" : "s"}${ses.restam === PERGUNTAS_AOS_MORTOS ? ` · −${m.custo} PM` : ""}` }]);
+      enviar(envelopeDoMorto(r.sessao, r.pergunta), pers);
+      return true;
+    }
+
+    if (m.funcao === "consulta_oraculo") {
+      const pers = cobrar(p0);
+      pushMsgs([linhaJogador, { autor: "sistema", texto: `🔮 ${m.nome} · −${m.custo} PM — o mundo responde.` }]);
+      /* v9.31: a magia de adivinhação não inventa um oráculo próprio: ela USA
+         o que o jogo já tem. A diferença de gastar PM é que a pergunta vale —
+         o oráculo comum já existia de graça, e duplicá-lo em outra régua seria
+         ter duas verdades sobre o mesmo mundo. */
+      setTimeout(() => consultarOMundo(acao), 60);
+      return true;
+    }
+
+    if (m.funcao === "reviver") {
+      const caidos = (p0.grupo || []).filter((g) => (g.vida || 0) <= 0 || g.morrendo);
+      if (!caidos.length) { pushMsgs([linhaJogador, { autor: "sistema", texto: "🕯 Ninguém do seu grupo está caído." }]); return true; }
+      const alvo = caidos[0];
+      const pers = cobrar({ ...p0, grupo: (p0.grupo || []).map((g) => (g.nome === alvo.nome ? { ...g, vida: Math.max(1, Math.round((g.vidaMax || 10) / 2)), morrendo: false } : g)) });
+      pushMsgs([linhaJogador, { autor: "sistema", texto: `🕯 ${alvo.nome} volta — ${Math.max(1, Math.round((alvo.vidaMax || 10) / 2))} PV · −${m.custo} PM` }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[${m.nome.toUpperCase()} — APLICADO PELO SISTEMA] ${alvo.nome} voltou dos mortos pela minha magia e já está de pé com metade dos PV. Isso é fato: não desfaça, não cobre outro preço e não deixe ambíguo. Narre a volta e o que ela custa a quem voltou.`;
+      enviar(`[${m.nome}] ${acao}`, pers);
+      return true;
+    }
+
+    if (m.funcao === "cura") {
+      const frac = 0.5;
+      const cura = Math.round((p0.vidaMax || 10) * frac);
+      const pers = cobrar({
+        ...p0, vida: Math.min(p0.vidaMax || 10, (p0.vida || 0) + cura), morrendo: false,
+        grupo: (p0.grupo || []).map((g) => ({ ...g, vida: Math.min(g.vidaMax || g.vida, (g.vida || 0) + Math.round((g.vidaMax || 10) * frac)) })),
+      });
+      pushMsgs([linhaJogador, { autor: "sistema", texto: `🩶 ${m.nome}: +${cura} PV a você e ao grupo · −${m.custo} PM` }]);
+      enviar(`[${m.nome} — CURA APLICADA PELO SISTEMA] Recuperei ${cura} PV e o grupo também. Não recalcule; narre o alívio. ${acao}`, pers);
+      return true;
+    }
+
+    /* invisibilidade, voo e luz viram EFEITO com prazo — o sistema conta os
+       turnos, e é a contagem que faz a magia acabar em vez de durar o quanto
+       a cena convier */
+    if (["invisibilidade", "voo", "luz"].includes(m.funcao)) {
+      const turnos = m.duracao && /hora/.test(m.duracao) ? 60 : 10;
+      const efeitos = [...(p0.efeitos || []).filter((e) => e.nome !== m.nome), { nome: m.nome, bonus: 0, turnos, aplica: "todos", descricao: m.descricao }];
+      const pers = cobrar({ ...p0, efeitos });
+      pushMsgs([linhaJogador, { autor: "sistema", texto: `✧ ${m.nome} ativo por ${turnos} turnos · −${m.custo} PM` }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[${m.nome.toUpperCase()} — ATIVO, CONTADO PELO SISTEMA] A magia está em vigor por ${turnos} turnos: ${m.descricao} Trate como fato em toda cena até o sistema avisar que acabou — o mundo reage a isso (quem não me vê, não me acha; quem está no chão, não me alcança). Não a encerre por conta própria.`;
+      enviar(`[${m.nome}] ${acao}`, pers);
+      return true;
+    }
+    return false;
+  };
+
   const agirInterno = (texto) => {
     const acao = texto.trim();
     if (!acao || carregando || rolagem) return;
     /* MODO CRIATIVO (v9.10): "/..." é comando de teste. Intercepta ANTES de
        tudo — não vira ação, não vai ao Mestre, não gasta turno nem tokens. */
     if (acao.startsWith("/")) { setEntrada(""); if (executarComando(acao)) return; }
+    /* ---------------- CONJURAR VEM PRIMEIRO (v9.31) ----------------
+       Nomear uma magia que está na SUA ficha é a declaração mais explícita que
+       existe neste jogo, e por isso ela ganha de qualquer heurística. Estava
+       depois do oráculo, e o resultado foi este: "conjuro Falar com os Mortos
+       e pergunto: quem pagou pela emboscada?" terminava em interrogação, o
+       oráculo reconhecia uma pergunta fechada e respondia com um d100 — a
+       magia nunca era lançada, e o cadáver nunca abria a boca. */
+    {
+      let feito = false;
+      try {
+        const mf = magiaDeFuncaoNaAcao(acao);
+        if (mf) feito = usarFuncaoMagica(mf, acao);
+      } catch { /* conjurar nunca pode custar o turno */ }
+      if (feito) { setEntrada(""); return; }
+    }
+    if (interceptarMovimento(acao)) { setEntrada(""); return; }
     /* PEDIDO DE TESTE (v9.6): "peço um teste de percepção para ver se acho
        algo aqui" é o jeito de mesa. O sistema intercepta antes de mandar ao
        Mestre: fixa a dificuldade, rola, e o resultado é que vira envelope —
@@ -5436,11 +5543,19 @@ export default function Taverna() {
         }
       }
     } catch { /* anotar segredo nunca pode travar o turno */ }
-    if (interceptarMovimento(acao)) return;
     /* RELÓGIO: turnos de exploração/cons conversam ~45 min de mundo.
        Combate, masmorra e acampamento têm tempo próprio (contado nesses fluxos). */
     let extraTempo = "";
-    if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) extraTempo = avancarMinutos(MINUTOS_POR_TURNO);
+    if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) {
+      extraTempo = avancarMinutos(MINUTOS_POR_TURNO);
+      /* v9.31: o gatilho "turno_mundo" dos relógios morava na vez do mundo, e
+         ela deixou de existir. Ele passa para o turno normal — que agora É o
+         turno — mas a cada DOIS, para manter a cadência de antes: os relógios
+         andavam uma vez por par ação+mundo, e dobrar isso encurtaria pela
+         metade todo prazo já em curso nos saves. */
+      turnosDeMundoRef.current += 1;
+      if (turnosDeMundoRef.current % 2 === 0) tiquear("turno_mundo", { porque: "o mundo se mexeu enquanto você agia" });
+    }
     setEntrada(""); setHabAbertas(false);
     /* MILAGRE ARMADO (v9.28): vem antes das habilidades porque um milagre É o
        turno — não se encaixa numa sequência com magias, e deixá-lo depois
@@ -5775,6 +5890,17 @@ export default function Taverna() {
     if (!combPos) return { pers: persBase, resumo: "" };
     const vivos = (combPos.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
     if (!vivos.length) { fecharSeTodosCairam(); return { pers: persBase, resumo: "" }; }
+    /* ---------------- A VEZ DO MUNDO (v9.31) ----------------
+       Ela sempre existiu aqui dentro, escondida: o revide dos inimigos e o
+       turno dos companheiros já rodavam colados na ação do jogador, sem nome
+       e sem separação visível. Fora do combate havia um botão chamado "VEZ DO
+       MUNDO" que não fazia nada disso — pedia à IA para encenar vida.
+
+       Agora é o contrário, e é o certo: o nome fica onde a coisa acontece. O
+       jogador age no turno dele e só reage; aqui agem os inimigos E o grupo
+       dele. É a única fase do jogo em que o mundo se move sem ele, e ela tem
+       cabeçalho para o jogador saber que a vez virou. */
+    pushMsgs([{ autor: "sistema", texto: `🌍 VEZ DO MUNDO — rodada ${combPos.rodada || 1}: os inimigos e o seu grupo agem.` }]);
 
     /* ---- QUEM ESTÁ MUITO FERIDO TENTA SAIR (v9.14) ----
        E dar as costas custa: o herói leva um golpe livre — a reação que a
@@ -5977,70 +6103,19 @@ export default function Taverna() {
   };
 
 
-  const vezDoMundo = () => {
-    if (bloqueado || acampadoRef.current) return;
-    ehAcaoMundoRef.current = true;
-    setAguardandoMundo(false);
-    pushMsgs([{ autor: "sistema", texto: "🌍 O mundo vive…" }]);
-    const modo = MODOS_MUNDO[modoMundoRef.current % MODOS_MUNDO.length];
-    modoMundoRef.current += 1;
-    tiquear("turno_mundo", { porque: "o mundo se mexeu" });
-    enviar(`[VEZ DO MUNDO] ${instrucaoMundo(modo, urgenciaRef.current >= 1)}`, personagem);
-  };
 
-  /* RESPONDER + VEZ DO MUNDO ao mesmo tempo: sua fala é conduzida E o mundo
-     vive o mesmo instante (pessoas agem e falam, coisas acontecem no presente). */
-  const responderEMover = (texto) => {
-    const fala = (texto || "").trim();
-    if (!fala || bloqueado) return;
-    /* v9.18: o campo "Responder" da vez do mundo é outro caminho de entrada, e
-       ele não passava pelo interceptador de comandos — digitar "/curar" ali
-       mandava a barra literal para o Mestre. Comando é comando em qualquer
-       campo; o Mestre nunca vê nenhum dos dois. */
-    if (fala.startsWith("/")) { setEntrada(""); if (executarComando(fala)) return; }
-    /* v9.30: e o resto da cadeia também. Responder ao mundo dizendo "sigo para
-       Rio do Sul" ou "conjuro Teleporte para Aldoria" é a mesma coisa que
-       dizê-lo no campo de ação — só o rótulo do botão muda. */
-    setEntrada("");
-    if (interceptarMovimento(fala)) return;
-    ehAcaoMundoRef.current = true;
-    pushMsgs([{ autor: "jogador", texto: fala }]);
-    const modo = MODOS_MUNDO[modoMundoRef.current % MODOS_MUNDO.length];
-    modoMundoRef.current += 1;
-    enviar(`[RESPONDO E O MUNDO VIVE] Eu falo: "${fala}". ${instrucaoMundo(modo, urgenciaRef.current >= 1)}`, personagem);
-  };
-
-  /* TURNO DO MUNDO SEMI-AUTOMÁTICO (v7.0): depois da sua ação o mundo fica
-     "na iminência" por 60s. Se você digitar, o relógio pausa — você sempre
-     tem a chance de responder. Se nada acontecer, o mundo vive sozinho.
-     Pode ser desligado no botão ao lado. */
-  const [autoMundo, setAutoMundo] = useState(true);
-  const mundoAutoDesdeRef = useRef(null);
-  const [tickMundo, setTickMundo] = useState(0);
-  useEffect(() => {
-    if (!aguardandoMundo) { mundoAutoDesdeRef.current = null; return; }
-    if (!mundoAutoDesdeRef.current) mundoAutoDesdeRef.current = Date.now();
-    if (!autoMundo) return;
-    const t = setInterval(() => {
-      setTickMundo((x) => x + 1);
-      if (bloqueado || rolagem || combateRef.current || acampadoRef.current) return;
-      if ((entrada || "").trim()) return; // você está digitando — o mundo espera
-      if (Date.now() - mundoAutoDesdeRef.current >= 60 * 1000) vezDoMundo();
-    }, 1000);
-    return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aguardandoMundo, autoMundo, entrada]); // bloqueado/rolagem lidos só no callback (declarados adiante no componente)
-  const mundoRestante = (aguardandoMundo && autoMundo && mundoAutoDesdeRef.current)
-    ? Math.max(0, 60 - Math.floor((Date.now() - mundoAutoDesdeRef.current) / 1000))
-    : null;
+  /* O TEMPORIZADOR MORREU (v9.31). Ele existia para resolver um problema que
+     deixou de existir: o mundo ficava "na iminência" 60 segundos porque, sem
+     um turno da IA, nada acontecia. Hoje o que faz o mundo viver são os
+     sistemas — relógios andam, missões conferem, eventos nascem, o arco vira
+     — e eles rodam no turno normal, de graça. Um relógio na tela cobrando uma
+     ação que o jogador não precisa tomar era pressa sem motivo. */
 
   /* PASSAR O TEMPO (deliberado): simula N horas; quanto mais horas, mais o mundo muda */
   const passarTempo = (horas) => {
     if (bloqueado || acampadoRef.current) return;
     if (combateRef.current) { combateRef.current = null; setCombate(null); combateOciosoRef.current = 0; }
     setMostrarHoras(false);
-    ehAcaoMundoRef.current = true;
-    setAguardandoMundo(false);
     const escala = horas <= 3 ? "algumas horas (mudanças pequenas)" : horas <= 8 ? "boa parte do dia (mudanças perceptíveis)" : horas <= 16 ? "quase um dia inteiro (mudanças significativas)" : "um dia completo (o mundo se move bastante)";
     pushMsgs([{ autor: "sistema", texto: `🕐 Você deixa ${horas}h passarem…` }]);
     /* RELÓGIO: "passar o tempo" agora move as horas de verdade — dias viram
@@ -7674,7 +7749,6 @@ export default function Taverna() {
   const acampar = () => {
     if (acampadoRef.current || bloqueado) return;
     if (combateRef.current) { combateRef.current = null; setCombate(null); combateOciosoRef.current = 0; }
-    setAguardandoMundo(false);
     definirAcampado(true);
     const local = localDeDescanso(mapaRef.current, cidadeAtualRef.current, faccaoJogadorRef.current);
     const rotulo = local.tipo === "sede" ? "🏛 Você recolhe-se à sede da sua guilda"
@@ -9118,29 +9192,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               </div>
             )}
 
-            {aguardandoMundo && !bloqueado && !rolagem ? (
-              <div className="px-4 md:px-8 shrink-0" style={{ paddingRight: "68px", paddingBottom: "20px" }}>
-                {/* responder move o mundo junto — você fala E o mundo vive o instante */}
-                <div className="flex gap-2 rounded-2xl p-2 min-w-0 mb-2" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
-                  <input value={entrada} onChange={(e) => setEntrada(e.target.value)} onKeyDown={(e) => e.key === "Enter" && responderEMover(entrada)}
-                    placeholder="Responder / falar…"
-                    className="flex-1 bg-transparent outline-none tv-body text-[15px] px-3 min-w-0" style={{ color: T.ink }} />
-                  <Botao primario pequeno desativado={!entrada.trim()} onClick={() => responderEMover(entrada)}>Responder →</Botao>
-                </div>
-                <div className="flex items-stretch gap-2">
-                  <button onClick={vezDoMundo} className="tv-fade flex-1 rounded-2xl py-3 tv-mono text-sm flex items-center justify-center gap-2" style={{ background: T.amber, color: T.onAccent, fontWeight: 700, letterSpacing: "0.05em" }}>
-                    🌍 VEZ DO MUNDO →{autoMundo && mundoRestante != null && <span className="text-[10px] font-normal opacity-80">{entrada.trim() ? "auto pausado (você está digitando)" : `auto em ${mundoRestante}s`}</span>}
-                  </button>
-                  <button onClick={() => setAutoMundo((v) => !v)} title={autoMundo ? "Turno do mundo automático: LIGADO (60s parado = o mundo vive) — toque para desligar" : "Turno do mundo automático: desligado — toque para ligar"}
-                    className="tv-mono text-xs rounded-2xl px-3 shrink-0" style={{ background: T.panel, color: autoMundo ? T.ok : T.inkDim, border: `1px solid ${T.line}`, fontWeight: 600 }}>
-                    {autoMundo ? "⏳" : "✋"}
-                  </button>
-                  <button onClick={() => setMostrarHoras((v) => !v)} title="Passar mais tempo" className="tv-mono text-xs rounded-2xl px-4 shrink-0" style={{ background: T.panel, color: T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600 }}>
-                    🕐<span className="hidden md:inline"> Horas</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
+            {/* v9.31: UM campo de escrita só. A barra "Responder / VEZ DO
+                MUNDO" existia porque existiam dois turnos fora do combate; com
+                um turno só, ela vira ruído — e o botão que pedia ao jogador
+                para mandar o mundo viver some junto, porque o mundo já vive. */}
+            {(
             <div className="px-4 md:px-8 shrink-0" style={{ paddingRight: "68px", paddingBottom: rolagem ? "6px" : "20px" }}>
               {/* LINHA 1 — ferramentas: rótulos sempre visíveis, sem roubar espaço da escrita */}
               <div className="flex items-center gap-1.5 mb-2">
@@ -9156,17 +9212,13 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   style={{ background: mostrarHoras ? T.amber : "transparent", color: mostrarHoras ? T.onAccent : T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600, opacity: (bloqueado || acampado) ? 0.4 : 1 }}>
                   🕐 Tempo
                 </button>
-                {/* v9.14: era onClick={viajar}, que entrega o EVENTO do React
-                    como `destino` — objeto truthy, e o envelope saía dizendo
-                    "Estou a caminho de [object Object]". */}
-                <button onClick={() => viajar("")} disabled={bloqueado || acampado} title="Seguir viagem: clima e encontro rolados pelas tabelas" className="tv-mono text-[11px] rounded-full px-3 py-1.5"
-                  style={{ background: "transparent", color: T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600, opacity: (bloqueado || acampado) ? 0.4 : 1 }}>
-                  🧭 Viajar
-                </button>
-                <button onClick={entrarMasmorra} disabled={bloqueado || acampado || !!masmorra} title="Explorar uma masmorra: salas roladas por tabela, tesouro e chefe por código" className="tv-mono text-[11px] rounded-full px-3 py-1.5"
-                  style={{ background: "transparent", color: T.violetSoft, border: `1px solid ${T.line}`, fontWeight: 600, opacity: (bloqueado || acampado || masmorra) ? 0.4 : 1 }}>
-                  🕳 Masmorra
-                </button>
+                {/* v9.31: os botões "Viajar" e "Masmorra" saíram. Desde o
+                    rastro, os dois módulos abrem sozinhos quando o herói põe o
+                    pé na estrada ou desce num covil — e um botão que faz o que
+                    a própria ação já faz é uma segunda maneira de dizer a
+                    mesma coisa, com o agravante de sugerir que sem ele não
+                    acontece. A tela fica mais limpa e a regra, mais simples:
+                    escreva o que você faz. */}
                 {/* v9.16: o selo fica SEMPRE visível, aceso ou apagado. Recurso
                     que o jogador precisa abrir um painel para lembrar que tem
                     é recurso que ele não gasta — e que portanto não existe. */}
