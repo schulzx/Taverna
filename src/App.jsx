@@ -40,6 +40,7 @@ import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, detec
 import { PERICIAS, periciaPorId, periciasDoAtributo, garantirPericias, periciasIniciais, bonusDePericia, passivoDe, resolucaoAutomatica, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente, resumoPericiasPrompt, PERICIAS_PROMPT } from "./pericias.js";
 import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, podeGastar, gastarHeroismo, validarDeclaracao, envelopeDeclaracao, envelopeRefazer, resumoHeroismoPrompt, HEROISMO_PROMPT } from "./heroismo.js";
 import { dadoDeVida, garantirDadosVida, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT } from "./descanso.js";
+import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, RELOGIOS_PROMPT } from "./relogios.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
@@ -54,6 +55,7 @@ import { fichaTexto, formatarCanone, montarSystemPrompt } from "./prompt.js";
 import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./ui.jsx";
 import { FichaVisual } from "./painel-ficha.jsx";
 import { SeloHeroismo, PainelHeroismo } from "./painel-heroismo.jsx";
+import { FaixaRelogios } from "./painel-relogios.jsx";
 import { PainelAscensao } from "./painel-ascensao.jsx";
 import { PainelCodex } from "./painel-codex.jsx";
 import { PainelDiario } from "./painel-diario.jsx";
@@ -2326,6 +2328,47 @@ export default function Taverna() {
           godLinha(`⚡ Curado: ${p.vidaMax} PV, ${p.manaMax} PM, sem condições e sem exaustão.`);
           return true;
         }
+        case "relogio": {
+          const sub = String(arg(0) || "listar").toLowerCase();
+          const lista = relogiosRef.current;
+          if (sub === "listar" || sub === "l") {
+            godLinha(lista.length
+              ? "⚡ Relógios:\n" + lista.map((r) => `  ${r.id} · ${tipoDe(r.tipo).icone} ${r.nome} ${barraDe(r)} ${r.cheios}/${r.segmentos} (${r.gatilho})`).join("\n")
+              : "⚡ Nenhum relógio em curso.");
+            return true;
+          }
+          if (sub === "+") {
+            const nome = resto.replace(/^\+\s*/, "").trim();
+            if (!nome) { godLinha("⚡ /relogio + <nome do relógio>"); return true; }
+            const ac = aceitarProposta(lista, { nome, tipo: "ameaca", segmentos: 6, gatilho: "noite", consequencia: "" }, diaRef.current);
+            if (!ac.ok) { godLinha(`⚡ ${ac.motivo}.`); return true; }
+            relogiosRef.current = ac.relogios; setRelogios(ac.relogios); salvar({});
+            godLinha(`⚡ Criado: ${ac.relogio.id} · ${ac.relogio.nome} ${barraDe(ac.relogio)}`);
+            return true;
+          }
+          if (sub === "++") {
+            const id = String(arg(1) || "");
+            const r = avancarUm(lista, id, { porque: "modo criativo" });
+            if (!r.avancados.length) { godLinha("⚡ /relogio ++ <id> — use /relogio listar para ver os ids."); return true; }
+            relogiosRef.current = r.relogios; setRelogios(r.relogios); salvar({});
+            r.avancados.forEach((av) => godLinha("⚡ " + linhaDoAvanco(av)));
+            for (const c of r.cheios) {
+              pushMsgs([{ autor: "sistema", texto: `${tipoDe(c.tipo).icone} ${c.nome} — o tempo acabou. ${c.consequencia || ""}`.trim() }]);
+              notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeCheio(c)}`;
+            }
+            return true;
+          }
+          if (sub === "-") {
+            const id = String(arg(1) || "");
+            const nova = removerRelogio(lista, id);
+            if (nova.length === lista.length) { godLinha("⚡ /relogio - <id> — id não encontrado."); return true; }
+            relogiosRef.current = nova; setRelogios(nova); salvar({});
+            godLinha(`⚡ Relógio ${id} apagado.`);
+            return true;
+          }
+          godLinha("⚡ /relogio listar · /relogio + <nome> · /relogio ++ <id> · /relogio - <id>");
+          return true;
+        }
         case "heroismo": {
           const n = lerNumero(arg(0));
           if (!n.ok) { godLinha(`⚡ /heroismo <0-${HEROISMO_MAX}>`); return true; }
@@ -2642,6 +2685,12 @@ export default function Taverna() {
      global (máx. 1, escala por etapas) — sorteados por código, o mestre só narra. */
   const eventosRef = useRef({ locais: [], global: null, semGlobalDesde: 0, seq: 1 });
   const [eventos, setEventos] = useState(eventosRef.current);
+  /* RELÓGIOS (v9.18): a lista vive num ref porque quase todo tique acontece
+     dentro de fluxos assíncronos (descanso, turno do mundo, rolagem) onde o
+     estado do render já está velho — o mesmo motivo de todos os outros refs
+     desta casa. O useState existe só para a tela redesenhar. */
+  const relogiosRef = useRef([]);
+  const [relogios, setRelogios] = useState([]);
   const localAtualTxt = () => jornadaRef.current
     ? `EM VIAGEM desde ${jornadaRef.current.de || "a última parada"} (desde o dia ${jornadaRef.current.desde || "?"})${jornadaRef.current.meio ? `, viajando de ${jornadaRef.current.meio}` : ""} — não estou em cidade nenhuma`
     : (cidadeAtualRef.current ? `em ${cidadeAtualRef.current}` : "a sós, fora de cidade");
@@ -2748,7 +2797,7 @@ export default function Taverna() {
       combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
-      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, eventos: eventosRef.current, divindade: divindadeRef.current,
+      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, divindade: divindadeRef.current,
       historia: historiaRef.current, quests: questsRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
@@ -3754,6 +3803,7 @@ export default function Taverna() {
         "SEÇÃO grupo: \"entraram\" = nomes de pessoas que ACEITARAM de fato acompanhar o herói como companheiros de jornada NESTE turno (o Mestre narrando \"vou com você\" conta). Se o convite foi recusado ou só um encontro casual, [].",
         "SEÇÃO teste_sugerido: se o Mestre CONCEDEU de graça algo grande que deveria ter exigido convencimento — uma criatura anciã entregando seu poder, um rei cedendo o trono, um inimigo virando aliado do nada — preencha {\"atributo\":\"Presença|Intelecto|Força|Destreza|Vigor\",\"perfil\":\"dificil|formidavel\",\"motivo\":\"o que precisava ser provado\"}. Concessões pequenas e naturais da história NÃO entram. Na maioria dos turnos: null.",
         "SEÇÃO combate (só se houver COMBATENTES listados): \"mortes_narradas\" = inimigos que a NARRATIVA declarou mortos/destruídos/desfeitos NESTE turno. Liste só nomes da lista de combatentes; se ninguém morreu na narração, [].",
+        "SEÇÃO relogio_novo (v9.18): se ALGO LONGO COMEÇOU DE FATO em cena — um ritual que passou a ser conduzido, uma perseguição que se iniciou, uma obra que o jogador pôs em marcha — proponha {\"nome\":\"frase curta no presente\",\"tipo\":\"ameaca|cacada|oportunidade|obra\",\"segmentos\":4|6|8,\"gatilho\":\"noite|turno_mundo|falha|sucesso|viagem\",\"consequencia\":\"o que acontece quando encher\"}. NO MÁXIMO UM por turno, e só quando de fato começou — intenção, ameaça verbal e possibilidade NÃO contam. Na esmagadora maioria dos turnos: null.",
         "REGRA GERAL: na dúvida, NÃO marque — {\"missoes\":{\"concluidas\":[],\"falhadas\":[],\"progresso\":[],\"global_encerrado\":false},\"canone\":{},\"pessoas\":[],\"fe\":{\"fieis\":0,\"pf\":0}} é resposta válida e frequente.",
       ].join("\n");
       const lista = ativas.map((q) => `- "${q.titulo}" (${q.tipo}) — objetivo: ${q.objetivo || q.descricao || "—"}`).join("\n");
@@ -3765,6 +3815,22 @@ export default function Taverna() {
       if (!r || typeof r !== "object") return;
       const msgs = [];
       let p = pers;
+      /* ---- SEÇÃO relógio proposto (v9.18) ----
+         O Mestre conhece a ficção melhor que qualquer tabela, então PODE
+         pedir um relógio. Propor não é criar: o sistema apara o tamanho,
+         força um gatilho da lista, recusa duplicata e recusa quando já há
+         relógios demais. Mesmo contrato do resto da casa. */
+      try {
+        const prop = r.relogio_novo;
+        if (prop && typeof prop === "object" && prop.nome) {
+          const ac = aceitarProposta(relogiosRef.current, prop, diaRef.current);
+          if (ac.ok) {
+            relogiosRef.current = ac.relogios; setRelogios(ac.relogios);
+            msgs.push(`${tipoDe(ac.relogio.tipo).icone} Começou a contar: ${ac.relogio.nome} ${barraDe(ac.relogio)} — ${tipoDe(ac.relogio.tipo).desc}.`);
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeNovo(ac.relogio)}`;
+          }
+        }
+      } catch { /* proposta malformada nunca derruba o turno */ }
       /* ---- SEÇÃO missões (isolada) ---- */
       try {
         const rm = r.missoes && typeof r.missoes === "object" ? r.missoes : {};
@@ -4260,7 +4326,8 @@ export default function Taverna() {
       const per = resumoPericiasPrompt(p, (id) => atributoEfetivo(p, id));
       const her = resumoHeroismoPrompt(p);
       const dsc = resumoDescansoPrompt(p, diaRef.current);
-      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
+      const rel = resumoRelogiosPrompt(relogiosRef.current);
+      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -4525,6 +4592,7 @@ export default function Taverna() {
       correioRef.current = garantirCorreio(sv.correio); setCorreio(correioRef.current);
       jornadaRef.current = sv.jornada && typeof sv.jornada === "object" ? sv.jornada : null; setJornada(jornadaRef.current);
       eventosRef.current = garantirEventos(sv.eventos); setEventos(eventosRef.current);
+      relogiosRef.current = garantirRelogios(sv.relogios); setRelogios(relogiosRef.current);
       /* MIGRAÇÃO (v7.4): saves antigos ganham a ascensão zerada — nada quebra */
       divindadeRef.current = garantirDivindade(sv.divindade); setDivindade(divindadeRef.current);
       /* MIGRAÇÃO (v8.9): save antigo tem fiéis sem endereço — a fé é
@@ -4560,6 +4628,11 @@ export default function Taverna() {
       /* DESPERTAR NO CARREGAMENTO (v7.4.1): save veterano nível ≥15 nunca
          disparava o despertar (ele só checava DEPOIS de um turno). */
       setTimeout(() => checarDespertar(pers, true), 900);
+      /* RELÓGIOS (v9.18): semeia no carregamento para que o save antigo — que
+         já tem nêmesis odiando e evento global correndo — abra com os
+         ponteiros na tela em vez de esperar a próxima noite. Idempotente:
+         `temDaFonte` impede o segundo relógio da mesma origem. */
+      setTimeout(() => semearRelogiosAgora(), 1100);
       if (comResumo && !sv.rolagem) {
         enviar(`[RESUMO DE SESSÃO] Retomando "${sv.nomeCampanha}". Abra com "Anteriormente, em ${sv.nomeCampanha}…" e recapitule os principais acontecimentos em até 120 palavras, tom de série. Depois reapresente a cena atual e me convide a agir. Sem rolagem e sem mudanças nesta resposta.`, pers, sv.historico || []);
       }
@@ -5266,6 +5339,7 @@ export default function Taverna() {
     pushMsgs([{ autor: "sistema", texto: "🌍 O mundo vive…" }]);
     const modo = MODOS_MUNDO[modoMundoRef.current % MODOS_MUNDO.length];
     modoMundoRef.current += 1;
+    tiquear("turno_mundo", { porque: "o mundo se mexeu" });
     enviar(`[VEZ DO MUNDO] ${instrucaoMundo(modo, urgenciaRef.current >= 1)}`, personagem);
   };
 
@@ -5274,6 +5348,11 @@ export default function Taverna() {
   const responderEMover = (texto) => {
     const fala = (texto || "").trim();
     if (!fala || bloqueado) return;
+    /* v9.18: o campo "Responder" da vez do mundo é outro caminho de entrada, e
+       ele não passava pelo interceptador de comandos — digitar "/curar" ali
+       mandava a barra literal para o Mestre. Comando é comando em qualquer
+       campo; o Mestre nunca vê nenhum dos dois. */
+    if (fala.startsWith("/")) { setEntrada(""); if (executarComando(fala)) return; }
     setEntrada("");
     ehAcaoMundoRef.current = true;
     pushMsgs([{ autor: "jogador", texto: fala }]);
@@ -5340,6 +5419,46 @@ export default function Taverna() {
     const a = ATRIBUTOS.find((x) => x.nome.toLowerCase() === (rolagem.atributo || "").toLowerCase());
     return a && personagem ? modDoTeste(personagem, a.id, rolagem.pericia).total : 0;
   })() : 0;
+
+  /* ---------------- RELÓGIOS (v9.18) ----------------
+     Um lugar só para mexer no ponteiro, e ele faz três coisas sempre na
+     mesma ordem: avança, conta ao jogador POR QUE avançou, e — se encheu —
+     manda o envelope obrigatório ao Mestre e tira o relógio da lista.
+
+     A ordem importa. Se o envelope fosse antes da mensagem, o jogador leria
+     a consequência antes de saber de onde ela veio; e se o relógio cheio
+     ficasse na tela, ele viraria um aviso permanente de algo que já
+     aconteceu. Relógio cheio virou cena — cena não fica pendurada. */
+  const tiquear = (gatilho, { quanto = 1, porque = "", apenasIds = null } = {}) => {
+    const r = avancar(relogiosRef.current, gatilho, { quanto, porque, apenasIds });
+    if (!r.avancados.length) return;
+    relogiosRef.current = r.relogios; setRelogios(r.relogios);
+    pushMsgs(r.avancados.map((av) => ({ autor: "sistema", texto: linhaDoAvanco(av) })));
+    for (const cheio of r.cheios) {
+      pushMsgs([{ autor: "sistema", texto: `${tipoDe(cheio.tipo).icone} ${cheio.nome} — o tempo acabou. ${cheio.consequencia || ""}`.trim() }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeCheio(cheio)}`;
+    }
+  };
+
+  /* As sementes do sistema. Roda de graça (função pura sobre estado que já
+     está na mão) e é idempotente: `temDaFonte` impede o segundo relógio da
+     mesma nêmesis. Chamada nos momentos em que o estado que a alimenta muda. */
+  const semearRelogiosAgora = () => {
+    const faccaoEmGuerra = (((mapaRef.current || {}).faccoes) || []).find((f) => f.tratado === "guerra");
+    const r = semearRelogios(relogiosRef.current, {
+      nemesis: nemesisRef.current,
+      global: (eventosRef.current || {}).global,
+      fama: famaAtual(),
+      emGuerra: faccaoEmGuerra ? faccaoEmGuerra.nome : null,
+      dia: diaRef.current,
+    });
+    if (!r.novos.length) return;
+    relogiosRef.current = r.relogios; setRelogios(r.relogios);
+    for (const n of r.novos) {
+      pushMsgs([{ autor: "sistema", texto: `${tipoDe(n.tipo).icone} Começou a contar: ${n.nome} ${barraDe(n)} — ${tipoDe(n.tipo).desc}.` }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeNovo(n)}`;
+    }
+  };
 
   /* ---------------- PONTOS DE HEROÍSMO (v9.16) ----------------
      Ganhar é sempre pelo sistema, nunca por julgamento do Mestre: aqui ele
@@ -5444,6 +5563,13 @@ export default function Taverna() {
       const pd = premiarHeroismo(personagemRef.current || personagem, "desastre");
       if (pd !== (personagemRef.current || personagem)) { setPersonagem(pd); personagemRef.current = pd; }
     }
+    /* v9.18: o dado também move os relógios. A falha crítica adianta o que
+       está atrás de você; o êxito adianta o que você está construindo. É a
+       ponte entre a rolagem isolada e a ameaça de longo prazo — sem ela, o
+       relógio andaria só com o calendário e o jogador não teria como
+       apressá-lo nem atrasá-lo com o que faz. */
+    if (desastre) tiquear("falha", { porque: "você falhou feio" });
+    else if (dc != null && (critico || total >= dc)) tiquear("sucesso", { porque: "você conseguiu o que queria" });
     const buffs = (personagem.efeitos || []).filter((e) => !e.aplica || e.aplica.toLowerCase() === (r.atributo || "").toLowerCase() || e.aplica.toLowerCase() === "testes");
     const notaBuff = buffs.length ? ` (inclui bônus de ${buffs.map((b) => b.nome).join(", ")})` : "";
     pushMsgs([{ autor: "sistema", texto: `🎲 d20 → ${valor}${mod ? ` + ${mod}` : ""} = ${total}${dc != null ? ` vs dif. ${dc}` : ""} · ${resultado}${dadoAnterior != null ? ` ✧ (refeito — o primeiro deu ${dadoAnterior})` : ""}` }]);
@@ -6704,6 +6830,19 @@ export default function Taverna() {
          amanhecer vale como curto — que é exatamente o que se queria. */
       pers = { ...pers, ultimoLongo: diaRef.current };
       setPersonagem(pers);
+      /* v9.18: a noite inteira é o que mais move ponteiro. É aqui que dormir
+         passa a CUSTAR alguma coisa em algum outro lugar — sem isso o
+         descanso longo seria puro ganho e o atrito do v9.17 ficaria pela
+         metade.
+
+         TIQUEIA ANTES DE SEMEAR, e a ordem não é detalhe: com o inverso, uma
+         ameaça que acabava de nascer já aparecia em 1/8 na mesma noite. O
+         jogador leria "Brigid fecha o cerco" e um passo dado ao mesmo tempo,
+         sem nunca ter visto o relógio vazio — e um ponteiro que já começa
+         andado ensina que o ponteiro anda sozinho, que é o oposto do que
+         este sistema quer dizer. */
+      tiquear("noite", { porque: "mais uma noite passou" });
+      semearRelogiosAgora();
     } else {
       minutoRef.current = (minutoRef.current + 60) % 1440; setMinuto(minutoRef.current); // cochilo de uma hora
     }
@@ -7158,6 +7297,8 @@ export default function Taverna() {
 
   const viajar = (destino = "") => {
     if (acampadoRef.current) return;
+    /* v9.18: pôr o pé na estrada deixa rastro — é o gatilho das caçadas. */
+    tiquear("viagem", { porque: "você se moveu, e rastro fica" });
     /* NAVEGAÇÃO (5e): terreno difícil pode fazer o grupo se perder. */
     let notaErmos = "";
     {
@@ -7877,6 +8018,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 </div>
               );
             })()}
+
+            {/* v9.18: a faixa fica ACIMA da barra de acao, colada na cena.
+                E la que ela e lida de relance — dentro de um painel, o
+                jogador so veria o relogio quando fosse procura-lo, e a
+                ameaca voltaria a ser adjetivo. */}
+            <FaixaRelogios relogios={relogios} />
 
             {mostrarHoras && (
               <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.amber}`, marginRight: "68px" }}>

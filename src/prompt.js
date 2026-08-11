@@ -25,6 +25,7 @@ import { TESTES_PROMPT } from "./testes.js";
 import { PERICIAS_PROMPT } from "./pericias.js";
 import { HEROISMO_PROMPT } from "./heroismo.js";
 import { DESCANSO_PROMPT } from "./descanso.js";
+import { RELOGIOS_PROMPT } from "./relogios.js";
 import { ESPECIALIZACOES_PROMPT } from "./especializacoes.js";
 import { ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 
@@ -138,6 +139,8 @@ ${PERICIAS_PROMPT}
 ${HEROISMO_PROMPT}
 
 ${DESCANSO_PROMPT}
+
+${RELOGIOS_PROMPT}
 ${ASCENSAO_SISTEMA_PROMPT}
 ${divindadeInfo ? `- ${divindadeInfo}\n` : ""}- GERADORES DE VIDA (o app sorteia, você narra): envelopes [EVENTO LOCAL], [EVENTO GLOBAL] e [QUEST GERADA PELO SISTEMA] trazem material PRONTO — fios do dia a dia, arcos regionais que escalam por etapas e quests calibradas à fase do arco. Os FATOS sorteados (quem, raça, lugar, o quê) são fixos: os atores já vêm com nome, raça e ofício definidos pelo sistema — use-os exatamente como dados (a diversidade do mundo é responsabilidade do sistema, não mude raças nem troque personagens). O COMO (voz, cena, desdobramentos) é todo seu. Fios locais são pequenos e expiram se ignorados (o mundo se resolve sem o herói — narre o desfecho de passagem). O evento global é arco longo de fundo: escala quando o sistema anuncia nova etapa; quando o jogador o RESOLVER de fato, envie "evento_global_encerrar": true no JSON. Limites do sistema: no máx. 1 global e 3 locais por vez — nunca empilhe mais por conta própria.
 

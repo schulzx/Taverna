@@ -46,6 +46,7 @@ export const COMANDOS = [
   { cmd: "mapa", args: "", grupo: "mundo", desc: "lista o mundo: continentes, regiões e cidades" },
   { cmd: "aqui", args: "", grupo: "mundo", desc: "mostra a base do lugar onde você está (locais, gente, segredos)" },
   { cmd: "chefes", args: "", grupo: "mundo", desc: "lista os chefes gerados neste mundo" },
+  { cmd: "relogio", args: "<listar|+ nome|++ id|- id>", grupo: "mundo", desc: "lista, cria, avança ou apaga um relógio de progresso" },
 
   { cmd: "combate", args: "<criatura> [nivel] [quantos]", grupo: "luta", desc: "abre uma luta contra a criatura pedida" },
   { cmd: "matar", args: "", grupo: "luta", desc: "derruba todos os inimigos do combate atual" },
