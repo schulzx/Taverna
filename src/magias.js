@@ -27,7 +27,7 @@
    ============================================================ */
 
 import { naturezaDaHabilidade } from "./combos.js";
-import { classeDaHabilidade } from "./classes.js";
+import { classesDaHabilidade } from "./classes.js";
 
 /* Quem prepara e quem não prepara. Fora desta lista, ninguém prepara —
    inclusive as classes marciais, que é o caso comum. */
@@ -53,11 +53,21 @@ export function temCaderno(pers) { return classesQuePreparam(pers).length > 0; }
 export function ehPreparavel(hab, pers) {
   if (!hab || !hab.nome) return false;
   if (naturezaDaHabilidade(hab, pers) !== "magico") return false;
-  const dona = classeDaHabilidade(hab.nome);
+  /* v9.33: a pergunta certa é "esta magia é do caderno DELE?", e ela se
+     responde cruzando as classes que lançam a magia com as classes que o
+     herói tem e que preparam. Antes olhava só a PRIMEIRA classe da magia:
+     "Bola de Fogo" é de Mago e Feiticeiro, e um mago via a própria magia
+     ficar fora do caderno por causa da ordem em que os nomes estão escritos
+     na tabela do grimório — coisa que ele não tem como saber nem consertar.
+     Magia de uma classe que ele NÃO tem também não prepara: ela não veio do
+     estudo dele, então está sempre à mão. */
+  const donas = classesDaHabilidade(hab.nome);
   /* habilidade sem classe de origem (única, dádiva, improviso) não prepara:
      ela é do herói, não do caderno */
-  if (!dona) return false;
-  return preparaMagia(dona);
+  if (!donas.length) return false;
+  const minhas = classesQuePreparam(pers);
+  if (!minhas.length) return false;
+  return donas.some((d) => minhas.includes(d));
 }
 
 export function preparaveisDe(pers) {
@@ -108,6 +118,30 @@ export function preparadasIniciais(pers) {
     .sort((a, b) => (Number(b.custo) || 0) - (Number(a.custo) || 0))
     .slice(0, teto)
     .map((h) => h.nome);
+}
+
+/* ---------------- POR QUE NÃO HÁ NADA AQUI ----------------
+   O relato que trouxe esta função: "não achei onde arrumo minhas
+   habilidades; entrei na ficha e não tem nada, acampei e também não
+   apareceu nada". O painel do caderno simplesmente não era renderizado
+   quando não havia o que preparar — e um espaço vazio não distingue
+   "você procurou no lugar errado" de "isto não existe para a sua
+   classe". As duas conclusões levam o jogador a caçar uma tela que ele
+   nunca vai achar. Agora o painel aparece sempre e DIZ o motivo. */
+export function motivoDoCaderno(pers) {
+  const classes = [(pers && pers.classe) || "", ...(((pers && pers.classesExtras) || []))].filter(Boolean);
+  if (!classes.length) return "Escolha um caminho primeiro — sem classe não há magia para preparar.";
+  if (temCaderno(pers)) {
+    if (!preparaveisDe(pers).length) {
+      return `Você ainda não aprendeu nenhuma magia de caderno. Elas chegam pela árvore de ${classesQuePreparam(pers).join(" e ")} — aprenda uma e ela aparece aqui.`;
+    }
+    return "";
+  }
+  const inatas = classes.filter((c) => ehInato(c));
+  if (inatas.length) {
+    return `${inatas.join(" e ")} não prepara magia: o dom é de nascença. Tudo o que você sabe está sempre à mão, e é por isso que não há nada para arrumar aqui.`;
+  }
+  return `Nenhuma das suas classes (${classes.join(", ")}) estuda magia em caderno. Golpe, técnica e furtividade nunca se preparam — estão sempre à mão.`;
 }
 
 export function alternarPreparada(pers, nome) {

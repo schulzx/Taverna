@@ -43,7 +43,7 @@ import { dadoDeVida, garantirDadosVida, dadosDisponiveis, gastarDadoDeVida, pode
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, RELOGIOS_PROMPT } from "./relogios.js";
 import { avaliarEncontro, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
 import { montarCampo, garantirCampo, posicionarInimigos, ZONA_HEROI, alcanca, podeMover, inimigosNaZona, moverInimigos, nomeDaZona, zonaDe, mapaDoCampo, resumoZonasPrompt, bonusDefesaDaZona, ZONAS_PROMPT } from "./zonas.js";
-import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPreparada, ehPreparavel, preparadasIniciais, alternarPreparada, podeLancar, ehRitual, MINUTOS_RITUAL, resumoMagiasPrompt, MAGIAS_PROMPT } from "./magias.js";
+import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPreparada, ehPreparavel, preparadasIniciais, alternarPreparada, podeLancar, ehRitual, motivoDoCaderno, MINUTOS_RITUAL, resumoMagiasPrompt, MAGIAS_PROMPT } from "./magias.js";
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, ORACULO_PROMPT } from "./oraculo.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -938,7 +938,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1057,6 +1057,13 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                   </div>
                 );
               })()}
+              {/* v9.33: o caderno de magias TAMBÉM aqui. "Arrumar as
+                  habilidades" é coisa de ficha, e era exatamente aqui que o
+                  jogador procurou — e não achou, porque o painel só existia
+                  dentro do acampamento. Preparar fora do descanso não quebra
+                  nada: o que a regra raciona é QUANTAS cabem na cabeça, e
+                  esse teto é o mesmo em qualquer hora do dia. */}
+              <PainelCaderno personagem={personagem} onPreparar={onPrepararMagia} />
               {/* v9.32: as dádivas passam a dizer COMO se usam. O jogador leu
                   "Dádiva do Destino" na tela e escreveu: "não entendi como
                   usar e não ficou claro se aconteceu algo". As passivas dizem
@@ -1968,7 +1975,9 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
         <div className="rounded-xl p-2 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
           <div className="tv-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Ao seu lado</div>
           <div className="flex items-center gap-2 flex-wrap">
-            {grupo.map((g) => {
+            {/* a chave leva o índice: um grupo pode ter dois companheiros com
+                o mesmo nome, e nome sozinho não é identidade estável (v9.33) */}
+            {grupo.map((g, gi) => {
               const pv = Math.max(0, g.vida || 0), pvMax = Math.max(1, g.vidaMax || 1);
               const pm = g.mana != null ? g.mana : (g.manaMax || 0), pmMax = g.manaMax || 0;
               const frac = pv / pvMax;
@@ -1976,7 +1985,7 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
               const critico = !caido && frac <= 1 / 3;
               const cor = caido ? T.inkDim : critico ? T.danger : T.ok;
               return (
-                <div key={g.nome} className="rounded-lg px-2 py-1" title={`${g.nome}${g.classe ? ` · ${g.classe}` : ""} — ${pv}/${pvMax} PV${pmMax ? ` · ${pm}/${pmMax} PM` : ""}${caido ? " · caído" : critico ? " · à beira de cair" : ""}`}
+                <div key={`${g.nome}-${gi}`} className="rounded-lg px-2 py-1" title={`${g.nome}${g.classe ? ` · ${g.classe}` : ""} — ${pv}/${pvMax} PV${pmMax ? ` · ${pm}/${pmMax} PM` : ""}${caido ? " · caído" : critico ? " · à beira de cair" : ""}`}
                   style={{ background: T.panel, border: `1px solid ${caido ? T.line : critico ? T.danger : T.line}`, opacity: caido ? 0.5 : 1, minWidth: 104 }}>
                   <div className="flex items-baseline justify-between gap-2">
                     <span className="tv-body text-[11px] truncate" style={{ color: caido ? T.inkDim : T.ink, maxWidth: 88, textDecoration: caido ? "line-through" : "none" }}>{g.nome}</span>
@@ -2087,10 +2096,27 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
 
 function PainelHabilidades({ personagem, selecionar, fechar, escolhidas = [], limite = 1 }) {
   const [busca, setBusca] = React.useState("");
-  const todas = (personagem.habilidades || []).filter((h) => h && h.nome);
+  /* ---- SÓ O QUE DÁ PARA USAR (v9.33) ----
+     As guardadas apareciam aqui, apagadas, com o motivo. A intenção era boa —
+     esconder faria o jogador procurar a magia, não achar e concluir que
+     perdeu a habilidade. Mas com o grimório de 85 magias a lista ficou
+     comprida o bastante para o remédio virar o problema: uma dúzia de linhas
+     mortas empurrando para baixo justamente as que ele veio usar, no meio de
+     uma luta.
+
+     A saída é a mesma do resto da tela: não esconder, DOBRAR. O que sai na
+     luta fica em cima; o que está guardado vira uma linha que se abre, e ela
+     diz onde preparar. Ninguém acha que perdeu nada, e a lista de combate
+     volta a ser a lista de combate. */
+  const [verGuardadas, setVerGuardadas] = React.useState(false);
+  const tudo = (personagem.habilidades || []).filter((h) => h && h.nome);
+  const guardadas = tudo.filter((h) => ehPreparavel(h, personagem) && !estaPreparada(personagem, h));
+  const todas = tudo.filter((h) => !guardadas.includes(h));
   const normal = (x) => (x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const lista = busca ? todas.filter((h) => normal(h.nome).includes(normal(busca)) || normal(h.descricao).includes(normal(busca))) : todas;
-  const muitas = todas.length > 6;
+  const filtrar = (l) => busca ? l.filter((h) => normal(h.nome).includes(normal(busca)) || normal(h.descricao).includes(normal(busca))) : l;
+  const lista = filtrar(todas);
+  const listaGuardadas = filtrar(guardadas);
+  const muitas = tudo.length > 6;
   return (
     <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.violet}`, marginRight: "68px" }}>
       <div className="flex items-center justify-between mb-3">
@@ -2104,8 +2130,10 @@ function PainelHabilidades({ personagem, selecionar, fechar, escolhidas = [], li
         <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar habilidade…"
           className="w-full rounded-lg px-3 py-2 mb-3 tv-body text-sm outline-none" style={{ background: T.panelSoft, border: `1px solid ${T.line}`, color: T.ink }} />
       )}
-      {todas.length === 0 ? (
+      {tudo.length === 0 ? (
         <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você ainda não despertou nenhuma habilidade. Elas virão com a história.</div>
+      ) : todas.length === 0 ? (
+        <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Nenhuma magia preparada — todas as {guardadas.length} que você sabe estão guardadas. Abra a ficha e escolha o que levar na cabeça.</div>
       ) : (
         <div className="grid md:grid-cols-2 gap-2 tv-scroll" style={{ maxHeight: "38vh", overflowY: "auto" }}>
           {lista.map((h, i) => {
@@ -2116,12 +2144,12 @@ function PainelHabilidades({ personagem, selecionar, fechar, escolhidas = [], li
             /* com dois movimentos dá para marcar duas magias e descrever as
                duas de uma vez — o turno inteiro numa tacada só (v9.5) */
             const cheio = !marcada && escolhidas.length >= limite;
-            /* CADERNO (v9.21): magia guardada aparece na lista, apagada e com
-               o motivo. Esconder seria pior — o jogador procuraria a magia,
-               nao a acharia, e concluiria que perdeu a habilidade. */
+            /* nesta lista já não há guardada nenhuma: elas saíram para a
+               dobra lá embaixo. O selo 📖 fica, para o jogador reconhecer o
+               que veio do caderno e o que está sempre à mão. */
             const doCaderno = ehPreparavel(h, personagem);
-            const guardada = doCaderno && !estaPreparada(personagem, h);
-            const travada = semMana || rec > 0 || cheio || guardada;
+            const guardada = false;
+            const travada = semMana || rec > 0 || cheio;
             return (
               <button key={i} onClick={() => !travada && selecionar(h)} disabled={travada} className="text-left rounded-xl p-3 transition-all"
                 style={{ background: marcada ? T.violet : T.panelSoft, border: `1px solid ${marcada ? T.violet : travada ? T.line : T.violet}`, opacity: travada ? 0.45 : 1, cursor: travada ? "not-allowed" : "pointer" }}>
@@ -2140,6 +2168,80 @@ function PainelHabilidades({ personagem, selecionar, fechar, escolhidas = [], li
             );
           })}
         </div>
+      )}
+      {guardadas.length > 0 && (
+        <div className="mt-2 pt-2" style={{ borderTop: `1px solid ${T.line}` }}>
+          <button onClick={() => setVerGuardadas((v) => !v)}
+            title="Magias que você sabe mas não preparou hoje. Elas não saem na luta."
+            className="tv-mono text-[10px] flex items-center gap-2" style={{ color: T.inkDim }}>
+            📕 {guardadas.length} guardada{guardadas.length === 1 ? "" : "s"} — não saem na luta
+            <span style={{ opacity: 0.7 }}>{verGuardadas ? "▴ esconder" : "▾ ver quais"}</span>
+          </button>
+          {verGuardadas && (
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {listaGuardadas.map((h) => (
+                <span key={h.nome} className="tv-mono text-[10px] px-2 py-1 rounded-full"
+                  title={ehRitual(h) ? "Fora de combate você ainda pode conduzi-la como ritual, pagando tempo." : "Prepare-a na ficha ou no acampamento."}
+                  style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>
+                  📕 {h.nome}{ehRitual(h) ? " ⏳" : ""}
+                </span>
+              ))}
+              <span className="tv-body text-[10px] w-full mt-1" style={{ color: T.inkDim }}>
+                Para trocar o que você leva, abra a ficha (Gestão › Ficha) ou acampe — o painel “📖 Magias na cabeça” está nos dois.
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- O CADERNO DE MAGIAS (v9.33) ----------------
+   Ele já existia, e morava num lugar só: dentro do painel de acampamento.
+   O jogador procurou na ficha — que é onde se "arruma as habilidades" —,
+   não achou, acampou para ver se aparecia, e não achou de novo. Duas
+   coisas estavam erradas ao mesmo tempo: o painel só existia numa tela
+   passageira, e quando não havia o que preparar ele simplesmente não era
+   desenhado, então o vazio não distinguia "procurei no lugar errado" de
+   "isto não existe para mim".
+
+   Agora é um componente só, desenhado nos DOIS lugares, e ele aparece
+   mesmo quando está vazio — dizendo por quê. */
+function PainelCaderno({ personagem, onPreparar, compacto = false }) {
+  const prep = garantirPreparadas(personagem);
+  const teto = limitePreparadas(personagem);
+  const lista = preparaveisDe(personagem);
+  const motivo = motivoDoCaderno(personagem);
+  return (
+    <div className="rounded-xl px-3 py-2 mb-3" style={{ background: T.panelSoft, border: `1px solid ${lista.length ? T.violet : T.line}` }}>
+      <div className="flex items-baseline justify-between gap-2 mb-1.5">
+        <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>📖 Magias na cabeça</div>
+        {lista.length > 0 && <div className="tv-mono text-[10px]" style={{ color: prep.length >= teto ? T.violet : T.inkDim }}>{prep.length}/{teto}</div>}
+      </div>
+      {motivo ? (
+        <div className="tv-body text-[11px]" style={{ color: T.inkDim }}>{motivo}</div>
+      ) : (
+        <>
+          <div className="flex flex-wrap gap-1.5">
+            {lista.map((h) => {
+              const on = prep.includes(h.nome);
+              return (
+                <button key={h.nome} onClick={() => onPreparar(h.nome)}
+                  title={`${h.descricao || ""}${ehRitual(h) ? "\n\nRitual: fora de combate dá para conduzi-la mesmo sem preparar, pagando tempo." : ""}`}
+                  className="tv-mono text-[10px] px-2 py-1 rounded-full"
+                  style={{ background: on ? T.violet : "transparent", color: on ? T.onSecond : T.inkDim, border: `1px solid ${on ? T.violet : T.line}` }}>
+                  {on ? "📖" : "📕"} {h.nome} <span style={{ opacity: 0.7 }}>{Math.max(0, Number(h.custo) || 0)}PM</span>{ehRitual(h) ? " ⏳" : ""}
+                </button>
+              );
+            })}
+          </div>
+          {!compacto && (
+            <div className="tv-body text-[10px] mt-1.5" style={{ color: T.inkDim }}>
+              Toque para preparar ou guardar. Só as preparadas aparecem no botão ✦ Habilidades — as guardadas voltam a caber no próximo descanso longo, e as marcadas com ⏳ ainda podem ser conduzidas como ritual fora da luta.
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -9479,37 +9581,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 })()}
                 {/* CADERNO (v9.21): o acampamento é onde se decide o que levar.
                     Fica ao lado dos dados de vida porque as duas perguntas são a
-                    mesma — quanto do amanhã eu gasto agora? */}
-                {temCaderno(personagem) && (() => {
-                  const prep = garantirPreparadas(personagem);
-                  const teto = limitePreparadas(personagem);
-                  const lista = preparaveisDe(personagem);
-                  return (
-                    <div className="rounded-xl px-3 py-2 mb-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-                      <div className="flex items-baseline justify-between gap-2 mb-1.5">
-                        <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>📖 Magias na cabeça</div>
-                        <div className="tv-mono text-[10px]" style={{ color: prep.length >= teto ? T.violet : T.inkDim }}>{prep.length}/{teto}</div>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {lista.map((h) => {
-                          const on = prep.includes(h.nome);
-                          return (
-                            <button key={h.nome} onClick={() => prepararMagia(h.nome)}
-                              title={`${h.descricao || ""}${ehRitual(h) ? "\n\nRitual: fora de combate dá para conduzi-la mesmo sem preparar, pagando tempo." : ""}`}
-                              className="tv-mono text-[10px] px-2 py-1 rounded-full"
-                              style={{ background: on ? T.violet : "transparent", color: on ? T.onSecond : T.inkDim, border: `1px solid ${on ? T.violet : T.line}` }}>
-                              {on ? "📖" : "📕"} {h.nome} <span style={{ opacity: 0.7 }}>{Math.max(0, Number(h.custo) || 0)}PM</span>{ehRitual(h) ? " ⏳" : ""}
-                            </button>
-                          );
-                        })}
-                        {!lista.length && <span className="tv-body text-[11px]" style={{ color: T.inkDim }}>Nenhuma magia de caderno na ficha ainda.</span>}
-                      </div>
-                      <div className="tv-body text-[10px] mt-1.5" style={{ color: T.inkDim }}>
-                        Só as preparadas saem em combate. As guardadas voltam a caber no próximo descanso longo — e as marcadas com ⏳ ainda podem ser conduzidas como ritual fora da luta.
-                      </div>
-                    </div>
-                  );
-                })()}
+                    mesma — quanto do amanhã eu gasto agora? A v9.33 tirou o
+                    corpo dele daqui: o mesmo painel também vive na ficha, e
+                    duas cópias divergiriam na primeira mudança. */}
+                <PainelCaderno personagem={personagem} onPreparar={prepararMagia} />
                 {/* SINTONIA (v9.23): as três vagas. Fica ao lado do caderno
                     porque a pergunta é a mesma — o que eu levo comigo hoje? */}
                 {itensDePoder(personagem).length > 0 && (() => {
@@ -9691,7 +9766,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

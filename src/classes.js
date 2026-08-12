@@ -428,6 +428,23 @@ export function classeDaHabilidade(nomeHab) {
   return null;
 }
 
+/* TODAS as classes que lançam uma habilidade, não só a primeira (v9.33).
+   `classeDaHabilidade` devolve uma só porque quem pergunta quer dado de dano
+   e atributo-chave, e para isso uma basta. O caderno de magias precisa da
+   lista inteira: "Bola de Fogo" é de Mago E Feiticeiro, e decidir se ela se
+   prepara olhando só a primeira faz a mesma magia preparar ou não conforme a
+   ordem em que ela foi escrita na tabela — que é uma coisa que o jogador não
+   tem como saber nem como consertar. */
+export function classesDaHabilidade(nomeHab) {
+  const alvo = String(nomeHab || "").toLowerCase();
+  const fora = [];
+  for (const c of CLASSES) if (c.habilidades.some((h) => h.nome.toLowerCase() === alvo)) fora.push(c.nome);
+  const mg = magiaPorNome(nomeHab);
+  if (mg && mg.classes.length) for (const n of mg.classes) if (!fora.includes(n)) fora.push(n);
+  if (!fora.length) { const uma = classeDaHabilidade(nomeHab); if (uma) fora.push(uma); }
+  return fora;
+}
+
 /* A subclasse dona de uma especialização, e as especializações de uma subclasse. */
 export function subclasseDaEspecializacao(nomeEsp) {
   for (const c of CLASSES) for (const s of c.subclasses || []) if ((s.especializacoes || []).includes(nomeEsp)) return s.nome;
