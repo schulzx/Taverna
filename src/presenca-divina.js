@@ -121,6 +121,46 @@ export function presencaDoHeroi({ gdJogador, alvos = [], nomeHeroi = "você", ro
   };
 }
 
+/* ---------------- O HERÓI DIVINO NA LUTA (v9.32) ----------------
+   `presencaDoHeroi` existia só para a cor de cena: gente que entra no
+   registro desvia o olhar. Faltava o lugar onde a diferença de grau
+   decide alguma coisa — o combate. O jogador chegou a GD 4, invocou uma
+   luta e escreveu: "as pessoas não estavam tendo efeitos e tendo que
+   fazer rolagens perto de mim; na ascensão eu estava como GD 4 e não
+   tinha efeito sobre os outros". Estava certo: o peso do deus valia contra
+   a plateia e não valia contra quem ia lutar com ele.
+
+   A régua é a mesma dos deuses inimigos — DIFERENCA_MINIMA degraus — e o
+   efeito é o mesmo que eles impõem: medo, três turnos, uma vez por luta.
+   Um bicho que já é divino não se curva, e nem tudo que respira tem
+   joelho: quem vem marcado como imune a medo passa direto. */
+export function presencaDoHeroiEmCombate({ gdJogador = 0, inimigos = [], nomeHeroi = "você", rolar = () => 1 + Math.floor(Math.random() * 20) } = {}) {
+  const gdJ = Math.max(0, Number(gdJogador) || 0);
+  if (gdJ < DIFERENCA_MINIMA) return null;
+  const dc = dificuldadeDaPresenca(gdJ);
+  const afetados = [];
+  for (const e of inimigos || []) {
+    if (!e || !e.nome || e.derrotado || (e.vida || 0) <= 0) continue;
+    const gdE = Math.max(0, Number(e.gd) || 0);
+    if (gdJ - gdE < DIFERENCA_MINIMA) continue;              // rivalidade, não terror
+    if (e.imuneMedo || /morto-vivo|constructo|golem|autômato|automato|esqueleto|estátua|estatua/i.test(`${e.nome} ${e.desc || ""}`)) continue;
+    /* o bônus vem do NÍVEL comprimido, não cru: um bicho de nível 20 somando
+       +20 passaria em qualquer dificuldade e a regra nunca dispararia contra
+       o que ela existe para atingir — o inimigo forte e mortal. Um quarto do
+       nível é a mesma escala da proficiência do 5e, e é o que deixa um
+       minotauro veterano com chance real de encarar sem virar imune. */
+    const r = rolar() + Math.min(6, Math.floor((Number(e.nivel) || 1) / 4)) + 2 * gdE + (temItemConsagrado(e) ? 4 : 0);
+    if (r >= dc) continue;
+    afetados.push({ nome: e.nome, cond: criarCondicao("amedrontado", { turnos: 3, origem: `presença de ${nomeHeroi}` }), rolagem: r });
+  }
+  if (!afetados.length) return null;
+  return {
+    dc, afetados,
+    linhas: afetados.map((a) => `🌑 ${a.nome} encara ${nomeHeroi} e falha (${a.rolagem} vs ${dc}) — amedrontado por 3 turnos.`),
+    nota: `[PRESENÇA DIVINA DO HERÓI — SISTEMA ROLOU E APLICOU] Diante de mim (GD ${gdJ}), ${afetados.map((a) => a.nome).join(", ")} ${afetados.length > 1 ? "falharam" : "falhou"} na resistência: ${afetados.length > 1 ? "estão" : "está"} AMEDRONTAD${afetados.length > 1 ? "OS" : "O"} por 3 turnos, e o efeito já está aplicado. Narre o que isso parece — a arma que treme, o passo que não vem, o olhar que não sobe — sem aplicar nenhuma outra condição e sem desfazer esta.`,
+  };
+}
+
 export const PRESENCA_PROMPT = `PRESENÇA DIVINA (v9.8 — o sistema rola, você narra):
 - Quando uma divindade entra em cena, o SISTEMA identifica o grau dela sozinho (pelo panteão do mundo) e rola a resistência de todo mundo. Você não precisa mandar o campo "gd" — se mandar, ótimo; se esquecer, o sistema resolve. O que você NUNCA faz é aplicar medo, cegueira ou paralisia por presença divina por conta própria.
 - O envelope "[PRESENÇA DIVINA — SISTEMA ROLOU]" chega com o resultado pronto. Narre o peso da cena com toda a força — e nada além do que o envelope disse.

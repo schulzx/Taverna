@@ -27,6 +27,7 @@ import { HEROISMO_PROMPT } from "./heroismo.js";
 import { DESCANSO_PROMPT } from "./descanso.js";
 import { RELOGIOS_PROMPT } from "./relogios.js";
 import { GRIMORIO_PROMPT } from "./grimorio.js";
+import { DADIVAS_PROMPT } from "./dadivas.js";
 import { ORCAMENTO_PROMPT } from "./orcamento.js";
 import { ESPECIALIZACOES_PROMPT } from "./especializacoes.js";
 import { ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
@@ -145,6 +146,8 @@ ${DESCANSO_PROMPT}
 ${RELOGIOS_PROMPT}
 
 ${GRIMORIO_PROMPT}
+
+${DADIVAS_PROMPT}
 
 ${ORCAMENTO_PROMPT}
 ${ASCENSAO_SISTEMA_PROMPT}

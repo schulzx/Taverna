@@ -424,6 +424,13 @@ export function migrarPersonagem(p) {
     ritmoViagem: p.ritmoViagem || "normal",
     dadivas: Array.isArray(p.dadivas) ? p.dadivas : [],
     dadivasPendentes: p.dadivasPendentes || 0,
+    /* v9.32: as dádivas exclusivas desta lenda (nome, descrição e efeito
+       guardados por inteiro, porque não existe tabela onde procurá-las) e o
+       registro do que já foi gasto nas que têm carga. Save antigo acorda com
+       as duas coisas vazias, que é exatamente o estado de quem nunca usou. */
+    dadivasUnicas: Array.isArray(p.dadivasUnicas) ? p.dadivasUnicas : [],
+    dadivaGastos: (p.dadivaGastos && typeof p.dadivaGastos === "object") ? p.dadivaGastos : {},
+    bonusDefesa: Number(p.bonusDefesa) || 0,
     cicatrizes: Array.isArray(p.cicatrizes) ? p.cicatrizes : [],
     efeitos: Array.isArray(p.efeitos) ? p.efeitos : [],
     condicoes: Array.isArray(p.condicoes) ? p.condicoes : [],

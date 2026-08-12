@@ -49,7 +49,7 @@ import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, ORACU
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
 import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, relogioDaMissao, falharPorRelogio, recompensaDe, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeRecusa, resumoMissoesPrompt, MISSOES_PROMPT } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
-import { reconciliarGraus, resolverPresenca, presencaDoHeroi, PRESENCA_PROMPT } from "./presenca-divina.js";
+import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
@@ -74,6 +74,8 @@ import { aplicarNivel, evoluirCompanheiro, aplicarDescanso, recargaPadrao, aplic
 import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, consumirDia, RITMOS_VIAGEM, ritmoViagem, marchaForcada, testarNavegacao, forragear, efeitoExaustao, recuperarExaustao, resumoErmos } from "./ermos.js";
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, sortearDadiva, resumoEpico } from "./regras.js";
 import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, processarDiaCorreio } from "./correio.js";
+import { gerarDadivaUnica, envelopeDaUnica, todasAsLinhas as linhasDeDadivas, ataquesExtras, danoExtraDeDadiva, descontoDePM, bonusSocialDeDadiva, temVantagemMental, zonasPorMovimento, ignoraTerrenoDificil, criticoMinimo, imuneA, refazerDisponivel, gastarRefazer, repousarDadivas, segundoFolegoDisponivel, gastarSegundoFolego, resumoDadivasPrompt, DADIVAS_PROMPT } from "./dadivas.js";
+import { agruparMensagens } from "./resumo.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -225,7 +227,7 @@ function OverlayMorte({ estado, nomeMorto, aoVoltar, aoHerdar }) {
   );
 }
 
-function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, aoRefazer }) {
+function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino = 0, aoRefazer }) {
   if (rolagem.auto) {
     return (
       <div className="fixed inset-0 z-40 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.85)", backdropFilter: "blur(3px)" }}>
@@ -341,17 +343,22 @@ function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, aoRefazer
               </div>
             )}
             <div className="mt-5 flex items-center justify-center gap-2 flex-wrap">
-              {refeito == null && heroismo >= 1 && !rolagem.semHeroismo && (
+              {/* v9.32: o botão também aparece para quem tem a Dádiva do
+                  Destino e nenhum ponto de heroísmo. `destino` diz de onde
+                  vem a carga, para o rótulo não mentir sobre o preço. */}
+              {refeito == null && (heroismo >= 1 || destino > 0) && !rolagem.semHeroismo && (
                 <button
                   onClick={() => {
                     if (!aoRefazer || !aoRefazer()) return;
                     const novo = 1 + Math.floor(Math.random() * lados);
                     setRefeito(valor); setValor(novo); setFinalRef(novo);
                   }}
-                  title="Gasta 1 ponto de heroísmo. O segundo dado vale — mesmo se for pior."
+                  title={destino > 0
+                    ? "Dádiva do Destino: refaz de graça, uma vez por descanso longo. O segundo dado vale — mesmo se for pior."
+                    : "Gasta 1 ponto de heroísmo. O segundo dado vale — mesmo se for pior."}
                   className="rounded-xl px-4 py-2.5 tv-mono text-sm"
-                  style={{ background: "transparent", color: T.violetSoft, border: `1px solid ${T.violet}`, fontWeight: 600 }}>
-                  ✧ Refazer <span style={{ opacity: 0.7 }}>· 1 ponto</span>
+                  style={{ background: "transparent", color: destino > 0 ? T.amberSoft : T.violetSoft, border: `1px solid ${destino > 0 ? T.amber : T.violet}`, fontWeight: 600 }}>
+                  {destino > 0 ? "🌠 Destino" : "✧ Refazer"} <span style={{ opacity: 0.7 }}>· {destino > 0 ? "de graça" : "1 ponto"}</span>
                 </button>
               )}
               <button onClick={() => aoConcluir(finalRef.current, refeito)} className="rounded-xl px-6 py-2.5 tv-mono text-sm" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>
@@ -998,7 +1005,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
               <div className="flex items-center gap-2 flex-wrap">
                 {(personagem.nivel || 1) >= 20 && (
                   <span className="tv-mono text-[10px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>
-                    🌠 {(personagem.dadivas || []).length} dádiva{(personagem.dadivas || []).length === 1 ? "" : "s"} · {personagem.xp}/{XP_POR_DADIVA}
+                    🌠 {linhasDeDadivas(personagem).length} dádiva{linhasDeDadivas(personagem).length === 1 ? "" : "s"} · {personagem.xp}/{XP_POR_DADIVA}
                   </span>
                 )}
               </div>
@@ -1050,13 +1057,22 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                   </div>
                 );
               })()}
-              {(personagem.dadivas || []).length > 0 && (
+              {/* v9.32: as dádivas passam a dizer COMO se usam. O jogador leu
+                  "Dádiva do Destino" na tela e escreveu: "não entendi como
+                  usar e não ficou claro se aconteceu algo". As passivas dizem
+                  que já estão valendo; as que têm carga dizem onde a carga
+                  aparece e se ela está cheia. E as únicas desta lenda, que
+                  antes dependiam do Mestre registrar, aparecem aqui. */}
+              {linhasDeDadivas(personagem).length > 0 && (
                 <div className="rounded-lg px-2.5 py-2" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
-                  <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>Dádivas épicas</div>
-                  {(personagem.dadivas || []).map((id) => {
-                    const d = DADIVAS_EPICAS.find((x) => x.id === id);
-                    return d ? <div key={id} className="tv-body text-xs" style={{ color: T.ink }}>🌠 {d.nome} <span style={{ color: T.inkDim }}>— {d.desc}</span></div> : null;
-                  })}
+                  <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>Dádivas épicas — já aplicadas na ficha</div>
+                  {linhasDeDadivas(personagem).map((l) => (
+                    <div key={l.id} className="tv-body text-xs mb-0.5" style={{ color: T.ink }}>
+                      {l.unica ? "✷" : "🌠"} {l.nome}
+                      <span style={{ color: T.inkDim }}> — {l.desc}</span>
+                      {l.extra && <span className="tv-mono text-[10px]" style={{ color: l.ativa ? T.amberSoft : T.inkDim }}>{l.extra}</span>}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -1749,7 +1765,46 @@ function PainelBancada({ bancada = [], despensa = [], onForjar, bloqueado }) {
   );
 }
 
-function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover, grupo = [] }) {
+/* ---------------- UMA CORRIDA DE LINHAS DO SISTEMA (v9.32) ----------------
+   O que não se dobra fica em cima, como sempre foi. O que é contabilidade
+   pura desce para uma linha só de saldo, que abre com um toque. A dobra
+   nasce FECHADA de propósito: quem quer conferir a conta clica; quem quer
+   ler a cena não precisa fazer nada. */
+function BlocoSistema({ visiveis = [], dobradas = [], saldo = "" }) {
+  const [aberto, setAberto] = useState(false);
+  const pilula = (txt, i) => (
+    <div key={i} className="tv-fade flex justify-center">
+      <span className="tv-mono text-xs px-3 py-1.5 rounded-full text-center" style={{ background: T.panelSoft, color: T.violetSoft }}>{txt}</span>
+    </div>
+  );
+  return (
+    <div className="space-y-2">
+      {visiveis.map(pilula)}
+      {dobradas.length > 0 && (
+        <div className="tv-fade flex flex-col items-center gap-1.5">
+          <button onClick={() => setAberto((v) => !v)}
+            title={aberto ? "Esconder as rolagens e os golpes" : "Ver rolagem por rolagem, golpe por golpe"}
+            className="tv-mono text-xs px-3 py-1.5 rounded-full flex items-center gap-2"
+            style={{ background: T.panelSoft, color: T.inkDim, border: `1px solid ${T.line}` }}>
+            <span style={{ color: T.violetSoft }}>{saldo}</span>
+            <span style={{ opacity: 0.7 }}>{aberto ? "▴ esconder" : `▾ ${dobradas.length} linhas`}</span>
+          </button>
+          {aberto && (
+            <div className="w-full space-y-1">
+              {dobradas.map((t, i) => (
+                <div key={i} className="flex justify-center">
+                  <span className="tv-mono text-[11px] px-3 py-1 rounded-full text-center" style={{ background: "transparent", color: T.inkDim, border: `1px solid ${T.line}` }}>{t}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover, grupo = [], alcanceMov = 1, ignoraDificil = false, previsao = null }) {
   const [bolsaAberta, setBolsaAberta] = useState(false);
   if (!combate || !combate.inimigos || combate.inimigos.length === 0) return null;
   const eco = combate.economia || { acao: 1, extra: 1 };
@@ -1770,46 +1825,98 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
           <span className="tv-mono text-[9px]" style={{ color: T.inkDim }} title="Ao agir, o turno é encerrado sozinho e os inimigos respondem">· agir encerra o turno</span>
         </span>
       </div>
-      {/* TERRENO (v9.20): a linha de zonas. Cada botão é um lugar; o seu
-          está aceso. Clicar anda para lá — e o botão já avisa, antes do
-          clique, se sair dali vai custar um golpe livre. Mostrar o preço
-          ANTES é a diferença entre uma decisão e uma pegadinha. */}
+      {/* ---------------- O CAMPO DE BATALHA (v9.32) ----------------
+          Aqui havia uma fileira de três pílulas com o NOME do lugar e um
+          contador de inimigos. Bastava enquanto a única decisão espacial era
+          "ando ou fico". Deixou de bastar quando a magia de área passou a
+          pegar aliado de verdade: o jogador escreveu que o fogo amigo é "uma
+          bênção que vira maldição se ele não conseguir saber quando usar a
+          habilidade", e ele tem razão — uma decisão que se toma no escuro não
+          é uma decisão, é um sorteio.
+
+          Então o terreno virou mapa: cada lugar mostra QUEM está lá, de que
+          lado, com quanta vida. E quando há uma habilidade selecionada, as
+          zonas que ela vai varrer acendem antes do clique, com a conta de
+          quantos companheiros estão dentro. O preço aparece antes de ser
+          pago; a escolha continua inteiramente do jogador. */}
       {(() => {
         const campo = garantirCampo(combate.campo);
         if (!campo) return null;
         const zh = combate.zonaHeroi ?? 0;
         const colados = inimigosNaZona(combate.inimigos, zh).length;
+        const pv = (ent) => {
+          const max = ent.vidaMax || ent.vida || 1;
+          return Math.max(0, Math.min(1, (ent.vida || 0) / max));
+        };
+        const barra = (frac, cor) => (
+          <span className="inline-block rounded-full overflow-hidden align-middle" style={{ width: 26, height: 3, background: T.line }}>
+            <span className="block h-full" style={{ width: `${Math.round(frac * 100)}%`, background: frac < 0.34 ? T.danger : cor }} />
+          </span>
+        );
         return (
-          <div className="flex items-center gap-1.5 flex-wrap mb-2">
-            <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>terreno</span>
-            {campo.zonas.map((z) => {
-              const aqui = z.i === zh;
-              const inim = inimigosNaZona(combate.inimigos, z.i);
-              const dist = Math.abs(z.i - zh);
-              const pode = dist === 1 && (eco.movimento == null || eco.movimento > 0);
-              const titulo = aqui
-                ? `Você está aqui${z.cobertura ? " · cobertura: +2 de defesa" : ""}${inim.length ? ` · ${inim.length} inimigo(s) colado(s)` : ""}`
-                : dist > 1 ? `${z.nome} está a ${dist} lugares — atravesse um de cada vez`
-                : `Ir para ${z.nome}${z.cobertura ? " (cobertura: +2 de defesa)" : ""}${z.dificil ? " (terreno difícil: custa a ação)" : ""}${colados ? ` · ${colados === 1 ? "um inimigo colado leva" : `${colados} inimigos colados levam`} um golpe livre em você na saída` : ""}`;
-              return (
-                <button key={z.i} disabled={aqui || !pode} onClick={() => onMover && onMover(z.i)} title={titulo}
-                  className="tv-mono text-[10px] px-2 py-1 rounded-full flex items-center gap-1"
-                  style={{
-                    background: aqui ? T.amber : T.panelSoft,
-                    border: `1px solid ${aqui ? T.amber : pode ? T.line : "transparent"}`,
-                    color: aqui ? T.onAccent : pode ? T.ink : T.inkDim,
-                    opacity: !aqui && !pode ? 0.4 : 1,
-                  }}>
-                  {aqui ? "◉" : "○"} {z.nome}{z.cobertura ? " 🛡" : ""}{z.dificil ? " ⛰" : ""}
-                  {inim.length > 0 && <span style={{ color: aqui ? T.onAccent : T.danger, fontWeight: 700 }}>·{inim.length}</span>}
-                </button>
-              );
-            })}
-            {colados > 0 && (
-              <span className="tv-mono text-[9px]" style={{ color: T.danger }} title="Sair de perto de um inimigo dá a ele um golpe livre">
-                ⚡ sair custa {colados === 1 ? "um golpe livre" : `${colados} golpes livres`}
-              </span>
-            )}
+          <div className="mb-2">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>campo de batalha</span>
+              {colados > 0 && (
+                <span className="tv-mono text-[9px]" style={{ color: T.danger }} title="Sair de perto de um inimigo dá a ele um golpe livre">
+                  ⚡ sair daqui custa {colados === 1 ? "um golpe livre" : `${colados} golpes livres`}
+                </span>
+              )}
+              {previsao && (
+                <span className="tv-mono text-[9px] ml-auto px-2 py-0.5 rounded-full" style={{ color: previsao.aliados.length ? T.danger : T.amberSoft, border: `1px solid ${previsao.aliados.length ? T.danger : T.amber}` }}>
+                  {previsao.aliados.length ? "💢" : "◎"} {previsao.nome}: {previsao.inimigos.length} inimigo{previsao.inimigos.length === 1 ? "" : "s"}
+                  {previsao.aliados.length ? ` · PEGA ${previsao.aliados.join(", ")}` : " · nenhum aliado na área"}
+                </span>
+              )}
+            </div>
+            <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${campo.zonas.length}, minmax(0, 1fr))` }}>
+              {campo.zonas.map((z) => {
+                const aqui = z.i === zh;
+                const inim = inimigosNaZona(combate.inimigos, z.i);
+                const aliadosAqui = (grupo || []).filter((g) => (g.zona ?? zh) === z.i && (g.vida || 0) > 0);
+                const dist = Math.abs(z.i - zh);
+                const pode = !aqui && dist <= Math.max(1, alcanceMov) && (eco.movimento == null || eco.movimento > 0);
+                const naArea = !!(previsao && previsao.zonas.includes(z.i));
+                const custaAcao = z.dificil && !ignoraDificil;
+                const titulo = aqui
+                  ? `Você está aqui${z.cobertura ? " · cobertura: +2 de defesa" : ""}${inim.length ? ` · ${inim.length} inimigo(s) colado(s)` : ""}`
+                  : dist > Math.max(1, alcanceMov) ? `${z.nome} está a ${dist} lugares — longe demais para um movimento`
+                  : `Ir para ${z.nome}${z.cobertura ? " (cobertura: +2 de defesa)" : ""}${custaAcao ? " (terreno difícil: custa a ação)" : ""}${colados ? ` · ${colados === 1 ? "um inimigo colado leva" : `${colados} inimigos colados levam`} um golpe livre em você na saída` : ""}`;
+                return (
+                  <div key={z.i} className="rounded-xl p-1.5 flex flex-col gap-1 min-w-0"
+                    style={{
+                      background: naArea ? "rgba(220,80,60,0.14)" : T.panelSoft,
+                      border: `1px solid ${naArea ? T.danger : aqui ? T.amber : T.line}`,
+                    }}>
+                    <button disabled={aqui || !pode} onClick={() => onMover && onMover(z.i)} title={titulo}
+                      className="tv-mono text-[10px] text-left leading-tight truncate"
+                      style={{ color: aqui ? T.amberSoft : pode ? T.ink : T.inkDim, opacity: !aqui && !pode ? 0.5 : 1, fontWeight: aqui ? 700 : 500 }}>
+                      {aqui ? "◉" : pode ? "○" : "·"} {z.nome}{z.cobertura ? " 🛡" : ""}{z.dificil ? " ⛰" : ""}
+                    </button>
+                    <div className="flex flex-col gap-0.5">
+                      {aqui && (
+                        <span className="tv-mono text-[10px] flex items-center gap-1 truncate" style={{ color: T.amber, fontWeight: 700 }}>🧍 você</span>
+                      )}
+                      {/* a chave leva o índice: um grupo pode ter dois nomes
+                          iguais (dois "Brisa" vindos de saves diferentes) e
+                          nome sozinho não é identidade estável */}
+                      {aliadosAqui.map((g, gi) => (
+                        <span key={`${g.nome}-${gi}`} className="tv-mono text-[9px] flex items-center gap-1 truncate" style={{ color: naArea ? T.danger : T.ok }} title={`${g.nome}: ${g.vida}/${g.vidaMax || g.vida} PV${naArea ? " — está dentro da área" : ""}`}>
+                          {naArea ? "💢" : "🛡"} <span className="truncate">{g.nome}</span> {barra(pv(g), T.ok)}
+                        </span>
+                      ))}
+                      {inim.map((e, ei) => (
+                        <span key={`${e.nome}-${ei}`} className="tv-mono text-[9px] flex items-center gap-1 truncate" style={{ color: T.danger }} title={`${e.nome}: ${e.vida}/${e.vidaMax || e.vida} PV${e.gd ? ` · GD ${e.gd}` : ""}${(e.condicoes || []).length ? ` · ${(e.condicoes || []).map((c) => c.nome).join(", ")}` : ""}`}>
+                          👹 <span className="truncate">{e.nome}</span> {barra(pv(e), T.danger)}
+                          {(e.condicoes || []).length > 0 && <span style={{ opacity: 0.8 }}>·{(e.condicoes || []).length}</span>}
+                        </span>
+                      ))}
+                      {!aqui && !aliadosAqui.length && !inim.length && <span className="tv-mono text-[9px]" style={{ color: T.inkDim, opacity: 0.6 }}>—</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         );
       })()}
@@ -2433,6 +2540,82 @@ export default function Taverna() {
      topo do jogo (ascensão, milagres, presença divina, cidade dominada) sem
      precisar jogar uma campanha inteira até lá. */
   const godLinha = (t) => pushMsgs([{ autor: "sistema", texto: t }]);
+
+  /* ---- A LUTA DO MODO CRIATIVO ENTRA PELA MESMA PORTA (v9.32) ----
+     `/combate` e `/encontro` montavam a lista de inimigos e paravam ali:
+     nada de terreno, nada de iniciativa, nada de reconciliar o grau divino,
+     nada de presença. O jogador invocou minotauros sendo GD 4 e não viu nem
+     a Regra do Degrau nem ninguém se curvando — e concluiu, com razão, que a
+     ascensão não fazia diferença. Não fazia mesmo: metade do combate nem
+     tinha sido montada. Esta função é o equipamento que faltava, e é a MESMA
+     coisa que o caminho normal (a resposta do Mestre) já fazia. */
+  const equiparCombate = (comb, pers) => {
+    const msgs = [];
+    if (!comb || !(comb.inimigos || []).length) return { combate: comb, msgs };
+    const panteao = (divindadeRef.current && divindadeRef.current.panteao) || [];
+    let inimigos = reconciliarGraus(comb.inimigos, panteao);
+    inimigos.filter((e) => e.gdPeloSistema).forEach((e) => msgs.push(`✦ O sistema reconheceu ${e.nome} como divindade de GD ${e.gd} — Regra do Degrau em vigor.`));
+    const campo = montarCampo({
+      emMasmorra: !!masmorraRef.current,
+      local: localAtualTxt(),
+      bioma: ((mapaRef.current.cidades || []).find((c) => c.nome === cidadeAtualRef.current) || {}).bioma || "",
+    });
+    inimigos = posicionarInimigos(campo, inimigos);
+    const ordem = rolarIniciativa([
+      { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") },
+      ...(pers.grupo || []).map((g) => ({ nome: g.nome, lado: "aliado", modDestreza: 1 })),
+      ...inimigos.map((e) => ({ nome: e.nome, lado: "inimigo", modDestreza: e.agil ? 2 : 0 })),
+    ]);
+    reacaoUsadaRef.current = false;
+    const novo = { ...comb, inimigos, campo, ordem, rodada: 1, recursos: novosRecursos(), zonaHeroi: ZONA_HEROI };
+    msgs.push(`🗺 Terreno: ${mapaDoCampo(campo, { zonaHeroi: ZONA_HEROI, inimigos, grupo: pers.grupo || [] })}`);
+    msgs.push(`🎲 Iniciativa — ${resumoIniciativa(ordem)}`);
+    return { combate: novo, msgs };
+  };
+
+  /* A presença nos DOIS sentidos, na abertura da luta. O deus que entrou
+     esmaga; o herói que ascendeu faz joelho dobrar. A segunda metade nunca
+     rodava em lugar nenhum — era o "não tinha efeito sobre os outros". */
+  const presencaNaLuta = (comb, persBase, { contraMim = true } = {}) => {
+    const pers = persBase || personagemRef.current || personagem;
+    if (!comb || !pers) return;
+    const gdJ = grauDe(divindadeRef.current, pers.nivel || 1);
+    const linhas = [];
+    let p = pers;
+
+    if (contraMim) {
+      const div = (comb.inimigos || []).filter((e) => (e.gd || 0) >= 3).sort((a, b) => (b.gd || 0) - (a.gd || 0))[0];
+      const res = div ? resolverPresenca({ fonte: div, jogador: p, grupo: p.grupo || [], gdJogador: gdJ }) : null;
+      if (res) {
+        if (res.condJogador) p = { ...p, condicoes: [...(p.condicoes || []).filter((x) => x.id !== res.condJogador.id), res.condJogador] };
+        if (res.afetados.length) {
+          p = { ...p, grupo: (p.grupo || []).map((g) => {
+            const a = res.afetados.find((x) => x.nome === g.nome);
+            return a ? { ...g, condicoes: [...(g.condicoes || []).filter((x) => x.id !== a.cond.id), a.cond] } : g;
+          }) };
+        }
+        linhas.push(...res.linhas);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${res.nota}`;
+      }
+    }
+
+    const meu = presencaDoHeroiEmCombate({ gdJogador: gdJ, inimigos: comb.inimigos || [], nomeHeroi: p.nome });
+    if (meu) {
+      const porNome = new Map(meu.afetados.map((a) => [a.nome, a.cond]));
+      const novos = (comb.inimigos || []).map((e) => {
+        const c = porNome.get(e.nome);
+        return c ? { ...e, condicoes: [...(e.condicoes || []).filter((x) => x.id !== c.id), c] } : e;
+      });
+      combateRef.current = { ...(combateRef.current || comb), inimigos: novos };
+      setCombate(combateRef.current);
+      linhas.push(...meu.linhas);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${meu.nota}`;
+    }
+
+    if (p !== pers) { personagemRef.current = p; setPersonagem(p); }
+    if (linhas.length) pushMsgs(linhas.map((t) => ({ autor: "sistema", texto: t })));
+  };
+
   const executarComando = (entrada) => {
     const c = interpretar(entrada);
     if (!c) return false;
@@ -2746,11 +2929,15 @@ export default function Taverna() {
           for (let i = 0; i < Math.max(1, Math.min(6, quantos)); i++) {
             lista.push({ nome: quantos > 1 ? `${nomeC} ${i + 1}` : nomeC, nivel: nivel || personagem.nivel || 1, ameaca: "" });
           }
-          const novo = processarCombate(null, { combate_iniciar: lista, __nivelJogador: personagem.nivel || 1 }, msgs);
+          const cru = processarCombate(null, { combate_iniciar: lista, __nivelJogador: personagem.nivel || 1 }, msgs);
+          const eq = equiparCombate(cru, personagem);
+          const novo = eq.combate;
           combateRef.current = novo; setCombate(novo);
           const avG = avaliarEncontro(novo.inimigos, personagem);
           godLinha(`⚡ Combate aberto: ${lista.map((x) => x.nome).join(", ")}${nivel ? ` (nível ${nivel})` : ""}.${avG ? `\n⚡ ${selo(avG)} (peso ${avG.ajustado} vs capacidade ${avG.capacidade})` : ""}`);
           if (msgs.length) pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
+          if (eq.msgs.length) pushMsgs(eq.msgs.map((t) => ({ autor: "sistema", texto: t })));
+          presencaNaLuta(novo, personagem);
           return true;
         }
         case "encontro": {
@@ -2767,11 +2954,15 @@ export default function Taverna() {
           const n = quantosPara(modelo, personagem, faixa);
           const lista = Array.from({ length: n }, (_, i) => ({ nome: n > 1 ? `${nomeC} ${i + 1}` : nomeC, ameaca: modelo.ameaca, nivel: modelo.nivel }));
           const msgs = [];
-          const novo = processarCombate(null, { combate_iniciar: lista, __nivelJogador: personagem.nivel || 1 }, msgs);
+          const cru = processarCombate(null, { combate_iniciar: lista, __nivelJogador: personagem.nivel || 1 }, msgs);
+          const eq = equiparCombate(cru, personagem);
+          const novo = eq.combate;
           combateRef.current = novo; setCombate(novo);
           const av = avaliarEncontro(novo.inimigos, personagem);
           godLinha(`⚡ ${n}× ${nomeC} (${modelo.ameaca}) para um encontro ${faixa}.\n⚡ ${selo(av)} — peso ${av.ajustado} (bruto ${av.bruto} × ${av.mult}) vs capacidade ${av.capacidade}.`);
           if (msgs.length) pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
+          if (eq.msgs.length) pushMsgs(eq.msgs.map((t) => ({ autor: "sistema", texto: t })));
+          presencaNaLuta(novo, personagem);
           return true;
         }
         case "matar": {
@@ -3342,7 +3533,16 @@ export default function Taverna() {
   };
 
   const aplicarResposta = useCallback((resp, persAtual) => {
-    let pers = persAtual;
+    /* v9.32: FICHA NUNCA NULA. O erro "undefined is not an object (evaluating
+       'e.efeitos')" que apareceu em jogo era isto: alguma chamada de enviar()
+       passou `persAtual` vazio, `tickEfeitos(pers)` é a PRIMEIRA coisa que
+       toca na ficha aqui, e o turno inteiro morria na primeira linha — com
+       ele, as mudanças, os efeitos, a divindade, tudo. Um turno não pode
+       depender de quem chamou ter lembrado de mandar a ficha: se ela não
+       veio, ela está no ref, e se não está em lugar nenhum não há turno para
+       aplicar. Vale tanto para undefined quanto para null. */
+    let pers = persAtual || personagemRef.current || personagem;
+    if (!pers) return null;
     const msgs = [];
     /* trava anti-cobrança-dupla: no turno de [HABILIDADE] o custo já foi
        descontado pelo app; qualquer mana negativa do Mestre é ignorada */
@@ -3422,6 +3622,15 @@ export default function Taverna() {
         if (!c || !c.nome) return;
         const cond = criarCondicao(c.nome, { turnos: c.turnos, origem: "narrado pelo Mestre" });
         if (!cond) { msgs.push(`⚠ Condição desconhecida ignorada: "${c.nome}" (use o catálogo do sistema).`); return; }
+        /* v9.32: a Dádiva do Vigor Irreal torna imune a exaustão, veneno e
+           doença — e imune quer dizer que a condição NÃO ENTRA, nem vinda do
+           Mestre. Vale só para o herói: a dádiva é dele. */
+        const paraMim = !c.alvo || String(c.alvo).toLowerCase() === "jogador" || String(c.alvo).toLowerCase() === (pers.nome || "").toLowerCase();
+        if (paraMim && imuneA(pers, cond.id)) {
+          msgs.push(`🌠 ${cond.nome} não pega: a Dádiva do Vigor Irreal te faz imune.`);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DÁDIVA DO VIGOR IRREAL — SISTEMA] Você tentou me pôr ${cond.nome.toLowerCase()}, e eu sou IMUNE a isso por dádiva épica. Nada foi aplicado. Narre o veneno que não pega, o cansaço que não vem — e não insista com essa condição.`;
+          return;
+        }
         const r = aplicarCondicaoEm(pers, c.alvo, cond);
         pers = r.pers;
         if (r.texto) msgs.push(r.texto);
@@ -3745,6 +3954,11 @@ export default function Taverna() {
         ];
         const ordem = rolarIniciativa(participantes);
         reacaoUsadaRef.current = false;
+        /* v9.32: o outro lado da presença. O bloco acima já rolou o peso de um
+           deus INIMIGO sobre mim; aqui rola o meu sobre eles. Vai depois da
+           iniciativa porque o medo é da abertura da luta, não da entrada em
+           cena — e `contraMim: false` para não rolar duas vezes a mesma coisa. */
+        setTimeout(() => presencaNaLuta(combateRef.current, personagemRef.current, { contraMim: false }), 0);
         /* ORÇAMENTO (v9.19): a luta é pesada AGORA, com a mesa cheia — depois
            que os primeiros caem, a conta já não descreve o que o jogador
            enfrentou. O selo vai para a tela e a faixa para o Mestre, para a
@@ -3994,6 +4208,16 @@ export default function Taverna() {
          não testa */
       if (rolagemFinal.dificuldade != null && rolagemFinal.dificuldade > modT + 19) rolagemFinal = { ...rolagemFinal, dificuldade: modT + 14 };
       if (avaliarTeste(modT, rolagemFinal.dificuldade) === "auto") rolagemFinal = { ...rolagemFinal, auto: true };
+    }
+    /* v9.32: a Dádiva da Vontade de Ferro dá VANTAGEM em resistência mental e
+       contra medo. Ela mora aqui, no ponto por onde todo teste do Mestre
+       passa, e é lida do motivo — porque é assim que o pedido chega: em
+       português, não em campo estruturado. */
+    if (rolagemFinal && !rolagemFinal.vantagem && temVantagemMental(pers)) {
+      const alvoTxt = `${rolagemFinal.motivo || ""} ${rolagemFinal.atributo || ""} ${rolagemFinal.rotulo || ""}`.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+      if (/(medo|terror|pavor|amedront|encant|enfeiti|domin|charme|ilus|mental|sanidade|vontade|possess|hipno|controle da mente|persuas[aã]o resistir)/.test(alvoTxt)) {
+        rolagemFinal = { ...rolagemFinal, vantagem: true, desvantagem: false, notaDadiva: "Vontade de Ferro" };
+      }
     }
     setRolagem(rolagemFinal);
     /* CÓDEX: novos companheiros, quase-morte e checagem de conquistas do turno */
@@ -4399,15 +4623,50 @@ export default function Taverna() {
     const ef = mil.efeito || {};
     let notaMestre = `[MILAGRE INVOCADO — efeito JÁ APLICADO pelo sistema] "${mil.nome}": ${mil.desc} Custou ${mil.pf} PF${origem === "jogador" ? " (o jogador invocou)" : ""}. Narre a manifestação à altura do domínio${novo.dominio ? ` (${novo.dominio})` : ""} — visceral, pública, inesquecível. NÃO recalcule números.`;
 
+    /* v9.32: O MILAGRE VOLTA A ACONTECER. Aqui moravam três `setPersonagem`
+       com função atualizadora, e eles falhavam de duas maneiras ao mesmo
+       tempo. A primeira: `personagemRef` não era sincronizado, e logo em
+       seguida `dispararMilagre` mandava `personagemRef.current` — a ficha SEM
+       a cura — para o Mestre; quando a resposta voltava, `aplicarResposta`
+       partia daquela base velha e regravava por cima. A cura vivia meio
+       segundo e morria. A segunda: os `msgs.push` estavam DENTRO da função
+       atualizadora, que só roda na renderização seguinte — depois de o array
+       já ter sido devolvido e desenhado. A linha "+X PV" nunca chegava à
+       tela. Era exatamente o que o jogador viu: o Mestre narrando uma cura
+       que não aconteceu com ninguém.
+
+       O jeito certo é o mesmo do resto do arquivo: calcular sobre o ref,
+       gravar estado E ref juntos, e empurrar as linhas na hora. */
+    const aplicarNaFicha = (fn) => {
+      const base = personagemRef.current || personagem;
+      if (!base) return null;
+      const novoP = fn(base);
+      personagemRef.current = novoP;
+      setPersonagem(novoP);
+      salvar({ personagem: novoP });
+      return novoP;
+    };
+
     if (ef.tipo === "cura") {
-      setPersonagem((p) => {
-        const cura = Math.round((p.vidaMax || 10) * (ef.fracao || 0.5));
-        const grupo = (p.grupo || []).map((g) => ({ ...g, vida: Math.min(g.vidaMax || g.vida, (g.vida || 0) + Math.round((g.vidaMax || 10) * (ef.fracao || 0.5))) }));
-        msgs.push({ autor: "sistema", texto: `🩶 +${cura} PV a você e ao grupo` });
-        return { ...p, vida: Math.min(p.vidaMax, (p.vida || 0) + cura), morrendo: false, morte: { sucessos: 0, falhas: 0 }, grupo };
+      let curou = 0;
+      const nomes = [];
+      aplicarNaFicha((p) => {
+        curou = Math.round((p.vidaMax || 10) * (ef.fracao || 0.5));
+        const grupo = (p.grupo || []).map((g) => {
+          const ganho = Math.round((g.vidaMax || 10) * (ef.fracao || 0.5));
+          const antes = g.vida || 0;
+          const depois = Math.min(g.vidaMax || g.vida || 1, antes + ganho);
+          if (depois > antes) nomes.push(`${g.nome} +${depois - antes}`);
+          /* quem estava caído levanta: um milagre de restauração que deixa o
+             companheiro no chão não é restauração nenhuma */
+          return { ...g, vida: depois, morrendo: depois > 0 ? false : g.morrendo };
+        });
+        return { ...p, vida: Math.min(p.vidaMax, (p.vida || 0) + curou), morrendo: false, morte: { sucessos: 0, falhas: 0 }, grupo };
       });
+      msgs.push({ autor: "sistema", texto: `🩶 +${curou} PV em ${(personagemRef.current || {}).nome || "você"}${nomes.length ? ` · ${nomes.join(" · ")}` : ""}` });
+      notaMestre += ` A cura JÁ está nas fichas: eu recuperei ${curou} PV${nomes.length ? ` e o grupo também (${nomes.join(", ")})` : ""}. Narre o alívio, não os números.`;
     } else if (ef.tipo === "efeito") {
-      setPersonagem((p) => {
+      aplicarNaFicha((p) => {
         const efeitos = (p.efeitos || []).filter((e) => e.nome !== ef.nome);
         efeitos.push({ nome: ef.nome, bonus: ef.bonus || 2, turnos: ef.turnos || 5, aplica: "todos", descricao: mil.desc });
         return { ...p, efeitos };
@@ -4427,11 +4686,18 @@ export default function Taverna() {
       combateRef.current = nc; setCombate(nc);
       notaMestre += ` Alvos atingidos: ${alvos.map((a) => a.nome).join(", ")}.`;
     } else if (ef.tipo === "ressurreicao") {
-      setPersonagem((p) => {
-        const grupo = (p.grupo || []).map((g) => (g.vida <= 0 || g.morrendo) ? { ...g, vida: Math.max(1, Math.round((g.vidaMax || 10) / 2)), morrendo: false } : g);
+      const voltaram = [];
+      aplicarNaFicha((p) => {
+        const grupo = (p.grupo || []).map((g) => {
+          if (!(g.vida <= 0 || g.morrendo)) return g;
+          voltaram.push(g.nome);
+          return { ...g, vida: Math.max(1, Math.round((g.vidaMax || 10) / 2)), morrendo: false, morte: { sucessos: 0, falhas: 0 } };
+        });
+        if (p.vida <= 0 || p.morrendo) voltaram.push(p.nome);
         return { ...p, grupo, vida: p.vida <= 0 ? Math.max(1, Math.round(p.vidaMax / 2)) : p.vida, morrendo: false, morte: { sucessos: 0, falhas: 0 } };
       });
-      msgs.push({ autor: "sistema", texto: "🕯 Os caídos voltam — a morte devolve o que é seu." });
+      msgs.push({ autor: "sistema", texto: voltaram.length ? `🕯 Voltam: ${voltaram.join(", ")} — a morte devolve o que é seu.` : "🕯 Ninguém havia tombado — o domínio guarda o gesto." });
+      if (voltaram.length) notaMestre += ` Quem voltou: ${voltaram.join(", ")} — já de pé na ficha.`;
     } else if (ef.tipo === "vinculo") {
       notaMestre += " O NPC presente mais relevante jura lealdade de forma irreversível — trate como fato firmado.";
     }
@@ -4450,9 +4716,31 @@ export default function Taverna() {
     while ((p.dadivasPendentes || 0) > 0) {
       const r = sortearDadiva(p.dadivas || []);
       p = { ...p, dadivasPendentes: p.dadivasPendentes - 1 };
+      /* v9.32: A ÚNICA DEIXOU DE SER UM PEDIDO. Aqui saía um envelope pedindo
+         que o Mestre inventasse a bênção e a registrasse via
+         "adicionar_habilidades". Quando ele narrava e esquecia de registrar —
+         e ele esquece —, o jogador lia o nome de uma dádiva que não existia em
+         canto nenhum da ficha. Era a última decisão mecânica que ainda morava
+         na narração. Agora o sistema gera nome e número, aplica, e o Mestre
+         recebe o nome pronto para narrar. */
       if (r.unica) {
-        msgs.push("🌠 DÁDIVA ÉPICA ÚNICA — algo que só existe na sua lenda desperta…");
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DÁDIVA ÉPICA ÚNICA — crie AGORA] O herói cruzou mais 30.000 XP no ápice mortal e conquistou uma dádiva épica EXCLUSIVA desta campanha. Invente uma bênção poderosa e memorável, coerente com tudo que ele viveu (feitos, domínio, cicatrizes, inimigos) — dê nome próprio e um efeito claro, e registre-a via "adicionar_habilidades" com custo 0. Narre a manifestação à altura: isto acontece pouquíssimas vezes numa vida.`;
+        const u = gerarDadivaUnica(p, {
+          dominio: (divindadeRef.current && divindadeRef.current.dominio) || "",
+          titulo: (divindadeRef.current && divindadeRef.current.despertar) ? tituloDe(grauDe(divindadeRef.current)) : "",
+          quantas: (p.dadivasUnicas || []).length,
+        });
+        const ef = u.efeito || {};
+        p = {
+          ...p,
+          dadivasUnicas: [...(p.dadivasUnicas || []), u],
+          vidaMax: (p.vidaMax || 10) + (ef.vidaMax || 0),
+          vida: Math.min((p.vidaMax || 10) + (ef.vidaMax || 0), (p.vida || 0) + (ef.vidaMax || 0)),
+          manaMax: (p.manaMax || 8) + (ef.manaMax || 0),
+          mana: Math.min((p.manaMax || 8) + (ef.manaMax || 0), (p.mana || 0) + (ef.manaMax || 0)),
+          bonusDefesa: (p.bonusDefesa || 0) + (ef.defesa || 0),
+        };
+        msgs.push(`🌠 DÁDIVA ÉPICA ÚNICA: ${u.nome} — ${u.desc}`);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaUnica(u, p)}`;
       } else {
         const d = r.dadiva;
         const ef = d.efeito || {};
@@ -4463,9 +4751,10 @@ export default function Taverna() {
           vida: Math.min((p.vidaMax || 10) + (ef.vidaMax || 0), (p.vida || 0) + (ef.vidaMax || 0)),
           manaMax: (p.manaMax || 8) + (ef.manaMax || 0),
           mana: Math.min((p.manaMax || 8) + (ef.manaMax || 0), (p.mana || 0) + (ef.manaMax || 0)),
+          bonusDefesa: (p.bonusDefesa || 0) + (ef.defesa || 0),
         };
         msgs.push(`🌠 DÁDIVA ÉPICA: ${d.nome} — ${d.desc}`);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DÁDIVA ÉPICA CONCEDIDA PELO SISTEMA] "${d.nome}": ${d.desc} Já aplicada — narre o momento em que esse poder desperta nele, com o peso que merece.`;
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DÁDIVA ÉPICA CONCEDIDA PELO SISTEMA] "${d.nome}": ${d.desc} Já aplicada na ficha — narre o momento em que esse poder desperta nele, com o peso que merece. NÃO invente outro nome, NÃO mude o efeito e NÃO envie "adicionar_habilidades".`;
       }
     }
     return p;
@@ -4626,7 +4915,11 @@ export default function Taverna() {
       const leg = resumoLegadoPrompt(p);
       const mis = resumoMissoesPrompt(missoesRef.current);
       const grm = resumoGrimorioPrompt(p);
-      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${mis ? `\n${mis}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
+      /* v9.32: as dádivas no rodapé. Sem isto o Mestre não sabe que o herói é
+         imune a veneno nem que ele tem um nome próprio de bênção — e inventa
+         os dois. */
+      const dad = resumoDadivasPrompt(p);
+      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${mis ? `\n${mis}` : ""}${dad ? `\n${dad}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -4636,7 +4929,7 @@ export default function Taverna() {
          para o modelo manter o formato). Antes ia o JSON completo com mudancas,
          sugestões e campos de combate — ~3× mais tokens por mensagem antiga,
          sem nenhum ganho de memória (os efeitos já vivem no estado do app). */
-      let pers = aplicarResposta(resp, persAtual);
+      let pers = aplicarResposta(resp, persAtual) || personagemRef.current || personagem;
       /* MISSÕES (v9.27): o conferente roda DEPOIS de tudo aplicado — só aí o
          estado do turno está completo (a cidade nova, o inimigo caído, o item
          na bolsa). Custa zero: é comparação com o que já está na mão.
@@ -4997,8 +5290,12 @@ export default function Taverna() {
     /* ATAQUES MÚLTIPLOS (D&D): 2 ataques no nível 5, 3 no 11, 4 no 20 */
     const nv = pers.nivel || 1;
     /* 5e: marciais ganham Ataque Extra; conjuradores fazem UMA conjuração com
-       mais dados; ladino faz um golpe só, com Ataque Furtivo somando dados. */
-    const nAtaques = ataquesPorTurno(pers.classe, nv);
+       mais dados; ladino faz um golpe só, com Ataque Furtivo somando dados.
+       v9.32: a Dádiva do Combate soma o golpe extra que a ficha promete. */
+    const nAtaques = ataquesPorTurno(pers.classe, nv) + ataquesExtras(pers);
+    /* v9.32: DÁDIVAS QUE APARECEM NO DADO. Dano fixo, crítico mais largo. */
+    const danoDeDadiva = danoExtraDeDadiva(pers);
+    const critMin = criticoMinimo(pers);
     const normalizar = (x) => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const alvoCitado = vivos.find((e) => acaoN.includes(normalizar(e.nome)));
     const campoDaLuta = garantirCampo(comb.campo);
@@ -5029,13 +5326,28 @@ export default function Taverna() {
         || (alvoCitado && aoAlcance.find((e) => e.nome === alvoCitado.nome))
         || aoAlcance[0];
       const penal = alcanca(campoDaLuta, alvo.zona ?? 0, zH, { distancia: armaLonge }).penalidade || 0;
+      /* ---- A REGRA DO DEGRAU, DO LADO DE CÁ (v9.32) ----
+         `bonusDivino` e `imunePorEscopo` estavam importados neste arquivo
+         desde a v7.4 e nunca eram chamados: o inimigo divino ganhava +2 por
+         degrau contra o herói (combate.js faz essa conta), e o herói divino
+         não ganhava nada contra ninguém. Foi o que o jogador viu ao invocar
+         minotauros sendo GD 4 — a ascensão não aparecia no dado. Pior: as
+         linhas de tela que anunciam "IMUNE — GD tal" já existiam logo abaixo,
+         lendo um `r.escopoImune` que nada nunca escrevia. A metade visível da
+         regra estava pronta e a metade que conta faltava. */
+      const gdAlvo = Math.max(0, Number(alvo.gd) || 0);
+      const degrau = bonusDivino(gdJ, gdAlvo);
       const r = resolverAtaque({
         atacante: pers.nome, alvo, ehAtacanteInimigo: false,
-        bonusAtaque: bonusAtkBase - penal, danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)) + bArma.bonus,
+        bonusAtaque: bonusAtkBase - penal + degrau,
+        danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)) + bArma.bonus + danoDeDadiva,
         condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
         tipoDano: elementoDaArma(pers), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
         bonusDefesaAlvo: bonusDefesaDaZona(campoDaLuta, alvo.zona ?? 0),
+        criticoEm: critMin,
       });
+      /* três degraus abaixo, o golpe comum atravessa sem ferir */
+      if (imunePorEscopo(gdJ, gdAlvo)) { r.escopoImune = true; r.dano = 0; }
       if (r.dano > 0) { const l = locais.find((e) => e.nome === alvo.nome); l.vida = Math.max(0, l.vida - r.dano); if (l.vida <= 0) l.derrotado = true; }
       resultados.push({ r, alvo: { ...alvo } });
     }
@@ -5103,9 +5415,13 @@ export default function Taverna() {
     /* COMBO (v9.6): duas habilidades que conversam no mesmo turno */
     const combo = ctx.combo || null;
     if (combo) danoBase = Math.round(danoBase * combo.mult);
+    /* a mesma Regra do Degrau do golpe de arma: a habilidade de um deus pesa
+       mais contra um mortal, e a de um mortal não fura a casca de um deus */
+    const gdJH = grauDe(divindadeRef.current);
+    const gdAlvoH = Math.max(0, Number(alvo.gd) || 0);
     const r = resolverAtaque({
       atacante: pers.nome, alvo, ehAtacanteInimigo: false,
-      bonusAtaque: bonusAtk, danoBase,
+      bonusAtaque: bonusAtk + bonusDivino(gdJH, gdAlvoH), danoBase: danoBase + danoExtraDeDadiva(pers),
       condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
       /* v9.21: o tipo de dano sai da habilidade — elemento no nome, senão a
          escola da classe. Antes ia "magico", que não existe na tabela: toda
@@ -5113,7 +5429,9 @@ export default function Taverna() {
       tipoDano: tipoDeDanoDaHabilidade(h, pers), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
       resistAlvo: resistenciasEquipadas(alvo),
       bonusDefesaAlvo: bonusDefesaDaZona(campoH, alvo.zona ?? 0),
+      criticoEm: criticoMinimo(pers),
     });
+    if (imunePorEscopo(gdJH, gdAlvoH)) { r.escopoImune = true; r.dano = 0; }
     const linhasSis = [];
     const partes = [];
     logDadoCombate(resumoDoAtaque(r));
@@ -5201,6 +5519,12 @@ export default function Taverna() {
         linhasSis.push({ autor: "sistema", texto: `🩸 ${h.nome} drena a essência: +${cura} PV` });
         partes.push(`drenei ${cura} PV`);
       }
+    } else if (r.escopoImune) {
+      /* a magia acerta e não fere: três degraus de GD abaixo, poder comum não
+         atravessa a casca de um deus. O jogador precisa ler POR QUE, senão
+         acha que errou a conta. */
+      partes.push(`${alvo.nome} — IMUNE (GD ${gdAlvoH} contra meu GD ${gdJH}: poder comum não fere divindade tão acima; preciso de artefato lendário, bênção ou enfraquecê-lo antes)`);
+      linhasSis.push({ autor: "sistema", texto: `✦ ${pers.nome} · ${h.nome} → ${alvo.nome}: atravessa sem encontrar carne — ${alvo.nome} é GD ${gdAlvoH} (${tituloDe(gdAlvoH)}), IMUNE ao seu poder comum` });
     } else {
       partes.push(`${alvo.nome} — ${r.desastre ? "erro desastroso" : "errou"} (d20=${r.d20}${r.bonus ? `+${r.bonus}` : ""}=${r.total} vs ${r.ca})`);
       linhasSis.push({ autor: "sistema", texto: `✦ ${pers.nome} · ${h.nome} → ${alvo.nome}: ${r.desastre ? "erro desastroso" : "errou"}` });
@@ -5574,7 +5898,11 @@ export default function Taverna() {
       const sequencia = [];   // ordem real de uso — é dela que o combo sai
       let custoTotal = 0;
       for (const h of escolhidas) {
-        const custo = Math.max(0, Number(h.custo) || 0);
+        /* v9.32: a Dádiva da Magia desconta 1 PM por conjuração. Estava escrita
+           na tabela desde a v8.1 e nunca chegou a nenhuma conta — como todo o
+           resto do efeito das dádivas. Truque de custo zero continua zero. */
+        const custoCheio = Math.max(0, Number(h.custo) || 0);
+        const custo = custoCheio > 0 ? Math.max(0, custoCheio - descontoDePM(pers)) : 0;
         /* CADERNO (v9.21): magia guardada não sai. A checagem vem ANTES do
            custo em PM porque a mensagem certa é a que explica o motivo real —
            dizer "mana insuficiente" para quem tem mana de sobra e só não
@@ -6002,6 +6330,19 @@ export default function Taverna() {
     }
     let persAtual = { ...persBase, vida: Math.max(0, persBase.vida - danoNoJogador), mana: Math.max(0, (persBase.mana || 0) - pmReacaoRef.current), grupo: grupoAtual };
     pmReacaoRef.current = 0;
+    /* ---- SEGUNDO FÔLEGO (v9.32) ----
+       A Dádiva da Recuperação diz, desde a v8.1, "recupera metade da vida ao
+       cair a 0 PV, uma vez por dia" — e não havia uma linha de código atrás
+       dela. Aqui é o único lugar onde o herói cai por dano de combate, então
+       é aqui que ela acorda. Uma vez por DIA, marcada na ficha pelo número do
+       dia: o contador se devolve sozinho quando o dia vira, sem precisar de
+       ninguém para zerá-lo. */
+    if (persAtual.vida <= 0 && segundoFolegoDisponivel(persAtual, diaRef.current)) {
+      const volta = Math.max(1, Math.round((persAtual.vidaMax || 10) / 2));
+      persAtual = gastarSegundoFolego({ ...persAtual, vida: volta, morrendo: false, morte: { sucessos: 0, falhas: 0 } }, diaRef.current);
+      pushMsgs([{ autor: "sistema", texto: `🌠 Dádiva da Recuperação — você cai e o corpo se recusa: +${volta} PV (uma vez por dia).` }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DÁDIVA DA RECUPERAÇÃO — APLICADA PELO SISTEMA] Eu cheguei a 0 PV e voltei na mesma hora com ${volta} PV: é a dádiva épica agindo, e ela só faz isso uma vez por dia. NÃO me trate como caído nem como moribundo, e narre o instante como o que é — o joelho que dobra e não chega ao chão.`;
+    }
     if (persConcQuebrada) persAtual = { ...persAtual, efeitos: (persAtual.efeitos || []).filter((e) => e.nome !== persConcQuebrada) };
     persAtual = aplicarCondicoesDosGolpes(acoes, persAtual);
 
@@ -6135,14 +6476,57 @@ export default function Taverna() {
   const modDoTeste = (pers, attrId, periciaId) => {
     if (!pers || !attrId) return { total: 0, nivelTreino: "nenhum" };
     const base = atributoEfetivo(pers, attrId);
-    if (!periciaId) return { total: base, nivelTreino: "nenhum" };
+    /* v9.32: a Dádiva da Presença soma +2 em teste SOCIAL, e social aqui é o
+       que rola em Presença — persuadir, intimidar, comandar uma sala. Fica
+       neste ponto porque é por onde passa todo teste do jogo; somar no
+       atributo faria a bênção valer também para resistir a medo, que é outra
+       coisa e tem dádiva própria. */
+    const social = attrId === "presenca" ? bonusSocialDeDadiva(pers) : 0;
+    if (!periciaId) return { total: base + social, nivelTreino: "nenhum" };
     const b = bonusDePericia(pers, periciaId, base);
-    return { total: b.total, nivelTreino: b.nivelTreino };
+    return { total: b.total + social, nivelTreino: b.nivelTreino };
   };
   const modPend = rolagem ? (() => {
     const a = ATRIBUTOS.find((x) => x.nome.toLowerCase() === (rolagem.atributo || "").toLowerCase());
     return a && personagem ? modDoTeste(personagem, a.id, rolagem.pericia).total : 0;
   })() : 0;
+
+  /* ---------------- O QUE A ÁREA VAI PEGAR (v9.32) ----------------
+     A conta que o sistema já fazia DEPOIS do clique, feita ANTES dele. Roda
+     a mesma `alvosDaArea` do disparo, com o mesmo alvo que o disparo vai
+     escolher — o declarado no painel, senão o primeiro ao alcance —, e
+     devolve as zonas varridas e os companheiros que estão nelas.
+
+     Vale para a primeira habilidade de área selecionada. Duas magias de área
+     no mesmo turno é caso raro e a segunda pinta por cima da primeira; entre
+     mostrar uma previsão certa e nenhuma, uma certa é melhor. */
+  const previsaoDeArea = (() => {
+    const comb = combate;
+    if (!comb || !habsSel.length || !personagem) return null;
+    const h = habsSel.find((x) => x && (ehArea(x) || x.area));
+    if (!h) return null;
+    const vivos = (comb.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
+    if (!vivos.length) return null;
+    const campoP = garantirCampo(comb.campo);
+    const zH = comb.zonaHeroi ?? ZONA_HEROI;
+    const atingiveis = vivos.filter((e) => alcanca(campoP, e.zona ?? 0, zH, { distancia: true }).ok);
+    const pool = atingiveis.length ? atingiveis : vivos;
+    const declarado = (alvosGolpe || []).find(Boolean);
+    const alvo = (declarado && pool.find((e) => e.nome === declarado)) || pool[0];
+    if (!alvo) return null;
+    try {
+      const r = alvosDaArea({
+        hab: h, totalZonas: campoP ? campoP.zonas.length : 1,
+        zonaHeroi: campoP ? zH : 0, zonaAlvo: campoP ? (alvo.zona ?? 0) : 0,
+        inimigos: pool, aliados: (personagem.grupo || []).map((g) => ({ ...g, zona: g.zona ?? (campoP ? zH : 0) })),
+      });
+      return {
+        nome: h.nome, zonas: r.zonas || [],
+        inimigos: (r.inimigos || []).map((e) => e.nome),
+        aliados: (r.aliados || []).filter((g) => (g.vida || 0) > 0).map((g) => g.nome),
+      };
+    } catch { return null; }
+  })();
 
   /* ---------------- MOVER-SE NA LUTA (v9.20) ----------------
      Uma zona por vez, e sair de perto de quem está te batendo custa: cada
@@ -6158,8 +6542,19 @@ export default function Taverna() {
     const campo = garantirCampo(comb.campo);
     if (!campo) { pushMsgs([{ autor: "sistema", texto: "📏 Esta luta não tem terreno definido." }]); return; }
     const de = comb.zonaHeroi ?? ZONA_HEROI;
-    const chk = podeMover(campo, de, destino);
+    /* v9.32: a Dádiva dos Passos Longos — "move-se o dobro e ignora terreno
+       difícil". `podeMover` recusa qualquer salto de mais de uma zona, e é
+       essa recusa que a dádiva compra; o terreno difícil deixa de comer a
+       ação. Sem dádiva, `alcanceMov` é 1 e nada muda. */
+    const persMov = personagemRef.current || personagem;
+    const alcanceMov = zonasPorMovimento(persMov);
+    const dist = Math.abs(Math.floor(Number(destino)) - de);
+    const chkBase = podeMover(campo, de, destino);
+    const chk = (!chkBase.ok && dist > 1 && dist <= alcanceMov && zonaDe(campo, destino))
+      ? { ok: true, custaAcao: !!zonaDe(campo, destino).dificil, zona: zonaDe(campo, destino), longo: true }
+      : chkBase;
     if (!chk.ok) { pushMsgs([{ autor: "sistema", texto: `📏 ${chk.motivo}.` }]); return; }
+    if (chk.custaAcao && ignoraTerrenoDificil(persMov)) chk.custaAcao = false;
     const eco = comb.economia;
     if (eco && eco.movimento <= 0) { pushMsgs([{ autor: "sistema", texto: "⏳ Você já se moveu nesta rodada." }]); return; }
     if (chk.custaAcao && eco && eco.acao <= 0) { pushMsgs([{ autor: "sistema", texto: `⏳ ${chk.zona.nome} é terreno difícil: entrar custa a ação, e você já usou a sua.` }]); return; }
@@ -6383,7 +6778,20 @@ export default function Taverna() {
   /* O gasto que compra um segundo dado. Devolve true quando pagou — o
      overlay só rola de novo se esta função autorizar. */
   const pagarRefazer = () => {
-    const g = gastarHeroismo(personagemRef.current || personagem, "refazer");
+    const base = personagemRef.current || personagem;
+    /* v9.32: A DÁDIVA DO DESTINO PAGA PRIMEIRO. "Uma vez por descanso, refaz
+       qualquer rolagem" era texto na ficha e nada mais — o jogador leu, não
+       entendeu como usar e não tinha como usar. Ela entra aqui, no mesmo
+       botão que já existia, e ANTES do ponto de heroísmo: um recurso que se
+       renova no descanso deve ser gasto antes de um recurso escasso, e
+       escolher qual dos dois é uma decisão que não interessa a ninguém. */
+    if (refazerDisponivel(base) > 0) {
+      const p = gastarRefazer(base);
+      setPersonagem(p); personagemRef.current = p;
+      pushMsgs([{ autor: "sistema", texto: "🌠 Dádiva do Destino — o destino te devia esta: a rolagem se refaz sem custar heroísmo (volta no descanso longo)." }]);
+      return true;
+    }
+    const g = gastarHeroismo(base, "refazer");
     if (!g.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ Refazer ${g.motivo}.` }]); return false; }
     setPersonagem(g.pers); personagemRef.current = g.pers;
     return true;
@@ -7796,7 +8204,15 @@ export default function Taverna() {
     /* v9.16: o descanso longo garante PISO de 1 ponto de heroismo. Piso e
        nao soma: quem chega com 3 nao vira 4, senao acampar viraria fabrica
        de pontos e o recurso deixaria de ser escasso. */
-    if (tipo === "longo") { const rh = ganharHeroismo(pers, "descanso"); pers = rh.pers; if (rh.msg) msgs.push(rh.msg); }
+    if (tipo === "longo") {
+      const rh = ganharHeroismo(pers, "descanso"); pers = rh.pers; if (rh.msg) msgs.push(rh.msg);
+      /* v9.32: a Dádiva do Destino se renova aqui — é o que "uma vez por
+         descanso" quer dizer. Sem este lugar ela valia uma vez na vida. */
+      if (refazerDisponivel(pers) === 0 && refazerDisponivel({ ...pers, dadivaGastos: {} }) > 0) {
+        pers = repousarDadivas(pers);
+        msgs.push("🌠 Dádiva do Destino recarregada — o destino volta a te dever uma.");
+      }
+    }
     /* VÍNCULO: conversas de fogueira aproximam (+3 para todo o grupo) */
     pers = { ...pers, grupo: aplicarVinculo(pers.grupo, "todos", 3, msgs) };
     setPersonagem(pers);
@@ -8823,8 +9239,15 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         <div className="flex flex-1 min-h-0 relative">
           <main className="flex-1 flex flex-col min-w-0">
             <div ref={areaRef} onScroll={aoRolar} className="tv-scroll flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-4" style={{ paddingRight: "68px" }}>
-              {mensagens.map((m, i) => {
-                if (m.autor === "sistema") return <div key={i} className="tv-fade flex justify-center"><span className="tv-mono text-xs px-3 py-1.5 rounded-full text-center" style={{ background: T.panelSoft, color: T.violetSoft }}>{m.texto}</span></div>;
+              {agruparMensagens(mensagens).map((item, k) => {
+                /* v9.32: as linhas do sistema chegam AGRUPADAS. Uma rodada de
+                   combate empurrava vinte balões iguais entre a ação do
+                   jogador e a narração — e a narração, que é o que ele quer
+                   ler, sumia no meio. Agora o que muda uma decisão continua na
+                   tela e a contabilidade vira uma linha de saldo, com o
+                   detalhe a um toque. */
+                if (item.tipo === "bloco") return <BlocoSistema key={`b${item.inicio}`} {...item} />;
+                const i = item.i, m = item.m;
                 if (m.autor === "jogador") return <div key={i} className="tv-fade flex justify-end"><div className="max-w-[85%] md:max-w-[70%] rounded-2xl rounded-br-sm px-4 py-3 tv-body text-[15px]" style={{ background: T.panelSoft, color: T.ink, border: `1px solid ${T.line}` }}>{m.texto}</div></div>;
                 return (
                   <div key={i} className="tv-fade max-w-[95%] md:max-w-[82%]">
@@ -8866,6 +9289,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               onDeclararAlvo={(i, nome) => { const a = [...alvosGolpeRef.current]; a[i] = nome; alvosGolpeRef.current = a; setAlvosGolpe([...a]); }}
               onLimparAlvos={() => { alvosGolpeRef.current = []; setAlvosGolpe([]); }}
               onMover={moverPara} grupo={personagem.grupo || []}
+              alcanceMov={zonasPorMovimento(personagem)} ignoraDificil={ignoraTerrenoDificil(personagem)}
+              previsao={previsaoDeArea}
               pocoes={pocoesNaBolsa} onUsarConsumivel={usarConsumivelUI} />}
 
             {/* v9.4: as sugestões de ação saíram. Numa mesa de verdade o Mestre
@@ -9350,7 +9775,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         </div>
       )}
 
-      {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} modificador={modPend} aoConcluir={concluirRolagem} heroismo={garantirHeroismo(personagem)} aoRefazer={pagarRefazer} />}
+      {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} modificador={modPend} aoConcluir={concluirRolagem} heroismo={garantirHeroismo(personagem)} destino={refazerDisponivel(personagem)} aoRefazer={pagarRefazer} />}
       {desfechoMorte && <OverlayMorte estado={desfechoMorte} nomeMorto={personagem.nome} aoVoltar={voltarDosMortos} aoHerdar={seguirComHerdeiro} />}
       {fase === "jogo" && personagem?.nivelPendentes > 0 && !carregando && !dadoRolando && (
         <ModalNivel nivel={personagem.nivel - personagem.nivelPendentes + 1} personagem={personagem} escolher={confirmarNivel} />

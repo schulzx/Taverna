@@ -33,7 +33,10 @@ export function defesaDe(ent, ehInimigo = false) {
   if (ehInimigo) return ent.defesa || (10 + Math.floor((BONUS_AMEACA[ent.ameaca] || 3) / 2) + (ent.agil ? 3 : 0));
   const dex = (ent.atributos?.destreza || 0);
   const bonusEquip = ent.equipados ? Object.values(ent.equipados).reduce((s, it) => s + ((it?.atributos?.defesa) || 0), 0) : 0;
-  return 10 + dex + bonusEquip;
+  /* v9.32: `bonusDefesa` é o que as dádivas épicas depositam na ficha. Fica
+     aqui, e não em bonusEquip, porque não vem de equipamento nenhum: é do
+     corpo. Ausente em toda ficha que não tem dádiva — soma zero. */
+  return 10 + dex + bonusEquip + (Number(ent.bonusDefesa) || 0);
 }
 
 /* Condições afetam as rolagens. A mecânica NÃO mora mais aqui: vem do
@@ -45,7 +48,10 @@ export function modificadoresDeCondicao(condicoes = []) {
 }
 
 /* Resolve UM ataque. Devolve um objeto de resultado detalhado (sem narrar). */
-export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque, danoBase, vantagem, desvantagem, condAtacante = [], condAlvo = [], tipoDano = "fisico", perfilAlvo = null, resistAlvo = [], bonusDefesaAlvo = 0 }) {
+/* `criticoEm` é a régua do crítico: 20 no d20 comum, 19 para quem tem a
+   Dádiva da Sorte Impossível. Vem com padrão 20 para que toda chamada antiga
+   — e são muitas — continue rolando exatamente como rolava. */
+export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque, danoBase, vantagem, desvantagem, condAtacante = [], condAlvo = [], tipoDano = "fisico", perfilAlvo = null, resistAlvo = [], bonusDefesaAlvo = 0, criticoEm = 20 }) {
   const modAtk = modificadoresDeCondicao(condAtacante);
   const modAlvo = modificadoresDeCondicao(condAlvo);
   if (modAtk.perdeAcao) return { tipo: "impedido", texto: `${atacante} está impossibilitado de agir` };
@@ -64,7 +70,7 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
      em defesaDe() porque cobertura é do lugar, não da pessoa: a mesma ficha
      é mais difícil de acertar atrás do muro e mais fácil no campo aberto. */
   const ca = defesaDe(alvo, !ehAtacanteInimigo) + (bonusDefesaAlvo || 0); // se o atacante é inimigo, o alvo é o jogador/aliado
-  const critico = rolagem.valor === 20;
+  const critico = rolagem.valor >= Math.max(2, Math.min(20, criticoEm || 20));
   const desastre = rolagem.valor === 1;
 
   let resultado, dano = 0;
