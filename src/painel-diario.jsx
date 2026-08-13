@@ -5,7 +5,7 @@
 import React from "react";
 import { T } from "./constantes.js";
 import { ESTRUTURAS, estruturaPorId } from "./historia.js";
-import { ativas as missoesAtivas, ofertas as missoesOferecidas, garantirMissoes, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao } from "./missoes.js";
+import { ativas as missoesAtivas, ofertas as missoesOferecidas, garantirMissoes, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, textoDaPaga } from "./missoes.js";
 
 /* ---------------- O CARTÃO DA MISSÃO (v9.27) ----------------
    A regra de desenho é uma só, e ela é de gameplay: mostrar o que
@@ -66,8 +66,9 @@ function CartaoMissao({ m, aoResponder, aoEncerrarLegado }) {
       )}
 
       {m.recompensa && !fim && (
-        <div className="tv-mono text-[10px] mt-1.5" style={{ color: T.inkDim }}>
-          paga ◉ {m.recompensa.moedas} · {m.recompensa.xp} XP{m.recompensa.item ? ` · item ${m.recompensa.item}` : ""}
+        <div className="tv-mono text-[10px] mt-1.5" style={{ color: T.inkDim }}
+          title={m.recompensa.combinada ? "foi o preço dito na cena" : "arbitrado pelo sistema — ninguém falou em preço"}>
+          paga {textoDaPaga(m)}
         </div>
       )}
 

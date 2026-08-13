@@ -48,7 +48,7 @@ import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPr
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, ORACULO_PROMPT } from "./oraculo.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
-import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, relogioDaMissao, falharPorRelogio, recompensaDe, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeRecusa, resumoMissoesPrompt, MISSOES_PROMPT } from "./missoes.js";
+import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, relogioDaMissao, falharPorRelogio, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, resumoMissoesPrompt, MISSOES_PROMPT } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
@@ -4026,9 +4026,10 @@ export default function Taverna() {
       const c = { ...canoneRef.current };
       for (const [nome, ficha] of Object.entries(resp.mudancas.canone)) {
         if (!nome || !ficha || typeof ficha !== "object") continue;
-        const nova = !c[nome];
+        /* v9.36: registra em silêncio. O jogador acabou de LER a coisa na
+           narração; avisá-lo de que ela foi arquivada é o sistema falando de
+           si mesmo, e o códex está a um toque para quem quiser conferir. */
         c[nome] = { ...(c[nome] || {}), ...ficha };
-        if (nova) msgs.push(`📖 Registrado: ${nome}`);
       }
       canoneRef.current = c;
       /* rede de segurança do MAPA: se o cânone registra um lugar (tipo local/
@@ -4325,8 +4326,6 @@ export default function Taverna() {
           }
           if (tocou) { npcsRef.current = reg; setNpcs(reg); }
         }
-        const nomes = [...m.locais.map((l) => l.nome), ...m.gente.map((p) => p.nome)];
-        msgs.push(`📖 Entrou na história: ${nomes.join(", ")}${m.gente.length ? " — no registro de pessoas" : ""}.`);
       }
       /* ---- O PESO DO DEUS QUE ENTROU (v9.14) ----
          `presencaDoHeroi` estava escrita e testada desde a v9.8, e nunca foi
@@ -4449,6 +4448,19 @@ export default function Taverna() {
      latência) julga o turno inteiro de uma vez e devolve um JSON por seções.
      O CÓDIGO aplica cada seção ISOLADAMENTE: se uma vier quebrada, as outras
      ainda valem. Conservador de propósito: seções vazias são comuns. */
+  /* O estado que as etapas consultam. Serve ao conferente (a cada turno) e à
+     porta de entrada das ofertas — é ele que impede uma etapa de nascer
+     cumprida, como "encontre Ubba" com Ubba na sua frente. */
+  const mundoDasMissoes = (persAtual) => {
+    const p = persAtual || personagemRef.current || personagem || {};
+    return {
+      cidadeAtual: cidadeAtualRef.current,
+      derrotados: [...((baseMundoRef.current || {}).mortos || []), ...(derrotadosDaSessaoRef.current || [])],
+      inventario: p.inventario || [], equipamento: p.equipamento || [],
+      npcs: npcsRef.current, dia: diaRef.current, relogios: relogiosRef.current,
+    };
+  };
+
   const cronistaDoTurno = async (pers, narrativa) => {
     if (!narrativa || narrativa.length < 60) return;
     const ativas = questsRef.current.filter((q) => q.status === "ativa");
@@ -4464,19 +4476,27 @@ export default function Taverna() {
         "SEÇÃO grupo: \"entraram\" = nomes de pessoas que ACEITARAM de fato acompanhar o herói como companheiros de jornada NESTE turno (o Mestre narrando \"vou com você\" conta). Se o convite foi recusado ou só um encontro casual, [].",
         "SEÇÃO teste_sugerido: se o Mestre CONCEDEU de graça algo grande que deveria ter exigido convencimento — uma criatura anciã entregando seu poder, um rei cedendo o trono, um inimigo virando aliado do nada — preencha {\"atributo\":\"Presença|Intelecto|Força|Destreza|Vigor\",\"perfil\":\"dificil|formidavel\",\"motivo\":\"o que precisava ser provado\"}. Concessões pequenas e naturais da história NÃO entram. Na maioria dos turnos: null.",
         "SEÇÃO combate (só se houver COMBATENTES listados): \"mortes_narradas\" = inimigos que a NARRATIVA declarou mortos/destruídos/desfeitos NESTE turno. Liste só nomes da lista de combatentes; se ninguém morreu na narração, [].",
-        "SEÇÃO missao_oferecida (v9.27): se alguém em cena OFERECEU um trabalho ao herói — um nobre desesperado, um capitão precisando de escolta, um aldeão com um problema —, descreva a proposta em {\"titulo\":\"nome curto do trabalho\",\"tipo\":\"contrato|favor\",\"dador\":\"quem ofereceu\",\"descricao\":\"uma frase\",\"etapas\":[{\"tipo\":\"ir_a|derrotar|achar|falar_com|levar_a\",\"alvo\":\"nome exato de cidade, criatura, pessoa ou objeto\",\"item\":\"só para levar_a\",\"quantos\":1}]}. De 1 a 3 etapas, todas CONCRETAS e verificáveis — \"ganhar a confiança\" não é etapa. Só quando alguém de fato ofereceu algo NESTE turno; caso contrário, null.",
+        "SEÇÃO missao_oferecida (v9.27): se alguém em cena OFERECEU um trabalho ao herói — um nobre desesperado, um capitão precisando de escolta, um aldeão com um problema —, descreva a proposta em {\"titulo\":\"nome curto do trabalho\",\"tipo\":\"contrato|favor\",\"dador\":\"quem ofereceu\",\"descricao\":\"uma frase\",\"paga\":15,\"etapas\":[{\"tipo\":\"ir_a|derrotar|achar|falar_com|levar_a\",\"alvo\":\"nome exato de cidade, criatura, pessoa ou objeto\",\"item\":\"só para levar_a\",\"quantos\":1}]}. De 1 a 3 etapas, todas CONCRETAS e verificáveis — \"ganhar a confiança\" não é etapa. Só quando alguém de fato ofereceu algo NESTE turno; caso contrário, null.",
+        "CAMPO \"paga\": o número EXATO de moedas que a cena prometeu (o cartaz que diz \"paga-se 15 moedas\" é 15). Se o combinado NÃO é dinheiro — um favor em troca de informação, uma dívida, uma porta que se abre —, \"paga\": 0. Se ninguém falou de pagamento, \"paga\": null e o sistema arbitra. NUNCA invente um valor.",
+        "UM TRABALHO É UMA MISSÃO SÓ: se a proposta desta cena é o mesmo serviço de uma missão que já está na lista (o cartaz no mural e a pessoa que vem falar dele são a mesma coisa), missao_oferecida é null. E a etapa \"falar_com\" nunca aponta para quem está oferecendo — o herói já está diante dele.",
         "SEÇÃO relogio_novo (v9.18): se ALGO LONGO COMEÇOU DE FATO em cena — um ritual que passou a ser conduzido, uma perseguição que se iniciou, uma obra que o jogador pôs em marcha — proponha {\"nome\":\"frase curta no presente\",\"tipo\":\"ameaca|cacada|oportunidade|obra\",\"segmentos\":4|6|8,\"gatilho\":\"noite|turno_mundo|falha|sucesso|viagem\",\"consequencia\":\"o que acontece quando encher\"}. NO MÁXIMO UM por turno, e só quando de fato começou — intenção, ameaça verbal e possibilidade NÃO contam. Na esmagadora maioria dos turnos: null.",
         "REGRA GERAL: na dúvida, NÃO marque — {\"missoes\":{\"concluidas\":[],\"falhadas\":[],\"progresso\":[],\"global_encerrado\":false},\"canone\":{},\"pessoas\":[],\"fe\":{\"fieis\":0,\"pf\":0}} é resposta válida e frequente.",
       ].join("\n");
       const lista = ativas.map((q) => `- "${q.titulo}" (${q.tipo}) — objetivo: ${q.objetivo || q.descricao || "—"}`).join("\n");
       const evG = eventosRef.current && eventosRef.current.global;
       const combatentes = (combateRef.current && combateRef.current.inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
-      const user = `MISSÕES ATIVAS:\n${lista || "(nenhuma)"}\n\nEVENTO GLOBAL ATIVO:\n${evG ? `- "${evG.nome}" — ${(evG.etapas || [])[evG.etapa] || evG.descricao || "—"}` : "(nenhum)"}\n\nCOMBATENTES AINDA DE PÉ (nome — PV):\n${combatentes.map((e) => `- ${e.nome} — ${e.vida} PV`).join("\n") || "(sem combate aberto)"}\n\nCÂNONE ATUAL:\n${formatarCanone(canoneRef.current) || "(vazio)"}\n\nELENCO (pessoas já registradas):\n${Object.keys(npcsRef.current).join(", ") || "(ninguém)"}\n\nNARRATIVA DO TURNO:\n${narrativa}`;
+      /* o que já está no diário do sistema — sem isso o Cronista reoferece o
+         mesmo serviço com outro nome, que foi exatamente o bug do gado */
+      const jaNoDiario = garantirMissoes(missoesRef.current)
+        .filter((q) => ["ativa", "oferecida"].includes(q.status))
+        .map((q) => `- "${q.titulo}"${q.dador ? ` (de ${q.dador})` : ""} — ${q.descricao || "—"}`).join("\n");
+      const user = `MISSÕES DO SISTEMA JÁ ABERTAS (não proponha nenhuma que seja o mesmo serviço que uma destas):\n${jaNoDiario || "(nenhuma)"}\n\nMISSÕES ATIVAS:\n${lista || "(nenhuma)"}\n\nEVENTO GLOBAL ATIVO:\n${evG ? `- "${evG.nome}" — ${(evG.etapas || [])[evG.etapa] || evG.descricao || "—"}` : "(nenhum)"}\n\nCOMBATENTES AINDA DE PÉ (nome — PV):\n${combatentes.map((e) => `- ${e.nome} — ${e.vida} PV`).join("\n") || "(sem combate aberto)"}\n\nCÂNONE ATUAL:\n${formatarCanone(canoneRef.current) || "(vazio)"}\n\nELENCO (pessoas já registradas):\n${Object.keys(npcsRef.current).join(", ") || "(ninguém)"}\n\nNARRATIVA DO TURNO:\n${narrativa}`;
       const txt = await chamarModelo(sys, [{ role: "user", content: user }], 900, "json", "leve");
       const r = parseObjetoTolerante(txt);
       if (!r || typeof r !== "object") return;
       const msgs = [];
       let p = pers;
+      let tocouElenco = false;
       /* ---- SEÇÃO missão oferecida (v9.27) ----
          O Mestre traz o nobre desesperado; o sistema decide o que aquilo
          vira. Proposta sem etapa verificável é recusada em silêncio — é a
@@ -4484,12 +4504,18 @@ export default function Taverna() {
       try {
         const prop = r.missao_oferecida;
         if (prop && typeof prop === "object" && prop.titulo) {
-          const ac = ofertaDoMestre(missoesRef.current, prop, { nivel: p.nivel || 1, dia: diaRef.current });
+          const ac = ofertaDoMestre(missoesRef.current, prop, {
+            nivel: p.nivel || 1, dia: diaRef.current,
+            mundo: mundoDasMissoes(p),
+            /* se a cena disse um preço e o Cronista não o repetiu, o preço da
+               cena ainda vale — o jogador leu aquele número */
+            moedasNaCena: precoNoTexto(narrativa),
+          });
           if (ac.ok) {
             missoesRef.current = ac.missoes; setMissoes(ac.missoes);
             const et = etapaAtual(ac.missao);
             msgs.push(`${tipoMissao(ac.missao.tipo).icone} Ofereceram um trabalho: ${ac.missao.titulo}${ac.missao.dador ? ` (${ac.missao.dador})` : ""} — abra o Diário para aceitar ou recusar.`);
-            if (et) msgs.push(`   primeiro passo: ${textoDaEtapa(et)} · paga ◉ ${ac.missao.recompensa.moedas} e ${ac.missao.recompensa.xp} XP`);
+            if (et) msgs.push(`   primeiro passo: ${textoDaEtapa(et)} · paga ${textoDaPaga(ac.missao)}`);
             notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeOferta(ac.missao)}`;
           }
         }
@@ -4566,9 +4592,9 @@ export default function Taverna() {
             const chave = Object.keys(reg).find((k) => k.toLowerCase() === String(n.nome).toLowerCase());
             if (!tocou) { reg = { ...reg }; tocou = true; }
             if (chave) reg[chave] = mesclarNPC(reg[chave], n);
-            else { reg[String(n.nome).slice(0, 40)] = criarNPC(String(n.nome).slice(0, 40), { ...n, conhecidoEm: diaRef.current }); msgs.push(`✒ Cronista registrou no elenco: ${n.nome}`); }
+            else reg[String(n.nome).slice(0, 40)] = criarNPC(String(n.nome).slice(0, 40), { ...n, conhecidoEm: diaRef.current });
           });
-          if (tocou) { npcsRef.current = reg; setNpcs(reg); sincronizarNemesis(); }
+          if (tocou) { npcsRef.current = reg; setNpcs(reg); sincronizarNemesis(); tocouElenco = true; }
         }
       } catch { /* seção quebrada não derruba as outras */ }
       /* ---- SEÇÃO fé (isolada) ---- */
@@ -4624,7 +4650,7 @@ export default function Taverna() {
               c[chaveExistente] = alvo;
             }
           }
-          if (novos.length) { canoneRef.current = c; tocouCanone = true; msgs.push(...novos.map((n) => `✒ Cronista registrou no cânone: ${n}`)); }
+          if (novos.length) { canoneRef.current = c; tocouCanone = true; }
         }
       } catch { /* seção quebrada não derruba as outras */ }
       /* ---- SEÇÃO grupo: RECRUTAMENTO REAL (v7.5) ----
@@ -4670,9 +4696,13 @@ export default function Taverna() {
           }
         }
       } catch { /* seção quebrada não derruba as outras */ }
-      if (!msgs.length) return;
+      /* v9.36: o registro agora é MUDO (cânone e elenco entram sem avisar), e
+         por isso a saída não pode mais depender de haver mensagem: um turno
+         que só arquivou gente ainda precisa gravar, ou o elenco se perde no
+         próximo reload. */
+      if (!msgs.length && !tocouCanone && !tocouElenco) return;
       /* o prompt precisa enxergar TUDO já no PRÓXIMO turno */
-      if (tocouCanone || msgs.length) systemRef.current = montarSystemPrompt(nomeCampanha, mundo, p, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+      if (tocouCanone || tocouElenco || msgs.length) systemRef.current = montarSystemPrompt(nomeCampanha, mundo, p, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
       pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
       salvar({ personagem: p });
     } catch { /* o cronista NUNCA atrapalha o jogo — falhou, vida segue */ }
@@ -6859,13 +6889,7 @@ export default function Taverna() {
      exatamente igual a abandoná-la: nada acontecia dos dois jeitos. */
   const conferirAsMissoes = (persAtual) => {
     const p = persAtual || personagemRef.current || personagem || {};
-    const mundo = {
-      cidadeAtual: cidadeAtualRef.current,
-      derrotados: [...((baseMundoRef.current || {}).mortos || []), ...(derrotadosDaSessaoRef.current || [])],
-      inventario: p.inventario || [], equipamento: p.equipamento || [],
-      npcs: npcsRef.current, dia: diaRef.current, relogios: relogiosRef.current,
-    };
-    const r = conferirMissoes(missoesRef.current, mundo);
+    const r = conferirMissoes(missoesRef.current, mundoDasMissoes(p));
     if (!r.avancos.length) return p;
     missoesRef.current = r.missoes; setMissoes(r.missoes);
     pushMsgs(r.avancos.map((a) => ({ autor: "sistema", texto: linhaEtapa(a) })));
@@ -6878,7 +6902,7 @@ export default function Taverna() {
     for (const m of r.concluidas) {
       const rec = m.recompensa || recompensaDe({ tipo: m.tipo, nivel: pers.nivel || 1, etapas: m.etapas.length });
       pers = aplicarNivel({ ...pers, moedas: (pers.moedas || 0) + rec.moedas, xp: (pers.xp || 0) + rec.xp });
-      const linhas = [`${tipoMissao(m.tipo).icone} MISSÃO CONCLUÍDA: ${m.titulo} — +${rec.moedas} moedas · +${rec.xp} XP`];
+      const linhas = [`${tipoMissao(m.tipo).icone} MISSÃO CONCLUÍDA: ${m.titulo} — ${rec.moedas ? `+${rec.moedas} moedas · ` : "o pagamento não era em moedas · "}+${rec.xp} XP`];
       if (rec.item) {
         const it = gerarLoot(rec.item, { nivel: pers.nivel || 1 });
         pers = { ...pers, equipamento: [...(pers.equipamento || []), it] };
@@ -6918,13 +6942,17 @@ export default function Taverna() {
     if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${r.motivo}.` }]); return; }
     missoesRef.current = r.missoes; setMissoes(r.missoes);
     const m = r.missao;
+    /* v9.36: o botão REGISTRA, não FALA. Antes, aceitar disparava um turno e o
+       Mestre fechava o acordo sozinho — mas "aceito com prazer" e "o que você
+       pede sorrindo eu faço chorando" pedem cenas opostas, e essa escolha é do
+       jogador. Então o envelope fica guardado e viaja na próxima fala dele. */
     if (aceita) {
       const e = etapaAtual(m);
-      pushMsgs([{ autor: "sistema", texto: `${tipoMissao(m.tipo).icone} Missão aceita: ${m.titulo}${e ? ` — primeiro passo: ${textoDaEtapa(e)}` : ""}` }]);
-      enviar(`[MISSÃO ACEITA — REGISTRADA PELO SISTEMA] Aceitei "${m.titulo}"${m.dador ? ` de ${m.dador}` : ""}. O sistema já registrou as etapas e cuidará de marcá-las. Feche o acordo em duas ou três frases — o aperto de mão, a condição, o olhar de quem paga — e me devolva a palavra. NÃO resolva nada da missão agora.`, personagemRef.current || personagem);
+      pushMsgs([{ autor: "sistema", texto: `${tipoMissao(m.tipo).icone} Missão aceita: ${m.titulo}${e ? ` — primeiro passo: ${textoDaEtapa(e)}` : ""} · paga ${textoDaPaga(m)}` }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeAceite(m)}`;
     } else {
       pushMsgs([{ autor: "sistema", texto: `✕ Recusado: ${m.titulo}` }]);
-      enviar(envelopeDeRecusa(m), personagemRef.current || personagem);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeRecusa(m)}`;
     }
     salvar({});
   };

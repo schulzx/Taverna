@@ -105,18 +105,40 @@ export const MAX_ATIVAS = 8;
 /* ---------------- A RECOMPENSA ----------------
    Paga por código, sempre. Antes só o contrato tinha recompensa — as
    missões da história não davam nada, e terminar uma era exatamente
-   igual a abandoná-la. */
-export function recompensaDe({ tipo = "favor", nivel = 1, etapas = 3 }) {
+   igual a abandoná-la.
+
+   v9.36: mas quem PROMETE é a ficção. O mural dizia "paga-se 15 moedas"
+   e o sistema anunciava 43 na mesma tela: duas verdades sobre o mesmo
+   trabalho, e o jogador no meio decidindo em qual acreditar. Agora, se
+   a cena disse um preço, o preço da cena é o preço — o sistema calcula
+   só o que ninguém combinou. E `moedasPrometidas: 0` é um combinado
+   legítimo: favor por informação não paga em moeda, paga em favor. */
+export function recompensaDe({ tipo = "favor", nivel = 1, etapas = 3, moedasPrometidas = null }) {
   const base = { contrato: 1, favor: 1.2, cacada: 1.6, principal: 2.2, global: 2.5, divina: 2.5 }[tipo] || 1;
   const peso = base * (0.7 + etapas * 0.15);
+  const combinada = Number.isFinite(moedasPrometidas) && moedasPrometidas >= 0;
   return {
-    moedas: Math.round((25 + nivel * 12) * peso),
+    moedas: combinada ? Math.round(moedasPrometidas) : Math.round((25 + nivel * 12) * peso),
     xp: Math.round((40 + nivel * 18) * peso),
     /* item só nas grandes: se toda missão desse item, item deixaria de
        significar alguma coisa */
     item: peso >= 2 ? (nivel >= 12 ? "epico" : nivel >= 6 ? "raro" : "incomum") : null,
     fama: Math.round(peso * 3),
+    /* o que a cena prometeu, para a tela e o envelope falarem a mesma língua */
+    combinada,
   };
+}
+
+/* O preço que a cena disse. Só aceita quando a frase é sobre pagamento —
+   "15 moedas" vale, "15 cabeças de gado" não. */
+const RX_PAGAMENTO = /(\d{1,6})\s*(?:moedas?|peças? de ouro|po\b|pratas?)/gi;
+export function precoNoTexto(txt) {
+  const s = String(txt || "");
+  if (!s) return null;
+  const achados = [...s.matchAll(RX_PAGAMENTO)].map((m) => Number(m[1])).filter((n) => Number.isFinite(n));
+  /* dois preços diferentes na mesma cena não são um combinado, são ruído */
+  if (achados.length !== 1) return null;
+  return achados[0];
 }
 
 /* ---------------- CRIAR ---------------- */
@@ -146,13 +168,13 @@ export function garantirMissoes(lista) {
   }));
 }
 
-export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status }) {
+export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status, moedasPrometidas = null }) {
   const m = garantirMissoes([{
     id, titulo, tipo, descricao, dador, etapas, criadaEm: dia,
     status: status || (ehForcada(tipo) ? "ativa" : "oferecida"),
   }])[0];
   if (!m || !m.etapas.length) return null;
-  m.recompensa = recompensaDe({ tipo, nivel, etapas: m.etapas.length });
+  m.recompensa = recompensaDe({ tipo, nivel, etapas: m.etapas.length, moedasPrometidas });
   return m;
 }
 
@@ -193,26 +215,78 @@ export function conferir(lista, mundo = {}) {
   return { missoes: out, avancos, concluidas };
 }
 
+/* ---------------- DUAS MISSÕES SÃO A MESMA MISSÃO? ----------------
+   v9.36. O jogador leu um contrato no mural sobre o gado de Jessa e o
+   taverneiro veio falar do mesmo gado — o sistema ofereceu as duas, com
+   títulos diferentes, etapas diferentes e preços diferentes. Comparar
+   títulos exatos nunca ia pegar isso: "O gado de Jessa" e "O gado
+   desaparecido de Jessa" são strings distintas e o mesmo trabalho.
+
+   Então compara-se ASSUNTO, não nome: as palavras com peso do título,
+   da descrição e dos alvos. Se quem oferece é a mesma pessoa, a barra
+   desce — o taverneiro não tem dois problemas com o mesmo gado. */
+const VAZIAS = new Set("de da do das dos e ou o a os as um uma uns umas em no na nos nas para por com que ao aos se sua seu suas seus meu minha ate the of".split(" "));
+const soLetras = (s) => norm(s).replace(/[^a-z0-9 ]+/g, " ");
+export function assuntoDe(m) {
+  const txt = `${m && m.titulo || ""} ${m && m.descricao || ""} ${((m && m.etapas) || []).map((e) => `${e.alvo || ""} ${e.item || ""}`).join(" ")}`;
+  return new Set(soLetras(txt).split(/\s+/).filter((w) => w.length > 2 && !VAZIAS.has(w)));
+}
+/* "Braam (n'A Cabra Dançante)" e "Braam, o taverneiro" são o mesmo Braam */
+const primeiroNome = (s) => (soLetras(s).trim().split(/\s+/)[0] || "");
+export function mesmaPessoa(a, b) {
+  const x = primeiroNome(a), y = primeiroNome(b);
+  return !!x && x.length > 2 && x === y;
+}
+export function pareceMesmaMissao(a, b) {
+  if (!a || !b) return false;
+  if (norm(a.titulo) === norm(b.titulo)) return true;
+  const A = assuntoDe(a), B = assuntoDe(b);
+  if (!A.size || !B.size) return false;
+  let juntas = 0;
+  A.forEach((w) => { if (B.has(w)) juntas++; });
+  /* cobertura da MENOR: uma proposta curta que cabe inteira dentro de uma
+     missão que já existe é a mesma missão contada com menos palavras */
+  const cobertura = juntas / Math.min(A.size, B.size);
+  return cobertura >= (mesmaPessoa(a.dador, b.dador) ? 0.4 : 0.62);
+}
+
 /* ---------------- O QUE O MESTRE PODE OFERECER ----------------
    Ele traz o nobre desesperado à taverna; o sistema decide o que
    aquilo vira. Propostas sem etapa verificável são recusadas — é a
    trava que impede "ganhe a confiança do barão" de virar missão. */
-export function aceitarProposta(lista, prop, { nivel = 1, dia = 0 } = {}) {
+export function aceitarProposta(lista, prop, { nivel = 1, dia = 0, mundo = null, moedasNaCena = null } = {}) {
   const atual = garantirMissoes(lista);
   if (!prop || !String(prop.titulo || "").trim()) return { ok: false, motivo: "sem título" };
   if (atual.filter((q) => q.status === "ativa" || q.status === "oferecida").length >= MAX_ATIVAS) {
     return { ok: false, motivo: "já há missões demais em jogo" };
   }
   const titulo = String(prop.titulo).trim();
-  if (atual.some((q) => norm(q.titulo) === norm(titulo) && ["ativa", "oferecida"].includes(q.status))) {
-    return { ok: false, motivo: "já existe uma missão com esse nome" };
+  const proposta = { titulo, descricao: prop.descricao || "", dador: prop.dador || "", etapas: Array.isArray(prop.etapas) ? prop.etapas : [] };
+  /* duplicata olha também para o que já foi feito: reoferecer um trabalho
+     concluído é a mesma confusão, com o agravante de já ter sido pago */
+  if (atual.some((q) => ["ativa", "oferecida", "concluida"].includes(q.status) && pareceMesmaMissao(q, proposta))) {
+    return { ok: false, motivo: "esse mesmo trabalho já está no diário" };
   }
-  const etapas = (Array.isArray(prop.etapas) ? prop.etapas : []).filter((e) => e && ETAPAS[e.tipo] && (e.alvo || e.dia || e.relogioId));
+
+  let etapas = (Array.isArray(prop.etapas) ? prop.etapas : []).filter((e) => e && ETAPAS[e.tipo] && (e.alvo || e.dia || e.relogioId));
+  /* QUEM OFERECE NÃO É QUEM SE PROCURA. Ubba propôs um favor em troca de
+     informação e a primeira etapa virou "Encontrar Ubba" — o jogador estava
+     falando com ele naquele instante. A etapa nasceu cumprida e mentindo. */
+  if (proposta.dador) {
+    etapas = etapas.filter((e) => !(e.tipo === "falar_com" && mesmaPessoa(e.alvo, proposta.dador)));
+  }
+  /* e nenhuma etapa nasce cumprida: se o mundo já satisfaz a condição, ela
+     não é um passo, é uma linha morta no diário */
+  if (mundo) etapas = etapas.filter((e) => { try { return !etapaDef(e.tipo).ver(e, mundo); } catch { return true; } });
   if (!etapas.length) return { ok: false, motivo: "nenhuma etapa que o sistema saiba conferir" };
+
+  const prometido = Number.isFinite(Number(prop.paga)) && Number(prop.paga) >= 0 ? Number(prop.paga)
+    : precoNoTexto(`${titulo} ${proposta.descricao}`);
   const m = criarMissao({
     titulo, tipo: TIPOS[prop.tipo] ? prop.tipo : "favor",
-    descricao: prop.descricao || "", dador: prop.dador || "",
+    descricao: proposta.descricao, dador: proposta.dador,
     etapas, nivel, dia,
+    moedasPrometidas: prometido != null ? prometido : moedasNaCena,
   });
   if (!m) return { ok: false, motivo: "proposta malformada" };
   return { ok: true, missoes: [...atual, m], missao: m };
@@ -306,17 +380,38 @@ export function envelopeDeAvanco(a) {
 }
 
 export function envelopeDeConclusao(m, rec) {
-  return `[MISSÃO CONCLUÍDA — RECONHECIDA E PAGA PELO SISTEMA] "${m.titulo}" acabou: todas as ${m.etapas.length} etapas foram cumpridas. O sistema já pagou ◉ ${rec.moedas} e ${rec.xp} XP${rec.item ? ` e entregou um item ${rec.item}` : ""} — NÃO envie moedas, XP nem itens por isto, seria dobrado.
+  return `[MISSÃO CONCLUÍDA — RECONHECIDA E PAGA PELO SISTEMA] "${m.titulo}" acabou: todas as ${m.etapas.length} etapas foram cumpridas. O sistema já ${rec.moedas ? `pagou ◉ ${rec.moedas} e ` : "creditou "}${rec.xp} XP${rec.item ? ` e entregou um item ${rec.item}` : ""} — NÃO envie moedas, XP nem itens por isto, seria dobrado.
 
-Narre o fechamento em 3 ou 4 frases: quem paga, o que diz, o que muda no lugar por causa disso. ${m.dador ? `Quem encomendou foi ${m.dador} — feche com ${m.dador}, não com um estranho.` : ""} Esta missão está ENCERRADA: não a mencione como pendente nunca mais.`;
+Narre o fechamento em 3 ou 4 frases: ${rec.moedas ? "quem paga, o que diz" : "como o combinado se cumpre — a informação dita, a porta aberta, o favor devolvido — sem moeda nenhuma trocando de mão"}, o que muda no lugar por causa disso. ${m.dador ? `Quem encomendou foi ${m.dador} — feche com ${m.dador}, não com um estranho.` : ""} Esta missão está ENCERRADA: não a mencione como pendente nunca mais.`;
+}
+
+/* O que a missão paga, em uma linha — a mesma frase na tela, no diário e
+   no envelope. Duas verdades sobre o mesmo trabalho foi o bug. */
+export function textoDaPaga(m) {
+  const r = (m && m.recompensa) || null;
+  if (!r) return "";
+  if (!r.moedas) return `sem moedas — o pagamento é outro · ${r.xp} XP`;
+  return `◉ ${r.moedas}${r.combinada ? " (o combinado)" : ""} · ${r.xp} XP${r.item ? ` · item ${r.item}` : ""}`;
 }
 
 export function envelopeDeOferta(m) {
-  return `[MISSÃO OFERECIDA — REGISTRADA PELO SISTEMA] ${m.dador ? `${m.dador} ofereceu` : "Ofereceram"} um trabalho: "${m.titulo}". O sistema registrou a proposta e as etapas; eu ainda NÃO aceitei. Narre a oferta sendo feita — a pessoa, o tom, a urgência — e depois PARE e espere minha resposta. Não presuma que eu aceitei, não comece a missão e não me empurre para ela.`;
+  const r = m.recompensa || {};
+  const preco = r.moedas
+    ? `O pagamento combinado é ${r.moedas} moedas — se voltar a falar de preço, é ESSE número, nenhum outro.`
+    : `Este trabalho NÃO se paga em moedas: o combinado é outro (um favor, uma informação, uma porta que se abre). Não prometa dinheiro por ele.`;
+  return `[MISSÃO OFERECIDA — REGISTRADA PELO SISTEMA] ${m.dador ? `${m.dador} ofereceu` : "Ofereceram"} um trabalho: "${m.titulo}". ${preco} O sistema registrou a proposta e as etapas; eu ainda NÃO aceitei. Narre a oferta sendo feita — a pessoa, o tom, a urgência — e depois PARE e espere minha resposta. Não presuma que eu aceitei, não comece a missão, não me empurre para ela e não ofereça de novo o mesmo serviço com outro nome.`;
+}
+
+/* v9.36: aceitar não é falar. O botão registra; a fala é minha, e vem no
+   turno seguinte — "aceito com prazer" e "o que você pede sorrindo eu faço
+   chorando" pedem narrações opostas, e quem escolhe entre elas é o jogador.
+   Por isso este envelope não pede narração nenhuma: ele espera. */
+export function envelopeDeAceite(m) {
+  return `[MISSÃO ACEITA — REGISTRADA PELO SISTEMA] Eu aceitei "${m.titulo}"${m.dador ? ` de ${m.dador}` : ""}. O sistema já registrou as etapas e cuidará de marcá-las${m.recompensa && m.recompensa.moedas ? ` e de pagar as ${m.recompensa.moedas} moedas no fim` : ""} — não pague, não avance e não conclua nada. NÃO narre o acordo por conta própria: eu ainda vou DIZER como aceito, e a cena continua a partir das minhas palavras. Se a próxima coisa que eu escrever for minha resposta a ${m.dador || "quem ofereceu"}, é a ela que você reage.`;
 }
 
 export function envelopeDeRecusa(m) {
-  return `[MISSÃO RECUSADA — REGISTRADA PELO SISTEMA] Eu recusei "${m.titulo}". Narre a reação de quem ofereceu em uma ou duas frases — decepção, raiva fria, um dar de ombros — e siga a cena. Não insista, não reofereça no mesmo turno e não faça o mundo me punir por ter dito não.`;
+  return `[MISSÃO RECUSADA — REGISTRADA PELO SISTEMA] Eu recusei "${m.titulo}". NÃO narre a recusa sozinho: eu ainda vou dizer com que palavras recuso, e é a elas que você reage. Quando eu falar, responda com a reação de quem ofereceu em uma ou duas frases — decepção, raiva fria, um dar de ombros — e siga a cena. Não insista, não reofereça e não faça o mundo me punir por ter dito não.`;
 }
 
 export function resumoMissoesPrompt(lista) {
@@ -336,5 +431,8 @@ export const MISSOES_PROMPT = `MISSÕES (v9.27):
 - Missão é uma sequência de ETAPAS que o SISTEMA confere sozinho. Você não abre, não avança, não encerra e não paga — tudo isso chega por envelope.
 - Você PODE oferecer trabalho quando a ficção pedir, pelo campo "missao_oferecida": um nobre desesperado na taverna, um capitão precisando de escolta. Proponha só o que se traduz em etapas concretas (chegar a um lugar, derrotar alguém, encontrar um objeto, entregar algo, encontrar uma pessoa). "Ganhar a confiança de alguém" não é etapa — é cena, e cena você já sabe fazer.
 - Oferta é oferta: depois de narrá-la, PARE e espere a resposta do jogador. Não presuma aceite, não comece a missão, não empurre.
+- DIGA O PREÇO NA CENA e mande o mesmo número no campo "paga": o cartaz que promete 15 moedas e o diário que anuncia 43 são duas verdades sobre o mesmo trabalho. Se o combinado não é dinheiro — um favor, uma informação, uma dívida —, "paga": 0, e não invente moedas depois.
+- UM TRABALHO, UMA MISSÃO. O contrato no mural e a pessoa que vem falar dele são a MESMA missão: não ofereça de novo com outro título. E nunca peça ao jogador que "encontre" quem está falando com ele agora.
 - Missões que o mundo impõe (nêmesis, evento global, abalo divino) não são oferecidas — elas chegam ativas, e o jogador não pode recusá-las.
+- Aceitar e recusar são BOTÕES do jogador, e a fala vem depois: quando o envelope disser que aceitei ou recusei, NÃO narre o acordo — espere as minhas palavras e reaja a elas.
 - NUNCA diga ao jogador quais são as etapas seguintes de uma missão. Ele sabe o que fazer agora; o resto é história por acontecer.`;
