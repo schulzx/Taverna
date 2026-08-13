@@ -72,7 +72,11 @@ export function defesaDeDadiva(pers) { return somar(pers, "defesa"); }
 export function descontoDePM(pers) { return somar(pers, "descontoPM"); }
 export function bonusSocialDeDadiva(pers) { return somar(pers, "bonusSocial"); }
 export function temVantagemMental(pers) { return algum(pers, "vantagemMental"); }
-export function zonasPorMovimento(pers) { return Math.max(1, somar(pers, "movimento") || 1); }
+/* v9.34: com o grid, "quantas zonas por movimento" deixou de fazer sentido —
+   o deslocamento é orçamento em metros. O que a Dádiva dos Passos Longos faz
+   é DOBRAR esse orçamento e ignorar terreno difícil, que é o que ela sempre
+   disse ("move-se o dobro e ignora terreno difícil"). */
+export function dobraMovimento(pers) { return somar(pers, "movimento") >= 2; }
 export function ignoraTerrenoDificil(pers) { return somar(pers, "movimento") >= 2; }
 
 /* Crítico: 20 é o padrão do d20; a Sorte Impossível abaixa a régua para 19.

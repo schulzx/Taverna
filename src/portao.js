@@ -60,7 +60,7 @@ import { detectarForaDeLugar, notaForaDeLugar, detectarVazamento, notaVazamento,
 export { ocorrenciaDoNome } from "./cena.js";
 import { mesmoPapel, quemTemOPapel } from "./npcs.js";
 import { detectarAscensaoNarrada } from "./ascensao.js";
-import { detectarAlcanceImpossivel, notaAlcanceImpossivel, nomeDaZona } from "./zonas.js";
+import { detectarAlcanceImpossivel, notaAlcanceImpossivel, nomeDoLugar } from "./grid.js";
 import { tituloDe } from "./divindades.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -248,15 +248,18 @@ export function violacoesDoTurno(narrativa, ctx = {}) {
     });
   }
 
-  /* alcance: quem está a duas zonas não encosta em você (v9.20) */
-  const longe = detectarAlcanceImpossivel(texto, { campo: ctx.campo, zonaHeroi: ctx.zonaHeroi || 0, inimigos: ctx.inimigos });
+  /* alcance: quem está longe não encosta em você (v9.20, em metros na v9.34).
+     A régua ficou GROSSA de propósito — só morde acima de 6 m. Com o grid a
+     tentação seria morder por um quadrado de diferença, e aí o portão passaria
+     a mastigar prosa correta: falso positivo custa uma chamada e uma cena. */
+  const longe = detectarAlcanceImpossivel(texto, { grade: ctx.grade, heroi: ctx.heroi, inimigos: ctx.inimigos });
   if (longe.length) {
-    const onde = nomeDaZona(ctx.campo, ctx.zonaHeroi || 0);
+    const onde = ctx.heroi && ctx.heroi.x != null ? nomeDoLugar(ctx.grade, ctx.heroi.x, ctx.heroi.y) : "onde está";
     v.push({
       id: "alcance", rotulo: `${longe.map((a) => a.nome).join(", ")} encostou em você de outro lugar`,
       aviso: "",
-      nota: notaAlcanceImpossivel(longe, ctx.campo, ctx.zonaHeroi || 0),
-      regra: `${longe.map((a) => `${a.nome} está em ${a.onde}, a ${a.distancia} lugar(es) de distância do herói, que está em ${onde}`).join("; ")}. Essa criatura NÃO alcança o herói: ninguém atravessa o terreno de graça. Reescreva a mesma cena com ela ameaçando, avançando ou atacando de longe — sem encostar, sem agarrar, sem chegar a um palmo. Mantenha o resto igual.`,
+      nota: notaAlcanceImpossivel(longe, ctx.grade, ctx.heroi),
+      regra: `${longe.map((a) => `${a.nome} está em ${a.onde}, a uns ${a.metros} metros do herói, que está em ${onde}`).join("; ")}. Essa criatura NÃO alcança o herói: ninguém atravessa o terreno de graça. Reescreva a mesma cena com ela ameaçando, avançando ou atacando de longe — sem encostar, sem agarrar, sem chegar a um palmo. Mantenha o resto igual, e não cite metros na narração.`,
       lembrete: "Ninguém alcança quem está em outro lugar do terreno. Quem se move, se move pelo sistema — você narra o movimento que o envelope trouxer, nunca um que você decidiu.",
     });
   }

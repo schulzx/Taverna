@@ -28,6 +28,8 @@ import { DESCANSO_PROMPT } from "./descanso.js";
 import { RELOGIOS_PROMPT } from "./relogios.js";
 import { GRIMORIO_PROMPT } from "./grimorio.js";
 import { DADIVAS_PROMPT } from "./dadivas.js";
+import { GRID_PROMPT } from "./grid.js";
+import { MOVIMENTO_PROMPT } from "./movimento.js";
 import { ORCAMENTO_PROMPT } from "./orcamento.js";
 import { ESPECIALIZACOES_PROMPT } from "./especializacoes.js";
 import { ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
@@ -148,6 +150,10 @@ ${RELOGIOS_PROMPT}
 ${GRIMORIO_PROMPT}
 
 ${DADIVAS_PROMPT}
+
+${GRID_PROMPT}
+
+${MOVIMENTO_PROMPT}
 
 ${ORCAMENTO_PROMPT}
 ${ASCENSAO_SISTEMA_PROMPT}

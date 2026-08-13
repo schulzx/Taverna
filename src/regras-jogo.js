@@ -354,8 +354,15 @@ export function processarCombate(combateAtual, m, msgs) {
     rodada: anterior.rodada,
     recursos: anterior.recursos,
     aval: anterior.aval,
-    campo: anterior.campo,
-    zonaHeroi: anterior.zonaHeroi,
+    /* v9.34: a grade e as POSIÇÕES entraram no lugar de `campo`/`zonaHeroi`,
+       e a lista mordeu exatamente como o parágrafo acima previu: o herói e os
+       aliados sumiam do combate a cada resposta do Mestre, o grid ficava com
+       inimigos flutuando sozinhos e o fogo amigo parava de saber quem estava
+       onde. Se um dia o combate ganhar mais um campo que descreve a LUTA, ele
+       entra aqui — é o único jeito de ele sobreviver ao turno. */
+    grade: anterior.grade,
+    heroi: anterior.heroi,
+    aliados: anterior.aliados,
     log: anterior.log,
   };
 }

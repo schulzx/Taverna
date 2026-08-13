@@ -6,7 +6,7 @@
    Estilo D&D 5e / Baldur's Gate 3: todos rolam d20, com
    vantagem/desvantagem, críticos e condições de estado.
    ============================================================ */
-import { alcanca, bonusDefesaDaZona } from "./zonas.js";
+import { alcanca, bonusDefesaEm } from "./grid.js";
 
 import { perfilDeCriatura, multiplicadorDano, iconeDano, resistenciasEquipadas, elementoDaArma } from "./danos.js";
 import { mecanicaDe } from "./condicoes.js";
@@ -129,25 +129,22 @@ export function resumoDoAtaque(r) {
    Cada inimigo vivo age: escolhe um alvo (jogador ou companheiro)
    e ataca. O app resolve toda a matemática; devolve os resultados
    para o app aplicar o dano e o Mestre narrar as DECISÕES. */
-export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0, campo = null, zonaHeroi = 0 }) {
+/* v9.34: `grade` e as POSIÇÕES substituem `campo`/`zonaHeroi`. Cada alvo
+   possível carrega o próprio lugar no tabuleiro — inclusive os companheiros,
+   que antes contavam como estando "na zona do herói" por economia de estado.
+   Com o grid isso deixou de ser economia e virou mentira: era exatamente o
+   que impedia a área de dizer se o fogo amigo ia pegar alguém. Quem move o
+   companheiro continua sendo o sistema; o jogador nunca faz essa conta. */
+export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0, grade = null, heroi = null, aliados = [] }) {
   const vivos = (inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
+  const pos = heroi || jogador;
   const alvosPossiveis = [
-    { ref: "jogador", nome: jogador.nome, ent: jogador },
-    ...grupo.filter((g) => (g.vida || 0) > 0).map((g) => ({ ref: "grupo", nome: g.nome, ent: g })),
+    { ref: "jogador", nome: jogador.nome, ent: jogador, onde: pos },
+    ...grupo.map((g, i) => ({ ref: "grupo", nome: g.nome, ent: g, onde: aliados[i] || pos, i }))
+      .filter((a) => (a.ent.vida || 0) > 0),
   ];
   const acoes = [];
   for (const inim of vivos) {
-    /* ZONAS (v9.20): quem não alcança, não bate. Sem campo definido esta
-       conta devolve sempre "alcança, sem penalidade" — é o que mantém o
-       comportamento antigo intacto para combates sem terreno.
-
-       O grupo inteiro do herói conta como estando NA ZONA DELE, de
-       propósito: dar posição individual a cada companheiro dobraria o
-       estado e transferiria para o jogador uma contabilidade que não é
-       decisão dele — ele comanda a própria posição, não a de quatro. */
-    const alc = alcanca(campo, inim.zona ?? 0, zonaHeroi, { distancia: !!inim.distancia });
-    if (!alc.ok) continue;
-    const penalidadeZona = alc.penalidade || 0;
     /* MULTIATAQUE (5e): elites agem 2 vezes, lendários até 3 — como o
        Multiattack dos monstros. Cada golpe escolhe alvo de novo. */
     const nGolpes = ataquesDoInimigo(inim.ameaca, inim.nivel);
@@ -161,6 +158,13 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
       } else {
         alvo = vivosAlvo[0];
       }
+      /* quem não alcança, não bate — e agora "alcançar" é uma distância em
+         metros contra o alcance natural do bicho (o ogro pega de 3 m), com
+         parede cortando o tiro. Sem grade, devolve "alcança, sem penalidade"
+         e o comportamento antigo fica intacto. */
+      const alc = alcanca(grade, { ...inim }, alvo.onde || pos, { distancia: !!inim.distancia, alcanceM: inim.distancia ? 36 : null });
+      if (!alc.ok) continue;
+      const penalidadeZona = alc.penalidade || 0;
       const perfilInim = perfilDeCriatura(inim.nome, inim.desc);
       const r = resolverAtaque({
         atacante: inim.nome, alvo: alvo.ent, ehAtacanteInimigo: true,
@@ -169,9 +173,9 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
         danoBase: danoDe(inim, true),
         condAtacante: inim.condicoes || [], condAlvo: alvo.ent.condicoes || [],
         tipoDano: perfilInim.ataque, resistAlvo: resistenciasEquipadas(alvo.ent),
-        /* cobertura do herói e do grupo: quem luta atrás de alguma coisa é
-           mais difícil de acertar, e é isso que dá motivo para recuar */
-        bonusDefesaAlvo: bonusDefesaDaZona(campo, zonaHeroi),
+        /* cobertura do LUGAR de quem apanha: quem luta atrás de alguma coisa
+           é mais difícil de acertar, e é isso que dá motivo para recuar */
+        bonusDefesaAlvo: bonusDefesaEm(grade, alvo.onde || pos),
       });
       /* GOLPE DO CATÁLOGO (v9.1): o bicho não "ataca" genericamente — ele usa
          um golpe com nome, do repertório fixo dele. É esse nome que o Mestre
