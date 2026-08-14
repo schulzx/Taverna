@@ -23,6 +23,7 @@
 import { rngDe } from "./geografia.js";
 import { pessoaDiversa, nomeTaverna, nomePessoa } from "./nomes.js";
 import { criaturasDoGenero } from "./bestiario.js";
+import { moldePorId } from "./moldes.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const entre = (rnd, a, b) => a + Math.floor(rnd() * (b - a + 1));
@@ -49,6 +50,20 @@ const LOCAIS = [
 ];
 const PESO_PORTE = { aldeia: 1, vila: 2, cidade: 4, fortaleza: 3, capital: 5 };
 
+/* Um porte que o sobremundo não conhece ("átrio", "porto franco", "colônia")
+   ainda precisa de peso e de quantidade de locais. O molde lista os portes
+   do menor para o maior, então a POSIÇÃO na lista é a resposta — sem tabela
+   nova por molde. */
+function posicaoDoPorte(M, porte) {
+  const i = (M.portes || []).indexOf(porte);
+  return i < 0 ? 2 : i;
+}
+function pesoDoPorte(M, porte) { return [1, 2, 4, 3, 5][posicaoDoPorte(M, porte)] || 3; }
+function quantosLocais(M, porte) {
+  const tabela = (M.locaisPorPorte && M.locaisPorPorte.length === 5) ? M.locaisPorPorte : [2, 3, 5, 4, 7];
+  return tabela[posicaoDoPorte(M, porte)] || 3;
+}
+
 const NOME_LOCAL = {
   taverna: null,   // usa o banco de tavernas
   mercado: ["Praça das Balanças", "Mercado Velho", "Feira Baixa", "Pátio dos Cambistas", "Mercado do Meio-dia"],
@@ -64,27 +79,35 @@ const NOME_LOCAL = {
   "casa de banhos": ["Águas Quentes", "Casa de Vapor", "Fonte Coberta"],
 };
 
-export function locaisDaCidade(semente, cidade, genero = "Fantasia medieval") {
+/* v9.40: o MOLDE decide o que existe dentro de um assentamento. Uma torre
+   não tem docas nem taverna — tem fogueira, feira do degrau e o portal. O
+   parâmetro é o último e tem padrão, então quem ainda não passa molde
+   continua gerando o sobremundo de sempre. */
+export function locaisDaCidade(semente, cidade, genero = "Fantasia medieval", molde = null) {
   if (!cidade || !cidade.nome) return [];
+  const M = moldePorId(molde && molde.id ? molde.id : molde);
+  const TABELA = M.locais || LOCAIS;
   const rnd = rngDe(`${semente}|locais|${cidade.nome}`);
-  const peso = PESO_PORTE[cidade.porte || cidade.tipo] || 3;
-  const quantos = LOCAIS_POR_PORTE[cidade.porte || cidade.tipo] || 3;
-  const elegiveis = LOCAIS.filter((l) => {
+  const peso = PESO_PORTE[cidade.porte || cidade.tipo] || pesoDoPorte(M, cidade.porte || cidade.tipo);
+  const quantos = LOCAIS_POR_PORTE[cidade.porte || cidade.tipo] || quantosLocais(M, cidade.porte || cidade.tipo);
+  const elegiveis = TABELA.filter((l) => {
     if (l.bioma && !l.bioma.includes(cidade.bioma)) return false;
     if (l.porteMin && peso < l.porteMin) return false;
     return true;
   });
-  const escolhidos = [];
-  for (const l of elegiveis) {
-    if (l.sempre) escolhidos.push(l);
-    if (escolhidos.length >= quantos) break;
-  }
+  /* v9.40: "sempre" passou a significar SEMPRE. O laço antigo parava ao
+     atingir a contagem do porte, e num patamar da Torre (2 locais) isso
+     cortava justamente o PORTAL — a única saída para cima. Um lugar sem a
+     sua saída obrigatória é um beco, e nenhuma contagem justifica isso. */
+  const escolhidos = elegiveis.filter((l) => l.sempre);
   const resto = elegiveis.filter((l) => !escolhidos.includes(l));
   while (escolhidos.length < quantos && resto.length) {
     escolhidos.push(resto.splice(Math.floor(rnd() * resto.length), 1)[0]);
   }
   return escolhidos.map((l) => {
-    const nomes = NOME_LOCAL[l.tipo];
+    /* o molde traz o próprio banco de nomes; sem ele, o do sobremundo; sem
+       nenhum dos dois, o tipo vira o nome (feio, mas nunca vazio) */
+    const nomes = (M.nomesLocal && M.nomesLocal[l.tipo]) || NOME_LOCAL[l.tipo];
     const nome = l.tipo === "taverna" ? nomeTaverna(genero, rnd) : (nomes ? pick(rnd, nomes) : l.tipo);
     return { id: `${cidade.nome}|${l.tipo}`, tipo: l.tipo, icone: l.icone, nome, cidade: cidade.nome, papeis: l.papeis };
   });
@@ -109,8 +132,9 @@ const MODOS = [
   "trata todo mundo por apelido", "tem sempre pressa", "para no meio da frase e recomeça",
 ];
 
-export function genteDoLocal(semente, local, genero = "Fantasia medieval") {
+export function genteDoLocal(semente, local, genero = "Fantasia medieval", molde = null) {
   if (!local) return [];
+  const VONT = moldePorId(molde && molde.id ? molde.id : molde).vontades || VONTADES;
   const rnd = rngDe(`${semente}|gente|${local.id}`);
   const quantos = entre(rnd, 2, 3);
   const out = [];
@@ -124,7 +148,7 @@ export function genteDoLocal(semente, local, genero = "Fantasia medieval") {
       papel: (local.papeis && local.papeis[i % local.papeis.length]) || p.ocupacao,
       traco: p.traco,
       modo: pick(rnd, MODOS),
-      vontade: pick(rnd, VONTADES),
+      vontade: pick(rnd, VONT),
       local: local.nome,
       cidade: local.cidade,
     });
@@ -146,8 +170,8 @@ const SEGREDOS = [
   { tipo: "relicario", icone: "📿", o: "um relicário guardado longe dos olhos", acha: "percepcao", dc: 17 },
 ];
 
-export function segredosDaCidade(semente, cidade, genero = "Fantasia medieval") {
-  const locais = locaisDaCidade(semente, cidade, genero);
+export function segredosDaCidade(semente, cidade, genero = "Fantasia medieval", molde = null) {
+  const locais = locaisDaCidade(semente, cidade, genero, molde);
   if (!locais.length) return [];
   const rnd = rngDe(`${semente}|segredos|${cidade.nome}`);
   const quantos = (PESO_PORTE[cidade.porte || cidade.tipo] || 3) >= 4 ? 2 : 1;
@@ -380,8 +404,8 @@ export function foiSaqueado(base, id) { return garantirBase(base).saqueados.incl
    se existe algo procurável AQUI com aquele atributo, e é a dificuldade do
    PRÓPRIO segredo que vale — não a genérica do pedido. Quem decide se achou
    é o dado; o Mestre só narra o que já foi decidido. */
-export function achavelAqui(semente, mapa, nomeCidade, base, genero, atributo = "percepcao") {
-  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero);
+export function achavelAqui(semente, mapa, nomeCidade, base, genero, atributo = "percepcao", molde = null) {
+  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde);
   if (!q) return null;
   const cands = [
     ...(q.segredos || []).map((s) => ({ ...s, especie: "segredo", onde: `em ${s.local}` })),
@@ -432,13 +456,13 @@ function cidadeSintetica(semente, nome) {
   return { nome, porte: pick(rnd, portes), tipo: "cidade", bioma: pick(rnd, biomas), regiao: "", avulsa: true };
 }
 
-export function oQueExisteAqui(semente, mapa, nomeCidade, base, genero = "Fantasia medieval") {
+export function oQueExisteAqui(semente, mapa, nomeCidade, base, genero = "Fantasia medieval", molde = null) {
   const cidade = ((mapa && mapa.cidades) || []).find((c) => c.nome === nomeCidade) || cidadeSintetica(semente, nomeCidade);
   if (!cidade) return null;
-  const locais = locaisDaCidade(semente, cidade, genero);
+  const locais = locaisDaCidade(semente, cidade, genero, molde);
   const gente = [];
-  for (const l of locais) for (const p of genteDoLocal(semente, l, genero)) if (!estaMorto(base, p.nome)) gente.push(p);
-  const segredos = segredosDaCidade(semente, cidade, genero).filter((s) => !foiSaqueado(base, s.id));
+  for (const l of locais) for (const p of genteDoLocal(semente, l, genero, molde)) if (!estaMorto(base, p.nome)) gente.push(p);
+  const segredos = segredosDaCidade(semente, cidade, genero, molde).filter((s) => !foiSaqueado(base, s.id));
   const regiao = ((mapa && mapa.regioes) || []).find((r) => r.nome === cidade.regiao);
   const bichos = regiao ? criaturasDaRegiao(semente, regiao, genero) : [];
   /* o que existe NO CHÃO por perto: masmorras e caches do ermo (v9.9) */
@@ -455,10 +479,10 @@ export function oQueExisteAqui(semente, mapa, nomeCidade, base, genero = "Fantas
    "já apareceu", e ele para de reapresentar quem o jogador já conhece. */
 const semAcento = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
-export function mencionadosNaCena(semente, mapa, nomeCidade, base, genero, narrativa) {
+export function mencionadosNaCena(semente, mapa, nomeCidade, base, genero, narrativa, molde = null) {
   const texto = semAcento(narrativa);
   if (!texto.trim()) return { locais: [], gente: [] };
-  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero);
+  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde);
   if (!q) return { locais: [], gente: [] };
   const cita = (nome) => {
     const alvo = semAcento(nome);
@@ -481,8 +505,8 @@ export const idDoLocal = (cidade, l) => (l && l.id) || `${cidade}|local|${(l && 
 export const idDaGente = (cidade, p) => `${cidade}|gente|${(p && p.nome) || ""}`;
 
 /* O bloco que entra no prompt. Curto de propósito: é ficha, não literatura. */
-export function resumoDaqui(semente, mapa, nomeCidade, base, genero) {
-  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero);
+export function resumoDaqui(semente, mapa, nomeCidade, base, genero, molde = null) {
+  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde);
   if (!q) return "";
   const marca = (id) => (foiRevelado(base, id) ? " ✓" : "");
   const locais = q.locais.map((l) => `${l.icone} ${l.nome} (${l.tipo})${marca(idDoLocal(q.cidade.nome, l))}`).join(" · ");

@@ -7,9 +7,16 @@
    sorteada pelo sistema e servida pronta para a narração.
    ============================================================ */
 
+import { moldePorId } from "./moldes.js";
+
 /* ---------------- PARÂMETROS DE PORTE ----------------
    Faixas de população por tipo de assentamento — âncora para o
-   Mestre e para o cálculo de fé por acontecimento. */
+   Mestre e para o cálculo de fé por acontecimento.
+
+   v9.40: os portes dos moldes novos entram aqui pelo mesmo motivo que os
+   antigos — é desta tabela que saem a população, o rótulo da tela e o
+   peso da fé. Um andar da Torre tem gente morando nele; uma estação
+   orbital também. */
 export const PORTES = {
   ruina:     { rotulo: "ruína",      min: 0,     max: 0,     servicos: "nenhum — só ecos e perigo" },
   aldeia:    { rotulo: "aldeia",     min: 50,    max: 300,   servicos: "ferreiro simples, taverna comum" },
@@ -18,6 +25,23 @@ export const PORTES = {
   capital:   { rotulo: "capital",    min: 15000, max: 80000, servicos: "corte, catedral, universidade, porto grande" },
   metropole: { rotulo: "metrópole",  min: 80000, max: 300000, servicos: "tudo que o mundo oferece — e tudo que ele esconde" },
   fortaleza: { rotulo: "fortaleza",  min: 200,   max: 2000,  servicos: "guarnição, armeiro, poucas comodidades" },
+  /* Torre */
+  patamar:        { rotulo: "patamar",        min: 20,   max: 150,   servicos: "uma fogueira e quem a guarda" },
+  andar:          { rotulo: "andar",          min: 60,   max: 900,   servicos: "trocas, remendos e o portal" },
+  "andar-mestre": { rotulo: "andar-mestre",   min: 400,  max: 4000,  servicos: "feira do degrau, oficina, capela" },
+  "átrio":        { rotulo: "átrio",          min: 1000, max: 12000, servicos: "tudo o que sobreviveu à subida" },
+  /* Arquipélago */
+  fundeadouro:     { rotulo: "fundeadouro",    min: 20,    max: 200,   servicos: "água doce e um cais podre" },
+  "vila de pesca": { rotulo: "vila de pesca",  min: 200,   max: 1200,  servicos: "peixe, conserto de rede, taverna" },
+  porto:           { rotulo: "porto",          min: 1200,  max: 12000, servicos: "estaleiro, receptador, cartas náuticas" },
+  forte:           { rotulo: "forte",          min: 150,   max: 1800,  servicos: "guarnição, canhões, poucas perguntas" },
+  "porto franco":  { rotulo: "porto franco",   min: 12000, max: 60000, servicos: "tudo se compra, inclusive silêncio" },
+  /* Braço estelar */
+  "posto avançado":  { rotulo: "posto avançado",  min: 20,    max: 300,    servicos: "doca única, oxigênio racionado" },
+  "colônia":         { rotulo: "colônia",         min: 300,   max: 9000,   servicos: "oficina, enfermaria, mercado de peças" },
+  sistema:           { rotulo: "sistema",         min: 9000,  max: 90000,  servicos: "várias docas, rotas registradas" },
+  base:              { rotulo: "base",            min: 200,   max: 3000,   servicos: "segurança pesada, trânsito controlado" },
+  "capital orbital": { rotulo: "capital orbital", min: 90000, max: 400000, servicos: "o braço inteiro passa por aqui" },
 };
 export function populacaoDe(porte, rnd = Math.random) {
   const p = PORTES[porte] || PORTES.cidade;
@@ -41,6 +65,11 @@ export const TERRENO_VIAGEM = {
   montanha:  { kmDia: 12, rotulo: "passo de montanha" },
   gelo:      { kmDia: 12, rotulo: "gelo" },
   maritima:  { kmDia: 90, rotulo: "rota marítima" },
+  /* v9.40: travessias que não se medem em quilômetros. Ficam na tabela
+     porque quem lê uma rota pergunta pelo terreno dela, e um `undefined`
+     aqui derrubaria o cálculo de dias no meio de uma viagem. */
+  portal:    { kmDia: 0,  rotulo: "portal do andar" },
+  salto:     { kmDia: 0,  rotulo: "rota de salto" },
 };
 /* 1 unidade do mapa (0-100) ≈ 25 km — um continente de ~2.500 km */
 export const KM_POR_UNIDADE = 25;
@@ -62,13 +91,17 @@ export function rngDe(semente) {
 }
 const pickR = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 
-/* Nome de cidade único dentro do conjunto */
-function nomeCidade(rnd, usados) {
+/* Nome de lugar único dentro do conjunto. v9.40: o banco vem do MOLDE —
+   "Baixo Brumoso" denunciava o gerador na primeira tela de uma campanha
+   estelar. Sem molde, o banco medieval de sempre. */
+function nomeCidade(rnd, usados, molde) {
+  const A = (molde && molde.nomes && molde.nomes.a) || CIDADE_A;
+  const Bn = (molde && molde.nomes && molde.nomes.b) || CIDADE_B;
   for (let t = 0; t < 12; t++) {
-    const nome = `${pickR(rnd, CIDADE_A)} ${pickR(rnd, CIDADE_B)}`;
+    const nome = `${pickR(rnd, A)} ${pickR(rnd, Bn)}`;
     if (!usados.has(nome.toLowerCase())) { usados.add(nome.toLowerCase()); return nome; }
   }
-  const fallback = `Porto ${Math.floor(rnd() * 900 + 100)}`;
+  const fallback = `${pickR(rnd, A)} ${Math.floor(rnd() * 900 + 100)}`;
   usados.add(fallback.toLowerCase());
   return fallback;
 }
@@ -76,8 +109,68 @@ function nomeCidade(rnd, usados) {
 /* ---------------- ROTAS ----------------
    Liga cada cidade às 2 mais próximas (malha de caminhos), classifica
    o terreno pelo bioma dos dois lados e calcula a distância e os dias. */
-export function gerarRotas(cidades) {
+/* v9.40: as rotas de um molde que não é continental. Uma torre só liga
+   andar a andar, e um braço estelar liga o que tem rota de salto — o
+   vizinho mais próximo em linha reta não significa nada nos dois casos. */
+function rotasDaPilha(cs, molde) {
+  const rotas = [];
+  const ordenadas = [...cs].sort((a, b) => (a.z || 0) - (b.z || 0));
+  for (let i = 0; i + 1 < ordenadas.length; i++) {
+    rotas.push({
+      de: ordenadas[i].nome, para: ordenadas[i + 1].nome,
+      terreno: "portal", km: 0,
+      /* subir um andar é uma travessia, não uma jornada: seis horas */
+      dias: 0.25,
+    });
+  }
+  return rotas;
+}
+
+function rotasDoGrafo(cs, molde) {
+  const rotas = [];
+  for (let i = 0; i < cs.length; i++) {
+    const perto = cs.map((o, j) => ({ j, d: Math.hypot((cs[i].x || 0) - (o.x || 0), (cs[i].y || 0) - (o.y || 0), (cs[i].z || 0) - (o.z || 0)) }))
+      .filter((o) => o.j !== i).sort((a, b) => a.d - b.d);
+    for (const { j, d } of perto.slice(0, 2)) {
+      const de = cs[i].nome, para = cs[j].nome;
+      if (rotas.some((r) => (r.de === de && r.para === para) || (r.de === para && r.para === de))) continue;
+      rotas.push({ de, para, terreno: "salto", km: Math.round(d), dias: Math.max(1, Math.round(d / 12)) });
+    }
+  }
+  return rotas;
+}
+
+/* Entre ilhas só existe um caminho: o mar. Classificar terreno pelo bioma
+   das duas pontas — como faz o sobremundo — produzia rotas de "colina"
+   ligando duas ilhas, e o cálculo de dias saía de uma tabela de marcha a
+   pé para uma travessia de navio. */
+function rotasDoMar(cs, molde) {
+  const rotas = [];
+  const veloc = (id) => {
+    const b = (molde.biomas || []).find((x) => x.id === id);
+    return (b && b.kmDia) || 60;
+  };
+  for (let i = 0; i < cs.length; i++) {
+    const perto = cs.map((o, j) => ({ j, d: Math.hypot((cs[i].x || 0) - (o.x || 0), (cs[i].y || 0) - (o.y || 0)) }))
+      .filter((o) => o.j !== i).sort((a, b) => a.d - b.d);
+    for (const { j, d } of perto.slice(0, 2)) {
+      const de = cs[i].nome, para = cs[j].nome;
+      if (rotas.some((r) => (r.de === de && r.para === para) || (r.de === para && r.para === de))) continue;
+      /* a travessia herda o pior dos dois lados: bruma e recife atrasam */
+      const kmDia = Math.min(veloc(cs[i].bioma), veloc(cs[j].bioma), 90);
+      const km = Math.max(20, Math.round(d * ((molde.unidade && molde.unidade.km) || 40) / 10) * 10);
+      rotas.push({ de, para, terreno: "maritima", km, dias: Math.max(0.5, Math.round((km / Math.max(10, kmDia)) * 2) / 2) });
+    }
+  }
+  return rotas;
+}
+
+export function gerarRotas(cidades, molde) {
   const cs = cidades || [];
+  const topo = molde && molde.topologia;
+  if (topo === "pilha") return rotasDaPilha(cs, molde);
+  if (topo === "grafo") return rotasDoGrafo(cs, molde);
+  if (topo === "ilhas") return rotasDoMar(cs, molde);
   const rotas = [];
   for (let i = 0; i < cs.length; i++) {
     const dists = cs.map((o, j) => ({ j, d: Math.hypot((cs[i].x || 0) - (o.x || 0), (cs[i].y || 0) - (o.y || 0)) })).filter((o) => o.j !== i).sort((a, b) => a.d - b.d);
@@ -122,10 +215,106 @@ export const FAIXAS_MUNDO = {
 };
 const entreR = (rnd, a, b) => a + Math.floor(rnd() * (b - a + 1));
 
-export function gerarGeografia(semente) {
+/* v9.40: a topologia decide a FORMA; o resto do jogo nem fica sabendo.
+   Um andar da Torre é um registro de cidade com `z` no lugar de `x,y`, e
+   por isso missões, viagem, ofertas e mapa continuam funcionando sem uma
+   linha de mudança — só o vocabulário na tela muda. */
+export function gerarGeografia(semente, molde) {
+  const m = moldePorId(molde && molde.id ? molde.id : molde);
+  if (m.topologia === "pilha") return mundoEmPilha(semente, m);
+  if (m.topologia === "grafo") return mundoEmGrafo(semente, m);
+  return mundoContinental(semente, m);
+}
+
+/* A TORRE: uma coluna de andares. Não há norte nem sul — há acima e
+   abaixo, e o perigo é função da altura. */
+function mundoEmPilha(semente, m) {
+  const rnd = rngDe(semente);
+  const usadosC = new Set();
+  /* o molde promete cem andares; herdando as faixas do continental, a Torre
+     nascia com 18 a 40 e a promessa virava propaganda */
+  const faixa = (m.tamanho && m.tamanho.length === 2) ? m.tamanho : [18, 40];
+  const quantos = entreR(rnd, faixa[0], faixa[1]);
+  const secoes = [];
+  const porSecao = Math.max(4, Math.round(quantos / entreR(rnd, 3, 5)));
+  const cidades = [];
+  for (let z = 1; z <= quantos; z++) {
+    const iSec = Math.floor((z - 1) / porSecao);
+    if (!secoes[iSec]) {
+      secoes[iSec] = {
+        nome: `${pickR(rnd, ["Base", "Meio", "Alto", "Coroa", "Fundo", "Vão"])} ${["I", "II", "III", "IV", "V", "VI"][iSec] || iSec + 1}`,
+        continente: "A Torre", bioma: pickR(rnd, m.biomas).id, cx: 50, cy: 50,
+      };
+    }
+    const porte = z === quantos ? "átrio" : z % porSecao === 0 ? "andar-mestre" : z <= 2 ? "patamar" : "andar";
+    cidades.push({
+      nome: nomeDeAndar(rnd, z, usadosC),
+      tipo: porte, porte,
+      populacao: populacaoDe(porte, rnd),
+      regiao: secoes[iSec].nome, continente: "A Torre",
+      bioma: pickR(rnd, m.biomas).id,
+      faccao: null, relacao: "neutra", locais: [], sede: false, notas: "",
+      /* x,y existem só porque o painel de mapa desenha num plano; quem
+         manda é o z, e é ele que a progressão de perigo lê */
+      x: 50, y: Math.max(4, 96 - Math.round((z / quantos) * 92)), z,
+      descoberta: z <= 1,
+    });
+  }
+  return { continente: "A Torre", continentes: [{ nome: "A Torre", regioes: secoes.map((s) => s.nome) }], regioes: secoes, cidades, rotas: gerarRotas(cidades, m) };
+}
+
+/* O BRAÇO ESTELAR: pontos esparsos em três eixos, ligados por saltos. */
+function mundoEmGrafo(semente, molde) {
+  const m = molde;
+  const rnd = rngDe(semente);
+  const usadosC = new Set(), usadosR = new Set();
+  const nSetores = entreR(rnd, 2, 4);
+  const regioes = [];
+  for (let i = 0; i < nSetores; i++) {
+    let nome;
+    do { nome = `${pickR(rnd, (m.nomesRegiao || {}).a || REGIAO_A)} ${pickR(rnd, (m.nomesRegiao || {}).b || REGIAO_B)}`; } while (usadosR.has(nome));
+    usadosR.add(nome);
+    regioes.push({ nome, continente: "O Braço", bioma: pickR(rnd, m.biomas).id, cx: 20 + rnd() * 60, cy: 20 + rnd() * 60 });
+  }
+  const cidades = [];
+  for (const reg of regioes) {
+    const quantas = entreR(rnd, 2, 5);
+    for (let i = 0; i < quantas; i++) {
+      const porte = cidades.length === 0 ? "capital orbital" : pickR(rnd, m.portes);
+      cidades.push({
+        nome: nomeCidade(rnd, usadosC, molde), tipo: porte, porte,
+        populacao: populacaoDe(porte, rnd),
+        regiao: reg.nome, continente: "O Braço", bioma: pickR(rnd, m.biomas).id,
+        faccao: null, relacao: "neutra", locais: [], sede: false, notas: "",
+        x: Math.max(4, Math.min(96, Math.round(reg.cx + (rnd() - 0.5) * 30))),
+        y: Math.max(4, Math.min(96, Math.round(reg.cy + (rnd() - 0.5) * 30))),
+        z: Math.round((rnd() - 0.5) * 40),
+        descoberta: cidades.length === 0,
+      });
+    }
+  }
+  return { continente: "O Braço", continentes: [{ nome: "O Braço", regioes: regioes.map((r) => r.nome) }], regioes, cidades, rotas: gerarRotas(cidades, m) };
+}
+
+function nomeDeAndar(rnd, z, usados) {
+  const alcunhas = ["dos Ossos", "das Correntes", "do Sino", "sem Teto", "das Cinzas", "do Poço", "dos Espelhos", "da Ferrugem", "do Silêncio", "das Velas", "do Sal", "dos Nomes", "da Chuva", "do Fio", "das Máscaras"];
+  for (let t = 0; t < 12; t++) {
+    const nome = `Andar ${z} — ${pickR(rnd, alcunhas)}`;
+    if (!usados.has(nome.toLowerCase())) { usados.add(nome.toLowerCase()); return nome; }
+  }
+  const f = `Andar ${z}`;
+  usados.add(f.toLowerCase());
+  return f;
+}
+
+function mundoContinental(semente, molde) {
   const rnd = rngDe(semente);
   const usadosR = new Set(), usadosC = new Set(), usadosK = new Set();
   const F = FAIXAS_MUNDO;
+  const BIOMAS_M = (molde && molde.biomas || []).map((b) => b.id);
+  const sorteiaBioma = () => (BIOMAS_M.length ? pickR(rnd, BIOMAS_M) : pickR(rnd, BIOMAS));
+  const RA = (molde && molde.nomesRegiao && molde.nomesRegiao.a) || REGIAO_A;
+  const RB = (molde && molde.nomesRegiao && molde.nomesRegiao.b) || REGIAO_B;
 
   /* continentes: quase sempre um, às vezes dois, raramente três */
   const nCont = rnd() < 0.62 ? 1 : rnd() < 0.8 ? 2 : entreR(rnd, 2, F.continentes[1]);
@@ -142,9 +331,9 @@ export function gerarGeografia(semente) {
     const nReg = entreR(rnd, F.regioesPorContinente[0], F.regioesPorContinente[1]);
     for (let i = 0; i < nReg; i++) {
       let nome;
-      do { nome = `${pickR(rnd, REGIAO_A)} ${pickR(rnd, REGIAO_B)}`; } while (usadosR.has(nome));
+      do { nome = `${pickR(rnd, RA)} ${pickR(rnd, RB)}`; } while (usadosR.has(nome));
       usadosR.add(nome);
-      regioes.push({ nome, continente: cont.nome, bioma: pickR(rnd, BIOMAS), cx: 0, cy: 0 });
+      regioes.push({ nome, continente: cont.nome, bioma: sorteiaBioma(), cx: 0, cy: 0 });
       cont.regioes.push(nome);
     }
   }
@@ -159,16 +348,22 @@ export function gerarGeografia(semente) {
   /* cidades: cada região recebe um punhado próprio, então o total varia
      junto com o número de regiões — mundos pequenos e mundos enormes */
   const cidades = [];
-  const porteInicial = ["capital", "cidade", "cidade"];
+  /* v9.40: os portes vêm do MOLDE, do maior para o menor. O primeiro
+     lugar do mundo é sempre o maior — a capital, o porto franco —, e os
+     demais saem da faixa de baixo. Antes eram "capital, cidade, cidade"
+     cravados, e um arquipélago nascia com capitais no meio do mar. */
+  const P = (molde && molde.portes && molde.portes.length === 5) ? molde.portes : ["aldeia", "vila", "cidade", "fortaleza", "capital"];
+  const porteInicial = [P[4], P[2], P[2]];
+  const porteComum = [P[0], P[0], P[1], P[1], P[2], P[3]];
   for (const reg of regioes) {
     const quantas = entreR(rnd, F.cidadesPorRegiao[0], F.cidadesPorRegiao[1]);
     for (let i = 0; i < quantas; i++) {
       const idx = cidades.length;
-      const porte = idx < porteInicial.length ? porteInicial[idx] : pickR(rnd, ["aldeia", "aldeia", "vila", "vila", "cidade", "fortaleza"]);
+      const porte = idx < porteInicial.length ? porteInicial[idx] : pickR(rnd, porteComum);
       const x = Math.max(6, Math.min(94, Math.round(reg.cx + (rnd() - 0.5) * 24)));
       const y = Math.max(6, Math.min(94, Math.round(reg.cy + (rnd() - 0.5) * 24)));
       cidades.push({
-        nome: nomeCidade(rnd, usadosC),
+        nome: nomeCidade(rnd, usadosC, molde),
         tipo: porte, porte,
         populacao: populacaoDe(porte, rnd),
         regiao: reg.nome, continente: reg.continente, bioma: reg.bioma,
@@ -181,14 +376,14 @@ export function gerarGeografia(semente) {
   while (cidades.length < F.minCidades) {
     const reg = regioes[cidades.length % regioes.length];
     cidades.push({
-      nome: nomeCidade(rnd, usadosC), tipo: "vila", porte: "vila",
-      populacao: populacaoDe("vila", rnd), regiao: reg.nome, continente: reg.continente, bioma: reg.bioma,
+      nome: nomeCidade(rnd, usadosC, molde), tipo: P[1], porte: P[1],
+      populacao: populacaoDe(P[1], rnd), regiao: reg.nome, continente: reg.continente, bioma: reg.bioma,
       faccao: null, relacao: "neutra", locais: [], sede: false, notas: "",
       x: Math.round(reg.cx), y: Math.round(reg.cy), descoberta: false,
     });
   }
   /* `continente` (singular) fica para quem já lia o campo antigo */
-  return { continente: continentes[0].nome, continentes, regioes, cidades, rotas: gerarRotas(cidades) };
+  return { continente: continentes[0].nome, continentes, regioes, cidades, rotas: gerarRotas(cidades, molde) };
 }
 
 /* ---------------- MIGRAÇÃO DE SAVES ANTIGOS ----------------

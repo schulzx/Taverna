@@ -66,13 +66,27 @@ export function marchaForcada(horasExtras, modVigor) {
 /* ---------------- NAVEGAÇÃO: dá para se perder ---------------- */
 export const CD_NAVEGACAO = { planicie: 10, costa: 10, colina: 12, floresta: 15, montanha: 15, deserto: 15, pantano: 15, gelo: 17 };
 
-export function testarNavegacao(bioma, modSobrevivencia, temMapa) {
-  const cd = (CD_NAVEGACAO[bioma] || 12) - (temMapa ? 5 : 0);
+/* v9.40: perder-se e caçar comida dependem do TERRENO, e cada molde tem os
+   seus. As três tabelas antigas (viagem, navegação, abundância) viraram
+   campos do bioma no molde — aqui a gente só pergunta, com as tabelas
+   medievais como rede quando o molde não conhece o bioma. */
+function fichaDoBioma(bioma, molde) {
+  const bs = (molde && molde.biomas) || [];
+  return bs.find((b) => b.id === bioma) || null;
+}
+export function rotuloDeBioma(bioma, molde) {
+  const f = fichaDoBioma(bioma, molde);
+  return (f && f.rotulo) || BIOMA_ROTULO[bioma] || bioma;
+}
+
+export function testarNavegacao(bioma, modSobrevivencia, temMapa, molde = null) {
+  const f = fichaDoBioma(bioma, molde);
+  const cd = ((f && f.cd) || CD_NAVEGACAO[bioma] || 12) - (temMapa ? 5 : 0);
   const rolo = d(20) + (modSobrevivencia || 0);
   const passou = rolo >= cd;
   return {
     cd, rolo, passou,
-    texto: `Navegação em ${BIOMA_ROTULO[bioma] || bioma}: d20+${modSobrevivencia || 0} = ${rolo} vs ${cd} → ${passou ? "rota mantida" : "vocês se perdem"}`,
+    texto: `Navegação em ${rotuloDeBioma(bioma, molde)}: d20+${modSobrevivencia || 0} = ${rolo} vs ${cd} → ${passou ? "rota mantida" : "vocês se perdem"}`,
     horasPerdidas: passou ? 0 : d(4) + 1,
   };
 }
@@ -80,10 +94,11 @@ export function testarNavegacao(bioma, modSobrevivencia, temMapa) {
 /* ---------------- FORRAGEAMENTO ---------------- */
 export const ABUNDANCIA = { planicie: 12, floresta: 10, colina: 12, costa: 10, montanha: 15, pantano: 15, deserto: 20, gelo: 20 };
 
-export function forragear(bioma, modSobrevivencia) {
-  const cd = ABUNDANCIA[bioma] || 14;
+export function forragear(bioma, modSobrevivencia, molde = null) {
+  const f = fichaDoBioma(bioma, molde);
+  const cd = (f && f.abundancia) || ABUNDANCIA[bioma] || 14;
   const rolo = d(20) + (modSobrevivencia || 0);
-  if (rolo < cd) return { achou: false, racoes: 0, agua: 0, cd, rolo, texto: `Forrageamento em ${BIOMA_ROTULO[bioma] || bioma}: ${rolo} vs ${cd} — a terra não deu nada hoje.` };
+  if (rolo < cd) return { achou: false, racoes: 0, agua: 0, cd, rolo, texto: `Forrageamento em ${rotuloDeBioma(bioma, molde)}: ${rolo} vs ${cd} — a terra não deu nada hoje.` };
   const racoes = d(6) + Math.max(0, modSobrevivencia || 0);
   const agua = d(6) + Math.max(0, modSobrevivencia || 0);
   return { achou: true, racoes, agua, cd, rolo, texto: `Forrageamento: ${rolo} vs ${cd} — +${racoes} rações e +${agua} de água.` };

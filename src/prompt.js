@@ -33,6 +33,7 @@ import { MOVIMENTO_PROMPT } from "./movimento.js";
 import { MISSOES_PROMPT } from "./missoes.js";
 import { OFERTAS_PROMPT } from "./ofertas.js";
 import { LUGAR_PROMPT } from "./lugar.js";
+import { MOLDES_PROMPT } from "./moldes.js";
 import { ORCAMENTO_PROMPT } from "./orcamento.js";
 import { ESPECIALIZACOES_PROMPT } from "./especializacoes.js";
 import { ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
@@ -163,6 +164,8 @@ ${MISSOES_PROMPT}
 ${OFERTAS_PROMPT}
 
 ${LUGAR_PROMPT}
+
+${MOLDES_PROMPT}
 
 ${ORCAMENTO_PROMPT}
 ${ASCENSAO_SISTEMA_PROMPT}

@@ -5,10 +5,11 @@
 import React from "react";
 import { T } from "./constantes.js";
 import { RELACOES, blobPath, centrosDeRegiao, gerarEstradas } from "./mapa.js";
+import { PORTES } from "./geografia.js";
 import { ESTADOS_FE, estadoFe, feDaCidade, temploDaCidade, temploDe, fieisDaCidade, heresiaDaCidade, patronoDaCidade, resumoNumerico } from "./devocao.js";
 import { ondeEstou, pontoDoHeroi } from "./rastro.js";
 
-export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindade, jornada = null, masmorra = null }) {
+export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindade, jornada = null, masmorra = null, molde = null }) {
   const [selecionada, setSelecionada] = React.useState(null);
   /* CAMADAS (v8.9): o mesmo pergaminho conta duas histórias — quem manda
      (política) e quem reza (fé). A camada de fé só existe depois do despertar. */
@@ -33,11 +34,72 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
   if (cidades.length === 0) {
     return <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>O mapa ainda está em branco. Conforme você explora, cidades e territórios aparecem aqui — e ficam salvos, para o mundo nunca mais se perder.</div>;
   }
+
   const rodapeNevoa = ocultas > 0 ? (
     <div className="tv-mono text-[10px] mt-2 px-2 py-1.5 rounded-lg" style={{ background: T.panelSoft, border: `1px dashed ${T.line}`, color: T.inkDim }}>
       🌫 Há {ocultas} {ocultas === 1 ? "lugar" : "lugares"} neste mundo que você ainda não conhece. Viaje até eles, ou compre o mapa da região num armazém ou casa de relíquias.
     </div>
   ) : null;
+
+  /* v9.40: UM MUNDO VERTICAL NÃO É UM MAPA. Desenhar a Torre no pergaminho
+     produzia uma coluna de pontos empilhados — cem andares num plano 4:3 se
+     sobrepõem e não dizem nada. Quando o molde tem um eixo só, e ele é o Z,
+     o painel vira ESCADA: de cima para baixo, o mais alto primeiro, porque é
+     assim que se olha uma torre de fora. */
+  const vertical = !!(molde && (molde.eixos || []).length === 1 && molde.eixos[0] === "z");
+  if (vertical) {
+    const rotulo = molde.assentamento || { singular: "andar", plural: "andares" };
+    const degraus = [...cidades].sort((a, b) => (b.z || 0) - (a.z || 0));
+    const maisAlto = Math.max(...todas.map((c) => c.z || 0));
+    return (
+      <div>
+        <div className="flex items-baseline justify-between mb-2">
+          <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>
+            {molde.icone} {molde.nome} · {rotulo.plural}
+          </div>
+          <div className="tv-mono text-[10px]" style={{ color: T.inkDim }}>
+            {cidades.length} de {todas.length} {cidades.length === 1 ? "conhecido" : "conhecidos"}
+          </div>
+        </div>
+        <div className="rounded-xl p-2 mb-3" style={{ border: `1px solid ${T.line}`, background: T.panelSoft, maxHeight: 420, overflowY: "auto" }}>
+          {degraus.map((c) => {
+            const atual = cidadeAtual && c.nome.toLowerCase() === String(cidadeAtual).toLowerCase();
+            const perigo = molde.progressao ? 1 + Math.max(0, (c.z || 1) - 1) * molde.progressao.perigoPorPasso : 1;
+            return (
+              <button key={c.nome} onClick={() => setSelecionada(selecionada === c.nome ? null : c.nome)}
+                className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg"
+                style={{ background: atual ? T.panel : "transparent", border: `1px solid ${atual ? T.amber : "transparent"}` }}>
+                {/* o fio do portal: é ele que liga um degrau ao seguinte */}
+                <span className="tv-mono text-[10px] shrink-0" style={{ color: atual ? T.amberSoft : T.inkDim, width: 34, textAlign: "right" }}>
+                  {c.z}
+                </span>
+                <span className="shrink-0" style={{ width: 1, height: 22, background: c.z === maisAlto ? "transparent" : T.line }} />
+                <span className="tv-body text-xs truncate" style={{ color: atual ? T.ink : T.inkDim }}>
+                  {atual ? "▸ " : ""}{c.nome}
+                </span>
+                <span className="tv-mono text-[9px] ml-auto shrink-0" style={{ color: perigo >= 2 ? T.danger : T.inkDim }}>
+                  ×{perigo.toFixed(1)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        {selecionada && (() => {
+          const c = cidades.find((x) => x.nome === selecionada);
+          if (!c) return null;
+          return (
+            <div className="rounded-xl p-3 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
+              <div className="tv-display text-base" style={{ color: T.ink }}>{c.nome}</div>
+              <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>
+                {(PORTES[c.porte || c.tipo] || {}).rotulo || c.tipo} · {c.regiao} · {Number(c.populacao || 0).toLocaleString("pt-BR")} hab.
+              </div>
+            </div>
+          );
+        })()}
+        {rodapeNevoa}
+      </div>
+    );
+  }
   /* ONDE VOCÊ ESTÁ (v9.29). O mapa mostrava o mundo e não mostrava o herói —
      e na estrada ele sumia de vez: não estava mais na origem, não estava
      ainda no destino, não estava em lugar nenhum que a tela soubesse
