@@ -61,6 +61,7 @@ export { ocorrenciaDoNome } from "./cena.js";
 import { mesmoPapel, quemTemOPapel } from "./npcs.js";
 import { detectarAscensaoNarrada } from "./ascensao.js";
 import { detectarAlcanceImpossivel, notaAlcanceImpossivel, nomeDoLugar } from "./grid.js";
+import { detectarVoltaForcada, notaVoltaForcada } from "./lugar.js";
 import { tituloDe } from "./divindades.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -233,6 +234,24 @@ export function violacoesDoTurno(narrativa, ctx = {}) {
       nota: `[CORREÇÃO DE COESÃO — MORTE INDEVIDA NA NARRAÇÃO] Você narrou a queda de ${e.nome}, mas o SISTEMA registra ${e.vida} de ${e.vidaMax} PV: ${e.nome} está DE PÉ e continua agindo. RETOME a cena tratando-o como vivo — sem ressurreição, sem "ele se ergue de novo", sem cinzas: ele simplesmente não caiu. E calibre a intensidade pelo dano REAL do envelope: ${e.vida} de ${e.vidaMax} PV significa que ele ainda tem ${pct}% da vida — não descreva golpes pequenos como devastadores.`,
       regra: `${e.nome} NÃO morreu e NÃO caiu: o sistema registra ${e.vida} de ${e.vidaMax} PV (${pct}% da vida). Reescreva o golpe como um dano que ele ENCAIXOU e do qual continua de pé, agindo. Não use ressurreição, não faça "ele se ergue de novo", não deixe cinzas nem corpo. E não descreva o golpe como devastador: ele levou ${pct === 100 ? "um arranhão" : "dano parcial"}.`,
       lembrete: "Nunca declare a morte de um combatente por conta própria — quem tem PV é o sistema. Narre o golpe; a queda só existe quando o envelope disser que existe.",
+    });
+  }
+
+  /* v9.39: o teleporte AO CONTRÁRIO — não é alguém que chega de longe, é o
+     herói que é levado de volta à cidade sem ter pedido. Nasceu de um bug
+     real: o sistema só sabia "cidade" ou "viagem", o rodapé afirmava a cidade
+     em todo turno, e o Mestre devolvia o herói a ela para a frase virar
+     verdade. Agora o lugar existe, e este cão de guarda o defende. */
+  const volta = detectarVoltaForcada(texto, {
+    lugar: ctx.lugar, cidade: ctx.cidadeAtual, pedidoDoJogador: ctx.pedidoDoJogador,
+  });
+  if (volta) {
+    v.push({
+      id: "volta_forcada", rotulo: `você foi devolvido a ${volta.cidade} sem ter pedido`,
+      aviso: "",
+      nota: notaVoltaForcada(volta),
+      regra: `O herói está em ${volta.lugar}, FORA de ${volta.cidade}, e não pediu para voltar. Reescreva a cena inteira acontecendo em ${volta.lugar}: nada de estrada, nada de chegada, nada de portões da cidade. O que muda é o que vem até ele — o som ao longe, quem se aproxima no escuro, o que a espera revela. Mantenha o resto igual.`,
+      lembrete: "O herói fica onde está até ELE dizer que se move. Passar o tempo, vigiar e dormir acontecem no lugar em que ele já estava — nunca devolva ninguém à cidade por conta própria.",
     });
   }
 

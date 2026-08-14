@@ -51,6 +51,7 @@ import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, 
 import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
+import { garantirLugar, definirLugar, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, linhaDeLugar, resumoLugarPrompt } from "./lugar.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
@@ -3297,6 +3298,12 @@ export default function Taverna() {
      no meio do oceano). Limpa quando o sistema registra chegada (cidade_atual). */
   const jornadaRef = useRef(null); // { de, desde, meio } | null
   const [jornada, setJornada] = useState(null);
+  /* v9.39: o terceiro lugar. Nem cidade, nem viagem — a fazenda a quarenta
+     minutos a pé, onde a armadilha está armada. Sem isto o rodapé afirmava a
+     cidade em todo turno e o Mestre devolvia o herói a ela para a frase
+     voltar a ser verdade. */
+  const lugarRef = useRef(null); // { nome, cidade, distancia, desde } | null
+  const [lugar, setLugar] = useState(null);
   /* GERADORES DE VIDA (v7.2): eventos locais (máx. 3, expiram) e o evento
      global (máx. 1, escala por etapas) — sorteados por código, o mestre só narra. */
   const eventosRef = useRef({ locais: [], global: null, semGlobalDesde: 0, seq: 1 });
@@ -3313,7 +3320,32 @@ export default function Taverna() {
   const diaLutaRef = useRef({ gasto: 0, lutas: 0 });
   const localAtualTxt = () => jornadaRef.current
     ? `EM VIAGEM desde ${jornadaRef.current.de || "a última parada"} (desde o dia ${jornadaRef.current.desde || "?"})${jornadaRef.current.meio ? `, viajando de ${jornadaRef.current.meio}` : ""} — não estou em cidade nenhuma`
-    : (cidadeAtualRef.current ? `em ${cidadeAtualRef.current}` : "a sós, fora de cidade");
+    : lugarRef.current
+      ? linhaDeLugar(lugarRef.current)
+      : (cidadeAtualRef.current ? `em ${cidadeAtualRef.current}` : "a sós, fora de cidade");
+
+  /* Registrar onde estou. Vem de dois lados — o Mestre pelo campo
+     "lugar_atual" (imediato) e o Cronista lendo a narração (no fim do turno)
+     — e os dois passam por aqui, para o anúncio e a limpeza serem um só.
+     `null` significa "voltei para dentro da cidade". */
+  const registrarLugar = (nome) => {
+    const cidade = cidadeAtualRef.current || "";
+    const cru = String(nome || "").trim();
+    /* "cidade" é a palavra combinada para "voltei para dentro dela": sem um
+       sinal explícito, um `null` de descuido apagaria o lugar todo turno e
+       devolveria exatamente o teleporte que este código existe para impedir */
+    const voltou = /^(cidade|na cidade|de volta|dentro da cidade)$/i.test(cru);
+    if (!cru || voltou || ehAPropriaCidade(cru, cidade)) {
+      if (!lugarRef.current) return null;
+      const antigo = lugarRef.current;
+      lugarRef.current = null; setLugar(null);
+      return `📍 De volta ${cidade ? `a ${cidade}` : "à cidade"} — ${antigo.nome} fica para trás.`;
+    }
+    const novo = definirLugar(cru, { cidade, dia: diaRef.current });
+    if (!novo || ehOMesmoLugar(novo, lugarRef.current)) return null;
+    lugarRef.current = novo; setLugar(novo);
+    return `📍 Você está ${comEm(textoDoLugar(novo))}.`;
+  };
   const famaAtual = () => calcularFama(contRef.current, (personagem && personagem.nivel) || 1, dominiosDe(mapaRef.current).length);
   const famaPatamarRef = useRef(0); // fama da última checagem, para detectar saltos de patamar
   const absMin = () => (diaRef.current - 1) * 1440 + minutoRef.current;
@@ -3402,6 +3434,7 @@ export default function Taverna() {
   const seguraRef = useRef(null);      // null = fluindo; array = retendo
   const portaoRef = useRef(null);      // violações do turno à espera de conserto
   const portaoCtxRef = useRef(null);   // o mesmo contexto, para a re-checagem
+  const ultimoPedidoRef = useRef("");  // a última fala do jogador, crua
   const entregaRef = useRef(null);     // as linhas do turno, prontas menos o texto
 
   const pushMsgs = useCallback((novas) => {
@@ -3417,7 +3450,7 @@ export default function Taverna() {
       combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
-      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
+      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
       historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
@@ -3880,8 +3913,16 @@ export default function Taverna() {
         if (fc.doJogador) faccaoJogadorRef.current = fc.nome;
         mudouMapa = true;
       });
+      /* v9.39: onde estou, quando não é a cidade. Vem antes de `cidade_atual`
+         de propósito: chegar a uma cidade apaga o sublocal, e a ordem inversa
+         deixaria um fantasma de fazenda pendurado na cidade nova. */
+      if (Object.prototype.hasOwnProperty.call(md, "lugar_atual")) {
+        const aviso = registrarLugar(md.lugar_atual);
+        if (aviso) msgs.push(aviso);
+      }
       if (md.cidade_atual) {
         cidadeAtualRef.current = md.cidade_atual;
+        if (lugarRef.current) { lugarRef.current = null; setLugar(null); }
         /* CHEGADA: registrar uma cidade encerra a jornada — a partir daqui eu
            ESTOU nessa cidade (e o descanso pode ser em estalagem/aposentos). */
         if (jornadaRef.current) {
@@ -4387,6 +4428,10 @@ export default function Taverna() {
         presentes: elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: pers.grupo || [] }).aqui,
         divindade: divindadeRef.current, nivel: pers.nivel || 1,
         mortosBase: (baseMundoRef.current || {}).mortos || [], nemesis: nemesisRef.current,
+        /* v9.39: o lugar e o que EU pedi. O cão de guarda da volta forçada só
+           morde quando o jogador não pediu para voltar — e quem sabe disso é
+           a última mensagem dele, não a narração. */
+        lugar: lugarRef.current, pedidoDoJogador: ultimoPedidoRef.current,
       };
       portaoRef.current = violacoesDoTurno(resp.narrativa, portaoCtxRef.current);
     } catch { portaoRef.current = null; /* o portão nunca derruba o turno */ }
@@ -4494,7 +4539,7 @@ export default function Taverna() {
     try {
       const sys = [
         "Você é o CRONISTA de um RPG. Você NÃO narra: lê a narrativa do turno e julga, por seções, o que o SISTEMA deve registrar. Responda APENAS em JSON:",
-        "{\"missoes\":{\"concluidas\":[\"titulo exato\"],\"falhadas\":[\"titulo exato\"],\"progresso\":[{\"titulo\":\"...\",\"nota\":\"resumo curto\"}],\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\",\"acontecimento\":null},\"grupo\":{\"entraram\":[]},\"teste_sugerido\":null,\"combate\":{\"mortes_narradas\":[]}}",
+        "{\"lugar\":null,\"missoes\":{\"concluidas\":[\"titulo exato\"],\"falhadas\":[\"titulo exato\"],\"progresso\":[{\"titulo\":\"...\",\"nota\":\"resumo curto\"}],\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\",\"acontecimento\":null},\"grupo\":{\"entraram\":[]},\"teste_sugerido\":null,\"combate\":{\"mortes_narradas\":[]}}",
         "SEÇÃO missoes: (1) \"concluida\" SÓ com objetivo CUMPRIDO de fato e sem dúvida neste turno; (2) \"falhada\" só se impossível ou explicitamente perdida; (3) avanço parcial real vira \"progresso\"; (4) copie os títulos EXATAMENTE; (5) \"global_encerrado\": true SÓ se o EVENTO GLOBAL (se listado) foi RESOLVIDO de fato — a ameaça central derrotada/desfeita, não um avanço.",
         "SEÇÃO canone: fatos DURÁVEIS — artefatos e objetos relevantes que o herói ganhou/achou/descobriu (com o que o objeto É de fato; saque comum não entra), lugares importantes, promessas, segredos. NÃO reescreva nem contradiga o CÂNONE ATUAL — só crie novo ou acrescente campo novo.",
         "SEÇÃO pessoas: pessoas COM NOME e papel durável (aliados recorrentes, rivais, contatos) que ainda não estão no ELENCO — figurantes de cena única ficam de fora.",
@@ -4505,6 +4550,7 @@ export default function Taverna() {
         "SEÇÃO combate (só se houver COMBATENTES listados): \"mortes_narradas\" = inimigos que a NARRATIVA declarou mortos/destruídos/desfeitos NESTE turno. Liste só nomes da lista de combatentes; se ninguém morreu na narração, [].",
         "SEÇÃO missao_oferecida (v9.27): se alguém em cena OFERECEU um trabalho ao herói — um nobre desesperado, um capitão precisando de escolta, um aldeão com um problema —, descreva a proposta em {\"titulo\":\"nome curto do trabalho\",\"tipo\":\"contrato|favor\",\"dador\":\"quem ofereceu\",\"descricao\":\"uma frase\",\"paga\":15,\"prazo\":0,\"etapas\":[{\"tipo\":\"ir_a|derrotar|achar|falar_com|levar_a\",\"alvo\":\"nome exato de cidade, criatura, pessoa ou objeto\",\"item\":\"só para levar_a\",\"quantos\":1}]}. De 1 a 3 etapas, todas CONCRETAS e verificáveis — \"ganhar a confiança\" não é etapa. Só quando alguém de fato ofereceu algo NESTE turno; caso contrário, null.",
         "CAMPO \"paga\": o número EXATO de moedas que a cena prometeu (o cartaz que diz \"paga-se 15 moedas\" é 15). Se o combinado NÃO é dinheiro — um favor em troca de informação, uma dívida, uma porta que se abre —, \"paga\": 0. Se ninguém falou de pagamento, \"paga\": null e o sistema arbitra. NUNCA invente um valor.",
+        "SEÇÃO lugar (v9.39): onde o herói está AO FIM deste turno. Se ele está num ponto NOMEADO fora da cidade, \"lugar\": \"a fazenda de Jessa\" (nome curto, como se diz em voz alta: uma fazenda, um moinho, uma gruta, o acampamento da tocaia) — e REPITA esse nome em todo turno em que ele continuar lá. Se ele está dentro da cidade, a palavra exata \"cidade\". Se você não souber dizer, null. Isto é o que impede o sistema de achar que ele voltou para a cidade sem ter voltado.",
         "CAMPO \"prazo\": só quando a CENA impôs pressa em número de noites (\"até a próxima lua\", \"antes que ela morra\", \"tenho três dias\") — use 4, 6 ou 8, o mais próximo do que foi dito. Sem pressa dita, \"prazo\": 0. Não invente urgência: prazo em toda missão não pressiona em nenhuma.",
         "UM TRABALHO É UMA MISSÃO SÓ: se a proposta desta cena é o mesmo serviço de uma missão que já está na lista (o cartaz no mural e a pessoa que vem falar dele são a mesma coisa), missao_oferecida é null. E a etapa \"falar_com\" nunca aponta para quem está oferecendo — o herói já está diante dele.",
         "SEÇÃO relogio_novo (v9.18): se ALGO LONGO COMEÇOU DE FATO em cena — um ritual que passou a ser conduzido, uma perseguição que se iniciou, uma obra que o jogador pôs em marcha — proponha {\"nome\":\"frase curta no presente\",\"tipo\":\"ameaca|cacada|oportunidade|obra\",\"segmentos\":4|6|8,\"gatilho\":\"noite|turno_mundo|falha|sucesso|viagem\",\"consequencia\":\"o que acontece quando encher\"}. NO MÁXIMO UM por turno, e só quando de fato começou — intenção, ameaça verbal e possibilidade NÃO contam. Na esmagadora maioria dos turnos: null.",
@@ -4525,6 +4571,19 @@ export default function Taverna() {
       const msgs = [];
       let p = pers;
       let tocouElenco = false;
+      /* ---- SEÇÃO lugar (v9.39) ----
+         O Cronista lê a narração e diz onde o herói ficou. É a rede que
+         apanha o caso em que o Mestre esqueceu de mandar "lugar_atual" —
+         e é justamente esse esquecimento que produzia o teleporte. */
+      try {
+        /* só um TEXTO conta. `null` aqui é "não sei dizer", e tratá-lo como
+           "voltou para a cidade" faria o descuido do Cronista desfazer o
+           lugar a cada turno — o bug de novo, por outra porta. */
+        if (typeof r.lugar === "string" && r.lugar.trim()) {
+          const aviso = registrarLugar(r.lugar);
+          if (aviso) msgs.push(aviso);
+        }
+      } catch { /* nunca derruba o turno */ }
       /* ---- SEÇÃO missão oferecida (v9.27) ----
          O Mestre traz o nobre desesperado; o sistema decide o que aquilo
          vira. Proposta sem etapa verificável é recusada em silêncio — é a
@@ -5111,6 +5170,15 @@ export default function Taverna() {
 
   const enviar = useCallback(async (conteudo, persAtual, histBase) => {
     setCarregando(true); setFalha(null);
+    /* O que EU pedi neste turno — só a minha frase distingue "o Mestre me
+       devolveu à cidade" de "eu voltei".
+
+       Turno do SISTEMA não é pedido meu, e a diferença é o colchete: todo
+       envelope começa por um cabeçalho entre colchetes, e o que eu digito
+       nunca começa assim. Sem essa distinção o cão de guarda se desarmava
+       sozinho — dentro do envelope de "passar o tempo" está escrito "NÃO me
+       leve de volta à cidade", e o detector lia a proibição como pedido. */
+    ultimoPedidoRef.current = String(conteudo || "").trimStart().startsWith("[") ? "" : String(conteudo || "");
     const nota = notaRef.current; notaRef.current = "";
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
     /* RODAPÉ DO SISTEMA (v7.0.2): lembrete curto colado SÓ na mensagem atual
@@ -5118,7 +5186,7 @@ export default function Taverna() {
        DeepSeek mais esquecia: relógio do sistema, proibição de inventar
        memórias, obediência ao cânone e narrativa sempre preenchida. */
     const estR = estacaoDe(diaRef.current);
-    const rodape = `[RODAPÉ DO SISTEMA] Agora: ${dataTxt(diaRef.current)} (dia ${diaRef.current}), ${horaTxt(minutoRef.current)}${ehNoite(minutoRef.current) ? " (noite)" : ""}, ${estR.nome.toLowerCase()}. Local: ${localAtualTxt()}. Inviolável: (1) o tempo SÓ muda por envelope do sistema — nunca narre amanhecer, anoitecer ou horas passando por conta própria; (2) NUNCA invente memórias nem passado compartilhado que não esteja no cânone/registro de pessoas; (3) siga o cânone e o registro à risca; (4) o campo "narrativa" vem SEMPRE preenchido; (5) descanso/sono acontecem ONDE EU ESTOU — jamais me teleporte para aposentos ou cidade sem viagem narrada.${divindadeRef.current && divindadeRef.current.despertar ? " " + resumoAscensao(divindadeRef.current, (personagem && personagem.nivel) || 1) : ""}${(() => {
+    const rodape = `[RODAPÉ DO SISTEMA] Agora: ${dataTxt(diaRef.current)} (dia ${diaRef.current}), ${horaTxt(minutoRef.current)}${ehNoite(minutoRef.current) ? " (noite)" : ""}, ${estR.nome.toLowerCase()}. Local: ${localAtualTxt()}. Inviolável: (1) o tempo SÓ muda por envelope do sistema — nunca narre amanhecer, anoitecer ou horas passando por conta própria; (2) NUNCA invente memórias nem passado compartilhado que não esteja no cânone/registro de pessoas; (3) siga o cânone e o registro à risca; (4) o campo "narrativa" vem SEMPRE preenchido; (5) descanso/sono acontecem ONDE EU ESTOU — jamais me teleporte para aposentos ou cidade sem viagem narrada; (6) ONDE EU ESTOU é o que este rodapé diz, e só muda quando EU escrevo que me movo — esperar, vigiar e deixar horas passarem acontece no lugar em que eu já estava.${divindadeRef.current && divindadeRef.current.despertar ? " " + resumoAscensao(divindadeRef.current, (personagem && personagem.nivel) || 1) : ""}${(() => {
       /* CONDIÇÕES (v9.0) e NÊMESIS: estado vivo, colado em TODO turno. É o que
          impede o Mestre de narrar um herói inteiro enquanto o sistema o mantém
          atordoado — ou uma nêmesis viva depois de o sistema tê-la enterrado. */
@@ -5145,7 +5213,11 @@ export default function Taverna() {
       const rit = resumoRitoPrompt(divindadeRef.current, p.nivel || 1);
       /* BASE DO MUNDO (v9.8): o lugar onde o herói está já tem locais, gente e
          segredos definidos. É isto que substitui a invenção a cada turno. */
-      const aqui = resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo());
+      /* v9.39: quando o herói está fora da cidade, o que a base descreve
+         continua verdadeiro — mas é o mundo LÁ, não a cena aqui. A linha do
+         lugar vem antes para o Mestre ler nessa ordem. */
+      const ondeEstou = resumoLugarPrompt(lugarRef.current, cidadeAtualRef.current);
+      const aqui = (ondeEstou ? ondeEstou + "\n\n" : "") + resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo());
       const chefes = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo());
       /* QUEM ESTÁ EM CENA (v9.9): presentes, ausentes com a distância em dias,
          e o que foi dito em particular — as duas regras que impedem o aliado
@@ -5447,6 +5519,9 @@ export default function Taverna() {
          mostrando "na estrada" para sempre e fazia a viagem seguinte partir do
          lugar errado. */
       jornadaRef.current = jornadaValida(sv.jornada && typeof sv.jornada === "object" ? sv.jornada : null, cidadeAtualRef.current); setJornada(jornadaRef.current);
+      /* viagem manda mais que sublocal: quem está na estrada não está numa
+         fazenda dos arredores, e um save antigo nunca traz os dois */
+      lugarRef.current = jornadaRef.current ? null : garantirLugar(sv.lugar); setLugar(lugarRef.current);
       eventosRef.current = garantirEventos(sv.eventos); setEventos(eventosRef.current);
       relogiosRef.current = garantirRelogios(sv.relogios); setRelogios(relogiosRef.current);
       diaLutaRef.current = garantirDia(sv.diaLuta);
@@ -6750,7 +6825,14 @@ export default function Taverna() {
     const reinoMsg = avancarMinutos(horas * 60);
     const climaNovo = talvezMudarClima(horas >= 8 ? 0.65 : 0.35);
     const climaMsg = climaNovo ? `\n[CLIMA] O tempo virou: agora está ${climaNovo.rotulo} — ${climaNovo.nota}. Use isso na cena.` : "";
-    enviar(`[PASSAR O TEMPO — ${horas} horas] Simule a passagem de ${horas} horas: ${escala}. Faça o mundo VIVER esse intervalo proporcionalmente — o que os NPCs e facções fizeram, o que avançou, o que mudou no ambiente e nas suas missões, notícias que chegaram. Quanto mais horas, mais coisas acontecem (mas sempre plausível, nunca absurdo tipo impérios caindo em 1 dia). Ao final, reapresente a cena atual e me convide a agir.${climaMsg}${reinoMsg}`, personagem);
+    /* v9.39: as horas passam ONDE EU ESTOU. Sem esta linha, "reapresente a
+       cena atual" virava um convite para o Mestre reabrir a cena que ele tem
+       mais à mão — a cidade —, e o jogador que deixou 12h passarem de tocaia
+       na porteira acordava teletransportado. */
+    const ondeEspero = lugarRef.current
+      ? ` EU CONTINUO EM ${lugarRef.current.nome.toUpperCase()}, fora da cidade: as ${horas} horas passam AQUI e a cena é reaberta AQUI. NÃO me leve de volta à cidade, não narre estrada nenhuma, não me faça chegar a lugar algum — se eu estava de tocaia, continuo de tocaia. Traga o mundo até mim: o que se ouve, o que se aproxima, o que muda no escuro.`
+      : "";
+    enviar(`[PASSAR O TEMPO — ${horas} horas] Simule a passagem de ${horas} horas: ${escala}. Faça o mundo VIVER esse intervalo proporcionalmente — o que os NPCs e facções fizeram, o que avançou, o que mudou no ambiente e nas suas missões, notícias que chegaram. Quanto mais horas, mais coisas acontecem (mas sempre plausível, nunca absurdo tipo impérios caindo em 1 dia).${ondeEspero} Ao final, reapresente a cena atual e me convide a agir.${climaMsg}${reinoMsg}`, personagem);
   };
 
   /* MODIFICADOR DE UM TESTE (v9.15) — atributo + treino da perícia.
@@ -9201,6 +9283,9 @@ export default function Taverna() {
 
   const viajar = (destino = "") => {
     if (acampadoRef.current) return;
+    /* pôr o pé na estrada de verdade encerra o sublocal: viagem entre cidades
+       e um ponto nos arredores são estados que não convivem */
+    if (lugarRef.current) { lugarRef.current = null; setLugar(null); }
     /* v9.18: pôr o pé na estrada deixa rastro — é o gatilho das caçadas. */
     tiquear("viagem", { porque: "você se moveu, e rastro fica" });
     /* NAVEGAÇÃO (5e): terreno difícil pode fazer o grupo se perder. */
@@ -9941,6 +10026,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               <span className="tv-mono text-[10px] shrink-0" style={{ color: T.amberSoft }}>NV {personagem.nivel}</span>
               <span className="tv-mono text-[10px] shrink-0" title={`${estacaoDe(dia).nome} — ${estacaoDe(dia).nota} · o app controla o relógio`} style={{ color: T.inkDim }}>📅 {dataTxt(dia)} · {horaTxt(minuto)}{ehNoite(minuto) ? " 🌙" : ""} {estacaoDe(dia).icone}</span>
               {clima && <span className="tv-mono text-[10px] shrink-0" title={clima.nota} style={{ color: T.inkDim }}>{clima.icone} {clima.rotulo}</span>}
+              {/* v9.39: estar fora da cidade agora é um estado do jogo, então
+                  o jogador vê o mesmo que o Mestre lê. Só aparece quando é
+                  verdade: dentro da cidade, a barra não ganha ruído. */}
+              {lugar && <span className="tv-mono text-[10px] shrink-0" title={`fora de ${lugar.cidade || "a cidade"} — você fica aqui até dizer que sai`} style={{ color: T.amberSoft }}>📍 {lugar.nome}</span>}
               <BarraMini rotulo="XP" atual={personagem.xp} max={XP_POR_NIVEL(personagem.nivel)} cor={T.ok} />
             </div>
 
