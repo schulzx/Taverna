@@ -5,7 +5,7 @@
 import React from "react";
 import { T } from "./constantes.js";
 import { ESTRUTURAS, estruturaPorId } from "./historia.js";
-import { ativas as missoesAtivas, ofertas as missoesOferecidas, garantirMissoes, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, textoDaPaga } from "./missoes.js";
+import { ativas as missoesAtivas, ofertas as missoesOferecidas, garantirMissoes, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, textoDaPaga, temPrazo, textoDoPrazo } from "./missoes.js";
 
 /* ---------------- O CARTÃO DA MISSÃO (v9.27) ----------------
    A regra de desenho é uma só, e ela é de gameplay: mostrar o que
@@ -69,6 +69,15 @@ function CartaoMissao({ m, aoResponder, aoEncerrarLegado }) {
         <div className="tv-mono text-[10px] mt-1.5" style={{ color: T.inkDim }}
           title={m.recompensa.combinada ? "foi o preço dito na cena" : "arbitrado pelo sistema — ninguém falou em preço"}>
           paga {textoDaPaga(m)}
+        </div>
+      )}
+
+      {/* O prazo aparece na OFERTA e na missão em curso: numa é informação
+          para decidir, na outra é a pressão de quem já topou. */}
+      {temPrazo(m) && !fim && (
+        <div className="tv-mono text-[10px] mt-1" style={{ color: T.danger }}
+          title="o relógio anda uma casa por noite dormida; quando enche, a missão falha">
+          ⏳ {oferta ? `prazo: ${textoDoPrazo(m)}` : `contra o tempo: ${textoDoPrazo(m)}`}
         </div>
       )}
 

@@ -159,6 +159,10 @@ export function garantirMissoes(lista) {
       dia: Number(e.dia) || 0, relogioId: String(e.relogioId || ""), rotulo: String(e.rotulo || ""),
       feito: !!e.feito,
     })).slice(0, 5),
+    /* v9.38: em NOITES, não em dias — o relógio de prazo tem gatilho "noite",
+       e medir em dias faria a barra andar num ritmo diferente do número que
+       o jogador leu no cartaz. 0 é o normal: a maioria das missões espera. */
+    prazo: Math.max(0, Math.floor(Number(q.prazo) || 0)),
     recompensa: q.recompensa || null,
     /* v9.27: veio da era em que quest era um título sem etapa. Não dá para
        conferir, então só o jogador pode encerrá-la. */
@@ -168,9 +172,9 @@ export function garantirMissoes(lista) {
   }));
 }
 
-export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status, moedasPrometidas = null }) {
+export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status, moedasPrometidas = null, prazo = 0 }) {
   const m = garantirMissoes([{
-    id, titulo, tipo, descricao, dador, etapas, criadaEm: dia,
+    id, titulo, tipo, descricao, dador, etapas, criadaEm: dia, prazo: noitesDePrazo(prazo),
     status: status || (ehForcada(tipo) ? "ativa" : "oferecida"),
   }])[0];
   if (!m || !m.etapas.length) return null;
@@ -254,7 +258,7 @@ export function pareceMesmaMissao(a, b) {
    Ele traz o nobre desesperado à taverna; o sistema decide o que
    aquilo vira. Propostas sem etapa verificável são recusadas — é a
    trava que impede "ganhe a confiança do barão" de virar missão. */
-export function aceitarProposta(lista, prop, { nivel = 1, dia = 0, mundo = null, moedasNaCena = null } = {}) {
+export function aceitarProposta(lista, prop, { nivel = 1, dia = 0, mundo = null, moedasNaCena = null, dadorPresente = true } = {}) {
   const atual = garantirMissoes(lista);
   if (!prop || !String(prop.titulo || "").trim()) return { ok: false, motivo: "sem título" };
   if (atual.filter((q) => q.status === "ativa" || q.status === "oferecida").length >= MAX_ATIVAS) {
@@ -269,10 +273,14 @@ export function aceitarProposta(lista, prop, { nivel = 1, dia = 0, mundo = null,
   }
 
   let etapas = (Array.isArray(prop.etapas) ? prop.etapas : []).filter((e) => e && ETAPAS[e.tipo] && (e.alvo || e.dia || e.relogioId));
-  /* QUEM OFERECE NÃO É QUEM SE PROCURA. Ubba propôs um favor em troca de
+  /* QUEM ESTÁ NA SUA FRENTE NÃO SE PROCURA. Ubba propôs um favor em troca de
      informação e a primeira etapa virou "Encontrar Ubba" — o jogador estava
-     falando com ele naquele instante. A etapa nasceu cumprida e mentindo. */
-  if (proposta.dador) {
+     falando com ele naquele instante. A etapa nasceu cumprida e mentindo.
+
+     Mas um CARTAZ é o contrário: quem assinou não está ali, e "falar com
+     Braam n'A Cabra Dançante" é o primeiro passo de verdade. Por isso a
+     regra não é sobre quem oferece — é sobre quem está presente. */
+  if (proposta.dador && dadorPresente) {
     etapas = etapas.filter((e) => !(e.tipo === "falar_com" && mesmaPessoa(e.alvo, proposta.dador)));
   }
   /* e nenhuma etapa nasce cumprida: se o mundo já satisfaz a condição, ela
@@ -285,7 +293,7 @@ export function aceitarProposta(lista, prop, { nivel = 1, dia = 0, mundo = null,
   const m = criarMissao({
     titulo, tipo: TIPOS[prop.tipo] ? prop.tipo : "favor",
     descricao: proposta.descricao, dador: proposta.dador,
-    etapas, nivel, dia,
+    etapas, nivel, dia, prazo: prop.prazo,
     moedasPrometidas: prometido != null ? prometido : moedasNaCena,
   });
   if (!m) return { ok: false, motivo: "proposta malformada" };
@@ -351,14 +359,47 @@ export function semearMissoes(lista, ctx = {}) {
   return { missoes: [...atual, ...novas], novas };
 }
 
+/* ---------------- O PRAZO (v9.38) ----------------
+   Escrito e testado na v9.27, ligado só agora: `relogioDaMissao` e
+   `falharPorRelogio` existiam, passavam nos testes e não eram chamadas de
+   lugar nenhum. Missão com prazo nunca falhou por tempo uma única vez.
+
+   O relógio só aceita 4, 6 ou 8 pedaços (TAMANHOS, em relogios.js), e o
+   gatilho é "noite" — um pedaço por noite dormida. Então prazo se mede em
+   NOITES e só existe nessas três durações: qualquer outro número viraria 6
+   sem avisar, e o cartaz prometeria um prazo que o relógio não cumpre. */
+export const PRAZOS = [4, 6, 8];
+export function noitesDePrazo(n) {
+  const v = Math.floor(Number(n) || 0);
+  if (v <= 0) return 0;
+  /* encosta na duração possível mais próxima, para baixo em caso de empate:
+     prometer menos tempo e dar mais é melhor que o contrário */
+  return PRAZOS.reduce((a, b) => (Math.abs(b - v) < Math.abs(a - v) ? b : a), PRAZOS[0]);
+}
+export function temPrazo(m) { return !!(m && m.prazo > 0); }
+export function textoDoPrazo(m) {
+  return temPrazo(m) ? `${m.prazo} noites` : "";
+}
+
 /* Missão com pressa ganha relógio. O relógio não é enfeite: quando ele
    enche, a missão FALHA — é o que dá peso ao prazo. */
 export function relogioDaMissao(m, dia = 0) {
+  const noites = noitesDePrazo(m && m.prazo);
+  if (!noites) return null;
   return criarRelogio({
-    nome: `Prazo: ${m.titulo}`, tipo: "ameaca", segmentos: 6, gatilho: "noite",
+    nome: `Prazo: ${m.titulo}`, tipo: "ameaca", segmentos: noites, gatilho: "noite",
     fonte: `missao:${m.id}`, dia,
     consequencia: `O tempo de "${m.titulo}" se esgota — a missão falha.`,
   });
+}
+
+/* O que o Mestre recebe quando o tempo acaba. Não é o envelope genérico do
+   relógio cheio: aquele anuncia um acontecimento, e este anuncia uma PERDA
+   — algo que o herói tinha nas mãos e deixou escapar por demora. */
+export function envelopeDeFalhaPorTempo(m) {
+  return `[MISSÃO FALHADA POR TEMPO — DECIDIDO PELO SISTEMA] O prazo de "${m.titulo}"${m.dador ? `, de ${m.dador}` : ""} acabou: as ${m.prazo} noites passaram e o serviço não foi cumprido. A missão está ENCERRADA como fracasso — não pague nada por ela, não a ofereça de novo e não deixe o herói "ainda dar tempo".
+
+Narre a consequência em 2 ou 3 frases, e que ela DOA sem ser catástrofe: o que aconteceu com quem esperava, o que se perdeu, como a notícia chega. ${m.dador ? `${m.dador} tem todo o direito de estar magoado, frio ou seco — mas o mundo não vira as costas ao herói por isso.` : ""} Depois siga a cena.`;
 }
 
 export function falharPorRelogio(lista, relogioFonte) {
@@ -399,7 +440,7 @@ export function envelopeDeOferta(m) {
   const preco = r.moedas
     ? `O pagamento combinado é ${r.moedas} moedas — se voltar a falar de preço, é ESSE número, nenhum outro.`
     : `Este trabalho NÃO se paga em moedas: o combinado é outro (um favor, uma informação, uma porta que se abre). Não prometa dinheiro por ele.`;
-  return `[MISSÃO OFERECIDA — REGISTRADA PELO SISTEMA] ${m.dador ? `${m.dador} ofereceu` : "Ofereceram"} um trabalho: "${m.titulo}". ${preco} O sistema registrou a proposta e as etapas; eu ainda NÃO aceitei. Narre a oferta sendo feita — a pessoa, o tom, a urgência — e depois PARE e espere minha resposta. Não presuma que eu aceitei, não comece a missão, não me empurre para ela e não ofereça de novo o mesmo serviço com outro nome.`;
+  return `[MISSÃO OFERECIDA — REGISTRADA PELO SISTEMA] ${m.dador ? `${m.dador} ofereceu` : "Ofereceram"} um trabalho: "${m.titulo}". ${preco}${temPrazo(m) ? ` Há PRAZO: ${m.prazo} noites, e o sistema conta as noites sozinho — se esgotar, a missão falha. Deixe a pressa clara na fala de quem oferece.` : ""} O sistema registrou a proposta e as etapas; eu ainda NÃO aceitei. Narre a oferta sendo feita — a pessoa, o tom, a urgência — e depois PARE e espere minha resposta. Não presuma que eu aceitei, não comece a missão, não me empurre para ela e não ofereça de novo o mesmo serviço com outro nome.`;
 }
 
 /* v9.36: aceitar não é falar. O botão registra; a fala é minha, e vem no
@@ -407,7 +448,7 @@ export function envelopeDeOferta(m) {
    chorando" pedem narrações opostas, e quem escolhe entre elas é o jogador.
    Por isso este envelope não pede narração nenhuma: ele espera. */
 export function envelopeDeAceite(m) {
-  return `[MISSÃO ACEITA — REGISTRADA PELO SISTEMA] Eu aceitei "${m.titulo}"${m.dador ? ` de ${m.dador}` : ""}. O sistema já registrou as etapas e cuidará de marcá-las${m.recompensa && m.recompensa.moedas ? ` e de pagar as ${m.recompensa.moedas} moedas no fim` : ""} — não pague, não avance e não conclua nada. NÃO narre o acordo por conta própria: eu ainda vou DIZER como aceito, e a cena continua a partir das minhas palavras. Se a próxima coisa que eu escrever for minha resposta a ${m.dador || "quem ofereceu"}, é a ela que você reage.`;
+  return `[MISSÃO ACEITA — REGISTRADA PELO SISTEMA] Eu aceitei "${m.titulo}"${m.dador ? ` de ${m.dador}` : ""}. O sistema já registrou as etapas e cuidará de marcá-las${m.recompensa && m.recompensa.moedas ? ` e de pagar as ${m.recompensa.moedas} moedas no fim` : ""} — não pague, não avance e não conclua nada.${temPrazo(m) ? ` O prazo é de ${m.prazo} noites e já está correndo no relógio do sistema: você pode lembrar da pressa na ficção, mas NÃO conte as noites nem declare o prazo vencido — quem faz isso é o código.` : ""} NÃO narre o acordo por conta própria: eu ainda vou DIZER como aceito, e a cena continua a partir das minhas palavras. Se a próxima coisa que eu escrever for minha resposta a ${m.dador || "quem ofereceu"}, é a ela que você reage.`;
 }
 
 export function envelopeDeRecusa(m) {
@@ -420,7 +461,7 @@ export function resumoMissoesPrompt(lista) {
   const linha = (m) => {
     const e = etapaAtual(m);
     const p = progresso(m);
-    return `- ${tipoDef(m.tipo).icone} "${m.titulo}" (${p.feitas}/${p.total})${e ? ` — agora: ${textoDaEtapa(e)}` : ""}${m.dador ? ` · de ${m.dador}` : ""}`;
+    return `- ${tipoDef(m.tipo).icone} "${m.titulo}" (${p.feitas}/${p.total})${e ? ` — agora: ${textoDaEtapa(e)}` : ""}${m.dador ? ` · de ${m.dador}` : ""}${temPrazo(m) ? ` · com prazo (${m.prazo} noites — o relógio é do sistema)` : ""}`;
   };
   return `MISSÕES (do sistema — quem abre, avança e encerra é o código, NUNCA você):
 ${at.map(linha).join("\n") || "- (nenhuma ativa)"}${of.length ? `\nOFERECIDAS, à espera da minha resposta: ${of.map((m) => `"${m.titulo}"`).join(", ")}` : ""}
@@ -434,5 +475,6 @@ export const MISSOES_PROMPT = `MISSÕES (v9.27):
 - DIGA O PREÇO NA CENA e mande o mesmo número no campo "paga": o cartaz que promete 15 moedas e o diário que anuncia 43 são duas verdades sobre o mesmo trabalho. Se o combinado não é dinheiro — um favor, uma informação, uma dívida —, "paga": 0, e não invente moedas depois.
 - UM TRABALHO, UMA MISSÃO. O contrato no mural e a pessoa que vem falar dele são a MESMA missão: não ofereça de novo com outro título. E nunca peça ao jogador que "encontre" quem está falando com ele agora.
 - Missões que o mundo impõe (nêmesis, evento global, abalo divino) não são oferecidas — elas chegam ativas, e o jogador não pode recusá-las.
+- PRAZO é do sistema. Algumas missões correm contra o tempo, e isso vira um relógio que anda uma casa por NOITE dormida. Você pode encenar a pressa — a viúva que olha a porta, o mercador que fala em "antes da lua cheia" —, mas NUNCA conte as noites, nunca diga que o prazo venceu e nunca dê tempo extra: quando esgota, o sistema avisa por envelope.
 - Aceitar e recusar são BOTÕES do jogador, e a fala vem depois: quando o envelope disser que aceitei ou recusei, NÃO narre o acordo — espere as minhas palavras e reaja a elas.
 - NUNCA diga ao jogador quais são as etapas seguintes de uma missão. Ele sabe o que fazer agora; o resto é história por acontecer.`;

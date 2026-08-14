@@ -15,7 +15,7 @@ import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, valorDe } from "./loot.js";
 import { gerarMasmorra, recompensaChefe, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca } from "./masmorras.js";
-import { gerarMural, gerarContrato, ICONE_CONTRATO } from "./contratos.js";
+import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDaAbordagem, ICONE_OFERTA } from "./ofertas.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
 import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano, resistenciasEquipadas } from "./danos.js";
@@ -40,7 +40,7 @@ import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, detec
 import { PERICIAS, periciaPorId, periciasDoAtributo, garantirPericias, periciasIniciais, bonusDePericia, passivoDe, resolucaoAutomatica, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente, resumoPericiasPrompt, PERICIAS_PROMPT } from "./pericias.js";
 import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, podeGastar, gastarHeroismo, validarDeclaracao, envelopeDeclaracao, envelopeRefazer, resumoHeroismoPrompt, HEROISMO_PROMPT } from "./heroismo.js";
 import { dadoDeVida, garantirDadosVida, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT } from "./descanso.js";
-import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, RELOGIOS_PROMPT } from "./relogios.js";
+import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, MAX_RELOGIOS, RELOGIOS_PROMPT } from "./relogios.js";
 import { avaliarEncontro, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
 import { montarGrade, garantirGrade, posicionar, alcanca, caminhar, alcancaveisDe, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, mapaEmTexto, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, quadradosDe, distanciaM, tamanhoDe, ladoDe, alcanceNatural, terrenoDificil, temCobertura, ehParede, regiaoDe, m2q, GRID_PROMPT } from "./grid.js";
 import { deslocamentoDe, passoEfetivo, deslocamentoDeCriatura, resumoDeslocamento, resumoDeslocamentoPrompt, MOVIMENTO_PROMPT } from "./movimento.js";
@@ -48,7 +48,7 @@ import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPr
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, ORACULO_PROMPT } from "./oraculo.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
-import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, relogioDaMissao, falharPorRelogio, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, resumoMissoesPrompt, MISSOES_PROMPT } from "./missoes.js";
+import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
@@ -737,15 +737,29 @@ function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garant
       </div>
     );
   };
+  /* O cartaz mostra QUEM assina e ONDE encontrá-lo: é a primeira etapa do
+     serviço, e sem isso o jogador pega um papel que não leva a lugar nenhum. */
   const cartaz = (c) => {
-    const icone = ICONE_CONTRATO[c.tipo] || "📜";
+    const icone = c.icone || ICONE_OFERTA[c.molde] || "📜";
     return (
       <div key={c.id} className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
         <div className="flex items-start justify-between gap-2">
           <span className="tv-display text-base leading-tight" style={{ color: T.ink }}>{icone} {c.titulo}</span>
-          <span className="tv-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>◉ {c.recompensa.moedas} · {c.recompensa.xp} XP</span>
+          <span className="tv-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0" style={{ border: `1px solid ${c.paga ? T.amber : T.violet}`, color: c.paga ? T.amberSoft : T.violetSoft }}>
+            {c.paga ? `◉ ${c.paga}` : "sem moedas"}
+          </span>
         </div>
         <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{c.descricao}</div>
+        <div className="tv-mono text-[9px] mt-1" style={{ color: T.violetSoft }}>
+          assina {c.dador}{c.dadorPapel ? `, ${c.dadorPapel}` : ""}{c.dadorLocal ? ` · ${c.dadorLocal}` : ""}
+        </div>
+        {/* o prazo vai no cartaz, antes do botão: aceitar sem saber que o
+            tempo conta seria armadilha, não pressão */}
+        {c.prazo > 0 && (
+          <div className="tv-mono text-[9px] mt-1" style={{ color: T.danger }}>
+            ⏳ prazo: {c.prazo} noites — passou disso, o serviço se perde
+          </div>
+        )}
         <button onClick={() => aceitarContrato(c)}
           className="tv-mono text-[10px] mt-2 px-2 py-1 rounded"
           style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>
@@ -3252,6 +3266,11 @@ export default function Taverna() {
   const masmorraRef = useRef(null);
   const [masmorra, setMasmorra] = useState(null);
   /* MURAL DE CONTRATOS (v6.3): 3 trabalhos por tabela, recompensa paga por código */
+  /* no máximo um trabalho oferecido por dia — o mundo tem gente precisando de
+     ajuda, não uma fila de recrutadores no seu ombro */
+  const ultimoTrabalhoDiaRef = useRef(0);
+  /* o aviso do trabalho novo, esperando a cena que o justifica */
+  const trabalhoPendenteRef = useRef([]);
   const muralRef = useRef([]);
   const [mural, setMural] = useState([]);
   const decretosRef = useRef([]);
@@ -4372,6 +4391,14 @@ export default function Taverna() {
       portaoRef.current = violacoesDoTurno(resp.narrativa, portaoCtxRef.current);
     } catch { portaoRef.current = null; /* o portão nunca derruba o turno */ }
     /* detector de repetição: mede se o Mestre voltou a usar interrupção urgente */
+    /* O TRABALHO QUE O SISTEMA MARCOU PARA ESTA CENA (v9.37). O envelope foi
+       mandado no turno passado e a abordagem está NESTA narração — então é
+       aqui, depois dela, que o aviso aparece. Anunciar antes seria o sistema
+       contando o que a ficção ainda não mostrou. */
+    if ((trabalhoPendenteRef.current || []).length) {
+      msgs.push(...trabalhoPendenteRef.current);
+      trabalhoPendenteRef.current = [];
+    }
     /* A ENTREGA. Sem violação — o caso comum — sai na tela agora, exatamente
        como sempre saiu. Com violação, as linhas ficam guardadas e a tela
        trava até o conserto voltar: quem solta é passarPeloPortao(). */
@@ -4476,8 +4503,9 @@ export default function Taverna() {
         "SEÇÃO grupo: \"entraram\" = nomes de pessoas que ACEITARAM de fato acompanhar o herói como companheiros de jornada NESTE turno (o Mestre narrando \"vou com você\" conta). Se o convite foi recusado ou só um encontro casual, [].",
         "SEÇÃO teste_sugerido: se o Mestre CONCEDEU de graça algo grande que deveria ter exigido convencimento — uma criatura anciã entregando seu poder, um rei cedendo o trono, um inimigo virando aliado do nada — preencha {\"atributo\":\"Presença|Intelecto|Força|Destreza|Vigor\",\"perfil\":\"dificil|formidavel\",\"motivo\":\"o que precisava ser provado\"}. Concessões pequenas e naturais da história NÃO entram. Na maioria dos turnos: null.",
         "SEÇÃO combate (só se houver COMBATENTES listados): \"mortes_narradas\" = inimigos que a NARRATIVA declarou mortos/destruídos/desfeitos NESTE turno. Liste só nomes da lista de combatentes; se ninguém morreu na narração, [].",
-        "SEÇÃO missao_oferecida (v9.27): se alguém em cena OFERECEU um trabalho ao herói — um nobre desesperado, um capitão precisando de escolta, um aldeão com um problema —, descreva a proposta em {\"titulo\":\"nome curto do trabalho\",\"tipo\":\"contrato|favor\",\"dador\":\"quem ofereceu\",\"descricao\":\"uma frase\",\"paga\":15,\"etapas\":[{\"tipo\":\"ir_a|derrotar|achar|falar_com|levar_a\",\"alvo\":\"nome exato de cidade, criatura, pessoa ou objeto\",\"item\":\"só para levar_a\",\"quantos\":1}]}. De 1 a 3 etapas, todas CONCRETAS e verificáveis — \"ganhar a confiança\" não é etapa. Só quando alguém de fato ofereceu algo NESTE turno; caso contrário, null.",
+        "SEÇÃO missao_oferecida (v9.27): se alguém em cena OFERECEU um trabalho ao herói — um nobre desesperado, um capitão precisando de escolta, um aldeão com um problema —, descreva a proposta em {\"titulo\":\"nome curto do trabalho\",\"tipo\":\"contrato|favor\",\"dador\":\"quem ofereceu\",\"descricao\":\"uma frase\",\"paga\":15,\"prazo\":0,\"etapas\":[{\"tipo\":\"ir_a|derrotar|achar|falar_com|levar_a\",\"alvo\":\"nome exato de cidade, criatura, pessoa ou objeto\",\"item\":\"só para levar_a\",\"quantos\":1}]}. De 1 a 3 etapas, todas CONCRETAS e verificáveis — \"ganhar a confiança\" não é etapa. Só quando alguém de fato ofereceu algo NESTE turno; caso contrário, null.",
         "CAMPO \"paga\": o número EXATO de moedas que a cena prometeu (o cartaz que diz \"paga-se 15 moedas\" é 15). Se o combinado NÃO é dinheiro — um favor em troca de informação, uma dívida, uma porta que se abre —, \"paga\": 0. Se ninguém falou de pagamento, \"paga\": null e o sistema arbitra. NUNCA invente um valor.",
+        "CAMPO \"prazo\": só quando a CENA impôs pressa em número de noites (\"até a próxima lua\", \"antes que ela morra\", \"tenho três dias\") — use 4, 6 ou 8, o mais próximo do que foi dito. Sem pressa dita, \"prazo\": 0. Não invente urgência: prazo em toda missão não pressiona em nenhuma.",
         "UM TRABALHO É UMA MISSÃO SÓ: se a proposta desta cena é o mesmo serviço de uma missão que já está na lista (o cartaz no mural e a pessoa que vem falar dele são a mesma coisa), missao_oferecida é null. E a etapa \"falar_com\" nunca aponta para quem está oferecendo — o herói já está diante dele.",
         "SEÇÃO relogio_novo (v9.18): se ALGO LONGO COMEÇOU DE FATO em cena — um ritual que passou a ser conduzido, uma perseguição que se iniciou, uma obra que o jogador pôs em marcha — proponha {\"nome\":\"frase curta no presente\",\"tipo\":\"ameaca|cacada|oportunidade|obra\",\"segmentos\":4|6|8,\"gatilho\":\"noite|turno_mundo|falha|sucesso|viagem\",\"consequencia\":\"o que acontece quando encher\"}. NO MÁXIMO UM por turno, e só quando de fato começou — intenção, ameaça verbal e possibilidade NÃO contam. Na esmagadora maioria dos turnos: null.",
         "REGRA GERAL: na dúvida, NÃO marque — {\"missoes\":{\"concluidas\":[],\"falhadas\":[],\"progresso\":[],\"global_encerrado\":false},\"canone\":{},\"pessoas\":[],\"fe\":{\"fieis\":0,\"pf\":0}} é resposta válida e frequente.",
@@ -5161,6 +5189,9 @@ export default function Taverna() {
          ficha SEM a recompensa que a missão tinha acabado de pagar. O jogador
          via "+144 moedas" na tela e recarregava sem elas. */
       try { pers = conferirAsMissoes(pers) || pers; } catch { /* nunca derruba o turno */ }
+      /* v9.37: e se há espaço no diário, o mundo oferece trabalho por conta
+         própria — o serviço sai montado daqui e o Mestre só encena quem pede */
+      try { oferecerTrabalhoDaqui(); } catch { /* idem */ }
       /* PORTÃO (v9.12): se algum cão de guarda duro mordeu, o conserto acontece
          AQUI — antes de a narrativa chegar à tela e antes de ela entrar no
          histórico. O que o Mestre lembra na próxima vez é o texto corrigido,
@@ -5313,7 +5344,10 @@ export default function Taverna() {
     tituloAtivoRef.current = ""; setTituloAtivo("");
     descobRef.current = []; setDescobertas([]);
     masmorraRef.current = null; setMasmorra(null);
-    muralRef.current = gerarMural((mundo && mundo.genero) || "Fantasia medieval", 1, { cidades: [], faccoes: [] }, 3); setMural(muralRef.current);
+    /* v9.37: o mural nasce vazio de propósito — os cartazes são o que a gente
+       DESTA cidade quer ver feito, e na criação ainda não há cidade nenhuma.
+       Ele se enche sozinho quando o jogador o abre. */
+    muralRef.current = []; setMural(muralRef.current);
     decretosRef.current = []; setDecretos(decretosRef.current);
     diaRef.current = 1; setDia(1);
     minutoRef.current = AMANHECER + 60; setMinuto(minutoRef.current);
@@ -6925,6 +6959,79 @@ export default function Taverna() {
     return pers;
   };
 
+  /* ---------------- O PRAZO COMEÇA A CORRER (v9.38) ----------------
+     Uma missão com pressa ganha um relógio de "noite": uma casa por noite
+     dormida, e quando enche a missão FALHA. Devolve a missão com o
+     `relogioId` preenchido — é por ele que `conferirAsMissoes` mata o
+     relógio quando o serviço termina antes do tempo.
+
+     A recusa possível é honesta e precisa ser dita: `garantirRelogios`
+     corta a lista em MAX_RELOGIOS, então um relógio a mais numa lista
+     cheia seria descartado em silêncio e o jogador ficaria com um prazo
+     na tela que nada faz andar. Sem espaço, a missão simplesmente não tem
+     prazo — e o jogador é avisado disso. */
+  const iniciarPrazo = (missao) => {
+    if (!temPrazo(missao)) return missao;
+    const rel = relogioDaMissao(missao, diaRef.current);
+    if (!rel) return missao;
+    if ((relogiosRef.current || []).length >= MAX_RELOGIOS) {
+      pushMsgs([{ autor: "sistema", texto: `⏳ ${missao.titulo} tinha prazo de ${missao.prazo} noites, mas já há relógios demais em jogo — desta vez o tempo não conta contra você.` }]);
+      return { ...missao, prazo: 0 };
+    }
+    relogiosRef.current = [...(relogiosRef.current || []), rel]; setRelogios(relogiosRef.current);
+    pushMsgs([{ autor: "sistema", texto: `${tipoDe(rel.tipo).icone} ${rel.nome} ${barraDe(rel)} — ${missao.prazo} noites, e cada noite dormida gasta uma.` }]);
+    return { ...missao, relogioId: rel.id };
+  };
+
+  /* ---------------- O MUNDO OFERECE TRABALHO (v9.37) ----------------
+     O outro lado do mural, e a inversão que faltava: em vez de esperar o
+     Mestre inventar um nobre desesperado e o Cronista tentar extrair etapas
+     da prosa dele, o SISTEMA monta o serviço inteiro — quem pede, o que
+     pede, quanto paga — e manda o Mestre encenar a abordagem.
+
+     Ele vem da base do mundo, então a pessoa existe, mora em algum lugar
+     desta cidade e tem uma vontade própria desde a criação da campanha. A
+     preferência é por quem o herói JÁ conhece: um rosto conhecido pedindo
+     ajuda vale mais que um estranho, e poupa o Mestre de apresentar gente
+     nova a cada duas cenas.
+
+     Conservador de propósito: fora de combate, fora de masmorra, no máximo
+     um por dia e só quando o diário está com espaço. Trabalho oferecido
+     demais vira ruído, e ruído é o oposto de uma oferta que importa. */
+  const oferecerTrabalhoDaqui = () => {
+    if (combateRef.current || masmorraRef.current) return;
+    if (!cidadeAtualRef.current) return;
+    if (ultimoTrabalhoDiaRef.current >= diaRef.current) return;
+    const abertas = garantirMissoes(missoesRef.current).filter((q) => ["ativa", "oferecida"].includes(q.status));
+    if (abertas.length >= 3) return;
+    const p = personagemRef.current || personagem || {};
+    const candidatas = ofertasDaqui({
+      semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,
+      base: baseMundoRef.current, genero: generoMundo(), nivel: p.nivel || 1, quantas: 6,
+      evitar: abertas.flatMap((q) => [q.titulo, q.dador]),
+    });
+    if (!candidatas.length) return;
+    const conhecidos = new Set(Object.keys(npcsRef.current || {}).map((n) => n.toLowerCase()));
+    const of = candidatas.find((c) => conhecidos.has(String(c.dador).toLowerCase())) || candidatas[0];
+    const r = ofertaDoMestre(missoesRef.current, propostaDaOferta(of), {
+      nivel: p.nivel || 1, dia: diaRef.current,
+      mundo: mundoDasMissoes(p),
+      /* quem oferece está na sua frente: nada de "encontre quem já te achou" */
+      dadorPresente: true,
+    });
+    if (!r.ok) return;
+    ultimoTrabalhoDiaRef.current = diaRef.current;
+    missoesRef.current = r.missoes; setMissoes(r.missoes);
+    const et = etapaAtual(r.missao);
+    /* o aviso espera a cena: quem o solta é `aplicarResposta`, depois da
+       narração em que o Mestre encena a abordagem */
+    trabalhoPendenteRef.current = [
+      `${of.icone || "📋"} ${of.dador} tem um trabalho: ${r.missao.titulo} — abra o Diário para aceitar ou recusar.`,
+      ...(et ? [`   primeiro passo: ${textoDaEtapa(et)} · paga ${textoDaPaga(r.missao)}`] : []),
+    ];
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaAbordagem(of)}`;
+  };
+
   /* A resposta do jogador a uma oferta. Recusar é uma resposta legítima, e o
      envelope proíbe o Mestre de insistir ou de punir por isso. */
   /* Só as de legado se encerram à mão. Nas outras quem marca é o código —
@@ -6949,7 +7056,14 @@ export default function Taverna() {
     if (aceita) {
       const e = etapaAtual(m);
       pushMsgs([{ autor: "sistema", texto: `${tipoMissao(m.tipo).icone} Missão aceita: ${m.titulo}${e ? ` — primeiro passo: ${textoDaEtapa(e)}` : ""} · paga ${textoDaPaga(m)}` }]);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeAceite(m)}`;
+      /* o prazo só começa a correr quando o serviço é aceito: antes disso é
+         uma condição da oferta, não um relógio na cabeça do jogador */
+      const comPrazo = iniciarPrazo(m);
+      if (comPrazo !== m) {
+        missoesRef.current = missoesRef.current.map((q) => (q.id === m.id ? { ...q, ...comPrazo, status: "ativa" } : q));
+        setMissoes(missoesRef.current);
+      }
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeAceite(comPrazo)}`;
     } else {
       pushMsgs([{ autor: "sistema", texto: `✕ Recusado: ${m.titulo}` }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeRecusa(m)}`;
@@ -6972,6 +7086,24 @@ export default function Taverna() {
     relogiosRef.current = r.relogios; setRelogios(r.relogios);
     pushMsgs(r.avancados.map((av) => ({ autor: "sistema", texto: linhaDoAvanco(av) })));
     for (const cheio of r.cheios) {
+      /* v9.38: o relógio de PRAZO não é um relógio qualquer. Ele não anuncia
+         um acontecimento no mundo — ele encerra uma missão como fracasso, e
+         quem marca isso é `falharPorRelogio`, nunca o Mestre. Por isso este
+         caso sai da rotina antes de chegar ao envelope genérico. */
+      if (String(cheio.fonte || "").startsWith("missao:")) {
+        const rf = falharPorRelogio(missoesRef.current, cheio.fonte);
+        if (rf.falhada) {
+          missoesRef.current = rf.missoes; setMissoes(rf.missoes);
+          pushMsgs([{ autor: "sistema", texto: `⏳ ${rf.falhada.titulo}: o prazo de ${rf.falhada.prazo} noites acabou — a missão falhou.` }]);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeFalhaPorTempo(rf.falhada)}`;
+          marcarNoArco("relogio", `perdi o prazo de "${rf.falhada.titulo}"`);
+          salvar({});
+          continue;
+        }
+        /* a missão já não estava ativa (concluída, recusada ou apagada): o
+           relógio era um fantasma, e some sem dizer nada ao jogador */
+        continue;
+      }
       pushMsgs([{ autor: "sistema", texto: `${tipoDe(cheio.tipo).icone} ${cheio.nome} — o tempo acabou. ${cheio.consequencia || ""}`.trim() }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeCheio(cheio)}`;
       /* relógio cheio é consequência caindo no mundo — e consequência move o arco */
@@ -7896,44 +8028,75 @@ export default function Taverna() {
     enviar(`[MASMORRA — FUGA] Eu ESCOLHI fugir de ${mm.nome} antes do fim — abandono conscientemente as salas e tesouros que ainda restavam (o que já conquistei, carrego comigo). Narre a retirada apressada em 2-3 frases e retome a cena do mundo lá fora.`, personagem);
   };
 
-  /* ---------------- MURAL DE CONTRATOS (v6.3 · recompensa paga por código) ---------------- */
+  /* ---------------- MURAL DE CONTRATOS (v9.37 · o mundo é que oferece) ----------------
+     O mural deixou de ser uma tabela de sorteio e virou uma JANELA: os
+     cartazes são os trabalhos que a gente desta cidade já queria ver feitos,
+     lidos direto da base do mundo. Cada pessoa tem um serviço, sempre o
+     mesmo, e o cartaz é só o papel onde ele foi parar. */
   const garantirMural = (forcar = false) => {
     if (!forcar && (muralRef.current || []).length > 0) return;
-    muralRef.current = gerarMural((mundo && mundo.genero) || "Fantasia medieval", personagem ? personagem.nivel || 1 : 1, mapaRef.current, 3);
+    muralRef.current = ofertasDaqui({
+      semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,
+      base: baseMundoRef.current, genero: generoMundo(),
+      nivel: (personagem && personagem.nivel) || 1, quantas: 3,
+      /* nada de pregar no mural o que já está no diário */
+      evitar: garantirMissoes(missoesRef.current)
+        .filter((q) => ["ativa", "oferecida", "concluida"].includes(q.status))
+        .flatMap((q) => [q.titulo, q.dador]),
+    });
     setMural(muralRef.current);
   };
 
   const aceitarContrato = (c) => {
     if (!c) return;
-    /* sai do mural e entra outro no lugar — o mural nunca fica vazio */
-    muralRef.current = (muralRef.current || []).filter((x) => x.id !== c.id);
-    muralRef.current = [...muralRef.current, gerarContrato((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1, mapaRef.current)];
-    setMural(muralRef.current);
-    /* v9.27: o contrato do mural vira MISSÃO com etapa de verdade. Antes ele
-       entrava como um título no diário e a recompensa dependia de o Mestre
-       lembrar de dizer que acabou. Agora a etapa vem do TIPO do contrato —
-       caçar é derrotar, entrega é chegar com a coisa — e o sistema fecha. */
-    {
-      const etapa = c.alvo
-        ? { tipo: "derrotar", alvo: c.alvo, quantos: c.tipo === "limpeza" ? 3 : 1 }
-        : c.tipo === "entrega" || c.tipo === "escolta"
-          ? { tipo: "ir_a", alvo: (String(c.titulo).split(" para ")[1] || String(c.descricao).match(/até ([A-ZÀ-Ý][\wÀ-ÿ\s]{2,24})/)?.[1] || "").trim() }
-          : { tipo: "achar", alvo: String(c.descricao).replace(/^.*?traga\s+/i, "").replace(/[.!?].*$/, "").trim() };
-      if (etapa.alvo) {
-        const m = criarMissao({
-          titulo: c.titulo, tipo: "contrato", status: "ativa", descricao: c.descricao,
-          etapas: [etapa], nivel: personagem.nivel || 1, dia: diaRef.current,
-        });
-        if (m && !missoesRef.current.some((x) => x.titulo.toLowerCase() === m.titulo.toLowerCase() && x.status === "ativa")) {
-          /* o contrato traz o próprio preço da tabela; o do sistema fica de fora */
-          const comPreco = { ...m, recompensa: { ...m.recompensa, ...(c.recompensa || {}) } };
-          missoesRef.current = [...missoesRef.current, comPreco]; setMissoes(missoesRef.current);
-        }
-      }
+    /* v9.37: o cartaz JÁ é estrutura — dador, etapas tipadas, alvos que
+       existem e preço decidido antes de qualquer palavra. Some a expressão
+       regular que lia a frase que o próprio sistema tinha escrito.
+
+       A primeira etapa é procurar quem assinou: no mural, ao contrário de
+       uma proposta feita cara a cara, quem oferece NÃO está presente — e é
+       por isso que `dadorPresente: false`. Se o herói já conhece a pessoa,
+       a etapa cai sozinha na conferência de quem já nasce cumprido. */
+    const prop = propostaDaOferta(c);
+    const r = ofertaDoMestre(missoesRef.current, {
+      ...prop,
+      etapas: [{ tipo: "falar_com", alvo: c.dador }, ...prop.etapas],
+    }, {
+      nivel: (personagem && personagem.nivel) || 1, dia: diaRef.current,
+      mundo: mundoDasMissoes(personagemRef.current || personagem),
+      dadorPresente: false,
+    });
+    if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${r.motivo}.` }]); return; }
+    /* contrato do mural nasce ATIVO: pegar o papel já é aceitar */
+    const aceita = { ...r.missao, status: "ativa" };
+    missoesRef.current = r.missoes.map((m) => (m.id === aceita.id ? aceita : m));
+    setMissoes(missoesRef.current);
+    /* o mural se refaz DEPOIS, para não pregar de novo o que acabou de sair
+       dele: `garantirMural` exclui tudo o que já está no diário */
+    garantirMural(true);
+    let pers = personagemRef.current || personagem;
+    /* o que a missão exige carregar, o sistema entrega — depender do Mestre
+       para pôr a carta na bolsa era deixar a etapa impossível de cumprir */
+    if (c.daItem) {
+      pers = { ...pers, inventario: [...(pers.inventario || []), c.daItem] };
+      setPersonagem(pers); personagemRef.current = pers;
     }
     setAba(null);
-    pushMsgs([{ autor: "jogador", texto: `📋 Aceito o contrato: ${c.titulo} (◉ ${c.recompensa.moedas} + ${c.recompensa.xp} XP)` }]);
-    enviar(`[CONTRATO ACEITO — ${c.titulo}] Peguei no mural: "${c.descricao}" A recompensa (◉ ${c.recompensa.moedas} e ${c.recompensa.xp} XP) será paga PELO SISTEMA ao concluir — NÃO envie moedas/xp. Costure o serviço na ficção (o objetivo está alcançável a partir da situação atual) e, quando eu CUMPRIR de verdade, marque com "quest_atualizar" {"titulo":"${c.titulo}","status":"concluida"}.${SO_ISSO}`, personagem);
+    const e = etapaAtual(aceita);
+    pushMsgs([
+      { autor: "jogador", texto: `📋 Pego o cartaz: ${c.titulo}` },
+      { autor: "sistema", texto: `${c.icone || "📜"} ${c.titulo} — paga ${textoDaPaga(aceita)}${e ? ` · primeiro passo: ${textoDaEtapa(e)}` : ""}` },
+      ...(c.daItem ? [{ autor: "sistema", texto: `◆ ${c.daItem} — na sua bolsa.` }] : []),
+    ]);
+    /* e só então o relógio: a linha do prazo vem DEPOIS da linha que diz que
+       o serviço foi pego, ou o jogador lê a consequência antes da causa */
+    const comPrazo = iniciarPrazo(aceita);
+    if (comPrazo !== aceita) {
+      missoesRef.current = missoesRef.current.map((m) => (m.id === aceita.id ? comPrazo : m));
+      setMissoes(missoesRef.current);
+    }
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoCartaz(c)}`;
+    salvar({ personagem: pers });
   };
 
   const abandonarContrato = (titulo) => {
