@@ -43,7 +43,7 @@ import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, pod
 import { dadoDeVida, garantirDadosVida, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT } from "./descanso.js";
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, MAX_RELOGIOS, RELOGIOS_PROMPT } from "./relogios.js";
 import { avaliarEncontro, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
-import { montarGrade, garantirGrade, posicionar, alcanca, caminhar, alcancaveisDe, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, mapaEmTexto, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, quadradosDe, distanciaM, tamanhoDe, ladoDe, alcanceNatural, terrenoDificil, temCobertura, ehParede, regiaoDe, m2q, q2m, centroDe, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO, GRID_PROMPT } from "./grid.js";
+import { montarGrade, garantirGrade, posicionar, posicionarPerto, alcanca, caminhar, alcancaveisDe, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, mapaEmTexto, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, quadradosDe, distanciaM, tamanhoDe, ladoDe, alcanceNatural, terrenoDificil, temCobertura, ehParede, regiaoDe, m2q, q2m, centroDe, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO, GRID_PROMPT } from "./grid.js";
 import { deslocamentoDe, passoEfetivo, passoComSelecao, passoDeHabilidade, deslocamentoDeCriatura, resumoDeslocamento, resumoDeslocamentoPrompt, MOVIMENTO_PROMPT } from "./movimento.js";
 import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPreparada, ehPreparavel, preparadasIniciais, alternarPreparada, podeLancar, ehRitual, motivoDoCaderno, MINUTOS_RITUAL, resumoMagiasPrompt, MAGIAS_PROMPT } from "./magias.js";
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
@@ -83,6 +83,7 @@ import { comDom, vantagemDeTraco, vantagemMentalDeTraco, imuneDeTraco, iniciativ
 import { bonusDeBancada, componentesExtras, bonusDeNavegacao, despojosExtras, bonusDeTeste, precoDeVenda, precoDeCompraPara, moedasDeEspolio, resumoProfissaoPrompt } from "./profissoes.js";
 import { criarOficina, anotar as anotarOficina, bilheteDaOficina, OFICINA_PROMPT } from "./oficina.js";
 import { romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, devolverSegura, GATILHOS_PROMPT } from "./gatilhos.js";
+import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
 import { agruparMensagens } from "./resumo.js";
 
 /* ============================================================
@@ -1211,7 +1212,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} jornada={jornada} masmorra={masmorra} molde={molde} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} />}
         {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} />}
-        {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} mortosBase={mortosBase} />}
+        {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} mortosBase={mortosBase} />}
 
         {aba === "gestao" && subGestao === "diplomacia" && <PainelDiplomacia mapa={mapa} faccaoJogador={faccaoJogador} onDiplomacia={onDiplomacia} onPresente={onPresente} cofre={guilda && guilda.cofre} />}
         {aba === "gestao" && subGestao === "correio" && <PainelCorreio correio={correio} faccoes={((mapa && mapa.faccoes) || []).filter((f) => f && f.nome && !f.doJogador && f.relacao !== "jogador").map((f) => f.nome)} dia={dia} moedas={personagem.moedas || 0} enviarCarta={enviarCarta} responderPeticao={responderPeticao} />}
@@ -1465,7 +1466,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
 
         {aba === "gestao" && subGestao === "grupo" && (
           <>
-            <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Grupo · {1 + (personagem.grupo || []).length} de {1 + MAX_COMPANHEIROS}</div>
+            <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Grupo · {1 + (personagem.grupo || []).filter((g) => !g.invocada).length} de {1 + MAX_COMPANHEIROS}</div>
             <CartaoMembro nome={personagem.nome} subtitulo={personagem.conceito} nivel={personagem.nivel} vida={personagem.vida} vidaMax={personagem.vidaMax} mana={personagem.mana} manaMax={personagem.manaMax} habilidades={personagem.habilidades} semente={sementeDe(personagem)} ehVoce />
             {(personagem.grupo || []).length === 0 ? (
               <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você viaja sozinho — por enquanto. Aliados podem se juntar a você.</div>
@@ -3381,7 +3382,7 @@ export default function Taverna() {
         }
         case "companheiro": {
           if (!resto) { godLinha("⚡ /companheiro <nome>"); return true; }
-          if ((personagem.grupo || []).length >= MAX_COMPANHEIROS) { godLinha(`⚡ O grupo já está cheio (${MAX_COMPANHEIROS}).`); return true; }
+          if ((personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS) { godLinha(`⚡ O grupo já está cheio (${MAX_COMPANHEIROS}).`); return true; }
           const nv = personagem.nivel || 1;
           const novo = garantirFichaCompanheiro({
             nome: resto, conceito: "aliado de testes", nivel: nv, xp: 0,
@@ -3851,6 +3852,56 @@ export default function Taverna() {
   /* Habilidade que fortalece em vez de ferir: "Grito de Guerra" inspira o
      grupo, "Postura Defensiva" protege quem usou, "Fúria" enfurece. Também
      sai do catálogo — o Mestre não concede mais buff por conta própria. */
+  /* ---------------- A INVOCAÇÃO ENTRA NO CAMPO (v9.46) ----------------
+     Existem DOIS caminhos para usar uma habilidade — a selecionada no painel
+     e a citada na frase ("conjuro Invocar Fera Menor") —, e o primeiro
+     esboço disto morava só no primeiro. O jogador que digita o nome da
+     magia pagava o PM e não recebia a fera: o mesmo bug de sempre, com
+     roupa nova. Uma função, dois chamadores. */
+  const porInvocacaoEmCampo = (h, pers) => {
+    const molde = invocacaoDe(h);
+    if (!molde) return null;
+    if (conjuracoesAtivas(pers) >= limiteDeInvocacoes(pers)) {
+      return { pers, linha: `⛔ ${h.nome}: você já sustenta o máximo de conjurações (${limiteDeInvocacoes(pers)}) — desfaça uma antes.`, nota: "", ok: false };
+    }
+    const rodadaAtual = (combateRef.current && combateRef.current.rodada) || 1;
+    const novas = criarInvocacoes(h, pers, rodadaAtual).map(garantirFichaCompanheiro);
+    const p = { ...pers, grupo: [...(pers.grupo || []), ...novas] };
+    /* põe cada uma no tabuleiro, colada ao conjurador, e estende `aliados`
+       na MESMA ordem de `grupo` — o motor de movimento casa os dois por
+       índice, e trocar a ordem os desalinharia. Fora de combate não há
+       tabuleiro: a criatura existe na ficha e entra na próxima luta. */
+    const cb = combateRef.current;
+    if (cb && cb.grade && cb.heroi) {
+      const ocupados = [cb.heroi, ...(cb.aliados || []), ...(cb.inimigos || [])];
+      const postas = [];
+      for (const n of novas) postas.push(posicionarPerto(cb.grade, { nome: n.nome, tamanho: n.tamanho || "medio" }, cb.heroi, [...ocupados, ...postas]));
+      combateRef.current = { ...cb, aliados: [...(cb.aliados || []), ...postas] };
+      setCombate(combateRef.current);
+    }
+    const um = novas.length === 1;
+    return {
+      pers: p, ok: true,
+      linha: `🜁 ${novas.map((n) => `${n.nome} (${n.vida} PV)`).join(", ")} ${um ? "atende" : "atendem"} ao chamado — ${molde.turnos} turnos.`,
+      nota: `[INVOCAÇÃO — POSTA EM CAMPO PELO SISTEMA] "${h.nome}" trouxe ${novas.map((n) => n.nome).join(", ")}: ${molde.conceito}. ${um ? "É uma criatura" : "Elas são criaturas"} de verdade, com PV e lugar no terreno, e o sistema resolve o turno ${um ? "dela" : "delas"}. Narre a chegada e como os inimigos reagem — não decida o que ${um ? "ela faz" : "elas fazem"}, não ${um ? "a" : "as"} fira e não ${um ? "a" : "as"} desfaça: o prazo é do sistema.`,
+    };
+  };
+
+  /* SACRIFÍCIO ARCANO: desfaz uma invocação e devolve PM. Mesma história —
+     dois caminhos, uma função. */
+  const RX_SACRIFICIO = /sacrificio arcano|desfaz uma invoca/;
+  const porSacrificio = (h, pers) => {
+    const txt = `${h.nome || ""} ${h.descricao || ""}`.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    if (!RX_SACRIFICIO.test(txt)) return null;
+    const s = sacrificarInvocacao(pers);
+    if (!s.ok) return { pers, ok: false, linha: `⛔ ${h.nome}: ${s.motivo}.`, nota: "" };
+    return {
+      pers: s.pers, ok: true,
+      linha: `🜄 ${s.nome} se desfaz em fumaça — +${s.pm} PM de volta.`,
+      nota: `[SACRIFÍCIO ARCANO — RESOLVIDO PELO SISTEMA] Desfiz ${s.nome} e recuperei ${s.pm} PM. Narre a criatura se desmanchando no gesto de quem a chamou. Os números já foram aplicados.`,
+    };
+  };
+
   const aplicarBuffDeHabilidade = (h, pers) => {
     const port = aflicaoDe(`${h.nome || ""} ${h.descricao || ""}`);
     if (!port || port.alvo === "alvo") return { pers, texto: "", nota: "" };
@@ -4591,7 +4642,7 @@ export default function Taverna() {
         let p2 = { ...pers, moedas: (pers.moedas || 0) + esp.moedas, xp: (pers.xp || 0) + esp.xp };
         let subiu = 0;
         while (p2.xp >= XP_POR_NIVEL(p2.nivel)) { p2.xp -= XP_POR_NIVEL(p2.nivel); p2.nivel += 1; p2.nivelPendentes = (p2.nivelPendentes || 0) + 1; subiu++; }
-        p2.grupo = (p2.grupo || []).map((g) => { const ev = evoluirCompanheiro({ ...g, xp: (g.xp || 0) + esp.xp }); const m2 = ev._subiu; delete ev._subiu; if (m2) msgs.push(`✦ ${g.nome} subiu para o nível ${ev.nivel}!`); return ev; });
+        p2.grupo = (p2.grupo || []).map((g) => { if (g.invocada) return g; const ev = evoluirCompanheiro({ ...g, xp: (g.xp || 0) + esp.xp }); const m2 = ev._subiu; delete ev._subiu; if (m2) msgs.push(`✦ ${g.nome} subiu para o nível ${ev.nivel}!`); return ev; });
         msgs.push(`◉ Espólios: +${esp.moedas} moedas · +${esp.xp} XP${subiu ? ` · ✦ NÍVEL ${p2.nivel}!` : ""}`);
         pers = p2;
         setPersonagem(p2);
@@ -5141,7 +5192,7 @@ export default function Taverna() {
             const nome = String(nome0 || "").slice(0, 40).trim();
             if (!nome) return;
             if (grupoAtual.some((x) => (x.nome || "").toLowerCase() === nome.toLowerCase())) return;
-            if (grupoAtual.length >= MAX_COMPANHEIROS) { msgs.push(`O grupo está cheio — ${nome} não pôde se juntar.`); return; }
+            if (grupoAtual.filter((g) => !g.invocada).length >= MAX_COMPANHEIROS) { msgs.push(`O grupo está cheio — ${nome} não pôde se juntar.`); return; }
             const fichaElenco = Object.values(npcsRef.current).find((n) => (n.nome || "").toLowerCase() === nome.toLowerCase());
             const nivelC = Math.max(1, (p.nivel || 1) - 2);
             const vidaMaxC = 10 + (nivelC - 1) * 3;
@@ -5653,11 +5704,14 @@ export default function Taverna() {
          do herói como enfeite de ficha — que foi exatamente o que acontecia. */
       const trc = resumoTracosPrompt(p);
       const prf = resumoProfissaoPrompt(p);
+      /* v9.46: quem está no campo por conjuração. Sem esta linha o Mestre
+         narra um herói sozinho ao lado de uma fera invocada de 40 PV. */
+      const ivc = resumoInvocacoesPrompt(p);
       /* v9.41: só entra quando há coisa caída — e aí precisa entrar, senão o
          Mestre descreve um chão limpo em cima de um chão cheio, ou pior,
          "entrega" o que o jogador ainda não recolheu. */
       const chn = envelopeDoQueFicou(pertoDaqui(chaoRef.current, combateRef.current ? combateRef.current.heroi : null, RAIO_EXAME));
-      return `${aqui ? `\n${aqui}` : ""}${chn ? `\n${chn}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${mis ? `\n${mis}` : ""}${dad ? `\n${dad}` : ""}${trc ? `\n${trc}` : ""}${prf ? `\n${prf}` : ""}${mov ? `\n${mov}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
+      return `${aqui ? `\n${aqui}` : ""}${chn ? `\n${chn}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${mis ? `\n${mis}` : ""}${dad ? `\n${dad}` : ""}${trc ? `\n${trc}` : ""}${prf ? `\n${prf}` : ""}${ivc ? `\n${ivc}` : ""}${mov ? `\n${mov}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -6778,6 +6832,19 @@ export default function Taverna() {
             notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${rupC.nota}`;
           }
         }
+        /* ---- A INVOCAÇÃO ENTRA NO CAMPO (v9.46) ----
+           Treze habilidades de quatro classes prometiam uma criatura e
+           entregavam uma frase. Aqui a criatura nasce de verdade: ficha
+           completa de companheiro (é o motor que já sabe agir sozinho),
+           lugar no tabuleiro ao lado de quem a chamou, e prazo. O teto é
+           cobrado ANTES do resto para que a recusa não custe o PM. */
+        for (const fn of [porInvocacaoEmCampo, porSacrificio]) {
+          const r = fn(h, pers);
+          if (!r) continue;
+          pers = r.pers;
+          if (r.linha) linhas.push(r.linha);
+          if (r.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${r.nota}`;
+        }
         const buffH = aplicarBuffDeHabilidade(h, pers);
         pers = buffH.pers;
         if (buffH.texto) linhas.push(buffH.texto);
@@ -6855,10 +6922,20 @@ export default function Taverna() {
       const recC = habCitada.recarga != null ? Math.max(0, Number(habCitada.recarga) || 0) : recargaPadrao(custo);
       const base0C = fichaViva() || personagem;
       let pers = { ...base0C, mana: base0C.mana - custo, habRecarga: recC > 0 ? { ...(base0C.habRecarga || {}), [(habCitada.nome || "").toLowerCase()]: recC } : (base0C.habRecarga || {}) };
+      /* v9.46: o caminho da habilidade CITADA passa pelas mesmas portas que
+         o do painel. Quem digita "conjuro Invocar Fera Menor" recebe a fera. */
+      const linhasCit = [];
+      for (const fn of [porInvocacaoEmCampo, porSacrificio]) {
+        const r = fn(habCitada, pers);
+        if (!r) continue;
+        pers = r.pers;
+        if (r.linha) linhasCit.push(r.linha);
+        if (r.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${r.nota}`;
+      }
       const buffC = aplicarBuffDeHabilidade(habCitada, pers);
       pers = mudarFicha(() => buffC.pers);
       habUsadaRef.current = true;
-      pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `✦ ${habCitada.nome} · gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}${recC > 0 ? ` · ⏳ recarga ${recC}t` : ""}` }, ...(buffC.texto ? [{ autor: "sistema", texto: buffC.texto }] : [])]);
+      pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `✦ ${habCitada.nome} · gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}${recC > 0 ? ` · ⏳ recarga ${recC}t` : ""}` }, ...linhasCit.map((t) => ({ autor: "sistema", texto: t })), ...(buffC.texto ? [{ autor: "sistema", texto: buffC.texto }] : [])]);
       if (buffC.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${buffC.nota}`;
       const miraCitada = miraRef.current; miraRef.current = null; setMira(null);
       const desfechoC = resolverHabilidadeOfensiva(habCitada, acao, pers, { mira: miraCitada });
@@ -6993,12 +7070,25 @@ export default function Taverna() {
      mesmo turno. Quem chama passa a ficha viva e recebe a nova. */
   const fecharSeTodosCairam = (persBase = null) => {
     const c = combateRef.current;
-    const base0 = persBase || personagemRef.current || personagem || null;
+    let base0 = persBase || personagemRef.current || personagem || null;
     if (base0) personagemRef.current = base0;
     if (!c || !(c.inimigos || []).length) return false;
     const todosCairam = c.inimigos.every((e) => e.derrotado || (e.vida || 0) <= 0);
     if (!todosCairam) return false;
     combateRef.current = null; setCombate(null); combateOciosoRef.current = 0;
+    /* v9.46: acabou a luta, acabou a conjuração. Sem isto a fera invocada
+       viraria companheiro permanente pela porta dos fundos — e o teto do
+       grupo, o vínculo e o XP não sabem lidar com uma criatura que não é
+       gente. Some em silêncio: o jogador acabou de ganhar a luta, e uma
+       linha de "sua fera se desfez" no meio dos espólios é ruído. */
+    if (base0) {
+      const disp = dispensarTodas(base0);
+      if (disp.sumiram.length) {
+        base0 = disp.pers;
+        personagemRef.current = base0;
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INVOCAÇÕES ENCERRADAS PELO SISTEMA] Com o fim da luta, ${disp.sumiram.join(", ")} ${disp.sumiram.length > 1 ? "se desfizeram" : "se desfez"}. Não ${disp.sumiram.length > 1 ? "as mencione" : "a mencione"} como se ainda estivesse aqui.`;
+      }
+    }
     /* quem FUGIU não tombou: não rende espólio, não conta abate e — o que
        mais importaria — não tem o nome riscado no registro do mundo (v9.14) */
     const derrotados = c.inimigos.filter((e) => !e.fugiu);
@@ -7029,7 +7119,7 @@ export default function Taverna() {
       const base = personagemRef.current || personagem || {};
       let p2 = { ...base, moedas: (base.moedas || 0) + esp.moedas, xp: (base.xp || 0) + esp.xp };
       while (p2.xp >= XP_POR_NIVEL(p2.nivel)) { p2.xp -= XP_POR_NIVEL(p2.nivel); p2.nivel += 1; p2.nivelPendentes = (p2.nivelPendentes || 0) + 1; }
-      p2.grupo = (p2.grupo || []).map((g) => { const ev = evoluirCompanheiro({ ...g, xp: (g.xp || 0) + esp.xp }); delete ev._subiu; return ev; });
+      p2.grupo = (p2.grupo || []).map((g) => { if (g.invocada) return g; const ev = evoluirCompanheiro({ ...g, xp: (g.xp || 0) + esp.xp }); delete ev._subiu; return ev; });
       /* PRESENÇA DIVINA expira com o fim do combate — não vira debuff eterno */
       p2.condicoes = (p2.condicoes || []).filter((c) => !(c.origem || "").startsWith("presença de"));
       p2.grupo = (p2.grupo || []).map((g) => ({ ...g, condicoes: (g.condicoes || []).filter((c) => !(c.origem || "").startsWith("presença de")) }));
@@ -7220,6 +7310,20 @@ export default function Taverna() {
             a.r.dano = amort.dano;
             amort.linhas.forEach((t) => linhasSis.push({ autor: "sistema", texto: t }));
           }
+          /* v9.46: ELO VITAL e FUSÃO ESPIRITUAL. As duas dizem, desde
+             sempre, que a invocação leva o golpe pelo dono — e as duas
+             dependiam de uma invocação que nunca existia. Fica DEPOIS do
+             amortecimento de origem porque a criatura recebe o golpe como
+             ele chega ao herói, já aparado pelo corpo dele. */
+          /* `grupoAtual` é a autoridade sobre o grupo dentro deste laço —
+             o dano em companheiro já foi escrito nele. Entra e sai por ele,
+             senão a invocação apanharia numa cópia que ninguém lê. */
+          const rep = repartirDano({ ...persTracos, grupo: grupoAtual }, a.r.dano);
+          if (rep.linhas.length) {
+            grupoAtual = rep.pers.grupo || grupoAtual;
+            a.r.dano = rep.dano;
+            rep.linhas.forEach((t) => linhasSis.push({ autor: "sistema", texto: t }));
+          }
           danoNoJogador += a.r.dano;
         }
         else grupoAtual = grupoAtual.map((g) => g.nome === a.alvoNome ? { ...g, vida: Math.max(0, (g.vida || 0) - a.r.dano) } : g);
@@ -7300,9 +7404,21 @@ export default function Taverna() {
     if (persConcQuebrada) persAtual = { ...persAtual, efeitos: (persAtual.efeitos || []).filter((e) => e.nome !== persConcQuebrada) };
     persAtual = aplicarCondicoesDosGolpes(acoes, persAtual);
 
-    /* TURNO DOS COMPANHEIROS: atacam inimigos ou socorrem quem caiu */
+    /* TURNO DOS COMPANHEIROS: atacam inimigos ou socorrem quem caiu.
+       v9.46: as invocações estão no grupo e entram aqui sem caso especial —
+       era esse o ponto de fazê-las companheiros com prazo. VOZ DE COMANDO
+       ("todas as invocações agem duas vezes neste turno") é o único
+       tempero: roda o turno delas mais uma vez. */
     const jogadorCaido = persAtual.vida <= 0;
     const acoesComp = turnoDosCompanheiros({ grupo: persAtual.grupo || [], inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome, jogador: persAtual, rodada: (combPos.rodada || 1) });
+    if (temVozDeComando(persAtual) && invocacoesDe(persAtual).length) {
+      const soInvocadas = invocacoesDe(persAtual);
+      const extra = turnoDosCompanheiros({ grupo: soInvocadas, inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome, jogador: persAtual, rodada: (combPos.rodada || 1) });
+      if (extra.length) {
+        acoesComp.push(...extra);
+        pushMsgs([{ autor: "sistema", texto: `📯 Voz de Comando — ${soInvocadas.map((g) => g.nome).join(", ")} ${soInvocadas.length > 1 ? "agem" : "age"} de novo.` }]);
+      }
+    }
     const partesComp = [];
     for (const ac of acoesComp) {
       if (ac.tipo === "ataque" && ac.r) {
@@ -7367,6 +7483,22 @@ export default function Taverna() {
       morteRoladaRef.current = true;
     }
 
+    /* v9.46: O PRAZO DA CONJURAÇÃO. Vence na virada da rodada, que é o
+       único relógio que a luta tem. Sai do grupo E do tabuleiro na mesma
+       operação — deixar a figura no grid depois de a criatura sumir seria
+       pior do que não ter prazo nenhum. */
+    if (combateRef.current) {
+      const proxima = (combateRef.current.rodada || 1) + 1;
+      const exp = expirarInvocacoes(persAtual, proxima);
+      if (exp.sumiram.length) {
+        const idx = new Set();
+        (persAtual.grupo || []).forEach((g, i) => { if (exp.sumiram.includes(g.nome)) idx.add(i); });
+        persAtual = exp.pers;
+        combateRef.current = { ...combateRef.current, aliados: (combateRef.current.aliados || []).filter((_, i) => !idx.has(i)) };
+        pushMsgs(exp.linhas.map((t) => ({ autor: "sistema", texto: t })));
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INVOCAÇÃO ENCERRADA PELO SISTEMA] ${exp.sumiram.join(", ")} ${exp.sumiram.length > 1 ? "se desfizeram" : "se desfez"}: o prazo venceu. Narre o desmanche em uma frase e siga — ${exp.sumiram.length > 1 ? "elas não estão mais" : "ela não está mais"} no campo, e não ${exp.sumiram.length > 1 ? "voltam" : "volta"}.`;
+      }
+    }
     persAtual = mudarFicha(() => persAtual);
     /* NOVA RODADA: revide concluído, meus movimentos renovam */
     if (combateRef.current) {
@@ -9707,7 +9839,7 @@ export default function Taverna() {
   /* CONVITE AO GRUPO: o jogador convida um NPC conhecido; o Mestre decide
      na ficção se ele aceita (a escolha é do personagem, não do jogador). */
   const convidarNpc = (nome) => {
-    if (bloqueado || (personagem.grupo || []).length >= MAX_COMPANHEIROS) return;
+    if (bloqueado || (personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS) return;
     setAba(null);
     pushMsgs([{ autor: "jogador", texto: `Convido ${nome} para se juntar ao meu grupo.` }]);
     enviar(`[CONVITE AO GRUPO — ação de painel] Aqui, na cena atual, eu faço UM convite a ${nome}: juntar-se ao meu grupo. Sua resposta é SÓ a reação e as palavras de ${nome}, em 1ª pessoa, aí mesmo onde estamos. A decisão é dele(a): pode aceitar (registre em "grupo_adicionar" com a ficha completa), recusar com jeito, ou pedir uma condição — mas a condição é uma FALA, não uma missão nem uma viagem. Não narre partida, despedida, preparativos, estrada nem passagem de tempo: ninguém saiu do lugar por causa de um convite.${SO_ISSO}`, personagem);

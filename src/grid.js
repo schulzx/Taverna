@@ -517,6 +517,27 @@ export function posicionar(grade, { heroi, grupo = [], inimigos = [] }) {
   return { heroi: h, grupo: gr, inimigos: in2 };
 }
 
+/* v9.46: pôr UM recém-chegado no tabuleiro, ao lado de quem o trouxe.
+   `posicionar` monta a mesa inteira do zero e só serve ao início da luta;
+   a invocação nasce no meio dela, com todo mundo já colocado. Procura em
+   anéis crescentes a partir do conjurador, exatamente como `poe` faz —
+   perto o bastante para ser dele, longe o bastante para caber. */
+export function posicionarPerto(grade, ent, perto, ocupadosLista = []) {
+  const g = garantirGrade(grade);
+  if (!g || !perto || perto.x == null) return { ...ent, x: (perto && perto.x) || 0, y: (perto && perto.y) || 0 };
+  const ocupados = ocupacaoDe(ocupadosLista);
+  const lado = ladoDe(ent);
+  for (let raio = 1; raio < Math.max(g.largura, g.altura); raio++) {
+    for (let dy = -raio; dy <= raio; dy++) for (let dx = -raio; dx <= raio; dx++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) !== raio) continue;
+      const x = perto.x + dx, y = perto.y + dy;
+      if (!livrePara(grade, x, y, lado, ocupados)) continue;
+      return { ...ent, x, y };
+    }
+  }
+  return { ...ent, x: perto.x, y: perto.y };
+}
+
 /* Quem está colado em você — a lista que o ataque de oportunidade sempre
    precisou. "Colado" agora respeita o alcance do bicho: o ogro te segura
    de 3 m, e sair de perto dele custa igual. */
