@@ -84,6 +84,7 @@ import { bonusDeBancada, componentesExtras, bonusDeNavegacao, despojosExtras, bo
 import { criarOficina, anotar as anotarOficina, bilheteDaOficina, OFICINA_PROMPT } from "./oficina.js";
 import { romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, devolverSegura, GATILHOS_PROMPT } from "./gatilhos.js";
 import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
+import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, ehReescrever, reescreverInstante, HABILIDADES_PROMPT } from "./habilidades.js";
 import { agruparMensagens } from "./resumo.js";
 
 /* ============================================================
@@ -3781,7 +3782,7 @@ export default function Taverna() {
   const tentarReacaoNoGolpe = (a, pers) => {
     if (reacaoUsadaRef.current || !a || !a.r) return null;
     const gatilho = a.r.dano > 0 ? "sofre_dano" : "inimigo_erra";
-    const esc = escolherReacao({ pers, gatilho, dano: a.r.dano || 0, temReacao: true });
+    const esc = escolherReacao({ pers, gatilho, dano: a.r.dano || 0, temReacao: true, tipoDano: a.r.tipoDano || "fisico" });
     if (!esc) return null;
     const res = resolverReacao(esc, { pers, dano: a.r.dano || 0, atacante: a.inimigo });
     if (!res) return null;
@@ -3900,6 +3901,64 @@ export default function Taverna() {
       linha: `🜄 ${s.nome} se desfaz em fumaça — +${s.pm} PM de volta.`,
       nota: `[SACRIFÍCIO ARCANO — RESOLVIDO PELO SISTEMA] Desfiz ${s.nome} e recuperei ${s.pm} PM. Narre a criatura se desmanchando no gesto de quem a chamou. Os números já foram aplicados.`,
     };
+  };
+
+  /* ---------------- AS QUATRO DE REGRA PRÓPRIA (v9.47) ----------------
+     Mesma forma dos dois de cima: recebem a habilidade e a ficha, devolvem
+     `{pers, linha, nota}` ou null. Entram na mesma corrente, e por isso
+     valem tanto para a habilidade escolhida no painel quanto para a citada
+     na frase — que foi o furo que a invocação me ensinou. */
+  /* ---------------- A LUTA ACABOU, A CONJURAÇÃO TAMBÉM (v9.47) ----------
+     Isto era um bug de verdade, achado jogando: a forma e a invocação
+     venciam por RODADA, e a rodada só existe dentro da luta. Quando o
+     combate fechava por qualquer caminho que não fosse "todos caíram" — o
+     HUD ocioso, a fuga, o Mestre encerrando na narrativa —, o herói ficava
+     urso para sempre e a fera ficava no grupo para sempre.
+
+     São cinco lugares que zeram `combateRef`. Em vez de lembrar de cada um
+     (que é exatamente como o bug nasceu), uma função só, chamada em todos. */
+  const limparConjuracoesDaLuta = (persBase) => {
+    let p = persBase || personagemRef.current || personagem;
+    if (!p) return p;
+    let mudou = false;
+    if (estaEmForma(p)) {
+      const volta = desfazerForma(p, "luta");
+      p = volta.pers; mudou = true;
+      pushMsgs([{ autor: "sistema", texto: volta.linha }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${volta.nota}`;
+    }
+    const disp = dispensarTodas(p);
+    if (disp.sumiram.length) {
+      p = disp.pers; mudou = true;
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INVOCAÇÕES ENCERRADAS PELO SISTEMA] Com o fim da luta, ${disp.sumiram.join(", ")} ${disp.sumiram.length > 1 ? "se desfizeram" : "se desfez"}. Não ${disp.sumiram.length > 1 ? "as mencione" : "a mencione"} como se ainda estivesse aqui.`;
+    }
+    if (mudou) { personagemRef.current = p; setPersonagem(p); }
+    return p;
+  };
+
+  const porForma = (h, pers) => {
+    const r = assumirForma(pers, h, (combateRef.current && combateRef.current.rodada) || 1);
+    return r ? { pers: r.pers, linha: r.linha, nota: r.nota } : null;
+  };
+  const porReerguer = (h, pers) => {
+    const r = reerguer(pers, h);
+    return r ? { pers: r.pers, linha: r.linha, nota: r.nota } : null;
+  };
+  const porMetamagia = (h, pers) => {
+    const m = metamagiaDe(h);
+    if (!m) return null;
+    return {
+      pers: armarMetamagia(pers, m),
+      linha: `✧ Metamagia ${m.rotulo} armada — ${m.diz}.`,
+      nota: `[METAMAGIA ARMADA PELO SISTEMA] Preparei ${m.rotulo}: ${m.diz}. Ela se gasta sozinha na próxima magia que eu lançar — não a aplique você, não escolha por mim qual magia recebe e não a use duas vezes.`,
+    };
+  };
+  const porReescrever = (h, pers) => {
+    if (!ehReescrever(h)) return null;
+    const golpe = golpeRecenteRef.current;
+    const r = reescreverInstante(pers, (golpe && golpe.dano) || 0);
+    if (r.ok) golpeRecenteRef.current = null;   // um instante, uma vez
+    return { pers: r.pers, linha: r.linha, nota: r.nota };
   };
 
   const aplicarBuffDeHabilidade = (h, pers) => {
@@ -4619,7 +4678,7 @@ export default function Taverna() {
         else combateOciosoRef.current += 1;
         if (combateOciosoRef.current >= 2) {
           combateOciosoRef.current = 0;
-          combateRef.current = null; setCombate(null);
+          combateRef.current = null; setCombate(null); limparConjuracoesDaLuta(null);
           msgs.push("⚔ O confronto se dissolve — o painel de combate se fecha.");
         }
       } else combateOciosoRef.current = 0;
@@ -5909,7 +5968,7 @@ export default function Taverna() {
     bancoNomesRef.current = gerarBancoNomes(mundo);
     systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null);
-    setCombate(null); combateRef.current = null;
+    setCombate(null); combateRef.current = null;   /* fim de campanha: nao ha ficha para limpar */
     setFase("jogo");
     enviar(`Comece a aventura: apresente o mundo com riqueza, situe meu personagem numa cena de abertura marcante com pelo menos um NPC interessante, e termine com um gancho que me convide a agir. (Minhas habilidades iniciais já foram concedidas pelo SISTEMA: ${(pers.habilidades || []).map((h) => h.nome).join(", ") || "nenhuma"} — NÃO envie "adicionar_habilidades".)`, pers, []);
   };
@@ -6166,7 +6225,9 @@ export default function Taverna() {
       const r = resolverAtaque({
         atacante: pers.nome, alvo, ehAtacanteInimigo: false,
         bonusAtaque: bonusAtkBase - penal + degrau,
-        danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)) + bArma.bonus + danoDeDadiva,
+        /* v9.47: o golpe da FORMA soma aqui — garra de bicho e punho de
+           avatar são o corpo batendo, não um buff mágico. */
+        danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)) + bArma.bonus + danoDeDadiva + danoDaForma(pers),
         condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
         tipoDano: elementoDaArma(pers), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
         bonusDefesaAlvo: bonusDefesaEm(gradeDaLuta, alvo),
@@ -6233,7 +6294,19 @@ export default function Taverna() {
     const meuLugarH = comb.heroi || { nome: pers.nome };
     /* magia alcança longe: o alcance da própria magia, quando o grimório o
        traz, ou 36 m de teto. Parede continua cortando. */
-    const alcanceMagia = Math.max(1.5, Number((geometriaDe(h) || {}).alcance) || 36);
+    /* ---------------- METAMAGIA (v9.47) ----------------
+       "Estende o alcance da PRÓXIMA magia" e "duplica a PRÓXIMA magia em
+       dois alvos" são promessas sobre o futuro, e o jogo não tinha onde
+       guardá-las. Aqui a promessa é cobrada e apagada: uma magia, um uso.
+       Consome ANTES de escolher alvo e alcance, porque é isso que ela muda. */
+    const meta = (() => {
+      const c = consumirMetamagia(personagemRef.current || pers);
+      if (!c.meta) return null;
+      personagemRef.current = c.pers;
+      setPersonagem(c.pers);
+      return c.meta;
+    })();
+    const alcanceMagia = alcanceComMetamagia(Math.max(1.5, Number((geometriaDe(h) || {}).alcance) || 36), meta);
     const atingiveis = vivos.filter((e) => alcanca(gradeH, meuLugarH, e, { alcanceM: alcanceMagia }).ok);
     const pool = atingiveis.length ? atingiveis : vivos;
     const declaradoH = (alvosGolpeRef.current || []).find(Boolean);
@@ -6309,6 +6382,26 @@ export default function Taverna() {
         return { ...e, vida: pv, derrotado: pv <= 0, ultimoDano: r.dano };
       });
       partes.push(`${alvo.nome} — ${r.resultado === "critico" ? `CRÍTICO, ${r.dano} de dano` : r.resultado === "acerta" ? `${r.dano} de dano` : "resistiu parcialmente"} (d20=${r.d20}${r.bonus ? `+${r.bonus}` : ""}=${r.total} vs ${r.ca})${(locais.find((e) => e.nome === alvo.nome) || {}).derrotado ? " [CAIU]" : ""}`);
+      /* METAMAGIA GÊMEA (v9.47): "duplica a próxima magia em dois alvos".
+         O segundo alvo é o próximo de pé ao alcance — não uma segunda
+         rolagem, mas o MESMO golpe caindo duas vezes, que é o que a
+         palavra "duplica" diz. Só para magia de alvo único: numa área ela
+         seria dano duplo sobre a mesma gente, e isso a descrição não
+         promete. */
+      if (ehGemea(meta) && !(ehArea(h) || h.area)) {
+        const segundo = pool.find((e) => e.nome !== alvo.nome && !e.derrotado && (e.vida || 0) > 0);
+        if (segundo) {
+          locais = locais.map((e) => {
+            if (e.nome !== segundo.nome) return e;
+            const pv = Math.max(0, e.vida - r.dano);
+            return { ...e, vida: pv, derrotado: pv <= 0, ultimoDano: r.dano };
+          });
+          linhasSis.push({ autor: "sistema", texto: `✧ Metamagia Gêmea — ${h.nome} cai também em ${segundo.nome}: ${r.dano} de dano.` });
+          partes.push(`${segundo.nome} — ${r.dano} de dano pela magia GEMINADA${(locais.find((e) => e.nome === segundo.nome) || {}).derrotado ? " [CAIU]" : ""}`);
+        } else {
+          linhasSis.push({ autor: "sistema", texto: "✧ Metamagia Gêmea — não havia um segundo alvo ao alcance; o poder se perde." });
+        }
+      }
       /* ---------------- ÁREA COM FORMA (v9.30, em metros na v9.34) ----------
          Antes das zonas, `h.area` espalhava metade do dano em TODO inimigo
          vivo. Com zonas, a forma passou a decidir — mas o raio ainda era
@@ -6790,9 +6883,18 @@ export default function Taverna() {
           /* v9.44: a armadura que trava a conjuração. Vem ANTES do caderno
              porque é o obstáculo mais físico dos dois: não adianta explicar
              que a magia não estava preparada se o problema é o aço no corpo. */
-          if (magiaTravada(pers) && /magia|conjur|feiti|arcan|encant/i.test(`${h.nome || ""} ${h.descricao || ""}`)) {
+          /* mesma correção do caminho citado: a escola decide, não a palavra */
+          const ehConjuracao = naturezaDaHabilidade(h, pers) !== "fisico";
+          if (magiaTravada(pers) && ehConjuracao) {
             const peca = (penalidadesDe(pers).find((x) => x.tipo === "sem_magia") || {}).item || "o que você está vestindo";
             pushMsgs([{ autor: "sistema", texto: `⛓ ${h.nome} não sai: você não consegue conjurar vestindo ${peca}. Tire a peça e tente de novo.` }]);
+            continue;
+          }
+          /* v9.47: a Forma Animal promete "um animal" — e animal não conjura.
+             Sem isto a transformação seria um buff com nome bonito, e o preço
+             que a torna uma escolha (perder a magia) não existiria. */
+          if (magiaTravadaPelaForma(pers) && ehConjuracao) {
+            pushMsgs([{ autor: "sistema", texto: `🐾 ${h.nome} não sai: em ${pers.forma.nome} você não tem mão nem voz para conjurar.` }]);
             continue;
           }
           const lanc = podeLancar(pers, h, { emCombate: !!combateRef.current });
@@ -6838,7 +6940,7 @@ export default function Taverna() {
            completa de companheiro (é o motor que já sabe agir sozinho),
            lugar no tabuleiro ao lado de quem a chamou, e prazo. O teto é
            cobrado ANTES do resto para que a recusa não custe o PM. */
-        for (const fn of [porInvocacaoEmCampo, porSacrificio]) {
+        for (const fn of [porInvocacaoEmCampo, porSacrificio, porForma, porReerguer, porMetamagia, porReescrever]) {
           const r = fn(h, pers);
           if (!r) continue;
           pers = r.pers;
@@ -6919,13 +7021,36 @@ export default function Taverna() {
         if (ecoH2.acao > 0) ecoH2.acao -= 1; else ecoH2.extra -= 1;
         combateRef.current = { ...combateRef.current, economia: { ...ecoH2 } }; setCombate(combateRef.current);
       }
+      /* v9.47: O QUE TRAVA A CONJURAÇÃO VALE NOS DOIS CAMINHOS. Esta guarda
+         existia só no laço do painel — e o jogador que digita "conjuro Raio
+         Solar" estando em Forma Animal conjurava numa boa, de dentro do
+         corpo do bicho. É o mesmo furo que a invocação me ensinou, na
+         terceira vez: toda regra de habilidade tem DOIS chamadores. */
+      {
+        /* v9.47: o teste NÃO é procurar a palavra "magia" na descrição —
+           "Raio Solar" não a contém e passou batido no primeiro teste em
+           jogo, conjurado de dentro do corpo do urso. Quem sabe se uma
+           habilidade é conjuração é `naturezaDaHabilidade`, que já decide
+           isso pela escola desde a v9.6. */
+        const ehConjuracaoC = naturezaDaHabilidade(habCitada, fichaViva() || personagem) !== "fisico";
+        const baseC = fichaViva() || personagem;
+        if (ehConjuracaoC && magiaTravadaPelaForma(baseC)) {
+          pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `🐾 ${habCitada.nome} não sai: em ${baseC.forma.nome} você não tem mão nem voz para conjurar.` }]);
+          return;
+        }
+        if (ehConjuracaoC && magiaTravada(baseC)) {
+          const peca = (penalidadesDe(baseC).find((x) => x.tipo === "sem_magia") || {}).item || "o que você está vestindo";
+          pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `⛓ ${habCitada.nome} não sai: você não consegue conjurar vestindo ${peca}.` }]);
+          return;
+        }
+      }
       const recC = habCitada.recarga != null ? Math.max(0, Number(habCitada.recarga) || 0) : recargaPadrao(custo);
       const base0C = fichaViva() || personagem;
       let pers = { ...base0C, mana: base0C.mana - custo, habRecarga: recC > 0 ? { ...(base0C.habRecarga || {}), [(habCitada.nome || "").toLowerCase()]: recC } : (base0C.habRecarga || {}) };
       /* v9.46: o caminho da habilidade CITADA passa pelas mesmas portas que
          o do painel. Quem digita "conjuro Invocar Fera Menor" recebe a fera. */
       const linhasCit = [];
-      for (const fn of [porInvocacaoEmCampo, porSacrificio]) {
+      for (const fn of [porInvocacaoEmCampo, porSacrificio, porForma, porReerguer, porMetamagia, porReescrever]) {
         const r = fn(habCitada, pers);
         if (!r) continue;
         pers = r.pers;
@@ -7081,6 +7206,13 @@ export default function Taverna() {
        grupo, o vínculo e o XP não sabem lidar com uma criatura que não é
        gente. Some em silêncio: o jogador acabou de ganhar a luta, e uma
        linha de "sua fera se desfez" no meio dos espólios é ruído. */
+    if (base0 && estaEmForma(base0)) {
+      const volta = desfazerForma(base0, "luta");
+      base0 = volta.pers;
+      personagemRef.current = base0;
+      pushMsgs([{ autor: "sistema", texto: volta.linha }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${volta.nota}`;
+    }
     if (base0) {
       const disp = dispensarTodas(base0);
       if (disp.sumiram.length) {
@@ -7489,6 +7621,14 @@ export default function Taverna() {
        pior do que não ter prazo nenhum. */
     if (combateRef.current) {
       const proxima = (combateRef.current.rodada || 1) + 1;
+      /* v9.47: a FORMA vence pelo mesmo relógio. Vem primeiro porque é o
+         corpo do herói: saber quem ele é precede saber quem está com ele. */
+      const fim = expirarForma(persAtual, proxima);
+      if (fim.linha) {
+        persAtual = fim.pers;
+        pushMsgs([{ autor: "sistema", texto: fim.linha }]);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${fim.nota}`;
+      }
       const exp = expirarInvocacoes(persAtual, proxima);
       if (exp.sumiram.length) {
         const idx = new Set();
@@ -7533,7 +7673,7 @@ export default function Taverna() {
   /* PASSAR O TEMPO (deliberado): simula N horas; quanto mais horas, mais o mundo muda */
   const passarTempo = (horas) => {
     if (bloqueado || acampadoRef.current) return;
-    if (combateRef.current) { combateRef.current = null; setCombate(null); combateOciosoRef.current = 0; }
+    if (combateRef.current) { combateRef.current = null; setCombate(null); combateOciosoRef.current = 0; limparConjuracoesDaLuta(null); }
     setMostrarHoras(false);
     const escala = horas <= 3 ? "algumas horas (mudanças pequenas)" : horas <= 8 ? "boa parte do dia (mudanças perceptíveis)" : horas <= 16 ? "quase um dia inteiro (mudanças significativas)" : "um dia completo (o mundo se move bastante)";
     pushMsgs([{ autor: "sistema", texto: `🕐 Você deixa ${horas}h passarem…` }]);
@@ -9523,7 +9663,7 @@ export default function Taverna() {
      Mestre narra o que passou, proporcional ao tempo (nunca exagerado). */
   const acampar = () => {
     if (acampadoRef.current || bloqueado) return;
-    if (combateRef.current) { combateRef.current = null; setCombate(null); combateOciosoRef.current = 0; }
+    if (combateRef.current) { combateRef.current = null; setCombate(null); combateOciosoRef.current = 0; limparConjuracoesDaLuta(null); }
     definirAcampado(true);
     const local = localDeDescanso(mapaRef.current, cidadeAtualRef.current, faccaoJogadorRef.current);
     const rotulo = local.tipo === "sede" ? "🏛 Você recolhe-se à sede da sua guilda"

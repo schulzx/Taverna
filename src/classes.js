@@ -101,7 +101,11 @@ export const CLASSES = [
       HAB("Prisão Arcana", 6, 5, "utilidade", "Prende um inimigo por 2 turnos."),
       HAB("Contramágica", 6, 4, "defesa", "Cancela a magia de um inimigo."),
       HAB("Meteoro", 8, 7, "ataque", "Dano devastador em área ampla."),
-      HAB("Reescrever o Instante", 10, 8, "utilidade", "Desfaz o resultado do último turno."),
+      /* v9.47: a promessa antiga era "desfaz o resultado do último turno" —
+         que, ao pé da letra, exigiria um retrato do mundo inteiro por rodada.
+         A frase passa a dizer o que o código faz, e o que o jogador de fato
+         sente ter perdido: o dano da última rodada. */
+      HAB("Reescrever o Instante", 10, 8, "utilidade", "O tempo dobra: o dano que você sofreu na última rodada não aconteceu."),
       HAB("Bola de Fogo", 5, 5, "ataque", "Explosão flamejante em área ampla."),
       HAB("Muralha de Gelo", 6, 5, "defesa", "Ergue uma barreira gélida que bloqueia a passagem."),
       HAB("Invisibilidade", 7, 5, "utilidade", "Fica invisível até atacar ou conjurar."),

@@ -20,6 +20,22 @@ import { perfilCombate } from "./combate.js";
    `exige`: perfil de combate, ou uma habilidade na ficha.
    O sistema usa a PRIMEIRA da lista que se aplicar — a ordem é a prioridade. */
 export const REACOES = [
+  /* v9.47: CONTRAMÁGICA. "Cancela a magia de um inimigo" era a promessa, e
+     ela não cabia no turno do herói: no instante em que ele age, nenhum
+     inimigo declarou magia nenhuma. Cabe AQUI — reação é justamente o que
+     acontece fora do próprio turno, e a única janela em que uma magia
+     inimiga existe é a que está chegando.
+
+     PRIMEIRA da lista, e a ordem é a regra: `escolherReacao` devolve a
+     primeira que se aplica, e cancelar é melhor do que aparar. Só morde o
+     que é mágico — contramágica não para uma machadada —, então quem não
+     está sob magia cai no Escudo Arcano da linha seguinte, como antes. */
+  {
+    id: "contramagia", nome: "Contramágica", icone: "🚫", gatilho: "sofre_dano",
+    exigeTipo: [], soMagia: true, pm: 3, corta: 1, minDano: 4,
+    desc: "Desfaz a magia inimiga no ar, antes de ela terminar.",
+    narrar: "corta o gesto do conjurador no meio e a magia se desfaz sem chegar",
+  },
   {
     id: "escudo_arcano", nome: "Escudo Arcano", icone: "🛡", gatilho: "sofre_dano",
     exigeTipo: ["conjurador"], pm: 2, corta: 0.6, minDano: 6,
@@ -66,11 +82,13 @@ export function reacoesDe(pers) {
 /* ---------------- A DECISÃO ----------------
    Vale gastar a reação agora? O sistema é econômico de propósito: aparar um
    arranhão desperdiça o recurso que salvaria a vida no golpe seguinte. */
-export function escolherReacao({ pers, gatilho, dano = 0, temReacao = true }) {
+export function escolherReacao({ pers, gatilho, dano = 0, temReacao = true, tipoDano = "fisico" }) {
   if (!temReacao || !pers) return null;
   const candidatas = reacoesDe(pers).filter((r) => r.gatilho === gatilho);
   for (const r of candidatas) {
     if ((r.pm || 0) > (pers.mana || 0)) continue;
+    /* v9.47: reação que só morde magia não morde uma machadada. */
+    if (r.soMagia && (!tipoDano || tipoDano === "fisico")) continue;
     if (gatilho === "sofre_dano") {
       const limite = Math.max(r.minDano || 0, Math.round((pers.vidaMax || 20) * 0.08));
       if (dano < limite) continue;      // golpe pequeno não merece a reação

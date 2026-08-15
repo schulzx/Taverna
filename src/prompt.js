@@ -54,6 +54,7 @@ import { PROFISSOES_PROMPT } from "./profissoes.js";
 import { OFICINA_PROMPT } from "./oficina.js";
 import { GATILHOS_PROMPT } from "./gatilhos.js";
 import { INVOCACOES_PROMPT } from "./invocacoes.js";
+import { HABILIDADES_PROMPT } from "./habilidades.js";
 
 export function fichaTexto(p) {
   const attrs = ATRIBUTOS.map((a) => `${a.nome}: +${p.atributos[a.id]}`).join(", ");
@@ -178,6 +179,8 @@ ${PROFISSOES_PROMPT}
 ${GATILHOS_PROMPT}
 
 ${INVOCACOES_PROMPT}
+
+${HABILIDADES_PROMPT}
 
 ${OFICINA_PROMPT}
 
