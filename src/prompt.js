@@ -51,6 +51,8 @@ import { ORACULO_PROMPT } from "./oraculo.js";
 import { SINTONIA_PROMPT } from "./sintonia.js";
 import { TRACOS_PROMPT } from "./tracos.js";
 import { PROFISSOES_PROMPT } from "./profissoes.js";
+import { OFICINA_PROMPT } from "./oficina.js";
+import { GATILHOS_PROMPT } from "./gatilhos.js";
 
 export function fichaTexto(p) {
   const attrs = ATRIBUTOS.map((a) => `${a.nome}: +${p.atributos[a.id]}`).join(", ");
@@ -171,6 +173,10 @@ ${DADIVAS_PROMPT}
 ${TRACOS_PROMPT}
 
 ${PROFISSOES_PROMPT}
+
+${GATILHOS_PROMPT}
+
+${OFICINA_PROMPT}
 
 ${MAGIAS_PROMPT}
 

@@ -238,6 +238,88 @@ export function conjuracaoBloqueada(pers, ranks) {
   return penalidadesAtivas(pers, ranks).some((p) => p.tipo === "sem_magia");
 }
 
+/* ============================================================
+   O DADO DA ARMA E A LÂMINA SUTIL (v9.45)
+
+   Até aqui a arma quase não importava. `danoDe` somava um d4 fixo
+   mais o MAIOR entre Força e Destreza, para todo mundo e em toda
+   arma — o montante e a adaga batiam igual, e a propriedade "sutil"
+   do catálogo era decoração, porque a finesse já valia para tudo.
+
+   Duas mudanças que só fazem sentido juntas:
+
+   1. CADA ARMA TEM SEU DADO. É o que transforma escolher arma em
+      decisão: o montante bate 2d6 e ocupa as duas mãos; a adaga bate
+      1d4 e cabe em qualquer lugar.
+
+   2. SUTIL VOLTA A SER UMA PROPRIEDADE. Corpo a corpo usa FORÇA;
+      arma sutil (adaga, rapieira, espada curta, cimitarra, katana,
+      stiletto, chicote) e arma à distância usam o melhor entre Força
+      e Destreza. Sem o passo 1 isso seria só uma perda: o duelista
+      de Destreza perderia o machado e não ganharia nada em troca.
+      Com ele, a rapieira (1d8, sutil) passa a ser a arma que ela
+      sempre deveria ter sido.
+
+   O FOCO ARCANO conta como sutil de propósito. Cajado e orbe não são
+   armas de músculo, e obrigar o mago a ter Força para bater com o
+   bastão seria cobrar dele um atributo que a classe inteira despreza.
+   ============================================================ */
+
+/* {n, faces} — quantos dados e de quantas faces. Sai da CATEGORIA,
+   ajustado pelas propriedades: leve desce, pesada/duas mãos sobe. */
+export function danoDaArma(item) {
+  const f = item ? fichaDoItem(item) : null;
+  if (!f || f.familia !== "arma") return { n: 1, faces: 2, texto: "1d2", rotulo: "desarmado" };
+  const props = f.props || [];
+  const leve = props.includes("leve");
+  const duasMaos = props.includes("duas mãos");
+  const pesada = props.includes("pesada");
+  const marcial = (CAT_ARMA[f.cat] || {}).classe === "marcial";
+
+  if (f.cat === "arcana") return { n: 1, faces: leve ? 4 : 6, texto: leve ? "1d4" : "1d6", rotulo: "foco arcano" };
+  const aDistancia = !!(CAT_ARMA[f.cat] || {}).distancia;
+  if (pesada && duasMaos) {
+    /* 2d6 é o dado do MONTANTE — peso movido pelos ombros. Arco longo e besta
+       pesada também são "pesada, duas mãos" no catálogo, e por isso a
+       distinção tem de estar aqui: o que a corda entrega é 1d10, não o
+       balanço de uma lâmina de dois gumes. */
+    const dado = (marcial && !aDistancia) ? { n: 2, faces: 6, texto: "2d6" } : { n: 1, faces: 10, texto: "1d10" };
+    return { ...dado, rotulo: aDistancia ? "arma pesada de longo alcance" : "arma pesada de duas mãos" };
+  }
+  if (duasMaos) return { n: 1, faces: marcial ? 10 : 8, texto: marcial ? "1d10" : "1d8", rotulo: "arma de duas mãos" };
+  if (leve) return { n: 1, faces: marcial ? 6 : 4, texto: marcial ? "1d6" : "1d4", rotulo: "arma leve" };
+  return { n: 1, faces: marcial ? 8 : 6, texto: marcial ? "1d8" : "1d6", rotulo: marcial ? "arma marcial" : "arma simples" };
+}
+
+/* Qual atributo entra no golpe: "forca", "destreza" ou "melhor". */
+export function atributoDaArma(item) {
+  const f = item ? fichaDoItem(item) : null;
+  if (!f || f.familia !== "arma") return "forca";           // punho e chute são força
+  if ((CAT_ARMA[f.cat] || {}).distancia) return "destreza";  // arco e besta, sempre
+  if (f.cat === "arcana") return "melhor";                   // o foco não é músculo
+  return (f.props || []).includes("sutil") ? "melhor" : "forca";
+}
+
+/* O número que o combate usa, já resolvido contra uma ficha. */
+export function modDoGolpe(ent, item) {
+  const forca = (ent && ent.atributos && ent.atributos.forca) || 0;
+  const dex = (ent && ent.atributos && ent.atributos.destreza) || 0;
+  const modo = atributoDaArma(item);
+  if (modo === "destreza") return dex;
+  if (modo === "forca") return forca;
+  return Math.max(forca, dex);
+}
+
+/* Uma linha para a bolsa e para a mensagem de equipar: "1d8 · sutil". */
+export function fichaDeCombateTexto(item) {
+  const f = item ? fichaDoItem(item) : null;
+  if (!f || f.familia !== "arma") return "";
+  const d = danoDaArma(item);
+  const modo = atributoDaArma(item);
+  const atr = modo === "destreza" ? "Destreza" : modo === "melhor" ? "Força ou Destreza" : "Força";
+  return `${d.texto} · ${atr}${(f.props || []).length ? ` · ${f.props.join(", ")}` : ""}`;
+}
+
 /* ---------------- O QUE A CLASSE COMEÇA USANDO ----------------
    Serve à criação de personagem e ao craft: o que faz sentido para você. */
 export function armasRecomendadas(classe) {
@@ -261,7 +343,9 @@ export function resumoProficienciaPrompt(pers, ranks) {
   return `EQUIPAMENTO: ${treino} ATENÇÃO — o herói está usando o que não sabe usar: ${pen.map((p) => `${p.item} (${p.texto})`).join("; ")}. Isso é FATO mecânico: narre o desconforto, o peso, a manga que atrapalha o gesto — e nunca deixe passar como se estivesse tudo bem.`;
 }
 
-export const ITENS_PROMPT = `ARMAS E ARMADURAS (v9.11 — o sistema decide, você narra):
+export const ITENS_PROMPT = `ARMAS E ARMADURAS (v9.45 — o sistema decide, você narra):
 - Cada arma é simples ou marcial; cada armadura é leve, média ou pesada. Cada classe sabe usar um conjunto — o guerreiro veste placas e empunha montante, o mago fica na adaga e no cajado, o ladino em armadura leve e lâminas sutis.
+- A ARMA IMPORTA: cada uma tem seu dado (o montante bate 2d6 e ocupa as duas mãos; a adaga bate 1d4 e cabe em qualquer lugar) e pede um atributo. Corpo a corpo é FORÇA, salvo as lâminas SUTIS (adaga, rapieira, espada curta, cimitarra, katana, estilete, chicote) e os focos arcanos, que valem pela Destreza quando ela for maior; arco e besta são sempre Destreza. Narre a diferença — o peso que o golpe carrega, ou a precisão que ele tem —, mas nunca o número.
+- Arma de DUAS MÃOS ocupa as duas: quem empunha montante ou arco longo não segura escudo, e o sistema tira um quando o outro entra. Arma de ALCANCE (lança, tridente, alabarda, pique, chicote) espeta de um passo mais longe.
 - Usar o que não se sabe usar NÃO é proibido: é caro. O sistema aplica desvantagem, perda de proficiência, deslocamento reduzido — e, para conjuradores em armadura sem treino, a IMPOSSIBILIDADE de conjurar. Quando o envelope avisar que o herói está mal-equipado, narre isso com honestidade: o gesto que não sai, o peso que atrasa, a lâmina grande demais para o pulso.
 - Você NUNCA concede nem retira proficiência, e nunca deixa um mago sair conjurando de dentro de uma armadura de placas porque a cena ficaria bonita.`;

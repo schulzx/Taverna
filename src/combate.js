@@ -13,8 +13,9 @@ import { mecanicaDe } from "./condicoes.js";
 import { golpeDaVez } from "./aflicoes.js";
 import { decidirAcaoCompanheiro, valorDaCura, danoDaHabilidadeComp } from "./companheiros.js";
 import { tipoDeDanoDaHabilidade } from "./combos.js";
-import { proficienciaDe, fichaDoItem } from "./itens.js";
+import { proficienciaDe, fichaDoItem, danoDaArma, modDoGolpe } from "./itens.js";
 import { estaSintonizado } from "./sintonia.js";
+import { estaInvisivel } from "./gatilhos.js";
 
 export function d(n) { return 1 + Math.floor(Math.random() * n); }
 
@@ -122,16 +123,27 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
 }
 
 /* Estima o dano-base de um atacante a partir de seus atributos/arma.
-   Jogador: força ou destreza + arma. Inimigo: pela ameaça. */
+   Jogador: o DADO DA ARMA + o atributo que a arma pede. Inimigo: pela ameaça.
+
+   v9.45: até aqui a conta era `4 + max(força, destreza) + d4`, igual para
+   toda arma — o montante e a adaga batiam o mesmo, e o `4` fixo fazia o
+   punho valer quase uma espada. Agora o dado sai do catálogo e o atributo
+   sai da propriedade: corpo a corpo é Força, salvo se a arma for sutil.
+   O `2` que sobrou do antigo `4` é o piso que mantém o dano total na mesma
+   faixa de antes — sem ele, trocar a fórmula seria também nerfar todo
+   mundo, e uma coisa de cada vez. */
 export function danoDe(ent, ehInimigo = false) {
   if (ehInimigo) {
     const base = { fraco: 3, comum: 5, competente: 7, elite: 10, lendario: 14 }[ent.ameaca] || 5;
     return base + d(4) - 1;
   }
-  const forca = ent.atributos?.forca || 0, dex = ent.atributos?.destreza || 0;
-  const atr = Math.max(forca, dex);
-  const bonusArma = ent.equipados?.arma?.atributos?.dano || 0;
-  return 4 + atr + bonusArma + d(4) - 1;
+  const arma = ent.equipados?.arma || null;
+  const dado = danoDaArma(arma);
+  const atr = modDoGolpe(ent, arma);
+  const bonusArma = arma?.atributos?.dano || 0;
+  let total = 2 + atr + bonusArma;
+  for (let i = 0; i < dado.n; i++) total += d(dado.faces);
+  return total;
 }
 
 /* frase curta e neutra do que aconteceu (o app mostra; a IA embeleza) */
@@ -197,6 +209,11 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
         /* cobertura do LUGAR de quem apanha: quem luta atrás de alguma coisa
            é mais difícil de acertar, e é isso que dá motivo para recuar */
         bonusDefesaAlvo: bonusDefesaEm(grade, alvo.onde || pos),
+        /* v9.45: quem não é visto é difícil de acertar. Enquanto a
+           invisibilidade dura — e ela dura até o herói atacar ou conjurar —
+           todo golpe contra ele sai com desvantagem. É a metade da magia que
+           faltava; sem ela, sumir não protegia de nada. */
+        desvantagem: estaInvisivel(alvo.ent),
       });
       /* GOLPE DO CATÁLOGO (v9.1): o bicho não "ataca" genericamente — ele usa
          um golpe com nome, do repertório fixo dele. É esse nome que o Mestre
@@ -537,6 +554,10 @@ export function ataqueDeOportunidade(atacante, alvo, bonusAtaque, danoBase, { eh
     atacante: atacante.nome || atacante, alvo, ehAtacanteInimigo,
     bonusAtaque, danoBase, condAtacante: atacante.condicoes || [], condAlvo: alvo.condicoes || [],
     tipoDano, resistAlvo: resistenciasEquipadas(alvo),
+    /* v9.45: acertar quem não se vê é difícil. Vale para o ataque de
+       oportunidade porque é exatamente aqui que a invisibilidade deveria
+       salvar o herói que decide sair de perto. */
+    desvantagem: estaInvisivel(alvo),
   });
 }
 

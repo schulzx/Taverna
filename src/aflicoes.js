@@ -39,7 +39,18 @@ export const PORTADORES = [
   { id: "gelo",       re: /gélid|gelid|gelo|congel|glacial|nevasca|frio mordaz/i,                                           cond: "lento",      alvo: "alvo", chance: 0.5,  dif: 0 },
   { id: "cegueira",   re: /cega|cegue|ofusc|clarão|clarao|areia nos olhos|fumaça|fumaca|flash/i,                            cond: "cego",       alvo: "alvo", chance: 0.45, dif: 0 },
   { id: "terror",     re: /terror|pavor|medo|amedront|uivo|berro|aterrad|macabr|espectr|assombr|arrepi/i,                   cond: "amedrontado", alvo: "alvo", chance: 0.45, dif: 0 },
-  { id: "prisao",     re: /rede|teia|laço|laco|corda|grilh[aã]o|agarr|enred|lama|piche|raiz|vinha/i,                        cond: "agarrado",   alvo: "alvo", chance: 0.5,  dif: 0 },
+  /* v9.45: "prende", "imobiliza", "impede de sair do lugar" são a mesma coisa
+     que rede e teia, e faltavam. A varredura de habilidades encontrou Prisão
+     Arcana ("Prende um inimigo por 2 turnos") e Armadilha ("Prende o primeiro
+     inimigo que passar") sem nenhum portador — duas habilidades cujo efeito
+     inteiro é a palavra que ninguém estava lendo. */
+  { id: "prisao",     re: /rede|teia|laço|laco|corda|grilh[aã]o|agarr|enred|lama|piche|raiz|vinha|prend[ea]|prision|aprision|imobiliz|algem|cativ/i, cond: "agarrado",   alvo: "alvo", chance: 0.5,  dif: 0 },
+  /* "para de lutar", "sai da luta", "não ataca mais" — o Fascínio do Bardo
+     dizia isso por extenso e o sistema não tinha onde encaixar. */
+  { id: "fascinio",   re: /fascin|para de lutar|deixa de lutar|baixa a arma|perde a vontade de lutar|encara sem reagir/i,     cond: "enfeiticado", alvo: "alvo", chance: 0.5, dif: 1 },
+  /* "impede de usar habilidades" (Toque da Quietude) e "silêncio": quem não
+     conjura perde a ação mágica, e Atordoado é o mais próximo do catálogo. */
+  { id: "quietude",   re: /impede.{0,20}(habilidade|magia|conjur)|silenc|emudec|sela a voz|sem conseguir conjurar/i,          cond: "atordoado",  alvo: "alvo", chance: 0.5, dif: 1 },
   { id: "encanto",    re: /encant|enfeitiç|enfeitic|domin|hipnot|sedu|canto de sereia|sussurr|persuas[aã]o arcana/i,        cond: "enfeiticado", alvo: "alvo", chance: 0.4,  dif: 1 },
   { id: "derrubada",  re: /derrub|investida|rasteira|empurr|tromba|arremete|carga|placagem/i,                               cond: "caido",      alvo: "alvo", chance: 0.45, dif: 0 },
   { id: "drenagem",   re: /drena|suga|debilit|enfraquec|maldi[çc]|praga|definha|murcha/i,                                   cond: "enfraquecido", alvo: "alvo", chance: 0.45, dif: 0 },

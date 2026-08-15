@@ -48,13 +48,24 @@ export default async function handler(req, res) {
               model: modelo,
               messages: msgs,
               max_tokens: teto,
-              /* TEMPERATURA POR TAREFA (v7.2.2): o mestre narra a 1.3 — a
-                 recomendação oficial para escrita criativa: prosa mais autêntica
-                 e imprevisível. A burocracia (livro/resumo) fica a 0.3: ali
-                 criatividade é defeito — queremos fidelidade aos fatos.
-                 A estrutura JSON não sofre: response_format garante a forma;
-                 a temperatura só mexe no CONTEÚDO. Override: DS_TEMPERATURA. */
-              temperature: tarefa === "leve" ? 0.3 : Number(process.env.DS_TEMPERATURA || 1.1),
+              /* TEMPERATURA POR TAREFA. A burocracia (livro/resumo) fica a
+                 0.3: ali criatividade é defeito — queremos fidelidade aos fatos.
+
+                 v9.45 — O MESTRE DESCE DE 1.1 PARA 0.85. A recomendação de
+                 1.3 para "escrita criativa" é dada para inglês, prosa livre e
+                 prompt curto. Aqui não é nada disso: é português, é saída em
+                 JSON e o prompt de sistema passa de 90 mil caracteres. Nessas
+                 três condições a temperatura alta para de produzir surpresa e
+                 passa a produzir ERRO DE SINTAXE — o jogador mandou uma
+                 captura com "o Arco tinha fome; a laje esta; o segundo andar
+                 mordiscava à toa" e "Nicolau se interessa por ninguém e por
+                 dívida", frases que não querem dizer nada e não são escolha
+                 estilística de ninguém.
+
+                 0.85 mantém a prosa viva e devolve a gramática. Se ficar
+                 previsível demais, DS_TEMPERATURA sobe sem redeploy — é
+                 variável de ambiente justamente para se afinar jogando. */
+              temperature: tarefa === "leve" ? 0.3 : Number(process.env.DS_TEMPERATURA || 0.85),
               thinking: { type: "disabled" },
               ...(emJson ? { response_format: { type: "json_object" } } : {}),
             }),

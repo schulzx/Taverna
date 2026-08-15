@@ -62,7 +62,7 @@ import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDa
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { detectarPartida, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra } from "./rastro.js";
 import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, resolvidaPeloSistema, PERGUNTAS_AOS_MORTOS, abrirInterrogatorio, perguntarAoMorto, envelopeDoMorto, textoDeIdentificacao, localizarNoMapa, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
-import { avaliarEquipar, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
+import { avaliarEquipar, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt } from "./prompt.js";
 import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./ui.jsx";
@@ -81,6 +81,8 @@ import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, 
 import { gerarDadivaUnica, envelopeDaUnica, todasAsLinhas as linhasDeDadivas, ataquesExtras, danoExtraDeDadiva, descontoDePM, bonusSocialDeDadiva, temVantagemMental, dobraMovimento, ignoraTerrenoDificil, criticoMinimo, imuneA, refazerDisponivel, gastarRefazer, repousarDadivas, segundoFolegoDisponivel, gastarSegundoFolego, resumoDadivasPrompt, DADIVAS_PROMPT } from "./dadivas.js";
 import { comDom, vantagemDeTraco, vantagemMentalDeTraco, imuneDeTraco, iniciativaDeTraco, ignoraDificilPorTraco, oficioDeTraco, refazerDeTracoDisponivel, gastarRefazerDeTraco, sorteDisponivel, gastarSorte, firmeDisponivel, gastarFirme, repousarTracos, abrirCombateTracos, amortecerDano, textoDoTraco, resumoTracosPrompt } from "./tracos.js";
 import { bonusDeBancada, componentesExtras, bonusDeNavegacao, despojosExtras, bonusDeTeste, precoDeVenda, precoDeCompraPara, moedasDeEspolio, resumoProfissaoPrompt } from "./profissoes.js";
+import { criarOficina, anotar as anotarOficina, bilheteDaOficina, OFICINA_PROMPT } from "./oficina.js";
+import { romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, devolverSegura, GATILHOS_PROMPT } from "./gatilhos.js";
 import { agruparMensagens } from "./resumo.js";
 
 /* ============================================================
@@ -1526,7 +1528,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                               <div className="flex items-center justify-between gap-2">
                                 <div className="min-w-0">
                                   <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{it.nome}</div>
-                                  <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>{SLOT_ROTULO[it.tipo] || it.tipo} · {it.raridade}</div>
+                                  <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>{SLOT_ROTULO[it.tipo] || it.tipo} · {it.raridade}{fichaDeCombateTexto(it) ? <span style={{ color: T.inkDim }}> · {fichaDeCombateTexto(it)}</span> : null}</div>
                                 </div>
                                 <button onClick={() => desequiparComp(comp.nome, slot)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>tirar</button>
                               </div>
@@ -1554,7 +1556,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                             <div className="flex items-center justify-between gap-2">
                               <div className="min-w-0">
                                 <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{it.nome}</div>
-                                <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>{SLOT_ROTULO[it.tipo] || it.tipo} · {it.raridade}</div>
+                                <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>{SLOT_ROTULO[it.tipo] || it.tipo} · {it.raridade}{fichaDeCombateTexto(it) ? <span style={{ color: T.inkDim }}> · {fichaDeCombateTexto(it)}</span> : null}</div>
                               </div>
                               <div className="flex items-center gap-1 shrink-0">
                                 <button onClick={() => desmontarEquip(comp.nome, it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title={`Desmontar → +${essenciaDe(it)} essência`}>⚒</button>
@@ -1620,7 +1622,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                         <div className="flex items-center justify-between gap-2">
                           <div className="min-w-0">
                             <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{it.nome}</div>
-                            <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>{SLOT_ROTULO[it.tipo] || it.tipo} · {it.raridade}</div>
+                            <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>{SLOT_ROTULO[it.tipo] || it.tipo} · {it.raridade}{fichaDeCombateTexto(it) ? <span style={{ color: T.inkDim }}> · {fichaDeCombateTexto(it)}</span> : null}</div>
                           </div>
                           <button onClick={() => desequipar(slot)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>tirar</button>
                         </div>
@@ -1649,7 +1651,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                       <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
                           <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{it.nome}</div>
-                          <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>{SLOT_ROTULO[it.tipo] || it.tipo} · {it.raridade}</div>
+                          <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>{SLOT_ROTULO[it.tipo] || it.tipo} · {it.raridade}{fichaDeCombateTexto(it) ? <span style={{ color: T.inkDim }}> · {fichaDeCombateTexto(it)}</span> : null}</div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">{(personagem.grupo || []).length > 0 && (
                           <select value="" onChange={(e) => { if (e.target.value) transferirItem("eu", e.target.value, "equipamento", it.nome); }} className="tv-mono text-[10px] rounded px-1 py-1" style={{ background: T.panel, color: T.violetSoft, border: `1px solid ${T.line}` }}>
@@ -2820,6 +2822,9 @@ export default function Taverna() {
   const systemRef = useRef("");
   const livroRef = useRef("");
   const notaRef = useRef("");
+  /* v9.45: o que o herói fez de mãos desde o último turno de verdade. Não é
+     estado de jogo — é uma fila de recibos que espera o próximo `enviar`. */
+  const oficinaRef = useRef(criarOficina());
   const turnoContRef = useRef(0);
   const fimRef = useRef(null);
   const saveRef = useRef(null);
@@ -4029,6 +4034,18 @@ export default function Taverna() {
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Meus PV chegaram a zero e a Dádiva da Recuperação me pôs de pé na hora, com ${volta} PV. Narre o joelho que dobra e o corpo que se recusa a ficar no chão — sem mudar número nenhum.`;
       return gastarSegundoFolego({ ...pers, vida: volta, morrendo: false, morte: { sucessos: 0, falhas: 0 } }, diaRef.current);
     }
+    /* v9.45: a habilidade da CLASSE que promete o mesmo — "Ao cair a 0 PV,
+       continua de pé por 1 turno" (Indomável) e "Não pode cair abaixo de 1 PV"
+       (Corpo Imortal). Vem antes do traço racial porque volta a cada luta,
+       e recurso que se renova mais rápido se gasta primeiro. */
+    {
+      const quem = seguraEmPe(pers);
+      if (quem) {
+        msgs.push(`🛡 ${quem} — você deveria cair, e não cai: fica com 1 PV (uma vez por luta).`);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Meus PV chegaram a zero e "${quem}" me segurou de pé com 1 PV. Narre o corpo que se recusa a ir ao chão. Não mude número nenhum, e deixe claro que agora qualquer coisa me derruba.`;
+        return gastarSegura({ ...pers, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } });
+      }
+    }
     /* FÚRIA PERSISTENTE (v9.44): mesma regra, mesma porta. Vale em qualquer
        queda — a do turno inimigo, a do sangramento, a do veneno na estrada. */
     if (firmeDisponivel(pers, diaRef.current)) {
@@ -4508,7 +4525,7 @@ export default function Taverna() {
            do Halfling e a Pele de Pedra do Goliath. Aqui, e não no fim da
            luta anterior, porque nem toda luta tem fim registrado: o Mestre às
            vezes encerra na narrativa e o sistema só descobre na próxima. */
-        pers = abrirCombateTracos(pers);
+        pers = devolverSegura(abrirCombateTracos(pers));
         const participantes = [
           { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") + iniciativaDeTraco(pers) },
           ...(pers.grupo || []).map((g) => ({ nome: g.nome, lado: "aliado", modDestreza: 1 })),
@@ -5552,7 +5569,15 @@ export default function Taverna() {
        leve de volta à cidade", e o detector lia a proibição como pedido. */
     ultimoPedidoRef.current = String(conteudo || "").trimStart().startsWith("[") ? "" : String(conteudo || "");
     varrerChao();   // outro lugar, outro dia: o que ficou para trás fica para trás
-    const nota = notaRef.current; notaRef.current = "";
+    /* v9.45: o trabalho de bastidor entra AQUI, junto do bilhete do sistema —
+       e só aqui. Cada poção fervida na bancada anotou uma linha e não acordou
+       o Mestre; agora todas viram um envelope só, colado à frente do que o
+       jogador de fato pediu. É o que separa "ato na cena" de "trabalho de
+       mãos": o primeiro merece um turno, o segundo merece uma frase. */
+    const oficina = bilheteDaOficina(oficinaRef.current);
+    if (oficina) oficinaRef.current = criarOficina();
+    const nota = [oficina, notaRef.current].filter(Boolean).join("\n");
+    notaRef.current = "";
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
     /* RODAPÉ DO SISTEMA (v7.0.2): lembrete curto colado SÓ na mensagem atual
        (não fica no histórico — custo ~zero) reforçando as regras que o
@@ -6014,7 +6039,11 @@ export default function Taverna() {
     if (!verboAtaque) return null;
     const vivos = comb.inimigos.filter((e) => !e.derrotado);
     const gdJ = grauDe(divindadeRef.current);
-    const bonusAtkBase = Math.max((pers.atributos?.forca || 0), (pers.atributos?.destreza || 0)) + 2 + Math.floor(((pers.nivel || 1) - 1) / 4);
+    /* v9.45: o bônus de ataque sai da MESMA regra do dano — corpo a corpo é
+       Força, salvo se a arma for sutil ou à distância. Antes era o maior dos
+       dois em qualquer caso, e por isso a propriedade "sutil" do catálogo
+       nunca significou nada: a finesse já valia para o montante. */
+    const bonusAtkBase = modDoGolpe(pers, pers.equipados && pers.equipados.arma) + 2 + Math.floor(((pers.nivel || 1) - 1) / 4);
     /* buffs FÍSICOS somam no golpe de arma — os mágicos, não (v9.6) */
     const bArma = bonusDeArma(pers);
     /* ATAQUES MÚLTIPLOS (D&D): 2 ataques no nível 5, 3 no 11, 4 no 20 */
@@ -6091,11 +6120,29 @@ export default function Taverna() {
         /* v9.44: sem treino na arma ou na armadura, o golpe sai torto — é o
            que o painel de equipamento promete desde a v9.11. */
         desvantagem: ataqueEstorvado(pers),
+        /* v9.45: e quem golpeia sem ser visto acerta melhor. A vantagem vale
+           para ESTE golpe: a invisibilidade só cai depois que ele sai. */
+        vantagem: estaInvisivel(pers),
       });
       /* três degraus abaixo, o golpe comum atravessa sem ferir */
       if (imunePorEscopo(gdJ, gdAlvo)) { r.escopoImune = true; r.dano = 0; }
       if (r.dano > 0) { const l = locais.find((e) => e.nome === alvo.nome); l.vida = Math.max(0, l.vida - r.dano); if (l.vida <= 0) l.derrotado = true; }
       resultados.push({ r, alvo: { ...alvo } });
+    }
+    /* ---- ATACOU, APARECEU (v9.45) ----
+       "Fica invisível ATÉ ATACAR ou conjurar" era a descrição da habilidade
+       desde sempre, e o "até" não existia em lugar nenhum do código: o
+       jogador atacava, o sistema seguia contando turnos e o Mestre seguia
+       narrando um herói que ninguém via. A ruptura vem DEPOIS do laço para
+       que o golpe que quebra o feitiço ainda seja o golpe com vantagem —
+       que é exatamente o que a magia compra. */
+    if (resultados.length) {
+      const rup = romperPorGatilho(fichaViva(), "atacar");
+      if (rup.rompidos.length) {
+        mudarFicha(() => rup.pers);
+        pushMsgs(rup.linhas.map((t) => ({ autor: "sistema", texto: t })));
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${rup.nota}`;
+      }
     }
     return { resultados, nAtaques, bonusArma: bArma };
   };
@@ -6719,6 +6766,18 @@ export default function Taverna() {
         }
         const recH = h.recarga != null ? Math.max(0, Number(h.recarga) || 0) : recargaPadrao(custo);
         pers = { ...pers, mana: pers.mana - custo, habRecarga: recH > 0 ? { ...(pers.habRecarga || {}), [(h.nome || "").toLowerCase()]: recH } : (pers.habRecarga || {}) };
+        /* CONJUROU, APARECEU (v9.45). Vem ANTES de aplicar o buff desta
+           habilidade, e a ordem é o detalhe que importa: quem lança
+           Invisibilidade some agora, e não some para logo em seguida cair
+           por causa do próprio feitiço que acabou de lançar. */
+        {
+          const rupC = romperPorGatilho(pers, "conjurar");
+          if (rupC.rompidos.length) {
+            pers = rupC.pers;
+            rupC.linhas.forEach((t) => linhas.push(t));
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${rupC.nota}`;
+          }
+        }
         const buffH = aplicarBuffDeHabilidade(h, pers);
         pers = buffH.pers;
         if (buffH.texto) linhas.push(buffH.texto);
@@ -7195,6 +7254,16 @@ export default function Taverna() {
     }
     let persAtual = { ...persTracos, vida: Math.max(0, persTracos.vida - danoNoJogador), mana: Math.max(0, (persTracos.mana || 0) - pmReacaoRef.current), grupo: grupoAtual };
     pmReacaoRef.current = 0;
+    /* v9.45: o que promete cair no primeiro golpe sofrido cai aqui — este é o
+       único ponto em que o dano do inimigo vira PV do herói. */
+    if (danoNoJogador > 0) {
+      const rupD = romperPorGatilho(persAtual, "dano");
+      if (rupD.rompidos.length) {
+        persAtual = rupD.pers;
+        pushMsgs(rupD.linhas.map((t) => ({ autor: "sistema", texto: t })));
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${rupD.nota}`;
+      }
+    }
     /* ---- SEGUNDO FÔLEGO (v9.32) ----
        A Dádiva da Recuperação diz, desde a v8.1, "recupera metade da vida ao
        cair a 0 PV, uma vez por dia" — e não havia uma linha de código atrás
@@ -7207,6 +7276,15 @@ export default function Taverna() {
       persAtual = gastarSegundoFolego({ ...persAtual, vida: volta, morrendo: false, morte: { sucessos: 0, falhas: 0 } }, diaRef.current);
       pushMsgs([{ autor: "sistema", texto: `🌠 Dádiva da Recuperação — você cai e o corpo se recusa: +${volta} PV (uma vez por dia).` }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DÁDIVA DA RECUPERAÇÃO — APLICADA PELO SISTEMA] Eu cheguei a 0 PV e voltei na mesma hora com ${volta} PV: é a dádiva épica agindo, e ela só faz isso uma vez por dia. NÃO me trate como caído nem como moribundo, e narre o instante como o que é — o joelho que dobra e não chega ao chão.`;
+    }
+    /* v9.45: a mesma habilidade de classe, no caminho do turno inimigo. */
+    if (persAtual.vida <= 0) {
+      const quemSegura = seguraEmPe(persAtual);
+      if (quemSegura) {
+        persAtual = gastarSegura({ ...persAtual, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } });
+        pushMsgs([{ autor: "sistema", texto: `🛡 ${quemSegura} — você deveria cair, e não cai: fica com 1 PV (uma vez por luta).` }]);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] O golpe me levaria a 0 e "${quemSegura}" me segurou de pé com 1 PV. NÃO me trate como caído. Narre o corpo que se recusa, e deixe claro que agora qualquer coisa me derruba.`;
+      }
     }
     /* ---- FÚRIA PERSISTENTE (v9.44) ----
        O Meio-orc promete, desde a primeira versão, "ao chegar a 0 PV, fica
@@ -8456,7 +8534,8 @@ export default function Taverna() {
       }
       return { ...p, equipados };
     });
-    const linhas = [{ autor: "sistema", texto: `⚔ Equipou: ${item.nome}${av.ficha ? ` (${av.ficha.rotulo})` : ""}` }];
+    const combTxt = fichaDeCombateTexto(item);
+    const linhas = [{ autor: "sistema", texto: `⚔ Equipou: ${item.nome}${av.ficha ? ` (${av.ficha.rotulo})` : ""}${combTxt ? ` — ${combTxt}` : ""}` }];
     if (largou.length) linhas.push({ autor: "sistema", texto: `🤲 Você só tem duas mãos — ${largou.join(" e ")} voltou para a mochila.` });
     for (const p of av.penalidades) linhas.push({ autor: "sistema", texto: `⚠ ${p.texto}` });
     pushMsgs(linhas);
@@ -9702,11 +9781,20 @@ export default function Taverna() {
     const p = aplicarCraft(personagem, r, res);
     setPersonagem(p);
     const extra = avancarMinutos(60);   // uma hora de bancada, dê certo ou não
+    /* v9.45: A BANCADA NÃO ACORDA O MESTRE. Cada frasco fervido pedia um
+       turno inteiro de narração — e quem ferve cinco parava cinco vezes, a
+       cinco chamadas de API, para ouvir sobre um trabalho a que ninguém
+       assiste. O recibo fica anotado e viaja junto do próximo ato de
+       verdade, como pano de fundo. O jogador continua vendo tudo na hora:
+       o resultado, o dado e o relógio saem no chat, que é onde ele olha. */
+    const nomeProduto = (produtoDaReceita(r) || {}).nome || r.produz;
+    oficinaRef.current = anotarOficina(oficinaRef.current, { tipo: "bancada", nome: nomeProduto, ok: !!res.ok, minutos: 60 });
     pushMsgs([
-      { autor: "jogador", texto: `⚗ Trabalho na bancada: ${(produtoDaReceita(r) || {}).nome || r.produz}` },
+      { autor: "jogador", texto: `⚗ Trabalho na bancada: ${nomeProduto}` },
       { autor: "sistema", texto: textoDoCraft(r, res, mostrarRolagensRef.current) },
+      ...(extra ? [{ autor: "sistema", texto: extra.trim() }] : []),
     ]);
-    enviar(`${envelopeDoCraft(r, res)}${extra}${SO_ISSO}`, p);
+    salvar({ personagem: p });
   };
 
   /* O caderno de receitas com o estado de cada uma — vai para a Bolsa.
