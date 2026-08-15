@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
-import { gerarGeografia, garantirGeografia, descobrirCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas } from "./geografia.js";
+import { gerarGeografia, garantirGeografia, descobrirCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar } from "./historia.js";
@@ -2089,7 +2089,7 @@ function PainelExame({ itens = [], raio = 0, aoPegar, aoFechar }) {
   );
 }
 
-function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover, grupo = [], passoM = 9, passoTotal = 9, previsao = null, mira = null, onMirar, alcanceMira = null }) {
+function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover, grupo = [], passoM = 9, passoTotal = 9, previsao = null, mira = null, onMirar, alcanceMira = null, acaoBonus = false }) {
   const [bolsaAberta, setBolsaAberta] = useState(false);
   if (!combate || !combate.inimigos || combate.inimigos.length === 0) return null;
   const eco = combate.economia || { acao: 1, extra: 1 };
@@ -2106,7 +2106,10 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
         {combate.rodada > 1 && <span style={{ color: T.inkDim }}>· rodada {combate.rodada}</span>}
         <span className="flex items-center gap-1 ml-auto normal-case tracking-normal">
           {chipMov(eco.acao > 0, "⚔ ação")}
-          {chipMov(eco.extra > 0, "✦ extra")}
+          {/* v9.43: quem não tem ação bônus não vê a pílula dela. Mostrar um
+              recurso permanentemente riscado ensina a regra errada — o jogador
+              passa a achar que perdeu alguma coisa que nunca teve. */}
+          {eco.extra != null && (eco.extra > 0 || acaoBonus) && chipMov(eco.extra > 0, "✦ extra")}
           <span className="tv-mono text-[9px]" style={{ color: T.inkDim }} title="Ao agir, o turno é encerrado sozinho e os inimigos respondem">· agir encerra o turno</span>
         </span>
       </div>
@@ -2737,6 +2740,15 @@ export default function Taverna() {
      estado mais recente e `mudarFicha` grava nos dois lugares de uma vez, de
      modo que o próximo a ler nunca receba o passado. */
   const fichaViva = () => personagemRef.current || personagem;
+  /* ---------------- A AÇÃO BÔNUS TEM DONO (v9.43) ----------------
+     No 5e ninguém tem ação bônus por existir: ela vem de um traço de classe
+     (Surto de Ação, Ação Ardilosa, Rajada de Golpes, Fúria…) e quase sempre
+     a partir do segundo nível. Aqui ela nascia 1 para todo mundo, e um Mago
+     de nível 1 abria a luta com dois movimentos — lançava duas magias no
+     mesmo turno, que foi exatamente o que apareceu em jogo. `acoesBonusDe`
+     é o catálogo que já sabia disso e que ninguém consultava. */
+  const temAcaoBonus = (p) => acoesBonusDe((p || {}).classe, (p || {}).nivel || 1).length > 0;
+  const economiaNova = (p) => ({ acao: 1, extra: temAcaoBonus(p) ? 1 : 0 });
   const mudarFicha = (fn) => {
     const base = personagemRef.current || personagem;
     if (!base) return base;
@@ -3306,7 +3318,7 @@ export default function Taverna() {
           for (let i = 0; i < Math.max(1, Math.min(6, quantos)); i++) {
             lista.push({ nome: quantos > 1 ? `${nomeC} ${i + 1}` : nomeC, nivel: nivel || personagem.nivel || 1, ameaca: "" });
           }
-          const cru = processarCombate(null, { combate_iniciar: lista, __nivelJogador: personagem.nivel || 1 }, msgs);
+          const cru = processarCombate(null, { combate_iniciar: lista, __nivelJogador: personagem.nivel || 1, __temBonus: temAcaoBonus(personagem) }, msgs);
           const eq = equiparCombate(cru, personagem);
           const novo = eq.combate;
           combateRef.current = novo; setCombate(novo);
@@ -3331,7 +3343,7 @@ export default function Taverna() {
           const n = quantosPara(modelo, personagem, faixa);
           const lista = Array.from({ length: n }, (_, i) => ({ nome: n > 1 ? `${nomeC} ${i + 1}` : nomeC, ameaca: modelo.ameaca, nivel: modelo.nivel }));
           const msgs = [];
-          const cru = processarCombate(null, { combate_iniciar: lista, __nivelJogador: personagem.nivel || 1 }, msgs);
+          const cru = processarCombate(null, { combate_iniciar: lista, __nivelJogador: personagem.nivel || 1, __temBonus: temAcaoBonus(personagem) }, msgs);
           const eq = equiparCombate(cru, personagem);
           const novo = eq.combate;
           combateRef.current = novo; setCombate(novo);
@@ -4409,6 +4421,7 @@ export default function Taverna() {
     if (resp.mudancas) {
       const combateAntes = combateRef.current;
       resp.mudancas.__nivelJogador = pers.nivel || 1;
+      resp.mudancas.__temBonus = temAcaoBonus(pers);
       const novoCombate = processarCombate(combateRef.current, resp.mudancas, msgs);
       combateRef.current = novoCombate;
       setCombate(novoCombate);
@@ -4677,6 +4690,32 @@ export default function Taverna() {
         }
       }
     } catch { /* o códex nunca derruba o turno */ }
+    /* ---- CHEGUEI E NINGUÉM ANOTOU (v9.43) ----
+       O Mestre narrou a travessia do portal com todas as letras e esqueceu
+       de mandar `cidade_atual`: a ficção subiu para o Andar 2, o mapa ficou
+       no Andar 1. Este cão de guarda RATIFICA — a narração está certa, o
+       que falta é o registro, e registro é trabalho do sistema.
+
+       Só morde quando o destino fica a UM PASSO daqui (rota de meio dia ou
+       menos). Onde viajar custa dias, "chegar" numa frase é quase sempre
+       plano ou lembrança, e mover o herói por isso seria pior que o bug. */
+    try {
+      const jaVeio = !!(resp.mudancas && resp.mudancas.cidade_atual);
+      if (!jaVeio && !combateRef.current && !jornadaRef.current) {
+        const ch = detectarChegada(resp.narrativa, { mapa: mapaRef.current, cidade: cidadeAtualRef.current });
+        if (ch) {
+          const de = cidadeAtualRef.current;
+          cidadeAtualRef.current = ch.nome;
+          if (lugarRef.current) { lugarRef.current = null; setLugar(null); }
+          const dsc = descobrirCidade(mapaRef.current, ch.nome);
+          if (dsc.nova) { mapaRef.current = dsc.mapa; setMapa(mapaRef.current); }
+          msgs.push(`🧭 Você está em ${ch.nome}${dsc.nova ? " — e o lugar entrou no seu mapa" : ""}.`);
+          const tx = avancarMinutos(Math.max(15, Math.round((ch.dias || 0) * 1440)));
+          if (tx) msgs.push(tx);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaDaChegada(ch, de)}`;
+        }
+      }
+    } catch { /* a chegada nunca derruba o turno */ }
     /* ---- O PORTÃO (v9.12) ----
        Aqui moravam três cães de guarda separados — coerência de cena (v9.9),
        ascensão (v9.6) e morte na prosa (v9.5). Todos os três CONTRADIZEM o
@@ -5503,7 +5542,12 @@ export default function Taverna() {
          diz se "aqui" é uma cidade, um andar ou uma órbita, e sem essa
          ordem o Mestre lê a lista de locais já pensando em cidade. */
       const forma = resumoMoldePrompt(moldeMundo());
-      const aqui = [forma, ondeEstou, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo())].filter(Boolean).join("\n\n");
+      /* v9.43: para onde dá para ir num gesto. Em mundo de estrada esta linha
+         nem existe (toda rota leva dias); na Torre é o portal do andar, e sem
+         ela o Mestre inventa o nome do destino e esquece de registrar a
+         chegada — que foi o bug do "subi na narração e não subi no sistema". */
+      const saidas = saidasDeUmPassoPrompt(mapaRef.current, cidadeAtualRef.current);
+      const aqui = [forma, ondeEstou, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo()), saidas].filter(Boolean).join("\n\n");
       const chefes = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), moldeMundo());
       /* QUEM ESTÁ EM CENA (v9.9): presentes, ausentes com a distância em dias,
          e o que foi dito em particular — as duas regras que impedem o aliado
@@ -6588,7 +6632,7 @@ export default function Taverna() {
         /* ECONOMIA (v7.4): cada habilidade gasta um movimento (ação ou extra) */
         if (combateRef.current && combateRef.current.economia) {
           const ecoH = combateRef.current.economia;
-          if (ecoH.acao <= 0 && ecoH.extra <= 0) { pushMsgs([{ autor: "sistema", texto: `⏳ Sem movimentos para ${h.nome} — ficou para o próximo turno.` }]); break; }
+          if (ecoH.acao <= 0 && ecoH.extra <= 0) { pushMsgs([{ autor: "sistema", texto: `⏳ Sua ação deste turno já saiu — ${h.nome} fica para a próxima rodada.${temAcaoBonus(pers) ? "" : ` (${pers.classe || "Sua classe"} não tem ação bônus: é uma coisa por turno.)`}` }]); break; }
           if (ecoH.acao > 0) ecoH.acao -= 1; else ecoH.extra -= 1;
           combateRef.current = { ...combateRef.current, economia: { ...ecoH } }; setCombate(combateRef.current);
         } else if (usadas.length >= 1) {
@@ -6668,7 +6712,7 @@ export default function Taverna() {
       /* ECONOMIA (v7.4): idem — habilidade citada por texto também gasta */
       if (combateRef.current && combateRef.current.economia) {
         const ecoH2 = combateRef.current.economia;
-        if (ecoH2.acao <= 0 && ecoH2.extra <= 0) { pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: "⏳ Sem movimentos neste turno — ela fica para a próxima rodada." }]); return; }
+        if (ecoH2.acao <= 0 && ecoH2.extra <= 0) { pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: "⏳ Sua ação deste turno já saiu — ela fica para a próxima rodada." }]); return; }
         if (ecoH2.acao > 0) ecoH2.acao -= 1; else ecoH2.extra -= 1;
         combateRef.current = { ...combateRef.current, economia: { ...ecoH2 } }; setCombate(combateRef.current);
       }
@@ -7138,7 +7182,7 @@ export default function Taverna() {
     persAtual = mudarFicha(() => persAtual);
     /* NOVA RODADA: revide concluído, meus movimentos renovam */
     if (combateRef.current) {
-      combateRef.current = { ...combateRef.current, economia: { acao: 1, extra: 1 }, rodada: (combateRef.current.rodada || 1) + 1 };
+      combateRef.current = { ...combateRef.current, economia: economiaNova(persAtual), rodada: (combateRef.current.rodada || 1) + 1 };
       setCombate(combateRef.current);
       reacaoUsadaRef.current = false;   // nova rodada, reação de novo disponível
     }
@@ -10251,7 +10295,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 const resta = combate.economia && combate.economia.movM != null ? combate.economia.movM : p.metros;
                 return { passoM: resta, passoTotal: p.metros };
               })()}
-              previsao={previsaoDeArea}
+              previsao={previsaoDeArea} acaoBonus={temAcaoBonus(personagem)}
               mira={mira} onMirar={definirMira} alcanceMira={alcanceDaHabilidade}
               pocoes={pocoesNaBolsa} onUsarConsumivel={usarConsumivelUI} />}
 

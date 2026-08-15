@@ -419,6 +419,101 @@ export function descobrirCidade(mapa, nome) {
   return { mapa: { ...mapa, cidades: mapa.cidades.map((x) => (x === c ? { ...x, descoberta: true } : x)) }, nova: c.nome };
 }
 
+/* ============================================================
+   O CÃO DE GUARDA DA CHEGADA (v9.43)
+
+   O jogador subiu para o Andar 2 na narração e continuou no Andar 1
+   no sistema: o Mestre descreveu a travessia do portal com todas as
+   letras — "o Arco Pálido despeja você no Andar 2 de joelhos" — e não
+   mandou `cidade_atual`. A ficção andou; o mundo ficou.
+
+   Este cão de guarda é do tipo que RATIFICA, como o de condições: a
+   narração está CERTA, e barrá-la seria transformar acerto em erro. O
+   que falta é o registro, e registro é trabalho do sistema.
+
+   POR QUE ELE SÓ MORDE QUANDO O DESTINO ESTÁ A UM PASSO. Num
+   continente, ir de uma cidade a outra leva dias e passa por uma
+   jornada inteira, com estrada, encontros e tempo cobrado — ali,
+   "chegar" mencionado numa frase é quase sempre plano, promessa ou
+   lembrança, e mover o herói por causa disso seria pior que o bug.
+   Na Torre, subir um andar é atravessar um portal: seis horas, um
+   gesto, uma cena. É o caso em que a narração PODE, sozinha, ser a
+   viagem inteira — e é exatamente esse o caso que o `dias <= 0,5`
+   isola. A régua se ajusta sozinha ao molde do mundo: onde viajar é
+   caro, o cão dorme.
+   ============================================================ */
+export const DIAS_DE_UM_PASSO = 0.5;
+
+const semA = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+/* "Andar 2 — das Máscaras" é anunciado na prosa como "Andar 2": a chave
+   curta é o que vem antes do travessão. */
+const chaveCurta = (nome) => semA(nome).split(/\s+[—–-]\s+/)[0].trim();
+
+export function vizinhosDeUmPasso(mapa, cidade, teto = DIAS_DE_UM_PASSO) {
+  const aqui = semA(cidade);
+  if (!aqui) return [];
+  const out = [];
+  for (const r of (mapa && mapa.rotas) || []) {
+    if (!r || !(Number(r.dias) <= teto)) continue;
+    if (semA(r.de) === aqui) out.push({ nome: r.para, dias: Number(r.dias) || 0, terreno: r.terreno });
+    else if (semA(r.para) === aqui) out.push({ nome: r.de, dias: Number(r.dias) || 0, terreno: r.terreno });
+  }
+  return out;
+}
+
+/* Preposição colada no nome — "no Andar 2", "ao Átrio". Sem ela, o nome
+   pode estar só sendo citado ("dizem que o Andar 2 é pior"). */
+const PREPOSICAO = /\b(n[oa]s?|em|ao|aos?|à|as|para|ate|rumo a|dentro d[eoa]s?)\s+$/;
+const CHEGOU = /(cheg|desemboc|despej|cospe|cuspiu|emerg|surge|surgiu|pisa|pisou|poe os pes|pos os pes|atravess|cruz|sobe|subiu|desce|desceu|entra|entrou|aport|atrac|desembarc|deposit|larg|arremess|joga voce|jogou voce|leva voce|levou voce|se ve |se viu |esta agora|agora esta)/;
+const NEGADO = /\b(nao |sem |quase |antes de|ainda nao|impedid|se voce|se tivesse|talvez|promete|prometeu|planeja|pretende|pensa em|quer |dizem que|contam que|ouviu falar|um dia)\b/;
+
+const fraseEm = (txt, pos) => {
+  let ini = 0;
+  for (let i = pos - 1; i >= 0; i--) if (/[.!?;:\n]/.test(txt[i])) { ini = i + 1; break; }
+  let fim = txt.length;
+  for (let i = pos; i < txt.length; i++) if (/[.!?;:\n]/.test(txt[i])) { fim = i; break; }
+  return txt.slice(ini, fim);
+};
+
+export function detectarChegada(narrativa, { mapa, cidade, teto = DIAS_DE_UM_PASSO } = {}) {
+  const txt = semA(narrativa);
+  if (!txt.trim() || !cidade) return null;
+  for (const v of vizinhosDeUmPasso(mapa, cidade, teto)) {
+    const chaves = [...new Set([semA(v.nome), chaveCurta(v.nome)])].filter((k) => k.length >= 4);
+    for (const chave of chaves) {
+      let pos = txt.indexOf(chave);
+      while (pos >= 0) {
+        const frase = fraseEm(txt, pos);
+        const antes = txt.slice(Math.max(0, pos - 14), pos);
+        if (PREPOSICAO.test(antes) && CHEGOU.test(frase) && !NEGADO.test(frase)) {
+          return { nome: v.nome, dias: v.dias, terreno: v.terreno, trecho: frase.trim().slice(0, 140) };
+        }
+        pos = txt.indexOf(chave, pos + chave.length);
+      }
+    }
+  }
+  return null;
+}
+
+/* O outro lado da mesma moeda: dizer ao Mestre PARA ONDE dá para ir num
+   gesto. Sem isto ele inventa o nome do destino — e acertou por sorte,
+   porque "Andar 2" é adivinhável. Só aparece quando existe saída de um
+   passo, então em mundo de estrada esta linha nem é gerada. */
+export function saidasDeUmPassoPrompt(mapa, cidade, teto = DIAS_DE_UM_PASSO) {
+  const vs = vizinhosDeUmPasso(mapa, cidade, teto);
+  if (!vs.length) return "";
+  const horas = (d) => {
+    const h = Math.round((Number(d) || 0) * 24);
+    return h <= 1 ? "quase na hora" : `cerca de ${h} horas`;
+  };
+  return `SAÍDAS DAQUI (fato do sistema): de ${cidade} dá para alcançar ${vs.map((v) => `${v.nome} (${horas(v.dias)})`).join(", ")} numa travessia só — não é jornada, é uma cena. Estes nomes você PODE dizer. Se a cena me levar a uma delas, mande "cidade_atual" com o nome EXATO acima, na mesma resposta em que narrar a chegada; sem isso eu continuo aqui.`;
+}
+
+export function notaDaChegada(a, de) {
+  if (!a) return "";
+  return `[CHEGADA — REGISTRADA PELO SISTEMA] Você narrou que eu cheguei a ${a.nome} e não mandou "cidade_atual". O sistema me moveu: eu saí de ${de || "onde estava"} e AGORA ESTOU em ${a.nome}; o relógio andou o que a travessia custa e o lugar entrou no meu mapa. Trate isso como fato — não me devolva ao lugar anterior e não narre a travessia de novo. Da próxima vez, mande "cidade_atual" junto com a cena.`;
+}
+
 /* Um mapa comprado abre a região inteira de uma vez — é para isso que
    alguém paga por um mapa. */
 export function descobrirRegiao(mapa, regiao) {

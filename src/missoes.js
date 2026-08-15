@@ -241,6 +241,25 @@ export function mesmaPessoa(a, b) {
   const x = primeiroNome(a), y = primeiroNome(b);
   return !!x && x.length > 2 && x === y;
 }
+/* Para onde a missão APONTA: o que as etapas mandam achar, derrotar, levar
+   ou visitar. É o único pedaço de uma missão que não depende de estilo — a
+   prosa muda de um contador para outro, o alvo não. */
+export function alvosDe(m) {
+  const s = new Set();
+  for (const e of (m && m.etapas) || []) {
+    for (const w of soLetras(`${(e && e.alvo) || ""} ${(e && e.item) || ""}`).split(/\s+/)) {
+      if (w.length >= 4 && !VAZIAS.has(w)) s.add(w);
+    }
+  }
+  return s;
+}
+export function mesmoAlvo(a, b) {
+  const A = alvosDe(a), B = alvosDe(b);
+  if (!A.size || !B.size) return false;
+  for (const w of A) if (B.has(w)) return true;
+  return false;
+}
+
 export function pareceMesmaMissao(a, b) {
   if (!a || !b) return false;
   if (norm(a.titulo) === norm(b.titulo)) return true;
@@ -270,6 +289,25 @@ export function aceitarProposta(lista, prop, { nivel = 1, dia = 0, mundo = null,
      concluído é a mesma confusão, com o agravante de já ter sido pago */
   if (atual.some((q) => ["ativa", "oferecida", "concluida"].includes(q.status) && pareceMesmaMissao(q, proposta))) {
     return { ok: false, motivo: "esse mesmo trabalho já está no diário" };
+  }
+  /* ---------------- MESMA PESSOA, MESMO ALVO (v9.43) ----------------
+     Osric ofereceu a mesma caçada duas vezes: uma pelo gerador estrutural
+     ("A caçada de Osric Ventoforte") e outra pela proposta do Mestre
+     ("Caçar o atirador do Mercado da Aurora"). São o mesmo serviço contado
+     com outras palavras, e a semelhança de VOCABULÁRIO ficou em 0,33 contra
+     um limiar de 0,4 — perto, e perto não serve.
+
+     A régua que separa os dois casos não está nas palavras da prosa: está no
+     ALVO. Dois trabalhos do mesmo dador que apontam para a mesma coisa são
+     um trabalho só, por mais diferente que a descrição seja. Já o taverneiro
+     que quer o gado achado E os ratos da dispensa mortos tem, de fato, dois
+     problemas — e alvos diferentes provam isso sem depender de estilo.
+
+     Concluídas não entram na conta: um velho conhecido pode voltar com
+     serviço novo sobre o mesmo assunto, e isso é história, não duplicata. */
+  if (proposta.dador && atual.some((q) => ["ativa", "oferecida"].includes(q.status)
+    && mesmaPessoa(q.dador, proposta.dador) && mesmoAlvo(q, proposta))) {
+    return { ok: false, motivo: "essa pessoa já lhe deu esse mesmo trabalho" };
   }
 
   let etapas = (Array.isArray(prop.etapas) ? prop.etapas : []).filter((e) => e && ETAPAS[e.tipo] && (e.alvo || e.dia || e.relogioId));

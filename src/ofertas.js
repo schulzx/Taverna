@@ -68,6 +68,19 @@ const OBJETO_DO_SEGREDO = {
    nenhuma. "não voltou" serve para qualquer pessoa; "há" serve para um
    osso e para muitos. */
 
+/* Um pedaço de frase só entra se ACRESCENTAR alguma coisa. A base descreve
+   o bicho ("rondando os arredores") sem saber o que a frase já disse
+   ("ronda os arredores"), e colar os dois produz eco. Compara as palavras
+   que importam: se todas já estão na parte de cima, não entra. */
+const semAcento = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const raiz = (p) => semAcento(p).replace(/(ndo|r|s|m|ava|ou)$/,"");
+function acrescenta(pedaco, jaDito) {
+  const p = semAcento(pedaco).match(/[a-z]{4,}/g) || [];
+  if (!p.length) return false;
+  const dito = new Set((semAcento(jaDito).match(/[a-z]{4,}/g) || []).map(raiz));
+  return p.some((w) => !dito.has(raiz(w)));
+}
+
 /* ---------------- OS MOLDES ----------------
    Cada molde sabe (a) de que material precisa, (b) que vontades ele
    atende e (c) como montar as etapas. `risco` é o multiplicador do
@@ -87,7 +100,14 @@ export const MOLDES = [
     vontades: ["vingança", "medo de dormir", "lembrado por algo", "coragem"],
     montar: ({ pessoa, criatura, aqui }) => ({
       titulo: `A caçada de ${pessoa.nome}`,
-      descricao: `${criatura.nome} ronda ${aqui.regiao ? aqui.regiao.nome : "os arredores"} — ${criatura.comportamento || "e não se afasta"}. ${pessoa.nome} quer o bicho morto.`,
+      /* o comportamento da criatura vem da base e às vezes DIZ a mesma coisa
+         que a metade de cima da frase — "Atirador ronda os arredores —
+         rondando os arredores". Quando ele repete, some. */
+      descricao: (() => {
+        const abertura = `${criatura.nome} ronda ${aqui.regiao ? aqui.regiao.nome : "os arredores"}`;
+        const como = String(criatura.comportamento || "").trim();
+        return `${abertura}${acrescenta(como, abertura) ? ` — ${como}` : ""}. ${pessoa.nome} quer o bicho morto.`;
+      })(),
       etapas: [{ tipo: "derrotar", alvo: criatura.nome, quantos: 1 }],
       gancho: `${pessoa.nome} ${pessoa.vontade}, e a caçada tem a ver com isso`,
     }),

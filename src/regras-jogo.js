@@ -349,7 +349,13 @@ export function processarCombate(combateAtual, m, msgs) {
   const anterior = combateAtual || {};
   return {
     inimigos,
-    economia: anterior.economia || { acao: 1, extra: 1 },
+    /* v9.43: a AÇÃO BÔNUS deixou de ser de graça. Ela nascia 1 para todo
+       mundo, e um Mago de nível 1 abria a luta com dois movimentos — dava
+       para lançar duas magias no mesmo turno. O ECONOMIA_ACAO_PROMPT já
+       dizia a regra certa desde a v8.9 ("UMA ação bônus, só se a classe
+       conceder") e o código nunca a implementou; quem decide é
+       `acoesBonusDe`, e o app manda a resposta em `__temBonus`. */
+    economia: anterior.economia || { acao: 1, extra: m.__temBonus ? 1 : 0 },
     ordem: anterior.ordem,
     rodada: anterior.rodada,
     recursos: anterior.recursos,
