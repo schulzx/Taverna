@@ -137,6 +137,43 @@ export function passoEfetivo(pers, opcoes = {}) {
   };
 }
 
+/* ---------------- O PASSO QUE A HABILIDADE PROMETE (v9.41) ----------------
+   O grid acende o chão que cabe no turno, e até aqui ele só sabia o que a
+   FICHA já tinha: efeito ativo, condição, raça. Mas quem seleciona Voo e
+   olha o tabuleiro quer ver o alcance de quem voa — antes de gastar o PM,
+   que é justamente quando a decisão é tomada. Mostrar depois é mostrar
+   tarde.
+
+   Só isto: quanto chão a habilidade SELECIONADA daria. Ela não altera a
+   ficha, não gasta nada e não sobrevive ao turno; é uma pergunta que a
+   tela faz para desenhar. Quem aplica o efeito de verdade continua sendo
+   `aplicarBuffDeHabilidade`, na hora do uso. */
+const RX_VOO_HAB = /\b(voo|voar|voando|asas|alado|levita|levitar|planar|planeio|etérea?o?)\b/i;
+const RX_DISPARADA = /\b(disparada|disparar|corrida|correr|acelera|celeridade|c[ée]lere|arrancada|investida|arremete|salto|impulso|passo largo|vento)\b/i;
+
+export function passoDeHabilidade(h) {
+  if (!h) return null;
+  const t = `${h.nome || ""} ${h.descricao || ""}`;
+  if (RX_VOO_HAB.test(t)) return { nome: h.nome, metros: 18, voando: true, dobra: false };
+  if (RX_DISPARADA.test(t)) return { nome: h.nome, metros: 0, voando: false, dobra: true };
+  return null;
+}
+
+/* O passo que o grid deve desenhar AGORA: o da ficha, corrigido pelo que
+   estiver selecionado. Devolve `fonte` para a tela poder dizer de onde veio
+   o número — sem isso o jogador vê o alcance mudar e não sabe por quê. */
+export function passoComSelecao(pers, selecionadas = [], opcoes = {}) {
+  const base = passoEfetivo(pers, opcoes);
+  let metros = base.metros, voando = base.voando, fonte = "";
+  for (const h of selecionadas || []) {
+    const p = passoDeHabilidade(h);
+    if (!p) continue;
+    if (p.voando && p.metros > metros) { metros = p.metros; voando = true; fonte = p.nome; }
+    else if (p.dobra) { metros = metros * 2; fonte = p.nome; }
+  }
+  return { ...base, metros: Math.round(metros * 10) / 10, voando, ignoraDificil: voando, fonte };
+}
+
 /* Criaturas do bestiário: sem ficha de raça, a velocidade sai do tamanho e
    do que o nome anuncia. Um dragão voa; um zumbi arrasta. */
 const RX_VOADOR = /(dragao|dragão|wyvern|grifo|harpia|morcego|quimera|arauto|anjo|demonio alado|vespa|aguia|corvo|fenix|imp)/i;

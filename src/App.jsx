@@ -43,8 +43,8 @@ import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, pod
 import { dadoDeVida, garantirDadosVida, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT } from "./descanso.js";
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, MAX_RELOGIOS, RELOGIOS_PROMPT } from "./relogios.js";
 import { avaliarEncontro, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
-import { montarGrade, garantirGrade, posicionar, alcanca, caminhar, alcancaveisDe, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, mapaEmTexto, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, quadradosDe, distanciaM, tamanhoDe, ladoDe, alcanceNatural, terrenoDificil, temCobertura, ehParede, regiaoDe, m2q, GRID_PROMPT } from "./grid.js";
-import { deslocamentoDe, passoEfetivo, deslocamentoDeCriatura, resumoDeslocamento, resumoDeslocamentoPrompt, MOVIMENTO_PROMPT } from "./movimento.js";
+import { montarGrade, garantirGrade, posicionar, alcanca, caminhar, alcancaveisDe, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, mapaEmTexto, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, quadradosDe, distanciaM, tamanhoDe, ladoDe, alcanceNatural, terrenoDificil, temCobertura, ehParede, regiaoDe, m2q, q2m, centroDe, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO, GRID_PROMPT } from "./grid.js";
+import { deslocamentoDe, passoEfetivo, passoComSelecao, passoDeHabilidade, deslocamentoDeCriatura, resumoDeslocamento, resumoDeslocamentoPrompt, MOVIMENTO_PROMPT } from "./movimento.js";
 import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPreparada, ehPreparavel, preparadasIniciais, alternarPreparada, podeLancar, ehRitual, motivoDoCaderno, MINUTOS_RITUAL, resumoMagiasPrompt, MAGIAS_PROMPT } from "./magias.js";
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, ORACULO_PROMPT } from "./oraculo.js";
@@ -58,6 +58,7 @@ import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saque
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
 import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao } from "./portao.js";
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
+import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { detectarPartida, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra } from "./rastro.js";
 import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, resolvidaPeloSistema, PERGUNTAS_AOS_MORTOS, abrirInterrogatorio, perguntarAoMorto, envelopeDoMorto, textoDeIdentificacao, localizarNoMapa, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
@@ -1841,8 +1842,18 @@ function BlocoSistema({ visiveis = [], dobradas = [], saldo = "" }) {
 
    E ele NÃO é o meio de entrada. Tocar num quadrado é atalho para quem
    quer precisão; a via normal continua sendo escrever a ação. */
-function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9, podeMover = true, onMover }) {
+function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9, passoTotal = 9, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null }) {
   const [aberto, setAberto] = React.useState(false);
+  /* ---------------- ANDAR OU MIRAR (v9.41) ----------------
+     O toque no quadrado passou a querer dizer duas coisas, e duas coisas
+     sem aviso é ambiguidade. Então há um modo, e ele diz na cara qual é:
+     sem habilidade selecionada só existe andar; com uma habilidade de
+     área selecionada, o tabuleiro abre já mirando, porque quem acabou de
+     escolher Bola de Fogo quer dizer ONDE ela cai, não dar dois passos. */
+  const podeMirar = !!(alcanceMira && alcanceMira.tamanho && onMirar);
+  const [modo, setModo] = React.useState("andar");
+  React.useEffect(() => { setModo(podeMirar ? "mirar" : "andar"); }, [podeMirar, alcanceMira && alcanceMira.nome]);
+  const mirando = podeMirar && modo === "mirar";
   const grade = combate && combate.grade ? combate.grade : null;
   const g = garantirGrade(grade);
   if (!g) return null;
@@ -1852,8 +1863,9 @@ function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9, podeM
   const colados = heroi ? adjacentes(heroi, inimigos) : [];
 
   const ocupados = ocupacaoDe([...inimigos, ...aliados], heroi);
-  const podeIr = (heroi && podeMover) ? alcancaveisDe(grade, heroi, { ocupados, deslocamentoM: passoM }) : new Set();
+  const podeIr = (heroi && podeMover && !mirando) ? alcancaveisDe(grade, heroi, { ocupados, deslocamentoM: passoM }) : new Set();
   const naArea = new Set((previsao && previsao.quadrados || []).map((q) => `${q.x},${q.y}`));
+  const noAlcance = (alcanceMira && alcanceMira.quadrados) || new Set();
 
   /* quem ocupa cada quadrado, com o rótulo só no canto superior esquerdo */
   const mapa = new Map();
@@ -1873,29 +1885,35 @@ function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9, podeM
         const oc = mapa.get(k);
         const alvo = naArea.has(k);
         const indo = podeIr.has(k);
+        const tiro = mirando && noAlcance.has(k);
+        const alvoMira = mira && mira.x === x && mira.y === y;
         const dificil = terrenoDificil(grade, x, y);
         const cob = !parede && temCobertura(grade, x, y);
         const fundo = parede ? "#0b0912"
           : alvo ? "rgba(220,80,60,0.34)"
           : oc ? (oc.tipo === "heroi" ? "rgba(232,163,61,0.30)" : oc.tipo === "aliado" ? "rgba(90,190,120,0.26)" : "rgba(220,80,60,0.22)")
           : indo ? "rgba(232,163,61,0.10)"
+          : tiro ? "rgba(150,120,220,0.13)"
           : dificil ? "rgba(120,100,70,0.16)"
           : cob ? "rgba(120,140,190,0.12)" : T.panelSoft;
+        /* mirar não se importa com parede nem com quem está em cima: a magia
+           cai onde o jogador apontar, contanto que ele enxergue o ponto */
+        const clicavel = mirando ? tiro : indo;
         const titulo = oc
-          ? `${oc.ent.nome}${oc.ent.vidaMax ? ` — ${oc.ent.vida}/${oc.ent.vidaMax} PV` : ""}${ladoDe(oc.ent) > 1 ? ` · ${tamanhoDe(oc.ent).nome}` : ""} · ${nomeDoLugar(grade, x, y)}`
-          : `${nomeDoLugar(grade, x, y)}${parede ? " (parede)" : ""}${dificil ? " · terreno difícil" : ""}${cob ? " · cobertura +2" : ""}${indo ? " — dá para chegar aqui neste turno" : ""}`;
+          ? `${oc.ent.nome}${oc.ent.vidaMax ? ` — ${oc.ent.vida}/${oc.ent.vidaMax} PV` : ""}${ladoDe(oc.ent) > 1 ? ` · ${tamanhoDe(oc.ent).nome}` : ""} · ${nomeDoLugar(grade, x, y)}${tiro ? " — dá para acertar aqui" : ""}`
+          : `${nomeDoLugar(grade, x, y)}${parede ? " (parede)" : ""}${dificil ? " · terreno difícil" : ""}${cob ? " · cobertura +2" : ""}${indo ? " — dá para chegar aqui neste turno" : ""}${tiro ? ` — dá para fazer ${alcanceMira.nome} cair aqui` : ""}`;
         return (
           <button key={k} title={titulo}
-            disabled={parede || !!oc || !indo}
-            onClick={() => indo && onMover && onMover({ x, y })}
+            disabled={!clicavel}
+            onClick={() => { if (!clicavel) return; if (mirando) onMirar({ x, y }); else onMover && onMover({ x, y }); }}
             style={{
               width: lado, height: lado, background: fundo, padding: 0, lineHeight: 1,
-              border: `1px solid ${alvo ? T.danger : oc && oc.tipo === "heroi" ? T.amber : indo ? "rgba(232,163,61,0.35)" : T.line}`,
-              cursor: indo ? "pointer" : "default", fontSize: Math.max(7, Math.round(lado * 0.55)),
-              color: oc ? (oc.tipo === "heroi" ? T.amberSoft : oc.tipo === "aliado" ? T.ok : T.danger) : T.inkDim,
+              border: `1px solid ${alvoMira ? T.violetSoft : alvo ? T.danger : oc && oc.tipo === "heroi" ? T.amber : indo ? "rgba(232,163,61,0.35)" : tiro ? "rgba(150,120,220,0.30)" : T.line}`,
+              cursor: clicavel ? "pointer" : "default", fontSize: Math.max(7, Math.round(lado * 0.55)),
+              color: oc ? (oc.tipo === "heroi" ? T.amberSoft : oc.tipo === "aliado" ? T.ok : T.danger) : T.violetSoft,
               fontWeight: 700, overflow: "hidden",
             }}>
-            {oc && oc.chefe ? (oc.tipo === "heroi" ? "🧍" : oc.tipo === "aliado" ? "🛡" : "👹") : ""}
+            {oc && oc.chefe ? (oc.tipo === "heroi" ? "🧍" : oc.tipo === "aliado" ? "🛡" : "👹") : alvoMira ? "◎" : ""}
           </button>
         );
       }))}
@@ -1912,7 +1930,18 @@ function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9, podeM
           ⚡ sair custa {colados.length === 1 ? "um golpe livre" : `${colados.length} golpes livres`}
         </span>
       )}
-      <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>👣 {passoM} m por turno</span>
+      <span className="tv-mono text-[9px]" style={{ color: passoM > 0 ? T.inkDim : T.danger }}
+        title="O que sobra do seu passo nesta rodada. Andar não gasta a ação: dá para dar dois passos, contornar e ainda golpear.">
+        👣 {metrosTxt(passoM)} de {metrosTxt(passoTotal)} m nesta rodada
+      </span>
+      {podeMirar && (
+        <button onClick={() => setModo((m) => (m === "mirar" ? "andar" : "mirar"))}
+          title={mirando ? "Voltar a andar pelo tabuleiro" : `Escolher onde ${alcanceMira.nome} vai cair`}
+          className="tv-mono text-[9px] px-2 py-0.5 rounded-full"
+          style={{ background: mirando ? T.violet : "transparent", color: mirando ? T.onSecond : T.violetSoft, border: `1px solid ${T.violet}` }}>
+          {mirando ? `◎ mirando ${alcanceMira.nome} — toque onde cai` : `👣 andando — toque para mirar ${alcanceMira.nome}`}
+        </button>
+      )}
       {previsao && (
         <span className="tv-mono text-[9px] px-2 py-0.5 rounded-full" style={{ color: previsao.aliados.length ? T.danger : T.amberSoft, border: `1px solid ${previsao.aliados.length ? T.danger : T.amber}` }}>
           {previsao.aliados.length ? "💢" : "◎"} {previsao.nome} ({previsao.forma}{previsao.raio ? ` de ${previsao.raio} m` : ""}): {previsao.inimigos.length} inimigo{previsao.inimigos.length === 1 ? "" : "s"}
@@ -1948,6 +1977,7 @@ function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9, podeM
             <span style={{ color: T.ok }}>🛡 grupo</span>
             <span style={{ color: T.danger }}>👹 inimigo</span>
             <span>▪ dourado claro: dá para chegar aí neste turno</span>
+            <span>▪ roxo claro: até onde a habilidade alcança</span>
             <span>▪ vermelho: a área da magia selecionada</span>
           </div>
           {(inimigos.length > 0 && heroi) && (
@@ -1964,7 +1994,73 @@ function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9, podeM
   );
 }
 
-function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover, grupo = [], passoM = 9, previsao = null }) {
+/* ---------------- EXAMINAR (v9.41) ----------------
+   O painel que substitui "eu examino e pego os itens" — a frase que o
+   jogador escrevia, o Mestre narrava com entusiasmo e a ficha ignorava.
+   Aqui não há promessa: o que está na lista existe, e o que sai da lista
+   entra na bolsa no mesmo clique.
+
+   Nasce com TUDO marcado. Quem quer catar tudo aperta um botão; quem quer
+   escolher desmarca. O caso comum é o de um clique. */
+function PainelExame({ itens = [], raio = 0, aoPegar, aoFechar }) {
+  const [fora, setFora] = useState(() => new Set());
+  const escolhidos = itens.filter((i) => !fora.has(i.id));
+  const alternar = (id) => setFora((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const corDaRaridade = { comum: T.inkDim, incomum: T.ok, raro: T.violetSoft, epico: T.amberSoft, lendario: T.amber };
+  return (
+    <div className="tv-fade rounded-2xl p-3 mb-2" style={{ background: T.panel, border: `1px solid ${T.ok}` }}>
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
+        <span className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.ok }}>🔍 o que dá para pegar</span>
+        <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>
+          {raio ? `no raio de ${raio} m` : "ao seu alcance"}
+        </span>
+        <button onClick={aoFechar} className="tv-mono text-[10px] px-2 ml-auto" style={{ color: T.inkDim }}>✕</button>
+      </div>
+      {!itens.length ? (
+        <div className="tv-body text-[13px] px-1 py-2" style={{ color: T.inkDim }}>
+          Você varre o chão com os olhos e não há nada de aproveitável por perto.
+        </div>
+      ) : (
+        <>
+          <div className="space-y-1 mb-2" style={{ maxHeight: 220, overflowY: "auto" }}>
+            {itens.map((i) => {
+              const dentro = !fora.has(i.id);
+              return (
+                <button key={i.id} onClick={() => alternar(i.id)}
+                  className="w-full text-left rounded-xl px-3 py-2 flex items-center gap-2"
+                  style={{ background: dentro ? T.panelSoft : "transparent", border: `1px solid ${dentro ? T.ok : T.line}`, opacity: dentro ? 1 : 0.5 }}>
+                  <span style={{ fontSize: 15 }}>{i.icone}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="tv-body text-[13px] block truncate" style={{ color: dentro ? T.ink : T.inkDim }}>{i.nome}</span>
+                    <span className="tv-mono text-[9px] block truncate" style={{ color: T.inkDim }}>
+                      {[i.de ? `de ${i.de}` : "", i.detalhe].filter(Boolean).join(" · ") || i.especie}
+                    </span>
+                  </span>
+                  {i.especie === "equipamento" && (
+                    <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded-full shrink-0" style={{ border: `1px solid ${corDaRaridade[i.raridade] || T.line}`, color: corDaRaridade[i.raridade] || T.inkDim }}>
+                      {RARIDADE_ROTULO[i.raridade] || i.raridade}
+                    </span>
+                  )}
+                  <span className="tv-mono text-[11px] shrink-0" style={{ color: dentro ? T.ok : T.inkDim }}>{dentro ? "✓" : "○"}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Botao primario pequeno desativado={!escolhidos.length}
+              onClick={() => { aoPegar(escolhidos.map((i) => i.id)); setFora(new Set()); }}>
+              Pegar {escolhidos.length === itens.length ? "tudo" : `${escolhidos.length}`} →
+            </Botao>
+            <button onClick={() => setFora(new Set(itens.map((i) => i.id)))} className="tv-mono text-[10px] px-2 py-1" style={{ color: T.inkDim }}>desmarcar tudo</button>
+            <span className="tv-mono text-[9px] ml-auto" style={{ color: T.inkDim }}>abaixar-se não gasta o turno</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover, grupo = [], passoM = 9, passoTotal = 9, previsao = null, mira = null, onMirar, alcanceMira = null }) {
   const [bolsaAberta, setBolsaAberta] = useState(false);
   if (!combate || !combate.inimigos || combate.inimigos.length === 0) return null;
   const eco = combate.economia || { acao: 1, extra: 1 };
@@ -2000,7 +2096,8 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
           quantos companheiros estão dentro. O preço aparece antes de ser
           pago; a escolha continua inteiramente do jogador. */}
       <GridDeBatalha combate={combate} grupo={grupo} previsao={previsao}
-        passoM={passoM} podeMover={eco.movimento == null || eco.movimento > 0} onMover={onMover} />
+        passoM={passoM} passoTotal={passoTotal} podeMover={passoM >= 1.5} onMover={onMover}
+        mira={mira} onMirar={onMirar} alcanceMira={alcanceMira} />
       {/* POÇÕES À MÃO (v9.2): as três mais úteis, a um toque.
           v9.13: usar item da bolsa NÃO gasta mais o turno — o sistema aplica
           na hora e o Mestre narra junto da ação que vier depois. */}
@@ -2599,6 +2696,27 @@ export default function Taverna() {
      na primeira tentativa (só abria no segundo clique). */
   const personagemRef = useRef(null);
   useEffect(() => { if (personagem) personagemRef.current = personagem; }, [personagem]);
+  /* ---------------- A FICHA VIVA (v9.41) ----------------
+     O espelho acima só é atualizado por um efeito — ou seja, na renderização
+     SEGUINTE. Só que um turno de combate inteiro roda dentro de UM clique:
+     eu ataco, o sistema fecha a luta, credita os espólios, e a linha de baixo
+     manda ao Mestre a cópia da ficha que quem chamou tinha em mão antes de
+     tudo isso. A cópia velha chega ao `aplicarResposta` e volta por cima.
+
+     Foi exatamente assim que "+21 moedas e +90 XP" apareceu na tela e não
+     apareceu na bolsa: o crédito existiu por três linhas. `fichaViva` lê o
+     estado mais recente e `mudarFicha` grava nos dois lugares de uma vez, de
+     modo que o próximo a ler nunca receba o passado. */
+  const fichaViva = () => personagemRef.current || personagem;
+  const mudarFicha = (fn) => {
+    const base = personagemRef.current || personagem;
+    if (!base) return base;
+    const novo = typeof fn === "function" ? fn(base) : fn;
+    if (!novo) return base;
+    personagemRef.current = novo;
+    setPersonagem(novo);
+    return novo;
+  };
   const [mensagens, setMensagens] = useState([]);
   const [historico, setHistorico] = useState([]);
   const [rolagem, setRolagem] = useState(null);
@@ -2619,6 +2737,10 @@ export default function Taverna() {
   const golpeRecenteRef = useRef(null);
   /* v9.5: um turno pode carregar mais de uma habilidade, uma por movimento */
   const [habsSel, setHabsSel] = useState([]);
+  /* Onde a área vai cair. Vive num ref porque quem a consome é o disparo,
+     dentro de um clique que não vê o estado desta renderização. */
+  const [mira, setMira] = useState(null);
+  const miraRef = useRef(null);
   /* v9.28: o milagre agora é ARMADO, não disparado. Clicar nele no painel de
      Ascensão só engatilha; quem diz COMO ele se manifesta é o jogador, no
      campo de escrita — igual à habilidade. Antes o clique já mandava tudo ao
@@ -3335,6 +3457,30 @@ export default function Taverna() {
      desta casa. O useState existe só para a tela redesenhar. */
   const relogiosRef = useRef([]);
   const [relogios, setRelogios] = useState([]);
+  /* O CHÃO (v9.41): o espólio para de entrar sozinho na bolsa e passa a
+     ficar caído onde a cena aconteceu, esperando que alguém se abaixe. */
+  const chaoRef = useRef(criarChao());
+  const [chao, setChao] = useState(criarChao());
+  const [examinando, setExaminando] = useState(false);
+  /* A assinatura da cena. Trocou de lugar ou virou o dia? O que ficou no
+     chão fica no chão — senão a pilha vira um segundo inventário que
+     acompanha o herói pelo mundo inteiro. */
+  const cenaDoChao = () => `${cidadeAtualRef.current || ""}|${(lugarRef.current && lugarRef.current.nome) || ""}|${diaRef.current || 1}`;
+  const varrerChao = () => {
+    const c = varrerSeMudou(chaoRef.current, cenaDoChao());
+    if (c !== chaoRef.current) { chaoRef.current = c; setChao(c); }
+    return c;
+  };
+  /* ponte entre o bloco que calcula o espólio e o envelope que sai lá
+     embaixo, na mesma função — os dois estão separados por trinta linhas */
+  const espolioNoChaoRef = useRef([]);
+  const porNoChaoAqui = (novos) => {
+    const lista = (Array.isArray(novos) ? novos : [novos]).filter(Boolean);
+    if (!lista.length) return chaoRef.current;
+    chaoRef.current = porNoChao(chaoRef.current, lista, { cena: cenaDoChao() });
+    setChao(chaoRef.current);
+    return chaoRef.current;
+  };
   /* ORÇAMENTO DO DIA (v9.19): quanto o grupo já enfrentou desde a última
      noite. Zera no descanso longo — é o que dá sentido a "seguimos ou
      acampamos?", porque agora a pergunta tem resposta calculada. */
@@ -3472,7 +3618,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current,
+      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -3793,6 +3939,65 @@ export default function Taverna() {
       return { pers, texto: `✓ ${alvoNome}: ${nomeBruto} passou` };
     }
     return { pers, texto: "" };
+  };
+
+  /* ---------------- CAIR A ZERO (v9.41) ----------------
+     O teste de morte existia desde sempre e morava DENTRO do revide de
+     combate — ou seja, só rolava quando um inimigo te derrubava no turno
+     dele. Em jogo isso apareceu do jeito pior possível: o herói terminou
+     a luta sangrando, o sangramento levou os PV a zero no turno seguinte,
+     e não aconteceu absolutamente nada. Nem queda, nem teste, nem morte.
+     Zero PV fora da vez do mundo era um número na ficha.
+
+     Agora a queda é UMA função e todo caminho passa por ela: o dano do
+     combate, o veneno que cobra por turno, a queda narrada, a armadilha.
+     `morteRolada` impede que o mesmo zero seja testado duas vezes no
+     mesmo giro — o revide rola e marca; a resposta do Mestre lê a marca e
+     não rola de novo. */
+  const morteRoladaRef = useRef(false);
+  const resolverQueda = (pers, msgs = []) => {
+    if (!pers) return pers;
+    if ((pers.vida || 0) > 0) {
+      /* levantou (cura, poção, segundo fôlego): os contadores zeram */
+      const m = pers.morte || {};
+      if (pers.morrendo || (m.falhas || 0) + (m.sucessos || 0) > 0) return { ...pers, morrendo: false, morte: { sucessos: 0, falhas: 0 } };
+      return pers;
+    }
+    if (pers.morto) return pers;
+    if (morteRoladaRef.current) { morteRoladaRef.current = false; return pers; }
+    /* SEGUNDO FÔLEGO (v9.32): a Dádiva da Recuperação vale em qualquer
+       queda, não só na que acontece no turno dos inimigos. */
+    if (segundoFolegoDisponivel(pers, diaRef.current)) {
+      const volta = Math.max(1, Math.round((pers.vidaMax || 10) / 2));
+      msgs.push(`🌠 Dádiva da Recuperação — você cai e o corpo se recusa: +${volta} PV (uma vez por dia).`);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Meus PV chegaram a zero e a Dádiva da Recuperação me pôs de pé na hora, com ${volta} PV. Narre o joelho que dobra e o corpo que se recusa a ficar no chão — sem mudar número nenhum.`;
+      return gastarSegundoFolego({ ...pers, vida: volta, morrendo: false, morte: { sucessos: 0, falhas: 0 } }, diaRef.current);
+    }
+    const caiuAgora = !pers.morrendo;
+    const res = testeDeMorte();
+    const ap = aplicarTesteMorte(pers.morte || { sucessos: 0, falhas: 0 }, res);
+    if (caiuAgora) msgs.push("💥 Seus PV chegam a zero — você desaba, inconsciente.");
+    msgs.push(`☠ Teste de morte: ${res.texto}`);
+    if (ap.desfecho === "revive") {
+      msgs.push("✨ Você volta a si com 1 PV!");
+      const rh = ganharHeroismo({ ...pers, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } }, "sobreviveu");
+      if (rh.msg) msgs.push(rh.msg);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Caí a 0 PV e o teste de morte saiu 20 natural: estou de pé de novo, com 1 PV. Narre o retorno brutal à consciência. Não mude números.`;
+      return rh.pers;
+    }
+    if (ap.desfecho === "estavel") {
+      msgs.push("Você estabiliza — inconsciente, mas vivo. Alguém precisa te ajudar.");
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Estou a 0 PV e ESTABILIZEI: inconsciente, respirando, sem poder agir. Narre a cena de quem está caído — e quem estiver por perto pode me socorrer. NÃO me faça levantar, andar ou falar.`;
+      return { ...pers, morrendo: true, morte: { sucessos: 0, falhas: 0 } };
+    }
+    if (ap.desfecho === "morto") {
+      msgs.push("💀 Você tomba. O que vem depois é escolha sua — e custa.");
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MORTE — DECLARADA PELO SISTEMA] Falhei o terceiro teste de morte. Narre o instante final, curto e sem consolo, e pare aí: o que vem depois o sistema resolve.`;
+      setTimeout(() => abrirDesfechoDaMorte(), 400);
+      return { ...pers, morrendo: false, morto: true, morte: ap };
+    }
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Estou caído a 0 PV, inconsciente, rolando testes de morte (${ap.sucessos} sucesso${ap.sucessos === 1 ? "" : "s"}, ${ap.falhas} falha${ap.falhas === 1 ? "" : "s"}). Narre isso do lado de fora — eu não vejo, não ouço e não ajo. Uma cura ou uma estabilização me traz de volta.`;
+    return { ...pers, morrendo: true, morte: ap };
   };
 
   const aplicarResposta = useCallback((resp, persAtual) => {
@@ -4299,28 +4504,29 @@ export default function Taverna() {
         /* VÍNCULO: sangue derramado junto aproxima (+2 para todo o grupo) */
         p2 = { ...p2, grupo: aplicarVinculo(p2.grupo, "todos", 2, msgs) };
         /* LOOT PROCEDURAL: quando cai item, o CÓDIGO gera pela tabela (a IA só
-           descreve o achado — não inventa mais equipamento de vitória) */
-        let itemCaido = null;
-        if (esp.caiItem) {
-          itemCaido = gerarEspolioItem(resp.mudancas.__inimigosFinais || [], p2.nivel || 1);
-          p2 = { ...p2, equipamento: [...(p2.equipamento || []), itemCaido] };
-          msgs.push(`✦ Espólio raro: ${itemCaido.nome} (${RARIDADE_ROTULO[itemCaido.raridade] || itemCaido.raridade}) — na mochila de equipamentos`);
+           descreve o achado — não inventa mais equipamento de vitória).
+           v9.41: e o achado NÃO entra sozinho na bolsa — fica caído entre os
+           corpos, esperando o jogador se abaixar. Ver chao.js. */
+        const caiuAqui = [];
+        {
+          const ondeCaiu = (i) => {
+            const e = fins[Math.min(i, Math.max(0, fins.length - 1))] || {};
+            return { de: e.nome || "", x: e.x != null ? e.x : null, y: e.y != null ? e.y : null };
+          };
+          if (esp.caiItem) caiuAqui.push(achadoDeEquipamento(gerarEspolioItem(fins, p2.nivel || 1), ondeCaiu(0)));
+          for (let i = 0; i < (esp.consumiveis || 0); i++) {
+            const c = sortearConsumivel(p2.nivel || 1);
+            if (!c) continue;
+            caiuAqui.push(achadoDeConsumivel(c, itemConsumivel(c.id), ondeCaiu(i)));
+          }
+          /* DESPOJOS (v9.13): o corpo também é matéria-prima. Criatura mágica
+             deixa essência, peçonhenta deixa glândula, bicho deixa couro. */
+          despojosDe(fins).forEach((c, i) => caiuAqui.push(achadoDeComponente(c, itemComponente(c.id), ondeCaiu(i))));
         }
-        /* CONSUMÍVEIS (v9.2): o que realmente enche a bolsa depois de uma luta */
-        const consCaidos = [];
-        for (let i = 0; i < (esp.consumiveis || 0); i++) {
-          const c = sortearConsumivel(p2.nivel || 1);
-          if (!c) continue;
-          consCaidos.push(c);
-          p2 = { ...p2, inventario: [...(p2.inventario || []), itemConsumivel(c.id)] };
-        }
-        if (consCaidos.length) msgs.push(`${consCaidos[0].icone} Na bolsa: ${consCaidos.map((c) => c.nome).join(", ")}`);
-        /* DESPOJOS (v9.13): o corpo também é matéria-prima. Criatura mágica
-           deixa essência, peçonhenta deixa glândula, bicho deixa couro. */
-        const desp = despojosDe(resp.mudancas.__inimigosFinais || []);
-        if (desp.length) {
-          p2 = { ...p2, inventario: [...(p2.inventario || []), ...desp.map((c) => itemComponente(c.id)).filter(Boolean)] };
-          msgs.push(`🧺 Do corpo dá para tirar: ${desp.map((c) => `${c.icone} ${c.nome}`).join(", ")}`);
+        const noChao = caiuAqui.filter(Boolean);
+        if (noChao.length) {
+          porNoChaoAqui(noChao);
+          msgs.push(`🧺 No chão: ${resumoDoChao(noChao)} — toque em EXAMINAR para recolher.`);
         }
         /* PODER ÚNICO (v7.4.4): vitória sobre elite/lendário pode despertar
            uma habilidade só sua — gerada e limitada pelo sistema */
@@ -4353,7 +4559,9 @@ export default function Taverna() {
           const abatido = identificarDivindadeAbatida(resp.mudancas.__inimigosFinais || [], divindadeRef.current);
           if (abatido) abrirRitoAscensao(abatido, p2.nivel || 1);
         }
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — espólios já aplicados pelo sistema: +${esp.moedas} moedas e +${esp.xp} XP para todos] NÃO envie moedas nem xp (seria dobrado). Narre o desfecho da luta em 2-3 frases.${itemCaido ? ` O SISTEMA derrubou um item: "${itemCaido.nome}" (${itemCaido.raridade}${itemCaido.poder ? `, poder: ${itemCaido.poder}` : ""}) — já está na minha mochila, NÃO envie "adicionar_equipamento" nem "adicionar_itens". Apenas descreva o achado com emoção, coerente com os inimigos derrotados.` : " Nenhum equipamento especial desta vez — não envie itens."}${consCaidos.length ? ` O sistema também colocou na minha bolsa: ${consCaidos.map((c) => c.nome).join(", ")} — já estão comigo, não envie itens por isso; mencione de passagem onde estavam (num cinto, numa sacola, no corpo de alguém).` : ""}${chefeCaido ? " A MASMORRA FOI CONCLUÍDA e o tesouro do chefe já foi entregue pelo sistema — narre a saída triunfal e retome o mundo lá fora." : ""}`;
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — espólios já aplicados pelo sistema: +${esp.moedas} moedas e +${esp.xp} XP para todos] NÃO envie moedas nem xp (seria dobrado). Narre o desfecho da luta em 2-3 frases.${noChao.length
+          ? ` FICOU CAÍDO no chão, entre os corpos: ${noChao.map((c) => `${c.nome}${c.de ? ` (de ${c.de})` : ""}`).join(", ")}. Mostre isso na cena — o brilho no cinto, o couro que dá para tirar — mas NÃO me entregue nada e NÃO envie "adicionar_itens" nem "adicionar_equipamento": quem se abaixa e recolhe sou eu, pelo sistema.`
+          : " Nada de aproveitável ficou no chão — não invente achados."}${chefeCaido ? " A MASMORRA FOI CONCLUÍDA e o tesouro do chefe já foi entregue pelo sistema — narre a saída triunfal e retome o mundo lá fora." : ""}`;
       }
     }
     /* ---- CÃO DE GUARDA DE CONDIÇÕES (v9.0) ----
@@ -4464,6 +4672,16 @@ export default function Taverna() {
     if ((trabalhoPendenteRef.current || []).length) {
       msgs.push(...trabalhoPendenteRef.current);
       trabalhoPendenteRef.current = [];
+    }
+    /* ---- CAIR A ZERO (v9.41) ----
+       Depois de TUDO: o dano do Mestre, o tick do veneno, a cura, a poção.
+       É o último a falar porque é o único que precisa do número final —
+       e é aqui que o sangramento que esvazia a barra fora da luta deixa
+       de ser um número parado e vira uma queda com teste. */
+    {
+      const antes = pers;
+      pers = resolverQueda(pers, msgs);
+      if (pers !== antes) { personagemRef.current = pers; setPersonagem(pers); }
     }
     /* A ENTREGA. Sem violação — o caso comum — sai na tela agora, exatamente
        como sempre saiu. Com violação, as linhas ficam guardadas e a tela
@@ -5200,6 +5418,7 @@ export default function Taverna() {
        sozinho — dentro do envelope de "passar o tempo" está escrito "NÃO me
        leve de volta à cidade", e o detector lia a proibição como pedido. */
     ultimoPedidoRef.current = String(conteudo || "").trimStart().startsWith("[") ? "" : String(conteudo || "");
+    varrerChao();   // outro lugar, outro dia: o que ficou para trás fica para trás
     const nota = notaRef.current; notaRef.current = "";
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
     /* RODAPÉ DO SISTEMA (v7.0.2): lembrete curto colado SÓ na mensagem atual
@@ -5266,7 +5485,11 @@ export default function Taverna() {
          imune a veneno nem que ele tem um nome próprio de bênção — e inventa
          os dois. */
       const dad = resumoDadivasPrompt(p);
-      return `${aqui ? `\n${aqui}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${mis ? `\n${mis}` : ""}${dad ? `\n${dad}` : ""}${mov ? `\n${mov}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
+      /* v9.41: só entra quando há coisa caída — e aí precisa entrar, senão o
+         Mestre descreve um chão limpo em cima de um chão cheio, ou pior,
+         "entrega" o que o jogador ainda não recolheu. */
+      const chn = envelopeDoQueFicou(pertoDaqui(chaoRef.current, combateRef.current ? combateRef.current.heroi : null, RAIO_EXAME));
+      return `${aqui ? `\n${aqui}` : ""}${chn ? `\n${chn}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${mis ? `\n${mis}` : ""}${dad ? `\n${dad}` : ""}${mov ? `\n${mov}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -5549,6 +5772,7 @@ export default function Taverna() {
       lugarRef.current = jornadaRef.current ? null : garantirLugar(sv.lugar); setLugar(lugarRef.current);
       eventosRef.current = garantirEventos(sv.eventos); setEventos(eventosRef.current);
       relogiosRef.current = garantirRelogios(sv.relogios); setRelogios(relogiosRef.current);
+      chaoRef.current = garantirChao(sv.chao); setChao(chaoRef.current);
       diaLutaRef.current = garantirDia(sv.diaLuta);
       /* MIGRAÇÃO (v7.4): saves antigos ganham a ascensão zerada — nada quebra */
       divindadeRef.current = garantirDivindade(sv.divindade); setDivindade(divindadeRef.current);
@@ -5721,6 +5945,11 @@ export default function Taverna() {
   const HAB_OFENSIVA_RX = /dano|ataca|golpe|projetil|projétil|chama|gelo|raio|lamina|lâmina|fogo|destrui|ferir|maldic|explos|impacto|perfur|cort[ae]|drena|execut/i;
   const resolverHabilidadeOfensiva = (h, acao, pers, ctx = {}) => {
     const comb = combateRef.current;
+    /* a ficha que chega aqui já pagou o PM e o buff: ela é mais nova que o
+       espelho, então é ela que passa a ser a ficha viva. Tudo o que esta
+       função mudar (fogo amigo, drenagem, o fechamento da luta) escreve no
+       mesmo lugar, e quem chamou lê de lá em vez da própria cópia. */
+    if (pers) personagemRef.current = pers;
     if (!comb || !(comb.inimigos || []).some((e) => !e.derrotado && e.vida > 0)) return null;
     if (h.danoBase == null && !HAB_OFENSIVA_RX.test(`${h.nome || ""} ${h.descricao || ""}`)) return null;
     const vivos = comb.inimigos.filter((e) => !e.derrotado && e.vida > 0);
@@ -5745,7 +5974,17 @@ export default function Taverna() {
     const atingiveis = vivos.filter((e) => alcanca(gradeH, meuLugarH, e, { alcanceM: alcanceMagia }).ok);
     const pool = atingiveis.length ? atingiveis : vivos;
     const declaradoH = (alvosGolpeRef.current || []).find(Boolean);
-    const alvo = (declaradoH && pool.find((e) => e.nome === declaradoH))
+    /* ---------------- ONDE A ÁREA CAI (v9.41) ----------------
+       Com um ponto de mira escolhido, o CENTRO da forma é o ponto — e o
+       alvo da rolagem passa a ser quem estiver dentro dela, para que o
+       golpe pouse onde a explosão pousa. Sem mira, tudo como era: a área
+       nasce em cima do alvo. */
+    const miraAqui = (ehArea(h) || h.area) && ctx.mira && ctx.mira.x != null ? { nome: "o ponto que escolhi", x: ctx.mira.x, y: ctx.mira.y } : null;
+    const dentroDaMira = miraAqui
+      ? pegosPelaArea(quadradosDaArea(geometriaDe(h), { grade: gradeH, origem: meuLugarH, alvo: miraAqui }), pool)
+      : [];
+    const alvo = (miraAqui && ((declaradoH && dentroDaMira.find((e) => e.nome === declaradoH)) || dentroDaMira[0]))
+      || (declaradoH && pool.find((e) => e.nome === declaradoH))
       || pool.find((e) => acaoN.includes(norm(e.nome)))
       || pool[0];
     /* ATRIBUTO DA HABILIDADE (v9.6): antes era o MAIOR número da ficha, o que
@@ -5820,7 +6059,9 @@ export default function Taverna() {
       if (ehArea(h) || h.area) {
         const geo = geometriaDe(h);
         const aliadosPos = (comb.aliados || []).map((a, i) => ({ ...a, vida: ((pers.grupo || [])[i] || {}).vida, i }));
-        const quadrados = quadradosDaArea(geo, { grade: gradeH, origem: meuLugarH, alvo });
+        /* mesma conta da previsão, com o mesmo centro — é isso que faz o que
+           acendeu na tela ser exatamente o que apanha */
+        const quadrados = quadradosDaArea(geo, { grade: gradeH, origem: meuLugarH, alvo: miraAqui || alvo });
         const pegosInim = pegosPelaArea(quadrados, locais);
         const pegosAli = pegosPelaArea(quadrados, aliadosPos.filter((a) => (a.vida || 0) > 0));
         const pegos = new Set(pegosInim.map((e) => e.nome).filter((n) => n !== alvo.nome));
@@ -5838,7 +6079,7 @@ export default function Taverna() {
         if (pegosAli.length) {
           const meio = Math.max(1, Math.round(r.dano / 2));
           const indices = new Set(pegosAli.map((a) => a.i));
-          setPersonagem((old) => ({
+          mudarFicha((old) => ({
             ...old,
             grupo: (old.grupo || []).map((g, i) => (indices.has(i) ? { ...g, vida: Math.max(0, (g.vida || 0) - meio) } : g)),
           }));
@@ -5878,7 +6119,7 @@ export default function Taverna() {
       /* molde DRENAGEM (únicas): recupera metade do dano causado */
       if (h.molde === "drenagem") {
         const cura = Math.max(1, Math.round(r.dano / 2));
-        setPersonagem((old) => ({ ...old, vida: Math.min(old.vidaMax, (old.vida || 0) + cura) }));
+        mudarFicha((old) => ({ ...old, vida: Math.min(old.vidaMax, (old.vida || 0) + cura) }));
         linhasSis.push({ autor: "sistema", texto: `🩸 ${h.nome} drena a essência: +${cura} PV` });
         partes.push(`drenei ${cura} PV`);
       }
@@ -5895,6 +6136,9 @@ export default function Taverna() {
     combateRef.current = { ...comb, inimigos: locais, economia: comb.economia, log: combateRef.current.log };
     setCombate(combateRef.current);
     if (linhasSis.length) pushMsgs(linhasSis);
+    /* a ficha que entrou aqui já é a mais nova (o PM saiu dela) e virou a ficha
+       viva na primeira linha desta função; o que o fechamento creditar fica no
+       mesmo lugar, que é onde quem chamou vai buscar depois */
     fecharSeTodosCairam();
     return partes.join("; ");
   };
@@ -6254,7 +6498,8 @@ export default function Taverna() {
          as duas de uma vez. O sistema resolve cada uma na ordem escolhida,
          cobra PM e movimento de cada, e manda ao Mestre um envelope único. */
       const escolhidas = [...habsSel]; setHabsSel([]);
-      let pers = { ...personagem };
+      const miraDoTurno = miraRef.current; miraRef.current = null; setMira(null);
+      let pers = { ...(fichaViva() || personagem) };
       const linhas = [];
       const desfechos = [];
       const usadas = [];
@@ -6308,13 +6553,17 @@ export default function Taverna() {
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${combo.nota}`;
         }
         sequencia.push(h);
-        const desfechoH = resolverHabilidadeOfensiva(h, acao, pers, { combo });
+        const desfechoH = resolverHabilidadeOfensiva(h, acao, pers, { combo, mira: miraDoTurno });
+        /* a magia pode ter drenado vida, queimado o próprio grupo ou encerrado
+           a luta: sem reler a ficha viva aqui, a habilidade seguinte partiria
+           da cópia anterior e desfaria tudo isso */
+        pers = fichaViva() || pers;
         if (desfechoH) desfechos.push(`"${h.nome}"${combo ? ` [${combo.nome}]` : ""}: ${desfechoH}`);
         usadas.push({ h, custo, recH, combo });
         custoTotal += custo;
       }
       if (!usadas.length) return;
-      setPersonagem(pers);
+      pers = mudarFicha(() => pers);
       habUsadaRef.current = true;
       const nomes = usadas.map((u) => u.h.nome);
       pushMsgs([
@@ -6326,8 +6575,11 @@ export default function Taverna() {
       /* v9.13: a sequência de habilidades TAMBÉM é um turno inteiro. Antes ela
          escapava do revide — dava para encadear magias a luta toda sem o
          inimigo nunca responder, e só o botão "encerrar turno" quebrava isso. */
-      const fechouHab = fecharSeTodosCairam();
-      const rvH = fechouHab ? { pers, texto: "" } : fecharMeuTurno(pers);
+      /* a ficha que segue daqui é SEMPRE a viva: dentro de `resolverHabilidadeOfensiva`
+         a luta pode ter fechado e creditado espólios, e mandar `pers` — a cópia
+         de antes do golpe — apagaria o crédito no mesmo turno em que ele apareceu */
+      const fechouHab = fecharSeTodosCairam(fichaViva() || pers);
+      const rvH = fechouHab ? { pers: fichaViva() || pers, texto: "" } : fecharMeuTurno(fichaViva() || pers);
       enviar(desfechos.length
         ? `[HABILIDADES — RESOLVIDAS PELO SISTEMA] No MESMO turno usei ${listaTxt}. O SISTEMA já rolou o acerto, calculou e APLICOU tudo: ${desfechos.join(" · ")}.${rvH.texto} Narre a sequência inteira como UM só turno meu — não recalcule, não mude quem acertou, NÃO declare a morte de quem ainda tem PV. Minha intenção: ${acao}`
         : `[HABILIDADES] No MESMO turno uso ${listaTxt} (PM já descontados; tenho ${rvH.pers.mana}). COMO eu as uso: ${acao}.${rvH.texto} Narre a sequência conforme minha intenção — se incerto, peça a rolagem apropriada. LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte.${extraTempo}`, rvH.pers);
@@ -6364,22 +6616,24 @@ export default function Taverna() {
         combateRef.current = { ...combateRef.current, economia: { ...ecoH2 } }; setCombate(combateRef.current);
       }
       const recC = habCitada.recarga != null ? Math.max(0, Number(habCitada.recarga) || 0) : recargaPadrao(custo);
-      let pers = { ...personagem, mana: personagem.mana - custo, habRecarga: recC > 0 ? { ...(personagem.habRecarga || {}), [(habCitada.nome || "").toLowerCase()]: recC } : (personagem.habRecarga || {}) };
+      const base0C = fichaViva() || personagem;
+      let pers = { ...base0C, mana: base0C.mana - custo, habRecarga: recC > 0 ? { ...(base0C.habRecarga || {}), [(habCitada.nome || "").toLowerCase()]: recC } : (base0C.habRecarga || {}) };
       const buffC = aplicarBuffDeHabilidade(habCitada, pers);
-      pers = buffC.pers;
-      setPersonagem(pers);
+      pers = mudarFicha(() => buffC.pers);
       habUsadaRef.current = true;
       pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `✦ ${habCitada.nome} · gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}${recC > 0 ? ` · ⏳ recarga ${recC}t` : ""}` }, ...(buffC.texto ? [{ autor: "sistema", texto: buffC.texto }] : [])]);
       if (buffC.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${buffC.nota}`;
-      const desfechoC = resolverHabilidadeOfensiva(habCitada, acao, pers);
-      const fechouCit = fecharSeTodosCairam();
-      const rvC = fechouCit ? { pers, texto: "" } : fecharMeuTurno(pers);
+      const miraCitada = miraRef.current; miraRef.current = null; setMira(null);
+      const desfechoC = resolverHabilidadeOfensiva(habCitada, acao, pers, { mira: miraCitada });
+      pers = fichaViva() || pers;
+      const fechouCit = fecharSeTodosCairam(pers);
+      const rvC = fechouCit ? { pers: fichaViva() || pers, texto: "" } : fecharMeuTurno(fichaViva() || pers);
       enviar(desfechoC
         ? `[HABILIDADE — RESOLVIDA PELO SISTEMA] Usei "${habCitada.nome}" (custo ${custo} PM, já descontado). O SISTEMA já rolou o acerto, calculou e APLICOU o resultado: ${desfechoC}.${rvC.texto} Sua função é APENAS narrar esse resultado exato — não recalcule, NÃO declare a morte de quem ainda tem PV. Minha intenção: ${acao}`
         : `[HABILIDADE] Uso "${habCitada.nome}" (custo ${custo} PM, já descontado; tenho ${rvC.pers.mana} PM). ${habCitada.descricao || ""} Ação: ${acao}.${rvC.texto} LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte; se o inimigo ainda tiver PV, ele segue de pé.${extraTempo}`, rvC.pers);
       return;
     }
-    const ataque = resolverAtaqueJogador(acao, personagem);
+    const ataque = resolverAtaqueJogador(acao, fichaViva() || personagem);
     /* ZONAS (v9.20): golpe sem alcance não gasta a ação. Cobrar o turno por
        uma regra que o jogador acabou de descobrir seria punir a curiosidade;
        o custo dele é o passo que ele vai ter que dar. */
@@ -6442,8 +6696,8 @@ export default function Taverna() {
          rodada seguinte já abre renovada. Antes isto só acontecia quando os
          movimentos se esgotavam OU quando o jogador apertava "encerrar turno" —
          e por isso quem lutava só com habilidades nunca era revidado. */
-      const fechouNoMeuGolpe = fecharSeTodosCairam();
-      const rv = fechouNoMeuGolpe ? { pers: personagem, texto: "" } : fecharMeuTurno(personagem);
+      const fechouNoMeuGolpe = fecharSeTodosCairam(fichaViva() || personagem);
+      const rv = fechouNoMeuGolpe ? { pers: fichaViva() || personagem, texto: "" } : fecharMeuTurno(fichaViva() || personagem);
       const persAtual = rv.pers;
       const resumoInimigos = rv.texto;
       enviar(`[COMBATE — RESOLVIDO PELO SISTEMA] Minha sequência de ${desfecho}. O dano já foi aplicado.${resumoInimigos} NÃO recalcule nem mude números — NARRE de forma vívida (2-4 frases) a sequência dos meus golpes e as decisões e reações dos inimigos: quem recuou, quem avançou, quem mudou de alvo. Ação declarada: ${acao}`, persAtual);
@@ -6494,8 +6748,16 @@ export default function Taverna() {
     setCombate(combateRef.current);
   };
 
-  const fecharSeTodosCairam = () => {
+  /* Devolve `false` enquanto a luta continua e A FICHA ATUALIZADA quando ela
+     fecha — ficha é sempre objeto, então continua servindo de bandeira para
+     quem só queria saber "acabou?". A mudança existe porque fechar a luta
+     CREDITA coisas, e quem chamava seguia usando a própria cópia da ficha na
+     linha seguinte: as moedas, o XP e a bolsa apareciam na tela e sumiam no
+     mesmo turno. Quem chama passa a ficha viva e recebe a nova. */
+  const fecharSeTodosCairam = (persBase = null) => {
     const c = combateRef.current;
+    const base0 = persBase || personagemRef.current || personagem || null;
+    if (base0) personagemRef.current = base0;
     if (!c || !(c.inimigos || []).length) return false;
     const todosCairam = c.inimigos.every((e) => e.derrotado || (e.vida || 0) <= 0);
     if (!todosCairam) return false;
@@ -6503,7 +6765,7 @@ export default function Taverna() {
     /* quem FUGIU não tombou: não rende espólio, não conta abate e — o que
        mais importaria — não tem o nome riscado no registro do mundo (v9.14) */
     const derrotados = c.inimigos.filter((e) => !e.fugiu);
-    if (!derrotados.length) { pushMsgs([{ autor: "sistema", texto: "⚔ Não sobrou ninguém em pé para lutar — o combate termina sem espólios." }]); return true; }
+    if (!derrotados.length) { pushMsgs([{ autor: "sistema", texto: "⚔ Não sobrou ninguém em pé para lutar — o combate termina sem espólios." }]); return base0 || true; }
     /* v9.8: quem cai sai da base do mundo para sempre — o nome fica riscado no
        registro de pessoas e some do que o Mestre recebe no prompt. */
     derrotados.forEach((e) => registrarMorte(e.nome));
@@ -6531,23 +6793,35 @@ export default function Taverna() {
       p2.condicoes = (p2.condicoes || []).filter((c) => !(c.origem || "").startsWith("presença de"));
       p2.grupo = (p2.grupo || []).map((g) => ({ ...g, condicoes: (g.condicoes || []).filter((c) => !(c.origem || "").startsWith("presença de")) }));
       p2 = talvezDespertarUnica(p2, derrotados, msgsU);
-      /* consumíveis também caem quando a luta fecha por código */
-      const caidos = [];
+      /* v9.41: O QUE CAI, CAI NO CHÃO. Isto entrava direto na bolsa e a linha
+         "Na bolsa: Elixir de Intelecto" era a única prova de que tinha
+         acontecido. Agora o espólio fica caído no lugar onde o dono tombou e
+         o jogador se abaixa — é o que faz "examino e pego" ser uma jogada em
+         vez de um pedido ao Mestre. Moeda e XP seguem automáticos. */
+      const chaoNovos = [];
+      const ondeCaiu = (i) => {
+        const e = derrotados[Math.min(i, derrotados.length - 1)] || {};
+        return { de: e.nome || "", x: e.x != null ? e.x : null, y: e.y != null ? e.y : null };
+      };
+      if (esp.caiItem) {
+        const it = gerarEspolioItem(derrotados, p2.nivel || 1);
+        chaoNovos.push(achadoDeEquipamento(it, ondeCaiu(0)));
+      }
       for (let i = 0; i < (esp.consumiveis || 0); i++) {
         const cc = sortearConsumivel(p2.nivel || 1);
         if (!cc) continue;
-        caidos.push(cc);
-        p2 = { ...p2, inventario: [...(p2.inventario || []), itemConsumivel(cc.id)] };
+        chaoNovos.push(achadoDeConsumivel(cc, itemConsumivel(cc.id), ondeCaiu(i)));
       }
-      if (caidos.length) msgsU.push(`${caidos[0].icone} Na bolsa: ${caidos.map((cc) => cc.nome).join(", ")}`);
       /* DESPOJOS (v9.13): o corpo também é matéria-prima para a bancada */
-      const despU = despojosDe(derrotados);
-      if (despU.length) {
-        p2 = { ...p2, inventario: [...(p2.inventario || []), ...despU.map((c) => itemComponente(c.id)).filter(Boolean)] };
-        msgsU.push(`🧺 Do corpo dá para tirar: ${despU.map((c) => `${c.icone} ${c.nome}`).join(", ")}`);
+      despojosDe(derrotados).forEach((c, i) => chaoNovos.push(achadoDeComponente(c, itemComponente(c.id), ondeCaiu(i))));
+      const caiuNoChao = chaoNovos.filter(Boolean);
+      if (caiuNoChao.length) {
+        porNoChaoAqui(caiuNoChao);
+        msgsU.push(`🧺 No chão: ${resumoDoChao(caiuNoChao)} — toque em EXAMINAR para recolher.`);
       }
       personagemRef.current = p2;
       setPersonagem(p2);
+      espolioNoChaoRef.current = caiuNoChao;
     }
     pushMsgs([
       { autor: "sistema", texto: "⚔ Todos os inimigos caíram — o combate termina." },
@@ -6562,8 +6836,14 @@ export default function Taverna() {
       const abatido = identificarDivindadeAbatida(derrotados, divindadeRef.current);
       if (abatido) abrirRitoAscensao(abatido, (personagemRef.current || personagem || {}).nivel || 1);
     } catch { /* o rito nunca derruba o fim de um combate */ }
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — sistema já aplicou +${esp.moedas} moedas e +${esp.xp} XP] NÃO envie moedas nem xp. Narre o desfecho em 2-3 frases.${esp.caiItem ? " UM ITEM CAIU: crie um item coerente e envie em \"adicionar_equipamento\" ou \"adicionar_itens\"." : " Sem itens desta vez."}`;
-    return true;
+    {
+      const caiu = espolioNoChaoRef.current || [];
+      espolioNoChaoRef.current = [];
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — sistema já aplicou +${esp.moedas} moedas e +${esp.xp} XP] NÃO envie moedas nem xp. Narre o desfecho em 2-3 frases.${caiu.length
+        ? ` FICOU CAÍDO no chão, entre os corpos: ${resumoDoChao(caiu)}. Você pode MOSTRAR isso na cena — o brilho no cinto, o couro que dá para tirar —, mas NÃO me entregue nada e NÃO envie "adicionar_itens" nem "adicionar_equipamento": quem se abaixa e recolhe sou eu, pelo sistema.`
+        : " Nada de aproveitável ficou no chão — não invente achados."}`;
+    }
+    return personagemRef.current;
   };
 
   /* ---------------- O REVIDE (v9.13) ----------------
@@ -6580,7 +6860,7 @@ export default function Taverna() {
     const combPos = combateRef.current;
     if (!combPos) return { pers: persBase, resumo: "" };
     const vivos = (combPos.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
-    if (!vivos.length) { fecharSeTodosCairam(); return { pers: persBase, resumo: "" }; }
+    if (!vivos.length) { const p = fecharSeTodosCairam(persBase); return { pers: (p && p !== true) ? p : persBase, resumo: "" }; }
     /* ---------------- A VEZ DO MUNDO (v9.31) ----------------
        Ela sempre existiu aqui dentro, escondida: o revide dos inimigos e o
        turno dos companheiros já rodavam colados na ação do jogador, sem nome
@@ -6616,8 +6896,9 @@ export default function Taverna() {
     }
     if (fugas.length) {
       combateRef.current = combPos; setCombate({ ...combPos });
-      if (fecharSeTodosCairam()) {
-        return { pers: persBase, resumo: ` ${fugas.join("; ")}. Com isso a luta ACABOU — narre a debandada e o silêncio depois.` };
+      const pFuga = fecharSeTodosCairam(persBase);
+      if (pFuga) {
+        return { pers: (pFuga !== true) ? pFuga : persBase, resumo: ` ${fugas.join("; ")}. Com isso a luta ACABOU — narre a debandada e o silêncio depois.` };
       }
     }
     const aindaVivos = (combPos.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
@@ -6776,36 +7057,28 @@ export default function Taverna() {
       }
     }
     combateRef.current = combPos; setCombate({ ...combPos });
-    fecharSeTodosCairam(); // companheiro pode ter dado o golpe final
-
-    /* SISTEMA DE MORTE: se o jogador está a 0 PV, faz um teste de morte */
-    if (persAtual.vida <= 0) {
-      const estadoMorte = persAtual.morte || { sucessos: 0, falhas: 0 };
-      const res = testeDeMorte();
-      const ap = aplicarTesteMorte(estadoMorte, res);
-      pushMsgs([{ autor: "sistema", texto: `☠ Teste de morte: ${res.texto}` }]);
-      if (ap.desfecho === "revive") {
-        persAtual = { ...persAtual, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } };
-        pushMsgs([{ autor: "sistema", texto: "✨ Você volta a si com 1 PV!" }]);
-        /* v9.16: voltar de um 0 PV rende um ponto de heroísmo. Cair e levantar
-           é o momento mais heroico que a mesa produz sozinha — e é justo que
-           quem passou por isso saia com uma ficha na mão. */
-        const rh = ganharHeroismo(persAtual, "sobreviveu");
-        persAtual = rh.pers; if (rh.msg) pushMsgs([{ autor: "sistema", texto: rh.msg }]);
-      }
-      else if (ap.desfecho === "estavel") { persAtual = { ...persAtual, morrendo: true, morte: { sucessos: 0, falhas: 0 } }; pushMsgs([{ autor: "sistema", texto: "Você estabiliza — inconsciente, mas vivo. Alguém precisa te ajudar." }]); }
-      else if (ap.desfecho === "morto") {
-        /* v9.25: aqui o jogo dizia "enquanto houver esperança, a lenda não
-           termina" — uma frase bonita para admitir que o sistema não sabia o
-           que fazer. Agora sabe: a morte abre uma escolha com preço. */
-        persAtual = { ...persAtual, morrendo: false, morto: true, morte: ap };
-        pushMsgs([{ autor: "sistema", texto: "💀 Você tomba. O que vem depois é escolha sua — e custa." }]);
-        setTimeout(() => abrirDesfechoDaMorte(), 400);
-      }
-      else { persAtual = { ...persAtual, morrendo: true, morte: ap }; }
+    /* o companheiro pode ter dado o golpe final — e se deu, os espólios entram
+       AQUI, na ficha que segue viagem daqui para baixo. Antes o fechamento
+       creditava numa cópia que o `setPersonagem` de baixo cobria de volta. */
+    {
+      const pFim = fecharSeTodosCairam(persAtual);
+      if (pFim && pFim !== true) persAtual = pFim;
     }
 
-    setPersonagem(persAtual);
+    /* SISTEMA DE MORTE: se o jogador está a 0 PV, faz um teste de morte.
+       v9.41: a regra saiu daqui e virou `resolverQueda`, porque cair a zero
+       acontece em muito mais lugares do que o turno dos inimigos — e o que
+       estava escrito aqui era, na prática, a única queda que o jogo
+       reconhecia. `morteRolada` avisa a resposta do Mestre de que este zero
+       já foi testado, para o mesmo golpe não render dois testes. */
+    if ((persAtual.vida || 0) <= 0 && !persAtual.morto) {
+      const linhasQueda = [];
+      persAtual = resolverQueda(persAtual, linhasQueda);
+      if (linhasQueda.length) pushMsgs(linhasQueda.map((t) => ({ autor: "sistema", texto: t })));
+      morteRoladaRef.current = true;
+    }
+
+    persAtual = mudarFicha(() => persAtual);
     /* NOVA RODADA: revide concluído, meus movimentos renovam */
     if (combateRef.current) {
       combateRef.current = { ...combateRef.current, economia: { acao: 1, extra: 1 }, rodada: (combateRef.current.rodada || 1) + 1 };
@@ -6891,6 +7164,57 @@ export default function Taverna() {
      Vale para a primeira habilidade de área selecionada. Duas magias de área
      no mesmo turno é caso raro e a segunda pinta por cima da primeira; entre
      mostrar uma previsão certa e nenhuma, uma certa é melhor. */
+  /* O que está ao alcance da mão AGORA. Durante a luta o raio é o passo de
+     um turno, medido do quadrado onde eu estou; fora dela não há tabuleiro
+     e "perto" é a cena inteira. */
+  const chaoPerto = pertoDaqui(chao, combate ? combate.heroi : null, RAIO_EXAME);
+
+  /* ---------------- O ALCANCE E A MIRA (v9.41) ----------------
+     Duas coisas que o jogador não tinha como saber antes de gastar o PM:
+     até ONDE a habilidade chega e ONDE a área vai cair. A primeira ele
+     descobria errando ("longe demais"), a segunda ele não escolhia — o
+     sistema centrava a explosão no primeiro inimigo da lista, e quem
+     lançasse Bola de Fogo para pegar três acabava pegando um e o próprio
+     companheiro.
+
+     `alcanceDaHabilidade` acende o chão que a habilidade alcança, com
+     parede cortando a visada; `mira` guarda o quadrado escolhido, e é ele
+     que vira o centro da forma — na previsão e no disparo, com a mesma
+     conta, para que o que se vê seja o que acontece. */
+  const habMirada = combate && habsSel.length
+    ? (habsSel.find((x) => x && (ehArea(x) || x.area)) || habsSel[0])
+    : null;
+
+  const alcanceDaHabilidade = (() => {
+    const comb = combate;
+    if (!comb || !habMirada || !comb.grade || !comb.heroi) return null;
+    const geo = geometriaDe(habMirada) || {};
+    const alcanceM = Math.max(1.5, Number(geo.alcance) || 36);
+    const ehDeArea = !!(ehArea(habMirada) || habMirada.area);
+    const g = garantirGrade(comb.grade);
+    if (!g) return null;
+    const quadrados = new Set();
+    const teto = m2q(alcanceM);
+    const h = comb.heroi;
+    for (let x = Math.max(0, h.x - teto); x <= Math.min(g.largura - 1, h.x + teto); x++) {
+      for (let y = Math.max(0, h.y - teto); y <= Math.min(g.altura - 1, h.y + teto); y++) {
+        if (x === h.x && y === h.y) continue;
+        if (ehParede(comb.grade, x, y)) continue;
+        if (distanciaM(h, { x, y }) > alcanceM) continue;
+        if (!linhaDeVisao(comb.grade, h, { x, y })) continue;
+        quadrados.add(`${x},${y}`);
+      }
+    }
+    return { nome: habMirada.nome, alcanceM, area: ehDeArea, raio: geo.raio || 0, quadrados, tamanho: quadrados.size };
+  })();
+
+  /* mira só existe enquanto a habilidade que a pediu está selecionada */
+  useEffect(() => {
+    if (!alcanceDaHabilidade || !alcanceDaHabilidade.area) { if (miraRef.current) { miraRef.current = null; setMira(null); } }
+  }, [alcanceDaHabilidade && alcanceDaHabilidade.nome, alcanceDaHabilidade && alcanceDaHabilidade.area]);
+
+  const definirMira = (q) => { miraRef.current = q; setMira(q); };
+
   const previsaoDeArea = (() => {
     const comb = combate;
     if (!comb || !habsSel.length || !personagem) return null;
@@ -6905,19 +7229,47 @@ export default function Taverna() {
     const atingiveis = vivos.filter((e) => alcanca(gradeP, meuP, e, { alcanceM: Math.max(1.5, Number(geo.alcance) || 36) }).ok);
     const pool = atingiveis.length ? atingiveis : vivos;
     const declarado = (alvosGolpe || []).find(Boolean);
-    const alvo = (declarado && pool.find((e) => e.nome === declarado)) || pool[0];
-    if (!alvo) return null;
+    /* o ponto que o jogador escolheu manda; sem escolha, o alvo declarado;
+       sem nenhum dos dois, o primeiro que dá para acertar */
+    const centro = mira && mira.x != null ? { nome: "o ponto que escolhi", x: mira.x, y: mira.y }
+      : (declarado && pool.find((e) => e.nome === declarado)) || pool[0];
+    if (!centro) return null;
     try {
-      const quadrados = quadradosDaArea(geo, { grade: gradeP, origem: meuP, alvo });
+      const quadrados = quadradosDaArea(geo, { grade: gradeP, origem: meuP, alvo: centro });
       const aliadosPos = (comb.aliados || []).map((a, i) => ({ ...a, vida: ((personagem.grupo || [])[i] || {}).vida }));
       return {
-        nome: h.nome, quadrados,
+        nome: h.nome, quadrados, mirado: !!(mira && mira.x != null),
         forma: formaDef(geo.forma).nome, raio: geo.raio,
         inimigos: pegosPelaArea(quadrados, pool).map((e) => e.nome),
         aliados: pegosPelaArea(quadrados, aliadosPos.filter((a) => (a.vida || 0) > 0)).map((a) => a.nome),
       };
     } catch { return null; }
   })();
+
+  /* ---------------- RECOLHER DO CHÃO (v9.41) ----------------
+     Um clique, uma transferência: o achado sai da pilha e entra na ficha
+     com o objeto que já foi montado quando ele caiu. Nada é recalculado
+     aqui, e por isso não existe caminho em que o item apareça na tela e
+     não apareça na bolsa. Abaixar-se é gesto, não turno — a mesma regra
+     da poção. */
+  const recolherDoChao = (ids) => {
+    const { chao: novo, pegos } = tirarDoChao(chaoRef.current, ids);
+    if (!pegos.length) return;
+    chaoRef.current = novo; setChao(novo);
+    const p = mudarFicha((base) => {
+      let np = { ...base };
+      for (const it of pegos) {
+        if (!it || !it.pronto) continue;
+        if (it.destino === "equipamento") np = { ...np, equipamento: [...(np.equipamento || []), it.pronto] };
+        else np = { ...np, inventario: [...(np.inventario || []), it.pronto] };
+      }
+      return np;
+    });
+    pushMsgs([{ autor: "sistema", texto: `🤲 Você recolhe: ${pegos.map((i) => `${i.icone} ${i.nome}`).join(", ")}` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoRecolhimento(pegos)}`;
+    if (!novo.itens.length) setExaminando(false);
+    salvar({ personagem: p, chao: novo });
+  };
 
   /* ---------------- MOVER-SE NA LUTA (v9.20) ----------------
      Uma zona por vez, e sair de perto de quem está te batendo custa: cada
@@ -6938,13 +7290,24 @@ export default function Taverna() {
        e ignora terreno difícil. `caminhar` faz a busca de caminho e cobra o
        terreno; aqui só se decide quanto chão cabe no turno. */
     const persMov = personagemRef.current || personagem;
-    const passo = passoEfetivo(persMov, { dobrar: dobraMovimento(persMov) });
+    const passo = passoComSelecao(persMov, habsSel, { dobrar: dobraMovimento(persMov) });
     if (passo.parado) { pushMsgs([{ autor: "sistema", texto: `📏 Você não consegue se mover (${passo.fontes.join(", ")}).` }]); return; }
     const eco = comb.economia;
-    if (eco && eco.movimento <= 0) { pushMsgs([{ autor: "sistema", texto: "⏳ Você já se moveu nesta rodada." }]); return; }
+    /* ---------------- O ORÇAMENTO É EM METROS (v9.41) ----------------
+       Aqui havia um `movimento: 0` que zerava o turno inteiro no primeiro
+       passo: quem andasse um quadrado para o lado perdia os outros sete
+       metros e meio, e o grid apagava. Isso não é economia de ação — é
+       gastar nove metros para andar um e meio. Agora o que sobra continua
+       sobrando, e dá para andar, contornar e andar de novo enquanto houver
+       chão; o que fecha o turno é AGIR, como sempre foi. */
+    const restante = eco && eco.movM != null ? eco.movM : passo.metros;
+    if (restante < METROS_POR_QUADRADO) {
+      pushMsgs([{ autor: "sistema", texto: `⏳ Você já cobriu os ${metrosTxt(passo.metros)} m desta rodada — o próximo passo é no turno que vem.` }]);
+      return;
+    }
 
     const ocupados = ocupacaoDe([...(comb.inimigos || []), ...(comb.aliados || [])], de);
-    const chk = caminhar(grade, de, destino, { ocupados, deslocamentoM: passo.metros });
+    const chk = caminhar(grade, de, destino, { ocupados, deslocamentoM: restante });
     if (!chk.ok) { pushMsgs([{ autor: "sistema", texto: `📏 ${chk.motivo}.` }]); return; }
 
     /* sair de perto custa: cada inimigo que te alcança leva um golpe livre —
@@ -6954,7 +7317,8 @@ export default function Taverna() {
     let pers = personagemRef.current || personagem;
     const nomeDe = nomeDoLugar(grade, de.x, de.y);
     const nomePara = nomeDoLugar(grade, chk.destino.x, chk.destino.y);
-    const linhas = [{ autor: "sistema", texto: `👣 Você vai ${nomeDe === nomePara ? `${Math.round(chk.custoM)} m dentro de ${nomePara}` : `de ${nomeDe} para ${nomePara}`}${passo.voando ? " (voando)" : ""} — ${Math.round(chk.custoM)} de ${passo.metros} m.` }];
+    const sobra = Math.max(0, Math.round((restante - chk.custoM) * 10) / 10);
+    const linhas = [{ autor: "sistema", texto: `👣 Você vai ${nomeDe === nomePara ? `${metrosTxt(chk.custoM)} m dentro de ${nomePara}` : `de ${nomeDe} para ${nomePara}`}${passo.voando ? " (voando)" : ""} — ${metrosTxt(chk.custoM)} m gastos, ${sobra > 0 ? `restam ${metrosTxt(sobra)} m` : "acabou o passo desta rodada"}.` }];
     if (colados.length) {
       const ops = oportunidadesContraOJogador(colados, pers, grauDe(divindadeRef.current));
       let dano = 0;
@@ -6965,7 +7329,7 @@ export default function Taverna() {
       }
       if (dano > 0) { pers = { ...pers, vida: Math.max(0, (pers.vida || 0) - dano) }; setPersonagem(pers); personagemRef.current = pers; }
     }
-    const novaEco = eco ? { ...eco, movimento: 0 } : eco;
+    const novaEco = eco ? { ...eco, movM: sobra } : eco;
     combateRef.current = { ...comb, heroi: { ...de, x: chk.destino.x, y: chk.destino.y }, economia: novaEco };
     setCombate(combateRef.current);
     pushMsgs(linhas);
@@ -9812,8 +10176,15 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               onDeclararAlvo={(i, nome) => { const a = [...alvosGolpeRef.current]; a[i] = nome; alvosGolpeRef.current = a; setAlvosGolpe([...a]); }}
               onLimparAlvos={() => { alvosGolpeRef.current = []; setAlvosGolpe([]); }}
               onMover={moverPara} grupo={personagem.grupo || []}
-              passoM={passoEfetivo(personagem, { dobrar: dobraMovimento(personagem) }).metros}
+              {...(() => {
+                /* o passo que o grid acende é o que SOBROU da rodada, já
+                   corrigido pelo que estiver selecionado (Voo alcança mais) */
+                const p = passoComSelecao(personagem, habsSel, { dobrar: dobraMovimento(personagem) });
+                const resta = combate.economia && combate.economia.movM != null ? combate.economia.movM : p.metros;
+                return { passoM: resta, passoTotal: p.metros };
+              })()}
               previsao={previsaoDeArea}
+              mira={mira} onMirar={definirMira} alcanceMira={alcanceDaHabilidade}
               pocoes={pocoesNaBolsa} onUsarConsumivel={usarConsumivelUI} />}
 
             {/* v9.4: as sugestões de ação saíram. Numa mesa de verdade o Mestre
@@ -10133,6 +10504,20 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   style={{ background: habAbertas ? T.violet : "transparent", color: habAbertas ? T.onSecond : T.violetSoft, border: `1px solid ${T.violet}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
                   ✦ Habilidades
                 </button>
+                {/* EXAMINAR (v9.41): o "segurar a tecla" do Baldur's Gate. Mostra
+                    tudo o que dá para catar por perto e deixa o jogador escolher.
+                    Fica sempre visível, aceso ou apagado, pelo mesmo motivo do
+                    selo de heroísmo: recurso que só aparece quando serve é
+                    recurso que ninguém aprende a usar. */}
+                <button onClick={() => setExaminando((v) => !v)} disabled={bloqueado}
+                  title={chaoPerto.length ? `${chaoPerto.length} coisa(s) caída(s) por perto` : "Nada caído por perto"}
+                  className="tv-mono text-[11px] rounded-full px-3 py-1.5 flex items-center gap-1"
+                  style={{ background: examinando ? T.ok : "transparent", color: examinando ? T.onAccent : chaoPerto.length ? T.ok : T.inkDim, border: `1px solid ${chaoPerto.length ? T.ok : T.line}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
+                  🔍 Examinar
+                  {chaoPerto.length > 0 && (
+                    <span className="tv-mono text-[9px] px-1.5 rounded-full" style={{ background: examinando ? T.onAccent : T.ok, color: examinando ? T.ok : T.onAccent }}>{chaoPerto.length}</span>
+                  )}
+                </button>
                 <button onClick={() => setMostrarHoras((v) => !v)} disabled={bloqueado || acampado} title="Passar o tempo" className="tv-mono text-[11px] rounded-full px-3 py-1.5"
                   style={{ background: mostrarHoras ? T.amber : "transparent", color: mostrarHoras ? T.onAccent : T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600, opacity: (bloqueado || acampado) ? 0.4 : 1 }}>
                   🕐 Tempo
@@ -10151,6 +10536,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   <SeloHeroismo pontos={garantirHeroismo(personagem)} aceso={heroAberto} aoAbrir={() => setHeroAberto((v) => !v)} />
                 </div>
               </div>
+              {examinando && (
+                <PainelExame itens={chaoPerto} raio={combate ? RAIO_EXAME : 0}
+                  aoPegar={recolherDoChao} aoFechar={() => setExaminando(false)} />
+              )}
               {heroAberto && (
                 <PainelHeroismo
                   pontos={garantirHeroismo(personagem)}

@@ -41,6 +41,11 @@
 export const METROS_POR_QUADRADO = 1.5;
 export const m2q = (metros) => Math.max(0, Math.round((Number(metros) || 0) / METROS_POR_QUADRADO));
 export const q2m = (quadrados) => (Number(quadrados) || 0) * METROS_POR_QUADRADO;
+/* Metro escrito para gente: vírgula decimal e sem casa inútil — 7,5 e 9,
+   nunca "7.5" nem "9.0". Um quadrado é 1,5 m, então meia casa aparece o
+   tempo todo e arredondar para inteiro faria o orçamento não fechar na
+   conta do jogador ("gastei 2, restam 7,5" de um total de 9). */
+export const metrosTxt = (n) => String(Math.round((Number(n) || 0) * 10) / 10).replace(".", ",");
 
 /* ---------------- TAMANHO DAS CRIATURAS ----------------
    Um goblin e um dragão não ocupam o mesmo chão, e é isso que faz o

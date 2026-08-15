@@ -30,6 +30,7 @@ import { GRIMORIO_PROMPT } from "./grimorio.js";
 import { DADIVAS_PROMPT } from "./dadivas.js";
 import { GRID_PROMPT } from "./grid.js";
 import { MOVIMENTO_PROMPT } from "./movimento.js";
+import { CHAO_PROMPT } from "./chao.js";
 import { MISSOES_PROMPT } from "./missoes.js";
 import { OFERTAS_PROMPT } from "./ofertas.js";
 import { LUGAR_PROMPT } from "./lugar.js";
@@ -158,6 +159,8 @@ ${DADIVAS_PROMPT}
 ${GRID_PROMPT}
 
 ${MOVIMENTO_PROMPT}
+
+${CHAO_PROMPT}
 
 ${MISSOES_PROMPT}
 
