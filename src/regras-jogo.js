@@ -21,6 +21,8 @@ import { garantirHeroismo } from "./heroismo.js";
 import { garantirDadosVida, aplicarCurto, aplicarLongo } from "./descanso.js";
 import { garantirPreparadas, preparadasIniciais, temCaderno } from "./magias.js";
 import { garantirSintonia, sintoniaInicial, atributosValem } from "./sintonia.js";
+import { comDom, repousarTracos } from "./tracos.js";
+import { curaExtraDoHeroi, curaExtraDoGrupo } from "./profissoes.js";
 
 export function aplicarNivel(pers) {
   let { xp, nivel, nivelPendentes, vidaMax, manaMax, vida, mana } = pers;
@@ -72,7 +74,27 @@ export function aplicarDescanso(pers, tipo, msgs, dia = 0) {
     ...gm,
     condicoes: limparPorDescanso(gm.condicoes || [], longo ? "longo" : "curto").condicoes,
   }));
-  return { ...p, condicoes: lim.condicoes, grupo };
+  /* v9.44: os traços de origem que se gastam voltam aqui — a segunda chance
+     do Humano e a sorte do Halfling em qualquer descanso, a fúria do Meio-orc
+     só na noite inteira. Fica nesta função, e não no botão de acampar, porque
+     é por aqui que passa TODO descanso do jogo. */
+  p = repousarTracos({ ...p, condicoes: lim.condicoes, grupo }, { longo, dia });
+  /* v9.44: a PROFISSÃO no acampamento. O Médico de Campo remenda o herói em
+     qualquer descanso; o Cozinheiro só rende na noite inteira, porque uma
+     refeição de verdade não sai de uma parada de uma hora. Os dois somam
+     sobre a cura que descanso.js já calculou — não a substituem. */
+  const extraEu = curaExtraDoHeroi(p);
+  if (extraEu > 0 && (p.vida || 0) < (p.vidaMax || 0)) {
+    const antes = p.vida || 0;
+    p = { ...p, vida: Math.min(p.vidaMax || 0, antes + extraEu) };
+    if (p.vida > antes) msgs.push(`⚕ ${p.profissao}: +${p.vida - antes} PV a mais no descanso.`);
+  }
+  const extraGrupo = longo ? curaExtraDoGrupo(p) : 0;
+  if (extraGrupo > 0 && (p.grupo || []).length) {
+    p = { ...p, grupo: (p.grupo || []).map((gm) => ({ ...gm, vida: Math.min(gm.vidaMax || 0, (gm.vida || 0) + extraGrupo) })) };
+    msgs.push(`⚕ ${p.profissao}: o grupo recupera +${extraGrupo} PV cada.`);
+  }
+  return p;
 }
 
 /* RECARGA PADRÃO (v7.4.3): habilidade forte precisa de fôlego — o sistema
@@ -384,7 +406,7 @@ export function migrarPersonagem(p) {
      da ficha antiga, cobra o que ela já gastou pela tabela nova e devolve o
      troco — ninguém perde o que tinha, e quem gastou bem só não recebe extra. */
   p = migrarAtributos({ ...p, atributos: { ...atributosBase, ...(p.atributos || {}) } });
-  return {
+  const novo = {
     ...p,
     atributos: { ...atributosBase, ...(p.atributos || {}) },
     inventario: Array.isArray(p.inventario) ? p.inventario : [],
@@ -455,5 +477,13 @@ export function migrarPersonagem(p) {
     nivelPendentes: p.nivelPendentes || 0,
     vida: p.vida ?? p.vidaMax ?? 10, vidaMax: p.vidaMax ?? 10,
     mana: p.mana ?? p.manaMax ?? 8, manaMax: p.manaMax ?? 8,
+    /* v9.44: o que os traços de origem já gastaram. Ficha antiga acorda com
+       tudo na mão — é um recurso que nunca existiu para ela, e chegar com ele
+       vazio seria punir o jogador por uma regra que ele não teve como usar. */
+    tracoGastos: (p.tracoGastos && typeof p.tracoGastos === "object") ? p.tracoGastos : {},
   };
+  /* O DOM da origem (Sopro Ancestral, Chama Menor) entra depois do resto
+     porque `comDom` lê `raca` e `habilidades` já normalizados. Save antigo de
+     Draconato acorda com o sopro que a tela de criação sempre prometeu. */
+  return comDom(novo);
 }

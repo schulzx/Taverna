@@ -6,28 +6,34 @@
    balanceamento fica sob controle do jogo, não do improviso.
    ============================================================ */
 
-/* ---------------- RAÇAS (mundos de fantasia) ---------------- */
+/* ---------------- RAÇAS (mundos de fantasia) ----------------
+   `traco` é a frase que o jogador lê na criação; `efeito` é o que o
+   código faz com ela. Até a v9.43 só existia a primeira: dez raças
+   prometiam vantagem, resistência e segunda chance, e nenhuma delas
+   tocava num dado. As duas colunas nascem juntas de propósito — quem
+   editar a frase sem editar o efeito volta a mentir para o jogador.
+   Quem lê `efeito` é tracos.js, e só ele. */
 export const RACAS = [
-  { nome: "Humano", desc: "Versáteis e ambiciosos. Aprendem rápido e se adaptam a tudo.", bonus: { forca: 1, destreza: 1, vigor: 1, intelecto: 1, presenca: 1, percepcao: 1 }, traco: "Determinação: uma vez por descanso, refaz uma rolagem falha." },
-  { nome: "Elfo", desc: "Longevos, graciosos, ligados à magia antiga e às florestas.", bonus: { destreza: 2, intelecto: 1, percepcao: 1 }, traco: "Sentidos élficos: vantagem em testes de percepção." },
-  { nome: "Anão", desc: "Robustos, teimosos, mestres da pedra e do metal.", bonus: { vigor: 2, forca: 1 }, traco: "Resistência anã: reduz em 1 todo dano de veneno e fogo." },
-  { nome: "Halfling", desc: "Pequenos, sortudos, impossíveis de intimidar.", bonus: { destreza: 2, presenca: 1 }, traco: "Sorte pequena: transforma um 1 natural em 2 uma vez por combate." },
-  { nome: "Meio-orc", desc: "Força bruta temperada por uma vontade indomável.", bonus: { forca: 2, vigor: 2 }, traco: "Fúria persistente: ao chegar a 0 PV, fica com 1 PV uma vez por descanso longo." },
-  { nome: "Draconato", desc: "Herdeiros de sangue dracônico, orgulhosos e imponentes.", bonus: { forca: 2, presenca: 1 }, traco: "Sopro ancestral: 1× por descanso, causa dano em área em linha." },
-  { nome: "Tiefling", desc: "Marcados por um pacto antigo. Temidos, resilientes, astutos.", bonus: { presenca: 2, intelecto: 1 }, traco: "Herança infernal: resistência a fogo e uma pequena magia inata." },
-  { nome: "Gnomo", desc: "Inventivos e curiosos, mentes que não param nunca.", bonus: { intelecto: 2, destreza: 1 }, traco: "Astúcia gnômica: vantagem para resistir a efeitos mentais." },
-  { nome: "Meio-elfo", desc: "Entre dois mundos, encantadores e adaptáveis.", bonus: { presenca: 2, destreza: 1, percepcao: 1 }, traco: "Diplomata nato: vantagem em testes sociais na primeira impressão." },
-  { nome: "Goliath", desc: "Gigantes das montanhas, forjados pelo frio e pela altitude.", bonus: { forca: 3, vigor: 1 }, traco: "Pele de pedra: 1× por combate, reduz um golpe pela metade." },
+  { nome: "Humano", desc: "Versáteis e ambiciosos. Aprendem rápido e se adaptam a tudo.", bonus: { forca: 1, destreza: 1, vigor: 1, intelecto: 1, presenca: 1, percepcao: 1 }, traco: "Determinação: uma vez por descanso, refaz uma rolagem falha.", efeito: { refazer: 1 } },
+  { nome: "Elfo", desc: "Longevos, graciosos, ligados à magia antiga e às florestas.", bonus: { destreza: 2, intelecto: 1, percepcao: 1 }, traco: "Sentidos élficos: vantagem em testes de Percepção.", efeito: { vantagem: ["percepcao"] } },
+  { nome: "Anão", desc: "Robustos, teimosos, mestres da pedra e do metal.", bonus: { vigor: 2, forca: 1 }, traco: "Resistência anã: reduz em 1 todo dano de veneno e fogo.", efeito: { reduzDano: { veneno: 1, fogo: 1 } } },
+  { nome: "Halfling", desc: "Pequenos, sortudos, impossíveis de intimidar.", bonus: { destreza: 2, presenca: 1 }, traco: "Sorte pequena: transforma um 1 natural em 2 — uma vez por combate (ou por descanso, fora da luta).", efeito: { sorteDoUm: true } },
+  { nome: "Meio-orc", desc: "Força bruta temperada por uma vontade indomável.", bonus: { forca: 2, vigor: 2 }, traco: "Fúria persistente: ao chegar a 0 PV, fica com 1 PV uma vez por descanso longo.", efeito: { firme: true } },
+  { nome: "Draconato", desc: "Herdeiros de sangue dracônico, orgulhosos e imponentes.", bonus: { forca: 2, presenca: 1 }, traco: "Sopro ancestral: baforada em linha que pega todos no caminho (3 PM).", efeito: { dom: { nome: "Sopro Ancestral", nivel: 1, custo: 3, tipo: "ataque", descricao: "Baforada de fogo em linha de 9 m: dano em área a todos no caminho." } } },
+  { nome: "Tiefling", desc: "Marcados por um pacto antigo. Temidos, resilientes, astutos.", bonus: { presenca: 2, intelecto: 1 }, traco: "Herança infernal: resistência a fogo e a magia inata Chama Menor (1 PM).", efeito: { resistencia: ["fogo"], dom: { nome: "Chama Menor", nivel: 1, custo: 1, tipo: "ataque", descricao: "Uma língua de fogo salta da mão e queima um alvo à vista." } } },
+  { nome: "Gnomo", desc: "Inventivos e curiosos, mentes que não param nunca.", bonus: { intelecto: 2, destreza: 1 }, traco: "Astúcia gnômica: vantagem para resistir a efeitos mentais.", efeito: { vantagemMental: true } },
+  { nome: "Meio-elfo", desc: "Entre dois mundos, encantadores e adaptáveis.", bonus: { presenca: 2, destreza: 1, percepcao: 1 }, traco: "Diplomata nato: vantagem em testes de Presença — a sala se inclina para você.", efeito: { vantagem: ["presenca"] } },
+  { nome: "Goliath", desc: "Gigantes das montanhas, forjados pelo frio e pela altitude.", bonus: { forca: 3, vigor: 1 }, traco: "Pele de pedra: 1× por combate, reduz um golpe pela metade.", efeito: { pedra: true } },
 ];
 
 /* ---------------- ORIGENS (ficção científica, cyberpunk, pós-apoc) ---------------- */
 export const ORIGENS = [
-  { nome: "Terrano", desc: "Nascido no berço da humanidade. Adaptável e teimoso.", bonus: { forca: 1, vigor: 1, presenca: 1, intelecto: 1 }, traco: "Improviso: conserta o que não deveria ter conserto." },
-  { nome: "Colono Orbital", desc: "Criado em gravidade baixa, ágil e preciso.", bonus: { destreza: 2, intelecto: 1 }, traco: "Pé de gato: vantagem em movimentação em espaços apertados." },
-  { nome: "Sintético", desc: "Consciência artificial em corpo construído.", bonus: { intelecto: 3 }, traco: "Processamento frio: imune a medo e efeitos mentais." },
-  { nome: "Mutante", desc: "O ermo reescreveu seu corpo. Não sem preço.", bonus: { vigor: 2, forca: 1 }, traco: "Metabolismo estranho: resistência a veneno e radiação." },
-  { nome: "Cromado", desc: "Mais implante do que carne. Rápido, letal, endividado.", bonus: { destreza: 2, forca: 1 }, traco: "Reflexos de fábrica: age primeiro no primeiro turno de combate." },
-  { nome: "Vagante", desc: "Sem mundo, sem bandeira. Só a estrada.", bonus: { percepcao: 2, destreza: 1 }, traco: "Faro de perigo: sente emboscadas antes de acontecerem." },
+  { nome: "Terrano", desc: "Nascido no berço da humanidade. Adaptável e teimoso.", bonus: { forca: 1, vigor: 1, presenca: 1, intelecto: 1 }, traco: "Improviso: conserta o que não deveria ter conserto — a bancada de ofício fica 2 mais fácil.", efeito: { oficio: 2 } },
+  { nome: "Colono Orbital", desc: "Criado em gravidade baixa, ágil e preciso.", bonus: { destreza: 2, intelecto: 1 }, traco: "Pé de gato: escala tão rápido quanto anda e atravessa terreno difícil sem perder passo.", efeito: { ignoraDificil: true } },
+  { nome: "Sintético", desc: "Consciência artificial em corpo construído.", bonus: { intelecto: 3 }, traco: "Processamento frio: imune a medo e a encantamento; vantagem para resistir ao que é mental.", efeito: { vantagemMental: true, imune: ["amedrontado", "enfeiticado"] } },
+  { nome: "Mutante", desc: "O ermo reescreveu seu corpo. Não sem preço.", bonus: { vigor: 2, forca: 1 }, traco: "Metabolismo estranho: resistência a veneno — metade do dano.", efeito: { resistencia: ["veneno"] } },
+  { nome: "Cromado", desc: "Mais implante do que carne. Rápido, letal, endividado.", bonus: { destreza: 2, forca: 1 }, traco: "Reflexos de fábrica: +5 na iniciativa — você quase sempre age primeiro.", efeito: { iniciativa: 5 } },
+  { nome: "Vagante", desc: "Sem mundo, sem bandeira. Só a estrada.", bonus: { percepcao: 2, destreza: 1 }, traco: "Faro de perigo: vantagem em testes de Percepção — a emboscada tem de ser muito boa.", efeito: { vantagem: ["percepcao"] } },
 ];
 
 /* ---------------- ÁRVORE DE HABILIDADES ----------------
@@ -354,20 +360,35 @@ export const CLASSES = [
   },
 ];
 
-/* ---------------- PROFISSÕES ---------------- */
+/* ---------------- PROFISSÕES ----------------
+   Mesma regra das raças: `beneficio` é a frase da tela, `efeito` é o que o
+   código faz. Até a v9.43 só havia a frase — doze profissões prometiam
+   preço melhor, colheita maior e bancada mais fácil, e `p.profissao` não era
+   lida por nada além do prompt. Quem lê `efeito` é profissoes.js.
+
+   O vocabulário é curto de propósito, e cada campo tem UM lugar no código:
+     bancada {oficio: n}  reduz a dificuldade da forja daquele ofício
+     colher n             componentes a mais por forrageamento
+     navegar n            bônus no teste de não se perder
+     teste {attr: n}      bônus num teste de atributo
+     curaDescanso n       PV a mais para o herói em cada descanso
+     curaGrupo n          PV a mais para cada companheiro no descanso longo
+     venda p / compra p   fração melhor no balcão (0,25 = 25%)
+     espolio p            fração a mais de moedas nos espólios
+     despojos n           componentes a mais por corpo esfolado            */
 export const PROFISSOES = [
-  { nome: "Ferreiro", desc: "Forja e repara armas e armaduras.", beneficio: "Pode reparar equipamentos em descanso e melhorar armas com materiais." },
-  { nome: "Alquimista", desc: "Destila poções, venenos e reagentes.", beneficio: "Cria poções de cura e frascos ofensivos com ingredientes." },
-  { nome: "Herborista", desc: "Conhece ervas, raízes e cogumelos.", beneficio: "Coleta ingredientes no ermo e identifica venenos." },
-  { nome: "Cartógrafo", desc: "Desenha e lê mapas de terras desconhecidas.", beneficio: "Reduz chance de se perder; revela caminhos ocultos." },
-  { nome: "Escriba", desc: "Copia, traduz e decifra documentos antigos.", beneficio: "Lê línguas mortas e identifica pergaminhos." },
-  { nome: "Cozinheiro", desc: "Transforma ração em refeição de verdade.", beneficio: "Refeições em acampamento dão bônus temporário ao grupo." },
-  { nome: "Joalheiro", desc: "Lapida gemas e engasta encantamentos.", beneficio: "Extrai valor de gemas e prepara focos mágicos." },
-  { nome: "Curtidor", desc: "Trabalha couro e peles de criaturas.", beneficio: "Converte despojos de bestas em armaduras leves." },
-  { nome: "Minerador", desc: "Sabe onde e como extrair metal e pedra.", beneficio: "Encontra minérios e passagens em cavernas." },
-  { nome: "Caçador de Recompensas", desc: "Vive de contratos e alvos marcados.", beneficio: "Ganha mais moedas por inimigos notáveis e acesso a contratos." },
-  { nome: "Mercador", desc: "Compra barato, vende caro, conhece todo mundo.", beneficio: "Melhores preços e acesso a mercadorias raras." },
-  { nome: "Médico de Campo", desc: "Estanca sangue e remenda ossos sem magia.", beneficio: "Cura extra em descansos e trata condições físicas." },
+  { nome: "Ferreiro", desc: "Forja e repara armas e armaduras.", beneficio: "Trabalho de metal: a bancada de utilitários fica 3 mais fácil, e o que você vende vale +20%.", efeito: { bancada: { utilitario: 3 }, venda: 0.2 } },
+  { nome: "Alquimista", desc: "Destila poções, venenos e reagentes.", beneficio: "Fervura e paciência: a bancada de alquimia fica 3 mais fácil.", efeito: { bancada: { alquimia: 3 } } },
+  { nome: "Herborista", desc: "Conhece ervas, raízes e cogumelos.", beneficio: "Conhece o mato: cada forrageamento traz 2 componentes a mais.", efeito: { colher: 2 } },
+  { nome: "Cartógrafo", desc: "Desenha e lê mapas de terras desconhecidas.", beneficio: "Lê a terra: +5 no teste de navegação — você quase não se perde.", efeito: { navegar: 5 } },
+  { nome: "Escriba", desc: "Copia, traduz e decifra documentos antigos.", beneficio: "Lê o que ninguém lê: +2 em todo teste de Intelecto.", efeito: { teste: { intelecto: 2 } } },
+  { nome: "Cozinheiro", desc: "Transforma ração em refeição de verdade.", beneficio: "Comida de verdade: cada companheiro recupera 3 PV a mais no descanso longo.", efeito: { curaGrupo: 3 } },
+  { nome: "Joalheiro", desc: "Lapida gemas e engasta encantamentos.", beneficio: "Sabe o que vale: +25% em tudo que você vende.", efeito: { venda: 0.25 } },
+  { nome: "Curtidor", desc: "Trabalha couro e peles de criaturas.", beneficio: "Aproveita a carcaça: cada corpo rende 1 componente a mais.", efeito: { despojos: 1 } },
+  { nome: "Minerador", desc: "Sabe onde e como extrair metal e pedra.", beneficio: "Enxerga a veia na pedra: +1 componente ao forragear e +2 em testes de Percepção.", efeito: { colher: 1, teste: { percepcao: 2 } } },
+  { nome: "Caçador de Recompensas", desc: "Vive de contratos e alvos marcados.", beneficio: "Cobra pelo trabalho: +30% de moedas nos espólios de combate.", efeito: { espolio: 0.3 } },
+  { nome: "Mercador", desc: "Compra barato, vende caro, conhece todo mundo.", beneficio: "Conhece todo mundo: 20% de desconto na compra e +15% na venda.", efeito: { compra: 0.2, venda: 0.15 } },
+  { nome: "Médico de Campo", desc: "Estanca sangue e remenda ossos sem magia.", beneficio: "Remenda sem magia: +4 PV para você em cada descanso e +2 para cada companheiro.", efeito: { curaDescanso: 4, curaGrupo: 2 } },
 ];
 
 /* ---------------- API ---------------- */

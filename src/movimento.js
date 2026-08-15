@@ -128,10 +128,15 @@ export function deslocamentoDe(pers, { dobrar = false } = {}) {
 export function passoEfetivo(pers, opcoes = {}) {
   const d = deslocamentoDe(pers, opcoes);
   const voando = d.voar > 0;
+  /* v9.44: voar não é mais a única forma de ignorar terreno difícil. A Dádiva
+     dos Passos Longos diz "ignora terreno difícil" desde a v8.1 e o Colono
+     Orbital promete atravessar aperto sem perder passo — as duas chegam por
+     `opcoes` em vez de serem lidas aqui, para este arquivo continuar sem
+     saber o que são dádivas e traços. */
   return {
     metros: voando ? d.voar : d.andar,
     voando,
-    ignoraDificil: voando,
+    ignoraDificil: voando || !!opcoes.ignoraDificil,
     parado: d.parado,
     fontes: d.fontes,
   };
@@ -171,7 +176,7 @@ export function passoComSelecao(pers, selecionadas = [], opcoes = {}) {
     if (p.voando && p.metros > metros) { metros = p.metros; voando = true; fonte = p.nome; }
     else if (p.dobra) { metros = metros * 2; fonte = p.nome; }
   }
-  return { ...base, metros: Math.round(metros * 10) / 10, voando, ignoraDificil: voando, fonte };
+  return { ...base, metros: Math.round(metros * 10) / 10, voando, ignoraDificil: voando || base.ignoraDificil, fonte };
 }
 
 /* Criaturas do bestiário: sem ficha de raça, a velocidade sai do tamanho e

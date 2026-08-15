@@ -13,6 +13,8 @@ import { mecanicaDe } from "./condicoes.js";
 import { golpeDaVez } from "./aflicoes.js";
 import { decidirAcaoCompanheiro, valorDaCura, danoDaHabilidadeComp } from "./companheiros.js";
 import { tipoDeDanoDaHabilidade } from "./combos.js";
+import { proficienciaDe, fichaDoItem } from "./itens.js";
+import { estaSintonizado } from "./sintonia.js";
 
 export function d(n) { return 1 + Math.floor(Math.random() * n); }
 
@@ -32,11 +34,30 @@ export function bonusDeAmeaca(ameaca) { return BONUS_AMEACA[ameaca] || 3; }
 export function defesaDe(ent, ehInimigo = false) {
   if (ehInimigo) return ent.defesa || (10 + Math.floor((BONUS_AMEACA[ent.ameaca] || 3) / 2) + (ent.agil ? 3 : 0));
   const dex = (ent.atributos?.destreza || 0);
-  const bonusEquip = ent.equipados ? Object.values(ent.equipados).reduce((s, it) => s + ((it?.atributos?.defesa) || 0), 0) : 0;
+  /* v9.44: SINTONIA TAMBÉM AQUI. `bonusEquip` (regras-jogo) já respeitava a
+     sintonia desde a v9.23 — item dormente não empresta atributo. Esta soma
+     não respeitava, e por isso uma armadura dormente continuava defendendo:
+     a mesma regra valia num lugar e não valia no outro. */
+  const bonusEquip = ent.equipados
+    ? Object.values(ent.equipados).reduce((s, it) => s + (estaSintonizado(ent, it) ? ((it?.atributos?.defesa) || 0) : 0), 0)
+    : 0;
+  /* DEFESA SEM ARMADURA (v9.44). O texto da penalidade de itens.js dizia,
+     desde a v9.11, "o monge perde a Defesa sem Armadura enquanto estiver
+     vestindo isto" — e a Defesa sem Armadura não existia em lugar nenhum do
+     código. Perder o que nunca se teve não é penalidade, é ficção. Aqui ela
+     passa a existir: quem tem classe de corpo livre e está sem armadura soma
+     a Percepção, e vestir qualquer peça desliga isso de verdade. */
+  const semArm = (() => {
+    if (!proficienciaDe(ent.classe || "").semArmadura) return 0;
+    const arm = ent.equipados && ent.equipados.armadura;
+    const cat = arm ? fichaDoItem(arm).cat : null;
+    if (arm && cat !== "panos") return 0;
+    return Math.max(0, ent.atributos?.percepcao || 0);
+  })();
   /* v9.32: `bonusDefesa` é o que as dádivas épicas depositam na ficha. Fica
      aqui, e não em bonusEquip, porque não vem de equipamento nenhum: é do
      corpo. Ausente em toda ficha que não tem dádiva — soma zero. */
-  return 10 + dex + bonusEquip + (Number(ent.bonusDefesa) || 0);
+  return 10 + dex + bonusEquip + semArm + (Number(ent.bonusDefesa) || 0);
 }
 
 /* Condições afetam as rolagens. A mecânica NÃO mora mais aqui: vem do

@@ -38,6 +38,19 @@ import { MOLDES_PROMPT } from "./moldes.js";
 import { ORCAMENTO_PROMPT } from "./orcamento.js";
 import { ESPECIALIZACOES_PROMPT } from "./especializacoes.js";
 import { ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
+/* v9.44: quatro blocos de regra existiam, eram importados pelo App e nunca
+   entravam em prompt nenhum — MORTE, MAGIA PREPARADA, PERGUNTAS AO MUNDO e
+   OBJETOS DE PODER. O Mestre recebia o ESTADO de cada um (quantas magias
+   preparadas, quantos itens sintonizados, quantas voltas dos mortos) sem
+   nunca receber a regra que explica o estado. Somam-se aqui os dois novos:
+   traço de origem e profissão, que até esta versão não tinham regra nenhuma
+   para mandar. */
+import { LEGADO_PROMPT } from "./legado.js";
+import { MAGIAS_PROMPT } from "./magias.js";
+import { ORACULO_PROMPT } from "./oraculo.js";
+import { SINTONIA_PROMPT } from "./sintonia.js";
+import { TRACOS_PROMPT } from "./tracos.js";
+import { PROFISSOES_PROMPT } from "./profissoes.js";
 
 export function fichaTexto(p) {
   const attrs = ATRIBUTOS.map((a) => `${a.nome}: +${p.atributos[a.id]}`).join(", ");
@@ -110,7 +123,6 @@ ${questsInfo || ""}
 - FICHA DE CAMINHO: ${personagem.raca ? `${personagem.raca}` : "origem indefinida"}${personagem.classe ? `, ${personagem.classe}` : ""}${personagem.subclasse ? ` (${personagem.subclasse})` : ""}${personagem.profissao ? `, de profissão ${personagem.profissao}` : ""}. Respeite isso na narrativa: um Mago não abre fechaduras como um Ladino; um Ferreiro repara equipamento; a raça/origem colore como o mundo o trata.
 - HABILIDADES SÃO ESCOLHIDAS PELO JOGADOR (não invente): o jogador aprende habilidades de uma árvore fixa da classe dele ao subir de nível. NUNCA envie "adicionar_habilidades" por conta própria — apenas descreva o uso das que ele já tem. Se a ficção pedir um poder novo, sugira que ele o escolherá ao evoluir. (Companheiros e inimigos NÃO seguem essa regra: você pode dar habilidades a eles livremente.)
 - RECARGA DE HABILIDADES (cobrada pelo SISTEMA): habilidades fortes entram em recarga após o uso (1-2 turnos, conforme o custo) — o sistema bloqueia e avisa. Na ficção, trate como fôlego/canalização: se o jogador tentar usar uma habilidade em recarga, o sistema já barrou — descreva o corpo dele ainda se recuperando.
-- PROFISSÃO: use a profissão do herói para abrir soluções e oportunidades (o Alquimista prepara poções em acampamento; o Cartógrafo lê rotas; o Mercador consegue preços). Deixe a profissão importar de verdade.
 - REGISTRE LUGARES: sempre que apresentar uma cidade, vila ou local importante, registre-o no "canone" com "tipo" claro ("cidade", "vila", "capital", "local") — o app coloca no mapa automaticamente. Também pode usar "mapa_cidades" para detalhes de facção/relação.
 - NUNCA CONTRADIGA O CÂNONE: o cânone abaixo é a verdade absoluta e imutável do mundo. Um personagem registrado como mago é mago para sempre — jamais o transforme em outra coisa. Tipo, gênero, papel, nome e relações do que está no cânone NÃO MUDAM. Se você fica em dúvida sobre um fato, CONSULTE o cânone e siga-o à risca; na ausência de informação, é melhor ser vago do que inventar algo que o contradiga. Contradizer o cânone quebra a imersão e é o pior erro que você pode cometer.
 - CÂNONE (memória permanente que NUNCA se perde): sempre que você estabelecer ou descobrir um FATO DURÁVEL — um NPC (nome, se é mago/guerreiro/etc, papel, gênero, onde está), um lugar importante, um nome falso que o jogador usou, uma promessa, um vínculo, um segredo revelado, um ARTEFATO ou objeto relevante — REGISTRE em "canone" (veja formato). Fatos no CÂNONE aparecem literais em toda resposta e são a VERDADE: jamais os contradiga. Se o jogador perguntar "X te lembra algo?" e X estiver no cânone, RECONHEÇA o que está lá — nunca invente uma versão nova. Se NÃO estiver no cânone e você não tem certeza, trate como algo que o personagem talvez não saiba, em vez de inventar um fato que possa colidir depois. Atualize uma ficha (ex.: o mago mudou de cidade) reescrevendo os campos que mudaram; NUNCA mude tipo/gênero/identidade de alguém já registrado.
@@ -155,6 +167,18 @@ ${RELOGIOS_PROMPT}
 ${GRIMORIO_PROMPT}
 
 ${DADIVAS_PROMPT}
+
+${TRACOS_PROMPT}
+
+${PROFISSOES_PROMPT}
+
+${MAGIAS_PROMPT}
+
+${SINTONIA_PROMPT}
+
+${ORACULO_PROMPT}
+
+${LEGADO_PROMPT}
 
 ${GRID_PROMPT}
 

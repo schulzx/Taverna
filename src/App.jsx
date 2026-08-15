@@ -79,6 +79,8 @@ import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, consumirDia, RITMOS_VI
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, sortearDadiva, resumoEpico } from "./regras.js";
 import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, processarDiaCorreio } from "./correio.js";
 import { gerarDadivaUnica, envelopeDaUnica, todasAsLinhas as linhasDeDadivas, ataquesExtras, danoExtraDeDadiva, descontoDePM, bonusSocialDeDadiva, temVantagemMental, dobraMovimento, ignoraTerrenoDificil, criticoMinimo, imuneA, refazerDisponivel, gastarRefazer, repousarDadivas, segundoFolegoDisponivel, gastarSegundoFolego, resumoDadivasPrompt, DADIVAS_PROMPT } from "./dadivas.js";
+import { comDom, vantagemDeTraco, vantagemMentalDeTraco, imuneDeTraco, iniciativaDeTraco, ignoraDificilPorTraco, oficioDeTraco, refazerDeTracoDisponivel, gastarRefazerDeTraco, sorteDisponivel, gastarSorte, firmeDisponivel, gastarFirme, repousarTracos, abrirCombateTracos, amortecerDano, textoDoTraco, resumoTracosPrompt } from "./tracos.js";
+import { bonusDeBancada, componentesExtras, bonusDeNavegacao, despojosExtras, bonusDeTeste, precoDeVenda, precoDeCompraPara, moedasDeEspolio, resumoProfissaoPrompt } from "./profissoes.js";
 import { agruparMensagens } from "./resumo.js";
 
 /* ============================================================
@@ -1296,7 +1298,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                         <div key={`${v.origem}|${v.nome}`} className="rounded-lg px-2.5 py-2 flex items-center gap-2" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
                           <span className="tv-body text-sm flex-1 min-w-0 truncate" style={{ color: T.ink }}>{v.nome}{v.qtd > 1 ? <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}> ×{v.qtd}</span> : null}</span>
                           <button onClick={() => onVender && onVender(v.nome, v.origem)} className="tv-mono text-[10px] px-2.5 py-1.5 rounded-lg shrink-0" style={{ border: `1px solid ${T.ok}`, color: T.ok }}>
-                            vender ◉ {precoDeCompra(v.it, cidadeMercado)}
+                            vender ◉ {precoDeVenda(personagem, precoDeCompra(v.it, cidadeMercado))}
                           </button>
                         </div>
                       ))}
@@ -1871,7 +1873,7 @@ function BlocoSistema({ visiveis = [], dobradas = [], saldo = "" }) {
 
    E ele NÃO é o meio de entrada. Tocar num quadrado é atalho para quem
    quer precisão; a via normal continua sendo escrever a ação. */
-function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9, passoTotal = 9, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null }) {
+function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null }) {
   const [aberto, setAberto] = React.useState(false);
   /* ---------------- ANDAR OU MIRAR (v9.41) ----------------
      O toque no quadrado passou a querer dizer duas coisas, e duas coisas
@@ -1892,7 +1894,7 @@ function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9, passo
   const colados = heroi ? adjacentes(heroi, inimigos) : [];
 
   const ocupados = ocupacaoDe([...inimigos, ...aliados], heroi);
-  const podeIr = (heroi && podeMover && !mirando) ? alcancaveisDe(grade, heroi, { ocupados, deslocamentoM: passoM }) : new Set();
+  const podeIr = (heroi && podeMover && !mirando) ? alcancaveisDe(grade, heroi, { ocupados, deslocamentoM: passoM, ignoraDificil }) : new Set();
   const naArea = new Set((previsao && previsao.quadrados || []).map((q) => `${q.x},${q.y}`));
   const noAlcance = (alcanceMira && alcanceMira.quadrados) || new Set();
 
@@ -2089,7 +2091,7 @@ function PainelExame({ itens = [], raio = 0, aoPegar, aoFechar }) {
   );
 }
 
-function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover, grupo = [], passoM = 9, passoTotal = 9, previsao = null, mira = null, onMirar, alcanceMira = null, acaoBonus = false }) {
+function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover, grupo = [], passoM = 9, passoTotal = 9, ignoraDificil = false, previsao = null, mira = null, onMirar, alcanceMira = null, acaoBonus = false }) {
   const [bolsaAberta, setBolsaAberta] = useState(false);
   if (!combate || !combate.inimigos || combate.inimigos.length === 0) return null;
   const eco = combate.economia || { acao: 1, extra: 1 };
@@ -2128,7 +2130,7 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
           quantos companheiros estão dentro. O preço aparece antes de ser
           pago; a escolha continua inteiramente do jogador. */}
       <GridDeBatalha combate={combate} grupo={grupo} previsao={previsao}
-        passoM={passoM} passoTotal={passoTotal} podeMover={passoM >= 1.5} onMover={onMover}
+        passoM={passoM} passoTotal={passoTotal} ignoraDificil={ignoraDificil} podeMover={passoM >= 1.5} onMover={onMover}
         mira={mira} onMirar={onMirar} alcanceMira={alcanceMira} />
       {/* POÇÕES À MÃO (v9.2): as três mais úteis, a um toque.
           v9.13: usar item da bolsa NÃO gasta mais o turno — o sistema aplica
@@ -2560,7 +2562,7 @@ function TelaPersonagem({ mundo, concluir }) {
           <select value={raca} onChange={(e) => setRaca(e.target.value)} className="w-full rounded-xl p-3 tv-body text-sm outline-none" style={campo}>
             {racasDisp.map((r) => <option key={r.nome} value={r.nome}>{r.nome}</option>)}
           </select>
-          {rObj && <div className="tv-body text-xs mt-1.5" style={{ color: T.inkDim }}>{rObj.desc} <span style={{ color: T.amberSoft }}>{Object.entries(rObj.bonus).map(([k, v]) => `+${v} ${(ATRIBUTOS.find((a) => a.id === k) || {}).nome || k}`).join(", ")}</span></div>}
+          {rObj && <div className="tv-body text-xs mt-1.5" style={{ color: T.inkDim }}>{rObj.desc} <span style={{ color: T.amberSoft }}>{Object.entries(rObj.bonus).map(([k, v]) => `+${v} ${(ATRIBUTOS.find((a) => a.id === k) || {}).nome || k}`).join(", ")}</span>{rObj.traco && <><br /><span style={{ color: T.violetSoft }}>✦ {rObj.traco}</span></>}</div>}
         </div>
         <div>
           <div className="tv-mono text-xs uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Profissão</div>
@@ -2627,7 +2629,7 @@ function TelaPersonagem({ mundo, concluir }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="tv-mono text-xs" style={{ color: T.inkDim }}>PV: <span style={{ color: T.ink }}>{vidaMax}</span> · PM: <span style={{ color: T.violetSoft }}>{manaMax}</span> · Moedas: <span style={{ color: T.amberSoft }}>{MOEDAS_INICIAIS}</span></div>
         <Botao primario desativado={!nome.trim() || !conceito.trim() || restantes !== 0}
-          onClick={() => concluir({
+          onClick={() => concluir(comDom({
             nome: nome.trim(), conceito: conceito.trim(), historia: historia.trim(),
             raca, classe, subclasse, profissao,
             antecedente: antObj.nome, antecedenteGancho: antObj.gancho,
@@ -2641,7 +2643,7 @@ function TelaPersonagem({ mundo, concluir }) {
             /* v9.15: nasce treinado no que a classe e o passado justificam.
                Redistribui livremente na ficha depois — a criação não é armadilha. */
             pericias: periciasIniciais({ classe, antecedente: antObj.nome }), periciasVersao: 1,
-          })}>Começar aventura →</Botao>
+          }))}>Começar aventura →</Botao>
       </div>
     </div>
   );
@@ -2749,6 +2751,15 @@ export default function Taverna() {
      é o catálogo que já sabia disso e que ninguém consultava. */
   const temAcaoBonus = (p) => acoesBonusDe((p || {}).classe, (p || {}).nivel || 1).length > 0;
   const economiaNova = (p) => ({ acao: 1, extra: temAcaoBonus(p) ? 1 : 0 });
+  /* ---------------- O PREÇO DE VESTIR O QUE NÃO SE SABE USAR (v9.44) ----------
+     `avaliarEquipar` produzia estas penalidades desde a v9.11 e nada as lia:
+     `penalidadesAtivas` alimentava só o painel e o prompt, e
+     `conjuracaoBloqueada` estava importada neste arquivo sem uma única
+     chamada. O painel dizia "você NÃO consegue conjurar vestindo isto" e o
+     mago de placas conjurava. Duas linhas de leitura resolvem os dois. */
+  const penalidadesDe = (p) => { try { return penalidadesAtivas(p, ranksDoPersonagem(p)); } catch { return []; } };
+  const ataqueEstorvado = (p) => penalidadesDe(p).some((x) => x.tipo === "desvantagem");
+  const magiaTravada = (p) => { try { return conjuracaoBloqueada(p, ranksDoPersonagem(p)); } catch { return false; } };
   const mudarFicha = (fn) => {
     const base = personagemRef.current || personagem;
     if (!base) return base;
@@ -2916,7 +2927,7 @@ export default function Taverna() {
     inimigos.filter((e) => e.gdPeloSistema).forEach((e) => msgs.push(`✦ O sistema reconheceu ${e.nome} como divindade de GD ${e.gd} — Regra do Degrau em vigor.`));
     const g = montarGrid(pers, inimigos);
     const ordem = rolarIniciativa([
-      { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") },
+      { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") + iniciativaDeTraco(pers) },
       ...(pers.grupo || []).map((g2) => ({ nome: g2.nome, lado: "aliado", modDestreza: 1 })),
       ...g.inimigos.map((e) => ({ nome: e.nome, lado: "inimigo", modDestreza: e.agil ? 2 : 0 })),
     ]);
@@ -4018,6 +4029,13 @@ export default function Taverna() {
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Meus PV chegaram a zero e a Dádiva da Recuperação me pôs de pé na hora, com ${volta} PV. Narre o joelho que dobra e o corpo que se recusa a ficar no chão — sem mudar número nenhum.`;
       return gastarSegundoFolego({ ...pers, vida: volta, morrendo: false, morte: { sucessos: 0, falhas: 0 } }, diaRef.current);
     }
+    /* FÚRIA PERSISTENTE (v9.44): mesma regra, mesma porta. Vale em qualquer
+       queda — a do turno inimigo, a do sangramento, a do veneno na estrada. */
+    if (firmeDisponivel(pers, diaRef.current)) {
+      msgs.push("🩸 Fúria persistente — você deveria cair, e não cai: fica com 1 PV (uma vez por descanso longo).");
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Meus PV chegaram a zero e o traço da minha origem me deixou de pé com 1 PV. Narre o corpo que se recusa a ir ao chão, e deixe claro que agora qualquer coisa me derruba. Não mude número nenhum.`;
+      return gastarFirme({ ...pers, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } }, diaRef.current);
+    }
     const caiuAgora = !pers.morrendo;
     const res = testeDeMorte();
     const ap = aplicarTesteMorte(pers.morte || { sucessos: 0, falhas: 0 }, res);
@@ -4148,9 +4166,16 @@ export default function Taverna() {
            doença — e imune quer dizer que a condição NÃO ENTRA, nem vinda do
            Mestre. Vale só para o herói: a dádiva é dele. */
         const paraMim = !c.alvo || String(c.alvo).toLowerCase() === "jogador" || String(c.alvo).toLowerCase() === (pers.nome || "").toLowerCase();
-        if (paraMim && imuneA(pers, cond.id)) {
-          msgs.push(`🌠 ${cond.nome} não pega: a Dádiva do Vigor Irreal te faz imune.`);
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DÁDIVA DO VIGOR IRREAL — SISTEMA] Você tentou me pôr ${cond.nome.toLowerCase()}, e eu sou IMUNE a isso por dádiva épica. Nada foi aplicado. Narre o veneno que não pega, o cansaço que não vem — e não insista com essa condição.`;
+        /* v9.44: a origem também torna imune — o Sintético não sente medo nem
+           se deixa encantar, e isso estava escrito na tela de criação sem
+           nada atrás. Mesma porta da dádiva: imune quer dizer que a condição
+           NÃO ENTRA, nem vinda do Mestre. */
+        const porDadiva = paraMim && imuneA(pers, cond.id);
+        const porOrigem = paraMim && imuneDeTraco(pers, cond.id);
+        if (porDadiva || porOrigem) {
+          const fonte = porDadiva ? "a Dádiva do Vigor Irreal" : `sua origem (${pers.raca})`;
+          msgs.push(`🌠 ${cond.nome} não pega: ${fonte} te faz imune.`);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[IMUNIDADE — SISTEMA] Você tentou me pôr ${cond.nome.toLowerCase()}, e eu sou IMUNE a isso${porOrigem ? " por origem" : " por dádiva épica"}. Nada foi aplicado. Narre o que não pega — o medo que não encontra onde morder, o veneno que escorre sem entrar — e não insista com essa condição.`;
           return;
         }
         const r = aplicarCondicaoEm(pers, c.alvo, cond);
@@ -4479,8 +4504,13 @@ export default function Taverna() {
         const houveIniciar = Array.isArray(resp.mudancas.combate_iniciar) && resp.mudancas.combate_iniciar.length > 0;
       /* INICIATIVA (v8.9): combate novo → o sistema rola a ordem do turno. */
       if (houveIniciar && combateRef.current && !combateRef.current.ordem) {
+        /* v9.44: luta nova devolve os traços de uma vez por combate — a sorte
+           do Halfling e a Pele de Pedra do Goliath. Aqui, e não no fim da
+           luta anterior, porque nem toda luta tem fim registrado: o Mestre às
+           vezes encerra na narrativa e o sistema só descobre na próxima. */
+        pers = abrirCombateTracos(pers);
         const participantes = [
-          { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") },
+          { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") + iniciativaDeTraco(pers) },
           ...(pers.grupo || []).map((g) => ({ nome: g.nome, lado: "aliado", modDestreza: 1 })),
           ...(combateRef.current.inimigos || []).map((e) => ({ nome: e.nome, lado: "inimigo", modDestreza: e.agil ? 2 : 0 })),
         ];
@@ -4536,7 +4566,11 @@ export default function Taverna() {
           ...derrotadosDaSessaoRef.current,
           ...(resp.mudancas.__inimigosFinais || []).map((e) => e && e.nome).filter(Boolean),
         ].slice(-120);
-        const esp = gerarEspolios(resp.mudancas.__inimigosFinais || []);
+        const espBruto = gerarEspolios(resp.mudancas.__inimigosFinais || []);
+        /* v9.44: o Caçador de Recompensas cobra pelo trabalho. O acréscimo é
+           sobre as MOEDAS, não sobre o XP — quem vive de contrato ganha mais
+           dinheiro pela mesma caçada, não experiência mais rápido. */
+        const esp = { ...espBruto, moedas: moedasDeEspolio(pers, espBruto.moedas) };
         let p2 = { ...pers, moedas: (pers.moedas || 0) + esp.moedas, xp: (pers.xp || 0) + esp.xp };
         let subiu = 0;
         while (p2.xp >= XP_POR_NIVEL(p2.nivel)) { p2.xp -= XP_POR_NIVEL(p2.nivel); p2.nivel += 1; p2.nivelPendentes = (p2.nivelPendentes || 0) + 1; subiu++; }
@@ -4576,7 +4610,11 @@ export default function Taverna() {
           }
           /* DESPOJOS (v9.13): o corpo também é matéria-prima. Criatura mágica
              deixa essência, peçonhenta deixa glândula, bicho deixa couro. */
-          despojosDe(fins).forEach((c, i) => caiuAqui.push(achadoDeComponente(c, itemComponente(c.id), ondeCaiu(i))));
+          /* v9.44: o Curtidor aproveita a carcaça — um componente a mais por
+             corpo. Sorteia de novo na mesma mesa: é o mesmo bicho. */
+          const desp = despojosDe(fins);
+          for (let k = 0; k < despojosExtras(p2) * fins.length; k++) { const x = despojosDe(fins)[0]; if (x) desp.push(x); }
+          desp.forEach((c, i) => caiuAqui.push(achadoDeComponente(c, itemComponente(c.id), ondeCaiu(i))));
         }
         const noChao = caiuAqui.filter(Boolean);
         if (noChao.length) {
@@ -4793,10 +4831,24 @@ export default function Taverna() {
        contra medo. Ela mora aqui, no ponto por onde todo teste do Mestre
        passa, e é lida do motivo — porque é assim que o pedido chega: em
        português, não em campo estruturado. */
-    if (rolagemFinal && !rolagemFinal.vantagem && temVantagemMental(pers)) {
+    if (rolagemFinal && !rolagemFinal.vantagem && (temVantagemMental(pers) || vantagemMentalDeTraco(pers))) {
       const alvoTxt = `${rolagemFinal.motivo || ""} ${rolagemFinal.atributo || ""} ${rolagemFinal.rotulo || ""}`.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
       if (/(medo|terror|pavor|amedront|encant|enfeiti|domin|charme|ilus|mental|sanidade|vontade|possess|hipno|controle da mente|persuas[aã]o resistir)/.test(alvoTxt)) {
-        rolagemFinal = { ...rolagemFinal, vantagem: true, desvantagem: false, notaDadiva: "Vontade de Ferro" };
+        rolagemFinal = { ...rolagemFinal, vantagem: true, desvantagem: false, porVantagem: temVantagemMental(pers) ? "Vontade de Ferro" : textoDoTraco(pers).split(":")[0] };
+      }
+    }
+    /* v9.44: o traço de origem entra pela MESMA porta. O Elfo tem vantagem em
+       Percepção e o Meio-elfo em Presença — a frase está na tela de criação
+       desde a primeira versão, e este é o único ponto por onde todo teste do
+       Mestre passa. Vantagem e desvantagem se anulam (5e): se o herói já
+       rolava com desvantagem, o traço não vira vantagem, apaga a penalidade. */
+    if (rolagemFinal && !rolagemFinal.vantagem) {
+      const attrT2 = ATRIBUTOS.find((x) => x.nome.toLowerCase() === String(rolagemFinal.atributo || "").toLowerCase());
+      if (attrT2 && vantagemDeTraco(pers, attrT2.id)) {
+        const marca = textoDoTraco(pers).split(":")[0];
+        rolagemFinal = rolagemFinal.desvantagem
+          ? { ...rolagemFinal, desvantagem: false, porVantagem: `${marca} (anula a desvantagem)` }
+          : { ...rolagemFinal, vantagem: true, porVantagem: marca };
       }
     }
     setRolagem(rolagemFinal);
@@ -5571,11 +5623,16 @@ export default function Taverna() {
          imune a veneno nem que ele tem um nome próprio de bênção — e inventa
          os dois. */
       const dad = resumoDadivasPrompt(p);
+      /* v9.44: o traço da origem e o que a profissão abre. Sem estas duas
+         linhas o Mestre trata Anão e Elfo como a mesma pessoa e a profissão
+         do herói como enfeite de ficha — que foi exatamente o que acontecia. */
+      const trc = resumoTracosPrompt(p);
+      const prf = resumoProfissaoPrompt(p);
       /* v9.41: só entra quando há coisa caída — e aí precisa entrar, senão o
          Mestre descreve um chão limpo em cima de um chão cheio, ou pior,
          "entrega" o que o jogador ainda não recolheu. */
       const chn = envelopeDoQueFicou(pertoDaqui(chaoRef.current, combateRef.current ? combateRef.current.heroi : null, RAIO_EXAME));
-      return `${aqui ? `\n${aqui}` : ""}${chn ? `\n${chn}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${mis ? `\n${mis}` : ""}${dad ? `\n${dad}` : ""}${mov ? `\n${mov}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
+      return `${aqui ? `\n${aqui}` : ""}${chn ? `\n${chn}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${mis ? `\n${mis}` : ""}${dad ? `\n${dad}` : ""}${trc ? `\n${trc}` : ""}${prf ? `\n${prf}` : ""}${mov ? `\n${mov}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
@@ -5991,7 +6048,16 @@ export default function Taverna() {
       /* v9.34: alcance em METROS. Corpo a corpo vale o alcance natural do
          herói (1,5 m para gente); arma de longe vai a 36 m com penalidade
          por faixa. Parede corta o tiro — é a novidade que o grid trouxe. */
-      const alcanceArma = armaLonge ? 36 : alcanceNatural({ nome: pers.nome, tamanho: pers.tamanho });
+      /* v9.44: ARMA DE ALCANCE. A propriedade "alcance" está no catálogo de
+         itens desde a v9.11 (lança, tridente, alabarda, pique, chicote) e
+         nunca era lida — com o grid em metros, ela finalmente tem onde
+         importar: são 1,5 m a mais, o quadrado que separa quem espeta de
+         quem tem de encostar. */
+      const armaEq = pers.equipados && pers.equipados.arma;
+      const temAlcance = !!(armaEq && (fichaDoItem(armaEq).props || []).includes("alcance"));
+      const alcanceArma = armaLonge
+        ? 36
+        : alcanceNatural({ nome: pers.nome, tamanho: pers.tamanho }) + (temAlcance ? METROS_POR_QUADRADO : 0);
       const podeBater = (e) => alcanca(gradeDaLuta, meuLugar, e, { alcanceM: alcanceArma }).ok;
       const aoAlcance = vivosAgora.filter(podeBater);
       if (!aoAlcance.length) {
@@ -6022,6 +6088,9 @@ export default function Taverna() {
         tipoDano: elementoDaArma(pers), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
         bonusDefesaAlvo: bonusDefesaEm(gradeDaLuta, alvo),
         criticoEm: critMin,
+        /* v9.44: sem treino na arma ou na armadura, o golpe sai torto — é o
+           que o painel de equipamento promete desde a v9.11. */
+        desvantagem: ataqueEstorvado(pers),
       });
       /* três degraus abaixo, o golpe comum atravessa sem ferir */
       if (imunePorEscopo(gdJ, gdAlvo)) { r.escopoImune = true; r.dano = 0; }
@@ -6617,6 +6686,14 @@ export default function Taverna() {
            dizer "mana insuficiente" para quem tem mana de sobra e só não
            preparou a magia seria mentir sobre a regra. */
         {
+          /* v9.44: a armadura que trava a conjuração. Vem ANTES do caderno
+             porque é o obstáculo mais físico dos dois: não adianta explicar
+             que a magia não estava preparada se o problema é o aço no corpo. */
+          if (magiaTravada(pers) && /magia|conjur|feiti|arcan|encant/i.test(`${h.nome || ""} ${h.descricao || ""}`)) {
+            const peca = (penalidadesDe(pers).find((x) => x.tipo === "sem_magia") || {}).item || "o que você está vestindo";
+            pushMsgs([{ autor: "sistema", texto: `⛓ ${h.nome} não sai: você não consegue conjurar vestindo ${peca}. Tire a peça e tente de novo.` }]);
+            continue;
+          }
           const lanc = podeLancar(pers, h, { emCombate: !!combateRef.current });
           if (!lanc.ok) { pushMsgs([{ autor: "sistema", texto: `📕 ${lanc.motivo}` }]); continue; }
           if (lanc.ritual) {
@@ -6876,7 +6953,11 @@ export default function Taverna() {
        o último inimigo. Resultado: "derrotar 3 mercenários" ficava aberta para
        sempre justamente quando o jogador matava os três. */
     derrotadosDaSessaoRef.current = [...derrotadosDaSessaoRef.current, ...derrotados.map((e) => e && e.nome).filter(Boolean)].slice(-120);
-    const esp = gerarEspolios(derrotados);
+    /* v9.44: mesmo acréscimo do outro caminho de vitória — o Caçador de
+       Recompensas ganha o mesmo, quer a luta feche pelo golpe dele, quer
+       feche pela narrativa do Mestre. */
+    const espCru = gerarEspolios(derrotados);
+    const esp = { ...espCru, moedas: moedasDeEspolio(persBase || personagemRef.current || personagem, espCru.moedas) };
     const msgsU = [];
     /* CALCULA FORA DO UPDATER (v9.13). Isto morava dentro de
        setPersonagem(p => …), e o updater do React só roda na renderização
@@ -6914,7 +6995,9 @@ export default function Taverna() {
         chaoNovos.push(achadoDeConsumivel(cc, itemConsumivel(cc.id), ondeCaiu(i)));
       }
       /* DESPOJOS (v9.13): o corpo também é matéria-prima para a bancada */
-      despojosDe(derrotados).forEach((c, i) => chaoNovos.push(achadoDeComponente(c, itemComponente(c.id), ondeCaiu(i))));
+      const despU = despojosDe(derrotados);
+      for (let k = 0; k < despojosExtras(p2) * derrotados.length; k++) { const x = despojosDe(derrotados)[0]; if (x) despU.push(x); }
+      despU.forEach((c, i) => chaoNovos.push(achadoDeComponente(c, itemComponente(c.id), ondeCaiu(i))));
       const caiuNoChao = chaoNovos.filter(Boolean);
       if (caiuNoChao.length) {
         porNoChaoAqui(caiuNoChao);
@@ -7053,6 +7136,10 @@ export default function Taverna() {
     let grupoAtual = [...(persBase.grupo || [])];
     const partes = [];
     let persConcQuebrada = null;
+    /* v9.44: a ficha vai mudando DENTRO da rodada — a Pele de Pedra do Goliath
+       é um gasto, e gasto anotado numa cópia que ninguém lê é gasto perdido.
+       `persTracos` carrega essas anotações até `persAtual`, lá embaixo. */
+    let persTracos = persBase;
     for (const a of acoes) {
       logDadoCombate(resumoDoAtaque(a.r));
       if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(a.r) });
@@ -7063,7 +7150,19 @@ export default function Taverna() {
         if (rc && rc.danoFinal != null) a.r.dano = rc.danoFinal;
       }
       if (a.r.dano > 0) {
-        if (a.alvoRef === "jogador") danoNoJogador += a.r.dano;
+        if (a.alvoRef === "jogador") {
+          /* ORIGEM ANTES DO PV (v9.44). A resistência do Tiefling ao fogo, a
+             redução anã a veneno e fogo e a Pele de Pedra do Goliath agem
+             sobre o GOLPE, não sobre a ficha depois — e este é o único ponto
+             em que o dano do inimigo vira PV do herói. */
+          const amort = amortecerDano(persTracos, a.r.dano, a.r.tipoDano || "fisico");
+          if (amort.linhas.length) {
+            persTracos = amort.pers;
+            a.r.dano = amort.dano;
+            amort.linhas.forEach((t) => linhasSis.push({ autor: "sistema", texto: t }));
+          }
+          danoNoJogador += a.r.dano;
+        }
         else grupoAtual = grupoAtual.map((g) => g.nome === a.alvoNome ? { ...g, vida: Math.max(0, (g.vida || 0) - a.r.dano) } : g);
       }
       const alvoMax = a.alvoRef === "jogador" ? (persBase.vidaMax || 1) : ((grupoAtual.find((g) => g.nome === a.alvoNome) || {}).vidaMax || 1);
@@ -7094,7 +7193,7 @@ export default function Taverna() {
         if (extra.length) pushMsgs(extra);
       }
     }
-    let persAtual = { ...persBase, vida: Math.max(0, persBase.vida - danoNoJogador), mana: Math.max(0, (persBase.mana || 0) - pmReacaoRef.current), grupo: grupoAtual };
+    let persAtual = { ...persTracos, vida: Math.max(0, persTracos.vida - danoNoJogador), mana: Math.max(0, (persTracos.mana || 0) - pmReacaoRef.current), grupo: grupoAtual };
     pmReacaoRef.current = 0;
     /* ---- SEGUNDO FÔLEGO (v9.32) ----
        A Dádiva da Recuperação diz, desde a v8.1, "recupera metade da vida ao
@@ -7108,6 +7207,17 @@ export default function Taverna() {
       persAtual = gastarSegundoFolego({ ...persAtual, vida: volta, morrendo: false, morte: { sucessos: 0, falhas: 0 } }, diaRef.current);
       pushMsgs([{ autor: "sistema", texto: `🌠 Dádiva da Recuperação — você cai e o corpo se recusa: +${volta} PV (uma vez por dia).` }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DÁDIVA DA RECUPERAÇÃO — APLICADA PELO SISTEMA] Eu cheguei a 0 PV e voltei na mesma hora com ${volta} PV: é a dádiva épica agindo, e ela só faz isso uma vez por dia. NÃO me trate como caído nem como moribundo, e narre o instante como o que é — o joelho que dobra e não chega ao chão.`;
+    }
+    /* ---- FÚRIA PERSISTENTE (v9.44) ----
+       O Meio-orc promete, desde a primeira versão, "ao chegar a 0 PV, fica
+       com 1 PV uma vez por descanso longo". Vem DEPOIS do segundo fôlego de
+       propósito: se o herói tem os dois, a dádiva devolve metade da vida e é
+       melhor — gastar o traço primeiro seria queimar o recurso pequeno para
+       o grande não ser usado. 1 PV é 1 PV: ele continua de pé, e por um fio. */
+    if (persAtual.vida <= 0 && firmeDisponivel(persAtual, diaRef.current)) {
+      persAtual = gastarFirme({ ...persAtual, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } }, diaRef.current);
+      pushMsgs([{ autor: "sistema", texto: "🩸 Fúria persistente — você deveria cair, e não cai: fica com 1 PV (uma vez por descanso longo)." }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FÚRIA PERSISTENTE — APLICADA PELO SISTEMA] O golpe me levaria a 0 e eu fiquei de pé com 1 PV: é o traço da minha origem, e ele só faz isso uma vez por descanso longo. NÃO me trate como caído. Narre o corpo que se recusa — o joelho que trava, o ar que volta pelos dentes —, e deixe claro que agora qualquer coisa me derruba.`;
     }
     if (persConcQuebrada) persAtual = { ...persAtual, efeitos: (persAtual.efeitos || []).filter((e) => e.nome !== persConcQuebrada) };
     persAtual = aplicarCondicoesDosGolpes(acoes, persAtual);
@@ -7247,9 +7357,13 @@ export default function Taverna() {
        atributo faria a bênção valer também para resistir a medo, que é outra
        coisa e tem dádiva própria. */
     const social = attrId === "presenca" ? bonusSocialDeDadiva(pers) : 0;
-    if (!periciaId) return { total: base + social, nivelTreino: "nenhum" };
+    /* v9.44: a profissão soma aqui, pelo mesmo motivo que a dádiva social —
+       é o ponto único por onde todo teste passa. O Escriba lê o que ninguém
+       lê (Intelecto) e o Minerador vê o que a pedra esconde (Percepção). */
+    const oficio = bonusDeTeste(pers, attrId);
+    if (!periciaId) return { total: base + social + oficio, nivelTreino: "nenhum" };
     const b = bonusDePericia(pers, periciaId, base);
-    return { total: b.total + social, nivelTreino: b.nivelTreino };
+    return { total: b.total + social + oficio, nivelTreino: b.nivelTreino };
   };
   const modPend = rolagem ? (() => {
     const a = ATRIBUTOS.find((x) => x.nome.toLowerCase() === (rolagem.atributo || "").toLowerCase());
@@ -7391,7 +7505,13 @@ export default function Taverna() {
        e ignora terreno difícil. `caminhar` faz a busca de caminho e cobra o
        terreno; aqui só se decide quanto chão cabe no turno. */
     const persMov = personagemRef.current || personagem;
-    const passo = passoComSelecao(persMov, habsSel, { dobrar: dobraMovimento(persMov) });
+    /* v9.44: `ignoraTerrenoDificil` existia desde a v8.1 e nunca era chamada —
+       a Dádiva dos Passos Longos dizia "ignora terreno difícil" e o pântano
+       continuava cobrando o dobro. O Colono Orbital entra pela mesma porta. */
+    const passo = passoComSelecao(persMov, habsSel, {
+      dobrar: dobraMovimento(persMov),
+      ignoraDificil: ignoraTerrenoDificil(persMov) || ignoraDificilPorTraco(persMov),
+    });
     if (passo.parado) { pushMsgs([{ autor: "sistema", texto: `📏 Você não consegue se mover (${passo.fontes.join(", ")}).` }]); return; }
     const eco = comb.economia;
     /* ---------------- O ORÇAMENTO É EM METROS (v9.41) ----------------
@@ -7408,7 +7528,7 @@ export default function Taverna() {
     }
 
     const ocupados = ocupacaoDe([...(comb.inimigos || []), ...(comb.aliados || [])], de);
-    const chk = caminhar(grade, de, destino, { ocupados, deslocamentoM: restante });
+    const chk = caminhar(grade, de, destino, { ocupados, deslocamentoM: restante, ignoraDificil: passo.ignoraDificil });
     if (!chk.ok) { pushMsgs([{ autor: "sistema", texto: `📏 ${chk.motivo}.` }]); return; }
 
     /* sair de perto custa: cada inimigo que te alcança leva um golpe livre —
@@ -7745,6 +7865,16 @@ export default function Taverna() {
       pushMsgs([{ autor: "sistema", texto: "🌠 Dádiva do Destino — o destino te devia esta: a rolagem se refaz sem custar heroísmo (volta no descanso longo)." }]);
       return true;
     }
+    /* v9.44: a Determinação do Humano é o mesmo recurso, um degrau abaixo —
+       "uma vez por descanso, refaz uma rolagem falha". Vem depois da dádiva
+       (que é mais rara e volta na mesma noite) e antes do heroísmo, pela
+       mesma lógica: gasta-se primeiro o que se renova. */
+    if (refazerDeTracoDisponivel(base) > 0) {
+      const p = gastarRefazerDeTraco(base);
+      setPersonagem(p); personagemRef.current = p;
+      pushMsgs([{ autor: "sistema", texto: "💪 Determinação — você não aceita esse resultado: a rolagem se refaz sem custar heroísmo (volta no descanso)." }]);
+      return true;
+    }
     const g = gastarHeroismo(base, "refazer");
     if (!g.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ Refazer ${g.motivo}.` }]); return false; }
     setPersonagem(g.pers); personagemRef.current = g.pers;
@@ -7814,6 +7944,20 @@ export default function Taverna() {
       pushMsgs([{ autor: "sistema", texto: `✓ ${r.motivo || "Teste"}: trivial para seu patamar — sucesso sem rolagem` }]);
       enviar(`[TESTE — SUCESSO AUTOMÁTICO] "${r.motivo || "ação"}": trivial para meu patamar (dificuldade ${r.dificuldade} vs minha competência). Narre o êxito com naturalidade, sem drama de dado.${SO_ISSO}`, personagem);
       return;
+    }
+    /* SORTE PEQUENA (v9.44). O traço do Halfling diz "transforma um 1 natural
+       em 2", e a frase é sobre o DADO, não sobre o resultado — por isso ela
+       age aqui, antes de qualquer conta, e o desastre nem chega a existir.
+       Gasta uma vez e volta na luta seguinte ou no descanso. A troca aparece
+       no chat porque um dado que muda de valor sem explicação parece bug. */
+    {
+      const pvSorte = personagemRef.current || personagem;
+      if (valor === 1 && sorteDisponivel(pvSorte)) {
+        valor = 2;
+        const pvGasto = gastarSorte(pvSorte);
+        setPersonagem(pvGasto); personagemRef.current = pvGasto;
+        pushMsgs([{ autor: "sistema", texto: "🍀 Sorte pequena — o 1 natural vira 2. Volta na próxima luta (ou no descanso)." }]);
+      }
     }
     const mod = modPend;
     const total = valor + mod;
@@ -8293,13 +8437,27 @@ export default function Taverna() {
        é caro. O sistema deixa vestir e diz o preço na hora, em vez de esconder
        a regra e deixar o jogador achar que está tudo bem. */
     const av = avaliarEquipar(personagem, item, ranksDoPersonagem(personagem));
+    /* v9.44: DUAS MÃOS SÃO DUAS MÃOS. O catálogo marca montante, alabarda,
+       arco longo e besta pesada como "duas mãos" desde a v9.11, e nada lia a
+       marca: dava para empunhar o machado duplo E o escudo, somando defesa
+       com a mão que não existe. Quem pega uma arma de duas mãos larga o
+       escudo; quem pega o escudo larga a arma de duas mãos. */
+    const largou = [];
     setPersonagem((p) => {
       const slot = item.tipo || (av.ficha && av.ficha.familia === "arma" ? "arma" : "arma");
       const equipados = { ...(p.equipados || {}) };
       equipados[slot] = item; // substitui o que estiver no mesmo slot (volta pra mochila automaticamente)
+      const duasMaos = (f) => !!(f && (f.props || []).includes("duas mãos"));
+      if (slot === "arma" && duasMaos(av.ficha) && equipados.escudo) {
+        largou.push(equipados.escudo.nome); delete equipados.escudo;
+      }
+      if (slot === "escudo" && duasMaos(fichaDoItem(equipados.arma))) {
+        largou.push(equipados.arma.nome); delete equipados.arma;
+      }
       return { ...p, equipados };
     });
     const linhas = [{ autor: "sistema", texto: `⚔ Equipou: ${item.nome}${av.ficha ? ` (${av.ficha.rotulo})` : ""}` }];
+    if (largou.length) linhas.push({ autor: "sistema", texto: `🤲 Você só tem duas mãos — ${largou.join(" e ")} voltou para a mochila.` });
     for (const p of av.penalidades) linhas.push({ autor: "sistema", texto: `⚠ ${p.texto}` });
     pushMsgs(linhas);
     if (av.penalidades.length) {
@@ -8530,6 +8688,13 @@ export default function Taverna() {
        trabalhar depende do chão — mato rende erva, encosta rende pedra —, e é
        daqui que sai a matéria-prima da bancada. */
     const colhidos = colherComponentes(bioma, atributoEfetivo(personagem, "percepcao"));
+    /* v9.44: o Herborista traz mais do mesmo mato, o Minerador mais da mesma
+       encosta. Sortear de novo e pegar o primeiro é honesto — é o mesmo
+       bioma e a mesma tabela; o que muda é só quantas mãos cheias voltam. */
+    for (let i = 0; i < componentesExtras(personagem); i++) {
+      const c = colherComponentes(bioma, atributoEfetivo(personagem, "percepcao"))[0];
+      if (c) colhidos.push(c);
+    }
     /* A ficha nova é montada AQUI, não dentro do updater: o `enviar` logo
        abaixo recebe a ficha como argumento e é ela que vira estado no fim do
        turno. Montar dentro de setPersonagem faria o enviar levar a ficha
@@ -9527,7 +9692,12 @@ export default function Taverna() {
       pushMsgs([{ autor: "sistema", texto: `⚗ Falta material: ${falta.map((x) => `${x.nome} ${x.tem}/${x.precisa}`).join(", ")}.` }]);
       return;
     }
-    const mod = atributoEfetivo(personagem, r.atributo);
+    /* v9.44: o ofício entra no modificador, não na dificuldade da receita —
+       assim o texto que o jogador lê ("dif. 15") continua sendo o da receita,
+       e o que mudou aparece onde deve, no bônus dele. O Alquimista de
+       profissão e o Terrano de origem somam: são duas coisas diferentes. */
+    const modOficio = bonusDeBancada(personagem, r.oficio) + oficioDeTraco(personagem);
+    const mod = atributoEfetivo(personagem, r.atributo) + modOficio;
     const res = forjarNaBancada(r, mod);
     const p = aplicarCraft(personagem, r, res);
     setPersonagem(p);
@@ -9593,7 +9763,11 @@ export default function Taverna() {
         l.estoque = [...l.estoque, ...mapas.filter((mp) => !gastos.includes(mp.nome))];
       }
     }
-    return lista;
+    /* v9.44: o desconto do Mercador é aplicado no ESTOQUE, não no caixa. A
+       etiqueta que o jogador lê e a moeda que sai do bolso saem daqui — se o
+       desconto morasse só em `comprarNoMercado`, a banca anunciaria um preço
+       e cobraria outro, que é a pior forma de dar um benefício. */
+    return lista.map((l) => ({ ...l, estoque: (l.estoque || []).map((it) => ({ ...it, preco: precoDeCompraPara(personagem, it.preco) })) }));
   })();
 
   const comprarNoMercado = (mercadorId, nomeItem) => {
@@ -9643,7 +9817,11 @@ export default function Taverna() {
     if (origem === "equipamento" && Object.values(personagem.equipados || {}).some((e) => e && e.nome === nomeItem)) {
       pushMsgs([{ autor: "sistema", texto: `⛔ ${nomeItem} está equipado — desequipe antes de vender.` }]); return;
     }
-    const valor = precoDeCompra(typeof item === "string" ? { nome: item } : item, cidadeMercado);
+    /* v9.44: o Joalheiro sabe o que vale, o Ferreiro sabe o que forjou e o
+       Mercador conhece o comprador. O acréscimo é da PROFISSÃO e entra aqui,
+       no mesmo lugar onde a etiqueta da tela é calculada — se entrasse só num
+       dos dois, o botão prometeria um número e o cofre receberia outro. */
+    const valor = precoDeVenda(personagem, precoDeCompra(typeof item === "string" ? { nome: item } : item, cidadeMercado));
     const p = {
       ...personagem,
       moedas: (personagem.moedas || 0) + valor,
@@ -9788,7 +9966,9 @@ export default function Taverna() {
     let notaErmos = "";
     {
       const bioma = (cidadeAtualRef.current && (mapaRef.current.cidades || []).find((c) => c.nome === cidadeAtualRef.current)?.bioma) || "planicie";
-      const nav = testarNavegacao(bioma, atributoEfetivo(personagem, "percepcao"), (mapaRef.current.cidades || []).length > 3);
+      /* v9.44: o Cartógrafo soma no teste de rota — "reduz a chance de se
+         perder" era a promessa, e este é o único dado que decide isso. */
+      const nav = testarNavegacao(bioma, atributoEfetivo(personagem, "percepcao") + bonusDeNavegacao(personagem), (mapaRef.current.cidades || []).length > 3);
       if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: `🧭 ${nav.texto}` }]);
       if (!nav.passou) {
         pushMsgs([{ autor: "sistema", texto: `🧭 Vocês se perdem e queimam ${nav.horasPerdidas}h tentando reencontrar a rota.` }]);
@@ -10291,9 +10471,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               {...(() => {
                 /* o passo que o grid acende é o que SOBROU da rodada, já
                    corrigido pelo que estiver selecionado (Voo alcança mais) */
-                const p = passoComSelecao(personagem, habsSel, { dobrar: dobraMovimento(personagem) });
+                const p = passoComSelecao(personagem, habsSel, {
+                  dobrar: dobraMovimento(personagem),
+                  ignoraDificil: ignoraTerrenoDificil(personagem) || ignoraDificilPorTraco(personagem),
+                });
                 const resta = combate.economia && combate.economia.movM != null ? combate.economia.movM : p.metros;
-                return { passoM: resta, passoTotal: p.metros };
+                return { passoM: resta, passoTotal: p.metros, ignoraDificil: p.ignoraDificil };
               })()}
               previsao={previsaoDeArea} acaoBonus={temAcaoBonus(personagem)}
               mira={mira} onMirar={definirMira} alcanceMira={alcanceDaHabilidade}
@@ -10673,7 +10856,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             {rolagem && !carregando && (
               <div className="tv-fade px-4 md:px-8 pb-5 flex justify-center" style={{ paddingRight: "68px" }}>
                 <div className="tv-pulse flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl px-4 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
-                  <span className="tv-mono text-xs text-center" style={{ color: T.ink }}>🎲 Teste de {rolagem.rotulo || rolagem.atributo || "sorte"}{rolagem.dificuldade != null ? ` · dif. ${rolagem.dificuldade}` : ""} — <em className="tv-body" style={{ color: T.inkDim }}>{rolagem.motivo}</em></span>
+                  <span className="tv-mono text-xs text-center" style={{ color: T.ink }}>🎲 Teste de {rolagem.rotulo || rolagem.atributo || "sorte"}{rolagem.dificuldade != null ? ` · dif. ${rolagem.dificuldade}` : ""} — <em className="tv-body" style={{ color: T.inkDim }}>{rolagem.motivo}</em>{rolagem.porVantagem ? <span style={{ color: T.violetSoft }}> · ✦ {rolagem.porVantagem}</span> : null}</span>
                   <Botao primario pequeno desativado={dadoRolando} onClick={() => { if (!dadoRolando) setDadoRolando(true); }}>Rolar d20{modPend !== 0 ? ` (+${modPend})` : ""}</Botao>
                 </div>
               </div>
@@ -10776,7 +10959,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         </div>
       )}
 
-      {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} modificador={modPend} aoConcluir={concluirRolagem} heroismo={garantirHeroismo(personagem)} destino={refazerDisponivel(personagem)} aoRefazer={pagarRefazer} />}
+      {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} modificador={modPend} aoConcluir={concluirRolagem} heroismo={garantirHeroismo(personagem)} destino={refazerDisponivel(personagem) + refazerDeTracoDisponivel(personagem)} aoRefazer={pagarRefazer} />}
       {desfechoMorte && <OverlayMorte estado={desfechoMorte} nomeMorto={personagem.nome} aoVoltar={voltarDosMortos} aoHerdar={seguirComHerdeiro} />}
       {fase === "jogo" && personagem?.nivelPendentes > 0 && !carregando && !dadoRolando && (
         <ModalNivel nivel={personagem.nivel - personagem.nivelPendentes + 1} personagem={personagem} escolher={confirmarNivel} />

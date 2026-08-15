@@ -38,6 +38,8 @@
    sem penalidade".
    ============================================================ */
 
+import { deslocamentoDeCriatura } from "./movimento.js";
+
 export const METROS_POR_QUADRADO = 1.5;
 export const m2q = (metros) => Math.max(0, Math.round((Number(metros) || 0) / METROS_POR_QUADRADO));
 export const q2m = (quadrados) => (Number(quadrados) || 0) * METROS_POR_QUADRADO;
@@ -403,7 +405,11 @@ export function ocupacaoDe(entidades, exceto = null) {
 
 /* Devolve { ok, caminho, custoM } ou { ok:false, motivo }. O caminho é a
    lista de quadrados, para o desenho poder mostrar por onde se passou. */
-export function caminhar(grade, ent, destino, { ocupados = new Set(), deslocamentoM = DESLOCAMENTO_PADRAO } = {}) {
+/* v9.44: `ignoraDificil` chega até aqui. Quem voa, quem tem a Dádiva dos
+   Passos Longos e quem nasceu Colono Orbital atravessa lama e escombro sem
+   pagar o dobro — e até esta versão nenhum dos três pagava menos, porque a
+   flag existia em movimento.js e morria antes de virar custo de quadrado. */
+export function caminhar(grade, ent, destino, { ocupados = new Set(), deslocamentoM = DESLOCAMENTO_PADRAO, ignoraDificil = false } = {}) {
   const g = garantirGrade(grade);
   if (!g) return { ok: false, motivo: "esta luta não tem terreno definido" };
   const lado = ladoDe(ent);
@@ -428,7 +434,7 @@ export function caminhar(grade, ent, destino, { ocupados = new Set(), deslocamen
         const k = chave(nx, ny);
         if (custo.has(k)) continue;
         if (!livrePara(grade, nx, ny, lado, ocupados)) continue;
-        const passo = terrenoDificil(grade, nx, ny) ? 2 : 1;
+        const passo = (!ignoraDificil && terrenoDificil(grade, nx, ny)) ? 2 : 1;
         const c = cAt + passo;
         if (c > tetoQ) continue;
         custo.set(k, c);
@@ -450,7 +456,7 @@ export function caminhar(grade, ent, destino, { ocupados = new Set(), deslocamen
 
 /* Todos os quadrados que cabem num deslocamento — uma busca só, para a tela
    poder acender o alcance inteiro sem rodar `caminhar` setecentas vezes. */
-export function alcancaveisDe(grade, ent, { ocupados = new Set(), deslocamentoM = DESLOCAMENTO_PADRAO } = {}) {
+export function alcancaveisDe(grade, ent, { ocupados = new Set(), deslocamentoM = DESLOCAMENTO_PADRAO, ignoraDificil = false } = {}) {
   const g = garantirGrade(grade);
   if (!g || !ent || ent.x == null) return new Set();
   const lado = ladoDe(ent);
@@ -466,7 +472,7 @@ export function alcancaveisDe(grade, ent, { ocupados = new Set(), deslocamentoM 
         const nx = at.x + ax, ny = at.y + ay, k = chave(nx, ny);
         if (custo.has(k)) continue;
         if (!livrePara(grade, nx, ny, lado, ocupados)) continue;
-        const c = cAt + (terrenoDificil(grade, nx, ny) ? 2 : 1);
+        const c = cAt + ((!ignoraDificil && terrenoDificil(grade, nx, ny)) ? 2 : 1);
         if (c > tetoQ) continue;
         custo.set(k, c);
         prox.push({ x: nx, y: ny });
@@ -519,6 +525,9 @@ export function adjacentes(ent, lista) {
     && distanciaM(e, ent) <= alcanceNatural(e));
 }
 
+/* v9.44: grid.js passa a conhecer movimento.js — e só nesse sentido.
+   movimento.js não importa nada de ninguém, então a seta aponta para um lado
+   só e não há ciclo a temer. */
 /* ---------------- A IA DE POSIÇÃO ----------------
    Quem não alcança, anda na direção de quem quer bater; quem alcança,
    fica e bate. Determinística, então o Mestre não escolhe nada. */
@@ -533,16 +542,25 @@ export function moverInimigos(grade, inimigos, alvo, todos) {
     if (dist <= alcanceNatural(e)) return e;
     if (e.distancia && dist <= 18) return e;   // atirador mantém distância
     const ocupados = ocupacaoDe([...(todos || []), ...vivos], e);
+    /* ---- CADA BICHO NO SEU PASSO (v9.44) ----
+       `deslocamentoDeCriatura` existia em movimento.js desde a v9.34 com o
+       comentário "um dragão voa; um zumbi arrasta", estava importada no App e
+       não era chamada em lugar nenhum: aqui todo mundo andava os mesmos 9 m.
+       O zumbi alcançava o herói tão rápido quanto o lobo, e o dragão não
+       passava por cima de nada. Agora o passo sai da criatura, e quem voa
+       atravessa o terreno difícil sem pagar o dobro. */
+    const passoDele = deslocamentoDeCriatura(e);
+    const metrosDele = passoDele.metros || DESLOCAMENTO_PADRAO;
     /* anda o quanto der na direção do alvo: procura o quadrado alcançável
        que mais aproxima. É guloso e basta — o campo é pequeno. */
     let melhor = null, melhorD = dist;
-    const teto = m2q(DESLOCAMENTO_PADRAO);
+    const teto = m2q(metrosDele);
     for (let x = Math.max(0, e.x - teto); x <= Math.min(g.largura - 1, e.x + teto); x++) {
       for (let y = Math.max(0, e.y - teto); y <= Math.min(g.altura - 1, e.y + teto); y++) {
         if (x === e.x && y === e.y) continue;
         const d = distanciaM({ ...e, x, y }, alvo);
         if (d >= melhorD) continue;
-        const r = caminhar(grade, e, { x, y }, { ocupados, deslocamentoM: DESLOCAMENTO_PADRAO });
+        const r = caminhar(grade, e, { x, y }, { ocupados, deslocamentoM: metrosDele, ignoraDificil: !!passoDele.voando });
         if (!r.ok) continue;
         melhor = { x, y }; melhorD = d;
       }
