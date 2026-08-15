@@ -174,13 +174,42 @@ ${narrativas.slice(-16).join("\n\n")}`;
 function OverlayMorte({ estado, nomeMorto, aoVoltar, aoHerdar }) {
   const [nome, setNome] = useState("");
   const { formas, heranca: h } = estado;
+  /* ---------------- O PROCESSO, NÃO SÓ O VEREDITO (v9.42) ----------------
+     Esta tela mostrava o resultado e escondia a conta. Quem tombou com dois
+     sucessos e uma falha na mão olhava para ela sem entender: o dado que
+     decidiu tinha sido um 1 natural, que vale DUAS falhas, e isso estava
+     escrito só no chat — atrás da própria tela. A regra existe para ser
+     lida; um desfecho que o jogador não consegue reconstruir vira sorte. */
+  const m = estado.morte || {};
+  const rolagens = m.rolagens || [];
+  const corDoDado = (t) => (t === "sucesso" ? T.ok : t === "falha2" ? T.danger : t === "falha" ? T.amberSoft : T.violetSoft);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(6,4,10,0.94)", backdropFilter: "blur(6px)" }}>
-      <div className="tv-fade w-full max-w-lg">
-        <div className="text-center mb-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 overflow-y-auto" style={{ background: "rgba(6,4,10,0.94)", backdropFilter: "blur(6px)" }}>
+      <div className="tv-fade w-full max-w-lg my-auto">
+        <div className="text-center mb-4">
           <div className="tv-display text-4xl mb-1" style={{ color: T.danger }}>{nomeMorto} tomba.</div>
           <div className="tv-body text-sm" style={{ color: T.inkDim }}>A campanha continua. O que ela custa daqui em diante é escolha sua.</div>
         </div>
+
+        {rolagens.length > 0 && (
+          <div className="rounded-2xl p-4 mb-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+            <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>☠ os dados que decidiram</div>
+            <div className="space-y-1 mb-2">
+              {rolagens.map((r, i) => (
+                <div key={i} className="flex items-baseline gap-2">
+                  <span className="tv-mono text-[10px] w-4 shrink-0" style={{ color: T.inkDim }}>{i + 1}º</span>
+                  <span className="tv-mono text-sm w-8 shrink-0 text-right" style={{ color: corDoDado(r.tipo), fontWeight: 700 }}>{r.rolo}</span>
+                  <span className="tv-body text-[12px]" style={{ color: r.tipo === "falha2" ? T.danger : T.inkDim }}>
+                    {r.tipo === "falha2" ? "1 natural — vale DUAS falhas" : r.tipo === "sucesso" ? "10 ou mais — resiste" : r.tipo === "revive" ? "20 natural — de volta à luta" : "abaixo de 10 — enfraquece"}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="tv-mono text-[10px] pt-2" style={{ color: T.inkDim, borderTop: `1px solid ${T.line}` }}>
+              {m.sucessos || 0} sucesso{(m.sucessos || 0) === 1 ? "" : "s"} · <span style={{ color: T.danger }}>{m.falhas || 0} falha{(m.falhas || 0) === 1 ? "" : "s"}</span> — três falhas encerram, e o 1 natural conta por duas.
+            </div>
+          </div>
+        )}
 
         <div className="rounded-2xl p-4 mb-3" style={{ background: T.panel, border: `1px solid ${formas.possivel ? T.amber : T.line}` }}>
           <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: formas.possivel ? T.amberSoft : T.inkDim }}>✨ Voltar</div>
@@ -3958,9 +3987,13 @@ export default function Taverna() {
   const resolverQueda = (pers, msgs = []) => {
     if (!pers) return pers;
     if ((pers.vida || 0) > 0) {
-      /* levantou (cura, poção, segundo fôlego): os contadores zeram */
+      /* levantou (cura, poção, segundo fôlego): os contadores zeram — e o
+         histórico de dados com eles, senão a próxima queda abre mostrando
+         a rolagem da queda passada */
       const m = pers.morte || {};
-      if (pers.morrendo || (m.falhas || 0) + (m.sucessos || 0) > 0) return { ...pers, morrendo: false, morte: { sucessos: 0, falhas: 0 } };
+      if (pers.morrendo || (m.falhas || 0) + (m.sucessos || 0) > 0 || (m.rolagens || []).length) {
+        return { ...pers, morrendo: false, morte: { sucessos: 0, falhas: 0, rolagens: [] } };
+      }
       return pers;
     }
     if (pers.morto) return pers;
@@ -3976,11 +4009,20 @@ export default function Taverna() {
     const caiuAgora = !pers.morrendo;
     const res = testeDeMorte();
     const ap = aplicarTesteMorte(pers.morte || { sucessos: 0, falhas: 0 }, res);
+    /* ---- OS DADOS FICAM GUARDADOS (v9.42) ----
+       O jogador tombou com dois sucessos e uma falha e não entendeu por quê:
+       o dado que decidiu foi um 1 natural, que no 5e conta DUAS falhas, e a
+       tela de tombamento não mostrava dado nenhum. Ele teve que recarregar a
+       página para ler o chat e descobrir o que tinha acontecido — e foi
+       assim que descobriu também que recarregar burlava o tombamento.
+       Um desfecho que o jogador não consegue reconstruir parece arbitrário,
+       e arbitrário é o oposto do que uma regra de morte precisa ser. */
+    const historico = [...((pers.morte || {}).rolagens || []), { rolo: res.rolo, tipo: res.tipo, texto: res.texto }].slice(-8);
     if (caiuAgora) msgs.push("💥 Seus PV chegam a zero — você desaba, inconsciente.");
     msgs.push(`☠ Teste de morte: ${res.texto}`);
     if (ap.desfecho === "revive") {
       msgs.push("✨ Você volta a si com 1 PV!");
-      const rh = ganharHeroismo({ ...pers, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } }, "sobreviveu");
+      const rh = ganharHeroismo({ ...pers, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0, rolagens: [] } }, "sobreviveu");
       if (rh.msg) msgs.push(rh.msg);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Caí a 0 PV e o teste de morte saiu 20 natural: estou de pé de novo, com 1 PV. Narre o retorno brutal à consciência. Não mude números.`;
       return rh.pers;
@@ -3988,16 +4030,16 @@ export default function Taverna() {
     if (ap.desfecho === "estavel") {
       msgs.push("Você estabiliza — inconsciente, mas vivo. Alguém precisa te ajudar.");
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Estou a 0 PV e ESTABILIZEI: inconsciente, respirando, sem poder agir. Narre a cena de quem está caído — e quem estiver por perto pode me socorrer. NÃO me faça levantar, andar ou falar.`;
-      return { ...pers, morrendo: true, morte: { sucessos: 0, falhas: 0 } };
+      return { ...pers, morrendo: true, morte: { sucessos: 0, falhas: 0, rolagens: [] } };
     }
     if (ap.desfecho === "morto") {
       msgs.push("💀 Você tomba. O que vem depois é escolha sua — e custa.");
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MORTE — DECLARADA PELO SISTEMA] Falhei o terceiro teste de morte. Narre o instante final, curto e sem consolo, e pare aí: o que vem depois o sistema resolve.`;
       setTimeout(() => abrirDesfechoDaMorte(), 400);
-      return { ...pers, morrendo: false, morto: true, morte: ap };
+      return { ...pers, morrendo: false, morto: true, morte: { ...ap, rolagens: historico } };
     }
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Estou caído a 0 PV, inconsciente, rolando testes de morte (${ap.sucessos} sucesso${ap.sucessos === 1 ? "" : "s"}, ${ap.falhas} falha${ap.falhas === 1 ? "" : "s"}). Narre isso do lado de fora — eu não vejo, não ouço e não ajo. Uma cura ou uma estabilização me traz de volta.`;
-    return { ...pers, morrendo: true, morte: ap };
+    return { ...pers, morrendo: true, morte: { ...ap, rolagens: historico } };
   };
 
   const aplicarResposta = useCallback((resp, persAtual) => {
@@ -5840,6 +5882,13 @@ export default function Taverna() {
       /* DESPERTAR NO CARREGAMENTO (v7.4.1): save veterano nível ≥15 nunca
          disparava o despertar (ele só checava DEPOIS de um turno). */
       setTimeout(() => checarDespertar(pers, true), 900);
+      /* ---- A MORTE ATRAVESSA A RECARGA (v9.42) ----
+         A tela de tombamento vivia só no estado da sessão: recarregar a
+         página voltava direto para a campanha com o herói "morto" na ficha e
+         nenhuma escolha cobrada. Dava para tombar e seguir jogando, o que
+         esvazia a única regra do jogo que tem preço de verdade. A morte está
+         no save; a tela agora nasce dele. */
+      if (pers && pers.morto) setTimeout(() => abrirDesfechoDaMorte(), 700);
       /* RELÓGIOS (v9.18): semeia no carregamento para que o save antigo — que
          já tem nêmesis odiando e evento global correndo — abra com os
          ponteiros na tela em vez de esperar a próxima noite. Idempotente:
@@ -6161,6 +6210,14 @@ export default function Taverna() {
      e a tela ficava parada sem explicação. Agora o erro aparece no chat, com
      nome, e o turno segue para o Mestre em vez de morrer no meio. */
   const agir = (texto) => {
+    /* v9.42: morto não age. A tela de tombamento cobre tudo, mas cobrir não é
+       impedir — e um caminho que ainda funciona por baixo do pano é o mesmo
+       que não existir regra. Quem tombou escolhe voltar ou passar o fio. */
+    const pm = fichaViva();
+    if (pm && pm.morto && !String(texto || "").trimStart().startsWith("/")) {
+      abrirDesfechoDaMorte();
+      return;
+    }
     try { agirInterno(texto); }
     catch (e) {
       const msg = String((e && e.message) || e).slice(0, 160);
@@ -7951,7 +8008,13 @@ export default function Taverna() {
       moedas: p.moedas || 0, cofre: g.cofre || 0,
       pf: dv.pf || 0, gd: grauDe(dv),
     });
-    setDesfechoMorte({ formas: f, heranca: heranca(p, { mapa: mapaRef.current, guilda: g, faccaoJogador: faccaoJogadorRef.current }) });
+    setDesfechoMorte({
+      formas: f,
+      heranca: heranca(p, { mapa: mapaRef.current, guilda: g, faccaoJogador: faccaoJogadorRef.current }),
+      /* os dados que decidiram vão junto: sem eles a tela é um veredito sem
+         processo, e o jogador só descobre o que houve recarregando a página */
+      morte: p.morte || { sucessos: 0, falhas: 0, rolagens: [] },
+    });
   };
 
   const voltarDosMortos = (via) => {
@@ -10089,6 +10152,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
   const irMenu = () => { setAba(null); setHabAbertas(false); setHabsSel([]); setEntrada(""); setDadoRolando(false); setFase("menu"); };
 
+  /* v9.42: `morto` NÃO entra aqui de propósito. A tela de tombamento é um
+     overlay que cobre a página inteira — para o jogador, tudo abaixo dela já
+     está fora de alcance, e travar o campo por cima disso só serviria para
+     matar os comandos de desenvolvimento. Quem barra a ação de quem tombou é
+     a guarda dentro de `agir`, que deixa o `/comando` passar. */
   const bloqueado = carregando || !!rolagem;
 
   return (
