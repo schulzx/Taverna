@@ -195,4 +195,6 @@ export const LUGAR_PROMPT = `ONDE O HERÓI ESTÁ (v9.39):
 - Além das cidades e das viagens, existe um terceiro lugar: um ponto NOMEADO fora da cidade e perto dela — uma fazenda, um moinho, uma gruta, o acampamento onde a armadilha está armada.
 - Quando o herói chegar a um lugar assim, registre "lugar_atual": "a fazenda de Jessa" (nome curto, como se diz em voz alta). Quando ele voltar para dentro da cidade, registre "lugar_atual": null.
 - Enquanto houver um lugar registrado, o herói ESTÁ nele. Não o devolva à cidade por conta própria — nem para passar o tempo, nem para dormir, nem para "reapresentar a cena". Esperar de tocaia é uma cena legítima e acontece onde a tocaia está.
+- SAIR DE UM LUGAR É UM MOVIMENTO, e movimento é do jogador: o sistema só aceita "lugar_atual": null quando o próprio herói escreveu que sai. Se você mandar sem isso, é recusado e você recebe um aviso — não insista.
+- DENTRO DE UM COMBATE o lugar não muda, em hipótese nenhuma: enquanto a luta corre quem diz onde cada um está é o tabuleiro do sistema, em metros. Nada de arrastar o herói um andar acima entre dois golpes.
 - Lugar assim NÃO é viagem: ir e voltar custa HORAS. Nunca invente dias de marcha para o que fica nos arredores — viagem de verdade tem sistema próprio e começa por outro caminho.`;

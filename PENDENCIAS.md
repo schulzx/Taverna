@@ -39,9 +39,14 @@ jogador descobre jogando.
 
 ## Mestre e prompt
 
-- **O prompt de sistema passa de 90 mil caracteres** (~25 mil tokens) e vai
-  inteiro em todo turno. Pesa na coerência e no custo. Muita regra lá dentro
-  já virou código e pode sair — vale uma sessão só de enxugar.
+- **O prompt de sistema ainda passa de 75 mil caracteres** (~21 mil tokens) e
+  vai inteiro em todo turno. A faxina da v9.50 tirou 9 mil caracteres — o que
+  contradizia o código ou já era código. O que sobrou é regra viva, e cortar
+  daqui em diante é escolha de produto, não limpeza: o candidato óbvio é
+  mandar por turno só o que a cena usa (o bloco de masmorra só em masmorra, o
+  de diplomacia só quando há facção em jogo), que é uma mudança de
+  arquitetura, não de texto. `teste-prompt.mjs` guarda o tamanho e as regras
+  que não podem voltar.
 
 - **Temperatura em 0.85** (v9.45, era 1.1). Escolhida contra a prosa
   quebrada que apareceu em jogo; se ficar previsível demais, `DS_TEMPERATURA`

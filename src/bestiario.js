@@ -63,13 +63,15 @@ export function completarInimigo(e, nivelJogador) {
 }
 
 /* ---------------- SISTEMA DE TESTES ---------------- */
-export const TABELA_TESTES = `AÇÕES QUE PEDEM TESTE (com dificuldade-base — ajuste ±2 pela situação):
-· FÍSICO (Força/Vigor): escalar muro liso 12, arrombar porta reforçada 15, erguer portcullis 15, saltar abismo largo 12, resistir a veneno 12, nadar em tempestade 15.
-· AGILIDADE (Destreza): furtividade contra guardas atentos 12, escapar de agarrão 12, equilibrar-se em corda 12, abrir fechadura comum 12 / complexa 15, punga 15.
-· SOCIAL (Presença): persuadir neutro 12 / relutante 15, enganar desconfiado 15, intimidar alguém do MESMO patamar 15 / de patamar acima 18+, barganhar 12, inspirar multidão 15.
-· MENTE (Intelecto/Percepção): decifrar texto arcano 15, notar emboscada 12, rastrear na chuva 15, lembrar lore obscura 15, detectar mentira 12.
-QUANDO NÃO PEDIR TESTE: ação TRIVIAL para o patamar do herói (consulte o PATAMAR — um Herói não testa para intimidar um goblin, uma Lenda não testa para escalar um muro); ação sem consequência interessante em caso de falha; ação impossível (negue, não teste). Intimidar/enfrentar algo de patamar MUITO acima: perfil "formidavel", e mesmo sucesso dá efeito parcial.
-COMO MEDIR (NÃO invente números — use o PERFIL e o sistema calcula): "facil" = desafio leve, errar é azar; "digno" = desafio à altura do herói (o padrão); "dificil" = exige perícia real, falha provável sem preparo; "formidavel" = no limite do possível, sucesso é feito memorável. O sistema converte o perfil em dificuldade a partir do modificador do herói — um desafio "digno" é digno em qualquer nível.
+/* v9.50: esta tabela trazia uma lista de dificuldades numéricas ("escalar muro
+   liso 12, arrombar porta reforçada 15…") e, quatro linhas abaixo, mandava NÃO
+   inventar números e usar o perfil. Os dois nunca puderam ser verdade ao mesmo
+   tempo: a dificuldade é derivada do modificador do herói desde a v9.15, e um
+   número fixo é recalibrado assim que chega. Ficou o que decide de verdade. */
+export const TABELA_TESTES = `COMO MEDIR UM TESTE (você escolhe o PERFIL; o sistema calcula o número):
+· "facil" = desafio leve, errar é azar. · "digno" = à altura do herói (o padrão). · "dificil" = exige perícia real, falha provável sem preparo. · "formidavel" = no limite do possível, sucesso é feito memorável.
+· Um "digno" é digno em qualquer nível — o sistema converte pelo modificador do herói, então o perfil nunca envelhece.
+QUANDO NÃO PEDIR TESTE: ação TRIVIAL para o patamar dele (um Herói não testa para intimidar um goblin, uma Lenda não testa para escalar um muro); ação sem consequência interessante na falha; ação impossível (negue, não teste). Contra algo de patamar MUITO acima: perfil "formidavel", e mesmo o sucesso dá efeito parcial.
 REGRA DE OURO: teste só quando o resultado é incerto E a falha gera história.`;
 
 /* Decisor por código: o app transforma testes triviais em sucesso automático. */

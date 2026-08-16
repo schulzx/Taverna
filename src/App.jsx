@@ -4299,14 +4299,13 @@ export default function Taverna() {
          crítica num teste (`consequencias.js`). Quando a cena pede uma
          condição, o caminho do Mestre é o de qualquer mesa: pedir a rolagem.
          O dado decide e o sistema cobra. */
-      /* ROLAGENS DE COMBATE (visíveis, se ligado nas config) */
-      if (mostrarRolagensRef.current && Array.isArray(md.rolagens_combate)) {
-        md.rolagens_combate.forEach((r) => {
-          if (!r || !r.quem) return;
-          const ic = r.resultado === "crítico" ? "🎯" : r.resultado === "desastre" ? "💥" : r.resultado === "acerta" ? "⚔" : "🛡";
-          msgs.push(`${ic} ${r.quem} → ${r.alvo || "alvo"} · ${r.d20 ?? "?"}${r.mod ? `+${r.mod}` : ""}${r.total != null ? `=${r.total}` : ""}${r.dificuldade != null ? ` vs ${r.dificuldade}` : ""} · ${r.resultado || ""}`);
-        });
-      }
+      /* v9.50: aqui se exibiam as "rolagens_combate" que o MESTRE mandava. O
+         prompt ensinava, num parágrafo longo, como ele devia rolar o d20 dos
+         inimigos, escolher o modificador pela competência e fixar a
+         dificuldade de acertar — um trabalho que o sistema faz sozinho desde
+         que o combate passou a ser resolvido por código. Cinco outras regras
+         do mesmo prompt diziam o contrário dessa. As rolagens que o jogador vê
+         hoje saem de `logDadoCombate`, e são as de verdade. */
     }
     /* MAPA E FACÇÕES: registra cidades e facções vindas do Mestre */
     if (resp.mudancas) {
