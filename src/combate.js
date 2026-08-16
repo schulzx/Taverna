@@ -7,6 +7,7 @@
    vantagem/desvantagem, críticos e condições de estado.
    ============================================================ */
 import { alcanca, bonusDefesaEm } from "./grid.js";
+import { defesaDeGuarda } from "./habilidades.js";
 
 import { perfilDeCriatura, multiplicadorDano, iconeDano, resistenciasEquipadas, elementoDaArma } from "./danos.js";
 import { mecanicaDe } from "./condicoes.js";
@@ -58,7 +59,11 @@ export function defesaDe(ent, ehInimigo = false) {
   /* v9.32: `bonusDefesa` é o que as dádivas épicas depositam na ficha. Fica
      aqui, e não em bonusEquip, porque não vem de equipamento nenhum: é do
      corpo. Ausente em toda ficha que não tem dádiva — soma zero. */
-  return 10 + dex + bonusEquip + semArm + (Number(ent.bonusDefesa) || 0);
+  /* v9.53: a GUARDA temporária entra aqui. Cinco habilidades prometiam
+     "aumenta a defesa por N turnos" e nenhuma somava um ponto — e o campo
+     `bonusDefesa` logo acima não servia, porque dádiva não vence e guarda
+     vence. Duas coisas parecidas com prazos diferentes são duas coisas. */
+  return 10 + dex + bonusEquip + semArm + (Number(ent.bonusDefesa) || 0) + defesaDeGuarda(ent);
 }
 
 /* Condições afetam as rolagens. A mecânica NÃO mora mais aqui: vem do

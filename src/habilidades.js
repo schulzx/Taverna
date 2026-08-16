@@ -134,9 +134,17 @@ export const magiaTravadaPelaForma = (pers) => !!(estaEmForma(pers) && pers.form
    3. REERGUER — o aliado que estava no chão
    ============================================================ */
 
+/* v9.53: três ficaram de fora do casamento da v9.47 — a varredura das 508
+   habilidades as achou prometendo exatamente isto e sem ninguém para cobrar.
+   Refrão Teimoso diz "metade do PV" com todas as letras, e é o único caso em
+   que a fração vinha escrita na descrição; as outras seguem a régua da casa
+   (um aliado, pouco PV; todos, um pouco mais). */
 const REERGUERES = [
   { rx: /ressurreicao menor|traz de volta um aliado caido|aliado caido de volta/, todos: false, fracao: 0.25, rotulo: "de volta, com pouco PV" },
   { rx: /ultima estrofe|reergue todos os aliados caidos/,                          todos: true,  fracao: 0.4,  rotulo: "de pé outra vez" },
+  { rx: /refrao teimoso|volta cantando junto/,                                     todos: false, fracao: 0.5,  rotulo: "de pé, cantando junto" },
+  { rx: /renascimento|todos os aliados caidos se erguem/,                          todos: true,  fracao: 0.35, rotulo: "de volta à vida" },
+  { rx: /grande necropole|todos os caidos da cena se erguem/,                      todos: true,  fracao: 0.3,  rotulo: "de pé, servindo a quem os chamou" },
 ];
 
 export function reerguerDe(hab) {
@@ -278,7 +286,76 @@ export function colherPorLimiar(inimigos, regra, { podeCair } = {}) {
   };
 }
 
-export const HABILIDADES_PROMPT = `HABILIDADES DE REGRA PRÓPRIA (v9.48 — o sistema resolve, você narra):
+/* ============================================================
+   6. A GUARDA — defesa que dura alguns turnos (v9.53)
+
+   Cinco habilidades prometiam "aumenta a defesa por N turnos" e nenhuma
+   somava um ponto à CA: Casca de Carvalho, Pele Arcana, Forma Dracônica,
+   Enxerto Mecânico e Elixir de Combate. O jogador gastava PM, lia a linha
+   bonita e continuava sendo acertado exatamente como antes.
+
+   A ficha já tinha onde guardar isso — `bonusDefesa`, que as dádivas épicas
+   usam desde a v9.32 e `defesaDe` soma. O que faltava era o PRAZO: dádiva é
+   para sempre, guarda vence. Por isso não dá para reusar o campo: uma lista
+   própria, com `ate` em rodadas, do mesmo jeito que a forma e a invocação.
+
+   O valor não sai da descrição — "aumenta MUITO a defesa" não é número. Sai
+   da tabela, e a tabela é a régua: +2 é uma peça de armadura, +4 é uma
+   armadura inteira. Nada acima disso, porque defesa alta é a estatística
+   que mais rápido quebra um combate.
+   ============================================================ */
+
+export const GUARDAS = [
+  { id: "casca_carvalho", rx: /casca de carvalho/, valor: 4, turnos: 3, conceito: "a pele vira casca: o golpe encontra madeira antes de encontrar carne" },
+  { id: "pele_arcana",    rx: /pele arcana/,       valor: 3, turnos: 2, conceito: "a magia endurece a pele num verniz que a lâmina não gosta" },
+  { id: "forma_draconica", rx: /forma draconica/,  valor: 3, turnos: 3, conceito: "escamas sobem pelos braços e as costas ganham peso de asa" },
+  { id: "enxerto_mecanico", rx: /enxerto mecanico/, valor: 3, turnos: 4, conceito: "peças presas ao próprio corpo: mais resistência, menos gente" },
+  { id: "elixir_combate", rx: /elixir de combate/, valor: 2, turnos: 3, conceito: "o elixir desce queimando e o corpo responde mais firme" },
+];
+
+export function guardaDe(hab) {
+  const t = txtDe(hab);
+  if (!t.trim()) return null;
+  return GUARDAS.find((g) => g.rx.test(t)) || null;
+}
+
+export const guardasAtivas = (pers) => ((pers && pers.guardas) || []).filter((g) => g && g.valor);
+export const defesaDeGuarda = (pers) => guardasAtivas(pers).reduce((s, g) => s + (Number(g.valor) || 0), 0);
+
+export function erguerGuarda(pers, hab, rodada = 1) {
+  const g = guardaDe(hab);
+  if (!g) return null;
+  const jaTem = ((pers && pers.guardas) || []).some((x) => x.id === g.id);
+  if (jaTem) return { ok: false, pers, linha: `⛔ ${hab.nome}: essa guarda já está de pé.`, nota: "" };
+  const guardas = [...((pers && pers.guardas) || []), { id: g.id, nome: hab.nome, valor: g.valor, ate: rodada + g.turnos }];
+  return {
+    ok: true, pers: { ...pers, guardas },
+    linha: `🛡 ${hab.nome} — ${g.conceito}. +${g.valor} de defesa · ${g.turnos} turnos.`,
+    nota: `[GUARDA ERGUIDA PELO SISTEMA] "${hab.nome}": ${g.conceito}. O sistema já somou ${g.valor} à minha defesa e conta os ${g.turnos} turnos. Narre o que mudou no meu corpo e mostre os golpes resvalando — não invente número, não estenda o prazo e não a desfaça.`,
+  };
+}
+
+/* Vence por rodada, como a forma e a invocação. Devolve o que caiu. */
+export function expirarGuardas(pers, rodada) {
+  const ativas = (pers && pers.guardas) || [];
+  if (!ativas.length) return { pers, linhas: [] };
+  const ficam = ativas.filter((g) => Number(g.ate) > Number(rodada));
+  if (ficam.length === ativas.length) return { pers, linhas: [] };
+  const caidas = ativas.filter((g) => !ficam.includes(g));
+  const p = { ...pers };
+  if (ficam.length) p.guardas = ficam; else delete p.guardas;
+  return { pers: p, linhas: caidas.map((g) => `🛡 ${g.nome} se desfaz — a defesa volta ao normal.`) };
+}
+
+/* A luta acabou: guarda de combate não atravessa a porta. */
+export function baixarGuardas(pers) {
+  if (!((pers && pers.guardas) || []).length) return { pers, linha: "" };
+  const p = { ...pers }; delete p.guardas;
+  return { pers: p, linha: "🛡 Com o fim da luta, sua guarda baixa." };
+}
+
+export const HABILIDADES_PROMPT = `HABILIDADES DE REGRA PRÓPRIA (v9.53 — o sistema resolve, você narra):
+- GUARDA: algumas habilidades erguem uma defesa que dura alguns turnos. O sistema soma o número à minha defesa e conta o prazo — narre o corpo que mudou e os golpes que resvalam, sem inventar valor nem estender a duração.
 - METAMAGIA arma a PRÓXIMA magia (mais alcance, ou um segundo alvo) e o sistema a consome sozinho quando ela sai. Você não escolhe qual magia recebe o efeito nem o aplica duas vezes.
 - FORMAS (animal, ancestral) trocam o CORPO do herói: outro fôlego, outro golpe, e — na forma animal — nenhuma conjuração e nenhuma fala articulada. Trate-o como a criatura enquanto durar, inclusive no que ele deixa de conseguir fazer. O prazo é do sistema; não o devolva ao corpo antigo por conta própria.
 - REERGUER põe um aliado caído de pé com uma fração do PV. O número já está aplicado: narre o retorno, não o milagre genérico.

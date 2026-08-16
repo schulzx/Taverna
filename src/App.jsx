@@ -86,7 +86,7 @@ import { bonusDeBancada, componentesExtras, bonusDeNavegacao, despojosExtras, bo
 import { criarOficina, anotar as anotarOficina, bilheteDaOficina, OFICINA_PROMPT } from "./oficina.js";
 import { romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, devolverSegura, GATILHOS_PROMPT } from "./gatilhos.js";
 import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
-import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, HABILIDADES_PROMPT } from "./habilidades.js";
+import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, erguerGuarda, expirarGuardas, baixarGuardas, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, HABILIDADES_PROMPT } from "./habilidades.js";
 import { agruparMensagens } from "./resumo.js";
 
 /* ============================================================
@@ -3996,6 +3996,11 @@ export default function Taverna() {
       pushMsgs([{ autor: "sistema", texto: volta.linha }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${volta.nota}`;
     }
+    /* v9.53: guarda de combate não atravessa a porta — mesma razão da forma
+       e da invocação, e pelo mesmo caminho, para não virar o quarto lugar
+       que alguém esquece de ligar. */
+    const bg = baixarGuardas(p);
+    if (bg.linha) { p = bg.pers; mudou = true; pushMsgs([{ autor: "sistema", texto: bg.linha }]); }
     const disp = dispensarTodas(p);
     if (disp.sumiram.length) {
       p = disp.pers; mudou = true;
@@ -4007,6 +4012,10 @@ export default function Taverna() {
 
   const porForma = (h, pers) => {
     const r = assumirForma(pers, h, (combateRef.current && combateRef.current.rodada) || 1);
+    return r ? { pers: r.pers, linha: r.linha, nota: r.nota } : null;
+  };
+  const porGuarda = (h, pers) => {
+    const r = erguerGuarda(pers, h, (combateRef.current && combateRef.current.rodada) || 1);
     return r ? { pers: r.pers, linha: r.linha, nota: r.nota } : null;
   };
   const porReerguer = (h, pers) => {
@@ -7012,7 +7021,7 @@ export default function Taverna() {
            completa de companheiro (é o motor que já sabe agir sozinho),
            lugar no tabuleiro ao lado de quem a chamou, e prazo. O teto é
            cobrado ANTES do resto para que a recusa não custe o PM. */
-        for (const fn of [porInvocacaoEmCampo, porSacrificio, porForma, porReerguer, porMetamagia, porReescrever]) {
+        for (const fn of [porInvocacaoEmCampo, porSacrificio, porForma, porGuarda, porReerguer, porMetamagia, porReescrever]) {
           const r = fn(h, pers);
           if (!r) continue;
           pers = r.pers;
@@ -7122,7 +7131,7 @@ export default function Taverna() {
       /* v9.46: o caminho da habilidade CITADA passa pelas mesmas portas que
          o do painel. Quem digita "conjuro Invocar Fera Menor" recebe a fera. */
       const linhasCit = [];
-      for (const fn of [porInvocacaoEmCampo, porSacrificio, porForma, porReerguer, porMetamagia, porReescrever]) {
+      for (const fn of [porInvocacaoEmCampo, porSacrificio, porForma, porGuarda, porReerguer, porMetamagia, porReescrever]) {
         const r = fn(habCitada, pers);
         if (!r) continue;
         pers = r.pers;
@@ -7700,6 +7709,13 @@ export default function Taverna() {
         persAtual = fim.pers;
         pushMsgs([{ autor: "sistema", texto: fim.linha }]);
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${fim.nota}`;
+      }
+      /* v9.53: a GUARDA vence pelo mesmo relógio da forma e da invocação —
+         quem tem prazo em rodadas é contado num lugar só. */
+      const gua = expirarGuardas(persAtual, proxima);
+      if (gua.linhas.length) {
+        persAtual = gua.pers;
+        pushMsgs(gua.linhas.map((texto) => ({ autor: "sistema", texto })));
       }
       const exp = expirarInvocacoes(persAtual, proxima);
       if (exp.sumiram.length) {

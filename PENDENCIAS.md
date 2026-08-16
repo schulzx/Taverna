@@ -69,11 +69,11 @@ jogador descobre jogando.
   para o Engenheiro e o Invocador (que vivem de máquinas e criaturas) isso
   parece esquecimento, não desenho.
 
-- **Trinta habilidades prometem número e não têm quem o cobre.** A varredura
+- **Vinte e duas habilidades ainda prometem número e não têm quem o cobre.**
+  (Eram trinta; a v9.53 pagou oito.) A varredura
   separou por família, e cada família é um resolvedor:
-  - **Defesa temporária** (Casca de Carvalho, Pele Arcana, Forma Dracônica,
-    Enxerto Mecânico, Elixir de Combate): "aumenta a defesa por N turnos" —
-    ninguém soma nada à CA.
+  - ~~**Defesa temporária**~~ RESOLVIDO na v9.53: as cinco erguem uma GUARDA
+    que soma à CA e vence por rodada, como a forma e a invocação.
   - **Controle de inimigo** (Marionete, Discórdia, Selo de Interdito, Silêncio
     Que Grita, Mentira Luminosa, Palco Aberto): virar um inimigo contra o
     outro, calar a conjuração, criar uma cópia. Nenhum tem código.
