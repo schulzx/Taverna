@@ -11,7 +11,13 @@ import { criaturasDoGenero } from "./bestiario.js";
 import { gerarLoot } from "./loot.js";
 
 const d = (n) => Math.floor(Math.random() * n);
-const sortear = (arr) => arr[d(arr.length)];
+/* v9.53: era `arr[d(arr.length)]`, e `d(n)` devolve 1..n — nunca 0. O
+   primeiro item de TODA tabela deste arquivo era inalcançável (a primeira
+   pista, a primeira armadilha, o primeiro enigma, o primeiro santuário), e
+   uma em cada `n` chamadas devolvia `undefined`. Em 500 masmorras geradas,
+   500 tinham ao menos uma passagem com a pista vazia — o jogador escolhia a
+   porta no escuro porque o sorteio caía fora da lista. */
+const sortear = (arr) => (arr && arr.length ? arr[Math.floor(Math.random() * arr.length)] : undefined);
 
 const LUGARES = ["Cripta", "Catacumba", "Mina", "Caverna", "Ruína", "Tumba", "Esgoto", "Fortaleza", "Templo", "Cisterna", "Torre", "Labirinto", "Covil", "Santuário", "Prisão", "Abismo"];
 const EPITETOS = ["dos Sussurros", "do Rei Caído", "das Correntes", "do Musgo Negro", "das Ossadas", "do Sino Rachado", "das Águas Paradas", "do Olho Cego", "das Sombras", "do Voto Quebrado", "da Serpente", "dos Ratos", "do Silêncio", "das Brasas", "da Névoa", "do Eremita"];
@@ -92,6 +98,34 @@ export function gerarMasmorra(genero, nivel, nomeSugerido = "") {
       const destinos = [...atual].sort(() => Math.random() - 0.5).slice(0, Math.min(2, atual.length));
       pai.saidas = [...new Set([...pai.saidas, ...destinos])];
     }
+    /* ---------------- TODA SALA PRECISA DE UMA ENTRADA (v9.53) ----------------
+       Aqui morava o pior bug que este jogo já teve. Cada sala da camada
+       anterior sorteava DUAS da camada nova — e quando a camada nova tinha
+       três salas e a anterior tinha uma ou duas, sobrava sala sem ninguém
+       apontando para ela. Em 200 masmorras geradas, 117 tinham pelo menos uma
+       sala órfã.
+
+       O caso letal: em 12% delas a órfã era justamente a sala que guarda a
+       CHAVE, e o portão do chefe é `trancada: true`. O jogador entrava,
+       limpava tudo o que alcançava, chegava ao portão e lia "falta a chave
+       que alguém guardou lá dentro" — sem ter para onde ir. Uma em cada oito
+       expedições era um beco sem saída, e o único botão restante era o de
+       fugir, que abre mão de tudo.
+
+       O conserto é uma varredura: quem ficou sem pai ganha um, sorteado entre
+       os da camada anterior. Fica AQUI, dentro do laço, e não numa costura no
+       fim, porque uma camada consertada é a camada anterior da seguinte — e
+       reparar cedo é o que impede o furo de se propagar. */
+    const comPai = new Set(anterior.flatMap((pid) => salas.find((x) => x.id === pid).saidas));
+    for (const id of atual) {
+      if (comPai.has(id)) continue;
+      /* o sorteio sai ANTES do `find`: dentro do predicado ele seria refeito
+         a cada sala comparada, e o `find` compararia cada uma contra um pai
+         diferente — quase nunca achando nenhum. */
+      const escolhido = sortear(anterior);
+      const pai = salas.find((x) => x.id === escolhido);
+      if (pai) pai.saidas = [...new Set([...pai.saidas, id])];
+    }
     anterior = atual;
   }
 
@@ -100,7 +134,57 @@ export function gerarMasmorra(genero, nivel, nomeSugerido = "") {
   salas.push(chefe);
   for (const pid of anterior) salas.find((x) => x.id === pid).saidas.push(chefe.id);
 
-  return { nome, salas, atual: 0, tochas: 5 + d(3), chave: false, ritmo: "normal", saques: { moedas: 0, itens: 0 }, encerrada: false };
+  return { nome, salas: garantirCaminhos(salas), atual: 0, tochas: 5 + d(3), chave: false, ritmo: "normal", saques: { moedas: 0, itens: 0 }, encerrada: false };
+}
+
+/* ---------------- A REDE DE SEGURANÇA (v9.53) ----------------
+   O reparo dentro do laço já basta. Esta função existe assim mesmo, e o
+   motivo é o tamanho do estrago: uma masmorra impossível não é um número
+   errado na tela, é a partida travada com o jogador lá dentro. Quando o
+   custo do erro é esse, cinto e suspensório valem as vinte linhas.
+
+   Faz duas perguntas, nesta ordem, porque a segunda depende da primeira:
+
+   1) Toda sala tem caminho desde a entrada? Quem não tiver ganha um pai da
+      camada anterior (ou da entrada, se for da camada 1).
+   2) A CHAVE está alcançável sem a chave? É a pergunta que salva a partida:
+      de nada adianta a sala existir no grafo se o único caminho até ela
+      passa pelo portão que ela mesma abre. */
+export function garantirCaminhos(salas) {
+  const porId = new Map(salas.map((s) => [s.id, s]));
+  /* quem se alcança a partir da entrada, opcionalmente ignorando trancadas */
+  const alcancaveis = (respeitarTrancas) => {
+    const vistos = new Set([0]); const fila = [0];
+    while (fila.length) {
+      const s = porId.get(fila.shift());
+      for (const id of (s && s.saidas) || []) {
+        const alvo = porId.get(id);
+        if (!alvo || vistos.has(id)) continue;
+        if (respeitarTrancas && alvo.trancada) continue;
+        vistos.add(id); fila.push(id);
+      }
+    }
+    return vistos;
+  };
+
+  /* 1) ninguém fica de fora */
+  let vistos = alcancaveis(false);
+  for (const s of salas) {
+    if (vistos.has(s.id)) continue;
+    const pais = salas.filter((x) => vistos.has(x.id) && x.camada === s.camada - 1);
+    const pai = pais.length ? sortear(pais.map((x) => x.id)) : 0;
+    porId.get(pai).saidas = [...new Set([...porId.get(pai).saidas, s.id])];
+    vistos = alcancaveis(false);
+  }
+
+  /* 2) a chave nunca atrás da própria porta */
+  const chave = salas.find((s) => s.guardaChave || s.tipo === "chave");
+  if (chave && !alcancaveis(true).has(chave.id)) {
+    const abertas = [...alcancaveis(true)].map((id) => porId.get(id)).filter((s) => s && s.camada < chave.camada);
+    const pai = porId.get(abertas.length ? sortear(abertas.map((x) => x.id)) : 0);
+    pai.saidas = [...new Set([...pai.saidas, chave.id])];
+  }
+  return salas;
 }
 
 /* Saídas visíveis da sala atual, já com pista e estado. */

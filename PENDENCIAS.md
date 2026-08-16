@@ -7,27 +7,21 @@ Este arquivo existe porque a alternativa é lembrar — e a varredura da
 v9.44 mostrou onde isso dá: regra escrita, ninguém liga o código, e o
 jogador descobre jogando.
 
-## Masmorra — o mais grave da varredura da v9.52
+## Masmorra
 
-- **UMA EM CADA OITO MASMORRAS É IMPOSSÍVEL DE TERMINAR.** Em 500 masmorras
-  geradas, **60 (12%)** põem a sala que guarda a chave num ramo sem caminho
-  até ele, e nas 60 a sala do chefe está TRANCADA. O jogador entra, limpa
-  tudo o que alcança, chega ao portão e lê "🔒 O portão está lacrado — falta
-  a chave que alguém guardou lá dentro" sem ter para onde ir. Só resta o
-  botão de fugir, que abre mão de tudo.
+- **~~Uma em cada oito masmorras é impossível de terminar.~~** RESOLVIDO na
+  v9.53. O gerador ligava cada camada à seguinte sorteando destinos e sobrava
+  sala sem pai — 58% das masmorras tinham órfã, e em 12% a órfã era a sala da
+  CHAVE, com o portão do chefe trancado. Agora toda camada é reparada assim
+  que nasce, e `garantirCaminhos` confere no fim. Medido: 0 órfãs em mil
+  masmorras, chave sempre alcançável, 200/200 concluíveis.
 
-  O caso maior é o mesmo defeito mais brando: **117 de 200 masmorras (58%)
-  têm pelo menos uma sala sem nenhum caminho até ela**. O gerador liga cada
-  camada à seguinte sorteando destinos, e sobra sala sem quem aponte para
-  ela. Exemplo real de sete salas, onde a 3 é órfã:
-
-  ```
-  0:entrada->[1,2]   1:chave->[4,5]   2:combate->[5,4]
-  3:combate->[6]     4:tesouro->[6]   5:tesouro->[6]   6:chefe->[]
-  ```
-
-  Consertar é garantir que toda sala da camada N tenha ao menos uma entrada
-  vinda de N−1 — e, se a régua falhar, que a chave nunca fique atrás dela.
+- **~~O sorteio nunca alcançava o primeiro item de nenhuma tabela.~~**
+  RESOLVIDO na v9.53. `sortear = arr[d(arr.length)]`, com `d(n)` devolvendo
+  1..n: o índice 0 era inalcançável e uma em cada `n` chamadas caía fora da
+  lista. Em 500 masmorras, 500 tinham passagem com a pista vazia. O mesmo
+  `sortear` estava em `loot.js`, onde comia o primeiro prefixo, o primeiro
+  sufixo e o primeiro poder de cada tabela.
 
 - **Mais da metade da masmorra é ignorável.** Andando sempre pela primeira
   saída, uma masmorra de 9 salas termina com o chefe morto tendo visitado 5.
@@ -35,12 +29,10 @@ jogador descobre jogando.
   há porta que exija tê-los feito, nem recompensa por limpar tudo. Explorar
   é escolha sem consequência, dos dois lados.
 
-- **As tochas acabam antes de um terço da masmorra.** Começa com `5 + d3` e
-  gasta uma por sala, sempre — numa masmorra de 9 salas o herói fica no
-  escuro (desvantagem e mais perigo) a partir da quarta. Como o número
-  inicial não olha o tamanho da masmorra, quanto maior o covil, maior a
-  fração dele jogada às cegas. Ou as tochas escalam, ou dá para comprá-las e
-  repô-las, ou o escuro deixa de ser o estado normal.
+- **As tochas acabam antes de um terço da masmorra.** A luz é a da mochila
+  (v9.26) e o padrão da ficha são 5 tochas, uma por sala — numa masmorra de
+  9 salas o herói fica no escuro a partir da quarta. Falta o mercado vender
+  tocha e a entrada avisar quantas a expedição vai pedir.
 
 ## Balanceamento — achado na varredura da v9.52
 

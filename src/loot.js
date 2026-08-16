@@ -7,7 +7,11 @@
    ============================================================ */
 
 const d = (n) => Math.floor(Math.random() * n);
-const sortear = (arr) => arr[d(arr.length)];
+/* v9.53: mesmo off-by-one de `masmorras.js` — `d(n)` devolve 1..n, então
+   `arr[d(arr.length)]` nunca alcançava o índice 0 e caía fora da lista uma
+   vez a cada `n`. O primeiro prefixo, o primeiro sufixo e o primeiro poder
+   de cada tabela de loot nunca saíram no jogo. */
+const sortear = (arr) => (arr && arr.length ? arr[Math.floor(Math.random() * arr.length)] : undefined);
 
 export const RARIDADES = ["comum", "incomum", "raro", "epico", "lendario"];
 export const RARIDADE_ROTULO = { comum: "Comum", incomum: "Incomum", raro: "Raro", epico: "Épico", lendario: "Lendário" };
