@@ -182,6 +182,13 @@ jogador descobre jogando.
   depois de abrir a bolsa e reparar. Colher uma erva na estrada devia
   acender alguma coisa.
 
+## Miudezas
+
+- **A fama chega ao teto cedo e para.** "Lenda Viva" começa em 70 e vale
+  igual para 70, 100 ou 200 — passado esse ponto, feito nenhum muda o que o
+  mundo diz do herói. Ou entra um patamar acima, ou a fama vira outra coisa
+  (reputação por região, por facção) depois do teto.
+
 ## O que a sonda passou — e não vira pendência
 
 Registrado para ninguém gastar tempo reconferindo. Medido em v9.52:
@@ -201,6 +208,13 @@ Registrado para ninguém gastar tempo reconferindo. Medido em v9.52:
   prova nenhuma **por desenho** — ali se sobe acumulando fiéis, e é isso que
   a torna "lenta, segura e legítima".
 - **Diplomacia.** Os cinco tratados existem e estão ligados ao mapa.
+- **Encontros de estrada.** Cinco variedades por bioma, em cinco tipos
+  (perigo, achado, cena, viajante, tranquilo) — os oito biomas cobertos.
+- **Relógios.** Quatro tipos (ameaça, caçada, oportunidade, obra), três
+  tamanhos, gatilho por noite. **Missões**: catálogo de etapas completo com
+  conferência automática. **Decretos, correio, reino, oráculo, sintonia,
+  vínculos, legado, heroísmo**: catálogos cheios e funções no lugar.
+- **Grimório**: 85 magias. **Conquistas**: 67 no catálogo.
 
 ## O que ainda não foi jogado de ponta a ponta
 
