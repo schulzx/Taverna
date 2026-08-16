@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
-import { gerarGeografia, garantirGeografia, descobrirCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
+import { gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar } from "./historia.js";
@@ -53,6 +53,7 @@ import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, 
 import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
+import { resumoArredoresPrompt } from "./arredores.js";
 import { garantirLugar, definirLugar, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
@@ -992,7 +993,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lugar = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1211,7 +1212,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
 
         {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} />}
         {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"}  onMilagre={onMilagreUI} mapa={mapa} devocao={devocao} onEncararProva={onEncararProva} onDesistirRito={onDesistirRito} />}
-        {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} jornada={jornada} masmorra={masmorra} molde={molde} />}
+        {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} jornada={jornada} masmorra={masmorra} molde={molde} semente={sementeMundo} genero={generoMundo} lugar={lugar} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} />}
         {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} />}
         {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} mortosBase={mortosBase} />}
@@ -3593,6 +3594,53 @@ export default function Taverna() {
     lugarRef.current = novo; setLugar(novo);
     return `📍 Você está ${comEm(textoDoLugar(novo))}.`;
   };
+  /* ---------------- A NÉVOA AO REDOR (v9.51) ----------------
+     Chegar a uma cidade abre a vizinhança dela: as cidades ligadas por uma
+     rota direta entram no mapa marcadas como conhecidas DE OUVIR. É o que
+     acontece de verdade — ninguém passa uma tarde numa vila sem descobrir
+     para onde vão as duas estradas que saem dela.
+
+     Antes disso o mapa mostrava um ponto só, o que o herói tivesse pisado,
+     e um mapa de um ponto é um alfinete. */
+  const abrirNevoaDaVizinhanca = (nomeCidade, msgs) => {
+    const viz = descobrirVizinhanca(mapaRef.current, nomeCidade);
+    if (!viz.novas.length) return;
+    mapaRef.current = viz.mapa; setMapa(mapaRef.current);
+    const n = viz.novas.length;
+    msgs.push(`🗺 De ${nomeCidade} você fica sabendo de ${n === 1 ? "mais um lugar" : `mais ${n} lugares`}: ${viz.novas.join(", ")} — ouvido no mercado, não visto de perto.`);
+  };
+  /* ---------------- A VIAGEM TERMINA SOZINHA (v9.51) ----------------
+     Achado jogando: parti de Nova do Norte para Forte do Rei, uma rota de 3,5
+     dias, e no dia 7 ainda estava "em viagem". O sistema sabia a rota, sabia
+     o dia da partida e sabia que dia era hoje — e esperava o Mestre lembrar
+     de narrar a chegada para então registrá-la.
+
+     Chegar é aritmética, e aritmética é do código. O Mestre continua narrando
+     a chegada; ele é que não decide mais QUANDO ela acontece. */
+  const talvezChegarSozinho = () => {
+    const j = jornadaRef.current;
+    if (!j || !j.para) return;
+    const semA = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const rota = (mapaRef.current.rotas || []).find((r) =>
+      (semA(r.de) === semA(j.de) && semA(r.para) === semA(j.para)) ||
+      (semA(r.de) === semA(j.para) && semA(r.para) === semA(j.de)));
+    /* sem rota registrada o destino é longe por definição — três dias é o
+       piso honesto, e melhor errar para mais do que teleportar o herói */
+    const dias = Math.max(0.5, rota ? Number(rota.dias) || 3 : 3);
+    const andados = diaRef.current - (Number(j.desde) || diaRef.current);
+    if (andados < dias) return;
+    const msgs = [];
+    cidadeAtualRef.current = j.para;
+    jornadaRef.current = null; setJornada(null);
+    if (lugarRef.current) { lugarRef.current = null; setLugar(null); }
+    msgs.push(`🧭 Fim da estrada: depois de ${Math.round(andados)} ${Math.round(andados) === 1 ? "dia" : "dias"}, você chega a ${j.para}.`);
+    const dsc = descobrirCidade(mapaRef.current, j.para);
+    if (dsc.nova) { mapaRef.current = dsc.mapa; setMapa(mapaRef.current); msgs.push(`🗺 ${dsc.nova} entrou no seu mapa.`); }
+    mapaRef.current = pisarNaCidade(mapaRef.current, j.para); setMapa(mapaRef.current);
+    abrirNevoaDaVizinhanca(j.para, msgs);
+    pushMsgs(msgs.map((texto) => ({ autor: "sistema", texto })));
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CHEGADA — REGISTRADA PELO SISTEMA] A estrada acabou: os ${Math.round(andados)} dias de viagem cobriram o trecho e eu ESTOU em ${j.para}, dentro dela. Narre a chegada — o que se vê do portão, o que muda no ar, quem repara em mim — e trate este lugar como o meu lugar a partir de agora. Não me ponha de volta na estrada.`;
+  };
   const famaAtual = () => calcularFama(contRef.current, (personagem && personagem.nivel) || 1, dominiosDe(mapaRef.current).length);
   const famaPatamarRef = useRef(0); // fama da última checagem, para detectar saltos de patamar
   const absMin = () => (diaRef.current - 1) * 1440 + minutoRef.current;
@@ -4355,6 +4403,8 @@ export default function Taverna() {
           mapaRef.current = dsc.mapa; setMapa(mapaRef.current);
           msgs.push(`🗺 ${dsc.nova} entrou no seu mapa.`);
         }
+        mapaRef.current = pisarNaCidade(mapaRef.current, md.cidade_atual); setMapa(mapaRef.current);
+        abrirNevoaDaVizinhanca(md.cidade_atual, msgs);
       }
       if (md.jornada_meio && jornadaRef.current) {
         jornadaRef.current = { ...jornadaRef.current, meio: String(md.jornada_meio).slice(0, 40) };
@@ -5653,6 +5703,7 @@ export default function Taverna() {
        mãos": o primeiro merece um turno, o segundo merece uma frase. */
     const oficina = bilheteDaOficina(oficinaRef.current);
     if (oficina) oficinaRef.current = criarOficina();
+    talvezChegarSozinho();
     const nota = [oficina, notaRef.current].filter(Boolean).join("\n");
     notaRef.current = "";
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
@@ -5701,7 +5752,12 @@ export default function Taverna() {
          ela o Mestre inventa o nome do destino e esquece de registrar a
          chegada — que foi o bug do "subi na narração e não subi no sistema". */
       const saidas = saidasDeUmPassoPrompt(mapaRef.current, cidadeAtualRef.current);
-      const aqui = [forma, ondeEstou, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo()), saidas].filter(Boolean).join("\n\n");
+      /* v9.51: o cinturão da cidade. Sem esta linha o Mestre inventava a
+         fazenda de novo a cada menção, com outro nome e outro dono — o mesmo
+         motivo pelo qual a base do mundo existe. */
+      const cidadeObj = (mapaRef.current.cidades || []).find((c) => (c.nome || "").toLowerCase() === String(cidadeAtualRef.current || "").toLowerCase());
+      const fora = cidadeObj ? resumoArredoresPrompt(sementeMundo(), cidadeObj) : "";
+      const aqui = [forma, ondeEstou, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo()), fora, saidas].filter(Boolean).join("\n\n");
       const chefes = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), moldeMundo());
       /* QUEM ESTÁ EM CENA (v9.9): presentes, ausentes com a distância em dias,
          e o que foi dito em particular — as duas regras que impedem o aliado
@@ -11278,7 +11334,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lugar={lugar} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

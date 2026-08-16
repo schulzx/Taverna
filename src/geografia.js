@@ -419,6 +419,56 @@ export function descobrirCidade(mapa, nome) {
   return { mapa: { ...mapa, cidades: mapa.cidades.map((x) => (x === c ? { ...x, descoberta: true } : x)) }, nova: c.nome };
 }
 
+/* ---------------- A NÉVOA AO REDOR (v9.51) ----------------
+   Quem chega numa cidade não fica sabendo só dela. Pergunta no mercado,
+   olha a estrada que sai pelo portão norte e descobre que a três horas
+   dali tem uma vila, e que o rio leva a um porto. Isso não é explorar —
+   é conversar.
+
+   Até aqui o mapa não fazia essa distinção: das vinte cidades do mundo,
+   o herói via UMA, a que pisou, e o resto era um número no rodapé. Um
+   mapa com um ponto só não é mapa, é alfinete.
+
+   A régua é a VIZINHANÇA REAL: as cidades ligadas a esta por uma rota
+   direta, com o dia de viagem que a rota já registra. Não abre o
+   continente inteiro — só o que se enxerga do alto do muro. */
+/* Pisar na cidade tira o "de ouvir": o herói deixa de saber que ela existe
+   e passa a conhecê-la. Sem isto, a vila de que ele ouviu falar continuava
+   desenhada tracejada mesmo depois de ele dormir lá — e o mapa mentia por
+   um detalhe que ninguém ia procurar. */
+export function pisarNaCidade(mapa, nome) {
+  const alvo = semA(nome);
+  if (!mapa || !alvo) return mapa;
+  const c = (mapa.cidades || []).find((x) => semA(x.nome) === alvo);
+  if (!c || !c.deOuvir) return mapa;
+  return { ...mapa, cidades: mapa.cidades.map((x) => { if (x !== c) return x; const n = { ...x, descoberta: true }; delete n.deOuvir; return n; }) };
+}
+
+export const DIAS_DE_VIZINHANCA = 12;
+
+export function descobrirVizinhanca(mapa, nome, teto = DIAS_DE_VIZINHANCA) {
+  const aqui = semA(nome);
+  if (!mapa || !aqui) return { mapa, novas: [] };
+  const perto = new Set();
+  for (const r of mapa.rotas || []) {
+    if (!r || !(Number(r.dias) <= teto)) continue;
+    if (semA(r.de) === aqui) perto.add(semA(r.para));
+    else if (semA(r.para) === aqui) perto.add(semA(r.de));
+  }
+  if (!perto.size) return { mapa, novas: [] };
+  const novas = [];
+  const cidades = (mapa.cidades || []).map((c) => {
+    if (c.descoberta !== false || !perto.has(semA(c.nome))) return c;
+    novas.push(c.nome);
+    /* `deOuvir` marca o que se conhece por conversa, não por ter ido: o
+       painel desenha esses pontos mais apagados, e é honesto — o herói
+       sabe que existe, não sabe como é. */
+    return { ...c, descoberta: true, deOuvir: true };
+  });
+  if (!novas.length) return { mapa, novas: [] };
+  return { mapa: { ...mapa, cidades }, novas };
+}
+
 /* ============================================================
    O CÃO DE GUARDA DA CHEGADA (v9.43)
 

@@ -8,9 +8,18 @@ import { RELACOES, blobPath, centrosDeRegiao, gerarEstradas } from "./mapa.js";
 import { PORTES } from "./geografia.js";
 import { ESTADOS_FE, estadoFe, feDaCidade, temploDaCidade, temploDe, fieisDaCidade, heresiaDaCidade, patronoDaCidade, resumoNumerico } from "./devocao.js";
 import { ondeEstou, pontoDoHeroi } from "./rastro.js";
+import { PlantaCidade } from "./planta-cidade.jsx";
+import { arredoresDaCidade } from "./arredores.js";
 
-export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindade, jornada = null, masmorra = null, molde = null }) {
+export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindade, jornada = null, masmorra = null, molde = null, semente = "", genero = "Fantasia medieval", lugar = null }) {
   const [selecionada, setSelecionada] = React.useState(null);
+  /* DUAS ESCALAS (v9.51): o continente e a cidade. O mesmo pergaminho conta
+     as duas histórias, e o alternador só oferece a segunda quando há cidade
+     sob os pés — em viagem, "mapa da cidade" não quer dizer nada. */
+  const [escala, setEscala] = React.useState("mundo");
+  const cidadeAqui = (mapa?.cidades || []).find((c) => cidadeAtual && (c.nome || "").toLowerCase() === String(cidadeAtual).toLowerCase()) || null;
+  const podeCidade = !!cidadeAqui && !jornada;
+  const verCidade = podeCidade && escala === "cidade";
   /* CAMADAS (v8.9): o mesmo pergaminho conta duas histórias — quem manda
      (política) e quem reza (fé). A camada de fé só existe depois do despertar. */
   const desperto = !!(divindade && divindade.despertar);
@@ -107,6 +116,26 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
      meio do trecho, com a estrada tracejada ligando as duas pontas. */
   const onde = ondeEstou({ cidadeAtual, jornada, masmorra, mapa });
   const eu = pontoDoHeroi({ cidadeAtual, jornada, mapa });
+  const seletorEscala = podeCidade ? (
+    <div className="flex gap-1.5 mb-3">
+      {[{ id: "mundo", rotulo: "🌍 Mundo" }, { id: "cidade", rotulo: `🏘 ${cidadeAqui.nome}` }].map((k) => (
+        <button key={k.id} onClick={() => { setEscala(k.id); setSelecionada(null); }}
+          className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full"
+          style={{ background: escala === k.id ? T.amber : T.panelSoft, color: escala === k.id ? T.onAccent : T.inkDim, border: `1px solid ${escala === k.id ? T.amber : T.line}`, fontWeight: 600 }}>
+          {k.rotulo}
+        </button>
+      ))}
+    </div>
+  ) : null;
+  if (verCidade) {
+    return (
+      <div>
+        {seletorEscala}
+        <PlantaCidade semente={semente} cidade={cidadeAqui} genero={genero} molde={molde} lugar={lugar}
+          selecionado={selecionada} aoSelecionar={setSelecionada} />
+      </div>
+    );
+  }
   return (
     <div>
       <div className="rounded-xl px-3 py-2 mb-3 flex items-baseline gap-2" style={{ background: T.panelSoft, border: `1px solid ${onde.tipo === "estrada" ? T.violet : onde.tipo === "masmorra" ? T.danger : T.line}` }}>
@@ -114,6 +143,7 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
         <span className="tv-body text-sm" style={{ color: T.ink }}>{onde.rotulo}</span>
         {onde.detalhe && <span className="tv-body text-[11px]" style={{ color: T.inkDim }}>· {onde.detalhe}</span>}
       </div>
+      {seletorEscala}
       {faccaoJogador && (
         <div className="rounded-xl p-3 mb-3" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
           <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.amberSoft }}>Sua facção</div>
@@ -180,6 +210,16 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
             if (!a || !b) return null;
             return <line key={`rd-${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#7a5f3d" strokeOpacity={rt.mesmaRegiao ? 0.55 : 0.35} strokeWidth={rt.mesmaRegiao ? 0.5 : 0.4} strokeDasharray={rt.mesmaRegiao ? "" : "1.2 1.2"} />;
           })}
+          {/* v9.51: o cinturão da cidade onde o herói está. Fazenda, moinho e
+              capela não são cidades — são a paisagem em volta, e é por isso
+              que aparecem só aqui, em volta de onde ele pisa, e não no mundo
+              inteiro: ninguém conhece o moinho de uma vila a dez dias daqui. */}
+          {cidadeAqui && arredoresDaCidade(semente, cidadeAqui).map((a, i) => (
+            <g key={`ar-${i}`}>
+              <line x1={cidadeAqui.x} y1={cidadeAqui.y} x2={a.x} y2={a.y} stroke="#8a7550" strokeWidth="0.25" strokeDasharray="0.8 0.8" opacity="0.7" />
+              <circle cx={a.x} cy={a.y} r="0.9" fill="#a08a5e" stroke="#5c4a30" strokeWidth="0.2" />
+            </g>
+          ))}
           {/* montanhas decorativas por região */}
           {centrosDeRegiao(cidades).map((r, i) => (
             <g key={`mt-${i}`} stroke="#6d5c40" strokeWidth="0.4" fill="none" opacity="0.6">
@@ -225,8 +265,11 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
             : est && (est.chave === "hostil" || est.chave === "herege") ? `0 0 8px ${est.cor}`
             : (atual || selecionada === c.nome) ? "0 0 8px #c9a45a" : "0 1px 2px #00000040";
           return (
-            <div key={i} style={{ position: "absolute", left: `${c.x}%`, top: `${c.y}%`, transform: "translate(-50%,-50%)", textAlign: "center" }}>
-              <div onClick={() => setSelecionada(selecionada === c.nome ? null : c.nome)} style={{ width: c.sede ? 15 : 10, height: c.sede ? 15 : 10, borderRadius: c.tipo === "capital" || c.sede ? 3 : "50%", background: cor, border: (atual || selecionada === c.nome) ? `2px solid #3a2e1c` : `1.5px solid #3a2e1c`, boxShadow: halo, margin: "0 auto", cursor: "pointer" }} />
+            <div key={i} style={{ position: "absolute", left: `${c.x}%`, top: `${c.y}%`, transform: "translate(-50%,-50%)", textAlign: "center", opacity: c.deOuvir ? 0.62 : 1 }}>
+              {/* v9.51: quem se conhece DE OUVIR entra no mapa com o contorno
+                  tracejado. O herói sabe que a vila existe e por qual estrada
+                  se chega — não sabe como ela é. */}
+              <div onClick={() => setSelecionada(selecionada === c.nome ? null : c.nome)} style={{ width: c.sede ? 15 : 10, height: c.sede ? 15 : 10, borderRadius: c.tipo === "capital" || c.sede ? 3 : "50%", background: c.deOuvir ? "transparent" : cor, border: c.deOuvir ? `1.5px dashed ${cor}` : (atual || selecionada === c.nome) ? `2px solid #3a2e1c` : `1.5px solid #3a2e1c`, boxShadow: c.deOuvir ? "none" : halo, margin: "0 auto", cursor: "pointer" }} />
               <div className="tv-mono" style={{ fontSize: 7, color: "#3a2e1c", marginTop: 1, whiteSpace: "nowrap", fontWeight: 600, textShadow: "0 1px 2px #f0e6cc, 0 -1px 2px #f0e6cc" }}>
                 {templo ? `${templo.icone} ` : ""}{c.nome}{c.sede ? " ★" : ""}{verFe && feDaCidade(dev, c.nome) >= 8 ? ` ${Math.round(feDaCidade(dev, c.nome))}%` : ""}
               </div>

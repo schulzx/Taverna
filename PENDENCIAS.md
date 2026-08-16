@@ -28,6 +28,17 @@ jogador descobre jogando.
 
 ## Onde o herói está
 
+- **A planta da cidade é a mesma para todo mundo.** A v9.51 desenha muralha,
+  duas ruas-mestras, praça no meio e quatro portões — bonito e legível, mas
+  igual numa aldeia de 190 almas e numa capital de 54 mil. Falta a planta
+  responder ao porte e ao bioma: aldeia sem muro, porto com o mar de um lado,
+  fortaleza com o muro grosso e uma rua só.
+
+- **Os arredores não estão no mapa-mundo das outras cidades.** Só o cinturão
+  da cidade onde o herói está aparece no pergaminho — de propósito, para não
+  poluir —, mas isso significa que sair de uma cidade apaga o moinho dela do
+  mapa. Talvez devesse ficar, apagado, uma vez visitado.
+
 - **Um lugar DENTRO de outro.** O sistema conhece cidade, viagem e um ponto
   *nos arredores* — e é só isso. Numa masmorra o Mestre escreveu o andar em
   `cidade_atual` e o andar seguinte em `lugar_atual`, e a tela ficou dizendo
