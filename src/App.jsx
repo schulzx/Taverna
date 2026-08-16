@@ -52,7 +52,7 @@ import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, 
 import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
-import { garantirLugar, definirLugar, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, linhaDeLugar, resumoLugarPrompt } from "./lugar.js";
+import { garantirLugar, definirLugar, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
@@ -84,7 +84,7 @@ import { bonusDeBancada, componentesExtras, bonusDeNavegacao, despojosExtras, bo
 import { criarOficina, anotar as anotarOficina, bilheteDaOficina, OFICINA_PROMPT } from "./oficina.js";
 import { romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, devolverSegura, GATILHOS_PROMPT } from "./gatilhos.js";
 import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
-import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, ehReescrever, reescreverInstante, HABILIDADES_PROMPT } from "./habilidades.js";
+import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, HABILIDADES_PROMPT } from "./habilidades.js";
 import { agruparMensagens } from "./resumo.js";
 
 /* ============================================================
@@ -3561,8 +3561,28 @@ export default function Taverna() {
        sinal explícito, um `null` de descuido apagaria o lugar todo turno e
        devolveria exatamente o teleporte que este código existe para impedir */
     const voltou = /^(cidade|na cidade|de volta|dentro da cidade)$/i.test(cru);
+    /* v9.48: NINGUÉM SE MOVE NO MEIO DE UMA LUTA. Achado jogando: o herói
+       subiu para o Andar 2, atacou um zumbi, e o turno seguinte o anunciou
+       "de volta ao Andar 1". Dentro do combate quem diz onde cada um está é
+       o tabuleiro, em metros — um campo de texto do Mestre não tem
+       autoridade para arrastar o herói um andar inteiro entre dois golpes. */
+    if (combateRef.current) {
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[LUGAR — RECUSADO PELO SISTEMA] Você mudou o meu lugar no meio de um combate. Não muda: enquanto a luta corre, quem diz onde cada um está é o tabuleiro do sistema. Continuo ${lugarRef.current ? comEm(lugarRef.current.nome) : `em ${cidade || "onde eu estava"}`}, e a cena é aqui.`;
+      return null;
+    }
     if (!cru || voltou || ehAPropriaCidade(cru, cidade)) {
       if (!lugarRef.current) return null;
+      /* v9.48: SAIR DAQUI TAMBÉM É UM MOVIMENTO, e movimento é do jogador.
+         O cão de guarda de `lugar.js` já defendia a NARRATIVA que devolvia o
+         herói à cidade sem ele pedir — mas o Mestre nem precisava narrar:
+         bastava mandar `lugar_atual: null` no campo estruturado e o sistema
+         obedecia, anunciando a volta com o próprio ícone. A porta dos
+         fundos do mesmo bug. Agora o campo passa pela mesma régua: só volta
+         quem escreveu que volta. */
+      if (!pediuParaVoltar(ultimoPedidoRef.current, cidade)) {
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[LUGAR — RECUSADO PELO SISTEMA] Você me tirou de onde eu estava — ${lugarRef.current.nome} — sem que eu tenha dito que saio. O SISTEMA registra que eu continuo LÁ. Retome a cena ${comEm(lugarRef.current.nome)} — eu não caminhei de volta e não cheguei a lugar nenhum. Só eu decido sair daqui, e só quando eu escrever isso.`;
+        return null;
+      }
       const antigo = lugarRef.current;
       lugarRef.current = null; setLugar(null);
       return `📍 De volta ${cidade ? `a ${cidade}` : "à cidade"} — ${antigo.nome} fica para trás.`;
@@ -4353,8 +4373,14 @@ export default function Taverna() {
         if (aviso) msgs.push(aviso);
       }
       if (md.cidade_atual) {
+        /* v9.48: repetir a cidade em que já estou não é chegar a lugar
+           nenhum. Esta linha apagava o sublocal em silêncio a cada turno em
+           que o Mestre reafirmasse `cidade_atual` — a segunda porta dos
+           fundos do mesmo teleporte, e sem nem uma mensagem na tela. Só
+           MUDAR de cidade encerra o que estava fora dela. */
+        const trocouCidade = !ehAPropriaCidade(md.cidade_atual, cidadeAtualRef.current || "") && String(md.cidade_atual).trim().toLowerCase() !== String(cidadeAtualRef.current || "").trim().toLowerCase();
         cidadeAtualRef.current = md.cidade_atual;
-        if (lugarRef.current) { lugarRef.current = null; setLugar(null); }
+        if (trocouCidade && lugarRef.current) { lugarRef.current = null; setLugar(null); }
         /* CHEGADA: registrar uma cidade encerra a jornada — a partir daqui eu
            ESTOU nessa cidade (e o descanso pode ser em estalagem/aposentos). */
         if (jornadaRef.current) {
@@ -6275,7 +6301,41 @@ export default function Taverna() {
        mesmo lugar, e quem chamou lê de lá em vez da própria cópia. */
     if (pers) personagemRef.current = pers;
     if (!comb || !(comb.inimigos || []).some((e) => !e.derrotado && e.vida > 0)) return null;
-    if (h.danoBase == null && !HAB_OFENSIVA_RX.test(`${h.nome || ""} ${h.descricao || ""}`)) return null;
+    /* ---------------- LIMIAR (v9.48) ----------------
+       Vem ANTES da régua de "habilidade ofensiva" logo abaixo, e é
+       exatamente por isso que existe aqui: a descrição da Colheita Final
+       não tem uma só palavra de dano ("todo inimigo abaixo de um terço de
+       PV cai de uma vez" — nada de ferir, cortar ou queimar), então a
+       régua a descartava antes de qualquer conta. O jogador via os 8 PM
+       saírem da ficha e o zumbi de 23/92 continuar de pé. */
+    const limiar = limiarDe(h);
+    if (limiar && limiar.modo === "abate" && limiar.escopo === "todos") {
+      ataqueResolvidoRef.current = true;   // v9.48: colher também é lutar — ver a nota abaixo
+      /* a Regra do Degrau vale aqui como vale no dano: o poder de um
+         mortal não colhe quem está três degraus de divindade acima. */
+      const gdJC = grauDe(divindadeRef.current);
+      const col = colherPorLimiar(comb.inimigos, limiar, { podeCair: (e) => !imunePorEscopo(gdJC, Math.max(0, Number(e.gd) || 0)) });
+      combateRef.current = { ...comb, inimigos: col.lista, economia: comb.economia, log: combateRef.current.log };
+      setCombate(combateRef.current);
+      const um = col.nomes.length === 1;
+      if (col.nomes.length) {
+        pushMsgs([{ autor: "sistema", texto: `☠ ${h.nome} — ${col.nomes.join(", ")} ${um ? "estava" : "estavam"} abaixo de ${limiar.fracaoTxt} dos PV e ${um ? "cai" : "caem"} de uma vez.` }]);
+      } else {
+        pushMsgs([{ autor: "sistema", texto: `✧ ${h.nome} varre o campo e não encontra ninguém abaixo de ${limiar.fracaoTxt} dos PV — ninguém cai.` }]);
+      }
+      fecharSeTodosCairam();
+      return col.nomes.length
+        ? `${col.nomes.map((n) => `${n} [CAIU — estava abaixo de ${limiar.fracaoTxt} dos PV]`).join("; ")}`
+        : `ninguém estava abaixo de ${limiar.fracaoTxt} dos PV: ${h.nome} passou pelo campo e NÃO derrubou ninguém`;
+    }
+    if (h.danoBase == null && !limiar && !HAB_OFENSIVA_RX.test(`${h.nome || ""} ${h.descricao || ""}`)) return null;
+    /* v9.48: MAGIA TAMBÉM É TROCA DE GOLPES. Este ref é o que diz ao contador
+       de luta parada que alguém ainda está lutando, e só o golpe de ARMA o
+       levantava: dois turnos seguidos de magia e o painel de combate se
+       dissolvia debaixo de um conjurador que não tinha parado de atacar um
+       instante. Apareceu no teste da própria Colheita Final — a luta fechou
+       sozinha antes de eu conseguir usá-la. */
+    ataqueResolvidoRef.current = true;
     const vivos = comb.inimigos.filter((e) => !e.derrotado && e.vida > 0);
     const norm = (x) => (x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
     const acaoN = norm(acao);
@@ -6323,6 +6383,19 @@ export default function Taverna() {
       || (declaradoH && pool.find((e) => e.nome === declaradoH))
       || pool.find((e) => acaoN.includes(norm(e.nome)))
       || pool[0];
+    /* LIMIAR DE ALVO ÚNICO (v9.48): a execução não rola acerto contra quem
+       já está por baixo — "elimina alvo com pouco PV restante" não promete
+       uma chance, promete o fim. Quem está ACIMA do limiar cai no golpe
+       normal, logo adiante: a habilidade não vira um turno perdido. */
+    if (limiar && limiar.modo === "abate" && abaixoDoLimiar(alvo, limiar.fracao)
+      && !imunePorEscopo(grauDe(divindadeRef.current), Math.max(0, Number(alvo.gd) || 0))) {
+      const mortos = comb.inimigos.map((e) => (e.nome === alvo.nome ? { ...e, vida: 0, derrotado: true, ultimoDano: e.vida } : e));
+      combateRef.current = { ...comb, inimigos: mortos, economia: comb.economia, log: combateRef.current.log };
+      setCombate(combateRef.current);
+      pushMsgs([{ autor: "sistema", texto: `☠ ${h.nome} → ${alvo.nome}: ${alvo.vida}/${alvo.vidaMax} PV — abaixo de ${limiar.fracaoTxt}, e ${limiar.diz}.` }]);
+      fecharSeTodosCairam();
+      return `${alvo.nome} [CAIU — ${h.nome} executa quem está abaixo de ${limiar.fracaoTxt} dos PV; ele estava com ${alvo.vida} de ${alvo.vidaMax}]`;
+    }
     /* ATRIBUTO DA HABILIDADE (v9.6): antes era o MAIOR número da ficha, o que
        tornava a multiclasse gratuita — um mago pegava técnicas de guerreiro e
        elas escalavam com intelecto. Agora cada habilidade usa o atributo-chave
@@ -6342,8 +6415,10 @@ export default function Taverna() {
     let danoBase = h.danoBase != null
       ? h.danoBase + d(4) - 1
       : danoDaClasse(classeHab, nvHab, atr) + Math.max(0, Number(h.custo) || 0) * 3;
-    /* molde EXECUÇÃO (únicas): dano dobrado em alvo com menos de metade dos PV */
-    if (h.molde === "execucao" && alvo.vidaMax && alvo.vida < alvo.vidaMax / 2) danoBase *= 2;
+    /* LIMIAR QUE DOBRA (v9.48): o molde EXECUÇÃO das únicas era o único desta
+       família com código; agora entra pela mesma porta que Golpe Decisivo e
+       a Execução do Assassino, que prometiam o dobro e nunca o davam. */
+    if (limiar && limiar.modo === "dobra" && abaixoDoLimiar(alvo, limiar.fracao)) danoBase *= 2;
     /* BUFFS DA ESCOLA CERTA (v9.6): até aqui os efeitos ativos não somavam a
        nada. Agora somam — mas só os da natureza desta habilidade. Fúria de
        Batalha levanta aço, não feitiço. */

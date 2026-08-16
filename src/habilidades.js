@@ -188,8 +188,99 @@ export function reescreverInstante(pers, dano = 0) {
   };
 }
 
-export const HABILIDADES_PROMPT = `HABILIDADES DE REGRA PRÓPRIA (v9.47 — o sistema resolve, você narra):
+/* ============================================================
+   5. LIMIARES — o golpe que cobra o ESTADO do alvo (v9.48)
+
+   Achado jogando: "Colheita Final — todo inimigo abaixo de um terço
+   de PV cai de uma vez" foi usada contra um zumbi com 23 de 92 PV, e
+   o zumbi continuou de pé. Os 8 PM saíram da ficha e nada aconteceu.
+
+   O motivo é instrutivo. A régua que decide se uma habilidade é
+   ofensiva procura palavras de violência no texto — "dano", "golpe",
+   "chama", "corta". A descrição da Colheita Final não tem NENHUMA
+   delas: ela não fala em ferir, fala em cair. A habilidade era
+   descartada antes de qualquer conta, e o jogador via só o débito.
+
+   A família inteira estava no mesmo buraco, e ela é maior do que
+   parecia: seis habilidades de cinco caminhos diferentes prometem
+   algo que depende de QUANTO o alvo já perdeu. Duas dobram o dano
+   contra quem está por baixo; quatro simplesmente derrubam.
+
+   Aqui elas viram tabela. Cada linha casa com o texto REAL do
+   catálogo — nada de regex esperto: um falso positivo aqui mata um
+   inimigo que devia estar de pé, e esse é o pior erro que este jogo
+   sabe cometer.
+   ============================================================ */
+
+/* `fracao` é do PV MÁXIMO do alvo, e a comparação é estrita: "abaixo
+   de um terço" é abaixo, não "no terço". */
+const LIMIARES = [
+  {
+    id: "colheita", rx: /todo inimigo abaixo de um terco/, modo: "abate", escopo: "todos", fracao: 1 / 3,
+    fracaoTxt: "um terço", diz: "todo inimigo abaixo de um terço dos PV cai de uma vez",
+  },
+  {
+    id: "execucao_ladino", rx: /elimina alvo com pouco pv/, modo: "abate", escopo: "alvo", fracao: 0.25,
+    fracaoTxt: "um quarto", diz: "o alvo com pouco PV é eliminado",
+  },
+  {
+    id: "cobranca", rx: /executa alvo enfraquecido/, modo: "abate", escopo: "alvo", fracao: 0.25,
+    fracaoTxt: "um quarto", diz: "o alvo enfraquecido é executado e a alma vai para o patrono",
+  },
+  {
+    id: "uma_respiracao", rx: /o alvo cai antes de reagir, se estiver ferido/, modo: "abate", escopo: "alvo", fracao: 0.5,
+    fracaoTxt: "metade", diz: "o alvo já ferido cai antes de reagir",
+  },
+  {
+    id: "execucao_assassino", rx: /contra alvo abaixo de metade da vida, o dano dobra/, modo: "dobra", escopo: "alvo", fracao: 0.5,
+    fracaoTxt: "metade", diz: "contra quem está abaixo da metade, o dano dobra",
+  },
+  {
+    id: "golpe_decisivo", rx: /dano massivo em alvo abaixo de metade do pv/, modo: "dobra", escopo: "alvo", fracao: 0.5,
+    fracaoTxt: "metade", diz: "abaixo da metade dos PV, o golpe dobra",
+  },
+];
+
+/* As habilidades ÚNICAS não têm texto fixo — elas nascem de um molde, e
+   o molde "execucao" já prometia o dobro abaixo da metade desde a v7.4.
+   Era a única desta família com código, e agora entra pela mesma porta. */
+const MOLDE_EXECUCAO = {
+  id: "molde_execucao", modo: "dobra", escopo: "alvo", fracao: 0.5,
+  fracaoTxt: "metade", diz: "contra quem está abaixo da metade, o dano dobra",
+};
+
+export function limiarDe(hab) {
+  if (!hab) return null;
+  if (hab.molde === "execucao") return MOLDE_EXECUCAO;
+  const t = txtDe(hab);
+  if (!t.trim()) return null;
+  return LIMIARES.find((l) => l.rx.test(t)) || null;
+}
+
+export function abaixoDoLimiar(alvo, fracao) {
+  const max = Number(alvo && alvo.vidaMax) || 0;
+  const pv = Number(alvo && alvo.vida) || 0;
+  if (max <= 0 || pv <= 0) return false;
+  return pv < max * (Number(fracao) || 0);
+}
+
+/* Quem cai. Função pura sobre a lista de inimigos — `podeCair` é a
+   porta por onde quem chama recusa o que não pode ser abatido (a
+   Regra do Degrau: o poder de um mortal não colhe um deus). */
+export function colherPorLimiar(inimigos, regra, { podeCair } = {}) {
+  if (!regra || regra.modo !== "abate") return null;
+  const lista = Array.isArray(inimigos) ? inimigos : [];
+  const alvos = lista.filter((e) => e && !e.derrotado && (e.vida || 0) > 0 && abaixoDoLimiar(e, regra.fracao) && (!podeCair || podeCair(e)));
+  const nomes = new Set(alvos.map((e) => e.nome));
+  return {
+    nomes: alvos.map((e) => e.nome),
+    lista: lista.map((e) => (nomes.has(e.nome) ? { ...e, vida: 0, derrotado: true, ultimoDano: e.vida } : e)),
+  };
+}
+
+export const HABILIDADES_PROMPT = `HABILIDADES DE REGRA PRÓPRIA (v9.48 — o sistema resolve, você narra):
 - METAMAGIA arma a PRÓXIMA magia (mais alcance, ou um segundo alvo) e o sistema a consome sozinho quando ela sai. Você não escolhe qual magia recebe o efeito nem o aplica duas vezes.
 - FORMAS (animal, ancestral) trocam o CORPO do herói: outro fôlego, outro golpe, e — na forma animal — nenhuma conjuração e nenhuma fala articulada. Trate-o como a criatura enquanto durar, inclusive no que ele deixa de conseguir fazer. O prazo é do sistema; não o devolva ao corpo antigo por conta própria.
 - REERGUER põe um aliado caído de pé com uma fração do PV. O número já está aplicado: narre o retorno, não o milagre genérico.
-- REESCREVER O INSTANTE desfaz o dano da última rodada no corpo do herói — e só isso. Os inimigos lembram do que fizeram, o mundo não volta atrás, e nada mais é desfeito.`;
+- REESCREVER O INSTANTE desfaz o dano da última rodada no corpo do herói — e só isso. Os inimigos lembram do que fizeram, o mundo não volta atrás, e nada mais é desfeito.
+- LIMIAR: algumas habilidades cobram o ESTADO do alvo — abaixo de uma fração dos PV, o dano dobra ou o inimigo simplesmente CAI, sem rolagem. Quem mede o PV e decide quem tomba é o sistema, e o envelope traz os nomes prontos. Narre a queda de quem o sistema derrubou e NÃO derrube mais ninguém: quem não estava fraco o bastante continua de pé, mesmo que a cena peça o contrário.`;

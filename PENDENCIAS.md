@@ -26,6 +26,17 @@ jogador descobre jogando.
   dedução por nome (`PISTAS_ARMA`), que não conhece "sutil". Uma rapieira
   lendária chamada "Presságio" vira arma marcial comum.
 
+## Onde o herói está
+
+- **Um lugar DENTRO de outro.** O sistema conhece cidade, viagem e um ponto
+  *nos arredores* — e é só isso. Numa masmorra o Mestre escreveu o andar em
+  `cidade_atual` e o andar seguinte em `lugar_atual`, e a tela ficou dizendo
+  "Andar 2 (nos arredores de Andar 1 — da Ferrugem)", com a regra de que ir e
+  voltar leva HORAS. Subir uma escada não é uma caminhada até a fazenda.
+  Falta uma distância `dentro` (minutos, não horas) e uma régua que impeça um
+  andar de virar cidade no mapa. *(v9.48 — as duas portas do teleporte foram
+  fechadas; o modelo do lugar continua com dois andares só.)*
+
 ## Mestre e prompt
 
 - **O prompt de sistema passa de 90 mil caracteres** (~25 mil tokens) e vai
