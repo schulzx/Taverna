@@ -58,41 +58,69 @@ jogador descobre jogando.
   e o quarto ataque também não ganha dado maior — os dois eixos de progressão
   passam pela mesma porta. Cabe dar dado crescente a quem não ganha ataque.
 
-- **Ação bônus nomeada não faz o que o nome diz.** `ACOES_BONUS` promete
-  "Rajada de Golpes — dois ataques desarmados extras" ao Monge e "Surto de
-  Ação — uma ação inteira a mais" ao Guerreiro. O sistema só libera o SLOT
-  extra do turno: a rajada não dá dois golpes, ela deixa usar outra
-  habilidade. Ou a descrição vira verdade, ou ela deve dizer o que é.
+- ~~**Ação bônus nomeada não faz o que o nome diz.**~~ RESOLVIDO na v9.54 pelo
+  caminho honesto: as descrições passaram a dizer o que o sistema faz — um
+  segundo movimento no turno, gasto numa habilidade. Não pelo caminho
+  contrário (dar de verdade os dois socos ao Monge e a ação inteira ao
+  Guerreiro), porque a ação bônus renasce a cada rodada aqui: um Surto de Ação
+  que valesse uma ação inteira TODA rodada daria ao Guerreiro o dobro de
+  golpes permanente, e o Surto do 5e é uma vez por descanso.
 
-- **`ACOES_BONUS` tem "Bárbaro", que não é classe deste jogo** — entrada morta.
-  E Mago, Caçador, Bruxo, Engenheiro e Invocador não têm ação bônus nenhuma;
-  para o Engenheiro e o Invocador (que vivem de máquinas e criaturas) isso
-  parece esquecimento, não desenho.
+- ~~**`ACOES_BONUS` tem "Bárbaro", que não é classe deste jogo**~~ RESOLVIDO na
+  v9.54: entrada morta removida. Mago, Caçador, Bruxo, Engenheiro e Invocador
+  seguem SEM ação bônus, e agora por decisão escrita: a segunda ação é a
+  alavanca de poder mais forte deste combate — mais que dano, mais que defesa
+  — e distribuí-la para tapar buraco de progressão (o do Caçador é da onda 3)
+  seria pagar a dívida errada com a moeda mais cara.
 
-- **Dezoito habilidades ainda prometem número e não têm quem o cobre.**
-  (Eram trinta; a v9.53 pagou doze — restam movimento/alcance e controle de inimigo.) A varredura
-  separou por família, e cada família é um resolvedor:
+- ~~**Trinta habilidades prometem número e não têm quem o cobre.**~~ RESOLVIDO:
+  a v9.53 pagou doze e a v9.54 pagou as dezoito restantes. As cinco famílias:
   - ~~**Defesa temporária**~~ RESOLVIDO na v9.53: as cinco erguem uma GUARDA
     que soma à CA e vence por rodada, como a forma e a invocação.
-  - **Controle de inimigo** (Marionete, Discórdia, Selo de Interdito, Silêncio
-    Que Grita, Mentira Luminosa, Palco Aberto): virar um inimigo contra o
-    outro, calar a conjuração, criar uma cópia. Nenhum tem código.
+  - ~~**Controle de inimigo**~~ RESOLVIDO na v9.54 em `controle.js`, a única
+    das cinco que precisou entrar no motor do turno dos inimigos. Três verbos:
+    VIRAR (Marionete, Discórdia — o inimigo passa a bater nos próprios e
+    continua podendo ser derrubado por quem o controla), PARAR e CALAR (Selo
+    de Interdito, Corte de Marionetes, Silêncio Que Grita — viram CONDIÇÃO, que
+    o jogo já sabia cobrar) e PROVOCAR (Palco Aberto — todo inimigo vem para o
+    herói e os companheiros rolam com vantagem). Mentira Luminosa entrou pela
+    porta das invocações, que já sabe pôr uma criatura em campo por N turnos.
+    O silêncio morde só quem conjura, e não vira um atordoamento de dois
+    turnos: isso já é o Corte de Marionetes, e faria duas habilidades
+    diferentes serem a mesma coisa mais barata.
   - ~~**Invulnerabilidade temporária**~~ RESOLVIDO na v9.53: as quatro entram
     como GUARDA, com uma escada deliberada — só a de UM turno (Vazio Perfeito)
     é absoluta e faz o golpe errar antes do dado; as de três e quatro turnos
     viram desvantagem, porque um combate inteiro sem poder ser acertado não é
     uma habilidade, é o fim do combate. Nada Me Alcança só morde feitiço.
-  - **Movimento e alcance** (Passo do Vento, Mais Rápido que o Olho, Cano
-    Longo, Olho que Mede o Vento, Mira do Batedor, Punho que Rompe): dobrar
-    deslocamento, agir duas vezes, ignorar cobertura e armadura.
+  - ~~**Movimento e alcance**~~ RESOLVIDO na v9.54, e era maior do que parecia:
+    a varredura achou **sete** habilidades dizendo "ignora" (quatro furam
+    armadura, três furam cobertura) e **três** prometendo agir duas vezes, e
+    não as seis mapeadas. As de "ignora" caíam no mesmo poço da Colheita
+    Final — "Ignora cobertura, penumbra e distância neste disparo" não tem uma
+    só palavra de violência, então a régua de habilidade ofensiva as
+    descartava antes de qualquer conta e o PM saía da ficha à toa. Agora o
+    leitor é consultado ANTES dela. Quem fura armadura rola contra o corpo nu
+    (os 10 de base); quem fura cobertura rola como em campo aberto — e as duas
+    portas ficam separadas, porque furar a couraça de alguém não faz o muro na
+    frente dele desaparecer. A PRESSA dá duas AÇÕES na rodada (não dois
+    golpes: quem conjura não bate) pela economia de ação que já existia. E o
+    Passo do Vento, que dobrava o passo desde sempre, enfim ignora o terreno
+    difícil que a descrição dele promete com todas as letras.
   - ~~**Reerguer que faltou**~~ RESOLVIDO na v9.53: Refrão Teimoso,
     Renascimento e Grande Necrópole entraram na tabela do `reerguerDe`, e o
     Refrão devolve a metade que a descrição dele promete com todas as letras.
 
-- **"Céu Escuro" diz "toda a área inimiga" e não é reconhecida como área.**
-  As irmãs dela (Chuva de Flechas, Cem Passos, Corrente Viva, Caos Puro) caem
-  certo numa esfera de 6 m; essa cai como alvo único. Régua de `ehArea` a
-  ajustar.
+- ~~**"Céu Escuro" diz "toda a área inimiga" e não é reconhecida como área.**~~
+  RESOLVIDO na v9.54: a régua de `ehArea` pedia a preposição ("em área") e não
+  reconhecia a coisa dita direto. Uma nuvem de flechas sobre a área inimiga
+  acertava um arqueiro só.
+
+- ~~**O conjurador do sexo masculino ataca com dano físico.**~~ RESOLVIDO na
+  v9.54, e apareceu por acidente: a tabela de perfis do bestiário tem
+  "feiticeira" e "mago" e nunca teve "feiticeiro", "arcanista" nem
+  "conjurador" — todos caíam no perfil padrão. Achado ao testar o Silêncio Que
+  Grita, que precisa saber quem conjura para saber quem calar.
 
 - **A exaustão se reanuncia todo turno.** "🥱 Exaustão: 44h acordado. Você
   está Exausto" aparece de novo às 48h, às 52h — a condição já está na ficha e

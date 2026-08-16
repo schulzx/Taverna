@@ -7,7 +7,7 @@
    vantagem/desvantagem, críticos e condições de estado.
    ============================================================ */
 import { alcanca, bonusDefesaEm } from "./grid.js";
-import { defesaDeGuarda, estaIntocavel, esquivaDeGuarda } from "./habilidades.js";
+import { defesaDeGuarda, estaIntocavel, esquivaDeGuarda, DEFESA_NUA } from "./habilidades.js";
 
 import { perfilDeCriatura, multiplicadorDano, iconeDano, resistenciasEquipadas, elementoDaArma } from "./danos.js";
 import { mecanicaDe } from "./condicoes.js";
@@ -17,6 +17,7 @@ import { tipoDeDanoDaHabilidade } from "./combos.js";
 import { proficienciaDe, fichaDoItem, danoDaArma, modDoGolpe } from "./itens.js";
 import { estaSintonizado } from "./sintonia.js";
 import { estaInvisivel } from "./gatilhos.js";
+import { estaVirado } from "./controle.js";
 
 export function d(n) { return 1 + Math.floor(Math.random() * n); }
 
@@ -78,7 +79,7 @@ export function modificadoresDeCondicao(condicoes = []) {
 /* `criticoEm` é a régua do crítico: 20 no d20 comum, 19 para quem tem a
    Dádiva da Sorte Impossível. Vem com padrão 20 para que toda chamada antiga
    — e são muitas — continue rolando exatamente como rolava. */
-export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque, danoBase, vantagem, desvantagem, condAtacante = [], condAlvo = [], tipoDano = "fisico", perfilAlvo = null, resistAlvo = [], bonusDefesaAlvo = 0, criticoEm = 20 }) {
+export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque, danoBase, vantagem, desvantagem, condAtacante = [], condAlvo = [], tipoDano = "fisico", perfilAlvo = null, resistAlvo = [], bonusDefesaAlvo = 0, criticoEm = 20, ignoraArmadura = false }) {
   const modAtk = modificadoresDeCondicao(condAtacante);
   const modAlvo = modificadoresDeCondicao(condAlvo);
   if (modAtk.perdeAcao) return { tipo: "impedido", texto: `${atacante} está impossibilitado de agir` };
@@ -108,7 +109,13 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
   /* v9.20: a cobertura do terreno soma na defesa do alvo. Fica AQUI e não
      em defesaDe() porque cobertura é do lugar, não da pessoa: a mesma ficha
      é mais difícil de acertar atrás do muro e mais fácil no campo aberto. */
-  const ca = defesaDe(alvo, !ehAtacanteInimigo) + (bonusDefesaAlvo || 0); // se o atacante é inimigo, o alvo é o jogador/aliado
+  /* v9.54: O GOLPE QUE IGNORA A ARMADURA. Quatro habilidades dizem isso com
+     todas as letras e nenhuma tirava um ponto da conta. Aqui a defesa cai ao
+     corpo nu — os mesmos 10 de onde `defesaDe` parte antes de somar destreza,
+     equipamento e guarda. A COBERTURA continua somando de propósito: furar a
+     couraça de alguém não faz o muro na frente dele desaparecer, e quem
+     ignora cobertura tem a própria porta, logo acima, em `bonusDefesaAlvo`. */
+  const ca = (ignoraArmadura ? DEFESA_NUA : defesaDe(alvo, !ehAtacanteInimigo)) + (bonusDefesaAlvo || 0); // se o atacante é inimigo, o alvo é o jogador/aliado
   const critico = rolagem.valor >= Math.max(2, Math.min(20, criticoEm || 20));
   const desastre = rolagem.valor === 1;
 
@@ -185,7 +192,10 @@ export function resumoDoAtaque(r) {
    Com o grid isso deixou de ser economia e virou mentira: era exatamente o
    que impedia a área de dizer se o fogo amigo ia pegar alguém. Quem move o
    companheiro continua sendo o sistema; o jogador nunca faz essa conta. */
-export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0, grade = null, heroi = null, aliados = [] }) {
+/* v9.54: `rodada` e `provocado` entram aqui porque é aqui que a família de
+   CONTROLE mora — a única das cinco que não cabia numa tabela lida na hora
+   do golpe. Os dois têm padrão, então toda chamada antiga segue idêntica. */
+export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0, grade = null, heroi = null, aliados = [], rodada = 1, provocado = false }) {
   const vivos = (inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
   const pos = heroi || jogador;
   const alvosPossiveis = [
@@ -195,16 +205,32 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
   ];
   const acoes = [];
   for (const inim of vivos) {
+    /* A MARIONETE BATE NOS PRÓPRIOS. Ela continua na lista de inimigos —
+       quem a controla ainda pode derrubá-la, e isso é decisão de verdade —,
+       mas o alvo dela passa a ser outro inimigo que ainda tenha vontade. Se
+       não sobrou nenhum, ela fica parada: virar alguém contra ninguém não
+       é um turno, é um turno perdido. */
+    const virado = estaVirado(inim, rodada);
+    const alvosDele = virado
+      ? vivos.filter((e) => e.nome !== inim.nome && (e.vida || 0) > 0 && !estaVirado(e, rodada))
+        .map((e) => ({ ref: "inimigo", nome: e.nome, ent: e, onde: e }))
+      : alvosPossiveis;
+    if (virado && !alvosDele.length) continue;
     /* MULTIATAQUE (5e): elites agem 2 vezes, lendários até 3 — como o
        Multiattack dos monstros. Cada golpe escolhe alvo de novo. */
     const nGolpes = ataquesDoInimigo(inim.ameaca, inim.nivel);
     for (let g = 0; g < nGolpes; g++) {
-      const vivosAlvo = alvosPossiveis.filter((a) => (a.ent.vida || 0) > 0);
+      const vivosAlvo = alvosDele.filter((a) => (a.ent.vida || 0) > 0);
       if (!vivosAlvo.length) break;
       let alvo;
-      if (vivosAlvo.length > 1 && Math.random() < 0.35) {
+      /* v9.54: PROVOCADO, ninguém desvia o olhar. É a metade que dá sentido à
+         outra: sem isto, "o grupo age livre" seria uma frase, porque o
+         companheiro continuaria apanhando em 35% dos golpes. */
+      if (!virado && !provocado && vivosAlvo.length > 1 && Math.random() < 0.35) {
         const comps = vivosAlvo.filter((a) => a.ref === "grupo");
         alvo = comps.length ? comps[Math.floor(Math.random() * comps.length)] : vivosAlvo[0];
+      } else if (virado && vivosAlvo.length > 1) {
+        alvo = vivosAlvo[Math.floor(Math.random() * vivosAlvo.length)];
       } else {
         alvo = vivosAlvo[0];
       }
@@ -216,8 +242,12 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
       if (!alc.ok) continue;
       const penalidadeZona = alc.penalidade || 0;
       const perfilInim = perfilDeCriatura(inim.nome, inim.desc);
+      /* `ehAtacanteInimigo` só serve para dizer de que lado está o ALVO, e a
+         marionete bate em quem está do lado de lá. Sem esta linha, o golpe
+         dela rolaria contra a defesa de um herói que não existe. */
+      const alvoEhInimigo = alvo.ref === "inimigo";
       const r = resolverAtaque({
-        atacante: inim.nome, alvo: alvo.ent, ehAtacanteInimigo: true,
+        atacante: inim.nome, alvo: alvo.ent, ehAtacanteInimigo: !alvoEhInimigo,
         /* REGRA DO DEGRAU (v7.4): divindades ganham +2/degrau sobre o alvo */
         bonusAtaque: bonusDeAmeaca(inim.ameaca) + 2 * ((inim.gd || 0) - (gdJogador || 0)) - penalidadeZona,
         danoBase: danoDe(inim, true),
@@ -236,7 +266,7 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
          um golpe com nome, do repertório fixo dele. É esse nome que o Mestre
          narra e é dele que o sistema tira a aflição que o golpe carrega. */
       const golpeNome = golpeDaVez(inim.nome, perfilInim.ataque, inim.ameaca, g);
-      acoes.push({ inimigo: inim.nome, alvoRef: alvo.ref, alvoNome: alvo.nome, r, golpe: g + 1, deTotal: nGolpes, golpeNome });
+      acoes.push({ inimigo: inim.nome, alvoRef: alvo.ref, alvoNome: alvo.nome, r, golpe: g + 1, deTotal: nGolpes, golpeNome, virado });
     }
   }
   return acoes;
@@ -271,7 +301,11 @@ export function aplicarTesteMorte(estado, res) {
    Cada companheiro vivo age: se algum aliado está caído (0 PV/morrendo),
    há chance de ir CURAR/estabilizar; senão, ATACA um inimigo. O app
    resolve a matemática; a IA narra a decisão. */
-export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido = false, jogadorNome = "", jogador = null, rodada = 1 }) {
+/* v9.54: `provocado` é a outra metade do Palco Aberto. "O grupo age livre E
+   COM VANTAGEM" — a primeira metade está no turno dos inimigos (ninguém olha
+   para o companheiro); esta é a segunda, e sem ela metade da frase seria
+   decoração. */
+export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido = false, jogadorNome = "", jogador = null, rodada = 1, provocado = false }) {
   const vivos = (grupo || []).filter((g) => (g.vida || 0) > 0 && !g.morrendo);
   const acoes = [];
   for (const comp of vivos) {
@@ -304,7 +338,7 @@ export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido =
       const r = resolverAtaque({
         atacante: comp.nome, alvo, ehAtacanteInimigo: false,
         bonusAtaque: 2 + (comp.nivel || 1), danoBase: danoDaHabilidadeComp(comp, plano.habilidade),
-        condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [],
+        condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [], vantagem: provocado,
         /* v9.21: mesmo conserto do lado do jogador — "magico" nao e um tipo
            de dano, e mandar isso fazia a habilidade do companheiro sair
            rotulada como fisica e passar por cima de toda resistencia. */
@@ -316,7 +350,7 @@ export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido =
     const r = resolverAtaque({
       atacante: comp.nome, alvo, ehAtacanteInimigo: false,
       bonusAtaque: 2 + (comp.nivel || 1), danoBase: 4 + (comp.nivel || 1) + bonusArmaComp + d(4),
-      condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [],
+      condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [], vantagem: provocado,
       tipoDano: elementoDaArma(comp), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
     });
     acoes.push({ companheiro: comp.nome, tipo: "ataque", alvoNome: alvo.nome, r });
@@ -542,16 +576,29 @@ export function gastarRecurso(rec, tipo) {
 }
 
 /* AÇÕES BÔNUS típicas por classe (5e) — o que a classe pode fazer
-   "de graça" no mesmo turno, além da ação principal. */
+   "de graça" no mesmo turno, além da ação principal.
+
+   v9.54: AS DESCRIÇÕES PASSAM A DIZER O QUE O SISTEMA FAZ. O que este
+   catálogo concede é UMA COISA SÓ: um segundo movimento na rodada, gasto
+   numa habilidade. Ele não dava dois socos ao monge ("dois ataques
+   desarmados extras"), não dava um dado a ninguém ("um dado de bônus a um
+   aliado") e não entrava em fúria — a fúria porque "Bárbaro" nunca foi uma
+   classe desta casa, e a entrada inteira era código morto que só servia
+   para o dia em que alguém a lesse e acreditasse.
+
+   Quem ficou de fora ficou de propósito: Mago, Bruxo, Caçador, Engenheiro
+   e Invocador agem uma vez por rodada. Uma segunda ação é a alavanca de
+   poder mais forte que este combate tem — mais que dano, mais que defesa —
+   e distribuí-la para tapar buraco de progressão seria pagar a dívida
+   errada com a moeda mais cara. */
 export const ACOES_BONUS = {
-  "Guerreiro": [{ id: "surto", nome: "Surto de Ação", desc: "Uma ação inteira a mais neste turno.", nivel: 2 }],
-  "Ladino":    [{ id: "disparada", nome: "Ação Ardilosa", desc: "Disparar, desengajar ou esconder-se.", nivel: 2 }],
-  "Monge":     [{ id: "rajada", nome: "Rajada de Golpes", desc: "Dois ataques desarmados extras.", nivel: 1 }],
-  "Bárbaro":   [{ id: "furia", nome: "Fúria", desc: "Entra em fúria: mais dano e resistência.", nivel: 1 }],
-  "Bardo":     [{ id: "inspiracao", nome: "Inspiração de Bardo", desc: "Dá um dado de bônus a um aliado.", nivel: 1 }],
-  "Feiticeiro":[{ id: "metamagia", nome: "Metamagia Rápida", desc: "Conjura um truque como ação bônus.", nivel: 3 }],
-  "Clérigo":   [{ id: "bencao", nome: "Prece Rápida", desc: "Uma bênção menor num aliado.", nivel: 2 }],
-  "Druida":    [{ id: "forma", nome: "Forma Selvagem", desc: "Assume a forma de uma fera.", nivel: 2 }],
+  "Guerreiro": [{ id: "surto", nome: "Surto de Ação", desc: "Uma técnica a mais neste turno, no fôlego que sobra.", nivel: 2 }],
+  "Ladino":    [{ id: "disparada", nome: "Ação Ardilosa", desc: "Uma habilidade a mais neste turno — sumir, disparar, escapar.", nivel: 2 }],
+  "Monge":     [{ id: "rajada", nome: "Rajada de Golpes", desc: "Uma habilidade a mais neste turno: o corpo emenda um gesto no outro.", nivel: 1 }],
+  "Bardo":     [{ id: "inspiracao", nome: "Inspiração de Bardo", desc: "Uma habilidade a mais neste turno, cantada por cima da anterior.", nivel: 1 }],
+  "Feiticeiro":[{ id: "metamagia", nome: "Metamagia Rápida", desc: "Uma segunda conjuração neste turno.", nivel: 3 }],
+  "Clérigo":   [{ id: "bencao", nome: "Prece Rápida", desc: "Uma prece a mais neste turno, curta o bastante para caber.", nivel: 2 }],
+  "Druida":    [{ id: "forma", nome: "Forma Selvagem", desc: "Uma habilidade a mais neste turno, com o corpo já mudando.", nivel: 2 }],
 };
 export function acoesBonusDe(classe, nivel) {
   return (ACOES_BONUS[classe] || []).filter((a) => (nivel || 1) >= a.nivel);

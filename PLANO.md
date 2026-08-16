@@ -18,11 +18,11 @@ da outra.
 
 ---
 
-## Onda 1 — o que trava a partida
+## Onda 1 — o que trava a partida ✅ FEITA (v9.53)
 
-Uma coisa só, e é a mais urgente do projeto.
+Uma coisa só, e era a mais urgente do projeto.
 
-### 1.1 A masmorra impossível `alto` `pequeno`
+### 1.1 A masmorra impossível ✅ FEITO
 
 Doze por cento das masmorras não podem ser terminadas: a sala da chave fica
 num ramo sem caminho e a do chefe está trancada.
@@ -42,42 +42,48 @@ da entrada a cada sala, e que a chave vem antes de qualquer porta trancada.
 
 ---
 
-## Onda 2 — as promessas que a ficha faz e o sistema não paga
+## Onda 2 — as promessas que a ficha faz e o sistema não paga ✅ FEITA (v9.54)
 
 O jogador gastou ponto de habilidade nisso. É dívida, não melhoria.
 
-### 2.1 Os cinco resolvedores que faltam `alto` `médio`
+### 2.1 Os cinco resolvedores que faltam ✅ FEITO (v9.53 e v9.54)
 
-Trinta habilidades prometem número e ninguém cobra. São **cinco famílias**, e
-cada família é um módulo pequeno no mesmo idioma dos que já existem
-(`aflicoes.js`, `gatilhos.js`, `habilidades.js`):
+Trinta habilidades prometiam número e ninguém cobrava. Eram **cinco famílias**,
+cada uma um módulo pequeno no idioma dos que já existiam:
 
-| família | quantas | o que falta |
+| família | quantas | onde ficou |
 |---|---|---|
-| Defesa temporária | 5 | somar à CA por N turnos e expirar |
-| Controle de inimigo | 6 | virar um inimigo, calar conjuração, criar cópia |
-| Invulnerabilidade | 4 | "nada te atinge por N turnos" |
-| Movimento e alcance | 6 | dobrar deslocamento, ignorar cobertura/armadura |
-| Reerguer que faltou | 3 | casar com o `reerguerDe` que já existe |
+| Defesa temporária | 5 | `GUARDAS`, em `habilidades.js` (v9.53) |
+| Invulnerabilidade | 4 | as mesmas `GUARDAS`, com escada de prazo (v9.53) |
+| Reerguer que faltou | 3 | estendeu a tabela do `reerguerDe` (v9.53) |
+| Movimento e alcance | 10 | `IGNORAM` + `PRESSAS` (v9.54) |
+| Controle de inimigo | 6 | `controle.js`, módulo novo (v9.54) |
 
-**Ordem dentro da onda:** *reerguer* primeiro (é só estender uma tabela que
-já funciona), depois *defesa temporária* (a mais simples de todas), depois
-*movimento*, *invulnerabilidade* e por fim *controle de inimigo* — que é a
-única que precisa mexer no motor de turno dos inimigos.
+A ordem executada foi a planejada, e ela se pagou: as quatro primeiras eram
+tabelas lidas na hora de um golpe, e a última foi a única que precisou entrar
+no motor do turno dos inimigos — deixá-la por último manteve as outras quatro
+longe do único trecho de código realmente delicado.
 
-**Depende de:** nada. Pode começar hoje.
+Duas surpresas. A família de movimento tinha **dez** habilidades, não seis: a
+varredura por TEXTO achou quatro que ninguém havia mapeado. E quatro delas
+caíam no mesmo poço da Colheita Final — descrição sem palavra de violência,
+descartada antes de qualquer conta, com o PM saindo da ficha à toa.
 
-### 2.2 A ação bônus que não faz o que diz `médio` `pequeno`
+### 2.2 A ação bônus que não faz o que diz ✅ FEITO (v9.54)
 
-"Rajada de Golpes — dois ataques desarmados extras" só libera o slot do
-turno. Duas saídas, e a segunda é honesta o bastante: ou a rajada dá mesmo os
-dois golpes, ou a descrição passa a dizer "uma ação a mais neste turno".
-Junto: tirar `"Bárbaro"` de `ACOES_BONUS` (classe que não existe) e decidir se
-Engenheiro e Invocador ficam sem nenhuma.
+Resolvido pelo segundo caminho, que era o honesto: a descrição passou a dizer
+o que o sistema faz. O primeiro (dar de verdade os dois socos) esbarra em algo
+que só aparece olhando o código: **a ação bônus renasce a cada rodada aqui**.
+Um Surto de Ação que valesse uma ação inteira toda rodada daria ao Guerreiro o
+dobro de golpes permanente — e no 5e o Surto é uma vez por descanso.
 
-### 2.3 "Céu Escuro" e a régua de área `baixo` `mínimo`
+`"Bárbaro"` saiu. Engenheiro e Invocador ficam sem, por decisão escrita: a
+segunda ação é a alavanca de poder mais forte deste combate, e o buraco de
+progressão do Caçador é assunto da onda 3.
 
-Diz "toda a área inimiga" e cai como alvo único. Uma linha em `ehArea`.
+### 2.3 "Céu Escuro" e a régua de área ✅ FEITO (v9.54)
+
+A régua pedia a preposição ("em área") e não reconhecia a coisa dita direto.
 
 ---
 
@@ -196,7 +202,11 @@ para quem joga, não para quem chama a função.
 
 ## Ordem sugerida, em uma linha
 
-**1.1** (a masmorra travada, hoje) → **2.1** (os cinco resolvedores, a maior
-dívida) → **3.1** (as classes que congelam) → **1.1+3.3** (tochas junto com o
-gerador) → **2.2, 2.3, 3.4, 3.5, 4.5** (os pequenos, em qualquer ordem) →
-**4.1–4.4** (o mundo visível) → **5.x** (as adições).
+~~**1.1**~~ → ~~**2.1**~~ → ~~**2.2, 2.3**~~ → **3.1** (as classes que
+congelam, a próxima) → **3.3** (tochas) → **3.4, 3.5, 4.5** (os pequenos, em
+qualquer ordem) → **4.1–4.4** (o mundo visível) → **5.x** (as adições).
+
+As ondas 1 e 2 estão pagas. A onda 3 começa pela 3.1, e agora ela pode ser
+medida limpa: a nota dizia "melhor DEPOIS da 2.1, senão as duas causas se
+misturam no mesmo teste" — com as promessas soltas todas pagas, o que sobrar
+de dano baixo num Monge nível 20 é progressão de classe, e nada mais.

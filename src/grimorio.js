@@ -232,7 +232,10 @@ export function classesDaMagia(nome) { const m = magiaPorNome(nome); return m ? 
 const RX_CONE = /\b(cone|em leque|em arco)\b/i;
 const RX_CONE_FRACO = /(sopro|baforada|leque)/i;
 const RX_LINHA = /(\blinha\b|em reta|perfura(ndo)?|atravessa|feixe reto)/i;
-const RX_AREA = /(em area|em área|todos os inimigos|todos ao redor|em volta|ao seu redor|toda a sala|todos os alvos|chuva de|explos|estoura|onda de|irradia)/i;
+/* v9.54: "toda a área inimiga" (Céu Escuro) caía como ALVO ÚNICO — a régua
+   pedia a preposição ("em área") e não reconhecia a coisa dita direto. Uma
+   nuvem de flechas sobre a área inimiga acertava um arqueiro só. */
+const RX_AREA = /(em area|em área|toda a area|toda a área|todos os inimigos|todos ao redor|em volta|ao seu redor|toda a sala|todos os alvos|chuva de|explos|estoura|onda de|irradia)/i;
 const RX_AURA = /(aura|campo ao redor|em torno de voce|em torno de você|todos os aliados)/i;
 
 export function geometriaDe(hab) {

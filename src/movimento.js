@@ -156,11 +156,21 @@ export function passoEfetivo(pers, opcoes = {}) {
 const RX_VOO_HAB = /\b(voo|voar|voando|asas|alado|levita|levitar|planar|planeio|etérea?o?)\b/i;
 const RX_DISPARADA = /\b(disparada|disparar|corrida|correr|acelera|celeridade|c[ée]lere|arrancada|investida|arremete|salto|impulso|passo largo|vento)\b/i;
 
+/* v9.54: "Move-se o dobro E IGNORA TERRENO DIFÍCIL" era a descrição do Passo
+   do Vento desde sempre. A primeira metade funcionava — a disparada dobra o
+   orçamento logo abaixo; a segunda não existia em lugar nenhum, e o monge
+   atravessava o matagal pagando o dobro por quadrado como todo mundo. Sai do
+   TEXTO, e não de uma lista de nomes, porque quem escrever a próxima
+   habilidade vai escrever a frase, não vai vir editar este arquivo. */
+const RX_IGNORA_DIFICIL = /ignora(ndo)? terreno dif[íi]cil|sem perder passo|atravessa .{0,20}sem (parar|perder)/i;
+
 export function passoDeHabilidade(h) {
   if (!h) return null;
   const t = `${h.nome || ""} ${h.descricao || ""}`;
-  if (RX_VOO_HAB.test(t)) return { nome: h.nome, metros: 18, voando: true, dobra: false };
-  if (RX_DISPARADA.test(t)) return { nome: h.nome, metros: 0, voando: false, dobra: true };
+  const ignora = RX_IGNORA_DIFICIL.test(t);
+  if (RX_VOO_HAB.test(t)) return { nome: h.nome, metros: 18, voando: true, dobra: false, ignoraDificil: true };
+  if (RX_DISPARADA.test(t)) return { nome: h.nome, metros: 0, voando: false, dobra: true, ignoraDificil: ignora };
+  if (ignora) return { nome: h.nome, metros: 0, voando: false, dobra: false, ignoraDificil: true };
   return null;
 }
 
@@ -169,14 +179,15 @@ export function passoDeHabilidade(h) {
    o número — sem isso o jogador vê o alcance mudar e não sabe por quê. */
 export function passoComSelecao(pers, selecionadas = [], opcoes = {}) {
   const base = passoEfetivo(pers, opcoes);
-  let metros = base.metros, voando = base.voando, fonte = "";
+  let metros = base.metros, voando = base.voando, fonte = "", ignora = base.ignoraDificil;
   for (const h of selecionadas || []) {
     const p = passoDeHabilidade(h);
     if (!p) continue;
+    if (p.ignoraDificil) { ignora = true; if (!fonte) fonte = p.nome; }
     if (p.voando && p.metros > metros) { metros = p.metros; voando = true; fonte = p.nome; }
     else if (p.dobra) { metros = metros * 2; fonte = p.nome; }
   }
-  return { ...base, metros: Math.round(metros * 10) / 10, voando, ignoraDificil: voando || base.ignoraDificil, fonte };
+  return { ...base, metros: Math.round(metros * 10) / 10, voando, ignoraDificil: voando || ignora, fonte };
 }
 
 /* Criaturas do bestiário: sem ficha de raça, a velocidade sai do tamanho e

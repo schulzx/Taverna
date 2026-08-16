@@ -30,7 +30,11 @@ const PERFIS = [
   [/aranha|escorpi|vespa|cobra|víbora|vibora|basilisco|medusa/i, { ataque: "veneno", resist: ["veneno"], fraqueza: [], imune: [] }],
   [/gosma|slime|lodo|gelatina/i, { ataque: "veneno", resist: ["fisico"], fraqueza: ["fogo"], imune: [] }],
   [/golem|estátua|estatua|autômato|automato|pedra|rocha/i, { ataque: "fisico", resist: ["fisico", "veneno"], fraqueza: ["raio"], imune: [] }],
-  [/fada|fey|sílfide|silfide|duende|bruxa|feiticeira|mago|cultista/i, { ataque: "arcano", resist: ["arcano"], fraqueza: [], imune: [] }],
+  /* v9.54: "feiticeiro" faltava ao lado de "feiticeira", e "conjurador" e
+     "arcanista" nunca estiveram aqui — o conjurador do sexo masculino caía no
+     perfil padrão e atacava com dano FÍSICO. Apareceu ao testar o Silêncio Que
+     Grita, que precisa saber quem conjura para saber quem calar. */
+  [/fada|fey|sílfide|silfide|duende|bruxa|feiticeir|mago|maga\b|arcanista|conjurador|cultista/i, { ataque: "arcano", resist: ["arcano"], fraqueza: [], imune: [] }],
   [/sereia|kraken|tubarão|tubarao|aquático|aquatico|nix|ondina/i, { ataque: "gelo", resist: ["fogo"], fraqueza: ["raio"], imune: [] }],
   [/planta|treant|vinha|fungo|mofo/i, { ataque: "veneno", resist: ["veneno"], fraqueza: ["fogo"], imune: [] }],
 ];

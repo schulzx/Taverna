@@ -85,8 +85,9 @@ import { comDom, vantagemDeTraco, vantagemMentalDeTraco, imuneDeTraco, iniciativ
 import { bonusDeBancada, componentesExtras, bonusDeNavegacao, despojosExtras, bonusDeTeste, precoDeVenda, precoDeCompraPara, moedasDeEspolio, resumoProfissaoPrompt } from "./profissoes.js";
 import { criarOficina, anotar as anotarOficina, bilheteDaOficina, OFICINA_PROMPT } from "./oficina.js";
 import { romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, devolverSegura, GATILHOS_PROMPT } from "./gatilhos.js";
+import { controleDe, aplicarControle, expirarControles, estaProvocando, CONTROLE_PROMPT } from "./controle.js";
 import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
-import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, erguerGuarda, expirarGuardas, baixarGuardas, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, HABILIDADES_PROMPT } from "./habilidades.js";
+import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, erguerGuarda, expirarGuardas, baixarGuardas, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, ignoraDoGolpe, linhaDoIgnorar, notaDoIgnorar, apressar, expirarPressa, baixarPressa, acoesPorRodada, HABILIDADES_PROMPT } from "./habilidades.js";
 import { agruparMensagens } from "./resumo.js";
 
 /* ============================================================
@@ -2113,7 +2114,10 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
         <span style={{ color: T.inkDim }}>· {combate.inimigos.filter((e) => !e.derrotado).length} de pé</span>
         {combate.rodada > 1 && <span style={{ color: T.inkDim }}>· rodada {combate.rodada}</span>}
         <span className="flex items-center gap-1 ml-auto normal-case tracking-normal">
-          {chipMov(eco.acao > 0, "⚔ ação")}
+          {/* v9.54: com a pressa ativa a rodada tem duas ações, e o contador
+              precisa dizer quantas sobraram — uma pílula acesa sem número
+              faria a segunda ação existir só para quem leu o código. */}
+          {chipMov(eco.acao > 0, eco.acao > 1 ? `⚔ ação ×${eco.acao}` : "⚔ ação")}
           {/* v9.43: quem não tem ação bônus não vê a pílula dela. Mostrar um
               recurso permanentemente riscado ensina a regra errada — o jogador
               passa a achar que perdeu alguma coisa que nunca teve. */}
@@ -2756,7 +2760,12 @@ export default function Taverna() {
      mesmo turno, que foi exatamente o que apareceu em jogo. `acoesBonusDe`
      é o catálogo que já sabia disso e que ninguém consultava. */
   const temAcaoBonus = (p) => acoesBonusDe((p || {}).classe, (p || {}).nivel || 1).length > 0;
-  const economiaNova = (p) => ({ acao: 1, extra: temAcaoBonus(p) ? 1 : 0 });
+  /* v9.54: `acoesPorRodada` é onde a PRESSA entra no motor, e é o único lugar.
+     "Você age duas vezes por rodada" não é "bate duas vezes" — quem conjura
+     não bate —, é literalmente uma segunda ação, e a economia da rodada já é
+     o que o golpe e a conjuração gastam. Dobrar aqui faz as duas coisas de
+     uma vez sem que nenhuma das duas precise saber que a pressa existe. */
+  const economiaNova = (p) => ({ acao: acoesPorRodada(p), extra: temAcaoBonus(p) ? 1 : 0 });
   /* ---------------- O PREÇO DE VESTIR O QUE NÃO SE SABE USAR (v9.44) ----------
      `avaliarEquipar` produzia estas penalidades desde a v9.11 e nada as lia:
      `penalidadesAtivas` alimentava só o painel e o prompt, e
@@ -4001,6 +4010,10 @@ export default function Taverna() {
        que alguém esquece de ligar. */
     const bg = baixarGuardas(p);
     if (bg.linha) { p = bg.pers; mudou = true; pushMsgs([{ autor: "sistema", texto: bg.linha }]); }
+    /* v9.54: a pressa também não atravessa a porta — duas ações por rodada
+       fora da luta seriam duas ações num turno que não tem rodada nenhuma. */
+    const bp = baixarPressa(p);
+    if (bp.linha) { p = bp.pers; mudou = true; pushMsgs([{ autor: "sistema", texto: bp.linha }]); }
     const disp = dispensarTodas(p);
     if (disp.sumiram.length) {
       p = disp.pers; mudou = true;
@@ -4017,6 +4030,57 @@ export default function Taverna() {
   const porGuarda = (h, pers) => {
     const r = erguerGuarda(pers, h, (combateRef.current && combateRef.current.rodada) || 1);
     return r ? { pers: r.pers, linha: r.linha, nota: r.nota } : null;
+  };
+  /* v9.54: a segunda ação da rodada. Como a guarda e a forma, entra pelos
+     DOIS caminhos de habilidade — o do painel e o da citada na frase —,
+     porque essa foi a mesma pedra em que esta casa já tropeçou quatro vezes. */
+  const porPressa = (h, pers) => {
+    const r = apressar(pers, h, (combateRef.current && combateRef.current.rodada) || 1);
+    if (!r) return null;
+    /* A SEGUNDA AÇÃO VALE JÁ. A economia da rodada nasce no início dela, e a
+       pressa é erguida no meio — sem creditar aqui, "você age duas vezes NESTE
+       turno" (Instante Roubado, prazo de um turno só) não daria ação nenhuma:
+       nasceria e venceria antes de a rodada seguinte começar. O `-1` é a ação
+       que a própria habilidade acabou de gastar. */
+    const eco = r.ok && combateRef.current && combateRef.current.economia;
+    if (eco) {
+      const ganho = Math.max(0, acoesPorRodada(r.pers) - 1);
+      if (ganho) {
+        combateRef.current = { ...combateRef.current, economia: { ...eco, acao: (eco.acao || 0) + ganho } };
+        setCombate(combateRef.current);
+      }
+    }
+    return { pers: r.pers, linha: r.linha, nota: r.nota };
+  };
+  /* ---------------- CONTROLE DE INIMIGO (v9.54) ----------------
+     A quinta e última família. Mexe nos INIMIGOS, não na ficha — por isso
+     escreve em `combateRef` como a invocação faz, e devolve a ficha
+     intacta. Sem combate aberto ela recusa: tomar a vontade de quem não
+     está em cena não é uma habilidade, é uma frase. */
+  const porControle = (h, pers) => {
+    const regra = controleDe(h);
+    if (!regra) return null;
+    const comb = combateRef.current;
+    if (!comb || !(comb.inimigos || []).some((e) => !e.derrotado && (e.vida || 0) > 0)) {
+      return { pers, linha: `⛔ ${h.nome}: não há inimigo em cena para isso.`, nota: "" };
+    }
+    const rodada = comb.rodada || 1;
+    const gdJ = grauDe(divindadeRef.current);
+    const r = aplicarControle(comb.inimigos, regra, {
+      rodada, nomeHab: h.nome,
+      alvoNome: (alvosGolpeRef.current || []).find(Boolean) || "",
+      /* A REGRA DO DEGRAU, aqui mais do que em qualquer lugar: virar contra
+         os outros um inimigo três degraus acima seria pior do que matá-lo
+         de graça — seria ganhar a luta com o poder do adversário. */
+      podeVirar: (e) => !imunePorEscopo(gdJ, Math.max(0, Number(e.gd) || 0)),
+    });
+    if (!r) return null;
+    combateRef.current = {
+      ...comb, inimigos: r.inimigos,
+      ...(r.provocacao ? { provocacao: r.provocacao } : {}),
+    };
+    setCombate(combateRef.current);
+    return { pers, linha: r.linha, nota: r.nota };
   };
   const porReerguer = (h, pers) => {
     const r = reerguer(pers, h);
@@ -6334,7 +6398,14 @@ export default function Taverna() {
         ? `${col.nomes.map((n) => `${n} [CAIU — estava abaixo de ${limiar.fracaoTxt} dos PV]`).join("; ")}`
         : `ninguém estava abaixo de ${limiar.fracaoTxt} dos PV: ${h.nome} passou pelo campo e NÃO derrubou ninguém`;
     }
-    if (h.danoBase == null && !limiar && !HAB_OFENSIVA_RX.test(`${h.nome || ""} ${h.descricao || ""}`)) return null;
+    /* ---------------- O QUE O GOLPE IGNORA (v9.54) ----------------
+       Também vem ANTES da régua de "habilidade ofensiva", e pela mesma razão
+       do limiar: "Ignora cobertura, penumbra e distância neste disparo" não
+       tem uma só palavra de violência, então a régua descartava o disparo
+       antes de existir. Sete habilidades caíam aqui — o PM saía da ficha e
+       nenhuma flecha era disparada. */
+    const ignora = ignoraDoGolpe(h);
+    if (h.danoBase == null && !limiar && !ignora && !HAB_OFENSIVA_RX.test(`${h.nome || ""} ${h.descricao || ""}`)) return null;
     /* v9.48: MAGIA TAMBÉM É TROCA DE GOLPES. Este ref é o que diz ao contador
        de luta parada que alguém ainda está lutando, e só o golpe de ARMA o
        levantava: dois turnos seguidos de magia e o painel de combate se
@@ -6372,7 +6443,13 @@ export default function Taverna() {
       setPersonagem(c.pers);
       return c.meta;
     })();
-    const alcanceMagia = alcanceComMetamagia(Math.max(1.5, Number((geometriaDe(h) || {}).alcance) || 36), meta);
+    /* v9.54: "longuíssimo alcance" e "ignora a distância" viram teto de metros
+       aqui — é o único lugar onde a distância decide alguma coisa para uma
+       habilidade, e sem isto o Cano Longo alcançava o mesmo que um truque. */
+    const alcanceMagia = Math.max(
+      alcanceComMetamagia(Math.max(1.5, Number((geometriaDe(h) || {}).alcance) || 36), meta),
+      (ignora && ignora.alcanceM) || 0,
+    );
     const atingiveis = vivos.filter((e) => alcanca(gradeH, meuLugarH, e, { alcanceM: alcanceMagia }).ok);
     const pool = atingiveis.length ? atingiveis : vivos;
     const declaradoH = (alvosGolpeRef.current || []).find(Boolean);
@@ -6447,12 +6524,23 @@ export default function Taverna() {
          magia era rotulada FÍSICA e nenhuma fraqueza ou resistência casava. */
       tipoDano: tipoDeDanoDaHabilidade(h, pers), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
       resistAlvo: resistenciasEquipadas(alvo),
-      bonusDefesaAlvo: bonusDefesaEm(gradeH, alvo),
+      /* v9.54: quem ignora cobertura rola como se o alvo estivesse em campo
+         aberto; quem ignora armadura rola contra o corpo, não contra a placa.
+         São duas portas separadas de propósito — furar a couraça de alguém
+         não faz o muro na frente dele desaparecer. */
+      bonusDefesaAlvo: ignora && ignora.cobertura ? 0 : bonusDefesaEm(gradeH, alvo),
+      ignoraArmadura: !!(ignora && ignora.armadura),
       criticoEm: criticoMinimo(pers),
     });
     if (imunePorEscopo(gdJH, gdAlvoH)) { r.escopoImune = true; r.dano = 0; }
     const linhasSis = [];
     const partes = [];
+    /* a frase nasce junto do efeito: o jogador precisa VER que o golpe
+       atravessou, senão o número certo continua parecendo sorte */
+    if (ignora) {
+      linhasSis.push({ autor: "sistema", texto: linhaDoIgnorar(ignora, h) });
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaDoIgnorar(ignora, h)}`;
+    }
     logDadoCombate(resumoDoAtaque(r));
     if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(r) });
     let locais = comb.inimigos.map((e) => ({ ...e }));
@@ -7021,7 +7109,7 @@ export default function Taverna() {
            completa de companheiro (é o motor que já sabe agir sozinho),
            lugar no tabuleiro ao lado de quem a chamou, e prazo. O teto é
            cobrado ANTES do resto para que a recusa não custe o PM. */
-        for (const fn of [porInvocacaoEmCampo, porSacrificio, porForma, porGuarda, porReerguer, porMetamagia, porReescrever]) {
+        for (const fn of [porInvocacaoEmCampo, porSacrificio, porForma, porGuarda, porPressa, porControle, porReerguer, porMetamagia, porReescrever]) {
           const r = fn(h, pers);
           if (!r) continue;
           pers = r.pers;
@@ -7131,7 +7219,7 @@ export default function Taverna() {
       /* v9.46: o caminho da habilidade CITADA passa pelas mesmas portas que
          o do painel. Quem digita "conjuro Invocar Fera Menor" recebe a fera. */
       const linhasCit = [];
-      for (const fn of [porInvocacaoEmCampo, porSacrificio, porForma, porGuarda, porReerguer, porMetamagia, porReescrever]) {
+      for (const fn of [porInvocacaoEmCampo, porSacrificio, porForma, porGuarda, porPressa, porControle, porReerguer, porMetamagia, porReescrever]) {
         const r = fn(habCitada, pers);
         if (!r) continue;
         pers = r.pers;
@@ -7489,9 +7577,15 @@ export default function Taverna() {
         }
       }
     }
+    /* v9.54: a rodada entra no motor porque é ela que diz quem ainda está
+       virado, e a provocação porque é ela que decide para onde todo mundo
+       olha. Sem os dois, a família de controle seria uma linha de tela. */
+    const rodadaAgora = (combateRef.current && combateRef.current.rodada) || 1;
+    const provocandoAgora = estaProvocando(combateRef.current, rodadaAgora);
     const acoes = turnoDosInimigos({
       inimigos: combPos.inimigos, jogador: persBase, grupo: persBase.grupo || [],
       gdJogador: grauDe(divindadeRef.current), grade: gradeAtual, heroi: lugarHeroi, aliados: aliadosAgora,
+      rodada: rodadaAgora, provocado: provocandoAgora,
     });
     const linhasSis = [];
     let danoNoJogador = 0;
@@ -7505,7 +7599,10 @@ export default function Taverna() {
     for (const a of acoes) {
       logDadoCombate(resumoDoAtaque(a.r));
       if (mostrarRolagensRef.current) linhasSis.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(a.r) });
-      linhasSis.push({ autor: "sistema", texto: a.r.dano > 0 ? `🛡 ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: ${a.r.critico ? "CRÍTICO! " : ""}${a.r.dano} de dano` : `🛡 ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: errou` });
+      /* 🎏 em vez de 🛡 quando é a marionete batendo: o jogador precisa ver de
+         relance que aquele golpe está do lado dele */
+      const marcaGolpe = a.virado ? "🎏" : "🛡";
+      linhasSis.push({ autor: "sistema", texto: a.r.dano > 0 ? `${marcaGolpe} ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: ${a.r.critico ? "CRÍTICO! " : ""}${a.r.dano} de dano` : `${marcaGolpe} ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: errou` });
       /* REAÇÃO (v9.5): a janela acontece AQUI, antes de o dano virar PV */
       if (a.alvoRef === "jogador") {
         const rc = tentarReacaoNoGolpe(a, persBase);
@@ -7539,11 +7636,31 @@ export default function Taverna() {
           }
           danoNoJogador += a.r.dano;
         }
+        /* v9.54: A MARIONETE BATE E O PV CAI. Este `else` tratava tudo o que
+           não era o jogador como companheiro; com o controle de inimigo há um
+           terceiro lado da mesa, e sem esta porta o golpe da marionete
+           apareceria na tela sem tirar um ponto de ninguém. */
+        else if (a.alvoRef === "inimigo") {
+          /* escreve em `combPos`, que é a autoridade sobre os inimigos dentro
+             desta função inteira: o turno dos companheiros lê dele logo
+             adiante e o `combateRef.current = combPos` do fim o publica. Ir
+             direto no ref seria escrever num lugar que aquela linha cobre. */
+          combPos.inimigos = combPos.inimigos.map((e) => {
+            if (e.nome !== a.alvoNome) return e;
+            const pv = Math.max(0, (e.vida || 0) - a.r.dano);
+            return { ...e, vida: pv, derrotado: pv <= 0, ultimoDano: a.r.dano };
+          });
+        }
         else grupoAtual = grupoAtual.map((g) => g.nome === a.alvoNome ? { ...g, vida: Math.max(0, (g.vida || 0) - a.r.dano) } : g);
       }
-      const alvoMax = a.alvoRef === "jogador" ? (persBase.vidaMax || 1) : ((grupoAtual.find((g) => g.nome === a.alvoNome) || {}).vidaMax || 1);
+      const doCampo = (nome) => (combPos.inimigos || []).find((e) => e.nome === nome) || {};
+      const alvoMax = a.alvoRef === "jogador" ? (persBase.vidaMax || 1)
+        : a.alvoRef === "inimigo" ? (doCampo(a.alvoNome).vidaMax || 1)
+        : ((grupoAtual.find((g) => g.nome === a.alvoNome) || {}).vidaMax || 1);
       const alvoDepois = a.r.dano > 0
-        ? (a.alvoRef === "jogador" ? Math.max(0, persBase.vida - danoNoJogador) : Math.max(0, ((grupoAtual.find((g) => g.nome === a.alvoNome) || {}).vida || 0)))
+        ? (a.alvoRef === "jogador" ? Math.max(0, persBase.vida - danoNoJogador)
+          : a.alvoRef === "inimigo" ? Math.max(0, doCampo(a.alvoNome).vida || 0)
+          : Math.max(0, ((grupoAtual.find((g) => g.nome === a.alvoNome) || {}).vida || 0)))
         : undefined;
       partes.push(linhaParaMestre(a.golpeNome ? `${a.inimigo} (${a.golpeNome})` : a.inimigo, a.alvoNome, a.r, alvoMax, alvoDepois));
     }
@@ -7623,10 +7740,10 @@ export default function Taverna() {
        ("todas as invocações agem duas vezes neste turno") é o único
        tempero: roda o turno delas mais uma vez. */
     const jogadorCaido = persAtual.vida <= 0;
-    const acoesComp = turnoDosCompanheiros({ grupo: persAtual.grupo || [], inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome, jogador: persAtual, rodada: (combPos.rodada || 1) });
+    const acoesComp = turnoDosCompanheiros({ grupo: persAtual.grupo || [], inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome, jogador: persAtual, rodada: (combPos.rodada || 1), provocado: provocandoAgora });
     if (temVozDeComando(persAtual) && invocacoesDe(persAtual).length) {
       const soInvocadas = invocacoesDe(persAtual);
-      const extra = turnoDosCompanheiros({ grupo: soInvocadas, inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome, jogador: persAtual, rodada: (combPos.rodada || 1) });
+      const extra = turnoDosCompanheiros({ grupo: soInvocadas, inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome, jogador: persAtual, rodada: (combPos.rodada || 1), provocado: provocandoAgora });
       if (extra.length) {
         acoesComp.push(...extra);
         pushMsgs([{ autor: "sistema", texto: `📯 Voz de Comando — ${soInvocadas.map((g) => g.nome).join(", ")} ${soInvocadas.length > 1 ? "agem" : "age"} de novo.` }]);
@@ -7716,6 +7833,19 @@ export default function Taverna() {
       if (gua.linhas.length) {
         persAtual = gua.pers;
         pushMsgs(gua.linhas.map((texto) => ({ autor: "sistema", texto })));
+      }
+      /* v9.54: e a PRESSA no mesmo relógio — quarto prazo em rodadas, quarta
+         linha aqui. É por isso que os quatro moram juntos: quem escrever o
+         quinto vai ver os outros antes de esquecer o dele. */
+      const prs = expirarPressa(persAtual, proxima);
+      if (prs.linha) { persAtual = prs.pers; pushMsgs([{ autor: "sistema", texto: prs.linha }]); }
+      /* v9.54: e os fios arrebentam. A leitura de quem está virado já é
+         preguiçosa (compara com a rodada), então isto existe para o jogador
+         saber e para o inimigo não carregar campo morto pelo resto da luta. */
+      const ctr = expirarControles(combateRef.current.inimigos, proxima);
+      if (ctr.linhas.length) {
+        combateRef.current = { ...combateRef.current, inimigos: ctr.inimigos };
+        pushMsgs(ctr.linhas.map((texto) => ({ autor: "sistema", texto })));
       }
       const exp = expirarInvocacoes(persAtual, proxima);
       if (exp.sumiram.length) {

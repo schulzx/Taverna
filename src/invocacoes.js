@@ -52,6 +52,13 @@ export const INVOCACOES = [
   { id: "morto_animado",rx: /animar\s+mortos|cadaver\s+se\s+levanta/,               nome: "Morto Animado",     conceito: "cadáver reanimado que obedece sem entender",                 turnos: 10, pv: 12, pvNv: 2,  dano: 4, quantos: 1, classe: "Guerreiro" },
   /* CAÇADOR — companheiro animal é invocação de prazo, não recruta */
   { id: "animal",       rx: /companheiro\s+animal|aliado\s+animal/,                 nome: "Companheiro Animal",conceito: "animal fiel que caça ao lado do dono",                       turnos: 5, pv: 14, pvNv: 2.5, dano: 4, quantos: 1, classe: "Caçador" },
+
+  /* v9.54: A CÓPIA. "Cria uma cópia sua perfeita que age por um turno" era
+     a única da família de controle que não pedia mecânica nova — uma coisa
+     que entra na luta do seu lado, age sozinha e some no prazo é exatamente
+     o que este arquivo já faz desde a v9.46. Ela é frágil de propósito: é
+     luz e mentira, não carne, e um turno é o que a descrição promete. */
+  { id: "copia",        rx: /mentira\s+luminosa|copia\s+sua\s+perfeita|copia\s+de\s+voce/, nome: "Sua Cópia", conceito: "uma cópia sua, perfeita até o gesto — luz que engana e ainda assim golpeia", turnos: 1, pv: 6, pvNv: 1.5, dano: 4, quantos: 1, classe: "Guerreiro" },
 ];
 
 export function invocacaoDe(hab) {

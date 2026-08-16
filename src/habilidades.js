@@ -377,7 +377,132 @@ export function baixarGuardas(pers) {
   return { pers: p, linha: "🛡 Com o fim da luta, sua guarda baixa." };
 }
 
-export const HABILIDADES_PROMPT = `HABILIDADES DE REGRA PRÓPRIA (v9.53 — o sistema resolve, você narra):
+/* ============================================================
+   7. O QUE O GOLPE IGNORA — cobertura, distância e armadura (v9.54)
+
+   Sete habilidades dizem "ignora" com todas as letras e nenhuma
+   ignorava coisa alguma. Quatro furam armadura (Quebra-Guarda, Mira do
+   Batedor, Punho que Rompe, Punho de Pedra) e três furam cobertura
+   (Cano Longo, Tiro Calibrado, Olho que Mede o Vento).
+
+   E o buraco era mais fundo do que "faltou somar um número": a régua
+   que decide se uma habilidade é ofensiva procura palavras de violência
+   no texto, e "Ignora cobertura, penumbra e distância neste disparo"
+   não tem nenhuma. Era o mesmo poço da Colheita Final — a habilidade
+   nem chegava à conta. O jogador gastava o PM, lia a frase e o disparo
+   não acontecia. Por isso o leitor daqui é consultado ANTES daquela
+   régua, exatamente como o limiar.
+
+   ARMADURA NÃO É COBERTURA, e as duas continuam separadas: furar a
+   couraça de alguém não faz o muro na frente dele desaparecer. Quem
+   ignora armadura acerta contra o corpo nu — os 10 que são a base de
+   toda defesa nesta casa —, mas ainda tem o muro pela frente.
+   ============================================================ */
+
+/* A defesa de um corpo sem nada vestido. É o mesmo 10 de onde `defesaDe`
+   parte antes de somar destreza, equipamento e guarda. */
+export const DEFESA_NUA = 10;
+
+const IGNORAM = [
+  { id: "quebra_guarda",  rx: /quebra-?guarda|ignora a armadura do alvo neste golpe/,        armadura: true, diz: "passa por dentro da armadura" },
+  { id: "mira_batedor",   rx: /mira do batedor|disparo calculado que ignora a armadura/,      armadura: true, diz: "a flecha encontra a fresta" },
+  { id: "punho_rompe",    rx: /punho que rompe|ignora a defesa do alvo neste ataque/,         armadura: true, diz: "o punho atravessa a guarda" },
+  { id: "punho_pedra",    rx: /punho de pedra|ignora armadura e racha escudo/,                armadura: true, diz: "a placa cede e o escudo racha" },
+  { id: "cano_longo",     rx: /cano longo|longuissimo alcance que ignora cobertura/,          cobertura: true, alcanceM: 90, diz: "o tiro vem de onde ninguém esperava" },
+  { id: "tiro_calibrado", rx: /tiro calibrado|disparo preciso que ignora cobertura/,          cobertura: true, diz: "o disparo entra pelo vão" },
+  { id: "olho_vento",     rx: /olho que mede o vento|ignora cobertura, penumbra e distancia/, cobertura: true, alcanceM: 90, diz: "vento, sombra e distância deixam de contar" },
+];
+
+export function ignoraDoGolpe(hab) {
+  const t = txtDe(hab);
+  if (!t.trim()) return null;
+  return IGNORAM.find((g) => g.rx.test(t)) || null;
+}
+
+/* A linha que o jogador lê. Nasce junto do efeito, como toda linha desta
+   casa: se um dia o efeito mudar, a frase muda no mesmo lugar. */
+export function linhaDoIgnorar(ig, hab) {
+  if (!ig) return "";
+  const o = ig.armadura ? "a armadura do alvo" : "a cobertura e a distância";
+  return `🎯 ${(hab && hab.nome) || "O golpe"} — ${ig.diz}: este ataque ignora ${o}.`;
+}
+export function notaDoIgnorar(ig, hab) {
+  if (!ig) return "";
+  const o = ig.armadura
+    ? "a ARMADURA do alvo não conta neste golpe — o sistema já rolou contra o corpo, não contra a placa"
+    : "a COBERTURA e a DISTÂNCIA não contam neste disparo — o sistema já rolou como se o alvo estivesse em campo aberto";
+  return `[GOLPE QUE IGNORA — RESOLVIDO PELO SISTEMA] "${(hab && hab.nome) || "O golpe"}": ${o}. Narre ${ig.diz} e não descreva o alvo se protegendo do que este golpe atravessa. O número já saiu; não o recalcule.`;
+}
+
+/* ============================================================
+   8. A PRESSA — agir duas vezes na mesma rodada (v9.54)
+
+   Três habilidades prometem uma segunda ação e nenhuma tinha código:
+   "Você age duas vezes por rodada durante quatro turnos", "Você age
+   duas vezes neste turno", "ataques dobrados por quatro turnos".
+
+   O caminho barato seria dobrar o número de golpes do ataque de arma.
+   Não serve: quem conjura não bate, e a promessa é "AGIR" duas vezes,
+   não "bater" duas vezes. O jogo já tem onde escrever isso — a economia
+   de ação da rodada, que nasce em `economiaNova` e é gasta tanto pelo
+   golpe quanto pela conjuração. A pressa apenas faz essa economia
+   nascer com duas ações em vez de uma, e todo o resto do motor continua
+   sem saber que ela existe.
+
+   Vence por rodada, como a forma, a invocação e a guarda — no mesmo
+   lugar, para não virar o quinto relógio que alguém esquece de ligar.
+   ============================================================ */
+
+export const PRESSAS = [
+  { id: "mais_rapido_olho", rx: /mais rapido que o olho|age duas vezes por rodada/, acoes: 2, turnos: 4, conceito: "o corpo termina o gesto antes de o olho começar a ver" },
+  { id: "forma_conjunta",   rx: /forma conjunta|ataques dobrados por quatro turnos/, acoes: 2, turnos: 4, conceito: "você e a fera viram uma criatura só, com dois pares de garras" },
+  { id: "instante_roubado", rx: /instante roubado|age duas vezes neste turno/,       acoes: 2, turnos: 1, conceito: "um instante subtraído do mundo, e só você o gasta" },
+];
+
+export function pressaDe(hab) {
+  const t = txtDe(hab);
+  if (!t.trim()) return null;
+  return PRESSAS.find((p) => p.rx.test(t)) || null;
+}
+
+/* Quantas ações a rodada dá. Um, para todo mundo, quase sempre. */
+export function acoesPorRodada(pers) {
+  const p = pers && pers.pressa;
+  return p && Number(p.acoes) > 1 ? Number(p.acoes) : 1;
+}
+export const estaApressado = (pers) => acoesPorRodada(pers) > 1;
+
+export function apressar(pers, hab, rodada = 1) {
+  const p = pressaDe(hab);
+  if (!p) return null;
+  if (pers && pers.pressa) return { ok: false, pers, linha: `⛔ ${hab.nome}: você já está agindo duas vezes por rodada.`, nota: "" };
+  return {
+    ok: true,
+    pers: { ...pers, pressa: { id: p.id, nome: hab.nome, acoes: p.acoes, ate: rodada + p.turnos } },
+    linha: `⏩ ${hab.nome} — ${p.conceito}. Você age ${p.acoes} vezes por rodada · ${p.turnos} turno${p.turnos > 1 ? "s" : ""}.`,
+    nota: `[PRESSA CONCEDIDA PELO SISTEMA] "${hab.nome}": ${p.conceito}. O sistema já me deu ${p.acoes} ações por rodada e conta os ${p.turnos} turnos. Narre a velocidade — dois gestos onde cabia um — e deixe que eu declare as duas; não aja por mim, não estenda o prazo e não me tire a segunda ação.`,
+  };
+}
+
+export function expirarPressa(pers, rodada) {
+  const p = pers && pers.pressa;
+  if (!p) return { pers, linha: "" };
+  if (Number(p.ate) > Number(rodada)) return { pers, linha: "" };
+  const novo = { ...pers };
+  delete novo.pressa;
+  return { pers: novo, linha: `⏩ ${p.nome} passa — você volta a agir uma vez por rodada.` };
+}
+
+export function baixarPressa(pers) {
+  if (!(pers && pers.pressa)) return { pers, linha: "" };
+  const novo = { ...pers };
+  delete novo.pressa;
+  return { pers: novo, linha: "⏩ Com o fim da luta, a pressa passa." };
+}
+
+export const HABILIDADES_PROMPT = `HABILIDADES DE REGRA PRÓPRIA (v9.54 — o sistema resolve, você narra):
+- IGNORAR: alguns golpes atravessam o que normalmente protege — a armadura do alvo, ou a cobertura e a distância. O sistema já rolou assim; narre a passagem e não descreva o alvo se defendendo com aquilo que o golpe atravessou.
+- PRESSA: algumas habilidades dão DUAS ações por rodada durante alguns turnos. Quem declara as duas sou eu — narre a velocidade e espere; não aja no meu lugar.
 - GUARDA: algumas habilidades erguem uma defesa que dura alguns turnos. O sistema soma o número à minha defesa e conta o prazo — narre o corpo que mudou e os golpes que resvalam, sem inventar valor nem estender a duração.
 - METAMAGIA arma a PRÓXIMA magia (mais alcance, ou um segundo alvo) e o sistema a consome sozinho quando ela sai. Você não escolhe qual magia recebe o efeito nem o aplica duas vezes.
 - FORMAS (animal, ancestral) trocam o CORPO do herói: outro fôlego, outro golpe, e — na forma animal — nenhuma conjuração e nenhuma fala articulada. Trate-o como a criatura enquanto durar, inclusive no que ele deixa de conseguir fazer. O prazo é do sistema; não o devolva ao corpo antigo por conta própria.
