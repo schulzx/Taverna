@@ -264,84 +264,23 @@ export function limparPorDescanso(condicoes = [], tipo = "curto") {
   return { condicoes: ficam, removidas: saem };
 }
 
-/* ---------------- O CÃO DE GUARDA ----------------
-   Lê a narrativa do Mestre e encontra condições que ele DESCREVEU mas
-   não registrou. O sistema então aplica de verdade — a ficção vira
-   mecânica em vez de virar enfeite.
+/* ---------------- ONDE MORAVA O CÃO DE GUARDA (v9.49) ----------------
+   Aqui viviam `detectarCondicoesNarradas` e `detectarAliviosNarrados`: o
+   sistema lia a narração do Mestre atrás de condições que ele tivesse
+   descrito e esquecido de registrar, e aplicava sozinho.
 
-   Conservador de propósito: só conta quando a frase fala do herói
-   (você/te/seu/o próprio nome) e não está negada. Melhor deixar passar
-   uma do que aplicar veneno porque o Mestre disse que o ORC caiu. */
-const NEGACOES = /\b(nao|sem|resist|evit|escap|livr|imune|cura|curad|passa|passou|deixa de|nunca)\b/;
-const SUJEITO_HEROI = /\b(voce|te|ti|seu|sua|seus|suas|lhe)\b/;
+   A ideia era boa — a ficção virando mecânica em vez de enfeite — e a
+   prática entregou isto: "sente o ar quente ainda PRESO NA garganta"
+   virou Agarrado, dois turnos de desvantagem por uma metáfora. Não era
+   o regex: prosa não é ficha. O mesmo verbo que prende o herói numa
+   teia prende o ar na garganta dele.
 
-export function detectarCondicoesNarradas(texto, { nomeHeroi = "", jaAtivas = [] } = {}) {
-  const bruto = String(texto || "");
-  if (!bruto.trim()) return [];
-  const ativos = new Set((jaAtivas || []).map((c) => c.id || (normalizarCondicao(c.nome || "") || {}).id).filter(Boolean));
-  const heroi = semAcento(nomeHeroi);
-  const frases = bruto.split(/(?<=[.!?;:])\s+|\n+/);
-  const achados = [];
-  const vistos = new Set();
+   As condições agora vêm de três lugares, todos do código: o combate
+   (`aflicoes.js`), o tempo (`tickCondicoes` e `limparPorDescanso`, logo
+   acima) e a falha crítica num teste (`consequencias.js`).
 
-  for (const frase of frases) {
-    const f = semAcento(frase);
-    if (!f.trim()) continue;
-    /* onde a frase fala do herói? (posição importa — ver abaixo) */
-    const posSujeito = (() => {
-      const m = f.match(SUJEITO_HEROI);
-      const pv = m ? m.index : -1;
-      const pn = heroi.length >= 3 ? f.indexOf(heroi) : -1;
-      if (pv < 0) return pn;
-      if (pn < 0) return pv;
-      return Math.min(pv, pn);
-    })();
-    if (posSujeito < 0) continue;
-    /* negada, condicional ou hipotética não vale */
-    if (NEGACOES.test(f)) continue;
-    if (/^\s*(se|caso|talvez|quase|como se)\b/.test(f)) continue;
-
-    for (const c of listaCondicoes()) {
-      if (vistos.has(c.id) || ativos.has(c.id)) continue;
-      let pos = -1;
-      for (const re of c.aliases || []) {
-        const m = f.match(new RegExp(semAcento(re.source), "i"));
-        if (m && (pos < 0 || m.index < pos)) pos = m.index;
-      }
-      if (pos < 0) continue;
-      /* O SUJEITO PRECISA VIR ANTES. "O orc cai envenenado aos SEUS pés" tem
-         marca do herói — mas depois da condição, porque o envenenado é o orc.
-         "VOCÊ está envenenado" tem a marca antes. É essa ordem que separa
-         quem sofre a condição de quem só está por perto. */
-      if (posSujeito > pos) continue;
-      vistos.add(c.id);
-      achados.push({ id: c.id, rotulo: c.rotulo, icone: c.icone, tipo: c.tipo, trecho: frase.trim().slice(0, 120) });
-    }
-  }
-  return achados;
-}
-
-/* O contrário: o Mestre narrou que a condição PASSOU (curou, estancou).
-   Só aceita afirmações explícitas — nunca deduz alívio de silêncio. */
-export function detectarAliviosNarrados(texto, ativas = []) {
-  const f = semAcento(texto || "");
-  if (!f.trim() || !(ativas || []).length) return [];
-  const saem = [];
-  for (const inst of ativas) {
-    const c = condicaoPorId(inst.id) || normalizarCondicao(inst.nome || "");
-    if (!c) continue;
-    /* a ficção fala tanto pelo adjetivo ("envenenado") quanto pelo substantivo
-       ("o veneno passa") — o alívio precisa reconhecer os dois */
-    const raiz = semAcento(c.rotulo).replace(/[oa]$/, "");
-    const termo = c.subst ? `(?:${raiz}[oa]?|${semAcento(c.subst)})` : `${raiz}[oa]?`;
-    const alivio = new RegExp(
-      `(nao (esta|estava|fica) mais ${raiz}` +
-      `|(o |a |seu |sua )?${termo} (passa|passou|some|sumiu|cede|cedeu|acaba|acabou|se dissipa|dissipou|para de)` +
-      `|(cura|curad|estanca|estancad|neutraliza|neutralizad|dissipa|dissipad|apaga|apagad)[a-z]* (o |a |seu |sua )?${termo})`, "i");
-    if (alivio.test(f)) saem.push(inst);
-  }
-  return saem;
-}
+   Os `aliases` do catálogo continuam servindo: `normalizarCondicao` os usa
+   para casar o nome que o combate produz com o id certo. */
 
 /* ---------------- O QUE O MESTRE LÊ ----------------
    Vai no rodapé de TODO turno: enquanto houver condição ativa, ele não
@@ -361,9 +300,9 @@ export function resumoCondicoesPrompt(pers, grupo = []) {
   return linhas.join("\n");
 }
 
-export const CONDICOES_PROMPT = `CONDIÇÕES E EFEITOS (v9.0 — o sistema aplica, você narra):
-- Existe um catálogo fechado de condições: ${listaCondicoes().map((c) => c.rotulo).join(", ")}. Use SÓ esses nomes. Um sinônimo seu vira a condição certa pelo sistema, mas o nome exato evita ruído.
-- NUNCA descreva alguém envenenado, atordoado, sangrando, cego, amedrontado, paralisado (etc.) sem registrar em "condicoes_adicionar": [{"alvo":"você|nome do companheiro|nome do inimigo","nome":"Envenenado"}]. Se você narrar e esquecer de registrar, o SISTEMA aplica sozinho pelo que leu na sua narração e avisa o jogador — evite isso registrando direito.
-- Você NÃO define duração, dano por turno nem penalidade: tudo isso é do catálogo do sistema. Não escreva "por 3 turnos", "perde 5 PV por rodada" nem "com desvantagem de −4"; diga apenas O QUE ACONTECE na ficção.
-- O caminho inverso vale igual: as condições ativas chegam a você no rodapé de cada turno. Enquanto o herói estiver ATORDOADO ou PARALISADO ele NÃO age — narre o corpo que não obedece, jamais uma ação normal. Enquanto estiver ENVENENADO ou SANGRANDO, mostre o preço disso na cena.
-- Para tirar uma condição, registre "condicoes_remover": [{"alvo":"você","nome":"Envenenado"}] — e só quando algo na ficção justificar (antídoto, cura, descanso, o efeito acabar). Descanso limpa o que o catálogo manda; não anuncie curas que não aconteceram.`;
+export const CONDICOES_PROMPT = `CONDIÇÕES E EFEITOS (v9.49 — o sistema aplica, você narra):
+- Existe um catálogo fechado de condições: ${listaCondicoes().map((c) => c.rotulo).join(", ")}. Elas são MECÂNICA, com duração e efeito numérico, e são do SISTEMA.
+- VOCÊ NÃO APLICA NEM REMOVE CONDIÇÃO — não existe campo para isso e não existe frase que faça isso. Só três coisas põem uma condição em alguém: o combate (o sistema rola a aflição da arma, da magia ou do bicho), o tempo (o turno que vence, o descanso que limpa) e a FALHA CRÍTICA num teste. Nenhuma delas passa por você.
+- Quando a cena pedir uma consequência mecânica — a teia que prende, o veneno da taça, o degrau que cede —, faça o que se faz numa mesa: PEÇA A ROLAGEM ("rolagem": {...}) e pare ali. O dado decide e o sistema cobra. Descrever a teia prendendo o herói não o prende; pedir o teste de Força, sim.
+- Também não descreva alguém "envenenado", "atordoado", "sangrando", "cego" ou "paralisado" como estado de ficha se o envelope não disser que ele está: isso é afirmar mecânica que não existe. Descreva a cena, não o estado.
+- O caminho inverso vale igual: as condições ATIVAS chegam a você no rodapé de cada turno, e são fato. Enquanto o herói estiver ATORDOADO ou PARALISADO ele NÃO age — narre o corpo que não obedece, jamais uma ação normal. Enquanto estiver ENVENENADO ou SANGRANDO, mostre o preço disso na cena. E nunca anuncie que uma condição passou: quem a tira é o relógio, o descanso ou a cura.`;

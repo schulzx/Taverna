@@ -10,6 +10,7 @@ import { ATRIBUTOS, MAX_COMPANHEIROS, MOEDAS_INICIAIS } from "./constantes.js";
 import { ECONOMIA_PROMPT } from "./economia.js";
 import { CONDICOES_PROMPT } from "./condicoes.js";
 import { AFLICOES_PROMPT } from "./aflicoes.js";
+import { CONSEQUENCIAS_PROMPT } from "./consequencias.js";
 import { CONSUMIVEIS_PROMPT } from "./pocoes.js";
 import { MERCADO_PROMPT } from "./mercado.js";
 import { COMPANHEIROS_PROMPT } from "./companheiros.js";
@@ -213,7 +214,7 @@ ${divindadeInfo ? `- ${divindadeInfo}\n` : ""}- GERADORES DE VIDA (o app sorteia
 CONDIÇÕES DE ESTADO / BUFFS E DEBUFFS (dentro e fora de combate):
 ${CONDICOES_PROMPT}
 ${AFLICOES_PROMPT}
-- Registre com "condicoes_adicionar": [{"alvo":"você"|nome do companheiro|nome do inimigo,"nome":"Envenenado"}] — só alvo e nome; duração e efeito são do sistema. Use condições para dar consequência: o veneno da aranha, a lama que prende, o grito que amedronta. Valem fora de combate também (envenenado numa trilha, abençoado por um templo), e boas e ruins coexistem.
+${CONSEQUENCIAS_PROMPT}
 
 HABILIDADES E EFEITOS TEMPORÁRIOS:
 - O personagem tem habilidades/magias com custo em mana (PM), escolhidas pelo jogador numa árvore fixa — NUNCA conceda habilidades ao jogador (as iniciais já foram dadas pelo sistema; as novas ele escolhe ao subir de nível).
@@ -346,8 +347,6 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   "combate_atualizar": [{"nome":"Capitão Bandido","ameaca":"enfurecido, sangrando"}],
   "combate_encerrar": false,
   "rolagens_combate": [{"quem":"Lobo","alvo":"você","d20":8,"mod":2,"total":10,"dificuldade":15,"resultado":"erra"}],
-  "condicoes_adicionar": [{"alvo":"você","nome":"Envenenado"}],
-  "condicoes_remover": [{"alvo":"você","nome":"Envenenado"}],
   "npcs": [{"nome":"Mestra Elira","papel":"ferreira","relacao":"aliado","genero":"mulher","local":"Pedravale","segredo":"esconde um mapa nas forjas"}],
   "quest_atualizar": [{"titulo":"A caravana sumida","status":"concluida","nota":""}],
   "evento_global_encerrar": false,

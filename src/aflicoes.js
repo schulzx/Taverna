@@ -123,7 +123,7 @@ export function rolarAflicao({ fonte, nomeFonte = "", atacante = "", alvo, alvoN
   return {
     aplicou: true, resistiu: false, cond, portador: port, escopo: "alvo",
     texto: `${cond.icone} ${nomeAlvo} está ${cond.nome}${cond.turnos ? ` (${cond.turnos}t)` : ""} — ${nomeFonte || atacante} (${rolo} vs ${dif})`,
-    nota: `[AFLIÇÃO APLICADA — sistema rolou] ${nomeFonte || "O golpe"} de ${atacante} deixou ${nomeAlvo} ${cond.nome.toLowerCase()}: falhou no teste (${rolo} vs ${dif}). Efeito e duração já estão aplicados (${cond.efeito}). Narre isso como fato — não envie "condicoes_adicionar" e não invente outro efeito.`,
+    nota: `[AFLIÇÃO APLICADA — sistema rolou] ${nomeFonte || "O golpe"} de ${atacante} deixou ${nomeAlvo} ${cond.nome.toLowerCase()}: falhou no teste (${rolo} vs ${dif}). Efeito e duração já estão aplicados (${cond.efeito}). Narre isso como fato — e não invente outro efeito nem outra condição: condição é do sistema.`,
   };
 }
 

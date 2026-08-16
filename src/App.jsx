@@ -29,7 +29,8 @@ import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortear
 import { mercadoresDaCidade, talvezAmbulante, precoDeCompra, mapasAVenda, resumoMercadoPrompt } from "./mercado.js";
 import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
-import { criarCondicao, tickCondicoes, detectarCondicoesNarradas, detectarAliviosNarrados, limparPorDescanso, resumoCondicoesPrompt, estadoDeRolagem, mecanicaDe } from "./condicoes.js";
+import { criarCondicao, tickCondicoes, limparPorDescanso, resumoCondicoesPrompt, estadoDeRolagem, mecanicaDe } from "./condicoes.js";
+import { custoDaFalhaCritica, linhaDoCusto, notaDoCusto } from "./consequencias.js";
 import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, perderFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
@@ -4105,28 +4106,9 @@ export default function Taverna() {
     return { texto: `${nome} ${poder} ${elem}`.trim(), nome: nome || "seu golpe" };
   };
 
-  const removerCondicaoDe = (pers, alvoNome, id, nomeBruto) => {
-    const alvo = String(alvoNome || "você").toLowerCase().trim();
-    const casa = (x) => (id && x.id === id) || (x.nome || "").toLowerCase() === String(nomeBruto || "").toLowerCase();
-    const ehEu = !alvo || ["você", "voce", "eu", "herói", "heroi"].includes(alvo) || alvo === (pers.nome || "").toLowerCase();
-    if (ehEu) {
-      const tinha = (pers.condicoes || []).some(casa);
-      if (!tinha) return { pers, texto: "" };
-      return { pers: { ...pers, condicoes: (pers.condicoes || []).filter((x) => !casa(x)) }, texto: `✓ ${nomeBruto} passou` };
-    }
-    const idx = (pers.grupo || []).findIndex((g) => (g.nome || "").toLowerCase() === alvo);
-    if (idx >= 0) {
-      const grupo = pers.grupo.map((g, i) => (i !== idx ? g : { ...g, condicoes: (g.condicoes || []).filter((x) => !casa(x)) }));
-      return { pers: { ...pers, grupo }, texto: `✓ ${pers.grupo[idx].nome}: ${nomeBruto} passou` };
-    }
-    const comb = combateRef.current;
-    if (comb && (comb.inimigos || []).some((e) => (e.nome || "").toLowerCase() === alvo)) {
-      const nc = { ...comb, inimigos: comb.inimigos.map((e) => ((e.nome || "").toLowerCase() !== alvo ? e : { ...e, condicoes: (e.condicoes || []).filter((x) => !casa(x)) })) };
-      combateRef.current = nc; setCombate(nc);
-      return { pers, texto: `✓ ${alvoNome}: ${nomeBruto} passou` };
-    }
-    return { pers, texto: "" };
-  };
+  /* v9.49: `removerCondicaoDe` ficou sem chamador quando "condicoes_remover"
+     saiu. Quem tira condição agora é o relógio (o turno que vence), o descanso
+     e a cura — nunca uma frase. */
 
   /* ---------------- CAIR A ZERO (v9.41) ----------------
      O teste de morte existia desde sempre e morava DENTRO do revide de
@@ -4298,44 +4280,25 @@ export default function Taverna() {
     }
     if (resp.mudancas) pers = aplicarMudancas(pers, resp.mudancas, msgs);
     if ((pers.dadivasPendentes || 0) > 0) pers = concederDadivas(pers, msgs);
-    /* CONDIÇÕES: adiciona/remove nos alvos (jogador ou NPCs do grupo/combate) */
     if (resp.mudancas) {
       const md = resp.mudancas;
-      /* CONDIÇÕES (v9.0): o nome do Mestre é NORMALIZADO para o catálogo —
-         "envenenado gravemente" e "intoxicado" viram a mesma coisa, com a
-         mesma duração e o mesmo efeito. E agora valem também para
-         companheiros e inimigos, não só para o herói. */
-      (md.condicoes_adicionar || []).forEach((c) => {
-        if (!c || !c.nome) return;
-        const cond = criarCondicao(c.nome, { turnos: c.turnos, origem: "narrado pelo Mestre" });
-        if (!cond) { msgs.push(`⚠ Condição desconhecida ignorada: "${c.nome}" (use o catálogo do sistema).`); return; }
-        /* v9.32: a Dádiva do Vigor Irreal torna imune a exaustão, veneno e
-           doença — e imune quer dizer que a condição NÃO ENTRA, nem vinda do
-           Mestre. Vale só para o herói: a dádiva é dele. */
-        const paraMim = !c.alvo || String(c.alvo).toLowerCase() === "jogador" || String(c.alvo).toLowerCase() === (pers.nome || "").toLowerCase();
-        /* v9.44: a origem também torna imune — o Sintético não sente medo nem
-           se deixa encantar, e isso estava escrito na tela de criação sem
-           nada atrás. Mesma porta da dádiva: imune quer dizer que a condição
-           NÃO ENTRA, nem vinda do Mestre. */
-        const porDadiva = paraMim && imuneA(pers, cond.id);
-        const porOrigem = paraMim && imuneDeTraco(pers, cond.id);
-        if (porDadiva || porOrigem) {
-          const fonte = porDadiva ? "a Dádiva do Vigor Irreal" : `sua origem (${pers.raca})`;
-          msgs.push(`🌠 ${cond.nome} não pega: ${fonte} te faz imune.`);
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[IMUNIDADE — SISTEMA] Você tentou me pôr ${cond.nome.toLowerCase()}, e eu sou IMUNE a isso${porOrigem ? " por origem" : " por dádiva épica"}. Nada foi aplicado. Narre o que não pega — o medo que não encontra onde morder, o veneno que escorre sem entrar — e não insista com essa condição.`;
-          return;
-        }
-        const r = aplicarCondicaoEm(pers, c.alvo, cond);
-        pers = r.pers;
-        if (r.texto) msgs.push(r.texto);
-      });
-      (md.condicoes_remover || []).forEach((c) => {
-        if (!c || !c.nome) return;
-        const cond = criarCondicao(c.nome);
-        const r = removerCondicaoDe(pers, c.alvo, cond ? cond.id : null, c.nome);
-        pers = r.pers;
-        if (r.texto) msgs.push(r.texto);
-      });
+      /* CONDIÇÃO É DO SISTEMA (v9.49). Aqui moravam "condicoes_adicionar" e
+         "condicoes_remover": o Mestre punha e tirava condições na minha ficha
+         por campo estruturado, e um cão de guarda mais abaixo ainda lia a
+         NARRAÇÃO atrás das que ele tivesse esquecido de registrar. Os dois
+         saíram, e pelo mesmo motivo — o segundo mostrou o problema do
+         primeiro em estado puro: "sente o ar quente ainda PRESO NA garganta"
+         virou 🕸 Agarrado (2t), dois turnos de desvantagem por uma metáfora.
+
+         Prosa não é ficha. O mesmo verbo que prende o herói numa teia prende
+         o ar na garganta dele, e nenhuma régua sabe a diferença — nem a do
+         detector, nem a do Mestre escrevendo o campo.
+
+         Sobram TRÊS fontes, todas do código: o combate (`aflicoes.js` rola e
+         aplica), o tempo (o turno que vence, o descanso que limpa) e a falha
+         crítica num teste (`consequencias.js`). Quando a cena pede uma
+         condição, o caminho do Mestre é o de qualquer mesa: pedir a rolagem.
+         O dado decide e o sistema cobra. */
       /* ROLAGENS DE COMBATE (visíveis, se ligado nas config) */
       if (mostrarRolagensRef.current && Array.isArray(md.rolagens_combate)) {
         md.rolagens_combate.forEach((r) => {
@@ -4810,30 +4773,9 @@ export default function Taverna() {
           : " Nada de aproveitável ficou no chão — não invente achados."}${chefeCaido ? " A MASMORRA FOI CONCLUÍDA e o tesouro do chefe já foi entregue pelo sistema — narre a saída triunfal e retome o mundo lá fora." : ""}`;
       }
     }
-    /* ---- CÃO DE GUARDA DE CONDIÇÕES (v9.0) ----
-       O Mestre narrou "o veneno sobe pelo seu braço" e esqueceu de registrar?
-       O sistema lê a narração, reconhece a condição no catálogo e APLICA — a
-       ficção deixa de ser enfeite e vira mecânica. Só conta quando a frase
-       fala do herói e não está negada; e o inverso também vale: se ele narrou
-       explicitamente que a condição passou, o sistema tira. */
-    try {
-      const nar = resp.narrativa || "";
-      const achados = detectarCondicoesNarradas(nar, { nomeHeroi: pers.nome, jaAtivas: pers.condicoes || [] });
-      achados.slice(0, 3).forEach((a) => {
-        const cond = criarCondicao(a.id, { origem: "narrado pelo Mestre" });
-        if (!cond) return;
-        const r = aplicarCondicaoEm(pers, "você", cond);
-        pers = r.pers;
-        msgs.push(`${cond.icone} O Mestre narrou — o sistema aplicou: ${cond.nome}${cond.turnos ? ` (${cond.turnos}t)` : ""}. ${cond.efeito}`);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONDIÇÃO — APLICADA PELO SISTEMA A PARTIR DA SUA NARRAÇÃO] Você escreveu "${a.trecho}" e não registrou a condição. O sistema aplicou ${cond.nome} em mim (${cond.efeito}). Da próxima vez use "condicoes_adicionar" — e a partir de agora trate isso como fato mecânico, não como imagem.`;
-      });
-      const alivios = detectarAliviosNarrados(nar, pers.condicoes || []);
-      alivios.forEach((inst) => {
-        const r = removerCondicaoDe(pers, "você", inst.id, inst.nome);
-        pers = r.pers;
-        if (r.texto) msgs.push(`${r.texto} (narrado pelo Mestre)`);
-      });
-    } catch { /* o cão de guarda nunca derruba o turno */ }
+    /* v9.49: aqui morava o cão de guarda que lia a narração atrás de condições
+       — ver a nota lá em cima, onde `condicoes_adicionar` saiu. Foi ele que
+       transformou "o ar preso na garganta" em 🕸 Agarrado (2t). */
     try { conferirNemesisNaNarrativa(resp.narrativa); } catch { /* idem */ }
     /* ---- DA BASE PARA O CÂNONE (v9.14) ----
        O outro lado do consumo. Quando um local ou uma pessoa da base entra na
@@ -8412,6 +8354,33 @@ export default function Taverna() {
     const buffs = (personagem.efeitos || []).filter((e) => !e.aplica || e.aplica.toLowerCase() === (r.atributo || "").toLowerCase() || e.aplica.toLowerCase() === "testes");
     const notaBuff = buffs.length ? ` (inclui bônus de ${buffs.map((b) => b.nome).join(", ")})` : "";
     pushMsgs([{ autor: "sistema", texto: `🎲 d20 → ${valor}${mod ? ` + ${mod}` : ""} = ${total}${dc != null ? ` vs dif. ${dc}` : ""} · ${resultado}${dadoAnterior != null ? ` ✧ (refeito — o primeiro deu ${dadoAnterior})` : ""}` }]);
+    /* ---------------- O PREÇO DE FALHAR (v9.49) ----------------
+       A terceira e última fonte de condição do jogo, agora que o Mestre
+       deixou de ser fonte nenhuma. Só o 1 natural cobra, e só num teste que
+       põe o CORPO em risco: quem empurra o portão de pedra e tira 1 descobre
+       o próprio limite no ombro; quem falha em Percepção apenas não percebe,
+       e inventar um custo ali seria punir duas vezes o mesmo dado.
+
+       Vale nos dois caminhos — o teste que EU peço e a rolagem que o Mestre
+       pede — porque está antes da bifurcação dos envelopes. É de propósito:
+       toda regra deste jogo que mora num só dos dois caminhos vira bug. */
+    if (desastre) {
+      const custo = custoDaFalhaCritica(r.tipo || r.atributo);
+      const cond = custo ? criarCondicao(custo.cond, { origem: "falha crítica" }) : null;
+      if (cond) {
+        const base = personagemRef.current || personagem;
+        /* imune é imune, venha de onde vier — a mesma porta da dádiva e da
+           origem que já valia quando o Mestre é que aplicava */
+        if (imuneA(base, cond.id) || imuneDeTraco(base, cond.id)) {
+          pushMsgs([{ autor: "sistema", texto: `🌠 ${cond.nome} não pega: você é imune.` }]);
+        } else {
+          const ap = aplicarCondicaoEm(base, "você", cond);
+          personagemRef.current = ap.pers; setPersonagem(ap.pers);
+          pushMsgs([{ autor: "sistema", texto: linhaDoCusto(custo, cond) }]);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaDoCusto(custo, cond, r.motivo || "")}`;
+        }
+      }
+    }
     const notaVant = r.vantagem ? " (com vantagem)" : r.desvantagem ? " (com desvantagem)" : "";
     /* v9.16: quando houve refazer, o Mestre recebe a história do segundo
        fôlego junto do resultado — nunca a palavra "ponto" nem "sistema". */
