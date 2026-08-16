@@ -7,6 +7,41 @@ Este arquivo existe porque a alternativa é lembrar — e a varredura da
 v9.44 mostrou onde isso dá: regra escrita, ninguém liga o código, e o
 jogador descobre jogando.
 
+## Masmorra — o mais grave da varredura da v9.52
+
+- **UMA EM CADA OITO MASMORRAS É IMPOSSÍVEL DE TERMINAR.** Em 500 masmorras
+  geradas, **60 (12%)** põem a sala que guarda a chave num ramo sem caminho
+  até ele, e nas 60 a sala do chefe está TRANCADA. O jogador entra, limpa
+  tudo o que alcança, chega ao portão e lê "🔒 O portão está lacrado — falta
+  a chave que alguém guardou lá dentro" sem ter para onde ir. Só resta o
+  botão de fugir, que abre mão de tudo.
+
+  O caso maior é o mesmo defeito mais brando: **117 de 200 masmorras (58%)
+  têm pelo menos uma sala sem nenhum caminho até ela**. O gerador liga cada
+  camada à seguinte sorteando destinos, e sobra sala sem quem aponte para
+  ela. Exemplo real de sete salas, onde a 3 é órfã:
+
+  ```
+  0:entrada->[1,2]   1:chave->[4,5]   2:combate->[5,4]
+  3:combate->[6]     4:tesouro->[6]   5:tesouro->[6]   6:chefe->[]
+  ```
+
+  Consertar é garantir que toda sala da camada N tenha ao menos uma entrada
+  vinda de N−1 — e, se a régua falhar, que a chave nunca fique atrás dela.
+
+- **Mais da metade da masmorra é ignorável.** Andando sempre pela primeira
+  saída, uma masmorra de 9 salas termina com o chefe morto tendo visitado 5.
+  O tesouro, o santuário e a armadilha ficam para trás sem custo nenhum: não
+  há porta que exija tê-los feito, nem recompensa por limpar tudo. Explorar
+  é escolha sem consequência, dos dois lados.
+
+- **As tochas acabam antes de um terço da masmorra.** Começa com `5 + d3` e
+  gasta uma por sala, sempre — numa masmorra de 9 salas o herói fica no
+  escuro (desvantagem e mais perigo) a partir da quarta. Como o número
+  inicial não olha o tamanho da masmorra, quanto maior o covil, maior a
+  fração dele jogada às cegas. Ou as tochas escalam, ou dá para comprá-las e
+  repô-las, ou o escuro deixa de ser o estado normal.
+
 ## Balanceamento — achado na varredura da v9.52
 
 - **Cinco classes param de crescer no meio do caminho.** Medindo o dano POR
@@ -147,20 +182,36 @@ jogador descobre jogando.
   depois de abrir a bolsa e reparar. Colher uma erva na estrada devia
   acender alguma coisa.
 
-## O que ainda não foi testado
+## O que a sonda passou — e não vira pendência
 
-Registro honesto do que a varredura da v9.52 NÃO cobriu, para ninguém supor
-que está verificado:
+Registrado para ninguém gastar tempo reconferindo. Medido em v9.52:
 
-- **Masmorra** (sala a sala, chefe, tesouro) — nunca joguei uma inteira.
-- **Ascensão e deicídio** — o rito tem provas e nunca as encarei.
-- **Diplomacia, correio e decretos** — painéis abertos, nunca exercitados.
-- **Descanso longo e acampamento** — as conversas de acampamento, o mundo que
-  para, o que o descanso limpa.
-- **Companheiros em combate** — o motor decide por eles e nunca vi uma luta
-  com o grupo cheio.
-- **Morte do herói** e a tela de tombamento.
-- **Mercado**: comprar e vender de verdade, com o preço aferido.
+- **Companheiros.** Entram com classe e duas habilidades do catálogo, chegam
+  ao nível 5 com sete habilidades depois de 10 mil XP, e decidem de verdade
+  em combate (200 decisões: 82 ataques, 118 habilidades — não é repetição).
+- **Morte do herói.** Em 2.000 quedas a 0 PV: 39% morre, 43% estabiliza, 18%
+  volta com o 20 natural. A curva está no lugar.
+- **Descanso longo.** Limpa todas as doze condições ruins do catálogo e
+  preserva Abençoado e Inspirado. O curto limpa só sangramento, cegueira e
+  fogo, que é o desenho.
+- **Mercado.** Estoque proporcional ao porte: 3 mercadores e 15 itens numa
+  capital, 1 e 5 numa vila, com preço aferido pelo sistema.
+- **Fuga do inimigo.** Um lacaio a 1 de 20 PV foge em 51% das rodadas.
+- **Ascensão.** Deicídio e relíquia têm três provas cada; a Via da Fé não tem
+  prova nenhuma **por desenho** — ali se sobe acumulando fiéis, e é isso que
+  a torna "lenta, segura e legítima".
+- **Diplomacia.** Os cinco tratados existem e estão ligados ao mapa.
+
+## O que ainda não foi jogado de ponta a ponta
+
+A sonda mede os módulos; ela não substitui a partida. Continua sem
+verificação **na tela**:
+
+- A masmorra jogada sala a sala pela interface (o painel, o ritmo, a busca).
+- O acampamento e as conversas de vínculo.
+- Comprar e vender de fato, com moeda saindo do bolso.
+- A tela de tombamento do herói.
+- Diplomacia e correio exercitados com uma facção real.
 
 ## Fora do jogo
 
