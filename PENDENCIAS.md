@@ -69,23 +69,25 @@ jogador descobre jogando.
   para o Engenheiro e o Invocador (que vivem de máquinas e criaturas) isso
   parece esquecimento, não desenho.
 
-- **Vinte e duas habilidades ainda prometem número e não têm quem o cobre.**
-  (Eram trinta; a v9.53 pagou oito.) A varredura
+- **Dezoito habilidades ainda prometem número e não têm quem o cobre.**
+  (Eram trinta; a v9.53 pagou doze — restam movimento/alcance e controle de inimigo.) A varredura
   separou por família, e cada família é um resolvedor:
   - ~~**Defesa temporária**~~ RESOLVIDO na v9.53: as cinco erguem uma GUARDA
     que soma à CA e vence por rodada, como a forma e a invocação.
   - **Controle de inimigo** (Marionete, Discórdia, Selo de Interdito, Silêncio
     Que Grita, Mentira Luminosa, Palco Aberto): virar um inimigo contra o
     outro, calar a conjuração, criar uma cópia. Nenhum tem código.
-  - **Invulnerabilidade temporária** (Vazio Perfeito, Dança Sem Vulto, Nada Me
-    Alcança, Improvável): "por N turnos nada te atinge" — a promessa mais
-    perigosa de todas para ficar solta.
+  - ~~**Invulnerabilidade temporária**~~ RESOLVIDO na v9.53: as quatro entram
+    como GUARDA, com uma escada deliberada — só a de UM turno (Vazio Perfeito)
+    é absoluta e faz o golpe errar antes do dado; as de três e quatro turnos
+    viram desvantagem, porque um combate inteiro sem poder ser acertado não é
+    uma habilidade, é o fim do combate. Nada Me Alcança só morde feitiço.
   - **Movimento e alcance** (Passo do Vento, Mais Rápido que o Olho, Cano
     Longo, Olho que Mede o Vento, Mira do Batedor, Punho que Rompe): dobrar
     deslocamento, agir duas vezes, ignorar cobertura e armadura.
-  - **Reerguer que faltou** (Refrão Teimoso, Renascimento, Grande Necrópole):
-    a família do `reerguerDe` existe desde a v9.47 e estas três ficaram de
-    fora do casamento.
+  - ~~**Reerguer que faltou**~~ RESOLVIDO na v9.53: Refrão Teimoso,
+    Renascimento e Grande Necrópole entraram na tabela do `reerguerDe`, e o
+    Refrão devolve a metade que a descrição dele promete com todas as letras.
 
 - **"Céu Escuro" diz "toda a área inimiga" e não é reconhecida como área.**
   As irmãs dela (Chuva de Flechas, Cem Passos, Corrente Viva, Caos Puro) caem

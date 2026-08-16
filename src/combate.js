@@ -7,7 +7,7 @@
    vantagem/desvantagem, críticos e condições de estado.
    ============================================================ */
 import { alcanca, bonusDefesaEm } from "./grid.js";
-import { defesaDeGuarda } from "./habilidades.js";
+import { defesaDeGuarda, estaIntocavel, esquivaDeGuarda } from "./habilidades.js";
 
 import { perfilDeCriatura, multiplicadorDano, iconeDano, resistenciasEquipadas, elementoDaArma } from "./danos.js";
 import { mecanicaDe } from "./condicoes.js";
@@ -83,9 +83,21 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
   const modAlvo = modificadoresDeCondicao(condAlvo);
   if (modAtk.perdeAcao) return { tipo: "impedido", texto: `${atacante} está impossibilitado de agir` };
 
+  /* ---------------- A GUARDA QUE NÃO DEIXA ACERTAR (v9.53) ----------------
+     Quatro habilidades prometiam "por N turnos nada te atinge" e nenhuma
+     tinha código — a promessa mais perigosa de todas para ficar solta,
+     porque é a única que, cumprida errado, acaba com o combate.
+
+     A intocável erra ANTES do dado: não é uma rolagem difícil, é o golpe que
+     não encontra corpo. Dura um turno, e é por isso que pode ser absoluta. */
+  if (estaIntocavel(alvo)) {
+    return { tipo: "erra", resultado: "errou", d20: 0, bonus: 0, total: 0, ca: 0, dano: 0, critico: false, desastre: false, intocavel: true };
+  }
   // cego no alvo dá vantagem a quem ataca; vantagem/desvantagem do atacante somam
   let vant = vantagem || modAtk.vantagem;
   let desv = desvantagem || modAtk.desvantagem;
+  /* as de prazo longo não zeram o golpe: entortam o dado contra quem ataca */
+  if (esquivaDeGuarda(alvo, { magico: tipoDano && tipoDano !== "fisico" })) desv = true;
   if (condAlvo.some((c) => (c.nome || "").toLowerCase().includes("cego"))) vant = true;
   // se vantagem e desvantagem coexistem, cancelam (regra 5e)
   if (vant && desv) { vant = false; desv = false; }

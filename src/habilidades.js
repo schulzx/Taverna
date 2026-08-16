@@ -305,12 +305,24 @@ export function colherPorLimiar(inimigos, regra, { podeCair } = {}) {
    que mais rápido quebra um combate.
    ============================================================ */
 
+/* `tipo`: "defesa" soma à CA; "esquiva" dá desvantagem a quem te ataca;
+   "intocavel" faz o golpe errar. A escada é de propósito — quanto mais
+   absoluta a promessa, mais curto o prazo, porque "nada te atinge" por três
+   turnos é um combate inteiro sem combate. */
 export const GUARDAS = [
   { id: "casca_carvalho", rx: /casca de carvalho/, valor: 4, turnos: 3, conceito: "a pele vira casca: o golpe encontra madeira antes de encontrar carne" },
   { id: "pele_arcana",    rx: /pele arcana/,       valor: 3, turnos: 2, conceito: "a magia endurece a pele num verniz que a lâmina não gosta" },
   { id: "forma_draconica", rx: /forma draconica/,  valor: 3, turnos: 3, conceito: "escamas sobem pelos braços e as costas ganham peso de asa" },
   { id: "enxerto_mecanico", rx: /enxerto mecanico/, valor: 3, turnos: 4, conceito: "peças presas ao próprio corpo: mais resistência, menos gente" },
   { id: "elixir_combate", rx: /elixir de combate/, valor: 2, turnos: 3, conceito: "o elixir desce queimando e o corpo responde mais firme" },
+  /* v9.53: as quatro que prometiam invulnerabilidade. "Por um turno, nada te
+     atinge" é a única que fica absoluta — e fica porque dura UM turno. As de
+     três e quatro turnos viram desvantagem: um combate inteiro sem poder ser
+     acertado não é uma habilidade, é o fim do combate. */
+  { id: "vazio_perfeito", rx: /vazio perfeito|nada te atinge/, tipo: "intocavel", turnos: 1, conceito: "o corpo para de estar onde o golpe procura" },
+  { id: "danca_sem_vulto", rx: /danca sem vulto|tudo que vier em sua direcao erra/, tipo: "esquiva", turnos: 3, conceito: "o corpo vira dança: o que vem em sua direção passa por onde você não está mais" },
+  { id: "nada_me_alcanca", rx: /nada me alcanca|nenhum efeito mental ou magico funciona/, tipo: "esquiva", soMagia: true, turnos: 4, conceito: "a mente fecha como punho: o que é feitiço escorrega e não encontra onde entrar" },
+  { id: "improvavel", rx: /improvavel|tudo que puder dar certo/, tipo: "esquiva", turnos: 3, conceito: "a sorte entorta a favor: o que podia dar certo, dá" },
 ];
 
 export function guardaDe(hab) {
@@ -319,19 +331,30 @@ export function guardaDe(hab) {
   return GUARDAS.find((g) => g.rx.test(t)) || null;
 }
 
-export const guardasAtivas = (pers) => ((pers && pers.guardas) || []).filter((g) => g && g.valor);
+export const guardasAtivas = (pers) => ((pers && pers.guardas) || []).filter(Boolean);
 export const defesaDeGuarda = (pers) => guardasAtivas(pers).reduce((s, g) => s + (Number(g.valor) || 0), 0);
+
+/* O golpe simplesmente NÃO acerta: só a guarda de um turno faz isso. */
+export const estaIntocavel = (pers) => guardasAtivas(pers).some((g) => g.tipo === "intocavel");
+/* Quem ataca este herói rola com desvantagem. `magico` distingue a guarda que
+   só morde feitiço (Nada Me Alcança) da que morde tudo. */
+export function esquivaDeGuarda(pers, { magico = false } = {}) {
+  return guardasAtivas(pers).some((g) => g.tipo === "esquiva" && (!g.soMagia || magico));
+}
 
 export function erguerGuarda(pers, hab, rodada = 1) {
   const g = guardaDe(hab);
   if (!g) return null;
   const jaTem = ((pers && pers.guardas) || []).some((x) => x.id === g.id);
   if (jaTem) return { ok: false, pers, linha: `⛔ ${hab.nome}: essa guarda já está de pé.`, nota: "" };
-  const guardas = [...((pers && pers.guardas) || []), { id: g.id, nome: hab.nome, valor: g.valor, ate: rodada + g.turnos }];
+  const guardas = [...((pers && pers.guardas) || []), { id: g.id, nome: hab.nome, valor: g.valor, tipo: g.tipo || "defesa", soMagia: !!g.soMagia, ate: rodada + g.turnos }];
+  const efeito = g.tipo === "intocavel" ? "nenhum golpe te acerta"
+    : g.tipo === "esquiva" ? `quem ${g.soMagia ? "te conjura" : "te ataca"} rola com desvantagem`
+    : `+${g.valor} de defesa`;
   return {
     ok: true, pers: { ...pers, guardas },
-    linha: `🛡 ${hab.nome} — ${g.conceito}. +${g.valor} de defesa · ${g.turnos} turnos.`,
-    nota: `[GUARDA ERGUIDA PELO SISTEMA] "${hab.nome}": ${g.conceito}. O sistema já somou ${g.valor} à minha defesa e conta os ${g.turnos} turnos. Narre o que mudou no meu corpo e mostre os golpes resvalando — não invente número, não estenda o prazo e não a desfaça.`,
+    linha: `🛡 ${hab.nome} — ${g.conceito}. ${efeito} · ${g.turnos} turno${g.turnos > 1 ? "s" : ""}.`,
+    nota: `[GUARDA ERGUIDA PELO SISTEMA] "${hab.nome}": ${g.conceito}. O sistema já aplicou (${efeito}) e conta os ${g.turnos} turnos. Narre o que mudou no meu corpo e mostre os golpes resvalando — não invente número, não estenda o prazo e não a desfaça.`,
   };
 }
 
