@@ -3,7 +3,7 @@ import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./n
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
-import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
+import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste, dificuldadePorPerfil } from "./bestiario.js";
@@ -13,8 +13,8 @@ import { rolarClima, rolarEncontro, CLIMAS } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
-import { RARIDADES, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, valorDe } from "./loot.js";
-import { gerarMasmorra, recompensaChefe, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca } from "./masmorras.js";
+import { RARIDADES, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
+import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca } from "./masmorras.js";
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDaAbordagem, ICONE_OFERTA } from "./ofertas.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
@@ -1038,6 +1038,8 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
               defesa={defesaDe(personagem)}
               iniciativa={atributoEfetivo(personagem, "destreza")}
               ataques={ataquesPorTurno(personagem.classe, personagem.nivel || 1)}
+              golpe={resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1)}
+              proximo={proximoGanho(personagem.classe, personagem.nivel || 1)}
               modDe={(id) => atributoEfetivo(personagem, id)}
               penalidades={penalidadesAtivas(personagem, ranksDoPersonagem(personagem))}
               proficiencias={proficienciasDoHeroi(personagem, ranksDoPersonagem(personagem))}
@@ -4810,6 +4812,13 @@ export default function Taverna() {
            dinheiro pela mesma caçada, não experiência mais rápido. */
         const esp = { ...espBruto, moedas: moedasDeEspolio(pers, espBruto.moedas) };
         let p2 = { ...pers, moedas: (pers.moedas || 0) + esp.moedas, xp: (pers.xp || 0) + esp.xp };
+        /* v9.54: a mesma segunda fonte de essência do outro caminho de
+           vitória — os dois precisam concordar, senão a forja renderia
+           conforme QUEM fechou a luta, e isso o jogador não escolhe. */
+        {
+          const ess = essenciaDeEspolio(resp.mudancas.__inimigosFinais || []);
+          if (ess > 0) { p2.essencia = (p2.essencia || 0) + ess; msgs.push(`⚗ +${ess} de essência — o que sobra quando algo com poder morre.`); }
+        }
         let subiu = 0;
         while (p2.xp >= XP_POR_NIVEL(p2.nivel)) { p2.xp -= XP_POR_NIVEL(p2.nivel); p2.nivel += 1; p2.nivelPendentes = (p2.nivelPendentes || 0) + 1; subiu++; }
         p2.grupo = (p2.grupo || []).map((g) => { if (g.invocada) return g; const ev = evoluirCompanheiro({ ...g, xp: (g.xp || 0) + esp.xp }); const m2 = ev._subiu; delete ev._subiu; if (m2) msgs.push(`✦ ${g.nome} subiu para o nível ${ev.nivel}!`); return ev; });
@@ -4871,9 +4880,14 @@ export default function Taverna() {
           const sala = salaCorrente;
           const rec = recompensaChefe(p2.nivel || 1);
           /* v9.26: a luz que sobrou volta com o herói, junto do tesouro */
+          /* v9.54: o chefe deixa ESSÊNCIA, e é a maior fonte do jogo. É a
+             criatura mais carregada de poder que a masmorra põe na frente do
+             herói, e o momento em que ele mais quer forjar alguma coisa. */
+          const essChefe = essenciaDoChefe(p2.nivel || 1);
           p2 = { ...p2, moedas: (p2.moedas || 0) + (sala.moedas || 0), equipamento: [...(p2.equipamento || []), rec.item],
+                 essencia: (p2.essencia || 0) + essChefe,
                  suprimentos: { ...garantirSuprimentos(p2.suprimentos), tochas: Math.max(0, mm.tochas || 0) } };
-          msgs.push(`🕳 ${mm.nome} CONCLUÍDA! Tesouro do fundo: +${sala.moedas} moedas · ✦ ${rec.item.nome} (${RARIDADE_ROTULO[rec.item.raridade] || rec.item.raridade})`);
+          msgs.push(`🕳 ${mm.nome} CONCLUÍDA! Tesouro do fundo: +${sala.moedas} moedas · ⚗ +${essChefe} essência · ✦ ${rec.item.nome} (${RARIDADE_ROTULO[rec.item.raridade] || rec.item.raridade})`);
           if ((mm.tochas || 0) > 0) msgs.push(`🕯 ${mm.tochas} tocha(s) voltam para a mochila.`);
           masmorraRef.current = null; setMasmorra(null);
           bumpCont("masmorrasConcluidas");
@@ -7418,7 +7432,19 @@ export default function Taverna() {
        pronto — as mensagens existem antes de serem lidas. */
     {
       const base = personagemRef.current || personagem || {};
+      /* v9.54: A SEGUNDA FONTE DE ESSÊNCIA. Desmontar equipamento era a única,
+         e isso fechava a forja num círculo: quem não acha equipamento não
+         desmonta, quem não desmonta não forja, e quem não forja continua sem
+         achar — o jogador que mais precisava dela era o que menos podia
+         usá-la. Agora ela também sobra de quem morre carregado de poder.
+         Bicho comum não deixa nada: um bando de goblins segue rendendo só
+         moeda, e é o elite que deixa resíduo. */
+      const essenciaGanha = essenciaDeEspolio(derrotados);
       let p2 = { ...base, moedas: (base.moedas || 0) + esp.moedas, xp: (base.xp || 0) + esp.xp };
+      if (essenciaGanha > 0) {
+        p2.essencia = (p2.essencia || 0) + essenciaGanha;
+        msgsU.push(`⚗ +${essenciaGanha} de essência — o que sobra quando algo com poder morre.`);
+      }
       while (p2.xp >= XP_POR_NIVEL(p2.nivel)) { p2.xp -= XP_POR_NIVEL(p2.nivel); p2.nivel += 1; p2.nivelPendentes = (p2.nivelPendentes || 0) + 1; }
       p2.grupo = (p2.grupo || []).map((g) => { if (g.invocada) return g; const ev = evoluirCompanheiro({ ...g, xp: (g.xp || 0) + esp.xp }); delete ev._subiu; return ev; });
       /* PRESENÇA DIVINA expira com o fim do combate — não vira debuff eterno */
@@ -9222,10 +9248,21 @@ export default function Taverna() {
     if (sala.tipo === "combate" || sala.tipo === "chefe") {
       /* COMBATE ABERTO PELO SISTEMA (v7.0): o app monta os inimigos pelo
          bestiário e abre o HUD na hora — sem depender do Mestre lembrar. */
-      const inimigos = (sala.inimigos || []).map((i) => {
+      let inimigos = (sala.inimigos || []).map((i) => {
         const comp = completarInimigo({ nome: i.nome, ameaca: i.ameaca }, personagem.nivel || 1);
         return { ...comp, derrotado: false, semente: `inimigo|${comp.nome}|${comp.ameaca || ""}` };
       });
+      /* v9.54: O CHEFE PAGA PELAS SALAS QUE VOCÊ LIMPOU. Era possível matá-lo
+         visitando cinco de nove salas, e o tesouro, o santuário e o enigma
+         eram puláveis sem custo nenhum — explorar era zelo, não decisão.
+         Agora cada sala limpa tira força do chefe e queima tocha e tempo: as
+         duas pontas puxam, e o jogador escolhe onde parar. */
+      let notaDesgaste = "";
+      if (sala.tipo === "chefe") {
+        const dg = chefeDesgastado(masmorraRef.current, inimigos);
+        inimigos = dg.inimigos;
+        if (dg.linha) { pushMsgs([{ autor: "sistema", texto: dg.linha }]); notaDesgaste = ` ${dg.nota}`; }
+      }
       combateRef.current = { inimigos }; setCombate(combateRef.current); combateOciosoRef.current = 0;
       salaEmCursoRef.current = id;
       inimigos.forEach((comp) => {
@@ -9236,7 +9273,7 @@ export default function Taverna() {
       setDescobertas(descobRef.current);
       const lista = inimigos.map((i) => `${i.nome} (nv ${i.nivel || 1}, ${i.vida} PV)`).join(", ");
       pushMsgs([{ autor: "sistema", texto: `⚔ ${sala.tipo === "chefe" ? "A sala do chefe!" : "Emboscada na masmorra!"} ${inimigos.map((i) => i.nome).join(", ")} — o combate está aberto.` }]);
-      enviar(`[MASMORRA — ${pos} · ${sala.tipo === "chefe" ? "CHEFE" : "COMBATE"} — COMBATE JÁ ABERTO PELO SISTEMA] Avanço para a próxima sala e os inimigos saltam das sombras: ${lista}. O HUD de combate JÁ ESTÁ ABERTO — NÃO envie "combate_iniciar". Descreva a sala e a investida inicial em 1-2 frases e me passe a vez (eu ajo pelos botões de combate).${sala.tipo === "chefe" ? " É o confronto final desta masmorra — narre à altura." : ""}${avisoSegredo}${extraTempo}`, personagem);
+      enviar(`[MASMORRA — ${pos} · ${sala.tipo === "chefe" ? "CHEFE" : "COMBATE"} — COMBATE JÁ ABERTO PELO SISTEMA] Avanço para a próxima sala e os inimigos saltam das sombras: ${lista}. O HUD de combate JÁ ESTÁ ABERTO — NÃO envie "combate_iniciar". Descreva a sala e a investida inicial em 1-2 frases e me passe a vez (eu ajo pelos botões de combate).${sala.tipo === "chefe" ? " É o confronto final desta masmorra — narre à altura." : ""}${notaDesgaste}${avisoSegredo}${extraTempo}`, personagem);
     } else if (sala.tipo === "armadilha") {
       /* dano por código: o herói (ou um companheiro, 30%) sofre a armadilha */
       const emComp = (personagem.grupo || []).length > 0 && Math.random() < 0.3;
@@ -10246,6 +10283,24 @@ export default function Taverna() {
     }
     if (cons.tipo === "mana" && (personagem.mana || 0) >= (personagem.manaMax || 0)) {
       pushMsgs([{ autor: "sistema", texto: `⚗ ${cons.nome} guardada — sua mana já está cheia.` }]); return;
+    }
+    /* v9.54: TOCHA. O efeito não é da ficha, é do lugar — e fora de uma
+       masmorra não há lugar onde ele signifique alguma coisa. A mesma régua
+       da poção cheia: gastar um item para nada é desperdício, não decisão. */
+    if (cons.tipo === "tocha") {
+      const mmT = masmorraRef.current;
+      if (!mmT || mmT.encerrada) { pushMsgs([{ autor: "sistema", texto: `🕯 ${cons.nome} fica na bolsa — tocha só serve lá embaixo.` }]); return; }
+      const ac = acenderTochas(mmT, cons.quantas || 3);
+      if (ac.mm === mmT) { pushMsgs([{ autor: "sistema", texto: ac.linha }]); return; }
+      masmorraRef.current = ac.mm; setMasmorra(ac.mm);
+      const semUma = { ...personagem, inventario: (() => {
+        const i = (personagem.inventario || []).findIndex((raw) => (typeof raw === "string" ? raw : (raw && raw.nome) || "") === nomeItem);
+        return i >= 0 ? personagem.inventario.filter((_, k) => k !== i) : (personagem.inventario || []);
+      })() };
+      setPersonagem(semUma);
+      pushMsgs([{ autor: "sistema", texto: ac.linha }]);
+      salvar({ personagem: semUma, masmorra: ac.mm });
+      return;
     }
     const comb = combateRef.current;
     /* v9.13: ABRIR A BOLSA NÃO É O TURNO. Enquanto agir encerrava o turno só

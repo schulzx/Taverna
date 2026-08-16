@@ -509,13 +509,77 @@ export function ataquesPorTurno(classe, nivel) {
   return 1 + (p.extras || []).filter((n) => (nivel || 1) >= n).length;
 }
 
-/* Quantos DADOS de dano a conjuração/golpe carrega (conjuradores e ladino). */
+/* ---------------- OS DOIS EIXOS DE PROGRESSÃO (v9.54) ----------------
+   Quantos DADOS de dano a conjuração/golpe carrega.
+
+   Aqui morava a doença que esvaziava o jogo no segundo tempo: OS DOIS
+   EIXOS PASSAVAM PELA MESMA PORTA. Quem não ganhava o terceiro e o quarto
+   ataque também não ganhava dado maior — e como só o Guerreiro ganha o
+   terceiro e o quarto, cinco classes paravam de crescer no nível 5.
+
+   Medido antes do conserto, o vão entre um ganho e o seguinte:
+
+     Monge, Caçador, Engenheiro, Clérigo   5 → 20   quinze níveis
+     Bardo                                 6 → 20   quatorze níveis
+     Guerreiro                            11 → 20   nove níveis
+     Conjuradores                          5 → 11   seis níveis
+     Ladino                                          dois níveis
+
+   Um Monge nível 20 batia como um nível 5 enquanto o Ladino ao lado dele
+   triplicava. Quinze níveis é mais da metade da campanha inteira sem que
+   subir de nível signifique alguma coisa no combate.
+
+   O conserto separa os eixos: quem NÃO chega ao terceiro ataque ganha o
+   dado crescente, na mesma escada dos conjuradores (11 e 17). Quem chega
+   mantém o dado — o Guerreiro é o único, e o quarto ataque no 20 é o
+   maior salto isolado do jogo. Dar-lhe dado por cima faria dele outra
+   coisa: não o mestre das armas, o dono do combate. */
 export function dadosDeDano(classe, nivel) {
   const p = perfilCombate(classe);
   const nv = nivel || 1;
   if (p.tipo === "conjurador") return 1 + (nv >= 5 ? 1 : 0) + (nv >= 11 ? 1 : 0) + (nv >= 17 ? 1 : 0);
   if (p.tipo === "furtivo") return 1 + Math.floor(nv / 2); // Ataque Furtivo: +1 dado a cada 2 níveis
-  return 1;
+  /* três ou mais degraus de ataque extra = o eixo dele já é o número de
+     golpes; nada de dado por cima */
+  if ((p.extras || []).length >= 3) return 1;
+  return 1 + (nv >= 11 ? 1 : 0) + (nv >= 17 ? 1 : 0);
+}
+
+/* Os níveis em que ESTA classe ganha alguma coisa no combate — os dois
+   eixos juntos. Existe para a ficha poder dizer ao jogador o que vem
+   pela frente, e para o teste poder provar que ninguém fica parado. */
+export function marcosDaClasse(classe) {
+  const marcos = [];
+  for (let nv = 2; nv <= 20; nv++) {
+    const ganhouAtaque = ataquesPorTurno(classe, nv) !== ataquesPorTurno(classe, nv - 1);
+    const ganhouDado = dadosDeDano(classe, nv) !== dadosDeDano(classe, nv - 1);
+    if (ganhouAtaque || ganhouDado) marcos.push({ nivel: nv, ataque: ganhouAtaque, dado: ganhouDado });
+  }
+  return marcos;
+}
+
+/* O maior número de níveis seguidos sem ganhar nada. É a régua da 3.1:
+   nenhuma classe pode passar de nove, que é o vão do Guerreiro entre o
+   terceiro e o quarto ataque — o único vão longo que se justifica,
+   porque termina no maior salto do jogo. */
+export function maiorVaoSemGanho(classe) {
+  const ns = marcosDaClasse(classe).map((m) => m.nivel);
+  let maior = (ns.length ? ns[0] : 21) - 1;
+  for (let i = 0; i < ns.length; i++) {
+    const fim = i + 1 < ns.length ? ns[i + 1] : 21;
+    maior = Math.max(maior, fim - ns[i] - (i + 1 < ns.length ? 0 : 1));
+  }
+  return maior;
+}
+
+/* O que ainda vem: a linha que a ficha mostra para o próximo degrau. */
+export function proximoGanho(classe, nivel) {
+  const m = marcosDaClasse(classe).find((x) => x.nivel > (nivel || 1));
+  if (!m) return null;
+  const o = m.ataque && m.dado ? "mais um ataque e um dado de dano"
+    : m.ataque ? "mais um ataque por turno"
+    : "mais um dado de dano em cada golpe";
+  return { nivel: m.nivel, texto: `no nível ${m.nivel}: ${o}` };
 }
 
 /* Resumo pronto para a ficha e para o prompt. */
@@ -523,9 +587,12 @@ export function resumoAcaoDeTurno(classe, nivel) {
   const p = perfilCombate(classe);
   const n = ataquesPorTurno(classe, nivel);
   const dd = dadosDeDano(classe, nivel);
-  if (p.tipo === "conjurador") return { n: 1, dados: dd, texto: `1 conjuração por turno com ${dd}d${p.dadoBase} de dano`, tipo: p.tipo };
-  if (p.tipo === "furtivo") return { n: 1, dados: dd, texto: `1 golpe por turno com ${dd}d${p.dadoBase} (Ataque Furtivo)`, tipo: p.tipo };
-  return { n, dados: 1, texto: `${n} ataque${n > 1 ? "s" : ""} por turno`, tipo: p.tipo };
+  if (p.tipo === "conjurador") return { n: 1, dados: dd, face: p.dadoBase, texto: `1 conjuração por turno com ${dd}d${p.dadoBase} de dano`, tipo: p.tipo };
+  if (p.tipo === "furtivo") return { n: 1, dados: dd, face: p.dadoBase, texto: `1 golpe por turno com ${dd}d${p.dadoBase} (Ataque Furtivo)`, tipo: p.tipo };
+  /* v9.54: o dado do marcial passa a aparecer. Enquanto ele era sempre 1,
+     omiti-lo era economia de tela; agora que cresce, escondê-lo seria
+     esconder metade da progressão de cinco classes. */
+  return { n, dados: dd, face: p.dadoBase, texto: `${n} ataque${n > 1 ? "s" : ""} por turno de ${dd}d${p.dadoBase}`, tipo: p.tipo };
 }
 
 /* Dano por golpe já considerando os dados da classe. */

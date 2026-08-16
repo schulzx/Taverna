@@ -158,6 +158,12 @@ export function FichaVisual({
   personagem, mundo, divindade, tituloAtivo, tituloInfo, famaInfo, patamarNome,
   defesa, iniciativa, ataques = 1, modDe, penalidades = [], proficiencias = null,
   onSubirAtributo, pontosAtr = 0, onAlternarPericia,
+  /* v9.54: o golpe da vez e o próximo degrau. Enquanto o dado do marcial era
+     sempre 1, mostrar só o número de ataques bastava; agora que ele cresce,
+     essa pílula escondia metade da progressão de cinco classes. E `proximo`
+     existe porque foi a queixa por trás da 3.1: não é só que o Monge parava
+     de crescer — é que ele não tinha como saber que tinha parado. */
+  golpe = null, proximo = null,
 }) {
   const p = personagem || {};
   const nivel = p.nivel || 1;
@@ -194,8 +200,18 @@ export function FichaVisual({
           <Vital rotulo="Defesa" valor={defesa} cor={T.amberSoft} titulo="Quão difícil é te acertar (10 + destreza + armadura e escudo)" />
           <Vital rotulo="Iniciativa" valor={sinal(iniciativa)} titulo="O que você soma ao d20 para decidir quem age primeiro" />
           <Vital rotulo="Proficiência" valor={sinal(prof)} titulo={`Bônus de proficiência do nível ${nivel} — soma no que você domina`} />
-          <Vital rotulo="Ataques" valor={ataques} sub="por turno" cor={ataques > 1 ? T.amberSoft : T.ink} titulo="Quantos golpes saem numa ação de ataque, pela sua classe e nível" />
+          <Vital rotulo={golpe && golpe.tipo === "conjurador" ? "Conjuração" : "Ataques"}
+            valor={golpe && golpe.tipo === "conjurador" ? `${golpe.dados}d${golpe.face}` : ataques}
+            sub={golpe && golpe.tipo !== "conjurador" ? `× ${golpe.dados}d${golpe.face}` : "por turno"}
+            cor={ataques > 1 || (golpe && golpe.dados > 1) ? T.amberSoft : T.ink}
+            titulo={golpe ? `${golpe.texto} — os dois eixos da sua classe: quantos golpes saem e quanto dado cada um carrega` : "Quantos golpes saem numa ação de ataque, pela sua classe e nível"} />
         </div>
+
+        {proximo ? (
+          <div className="tv-mono text-[9px] px-1" style={{ color: T.inkDim }} title="O próximo degrau de combate da sua classe">
+            ▸ próximo degrau {proximo.texto}
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-2 gap-3">
           <Barra atual={p.vida} max={p.vidaMax} cor={T.danger} rotulo="Vida" />

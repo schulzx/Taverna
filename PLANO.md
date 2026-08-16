@@ -24,21 +24,17 @@ Uma coisa só, e era a mais urgente do projeto.
 
 ### 1.1 A masmorra impossível ✅ FEITO
 
-Doze por cento das masmorras não podem ser terminadas: a sala da chave fica
-num ramo sem caminho e a do chefe está trancada.
+Doze por cento das masmorras não podiam ser terminadas: a sala da chave ficava
+num ramo sem caminho e a do chefe estava trancada.
 
-O conserto é no gerador, em `masmorras.js`, e tem duas metades:
+O conserto foi no gerador, em `masmorras.js`, nas duas metades planejadas —
+toda sala ganha um pai dentro do laço de geração, e `garantirCaminhos` faz a
+segunda checagem no fim. E apareceu uma terceira causa que o plano não
+previa: `sortear = arr[d(arr.length)]`, com `d(n)` devolvendo 1..n, tornava o
+índice 0 inalcançável em toda tabela do jogo.
 
-- **Toda sala precisa de uma entrada.** Ao ligar a camada N à N−1, garantir
-  que nenhuma sala fique sem quem aponte para ela — hoje os destinos são
-  sorteados e sobra órfã em 58% dos casos.
-- **A chave nunca atrás da própria porta.** Mesmo com a régua acima, uma
-  segunda checagem no fim da geração: se a sala que guarda a chave não é
-  alcançável sem a chave, religar. É o cinto além do suspensório, e aqui
-  vale, porque o custo do erro é a partida inteira.
-
-**Teste que fica:** gerar mil masmorras e provar que em todas existe caminho
-da entrada a cada sala, e que a chave vem antes de qualquer porta trancada.
+**Teste que ficou:** mil masmorras com caminho da entrada a cada sala, chave
+sempre alcançável sem a chave, e 200 de 200 concluíveis andando de verdade.
 
 ---
 
@@ -87,51 +83,49 @@ A régua pedia a preposição ("em área") e não reconhecia a coisa dita direto
 
 ---
 
-## Onda 3 — o que faz o jogo esvaziar com o tempo
+## Onda 3 — o que faz o jogo esvaziar com o tempo ✅ FEITA (v9.54)
 
-### 3.1 Cinco classes que param de crescer `alto` `médio`
+### 3.1 Cinco classes que param de crescer ✅ FEITO
 
-Caçador, Engenheiro, Clérigo, Bardo e Monge congelam no nível 5 ou 11. Um
-Monge nível 20 bate como um nível 5.
+A causa era estrutural, e a suspeita se confirmou medindo: **os dois eixos de
+progressão passavam pela mesma porta**. Separados em `dadosDeDano`, o vão
+entre um ganho e o seguinte caiu de **quinze níveis para seis**.
 
-A causa é estrutural: **quem não ganha ataque extra também não ganha dado
-maior** — os dois eixos de progressão passam pela mesma porta. O conserto é
-separar os eixos em `dadosDeDano`: quem fica com dois ataques ganha dado
-crescente; quem ganha o terceiro e o quarto mantém o dado.
+A nota do plano se pagou: fazer isto DEPOIS da 2.1 deixou a medição limpa. Com
+as promessas soltas todas quitadas, o que sobrava de dano baixo num Monge
+nível 20 era progressão de classe e nada mais — não havia segunda causa para
+confundir o resultado.
 
-**Depende de:** nada, mas é melhor DEPOIS da 2.1 — muitas dessas classes têm
-habilidades na lista de promessas soltas, e consertar as duas coisas ao mesmo
-tempo mistura duas causas no mesmo teste.
+**Teste que ficou:** a tabela de dano por turno do nível 1 ao 20, com dois
+pisos que nenhuma classe pode furar — nunca mais de nove níveis parada, e o
+dano do 20 sempre ao menos o dobro do dano do 5.
 
-**Teste que fica:** a tabela de dano por turno do nível 1 ao 20, com um piso
-de crescimento que nenhuma classe pode furar.
+O Guerreiro mantém o dado, como o plano previa. E sobrou uma propriedade
+bonita: bônus fixos por golpe (arma, dádiva) favorecem quem bate muitas vezes;
+dados favorecem quem bate poucas. As duas classes puxam de lados diferentes.
 
-### 3.2 A masmorra que não dá razão para explorar `médio` `médio`
+### 3.2 A masmorra que não dá razão para explorar ✅ FEITO
 
-Mata-se o chefe visitando 5 de 9 salas. Tesouro e santuário são puláveis sem
-custo. Três alavancas, e dá para escolher uma:
+Das três alavancas, entrou a terceira — a única que transforma explorar em
+decisão em vez de zelo. Cada sala limpa tira 6% da vida do chefe, com teto em
+40%. Como cada sala também queima tocha e tempo (3.3), as duas pontas puxam:
+o jogador escolhe onde parar.
 
-- a porta do chefe exige mais que a chave (dois selos, dois guardiões);
-- limpar tudo rende alguma coisa que se sente;
-- o chefe fica mais fraco a cada sala limpa — o que transforma explorar em
-  decisão tática em vez de zelo.
+### 3.3 As tochas ✅ FEITO
 
-### 3.3 As tochas `médio` `pequeno`
+Três partes: o número inicial olha o tamanho da masmorra, existe um feixe de
+tochas para comprar e fabricar, e `tochaExtra` — que estava na tabela de
+RITMOS desde a v8.4 sem ninguém ler — enfim cobra do passo cauteloso.
 
-`5 + d3` numa masmorra que pode ter 12 salas: dois terços dela no escuro por
-padrão. O número inicial precisa olhar o tamanho da masmorra, e comprar tocha
-no mercado precisa ser possível.
+### 3.4 A essência da forja ✅ FEITO
 
-**Depende de:** 1.1 (mexer no gerador duas vezes é desperdício — fazer junto).
+Segunda fonte: o que o jogador já faz, que é matar coisa difícil. Comum e
+fraco não deixam nada; elite deixa 3, lendário 8, chefe de masmorra 10 +
+nível×1,5.
 
-### 3.4 A essência da forja `médio` `pequeno`
+### 3.5 A fama que trava em 70 ✅ FEITO
 
-Única fonte é desmontar equipamento. Quem nunca acha, nunca forja. Falta uma
-segunda fonte: espólio de chefe, compra, ou o ofício da profissão rendendo.
-
-### 3.5 A fama que trava em 70 `baixo` `pequeno`
-
-"Lenda Viva" vale igual para 70 e para 200.
+Dois degraus novos, diferentes em natureza e não em grau.
 
 ---
 
@@ -202,11 +196,12 @@ para quem joga, não para quem chama a função.
 
 ## Ordem sugerida, em uma linha
 
-~~**1.1**~~ → ~~**2.1**~~ → ~~**2.2, 2.3**~~ → **3.1** (as classes que
-congelam, a próxima) → **3.3** (tochas) → **3.4, 3.5, 4.5** (os pequenos, em
-qualquer ordem) → **4.1–4.4** (o mundo visível) → **5.x** (as adições).
+~~**1.1**~~ → ~~**2.1**~~ → ~~**2.2, 2.3**~~ → ~~**3.1–3.5**~~ → **4.5** (a
+exaustão que se reanuncia, o menor que sobrou) → **4.1–4.4** (o mundo
+visível) → **5.x** (as adições).
 
-As ondas 1 e 2 estão pagas. A onda 3 começa pela 3.1, e agora ela pode ser
-medida limpa: a nota dizia "melhor DEPOIS da 2.1, senão as duas causas se
-misturam no mesmo teste" — com as promessas soltas todas pagas, o que sobrar
-de dano baixo num Monge nível 20 é progressão de classe, e nada mais.
+As ondas 1, 2 e 3 estão pagas — tudo o que era **dívida** foi quitado: o que
+travava a partida, o que a ficha prometia e o sistema não cumpria, e o que
+fazia o jogo esvaziar com o tempo. O que resta é de outra natureza. A onda 4
+é mundo que já existe e o jogador não vê; a 5 é adição. Nenhuma das duas tem
+alguém esperando por elas com um ponto de habilidade gasto.

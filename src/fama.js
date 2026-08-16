@@ -6,12 +6,20 @@
      cada dia; nos limiares, ela age (sabotagem, assassinos, difamação…).
    - RUMORES viajam citando feitos verdadeiros dos seus contadores. */
 
+/* v9.54: DOIS DEGRAUS NOVOS NO TOPO. "Lenda Viva" cobria de 70 até o teto de
+   100 — quase um terço da escala inteira num rótulo só, e a fama parava de
+   dizer alguma coisa exatamente quando o herói passava a merecê-la. Os dois
+   últimos são deliberadamente diferentes em NATUREZA, não em grau: virar
+   canção é perder o controle da própria história, e virar mito é o mundo
+   deixar de acreditar que você é gente. */
 export const PATAMARES_FAMA = [
   { min: 0, rotulo: "Desconhecido(a)", nota: "só mais um rosto na estrada" },
   { min: 10, rotulo: "Conhecido(a)", nota: "nas tavernas da região, alguém já ouviu seu nome" },
   { min: 25, rotulo: "Renomado(a)", nota: "comerciantes e guardas te reconhecem; portas se abrem" },
   { min: 45, rotulo: "Famoso(a)", nota: "crianças imitam você; potências te medem com cuidado" },
   { min: 70, rotulo: "Lenda Viva", nota: "seu nome viaja mais rápido que você — e nem sempre conta a verdade" },
+  { min: 85, rotulo: "Nome de Canção", nota: "trovadores disputam de quem é a versão certa; nenhuma é a sua, e já não adianta corrigir" },
+  { min: 100, rotulo: "Mito em Vida", nota: "há quem duvide que você exista de fato — e quem te encontra fica sem saber o que dizer" },
 ];
 export const patamarFama = (fama) => [...PATAMARES_FAMA].reverse().find((p) => fama >= p.min) || PATAMARES_FAMA[0];
 

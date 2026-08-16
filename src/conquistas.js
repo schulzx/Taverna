@@ -56,6 +56,10 @@ export const CONQUISTAS = [
   { id: "ano_inteiro", icone: "🗓", nome: "As Quatro Estações", titulo: "o Perene", dica: "Complete um ano inteiro de campanha.", segredo: true, quando: (s) => (s.diasVividos || 0) >= 360 },
   { id: "nome_conhecido", icone: "📣", nome: "Nome na Boca do Povo", titulo: "o Renomado", dica: "Alcance fama 25.", quando: (s) => (s.fama || 0) >= 25 },
   { id: "lenda_viva", icone: "🌟", nome: "Lenda Viva", titulo: "Lenda Viva", dica: "Alcance fama 70.", segredo: true, quando: (s) => (s.fama || 0) >= 70 },
+  /* v9.54: o topo da escala passou a ter dois degraus novos, e o último
+     merecia marco próprio — chegar a 100 é ter feito quase tudo o que este
+     mundo tem para fazer. */
+  { id: "mito_em_vida", icone: "☄", nome: "Mito em Vida", titulo: "o Mito", dica: "Alcance o topo da fama: 100.", segredo: true, quando: (s) => (s.fama || 0) >= 100 },
   { id: "nemesis_surgida", icone: "🎭", nome: "Preço pela Cabeça", titulo: "Alvo de Ódio", dica: "Alguém jura seu fim.", quando: (s) => !!s.temNemesis },
   { id: "nemesis_vencida", icone: "🕊", nome: "Fim da Perseguição", titulo: "Quem Ri por Último", dica: "Derrote sua nêmesis.", segredo: true, quando: (s) => (s.nemesisVencidas || 0) >= 1 },
   { id: "primeiro_cronica", icone: "📜", nome: "Em Letra de Forma", titulo: "o Cronista", dica: "Exporte a crônica da sua saga.", quando: (s) => (s.cronicas || 0) >= 1 },
@@ -65,7 +69,9 @@ export const CONQUISTAS = [
   { id: "tres_companheiros", icone: "⚑", nome: "Capitão de Companhia", titulo: "o Capitão", dica: "Viaje com 3 companheiros ao mesmo tempo.", quando: (s) => s.companheiros >= 3 },
   { id: "cinco_pessoas", icone: "😊", nome: "Rosto Conhecido", titulo: "Rosto Conhecido", dica: "Conheça 5 pessoas marcantes.", quando: (s) => s.npcs >= 5 },
   { id: "quinze_pessoas", icone: "🍻", nome: "Alma da Taverna", titulo: "Alma da Taverna", dica: "Conheça 15 pessoas marcantes.", quando: (s) => s.npcs >= 15 },
-  { id: "trinta_pessoas", icone: "🌟", nome: "Lenda Viva", titulo: "Lenda Viva", dica: "Conheça 30 pessoas marcantes.", quando: (s) => s.npcs >= 30 },
+  /* v9.54: chamava-se "Lenda Viva", igualzinha à conquista de fama 70 — duas
+     linhas diferentes com o mesmo nome e o mesmo título na tela. */
+  { id: "trinta_pessoas", icone: "🫂", nome: "Cidade Inteira", titulo: "Conhecido de Todos", dica: "Conheça 30 pessoas marcantes.", quando: (s) => s.npcs >= 30 },
   { id: "primeiro_presente", icone: "🎁", nome: "Mãos Generosas", titulo: "o Generoso", dica: "Presenteie uma potência.", quando: (s) => s.presentes >= 1 },
   { id: "cinco_presentes", icone: "💝", nome: "O Magnânimo", titulo: "o Magnânimo", dica: "Presenteie 5 vezes.", quando: (s) => s.presentes >= 5 },
   { id: "vinculo_amizade", icone: "🍻", nome: "Ombro Amigo", titulo: "Ombro Amigo", dica: "Alcance o vínculo Amizade com um companheiro.", quando: (s) => s.vinculoAmizade >= 1 },

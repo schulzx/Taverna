@@ -23,16 +23,23 @@ jogador descobre jogando.
   `sortear` estava em `loot.js`, onde comia o primeiro prefixo, o primeiro
   sufixo e o primeiro poder de cada tabela.
 
-- **Mais da metade da masmorra é ignorável.** Andando sempre pela primeira
-  saída, uma masmorra de 9 salas termina com o chefe morto tendo visitado 5.
-  O tesouro, o santuário e a armadilha ficam para trás sem custo nenhum: não
-  há porta que exija tê-los feito, nem recompensa por limpar tudo. Explorar
-  é escolha sem consequência, dos dois lados.
+- ~~**Mais da metade da masmorra é ignorável.**~~ RESOLVIDO na v9.54. Das três
+  alavancas possíveis (portão com mais de um selo, prêmio por limpar tudo,
+  chefe mais fraco a cada sala), entrou a terceira — a única que transforma
+  explorar em DECISÃO em vez de virtude. Cada sala limpa tira 6% da vida do
+  chefe, com teto em 40%: não trivializa o confronto, mas a diferença entre
+  descer reto e limpar o andar aparece no primeiro golpe. E como cada sala
+  também queima tocha e tempo, as duas pontas passam a puxar — o jogador
+  escolhe onde parar, que era exatamente o que faltava.
 
-- **As tochas acabam antes de um terço da masmorra.** A luz é a da mochila
-  (v9.26) e o padrão da ficha são 5 tochas, uma por sala — numa masmorra de
-  9 salas o herói fica no escuro a partir da quarta. Falta o mercado vender
-  tocha e a entrada avisar quantas a expedição vai pedir.
+- ~~**As tochas acabam antes de um terço da masmorra.**~~ RESOLVIDO na v9.54,
+  em três partes. O número inicial passa a olhar o tamanho da masmorra (dá
+  para CHEGAR ao chefe com folga, não para varrer tudo) — antes eram 6 a 8
+  num lugar de até 11 salas, e o escuro no terço final não era tensão, era
+  imposto. Existe agora um Feixe de Tochas no catálogo, barato de propósito,
+  que se compra e se fabrica na bancada. E `tochaExtra`, que estava na tabela
+  de RITMOS desde a v8.4 sem ninguém ler, enfim cobra: o passo cauteloso vê
+  mais e queima mais, que era a metade da troca que não existia.
 
 ## Balanceamento — achado na varredura da v9.52
 
@@ -52,11 +59,27 @@ jogador descobre jogando.
   | **Clérigo** | 8 | 15 | **15** | **15** | ×1,9 |
   | **Bardo / Monge** | 7 | 7–13 | 13 | **13** | ×1,9 |
 
-  Caçador, Engenheiro, Clérigo, Bardo e Monge **congelam no nível 5 ou 11** e
-  não sobem mais nada até o 20. Um Monge nível 20 bate como um nível 5,
-  enquanto o Ladino ao lado dele triplica. A causa: quem não ganha o terceiro
-  e o quarto ataque também não ganha dado maior — os dois eixos de progressão
-  passam pela mesma porta. Cabe dar dado crescente a quem não ganha ataque.
+  Caçador, Engenheiro, Clérigo, Bardo e Monge **congelavam no nível 5 ou 11** e
+  não subiam mais nada até o 20. Um Monge nível 20 batia como um nível 5,
+  enquanto o Ladino ao lado dele triplicava. A causa: quem não ganha o terceiro
+  e o quarto ataque também não ganhava dado maior — os dois eixos de progressão
+  passavam pela mesma porta.
+
+  ~~RESOLVIDO~~ na v9.54, separando os eixos: quem NÃO chega ao terceiro ataque
+  ganha o dado crescente na mesma escada dos conjuradores (11 e 17). Medido de
+  novo, o vão entre um ganho e o seguinte caiu de **quinze níveis para seis**,
+  e nenhuma classe passa mais de nove parada — nove é o do Guerreiro entre o
+  terceiro e o quarto ataque, o único vão longo que se justifica, porque
+  termina no maior salto isolado do jogo (34 → 50 de dano por turno).
+
+  O Guerreiro mantém o dado de propósito. Dar-lhe dado por cima dos quatro
+  ataques faria dele outra coisa: não o mestre das armas, o dono do combate.
+  E o que sobrou é uma propriedade bonita — bônus fixos por golpe (arma,
+  dádiva) favorecem quem bate muitas vezes; dados favorecem quem bate poucas.
+
+  A ficha passou a mostrar os dois eixos na mesma pílula (`2 ataques × 2d6`) e
+  a dizer o próximo degrau. Era metade da queixa: o Monge não só parava de
+  crescer, ele não tinha como saber que tinha parado.
 
 - ~~**Ação bônus nomeada não faz o que o nome diz.**~~ RESOLVIDO na v9.54 pelo
   caminho honesto: as descrições passaram a dizer o que o sistema faz — um
@@ -193,11 +216,15 @@ jogador descobre jogando.
 
 ## Craft e economia
 
-- **Essência só vem de desmontar.** A forja pede ⚗ 4 para o item mais barato e
-  ⚗ 130 para o lendário, e a única fonte de essência é desmontar equipamento
-  que você já tem. Quem nunca acha equipamento nunca forja, e quem forja
-  precisa destruir para construir. Falta uma segunda fonte: espólio de chefe,
-  compra no mercado, ou o ofício da profissão rendendo essência.
+- ~~**Essência só vem de desmontar.**~~ RESOLVIDO na v9.54. Era um círculo
+  fechado: quem não acha equipamento não desmonta, quem não desmonta não
+  forja, e quem não forja continua sem achar — o jogador que mais precisava
+  da forja era o que menos podia usá-la. A segunda fonte é o que ele já está
+  fazendo: matar coisa difícil. Bicho comum e fraco não deixam nada (um bando
+  de goblins segue rendendo só moeda); competente deixa 1, elite 3, lendário
+  8, e o chefe da masmorra deixa 10 + nível×1,5 — a maior fonte do jogo, e o
+  momento em que ele mais quer forjar alguma coisa. A régua: um chefe paga
+  sozinho uma forja incomum, e nem o chefe de nível 20 paga uma épica.
 
 - **A bancada não avisa que está pronta.** As receitas ficam atrás de um
   acordeão fechado dentro do inventário; o contador "N prontas" só aparece
@@ -206,10 +233,15 @@ jogador descobre jogando.
 
 ## Miudezas
 
-- **A fama chega ao teto cedo e para.** "Lenda Viva" começa em 70 e vale
-  igual para 70, 100 ou 200 — passado esse ponto, feito nenhum muda o que o
-  mundo diz do herói. Ou entra um patamar acima, ou a fama vira outra coisa
-  (reputação por região, por facção) depois do teto.
+- ~~**A fama chega ao teto cedo e para.**~~ RESOLVIDO na v9.54 com dois
+  degraus novos — **Nome de Canção** (85) e **Mito em Vida** (100) —,
+  deliberadamente diferentes em NATUREZA e não em grau: virar canção é perder
+  o controle da própria história, virar mito é o mundo deixar de acreditar
+  que você é gente. O topo ganhou marco próprio no Códex.
+
+- ~~**Duas conquistas diferentes chamadas "Lenda Viva".**~~ RESOLVIDO na
+  v9.54: uma era fama 70, a outra conhecer 30 pessoas — mesmo nome e mesmo
+  título na tela. A segunda virou "Cidade Inteira".
 
 ## O que a sonda passou — e não vira pendência
 

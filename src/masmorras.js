@@ -134,7 +134,24 @@ export function gerarMasmorra(genero, nivel, nomeSugerido = "") {
   salas.push(chefe);
   for (const pid of anterior) salas.find((x) => x.id === pid).saidas.push(chefe.id);
 
-  return { nome, salas: garantirCaminhos(salas), atual: 0, tochas: 5 + d(3), chave: false, ritmo: "normal", saques: { moedas: 0, itens: 0 }, encerrada: false };
+  const completas = garantirCaminhos(salas);
+  return { nome, salas: completas, atual: 0, tochas: tochasIniciais(completas), chave: false, ritmo: "normal", saques: { moedas: 0, itens: 0 }, encerrada: false };
+}
+
+/* ---------------- QUANTAS TOCHAS (v9.54) ----------------
+   Era `5 + d(3)` — de seis a oito — num lugar que pode ter onze salas. Como
+   cada passo gasta uma, o jogador chegava ao terço final SEMPRE no escuro,
+   e "sempre" não é uma decisão: é um imposto. Escuridão que acontece toda
+   vez deixa de ser tensão e vira cenário.
+
+   O número passa a olhar o tamanho da masmorra, e a régua é deliberada:
+   dá para CHEGAR ao chefe com folga, não dá para varrer tudo. Quem quiser
+   as onze salas vai ter de achar tocha lá dentro, comprar antes de descer
+   ou aceitar o escuro no fim — e aí é escolha, que é o que a masmorra
+   estava pedindo. */
+export function tochasIniciais(salas) {
+  const n = (salas || []).length;
+  return Math.max(5, Math.round(n * 0.7) + d(2));
 }
 
 /* ---------------- A REDE DE SEGURANÇA (v9.53) ----------------
@@ -215,9 +232,16 @@ export function entrarNaSala(mm, id) {
   const alvo = mm.salas.find((s) => s.id === id);
   if (!alvo) return { mm, msgs: ["Não há passagem por ali."], bloqueado: true };
   if (alvo.trancada && !mm.chave) return { mm, msgs: ["🔒 O portão está lacrado — falta a chave que alguém guardou lá dentro."], bloqueado: true };
-  const tochas = Math.max(0, (mm.tochas || 0) - 1);
+  /* v9.54: `tochaExtra` estava na tabela de RITMOS desde a v8.4 e ninguém a
+     lia — todo passo custava uma tocha, andasse o herói devagar ou correndo.
+     O ritmo cauteloso promete ver mais em troca de queimar mais, e essa era
+     a metade da troca que não existia: escolher "cauteloso" só tinha
+     vantagem, e uma escolha sem custo não é uma escolha. */
+  const gasto = 1 + (ritmoPorId(mm.ritmo).tochaExtra || 0);
+  const tochas = Math.max(0, (mm.tochas || 0) - gasto);
   const msgs = [];
   if (tochas === 0 && (mm.tochas || 0) > 0) msgs.push("🕯 Sua última tocha se apaga — daqui em diante é no escuro (desvantagem e mais perigo).");
+  else if (gasto > 1 && tochas > 0) msgs.push(`🕯 Passo cauteloso: ${gasto} tochas queimadas — restam ${tochas}.`);
   const salas = mm.salas.map((s) => s.id === id ? { ...s, visitada: true } : s);
   return { mm: { ...mm, salas, atual: id, tochas }, msgs, sala: salas.find((s) => s.id === id) };
 }
@@ -236,6 +260,61 @@ export function progressoMasmorra(mm) {
 }
 
 export function noEscuro(mm) { return !mm || (mm.tochas || 0) <= 0; }
+
+/* Tochas achadas ou compradas. O teto existe para o feixe não virar uma
+   licença de varrer a masmorra inteira sem pensar. */
+export function acenderTochas(mm, quantas = 3) {
+  if (!mm) return { mm, linha: "" };
+  const teto = Math.max(6, mm.salas.length + 2);
+  const antes = mm.tochas || 0;
+  /* o `Math.max(antes, …)` não é zelo: sem ele, quem descesse com mais tochas
+     do que o teto (voltou de uma masmorra grande e entrou numa pequena)
+     PERDERIA tochas ao acender uma. Um teto que confisca não é teto. */
+  const tochas = Math.max(antes, Math.min(teto, antes + Math.max(0, quantas)));
+  if (tochas === antes) return { mm, linha: `🕯 Você já carrega tochas demais para acender mais uma (${antes}).` };
+  return { mm: { ...mm, tochas }, linha: `🕯 ${tochas - antes} tocha${tochas - antes > 1 ? "s" : ""} a mais na mão — ${tochas} no total.` };
+}
+
+/* ---------------- O CHEFE QUE ENFRAQUECE (v9.54) ----------------
+   A queixa medida: dava para matar o chefe visitando 5 de 9 salas, e o
+   tesouro, o santuário e o enigma eram puláveis sem custo nenhum. Explorar
+   era zelo — coisa que o jogador cuidadoso faz e o apressado ignora sem
+   perder nada.
+
+   Das três alavancas possíveis (portão com mais de um selo, prêmio por
+   limpar tudo, chefe mais fraco a cada sala), esta é a única que transforma
+   explorar em DECISÃO em vez de virtude: cada sala limpa tira força do
+   chefe, e cada sala limpa queima tocha e tempo. Agora as duas pontas
+   puxam, e o jogador escolhe onde parar.
+
+   Seis por cento por sala, teto em quarenta: não dá para trivializar o
+   confronto final — o chefe continua sendo o chefe —, mas a diferença entre
+   descer reto e limpar o andar é visível no primeiro golpe. */
+export const DESGASTE_POR_SALA = 0.06;
+export const DESGASTE_MAXIMO = 0.40;
+
+export function desgasteDoChefe(mm) {
+  if (!mm) return { fracao: 0, salas: 0, pct: 0 };
+  const limpas = (mm.salas || []).filter((s) => s && s.resolvida && s.tipo !== "entrada" && s.tipo !== "chefe").length;
+  const fracao = Math.min(DESGASTE_MAXIMO, limpas * DESGASTE_POR_SALA);
+  return { fracao, salas: limpas, pct: Math.round(fracao * 100) };
+}
+
+/* Aplica o desgaste à lista de inimigos do chefe. Devolve a lista nova e a
+   linha que o jogador lê — a frase e o efeito nascem juntos. */
+export function chefeDesgastado(mm, inimigos) {
+  const d = desgasteDoChefe(mm);
+  if (!d.fracao || !(inimigos || []).length) return { inimigos: inimigos || [], linha: "", nota: "", desgaste: d };
+  const novos = inimigos.map((e) => {
+    const max = Math.max(1, Math.round((e.vidaMax || e.vida || 1) * (1 - d.fracao)));
+    return { ...e, vida: Math.min(e.vida || max, max), vidaMax: max };
+  });
+  return {
+    inimigos: novos, desgaste: d,
+    linha: `💀 As ${d.salas} salas que você limpou cobraram o seu preço lá embaixo: o chefe entra com ${d.pct}% a menos de vida.`,
+    nota: `[CHEFE DESGASTADO PELO SISTEMA] Limpei ${d.salas} salas antes de chegar aqui, e o sistema já tirou ${d.pct}% da vida do chefe. Narre isso como o que é — a guarda dele desfalcada, os servos que não vieram, o ritual interrompido pela metade —, nunca como fraqueza dele. Não recalcule número nenhum.`,
+  };
+}
 
 export function recompensaChefe(nivel) {
   const raridade = Math.random() < 0.7 ? "epico" : "lendario";

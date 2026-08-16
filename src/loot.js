@@ -240,6 +240,32 @@ export const CUSTO_FORJA = {
   lendario: { essencia: 130, moedas: 300 },
 };
 export function essenciaDe(item) { return ESSENCIA_POR_RARIDADE[(item && item.raridade) || "comum"] || 2; }
+
+/* ---------------- A SEGUNDA FONTE (v9.54) ----------------
+   Desmontar equipamento era a ÚNICA maneira de conseguir essência, e isso
+   fechava a forja num círculo: quem não acha equipamento não desmonta, quem
+   não desmonta não forja, e quem não forja continua sem achar. O jogador que
+   mais precisa da forja é exatamente o que menos consegue usá-la.
+
+   A segunda fonte é o que ele já está fazendo: matar coisa difícil. Bicho
+   comum não deixa nada — a essência é o que sobra quando algo com poder
+   morre, e é essa a frase que o craft.js já usava para o despojo. Um bando
+   de goblins continua rendendo só moeda; um elite deixa resíduo.
+
+   Os números são pequenos de propósito. Uma forja incomum custa 10, e assim
+   ela sai de umas três lutas duras ou de um chefe — perto do que custaria
+   desmontando, sem virar a fonte principal. */
+export const ESSENCIA_POR_AMEACA = { fraco: 0, comum: 0, competente: 1, elite: 3, lendario: 8 };
+
+export function essenciaDeEspolio(inimigos = []) {
+  return (inimigos || []).reduce((s, e) => s + (ESSENCIA_POR_AMEACA[e && e.ameaca] || 0), 0);
+}
+
+/* O chefe da masmorra deixa mais: é a criatura mais carregada de poder que
+   o jogo põe na frente do herói, e o momento em que ele mais quer forjar. */
+export function essenciaDoChefe(nivel = 1) {
+  return 10 + Math.floor((nivel || 1) * 1.5);
+}
 export function valorDe(item) {
   const t = TIER[(item && item.raridade) || "comum"] ?? 0;
   return 8 + t * t * 18 + t * 7; // comum 8 · incomum 33 · raro 94 · epico 209 · lendario 396

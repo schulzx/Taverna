@@ -92,6 +92,10 @@ export const RECEITAS = [
 
   /* — utilitários: destreza. Trabalho de mão, não de livro — */
   { id: "r_ataduras", produz: "ataduras", oficio: "utilitario", atributo: "destreza", dificuldade: 8, nivel: 1, custo: [["couro_curtido", 1]] },
+  /* v9.54: a mais simples da bancada, e de propósito — tocha é a única coisa
+     do catálogo que não faz nada além de deixar ver, e quem desce numa
+     masmorra não deveria depender de haver mercador na cidade certa. */
+  { id: "r_tochas", produz: "tochas", oficio: "utilitario", atributo: "destreza", dificuldade: 7, nivel: 1, custo: [["couro_curtido", 1]] },
   { id: "r_sais", produz: "sais", oficio: "utilitario", atributo: "destreza", dificuldade: 11, nivel: 2, custo: [["flor_febre", 1], ["sal_negro", 1]] },
   { id: "r_revigorante", produz: "revigorante", oficio: "utilitario", atributo: "destreza", dificuldade: 12, nivel: 2, custo: [["erva_amarga", 1], ["flor_febre", 1]] },
 ];

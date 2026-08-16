@@ -55,6 +55,12 @@ export const CONSUMIVEIS = [
   { id: "ataduras",  nome: "Ataduras de Linho",  icone: "🩹", tipo: "limpa", remove: ["sangrando"],  valor: 25, raridade: "comum", nivel: 1, desc: "Estanca o que não para sozinho." },
   { id: "sais",      nome: "Sais Aromáticos",    icone: "🧂", tipo: "limpa", remove: ["atordoado", "amedrontado"], valor: 45, raridade: "comum", nivel: 2, desc: "Um cheiro violento que traz a cabeça de volta." },
   { id: "revigorante", nome: "Tônico Revigorante", icone: "☕", tipo: "limpa", remove: ["exausto"], valor: 60, raridade: "comum", nivel: 2, desc: "Amargo, quente e forte o bastante para roubar uma noite do corpo." },
+
+  /* v9.54: TOCHA. A masmorra sempre gastou tocha a cada passo e nunca houve
+     onde comprar uma — o jogador via o recurso acabar sem ter tido escolha
+     nenhuma sobre isso. É o consumível mais barato do catálogo de propósito:
+     não é poder, é permissão para explorar. */
+  { id: "tochas", nome: "Feixe de Tochas", icone: "🕯", tipo: "tocha", quantas: 3, valor: 18, raridade: "comum", nivel: 1, desc: "Três varas de pinho e breu. Não fazem nada — só deixam ver." },
 ];
 
 export const consumivelPorId = (id) => CONSUMIVEIS.find((c) => c.id === id) || null;
@@ -100,6 +106,7 @@ export function descricaoCurta(c) {
   if (c.tipo === "atributo") return `+${c.bonus} ${c.rotulo} por ${c.turnos} turnos`;
   if (c.tipo === "condicao") return `aplica ${c.condicao}`;
   if (c.tipo === "limpa") return `remove ${c.remove.join(" e ")}`;
+  if (c.tipo === "tocha") return `+${c.quantas} tochas na masmorra`;
   return c.desc || "";
 }
 
@@ -136,6 +143,10 @@ export function usarConsumivel(ent, idOuItem) {
     if (!cond) return null;
     p.condicoes = [...(p.condicoes || []).filter((x) => x.id !== cond.id), cond];
     texto = `${c.icone} ${c.nome}: ${cond.nome}${cond.turnos ? ` (${cond.turnos}t)` : ""} — ${cond.efeito}`;
+  } else if (c.tipo === "tocha") {
+    /* o efeito não é da ficha, é do lugar: quem chama sabe se há masmorra
+       aberta e soma lá. Aqui só se declara quantas, e se elas servem agora. */
+    return { ent: p, texto: `${c.icone} ${c.nome}: ${c.quantas} tochas prontas para acender.`, gastou: true, consumivel: c, tochas: c.quantas };
   } else if (c.tipo === "limpa") {
     const tinha = (p.condicoes || []).filter((x) => c.remove.includes(x.id));
     if (!tinha.length) return { ent: p, texto: `${c.icone} ${c.nome}: nada para curar agora — o frasco fica.`, gastou: false };
