@@ -49,6 +49,98 @@ export function populacaoDe(porte, rnd = Math.random) {
   return Math.round((p.min + rnd() * (p.max - p.min)) / 10) * 10;
 }
 
+/* ============================================================
+   A FORMA DO ASSENTAMENTO (v9.54)
+
+   A planta da v9.51 desenhava a MESMA muralha, as mesmas duas ruas e a
+   mesma praça numa aldeia de 190 almas e numa capital de 54 mil. A
+   segunda escala do mapa existia, mas dizia sempre a mesma coisa — e
+   uma planta que não distingue uma coisa da outra é decoração.
+
+   A forma sai de dois fatos que TODA cidade deste jogo tem, em todos os
+   moldes: quanta gente mora nela e em que chão ela está. Não sai do
+   `porte`, e isso é deliberado: são vinte e três portes espalhados por
+   cinco moldes ("fundeadouro", "andar-mestre", "posto avançado"), e uma
+   tabela por nome seria uma lista para esquecer de atualizar. População
+   é um número, e número compara sozinho.
+
+   AS REGRAS SÃO AS DA HISTÓRIA, não as do desenho:
+
+   - Muralha custa caro. Aldeia não tem — tem o casario e o mato. Vila
+     levanta paliçada. Só de mil e tantas almas para cima alguém paga
+     pedra, e capital paga pedra grossa.
+   - Cruzamento de ruas é coisa de lugar grande. Povoado tem UMA rua, que
+     é a estrada passando no meio; a segunda rua nasce quando há gente
+     bastante para haver dois destinos.
+   - Praça é onde o mercado cabe. Sem mercado permanente, é um largo.
+   - E o chão manda: cidade de costa tem um lado que é água e não tem
+     muro nenhum ali; cidade de montanha nasce espremida entre paredes.
+   ============================================================ */
+
+const MUROS = {
+  nenhum:  { id: "nenhum",  rotulo: "sem muro",         espessura: 0,   nota: "casas e cercas — quem quiser entrar, entra" },
+  palicada:{ id: "palicada",rotulo: "paliçada",         espessura: 0.7, nota: "estacas de madeira e um portão que range" },
+  muralha: { id: "muralha", rotulo: "muralha",          espessura: 1.4, nota: "pedra de verdade, com guarda em cima" },
+  grossa:  { id: "grossa",  rotulo: "muralha grossa",   espessura: 2.6, nota: "feita para aguentar cerco, não para enfeitar" },
+};
+
+/* Assentamento militar: pouca gente e muito muro. Aqui o porte importa,
+   porque é a única coisa que distingue um forte de uma vila do mesmo
+   tamanho — e são poucos nomes, todos com a mesma ideia. */
+const RX_MILITAR = /(fortaleza|forte|base|guarni|posto avan|quartel)/i;
+
+export function formaDaCidade(cidade) {
+  const c = cidade || {};
+  const pop = Math.max(0, Number(c.populacao) || 0);
+  const bioma = String(c.bioma || "").toLowerCase();
+  const militar = RX_MILITAR.test(String(c.porte || c.tipo || ""));
+
+  let muro = MUROS.nenhum;
+  if (militar) muro = pop >= 1200 ? MUROS.grossa : MUROS.muralha;
+  else if (pop >= 20000) muro = MUROS.grossa;
+  else if (pop >= 1500) muro = MUROS.muralha;
+  else if (pop >= 400) muro = MUROS.palicada;
+
+  /* O TAMANHO NA TELA É UMA ESCADA, não uma fórmula. A primeira versão desta
+     função usava logaritmo da população, e o resultado foi uma aldeia de raio
+     27 ao lado de uma capital de 37 — matematicamente correto e visualmente
+     inútil, porque a diferença que o jogador precisa VER é "isto é um
+     povoado" contra "isto é uma capital", e não a proporção exata. Cinco
+     degraus, e cada um se distingue do vizinho de relance. */
+  const raio = pop < 400 ? 15 : pop < 1500 ? 20 : pop < 15000 ? 27 : pop < 60000 ? 33 : 37;
+  /* militar é compacto de propósito: muita parede em volta de pouco chão.
+     O piso de 13 existe porque abaixo disso os locais de dentro deixam de
+     caber — uma planta ilegível não informa nada, por mais fiel que seja. */
+  const raioFinal = militar ? Math.max(13, Math.round(raio * 0.72)) : raio;
+
+  const ruas = pop >= 1500 ? 2 : 1;
+  const anelViario = pop >= 20000;
+  const praca = pop >= 300;
+  const pracaR = pop >= 20000 ? 11 : pop >= 1500 ? 8 : 5.5;
+  /* portão só existe se houver muro; uma rua atravessa por dois */
+  const portoes = muro.espessura === 0 ? 0 : ruas * 2;
+
+  /* o porte também decide: uma "vila de pesca" é costeira mesmo que o bioma
+     da região tenha vindo genérico — o nome dela é o fato */
+  const costa = /costa|praia|litoral|mar|ilha|arquipel|porto/.test(bioma) || /porto|fundeadouro|cais|embarcad|pesca|enseada|doca/i.test(String(c.porte || ""));
+  const montanha = /montanha|serra|pico|penhasco|alt/.test(bioma);
+
+  return {
+    muro, raio: raioFinal, ruas, anelViario, praca, pracaR, portoes,
+    /* costa: um lado é água, e ali o muro simplesmente não existe */
+    agua: costa ? { lado: "oeste", cais: true } : null,
+    /* montanha: o assentamento é espremido num eixo, entre paredes de pedra */
+    aperto: montanha ? 0.62 : 1,
+    militar, pop,
+    nota: [
+      muro.rotulo === "sem muro" ? "sem muralha" : muro.rotulo,
+      ruas === 1 ? "uma rua só" : "duas ruas que se cruzam",
+      praca ? "praça no meio" : "um largo de terra batida",
+      costa ? "e o mar de um lado" : montanha ? "espremida entre as pedras" : "",
+    ].filter(Boolean).join(", "),
+  };
+}
+
 /* ---------------- BIOMAS E VIAGEM ---------------- */
 export const BIOMAS = ["planicie", "floresta", "colina", "montanha", "deserto", "pantano", "costa", "gelo"];
 export const BIOMA_ROTULO = { planicie: "planície", floresta: "floresta", colina: "colinas", montanha: "montanhas", deserto: "deserto", pantano: "pântano", costa: "costa", gelo: "gelo" };
@@ -436,13 +528,20 @@ export function descobrirCidade(mapa, nome) {
    e passa a conhecê-la. Sem isto, a vila de que ele ouviu falar continuava
    desenhada tracejada mesmo depois de ele dormir lá — e o mapa mentia por
    um detalhe que ninguém ia procurar. */
+/* v9.54: `pisada` é diferente de `descoberta`, e a diferença importa. Ouvir
+   falar de uma vila revela o ponto no pergaminho; ter DORMIDO nela revela o
+   que fica em volta — o moinho, a ponte, a fazenda do velho. É por isso que
+   o cinturão só aparece nas cidades pisadas, e é por isso que ele PERMANECE
+   depois: sair da cidade não apaga da memória o moinho que se viu. */
 export function pisarNaCidade(mapa, nome) {
   const alvo = semA(nome);
   if (!mapa || !alvo) return mapa;
   const c = (mapa.cidades || []).find((x) => semA(x.nome) === alvo);
-  if (!c || !c.deOuvir) return mapa;
-  return { ...mapa, cidades: mapa.cidades.map((x) => { if (x !== c) return x; const n = { ...x, descoberta: true }; delete n.deOuvir; return n; }) };
+  if (!c || (c.pisada && !c.deOuvir)) return mapa;
+  return { ...mapa, cidades: mapa.cidades.map((x) => { if (x !== c) return x; const n = { ...x, descoberta: true, pisada: true }; delete n.deOuvir; return n; }) };
 }
+
+export const cidadesPisadas = (mapa) => ((mapa && mapa.cidades) || []).filter((c) => c && c.pisada);
 
 export const DIAS_DE_VIZINHANCA = 12;
 

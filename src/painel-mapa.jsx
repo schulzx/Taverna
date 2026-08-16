@@ -214,6 +214,20 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
               capela não são cidades — são a paisagem em volta, e é por isso
               que aparecem só aqui, em volta de onde ele pisa, e não no mundo
               inteiro: ninguém conhece o moinho de uma vila a dez dias daqui. */}
+          {/* v9.54: E O QUE FOI VISTO NÃO SE APAGA. Até aqui o cinturão vivia
+              só enquanto o herói estava dentro da cidade — sair apagava do
+              pergaminho o moinho que ele tinha acabado de visitar, como se
+              tivesse esquecido no portão. Agora toda cidade PISADA guarda o
+              seu, desenhado apagado; a de agora continua viva e cheia. Mapa
+              velho é assim: o que você andou fica, mais fraco. */}
+          {cidades.filter((c) => c && c.pisada && (!cidadeAqui || c.nome !== cidadeAqui.nome)).map((c) => (
+            arredoresDaCidade(semente, c).map((a, i) => (
+              <g key={`arv-${c.nome}-${i}`} opacity="0.32">
+                <line x1={c.x} y1={c.y} x2={a.x} y2={a.y} stroke="#8a7550" strokeWidth="0.2" strokeDasharray="0.6 1" />
+                <circle cx={a.x} cy={a.y} r="0.6" fill="none" stroke="#7a6748" strokeWidth="0.18" />
+              </g>
+            ))
+          ))}
           {cidadeAqui && arredoresDaCidade(semente, cidadeAqui).map((a, i) => (
             <g key={`ar-${i}`}>
               <line x1={cidadeAqui.x} y1={cidadeAqui.y} x2={a.x} y2={a.y} stroke="#8a7550" strokeWidth="0.25" strokeDasharray="0.8 0.8" opacity="0.7" />

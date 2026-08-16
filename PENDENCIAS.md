@@ -145,18 +145,26 @@ jogador descobre jogando.
   "conjurador" — todos caíam no perfil padrão. Achado ao testar o Silêncio Que
   Grita, que precisa saber quem conjura para saber quem calar.
 
-- **A exaustão se reanuncia todo turno.** "🥱 Exaustão: 44h acordado. Você
-  está Exausto" aparece de novo às 48h, às 52h — a condição já está na ficha e
-  a linha repete. Deve avisar na virada e calar depois.
+- ~~**A exaustão se reanuncia todo turno.**~~ RESOLVIDO na v9.54 — e a causa
+  não era a que esta linha supunha. A condição NÃO estava na ficha: quem a
+  aplicava escrevia só no estado do React e deixava `personagemRef.current`
+  para trás, e como quase todo o resto desta casa lê a ficha viva do ref e
+  devolve o objeto inteiro, a primeira escrita seguinte apagava a exaustão
+  sem saber que ela existia. No turno seguinte o herói estava descansado
+  outra vez, o teste dava falso e a linha voltava. É a mesma armadilha que a
+  v9.13 documentou nos espólios: quem escreve em um dos dois lugares escreve
+  em nenhum.
 
 ## Combate e habilidades
 
-- **Invocação fora de combate.** `criarInvocacoes` põe a criatura na ficha
-  em qualquer lugar, mas `expiraEm` conta RODADAS e fora da luta não há
-  rodada nenhuma — a invocação feita no acampamento não tem posição no
-  tabuleiro e não tem relógio que a vença. Decidir se ela some ao sair da
-  cena, se vira prazo em minutos, ou se simplesmente não pode ser chamada
-  fora de combate. *(v9.46 — verificado só em combate.)*
+- ~~**Invocação fora de combate.**~~ RESOLVIDO na v9.54: cada invocação passa
+  a carregar os DOIS relógios, e cada um vale no seu tempo — rodadas na luta,
+  minutos no mundo (cinco por rodada). Das três saídas possíveis, esta é a
+  única que não mente: proibir contradiria a ficção (chamar um batedor para
+  vasculhar a mata é uso legítimo) e sumir na troca de cena é um prazo
+  invisível, que o jogador não pode planejar. O relógio de minutos só corre
+  fora da luta — deixar os dois juntos desfaria a fera no meio do combate por
+  causa dos seis segundos que a rodada custa no calendário.
 
 - **Gatilho `atacar` da invisibilidade, em jogo.** Coberto por teste e pelo
   caminho gêmeo (`conjurar`, esse verificado no navegador), mas nunca vi um
@@ -170,25 +178,40 @@ jogador descobre jogando.
 
 ## Onde o herói está
 
-- **A planta da cidade é a mesma para todo mundo.** A v9.51 desenha muralha,
-  duas ruas-mestras, praça no meio e quatro portões — bonito e legível, mas
-  igual numa aldeia de 190 almas e numa capital de 54 mil. Falta a planta
-  responder ao porte e ao bioma: aldeia sem muro, porto com o mar de um lado,
-  fortaleza com o muro grosso e uma rua só.
+- ~~**A planta da cidade é a mesma para todo mundo.**~~ RESOLVIDO na v9.54
+  com `formaDaCidade`, que lê os dois fatos que TODA cidade deste jogo tem em
+  todos os moldes: quanta gente mora nela e em que chão ela está. Não lê o
+  `porte` de propósito — são dezenove portes espalhados por cinco moldes
+  ("fundeadouro", "andar-mestre", "posto avançado"), e uma tabela por nome
+  seria uma lista para esquecer de atualizar. População é um número, e número
+  compara sozinho.
 
-- **Os arredores não estão no mapa-mundo das outras cidades.** Só o cinturão
-  da cidade onde o herói está aparece no pergaminho — de propósito, para não
-  poluir —, mas isso significa que sair de uma cidade apaga o moinho dela do
-  mapa. Talvez devesse ficar, apagado, uma vez visitado.
+  Aldeia de 190 almas não tem muralha nem portão; vila levanta paliçada;
+  cidade paga pedra; capital paga pedra grossa. Uma rua só até haver dois
+  destinos, e anel viário só na cidade grande. Costa tem água de um lado e
+  cais; montanha nasce espremida; fortaleza é compacta — muita parede em
+  volta de pouco chão. O tamanho na tela é uma ESCADA de cinco degraus e não
+  um logaritmo: a primeira versão usava log da população e entregava uma
+  aldeia de raio 27 ao lado de uma capital de 37, matematicamente correta e
+  visualmente inútil.
 
-- **Um lugar DENTRO de outro.** O sistema conhece cidade, viagem e um ponto
-  *nos arredores* — e é só isso. Numa masmorra o Mestre escreveu o andar em
-  `cidade_atual` e o andar seguinte em `lugar_atual`, e a tela ficou dizendo
-  "Andar 2 (nos arredores de Andar 1 — da Ferrugem)", com a regra de que ir e
-  voltar leva HORAS. Subir uma escada não é uma caminhada até a fazenda.
-  Falta uma distância `dentro` (minutos, não horas) e uma régua que impeça um
-  andar de virar cidade no mapa. *(v9.48 — as duas portas do teleporte foram
-  fechadas; o modelo do lugar continua com dois andares só.)*
+  E o Mestre passou a receber a mesma linha — ele narrava portão, guarda e
+  muralha numa aldeia que não tem nenhum dos três.
+
+- ~~**Os arredores não estão no mapa-mundo das outras cidades.**~~ RESOLVIDO
+  na v9.54 com a marca `pisada`, que é diferente de `descoberta` e a
+  diferença importa: ouvir falar de uma vila revela o ponto no pergaminho;
+  ter dormido nela revela o que fica em volta. Toda cidade pisada guarda o
+  cinturão dela, desenhado apagado; a de agora continua cheia. Mapa velho é
+  assim — o que você andou fica, mais fraco.
+
+- ~~**Um lugar DENTRO de outro.**~~ RESOLVIDO na v9.54 com a distância
+  `dentro`, lida do NOME do lugar por uma lista curta e literal (andar,
+  porão, cripta, salão, corredor…). "de cima" não entra: o moinho de cima
+  fica nos arredores, e é ali que ele fica. O texto do prompt muda junto — um
+  andar de torre não é "fora da cidade", sair dele leva minutos e não horas,
+  e o mundo que vem até o herói é quem sobe a escada, não quem passa na
+  estrada.
 
 ## Mestre e prompt
 

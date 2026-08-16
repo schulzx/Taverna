@@ -41,11 +41,30 @@ const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-
 
 /* Quanto custa ir e voltar. Um lugar do dia a dia da região não vira
    viagem: viagem tem sistema próprio (`jornada`) e mapa próprio. */
+/* v9.54: `dentro` é a terceira distância, e ela existia como buraco. Um
+   andar de torre, um porão, a sala do trono — tudo isso caía em "arredores"
+   e vinha com a régua de HORAS colada: o Mestre lia "ir e voltar leva horas"
+   para descer uma escada. A distância mais curta do jogo estava sendo
+   descrita como a do meio, e a consequência era pior do que parece: o herói
+   que subia à torre para pegar um livro perdia a tarde. */
 export const DISTANCIAS = {
+  dentro: { id: "dentro", rotulo: "dentro", dentro: true, volta: "sair daqui leva MINUTOS — é uma escada, um corredor, uma porta" },
   arredores: { id: "arredores", rotulo: "nos arredores", volta: "ir e voltar leva HORAS, não dias" },
   perto: { id: "perto", rotulo: "a meio dia daqui", volta: "ir e voltar leva a maior parte de um dia" },
 };
 export function distanciaDe(id) { return DISTANCIAS[id] || DISTANCIAS.arredores; }
+
+/* De que distância é este lugar, lido do NOME. A lista é curta e literal de
+   propósito: só palavras que só podem significar interior. "de cima" não
+   entra — "o moinho de cima" fica nos arredores, e é ali que ele fica. Na
+   dúvida, arredores, que é o comportamento de sempre. */
+const RX_DENTRO = /\b(andar|piso|sobrado|porao|porão|subsolo|sotao|sótão|adega|cripta|catacumba|cela|calabouco|calabouço|corredor|escadaria|escada|salao|salão|sala|saguao|saguão|atrio|átrio|nave|campanario|campanário|cozinha|despensa|quarto|alcova|biblioteca|arquivo|oficina|forja|adro interno|topo da torre|alto da torre|cume da torre|dentro d[aeo])\b/;
+
+export function distanciaPorTexto(nome) {
+  const n = norm(nome);
+  if (!n) return "arredores";
+  return RX_DENTRO.test(n) ? "dentro" : "arredores";
+}
 
 export function garantirLugar(l) {
   if (!l || !l.nome) return null;
@@ -57,8 +76,10 @@ export function garantirLugar(l) {
   };
 }
 
-export function definirLugar(nome, { cidade = "", dia = 0, distancia = "arredores" } = {}) {
-  return garantirLugar({ nome, cidade, dia, distancia, desde: dia });
+export function definirLugar(nome, { cidade = "", dia = 0, distancia = null } = {}) {
+  /* sem distância declarada, o NOME decide — quem chama não deveria precisar
+     saber se "o segundo andar da torre" é uma escada ou uma caminhada */
+  return garantirLugar({ nome, cidade, dia, distancia: distancia || distanciaPorTexto(nome), desde: dia });
 }
 
 /* O mesmo lugar de novo não é um lugar novo: evita reanunciar a cada
@@ -104,17 +125,23 @@ export function textoDoLugar(l) {
 export function linhaDeLugar(l) {
   if (!l) return "";
   const d = distanciaDe(l.distancia);
+  /* v9.54: um andar de torre não é "fora da cidade" — pode estar no meio
+     dela. A frase de sempre defendia o herói de ser teleportado de volta; a
+     de dentro defende a mesma coisa dizendo a verdade sobre onde ele está. */
+  if (d.dentro) {
+    return `${comEm(l.nome)}${l.cidade ? `, dentro de ${l.cidade}` : ""} — e este é um lugar INTERNO: ${d.volta}. Eu não estou no salão principal nem na rua, e você NÃO me tira daqui: só eu decido descer, sair ou passar para outro cômodo, e só quando eu escrever isso. Toda cena acontece AQUI.`;
+  }
   return `FORA DA CIDADE, ${comEm(l.nome)}${l.cidade ? ` — ${d.rotulo} de ${l.cidade}, ${d.volta}` : ""}. Eu NÃO estou na cidade e você NÃO me devolve a ela: só eu decido voltar, e só quando eu escrever isso. Enquanto eu não disser, toda cena acontece AQUI, inclusive as horas que passam, o que espero e o que vigio.`;
 }
 
 export function resumoLugarPrompt(l, cidade) {
   if (!l) return "";
   const d = distanciaDe(l.distancia);
-  return `ONDE EU ESTOU: ${l.nome}${l.cidade ? `, ${d.rotulo} de ${l.cidade}` : ""}.
+  return `ONDE EU ESTOU: ${l.nome}${l.cidade ? `, ${d.dentro ? "dentro de" : `${d.rotulo} de`} ${l.cidade}` : ""}.
 - Este lugar é REAL e o sistema o guarda entre turnos. A lista de locais e de gente da cidade abaixo é o que existe LÁ, não aqui: use-a como o mundo ao redor, não como a cena.
-- ${d.volta.charAt(0).toUpperCase() + d.volta.slice(1)} — nunca transforme a volta numa viagem de dias.
-- Se eu esperar, vigiar, dormir ou deixar o tempo passar, isso acontece AQUI. Faça o mundo vir até mim: quem aparece na estrada, o que se ouve ao longe, o que cai na armadilha.
-- Só saio daqui quando EU escrever que saio. Se eu voltar à cidade, registre "lugar_atual": null.`;
+- ${d.volta.charAt(0).toUpperCase() + d.volta.slice(1)} — ${d.dentro ? "nunca transforme sair de um cômodo numa expedição, e nunca cobre horas por uma escada." : "nunca transforme a volta numa viagem de dias."}
+- Se eu esperar, vigiar, dormir ou deixar o tempo passar, isso acontece AQUI. Faça o mundo vir até mim: ${d.dentro ? "quem sobe a escada, o que se ouve pelo assoalho, a porta que range" : "quem aparece na estrada, o que se ouve ao longe, o que cai na armadilha"}.
+- Só saio daqui quando EU escrever que saio. Se eu voltar ${d.dentro ? "para fora" : "à cidade"}, registre "lugar_atual": null.`;
 }
 
 /* ---------------- O CÃO DE GUARDA ----------------

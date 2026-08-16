@@ -30,32 +30,43 @@
 
 import React from "react";
 import { T } from "./constantes.js";
-import { rngDe } from "./geografia.js";
+import { rngDe, formaDaCidade } from "./geografia.js";
 import { locaisDaCidade } from "./mundo-base.js";
 import { arredoresDaCidade, tempoDeIda } from "./arredores.js";
 
 /* A muralha: um polígono irregular deterministicamente amassado, para
    nenhuma cidade sair redonda de compasso. */
-function muralha(rnd, raio = 33) {
+/* v9.54: o contorno passa a receber a FORMA. `aperto` espreme o eixo
+   vertical (montanha), e o lado do mar é cortado fora — a cidade de costa
+   termina na água, não numa parede sobre o mar. */
+function muralha(rnd, forma) {
+  const raio = forma.raio;
   const pontos = [];
   const lados = 11;
   for (let i = 0; i < lados; i++) {
     const a = (i / lados) * Math.PI * 2;
     const r = raio * (0.86 + rnd() * 0.26);
-    pontos.push([50 + Math.cos(a) * r * 1.18, 50 + Math.sin(a) * r]);
+    let x = 50 + Math.cos(a) * r * 1.18;
+    let y = 50 + Math.sin(a) * r * forma.aperto;
+    /* o mar entra pelo oeste: o contorno não passa da linha d'água */
+    if (forma.agua) x = Math.max(x, 50 - raio * 0.42);
+    pontos.push([x, y]);
   }
   return "M " + pontos.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(" L ") + " Z";
 }
 
 /* Onde cada local se planta. A praça fica no meio; o resto se distribui
-   em dois anéis, para uma capital de sete locais não virar uma fila. */
-function plantarLocais(rnd, locais) {
+   em dois anéis, para uma capital de sete locais não virar uma fila.
+   v9.54: os anéis encolhem com o assentamento — numa aldeia de raio 15 os
+   locais ficavam fora do próprio casario. */
+function plantarLocais(rnd, locais, forma) {
   const n = locais.length;
+  const dentro = forma.raio * 0.75;
   return locais.map((l, i) => {
     if (l.tipo === "mercado") return { ...l, x: 50, y: 50, praca: true };
-    const anel = i % 2 === 0 ? 17 : 26;
+    const anel = (i % 2 === 0 ? 0.52 : 0.82) * dentro;
     const a = (i / Math.max(1, n - 1)) * Math.PI * 2 + rnd() * 0.5;
-    return { ...l, x: 50 + Math.cos(a) * anel * 1.15, y: 50 + Math.sin(a) * anel };
+    return { ...l, x: 50 + Math.cos(a) * anel * 1.15, y: 50 + Math.sin(a) * anel * forma.aperto };
   });
 }
 
@@ -64,9 +75,13 @@ export function PlantaCidade({ semente, cidade, genero, molde, lugar, aoSelecion
     return <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você não está em cidade nenhuma agora — o mapa do mundo mostra onde você anda.</div>;
   }
   const rnd = rngDe(`${semente}|planta|${cidade.nome}`);
-  const locais = plantarLocais(rnd, locaisDaCidade(semente, cidade, genero, molde));
+  /* v9.54: a forma vem da POPULAÇÃO e do BIOMA, não de uma constante. Uma
+     aldeia de 190 almas deixa de ter a mesma muralha de uma capital. */
+  const forma = formaDaCidade(cidade);
+  const locais = plantarLocais(rnd, locaisDaCidade(semente, cidade, genero, molde), forma);
   const fora = arredoresDaCidade(semente, cidade);
-  const dMuro = muralha(rngDe(`${semente}|muro|${cidade.nome}`));
+  const dMuro = muralha(rngDe(`${semente}|muro|${cidade.nome}`), forma);
+  const R = forma.raio, Ay = forma.aperto;
   /* onde o herói está: dentro dos muros, ou num dos arredores */
   const noArredor = lugar && fora.find((a) => a.nome.toLowerCase() === String(lugar.nome || "").toLowerCase());
 
@@ -84,18 +99,36 @@ export function PlantaCidade({ semente, cidade, genero, molde, lugar, aoSelecion
             const px = 50 + Math.cos(a.ang) * 47, py = 50 + Math.sin(a.ang) * 47;
             return <line key={`tr-${i}`} x1="50" y1="50" x2={px} y2={py} stroke="#a08a5e" strokeWidth="0.7" strokeDasharray="2 1.6" opacity="0.75" />;
           })}
-          {/* dentro dos muros */}
-          <path d={dMuro} fill="#eadfc1" stroke="#6d5c40" strokeWidth="1.4" />
-          <path d={dMuro} fill="none" stroke="#8d7a56" strokeWidth="0.4" />
-          {/* as duas ruas-mestras e a praça */}
-          <line x1="50" y1="12" x2="50" y2="88" stroke="#c8b98f" strokeWidth="3.2" />
-          <line x1="12" y1="50" x2="88" y2="50" stroke="#c8b98f" strokeWidth="3.2" />
-          <circle cx="50" cy="50" r="8" fill="#c8b98f" />
-          <circle cx="50" cy="50" r="8" fill="none" stroke="#a08a5e" strokeWidth="0.3" />
-          {/* portões: onde a rua encontra o muro */}
-          {[[50, 13], [50, 87], [13, 50], [87, 50]].map(([x, y], i) => (
+          {/* v9.54: O MAR, quando há. Entra pelo oeste e a cidade termina
+              nele — é por isso que o porto não tem muro daquele lado. */}
+          {forma.agua && (
+            <>
+              <rect x="0" y="0" width={50 - R * 0.42} height="100" fill="#8fa8ac" opacity="0.75" />
+              <path d={`M ${50 - R * 0.42} 0 Q ${50 - R * 0.42 + 2.5} 50 ${50 - R * 0.42} 100`} fill="none" stroke="#6f8c90" strokeWidth="0.6" opacity="0.8" />
+            </>
+          )}
+          {/* dentro dos muros — a espessura é a do assentamento */}
+          <path d={dMuro} fill="#eadfc1" stroke="#6d5c40" strokeWidth={Math.max(0.5, forma.muro.espessura)} strokeDasharray={forma.muro.id === "nenhum" ? "1.4 1.6" : forma.muro.id === "palicada" ? "2.4 0.9" : ""} strokeOpacity={forma.muro.id === "nenhum" ? 0.5 : 1} />
+          {forma.muro.espessura >= 1.4 && <path d={dMuro} fill="none" stroke="#8d7a56" strokeWidth="0.4" />}
+          {/* as ruas-mestras: uma só num povoado, duas quando há dois destinos */}
+          <line x1="50" y1={50 - R * Ay * 1.05} x2="50" y2={50 + R * Ay * 1.05} stroke="#c8b98f" strokeWidth={forma.pop >= 20000 ? 3.6 : 2.8} />
+          {forma.ruas > 1 && <line x1={50 - R * 1.24} y1="50" x2={50 + R * 1.24} y2="50" stroke="#c8b98f" strokeWidth={forma.pop >= 20000 ? 3.6 : 2.8} />}
+          {/* o anel viário só existe em cidade grande */}
+          {forma.anelViario && <ellipse cx="50" cy="50" rx={R * 0.78} ry={R * Ay * 0.78} fill="none" stroke="#c8b98f" strokeWidth="2" opacity="0.85" />}
+          {/* praça — ou o largo de terra batida de quem não tem mercado */}
+          <circle cx="50" cy="50" r={forma.pracaR} fill="#c8b98f" opacity={forma.praca ? 1 : 0.55} />
+          <circle cx="50" cy="50" r={forma.pracaR} fill="none" stroke="#a08a5e" strokeWidth="0.3" strokeDasharray={forma.praca ? "" : "1 1"} />
+          {/* portões: onde a rua encontra o muro. Sem muro, sem portão. */}
+          {forma.portoes > 0 && [
+            [50, 50 - R * Ay * 1.0], [50, 50 + R * Ay * 1.0],
+            ...(forma.ruas > 1 ? [[50 - R * 1.18, 50], [50 + R * 1.18, 50]] : []),
+          ].map(([x, y], i) => (
             <rect key={`pt-${i}`} x={x - 2} y={y - 1.2} width="4" height="2.4" fill="#6d5c40" opacity="0.9" rx="0.5" />
           ))}
+          {/* o cais: a cidade de água entra no mar por uma língua de pedra */}
+          {forma.agua && forma.agua.cais && (
+            <rect x={50 - R * 0.42 - 5} y="48.4" width="7" height="3.2" fill="#a08a5e" stroke="#5c4a30" strokeWidth="0.3" rx="0.4" />
+          )}
           <rect x="0" y="0" width="100" height="100" filter="url(#tvPapelC)" opacity="0.5" />
           <rect x="0.8" y="0.8" width="98.4" height="98.4" fill="none" stroke="#5c4a30" strokeWidth="0.7" opacity="0.8" />
         </svg>
@@ -137,7 +170,13 @@ export function PlantaCidade({ semente, cidade, genero, molde, lugar, aoSelecion
         </div>
       </div>
 
-      <div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Dentro dos muros ({locais.length})</div>
+      {/* v9.54: a planta passa a DIZER o que ela é. Sem esta linha o jogador
+          vê a muralha encolher e não sabe se é desenho ou informação. */}
+      <div className="tv-mono text-[10px] mb-2 px-2 py-1.5 rounded-lg" style={{ background: T.panelSoft, border: `1px solid ${T.line}`, color: T.inkDim }}>
+        {cidade.porte ? `${cidade.porte} · ` : ""}{forma.pop ? `${forma.pop.toLocaleString("pt-BR")} almas · ` : ""}{forma.nota}
+      </div>
+
+      <div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>{forma.muro.id === "nenhum" ? `No casario (${locais.length})` : `Dentro dos muros (${locais.length})`}</div>
       <div className="space-y-1.5 mb-3">
         {locais.map((l) => (
           <div key={l.id} className="rounded-lg px-3 py-2 flex items-center gap-2" onClick={() => aoSelecionar && aoSelecionar(selecionado === l.id ? null : l.id)}

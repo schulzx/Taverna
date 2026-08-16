@@ -95,7 +95,27 @@ export function conjuracoesAtivas(pers) {
    ela é. `garantirFichaCompanheiro` (chamado por quem usa) completa a
    classe e as habilidades — e é assim que a fera invocada sai batendo
    sem que este arquivo precise saber o que é um turno. */
-export function criarInvocacoes(hab, pers, rodada = 1) {
+/* ---------------- OS DOIS RELÓGIOS (v9.54) ----------------
+   `expiraEm` conta RODADAS, e fora da luta não há rodada nenhuma: quem
+   invocava uma fera na estrada ficava com ela até a próxima briga acabar —
+   às vezes dias de viagem depois. Uma conjuração de três rodadas virava
+   companheiro permanente pela porta dos fundos, que é exatamente o que
+   `dispensarTodas` existe para impedir.
+
+   Das três saídas possíveis (sumir ao trocar de cena, prazo em minutos, ou
+   proibir a invocação fora de combate), a segunda é a única que não mente:
+   proibir contradiria a ficção (chamar um batedor para vasculhar a mata é
+   uso legítimo), e sumir na troca de cena é um prazo invisível, que o
+   jogador não pode planejar.
+
+   Então cada invocação carrega os DOIS prazos, e cada um vale no seu
+   tempo: rodadas na luta, minutos no mundo. Um turno fora de combate são
+   cinco minutos nesta casa, e é essa a régua — uma fera de três rodadas
+   acompanha o herói por um quarto de hora, tempo de vasculhar um bosque e
+   não de atravessar um reino. */
+export const MINUTOS_POR_RODADA_FORA = 5;
+
+export function criarInvocacoes(hab, pers, rodada = 1, { minutoAbs = null } = {}) {
   const inv = invocacaoDe(hab);
   if (!inv) return [];
   const nivel = Math.max(1, Number((pers && pers.nivel) || 1));
@@ -110,6 +130,9 @@ export function criarInvocacoes(hab, pers, rodada = 1) {
       invocada: true,
       invocacaoId: inv.id,
       expiraEm: rodada + inv.turnos,
+      /* null quando quem chamou não soube dizer a hora — e aí o prazo em
+         minutos simplesmente não existe, como era antes desta versão */
+      expiraMin: minutoAbs != null ? Number(minutoAbs) + inv.turnos * MINUTOS_POR_RODADA_FORA : null,
       turnosTotais: inv.turnos,
       dono: (pers && pers.nome) || "",
       nivel,
@@ -143,6 +166,20 @@ export function expirarInvocacoes(pers, rodada) {
     pers: { ...pers, grupo: grupo.filter((g) => !vencidas.includes(g)) },
     sumiram: vencidas.map((g) => g.nome),
     linhas: [`✧ ${vencidas.map((g) => g.nome).join(", ")} ${vencidas.length > 1 ? "se desfazem" : "se desfaz"} — o prazo da conjuração acabou.`],
+  };
+}
+
+/* O relógio do MUNDO. Só deve ser chamado fora da luta — dentro dela quem
+   manda é a rodada, e deixar os dois correrem juntos desfaria a fera no meio
+   do combate por causa dos seis segundos que a rodada custa no calendário. */
+export function expirarPorMinuto(pers, minutoAbs) {
+  const grupo = (pers && pers.grupo) || [];
+  const vencidas = grupo.filter((g) => g && g.invocada && g.expiraMin != null && Number(g.expiraMin) <= Number(minutoAbs));
+  if (!vencidas.length) return { pers, sumiram: [], linhas: [] };
+  return {
+    pers: { ...pers, grupo: grupo.filter((g) => !vencidas.includes(g)) },
+    sumiram: vencidas.map((g) => g.nome),
+    linhas: [`✧ ${vencidas.map((g) => g.nome).join(", ")} ${vencidas.length > 1 ? "se desfazem" : "se desfaz"} — o que foi chamado não fica.`],
   };
 }
 

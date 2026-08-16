@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
-import { gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
+import { gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar } from "./historia.js";
@@ -86,7 +86,7 @@ import { bonusDeBancada, componentesExtras, bonusDeNavegacao, despojosExtras, bo
 import { criarOficina, anotar as anotarOficina, bilheteDaOficina, OFICINA_PROMPT } from "./oficina.js";
 import { romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, devolverSegura, GATILHOS_PROMPT } from "./gatilhos.js";
 import { controleDe, aplicarControle, expirarControles, estaProvocando, CONTROLE_PROMPT } from "./controle.js";
-import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
+import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, expirarPorMinuto, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
 import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, erguerGuarda, expirarGuardas, baixarGuardas, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, ignoraDoGolpe, linhaDoIgnorar, notaDoIgnorar, apressar, expirarPressa, baixarPressa, acoesPorRodada, HABILIDADES_PROMPT } from "./habilidades.js";
 import { agruparMensagens } from "./resumo.js";
 
@@ -3679,11 +3679,39 @@ export default function Taverna() {
       }
     }
     setMinuto(minutoRef.current);
+    /* v9.54: O PRAZO DA INVOCAÇÃO NO RELÓGIO DO MUNDO. Só fora da luta —
+       dentro dela quem manda é a rodada, e deixar os dois correrem juntos
+       desfaria a fera no meio do combate por causa dos seis segundos que a
+       rodada custa no calendário. */
+    if (!combateRef.current) {
+      const fim = expirarPorMinuto(fichaViva() || personagem, absMin());
+      if (fim.sumiram.length) {
+        mudarFicha(() => fim.pers);
+        pushMsgs(fim.linhas.map((t) => ({ autor: "sistema", texto: t })));
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INVOCAÇÃO ENCERRADA PELO SISTEMA] ${fim.sumiram.join(", ")} ${fim.sumiram.length > 1 ? "se desfizeram" : "se desfez"}: o prazo acabou. Narre o desmanche em uma frase e siga — ${fim.sumiram.length > 1 ? "elas não estão mais" : "ela não está mais"} comigo.`;
+      }
+    }
     /* Sono: o corpo cobra. 16h acordado = aviso; 20h = exaustão (condição por código). */
     const acordadoH = (absMin() - acordouAbsRef.current) / 60;
-    const cansadoJa = (personagem.condicoes || []).some((c) => c.id === "exausto" || (c.nome || "").toLowerCase().includes("cansado"));
+    /* ---------------- A EXAUSTÃO QUE SE REANUNCIAVA (v9.54) ----------------
+       "🥱 Exaustão: 44h acordado" aparecia de novo às 48h, às 52h, às 100h — e
+       a causa não era a linha repetindo à toa, era a CONDIÇÃO sumindo da ficha
+       entre um turno e outro.
+
+       O `setPersonagem` de baixo escrevia só no estado do React e deixava
+       `personagemRef.current` para trás. Como quase todo o resto desta casa
+       lê a ficha viva do ref e devolve o objeto inteiro, a primeira escrita
+       que viesse depois apagava a exaustão sem saber que ela existia — e no
+       turno seguinte o herói estava descansado outra vez, o teste `cansadoJa`
+       dava falso e a linha voltava.
+
+       É a mesma armadilha que a v9.13 documentou nos espólios: quem escreve
+       em um dos dois lugares escreve em nenhum. `mudarFicha` escreve nos
+       dois, e `fichaViva()` é quem sabe a verdade. */
+    const persAgora = fichaViva() || personagem;
+    const cansadoJa = (persAgora.condicoes || []).some((c) => c.id === "exausto" || (c.nome || "").toLowerCase().includes("cansado"));
     if (acordadoH >= HORAS_EXAUSTO && !cansadoJa) {
-      setPersonagem((p) => ({ ...p, condicoes: [...(p.condicoes || []).filter((x) => x.id !== "exausto"), criarCondicao("exausto", { origem: "vigília longa demais" })] }));
+      mudarFicha((p) => ({ ...p, condicoes: [...(p.condicoes || []).filter((x) => x.id !== "exausto"), criarCondicao("exausto", { origem: "vigília longa demais" })] }));
       pushMsgs([{ autor: "sistema", texto: `🥱 Exaustão: ${Math.floor(acordadoH)}h acordado. Você está Exausto (desvantagem) até um descanso longo.` }]);
     } else if (acordadoH >= HORAS_AVISO_SONO && (acordadoH - n / 60) < HORAS_AVISO_SONO) {
       pushMsgs([{ autor: "sistema", texto: `🌙 Você está acordado há ${Math.floor(acordadoH)}h. O corpo pede acampamento — além de ${HORAS_EXAUSTO}h vem a exaustão.` }]);
@@ -3946,7 +3974,7 @@ export default function Taverna() {
       return { pers, linha: `⛔ ${h.nome}: você já sustenta o máximo de conjurações (${limiteDeInvocacoes(pers)}) — desfaça uma antes.`, nota: "", ok: false };
     }
     const rodadaAtual = (combateRef.current && combateRef.current.rodada) || 1;
-    const novas = criarInvocacoes(h, pers, rodadaAtual).map(garantirFichaCompanheiro);
+    const novas = criarInvocacoes(h, pers, rodadaAtual, { minutoAbs: absMin() }).map(garantirFichaCompanheiro);
     const p = { ...pers, grupo: [...(pers.grupo || []), ...novas] };
     /* põe cada uma no tabuleiro, colada ao conjurador, e estende `aliados`
        na MESMA ordem de `grupo` — o motor de movimento casa os dois por
@@ -5844,7 +5872,16 @@ export default function Taverna() {
          motivo pelo qual a base do mundo existe. */
       const cidadeObj = (mapaRef.current.cidades || []).find((c) => (c.nome || "").toLowerCase() === String(cidadeAtualRef.current || "").toLowerCase());
       const fora = cidadeObj ? resumoArredoresPrompt(sementeMundo(), cidadeObj) : "";
-      const aqui = [forma, ondeEstou, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo()), fora, saidas].filter(Boolean).join("\n\n");
+      /* v9.54: A FORMA DO ASSENTAMENTO. A planta já sabia que uma aldeia de
+         190 almas não tem muralha; o Mestre não sabia, e narrava portão,
+         guarda e muro numa aldeia que não tem nenhum dos três. É uma linha
+         curta porque é um FATO curto — e fato que o desenho já mostra ao
+         jogador não pode continuar sendo contradito na prosa. */
+      const shape = cidadeObj && !lugarRef.current ? (() => {
+        const f = formaDaCidade(cidadeObj);
+        return `A FORMA DAQUI (do sistema — obedeça): ${cidadeObj.nome} é ${f.nota}. ${f.muro.id === "nenhum" ? "NÃO há muralha, portão nem guarda de portão — quem chega, entra." : `A defesa é ${f.muro.rotulo}: ${f.muro.nota}.`}${f.agua ? " Um lado é água, com cais." : ""}${f.aperto < 1 ? " O assentamento está espremido entre paredes de pedra." : ""}`;
+      })() : "";
+      const aqui = [forma, ondeEstou, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo()), shape, fora, saidas].filter(Boolean).join("\n\n");
       const chefes = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), moldeMundo());
       /* QUEM ESTÁ EM CENA (v9.9): presentes, ausentes com a distância em dias,
          e o que foi dito em particular — as duas regras que impedem o aliado
@@ -6115,9 +6152,14 @@ export default function Taverna() {
         mapaRef.current = { ...mapaRef.current, cidades: (mapaRef.current.cidades || []).map((c) => ({ ...c, descoberta: true })) };
       }
       nevoaVersaoRef.current = 1;
-      setMapa(mapaRef.current);
       faccaoJogadorRef.current = sv.faccaoJogador || "";
       cidadeAtualRef.current = sv.cidadeAtual || "";
+      /* v9.54: a marca `pisada` nasce nesta versão, e sem esta linha a cidade
+         onde o save parou nunca a ganharia — o herói sairia dela e veria o
+         cinturão que ele acabou de percorrer sumir do pergaminho, que é
+         exatamente o bug que esta versão veio consertar. */
+      if (cidadeAtualRef.current) mapaRef.current = pisarNaCidade(mapaRef.current, cidadeAtualRef.current);
+      setMapa(mapaRef.current);
       guildaRef.current = sv.guilda && typeof sv.guilda === "object" ? { nivel: sv.guilda.nivel || 1, cofre: sv.guilda.cofre || 0 } : { nivel: 1, cofre: 0 }; setGuilda(guildaRef.current);
       climaRef.current = sv.clima && sv.clima.id ? sv.clima : null; setClima(climaRef.current);
       /* CÓDEX (v6.0): saves antigos não têm conquistas — começam do zero sem quebrar */

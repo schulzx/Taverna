@@ -129,35 +129,48 @@ Dois degraus novos, diferentes em natureza e não em grau.
 
 ---
 
-## Onda 4 — o mundo que já existe e ninguém vê
+## Onda 4 — o mundo que já existe e ninguém vê ✅ FEITA (v9.54)
 
-### 4.1 A planta que responde ao lugar `médio` `médio`
+### 4.1 A planta que responde ao lugar ✅ FEITO
 
-Hoje a mesma muralha, as mesmas duas ruas e a mesma praça numa aldeia de 190
-almas e numa capital de 54 mil. Falta: aldeia sem muro, porto com o mar de um
-lado, fortaleza com muro grosso e uma rua só, montanha com a cidade
-espremida.
+A forma sai da POPULAÇÃO e do BIOMA, não do porte — são dezenove portes em
+cinco moldes, e uma tabela por nome seria uma lista para esquecer de
+atualizar. População é um número, e número compara sozinho.
 
-**Depende de:** nada — a v9.51 já entregou a estrutura.
+Tudo o que o plano pedia entrou: aldeia sem muro, porto com o mar de um lado,
+fortaleza com muro grosso e uma rua só, montanha espremida. E o Mestre passou
+a receber a mesma linha — ele narrava portão e guarda numa aldeia que não tem
+nenhum dos dois.
 
-### 4.2 O cinturão que fica no mapa `baixo` `pequeno`
+Uma lição de tamanho na tela: a primeira versão usava logaritmo da população
+e entregava uma aldeia de raio 27 ao lado de uma capital de 37 — correto e
+visualmente inútil. Virou uma escada de cinco degraus. Quando o objetivo é
+"o jogador vê a diferença", a régua é o olho, não a proporção.
 
-Sair de uma cidade apaga o moinho dela do pergaminho. Uma vez visitado,
-devia ficar, apagado.
+### 4.2 O cinturão que fica no mapa ✅ FEITO
 
-### 4.3 Um lugar DENTRO de outro `médio` `médio`
+A marca `pisada`, que é diferente de `descoberta`: ouvir falar revela o ponto,
+ter dormido lá revela o que fica em volta. Toda cidade pisada guarda o
+cinturão dela, apagado.
 
-O andar da torre virou "nos arredores" com regra de horas. Falta a distância
-`dentro` (minutos) e a régua que impede um andar de virar cidade no mapa.
+### 4.3 Um lugar DENTRO de outro ✅ FEITO
 
-### 4.4 Invocação fora de combate `médio` `pequeno`
+A distância `dentro`, lida do nome por uma lista curta e literal. O texto do
+prompt muda junto: um andar de torre não é "fora da cidade", e sair dele leva
+minutos.
 
-`expiraEm` conta rodadas e fora da luta não há rodada. Decidir: some ao sair
-da cena, vira prazo em minutos, ou não pode ser chamada fora de combate.
+### 4.4 Invocação fora de combate ✅ FEITO
 
-### 4.5 A exaustão que se reanuncia `baixo` `mínimo`
+Dos três caminhos, o prazo em minutos — o único que não mente. Proibir
+contradiria a ficção (chamar um batedor para vasculhar a mata é uso legítimo)
+e sumir na troca de cena é um prazo invisível, que ninguém pode planejar.
 
-Avisa na virada e cala depois.
+### 4.5 A exaustão que se reanuncia ✅ FEITO
+
+E a causa não era a que a pendência supunha. A condição não estava na ficha:
+quem a aplicava escrevia só no estado do React e deixava o espelho para trás,
+e a escrita seguinte a apagava. A mesma armadilha que a v9.13 documentou nos
+espólios — quem escreve em um dos dois lugares escreve em nenhum.
 
 ---
 
@@ -196,12 +209,13 @@ para quem joga, não para quem chama a função.
 
 ## Ordem sugerida, em uma linha
 
-~~**1.1**~~ → ~~**2.1**~~ → ~~**2.2, 2.3**~~ → ~~**3.1–3.5**~~ → **4.5** (a
-exaustão que se reanuncia, o menor que sobrou) → **4.1–4.4** (o mundo
-visível) → **5.x** (as adições).
+~~**1.1**~~ → ~~**2.1**~~ → ~~**2.2, 2.3**~~ → ~~**3.1–3.5**~~ →
+~~**4.1–4.5**~~ → **5.x**, tudo o que sobrou.
 
-As ondas 1, 2 e 3 estão pagas — tudo o que era **dívida** foi quitado: o que
-travava a partida, o que a ficha prometia e o sistema não cumpria, e o que
-fazia o jogo esvaziar com o tempo. O que resta é de outra natureza. A onda 4
-é mundo que já existe e o jogador não vê; a 5 é adição. Nenhuma das duas tem
-alguém esperando por elas com um ponto de habilidade gasto.
+**Quatro ondas de cinco, fechadas.** O que travava a partida, o que a ficha
+prometia sem cumprir, o que esvaziava o jogo com o tempo e o mundo que já
+existia sem ninguém ver. O que resta na onda 5 é adição de outra natureza —
+arquitetura (o prompt por cena), mundo novo (as células do ermo) e uma
+integração externa (imagem). Nenhuma tem alguém esperando com um ponto de
+habilidade gasto, e nenhuma é pequena: a 5.1 e a 5.2 são as duas maiores
+peças isoladas que restam no projeto.
