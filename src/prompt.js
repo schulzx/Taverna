@@ -36,6 +36,7 @@ import { MISSOES_PROMPT } from "./missoes.js";
 import { OFERTAS_PROMPT } from "./ofertas.js";
 import { LUGAR_PROMPT } from "./lugar.js";
 import { ARREDORES_PROMPT } from "./arredores.js";
+import { CELULAS_PROMPT } from "./celulas.js";
 import { MOLDES_PROMPT } from "./moldes.js";
 import { ORCAMENTO_PROMPT } from "./orcamento.js";
 import { ESPECIALIZACOES_PROMPT } from "./especializacoes.js";
@@ -85,14 +86,87 @@ export function formatarCanone(canone) {
   return linhas.join("\n");
 }
 
-export function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone, bancoNomes, mapaInfo, historiaInfo, questsInfo, npcsInfo, tempoInfo, divindadeInfo = "", tituloInfo = "") {
+/* ============================================================
+   O PROMPT QUE SÓ MANDA O QUE A CENA USA (v9.54)
+
+   Setenta e seis mil caracteres — vinte e um mil tokens — subiam em TODO
+   turno, e a maior parte deles não tinha nada a ver com o turno. Uma
+   conversa numa taverna carregava as regras de terreno de combate, a
+   economia de ação, as aflições de golpe, o controle de inimigo e a
+   presença divina. Um herói que nunca conjurou carregava o grimório.
+
+   A faxina da v9.50 tirou 9 mil caracteres do que era contradição ou já
+   era código; isto aqui é outra coisa, e é arquitetura: as regras que
+   sobraram são todas VERDADEIRAS, só não são todas RELEVANTES agora.
+
+   A régua para gatear um bloco tem duas perguntas, e as duas precisam de
+   "sim":
+
+   1) O bloco fala de uma situação que ou está acontecendo ou não está?
+      "Terreno da luta" sim; "não invente item" não — essa vale sempre.
+   2) O sistema SABE dizer se ela está acontecendo, sem adivinhar?
+      Combate, mercador na cidade, bancada, missão ativa: sim. "O jogador
+      talvez pergunte algo ao oráculo": não — e por isso o oráculo fica.
+
+   Na dúvida, o bloco FICA. Uma regra ausente custa um turno ruim, e um
+   turno ruim custa mais do que os quinhentos caracteres que ela pesava.
+   ============================================================ */
+
+/* Cada porta é uma pergunta sobre a cena. `quando` recebe o objeto que o
+   App monta a partir dos refs vivos; ausente ou vazio, tudo entra — que é
+   exatamente o comportamento de antes desta versão. */
+export const PORTAS_DA_CENA = [
+  { id: "combate", quando: (c) => !!c.emCombate, porque: "terreno, economia de ação, reação, aflição de golpe, combo, controle de inimigo e presença divina só existem dentro de uma luta" },
+  { id: "chao", quando: (c) => !!c.emCombate || !!c.temChao, porque: "o que caiu no chão sobrevive à luta, então a porta é o chão ter coisa — não a luta estar aberta" },
+  { id: "mercado", quando: (c) => !!c.temMercado, porque: "regra de compra e venda sem ninguém vendendo é regra sobre o nada" },
+  { id: "bancada", quando: (c) => !!c.temBancada, porque: "forjar e destilar pedem uma bancada; sem ela o bloco é enfeite" },
+  { id: "missao", quando: (c) => !!c.temMissao, porque: "as etapas e o mural só valem com trabalho aberto" },
+  { id: "magia", quando: (c) => !!c.conjura, porque: "quem não conjura não precisa do grimório nem da régua de círculos" },
+  { id: "grupo", quando: (c) => !!c.temGrupo, porque: "o companheiro que não existe não age sozinho" },
+  { id: "legado", quando: (c) => !!c.temLegado, porque: "herança e sucessão só depois de haver o que herdar" },
+  { id: "sintonia", quando: (c) => !!c.temSintonia, porque: "item que dorme só importa para quem carrega um" },
+  { id: "especializacao", quando: (c) => !!c.temEspecializacao, porque: "a árvore de caminhos só depois de o herói entrar num" },
+  { id: "ascensao", quando: (c) => !!c.despertou, porque: "o rito de subir ao panteão não existe antes do despertar" },
+  { id: "invocacao", quando: (c) => !!c.invoca, porque: "quem não chama nada não precisa das regras do que foi chamado" },
+  { id: "gatilho", quando: (c) => !!c.temGatilho, porque: "invisibilidade e afins: só de quem as tem na ficha" },
+  { id: "cidade", quando: (c) => !!c.emCidade, porque: "o cinturão de fazendas e moinhos é da cidade onde se está" },
+  /* aflição nasce de golpe de criatura, de arma ou de armadilha — e os três
+     só existem numa luta ou lá embaixo. Fora disso não há de onde vir. */
+  { id: "aflicao", quando: (c) => !!c.emCombate || !!c.emMasmorra, porque: "veneno, atordoamento e queimadura vêm de golpe ou de armadilha, e os dois moram na luta e na masmorra" },
+  { id: "dadiva", quando: (c) => !!c.temDadiva, porque: "a dádiva épica começa depois do nível 20 — antes disso a regra é sobre coisa nenhuma" },
+  { id: "regrapropria", quando: (c) => !!c.temRegraPropria, porque: "guarda, forma, limiar, pressa e as outras: só de quem tem uma delas na ficha" },
+  /* o avesso da porta da cidade: as regras do espaço ENTRE os lugares só
+     valem para quem está nele */
+  { id: "ermo", quando: (c) => !c.emCidade || !!c.emViagem, porque: "o que há entre os assentamentos importa a quem está entre eles" },
+];
+
+/* Devolve um mapa {id: boolean}. O `cena` vazio abre TODAS as portas, e
+   isso é deliberado: quem chamar sem o objeto novo recebe o prompt inteiro,
+   como sempre recebeu. */
+export function portasAbertas(cena) {
+  const c = cena && typeof cena === "object" ? cena : null;
+  const out = {};
+  for (const p of PORTAS_DA_CENA) out[p.id] = c ? !!p.quando(c) : true;
+  return out;
+}
+
+/* Sem esta linha, cada bloco recusado deixaria a própria linha em branco
+   para trás e o prompt viraria uma escada de buracos. */
+const _limparVazios = (t) => String(t).replace(/\n{3,}/g, "\n\n");
+
+export function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone, bancoNomes, mapaInfo, historiaInfo, questsInfo, npcsInfo, tempoInfo, divindadeInfo = "", tituloInfo = "", cena = null) {
+  const porta = portasAbertas(cena);
+  /* `so` é a única forma deste arquivo esconder alguma coisa: o bloco entra
+     inteiro ou não entra. Nada de meio bloco — regra pela metade é pior do
+     que regra ausente, porque parece completa. */
+  const so = (id, txt) => (porta[id] ? txt : "");
   mundo = mundo || { genero: "Fantasia medieval" };
   personagem = personagem || {};
   const canoneTexto = formatarCanone(canone);
   const bn = bancoNomes || {};
   const mapaTexto = mapaInfo || "";
   const npcsTexto = npcsInfo || "";
-  return `Você é o Mestre de um RPG de mesa por chat, em português brasileiro. Narre um mundo vivo, imprevisível e com vontade própria. Interprete TODOS os NPCs como pessoas reais (vozes, desejos, medos, segredos), crie eventos espontâneos, consequências e reviravoltas, e arbitre as regras com justiça.
+  return _limparVazios(`Você é o Mestre de um RPG de mesa por chat, em português brasileiro. Narre um mundo vivo, imprevisível e com vontade própria. Interprete TODOS os NPCs como pessoas reais (vozes, desejos, medos, segredos), crie eventos espontâneos, consequências e reviravoltas, e arbitre as regras com justiça.
 
 CAMPANHA: "${nomeCampanha}"
 Gênero: ${mundo.genero}
@@ -137,19 +211,19 @@ ${questsInfo || ""}
 - PERSONAGENS SEM AMARRAS (emoções de verdade — regra de interpretação): cada personagem vive a própria natureza ATÉ O FIM, sem suavização. O vilão é mau de verdade: cruel, manipulador, capaz de atrocidades. A sedutora é ousada de verdade: flerta, provoca, insinua sem pudor. O covarde foge, o fanático não negocia, o ambicioso trai. É TERMINANTEMENTE PROIBIDO amansar, moralizar ou "limpar" a personalidade de alguém por cautela — isso mata o mundo vivo. Temas maduros (desejo, violência, crueldade, vício, política suja, preconceito, luto) fazem parte da ficção e devem ser narrados com a intensidade que a cena pede, sem eufemismo e sem censura — apenas sem descrição sexual gráfica detalhada (insinue com classe; o resto, mostre sem medo). Emoções são emoções de verdade: raiva que queima, desejo que constrange, medo que paralisa, alegria que transborda.
 - ONDE EU ESTOU É FATO (âncora de local — regra dura): o LOCAL ATUAL informado acima é onde eu estou de verdade. Se estou EM VIAGEM, NÃO estou em cidade nenhuma: o descanso acontece na estrada, no acampamento ou no meio de transporte em que viajo (a cabine do navio, o vagão da caravana) — JAMAIS me "acorde" em aposentos, estalagens ou palácios sem que eu tenha chegado lá. Descansar no meio do mar NÃO me devolve ao porto. Só me coloque numa cidade se o sistema registrar chegada ("cidade_atual") ou se a ficção me levou até lá com viagem narrada. Quando o meio de viagem mudar (a pé → navio → carroça → cavalo), registre "jornada_meio" nas mudanças (ex.: "jornada_meio":"navio").
 - ${ECONOMIA_PROMPT}
-${MERCADO_PROMPT}
+${so("mercado", MERCADO_PROMPT)}
 ${CONSUMIVEIS_PROMPT}
-${COMPANHEIROS_PROMPT}
-${REACOES_PROMPT}
+${so("grupo", COMPANHEIROS_PROMPT)}
+${so("combate", REACOES_PROMPT)}
 ${BASE_PROMPT}
-${PRESENCA_PROMPT}
+${so("combate", PRESENCA_PROMPT)}
 ${CENA_PROMPT}
 ${ITENS_PROMPT}
 
-${CRAFT_PROMPT}
+${so("bancada", CRAFT_PROMPT)}
 ${ATRIBUTOS_PROMPT}
-${ESPECIALIZACOES_PROMPT}
-${COMBOS_PROMPT}
+${so("especializacao", ESPECIALIZACOES_PROMPT)}
+${so("combate", COMBOS_PROMPT)}
 ${TESTES_PROMPT}
 
 ${PERICIAS_PROMPT}
@@ -160,54 +234,55 @@ ${DESCANSO_PROMPT}
 
 ${RELOGIOS_PROMPT}
 
-${GRIMORIO_PROMPT}
+${so("magia", GRIMORIO_PROMPT)}
 
-${DADIVAS_PROMPT}
+${so("dadiva", DADIVAS_PROMPT)}
 
 ${TRACOS_PROMPT}
 
 ${PROFISSOES_PROMPT}
 
-${GATILHOS_PROMPT}
+${so("gatilho", GATILHOS_PROMPT)}
 
-${INVOCACOES_PROMPT}
+${so("invocacao", INVOCACOES_PROMPT)}
 
-${CONTROLE_PROMPT}
+${so("combate", CONTROLE_PROMPT)}
 
-${HABILIDADES_PROMPT}
+${so("regrapropria", HABILIDADES_PROMPT)}
 
-${OFICINA_PROMPT}
+${so("bancada", OFICINA_PROMPT)}
 
-${MAGIAS_PROMPT}
+${so("magia", MAGIAS_PROMPT)}
 
-${SINTONIA_PROMPT}
+${so("sintonia", SINTONIA_PROMPT)}
 
 ${ORACULO_PROMPT}
 
-${LEGADO_PROMPT}
+${so("legado", LEGADO_PROMPT)}
 
-${GRID_PROMPT}
+${so("combate", GRID_PROMPT)}
 
-${MOVIMENTO_PROMPT}
+${so("combate", MOVIMENTO_PROMPT)}
 
-${CHAO_PROMPT}
+${so("chao", CHAO_PROMPT)}
 
-${MISSOES_PROMPT}
+${so("missao", MISSOES_PROMPT)}
 
-${OFERTAS_PROMPT}
+${so("missao", OFERTAS_PROMPT)}
 
 ${LUGAR_PROMPT}
-${ARREDORES_PROMPT}
+${so("cidade", ARREDORES_PROMPT)}
+${so("ermo", CELULAS_PROMPT)}
 
 ${MOLDES_PROMPT}
 
 ${ORCAMENTO_PROMPT}
-${ASCENSAO_SISTEMA_PROMPT}
+${so("ascensao", ASCENSAO_SISTEMA_PROMPT)}
 ${divindadeInfo ? `- ${divindadeInfo}\n` : ""}- GERADORES DE VIDA (o app sorteia, você narra): envelopes [EVENTO LOCAL], [EVENTO GLOBAL] e [QUEST GERADA PELO SISTEMA] trazem material PRONTO — fios do dia a dia, arcos regionais que escalam por etapas e quests calibradas à fase do arco. Os FATOS sorteados (quem, raça, lugar, o quê) são fixos: os atores já vêm com nome, raça e ofício definidos pelo sistema — use-os exatamente como dados (a diversidade do mundo é responsabilidade do sistema, não mude raças nem troque personagens). O COMO (voz, cena, desdobramentos) é todo seu. Fios locais são pequenos e expiram se ignorados (o mundo se resolve sem o herói — narre o desfecho de passagem). O evento global é arco longo de fundo: escala quando o sistema anuncia nova etapa; quando o jogador o RESOLVER de fato, envie "evento_global_encerrar": true no JSON. Limites do sistema: no máx. 1 global e 3 locais por vez — nunca empilhe mais por conta própria.
 
 CONDIÇÕES DE ESTADO / BUFFS E DEBUFFS (dentro e fora de combate):
 ${CONDICOES_PROMPT}
-${AFLICOES_PROMPT}
+${so("aflicao", AFLICOES_PROMPT)}
 ${CONSEQUENCIAS_PROMPT}
 
 HABILIDADES E EFEITOS TEMPORÁRIOS:
@@ -330,7 +405,7 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
 }
 O campo "canone" é opcional: inclua-o só quando houver um fato durável a registrar ou atualizar. Cada chave é o NOME da entidade; os campos (tipo, papel, genero, local, status, notas) são todos opcionais — preencha os relevantes. Para atualizar, reenvie a mesma chave com os campos novos.
 SINAIS (canal barato — prefira-o sempre que existir): em vez de calcular e enviar números, mande um sinal curto e o SISTEMA resolve pela tabela. Sinais aceitos: "fe:sussurro|feito|proeza|marco" (o herói fez algo que rende fé — o sistema converte em fiéis conforme a fama dele; sussurro = notado por poucos, feito = a cidade comenta, proeza = a região conta, marco = muda a história); "milagre:<id>" (o herói gastou fé num milagre: bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar — o sistema cobra os PF e aplica o efeito); "viagem:<destino>" (o herói pôs o pé na estrada rumo a outro lugar — o sistema assume clima, encontros do trecho e passagem de tempo; NÃO narre a viagem inteira, só a partida); "masmorra:<nome>" (o herói vai enfrentar um covil, cripta, torre, fortaleza ou chefe — o sistema GERA as salas, os perigos e o chefe, e conduz sala a sala; você narra a entrada e depois só o que cada sala mandar); "loot:comum|incomum|raro|epico|lendario" (o herói encontrou um item — o sistema GERA o item com nome, afixos e poder, e te devolve os dados para você descrever o achado; NÃO escreva você o objeto de equipamento, é mais caro e sai incoerente); "ascender:deicidio|reliquia" (o herói venceu TODAS as provas de um caminho de ascensão — o sistema aplica o grau e as consequências); "dominio:<texto>" e "patrono:<texto>" (só na primeira vez que a ficção os revelar). Nunca invente PF nem número de fiéis: mande o sinal e narre a cena.
-Regras do formato: "rolagem" e "mudancas" são null quando não há; nunca os coloque dentro de "narrativa". "narrativa" é sempre uma string simples. Tipos de equipamento: arma, armadura, elmo, botas, anel, amuleto, escudo. Raridades: comum, incomum, raro, epico, lendario. Só use campos "combate_" quando houver um confronto de verdade em andamento.`;
+Regras do formato: "rolagem" e "mudancas" são null quando não há; nunca os coloque dentro de "narrativa". "narrativa" é sempre uma string simples. Tipos de equipamento: arma, armadura, elmo, botas, anel, amuleto, escudo. Raridades: comum, incomum, raro, epico, lendario. Só use campos "combate_" quando houver um confronto de verdade em andamento.`);
 }
 
 /* ---------------- Ponte de IA (produção) ---------------- */

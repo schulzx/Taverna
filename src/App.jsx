@@ -54,6 +54,7 @@ import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { resumoArredoresPrompt } from "./arredores.js";
+import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
 import { garantirLugar, definirLugar, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
@@ -66,7 +67,7 @@ import { detectarPartida, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jo
 import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, resolvidaPeloSistema, PERGUNTAS_AOS_MORTOS, abrirInterrogatorio, perguntarAoMorto, envelopeDoMorto, textoDeIdentificacao, localizarNoMapa, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
 import { avaliarEquipar, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
-import { fichaTexto, formatarCanone, montarSystemPrompt } from "./prompt.js";
+import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
 import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./ui.jsx";
 import { FichaVisual } from "./painel-ficha.jsx";
 import { SeloHeroismo, PainelHeroismo } from "./painel-heroismo.jsx";
@@ -84,10 +85,10 @@ import { gerarDadivaUnica, envelopeDaUnica, todasAsLinhas as linhasDeDadivas, at
 import { comDom, vantagemDeTraco, vantagemMentalDeTraco, imuneDeTraco, iniciativaDeTraco, ignoraDificilPorTraco, oficioDeTraco, refazerDeTracoDisponivel, gastarRefazerDeTraco, sorteDisponivel, gastarSorte, firmeDisponivel, gastarFirme, repousarTracos, abrirCombateTracos, amortecerDano, textoDoTraco, resumoTracosPrompt } from "./tracos.js";
 import { bonusDeBancada, componentesExtras, bonusDeNavegacao, despojosExtras, bonusDeTeste, precoDeVenda, precoDeCompraPara, moedasDeEspolio, resumoProfissaoPrompt } from "./profissoes.js";
 import { criarOficina, anotar as anotarOficina, bilheteDaOficina, OFICINA_PROMPT } from "./oficina.js";
-import { romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, devolverSegura, GATILHOS_PROMPT } from "./gatilhos.js";
+import { gatilhosDe, romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, devolverSegura, GATILHOS_PROMPT } from "./gatilhos.js";
 import { controleDe, aplicarControle, expirarControles, estaProvocando, CONTROLE_PROMPT } from "./controle.js";
 import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, expirarPorMinuto, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
-import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, erguerGuarda, expirarGuardas, baixarGuardas, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, ignoraDoGolpe, linhaDoIgnorar, notaDoIgnorar, apressar, expirarPressa, baixarPressa, acoesPorRodada, HABILIDADES_PROMPT } from "./habilidades.js";
+import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, temRegraPropria, erguerGuarda, expirarGuardas, baixarGuardas, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, ignoraDoGolpe, linhaDoIgnorar, notaDoIgnorar, apressar, expirarPressa, baixarPressa, acoesPorRodada, HABILIDADES_PROMPT } from "./habilidades.js";
 import { agruparMensagens } from "./resumo.js";
 
 /* ============================================================
@@ -3450,6 +3451,66 @@ export default function Taverna() {
     const fe = resumoFePrompt(mapaRef.current, devocaoRef.current, dv);
     return `${DIVINDADE_PROMPT}\n${CAMINHOS_PROMPT}\n${DEVOCAO_PROMPT}\nEstado atual do jogador: ${resumoAscensao(dv, 0)}${dv.panteao.length ? `\nPanteão conhecido: ${dv.panteao.map((d) => `${d.icone} ${d.nome} ${d.dominio} — GD ${d.gd} (${tituloDe(d.gd)}), culto: ${d.culto}`).join("; ")}.` : ""}${fe ? `\n${fe}` : ""}`;
   };
+  /* ---------------- O QUE A CENA USA (v9.54) ----------------
+     As perguntas que decidem quais blocos de regra sobem no prompt deste
+     turno. Todas são baratas e todas saem dos refs vivos — nenhuma
+     adivinha nada, que é a régua da porta: se o sistema não sabe dizer se
+     a situação está acontecendo, o bloco fica.
+
+     Onde existe um `resumo*Prompt`, a pergunta é ele mesmo devolver vazio.
+     Não é preguiça: essas funções JÁ carregam o teste de "não há nada a
+     dizer sobre isto", e escrever o teste uma segunda vez aqui seria criar
+     duas verdades que podem discordar. */
+  const cenaDoPrompt = () => {
+    const p = fichaViva() || personagem || {};
+    const mm = masmorraRef.current;
+    return {
+      emCombate: !!combateRef.current,
+      emMasmorra: !!(mm && !mm.encerrada),
+      temChao: (chaoRef.current || []).length > 0,
+      emCidade: !!cidadeAtualRef.current,
+      /* cidade tem mercador; ermo não tem. É a mesma pergunta, e é honesta:
+         a regra de compra e venda importa onde há de quem comprar. */
+      temMercado: !!cidadeAtualRef.current,
+      temBancada: ((p.inventario || []).some((it) => !!comoComponente(it))),
+      temMissao: !!resumoMissoesPrompt(missoesRef.current),
+      conjura: perfilCombate(p.classe).tipo === "conjurador" || temCaderno(p)
+        || (p.habilidades || []).some((h) => ehMagiaDoGrimorio(h && h.nome)),
+      temGrupo: ((p.grupo || []).length > 0),
+      temLegado: !!resumoLegadoPrompt(p),
+      temSintonia: !!resumoSintoniaPrompt(p),
+      temEspecializacao: !!p.especializacao,
+      despertou: !!(divindadeRef.current && divindadeRef.current.despertar),
+      invoca: (p.habilidades || []).some((h) => !!invocacaoDe(h)) || invocacoesDe(p).length > 0,
+      /* o bloco explica como narrar um efeito que ACABA por acontecimento —
+         sem efeito assim ativo, não há o que narrar */
+      temGatilho: (p.efeitos || []).some((e) => gatilhosDe(e).length > 0),
+      temDadiva: ((p.dadivas || []).length > 0) || (p.nivel || 1) >= 20,
+      temRegraPropria: temRegraPropria(p),
+      emViagem: !!jornadaRef.current,
+    };
+  };
+
+  /* ---------------- ONDE O ERMO ESTÁ (v9.54) ----------------
+     A célula do trecho atual. Em viagem, o ponto do caminho já percorrido;
+     parado fora de cidade, a célula de onde o herói ficou. Dentro da
+     cidade não há ermo, e o prompt não recebe nada. */
+  const celulaAqui = () => {
+    const semA = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const j = jornadaRef.current;
+    if (j && j.para) {
+      const rota = (mapaRef.current.rotas || []).find((r) =>
+        (semA(r.de) === semA(j.de) && semA(r.para) === semA(j.para)) ||
+        (semA(r.de) === semA(j.para) && semA(r.para) === semA(j.de)));
+      const dias = Math.max(0.5, rota ? Number(rota.dias) || 3 : 3);
+      const andados = Math.max(0, diaRef.current - (Number(j.desde) || diaRef.current));
+      return celulaDaJornada(sementeMundo(), j, mapaRef.current, moldeMundo(), andados / dias);
+    }
+    if (cidadeAtualRef.current && !lugarRef.current) return null;
+    const cid = (mapaRef.current.cidades || []).find((c) => semA(c.nome) === semA(cidadeAtualRef.current));
+    return cid ? celulaDaCidade(sementeMundo(), cid, { mapa: mapaRef.current, molde: moldeMundo() }) : null;
+  };
+
   /* A ÚNICA FONTE DE VERDADE DOS FIÉIS: quem manda é o mapa. Sempre que a
      devoção muda, o número da ascensão é RECALCULADO — nunca somado à mão. */
   const sincronizarFieis = (dev) => {
@@ -4680,7 +4741,7 @@ export default function Taverna() {
         }
       }
       if (tocouMapa) { mp2 = garantirGeografia(mp2, "taverna|canone"); mapaRef.current = mp2; setMapa(mp2); }
-      systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, c, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+      systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, c, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     }
     /* PESSOAS (registro de NPCs): o Mestre envia "npcs"; e como blindagem de
        memória, qualquer PESSOA do cânone sem ficha entra no registro por código. */
@@ -4706,7 +4767,7 @@ export default function Taverna() {
       }
       if (tocou) {
         npcsRef.current = reg; setNpcs(reg);
-        systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+        systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       }
     }
     setPersonagem(pers);
@@ -5420,7 +5481,7 @@ export default function Taverna() {
          próximo reload. */
       if (!msgs.length && !tocouCanone && !tocouElenco) return;
       /* o prompt precisa enxergar TUDO já no PRÓXIMO turno */
-      if (tocouCanone || tocouElenco || msgs.length) systemRef.current = montarSystemPrompt(nomeCampanha, mundo, p, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+      if (tocouCanone || tocouElenco || msgs.length) systemRef.current = montarSystemPrompt(nomeCampanha, mundo, p, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
       salvar({ personagem: p });
     } catch { /* o cronista NUNCA atrapalha o jogo — falhou, vida segue */ }
@@ -5538,7 +5599,7 @@ export default function Taverna() {
     if (pf) msgs.push(`✨ ${pf > 0 ? "+" : ""}${pf} Pontos de Fé (${novo.pf} PF)`);
     if (depois > antes) {
       msgs.push(`🌟 ASCENSÃO! Seu nome ganha peso no cosmos: agora você é ${tituloDe(depois)} (GD ${depois}).`);
-      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ASCENSÃO — REGISTRO DO SISTEMA] O jogador subiu para GD ${depois} (${tituloDe(depois)}). Isso é fato: narre os sinais dessa transformação aos poucos, à altura do marco.`;
     }
     return msgs;
@@ -5740,7 +5801,7 @@ export default function Taverna() {
     devocaoRef.current = dep.devocao; setDevocao(dep.devocao);
     divindadeRef.current = { ...dv, despertar: true, panteao, fieis: Math.max(50, fieisTotais(mapaRef.current, dep.devocao)), pf: dv.pf };
     setDivindade(divindadeRef.current);
-    systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+    systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     if (silencioso) {
       /* SAVE VETERANO (v7.4.1): nível alto carregado do disco — o sistema
          abre a ascensão SEM cutucar o Mestre (evita dupla narração com o
@@ -5881,7 +5942,12 @@ export default function Taverna() {
         const f = formaDaCidade(cidadeObj);
         return `A FORMA DAQUI (do sistema — obedeça): ${cidadeObj.nome} é ${f.nota}. ${f.muro.id === "nenhum" ? "NÃO há muralha, portão nem guarda de portão — quem chega, entra." : `A defesa é ${f.muro.rotulo}: ${f.muro.nota}.`}${f.agua ? " Um lado é água, com cais." : ""}${f.aperto < 1 ? " O assentamento está espremido entre paredes de pedra." : ""}`;
       })() : "";
-      const aqui = [forma, ondeEstou, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo()), shape, fora, saidas].filter(Boolean).join("\n\n");
+      /* v9.54: o trecho de ermo em que o herói está. É o estágio 2 do mundo
+         chegando ao Mestre: o caminho entre dois lugares deixa de ser um
+         vazio narrado de improviso e vira terreno, distância e uma feição
+         que continua lá na volta. */
+      const ermoAqui = (() => { try { return resumoCelulaPrompt(celulaAqui(), moldeMundo()); } catch { return ""; } })();
+      const aqui = [forma, ondeEstou, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo()), shape, ermoAqui, fora, saidas].filter(Boolean).join("\n\n");
       const chefes = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), moldeMundo());
       /* QUEM ESTÁ EM CENA (v9.9): presentes, ausentes com a distância em dias,
          e o que foi dito em particular — as duas regras que impedem o aliado
@@ -5921,6 +5987,25 @@ export default function Taverna() {
     })()}`;
     const base = histBase ?? historico;
     const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
+    /* ---------------- O PROMPT SE REFAZ A CADA TURNO (v9.54) ----------------
+       Enquanto o prompt era o mesmo em toda cena, remontá-lo em onze eventos
+       espalhados bastava. Com as portas da cena isso deixou de bastar, e o
+       modo de falhar era o pior possível: um combate que abrisse DEPOIS da
+       última remontagem subiria sem as regras de terreno, de economia de
+       ação e de aflição — o Mestre inventaria as três, e ninguém saberia
+       por quê.
+
+       Remontar aqui custa uma concatenação de sessenta mil caracteres, que
+       é ruído perto da chamada de rede que vem a seguir. Os onze pontos
+       antigos continuam onde estavam: eles servem ao caso em que o prompt
+       muda sem haver turno (recalibrar, carregar save). */
+    systemRef.current = montarSystemPrompt(
+      nomeCampanhaRef.current || nomeCampanha, mundoAtual(), persAtual || personagemRef.current || personagem,
+      livroRef.current, canoneRef.current, bancoNomesRef.current,
+      (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(),
+      resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current),
+      tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt(),
+    );
     try {
       const resp = await chamarMestre(systemRef.current, novoHist);
       /* MEMÓRIA ENXUTA: no histórico vai SÓ a narrativa (dentro do molde JSON,
@@ -5977,7 +6062,7 @@ export default function Taverna() {
         try {
           const narrativas = mensagensRef.current.filter((x) => x.autor === "mestre").map((x) => x.texto);
           gerarLivro(livroRef.current, narrativas).then((l) => {
-            if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, l, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo()); salvar({ livro: l }); }
+            if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, l, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt()); salvar({ livro: l }); }
           }).catch(() => { /* o livro pode falhar; a campanha não */ });
         } catch (e) {
           pushMsgs([{ autor: "sistema", texto: `⚠ O arquivista tropeçou ao atualizar o livro da campanha (${String((e && e.message) || e).slice(0, 120)}). O turno está salvo; se repetir, me mostre esta mensagem.` }]);
@@ -6113,7 +6198,7 @@ export default function Taverna() {
     confidenciasRef.current = [];
     mercadoRef.current = { comprados: {}, ambulante: null }; setMercado(mercadoRef.current);
     bancoNomesRef.current = gerarBancoNomes(mundo);
-    systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+    systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null);
     setCombate(null); combateRef.current = null;   /* fim de campanha: nao ha ficha para limpar */
     setFase("jogo");
@@ -6268,7 +6353,7 @@ export default function Taverna() {
       setMissoes(missoesRef.current);
       setQuests([...questsRef.current]);
       bancoNomesRef.current = gerarBancoNomes(sv.mundo);
-      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       setFase("jogo");
       /* DESPERTAR NO CARREGAMENTO (v7.4.1): save veterano nível ≥15 nunca
          disparava o despertar (ele só checava DEPOIS de um turno). */
@@ -8233,7 +8318,7 @@ export default function Taverna() {
       if (v.virou) {
         historiaRef.current = v.historia;
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeVirada(v)}`;
-        systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), personagemRef.current || personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+        systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), personagemRef.current || personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       }
       /* sem salvar aqui de propósito: quem chamou está no meio de um turno e
          vai gravar no fim dele, e `salvar` já leva historiaRef por padrão */
@@ -10701,6 +10786,15 @@ export default function Taverna() {
       jornadaRef.current = { ...jornadaRef.current, para: destino };
       setJornada(jornadaRef.current);
     }
+    /* v9.54: O TRECHO GANHA ROSTO. Até aqui o dia de estrada era clima mais
+       encontro, e o espaço em si não existia — o quarto dia era igual ao
+       primeiro. Agora o sistema diz por onde se passa, e a feição do trecho
+       é a mesma na volta: é a diferença entre um mundo e um gerador de
+       frases. */
+    {
+      const cel = celulaAqui();
+      if (cel) pushMsgs([{ autor: "sistema", texto: `🏞 ${linhaDaCelula(cel)}` }]);
+    }
     /* ---- RITMO E MARCHA FORÇADA (v9.14) ----
        `marchaForcada` estava em ermos.js sem nenhum chamador, e o ritmo de
        viagem era um campo que ninguém escolhia. Agora os dois existem: o
@@ -10911,7 +11005,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
       if (gn !== guildaRef.current.nivel) { const g = { ...guildaRef.current, nivel: gn }; guildaRef.current = g; setGuilda(g); msgs.push(`🏛 Guilda recalibrada para o nível ${gn}`); }
     }
     /* 5) O prompt precisa enxergar o mundo novo já no próximo turno */
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Recalibração de save: o estado do mundo (guilda, domínios, potências, pessoas, companheiros) foi atualizado para refletir tudo que já aconteceu. Trate os registros atuais como verdade.`;
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })).concat([{ autor: "sistema", texto: "⚖ Mundo recalibrado. Confira Gestão: Grupo, Pessoas, Guilda, Domínios e Diplomacia agora contam a sua história." }]));
     setRecalM(null);
@@ -11003,7 +11097,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     if (dv.dominio) msgs.push(`🌌 Domínio: ${dv.dominio}`);
     if (pan.length) msgs.push(`🏛 Panteão: ${pan.map((d) => `${d.nome} (GD ${d.gd})`).join(", ")}`);
     /* O Mestre precisa TRATAR isso como fato já no próximo turno */
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo());
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ASCENSÃO — RECALIBRAÇÃO DO SISTEMA] O estado divino do herói foi alinhado com a história já jogada: GD ${depois} (${tituloDe(depois)}), ${dv.fieis} fiéis, ${dv.pf} PF${dv.dominio ? `, domínio ${dv.dominio}` : ""}${dv.patrono ? `, patrono ${dv.patrono}` : ""}. Trate como verdade estabelecida — a história já o reconhecia assim.`;
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
     setRecalAsc(null);

@@ -215,14 +215,31 @@ jogador descobre jogando.
 
 ## Mestre e prompt
 
-- **O prompt de sistema ainda passa de 75 mil caracteres** (~21 mil tokens) e
-  vai inteiro em todo turno. A faxina da v9.50 tirou 9 mil caracteres — o que
-  contradizia o código ou já era código. O que sobrou é regra viva, e cortar
-  daqui em diante é escolha de produto, não limpeza: o candidato óbvio é
-  mandar por turno só o que a cena usa (o bloco de masmorra só em masmorra, o
-  de diplomacia só quando há facção em jogo), que é uma mudança de
-  arquitetura, não de texto. `teste-prompt.mjs` guarda o tamanho e as regras
-  que não podem voltar.
+- ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na
+  v9.54 pelo caminho que esta linha previa: mandar por turno só o que a cena
+  usa. São dezoito portas em `PORTAS_DA_CENA`, cada uma com a pergunta que a
+  abre e o motivo escrito ao lado.
+
+  A régua para gatear um bloco tem duas perguntas, e as duas precisam de
+  "sim": (1) ele fala de uma situação que ou está acontecendo ou não está?
+  (2) o sistema SABE dizer se ela está acontecendo, sem adivinhar? O oráculo
+  falha na segunda — não dá para saber se o jogador vai fazer uma pergunta
+  fechada — e por isso ficou. **Na dúvida, o bloco fica**: uma regra ausente
+  custa um turno ruim, e um turno ruim custa mais do que os quinhentos
+  caracteres que ela pesava.
+
+  Medido: **25% a menos** numa cena de taverna ou de estrada, 15% em combate,
+  e o tamanho cheio quando tudo está acontecendo de uma vez. Menos do que o
+  terço estimado no plano, e é o número honesto.
+
+  Um efeito colateral que quase virou bug: o prompt era remontado em ONZE
+  eventos espalhados e não a cada turno. Com as portas isso deixou de bastar
+  — um combate que abrisse depois da última remontagem subiria sem as regras
+  de terreno e de economia de ação, e o Mestre inventaria as duas sem
+  ninguém saber por quê. Agora ele se refaz antes de cada chamada.
+
+  `teste-prompt.mjs` continua guardando as regras que não podem voltar, e
+  `teste-onda5.mjs` guarda quais podem sair e quais nunca saem.
 
 - **Temperatura em 0.85** (v9.45, era 1.1). Escolhida contra a prosa
   quebrada que apareceu em jogo; se ficar previsível demais, `DS_TEMPERATURA`
@@ -230,12 +247,24 @@ jogador descobre jogando.
 
 ## Mundo
 
-- **Estágio 2 da geração de mundo: as células do ermo.** Dar coordenada real
-  ao espaço entre assentamentos (`${semente}|celula|${x},${y}` com bioma,
-  perigo e feição), que é onde `lugar.js` ganharia posição em vez de um nome
-  solto. Combinado como etapa, nunca começado.
+- ~~**Estágio 2 da geração de mundo: as células do ermo.**~~ RESOLVIDO na
+  v9.54 em `celulas.js`. O pergaminho de 100 por 100 virou uma grade de 20
+  por 20, e cada célula sabe três coisas: que terreno é, quão longe da gente
+  está e o que há nela de notável. Determinística pela semente — a feição do
+  quarto dia de estrada é a mesma na volta, e é isso que separa um mundo de
+  um gerador de frases.
 
-- **Estágio 3: o eixo extra por molde**, só onde significar alguma coisa.
+  Uma decisão que vale registrar: **o bioma da célula não é sorteado**, é
+  herdado do assentamento mais próximo. Sortear daria um mundo de retalhos
+  (deserto colado em geleira), e um mundo de retalhos é pior do que nenhum,
+  porque contradiz o que o jogador vê no mapa.
+
+- ~~**Estágio 3: o eixo extra por molde.**~~ RESOLVIDO na v9.54 dentro do
+  estágio 2, que era o lugar onde ele significava alguma coisa. A Torre e o
+  Braço Estelar declaram um eixo `z` desde a v9.40 e ele nunca passou de um
+  rótulo; agora a célula o carrega e o perigo cresce com a altura, pela
+  mesma `fatorDePerigo` que o molde já declarava e que ninguém chamava. Onde
+  o molde não tem `z`, nada muda — que era o critério combinado.
 
 ## Craft e economia
 

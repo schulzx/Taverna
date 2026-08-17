@@ -174,26 +174,48 @@ espólios — quem escreve em um dos dois lugares escreve em nenhum.
 
 ---
 
-## Onda 5 — o que é adição, não dívida
+## Onda 5 — o que é adição, não dívida ✅ FEITA (v9.54), menos a imagem
 
-### 5.1 O prompt que só manda o que a cena usa `médio` `grande`
+### 5.1 O prompt que só manda o que a cena usa ✅ FEITO
 
-Vinte e um mil tokens em todo turno. A faxina da v9.50 tirou o que era
-contradição; daqui em diante é arquitetura: o bloco de masmorra só em
-masmorra, o de diplomacia só com facção em jogo, o de ascensão só depois do
-despertar (esse já é assim). Economia estimada: um terço.
+Dezoito portas em `PORTAS_DA_CENA`, cada uma com a pergunta que a abre e o
+motivo escrito ao lado. A régua tem duas perguntas, e as duas precisam de
+"sim": o bloco fala de uma situação que ou está acontecendo ou não está? e o
+sistema sabe dizer se ela está acontecendo, sem adivinhar? O oráculo falha na
+segunda e por isso ficou.
 
-### 5.2 Estágio 2 do mundo: as células do ermo `médio` `grande`
+**Economia estimada: um terço. Medida: um quarto** — 25% numa cena de taverna
+ou de estrada, 15% em combate. A diferença é que boa parte do peso está no
+corpo do prompt (as regras-mestras que valem sempre) e não nos blocos.
 
-Dar coordenada real ao espaço entre assentamentos. É o que faria os
-arredores, o ermo e a viagem falarem a mesma língua.
+O achado que quase virou bug: o prompt era remontado em ONZE eventos e não a
+cada turno. Isso bastava quando ele era o mesmo em toda cena; com as portas,
+um combate aberto depois da última remontagem subiria sem as regras de
+terreno. Agora ele se refaz antes de cada chamada — e os onze pontos antigos
+continuam onde estavam, para o caso em que o prompt muda sem haver turno.
 
-### 5.3 Estágio 3: o eixo extra por molde `baixo` `médio`
+### 5.2 Estágio 2 do mundo: as células do ermo ✅ FEITO
 
-### 5.4 Geração de imagem `baixo` `grande`
+`celulas.js`: o pergaminho vira uma grade de 20 por 20, e cada célula sabe
+que terreno é, quão longe da gente está e o que há nela de notável. O bioma é
+HERDADO do assentamento mais próximo e não sorteado — sortear daria um mundo
+de retalhos, que é pior do que nenhum mundo porque contradiz o mapa.
 
-Exige `api/imagem.js` com a chave em variável de ambiente e IndexedDB para
-guardar. A cota do localStorage já está apertada.
+Os três sistemas passam a falar a mesma língua, como o plano previa: a viagem
+narra o trecho, o ermo tem distância e perigo reais, e um lugar fora da
+cidade tem posição em vez de um nome solto.
+
+### 5.3 Estágio 3: o eixo extra por molde ✅ FEITO
+
+Dentro do 5.2, que era onde ele significava alguma coisa — o critério
+combinado. A Torre e o Braço Estelar declaravam `z` desde a v9.40 e o eixo
+nunca passou de rótulo; agora a célula o carrega e o perigo cresce com a
+altura, pela `fatorDePerigo` que o molde já declarava e ninguém chamava.
+
+### 5.4 Geração de imagem — ADIADA (decisão do autor)
+
+Fica isolada, para depois. Exige `api/imagem.js` com a chave em variável de
+ambiente e IndexedDB para guardar: a cota do localStorage já está apertada.
 
 ---
 
@@ -210,12 +232,16 @@ para quem joga, não para quem chama a função.
 ## Ordem sugerida, em uma linha
 
 ~~**1.1**~~ → ~~**2.1**~~ → ~~**2.2, 2.3**~~ → ~~**3.1–3.5**~~ →
-~~**4.1–4.5**~~ → **5.x**, tudo o que sobrou.
+~~**4.1–4.5**~~ → ~~**5.1, 5.2, 5.3**~~ → **5.4** (geração de imagem, adiada
+por decisão do autor: fica isolada, para depois).
 
-**Quatro ondas de cinco, fechadas.** O que travava a partida, o que a ficha
-prometia sem cumprir, o que esvaziava o jogo com o tempo e o mundo que já
-existia sem ninguém ver. O que resta na onda 5 é adição de outra natureza —
-arquitetura (o prompt por cena), mundo novo (as células do ermo) e uma
-integração externa (imagem). Nenhuma tem alguém esperando com um ponto de
-habilidade gasto, e nenhuma é pequena: a 5.1 e a 5.2 são as duas maiores
-peças isoladas que restam no projeto.
+**O plano está cumprido.** O que travava a partida, o que a ficha prometia
+sem cumprir, o que esvaziava o jogo com o tempo, o mundo que já existia sem
+ninguém ver, e a arquitetura do prompt. Fora a geração de imagem — que é uma
+integração externa e foi separada de propósito —, não há mais item aberto
+neste plano.
+
+O que sobra em [PENDENCIAS.md](PENDENCIAS.md) daqui em diante é de outra
+espécie: coisas que só a partida de verdade revela. A lista de "o que ainda
+não foi jogado" continua lá, e ela rende mais na mão de quem joga do que na
+de quem chama a função.

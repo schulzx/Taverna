@@ -500,6 +500,17 @@ export function baixarPressa(pers) {
   return { pers: novo, linha: "⏩ Com o fim da luta, a pressa passa." };
 }
 
+/* ---------------- A PORTA DESTE BLOCO (v9.54) ----------------
+   O prompt por cena precisa saber se vale a pena mandar as regras deste
+   arquivo, e a pergunta certa é "este herói tem alguma habilidade que
+   passa por aqui?". A função mora AO LADO dos leitores de propósito:
+   quem acrescentar uma sétima família amanhã acrescenta uma linha aqui
+   sem sair do arquivo, e a porta não fica devendo. */
+export function temRegraPropria(pers) {
+  const habs = (pers && pers.habilidades) || [];
+  return habs.some((h) => !!(guardaDe(h) || formaDe(h) || limiarDe(h) || pressaDe(h) || ignoraDoGolpe(h) || reerguerDe(h) || metamagiaDe(h) || ehReescrever(h)));
+}
+
 export const HABILIDADES_PROMPT = `HABILIDADES DE REGRA PRÓPRIA (v9.54 — o sistema resolve, você narra):
 - IGNORAR: alguns golpes atravessam o que normalmente protege — a armadura do alvo, ou a cobertura e a distância. O sistema já rolou assim; narre a passagem e não descreva o alvo se defendendo com aquilo que o golpe atravessou.
 - PRESSA: algumas habilidades dão DUAS ações por rodada durante alguns turnos. Quem declara as duas sou eu — narre a velocidade e espere; não aja no meu lugar.
