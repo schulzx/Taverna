@@ -227,6 +227,27 @@ jogador descobre jogando.
   ermo junto seria dizer a mesma coisa duas vezes com palavras diferentes, e
   duas descrições do mesmo lugar é como o Mestre inventa uma terceira.
 
+- ~~**Só dava para viajar dizendo o NOME do lugar.**~~ RESOLVIDO na v9.57
+  (etapa 3) com `resolver.js`. Ninguém joga sempre pelo nome: diz-se "vamos
+  para a capital", "quero ir ao porto do norte", "voltamos para onde
+  estivemos". O sistema respondia a isso com silêncio, e o Mestre inventava
+  um destino.
+
+  Agora a descrição vira lugar. O resolver procura em tudo o que o próprio
+  sistema gerou — nome, porte, região, continente, bioma, relação, domínio,
+  o que já foi pisado — e no cânone e no elenco, que é como "a cidade onde
+  encontramos o ferreiro" acha resposta. Devolve uma de quatro coisas: ACHEI
+  (vai), AMBÍGUO (lista numerada), VAGO (mais de cinco: pede pista melhor)
+  ou NADA (diz o que conhece).
+
+  **Quem pergunta é o sistema, não o Mestre** — se ele desambiguasse estaria
+  escolhendo, e escolher destino é do jogador; e se apenas perguntasse na
+  prosa, a resposta voltaria como texto livre para ser interpretada de novo,
+  o mesmo problema um turno depois. A resposta é um número.
+
+  Na dúvida, NÃO MOVE. Um resolver que chuta teleporta o herói para o lugar
+  errado, e isso custa a sessão.
+
 - ~~**A pausa da viagem não existia.**~~ RESOLVIDO na v9.56 (etapa 2): uma
   luta na estrada agora PARA a viagem, e a pausa diz onde parou ("no 4º
   trecho de 13, junto às três pedras"). A pausa é LIDA, não guardada — se há

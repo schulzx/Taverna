@@ -38,6 +38,7 @@ import { LUGAR_PROMPT } from "./lugar.js";
 import { ARREDORES_PROMPT } from "./arredores.js";
 import { CELULAS_PROMPT } from "./celulas.js";
 import { VIAGEM_PROMPT } from "./viagem.js";
+import { RESOLVER_PROMPT } from "./resolver.js";
 import { MOLDES_PROMPT } from "./moldes.js";
 import { ORCAMENTO_PROMPT } from "./orcamento.js";
 import { ESPECIALIZACOES_PROMPT } from "./especializacoes.js";
@@ -276,6 +277,7 @@ ${LUGAR_PROMPT}
 ${so("cidade", ARREDORES_PROMPT)}
 ${so("ermo", CELULAS_PROMPT)}
 ${so("viagem", VIAGEM_PROMPT)}
+${RESOLVER_PROMPT}
 
 ${MOLDES_PROMPT}
 

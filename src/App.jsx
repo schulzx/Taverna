@@ -64,6 +64,7 @@ import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao }
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
+import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
 import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra } from "./rastro.js";
 import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, resolvidaPeloSistema, PERGUNTAS_AOS_MORTOS, abrirInterrogatorio, perguntarAoMorto, envelopeDoMorto, textoDeIdentificacao, localizarNoMapa, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
 import { avaliarEquipar, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
@@ -2857,6 +2858,11 @@ export default function Taverna() {
   const mortosSessaoRef = useRef(null);   // as cinco perguntas em curso (v9.31)
   const turnosDeMundoRef = useRef(0);     // cadência do relógio "turno_mundo" (v9.31)
   const sinalViagemRef = useRef(null);    // Mestre (ou o rastro) pediu para abrir viagem
+  /* v9.57: a pergunta de desambiguação em aberto. Guarda os candidatos que o
+     sistema ofereceu para que a resposta do jogador — um número ou um nome —
+     seja lida contra a MESMA lista que ele viu, e não contra o mapa inteiro
+     de novo. */
+  const escolhaPendenteRef = useRef(null);
   const sinalMasmorraRef = useRef(null);  // Mestre (ou o rastro) pediu para abrir masmorra
   const destinoViagemRef = useRef("");    // para onde o herói disse que ia — desenha a estrada no mapa
   const salaEmCursoRef = useRef(null);    // sala da masmorra cujo combate está aberto
@@ -3771,6 +3777,36 @@ export default function Taverna() {
       (semA(r.de) === semA(de) && semA(r.para) === semA(para)) ||
       (semA(r.de) === semA(para) && semA(r.para) === semA(de))) || null;
   };
+  /* ---------------- QUERER PARTIR (v9.57) ----------------
+     O resolver só é chamado quando há INTENÇÃO DE IR. Sem esta porta, toda
+     frase que mencionasse "a capital" viraria uma viagem — inclusive "o
+     mercador veio da capital". A régua é estreita porque o preço do falso
+     positivo é o herói na estrada sem ter pedido. */
+  const RX_QUER_PARTIR = /\b(vou para|vamos para|vou pra|vamos pra|vou a|vamos a|vou ate|vamos ate|parto para|partimos para|sigo para|seguimos para|viajo para|viajamos para|rumo a|rumo ao|quero ir|queremos ir|preciso ir|vamos voltar para|volto para|voltamos para|me leve para|partir para|viajar para|ir para|ir ate)\b/;
+  const querPartir = (texto) => {
+    const t = String(texto || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    return !!t.trim() && !t.trimStart().startsWith("[") && RX_QUER_PARTIR.test(t);
+  };
+
+  /* O que o cânone e o elenco sabem de cada lugar — é assim que "a cidade
+     onde encontramos o ferreiro" vira um destino. O sistema só reconhece o
+     que ele mesmo registrou; o que ninguém anotou, ninguém acha. */
+  const pistasDoCanone = () => {
+    const out = [];
+    try {
+      for (const [nome, f] of Object.entries(canoneRef.current || {})) {
+        if (!f || !f.local) continue;
+        out.push({ cidade: f.local, termos: [nome, f.papel, f.tipo].filter(Boolean), porque: `${nome} está lá` });
+      }
+      for (const [cidade, dados] of Object.entries(npcsRef.current || {})) {
+        for (const p of (dados && dados.gente) || []) {
+          if (p && p.nome) out.push({ cidade, termos: [p.nome, p.papel].filter(Boolean), porque: `${p.nome} mora lá` });
+        }
+      }
+    } catch { /* pista é bônus: nunca pode custar o turno */ }
+    return out;
+  };
+
   /* Os trechos que a estrada entre dois lugares atravessa. Sai das células
      do ermo — este arquivo não sabe o que é uma célula, só pede a lista. */
   const trechosDaRota = (de, para) => {
@@ -7037,6 +7073,24 @@ export default function Taverna() {
 
      Devolve true quando ela própria já resolveu o turno (o portal envia). */
   const interceptarMovimento = (acao) => {
+    /* ---------------- A RESPOSTA À PERGUNTA (v9.57) ----------------
+       Vem antes de tudo: se o sistema acabou de perguntar "qual dos três?",
+       o próximo que o jogador escreve é a resposta, e lê-la como uma ação
+       nova recomeçaria a conversa. Um número basta — e é por isso que a
+       pergunta vem numerada, em vez de "seja mais claro". */
+    if (escolhaPendenteRef.current) {
+      const pend = escolhaPendenteRef.current;
+      const escolhida = respostaDaEscolha(acao, pend.candidatos);
+      escolhaPendenteRef.current = null;
+      if (escolhida) {
+        sinalViagemRef.current = escolhida.nome; destinoViagemRef.current = escolhida.nome;
+        pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `🧭 ${escolhida.nome} — a caminho.` }]);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(escolhida.nome, cidadeAtualRef.current)}`;
+        enviar(`[PARTIDA — REGISTRADA PELO SISTEMA] Escolhi ${escolhida.nome} entre as opções que o sistema me deu, e ponho o pé na estrada agora. Narre a saída — o portão, quem fica, o primeiro trecho — e me passe a vez.`, personagem);
+        return true;
+      }
+      /* não era resposta: segue como ação normal, sem cobrar nada do jogador */
+    }
     /* o portal vem antes do rastro: "abro um portal e sigo para Aldoria" tem
        verbo de partida, e sem esta ordem o sistema abriria justamente a
        estrada que a magia existe para pular */
@@ -7070,6 +7124,33 @@ export default function Taverna() {
             sinalViagemRef.current = part.destino || "";
             destinoViagemRef.current = part.destino || "";
             notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(part.destino, cidadeAtualRef.current)}`;
+          } else if (querPartir(acao)) {
+            /* ---------------- O DESTINO POR DESCRIÇÃO (v9.57) ----------------
+               `detectarPartida` só reconhece o NOME. Mas ninguém joga assim o
+               tempo todo: diz-se "vamos para a capital", "quero ir ao porto
+               do norte", "voltamos para onde estivemos". Antes disto o
+               sistema respondia com silêncio e o Mestre inventava o destino.
+
+               Quem procura é o resolver, e o que ele NÃO faz importa tanto
+               quanto o que faz: na dúvida, não move. Um resolver que chuta
+               teleporta o herói para o lugar errado, e isso custa a sessão. */
+            const r = resolverLugar(acao, mapaRef.current, { extra: pistasDoCanone(), excluir: cidadeAtualRef.current });
+            if (r.tipo === "achei") {
+              const nome = r.escolha.cidade.nome;
+              sinalViagemRef.current = nome; destinoViagemRef.current = nome;
+              pushMsgs([{ autor: "sistema", texto: `🧭 Entendi "${acao.trim()}" como ${nome}${r.escolha.porque.length ? ` (${r.escolha.porque.join(", ")})` : ""}.` }]);
+              notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(nome, cidadeAtualRef.current)}`;
+            } else if (r.tipo === "ambiguo") {
+              escolhaPendenteRef.current = { candidatos: r.candidatos, oQueDisse: acao };
+              pushMsgs([{ autor: "sistema", texto: perguntaDeAmbiguidade(r, acao) }]);
+              return true;   // o turno é a pergunta: nada vai ao Mestre
+            } else if (r.tipo === "vago") {
+              pushMsgs([{ autor: "sistema", texto: perguntaDeVaguidade(r, acao) }]);
+              return true;
+            } else {
+              pushMsgs([{ autor: "sistema", texto: perguntaDeVazio(r, acao) }]);
+              return true;
+            }
           }
         }
       }
