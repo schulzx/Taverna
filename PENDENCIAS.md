@@ -178,6 +178,37 @@ jogador descobre jogando.
 
 ## Onde o herói está
 
+- ~~**A viagem não dizia ao Mestre quanto falta — nem para onde.**~~
+  RESOLVIDO na v9.56. A linha que ele recebia turno após turno era `EM VIAGEM
+  desde Nova do Norte (desde o dia 7)` — sem destino, sem progresso, sem
+  nada. Por isso escrevia "a estrada segue" repetidamente: não tinha como
+  saber que o terceiro dia é diferente do primeiro.
+
+  E havia um erro de aritmética embaixo. A chegada era medida em DIAS DE
+  CALENDÁRIO e o avanço em HORAS DE ESTRADA — dois relógios diferentes.
+  **Acampar cinco dias numa clareira, sem andar um metro, fazia o herói
+  chegar**: o tempo passava, logo a viagem acontecia.
+
+  Agora a viagem conta ESTRADA PERCORRIDA, e só andar anda. A régua fecha
+  dos dois lados: um dia de jornada tem 8 h de marcha, um avanço cobre 4
+  dessas horas (meio dia), e o relógio anda meio dia de calendário — logo
+  uma rota de 6,5 dias leva 13 avanços e gasta 6,5 dias. O Mestre recebe
+  quanto falta e uma instrução de ritmo por faixa (começo / meio / falta
+  pouco / último trecho), com a proibição de dizer os números na prosa.
+
+- ~~**Rotas de setenta e cinco avanços.**~~ RESOLVIDO na v9.56, e só
+  apareceu porque a conta acima passou a existir: o gerador produz travessias
+  de até 37 dias de marcha, e a 4 h por avanço isso dava 75 cliques para
+  atravessar o mapa. O modelo antigo escondia o número. A saída não foi
+  encurtar o mundo — foi fazer o PASSO crescer com a viagem: trecho curto se
+  anda em meios-dias, travessia épica se anda em semanas. Teto de 14
+  avanços, e o relógio sai do mesmo número para os dois nunca discordarem.
+
+- ~~**Forçar a marcha só queimava o dia.**~~ RESOLVIDO na v9.56: as três
+  horas extras passam a cobrir ESTRADA, e duas marchas forçadas economizam
+  um avanço inteiro. Até aqui a escolha custava exaustão e não aproximava o
+  herói de lugar nenhum.
+
 - ~~**"Vou até o Javali Cambaleante" e o sistema me deixa no centro.**~~
   RESOLVIDO na v9.55, e era o mais grave dos três achados da partida. O
   Mestre narrou a travessia da praça e a porta da taverna — impecável — e o

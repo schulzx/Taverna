@@ -162,6 +162,15 @@ export function jornadaValida(jornada, cidadeAtual) {
   if (!jornada || typeof jornada !== "object" || !jornada.de) return null;
   const de = norm(jornada.de), aqui = norm(cidadeAtual);
   if (aqui && de && aqui !== de) return null;
+  /* v9.56: uma jornada de antes do registro não tem estrada percorrida. Dar
+     zero a ela seria mandar o herói recomeçar a viagem no meio dela; o
+     honesto é assumir metade do caminho — ele partiu, andou alguma coisa, e
+     o sistema não tem como saber quanto. */
+  if (jornada.totalMin == null) {
+    const dias = Number(jornada.dias) || 3;
+    const totalMin = Math.max(60, Math.round(dias * 8 * 60));
+    return { ...jornada, dias, totalMin, andadoMin: Math.round(totalMin / 2), estado: "em_curso", km: Number(jornada.km) || 0 };
+  }
   return jornada;
 }
 

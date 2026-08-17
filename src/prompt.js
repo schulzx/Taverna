@@ -37,6 +37,7 @@ import { OFERTAS_PROMPT } from "./ofertas.js";
 import { LUGAR_PROMPT } from "./lugar.js";
 import { ARREDORES_PROMPT } from "./arredores.js";
 import { CELULAS_PROMPT } from "./celulas.js";
+import { VIAGEM_PROMPT } from "./viagem.js";
 import { MOLDES_PROMPT } from "./moldes.js";
 import { ORCAMENTO_PROMPT } from "./orcamento.js";
 import { ESPECIALIZACOES_PROMPT } from "./especializacoes.js";
@@ -137,6 +138,7 @@ export const PORTAS_DA_CENA = [
   { id: "regrapropria", quando: (c) => !!c.temRegraPropria, porque: "guarda, forma, limiar, pressa e as outras: só de quem tem uma delas na ficha" },
   /* o avesso da porta da cidade: as regras do espaço ENTRE os lugares só
      valem para quem está nele */
+  { id: "viagem", quando: (c) => !!c.emViagem, porque: "o relogio da estrada so importa a quem esta nela" },
   { id: "ermo", quando: (c) => !c.emCidade || !!c.emViagem, porque: "o que há entre os assentamentos importa a quem está entre eles" },
 ];
 
@@ -273,6 +275,7 @@ ${so("missao", OFERTAS_PROMPT)}
 ${LUGAR_PROMPT}
 ${so("cidade", ARREDORES_PROMPT)}
 ${so("ermo", CELULAS_PROMPT)}
+${so("viagem", VIAGEM_PROMPT)}
 
 ${MOLDES_PROMPT}
 

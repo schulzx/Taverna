@@ -54,6 +54,7 @@ import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { resumoArredoresPrompt, arredoresDaCidade } from "./arredores.js";
+import { abrirViagem, andar, pausarViagem, retomarViagem, progressoDaViagem, minutosPorAvanco, relogioDoAvanco, resumoViagemPrompt, linhaDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
 import { garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
@@ -3663,8 +3664,12 @@ export default function Taverna() {
      noite. Zera no descanso longo — é o que dá sentido a "seguimos ou
      acampamos?", porque agora a pergunta tem resposta calculada. */
   const diaLutaRef = useRef({ gasto: 0, lutas: 0 });
+  /* v9.56: a linha da viagem passou a dizer PARA ONDE e QUANTO FALTA. Ela
+     dizia só de onde e desde quando — o Mestre não sabia sequer o destino,
+     e por isso escrevia "a estrada segue" turno após turno sem nunca
+     apertar o ritmo. */
   const localAtualTxt = () => jornadaRef.current
-    ? `EM VIAGEM desde ${jornadaRef.current.de || "a última parada"} (desde o dia ${jornadaRef.current.desde || "?"})${jornadaRef.current.meio ? `, viajando de ${jornadaRef.current.meio}` : ""} — não estou em cidade nenhuma`
+    ? `${(linhaDaViagem(jornadaRef.current) || `EM VIAGEM desde ${jornadaRef.current.de || "a última parada"}`).replace(/^🧭 /, "EM VIAGEM: ")} — não estou em cidade nenhuma`
     : lugarRef.current
       ? linhaDeLugar(lugarRef.current)
       : (cidadeAtualRef.current ? `em ${cidadeAtualRef.current}` : "a sós, fora de cidade");
@@ -3748,29 +3753,44 @@ export default function Taverna() {
 
      Chegar é aritmética, e aritmética é do código. O Mestre continua narrando
      a chegada; ele é que não decide mais QUANDO ela acontece. */
+  /* v9.56: quem chega é quem ANDOU. A conta antiga comparava dias de
+     calendário com dias de rota — e como o calendário anda sozinho (acampar,
+     descansar, lutar), cinco dias parado numa clareira faziam o herói chegar.
+     Agora a régua é a estrada percorrida, e só `viajar` percorre estrada.
+
+     O `socorro` é a rede de segurança: uma jornada de save antigo não tem
+     `andadoMin`, e nenhum jogador pode ficar preso na estrada para sempre
+     por causa de um campo que não existia quando ele partiu. Três vezes o
+     prazo é generoso o bastante para nunca disparar por acidente. */
+  /* A rota entre dois lugares, nos dois sentidos. Estava copiada em dois
+     lugares com o mesmo `semA` local; agora é uma função só. */
+  const rotaEntre = (de, para) => {
+    const semA = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    if (!de || !para) return null;
+    return (mapaRef.current.rotas || []).find((r) =>
+      (semA(r.de) === semA(de) && semA(r.para) === semA(para)) ||
+      (semA(r.de) === semA(para) && semA(r.para) === semA(de))) || null;
+  };
   const talvezChegarSozinho = () => {
     const j = jornadaRef.current;
     if (!j || !j.para) return;
-    const semA = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-    const rota = (mapaRef.current.rotas || []).find((r) =>
-      (semA(r.de) === semA(j.de) && semA(r.para) === semA(j.para)) ||
-      (semA(r.de) === semA(j.para) && semA(r.para) === semA(j.de)));
-    /* sem rota registrada o destino é longe por definição — três dias é o
-       piso honesto, e melhor errar para mais do que teleportar o herói */
-    const dias = Math.max(0.5, rota ? Number(rota.dias) || 3 : 3);
-    const andados = diaRef.current - (Number(j.desde) || diaRef.current);
-    if (andados < dias) return;
+    const p = progressoDaViagem(j);
+    const diasNoCalendario = diaRef.current - (Number(j.desde) || diaRef.current);
+    const socorro = !p && diasNoCalendario >= 3;
+    if (p && !p.chegou && !(diasNoCalendario >= (j.dias || 3) * 3)) return;
+    if (!p && !socorro) return;
     const msgs = [];
     cidadeAtualRef.current = j.para;
     jornadaRef.current = null; setJornada(null);
     if (lugarRef.current) { lugarRef.current = null; setLugar(null); }
-    msgs.push(`🧭 Fim da estrada: depois de ${Math.round(andados)} ${Math.round(andados) === 1 ? "dia" : "dias"}, você chega a ${j.para}.`);
+    const dias = p ? Math.max(0.5, Math.round((p.horasTotais / HORAS_MARCHA_POR_DIA) * 10) / 10) : Math.round(diasNoCalendario);
+    msgs.push(`🧭 Fim da estrada: depois de ${dias} ${dias === 1 ? "dia" : "dias"} de marcha${p && p.kmTotais ? ` e ${p.kmTotais} km` : ""}, você chega a ${j.para}.`);
     const dsc = descobrirCidade(mapaRef.current, j.para);
     if (dsc.nova) { mapaRef.current = dsc.mapa; setMapa(mapaRef.current); msgs.push(`🗺 ${dsc.nova} entrou no seu mapa.`); }
     mapaRef.current = pisarNaCidade(mapaRef.current, j.para); setMapa(mapaRef.current);
     abrirNevoaDaVizinhanca(j.para, msgs);
     pushMsgs(msgs.map((texto) => ({ autor: "sistema", texto })));
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CHEGADA — REGISTRADA PELO SISTEMA] A estrada acabou: os ${Math.round(andados)} dias de viagem cobriram o trecho e eu ESTOU em ${j.para}, dentro dela. Narre a chegada — o que se vê do portão, o que muda no ar, quem repara em mim — e trate este lugar como o meu lugar a partir de agora. Não me ponha de volta na estrada.`;
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CHEGADA — REGISTRADA PELO SISTEMA] A estrada acabou: ${dias} dias de marcha cobriram o trecho e eu ESTOU em ${j.para}, dentro dela. Narre a chegada — o que se vê do portão, o que muda no ar, quem repara em mim — e trate este lugar como o meu lugar a partir de agora. Não me ponha de volta na estrada.`;
   };
   const famaAtual = () => calcularFama(contRef.current, (personagem && personagem.nivel) || 1, dominiosDe(mapaRef.current).length);
   const famaPatamarRef = useRef(0); // fama da última checagem, para detectar saltos de patamar
@@ -6007,7 +6027,16 @@ export default function Taverna() {
          vazio narrado de improviso e vira terreno, distância e uma feição
          que continua lá na volta. */
       const ermoAqui = (() => { try { return resumoCelulaPrompt(celulaAqui(), moldeMundo()); } catch { return ""; } })();
-      const aqui = [forma, ondeEstou, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo()), shape, ermoAqui, fora, saidas].filter(Boolean).join("\n\n");
+      /* v9.56: quanto falta de estrada. Sem esta linha o Mestre sabia que o
+         herói viajava e não sabia se era o primeiro dia ou o último — daí
+         "a estrada segue" repetido, sem nunca apertar o ritmo. */
+      /* A pausa é LIDA, não guardada: se há luta e há jornada, a viagem está
+         parada — e como só `viajar` anda, não há estado para sincronizar nem
+         para esquecer de desfazer. */
+      const viag = jornadaRef.current
+        ? resumoViagemPrompt(combateRef.current ? pausarViagem(jornadaRef.current, "estamos no meio de uma luta") : jornadaRef.current)
+        : "";
+      const aqui = [forma, ondeEstou, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo()), shape, viag, ermoAqui, fora, saidas].filter(Boolean).join("\n\n");
       const chefes = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), moldeMundo());
       /* QUEM ESTÁ EM CENA (v9.9): presentes, ausentes com a distância em dias,
          e o que foi dito em particular — as duas regras que impedem o aliado
@@ -10840,10 +10869,17 @@ export default function Taverna() {
          mapa ao sair da cidade — não estava mais na origem e não estava ainda
          no destino, então não estava em lugar nenhum que a tela soubesse
          desenhar. Com os dois pontos, o mapa mostra o trecho. */
-      jornadaRef.current = { de: cidadeAtualRef.current || "a última parada", para: destino || destinoViagemRef.current || "", desde: diaRef.current, meio: "" };
+      /* v9.56: a jornada nasce como REGISTRO — com a rota, a distância, o
+         total de estrada e o estado. É o que permite dizer quanto falta. */
+      const alvo = destino || destinoViagemRef.current || "";
+      jornadaRef.current = abrirViagem({
+        de: cidadeAtualRef.current || "a última parada", para: alvo,
+        dia: diaRef.current, rota: rotaEntre(cidadeAtualRef.current, alvo),
+      });
       setJornada(jornadaRef.current);
     } else if (destino && !jornadaRef.current.para) {
-      jornadaRef.current = { ...jornadaRef.current, para: destino };
+      const r = rotaEntre(jornadaRef.current.de, destino);
+      jornadaRef.current = { ...jornadaRef.current, para: destino, km: (r && Number(r.km)) || 0, terreno: (r && r.terreno) || "", dias: (r && Number(r.dias)) || 3, totalMin: minutosDaRota(r && r.dias) };
       setJornada(jornadaRef.current);
     }
     /* v9.54: O TRECHO GANHA ROSTO. Até aqui o dia de estrada era clima mais
@@ -10865,8 +10901,13 @@ export default function Taverna() {
     const fator = rit.id === "rapido" ? 0.8 : rit.id === "lento" ? 1.25 : 1;
     let notaMarcha = "";
     let persV = personagem;
+    /* v9.56: forçar a marcha passa a comprar ESTRADA, não só relógio. Era o
+       que faltava para a escolha significar alguma coisa: até aqui as três
+       horas extras queimavam o dia e não aproximavam o herói do destino. */
+    let marchouForcado = false;
     if (forcarMarchaRef.current) {
       forcarMarchaRef.current = false;
+      marchouForcado = true;
       const horasExtras = 3;
       const mf = marchaForcada(horasExtras, atributoEfetivo(personagem, "vigor"));
       if (mostrarRolagensRef.current) pushMsgs(mf.testes.map((t) => ({ autor: "sistema", texto: `🎲 Marcha forçada (hora ${t.hora}): ${t.rolo} vs CD ${t.cd} · ${t.passou ? "aguenta" : "cede"}` })));
@@ -10882,7 +10923,31 @@ export default function Taverna() {
         notaMarcha = ` FORCEI A MARCHA por ${horasExtras} horas além do normal e o sistema diz que aguentei sem exaustão. Mostre o esforço — mas eu chego de pé.`;
       }
     }
-    const extraTempo = avancarMinutos(Math.round(MINUTOS_VIAGEM * fator)); // estrada come horas
+    /* ---------------- O TURNO DE ESTRADA (v9.56) ----------------
+       Um avanço cobre QUATRO horas de marcha — meio dia dos oito que se
+       caminha — e o relógio anda meio dia de calendário. Antes o relógio
+       andava quatro horas enquanto a chegada cobrava dias inteiros: as duas
+       contas discordavam, e a discordância era o bug de "acampei cinco dias
+       e cheguei". O ritmo mexe no RELÓGIO, não na estrada: quem corre cobre
+       o mesmo trecho gastando menos dia. */
+    /* O passo cresce com a jornada: uma travessia de trinta dias não pode
+       custar setenta e cinco cliques, então o avanço vale o que a viagem
+       pede. O relógio sai do MESMO número, e é por isso que os dois nunca
+       discordam. */
+    let minutosDoRelogio = MINUTOS_RELOGIO_POR_TURNO;
+    if (jornadaRef.current) {
+      minutosDoRelogio = relogioDoAvanco(jornadaRef.current);
+      jornadaRef.current = andar(jornadaRef.current, minutosPorAvanco(jornadaRef.current) + (marchouForcado ? 180 : 0));
+      setJornada(jornadaRef.current);
+    }
+    const extraTempo = avancarMinutos(Math.round(minutosDoRelogio * fator));
+    /* v9.56: o jogador vê a MESMA barra que o Mestre recebe — quanto já se
+       andou e quantos avanços faltam. Vem depois de andar, para mostrar o
+       estado novo; antes mostraria o do turno passado. */
+    if (jornadaRef.current && jornadaRef.current.para) {
+      const linha = linhaDaViagem(jornadaRef.current);
+      if (linha) pushMsgs([{ autor: "sistema", texto: linha }]);
+    }
     /* MERCADOR AMBULANTE (v9.2): uma carroça na estrada, com estoque de
        verdade. Sai por sorteio do sistema — sem envelope, não há mercador. */
     let notaAmbulante = "";
