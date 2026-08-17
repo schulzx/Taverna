@@ -54,7 +54,7 @@ import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { resumoArredoresPrompt, arredoresDaCidade } from "./arredores.js";
-import { abrirViagem, andar, pausarViagem, retomarViagem, progressoDaViagem, minutosPorAvanco, relogioDoAvanco, resumoViagemPrompt, linhaDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
+import { abrirViagem, andar, pausarViagem, retomarViagem, progressoDaViagem, comTrechos, trechoAtual, minutosPorAvanco, relogioDoAvanco, resumoViagemPrompt, linhaDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
 import { garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
@@ -64,7 +64,7 @@ import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao }
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
-import { detectarPartida, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra } from "./rastro.js";
+import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra } from "./rastro.js";
 import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, resolvidaPeloSistema, PERGUNTAS_AOS_MORTOS, abrirInterrogatorio, perguntarAoMorto, envelopeDoMorto, textoDeIdentificacao, localizarNoMapa, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
 import { avaliarEquipar, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
@@ -3771,6 +3771,16 @@ export default function Taverna() {
       (semA(r.de) === semA(de) && semA(r.para) === semA(para)) ||
       (semA(r.de) === semA(para) && semA(r.para) === semA(de))) || null;
   };
+  /* Os trechos que a estrada entre dois lugares atravessa. Sai das células
+     do ermo — este arquivo não sabe o que é uma célula, só pede a lista. */
+  const trechosDaRota = (de, para) => {
+    const semA = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const cidades = mapaRef.current.cidades || [];
+    const A = cidades.find((c) => semA(c.nome) === semA(de));
+    const B = cidades.find((c) => semA(c.nome) === semA(para));
+    if (!A || !B || A.x == null || B.x == null) return [];
+    try { return celulasNaRota(sementeMundo(), A, B, { mapa: mapaRef.current, molde: moldeMundo() }); } catch { return []; }
+  };
   const talvezChegarSozinho = () => {
     const j = jornadaRef.current;
     if (!j || !j.para) return;
@@ -6026,15 +6036,27 @@ export default function Taverna() {
          chegando ao Mestre: o caminho entre dois lugares deixa de ser um
          vazio narrado de improviso e vira terreno, distância e uma feição
          que continua lá na volta. */
-      const ermoAqui = (() => { try { return resumoCelulaPrompt(celulaAqui(), moldeMundo()); } catch { return ""; } })();
+      /* v9.56 (etapa 2): em viagem quem descreve o terreno é o registro da
+         viagem, que tem o trecho exato. Mandar os dois seria dizer a mesma
+         coisa duas vezes com palavras diferentes — e duas descrições do
+         mesmo lugar é como o Mestre acaba inventando uma terceira. */
+      const ermoAqui = jornadaRef.current ? "" : (() => { try { return resumoCelulaPrompt(celulaAqui(), moldeMundo()); } catch { return ""; } })();
       /* v9.56: quanto falta de estrada. Sem esta linha o Mestre sabia que o
          herói viajava e não sabia se era o primeiro dia ou o último — daí
          "a estrada segue" repetido, sem nunca apertar o ritmo. */
       /* A pausa é LIDA, não guardada: se há luta e há jornada, a viagem está
          parada — e como só `viajar` anda, não há estado para sincronizar nem
          para esquecer de desfazer. */
+      /* A pausa diz ONDE parou: "no 4º trecho de 13, junto às três pedras".
+         É o que impede o Mestre de resolver a luta num lugar genérico e
+         depois retomar a estrada como se nada tivesse acontecido ali. */
       const viag = jornadaRef.current
-        ? resumoViagemPrompt(combateRef.current ? pausarViagem(jornadaRef.current, "estamos no meio de uma luta") : jornadaRef.current)
+        ? resumoViagemPrompt(combateRef.current
+          ? pausarViagem(jornadaRef.current, (() => {
+            const tr = trechoAtual(jornadaRef.current);
+            return `estamos no meio de uma luta${tr ? `, no ${tr.indice + 1}º trecho de ${tr.total} — ${tr.feicao.nome}` : ""}`;
+          })())
+          : jornadaRef.current)
         : "";
       const aqui = [forma, ondeEstou, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo()), shape, viag, ermoAqui, fora, saidas].filter(Boolean).join("\n\n");
       const chefes = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), moldeMundo());
@@ -7036,6 +7058,12 @@ export default function Taverna() {
         if (mm) {
           sinalMasmorraRef.current = mm.nome || "";
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeMasmorra(mm.nome)}`;
+        } else if (detectarSeguirViagem(acao, ctxRastro)) {
+          /* v9.56: quem já está na estrada AVANÇA nela. Enquanto a chegada
+             vinha do calendário isto não era preciso — bastava o tempo
+             passar. Com a viagem contando estrada percorrida, sem esta porta
+             o herói ficaria a 7% do caminho para sempre. */
+          sinalViagemRef.current = jornadaRef.current.para || "";
         } else {
           const part = detectarPartida(acao, ctxRastro);
           if (part) {
@@ -10876,6 +10904,12 @@ export default function Taverna() {
         de: cidadeAtualRef.current || "a última parada", para: alvo,
         dia: diaRef.current, rota: rotaEntre(cidadeAtualRef.current, alvo),
       });
+      /* v9.56 (etapa 2): a rota ganha TRECHOS. As células do ermo já sabiam
+         desenhar o caminho desde a v9.54 e ninguém as pendurava na jornada —
+         o resultado era uma viagem de treze avanços cruzando um espaço liso.
+         Presas aqui, o terceiro dia passa a parecer o terceiro dia, e a volta
+         pelo mesmo caminho reencontra as mesmas coisas. */
+      jornadaRef.current = comTrechos(jornadaRef.current, trechosDaRota(cidadeAtualRef.current, alvo));
       setJornada(jornadaRef.current);
     } else if (destino && !jornadaRef.current.para) {
       const r = rotaEntre(jornadaRef.current.de, destino);
@@ -10946,7 +10980,11 @@ export default function Taverna() {
        estado novo; antes mostraria o do turno passado. */
     if (jornadaRef.current && jornadaRef.current.para) {
       const linha = linhaDaViagem(jornadaRef.current);
-      if (linha) pushMsgs([{ autor: "sistema", texto: linha }]);
+      /* a v9.31 tirou o botão "Viajar" de propósito — a regra da casa é
+         "escreva o que você faz". Mas quem nunca viu isso não adivinha, e a
+         primeira barra é o lugar de dizer, uma vez só. */
+      const primeira = (jornadaRef.current.andadoMin || 0) <= minutosPorAvanco(jornadaRef.current);
+      if (linha) pushMsgs([{ autor: "sistema", texto: `${linha}${primeira ? " · escreva que segue viagem para avançar" : ""}` }]);
     }
     /* MERCADOR AMBULANTE (v9.2): uma carroça na estrada, com estoque de
        verdade. Sai por sorteio do sistema — sem envelope, não há mercador. */

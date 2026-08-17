@@ -146,6 +146,42 @@ export function progressoDaViagem(jornada) {
   };
 }
 
+/* ============================================================
+   OS TRECHOS DA ROTA (etapa 2)
+
+   Uma viagem de treze avanços passava por um espaço que, do ponto de
+   vista do sistema, era liso: a mesma estrada do começo ao fim. As
+   células do ermo (v9.54) já sabiam desenhar o caminho — que terreno,
+   que perigo, que feição — e ninguém as pendurava na jornada.
+
+   Aqui a rota passa a ter TRECHOS. Cada avanço cai num deles, e o
+   Mestre recebe o trecho ATUAL com o nome do que há nele. O ganho não é
+   cosmético: é o que faz o terceiro dia parecer o terceiro dia, e é o
+   que faz a volta pelo mesmo caminho reencontrar as mesmas coisas.
+
+   A lista chega pronta de fora — este arquivo não sabe o que é uma
+   célula, e não deveria: ele sabe onde a viagem está, e quem sabe o que
+   há lá é `celulas.js`.
+   ============================================================ */
+
+export function comTrechos(jornada, trechos) {
+  if (!jornada) return jornada;
+  const lista = (Array.isArray(trechos) ? trechos : []).filter(Boolean);
+  return { ...jornada, trechos: lista.map((c) => ({ id: c.id, bioma: c.bioma, perigo: c.perigo, rotuloPerigo: c.rotuloPerigo, feicao: c.feicao })) };
+}
+
+/* Em qual trecho a viagem está agora. A fração já é o progresso, então
+   o trecho é uma divisão simples — e o `min` existe porque quem chega
+   ao fim está no último trecho, não num que não existe. */
+export function trechoAtual(jornada) {
+  const t = (jornada && jornada.trechos) || [];
+  if (!t.length) return null;
+  const p = progressoDaViagem(jornada);
+  if (!p) return null;
+  const i = Math.min(t.length - 1, Math.floor(p.fracao * t.length));
+  return { ...t[i], indice: i, total: t.length };
+}
+
 /* ---------------- OS TEXTOS ----------------
    "Turno" é palavra do SISTEMA e o Mestre não pode dizê-la na prosa: ele
    recebe o número para saber onde apertar o ritmo, e traduz em ficção. O
@@ -163,7 +199,11 @@ export function resumoViagemPrompt(jornada) {
       : p.fracao < 0.2
         ? "Ainda é o começo do caminho: o que ficou para trás pesa mais do que o que vem pela frente."
         : "Meio do caminho: nem a partida nem a chegada — é aqui que a estrada cansa e é aqui que ela surpreende.";
-  return `EM VIAGEM (do sistema — números exatos, obedeça): de ${jornada.de} para ${jornada.para}${jornada.meio ? `, de ${jornada.meio}` : ""}${jornada.terreno ? `, por ${jornada.terreno}` : ""}. Percorrido: ${p.pct}% do trecho (${p.horasFeitas} de ${p.horasTotais} horas de marcha${p.kmTotais ? `, ${p.kmFeitos} de ${p.kmTotais} km` : ""}). FALTAM ${p.turnosRestantes} ${p.turnosRestantes === 1 ? "avanço" : "avanços"} de estrada (${p.diasRestantes} ${p.diasRestantes === 1 ? "dia" : "dias"} de marcha).
+  const tr = trechoAtual(jornada);
+  const ondeAgora = tr
+    ? `\n- O TRECHO DE AGORA (o ${tr.indice + 1}º de ${tr.total}): ${tr.rotuloPerigo}. Há aqui ${tr.feicao.nome} — ${tr.feicao.desc}. Isto EXISTE e é permanente: na volta pelo mesmo caminho estará no mesmo lugar. Use se couber; não invente outro lugar por cima dele.`
+    : "";
+  return `EM VIAGEM (do sistema — números exatos, obedeça): de ${jornada.de} para ${jornada.para}${jornada.meio ? `, de ${jornada.meio}` : ""}${jornada.terreno ? `, por ${jornada.terreno}` : ""}. Percorrido: ${p.pct}% do trecho (${p.horasFeitas} de ${p.horasTotais} horas de marcha${p.kmTotais ? `, ${p.kmFeitos} de ${p.kmTotais} km` : ""}). FALTAM ${p.turnosRestantes} ${p.turnosRestantes === 1 ? "avanço" : "avanços"} de estrada (${p.diasRestantes} ${p.diasRestantes === 1 ? "dia" : "dias"} de marcha).${ondeAgora}
 - ${perto}
 - NÃO me faça chegar antes: quem registra a chegada é o sistema, e ele avisa. Enquanto faltar avanço, a cena acontece NO CAMINHO.
 - E nunca diga "turno", "avanço de estrada", porcentagem ou quilômetro na narração: esses números são meus, não da ficção. Traduza em imagem — a luz do dia, o cansaço, o que já dá para ver ao longe.`;

@@ -84,10 +84,42 @@ const LUGAR_INTERNO = /\b(taverna|estalagem|hospedaria|quarto|mercado|feira|forj
    `ctx.cidades` é a lista de nomes conhecidos do mapa: se o jogador
    nomeia uma cidade que não é a de agora, o destino é fato, não
    palpite. */
+/* ---------------- SEGUIR VIAGEM (v9.56) ----------------
+   O comentário de baixo dizia "já está na estrada: quem cuida é o módulo",
+   e era verdade enquanto a chegada vinha do calendário: bastava o tempo
+   passar. Com a viagem contando ESTRADA PERCORRIDA isso deixou de bastar —
+   e o buraco era sério: uma vez na estrada, NADA avançava a estrada. O
+   herói ficaria a 7% do caminho para sempre.
+
+   A régua é a mesma do resto desta casa: escreva o que você faz. "Sigo
+   viagem", "continuo", "toco em frente", "retomo a estrada". Exige verbo
+   de seguir, e por isso "sigo conversando com o Bram" não anda um metro —
+   o objeto do verbo é uma conversa, não um caminho. */
+const SEGUIR = /\b(sigo|seguimos|continuo|continuamos|prossigo|prosseguimos|retomo|retomamos|avanço|avancamos|avanco|toco em frente|sigo em frente|pé na estrada|pe na estrada|marcho|marchamos|caminho mais|ando mais|volto à estrada|volto a estrada)\b/;
+/* o que o verbo de seguir precisa estar seguindo para valer como estrada */
+const COISA_DE_ESTRADA = /\b(viagem|viajando|estrada|caminho|jornada|rota|marcha|trecho|em frente|adiante|rumo|destino|para o norte|para o sul|para o leste|para o oeste)\b/;
+/* e o que o desqualifica: seguir uma pessoa, uma conversa, uma pista */
+const SEGUIR_OUTRA_COISA = /\b(conversa|conversando|falando|discurso|rastro|pegada|pista|cheiro|sangue|instru|ordem|conselho|receita|ritual|liturgia|leitura|estudo)\b/;
+
+export function detectarSeguirViagem(acao, ctx = {}) {
+  if (!ctx.emViagem) return null;
+  if (ctx.emCombate || ctx.acampado || ctx.emMasmorra) return null;
+  const txt = String(acao || "");
+  if (!txt.trim() || txt.trimStart().startsWith("[")) return null;   // envelope do sistema não é pedido meu
+  for (const o of oracoes(txt)) {
+    const n = norm(o);
+    if (!SEGUIR.test(n) || SEGUIR_OUTRA_COISA.test(n)) continue;
+    if (COISA_DE_ESTRADA.test(n) || /^\s*(sigo|continuo|seguimos|prossigo|avanco|marcho)\s*[.!]?\s*$/.test(n)) {
+      return { motivo: "o jogador escreveu que segue caminho" };
+    }
+  }
+  return null;
+}
+
 export function detectarPartida(acao, ctx = {}) {
   const gate = podeAbrirModulo(ctx);
   if (!gate.pode) return null;
-  if (ctx.emViagem) return null; // já está na estrada: quem cuida é o módulo
+  if (ctx.emViagem) return null; // já está na estrada: quem avança é `detectarSeguirViagem`
   const txt = String(acao || "");
   if (!txt.trim()) return null;
   const aqui = norm(ctx.cidadeAtual);

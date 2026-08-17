@@ -209,6 +209,30 @@ jogador descobre jogando.
   um avanço inteiro. Até aqui a escolha custava exaustão e não aproximava o
   herói de lugar nenhum.
 
+- ~~**Uma vez na estrada, nada avançava a estrada.**~~ RESOLVIDO na v9.56
+  (etapa 2), e era o buraco mais fundo dos três. `detectarPartida` recusava
+  quem já estava viajando com o comentário "quem cuida é o módulo" — e era
+  verdade enquanto a chegada vinha do calendário: bastava o tempo passar.
+  Com a viagem contando estrada percorrida, o herói ficaria a 7% do caminho
+  para sempre. Entra `detectarSeguirViagem`, na mesma régua da casa (escreva
+  o que você faz): "sigo viagem", "continuo", "toco em frente". Exige verbo
+  de seguir E coisa de estrada, e por isso "sigo conversando com Bram" e
+  "sigo o rastro do lobo" não andam um metro.
+
+- ~~**A rota era um espaço liso.**~~ RESOLVIDO na v9.56 (etapa 2): as células
+  do ermo (v9.54) já sabiam desenhar o caminho e ninguém as pendurava na
+  jornada. Agora a rota tem TRECHOS, cada avanço cai num deles, e o Mestre
+  recebe o trecho atual com o que há nele — permanente, igual na volta. Em
+  viagem quem descreve o terreno é o registro da viagem: mandar o bloco do
+  ermo junto seria dizer a mesma coisa duas vezes com palavras diferentes, e
+  duas descrições do mesmo lugar é como o Mestre inventa uma terceira.
+
+- ~~**A pausa da viagem não existia.**~~ RESOLVIDO na v9.56 (etapa 2): uma
+  luta na estrada agora PARA a viagem, e a pausa diz onde parou ("no 4º
+  trecho de 13, junto às três pedras"). A pausa é LIDA, não guardada — se há
+  luta e há jornada, a viagem está parada. Como só `viajar` anda, não há
+  estado para sincronizar nem para esquecer de desfazer.
+
 - ~~**"Vou até o Javali Cambaleante" e o sistema me deixa no centro.**~~
   RESOLVIDO na v9.55, e era o mais grave dos três achados da partida. O
   Mestre narrou a travessia da praça e a porta da taverna — impecável — e o
