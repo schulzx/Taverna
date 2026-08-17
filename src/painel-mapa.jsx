@@ -244,11 +244,26 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
           ))}
           {/* textura de papel sobre tudo */}
           <rect x="0" y="0" width="100" height="100" filter="url(#tvPapel)" opacity="0.55" />
-          {/* rosa dos ventos */}
-          <g transform="translate(90.5,88)">
+          {/* ---------------- ROSA DOS VENTOS (v9.55) ----------------
+              A estrela existia desde sempre e não dizia nada: era um enfeite
+              de oito pontas sem uma letra. Quem lia "Nova do Norte" no
+              pergaminho não tinha como saber para que lado ficava o norte, e
+              o mapa perdia a única informação que uma rosa dos ventos serve
+              para dar.
+
+              As letras são FIXAS e obedecem ao desenho: no SVG o y cresce
+              para baixo, então N é em cima, S embaixo, L à direita e O à
+              esquerda — a mesma convenção que `nomeMenteSobreOLugar` usa
+              para recusar um nome cardeal fora de lugar. As duas precisam
+              concordar, senão o mapa contradiz o próprio índice. */}
+          <g transform="translate(90.5,87)">
+            <circle r="8.4" fill="#eadfc1" opacity="0.45" stroke="#8d7a56" strokeWidth="0.2" />
             <path d="M0,-6.2 L1.3,-1.3 L6.2,0 L1.3,1.3 L0,6.2 L-1.3,1.3 L-6.2,0 L-1.3,-1.3 Z" fill="#5c4a30" opacity="0.85" />
             <path d="M0,-3.6 L0.9,-0.9 L3.6,0 L0.9,0.9 L0,3.6 L-0.9,0.9 L-3.6,0 L-0.9,-0.9 Z" fill="#c9a45a" transform="rotate(45)" opacity="0.9" />
             <circle r="0.7" fill="#eadfc1" />
+            {[["N", 0, -7.4], ["S", 0, 8.6], ["L", 7.6, 0.9], ["O", -7.6, 0.9]].map(([t, dx, dy]) => (
+              <text key={t} x={dx} y={dy} textAnchor="middle" fontSize="3.4" fill="#5c4a30" style={{ fontWeight: 700, letterSpacing: "0.02em" }}>{t}</text>
+            ))}
           </g>
           {/* barra de escala */}
           <g transform="translate(6,93.5)">

@@ -178,6 +178,55 @@ jogador descobre jogando.
 
 ## Onde o herói está
 
+- ~~**"Vou até o Javali Cambaleante" e o sistema me deixa no centro.**~~
+  RESOLVIDO na v9.55, e era o mais grave dos três achados da partida. O
+  Mestre narrou a travessia da praça e a porta da taverna — impecável — e o
+  marcador do mapa não saiu do lugar.
+
+  O Mestre estava CERTO em não registrar nada: o prompt lhe diz, desde a
+  v9.39, que `lugar_atual` é para o que fica FORA da cidade, e que voltar à
+  cidade é `lugar_atual: null`. A taverna não é fora da cidade. O modelo do
+  lugar tinha dois estados — "na cidade" e "fora dela" — e a cidade inteira,
+  com as suas cinco a sete portas, cabia no primeiro.
+
+  Agora quem move é o CÓDIGO, e move ANTES de o Mestre responder: o jogador
+  escreveu o nome de um lugar que o sistema conhece, com um verbo de
+  deslocamento; não há o que interpretar. Vale para os dois lados do muro —
+  um local de dentro é `dentro` (sair leva minutos), um do cinturão é
+  `arredores` (leva horas, e o relógio anda de verdade).
+
+  A régua é estreita de propósito: exige o verbo E o nome. Falar de um lugar
+  não é ir até ele — "pergunto ao guarda sobre a forja" tem o nome e não tem
+  a viagem —, e um falso positivo aqui teleporta o herói, que é o erro que o
+  `lugar.js` inteiro existe para impedir.
+
+- ~~**Coisas da cidade caindo no mar.**~~ RESOLVIDO na v9.55. Em Rio das
+  Águias o pomar cercado e o moinho de cima boiavam a oeste da muralha, e o
+  Cais Torto ficava no meio da praça — o cinturão era plantado num raio fixo
+  em volta do centro, sem ninguém perguntar onde estava a água. Agora o
+  ângulo é dobrado para longe do mar (espelhado no eixo vertical, que é o
+  eixo do mar), e quem vive de água — doca, cais, embarcadouro — vai PARA a
+  linha d'água em vez do anel. A conta que desenha o mar e a que planta as
+  coisas passaram a ser a mesma função.
+
+- ~~**Dois nomes escritos um por cima do outro na planta.**~~ RESOLVIDO na
+  v9.55: o ângulo de cada local era `i / (n - 1)`, e com isso o PRIMEIRO e o
+  ÚLTIMO caíam no mesmo lugar (0 e 2π). Era o que colava "Feira Baixa" em
+  "Javali Cambaleante". Dividir por `n` fecha a volta sem repetir.
+
+- ~~**O nome cardeal mentia sobre onde a coisa estava.**~~ RESOLVIDO na
+  v9.55. Os bancos de nome trazem "do Norte", "do Sul", "do Vento Sul", e o
+  sorteio nunca olhou onde a cidade tinha caído: nascia "Nova do Norte" no
+  canto de baixo do pergaminho com uma "Vila do Sul" logo acima. A régua é a
+  do olho e não a do compasso — só recusa quando o nome está na METADE
+  errada do mapa. Medido em 1.426 lugares gerados nos cinco moldes: zero com
+  o cardeal fora de lugar.
+
+- ~~**A rosa dos ventos não dizia para onde é o norte.**~~ RESOLVIDO na
+  v9.55: a estrela existia desde sempre sem uma letra. Agora tem N, S, L e
+  O, e eles obedecem à mesma convenção que a régua dos nomes usa — as duas
+  precisam concordar, senão o mapa contradiz o próprio índice.
+
 - ~~**A planta da cidade é a mesma para todo mundo.**~~ RESOLVIDO na v9.54
   com `formaDaCidade`, que lê os dois fatos que TODA cidade deste jogo tem em
   todos os moldes: quanta gente mora nela e em que chão ela está. Não lê o

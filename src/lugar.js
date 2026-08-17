@@ -66,6 +66,68 @@ export function distanciaPorTexto(nome) {
   return RX_DENTRO.test(n) ? "dentro" : "arredores";
 }
 
+/* ============================================================
+   IR A UM LUGAR DA CIDADE (v9.55)
+
+   Achado jogando: "Vou até o Javali Cambaleante". O Mestre narrou a
+   travessia da praça e a porta da taverna — perfeito — e o sistema
+   continuou com o herói no centro, porque ninguém registrou nada. O
+   marcador do mapa não saiu do lugar.
+
+   E o Mestre estava CERTO em não registrar: o prompt lhe diz, desde a
+   v9.39, que `lugar_atual` é para o que fica FORA da cidade, e que voltar
+   à cidade é `lugar_atual: null`. A taverna não é fora da cidade. O
+   sistema tinha um modelo com dois estados — "na cidade" e "fora dela" —
+   e a cidade inteira cabia no primeiro.
+
+   Então quem move é o CÓDIGO, e move antes de o Mestre responder: o
+   jogador escreveu o nome de um lugar que o sistema conhece, com um verbo
+   de deslocamento. Não há o que interpretar, e é exatamente o tipo de
+   coisa que esta casa não delega.
+
+   A RÉGUA É ESTREITA DE PROPÓSITO. Falar de um lugar não é ir até ele:
+   "pergunto ao taberneiro sobre a forja" tem o nome e não tem a viagem.
+   Exige-se o verbo E o nome, e um falso positivo aqui teleporta o herói —
+   que é o erro que este arquivo inteiro existe para impedir.
+   ============================================================ */
+
+const RX_VOU = /\b(vou|vamos|sigo|segui|caminho|ando|marcho|me dirijo|dirijo-?me|entro|entrar|adentro|rumo a|rumo ao|chego|chegar|visito|visitar|passo n[ao]|passar n[ao]|procuro|procurar|subo|desco|volto para|retorno a|me encaminho|encaminho-?me|parto para|atravesso ate|atravesso para)\b/;
+/* "até X" sozinho já é deslocamento em português falado ("até a forja!") */
+const RX_ATE = /\bat[eé]\s+[ao]?\s*\w/;
+
+/* Palavras que não distinguem nada e por isso não podem casar sozinhas. */
+const VAZIAS = new Set(["a", "o", "as", "os", "da", "do", "das", "dos", "de", "e", "em", "na", "no", "um", "uma", "the"]);
+const pedacos = (s) => norm(s).split(/[^a-z0-9]+/).filter((p) => p.length > 2 && !VAZIAS.has(p));
+
+/* Quanto do NOME do lugar aparece no que o jogador escreveu. Um nome de
+   duas palavras casa com uma delas ("javali" → "O Javali Cambaleante");
+   um nome de uma palavra precisa dela inteira. */
+function casaNome(texto, nome) {
+  const t = norm(texto);
+  const ps = pedacos(nome);
+  if (!ps.length) return false;
+  if (t.includes(norm(nome))) return true;
+  const achados = ps.filter((p) => new RegExp(`\\b${p}`).test(t)).length;
+  return ps.length === 1 ? achados === 1 : achados >= Math.min(2, ps.length - 0) || achados / ps.length >= 0.5;
+}
+
+/* Devolve o lugar que o jogador pediu, ou null. `lugares` é a lista de
+   candidatos — os locais de dentro da cidade e o cinturão de fora —, e
+   cada um precisa de `nome`; o resto vem junto para quem chama usar. */
+export function lugarPedido(texto, lugares = []) {
+  const t = norm(texto);
+  if (!t.trim() || !(RX_VOU.test(t) || RX_ATE.test(t))) return null;
+  /* o mais específico ganha: entre "a Forja" e "a Forja Velha", casa a que
+     tem mais pedaços reconhecidos no texto */
+  let melhor = null, pontos = 0;
+  for (const l of lugares) {
+    if (!l || !l.nome || !casaNome(t, l.nome)) continue;
+    const p = pedacos(l.nome).length;
+    if (p > pontos) { pontos = p; melhor = l; }
+  }
+  return melhor;
+}
+
 export function garantirLugar(l) {
   if (!l || !l.nome) return null;
   return {

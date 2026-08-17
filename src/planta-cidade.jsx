@@ -55,6 +55,30 @@ function muralha(rnd, forma) {
   return "M " + pontos.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(" L ") + " Z";
 }
 
+/* ---------------- A LINHA D'ÁGUA (v9.55) ----------------
+   O mar entra pelo oeste, e nada da cidade pode cair dentro dele. Achado
+   numa partida: o pomar cercado e o moinho de cima boiavam a oeste de Rio
+   das Águias, e o cais ficava no meio da praça.
+
+   `xDaAgua` é a mesma conta que desenha o mar, exportada para quem PÕE as
+   coisas — a linha do desenho e a linha da regra precisam ser a mesma, ou
+   volta a aparecer coisa flutuando. */
+const xDaAgua = (forma) => (forma.agua ? 50 - forma.raio * 0.42 : -Infinity);
+
+/* Dobra um ângulo para longe do mar. Espelha no eixo vertical (o mar é
+   sempre a oeste) e, se ainda molhar, empurra na horizontal — nunca
+   devolve um ponto na água. */
+function emTerra(ang, raio, forma) {
+  const limite = xDaAgua(forma);
+  if (limite === -Infinity) return ang;
+  const molha = (a) => 50 + Math.cos(a) * raio * 1.15 < limite + 2;
+  if (!molha(ang)) return ang;
+  const espelhado = Math.PI - ang;           // oeste vira leste, altura preservada
+  if (!molha(espelhado)) return espelhado;
+  /* caso raro (mar muito adentro): joga para o leste franco */
+  return Math.sin(ang) >= 0 ? Math.PI / 4 : -Math.PI / 4;
+}
+
 /* Onde cada local se planta. A praça fica no meio; o resto se distribui
    em dois anéis, para uma capital de sete locais não virar uma fila.
    v9.54: os anéis encolhem com o assentamento — numa aldeia de raio 15 os
@@ -62,10 +86,20 @@ function muralha(rnd, forma) {
 function plantarLocais(rnd, locais, forma) {
   const n = locais.length;
   const dentro = forma.raio * 0.75;
+  const limite = xDaAgua(forma);
   return locais.map((l, i) => {
     if (l.tipo === "mercado") return { ...l, x: 50, y: 50, praca: true };
-    const anel = (i % 2 === 0 ? 0.52 : 0.82) * dentro;
-    const a = (i / Math.max(1, n - 1)) * Math.PI * 2 + rnd() * 0.5;
+    /* v9.55: quem vive da água mora NA água — o cais no meio da praça foi
+       o que denunciou que ninguém consultava o mar ao plantar. */
+    if (forma.agua && /doca|porto|cais|embarcad|estaleiro|ancorad/i.test(`${l.tipo} ${l.nome}`)) {
+      return { ...l, x: limite + 3, y: 50 + (rnd() - 0.5) * forma.raio * forma.aperto, naAgua: true };
+    }
+    const anel = (i % 2 === 0 ? 0.5 : 0.84) * dentro;
+    /* v9.55: era `i / (n - 1)`, e com isso o PRIMEIRO e o ÚLTIMO local
+       caíam no mesmo ângulo (0 e 2π) — dois nomes escritos um por cima do
+       outro, que foi o que apareceu na tela ("Feira Baixa" colada em
+       "Javali Cambaleante"). Dividir por `n` fecha a volta sem repetir. */
+    const a = emTerra((i / Math.max(1, n)) * Math.PI * 2 + rnd() * 0.35, anel, forma);
     return { ...l, x: 50 + Math.cos(a) * anel * 1.15, y: 50 + Math.sin(a) * anel * forma.aperto };
   });
 }
@@ -79,11 +113,22 @@ export function PlantaCidade({ semente, cidade, genero, molde, lugar, aoSelecion
      aldeia de 190 almas deixa de ter a mesma muralha de uma capital. */
   const forma = formaDaCidade(cidade);
   const locais = plantarLocais(rnd, locaisDaCidade(semente, cidade, genero, molde), forma);
-  const fora = arredoresDaCidade(semente, cidade);
   const dMuro = muralha(rngDe(`${semente}|muro|${cidade.nome}`), forma);
   const R = forma.raio, Ay = forma.aperto;
+  /* v9.55: o cinturão também sai da água. O ângulo do arredor vem de
+     `arredores.js`, que não sabe (nem deve saber) onde está o mar desta
+     cidade — quem sabe é a forma, e é aqui que as duas coisas se encontram.
+     O raio 44 é o mesmo que o desenho usa logo abaixo. */
+  const fora = arredoresDaCidade(semente, cidade).map((a) => ({ ...a, ang: emTerra(a.ang, 44 / 1.15, forma) }));
   /* onde o herói está: dentro dos muros, ou num dos arredores */
-  const noArredor = lugar && fora.find((a) => a.nome.toLowerCase() === String(lugar.nome || "").toLowerCase());
+  const igual = (a, b) => String(a || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim()
+    === String(b || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  const noArredor = lugar && fora.find((a) => igual(a.nome, lugar.nome));
+  /* v9.55: E DENTRO DOS MUROS TAMBÉM. O marcador "você" só sabia sair da
+     praça para um arredor; um local DE DENTRO — a taverna, a forja, o
+     templo — deixava o herói desenhado no centro, e foi o que apareceu em
+     jogo: "fui até o Javali Cambaleante e o mapa não me moveu". */
+  const noLocal = !noArredor && lugar && locais.find((l) => igual(l.nome, lugar.nome));
 
   return (
     <div>
@@ -155,9 +200,11 @@ export function PlantaCidade({ semente, cidade, genero, molde, lugar, aoSelecion
             </div>
           );
         })}
-        {/* VOCÊ */}
+        {/* VOCÊ — na praça, num local de dentro, ou num arredor */}
         {(() => {
-          const p = noArredor ? { x: 50 + Math.cos(noArredor.ang) * 44, y: 50 + Math.sin(noArredor.ang) * 44 } : { x: 50, y: 50 };
+          const p = noArredor ? { x: 50 + Math.cos(noArredor.ang) * 44, y: 50 + Math.sin(noArredor.ang) * 44 }
+            : noLocal ? { x: noLocal.x, y: noLocal.y }
+            : { x: 50, y: 50 };
           return (
             <div style={{ position: "absolute", left: `${p.x}%`, top: `${p.y}%`, transform: "translate(-50%,-50%)", pointerEvents: "none", textAlign: "center" }}>
               <div style={{ width: 11, height: 11, borderRadius: "50%", background: "#f0e6cc", border: "2.5px solid #b4322e", boxShadow: "0 0 9px #b4322e", margin: "0 auto" }} />

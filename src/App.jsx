@@ -53,10 +53,10 @@ import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, 
 import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
-import { resumoArredoresPrompt } from "./arredores.js";
+import { resumoArredoresPrompt, arredoresDaCidade } from "./arredores.js";
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
-import { garantirLugar, definirLugar, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
-import { garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
+import { garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
+import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
 import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao } from "./portao.js";
@@ -3451,6 +3451,51 @@ export default function Taverna() {
     const fe = resumoFePrompt(mapaRef.current, devocaoRef.current, dv);
     return `${DIVINDADE_PROMPT}\n${CAMINHOS_PROMPT}\n${DEVOCAO_PROMPT}\nEstado atual do jogador: ${resumoAscensao(dv, 0)}${dv.panteao.length ? `\nPanteão conhecido: ${dv.panteao.map((d) => `${d.icone} ${d.nome} ${d.dominio} — GD ${d.gd} (${tituloDe(d.gd)}), culto: ${d.culto}`).join("; ")}.` : ""}${fe ? `\n${fe}` : ""}`;
   };
+  /* ---------------- ANDAR DENTRO DA CIDADE (v9.55) ----------------
+     "Vou até o Javali Cambaleante." O Mestre narrou a travessia da praça e
+     a porta da taverna, e o sistema deixou o herói no centro — o marcador
+     do mapa não saiu do lugar.
+
+     O Mestre estava certo em não registrar nada: o prompt lhe diz que
+     `lugar_atual` é o que fica FORA da cidade. A taverna não é fora da
+     cidade. O modelo tinha dois estados — dentro e fora — e a cidade
+     inteira cabia no primeiro.
+
+     Quem move, então, é o CÓDIGO, e move ANTES de o Mestre responder: o
+     jogador escreveu o nome de um lugar que o sistema conhece, com um
+     verbo de deslocamento. Não há o que interpretar, e é justamente o
+     tipo de coisa que esta casa não delega.
+
+     Vale para os dois lados do muro: um local de dentro vira `dentro` (sair
+     dele leva minutos); um do cinturão vira `arredores` (leva horas), que é
+     o que já era. E o Mestre recebe o fato pronto, não um pedido. */
+  const talvezAndarNaCidade = (texto) => {
+    if (combateRef.current || acampadoRef.current) return;
+    const cru = String(texto || "");
+    if (!cru.trim() || cru.trimStart().startsWith("[")) return;   // envelope do sistema não é pedido meu
+    const nomeCidade = cidadeAtualRef.current;
+    if (!nomeCidade) return;
+    const cid = (mapaRef.current.cidades || []).find((c) => (c.nome || "").toLowerCase() === String(nomeCidade).toLowerCase());
+    if (!cid) return;
+    const dentro = locaisDaCidade(sementeMundo(), cid, generoMundo(), moldeMundo()).map((l) => ({ ...l, onde: "dentro" }));
+    const fora = arredoresDaCidade(sementeMundo(), cid).map((a) => ({ ...a, onde: "arredores" }));
+    const alvo = lugarPedido(cru, [...dentro, ...fora]);
+    if (!alvo) return;
+    if (lugarRef.current && (lugarRef.current.nome || "").toLowerCase() === alvo.nome.toLowerCase()) return;
+    const novo = definirLugar(alvo.nome, { cidade: nomeCidade, dia: diaRef.current, distancia: alvo.onde });
+    if (!novo) return;
+    lugarRef.current = novo; setLugar(novo);
+    /* o cinturão é uma caminhada de verdade; o outro lado da praça, não */
+    if (alvo.onde === "arredores") {
+      const t = avancarMinutos(Number(alvo.minutos) || 40);
+      if (t) pushMsgs([{ autor: "sistema", texto: t }]);
+    } else {
+      avancarMinutos(5);
+    }
+    pushMsgs([{ autor: "sistema", texto: `📍 Você está ${comEm(alvo.nome)}${alvo.onde === "dentro" ? "" : ` — ${Math.round(Number(alvo.minutos) || 40)} min de caminhada desde ${nomeCidade}`}.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MOVIMENTO — REGISTRADO PELO SISTEMA] Eu me desloquei${alvo.onde === "dentro" ? ` dentro de ${nomeCidade}` : ""} e AGORA estou ${comEm(alvo.nome)}${alvo.onde === "arredores" ? `, nos arredores de ${nomeCidade}` : ""}. O sistema já registrou o lugar e o tempo. Narre a chegada e a cena AQUI — não me descreva a caminho, não me deixe na praça e não me devolva ao ponto de partida. Só eu decido sair daqui.`;
+  };
+
   /* ---------------- O QUE A CENA USA (v9.54) ----------------
      As perguntas que decidem quais blocos de regra sobem no prompt deste
      turno. Todas são baratas e todas saem dos refs vivos — nenhuma
@@ -3661,7 +3706,21 @@ export default function Taverna() {
       lugarRef.current = null; setLugar(null);
       return `📍 De volta ${cidade ? `a ${cidade}` : "à cidade"} — ${antigo.nome} fica para trás.`;
     }
-    const novo = definirLugar(cru, { cidade, dia: diaRef.current });
+    /* v9.55: se o nome é um local DESTA cidade, a distância é `dentro` — e
+       não a de arredores que o classificador por texto daria a uma taverna.
+       Sem isto, o Mestre mandando `lugar_atual: "O Javali Cambaleante"`
+       rebaixava para "horas de caminhada" o que o sistema tinha acabado de
+       registrar como o outro lado da praça. */
+    const dist = (() => {
+      const cid = (mapaRef.current.cidades || []).find((c) => (c.nome || "").toLowerCase() === String(cidade).toLowerCase());
+      if (!cid) return null;
+      try {
+        const locais = locaisDaCidade(sementeMundo(), cid, generoMundo(), moldeMundo());
+        const semA = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+        return locais.some((l) => semA(l.nome) === semA(cru)) ? "dentro" : null;
+      } catch { return null; }
+    })();
+    const novo = definirLugar(cru, { cidade, dia: diaRef.current, distancia: dist });
     if (!novo || ehOMesmoLugar(novo, lugarRef.current)) return null;
     lugarRef.current = novo; setLugar(novo);
     return `📍 Você está ${comEm(textoDoLugar(novo))}.`;
@@ -5880,6 +5939,7 @@ export default function Taverna() {
     const oficina = bilheteDaOficina(oficinaRef.current);
     if (oficina) oficinaRef.current = criarOficina();
     talvezChegarSozinho();
+    talvezAndarNaCidade(conteudo);
     const nota = [oficina, notaRef.current].filter(Boolean).join("\n");
     notaRef.current = "";
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;

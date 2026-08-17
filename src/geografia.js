@@ -186,11 +186,47 @@ const pickR = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 /* Nome de lugar único dentro do conjunto. v9.40: o banco vem do MOLDE —
    "Baixo Brumoso" denunciava o gerador na primeira tela de uma campanha
    estelar. Sem molde, o banco medieval de sempre. */
-function nomeCidade(rnd, usados, molde) {
+/* ---------------- O NOME NÃO PODE MENTIR SOBRE O LUGAR (v9.55) ----------------
+   Os bancos de nome trazem sufixos cardeais — "do Norte", "do Sul", "do
+   Vento Sul" — e o sorteio nunca olhou ONDE a cidade tinha caído. O mundo
+   nascia com "Nova do Norte" no canto de baixo do pergaminho e uma "Vila do
+   Sul" logo acima dela, e o jogador que abre o mapa vê a contradição antes
+   de ver qualquer outra coisa.
+
+   A régua é a do olho, não a do compasso: só recusa o nome quando ele está
+   na METADE errada do mapa. Uma cidade no meio pode se chamar do Norte sem
+   ofender ninguém — o que ofende é a do Norte estar ao sul da do Sul. */
+const RX_NORTE = /\bdo norte\b|\bsetentrional\b|\bboreal\b/i;
+const RX_SUL = /\bdo sul\b|\bvento sul\b|\bmeridional\b|\baustral\b/i;
+const RX_LESTE = /\bdo leste\b|\boriental\b|\bdo nascente\b/i;
+const RX_OESTE = /\bdo oeste\b|\bocidental\b|\bdo poente\b/i;
+
+export function nomeMenteSobreOLugar(nome, x, y) {
+  const n = String(nome || "");
+  const X = Number(x), Y = Number(y);
+  if (!Number.isFinite(X) || !Number.isFinite(Y)) return false;
+  /* y cresce para baixo no SVG: y pequeno é norte */
+  if (RX_NORTE.test(n) && Y > 55) return true;
+  if (RX_SUL.test(n) && Y < 45) return true;
+  if (RX_LESTE.test(n) && X < 45) return true;
+  if (RX_OESTE.test(n) && X > 55) return true;
+  return false;
+}
+
+function nomeCidade(rnd, usados, molde, x = null, y = null) {
   const A = (molde && molde.nomes && molde.nomes.a) || CIDADE_A;
   const Bn = (molde && molde.nomes && molde.nomes.b) || CIDADE_B;
   for (let t = 0; t < 12; t++) {
     const nome = `${pickR(rnd, A)} ${pickR(rnd, Bn)}`;
+    if (usados.has(nome.toLowerCase())) continue;
+    if (nomeMenteSobreOLugar(nome, x, y)) continue;
+    usados.add(nome.toLowerCase()); return nome;
+  }
+  /* esgotou as tentativas: monta um nome sem sufixo cardeal em vez de
+     aceitar a mentira — o número é feio, e a contradição é pior */
+  const semCardeal = Bn.filter((b) => !nomeMenteSobreOLugar(`x ${b}`, x, y));
+  for (let t = 0; t < 8 && semCardeal.length; t++) {
+    const nome = `${pickR(rnd, A)} ${pickR(rnd, semCardeal)}`;
     if (!usados.has(nome.toLowerCase())) { usados.add(nome.toLowerCase()); return nome; }
   }
   const fallback = `${pickR(rnd, A)} ${Math.floor(rnd() * 900 + 100)}`;
@@ -373,13 +409,16 @@ function mundoEmGrafo(semente, molde) {
     const quantas = entreR(rnd, 2, 5);
     for (let i = 0; i < quantas; i++) {
       const porte = cidades.length === 0 ? "capital orbital" : pickR(rnd, m.portes);
+      /* v9.55: a posição sai ANTES do nome, porque agora o nome a consulta */
+      const px = Math.max(4, Math.min(96, Math.round(reg.cx + (rnd() - 0.5) * 30)));
+      const py = Math.max(4, Math.min(96, Math.round(reg.cy + (rnd() - 0.5) * 30)));
       cidades.push({
-        nome: nomeCidade(rnd, usadosC, molde), tipo: porte, porte,
+        nome: nomeCidade(rnd, usadosC, molde, px, py), tipo: porte, porte,
         populacao: populacaoDe(porte, rnd),
         regiao: reg.nome, continente: "O Braço", bioma: pickR(rnd, m.biomas).id,
         faccao: null, relacao: "neutra", locais: [], sede: false, notas: "",
-        x: Math.max(4, Math.min(96, Math.round(reg.cx + (rnd() - 0.5) * 30))),
-        y: Math.max(4, Math.min(96, Math.round(reg.cy + (rnd() - 0.5) * 30))),
+        x: px,
+        y: py,
         z: Math.round((rnd() - 0.5) * 40),
         descoberta: cidades.length === 0,
       });
@@ -455,7 +494,7 @@ function mundoContinental(semente, molde) {
       const x = Math.max(6, Math.min(94, Math.round(reg.cx + (rnd() - 0.5) * 24)));
       const y = Math.max(6, Math.min(94, Math.round(reg.cy + (rnd() - 0.5) * 24)));
       cidades.push({
-        nome: nomeCidade(rnd, usadosC, molde),
+        nome: nomeCidade(rnd, usadosC, molde, x, y),
         tipo: porte, porte,
         populacao: populacaoDe(porte, rnd),
         regiao: reg.nome, continente: reg.continente, bioma: reg.bioma,
@@ -468,7 +507,7 @@ function mundoContinental(semente, molde) {
   while (cidades.length < F.minCidades) {
     const reg = regioes[cidades.length % regioes.length];
     cidades.push({
-      nome: nomeCidade(rnd, usadosC, molde), tipo: P[1], porte: P[1],
+      nome: nomeCidade(rnd, usadosC, molde, Math.round(reg.cx), Math.round(reg.cy)), tipo: P[1], porte: P[1],
       populacao: populacaoDe(P[1], rnd), regiao: reg.nome, continente: reg.continente, bioma: reg.bioma,
       faccao: null, relacao: "neutra", locais: [], sede: false, notas: "",
       x: Math.round(reg.cx), y: Math.round(reg.cy), descoberta: false,
