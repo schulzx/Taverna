@@ -102,12 +102,24 @@ const pedacos = (s) => norm(s).split(/[^a-z0-9]+/).filter((p) => p.length > 2 &&
 /* Quanto do NOME do lugar aparece no que o jogador escreveu. Um nome de
    duas palavras casa com uma delas ("javali" → "O Javali Cambaleante");
    um nome de uma palavra precisa dela inteira. */
+/* v9.58: a palavra tem que acabar onde acaba. Era `\b${p}` sem fim, e com os
+   cômodos isso virou erro de verdade: "desço para o salão" casava com "a
+   SALA dos fundos", porque "sala" é prefixo de "salao". O sufixo aceito é o
+   plural do português — a forja e as forjas são o mesmo lugar.
+
+   E vale nos DOIS sentidos: o cômodo se chama "os quartos do sótão" e o
+   jogador escreve "subo para o quarto". Só -os e -as viram singular, que são
+   os plurais que os nomes deste jogo usam; "cais" e "país" não são plurais
+   de nada e não podem ser desmanchados. */
+const singular = (p) => (/(os|as)$/.test(p) && p.length > 4 ? p.slice(0, -1) : p);
+const RX_PEDACO = (p) => new RegExp(`\\b${singular(p)}(s|es)?\\b`);
+
 function casaNome(texto, nome) {
   const t = norm(texto);
   const ps = pedacos(nome);
   if (!ps.length) return false;
   if (t.includes(norm(nome))) return true;
-  const achados = ps.filter((p) => new RegExp(`\\b${p}`).test(t)).length;
+  const achados = ps.filter((p) => RX_PEDACO(p).test(t)).length;
   return ps.length === 1 ? achados === 1 : achados >= Math.min(2, ps.length - 0) || achados / ps.length >= 0.5;
 }
 
@@ -118,11 +130,18 @@ export function lugarPedido(texto, lugares = []) {
   const t = norm(texto);
   if (!t.trim() || !(RX_VOU.test(t) || RX_ATE.test(t))) return null;
   /* o mais específico ganha: entre "a Forja" e "a Forja Velha", casa a que
-     tem mais pedaços reconhecidos no texto */
+     tem mais pedaços reconhecidos no texto.
+
+     v9.58: MAS O NOME INTEIRO GANHA DE TUDO. Sem este degrau, "desço para o
+     salão" perdia para "a sala dos fundos" — dois pedaços contra um, e o
+     jogador que escreveu o nome exato de um lugar ia parar noutro. Quem
+     escreveu o nome todo já disse qual é; contar pedaços ali é discutir com
+     o jogador sobre o que ele acabou de dizer. */
   let melhor = null, pontos = 0;
   for (const l of lugares) {
     if (!l || !l.nome || !casaNome(t, l.nome)) continue;
-    const p = pedacos(l.nome).length;
+    const inteiro = t.includes(norm(l.nome)) ? 100 : 0;
+    const p = inteiro + pedacos(l.nome).length;
     if (p > pontos) { pontos = p; melhor = l; }
   }
   return melhor;
@@ -133,15 +152,20 @@ export function garantirLugar(l) {
   return {
     nome: String(l.nome).slice(0, 60).trim(),
     cidade: String(l.cidade || "").slice(0, 60).trim(),
+    /* v9.58: DE QUE PRÉDIO este lugar é um cômodo. Vazio quando o lugar é o
+       prédio inteiro — que é o caso de quase tudo. Sem este campo o quarto de
+       cima da taverna e a taverna eram o mesmo tipo de coisa, e "desço para o
+       salão" não tinha para onde descer. */
+    dentroDe: String(l.dentroDe || "").slice(0, 60).trim(),
     distancia: DISTANCIAS[l.distancia] ? l.distancia : "arredores",
     desde: Number.isFinite(l.desde) ? l.desde : 0,
   };
 }
 
-export function definirLugar(nome, { cidade = "", dia = 0, distancia = null } = {}) {
+export function definirLugar(nome, { cidade = "", dia = 0, distancia = null, dentroDe = "" } = {}) {
   /* sem distância declarada, o NOME decide — quem chama não deveria precisar
      saber se "o segundo andar da torre" é uma escada ou uma caminhada */
-  return garantirLugar({ nome, cidade, dia, distancia: distancia || distanciaPorTexto(nome), desde: dia });
+  return garantirLugar({ nome, cidade, dia, dentroDe, distancia: distancia || distanciaPorTexto(nome), desde: dia });
 }
 
 /* O mesmo lugar de novo não é um lugar novo: evita reanunciar a cada
@@ -175,6 +199,17 @@ export function comEm(nome) {
   return `em ${s}`;
 }
 
+/* A mesma burrice deliberada para "de": "o quarto de cima de O Javali
+   Cambaleante" foi o que apareceu na primeira passada. */
+export function comDe(nome) {
+  const s = String(nome || "").trim();
+  if (/^a\s+/i.test(s)) return `d${s.replace(/^a\s+/i, "a ")}`;
+  if (/^o\s+/i.test(s)) return `d${s.replace(/^o\s+/i, "o ")}`;
+  if (/^as\s+/i.test(s)) return `d${s.replace(/^as\s+/i, "as ")}`;
+  if (/^os\s+/i.test(s)) return `d${s.replace(/^os\s+/i, "os ")}`;
+  return `de ${s}`;
+}
+
 export function textoDoLugar(l) {
   if (!l) return "";
   const d = distanciaDe(l.distancia);
@@ -191,7 +226,7 @@ export function linhaDeLugar(l) {
      dela. A frase de sempre defendia o herói de ser teleportado de volta; a
      de dentro defende a mesma coisa dizendo a verdade sobre onde ele está. */
   if (d.dentro) {
-    return `${comEm(l.nome)}${l.cidade ? `, dentro de ${l.cidade}` : ""} — e este é um lugar INTERNO: ${d.volta}. Eu não estou no salão principal nem na rua, e você NÃO me tira daqui: só eu decido descer, sair ou passar para outro cômodo, e só quando eu escrever isso. Toda cena acontece AQUI.`;
+    return `${comEm(l.nome)}${l.dentroDe ? `, dentro ${comDe(l.dentroDe)}` : ""}${l.cidade ? `, dentro de ${l.cidade}` : ""} — e este é um lugar INTERNO: ${d.volta}. Eu não estou no salão principal nem na rua, e você NÃO me tira daqui: só eu decido descer, sair ou passar para outro cômodo, e só quando eu escrever isso. Toda cena acontece AQUI.`;
   }
   return `FORA DA CIDADE, ${comEm(l.nome)}${l.cidade ? ` — ${d.rotulo} de ${l.cidade}, ${d.volta}` : ""}. Eu NÃO estou na cidade e você NÃO me devolve a ela: só eu decido voltar, e só quando eu escrever isso. Enquanto eu não disser, toda cena acontece AQUI, inclusive as horas que passam, o que espero e o que vigio.`;
 }
@@ -199,7 +234,7 @@ export function linhaDeLugar(l) {
 export function resumoLugarPrompt(l, cidade) {
   if (!l) return "";
   const d = distanciaDe(l.distancia);
-  return `ONDE EU ESTOU: ${l.nome}${l.cidade ? `, ${d.dentro ? "dentro de" : `${d.rotulo} de`} ${l.cidade}` : ""}.
+  return `ONDE EU ESTOU: ${l.nome}${l.dentroDe ? `, um cômodo ${comDe(l.dentroDe)}` : ""}${l.cidade ? `, ${d.dentro ? "dentro de" : `${d.rotulo} de`} ${l.cidade}` : ""}.
 - Este lugar é REAL e o sistema o guarda entre turnos. A lista de locais e de gente da cidade abaixo é o que existe LÁ, não aqui: use-a como o mundo ao redor, não como a cena.
 - ${d.volta.charAt(0).toUpperCase() + d.volta.slice(1)} — ${d.dentro ? "nunca transforme sair de um cômodo numa expedição, e nunca cobre horas por uma escada." : "nunca transforme a volta numa viagem de dias."}
 - Se eu esperar, vigiar, dormir ou deixar o tempo passar, isso acontece AQUI. Faça o mundo vir até mim: ${d.dentro ? "quem sobe a escada, o que se ouve pelo assoalho, a porta que range" : "quem aparece na estrada, o que se ouve ao longe, o que cai na armadilha"}.

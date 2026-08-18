@@ -56,7 +56,8 @@ import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmC
 import { resumoArredoresPrompt, arredoresDaCidade } from "./arredores.js";
 import { abrirViagem, andar, pausarViagem, retomarViagem, progressoDaViagem, comTrechos, trechoAtual, minutosPorAvanco, relogioDoAvanco, resumoViagemPrompt, linhaDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
-import { garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
+import { garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
+import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
@@ -997,7 +998,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lugar = null }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lugar = null, aoIrAoLugar = null, aoViajar = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1218,7 +1219,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
 
         {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} />}
         {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"}  onMilagre={onMilagreUI} mapa={mapa} devocao={devocao} onEncararProva={onEncararProva} onDesistirRito={onDesistirRito} />}
-        {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} jornada={jornada} masmorra={masmorra} molde={molde} semente={sementeMundo} genero={generoMundo} lugar={lugar} />}
+        {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} jornada={jornada} masmorra={masmorra} molde={molde} semente={sementeMundo} genero={generoMundo} lugar={lugar} aoIrAoLugar={aoIrAoLugar} aoViajar={aoViajar} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} />}
         {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} />}
         {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} mortosBase={mortosBase} />}
@@ -3476,31 +3477,120 @@ export default function Taverna() {
      Vale para os dois lados do muro: um local de dentro vira `dentro` (sair
      dele leva minutos); um do cinturão vira `arredores` (leva horas), que é
      o que já era. E o Mestre recebe o fato pronto, não um pedido. */
-  const talvezAndarNaCidade = (texto) => {
-    if (combateRef.current || acampadoRef.current) return;
-    const cru = String(texto || "");
-    if (!cru.trim() || cru.trimStart().startsWith("[")) return;   // envelope do sistema não é pedido meu
+  const semNome = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  /* A cidade sob os pés, resolvida uma vez. Devolve null fora de cidade. */
+  const cidadeSobOsPes = () => {
     const nomeCidade = cidadeAtualRef.current;
-    if (!nomeCidade) return;
-    const cid = (mapaRef.current.cidades || []).find((c) => (c.nome || "").toLowerCase() === String(nomeCidade).toLowerCase());
-    if (!cid) return;
+    if (!nomeCidade) return null;
+    return (mapaRef.current.cidades || []).find((c) => (c.nome || "").toLowerCase() === String(nomeCidade).toLowerCase()) || null;
+  };
+  /* Todo lugar a que se pode ir daqui a pé: os locais de dentro dos muros, o
+     cinturão de fora, e — quando o herói já está num local — os cômodos DELE.
+
+     Os cômodos só entram quando se está no prédio de propósito: "subo para o
+     quarto" na praça não quer dizer nada, e a mesma frase dentro da taverna
+     quer dizer tudo. Um quarto é um lugar do prédio, não da cidade. */
+  const lugaresDaqui = () => {
+    const cid = cidadeSobOsPes();
+    if (!cid) return [];
     const dentro = locaisDaCidade(sementeMundo(), cid, generoMundo(), moldeMundo()).map((l) => ({ ...l, onde: "dentro" }));
     const fora = arredoresDaCidade(sementeMundo(), cid).map((a) => ({ ...a, onde: "arredores" }));
-    const alvo = lugarPedido(cru, [...dentro, ...fora]);
-    if (!alvo) return;
-    if (lugarRef.current && (lugarRef.current.nome || "").toLowerCase() === alvo.nome.toLowerCase()) return;
-    const novo = definirLugar(alvo.nome, { cidade: nomeCidade, dia: diaRef.current, distancia: alvo.onde });
-    if (!novo) return;
+    const aqui = lugarRef.current;
+    const anfitriao = aqui && dentro.find((l) => semNome(l.nome) === semNome(aqui.nome));
+    const comodos = anfitriao
+      ? comodosDoLocal(sementeMundo(), anfitriao, generoMundo(), moldeMundo()).map((q) => ({ ...q, onde: "comodo", dentroDe: anfitriao.nome }))
+      : [];
+    /* quem já está num cômodo pode voltar para o salão: o próprio anfitrião
+       continua na lista, e é o que faz "desço para o salão" funcionar */
+    const paiDoComodo = aqui && aqui.dentroDe ? dentro.find((l) => semNome(l.nome) === semNome(aqui.dentroDe)) : null;
+    const irmaos = paiDoComodo
+      ? comodosDoLocal(sementeMundo(), paiDoComodo, generoMundo(), moldeMundo()).map((q) => ({ ...q, onde: "comodo", dentroDe: paiDoComodo.nome }))
+      : [];
+    return [...comodos, ...irmaos, ...dentro, ...fora];
+  };
+  /* O lugar que a frase pede, ou null. É a MESMA pergunta que o interceptador
+     faz antes de abrir estrada — e precisa ser a mesma função, ou as duas
+     respondem coisas diferentes sobre a mesma frase. */
+  const alvoLocalPedido = (texto) => {
+    const cru = String(texto || "");
+    if (!cru.trim() || cru.trimStart().startsWith("[")) return null;
+    if (combateRef.current || acampadoRef.current) return null;
+    return lugarPedido(cru, lugaresDaqui());
+  };
+  /* Move de verdade: registra o lugar, cobra o tempo e entrega o fato pronto
+     ao Mestre. Separado do detector porque o mapa também chama daqui — clicar
+     em "ir" na planta é a mesma coisa que escrever, e tem que ser o mesmo
+     código, ou as duas portas divergem. */
+  const moverParaLocal = (alvo) => {
+    const nomeCidade = cidadeAtualRef.current;
+    if (!alvo || !alvo.nome || !nomeCidade) return false;
+    if (lugarRef.current && semNome(lugarRef.current.nome) === semNome(alvo.nome)) return false;
+    const distancia = alvo.onde === "arredores" ? "arredores" : "dentro";
+    const novo = definirLugar(alvo.nome, { cidade: nomeCidade, dia: diaRef.current, distancia, dentroDe: alvo.dentroDe || "" });
+    if (!novo) return false;
     lugarRef.current = novo; setLugar(novo);
-    /* o cinturão é uma caminhada de verdade; o outro lado da praça, não */
+    /* o cinturão é uma caminhada de verdade; o outro lado da praça, não; e a
+       escada da taverna é um minuto */
     if (alvo.onde === "arredores") {
       const t = avancarMinutos(Number(alvo.minutos) || 40);
       if (t) pushMsgs([{ autor: "sistema", texto: t }]);
     } else {
-      avancarMinutos(5);
+      avancarMinutos(alvo.onde === "comodo" ? 1 : 5);
     }
-    pushMsgs([{ autor: "sistema", texto: `📍 Você está ${comEm(alvo.nome)}${alvo.onde === "dentro" ? "" : ` — ${Math.round(Number(alvo.minutos) || 40)} min de caminhada desde ${nomeCidade}`}.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MOVIMENTO — REGISTRADO PELO SISTEMA] Eu me desloquei${alvo.onde === "dentro" ? ` dentro de ${nomeCidade}` : ""} e AGORA estou ${comEm(alvo.nome)}${alvo.onde === "arredores" ? `, nos arredores de ${nomeCidade}` : ""}. O sistema já registrou o lugar e o tempo. Narre a chegada e a cena AQUI — não me descreva a caminho, não me deixe na praça e não me devolva ao ponto de partida. Só eu decido sair daqui.`;
+    const ondeDiz = alvo.onde === "comodo" ? ` — ${alvo.dentroDe}` : alvo.onde === "arredores" ? ` — ${Math.round(Number(alvo.minutos) || 40)} min de caminhada desde ${nomeCidade}` : "";
+    pushMsgs([{ autor: "sistema", texto: `📍 Você está ${comEm(alvo.nome)}${ondeDiz}.` }]);
+    const lugarDito = alvo.onde === "comodo" ? `${comEm(alvo.nome)}, dentro ${comDe(alvo.dentroDe)}` : comEm(alvo.nome);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MOVIMENTO — REGISTRADO PELO SISTEMA] Eu me desloquei${alvo.onde === "dentro" ? ` dentro de ${nomeCidade}` : ""} e AGORA estou ${lugarDito}${alvo.onde === "arredores" ? `, nos arredores de ${nomeCidade}` : ""}. O sistema já registrou o lugar e o tempo. Narre a chegada e a cena AQUI — não me descreva a caminho, não me deixe na praça e não me devolva ao ponto de partida. Só eu decido sair daqui.`;
+    return true;
+  };
+  const talvezAndarNaCidade = (texto) => {
+    const alvo = alvoLocalPedido(texto);
+    if (alvo) moverParaLocal(alvo);
+  };
+
+  /* ---------------- IR PELO MAPA (v9.58) ----------------
+     "Não vi a opção no mapa para ir para o local manualmente."
+
+     E não havia: a planta desenhava a taverna, a forja e o moinho, e a
+     única forma de chegar a qualquer um deles era escrever a frase certa.
+     Um mapa que mostra onde dá para ir e não deixa ir é um índice.
+
+     O botão NÃO é um atalho paralelo: ele chama o mesmo `moverParaLocal`
+     que a frase chama, e manda ao Mestre a mesma frase que o jogador teria
+     digitado. Se as duas portas divergissem, uma delas ia começar a mentir
+     — e a que mente é sempre a que ninguém testa. */
+  const irAoLugarPeloMapa = (alvo) => {
+    if (!alvo || !alvo.nome || carregando || rolagem) return;
+    if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⛔ No meio da luta quem diz onde cada um está é o tabuleiro, em metros." }]); return; }
+    setAba(null);
+    /* voltar ao meio da cidade é apagar o lugar, não ir a um lugar chamado
+       "a cidade" — registrar isso como sublocal criaria o fantasma que
+       `ehAPropriaCidade` existe para impedir */
+    if (alvo.onde === "cidade") {
+      if (!lugarRef.current) return;
+      const de = lugarRef.current.nome;
+      lugarRef.current = null; setLugar(null);
+      avancarMinutos(10);
+      pushMsgs([{ autor: "sistema", texto: `📍 Você voltou ao meio de ${alvo.nome}.` }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MOVIMENTO — REGISTRADO PELO SISTEMA] Eu saí ${comDe(de)} e AGORA estou de volta às ruas de ${alvo.nome}. O sistema já registrou. Narre a cena AQUI.`;
+      enviar(`Volto para o meio de ${alvo.nome}.`, personagem);
+      return;
+    }
+    if (!moverParaLocal(alvo)) return;
+    enviar(`Vou até ${alvo.nome}.`, personagem);
+  };
+
+  /* Partir pelo mapa. Mesmo caminho da escolha numerada do resolver: o
+     sistema abre a viagem, o Mestre narra a saída. */
+  const viajarPeloMapa = (nome) => {
+    if (!nome || carregando || rolagem) return;
+    if (combateRef.current || jornadaRef.current || masmorraRef.current) return;
+    if (semNome(nome) === semNome(cidadeAtualRef.current)) return;
+    setAba(null);
+    sinalViagemRef.current = nome; destinoViagemRef.current = nome;
+    pushMsgs([{ autor: "sistema", texto: `🧭 ${nome} — a caminho.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(nome, cidadeAtualRef.current)}`;
+    enviar(`[PARTIDA — REGISTRADA PELO SISTEMA] Escolhi ${nome} no mapa e ponho o pé na estrada agora. Narre a saída — o portão, quem fica, o primeiro trecho — e me passe a vez.`, personagem);
   };
 
   /* ---------------- O QUE A CENA USA (v9.54) ----------------
@@ -3521,6 +3611,9 @@ export default function Taverna() {
       emMasmorra: !!(mm && !mm.encerrada),
       temChao: (chaoRef.current || []).length > 0,
       emCidade: !!cidadeAtualRef.current,
+      /* dentro de um PRÉDIO da cidade — não nos arredores. A régua é a
+         distância, que já sabe distinguir uma escada de uma caminhada. */
+      dentroDeUmLocal: !!(lugarRef.current && lugarRef.current.distancia === "dentro" && cidadeAtualRef.current),
       /* cidade tem mercador; ermo não tem. É a mesma pergunta, e é honesta:
          a regra de compra e venda importa onde há de quem comprar. */
       temMercado: !!cidadeAtualRef.current,
@@ -6094,7 +6187,24 @@ export default function Taverna() {
           })())
           : jornadaRef.current)
         : "";
-      const aqui = [forma, ondeEstou, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo()), shape, viag, ermoAqui, fora, saidas].filter(Boolean).join("\n\n");
+      /* v9.58: A PLANTA DO PRÉDIO em que o herói está. Enquanto ele estiver
+         na rua isto não existe — a cidade tem locais, e é `resumoDaqui` que
+         os lista. Dentro de um, a pergunta muda: o que há neste prédio, e
+         por onde se anda dentro dele. Sem esta linha o Mestre inventava a
+         escada, e o jogador que escrevesse "subo" descobria que o sistema
+         não o seguia para lugar nenhum. */
+      const comodosAqui = (() => {
+        try {
+          const alvoNome = lugarRef.current ? (lugarRef.current.dentroDe || lugarRef.current.nome) : "";
+          if (!alvoNome) return "";
+          const cid = cidadeSobOsPes();
+          if (!cid) return "";
+          const dono = locaisDaCidade(sementeMundo(), cid, generoMundo(), moldeMundo()).find((l) => semNome(l.nome) === semNome(alvoNome));
+          if (!dono) return "";
+          return resumoComodosPrompt(comodosDoLocal(sementeMundo(), dono, generoMundo(), moldeMundo()), dono.nome);
+        } catch { return ""; }
+      })();
+      const aqui = [forma, ondeEstou, comodosAqui, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo()), shape, viag, ermoAqui, fora, saidas].filter(Boolean).join("\n\n");
       const chefes = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), moldeMundo());
       /* QUEM ESTÁ EM CENA (v9.9): presentes, ausentes com a distância em dias,
          e o que foi dito em particular — as duas regras que impedem o aliado
@@ -7124,8 +7234,21 @@ export default function Taverna() {
             sinalViagemRef.current = part.destino || "";
             destinoViagemRef.current = part.destino || "";
             notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(part.destino, cidadeAtualRef.current)}`;
-          } else if (querPartir(acao)) {
-            /* ---------------- O DESTINO POR DESCRIÇÃO (v9.57) ----------------
+          } else if (querPartir(acao) && !alvoLocalPedido(acao)) {
+            /* ---------------- A TAVERNA NÃO É UMA CIDADE (v9.58) ----------------
+               `!alvoLocalPedido` é a correção de um bug que custou a mecânica
+               inteira. "Vou até o Javali Cambaleante" casa `querPartir` — tem
+               "vou ate" —, e o resolver procura o Javali entre as CIDADES do
+               mapa. Não acha, claro: é uma taverna. E então respondia "Não
+               encontrei ... no que você conhece do mundo", devolvia true, e o
+               turno acabava ali: `talvezAndarNaCidade` roda depois, no envio,
+               e nunca chegava a rodar.
+
+               O jogador via o sistema negar um lugar que o sistema mesmo tinha
+               inventado e desenhado no mapa. Quem tem um alvo a pé aqui não
+               está pedindo estrada, e a estrada não pode nem opinar.
+
+               ---------------- O DESTINO POR DESCRIÇÃO (v9.57) ----------------
                `detectarPartida` só reconhece o NOME. Mas ninguém joga assim o
                tempo todo: diz-se "vamos para a capital", "quero ir ao porto
                do norte", "voltamos para onde estivemos". Antes disto o
@@ -11915,7 +12038,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lugar={lugar} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

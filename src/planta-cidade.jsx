@@ -33,6 +33,7 @@ import { T } from "./constantes.js";
 import { rngDe, formaDaCidade } from "./geografia.js";
 import { locaisDaCidade } from "./mundo-base.js";
 import { arredoresDaCidade, tempoDeIda } from "./arredores.js";
+import { comodosDoLocal } from "./comodos.js";
 
 /* A muralha: um polígono irregular deterministicamente amassado, para
    nenhuma cidade sair redonda de compasso. */
@@ -104,7 +105,7 @@ function plantarLocais(rnd, locais, forma) {
   });
 }
 
-export function PlantaCidade({ semente, cidade, genero, molde, lugar, aoSelecionar, selecionado }) {
+export function PlantaCidade({ semente, cidade, genero, molde, lugar, aoSelecionar, selecionado, aoIr = null }) {
   if (!cidade || !cidade.nome) {
     return <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você não está em cidade nenhuma agora — o mapa do mundo mostra onde você anda.</div>;
   }
@@ -129,9 +130,37 @@ export function PlantaCidade({ semente, cidade, genero, molde, lugar, aoSelecion
      templo — deixava o herói desenhado no centro, e foi o que apareceu em
      jogo: "fui até o Javali Cambaleante e o mapa não me moveu". */
   const noLocal = !noArredor && lugar && locais.find((l) => igual(l.nome, lugar.nome));
+  /* v9.58: e num CÔMODO de um local. Quem está no quarto de cima continua
+     dentro da taverna — o ponto no pergaminho é o da taverna, porque a planta
+     desenha a cidade, não o prédio. O prédio se lê na lista, aberto. */
+  const noComodo = !noArredor && !noLocal && lugar && lugar.dentroDe ? locais.find((l) => igual(l.nome, lugar.dentroDe)) : null;
+  const aqui = lugar ? lugar.nome : "";
+  const botaoIr = (alvo, rotulo) => (aoIr && !igual(alvo.nome, aqui) ? (
+    <button onClick={(e) => { e.stopPropagation(); aoIr(alvo); }}
+      className="tv-mono text-[9px] px-2 py-1 rounded-full shrink-0"
+      style={{ background: T.amber, color: T.onAccent, border: `1px solid ${T.amber}`, fontWeight: 700 }}>
+      {rotulo}
+    </button>
+  ) : null);
 
   return (
     <div>
+      {/* ONDE VOCÊ ESTÁ, e como sair daqui. Sem esta linha o único caminho de
+          volta ao meio da cidade era escrever a frase certa — e o jogador que
+          entrou na adega clicando não deveria precisar do teclado para subir. */}
+      {lugar && lugar.nome && (
+        <div className="rounded-xl px-3 py-2 mb-3 flex items-center gap-2" style={{ background: T.panelSoft, border: `1px solid ${T.amberSoft}` }}>
+          <span style={{ fontSize: 13 }}>📍</span>
+          <span className="tv-body text-sm" style={{ color: T.ink }}>{lugar.nome}{lugar.dentroDe ? <span className="tv-body text-xs" style={{ color: T.inkDim }}> · dentro de {lugar.dentroDe}</span> : null}</span>
+          {aoIr && (
+            <button onClick={() => aoIr({ nome: cidade.nome, onde: "cidade" })}
+              className="tv-mono text-[9px] px-2 py-1 rounded-full ml-auto shrink-0"
+              style={{ background: "transparent", color: T.amberSoft, border: `1px dashed ${T.amberSoft}`, fontWeight: 600 }}>
+              ▸ voltar ao meio de {cidade.nome}
+            </button>
+          )}
+        </div>
+      )}
       <div className="relative rounded-xl mb-3" style={{ border: `1px solid ${T.line}`, aspectRatio: "1 / 1", overflow: "hidden", background: "#dcd0ae" }}>
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
           <defs>
@@ -202,8 +231,9 @@ export function PlantaCidade({ semente, cidade, genero, molde, lugar, aoSelecion
         })}
         {/* VOCÊ — na praça, num local de dentro, ou num arredor */}
         {(() => {
+          const dentroDeAlgo = noLocal || noComodo;
           const p = noArredor ? { x: 50 + Math.cos(noArredor.ang) * 44, y: 50 + Math.sin(noArredor.ang) * 44 }
-            : noLocal ? { x: noLocal.x, y: noLocal.y }
+            : dentroDeAlgo ? { x: dentroDeAlgo.x, y: dentroDeAlgo.y }
             : { x: 50, y: 50 };
           return (
             <div style={{ position: "absolute", left: `${p.x}%`, top: `${p.y}%`, transform: "translate(-50%,-50%)", pointerEvents: "none", textAlign: "center" }}>
@@ -225,14 +255,42 @@ export function PlantaCidade({ semente, cidade, genero, molde, lugar, aoSelecion
 
       <div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>{forma.muro.id === "nenhum" ? `No casario (${locais.length})` : `Dentro dos muros (${locais.length})`}</div>
       <div className="space-y-1.5 mb-3">
-        {locais.map((l) => (
-          <div key={l.id} className="rounded-lg px-3 py-2 flex items-center gap-2" onClick={() => aoSelecionar && aoSelecionar(selecionado === l.id ? null : l.id)}
-            style={{ background: T.panelSoft, border: `1px solid ${selecionado === l.id ? T.amber : T.line}`, cursor: "pointer" }}>
-            <span style={{ fontSize: 14 }}>{l.icone}</span>
-            <span className="tv-body text-sm" style={{ color: T.ink }}>{l.nome}</span>
-            <span className="tv-mono text-[9px] ml-auto" style={{ color: T.inkDim }}>{l.tipo}</span>
-          </div>
-        ))}
+        {locais.map((l) => {
+          const estouAqui = igual(l.nome, aqui);
+          const comodos = comodosDoLocal(semente, l, genero, molde);
+          const aberto = selecionado === l.id;
+          return (
+            <div key={l.id} className="rounded-lg px-3 py-2" onClick={() => aoSelecionar && aoSelecionar(aberto ? null : l.id)}
+              style={{ background: T.panelSoft, border: `1px solid ${aberto ? T.amber : estouAqui || (noComodo && noComodo.id === l.id) ? T.amberSoft : T.line}`, cursor: "pointer" }}>
+              <div className="flex items-center gap-2">
+                <span style={{ fontSize: 14 }}>{l.icone}</span>
+                <span className="tv-body text-sm" style={{ color: T.ink }}>{estouAqui ? "📍 " : ""}{l.nome}</span>
+                <span className="tv-mono text-[9px] ml-auto shrink-0" style={{ color: T.inkDim }}>{l.tipo}</span>
+                {botaoIr({ ...l, onde: "dentro" }, "▸ ir")}
+              </div>
+              {/* v9.58: OS CÔMODOS. A pergunta era se "quartos numa taverna"
+                  funcionava — funcionava meio: a distância existia e o sistema
+                  não sabia de cômodo nenhum. Agora o prédio tem planta, ela é
+                  fixa, e daqui se entra nela. */}
+              {aberto && comodos.length > 0 && (
+                <div className="mt-2 pt-2 space-y-1" style={{ borderTop: `1px solid ${T.line}` }}>
+                  {comodos.map((q) => {
+                    const noQuarto = lugar && igual(q.nome, aqui);
+                    return (
+                      <div key={q.id} className="flex items-center gap-2">
+                        <span style={{ fontSize: 11 }}>{q.icone}</span>
+                        <span className="tv-body text-xs" style={{ color: noQuarto ? T.amber : T.ink }}>{noQuarto ? "📍 " : ""}{q.nome}</span>
+                        {q.restrito && <span className="tv-mono text-[8px] px-1 rounded shrink-0" style={{ color: T.danger, border: `1px solid ${T.danger}` }}>restrito</span>}
+                        <span className="tv-body text-[10px] ml-auto shrink-0" style={{ color: T.inkDim }}>{q.nota}</span>
+                        {botaoIr({ ...q, onde: "comodo", dentroDe: l.nome }, "▸ entrar")}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {fora.length > 0 && (
@@ -246,6 +304,7 @@ export function PlantaCidade({ semente, cidade, genero, molde, lugar, aoSelecion
                   <span style={{ fontSize: 14 }}>{a.icone}</span>
                   <span className="tv-body text-sm" style={{ color: T.ink }}>{noArredor && noArredor.id === a.id ? "📍 " : ""}{a.nome}</span>
                   <span className="tv-mono text-[9px] ml-auto shrink-0" style={{ color: T.violetSoft }}>{tempoDeIda(a)}</span>
+                  {botaoIr({ ...a, onde: "arredores" }, "▸ ir")}
                 </div>
                 {selecionado === a.id && <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>Mora lá: {a.dono}.</div>}
               </div>

@@ -178,6 +178,61 @@ jogador descobre jogando.
 
 ## Onde o herói está
 
+- ~~**O sistema negava um lugar que ele mesmo tinha desenhado.**~~ RESOLVIDO
+  na v9.58, e era o pior bug aberto do projeto — a mecânica que o jogador
+  chamou de "importantíssima e crucial".
+
+  "Vou até o Javali Cambaleante" respondia **"Não encontrei ... no que você
+  conhece do mundo"**. A causa era uma ordem de portas: `interceptarMovimento`
+  roda no envio, `talvezAndarNaCidade` roda depois, dentro do `enviar`. A
+  frase tem "vou ate", então casava `querPartir`, e o resolver de destinos
+  procurava o Javali entre as CIDADES do mapa. Não achava — é uma taverna —,
+  imprimia a recusa, devolvia `true`, e o turno morria ali: quem sabia mover
+  nunca chegava a rodar.
+
+  A correção é uma condição: `querPartir(acao) && !alvoLocalPedido(acao)`.
+  Quem tem um alvo a pé aqui não está pedindo estrada, e a estrada não pode
+  nem opinar. Os dois caminhos passaram a compartilhar `lugaresDaqui()` e
+  `moverParaLocal()` — se divergissem, um deles voltaria a mentir, e o que
+  mente é sempre o que ninguém testa.
+
+- ~~**"Não vi a opção no mapa para ir para o local manualmente."**~~
+  RESOLVIDO na v9.58. A planta desenhava a taverna, a forja e o moinho e não
+  deixava ir a nenhum: um mapa que mostra onde dá para ir e não deixa ir é um
+  índice. Agora cada local tem "▸ ir", cada cômodo tem "▸ entrar", quem está
+  num lugar tem "▸ voltar ao meio da cidade", e cada cidade conhecida no
+  mapa-mundo tem "🧭 Viajar para". **O botão não é um atalho paralelo**: chama
+  a mesma função que a frase chama e manda ao Mestre a mesma frase.
+
+- ~~**O mapa abria no continente.**~~ RESOLVIDO na v9.58. O herói passa a
+  maior parte da campanha dentro de um assentamento, e a pergunta que ele faz
+  ao abrir o mapa é "para onde eu posso ir daqui?". A planta é a padrão
+  quando há cidade sob os pés; o mundo continua a um clique, e volta a ser o
+  padrão sozinho em viagem.
+
+- ~~**Lugares dentro dos lugares: os cômodos.**~~ RESOLVIDO na v9.58 em
+  `comodos.js`. A pergunta foi "quartos numa taverna funcionam?", e a resposta
+  honesta era MEIO: a distância `dentro` existia desde a v9.54 e o Mestre
+  podia registrar `lugar_atual: "o quarto de cima"` — mas era regra escrita
+  sem código atrás. O sistema não SABIA que a taverna tem quartos, não sabia
+  quantos, e não garantia que o quarto da primeira noite fosse o da terceira.
+  E como a lista de destinos parava na porta do prédio, "subo para o quarto"
+  não movia nada.
+
+  Agora a hierarquia tem quatro níveis: mundo → cidade → local → cômodo. A
+  planta do prédio é determinística, entra no prompt inteira, e cômodo
+  restrito (a adega, a cripta, as celas) chega ao Mestre marcado como
+  invasão. O `lugar` ganhou `dentroDe`, que é o que faz "desço para o salão"
+  ter para onde descer.
+
+- ~~**"desço para o salão" levava à sala dos fundos.**~~ RESOLVIDO na v9.58,
+  achado pelo teste dos cômodos. `casaNome` casava prefixo sem exigir fim de
+  palavra — "sala" é prefixo de "salao" —, e o desempate por número de
+  pedaços dava a vitória ao nome mais longo. Duas correções: a palavra tem
+  que acabar onde acaba (com o plural do português aceito nos dois sentidos,
+  para "o quarto" achar "os quartos do sótão"), e **o nome inteiro ganha de
+  tudo** — quem escreveu o nome exato já disse qual é.
+
 - ~~**A viagem não dizia ao Mestre quanto falta — nem para onde.**~~
   RESOLVIDO na v9.56. A linha que ele recebia turno após turno era `EM VIAGEM
   desde Nova do Norte (desde o dia 7)` — sem destino, sem progresso, sem
@@ -371,6 +426,34 @@ jogador descobre jogando.
   ajusta pela Vercel sem redeploy. Falta jogar o suficiente para saber.
 
 ## Mundo
+
+- ~~**"Em três das criações tive os mesmos nomes."**~~ RESOLVIDO na v9.58 em
+  `toponimia.js`. Medi antes de mexer: a distribuição do sorteio era uniforme,
+  não havia viés. O problema era o TAMANHO do banco — 25 tavernas escritas à
+  mão, 5 mercados, 4 forjas, 3 arenas. Um mundo nasce com catorze
+  assentamentos e **todos têm mercado**: pela conta do aniversário, a chance
+  de dois mercados saírem iguais no mesmo mundo era de praticamente 100%, e
+  foi por isso que a "Feira Baixa" apareceu duas vezes na mesma planta.
+
+  A saída não foi embaralhar melhor, foi ter vocabulário: substantivo com
+  gênero e número, adjetivo que concorda, complemento já preposicionado, três
+  padrões. Dá 9.792 nomes de taverna e ~1.500 por tipo de local, por gênero
+  de campanha. **Medido**: a repetição dentro de um mundo caiu de ~100% para
+  6,7% em 300 mundos.
+
+  O que isto **não** promete é unicidade — `locaisDaCidade` é chamado uma
+  cidade por vez (do painel do mapa inclusive), e uma função determinística
+  que precisasse do mundo inteiro para nomear uma forja seria pior que o
+  problema. O que se compra é probabilidade.
+
+- ~~**O local citado em cena nunca virava cânone.**~~ RESOLVIDO na v9.58, e
+  só apareceu porque os nomes novos o revelaram. Quase todo local agora nasce
+  com artigo ("A Taça Negra"), e ninguém escreve em português "a porta de A
+  Taça Negra" — escreve "da Taça Negra". A fronteira de palavra em `cita`
+  rejeitava o "d" da contração, e o local mencionado nunca era promovido.
+  O bug já existia para as tavernas, que sempre tiveram artigo; só não
+  aparecia porque os outros tipos não tinham. Agora `cita` tenta também sem
+  o artigo.
 
 - ~~**Estágio 2 da geração de mundo: as células do ermo.**~~ RESOLVIDO na
   v9.54 em `celulas.js`. O pergaminho de 100 por 100 virou uma grade de 20

@@ -11,14 +11,20 @@ import { ondeEstou, pontoDoHeroi } from "./rastro.js";
 import { PlantaCidade } from "./planta-cidade.jsx";
 import { arredoresDaCidade } from "./arredores.js";
 
-export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindade, jornada = null, masmorra = null, molde = null, semente = "", genero = "Fantasia medieval", lugar = null }) {
+export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindade, jornada = null, masmorra = null, molde = null, semente = "", genero = "Fantasia medieval", lugar = null, aoIrAoLugar = null, aoViajar = null }) {
   const [selecionada, setSelecionada] = React.useState(null);
-  /* DUAS ESCALAS (v9.51): o continente e a cidade. O mesmo pergaminho conta
-     as duas histórias, e o alternador só oferece a segunda quando há cidade
-     sob os pés — em viagem, "mapa da cidade" não quer dizer nada. */
-  const [escala, setEscala] = React.useState("mundo");
   const cidadeAqui = (mapa?.cidades || []).find((c) => cidadeAtual && (c.nome || "").toLowerCase() === String(cidadeAtual).toLowerCase()) || null;
   const podeCidade = !!cidadeAqui && !jornada;
+  /* DUAS ESCALAS (v9.51): o continente e a cidade. O mesmo pergaminho conta
+     as duas histórias, e o alternador só oferece a segunda quando há cidade
+     sob os pés — em viagem, "mapa da cidade" não quer dizer nada.
+
+     v9.58: E A CIDADE É A PADRÃO. Abrir no continente era mostrar primeiro a
+     escala em que nada acontece: o herói passa a maior parte da campanha
+     dentro de um assentamento, e é a planta que responde à pergunta que ele
+     faz ao abrir o mapa — "para onde eu posso ir daqui?". O mundo continua a
+     um clique, e volta a ser o padrão sozinho quando não há cidade. */
+  const [escala, setEscala] = React.useState(podeCidade ? "cidade" : "mundo");
   const verCidade = podeCidade && escala === "cidade";
   /* CAMADAS (v8.9): o mesmo pergaminho conta duas histórias — quem manda
      (política) e quem reza (fé). A camada de fé só existe depois do despertar. */
@@ -132,7 +138,7 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
       <div>
         {seletorEscala}
         <PlantaCidade semente={semente} cidade={cidadeAqui} genero={genero} molde={molde} lugar={lugar}
-          selecionado={selecionada} aoSelecionar={setSelecionada} />
+          selecionado={selecionada} aoSelecionar={setSelecionada} aoIr={aoIrAoLugar} />
       </div>
     );
   }
@@ -369,11 +375,26 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
                   </div>
                 </div>
               )}
-              {aberta && (verFe || c.notas || (c.locais || []).length > 0) && (
+              {aberta && (verFe || c.notas || (c.locais || []).length > 0 || (aoViajar && !atual)) && (
                 <div className="mt-2 pt-2" style={{ borderTop: `1px solid ${T.line}` }}>
                   {verFe && est && <div className="tv-body text-xs mb-1" style={{ color: est.cor }}>{est.icone} Ao chegar: {est.recepcao}.</div>}
                   {c.notas && <div className="tv-body text-xs" style={{ color: T.inkDim }}>{c.notas}</div>}
                   {(c.locais || []).length > 0 && <div className="tv-body text-xs mt-1" style={{ color: T.violetSoft }}>Locais: {c.locais.join(", ")}</div>}
+                  {/* v9.58: PARTIR PELO MAPA. Até aqui só se viajava escrevendo,
+                      e escrever bem o nome de uma cidade que está na tela é uma
+                      exigência do teclado, não do jogo. O botão manda o mesmo
+                      pedido que a frase mandaria — o resto do caminho é o
+                      mesmo, inclusive a jornada e os trechos. */}
+                  {aoViajar && !atual && !jornada && !masmorra && (
+                    <button onClick={(e) => { e.stopPropagation(); aoViajar(c.nome); }}
+                      className="tv-mono text-[10px] mt-2 px-2.5 py-1.5 rounded-full"
+                      style={{ background: T.violet, color: T.onAccent, border: `1px solid ${T.violet}`, fontWeight: 600 }}>
+                      🧭 Viajar para {c.nome}
+                    </button>
+                  )}
+                  {aoViajar && !atual && (jornada || masmorra) && (
+                    <div className="tv-mono text-[9px] mt-2" style={{ color: T.inkDim }}>{jornada ? "Você já está na estrada." : "Saia do covil antes de abrir estrada."}</div>
+                  )}
                 </div>
               )}
             </div>

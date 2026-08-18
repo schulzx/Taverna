@@ -35,6 +35,7 @@ import { CHAO_PROMPT } from "./chao.js";
 import { MISSOES_PROMPT } from "./missoes.js";
 import { OFERTAS_PROMPT } from "./ofertas.js";
 import { LUGAR_PROMPT } from "./lugar.js";
+import { COMODOS_PROMPT } from "./comodos.js";
 import { ARREDORES_PROMPT } from "./arredores.js";
 import { CELULAS_PROMPT } from "./celulas.js";
 import { VIAGEM_PROMPT } from "./viagem.js";
@@ -141,6 +142,10 @@ export const PORTAS_DA_CENA = [
      valem para quem está nele */
   { id: "viagem", quando: (c) => !!c.emViagem, porque: "o relogio da estrada so importa a quem esta nela" },
   { id: "ermo", quando: (c) => !c.emCidade || !!c.emViagem, porque: "o que há entre os assentamentos importa a quem está entre eles" },
+  /* v9.58: a planta do prédio só importa a quem entrou num. Quem está na
+     rua tem a lista de LOCAIS; quem está dentro tem a de CÔMODOS, e mandar
+     as duas juntas é convidar o Mestre a misturar as escalas. */
+  { id: "comodos", quando: (c) => !!c.dentroDeUmLocal, porque: "o quarto de cima, a adega e a cripta só existem para quem está no prédio que os tem" },
 ];
 
 /* Devolve um mapa {id: boolean}. O `cena` vazio abre TODAS as portas, e
@@ -274,6 +279,7 @@ ${so("missao", MISSOES_PROMPT)}
 ${so("missao", OFERTAS_PROMPT)}
 
 ${LUGAR_PROMPT}
+${so("comodos", COMODOS_PROMPT)}
 ${so("cidade", ARREDORES_PROMPT)}
 ${so("ermo", CELULAS_PROMPT)}
 ${so("viagem", VIAGEM_PROMPT)}

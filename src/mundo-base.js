@@ -22,6 +22,7 @@
 
 import { rngDe } from "./geografia.js";
 import { pessoaDiversa, nomeTaverna, nomePessoa } from "./nomes.js";
+import { nomeDeLocal } from "./toponimia.js";
 import { criaturasDoGenero } from "./bestiario.js";
 import { moldePorId } from "./moldes.js";
 
@@ -107,9 +108,17 @@ export function locaisDaCidade(semente, cidade, genero = "Fantasia medieval", mo
   return escolhidos.map((l) => {
     /* o molde traz o próprio banco de nomes; sem ele, o do sobremundo; sem
        nenhum dos dois, o tipo vira o nome (feio, mas nunca vazio) */
-    const nomes = (M.nomesLocal && M.nomesLocal[l.tipo]) || NOME_LOCAL[l.tipo];
-    const nome = l.tipo === "taverna" ? nomeTaverna(genero, rnd) : (nomes ? pick(rnd, nomes) : l.tipo);
-    return { id: `${cidade.nome}|${l.tipo}`, tipo: l.tipo, icone: l.icone, nome, cidade: cidade.nome, papeis: l.papeis };
+    /* v9.58: O NOME VEM DA COMBINAÇÃO, NÃO DA LISTA. As listas curtas de
+       NOME_LOCAL faziam a mesma "Feira Baixa" aparecer em duas cidades do
+       mesmo mundo — cinco nomes para catorze mercados —, e a mesma taverna
+       reaparecer em criações diferentes. O molde ainda manda quando traz
+       banco próprio: uma Torre nomeia os degraus dela melhor do que o
+       sobremundo nomearia. E NOME_LOCAL sobrevive como rede: um tipo que a
+       toponímia não conheça continua tendo nome. */
+    const nomes = M.nomesLocal && M.nomesLocal[l.tipo];
+    const nome = nomes ? pick(rnd, nomes)
+      : (nomeDeLocal(l.tipo, genero, rnd) || (NOME_LOCAL[l.tipo] ? pick(rnd, NOME_LOCAL[l.tipo]) : l.tipo));
+    return { id: `${cidade.nome}|${l.tipo}`, tipo: l.tipo, icone: l.icone, nome, cidade: cidade.nome, porte: cidade.porte || cidade.tipo, papeis: l.papeis };
   });
 }
 
@@ -484,14 +493,36 @@ export function mencionadosNaCena(semente, mapa, nomeCidade, base, genero, narra
   if (!texto.trim()) return { locais: [], gente: [] };
   const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde);
   if (!q) return { locais: [], gente: [] };
+  /* ---------------- O ARTIGO COLADO NA PREPOSIÇÃO (v9.58) ----------------
+     Achado quando os nomes passaram a ser gerados: quase todo local agora
+     nasce com artigo ("A Taça Negra", "O Bazar da Aurora"), e ninguém
+     escreve em português "a porta de A Taça Negra" — escreve "da Taça
+     Negra". O nome inteiro deixa de aparecer no texto, e a fronteira de
+     palavra que existe para não casar pedaço ("Taça" dentro de "Taçador")
+     rejeitava o "d" da contração.
+
+     Consequência silenciosa e cara: o local citado em cena nunca virava
+     cânone. O bug já existia para as tavernas, que sempre tiveram artigo —
+     só não aparecia porque os outros tipos não tinham. */
+  const semArtigo = (s) => String(s).replace(/^(o|a|os|as)\s+/i, "").trim();
+  const casa = (alvo) => {
+    if (alvo.length < 4) return false;
+    let i = texto.indexOf(alvo);
+    while (i >= 0) {
+      const antes = i > 0 ? texto[i - 1] : " ";
+      const dep = i + alvo.length < texto.length ? texto[i + alvo.length] : " ";
+      if (!/[a-z0-9]/.test(antes) && !/[a-z0-9]/.test(dep)) return true;
+      i = texto.indexOf(alvo, i + 1);
+    }
+    return false;
+  };
   const cita = (nome) => {
     const alvo = semAcento(nome);
-    if (alvo.length < 4) return false;
-    const i = texto.indexOf(alvo);
-    if (i < 0) return false;
-    const antes = i > 0 ? texto[i - 1] : " ";
-    const dep = i + alvo.length < texto.length ? texto[i + alvo.length] : " ";
-    return !/[a-z0-9]/.test(antes) && !/[a-z0-9]/.test(dep);
+    if (casa(alvo)) return true;
+    const nu = semAcento(semArtigo(nome));
+    /* só vale tentar sem o artigo se sobrar nome: "A Fossa" vira "Fossa",
+       que ainda identifica; um nome que fosse só o artigo, não. */
+    return nu !== alvo && casa(nu);
   };
   return {
     locais: (q.locais || []).filter((l) => !foiRevelado(base, l.id || `${q.cidade.nome}|local|${l.nome}`) && cita(l.nome)),

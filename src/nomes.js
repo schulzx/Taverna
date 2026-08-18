@@ -5,6 +5,8 @@
    próprio nome e o da campanha; o sorteio é opcional para ele.
    ============================================================ */
 
+import { nomeDeTaverna } from "./toponimia.js";
+
 /* utilitário de sorteio determinístico opcional ou aleatório */
 /* `rnd` opcional (v9.8): passando um gerador semeado, o mesmo mundo produz
    sempre os mesmos nomes. Sem ele, continua aleatório como antes. */
@@ -98,7 +100,11 @@ export function nomeCidade(genero, rnd = Math.random) {
   if (rnd() < 0.45 && b.cidadeUnica) return sortear(b.cidadeUnica, rnd);
   return combinar(b.cidadePre, b.cidadeSuf, { rnd });
 }
-export function nomeTaverna(genero, rnd = Math.random) { return sortear(bancoDe(genero).taverna, rnd); }
+/* v9.58: passa a delegar. As 25 tavernas escritas à mão continuam neste
+   arquivo como referência do TOM que o gerador tem de acertar, mas quem
+   sorteia é a toponímia — 25 nomes para um mundo de catorze cidades
+   repetiam entre criações, e o jogador notou em três. */
+export function nomeTaverna(genero, rnd = Math.random) { return nomeDeTaverna(genero, rnd); }
 export function nomePessoa(genero, sexo, rnd = Math.random) {
   const b = bancoDe(genero);
   const primeiro = sexo === "fem" ? sortear(b.fem, rnd) : sexo === "masc" ? sortear(b.masc, rnd) : sortear(rnd() < 0.5 ? b.masc : b.fem, rnd);
