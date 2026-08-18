@@ -49,7 +49,7 @@ import { deslocamentoDe, passoEfetivo, passoComSelecao, passoDeHabilidade, deslo
 import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPreparada, ehPreparavel, preparadasIniciais, alternarPreparada, podeLancar, ehRitual, motivoDoCaderno, MINUTOS_RITUAL, resumoMagiasPrompt, MAGIAS_PROMPT } from "./magias.js";
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, perguntarPeloSistema, envelopeDaPerguntaDoSistema, linhaDaPerguntaDoSistema, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
-import { decidirTurno, linhaDaDecisao, TURNO_PROMPT } from "./turno.js";
+import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao, TURNO_PROMPT } from "./turno.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
 import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
@@ -7461,7 +7461,10 @@ export default function Taverna() {
       ehPartidaPorNome: ler(() => detectarPartida(acao, ctxDoRastro())),
       querPartir: ler(() => querPartir(acao)),
       temAlvoLocal: ler(() => alvoLocalPedido(acao)),
-      ehDesafio: ler(() => { const v = lerAcao(acao, ctxDesafio()); return v && v.tipo !== "livre"; }),
+      /* v9.63: o MESMO leitor que o adjudicador usa. Enquanto eram dois, o
+         sinal negava desafio para "peço um teste de Percepção" e o
+         adjudicador o atendia — a decisão e o ato discordavam. */
+      ehDesafio: ler(() => !!veredictoDaAcao(acao)),
       ehPerguntaAoMundo: ler(() => ehPerguntaAoMundo(acao)),
       temMilagreArmado: !!milagreSel,
       temHabilidadesSelecionadas: habsSel.length > 0,
@@ -7492,56 +7495,61 @@ export default function Taverna() {
        de dois caminhos, invisível para qualquer teste de módulo porque o
        defeito não estava em módulo nenhum, estava na ORDEM. Agora a ordem
        tem teste, e a decisão diz por que passou por cada porta. */
-    decisaoRef.current = decidirTurno(sinaisDoTurno(acao));
-    /* MODO CRIATIVO (v9.10): "/..." é comando de teste. Intercepta ANTES de
-       tudo — não vira ação, não vai ao Mestre, não gasta turno nem tokens. */
-    if (acao.startsWith("/")) { setEntrada(""); if (executarComando(acao)) return; }
-    /* ---------------- CONJURAR VEM PRIMEIRO (v9.31) ----------------
-       Nomear uma magia que está na SUA ficha é a declaração mais explícita que
-       existe neste jogo, e por isso ela ganha de qualquer heurística. Estava
-       depois do oráculo, e o resultado foi este: "conjuro Falar com os Mortos
-       e pergunto: quem pagou pela emboscada?" terminava em interrogação, o
-       oráculo reconhecia uma pergunta fechada e respondia com um d100 — a
-       magia nunca era lançada, e o cadáver nunca abria a boca. */
-    {
-      let feito = false;
-      try {
-        const mf = magiaDeFuncaoNaAcao(acao);
-        if (mf) feito = usarFuncaoMagica(mf, acao);
-      } catch { /* conjurar nunca pode custar o turno */ }
-      if (feito) { setEntrada(""); return; }
-    }
-    /* v9.61: quem decide se este turno é de MOVIMENTO é a tabela, não a
-       posição desta linha no arquivo. As seis portas abaixo são as que
-       `interceptarMovimento` sabe atender; se a decisão foi outra — e
-       "desafio" é a que importa, porque é ela que ganha de "destino" —,
-       este bloco nem é consultado. */
-    const PORTAS_DE_MOVIMENTO = ["resposta", "portal", "masmorra", "seguir", "partida", "destino"];
-    if (PORTAS_DE_MOVIMENTO.includes(decisaoRef.current.id) && interceptarMovimento(acao)) { setEntrada(""); return; }
-    /* ---------------- A AÇÃO DECLARADA (v9.59) ----------------
-       Era um PEDIDO DE TESTE e virou uma AÇÃO ADJUDICADA. A diferença não é
-       de nome: quem pede um teste está pedindo o dado direto, pulando a
-       parte em que se descobre se havia o que rolar. Foi assim que o mesmo
-       quarto aceitou seis Percepções seguidas, as quatro últimas contra
-       nada.
+    const sinais = sinaisDoTurno(acao);
+    decisaoRef.current = decidirTurno(sinais);
+    const cascata = cascataDoTurno(sinais);
+    /* ---------------- OS EXECUTORES (v9.63) ----------------
+       Uma função por trabalho, todas com o mesmo contrato: recebe a ação,
+       devolve `true` se RESOLVEU o turno. Devolver `false` não é erro — é a
+       porta dizendo que o sinal que a abriu era suspeita, não fato, e que o
+       turno segue para onde a TABELA mandar (nunca para a porta de baixo por
+       acaso: `seRecusar` é dado, e é o que impede a estrada de recolher o
+       que o desafio recusou).
 
-       Agora o jogador declara o que faz e o SISTEMA responde uma de cinco
-       coisas: rola, não precisa rolar, não dá desse jeito, você já tentou,
-       ou aqui já foi vasculhado. O hábito antigo continua funcionando —
-       "peço um teste de Percepção" entra pela mesma porta, como se fosse a
-       ação correspondente, e obedece às mesmas regras. */
-    {
-      const ver = adjudicarAcao(acao);
-      if (ver) { setEntrada(""); return; }
+       O que estas cinco linhas substituem é a razão desta versão existir. A
+       v9.61 fez a ORDEM virar tabela, mas só o movimento perguntava a ela; o
+       comando, a conjuração, a ação declarada e o oráculo continuavam a
+       rodar por posição no arquivo, ganhando ou perdendo a decisão. Ou seja:
+       a tabela descrevia um turno PARECIDO com o que o programa fazia. E o
+       lugar onde os dois discordavam era exatamente o tipo de canto onde
+       moraram os três bugs de ordem desta semana — o resolver comendo o
+       movimento local, o botão do mapa e o painel de Ações.
+
+       Um caso concreto do que a discordância custava: com uma escolha
+       pendente na tela ("qual dos três destinos?"), a tabela manda "resposta"
+       ganhar de "conjurar", e o arquivo fazia o contrário — a conjuração era
+       tentada primeiro, e uma resposta que citasse o nome de uma magia
+       lançaria a magia em vez de responder à pergunta. */
+    const executar = (faz) => {
+      /* MODO CRIATIVO (v9.10): "/..." é comando de teste. Não vira ação,
+         não vai ao Mestre, não gasta turno nem tokens. */
+      if (faz === "comando") return executarComando(acao);
+      /* as seis portas de viagem entram todas por aqui: `interceptarMovimento`
+         resolve resposta, portal, masmorra, estrada e destino por dentro */
+      if (faz === "movimento") return interceptarMovimento(acao);
+      /* CONJURAR (v9.31): nomear uma magia que está na SUA ficha é a
+         declaração mais explícita que existe neste jogo. Estava depois do
+         oráculo, e o resultado foi este: "conjuro Falar com os Mortos e
+         pergunto: quem pagou pela emboscada?" terminava em interrogação, o
+         oráculo reconhecia uma pergunta fechada e respondia com um d100 — a
+         magia nunca era lançada, e o cadáver nunca abria a boca. */
+      if (faz === "conjurar") { const mf = magiaDeFuncaoNaAcao(acao); return !!(mf && usarFuncaoMagica(mf, acao)); }
+      /* A AÇÃO DECLARADA (v9.59): o jogador declara o que faz e o SISTEMA
+         responde uma de cinco coisas — rola, não precisa rolar, não dá desse
+         jeito, você já tentou, ou aqui já foi vasculhado. */
+      if (faz === "desafio") return adjudicarAcao(acao);
       /* ORÁCULO (v9.24): pergunta FECHADA sobre o que o mundo ainda não
-         estabeleceu. Vem depois do pedido de teste de propósito — "peço um
-         teste de percepção?" é teste, não consulta. E fora de combate só:
-         no meio da luta, perguntar ao mundo é perder o turno. */
-      if (!combateRef.current && ehPerguntaAoMundo(acao)) {
-        setEntrada("");
-        consultarOMundo(acao);
-        return;
-      }
+         estabeleceu. Depois da ação declarada de propósito — "peço um teste
+         de percepção?" é teste, não consulta. */
+      if (faz === "oraculo") { consultarOMundo(acao); return true; }
+      return false;
+    };
+    setEntrada("");
+    for (let i = 0; i < cascata.atalhos.length;) {
+      let feito = false;
+      try { feito = !!executar(cascata.atalhos[i].faz); } catch { feito = false; }
+      if (feito) return;
+      i = proximaPorta(cascata.atalhos, i);
     }
     /* CONFIDÊNCIA (v9.9): "conto a Iris que matei o irmão do barão". O sistema
        anota o assunto e QUEM ouviu; a partir daí, mais ninguém pode mencioná-lo
@@ -7581,11 +7589,22 @@ export default function Taverna() {
       talvezOMundoSeMexer();
     }
     setEntrada(""); setHabAbertas(false);
-    /* MILAGRE ARMADO (v9.28): vem antes das habilidades porque um milagre É o
+    /* ---------------- A SEGUNDA FASE (v9.63) ----------------
+       Daqui para baixo o turno já pagou os 45 minutos, e é essa a linha que
+       separa as duas fases da tabela: as portas de "atalho" cobram o próprio
+       tempo (a estrada cobra a estrada, a tentativa cobra os minutos dela) e
+       por isso vêm antes do relógio; as de "turno" são o turno de exploração
+       inteiro, e por isso vêm depois.
+
+       Milagre, habilidades e cena são as três, nesta ordem — e agora a ordem
+       é lida da tabela, não do lugar onde estas linhas caíram no arquivo.
+
+       MILAGRE ARMADO (v9.28): vem antes das habilidades porque um milagre É o
        turno — não se encaixa numa sequência com magias, e deixá-lo depois
        faria a habilidade selecionada roubar a descrição que era dele. */
-    if (milagreSel) { dispararMilagre(milagreSel, acao); return; }
-    if (habsSel.length) {
+    const trabalhoDoTurno = (cascata.turno[0] || { faz: "cena" }).faz;
+    if (trabalhoDoTurno === "milagre") { dispararMilagre(milagreSel, acao); return; }
+    if (trabalhoDoTurno === "habilidades") {
       /* ---- TURNO COM VÁRIAS HABILIDADES (v9.5) ----
          Quem tem dois movimentos lança duas magias no MESMO turno e descreve
          as duas de uma vez. O sistema resolve cada uma na ordem escolhida,
@@ -9263,12 +9282,29 @@ export default function Taverna() {
      teste que nasce de uma frase e o que nasce do hábito antigo ("peço um
      teste de Percepção") passam os dois por aqui, porque uma regra que mora
      num só dos dois caminhos vira bug — já aconteceu três vezes neste jogo. */
-  const adjudicarAcao = (acao) => {
-    if (rolagem || carregando) return false;
-    let v = null;
+  /* ---------------- UM SÓ LEITOR (v9.63) ----------------
+     "Esta frase é uma ação que o sistema adjudica?" era respondida em DOIS
+     lugares: aqui, para agir, e lá em `sinaisDoTurno`, para decidir de quem
+     era o turno. E as duas respostas não eram a mesma, o que é a definição
+     do bug que este projeto mais repete.
+
+     Divergiam em dois pontos, e nenhum deles é acadêmico:
+
+     1) só ESTE lado conhecia a segunda chance de `detectarPedidoDeTeste` —
+        "peço um teste de Percepção" não casa nenhum desafio do catálogo, e
+        é a `periciaForcada` que o transforma num. O sinal dizia "não é
+        desafio" para a frase que o adjudicador atendia sem hesitar;
+     2) este lado aceita "livre" COM chave (a busca já vasculhada, que
+        precisa de resposta) e o sinal recusava tudo que fosse "livre".
+
+     Enquanto o adjudicador rodava em todo turno, ganhando ou perdendo a
+     decisão, isso não aparecia. Passa a aparecer no instante em que ele só
+     roda quando a tabela manda — que é o ponto desta versão. */
+  const veredictoDaAcao = (acao) => {
+    if (rolagem || carregando) return null;
     try {
       const ctx = ctxDesafio();
-      v = lerAcao(acao, ctx);
+      let v = lerAcao(acao, ctx);
       if (!v || (v.tipo === "livre" && !v.chave)) {
         const pedido = detectarPedidoDeTeste(acao);
         if (pedido) {
@@ -9276,11 +9312,16 @@ export default function Taverna() {
           v = lerAcao(acao, { ...ctx, periciaForcada: per });
         }
       }
-    } catch { return false; }
+      /* "livre" sem chave é conversa e caminhada: não é assunto deste código,
+         e interceptar aqui inundaria o jogo de avisos sobre o óbvio. */
+      if (!v || (v.tipo === "livre" && !v.chave)) return null;
+      return v;
+    } catch { return null; }
+  };
+
+  const adjudicarAcao = (acao) => {
+    const v = veredictoDaAcao(acao);
     if (!v) return false;
-    /* "livre" sem chave é conversa e caminhada: não é assunto deste código,
-       e interceptar aqui inundaria o jogo de avisos sobre o óbvio. */
-    if (v.tipo === "livre" && !v.chave) return false;
     if (v.tipo === "teste") { rolarDesafio(v, acao); return true; }
     pushMsgs([
       { autor: "jogador", texto: acao },

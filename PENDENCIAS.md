@@ -495,6 +495,60 @@ jogador descobre jogando.
   e o mundo que vem até o herói é quem sobe a escada, não quem passa na
   estrada.
 
+## A ordem do turno
+
+- ~~**A ordem do turno era o layout de um arquivo.**~~ RESOLVIDO em duas
+  etapas, v9.61 e v9.63, em `turno.js`.
+
+  Três bugs de uma única semana eram o mesmo bug: o resolver de destinos
+  comendo "vou até o Javali Cambaleante", o botão do mapa chamando o
+  movimento por fora da cadeia, e o painel de Ações chamando a rolagem por
+  fora da adjudicação. Nenhum deles aparece em teste de módulo, porque o
+  defeito não estava em módulo nenhum — estava na **ordem**, que não era um
+  objeto, era a posição das linhas dentro do `agirInterno`.
+
+  A **v9.61** fez a ordem virar dado: uma tabela de portas, cada uma com a
+  pergunta que a abre e a razão escrita de estar onde está.
+
+  Só que a tabela ainda não mandava em ninguém. Apenas o movimento
+  consultava a decisão; comando, conjuração, ação declarada e oráculo
+  continuavam a rodar por posição, **ganhando ou perdendo**. A tabela
+  descrevia um turno *parecido* com o que o programa fazia, e "parecido" é
+  onde moram os bugs de ordem. A discordância já era visível: com uma
+  escolha pendente na tela, a tabela manda a **resposta** ganhar da
+  **conjuração**, e o arquivo fazia o contrário — uma resposta que citasse o
+  nome de uma magia lançaria a magia em vez de responder à pergunta.
+
+  A **v9.63** fechou isso. Cada porta ganhou três campos — `fase` (paga o
+  próprio tempo ou paga os 45 minutos do turno), `faz` (o executor) e
+  `seRecusar` (para onde vai o turno quando a porta diz "não era comigo") —
+  e `agirInterno` virou um laço sobre a cascata. Nada mais executa por
+  estar escrito antes.
+
+  O campo que não podia ter valor único é o `seRecusar`, e a razão é o
+  Javali: `temAlvoLocal` abre a porta do desafio para **qualquer** frase que
+  cite um lugar daqui, e a esmagadora maioria delas não é desafio nenhum —
+  é só andar. Se a recusa caísse na porta de baixo, a estrada recolheria o
+  que o desafio soltou e o bug voltava inteiro. Ela pula para o oráculo,
+  porque a única outra coisa que uma ação declarada aqui ainda pode ser é
+  uma pergunta sobre **aqui**.
+
+  E o `faz` existe porque seis portas de viagem apontam para o mesmo
+  `interceptarMovimento`: sem ele, uma porta que recusa faria o turno
+  chamar o mesmo código duas vezes, e a segunda chamada mexe nos sinais de
+  viagem depois de ele já ter decidido não viajar.
+
+- ~~**Quem perguntava e quem respondia não liam a mesma coisa.**~~ RESOLVIDO
+  na v9.63, e foi um achado da própria refatoração. "Esta frase é uma ação
+  que o sistema adjudica?" tinha **duas** respostas: uma em `adjudicarAcao`,
+  para agir, outra em `sinaisDoTurno`, para decidir de quem era o turno. E
+  divergiam em dois pontos — só o adjudicador conhecia a segunda chance de
+  `detectarPedidoDeTeste` (é ela que transforma "peço um teste de Percepção"
+  num desafio de verdade), e só ele aceitava veredicto "livre" **com**
+  chave. Enquanto o adjudicador rodava em todo turno a divergência não
+  aparecia; ela ia estrear no instante em que ele passasse a rodar só quando
+  a tabela mandasse. Os dois lados passaram a chamar `veredictoDaAcao`.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na
