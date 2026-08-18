@@ -38,8 +38,8 @@ import { MOLDES, MOLDE_PADRAO, moldePorId, resumoMoldePrompt, MOLDES_PROMPT } fr
 import { BRAND, SLOGAN, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, FONT_CSS, GENEROS, ATRIBUTOS } from "./constantes.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
 import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito, naturezaDaHabilidade, tipoDeDanoDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
-import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, detectarPedidoDeTeste, envelopeDoTeste, TESTES_PROMPT } from "./testes.js";
-import { PERICIAS, periciaPorId, periciasDoAtributo, garantirPericias, periciasIniciais, bonusDePericia, passivoDe, resolucaoAutomatica, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente, resumoPericiasPrompt, PERICIAS_PROMPT } from "./pericias.js";
+import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, envelopeDoTeste, TESTES_PROMPT } from "./testes.js";
+import { PERICIAS, periciaPorId, garantirPericias, periciasIniciais, bonusDePericia, passivoDe, resolucaoAutomatica, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente, resumoPericiasPrompt, PERICIAS_PROMPT } from "./pericias.js";
 import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, podeGastar, gastarHeroismo, validarDeclaracao, envelopeDeclaracao, envelopeRefazer, resumoHeroismoPrompt, HEROISMO_PROMPT } from "./heroismo.js";
 import { dadoDeVida, garantirDadosVida, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT } from "./descanso.js";
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, MAX_RELOGIOS, RELOGIOS_PROMPT } from "./relogios.js";
@@ -59,7 +59,7 @@ import { abrirViagem, andar, pausarViagem, retomarViagem, progressoDaViagem, com
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
 import { garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
-import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeDoBarulho, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
+import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
@@ -9285,33 +9285,19 @@ export default function Taverna() {
   /* ---------------- UM SÓ LEITOR (v9.63) ----------------
      "Esta frase é uma ação que o sistema adjudica?" era respondida em DOIS
      lugares: aqui, para agir, e lá em `sinaisDoTurno`, para decidir de quem
-     era o turno. E as duas respostas não eram a mesma, o que é a definição
-     do bug que este projeto mais repete.
+     era o turno. Enquanto o adjudicador rodava em todo turno, ganhando ou
+     perdendo a decisão, a divergência não aparecia; ela estrearia no
+     instante em que ele passasse a rodar só quando a tabela mandasse.
 
-     Divergiam em dois pontos, e nenhum deles é acadêmico:
-
-     1) só ESTE lado conhecia a segunda chance de `detectarPedidoDeTeste` —
-        "peço um teste de Percepção" não casa nenhum desafio do catálogo, e
-        é a `periciaForcada` que o transforma num. O sinal dizia "não é
-        desafio" para a frase que o adjudicador atendia sem hesitar;
-     2) este lado aceita "livre" COM chave (a busca já vasculhada, que
-        precisa de resposta) e o sinal recusava tudo que fosse "livre".
-
-     Enquanto o adjudicador rodava em todo turno, ganhando ou perdendo a
-     decisão, isso não aparecia. Passa a aparecer no instante em que ele só
-     roda quando a tabela manda — que é o ponto desta versão. */
+     v9.64: a segunda leitura que morava aqui — `detectarPedidoDeTeste` com
+     `periciaForcada`, para atender "peço um teste de Percepção" — desceu
+     para dentro do `lerAcao`, e mudou de sentido: em vez de FABRICAR o
+     desafio que a perícia nomeada sugeria, agora ela devolve o veredicto
+     `naoSePede`. Rolagem deixou de ser algo que se pede. */
   const veredictoDaAcao = (acao) => {
     if (rolagem || carregando) return null;
     try {
-      const ctx = ctxDesafio();
-      let v = lerAcao(acao, ctx);
-      if (!v || (v.tipo === "livre" && !v.chave)) {
-        const pedido = detectarPedidoDeTeste(acao);
-        if (pedido) {
-          const per = pedido.pericia || (periciasDoAtributo(pedido.tipo)[0] || {}).id;
-          v = lerAcao(acao, { ...ctx, periciaForcada: per });
-        }
-      }
+      const v = lerAcao(acao, ctxDesafio());
       /* "livre" sem chave é conversa e caminhada: não é assunto deste código,
          e interceptar aqui inundaria o jogo de avisos sobre o óbvio. */
       if (!v || (v.tipo === "livre" && !v.chave)) return null;
@@ -9322,7 +9308,46 @@ export default function Taverna() {
   const adjudicarAcao = (acao) => {
     const v = veredictoDaAcao(acao);
     if (!v) return false;
-    if (v.tipo === "teste") { rolarDesafio(v, acao); return true; }
+    if (v.tipo === "teste") {
+      /* ---------------- O MUNDO FALA ANTES DO DADO (v9.64) ----------------
+         "Se o mestre decidir que tem, seja por ele ou pelo oráculo, ele pede
+         o teste."
+
+         Para vasculhar e investigar o sistema já sabia responder sozinho: a
+         base do mundo diz, item por item, o que está escondido em cada
+         canto. Escutar e rastrear não tinham essa base — rolavam sempre,
+         contra uma dificuldade de catálogo, e a pergunta que sobrava ("havia
+         mesmo alguém falando do outro lado?") caía na IA, que responde pela
+         cena que quer contar e não pelo lugar onde o herói está.
+
+         Agora o oráculo responde primeiro. Se não há, não há dado: o herói
+         encostou o ouvido e ouviu o silêncio, que é uma informação de
+         verdade e não um fracasso. E o lugar fica marcado, para que insistir
+         não vire uma segunda consulta com outra resposta. */
+      if (v.oportunidade) {
+        const q = perguntarOportunidade(v);
+        if (q && !/^sim/.test(q.grau.id)) {
+          pushMsgs([
+            { autor: "jogador", texto: acao },
+            { autor: "sistema", texto: linhaDaPerguntaDoSistema(q) },
+            { autor: "sistema", texto: `🚫 ${v.oportunidade.nada}` },
+          ]);
+          fecharTentativa(v, true, { limpo: true });
+          cobrarTempoDoDesafio(v);
+          enviar(`${envelopeDaPerguntaDoSistema(q, { oQue: `Eu tentei ${v.rotulo}` })}\n${envelopeSemOportunidade(v, acao)}`, fichaViva() || personagem);
+          return true;
+        }
+        /* houve o que testar: o "sim" viaja junto com o resultado do dado,
+           pelo envelope, para o Mestre não poder narrar um corredor mudo
+           depois de o mundo ter dito que havia voz nele */
+        if (q) {
+          pushMsgs([{ autor: "sistema", texto: linhaDaPerguntaDoSistema(q) }]);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaPerguntaDoSistema(q, { oQue: `Eu tentei ${v.rotulo}` })}`;
+        }
+      }
+      rolarDesafio(v, acao);
+      return true;
+    }
     pushMsgs([
       { autor: "jogador", texto: acao },
       { autor: "sistema", texto: falaDoVeredicto(v) },
@@ -9357,6 +9382,24 @@ export default function Taverna() {
       { autor: "jogador", texto: acao },
       { autor: "sistema", texto: `🎯 ${v.rotulo}${v.viaNome ? ` ${v.viaNome}` : ""} — dificuldade ${v.dc} (${v.deOnde}). Seu bônus: +${modT}${selo}.${v.mudou.length ? ` Conta a favor: ${v.mudou.join(", ")}.` : ""}` },
     ]);
+    /* ---------------- A PORTA VIGIADA (v9.64) ----------------
+       A terceira pergunta do catálogo estava pronta desde a v9.62 e sem
+       chamador. Ela entra AQUI, antes do dado, e não depois: uma vigia
+       decidida depois do resultado é a IA escolhendo se houve testemunha
+       conforme o que ficou dramático — que é exatamente o que o barulho e a
+       testemunha da furtividade deixaram de ser.
+
+       E é ela que faz a escolha entre as vias significar alguma coisa. Sem
+       olhos por perto, barulho é só barulho e a gazua não compra nada; com
+       vigia, a diferença entre entrar em silêncio e entrar no ombro é a
+       diferença entre a cena seguinte existir ou não. */
+    if (v.vigia) {
+      const q = perguntarVigia(v);
+      if (q) {
+        pushMsgs([{ autor: "sistema", texto: linhaDaPerguntaDoSistema(q) }]);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaPerguntaDoSistema(q, { oQue: `Eu vou ${v.rotulo}${v.viaNome ? ` ${v.viaNome}` : ""}` })}`;
+      }
+    }
     /* SEM DADO quando o bônus decide sozinho. Mantida a exceção do achado:
        a entrega do tesouro mora em `concluirRolagem`, e duplicá-la aqui é
        como se cria a divergência que ninguém acha depois. */
@@ -9391,11 +9434,15 @@ export default function Taverna() {
 
   /* Escreve no livro de tentativas. `limpo` fecha o lugar de vez: aqui já
      não há o que achar, e a próxima vez responde sem rolar. */
-  const fecharTentativa = (v, passou) => {
+  const fecharTentativa = (v, passou, { limpo = null } = {}) => {
     if (!v || !v.chave) return;
     tentativasRef.current = registrarTentativa(tentativasRef.current, v.chave, {
       via: v.via || "", resultado: passou ? "sucesso" : "falha", dia: diaRef.current,
-      limpo: !!(v.fechaDepois && passou),
+      /* v9.64: `limpo` explícito para o caso em que o mundo respondeu que
+         não havia o que testar. Não houve dado, então `fechaDepois && passou`
+         não descreve o que aconteceu — e sem fechar, insistir custaria o
+         tempo de novo para receber o mesmo silêncio do livro de fatos. */
+      limpo: limpo === null ? !!(v.fechaDepois && passou) : !!limpo,
     });
   };
 
@@ -9714,6 +9761,47 @@ export default function Taverna() {
       dentroDeUmPredio: !!(lugarRef.current && lugarRef.current.distancia === "dentro"),
       emMasmorra: !!masmorraRef.current,
       emCidade: !!cidadeAtualRef.current,
+      lugar: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "ermo",
+      dia: diaRef.current, cena: turnosDeMundoRef.current,
+    }, { fatos: fatosRef.current });
+    if (q && !q.reusado) fatosRef.current = registrarFato(fatosRef.current, q.chave, q, { dia: diaRef.current, cena: turnosDeMundoRef.current });
+    return q;
+  };
+
+  /* ---------------- HÁ O QUE TESTAR? (v9.64) ----------------
+     A pergunta que vem ANTES do dado. O contexto é todo derivado — quanta
+     gente há ao alcance, que horas são, se chove, se estamos debaixo da
+     terra — porque o ponto é justamente este: a resposta sai do lugar, não
+     da cena que alguém queria contar. */
+  const perguntarOportunidade = (v) => {
+    if (!v || !v.oportunidade) return null;
+    const cid = cidadeSobOsPes();
+    const onde = lugarRef.current ? comEm(lugarRef.current.nome) : (cidadeAtualRef.current ? `em ${cidadeAtualRef.current}` : "");
+    const q = perguntarPeloSistema(v.oportunidade.pergunta, {
+      onde,
+      movimento: movimentoDaqui(),
+      noite: ehNoite(minutoRef.current),
+      emMasmorra: !!masmorraRef.current,
+      emCidade: !!cid,
+      chuva: /chuva|tempestade|temporal|garoa/i.test((climaRef.current && climaRef.current.rotulo) || ""),
+      lugar: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "ermo",
+      dia: diaRef.current, cena: turnosDeMundoRef.current,
+    }, { fatos: fatosRef.current });
+    if (q && !q.reusado) fatosRef.current = registrarFato(fatosRef.current, q.chave, q, { dia: diaRef.current, cena: turnosDeMundoRef.current });
+    return q;
+  };
+
+  /* Este lugar tem olhos? `valioso` sai da dureza da tranca, que já é
+     derivada do tipo de lugar: quem põe cadeado de cadeia guarda coisa que
+     vale a pena vigiar, e quem põe tranca de taverna, não. */
+  const perguntarVigia = (v) => {
+    const onde = lugarRef.current ? comEm(lugarRef.current.nome) : (cidadeAtualRef.current ? `em ${cidadeAtualRef.current}` : "");
+    const q = perguntarPeloSistema("vigiado", {
+      onde,
+      valioso: Number(v && v.dc) >= 16,
+      noite: ehNoite(minutoRef.current),
+      emCidade: !!cidadeSobOsPes(),
+      emMasmorra: !!masmorraRef.current,
       lugar: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "ermo",
       dia: diaRef.current, cena: turnosDeMundoRef.current,
     }, { fatos: fatosRef.current });

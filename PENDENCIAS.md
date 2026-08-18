@@ -190,6 +190,60 @@ jogador descobre jogando.
   (o herói tenta), **salvaguarda** (algo acontece contra ele — e por isso
   ninguém a pede) e **jogada de ataque** (no tabuleiro).
 
+- ~~**O prompt dizia "o jogador NÃO pede testes" e o código deixava.**~~
+  RESOLVIDO na v9.64. A frase estava no `DESAFIOS_PROMPT` desde a v9.59, e
+  embaixo dela havia uma segunda porta viva: nomear a perícia convocava o
+  desafio correspondente e o dado saía.
+
+  Por que a regra é essa, e não conforto de mesa: **quem escolhe a perícia
+  escolhe o que existe.** "Peço Percepção" já afirma que há algo para ver;
+  "peço Intuição" já afirma que há mentira. O dado então só decide se o
+  herói alcança uma coisa que a própria pergunta plantou. Declarar a AÇÃO
+  devolve a decisão a quem é dela — o mundo diz se há, e só depois o dado
+  diz se você pega.
+
+  Três coisas foram necessárias, e as duas últimas só apareceram no teste:
+
+  1. o veredicto `naoSePede`, que recusa **e ensina** a frase que teria
+     funcionado, tirada do mesmo catálogo que a leria — uma regra nova que
+     só nega é uma regra que o jogador testa três vezes e abandona;
+  2. o vocabulário teve de crescer junto. "Verifico o quarto se encontro
+     algo" — o exemplo do próprio jogador — não casava nada. Tirar a porta
+     de trás e manter o funil teria piorado o jogo em nome da regra;
+  3. a fresta com nome próprio: metade das perícias carrega no nome o verbo
+     da ação que cobre — "Arrombamento" tem "arromb", "Investigação" tem
+     "investig" —, e o desafio casava pelo rótulo. A regra valia para
+     Percepção e não valia para meia dúzia de outras, que é pior do que não
+     valer para nenhuma. Agora, quando a frase é um pedido, o catálogo lê o
+     que SOBRA dela sem a moldura e sem o nome da perícia.
+
+- ~~**Escutar e rastrear rolavam contra o vazio.**~~ RESOLVIDO na v9.64, e
+  é a outra metade do conserto da v9.59. Lá, a busca deixou de rolar contra
+  o nada porque o mundo já sabia, item por item, o que estava escondido em
+  cada canto. Escutar e rastrear não tinham essa base: rolavam **sempre**,
+  contra dificuldade de catálogo, e a pergunta que sobrava — "havia mesmo
+  alguém falando do outro lado?" — caía na IA, que responde pela cena que
+  quer contar e não pelo lugar onde o herói está.
+
+  Agora o oráculo responde antes do dado, com o que o código sabe do lugar
+  e da hora, e a resposta entra no livro de fatos. Medido: há o que ouvir em
+  75% num salão cheio e 20% numa cripta vazia; há rastro em 65% no campo,
+  25% na rua de pedra, 45% sob chuva. Quando a resposta é não, não há
+  rolagem, o lugar fica marcado e o envelope proíbe a meia-pista de consolo.
+
+  **Aberto:** falta o mesmo tratamento para "ele está mentindo?", que
+  precisa de um alvo NOMEADO — sem isso o fato ficaria valendo para todas
+  as pessoas da cena, e duas conversas diferentes no mesmo dia herdariam a
+  mesma resposta.
+
+- ~~**A porta vigiada estava no catálogo e sem chamador.**~~ RESOLVIDO na
+  v9.64. A pergunta existia desde a v9.62 e nada a chamava. Ela entra ANTES
+  da tentativa de tranca — depois do resultado seria a IA escolhendo se
+  houve testemunha conforme o que ficou dramático — e é ela que faz a
+  escolha entre as vias significar alguma coisa: sem olhos por perto,
+  barulho é só barulho e a gazua silenciosa não compra nada.
+
+
 - ~~**O painel de Ações era uma porta dos fundos para o sistema inteiro.**~~
   RESOLVIDO na v9.59.1, e **achado jogando** — nenhuma suíte pegaria, porque
   o defeito estava no caminho que os testes não percorrem: a interface.
@@ -494,6 +548,39 @@ jogador descobre jogando.
   andar de torre não é "fora da cidade", sair dele leva minutos e não horas,
   e o mundo que vem até o herói é quem sobe a escada, não quem passa na
   estrada.
+
+## O vilão
+
+- **A nêmese cria inimigos; ela precisa criar o VILÃO.** Pedido em
+  18/08/2026. Hoje `MOVIMENTOS_DO_MUNDO` tem um fio de nêmese e o gerador
+  sabe pôr um adversário no caminho — o que não existe é o arco. Um vilão
+  não é um inimigo forte: é uma pessoa com um plano que anda enquanto o
+  herói faz outra coisa, e é o andar do plano que faz o confronto final
+  significar alguma coisa.
+
+  O sistema completo tem quatro tempos, e cada um é uma decisão que hoje
+  cairia na IA — que é exatamente onde ela não deve estar:
+
+  1. **Criação.** Quem é, de onde saiu, o que quer, e por que o mundo o
+     deixou chegar até aqui. Tem de nascer do que a campanha JÁ tem —
+     uma facção, um nome do cânone, uma dívida do herói — como a
+     iniciativa do mundo já faz: puxar fio aberto, nunca inventar um novo.
+  2. **Apresentação.** O vilão aparece antes de ser combatido, e por obra
+     dele: um decreto, um recado, um morto conhecido, um lugar fechado.
+     Quem decide QUANDO é o relógio dele, não a conveniência da cena.
+  3. **Desenvolvimento.** Um relógio próprio que anda com o tempo e com o
+     que o herói faz ou deixa de fazer, com marcos visíveis — e com o
+     vilão reagindo às derrotas que sofre, em vez de esperar parado.
+  4. **Confronto.** Não um só: o primeiro em que ele escapa ou o herói
+     escapa, e o último, cuja dificuldade e cujo elenco saem do que o
+     relógio marcou. Perder um confronto do meio tem de custar alguma
+     coisa que dê para ver.
+
+  O que já existe e serve de base: relógios com gatilho e tamanho,
+  facções e guerra, o cânone com vontades pendentes, o registro de pessoas
+  com nome riscado, e o livro de fatos do oráculo. O que falta é o arquivo
+  que amarra os quatro tempos e o envelope que entrega cada momento pronto
+  ao Mestre, para o vilão parar de ser um adjetivo e virar um calendário.
 
 ## A ordem do turno
 

@@ -53,6 +53,7 @@
 
 import { rngDe } from "./geografia.js";
 import { periciaPorId } from "./pericias.js";
+import { detectarPedidoDeTeste, semOPedidoDeTeste } from "./testes.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -183,12 +184,21 @@ export function trancaDe(semente, lugar, alvo = "porta") {
 export const DESAFIOS = [
   {
     id: "buscar",
-    rx: /\b(vasculh|revir|remexo|procur|busco|dou uma olhada|olho em volta com|examino o|examino a|examino esse|reviro|fu[cç]o|inspeciono|presto (bastante )?aten[cç][aã]o|reparo (n|em)|olho com aten[cç][aã]o|dou busca)/,
+    /* v9.64: o jogador deixou de poder pedir teste, e a rede que sobrou
+       tinha de ser mais larga — tirar a porta de trás e manter o funil
+       seria piorar o jogo em nome da regra. Entram os verbos de conferir
+       ("verifico o quarto" era o exemplo do próprio jogador e NÃO casava
+       nada), de esquadrinhar e de passar os olhos. */
+    rx: /\b(vasculh|revir|remexo|procur|busco|dou uma olhada|olho em volta com|examino o|examino a|examino esse|reviro|fu[cç]o|inspeciono|presto (bastante )?aten[cç][aã]o|reparo (n|em)|olho com aten[cç][aã]o|dou busca|verific|confiro|checo|esquadrinh|passo os olhos|dou uma vasculhada|dou uma geral|reviso o|corro os olhos)/,
     /* PROCURAR UMA PESSOA NÃO É VASCULHAR UM LUGAR, e a diferença é cara: um
        falso positivo aqui marca o quarto como revirado por causa de "procuro
        o taverneiro". A lista é de gente porque é o caso real; o falso
        negativo apenas devolve o turno ao Mestre, que é o lado seguro. */
-    naoSe: /\b(pessoa|gente|rosto|olhos del[ae]|taverneir|ferreir|mercador|guarda|capit[aã]|sacerdot|ac[oó]lito|estalajadeir|curandeir|algu[eé]m|homem|mulher|rapaz|mo[cç]a|velh[oa]|companheir|amig|aliad|informante|contato|comprador|vendedor|barqueir|cocheir|dono d|taverneira)/,
+    /* v9.64: e com os verbos de conferir entrou um falso positivo novo —
+       "verifico se a porta está trancada" é sobre a TRANCA, e `buscar` vem
+       antes dela no catálogo, então roubaria a frase e marcaria o cômodo
+       como revirado. Conferir se algo está fechado não é vasculhar. */
+    naoSe: /\b(pessoa|gente|rosto|olhos del[ae]|taverneir|ferreir|mercador|guarda|capit[aã]|sacerdot|ac[oó]lito|estalajadeir|curandeir|algu[eé]m|homem|mulher|rapaz|mo[cç]a|velh[oa]|companheir|amig|aliad|informante|contato|comprador|vendedor|barqueir|cocheir|dono d|taverneira)|\b(verific|confiro|checo)\w*\s+(se\s+)?[^.]{0,24}\b(trancad|destrancad|fechad|abert|porta|fechadura|cadeado|tranca)\b/,
     pericia: "percepcao", alvo: "busca", minutos: 10, barulho: false,
     rotulo: "vasculhar o lugar",
     /* a dificuldade sai do que existe aqui; sem nada, o sistema ainda deixa
@@ -209,6 +219,11 @@ export const DESAFIOS = [
     rx: /\b(escuto (a|à|na|no|atr[aá]s|pela|pelo)|fico escutando|encosto o ouvido|presto o ouvido|apuro os ouvidos|escuto com aten)/,
     pericia: "percepcao", alvo: "escuta", minutos: 2, barulho: false,
     rotulo: "escutar", dcPadrao: 13,
+    /* v9.64: antes do dado, o mundo diz se HÁ o que ouvir. Sem isto, este
+       teste rolava sempre — e a pergunta "havia mesmo alguém falando do
+       outro lado?" sobrava para a IA, que responde pela cena que quer
+       contar e não pelo lugar onde o herói está. */
+    oportunidade: { pergunta: "haOQueOuvir", nada: "Não há o que escutar daqui — nem voz, nem passo, nem respiração." },
   },
   {
     id: "fraqueza",
@@ -232,6 +247,11 @@ export const DESAFIOS = [
     rx: /\b(arromb|destranc|for[cç]o a porta|abro a porta|abrir a porta|abro o ba[uú]|abro o cofre|abro a fechadura|for[cç]o a fechadura|for[cç]o o ba[uú]|abro o cadeado|quebro a tranca|gazua|mexo na fechadura|trabalho a fechadura|tento a fechadura)/,
     pericia: "arrombamento", alvo: "tranca", minutos: 5, barulho: true,
     rotulo: "abrir o que está trancado", tranca: true,
+    /* v9.64: ANTES da tentativa, o mundo diz se este lugar tem vigia. É o
+       que faz a escolha entre a gazua silenciosa e o ombro barulhento
+       significar alguma coisa — sem olhos por perto, o barulho é só
+       barulho, e a via cara deixa de ser uma escolha para virar enfeite. */
+    vigia: true,
   },
   {
     id: "escalar",
@@ -277,6 +297,9 @@ export const DESAFIOS = [
     rx: /\b(rastre|sigo as pegadas|sigo o rastro|seguir o rastro|leio o ch[aã]o|farejo)/,
     pericia: "sobrevivencia", alvo: "rastro", minutos: 30, barulho: false,
     rotulo: "rastrear", dcPadrao: 14,
+    /* meia hora de mundo por tentativa: rolar contra um chão que não tem
+       pegada nenhuma custava caro e devolvia narração de consolo */
+    oportunidade: { pergunta: "haRastro", nada: "Não há rastro aqui — o chão não guardou nada que se possa seguir." },
   },
   {
     id: "estancar",
@@ -291,6 +314,35 @@ export const DESAFIOS = [
     rotulo: "ler o arcano", dcPadrao: 15,
   },
 ];
+
+/* ---------------- COMO SE DIZ (v9.64) ----------------
+   O jogador deixou de pedir testes. Uma recusa seca ("não se pede teste")
+   seria uma regra nova sem ensinar a gramática que ela exige — e quem
+   escreve "peço um teste de Percepção" está tentando fazer algo, não
+   quebrar a regra. Então a recusa vem com a frase que ELE teria escrito
+   para conseguir aquilo, tirada do mesmo catálogo que a leria.
+
+   Não está no catálogo acima de propósito: `rx` é o que o sistema LÊ, e
+   isto é o que o sistema ENSINA. Misturar os dois faria alguém, um dia,
+   ajustar a frase de exemplo e mexer sem querer na detecção. */
+const COMO_SE_DIZ = {
+  buscar: "reviro o quarto atrás de um esconderijo",
+  investigar: "leio os vestígios para saber o que aconteceu aqui",
+  escutar: "encosto o ouvido na porta",
+  fraqueza: "tento lembrar o que sei sobre essa criatura",
+  mentira: "tento saber se ele está mentindo",
+  tranca: "forço a fechadura com a gazua",
+  escalar: "escalo o muro pelo lado da hera",
+  furtar_se: "me esgueiro pela sombra até a porta dos fundos",
+  bater_carteira: "surrupio a bolsa do cinto dele",
+  convencer: "tento convencer o guarda a me deixar passar",
+  intimidar: "ameaço o taverneiro para ele falar",
+  mentir: "minto dizendo que sou o novo estalajadeiro",
+  rastrear: "sigo as pegadas na lama",
+  estancar: "trato o ferimento antes que ele piore",
+  arcano: "examino o selo para reconhecer a magia",
+};
+export function comoSeDiz(id) { return COMO_SE_DIZ[id] || ""; }
 
 export function desafioPorId(id) { return DESAFIOS.find((d) => d.id === id) || null; }
 /* O desafio que uma PERÍCIA nomeada resolve. Existe para o hábito antigo —
@@ -457,18 +509,54 @@ export function lerAcao(texto, ctx = {}) {
   const t = norm(cru);
   const {
     personagem = {}, semente = "", lugar = "", emCombate = false,
-    tentativas = {}, dia = 0, periciaForcada = "",
+    tentativas = {}, dia = 0,
   } = ctx;
   /* fora do destructuring de propósito: o conferidor de referências lê
      `achadoDe(...)` como chamada a uma função global e acusa falso positivo.
      Uma linha a mais vale menos que um conferidor que ninguém lê. */
   const achadoDe = typeof ctx.achadoDe === "function" ? ctx.achadoDe : null;
 
-  /* a frase manda; a perícia nomeada é a rede para quem ainda escreve
-     "peço um teste de Percepção" */
-  const d = DESAFIOS.find((x) => x.rx.test(t) && !(x.naoSe && x.naoSe.test(t)))
-    || (periciaForcada ? desafioPorPericia(periciaForcada) : null);
+  /* só a frase manda. Até a v9.63 havia uma segunda porta: nomear a perícia
+     ("peço um teste de Percepção") convocava o desafio correspondente e o
+     dado saía. Ela morreu na v9.64, e o motivo está logo abaixo.
+
+     Quando a frase É um pedido de rolagem, o catálogo lê o que SOBRA dela
+     depois de tirados a moldura do pedido e o nome da perícia. Sem isso a
+     regra teria buracos com nome próprio: metade das perícias carrega no
+     nome o verbo da ação que cobre — "Arrombamento" tem "arromb" —, e o
+     desafio casaria pelo rótulo da perícia, que é justamente o caminho que
+     esta versão fecha. */
+  const pedido = detectarPedidoDeTeste(cru);
+  const daAcao = pedido ? norm(semOPedidoDeTeste(cru)) : t;
+  const d = DESAFIOS.find((x) => x.rx.test(daAcao) && !(x.naoSe && x.naoSe.test(daAcao)));
   if (!d) {
+    /* ---------------- TESTE NÃO SE PEDE (v9.64) ----------------
+       O prompt já dizia isto ao Mestre desde a v9.59 — "o jogador NÃO pede
+       testes: ele declara uma AÇÃO" — e o código fazia o contrário. Regra
+       escrita sem código atrás é o bug que este projeto mais repete; aqui
+       era pior, porque havia código, e ele contradizia a regra.
+
+       Por que a regra é essa, e não conforto de mesa: quem pede o teste
+       escolhe a perícia, e escolher a perícia é escolher o que existe.
+       "Peço Percepção" já afirma que há algo para ver; "peço Intuição" já
+       afirma que há mentira. O dado então decide se o herói alcança uma
+       coisa que a pergunta plantou. Declarar a AÇÃO devolve essa decisão a
+       quem é dela: o mundo diz se há, e só depois o dado diz se você pega.
+
+       A recusa vem com a frase que teria funcionado. Uma regra nova que só
+       nega é uma regra que o jogador vai testar três vezes e desistir. */
+    if (pedido) {
+      const alvo = pedido.pericia ? desafioPorPericia(pedido.pericia) : null;
+      const per = pedido.pericia ? periciaPorId(pedido.pericia) : null;
+      return {
+        tipo: "naoSePede",
+        pericia: pedido.pericia || "",
+        periciaNome: (per && per.nome) || "",
+        rotulo: alvo ? alvo.rotulo : "",
+        comoSeDiz: alvo ? comoSeDiz(alvo.id) : "",
+        motivo: pedido.motivo || "",
+      };
+    }
     const livre = naoPedeDado(cru);
     return livre ? { tipo: "livre", porque: livre.porque } : null;
   }
@@ -579,6 +667,11 @@ export function lerAcao(texto, ctx = {}) {
        falha, QUEM viu é fato do mundo, e o sistema pergunta em vez de
        deixar a IA escolher a testemunha que a cena dela pedia. */
     testemunha: !!d.testemunha,
+    /* v9.64: o que o mundo precisa responder ANTES de o dado sair da mão.
+       Vai como dado, não resolvido: `lerAcao` é pura, e o oráculo precisa
+       de sorteio e do livro de fatos — quem pergunta é o App. */
+    oportunidade: d.oportunidade || null,
+    vigia: !!d.vigia,
     via: via ? via.id : "", viaNome: via ? via.nome : "",
     falaDaVia: via ? via.falha : "",
     achado: achado || null,
@@ -605,6 +698,10 @@ export function falaDoVeredicto(v) {
   }
   if (v.tipo === "impossivel") return `⛔ Assim não dá: ${v.porque}. O que abriria: ${v.comoSeria.join(", ")}.`;
   if (v.tipo === "livre") return `✓ ${v.porque} — sem dado.`;
+  if (v.tipo === "naoSePede") {
+    const qual = v.periciaNome ? ` de ${v.periciaNome}` : "";
+    return `🎲 Teste${qual} não se pede — quem decide se há dado é o sistema, e para isso ele precisa saber o que você FAZ.${v.comoSeDiz ? ` Diga assim: "${v.comoSeDiz}".` : ""}`;
+  }
   return "";
 }
 
@@ -632,7 +729,26 @@ export function envelopeDeVeredicto(v, oQueEuDisse = "") {
   if (v.tipo === "livre") {
     return `[SEM TESTE — DECISÃO DO SISTEMA]${disse} Isto não pede dado: ${v.porque}. Narre acontecendo, com naturalidade e sem tensão falsa, e devolva a palavra para mim.`;
   }
+  if (v.tipo === "naoSePede") {
+    return `[SEM TESTE — DECISÃO DO SISTEMA]${disse} Eu pedi uma rolagem, e rolagem não se pede: quem decide se há dado é o sistema, a partir do que eu FAÇO. Não houve teste e não vai haver por este pedido.
+REGRA DESTE ENVELOPE (obrigatória): NÃO role, NÃO peça rolagem, NÃO invente um resultado e NÃO me entregue por narração aquilo que o teste teria dado. Em UMA frase, devolva a cena ao ponto em que ela estava e deixe claro que estou parado esperando decidir o que fazer${v.comoSeDiz ? ` — algo como "${v.comoSeDiz}"` : ""}. Não trate isto como fracasso meu nem como recusa sua: é só a vez voltando para mim.`;
+  }
   return "";
+}
+
+/* ---------------- NÃO HAVIA O QUE TESTAR (v9.64) ----------------
+   O oráculo respondeu que não há o que ouvir, ou rastro nenhum. Não é
+   falha do herói e não é castigo: é o mundo respondendo antes do dado.
+
+   Este envelope existe separado do de busca vazia porque a diferença
+   importa na narração. Lá o herói ROLOU e o sucesso comprou a certeza
+   ("procurei bem, não há nada"). Aqui não houve dado nenhum — ele
+   encostou o ouvido e o silêncio respondeu na hora. */
+export function envelopeSemOportunidade(v, oQueEuDisse = "") {
+  const disse = oQueEuDisse ? ` Eu disse: "${String(oQueEuDisse).trim()}".` : "";
+  const nada = (v && v.oportunidade && v.oportunidade.nada) || "Não há aqui aquilo que eu procurava.";
+  return `[SEM TESTE — O MUNDO RESPONDEU ANTES DO DADO]${disse} O sistema perguntou ao mundo se havia o que ${v && v.rotulo ? v.rotulo : "encontrar"} aqui, e a resposta foi NÃO. ${nada} Não houve rolagem porque não havia obstáculo — não se rola contra o que não existe.
+REGRA DESTE ENVELOPE (obrigatória): narre em UMA ou DUAS frases o gesto acontecendo e encontrando o vazio, e devolva a palavra para mim. NÃO invente meia-pista, NÃO diga que "algo ainda escapa", NÃO plante um som distante nem uma marca no chão para salvar a cena. O vazio é a resposta verdadeira e ele é uma informação que eu ganhei.`;
 }
 
 /* ---------------- PROCUREI BEM, E NÃO HÁ NADA ----------------
@@ -657,11 +773,12 @@ export function envelopeDoBarulho(rotulo, passou) {
 /* A linha do prompt que explica a arquitetura ao Mestre. Enxuta porque sobe
    em TODO turno — este bloco não tem porta, já que o jogador pode declarar
    uma ação em qualquer cena. Cada frase aqui custa em toda a campanha. */
-export const DESAFIOS_PROMPT = `TESTES — QUEM DECIDE É O SISTEMA (v9.59):
+export const DESAFIOS_PROMPT = `TESTES — QUEM DECIDE É O SISTEMA (v9.64):
 - TRÊS rolagens existem, e só três: TESTE DE PERÍCIA (o herói tenta algo), SALVAGUARDA (algo acontece CONTRA ele) e JOGADA DE ATAQUE (na luta, pelo tabuleiro).
-- O jogador NÃO pede testes: ele declara uma AÇÃO ("presto atenção na taverna", "tento abrir a porta à força"). Quem decide se aquilo pede dado é o SISTEMA, e ele já decidiu antes de você ler isto.
+- O jogador NÃO pede testes: ele declara uma AÇÃO ("presto atenção na taverna", "forço a porta"), e quem decide se aquilo pede dado é o SISTEMA. Se ele pedir rolagem, o sistema recusa e devolve a vez — não entregue por narração o que o dado daria.
+- ANTES DO DADO, O MUNDO DIZ SE HÁ: o sistema pergunta primeiro se existe o que ouvir, seguir ou achar. Resposta não, teste nenhum — e o vazio é verdade, nunca convite a meia-pista.
 - VOCÊ NUNCA ROLA E NUNCA PEDE ROLAGEM. Se havia teste, o envelope já chegou com o resultado; se não chegou envelope, não era teste — narre e siga.
-- DUAS CONDIÇÕES para haver dado, e as duas precisam valer: chance real de falhar E custo real por falhar. Sem elas o sistema resolve sem rolar, e você narra a competência como competência, nunca como sorte.
+- DUAS CONDIÇÕES para haver dado, e as duas precisam valer: chance real de falhar E custo real por falhar. Sem elas o sistema resolve sem rolar, e competência se narra como competência, nunca como sorte.
 - MESMO OBSTÁCULO, MESMA ABORDAGEM, UMA VEZ SÓ. Insistir igual não rola de novo; reabre com outra abordagem, ajuda, ferramenta nova ou muito mais tempo, e o sistema avisa.
 - LUGAR VASCULHADO FICA VASCULHADO: não invente achado novo para preencher a cena.
-- O QUE ESTÁ TRANCADO abre de quatro jeitos — a chave, ferramentas de ladrão, uma magia que abra, ou força bruta —, cada um com dificuldade e barulho próprios, e o sistema já escolheu qual foi. Força faz BARULHO: quem estiver ao alcance ouviu, e a consequência é sua para narrar.`;
+- O QUE ESTÁ TRANCADO abre de quatro jeitos — a chave, ferramentas de ladrão, uma magia que abra, ou força bruta —, cada um com dificuldade e barulho próprios, e o sistema já escolheu qual foi. Força faz BARULHO, e quem ouviu já chega decidido no envelope.`;

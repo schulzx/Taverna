@@ -101,11 +101,45 @@ export function detectarPericiaPedida(texto) {
   return null;
 }
 
+/* ---------------- O QUE SOBRA DEPOIS DO PEDIDO (v9.64) ----------------
+   O jogador deixou de poder pedir rolagem, e a regra tinha uma fresta que
+   só apareceu no teste: o NOME de várias perícias contém o verbo da ação
+   que ela cobre. "Arrombamento" tem "arromb", "Investigação" tem
+   "investig", "Intimidação" tem "intimid". Então "faço uma checagem de
+   Arrombamento" continuava casando o desafio da tranca e o dado saía — a
+   regra valia para Percepção e não valia para meia dúzia de outras, que é
+   pior do que não valer para nenhuma.
+
+   Isto tira do texto a moldura do pedido E o nome da perícia citada. O que
+   sobra é a AÇÃO, se houver alguma: "peço um teste de Percepção para
+   vasculhar o quarto" vira "para vasculhar o quarto", que é uma ação
+   declarada e continua rolando, como deve. "Faço uma checagem de
+   Arrombamento" vira quase nada, e nada não é ação. */
+export function semOPedidoDeTeste(texto) {
+  let t = String(texto || "");
+  for (const p of PERICIAS) {
+    const rx = APELIDOS_PERICIA[p.id];
+    if (rx) t = t.replace(new RegExp(rx.source, "gi"), " ");
+  }
+  /* artigos e preposições FICAM. Tirá-los parecia limpeza e quebrava o
+     catálogo: metade dos padrões dele é frase feita — "abrir a porta" —, e
+     sem o artigo "peço um teste de Arrombamento para abrir a porta no
+     ombro" deixava de ser reconhecida como a ação que de fato é. */
+  return t
+    .replace(/\b(pe[çc]o|pedir|quero|queria|posso|poderia|fa[çc]o|fazer|vamos|deixa eu|me d[áa]|rolo)\b/gi, " ")
+    .replace(/\b(teste|testes|rolagem|rolagens|rolar|checagem|checar|jogada)\b/gi, " ")
+    .replace(/\s+/g, " ").trim();
+}
+
 /* Devolve { tipo, pericia, motivo } quando a frase é mesmo um pedido de teste. */
 export function detectarPedidoDeTeste(texto) {
   const t = String(texto || "");
   if (!t.trim()) return null;
-  if (!/(teste|rolagem|rolar|checagem)/i.test(t)) return null;
+  /* v9.64: "jogada" e "rolo <perícia>" entram na lista. Enquanto o pedido
+     de teste era ATENDIDO, um detector estreito só custava um turno solto;
+     agora que ele é RECUSADO com uma explicação, ficar de fora significa
+     receber silêncio em vez da regra — e a lição chega errada. */
+  if (!/(teste|rolagem|rolar|rolo|checagem|jogada)/i.test(t)) return null;
   if (!VERBO_PEDIDO.test(t)) return null;
   /* o motivo é o que vem depois de "para" / "pra" / "de ver se" */
   const mm = t.match(/\b(para|pra|a fim de|de ver se|ver se|se)\s+(.{4,140})/i);

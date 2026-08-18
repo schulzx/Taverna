@@ -350,7 +350,10 @@ export const PERGUNTAS_DO_SISTEMA = [
   {
     id: "vigiado",
     tipo: "perigo",
-    pergunta: (c) => `este lugar está sendo vigiado${c.onde ? ` ${c.onde}` : ""}?`,
+    /* v9.64: era "este lugar está sendo vigiado ${onde}?", e na tela saía
+       "este lugar está sendo vigiado no salão?" — o lugar dito duas vezes.
+       A pergunta vai para a tela, então a frase é parte do trabalho. */
+    pergunta: (c) => `há vigia${c.onde ? ` ${c.onde}` : ""}?`,
     ajustes: (c) => {
       const a = [];
       if (c.valioso) a.push({ delta: 20, motivo: "o que se guarda aqui vale a pena vigiar" });
@@ -360,6 +363,63 @@ export const PERGUNTAS_DO_SISTEMA = [
     },
     seSim: "há vigia. Mostre onde e como — não como emboscada pronta, mas como um problema visível a tempo de ser resolvido.",
     seNao: "não há vigia nenhuma. Não invente uma para dar tensão à cena.",
+  },
+  /* ============================================================
+     HÁ O QUE TESTAR? (v9.64)
+
+     As três de cima perguntam sobre a CONSEQUÊNCIA de uma ação que já
+     aconteceu. Estas duas perguntam antes: existe aqui a coisa contra
+     a qual o herói quer rolar?
+
+     É a metade que faltava do conserto da v9.59. Lá, o teste de busca
+     deixou de rolar contra o vazio porque o mundo já sabia, item por
+     item, o que estava escondido em cada canto. Escutar e rastrear não
+     tinham essa base — e por isso continuavam rolando SEMPRE, contra
+     uma dificuldade de catálogo, e o Mestre ficava com a pergunta que
+     nunca deveria ter sido dele: "havia mesmo o que ouvir?" A IA
+     responde isso pela cena que ela quer contar, não pelo lugar onde o
+     herói está.
+
+     Agora o oráculo responde antes, com o que o código sabe do lugar e
+     da hora, e o resultado entra no livro de fatos: dois heróis
+     encostando o ouvido na mesma porta na mesma cena ouvem a mesma
+     coisa.
+     ============================================================ */
+  {
+    id: "haOQueOuvir",
+    tipo: "perigo",
+    pergunta: (c) => `há algo para escutar${c.onde ? ` ${c.onde}` : ""}?`,
+    ajustes: (c) => {
+      const a = [];
+      const mov = Number(c.movimento);
+      if (Number.isFinite(mov)) {
+        if (mov >= 3) a.push({ delta: 25, motivo: "há vozes por toda parte aqui" });
+        else if (mov === 2) a.push({ delta: 10, motivo: "há movimento por aqui" });
+        else if (mov === 1) a.push({ delta: -10, motivo: "há pouca gente por perto" });
+        else a.push({ delta: -30, motivo: "não há vivalma para fazer som" });
+      }
+      if (c.noite) a.push({ delta: -12, motivo: "a esta hora quase tudo já se calou" });
+      if (c.emMasmorra) a.push({ delta: 10, motivo: "aqui embaixo o que se move faz eco" });
+      return a;
+    },
+    seSim: "há mesmo o que ouvir daí. O teste que veio a seguir decide se ele entendeu O QUÊ — não adiante o conteúdo antes do resultado.",
+    seNao: "não há nada a ouvir: nem voz, nem passo, nem respiração. Não invente um sussurro para dar tensão à cena. O silêncio é a resposta, e é uma informação verdadeira — quem escutou merece sabê-la.",
+  },
+  {
+    id: "haRastro",
+    tipo: "perigo",
+    pergunta: (c) => `há rastro para seguir${c.onde ? ` ${c.onde}` : ""}?`,
+    ajustes: (c) => {
+      const a = [];
+      if (c.emCidade) a.push({ delta: -25, motivo: "em pedra e gente um rastro se perde" });
+      else a.push({ delta: 15, motivo: "terra aberta guarda pegada" });
+      if (c.chuva) a.push({ delta: -20, motivo: "a chuva lava o chão" });
+      if (c.noite) a.push({ delta: -15, motivo: "no escuro não se lê o chão" });
+      if (c.emMasmorra) a.push({ delta: -8, motivo: "pedra seca não marca" });
+      return a;
+    },
+    seSim: "há rastro. O teste decide se ele consegue lê-lo — não revele para onde leva antes do resultado.",
+    seNao: "não há rastro nenhum, e é essa a verdade do chão. Não plante uma pegada de consolo nem um 'algo passou por aqui' vago: não há.",
   },
 ];
 
