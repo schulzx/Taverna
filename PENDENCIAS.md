@@ -190,6 +190,32 @@ jogador descobre jogando.
   (o herói tenta), **salvaguarda** (algo acontece contra ele — e por isso
   ninguém a pede) e **jogada de ataque** (no tabuleiro).
 
+- ~~**O painel de Ações era uma porta dos fundos para o sistema inteiro.**~~
+  RESOLVIDO na v9.59.1, e **achado jogando** — nenhuma suíte pegaria, porque
+  o defeito estava no caminho que os testes não percorrem: a interface.
+
+  Sob o título "Pedir um teste" havia seis botões que chamavam `pedirTeste`
+  DIRETO — dificuldade velha, sem livro de tentativas, sem adjudicação. Toda
+  a arquitetura da v9.59 tinha um atalho que a contornava, e por ele dava
+  para farmar testes infinitos exatamente como na captura de tela original.
+
+  É a **terceira vez na mesma sessão** que o mesmo bug aparece: uma regra que
+  mora em um só de dois caminhos. Antes foram o resolver comendo o movimento
+  local e o botão do mapa; agora o painel.
+
+  Agora cada botão DECLARA uma ação, com a frase que um jogador escreveria, e
+  entra pela mesma porta de tudo. E um botão a menos: **"Aguentar" era pedir
+  uma salvaguarda**, e salvaguarda ninguém pede — o botão contradizia o
+  sistema que deveria servir.
+
+- ~~**"Você já conseguiu isso aqui" depois de uma busca bem-sucedida.**~~
+  RESOLVIDO na v9.59.1, também achado jogando. Procurar não é conseguir:
+  a frase soava como se não houvesse mais nada (e pode haver, mais fundo e
+  mais difícil) e tratava revirar um quarto como tarefa que se conclui. Agora
+  a busca repetida responde como a falha responde — "você já revistou isto
+  assim" —, e reabre com ajuda, ferramenta ou tempo. Para uma porta aberta ou
+  um guarda convencido, "já conseguiu" continua certo.
+
 - ~~**A porta trancada não tinha como ser aberta.**~~ RESOLVIDO na v9.59.
   Quatro vias, cada uma com perícia, custo e barulho próprios: a chave,
   ferramentas de ladrão (Prestidigitação, silenciosa), uma magia que abra

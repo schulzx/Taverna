@@ -300,6 +300,48 @@ export function desafioPorId(id) { return DESAFIOS.find((d) => d.id === id) || n
 export function desafioPorPericia(id) { return DESAFIOS.find((d) => d.pericia === id) || null; }
 
 /* ============================================================
+   OS BOTÕES DO PAINEL
+
+   Achado JOGANDO, e é o terceiro caso nesta mesma sessão do bug de
+   sempre: "toda regra que mora num só dos dois caminhos vira bug".
+
+   O painel de Ações tinha seis botões sob o título "Pedir um teste"
+   que chamavam a rolagem DIRETO, pela dificuldade velha e sem passar
+   pelo livro de tentativas. Toda a v9.59 tinha uma porta dos fundos,
+   e por ela dava para farmar testes infinitos exatamente como antes.
+
+   Agora cada botão DECLARA UMA AÇÃO, com a frase canônica que um
+   jogador escreveria, e ela entra pela mesma porta de todo o resto.
+
+   E um botão a menos: "Aguentar" era pedir uma salvaguarda, e
+   salvaguarda ninguém pede — ela acontece com você. Um botão para ela
+   contradizia o próprio sistema que ele deveria servir.
+   ============================================================ */
+export const ACOES_RAPIDAS = [
+  { id: "buscar", icone: "👁", rotulo: "Vasculhar", frase: "vasculho o lugar com atenção", desc: "revirar o lugar atrás do que ele esconde" },
+  { id: "investigar", icone: "🔎", rotulo: "Investigar", frase: "investigo os vestígios", desc: "ler o vestígio: quem esteve aqui, o que falta" },
+  { id: "escutar", icone: "👂", rotulo: "Escutar", frase: "encosto o ouvido e escuto com atenção", desc: "o que se ouve daqui" },
+  { id: "fraqueza", icone: "📖", rotulo: "Lembrar", frase: "tento lembrar o que sei sobre esta criatura, alguma fraqueza", desc: "o que os livros dizem da criatura à frente" },
+  { id: "convencer", icone: "🗣", rotulo: "Convencer", frase: "tento convencer", desc: "dobrar uma vontade pela palavra" },
+  { id: "intimidar", icone: "😤", rotulo: "Intimidar", frase: "intimido", desc: "impor pela ameaça" },
+  { id: "furtar_se", icone: "🌑", rotulo: "Esgueirar", frase: "me esgueiro sem ser visto", desc: "passar sem ser visto nem ouvido" },
+  /* a frase precisa casar a própria regex do catálogo — "abrir o que está
+     trancado" não casava nada, e o botão caía fora do sistema em silêncio.
+     Achado pelo teste que confere botão contra desafio. */
+  { id: "tranca", icone: "🚪", rotulo: "Arrombar", frase: "tento arrombar a porta", desc: "a chave, a gazua, a magia ou o ombro" },
+];
+
+/* A frase que o botão declara. O motivo digitado pelo jogador entra colado,
+   porque é ele que diz CONTRA O QUÊ — "tento convencer" e "tento convencer
+   o guarda a nos deixar passar" são a mesma ação com alvos diferentes. */
+export function fraseDaAcaoRapida(id, motivo = "") {
+  const a = ACOES_RAPIDAS.find((x) => x.id === id);
+  if (!a) return String(motivo || "").trim();
+  const m = String(motivo || "").trim();
+  return m ? `${a.frase} — ${m}` : a.frase;
+}
+
+/* ============================================================
    O QUE NÃO PEDE DADO
 
    Metade de um bom sistema de testes é a lista do que NÃO se rola.
@@ -476,10 +518,26 @@ export function lerAcao(texto, ctx = {}) {
       comoReabrir: ["por outro caminho", "com ajuda de alguém", "com uma ferramenta que você não usou", "dedicando bem mais tempo"],
     };
   }
-  /* já deu certo e nada mudou: repetir um sucesso é fazer de novo o que já
-     está feito — não se rola por isso */
-  if (feito && !mudou.length && feito.resultado === "sucesso" && d.id !== "tranca") {
-    return { tipo: "livre", porque: `você já conseguiu isso aqui`, rotulo: d.rotulo, chave };
+  /* já deu certo e nada mudou. Duas respostas diferentes, e a diferença
+     apareceu jogando:
+
+     PROCURAR não é CONSEGUIR. Uma busca bem-sucedida achou o que achou, e
+     dizer "você já conseguiu isso aqui" na segunda vez está errado de duas
+     maneiras — soa como se não houvesse mais nada (e pode haver, mais fundo
+     e mais difícil) e trata revirar um quarto como uma tarefa que se conclui.
+     A resposta certa é a mesma da falha: você já revistou assim, e para achar
+     o que passou despercebido é preciso mudar alguma coisa.
+
+     Já uma porta aberta está aberta, e um guarda convencido está convencido:
+     ali repetir é refazer o que já está feito. */
+  if (feito && !mudou.length && feito.resultado === "sucesso") {
+    if (d.alvo === "busca" || d.alvo === "investigacao") {
+      return {
+        tipo: "jaTentou", rotulo: d.rotulo, chave, vezes: feito.vezes, apósSucesso: true,
+        comoReabrir: ["com ajuda de alguém", "com uma ferramenta que você não usou", "dedicando bem mais tempo"],
+      };
+    }
+    if (d.id !== "tranca") return { tipo: "livre", porque: "Isso você já conseguiu aqui", rotulo: d.rotulo, chave };
   }
 
   /* ---------------- A DIFICULDADE, QUE VEM DO OBSTÁCULO ----------------
@@ -536,7 +594,11 @@ export function lerAcao(texto, ctx = {}) {
 export function falaDoVeredicto(v) {
   if (!v) return "";
   if (v.tipo === "vasculhado") return `🔍 Você já revirou isto — não há mais o que achar aqui. Outro lugar, outro alvo, ou uma abordagem diferente.`;
-  if (v.tipo === "jaTentou") return `↺ Você já tentou ${v.rotulo} aqui, do mesmo jeito, e não deu. Insistir igual não muda nada — ${v.comoReabrir.join(", ")}.`;
+  if (v.tipo === "jaTentou") {
+    return v.apósSucesso
+      ? `↺ Você já revistou isto assim, e tirou daqui o que os seus olhos alcançaram. Para achar o que passou despercebido, algo tem de mudar — ${v.comoReabrir.join(", ")}.`
+      : `↺ Você já tentou ${v.rotulo} aqui, do mesmo jeito, e não deu. Insistir igual não muda nada — ${v.comoReabrir.join(", ")}.`;
+  }
   if (v.tipo === "impossivel") return `⛔ Assim não dá: ${v.porque}. O que abriria: ${v.comoSeria.join(", ")}.`;
   if (v.tipo === "livre") return `✓ ${v.porque} — sem dado.`;
   return "";
@@ -553,6 +615,9 @@ export function envelopeDeVeredicto(v, oQueEuDisse = "") {
   const disse = oQueEuDisse ? ` Eu disse: "${String(oQueEuDisse).trim()}".` : "";
   if (v.tipo === "vasculhado") {
     return `[SEM TESTE — DECISÃO DO SISTEMA]${disse} Este lugar JÁ FOI vasculhado até o fim e não tem mais nada a dar. O sistema não rolou nada e não vai rolar. Diga isso na voz da cena, em UMA frase — que aqui já foi revirado e não há mais o que achar — e devolva a palavra para mim. NÃO invente um achado novo, NÃO ofereça uma pista de consolo e NÃO deixe a cena parecer que ainda esconde algo.`;
+  }
+  if (v.tipo === "jaTentou" && v.apósSucesso) {
+    return `[SEM TESTE — DECISÃO DO SISTEMA]${disse} Eu já revistei este lugar assim, e já tirei daqui o que os meus olhos alcançaram. Procurar de novo do mesmo jeito não é uma nova chance: o sistema não rola. Em UMA frase, mostre o lugar já revirado — e NÃO ofereça um achado novo para preencher a cena. Se eu voltar com ajuda, com uma ferramenta ou com muito mais tempo, aí sim há o que rever.`;
   }
   if (v.tipo === "jaTentou") {
     return `[SEM TESTE — DECISÃO DO SISTEMA]${disse} Eu já tentei ${v.rotulo} aqui, exatamente assim, e falhei. Repetir a mesma coisa do mesmo jeito não é uma nova chance: o sistema não rola de novo. Em UMA ou DUAS frases, mostre a mesma parede em que eu já bati — sem novidade, sem meia-pista — e lembre que outra abordagem, ajuda ou muito mais tempo mudariam o quadro. NÃO resolva o obstáculo por generosidade.`;

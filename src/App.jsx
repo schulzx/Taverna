@@ -58,7 +58,7 @@ import { abrirViagem, andar, pausarViagem, retomarViagem, progressoDaViagem, com
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
 import { garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
-import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeDoBarulho, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
+import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeDoBarulho, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
@@ -9190,6 +9190,17 @@ export default function Taverna() {
     return true;
   };
 
+  /* O botão do painel não é um caminho paralelo: ele escreve a frase que o
+     jogador escreveria e manda pela mesma porta. Se a ação não pede dado, ou
+     se já foi tentada aqui, o botão ouve a mesma resposta que o teclado. */
+  const declararAcaoRapida = (id, motivo) => {
+    const frase = fraseDaAcaoRapida(id, motivo);
+    if (!frase) return;
+    if (adjudicarAcao(frase)) return;
+    /* sem obstáculo reconhecido, vira ação normal — o Mestre narra */
+    enviar(frase, fichaViva() || personagem);
+  };
+
   /* O teste que o veredicto mandou rolar. A dificuldade JÁ VEIO PRONTA — é
      do obstáculo, não do herói —, e por isso esta função não calcula nada:
      ela cobra o tempo, anuncia e entrega o dado. */
@@ -11843,20 +11854,30 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                       </button>
                     ))}
                   </div>
-                  {/* PEDIR TESTE (v9.6): como numa mesa — você pede, o sistema
-                      fixa a dificuldade e rola. Falhou, o Mestre não inventa. */}
+                  {/* ---------------- A PORTA DOS FUNDOS (v9.59.1) ----------------
+                      Estes botões diziam "Pedir um teste" e chamavam a rolagem
+                      DIRETO — dificuldade velha, sem livro de tentativas. Toda a
+                      arquitetura nova tinha um atalho que a contornava, e por
+                      ele dava para farmar testes infinitos como antes.
+
+                      Achado jogando. Agora cada botão DECLARA a ação, com a
+                      frase que um jogador escreveria, e entra pela mesma porta
+                      de tudo — inclusive para ouvir "você já tentou isso aqui". */}
                   <div className="mt-3 pt-3" style={{ borderTop: `1px dashed ${T.line}` }}>
                     <div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.violetSoft }}>
-                      Pedir um teste {entrada.trim() ? "— usa o que você escreveu como motivo" : "— escreva o motivo antes, se quiser"}
+                      O que você faz {entrada.trim() ? "— usa o que você escreveu como alvo" : "— escreva o alvo antes, se quiser"}
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {TIPOS_TESTE.map((t) => (
-                        <button key={t.id} title={t.desc}
-                          onClick={() => { const m = entrada.trim(); setEntrada(""); setAcoesAbertas(false); pedirTeste(t.id, m); }}
+                      {ACOES_RAPIDAS.map((a) => (
+                        <button key={a.id} title={a.desc}
+                          onClick={() => { const m = entrada.trim(); setEntrada(""); setAcoesAbertas(false); declararAcaoRapida(a.id, m); }}
                           className="tv-mono text-[11px] px-2.5 py-1.5 rounded-lg" style={{ background: T.panelSoft, color: T.ink, border: `1px solid ${T.violet}` }}>
-                          {t.icone} {t.rotulo}
+                          {a.icone} {a.rotulo}
                         </button>
                       ))}
+                    </div>
+                    <div className="tv-body text-[10px] mt-1.5" style={{ color: T.inkDim }}>
+                      O sistema decide se pede dado — e se já pediu por isto aqui, diz que já.
                     </div>
                   </div>
                 </div>
