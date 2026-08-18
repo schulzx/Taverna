@@ -58,6 +58,7 @@ import { abrirViagem, andar, pausarViagem, retomarViagem, progressoDaViagem, com
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
 import { garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
+import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeDoBarulho, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
@@ -2904,6 +2905,9 @@ export default function Taverna() {
   /* BASE DO MUNDO (v9.8): só o livro-razão mora aqui — o mundo em si é
      recalculado da semente sempre que alguém pergunta. */
   const [baseMundo, setBaseMundo] = useState(garantirBase(null));
+  /* v9.59: o livro de tentativas. Estado de save porque a memoria do que ja
+     foi tentado ONDE e o que separa "tentar de novo" de "insistir". */
+  const tentativasRef = useRef(garantirTentativas(null));
   const baseMundoRef = useRef(garantirBase(null));
   /* A SEMENTE PRECISA VIR DE REF (v9.14). Estas duas funções liam `mundo` e
      `nomeCampanha` do estado — e são chamadas de dentro de aplicarResposta,
@@ -4064,7 +4068,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
+      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -6556,6 +6560,7 @@ export default function Taverna() {
          Depois disso, o número da ascensão passa a ser a soma do mapa. */
       devocaoRef.current = garantirDevocao(sv.devocao, mapaRef.current, divindadeRef.current); setDevocao(devocaoRef.current);
       baseMundoRef.current = garantirBase(sv.baseMundo); setBaseMundo(baseMundoRef.current);
+      tentativasRef.current = garantirTentativas(sv.tentativas);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
         ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null }
@@ -7430,17 +7435,21 @@ export default function Taverna() {
       if (feito) { setEntrada(""); return; }
     }
     if (interceptarMovimento(acao)) { setEntrada(""); return; }
-    /* PEDIDO DE TESTE (v9.6): "peço um teste de percepção para ver se acho
-       algo aqui" é o jeito de mesa. O sistema intercepta antes de mandar ao
-       Mestre: fixa a dificuldade, rola, e o resultado é que vira envelope —
-       o Mestre nunca responde a pergunta antes do dado. */
+    /* ---------------- A AÇÃO DECLARADA (v9.59) ----------------
+       Era um PEDIDO DE TESTE e virou uma AÇÃO ADJUDICADA. A diferença não é
+       de nome: quem pede um teste está pedindo o dado direto, pulando a
+       parte em que se descobre se havia o que rolar. Foi assim que o mesmo
+       quarto aceitou seis Percepções seguidas, as quatro últimas contra
+       nada.
+
+       Agora o jogador declara o que faz e o SISTEMA responde uma de cinco
+       coisas: rola, não precisa rolar, não dá desse jeito, você já tentou,
+       ou aqui já foi vasculhado. O hábito antigo continua funcionando —
+       "peço um teste de Percepção" entra pela mesma porta, como se fosse a
+       ação correspondente, e obedece às mesmas regras. */
     {
-      const pedido = detectarPedidoDeTeste(acao);
-      if (pedido) {
-        setEntrada("");
-        pedirTeste(pedido.tipo, pedido.motivo, pedido.pericia ? { pericia: pedido.pericia } : {});
-        return;
-      }
+      const ver = adjudicarAcao(acao);
+      if (ver) { setEntrada(""); return; }
       /* ORÁCULO (v9.24): pergunta FECHADA sobre o que o mundo ainda não
          estabeleceu. Vem depois do pedido de teste de propósito — "peço um
          teste de percepção?" é teste, não consulta. E fora de combate só:
@@ -9068,10 +9077,26 @@ export default function Taverna() {
     if (r.origem === "pedido") {
       const provaAsc = r.provaAscensao || null;
       const passou = critico || (!desastre && total >= dc);
-      let env = envelopeDoTeste({
-        tipo: r.tipo, pericia: r.pericia, nivelTreino: r.nivelTreino, motivo: r.motivo,
-        valor, mod, total, dc, resultado: passou ? "sucesso" : "falha", critico, desastre,
-      });
+      /* ---------------- O QUE A TENTATIVA CUSTA (v9.59) ----------------
+         Tempo sempre, barulho onde faz sentido, e o registro no livro — os
+         três aqui, juntos, porque são a mesma decisão vista de ângulos
+         diferentes: a tentativa aconteceu no mundo e deixou marca nele. */
+      const des = r.desafio || null;
+      if (des) { fecharTentativa(des, passou); cobrarTempoDoDesafio(des); }
+      /* PASSAR NUMA BUSCA VAZIA NÃO É ACHAR — é saber que não há. O envelope
+         comum manda "revele UMA coisa concreta", e num quarto vazio isso é
+         uma ordem para inventar: exatamente o que produziu a quinta e a
+         sexta Percepção da captura de tela. */
+      let env = (passou && des && des.fechaDepois && !r.achado)
+        ? envelopeDeBuscaVazia(des.rotulo)
+        : envelopeDoTeste({
+          tipo: r.tipo, pericia: r.pericia, nivelTreino: r.nivelTreino, motivo: r.motivo,
+          valor, mod, total, dc, resultado: passou ? "sucesso" : "falha", critico, desastre,
+        });
+      if (des && des.barulho) {
+        pushMsgs([{ autor: "sistema", texto: `🔊 ${des.viaNome || "Assim"} faz barulho — quem estiver por perto ouviu.` }]);
+        env = `${envelopeDoBarulho(des.rotulo, passou)}\n${env}`;
+      }
       /* base no REF, não no estado: o prêmio de heroísmo logo acima pode ter
          acabado de mexer na ficha, e `personagem` ainda é o valor do render. */
       let persT = personagemRef.current || personagem;
@@ -9100,6 +9125,113 @@ export default function Taverna() {
       return;
     }
     enviar(`${preRefazer}[ROLAGEM] Teste de ${r.atributo || "sorte"} (${r.motivo})${notaVant}: rolei ${valor}, modificador +${mod}${notaBuff}, total ${total}${dc != null ? `, dificuldade ${dc}` : ""}. Resultado: ${resultado}. Narre as consequências de forma coerente com o resultado.`, personagemRef.current || personagem);
+  };
+
+  /* ---------------- A AÇÃO ADJUDICADA (v9.59) ----------------
+     O que o sistema sabe da cena, montado uma vez. `achadoDe` vai como
+     FUNÇÃO de propósito: só o desafio sabe qual atributo procura o quê, e
+     quem escuta à porta não acha o alçapão que a vista acharia. */
+  const ctxDesafio = () => ({
+    personagem: fichaViva() || personagem,
+    semente: sementeMundo(),
+    lugar: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "ermo",
+    emCombate: !!combateRef.current,
+    tentativas: tentativasRef.current,
+    dia: diaRef.current,
+    achadoDe: (attr) => {
+      try {
+        if (combateRef.current) return null;
+        return achavelAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), attr);
+      } catch { return null; }
+    },
+  });
+
+  /* Devolve true quando ela própria resolveu o turno. É a porta única: o
+     teste que nasce de uma frase e o que nasce do hábito antigo ("peço um
+     teste de Percepção") passam os dois por aqui, porque uma regra que mora
+     num só dos dois caminhos vira bug — já aconteceu três vezes neste jogo. */
+  const adjudicarAcao = (acao) => {
+    if (rolagem || carregando) return false;
+    let v = null;
+    try {
+      const ctx = ctxDesafio();
+      v = lerAcao(acao, ctx);
+      if (!v || (v.tipo === "livre" && !v.chave)) {
+        const pedido = detectarPedidoDeTeste(acao);
+        if (pedido) {
+          const per = pedido.pericia || (periciasDoAtributo(pedido.tipo)[0] || {}).id;
+          v = lerAcao(acao, { ...ctx, periciaForcada: per });
+        }
+      }
+    } catch { return false; }
+    if (!v) return false;
+    /* "livre" sem chave é conversa e caminhada: não é assunto deste código,
+       e interceptar aqui inundaria o jogo de avisos sobre o óbvio. */
+    if (v.tipo === "livre" && !v.chave) return false;
+    if (v.tipo === "teste") { rolarDesafio(v, acao); return true; }
+    pushMsgs([
+      { autor: "jogador", texto: acao },
+      { autor: "sistema", texto: falaDoVeredicto(v) },
+    ]);
+    enviar(envelopeDeVeredicto(v, acao), fichaViva() || personagem);
+    return true;
+  };
+
+  /* O teste que o veredicto mandou rolar. A dificuldade JÁ VEIO PRONTA — é
+     do obstáculo, não do herói —, e por isso esta função não calcula nada:
+     ela cobra o tempo, anuncia e entrega o dado. */
+  const rolarDesafio = (v, acao) => {
+    const p = fichaViva() || personagem;
+    const { total: modT, nivelTreino } = modDoTeste(p, v.atributo, v.pericia);
+    const per = v.pericia ? periciaPorId(v.pericia) : null;
+    const selo = nivelTreino === "especialista" ? " ★★ especialista"
+      : nivelTreino === "treinada" ? " ★ treinado"
+      : per ? " · sem treino" : "";
+    const rotulo = per ? per.nome : nomeDoAtributo(v.atributo);
+    pushMsgs([
+      { autor: "jogador", texto: acao },
+      { autor: "sistema", texto: `🎯 ${v.rotulo}${v.viaNome ? ` ${v.viaNome}` : ""} — dificuldade ${v.dc} (${v.deOnde}). Seu bônus: +${modT}${selo}.${v.mudou.length ? ` Conta a favor: ${v.mudou.join(", ")}.` : ""}` },
+    ]);
+    /* SEM DADO quando o bônus decide sozinho. Mantida a exceção do achado:
+       a entrega do tesouro mora em `concluirRolagem`, e duplicá-la aqui é
+       como se cria a divergência que ninguém acha depois. */
+    const auto = resolucaoAutomatica(modT, v.dc, { permitir: !v.achado });
+    if (auto) {
+      pushMsgs([{ autor: "sistema", texto: auto === "sucesso"
+        ? `✓ Isto está abaixo do seu patamar — sucesso sem rolar.`
+        : `✗ Nem um 20 alcança — falha sem rolar.` }]);
+      fecharTentativa(v, auto === "sucesso");
+      cobrarTempoDoDesafio(v);
+      enviar(envelopeDoTeste({
+        tipo: v.atributo, pericia: v.pericia, motivo: v.rotulo, mod: modT, dc: v.dc,
+        resultado: auto, automatico: true, nivelTreino,
+      }), fichaViva() || personagem);
+      return;
+    }
+    setRolagem({
+      atributo: nomeDoAtributo(v.atributo), rotulo, pericia: v.pericia,
+      nivelTreino: per && nivelTreino === "nenhum" ? "leigo" : nivelTreino,
+      motivo: v.rotulo, origem: "pedido", tipo: v.atributo,
+      dificuldade: v.dc, achado: v.achado, desafio: v,
+    });
+  };
+
+  /* O tempo é o custo que toda tentativa paga, dê certo ou não — é ele que
+     faz a insistência doer sem precisar de proibição. */
+  const cobrarTempoDoDesafio = (v) => {
+    if (!v || !v.minutos || combateRef.current) return;
+    const t = avancarMinutos(v.minutos);
+    if (t) pushMsgs([{ autor: "sistema", texto: t }]);
+  };
+
+  /* Escreve no livro de tentativas. `limpo` fecha o lugar de vez: aqui já
+     não há o que achar, e a próxima vez responde sem rolar. */
+  const fecharTentativa = (v, passou) => {
+    if (!v || !v.chave) return;
+    tentativasRef.current = registrarTentativa(tentativasRef.current, v.chave, {
+      via: v.via || "", resultado: passou ? "sucesso" : "falha", dia: diaRef.current,
+      limpo: !!(v.fechaDepois && passou),
+    });
   };
 
   /* ---------------- PEDIR UM TESTE (v9.6) ----------------

@@ -155,6 +155,57 @@ jogador descobre jogando.
   v9.13 documentou nos espólios: quem escreve em um dos dois lugares escreve
   em nenhum.
 
+## Testes e obstáculos
+
+- ~~**"Se eu ficar pedindo testes infinitamente ele vai me dar testes
+  infinitamente, mesmo que não tenha nada nem lógica."**~~ RESOLVIDO na v9.59
+  em `desafios.js`. Relatado com quatro capturas, 17/08/2026: o herói no
+  quarto de cima pedindo Percepção seis vezes seguidas — duas pagaram 168 e
+  180 moedas, e as quatro seguintes bateram contra dificuldade 17 com o
+  Mestre obrigado a narrar o vazio, uma vez atrás da outra.
+
+  Três defeitos, e os três são o mesmo visto de ângulos diferentes: **o
+  sistema não sabia contra o que se estava rolando.**
+
+  1. **A dificuldade era sobre o herói**, não sobre o obstáculo. A conta era
+     `12 + combate + masmorra + ameaça + nível/6`. Por isso o quarto virou 17
+     e ficou 17 mesmo depois de esvaziado: o número nunca falou do quarto.
+  2. **Não havia memória.** Nada registrava que aquele quarto já fora
+     revirado. Numa mesa, "você já vasculhou aqui" é meia regra do jogo.
+  3. **Quem pedia era o jogador.** Pedir "um teste de Percepção" é pedir o
+     dado direto, pulando a parte em que se descobre se havia o que rolar.
+
+  A ordem foi invertida: entra a AÇÃO declarada, sai um VEREDICTO — *rola*,
+  *não precisa rolar*, *não dá desse jeito*, *você já tentou*, *aqui já foi
+  vasculhado*. A dificuldade vem do obstáculo (a tranca de uma cadeia é pior
+  que a de uma taverna, e é derivada da semente, então a mesma porta é a
+  mesma porta para sempre). O livro de tentativas mora no save, e o que
+  reabre um obstáculo fechado está **enumerado**: outra abordagem, ajuda,
+  ferramenta nova, ou tempo declarado de sobra.
+
+  Custo de falhar, decidido com o autor: tempo sempre, barulho onde faz
+  sentido, e a falha crítica cobrando mais (esta última já existia).
+
+  Os três tipos de rolagem passam a estar escritos: **teste de perícia**
+  (o herói tenta), **salvaguarda** (algo acontece contra ele — e por isso
+  ninguém a pede) e **jogada de ataque** (no tabuleiro).
+
+- ~~**A porta trancada não tinha como ser aberta.**~~ RESOLVIDO na v9.59.
+  Quatro vias, cada uma com perícia, custo e barulho próprios: a chave,
+  ferramentas de ladrão (Prestidigitação, silenciosa), uma magia que abra
+  (Arcanismo, mais fácil), e força bruta (Arrombamento, mais difícil e
+  **acorda a casa**). Pedir a via que não se tem NÃO vira teste difícil —
+  vira "assim não dá, e olha o que abriria". É o que faz a escolha entre
+  elas significar alguma coisa: o Ladino entra calado, o Guerreiro entra
+  acordando todo mundo.
+
+- **A salvaguarda ainda não é disparada por nada.** ABERTO. O tipo está
+  definido e o Mestre já recebe a regra de que não a pede — mas nenhuma
+  fonte do jogo ainda a dispara. Os candidatos naturais já existem e estão
+  soltos: veneno e as outras aflições (`aflicoes.js`), armadilhas de
+  masmorra, queda, e o encanto que vira condição. Enquanto isso, resistir
+  continua sendo resolvido pelas aflições, que rolam sozinhas.
+
 ## Combate e habilidades
 
 - ~~**Invocação fora de combate.**~~ RESOLVIDO na v9.54: cada invocação passa
@@ -426,6 +477,34 @@ jogador descobre jogando.
   ajusta pela Vercel sem redeploy. Falta jogar o suficiente para saber.
 
 ## Mundo
+
+- **A planta da cidade é sempre o mesmo desenho.** ABERTO. Relatado jogando,
+  17/08/2026: "tem sempre o mesmo desenho, muda apenas o nome das coisas".
+  E é verdade — a v9.54 fez a FORMA variar (raio, muralha, ruas, praça,
+  água, aperto) a partir da população e do bioma, mas a TOPOLOGIA é uma só:
+  praça redonda no centro, uma ou duas ruas retas cruzando no meio, locais
+  distribuídos em dois anéis concêntricos, portões onde a rua encontra o
+  muro. Trocar os nomes não troca a planta, e o olho reconhece a planta.
+
+  O que falta é variedade de traçado, não de rótulo. Umas linhas de ataque,
+  da mais barata para a mais cara:
+
+  - **Traçados alternativos por bioma e origem**: cidade de rio se estica
+    ao longo da margem (linear, ponte no meio); cidade de montanha sobe em
+    terraços; cidade de estrada é uma rua-mestra com casario dos dois lados;
+    porto é meia-lua voltada para a água. A escolha sai da semente + bioma,
+    como tudo aqui.
+  - **Bairros em vez de anéis**: agrupar locais por afinidade (mercado e
+    docas juntos, templo e cemitério juntos, quartel colado ao portão) em
+    vez de espalhar por ângulo. Isso já muda a leitura do mapa sozinho.
+  - **Ruas irregulares**: as duas retas que se cruzam são o que mais
+    denuncia o gerador. Uma malha levemente torta, ou radial, ou em espinha
+    de peixe, muda o desenho inteiro com pouca conta.
+  - **Acidentes**: o rio que corta, a colina com a cidadela em cima, a
+    ruína dentro dos muros, a muralha velha por dentro da nova.
+
+  O critério de pronto é o mesmo dos nomes: gerar algumas centenas de
+  plantas e conseguir dizer, olhando, que não são a mesma cidade repintada.
 
 - ~~**"Em três das criações tive os mesmos nomes."**~~ RESOLVIDO na v9.58 em
   `toponimia.js`. Medi antes de mexer: a distribuição do sorteio era uniforme,

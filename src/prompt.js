@@ -22,7 +22,7 @@ import { ITENS_PROMPT } from "./itens.js";
 import { CRAFT_PROMPT } from "./craft.js";
 import { ATRIBUTOS_PROMPT } from "./atributos.js";
 import { COMBOS_PROMPT } from "./combos.js";
-import { TESTES_PROMPT } from "./testes.js";
+import { DESAFIOS_PROMPT } from "./desafios.js";
 import { PERICIAS_PROMPT } from "./pericias.js";
 import { HEROISMO_PROMPT } from "./heroismo.js";
 import { DESCANSO_PROMPT } from "./descanso.js";
@@ -232,7 +232,7 @@ ${so("bancada", CRAFT_PROMPT)}
 ${ATRIBUTOS_PROMPT}
 ${so("especializacao", ESPECIALIZACOES_PROMPT)}
 ${so("combate", COMBOS_PROMPT)}
-${TESTES_PROMPT}
+${DESAFIOS_PROMPT}
 
 ${PERICIAS_PROMPT}
 
