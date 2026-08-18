@@ -60,7 +60,7 @@ import { abrirViagem, andar, pausarViagem, retomarViagem, progressoDaViagem, com
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
 import { garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
-import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
+import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
@@ -4656,6 +4656,72 @@ export default function Taverna() {
     return { ...pers, morrendo: true, morte: { ...ap, rolagens: historico } };
   };
 
+  /* ============================================================
+     A PORTA ÚNICA DO DANO (v9.66)
+
+     "O herói sofre X agora" era uma frase que o programa sabia dizer de
+     cinco jeitos diferentes. Uma varredura por `vida: Math.max(0, …)` acha
+     cinco lugares, cada um resolvendo por conta própria: a retirada em
+     combate, a resolução da rodada, o ataque de oportunidade na saída, a
+     armadilha da masmorra, a sala que desaba. Nenhum deles é reaproveitável
+     por quem vem depois, e é assim que se chega a um sexto.
+
+     Este projeto já perdeu três dias com essa forma exata de bug — uma
+     regra morando em vários caminhos, e o que diverge sendo sempre o que
+     ninguém testa. O preço em pele seria o sexto caminho; em vez disso,
+     vira o primeiro a passar por uma porta.
+
+     O QUE A PORTA FAZ, e é por isso que ela precisa existir:
+       1. tira o PV da ficha VIVA (não da cópia do render);
+       2. aplica a condição, se houver, respeitando imunidade;
+       3. chama `resolverQueda` NA HORA. É o ponto todo. Cair a zero fora da
+          luta já era resolvido — mas só depois de o Mestre responder, lá no
+          `aplicarResposta`. Um dano que zera a barra antes disso deixava o
+          herói andando com 0 PV até a IA devolver texto;
+       4. devolve o que aconteceu, para o envelope contar a mesma história.
+
+     O QUE ELA NÃO FAZ: mexer nos três sites de dentro do combate. Aqueles
+     terminam a rodada em `resolverQueda` de qualquer jeito, e puxá-los para
+     cá resolveria a queda duas vezes na mesma rodada.
+     ============================================================ */
+  const sofrerNaPele = ({ dano = 0, condicao = "", turnos = 0, motivo = "", porque = "" } = {}) => {
+    const base = fichaViva() || personagemRef.current || personagem;
+    if (!base) return { pers: base, dano: 0, caiu: false, condicao: "" };
+    const linhas = [];
+    let pers = base;
+
+    const perdeu = Math.max(0, Math.round(Number(dano) || 0));
+    if (perdeu > 0) {
+      pers = { ...pers, vida: Math.max(0, (pers.vida || 0) - perdeu) };
+      linhas.push(`💥 ${perdeu} de dano${motivo ? ` — ${motivo}` : ""} · ${pers.vida}/${pers.vidaMax} PV`);
+    }
+
+    let posta = "";
+    if (condicao) {
+      const cond = criarCondicao(condicao, { origem: porque || motivo || "o preço do esforço", turnos: turnos || undefined });
+      if (cond) {
+        if (imuneA(pers, cond.id) || imuneDeTraco(pers, cond.id)) {
+          linhas.push(`🌠 ${cond.nome} não pega: você é imune.`);
+        } else {
+          const ap = aplicarCondicaoEm(pers, "você", cond);
+          pers = ap.pers;
+          posta = cond.nome;
+          linhas.push(`${cond.icone} ${cond.nome}${cond.turnos ? ` (${cond.turnos}t)` : ""} — ${cond.efeito}`);
+        }
+      }
+    }
+
+    /* a queda vem por último e AQUI, não no fim do turno: é o número final
+       que ela precisa, e é agora que ele existe */
+    const antesDaQueda = pers;
+    pers = resolverQueda(pers, linhas);
+    const caiu = pers !== antesDaQueda && ((pers.morrendo || pers.morto) || (antesDaQueda.vida || 0) <= 0);
+
+    personagemRef.current = pers; setPersonagem(pers);
+    if (linhas.length) pushMsgs(linhas.map((t) => ({ autor: "sistema", texto: t })));
+    return { pers, dano: perdeu, caiu, condicao: posta, linhas };
+  };
+
   const aplicarResposta = useCallback((resp, persAtual) => {
     /* v9.32: FICHA NUNCA NULA. O erro "undefined is not an object (evaluating
        'e.efeitos')" que apareceu em jogo era isto: alguma chamada de enviar()
@@ -9199,11 +9265,27 @@ export default function Taverna() {
          três aqui, juntos, porque são a mesma decisão vista de ângulos
          diferentes: a tentativa aconteceu no mundo e deixou marca nele. */
       if (des) { fecharTentativa(des, passou); cobrarTempoDoDesafio(des); }
+      let envQueda = "";
       if (custo) {
         pushMsgs([{ autor: "sistema", texto: falaDoCusto(custo) }]);
         if (custo.minutosExtra && !combateRef.current) {
           const tx = avancarMinutos(custo.minutosExtra);
           if (tx) pushMsgs([{ autor: "sistema", texto: tx }]);
+        }
+        /* ---------------- O PREÇO EM PELE (v9.66) ----------------
+           Tempo e barulho são reversíveis; a pele é o custo que o jogador
+           sente na ficha, e é ele que faz a vitória paga do `porPouco` ser
+           uma decisão em vez de um desconto. Passa TODO pela porta única —
+           inclusive a queda, que primeiro rola a salvaguarda dela. */
+        const pele = custo.pele;
+        if (pele && pele.queda && des && des.queda) {
+          const r = sofrerQueda(des.queda, { motivo: des.rotulo });
+          envQueda = `${r.envelope}\n`;
+        } else if (pele) {
+          sofrerNaPele({
+            dano: pele.dano || 0, condicao: pele.condicao || "",
+            motivo: pele.diz || "", porque: des ? des.rotulo : "",
+          });
         }
       }
       /* PASSAR NUMA BUSCA VAZIA NÃO É ACHAR — é saber que não há. O envelope
@@ -9267,7 +9349,7 @@ export default function Taverna() {
           }
         }
       }
-      if (custo) env = `${envelopeDoCusto(custo, des && des.rotulo)}\n${env}`;
+      if (custo) env = `${envQueda}${envelopeDoCusto(custo, des && des.rotulo)}\n${env}`;
       if (des && des.testemunha && !passou) {
         const q = perguntarTestemunha(des);
         pushMsgs([{ autor: "sistema", texto: linhaDaPerguntaDoSistema(q) }]);
@@ -9863,6 +9945,46 @@ export default function Taverna() {
     return q;
   };
 
+  /* ---------------- A QUEDA (v9.66) ----------------
+     A pendência mais antiga da tabela de salvaguardas: `FONTES_DE_SALVAGUARDA`
+     conhece doze categorias e a queda era uma das que nunca disparavam. Ela
+     existia na ficção — o herói despencava e o Mestre decidia o que isso
+     custava, o que quer dizer que às vezes não custava nada.
+
+     Cair é a coisa que acontece CONTRA o herói, e por isso é salvaguarda e
+     não teste: ninguém pede uma. A de Destreza é `meia`, então passar não
+     anula — corta pela metade, que é a diferença entre desviar e aguentar.
+
+     A altura vem do lugar e da semente: o mesmo muro é o mesmo muro para
+     sempre, e quem escala o penhasco sabe o que está escalando. */
+  const sofrerQueda = (q, { motivo = "a queda" } = {}) => {
+    const p = fichaViva() || personagem;
+    const fonte = fonteDaSalvaguarda("queda") || { salva: "destreza", meia: true, diz: "a queda" };
+    /* a dificuldade é da ALTURA, não do herói — `dcDaQueda` mora em
+       `desafios.js` porque essa distinção já se perdeu quatro vezes neste
+       projeto e agora tem teste com nome */
+    const sv = rolarSalvaguarda({
+      pers: p, salva: fonte.salva, dc: dcDaQueda(q.metros),
+      modDe: (a) => atributoEfetivo(p, a),
+    });
+    const rolo = rolarQueda(q);
+    const cheio = rolo.total;
+    const sofrido = sv.passou && fonte.meia ? Math.floor(cheio / 2) : cheio;
+    pushMsgs([
+      { autor: "sistema", texto: `🪂 ${q.nome} — ${q.metros} m de queda (${rolo.dados}d6).` },
+      { autor: "sistema", texto: linhaDaSalvaguarda(sv) },
+    ]);
+    /* `caido` só faz sentido para quem ainda está de pé para ser derrubado:
+       aplicá-la a quem acabou de cair a zero é empilhar humilhação em cima
+       de uma rolagem de morte */
+    const r = sofrerNaPele({ dano: sofrido, motivo: `${q.metros} m de queda`, condicao: sofrido > 0 ? "caido" : "", porque: "a queda" });
+    return {
+      ...r, sv, cheio, sofrido, q,
+      envelope: `${envelopeDaSalvaguarda(sv, { oQue: `A queda de ${q.metros} metros`, meia: fonte.meia, danoCheio: cheio, danoFinal: sofrido })}
+[QUEDA — RESOLVIDA PELO SISTEMA] Eu caí ${q.metros} metros ${motivo ? `ao tentar ${motivo}` : ""} e o sistema já cobrou: ${sofrido} de dano, e estou no chão. Narre o tombo e o corpo — NÃO mude o número, NÃO me deixe de pé e NÃO invente que me segurei em alguma coisa no último instante.`,
+    };
+  };
+
   /* ---------------- HÁ O QUE TESTAR? (v9.64) ----------------
      A pergunta que vem ANTES do dado. O contexto é todo derivado — quanta
      gente há ao alcance, que horas são, se chove, se estamos debaixo da
@@ -10335,13 +10457,20 @@ export default function Taverna() {
         });
         const cheio = sala.dano;
         const sofrido = sv.passou && fonte.meia ? Math.floor(cheio / 2) : sv.passou ? 0 : cheio;
-        const p2 = { ...personagem, vida: Math.max(0, personagem.vida - sofrido) };
-        setPersonagem(p2);
         pushMsgs([
           { autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha}` },
           { autor: "sistema", texto: linhaDaSalvaguarda(sv) },
-          { autor: "sistema", texto: `💥 Você sofre ${sofrido} de dano${sofrido < cheio ? ` (de ${cheio} — ${sv.passou ? "reflexo" : "sorte"})` : ""}` },
         ]);
+        /* v9.66: a armadilha passa pela porta única. Ela é o segundo
+           chamador, e é o que faz a porta ser porta e não embrulho de uma
+           chamada só. Ganha de graça o que fazia falta aqui: quem levava a
+           barra a zero num corredor de masmorra continuava andando com 0 PV
+           até o Mestre responder, porque a queda só era resolvida depois. */
+        const p2 = sofrerNaPele({
+          dano: sofrido,
+          motivo: `${sala.nomeArmadilha}${sofrido < cheio ? ` (de ${cheio} — ${sv.passou ? "reflexo" : "sorte"})` : ""}`,
+          porque: "a armadilha",
+        }).pers;
         enviar(`${envelopeDaSalvaguarda(sv, { oQue: `A armadilha (${sala.nomeArmadilha})`, meia: fonte.meia, danoCheio: cheio, danoFinal: sofrido })}
 [MASMORRA — ${pos}] Narre o susto e o estado em que fico.${avisoSegredo}${extraTempo}`, p2);
       }

@@ -737,6 +737,9 @@ export function lerAcao(texto, ctx = {}) {
        que diz a natureza da coisa — e os alvos sociais não estão na tabela
        de propósito: ali "consegui, mas caro" já é um degrau do pedido. */
     alvoDoCusto: d.alvo,
+    /* v9.66: de que altura se cai daqui. Derivada da semente e do lugar,
+       como a dureza da tranca — a mesma parede tem sempre a mesma altura. */
+    queda: d.alvo === "escalada" ? quedaDe(semente, lugar, cru) : null,
     via: via ? via.id : "", viaNome: via ? via.nome : "",
     falaDaVia: via ? via.falha : "",
     achado: achado || null,
@@ -850,12 +853,23 @@ export const CUSTO_DE_FALHAR = [
     seca: "a fechadura emperra com a tentativa malfeita",
     preco: "ela cede, mas cede errado: com estrondo, e a porta fica marcada de quem passou",
     minutosExtra: 5, barulhoExtra: true,
+    /* v9.66: o ombro que arromba paga. Número fixo e pequeno de propósito —
+       é o preço de uma vitória que o dado não deu, não um golpe de inimigo. */
+    pelePorPouco: { dano: 2, diz: "o ombro bate na madeira que só cede depois" },
   },
   {
     alvo: "escalada", porPouco: true,
     seca: "você escorrega e volta ao chão, com as mãos em carne viva",
     preco: "você chega em cima, mas chega machucado e sem fôlego",
     minutosExtra: 5,
+    /* A QUEDA (v9.66). A falha seca aqui não é "não subiu": é ter subido o
+       suficiente para cair. Este é o único preço em pele que não é um
+       número fixo — ele passa por uma SALVAGUARDA, porque cair é a coisa
+       que acontece CONTRA o herói, e é a definição da segunda rolagem da
+       mesa. Era também a pendência mais antiga da tabela de salvaguardas:
+       `FONTES_DE_SALVAGUARDA` conhecia a queda e nada a disparava. */
+    peleSeca: { queda: true, diz: "o corpo despenca antes de a mão achar onde segurar" },
+    pelePorPouco: { condicao: "enfraquecido", diz: "as mãos em carne viva e os braços tremendo" },
   },
   {
     alvo: "busca", porPouco: true,
@@ -894,6 +908,11 @@ export const CUSTO_DE_FALHAR = [
     alvo: "medicina", porPouco: false,
     seca: "o curativo não segura e a hemorragia recomeça pior",
     minutosExtra: 10,
+    /* quem trata mal se esgota tentando: o preço é a reserva, não o sangue.
+       Ferir o PACIENTE seria mais bonito e é o que a mesa faria — mas o
+       desafio não sabe QUEM está sendo tratado, e cobrar de um alvo que o
+       sistema não identificou é inventar uma vítima. Fica anotado. */
+    peleSeca: { condicao: "enfraquecido", diz: "as mãos tremem de tanto tentar segurar o que não segura" },
   },
   {
     alvo: "fraqueza", porPouco: false,
@@ -905,10 +924,72 @@ export const CUSTO_DE_FALHAR = [
     seca: "os símbolos não se deixam ler, e olhar demais para eles cansa",
     preco: "você lê o selo, mas a leitura cobra: a cabeça lateja o resto do dia",
     minutosExtra: 10,
+    pelePorPouco: { condicao: "enfraquecido", diz: "o selo devolve o olhar, e a cabeça paga" },
   },
 ];
 
 export function custoPorAlvo(alvo) { return CUSTO_DE_FALHAR.find((c) => c.alvo === alvo) || null; }
+
+/* ============================================================
+   A ALTURA (v9.66)
+
+   De quanto se cai depende de onde se estava subindo, e isso não
+   se guarda em lugar nenhum: é DERIVADO, como a dureza da tranca.
+   O mesmo muro é o mesmo muro para sempre, e o penhasco dos
+   arredores machuca mais que a parede do celeiro — porque quem
+   escala escolhe o que escala.
+
+   A regra da mesa é 1d6 por 3 metros. Mantida, com um teto: um
+   herói de nível 3 não pode morrer de uma queda de escadaria
+   porque o dado foi generoso com a altura.
+   ============================================================ */
+const ALTURA_POR_LUGAR = [
+  { rx: /penhasc|abismo|precip[ií]cio|despenhadeir|falesia|encosta|monte|serra|pico/, base: 9, nome: "o penhasco" },
+  { rx: /torre|campan[aá]rio|farol|mastro|muralha|torre[aã]o|atalaia/, base: 7, nome: "a torre" },
+  { rx: /telhad|cumeeira|beiral|sacada|varanda|andaime/, base: 5, nome: "o telhado" },
+  { rx: /muro|paliçad|palissad|cerca|port[aã]o|parede|fachada|janela/, base: 4, nome: "o muro" },
+  { rx: /po[cç]o|fosso|escada|escadaria|corda|arvore|[aá]rvore|pilha/, base: 3, nome: "a subida" },
+];
+
+export function quedaDe(semente, lugar, texto = "") {
+  const t = norm(texto);
+  const l = norm(lugar);
+  /* o que a FRASE nomeia ganha do lugar: quem diz "escalo o penhasco" está
+     no penhasco, mesmo que o sistema registre a cidade ao lado dele */
+  const achou = ALTURA_POR_LUGAR.find((a) => a.rx.test(t)) || ALTURA_POR_LUGAR.find((a) => a.rx.test(l)) || ALTURA_POR_LUGAR[3];
+  /* a variação é do LUGAR, não do momento: a mesma parede tem sempre a
+     mesma altura, e é isso que separa um mundo de um gerador */
+  const r = rngDe(`queda|${semente}|${lugar}|${achou.nome}`);
+  const metros = Math.max(2, achou.base + Math.round((r() - 0.5) * 4));
+  return { metros, nome: achou.nome, dados: Math.max(1, Math.min(8, Math.round(metros / 3))) };
+}
+
+/* A DIFICULDADE DE NÃO SE ESPATIFAR, e ela é só da ALTURA.
+
+   Achado jogando, e é o mesmo bug pela quarta vez neste projeto. A primeira
+   versão passava por `dcDaFonte`, que soma nível/3 — o que faz todo sentido
+   para o que uma CRIATURA dispara (o veneno do que se caça no nível 12 é
+   pior que o do nível 1) e nenhum para um penhasco, que não fica mais alto
+   porque o herói subiu de nível. Na tela: 10 metros viraram dificuldade 19
+   para um herói de nível 12, e um alpinista experiente errava a salvaguarda
+   que um recruta passaria.
+
+   Mora aqui, e não no App, exatamente por isso: uma conta que já voltou
+   quatro vezes precisa de uma asserção, e o App não tem onde ter uma. */
+export function dcDaQueda(metros) {
+  const m = Math.max(1, Number(metros) || 3);
+  return Math.max(10, Math.min(20, 10 + Math.round(m / 1.5)));
+}
+
+/* Rola a queda. A sorte entra por parâmetro para o teste poder fixá-la —
+   e para que ninguém, um dia, sorteie isto com `Math.random` escondido no
+   meio de outra função. */
+export function rolarQueda(q, { sorte = Math.random } = {}) {
+  const n = Math.max(1, Number(q && q.dados) || 1);
+  let total = 0;
+  for (let i = 0; i < n; i++) total += 1 + Math.floor(sorte() * 6);
+  return { total, dados: n, metros: (q && q.metros) || 3, nome: (q && q.nome) || "a queda" };
+}
 
 /* O desfecho de uma rolagem que não bateu a dificuldade. `total` e `dc` são
    os números que já saíram — esta função não rola nada e não decide nada
@@ -925,6 +1006,10 @@ export function desfechoDaFalha(v, total, dc, { emCombate = false } = {}) {
     diz: porPouco ? c.preco : c.seca,
     minutosExtra: Math.max(0, Number(c.minutosExtra) || 0),
     barulhoExtra: !!c.barulhoExtra && porPouco,
+    /* v9.66: o preço em PELE, e ele é diferente nos dois lados. Quem falha
+       por pouco e sobe machucado não é quem falha e despenca — juntar os
+       dois num campo só faria a vitória paga e o tombo custarem igual. */
+    pele: (porPouco ? c.pelePorPouco : c.peleSeca) || null,
   };
 }
 

@@ -295,10 +295,50 @@ jogador descobre jogando.
   sobe cerca de **dez pontos** (numa dificuldade 15 com bônus +1: de 30%
   para 40%, dos quais 10 pagando). É o preço de trocar becos por decisões.
 
-  **Aberto:** um preço em PELE — sangue, um osso — ficou de fora. Exigiria
-  o pipeline de dano fora de combate, com queda a 0 PV e tudo o que vem
-  junto; prometê-lo na tabela e deixá-lo só no texto do envelope seria
-  escrever a regra sem código atrás outra vez.
+  ~~**Aberto:** um preço em PELE ficou de fora.~~ RESOLVIDO na v9.66, em
+  três passos e nesta ordem, porque o primeiro é o que fazia falta:
+
+  1. **A porta única do dano.** "O herói sofre X agora" era uma frase que o
+     programa sabia dizer de cinco jeitos — uma varredura por
+     `vida: Math.max(0, …)` acha cinco lugares, cada um resolvendo por
+     conta própria. Nenhum reaproveitável por quem viesse depois, e é assim
+     que se chega a um sexto. `sofrerNaPele` tira o PV da ficha VIVA,
+     aplica a condição respeitando imunidade, e chama `resolverQueda` NA
+     HORA — que é o ponto todo: cair a zero fora da luta já era resolvido,
+     mas só depois de o Mestre responder, e um dano que zerava a barra
+     antes disso deixava o herói andando com 0 PV até a IA devolver texto.
+     A armadilha da masmorra passou a entrar por ela, e é isso que a torna
+     uma porta e não o embrulho de uma chamada só. Os três sites de DENTRO
+     do combate ficaram fora de propósito: aqueles terminam a rodada em
+     `resolverQueda` de qualquer jeito, e puxá-los para cá resolveria a
+     queda duas vezes na mesma rodada.
+
+  2. **A queda ligada à salvaguarda** — a pendência de baixo, resolvida
+     pela outra ponta. Cair é a coisa que acontece CONTRA o herói, e por
+     isso é salvaguarda e não teste. A de Destreza é `meia`: passar não
+     anula, corta pela metade. A altura é DERIVADA do lugar e da semente,
+     como a dureza da tranca — a mesma parede tem sempre a mesma altura, e
+     a frase manda sobre o lugar (quem diz "escalo o penhasco" está no
+     penhasco). 1d6 por 3 m, com teto de 8 dados.
+
+  3. **A tabela.** `pelePorPouco` e `peleSeca` são campos separados porque
+     os dois lados não custam igual: subir machucado (`enfraquecido`) não é
+     despencar. A tranca cobra 2 PV do ombro na vitória paga; o arcano e a
+     medicina cobram a reserva.
+
+  **Achado jogando, e é o mesmo bug pela QUARTA vez:** a primeira versão
+  passava a dificuldade da queda por `dcDaFonte`, que soma nível/3. Faz
+  sentido para o que uma criatura dispara — o veneno do que se caça no
+  nível 12 é pior que o do nível 1 — e nenhum para um penhasco, que não
+  fica mais alto porque o herói subiu de nível. Na tela: 10 metros viraram
+  dificuldade **19** para um herói de nível 12. Agora `dcDaQueda` mora em
+  `desafios.js`, olha só a altura (3 m → 12, 10 m → 17, 30 m → 20), e tem
+  asserção com nome — uma conta que já voltou quatro vezes precisa de uma.
+
+  **Aberto:** falhar em `estancar` deveria cobrar do PACIENTE, que é o que
+  a mesa faria. O desafio não sabe QUEM está sendo tratado, e cobrar de um
+  alvo que o sistema não identificou é inventar uma vítima. Por ora cobra a
+  reserva de quem trata.
 
 - ~~**A porta vigiada estava no catálogo e sem chamador.**~~ RESOLVIDO na
   v9.64. A pergunta existia desde a v9.62 e nada a chamava. Ela entra ANTES
@@ -369,11 +409,16 @@ jogador descobre jogando.
   bônus fixo, porque traduzir a promessa em "+3" seria trocá-la por outra
   coisa parecida.
 
-- **Salvaguarda de queda, de empurrão e de agarrão ainda não têm fonte.** A
-  tabela `FONTES_DE_SALVAGUARDA` conhece as doze categorias, mas só duas
-  disparam de fato hoje. Queda (do penhasco, da escada, do telhado) e
-  agarrão (a teia, o tentáculo) existem na ficção e passam pelo Mestre sem
-  passar pelo sistema.
+- **Salvaguarda de empurrão e de agarrão ainda não têm fonte.** A tabela
+  `FONTES_DE_SALVAGUARDA` conhece as doze categorias, e três disparam de
+  fato. Agarrão (a teia, o tentáculo) e empurrão (a rajada, a tromba)
+  existem na ficção e passam pelo Mestre sem passar pelo sistema.
+
+  ~~A queda~~ RESOLVIDA na v9.66: entrou pelo preço em pele da escalada,
+  com a altura derivada do lugar e a dificuldade tirada só dela. As duas
+  que sobram precisam do mesmo que a queda precisou — um MOMENTO em que
+  disparem. A queda achou o dela na falha de `escalada`; o agarrão pede a
+  criatura que agarra (bestiário) e o empurrão, o efeito que empurra.
 
 ## Combate e habilidades
 
