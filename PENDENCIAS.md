@@ -199,12 +199,37 @@ jogador descobre jogando.
   elas significar alguma coisa: o Ladino entra calado, o Guerreiro entra
   acordando todo mundo.
 
-- **A salvaguarda ainda não é disparada por nada.** ABERTO. O tipo está
-  definido e o Mestre já recebe a regra de que não a pede — mas nenhuma
-  fonte do jogo ainda a dispara. Os candidatos naturais já existem e estão
-  soltos: veneno e as outras aflições (`aflicoes.js`), armadilhas de
-  masmorra, queda, e o encanto que vira condição. Enquanto isso, resistir
-  continua sendo resolvido pelas aflições, que rolam sozinhas.
+- ~~**A salvaguarda ainda não é disparada por nada.**~~ RESOLVIDO na v9.60 em
+  `salvaguardas.js`. Era regra escrita sem código atrás — a v9.59 declarou
+  que existem três rolagens e a segunda não tinha nada por baixo.
+
+  Seis salvaguardas, uma por atributo, e **duas proficientes por classe** —
+  é isso que faz o Guerreiro aguentar veneno (79% contra 50% do Mago) e o
+  Mago aguentar a mente (70% contra 30%). Sem a proficiência, salvaguarda
+  seria o atributo com outro nome e a classe não mudaria nada na hora em que
+  o mundo bate de volta.
+
+  Duas fontes de verdade, ligadas:
+
+  1. **A armadilha de masmorra**, que era um bug silencioso: o dano da sala
+     saía inteiro da ficha, sem nada entre o gatilho e o ferimento. Agora
+     pede salvaguarda de Destreza, e passar **corta pela metade** em vez de
+     anular — a armadilha já disparou e o herói já está dentro dela.
+  2. **As aflições de golpe**, que já rolavam uma resistência escondida com
+     atributo cru mais nível/4. Aquilo *era* uma salvaguarda sem saber que
+     era; agora tem nome, o bônus certo e aparece na tela.
+
+  De quebra, o Gnomo e o Sintético passaram a cobrar a vantagem contra
+  efeitos mentais que as fichas deles prometiam desde a criação do jogo e
+  que **nada, em lugar nenhum, lia** — e vantagem aqui é dois dados, não um
+  bônus fixo, porque traduzir a promessa em "+3" seria trocá-la por outra
+  coisa parecida.
+
+- **Salvaguarda de queda, de empurrão e de agarrão ainda não têm fonte.** A
+  tabela `FONTES_DE_SALVAGUARDA` conhece as doze categorias, mas só duas
+  disparam de fato hoje. Queda (do penhasco, da escada, do telhado) e
+  agarrão (a teia, o tentáculo) existem na ficção e passam pelo Mestre sem
+  passar pelo sistema.
 
 ## Combate e habilidades
 

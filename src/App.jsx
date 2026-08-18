@@ -59,6 +59,7 @@ import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaP
 import { garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeDoBarulho, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
+import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
@@ -4211,6 +4212,15 @@ export default function Taverna() {
   const aplicarCondicoesDosGolpes = (acoes, persBase) => {
     let p = persBase;
     for (const a of (acoes || []).filter((x) => x.r && x.r.dano > 0 && x.alvoRef === "jogador")) {
+      /* ---------------- QUEM RESISTE É A CLASSE (v9.60) ----------------
+         Esta resistência sempre existiu e sempre foi uma salvaguarda sem
+         nome: atributo cru mais nível/4, igual para o Mago e para o
+         Guerreiro. Agora é a salvaguarda de verdade, com a proficiência
+         das duas que a classe garante — e o Gnomo e o Sintético finalmente
+         cobram a vantagem contra o mental que as fichas deles prometiam
+         desde sempre e que nada, em lugar nenhum, lia. */
+      const qual = salvaDoGolpe(a.golpeNome || a.inimigo);
+      const b = bonusDeSalvaguarda(p, qual, (x) => atributoEfetivo(p, x));
       const res = rolarAflicao({
         /* só o NOME DO GOLPE decide a aflição — o nome da criatura entraria
            por engano ("Rato Gigante" viraria "fortalecido" por causa de
@@ -4218,6 +4228,9 @@ export default function Taverna() {
         fonte: a.golpeNome || a.inimigo,
         nomeFonte: a.golpeNome ? `${a.golpeNome} (${a.inimigo})` : `golpe de ${a.inimigo}`,
         atacante: a.inimigo, alvo: p, alvoNome: "você", critico: a.r.critico,
+        bonusResistir: b.total,
+        rotuloResistir: `Salvaguarda de ${nomeDaSalva(qual)}${b.proficiente ? " ★" : ""}`,
+        vantagem: ehSalvaMental(qual) && (temVantagemMental(p) || vantagemMentalDeTraco(p)),
       });
       if (!res) continue;
       pushMsgs([{ autor: "sistema", texto: res.texto }]);
@@ -9863,10 +9876,32 @@ export default function Taverna() {
         pushMsgs([{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha} — ${alvo.nome} sofre ${sala.dano} de dano` }]);
         enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nomeArmadilha}). ${alvo.nome} já sofreu ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e como o grupo reage.${avisoSegredo}${extraTempo}`, personagem);
       } else {
-        const p2 = { ...personagem, vida: Math.max(0, personagem.vida - sala.dano) };
+        /* ---------------- A ARMADILHA PEDE SALVAGUARDA (v9.60) ----------------
+           A primeira fonte de verdade da segunda rolagem do jogo. Até aqui o
+           dardo simplesmente acertava: o dano da sala saía inteiro da ficha e
+           não havia nada entre o gatilho e o ferimento — nenhum reflexo,
+           nenhuma diferença entre o Ladino e o Mago no corredor errado.
+
+           Passar não anula: a armadilha já disparou e o herói já está no meio
+           dela. Corta pela metade, que é a diferença entre desviar e aguentar
+           — e é o que faz Destreza valer alguma coisa numa masmorra. */
+        const fonte = fonteDaSalvaguarda(`${sala.nomeArmadilha} armadilha`) || { salva: "destreza", meia: true, diz: "a armadilha" };
+        const sv = rolarSalvaguarda({
+          pers: personagem, salva: fonte.salva,
+          dc: dcDaFonte({ nivel: personagem.nivel || 1, base: (sala.segredo && sala.segredo.cd) || 13 }),
+          modDe: (a) => atributoEfetivo(personagem, a),
+        });
+        const cheio = sala.dano;
+        const sofrido = sv.passou && fonte.meia ? Math.floor(cheio / 2) : sv.passou ? 0 : cheio;
+        const p2 = { ...personagem, vida: Math.max(0, personagem.vida - sofrido) };
         setPersonagem(p2);
-        pushMsgs([{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha} — você sofre ${sala.dano} de dano` }]);
-        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nomeArmadilha}). Eu já sofri ${sala.dano} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e o estado em que fico.${avisoSegredo}${extraTempo}`, p2);
+        pushMsgs([
+          { autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha}` },
+          { autor: "sistema", texto: linhaDaSalvaguarda(sv) },
+          { autor: "sistema", texto: `💥 Você sofre ${sofrido} de dano${sofrido < cheio ? ` (de ${cheio} — ${sv.passou ? "reflexo" : "sorte"})` : ""}` },
+        ]);
+        enviar(`${envelopeDaSalvaguarda(sv, { oQue: `A armadilha (${sala.nomeArmadilha})`, meia: fonte.meia, danoCheio: cheio, danoFinal: sofrido })}
+[MASMORRA — ${pos}] Narre o susto e o estado em que fico.${avisoSegredo}${extraTempo}`, p2);
       }
     } else if (sala.tipo === "tesouro") {
       let item = null;

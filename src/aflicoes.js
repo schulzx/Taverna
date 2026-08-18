@@ -87,7 +87,14 @@ function modDoAlvo(alvo, attr) {
    Um só ponto de verdade: quem tenta afligir, quem resiste, e o texto
    pronto para o jogador e para o Mestre. Devolve null quando a fonte
    não carrega nada (a maioria dos golpes). */
-export function rolarAflicao({ fonte, nomeFonte = "", atacante = "", alvo, alvoNome = "", critico = false, sempre = false }) {
+/* v9.60: `bonusResistir` e `rotuloResistir` entram por fora. Esta função
+   sempre rolou uma resistência — atributo cru mais nível/4 —, e o que ela
+   rolava ERA uma salvaguarda sem saber que era. Quando quem resiste é o
+   herói, o App passa o bônus de salvaguarda de verdade (com a proficiência
+   da classe) e o nome dela, e a linha na tela deixa de dizer "o golpe
+   tentou" para dizer o que de fato aconteceu. Sem os dois, o comportamento
+   é o de antes — que é o que vale para inimigos, que não têm classe. */
+export function rolarAflicao({ fonte, nomeFonte = "", atacante = "", alvo, alvoNome = "", critico = false, sempre = false, bonusResistir = null, rotuloResistir = "", vantagem = false, desvantagem = false }) {
   const port = typeof fonte === "object" && fonte ? fonte : aflicaoDe(fonte);
   if (!port) return null;
   const cat = CONDICOES[port.cond];
@@ -110,20 +117,33 @@ export function rolarAflicao({ fonte, nomeFonte = "", atacante = "", alvo, alvoN
 
   const dif = ((cat.resistir && cat.resistir.dif) || 12) + (port.dif || 0) + (critico ? 2 : 0);
   const attr = (cat.resistir && cat.resistir.attr) || "vigor";
-  const rolo = 1 + Math.floor(Math.random() * 20) + modDoAlvo(alvo, attr);
+  const mod = bonusResistir != null ? Number(bonusResistir) || 0 : modDoAlvo(alvo, attr);
+  /* vantagem é DOIS DADOS, não um bônus fixo — o Gnomo e o Sintético
+     prometem "vantagem para resistir ao que é mental", e traduzir isso em
+     "+3" seria trocar a promessa por outra coisa parecida. */
+  const um = () => 1 + Math.floor(Math.random() * 20);
+  const a1 = um();
+  const d20 = vantagem ? Math.max(a1, um()) : desvantagem ? Math.min(a1, um()) : a1;
+  const rolo = d20 + mod;
   const nomeAlvo = alvoNome || (alvo && alvo.nome) || "o alvo";
+  const comoSeChama = rotuloResistir || "resistência";
+  const conta = `d20 ${d20}${mod ? ` + ${mod}` : ""} = ${rolo} vs ${dif}`;
 
   if (rolo >= dif) {
     return {
-      aplicou: false, resistiu: true, cond, portador: port, escopo: "alvo",
-      texto: `🎲 ${nomeFonte || "o golpe"} tentou deixar ${nomeAlvo} ${cond.nome.toLowerCase()} — resistiu (${rolo} vs ${dif}).`,
-      nota: `[AFLIÇÃO RESISTIDA — sistema rolou] ${nomeFonte || "O golpe"} de ${atacante} carregava ${cond.nome.toLowerCase()}; ${nomeAlvo} passou no teste (${rolo} vs ${dif}). Narre o perigo que passou raspando e NÃO aplique a condição.`,
+      aplicou: false, resistiu: true, cond, portador: port, escopo: "alvo", salva: rotuloResistir || "", rolo, dif, d20, mod,
+      texto: rotuloResistir
+        ? `🛡 ${comoSeChama} contra ${nomeFonte || "o golpe"}: ${conta} · resistiu`
+        : `🎲 ${nomeFonte || "o golpe"} tentou deixar ${nomeAlvo} ${cond.nome.toLowerCase()} — resistiu (${rolo} vs ${dif}).`,
+      nota: `[${rotuloResistir ? "SALVAGUARDA" : "AFLIÇÃO RESISTIDA"} — ROLADA PELO SISTEMA] ${nomeFonte || "O golpe"} de ${atacante} carregava ${cond.nome.toLowerCase()}; ${nomeAlvo} passou (${conta})${rotuloResistir ? ` na ${comoSeChama}` : ""}. Narre o perigo que passou raspando e NÃO aplique a condição — nem suavizada, nem por um instante. Você não rola salvaguarda e não a repete.`,
     };
   }
   return {
-    aplicou: true, resistiu: false, cond, portador: port, escopo: "alvo",
-    texto: `${cond.icone} ${nomeAlvo} está ${cond.nome}${cond.turnos ? ` (${cond.turnos}t)` : ""} — ${nomeFonte || atacante} (${rolo} vs ${dif})`,
-    nota: `[AFLIÇÃO APLICADA — sistema rolou] ${nomeFonte || "O golpe"} de ${atacante} deixou ${nomeAlvo} ${cond.nome.toLowerCase()}: falhou no teste (${rolo} vs ${dif}). Efeito e duração já estão aplicados (${cond.efeito}). Narre isso como fato — e não invente outro efeito nem outra condição: condição é do sistema.`,
+    aplicou: true, resistiu: false, cond, portador: port, escopo: "alvo", salva: rotuloResistir || "", rolo, dif, d20, mod,
+    texto: rotuloResistir
+      ? `🛡 ${comoSeChama} contra ${nomeFonte || "o golpe"}: ${conta} · ${cond.icone} ${cond.nome}${cond.turnos ? ` (${cond.turnos}t)` : ""}`
+      : `${cond.icone} ${nomeAlvo} está ${cond.nome}${cond.turnos ? ` (${cond.turnos}t)` : ""} — ${nomeFonte || atacante} (${rolo} vs ${dif})`,
+    nota: `[${rotuloResistir ? "SALVAGUARDA" : "AFLIÇÃO APLICADA"} — ROLADA PELO SISTEMA] ${nomeFonte || "O golpe"} de ${atacante} deixou ${nomeAlvo} ${cond.nome.toLowerCase()}: falhou (${conta})${rotuloResistir ? ` na ${comoSeChama}` : ""}. Efeito e duração já estão aplicados (${cond.efeito}). Narre isso como fato — e não invente outro efeito nem outra condição: condição é do sistema. Você não rola esta salvaguarda e não a repete, nem para ser generoso.`,
   };
 }
 

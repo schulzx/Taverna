@@ -23,6 +23,7 @@ import { CRAFT_PROMPT } from "./craft.js";
 import { ATRIBUTOS_PROMPT } from "./atributos.js";
 import { COMBOS_PROMPT } from "./combos.js";
 import { DESAFIOS_PROMPT } from "./desafios.js";
+import { SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { PERICIAS_PROMPT } from "./pericias.js";
 import { HEROISMO_PROMPT } from "./heroismo.js";
 import { DESCANSO_PROMPT } from "./descanso.js";
@@ -233,6 +234,8 @@ ${ATRIBUTOS_PROMPT}
 ${so("especializacao", ESPECIALIZACOES_PROMPT)}
 ${so("combate", COMBOS_PROMPT)}
 ${DESAFIOS_PROMPT}
+
+${so("aflicao", SALVAGUARDAS_PROMPT)}
 
 ${PERICIAS_PROMPT}
 
