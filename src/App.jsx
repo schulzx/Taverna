@@ -50,6 +50,7 @@ import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPr
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, perguntarPeloSistema, envelopeDaPerguntaDoSistema, linhaDaPerguntaDoSistema, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
 import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao, TURNO_PROMPT } from "./turno.js";
+import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
 import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
@@ -59,7 +60,7 @@ import { abrirViagem, andar, pausarViagem, retomarViagem, progressoDaViagem, com
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
 import { garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
-import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
+import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
@@ -9184,13 +9185,27 @@ export default function Taverna() {
        consolar com meia-pista. A regra vai escrita dentro do envelope. */
     if (r.origem === "pedido") {
       const provaAsc = r.provaAscensao || null;
-      const passou = critico || (!desastre && total >= dc);
+      const des = r.desafio || null;
+      /* ---------------- O QUE A FALHA COBRA (v9.65) ----------------
+         Antes de decidir se passou, porque a decisão depende disto: falhar
+         por um ou dois, onde a ficção tem preço, não é falhar — é conseguir
+         pagando. Falhar por muito continua sendo falhar, e mesmo aí cobra
+         alguma coisa, para que "nada acontece" pare de ser um desfecho. */
+      const bateu = critico || (!desastre && total >= dc);
+      const custo = des && !bateu ? desfechoDaFalha(des, total, dc, { emCombate: !!combateRef.current }) : null;
+      const passou = bateu || !!(custo && custo.porPouco);
       /* ---------------- O QUE A TENTATIVA CUSTA (v9.59) ----------------
          Tempo sempre, barulho onde faz sentido, e o registro no livro — os
          três aqui, juntos, porque são a mesma decisão vista de ângulos
          diferentes: a tentativa aconteceu no mundo e deixou marca nele. */
-      const des = r.desafio || null;
       if (des) { fecharTentativa(des, passou); cobrarTempoDoDesafio(des); }
+      if (custo) {
+        pushMsgs([{ autor: "sistema", texto: falaDoCusto(custo) }]);
+        if (custo.minutosExtra && !combateRef.current) {
+          const tx = avancarMinutos(custo.minutosExtra);
+          if (tx) pushMsgs([{ autor: "sistema", texto: tx }]);
+        }
+      }
       /* PASSAR NUMA BUSCA VAZIA NÃO É ACHAR — é saber que não há. O envelope
          comum manda "revele UMA coisa concreta", e num quarto vazio isso é
          uma ordem para inventar: exatamente o que produziu a quinta e a
@@ -9216,12 +9231,49 @@ export default function Taverna() {
          a chance existe. QUEM viu é fato do mundo, e era mais uma decisão
          que o sistema empurrava para a IA, que escolhia sempre a testemunha
          que a cena dela pedia. */
+      /* ---------------- A CONVERSA DEIXA MARCA (v9.65) ----------------
+         O envelope social entra NO LUGAR do envelope de teste, porque ele
+         diz coisas que o outro não sabe dizer: o que exatamente o sucesso
+         comprou, e o que ele não comprou. Um sucesso em Persuasão não
+         escala para o favor seguinte, e essa era a improvisação mais cara
+         que ainda sobrava para a IA. */
+      if (des && des.social) {
+        const quem = des.quem || "essa pessoa";
+        env = envelopeSocial(des.social, { passou, quem, oQueEuDisse: r.motivo || "", rotulo: des.rotulo });
+        /* o ouro sai da bolsa de verdade: uma alavanca que não cobra não é
+           uma alavanca, é um desconto de graça na dificuldade */
+        if (passou && des.social.custoEmMoedas > 0) {
+          const base = personagemRef.current || personagem;
+          const pago = Math.min(base.moedas || 0, des.social.custoEmMoedas);
+          if (pago > 0) {
+            const np = { ...base, moedas: (base.moedas || 0) - pago };
+            personagemRef.current = np; setPersonagem(np);
+            pushMsgs([{ autor: "sistema", texto: `◉ ${pago} moedas mudaram de mão.` }]);
+          }
+        }
+        /* e a alavanca suja cobra em outra moeda: quem é ameaçado ou
+           chantageado desce um degrau na escada da relação, tenha o teste
+           dado certo ou não. É o que faz o jogador escolher entre resolver
+           a cena e resolver a campanha. */
+        const suja = (des.social.alavancas || []).reduce((s, a) => s + (a.piora || 0), 0);
+        if (suja > 0 && des.pessoa && des.pessoa.nome) {
+          const antes = des.pessoa.relacao || "desconhecido";
+          const depois = moverRelacao(antes, suja);
+          if (depois !== antes) {
+            npcsRef.current = { ...npcsRef.current, [des.pessoa.nome]: { ...des.pessoa, relacao: depois } };
+            setNpcs(npcsRef.current);
+            pushMsgs([{ autor: "sistema", texto: `💢 ${des.pessoa.nome} passa a ver você como ${relacaoNPC(depois).rotulo.toLowerCase()}.` }]);
+            env = `${env}\n[RELAÇÃO — MUDADA PELO SISTEMA] O jeito que eu usei cobrou seu preço: ${des.pessoa.nome} agora me vê como ${relacaoNPC(depois).rotulo.toUpperCase()}. Isto é fato, e vale daqui em diante — trate essa pessoa assim na próxima vez que ela aparecer, sem que eu precise lembrar.`;
+          }
+        }
+      }
+      if (custo) env = `${envelopeDoCusto(custo, des && des.rotulo)}\n${env}`;
       if (des && des.testemunha && !passou) {
         const q = perguntarTestemunha(des);
         pushMsgs([{ autor: "sistema", texto: linhaDaPerguntaDoSistema(q) }]);
         env = `${envelopeDaPerguntaDoSistema(q, { oQue: `Eu falhei ao ${des.rotulo}` })}\n${env}`;
       }
-      if (des && des.barulho) {
+      if (des && (des.barulho || (custo && custo.barulhoExtra))) {
         const q = perguntarBarulho(des);
         pushMsgs([
           { autor: "sistema", texto: `🔊 ${des.viaNome || "Assim"} faz barulho.` },
@@ -9263,9 +9315,44 @@ export default function Taverna() {
      O que o sistema sabe da cena, montado uma vez. `achadoDe` vai como
      FUNÇÃO de propósito: só o desafio sabe qual atributo procura o quê, e
      quem escuta à porta não acha o alçapão que a vista acharia. */
+  /* ---------------- COM QUEM SE ESTÁ FALANDO (v9.65) ----------------
+     A pergunta que faltava para o teste social existir. Até aqui o sistema
+     rolava Persuasão contra 14 sem ter a menor ideia de quem estava do
+     outro lado — e é o outro lado que decide quase tudo: o que essa pessoa
+     tem a perder, o que ela sente por você, o que ela esconde.
+
+     Duas fontes, nesta ordem. Primeiro o NOME dito na frase, entre quem
+     está presente — é a resposta sem ambiguidade. Depois, se a cena tem uma
+     única pessoa, é com ela que se está falando: numa conversa de dois,
+     ninguém repete o nome do interlocutor a cada frase.
+
+     E não adivinha além disso. Com três pessoas na sala e nenhum nome
+     citado, devolve `null` e o desafio cai no degrau padrão — que é o 14
+     de sempre. Chutar QUEM seria pior que não saber: o sistema aplicaria a
+     ficha de uma pessoa a uma conversa com outra. */
+  const pessoaNaFrente = (texto) => {
+    try {
+      const t = String(texto || "");
+      if (!t.trim()) return null;
+      const { aqui } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (personagem && personagem.grupo) || [] });
+      const vivos = aqui.filter((n) => n && n.nome && n.nome.length >= 3);
+      if (!vivos.length) return null;
+      const alvo = t.toLowerCase();
+      /* o nome mais longo ganha, mesma regra dos lugares e das habilidades:
+         "Bram" e "Bram, o Torto" na mesma cena não podem trocar de lugar */
+      const citados = vivos.filter((n) => alvo.includes(n.nome.toLowerCase())).sort((a, b) => b.nome.length - a.nome.length);
+      if (citados.length) return citados[0];
+      return vivos.length === 1 ? vivos[0] : null;
+    } catch { return null; }
+  };
+
   const ctxDesafio = () => ({
     personagem: fichaViva() || personagem,
     semente: sementeMundo(),
+    /* v9.65: quem está na frente e o quanto o seu nome pesa. Os dois são
+       lidos SÓ quando o desafio é social — daí a função, e não o valor. */
+    pessoaDe: pessoaNaFrente,
+    fama: famaAtual(),
     lugar: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "ermo",
     emCombate: !!combateRef.current,
     tentativas: tentativasRef.current,
@@ -9380,8 +9467,16 @@ export default function Taverna() {
     const rotulo = per ? per.nome : nomeDoAtributo(v.atributo);
     pushMsgs([
       { autor: "jogador", texto: acao },
-      { autor: "sistema", texto: `🎯 ${v.rotulo}${v.viaNome ? ` ${v.viaNome}` : ""} — dificuldade ${v.dc} (${v.deOnde}). Seu bônus: +${modT}${selo}.${v.mudou.length ? ` Conta a favor: ${v.mudou.join(", ")}.` : ""}` },
+      { autor: "sistema", texto: `🎯 ${v.rotulo}${v.quem ? ` ${v.quem}` : ""}${v.viaNome ? ` ${v.viaNome}` : ""} — dificuldade ${v.dc} (${v.deOnde}). Seu bônus: +${modT}${selo}.${v.mudou.length ? ` Conta a favor: ${v.mudou.join(", ")}.` : ""}` },
     ]);
+    /* v9.65: no teste social, a linha de cima ("dificuldade 18") não basta —
+       o jogador precisa ver O QUE está pedindo e o que não contou. O blefe
+       que não colou é a parte mais importante: prometer ouro que não se tem
+       falhava em silêncio, e o jogador achava que a oferta tinha pesado. */
+    if (v.social) {
+      const blefe = falaDosBlefes(v.social);
+      if (blefe) pushMsgs([{ autor: "sistema", texto: blefe }]);
+    }
     /* ---------------- A PORTA VIGIADA (v9.64) ----------------
        A terceira pergunta do catálogo estava pronta desde a v9.62 e sem
        chamador. Ela entra AQUI, antes do dado, e não depois: uma vigia
@@ -9779,6 +9874,14 @@ export default function Taverna() {
     const onde = lugarRef.current ? comEm(lugarRef.current.nome) : (cidadeAtualRef.current ? `em ${cidadeAtualRef.current}` : "");
     const q = perguntarPeloSistema(v.oportunidade.pergunta, {
       onde,
+      /* v9.65: a pergunta da mentira é sobre uma PESSOA, e leva a ficha
+         dela — o que ela sente por você e se o registro diz que ela
+         esconde alguma coisa. O campo `segredo` do registro de pessoas
+         existia desde sempre como memória de enredo; aqui ele finalmente
+         mexe num número. */
+      quem: v.quem || "",
+      relacao: (v.pessoa && v.pessoa.relacao) || "",
+      temSegredo: !!(v.pessoa && v.pessoa.segredo),
       movimento: movimentoDaqui(),
       noite: ehNoite(minutoRef.current),
       emMasmorra: !!masmorraRef.current,

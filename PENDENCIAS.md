@@ -231,10 +231,74 @@ jogador descobre jogando.
   25% na rua de pedra, 45% sob chuva. Quando a resposta é não, não há
   rolagem, o lugar fica marcado e o envelope proíbe a meia-pista de consolo.
 
-  **Aberto:** falta o mesmo tratamento para "ele está mentindo?", que
-  precisa de um alvo NOMEADO — sem isso o fato ficaria valendo para todas
-  as pessoas da cena, e duas conversas diferentes no mesmo dia herdariam a
-  mesma resposta.
+  ~~**Aberto:** falta o mesmo tratamento para "ele está mentindo?"~~
+  RESOLVIDO na v9.65. A pergunta `estaMentindo` entrou, e é a única do
+  catálogo que exige alvo NOMEADO: o texto dela carrega o nome da pessoa,
+  porque sem isso o fato valeria para todas as pessoas da cena e duas
+  conversas diferentes no mesmo dia herdariam a mesma resposta. Sem nome,
+  não pergunta — o desafio rola como sempre rolou, que é o lado seguro. É
+  `social` e não `perigo` porque a duração certa é o DIA: mentir é
+  disposição, não posição de patrulha.
+
+- ~~**Convencer, intimidar e enganar rolavam contra um 14 fixo.**~~
+  RESOLVIDO na v9.65, em `social.js` — o mesmo 14 para arrancar uma fofoca
+  de um bêbado e para convencer o capitão da guarda a abrir o portão. É o
+  terceiro caso do mesmo defeito, e o mais usado dos três fora da luta: a
+  busca rolava contra um número que descrevia o herói e não o quarto; a
+  tranca, contra um que não sabia se a porta era de taverna ou de cadeia.
+
+  E havia o lado pior: no SUCESSO, o quanto a pessoa cedia era inteiramente
+  da IA. Um sistema em que o dado decide SE e a IA decide QUANTO não é um
+  sistema, é uma formalidade antes da improvisação.
+
+  A peça central é a **escada do pedido** — cinco degraus, de uma cortesia
+  (8) a trair quem lhe paga (22) —, e cada degrau diz três coisas: quanto
+  custa, o que o sucesso compra **exatamente**, e o que ele nunca compra.
+  Somam-se a relação (dez graus, de cônjuge a inimigo), o papel (quem tem
+  farda ou fé tem mais a perder), a fama e quatro **alavancas que o código
+  confere**: ouro que está mesmo na bolsa (e sai dela), o segredo que o
+  registro de pessoas guarda desde sempre e nunca tinha mexido num número,
+  uma dívida anotada, e o aço à vista — este só para quem intimida.
+
+  Duas propriedades foram desenhadas de propósito:
+
+  - **o degrau padrão é 14.** Onde o sistema não lê o tamanho do pedido, o
+    jogo se comporta como antes; a régua nova só morde onde há informação;
+  - **prometer o que não se tem não desconta nada, e o sistema diz isso.**
+    Antes o blefe falhava em silêncio e o jogador passava a partida achando
+    que a oferta pesava.
+
+  Medido: a mesma fofoca ao mesmo guarda custa 16, o portão 23, a traição
+  27; o mesmo favor custa 9 ao amigo taverneiro, 19 ao guarda estranho e 25
+  ao nobre inimigo. Ameaça e chantagem funcionam **e cobram**: quem as usa
+  desce um degrau na relação daquela pessoa, tenha o dado dado certo ou não.
+
+  E o livro de tentativas passou a chavear o social por **pedido e pessoa**,
+  não por lugar — chavear pelo lugar faria o segundo assunto com o mesmo
+  taverneiro ouvir "você já tentou isso aqui" e travaria a conversa inteira
+  depois de uma recusa qualquer.
+
+- ~~**Falhar era não acontecer nada.**~~ RESOLVIDO na v9.65. O herói
+  tentava, o dado dizia não, e o Mestre ficava com a tarefa de narrar uma
+  parede — a improvisação mais frequente que ainda sobrava para a IA.
+  Agora toda falha cobra o custo do seu tipo, e **falhar por um ou dois não
+  é falhar: é conseguir pagando**.
+
+  A lista de `porPouco` é curta de propósito, e a razão é uma regra da casa:
+  ela só vale onde o CÓDIGO consegue cobrar o preço. O que ele cobra hoje é
+  minutos (o relógio anda de verdade), barulho (que vira pergunta ao
+  oráculo, e a resposta é fato) e o livro de tentativas. Não vale no social
+  — ali "consegui, mas caro" já é um degrau da escada — nem dentro da luta,
+  onde o turno já é o preço.
+
+  Medido, e dito sem maquiagem: onde o `porPouco` vale, a chance efetiva
+  sobe cerca de **dez pontos** (numa dificuldade 15 com bônus +1: de 30%
+  para 40%, dos quais 10 pagando). É o preço de trocar becos por decisões.
+
+  **Aberto:** um preço em PELE — sangue, um osso — ficou de fora. Exigiria
+  o pipeline de dano fora de combate, com queda a 0 PV e tudo o que vem
+  junto; prometê-lo na tabela e deixá-lo só no texto do envelope seria
+  escrever a regra sem código atrás outra vez.
 
 - ~~**A porta vigiada estava no catálogo e sem chamador.**~~ RESOLVIDO na
   v9.64. A pergunta existia desde a v9.62 e nada a chamava. Ela entra ANTES

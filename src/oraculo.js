@@ -421,6 +421,33 @@ export const PERGUNTAS_DO_SISTEMA = [
     seSim: "há rastro. O teste decide se ele consegue lê-lo — não revele para onde leva antes do resultado.",
     seNao: "não há rastro nenhum, e é essa a verdade do chão. Não plante uma pegada de consolo nem um 'algo passou por aqui' vago: não há.",
   },
+  {
+    /* A ÚNICA QUE EXIGE NOME (v9.65). As outras perguntam sobre um LUGAR, e
+       o lugar já entra na chave do fato. Esta pergunta sobre uma PESSOA: sem
+       o nome dentro do texto da pergunta, "ele está mentindo?" viraria um
+       fato só, herdado por todas as conversas do dia — o taverneiro e o
+       capitão dividindo a mesma honestidade. Por isso quem chama sem nome
+       não chama: o desafio rola como sempre rolou.
+
+       É `social` e não `perigo` porque a duração certa é o DIA: mentir é
+       disposição, não posição de patrulha, e alguém que mentiu de manhã
+       não vira sincero à tarde porque a cena mudou. */
+    id: "estaMentindo",
+    tipo: "social",
+    pergunta: (c) => `${c.quem || "essa pessoa"} está mentindo para mim?`,
+    ajustes: (c) => {
+      const a = [];
+      const rel = String(c.relacao || "").toLowerCase();
+      if (["conjuge", "romance", "familia", "aliado", "amigo", "companheiro"].includes(rel)) a.push({ delta: -25, motivo: "quem é dos seus tem menos motivo para mentir" });
+      else if (["rival", "inimigo"].includes(rel)) a.push({ delta: 25, motivo: "essa pessoa não joga a seu favor" });
+      else if (rel === "desconhecido") a.push({ delta: 8, motivo: "estranho não deve nada à sua verdade" });
+      if (c.temSegredo) a.push({ delta: 20, motivo: "essa pessoa esconde alguma coisa" });
+      if (c.pediuAlgo) a.push({ delta: 10, motivo: "quem quer algo de você conta a história que serve" });
+      return a;
+    },
+    seSim: "essa pessoa está mentindo, e a mentira é dela por um motivo dela. O teste que veio a seguir decide se o herói PERCEBE — não entregue o conteúdo da mentira antes disso, e não faça a pessoa se trair sozinha.",
+    seNao: "essa pessoa está dizendo a verdade como ela a conhece. Pode estar enganada, mas não está mentindo. Se o herói falhar no teste, ele fica na dúvida — e você NÃO transforma a dúvida em culpa: não plante gestos suspeitos em quem não mentiu.",
+  },
 ];
 
 export function perguntaDoSistemaPorId(id) { return PERGUNTAS_DO_SISTEMA.find((p) => p.id === id) || null; }

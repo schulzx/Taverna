@@ -54,6 +54,7 @@
 import { rngDe } from "./geografia.js";
 import { periciaPorId } from "./pericias.js";
 import { detectarPedidoDeTeste, semOPedidoDeTeste } from "./testes.js";
+import { dificuldadeSocial, foraDaConversa, envelopeForaDaConversa } from "./social.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -239,6 +240,17 @@ export const DESAFIOS = [
     rx: /\b(ele est[aá] mentindo|ela est[aá] mentindo|se ele mente|se ela mente|leio (as )?inten[cç]|tento saber se|desconfio|sinto se|percebo se mente)\b/,
     pericia: "intuicao", alvo: "intuicao", minutos: 0, barulho: false,
     rotulo: "ler a intenção", dcPadrao: 14,
+    /* v9.65: rolar Intuição sem o mundo ter decidido se HÁ mentira é
+       rolar para saber se existe a coisa que a pergunta já supôs. Mas
+       este é o único que exige um alvo NOMEADO: sem nome, o fato ficaria
+       valendo para todas as pessoas da cena, e duas conversas diferentes
+       no mesmo dia herdariam a mesma resposta. Sem nome, não pergunta —
+       rola como sempre rolou, que é o comportamento seguro. */
+    oportunidade: {
+      pergunta: "estaMentindo", precisaDeAlvo: true,
+      nada: "Não há mentira nenhuma aqui — o que essa pessoa disse, ela acredita.",
+    },
+    alvoNomeado: true,
   },
   {
     id: "tranca",
@@ -561,8 +573,41 @@ export function lerAcao(texto, ctx = {}) {
     return livre ? { tipo: "livre", porque: livre.porque } : null;
   }
 
+  /* ---------------- COM QUEM SE ESTÁ FALANDO (v9.65) ----------------
+     Vai como FUNÇÃO, pelo mesmo motivo do `achadoDe`: só aqui se sabe que
+     este desafio é social, e resolver a pessoa em todo turno — inclusive
+     nos que só perguntam "isto é desafio?" — seria varrer o elenco da cena
+     à toa dezenas de vezes por partida. */
+  const pessoaDe = typeof ctx.pessoaDe === "function" ? ctx.pessoaDe : null;
+  const pessoa = (d.social || d.alvoNomeado) && pessoaDe ? pessoaDe(cru) : null;
+
+  /* ---------------- O QUE CONVERSA NENHUMA COMPRA ----------------
+     Antes do livro de tentativas de propósito: pedir a alguém que se mate
+     por você não é uma tentativa que possa ser repetida com ajuda ou com
+     mais tempo. Não é dificuldade alta — é outra categoria de coisa, e
+     registrá-la como tentativa fingiria que um dia ela abre. */
+  if (d.social) {
+    const fora = foraDaConversa(cru);
+    if (fora) {
+      return {
+        tipo: "foraDaConversa", rotulo: d.rotulo,
+        porque: fora.porque, comoSeria: fora.comoSeria,
+        quem: (pessoa && pessoa.nome) || "",
+      };
+    }
+  }
+
+  /* A conta social é feita AQUI, antes do livro de tentativas, porque é ela
+     que diz qual é a chave. Um obstáculo social não é "persuasão neste
+     lugar": é ESTE pedido a ESTA pessoa. Chavear pelo lugar faria o segundo
+     pedido ao mesmo taverneiro — outro assunto, outro tamanho — ouvir "você
+     já tentou isso aqui", que é falso e trava a conversa inteira. */
+  const conta = d.social ? dificuldadeSocial({ texto: cru, pessoa, pers: personagem, pericia: d.pericia, fama: ctx.fama }) : null;
+
   const reg = garantirTentativas(tentativas);
-  const chave = chaveDaTentativa(lugar, d.alvo);
+  const chave = chaveDaTentativa(lugar, conta
+    ? `${d.alvo}|${(pessoa && pessoa.nome) || "quem quer que seja"}|${conta.tamanho}`
+    : d.alvo);
   const feito = reg[chave] || null;
 
   /* ---------------- A TRANCA E AS SUAS VIAS ---------------- */
@@ -641,7 +686,15 @@ export function lerAcao(texto, ctx = {}) {
   const achado = (typeof achadoDe === "function" && (d.alvo === "busca" || d.alvo === "investigacao"))
     ? achadoDe(atributoDoDesafio) : null;
   let dc, deOnde;
-  if (d.tranca) {
+  const social = conta;
+  if (social) {
+    /* v9.65: o 14 fixo morreu. A dificuldade sai de QUEM está na frente e
+       do TAMANHO do que se pede — e quando o sistema não consegue ler o
+       tamanho, o degrau padrão é justamente 14, para que o jogo só mude
+       onde há informação de verdade. */
+    dc = social.dc;
+    deOnde = social.deOnde;
+  } else if (d.tranca) {
     const tr = trancaDe(semente, lugar, "porta");
     dc = tr.dc + (via ? via.ajuste : 0);
     deOnde = `${tr.nome}, ${via ? via.nome : "no braço"}`;
@@ -670,8 +723,20 @@ export function lerAcao(texto, ctx = {}) {
     /* v9.64: o que o mundo precisa responder ANTES de o dado sair da mão.
        Vai como dado, não resolvido: `lerAcao` é pura, e o oráculo precisa
        de sorteio e do livro de fatos — quem pergunta é o App. */
-    oportunidade: d.oportunidade || null,
+    /* a pergunta que exige alvo nomeado só existe quando há nome. Resolvido
+       aqui, e não no App, para que quem consumir o veredicto não precise
+       conhecer a exceção — a regra viaja junto com o dado. */
+    oportunidade: (d.oportunidade && d.oportunidade.precisaDeAlvo && !pessoa) ? null : (d.oportunidade || null),
     vigia: !!d.vigia,
+    /* v9.65: a conta social inteira viaja junto — o que o sucesso compra,
+       o que ele não compra, o que foi pago e o blefe que não colou. */
+    social,
+    quem: (pessoa && pessoa.nome) || "",
+    pessoa: pessoa || null,
+    /* v9.65: o que a falha cobra. Sai do ALVO e não do id, porque é o alvo
+       que diz a natureza da coisa — e os alvos sociais não estão na tabela
+       de propósito: ali "consegui, mas caro" já é um degrau do pedido. */
+    alvoDoCusto: d.alvo,
     via: via ? via.id : "", viaNome: via ? via.nome : "",
     falaDaVia: via ? via.falha : "",
     achado: achado || null,
@@ -697,6 +762,7 @@ export function falaDoVeredicto(v) {
       : `↺ Você já tentou ${v.rotulo} aqui, do mesmo jeito, e não deu. Insistir igual não muda nada — ${v.comoReabrir.join(", ")}.`;
   }
   if (v.tipo === "impossivel") return `⛔ Assim não dá: ${v.porque}. O que abriria: ${v.comoSeria.join(", ")}.`;
+  if (v.tipo === "foraDaConversa") return `⛔ Isso não é dificuldade, é outra categoria de coisa: ${v.porque}. O que um dia mudaria: ${v.comoSeria.join(", ")}.`;
   if (v.tipo === "livre") return `✓ ${v.porque} — sem dado.`;
   if (v.tipo === "naoSePede") {
     const qual = v.periciaNome ? ` de ${v.periciaNome}` : "";
@@ -729,11 +795,154 @@ export function envelopeDeVeredicto(v, oQueEuDisse = "") {
   if (v.tipo === "livre") {
     return `[SEM TESTE — DECISÃO DO SISTEMA]${disse} Isto não pede dado: ${v.porque}. Narre acontecendo, com naturalidade e sem tensão falsa, e devolva a palavra para mim.`;
   }
+  if (v.tipo === "foraDaConversa") return envelopeForaDaConversa(v, v.quem || "essa pessoa");
   if (v.tipo === "naoSePede") {
     return `[SEM TESTE — DECISÃO DO SISTEMA]${disse} Eu pedi uma rolagem, e rolagem não se pede: quem decide se há dado é o sistema, a partir do que eu FAÇO. Não houve teste e não vai haver por este pedido.
 REGRA DESTE ENVELOPE (obrigatória): NÃO role, NÃO peça rolagem, NÃO invente um resultado e NÃO me entregue por narração aquilo que o teste teria dado. Em UMA frase, devolva a cena ao ponto em que ela estava e deixe claro que estou parado esperando decidir o que fazer${v.comoSeDiz ? ` — algo como "${v.comoSeDiz}"` : ""}. Não trate isto como fracasso meu nem como recusa sua: é só a vez voltando para mim.`;
   }
   return "";
+}
+
+/* ============================================================
+   O CUSTO DA FALHA (v9.65)
+
+   Falhar, até aqui, era não acontecer nada. O herói tentava, o dado
+   dizia não, e o Mestre ficava com a tarefa de narrar uma parede —
+   o que ele faz do jeito que a improvisação permite: às vezes com
+   uma consequência inventada e cara demais, às vezes com nada.
+
+   Numa mesa boa a falha quase nunca é um beco. Ela custa: tempo,
+   posição, barulho, um ferimento, uma ferramenta. É isso que faz o
+   jogo andar mesmo quando o dado é ruim, e é a improvisação mais
+   frequente que ainda sobrava para a IA.
+
+   DUAS REGRAS, e a segunda é a que muda o jogo:
+
+   1) TODA falha cobra o custo do seu tipo. Está na tabela, o código
+      aplica o que dá para aplicar (minutos, barulho, o livro de
+      tentativas) e o envelope entrega o resto pronto.
+
+   2) FALHAR POR POUCO — um ou dois abaixo da dificuldade — não é
+      falhar: é conseguir e pagar. É a "vitória a um preço" da mesa,
+      e ela só existe onde a ficção tem um preço claro que o CÓDIGO
+      consegue cobrar. Onde não tem, a falha é seca, porque um preço
+      que só a narração aplica é um preço que não existe.
+
+      O que o código cobra hoje, e é por isso que a lista de
+      `porPouco` é curta: MINUTOS (o relógio do mundo anda de
+      verdade), BARULHO (que vira pergunta ao oráculo, e a resposta
+      é fato) e o LIVRO DE TENTATIVAS. Um preço em PELE — sangue,
+      um osso — está de fora porque exigiria o pipeline de dano
+      fora de combate, com queda a 0 PV e tudo o que vem junto;
+      prometê-lo aqui e deixá-lo só no texto do envelope seria
+      escrever a regra sem código atrás outra vez.
+
+   O QUE ISSO CUSTA EM EQUILÍBRIO, dito sem maquiagem: onde o
+   `porPouco` vale, a chance efetiva de conseguir sobe cerca de dez
+   pontos. É o preço de trocar becos por decisões, e é cobrado de
+   volta em minutos, em ruído e em pele. Por isso ele NÃO vale para
+   o social (onde "consegui, mas caro" já é um degrau da escada do
+   pedido) nem dentro da luta (onde o turno já é o preço).
+   ============================================================ */
+export const CUSTO_DE_FALHAR = [
+  {
+    alvo: "tranca", porPouco: true,
+    seca: "a fechadura emperra com a tentativa malfeita",
+    preco: "ela cede, mas cede errado: com estrondo, e a porta fica marcada de quem passou",
+    minutosExtra: 5, barulhoExtra: true,
+  },
+  {
+    alvo: "escalada", porPouco: true,
+    seca: "você escorrega e volta ao chão, com as mãos em carne viva",
+    preco: "você chega em cima, mas chega machucado e sem fôlego",
+    minutosExtra: 5,
+  },
+  {
+    alvo: "busca", porPouco: true,
+    seca: "você revira o que dá e não encontra — e o lugar fica remexido, o que qualquer um nota",
+    preco: "você acha, mas o dobro do tempo se foi e ficou tudo fora do lugar",
+    minutosExtra: 15,
+  },
+  {
+    alvo: "investigacao", porPouco: true,
+    seca: "os vestígios não fecham numa história; ficam pedaços soltos",
+    preco: "a história fecha, mas custou o triplo do tempo debruçado ali",
+    minutosExtra: 20,
+  },
+  {
+    alvo: "rastro", porPouco: true,
+    seca: "a trilha se perde e você volta ao ponto em que ela era clara",
+    preco: "você reencontra a trilha, mas perdeu meia manhã e terreno para quem vai à frente",
+    minutosExtra: 30,
+  },
+  {
+    alvo: "escuta", porPouco: false,
+    seca: "você ouve pedaços sem sentido, e encostar ali por tanto tempo é arriscado",
+    minutosExtra: 2,
+  },
+  {
+    alvo: "furtividade", porPouco: false,
+    seca: "o passo sai errado e o corpo aparece onde não devia",
+    minutosExtra: 0,
+  },
+  {
+    alvo: "furto", porPouco: false,
+    seca: "a mão erra o tempo e toca onde não devia tocar",
+    minutosExtra: 0,
+  },
+  {
+    alvo: "medicina", porPouco: false,
+    seca: "o curativo não segura e a hemorragia recomeça pior",
+    minutosExtra: 10,
+  },
+  {
+    alvo: "fraqueza", porPouco: false,
+    seca: "nada do que você sabe encaixa nesta criatura",
+    minutosExtra: 0,
+  },
+  {
+    alvo: "arcano", porPouco: true,
+    seca: "os símbolos não se deixam ler, e olhar demais para eles cansa",
+    preco: "você lê o selo, mas a leitura cobra: a cabeça lateja o resto do dia",
+    minutosExtra: 10,
+  },
+];
+
+export function custoPorAlvo(alvo) { return CUSTO_DE_FALHAR.find((c) => c.alvo === alvo) || null; }
+
+/* O desfecho de uma rolagem que não bateu a dificuldade. `total` e `dc` são
+   os números que já saíram — esta função não rola nada e não decide nada
+   por sorteio: só lê a distância entre os dois. */
+export function desfechoDaFalha(v, total, dc, { emCombate = false } = {}) {
+  if (!v || !v.alvoDoCusto) return null;
+  const c = custoPorAlvo(v.alvoDoCusto);
+  if (!c) return null;
+  const faltou = Number(dc) - Number(total);
+  if (!(faltou > 0)) return null;
+  const porPouco = !!c.porPouco && !emCombate && faltou <= 2;
+  return {
+    porPouco, faltou, alvo: c.alvo,
+    diz: porPouco ? c.preco : c.seca,
+    minutosExtra: Math.max(0, Number(c.minutosExtra) || 0),
+    barulhoExtra: !!c.barulhoExtra && porPouco,
+  };
+}
+
+export function falaDoCusto(des) {
+  if (!des) return "";
+  return des.porPouco
+    ? `⚖ Faltaram ${des.faltou} — e por tão pouco o mundo negocia: ${des.diz}.`
+    : `↯ ${des.diz.charAt(0).toUpperCase()}${des.diz.slice(1)}.`;
+}
+
+export function envelopeDoCusto(des, rotulo) {
+  if (!des) return "";
+  if (des.porPouco) {
+    return `[CUSTO — DECIDIDO PELO SISTEMA] Eu falhei por ${des.faltou} no teste de ${rotulo || "perícia"}, e por tão pouco o sistema decidiu que EU CONSIGO — pagando. O que aconteceu: ${des.diz}. O sistema já cobrou o preço (tempo, e o que mais estiver no envelope ao lado).
+REGRA DESTE ENVELOPE (obrigatória): narre o sucesso E o preço, os dois, na mesma cena — o preço não é enfeite, é o que eu paguei para ter isto. NÃO transforme em sucesso limpo e NÃO transforme em fracasso. E não invente um custo maior que este: o que custou está escrito aqui.`;
+  }
+  return `[CUSTO — DECIDIDO PELO SISTEMA] Eu falhei no teste de ${rotulo || "perícia"}, e falhar aqui não é só não conseguir: ${des.diz}. O sistema já cobrou o tempo.
+REGRA DESTE ENVELOPE (obrigatória): mostre a falha COM esta consequência, em uma ou duas frases — não como um "nada acontece". NÃO me dê o resultado por generosidade, NÃO ofereça meia-vitória e NÃO invente uma consequência pior que esta.`;
 }
 
 /* ---------------- NÃO HAVIA O QUE TESTAR (v9.64) ----------------
