@@ -117,27 +117,49 @@ export function calcularChance(pergunta, ctx = {}) {
    Um d100 contra a chance decide o lado; a MARGEM decide o grau. Perto
    do limiar sai "sim, mas" ou "não, mas" — que é onde a ficção fica boa.
    Longe, sai limpo. Nos extremos (5% de cada ponta), o mundo se mexe. */
-export function consultar(pergunta, ctx = {}, { sorte = Math.random } = {}) {
+export function consultar(pergunta, ctx = {}, { sorte = Math.random, fatos = null } = {}) {
   const { chance, tipo, porque, faixa } = calcularChance(pergunta, ctx);
+  /* ---------------- O MUNDO NÃO PISCA (v9.61) ----------------
+     Antes de rolar, olha o que já foi respondido. Uma pergunta que já
+     tem resposta não é uma pergunta: é um fato, e fato se consulta.
+     Sem isto, o oráculo respondendo várias vezes por turno faria a
+     realidade mudar de forma a cada consulta. */
+  if (fatos) {
+    const chave = chaveDoFato(pergunta, ctx.lugar);
+    const antes = garantirFatos(fatos)[chave];
+    if (fatoValido(antes, { dia: ctx.dia, cena: ctx.cena })) {
+      return {
+        pergunta: String(pergunta || "").trim(), chance, tipo, porque, faixa,
+        rolo: 0, sim: /^sim/.test(antes.grau), grau: grauPorId(antes.grau),
+        reusado: true, chave,
+      };
+    }
+  }
   const rolo = d(100, sorte);
   const sim = rolo <= chance;
   const margem = Math.abs(rolo - chance);
   let grau;
   if (sim) grau = rolo <= 5 ? "sim_e" : margem <= 20 ? "sim_mas" : "sim";
   else grau = rolo >= 96 ? "nao_e" : margem <= 20 ? "nao_mas" : "nao";
-  return { pergunta: String(pergunta || "").trim(), chance, tipo, porque, faixa, rolo, sim, grau: grauPorId(grau) };
+  return { pergunta: String(pergunta || "").trim(), chance, tipo, porque, faixa, rolo, sim, grau: grauPorId(grau), reusado: false, chave: chaveDoFato(pergunta, ctx.lugar) };
 }
 
 /* ---------------- O ENVELOPE ----------------
    O ponto inteiro: o Mestre recebe a resposta PRONTA e a instrução de
    não a contradizer. Ele decide COMO aquilo é verdade, nunca SE. */
 export function envelopeDoOraculo(r) {
+  if (r.reusado) {
+    return `[PERGUNTA AO MUNDO — JÁ RESPONDIDA] Eu perguntei: "${r.pergunta}", e o mundo JÁ tinha respondido isto antes: ${r.grau.rotulo.toUpperCase()}
+
+REGRA DESTE ENVELOPE (obrigatória): não houve rolagem nova porque não havia o que decidir — isto já é fato estabelecido, e continua exatamente como era. ${r.grau.guia} Se eu já vi esta verdade em cena, trate como coisa sabida, sem redescobri-la com espanto. NÃO mude a resposta, NÃO a suavize e NÃO mencione oráculo, chance, dado ou sistema.`;
+  }
   return `[PERGUNTA AO MUNDO — RESPONDIDA PELO SISTEMA] Eu perguntei: "${r.pergunta}". O sistema pesou o que sabe do mundo (chance ${r.chance}% — ${r.faixa.rotulo}) e rolou: ${r.rolo}. A resposta é: ${r.grau.rotulo.toUpperCase()}
 
 REGRA DESTE ENVELOPE (obrigatória): esta resposta é FATO do mundo, não sugestão. ${r.grau.guia} Você decide COMO isso é verdade — quem, por quê, com que cara — mas nunca SE. Não inverta, não amenize, não transforme em "talvez", e não mencione oráculo, chance, dado ou sistema. Responda em duas ou três frases e devolva a palavra para mim.`;
 }
 
 export function linhaDaConsulta(r) {
+  if (r.reusado) return `🔮 "${r.pergunta}" — o mundo já respondeu isto: ${r.grau.rotulo}`;
   return `🔮 "${r.pergunta}" — ${r.faixa.rotulo} (${r.chance}%), rolou ${r.rolo}: ${r.grau.rotulo}`;
 }
 
@@ -158,7 +180,188 @@ export function ehPerguntaAoMundo(texto) {
   return ABRE.test(t) || /\?/.test(t);
 }
 
+/* ============================================================
+   O LIVRO DE FATOS (v9.61)
+
+   O problema que aparece no primeiro dia em que o oráculo decide de
+   verdade: ele ROLA. Pergunte "há uma saída pelos fundos?" duas vezes
+   e o mundo pisca — duas respostas, dois prédios diferentes, e o
+   jogador aprende que a realidade aqui é uma máquina caça-níqueis.
+
+   Um oráculo sem memória torna o mundo MENOS coerente, não mais. É o
+   mesmo defeito que o livro de tentativas consertou nos testes, e a
+   solução é a mesma: resposta dada vira FATO, e fato se consulta em
+   vez de se rolar.
+
+   QUANTO TEMPO UM FATO DURA depende do que ele é, e o tipo da
+   pergunta já diz:
+
+     mundo   — a forma das coisas. A saída pelos fundos existe ou não
+               existe; isso não muda porque o dia virou. PERMANENTE.
+     social  — a disposição de alguém. Muda com o que acontece entre
+               vocês, então vale pelo DIA.
+     perigo  — onde está a patrulha, quem está olhando agora. É do
+               instante: vale pela CENA.
+
+   Sem essa graduação, ou o mundo congela (tudo permanente) ou volta a
+   piscar (tudo efêmero). ============================================ */
+
+const semAcento = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+/* palavras que não distinguem uma pergunta de outra — tirá-las faz
+   "tem uma saída pelos fundos?" e "há saída pelos fundos?" serem a
+   MESMA pergunta, que é o ponto inteiro do livro */
+const VAZIAS = new Set(["sera", "que", "por", "acaso", "tem", "ha", "existe", "algum", "alguma", "um", "uma", "o", "a", "os", "as", "de", "do", "da", "dos", "das", "em", "no", "na", "e", "ou", "esse", "essa", "isso", "aqui", "ali", "para", "pra", "com", "se", "eu", "consigo", "posso", "da", "dar", "vale", "esta", "estao"]);
+
+export function chaveDoFato(pergunta, lugar = "") {
+  const nucleo = semAcento(pergunta)
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((p) => p.length > 2 && !VAZIAS.has(p))
+    .sort()
+    .join("-");
+  return `${semAcento(lugar) || "mundo"}|${nucleo}`;
+}
+
+export const DURACOES = {
+  mundo: { id: "permanente", diz: "a forma das coisas não muda porque o dia virou" },
+  social: { id: "dia", diz: "a disposição de alguém muda com o que acontece entre vocês" },
+  perigo: { id: "cena", diz: "onde está a patrulha agora é coisa do instante" },
+};
+export function duracaoDoTipo(tipo) { return DURACOES[tipo] || DURACOES.mundo; }
+
+export function garantirFatos(f) {
+  const o = f && typeof f === "object" ? f : {};
+  const out = {};
+  for (const [k, v] of Object.entries(o)) {
+    if (!v || typeof v !== "object" || !v.grau) continue;
+    out[k] = {
+      grau: String(v.grau),
+      tipo: String(v.tipo || "mundo"),
+      duracao: String(v.duracao || "permanente"),
+      dia: Number(v.dia) || 0,
+      cena: Number(v.cena) || 0,
+      pergunta: String(v.pergunta || "").slice(0, 160),
+    };
+  }
+  return out;
+}
+
+/* Um fato ainda vale? Permanente sempre; do dia, enquanto for o dia;
+   da cena, enquanto for a cena. */
+export function fatoValido(fato, { dia = 0, cena = 0 } = {}) {
+  if (!fato) return false;
+  if (fato.duracao === "permanente") return true;
+  if (fato.duracao === "dia") return Number(fato.dia) === Number(dia);
+  return Number(fato.cena) === Number(cena);
+}
+
+export function registrarFato(fatos, chave, r, { dia = 0, cena = 0 } = {}) {
+  const base = garantirFatos(fatos);
+  const dur = duracaoDoTipo(r.tipo).id;
+  return { ...base, [chave]: { grau: r.grau.id, tipo: r.tipo, duracao: dur, dia, cena, pergunta: r.pergunta } };
+}
+
+/* ============================================================
+   A INICIATIVA DO MUNDO (v9.61)
+
+   "Ele identifica situações e toma decisões, e a genialidade da IA
+   cria a história para aquela situação."
+
+   O mundo passa a se mexer sem ser perguntado. E com UMA TRAVA, que é
+   o que separa isto de um gerador de acontecimentos aleatórios: ele
+   só pode puxar FIO QUE JÁ EXISTE. Um relógio que está quase cheio,
+   um nome do cânone com uma vontade pendente, uma facção em guerra,
+   uma missão com prazo correndo, a nêmese.
+
+   Ele nunca inventa uma trama nova — inventar é da IA, e é a única
+   coisa que ela faz melhor que qualquer código. O que o sistema faz
+   é ESCOLHER qual fio puxar e quando, que é a decisão que a IA fazia
+   mal: ela puxava o fio mais conveniente para a cena que já tinha na
+   cabeça, e por isso o mundo nunca cobrava nada.
+
+   RITMO, e ele é conservador de propósito: a maior parte dos turnos
+   não tem iniciativa nenhuma. Um mundo que interrompe toda hora não
+   é vivo, é barulhento — e o jogador perde a própria cena.
+   ============================================================ */
+export const MOVIMENTOS_DO_MUNDO = [
+  {
+    id: "relogio", peso: 5,
+    quando: (c) => !!(c.relogioQuaseCheio && c.relogioQuaseCheio.nome),
+    fio: (c) => c.relogioQuaseCheio.nome,
+    diz: "algo que já estava se fechando dá mais um passo",
+  },
+  {
+    id: "nemesis", peso: 4,
+    quando: (c) => !!c.nemesis,
+    fio: (c) => c.nemesis,
+    diz: "quem tem contas com você se mexe",
+  },
+  {
+    id: "prazo", peso: 4,
+    quando: (c) => !!(c.missaoComPrazo && c.missaoComPrazo.titulo),
+    fio: (c) => c.missaoComPrazo.titulo,
+    diz: "o prazo aperta e alguém cobra",
+  },
+  {
+    id: "faccao", peso: 3,
+    quando: (c) => !!c.faccaoHostil,
+    fio: (c) => c.faccaoHostil,
+    diz: "quem está em guerra com você age onde você está",
+  },
+  {
+    id: "gente", peso: 3,
+    quando: (c) => !!(c.npcComVontade && c.npcComVontade.nome),
+    fio: (c) => `${c.npcComVontade.nome} (${c.npcComVontade.vontade || "tem um assunto pendente"})`,
+    diz: "alguém desta cidade avança a própria vontade",
+  },
+  {
+    id: "boato", peso: 2,
+    quando: (c) => !!c.emCidade,
+    fio: () => "o que já se comenta por aqui",
+    diz: "a notícia de algo que já aconteceu chega até você",
+  },
+];
+
+/* Com que frequência o mundo se mexe. Cadência larga, e mais larga
+   ainda quando o jogador está no meio de outra coisa — interromper
+   uma luta ou uma masmorra com um boato é roubar a cena dele. */
+export const RITMO_DO_MUNDO = { cada: 6, chance: 45 };
+
+export function podeIniciativa(ctx = {}) {
+  if (ctx.emCombate || ctx.emMasmorra || ctx.emViagem) return false;
+  if (ctx.desdeUltima != null && Number(ctx.desdeUltima) < RITMO_DO_MUNDO.cada) return false;
+  return true;
+}
+
+export function iniciativaDoMundo(ctx = {}, { sorte = Math.random } = {}) {
+  if (!podeIniciativa(ctx)) return null;
+  if (d(100, sorte) > RITMO_DO_MUNDO.chance) return null;
+  const abertos = MOVIMENTOS_DO_MUNDO.filter((m) => { try { return !!m.quando(ctx); } catch { return false; } });
+  if (!abertos.length) return null;
+  /* sorteio por peso: o relógio quase cheio pesa mais que um boato,
+     porque ele é o fio que o próprio jogo já disse que ia estourar */
+  const total = abertos.reduce((n, m) => n + m.peso, 0);
+  let corte = sorte() * total;
+  const m = abertos.find((x) => (corte -= x.peso) <= 0) || abertos[0];
+  let fio = "";
+  try { fio = String(m.fio(ctx) || ""); } catch { fio = ""; }
+  return { id: m.id, diz: m.diz, fio };
+}
+
+export function envelopeDaIniciativa(mv) {
+  if (!mv) return "";
+  return `[O MUNDO SE MEXE — ESCOLHIDO PELO SISTEMA] Enquanto eu fazia o que fiz, ${mv.diz}: ${mv.fio}.
+REGRA DESTE ENVELOPE (obrigatória): este fio JÁ EXISTE no jogo — o sistema o escolheu entre os que estão abertos, e não é sugestão. Traga-o à cena agora, em duas ou três frases, ENTRELAÇADO com o que eu acabei de fazer (não como parágrafo separado, não como "enquanto isso, em outro lugar").
+NÃO invente uma trama nova, NÃO abra um segundo fio, NÃO resolva este aqui e NÃO transforme isto num combate por conta própria. É uma pressão chegando, não um desfecho. Depois devolva a palavra para mim.`;
+}
+
+export function linhaDaIniciativa(mv) {
+  return mv ? `🌍 O mundo se mexe: ${mv.diz}.` : "";
+}
+
+/* Duas linhas. A regra de cumprir o grau vai INTEIRA dentro de cada
+   envelope do oráculo, junto do grau que ela governa — repeti-la aqui era
+   pagar por ela em todo turno para usá-la em um a cada cinquenta. */
 export const ORACULO_PROMPT = `PERGUNTAS AO MUNDO (v9.24):
-- Quando o jogador faz uma pergunta FECHADA sobre algo que o mundo ainda não estabeleceu ("o guarda é subornável?", "tem uma saída pelos fundos?"), quem responde é o SISTEMA, não você. A resposta chega num envelope com um grau — de "não, e ainda por cima" a "sim, e ainda mais".
-- Cumpra o grau ao pé da letra. Você decide COMO aquilo é verdade; nunca SE. Não inverta, não amenize, não transforme em talvez, e não ofereça um caminho alternativo quando a resposta foi não.
-- Nunca antecipe a resposta, nunca a mencione como mecânica, e nunca diga "o mundo decidiu" — narre o fato como sempre foi assim.`;
+- Pergunta FECHADA sobre algo que o mundo ainda não estabeleceu ("o guarda é subornável?", "tem saída pelos fundos?") é respondida pelo SISTEMA, não por você, e chega num envelope com um grau — de "não, e ainda por cima" a "sim, e ainda mais".
+- Nunca antecipe a resposta, nunca a mencione como mecânica e nunca diga "o mundo decidiu": narre o fato como se sempre tivesse sido assim.`;

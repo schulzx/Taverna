@@ -48,7 +48,8 @@ import { montarGrade, garantirGrade, posicionar, posicionarPerto, alcanca, camin
 import { deslocamentoDe, passoEfetivo, passoComSelecao, passoDeHabilidade, deslocamentoDeCriatura, resumoDeslocamento, resumoDeslocamentoPrompt, MOVIMENTO_PROMPT } from "./movimento.js";
 import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPreparada, ehPreparavel, preparadasIniciais, alternarPreparada, podeLancar, ehRitual, motivoDoCaderno, MINUTOS_RITUAL, resumoMagiasPrompt, MAGIAS_PROMPT } from "./magias.js";
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
-import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, ORACULO_PROMPT } from "./oraculo.js";
+import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
+import { decidirTurno, linhaDaDecisao, TURNO_PROMPT } from "./turno.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
 import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
@@ -2909,6 +2910,12 @@ export default function Taverna() {
   /* v9.59: o livro de tentativas. Estado de save porque a memoria do que ja
      foi tentado ONDE e o que separa "tentar de novo" de "insistir". */
   const tentativasRef = useRef(garantirTentativas(null));
+  /* v9.61: a decisao do turno, viva entre o despachante e quem age */
+  const decisaoRef = useRef({ id: "cena", descartadas: [] });
+  /* o livro de fatos do oraculo: resposta dada nao volta a ser pergunta */
+  const fatosRef = useRef(garantirFatos(null));
+  /* quantos turnos desde a ultima vez que o mundo se mexeu sozinho */
+  const desdeMundoRef = useRef(0);
   const baseMundoRef = useRef(garantirBase(null));
   /* A SEMENTE PRECISA VIR DE REF (v9.14). Estas duas funções liam `mundo` e
      `nomeCampanha` do estado — e são chamadas de dentro de aplicarResposta,
@@ -4069,7 +4076,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
+      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -6574,6 +6581,7 @@ export default function Taverna() {
       devocaoRef.current = garantirDevocao(sv.devocao, mapaRef.current, divindadeRef.current); setDevocao(devocaoRef.current);
       baseMundoRef.current = garantirBase(sv.baseMundo); setBaseMundo(baseMundoRef.current);
       tentativasRef.current = garantirTentativas(sv.tentativas);
+      fatosRef.current = garantirFatos(sv.fatos);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
         ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null }
@@ -7252,8 +7260,15 @@ export default function Taverna() {
             sinalViagemRef.current = part.destino || "";
             destinoViagemRef.current = part.destino || "";
             notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(part.destino, cidadeAtualRef.current)}`;
-          } else if (querPartir(acao) && !alvoLocalPedido(acao)) {
+          } else if (querPartir(acao)) {
             /* ---------------- A TAVERNA NÃO É UMA CIDADE (v9.58) ----------------
+               v9.61: o `&& !alvoLocalPedido(acao)` que morava aqui subiu para a
+               tabela do turno, onde a porta "desafio" vem antes da porta
+               "destino". A regra é a mesma; a diferença é que agora ela é
+               DADO, tem teste de regressão com nome, e vale para quem entrar
+               por qualquer porta — inclusive os botões, que foi como ela
+               vazou duas vezes.
+               ------------------------------------------------------------
                `!alvoLocalPedido` é a correção de um bug que custou a mecânica
                inteira. "Vou até o Javali Cambaleante" casa `querPartir` — tem
                "vou ate" —, e o resolver procura o Javali entre as CIDADES do
@@ -7426,9 +7441,58 @@ export default function Taverna() {
     return false;
   };
 
+  /* ---------------- OS SINAIS DO TURNO (v9.61) ----------------
+     O que o sistema sabe ANTES de decidir. Tudo lido, nada agido: é a
+     separação que permite ao despachante ser puro e ao teste ser honesto.
+
+     `temAlvoLocal` é o sinal que não existia e cuja falta custou a mecânica
+     de movimento — sem ele, "vou até o Javali Cambaleante" e "vou até a
+     capital" eram a mesma frase para quem decidia. */
+  const sinaisDoTurno = (acao) => {
+    const ler = (f) => { try { return !!f(); } catch { return false; } };
+    return {
+      texto: acao,
+      ehComando: acao.startsWith("/"),
+      temEscolhaPendente: !!escolhaPendenteRef.current,
+      ehConjuracao: ler(() => magiaDeFuncaoNaAcao(acao)),
+      ehPortal: ler(() => magiaDePortalNaAcao(acao)),
+      ehEntradaEmMasmorra: ler(() => detectarEntradaEmMasmorra(acao, ctxDoRastro())),
+      ehSeguirViagem: ler(() => detectarSeguirViagem(acao, ctxDoRastro())),
+      ehPartidaPorNome: ler(() => detectarPartida(acao, ctxDoRastro())),
+      querPartir: ler(() => querPartir(acao)),
+      temAlvoLocal: ler(() => alvoLocalPedido(acao)),
+      ehDesafio: ler(() => { const v = lerAcao(acao, ctxDesafio()); return v && v.tipo !== "livre"; }),
+      ehPerguntaAoMundo: ler(() => ehPerguntaAoMundo(acao)),
+      temMilagreArmado: !!milagreSel,
+      temHabilidadesSelecionadas: habsSel.length > 0,
+      emCombate: !!combateRef.current,
+      emViagem: !!jornadaRef.current,
+      bloqueado: !!(carregando || rolagem),
+    };
+  };
+  /* o contexto do rastro montado uma vez — três detectores pedem o mesmo */
+  const ctxDoRastro = () => ({
+    cidadeAtual: cidadeAtualRef.current,
+    cidades: ((mapaRef.current || {}).cidades || []).map((c) => c.nome),
+    emCombate: !!combateRef.current, acampado: !!acampadoRef.current,
+    emMasmorra: !!masmorraRef.current, emViagem: !!jornadaRef.current,
+  });
+
   const agirInterno = (texto) => {
     const acao = texto.trim();
     if (!acao || carregando || rolagem) return;
+    /* ---------------- O DESPACHANTE (v9.61) ----------------
+       A ordem do turno deixou de ser o layout deste arquivo e virou uma
+       tabela em `turno.js`. Isto aqui não decide mais nada: pergunta qual
+       porta ganhou e chama quem sabe agir.
+
+       A mudança é pequena na tela e grande embaixo dela. Três bugs desta
+       semana — o resolver comendo o movimento local, o botão do mapa e o
+       painel de Ações — eram todos a mesma coisa: uma regra morando num só
+       de dois caminhos, invisível para qualquer teste de módulo porque o
+       defeito não estava em módulo nenhum, estava na ORDEM. Agora a ordem
+       tem teste, e a decisão diz por que passou por cada porta. */
+    decisaoRef.current = decidirTurno(sinaisDoTurno(acao));
     /* MODO CRIATIVO (v9.10): "/..." é comando de teste. Intercepta ANTES de
        tudo — não vira ação, não vai ao Mestre, não gasta turno nem tokens. */
     if (acao.startsWith("/")) { setEntrada(""); if (executarComando(acao)) return; }
@@ -7447,7 +7511,13 @@ export default function Taverna() {
       } catch { /* conjurar nunca pode custar o turno */ }
       if (feito) { setEntrada(""); return; }
     }
-    if (interceptarMovimento(acao)) { setEntrada(""); return; }
+    /* v9.61: quem decide se este turno é de MOVIMENTO é a tabela, não a
+       posição desta linha no arquivo. As seis portas abaixo são as que
+       `interceptarMovimento` sabe atender; se a decisão foi outra — e
+       "desafio" é a que importa, porque é ela que ganha de "destino" —,
+       este bloco nem é consultado. */
+    const PORTAS_DE_MOVIMENTO = ["resposta", "portal", "masmorra", "seguir", "partida", "destino"];
+    if (PORTAS_DE_MOVIMENTO.includes(decisaoRef.current.id) && interceptarMovimento(acao)) { setEntrada(""); return; }
     /* ---------------- A AÇÃO DECLARADA (v9.59) ----------------
        Era um PEDIDO DE TESTE e virou uma AÇÃO ADJUDICADA. A diferença não é
        de nome: quem pede um teste está pedindo o dado direto, pulando a
@@ -7503,6 +7573,12 @@ export default function Taverna() {
          metade todo prazo já em curso nos saves. */
       turnosDeMundoRef.current += 1;
       if (turnosDeMundoRef.current % 2 === 0) tiquear("turno_mundo", { porque: "o mundo se mexeu enquanto você agia" });
+      /* v9.61: e o mundo pode se mexer POR CONTA PRÓPRIA — puxando um fio que
+         JÁ está aberto, nunca inventando um novo. Aqui, junto do relógio,
+         porque é o mesmo instante: o tempo passou para todos, não só para o
+         herói. Fora de combate, masmorra e estrada, que é onde interromper
+         seria roubar a cena dele. */
+      talvezOMundoSeMexer();
     }
     setEntrada(""); setHabAbertas(false);
     /* MILAGRE ARMADO (v9.28): vem antes das habilidades porque um milagre É o
@@ -9503,12 +9579,51 @@ export default function Taverna() {
       emMasmorra: !!masmorraRef.current,
       emCidade: !!cidadeAtualRef.current && !jornadaRef.current,
       relogiosCheios: (relogiosRef.current || []).filter((x) => x.cheios >= x.segmentos - 1).length,
-    });
+      /* v9.61: o lugar entra na chave do fato — "há saída pelos fundos?" é
+         uma pergunta sobre ESTE prédio, não sobre o mundo em geral. E o dia
+         e a cena decidem quando o fato caduca. */
+      lugar: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "ermo",
+      dia: diaRef.current,
+      cena: turnosDeMundoRef.current,
+    }, { fatos: fatosRef.current });
+    /* resposta dada vira FATO. Sem isto, perguntar duas vezes dava dois
+       mundos, e o jogador aprendia que a realidade aqui é caça-níquel. */
+    if (!r.reusado) fatosRef.current = registrarFato(fatosRef.current, r.chave, r, { dia: diaRef.current, cena: turnosDeMundoRef.current });
     pushMsgs([
       { autor: "jogador", texto: `🔮 ${r.pergunta}` },
-      { autor: "sistema", texto: linhaDaConsulta(r) + (r.porque.length ? `\n   ${r.porque.join(" · ")}` : "") },
+      { autor: "sistema", texto: linhaDaConsulta(r) + (!r.reusado && r.porque.length ? `\n   ${r.porque.join(" · ")}` : "") },
     ]);
     enviar(envelopeDoOraculo(r), p);
+  };
+
+  /* ---------------- O MUNDO SE MEXE SOZINHO (v9.61) ----------------
+     A iniciativa. Ela não inventa nada — escolhe entre os fios que o jogo
+     já tem abertos e diz ao Mestre para trazer ESSE à cena. É a decisão
+     que a IA fazia mal: ela puxava sempre o fio mais conveniente para a
+     cena que já tinha na cabeça, e por isso o mundo nunca cobrava nada. */
+  const talvezOMundoSeMexer = () => {
+    try {
+      desdeMundoRef.current += 1;
+      const rel = (relogiosRef.current || []).find((x) => x.cheios >= x.segmentos - 1);
+      const mis = (missoesRef.current || []).find((m) => m && m.ativa && temPrazo(m));
+      const faccao = (((mapaRef.current || {}).faccoes) || []).find((f) => f.tratado === "guerra");
+      const npcs = (((npcsRef.current || {})[cidadeAtualRef.current] || {}).gente) || [];
+      const alguem = npcs.find((n) => n && n.nome && n.vontade);
+      const mv = iniciativaDoMundo({
+        desdeUltima: desdeMundoRef.current,
+        emCombate: !!combateRef.current, emMasmorra: !!masmorraRef.current, emViagem: !!jornadaRef.current,
+        emCidade: !!cidadeAtualRef.current,
+        relogioQuaseCheio: rel ? { nome: rel.nome } : null,
+        missaoComPrazo: mis ? { titulo: mis.titulo || mis.nome } : null,
+        faccaoHostil: faccao ? faccao.nome : null,
+        npcComVontade: alguem ? { nome: alguem.nome, vontade: alguem.vontade } : null,
+        nemesis: (nemesisRef.current && nemesisRef.current.nome) || null,
+      });
+      if (!mv) return;
+      desdeMundoRef.current = 0;
+      pushMsgs([{ autor: "sistema", texto: linhaDaIniciativa(mv) }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaIniciativa(mv)}`;
+    } catch { /* o mundo se mexer nunca pode custar o turno */ }
   };
 
   /* ---------------- SINTONIA (v9.23) ----------------
