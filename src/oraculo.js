@@ -99,7 +99,13 @@ export function calcularChance(pergunta, ctx = {}) {
     if ((ctx.gd || 0) >= 3) mexer(10, "há algo de divino em você que as pessoas sentem");
   }
   if (tipo === "perigo") {
-    if (ctx.noite) mexer(8, "é noite, e a noite esconde");
+    /* v9.62: a noite é o único fator que muda de SINAL conforme a pergunta.
+       "Há uma emboscada?" — sim, a noite esconde quem espera, e soma. "Alguém
+       me viu?" — a noite esconde a MIM, e subtrai. O fator genérico só vale
+       quando a pergunta é do jogador; quando é uma REGRA perguntando, ela
+       manda a própria conta da noite nos ajustes, e somar as duas fazia o
+       escuro deixar o herói mais visível — que foi o que a suíte flagrou. */
+    if (ctx.noite && !Array.isArray(ctx.ajustes)) mexer(8, "é noite, e a noite esconde");
     if ((ctx.exaustao || 0) >= 2) mexer(-8, "você está exausto e desatento");
     if (ctx.emMasmorra) mexer(10, "masmorra é lugar de armadilha");
     const relogios = Math.max(0, Number(ctx.relogiosCheios) || 0);

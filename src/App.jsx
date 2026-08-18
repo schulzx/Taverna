@@ -9192,6 +9192,16 @@ export default function Taverna() {
 
          Agora quem responde é o oráculo, com o que o código sabe do lugar e
          da hora — e responde ANTES de saber que cena vem depois. */
+      /* FALHAR EM SILÊNCIO NÃO É FALHAR EM SEGREDO (v9.62). Errar a
+         furtividade ou a mão leve não diz, sozinho, que alguém viu — diz que
+         a chance existe. QUEM viu é fato do mundo, e era mais uma decisão
+         que o sistema empurrava para a IA, que escolhia sempre a testemunha
+         que a cena dela pedia. */
+      if (des && des.testemunha && !passou) {
+        const q = perguntarTestemunha(des);
+        pushMsgs([{ autor: "sistema", texto: linhaDaPerguntaDoSistema(q) }]);
+        env = `${envelopeDaPerguntaDoSistema(q, { oQue: `Eu falhei ao ${des.rotulo}` })}\n${env}`;
+      }
       if (des && des.barulho) {
         const q = perguntarBarulho(des);
         pushMsgs([
@@ -9634,6 +9644,23 @@ export default function Taverna() {
     }
     if (ehNoite(minutoRef.current)) base = Math.max(0, base - 1);
     return Math.max(0, Math.min(3, base));
+  };
+
+  /* Quem viu. Mesma máquina do barulho, outra pergunta: a diferença entre
+     ser ouvido e ser visto é a luz, não a gente — por isso a noite pesa
+     muito mais aqui do que no som. */
+  const perguntarTestemunha = (des) => {
+    const onde = lugarRef.current ? comEm(lugarRef.current.nome) : (cidadeAtualRef.current ? `em ${cidadeAtualRef.current}` : "");
+    const q = perguntarPeloSistema("viram", {
+      onde,
+      movimento: movimentoDaqui(),
+      noite: ehNoite(minutoRef.current),
+      emCidade: !!cidadeAtualRef.current,
+      lugar: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "ermo",
+      dia: diaRef.current, cena: turnosDeMundoRef.current,
+    }, { fatos: fatosRef.current });
+    if (q && !q.reusado) fatosRef.current = registrarFato(fatosRef.current, q.chave, q, { dia: diaRef.current, cena: turnosDeMundoRef.current });
+    return q;
   };
 
   /* A regra pergunta ao oráculo em vez de mandar a IA decidir. */

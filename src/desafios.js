@@ -242,13 +242,13 @@ export const DESAFIOS = [
   {
     id: "furtar_se",
     rx: /\b(me esgueiro|esgueir|na surdina|sem ser vist|sorrateir|em sil[eê]ncio at[eé]|me escondo|fico na sombra|sigo sem que)/,
-    pericia: "furtividade", alvo: "furtividade", minutos: 5, barulho: false,
+    pericia: "furtividade", alvo: "furtividade", minutos: 5, barulho: false, testemunha: true,
     rotulo: "passar sem ser visto", dcPadrao: 14,
   },
   {
     id: "bater_carteira",
     rx: /\b(bato a carteira|surrupi|furto (a|o|dele|dela)|punguei|punho a bolsa|tiro do bolso dele|roubo a bolsa|planto)/,
-    pericia: "prestidigitacao", alvo: "furto", minutos: 1, barulho: false,
+    pericia: "prestidigitacao", alvo: "furto", minutos: 1, barulho: false, testemunha: true,
     rotulo: "mão leve", dcPadrao: 15,
   },
   {
@@ -575,6 +575,10 @@ export function lerAcao(texto, ctx = {}) {
     minutos: (via ? via.minutos : d.minutos) || 0,
     barulho: via ? via.barulho : !!d.barulho,
     corpo: !!d.corpo, social: !!d.social,
+    /* v9.62: falhar em silêncio não é falhar em segredo. Quando esta ação
+       falha, QUEM viu é fato do mundo, e o sistema pergunta em vez de
+       deixar a IA escolher a testemunha que a cena dela pedia. */
+    testemunha: !!d.testemunha,
     via: via ? via.id : "", viaNome: via ? via.nome : "",
     falaDaVia: via ? via.falha : "",
     achado: achado || null,
