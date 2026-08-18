@@ -48,7 +48,7 @@ import { montarGrade, garantirGrade, posicionar, posicionarPerto, alcanca, camin
 import { deslocamentoDe, passoEfetivo, passoComSelecao, passoDeHabilidade, deslocamentoDeCriatura, resumoDeslocamento, resumoDeslocamentoPrompt, MOVIMENTO_PROMPT } from "./movimento.js";
 import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPreparada, ehPreparavel, preparadasIniciais, alternarPreparada, podeLancar, ehRitual, motivoDoCaderno, MINUTOS_RITUAL, resumoMagiasPrompt, MAGIAS_PROMPT } from "./magias.js";
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
-import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
+import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, perguntarPeloSistema, envelopeDaPerguntaDoSistema, linhaDaPerguntaDoSistema, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
 import { decidirTurno, linhaDaDecisao, TURNO_PROMPT } from "./turno.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
 import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
@@ -9182,9 +9182,23 @@ export default function Taverna() {
           tipo: r.tipo, pericia: r.pericia, nivelTreino: r.nivelTreino, motivo: r.motivo,
           valor, mod, total, dc, resultado: passou ? "sucesso" : "falha", critico, desastre,
         });
+      /* ---------------- O BARULHO PARA DE SER DELEGADO (v9.62) ----------------
+         O envelope antigo dizia "se houver alguém por perto, ELE OUVIU —
+         isto é seu para narrar". Era o sistema pedindo à IA que decidisse um
+         fato do mundo, e no pior lugar possível: a IA decide olhando a cena
+         que ela quer contar, então o barulho acordava a casa quando a
+         história precisava de tensão e não acordava ninguém quando não
+         precisava. Deixava de ser consequência e virava tempero.
+
+         Agora quem responde é o oráculo, com o que o código sabe do lugar e
+         da hora — e responde ANTES de saber que cena vem depois. */
       if (des && des.barulho) {
-        pushMsgs([{ autor: "sistema", texto: `🔊 ${des.viaNome || "Assim"} faz barulho — quem estiver por perto ouviu.` }]);
-        env = `${envelopeDoBarulho(des.rotulo, passou)}\n${env}`;
+        const q = perguntarBarulho(des);
+        pushMsgs([
+          { autor: "sistema", texto: `🔊 ${des.viaNome || "Assim"} faz barulho.` },
+          { autor: "sistema", texto: linhaDaPerguntaDoSistema(q) },
+        ]);
+        env = `${envelopeDaPerguntaDoSistema(q, { oQue: `Eu fiz barulho ao ${des.rotulo}` })}\n${env}`;
       }
       /* base no REF, não no estado: o prêmio de heroísmo logo acima pode ter
          acabado de mexer na ficha, e `personagem` ainda é o valor do render. */
@@ -9594,6 +9608,49 @@ export default function Taverna() {
       { autor: "sistema", texto: linhaDaConsulta(r) + (!r.reusado && r.porque.length ? `\n   ${r.porque.join(" · ")}` : "") },
     ]);
     enviar(envelopeDoOraculo(r), p);
+  };
+
+  /* ---------------- QUANTA GENTE HÁ AO ALCANCE DO OUVIDO (v9.62) ----------------
+     O que a regra sabe e o oráculo não tem como saber: onde o herói está.
+     Um salão de taverna às nove da noite e um corredor de cripta são o mesmo
+     "dentro de um prédio" para quem só lê a pergunta — e são o oposto para
+     quem responde se alguém ouviu.
+
+     Zero a três, e a escala sai do TIPO do lugar e do porte da cidade, que o
+     sistema já gerou. Nada aqui é sorteado. */
+  const movimentoDaqui = () => {
+    const cid = cidadeSobOsPes();
+    const dentro = lugarRef.current;
+    if (masmorraRef.current) return 0;
+    if (!cid) return jornadaRef.current ? 0 : 1;
+    const pop = Number(cid.populacao) || 0;
+    let base = pop >= 20000 ? 3 : pop >= 4000 ? 2 : 1;
+    if (dentro) {
+      const n = semNome(dentro.nome);
+      /* onde se bebe e se negocia há gente; onde se enterra e se tranca, não */
+      if (/taverna|salao|mercado|feira|praca|banho|arena|guilda|estalagem|cais|doca/.test(n)) base = 3;
+      else if (/cripta|jazigo|ossuario|adega|porao|cela|cadeia|cofre|arquivo|reserva|deposito|quarto|sotao/.test(n)) base = Math.max(0, base - 2);
+      else base = Math.max(0, base - 1);
+    }
+    if (ehNoite(minutoRef.current)) base = Math.max(0, base - 1);
+    return Math.max(0, Math.min(3, base));
+  };
+
+  /* A regra pergunta ao oráculo em vez de mandar a IA decidir. */
+  const perguntarBarulho = (des) => {
+    const onde = lugarRef.current ? comEm(lugarRef.current.nome) : (cidadeAtualRef.current ? `em ${cidadeAtualRef.current}` : "");
+    const q = perguntarPeloSistema("ouviram", {
+      onde,
+      movimento: movimentoDaqui(),
+      noite: ehNoite(minutoRef.current),
+      dentroDeUmPredio: !!(lugarRef.current && lugarRef.current.distancia === "dentro"),
+      emMasmorra: !!masmorraRef.current,
+      emCidade: !!cidadeAtualRef.current,
+      lugar: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "ermo",
+      dia: diaRef.current, cena: turnosDeMundoRef.current,
+    }, { fatos: fatosRef.current });
+    if (q && !q.reusado) fatosRef.current = registrarFato(fatosRef.current, q.chave, q, { dia: diaRef.current, cena: turnosDeMundoRef.current });
+    return q;
   };
 
   /* ---------------- O MUNDO SE MEXE SOZINHO (v9.61) ----------------

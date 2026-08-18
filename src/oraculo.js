@@ -82,7 +82,11 @@ export function tipoDaPergunta(texto) {
 }
 
 export function calcularChance(pergunta, ctx = {}) {
-  const tipo = tipoDaPergunta(pergunta);
+  /* `tipoForcado` existe porque a regra que pergunta SABE de que espécie é a
+     pergunta dela, e adivinhar pelo texto erraria: "alguém ouviu o barulho?"
+     não tem nenhuma palavra da tabela de perigo, cairia em "mundo" e viraria
+     fato PERMANENTE — o corredor ficaria vazio para o resto da campanha. */
+  const tipo = (ctx.tipoForcado && TIPOS[ctx.tipoForcado]) ? ctx.tipoForcado : tipoDaPergunta(pergunta);
   let c = 50;
   const por = [];
   const mexer = (delta, motivo) => { if (!delta) return; c += delta; por.push(`${delta > 0 ? "+" : ""}${delta} ${motivo}`); };
@@ -108,6 +112,17 @@ export function calcularChance(pergunta, ctx = {}) {
   /* o peso que o jogador escolheu: ele sabe o que a ficção já sugeriu */
   if (ctx.inclinacao === "provavel") mexer(20, "a cena já apontava para isso");
   if (ctx.inclinacao === "improvavel") mexer(-20, "a cena já apontava contra");
+  /* ---------------- O QUE A REGRA SABE (v9.62) ----------------
+     Quando quem pergunta é uma REGRA e não o jogador, ela chega sabendo
+     coisas que o oráculo não tem como saber sozinho: que este prédio é uma
+     taverna cheia às nove da noite, que a porta dá para um beco, que o
+     herói está sozinho num corredor de cripta. Cada ajuste vem com o seu
+     motivo porque a lista vai para a tela — número sem causa é dado
+     disfarçado de sistema, e isso vale igual para as perguntas que o
+     sistema faz a si mesmo. */
+  for (const a of (Array.isArray(ctx.ajustes) ? ctx.ajustes : [])) {
+    if (a && Number.isFinite(Number(a.delta))) mexer(Math.round(Number(a.delta)), String(a.motivo || "o que a cena já era"));
+  }
 
   c = Math.max(5, Math.min(95, Math.round(c)));
   return { chance: c, tipo, porque: por, faixa: faixaPorChance(c) };
@@ -259,6 +274,117 @@ export function registrarFato(fatos, chave, r, { dia = 0, cena = 0 } = {}) {
   const base = garantirFatos(fatos);
   const dur = duracaoDoTipo(r.tipo).id;
   return { ...base, [chave]: { grau: r.grau.id, tipo: r.tipo, duracao: dur, dia, cena, pergunta: r.pergunta } };
+}
+
+/* ============================================================
+   AS PERGUNTAS QUE O SISTEMA FAZ A SI MESMO (v9.62)
+
+   Ontem eu escrevi este envelope, e ele estava errado:
+
+     "Se houver alguém por perto — dono, guarda, morador —, ELE OUVIU.
+      Isto é seu para narrar."
+
+   É o sistema pedindo à IA que decida um FATO DO MUNDO. E é o pior
+   lugar para pedir: a IA decide olhando a cena que ela quer contar, e
+   por isso a resposta é sempre a conveniente — arrombar acorda a casa
+   quando a história precisa de tensão, e não acorda ninguém quando ela
+   não precisa. O barulho deixa de ser consequência e vira tempero.
+
+   O oráculo existe exatamente para responder isso, e a diferença é
+   que ele responde ANTES de saber que cena vem depois.
+
+   O QUE MUDA NA PRÁTICA: a regra para de delegar. Ela pergunta, o
+   oráculo responde com o que o código sabe do lugar e da hora, a
+   resposta vira fato no livro, e o Mestre recebe pronto: "ninguém
+   ouviu" ou "alguém ouviu, e é isto que ele faz agora".
+
+   E o oráculo não sabe sozinho se aqui é uma taverna cheia às nove da
+   noite ou um corredor de cripta — quem sabe é a regra que pergunta.
+   Por isso ela manda AJUSTES junto, cada um com o seu motivo.
+   ============================================================ */
+export const PERGUNTAS_DO_SISTEMA = [
+  {
+    id: "ouviram",
+    tipo: "perigo",
+    pergunta: (c) => `alguém ouviu o barulho${c.onde ? ` ${c.onde}` : ""}?`,
+    /* a régua: quanta gente há ao alcance do ouvido, e o quanto a hora
+       ajuda a esconder. Nada disso é sorteado — sai do lugar e do relógio. */
+    ajustes: (c) => {
+      const a = [];
+      const mov = Number(c.movimento);
+      if (Number.isFinite(mov)) {
+        if (mov >= 3) a.push({ delta: 25, motivo: "este lugar está cheio de gente" });
+        else if (mov === 2) a.push({ delta: 12, motivo: "há movimento por aqui" });
+        else if (mov === 1) a.push({ delta: -5, motivo: "há pouca gente por perto" });
+        else a.push({ delta: -25, motivo: "não há vivalma por perto" });
+      }
+      if (c.noite) a.push({ delta: -10, motivo: "é noite e quase todos dormem" });
+      if (c.dentroDeUmPredio) a.push({ delta: 10, motivo: "paredes de prédio devolvem o som para dentro" });
+      if (c.emMasmorra) a.push({ delta: -12, motivo: "aqui embaixo não há quem ouça — ou não deveria haver" });
+      return a;
+    },
+    /* o que o Mestre faz com cada lado da resposta */
+    seSim: "alguém ouviu, e vem ver, ou já sabe. Mostre quem — dono, guarda, morador, o que dorme no andar de baixo — e o que essa pessoa faz AGORA. Não resolva a consequência inteira: mostre-a chegando.",
+    seNao: "ninguém ouviu. Diga isso pela cena, em uma frase — o corredor vazio, a casa que não acorda — e siga. NÃO invente uma testemunha depois.",
+  },
+  {
+    id: "viram",
+    tipo: "perigo",
+    pergunta: (c) => `alguém viu${c.onde ? ` ${c.onde}` : ""}?`,
+    ajustes: (c) => {
+      const a = [];
+      const mov = Number(c.movimento);
+      if (Number.isFinite(mov)) a.push(mov >= 2 ? { delta: 20, motivo: "há olhos por toda parte aqui" } : { delta: -15, motivo: "há pouca gente para ver" });
+      if (c.noite) a.push({ delta: -15, motivo: "no escuro se vê pouco" });
+      return a;
+    },
+    seSim: "alguém viu. Mostre quem, e o que essa pessoa faz com o que viu — falar, calar, cobrar, seguir.",
+    seNao: "ninguém viu. O gesto passou despercebido; diga isso em uma frase e siga, sem plantar uma testemunha depois.",
+  },
+  {
+    id: "vigiado",
+    tipo: "perigo",
+    pergunta: (c) => `este lugar está sendo vigiado${c.onde ? ` ${c.onde}` : ""}?`,
+    ajustes: (c) => {
+      const a = [];
+      if (c.valioso) a.push({ delta: 20, motivo: "o que se guarda aqui vale a pena vigiar" });
+      if (c.noite) a.push({ delta: 8, motivo: "é de noite que se põe vigia" });
+      if (c.emCidade) a.push({ delta: 6, motivo: "cidade tem guarda" });
+      return a;
+    },
+    seSim: "há vigia. Mostre onde e como — não como emboscada pronta, mas como um problema visível a tempo de ser resolvido.",
+    seNao: "não há vigia nenhuma. Não invente uma para dar tensão à cena.",
+  },
+];
+
+export function perguntaDoSistemaPorId(id) { return PERGUNTAS_DO_SISTEMA.find((p) => p.id === id) || null; }
+
+/* A regra pergunta; o oráculo responde. Mesma máquina da pergunta do
+   jogador — mesma chance derivada, mesmo livro de fatos, mesmos seis
+   graus —, só que o texto da pergunta é canônico, para que duas regras
+   perguntando a mesma coisa no mesmo lugar recebam a MESMA resposta. */
+export function perguntarPeloSistema(id, ctx = {}, { sorte = Math.random, fatos = null } = {}) {
+  const q = perguntaDoSistemaPorId(id);
+  if (!q) return null;
+  const texto = q.pergunta(ctx);
+  let ajustes = [];
+  try { ajustes = q.ajustes(ctx) || []; } catch { ajustes = []; }
+  const r = consultar(texto, { ...ctx, ajustes, tipoForcado: q.tipo }, { sorte, fatos });
+  return { ...r, deQuem: id, seSim: q.seSim, seNao: q.seNao };
+}
+
+export function envelopeDaPerguntaDoSistema(r, { oQue = "o que eu fiz" } = {}) {
+  if (!r) return "";
+  const passou = /^sim/.test(r.grau.id);
+  const conta = r.reusado ? "o mundo já tinha respondido isto" : `chance ${r.chance}% — ${r.faixa.rotulo}, rolou ${r.rolo}`;
+  return `[O MUNDO RESPONDE — PERGUNTADO PELO PRÓPRIO SISTEMA] ${oQue}. O sistema perguntou ao mundo: "${r.pergunta}" (${conta}). A resposta é ${r.grau.rotulo.toUpperCase()}.
+REGRA DESTE ENVELOPE (obrigatória): isto é FATO, decidido antes de você saber que cena viria. ${passou ? r.seSim : r.seNao} ${r.grau.guia}
+Não inverta, não amenize, não deixe ambíguo e não mencione oráculo, chance, dado nem sistema.`;
+}
+
+export function linhaDaPerguntaDoSistema(r) {
+  if (!r) return "";
+  return `🔮 ${r.pergunta} — ${r.reusado ? "já respondido" : `${r.chance}%, rolou ${r.rolo}`}: ${r.grau.rotulo}`;
 }
 
 /* ============================================================
