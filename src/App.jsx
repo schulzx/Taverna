@@ -51,7 +51,7 @@ import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidat
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, perguntarPeloSistema, envelopeDaPerguntaDoSistema, linhaDaPerguntaDoSistema, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
 import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao, TURNO_PROMPT } from "./turno.js";
 import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobrancaNegada } from "./cobranca.js";
-import { garantirMesa, anotarTurno, temperaturaDaMesa, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
+import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
 import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
@@ -62,7 +62,7 @@ import { abrirViagem, andar, pausarViagem, retomarViagem, progressoDaViagem, com
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
 import { garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
-import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
+import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
@@ -3610,7 +3610,10 @@ export default function Taverna() {
     if (!moverParaLocal(alvo)) return;
     /* v9.69: o botão é um turno como qualquer outro, e o mundo tem de
        saber disso. Sem esta linha, atravessar a cidade pela planta era o
-       único jeito de fazer o tempo passar sem que nada se mexesse. */
+       único jeito de fazer o tempo passar sem que nada se mexesse.
+       v9.72: e atravessar a cidade É o pilar do mundo lá fora — aqui não
+       há texto de jogador para ler, então o pilar vem do próprio botão. */
+    texturaRef.current = { ...texturaRef.current, pilar: "exploracao" };
     marcarTurnoDoMundo();
     enviar(`Vou até ${alvo.nome}.`, personagem);
   };
@@ -7676,6 +7679,13 @@ export default function Taverna() {
        defeito não estava em módulo nenhum, estava na ORDEM. Agora a ordem
        tem teste, e a decisão diz por que passou por cada porta. */
     ultimoDesfechoRef.current = null;
+    /* v9.72: o pilar do turno sai do que o JOGADOR escreveu, e não só do
+       desafio que rolou. A leitura antiga servia ao turno com dado e
+       deixava de fora o que mais acontece — a conversa: um turno inteiro
+       de taverna entrava como pilar nenhum, e uma campanha feita de
+       taverna podia acusar fome de "a gente". Quem rolar dado depois
+       sobrescreve isto, porque o desafio é a leitura mais firme. */
+    texturaRef.current = { ...texturaRef.current, pilar: pilarDoTexto(acao) };
     const sinais = sinaisDoTurno(acao);
     decisaoRef.current = decidirTurno(sinais);
     const cascata = cascataDoTurno(sinais);
@@ -9814,6 +9824,13 @@ export default function Taverna() {
          não descreve o que aconteceu — e sem fechar, insistir custaria o
          tempo de novo para receber o mesmo silêncio do livro de fatos. */
       limpo: limpo === null ? !!(v.fechaDepois && passou) : !!limpo,
+      /* v9.72: como a coisa se escreve, para o fracasso poder virar frase
+         mais tarde. A chave é normalizada porque precisa casar; estas duas
+         existem porque o livro sabia que o herói tinha falhado e não sabia
+         dizer em quê — e era por isso que o fio do fracasso, o mais forte
+         dos seis da memória, não tinha fonte nenhuma. */
+      rotulo: `${v.rotulo || ""}${v.viaNome ? ` ${v.viaNome}` : ""}`.trim(),
+      onde: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "",
     });
   };
 
@@ -10410,7 +10427,7 @@ export default function Taverna() {
              passou vidas inteiras de campanha calado (v9.71). */
           promessaAberta: (missoesAtivas(missoesRef.current) || []).map((m) => m.titulo).filter(Boolean)[0] || "",
           nomeEsquecido: longe.length ? { nome: longe[0].nome, vontade: longe[0].vontade || "" } : null,
-          tentativaFalha: "",
+          tentativaFalha: (fracassoEsquecido(tentativasRef.current, { dia: diaRef.current }) || {}).frase || "",
           derrotado: derrotadosDaSessaoRef.current[derrotadosDaSessaoRef.current.length - 1] || "",
           cicatriz: cic ? `${cic.nome} — ${cic.descricao || ""}`.trim() : "",
           lugarAbandonado: lug.length ? lug[lug.length - 1].nome : "",

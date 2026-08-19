@@ -268,6 +268,49 @@ export const PILARES = [
 
 export function pilarPorId(id) { return PILARES.find((p) => p.id === id) || null; }
 
+/* ---------------- DE ONDE SAI O PILAR DE UM TURNO (v9.72) ----------------
+   A primeira versão lia o pilar SÓ do desafio que rolou. Servia para o
+   turno com dado e deixava de fora justamente o que mais acontece: a
+   conversa. Um turno inteiro de taverna — o herói falando com três
+   pessoas, sem tocar num dado — entrava como `null`, e então uma campanha
+   feita de taverna podia acusar fome de "a gente". O holofote apontava
+   para a luz acesa.
+
+   O sinal aqui é o TEXTO DO JOGADOR, e ele é honesto por um motivo: o
+   pilar não pergunta o que existe na cena, pergunta que tipo de jogo o
+   jogador acabou de jogar. Quem escreve "pergunto ao ferreiro" jogou o
+   pilar social, esteja o ferreiro registrado no elenco ou não — e é essa
+   a diferença para `pessoaNaFrente`, que depende do cadastro e devolve
+   nada numa cidade cujos nomes o Mestre ainda não registrou.
+
+   O falso positivo aqui é barato: o pilar só sugere um LADO ao envelope
+   do fio, e o envelope já manda não forçar se não couber. */
+export const SINAIS_DO_PILAR = [
+  {
+    pilar: "social",
+    /* fala dirigida a alguém, ou a fala do próprio herói entre aspas */
+    rx: /\b(digo|falo|pergunto|respondo|conto|comento|converso|puxo conversa|cumprimento|pe[cç]o|agrade[cç]o|explico|proponho|ofere[cç]o|negocio|barganho|discuto|grito com|sussurro (para|a)|chamo|me apresento|elogio|amea[cç]o|convido|insisto com|interrogo|indago)\b|["“][^"”]{4,}["”]/,
+    porque: "quem escreve a própria fala está jogando o pilar da gente, e isso não depende de o Mestre já ter registrado o nome de quem ouve",
+  },
+  {
+    pilar: "exploracao",
+    rx: /\b(vou at[ée]|sigo|caminho|ando at[ée]|entro|saio|subo|des[cç]o|atravesso|volto|parto|viajo|exploro|percorro|olho em volta|observo|examino|vasculho|procuro|investigo|escalo|avan[cç]o|rastreio|acampo)\b/,
+    porque: "mexer o corpo pelo mundo é o outro pilar, e ele é o que some primeiro numa campanha que virou conversa",
+  },
+];
+
+export function pilarDoTexto(texto) {
+  const t = String(texto || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  if (!t.trim()) return null;
+  /* a conversa ganha do deslocamento de propósito: "vou até a elfa e digo
+     que ela caiu do céu" é uma cena social com um passo de caminhada
+     dentro, não uma caminhada com uma fala dentro */
+  for (const s of SINAIS_DO_PILAR) {
+    try { if (s.rx.test(t)) return s.pilar; } catch { /* regex nunca custa o turno */ }
+  }
+  return null;
+}
+
 export function pilarFaminto(mesa) {
   const m = garantirMesa(mesa);
   /* janela curta demais não sustenta a conclusão: dizer que a luta está

@@ -1032,20 +1032,43 @@ decide alguma coisa.
   a v9.61 o escreveu. Regra escrita sem código atrás na forma mais
   silenciosa que ela tem: a que não quebra nada, só não acontece.
 
-### O que fica aberto aqui
+### As duas metades que faltavam — v9.72
 
-- **O holofote não tem como ver o pilar social direito.** O pilar de um
-  turno sai do desafio que rolou (`social` ou `exploracao`) e da luta. Um
-  turno de pura conversa, sem dado nenhum, entra como `null` — então uma
-  campanha inteira de taverna pode acusar fome de "a gente". Não custa
-  caro (o pilar só sugere um lado ao envelope do fio), mas a leitura certa
-  precisaria de um sinal barato de "houve pessoa nesta cena", e
-  `pessoaNaFrente` só responde sobre quem está no elenco registrado.
+- **~~O holofote não via o pilar social.~~** RESOLVIDO. O pilar saía só do
+  desafio que rolou, então servia ao turno com dado e deixava de fora o
+  que mais acontece: a conversa. Um turno inteiro de taverna entrava como
+  `null`, e uma campanha feita de taverna podia acusar fome de "a gente" —
+  o holofote apontando para a luz acesa.
 
-- **`tentativaFalha` está sempre vazio.** O fio existe na tabela e o livro
-  de tentativas tem o dado — falta ligar a chave da tentativa fracassada a
-  uma frase legível. É o fio mais mulliganesco dos seis e é o único que
-  ainda não tem fonte.
+  O sinal agora é o **texto do jogador**, e ele é honesto por um motivo: o
+  pilar não pergunta o que existe na cena, pergunta que tipo de jogo o
+  jogador acabou de jogar. Quem escreve "pergunto ao ferreiro" jogou o
+  pilar social, esteja o ferreiro registrado no elenco ou não — e é essa a
+  diferença para `pessoaNaFrente`, que depende do cadastro e devolve nada
+  numa cidade cujos nomes o Mestre ainda não registrou. A conversa ganha
+  do deslocamento de propósito: *"vou até a elfa e digo que ela caiu do
+  céu"* é uma cena social com um passo de caminhada dentro, não o
+  contrário. O botão da planta marca o próprio pilar, porque ali não há
+  texto de jogador para ler.
+
+  O falso positivo aqui é barato: o pilar só sugere um lado ao envelope do
+  fio, e o envelope já manda não forçar se não couber.
+
+- **~~`tentativaFalha` estava sempre vazio.~~** RESOLVIDO. O fio mais forte
+  dos seis nasceu sem fonte: o livro de tentativas sabia que o herói tinha
+  falhado e **não sabia dizer em quê**, porque a chave é normalizada
+  (minúscula, sem acento) e não há texto legível nela.
+
+  O livro agora guarda também como a coisa se escreve, e `fracassoEsquecido`
+  lê de volta com três filtros — só falha, nada de lugar já esgotado, e
+  nada de hoje (o que aconteceu neste mesmo dia ainda está na cena; trazê-lo
+  de volta como memória é a cara de um sistema mal ajustado). Vence o mais
+  antigo, que é o mais esquecido. E insistir **refresca a data**: quem
+  tentou ontem não abandonou nada, e sai da fila do esquecimento.
+
+  O texto é o do primeiro registro — reescrevê-lo a cada insistência
+  trocaria a lembrança pela última tentativa. Save antigo, sem rótulo, não
+  vira frase e não quebra nada.
 
 ## Mestre e prompt
 

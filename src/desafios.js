@@ -690,6 +690,13 @@ export function garantirTentativas(t) {
       resultado: v.resultado === "sucesso" ? "sucesso" : "falha",
       limpo: !!v.limpo,      // o lugar não tem mais nada a dar
       vezes: Number(v.vezes) || 1,
+      /* v9.72: a chave é normalizada (minúscula, sem acento) porque ela
+         precisa casar; estas duas guardam como a coisa se ESCREVE, para o
+         fracasso poder virar frase depois. Sem elas o livro sabia que o
+         herói tinha falhado e não sabia dizer em quê — que é a razão de
+         `tentativaFalha` ter nascido sem fonte em `mestria.js`. */
+      rotulo: typeof v.rotulo === "string" ? v.rotulo.slice(0, 60) : "",
+      onde: typeof v.onde === "string" ? v.onde.slice(0, 60) : "",
     };
   }
   return out;
@@ -699,9 +706,9 @@ export function chaveDaTentativa(lugar, alvo) {
   return `${norm(lugar) || "aqui"}|${norm(alvo) || "acao"}`;
 }
 
-export function registrarTentativa(reg, chave, { via = "", resultado = "falha", dia = 0, limpo = false } = {}) {
+export function registrarTentativa(reg, chave, { via = "", resultado = "falha", dia = 0, limpo = false, rotulo = "", onde = "" } = {}) {
   const base = garantirTentativas(reg);
-  const antes = base[chave] || { vias: [], dia, resultado: "falha", limpo: false, vezes: 0 };
+  const antes = base[chave] || { vias: [], dia, resultado: "falha", limpo: false, vezes: 0, rotulo: "", onde: "" };
   return {
     ...base,
     [chave]: {
@@ -709,7 +716,48 @@ export function registrarTentativa(reg, chave, { via = "", resultado = "falha", 
       dia, resultado,
       limpo: limpo || antes.limpo,
       vezes: (antes.vezes || 0) + 1,
+      /* o primeiro registro manda no texto: é o rótulo de quando a coisa
+         ainda era nova, e reescrevê-lo a cada insistência trocaria a
+         lembrança pela última tentativa */
+      rotulo: antes.rotulo || String(rotulo || "").slice(0, 60),
+      onde: antes.onde || String(onde || "").slice(0, 60),
     },
+  };
+}
+
+/* ============================================================
+   O FRACASSO QUE FICOU PARA TRÁS (v9.72)
+
+   "Falhar tem de mover a história" — e a falha que não move nada é a que
+   ensina o jogador a não arriscar. O livro de tentativas já guardava
+   tudo: o que foi tentado, onde, em que dia, quantas vezes. O que
+   faltava era a leitura de VOLTA — alguém perguntando ao livro "em que
+   este herói falhou e nunca mais voltou?".
+
+   TRÊS FILTROS, e cada um tira um jeito de a lembrança sair errada:
+
+   1. Só falha. Sucesso não é fio pendente.
+   2. Nada de `limpo`: um lugar que já se sabe vazio não tem o que cobrar.
+   3. Nada de HOJE. O que aconteceu neste mesmo dia ainda está na cena —
+      trazê-lo de volta como memória seria o mundo lembrando de algo que
+      o jogador acabou de fazer, que é a cara de um sistema mal ajustado.
+
+   Vence o MAIS ANTIGO, que é o mais esquecido, e é essa a graça.
+   ============================================================ */
+export function fracassoEsquecido(reg, { dia = 0 } = {}) {
+  const base = garantirTentativas(reg);
+  let melhor = null;
+  for (const [chave, v] of Object.entries(base)) {
+    if (v.resultado !== "falha" || v.limpo) continue;
+    if (!v.rotulo) continue;                       // sem texto não vira frase
+    if (Number(dia) - Number(v.dia || 0) < 1) continue;
+    if (!melhor || v.dia < melhor.dia) melhor = { chave, ...v };
+  }
+  if (!melhor) return null;
+  return {
+    chave: melhor.chave, rotulo: melhor.rotulo, onde: melhor.onde, dia: melhor.dia,
+    vezes: melhor.vezes,
+    frase: `${melhor.rotulo}${melhor.onde ? ` — ${melhor.onde}` : ""}, no dia ${melhor.dia}${melhor.vezes > 1 ? `, e você tentou ${melhor.vezes} vezes` : ""}`,
   };
 }
 
