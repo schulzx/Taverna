@@ -179,9 +179,23 @@ REGRA DESTE ENVELOPE (obrigatória): não houve rolagem nova porque não havia o
 REGRA DESTE ENVELOPE (obrigatória): esta resposta é FATO do mundo, não sugestão. ${r.grau.guia} Você decide COMO isso é verdade — quem, por quê, com que cara — mas nunca SE. Não inverta, não amenize, não transforme em "talvez", e não mencione oráculo, chance, dado ou sistema. Responda em duas ou três frases e devolva a palavra para mim.`;
 }
 
+/* ---------------- O QUE APARECE NA TELA (v9.70) ----------------
+   Antes: `🔮 "há saída pelos fundos?" — no fio (58%), rolou 93: Não, e
+   ainda por cima… +8 cidade tem de tudo`.
+
+   O jogador perguntou uma coisa ao mundo e recebeu de volta uma
+   auditoria. A chance, a faixa, o número rolado e a lista de fatores são
+   o sistema explicando a si mesmo — e nada disso é jogável: não muda o
+   que ele pode fazer no turno seguinte, não é uma escolha e não é uma
+   informação do mundo. É o motor aparecendo.
+
+   Fica o que é gameplay: a pergunta e a resposta. O dado do TESTE
+   continua na tela inteiro, e a diferença entre os dois casos é o que
+   define a régua: no teste o jogador torce pelo número, e ver o número é
+   metade da graça; no oráculo ele quer saber do mundo, e o número é
+   contabilidade. */
 export function linhaDaConsulta(r) {
-  if (r.reusado) return `🔮 "${r.pergunta}" — o mundo já respondeu isto: ${r.grau.rotulo}`;
-  return `🔮 "${r.pergunta}" — ${r.faixa.rotulo} (${r.chance}%), rolou ${r.rolo}: ${r.grau.rotulo}`;
+  return `🔮 "${r.pergunta}" — ${r.grau.rotulo}`;
 }
 
 /* ---------------- DETECTAR NO TEXTO ----------------
@@ -475,10 +489,24 @@ REGRA DESTE ENVELOPE (obrigatória): isto é FATO, decidido antes de você saber
 Não inverta, não amenize, não deixe ambíguo e não mencione oráculo, chance, dado nem sistema.`;
 }
 
-export function linhaDaPerguntaDoSistema(r) {
-  if (!r) return "";
-  return `🔮 ${r.pergunta} — ${r.reusado ? "já respondido" : `${r.chance}%, rolou ${r.rolo}`}: ${r.grau.rotulo}`;
-}
+/* ---------------- A PERGUNTA QUE NÃO APARECE (v9.70) ----------------
+   Devolve string vazia, e é de propósito.
+
+   Estas perguntas são o SISTEMA falando consigo mesmo: ninguém as fez.
+   O jogador arrombou uma porta; que o motor tenha consultado o mundo
+   sobre quem ouviu não é informação dele — a consequência chega pela
+   cena, que é onde ela pertence.
+
+   E havia um problema pior que o ruído: VAZAMENTO. "há algo para
+   escutar? — Sim" aparecia ANTES do teste, então o jogador já sabia que
+   havia o que ouvir antes de o herói ter ouvido. "há vigia? — Sim"
+   entregava o vigia antes da tentativa. O motor estava contando o final
+   do filme para justificar o próprio trabalho.
+
+   A função fica — o teste ainda a exercita, e um dia pode haver uma
+   janela de diagnóstico onde ela caiba. O que ela não faz mais é ir
+   para a conversa. */
+export function linhaDaPerguntaDoSistema() { return ""; }
 
 /* ============================================================
    A INICIATIVA DO MUNDO (v9.61)

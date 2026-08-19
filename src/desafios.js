@@ -340,6 +340,43 @@ export const DESAFIOS = [
     rotulo: "convencer", dcPadrao: DC("incomum"), social: true,
   },
   {
+    /* ---------------- A APROXIMAÇÃO (v9.69) ----------------
+       Relatado com a frase exata: "vou na elfa bonita que acabou de passar
+       por mim e digo: você caiu do céu? porque você é um anjo". Hoje isso
+       cai em `livre` — "digo" está na lista do que não se rola — e vira
+       ficção pura: sem dado, sem torcida, sem prêmio nem consequência. É o
+       momento mais comum de uma mesa e o sistema não tinha nada para ele.
+
+       O GATILHO NÃO PODE SER A CANTADA. Nenhum regex separa com segurança
+       um galanteio de uma conversa fiada pelo CONTEÚDO, e tentar isso
+       faria o sistema pedir dado a cada frase — que é justamente o que
+       cansa e o que o autor pediu para evitar.
+
+       O gatilho é a ESTRUTURA: aproximar-se de alguém e dizer uma fala
+       DIRIGIDA a essa pessoa. Quem escreve a própria fala está
+       performando, e performar diante de um estranho é Presença. As duas
+       condições precisam valer — há uma pessoa que o sistema sabe nomear,
+       e há uma fala endereçada a ela.
+
+       E o freio contra o teste a cada turno não é o regex: é o LIVRO DE
+       TENTATIVAS. A chave social é pessoa + tamanho do pedido, então cada
+       pessoa dá UMA primeira impressão. Insistir na mesma cantada com a
+       mesma pessoa ouve "você já tentou isso". */
+    id: "impressionar",
+    /* SEM `\b` no fim, e isto é a TERCEIRA vez na mesma sessão de trabalho
+       que esta armadilha aparece: `elogi\b` não casa "elogio" e
+       `me aproximo d\b` não casa "dela", porque o que vem depois do
+       radical é letra, não fronteira. O `\b` da esquerda basta — é ele que
+       impede o radical de casar no meio de outra palavra. */
+    rx: /\b(cantada|elogi|flert|charme|gracejo|galanteio|quebr(o|ar) o gelo|puxo conversa|dou em cima|chego junto|sorrio para|pisco para|tento impressionar|me apresento (a|ao|para))|\b(vou (n|at[eé] )(a|o|na|no)|chego (n|at[eé] )(a|o|na|no)|me aproximo d|paro d(o|a)|abordo)[^.!?]{0,60}\b(e (digo|falo|solto|comento|pergunto)|dizendo|falando)\b/,
+    /* pedir informação a alguém não é se apresentar a alguém: quem chega
+       com uma pergunta de balcão está na porta da cortesia, não na da
+       simpatia, e o degrau resolve isso sozinho — mas a BRIGA não. */
+    naoSe: /\b(ataco|golpeio|saco a|puxo a (espada|faca|adaga)|avan[cç]o (n|sobre)|parto para cima)\b/,
+    pericia: "persuasao", alvo: "impressao", minutos: 5, barulho: false,
+    rotulo: "causar boa impressão", dcPadrao: DC("comum"), social: true,
+  },
+  {
     id: "intimidar",
     rx: /\b(intimid|amea[cç]o|meto medo|na marra|no grito|ponho a m[ãa]o na espada para)/,
     pericia: "intimidacao", alvo: "intimidacao", minutos: 5, barulho: true,
@@ -532,6 +569,7 @@ const COMO_SE_DIZ = {
   rastrear: "sigo as pegadas na lama",
   estancar: "trato o ferimento antes que ele piore",
   arcano: "examino o selo para reconhecer a magia",
+  impressionar: "chego junto dela e puxo conversa",
   desarmar: "desarmo a armadilha antes de pisar nela",
   nadar: "atravesso a nado até a outra margem",
   saltar: "salto o vão até o outro telhado",

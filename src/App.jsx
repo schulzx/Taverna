@@ -50,6 +50,7 @@ import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPr
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, perguntarPeloSistema, envelopeDaPerguntaDoSistema, linhaDaPerguntaDoSistema, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
 import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao, TURNO_PROMPT } from "./turno.js";
+import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobrancaNegada } from "./cobranca.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
 import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
@@ -2913,6 +2914,9 @@ export default function Taverna() {
   const tentativasRef = useRef(garantirTentativas(null));
   /* v9.61: a decisao do turno, viva entre o despachante e quem age */
   const decisaoRef = useRef({ id: "cena", descartadas: [] });
+  /* v9.70: o desfecho do ultimo dado deste turno. So existe para a cobranca
+     poder recusar o que a narracao promete depois de uma falha. */
+  const ultimoDesfechoRef = useRef(null);
   /* o livro de fatos do oraculo: resposta dada nao volta a ser pergunta */
   const fatosRef = useRef(garantirFatos(null));
   /* quantos turnos desde a ultima vez que o mundo se mexeu sozinho */
@@ -3586,10 +3590,15 @@ export default function Taverna() {
       avancarMinutos(10);
       pushMsgs([{ autor: "sistema", texto: `📍 Você voltou ao meio de ${alvo.nome}.` }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MOVIMENTO — REGISTRADO PELO SISTEMA] Eu saí ${comDe(de)} e AGORA estou de volta às ruas de ${alvo.nome}. O sistema já registrou. Narre a cena AQUI.`;
+      marcarTurnoDoMundo();
       enviar(`Volto para o meio de ${alvo.nome}.`, personagem);
       return;
     }
     if (!moverParaLocal(alvo)) return;
+    /* v9.69: o botão é um turno como qualquer outro, e o mundo tem de
+       saber disso. Sem esta linha, atravessar a cidade pela planta era o
+       único jeito de fazer o tempo passar sem que nada se mexesse. */
+    marcarTurnoDoMundo();
     enviar(`Vou até ${alvo.nome}.`, personagem);
   };
 
@@ -4077,7 +4086,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
+      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -4800,6 +4809,46 @@ export default function Taverna() {
       pers = { ...pers, habRecarga: rec };
     }
     if (resp.mudancas) pers = aplicarMudancas(pers, resp.mudancas, msgs);
+    /* ---------------- A COBRANÇA (v9.70) ----------------
+       "Se ela disse 'você acha 100 moedas e uma poção de vida', então o
+       mestre credita 100 moedas e uma poção de vida."
+
+       O Mestre tem um canal para declarar o que mudou, e o sistema o aplica
+       direitinho. Mas ele é um narrador: às vezes escreve a cena inteira,
+       com o brilho das moedas na palma da mão, e esquece de preencher o
+       campo. O jogador LÊ que ganhou e olha a bolsa igual.
+
+       Não é bug de código — é a distância entre a ficção e a ficha, e ela
+       aparece do lado que ninguém confere. Aqui o sistema lê a narração,
+       subtrai o que já foi declarado e credita a diferença. No caso comum,
+       em que o campo veio certo, a subtração dá zero e isto não faz nada.
+
+       O AVISO ANTIGO DESTE MESMO LUGAR vale de novo, e está três parágrafos
+       abaixo: já houve um cão de guarda que lia condições na narração, e
+       "o ar quente preso na garganta" virou dois turnos de Agarrado. Por
+       isso aqui só entram QUANTIA e ITEM DE CATÁLOGO, com verbo de aquisição
+       e o herói como sujeito — nunca um estado, nunca uma metáfora. */
+    try {
+      const falta = oQueFaltaCreditar(resp.narrativa, resp.mudancas);
+      /* O DADO MANDA MAIS QUE A NARRAÇÃO. Achado na prova desta versão: o
+         teste falhou, o Mestre narrou o roubo dando certo assim mesmo, e a
+         cobrança creditou. A peça feita para a ficha obedecer à ficção tinha
+         acabado de fazer a ficção passar por cima do dado — a inversão exata
+         do projeto. Uma regra que depende de o outro lado obedecer não é
+         regra, é pedido; esta pergunta ao resultado antes de creditar. */
+      if (falta.temAlgo && ultimoDesfechoRef.current === "falha") {
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaCobrancaNegada(falta)}`;
+      } else if (falta.temAlgo) {
+        const extras = falta.consumiveis.map((c) => itemConsumivel(c.id)).filter(Boolean);
+        pers = {
+          ...pers,
+          moedas: Math.max(0, (pers.moedas || 0) + falta.moedas),
+          inventario: [...(pers.inventario || []), ...extras],
+        };
+        msgs.push(falaDaCobranca(falta));
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaCobranca(falta)}`;
+      }
+    } catch { /* conferir a narração nunca pode custar o turno */ }
     if ((pers.dadivasPendentes || 0) > 0) pers = concederDadivas(pers, msgs);
     if (resp.mudancas) {
       const md = resp.mudancas;
@@ -6658,6 +6707,15 @@ export default function Taverna() {
       baseMundoRef.current = garantirBase(sv.baseMundo); setBaseMundo(baseMundoRef.current);
       tentativasRef.current = garantirTentativas(sv.tentativas);
       fatosRef.current = garantirFatos(sv.fatos);
+      /* v9.69: a CADÊNCIA do mundo também é estado de save. Sem isto os dois
+         contadores voltavam a zero a cada sessão: os relógios tiquavam menos
+         (o gatilho é a cada DOIS turnos) e a iniciativa do mundo, que precisa
+         de SEIS turnos para poder acontecer, quase nunca chegava lá. Quem joga
+         em sessões curtas tinha um mundo que nunca tomava a frente — e a
+         causa não estava em regra nenhuma, estava num contador que ninguém
+         guardava. */
+      turnosDeMundoRef.current = Math.max(0, Number(sv.turnosDeMundo) || 0);
+      desdeMundoRef.current = Math.max(0, Number(sv.desdeMundo) || 0);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
         ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null }
@@ -7571,6 +7629,7 @@ export default function Taverna() {
        de dois caminhos, invisível para qualquer teste de módulo porque o
        defeito não estava em módulo nenhum, estava na ORDEM. Agora a ordem
        tem teste, e a decisão diz por que passou por cada porta. */
+    ultimoDesfechoRef.current = null;
     const sinais = sinaisDoTurno(acao);
     decisaoRef.current = decidirTurno(sinais);
     const cascata = cascataDoTurno(sinais);
@@ -7650,19 +7709,7 @@ export default function Taverna() {
     let extraTempo = "";
     if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) {
       extraTempo = avancarMinutos(MINUTOS_POR_TURNO);
-      /* v9.31: o gatilho "turno_mundo" dos relógios morava na vez do mundo, e
-         ela deixou de existir. Ele passa para o turno normal — que agora É o
-         turno — mas a cada DOIS, para manter a cadência de antes: os relógios
-         andavam uma vez por par ação+mundo, e dobrar isso encurtaria pela
-         metade todo prazo já em curso nos saves. */
-      turnosDeMundoRef.current += 1;
-      if (turnosDeMundoRef.current % 2 === 0) tiquear("turno_mundo", { porque: "o mundo se mexeu enquanto você agia" });
-      /* v9.61: e o mundo pode se mexer POR CONTA PRÓPRIA — puxando um fio que
-         JÁ está aberto, nunca inventando um novo. Aqui, junto do relógio,
-         porque é o mesmo instante: o tempo passou para todos, não só para o
-         herói. Fora de combate, masmorra e estrada, que é onde interromper
-         seria roubar a cena dele. */
-      talvezOMundoSeMexer();
+      marcarTurnoDoMundo();
     }
     setEntrada(""); setHabAbertas(false);
     /* ---------------- A SEGUNDA FASE (v9.63) ----------------
@@ -9274,6 +9321,9 @@ export default function Taverna() {
          três aqui, juntos, porque são a mesma decisão vista de ângulos
          diferentes: a tentativa aconteceu no mundo e deixou marca nele. */
       if (des) { fecharTentativa(des, passou); cobrarTempoDoDesafio(des); }
+      /* v9.70: o desfecho fica registrado para a cobranca poder recusar o que
+         a narracao prometer depois de uma falha. O dado manda mais que ela. */
+      ultimoDesfechoRef.current = passou ? "sucesso" : "falha";
       let envQueda = "";
       if (custo) {
         pushMsgs([{ autor: "sistema", texto: falaDoCusto(custo) }]);
@@ -9361,14 +9411,12 @@ export default function Taverna() {
       if (custo) env = `${envQueda}${envelopeDoCusto(custo, des && des.rotulo)}\n${env}`;
       if (des && des.testemunha && !passou) {
         const q = perguntarTestemunha(des);
-        pushMsgs([{ autor: "sistema", texto: linhaDaPerguntaDoSistema(q) }]);
         env = `${envelopeDaPerguntaDoSistema(q, { oQue: `Eu falhei ao ${des.rotulo}` })}\n${env}`;
       }
       if (des && (des.barulho || (custo && custo.barulhoExtra))) {
         const q = perguntarBarulho(des);
         pushMsgs([
           { autor: "sistema", texto: `🔊 ${des.viaNome || "Assim"} faz barulho.` },
-          { autor: "sistema", texto: linhaDaPerguntaDoSistema(q) },
         ]);
         env = `${envelopeDaPerguntaDoSistema(q, { oQue: `Eu fiz barulho ao ${des.rotulo}` })}\n${env}`;
       }
@@ -9486,6 +9534,16 @@ export default function Taverna() {
   const adjudicarAcao = (acao) => {
     const v = veredictoDaAcao(acao);
     if (!v) return false;
+    /* v9.70: TODA recusa do sistema conta como falha para a cobrança, não
+       só o dado que não passou. Visto na tela: o veredicto foi "você já
+       tentou isso aqui", nenhum dado foi rolado, o Mestre narrou o roubo
+       dando certo assim mesmo — e as cem moedas entraram. Uma tentativa
+       NEGADA rende tanto quanto uma falhada: nada. */
+    /* `veredictoDaAcao` já devolveu null para a ação livre de verdade — a
+       conversa, a caminhada. O `livre` que chega aqui é sempre o "isso você
+       já conseguiu aqui", que TEM chave e é uma recusa como as outras. Por
+       isso a régua é só uma: o que não é teste não rende nada. */
+    if (v.tipo !== "teste") ultimoDesfechoRef.current = "falha";
     if (v.tipo === "teste") {
       /* ---------------- O MUNDO FALA ANTES DO DADO (v9.64) ----------------
          "Se o mestre decidir que tem, seja por ele ou pelo oráculo, ele pede
@@ -9507,9 +9565,11 @@ export default function Taverna() {
         if (q && !/^sim/.test(q.grau.id)) {
           pushMsgs([
             { autor: "jogador", texto: acao },
-            { autor: "sistema", texto: linhaDaPerguntaDoSistema(q) },
             { autor: "sistema", texto: `🚫 ${v.oportunidade.nada}` },
           ]);
+          /* o mundo disse que não havia o que testar: para a cobrança isto é
+             uma falha, e nada que a narração prometer entra na bolsa */
+          ultimoDesfechoRef.current = "falha";
           fecharTentativa(v, true, { limpo: true });
           cobrarTempoDoDesafio(v);
           enviar(`${envelopeDaPerguntaDoSistema(q, { oQue: `Eu tentei ${v.rotulo}` })}\n${envelopeSemOportunidade(v, acao)}`, fichaViva() || personagem);
@@ -9519,7 +9579,6 @@ export default function Taverna() {
            pelo envelope, para o Mestre não poder narrar um corredor mudo
            depois de o mundo ter dito que havia voz nele */
         if (q) {
-          pushMsgs([{ autor: "sistema", texto: linhaDaPerguntaDoSistema(q) }]);
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaPerguntaDoSistema(q, { oQue: `Eu tentei ${v.rotulo}` })}`;
         }
       }
@@ -9582,7 +9641,6 @@ export default function Taverna() {
     if (v.vigia) {
       const q = perguntarVigia(v);
       if (q) {
-        pushMsgs([{ autor: "sistema", texto: linhaDaPerguntaDoSistema(q) }]);
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaPerguntaDoSistema(q, { oQue: `Eu vou ${v.rotulo}${v.viaNome ? ` ${v.viaNome}` : ""}` })}`;
       }
     }
@@ -10132,6 +10190,46 @@ export default function Taverna() {
     }, { fatos: fatosRef.current });
     if (q && !q.reusado) fatosRef.current = registrarFato(fatosRef.current, q.chave, q, { dia: diaRef.current, cena: turnosDeMundoRef.current });
     return q;
+  };
+
+  /* ============================================================
+     O TURNO DO MUNDO (v9.69)
+
+     Estas quatro linhas moravam dentro do `agirInterno`, no rabo dele, e
+     por isso valiam SÓ para o turno que começa digitado. A varredura de
+     "todo turno passa pelo mestre?" mostrou o preço disso: quem joga pelos
+     BOTÕES — anda pelo mapa, viaja pela planta, acampa, entra na masmorra
+     — tinha um mundo congelado. Os relógios de ameaça não andavam, o prazo
+     da missão não corria, a nêmese não se mexia. O calendário virava, o
+     mundo não.
+
+     É a mesma forma do bug que este projeto mais repete, e desta vez ela
+     estava no lugar mais caro: não numa regra, no RELÓGIO. Um jogador
+     podia atravessar meio continente clicando e chegar num mundo
+     exatamente igual ao que deixou.
+
+     Agora é uma função com nome, e quem constitui um turno a chama —
+     independentemente de ter vindo do teclado ou de um botão. A cobrança
+     dos 45 minutos NÃO entra aqui de propósito: cada botão já cobra o
+     tempo que a sua ação custa (cinco minutos para atravessar a praça,
+     dez para voltar ao meio da cidade), e somar o turno de exploração por
+     cima faria a caminhada custar uma hora.
+     ============================================================ */
+  const marcarTurnoDoMundo = () => {
+    if (combateRef.current) return;
+    /* v9.31: o gatilho "turno_mundo" dos relógios morava na vez do mundo, e
+       ela deixou de existir. Ele passa para o turno normal — que agora É o
+       turno — mas a cada DOIS, para manter a cadência de antes: os relógios
+       andavam uma vez por par ação+mundo, e dobrar isso encurtaria pela
+       metade todo prazo já em curso nos saves. */
+    turnosDeMundoRef.current += 1;
+    if (turnosDeMundoRef.current % 2 === 0) tiquear("turno_mundo", { porque: "o mundo se mexeu enquanto você agia" });
+    /* v9.61: e o mundo pode se mexer POR CONTA PRÓPRIA — puxando um fio que
+       JÁ está aberto, nunca inventando um novo. Aqui, junto do relógio,
+       porque é o mesmo instante: o tempo passou para todos, não só para o
+       herói. Fora de masmorra e estrada, que é onde interromper seria
+       roubar a cena dele. */
+    if (!acampadoRef.current && !masmorraRef.current) talvezOMundoSeMexer();
   };
 
   /* ---------------- O MUNDO SE MEXE SOZINHO (v9.61) ----------------

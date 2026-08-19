@@ -793,6 +793,125 @@ jogador descobre jogando.
   pior. Mudou de casa para `rolarDesafio`, com a regra da mesa: vantagem e
   desvantagem se anulam.
 
+- ~~**"Vou na elfa bonita e digo: você caiu do céu?" não era nada.**~~
+  RESOLVIDO na v9.69. A frase caía em `livre` — "digo" está na lista do que
+  não se rola — e virava ficção pura: sem dado, sem torcida, sem prêmio nem
+  consequência. É o momento mais comum de uma mesa e o sistema não tinha
+  nada para ele.
+
+  **O gatilho não pode ser a cantada.** Nenhum regex separa com segurança um
+  galanteio de conversa fiada pelo CONTEÚDO, e tentar isso faria o sistema
+  pedir dado a cada frase — que é justamente o que cansa. O gatilho é a
+  ESTRUTURA: aproximar-se de alguém e dizer uma fala DIRIGIDA a essa pessoa.
+  Quem escreve a própria fala está performando, e performar diante de um
+  estranho é Presença.
+
+  E o freio contra o teste a cada turno não é o regex: é o **livro de
+  tentativas**. A chave social é pessoa + tamanho do pedido, então cada
+  pessoa dá UMA primeira impressão; insistir ouve "você já tentou isso".
+
+  A escada do pedido ganhou o degrau que faltava, `simpatia` (12) — o único
+  em que não se pede coisa nenhuma, e sim que a pessoa queira ficar. Custa
+  mais que arrancar uma fofoca porque fofoca é sobre o mundo e isto é sobre
+  você.
+
+  **Achado no caminho:** "dou uma cantada nela" contava como **ouro na
+  mesa**. A alavanca do suborno aceitava o verbo `dou` solto, e a
+  dificuldade caía três pontos por um dinheiro que ninguém ofereceu — só
+  apareceu quando o degrau novo trouxe frases com "dou". E o `\b` que mata
+  radical voltou pela terceira vez na mesma sessão: `elogi\b` não casa
+  "elogio", `me aproximo d\b` não casa "dela".
+
+- ~~**O mundo só andava para quem digitava.**~~ RESOLVIDO na v9.69, e foi
+  a resposta à pergunta "todo turno passa mesmo pelo mestre?".
+
+  O despachante governa todo turno que começa como TEXTO — isso se
+  confirmou. Mas o RABO do turno (o relógio do mundo, o gatilho `turno_mundo`
+  e a iniciativa) morava dentro do `agirInterno`, e por isso valia só para
+  ele. Quem jogava pelos BOTÕES — andava pelo mapa, viajava pela planta,
+  acampava — tinha um mundo congelado: os relógios de ameaça não andavam, o
+  prazo da missão não corria, a nêmese não se mexia. O calendário virava, o
+  mundo não. Um jogador podia atravessar meio continente clicando e chegar
+  num mundo idêntico ao que deixou.
+
+  É a forma de sempre — a regra que mora num só de dois caminhos — desta
+  vez no lugar mais caro: não numa regra, no relógio. Virou
+  `marcarTurnoDoMundo()`, e quem constitui um turno a chama, venha do
+  teclado ou de um botão.
+
+  **E os dois contadores não eram salvos.** Voltavam a zero a cada sessão:
+  o gatilho dos relógios é a cada DOIS turnos e a iniciativa precisa de
+  SEIS, então quem joga em sessões curtas tinha um mundo que nunca tomava a
+  frente — e a causa não estava em regra nenhuma, estava num contador que
+  ninguém guardava.
+
+- **O combate ainda é chamado pela IA.** `mudancas.combate_iniciar` é dela;
+  o sistema completa as fichas dos inimigos pelo bestiário, mas a DECISÃO
+  de que a luta começa é da narração. É o último item da lista "o mestre
+  chama os combates" que continua aberto, e ele tem duas metades bem
+  diferentes:
+
+  - **o herói ataca primeiro** — o sistema PODE ler isso, e hoje não lê:
+    "ataco o bandido com a espada" não casa nada no catálogo. É a metade
+    viável, e a que dá ao sistema a decisão mais decisiva do jogo;
+  - **o mundo ataca primeiro** — a emboscada, o guarda que perde a
+    paciência. Isso é ficção, e a ficção é dela; a forma certa é a mesma do
+    campo `perigo`: ela declara a hostilidade e o sistema monta o encontro,
+    escolhe a ameaça compatível e abre a luta.
+
+- ~~**A narração prometia e a ficha não entregava.**~~ RESOLVIDO na v9.70,
+  em `cobranca.js`. O Mestre tem um canal para declarar o que mudou —
+  `mudancas.moedas`, `adicionar_itens` — e o sistema o aplica direitinho.
+  Mas ele é um narrador: às vezes escreve a cena inteira, com o brilho das
+  moedas na palma da mão, e esquece de preencher o campo. O jogador LÊ que
+  ganhou cem moedas, olha a bolsa e continua com as mesmas.
+
+  Não é bug de código: é a distância entre a ficção e a ficha, e ela sempre
+  aparece do lado que ninguém confere. A partir dela, todo prêmio precisa
+  ser verificado à mão — e essa dúvida come o jogo por dentro.
+
+  O sistema passou a LER a narração, subtrair o que já foi declarado e
+  creditar a diferença. No caso comum, em que o campo veio certo, a
+  subtração dá zero e o arquivo inteiro não faz nada.
+
+  **As travas importam mais que a detecção**, e a razão está escrita três
+  parágrafos acima no próprio App: já houve aqui um cão de guarda que lia
+  CONDIÇÕES na narração, e "o ar quente ainda preso na garganta" virou dois
+  turnos de Agarrado. Por isso só entram quantia e item de catálogo, com
+  verbo de aquisição e o herói como sujeito; qualquer negação na frase
+  descarta a frase inteira; e há teto por turno.
+
+  **O achado desta versão, e é grave: o dado manda mais que a narração.** Na
+  primeira prova, o teste de furtividade FALHOU, o Mestre narrou o roubo
+  dando certo assim mesmo, e o sistema creditou as cem moedas. A peça criada
+  para a ficha obedecer à ficção tinha acabado de fazer a ficção passar por
+  cima do dado — a inversão exata do que este projeto inteiro construiu. O
+  envelope do teste já proibia entregar qualquer coisa na falha, mas uma
+  regra que depende de o outro lado obedecer não é regra, é pedido.
+
+  Agora a cobrança pergunta ao resultado antes de creditar, e a régua é uma
+  só: **o que não é teste não rende nada.** Falha, tentativa já feita, ação
+  impossível, mundo dizendo que não havia o que testar — em todas, o que a
+  narração prometer fica fora da bolsa e o Mestre recebe a recusa por
+  escrito. Medido na tela: dado 17 vs 15 creditou 100 moedas e a poção; a
+  repetição sem dado creditou zero.
+
+- ~~**A tela mostrava a contabilidade do motor.**~~ RESOLVIDO na v9.70.
+  `🔮 "há saída pelos fundos?" — no fio (58%), rolou 93: Não, e ainda por
+  cima… +8 cidade tem de tudo`: o jogador perguntou uma coisa ao mundo e
+  recebeu de volta uma auditoria. A chance, a faixa, o número e os fatores
+  não são jogáveis — não mudam o que ele pode fazer, não são escolha e não
+  são informação do mundo. Ficou a pergunta e a resposta.
+
+  E as perguntas que o SISTEMA faz a si mesmo saíram da conversa inteiras.
+  Além do ruído, elas VAZAVAM: "há algo para escutar? — Sim" aparecia antes
+  do teste, e "há vigia? — Sim" entregava o vigia antes da tentativa. O
+  motor estava contando o final do filme para justificar o próprio trabalho.
+
+  A régua que separa os dois casos: o dado do TESTE continua na tela
+  inteiro, porque ali o jogador torce pelo número e ver o número é metade da
+  graça. No oráculo ele quer saber do mundo, e o número é contabilidade.
+
 ## A ordem do turno
 
 - ~~**A ordem do turno era o layout de um arquivo.**~~ RESOLVIDO em duas

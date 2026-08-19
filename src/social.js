@@ -67,6 +67,24 @@ export const TAMANHOS_DO_PEDIDO = [
     nunca: "aquilo que ela ganharia calando ou perderia falando",
   },
   {
+    /* ---------------- A SIMPATIA (v9.69) ----------------
+       O degrau que faltava, e o mais usado de todos numa mesa de verdade:
+       não se está pedindo COISA nenhuma. Está-se pedindo que a pessoa
+       queira ficar. É o que acontece quando o herói se aproxima de alguém
+       que acabou de passar e diz alguma coisa.
+
+       Ele custa mais que arrancar uma fofoca porque fofoca é sobre o
+       mundo e isto é sobre VOCÊ: quem conta um boato não arrisca nada,
+       quem decide se gosta de um estranho arrisca a próxima meia hora. */
+    id: "simpatia", dc: 12, rotulo: "a boa vontade de quem não te deve nada",
+    /* sem `\b` no fim: `elogi\b` não casa "elogio", e o degrau caía no
+       padrão sem ninguém notar — o número saía 16 em vez de 14 e parecia
+       só uma conversa difícil */
+    rx: /\b(cantada|elogi|flert|charme|gracejo|galanteio|quebr(o|ar) o gelo|puxo conversa|puxar conversa|dou em cima|chego junto|me fa[cç]o de|sorrio para|pisco para|impression|caiu do c[eé]u|um anjo)/,
+    cede: "a atenção dela e o benefício da dúvida: a conversa continua, e ela quer ouvir a próxima frase",
+    nunca: "afeto, confiança ou favor — isso não se ganha numa frase, se constrói em muitas",
+  },
+  {
     id: "favor", dc: 14, rotulo: "um favor que lhe custa pouco",
     rx: /\b(me d(ê|e|ar) um desconto|abaix(a|ar) o pre[cç]o|pechinch|barganh|me esper(a|ar)|guard(a|ar) (isto|isso|para mim)|lev(a|ar) (este|esse|um) recado|me empresta|me emprestar|me arrum|me apresent|fal(a|ar) bem de mim|me indic)\b/,
     cede: "um favor de quem não arrisca nada com ele: um desconto razoável, esperar, guardar algo, levar um recado, apresentar você a alguém",
@@ -172,7 +190,12 @@ export function pesoDoPapel(papel) {
 export const ALAVANCAS = [
   {
     id: "moeda", delta: -3, rotulo: "ouro na mesa",
-    rx: /\b(ofere[cç]o|pago|dou|deixo|pus|ponho|na mesa|em troca de|por (uma|umas|dez|vinte|cinquenta|cem)?\s*moeda|suborn|gorjeta|prata|ouro)\b/,
+    /* O VERBO SOZINHO NÃO É OFERTA. A versão anterior aceitava o `dou`
+       solto, e "dou uma cantada nela" passou a valer como suborno: a
+       dificuldade caía três pontos porque o herói tinha moedas na bolsa.
+       Só apareceu quando o degrau da simpatia trouxe frases com "dou".
+       Agora o dinheiro precisa estar dito. */
+    rx: /\b(suborn|gorjeta|(ofere[cç]o|pago|dou|deixo|ponho|pus|entrego)\s+(\w+\s+){0,3}(moedas?|pratas?|ouro|dinheiro|pe[cç]as?)|em troca de\s+(\w+\s+){0,2}(moedas?|ouro|prata|dinheiro))/,
     /* preço por degrau: um favor barato compra-se com trocado; uma
        traição, não. O número existe para o sistema poder COBRAR. */
     preco: { cortesia: 2, conversa: 10, favor: 30, risco: 120, traicao: 500 },
