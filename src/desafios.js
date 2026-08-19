@@ -182,6 +182,42 @@ export function trancaDe(semente, lugar, alvo = "porta") {
    "vasculho o quarto" duas vezes ser a MESMA tentativa e "vasculho o
    quarto" e "escuto à porta" serem duas.
    ============================================================ */
+/* ============================================================
+   A RÉGUA (v9.67)
+
+   Até aqui as dificuldades do catálogo eram 13, 14 e 15, e nenhuma
+   delas sabia dizer por que era aquela. Um número sem nome não se
+   discute e não se ajusta: quem for mexer daqui a um mês vai olhar
+   um 14 e não ter como saber se ele quis dizer "isso é difícil" ou
+   "alguém digitou 14".
+
+   A régua dá nome a cada degrau, e o nome é a justificativa. É
+   também o que permite ao sistema RESPONDER, e não só rolar: quando
+   um obstáculo é `trivial`, não há teste — há uma pessoa competente
+   fazendo o que sabe fazer.
+
+   O que isto mudou nos números que já existiam: cinco entradas que
+   marcavam 14 subiram para 15 (`incomum`), porque 14 não era degrau
+   de nada. Um ponto em cada, e agora todas têm nome.
+   ============================================================ */
+export const DIFICULDADES = [
+  { id: "trivial", dc: 5, nome: "trivial", diz: "qualquer um faz — e por isso não se rola" },
+  { id: "facil", dc: 10, nome: "fácil", diz: "quem tem o mínimo de jeito consegue" },
+  { id: "comum", dc: 13, nome: "comum", diz: "o obstáculo do dia a dia de quem vive assim" },
+  { id: "incomum", dc: 15, nome: "incomum", diz: "exige atenção de verdade, e não perdoa distração" },
+  { id: "dificil", dc: 18, nome: "difícil", diz: "só quem treinou passa com alguma frequência" },
+  { id: "arduo", dc: 21, nome: "árduo", diz: "especialista, e ainda assim com sorte" },
+  { id: "heroico", dc: 25, nome: "heroico", diz: "a história conta esse dia porque quase ninguém conseguiria" },
+];
+export function dificuldadePorId(id) { return DIFICULDADES.find((d) => d.id === id) || null; }
+/* o degrau em que um número cai — para o sistema poder dizer "isto é
+   difícil" em vez de "isto é 18", que é o que o jogador entende */
+export function degrauDaDC(dc) {
+  const n = Number(dc) || 0;
+  return [...DIFICULDADES].reverse().find((d) => n >= d.dc) || DIFICULDADES[0];
+}
+const DC = (id) => (dificuldadePorId(id) || { dc: 13 }).dc;
+
 export const DESAFIOS = [
   {
     id: "buscar",
@@ -199,19 +235,24 @@ export const DESAFIOS = [
        "verifico se a porta está trancada" é sobre a TRANCA, e `buscar` vem
        antes dela no catálogo, então roubaria a frase e marcaria o cômodo
        como revirado. Conferir se algo está fechado não é vasculhar. */
-    naoSe: /\b(pessoa|gente|rosto|olhos del[ae]|taverneir|ferreir|mercador|guarda|capit[aã]|sacerdot|ac[oó]lito|estalajadeir|curandeir|algu[eé]m|homem|mulher|rapaz|mo[cç]a|velh[oa]|companheir|amig|aliad|informante|contato|comprador|vendedor|barqueir|cocheir|dono d|taverneira)|\b(verific|confiro|checo)\w*\s+(se\s+)?[^.]{0,24}\b(trancad|destrancad|fechad|abert|porta|fechadura|cadeado|tranca)\b/,
+    /* v9.67: `buscar` é a PRIMEIRA entrada do catálogo, e por isso é a que
+       mais precisa saber recuar. Cada leva nova de desafios devolve para
+       cá uma palavra que ela roubaria: examinar um CORPO é Medicina,
+       procurar ÁGUA no ermo é Sobrevivência, e nenhuma das duas é revirar
+       um cômodo — mas as três dizem "examino" e "procuro". */
+    naoSe: /\b(pessoa|gente|rosto|olhos del[ae]|taverneir|ferreir|mercador|guarda|capit[aã]|sacerdot|ac[oó]lito|estalajadeir|curandeir|algu[eé]m|homem|mulher|rapaz|mo[cç]a|velh[oa]|companheir|amig|aliad|informante|contato|comprador|vendedor|barqueir|cocheir|dono d|taverneira)|\b(verific|confiro|checo)\w*\s+(se\s+)?[^.]{0,24}\b(trancad|destrancad|fechad|abert|porta|fechadura|cadeado|tranca)\b|\b(corpo|cad[aá]ver|ferimento|ferido|morto|doente|pulso)\b|\b(procuro|acho|busco)\s+(a|o|um|uma)?\s*(agua|[aá]gua|abrigo|po[cç]o|comida|caminho|norte|rumo|lenha)\b/,
     pericia: "percepcao", alvo: "busca", minutos: 10, barulho: false,
     rotulo: "vasculhar o lugar",
     /* a dificuldade sai do que existe aqui; sem nada, o sistema ainda deixa
        procurar UMA vez — saber que não há nada é informação, e informação
        não sai de graça */
-    dcPadrao: 13,
+    dcPadrao: DC("comum"),
   },
   {
     id: "investigar",
     rx: /\b(investig|deduzo|dedu[zç]|junto as pistas|analiso a cena|leio os vest[ií]gios|procuro pistas|o que aconteceu aqui|reconstruo)/,
     pericia: "investigacao", alvo: "investigacao", minutos: 15, barulho: false,
-    rotulo: "ler os vestígios", dcPadrao: 14,
+    rotulo: "ler os vestígios", dcPadrao: DC("incomum"),
   },
   {
     id: "escutar",
@@ -219,7 +260,7 @@ export const DESAFIOS = [
        alvo ou de esforço declarado — sem isso, todo turno viraria teste. */
     rx: /\b(escuto (a|à|na|no|atr[aá]s|pela|pelo)|fico escutando|encosto o ouvido|presto o ouvido|apuro os ouvidos|escuto com aten)/,
     pericia: "percepcao", alvo: "escuta", minutos: 2, barulho: false,
-    rotulo: "escutar", dcPadrao: 13,
+    rotulo: "escutar", dcPadrao: DC("comum"),
     /* v9.64: antes do dado, o mundo diz se HÁ o que ouvir. Sem isto, este
        teste rolava sempre — e a pergunta "havia mesmo alguém falando do
        outro lado?" sobrava para a IA, que responde pela cena que quer
@@ -229,8 +270,14 @@ export const DESAFIOS = [
   {
     id: "fraqueza",
     rx: /\b(fraqueza|ponto fraco|vulnerab|identific\w* (o|a|esse|essa|aquele)?\s*(inimigo|criatura|monstro|bicho)|o que (eu )?sei sobre|reconhe[cç]o (o|a|esse|essa))/,
+    /* v9.67: `reconheço esse ___` é largo demais, e a leva nova trouxe quem
+       o disputa. Reconhecer a criatura é lembrar do bestiário; reconhecer
+       um BRASÃO é lembrar de quem manda em quem — outra pergunta, outra
+       cena, e as duas caem em Saberes, o que torna a confusão invisível no
+       número e visível na ficção. */
+    naoSe: /\b(bras[aã]o|estandarte|emblema|bandeira|sotaque|dialeto|casa (é|e|de)|reino|ordem|selo da casa)\b/,
     pericia: "saberes", alvo: "fraqueza", minutos: 0, barulho: false,
-    rotulo: "lembrar o que se sabe da criatura", dcBase: 14,
+    rotulo: "lembrar o que se sabe da criatura", dcBase: DC("incomum"),
     /* este é o único que vale DENTRO da luta sem penalidade de tempo: é
        exatamente para isto que a perícia de saberes existe */
     valeEmCombate: true,
@@ -239,7 +286,7 @@ export const DESAFIOS = [
     id: "mentira",
     rx: /\b(ele est[aá] mentindo|ela est[aá] mentindo|se ele mente|se ela mente|leio (as )?inten[cç]|tento saber se|desconfio|sinto se|percebo se mente)\b/,
     pericia: "intuicao", alvo: "intuicao", minutos: 0, barulho: false,
-    rotulo: "ler a intenção", dcPadrao: 14,
+    rotulo: "ler a intenção", dcPadrao: DC("incomum"),
     /* v9.65: rolar Intuição sem o mundo ter decidido se HÁ mentira é
        rolar para saber se existe a coisa que a pergunta já supôs. Mas
        este é o único que exige um alvo NOMEADO: sem nome, o fato ficaria
@@ -269,19 +316,19 @@ export const DESAFIOS = [
     id: "escalar",
     rx: /\b(escal|trepo|subo (o|a|pel)|me i[cç]o|galgo|escalar)/,
     pericia: "atletismo", alvo: "escalada", minutos: 5, barulho: false,
-    rotulo: "escalar", dcPadrao: 14, corpo: true,
+    rotulo: "escalar", dcPadrao: DC("incomum"), corpo: true,
   },
   {
     id: "furtar_se",
     rx: /\b(me esgueiro|esgueir|na surdina|sem ser vist|sorrateir|em sil[eê]ncio at[eé]|me escondo|fico na sombra|sigo sem que)/,
     pericia: "furtividade", alvo: "furtividade", minutos: 5, barulho: false, testemunha: true,
-    rotulo: "passar sem ser visto", dcPadrao: 14,
+    rotulo: "passar sem ser visto", dcPadrao: DC("incomum"),
   },
   {
     id: "bater_carteira",
     rx: /\b(bato a carteira|surrupi|furto (a|o|dele|dela)|punguei|punho a bolsa|tiro do bolso dele|roubo a bolsa|planto)/,
     pericia: "prestidigitacao", alvo: "furto", minutos: 1, barulho: false, testemunha: true,
-    rotulo: "mão leve", dcPadrao: 15,
+    rotulo: "mão leve", dcPadrao: DC("incomum"),
   },
   {
     id: "convencer",
@@ -290,25 +337,25 @@ export const DESAFIOS = [
        guarda a me deixar passar" é. A régua é o verbo de esforço. */
     rx: /\b(tento convencer|convenço|persuad|nego[cç]io com|argument|insisto com|tento negociar|barganho|pechinch)/,
     pericia: "persuasao", alvo: "persuasao", minutos: 10, barulho: false,
-    rotulo: "convencer", dcPadrao: 14, social: true,
+    rotulo: "convencer", dcPadrao: DC("incomum"), social: true,
   },
   {
     id: "intimidar",
     rx: /\b(intimid|amea[cç]o|meto medo|na marra|no grito|ponho a m[ãa]o na espada para)/,
     pericia: "intimidacao", alvo: "intimidacao", minutos: 5, barulho: true,
-    rotulo: "intimidar", dcPadrao: 14, social: true,
+    rotulo: "intimidar", dcPadrao: DC("incomum"), social: true,
   },
   {
     id: "mentir",
     rx: /\b(minto|mentir|blefo|blefar|engano|finjo ser|me passo por|disfar[cç])/,
     pericia: "enganacao", alvo: "enganacao", minutos: 5, barulho: false,
-    rotulo: "enganar", dcPadrao: 14, social: true,
+    rotulo: "enganar", dcPadrao: DC("incomum"), social: true,
   },
   {
     id: "rastrear",
     rx: /\b(rastre|sigo as pegadas|sigo o rastro|seguir o rastro|leio o ch[aã]o|farejo)/,
     pericia: "sobrevivencia", alvo: "rastro", minutos: 30, barulho: false,
-    rotulo: "rastrear", dcPadrao: 14,
+    rotulo: "rastrear", dcPadrao: DC("incomum"),
     /* meia hora de mundo por tentativa: rolar contra um chão que não tem
        pegada nenhuma custava caro e devolvia narração de consolo */
     oportunidade: { pergunta: "haRastro", nada: "Não há rastro aqui — o chão não guardou nada que se possa seguir." },
@@ -317,13 +364,145 @@ export const DESAFIOS = [
     id: "estancar",
     rx: /\b(estanco|estancar|estabilizo|estabilizar|trato o ferimento|cuido do ferimento|fa[cç]o um curativo)\b/,
     pericia: "medicina", alvo: "medicina", minutos: 10, barulho: false,
-    rotulo: "estancar", dcPadrao: 13,
+    rotulo: "estancar", dcPadrao: DC("comum"),
   },
   {
     id: "arcano",
     rx: /\b(identific\w* (a|o) (magia|feiti|selo|runa|encant)|reconhe[cç]o (a|o) (magia|selo|runa)|leio a runa|examino o selo|o que (é|e) esse feiti)\b/,
     pericia: "arcanismo", alvo: "arcano", minutos: 10, barulho: false,
-    rotulo: "ler o arcano", dcPadrao: 15,
+    rotulo: "ler o arcano", dcPadrao: DC("incomum"),
+  },
+
+  /* ============================================================
+     A SEGUNDA LEVA (v9.67)
+
+     O catálogo tinha quinze entradas e uma lacuna que dá para medir:
+     QUATRO das dezoito perícias da ficha não tinham como aparecer no
+     jogo. Acrobacia, Fortitude, Montaria e Atuação existiam na tela
+     de personagem, custavam pontos para treinar, e não havia frase
+     nenhuma no mundo que as convocasse. Um jogador podia gastar a
+     especialização inteira em Acrobacia e nunca rolar uma.
+
+     E dentro das perícias já cobertas faltavam os momentos mais
+     comuns de uma mesa: desarmar a armadilha (numa masmorra cheia
+     delas), atravessar a nado, saltar o vão, empurrar o que é
+     pesado, escapar das cordas, orientar-se no ermo, dizer de que
+     alguém morreu.
+
+     A régua para entrar aqui é a mesma que sempre foi, e é o que
+     protege isto de virar uma lista de gatilhos: VERBO DE ESFORÇO
+     DECLARADO. "Olho o cavalo" não é Montaria; "domo o cavalo que
+     empinou" é. O falso positivo custa uma chamada e uma cena; o
+     falso negativo só devolve o turno ao Mestre, que é o lado
+     seguro de errar.
+     ============================================================ */
+  {
+    /* A armadilha existia na masmorra e não havia como declarar que se
+       tenta desarmá-la: o jogador passava por cima e torcia. */
+    id: "desarmar",
+    rx: /\b(desarm|desativ|neutraliz\w* (a|o) (armadilha|mecanismo|gatilho)|corto o fio|trav(o|ar) o mecanismo|prendo o gatilho|calço a placa)/,
+    pericia: "prestidigitacao", alvo: "armadilha", minutos: 5, barulho: false,
+    rotulo: "desarmar a armadilha", dcPadrao: DC("dificil"),
+  },
+  {
+    id: "nadar",
+    rx: /\b(nado|nadar|atravesso a nado|me jogo n[oa] (agua|[aá]gua|rio|mar)|mergulho (n|at[eé]|para))/,
+    pericia: "atletismo", alvo: "nado", minutos: 10, barulho: false,
+    rotulo: "atravessar a nado", dcPadrao: DC("comum"), corpo: true,
+  },
+  {
+    id: "saltar",
+    rx: /\b(salto (o|a|para|por cima|sobre)|pulo (o|a|para|por cima|sobre|do)|dou um salto|me atiro (para|sobre|por))/,
+    pericia: "atletismo", alvo: "salto", minutos: 0, barulho: false,
+    rotulo: "saltar o vão", dcPadrao: DC("incomum"), corpo: true, queda: true,
+  },
+  {
+    /* vem DEPOIS da tranca de propósito: "forço a porta" é arrombamento, e
+       a tranca está antes no catálogo. Aqui mora o resto do que é peso —
+       a pedra, a grade, o que precisa ser segurado antes de cair. */
+    id: "forcar",
+    rx: /\b(empurro (a|o)|arrasto (a|o)|levanto (a|o|esse|essa)|movo (a|a pedra|o bloco)|seguro (a|o) (porta|port[aã]o|grade|pedra|viga|corda)|entorto|arranco (a|o) (grade|barra|tabua|t[aá]bua))/,
+    pericia: "atletismo", alvo: "peso", minutos: 5, barulho: true,
+    rotulo: "vencer o peso", dcPadrao: DC("incomum"), corpo: true,
+  },
+  {
+    id: "equilibrio",
+    rx: /\b(me equilibro|atravesso (a|o) (viga|corda|tronco|parapeito|beiral|telhado)|ando pel[ao] (viga|corda|beiral|parapeito)|passo pel[ao] (peitoril|beiral|parapeito))/,
+    pericia: "acrobacia", alvo: "equilibrio", minutos: 2, barulho: false,
+    rotulo: "atravessar sem cair", dcPadrao: DC("incomum"), corpo: true, queda: true,
+  },
+  {
+    id: "escapar",
+    rx: /\b(me solto|me desvencilho|escapo (da|das|do|dos) (corda|amarra|algema|n[oó]|la[cç]o|rede|teia|agarr)|solto os pulsos|me contorço|escorrego pel[ao] (grade|abertura|fresta))/,
+    pericia: "acrobacia", alvo: "escapar", minutos: 5, barulho: false,
+    rotulo: "escapar do que prende", dcPadrao: DC("incomum"), corpo: true,
+  },
+  {
+    /* FORTITUDE COMO TESTE, NÃO COMO SALVAGUARDA, e a diferença é quem
+       começa: quem segura o fôlego para atravessar o alagado está TENTANDO
+       algo; quem é envenenado está sofrendo algo. A segunda ninguém pede —
+       e por isso não há aqui nenhum "resisto ao veneno". */
+    id: "aguentar",
+    rx: /\b(seguro o f[oô]lego|prendo a respira[cç][aã]o|aguento (a|o|mais|firme|em p[eé])|suporto (a|o)|cerro os dentes|fico de p[eé]|marcho (a|sem|mais)|viro a noite|bebo com ele)/,
+    pericia: "fortitude", alvo: "aguentar", minutos: 5, barulho: false,
+    rotulo: "aguentar", dcPadrao: DC("incomum"), corpo: true,
+  },
+  {
+    id: "cavalgar",
+    rx: /\b(esporeio|cavalgo|galopo|monto (no|na|o cavalo|a [eé]gua)|conduzo (a|o) (carro[cç]a|carreta|charrete|trenó|barca)|guio (a|o) (carro[cç]a|carreta)|salto com o cavalo)/,
+    pericia: "montaria", alvo: "montaria", minutos: 5, barulho: false,
+    rotulo: "dominar a montaria", dcPadrao: DC("comum"), corpo: true, queda: true,
+  },
+  {
+    id: "acalmar_bicho",
+    rx: /\b(acalmo (o|a) (cavalo|[eé]gua|c[aã]o|cachorro|mula|boi|bicho|animal|fera|besta)|me aproximo devagar d|estendo a m[aã]o para (o|a) (bicho|animal|cavalo|c[aã]o)|falo baixo com (o|a) (bicho|animal|cavalo))/,
+    pericia: "montaria", alvo: "bicho", minutos: 5, barulho: false,
+    rotulo: "acalmar o bicho", dcPadrao: DC("incomum"),
+  },
+  {
+    id: "atuar",
+    rx: /\b(canto (para|na|no|uma)|toco (para|a|o|na|no) (m[uú]sica|ala[uú]de|flauta|harpa|tambor|sala|taverna|gente|mesa)|conto uma hist[oó]ria|declamo|recito|dan[cç]o para|fa[cç]o um n[uú]mero|subo no palco|puxo uma can[cç][aã]o)/,
+    pericia: "atuacao", alvo: "atuacao", minutos: 15, barulho: true,
+    rotulo: "prender a sala", dcPadrao: DC("incomum"),
+    /* NÃO é `social`, e a suíte flagrou isto: `social` liga a escada do
+       PEDIDO — quanto custa arrancar uma coisa de UMA pessoa —, e cantar
+       para uma taverna não pede nada a ninguém. A plateia é uma sala, não
+       um interlocutor: não há relação, não há alavanca, não há o que ela
+       ceda. É um teste de perícia contra o ambiente, e o número é o do
+       catálogo. */
+  },
+  {
+    id: "orientar",
+    rx: /\b(me oriento|acho o (norte|caminho|rumo)|leio o c[eé]u|leio as estrelas|procuro (a|um)?\s*(um )?(po[cç]o|abrigo|[aá]gua|agua)|monto acampamento no|escolho onde acampar|ca[cç]o (algo|comida|bicho))/,
+    pericia: "sobrevivencia", alvo: "orientar", minutos: 40, barulho: false,
+    rotulo: "não se perder", dcPadrao: DC("comum"),
+  },
+  {
+    id: "diagnosticar",
+    rx: /\b(examino o (corpo|cad[aá]ver|ferimento|ferido|morto|doente)|de que (ele|ela|isso) morreu|do que (ele|ela) (est[aá] doente|padece)|vejo o que (ele|ela) tem|abro o corpo|checo o pulso)/,
+    pericia: "medicina", alvo: "diagnostico", minutos: 15, barulho: false,
+    rotulo: "ler o corpo", dcPadrao: DC("incomum"),
+  },
+  {
+    id: "heraldica",
+    rx: /\b(de quem (é|e) (esse|este|aquele) (bras[aã]o|estandarte|s[ií]mbolo|emblema)|reconhe[cç]o (o|esse|este) (bras[aã]o|estandarte|emblema|sotaque|dialeto)|que casa (é|e)|de que reino|que ordem (é|e) essa)/,
+    pericia: "saberes", alvo: "heraldica", minutos: 2, barulho: false,
+    rotulo: "reconhecer de onde vem", dcPadrao: DC("incomum"),
+  },
+  {
+    id: "falsificar",
+    rx: /\b(falsific|forjo (a|o) (assinatura|documento|carta|ordem|salvo-conduto)|imito (a letra|a assinatura|o timbre)|adulter(o|ar) (o|a))/,
+    pericia: "enganacao", alvo: "falsificar", minutos: 40, barulho: false,
+    rotulo: "falsificar", dcPadrao: DC("dificil"),
+  },
+  {
+    /* seguir uma PESSOA agora não é ler um rastro no chão: rastrear vem
+       antes no catálogo e cuida das pegadas; isto é a sombra atrás de
+       alguém que ainda está andando, e falhar aqui é ser notado. */
+    id: "seguir_alguem",
+    rx: /\b(sigo (ele|ela|o|a|os|as)\s*\w*\s*(sem ser|de longe|a dist[aâ]ncia|discretamente)|vou atr[aá]s del|encalço|sigo os passos del|fico na cola)/,
+    pericia: "furtividade", alvo: "perseguir", minutos: 20, barulho: false, testemunha: true,
+    rotulo: "seguir sem ser notado", dcPadrao: DC("incomum"),
   },
 ];
 
@@ -353,6 +532,21 @@ const COMO_SE_DIZ = {
   rastrear: "sigo as pegadas na lama",
   estancar: "trato o ferimento antes que ele piore",
   arcano: "examino o selo para reconhecer a magia",
+  desarmar: "desarmo a armadilha antes de pisar nela",
+  nadar: "atravesso a nado até a outra margem",
+  saltar: "salto o vão até o outro telhado",
+  forcar: "empurro a pedra que trava a passagem",
+  equilibrio: "atravesso a viga sem olhar para baixo",
+  escapar: "me solto das cordas torcendo os pulsos",
+  aguentar: "seguro o fôlego e sigo em frente",
+  cavalgar: "esporeio o cavalo por dentro do bosque",
+  acalmar_bicho: "acalmo o cavalo que empinou",
+  atuar: "canto para a taverna inteira",
+  orientar: "leio o céu para achar o rumo",
+  diagnosticar: "examino o corpo para saber de que ele morreu",
+  heraldica: "reconheço esse brasão",
+  falsificar: "falsifico o salvo-conduto",
+  seguir_alguem: "sigo ele de longe, sem ser notado",
 };
 export function comoSeDiz(id) { return COMO_SE_DIZ[id] || ""; }
 
@@ -413,10 +607,27 @@ export function fraseDaAcaoRapida(id, motivo = "") {
    chance real de falhar E consequência por falhar. Andar até o
    balcão falha em quê? Perguntar o nome de alguém custa o quê?
    ============================================================ */
-const SEM_DADO = [
-  { rx: /\b(pergunto|pe[cç]o (informa|not[ií]cia)|falo com|converso|cumprimento|saúdo|saudo|digo|respondo|comento|agrade[cç]o)\b/, porque: "conversa não se rola — só o que a conversa TENTA arrancar" },
-  { rx: /\b(ando|caminho|sigo (at[eé]|para)|entro|saio|sento|levanto|olho para|observo o|espero|aguardo|descanso)\b/, porque: "deslocar-se e olhar não são obstáculos" },
-  { rx: /\b(saco|puxo|desembainho|equipo|guardo|bebo|como|visto|acendo)\b/, porque: "usar o que se tem na mão não pede dado" },
+export const SEM_DADO = [
+  { rx: /\b(pergunto|pe[cç]o (informa|not[ií]cia)|falo com|converso|cumprimento|saúdo|saudo|digo|respondo|comento|agrade[cç]o|me apresento|dou bom dia|me despe[cç]o|escuto o que ele diz)\b/, porque: "conversa não se rola — só o que a conversa TENTA arrancar" },
+  { rx: /\b(ando|caminho|sigo (at[eé]|para)|entro|saio|sento|levanto|olho para|observo o|espero|aguardo|descanso|encosto na parede|me afasto|dou meia volta|volto por onde vim|subo a escada|des[cç]o a escada)\b/, porque: "deslocar-se e olhar não são obstáculos" },
+  { rx: /\b(saco|puxo|desembainho|equipo|guardo|bebo|como|visto|acendo|apago a|embainho|abro a bolsa|pego (a|o|meu|minha)|solto a corda|amarro|calço)\b/, porque: "usar o que se tem na mão não pede dado" },
+  /* ---------------- A SEGUNDA LEVA (v9.67) ----------------
+     Meia dúzia de coisas que a leva nova de desafios encostou perigosamente
+     perto, e que continuam não sendo teste nenhum. Esta lista cresce JUNTO
+     com o catálogo de propósito: cada verbo novo que o sistema aprende a
+     reconhecer traz consigo um punhado de frases parecidas que ele não pode
+     confundir com esforço. */
+  /* O `s?` no fim de cada substantivo não é capricho: `\b` depois de
+     "moeda" recusa "moedas", e esse detalhe já matou nove entradas de uma
+     vez neste arquivo. É o bug que este projeto mais repete depois da regra
+     sem código atrás — e ele reapareceu AQUI, no primeiro teste da leva. */
+  { rx: /\b(conto (as|o|os) (moedas?|dinheiro|pratas?|ouro)|guardo o dinheiro|abro a bolsa|conto quanto|somo|divido (a|o|as|os))\b/, porque: "contar o que é seu não tem como dar errado" },
+  { rx: /\b(leio (a|o|essa|esse) (placas?|tabuletas?|cartas?|bilhetes?|cartazes?|mural|nome)|escrevo|anoto|assino|desenho no)\b/, porque: "ler e escrever o que está à vista é saber ler, não um obstáculo" },
+  { rx: /\b(monto (o|a) (acampamento|barraca|tenda)|acendo a fogueira|deito|durmo|tiro o sono|me cubro|como a ra[cç][aã]o)\b/, porque: "acampar em lugar seguro é rotina, e a rotina não pede dado" },
+  { rx: /\b(pago|compro|vendo|entrego (a|o|as|os)|dou (a|o|as|os|para|de presente)|ofere[cç]o (a|o) (m[aã]os?|assentos?|bebidas?))\b/, porque: "o preço já é decidido pelo mercado; a mão que paga não erra" },
+  { rx: /\b(rezo|oro|agrade[cç]o (ao|aos|a deusa|ao deus)|acendo (uma )?vela|fa[cç]o o sinal|benzo)\b/, porque: "a prece é do coração, e o que ela move não é decidido por dado de perícia" },
+  { rx: /\b(monto no cavalo (parado|amarrado)|desmonto|apeio|amarro (o|os) (cavalos?|bichos?)|dou [aá]gua (ao|para o) (cavalos?|bichos?))\b/, porque: "montar num bicho parado e manso não é dominar montaria" },
+  { rx: /\b(respiro fundo|penso|reflito|me lembro de|imagino|conto at[eé] (tr[eê]s|dez)|fecho os olhos)\b/, porque: "pensar não é uma perícia, e o herói sabe o que o jogador sabe" },
 ];
 
 export function naoPedeDado(texto) {
@@ -702,8 +913,12 @@ export function lerAcao(texto, ctx = {}) {
     dc = achado.dc;
     deOnde = "há algo escondido aqui, e esta é a dificuldade dele";
   } else {
-    dc = d.dcBase || d.dcPadrao || 13;
-    deOnde = "obstáculo comum";
+    dc = d.dcBase || d.dcPadrao || DC("comum");
+    /* v9.67: dizia "obstáculo comum" para tudo, inclusive para um 18. O
+       jogador lia o número e a etiqueta discordando dele. Agora a etiqueta
+       sai da régua, que é para isso que ela existe: o sistema passa a saber
+       DIZER o que decidiu, e não só decidir. */
+    deOnde = `obstáculo ${degrauDaDC(dc).nome}`;
   }
   const alivio = bonusDoQueMudou(mudou);
   if (alivio) { dc -= alivio; deOnde += `, ${mudou.map((m) => m.diz).join(" e ")} (−${alivio})`; }
@@ -739,7 +954,7 @@ export function lerAcao(texto, ctx = {}) {
     alvoDoCusto: d.alvo,
     /* v9.66: de que altura se cai daqui. Derivada da semente e do lugar,
        como a dureza da tranca — a mesma parede tem sempre a mesma altura. */
-    queda: d.alvo === "escalada" ? quedaDe(semente, lugar, cru) : null,
+    queda: (d.alvo === "escalada" || d.queda) ? quedaDe(semente, lugar, cru) : null,
     via: via ? via.id : "", viaNome: via ? via.nome : "",
     falaDaVia: via ? via.falha : "",
     achado: achado || null,
@@ -918,6 +1133,113 @@ export const CUSTO_DE_FALHAR = [
     alvo: "fraqueza", porPouco: false,
     seca: "nada do que você sabe encaixa nesta criatura",
     minutosExtra: 0,
+  },
+  {
+    /* ler a intenção de alguém: falhar não fere e não custa tempo, mas
+       custa o pior dos preços numa mesa — você fica achando que sabe */
+    alvo: "intuicao", porPouco: false,
+    seca: "o rosto dela não entrega nada, e você fica com a sua própria desconfiança nas mãos",
+    minutosExtra: 0,
+  },
+  /* ---------------- OS CUSTOS DA SEGUNDA LEVA (v9.67) ----------------
+     Cada desafio novo precisa saber o que a falha dele cobra, ou o custo
+     da falha vira uma regra que só vale para as quinze primeiras entradas
+     — e uma regra que vale para parte do catálogo é a pior espécie de
+     regra, porque parece que vale para tudo. */
+  {
+    alvo: "armadilha", porPouco: false,
+    seca: "o mecanismo salta sob os seus dedos",
+    minutosExtra: 5,
+    /* desarmar mal é a única falha desta leva que fere sem cair: a
+       armadilha dispara no dedo de quem a estava desarmando */
+    peleSeca: { dano: 2, diz: "a lâmina do gatilho acha a mão antes do fio" },
+  },
+  {
+    alvo: "nado", porPouco: true,
+    seca: "a correnteza vence e devolve você à margem de onde saiu",
+    preco: "você chega do outro lado, e chega sem ar",
+    minutosExtra: 10,
+    pelePorPouco: { condicao: "enfraquecido", diz: "os braços não obedecem mais" },
+  },
+  {
+    alvo: "salto", porPouco: true,
+    seca: "o pé sai antes da borda",
+    preco: "a mão alcança a beira e o resto do corpo bate contra ela",
+    minutosExtra: 0,
+    peleSeca: { queda: true, diz: "não havia como parar no meio do salto" },
+    pelePorPouco: { dano: 2, diz: "as costelas encontram a quina da borda" },
+  },
+  {
+    alvo: "peso", porPouco: true,
+    seca: "não cede — e você sente onde vai doer amanhã",
+    preco: "cede, e as suas costas pagam a diferença",
+    minutosExtra: 5,
+    pelePorPouco: { dano: 2, diz: "alguma coisa estala nas costas" },
+  },
+  {
+    alvo: "equilibrio", porPouco: true,
+    seca: "o pé escorrega e não há onde segurar",
+    preco: "você chega do outro lado de joelhos, e não de pé",
+    minutosExtra: 2,
+    peleSeca: { queda: true, diz: "de cima não dá para escolher onde cair" },
+  },
+  {
+    alvo: "escapar", porPouco: true,
+    seca: "o nó aperta mais a cada tentativa",
+    preco: "você sai, deixando pele no caminho",
+    minutosExtra: 10,
+    pelePorPouco: { dano: 2, diz: "os pulsos saem em carne viva" },
+  },
+  {
+    alvo: "aguentar", porPouco: false,
+    seca: "o corpo tem um limite e ele acabou de aparecer",
+    minutosExtra: 5,
+    peleSeca: { condicao: "enfraquecido", diz: "as pernas avisam que não vão longe" },
+  },
+  {
+    alvo: "montaria", porPouco: true,
+    seca: "o bicho ganha a discussão e você vai ao chão",
+    preco: "você se segura, mas perde as rédeas por um trecho",
+    minutosExtra: 5,
+    peleSeca: { queda: true, diz: "cair de um cavalo em movimento é cair duas vezes" },
+  },
+  {
+    alvo: "bicho", porPouco: false,
+    seca: "o bicho recua, mostra os dentes e não deixa mais ninguém chegar perto",
+    minutosExtra: 10,
+  },
+  {
+    alvo: "atuacao", porPouco: true,
+    seca: "a sala não presta atenção, e agora presta atenção no jeito errado",
+    preco: "você prende a sala, mas paga com a voz",
+    minutosExtra: 15,
+  },
+  {
+    alvo: "orientar", porPouco: true,
+    seca: "o rumo se perde e a estrada cobra o dobro",
+    preco: "você acha o caminho, mas depois de andar em falso",
+    minutosExtra: 60,
+  },
+  {
+    alvo: "diagnostico", porPouco: true,
+    seca: "o corpo não conta nada que você saiba ler",
+    preco: "você entende, mas leva metade da manhã debruçado sobre ele",
+    minutosExtra: 20,
+  },
+  {
+    alvo: "heraldica", porPouco: false,
+    seca: "o símbolo não diz nada — ou diz algo que você aprendeu errado",
+    minutosExtra: 0,
+  },
+  {
+    alvo: "falsificar", porPouco: false,
+    seca: "o papel fica bom demais para ser verdade e falso demais para passar",
+    minutosExtra: 30,
+  },
+  {
+    alvo: "perseguir", porPouco: false,
+    seca: "a distância certa é fácil de errar, e você errou para o lado de perto",
+    minutosExtra: 10,
   },
   {
     alvo: "arcano", porPouco: true,

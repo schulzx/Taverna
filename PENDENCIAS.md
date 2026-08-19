@@ -691,6 +691,63 @@ jogador descobre jogando.
   que amarra os quatro tempos e o envelope que entrega cada momento pronto
   ao Mestre, para o vilão parar de ser um adjetivo e virar um calendário.
 
+- ~~**Quatro perícias da ficha não tinham como aparecer no jogo.**~~
+  RESOLVIDO na v9.67, e era um buraco que dava para MEDIR: Acrobacia,
+  Fortitude, Montaria e Atuação existiam na tela de personagem, custavam
+  pontos para treinar, e não havia frase nenhuma no mundo que as
+  convocasse. Um jogador podia gastar a especialização inteira em Acrobacia
+  e nunca rolar uma.
+
+  O catálogo foi de 15 para 31 entradas. Entraram as quatro órfãs e os
+  momentos mais comuns de uma mesa que faltavam dentro das perícias já
+  cobertas: **desarmar a armadilha** (numa masmorra cheia delas, e não
+  havia como declarar que se tentava), atravessar a nado, saltar o vão,
+  vencer o peso, escapar das cordas, orientar-se no ermo, ler um corpo,
+  reconhecer um brasão, falsificar um documento, seguir alguém sem ser
+  notado.
+
+  A régua para entrar continua a mesma, e é o que separa isto de uma lista
+  de gatilhos: **verbo de esforço declarado.** "Olho o cavalo" não é
+  Montaria; "domo o cavalo que empinou" é. E o teste de cada entrada nova
+  vem em par — a frase que ela deve reconhecer e a frase vizinha que ela
+  NÃO pode roubar.
+
+  Três achados no processo, e os três são bugs de fronteira:
+
+  1. `buscar` é a primeira entrada do catálogo e rouba tudo que diz
+     "examino" ou "procuro". Examinar um CORPO é Medicina; procurar ÁGUA
+     no ermo é Sobrevivência. Cada leva nova devolve para `buscar` uma
+     palavra que ela precisa recuar.
+  2. `reconheço esse ___` de `fraqueza` engolia `reconheço esse brasão`.
+     Reconhecer a criatura e reconhecer a heráldica caem as duas em
+     Saberes — o que torna a confusão invisível no número e visível na
+     ficção.
+  3. **o `\b` que mata plural voltou.** `(moeda|dinheiro)\b` recusa
+     "moedas", e o primeiro teste da leva pegou. É o bug que este projeto
+     mais repete depois da regra sem código atrás.
+
+- ~~**As dificuldades do catálogo eram 13, 14 e 15, e nenhuma sabia dizer
+  por quê.**~~ RESOLVIDO na v9.67 com a régua: sete degraus nomeados, do
+  `trivial` (5) ao `heroico` (25). Um número sem nome não se discute e não
+  se ajusta — quem mexesse ali daqui a um mês olharia um 14 sem ter como
+  saber se ele quis dizer "isso é difícil" ou "alguém digitou 14".
+
+  Cinco entradas que marcavam 14 subiram para 15 (`incomum`), porque 14 não
+  era degrau de nada. Um ponto em cada. E a linha que o jogador lê passou a
+  nomear o degrau em vez de dizer "obstáculo comum" para tudo, inclusive
+  para um 18 — o número e a etiqueta discordavam na cara dele.
+
+  A asserção que impede o 14 de voltar: **todo número do catálogo é um
+  degrau da régua**, e a suíte reprova qualquer valor solto.
+
+- ~~**A lista do que NÃO se rola tinha três entradas.**~~ Ampliada para
+  dez na v9.67, e cresceu **junto** com o catálogo de propósito: cada verbo
+  novo que o sistema aprende a reconhecer traz consigo um punhado de frases
+  parecidas que ele não pode confundir com esforço. Contar moedas, ler uma
+  placa, montar acampamento, pagar a conta, rezar, amarrar o cavalo,
+  respirar fundo. "Metade de um bom sistema de testes é a lista do que não
+  se rola" — e ela estava com um terço do tamanho da outra metade.
+
 ## A ordem do turno
 
 - ~~**A ordem do turno era o layout de um arquivo.**~~ RESOLVIDO em duas
