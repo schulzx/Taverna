@@ -38,7 +38,7 @@ import { MOLDES, MOLDE_PADRAO, moldePorId, resumoMoldePrompt, MOLDES_PROMPT } fr
 import { BRAND, SLOGAN, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, FONT_CSS, GENEROS, ATRIBUTOS } from "./constantes.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
 import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito, naturezaDaHabilidade, tipoDeDanoDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
-import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, envelopeDoTeste, TESTES_PROMPT } from "./testes.js";
+import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, envelopeDoTeste } from "./testes.js";
 import { PERICIAS, periciaPorId, garantirPericias, periciasIniciais, bonusDePericia, passivoDe, resolucaoAutomatica, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente, resumoPericiasPrompt, PERICIAS_PROMPT } from "./pericias.js";
 import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, podeGastar, gastarHeroismo, validarDeclaracao, envelopeDeclaracao, envelopeRefazer, resumoHeroismoPrompt, HEROISMO_PROMPT } from "./heroismo.js";
 import { dadoDeVida, garantirDadosVida, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT } from "./descanso.js";
@@ -61,7 +61,7 @@ import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaP
 import { garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
-import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
+import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
@@ -5439,9 +5439,18 @@ export default function Taverna() {
       if ((portaoRef.current || []).length) { seguraRef.current = []; entregaRef.current = linhas; }
       else { entregaRef.current = null; pushMsgs(linhas); }
     }
-    /* decisor de testes por código: se a dificuldade é trivial para o herói
-       (modificador torna a falha impossível), nem mostra o dado — sucesso direto */
-    let rolagemFinal = resp.rolagem || null;
+    /* ---------------- O CANAL FECHADO (v9.68) ----------------
+       `resp.rolagem` era o campo pelo qual o Mestre de IA pedia um teste, e
+       o código abaixo o atendia com uma régua inteira só dele — perfil,
+       recalibragem, janela rolável. Ele deixou de ser lido: o contrato não
+       o pede mais, e uma resposta antiga que ainda o traga é ignorada em
+       silêncio, porque avisar o jogador de um campo obsoleto seria o
+       sistema falando de si mesmo.
+
+       No lugar dele entra `resp.perigo`: a IA diz o que o MUNDO fez, e o
+       sistema escolhe a salvaguarda, a dificuldade, o dano e a condição. */
+    try { if (resp.perigo) dispararPerigo(resp.perigo); } catch { /* perigo mal descrito nunca custa o turno */ }
+    let rolagemFinal = null;
     if (rolagemFinal && (rolagemFinal.dificuldade != null || rolagemFinal.perfil)) {
       const attrT = ATRIBUTOS.find((x) => x.nome.toLowerCase() === (rolagemFinal.atributo || "").toLowerCase());
       const modT = attrT ? atributoEfetivo(pers, attrT.id) : 0;
@@ -7803,7 +7812,7 @@ export default function Taverna() {
       const rvH = fechouHab ? { pers: fichaViva() || pers, texto: "" } : fecharMeuTurno(fichaViva() || pers);
       enviar(desfechos.length
         ? `[HABILIDADES — RESOLVIDAS PELO SISTEMA] No MESMO turno usei ${listaTxt}. O SISTEMA já rolou o acerto, calculou e APLICOU tudo: ${desfechos.join(" · ")}.${rvH.texto} Narre a sequência inteira como UM só turno meu — não recalcule, não mude quem acertou, NÃO declare a morte de quem ainda tem PV. Minha intenção: ${acao}`
-        : `[HABILIDADES] No MESMO turno uso ${listaTxt} (PM já descontados; tenho ${rvH.pers.mana}). COMO eu as uso: ${acao}.${rvH.texto} Narre a sequência conforme minha intenção — se incerto, peça a rolagem apropriada. LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte.${extraTempo}`, rvH.pers);
+        : `[HABILIDADES] No MESMO turno uso ${listaTxt} (PM já descontados; tenho ${rvH.pers.mana}). COMO eu as uso: ${acao}.${rvH.texto} Narre a sequência conforme minha intenção. Se ficar incerto sobre o efeito, narre até onde a certeza vai e devolva a vez — você NÃO pede rolagem, e o que faltar o sistema resolve no meu próximo lance. LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte.${extraTempo}`, rvH.pers);
       return;
     }
     /* Detecta habilidade citada por texto (ex.: "uso Projétil Arcano") e desconta o PM
@@ -9593,11 +9602,38 @@ export default function Taverna() {
       }), fichaViva() || personagem);
       return;
     }
+    /* ---------------- A VANTAGEM DE TRAÇO MUDA DE CASA (v9.68) ----------------
+       Achada na varredura do prompt, e é o bug de sempre visto de um ângulo
+       novo: a vantagem racial — o Elfo em Percepção, o Meio-elfo em Presença —
+       morava SÓ no caminho da rolagem pedida pela IA. O comentário de lá
+       dizia, com razão para a época, "este é o único ponto por onde todo
+       teste do Mestre passa".
+
+       Só que desde a v9.59 o teste normal deixou de passar por lá: ele nasce
+       da ação declarada e vem por aqui. Ou seja, a frase que está na tela de
+       criação de personagem desde a primeira versão parou de valer para os
+       testes que de fato acontecem, e ninguém tinha como notar — o dado
+       simplesmente saía um pouco pior.
+
+       Vantagem e desvantagem se anulam, como na mesa: quem já rolava com
+       desvantagem não ganha vantagem, ganha a penalidade apagada. */
+    let vant = false, desv = false, porVantagem = "";
+    {
+      const p2 = fichaViva() || personagem;
+      const mental = ehSalvaMental(v.atributo) || /medo|terror|encant|ilus|mental|vontade/.test(semNome(v.rotulo || ""));
+      if (mental && (temVantagemMental(p2) || vantagemMentalDeTraco(p2))) {
+        vant = true; porVantagem = temVantagemMental(p2) ? "Vontade de Ferro" : textoDoTraco(p2).split(":")[0];
+      } else if (vantagemDeTraco(p2, v.atributo)) {
+        porVantagem = textoDoTraco(p2).split(":")[0];
+        if (desv) { desv = false; porVantagem += " (anula a desvantagem)"; } else vant = true;
+      }
+    }
     setRolagem({
       atributo: nomeDoAtributo(v.atributo), rotulo, pericia: v.pericia,
       nivelTreino: per && nivelTreino === "nenhum" ? "leigo" : nivelTreino,
       motivo: v.rotulo, origem: "pedido", tipo: v.atributo,
       dificuldade: v.dc, achado: v.achado, desafio: v,
+      vantagem: vant, desvantagem: desv, porVantagem,
     });
   };
 
@@ -9624,7 +9660,14 @@ export default function Taverna() {
   };
 
   /* ---------------- PEDIR UM TESTE (v9.6) ----------------
-     Numa mesa quem pede o teste é o jogador. O sistema fixa a dificuldade
+     v9.68: o nome ficou do tempo em que o jogador podia pedir um teste, e o
+     único chamador que sobrou é a PROVA DE ASCENSÃO — que o sistema abre, com
+     dificuldade que ele mesmo fixou, e ninguém pede. A varredura do prompt
+     confirmou que não há mais nenhuma outra porta para cá.
+
+     O texto abaixo é o de 2026 e ficou obsoleto na v9.64; fica riscado em vez
+     de apagado porque é o registro de por que esta função existe.
+     ~~Numa mesa quem pede o teste é o jogador. O sistema fixa a dificuldade
      pelo contexto que conhece, rola, e o envelope prende o Mestre ao
      resultado: falhou, ele não inventa nada. */
   const pedirTeste = (tipoId, motivo, extra = {}) => {
@@ -9943,6 +9986,63 @@ export default function Taverna() {
     }, { fatos: fatosRef.current });
     if (q && !q.reusado) fatosRef.current = registrarFato(fatosRef.current, q.chave, q, { dia: diaRef.current, cena: turnosDeMundoRef.current });
     return q;
+  };
+
+  /* ============================================================
+     O PERIGO QUE A FICÇÃO TRAZ (v9.68)
+
+     Esta função existe para SUBSTITUIR um canal, não para abrir um.
+
+     Até aqui o contrato de resposta do Mestre tinha um campo
+     `"rolagem"`, e o prompt ensinava a preenchê-lo: dado, atributo,
+     motivo, perfil de dificuldade. O código obedecia. Era o maior buraco
+     do projeto e ele estava escrito em letras grandes no lugar mais
+     visível — uma seção inteira chamada "ROLAGENS (o sistema rola e
+     calcula; VOCÊ PEDE)".
+
+     E não era só uma contradição de texto. Um dado pedido pela IA chega
+     com `desafio: null`, e por isso NÃO passa por nada do que foi
+     construído da v9.59 para cá: sem livro de tentativas, sem
+     dificuldade tirada do obstáculo, sem pergunta de oportunidade, sem
+     custo da falha, sem preço em pele. Era a régua paralela mais completa
+     que este jogo já teve, e ela vencia a oficial simplesmente por chegar
+     primeiro.
+
+     O QUE ENTRA NO LUGAR mantém para a IA o que é dela e tira o que não
+     é. Ela continua declarando O QUE O MUNDO FAZ — "a teia desaba do
+     teto", "o degrau cede", "a taça estava envenenada" —, que é ficção, e
+     ficção é dela. O que ela perde é escolher qual salvaguarda, qual
+     dificuldade, quanto dói e se passou.
+
+     E isto fecha, de quebra, a pendência mais velha da tabela de
+     salvaguardas: agarrão e empurrão conheciam a categoria e não tinham
+     MOMENTO em que disparassem. O momento é este.
+     ============================================================ */
+  const dispararPerigo = (texto) => {
+    const t = String(texto || "").trim();
+    if (!t || t.length < 4) return null;
+    const fonte = fonteDaSalvaguarda(t);
+    /* NÃO RECONHECI: é só ficção, e ficção não fere. O lado seguro de
+       errar aqui é não fazer nada — o contrário seria o sistema inventando
+       dano a partir de uma frase que ele não entendeu. */
+    if (!fonte) return null;
+    const p = fichaViva() || personagem;
+    const sv = rolarSalvaguarda({
+      pers: p, salva: fonte.salva,
+      dc: dcDaFonte({ nivel: p.nivel || 1, base: 13 }),
+      modDe: (a) => atributoEfetivo(p, a),
+    });
+    const rolo = danoDoPerigo(p.nivel || 1);
+    const cheio = rolo.total;
+    const sofrido = sv.passou ? (fonte.meia ? Math.floor(cheio / 2) : 0) : cheio;
+    const cond = sv.passou ? "" : condicaoDaFonte(fonte.id);
+    pushMsgs([
+      { autor: "sistema", texto: `⚠ ${fonte.diz.charAt(0).toUpperCase()}${fonte.diz.slice(1)} — o sistema resolve.` },
+      { autor: "sistema", texto: linhaDaSalvaguarda(sv) },
+    ]);
+    const r = sofrerNaPele({ dano: sofrido, condicao: cond, motivo: fonte.diz, porque: fonte.diz });
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaSalvaguarda(sv, { oQue: fonte.diz, meia: fonte.meia, danoCheio: cheio, danoFinal: sofrido })}`;
+    return { ...r, sv, fonte, sofrido };
   };
 
   /* ---------------- A QUEDA (v9.66) ----------------

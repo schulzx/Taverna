@@ -177,9 +177,21 @@ REGRA DESTE ENVELOPE (obrigatória): eu FALHEI. Você NÃO revela nada, NÃO ent
 REGRA DESTE ENVELOPE (obrigatória): eu PASSEI. Revele UMA coisa concreta e útil sobre ${motivo || t.pergunta} — algo que já existia na cena ou no mundo, nunca uma novidade conveniente inventada agora, e nunca um item ou aliado de brinde. ${critico ? "Foi crítico: pode ser algo especialmente valioso ou específico." : "Uma coisa só, do tamanho de um teste bem-sucedido."} Se estivermos em combate, uma fraqueza real do inimigo serve. Diga em até três frases e devolva a palavra para mim, sem iniciar cena nova, sem viagem e sem fazer o tempo passar.`;
 }
 
-export const TESTES_PROMPT = `TESTES PEDIDOS PELO JOGADOR (v9.6 — como numa mesa de verdade):
-- O jogador pode PEDIR um teste a qualquer momento ("peço um teste de Percepção para ver se acho algo aqui"). Quando isso acontece, o SISTEMA fixa a dificuldade e rola — você não escolhe o número, não rola, não antecipa o resultado e não responde a pergunta antes do dado.
-- O resultado chega num envelope "[TESTE PEDIDO POR MIM — ROLADO PELO SISTEMA]" com uma regra explícita. Cumpra-a ao pé da letra: em caso de FALHA você não revela nada, nem por descrição, nem por insinuação, nem "só um pedacinho". Silêncio é uma resposta legítima e é a resposta certa.
-- Em caso de SUCESSO, revele UMA coisa concreta que já existia — nunca invente um item, um aliado ou uma saída conveniente porque o dado foi bom.
-- Se o jogador perguntar algo que exigiria um teste e não pedir um, você pode dizer que aquilo pede um teste — mas NUNCA role por conta própria nem entregue a informação de graça.
-- O envelope pode chegar RESOLVIDO SEM DADO. Quando chegar, não invente tensão: aquilo estava abaixo (ou muito acima) do herói e o acaso não tinha o que decidir. Narre a competência com naturalidade — "você faz isso desde sempre" —, nunca como sorte.`;
+/* ============================================================
+   TESTES_PROMPT foi REMOVIDO na v9.68.
+
+   Ele dizia, em letras de regra permanente, duas coisas que o sistema
+   passou a proibir: que o jogador PODE pedir um teste a qualquer momento
+   (a v9.64 acabou com isso) e que a IA, se achasse que algo pedia teste,
+   PODIA dizer isso ao jogador.
+
+   A varredura mostrou que ele estava importado pelo App e nunca montado
+   em prompt nenhum — a contradicao estava dormindo, nao rodando. Fica o
+   registro porque um bloco morto que ainda LE como politica e pior que
+   nenhum bloco: o proximo a passar por aqui acredita nele.
+
+   As duas regras boas que moravam nele nao se perderam: viajam dentro do
+   , que e onde elas valem — coladas ao resultado, e nao
+   soltas no ar de todo turno.
+   ============================================================ */
+

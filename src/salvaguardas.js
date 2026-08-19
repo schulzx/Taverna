@@ -128,6 +128,40 @@ export const FONTES_DE_SALVAGUARDA = [
   { id: "sentidos", rx: /areia|cega|fumaca|ofusc|clarao|surdez|ensurdec/, salva: "percepcao", meia: false, diz: "o que engana os sentidos" },
 ];
 
+/* ============================================================
+   O QUE O PERIGO DEIXA (v9.68)
+
+   Nem todo perigo cobra em PV. A teia prende, o clarão cega, o
+   encanto dobra a vontade — e o dano ali é zero ou quase. Sem esta
+   coluna, o único jeito de o mundo agir era tirando vida, e a teia
+   virava "3 de dano" em vez de virar um herói preso.
+
+   Vazio quer dizer "este cobra em sangue e mais nada".
+   ============================================================ */
+export const CONDICAO_DA_FONTE = {
+  veneno: "envenenado", doenca: "envenenado", frio: "lento",
+  encanto: "enfeiticado", medo: "amedrontado", mente: "atordoado",
+  agarrao: "agarrado", empurrao: "caido", sentidos: "cego",
+  armadilha: "", sopro: "queimando", queda: "caido",
+};
+export function condicaoDaFonte(id) { return CONDICAO_DA_FONTE[id] || ""; }
+
+/* Quanto machuca um perigo que a ficção trouxe. Sai do NÍVEL, porque
+   é a única régua honesta disponível: o mundo que ameaça um herói de
+   nível 12 não é o mesmo que ameaça um de nível 1, e quem descreveu o
+   perigo (a IA) não pode escolher o número — se pudesse, teríamos de
+   volta exatamente o canal que esta versão fechou.
+
+   Fica de propósito na faixa do "susto que se aguenta": um perigo de
+   cena não pode matar sozinho, ou a narração vira arma. */
+export function danoDoPerigo(nivel = 1, { sorte = Math.random } = {}) {
+  const n = Math.max(1, Math.min(20, Number(nivel) || 1));
+  const dados = Math.max(1, Math.min(6, 1 + Math.floor(n / 4)));
+  let total = 0;
+  for (let i = 0; i < dados; i++) total += 1 + Math.floor(sorte() * 6);
+  return { total, dados };
+}
+
 /* Qual salvaguarda este perigo pede. Devolve null quando o texto não
    descreve perigo nenhum — e null aqui significa "não houve
    salvaguarda", não "salvaguarda fácil". */

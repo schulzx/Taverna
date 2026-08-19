@@ -409,16 +409,15 @@ jogador descobre jogando.
   bônus fixo, porque traduzir a promessa em "+3" seria trocá-la por outra
   coisa parecida.
 
-- **Salvaguarda de empurrão e de agarrão ainda não têm fonte.** A tabela
-  `FONTES_DE_SALVAGUARDA` conhece as doze categorias, e três disparam de
-  fato. Agarrão (a teia, o tentáculo) e empurrão (a rajada, a tromba)
-  existem na ficção e passam pelo Mestre sem passar pelo sistema.
+- ~~**Salvaguarda de empurrão e de agarrão ainda não têm fonte.**~~
+  RESOLVIDO na v9.68, e pelo lugar mais improvável: a varredura do prompt.
 
-  ~~A queda~~ RESOLVIDA na v9.66: entrou pelo preço em pele da escalada,
-  com a altura derivada do lugar e a dificuldade tirada só dela. As duas
-  que sobram precisam do mesmo que a queda precisou — um MOMENTO em que
-  disparem. A queda achou o dela na falha de `escalada`; o agarrão pede a
-  criatura que agarra (bestiário) e o empurrão, o efeito que empurra.
+  As doze categorias precisavam de um MOMENTO em que disparassem. A queda
+  achou o dela na v9.66, na falha de `escalada`. As outras acharam quando o
+  canal `perigo` substituiu o pedido de rolagem da IA: agora que ela declara
+  o que o MUNDO faz — "a teia desaba do teto" — e `fonteDaSalvaguarda` lê a
+  frase, TODAS as doze passaram a ter porta. Medido em partida: a teia virou
+  salvaguarda de Força, 16 de dano e a condição `agarrado`.
 
 ## Combate e habilidades
 
@@ -747,6 +746,52 @@ jogador descobre jogando.
   placa, montar acampamento, pagar a conta, rezar, amarrar o cavalo,
   respirar fundo. "Metade de um bom sistema de testes é a lista do que não
   se rola" — e ela estava com um terço do tamanho da outra metade.
+
+- ~~**O prompt ainda ensinava a IA a pedir teste — e o código obedecia.**~~
+  RESOLVIDO na v9.68, e era o maior buraco do projeto, escrito em letras
+  grandes no lugar mais visível: uma seção inteira chamada **"ROLAGENS (o
+  sistema rola e calcula; VOCÊ PEDE)"**, mais um campo `"rolagem"` no
+  contrato de JSON com um parágrafo ensinando a preenchê-lo — dado,
+  atributo, motivo, perfil de dificuldade.
+
+  Não era só contradição de texto. Um dado pedido pela IA chega com
+  `desafio: null`, e por isso **não passava por nada** do que foi construído
+  da v9.59 para cá: sem livro de tentativas, sem dificuldade tirada do
+  obstáculo, sem pergunta de oportunidade, sem custo da falha, sem preço em
+  pele. Era a régua paralela mais completa que este jogo já teve, e vencia a
+  oficial simplesmente por chegar primeiro.
+
+  A varredura achou mais quatro pontas, três delas dormindo:
+
+  - `TESTES_PROMPT` dizia que o jogador PODE pedir teste (a v9.64 acabou
+    com isso) e que a IA pode sugerir um. Estava **importado e nunca
+    montado** — a contradição não rodava, mas lia como política, e um bloco
+    morto que lê como política é pior que nenhum: o próximo acredita nele.
+  - `condicoes.js`: "faça o que se faz numa mesa: PEÇA A ROLAGEM".
+  - `aflicoes.js`: "NÃO aplique nada: peça a rolagem apropriada".
+  - o envelope `[HABILIDADES]`: "se incerto, peça a rolagem apropriada" —
+    esta rodava, em todo turno de habilidade não ofensiva.
+
+  **O que entrou no lugar** mantém para a IA o que é dela e tira o que não
+  é. Ela continua declarando O QUE O MUNDO FAZ — "a teia desaba", "o degrau
+  cede", "a taça estava envenenada" —, que é ficção; perde escolher qual
+  salvaguarda, qual dificuldade, quanto dói e se pegou. O campo `perigo`
+  substituiu `rolagem` no contrato, e `sanearResposta` força `rolagem: null`
+  para que nem uma resposta antiga reabra o canal.
+
+- ~~**A vantagem racial só valia no caminho que ia ser fechado.**~~
+  RESOLVIDO na v9.68, e foi o achado colateral da varredura. O Elfo tem
+  vantagem em Percepção e o Meio-elfo em Presença — frase que está na tela
+  de criação desde a primeira versão. O código que a aplicava morava no
+  caminho da rolagem pedida pela IA, com um comentário que dizia, com razão
+  **para a época**, "este é o único ponto por onde todo teste do Mestre
+  passa".
+
+  Só que desde a v9.59 o teste normal deixou de passar por lá: ele nasce da
+  ação declarada. Ou seja, o traço parou de valer para os testes que de fato
+  acontecem, e ninguém tinha como notar — o dado simplesmente saía um pouco
+  pior. Mudou de casa para `rolarDesafio`, com a regra da mesa: vantagem e
+  desvantagem se anulam.
 
 ## A ordem do turno
 

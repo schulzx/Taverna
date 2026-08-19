@@ -93,14 +93,17 @@ export function extrairJSON(texto) {
   const mSug = bruto.match(/"sugestoes"\s*:\s*(\[[^\]]*\])/);
   if (mSug) { try { sugestoes = JSON.parse(mSug[1]); } catch { /* ignora */ } }
 
-  // tenta recuperar rolagem/mudancas se estiverem completos no texto
-  let rolagem = null, mudancas = null;
-  const mRol = bruto.match(/"rolagem"\s*:\s*({[^}]*})/);
-  if (mRol) { try { rolagem = JSON.parse(mRol[1]); } catch { /* ignora */ } }
+  /* v9.68: o resgate era do campo "rolagem", que deixou de existir — a IA
+     não pede teste. Resgatar um campo morto de uma resposta quebrada seria
+     ressuscitar o canal exatamente onde ninguém olharia. Agora se resgata
+     "perigo", que é uma frase, não um objeto. */
+  let perigo = "", mudancas = null;
+  const mPer = bruto.match(/"perigo"\s*:\s*"([^"]{4,240})"/);
+  if (mPer) perigo = mPer[1];
 
   return {
     narrativa: narrativa || "O Mestre hesita…",
-    rolagem, mudancas,
+    perigo, rolagem: null, mudancas,
     sugestoes: Array.isArray(sugestoes) ? sugestoes : [],
   };
 }
@@ -117,7 +120,9 @@ export function sanearResposta(obj) {
     else narrativa = "";
   }
   narrativa = decodificarTexto(narrativa);
-  const rolagem = obj.rolagem && typeof obj.rolagem === "object" ? obj.rolagem : null;
+  /* v9.68: o campo de rolagem morreu — a IA nao pede teste. Fica `perigo`,
+     que e UMA frase de ficcao: o sistema le, escolhe a salvaguarda e cobra. */
+  const perigo = typeof obj.perigo === "string" ? obj.perigo.slice(0, 240) : "";
   const mudancas = obj.mudancas && typeof obj.mudancas === "object" ? obj.mudancas : null;
   const sugestoes = Array.isArray(obj.sugestoes) ? obj.sugestoes.filter((s) => typeof s === "string") : [];
   /* aviso discreto se a narrativa parece cortada (sem pontuação final) */
@@ -125,7 +130,7 @@ export function sanearResposta(obj) {
   if (narrativa.length > 40 && !".!?\"'»)…".includes(fim)) {
     narrativa = narrativa.trim() + " […]";
   }
-  return { narrativa: narrativa || "…", rolagem, mudancas, sugestoes };
+  return { narrativa: narrativa || "…", perigo, rolagem: null, mudancas, sugestoes };
 }
 
 
