@@ -277,7 +277,7 @@ export const DESAFIOS = [
        número e visível na ficção. */
     naoSe: /\b(bras[aã]o|estandarte|emblema|bandeira|sotaque|dialeto|casa (é|e|de)|reino|ordem|selo da casa)\b/,
     pericia: "saberes", alvo: "fraqueza", minutos: 0, barulho: false,
-    rotulo: "lembrar o que se sabe da criatura", dcBase: DC("incomum"),
+    rotulo: "lembrar o que se sabe da criatura", dcBase: DC("incomum"), dispensavel: true,
     /* este é o único que vale DENTRO da luta sem penalidade de tempo: é
        exatamente para isto que a perícia de saberes existe */
     valeEmCombate: true,
@@ -512,19 +512,19 @@ export const DESAFIOS = [
     id: "orientar",
     rx: /\b(me oriento|acho o (norte|caminho|rumo)|leio o c[eé]u|leio as estrelas|procuro (a|um)?\s*(um )?(po[cç]o|abrigo|[aá]gua|agua)|monto acampamento no|escolho onde acampar|ca[cç]o (algo|comida|bicho))/,
     pericia: "sobrevivencia", alvo: "orientar", minutos: 40, barulho: false,
-    rotulo: "não se perder", dcPadrao: DC("comum"),
+    rotulo: "não se perder", dcPadrao: DC("comum"), dispensavel: true,
   },
   {
     id: "diagnosticar",
     rx: /\b(examino o (corpo|cad[aá]ver|ferimento|ferido|morto|doente)|de que (ele|ela|isso) morreu|do que (ele|ela) (est[aá] doente|padece)|vejo o que (ele|ela) tem|abro o corpo|checo o pulso)/,
     pericia: "medicina", alvo: "diagnostico", minutos: 15, barulho: false,
-    rotulo: "ler o corpo", dcPadrao: DC("incomum"),
+    rotulo: "ler o corpo", dcPadrao: DC("incomum"), dispensavel: true,
   },
   {
     id: "heraldica",
     rx: /\b(de quem (é|e) (esse|este|aquele) (bras[aã]o|estandarte|s[ií]mbolo|emblema)|reconhe[cç]o (o|esse|este) (bras[aã]o|estandarte|emblema|sotaque|dialeto)|que casa (é|e)|de que reino|que ordem (é|e) essa)/,
     pericia: "saberes", alvo: "heraldica", minutos: 2, barulho: false,
-    rotulo: "reconhecer de onde vem", dcPadrao: DC("incomum"),
+    rotulo: "reconhecer de onde vem", dcPadrao: DC("incomum"), dispensavel: true,
   },
   {
     id: "falsificar",
@@ -969,6 +969,14 @@ export function lerAcao(texto, ctx = {}) {
     minutos: (via ? via.minutos : d.minutos) || 0,
     barulho: via ? via.barulho : !!d.barulho,
     corpo: !!d.corpo, social: !!d.social,
+    /* v9.71: falhar aqui significa APENAS não saber — nada quebra, ninguém
+       ouve, nada sangra. É a marca que autoriza o mestre a conceder o teste
+       quando a mesa já rolou dado demais (`mestria.js`), e ela é POSITIVA de
+       propósito: a primeira versão daquele governador inferia "inofensivo"
+       da ausência de uma linha em CUSTO_DE_FALHAR, e assim falsificar um
+       documento entrava na lista de dispensáveis só porque ninguém tinha
+       escrito ainda o que a falha dele custa. O que ninguém marcou, rola. */
+    dispensavel: !!d.dispensavel,
     /* v9.62: falhar em silêncio não é falhar em segredo. Quando esta ação
        falha, QUEM viu é fato do mundo, e o sistema pergunta em vez de
        deixar a IA escolher a testemunha que a cena dela pedia. */

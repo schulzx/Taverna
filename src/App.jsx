@@ -51,6 +51,7 @@ import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidat
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, perguntarPeloSistema, envelopeDaPerguntaDoSistema, linhaDaPerguntaDoSistema, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
 import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao, TURNO_PROMPT } from "./turno.js";
 import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobrancaNegada } from "./cobranca.js";
+import { garantirMesa, anotarTurno, temperaturaDaMesa, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
 import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
@@ -2921,6 +2922,18 @@ export default function Taverna() {
   const fatosRef = useRef(garantirFatos(null));
   /* quantos turnos desde a ultima vez que o mundo se mexeu sozinho */
   const desdeMundoRef = useRef(0);
+  /* ---------------- A MESA (v9.71) ----------------
+     A memória curta do mestre: os últimos dez turnos reduzidos a quatro
+     booleanos e um pilar. É com ela que `mestria.js` responde o que o
+     despachante não tinha como responder — se a mesa cansou de rolar
+     dado, se a cena morreu, que lado do jogo está passando fome.
+
+     `texturaRef` é o turno em curso sendo montado: cada peça do sistema
+     que faz alguma coisa acontecer marca o que fez, e a mesa só recebe o
+     registro fechado quando o turno acaba. Fosse cada peça escrevendo
+     direto na mesa, um turno com dado e perigo viraria dois turnos. */
+  const mesaRef = useRef(garantirMesa(null));
+  const texturaRef = useRef({});
   const baseMundoRef = useRef(garantirBase(null));
   /* A SEMENTE PRECISA VIR DE REF (v9.14). Estas duas funções liam `mundo` e
      `nomeCampanha` do estado — e são chamadas de dentro de aplicarResposta,
@@ -4086,7 +4099,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
+      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -4846,6 +4859,11 @@ export default function Taverna() {
           inventario: [...(pers.inventario || []), ...extras],
         };
         msgs.push(falaDaCobranca(falta));
+        /* v9.71: e a mesa fica sabendo que este turno rendeu. Sem isto, o
+           turno em que o herói acha o tesouro pela cobrança — e não pelo
+           campo declarado — contaria como turno vazio, e a cena esfriaria
+           no papel enquanto esquentava na mesa. */
+        texturaRef.current = { ...texturaRef.current, ganho: true };
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaCobranca(falta)}`;
       }
     } catch { /* conferir a narração nunca pode custar o turno */ }
@@ -5571,6 +5589,29 @@ export default function Taverna() {
       if (tocouVinculo) setPersonagem(pers);
       checarConquistas(pers);
     }
+    /* ---------------- O TURNO FECHA NA MESA (v9.71) ----------------
+       Aqui, e num lugar só. Este é o único ponto por onde passa TODO turno
+       que produziu narração — teclado, botão, luta, masmorra —, e a mesa
+       precisa de exatamente um registro por turno: um dado e um perigo no
+       mesmo turno não podem virar dois turnos, ou a temperatura sobe pelo
+       dobro e o mestre começa a segurar dado que não devia.
+
+       `ganho` sai das duas fontes juntas: o que o Mestre declarou e o que
+       as peças do sistema marcaram na textura. Sem as duas, um turno em
+       que o herói achou o tesouro pela cobrança contaria como turno vazio,
+       e a cena esfriaria no papel enquanto esquentava na mesa. */
+    try {
+      const tx = texturaRef.current || {};
+      const mud = (resp && resp.mudancas) || {};
+      const ganhou = !!tx.ganho || Number(mud.moedas) > 0 || Number(mud.xp) > 0
+        || (Array.isArray(mud.adicionar_itens) && mud.adicionar_itens.length > 0);
+      mesaRef.current = anotarTurno(mesaRef.current, {
+        rolou: !!tx.rolou, perigo: !!tx.perigo, ganho: ganhou,
+        luta: !!combateRef.current,
+        pilar: combateRef.current ? "combate" : (tx.pilar || null),
+      });
+    } catch { /* ler a mesa nunca pode custar o turno */ }
+    texturaRef.current = {};
     return pers;
   }, [pushMsgs]);
 
@@ -6716,6 +6757,11 @@ export default function Taverna() {
          guardava. */
       turnosDeMundoRef.current = Math.max(0, Number(sv.turnosDeMundo) || 0);
       desdeMundoRef.current = Math.max(0, Number(sv.desdeMundo) || 0);
+      /* v9.71: a mesa é curta e é do save. Sem esta linha, recarregar a
+         página zeraria a leitura de ritmo — e o mestre voltaria a ser o
+         novato que julga cada turno sozinho, que é o defeito que ela
+         existe para curar. */
+      mesaRef.current = garantirMesa(sv.mesa);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
         ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null }
@@ -9241,6 +9287,10 @@ export default function Taverna() {
         pushMsgs([{ autor: "sistema", texto: "🍀 Sorte pequena — o 1 natural vira 2. Volta na próxima luta (ou no descanso)." }]);
       }
     }
+    /* v9.71: todo d20 que o jogador joga esquenta a mesa, venha de onde
+       vier — a ação declarada, a salvaguarda, a prova. É a conta que
+       responde "já houve dado demais nos últimos turnos?". */
+    texturaRef.current = { ...texturaRef.current, rolou: true };
     const mod = modPend;
     const total = valor + mod;
     const dc = r.dificuldade;
@@ -9443,6 +9493,24 @@ export default function Taverna() {
         pushMsgs([{ autor: "sistema", texto: `${r.achado.icone || "🧰"} Achado: ${r.achado.o} — ◉ ${rec.moedas} moedas${extras.length ? ` · ${extras.join(", ")}` : ""}` }]);
         env = `${envelopeDoAchado(r.achado, rec)}\n${env}`;
       }
+      /* ---------------- O BRILHO (v9.71) ----------------
+         O outro lado do dado, e ele nunca existiu: 12 contra 11 e 25 contra
+         11 davam exatamente a mesma coisa. A falha tem seis texturas — pele,
+         tempo, barulho, testemunha, o "por pouco", o desastre — e o sucesso
+         tinha uma. Um dado em que só a metade de baixo tem relevo é meio
+         dado, e é uma das coisas que fazem a mesa parecer plana.
+
+         Só o sucesso LIMPO brilha: o `porPouco` é uma vitória já paga, e
+         premiá-la seria devolver com uma mão o preço cobrado com a outra.
+         E o brilho paga em ficção, nunca em ouro — moeda e item são do
+         sistema, e foi exatamente isso que a cobrança da v9.70 fechou. */
+      if (bateu) {
+        const b = brilhoDoSucesso({ total, dc, natural: valor });
+        if (b) {
+          pushMsgs([{ autor: "sistema", texto: falaDoBrilho(b) }]);
+          env = `${env}\n${envelopeDoBrilho(b, r.motivo || "o que eu fiz")}`;
+        }
+      }
       enviar(preRefazer + env, persT);
       if (provaAsc) resolverProvaAscensao(provaAsc, passou);
       return;
@@ -9545,6 +9613,32 @@ export default function Taverna() {
        isso a régua é só uma: o que não é teste não rende nada. */
     if (v.tipo !== "teste") ultimoDesfechoRef.current = "falha";
     if (v.tipo === "teste") {
+      /* ---------------- O MESTRE CONCEDE (v9.71) ----------------
+         "Não dá para fazer um teste a cada turno, chegaria um momento que
+         ficaria cansativo."
+
+         A saída errada seria pedir menos dado no geral — aí o jogo perde a
+         coisa que o faz jogo. A do ofício é mais fina: menos dado SEM
+         aposta, nunca menos dado com aposta. Quem decide é a mesa (os dez
+         últimos turnos), e as travas de `seguraOTeste` são a metade que
+         importa: corpo, testemunha, barulho, dificuldade, combate,
+         oportunidade, achado e conversa nunca são dispensados.
+
+         Conceder é um movimento de mestre, não o sistema desistindo — e
+         por isso conta como SUCESSO para a cobrança: o que a narração
+         entregar aqui é legítimo. */
+      const conc = seguraOTeste(v, mesaRef.current, { emCombate: !!combateRef.current });
+      if (conc.segura) {
+        pushMsgs([
+          { autor: "jogador", texto: acao },
+          { autor: "sistema", texto: falaDaConcessao(conc) },
+        ]);
+        ultimoDesfechoRef.current = "sucesso";
+        fecharTentativa(v, true);
+        cobrarTempoDoDesafio(v);
+        enviar(envelopeDaConcessao(conc), fichaViva() || personagem);
+        return true;
+      }
       /* ---------------- O MUNDO FALA ANTES DO DADO (v9.64) ----------------
          "Se o mestre decidir que tem, seja por ele ou pelo oráculo, ele pede
          o teste."
@@ -9608,6 +9702,12 @@ export default function Taverna() {
      do obstáculo, não do herói —, e por isso esta função não calcula nada:
      ela cobra o tempo, anuncia e entrega o dado. */
   const rolarDesafio = (v, acao) => {
+    /* v9.71: a mesa fica sabendo que houve dado neste turno, e de que lado
+       do jogo ele foi. O pilar sai do próprio desafio — quem pede algo a
+       alguém está jogando o pilar social; quem força a fechadura está
+       jogando o outro —, e é o que impede o holofote de apontar fome de
+       conversa numa campanha inteira feita de conversa. */
+    texturaRef.current = { ...texturaRef.current, rolou: true, pilar: v.social ? "social" : "exploracao" };
     const p = fichaViva() || personagem;
     const { total: modT, nivelTreino } = modDoTeste(p, v.atributo, v.pericia);
     const per = v.pericia ? periciaPorId(v.pericia) : null;
@@ -10085,13 +10185,40 @@ export default function Taverna() {
        dano a partir de uma frase que ele não entendeu. */
     if (!fonte) return null;
     const p = fichaViva() || personagem;
+    const rolo = danoDoPerigo(p.nivel || 1);
+    const cheio = rolo.total;
+    /* ---------------- O AVISO ANTES DA MORDIDA (v9.71) ----------------
+       A regra em que as quatro mesas concordam sem exceção: o perigo que
+       pode derrubar se ANUNCIA. Não por bondade — a morte que o jogador
+       não teve como ver não é derrota, é sorteio, e sorteio não constrói
+       história nenhuma.
+
+       O sistema não sabe o que é justo, mas sabe duas coisas: quanto o
+       golpe tira e quanto ainda resta no corpo. Quando o que vem por aí
+       levaria metade do que sobrou e essa fonte nunca apareceu antes, ele
+       segura a mordida e manda a cena recuar um instante.
+
+       É uma RECUSA, e não um pedido de aviso, porque este código roda
+       DEPOIS de a IA já ter narrado o golpe chegando — mesma forma da
+       cobrança negada. E vale uma vez por fonte: da segunda em diante a
+       mesma armadilha morde sem aviso, porque aí o jogador já sabe onde
+       pisou. */
+    {
+      const av = avisarAntesDeMorder({ dano: cheio, pv: p.vida || 0, fonteId: fonte.id, mesa: mesaRef.current });
+      if (av.avisa) {
+        mesaRef.current = marcarAvisado(mesaRef.current, fonte.id);
+        texturaRef.current = { ...texturaRef.current, perigo: true };
+        pushMsgs([{ autor: "sistema", texto: linhaDoAviso() }]);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoAviso(fonte.diz, { avisa: av.porque })}`;
+        return null;
+      }
+    }
+    texturaRef.current = { ...texturaRef.current, perigo: true };
     const sv = rolarSalvaguarda({
       pers: p, salva: fonte.salva,
       dc: dcDaFonte({ nivel: p.nivel || 1, base: 13 }),
       modDe: (a) => atributoEfetivo(p, a),
     });
-    const rolo = danoDoPerigo(p.nivel || 1);
-    const cheio = rolo.total;
     const sofrido = sv.passou ? (fonte.meia ? Math.floor(cheio / 2) : 0) : cheio;
     const cond = sv.passou ? "" : condicaoDaFonte(fonte.id);
     pushMsgs([
@@ -10240,8 +10367,71 @@ export default function Taverna() {
   const talvezOMundoSeMexer = () => {
     try {
       desdeMundoRef.current += 1;
+      /* ---------------- A TEMPERATURA MANDA (v9.71) ----------------
+         A cadência do mundo era só um contador: seis turnos e uma moeda de
+         45%. Ela não sabia o que estava acontecendo na mesa — e por isso
+         interrompia com um boato o turno seguinte a uma perseguição, e
+         ficava calada nos dez turnos em que a cena morria.
+
+         Agora a mesa decide. Em brasa e com a mesa quente o mundo não toma
+         a palavra: interromper ali é roubar do jogador a cena mais quente
+         que ele tem. */
+      const temp = temperaturaDaMesa(mesaRef.current);
+      if (!temp.mundoPode) return;
+      /* ---------------- O FIO DA MEMÓRIA (v9.71) ----------------
+         E quando a mesa esfria — cinco turnos sem dado, sem perigo e sem
+         nada ganho — o que entra não é a pressão do mundo, é o passado do
+         próprio jogador: a promessa que ele fez, o nome que ele deixou para
+         trás, a cicatriz, o lugar que descobriu e não voltou a ver.
+
+         Nada disso é inventado aqui: tudo já está registrado no jogo. O
+         mestre só escolhe qual puxar, que é a decisão que a IA fazia mal —
+         ela puxava o fio conveniente para a cena que já tinha na cabeça, e
+         por isso o passado do jogador nunca voltava.
+
+         A cadência própria (quatro turnos) existe porque a mesa fria fica
+         fria: sem ela, uma tarde de conversa levaria um fio por turno, e
+         fio que chega todo turno vira ruído como qualquer outra coisa. */
+      if (temp.pedeFio && (mesaRef.current.desdeFio || 0) >= 4) {
+        const p0 = fichaViva() || personagem || {};
+        const cid = cidadeAtualRef.current;
+        const gente = (((npcsRef.current || {})[cid] || {}).gente) || [];
+        /* alguém conhecido que NÃO está na cena: quem está aqui não precisa
+           voltar, precisa falar — e isso a IA já faz sozinha */
+        const elenco = elencoDaCena(npcsRef.current, cid, mapaRef.current, { comGrupo: p0.grupo || [] });
+        const aqui = new Set((elenco.aqui || []).map((n) => n && n.nome));
+        const longe = gente.filter((n) => n && n.nome && !aqui.has(n.nome));
+        const cic = (p0.cicatrizes || [])[0];
+        const lug = ((mapaRef.current || {}).cidades || []).filter((c) => c.descoberta && c.nome !== cid);
+        const mv = fioDaMemoria({
+          /* `missoesAtivas` e não `q.ativa`: a missão guarda `status: "ativa"`,
+             e a diferença entre as duas grafias é a diferença entre um fio que
+             existe e um que nunca dispara — foi assim que o "o prazo aperta"
+             passou vidas inteiras de campanha calado (v9.71). */
+          promessaAberta: (missoesAtivas(missoesRef.current) || []).map((m) => m.titulo).filter(Boolean)[0] || "",
+          nomeEsquecido: longe.length ? { nome: longe[0].nome, vontade: longe[0].vontade || "" } : null,
+          tentativaFalha: "",
+          derrotado: derrotadosDaSessaoRef.current[derrotadosDaSessaoRef.current.length - 1] || "",
+          cicatriz: cic ? `${cic.nome} — ${cic.descricao || ""}`.trim() : "",
+          lugarAbandonado: lug.length ? lug[lug.length - 1].nome : "",
+        }, { mesa: mesaRef.current });
+        if (mv) {
+          mesaRef.current = marcarFio(mesaRef.current, mv.id);
+          desdeMundoRef.current = 0;
+          pushMsgs([{ autor: "sistema", texto: linhaDoFio(mv) }]);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoFio(mv, pilarFaminto(mesaRef.current))}`;
+          return;
+        }
+      }
       const rel = (relogiosRef.current || []).find((x) => x.cheios >= x.segmentos - 1);
-      const mis = (missoesRef.current || []).find((m) => m && m.ativa && temPrazo(m));
+      /* ---------------- UM FIO QUE NUNCA PUXOU (v9.71) ----------------
+         Achado na prova da mestria: esta linha procurava `m.ativa`, e a
+         missão guarda `status: "ativa"`. O predicado nunca foi verdadeiro,
+         então "o prazo aperta e alguém cobra" — o terceiro fio mais pesado
+         da iniciativa do mundo — nunca saiu uma vez sequer desde que a
+         v9.61 o escreveu. Regra escrita sem código atrás, na forma mais
+         silenciosa que ela tem: a que não quebra nada, só não acontece. */
+      const mis = missoesAtivas(missoesRef.current).find((m) => temPrazo(m));
       const faccao = (((mapaRef.current || {}).faccoes) || []).find((f) => f.tratado === "guerra");
       const npcs = (((npcsRef.current || {})[cidadeAtualRef.current] || {}).gente) || [];
       const alguem = npcs.find((n) => n && n.nome && n.vontade);

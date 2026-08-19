@@ -966,6 +966,87 @@ jogador descobre jogando.
   aparecia; ela ia estrear no instante em que ele passasse a rodar só quando
   a tabela mandasse. Os dois lados passaram a chamar `veredictoDaAcao`.
 
+## A escola do mestre — v9.71
+
+O despachante já mandava no turno inteiro, mas julgava cada turno
+**sozinho**: sem memória do que a mesa vinha vivendo. É essa a diferença
+entre um mestre de primeira sessão e um mestre rodado, e ela não é
+imaginação — é **tempo**. O novato pede dado para tudo e cansa; deixa a
+cena morrer sem perceber que morreu; planta um nome no dia 3 e nunca mais
+o usa; mata com uma armadilha que ninguém teve como ver; dá o sucesso e
+nada além dele.
+
+`mestria.js` é a memória curta (dez turnos, quatro booleanos e um pilar
+cada) e o repertório que se aplica sobre ela. **Ele não inventa nada** —
+escolhe entre o que já existe e diz quando. E não sobe uma linha ao prompt
+por turno: fala só por envelope, então só custa token no turno em que
+decide alguma coisa.
+
+- **A TEMPERATURA.** Quatro estados, e cada um manda em duas coisas: se o
+  mestre pode dispensar um dado sem graça e se o mundo pode tomar a
+  palavra. *Brasa* (luta ou perigo em curso) e *quente* (três dados nos
+  últimos cinco) calam o mundo — interromper ali é roubar a cena mais
+  quente que o jogador tem. *Fria* (cinco turnos sem dado, sem perigo e
+  sem nada ganho) é a cena morta que ninguém percebeu.
+
+- **O GOVERNADOR DO DADO.** "Não dá para fazer um teste a cada turno,
+  chegaria um momento que ficaria cansativo." A saída errada seria pedir
+  menos dado no geral — aí o jogo perde o que o faz jogo. Pede-se menos
+  dado **sem aposta**, e nunca menos dado com aposta.
+
+  A primeira versão desta régua estava errada e é o registro que importa:
+  ela inferia "inofensivo" da **ausência** de uma linha em
+  `CUSTO_DE_FALHAR`, e assim falsificar um documento e acalmar um bicho
+  entravam na lista de dispensáveis só porque ninguém tinha escrito ainda
+  o que a falha deles custa. Lacuna numa tabela virando permissão em
+  outra. Agora a marca é positiva e mora no catálogo (`dispensavel`), só
+  onde falhar significa **apenas não saber** — hoje quatro dos trinta e
+  um. O que ninguém marcou, rola.
+
+- **O FIO DA MEMÓRIA.** A iniciativa do mundo só puxava fios de pressão,
+  todos olhando para a frente. Falta o que olha para trás: a promessa que
+  o jogador fez, o nome que ele deixou para trás, a cicatriz, o lugar que
+  descobriu e não voltou a ver, o inimigo que matou. Nada disso é
+  inventado — está tudo registrado; o mestre só escolhe qual puxar quando
+  a mesa esfria, e não repete o mesmo fio duas vezes seguidas.
+
+- **O BRILHO.** 12 contra 11 e 25 contra 11 davam exatamente a mesma
+  coisa. A falha tinha seis texturas e o sucesso tinha uma — um dado em
+  que só a metade de baixo tem relevo é meio dado. Agora o 20 natural e a
+  margem de dez pontos cobram uma coisa a mais do narrador, **em ficção**:
+  informação além da pergunta, um detalhe que abre caminho, o feito visto
+  por quem importa. Nunca em ouro — moeda e item são do sistema, e foi
+  isso que a cobrança da v9.70 fechou.
+
+- **A MORDIDA SEGURADA.** O perigo que pode derrubar se anuncia. Não por
+  bondade: a morte que o jogador não teve como ver não é derrota, é
+  sorteio. Quando o golpe levaria metade do que resta e a fonte nunca
+  apareceu antes, o sistema segura e manda a cena recuar um instante — uma
+  vez por fonte, porque da segunda em diante o jogador já sabe onde pisou.
+
+- **~~O fio "o prazo aperta" nunca puxou uma vez.~~** RESOLVIDO na v9.71,
+  e achado dentro da prova em jogo desta versão. A iniciativa do mundo
+  procurava `m.ativa` e a missão guarda `status: "ativa"`. O predicado
+  nunca foi verdadeiro: o terceiro fio mais pesado da tabela — peso 4, o
+  prazo correndo e alguém cobrando — não saiu **uma única vez** desde que
+  a v9.61 o escreveu. Regra escrita sem código atrás na forma mais
+  silenciosa que ela tem: a que não quebra nada, só não acontece.
+
+### O que fica aberto aqui
+
+- **O holofote não tem como ver o pilar social direito.** O pilar de um
+  turno sai do desafio que rolou (`social` ou `exploracao`) e da luta. Um
+  turno de pura conversa, sem dado nenhum, entra como `null` — então uma
+  campanha inteira de taverna pode acusar fome de "a gente". Não custa
+  caro (o pilar só sugere um lado ao envelope do fio), mas a leitura certa
+  precisaria de um sinal barato de "houve pessoa nesta cena", e
+  `pessoaNaFrente` só responde sobre quem está no elenco registrado.
+
+- **`tentativaFalha` está sempre vazio.** O fio existe na tabela e o livro
+  de tentativas tem o dado — falta ligar a chave da tentativa fracassada a
+  uma frase legível. É o fio mais mulliganesco dos seis e é o único que
+  ainda não tem fonte.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na
