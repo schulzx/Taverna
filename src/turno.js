@@ -60,6 +60,10 @@ export function garantirSinais(s) {
     /* o sinal que faltava na v9.57 e que custou a mecânica de movimento
        local: existe um lugar A PÉ, aqui, com este nome? */
     temAlvoLocal: b("temAlvoLocal"),
+    /* v9.73: o jogador declarou o primeiro golpe. Vem antes de `ehDesafio`
+       na tabela porque atacar não é um obstáculo a vencer — é uma luta a
+       abrir, e o catálogo de desafios não tem nada que descreva isso. */
+    ehAgressao: b("ehAgressao"),
     ehDesafio: b("ehDesafio"),
     ehPerguntaAoMundo: b("ehPerguntaAoMundo"),
     temMilagreArmado: b("temMilagreArmado"),
@@ -144,6 +148,22 @@ export const PORTAS_DO_TURNO = [
     fase: "atalho", faz: "movimento", seRecusar: "seguinte",
     quando: (s) => s.ehPartidaPorNome,
     porque: "o nome literal de uma cidade conhecida é intenção sem ambiguidade",
+  },
+  {
+    /* O PRIMEIRO GOLPE (v9.73). Antes do desafio, e a razão é a mesma que
+       pôs o desafio antes do destino: a coisa mais concreta que o jogador
+       declarou ganha. "Ataco o guarda" não é obstáculo a vencer nem estrada
+       a abrir — é uma luta a abrir, e ela não passava por porta nenhuma:
+       caía em `cena`, e quem decidia se havia briga era a IA.
+
+       Fora de combate, e só: dentro da luta quem age é o painel, com
+       alcance, posição e economia de ação. E a recusa cai na porta SEGUINTE
+       porque um ataque que o sistema não soube resolver ainda pode ser
+       muita coisa — inclusive um desafio, como "avanço sobre a porta". */
+    id: "agressao", rotulo: "Primeiro golpe", intercepta: true,
+    fase: "atalho", faz: "agressao", seRecusar: "seguinte",
+    quando: (s) => s.ehAgressao && !s.emCombate,
+    porque: "quando o jogador declara violência contra alguém que está na cena, não há o que decidir: a luta começa, e nenhum narrador tem direito de veto sobre isso",
   },
   {
     /* A PORTA QUE FALTAVA. O desafio vem ANTES do destino por descrição, e

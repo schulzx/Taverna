@@ -1070,6 +1070,82 @@ decide alguma coisa.
   trocaria a lembrança pela última tentativa. Save antigo, sem rótulo, não
   vira frase e não quebra nada.
 
+## O primeiro golpe — v9.73
+
+"O mestre chama os combates." O combate tem duas metades e só uma é
+ownable: o mundo atacando primeiro é ficção, e ficção é da IA. Quando o
+JOGADOR declara violência, não há o que decidir — ele declarou.
+
+E não era assim. "Ataco o bandido" não casava nada no catálogo, caía em
+`cena`, e o que acontecia dependia do humor da cena que a IA tinha na
+cabeça: às vezes o painel abria, às vezes o golpe virava um empurrão
+narrado, às vezes o alvo "recuava assustado". O jogador aprende rápido
+que atacar é sugerir.
+
+`agressao.js` lê a declaração e devolve um de três desfechos. **Os dois
+que NÃO abrem luta são o que faz a peça ser segura de existir:**
+
+1. **Alvo no registro e na cena** → o sistema monta a ficha dele pelo
+   PAPEL (`PESO_DO_PAPEL`: quem vive de armas devolve o golpe melhor que
+   quem vive de vender cerveja), abre o combate e manda a IA narrar só a
+   investida — sem decidir se acertou, sem fazer o alvo recuar, e sem
+   desfazer o que o jogador fez.
+2. **Alvo é do meu grupo** → não abre nada e não vai ao Mestre. Virar
+   companheiro em inimigo mexe em ficha, vínculo e elenco.
+3. **Ninguém com esse nome aqui** → também não abre. Inventar o alvo
+   seria deixar o jogador ESCREVER o inimigo em vez de encontrá-lo
+   ("ataco o dragão ancião" no nível 1), e com isso o orçamento de
+   encontro, o bestiário e o mapa deixariam de significar qualquer coisa.
+   O turno vai com uma ordem de duas saídas: abra o combate agora, ou
+   diga que não há quem atacar. O que ela não pode mais é narrar a briga
+   sem painel aberto.
+
+E o alvo NUNCA é escolhido por eliminação, nem com uma pessoa só na
+cena — que é o contrário do que o teste social faz, e de propósito:
+errar o alvo lá custa uma linha, errar aqui abre uma luta contra quem o
+jogador não quis tocar.
+
+- **~~A masmorra lutava sem tabuleiro e sem iniciativa.~~** RESOLVIDO na
+  v9.73, e é o achado desta versão. Havia TRÊS portas para abrir combate
+  com três níveis de equipamento: a da IA (completa), a do modo criativo
+  (`equiparCombate`, quase completa) e a da masmorra —
+  `combateRef.current = { inimigos }` e mais nada, desde a v7.0. O bloco
+  que monta terreno, iniciativa, orçamento e traços de abertura morava
+  dentro do `aplicarResposta`, atrás de `if (houveIniciar)`, isto é,
+  atrás de a IA ter mandado `combate_iniciar`.
+
+  Ou seja: o lugar onde o jogador mais luta era o pior equipado. Agora
+  existe `abrirCombate`, a porta única, e a masmorra e a IA passam por
+  ela. Medido em jogo: a emboscada da cripta abriu com terreno, tamanhos,
+  ordem de iniciativa e selo de encontro — nenhum dos quatro existia ali.
+
+- **~~O fio "alguém desta cidade avança a própria vontade" nunca puxou.~~**
+  RESOLVIDO na v9.73. Irmão do `m.ativa` da v9.71 e achado na mesma
+  varredura: a linha lia `npcs[cidadeAtual].gente`, e o registro de
+  pessoas é indexado por NOME — `elencoDaCena` sempre soube disso. O
+  acesso devolvia `undefined`, o `.gente` devolvia `[]`, e o fio de peso
+  3 ficou mudo. **Duas das seis vozes do mundo estavam caladas**, e
+  nenhuma das duas quebrava nada: só não acontecia.
+
+### O que fica aberto aqui
+
+- **O modo criativo ainda tem porta própria.** `/combate` e `/encontro`
+  usam `processarCombate` + `equiparCombate` e ficam sem os traços de
+  abertura e sem o custo do dia. É ferramenta de teste, não jogo, e por
+  isso não entrou nesta leva — mas são três portas de novo, e esta casa
+  já sabe onde isso termina.
+
+- **A metade que continua sendo da IA.** O mundo atacando primeiro segue
+  chegando por `combate_iniciar`. A forma certa é a do canal `perigo`:
+  ela declara a hostilidade, o sistema monta o encontro com uma ameaça
+  compatível e abre a luta. Falta o passo do meio — traduzir "os bandidos
+  saltam do mato" em uma lista de inimigos com orçamento conferido.
+
+- **O tamanho do Rato Gigante.** A emboscada da prova trouxe "Rato
+  Gigante é enorme (3×3 quadrados)". Ou a tabela de tamanhos lê o
+  "Gigante" do nome, ou o padrão está errado — de todo jeito, um rato não
+  ocupa nove quadrados.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

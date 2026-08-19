@@ -51,6 +51,7 @@ import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidat
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, perguntarPeloSistema, envelopeDaPerguntaDoSistema, linhaDaPerguntaDoSistema, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
 import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao, TURNO_PROMPT } from "./turno.js";
 import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobrancaNegada } from "./cobranca.js";
+import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo } from "./agressao.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -2999,6 +3000,71 @@ export default function Taverna() {
     return { combate: novo, msgs };
   };
 
+  /* ============================================================
+     A PORTA ÚNICA DE ABRIR COMBATE (v9.73)
+
+     `equiparCombate` acima nasceu na v9.32 para tirar o modo criativo da
+     miséria — ele montava a lista de inimigos e parava ali. Só que a
+     varredura desta versão mostrou que a miséria tinha mais um morador, e
+     pior: a MASMORRA. Ela abre a luta sozinha desde a v7.0, com
+     `combateRef.current = { inimigos }` e nada mais — e o bloco que monta
+     terreno, iniciativa, orçamento e presença mora dentro do
+     `aplicarResposta`, atrás de `if (houveIniciar)`, isto é, atrás de a IA
+     ter mandado `combate_iniciar`.
+
+     Resultado: toda luta de masmorra desde então rodou sem ordem de
+     iniciativa, sem tabuleiro e sem o selo do orçamento. É o bug de sempre
+     desta casa — toda regra que mora num só de dois caminhos vira bug —,
+     agora com três caminhos e três níveis de equipamento diferentes.
+
+     Esta função é o encontro dos três. Ela faz TUDO o que uma luta precisa
+     ter no instante em que nasce, e devolve a ficha mexida junto, porque os
+     traços de abertura (a sorte do Halfling, a Pele de Pedra do Goliath)
+     são da ficha e não do combate.
+     ============================================================ */
+  const abrirCombate = (inimigosCrus, { pers: persEntra = null, jaNoRef = false } = {}) => {
+    let pers = persEntra || fichaViva() || personagem;
+    const msgs = [];
+    const crus = jaNoRef
+      ? ((combateRef.current && combateRef.current.inimigos) || [])
+      : (inimigosCrus || []).map((i) => {
+        const comp = completarInimigo({ nome: i.nome, ameaca: i.ameaca, nivel: i.nivel }, pers.nivel || 1);
+        return { ...comp, derrotado: false, semente: `inimigo|${comp.nome}|${comp.ameaca || ""}` };
+      });
+    if (!crus.length) return { pers, msgs, nota: "" };
+    /* v9.44: luta nova devolve os traços de uma vez por combate. Aqui, e não
+       no fim da luta anterior, porque nem toda luta tem fim registrado. */
+    pers = devolverSegura(abrirCombateTracos(pers));
+    const eq = equiparCombate({ ...(jaNoRef ? combateRef.current : {}), inimigos: crus }, pers);
+    combateRef.current = eq.combate;
+    combateOciosoRef.current = 0;
+    reacaoUsadaRef.current = false;
+    msgs.push(...eq.msgs);
+    /* ORÇAMENTO: a luta é pesada AGORA, com a mesa cheia — depois que os
+       primeiros caem, a conta já não descreve o que o jogador enfrentou. */
+    const aval = avaliarEncontro(eq.combate.inimigos, pers);
+    if (aval) {
+      combateRef.current = { ...combateRef.current, aval };
+      diaLutaRef.current = gastarDoDia(diaLutaRef.current, aval.custoDoDia);
+      msgs.push(selo(aval));
+    }
+    setCombate(combateRef.current);
+    /* CÓDEX: toda criatura que entra em combate vira registro no bestiário */
+    let mexeuCodex = false;
+    for (const e of eq.combate.inimigos) {
+      if (e.nome && !descobRef.current.some((d) => d.toLowerCase() === e.nome.toLowerCase())) {
+        descobRef.current = [...descobRef.current, e.nome];
+        mexeuCodex = true;
+      }
+    }
+    if (mexeuCodex) setDescobertas(descobRef.current);
+    /* v9.32: o meu peso divino sobre eles. Adiado um tique porque ele lê o
+       combate já no ref, e aqui o React ainda não reagiu. */
+    setTimeout(() => presencaNaLuta(combateRef.current, personagemRef.current, { contraMim: false }), 0);
+    const nota = `${aval ? resumoOrcamentoPrompt(aval, diaLutaRef.current) + "\n" : ""}[INICIATIVA ROLADA PELO SISTEMA] Ordem do combate: ${resumoIniciativa(eq.combate.ordem)}. Respeite essa ordem ao narrar quem age quando.`;
+    return { pers, msgs, nota, combate: eq.combate };
+  };
+
   /* O TABULEIRO NASCE DO LUGAR (v9.34). O tamanho não é fixo: uma briga de
      taverna não usa trinta metros de comprimento, e um tabuleiro único para
      tudo seria, na maioria das lutas, um campo de quadrados vazios — além de
@@ -5210,48 +5276,15 @@ export default function Taverna() {
          turnos parados. Evita o combate "preso" na tela por vários turnos. */
       if (combateRef.current) {
         const houveIniciar = Array.isArray(resp.mudancas.combate_iniciar) && resp.mudancas.combate_iniciar.length > 0;
-      /* INICIATIVA (v8.9): combate novo → o sistema rola a ordem do turno. */
+      /* INICIATIVA (v8.9): combate novo → o sistema rola a ordem do turno.
+         v9.73: o corpo disto virou `abrirCombate`, a porta única — este
+         caminho era o ÚNICO equipado por inteiro, e por isso a masmorra
+         lutava há versões sem tabuleiro e sem ordem de iniciativa. */
       if (houveIniciar && combateRef.current && !combateRef.current.ordem) {
-        /* v9.44: luta nova devolve os traços de uma vez por combate — a sorte
-           do Halfling e a Pele de Pedra do Goliath. Aqui, e não no fim da
-           luta anterior, porque nem toda luta tem fim registrado: o Mestre às
-           vezes encerra na narrativa e o sistema só descobre na próxima. */
-        pers = devolverSegura(abrirCombateTracos(pers));
-        const participantes = [
-          { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") + iniciativaDeTraco(pers) },
-          ...(pers.grupo || []).map((g) => ({ nome: g.nome, lado: "aliado", modDestreza: 1 })),
-          ...(combateRef.current.inimigos || []).map((e) => ({ nome: e.nome, lado: "inimigo", modDestreza: e.agil ? 2 : 0 })),
-        ];
-        const ordem = rolarIniciativa(participantes);
-        reacaoUsadaRef.current = false;
-        /* v9.32: o outro lado da presença. O bloco acima já rolou o peso de um
-           deus INIMIGO sobre mim; aqui rola o meu sobre eles. Vai depois da
-           iniciativa porque o medo é da abertura da luta, não da entrada em
-           cena — e `contraMim: false` para não rolar duas vezes a mesma coisa. */
-        setTimeout(() => presencaNaLuta(combateRef.current, personagemRef.current, { contraMim: false }), 0);
-        /* ORÇAMENTO (v9.19): a luta é pesada AGORA, com a mesa cheia — depois
-           que os primeiros caem, a conta já não descreve o que o jogador
-           enfrentou. O selo vai para a tela e a faixa para o Mestre, para a
-           prosa dele combinar com o perigo real; e o custo entra no dia. */
-        const aval = avaliarEncontro(combateRef.current.inimigos, pers);
-        /* GRID (v9.20 em zonas, v9.34 em metros): o terreno nasce com a luta e
-           vem do LUGAR — taverna, masmorra, floresta. Derivar do cenário em vez
-           de sortear faz o combate herdar a ficção que já estava em jogo: quem
-           lutou na taverna luta entre as mesas, não numa arena genérica. */
-        const gg = montarGrid(pers, combateRef.current.inimigos);
-        combateRef.current = { ...combateRef.current, inimigos: gg.inimigos, grade: gg.grade, heroi: gg.heroi, aliados: gg.aliados, ordem, rodada: 1, recursos: novosRecursos(), aval };
-        setCombate(combateRef.current);
-        msgs.push(`🗺 Terreno: ${mapaEmTexto(gg.grade, { heroi: gg.heroi, grupo: gg.aliados, inimigos: gg.inimigos })}`);
-        {
-          const grandes = gg.inimigos.filter((e) => ladoDe(e) > 1);
-          if (grandes.length) msgs.push(`📏 ${grandes.map((e) => `${e.nome} é ${tamanhoDe(e).nome.toLowerCase()} (alcança ${alcanceNatural(e)} m parado)`).join(" · ")}`);
-        }
-        if (aval) {
-          diaLutaRef.current = gastarDoDia(diaLutaRef.current, aval.custoDoDia);
-          msgs.push(selo(aval));
-        }
-        msgs.push(`🎲 Iniciativa — ${resumoIniciativa(ordem)}`);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${aval ? resumoOrcamentoPrompt(aval, diaLutaRef.current) + "\n" : ""}[INICIATIVA ROLADA PELO SISTEMA] Ordem do combate: ${resumoIniciativa(ordem)}. Respeite essa ordem ao narrar quem age quando.`;
+        const ab = abrirCombate(null, { pers, jaNoRef: true });
+        pers = ab.pers;
+        msgs.push(...ab.msgs);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${ab.nota}`;
       }
         const houveDano = Array.isArray(resp.mudancas.combate_inimigo_vida) && resp.mudancas.combate_inimigo_vida.length > 0;
         const houveAtaqueMeu = ataqueResolvidoRef.current;
@@ -7647,6 +7680,7 @@ export default function Taverna() {
       /* v9.63: o MESMO leitor que o adjudicador usa. Enquanto eram dois, o
          sinal negava desafio para "peço um teste de Percepção" e o
          adjudicador o atendia — a decisão e o ato discordavam. */
+      ehAgressao: ler(() => ehDeclaracaoDeAtaque(acao)),
       ehDesafio: ler(() => !!veredictoDaAcao(acao)),
       ehPerguntaAoMundo: ler(() => ehPerguntaAoMundo(acao)),
       temMilagreArmado: !!milagreSel,
@@ -7728,6 +7762,7 @@ export default function Taverna() {
       /* A AÇÃO DECLARADA (v9.59): o jogador declara o que faz e o SISTEMA
          responde uma de cinco coisas — rola, não precisa rolar, não dá desse
          jeito, você já tentou, ou aqui já foi vasculhado. */
+      if (faz === "agressao") return declararAgressao(acao);
       if (faz === "desafio") return adjudicarAcao(acao);
       /* ORÁCULO (v9.24): pergunta FECHADA sobre o que o mundo ainda não
          estabeleceu. Depois da ação declarada de propósito — "peço um teste
@@ -9697,6 +9732,65 @@ export default function Taverna() {
     return true;
   };
 
+  /* ---------------- O PRIMEIRO GOLPE (v9.73) ----------------
+     "O mestre chama os combates." Esta é a metade que o sistema pode ter
+     inteira: quando o JOGADOR declara violência, não há o que decidir.
+
+     Três desfechos, e os dois que NÃO abrem luta são o que faz esta peça
+     ser segura de existir:
+
+     1. Alvo no registro e presente → o sistema monta a ficha dele pelo
+        papel, abre o combate pela porta única e manda a IA narrar só a
+        investida. Ela não decide se acertou nem faz o alvo recuar.
+
+     2. Alvo é do meu grupo → o sistema não abre nada. Virar companheiro em
+        inimigo mexe em ficha, vínculo e elenco, e fazer isso a partir de
+        uma frase ambígua é caro demais.
+
+     3. Ninguém com esse nome no registro daqui → também não abre, porque
+        inventar o alvo seria deixar o jogador ESCREVER o inimigo em vez de
+        encontrá-lo ("ataco o dragão ancião" no nível 1). Mas o turno já não
+        é ficção solta: vai com uma ordem de duas saídas. */
+  const declararAgressao = (acao) => {
+    const p = fichaViva() || personagem;
+    const elenco = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [] });
+    const a = lerAgressao(acao, { presentes: elenco.aqui || [], grupo: p.grupo || [], emCombate: !!combateRef.current });
+    if (!a) return false;
+    if (a.tipo === "companheiro") {
+      pushMsgs([
+        { autor: "jogador", texto: acao },
+        { autor: "sistema", texto: falaDoCompanheiro(a) },
+      ]);
+      return true;                                   // resolvido, e sem ir ao Mestre
+    }
+    if (a.tipo === "semAlvoConhecido") {
+      pushMsgs([{ autor: "jogador", texto: acao }]);
+      enviar(envelopeSemAlvo(a, acao), p);
+      return true;
+    }
+    const ab = abrirCombate([{ nome: a.nome, ameaca: a.ameaca }], { pers: p });
+    if (ab.pers !== p) { personagemRef.current = ab.pers; setPersonagem(ab.pers); }
+    pushMsgs([
+      { autor: "jogador", texto: acao },
+      { autor: "sistema", texto: falaDaAgressao(a) },
+      ...ab.msgs.map((t) => ({ autor: "sistema", texto: t })),
+    ]);
+    /* quem você ataca deixa de gostar de você, e isso vale mesmo que a luta
+       acabe em um turno: sem esta linha o mundo esqueceria o golpe */
+    try {
+      const reg = npcsRef.current || {};
+      const chave = Object.keys(reg).find((k) => k.toLowerCase() === String(a.nome).toLowerCase());
+      if (chave) {
+        npcsRef.current = { ...reg, [chave]: { ...reg[chave], relacao: "inimigo" } };
+        setNpcs(npcsRef.current);
+      }
+    } catch { /* a relação nunca pode custar a luta */ }
+    texturaRef.current = { ...texturaRef.current, luta: true, pilar: "combate" };
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${ab.nota}`;
+    enviar(envelopeDaAgressao(a), ab.pers);
+    return true;
+  };
+
   /* O botão do painel não é um caminho paralelo: ele escreve a frase que o
      jogador escreveria e manda pela mesma porta. Se a ação não pede dado, ou
      se já foi tentada aqui, o botão ouve a mesma resposta que o teclado. */
@@ -10412,12 +10506,15 @@ export default function Taverna() {
       if (temp.pedeFio && (mesaRef.current.desdeFio || 0) >= 4) {
         const p0 = fichaViva() || personagem || {};
         const cid = cidadeAtualRef.current;
-        const gente = (((npcsRef.current || {})[cid] || {}).gente) || [];
         /* alguém conhecido que NÃO está na cena: quem está aqui não precisa
-           voltar, precisa falar — e isso a IA já faz sozinha */
-        const elenco = elencoDaCena(npcsRef.current, cid, mapaRef.current, { comGrupo: p0.grupo || [] });
-        const aqui = new Set((elenco.aqui || []).map((n) => n && n.nome));
-        const longe = gente.filter((n) => n && n.nome && !aqui.has(n.nome));
+           voltar, precisa falar — e isso a IA já faz sozinha.
+
+           v9.73: `elencoDaCena` já separa os dois lados e é a ÚNICA leitura
+           correta do registro, que é indexado por nome e não por cidade. A
+           primeira versão desta linha copiou o acesso errado que morava no
+           vizinho (`npcs[cidade].gente`), e com ele herdou o defeito: o fio
+           do nome esquecido nasceu tão mudo quanto o que ele imitou. */
+        const longe = elencoDaCena(npcsRef.current, cid, mapaRef.current, { comGrupo: p0.grupo || [] }).longe || [];
         const cic = (p0.cicatrizes || [])[0];
         const lug = ((mapaRef.current || {}).cidades || []).filter((c) => c.descoberta && c.nome !== cid);
         const mv = fioDaMemoria({
@@ -10450,8 +10547,18 @@ export default function Taverna() {
          silenciosa que ela tem: a que não quebra nada, só não acontece. */
       const mis = missoesAtivas(missoesRef.current).find((m) => temPrazo(m));
       const faccao = (((mapaRef.current || {}).faccoes) || []).find((f) => f.tratado === "guerra");
-      const npcs = (((npcsRef.current || {})[cidadeAtualRef.current] || {}).gente) || [];
-      const alguem = npcs.find((n) => n && n.nome && n.vontade);
+      /* ---------------- O SEGUNDO FIO MORTO (v9.73) ----------------
+         Esta linha era `npcsRef.current[cidadeAtual].gente`, e o registro de
+         pessoas NÃO é indexado por cidade: é um objeto por NOME, como
+         `elencoDaCena` sempre leu. O acesso devolvia `undefined`, o `.gente`
+         devolvia `[]`, e "alguém desta cidade avança a própria vontade" —
+         peso 3 na iniciativa do mundo — nunca saiu uma vez.
+
+         É o irmão do `m.ativa` consertado na v9.71, achado na mesma
+         varredura: não quebra nada, não aparece em teste de módulo, só não
+         acontece. Duas das seis vozes do mundo estavam mudas. */
+      const daqui = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (personagemRef.current || personagem || {}).grupo || [] }).aqui;
+      const alguem = daqui.find((n) => n && n.nome && n.vontade);
       const mv = iniciativaDoMundo({
         desdeUltima: desdeMundoRef.current,
         emCombate: !!combateRef.current, emMasmorra: !!masmorraRef.current, emViagem: !!jornadaRef.current,
@@ -10825,14 +10932,17 @@ export default function Taverna() {
         inimigos = dg.inimigos;
         if (dg.linha) { pushMsgs([{ autor: "sistema", texto: dg.linha }]); notaDesgaste = ` ${dg.nota}`; }
       }
-      combateRef.current = { inimigos }; setCombate(combateRef.current); combateOciosoRef.current = 0;
+      /* v9.73: PELA PORTA ÚNICA. Esta linha era `combateRef.current = {
+         inimigos }` e mais nada — desde a v7.0 toda luta de masmorra rodou
+         sem ordem de iniciativa, sem tabuleiro, sem os traços de abertura e
+         sem o selo do orçamento, porque o bloco que monta tudo isso morava
+         atrás de "a IA mandou combate_iniciar". A masmorra é o lugar onde o
+         jogador mais luta, e era o mais mal equipado dos três. */
+      const ab = abrirCombate(inimigos, { pers: personagemRef.current || personagem });
+      if (ab.pers !== (personagemRef.current || personagem)) { personagemRef.current = ab.pers; setPersonagem(ab.pers); }
+      if (ab.msgs.length) pushMsgs(ab.msgs.map((t) => ({ autor: "sistema", texto: t })));
+      if (ab.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${ab.nota}`;
       salaEmCursoRef.current = id;
-      inimigos.forEach((comp) => {
-        if (comp.nome && !descobRef.current.some((d) => d.toLowerCase() === comp.nome.toLowerCase())) {
-          descobRef.current = [...descobRef.current, comp.nome];
-        }
-      });
-      setDescobertas(descobRef.current);
       const lista = inimigos.map((i) => `${i.nome} (nv ${i.nivel || 1}, ${i.vida} PV)`).join(", ");
       pushMsgs([{ autor: "sistema", texto: `⚔ ${sala.tipo === "chefe" ? "A sala do chefe!" : "Emboscada na masmorra!"} ${inimigos.map((i) => i.nome).join(", ")} — o combate está aberto.` }]);
       enviar(`[MASMORRA — ${pos} · ${sala.tipo === "chefe" ? "CHEFE" : "COMBATE"} — COMBATE JÁ ABERTO PELO SISTEMA] Avanço para a próxima sala e os inimigos saltam das sombras: ${lista}. O HUD de combate JÁ ESTÁ ABERTO — NÃO envie "combate_iniciar". Descreva a sala e a investida inicial em 1-2 frases e me passe a vez (eu ajo pelos botões de combate).${sala.tipo === "chefe" ? " É o confronto final desta masmorra — narre à altura." : ""}${notaDesgaste}${avisoSegredo}${extraTempo}`, personagem);
