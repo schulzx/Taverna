@@ -145,13 +145,25 @@ export function diasEntre(mapa, de, para) {
 }
 
 /* Onde o registro diz que a pessoa está. `local` é texto livre do Mestre;
-   se bater com uma cidade do mapa, vira posição de verdade. */
+   se bater com uma cidade do mapa, vira posição de verdade.
+
+   QUANDO NÃO BATE (v9.99): antes isto devolvia o texto cru — "atrás do
+   balcão da Taverna", "na forja" — como se fosse a cidade. Esse texto
+   nunca é igual a `cidadeAtual`, então todo NPC registrado com um local
+   descritivo (em vez do nome exato da cidade) caía para sempre no balde
+   LONGE em elencoDaCena, mesmo sentado à mesa na cena atual. O cão de
+   guarda de teletransporte então mordia toda aparição dele — "se
+   aproxima", "senta" — e o portão entrava num looping: reescreve para
+   tirar o NPC, o Mestre bota de volta porque é o ponto da cena, o cão
+   de guarda morde de novo. Mesma regra do resto do arquivo: na dúvida,
+   NÃO morde — devolve "", que vira "paradeiro não registrado" (presente),
+   não "longe". */
 export function cidadeDe(npc, mapa) {
   const bruto = (npc && (npc.cidade || npc.local)) || "";
   if (!bruto) return "";
   const cs = (mapa && mapa.cidades) || [];
   const achou = cs.find((c) => norm(bruto).includes(norm(c.nome)));
-  return achou ? achou.nome : bruto;
+  return achou ? achou.nome : "";
 }
 
 /* Quem plausivelmente está na cena, e quem está longe (com a conta feita). */
