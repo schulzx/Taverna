@@ -1675,6 +1675,89 @@ apertado três vezes na mesma luta.
   seis slots; cresce como qualquer tabela desta casa — uma entrada nova
   só precisa de campos com leitor, e a suíte cobra.
 
+## O vilão — v9.83
+
+"O sistema nêmesis não será um gerador de inimigos, ele será o vilão. Ele
+não aparecerá mais na ficha do jogador — o jogador não precisa saber quem
+é seu nêmesis, porque quando o vilão aparecer, ele saberá, e não
+esquecerá."
+
+**O que havia.** Um nome sorteado, um título sorteado, um motivo sorteado
+de uma lista de seis, e um número: `odio`, subindo de dois a cinco por dia
+até cem. Em 30, difamação; em 55, sabotagem; em 80, assassinos; em 100, o
+confronto. Sempre nessa ordem, sempre nesse ritmo, em toda campanha que
+este jogo já teve. E enquanto o número corria, **nada acontecia no mundo**.
+
+E o pior estava na tela: **"🎭 nêmesis: Sarna · ódio 42"**, num canto da
+ficha, desde o primeiro dia. O jogador conhecia o nome do inimigo antes de
+qualquer cena, via o ódio subir como quem acompanha um carregamento, e
+quando a pessoa enfim aparecia já não havia revelação nenhuma para
+acontecer. **O sistema entregava o final na primeira página.**
+
+`vilao.js` reescreve isso a partir do que as histórias que ficaram fazem:
+
+- **AS FASES.** Cinco degraus — rumor, marca, mão, rosto, guerra — e o que
+  muda entre eles não é o quanto ele bate: é **o quanto o jogador sabe**.
+  Nas três primeiras o sistema PROÍBE nomear, proíbe dizer que há alguém
+  por trás, e proíbe as palavras "vilão" e "nêmesis". Juntar os pontos é
+  o prazer do jogador, e entregá-los prontos é roubar a cena que ainda
+  vai acontecer.
+
+- **A REVELAÇÃO NÃO É UMA LUTA.** Quem luta com o vilão na estreia não
+  tem clímax depois. Ele aparece para conversar, oferecer ou cobrar, e
+  vai embora inteiro — e o envelope pede a melhor fala da campanha até
+  ali, para alguém que acredita no que diz e sabe o que o herói fez.
+
+- **ELE NASCE DE COMO VOCÊ JOGOU.** Seis arquétipos, cada um com uma
+  `nasceDe` que lê o registro do jogador: quem resolveu tudo no aço atrai
+  o Espelho; quem tomou cidades atrai o Herdeiro; quem desceu masmorras
+  atrás de poder atrai o Faminto. O vilão de cada campanha é o retrato do
+  jogador com um passo a mais — e quem não tem história ainda tem vilão,
+  porque o Arquiteto nasce de qualquer um.
+
+- **ELE TEM UM PLANO, E ESTÁ GANHANDO.** Nove passos, e cada um TIRA
+  alguma coisa — escolhida entre o que o jogador tem de verdade: a pessoa
+  cujo nome ele escreveu, a cidade que ele tomou, a promessa que ele fez.
+  Ameaçar "o reino" é meteorologia. O plano chega ao fim mesmo se o herói
+  nunca interferir, e é por isso que ele tem motivo para atrapalhar antes
+  de saber contra quem.
+
+- **ELE NÃO CAI ANTES DA HORA.** Vilão derrubado de primeira é monstro
+  com nome — e a IA narra a morte dele com a melhor das intenções, porque
+  a cena pedia um desfecho. O sistema recusa, e a recusa não é "nada
+  aconteceu": ele escapa CUSTANDO alguma coisa. Uma peça fica para trás,
+  um plano atrasa, alguém que estava com ele morre no lugar.
+
+- **E a morte dele muda o mundo.** O envelope da queda proíbe sucessor e
+  "plano maior", e manda narrar o que ele DEIXOU: gente que acreditava
+  nele e agora não tem no que acreditar, um lugar que continua nas mãos
+  dele mesmo depois de morto, uma frase que as pessoas ainda repetem.
+
+**A segunda porta por onde a revelação vazava** também fechou: o vilão
+entrava no registro de pessoas no dia em que nascia, com "NÊMESIS do
+herói" escrito na ficha — e o registro sobe ao prompt em TODO turno.
+A IA sabia o nome desde o primeiro dia. Agora ele entra no elenco na
+revelação.
+
+E o sistema fala em voz de sistema **duas vezes na campanha inteira**: na
+revelação e na queda. Nas outras fases ele cala e deixa a cena falar.
+
+### O que fica aberto aqui
+
+- **O vilão não entrega a relíquia.** A v9.82 deixou anotado que uma peça
+  única precisa de um lugar na história, e que o vilão seria o dono desse
+  lugar. O gancho existe dos dois lados e ainda não foi ligado: o cofre
+  dele, o que ele tirou de alguém, o que fica no chão quando ele cai.
+
+- **O plano não reage ao que o herói faz.** Ele avança por dia, e
+  atrapalhá-lo não o atrasa — não há como o jogador "quebrar um passo".
+  A fase da guerra promete um plano atacável e o envelope pede isso à
+  ficção, mas o sistema ainda não tem onde registrar um passo desfeito.
+
+- **Um vilão por campanha.** Quando ele cai, não nasce outro. A fama
+  volta a poder gerar um, mas a peça não sabe encadear — o segundo seria
+  um estranho começando do rumor, sem nenhuma relação com o primeiro.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

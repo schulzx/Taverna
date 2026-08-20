@@ -20,7 +20,8 @@ import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
 import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano, resistenciasEquipadas } from "./danos.js";
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, MINUTOS_RODADA_COMBATE, AMANHECER } from "./calendario.js";
-import { calcularFama, patamarFama, gerarNemesis, LIMIARES_NEMESIS, ACOES_NEMESIS, rumorDoDia } from "./fama.js";
+import { calcularFama, patamarFama, rumorDoDia } from "./fama.js";
+import { gerarVilao, garantirVilao, avancarPlano, podeAvancar, escolherAlvo, faseDe, linhaDoAvanco as linhaDoVilao, envelopeDoAvanco, resumoVilaoPrompt, podeCair, envelopeDaQueda, envelopeDaQuedaCedoDemais, linhaDaQueda, TOTAL_DE_PASSOS } from "./vilao.js";
 import { gerarCronica } from "./cronica.js";
 import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { rolarAflicao, aflicaoDe } from "./aflicoes.js";
@@ -1060,11 +1061,20 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
               onSubirAtributo={onSubirAtributo} pontosAtr={personagem.pontosAtr || 0} onAlternarPericia={onAlternarPericia}
             />
             <div className="flex items-center gap-2 flex-wrap">
-              {nemesis && nemesis.status !== "derrotada" && (
-                <span className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.danger}`, color: T.danger }} title={`${nemesis.nome}, ${nemesis.titulo} — ${nemesis.motivo}. Ódio: ${nemesis.odio}/100`}>
-                  🎭 nêmesis: {nemesis.nome} · ódio {nemesis.odio}
-                </span>
-              )}
+              {/* ---------------- A LINHA DA NÊMESIS SAIU DAQUI (v9.83) ----------------
+                  "Ele não aparecerá mais na ficha do jogador — o jogador não
+                  precisa saber quem é seu nêmesis, porque quando o vilão
+                  aparecer, ele saberá, e não esquecerá."
+
+                  O que havia era "🎭 nêmesis: Sarna · ódio 42" num canto da
+                  ficha, desde o primeiro dia. O jogador conhecia o nome do
+                  inimigo antes de qualquer cena, via o ódio subir como quem
+                  acompanha um carregamento, e quando a pessoa enfim aparecia
+                  já não havia revelação nenhuma para acontecer — o sistema
+                  tinha entregado o final na primeira página.
+
+                  Não sobrou nada aqui de propósito: o vilão chega pela
+                  ficção, e só. */}
               {personagem.antecedente && (
                 <span className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title={personagem.antecedenteGancho || ""}>🎭 {personagem.antecedente}</span>
               )}
@@ -11514,12 +11524,22 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (nemesisRef.current && nemesisRef.current.status !== "derrotada") return;
     if (famaAtual() < 20) return;
     if (Math.random() > 0.35) return;
-    const n = gerarNemesis(() => nomePessoa((mundo && mundo.genero) || "Fantasia medieval"), contRef.current, { dominios: dominiosDe(mapaRef.current).length }, diaRef.current);
+    const n = gerarVilao({
+      nome: nomePessoa((mundo && mundo.genero) || "Fantasia medieval"),
+      cont: contRef.current,
+      stats: { dominios: dominiosDe(mapaRef.current).length },
+      dia: diaRef.current,
+    });
     nemesisRef.current = n; setNemesis(n);
-    npcsRef.current = { ...npcsRef.current, [n.nome]: criarNPC(n.nome, { papel: n.titulo, relacao: "inimigo", notas: `NÊMESIS do herói: ${n.motivo}. Ódio cresce a cada dia.`, conhecidoEm: diaRef.current, ultimaVez: Date.now() }) };
-    setNpcs(npcsRef.current);
-    pushMsgs([{ autor: "sistema", texto: `🎭 Alguém jurou seu fim: ${n.nome}, ${n.titulo} — ${n.motivo}.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[NÊMESIS — SURGIMENTO, CANON] Minha fama atraiu uma inimiga jurada: ${n.nome}, "${n.titulo}" — ${n.motivo}. Ela existe no mundo AGORA (ficha registrada), age nas sombras e o ódio dela cresce a cada dia (o sistema cuida dos números e dos ataques). Semeie a presença dela aos poucos: sinais, olhares, histórias — NÃO a confronte ainda.`;
+    /* O REGISTRO DE PESSOAS NÃO O RECEBE AINDA. Antes ele entrava no elenco
+       no dia em que nascia, com "NÊMESIS do herói" escrito na ficha — e o
+       registro sobe ao prompt em TODO turno, então a IA sabia o nome e o
+       papel dele desde o primeiro dia. Era a segunda porta por onde a
+       revelação vazava, e ninguém via porque a primeira (a linha na ficha)
+       já tinha entregado tudo. Ele entra no elenco na REVELAÇÃO.
+
+       E nada na tela: o jogador não é avisado de que ganhou um inimigo. */
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${resumoVilaoPrompt(n)}`;
     checarConquistas();
   };
 
@@ -11554,8 +11574,21 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      narrando a morte, não desligavam nada — e ela continuava caçando um herói
      que já a tinha enterrado. Agora tudo passa por aqui. */
   const encerrarNemesis = (causa) => {
-    const n = nemesisRef.current;
+    const n = garantirVilao(nemesisRef.current);
     if (!n || n.status === "derrotada") return false;
+    /* ---------------- ELE NÃO CAI ANTES DA HORA (v9.83) ----------------
+       Vilão derrubado de primeira é monstro com nome. E a IA narra a morte
+       dele com a melhor das intenções — porque a cena pedia um desfecho, e
+       dar desfecho é o trabalho dela.
+
+       O sistema recusa, e a recusa não é "nada aconteceu": ele ESCAPA
+       custando alguma coisa. Uma peça dele fica para trás, um plano
+       atrasa, alguém que estava com ele morre no lugar. É o que
+       transforma cada encontro num degrau em vez de um empate. */
+    if (!podeCair(n)) {
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaQuedaCedoDemais(n)}`;
+      return false;
+    }
     nemesisRef.current = { ...n, status: "derrotada", odio: 0, mortaEm: diaRef.current, comoMorreu: causa || "" };
     setNemesis(nemesisRef.current);
     /* o registro de pessoas é a memória do Mestre: ela precisa constar morta lá */
@@ -11566,8 +11599,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     }
     bumpCont("nemesisVencidas"); checarConquistas();
     marcarNoArco("nemesis", `matei ${n.nome}, ${n.titulo}`);
-    pushMsgs([{ autor: "sistema", texto: `🕊 A perseguição acabou: ${n.nome}, ${n.titulo}, está morta${causa ? ` — ${causa}` : ""}.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[NÊMESIS — FIM, CANON E IRREVERSÍVEL] ${n.nome}, "${n.titulo}", está MORTA${causa ? ` (${causa})` : ""}. A perseguição contra mim ACABOU: ela não aparece mais, não age, não manda agentes, não tem sucessor nem "plano póstumo" — e o registro de pessoas já a marca como morta. Narre a notícia chegando e o que esse fim significa para mim; daqui em diante ela só existe como memória ou legado.`;
+    pushMsgs([{ autor: "sistema", texto: linhaDaQueda(n) }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaQueda(n, causa)}`;
     return true;
   };
 
@@ -11615,39 +11648,59 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (n.status === "derrotada") {
       return `NÊMESIS ENCERRADA (fato do sistema): ${n.nome}, "${n.titulo}", está MORTA${n.comoMorreu ? ` — ${n.comoMorreu}` : ""}. Não a coloque em cena, não a faça agir nem enviar agentes, e não invente sucessores dela.`;
     }
-    const fase = n.odio >= 100 ? "ela quer o confronto final, cara a cara"
-      : n.odio >= 80 ? "assassinos pagos por ela estão a caminho"
-      : n.odio >= 55 ? "ela sabota meus negócios pelas sombras"
-      : n.odio >= 30 ? "ela já age contra mim, sem se mostrar"
-      : "ela ainda observa de longe, sem se revelar";
-    return `NÊMESIS ATIVA (fato do sistema — o ódio e as ações dela são calculados por código; não improvise ataques nem desfechos): ${n.nome}, "${n.titulo}" — ${n.motivo}. Ódio ${n.odio}/100: ${fase}. NÃO a mate, não a faça desistir e não a traga para um confronto frente a frente sem envelope do sistema. Se ela morrer numa cena, diga isso claramente na narrativa — o sistema encerra a perseguição sozinho.`;
+    return resumoVilaoPrompt(n);
   };
 
+  /* ---------------- O PLANO ANDA (v9.83) ----------------
+     Era um contador: `odio` subia de dois a cinco por dia e, em quatro
+     números fixos, disparava difamação, sabotagem, assassinos e confronto
+     — sempre nessa ordem, sempre nesse ritmo, em toda campanha que este
+     jogo já teve. E enquanto o número corria, NADA acontecia no mundo.
+
+     Agora o que anda é um PLANO de nove passos, e cada passo tira alguma
+     coisa — escolhida entre o que o jogador tem de verdade: a pessoa cujo
+     nome ele escreveu, a cidade que ele tomou, a promessa que ele fez.
+     Ameaçar "o reino" é meteorologia; isto é vilania.
+
+     E anda devagar de propósito: um vilão que se move todo dia é barulho,
+     e barulho não assusta. */
+  const CUSTO_DO_PASSO = ["sombra", "voz", "lugar", "esperanca", "gente", "lugar", "voz", "gente", "tudo"];
   const processarNemesisDiaria = () => {
-    const n = nemesisRef.current;
-    if (!n || n.status === "derrotada") return;
-    /* a nêmesis morreu na ficção? o registro de pessoas é a fonte da verdade */
+    const v = garantirVilao(nemesisRef.current);
+    if (!v || v.status === "derrotada") return;
+    if (v !== nemesisRef.current) { nemesisRef.current = v; setNemesis(v); }
     sincronizarNemesis();
     if (nemesisRef.current.status === "derrotada") return;
-    const odio = Math.min(100, (n.odio || 0) + 2 + Math.floor(Math.random() * 4));
-    let atual = { ...n, odio, status: odio >= 30 ? "ativa" : n.status };
-    for (const lim of LIMIARES_NEMESIS) {
-      if (odio >= lim && (n.ultimoLimiar || 0) < lim) {
-        atual = { ...atual, ultimoLimiar: lim };
-        const acao = ACOES_NEMESIS[lim];
-        pushMsgs([{ autor: "sistema", texto: `🎭 ${acao.rotulo}: ${acao.txt(atual)}` }]);
-        if (acao.tipo === "sabotagem") {
-          const perda = Math.round((guildaRef.current.cofre || 0) * 0.1);
-          if (perda > 0) {
-            guildaRef.current = { ...guildaRef.current, cofre: guildaRef.current.cofre - perda }; setGuilda(guildaRef.current);
-            pushMsgs([{ autor: "sistema", texto: `🔥 A sabotagem custou ◉ ${perda} do cofre.` }]);
-          }
-        }
-        const instr = { difamacao: "Espalhe na ficção os efeitos dessa difamação: um olhar torto, um comerciante que hesita, um boato cruel sobre mim circulando.", sabotagem: "Narre as consequências da sabotagem chegando aos meus ouvidos (o prejuízo já foi aplicado pelo sistema).", assassinos: "Prepare o ataque: em breve (nesta sessão ou na próxima cena de estrada), assassinos a serviço dela me emboscam — quando acontecer, abra o combate com 'combate_iniciar' (assassinos de ameaça compatível com meu nível).", confronto: "É o confronto final: ela virá pessoalmente, com um desafio aberto ou uma armadilha mortal. Construa o encontro como clímax e, quando eu vencer (se vencer), registre-a como morta no registro de pessoas." }[acao.tipo];
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[NÊMESIS — ${acao.rotulo.toUpperCase()}] ${acao.txt(atual)} ${instr}`;
-      }
+    if (!podeAvancar(nemesisRef.current, { dia: diaRef.current })) return;
+
+    const proximo = Math.min(TOTAL_DE_PASSOS - 1, (nemesisRef.current.passo || 0) + 1);
+    const alvo = escolherAlvo(CUSTO_DO_PASSO[proximo], {
+      pessoas: Object.values(npcsRef.current || {})
+        .filter((n) => n && n.nome && String(n.status || "").toLowerCase() !== "morto" && n.nome !== nemesisRef.current.nome)
+        .map((n) => n.nome),
+      lugares: [...dominiosDe(mapaRef.current).map((c) => c.nome), cidadeAtualRef.current].filter(Boolean),
+      promessas: (missoesAtivas(missoesRef.current) || []).map((m) => m.titulo).filter(Boolean),
+    });
+    const r = avancarPlano(nemesisRef.current, { dia: diaRef.current, alvo });
+    if (!r) return;
+    nemesisRef.current = r.vilao; setNemesis(r.vilao);
+
+    /* A REVELAÇÃO é o ÚNICO momento em que o sistema fala em voz de sistema
+       sobre ele — porque é um marco da campanha, e o jogador precisa saber
+       que aquilo acabou de acontecer. Nas outras fases o sistema cala e
+       deixa a cena falar. */
+    const linha = linhaDoVilao(r);
+    if (linha) pushMsgs([{ autor: "sistema", texto: linha }]);
+    if (r.revelacao) {
+      npcsRef.current = { ...npcsRef.current, [r.vilao.nome]: criarNPC(r.vilao.nome, {
+        papel: r.vilao.titulo, relacao: "inimigo",
+        notas: `O VILÃO desta campanha. Acredita que ${r.vilao.crenca}. Quer ${r.vilao.quer}.`,
+        conhecidoEm: diaRef.current, ultimaVez: Date.now(),
+      }) };
+      setNpcs(npcsRef.current);
+      marcarNoArco("nemesis", `soube quem é ${r.vilao.nome}`);
     }
-    nemesisRef.current = atual; setNemesis(atual);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoAvanco(r)}`;
   };
 
   /* AVANÇO DE DIAS (v6.5): cada dia passado move o calendário e rola a vida
