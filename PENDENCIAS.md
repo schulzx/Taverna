@@ -1459,6 +1459,31 @@ são tão comuns quanto o primeiro.
   como as poções, e recusar "uso a corda" por não achar uma corda seria
   transformar cada objeto plausível de mochila num erro.
 
+## A metade positiva — v9.79
+
+- **~~Digitar o nome de uma habilidade que você TEM não a executava.~~**
+  RESOLVIDO. A v9.78 passou a recusar quando falta PM ou recarga; quando
+  sobrava, a frase ia para a IA e **nada era cobrado** — nem os PM, nem a
+  recarga, nem o efeito de regra. O herói "usava" a Postura Defensiva na
+  ficção e continuava com a mana cheia e sem defesa nenhuma na ficha.
+
+  O conserto NÃO reescreve a execução: aponta o teclado para o caminho do
+  PAINEL, que já resolve tudo — a trava da armadura, o caderno da magia
+  guardada, o ritual, os PM com o desconto das dádivas, a recarga, a
+  economia de ação em combate e o combo. Reescrever aquela sequência para
+  o texto criaria a segunda régua no lugar exato onde a v9.78 acabou de
+  fechar a primeira.
+
+  **Sem verbo de uso, não é declaração.** "Adoto uma postura defensiva e
+  espero" é descrição de postura, não o talento de Guerreiro — disparar a
+  habilidade ali cobraria PM de quem só estava narrando. Medido em jogo:
+  "ativo Postura Defensiva" tirou a mana de 6 para 4 e pôs o efeito na
+  ficha; "adoto uma postura defensiva e espero" não cobrou nada.
+
+  **As três metades encaixam sem se morder:** quem NÃO tem é recusado
+  pela v9.76; quem tem e não pode pagar, pela v9.78; quem tem e pode
+  pagar sai por aqui.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

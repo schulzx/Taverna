@@ -222,6 +222,21 @@ export function entradaNaFicha(pers, nome) {
   return null;
 }
 
+/* ---------------- E A METADE POSITIVA (v9.79) ----------------
+   A habilidade que o herói TEM e nomeou. Devolve a entrada da ficha —
+   com custo, tipo e descrição — para quem sabe executá-la.
+
+   E quem sabe é o caminho do PAINEL, que já resolve tudo: a trava da
+   armadura, o caderno da magia guardada, o ritual, os PM, a recarga, a
+   economia de ação em combate e o combo. Reescrever isso para o teclado
+   seria criar a segunda régua no lugar exato onde este projeto acabou de
+   fechar a primeira. */
+export function habilidadeDeclarada(texto, pers) {
+  const pod = poderDeclarado(texto);
+  if (!pod || !temOPoder(pers, pod.nome)) return null;
+  return entradaNaFicha(pers, pod.nome);
+}
+
 export function faltaRecurso(pers, entrada, { desconto = 0 } = {}) {
   if (!entrada) return null;
   const custo = Math.max(0, (Number(entrada.custo) || 0) - (Number(desconto) || 0));

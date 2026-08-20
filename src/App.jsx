@@ -51,7 +51,7 @@ import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidat
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, perguntarPeloSistema, envelopeDaPerguntaDoSistema, linhaDaPerguntaDoSistema, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
 import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao, TURNO_PROMPT } from "./turno.js";
 import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobrancaNegada } from "./cobranca.js";
-import { lerPoder, lerConsumo, falaDoPoder, envelopeDoPoder } from "./poderes.js";
+import { lerPoder, lerConsumo, habilidadeDeclarada, falaDoPoder, envelopeDoPoder } from "./poderes.js";
 import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, conferirLista, falaDaListaAparada, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "./emboscada.js";
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo } from "./agressao.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
@@ -7761,7 +7761,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       ehDesafio: ler(() => !!veredictoDaAcao(acao)),
       ehPerguntaAoMundo: ler(() => ehPerguntaAoMundo(acao)),
       temMilagreArmado: !!milagreSel,
-      temHabilidadesSelecionadas: habsSel.length > 0,
+      /* v9.79: OU o texto nomeou uma habilidade que eu TENHO. É a metade
+         positiva da conferência da ficha: a v9.78 passou a recusar quando
+         falta PM ou recarga, e quando sobrava a frase ia para a IA sem
+         nada ser cobrado — nem os PM, nem a recarga, nem o efeito. */
+      temHabilidadesSelecionadas: habsSel.length > 0 || ler(() => !!habilidadeDeclarada(acao, fichaViva() || personagem)),
       emCombate: !!combateRef.current,
       emViagem: !!jornadaRef.current,
       bloqueado: !!(carregando || rolagem),
@@ -7902,7 +7906,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          Quem tem dois movimentos lança duas magias no MESMO turno e descreve
          as duas de uma vez. O sistema resolve cada uma na ordem escolhida,
          cobra PM e movimento de cada, e manda ao Mestre um envelope único. */
-      const escolhidas = [...habsSel]; setHabsSel([]);
+      /* v9.79: o painel OU o teclado, pelo mesmo caminho. Reescrever esta
+         sequência para o texto criaria a segunda régua no lugar exato onde
+         a v9.78 fechou a primeira — aqui moram a trava da armadura, o
+         caderno, o ritual, os PM, a recarga e a economia de ação. */
+      const doTexto = habsSel.length ? null : habilidadeDeclarada(acao, fichaViva() || personagem);
+      const escolhidas = habsSel.length ? [...habsSel] : (doTexto ? [doTexto] : []); setHabsSel([]);
       const miraDoTurno = miraRef.current; miraRef.current = null; setMira(null);
       let pers = { ...(fichaViva() || personagem) };
       const linhas = [];
