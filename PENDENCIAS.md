@@ -1609,6 +1609,72 @@ consertar, e a única forma de ele voltar.
   2 no raro, 3 no épico, 4 no lendário) seria barato e daria textura sem
   aumentar a tabela.
 
+## As relíquias — v9.82
+
+"Podem existir os itens únicos, que são acima dos lendários, e estes
+tenham um poder ativo. Podem existir habilidades únicas que só são
+adquiridas ao adquirir um item único. Assim um personagem nível 20 pode
+conseguir batalhar com um semideus com mais facilidade."
+
+Três coisas separam uma relíquia de um lendário, e as três importam:
+
+1. **Ela não é sorteada — é escrita.** O lendário nasce de base + prefixo
+   + sufixo, e por isso existem milhares deles. A relíquia tem nome
+   próprio, história própria e poderes próprios, escritos à mão. Duas
+   campanhas nunca terão a "mesma" Comedora de Reis: terão A Comedora de
+   Reis, e ela é uma só.
+
+2. **Ela tem um poder ATIVO.** Tudo o que o arsenal da v9.81 concede é
+   passivo: vale enquanto está no corpo. A relíquia tem um gesto — uma
+   vez por dia, o portador FAZ alguma coisa com ela. É a diferença entre
+   carregar poder e usar poder, e é o que dá à peça um lugar na memória
+   da campanha.
+
+3. **Os passivos dela são dela.** Não saem do catálogo geral: são
+   escritos junto com a peça e não aparecem em item nenhum. É o que
+   "habilidades únicas que só são adquiridas ao adquirir um item único"
+   pede, ao pé da letra.
+
+**E a pimenta é medida.** Uma relíquia deve fazer um nível 20 encarar um
+semideus com mais CHANCE, não com garantia. O vocabulário do ativo é
+pequeno e fechado — curar uma fração, devolver mana, tirar condição,
+erguer quem caiu, um bônus temporário — e nenhum deles mata, atordoa ou
+resolve a luta. Quem ganha continua sendo quem jogou melhor. A suíte
+cobra isso: nenhum ativo cura mais de 60% do corpo, e o vocabulário não
+aceita campo fora dos cinco.
+
+O contador é por **DIA da campanha**, e não por descanso: descanso se
+força, dia não. Sem isso a relíquia viraria um botão de "recuperar tudo"
+apertado três vezes na mesma luta.
+
+- **A trava da v9.80 vale aqui também.** Os passivos das relíquias não
+  estão em `PODERES`, mas falam o mesmo vocabulário — e a suíte confere,
+  poder por poder, que todo campo tem leitor. Um passivo escrito com
+  campo novo não passa.
+
+- **`essenciaDe` usava `||` em vez de `??`.** O único rende ZERO essência
+  de propósito — desmontar a única peça do mundo por vinte de pó seria
+  destruí-la —, e `|| 2` transformava esse zero de volta em dois. O botão
+  da forja voltaria a aparecer sobre ela.
+
+### O que fica aberto aqui
+
+- **A única fonte é o modo criativo (`/relica`).** É deliberado: uma peça
+  que existe uma vez no mundo não pode cair de um baú aleatório — precisa
+  de um lugar na história, e quem decide esse lugar é quem joga. Mas
+  falta a ponte natural: o chefe de masmorra em nível alto, a nêmese
+  abatida, o cofre do vilão. Quando o sistema de vilão existir, é ele que
+  deve entregar a primeira.
+
+- **O gesto só se aciona escrevendo.** Não há botão na ficha nem no
+  painel de combate — o jogador precisa saber que a relíquia tem um nome
+  e escrevê-lo. A linha do item já mostra `◈ Banquete (uma vez por dia)`,
+  mas um botão ao lado da sintonia seria o lugar óbvio.
+
+- **Dez relíquias, e nenhuma para escudo além de uma.** O catálogo cobre
+  seis slots; cresce como qualquer tabela desta casa — uma entrada nova
+  só precisa de campos com leitor, e a suíte cobra.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

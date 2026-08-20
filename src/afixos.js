@@ -63,7 +63,7 @@
    mesma pergunta tem duas réguas.
    ============================================================ */
 
-export const TIER = { comum: 0, incomum: 1, raro: 2, epico: 3, lendario: 4 };
+export const TIER = { comum: 0, incomum: 1, raro: 2, epico: 3, lendario: 4, unico: 5 };
 
 /* ---------------- O QUE CADA DEGRAU COMPRA ---------------- */
 export const DEGRAUS = [
@@ -72,6 +72,12 @@ export const DEGRAUS = [
   { id: "raro", tier: 2, quantos: 1, forte: true, diz: "faz uma coisa que muda a conta" },
   { id: "epico", tier: 3, quantos: 2, forte: true, diz: "faz duas, e uma delas pesa" },
   { id: "lendario", tier: 4, quantos: 2, forte: true, concede: true, diz: "faz duas, e ainda põe um poder na sua mão" },
+  /* v9.82: o ÚNICO não é sorteado — é escrito. Ele não passa por
+     `gerarLoot`: vem de `relicas.js`, com nome próprio, história própria,
+     passivos próprios que não existem em item nenhum, e um GESTO — uma vez
+     por dia, o portador faz alguma coisa com ele. É a diferença entre
+     carregar poder e usar poder. */
+  { id: "unico", tier: 5, quantos: 0, forte: true, concede: true, escrito: true, diz: "tem nome, história e um gesto que só ela faz" },
 ];
 
 export function degrauDe(raridade) {

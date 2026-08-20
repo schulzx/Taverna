@@ -52,6 +52,7 @@ import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chave
 import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao, TURNO_PROMPT } from "./turno.js";
 import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobrancaNegada } from "./cobranca.js";
 import { lerPoder, lerConsumo, habilidadeDeclarada, falaDoPoder, envelopeDoPoder } from "./poderes.js";
+import { RELIQUIAS, reliquiaPorId, itemDaReliquia, ativoDeclarado, podeUsarAtivo, usarAtivo, falaDoAtivoNegado, envelopeDoAtivo, envelopeDaReliquiaAchada } from "./relicas.js";
 import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, conferirLista, falaDaListaAparada, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "./emboscada.js";
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo } from "./agressao.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
@@ -563,7 +564,7 @@ const SO_ISSO = ` ESCOPO DESTE TURNO (obrigatório): responda SOMENTE ao que est
 
 const SUBS_GESTAO = [{ id: "ficha", rotulo: "Ficha" }, { id: "grupo", rotulo: "Grupo" }, { id: "pessoas", rotulo: "Pessoas" }, { id: "talentos", rotulo: "Talentos" }, { id: "mercado", rotulo: "Mercado" }, { id: "guilda", rotulo: "Guilda" }, { id: "dominios", rotulo: "Domínios" }, { id: "diplomacia", rotulo: "Diplomacia" }, { id: "correio", rotulo: "Correio" }, { id: "mural", rotulo: "Mural" }];
 
-const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D" };
+const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D", unico: "#E8615B" };
 const SLOT_ROTULO = { arma: "Arma", armadura: "Armadura", elmo: "Elmo", botas: "Botas", anel: "Anel", amuleto: "Amuleto", escudo: "Escudo" };
 const SLOTS_ORDEM = ["arma", "escudo", "armadura", "elmo", "botas", "anel", "amuleto"];
 
@@ -2059,7 +2060,7 @@ function PainelExame({ itens = [], raio = 0, aoPegar, aoFechar }) {
   const [fora, setFora] = useState(() => new Set());
   const escolhidos = itens.filter((i) => !fora.has(i.id));
   const alternar = (id) => setFora((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-  const corDaRaridade = { comum: T.inkDim, incomum: T.ok, raro: T.violetSoft, epico: T.amberSoft, lendario: T.amber };
+  const corDaRaridade = { comum: T.inkDim, incomum: T.ok, raro: T.violetSoft, epico: T.amberSoft, lendario: T.amber, unico: T.danger || T.amber };
   return (
     <div className="tv-fade rounded-2xl p-3 mb-2" style={{ background: T.panel, border: `1px solid ${T.ok}` }}>
       <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -3465,6 +3466,23 @@ export default function Taverna() {
           godLinha(`⚡ Combate aberto: ${lista.map((x) => x.nome).join(", ")}${nivel ? ` (nível ${nivel})` : ""}.`);
           if (msgs.length) pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
           if (abG.msgs.length) pushMsgs(abG.msgs.map((t) => ({ autor: "sistema", texto: t })));
+          return true;
+        }
+        case "relica": {
+          /* v9.82: a única porta que entrega uma relíquia por enquanto, e é
+             deliberado. Uma peça que existe UMA vez no mundo não pode cair
+             de um baú aleatório: ela precisa de um lugar na história, e
+             quem decide esse lugar é quem está jogando. */
+          const nomeR = resto.trim();
+          const rel = nomeR
+            ? RELIQUIAS.find((x) => x.nome.toLowerCase().includes(nomeR.toLowerCase()) || x.id === nomeR.toLowerCase())
+            : RELIQUIAS[Math.floor(Math.random() * RELIQUIAS.length)];
+          if (!rel) { godLinha(`⚡ Relíquias: ${RELIQUIAS.map((x) => x.nome).join(" · ")}`); return true; }
+          const itR = itemDaReliquia(rel);
+          const pR = { ...personagem, equipamento: [...(personagem.equipamento || []), itR] };
+          setPersonagem(pR); personagemRef.current = pR; salvar({ personagem: pR });
+          godLinha(`${rel.icone} ${rel.nome} entrou na bolsa. ${rel.historia}`);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaReliquiaAchada(rel)}`;
           return true;
         }
         case "encontro": {
@@ -5132,7 +5150,7 @@ export default function Taverna() {
             notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ASCENSÃO — ${cam.nome.toUpperCase()} — APLICADA PELO SISTEMA] O herói subiu para GD ${grauDe(dv2)} (${tituloDe(grauDe(dv2))}) por este caminho. ${cam.id === "deicidio" ? "O culto da divindade morta jura vingança eterna — registre isso no cânone e faça o mundo reagir: outros deuses passam a vigiá-lo." : cam.id === "reliquia" ? "A fonte primordial se apagou — registre no cânone o que restou dela e o preço que o ritual cobrou do herói." : ""} Narre a transformação à altura: virar deus deve doer, custar e mudar o jogo.`;
           }
         } else if (chave === "loot") {
-          const rar = ["comum", "incomum", "raro", "epico", "lendario"].includes(arg.toLowerCase()) ? arg.toLowerCase() : "comum";
+          const rar = ["comum", "incomum", "raro", "epico", "lendario", "unico"].includes(arg.toLowerCase()) ? arg.toLowerCase() : "comum";
           const it = gerarLoot(rar, { nivel: (pers || personagemRef.current || {}).nivel || 1 });
           setPersonagem((p) => ({ ...p, equipamento: [...(p.equipamento || []), it] }));
           msgs.push(`◆ Achado: ${it.nome} (${RARIDADE_ROTULO[it.raridade] || it.raridade})${it.poder ? ` — ${it.poder}` : ""}`);
@@ -7747,6 +7765,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       temEscolhaPendente: !!escolhaPendenteRef.current,
       declarouPoderQueNaoTem: ler(() => !!lerPoder(acao, fichaViva() || personagem, { desconto: descontoDePM(fichaViva() || personagem) })),
       vaiConsumir: ler(() => { const c = lerConsumo(acao, fichaViva() || personagem); return !!(c && c.tipo === "consumir"); }),
+      vaiAcionarReliquia: ler(() => !!ativoDeclarado(acao, fichaViva() || personagem)),
       ehConjuracao: ler(() => magiaDeFuncaoNaAcao(acao)),
       ehPortal: ler(() => magiaDePortalNaAcao(acao)),
       ehEntradaEmMasmorra: ler(() => detectarEntradaEmMasmorra(acao, ctxDoRastro())),
@@ -7844,6 +7863,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          responde uma de cinco coisas — rola, não precisa rolar, não dá desse
          jeito, você já tentou, ou aqui já foi vasculhado. */
       if (faz === "poder") return recusarPoder(acao);
+      if (faz === "reliquia") return acionarReliquia(acao);
       if (faz === "consumir") return beberDaBolsa(acao);
       if (faz === "agressao") return declararAgressao(acao);
       if (faz === "desafio") return adjudicarAcao(acao);
@@ -9846,6 +9866,43 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* o Mestre fica sabendo mesmo sem ser chamado agora: se a cena seguinte
        tocar no assunto, ele já não trata o poder como existente */
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoPoder(v, acao)}`;
+    return true;
+  };
+
+  /* ---------------- O GESTO DA RELÍQUIA (v9.82) ----------------
+     "Podem existir os itens únicos, que são acima dos lendários, e estes
+     tenham um poder ativo — tipo 'uma vez ao dia essa lâmina se alimenta
+     do seu inimigo e enche seu PV'."
+
+     Tudo o que o arsenal da v9.81 concede é PASSIVO: vale enquanto está no
+     corpo. Aqui há um gesto — o portador FAZ alguma coisa, uma vez por
+     dia. É a diferença entre carregar poder e usar poder.
+
+     E o contador é por DIA da campanha, não por descanso: descanso se
+     força, dia não. Sem isso a relíquia viraria um botão de "recuperar
+     tudo" apertado três vezes na mesma luta. */
+  const acionarReliquia = (acao) => {
+    const p = fichaViva() || personagem;
+    const alvo = ativoDeclarado(acao, p);
+    if (!alvo) return false;
+    const { item, rel } = alvo;
+    const pode = podeUsarAtivo(p, rel, { dia: diaRef.current, sintonizado: estaSintonizado(p, item) });
+    if (!pode.pode) {
+      pushMsgs([
+        { autor: "jogador", texto: acao },
+        { autor: "sistema", texto: falaDoAtivoNegado(pode) },
+      ]);
+      return true;                       // resolvido: não gasta turno com o Mestre
+    }
+    const r = usarAtivo(p, rel, { dia: diaRef.current });
+    if (!r) return false;
+    personagemRef.current = r.pers; setPersonagem(r.pers); salvar({ personagem: r.pers });
+    pushMsgs([
+      { autor: "jogador", texto: acao },
+      { autor: "sistema", texto: r.texto },
+    ]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoAtivo(rel, r.texto)}`;
+    enviar(acao, r.pers);
     return true;
   };
 

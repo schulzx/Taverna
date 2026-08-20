@@ -15,8 +15,8 @@ const sortear = (arr) => (arr && arr.length ? arr[Math.floor(Math.random() * arr
 
 import { TIER as TIER_AFIXO, degrauDe, pesoDoPrefixo, tierDaBase, poderesPossiveis, concessaoPara, resumoDoItem, EFEITOS_DE_ATRIBUTO, CONCESSAO_DA_BASE } from "./afixos.js";
 
-export const RARIDADES = ["comum", "incomum", "raro", "epico", "lendario"];
-export const RARIDADE_ROTULO = { comum: "Comum", incomum: "Incomum", raro: "Raro", epico: "Épico", lendario: "Lendário" };
+export const RARIDADES = ["comum", "incomum", "raro", "epico", "lendario", "unico"];
+export const RARIDADE_ROTULO = { comum: "Comum", incomum: "Incomum", raro: "Raro", epico: "Épico", lendario: "Lendário", unico: "Único" };
 
 /* ---------------- BASES POR SLOT (o coração do item) ----------------
    armas: bonus = dano · defesas: bonus = defesa · acessórios: sem bônus
@@ -308,7 +308,10 @@ export function gerarEspolioItem(inimigos, nivel = 1) {
 }
 
 /* ---------------- FORJA (desmontar → essência → forjar) ---------------- */
-export const ESSENCIA_POR_RARIDADE = { comum: 2, incomum: 5, raro: 12, epico: 25, lendario: 60 };
+/* v9.82: o ÚNICO não entra na forja. Desmontar a única que existe para
+   virar pó seria destruir uma peça do mundo por vinte de essência — e
+   `essenciaDe` devolvendo zero é o que impede o botão de aparecer. */
+export const ESSENCIA_POR_RARIDADE = { comum: 2, incomum: 5, raro: 12, epico: 25, lendario: 60, unico: 0 };
 export const CUSTO_FORJA = {
   comum: { essencia: 4, moedas: 0 },
   incomum: { essencia: 10, moedas: 10 },
@@ -316,7 +319,11 @@ export const CUSTO_FORJA = {
   epico: { essencia: 55, moedas: 120 },
   lendario: { essencia: 130, moedas: 300 },
 };
-export function essenciaDe(item) { return ESSENCIA_POR_RARIDADE[(item && item.raridade) || "comum"] || 2; }
+/* v9.82: `??` e não `||` — o único rende ZERO, e `|| 2` transformava esse
+   zero de volta em dois. A relíquia voltaria a ser desmontável por engano,
+   e o botão da forja apareceria sobre a única peça do mundo que não pode
+   virar pó. */
+export function essenciaDe(item) { return ESSENCIA_POR_RARIDADE[(item && item.raridade) || "comum"] ?? 2; }
 
 /* ---------------- A SEGUNDA FONTE (v9.54) ----------------
    Desmontar equipamento era a ÚNICA maneira de conseguir essência, e isso

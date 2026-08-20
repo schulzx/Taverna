@@ -57,6 +57,9 @@ export function garantirSinais(s) {
     /* v9.78: o frasco ESTÁ na bolsa. Aqui não há recusa: quem bebe é o
        sistema, com o mesmo código do botão do painel. */
     vaiConsumir: b("vaiConsumir"),
+    /* v9.82: o jogador acionou o poder ativo de uma relíquia que está com
+       ele. Uma vez por dia, e quem resolve é o sistema. */
+    vaiAcionarReliquia: b("vaiAcionarReliquia"),
     ehConjuracao: b("ehConjuracao"),
     ehPortal: b("ehPortal"),
     ehEntradaEmMasmorra: b("ehEntradaEmMasmorra"),
@@ -143,6 +146,17 @@ export const PORTAS_DO_TURNO = [
     fase: "atalho", faz: "poder", seRecusar: "seguinte",
     quando: (s) => s.declarouPoderQueNaoTem,
     porque: "a ficha é a única fonte do que o herói pode fazer, e conferi-la antes de a cena existir é o que impede o jogo inteiro de ser obtido escrevendo o nome",
+  },
+  {
+    /* O GESTO DA RELÍQUIA (v9.82). Vem antes do frasco e da magia porque é
+       a declaração mais específica que existe no jogo: há UMA Comedora de
+       Reis no mundo, e quem escreve o nome dela não está pedindo outra
+       coisa. Fosse depois, "uso o Banquete" poderia ser lido como qualquer
+       verbo de uso com um substantivo atrás. */
+    id: "reliquia", rotulo: "Gesto de relíquia", intercepta: true,
+    fase: "atalho", faz: "reliquia", seRecusar: "seguinte",
+    quando: (s) => s.vaiAcionarReliquia,
+    porque: "uma relíquia tem nome próprio e um gesto que só ela faz — e o gesto é do sistema, que rola, aplica e marca o uso do dia",
   },
   {
     /* O FRASCO QUE ESTÁ NA BOLSA (v9.78). A irmã positiva da porta acima, e

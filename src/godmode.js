@@ -50,6 +50,7 @@ export const COMANDOS = [
   { cmd: "arco", args: "[+n]", grupo: "mundo", desc: "mostra o momento do arco e quanto falta para virar; com +n, empurra n marcos" },
 
   { cmd: "combate", args: "<criatura> [nivel] [quantos]", grupo: "luta", desc: "abre uma luta contra a criatura pedida" },
+  { cmd: "relica", args: "[nome]", grupo: "luta", desc: "põe uma relíquia (item único) na bolsa; sem nome, lista ou sorteia" },
   { cmd: "encontro", args: "<trivial|facil|medio|dificil|mortal> <criatura>", grupo: "luta", desc: "monta uma luta na dificuldade pedida — o sistema escolhe quantos" },
   { cmd: "matar", args: "", grupo: "luta", desc: "derruba todos os inimigos do combate atual" },
   { cmd: "companheiro", args: "<nome>", grupo: "luta", desc: "põe alguém no seu grupo, pronto para lutar" },
