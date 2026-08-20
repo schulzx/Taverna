@@ -2013,6 +2013,82 @@ bibliotecário com muitos dados para ele ter uma ampla biblioteca."
   trava genérica de "passado". Uma trava por tipo de memória seria mais
   honesta.
 
+## O gesto por baixo da forma — v9.87
+
+- **~~Duas formas diferentes faziam a mesma cena.~~** RESOLVIDO, e o
+  diagnóstico anterior estava errado. Eu tinha anotado que faltava "uma
+  memória do que a IA de fato escreveu" — não falta. O problema era do
+  lado de cá: `mensageiro`, `rosto_conhecido`, `pela_crianca`,
+  `procurador`, `ordem_de_longe` e `quem_ficou` são **seis entradas
+  distintas e uma única cena** — alguém chega e fala comigo. Três delas
+  seguidas passavam pela memória sem alarme nenhum, e o jogador lia a
+  mesma coisa três vezes com nomes diferentes na estante.
+
+  Toda forma ganhou um **gesto**: o que a cena FAZ, abaixo do assunto.
+  Vinte e dois nomes para 191 formas, e grosso de propósito — se cada
+  forma tivesse o próprio gesto, o gesto seria o id de novo. A janela do
+  gesto é curta (três) porque proibir "alguém chega e fala" por oito
+  turnos proibiria metade do que uma cena de cidade pode ser.
+
+- **~~E os vetos casavam TEXTO.~~** RESOLVIDO de quebra. Eles testavam
+  trechos da própria `forma` (`/respiro|calma, de verdade calma|ter
+  graça/`), o que é frágil ao ponto de sumir sozinho: bastava reescrever
+  uma frase para o veto parar de cortar sem que nada quebrasse. Agora
+  leem `gesto`, e por isso cortam a família inteira em vez das quatro
+  formas cujo texto eu tinha lembrado de listar.
+
+- **~~A cadência era um número fixo.~~** RESOLVIDO. Três turnos tratava
+  igual duas mesas opostas. Numa mesa **fria** — cinco turnos sem dado,
+  sem perigo e sem nada ganho — a forma é o socorro, e fazê-la esperar é
+  deixar a cena morrer mais um pouco antes de acudir. Numa mesa **quente**
+  já há voz demais.
+
+  ```
+  fria   → 2      morna → 3      quente → 6      brasa → nunca
+  ```
+
+  Tabela com o motivo de cada linha, e o motivo entra na mensagem de
+  espera: quem for depurar tem de saber por que esperou seis e não três.
+
+- **~~`precisa` era grosso demais.~~** RESOLVIDO. "Passado" cobria três
+  memórias diferentes: a forma que pede uma FRASE já dita, a que pede um
+  OBJETO que apareceu e a que pede um LUGAR onde estive. Um herói com
+  três cicatrizes e nenhum quilômetro rodado tem passado de sobra e
+  nenhum lugar de que se lembrar.
+
+  Cinco exigências, e viraram **tabela** com garantia de leitor: uma
+  forma que declare exigência sem linha correspondente quebra a suíte, em
+  vez de abrir sempre porque nenhum veto a conhecia.
+
+### O veto falhava ABRINDO
+
+Achado ao ligar a tabela: `consultarBiblioteca` engolia a exceção de um
+veto quebrado e deixava a forma passar. É a classe de bug que esta casa
+mais repete, na versão mais cara — **lacuna virando permissão**, a mesma
+de `seguraOTeste` na v9.71.
+
+Invertido: veto que lança agora **corta**. Um veto com defeito que corta
+demais aparece na hora, porque a estante encolhe; um que libera demais só
+aparece quando a IA já narrou o que não devia.
+
+### O que fica aberto aqui
+
+- **O gesto não sabe o que o JOGADOR fez.** A memória cobre o que o
+  sistema mandou, e o jogador que passa três turnos conversando recebe
+  formas de conversa sem que nada perceba a redundância. `pilarDoTexto`
+  já lê o texto dele e já alimenta a mesa — faltaria o gesto olhar para
+  esse sinal também.
+
+- **`peso` é fixo por forma.** Uma forma que serve muito bem à cena atual
+  concorre com o mesmo peso de uma que mal cabe. O `quando` é binário:
+  abre ou não abre. Uma nota de ADERÊNCIA — o quanto ESTA forma serve a
+  ESTA situação — deixaria o sorteio mais fino sem tirar a variedade.
+
+- **`temFalaAnterior` conta mensagens, não falas.** Doze narrações do
+  Mestre é um limiar honesto para "já se conversou", mas não é a mesma
+  coisa que existir uma frase memorável para ecoar. Só a IA sabe disso, e
+  é o único caso em que devolver a pergunta a ela seria defensável.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

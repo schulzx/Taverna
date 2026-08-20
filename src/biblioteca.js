@@ -42,13 +42,13 @@
    duas linhas.
    ============================================================ */
 
-import { ESCOLAS, JOGADAS, escolaPorId, jogadaPorId } from "./estante.js";
+import { ESCOLAS, JOGADAS, GESTOS, escolaPorId, jogadaPorId, gestoPorId } from "./estante.js";
 
 /* Reexportados porque o acervo e a consulta são a mesma ferramenta vista
    de dois lados: quem importa "a biblioteca" quer os dois, e obrigar o
    chamador a saber que os dados moram noutro arquivo é vazar arrumação
    interna para fora. */
-export { ESCOLAS, JOGADAS, escolaPorId, jogadaPorId };
+export { ESCOLAS, JOGADAS, GESTOS, escolaPorId, jogadaPorId, gestoPorId };
 
 /* ============================================================
    A SITUAÇÃO — o que o mestre leva à consulta
@@ -103,6 +103,14 @@ export function garantirSituacao(s) {
        dias faz a única coisa que pode: inventa a pessoa. */
     temGenteConhecida: b("temGenteConhecida"),
     temPassado: b("temPassado"),
+    /* v9.87: e a trava ficou mais fina. "Passado" era grosso demais — a
+       forma que pede uma FRASE já dita, a que pede um OBJETO que apareceu
+       e a que pede um LUGAR onde estive são três memórias diferentes, e um
+       herói com três cicatrizes e nenhum quilômetro rodado tem passado sem
+       ter lugar nenhum de que se lembrar. */
+    temFalaAnterior: b("temFalaAnterior"),
+    temObjetos: b("temObjetos"),
+    temLugarVisitado: b("temLugarVisitado"),
     pvBaixo: b("pvBaixo"),
     nivel: n("nivel", 1),
     fama: n("fama", 0),
@@ -120,21 +128,40 @@ export function garantirSituacao(s) {
    ============================================================ */
 export const NAO_REPETIR = 8;
 
+/* ---------------- E A MEMÓRIA DO GESTO (v9.87) ----------------
+   Não bastava lembrar da FORMA. `mensageiro`, `rosto_conhecido`,
+   `pela_crianca`, `procurador`, `ordem_de_longe` e `quem_ficou` são seis
+   entradas distintas e uma única cena — alguém chega e fala comigo. Três
+   delas seguidas passavam pela memória sem alarme nenhum, e o jogador lia
+   a mesma coisa três vezes com nomes diferentes do lado de cá.
+
+   A janela do gesto é CURTA de propósito, e muito mais curta que a da
+   forma: gesto é categoria grossa, e proibir "alguém chega e fala" por oito
+   turnos proibiria metade do que uma cena de cidade pode ser. Três é o
+   bastante para quebrar a sequência sem estreitar o mundo. */
+export const NAO_REPETIR_GESTO = 3;
+
 export function garantirEstante(e) {
   const o = e && typeof e === "object" ? e : {};
   const n = (x) => (Number.isFinite(Number(x)) ? Number(x) : 0);
   return {
     usadas: (Array.isArray(o.usadas) ? o.usadas : []).slice(-16),
+    gestos: (Array.isArray(o.gestos) ? o.gestos : []).slice(-8),
     /* turnos desde a última forma dada a uma cena comum */
     desdeCena: n(o.desdeCena),
   };
 }
 
-export function marcarJogada(estante, id) {
+export function marcarJogada(estante, id, gesto = "") {
   const e = garantirEstante(estante);
   const k = String(id || "");
   if (!k) return e;
-  return { ...e, usadas: [...e.usadas, k].slice(-16) };
+  const g = String(gesto || (jogadaPorId(k) || {}).gesto || "");
+  return {
+    ...e,
+    usadas: [...e.usadas, k].slice(-16),
+    gestos: g ? [...e.gestos, g].slice(-8) : e.gestos,
+  };
 }
 
 /* ============================================================
@@ -149,13 +176,22 @@ export const VETOS = [
   {
     id: "brasa_nao_respira",
     quando: (s) => s.temperatura === "brasa",
-    corta: (j) => /respiro|calma, de verdade calma|ter graça|silêncio confortável|ninguém aqui tem pressa/i.test(j.forma),
+    /* v9.87: era um casamento de TEXTO da forma, e por isso frágil ao
+       ponto de sumir sozinho: bastava reescrever uma frase para o veto
+       parar de cortar sem que nada quebrasse. Agora lê estrutura. */
+    corta: (j) => j.gesto === "respira",
     porque: "no meio de uma luta ou de um perigo em curso, uma cena calma não é respiro: é o sistema atrapalhando a melhor coisa que o jogador tem na mão",
   },
   {
     id: "sem_vilao_sem_oferta",
     quando: (s) => s.ordemDaFase < 0,
-    corta: (j) => /outro lado|quem age contra mim|me ofereça|me elogia|me manda um PRESENTE/i.test(j.forma),
+    /* só o gesto do antagonista, e NÃO `oferece`: quem oferece também é o
+       aldeão que dá uma recompensa torta, e essa não tem vilão nenhum
+       atrás. Na prática este veto é rede de segurança — toda forma do
+       outro lado já exige `ordemDaFase >= 1` no próprio `quando`, e sem
+       vilão a fase é -1 —, mas ele protege a próxima que alguém escrever
+       esquecendo dessa guarda. */
+    corta: (j) => j.gesto === "mostra_o_outro",
     porque: "sem antagonista não existe outro lado, e pedir a forma do inimigo quando não há inimigo é pedir à IA que invente um — que é exatamente o que o vilão veio impedir",
   },
   {
@@ -167,23 +203,53 @@ export const VETOS = [
   {
     id: "combate_nao_planta",
     quando: (s) => s.emCombate,
-    corta: (j) => /* a família inteira do plantio, mais o mundo de fundo */
-      /Dê a UM detalhe|Faça um NOME ser dito|de passagem, e nenhuma função|PODERIA ter tomado|NÃO tem relação comigo/i.test(j.forma),
+    /* v9.87: por gesto, e agora corta a família INTEIRA em vez das quatro
+       formas cujo texto eu tinha lembrado de listar. */
+    corta: (j) => j.gesto === "planta" || j.gesto === "mostra_mundo",
     porque: "plantar exige atenção sobrando, e no meio da luta a atenção do jogador está inteira em outro lugar; o que se planta ali não é plantio, é ruído",
   },
-  {
-    id: "sem_gente_sem_rosto",
-    quando: (s) => !s.temGenteConhecida,
-    corta: (j) => j.precisa === "gente",
-    porque: "não há ninguém registrado nesta campanha ainda, e uma forma que manda usar quem já apareceu, sem que ninguém tenha aparecido, é um pedido de invenção com outro nome",
-  },
-  {
-    id: "sem_passado_sem_colheita",
-    quando: (s) => !s.temPassado,
-    corta: (j) => j.precisa === "passado",
-    porque: "colher exige ter plantado: numa campanha que mal começou, 'traga de volta uma coisa desta campanha' só pode ser respondido inventando a coisa que voltaria",
-  },
 ];
+
+/* ============================================================
+   AS EXIGÊNCIAS — que memória cada forma precisa que exista
+
+   Uma linha por espécie de lembrança, e é tabela em vez de um veto por
+   valor pela razão de sempre nesta casa: assim o acervo pode inventar uma
+   exigência nova e a suíte cobra a linha correspondente aqui, em vez de a
+   forma abrir sempre porque nenhum veto a conhecia.
+
+   Até a v9.86 eram duas — "gente" e "passado" — e "passado" era grosso
+   demais. A forma que pede uma FRASE já dita, a que pede um OBJETO que
+   apareceu e a que pede um LUGAR onde estive são três memórias
+   diferentes: um herói com três cicatrizes e nenhum quilômetro rodado tem
+   passado de sobra e nenhum lugar de que se lembrar.
+   ============================================================ */
+export const EXIGENCIAS = [
+  { precisa: "gente", campo: "temGenteConhecida", porque: "não há ninguém registrado nesta campanha, e mandar usar quem já apareceu sem que ninguém tenha aparecido é um pedido de invenção com outro nome" },
+  { precisa: "passado", campo: "temPassado", porque: "colher exige ter plantado: numa campanha que mal começou, 'traga de volta uma coisa desta campanha' só pode ser respondido inventando a coisa que voltaria" },
+  { precisa: "fala", campo: "temFalaAnterior", porque: "repetir uma frase que já foi dita exige que se tenha conversado o bastante para haver frase — e o eco de uma campanha de dois diálogos é a IA escrevendo a frase original agora" },
+  { precisa: "objeto", campo: "temObjetos", porque: "um objeto desta campanha só reaparece em outras mãos se ele existir; sem inventário nenhum, quem inventa o objeto que volta é quem narra" },
+  { precisa: "lugar", campo: "temLugarVisitado", porque: "lembrar de um lugar exige ter ido a mais de um: no primeiro, toda semelhança com 'outro onde estive' é um lugar novo nascendo" },
+];
+export function exigenciaDe(precisa) { return EXIGENCIAS.find((x) => x.precisa === precisa) || null; }
+
+/* Um veto só, montado da tabela. Uma forma que declare uma exigência que
+   esta tabela não conhece é CORTADA, e não liberada: o lado seguro de uma
+   lacuna é o silêncio, nunca a permissão — foi assim que `seguraOTeste`
+   quase deixou passar meio catálogo na v9.71. */
+VETOS.push({
+  id: "sem_memoria_sem_forma",
+  quando: () => true,
+  corta: (j, s) => {
+    if (!j.precisa) return false;
+    const x = exigenciaDe(j.precisa);
+    /* sem tabela OU sem situação, corta: nos dois casos o sistema não tem
+       como afirmar que a memória existe, e afirmar sem saber é justamente
+       o que manda a IA inventar a lembrança */
+    return x && s ? !s[x.campo] : true;
+  },
+  porque: "toda forma que depende de haver histórico é trancada pelo sistema, que sabe se ele existe — nunca pela IA, que na falta dele inventaria a lembrança",
+});
 
 /* ============================================================
    A CONSULTA
@@ -207,7 +273,17 @@ export function consultarBiblioteca(situacao, { sorte = Math.random, estante = n
   let abertas = JOGADAS.filter((j) => {
     if (soSozinhas && !j.sozinha) return false;
     try { if (!j.quando(s)) return false; } catch { return false; }
-    for (const v of vetos) { try { if (v.corta(j)) return false; } catch { /* veto quebrado não veta */ } }
+    /* UM VETO QUEBRADO CORTA, e não passa. A primeira versão fazia o
+       contrário — engolia a exceção e deixava a forma aberta — e isso é a
+       classe de bug que esta casa mais repete, na sua forma mais cara: uma
+       lacuna virando permissão. Um veto com defeito que corta demais
+       aparece na hora (a estante encolhe); um que libera demais só aparece
+       quando a IA já narrou o que não devia. */
+    for (const v of vetos) {
+      let cortou = true;
+      try { cortou = !!v.corta(j, s); } catch { cortou = true; }
+      if (cortou) return false;
+    }
     return true;
   });
   if (!abertas.length) return null;
@@ -218,12 +294,21 @@ export function consultarBiblioteca(situacao, { sorte = Math.random, estante = n
   const frescas = abertas.filter((j) => !recentes.has(j.id));
   if (frescas.length) abertas = frescas;
 
+  /* e o GESTO recém-feito também sai. A ordem importa: a forma primeiro,
+     o gesto depois, e os dois com a mesma escapatória — se filtrar por
+     gesto esvaziar a estante, o gesto repetido é melhor que forma
+     nenhuma. Uma cena repetida é um defeito; uma cena sem forma é o
+     comportamento de antes, que não era defeito. */
+  const gestosRecentes = new Set(e.gestos.slice(-NAO_REPETIR_GESTO));
+  const outroGesto = abertas.filter((j) => !gestosRecentes.has(j.gesto));
+  if (outroGesto.length) abertas = outroGesto;
+
   const alvo = preferir || s.pilarFaminto || null;
   const peso = (j) => Math.max(1, j.peso) * (alvo && j.serve === alvo ? 2 : 1);
   const total = abertas.reduce((n, j) => n + peso(j), 0);
   let corte = sorte() * total;
   const j = abertas.find((x) => (corte -= peso(x)) <= 0) || abertas[0];
-  return { id: j.id, escola: j.escola, serve: j.serve, forma: j.forma, evite: j.evite, sozinha: !!j.sozinha };
+  return { id: j.id, gesto: j.gesto, escola: j.escola, serve: j.serve, forma: j.forma, evite: j.evite, sozinha: !!j.sozinha };
 }
 
 /* ============================================================
@@ -250,15 +335,35 @@ export function consultarBiblioteca(situacao, { sorte = Math.random, estante = n
    como compor a cena enquanto o sistema resolve iniciativa, dano e
    posição é atropelar a única parte que ainda era dela.
    ============================================================ */
+/* ---------------- E ELA RESPONDE À MESA (v9.87) ----------------
+   A cadência era um número fixo, e um número fixo trata igual duas mesas
+   opostas. Numa mesa FRIA — cinco turnos sem dado, sem perigo e sem nada
+   ganho — a forma é a coisa que mais ajuda, e fazê-la esperar três turnos
+   é deixar a cena morrer mais um pouco antes de socorrê-la. Numa mesa
+   QUENTE já há voz demais, e mais uma instrução é mais uma voz.
+
+   `cada: 0` é nunca, e a tabela diz por quê em vez de o código saber de
+   cor — a ordem e os motivos são o conteúdo, como em toda tabela desta
+   casa. */
 export const CADENCIA_DA_CENA = 3;
+export const CADENCIAS = [
+  { temperatura: "fria", cada: 2, porque: "a cena morreu e ninguém percebeu: aqui a forma é o socorro, não o enfeite" },
+  { temperatura: "morna", cada: 3, porque: "o passo normal da mesa, que é o estado da maioria dos turnos" },
+  { temperatura: "quente", cada: 6, porque: "já houve dado demais nos últimos turnos, e uma instrução a mais é só mais uma voz" },
+  { temperatura: "brasa", cada: 0, porque: "a cena já tem forma, e ela é do jogador" },
+];
+export function cadenciaDe(temperatura) {
+  return CADENCIAS.find((c) => c.temperatura === temperatura) || CADENCIAS[1];
+}
 
 export function podeFormaDeCena(situacao, estante) {
   const s = garantirSituacao(situacao);
   const e = garantirEstante(estante);
   if (s.emCombate) return { pode: false, porque: "o turno de luta já vem cheio de voz de sistema" };
-  if (s.temperatura === "brasa") return { pode: false, porque: "em brasa a cena já tem forma, e ela é do jogador" };
-  if (e.desdeCena < CADENCIA_DA_CENA) return { pode: false, porque: `faltam ${CADENCIA_DA_CENA - e.desdeCena} turnos para a próxima` };
-  return { pode: true, porque: "" };
+  const c = cadenciaDe(s.temperatura);
+  if (!c.cada) return { pode: false, porque: c.porque };
+  if (e.desdeCena < c.cada) return { pode: false, porque: `faltam ${c.cada - e.desdeCena} turnos para a próxima (mesa ${s.temperatura}: ${c.porque})` };
+  return { pode: true, porque: c.porque };
 }
 
 export function contarTurnoDeCena(estante) {

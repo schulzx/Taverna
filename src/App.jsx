@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
-import { gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
+import { cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao } from "./historia.js";
@@ -10778,6 +10778,14 @@ REGRA DESTE ENVELOPE (obrigatÃ³ria): trate o resto da minha frase normalmente â€
       temRelogio: (relogiosRef.current || []).some((x) => x.cheios > 0),
       temGenteConhecida: Object.keys(npcsRef.current || {}).length > 0,
       temPassado: feitos >= 2 || derrotadosDaSessaoRef.current.length > 0 || (p0.cicatrizes || []).length > 0,
+      /* v9.87: tres memorias diferentes, e nao uma so. Um heroi com tres
+         cicatrizes e nenhum quilometro rodado tem passado de sobra e nenhum
+         lugar de que se lembrar; um que conversou duas vezes nao tem frase
+         para ecoar. Os limiares sao baixos de proposito â€” a trava existe
+         para a campanha RECEM-NASCIDA, nao para racionar a forma. */
+      temFalaAnterior: (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").length >= 12,
+      temObjetos: (p0.inventario || []).length >= 3,
+      temLugarVisitado: cidadesPisadas(mapaRef.current).length >= 2,
       pvBaixo: (p0.vida || 0) > 0 && (p0.vida || 0) <= Math.ceil((p0.vidaMax || 1) / 3),
       nivel: p0.nivel || 1,
       fama: famaAtual(),
@@ -10788,7 +10796,7 @@ REGRA DESTE ENVELOPE (obrigatÃ³ria): trate o resto da minha frase normalmente â€
     try {
       const j = consultarBiblioteca(situacaoDaMesa({ fio }), { estante: estanteRef.current, preferir });
       if (!j) return "";
-      estanteRef.current = marcarJogada(estanteRef.current, j.id);
+      estanteRef.current = marcarJogada(estanteRef.current, j.id, j.gesto);
       return trechoDaJogada(j);
     } catch { return ""; /* a forma nunca pode custar o turno */ }
   };
@@ -10820,7 +10828,7 @@ REGRA DESTE ENVELOPE (obrigatÃ³ria): trate o resto da minha frase normalmente â€
       if (!podeFormaDeCena(sit, estanteRef.current).pode) return "";
       const j = consultarBiblioteca(sit, { estante: estanteRef.current, soSozinhas: true });
       if (!j) return "";
-      estanteRef.current = zerarCadenciaDaCena(marcarJogada(estanteRef.current, j.id));
+      estanteRef.current = zerarCadenciaDaCena(marcarJogada(estanteRef.current, j.id, j.gesto));
       return envelopeDaCena(j);
     } catch { return ""; }
   };
