@@ -1219,6 +1219,66 @@ rouba do jogador a decisão de recuar.
   mais repete — mas fechar o campo antigo mexe em masmorra, nêmese e
   eventos globais, e não cabia nesta leva.
 
+## A última régua dupla do combate — v9.75
+
+- **~~`combate_iniciar` não passava pelo orçamento.~~** RESOLVIDO. A
+  emboscada da v9.74 era conferida e a lista antiga não — e é por ela que
+  entra a maior parte das lutas do jogo: a nêmese, os eventos globais,
+  tudo o que a IA abre por conta própria. Duas réguas para a mesma
+  pergunta, e desta vez escrita de propósito, porque na v9.74 não coube.
+
+  **A conferência aqui é mais branda que a da emboscada, e a diferença
+  tem motivo.** Na emboscada o sistema constrói o encontro do zero e pode
+  escolher. Aqui a cena já existe: pode ser o clímax de um arco, o
+  confronto que a campanha inteira preparou, ou uma luta que o jogo QUER
+  que o herói perca e fuja. Recusar seria o sistema apagando a história
+  que o motor dele mesmo mandou construir.
+
+  Então ele faz duas coisas e só duas:
+
+  1. **Apara a multidão**, cortando pelo fim da lista — que é onde ficam
+     as cópias ("Bandido 5", "Bandido 6"). Nunca remove um chefe, porque
+     chefe é um, e nunca corta até zero. Medido: oito bandidos contra um
+     nível 1 viram dois.
+  2. **Não recusa o grande demais — avisa.** Um só inimigo acima do teto
+     passa inteiro, porque é assim que se faz uma cena de fuga. O que
+     muda é o envelope: o Mestre é obrigado a deixar a saída existir e
+     visível desde a primeira frase, em vez de descobrir sozinho, três
+     rodadas depois, que matou o jogador.
+
+## A voz do narrador — v9.75
+
+- **A temperatura sobe de 0.85 para 1.0**, a pedido de quem joga: "o
+  narrador ficou muito contido". O relato é o outro lado da mesma moeda
+  da v9.45, que DESCEU de 1.1 para 0.85 porque a prosa saía quebrada
+  ("o Arco tinha fome; a laje esta"). As duas coisas são verdade ao mesmo
+  tempo, e a janela entre "contido" e "agramatical" é estreita neste
+  jogo. 1.0 fica dentro dela por pouco — meio degrau abaixo do que
+  quebrou —, e o prompt encolheu bastante desde então (58,7k na cena
+  comum contra os 90k daquela época), o que dá folga.
+
+  **Se voltar a sair prosa quebrada, o conserto não pede redeploy:**
+  `DS_TEMPERATURA=0.9` na Vercel vale no pedido seguinte.
+
+- **A repetição ganhou alavanca própria.** "Fica sempre repetindo coisas"
+  é a outra metade da queixa, e temperatura é o remédio errado para ela:
+  temperatura mexe no quanto o modelo ARRISCA, não no quanto ele se
+  repete. Quem mexe nisso é a penalidade de frequência, agora em 0.3
+  (`DS_PENALIDADE`). É ela que desmancha o tique de reabrir toda cena com
+  o mesmo cheiro de cevada.
+
+  0.3 é conservador de propósito: penalidade alta em português estraga a
+  concordância — o modelo foge das preposições e dos artigos que já
+  gastou —, e este canal devolve JSON, que é o mesmo risco que derrubou a
+  temperatura na v9.45. A penalidade de PRESENÇA fica em zero: ela empurra
+  o modelo para assuntos novos, e assunto novo é justamente o que ele não
+  pode inventar aqui.
+
+- **O reserva obedecia a outra régua.** O Gemini nunca teve temperatura
+  configurada — rodava no padrão da casa do Google —, então trocar de
+  provedor trocava o tom do narrador sem que nada no jogo tivesse mudado.
+  Agora os dois leem as mesmas variáveis.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

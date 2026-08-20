@@ -211,4 +211,84 @@ REGRA DESTE ENVELOPE (obrigatória): na próxima fala, faça UMA das duas coisas
 NÃO narre o golpe dela me acertando, NÃO me faça sobreviver por sorte e NÃO invente que ela perdeu o interesse depois de me ferir: nada aconteceu comigo neste turno.`;
 }
 
+/* ============================================================
+   A LISTA QUE VEM PELO CAMPO ANTIGO (v9.75)
+
+   `montarEmboscada` acima cuida da investida narrada. Falta o outro
+   caminho, que é o mais usado de todos: `combate_iniciar`, o campo em
+   que a IA manda a lista de inimigos já montada — nome, ameaça e
+   quantidade — e por onde entram a nêmese, os eventos globais e tudo o
+   que ela abre por conta própria.
+
+   Esse campo nunca teve orçamento. A emboscada nova era conferida e a
+   lista antiga não, o que quer dizer que o mesmo jogo tinha DUAS RÉGUAS
+   para a mesma pergunta — a forma exata do bug que esta casa mais
+   repete, e desta vez escrita de propósito, porque na v9.74 não coube.
+
+   A CONFERÊNCIA AQUI É MAIS BRANDA QUE A DA EMBOSCADA, e a diferença
+   tem motivo. A emboscada é o sistema construindo o encontro do zero, e
+   ali ele pode escolher. Aqui a cena já existe: pode ser o clímax de um
+   arco, o confronto que a campanha inteira preparou, ou uma luta que o
+   jogo QUER que o herói perca e fuja. Recusar seria o sistema apagando
+   a história que o motor dele mesmo mandou construir.
+
+   Então ele faz duas coisas, e só duas:
+
+   1. APARA A MULTIDÃO. Corta cópias excedentes até a conta caber. Isso
+      nunca remove um chefe: chefe é um, e o corte começa pelo fim da
+      lista, que é onde ficam os "Bandido 5", "Bandido 6".
+
+   2. NÃO RECUSA O QUE É GRANDE DEMAIS — avisa. Um só inimigo acima do
+      teto passa, porque é assim que se faz uma cena de fuga. O que muda
+      é o envelope: o Mestre é obrigado a deixar a fuga aberta, em vez
+      de descobrir sozinho, três rodadas depois, que matou o jogador.
+   ============================================================ */
+export function conferirLista(inimigos, pers, { teto = TETO_DO_DESPROPORCIONAL } = {}) {
+  const lista = (inimigos || []).filter((e) => e && e.nome);
+  if (!lista.length) return { ok: false };
+  const nivel = (pers && pers.nivel) || 1;
+  const cheia = lista.map((e) => completarInimigo(e, nivel));
+  const razaoDe = (arr) => { const a = avaliarEncontro(arr, pers); return a ? a.razao : 0; };
+
+  /* um só já passa do teto? então não há corte que resolva — é cena de
+     fuga, e o sistema diz isso em vez de apagar a cena */
+  const soUm = razaoDe([cheia[0]]);
+  if (soUm > teto) {
+    return {
+      ok: true, tipo: "fuga", inimigos: lista, razao: soUm,
+      criatura: cheia[0].nome,
+      porque: `${cheia[0].nome} sozinho já pesa ${soUm}× a capacidade deste grupo`,
+    };
+  }
+  if (razaoDe(cheia) <= teto) return { ok: true, tipo: "cabe", inimigos: lista };
+
+  /* apara pelo fim: é lá que estão as cópias, e o primeiro da lista é o
+     que a ficção nomeou primeiro */
+  let n = lista.length;
+  while (n > 1 && razaoDe(cheia.slice(0, n)) > teto) n -= 1;
+  return {
+    ok: true, tipo: "aparado", inimigos: lista.slice(0, n),
+    de: lista.length, para: n, razao: razaoDe(cheia.slice(0, n)),
+    porque: `a cena trouxe ${lista.length} e o orçamento deste herói comporta ${n}`,
+  };
+}
+
+export function falaDaListaAparada(r) {
+  if (!r || r.tipo !== "aparado") return "";
+  return `⚖ ${r.de} eram demais para este patamar — ${r.para} entram na luta.`;
+}
+
+export function envelopeDaListaAparada(r) {
+  if (!r || r.tipo !== "aparado") return "";
+  return `[ENCONTRO APARADO PELO SISTEMA] Você abriu o combate com ${r.de} inimigos e o sistema pôs ${r.para}: ${r.de} contra mim não seria um encontro difícil, seria um acidente aritmético.
+REGRA DESTE ENVELOPE (obrigatória): narre o número que ficou. Os que não entraram simplesmente não vieram — não os mencione chegando depois, não os deixe "esperando lá fora" e não os traga como reforço no meio da luta. E não comente o corte: para mim, sempre foram ${r.para}.`;
+}
+
+export function envelopeDaLutaImpossivel(r) {
+  if (!r || r.tipo !== "fuga") return "";
+  return `[ENCONTRO ACIMA DO MEU PATAMAR — AVISO DO SISTEMA] Você abriu o combate com ${r.criatura}, e a conta diz que um só já pesa ${r.razao} vezes o que este grupo aguenta. O sistema NÃO cortou nada: a cena é sua e há lutas que existem para serem perdidas.
+REGRA DESTE ENVELOPE (obrigatória): então deixe a saída existir, e deixe-a VISÍVEL desde a primeira frase — a porta às costas, o desnível, a passagem estreita demais para ela. Se eu tentar fugir, a fuga funciona; ela pode me custar caro, mas funciona.
+NÃO feche o cerco, NÃO derrube a única saída e NÃO transforme isto num corredor sem porta. E não me avise em voz de sistema que eu vou morrer: mostre o tamanho da coisa e deixe que eu decida.`;
+}
+
 export function faixaPorId(id) { return FAIXAS.find((f) => f.id === id) || null; }

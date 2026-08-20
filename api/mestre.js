@@ -62,10 +62,36 @@ export default async function handler(req, res) {
                  dívida", frases que não querem dizer nada e não são escolha
                  estilística de ninguém.
 
-                 0.85 mantém a prosa viva e devolve a gramática. Se ficar
-                 previsível demais, DS_TEMPERATURA sobe sem redeploy — é
-                 variável de ambiente justamente para se afinar jogando. */
-              temperature: tarefa === "leve" ? 0.3 : Number(process.env.DS_TEMPERATURA || 0.85),
+                 v9.75 — SOBE PARA 1.0, a pedido de quem joga: "o narrador
+                 ficou muito contido". O relato é o outro lado da mesma moeda
+                 da v9.45, e as duas coisas são verdade ao mesmo tempo — a
+                 janela entre "contido" e "agramatical" é estreita neste jogo,
+                 e 1.0 fica dentro dela por pouco. É meio degrau abaixo do
+                 1.1 que produziu as frases quebradas, e o prompt de sistema
+                 encolheu bastante desde então (58,7k na cena comum contra os
+                 90k daquela época), o que dá mais folga.
+
+                 SE VOLTAR A SAIR PROSA QUEBRADA, o conserto não pede
+                 redeploy: DS_TEMPERATURA desce para 0.9 na Vercel e vale no
+                 pedido seguinte. É variável de ambiente justamente para isso. */
+              temperature: tarefa === "leve" ? 0.3 : Number(process.env.DS_TEMPERATURA || 1),
+              /* ---------------- A REPETIÇÃO TEM ALAVANCA PRÓPRIA (v9.75) ----------------
+                 "Fica sempre repetindo coisas" é a outra metade da queixa, e
+                 temperatura é o remédio errado para ela: temperatura mexe no
+                 quanto o modelo ARRISCA, não no quanto ele se repete. Quem
+                 mexe nisso é a penalidade de frequência, que cobra do modelo
+                 cada vez que ele reusa um token que já usou — é ela que
+                 desmancha o tique de reabrir toda cena com o mesmo cheiro de
+                 cevada e o mesmo "o salão prende a respiração".
+
+                 0.3 é conservador de propósito. Penalidade alta em português
+                 estraga a concordância (o modelo foge das preposições e dos
+                 artigos que ele já gastou), e este canal devolve JSON — o
+                 mesmo risco que derrubou a temperatura na v9.45. A presença
+                 fica em 0: ela empurra o modelo para ASSUNTOS novos, e assunto
+                 novo é justamente o que ele não pode inventar aqui. */
+              frequency_penalty: Number(process.env.DS_PENALIDADE || 0.3),
+              presence_penalty: 0,
               thinking: { type: "disabled" },
               ...(emJson ? { response_format: { type: "json_object" } } : {}),
             }),
@@ -90,7 +116,17 @@ export default async function handler(req, res) {
         role: m.role === "assistant" ? "model" : "user",
         parts: [{ text: String(m.content || "") }],
       }));
-      const generationConfig = { maxOutputTokens: teto, thinkingConfig: { thinkingLevel: "LOW" } };
+      /* v9.75: o reserva também obedece à mesma régua. Ele nunca teve
+         temperatura nenhuma configurada — rodava no padrão da casa do
+         Google —, e por isso trocar de provedor trocava o tom do narrador
+         sem que nada no jogo tivesse mudado. Duas configurações para a
+         mesma decisão é a mesma coisa que duas portas para a mesma regra. */
+      const generationConfig = {
+        maxOutputTokens: teto,
+        thinkingConfig: { thinkingLevel: "LOW" },
+        temperature: tarefa === "leve" ? 0.3 : Number(process.env.DS_TEMPERATURA || 1),
+        frequencyPenalty: Number(process.env.DS_PENALIDADE || 0.3),
+      };
       if (emJson) generationConfig.responseMimeType = "application/json";
       const safetySettings = [
         "HARM_CATEGORY_HARASSMENT", "HARM_CATEGORY_HATE_SPEECH",

@@ -51,7 +51,7 @@ import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidat
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, perguntarPeloSistema, envelopeDaPerguntaDoSistema, linhaDaPerguntaDoSistema, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
 import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao, TURNO_PROMPT } from "./turno.js";
 import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobrancaNegada } from "./cobranca.js";
-import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional } from "./emboscada.js";
+import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, conferirLista, falaDaListaAparada, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "./emboscada.js";
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo } from "./agressao.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
@@ -5219,6 +5219,30 @@ export default function Taverna() {
       const combateAntes = combateRef.current;
       resp.mudancas.__nivelJogador = pers.nivel || 1;
       resp.mudancas.__temBonus = temAcaoBonus(pers);
+      /* ---------------- A LISTA ANTIGA GANHA ORÇAMENTO (v9.75) ----------------
+         A emboscada da v9.74 era conferida e esta lista não, e é por aqui
+         que entra a maior parte das lutas do jogo — a nêmese, os eventos
+         globais, tudo o que a IA abre por conta própria. Duas réguas para a
+         mesma pergunta é a forma exata do bug que esta casa mais repete.
+
+         A conferência aqui é mais BRANDA que a da emboscada, e de propósito:
+         ali o sistema constrói o encontro do zero e pode escolher; aqui a
+         cena já existe e pode ser o clímax que a campanha inteira preparou.
+         Então ele apara a multidão e nunca recusa o inimigo grande demais —
+         só obriga o Mestre a deixar a fuga aberta. */
+      try {
+        const lista = resp.mudancas.combate_iniciar;
+        if (Array.isArray(lista) && lista.length && !combateRef.current) {
+          const conf = conferirLista(lista, pers);
+          if (conf.tipo === "aparado") {
+            resp.mudancas.combate_iniciar = conf.inimigos;
+            msgs.push(falaDaListaAparada(conf));
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaListaAparada(conf)}`;
+          } else if (conf.tipo === "fuga") {
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaLutaImpossivel(conf)}`;
+          }
+        }
+      } catch { /* conferir a lista nunca pode custar a luta */ }
       const novoCombate = processarCombate(combateRef.current, resp.mudancas, msgs);
       combateRef.current = novoCombate;
       setCombate(novoCombate);
