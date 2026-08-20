@@ -311,6 +311,26 @@ export function pilarDoTexto(texto) {
   return null;
 }
 
+/* ---------------- O PILAR QUE O JOGADOR VEM REPETINDO (v9.88) --------
+   O irmão de `pilarFaminto`, e o oposto dele: aquele olha o que está em
+   falta, este olha o que está em EXCESSO — e o excesso é dele, não do
+   sistema.
+
+   A estante lembra do que o Mestre mandou e é cega para o outro lado da
+   mesa. Um jogador que passa três turnos conversando recebia formas de
+   conversa sem que nada percebesse a redundância: o gesto nunca se
+   repetia e a cena se repetia mesmo assim, porque metade dela vinha dele.
+
+   Dois em três, e não três em três, porque a régua aqui não é "ele só
+   fez isso" — é "isto é o que ele vem fazendo". */
+export function pilarRepetido(mesa) {
+  const m = garantirMesa(mesa);
+  const ult = m.turnos.slice(-3).map((t) => t.pilar).filter(Boolean);
+  if (ult.length < 2) return null;
+  for (const p of PILARES) if (ult.filter((x) => x === p.id).length >= 2) return p;
+  return null;
+}
+
 export function pilarFaminto(mesa) {
   const m = garantirMesa(mesa);
   /* janela curta demais não sustenta a conclusão: dizer que a luta está

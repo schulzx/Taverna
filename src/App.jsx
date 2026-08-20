@@ -57,7 +57,7 @@ import { RELIQUIAS, reliquiaPorId, itemDaReliquia, ativoDeclarado, podeUsarAtivo
 import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, conferirLista, falaDaListaAparada, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "./emboscada.js";
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo } from "./agressao.js";
 import { consultarBiblioteca, garantirEstante, marcarJogada, trechoDaJogada, podeFormaDeCena, contarTurnoDeCena, zerarCadenciaDaCena, envelopeDaCena } from "./biblioteca.js";
-import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
+import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
 import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
@@ -10763,6 +10763,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       momento: (Number(h.etapa) || 0) / nEt,
       temperatura: temperaturaDaMesa(mesaRef.current).id,
       pilarFaminto: (pilarFaminto(mesaRef.current) || {}).id || null,
+      /* v9.88: e o oposto dele — o que o JOGADOR vem repetindo, para a
+         estante parar de somar mais do mesmo em cima do que ele já traz */
+      pilarRecente: (pilarRepetido(mesaRef.current) || {}).id || null,
       fio,
       pessoaNaCena: daqui.length > 0,
       emCidade: !!cidadeAtualRef.current,
@@ -10783,7 +10786,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          lugar de que se lembrar; um que conversou duas vezes nao tem frase
          para ecoar. Os limiares sao baixos de proposito — a trava existe
          para a campanha RECEM-NASCIDA, nao para racionar a forma. */
-      temFalaAnterior: (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").length >= 12,
+      /* v9.88: contar NARRACOES era proxy grosso — doze paragrafos de
+         travessia e descricao nao deixam uma frase para ecoar. Conta-se
+         agora a narracao que tem FALA dentro (aspas ou travessao), que e o
+         que o eco precisa que exista. Continua sendo proxy: se ha uma
+         frase memoravel so a IA sabe, e este e o unico caso em que
+         devolver a pergunta a ela seria defensavel. */
+      temFalaAnterior: (mensagensRef.current || []).filter((m) => m && m.autor === "mestre" && /[“"”]|—s/.test(String(m.texto || ""))).length >= 8,
       temObjetos: (p0.inventario || []).length >= 3,
       temLugarVisitado: cidadesPisadas(mapaRef.current).length >= 2,
       pvBaixo: (p0.vida || 0) > 0 && (p0.vida || 0) <= Math.ceil((p0.vidaMax || 1) / 3),

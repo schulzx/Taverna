@@ -2089,6 +2089,85 @@ aparece quando a IA já narrou o que não devia.
   coisa que existir uma frase memorável para ecoar. Só a IA sabe disso, e
   é o único caso em que devolver a pergunta a ela seria defensável.
 
+## A aderência: o `quando` deixa de ser a palavra final — v9.88
+
+- **~~`peso` era fixo por forma.~~** RESOLVIDO. O `quando` é binário —
+  abre ou não abre —, e isso bastava enquanto o acervo era pequeno,
+  porque quase tudo que abria servia. Com 191 formas abertas ao mesmo
+  tempo, `dentes_em_outro` pesava o mesmo no começo da campanha e no
+  clímax, e `colhe` competia de igual com `planta` num mundo onde ainda
+  não havia nada plantado.
+
+  A saída óbvia — uma função `cabe` em cada entrada — seria 191 regras
+  para manter, quase todas repetindo a mesma ideia. São **nove regras
+  gerais** aplicadas ao acervo inteiro, cada uma devolvendo um
+  multiplicador. Medido no jogo rodando:
+
+  ```
+  começo do arco   planta:117   mostra_mundo:98   fala:82
+  fim do arco      mostra_mundo:103  colhe:95     fala:74
+  mesa fria        mostra_mundo:87  me_ve:66  fala:65  chega_gente:62
+  mesa quente      me_ve:114  fala:109  mostra_mundo:86  vinculo:76
+  ferido, masmorra mostra_o_outro:93  mostra_dentes:79  me_ve:58  mostra_corpo:56
+  ```
+
+  **Nenhuma linha zera.** Afinidade não é veto: o que o `quando` abriu
+  continua possível mesmo quando não é o mais indicado, e é dessa cauda
+  que vem a cena que ninguém esperava. Piso 0,2 e teto 6.
+
+  E a linha mais útil é contra a intuição: **mesa fria pede
+  acontecimento, não respiro.** Mesa fria são cinco turnos sem dado, sem
+  perigo e sem nada ganho — mais uma cena calma sobre uma cena morta é a
+  morte confirmada. Sem essa linha a régua faria o contrário, porque as
+  formas de respiro só abrem em mesa fria ou morna e teriam a fria só
+  para elas.
+
+- **~~O holofote era caso especial no meio do sorteio.~~** RESOLVIDO de
+  quebra. Ele estava escrito à mão dentro de `consultarBiblioteca`;
+  virou a primeira linha da tabela, para que todo o peso da decisão more
+  num lugar só — que é o que impede a próxima regra de nascer solta como
+  esta estava.
+
+- **~~O gesto não sabia o que o JOGADOR fez.~~** RESOLVIDO. A memória
+  cobria o que o sistema mandou e era cega para o outro lado da mesa: um
+  jogador que passa três turnos conversando recebia formas de conversa
+  sem que nada percebesse a redundância — o gesto nunca se repetia e a
+  cena se repetia mesmo assim, **porque metade dela vinha dele**.
+
+  `pilarRepetido` é o irmão de `pilarFaminto` e o oposto dele: um olha o
+  que está em falta, o outro o que está em excesso. Dois em três turnos,
+  e não três em três, porque a régua não é "ele só fez isso" — é "isto é
+  o que ele vem fazendo". As duas forças puxam em sentidos contrários, e
+  é assim que tem de ser.
+
+- **~~`temFalaAnterior` contava narrações.~~** RESOLVIDO como dava. Doze
+  parágrafos de travessia e descrição não deixam uma frase para ecoar;
+  agora conta narração que tem fala dentro (aspas ou travessão). Continua
+  proxy — se há uma frase *memorável* só a IA sabe, e este segue sendo o
+  único caso em que devolver a pergunta a ela seria defensável.
+
+### O que fica aberto aqui
+
+- **`mostra_mundo` ganha por tamanho.** Ele tem 19 formas, o maior de
+  todos, e por isso lidera quase todo perfil: o sorteio é por forma, não
+  por gesto, então um gesto grande leva vantagem estrutural que ninguém
+  decidiu dar. Sortear o gesto primeiro e a forma depois corrigiria isso
+  — e mudaria o significado de `peso`, que hoje é a única maneira de uma
+  forma dizer "eu sou mais importante que minha vizinha".
+
+- **As nove linhas são multiplicativas e podem se empilhar.** O teto de 6
+  segura o estrago, mas uma forma que junte quatro afinidades favoráveis
+  chega lá e fica presa no teto junto com outra que juntou seis — as duas
+  viram a mesma coisa. Uma soma ponderada distinguiria, ao custo de
+  perder a leitura simples de "cada linha multiplica".
+
+- **A aderência não olha para a cena anterior.** Ela mede o quanto a
+  forma serve ao ESTADO, e o estado não inclui o que acabou de ser
+  narrado. Duas formas de gestos diferentes mas de tom idêntico — duas
+  cenas sombrias seguidas, dois respiros — continuam possíveis. Um campo
+  de TOM (seco, quente, sombrio, cômico) na estante resolveria, e é o
+  candidato natural à próxima versão.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

@@ -109,6 +109,16 @@ export function garantirSituacao(s) {
        herói com três cicatrizes e nenhum quilômetro rodado tem passado sem
        ter lugar nenhum de que se lembrar. */
     temFalaAnterior: b("temFalaAnterior"),
+    /* ---------------- O QUE O JOGADOR ACABOU DE FAZER (v9.88) --------
+       A memória cobria o que o SISTEMA mandou e era cega para o outro
+       lado da mesa: um jogador que passa três turnos conversando recebia
+       formas de conversa sem que nada percebesse a redundância — o gesto
+       nunca se repetia e a cena se repetia mesmo assim, porque metade
+       dela vinha dele.
+
+       `pilarDoTexto` já lê o texto do jogador e já alimenta a mesa desde
+       a v9.72. Faltava a estante olhar para esse sinal. */
+    pilarRecente: t("pilarRecente"),
     temObjetos: b("temObjetos"),
     temLugarVisitado: b("temLugarVisitado"),
     pvBaixo: b("pvBaixo"),
@@ -252,6 +262,112 @@ VETOS.push({
 });
 
 /* ============================================================
+   AS AFINIDADES — o quanto ESTA forma serve a ESTA cena
+
+   O `quando` é binário: abre ou não abre. E isso bastava enquanto o
+   acervo era pequeno, porque quase tudo que abria servia. Com cento e
+   noventa e uma formas abertas ao mesmo tempo, `dentes_em_outro` pesava
+   o mesmo no começo da campanha e no clímax, e `colhe` competia de
+   igual com `planta` num mundo onde ainda não havia nada plantado.
+
+   A alternativa óbvia — uma função `cabe` em cada entrada — seria cento
+   e noventa e uma regras para manter, quase todas repetindo a mesma
+   ideia. Aqui são NOVE regras gerais aplicadas ao acervo inteiro, pela
+   razão de sempre nesta casa: a tabela é o conteúdo, e uma regra escrita
+   uma vez não pode ficar desatualizada em cento e noventa lugares.
+
+   Cada linha devolve um MULTIPLICADOR. Acima de 1 aproxima, abaixo de 1
+   afasta, e nenhuma zera: afinidade não é veto, e uma forma que o
+   `quando` abriu continua possível mesmo quando não é a mais indicada —
+   é dela que vem a surpresa que uma régua fina mataria.
+   ============================================================ */
+export const PISO_AFINIDADE = 0.2;
+export const TETO_AFINIDADE = 6;
+
+export const AFINIDADES = [
+  {
+    id: "holofote",
+    diz: "o pilar que está passando fome vale o dobro",
+    vale: (j, s, alvo) => (alvo && j.serve === alvo ? 2 : 1),
+    porque: "é o giro do holofote, e ele dobra em vez de obrigar: forçar o pilar faminto todo turno faria o holofote girar por dever, e girar por dever aparece",
+  },
+  {
+    id: "o_que_eu_acabei_de_fazer",
+    diz: "o pilar que o próprio jogador acabou de jogar vale menos",
+    vale: (j, s) => (s.pilarRecente && j.serve === s.pilarRecente ? 0.5 : 1),
+    porque: "metade da cena vem do jogador: três turnos dele de conversa mais uma forma de conversa é a mesma cena quatro vezes, e o gesto sozinho não pega isso porque o gesto só lembra do que o sistema mandou",
+  },
+  {
+    id: "plantar_e_cedo",
+    diz: "plantar vale mais no começo do arco e menos no fim",
+    vale: (j, s) => (j.gesto === "planta" ? (s.momento < 0.4 ? 1.8 : s.momento > 0.7 ? 0.4 : 1) : 1),
+    porque: "o que se planta no último momento não tem quando germinar — plantio é uma promessa ao futuro, e no fim não há futuro sobrando",
+  },
+  {
+    id: "colher_e_tarde",
+    diz: "colher vale mais no fim do arco e quase nada no começo",
+    vale: (j, s) => (j.gesto === "colhe" ? (s.momento > 0.55 ? 2 : s.momento < 0.3 ? 0.4 : 1) : 1),
+    porque: "o outro lado da mesma moeda: colher cedo é colher o que mal foi plantado, e a colheita rala ensina que o passado desta campanha é raso",
+  },
+  {
+    id: "o_vilao_no_meio",
+    diz: "o antagonista rende mais entre a mão e a guerra",
+    vale: (j, s) => ((j.gesto === "mostra_o_outro" || j.gesto === "oferece") && s.ordemDaFase >= 2 && s.ordemDaFase <= 4 ? 1.6 : 1),
+    porque: "é a faixa em que ele já tem presença e ainda não é o clímax; antes disso ele é clima, e depois disso a cena dele é a luta",
+  },
+  {
+    id: "mesa_fria_quer_acontecimento",
+    diz: "numa mesa morta, o que faz alguma coisa acontecer vale mais — e o respiro vale menos",
+    vale: (j, s) => {
+      if (s.temperatura !== "fria") return 1;
+      if (j.gesto === "respira") return 0.3;
+      return ["chega_gente", "chega_coisa", "mostra_dentes", "bifurca", "aperta", "cheguei_tarde"].includes(j.gesto) ? 1.8 : 1;
+    },
+    porque: "contra a intuição, e é o ponto: mesa fria são cinco turnos sem dado, sem perigo e sem nada ganho — mais uma cena calma sobre uma cena morta é a morte confirmada, não o socorro",
+  },
+  {
+    id: "mesa_quente_quer_ar",
+    diz: "numa mesa que já rolou dado demais, o respiro e a gente valem mais",
+    vale: (j, s) => (s.temperatura === "quente" && ["respira", "fala", "me_ve", "vinculo"].includes(j.gesto) ? 1.8 : 1),
+    porque: "é onde o novato cansa a mesa: continua empilhando pressão porque cada pedaço, sozinho, era defensável",
+  },
+  {
+    id: "onde_eu_estou",
+    diz: "o espaço rende onde ele é o assunto, e a gente rende onde há gente",
+    vale: (j, s) => {
+      if (j.gesto === "mostra_lugar") return (s.emMasmorra || s.emViagem) ? 1.8 : 0.6;
+      if (j.gesto === "fala" || j.gesto === "vinculo") return s.pessoaNaCena ? 1.5 : 0.5;
+      if (j.gesto === "mostra_mundo") return s.emCidade ? 1.4 : 0.7;
+      return 1;
+    },
+    porque: "uma forma de fala numa cena sem ninguém é um pedido para a IA inventar quem fala, e uma forma de espaço numa taverna é descrição no lugar de cena",
+  },
+  {
+    id: "o_corpo_quando_doi",
+    diz: "o corpo entra quando há o que mostrar",
+    vale: (j, s) => (j.gesto === "mostra_corpo" ? (s.pvBaixo || s.temCicatriz ? 1.8 : 0.6) : 1),
+    porque: "o cansaço e a marca dizem alguma coisa num herói ferido, e num herói inteiro são só adjetivo",
+  },
+];
+export function afinidadePorId(id) { return AFINIDADES.find((a) => a.id === id) || null; }
+
+/* O produto das linhas, aparado nas duas pontas. O teto existe porque
+   uma pilha de multiplicadores pode fazer uma forma engolir o sorteio; o
+   piso, porque afinidade NÃO é veto — o que o `quando` abriu continua
+   possível, e é dessa cauda que vem a cena que ninguém esperava. */
+export function aderenciaDe(jogada, situacao, alvo = null) {
+  const s = garantirSituacao(situacao);
+  let m = 1;
+  for (const a of AFINIDADES) {
+    let v = 1;
+    try { v = Number(a.vale(jogada, s, alvo)); } catch { v = 1; }
+    if (!Number.isFinite(v) || v <= 0) v = 1;
+    m *= v;
+  }
+  return Math.min(TETO_AFINIDADE, Math.max(PISO_AFINIDADE, m));
+}
+
+/* ============================================================
    A CONSULTA
 
    O mestre chega com a situação e sai com UMA forma. Não com três para
@@ -303,12 +419,22 @@ export function consultarBiblioteca(situacao, { sorte = Math.random, estante = n
   const outroGesto = abertas.filter((j) => !gestosRecentes.has(j.gesto));
   if (outroGesto.length) abertas = outroGesto;
 
+  /* o holofote deixou de ser um caso especial aqui e virou a primeira
+     linha de AFINIDADES: todo o peso da decisão passou a morar num lugar
+     só, que é o que impede a próxima regra de nascer solta no meio do
+     sorteio como esta estava */
   const alvo = preferir || s.pilarFaminto || null;
-  const peso = (j) => Math.max(1, j.peso) * (alvo && j.serve === alvo ? 2 : 1);
+  const peso = (j) => Math.max(1, j.peso) * aderenciaDe(j, s, alvo);
   const total = abertas.reduce((n, j) => n + peso(j), 0);
   let corte = sorte() * total;
   const j = abertas.find((x) => (corte -= peso(x)) <= 0) || abertas[0];
-  return { id: j.id, gesto: j.gesto, escola: j.escola, serve: j.serve, forma: j.forma, evite: j.evite, sozinha: !!j.sozinha };
+  return {
+    id: j.id, gesto: j.gesto, escola: j.escola, serve: j.serve,
+    forma: j.forma, evite: j.evite, sozinha: !!j.sozinha,
+    /* a aderência sobe junto para quem for depurar: sem ela, "por que saiu
+       esta?" só se responde relendo nove funções à mão */
+    aderencia: Math.round(aderenciaDe(j, s, alvo) * 100) / 100,
+  };
 }
 
 /* ============================================================
