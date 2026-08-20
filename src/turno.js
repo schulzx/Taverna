@@ -51,6 +51,9 @@ export function garantirSinais(s) {
     texto: String(o.texto || ""),
     ehComando: b("ehComando"),
     temEscolhaPendente: b("temEscolhaPendente"),
+    /* v9.76: o jogador nomeou um poder que existe no jogo e nao esta na
+       ficha dele, ou reivindicou um estado que o sistema nao concedeu. */
+    declarouPoderQueNaoTem: b("declarouPoderQueNaoTem"),
     ehConjuracao: b("ehConjuracao"),
     ehPortal: b("ehPortal"),
     ehEntradaEmMasmorra: b("ehEntradaEmMasmorra"),
@@ -118,6 +121,25 @@ export const PORTAS_DO_TURNO = [
     fase: "atalho", faz: "movimento", seRecusar: "seguinte",
     quando: (s) => s.temEscolhaPendente,
     porque: "se o sistema acabou de perguntar 'qual dos três?', o que vem a seguir é a resposta — lê-la como ação nova recomeça a conversa",
+  },
+  {
+    /* O QUE EU NÃO TENHO (v9.76). Antes de qualquer porta que AJA, uma que
+       confere a ficha. "Uso invisibilidade" não casava porta nenhuma — não
+       é comando, não é magia da ficha (justamente por não estar nela), não
+       é desafio, não é pergunta ao mundo —, caía em `cena`, e a IA narrava
+       o que foi pedido, porque narrar o que foi pedido é o trabalho dela.
+
+       A única coisa que separava o jogador de qualquer poder do jogo era
+       escrever o nome dele: o grimório, a árvore de talentos, os pontos de
+       habilidade e os vinte níveis de progressão viravam decoração.
+
+       Vem ANTES de `conjurar` porque é a mesma pergunta vista pelo avesso,
+       e a ordem certa é conferir antes de agir. Não há conflito: quem TEM
+       o poder não abre esta porta. */
+    id: "poder", rotulo: "Poder que não está na ficha", intercepta: true,
+    fase: "atalho", faz: "poder", seRecusar: "seguinte",
+    quando: (s) => s.declarouPoderQueNaoTem,
+    porque: "a ficha é a única fonte do que o herói pode fazer, e conferi-la antes de a cena existir é o que impede o jogo inteiro de ser obtido escrevendo o nome",
   },
   {
     id: "conjurar", rotulo: "Magia nomeada da ficha", intercepta: true,

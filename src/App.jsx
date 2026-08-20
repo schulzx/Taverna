@@ -51,6 +51,7 @@ import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidat
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, perguntarPeloSistema, envelopeDaPerguntaDoSistema, linhaDaPerguntaDoSistema, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
 import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao, TURNO_PROMPT } from "./turno.js";
 import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobrancaNegada } from "./cobranca.js";
+import { lerPoder, falaDoPoder, envelopeDoPoder } from "./poderes.js";
 import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, conferirLista, falaDaListaAparada, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "./emboscada.js";
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo } from "./agressao.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
@@ -5236,7 +5237,10 @@ export default function Taverna() {
           const conf = conferirLista(lista, pers);
           if (conf.tipo === "aparado") {
             resp.mudancas.combate_iniciar = conf.inimigos;
-            msgs.push(falaDaListaAparada(conf));
+            /* v9.76: sem linha na tela. "⚖ 8 eram demais para este patamar"
+               conta ao jogador uma decisão de bastidor sobre uma luta que
+               ele nunca viu com oito — para ele, sempre foram dois, e é
+               exatamente isso que o envelope manda o Mestre narrar. */
             notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaListaAparada(conf)}`;
           } else if (conf.tipo === "fuga") {
             notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaLutaImpossivel(conf)}`;
@@ -7572,8 +7576,27 @@ export default function Taverna() {
               pushMsgs([{ autor: "sistema", texto: perguntaDeVaguidade(r, acao) }]);
               return true;
             } else {
-              pushMsgs([{ autor: "sistema", texto: perguntaDeVazio(r, acao) }]);
-              return true;
+              /* ---------------- O TURNO NÃO MORRE AQUI (v9.76) ----------------
+                 Esta porta engolia a frase inteira: imprimia "Não encontrei X
+                 no que você conhece do mundo" e devolvia `true`, e o turno
+                 acabava. Nada ia ao Mestre.
+
+                 O preço disso apareceu na mesa em frases que não eram sobre
+                 viagem nenhuma. `querPartir` é um teste de VERBO — "vou",
+                 "sigo", "volto" —, e qualquer frase que carregue um deles por
+                 acidente ("vou até o templo", "volto para o balcão e peço
+                 outra") caía no resolver de CIDADES, não achava cidade
+                 nenhuma com aquele nome (claro) e morria ali. O jogador
+                 escrevia uma ação e recebia um erro de mapa.
+
+                 Agora a porta RECUSA em vez de engolir: devolve `false`, e a
+                 cascata segue para quem for. A razão original de interceptar
+                 continua honrada por outro caminho — o Mestre não pode
+                 inventar o destino —, e é o envelope que garante isso, não o
+                 silêncio. */
+              notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DESTINO NÃO RECONHECIDO — AVISO DO SISTEMA] Eu falei em ir a algum lugar e o sistema não reconheceu, no mapa que conhecemos, nenhuma cidade com esse nome. Ele NÃO me moveu, e continuo exatamente onde estava.
+REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente — provavelmente ela não era sobre viajar. NÃO me ponha na estrada, NÃO invente uma cidade para o nome que eu disse e NÃO me faça chegar a lugar nenhum. Se de fato havia um destino ali e ele não existe no mundo, diga isso pela ficção, em uma frase, e siga.`;
+              return false;
             }
           }
         }
@@ -7722,6 +7745,7 @@ export default function Taverna() {
       texto: acao,
       ehComando: acao.startsWith("/"),
       temEscolhaPendente: !!escolhaPendenteRef.current,
+      declarouPoderQueNaoTem: ler(() => !!lerPoder(acao, fichaViva() || personagem)),
       ehConjuracao: ler(() => magiaDeFuncaoNaAcao(acao)),
       ehPortal: ler(() => magiaDePortalNaAcao(acao)),
       ehEntradaEmMasmorra: ler(() => detectarEntradaEmMasmorra(acao, ctxDoRastro())),
@@ -7814,6 +7838,7 @@ export default function Taverna() {
       /* A AÇÃO DECLARADA (v9.59): o jogador declara o que faz e o SISTEMA
          responde uma de cinco coisas — rola, não precisa rolar, não dá desse
          jeito, você já tentou, ou aqui já foi vasculhado. */
+      if (faz === "poder") return recusarPoder(acao);
       if (faz === "agressao") return declararAgressao(acao);
       if (faz === "desafio") return adjudicarAcao(acao);
       /* ORÁCULO (v9.24): pergunta FECHADA sobre o que o mundo ainda não
@@ -9784,6 +9809,35 @@ export default function Taverna() {
     return true;
   };
 
+  /* ---------------- O QUE EU NÃO TENHO (v9.76) ----------------
+     "Se eu digo 'uso invisibilidade' e o narrador narrar que eu usei
+     invisibilidade e fiz um roubo, acontece que acabei de fazer isso, mas
+     estou com um personagem nível 1 e sem invisibilidade, mas aconteceu."
+
+     O sistema tinha catálogo de magias, árvore de habilidades e a ficha na
+     mão, e não consultava nenhum dos três antes de o turno virar ficção. A
+     única coisa que separava o jogador de qualquer poder do jogo era
+     escrever o nome dele.
+
+     O turno morre aqui, e de propósito: NÃO vai ao Mestre pedindo que ele
+     narre a recusa. Mandar a frase com um envelope faria a IA escrever um
+     parágrafo sobre o herói tentando e falhando — e um turno inteiro gasto
+     para dizer "você não tem isso" é pior que a linha seca. Só quando ela
+     JÁ ESTÁ narrando por outro motivo é que o aviso viaja junto. */
+  const recusarPoder = (acao) => {
+    const p = fichaViva() || personagem;
+    const v = lerPoder(acao, p);
+    if (!v) return false;
+    pushMsgs([
+      { autor: "jogador", texto: acao },
+      { autor: "sistema", texto: falaDoPoder(v) },
+    ]);
+    /* o Mestre fica sabendo mesmo sem ser chamado agora: se a cena seguinte
+       tocar no assunto, ele já não trata o poder como existente */
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoPoder(v, acao)}`;
+    return true;
+  };
+
   /* ---------------- O PRIMEIRO GOLPE (v9.73) ----------------
      "O mestre chama os combates." Esta é a metade que o sistema pode ter
      inteira: quando o JOGADOR declara violência, não há o que decidir.
@@ -10584,7 +10638,11 @@ export default function Taverna() {
         if (mv) {
           mesaRef.current = marcarFio(mesaRef.current, mv.id);
           desdeMundoRef.current = 0;
-          pushMsgs([{ autor: "sistema", texto: linhaDoFio(mv) }]);
+          /* v9.76: SEM LINHA NA TELA. "🧵 notícia chega do lugar que você
+             descobriu e não voltou a ver" é o mestre narrando o próprio
+             método — e pior, entregando o truque antes de a cena existir: o
+             jogador lê o rótulo do fio e depois lê a cena que o encena. O
+             mundo lembrando dele tem de chegar como mundo, não como aviso. */
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoFio(mv, pilarFaminto(mesaRef.current))}`;
           return;
         }
@@ -10623,7 +10681,10 @@ export default function Taverna() {
       });
       if (!mv) return;
       desdeMundoRef.current = 0;
-      pushMsgs([{ autor: "sistema", texto: linhaDaIniciativa(mv) }]);
+      /* v9.76: calado, como o fio da memória logo acima. "🌍 O mundo se
+         mexe" era o sistema anunciando que ia fazer uma coisa, logo antes
+         de a IA fazê-la — duas vozes contando o mesmo, e a primeira delas
+         estragando a segunda. */
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaIniciativa(mv)}`;
     } catch { /* o mundo se mexer nunca pode custar o turno */ }
   };

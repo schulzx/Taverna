@@ -602,9 +602,10 @@ REGRA DESTE ENVELOPE (obrigatória): este fio JÁ EXISTE no jogo — o sistema o
 NÃO invente uma trama nova, NÃO abra um segundo fio, NÃO resolva este aqui e NÃO transforme isto num combate por conta própria. É uma pressão chegando, não um desfecho. Depois devolva a palavra para mim.`;
 }
 
-export function linhaDaIniciativa(mv) {
-  return mv ? `🌍 O mundo se mexe: ${mv.diz}.` : "";
-}
+/* v9.76: MUDA, pela mesma razão do fio da memória. Anunciar "o mundo se
+   mexe" logo antes de a IA mexer o mundo são duas vozes contando o mesmo,
+   e a primeira estraga a segunda. */
+export function linhaDaIniciativa() { return ""; }
 
 /* Duas linhas. A regra de cumprir o grau vai INTEIRA dentro de cada
    envelope do oráculo, junto do grau que ela governa — repeti-la aqui era

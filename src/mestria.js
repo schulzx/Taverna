@@ -421,9 +421,11 @@ REGRA DESTE ENVELOPE (obrigatória): isto JÁ ACONTECEU nesta campanha — o sis
 NÃO invente uma trama nova, NÃO reescreva o que aconteceu antes, NÃO resolva isto agora e NÃO transforme em combate por conta própria. É o mundo lembrando, não um desfecho. Depois devolva a palavra para mim.${holofote}`;
 }
 
-export function linhaDoFio(mv) {
-  return mv ? `🧵 ${mv.diz}.` : "";
-}
+/* v9.76: MUDA. Ela dizia "🧵 alguém vem cobrar o que você disse que
+   faria" — o mestre narrando o próprio método, e entregando o truque
+   antes de a cena existir: o jogador lia o rótulo do fio e só depois lia
+   a cena que o encena. O mundo lembrando dele tem de chegar como mundo. */
+export function linhaDoFio() { return ""; }
 
 /* ============================================================
    6. O BRILHO — o sucesso grande dá mais que o sucesso

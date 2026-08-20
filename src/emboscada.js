@@ -273,10 +273,10 @@ export function conferirLista(inimigos, pers, { teto = TETO_DO_DESPROPORCIONAL }
   };
 }
 
-export function falaDaListaAparada(r) {
-  if (!r || r.tipo !== "aparado") return "";
-  return `⚖ ${r.de} eram demais para este patamar — ${r.para} entram na luta.`;
-}
+/* v9.76: MUDA. Ela contava ao jogador uma decisão de bastidor sobre uma
+   luta que ele nunca viu com oito inimigos — para ele sempre foram dois, e
+   é exatamente isso que o envelope manda o Mestre narrar. */
+export function falaDaListaAparada() { return ""; }
 
 export function envelopeDaListaAparada(r) {
   if (!r || r.tipo !== "aparado") return "";

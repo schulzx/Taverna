@@ -126,6 +126,92 @@ function casaNome(texto, nome) {
 /* Devolve o lugar que o jogador pediu, ou null. `lugares` é a lista de
    candidatos — os locais de dentro da cidade e o cinturão de fora —, e
    cada um precisa de `nome`; o resto vem junto para quem chama usar. */
+/* ============================================================
+   O LUGAR TAMBÉM SE PEDE PELO TIPO (v9.76)
+
+   "Cada lugar tem seu nome, mas também tem seu tipo — mercado, templo,
+   taverna. Se eu digo 'vou até o mercado' ele identifica o mercado
+   daquela cidade e me leva até lá."
+
+   E não identificava. A busca era só por NOME, e os nomes são gerados
+   pela toponímia: o templo de uma cidade se chama "Santuário das
+   Cinzas" e o de outra "Ermida do Vau". Ninguém decora isso, e ninguém
+   deveria — o jogador diz o que a coisa É.
+
+   O estrago era maior do que parecia. "Vou até o templo" casa
+   `querPartir` ("vou ate"), então, não encontrando lugar local, a frase
+   caía no resolver de CIDADES, que procurava um assentamento chamado
+   "templo", não achava, e respondia "Não encontrei 'vou até o templo' no
+   que você conhece do mundo" — o sistema negando um lugar que ele mesmo
+   desenhou na planta da cidade, três metros à frente do herói.
+
+   As palavras são as que um jogador usa, não as que a toponímia usa
+   para BATIZAR: quem escreve "vou à igreja" quer o templo, mesmo que
+   "igreja" nunca apareça em nome nenhum. E o NOME continua ganhando do
+   tipo — quem escreveu "Santuário das Cinzas" já disse qual é.
+   ============================================================ */
+export const PALAVRAS_DO_TIPO = {
+  /* dentro da cidade */
+  taverna: ["taverna", "estalagem", "hospedaria", "albergue", "pousada", "bar", "botequim"],
+  mercado: ["mercado", "feira", "praca", "bazar", "comercio", "entreposto", "pregao"],
+  templo: ["templo", "igreja", "santuario", "capela", "altar", "oratorio", "ermida", "basilica"],
+  forja: ["forja", "ferraria", "ferreiro", "bigorna", "fundicao"],
+  quartel: ["quartel", "guarnicao", "casa da guarda", "baluarte", "bastiao"],
+  cadeia: ["cadeia", "carcere", "prisao", "calabouco", "enxovia", "celas"],
+  biblioteca: ["biblioteca", "arquivo", "livraria", "cartorio"],
+  docas: ["docas", "cais", "porto", "ancoradouro", "pier", "estaleiro"],
+  arena: ["arena", "coliseu", "ringue", "rinha"],
+  "cemitério": ["cemiterio", "necropole", "jazigo", "campo santo", "ossario", "sepultura"],
+  guilda: ["guilda", "confraria"],
+  "casa de banhos": ["casa de banhos", "banhos", "termas", "cisterna"],
+  torre: ["torre"],
+  forte: ["forte", "fortaleza", "castelo"],
+  /* e o cinturão de fora, que tem tipos próprios (arredores.js) */
+  capela: ["templo", "igreja", "santuario", "capela", "ermida"],
+  fazenda: ["fazenda", "granja", "roca", "courela", "terras baixas"],
+  moinho: ["moinho", "azenha"],
+  ponte: ["ponte", "passagem estreita"],
+  "ruína": ["ruina", "ruinas", "pedras antigas", "casarao vazio", "torre caida"],
+  mina: ["mina", "galeria", "poco fundo"],
+  pedreira: ["pedreira", "lavra", "corte de pedra"],
+  pomar: ["pomar", "figueiras", "olival"],
+  cabana: ["cabana", "choca", "casa de muda"],
+  embarcadouro: ["embarcadouro", "atracadouro"],
+  salinas: ["salinas", "marinha de sal"],
+  posto: ["posto", "posto da guarda", "guarita"],
+  "cemitério de fora": ["cemiterio", "campo santo", "vala"],
+};
+
+/* OS TIPOS que a frase pede — plural de propósito. Uma palavra pode
+   apontar para mais de um tipo, e isso não é ambiguidade: é o mundo. O
+   templo DENTRO da cidade e a capela do cinturão de FORA são tipos
+   diferentes no gerador e a mesma coisa para quem escreve "vou à igreja".
+   Foi exatamente isso que fez a primeira versão desta função falhar em
+   jogo: a cidade da prova não tinha templo dentro, tinha "o santuário à
+   beira do caminho" fora, e o pedido não achava nada.
+
+   A palavra mais longa ganha — "casa de banhos" contém "casa", e "banhos"
+   sozinho não pode roubar dela. */
+export function tiposPedidos(texto) {
+  const t = norm(texto);
+  if (!t.trim()) return [];
+  let melhores = [], tamanho = 0;
+  for (const [tipo, palavras] of Object.entries(PALAVRAS_DO_TIPO)) {
+    let meu = 0;
+    for (const p of palavras) {
+      if (p.length <= meu) continue;
+      if (new RegExp(`\\b${p}s?\\b`).test(t)) meu = p.length;
+    }
+    if (!meu) continue;
+    if (meu > tamanho) { tamanho = meu; melhores = [tipo]; }
+    else if (meu === tamanho) melhores.push(tipo);
+  }
+  return melhores;
+}
+
+/* Compatibilidade com quem só quer um: o primeiro da lista. */
+export function tipoPedido(texto) { return tiposPedidos(texto)[0] || null; }
+
 export function lugarPedido(texto, lugares = []) {
   const t = norm(texto);
   if (!t.trim() || !(RX_VOU.test(t) || RX_ATE.test(t))) return null;
@@ -144,7 +230,21 @@ export function lugarPedido(texto, lugares = []) {
     const p = inteiro + pedacos(l.nome).length;
     if (p > pontos) { pontos = p; melhor = l; }
   }
-  return melhor;
+  if (melhor) return melhor;
+  /* O NOME GANHA DO TIPO, sempre: quem escreveu "Santuário das Cinzas" já
+     disse qual é, e discutir com ele seria o mesmo erro do "salão" contra a
+     "sala dos fundos". O tipo só entra quando nome nenhum casou. */
+  const tipos = tiposPedidos(t);
+  if (!tipos.length) return null;
+  const doTipo = lugares.filter((l) => l && tipos.includes(l.tipo));
+  if (!doTipo.length) return null;
+  /* DENTRO GANHA DE FORA, e é a regra que faz "vou à igreja" servir nas
+     duas cidades: onde há templo, o templo; onde não há, a capela da
+     encruzilhada, a quarenta minutos de caminhada. Quem diz "vou ao
+     mercado" quer o da praça, não o entreposto do cinturão. */
+  return doTipo.find((l) => l.onde === "comodo")
+    || doTipo.find((l) => l.onde === "dentro")
+    || doTipo[0];
 }
 
 export function garantirLugar(l) {

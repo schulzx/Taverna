@@ -1279,6 +1279,81 @@ rouba do jogador a decisão de recuar.
   provedor trocava o tom do narrador sem que nada no jogo tivesse mudado.
   Agora os dois leem as mesmas variáveis.
 
+## O mestre confere a ficha — v9.76
+
+- **~~"Uso invisibilidade" funcionava com um herói nível 1 sem
+  invisibilidade.~~** RESOLVIDO, e é o relato mais grave que este projeto
+  recebeu em muitas versões.
+
+  O sistema tinha catálogo de magias, árvore de habilidades por classe e
+  a ficha do herói na mão — e não consultava nenhum dos três antes de o
+  turno virar ficção. "Uso invisibilidade" não casava porta NENHUMA do
+  despachante: não é comando, não é magia da ficha (justamente por não
+  estar nela), não é desafio, não é pergunta ao mundo. Caía em `cena`, e a
+  IA narrava o que foi pedido — porque narrar o que foi pedido é o
+  trabalho dela.
+
+  **A única coisa que separava o jogador de qualquer poder do jogo era
+  escrever o nome dele.** O grimório, a árvore de talentos, os pontos de
+  habilidade, o custo em PM e os vinte níveis de progressão viravam
+  decoração: tudo o que eles gerenciam podia ser obtido de graça
+  digitando uma frase.
+
+  `poderes.js` fecha as DUAS formas da mentira:
+
+  1. **O poder nomeado.** O nome é procurado no catálogo (261 poderes,
+     magias mais a árvore inteira das classes). Existe no jogo e não está
+     na ficha → o turno é recusado e nem chega ao Mestre.
+  2. **O estado reclamado.** "Enquanto estou invisível, roubo a carta" não
+     nomeia poder nenhum — afirma um estado. A pergunta aqui não é "tem a
+     magia?", é "está assim AGORA?", e quem responde é a lista de efeitos
+     ativos. Ter a magia guardada não é estar invisível.
+
+  **As travas são metade do arquivo.** Só se recusa o que o catálogo
+  conhece: "uso a corda", "uso a chave", "uso o mapa" não são poderes e o
+  sistema não opina. E as palavras comuns ficam de fora — a árvore tem
+  habilidades chamadas "Muralha", "Investida", "Escudo", e "uso a muralha
+  para me esconder" é tática, não é reivindicar um talento de Guerreiro.
+  As rubricas da árvore (classe, subclasse, especialização) também saem:
+  ninguém "usa Bárbaro".
+
+- **~~O turno morria dentro do resolver de destinos.~~** RESOLVIDO. A
+  porta do destino imprimia "Não encontrei X no que você conhece do
+  mundo" e devolvia `true` — o turno acabava ali e nada ia ao Mestre.
+
+  `querPartir` é um teste de VERBO ("vou", "sigo", "volto"), então
+  qualquer frase que carregue um deles por acidente caía no resolver de
+  CIDADES, não achava cidade nenhuma com aquele nome e morria. O jogador
+  escrevia uma ação e recebia um erro de mapa. Agora a porta RECUSA em
+  vez de engolir, e a razão original — o Mestre não pode inventar o
+  destino — passa a ser garantida por envelope, não por silêncio.
+
+- **~~"Vou até o templo" não achava o templo.~~** RESOLVIDO. A busca era
+  só por NOME, e os nomes vêm da toponímia: o templo de uma cidade se
+  chama "A Basílica da Garça" e o de outra "Ermida do Vau". Ninguém
+  decora isso, e ninguém deveria — o jogador diz o que a coisa É.
+
+  E a primeira versão do conserto ainda falhou em jogo, pelo motivo que
+  vale registrar: **uma palavra aponta para mais de um tipo.** O templo
+  DENTRO da cidade e a capela do cinturão de FORA são tipos diferentes no
+  gerador e a mesma coisa para quem escreve "vou à igreja". A cidade da
+  prova não tinha templo dentro — tinha "o santuário à beira do caminho"
+  fora —, e o pedido não achava nada. A função estava certa e a tabela
+  estava curta. Agora dentro ganha de fora, e quando não há dentro, o
+  cinturão atende: medido em jogo, "vou até o templo" leva a 26 minutos
+  de caminhada até o santuário.
+
+- **~~O jogador via os métodos do mestre.~~** RESOLVIDO. Saíram da tela o
+  fio da memória ("🧵 notícia chega do lugar que você descobriu e não
+  voltou a ver"), a iniciativa do mundo ("🌍 O mundo se mexe") e o corte
+  do encontro ("⚖ 8 eram demais para este patamar").
+
+  As três eram a mesma coisa: o sistema anunciando o que ia fazer logo
+  antes de a IA fazê-lo — duas vozes contando o mesmo, e a primeira
+  estragando a segunda. Pior no fio: o jogador lia o RÓTULO do fio e só
+  depois lia a cena que o encena. O que fica na tela continua sendo o que
+  é gameplay — o dado, o que entrou na bolsa, onde o herói está.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na
