@@ -55,6 +55,7 @@ import { MAGIAS } from "./grimorio.js";
 import { CONSUMIVEIS, comoConsumivel } from "./pocoes.js";
 import { CLASSES } from "./classes.js";
 import { estaInvisivel } from "./gatilhos.js";
+import { estaSintonizado } from "./sintonia.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -107,10 +108,29 @@ export const RX_DECLARA = /\b(uso|usar|utilizo|conjuro|conjurar|lan[cç]o|lan[c�
    Habilidades aprendidas, magias preparadas e o que a ficha guardar em
    qualquer lista de poder. É a única fonte: o que não está aqui, o herói
    não tem, e nenhuma frase muda isso. */
+/* ---------------- O QUE O ITEM CONCEDE (v9.80) ----------------
+   O degrau lendário põe uma habilidade do catálogo na mão do herói, e ela
+   não custa PM: "uma bota lendária de asas que dá a habilidade Voo, e o
+   player pode usá-la sem gastar PM".
+
+   Ela conta como poder da FICHA para todo efeito — senão a conferência da
+   v9.76 recusaria o próprio poder que o item acabou de dar. E vale só com
+   o item equipado E sintonizado: guardado na mochila, a bota é bota. */
+export function concessoesDeItem(pers) {
+  const out = [];
+  for (const it of Object.values((pers && pers.equipados) || {})) {
+    if (!it || !it.concede) continue;
+    if (!estaSintonizado(pers, it)) continue;
+    out.push({ nome: String(it.concede), custo: 0, deItem: it.nome });
+  }
+  return out;
+}
+
 export function poderesDaFicha(pers) {
   const p = pers || {};
   const listas = [p.habilidades, p.preparadas, p.magias, p.dadivas, p.sintonizados, p.milagres];
   const out = new Set();
+  for (const c of concessoesDeItem(p)) out.add(norm(c.nome));
   for (const l of listas) {
     for (const h of (Array.isArray(l) ? l : [])) {
       const nome = typeof h === "string" ? h : (h && h.nome);
@@ -213,6 +233,10 @@ export function estadoReclamado(texto, pers) {
    ============================================================ */
 export function entradaNaFicha(pers, nome) {
   const alvo = norm(nome);
+  /* a concessão vem PRIMEIRO: se o item dá a magia de graça, é o custo
+     zero que vale, e não o custo do grimório. Ao contrário, o herói que
+     tem a magia aprendida E a bota pagaria PM por ela do mesmo jeito. */
+  for (const c of concessoesDeItem(pers)) if (norm(c.nome) === alvo) return c;
   for (const l of [(pers && pers.habilidades) || [], (pers && pers.preparadas) || []]) {
     for (const h of l) {
       const n = typeof h === "string" ? h : (h && h.nome);

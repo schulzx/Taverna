@@ -13,6 +13,8 @@ const d = (n) => Math.floor(Math.random() * n);
    de cada tabela de loot nunca saíram no jogo. */
 const sortear = (arr) => (arr && arr.length ? arr[Math.floor(Math.random() * arr.length)] : undefined);
 
+import { TIER as TIER_AFIXO, degrauDe, pesoDoPrefixo, tierDaBase, poderesPossiveis, concessaoPara, resumoDoItem, EFEITOS_DE_ATRIBUTO, CONCESSAO_DA_BASE } from "./afixos.js";
+
 export const RARIDADES = ["comum", "incomum", "raro", "epico", "lendario"];
 export const RARIDADE_ROTULO = { comum: "Comum", incomum: "Incomum", raro: "Raro", epico: "Épico", lendario: "Lendário" };
 
@@ -164,8 +166,25 @@ export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = nu
   const dL = (n) => Math.floor(rand() * n);
   const pickL = (arr) => arr[dL(arr.length)];
   const slot = tipo && BASES[tipo] ? tipo : pickL(Object.keys(BASES));
-  const base = pickL(BASES[slot]);
   const tier = TIER[raridade] ?? 0;
+  /* ---------------- O NOME NÃO PROMETE O QUE A RARIDADE NÃO PAGA (v9.80) ----
+     "Apareceu no mercado uma bota lendária de asas, e a raridade dela era
+     comum." A base era sorteada da lista inteira, com "Botas Aladas" ao
+     lado de "Botas de Couro" e o mesmo peso — e nem a base nem o prefixo
+     olhavam a raridade. Duas fontes soltas, as duas mentindo.
+
+     O jogador não tem como saber que o nome é decorativo: ele lê "alada"
+     e "lendária" e espera asas e lenda. E depois de receber um pedaço de
+     couro, todo nome bonito do jogo perde o crédito. */
+  const elegiveis = BASES[slot].filter((b) => tierDaBase(b.nome) <= tier);
+  /* E O LENDÁRIO PREFERE A BASE QUE JÁ PROMETE O PODER. Sem isto o degrau
+     mais alto sorteava "Botas de Couro" e concedia Voo — coerente na
+     mecânica e absurdo no nome, que é meia correção do defeito que abriu
+     esta versão. A bota que voa deve ser a Bota Alada. */
+  const promissoras = degrauDe(raridade).concede ? elegiveis.filter((b) => CONCESSAO_DA_BASE[b.nome]) : [];
+  const base = promissoras.length ? pickL(promissoras)
+    : elegiveis.length ? pickL(elegiveis)
+      : BASES[slot].find((b) => tierDaBase(b.nome) === 0) || BASES[slot][0];
   const escalaNivel = Math.min(3, Math.floor((nivel - 1) / 5)); // +1 a cada 5 níveis, teto +3
 
   const atributos = {};
@@ -182,10 +201,16 @@ export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = nu
     }
   }
 
-  /* nome: comum/incomum = base [+ prefixo] · raro+ = prefixo + base + sufixo */
+  /* nome: comum/incomum = base [+ prefixo] · raro+ = prefixo + base + sufixo.
+     v9.80: e o PREFIXO tem peso. "Rústico" e "Lendário" estavam na mesma
+     lista, sorteados com a mesma chance — era assim que um item comum saía
+     "Lendário". Cada palavra agora mora num degrau mínimo, e a régua é a
+     que o jogador aplicaria: quanto mais a palavra promete, mais alto ela
+     mora. */
   let nome = base.nome;
-  const comPrefixo = tier >= 2 ? true : tier === 1 ? rand() < 0.6 : rand() < 0.15;
-  if (comPrefixo) nome = `${concordancia(pickL(PREFIXOS), base.nome)} ${base.nome}`;
+  const dosMeus = PREFIXOS.filter((p) => pesoDoPrefixo(p) <= tier);
+  const comPrefixo = dosMeus.length && (tier >= 2 ? true : tier === 1 ? rand() < 0.6 : rand() < 0.15);
+  if (comPrefixo) nome = `${concordancia(pickL(dosMeus), base.nome)} ${base.nome}`;
   if (tier >= 2) nome = `${nome} ${pickL(SUFIXOS)}`;
 
   /* v6.6 — dano elemental em armas e resistência elemental em defesas (raro+) */
@@ -204,7 +229,48 @@ export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = nu
   }
   const descricao = tier >= 3 ? "Uma peça que já sobreviveu a donos lendários." : tier === 2 ? "Trabalho de mestre artesão." : "";
 
-  return { nome, tipo: slot, raridade, atributos, poder, descricao };
+  /* ---------------- E AGORA A RARIDADE COMPRA ALGUMA COISA (v9.80) --------
+     O campo `poder` acima é TEXTO, e sempre foi: nenhuma linha de código o
+     consultava. O que valia mecanicamente era só `atributos` — e atributo é
+     a mesma coisa em qualquer raridade, só que maior. Era isso que fazia
+     escolher item virar escolher número, e escolher número não é escolher.
+
+     `poderes` é a lista que o jogo LÊ. Cada degrau compra a sua, e o
+     lendário compra também uma CONCESSÃO: uma habilidade do catálogo posta
+     na mão do herói, sem custo de PM. */
+  const degrau = degrauDe(raridade);
+  const poderes = [];
+  {
+    const pool = poderesPossiveis(slot, tier).filter((p) => !p.forte || tier >= 2);
+    /* o primeiro poder de um item forte é FORTE — sem isto o épico podia
+       sair com dois traços menores e valer menos que um raro */
+    const fortes = pool.filter((p) => p.forte);
+    const usados = new Set();
+    for (let i = 0; i < degrau.quantos; i++) {
+      const de = (i === 0 && degrau.forte && fortes.length ? fortes : pool).filter((p) => !usados.has(p.id));
+      if (!de.length) break;
+      const p = pickL(de);
+      usados.add(p.id);
+      poderes.push({ id: p.id, nome: p.nome, efeito: p.efeito, diz: p.diz });
+      /* efeito de ATRIBUTO é dobrado para dentro de `atributos`, onde
+         `bonusEquip` já os soma há versões. Manter uma segunda soma só
+         para itens seria criar a régua dupla que este arquivo evita. */
+      for (const [k, v] of Object.entries(p.efeito || {})) {
+        if (EFEITOS_DE_ATRIBUTO.includes(k)) atributos[k] = (atributos[k] || 0) + Number(v || 0);
+      }
+    }
+  }
+  const concede = degrau.concede ? concessaoPara(slot, base.nome, pickL) : "";
+
+  return {
+    nome, tipo: slot, raridade, atributos,
+    poderes, ...(concede ? { concede } : {}),
+    /* `poder` continua existindo porque a ficha, o mercado e o prompt já o
+       leem — mas agora ele DESCREVE o que a mecânica faz, em vez de ser
+       enfeite solto ao lado dela. */
+    poder: resumoDoItem({ poderes, concede }) || poder,
+    descricao,
+  };
 }
 
 /* Raridade do espólio conforme a ameaça do maior inimigo derrotado. */

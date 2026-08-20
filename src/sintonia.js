@@ -34,7 +34,13 @@ export function pedeSintonia(item) {
   if (!item || !item.nome) return false;
   if (item.sintoniza === false) return false;
   if (item.sintoniza === true) return true;
-  if (String(item.poder || "").trim()) return true;
+  /* v9.80: A RÉGUA É O DEGRAU, NÃO O TEXTO. Enquanto `poder` era enfeite,
+     "tem poder escrito" e "é raro" davam quase na mesma. Agora todo item
+     de incomum para cima carrega uma linha de poder, e manter a régua
+     antiga faria o couro comum ocupar um dos três lugares de sintonia —
+     um teto que existe para as peças que MUDAM o jogo. */
+  if (item.concede) return true;
+  if (Array.isArray(item.poderes) && item.poderes.length && (TIER[item.raridade] || 0) >= 2) return true;
   return (TIER[item.raridade] || 0) >= 2;
 }
 

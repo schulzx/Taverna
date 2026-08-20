@@ -215,9 +215,23 @@ export function aplicarMudancas(pers, m, msgs) {
   let equip = [...(pers.equipamento || [])];
   (m.adicionar_equipamento || []).forEach((eq) => {
     if (!eq?.nome || equip.some((x) => x.nome.toLowerCase() === eq.nome.toLowerCase())) return;
+    /* v9.80: OS PODERES ENTRAM JUNTO. Esta normalização copiava seis campos
+       e descartava o resto — e o resto, desde a v9.80, é justamente o que
+       faz o item valer alguma coisa. Achado na prova em jogo: a bota
+       lendária chegou à ficha com o NOME e a raridade certos, com a linha
+       de poder escrita no campo de texto, e sem `poderes` nem `concede`.
+       Ou seja, o item parecia lendário na tela e não fazia nada — o mesmo
+       defeito que a versão inteira veio consertar, reaberto três metros
+       adiante, na fronteira entre quem gera e quem guarda.
+
+       Só o que o sistema GERA carrega os dois campos: a IA não os manda, e
+       um `poderes` vindo dela seria efeito inventado sem passar pelo
+       catálogo. Copiar o que existe é seguro; criar não. */
     const item = {
       nome: eq.nome, tipo: (eq.tipo || "arma").toLowerCase(), raridade: (eq.raridade || "comum").toLowerCase(),
       atributos: eq.atributos || {}, poder: eq.poder || "", descricao: eq.descricao || "",
+      ...(Array.isArray(eq.poderes) && eq.poderes.length ? { poderes: eq.poderes } : {}),
+      ...(eq.concede ? { concede: String(eq.concede) } : {}),
     };
     equip.push(item);
     msgs.push(`⚔ Equipamento encontrado: ${item.nome} (${item.raridade})`);

@@ -1484,6 +1484,76 @@ são tão comuns quanto o primeiro.
   pela v9.76; quem tem e não pode pagar, pela v9.78; quem tem e pode
   pagar sai por aqui.
 
+## O que a raridade compra — v9.80
+
+Dois relatos, e são o mesmo defeito visto de dois lados: *"apareceu no
+mercado uma bota lendária de asas, e a raridade dela era comum"* e *"os
+itens não têm efeitos, apenas atributos — se um item dá apenas atributo,
+não faz diferença qual item eu uso"*.
+
+- **~~O nome mentia porque havia duas fontes soltas.~~** RESOLVIDO. O nome
+  se montava de prefixo + base + sufixo, e NENHUM dos três olhava a
+  raridade. A lista de prefixos tinha "Lendário" ao lado de "Rústico" com
+  o mesmo peso; a de bases tinha "Botas Aladas" ao lado de "Botas de
+  Couro", também com o mesmo. Um item comum saía "Botas Aladas
+  Lendárias", com defesa 1 e nada mais.
+
+  O jogador não tem como saber que o nome é decorativo: ele lê "alada" e
+  "lendária" e espera asas e lenda. E depois de receber um pedaço de
+  couro, **todo nome bonito do jogo perde o crédito**. Agora prefixo tem
+  peso e base tem degrau mínimo — nenhum dos dois aparece abaixo do seu.
+
+- **~~E a raridade não comprava nada além de número.~~** RESOLVIDO. O item
+  tinha um campo `poder`, e ele era TEXTO: "Nunca perde o fio", "Brilha
+  quando perigo se aproxima" — frases lidas por ninguém, porque nenhuma
+  linha de código consultava aquele campo. O que valia mecanicamente era
+  só `atributos`, e atributo é a mesma coisa em qualquer raridade, só que
+  maior.
+
+  Cada degrau agora compra o seu: **comum** o número e só (é o piso, e
+  ele tem de existir); **incomum** um traço menor; **raro** um poder dos
+  que mudam a conta; **épico** dois, um deles pesado; **lendário** dois
+  mais uma CONCESSÃO — uma habilidade do catálogo posta na mão do herói,
+  sem custo de PM. É a bota alada que dá Voo, o exemplo do próprio
+  relato.
+
+  **O truque que fez isso caber:** os efeitos falam a mesma língua das
+  dádivas (`danoExtra`, `ataqueExtra`, `descontoPM`, `criticoEm`,
+  `movimento`…). Não foi economia de digitação — é que os leitores delas
+  já existem e já são chamados de dentro do combate, do movimento e das
+  rolagens. Um vocabulário próprio para item obrigaria a escrever um
+  segundo conjunto de leitores, e esta casa já sabe onde isso termina.
+
+- **~~E o item perdia os poderes ao entrar na ficha.~~** RESOLVIDO, e é o
+  achado que a prova em jogo entregou. A normalização de
+  `adicionar_equipamento` copiava seis campos e descartava o resto — e o
+  resto era justamente o que passou a fazer o item valer alguma coisa. A
+  bota lendária chegava à ficha com o nome certo, a raridade certa, a
+  linha de poder escrita no campo de texto, e **sem `poderes` nem
+  `concede`**: parecia lendária na tela e não fazia nada. O mesmo defeito
+  da versão inteira, reaberto três metros adiante, na fronteira entre
+  quem gera e quem guarda.
+
+- **A sintonia passou a medir o degrau, não o texto.** Enquanto `poder`
+  era enfeite, "tem poder escrito" e "é raro" davam quase na mesma. Agora
+  todo item de incomum para cima carrega uma linha de poder, e a régua
+  antiga faria o couro incomum ocupar um dos TRÊS lugares de sintonia —
+  um teto que existe para as peças que mudam o jogo.
+
+### O que fica aberto aqui
+
+- **A tabela de poderes é curta** — vinte, cobrindo os sete slots. É o
+  suficiente para o degrau significar alguma coisa, mas dois épicos do
+  mesmo slot ainda se parecem demais. Crescer a tabela é barato e não
+  mexe em código nenhum: cada entrada nova só precisa de um campo de
+  efeito que já tenha leitor, e a suíte cobra isso.
+
+- **Os itens que já estão em saves antigos não ganham poderes.** Eles
+  continuam com `atributos` e o texto antigo, e funcionam como sempre
+  funcionaram. Recalcular equipamento guardado seria reescrever o que o
+  jogador já conquistou — e a forja existe justamente para trocar o
+  velho pelo novo.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

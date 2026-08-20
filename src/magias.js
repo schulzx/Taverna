@@ -104,7 +104,24 @@ export function garantirPreparadas(pers) {
 
 export function estaPreparada(pers, hab) {
   if (!ehPreparavel(hab, pers)) return true;   // não é do caderno: sempre à mão
+  /* v9.80: O ITEM É A PREPARAÇÃO. A bota lendária que concede Voo dá a
+     magia inteira — barrá-la no caderno seria devolver com uma mão o que
+     o degrau lendário deu com a outra, e o jogador leria "não preparada"
+     sobre uma magia que ele nunca aprendeu e não teria como preparar. */
+  if (concedidaPorItem(pers, hab)) return true;
   return garantirPreparadas(pers).includes(hab.nome);
+}
+
+/* Lê a ficha direto, sem importar nada: item equipado com `concede` igual
+   ao nome da habilidade. A sintonia é conferida por quem gera a lista de
+   poderes (`poderes.js`); aqui basta a promessa do item equipado. */
+export function concedidaPorItem(pers, hab) {
+  const alvo = String((hab && hab.nome) || "").toLowerCase();
+  if (!alvo) return false;
+  for (const it of Object.values((pers && pers.equipados) || {})) {
+    if (it && it.concede && String(it.concede).toLowerCase() === alvo) return true;
+  }
+  return false;
 }
 
 /* Preenche o caderno sozinho — usado na migração e no "preparar tudo o que

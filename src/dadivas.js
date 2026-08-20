@@ -29,6 +29,7 @@
    ============================================================ */
 
 import { DADIVAS_EPICAS } from "./regras.js";
+import { estaSintonizado } from "./sintonia.js";
 
 export function dadivaPorId(id) { return DADIVAS_EPICAS.find((d) => d.id === id) || null; }
 
@@ -53,12 +54,40 @@ function somar(pers, campo) {
   for (const u of unicasDe(pers)) {
     if (u && u.efeito && Number(u.efeito[campo])) t += Number(u.efeito[campo]);
   }
+  for (const p of poderesDeItem(pers)) {
+    if (p && p.efeito && Number(p.efeito[campo])) t += Number(p.efeito[campo]);
+  }
   return t;
 }
 function algum(pers, campo) {
   for (const id of idsDe(pers)) { const d = dadivaPorId(id); if (d && d.efeito && d.efeito[campo]) return true; }
   for (const u of unicasDe(pers)) if (u && u.efeito && u.efeito[campo]) return true;
+  for (const p of poderesDeItem(pers)) if (p && p.efeito && p.efeito[campo]) return true;
   return false;
+}
+
+/* ============================================================
+   O EQUIPAMENTO FALA A MESMA LÍNGUA (v9.80)
+
+   Os itens ganharam poderes de verdade, e os poderes falam este mesmo
+   vocabulário — `danoExtra`, `ataqueExtra`, `descontoPM`, `criticoEm`,
+   `movimento`, `rerroll`, `segundoFolego`. Não foi economia de
+   digitação: é que TODOS os leitores abaixo já são chamados de dentro do
+   combate, do movimento e das rolagens. Escrever um segundo conjunto de
+   leitores só para item seria dar duas réguas à mesma pergunta.
+
+   O FILTRO DA SINTONIA é o mesmo de `bonusEquip`: item guardado na
+   mochila não faz nada, e item que pede sintonia e não recebeu fica
+   dormente — serve de aço e de couro, mas o poder não responde.
+   ============================================================ */
+export function poderesDeItem(pers) {
+  const out = [];
+  for (const it of Object.values((pers && pers.equipados) || {})) {
+    if (!it || !Array.isArray(it.poderes) || !it.poderes.length) continue;
+    if (!estaSintonizado(pers, it)) continue;
+    for (const p of it.poderes) if (p && p.efeito) out.push(p);
+  }
+  return out;
 }
 
 /* ---------------- OS LEITORES ----------------
@@ -199,6 +228,7 @@ export function gerarDadivaUnica(pers, { dominio = "", titulo = "", quantas = 0 
 
 /* O que cada dádiva FAZ, em uma linha, com o estado do recurso quando ele
    existe. É a resposta a "não entendi como usar": se há carga, ela aparece. */
+
 export function linhaDaDadiva(pers, id) {
   const d = dadivaPorId(id);
   if (!d) return null;
