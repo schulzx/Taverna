@@ -1354,6 +1354,55 @@ rouba do jogador a decisão de recuar.
   depois lia a cena que o encena. O que fica na tela continua sendo o que
   é gameplay — o dado, o que entrou na bolsa, onde o herói está.
 
+## O ofício da cena — v9.77
+
+"Melhorou um pouco, mas não sinto que o mestre está mestrando" veio junto
+com um pedido de treinar também **o lado que fica com a IA**. A v9.75
+atacou o mecanismo — temperatura e penalidade de frequência —, e isso é
+metade: temperatura muda o quanto o modelo arrisca, não o quanto ele sabe
+narrar.
+
+O prompt já tinha uma seção de ritmo, mas ela era toda de nível de
+CAMPANHA: plot twists preparados, respeitar a agenda do jogador, não
+reciclar o inimigo derrotado. Nada sobre a frase e a cena, que é onde
+moram as duas queixas.
+
+Cinco regras, e cada uma ataca um defeito com nome:
+
+- **Abra diferente a cada vez** — um som antes da imagem, alguém já
+  falando, um movimento, um cheiro, um objeto fora do lugar, ninguém. É
+  o ataque direto ao "fica sempre repetindo", junto com a proibição de
+  reabrir um lugar com a mesma frase de ambiente de antes.
+- **Um detalhe concreto vale três adjetivos** — não "uma bebida forte",
+  "aguardente de centeio". É o ataque ao "contido": prosa vaga soa
+  cautelosa porque não se compromete com nada.
+- **Quem está em cena quer alguma coisa**, e mostra na primeira fala.
+  Ninguém está ali só para responder ao herói.
+- **Não narre o que eu sinto nem o que eu decido.** "Você sente um
+  calafrio", "você percebe que é perigoso" — é o erro mais comum de
+  mestre de IA e o que mais faz a narração soar como resumo.
+- **Corte antes de explicar.** Termine na imagem, não no que ela
+  significa.
+
+**E o bloco entrou PAGO**, sem crescer o orçamento — as duas
+contradições que ele custou estavam no prompt havia versões:
+
+- **~~O prompt mandava narrar a viagem inteira.~~** "NUNCA resolva
+  grandes deslocamentos num pulo. Descreva a jornada com etapas,
+  bifurcações, encontros" — e trinta linhas abaixo, no bloco de sinais,
+  "viagem:<destino> … NÃO narre a viagem inteira, só a partida". Duas
+  ordens opostas sobre a mesma coisa, e a primeira descrevia um sistema
+  que deixou de existir na v9.56, quando a viagem virou trecho, clima e
+  encontro por código.
+- **~~E mandava oferecer alternativas prontas.~~** "Apresente ganchos
+  concretos: 'a estrada leva três dias; partimos ao amanhecer ou há algo
+  a resolver antes?'" — o exemplo É uma pergunta com duas alternativas
+  prontas, e a linha seguinte proíbe exatamente isso ("NUNCA ofereça
+  opções … nem pergunte 'o que você faz?' com alternativas prontas").
+
+Também compactado o bloco de DIVERSIDADE VIVA sem tirar nenhuma das
+exigências dele — só o rodeio.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na
