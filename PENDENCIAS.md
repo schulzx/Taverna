@@ -1758,6 +1758,88 @@ revelação e na queda. Nas outras fases ele cala e deixa a cena falar.
   volta a poder gerar um, mas a peça não sabe encadear — o segundo seria
   um estranho começando do rumor, sem nenhuma relação com o primeiro.
 
+## O arco casa com o vilão — v9.84
+
+"Case esse sistema com o sistema de arcos, e não deixe nada visível, não
+queremos nenhum spoiler. A única coisa visível é o tipo de história que o
+player escolheu. O sistema de vilão deve ser tão bem elaborado que o fim
+do arco dele será o fim do capítulo."
+
+- **~~O arco andava por contagem.~~** RESOLVIDO. Cada missão concluída,
+  relógio cheio ou ameaça abatida somava marcos, e a cada tanto o momento
+  virava. Era um **termômetro de atividade**: um jogador que fizesse vinte
+  favores pequenos chegava ao momento mais escuro da história sem nunca
+  ter tido contra quem.
+
+  O arco de uma história não anda porque o herói andou — anda porque o
+  ANTAGONISTA andou. As duas peças viraram uma: a fase do vilão É o
+  momento do arco. Na Jornada do Herói o encaixe é um a um: a marca leva
+  à Travessia, a mão às Provações, **a revelação ao Abismo**, a guerra à
+  Transformação, a queda ao Retorno.
+
+  Os marcos não sumiram: continuam contando enquanto não há vilão, porque
+  o começo de uma campanha é mesmo feito de andar. O que eles não podem
+  mais é levar a história à segunda metade sozinhos.
+
+- **~~A tela de criação listava o arco inteiro.~~** RESOLVIDO. "O CHAMADO
+  → A TRAVESSIA → PROVAÇÕES → O ABISMO → A TRANSFORMAÇÃO → O RETORNO",
+  antes de o jogador escrever o nome do personagem. O diário tinha tirado
+  a fila de etapas na v9.28 pela razão certa — ver que está em "Provações"
+  é saber que ainda vem "O Abismo" — e a tela de criação continuou
+  mostrando a mesma coisa, inteira, no primeiro minuto.
+
+  E a **descrição** de cada estrutura enumerava as mesmas batidas em prosa
+  ("o chamado, as provações, o abismo e o retorno transformado"). As
+  quatro foram reescritas para dizer o que a história PROMETE, não a
+  ordem em que ela acontece.
+
+- **~~O nome da etapa subia ao prompt.~~** RESOLVIDO. Ia como `momento
+  interno "O Abismo"`, e uma IA que sabe que está no Abismo escreve como
+  quem sabe: anuncia o tom, antecipa a queda, escolhe as palavras do
+  rótulo. A proibição de contar ao jogador já existia e não bastava,
+  porque **o vazamento não é dizer o nome — é escrever a etiqueta em vez
+  da cena**. Sobe só a direção.
+
+- **~~E o fim do arco pedia um novo arco.~~** RESOLVIDO. Três das quatro
+  estruturas terminavam mandando a IA "perguntar se o jogador deseja um
+  novo arco" — e o envelope do capítulo proíbe exatamente isso. Duas
+  ordens opostas no mesmo prompt, que é a forma exata do bug que esta
+  casa mais repete.
+
+### O fim do capítulo
+
+As duas coisas têm de se encontrar: **o vilão caiu E o arco chegou ao
+último momento**. Uma sem a outra não fecha nada — matá-lo no meio o
+sistema não deixa (v9.83), e chegar ao fim sem derrubá-lo é o clímax por
+acontecer.
+
+O jogador lê uma linha: "📖 Fim do capítulo 1". Nada de etapa, nada de
+estrutura. E o Mestre recebe a ordem de fazer um EPÍLOGO — não um resumo
+—, proibido de anunciar o próximo vilão, de dizer a palavra "capítulo" e
+de perguntar o que fazer agora: o silêncio depois do fim é parte do fim.
+
+### A porta dos capítulos
+
+`historia` guarda `capitulo` e `capitulos[]`, e `abrirCapitulo` já existe:
+volta ao primeiro momento, zera marcos, incrementa o número, permite
+trocar a estrutura e **mantém o mundo inteiro** — cidades, gente, mapa,
+cânone. O capítulo anterior fica registrado com o vilão que o fechou.
+
+### O que fica aberto aqui
+
+- **A porta não tem maçaneta ainda.** `abrirCapitulo` existe e ninguém a
+  chama: falta a tela que oferece "começar o próximo capítulo" depois do
+  epílogo, e as três formas que o pedido menciona — o mesmo herói anos
+  depois, um herói novo no mesmo mundo, ou uma história que acontece
+  *durante* a anterior. A última é a mais interessante e a mais cara: o
+  mundo teria de ser lido no estado de um dia passado.
+
+- **O vilão não renasce com o capítulo.** `abrirCapitulo` reinicia o arco
+  mas não gera o vilão do capítulo novo, e o antigo continua no save como
+  derrotado. O segundo capítulo começaria sem antagonista até a fama
+  gerar outro — e sem nenhuma relação com o primeiro, quando a relação é
+  justamente o que faz uma campanha ter capítulos em vez de sessões.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

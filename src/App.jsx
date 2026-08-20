@@ -5,7 +5,7 @@ import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapa
 import { gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
-import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar } from "./historia.js";
+import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste, dificuldadePorPerfil } from "./bestiario.js";
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
@@ -2537,7 +2537,21 @@ function TelaMundo({ concluir }) {
           <button key={e.id} onClick={() => setEstrutura(e.id)} className="text-left rounded-xl p-4 transition-all" style={{ background: estrutura === e.id ? T.panelSoft : T.panel, border: `1px solid ${estrutura === e.id ? T.amber : T.line}` }}>
             <div className="tv-display text-lg" style={{ color: estrutura === e.id ? T.amberSoft : T.ink }}>{e.nome}</div>
             <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{e.desc}</div>
-            <div className="tv-mono text-[9px] mt-1.5 uppercase tracking-widest" style={{ color: T.violetSoft }}>{e.etapas.map((x) => x.nome).join(" → ")}</div>
+            {/* ---------------- O SPOILER MAIOR SAIU DAQUI (v9.84) ----------------
+                Esta linha listava o arco inteiro na tela de criação:
+                "O CHAMADO → A TRAVESSIA → PROVAÇÕES → O ABISMO → A
+                TRANSFORMAÇÃO → O RETORNO". Antes de escrever o nome do
+                personagem, o jogador já sabia que ia haver um abismo, e
+                mais ou menos quando.
+
+                O painel do diário tirou a fila de etapas na v9.28 pela
+                razão certa — ver que está em "Provações" é saber que ainda
+                vem "O Abismo" —, e a tela de criação continuou mostrando a
+                mesma coisa, inteira, no primeiro minuto da campanha.
+
+                O que fica é o que o jogador precisa escolher: o TIPO de
+                história. Onde ele está dentro dela é bastidor, e o que vem
+                depois é a história. */}
           </button>
         ))}
       </div>
@@ -3278,7 +3292,10 @@ export default function Taverna() {
           const est = estruturaPorId(h.estrutura);
           const chk = podeVirar(h, motorDoArco());
           const mo = motorDoArco();
-          godLinha(`⚡ Arco: ${est.nome} · momento ${h.etapa + 1}/${est.etapas.length} "${est.etapas[h.etapa].nome}"
+          /* v9.84: nem no console de autor o nome da etapa aparece — "em nenhum
+             lugar" é em nenhum lugar, e o número diz tudo o que a depuração
+             precisa saber. */
+          godLinha(`⚡ Arco: ${est.nome} · capítulo ${h.capitulo} · momento ${h.etapa + 1}/${est.etapas.length}
   marcos: ${h.marcos}/${custoDaEtapa(est, h.etapa)}${chk.pode ? " — vira no próximo marco" : ` — ${chk.motivo}`}
   motor: nêmesis ${mo.nemesis || "—"} · global ${mo.global || "—"} · impostas ${mo.impostas.length} · relógios ${mo.relogios.length}
   ${h.feitos.length ? `andou por: ${h.feitos.join("; ")}` : "nada empurrou este momento ainda"}`);
@@ -11601,6 +11618,25 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     marcarNoArco("nemesis", `matei ${n.nome}, ${n.titulo}`);
     pushMsgs([{ autor: "sistema", texto: linhaDaQueda(n) }]);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaQueda(n, causa)}`;
+
+    /* ---------------- E O CAPÍTULO FECHA (v9.84) ----------------
+       "O sistema de vilão deve ser tão bem elaborado que o fim do arco
+       dele será o fim do capítulo."
+
+       As duas coisas se encontram aqui: o vilão caiu E o arco chegou ao
+       último momento. Uma sem a outra não fecha nada — matá-lo no meio o
+       sistema não deixa, e chegar ao fim sem derrubá-lo é o clímax por
+       acontecer.
+
+       O que o jogador lê é uma linha: "Fim do capítulo 1". Nada de nome
+       de etapa, nada de estrutura. E o Mestre recebe a ordem de fazer um
+       EPÍLOGO — não um resumo, e sem anunciar o próximo vilão. */
+    if (capituloFechado(historiaRef.current, true)) {
+      const fc = fecharCapitulo(historiaRef.current, { vilao: n, dia: diaRef.current, causa });
+      historiaRef.current = fc.historia; setHistoria(fc.historia);
+      pushMsgs([{ autor: "sistema", texto: linhaDoCapitulo(fc.registro) }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoCapitulo(fc.registro)}`;
+    }
     return true;
   };
 
@@ -11701,6 +11737,21 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       marcarNoArco("nemesis", `soube quem é ${r.vilao.nome}`);
     }
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoAvanco(r)}`;
+
+    /* ---------------- O ARCO ANDA COM ELE (v9.84) ----------------
+       Até aqui o arco andava por CONTAGEM: cada missão concluída, relógio
+       cheio ou ameaça abatida somava marcos, e a cada tanto o momento
+       virava. Era um termômetro de atividade — e um jogador que fizesse
+       vinte favores pequenos chegava ao momento mais escuro da história
+       sem nunca ter tido contra quem.
+
+       O arco de uma história não anda porque o herói andou: anda porque o
+       ANTAGONISTA andou. As duas peças passam a ser uma só. */
+    const casou = casarComVilao(historiaRef.current, r.fase.ordem);
+    if (casou.virou) {
+      historiaRef.current = casou.historia; setHistoria(casou.historia);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeVirada(casou)}`;
+    }
   };
 
   /* AVANÇO DE DIAS (v6.5): cada dia passado move o calendário e rola a vida

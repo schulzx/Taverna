@@ -46,31 +46,31 @@ export const ESTRUTURAS = [
   {
     id: "jornada",
     nome: "Jornada do Herói",
-    desc: "Um arco clássico: o chamado, as provações, o abismo e o retorno transformado. Ideal para uma epopeia pessoal.",
+    desc: "Uma epopeia pessoal: um herói, um mundo que muda com ele, e um preço que ninguém escapa de pagar. Do tamanho de uma vida.",
     etapas: [
       { nome: "O Chamado", instrucao: "Estabeleça o mundo comum do herói e faça surgir UM chamado claro à aventura (a missão principal). Semeie o que estará em jogo. Cenas de apresentação, vínculos e o incidente que muda tudo." },
       { nome: "A Travessia", instrucao: "O herói deixa o mundo conhecido. Apresente aliados, rivais e as regras do mundo novo. Missões secundárias apresentam facções e lugares. A ameaça principal se mostra à distância." },
       { nome: "Provações", instrucao: "Desafios crescentes testam o herói e o grupo. Vitórias parciais e custos reais. Aprofunde vínculos com companheiros. O antagonista se torna pessoal." },
       { nome: "O Abismo", instrucao: "O momento mais escuro: uma derrota, perda ou revelação que abala o herói. Tudo parece perdido. Prepare AQUI as sementes da virada — nada de resgate fácil." },
       { nome: "A Transformação", instrucao: "O herói se reergue diferente: nova compreensão, aliança inesperada ou poder conquistado com custo. O caminho para o confronto final se abre." },
-      { nome: "O Retorno", instrucao: "Clímax e desfecho: o confronto decisivo com o que foi construído a campanha inteira, e as consequências. Feche os fios abertos. Depois do fim, ofereça um epílogo em paz — e pergunte se o jogador deseja um novo arco." },
+      { nome: "O Retorno", instrucao: "Clímax e desfecho: o confronto decisivo com o que foi construído a campanha inteira, e as consequências. Feche os fios abertos. Depois do fim, um epílogo em paz — e pare aí: o silêncio depois do fim é parte do fim, e quem decide se há outro capítulo é o jogador, não você." },
     ],
   },
   {
     id: "arquipelago",
     nome: "Arquipélago",
-    desc: "Focos múltiplos: várias histórias semi-independentes (ilhas) que o jogador navega, e que aos poucos se entrelaçam.",
+    desc: "Muitas histórias ao mesmo tempo, cada uma com gente e dramas próprios. Você escolhe onde estar, e o que deixa para trás continua acontecendo.",
     etapas: [
       { nome: "As Ilhas", instrucao: "Estabeleça 2-3 arcos INDEPENDENTES (lugares, facções ou personagens com dramas próprios), cada um com sua missão. O jogador escolhe livremente qual visitar; nenhum é 'o principal' ainda. Deixe cada ilha com identidade forte." },
       { nome: "Correntes", instrucao: "Sinais de que as ilhas se tocam: um nome que aparece em dois lugares, um objeto que viaja, um interesse comum. Não force a conexão — deixe o jogador percebê-la. Aprofunde o arco que ele mais frequenta." },
       { nome: "Convergência", instrucao: "As histórias se entrelaçam de verdade: os arcos revelam ser partes de um quadro maior (sem invalidar o que cada um era). As escolhas do jogador em cada ilha agora pesam nas outras." },
-      { nome: "A Maré", instrucao: "Clímax que reúne os fios: o desfecho depende do que o jogador construiu em cada arco. Amarre as pontas e mostre como cada ilha termina. Depois, epílogo e convite a um novo mar." },
+      { nome: "A Maré", instrucao: "Clímax que reúne os fios: o desfecho depende do que o jogador construiu em cada arco. Amarre as pontas e mostre como cada ilha termina. Depois, epílogo — e pare aí: não convide para um novo mar, não é sua a decisão." },
     ],
   },
   {
     id: "reinado",
     nome: "Ascensão do Reino",
-    desc: "Gestão, território e poder: fundar, expandir e defender um domínio. Para quem quer governar de verdade.",
+    desc: "Terra, gente e poder. Para quem prefere a mesa de mapas à estrada — e descobre que governar cobra mais que lutar.",
     etapas: [
       { nome: "Fundação", instrucao: "O jogador conquista ou herda sua primeira base (cidade, guilda ou fortaleza). Missões de estabelecimento: recursos, primeiros aliados, um lugar no mapa. Gestão é conteúdo nobre: colheitas, obras, nomeações." },
       { nome: "Expansão", instrucao: "Crescimento: novas cidades, rotas de comércio, alianças e vassalos. Gere dilemas de governo (impostos, disputas, festivais, embaixadas). Rivais observam — inveja e diplomacia antes de guerra." },
@@ -81,13 +81,13 @@ export const ESTRUTURAS = [
   {
     id: "misterio",
     nome: "Mistério em Camadas",
-    desc: "Uma investigação: pistas espalhadas, falsas respostas e uma revelação que recontextualiza tudo. Para quem gosta de descobrir.",
+    desc: "Alguma coisa aconteceu, e a explicação não fecha. Para quem prefere entender a vencer — e aguenta descobrir que estava enganado.",
     etapas: [
       { nome: "O Fio Solto", instrucao: "Um acontecimento estranho abre a investigação (a missão principal). Estabeleça o cenário, os envolvidos e a primeira pista. Plante DESDE JÁ, discretamente, elementos da revelação final." },
       { nome: "Pistas", instrucao: "A investigação avança por camadas: cada pista responde algo e abre outra pergunta. Testemunhas com versões conflitantes, lugares que escondem segredos. Recompense a atenção do jogador." },
       { nome: "A Falsa Resposta", instrucao: "Uma explicação convincente se apresenta — e está errada (ou incompleta). Deixe o jogador agir sobre ela e descobrir a rachadura. A verdade dói mais que a mentira." },
       { nome: "Revelação", instrucao: "A verdade vem à tona recontextualizando pistas que o jogador JÁ viu (nada de fato novo tirado do bolso). O responsável, o porquê, o custo. Momento de impacto máximo." },
-      { nome: "Acerto de Contas", instrucao: "As consequências da verdade: justiça, vingança, perdão ou encobrimento — escolha do jogador. Feche os destinos de cada envolvido. Epílogo e convite a um novo caso." },
+      { nome: "Acerto de Contas", instrucao: "As consequências da verdade: justiça, vingança, perdão ou encobrimento — escolha do jogador. Feche os destinos de cada envolvido. Epílogo — e pare aí: não ofereça um novo caso, quem decide se há outro é o jogador." },
     ],
   },
 ];
@@ -124,7 +124,126 @@ export function garantirHistoria(h) {
     /* os últimos acontecimentos que empurraram o arco — é isso que o envelope
        da virada cita, para que a mudança de momento tenha causa visível */
     feitos: Array.isArray(o.feitos) ? o.feitos.slice(-6).map((x) => String(x).slice(0, 80)) : [],
+    /* v9.84: O CAPÍTULO. O arco de um vilão tem começo, meio e fim — e o
+       fim dele é o fim de um capítulo, não da campanha. Guardar o número e
+       a lista dos que já fecharam é a porta que o sistema de capítulos vai
+       usar: começar de novo no mesmo mundo, anos depois, antes, ou durante. */
+    capitulo: Math.max(1, Number(o.capitulo) || 1),
+    capitulos: Array.isArray(o.capitulos) ? o.capitulos.slice(-12) : [],
   };
+}
+
+/* ============================================================
+   O ARCO ANDA COM O VILÃO (v9.84)
+
+   Até aqui o arco andava por CONTAGEM: cada missão concluída, relógio
+   cheio ou ameaça abatida somava marcos, e a cada tanto de marcos o
+   momento virava. Funcionava como termômetro de atividade — e é
+   exatamente isso que ele era: um jogador que fizesse vinte favores
+   pequenos chegava ao Abismo sem nunca ter tido contra quem.
+
+   O arco de uma história não anda porque o herói andou. Anda porque o
+   ANTAGONISTA andou. As duas peças passam a ser uma só: a fase do vilão
+   é o momento do arco.
+
+   E os marcos não somem: eles continuam contando enquanto NÃO HÁ vilão,
+   porque o começo de uma campanha é mesmo feito de andar. O que eles não
+   podem mais é levar a história ao desfecho sozinhos — daí o teto.
+   ============================================================ */
+
+/* Sem antagonista, o arco não passa da metade. A regra 2 do arquivo já
+   dizia isso do último momento; agora vale para a segunda metade
+   inteira, porque "O Abismo" sem ninguém do outro lado é tão vazio
+   quanto "O Retorno". */
+export function tetoSemVilao(est) {
+  /* O piso de 1 existe porque o começo de uma campanha É mesmo feito de
+     andar: sem ele, uma estrutura de quatro momentos travava no primeiro
+     até o vilão nascer — e o vilão só nasce depois de a fama crescer. */
+  return Math.max(1, Math.ceil((est.etapas.length - 1) / 2) - 1);
+}
+
+/* A fase do vilão vira o momento do arco. Seis fases, N momentos: a
+   conta é proporcional, e o arco NUNCA anda para trás — se os marcos já
+   tinham levado a história adiante, ela fica onde estava. */
+export function etapaDoVilao(est, ordemDaFase) {
+  const n = est.etapas.length;
+  return Math.max(0, Math.min(n - 1, Math.round((Number(ordemDaFase) || 0) / 5 * (n - 1))));
+}
+
+export function casarComVilao(h, ordemDaFase) {
+  const hh = garantirHistoria(h);
+  const est = estruturaPorId(hh.estrutura);
+  const alvo = etapaDoVilao(est, ordemDaFase);
+  if (alvo <= hh.etapa) return { historia: hh, virou: false };
+  return {
+    historia: { ...hh, etapa: alvo, marcos: 0, feitos: [] },
+    virou: true,
+    de: est.etapas[hh.etapa],
+    para: est.etapas[alvo],
+    causas: hh.feitos.slice(),
+    porVilao: true,
+  };
+}
+
+/* ============================================================
+   O FIM DO CAPÍTULO
+
+   "O sistema de vilão deve ser tão bem elaborado que o fim do arco dele
+   será o fim do capítulo."
+
+   O capítulo fecha quando as duas coisas se encontram: o vilão caiu E o
+   arco chegou ao último momento. Uma sem a outra não fecha nada — matar
+   o vilão no meio não existe (o sistema não deixa), e chegar ao último
+   momento sem derrubá-lo é o clímax por acontecer.
+   ============================================================ */
+export function capituloFechado(h, vilaoCaiu) {
+  const hh = garantirHistoria(h);
+  const est = estruturaPorId(hh.estrutura);
+  return !!vilaoCaiu && hh.etapa >= est.etapas.length - 1;
+}
+
+export function fecharCapitulo(h, { vilao = null, dia = 0, causa = "" } = {}) {
+  const hh = garantirHistoria(h);
+  const est = estruturaPorId(hh.estrutura);
+  const registro = {
+    n: hh.capitulo,
+    estrutura: est.id,
+    vilao: (vilao && vilao.nome) || "",
+    titulo: (vilao && vilao.titulo) || "",
+    fechadoEm: dia,
+    causa: String(causa || "").slice(0, 120),
+    feitos: hh.feitos.slice(),
+  };
+  return {
+    historia: { ...hh, capitulos: [...hh.capitulos, registro].slice(-12), fechado: true },
+    registro,
+  };
+}
+
+/* A porta: começar o próximo. O MUNDO fica — cidades, gente, mapa,
+   cânone. O que reinicia é a espinha dramática, e o herói pode ser o
+   mesmo ou outro, anos depois, antes, ou durante. */
+export function abrirCapitulo(h, { estrutura = null } = {}) {
+  const hh = garantirHistoria(h);
+  return {
+    ...hh,
+    estrutura: estrutura ? estruturaPorId(estrutura).id : hh.estrutura,
+    etapa: 0, marcos: 0, feitos: [],
+    capitulo: hh.capitulo + 1,
+    fechado: false,
+  };
+}
+
+export function linhaDoCapitulo(reg) {
+  if (!reg) return "";
+  return `📖 Fim do capítulo ${reg.n}.`;
+}
+
+export function envelopeDoCapitulo(reg, est) {
+  if (!reg) return "";
+  return `[FIM DE CAPÍTULO — RECONHECIDO PELO SISTEMA] O que começou com ${reg.vilao ? `a sombra de ${reg.vilao}` : "a primeira ameaça desta história"} terminou${reg.causa ? ` — ${reg.causa}` : ""}. Este foi o capítulo ${reg.n} desta campanha.
+REGRA DESTE ENVELOPE (obrigatória): narre um EPÍLOGO, não um resumo. Duas ou três cenas curtas do que ficou: quem respira aliviado, o que não volta ao que era, o que o herói faz na primeira manhã em que não há ninguém atrás dele. Feche os fios que este capítulo abriu.
+NÃO anuncie um novo vilão, NÃO plante uma ameaça nova e NÃO diga a palavra "capítulo": para o jogador isto é a história respirando, não uma estrutura. E NÃO pergunte o que ele quer fazer agora — o silêncio depois do fim é parte do fim.`;
 }
 
 /* ---------------- O MOTOR VISTO PELO ARCO ----------------
@@ -155,9 +274,13 @@ export function podeVirar(h, motor = {}) {
   if (i >= ultima) return { pode: false, motivo: "este já é o momento final do arco" };
   const custo = custoDaEtapa(est, i);
   if (hh.marcos < custo) return { pode: false, motivo: `faltam ${custo - hh.marcos} marcos`, falta: custo - hh.marcos };
-  /* a regra 2: o desfecho precisa de alguém do outro lado */
-  if (i + 1 >= ultima && !temAntagonista(motor)) {
-    return { pode: false, motivo: "o desfecho não tem contra quem acontecer — nenhuma nêmesis viva, nenhum evento global em curso" };
+  /* v9.84: A REGRA 2 VALE PARA A SEGUNDA METADE INTEIRA. Ela já protegia o
+     último momento — "O Retorno" sem ninguém do outro lado não é desfecho.
+     Mas "O Abismo" sem antagonista é igualmente vazio, e um jogador que
+     fizesse vinte favores pequenos chegava lá pela contagem, sem nunca ter
+     tido contra quem. Daqui para cima, quem move o arco é o VILÃO. */
+  if (i + 1 > tetoSemVilao(est) && !temAntagonista(motor)) {
+    return { pode: false, motivo: "a segunda metade da história não tem contra quem acontecer — nenhum vilão em curso, nenhum evento global" };
   }
   return { pode: true, custo };
 }
@@ -193,7 +316,13 @@ export function resumoHistoria(h, motor = {}) {
   if (motor.global) pecas.push(`o evento global "${motor.global}", que engole a região`);
   if ((motor.impostas || []).length) pecas.push(`o que o mundo impôs: ${motor.impostas.join(", ")}`);
   if ((motor.relogios || []).length) pecas.push(`relógios correndo: ${motor.relogios.join(", ")}`);
-  return `ARCO DA CAMPANHA: ${est.nome} · momento interno "${et.nome}"${ultima ? " — o último" : ""}.
+  /* v9.84: O NOME DA ETAPA NÃO SOBE MAIS. Ele ia como `momento interno
+     "O Abismo"` — e uma IA que sabe que está no Abismo escreve como quem
+     sabe: anuncia o tom, antecipa a queda, escolhe as palavras do rótulo.
+     A proibição de contar ao jogador já existia e não bastava, porque o
+     vazamento não é dizer o nome: é escrever a etiqueta em vez da cena.
+     Vai só a DIREÇÃO, que é o que ela precisa para narrar. */
+  return `ARCO DA CAMPANHA: ${est.nome}${ultima ? " — e este é o momento final" : ""}.
 DIREÇÃO DESTE MOMENTO: ${et.instrucao}
 ${pecas.length
     ? `AS PEÇAS QUE JÁ ESTÃO NA MESA — é COM ELAS que este momento se cumpre, não com material novo: ${pecas.join("; ")}. Puxe daqui antes de inventar.`
