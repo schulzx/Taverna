@@ -64,32 +64,91 @@ export const TAMANHOS = {
   imenso:  { id: "imenso",  nome: "Imenso",  lado: 4, alcance: 4.5, icone: "☗" },
 };
 
-/* O bestiário desta casa nunca guardou tamanho, e pedir que ele guardasse
-   agora deixaria todo save antigo com dragões do tamanho de goblins. Então
-   o tamanho se descobre, na ordem: o campo, se veio; o nome, que é a
-   informação mais confiável que existe ("dragão ancião" é imenso em
-   qualquer mundo); e a ameaça, como último recurso. */
+/* ============================================================
+   O TAMANHO SAI DO NOME (v9.74 — a espécie manda, o adjetivo empurra)
+
+   O bestiário desta casa nunca guardou tamanho, e pedir que ele guardasse
+   agora deixaria todo save antigo com dragões do tamanho de goblins.
+   Então o tamanho se descobre pelo nome — o que continua certo. O que
+   estava errado era COMO.
+
+   Havia cinco listas por tamanho, testadas do maior para o menor, e
+   "gigante" morava na lista dos Enormes porque o bestiário tem uma
+   criatura chamada Gigante. Só que "gigante" quase nunca é a espécie: é
+   ADJETIVO. Resultado, visto numa emboscada de cripta: **Rato Gigante
+   ocupava nove quadrados** e alcançava três metros parado. E não era só
+   o rato — "aranha gigante" e "javali gigante" estavam escritos na lista
+   dos Grandes e nunca eram alcançados, porque o "gigante" da lista de
+   cima comia os dois. Duas linhas de tabela que existiam e não faziam
+   nada, que é o defeito preferido deste projeto.
+
+   A regra nova é a do português: **a primeira palavra é a espécie, o
+   resto qualifica.** Rato é pequeno; "gigante" empurra um degrau para
+   cima; Rato Gigante é médio, do tamanho de um cão grande, e ocupa um
+   quadrado. Dragão é enorme; "ancião" empurra para imenso e "jovem"
+   puxa para grande — que é a diferença que faltava entre as duas pontas
+   da mesma espécie.
+   ============================================================ */
 const N = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-const RX_IMENSO = /(dragao anciao|dragao ancestral|kraken|titan|leviata|colosso|behemoth|calamidade|worm das areias|deus |avatar de)/;
-const RX_ENORME = /(dragao|gigante|hidra|elemental maior|golem de ferro|mamute|tarrasca|aranha colossal|serpente marinha|arauto)/;
-const RX_GRANDE = /(ogro|troll|urso|minotauro|golem|quimera|centauro|elemental|lobo atroz|javali gigante|aranha gigante|cavalo|grifo|basilisco|wyvern)/;
-const RX_PEQUENO = /(goblin|kobold|rato|morcego|fada|imp|halfling|gnomo|duende|serva?l|corvo)/;
-const RX_MIUDO = /(pixie|vaga-lume|enxame|sprite|besouro|slime menor)/;
+
+/* A escada, do menor ao maior. É ela que dá sentido a "empurrar um degrau". */
+export const ESCADA = ["miudo", "pequeno", "medio", "grande", "enorme", "imenso"];
+
+export function degrauDeTamanho(id, quanto = 0) {
+  const i = ESCADA.indexOf(N(id));
+  if (i < 0) return TAMANHOS.medio;
+  return TAMANHOS[ESCADA[Math.max(0, Math.min(ESCADA.length - 1, i + quanto))]];
+}
+
+/* AS ESPÉCIES — substantivos, nunca adjetivos. Foi misturar os dois que
+   produziu o rato de nove quadrados. */
+export const ESPECIES = [
+  { tamanho: "imenso",  rx: /(kraken|titan|leviata|colosso|behemoth|calamidade|worm das areias|tarrasca|deus |avatar de)/ },
+  { tamanho: "enorme",  rx: /(dragao|hidra|mamute|serpente marinha|arauto|gigante|golem de ferro)/ },
+  { tamanho: "grande",  rx: /(ogro|troll|urso|minotauro|golem|quimera|centauro|elemental|cavalo|grifo|basilisco|wyvern|jacare|crocodilo|alce|touro|boi)/ },
+  { tamanho: "medio",   rx: /(lobo|javali|homem|mulher|orc|humano|elfo|anao|guerreir|bandido|soldado|cultista|zumbi|esqueleto|capanga|batedor|atirador|sentinela|comandante|horror|brutamontes)/ },
+  { tamanho: "pequeno", rx: /(goblin|kobold|rato|morcego|fada|imp|halfling|gnomo|duende|serva?l|corvo|coruja|aranha|escorpiao|cobra|serpente|sapo|lagarto|caranguejo|macaco|raposa|gato|cao|cachorro)/ },
+  { tamanho: "miudo",   rx: /(pixie|vaga-lume|enxame|sprite|besouro|formiga|vespa|abelha|verme|slime)/ },
+];
+
+/* OS QUALIFICADORES, e o quanto cada um empurra. */
+export const QUALIFICADORES = [
+  { id: "colossal", rx: /(colossal|monstruos|descomunal|titanic)/, quanto: 2 },
+  { id: "aumentado", rx: /(gigante|anciao|ancestral|maior|primordial|atroz|imperial)/, quanto: 1 },
+  { id: "diminuido", rx: /(jovem|menor|filhote|cria|an[aã]o|miniatura|raquitic)/, quanto: -1 },
+];
 
 export function tamanhoDe(ent) {
   if (!ent) return TAMANHOS.medio;
+  /* o campo explícito manda em tudo: se alguém já decidiu, o nome não
+     tem por que ser lido de novo */
   const dado = TAMANHOS[N(ent.tamanho)];
   if (dado) return dado;
   const txt = N(`${ent.nome || ""} ${ent.desc || ""}`);
-  if (RX_IMENSO.test(txt)) return TAMANHOS.imenso;
-  if (RX_ENORME.test(txt)) return TAMANHOS.enorme;
-  if (RX_GRANDE.test(txt)) return TAMANHOS.grande;
-  if (RX_MIUDO.test(txt)) return TAMANHOS.miudo;
-  if (RX_PEQUENO.test(txt)) return TAMANHOS.pequeno;
-  /* último recurso: um lendário sem nome reconhecível ainda é coisa grande */
-  if (ent.ameaca === "lendario") return TAMANHOS.enorme;
-  if (ent.ameaca === "elite") return TAMANHOS.grande;
-  return TAMANHOS.medio;
+  /* A ESPÉCIE É A QUE VEM PRIMEIRO NO TEXTO, e não a primeira da lista.
+     Percorrer a lista em ordem de tamanho é o que fazia "rato gigante"
+     casar com o `gigante` dos Enormes antes de chegar ao `rato` dos
+     Pequenos — a lista estava ordenada por tamanho, e a frase está
+     ordenada por gramática. */
+  let esp = null, ondeEsp = Infinity, fimEsp = 0;
+  for (const e of ESPECIES) {
+    const m = txt.match(e.rx);
+    if (!m || m.index >= ondeEsp) continue;
+    esp = e; ondeEsp = m.index; fimEsp = m.index + m[0].length;
+  }
+  if (!esp) {
+    /* último recurso: um lendário sem nome reconhecível ainda é coisa grande */
+    return degrauDeTamanho(ent.ameaca === "lendario" ? "enorme" : ent.ameaca === "elite" ? "grande" : "medio", 0);
+  }
+  /* e o qualificador tem de vir DEPOIS da espécie, senão o Gigante do
+     bestiário qualificaria a si mesmo e subiria para imenso sozinho */
+  let q = null, ondeQ = Infinity;
+  for (const x of QUALIFICADORES) {
+    const m = txt.match(x.rx);
+    if (!m || m.index < fimEsp || m.index >= ondeQ) continue;
+    q = x; ondeQ = m.index;
+  }
+  return degrauDeTamanho(esp.tamanho, q ? q.quanto : 0);
 }
 export function ladoDe(ent) { return tamanhoDe(ent).lado; }
 export function alcanceNatural(ent) { return tamanhoDe(ent).alcance; }

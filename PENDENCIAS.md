@@ -1146,6 +1146,79 @@ jogador não quis tocar.
   "Gigante" do nome, ou o padrão está errado — de todo jeito, um rato não
   ocupa nove quadrados.
 
+## A outra metade da briga — v9.74
+
+A v9.73 deu ao sistema a metade que era dele. Esta é a outra ponta, e a
+divisão é a mesma da casa inteira:
+
+**ELA diz que há hostilidade e de que tipo** — isso é cena, é dela, e o
+sistema não inventa nada disso. **O SISTEMA decide o encontro** — quantos
+são e se aquilo cabe no herói que está na frente, porque isso é conta.
+
+Antes disto ela mandava `combate_iniciar` com a lista inteira montada por
+conta própria e o sistema só carimbava um selo depois do fato consumado.
+O selo DESCREVIA; não decidia. Um narrador com o dia inspirado punha seis
+ogros contra um herói de nível 2, e o sistema anunciava educadamente que
+aquilo ia matar o jogador.
+
+`emboscada.js` lê a investida no canal `perigo` — o mesmo por onde já
+entram as armadilhas e os elementos — e devolve um de três desfechos:
+
+1. **Encontro montado.** A criatura vem do BESTIÁRIO, a quantidade vem da
+   frase, e o teto vem do orçamento do herói. Seis ogros contra um nível 1
+   viram dois, e o envelope diz por quê: "6 contra mim não seria um
+   encontro difícil, seria um acidente. Narre o número que o sistema pôs
+   — quem não veio, não veio."
+
+2. **Desproporcional.** Aparar a quantidade resolve seis ogros; não
+   resolve UM dragão ancião. Um é um, passa por qualquer teto de
+   contagem, e continua sendo a morte certa. O sistema não sabe encolher
+   um dragão sem inventar um dragão menor, então recusa e devolve duas
+   saídas — e a primeira é a boa: **mantenha a ameaça, mas longe.**
+   Ameaça vista de perto e não enfrentada é das melhores coisas que uma
+   cena tem; o que ela não pode é alcançar o herói agora.
+
+3. **Sem ficha.** Criatura fora do bestiário: o sistema não sabe quantos
+   PV tem uma "Aberração do Sétimo Selo" e não inventa. Duas saídas de
+   novo — declare `combate_iniciar` com algo do catálogo, ou deixe claro
+   que aquilo não me alcança neste turno.
+
+A régua da detecção é o **VERBO, não o substantivo**: "há bandidos na
+estrada" é cenário, "os bandidos saltam do mato" é uma investida. E ficam
+de fora a emboscada lembrada, a contada por terceiros e a condicional —
+o aviso de que algo PODERIA atacar é tensão, e virar luta a partir dele
+rouba do jogador a decisão de recuar.
+
+- **~~Todo "X Gigante" era Enorme.~~** RESOLVIDO na v9.74. Havia cinco
+  listas de tamanho testadas do maior para o menor, e "gigante" morava na
+  dos Enormes porque o bestiário tem uma criatura chamada Gigante. Só que
+  quase nunca é a espécie: é ADJETIVO. **Rato Gigante ocupava nove
+  quadrados** e alcançava três metros parado. E "aranha gigante" e
+  "javali gigante" estavam escritos na lista dos Grandes sem nunca serem
+  alcançados — duas linhas de tabela que existiam e não faziam nada.
+
+  A regra nova é a do português: a primeira palavra é a espécie, o resto
+  qualifica. Rato é pequeno, "gigante" empurra um degrau, Rato Gigante é
+  médio. E as duas pontas da mesma espécie deixam de ter o mesmo tamanho:
+  Dragão Jovem é grande, Dragão é enorme, Dragão Ancião é imenso.
+
+- **~~O modo criativo tinha porta própria.~~** RESOLVIDO. `/combate` e
+  `/encontro` passam por `abrirCombate` como os outros dois.
+
+### O que fica aberto aqui
+
+- **O teto é sempre "mortal".** O sistema apara até o degrau mais alto da
+  tabela, o que quer dizer que quase toda emboscada montada sai mortal
+  para um herói de nível baixo. É defensável — a ficção pediu o número e
+  mortal é um degrau legítimo — mas vale medir numa campanha de verdade
+  se isso não deixa o jogo mais duro do que a mesa aguenta.
+
+- **`combate_iniciar` continua sem orçamento.** A emboscada pelo canal
+  `perigo` é conferida; a lista que a IA manda pelo campo antigo, não. São
+  dois caminhos com duas réguas, que é a forma exata do bug que esta casa
+  mais repete — mas fechar o campo antigo mexe em masmorra, nêmese e
+  eventos globais, e não cabia nesta leva.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

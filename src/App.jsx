@@ -51,6 +51,7 @@ import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidat
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, perguntarPeloSistema, envelopeDaPerguntaDoSistema, linhaDaPerguntaDoSistema, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
 import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao, TURNO_PROMPT } from "./turno.js";
 import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobrancaNegada } from "./cobranca.js";
+import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional } from "./emboscada.js";
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo } from "./agressao.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
@@ -3454,15 +3455,15 @@ export default function Taverna() {
           for (let i = 0; i < Math.max(1, Math.min(6, quantos)); i++) {
             lista.push({ nome: quantos > 1 ? `${nomeC} ${i + 1}` : nomeC, nivel: nivel || personagem.nivel || 1, ameaca: "" });
           }
+          /* v9.74: pela porta única, como os outros dois. Faltavam aqui os
+             traços de abertura e o custo do dia — pouco, mas era a terceira
+             porta de novo, e esta casa já sabe onde isso termina. */
           const cru = processarCombate(null, { combate_iniciar: lista, __nivelJogador: personagem.nivel || 1, __temBonus: temAcaoBonus(personagem) }, msgs);
-          const eq = equiparCombate(cru, personagem);
-          const novo = eq.combate;
-          combateRef.current = novo; setCombate(novo);
-          const avG = avaliarEncontro(novo.inimigos, personagem);
-          godLinha(`⚡ Combate aberto: ${lista.map((x) => x.nome).join(", ")}${nivel ? ` (nível ${nivel})` : ""}.${avG ? `\n⚡ ${selo(avG)} (peso ${avG.ajustado} vs capacidade ${avG.capacidade})` : ""}`);
+          const abG = abrirCombate(cru.inimigos, { pers: personagem });
+          if (abG.pers !== personagem) { personagemRef.current = abG.pers; setPersonagem(abG.pers); }
+          godLinha(`⚡ Combate aberto: ${lista.map((x) => x.nome).join(", ")}${nivel ? ` (nível ${nivel})` : ""}.`);
           if (msgs.length) pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
-          if (eq.msgs.length) pushMsgs(eq.msgs.map((t) => ({ autor: "sistema", texto: t })));
-          presencaNaLuta(novo, personagem);
+          if (abG.msgs.length) pushMsgs(abG.msgs.map((t) => ({ autor: "sistema", texto: t })));
           return true;
         }
         case "encontro": {
@@ -3480,14 +3481,11 @@ export default function Taverna() {
           const lista = Array.from({ length: n }, (_, i) => ({ nome: n > 1 ? `${nomeC} ${i + 1}` : nomeC, ameaca: modelo.ameaca, nivel: modelo.nivel }));
           const msgs = [];
           const cru = processarCombate(null, { combate_iniciar: lista, __nivelJogador: personagem.nivel || 1, __temBonus: temAcaoBonus(personagem) }, msgs);
-          const eq = equiparCombate(cru, personagem);
-          const novo = eq.combate;
-          combateRef.current = novo; setCombate(novo);
-          const av = avaliarEncontro(novo.inimigos, personagem);
-          godLinha(`⚡ ${n}× ${nomeC} (${modelo.ameaca}) para um encontro ${faixa}.\n⚡ ${selo(av)} — peso ${av.ajustado} (bruto ${av.bruto} × ${av.mult}) vs capacidade ${av.capacidade}.`);
+          const abE = abrirCombate(cru.inimigos, { pers: personagem });
+          if (abE.pers !== personagem) { personagemRef.current = abE.pers; setPersonagem(abE.pers); }
+          godLinha(`⚡ ${n}× ${nomeC} (${modelo.ameaca}) para um encontro ${faixa}.`);
           if (msgs.length) pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
-          if (eq.msgs.length) pushMsgs(eq.msgs.map((t) => ({ autor: "sistema", texto: t })));
-          presencaNaLuta(novo, personagem);
+          if (abE.msgs.length) pushMsgs(abE.msgs.map((t) => ({ autor: "sistema", texto: t })));
           return true;
         }
         case "matar": {
@@ -5552,7 +5550,37 @@ export default function Taverna() {
 
        No lugar dele entra `resp.perigo`: a IA diz o que o MUNDO fez, e o
        sistema escolhe a salvaguarda, a dificuldade, o dano e a condição. */
-    try { if (resp.perigo) dispararPerigo(resp.perigo); } catch { /* perigo mal descrito nunca custa o turno */ }
+    /* ---------------- A OUTRA METADE DA BRIGA (v9.74) ----------------
+       O canal `perigo` servia só às armadilhas e aos elementos. Aqui entra
+       o outro tipo de perigo — o que tem vontade própria e vem em cima.
+
+       A divisão é a da casa: ELA diz que há hostilidade e de que tipo,
+       porque isso é cena; o SISTEMA decide o encontro, porque quantos são
+       e se aquilo cabe no herói da frente é conta, não ficção. Antes disto
+       ela mandava a lista inteira montada por conta própria e o sistema só
+       carimbava um selo depois do fato consumado — o selo descrevia, não
+       decidia, e seis ogros contra um herói de nível 2 eram anunciados
+       educadamente como "Encontro mortal". */
+    try {
+      if (resp.perigo && !combateRef.current) {
+        const emb = montarEmboscada(resp.perigo, { pers });
+        if (emb && emb.tipo === "emboscada") {
+          const ab = abrirCombate(emb.inimigos, { pers });
+          pers = ab.pers;
+          msgs.push(falaDaEmboscada(emb), ...ab.msgs);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${ab.nota}\n${envelopeDaEmboscada(emb)}`;
+          texturaRef.current = { ...texturaRef.current, luta: true, pilar: "combate" };
+        } else if (emb && emb.tipo === "desproporcional") {
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDesproporcional(emb)}`;
+        } else if (emb && emb.tipo === "semCriatura") {
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeSemCriatura()}`;
+        } else if (!emb) {
+          dispararPerigo(resp.perigo);
+        }
+      } else if (resp.perigo) {
+        dispararPerigo(resp.perigo);
+      }
+    } catch { /* perigo mal descrito nunca custa o turno */ }
     let rolagemFinal = null;
     if (rolagemFinal && (rolagemFinal.dificuldade != null || rolagemFinal.perfil)) {
       const attrT = ATRIBUTOS.find((x) => x.nome.toLowerCase() === (rolagemFinal.atributo || "").toLowerCase());
