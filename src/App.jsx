@@ -102,7 +102,7 @@ import { bonusDeBancada, componentesExtras, bonusDeNavegacao, despojosExtras, bo
 import { criarOficina, anotar as anotarOficina, bilheteDaOficina, OFICINA_PROMPT } from "./oficina.js";
 import { gatilhosDe, romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, devolverSegura, GATILHOS_PROMPT } from "./gatilhos.js";
 import { controleDe, aplicarControle, expirarControles, estaProvocando, CONTROLE_PROMPT } from "./controle.js";
-import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, expirarPorMinuto, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
+import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, expirarPorMinuto, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, temComandoAtacar, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
 import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, temRegraPropria, erguerGuarda, expirarGuardas, baixarGuardas, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, ignoraDoGolpe, linhaDoIgnorar, notaDoIgnorar, apressar, expirarPressa, baixarPressa, acoesPorRodada, HABILIDADES_PROMPT } from "./habilidades.js";
 import { agruparMensagens } from "./resumo.js";
 
@@ -8686,7 +8686,21 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        ("todas as invocações agem duas vezes neste turno") é o único
        tempero: roda o turno delas mais uma vez. */
     const jogadorCaido = persAtual.vida <= 0;
-    const acoesComp = turnoDosCompanheiros({ grupo: persAtual.grupo || [], inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome, jogador: persAtual, rodada: (combPos.rodada || 1), provocado: provocandoAgora });
+    /* ---------------- COMANDO: ATACAR (v9.85) ----------------
+       Achado na varredura de regras sem leitor. "Comando: Atacar" custa um
+       ponto no rank 2 e promete, desde sempre, "sua invocação ataca com
+       fúria redobrada" — e não tinha uma linha de código atrás. O leitor
+       dela (`temComandoAtacar`) estava escrito em invocacoes.js, ao lado
+       de três irmãos ligados, e nunca foi chamado por ninguém.
+
+       É a pior versão desse bug: o jogador PAGA por ela.
+
+       Fúria redobrada é vantagem no ataque, e não uma ação a mais — a ação
+       a mais já é a Voz de Comando, oito linhas abaixo, e duas habilidades
+       da mesma árvore que fazem a mesma coisa é pior que uma que não faz
+       nada. */
+    const comFuria = temComandoAtacar(persAtual) ? invocacoesDe(persAtual).map((g) => g.nome) : [];
+    const acoesComp = turnoDosCompanheiros({ grupo: persAtual.grupo || [], inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome, jogador: persAtual, rodada: (combPos.rodada || 1), provocado: provocandoAgora, comFuria });
     if (temVozDeComando(persAtual) && invocacoesDe(persAtual).length) {
       const soInvocadas = invocacoesDe(persAtual);
       const extra = turnoDosCompanheiros({ grupo: soInvocadas, inimigos: combPos.inimigos, jogadorCaido, jogadorNome: persAtual.nome, jogador: persAtual, rodada: (combPos.rodada || 1), provocado: provocandoAgora });

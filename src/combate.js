@@ -305,7 +305,13 @@ export function aplicarTesteMorte(estado, res) {
    COM VANTAGEM" — a primeira metade está no turno dos inimigos (ninguém olha
    para o companheiro); esta é a segunda, e sem ela metade da frase seria
    decoração. */
-export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido = false, jogadorNome = "", jogador = null, rodada = 1, provocado = false }) {
+/* `comFuria` (v9.85) é a lista de nomes que atacam com vantagem NESTE
+   turno, e existe porque "Comando: Atacar" precisa distinguir uma parte do
+   grupo do resto: o talento acelera as INVOCAÇÕES do herói, não os
+   companheiros de carne. `provocado` continua valendo para todos, que é o
+   que ele sempre significou. */
+export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido = false, jogadorNome = "", jogador = null, rodada = 1, provocado = false, comFuria = [] }) {
+  const furioso = (nome) => provocado || (comFuria || []).includes(nome);
   const vivos = (grupo || []).filter((g) => (g.vida || 0) > 0 && !g.morrendo);
   const acoes = [];
   for (const comp of vivos) {
@@ -338,7 +344,7 @@ export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido =
       const r = resolverAtaque({
         atacante: comp.nome, alvo, ehAtacanteInimigo: false,
         bonusAtaque: 2 + (comp.nivel || 1), danoBase: danoDaHabilidadeComp(comp, plano.habilidade),
-        condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [], vantagem: provocado,
+        condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [], vantagem: furioso(comp.nome),
         /* v9.21: mesmo conserto do lado do jogador — "magico" nao e um tipo
            de dano, e mandar isso fazia a habilidade do companheiro sair
            rotulada como fisica e passar por cima de toda resistencia. */
@@ -350,7 +356,7 @@ export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido =
     const r = resolverAtaque({
       atacante: comp.nome, alvo, ehAtacanteInimigo: false,
       bonusAtaque: 2 + (comp.nivel || 1), danoBase: 4 + (comp.nivel || 1) + bonusArmaComp + d(4),
-      condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [], vantagem: provocado,
+      condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [], vantagem: furioso(comp.nome),
       tipoDano: elementoDaArma(comp), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
     });
     acoes.push({ companheiro: comp.nome, tipo: "ataque", alvoNome: alvo.nome, r });

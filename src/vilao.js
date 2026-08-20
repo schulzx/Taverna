@@ -308,20 +308,33 @@ export function avancarPlano(v, { dia = 0, alvo = null } = {}) {
    inventa um alvo, pela mesma razão de sempre.
    ============================================================ */
 export const TIPOS_DE_ALVO = [
-  { custa: "gente", campo: "pessoas", diz: (x) => `${x}`, comoDoi: "alguém que você conhece" },
-  { custa: "lugar", campo: "lugares", diz: (x) => `${x}`, comoDoi: "um lugar que é seu" },
-  { custa: "voz", campo: "promessas", diz: (x) => `${x}`, comoDoi: "algo que você prometeu" },
+  { custa: "gente", campo: "pessoas", ordem: ["pessoas", "promessas", "lugares"], comoDoi: "alguém que você conhece" },
+  { custa: "lugar", campo: "lugares", ordem: ["lugares", "pessoas", "promessas"], comoDoi: "um lugar que é seu" },
+  { custa: "voz", campo: "promessas", ordem: ["promessas", "pessoas", "lugares"], comoDoi: "algo que você prometeu" },
 ];
+export const ORDEM_PADRAO = ["pessoas", "lugares", "promessas"];
+
+/* v9.85: esta função repetia a ordem À MÃO, num encadeado de ternários, e
+   nunca olhava para a tabela logo acima. A tabela ficou escrita e nunca
+   usada — e com ela o `comoDoi`, que é o campo que diz ao Mestre QUE
+   ESPÉCIE DE FERIDA aquele alvo é. O envelope mandava só o nome cru, e
+   "ele pôs a mão em Marta" e "ele pôs a mão em Vale Torto" chegavam à IA
+   sem nenhuma diferença de peso.
+
+   Achado pela varredura de regras sem leitor. É a mesma doença do
+   `m.ativa` e do `npcs[cidade].gente`, no estágio anterior: aqui a
+   tabela nem chegou a ser lida errado — nunca foi lida. */
+export function tipoDoAlvo(custa) { return TIPOS_DE_ALVO.find((t) => t.custa === custa) || null; }
 
 export function escolherAlvo(custa, ctx = {}, sorte = Math.random) {
-  const ordem = custa === "tudo" ? ["pessoas", "lugares", "promessas"]
-    : custa === "gente" ? ["pessoas", "promessas", "lugares"]
-      : custa === "lugar" ? ["lugares", "pessoas", "promessas"]
-        : custa === "voz" ? ["promessas", "pessoas", "lugares"]
-          : ["pessoas", "lugares", "promessas"];
+  const t = tipoDoAlvo(custa);
+  const ordem = t ? t.ordem : ORDEM_PADRAO;
   for (const campo of ordem) {
     const lista = (ctx[campo] || []).filter(Boolean);
-    if (lista.length) return { campo, nome: String(lista[Math.floor(sorte() * lista.length)]) };
+    if (lista.length) {
+      const t2 = TIPOS_DE_ALVO.find((x) => x.campo === campo);
+      return { campo, nome: String(lista[Math.floor(sorte() * lista.length)]), comoDoi: t2 ? t2.comoDoi : "" };
+    }
   }
   return null;
 }
@@ -355,7 +368,11 @@ export function linhaDoAvanco(r) {
 export function envelopeDoAvanco(r) {
   if (!r || !r.vilao) return "";
   const v = r.vilao;
-  const alvo = r.alvo ? ` Desta vez ele pôs a mão em: ${r.alvo.nome}.` : "";
+  /* v9.85: o `comoDoi` entra aqui, que é o lugar para o qual ele foi
+     escrito. Sem ele o envelope mandava um nome cru, e a IA não tinha como
+     saber se aquilo era gente, chão ou palavra dada — três feridas de
+     tamanhos muito diferentes. */
+  const alvo = r.alvo ? ` Desta vez ele pôs a mão em ${r.alvo.comoDoi ? r.alvo.comoDoi + ": " : ""}${r.alvo.nome}.` : "";
   const passo = `O que ele fez agora: ${r.passo.diz}.`;
 
   if (v.fase === "rumor") {

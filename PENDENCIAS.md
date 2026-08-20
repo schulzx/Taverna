@@ -1840,6 +1840,88 @@ cânone. O capítulo anterior fica registrado com o vilão que o fechou.
   gerar outro — e sem nenhuma relação com o primeiro, quando a relação é
   justamente o que faz uma campanha ter capítulos em vez de sessões.
 
+## O Bibliotecário, e a varredura que ele trouxe — v9.85
+
+"E se criarmos um sistema treinado em histórias? Ele seria uma base de
+consulta do mestre. E temos que ter certeza que todos os sistemas estão
+ligados ao mestre, pois para ele tocar o mundo ele tem que ter controle
+sobre o mundo."
+
+- **~~O mestre sabia O QUÊ e não sabia COMO.~~** RESOLVIDO. Ele escolhia
+  bem qual fio puxar — o relógio quase cheio, a promessa aberta, o passo
+  do vilão — e o envelope pedia sempre a mesma coisa: *"traga isto à cena
+  em duas ou três frases"*.
+
+  Pedido igual todo turno recebe resposta igual todo turno. **A repetição
+  do narrador nunca foi falta de temperatura**: subir a temperatura fez a
+  IA variar as palavras, e o que se repetia era a jogada.
+
+  A estante tem **37 formas** e cada uma tem um `quando`, que é o que faz
+  disto uma consulta de mestre e não um sorteio: a cortesia do inimigo só
+  abre da fase da mão em diante, o espelho exige que ele já tenha
+  mostrado o rosto, em brasa não se respira e em combate não se planta.
+  Sem antagonista nenhuma forma do "outro lado" abre — pedir a forma do
+  inimigo quando não há inimigo é pedir à IA que invente um.
+
+  **Custa zero token por turno.** Fala só dentro de um envelope que já ia
+  ser enviado. E o nome da jogada não viaja: sobe a forma, nunca a
+  etiqueta — uma IA que sabe que está fazendo "o mensageiro" escreve o
+  mensageiro genérico que ela já viu mil vezes.
+
+### A varredura
+
+Em vez de ler tudo procurando desligamento, a pergunta virou mecânica:
+**quantas vezes cada `export` aparece em todo o código e em todas as
+provas?** Uma ocorrência é a definição — se não há segunda, a regra foi
+escrita e nunca chamada.
+
+**1508 regras, 0 módulos mudos, 26 sem leitor.** Duas eram regra de jogo:
+
+- **~~"Comando: Atacar" era comprável e inerte.~~** RESOLVIDO. Custa um
+  ponto no rank 2 e promete "sua invocação ataca com fúria redobrada". O
+  leitor dela (`temComandoAtacar`) estava escrito em invocacoes.js, ao
+  lado de três irmãos ligados, e **ninguém o chamava**. É a pior versão
+  do bug desta casa: o jogador PAGA por ela.
+
+  Fúria redobrada virou vantagem no ataque, e não uma ação a mais — a
+  ação a mais já é a Voz de Comando, oito linhas abaixo, e duas
+  habilidades da mesma árvore fazendo a mesma coisa é pior que uma que
+  não faz nada.
+
+- **~~`TIPOS_DE_ALVO` nunca foi lida.~~** RESOLVIDO. `escolherAlvo`
+  repetia a ordem à mão num encadeado de ternários e nunca olhava para a
+  tabela logo acima. Com ela ficou morto o `comoDoi`, que diz **que
+  espécie de ferida** o alvo é: o envelope mandava um nome cru, e "ele
+  pôs a mão em Marta" e "ele pôs a mão em Vale Torto" chegavam à IA com o
+  mesmo peso.
+
+### A catraca
+
+Ter certeza uma vez não serve. A varredura virou suíte, com a lista do
+que já se sabe morto **congelada com o motivo de cada perdão** — e ela
+anda nos dois sentidos: uma regra nova sem leitor quebra a suíte no dia
+em que nasce, e um perdão que ganhou leitor tem de sair da lista, senão
+ela cresce e vira decoração.
+
+### O que fica aberto aqui
+
+- **O gerador de nêmese antigo continua em fama.js.** `gerarNemesis`,
+  `LIMIARES_NEMESIS` e `ACOES_NEMESIS` foram substituídos pelo vilão na
+  v9.83 e ninguém os chama. Estão perdoados na catraca com o motivo
+  escrito, mas dois sistemas de antagonista no mesmo repositório é uma
+  armadilha para quem for mexer nisso depois. O mesmo vale para
+  `decaimentoFe` em divindades.js, duplicata da míngua que devocao.js já
+  roda todo dia.
+
+- **A estante não consulta o histórico da campanha.** Três formas
+  (`rosto_conhecido`, `espelho`, `eco`) dependem de haver passado, e hoje
+  quem decide se há é a IA — o `evite` manda escolher outra forma se não
+  houver. O mestre poderia saber disso e não oferecer a forma.
+
+- **A forma não chega ao turno comum.** O Bibliotecário só fala nos três
+  envelopes de iniciativa. A cena normal — a maior parte dos turnos —
+  continua sem forma nenhuma, e é onde a repetição mais aparece.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na
