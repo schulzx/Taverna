@@ -51,7 +51,7 @@ import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidat
 import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, perguntarPeloSistema, envelopeDaPerguntaDoSistema, linhaDaPerguntaDoSistema, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
 import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao, TURNO_PROMPT } from "./turno.js";
 import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobrancaNegada } from "./cobranca.js";
-import { lerPoder, falaDoPoder, envelopeDoPoder } from "./poderes.js";
+import { lerPoder, lerConsumo, falaDoPoder, envelopeDoPoder } from "./poderes.js";
 import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, conferirLista, falaDaListaAparada, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "./emboscada.js";
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo } from "./agressao.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
@@ -7745,7 +7745,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       texto: acao,
       ehComando: acao.startsWith("/"),
       temEscolhaPendente: !!escolhaPendenteRef.current,
-      declarouPoderQueNaoTem: ler(() => !!lerPoder(acao, fichaViva() || personagem)),
+      declarouPoderQueNaoTem: ler(() => !!lerPoder(acao, fichaViva() || personagem, { desconto: descontoDePM(fichaViva() || personagem) })),
+      vaiConsumir: ler(() => { const c = lerConsumo(acao, fichaViva() || personagem); return !!(c && c.tipo === "consumir"); }),
       ehConjuracao: ler(() => magiaDeFuncaoNaAcao(acao)),
       ehPortal: ler(() => magiaDePortalNaAcao(acao)),
       ehEntradaEmMasmorra: ler(() => detectarEntradaEmMasmorra(acao, ctxDoRastro())),
@@ -7839,6 +7840,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          responde uma de cinco coisas — rola, não precisa rolar, não dá desse
          jeito, você já tentou, ou aqui já foi vasculhado. */
       if (faz === "poder") return recusarPoder(acao);
+      if (faz === "consumir") return beberDaBolsa(acao);
       if (faz === "agressao") return declararAgressao(acao);
       if (faz === "desafio") return adjudicarAcao(acao);
       /* ORÁCULO (v9.24): pergunta FECHADA sobre o que o mundo ainda não
@@ -9826,7 +9828,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      JÁ ESTÁ narrando por outro motivo é que o aviso viaja junto. */
   const recusarPoder = (acao) => {
     const p = fichaViva() || personagem;
-    const v = lerPoder(acao, p);
+    const v = lerPoder(acao, p, { desconto: descontoDePM(p) });
     if (!v) return false;
     pushMsgs([
       { autor: "jogador", texto: acao },
@@ -9835,6 +9837,37 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* o Mestre fica sabendo mesmo sem ser chamado agora: se a cena seguinte
        tocar no assunto, ele já não trata o poder como existente */
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoPoder(v, acao)}`;
+    return true;
+  };
+
+  /* ---------------- O FRASCO QUE ESTÁ NA BOLSA (v9.78) ----------------
+     A irmã positiva da recusa acima, e a que corrigia o buraco mais antigo
+     dos dois. `usarConsumivelUI` existe desde sempre — rola o dado da
+     poção, aplica na ficha, tira o frasco da bolsa e salva. Só que era
+     alcançável apenas pelo BOTÃO do painel. Quem escrevia "bebo a poção de
+     cura" caía na cena, e a IA narrava a cura: o herói ficava curado na
+     ficção, com a poção intacta na bolsa e os PV intactos na ficha.
+
+     O mesmo bug de sempre — uma regra morando num só de dois caminhos —,
+     aqui na forma mais cara que ele tem: o painel obedecia à economia e o
+     teclado dava o efeito de graça. */
+  const beberDaBolsa = (acao) => {
+    const p = fichaViva() || personagem;
+    const c = lerConsumo(acao, p);
+    if (!c || c.tipo !== "consumir") return false;
+    pushMsgs([{ autor: "jogador", texto: acao }]);
+    const antes = (p.inventario || []).length;
+    usarConsumivelUI(c.item);
+    /* o `usarConsumivelUI` recusa em silêncio o que seria desperdício —
+       poção de cura com a vida cheia, tocha fora da masmorra. Quando ele
+       recusa, a bolsa não muda, e aí o turno não é nosso: devolve para a
+       cascata, que leva a frase ao Mestre como qualquer outra. */
+    const agora = fichaViva() || p;
+    if (((agora.inventario) || []).length === antes) return false;
+    /* e o envelope não é meu: `usarConsumivelUI` já escreveu o dele, com o
+       número que rolou. Escrever um segundo faria o Mestre ler duas ordens
+       sobre a mesma poção. */
+    enviar(acao, agora);
     return true;
   };
 
@@ -12138,6 +12171,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if ((cons.remove || []).includes("exausto")) {
       acordouAbsRef.current = absMin() - Math.round((HORAS_AVISO_SONO - 4) * 60);
     }
+    /* v9.78: O REF ACOMPANHA O ESTADO. Esta linha faltava, e o furo não era
+       só do caminho novo: quem clicava "usar" no painel e agia em seguida
+       mandava ao Mestre uma ficha ANTERIOR à poção — o `enviar` monta o
+       turno a partir de `fichaViva()`, que lê o ref. A poção aparecia na
+       tela, o `salvar({ personagem: p })` daqui guardava certo, e o
+       salvamento do turno seguinte, montado sobre a ficha velha, desfazia
+       tudo: os PV voltavam e o frasco reaparecia na bolsa. */
+    personagemRef.current = p;
     setPersonagem(p);
     pushMsgs([{ autor: "sistema", texto: r.texto }]);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONSUMÍVEL — JÁ APLICADO PELO SISTEMA] Usei ${cons.nome}. ${r.texto.replace(/^[^ ]+ /, "")}. O número já foi rolado e aplicado: narre o gesto e o efeito em UMA frase, junto do resto do turno, sem recalcular e sem me devolver PV/PM. ${comb ? "Abrir a bolsa NÃO gastou meu turno — a ação que vem a seguir é que é o meu turno; narre as duas coisas como uma sequência só." : ""}`;

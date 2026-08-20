@@ -1403,6 +1403,62 @@ contradições que ele custou estavam no prompt havia versões:
 Também compactado o bloco de DIVERSIDADE VIVA sem tirar nenhuma das
 exigências dele — só o rodeio.
 
+## Ter não é poder usar — v9.78
+
+A v9.76 fechou "não tenho". Faltavam os dois degraus seguintes, e os dois
+são tão comuns quanto o primeiro.
+
+- **~~TER a habilidade e não ter com que pagá-la.~~** RESOLVIDO. O herói
+  sabe a magia, escreve o nome, e o sistema deixava passar porque o nome
+  está na ficha — sem olhar os PM nem a recarga.
+
+  O painel de habilidades sempre soube disso: desenha a magia apagada
+  quando falta mana e mostra o contador da recarga. Só que **o painel é um
+  caminho e o teclado é outro**, e toda regra que mora num só de dois vira
+  bug — quem clicava obedecia à economia, quem digitava o mesmo nome não
+  pagava nada. Medido em jogo: "uso Reescrever o Instante" com 6 PM
+  responde "custa 8 PM e você tem 6". O desconto de PM das dádivas entra
+  na conta, ou o teclado voltaria a discordar do painel, agora para o lado
+  severo.
+
+- **~~"Bebo a poção de cura" curava sem gastar a poção.~~** RESOLVIDO, e
+  este era o buraco mais antigo dos três: `usarConsumivelUI` existe desde
+  sempre — rola o dado do frasco, aplica na ficha, tira o item da bolsa e
+  salva —, **mas só era alcançável pelo botão**. Quem escrevia a mesma
+  frase caía na cena, e a IA narrava a cura: o herói ficava curado na
+  ficção, com a poção intacta na bolsa e os PV intactos na ficha.
+
+  Aqui a resposta boa é a positiva: com o frasco na bolsa o sistema BEBE
+  de verdade, pelo mesmo código do botão. Sem o frasco, recusa. Medido:
+  PV 1 → 6, dois itens viram um; a segunda tentativa responde "você não
+  tem Poção de Cura Pequena na bolsa".
+
+- **~~E o ref da ficha não acompanhava o consumível.~~** RESOLVIDO, e é o
+  achado que a prova em jogo entregou de brinde: `usarConsumivelUI` fazia
+  `setPersonagem(p)` sem `personagemRef.current = p`. **O furo não era do
+  caminho novo — era do botão.** Quem clicava "usar" no painel e agia em
+  seguida mandava ao Mestre uma ficha ANTERIOR à poção, porque o `enviar`
+  monta o turno a partir de `fichaViva()`, que lê o ref. A poção aparecia
+  na tela, o save daquele instante guardava certo, e o salvamento do turno
+  seguinte — montado sobre a ficha velha — desfazia tudo: os PV voltavam e
+  o frasco reaparecia na bolsa.
+
+### O que fica aberto aqui
+
+- **Digitar o nome de uma habilidade que você TEM ainda não a executa.**
+  O sistema já recusa quando falta PM ou recarga, mas quando sobra, a
+  frase vai para a IA e nada é cobrado: nem os PM, nem a recarga, nem o
+  efeito de regra. É o gêmeo positivo do que a poção acabou de ganhar, e
+  o caminho é o mesmo — só que o do painel resolve várias habilidades
+  selecionadas de uma vez, com ordem e custo, e apontar o teclado para
+  ele exige cuidado maior que o do frasco.
+
+- **A bolsa só é conferida para CONSUMÍVEIS.** "Saco a espada élfica" ou
+  "uso a corda" continuam passando sem que o sistema olhe o inventário, e
+  é de propósito por enquanto: equipamento comum não tem catálogo fechado
+  como as poções, e recusar "uso a corda" por não achar uma corda seria
+  transformar cada objeto plausível de mochila num erro.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

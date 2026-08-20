@@ -54,6 +54,9 @@ export function garantirSinais(s) {
     /* v9.76: o jogador nomeou um poder que existe no jogo e nao esta na
        ficha dele, ou reivindicou um estado que o sistema nao concedeu. */
     declarouPoderQueNaoTem: b("declarouPoderQueNaoTem"),
+    /* v9.78: o frasco ESTÁ na bolsa. Aqui não há recusa: quem bebe é o
+       sistema, com o mesmo código do botão do painel. */
+    vaiConsumir: b("vaiConsumir"),
     ehConjuracao: b("ehConjuracao"),
     ehPortal: b("ehPortal"),
     ehEntradaEmMasmorra: b("ehEntradaEmMasmorra"),
@@ -140,6 +143,19 @@ export const PORTAS_DO_TURNO = [
     fase: "atalho", faz: "poder", seRecusar: "seguinte",
     quando: (s) => s.declarouPoderQueNaoTem,
     porque: "a ficha é a única fonte do que o herói pode fazer, e conferi-la antes de a cena existir é o que impede o jogo inteiro de ser obtido escrevendo o nome",
+  },
+  {
+    /* O FRASCO QUE ESTÁ NA BOLSA (v9.78). A irmã positiva da porta acima, e
+       a que corrigia o buraco mais antigo dos dois: `usarConsumivelUI`
+       existe desde sempre — rola o dado da poção, aplica, tira o frasco da
+       bolsa e salva —, mas só era alcançável pelo BOTÃO. Quem escrevia
+       "bebo a poção de cura" caía na cena, e a IA narrava a cura: o herói
+       ficava curado na ficção, com a poção ainda na bolsa e os PV intactos
+       na ficha. */
+    id: "consumir", rotulo: "Consumível da bolsa", intercepta: true,
+    fase: "atalho", faz: "consumir", seRecusar: "seguinte",
+    quando: (s) => s.vaiConsumir,
+    porque: "beber uma poção é a coisa mais mecânica que existe — dado, efeito e um item a menos —, e deixá-la na ficção fazia a cura acontecer sem sair da bolsa",
   },
   {
     id: "conjurar", rotulo: "Magia nomeada da ficha", intercepta: true,

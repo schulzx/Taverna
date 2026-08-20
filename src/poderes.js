@@ -52,6 +52,7 @@
    ============================================================ */
 
 import { MAGIAS } from "./grimorio.js";
+import { CONSUMIVEIS, comoConsumivel } from "./pocoes.js";
 import { CLASSES } from "./classes.js";
 import { estaInvisivel } from "./gatilhos.js";
 
@@ -197,14 +198,116 @@ export function estadoReclamado(texto, pers) {
 }
 
 /* ============================================================
+   O QUE CUSTA (v9.78) — ter não é poder usar
+
+   A v9.76 fechou "não tenho". Faltava o degrau seguinte, e ele é tão
+   comum quanto: TER a habilidade e não ter com que pagá-la. O herói
+   sabe a magia, escreve o nome, e o sistema deixa passar porque o nome
+   está na ficha — sem olhar os PM nem a recarga.
+
+   O painel de habilidades sempre soube disso: ele desenha a magia
+   apagada quando falta mana e mostra o contador da recarga. Só que o
+   painel é um caminho, e o TECLADO é outro — e toda regra que mora num
+   só de dois caminhos vira bug. Quem clicava no painel obedecia à
+   economia; quem digitava o mesmo nome não pagava nada.
+   ============================================================ */
+export function entradaNaFicha(pers, nome) {
+  const alvo = norm(nome);
+  for (const l of [(pers && pers.habilidades) || [], (pers && pers.preparadas) || []]) {
+    for (const h of l) {
+      const n = typeof h === "string" ? h : (h && h.nome);
+      if (n && norm(n) === alvo) return typeof h === "string" ? { nome: n, custo: 0 } : h;
+    }
+  }
+  return null;
+}
+
+export function faltaRecurso(pers, entrada, { desconto = 0 } = {}) {
+  if (!entrada) return null;
+  const custo = Math.max(0, (Number(entrada.custo) || 0) - (Number(desconto) || 0));
+  const rec = ((pers && pers.habRecarga) || {})[norm(entrada.nome)] || 0;
+  if (rec > 0) return { tipo: "recarregando", nome: entrada.nome, turnos: rec };
+  const mana = Number((pers && pers.mana)) || 0;
+  if (custo > 0 && mana < custo) return { tipo: "semMana", nome: entrada.nome, custo, tenho: mana };
+  return null;
+}
+
+/* ============================================================
+   A BOLSA TAMBÉM É FICHA
+
+   "Bebo a poção de cura" tinha o mesmo buraco da invisibilidade, e com
+   uma diferença que o torna pior: aqui o sistema JÁ SABIA fazer a coisa
+   certa. `usarConsumivelUI` existe desde sempre — rola o dado da poção,
+   aplica, tira o frasco da bolsa e salva. Só que ele só era alcançável
+   pelo BOTÃO. Quem escrevia a mesma frase caía na cena, e a IA narrava
+   a cura: o herói ficava curado na ficção, com a poção ainda na bolsa e
+   os PV intactos na ficha.
+
+   Então aqui há duas respostas, e a boa é a positiva: se o frasco está
+   na bolsa, o sistema BEBE de verdade. Se não está, recusa.
+   ============================================================ */
+export const RX_CONSUMIR = /\b(bebo|beber|tomo|tomar|engulo|engolir|viro|virar|estouro|aplico|aplicar|uso|usar|mastigo|passo)\b/;
+
+export function consumivelDeclarado(texto) {
+  const t = norm(texto);
+  if (!t || !RX_CONSUMIR.test(t)) return null;
+  /* o nome mais longo ganha: "poção de cura grande" não pode perder para
+     "poção de cura". E o catálogo resolve o nome vago sozinho — quem
+     escreve "bebo uma poção de cura" recebe a Pequena, que é o palpite
+     conservador de `comoConsumivel`. */
+  let achado = null;
+  for (const c of CONSUMIVEIS) {
+    const n = norm(c.nome);
+    if (t.includes(n) && (!achado || n.length > norm(achado.nome).length)) achado = c;
+  }
+  if (achado) return achado;
+  /* e a forma vaga: "bebo uma poção de cura", "tomo o antídoto" */
+  const m = t.match(/\b((?:po[cç][aã]o|frasco|elixir|antidoto|atadura|bandagem|curativo)[^.,;!?]{0,28})/);
+  return m ? comoConsumivel(m[1]) : null;
+}
+
+/* O NOME COMO ELE ESTÁ NA BOLSA — é esse que `usarConsumivelUI` espera,
+   e é por isso que não basta devolver o nome do catálogo: a bolsa pode
+   guardar o item por id, e o botão do painel passa o rótulo dela. */
+export function naBolsa(pers, cons) {
+  if (!cons) return null;
+  for (const raw of ((pers && pers.inventario) || [])) {
+    const c = comoConsumivel(raw);
+    if (c && c.id === cons.id) return typeof raw === "string" ? raw : (raw && raw.nome) || cons.nome;
+  }
+  return null;
+}
+
+export function lerConsumo(texto, pers) {
+  const cons = consumivelDeclarado(texto);
+  if (!cons) return null;
+  const naMao = naBolsa(pers, cons);
+  if (naMao) return { tipo: "consumir", cons, item: naMao };
+  return { tipo: "semItem", nome: cons.nome, icone: cons.icone || "🧪" };
+}
+
+/* ============================================================
    O VEREDICTO
    ============================================================ */
-export function lerPoder(texto, pers) {
+export function lerPoder(texto, pers, { desconto = 0 } = {}) {
   const est = estadoReclamado(texto, pers);
-  if (est) return { tipo: "estadoQueNaoTenho", ...est };
+  /* o `tipo` vem DEPOIS do espalhamento: o veredicto de dentro traz um
+     `tipo` próprio ("semMana", "semItem") e sobrescrevia o de fora, e as
+     recusas voltavam mudas — a fala e o envelope não reconheciam mais o
+     caso. Um bug de uma linha que apaga uma peça inteira em silêncio. */
+  if (est) return { ...est, tipo: "estadoQueNaoTenho" };
+  /* a bolsa antes do catálogo de poderes: "uso a poção de cura" casa os
+     dois leitores, e quem manda sobre um frasco é a bolsa */
+  const con = lerConsumo(texto, pers);
+  if (con && con.tipo === "semItem") return { ...con, tipo: "itemQueNaoTenho" };
+  if (con) return null;                         // tem o frasco: quem age é o App
   const pod = poderDeclarado(texto);
   if (!pod) return null;
-  if (temOPoder(pers, pod.nome)) return null;   // tem: segue o baile
+  if (temOPoder(pers, pod.nome)) {
+    /* TEM — e agora a pergunta seguinte: tem com que pagar? */
+    const falta = faltaRecurso(pers, entradaNaFicha(pers, pod.nome), { desconto });
+    return falta ? { ...falta, tipo: "semRecurso", motivo: falta.tipo } : null;
+  }
   return {
     tipo: "poderQueNaoTenho",
     nome: pod.nome, categoria: pod.tipo,
@@ -225,6 +328,12 @@ export function falaDoPoder(v) {
     return `⛔ Você não tem ${v.nome}. ${comoSeTem}`;
   }
   if (v.tipo === "estadoQueNaoTenho") return `⛔ Você não está ${v.diz}. Isso não é uma coisa que se declare — é efeito, e efeito vem de um poder que está na sua ficha.`;
+  if (v.tipo === "itemQueNaoTenho") return `⛔ Você não tem ${v.icone} ${v.nome} na bolsa.`;
+  if (v.tipo === "semRecurso") {
+    return v.turnos
+      ? `⛔ ${v.nome} ainda está recarregando — faltam ${v.turnos} turno${v.turnos === 1 ? "" : "s"}.`
+      : `⛔ ${v.nome} custa ${v.custo} PM e você tem ${v.tenho}.`;
+  }
   return "";
 }
 
@@ -240,6 +349,18 @@ export function envelopeDoPoder(v, oQueEuDisse = "") {
 REGRA DESTE ENVELOPE (obrigatória): nada disso aconteceu. Narre o que acontece de verdade — eu tentei, ou pensei em tentar, e não sai nada; ou simplesmente descreva a cena seguindo do ponto em que ela estava. NÃO narre o efeito, NÃO diga que funcionou "por um instante", NÃO invente uma versão fraca dele e NÃO me dê o poder como dádiva, revelação ou surpresa.
 E não me explique a regra: mostre pela ficção. Eu já sei o que não tenho.`;
   }
+  if (v.tipo === "itemQueNaoTenho") {
+    return `[RECUSADO PELO SISTEMA — NÃO ESTÁ NA MINHA BOLSA] Eu disse: "${dito}". ${v.nome} existe neste mundo, mas eu não carrego nenhum agora — o sistema conferiu o inventário.
+REGRA DESTE ENVELOPE (obrigatória): nada foi bebido, aplicado nem gasto. NÃO me cure, NÃO invente um frasco esquecido no fundo da bolsa e NÃO faça um companheiro "ter um sobrando". Se a cena pedia aquilo, o que ela ganha agora é o peso de não ter.`;
+  }
+  if (v.tipo === "semRecurso") {
+    return v.turnos
+      ? `[RECUSADO PELO SISTEMA — AINDA RECARREGANDO] Eu disse: "${dito}". Eu TENHO ${v.nome}, mas ela ainda está recarregando: faltam ${v.turnos} turno${v.turnos === 1 ? "" : "s"}.
+REGRA DESTE ENVELOPE (obrigatória): não saiu. Narre o gesto que não completa — a palavra que morre na boca, a mão que se fecha sem nada dentro — e siga. NÃO deixe funcionar "mais fraco" e NÃO adiante a recarga.`
+      : `[RECUSADO PELO SISTEMA — SEM RECURSO] Eu disse: "${dito}". Eu TENHO ${v.nome}, mas ela custa ${v.custo} PM e eu estou com ${v.tenho}.
+REGRA DESTE ENVELOPE (obrigatória): não saiu, e não sai de graça. Narre o esforço que não fecha — o cansaço, o vazio onde havia poder — e siga. NÃO cobre um preço alternativo em sangue ou em vida, NÃO deixe sair pela metade e NÃO me dê o efeito "só desta vez": quem decide o preço é o sistema, e ele já decidiu.`;
+  }
   return `[RECUSADO PELO SISTEMA — EU NÃO ESTOU ASSIM] Eu disse: "${dito}", e isso supõe que eu esteja ${v.diz}. Não estou: o sistema não registra esse efeito em mim agora, e estado não se cria dizendo que se tem.
 REGRA DESTE ENVELOPE (obrigatória): narre a cena SEM esse estado. O que eu tentei fazer, eu tentei à vista de todos — com as consequências que isso tem. NÃO me trate como ${v.diz}, NÃO diga que eu "quase" consegui e NÃO deixe passar "só desta vez".`;
 }
+
