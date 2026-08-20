@@ -247,7 +247,13 @@ export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = nu
     const fortes = pool.filter((p) => p.forte);
     const usados = new Set();
     for (let i = 0; i < degrau.quantos; i++) {
-      const de = (i === 0 && degrau.forte && fortes.length ? fortes : pool).filter((p) => !usados.has(p.id));
+      /* v9.81: no LENDÁRIO os dois são fortes. O épico compra "dois, e um
+         deles pesa"; o lendário não pode sair com um traço menor no
+         segundo lugar — "Passo Largo + Passo Leve" numa peça de lenda lê
+         como um item bom com um enfeite ao lado. Onde o slot não tiver
+         dois fortes, cai no resto e ninguém fica sem poder. */
+      const soForte = degrau.forte && (i === 0 || tier >= 4);
+      const de = (soForte && fortes.length ? fortes : pool).filter((p) => !usados.has(p.id));
       if (!de.length) break;
       const p = pickL(de);
       usados.add(p.id);
@@ -256,7 +262,12 @@ export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = nu
          `bonusEquip` já os soma há versões. Manter uma segunda soma só
          para itens seria criar a régua dupla que este arquivo evita. */
       for (const [k, v] of Object.entries(p.efeito || {})) {
-        if (EFEITOS_DE_ATRIBUTO.includes(k)) atributos[k] = (atributos[k] || 0) + Number(v || 0);
+        if (EFEITOS_DE_ATRIBUTO.includes(k)) { atributos[k] = (atributos[k] || 0) + Number(v || 0); continue; }
+        /* v9.81: e os dois que também moram em `atributos` sem serem
+           atributo — `danos.js` lê a resistência e o tipo elemental direto
+           do item equipado, e sempre leu. */
+        if (k === "resist") atributos.resist = [...new Set([...(atributos.resist || []), ...(Array.isArray(v) ? v : [v])])];
+        else if (k === "elemento") atributos.elemento = v;
       }
     }
   }

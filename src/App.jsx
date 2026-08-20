@@ -93,7 +93,7 @@ import { aplicarNivel, evoluirCompanheiro, aplicarDescanso, recargaPadrao, aplic
 import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, consumirDia, RITMOS_VIAGEM, ritmoViagem, marchaForcada, testarNavegacao, forragear, efeitoExaustao, recuperarExaustao, resumoErmos } from "./ermos.js";
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, sortearDadiva, resumoEpico } from "./regras.js";
 import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, processarDiaCorreio } from "./correio.js";
-import { gerarDadivaUnica, envelopeDaUnica, todasAsLinhas as linhasDeDadivas, ataquesExtras, danoExtraDeDadiva, descontoDePM, bonusSocialDeDadiva, temVantagemMental, dobraMovimento, ignoraTerrenoDificil, criticoMinimo, imuneA, refazerDisponivel, gastarRefazer, repousarDadivas, segundoFolegoDisponivel, gastarSegundoFolego, resumoDadivasPrompt, DADIVAS_PROMPT } from "./dadivas.js";
+import { gerarDadivaUnica, envelopeDaUnica, todasAsLinhas as linhasDeDadivas, ataquesExtras, danoExtraDeDadiva, descontoDePM, bonusSocialDeDadiva, temVantagemMental, dobraMovimento, ignoraTerrenoDificil, criticoMinimo, imuneA, vantagemDeItem, iniciativaDeItem, refazerDisponivel, gastarRefazer, repousarDadivas, segundoFolegoDisponivel, gastarSegundoFolego, resumoDadivasPrompt, DADIVAS_PROMPT } from "./dadivas.js";
 import { comDom, vantagemDeTraco, vantagemMentalDeTraco, imuneDeTraco, iniciativaDeTraco, ignoraDificilPorTraco, oficioDeTraco, refazerDeTracoDisponivel, gastarRefazerDeTraco, sorteDisponivel, gastarSorte, firmeDisponivel, gastarFirme, repousarTracos, abrirCombateTracos, amortecerDano, textoDoTraco, resumoTracosPrompt } from "./tracos.js";
 import { bonusDeBancada, componentesExtras, bonusDeNavegacao, despojosExtras, bonusDeTeste, precoDeVenda, precoDeCompraPara, moedasDeEspolio, resumoProfissaoPrompt } from "./profissoes.js";
 import { criarOficina, anotar as anotarOficina, bilheteDaOficina, OFICINA_PROMPT } from "./oficina.js";
@@ -2989,7 +2989,7 @@ export default function Taverna() {
     inimigos.filter((e) => e.gdPeloSistema).forEach((e) => msgs.push(`✦ O sistema reconheceu ${e.nome} como divindade de GD ${e.gd} — Regra do Degrau em vigor.`));
     const g = montarGrid(pers, inimigos);
     const ordem = rolarIniciativa([
-      { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") + iniciativaDeTraco(pers) },
+      { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") + iniciativaDeTraco(pers) + iniciativaDeItem(pers) },
       ...(pers.grupo || []).map((g2) => ({ nome: g2.nome, lado: "aliado", modDestreza: 1 })),
       ...g.inimigos.map((e) => ({ nome: e.nome, lado: "inimigo", modDestreza: e.agil ? 2 : 0 })),
     ]);
@@ -10035,6 +10035,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         vant = true; porVantagem = temVantagemMental(p2) ? "Vontade de Ferro" : textoDoTraco(p2).split(":")[0];
       } else if (vantagemDeTraco(p2, v.atributo)) {
         porVantagem = textoDoTraco(p2).split(":")[0];
+        if (desv) { desv = false; porVantagem += " (anula a desvantagem)"; } else vant = true;
+      } else if (vantagemDeItem(p2, v.atributo)) {
+        /* v9.81: e o EQUIPAMENTO também dá vantagem. Sem esta linha, um poder
+           de item que promete "os dedos acham a fechadura antes do olho"
+           seria mais um campo sem leitor — o defeito exato que a v9.80 veio
+           consertar, reaberto na peça que veio consertá-lo. */
+        porVantagem = "o que você carrega";
         if (desv) { desv = false; porVantagem += " (anula a desvantagem)"; } else vant = true;
       }
     }

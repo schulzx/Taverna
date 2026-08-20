@@ -1554,6 +1554,61 @@ não faz diferença qual item eu uso"*.
   jogador já conquistou — e a forja existe justamente para trocar o
   velho pelo novo.
 
+## O arsenal — v9.81
+
+"Prossiga com novas entradas para termos um arsenal gigante e
+diversificado." A tabela tinha vinte poderes para sete slots, e o limite
+**não era falta de ideia: era falta de CAMPO**. Com nove campos de efeito
+lidos, dois épicos do mesmo slot saíam iguais — e "item lendário tem de
+ser lendário" não se sustenta se todos os lendários forem o mesmo item
+com outro nome.
+
+Então a paleta veio primeiro, e ela é a parte que importa. **Cinco campos
+novos, e nenhum inventado** — cada um se pendurou num gancho que já
+existia:
+
+- `imunidades` → `imuneA`, que já servia às dádivas. O elmo que não deixa
+  o medo entrar passa a valer tanto quanto a dádiva que faz o mesmo.
+- `vantagem` → leitor novo (`vantagemDeItem`), pendurado no mesmo ponto
+  onde a vantagem racial já entrava, dentro de `rolarDesafio`.
+- `iniciativa` → leitor novo, somado onde `iniciativaDeTraco` já era.
+- `resist` e `elemento` → **não ganharam leitor**: são dobrados em
+  `atributos`, porque `danos.js` lê os dois de lá desde sempre. Dobrar em
+  vez de criar leitor é a mesma escolha de sempre — a pergunta já tinha
+  dono.
+
+Com isso a tabela foi de 20 para **62 poderes**, todo slot com pelo menos
+sete e cada degrau com escolha de sobra. Entram famílias inteiras que
+antes não cabiam: os seis elementos de arma, as sete resistências, as
+imunidades a condição (medo, atordoamento, veneno, sangramento, queda,
+encantamento) e as vantagens por atributo.
+
+- **E no lendário os DOIS poderes são fortes.** O épico compra "dois, e um
+  deles pesa"; o lendário não podia sair com um traço menor no segundo
+  lugar — "Passo Largo + Passo Leve" numa peça de lenda lê como um item
+  bom com um enfeite ao lado. Onde o slot não tiver dois fortes, cai no
+  resto e ninguém fica sem poder.
+
+**A trava continua sendo a mesma, e é ela que deixa a tabela crescer sem
+medo:** todo campo de efeito precisa estar em `LEITOR_DO_EFEITO`, e a
+suíte cobra isso poder por poder. Uma entrada nova escrita com um campo
+sem leitor não passa — que é exatamente o defeito que a v9.80 veio
+consertar, e a única forma de ele voltar.
+
+### O que fica aberto aqui
+
+- **Poder de item ainda é sempre passivo.** Tudo o que a tabela concede
+  vale enquanto o item está equipado e sintonizado; não há nada que o
+  jogador ATIVE ("uma vez por dia, esta lâmina..."). O gancho existe — as
+  dádivas já têm recurso que se gasta e contador que zera no descanso —,
+  mas o item precisaria aparecer numa lista de coisas usáveis, e isso é
+  UI além de regra.
+
+- **Nada distingue duas peças do mesmo poder.** Duas armas com "Sede"
+  são idênticas fora o nome. Um degrau de intensidade por raridade (Sede
+  2 no raro, 3 no épico, 4 no lendário) seria barato e daria textura sem
+  aumentar a tabela.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

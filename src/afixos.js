@@ -146,36 +146,81 @@ export function tierDaBase(nome) { return TIER_DA_BASE[nome] ?? 0; }
    separa "um jeito próprio de servir" de "muda a conta".
    ============================================================ */
 export const PODERES = [
-  /* ---- ARMA ---- */
-  { id: "sede", nome: "Sede", slots: ["arma"], tier: 2, forte: true, efeito: { danoExtra: 2 }, diz: "A lâmina bebe: cada golpe abre mais do que deveria." },
+  /* ================= ARMA — o gume ================= */
   { id: "gume_eterno", nome: "Gume Eterno", slots: ["arma"], tier: 1, efeito: { danoExtra: 1 }, diz: "Nunca perde o fio, nem depois de osso." },
-  { id: "presteza", nome: "Presteza", slots: ["arma"], tier: 3, forte: true, efeito: { ataqueExtra: 1 }, diz: "A arma puxa a mão de volta antes que o braço decida." },
-  { id: "veia", nome: "Caça-Veias", slots: ["arma"], tier: 2, forte: true, efeito: { criticoEm: 19 }, diz: "Ela encontra a fresta sozinha — crítico já no 19." },
   { id: "peso_certo", nome: "Peso Certo", slots: ["arma", "escudo"], tier: 1, efeito: { defesa: 1 }, diz: "Equilibrada a ponto de defender enquanto ataca." },
+  { id: "empunhadura", nome: "Empunhadura Justa", slots: ["arma"], tier: 1, efeito: { forca: 1 }, diz: "O cabo assenta na mão como se tivesse sido moldado nela." },
+  { id: "mao_leve", nome: "Mão Leve", slots: ["arma"], tier: 1, efeito: { destreza: 1 }, diz: "Pesa menos do que o tamanho promete." },
+  { id: "sede", nome: "Sede", slots: ["arma"], tier: 2, forte: true, efeito: { danoExtra: 2 }, diz: "A lâmina bebe: cada golpe abre mais do que deveria." },
+  { id: "veia", nome: "Caça-Veias", slots: ["arma"], tier: 2, forte: true, efeito: { criticoEm: 19 }, diz: "Ela encontra a fresta sozinha — crítico já no 19." },
   { id: "canaliza", nome: "Canal Arcano", slots: ["arma"], tier: 2, forte: true, efeito: { descontoPM: 1 }, diz: "A magia passa por ela e sai mais barata." },
+  { id: "bote", nome: "Bote", slots: ["arma"], tier: 2, forte: true, efeito: { iniciativa: 3 }, diz: "Ela decide antes de você — a mão já está em movimento." },
+  { id: "presteza", nome: "Presteza", slots: ["arma"], tier: 3, forte: true, efeito: { ataqueExtra: 1 }, diz: "A arma puxa a mão de volta antes que o braço decida." },
+  { id: "carniceira", nome: "Carniceira", slots: ["arma"], tier: 3, forte: true, efeito: { danoExtra: 4 }, diz: "O que ela abre não fecha sozinho." },
+  { id: "ceifa", nome: "Ceifa", slots: ["arma"], tier: 4, forte: true, efeito: { criticoEm: 18, danoExtra: 2 }, diz: "Duas em cada dez vezes, o golpe encontra exatamente onde doer mais." },
+  /* elementos — dobram em `atributos.elemento`, que o cálculo de dano lê */
+  { id: "brasa", nome: "Brasa", slots: ["arma"], tier: 2, forte: true, efeito: { elemento: "fogo", danoExtra: 1 }, diz: "O aço fica quente quando sai da bainha." },
+  { id: "geada", nome: "Geada", slots: ["arma"], tier: 2, forte: true, efeito: { elemento: "gelo", danoExtra: 1 }, diz: "O ar em volta do gume estala de frio." },
+  { id: "faisca", nome: "Faísca", slots: ["arma"], tier: 2, forte: true, efeito: { elemento: "raio", danoExtra: 1 }, diz: "Um estalo azul percorre o metal a cada golpe." },
+  { id: "peconha", nome: "Peçonha", slots: ["arma"], tier: 2, forte: true, efeito: { elemento: "veneno", danoExtra: 1 }, diz: "O fio sua uma seiva escura que não seca." },
+  { id: "aurora", nome: "Aurora", slots: ["arma"], tier: 3, forte: true, efeito: { elemento: "sagrado", danoExtra: 2 }, diz: "A luz que ela solta dói em quem não deveria estar de pé." },
+  { id: "umbra", nome: "Umbra", slots: ["arma"], tier: 3, forte: true, efeito: { elemento: "sombrio", danoExtra: 2 }, diz: "A lâmina come a luz em vez de refleti-la." },
 
-  /* ---- DEFESAS ---- */
+  /* ================= ESCUDO E ARMADURA — o couro ================= */
+  { id: "fivelas", nome: "Fivelas Fiéis", slots: ["armadura"], tier: 1, efeito: { defesa: 1 }, diz: "As fivelas se fecham sozinhas, e no lugar certo." },
+  { id: "forro", nome: "Forro Quente", slots: ["armadura"], tier: 1, efeito: { vigor: 1 }, diz: "Aquece o corpo no frio que mata." },
+  { id: "talabarte", nome: "Talabarte Firme", slots: ["escudo"], tier: 1, efeito: { forca: 1 }, diz: "O braço cansa muito depois do que deveria." },
   { id: "couraca", nome: "Couraça", slots: ["armadura", "escudo"], tier: 2, forte: true, efeito: { defesa: 2 }, diz: "O golpe chega e não encontra onde entrar." },
   { id: "folego", nome: "Fôlego de Sobra", slots: ["armadura", "elmo"], tier: 2, forte: true, efeito: { vigor: 2 }, diz: "Quem a veste aguenta um golpe a mais do que deveria." },
+  { id: "espinhos", nome: "Espinhos", slots: ["escudo", "armadura"], tier: 2, forte: true, efeito: { danoExtra: 1, defesa: 1 }, diz: "Quem bate nela se machuca um pouco também." },
+  { id: "muralha_viva", nome: "Muralha Viva", slots: ["armadura"], tier: 3, forte: true, efeito: { defesa: 3 }, diz: "Não é vestida: é habitada." },
   { id: "reergue", nome: "Segundo Fôlego", slots: ["armadura", "amuleto"], tier: 3, forte: true, efeito: { segundoFolego: 1 }, diz: "Uma vez por descanso, ela te põe de pé quando o corpo já tinha desistido." },
-  { id: "fivelas", nome: "Fivelas Fiéis", slots: ["armadura"], tier: 1, efeito: { defesa: 1 }, diz: "As fivelas se fecham sozinhas, e no lugar certo." },
+  { id: "inquebravel", nome: "Inquebrável", slots: ["armadura", "escudo"], tier: 4, forte: true, efeito: { defesa: 3, vigor: 2 }, diz: "Sobreviveu a todos os donos anteriores, e vai sobreviver a você." },
+  /* resistências — dobram em `atributos.resist`, que `danos.js` já lê */
+  { id: "escamas_igneas", nome: "Escamas Ígneas", slots: ["armadura", "escudo"], tier: 2, forte: true, efeito: { resist: "fogo" }, diz: "O fogo lambe e desiste." },
+  { id: "casco_gelido", nome: "Casco Gélido", slots: ["armadura", "escudo"], tier: 2, forte: true, efeito: { resist: "gelo" }, diz: "A geada não passa do couro." },
+  { id: "aterrado", nome: "Aterrado", slots: ["armadura", "botas"], tier: 2, forte: true, efeito: { resist: "raio" }, diz: "O raio corre por fora e vai para o chão." },
+  { id: "filtro", nome: "Filtro", slots: ["elmo", "amuleto"], tier: 2, forte: true, efeito: { resist: "veneno" }, diz: "O ar chega limpo, venha de onde vier." },
+  { id: "consagrado", nome: "Consagrado", slots: ["armadura", "amuleto"], tier: 3, forte: true, efeito: { resist: "sombrio" }, diz: "O que vem das trevas encontra uma parede antes da pele." },
+  { id: "profanado", nome: "Profanado", slots: ["armadura", "amuleto"], tier: 3, forte: true, efeito: { resist: "sagrado" }, diz: "A luz que julga passa ao largo de quem o veste." },
+  { id: "contra_magia", nome: "Contra-Magia", slots: ["armadura", "elmo"], tier: 3, forte: true, efeito: { resist: "arcano" }, diz: "Feitiço bate nela e se desmancha na metade." },
 
-  /* ---- ELMO ---- */
+  /* ================= ELMO — a cabeça ================= */
   { id: "vista_clara", nome: "Vista Clara", slots: ["elmo"], tier: 1, efeito: { percepcao: 1 }, diz: "Chuva, fumaça e escuro param de atrapalhar." },
+  { id: "viseira", nome: "Viseira Fiel", slots: ["elmo"], tier: 1, efeito: { defesa: 1 }, diz: "Nunca embaça, nunca desce na hora errada." },
   { id: "vontade", nome: "Vontade de Ferro", slots: ["elmo", "amuleto"], tier: 2, forte: true, efeito: { vantagemMental: true }, diz: "Medo e encantamento batem no aço e voltam." },
+  { id: "olho_atento", nome: "Olho Atento", slots: ["elmo"], tier: 2, forte: true, efeito: { vantagem: ["percepcao"] }, diz: "Você vê o que estava lá o tempo todo." },
+  { id: "sem_medo", nome: "Sem Medo", slots: ["elmo", "amuleto"], tier: 3, forte: true, efeito: { imunidades: ["amedrontado"] }, diz: "O que assusta os outros chega em você como informação." },
+  { id: "cabeca_fria", nome: "Cabeça Fria", slots: ["elmo"], tier: 3, forte: true, efeito: { imunidades: ["atordoado"] }, diz: "A pancada ecoa no metal, não no crânio." },
+  { id: "coroa_lucida", nome: "Coroa Lúcida", slots: ["elmo"], tier: 4, forte: true, efeito: { imunidades: ["enfeiticado", "amedrontado"], intelecto: 2 }, diz: "Nenhuma vontade que não seja a sua encontra porta aberta." },
 
-  /* ---- BOTAS ---- */
+  /* ================= BOTAS — o chão ================= */
   { id: "passo_leve", nome: "Passo Leve", slots: ["botas"], tier: 1, efeito: { destreza: 1 }, diz: "Passos que não acordam nem o sono mais leve." },
-  { id: "passo_largo", nome: "Passo Largo", slots: ["botas"], tier: 2, forte: true, efeito: { movimento: 2 }, diz: "O chão difícil deixa de existir, e a distância encolhe." },
   { id: "pe_firme", nome: "Pé Firme", slots: ["botas"], tier: 1, efeito: { vigor: 1 }, diz: "Não escorregam em gelo nem em lama." },
+  { id: "passo_largo", nome: "Passo Largo", slots: ["botas"], tier: 2, forte: true, efeito: { movimento: 2 }, diz: "O chão difícil deixa de existir, e a distância encolhe." },
+  { id: "pisada_muda", nome: "Pisada Muda", slots: ["botas"], tier: 2, forte: true, efeito: { vantagem: ["destreza"] }, diz: "O assoalho velho para de ranger sob você." },
+  { id: "sempre_de_pe", nome: "Sempre de Pé", slots: ["botas"], tier: 3, forte: true, efeito: { imunidades: ["caido"] }, diz: "Você pode cair; elas não deixam você ficar no chão." },
+  { id: "vento_calcanhares", nome: "Vento nos Calcanhares", slots: ["botas"], tier: 3, forte: true, efeito: { movimento: 2, iniciativa: 2 }, diz: "Você chega onde decidiu antes de terem visto você sair." },
 
-  /* ---- ACESSÓRIOS ---- */
-  { id: "lingua_de_prata", nome: "Língua de Prata", slots: ["anel", "amuleto"], tier: 1, efeito: { bonusSocial: 2 }, diz: "As palavras saem no tom que a outra pessoa queria ouvir." },
-  { id: "fonte", nome: "Fonte", slots: ["anel", "amuleto"], tier: 2, forte: true, efeito: { intelecto: 2 }, diz: "O poder passa por quem o usa com menos esforço." },
-  { id: "segunda_chance", nome: "Segunda Chance", slots: ["anel", "amuleto"], tier: 3, forte: true, efeito: { rerroll: 1 }, diz: "Uma vez por descanso, o destino aceita rever o que tinha decidido." },
-  { id: "economia", nome: "Economia", slots: ["anel"], tier: 2, forte: true, efeito: { descontoPM: 1 }, diz: "Toda conjuração sai um ponto mais barata." },
+  /* ================= ANEL E AMULETO — o que não se vê ================= */
   { id: "sorte_do_ladrao", nome: "Sorte do Ladrão", slots: ["anel"], tier: 1, efeito: { destreza: 1 }, diz: "Os dedos acham a fechadura antes do olho." },
+  { id: "lingua_de_prata", nome: "Língua de Prata", slots: ["anel", "amuleto"], tier: 1, efeito: { bonusSocial: 2 }, diz: "As palavras saem no tom que a outra pessoa queria ouvir." },
+  { id: "memoria", nome: "Memória Emprestada", slots: ["anel", "amuleto"], tier: 1, efeito: { intelecto: 1 }, diz: "Você lembra de coisas que jurava não ter aprendido." },
+  { id: "porte", nome: "Porte", slots: ["amuleto"], tier: 1, efeito: { presenca: 1 }, diz: "As pessoas param de falar quando você entra." },
+  { id: "economia", nome: "Economia", slots: ["anel"], tier: 2, forte: true, efeito: { descontoPM: 1 }, diz: "Toda conjuração sai um ponto mais barata." },
+  { id: "fonte", nome: "Fonte", slots: ["anel", "amuleto"], tier: 2, forte: true, efeito: { intelecto: 2 }, diz: "O poder passa por quem o usa com menos esforço." },
+  { id: "dedos_finos", nome: "Dedos Finos", slots: ["anel"], tier: 2, forte: true, efeito: { vantagem: ["destreza"], destreza: 1 }, diz: "Nó, laço e tranca são todos a mesma coisa para eles." },
+  { id: "voz_que_manda", nome: "Voz que Manda", slots: ["amuleto"], tier: 2, forte: true, efeito: { vantagem: ["presenca"], bonusSocial: 2 }, diz: "Quem ouve leva um instante para lembrar que pode dizer não." },
+  { id: "sangue_limpo", nome: "Sangue Limpo", slots: ["anel", "amuleto"], tier: 2, forte: true, efeito: { imunidades: ["envenenado"] }, diz: "O que entra pelo sangue não encontra onde se agarrar." },
+  { id: "estanca", nome: "Estanca", slots: ["anel", "amuleto"], tier: 2, forte: true, efeito: { imunidades: ["sangrando"] }, diz: "O corte fecha antes de o chão saber que houve corte." },
+  { id: "segunda_chance", nome: "Segunda Chance", slots: ["anel", "amuleto"], tier: 3, forte: true, efeito: { rerroll: 1 }, diz: "Uma vez por descanso, o destino aceita rever o que tinha decidido." },
+  { id: "olho_do_saber", nome: "Olho do Saber", slots: ["anel", "amuleto"], tier: 3, forte: true, efeito: { vantagem: ["intelecto"], intelecto: 1 }, diz: "O que está escrito se explica sozinho." },
+  { id: "coracao_de_boi", nome: "Coração de Boi", slots: ["amuleto"], tier: 3, forte: true, efeito: { vantagem: ["vigor"], vigor: 2 }, diz: "O cansaço chega, olha para você e vai embora." },
+  { id: "mao_do_gigante", nome: "Mão do Gigante", slots: ["anel"], tier: 3, forte: true, efeito: { vantagem: ["forca"], forca: 2 }, diz: "O que não cedia passa a ceder." },
+  { id: "duas_vidas", nome: "Duas Vidas", slots: ["amuleto"], tier: 4, forte: true, efeito: { segundoFolego: 1, rerroll: 1 }, diz: "Duas vezes por descanso o mundo aceita voltar atrás — uma no dado, outra no corpo." },
+  { id: "coroa_do_verbo", nome: "Coroa do Verbo", slots: ["amuleto"], tier: 4, forte: true, efeito: { bonusSocial: 4, vantagem: ["presenca"], presenca: 2 }, diz: "Ninguém consegue lembrar depois por que concordou." },
 ];
+
 
 /* ---------------- QUEM LÊ CADA EFEITO ----------------
    Existe para uma asserção, e é a mais importante desta peça: **todo
@@ -193,6 +238,13 @@ export const LEITOR_DO_EFEITO = {
   bonusSocial: "bonusSocialDeDadiva", vantagemMental: "temVantagemMental",
   movimento: "dobraMovimento", rerroll: "refazeresDeDadiva", segundoFolego: "temSegundoFolego",
   criticoEm: "criticoMinimo",
+  /* v9.81: os cinco que abriram o arsenal. Com nove campos, dois épicos do
+     mesmo slot saíam iguais — e "item lendário tem de ser lendário" não se
+     sustenta se todos os lendários forem o mesmo item com outro nome. */
+  imunidades: "imuneA", vantagem: "vantagemDeItem", iniciativa: "iniciativaDeItem",
+  /* estes dois viram `atributos` do item, e o cálculo de dano já os lê de
+     lá desde sempre — `resistenciasEquipadas` e o tipo de dano da arma */
+  resist: "atributos.resist", elemento: "atributos.elemento",
   /* dobrados em `atributos` pelo gerador */
   forca: "bonusEquip", destreza: "bonusEquip", vigor: "bonusEquip",
   intelecto: "bonusEquip", presenca: "bonusEquip", percepcao: "bonusEquip", defesa: "bonusEquip",
@@ -200,6 +252,10 @@ export const LEITOR_DO_EFEITO = {
 
 /* Os campos que viram `atributos` do item em vez de efeito de dádiva. */
 export const EFEITOS_DE_ATRIBUTO = ["forca", "destreza", "vigor", "intelecto", "presenca", "percepcao", "defesa"];
+
+/* Estes dois não são atributo, mas moram no mesmo lugar: `danos.js` lê
+   `atributos.resist` e o tipo elemental direto do item equipado. */
+export const EFEITOS_NO_ITEM = ["resist", "elemento"];
 
 export function poderPorId(id) { return PODERES.find((p) => p.id === id) || null; }
 

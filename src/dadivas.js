@@ -123,8 +123,29 @@ export function imunidadesDe(pers) {
   const s = new Set();
   for (const id of idsDe(pers)) { const d = dadivaPorId(id); (d && d.efeito && d.efeito.imunidades || []).forEach((x) => s.add(String(x))); }
   for (const u of unicasDe(pers)) ((u && u.efeito && u.efeito.imunidades) || []).forEach((x) => s.add(String(x)));
+  /* v9.81: e o que o EQUIPAMENTO concede. O elmo que não deixa o medo
+     entrar tem de valer tanto quanto a dádiva que faz o mesmo — senão a
+     imunidade seria um efeito que só o topo do jogo alcança. */
+  for (const p of poderesDeItem(pers)) ((p && p.efeito && p.efeito.imunidades) || []).forEach((x) => s.add(String(x)));
   return [...s];
 }
+
+/* ---------------- OS DOIS LEITORES QUE FALTAVAM (v9.81) ----------------
+   A paleta de efeitos de item era curta demais para um arsenal grande: com
+   nove campos, dois épicos do mesmo slot saíam parecidos. Estes dois abrem
+   dezenas de peças de uma vez, e os dois se penduram em ganchos que já
+   existiam — a vantagem por atributo (que os traços de raça já usam) e o
+   bônus de iniciativa (idem). */
+export function vantagemDeItem(pers, attrId) {
+  const alvo = String(attrId || "").toLowerCase();
+  return poderesDeItem(pers).some((p) => {
+    const v = p.efeito && p.efeito.vantagem;
+    if (!v) return false;
+    return Array.isArray(v) ? v.map((x) => String(x).toLowerCase()).includes(alvo) : String(v).toLowerCase() === alvo;
+  });
+}
+
+export function iniciativaDeItem(pers) { return somar(pers, "iniciativa"); }
 const NORM = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 export function imuneA(pers, condId) {
   const alvo = NORM(condId);
