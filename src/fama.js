@@ -38,39 +38,29 @@ export function calcularFama(cont, nivel, dominios) {
   );
 }
 
-/* ---------------- NÊMESIS ---------------- */
-const MOTIVOS = [
-  { id: "sangue", motivo: "você matou alguém que ela amava", so: (c) => (c.inimigosDerrotados || 0) > 0 },
-  { id: "trono", motivo: "você tomou terras que ela considerava suas por direito", so: (c, st) => (st.dominios || 0) > 0 },
-  { id: "culto", motivo: "você frustrou os planos do culto ao qual ela serve", so: () => true },
-  { id: "humilhacao", motivo: "você a humilhou publicamente — e o mundo inteiro ficou sabendo", so: (c) => (c.combatesVencidos || 0) >= 3 },
-  { id: "inveja", motivo: "ela faria tudo que você fez — se tivesse tido a chance. Agora quer provar ser melhor", so: () => true },
-  { id: "profecia", motivo: "uma profecia diz que você é o fim de tudo que ela construiu", so: () => true },
-];
-const TITULOS_NEM = ["a Lâmina Silenciosa", "o Corvo Negro", "a Víbora Coroada", "o Sem-Rosto", "a Mão Vazia", "o Lamento", "a Herdeira Amarga", "o Penitente de Ferro"];
+/* ---------------- A NÊMESE MUDOU DE CASA (v9.86) ----------------
+   Aqui morava o gerador de nêmese: `gerarNemesis`, `LIMIARES_NEMESIS` e
+   `ACOES_NEMESIS` — um motivo sorteado, um título de uma lista de oito, e
+   quatro degraus de ódio que disparavam difamação, sabotagem, assassinos e
+   confronto.
 
-export function gerarNemesis(nomePessoaFn, cont, stats, dia) {
-  const pool = MOTIVOS.filter((m) => m.so(cont, stats));
-  const m = pool[Math.floor(Math.random() * pool.length)];
-  return {
-    nome: nomePessoaFn(),
-    titulo: TITULOS_NEM[Math.floor(Math.random() * TITULOS_NEM.length)],
-    motivo: m.motivo,
-    odio: 15,
-    status: "espreita", // espreita → ativa → derrotada
-    origemDia: dia,
-    ultimoLimiar: 0,
-  };
-}
+   A v9.83 substituiu tudo isso pelo VILÃO (vilao.js): seis fases, seis
+   arquétipos, um plano de nove passos que cobra alvos reais do jogo, e a
+   revelação como marco único da campanha. Desde então nada aqui era
+   chamado por ninguém.
 
-/* O ódio cresce por dia; limiares disparam ações por tabela. */
-export const LIMIARES_NEMESIS = [30, 55, 80, 100];
-export const ACOES_NEMESIS = {
-  30: { tipo: "difamacao", rotulo: "Difamação", txt: (n) => `${n.nome} espalha mentiras sobre você nas estradas — sua reputação é o alvo.` },
-  55: { tipo: "sabotagem", rotulo: "Sabotagem", txt: (n) => `Agentes de ${n.nome} sabotam seus negócios: caravanas roubadas, depósitos queimados (o cofre sentiu).` },
-  80: { tipo: "assassinos", rotulo: "Assassinos enviados", txt: (n) => `${n.nome} parou de brincar: assassinos pagos estão a caminho, e eles conhecem seus hábitos.` },
-  100: { tipo: "confronto", rotulo: "O confronto final", txt: (n) => `${n.nome} deixou de se esconder. Ela quer você — frente a frente, diante de testemunhas. Isso só termina de um jeito.` },
-};
+   E ficar não era neutro. Dois geradores de antagonista no mesmo
+   repositório é uma armadilha para quem for mexer nisso depois: o nome
+   `gerarNemesis` é o primeiro que uma busca encontra, e o campo `odio`
+   que ele produzia ainda vive em saves antigos, onde `garantirVilao` o
+   migra. Quem restaurasse esta função teria dois sistemas escrevendo no
+   mesmo lugar do save.
+
+   O que ficou de fato útil deste bloco — a ideia de o antagonista nascer
+   de uma dívida concreta com o jogador — está em `ARQUETIPOS` e no
+   `nasceDe` de cada um deles.
+
+   Achado pela varredura de regras sem leitor (v9.85). */
 
 /* ---------------- RUMORES ----------------
    Mistura boatos do mundo com boatos sobre VOCÊ — estes últimos citando

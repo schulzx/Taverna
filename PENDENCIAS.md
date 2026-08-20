@@ -1922,6 +1922,97 @@ ela cresce e vira decoração.
   envelopes de iniciativa. A cena normal — a maior parte dos turnos —
   continua sem forma nenhuma, e é onde a repetição mais aparece.
 
+## A estante fica grande, e a forma chega ao turno comum — v9.86
+
+"Prossiga e finalize as três coisas anotadas, também preencha o
+bibliotecário com muitos dados para ele ter uma ampla biblioteca."
+
+- **~~Trinta e sete formas eram poucas.~~** RESOLVIDO. **191 formas, em
+  nove escolas.** Não era generosidade: com trinta e sete e uma janela de
+  seis, a nona cena já era uma repetição inevitável — repertório pequeno
+  repete por aritmética, não por descuido.
+
+  O acervo saiu para `estante.js` e o motor ficou em `biblioteca.js`.
+  Dezesseis famílias, na ordem em que um mestre pensa a cena: como a
+  coisa CHEGA, o que o inimigo OFERECE, o que a vitória CUSTA, o que fica
+  PLANTADO, o que volta COLHIDO, onde a mesa RESPIRA, o que o jogador
+  ESCOLHE, quem olha o herói NOS OLHOS, como o perigo mostra os DENTES, o
+  MUNDO que continua sem ele, como as pessoas FALAM, o que o LUGAR faz, o
+  que o TEMPO faz, o que o CORPO carrega, o que a DÚVIDA abre e o que o
+  VÍNCULO cobra.
+
+  A janela de repetição subiu de seis para oito, e a memória de doze para
+  dezesseis — ela pôde crescer porque o acervo cresceu junto.
+
+- **~~A forma não chegava ao turno comum.~~** RESOLVIDO, e era a mais
+  importante das três. O Bibliotecário nascia falando só nos três
+  envelopes de iniciativa — e esses três são raros **de propósito**: a
+  cadência do mundo é larga porque um mundo que interrompe toda hora é
+  barulhento, não vivo.
+
+  Quer dizer que a forma chegava a um turno em cada dez, e os outros nove
+  continuavam exatamente como antes. **E é neles que a repetição
+  aparece, porque são eles que se repetem.**
+
+  Entram só as formas marcadas `sozinha` — as **48** que moldam a CENA em
+  vez de moldar a entrega de outra coisa. "Termine com duas portas
+  abertas" funciona sem fio nenhum atrás; "faça isto chegar por um
+  mensageiro" não funciona sem o *isto*, e pedi-la num turno vazio é
+  pedir à IA que invente o *isto*.
+
+  Cadência de três turnos, nunca em combate e nunca em brasa: o turno de
+  luta já vem cheio de voz de sistema, e dizer à IA como compor a cena
+  enquanto o sistema resolve iniciativa, dano e posição é atropelar a
+  única parte que ainda era dela. E nunca duas formas no mesmo turno —
+  isso seria o sistema falando por cima de si mesmo.
+
+- **~~O histórico ficava nas mãos da IA.~~** RESOLVIDO. Vinte e uma
+  formas dependem de haver passado, e até aqui quem decidia se havia era
+  a IA: o `evite` mandava "escolher outra forma se não houver".
+
+  Delegar essa pergunta é exatamente o que esta casa não faz. Quem sabe
+  se há gente conhecida e se há campanha vivida é o **sistema** — o
+  registro de pessoas e os feitos do arco estão do lado de cá. Uma IA que
+  recebe *"traga alguém que você já conhece"* numa campanha de dois dias
+  faz a única coisa que pode: inventa a pessoa.
+
+  Duas travas separadas, porque são coisas diferentes: `temGenteConhecida`
+  (há nome no registro) e `temPassado` (há feitos, derrotados ou
+  cicatrizes). Ter conhecido gente não é ter vivido.
+
+- **~~Dois sistemas de antagonista no mesmo repositório.~~** RESOLVIDO. O
+  gerador de nêmese antigo (`gerarNemesis`, `LIMIARES_NEMESIS`,
+  `ACOES_NEMESIS`) saiu de fama.js, e a duplicata da míngua da fé saiu de
+  divindades.js. Nos dois lugares ficou uma lápide dizendo para onde a
+  regra mudou.
+
+  Ficar não era neutro: `gerarNemesis` é o primeiro nome que uma busca
+  encontra, e o campo `odio` que ele produzia ainda vive em saves
+  antigos, que `garantirVilao` migra. Quem restaurasse a função teria dois
+  sistemas escrevendo no mesmo lugar do save.
+
+  E o perdão da catraca não serve para código morto que dá para apagar:
+  serve para o que precisa continuar existindo sem leitor.
+
+### O que fica aberto aqui
+
+- **A forma não sabe o que já foi narrado.** A estante evita repetir a
+  mesma FORMA, mas nada impede que duas formas diferentes produzam cenas
+  parecidas — dois "alguém chega trazendo" seguidos, por caminhos
+  distintos. Faltaria uma memória do que a IA de fato escreveu, e essa é
+  a parte que o sistema não lê.
+
+- **A cadência é fixa em três.** Deveria responder à temperatura da mesa:
+  numa mesa fria a forma ajuda mais e podia vir mais cedo; numa mesa
+  quente ela atrapalha e podia esperar. O `podeFormaDeCena` já recebe a
+  situação inteira — falta usá-la.
+
+- **`precisa` só tem dois valores.** Há formas que dependem de coisas
+  mais específicas — uma frase realmente dita antes (`eco`), um objeto
+  que apareceu de fato (`objeto_volta`) — e hoje as duas passam pela
+  trava genérica de "passado". Uma trava por tipo de memória seria mais
+  honesta.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

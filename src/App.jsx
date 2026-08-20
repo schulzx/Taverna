@@ -56,7 +56,7 @@ import { lerPoder, lerConsumo, habilidadeDeclarada, falaDoPoder, envelopeDoPoder
 import { RELIQUIAS, reliquiaPorId, itemDaReliquia, ativoDeclarado, podeUsarAtivo, usarAtivo, falaDoAtivoNegado, envelopeDoAtivo, envelopeDaReliquiaAchada } from "./relicas.js";
 import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, conferirLista, falaDaListaAparada, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "./emboscada.js";
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo } from "./agressao.js";
-import { consultarBiblioteca, garantirEstante, marcarJogada, trechoDaJogada } from "./biblioteca.js";
+import { consultarBiblioteca, garantirEstante, marcarJogada, trechoDaJogada, podeFormaDeCena, contarTurnoDeCena, zerarCadenciaDaCena, envelopeDaCena } from "./biblioteca.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -6431,7 +6431,8 @@ export default function Taverna() {
     if (oficina) oficinaRef.current = criarOficina();
     talvezChegarSozinho();
     talvezAndarNaCidade(conteudo);
-    const nota = [oficina, notaRef.current].filter(Boolean).join("\n");
+    const formaDaCena = talvezDarFormaACena(conteudo);
+    const nota = [oficina, notaRef.current, formaDaCena].filter(Boolean).join("\n");
     notaRef.current = "";
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
     /* RODAPÉ DO SISTEMA (v7.0.2): lembrete curto colado SÓ na mensagem atual
@@ -10740,41 +10741,90 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      Aqui o mestre monta a situacao com o que ele JA SABE — a mesa, o arco,
      a fase do vilao, quem esta na cena — e a estante devolve uma forma. O
      nome dela nao viaja: sobe a forma, nunca a etiqueta. */
+  const situacaoDaMesa = ({ fio = "" } = {}) => {
+    const p0 = fichaViva() || {};
+    const h = historiaRef.current || {};
+    const est = estruturaPorId(h.estrutura);
+    const nEt = Math.max(1, (est.etapas || []).length - 1);
+    const v = nemesisRef.current;
+    const vivo = v && v.status !== "derrotada";
+    const daqui = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [] }).aqui || [];
+    /* ---------------- O HISTORICO E DO SISTEMA (v9.86) ----------------
+       Tres formas dependem de haver passado nesta campanha, e ate aqui quem
+       decidia se havia era a IA: o `evite` mandava escolher outra forma se
+       nao houvesse. Delegar essa pergunta e exatamente o que esta casa nao
+       faz — o registro de pessoas e os feitos do arco estao do lado de ca.
+       Uma IA que recebe "traga alguem que voce ja conhece" numa campanha de
+       dois dias faz a unica coisa que pode: inventa a pessoa. */
+    const feitos = (h.feitos || []).length;
+    return {
+      ordemDaFase: vivo ? (faseDe(v.fase).ordem) : -1,
+      vilaoConhecido: !!(vivo && v.conhecido),
+      momento: (Number(h.etapa) || 0) / nEt,
+      temperatura: temperaturaDaMesa(mesaRef.current).id,
+      pilarFaminto: (pilarFaminto(mesaRef.current) || {}).id || null,
+      fio,
+      pessoaNaCena: daqui.length > 0,
+      emCidade: !!cidadeAtualRef.current,
+      emMasmorra: !!masmorraRef.current,
+      emCombate: !!combateRef.current,
+      emViagem: !!jornadaRef.current,
+      noite: ehNoite(minutoRef.current),
+      temGrupo: (p0.grupo || []).length > 0,
+      temPromessa: (missoesAtivas(missoesRef.current) || []).length > 0,
+      temCicatriz: ((p0.cicatrizes || []).length > 0),
+      temDerrotado: derrotadosDaSessaoRef.current.length > 0,
+      temLugarAbandonado: (((mapaRef.current || {}).cidades) || []).some((c) => c.descoberta && c.nome !== cidadeAtualRef.current),
+      temRelogio: (relogiosRef.current || []).some((x) => x.cheios > 0),
+      temGenteConhecida: Object.keys(npcsRef.current || {}).length > 0,
+      temPassado: feitos >= 2 || derrotadosDaSessaoRef.current.length > 0 || (p0.cicatrizes || []).length > 0,
+      pvBaixo: (p0.vida || 0) > 0 && (p0.vida || 0) <= Math.ceil((p0.vidaMax || 1) / 3),
+      nivel: p0.nivel || 1,
+      fama: famaAtual(),
+    };
+  };
+
   const formaDoMestre = ({ fio = "", preferir = null } = {}) => {
     try {
-      const p0 = fichaViva() || {};
-      const h = historiaRef.current || {};
-      const est = estruturaPorId(h.estrutura);
-      const nEt = Math.max(1, (est.etapas || []).length - 1);
-      const v = nemesisRef.current;
-      const vivo = v && v.status !== "derrotada";
-      const daqui = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [] }).aqui || [];
-      const j = consultarBiblioteca({
-        ordemDaFase: vivo ? (faseDe(v.fase).ordem) : -1,
-        vilaoConhecido: !!(vivo && v.conhecido),
-        momento: (Number(h.etapa) || 0) / nEt,
-        temperatura: temperaturaDaMesa(mesaRef.current).id,
-        pilarFaminto: (pilarFaminto(mesaRef.current) || {}).id || null,
-        fio,
-        pessoaNaCena: daqui.length > 0,
-        emCidade: !!cidadeAtualRef.current,
-        emMasmorra: !!masmorraRef.current,
-        emCombate: !!combateRef.current,
-        emViagem: !!jornadaRef.current,
-        temPromessa: (missoesAtivas(missoesRef.current) || []).length > 0,
-        temCicatriz: ((p0.cicatrizes || []).length > 0),
-        temDerrotado: derrotadosDaSessaoRef.current.length > 0,
-        temLugarAbandonado: (((mapaRef.current || {}).cidades) || []).some((c) => c.descoberta && c.nome !== cidadeAtualRef.current),
-        temRelogio: (relogiosRef.current || []).some((x) => x.cheios > 0),
-        pvBaixo: (p0.vida || 0) > 0 && (p0.vida || 0) <= Math.ceil((p0.vidaMax || 1) / 3),
-        nivel: p0.nivel || 1,
-        fama: famaAtual(),
-      }, { estante: estanteRef.current, preferir });
+      const j = consultarBiblioteca(situacaoDaMesa({ fio }), { estante: estanteRef.current, preferir });
       if (!j) return "";
       estanteRef.current = marcarJogada(estanteRef.current, j.id);
       return trechoDaJogada(j);
     } catch { return ""; /* a forma nunca pode custar o turno */ }
   };
+
+  /* ---------------- A FORMA DA CENA COMUM (v9.86) ----------------
+     O Bibliotecario nasceu falando so nos tres envelopes de iniciativa. So
+     que esses tres sao raros de proposito — a cadencia do mundo e larga
+     porque um mundo que interrompe toda hora e barulhento, nao vivo.
+
+     Quer dizer que a forma chegava a um turno em cada dez, e os outros nove
+     — a maior parte do jogo — continuavam exatamente como antes. E e
+     justamente neles que a repeticao aparece, porque sao eles que se
+     repetem.
+
+     Aqui so entram as formas marcadas `sozinha`: as que moldam a CENA em
+     vez de moldar a entrega de outra coisa. "Termine com duas portas
+     abertas" funciona sem fio nenhum atras; "faca isto chegar por um
+     mensageiro" nao funciona sem o isto. */
+  const talvezDarFormaACena = (conteudo) => {
+    try {
+      estanteRef.current = contarTurnoDeCena(estanteRef.current);
+      /* um envelope de iniciativa ja traz forma, e duas formas no mesmo
+         turno e o sistema falando por cima de si mesmo */
+      if ((notaRef.current || "").includes("A FORMA")) return "";
+      /* turno que nao e do jogador (envelope de sistema, comando, retomada)
+         nao e cena: dar forma a ele seria moldar a resposta a mim mesmo */
+      if (String(conteudo || "").trimStart().startsWith("[")) return "";
+      const sit = situacaoDaMesa();
+      if (!podeFormaDeCena(sit, estanteRef.current).pode) return "";
+      const j = consultarBiblioteca(sit, { estante: estanteRef.current, soSozinhas: true });
+      if (!j) return "";
+      estanteRef.current = zerarCadenciaDaCena(marcarJogada(estanteRef.current, j.id));
+      return envelopeDaCena(j);
+    } catch { return ""; }
+  };
+
 
   /* ---------------- O MUNDO SE MEXE SOZINHO (v9.61) ----------------
      A iniciativa. Ela não inventa nada — escolhe entre os fios que o jogo

@@ -238,13 +238,17 @@ export function pfMaximo(div) {
   return Math.max(10, Math.round(Math.sqrt(f) * 2));
 }
 
-/* Fé míngua se o herói some: devoção exige presença. */
-export function decaimentoFe(div, diasSemManifestacao) {
-  const f = (div && div.fieis) || 0;
-  if (!f || (diasSemManifestacao || 0) < 30) return 0;
-  const taxa = Math.min(0.03, 0.005 * Math.floor(diasSemManifestacao / 30));
-  return Math.round(f * taxa);
-}
+/* ---------------- A MÍNGUA MORA EM OUTRO LUGAR (v9.86) ----------------
+   Aqui morava `decaimentoFe`: a fé encolhia se o herói passasse trinta
+   dias sem se manifestar. A regra é boa e continua valendo — só que quem a
+   aplica é `processarDiaFe` em devocao.js, por `MINGUA_BASE`, e essa
+   roda todo dia desde que a devoção virou sistema próprio.
+
+   Esta versão nunca foi chamada. Duas contas para a mesma regra, uma delas
+   muda, é o convite para que um dia as duas rodem juntas e a fé caia pelo
+   dobro sem ninguém entender por quê.
+
+   Achado pela varredura de regras sem leitor (v9.85). */
 
 /* ---------------- MILAGRES: no que gastar os Pontos de Fé ----------------
    Efeito RESOLVIDO PELO SISTEMA; o Mestre só narra. Cada milagre exige um
