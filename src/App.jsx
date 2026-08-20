@@ -56,6 +56,7 @@ import { lerPoder, lerConsumo, habilidadeDeclarada, falaDoPoder, envelopeDoPoder
 import { RELIQUIAS, reliquiaPorId, itemDaReliquia, ativoDeclarado, podeUsarAtivo, usarAtivo, falaDoAtivoNegado, envelopeDoAtivo, envelopeDaReliquiaAchada } from "./relicas.js";
 import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, conferirLista, falaDaListaAparada, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "./emboscada.js";
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo } from "./agressao.js";
+import { consultarBiblioteca, garantirEstante, marcarJogada, trechoDaJogada } from "./biblioteca.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -2961,6 +2962,10 @@ export default function Taverna() {
      registro fechado quando o turno acaba. Fosse cada peça escrevendo
      direto na mesa, um turno com dado e perigo viraria dois turnos. */
   const mesaRef = useRef(garantirMesa(null));
+  /* v9.85: a memoria da estante — quais FORMAS o mestre ja usou. Vive ao
+     lado da mesa porque tem a mesma natureza: memoria curta de oficio, que
+     nao e fato do mundo e nao entra na cronica. */
+  const estanteRef = useRef(garantirEstante(null));
   const texturaRef = useRef({});
   const baseMundoRef = useRef(garantirBase(null));
   /* A SEMENTE PRECISA VIR DE REF (v9.14). Estas duas funções liam `mundo` e
@@ -4212,7 +4217,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
+      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -6899,6 +6904,7 @@ export default function Taverna() {
          novato que julga cada turno sozinho, que é o defeito que ela
          existe para curar. */
       mesaRef.current = garantirMesa(sv.mesa);
+      estanteRef.current = garantirEstante(sv.estante);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
         ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null }
@@ -10709,6 +10715,53 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (!acampadoRef.current && !masmorraRef.current) talvezOMundoSeMexer();
   };
 
+  /* ---------------- A CONSULTA AO BIBLIOTECARIO (v9.85) ----------------
+     O mestre ja escolhia bem QUAL fio puxar. O que ele nunca teve foi a
+     segunda metade da decisao, que e a FORMA: um relogio quase cheio pode
+     entrar numa cena de vinte maneiras, e o envelope pedia sempre a mesma
+     — "traga isto a cena em duas ou tres frases". Pedido igual todo turno
+     recebe resposta igual todo turno, e era dai que vinha a repeticao do
+     narrador, nao da temperatura.
+
+     Aqui o mestre monta a situacao com o que ele JA SABE — a mesa, o arco,
+     a fase do vilao, quem esta na cena — e a estante devolve uma forma. O
+     nome dela nao viaja: sobe a forma, nunca a etiqueta. */
+  const formaDoMestre = ({ fio = "", preferir = null } = {}) => {
+    try {
+      const p0 = fichaViva() || {};
+      const h = historiaRef.current || {};
+      const est = estruturaPorId(h.estrutura);
+      const nEt = Math.max(1, (est.etapas || []).length - 1);
+      const v = nemesisRef.current;
+      const vivo = v && v.status !== "derrotada";
+      const daqui = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [] }).aqui || [];
+      const j = consultarBiblioteca({
+        ordemDaFase: vivo ? (faseDe(v.fase).ordem) : -1,
+        vilaoConhecido: !!(vivo && v.conhecido),
+        momento: (Number(h.etapa) || 0) / nEt,
+        temperatura: temperaturaDaMesa(mesaRef.current).id,
+        pilarFaminto: (pilarFaminto(mesaRef.current) || {}).id || null,
+        fio,
+        pessoaNaCena: daqui.length > 0,
+        emCidade: !!cidadeAtualRef.current,
+        emMasmorra: !!masmorraRef.current,
+        emCombate: !!combateRef.current,
+        emViagem: !!jornadaRef.current,
+        temPromessa: (missoesAtivas(missoesRef.current) || []).length > 0,
+        temCicatriz: ((p0.cicatrizes || []).length > 0),
+        temDerrotado: derrotadosDaSessaoRef.current.length > 0,
+        temLugarAbandonado: (((mapaRef.current || {}).cidades) || []).some((c) => c.descoberta && c.nome !== cidadeAtualRef.current),
+        temRelogio: (relogiosRef.current || []).some((x) => x.cheios > 0),
+        pvBaixo: (p0.vida || 0) > 0 && (p0.vida || 0) <= Math.ceil((p0.vidaMax || 1) / 3),
+        nivel: p0.nivel || 1,
+        fama: famaAtual(),
+      }, { estante: estanteRef.current, preferir });
+      if (!j) return "";
+      estanteRef.current = marcarJogada(estanteRef.current, j.id);
+      return trechoDaJogada(j);
+    } catch { return ""; /* a forma nunca pode custar o turno */ }
+  };
+
   /* ---------------- O MUNDO SE MEXE SOZINHO (v9.61) ----------------
      A iniciativa. Ela não inventa nada — escolhe entre os fios que o jogo
      já tem abertos e diz ao Mestre para trazer ESSE à cena. É a decisão
@@ -10776,7 +10829,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
              método — e pior, entregando o truque antes de a cena existir: o
              jogador lê o rótulo do fio e depois lê a cena que o encena. O
              mundo lembrando dele tem de chegar como mundo, não como aviso. */
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoFio(mv, pilarFaminto(mesaRef.current))}`;
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoFio(mv, pilarFaminto(mesaRef.current))}${formaDoMestre({ fio: mv.id })}`;
           return;
         }
       }
@@ -10818,7 +10871,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          mexe" era o sistema anunciando que ia fazer uma coisa, logo antes
          de a IA fazê-la — duas vozes contando o mesmo, e a primeira delas
          estragando a segunda. */
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaIniciativa(mv)}`;
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaIniciativa(mv)}${formaDoMestre({ fio: mv.id })}`;
     } catch { /* o mundo se mexer nunca pode custar o turno */ }
   };
 
@@ -11736,7 +11789,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       setNpcs(npcsRef.current);
       marcarNoArco("nemesis", `soube quem é ${r.vilao.nome}`);
     }
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoAvanco(r)}`;
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoAvanco(r)}${formaDoMestre({ fio: "vilao" })}`;
 
     /* ---------------- O ARCO ANDA COM ELE (v9.84) ----------------
        Até aqui o arco andava por CONTAGEM: cada missão concluída, relógio
