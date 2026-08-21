@@ -294,7 +294,19 @@ export function avancarPlano(v, { dia = 0, alvo = null } = {}) {
        o retrato do plano, e não um contador solto */
     odio: Math.round((passo / (TOTAL_DE_PASSOS - 1)) * 100),
     conhecido: v.conhecido || faseNova.ordem >= 3,
-    marcas: alvo ? [...(v.marcas || []), alvo].slice(-8) : (v.marcas || []),
+    /* ---------------- SEM REPETIR (v9.89) ----------------
+       Era `[...marcas, alvo]` sem conferir nada, e `escolherAlvo` sorteia
+       de uma lista curta: em 300 campanhas simuladas com um elenco
+       realista, 300 terminaram com marca repetida. O envelope da revelação
+       — o momento único da campanha — saía dizendo à IA "o que ele já me
+       tirou: Marta, Marta, Marta", o que não é uma lista de perdas: é um
+       defeito de contagem contado como ficção.
+
+       Aqui só se guarda o que ainda não está guardado. Quem já foi tirado
+       não pode ser tirado de novo. */
+    marcas: alvo && !(v.marcas || []).some((m) => m && m.nome === alvo.nome)
+      ? [...(v.marcas || []), alvo].slice(-8)
+      : (v.marcas || []),
   };
   return { vilao: novo, passo: p, fase: faseNova, mudouFase, alvo, revelacao: mudouFase && !!faseNova.revelacao };
 }
@@ -326,11 +338,20 @@ export const ORDEM_PADRAO = ["pessoas", "lugares", "promessas"];
    tabela nem chegou a ser lida errado — nunca foi lida. */
 export function tipoDoAlvo(custa) { return TIPOS_DE_ALVO.find((t) => t.custa === custa) || null; }
 
-export function escolherAlvo(custa, ctx = {}, sorte = Math.random) {
+/* `jaMarcados` (v9.89) entra porque deduplicar na entrada não bastava:
+   sem isto o vilão continuaria SORTEANDO quem ele já levou, e o passo
+   simplesmente não registraria nada — ele daria um passo no vazio, que é
+   pior que repetir, porque some sem deixar rastro. Quem já foi tirado sai
+   do sorteio; se todos já saíram, a lista volta inteira, porque um alvo
+   repetido ainda é melhor que passo nenhum. */
+export function escolherAlvo(custa, ctx = {}, sorte = Math.random, jaMarcados = []) {
   const t = tipoDoAlvo(custa);
   const ordem = t ? t.ordem : ORDEM_PADRAO;
+  const usados = new Set((jaMarcados || []).map((m) => m && m.nome).filter(Boolean));
   for (const campo of ordem) {
-    const lista = (ctx[campo] || []).filter(Boolean);
+    const todos = (ctx[campo] || []).filter(Boolean);
+    const livres = todos.filter((x) => !usados.has(String(x)));
+    const lista = livres.length ? livres : todos;
     if (lista.length) {
       const t2 = TIPOS_DE_ALVO.find((x) => x.campo === campo);
       return { campo, nome: String(lista[Math.floor(sorte() * lista.length)]), comoDoi: t2 ? t2.comoDoi : "" };
@@ -365,6 +386,21 @@ export function linhaDoAvanco(r) {
    nome.** Uma IA que revela o vilão porque a cena ficaria mais
    interessante destrói o único momento que não dá para refazer.
    ============================================================ */
+/* ---------------- ONDE A FORMA NÃO ENTRA (v9.89) ----------------
+   A revelação e a queda são os dois envelopes que já vêm COMPOSTOS: eles
+   dizem a cena inteira ("não é uma luta", "dê a ele a melhor fala da
+   campanha", "monte o confronto como clímax"). O Bibliotecário grampeava
+   uma forma sorteada em cima dos dois, e entre as cento e quarenta
+   possíveis havia oito que mandam o oposto — "quem fala nesta cena fala
+   POUCO", "ninguém responde", "alguém é interrompido antes de terminar".
+
+   Uma delas na revelação estraga o único momento da campanha que não
+   acontece duas vezes. Nas outras fases a forma continua entrando: lá o
+   envelope diz o QUE, e a forma diz o COMO, que é a divisão inteira. */
+export function levaForma(r) {
+  return !!r && !r.revelacao && !(r.fase && r.fase.final);
+}
+
 export function envelopeDoAvanco(r) {
   if (!r || !r.vilao) return "";
   const v = r.vilao;

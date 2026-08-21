@@ -2180,6 +2180,90 @@ identificado, sobrevive a revisões porque ninguém o questiona, e manda a
 próxima sessão gastar horas num defeito que não existe. Se dá para medir,
 mede-se antes de anotar.
 
+## A harmonia: o sistema passa a falar com uma voz só — v9.89
+
+"O sistema todo precisa estar em perfeita harmonia. Imagino que pelo
+funcionamento atual, algo deve estar confuso quanto ao funcionamento, se
+é pelo mestre ou pela IA."
+
+Estava, e a raiz era o **prompt fixo** — não os sistemas novos. Três
+sistemas nasceram em versões seguidas (o Mestre na v9.71, o vilão na
+v9.83, o Bibliotecário na v9.85), cada um provado sozinho, e ninguém
+tinha provado o ENTRE.
+
+- **~~Uma "regra-mestra" devolvia à IA tudo o que o Mestre tirou.~~**
+  RESOLVIDO, e era a confusão inteira. `prompt.js` mandava, todo turno:
+  *"LIBERDADE CRIATIVA (**regra-mestra — vem ANTES de qualquer cautela**)
+  […] **Invente tramas, viradas, detalhes e gente nova à vontade** […] As
+  ÚNICAS proibições deste jogo são fatuais."*
+
+  Os envelopes dizem *"NÃO abra trama nova"*, *"NÃO invente missão, item,
+  moeda nem nome de gente que o jogo não tenha"*. A linha do prompt não só
+  contradizia — ela **se declarava acima**, e classificava a proibição do
+  envelope como não estando entre as proibições do jogo. Quando os dois
+  colidiam, o prompt mandava a IA ficar contra o Mestre. E ele fala todo
+  turno; o envelope, num a cada três.
+
+  A ousadia ficou inteira — ela nasceu porque o narrador era tímido, e
+  essa metade continua necessária. O que mudou foi ela ganhar OBJETO: a
+  divisão que `turno.js` escreveu na v9.61 e que nunca tinha chegado ao
+  prompt. O sistema decide o que existe e o que acontece; a IA decide como
+  aquilo se parece e o que significa. E o envelope deixou de ser "cautela"
+  para ser **o mundo falando**.
+
+- **~~O prompt ensinava um vilão de desenho.~~** RESOLVIDO. *"O vilão é
+  mau de verdade: cruel, manipulador, capaz de atrocidades"* — contra
+  *"sem ameaça, sem voz alta, sem discurso: a gentileza é o que assusta"*
+  e *"deixe a razão do outro lado ser defensável"*. Dois professores, e o
+  do prompt falava todo turno. O perigo dele passou a morar no que ele FAZ
+  e no que ele CRÊ. Nenhum outro personagem foi amansado.
+
+- **~~As marcas do vilão repetiam em 100% das campanhas.~~** RESOLVIDO.
+  `avancarPlano` empilhava o alvo sem conferir nada e `escolherAlvo`
+  sorteava de uma lista curta. Medido: 300 campanhas simuladas com elenco
+  realista, **300 com marca repetida**. O envelope da revelação saía
+  dizendo *"o que ele já me tirou: Marta, Marta, Marta"* — que não é uma
+  lista de perdas, é um defeito de contagem contado como ficção. Agora 0
+  em 300, e **nenhum passo no vazio**: deduplicar só na entrada faria ele
+  sortear quem já levou e não registrar nada, que é pior que repetir
+  porque some sem deixar rastro.
+
+- **~~A revelação levava uma forma sorteada grampeada.~~** RESOLVIDO. A
+  revelação e a queda já vêm COMPOSTAS — dizem a cena inteira. O
+  Bibliotecário colava uma das 140 formas em cima, e oito delas mandam o
+  oposto de *"dê a ele a melhor fala da campanha até aqui"*:
+  `fala_curta`, `nao_responde`, `silencio_ruim`, `interrompido`. Nas
+  outras fases a forma continua entrando, que é onde o envelope diz o QUE
+  e a forma diz o COMO.
+
+- **~~A mesa não sabia que o vilão se mexeu.~~** RESOLVIDO.
+  `processarNemesisDiaria` não tocava em `mesaRef` nem na textura — zero
+  referências. O passo do vilão, que é a maior pressão que este jogo
+  produz, não esquentava nada: a temperatura podia ler "fria" no turno
+  seguinte e mandar o mundo puxar um fio da memória JUNTO. Ele entra como
+  **perigo**, não como luta — ele ainda não veio em pessoa.
+
+### O que foi verificado e está são
+
+Registrado para ninguém reabrir por leitura:
+
+- **Os dez detectores do portão estão ligados.** `detectarMorteIndevida`,
+  `detectarAscensaoNarrada` e os outros oito têm zero referência direta no
+  App e entram todos por `violacoesDoTurno`, que roda em toda resposta.
+- **Não há empilhamento de envelopes em jogo comum.** Medido em turnos
+  reais: 1 a 2 por turno, nunca mais.
+- **Os geradores de vida existem em produção**, por
+  `processarDescansoLongoEventos`.
+
+### O que fica aberto
+
+- **A maçaneta da porta dos capítulos** (v9.84) — `abrirCapitulo` existe e
+  ninguém a chama. É a próxima.
+- **O vilão não entrega relíquia** e **o plano dele não reage ao herói**:
+  não há como quebrar um passo. Os dois são do desenho original e ficaram.
+- **Um vilão por campanha** — nada encadeia depois que ele cai, e é
+  justamente disso que o sistema de capítulos vai precisar.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

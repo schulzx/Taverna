@@ -21,7 +21,7 @@ import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } fr
 import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano, resistenciasEquipadas } from "./danos.js";
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, MINUTOS_RODADA_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, rumorDoDia } from "./fama.js";
-import { gerarVilao, garantirVilao, avancarPlano, podeAvancar, escolherAlvo, faseDe, linhaDoAvanco as linhaDoVilao, envelopeDoAvanco, resumoVilaoPrompt, podeCair, envelopeDaQueda, envelopeDaQuedaCedoDemais, linhaDaQueda, TOTAL_DE_PASSOS } from "./vilao.js";
+import { gerarVilao, garantirVilao, avancarPlano, podeAvancar, escolherAlvo, levaForma, faseDe, linhaDoAvanco as linhaDoVilao, envelopeDoAvanco, resumoVilaoPrompt, podeCair, envelopeDaQueda, envelopeDaQuedaCedoDemais, linhaDaQueda, TOTAL_DE_PASSOS } from "./vilao.js";
 import { gerarCronica } from "./cronica.js";
 import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { rolarAflicao, aflicaoDe } from "./aflicoes.js";
@@ -11850,7 +11850,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         .map((n) => n.nome),
       lugares: [...dominiosDe(mapaRef.current).map((c) => c.nome), cidadeAtualRef.current].filter(Boolean),
       promessas: (missoesAtivas(missoesRef.current) || []).map((m) => m.titulo).filter(Boolean),
-    });
+      /* as marcas vão junto: deduplicar na entrada não bastava, porque sem
+         isto ele continuaria SORTEANDO quem já levou e o passo não
+         registraria nada — um passo no vazio, que é pior que repetir,
+         porque some sem deixar rastro */
+    }, Math.random, nemesisRef.current.marcas || []);
     const r = avancarPlano(nemesisRef.current, { dia: diaRef.current, alvo });
     if (!r) return;
     nemesisRef.current = r.vilao; setNemesis(r.vilao);
@@ -11870,7 +11874,18 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       setNpcs(npcsRef.current);
       marcarNoArco("nemesis", `soube quem é ${r.vilao.nome}`);
     }
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoAvanco(r)}${formaDoMestre({ fio: "vilao" })}`;
+    /* ---------------- E A MESA SENTE (v9.89) ----------------
+       `processarNemesisDiaria` não tocava na mesa, e por isso o passo do
+       vilão — que é a maior pressão que este jogo produz — não esquentava
+       nada. A temperatura podia ler "fria" no turno seguinte a ele e
+       mandar o mundo puxar um fio da memória JUNTO, empilhando duas
+       pressões no mesmo envelope por não saber da primeira.
+
+       O passo entra como perigo, que é o que ele é. Não como luta: ele
+       ainda não veio em pessoa, e marcar luta faria o mestre parar de
+       conceder dado numa cena que não tem dado nenhum. */
+    texturaRef.current = { ...(texturaRef.current || {}), perigo: true };
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoAvanco(r)}${levaForma(r) ? formaDoMestre({ fio: "vilao" }) : ""}`;
 
     /* ---------------- O ARCO ANDA COM ELE (v9.84) ----------------
        Até aqui o arco andava por CONTAGEM: cada missão concluída, relógio
