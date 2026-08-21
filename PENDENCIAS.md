@@ -2148,25 +2148,37 @@ aparece quando a IA já narrou o que não devia.
 
 ### O que fica aberto aqui
 
-- **`mostra_mundo` ganha por tamanho.** Ele tem 19 formas, o maior de
-  todos, e por isso lidera quase todo perfil: o sorteio é por forma, não
-  por gesto, então um gesto grande leva vantagem estrutural que ninguém
-  decidiu dar. Sortear o gesto primeiro e a forma depois corrigiria isso
-  — e mudaria o significado de `peso`, que hoje é a única maneira de uma
-  forma dizer "eu sou mais importante que minha vizinha".
+**Nada — e as três coisas que eu tinha anotado aqui eram falsas.**
 
-- **As nove linhas são multiplicativas e podem se empilhar.** O teto de 6
-  segura o estrago, mas uma forma que junte quatro afinidades favoráveis
-  chega lá e fica presa no teto junto com outra que juntou seis — as duas
-  viram a mesma coisa. Uma soma ponderada distinguiria, ao custo de
-  perder a leitura simples de "cada linha multiplica".
+Foram escritas por dedução, sem medir nenhuma. As três dissolveram no
+primeiro contato com um número, e ficam registradas com a medição para
+que ninguém as reabra por leitura do código:
 
-- **A aderência não olha para a cena anterior.** Ela mede o quanto a
-  forma serve ao ESTADO, e o estado não inclui o que acabou de ser
-  narrado. Duas formas de gestos diferentes mas de tom idêntico — duas
-  cenas sombrias seguidas, dois respiros — continuam possíveis. Um campo
-  de TOM (seco, quente, sombrio, cômico) na estante resolveria, e é o
-  candidato natural à próxima versão.
+- **~~"Duas cenas de tom idêntico seguidas."~~** NÃO ACONTECE. Em 2.000
+  sorteios, quatro gestos sombrios seguidos não saíram uma vez; a maior
+  sequência foi 3, e o "ar" (respiro, vínculo, olhar) ficou SEMPRE acima
+  do sombrio — 26% contra 7% no começo do arco, 21% contra 19% no
+  clímax. O tom já acompanha o arco sozinho, porque o momento e a fase do
+  vilão já entram na aderência. Um campo de TOM na estante seria uma
+  quarta régua medindo o que três já medem.
+
+- **~~"As afinidades empilham e empatam no teto."~~** NÃO ACONTECE. Em
+  7.640 combinações de forma e cena, o teto de 6 foi alcançado ZERO
+  vezes; o máximo observado foi 5,4. O teto está fazendo o que um teto
+  deve fazer — existir sem apertar.
+
+- **~~"`mostra_mundo` ganha por tamanho."~~** NÃO É POR TAMANHO. Ele sai
+  em 14% dos sorteios contra 10% do acervo, e a diferença é exatamente o
+  ×1,4 que a linha `onde_eu_estou` dá ao mundo numa cidade. O mesmo vale
+  para `fala` (6% do acervo, 10% do sorteio, ×1,5 com gente na cena).
+  Não é viés estrutural: é a tabela fazendo o que foi mandada fazer, na
+  cena em que foi mandada.
+
+A lição fica junto, porque ela é mais útil que os três itens: **item de
+pendência escrito por dedução vale menos que zero.** Ele parece trabalho
+identificado, sobrevive a revisões porque ninguém o questiona, e manda a
+próxima sessão gastar horas num defeito que não existe. Se dá para medir,
+mede-se antes de anotar.
 
 ## Mestre e prompt
 
