@@ -5,7 +5,7 @@ import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapa
 import { cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
-import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao } from "./historia.js";
+import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste, dificuldadePorPerfil } from "./bestiario.js";
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
@@ -21,7 +21,7 @@ import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } fr
 import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano, resistenciasEquipadas } from "./danos.js";
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, MINUTOS_RODADA_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, rumorDoDia } from "./fama.js";
-import { gerarVilao, garantirVilao, avancarPlano, podeAvancar, escolherAlvo, levaForma, faseDe, linhaDoAvanco as linhaDoVilao, envelopeDoAvanco, resumoVilaoPrompt, podeCair, envelopeDaQueda, envelopeDaQuedaCedoDemais, linhaDaQueda, TOTAL_DE_PASSOS } from "./vilao.js";
+import { gerarVilao, gerarHerdeiro, linhaDaHeranca, garantirVilao, avancarPlano, podeAvancar, escolherAlvo, levaForma, faseDe, linhaDoAvanco as linhaDoVilao, envelopeDoAvanco, resumoVilaoPrompt, podeCair, envelopeDaQueda, envelopeDaQuedaCedoDemais, linhaDaQueda, TOTAL_DE_PASSOS } from "./vilao.js";
 import { gerarCronica } from "./cronica.js";
 import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { rolarAflicao, aflicaoDe } from "./aflicoes.js";
@@ -2899,6 +2899,15 @@ export default function Taverna() {
      seja lida contra a MESMA lista que ele viu, e não contra o mapa inteiro
      de novo. */
   const escolhaPendenteRef = useRef(null);
+  /* ---------------- A PORTA DOS CAPÍTULOS (v9.90) ----------------
+     `ofertaCapitulo` é o registro do capítulo que acabou de fechar, e a
+     presença dele É a maçaneta: enquanto houver um aqui, o painel das três
+     formas fica na tela. `capituloNovoRef` guarda a forma escolhida
+     ENQUANTO o jogador cria o herói novo — as duas formas que trocam de
+     protagonista passam pela tela de criação, e ela não tem como saber
+     sozinha que está criando um segundo capítulo em vez de uma campanha. */
+  const [ofertaCapitulo, setOfertaCapitulo] = useState(null);
+  const capituloNovoRef = useRef(null);
   const sinalMasmorraRef = useRef(null);  // Mestre (ou o rastro) pediu para abrir masmorra
   const destinoViagemRef = useRef("");    // para onde o herói disse que ia — desenha a estrada no mapa
   const salaEmCursoRef = useRef(null);    // sala da masmorra cujo combate está aberto
@@ -6738,11 +6747,77 @@ export default function Taverna() {
   };
   useEffect(() => () => { if (vozAudioRef.current) { try { vozAudioRef.current.pause(); } catch {} } Object.values(vozCacheRef.current).forEach((u) => { try { URL.revokeObjectURL(u); } catch {} }); }, []);
 
+  /* ---------------- ABRIR O PRÓXIMO CAPÍTULO (v9.90) ----------------
+     "O player pode recomeçar a campanha começando um novo capítulo, tipo
+     as campanhas de Vox Machina."
+
+     As três formas guardam a MESMA coisa e mudam quem olha para ela: o
+     mundo fica inteiro — cidades, gente, mapa, cânone, o que foi
+     descoberto e o que foi destruído. É exatamente isso que separa um
+     capítulo novo de uma campanha nova.
+
+     E o vilão do capítulo seguinte NÃO nasce do zero: ele nasce da queda
+     do anterior. Um capítulo que começa sem antagonista e depois ganha um
+     gerado pela fama é uma sessão nova que por acaso usa o mesmo mapa. */
+  const abrirProximoCapitulo = (formaId, anos = 0) => {
+    const f = formaDeCapitulo(formaId);
+    const reg = ofertaCapitulo;
+    setOfertaCapitulo(null);
+    if (!reg) return;
+
+    if (f.quem === "novo") {
+      /* as duas que trocam de protagonista passam pela criação: guardamos a
+         forma no ref e a tela de criação devolve o herói por `iniciar` */
+      capituloNovoRef.current = { forma: f.id, reg, anos, heroiAnterior: (personagemRef.current || {}).nome || "" };
+      setFase("personagem");
+      return;
+    }
+
+    /* ---------------- O MESMO HERÓI, ANOS DEPOIS ----------------
+       Aqui não se cria nada: o herói continua com a ficha, as cicatrizes e
+       as dívidas. O que muda é o calendário, o arco e quem está do outro
+       lado. */
+    const h = abrirCapitulo(historiaRef.current, { forma: f.id, dia: diaRef.current, anos });
+    historiaRef.current = h; setHistoria(h);
+    diaRef.current = h.dia; setDia(h.dia);
+    minutoRef.current = AMANHECER + 60; setMinuto(minutoRef.current);
+    acordouAbsRef.current = (diaRef.current - 1) * 1440 + minutoRef.current;
+    /* o que pertencia ao capítulo que acabou some; o mundo, não */
+    questsRef.current = []; setQuests([]);
+    eventosRef.current = { locais: [], global: null, semGlobalDesde: 0, seq: 1 }; setEventos(eventosRef.current);
+    masmorraRef.current = null; setMasmorra(null);
+    jornadaRef.current = null; setJornada(null);
+    combateRef.current = null; setCombate(null);
+    mesaRef.current = garantirMesa(null);
+    estanteRef.current = garantirEstante(null);
+    /* O HERDEIRO. Ele entra em "espreita" e na fase do rumor, como qualquer
+       vilão — o capítulo novo tem de recomeçar pelo clima, senão a
+       revelação do segundo já nasce gasta. */
+    const herdeiro = gerarHerdeiro(nemesisRef.current, {
+      nome: nomePessoa(bancoNomesRef.current), cont: contRef.current,
+      stats: { dominios: dominiosDe(mapaRef.current).length }, dia: diaRef.current,
+    });
+    nemesisRef.current = herdeiro; setNemesis(herdeiro);
+    pushMsgs([{ autor: "sistema", texto: linhaDoNovoCapitulo(h.capitulo, f.id) }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoNovoCapitulo(reg, f.id, { anos, cidade: cidadeAtualRef.current })}`;
+    salvar();
+    enviar("[ABERTURA DE CAPÍTULO] Abra o capítulo conforme o envelope acima.", personagemRef.current, []);
+  };
+
   const iniciar = (pers) => {
+    /* ---------------- CAPÍTULO OU CAMPANHA (v9.90) ----------------
+       A mesma tela de criação serve às duas, e a diferença mora aqui: num
+       capítulo NOVO o mundo não se refaz. O cânone, o mapa, quem morreu,
+       quem virou lenda e o que foi descoberto continuam de pé — é a única
+       coisa que separa um capítulo de uma campanha, e apagá-los faria as
+       duas serem a mesma coisa com nomes diferentes. */
+    const cap = capituloNovoRef.current;
+    capituloNovoRef.current = null;
     personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
     setPersonagem(pers);
     livroRef.current = ""; turnoContRef.current = 0;
-    canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); npcTurnoRef.current = 0; definirAcampado(false);
+    if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); }
+    npcTurnoRef.current = 0; definirAcampado(false);
     /* GEOGRAFIA GERADA PELO SISTEMA (v7.5): o continente nasce PRONTO —
        regiões com bioma, cidades com porte e população, rotas com dias de
        viagem. O Mestre narra em cima de fatos fixos, não inventa caminhos. */
@@ -6751,47 +6826,71 @@ export default function Taverna() {
        que está. A primeira cidade é a casa dele — abre de saída, senão o
        Mestre começaria sem lugar nenhum para narrar. O resto se descobre
        viajando ou comprando o mapa da região. */
-    const inicial = geo.cidades[0];
-    mapaRef.current = {
-      cidades: geo.cidades.map((c) => (c === inicial ? { ...c, descoberta: true } : c)),
-      faccoes: [], continente: geo.continente, regioes: geo.regioes, rotas: geo.rotas,
-    };
-    setMapa(mapaRef.current);
-    nevoaVersaoRef.current = 1;
-    faccaoJogadorRef.current = ""; cidadeAtualRef.current = (inicial && inicial.nome) || "";
+    const inicial = cap
+      ? (((mapaRef.current || {}).cidades || []).find((c) => c.nome === cidadeAtualRef.current)
+        || ((mapaRef.current || {}).cidades || []).find((c) => c.descoberta)
+        || geo.cidades[0])
+      : geo.cidades[0];
+    if (!cap) {
+      mapaRef.current = {
+        cidades: geo.cidades.map((c) => (c === inicial ? { ...c, descoberta: true } : c)),
+        faccoes: [], continente: geo.continente, regioes: geo.regioes, rotas: geo.rotas,
+      };
+      setMapa(mapaRef.current);
+      nevoaVersaoRef.current = 1;
+      faccaoJogadorRef.current = "";
+    }
+    cidadeAtualRef.current = (inicial && inicial.nome) || "";
     jornadaRef.current = null; setJornada(null);
     eventosRef.current = { locais: [], global: null, semGlobalDesde: 0, seq: 1 }; setEventos(eventosRef.current);
     guildaRef.current = { nivel: 1, cofre: 0 }; setGuilda(guildaRef.current);
     contRef.current = { ...CONTADORES_INICIAIS };
     conqRef.current = { desbloqueadas: {}, ordem: [] }; setConquistas(conqRef.current);
     tituloAtivoRef.current = ""; setTituloAtivo("");
-    descobRef.current = []; setDescobertas([]);
+    /* os feitos são do HERÓI e somem com ele; o que o MUNDO já mostrou
+       fica, porque um lugar descoberto não se esconde de novo */
+    if (!cap) { descobRef.current = []; setDescobertas([]); }
     masmorraRef.current = null; setMasmorra(null);
     /* v9.37: o mural nasce vazio de propósito — os cartazes são o que a gente
        DESTA cidade quer ver feito, e na criação ainda não há cidade nenhuma.
        Ele se enche sozinho quando o jogador o abre. */
     muralRef.current = []; setMural(muralRef.current);
     decretosRef.current = []; setDecretos(decretosRef.current);
-    diaRef.current = 1; setDia(1);
+    const hCap = cap ? abrirCapitulo(historiaRef.current, { forma: cap.forma, dia: diaRef.current, anos: cap.anos }) : null;
+    diaRef.current = hCap ? hCap.dia : 1; setDia(diaRef.current);
     minutoRef.current = AMANHECER + 60; setMinuto(minutoRef.current);
     /* v9.5: o herói COMEÇA descansado. Com 0 aqui, o relógio do sono contava
        desde a meia-noite do dia 1 e ele amanhecia exausto sem ter feito nada. */
     acordouAbsRef.current = (diaRef.current - 1) * 1440 + minutoRef.current;
-    nemesisRef.current = null; setNemesis(null);
+    /* O VILÃO DO CAPÍTULO NOVO nasce da queda do anterior — menos no
+       PRÓLOGO, onde o antagonista do capítulo passado ainda está vivo, e é
+       justamente ele que o jogador vai cruzar antes de saber o fim. */
+    nemesisRef.current = !cap ? null
+      : cap.forma === "durante" ? garantirVilao(nemesisRef.current)
+        : gerarHerdeiro(nemesisRef.current, { nome: nomePessoa(bancoNomesRef.current), cont: contRef.current, stats: {}, dia: diaRef.current });
+    setNemesis(nemesisRef.current);
     famaPatamarRef.current = 0;
-    reinoRef.current = {}; setReino({});
-    historiaRef.current = garantirHistoria({ estrutura: (mundo && mundo.estrutura) || "jornada", etapa: 0 });
+    if (!cap) reinoRef.current = {};
+    setReino(reinoRef.current || {});
+    historiaRef.current = hCap || garantirHistoria({ estrutura: (mundo && mundo.estrutura) || "jornada", etapa: 0 });
     questsRef.current = []; setQuests([]);
     divindadeRef.current = garantirDivindade(null); setDivindade(divindadeRef.current);
     devocaoRef.current = garantirDevocao(null, mapaRef.current, divindadeRef.current); setDevocao(devocaoRef.current);
-    baseMundoRef.current = garantirBase(null); setBaseMundo(baseMundoRef.current);
+    if (!cap) { baseMundoRef.current = garantirBase(null); setBaseMundo(baseMundoRef.current); }
     confidenciasRef.current = [];
     mercadoRef.current = { comprados: {}, ambulante: null }; setMercado(mercadoRef.current);
-    bancoNomesRef.current = gerarBancoNomes(mundo);
+    if (!cap) bancoNomesRef.current = gerarBancoNomes(mundo);
     systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null);
     setCombate(null); combateRef.current = null;   /* fim de campanha: nao ha ficha para limpar */
     setFase("jogo");
+    if (cap) {
+      pushMsgs([{ autor: "sistema", texto: linhaDoNovoCapitulo(historiaRef.current.capitulo, cap.forma) }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoNovoCapitulo(cap.reg, cap.forma, { anos: cap.anos, heroiAnterior: cap.heroiAnterior, cidade: cidadeAtualRef.current })}`;
+      salvar();
+      enviar("[ABERTURA DE CAPÍTULO] Abra o capítulo conforme o envelope acima.", pers, []);
+      return;
+    }
     enviar(`Comece a aventura: apresente o mundo com riqueza, situe meu personagem numa cena de abertura marcante com pelo menos um NPC interessante, e termine com um gancho que me convide a agir. (Minhas habilidades iniciais já foram concedidas pelo SISTEMA: ${(pers.habilidades || []).map((h) => h.nome).join(", ") || "nenhuma"} — NÃO envie "adicionar_habilidades".)`, pers, []);
   };
 
@@ -11770,6 +11869,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       historiaRef.current = fc.historia; setHistoria(fc.historia);
       pushMsgs([{ autor: "sistema", texto: linhaDoCapitulo(fc.registro) }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoCapitulo(fc.registro)}`;
+      /* e a porta aparece — DEPOIS do epílogo, nunca antes: o envelope
+         acima proíbe perguntar o que o jogador quer fazer agora, porque o
+         silêncio depois do fim é parte do fim. O painel só renderiza no
+         turno seguinte a este, quando a narração já chegou. */
+      setOfertaCapitulo(fc.registro);
     }
     return true;
   };
@@ -13613,6 +13717,33 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   <Botao primario pequeno onClick={() => sairDoAcampamento("longo")} desativado={bloqueado}>
                     🌙 Descanso longo <span style={{ opacity: 0.7 }}>· {podeDescansoLongo(personagem, dia).pode ? "tudo, uma vez por dia" : "já dormiu hoje — valerá como curto"}</span>
                   </Botao>
+                </div>
+              </div>
+            )}
+
+            {/* ---------------- A PORTA DOS CAPITULOS (v9.90) ----------------
+                Aparece uma vez, depois do epilogo, e some ao ser usada. E o
+                unico painel do jogo que NAO tem como ser reaberto: a porta
+                de um capitulo que fechou so existe no instante em que ele
+                fecha, e oferece-la de novo transformaria o fim numa opcao
+                de menu. */}
+            {ofertaCapitulo && (
+              <div className="px-4 md:px-8 pb-3">
+                <div className="rounded-xl p-3" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
+                  <div className="tv-mono text-[11px] mb-2" style={{ color: T.inkDim }}>
+                    A historia continua — de onde voce quiser olha-la.
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {FORMAS_DE_CAPITULO.map((f) => (
+                      <Botao key={f.id} pequeno primario={f.id === "depois"}
+                        onClick={() => abrirProximoCapitulo(f.id, f.anosPadrao)}>
+                        {f.rotulo} <span style={{ opacity: 0.7 }}>· {f.diz}</span>
+                      </Botao>
+                    ))}
+                  </div>
+                  <div className="tv-body text-[10px] mt-2" style={{ color: T.inkDim }}>
+                    O mundo fica inteiro nas tres: as cidades, a gente, o mapa e tudo o que voce ja escreveu nele.
+                  </div>
                 </div>
               </div>
             )}

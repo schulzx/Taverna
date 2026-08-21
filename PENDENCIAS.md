@@ -2264,6 +2264,87 @@ Registrado para ninguém reabrir por leitura:
 - **Um vilão por campanha** — nada encadeia depois que ele cai, e é
   justamente disso que o sistema de capítulos vai precisar.
 
+## A maçaneta, e o vilão que herda — v9.90
+
+- **~~A porta dos capítulos não tinha maçaneta.~~** RESOLVIDO.
+  `abrirCapitulo` existia desde a v9.84 e **ninguém a chamava**. Agora ela
+  aparece depois do epílogo, uma vez, com as três formas que você pediu:
+
+  | forma | quem | quando |
+  |---|---|---|
+  | **Anos depois** | o mesmo herói | +5 anos |
+  | **Outra pessoa** | herói novo | onde parou |
+  | **Antes do fim** | herói novo | antes da queda |
+
+  Nas três **o mundo fica inteiro**: cidades, gente, mapa, cânone,
+  descobertas, o que foi saqueado e quem morreu. É a única coisa que
+  separa um capítulo novo de uma campanha nova — apagar isso faria as duas
+  serem a mesma coisa com nomes diferentes. O que some é o que pertence ao
+  **herói**: contadores, conquistas, título, quests.
+
+  O painel não pode ser reaberto, e é de propósito: a porta de um capítulo
+  que fechou só existe no instante em que ele fecha. Oferecê-la de novo
+  transformaria o fim numa opção de menu.
+
+- **A regra do prólogo.** "Antes do fim" é a única das três que mexe na
+  regra do jogo, e é o que a torna interessante em vez de confusa: **o
+  desfecho é fato**. O jogador pode vencer batalhas e mudar tudo o que o
+  registro não escreveu, mas nada do que ele conquistar desfaz o que já
+  foi contado — se a ação vai na direção de impedir o inevitável, ela
+  custa caro e chega tarde. E ele não sabe que está num prólogo: para ele
+  aquilo é o presente. O vilão do capítulo anterior continua vivo lá,
+  porque é ele que o jogador vai cruzar antes de saber o fim.
+
+- **~~Um vilão por campanha.~~** RESOLVIDO, e era a metade que faz um
+  capítulo ser capítulo. Um que começa sem antagonista e depois ganha um
+  gerado do zero pela fama é uma sessão nova que por acaso usa o mesmo
+  mapa.
+
+  Seis **heranças**, e nenhuma é "o irmão gêmeo do vilão". A regra que as
+  organiza: o novo antagonista não continua o plano do anterior — ele
+  nasce do **buraco que a queda dele abriu**, e esse buraco foi o herói
+  quem fez.
+
+  - **o órfão** — enterrou o morto e nunca aceitou o motivo
+  - **o herdeiro do plano** — servia a ele e conhece as peças que ficaram
+  - **o vazio** — ocupou o lugar vago na semana seguinte, sem disputa
+  - **o aviso** — é a coisa contra a qual o morto passava a vida se preparando
+  - **a obra** — o que ele pôs de pé, e que não parou quando ele parou
+  - **o caçador** — recebeu a tarefa de achar quem o derrubou
+
+  Duas herdam a **crença** inteira. Quando ela sobrevive, o jogador
+  reencontra o argumento que já ouviu na boca de outro rosto — e é aí que
+  uma campanha começa a parecer uma só história. As marcas **não** são
+  herdadas: são o que o herói perdeu para o morto, e passá-las adiante
+  faria o novo cobrar uma conta que não é dele.
+
+  O herdeiro começa no rumor, desconhecido, com assinatura própria. O
+  segundo capítulo recomeça pelo clima, senão a revelação dele já nasce
+  gasta.
+
+### Uma armadilha de ferramenta que custou uma rodada
+
+`App.jsx` virou **CRLF** no commit anterior (git `core.autocrlf`), e todo
+padrão multilinha dos meus scripts de patch passou a falhar — em
+silêncio, relatando "não achei" como se o texto tivesse mudado de lugar.
+Os patchers desta casa agora detectam o final de linha do arquivo e
+convertem o padrão. Vale para os oito arquivos que já estão em CRLF:
+App.jsx, especializacoes, geografia, masmorras, mundo-base, nomes,
+painel-mapa e subclasses.
+
+### O que fica aberto
+
+- **O plano do vilão não reage ao herói.** Não há como quebrar um passo:
+  ele anda a cada seis dias faça o jogador o que fizer. É a última peça
+  grande do sistema de vilão.
+- **O prólogo não rebobina o mundo.** "Antes do fim" volta o calendário e
+  trava o cânone, mas o mapa, os NPCs e o que foi descoberto seguem no
+  estado de hoje — o jogo não versiona o mundo por dia. Na prática o
+  prólogo é jogado num mundo que já viu coisas que ainda não aconteceram,
+  e só o envelope segura a incoerência.
+- **As relíquias do vilão** continuam sem entrega, e os ativos delas
+  continuam sem botão.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

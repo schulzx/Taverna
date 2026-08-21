@@ -223,15 +223,103 @@ export function fecharCapitulo(h, { vilao = null, dia = 0, causa = "" } = {}) {
 /* A porta: começar o próximo. O MUNDO fica — cidades, gente, mapa,
    cânone. O que reinicia é a espinha dramática, e o herói pode ser o
    mesmo ou outro, anos depois, antes, ou durante. */
-export function abrirCapitulo(h, { estrutura = null } = {}) {
+/* ============================================================
+   AS TRÊS FORMAS DE COMEÇAR DE NOVO (v9.90)
+
+   "O player pode recomeçar a campanha começando um novo capítulo, tipo as
+   campanhas de Vox Machina — pode tanto começar um novo capítulo quanto
+   criar uma nova campanha no mesmo mundo, anos depois ou antes, ou até
+   durante."
+
+   As três guardam a MESMA coisa e mudam quem olha para ela: o mundo fica.
+   Cidades, gente, mapa, cânone, o que foi descoberto e o que foi
+   destruído — nada disso se apaga, porque é exatamente isso que separa um
+   capítulo novo de uma campanha nova.
+
+   `quem` diz se o herói continua ou se outro assume. `tempo` diz para
+   onde o relógio anda. E `canoneTravado` é a única das três que mexe na
+   regra do jogo: numa história que acontece ANTES do fim da anterior, o
+   desfecho já está escrito, e nada do que o jogador fizer pode impedi-lo.
+   É a regra do prólogo, e é o que a torna interessante em vez de confusa.
+   ============================================================ */
+export const FORMAS_DE_CAPITULO = [
+  {
+    id: "depois", rotulo: "Anos depois", quem: "mesmo", tempo: "adiante",
+    anosPadrao: 5, canoneTravado: false,
+    diz: "o mesmo herói, mais velho, num mundo que andou sem ele",
+    porque: "é a forma mais simples e a que mais rende: o jogador volta com a mesma ficha, as mesmas cicatrizes e as mesmas dívidas, e encontra as consequências do que fez esperando por ele",
+  },
+  {
+    id: "outro", rotulo: "Outra pessoa", quem: "novo", tempo: "agora",
+    anosPadrao: 0, canoneTravado: false,
+    diz: "alguém que vivia neste mundo o tempo todo, e cuja história começa onde a outra terminou",
+    porque: "o herói anterior vira lenda de taverna, e nada é mais poderoso num mundo do que descobrir de fora quem foi a pessoa que você era",
+  },
+  {
+    id: "durante", rotulo: "Antes do fim", quem: "novo", tempo: "atras",
+    anosPadrao: 0, canoneTravado: true,
+    diz: "uma história que aconteceu enquanto a outra acontecia — e cujo desfecho você já conhece",
+    porque: "a graça do prólogo é saber o fim: cada vitória tem gosto de adiamento e cada aviso chega tarde, e isso só funciona porque o sistema NÃO deixa o passado ser reescrito",
+  },
+];
+export function formaDeCapitulo(id) { return FORMAS_DE_CAPITULO.find((f) => f.id === id) || FORMAS_DE_CAPITULO[0]; }
+
+/* Quantos dias o relógio anda. Para trás, ele volta a um ponto ANTES do
+   fim do capítulo que acabou — nunca antes do começo dele, ou a história
+   nova não teria como cruzar com a que já foi contada. */
+export function diaDoCapitulo(reg, forma, { dia = 0, anos = 0 } = {}) {
+  const f = formaDeCapitulo(forma);
+  const fim = Math.max(1, Number((reg && reg.fechadoEm) || dia) || 1);
+  if (f.tempo === "adiante") return fim + Math.max(1, Math.round((Number(anos) || f.anosPadrao) * 360));
+  if (f.tempo === "atras") return Math.max(1, Math.round(fim * 0.55));
+  return fim;
+}
+
+export function abrirCapitulo(h, { estrutura = null, forma = "depois", dia = 0, anos = 0 } = {}) {
   const hh = garantirHistoria(h);
+  const f = formaDeCapitulo(forma);
+  const reg = hh.capitulos[hh.capitulos.length - 1] || null;
   return {
     ...hh,
     estrutura: estrutura ? estruturaPorId(estrutura).id : hh.estrutura,
     etapa: 0, marcos: 0, feitos: [],
     capitulo: hh.capitulo + 1,
     fechado: false,
+    /* o capítulo lembra de COMO nasceu: é o que permite ao prompt tratar
+       um prólogo como prólogo pelo resto dele, e não só na primeira cena */
+    forma: f.id,
+    canoneTravado: !!f.canoneTravado,
+    dia: diaDoCapitulo(reg, f.id, { dia, anos }),
   };
+}
+
+/* O que o Mestre recebe ao ABRIR — o irmão do envelope que fecha. Ele é
+   longo por uma razão: é a única fala do sistema em toda a campanha que
+   precisa reconstruir o chão inteiro debaixo do jogador. */
+export function envelopeDoNovoCapitulo(reg, forma, { anos = 0, heroiAnterior = "", cidade = "" } = {}) {
+  const f = formaDeCapitulo(forma);
+  const antes = reg && reg.vilao ? `${reg.vilao}${reg.titulo ? `, ${reg.titulo}` : ""}` : "a ameaça anterior";
+  const onde = cidade ? ` Estou em ${cidade}.` : "";
+
+  if (f.id === "depois") {
+    const n = Math.max(1, Number(anos) || f.anosPadrao);
+    return `[UM TEMPO DEPOIS — ABERTURA DO SISTEMA] Passaram-se ${n} ${n === 1 ? "ano" : "anos"} desde que ${antes} caiu. Sou o mesmo, mais velho.${onde}
+REGRA DESTE ENVELOPE (obrigatória): abra com o MUNDO, não comigo. Mostre em duas ou três frases o que ${n} ${n === 1 ? "ano" : "anos"} fizeram com este lugar — o que cresceu, o que ruiu, quem morreu de velho, o que virou rotina. Só então me ponha na cena, e me ponha fazendo alguma coisa comum.
+NÃO resuma o capítulo anterior, NÃO me faça lembrar em voz alta e NÃO abra ameaça nova nesta cena: o que vem por aí é do sistema, e ele ainda não disse nada. Termine com a palavra comigo.`;
+  }
+  if (f.id === "outro") {
+    return `[OUTRA PESSOA, NESTE MESMO MUNDO — ABERTURA DO SISTEMA] Não sou mais quem eu era: sou outra pessoa, e este mundo é o mesmo.${onde}${heroiAnterior ? ` ${heroiAnterior} existiu de verdade aqui, e o que ${heroiAnterior} fez é história — eu posso ter ouvido falar, e provavelmente ouvi a versão errada.` : ""}
+REGRA DESTE ENVELOPE (obrigatória): trate o herói anterior como LENDA, não como conhecido: gente comenta, exagera, discorda e erra o nome. Eu não o conheço pessoalmente e não tenho nada dele. Abra pequeno — o meu dia, o meu ofício, o meu problema —, e deixe o mundo grande do lado de fora.
+NÃO me dê o passado dele, NÃO me faça herdeiro de nada e NÃO comece com uma missão. Termine com a palavra comigo.`;
+  }
+  return `[ANTES DO FIM — ABERTURA DO SISTEMA] Esta história acontece ENQUANTO a outra acontecia, e eu sou outra pessoa.${onde} O que já está escrito não muda: ${antes} ${reg && reg.causa ? `cai no fim desta linha do tempo — ${reg.causa}` : "ainda vai cair, no fim desta linha do tempo"}, e nada do que eu fizer aqui pode impedir isso.
+REGRA DESTE ENVELOPE (obrigatória, e esta é a regra do prólogo): o desfecho é FATO. Eu posso vencer batalhas, salvar gente e mudar tudo o que o registro não escreveu — mas nada do que eu conquistar pode desfazer o que já foi contado. Se a minha ação for na direção de impedir o inevitável, ela custa caro e chega tarde: mostre o preço, não o milagre.
+NÃO me deixe matar quem já morreu depois, NÃO me deixe salvar quem já se perdeu, e NÃO diga que estou num prólogo — para mim isto é o presente. Termine com a palavra comigo.`;
+}
+
+export function linhaDoNovoCapitulo(n, forma) {
+  const f = formaDeCapitulo(forma);
+  return `📖 Capítulo ${n} — ${f.rotulo.toLowerCase()}.`;
 }
 
 export function linhaDoCapitulo(reg) {

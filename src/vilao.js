@@ -271,6 +271,128 @@ export function garantirVilao(v) {
    TIRA alguma coisa — e o que ele tira sai do que o herói tem, não de
    uma lista de desgraças genéricas.
    ============================================================ */
+/* ============================================================
+   A HERANÇA (v9.90) — de onde vem o vilão do capítulo seguinte
+
+   Um capítulo novo que começa sem antagonista, e depois ganha um gerado
+   do zero pela fama, não é um capítulo: é uma sessão nova que por acaso
+   usa o mesmo mapa. O que faz uma campanha ter CAPÍTULOS é a relação
+   entre eles — e a relação mais forte que existe num jogo de herói é a
+   que sobra de quem ele derrubou.
+
+   Seis heranças, e nenhuma é "o irmão gêmeo do vilão". A regra que as
+   organiza é: o novo antagonista não continua o plano do anterior — ele
+   nasce do BURACO que a queda dele abriu, e esse buraco foi o herói quem
+   fez. É a diferença entre uma sequência e uma consequência.
+
+   `herdaCrenca` diz se a crença do morto sobrevive nele. Quando sobrevive,
+   o jogador reencontra o argumento que já ouviu, na boca de alguém com
+   outro rosto — e é aí que uma campanha começa a parecer uma só história.
+   ============================================================ */
+export const HERANCAS = [
+  {
+    id: "orfao", peso: 3, herdaCrenca: false,
+    quem: "alguém que amava o que caiu",
+    liga: (v) => `enterrou ${v} e nunca aceitou o motivo`,
+    crenca: (v) => `${v} não era o monstro que contaram — e quem contou precisa pagar pela versão que virou verdade`,
+    metodo: "não esconde de quem sabe: procura testemunhas, junta o que foi dito, e cobra uma por uma",
+    quer: "que a história seja corrigida em praça pública, custe o que custar a quem a escreveu",
+    porque: "é a herança mais humana das seis: quem sobra de um vilão morto quase nunca é outro vilão — é gente de luto, e luto com razão é mais perigoso que ambição",
+  },
+  {
+    id: "herdeiro_do_plano", peso: 3, herdaCrenca: true,
+    quem: "quem estava no plano e não foi pego",
+    liga: (v) => `servia a ${v} e conhece cada peça que ficou no tabuleiro`,
+    crenca: null,
+    metodo: "retoma de onde parou, sem a vaidade que perdeu o antecessor — e sem os erros dele",
+    quer: "terminar o que foi interrompido, agora com pressa e sem plateia",
+    porque: "o único caso em que a crença sobrevive inteira, e por isso o mais desconfortável: o jogador ganhou a luta e não ganhou o argumento",
+  },
+  {
+    id: "vazio", peso: 3, herdaCrenca: false,
+    quem: "quem ocupou o lugar que ficou vago",
+    liga: (v) => `tomou o que era de ${v} na semana seguinte à queda, sem disputa`,
+    crenca: (v) => `o que ${v} construiu era bom demais para morrer com ele, e mal-usado demais nas mãos dele`,
+    metodo: "administra: não conquista nada, apenas ocupa o que já estava de pé e faz funcionar melhor",
+    quer: "que a máquina volte a girar, e que ninguém repare em quem está no leme",
+    porque: "toda vitória do jogador é um vácuo, e o vácuo não fica vazio — foi ele quem esvaziou, e é essa a conta que volta",
+  },
+  {
+    id: "aviso", peso: 2, herdaCrenca: false,
+    quem: "aquilo de que ele avisava",
+    liga: (v) => `é a coisa contra a qual ${v} passou a vida se preparando`,
+    crenca: (v) => `ninguém no mundo está pronto, e ${v} era o único que sabia disso`,
+    metodo: "não negocia porque não precisa: chega no ritmo dele, e o mundo é que se apressa",
+    quer: "o que sempre quis, sem nunca ter dito a ninguém o que é",
+    porque: "a mais cruel: o vilão anterior estava certo sobre uma coisa, e o herói matou o único que se preparava. A campanha reinterpreta o capítulo passado inteiro",
+  },
+  {
+    id: "obra", peso: 2, herdaCrenca: true,
+    quem: "o que ele deixou construído",
+    liga: (v) => `é a coisa que ${v} pôs de pé, e que não parou quando ele parou`,
+    crenca: null,
+    metodo: "não tem rosto no começo: age por ofício, por contrato e por hábito, como uma instituição age",
+    quer: "cumprir a função para a qual foi feita, sem ninguém no comando para mandar parar",
+    porque: "mata a ideia de que derrubar o chefe resolve: o que ele montou tinha gente dentro, e gente dentro continua indo trabalhar",
+  },
+  {
+    id: "caçador", peso: 2, herdaCrenca: false,
+    quem: "quem veio atrás de quem o matou",
+    liga: (v) => `recebeu a tarefa de encontrar quem derrubou ${v}`,
+    crenca: (v) => `quem mata alguém como ${v} vira a próxima coisa a ser derrubada, e é melhor que seja cedo`,
+    metodo: "estuda antes de aparecer: conhece o meu nome, os meus hábitos e a minha gente antes de eu saber que existe",
+    quer: "provar que o herói e o monstro são o mesmo degrau da mesma escada",
+    porque: "é o espelho, mas ganho: a fama do jogador virou o motivo, e essa é a única herança em que a culpa é inteiramente dele",
+  },
+];
+export function herancaPorId(id) { return HERANCAS.find((h) => h.id === id) || null; }
+
+export function escolherHeranca(sorte = Math.random) {
+  const total = HERANCAS.reduce((n, h) => n + h.peso, 0);
+  let corte = sorte() * total;
+  return HERANCAS.find((h) => (corte -= h.peso) <= 0) || HERANCAS[0];
+}
+
+/* O herdeiro é um vilão COMPLETO — mesma forma, mesmo plano de nove
+   passos, mesmas seis fases. O que muda é de onde vieram a crença, o
+   método e o querer: em vez do arquétipo sorteado pelos feitos do herói,
+   eles vêm da relação com o morto.
+
+   O arquétipo continua sendo escolhido, e continua servindo: é dele que
+   saem as ASSINATURAS, e a assinatura é o que o jogador junta sozinho na
+   fase da marca. Um herdeiro sem assinatura própria seria reconhecido
+   cedo demais — ou não seria reconhecido nunca. */
+export function gerarHerdeiro(anterior, { nome = "", cont = {}, stats = {}, dia = 0, sorte = Math.random } = {}) {
+  const base = gerarVilao({ nome, cont, stats, dia, sorte });
+  if (!anterior || !anterior.nome) return base;
+  const h = escolherHeranca(sorte);
+  const morto = anterior.nome;
+  return {
+    ...base,
+    heranca: h.id,
+    veioDe: morto,
+    veioDeTitulo: anterior.titulo || "",
+    liga: h.liga(morto),
+    crenca: h.herdaCrenca ? (anterior.crenca || base.crenca) : h.crenca(morto),
+    motivo: h.herdaCrenca ? (anterior.crenca || base.crenca) : h.crenca(morto),
+    metodo: h.metodo,
+    quer: h.quer,
+    /* as marcas do morto NÃO passam: elas são o que o herói perdeu para
+       ELE, e herdá-las faria o novo cobrar uma conta que não é dele */
+    marcas: [],
+  };
+}
+
+/* O que o Mestre precisa saber na revelação de um herdeiro, e que o
+   envelope comum não diz: que este não é um vilão novo, é uma
+   consequência. Vai DENTRO do envelope da revelação, não em separado —
+   duas vozes dizendo a mesma coisa é a coisa que esta casa mais evita. */
+export function linhaDaHeranca(v) {
+  if (!v || !v.heranca || !v.veioDe) return "";
+  const h = herancaPorId(v.heranca);
+  return ` E ele não veio do nada: ${h ? h.quem : "veio do que ficou"} — ${v.liga}. O jogador derrubou ${v.veioDe}, e é dessa queda que este nasceu: diga isso na cena, sem explicar a mecânica.`;
+}
+
 export const DIAS_POR_PASSO = 6;
 
 export function podeAvancar(v, { dia = 0 } = {}) {
