@@ -3477,20 +3477,60 @@ demais. **Tem de ser possível, senão as opiniões não valem nada.**
 
 ---
 
-## A ORDEM
+## A ORDEM — FEITA (v9.101 → v9.112)
 
 ```
- 1. B1   lugares e criaturas do léxico     pequeno · visível · risco zero
- 2. A1   GEÓGRAFO + PAUTA                  a espinha, provada num consumidor só
- 3. R    O REGISTRO + Arquivista           mata o livro; todo o resto lê dele
- 4. A2   INTÉRPRETE                        a gente em cena
- 5. V    SISTEMA VILÃO                     precisa do Registro para saber
- 6. AL   SISTEMA ALIADO                    reusa o ENTRE que já existe
- 7. B2   raças pelo léxico                 pequeno, encaixa no intervalo
- 8. A3   ADVERSÁRIO                        melhor depois do Vilão e do Geógrafo
- 9. B3   equipamento pela FORMA
-10. C    COBRADOR                          fecha o círculo: o mundo lembra
+ 1. B1   lugares e criaturas do léxico     v9.101-103   lexico.js
+ 2. A1   GEÓGRAFO + PAUTA                  v9.104       geografo.js · pauta.js
+ 3. R    O REGISTRO + Arquivista           v9.105       registro.js  (matou o livro)
+ 4. A2   INTÉRPRETE                        v9.106       interprete.js
+ 5. V    SISTEMA VILÃO                     v9.107       antagonista.js
+ 6. AL   SISTEMA ALIADO                    v9.108       aliado.js
+ 7. B2   raças pelo léxico                 v9.109       duas colunas
+ 8. A3   ADVERSÁRIO                        v9.110       adversario.js
+ 9. B3   equipamento pela FORMA            v9.111       17 formas · tudo ou nada
+10. C    COBRADOR                          v9.112       cobrador.js  (o mundo lembra)
 ```
+
+**O que sobrou de fora, e de propósito:** B4, as habilidades. O nome de
+uma habilidade é IDENTIFICADOR em quinze lugares — `estaPreparada`,
+`concedidaPorItem`, recarga, custo, combos, o caderno, e o Mestre
+mandando `[HABILIDADE] Bola de Fogo`. O desenho existe (duas colunas,
+mais tabela de tradução no prompt e busca reversa), é caro em prompt,
+cria superfície de falha nova, e o ganho é menor que o do equipamento:
+o jogador lê o nome de uma magia muito menos vezes do que lê o nome do
+lugar onde está.
+
+### O que as dez ensinaram, e que não está na lista de commits
+
+**A CATRACA pagou o aluguel dela cinco vezes.** Campos órfãos em quatro
+etapas — `euGanhei`/`euPerdi`/`noite` (Intérprete), `nivel` (Vilão),
+quatro do contexto do ato (Aliado), quatro do estado da luta
+(Adversário). Todos com o mesmo sintoma: a condição vira falsa para
+sempre e ninguém percebe.
+
+**A REDE virou peça obrigatória.** Três agentes nasceram mudos na cena
+mais comum do jogo, porque nenhuma entrada do acervo batia. Todo acervo
+novo termina em entradas de peso baixo que sempre servem, e todo teste
+novo varre o espaço de situações procurando silêncio.
+
+**O ESCOPO de um campo é parte do campo.** `poupei` da campanha e
+`poupei` deste ato se chamam igual e querem coisas diferentes: o Aliado
+pergunta quem você é, o Cobrador pergunta o que você fez naquele dia.
+Passar um pelo outro produziu "a família de quem caiu aparece — por
+poupei o último e mandei embora".
+
+**O QUE O TESTE NÃO PEGA, a prova pega.** Duas partidas simuladas — 60
+dias de campanha e 10 mil itens gerados — acharam repetição de forma,
+truncagem no meio da palavra, plural irregular e um elmo classificado
+como armadura leve. Nenhuma teria falhado um teste unitário.
+
+**O TETO DE PROMPT é uma decisão, não um número.** Ele foi estourado
+uma vez (etapa 8, por 100 caracteres) e o conserto não foi mover o
+guarda: foi pôr o DESCANSO atrás de `!emCombate`, porque o código já
+recusava descansar na luta e a regra morava só num dos dois lados.
+Pior cena real: 78.945 (etapa 6) → 79.505 (etapa 10), com quatro
+sistemas novos dentro.
 
 **Por que o Registro subiu para o terceiro lugar:** ele responde a
 pergunta 1, apaga uma chamada de IA a cada 8 turnos, e é de onde o Vilão
