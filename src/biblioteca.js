@@ -109,6 +109,32 @@ export function garantirSituacao(s) {
        herói com três cicatrizes e nenhum quilômetro rodado tem passado sem
        ter lugar nenhum de que se lembrar. */
     temFalaAnterior: b("temFalaAnterior"),
+    /* ---------------- ONDE EU ESTOU (v9.93) ----------------
+       "A questão da localização e geografia o mestre tem que saber: ele
+       sabe onde o player está e onde os personagens estão."
+
+       Faltava, e o buraco era concreto: um assunto de CERCO podia
+       germinar numa aldeia de cinquenta almas que não tem porta para
+       fechar, e um REENCONTRO podia ser escolhido quando a única pessoa
+       conhecida da campanha estava sentada na minha frente.
+
+       O mapa sempre soube disto — porte, bioma, região, rotas com dias —
+       e o registro de gente sempre soube quem está aqui e quem não está.
+       O que faltava era o Mestre PERGUNTAR antes de decidir. */
+    porte: t("porte") || "",
+    /* gente CONHECIDA daqui e de longe: a segunda é a que faz um
+       reencontro ser possível, e ela não é o inverso da primeira */
+    gentePorPerto: n("gentePorPerto", 0),
+    genteLonge: n("genteLonge", 0),
+    /* dias até a vizinha conhecida mais próxima; 0 quando não há para
+       onde ir, e é a diferença entre um mundo aberto e um beco */
+    diasAteVizinha: n("diasAteVizinha", 0),
+    /* NÃO há `bioma` nem `longeDeCasa` aqui, e a ausência é deliberada:
+       os dois nasceram nesta mesma versão "por completude", nenhum assunto
+       os consultava, e a garantia de leitor os pegou no mesmo minuto.
+       Forçar um `quando` para justificá-los seria escrever uma regra que
+       serve à tabela em vez de servir à cena. Quando um assunto precisar
+       deles, são três linhas — e o checador cobra o leitor na hora. */
     /* ---------------- O QUE O JOGADOR ACABOU DE FAZER (v9.88) --------
        A memória cobria o que o SISTEMA mandou e era cega para o outro
        lado da mesa: um jogador que passa três turnos conversando recebia

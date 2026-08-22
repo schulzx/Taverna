@@ -2503,6 +2503,83 @@ que a v9.91 tornou obsoleto:
   um respiro na voz febril são os dois momentos em que a voz e o ritmo
   puxam para lados opostos, e nada os concilia hoje.
 
+## O Mestre passa a saber ONDE — v9.93
+
+"A questão da localização e geografia o mestre tem que saber: ele sabe
+onde o player está e onde os personagens estão."
+
+- **~~O compasso não conhecia a geografia.~~** RESOLVIDO — e era do pedido
+  original, deixado por fazer na v9.91. O buraco era concreto: um assunto
+  de **cerco** germinava numa aldeia de cinquenta almas que não tem porta
+  para fechar, e um **reencontro** podia ser escolhido com a única pessoa
+  conhecida da campanha sentada na minha frente.
+
+  Nos dois casos o Mestre pedia ao narrador uma cena que o mundo não
+  comporta — e a IA **não tem como recusar**, então ela inventa o portão.
+  É a forma mais silenciosa de pedir invenção que existe neste jogo.
+
+  O mapa sempre soube (porte, região, rotas com dias) e o registro de
+  gente sempre soube quem está aqui e quem não está. O que faltava era o
+  Mestre **perguntar antes de decidir**.
+
+  Quatro campos: `porte`, `gentePorPerto`, `genteLonge`, `diasAteVizinha`.
+  E dez assuntos passaram a consultá-los — cerco, revolta, escassez,
+  praga, lei nova, sucessão e festa pedem tamanho; reencontro pede alguém
+  que **não** esteja aqui; despedida pede alguém que esteja; descoberta de
+  caminho pede que haja para onde ir.
+
+  **Porte desconhecido não passa.** Num save antigo ou fora de cidade,
+  afirmar que há portão é justamente o que se quer evitar: o lado seguro
+  de uma lacuna é o silêncio, nunca a permissão.
+
+  Medido: a aldeia isolada dá `romance`, `cacada`, `briga_de_rua`; a
+  cidade dá `cerco`, `casa_perdida`, `impostor`. E a aldeia continua com
+  17 assuntos — a régua não esvaziou o lugar pequeno.
+
+- **~~A onda não conversava com o vilão.~~** RESOLVIDO. O passo dele e o
+  clímax do compasso podiam cair no mesmo turno, e nada os coordenava — o
+  **mesmo** defeito que `segurar` já resolvia para combate, masmorra e
+  viagem, só que ninguém tinha ligado o vilão nele.
+
+  E ele ganha sempre: a onda é cíclica e pode esperar um turno sem perder
+  nada; o passo do vilão acontece uma vez a cada seis dias de campanha.
+  Adiar o raro para não atropelar o frequente seria trocar a peça grande
+  pela pequena. O turno não se perde — ele volta ao contador.
+
+- **~~A voz não podia ser trocada depois.~~** RESOLVIDO, e num lugar só: o
+  painel do capítulo novo. É o único ponto da campanha em que trocar a
+  boca não soa como o narrador tendo uma crise no meio de uma frase —
+  entre um epílogo e uma abertura. Trocar é trocar **um campo** de
+  `mundo`; o prompt inteiro se remonta na chamada seguinte porque
+  `vozPrompt` lê dali. Sem estado novo.
+
+### E a garantia de leitor pegou o autor dela
+
+Eu acrescentei **seis** campos de geografia. Quatro acharam uso na hora;
+`bioma` e `longeDeCasa` entraram "por completude", nenhum assunto os
+consultava, e a garantia de leitor os flagrou no mesmo minuto — a mesma
+doença que passei a sessão inteira caçando, agora no meu próprio código
+novo.
+
+Foram **removidos**. Forçar um `quando` para justificá-los seria escrever
+uma regra que serve à tabela em vez de servir à cena. Quando um assunto
+precisar de bioma, são três linhas — e o checador cobra o leitor na hora
+em que ele nascer.
+
+A garantia também aprendeu duas coisas verdadeiras: que a entrega pode vir
+por **spread** de um segundo montador (`lugarDaMesa`), e que `assuntos.js`
+também **lê** a situação. Nenhuma das duas afrouxa nada — ela continua
+exigindo que todo campo normalizado seja entregue e todo campo entregue
+seja lido, e passou a enxergar as duas pontas que existem de verdade.
+
+### O que fica aberto
+
+- **Capital e cidade são a mesma coisa** para a régua: nenhum assunto
+  distingue as duas pontas de cima da escada, e uma corte tem histórias
+  que um burgo não tem.
+- **O bioma não entra em nada.** Um assunto de deserto, de gelo ou de
+  pântano teria material próprio, e o mapa já guarda o campo.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

@@ -6784,6 +6784,15 @@ export default function Taverna() {
      E o vilão do capítulo seguinte NÃO nasce do zero: ele nasce da queda
      do anterior. Um capítulo que começa sem antagonista e depois ganha um
      gerado pela fama é uma sessão nova que por acaso usa o mesmo mapa. */
+  /* Trocar a voz é trocar UM campo de `mundo` — e o prompt inteiro se
+     remonta na próxima chamada, porque `vozPrompt` lê dali. Não há estado
+     novo, e é por isso que a troca é barata. */
+  const trocarVoz = (id) => {
+    const m = { ...(mundoAtual() || {}), voz: id };
+    mundoRef.current = m; setMundo(m);
+    salvar({ mundo: m });
+  };
+
   const abrirProximoCapitulo = (formaId, anos = 0) => {
     const f = formaDeCapitulo(formaId);
     const reg = ofertaCapitulo;
@@ -10876,6 +10885,35 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      Aqui o mestre monta a situacao com o que ele JA SABE — a mesa, o arco,
      a fase do vilao, quem esta na cena — e a estante devolve uma forma. O
      nome dela nao viaja: sobe a forma, nunca a etiqueta. */
+  /* ---------------- O QUE O MESTRE SABE DO LUGAR (v9.93) ----------------
+     Tudo já existia: o mapa guarda porte, bioma e rotas com dias; o
+     registro de gente sabe quem está aqui e quem está longe. O que não
+     existia era alguém PERGUNTANDO antes de decidir — e por isso um cerco
+     podia germinar numa aldeia sem portão, e um reencontro podia ser
+     escolhido com a única pessoa conhecida sentada na minha frente. */
+  const lugarDaMesa = () => {
+    try {
+      const mapa = mapaRef.current || {};
+      const cidades = mapa.cidades || [];
+      const aqui = cidades.find((c) => c.nome === cidadeAtualRef.current) || null;
+      const p0 = fichaViva() || {};
+      const el = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [] });
+      /* a vizinha conhecida mais perto, em dias de estrada. Só conta o que
+         o jogador JÁ descobriu: um caminho que ele não conhece não é uma
+         saída, é névoa. */
+      const conhecidas = new Set(cidades.filter((c) => c.descoberta).map((c) => c.nome));
+      const dias = (mapa.rotas || [])
+        .filter((r) => (r.de === cidadeAtualRef.current && conhecidas.has(r.para)) || (r.para === cidadeAtualRef.current && conhecidas.has(r.de)))
+        .map((r) => Number(r.dias) || 0).filter((d) => d > 0);
+      return {
+        porte: (aqui && aqui.porte) || "",
+        gentePorPerto: (el.aqui || []).length,
+        genteLonge: (el.longe || []).length,
+        diasAteVizinha: dias.length ? Math.min(...dias) : 0,
+      };
+    } catch { return {}; }
+  };
+
   const situacaoDaMesa = ({ fio = "" } = {}) => {
     const p0 = fichaViva() || {};
     const h = historiaRef.current || {};
@@ -10930,6 +10968,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       temFalaAnterior: (mensagensRef.current || []).filter((m) => m && m.autor === "mestre" && /[“"”]|—s/.test(String(m.texto || ""))).length >= 8,
       temObjetos: (p0.inventario || []).length >= 3,
       temLugarVisitado: cidadesPisadas(mapaRef.current).length >= 2,
+      ...lugarDaMesa(),
       pvBaixo: (p0.vida || 0) > 0 && (p0.vida || 0) <= Math.ceil((p0.vidaMax || 1) / 3),
       nivel: p0.nivel || 1,
       fama: famaAtual(),
@@ -10972,6 +11011,22 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const talvezAndarOCompasso = (conteudo) => {
     try {
       if (String(conteudo || "").trimStart().startsWith("[")) return "";
+      /* ---------------- O VILÃO PASSA NA FRENTE (v9.93) ----------------
+         O passo dele e o clímax do compasso podiam cair no mesmo turno, e
+         nada os coordenava. É o mesmo defeito que `segurar` já resolvia
+         para combate, masmorra e viagem — só que ninguém tinha ligado o
+         vilão nele.
+
+         E ele ganha sempre: a onda é cíclica e pode esperar um turno sem
+         perder nada, enquanto o passo do vilão acontece uma vez a cada
+         seis dias de campanha. Adiar o raro para não atropelar o
+         frequente seria trocar a peça grande pela pequena. */
+      if ((notaRef.current || "").includes("— MOVIMENTO DO SISTEMA]")
+        || (notaRef.current || "").includes("MOMENTO ÚNICO DA CAMPANHA")
+        || (notaRef.current || "").includes("[A QUEDA —")) {
+        compassoRef.current = { ...compassoRef.current, turnos: Math.max(0, (compassoRef.current.turnos || 0) - 1) };
+        return "";
+      }
       const sit = situacaoDaMesa();
       const r = avancarCompasso(compassoRef.current, sit, {
         segurar: !!combateRef.current || !!masmorraRef.current || !!jornadaRef.current,
@@ -13802,6 +13857,24 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   </div>
                   <div className="tv-body text-[10px] mt-2" style={{ color: T.inkDim }}>
                     O mundo fica inteiro nas tres: as cidades, a gente, o mapa e tudo o que voce ja escreveu nele.
+                  </div>
+                  {/* ---------------- A VOZ, AQUI E SO AQUI (v9.93) ----------
+                      Ela era escolhida na criacao e ficava para sempre. O
+                      capitulo novo e o unico ponto da campanha em que trocar a
+                      boca nao soa como o narrador tendo uma crise no meio de
+                      uma frase — entre um epilogo e uma abertura, e so ali. */}
+                  <div className="tv-mono text-[10px] uppercase tracking-widest mt-3 mb-1.5" style={{ color: T.violetSoft }}>E a voz, se quiser outra</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {VOZES.map((v) => {
+                      const on = ((mundoAtual() || {}).voz || VOZ_PADRAO) === v.id;
+                      return (
+                        <button key={v.id} onClick={() => trocarVoz(v.id)} title={v.resumo}
+                          className="tv-mono text-[10px] px-2 py-1 rounded-full"
+                          style={{ background: on ? T.amber : "transparent", color: on ? T.onAccent : T.inkDim, border: `1px solid ${on ? T.amber : T.line}` }}>
+                          {v.icone} {v.nome}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

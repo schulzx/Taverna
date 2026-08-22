@@ -48,6 +48,25 @@ export const FAMILIAS = [
 ];
 export function familiaPorId(id) { return FAMILIAS.find((f) => f.id === id) || null; }
 
+/* ---------------- A RÉGUA DO PORTE (v9.93) ----------------
+   Um cerco precisa de portão, uma revolta precisa de multidão e uma lei
+   nova precisa de quem a assine. Sem esta régua, os três podiam germinar
+   numa aldeia de cinquenta almas — e o Mestre pediria ao narrador uma
+   cena que o lugar não comporta, que é a forma mais silenciosa de pedir
+   invenção: a IA não tem como recusar, então ela inventa o portão.
+
+   A ordem é a de `PORTES` em geografia.js. `ruina` e `fortaleza` ficam
+   de fora da escada de propósito: a primeira não tem ninguém, e a segunda
+   é pequena em gente e enorme em muro — ela entra por nome onde faz
+   sentido, não por tamanho. */
+const ESCADA = ["aldeia", "vila", "cidade", "capital", "metropole"];
+const portePeloMenos = (s, min) => {
+  const i = ESCADA.indexOf(String(s.porte || ""));
+  /* porte desconhecido NÃO passa: num save antigo ou numa cena fora de
+     cidade, afirmar que há portão é justamente o que se quer evitar */
+  return i >= 0 && i >= ESCADA.indexOf(min);
+};
+
 export const ASSUNTOS = [
   /* ==================== A LUTA ==================== */
   {
@@ -83,7 +102,7 @@ export const ASSUNTOS = [
   {
     id: "cerco", familia: "luta", peso: 3,
     nome: "um cerco",
-    quando: (s) => s.emCidade && s.momento >= 0.35,
+    quando: (s) => s.emCidade && s.momento >= 0.35 && portePeloMenos(s, "vila"),
     preparo: "Comece a preparar um CERCO. Mostre a preparação pelo lado de dentro: gente estocando, portas reforçadas, quem está indo embora enquanto dá.",
     subindo: "O cerco se fecha em volta: as saídas viram três, depois duas, e alguém decide que a culpa é de quem chegou de fora — de mim.",
     vespera: "As portas se fecham ao anoitecer, e é agora que se decide de que lado delas eu fico.",
@@ -113,7 +132,7 @@ export const ASSUNTOS = [
   {
     id: "revolta", familia: "luta", peso: 2,
     nome: "gente comum decidindo revidar",
-    quando: (s) => s.emCidade && s.momento >= 0.4,
+    quando: (s) => s.emCidade && s.momento >= 0.4 && portePeloMenos(s, "vila"),
     preparo: "Comece a preparar uma REVOLTA: mostre a paciência acabando em gente que não é guerreira — o preço que subiu de novo, a humilhação repetida, o funeral que ninguém pagou.",
     subindo: "A paciência vira organização: alguém está contando cabeças, e uma data começa a circular sem ser dita em voz alta.",
     vespera: "A rua está cheia de gente que não devia estar na rua a esta hora.",
@@ -155,7 +174,7 @@ export const ASSUNTOS = [
   {
     id: "reencontro", familia: "laco", peso: 3, precisa: "gente",
     nome: "um reencontro",
-    quando: (s) => s.emCidade && s.momento >= 0.3,
+    quando: (s) => s.emCidade && s.momento >= 0.3 && s.genteLonge > 0,
     preparo: "Comece a preparar um REENCONTRO: deixe cair o nome de alguém que eu já conheci nesta campanha, dito por outra pessoa, sem que ninguém explique nada.",
     subindo: "O nome volta com endereço: essa pessoa está por perto, e alguém deixa escapar em que estado ela anda.",
     vespera: "Está do outro lado da praça, e ainda não me viu.",
@@ -195,7 +214,7 @@ export const ASSUNTOS = [
   {
     id: "despedida", familia: "laco", peso: 2,
     nome: "uma despedida",
-    quando: (s) => (s.temGrupo || s.temGenteConhecida) && s.momento >= 0.5,
+    quando: (s) => (s.temGrupo || s.gentePorPerto > 0) && s.momento >= 0.5,
     preparo: "Comece a preparar uma DESPEDIDA: mostre alguém do meu convívio com uma vida própria puxando para outro lado — um ofício, uma família, um lugar de origem.",
     subindo: "Aquilo aperta e a pessoa começa a se despedir sem dizer que se despede: entrega coisas, resolve pendências, fala do futuro sem se incluir.",
     vespera: "As coisas dela estão amarradas, e a carroça sai ao amanhecer.",
@@ -269,7 +288,7 @@ export const ASSUNTOS = [
   {
     id: "escassez", familia: "mundo", peso: 3,
     nome: "uma escassez",
-    quando: (s) => s.emCidade,
+    quando: (s) => s.emCidade && portePeloMenos(s, "vila"),
     preparo: "Comece a preparar uma ESCASSEZ: mostre alguma coisa deste lugar dependendo de UMA fonte — água, sal, ferro, remédio, uma estrada.",
     subindo: "A fonte falha ou encarece, e as pessoas começam a se comportar de forma diferente por causa disso.",
     vespera: "Está acabando hoje, e as pessoas já sabem disso.",
@@ -279,7 +298,7 @@ export const ASSUNTOS = [
   {
     id: "praga", familia: "mundo", peso: 2,
     nome: "uma doença",
-    quando: (s) => s.emCidade && s.momento >= 0.3,
+    quando: (s) => s.emCidade && s.momento >= 0.3 && portePeloMenos(s, "vila"),
     preparo: "Comece a preparar uma DOENÇA: uma tosse, uma febre, um caso só — tratado como caso isolado por quem entende.",
     subindo: "Deixa de ser um caso. Alguém competente admite que não sabe o que é, e as medidas começam.",
     vespera: "Fecharam a primeira casa, e há gente decidindo se fecha a segunda.",
@@ -299,7 +318,7 @@ export const ASSUNTOS = [
   {
     id: "lei_nova", familia: "mundo", peso: 2,
     nome: "uma lei nova",
-    quando: (s) => s.emCidade,
+    quando: (s) => s.emCidade && portePeloMenos(s, "cidade"),
     preparo: "Comece a preparar uma LEI NOVA: mostre quem manda aqui incomodado com alguma coisa concreta e pequena.",
     subindo: "O incômodo vira regra: alguém é o primeiro a ser pego por ela, e o exemplo é público.",
     vespera: "O bando de guardas está fazendo a ronda desta rua agora.",
@@ -309,7 +328,7 @@ export const ASSUNTOS = [
   {
     id: "descoberta_de_mapa", familia: "mundo", peso: 3,
     nome: "um caminho que ninguém usava",
-    quando: (s) => s.emViagem || s.emCidade,
+    quando: (s) => (s.emViagem || s.emCidade) && s.diasAteVizinha > 0,
     preparo: "Comece a preparar uma DESCOBERTA DE CAMINHO: mostre alguém mencionando de passagem um lugar aonde não se vai mais, e o motivo banal de não se ir.",
     subindo: "Aparece uma razão concreta para ir: alguém foi, alguém precisa, ou o caminho de sempre fechou.",
     vespera: "A boca do caminho está ali, aberta, e ninguém vigia.",
@@ -319,7 +338,7 @@ export const ASSUNTOS = [
   {
     id: "festa", familia: "mundo", peso: 2,
     nome: "uma data que o lugar leva a sério",
-    quando: (s) => s.emCidade,
+    quando: (s) => s.emCidade && portePeloMenos(s, "vila"),
     preparo: "Comece a preparar uma DATA: mostre a preparação dela sem explicar o que é — o que se limpa, o que se cozinha, quem chega de fora.",
     subindo: "A cidade muda de rotina por causa dela, e as regras normais ficam suspensas de um jeito específico.",
     vespera: "Começa ao pôr do sol, e todo mundo já está no lugar onde vai estar.",
@@ -413,7 +432,7 @@ export const ASSUNTOS = [
   {
     id: "sucessao", familia: "poder", peso: 2,
     nome: "quem fica no lugar de quem manda",
-    quando: (s) => s.emCidade && s.momento >= 0.45,
+    quando: (s) => s.emCidade && s.momento >= 0.45 && portePeloMenos(s, "cidade"),
     preparo: "Comece a preparar uma SUCESSÃO: mostre quem manda neste lugar em atividade, e mostre que essa pessoa não é eterna.",
     subindo: "Começa a disputa por baixo: alianças pequenas, favores adiantados, gente sondando de que lado eu estou.",
     vespera: "Quem mandava não aparece há dois dias, e os outros já perceberam.",
