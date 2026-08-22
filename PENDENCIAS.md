@@ -2345,6 +2345,96 @@ painel-mapa e subclasses.
 - **As relíquias do vilão** continuam sem entrega, e os ativos delas
   continuam sem botão.
 
+## O compasso: a camada rápida do arco — v9.91
+
+"Podemos expandir a estrutura de arcos e dentro do arco ter camadas e
+etapas, algumas fixas e outras sorteadas, seguindo uma fórmula infalível.
+Assim o sistema pode ir mandando para o mestre 'comece a preparar uma
+briga' e depois 'agora comece a briga'."
+
+- **~~Entre dois momentos do arco não havia forma nenhuma.~~** RESOLVIDO.
+  O arco é a camada mais lenta que existe — seis momentos ao longo de uma
+  vida de jogo. Entre dois deles cabem cinquenta turnos, e esses cinquenta
+  turnos não tinham ritmo: o mundo se mexia por cadência, o vilão andava
+  por calendário, e o resto era o que o jogador quisesse. Uma campanha
+  podia passar quinze turnos sem nada e depois três lutas seguidas, **e
+  nenhuma peça do sistema estava errada**.
+
+### A onda é a fórmula, e ela é fixa
+
+```
+respiro → semente → subida → véspera → CLÍMAX → preço → respiro…
+          ↑ "comece a preparar"          ↑ "agora"
+```
+
+Ela não escolhe o que acontece — garante que sempre haja **ar antes da
+pancada e conta depois dela**. Um jogo que só sobe cansa; um que nunca
+sobe não é jogo.
+
+**A véspera é a peça que importa.** Um turno só, e o mais importante dos
+seis: é a última chance de o jogador escolher COMO encontra o que vem.
+Sem ela o clímax é emboscada do sistema — e emboscada do sistema é a
+diferença entre um jogo difícil e um jogo injusto.
+
+**O respiro é mudo.** Mandar "agora descanse" é o sistema atrapalhando
+exatamente o movimento que existe para ele calar.
+
+### O assunto é o que é sorteado
+
+**36 assuntos em seis famílias** — a luta, os laços, o enigma, o mundo, a
+perda, o poder. Cada um com os **cinco tempos**: o que plantar, como
+aperta, a véspera, o que acontece e o que fica. O assunto é escolhido na
+semente e carregado até o preço, e é daí que vem o efeito pedido: o
+sistema avisa cedo, o Mestre prepara o terreno, e quando a coisa acontece
+ela parece que estava vindo desde sempre. Porque estava.
+
+### A promessa, medida em 600 turnos
+
+| medida | resultado |
+|---|---|
+| clímaxes | 52 |
+| turnos de respiro | 154 |
+| menor vão entre clímaxes | **8** (nunca colados) |
+| maior vão entre clímaxes | **15** (nunca entedia) |
+| clímaxes com semente antes | 52/52 |
+| clímaxes com véspera antes | 52/52 |
+| assuntos distintos | 28 |
+| famílias repetidas coladas | 0 |
+
+### As travas
+
+- **A onda ESPERA** em combate, masmorra e viagem: um clímax de compasso
+  disparando dentro de uma luta que o jogador já está travando são duas
+  cenas grandes no mesmo turno, e a segunda apaga a primeira.
+- **A forma do Bibliotecário cede a vez** quando o compasso fala. Não por
+  hierarquia: o envelope do compasso já diz do que a cena trata e em que
+  tempo, e uma forma por cima seria duas instruções de composição para a
+  mesma cena.
+- **Ao prompt sobe só a TENSÃO**, nunca o movimento nem o assunto. Uma IA
+  que sabe que está na "véspera" escreve véspera; uma que sabe que a
+  tensão é alta escreve uma cena tensa, que é o que se queria. Mesma
+  régua do nome da etapa na v9.84.
+
+### Duas armadilhas de ferramenta, e a segunda foi pior
+
+Um id com cedilha (`caçada`) escapou de novo — segundo caso depois de
+`ciume_de_ofício`. A suíte agora cobra ASCII em todo id.
+
+E ao consertar uma asserção pelo shell, o `\b` da regex virou um
+**backspace literal** (0x08). A regex parou de casar qualquer coisa e a
+asserção **passou por estar vazia** — que é pior que falhar, porque uma
+falha aparece e um teste oco não. Regex com `\b` não passa mais por
+`node -e` no shell: vai por arquivo.
+
+### O que fica aberto
+
+- **O compasso não conhece a geografia fina.** Ele sabe se estou em
+  cidade, estrada ou masmorra, mas não a que distância está o que ele
+  quer usar — um assunto de cerco pode germinar na véspera de eu partir.
+  O pedido mencionava isso e ficou por fazer.
+- **A onda não conversa com o vilão.** O passo dele e o clímax do
+  compasso podem cair no mesmo turno; nada os coordena.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

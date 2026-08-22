@@ -57,6 +57,7 @@ import { RELIQUIAS, reliquiaPorId, itemDaReliquia, ativoDeclarado, podeUsarAtivo
 import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, conferirLista, falaDaListaAparada, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "./emboscada.js";
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo } from "./agressao.js";
 import { consultarBiblioteca, garantirEstante, marcarJogada, trechoDaJogada, podeFormaDeCena, contarTurnoDeCena, zerarCadenciaDaCena, envelopeDaCena } from "./biblioteca.js";
+import { garantirCompasso, avancarCompasso, envelopeDoCompasso, resumoCompasso, barraDoCompasso } from "./compasso.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -2975,6 +2976,11 @@ export default function Taverna() {
      lado da mesa porque tem a mesma natureza: memoria curta de oficio, que
      nao e fato do mundo e nao entra na cronica. */
   const estanteRef = useRef(garantirEstante(null));
+  /* ---------------- O COMPASSO (v9.91) ----------------
+     A camada rápida entre dois momentos do arco. Vive ao lado da mesa e da
+     estante porque tem a mesma natureza: memória de ofício, que não é fato
+     do mundo e não entra na crônica. */
+  const compassoRef = useRef(garantirCompasso(null));
   const texturaRef = useRef({});
   const baseMundoRef = useRef(garantirBase(null));
   /* A SEMENTE PRECISA VIR DE REF (v9.14). Estas duas funções liam `mundo` e
@@ -4226,7 +4232,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
+      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -6440,8 +6446,9 @@ export default function Taverna() {
     if (oficina) oficinaRef.current = criarOficina();
     talvezChegarSozinho();
     talvezAndarNaCidade(conteudo);
-    const formaDaCena = talvezDarFormaACena(conteudo);
-    const nota = [oficina, notaRef.current, formaDaCena].filter(Boolean).join("\n");
+    const doCompasso = talvezAndarOCompasso(conteudo);
+    const formaDaCena = doCompasso ? "" : talvezDarFormaACena(conteudo);
+    const nota = [oficina, notaRef.current, doCompasso, formaDaCena].filter(Boolean).join("\n");
     notaRef.current = "";
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
     /* RODAPÉ DO SISTEMA (v7.0.2): lembrete curto colado SÓ na mensagem atual
@@ -7005,6 +7012,7 @@ export default function Taverna() {
          existe para curar. */
       mesaRef.current = garantirMesa(sv.mesa);
       estanteRef.current = garantirEstante(sv.estante);
+      compassoRef.current = garantirCompasso(sv.compasso);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
         ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null }
@@ -9210,7 +9218,17 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       relogios: (relogiosRef.current || []).map((r) => `${r.nome} ${barraDe(r)}`).slice(0, 3),
     };
   };
-  const resumoDoArco = () => resumoHistoria(historiaRef.current, motorDoArco());
+  /* o RITMO sobe junto do arco: uma linha, e ela não diz o movimento nem
+     o assunto — diz só a tensão, que é o que a IA precisa para escolher o
+     tamanho da própria voz. Saber que se está na véspera é saber que o
+     clímax vem no turno seguinte, e isso apaga a única coisa que a véspera
+     existe para dar. */
+  const resumoDoRitmo = () => { try { return resumoCompasso(compassoRef.current); } catch { return ""; } };
+
+  /* v9.91: o RITMO vai junto do arco, e num lugar so. `resumoDoArco` e
+     passado a montarSystemPrompt em seis chamadas diferentes; acrescentar
+     um parametro seria seis lugares para esquecer dele na setima. */
+  const resumoDoArco = () => [resumoHistoria(historiaRef.current, motorDoArco()), resumoDoRitmo()].filter(Boolean).join("\n");
 
   /* Um acontecimento do motor empurra o arco. Se o empurrão bastar, o momento
      vira — em SILÊNCIO para o jogador: dizer "a história avança: Provações"
@@ -10923,6 +10941,29 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      vez de moldar a entrega de outra coisa. "Termine com duas portas
      abertas" funciona sem fio nenhum atras; "faca isto chegar por um
      mensageiro" nao funciona sem o isto. */
+  /* ---------------- A ONDA ANDA (v9.91) ----------------
+     Um turno de cada vez, no mesmo ponto por onde passa todo turno. E ela
+     SEGURA quando já há cena grande em curso: um clímax de compasso
+     disparando dentro de um combate que o jogador já está travando são
+     duas cenas grandes no mesmo turno, e a segunda apaga a primeira.
+
+     A forma da cena (o Bibliotecário) cede a vez quando o compasso fala.
+     Não por hierarquia: o envelope do compasso JÁ diz do que a cena trata
+     e em que tempo, e uma forma por cima disso seria o sistema dando duas
+     instruções de composição para a mesma cena. */
+  const talvezAndarOCompasso = (conteudo) => {
+    try {
+      if (String(conteudo || "").trimStart().startsWith("[")) return "";
+      const sit = situacaoDaMesa();
+      const r = avancarCompasso(compassoRef.current, sit, {
+        segurar: !!combateRef.current || !!masmorraRef.current || !!jornadaRef.current,
+        preferir: sit.pilarFaminto,
+      });
+      compassoRef.current = r.compasso;
+      return envelopeDoCompasso(r);
+    } catch { return ""; /* a onda nunca pode custar o turno */ }
+  };
+
   const talvezDarFormaACena = (conteudo) => {
     try {
       estanteRef.current = contarTurnoDeCena(estanteRef.current);
