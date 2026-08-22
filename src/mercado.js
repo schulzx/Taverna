@@ -18,6 +18,7 @@ import { gerarLoot, RARIDADE_ROTULO } from "./loot.js";
 import { CONSUMIVEIS, consumivelPorId, itemConsumivel, descricaoCurta } from "./pocoes.js";
 import { valorDeItem, PRECO_VENDA } from "./economia.js";
 import { PORTES } from "./geografia.js";
+import { nomesDeLugar } from "./lexico.js";
 
 /* RNG determinístico — a mesma cidade na mesma semana dá a mesma banca */
 function rngDe(semente) {
@@ -40,8 +41,22 @@ export const TIPOS_MERCADOR = [
 ];
 export const tipoMercador = (id) => TIPOS_MERCADOR.find((t) => t.id === id) || TIPOS_MERCADOR[2];
 
-const NOMES_LOJA_A = ["A Bigorna", "O Cálice", "A Roda", "O Corvo", "A Âncora", "O Martelo", "A Vela", "O Sino", "A Raiz", "O Prego"];
-const NOMES_LOJA_B = ["Torta", "de Ferro", "Rachada", "Silenciosa", "do Sul", "Dourada", "Velha", "de Sal", "Amarga", "do Vigia"];
+/* v9.113: o gênero viaja com o nome. Antes eram duas listas cruzadas
+   sem olhar uma para a outra, e saía "O Martelo Dourada" e "O Corvo
+   Rachada" — "A Bigorna Torta" acertava por sorte. */
+const NOMES_LOJA_A = [
+  { nome: "A Bigorna", f: true }, { nome: "O Cálice", f: false }, { nome: "A Roda", f: true },
+  { nome: "O Corvo", f: false }, { nome: "A Âncora", f: true }, { nome: "O Martelo", f: false },
+  { nome: "A Vela", f: true }, { nome: "O Sino", f: false }, { nome: "A Raiz", f: true },
+  { nome: "O Prego", f: false },
+];
+/* [masculino, feminino] nos adjetivos; as preposicionais não têm gênero
+   e entram iguais dos dois lados */
+const NOMES_LOJA_B = [
+  ["Torto", "Torta"], ["de Ferro", "de Ferro"], ["Rachado", "Rachada"],
+  ["Silencioso", "Silenciosa"], ["do Sul", "do Sul"], ["Dourado", "Dourada"],
+  ["Velho", "Velha"], ["de Sal", "de Sal"], ["Amargo", "Amarga"], ["do Vigia", "do Vigia"],
+];
 
 /* ---------------- CURIOSIDADES ----------------
    Não têm mecânica: têm gancho. São o que faz o jogador perguntar
@@ -122,10 +137,23 @@ export function mapasAVenda(regioesOcultas = [], cidadesPorRegiao = {}) {
   });
 }
 
-export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1, lex = null }) {
+export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1, lex = null, ordem = 0 }) {
   const rnd = rngDe(semente);
   const t = tipo ? tipoMercador(tipo) : pick(rnd, TIPOS_MERCADOR.filter((x) => x.id !== "ambulante"));
-  const nome = t.id === "ambulante" ? "Carroça na estrada" : `${pick(rnd, NOMES_LOJA_A)} ${pick(rnd, NOMES_LOJA_B)}`;
+  /* v9.113: O NOME DA BANCA VEM DO MUNDO, quando o mundo tem um. O
+     léxico já declara `lugares[tipo="mercado"].nomes` desde a v9.103 —
+     nesta campanha eram "Feira do Setor 3", "Central de Achados",
+     "Pavilhão do Vale" — e o mercado montava "A Bigorna Rachada" de um
+     banco de fantasia sem nunca perguntar. */
+  /* `ordem` é a posição desta banca na cidade, e existe para duas não
+     caírem no mesmo nome: com quatro nomes no léxico e três bancas
+     sorteando cada uma por conta própria, "Praça de Escambo" saía duas
+     vezes na mesma praça. */
+  const doMundo = lex ? nomesDeLugar(lex, "mercado") : [];
+  const generico = (() => { const a = pick(rnd, NOMES_LOJA_A); const b = pick(rnd, NOMES_LOJA_B); return `${a.nome} ${a.f ? b[1] : b[0]}`; })();
+  const nome = t.id === "ambulante"
+    ? (doMundo.length ? `${doMundo[Math.floor(rnd() * doMundo.length)]} (ambulante)` : "Carroça na estrada")
+    : (doMundo.length ? doMundo[ordem % doMundo.length] : generico);
   const quantos = t.id === "ambulante" ? 3 + Math.floor(rnd() * 3) : 4 + Math.floor(rnd() * 4);
   const estoque = [];
   const vistos = new Set();
@@ -163,7 +191,12 @@ export function mercadoresDaCidade(cidade, dia = 1, nivel = 1, lex = null) {
     const t = pick(rnd, outros);
     if (!tipos.includes(t.id)) tipos.push(t.id); else tipos.push("geral");
   }
-  return tipos.map((t, i) => gerarMercador({ cidade, semente: `${cidade.nome}|${semana}|${t}|${i}`, nivel, tipo: t, dia, lex }));
+    /* o deslocamento tem GERADOR PRÓPRIO. O `rnd` acima é quem sorteia os
+     TIPOS de mercador; consumir uma volta dele para decidir um nome
+     mudaria quais bancas esta cidade tem. É a regra que o bug do
+     continente deixou na v9.102. */
+  const desloc = Math.floor(rngDe(`nome-banca|${cidade.nome}`)() * 97);
+  return tipos.map((t, i) => gerarMercador({ cidade, semente: `${cidade.nome}|${semana}|${t}|${i}`, nivel, tipo: t, dia, lex, ordem: desloc + i }));
 }
 
 /* Mercador ambulante: chance pequena por dia de viagem. */
