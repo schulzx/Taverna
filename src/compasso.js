@@ -135,6 +135,10 @@ export function garantirCompasso(c) {
        É também o que permite o laço ser registrado: quando a onda chega
        ao clímax, o sistema sabe com quem aquilo aconteceu. */
     quem: typeof o.quem === "string" ? o.quem : "",
+    /* v9.98: a SEGUNDA pessoa, quando a onda é sobre duas outras e não
+       sobre mim. É o que separa um elenco de um mundo: sem ela, tudo o que
+       acontece entre gente do registro precisa de mim no meio. */
+    quem2: typeof o.quem2 === "string" ? o.quem2 : "",
     usados: (Array.isArray(o.usados) ? o.usados : []).slice(-8),
     familias: (Array.isArray(o.familias) ? o.familias : []).slice(-4),
     /* quantas ondas completas esta campanha já deu — o compasso não some
@@ -183,6 +187,10 @@ export function escolherAssunto(sit = {}, { sorte = Math.random, compasso = null
     if (a.exige && !(lacos[a.exige] || []).length) return false;
     if (a.exigeRompido && !(lacos.rompidos || []).length) return false;
     if (a.pede === "pessoa" && !a.exige && !a.exigeRompido && !aqui.length) return false;
+    /* duas pessoas exigem DUAS pessoas: com uma só, o assunto teria de
+       inventar a segunda, e inventar gente é o que o elenco veio impedir */
+    if (a.pede === "duas" && aqui.length < 2) return false;
+    if (a.exigeEntre && !((elenco && elenco.entre) || []).some((p) => p.tipo === a.exigeEntre)) return false;
     /* a mesma trava de memória do Bibliotecário: um assunto que exige
        histórico e o encontra vazio manda a IA inventar a lembrança */
     if (a.precisa === "gente" && !sit.temGenteConhecida) return false;
@@ -233,6 +241,7 @@ export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segur
   const voltou = prox.ordem === 0;
   let assunto = c.assunto;
   let quem = c.quem;
+  let quem2 = c.quem2;
   let usados = c.usados;
   let familias = c.familias;
 
@@ -261,11 +270,27 @@ export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segur
        que não declara precisar de pessoa fica sem nome, e o envelope
        simplesmente não fala de ninguém. */
     const lacos = (elenco && elenco.lacos) || {};
-    const balde = a.exige ? (lacos[a.exige] || [])
-      : a.exigeRompido ? (lacos.rompidos || [])
-        : a.pede === "pessoa" ? ((elenco && elenco.aqui) || [])
-          : [];
-    quem = balde.length ? String(balde[Math.floor(sorte() * balde.length)]) : "";
+    /* EXIGE ENTRE tira o par pronto do registro: os dois nomes vêm juntos
+       e já são alguma coisa um do outro. É o único caso em que o sistema
+       não sorteia duas vezes. */
+    if (a.exigeEntre) {
+      const pares = ((elenco && elenco.entre) || []).filter((p) => p.tipo === a.exigeEntre);
+      const par = pares.length ? pares[Math.floor(sorte() * pares.length)] : null;
+      quem = par ? par.a : "";
+      quem2 = par ? par.b : "";
+    } else {
+      const balde = a.exige ? (lacos[a.exige] || [])
+        : a.exigeRompido ? (lacos.rompidos || [])
+          : (a.pede === "pessoa" || a.pede === "duas") ? ((elenco && elenco.aqui) || [])
+            : [];
+      quem = balde.length ? String(balde[Math.floor(sorte() * balde.length)]) : "";
+      /* a segunda sai do mesmo balde MENOS a primeira: um atrito de alguém
+         consigo mesmo não é um atrito */
+      if (a.pede === "duas" && quem) {
+        const resto = balde.filter((x) => String(x) !== quem);
+        quem2 = resto.length ? String(resto[Math.floor(sorte() * resto.length)]) : "";
+      } else quem2 = "";
+    }
   }
 
   const novo = {
@@ -275,10 +300,11 @@ export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segur
     alvo: sortearDuracao(prox, sorte),
     assunto: voltou ? "" : assunto,
     quem: voltou ? "" : quem,
+    quem2: voltou ? "" : quem2,
     usados, familias,
     voltas: c.voltas + (voltou ? 1 : 0),
   };
-  return { compasso: novo, virou: true, movimento: prox, de: mov, assunto: assuntoPorId(assunto), quem: novo.quem, voltou };
+  return { compasso: novo, virou: true, movimento: prox, de: mov, assunto: assuntoPorId(assunto), quem: novo.quem, quem2: novo.quem2, voltou };
 }
 
 /* ============================================================
@@ -305,8 +331,12 @@ REGRA DESTE ENVELOPE (obrigatória): não existe "e tudo voltou ao normal". Most
    primeiro porque é ela que diz o que fazer, e o nome é a âncora que
    impede a IA de resolver "alguém" inventando gente. Uma linha, e só
    quando o sistema de fato escolheu alguém. */
-function comNome(txt, quem) {
+function comNome(txt, quem, quem2) {
   if (!quem) return txt;
+  if (quem2) {
+    return `${txt}
+E É ENTRE ${quem.toUpperCase()} E ${quem2.toUpperCase()}: as duas já existem nesta campanha, e isto é entre elas — eu estou por perto, não no meio. NÃO troque as pessoas, NÃO invente ninguém para o papel e NÃO me ponha como causa do que acontece entre as duas.`;
+  }
   return `${txt}
 E É COM ${quem.toUpperCase()}: esta pessoa já existe nesta campanha e é dela que se trata, do começo ao fim desta história. NÃO troque por outra e NÃO invente ninguém para o papel.`;
 }
@@ -316,7 +346,7 @@ export function envelopeDoCompasso(r) {
   const a = r.assunto;
   if (!a) return "";
   const f = TEXTO[r.movimento.id];
-  return f ? comNome(f(a), r.quem) : "";
+  return f ? comNome(f(a), r.quem, r.quem2) : "";
 }
 
 /* O jogador não vê nada disto. O compasso é bastidor puro: saber que se

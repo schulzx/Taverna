@@ -110,6 +110,64 @@ export function firmarLaco(npc, tipo, dia = 0) {
   };
 }
 
+/* ============================================================
+   O LAÇO ENTRE DOIS (v9.98) — o mundo com vida própria
+
+   "O laço é sempre com o herói. Não há laço entre dois NPCs, e é o que
+   faria o mundo ter vida própria: dois nomes do registro que são alguma
+   coisa um do outro, sem mim no meio."
+
+   `laco` é o que a pessoa é DE MIM. `entre` é o que ela é dos OUTROS —
+   e é a diferença entre um elenco e um mundo. Numa campanha só com
+   `laco`, todo mundo existe em relação ao herói e mais ninguém tem
+   história; é a razão pela qual mundos de RPG parecem um teatro que só se
+   monta quando o protagonista entra.
+
+   AS DUAS PONTAS ANDAM JUNTAS. Um laço entre Marta e Ubba fica gravado
+   nos dois, e quem grava é `firmarEntre`, que devolve o registro inteiro
+   — nunca um NPC. Guardar só de um lado é ter meia relação, e a metade
+   que falta é a que ninguém lembra de olhar.
+   ============================================================ */
+export function garantirEntre(e) {
+  const o = e && typeof e === "object" ? e : {};
+  const r = {};
+  for (const [nome, tipo] of Object.entries(o)) {
+    if (typeof nome === "string" && nome && tipoDeLacoPorId(tipo)) r[nome] = tipo;
+  }
+  return r;
+}
+
+export function firmarEntre(npcs, a, b, tipo, dia = 0) {
+  if (!npcs || !a || !b || a === b || !tipoDeLacoPorId(tipo)) return npcs;
+  const ka = Object.keys(npcs).find((k) => k.toLowerCase() === String(a).toLowerCase());
+  const kb = Object.keys(npcs).find((k) => k.toLowerCase() === String(b).toLowerCase());
+  if (!ka || !kb) return npcs;
+  return {
+    ...npcs,
+    [ka]: { ...npcs[ka], entre: { ...garantirEntre(npcs[ka].entre), [kb]: tipo } },
+    [kb]: { ...npcs[kb], entre: { ...garantirEntre(npcs[kb].entre), [ka]: tipo } },
+  };
+}
+
+/* Os PARES que existem, sem repetir o mesmo par ao contrário — quem
+   pergunta "que relações há neste mundo" quer a lista de relações, não a
+   de pontas. */
+export function paresEntre(npcs, tipo = null) {
+  const vistos = new Set(), out = [];
+  for (const [nome, npc] of Object.entries(npcs || {})) {
+    if (!vivo(npc)) continue;
+    for (const [outro, t] of Object.entries(garantirEntre(npc.entre))) {
+      if (tipo && t !== tipo) continue;
+      const par = [nome, outro].sort().join("|");
+      if (vistos.has(par)) continue;
+      if (!npcs[outro] || !vivo(npcs[outro])) continue;
+      vistos.add(par);
+      out.push({ a: nome, b: outro, tipo: t });
+    }
+  }
+  return out;
+}
+
 export function romperLaco(npc, dia = 0) {
   const atual = garantirLaco(npc && npc.laco);
   if (!atual) return npc;
@@ -158,6 +216,9 @@ export function criarNPC(nome, dados = {}) {
        clímax de uma onda do compasso, e nunca a IA. `null` é o normal:
        a maior parte da gente do mundo não é nada de ninguém. */
     laco: garantirLaco(dados.laco),
+    /* v9.98: e o que essa pessoa é dos OUTROS — o que faz o mundo ter vida
+       sem mim no meio. Chave é o nome do outro, valor é o tipo. */
+    entre: garantirEntre(dados.entre),
     ultimaVez: dados.ultimaVez || 0,     // turno da última menção (p/ ordenar)
     semente: dados.semente || `npc|${nome}|${dados.papel || ""}`,
   };
@@ -227,7 +288,27 @@ export function resumoNPCsParaPrompt(npcs, limite = 22) {
   const ord = [...lista].sort((a, b) => (b.ultimaVez || 0) - (a.ultimaVez || 0)).slice(0, limite);
   return ord.map((n) => {
     const partes = [n.papel, n.relacao && n.relacao !== "desconhecido" ? `relação: ${n.relacao}` : "", n.genero, n.local ? `em ${n.local}` : "", n.status && n.status !== "vivo" ? n.status : "", n.conhecidoEm != null ? (n.conhecidoEm > 0 ? `entrou na história no DIA ${n.conhecidoEm}` : "entrou antes do registro de dias") : ""].filter(Boolean);
-    const extra = [n.segredo ? `SEGREDO: ${n.segredo}` : "", n.notas].filter(Boolean).join(" · ");
+    /* ---------------- O LAÇO SOBE (v9.98) ----------------
+       O Mestre sabia que Marta era um amor rompido e a IA não — ela só
+       recebia o nome dentro do envelope da onda, e só no turno em que a
+       onda falava. Fora dali, para a narração, Marta era uma ferreira
+       qualquer.
+
+       Custa uma expressão por pessoa e dá à narração o que o sistema já
+       enxergava: com quem eu tenho história, de que espécie, e se ela
+       está quebrada. */
+    const l = garantirLaco(n.laco);
+    const laco = l
+      /* "${rotulo} comigo" serve a todos os tipos sem concordância torta:
+         "amizade comigo", "amor comigo", "dívida comigo". A primeira versão
+         dizia "é amizade minha", que só funciona para metade deles. */
+      ? (l.rompido
+        ? `ROMPEU comigo (era ${(tipoDeLacoPorId(l.tipo) || {}).rotulo}, no dia ${l.rompidoEm})`
+        : `${(tipoDeLacoPorId(l.tipo) || {}).rotulo} comigo${l.forca >= 3 ? ", e é profunda" : ""}`)
+      : "";
+    /* e o que ela é dos OUTROS, que é o que faz o elenco parecer um mundo */
+    const laE = Object.entries(garantirEntre(n.entre)).map(([o, t]) => `${(tipoDeLacoPorId(t) || {}).rotulo} com ${o}`).join(", ");
+    const extra = [laco, laE, n.segredo ? `SEGREDO: ${n.segredo}` : "", n.notas].filter(Boolean).join(" · ");
     return `• ${n.nome}${partes.length ? ` (${partes.join(", ")})` : ""}${extra ? ` — ${extra}` : ""}`;
   }).join("\n");
 }

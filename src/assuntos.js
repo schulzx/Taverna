@@ -1066,6 +1066,79 @@ export const ASSUNTOS = [
     agora: "Agora ACONTECE: fica claro que eu julguei errado, e que essa pessoa sabia e não se defendeu.",
     depois: "Mostre o que se faz com um erro que já custou anos: o que dá para devolver, o que não dá, e se ela quer de volta.",
   },
+
+  /* ============ OS FINS QUE FALTAVAM ============
+     Rivalidade e dívida eram firmadas e nunca exigidas: nasciam e ficavam
+     para sempre. Uma rivalidade que se resolve — no respeito ou no sangue
+     — e uma dívida que se quita são o outro lado delas, e sem esse lado o
+     registro só acumula. */
+  {
+    id: "fim_da_rivalidade", familia: "perda", peso: 3, exige: "rivalidade", rompe: true,
+    nome: "a rivalidade se resolve",
+    quando: (s) => s.momento >= 0.5,
+    preparo: "Comece a preparar um DESFECHO DE RIVALIDADE: ponha essa pessoa e eu diante do mesmo problema, cada um do seu jeito, e deixe os dois jeitos funcionarem.",
+    subindo: "A comparação entre nós dois deixa de interessar aos outros, e um dos dois percebe isso primeiro.",
+    vespera: "Vamos os dois ter de depender um do outro hoje, e não há terceira opção.",
+    agora: "Agora ACONTECE: a rivalidade acaba — por respeito ganho, por cansaço, ou porque um dos dois já não tem o que provar.",
+    depois: "Mostre o que sobra entre nós dois sem a disputa: se é amizade morna, indiferença, ou uma saudade esquisita da briga.",
+  },
+  {
+    id: "divida_quitada", familia: "perda", peso: 3, exige: "divida", rompe: true,
+    nome: "a dívida se acerta",
+    quando: (s) => s.momento >= 0.4,
+    preparo: "Comece a preparar um ACERTO: mostre essa pessoa e eu tratando do assunto pendente de lado, cada um fingindo que já não pesa.",
+    subindo: "Aparece uma chance concreta de acertar — e ela não é do tamanho exato da dívida, é maior ou menor.",
+    vespera: "A chance vence hoje, e os dois sabemos disso.",
+    agora: "Agora ACONTECE: a conta se acerta, e o acerto não fica redondo para nenhum dos dois.",
+    depois: "Mostre como duas pessoas se tratam quando já não devem nada uma à outra — e se isso é alívio ou perda.",
+  },
+
+  /* ============ O MUNDO SEM MIM NO MEIO ============
+     Estes nomeiam DUAS pessoas do elenco e registram um laço ENTRE elas.
+     São o que separa um elenco de um mundo: numa campanha em que só há
+     `laco`, todo mundo existe em relação ao herói e mais ninguém tem
+     história — e é a razão pela qual mundos de RPG parecem um teatro que
+     só se monta quando o protagonista entra. */
+  {
+    id: "dois_que_se_odeiam", familia: "laco", peso: 3, pede: "duas", firmaEntre: "rivalidade",
+    nome: "dois que não se suportam",
+    quando: (s) => s.emCidade && s.gentePorPerto >= 2,
+    preparo: "Comece a preparar um ATRITO ENTRE OS DOIS: mostre essas duas pessoas obrigadas a conviver por causa do ofício, e mostre uma delas evitando a outra sem explicar.",
+    subindo: "O atrito sai do particular: um faz o trabalho do outro pela metade, e terceiros começam a escolher lado.",
+    vespera: "Os dois vão ter de trabalhar juntos hoje, e ninguém mais está disponível.",
+    agora: "Agora ACONTECE: os dois se enfrentam na frente de todos, e eu estou junto sem ter pedido.",
+    depois: "Mostre como o lugar se reorganiza em volta dessa briga — quem fala com quem, e o que deixa de ser feito.",
+  },
+  {
+    id: "dois_que_se_querem", familia: "laco", peso: 3, pede: "duas", firmaEntre: "amor",
+    nome: "dois que se procuram",
+    quando: (s) => s.emCidade && s.gentePorPerto >= 2,
+    preparo: "Comece a preparar um INTERESSE ENTRE OS DOIS: mostre essas duas pessoas arrumando desculpas para estar no mesmo lugar, e mostre que nenhuma das duas percebeu ainda.",
+    subindo: "As desculpas ficam ruins e ninguém mais acredita nelas — inclusive elas.",
+    vespera: "Uma das duas vai dizer hoje, e me pediu conselho antes.",
+    agora: "Agora ACONTECE: fica dito entre os dois, e eu vejo de fora.",
+    depois: "Mostre o que muda no cotidiano dos dois e no meu: o que eles passam a fazer juntos, e o que deixam de fazer comigo.",
+  },
+  {
+    id: "dois_que_se_devem", familia: "laco", peso: 2, pede: "duas", firmaEntre: "divida",
+    nome: "uma conta entre dois conhecidos meus",
+    quando: (s) => s.emCidade && s.gentePorPerto >= 2 && s.momento >= 0.3,
+    preparo: "Comece a preparar uma CONTA ENTRE OS DOIS: mostre uma delas fazendo um favor grande à outra, na frente de mim, sem alarde.",
+    subindo: "O favor começa a ser mencionado por terceiros como se fosse dívida, e quem recebeu passa a evitar quem deu.",
+    vespera: "Quem deu vai cobrar hoje, e me chamou para estar junto.",
+    agora: "Agora ACONTECE: a cobrança é feita, e as duas versões do que foi combinado não batem.",
+    depois: "Mostre de que lado o lugar ficou, e o que essa conta fez com a minha relação com cada uma delas.",
+  },
+  {
+    id: "escolher_entre_dois", familia: "laco", peso: 3, exigeEntre: "rivalidade",
+    nome: "os dois querem que eu escolha",
+    quando: (s) => s.momento >= 0.4,
+    preparo: "Comece a preparar uma PRESSÃO: mostre cada uma dessas duas pessoas procurando a minha companhia separadamente, e falando bem de mim.",
+    subindo: "Cada uma começa a me contar a versão dela sobre a outra, e as duas versões são convincentes.",
+    vespera: "As duas me chamaram para a mesma hora, em lugares diferentes.",
+    agora: "Agora ACONTECE: fica impossível não escolher, e a palavra volta para mim.",
+    depois: "Mostre o que a escolha custou com as duas — inclusive com aquela que eu escolhi.",
+  },
 ];
 
 export function assuntoPorId(id) { return ASSUNTOS.find((a) => a.id === id) || null; }

@@ -2880,6 +2880,78 @@ voltou na v9.94 quando catorze regras passaram a precisar dele.
   faria o mundo ter vida própria: dois nomes do registro que são alguma
   coisa um do outro, sem mim no meio.
 
+## O laço sobe ao prompt, e passa a existir sem mim — v9.98
+
+- **~~O laço não subia ao prompt.~~** RESOLVIDO. O Mestre sabia que Marta
+  era um amor rompido; a IA não — ela só recebia o nome dentro do envelope
+  da onda, e só no turno em que a onda falava. Fora dali, para a narração,
+  **Marta era uma ferreira qualquer.**
+
+  Custa uma expressão por pessoa no resumo de gente:
+
+  ```
+  • Marta (ferreira) — ROMPEU comigo (era amor, no dia 40)
+  • Ubba (batedor) — amizade comigo, e é profunda · rivalidade com Lucan
+  • Lucan (escriba) — dívida comigo · rivalidade com Ubba
+  ```
+
+- **~~Rivalidade e dívida não terminavam.~~** RESOLVIDO. Eram firmadas e
+  nunca exigidas: nasciam e ficavam para sempre. O **fim da rivalidade**
+  (por respeito ganho, por cansaço, ou porque um dos dois já não tem o que
+  provar) e a **dívida que se acerta** — e o acerto não fica redondo para
+  nenhum dos dois.
+
+- **~~O laço era sempre com o herói.~~** RESOLVIDO, e é o que faz o mundo
+  ter vida própria. Numa campanha só com `laco`, todo mundo existe em
+  relação ao herói e mais ninguém tem história — **é a razão pela qual
+  mundos de RPG parecem um teatro que só se monta quando o protagonista
+  entra.**
+
+  `entre` é o que a pessoa é dos OUTROS. As duas pontas andam juntas:
+  guardar só de um lado é ter meia relação, e a metade que falta é a que
+  ninguém lembra de olhar.
+
+  Quatro assuntos novos nomeiam **duas** pessoas — *dois que não se
+  suportam*, *dois que se procuram*, *uma conta entre dois conhecidos
+  meus* — e um exige o par pronto: *os dois querem que eu escolha*. O
+  envelope diz *"e é ENTRE Ubba e Lucan […] eu estou por perto, não no
+  meio"*, e proíbe me pôr como causa.
+
+### O que 400 turnos produziram sozinhos
+
+```
+paixao_subita     · Lucan → amor
+amor_que_acaba    · Lucan rompe
+romance           · Marta → amor
+amor_que_acaba    · Marta rompe
+perdao            · Lucan reata
+dois_que_se_devem · Vaska ↔ Lucan (dívida)
+perdao            · Marta reata
+```
+
+Duas relações inteiras com o herói, cada uma com nascimento, ruptura e
+reconciliação — e uma dívida entre duas pessoas do elenco que não passa
+por ele.
+
+### A régua das famílias virou média
+
+`laco` chegou a 26% e a minha régua era "abaixo de 25%" — um número que eu
+escolhi de olho e que passou a reprovar por um ponto percentual. Mover o
+alvo seria trapaça; mantê-lo seria deixar uma medida sem significado
+governar o conteúdo.
+
+Com seis famílias a média é 16,7%, e o que interessa é a **distância até
+ela**: nenhuma pode valer o dobro da média (aí manda no sorteio) nem menos
+da metade (aí não existe na prática).
+
+### O que fica aberto
+
+- **Os laços entre dois não terminam.** Uma rivalidade entre Ubba e Lucan
+  nasce e fica: `firmaEntre` existe, `rompeEntre` não.
+- **O elenco da onda é só quem está na cena.** Um par pode ser semeado
+  entre duas pessoas presentes e depois nunca mais ser tocado se elas se
+  separarem — o registro guarda, mas nada volta a puxá-lo.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

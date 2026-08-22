@@ -8,7 +8,7 @@ import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste, dificuldadePorPerfil } from "./bestiario.js";
-import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, TIPOS_DE_LACO } from "./npcs.js";
+import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, firmarEntre, paresEntre, TIPOS_DE_LACO } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
 import { rolarClima, rolarEncontro, CLIMAS } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
@@ -10929,7 +10929,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const el = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [] });
       const lacos = { rompidos: comLaco(npcsRef.current, { rompido: true }) };
       for (const t of TIPOS_DE_LACO) lacos[t.id] = comLaco(npcsRef.current, { tipo: t.id, rompido: false });
-      return { aqui: (el.aqui || []).map((x) => x.nome).filter(Boolean), lacos };
+      /* e os PARES que já existem entre gente do registro: é o que permite
+         "os dois querem que eu escolha" saber quais dois, e é o que faz o
+         mundo ter história sem mim no meio */
+      return { aqui: (el.aqui || []).map((x) => x.nome).filter(Boolean), lacos, entre: paresEntre(npcsRef.current) };
     } catch { return { aqui: [], lacos: {} }; }
   };
 
@@ -11039,6 +11042,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (!chave) return;
       const npc = npcsRef.current[chave];
       let novo = npc;
+      /* ENTRE DOIS vem primeiro porque não mexe no meu laço com ninguém:
+         é o mundo se organizando sozinho, e o registro grava nas DUAS
+         pontas de uma vez. */
+      if (a.firmaEntre && r.quem2) {
+        npcsRef.current = firmarEntre(npcsRef.current, quem, r.quem2, a.firmaEntre, diaRef.current);
+        setNpcs(npcsRef.current);
+        return;
+      }
       if (a.firma) novo = firmarLaco(npc, a.firma, diaRef.current);
       else if (a.reata) novo = firmarLaco(npc, ((npc.laco || {}).tipo) || "amizade", diaRef.current);
       else if (a.rompe) novo = romperLaco(npc, diaRef.current);
