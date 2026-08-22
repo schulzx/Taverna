@@ -42,6 +42,8 @@ import { COMODOS_PROMPT } from "./comodos.js";
 import { ARREDORES_PROMPT } from "./arredores.js";
 import { ACAMPAMENTO_PROMPT } from "./acampamento.js";
 import { lexicoPrompt } from "./lexico.js";
+import { GEOGRAFO_PROMPT } from "./geografo.js";
+import { PAUTA_PROMPT } from "./pauta.js";
 import { CELULAS_PROMPT } from "./celulas.js";
 import { VIAGEM_PROMPT } from "./viagem.js";
 import { RESOLVER_PROMPT } from "./resolver.js";
@@ -308,6 +310,10 @@ ${so("chao", CHAO_PROMPT)}
 ${so("missao", MISSOES_PROMPT)}
 
 ${so("missao", OFERTAS_PROMPT)}
+
+${PAUTA_PROMPT}
+
+${GEOGRAFO_PROMPT}
 
 ${LUGAR_PROMPT}
 ${so("comodos", COMODOS_PROMPT)}

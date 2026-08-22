@@ -69,7 +69,7 @@ import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmC
 import { resumoArredoresPrompt, arredoresDaCidade } from "./arredores.js";
 import { abrirViagem, andar, pausarViagem, retomarViagem, progressoDaViagem, comTrechos, trechoAtual, minutosPorAvanco, relogioDoAvanco, resumoViagemPrompt, linhaDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
-import { garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
+import { tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
@@ -79,6 +79,8 @@ import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaC
 import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao } from "./portao.js";
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
+import { garantirEspaco, paraPauta } from "./geografo.js";
+import { porNaPauta, textoDaPauta, garantirPauta } from "./pauta.js";
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
@@ -3850,6 +3852,89 @@ export default function Taverna() {
      Não é preguiça: essas funções JÁ carregam o teste de "não há nada a
      dizer sobre isto", e escrever o teste uma segunda vez aqui seria criar
      duas verdades que podem discordar. */
+  /* ---------------- O ESPAÇO DA MESA (v9.104) ----------------
+     O retrato que o Geógrafo lê. Nenhum campo aqui é inventado: todos
+     saem de refs que já existiam e que ninguém tinha juntado. É a mesma
+     função que `situacaoDaMesa` faz para o Bibliotecário. */
+  const espacoDaMesa = () => {
+    const mm = masmorraRef.current;
+    const naMasmorra = !!(mm && !mm.encerrada);
+    const lug = lugarRef.current;
+    const cid = (mapaRef.current.cidades || []).find((c) => c.nome === cidadeAtualRef.current) || null;
+    const dentro = !!(lug && lug.distancia === "dentro") || naMasmorra;
+    /* de que TIPO é o prédio em que estou, quando estou num. O lugar
+       guarda o nome; os locais da cidade guardam o tipo — e é o tipo que
+       o acervo lê, porque é ele que diz o que o espaço comporta. */
+    let tipoDoLocal = "";
+    if (lug && lug.nome && cid) {
+      const achado = locaisDaCidade(sementeMundo(), cid, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico)
+        .find((l) => semNome(l.nome) === semNome(lug.nome));
+      if (achado) tipoDoLocal = achado.tipo;
+    }
+    /* v9.104: e quando o lugar foi INVENTADO pela ficção — o caso comum,
+       porque o Mestre nomeia lugares livremente —, o nome às vezes se
+       entrega: "A Taverna do Corvo", "o Templo Pálido". `tiposPedidos` já
+       sabe ler isso e existia para outra coisa.
+
+       Quando o nome não denuncia nada ("O Escudo das Velas"), o tipo fica
+       vazio e as afordâncias de lugar não disparam. É o lado seguro: um
+       tipo chutado daria ao Narrador uma regra sobre um lugar que talvez
+       não seja aquele. */
+    if (!tipoDoLocal && lug && lug.nome) tipoDoLocal = tiposPedidos(lug.nome)[0] || "";
+    const sit = situacaoDaMesa();
+    const cl = climaRef.current;
+    return garantirEspaco({
+      tipo: naMasmorra ? "masmorra" : jornadaRef.current ? "estrada" : lug ? "lugar" : cidadeAtualRef.current ? "cidade" : "nenhum",
+      rotulo: naMasmorra ? mm.nome : (lug && lug.nome) || cidadeAtualRef.current || "",
+      tipoDoLocal,
+      bioma: biomaDaqui(),
+      porte: (cid && (cid.porte || cid.tipo)) || "",
+      dentro,
+      aberto: !dentro && !naMasmorra,
+      apertado: naMasmorra,
+      /* a sala do chefe e a cripta são fundo de saco: uma saída só */
+      fundo: naMasmorra && saidasDe(mm).length <= 1,
+      alto: naMasmorra,
+      agua: /pantano|costa/.test(biomaDaqui()) && !dentro,
+      saidas: naMasmorra ? Math.max(1, saidasDe(mm).length) : dentro ? 2 : 4,
+      /* lá embaixo a luz é a tocha; aqui em cima é a hora */
+      luz: naMasmorra ? (mm.tochas > 0 ? "penumbra" : "escuro") : (ehNoite(minutoRef.current) && !dentro ? "penumbra" : "clara"),
+      publico: !!cidadeAtualRef.current && !acampadoRef.current && !naMasmorra,
+      gentePorPerto: sit.gentePorPerto,
+      cabem: naMasmorra ? 4 : dentro ? 10 : 20,
+      emCombate: !!combateRef.current,
+      emMasmorra: naMasmorra,
+      emViagem: !!jornadaRef.current,
+      acampado: !!acampadoRef.current,
+      noite: ehNoite(minutoRef.current),
+      clima: (cl && cl.rotulo) || "",
+      montado: false,
+    });
+  };
+
+  /* ---------------- A PAUTA DO TURNO (v9.104) ----------------
+     Um lugar só, ordenado e com teto, para tudo o que o Mestre decidiu.
+     Nasce com o Geógrafo dentro; cada sistema se muda para cá quando
+     chegar a vez dele. */
+  const pautaDoTurno = () => {
+    let p = garantirPauta(null);
+    /* quem está longe já é calculado pelo elenco da cena — o Geógrafo lê
+       dali em vez de refazer a conta, porque duas versões da mesma
+       verdade é como nasce o balanceamento fantasma desta casa */
+    const { longe } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (personagemRef.current || personagem || {}).grupo || [] });
+    const g = paraPauta({
+      espaco: espacoDaMesa(),
+      cidadeAtual: cidadeAtualRef.current, jornada: jornadaRef.current, masmorra: masmorraRef.current,
+      mapa: mapaRef.current, lugar: lugarRef.current, lex: (mundoAtual() || {}).lexico,
+      sitio: acampadoRef.current ? sitioRef.current : null,
+      clima: (climaRef.current && climaRef.current.rotulo) || "",
+      longe,
+    });
+    p = porNaPauta(p, "onde", g.onde);
+    p = porNaPauta(p, "naoPode", g.naoPode);
+    return p;
+  };
+
   const cenaDoPrompt = () => {
     const p = fichaViva() || personagem || {};
     const mm = masmorraRef.current;
@@ -6551,7 +6636,13 @@ export default function Taverna() {
     talvezAndarNaCidade(conteudo);
     const doCompasso = talvezAndarOCompasso(conteudo);
     const formaDaCena = doCompasso ? "" : talvezDarFormaACena(conteudo);
-    const nota = [oficina, notaRef.current, doCompasso, formaDaCena].filter(Boolean).join("\n");
+    /* v9.104: A PAUTA VEM NA FRENTE. Ela é o que o SISTEMA decidiu, e o
+       Narrador precisa saber ONDE a cena acontece antes de ler qualquer
+       instrução sobre o que fazer nela — a ordem importa para quem lê.
+       Por ora ela carrega o Geógrafo; os outros sistemas se mudam para
+       dentro dela quando chegar a vez de cada um. */
+    const pauta = textoDaPauta(pautaDoTurno(), { turno: turnoContRef.current + 1 });
+    const nota = [pauta, oficina, notaRef.current, doCompasso, formaDaCena].filter(Boolean).join("\n");
     notaRef.current = "";
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
     /* RODAPÉ DO SISTEMA (v7.0.2): lembrete curto colado SÓ na mensagem atual
