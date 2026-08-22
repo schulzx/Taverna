@@ -3216,6 +3216,336 @@ preposição.
   construído pelo jogador, é ali que o terceiro degrau precisa aparecer
   fora dos muros.
 
+# O MESTRE COMPLETO — segunda passada
+
+*Duas perguntas novas: acabar com o resumo, e interpretar o vilão e os
+aliados como sistemas vivos. As duas mudam o desenho — e uma delas o
+melhora bastante.*
+
+---
+
+## PERGUNTA 1 — o resumo ainda é necessário?
+
+### A conta, com números medidos
+
+A campanha de prova tem 118 turnos e 37.147 caracteres de histórico —
+mas ela foi jogada com um Narrador de mentira, e as narrações tinham 315
+caracteres. Uma narração de verdade tem entre 1.200 e 2.000. Projetando
+com 1.700 por turno (narração + ação do jogador):
+
+| campanha | histórico completo | prompt total | cabe? |
+|---|---|---|---|
+| 100 turnos | ~170 mil chars (~47k tokens) | ~64k tokens | sim |
+| 250 turnos | ~425 mil (~118k tokens) | ~135k | no limite |
+| 500 turnos | ~850 mil (~235k tokens) | ~252k | **não** |
+
+**O histórico completo funciona nos primeiros cento e cinquenta turnos e
+quebra depois.** É o pior tipo de desenho: passa em todo teste e falha
+exatamente na campanha que o jogador passou meses construindo.
+
+E há um custo que não aparece na conta: contexto muito longo degrada
+obediência. O prompt já carrega 17 mil tokens de regra; enterrá-los sob
+oitenta mil tokens de narrativa é competir com a própria instrução.
+
+### Mas a intuição por trás da pergunta está certa
+
+Três coisas diferentes estão hoje embrulhadas na palavra "resumo":
+
+1. **O CÂNONE** — fatos imutáveis que não podem ser contraditos. Isso
+   **não é resumo**, é tabela de fatos, e continua.
+2. **O LIVRO** — 220 palavras escritas por IA a cada 8 turnos, custando
+   uma chamada. **Este é o que deve morrer**, e por uma razão nova: quase
+   tudo o que ele resume virou dado estruturado. Registro de pessoas com
+   laço, relógios, missões, fase do arco, plano do vilão, marcas,
+   confidências, tentativas, descobertas, fama, lugares visitados. O
+   livro está reescrevendo em prosa o que o sistema já sabe em campo.
+3. **O HISTÓRICO BRUTO** — os últimos 18 turnos. Curto demais, e fica
+   melhor quando o livro sair.
+
+### O que entra no lugar: O REGISTRO, e dois leitores
+
+Não é resumir nem mandar tudo. É a terceira coisa, e é o padrão do
+conselho aplicado à memória.
+
+**O REGISTRO** guarda UMA LINHA por turno, escrita por código a partir do
+que o Mestre já sabia naquele instante:
+
+```
+turno 23 · no Escudo das Velas · Marta, Ubba · assunto: dívida
+         · menti sobre de onde vim · peso 3 · viu: Marta
+```
+
+Quem estava (`elencoDaCena`), onde (`lugar`), de que tratava
+(`compasso`), o que aconteceu (o veredicto, o brilho, o custo) e quanto
+pesou — o sistema já tem os cinco no momento em que o turno acontece.
+Nenhuma chamada de IA. ~120 caracteres por turno.
+
+**E ele poda por PESO, não por idade.** O turno em que você matou alguém
+fica para sempre; o turno em que você foi ao mercado sai em uma semana. É
+como a memória funciona, e é computável.
+
+Dois leitores em cima da mesma tabela:
+
+- **O ARQUIVISTA** responde *"esta cena é com Marta, aqui, sobre dívida —
+  o que já aconteceu que importa?"* e devolve três ou quatro linhas. Não
+  resume: **recupera**. Custo fixo no prompt, para sempre — uma campanha
+  de mil turnos entrega as mesmas quatro linhas.
+- **O COBRADOR** responde *"o que o mundo ainda não cobrou?"* — é a
+  Memória do Mundo da primeira passada, e agora tem onde morar.
+
+### Veredicto
+
+**Não mandar tudo. Matar o livro. Construir o Registro.**
+
+De quebra: com o livro fora (~1.000 chars e uma chamada de IA a cada 8
+turnos), dá para subir a janela de histórico bruto de 18 para ~30 turnos
+sem custo líquido. O passado recente fica mais vivo e o passado remoto
+passa a ser recuperado com precisão em vez de resumido com perda.
+
+---
+
+## PERGUNTA 2 — o Sistema Vilão e o Sistema Aliado
+
+**As duas ideias são boas e melhoram o desenho.** Elas expõem uma
+distinção que a primeira passada não tinha:
+
+> **CONSELHEIRO** responde uma pergunta sobre a cena.
+> **AGENTE** É alguém, e responde "o que EU faço".
+
+O Bibliotecário é conselheiro. O vilão não pode ser: ele tem vontade,
+tem plano, tem informação incompleta e age quando ninguém está olhando.
+Isso é outra categoria, e tratá-la como catálogo de cena seria espremer a
+coisa errada no molde certo.
+
+---
+
+### O SISTEMA VILÃO — "o vilão que sabe"
+
+`vilao.js` já tem o PLANO: arquétipos, 9 passos, heranças, marcas,
+alvos, quedas. O que falta é a CABEÇA.
+
+#### 1. O que ele sabe — e o que ele NÃO sabe
+
+A peça central, e a que a pergunta acertou em cheio. Um livro-razão do
+que chegou até ele:
+
+```
+o quê · como chegou (viu · marca contou · boato · fama) · quando · certeza
+```
+
+As fontes já existem: as **marcas** do plano são ouvidos, a **fama** é o
+que corre sozinho, as **confidências** dizem quem sabe o quê, o Registro
+diz o que foi público.
+
+**E o que ele não sabe é tão importante quanto.** Um vilão que sabe tudo
+é dispositivo de enredo, não personagem. O sistema tem de guardar as duas
+listas.
+
+#### 2. A leitura — que pode estar ERRADA
+
+~30 `LEITURAS` com `quando` sobre o estado de informação dele mais o
+arquétipo: *"conclui que você trabalha para o outro lado"*, *"conclui que
+você é comprável"*, *"conclui que você ainda não é ameaça"*.
+
+**A melhor parte é a leitura errada.** Um vilão que te interpreta mal é
+dramaticamente muito mais rico que um que acerta — e o erro é
+*computável*, porque é função de informação incompleta. Nenhuma outra
+peça do jogo consegue produzir isso.
+
+#### 3. A resposta — ~50 movimentos
+
+Não são os passos do plano; são as REAÇÕES. Testar, comprar, isolar,
+assustar, imitar, presentear, ignorar de propósito (que é uma resposta),
+mandar alguém, aparecer.
+
+#### 4. O CORPO DO VILÃO — a ideia que muda mais coisa
+
+A observação de que "um vilão pode ser um grupo de dragões ou um deus"
+não é detalhe de sabor: muda a mecânica inteira.
+
+| corpo | plano anda | matar "o vilão" | confronto é |
+|---|---|---|---|
+| **pessoa** | ritmo normal | acaba | uma cena |
+| **conselho** | mais devagar (precisam concordar) | um cai, os outros seguem | política — e um pode debandar |
+| **bando** | mais rápido e mais cru | a cabeça cai, o bando continua | vários confrontos |
+| **deus / coisa** | por sinais, não por passos | não se mata assim | um rito, não uma luta |
+| **instituição** | por regra e papel | não tem quem matar | um processo |
+
+Isso resolve um limite silencioso de hoje: `podeCair` e `envelopeDaQueda`
+assumem que o vilão é uma pessoa que morre. Com CORPO, a queda passa a
+ter cinco formas, e a estrutura de capítulos (`historia.js`) ganha finais
+que ela não conseguia escrever.
+
+#### 5. A cadência
+
+Um vilão que fala todo turno é praga. Ele age pelo relógio (já existe:
+`DIAS_POR_PASSO = 6`) **mais** uma cadência de reação quando o herói faz
+algo que chega até ele. E às vezes a resposta certa é o silêncio, que
+tem de ser um movimento explícito do acervo — senão nunca acontece.
+
+---
+
+### O SISTEMA ALIADO — "quem anda comigo quer alguma coisa"
+
+Hoje: `companheiros.js` infere classe e decide o turno de luta.
+`vinculos.js` guarda um número. Fora do combate, o aliado é móvel.
+
+#### 1. A vontade própria
+
+~40 `VONTADES DE ALIADO` com etapas — pequenas, três passos, não nove:
+achar alguém, pagar uma dívida, evitar uma cidade, provar uma coisa,
+chegar a um lugar antes de uma data, proteger o herói de algo que ele não
+sabe.
+
+**E ela avança ou apodrece sozinha.** Se o herói nunca ajuda, resolve-se
+mal — e é isso que faz a vontade ser real em vez de decorativa.
+
+#### 2. A opinião, e o CÓDIGO
+
+Não é número: é posição. ~50 `OPINIÕES` com `quando` sobre (o que o
+herói fez, o código dessa pessoa, o vínculo). E cada aliado carrega duas
+ou três coisas em que acredita — o **código**, que é a versão de aliado
+das *linhas que não se cruzam*.
+
+#### 3. O atrito entre aliados
+
+**Já existe e está pronto:** o `entre` de `npcs.js` (v9.98) grava
+relações entre dois NPCs nas duas pontas, e `assuntos.js` já tem quatro
+assuntos que pedem duas pessoas. Dois aliados com uma rivalidade produzem
+cena sem o herói no meio — que era exatamente o que aquele sistema foi
+construído para permitir e ainda não tinha quem usasse.
+
+#### 4. A hora de falar — o problema mais difícil
+
+Um aliado que comenta todo turno é insuportável. A regra: ele fala quando
+(a) toca a vontade dele, (b) cruza o código dele, (c) a onda está no
+respiro, ou (d) faz N turnos que ele não fala e aconteceu algo.
+
+**Teto duro: um aliado por turno.** Sem isso, quatro companheiros viram
+quatro linhas de Pauta e a cena vira assembleia.
+
+#### 5. A partida
+
+Um aliado pode ir embora — vínculo no fundo, ou o código cruzado vezes
+demais. **Tem de ser possível, senão as opiniões não valem nada.**
+
+---
+
+## A ESTRUTURA COMPLETA, revisada
+
+### Três categorias, e agora elas têm nome
+
+**CONSELHEIROS** — respondem uma pergunta sobre a cena (7)
+
+| | responde | estado |
+|---|---|---|
+| Bibliotecário | que forma esta cena tem | ✅ 191 jogadas |
+| Compasso | de que trata agora, e em que batida | ✅ 99 assuntos |
+| Mestre da Mesa | o ritmo: temperatura, pilar, concessão | ✅ |
+| Oráculo | sim/não sobre o mundo, e a iniciativa dele | ✅ |
+| Árbitro | qual teste, quão difícil, o que custa falhar | ✅ 31 desafios |
+| **Geógrafo** | onde, o que o lugar permite, o que é impossível | ⬜ |
+| **Intérprete** | o que a gente em cena faz | ⬜ ~120 movimentos |
+
+**AGENTES** — SÃO alguém, e respondem "o que eu faço" (3, todos novos)
+
+| | é | tem de próprio |
+|---|---|---|
+| **Sistema Vilão** | o antagonista | plano, informação, leitura (que erra), corpo, cadência |
+| **Sistema Aliado** | quem anda comigo | vontade com etapas, código, opinião, atrito, partida |
+| **Adversário** | a oposição descartável de uma luta | intenção, prioridade de alvo, condição de quebra |
+
+**REGISTROS** — guardam e devolvem (1 tabela, 2 leitores)
+
+| | |
+|---|---|
+| **O Registro** | uma linha por turno; poda por peso, não por idade |
+| ↳ Arquivista | "o que já aconteceu aqui, com essa gente, sobre isso" |
+| ↳ Cobrador | "o que o mundo ainda não cobrou" |
+
+**CRIAÇÃO** — decide uma vez e vira cânone (1)
+
+| | |
+|---|---|
+| Léxico | como o mundo se chama e como ele funciona | ✅ |
+
+**A ESPINHA**
+
+| | |
+|---|---|
+| **A Pauta do Turno** | tudo o que o Mestre decidiu, em ordem, com orçamento |
+
+---
+
+## A ORDEM
+
+```
+ 1. B1   lugares e criaturas do léxico     pequeno · visível · risco zero
+ 2. A1   GEÓGRAFO + PAUTA                  a espinha, provada num consumidor só
+ 3. R    O REGISTRO + Arquivista           mata o livro; todo o resto lê dele
+ 4. A2   INTÉRPRETE                        a gente em cena
+ 5. V    SISTEMA VILÃO                     precisa do Registro para saber
+ 6. AL   SISTEMA ALIADO                    reusa o ENTRE que já existe
+ 7. B2   raças pelo léxico                 pequeno, encaixa no intervalo
+ 8. A3   ADVERSÁRIO                        melhor depois do Vilão e do Geógrafo
+ 9. B3   equipamento pela FORMA
+10. C    COBRADOR                          fecha o círculo: o mundo lembra
+```
+
+**Por que o Registro subiu para o terceiro lugar:** ele responde a
+pergunta 1, apaga uma chamada de IA a cada 8 turnos, e é de onde o Vilão
+tira o que ele sabe e o Cobrador tira o que ele cobra. Construir o Vilão
+antes seria construí-lo cego.
+
+---
+
+## O QUE ISSO CUSTA NA PAUTA, e como não estourar
+
+Cada peça nova quer espaço. O orçamento, por linha:
+
+```
+ONDE        ~120   Geógrafo
+QUEM        ~120   elenco (já existe)
+MOMENTO     ~110   Compasso (já existe)
+FORMA       ~130   Bibliotecário (já existe)
+A GENTE     ~90 × até 3 presentes = 270   Intérprete
+O ALIADO    ~90 × 1 (teto duro)           Sistema Aliado
+O VILÃO     ~110   só quando ele age ou reage
+ANTES       ~90 × até 3                   Arquivista
+ACABOU DE   ~80    (já existe)
+NÃO PODE    ~120   vetos reunidos
+```
+
+Teto proposto: **1.400 caracteres**, cortando por prioridade como o
+léxico já faz. Hoje os envelopes somam algo próximo disso sem teto
+nenhum — a Pauta não é gasto novo, é o primeiro controle.
+
+---
+
+## OS RISCOS NOVOS
+
+**1. O vilão onisciente.** É a falha mais provável do Sistema Vilão, e a
+defesa tem de ser estrutural: o que ele NÃO sabe é uma lista guardada, e
+todo movimento dele precisa citar por qual fonte a informação chegou.
+Sem essa exigência, o acervo vai derivar para "ele simplesmente sabe".
+
+**2. O aliado tagarela.** Teto de um por turno, cadência própria, e o
+silêncio como movimento explícito.
+
+**3. O Registro inchar o save.** 1.000 turnos × 120 chars = 120 KB, num
+save que já esbarra na cota do navegador. A poda por peso é obrigatória
+desde o primeiro dia, não depois.
+
+**4. Quatro sorteios por turno.** Geógrafo, Intérprete, Aliado e Vilão
+sorteando no mesmo turno é superfície nova para dessincronizar semente —
+o bug do continente da v9.102 em quatro cópias. Cada agente precisa do
+próprio gerador derivado, e isso vira teste.
+
+**5. A soma virar assembleia.** Dez sistemas escrevendo na mesma Pauta
+pode produzir um turno em que tudo acontece ao mesmo tempo. A defesa é a
+cadência POR SISTEMA — cada um com o próprio direito de falar, como o
+Bibliotecário já tem — e a prioridade no corte.
+
 # O MESTRE COMPLETO — desenho da estrutura definitiva
 
 *Revisão de 68 módulos, 1.610 regras exportadas e os 55 blocos de prompt.
