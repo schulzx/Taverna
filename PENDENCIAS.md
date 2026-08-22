@@ -2580,6 +2580,70 @@ seja lido, e passou a enxergar as duas pontas que existem de verdade.
 - **O bioma não entra em nada.** Um assunto de deserto, de gelo ou de
   pântano teria material próprio, e o mapa já guarda o campo.
 
+## A corte e o chão — v9.94
+
+Duas ampliações puras. **55 assuntos** agora, contra 36 na v9.91.
+
+- **~~Capital e cidade eram a mesma coisa.~~** RESOLVIDO. A régua do porte
+  tratava tudo de "cidade" para cima igual, e o que muda numa capital não
+  é o tamanho: é que existe um **lugar onde as decisões são tomadas**, e
+  gente cuja vida inteira é chegar perto dele.
+
+  Cinco assuntos que só a capital tem: a **audiência** (a antessala, a
+  fila, o que custa furá-la), a **intriga de corte** (duas facções sendo
+  simpáticas de graça), o **julgamento público** (onde o que decide não é
+  a verdade), a **embaixada** (gente de fora com costumes que aqui
+  ofendem, e ninguém pode dizer nada) e a **guerra de guildas** — esta no
+  degrau de baixo, porque já existe onde há ofícios organizados.
+
+- **~~O bioma não entrava em nada.~~** RESOLVIDO, e a história dele é a
+  prova de que a catraca funciona nos dois sentidos: `bioma` foi
+  **removido** da situação na v9.93 por ter nascido sem leitor, e **volta
+  agora** porque quatorze regras o consultam. É assim que um campo entra
+  nesta casa — quando alguém precisa dele, nunca por completude.
+
+  Cada bioma ganhou a sua propriedade dramática, não uma paisagem
+  diferente para a mesma cena:
+
+  | bioma | o que só ele tem |
+  |---|---|
+  | deserto | a **sede**; a **tempestade** que apaga o caminho e desenterra o que estava embaixo |
+  | gelo | o **degelo** — o que o gelo guardava; o **frio** obrigando a escolher quem entra no calor |
+  | pântano | a **febre** da água parada; **o que afundou** e voltou |
+  | floresta | a **mata que repara em mim** (regras que se cumprem sem discutir); o **incêndio** |
+  | montanha | o **passo que fecha**, e cada lado fica do seu lado |
+  | costa | a **maré** cobrando a hora de quem não a respeitou; **o que veio dar na praia** |
+  | planície | **o que se vê chegando** com um dia de antecedência — o campo aberto não mente; a **colheita** |
+  | colina | **o outro lado da lomba**, que já estava assim há dias |
+
+  Medido: os oito biomas ficam entre **8% e 13%** do sorteio. Nenhum é
+  decorativo e nenhum domina.
+
+  **Bioma vazio não abre nada do chão** — num save antigo ou numa cena sem
+  lugar, afirmar que há deserto é o mesmo erro do portão inventado numa
+  aldeia.
+
+### Um homógrafo custou uma rodada
+
+A suíte reprovou dois assuntos corretos por causa de **"cobre"**: ela
+procurava o imperativo de *cobrar* (mandar a IA cobrar do jogador) e
+casou com a terceira pessoa de *cobrir* — "a hospitalidade cobre", "a
+regra não cobre esse caso". O guarda passou a pedir o **objeto** ("cobre
+me", "cobre moeda", "cobre PV"), que é onde o risco real mora, e o
+envelope do preço já proíbe a coisa por escrito de qualquer modo.
+
+É primo do `\b` que já mordeu esta casa cinco vezes: a diferença entre
+casar uma palavra e casar um pedaço de outra.
+
+### O que fica aberto
+
+- **A corte não tem assunto de laço próprio.** Casamento arranjado,
+  refém-hóspede e afilhado político são material de capital que ficou de
+  fora — a família `laco` só ganhou a intriga.
+- **O bioma não conversa com o porte.** Uma capital no gelo e uma aldeia
+  no gelo abrem os mesmos assuntos de chão, e uma corte que depende de
+  degelo para comer é outra história.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

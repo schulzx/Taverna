@@ -122,6 +122,12 @@ export function garantirSituacao(s) {
        e o registro de gente sempre soube quem está aqui e quem não está.
        O que faltava era o Mestre PERGUNTAR antes de decidir. */
     porte: t("porte") || "",
+    /* v9.94: o `bioma` VOLTA, e volta pela porta certa. Ele foi removido na
+       v9.93 por ter nascido sem leitor — e agora onze assuntos o
+       consultam, porque um pantano tem historias que um deserto nao tem.
+       E assim que um campo entra nesta casa: quando uma regra precisa
+       dele, nunca por completude. */
+    bioma: t("bioma") || "",
     /* gente CONHECIDA daqui e de longe: a segunda é a que faz um
        reencontro ser possível, e ela não é o inverso da primeira */
     gentePorPerto: n("gentePorPerto", 0),

@@ -10907,6 +10907,7 @@ REGRA DESTE ENVELOPE (obrigatÃ³ria): trate o resto da minha frase normalmente â€
         .map((r) => Number(r.dias) || 0).filter((d) => d > 0);
       return {
         porte: (aqui && aqui.porte) || "",
+        bioma: (aqui && aqui.bioma) || "",
         gentePorPerto: (el.aqui || []).length,
         genteLonge: (el.longe || []).length,
         diasAteVizinha: dias.length ? Math.min(...dias) : 0,

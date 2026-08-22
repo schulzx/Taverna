@@ -67,6 +67,17 @@ const portePeloMenos = (s, min) => {
   return i >= 0 && i >= ESCADA.indexOf(min);
 };
 
+/* ---------------- A RÉGUA DO CHÃO (v9.94) ----------------
+   Oito biomas em geografia.js, e até aqui nenhum assunto perguntava por
+   eles. Um pântano tem histórias que um deserto não tem — a febre, o que
+   afunda, o guia que cobra caro —, e escrevê-las genéricas era desperdiçar
+   a metade do mundo que o gerador já produz.
+
+   `bioma` foi REMOVIDO da situação na v9.93 por ter nascido sem leitor, e
+   volta agora pela porta certa: com regras que o consultam. É assim que um
+   campo entra aqui — quando alguém precisa dele, nunca por completude. */
+const chao = (s, ...quais) => quais.includes(String(s.bioma || ""));
+
 export const ASSUNTOS = [
   /* ==================== A LUTA ==================== */
   {
@@ -438,6 +449,207 @@ export const ASSUNTOS = [
     vespera: "Quem mandava não aparece há dois dias, e os outros já perceberam.",
     agora: "Agora ACONTECE: o lugar de quem mandava fica vago, e a disputa vem à luz.",
     depois: "Mostre com quem ficou, e o que a nova mão muda no dia a dia de quem mora aqui.",
+  },
+
+  /* ==================== A CORTE (capital e metrópole) ====================
+     Uma corte tem histórias que um burgo não tem, e a régua do porte as
+     tratava igual: tudo de "cidade" para cima abria as mesmas coisas. O
+     que muda numa capital não é o tamanho — é que existe um LUGAR onde as
+     decisões são tomadas, e gente cuja vida inteira é chegar perto dele. */
+  {
+    id: "audiencia", familia: "poder", peso: 3,
+    nome: "uma audiência que eu consegui",
+    quando: (s) => s.emCidade && portePeloMenos(s, "capital"),
+    preparo: "Comece a preparar uma AUDIÊNCIA: mostre a máquina de quem manda — a antessala, a fila, quem decide quem entra, e o que custa furá-la.",
+    subindo: "Meu nome entra na lista por um caminho torto, e alguém que também esperava perde o lugar por minha causa.",
+    vespera: "É amanhã de manhã, e um secretário já me disse quanto tempo eu tenho.",
+    agora: "Agora ACONTECE: eu entro, e a pessoa do outro lado tem menos tempo e mais poder do que eu esperava.",
+    depois: "Mostre o que a audiência mudou no meu trânsito por este lugar: que portas se abriram, e quem passou a me achar perigoso por causa disso.",
+  },
+  {
+    id: "intriga_de_corte", familia: "laco", peso: 3,
+    nome: "uma intriga de corte",
+    quando: (s) => s.emCidade && portePeloMenos(s, "capital") && s.pessoaNaCena,
+    preparo: "Comece a preparar uma INTRIGA: mostre duas facções de corte se tratando com cortesia perfeita, e mostre uma delas me sendo simpática de graça.",
+    subindo: "A simpatia vira convite, o convite vira pedido pequeno, e recusar já começa a ter custo.",
+    vespera: "Os dois lados me procuraram no mesmo dia, e cada um acha que eu já escolhi.",
+    agora: "Agora ACONTECE: os dois lados chocam em público e o que eu fiz — ou não fiz — aparece como prova.",
+    depois: "Mostre de que lado a corte decidiu que eu estou, independentemente do que eu queria.",
+  },
+  {
+    id: "julgamento", familia: "mundo", peso: 3,
+    nome: "um julgamento público",
+    quando: (s) => s.emCidade && portePeloMenos(s, "capital"),
+    preparo: "Comece a preparar um JULGAMENTO: mostre uma acusação circulando, com as duas versões vivas e nenhuma prova ainda.",
+    subindo: "A data é marcada e as pessoas começam a se posicionar — inclusive gente que eu conheço, e nem sempre do lado que eu esperava.",
+    vespera: "É de manhã na praça, e já há gente escolhendo lugar para ver.",
+    agora: "Agora ACONTECE: o julgamento corre à vista de todos, e o que decide não é a verdade.",
+    depois: "Mostre o que a sentença fez com a cidade: quem comemora, quem some, e o que passa a ser dito em voz baixa.",
+  },
+  {
+    id: "embaixada", familia: "mundo", peso: 2,
+    nome: "gente de fora com poder",
+    quando: (s) => s.emCidade && portePeloMenos(s, "capital"),
+    preparo: "Comece a preparar uma EMBAIXADA: mostre a cidade se arrumando para receber gente de longe — o que se esconde, o que se pinta, quem é mandado embora antes.",
+    subindo: "Os visitantes chegam e trazem costumes que aqui ofendem, e ninguém pode dizer nada.",
+    vespera: "O banquete é hoje, e alguém já avisou que vai haver um pedido na mesa.",
+    agora: "Agora ACONTECE: o que os de fora vieram buscar fica claro, e é maior do que a hospitalidade alcança.",
+    depois: "Mostre o que ficou do encontro: o que foi prometido em nome de quem, e quem paga por isso.",
+  },
+  {
+    id: "guilda_em_guerra", familia: "poder", peso: 3,
+    nome: "duas guildas disputando",
+    quando: (s) => s.emCidade && portePeloMenos(s, "cidade"),
+    preparo: "Comece a preparar uma DISPUTA DE GUILDAS: mostre dois ofícios da cidade dependendo da mesma coisa — uma rota, uma matéria, um privilégio.",
+    subindo: "A disputa sai do papel: entregas atrasam, gente é intimidada, e os dois lados procuram quem tenha mão pesada.",
+    vespera: "Os dois lados marcaram assembleia para a mesma hora, e ninguém pretende ceder.",
+    agora: "Agora ACONTECE: a disputa quebra em público, e a cidade tem de escolher a quem obedecer.",
+    depois: "Mostre o preço que a cidade paga pela vitória de um dos dois: o que encareceu, o que sumiu, quem ficou sem ofício.",
+  },
+
+  /* ==================== O CHÃO (o bioma como assunto) ====================
+     Oito biomas no gerador, e nenhum assunto perguntava por eles. Um
+     pântano tem histórias que um deserto não tem, e escrevê-las genéricas
+     era desperdiçar metade do mundo que o sistema já produz. */
+  {
+    id: "sede", familia: "mundo", peso: 4,
+    nome: "a água acabando",
+    quando: (s) => chao(s, "deserto"),
+    preparo: "Comece a preparar a SEDE: mostre como a água funciona aqui — quem a guarda, quanto vale, e o que as pessoas fazem para não desperdiçar uma gota.",
+    subindo: "Um ponto de água falha ou é tomado, e as contas de todo mundo mudam ao mesmo tempo.",
+    vespera: "O que resta dá para hoje, e a próxima fonte fica a mais de um dia daqui.",
+    agora: "Agora ACONTECE: falta água de verdade, e as pessoas param de ser razoáveis.",
+    depois: "Mostre o que a sede fez com as regras deste lugar: o que passou a ser permitido, e o que ninguém mais faz de graça.",
+  },
+  {
+    id: "tempestade_de_areia", familia: "mundo", peso: 3,
+    nome: "a tempestade que apaga o caminho",
+    quando: (s) => chao(s, "deserto"),
+    preparo: "Comece a preparar uma TEMPESTADE: mostre quem lê o céu daqui e o que essa pessoa começa a fazer sem explicar.",
+    subindo: "O ar muda de cor e de gosto, e quem sabe ler já está procurando abrigo em vez de terminar o serviço.",
+    vespera: "Está vindo, dá para ver a parede dela na linha do horizonte, e o abrigo mais perto tem dono.",
+    agora: "Agora ACONTECE: a tempestade chega e o mundo encolhe ao tamanho de um braço.",
+    depois: "Mostre o que a areia cobriu e o que ela DESCOBRIU: o caminho sumiu, e alguma coisa que estava enterrada não está mais.",
+  },
+  {
+    id: "degelo", familia: "mundo", peso: 3,
+    nome: "o que o gelo guardava",
+    quando: (s) => chao(s, "gelo", "montanha"),
+    preparo: "Comece a preparar o DEGELO: mostre o gelo daqui como coisa viva — o que ele range, o que ele empurra, o que as pessoas evitam pisar.",
+    subindo: "Alguma coisa aparece na borda do gelo que não devia estar ali, e quem mora aqui reconhece o que é.",
+    vespera: "A rachadura cresceu de novo esta manhã, e dá para ver alguma coisa escura embaixo.",
+    agora: "Agora ACONTECE: o gelo cede e entrega o que estava guardando, inteiro.",
+    depois: "Mostre o que fazer com o que apareceu: quem o reclama, quem quer que volte para baixo, e o que ele muda do que se contava aqui.",
+  },
+  {
+    id: "frio_que_mata", familia: "perda", peso: 3,
+    nome: "o frio cobrando",
+    quando: (s) => chao(s, "gelo"),
+    preparo: "Comece a preparar o FRIO: mostre a rotina inteira deste lugar organizada em torno de não morrer congelado — a lenha, as horas, quem dorme com quem.",
+    subindo: "Uma peça dessa rotina falha: falta lenha, alguém não volta na hora, um abrigo se perde.",
+    vespera: "A noite vem em duas horas e não há lenha para as duas.",
+    agora: "Agora ACONTECE: o frio alcança alguém, e é preciso decidir depressa quem entra no calor.",
+    depois: "Mostre o que o frio levou e o que sobrou de rancor entre quem escolheu e quem foi escolhido.",
+  },
+  {
+    id: "febre_do_pantano", familia: "perda", peso: 3,
+    nome: "a febre que vem da água parada",
+    quando: (s) => chao(s, "pantano"),
+    preparo: "Comece a preparar a FEBRE: mostre que aqui todo mundo convive com ela — quem já teve, o que se toma, o que se evita fazer ao anoitecer.",
+    subindo: "Alguém pega, e não é do jeito de sempre: mais rápido, ou fora da época.",
+    vespera: "A pessoa piorou durante a noite e o remédio daqui já não está fazendo efeito.",
+    agora: "Agora ACONTECE: a febre vira coisa séria, e o que cura está longe ou tem dono.",
+    depois: "Mostre o que a febre deixou: quem cuidou de quem, o que foi queimado, e de quem os outros passaram a desconfiar.",
+  },
+  {
+    id: "o_que_afunda", familia: "enigma", peso: 3,
+    nome: "o que o pântano engoliu",
+    quando: (s) => chao(s, "pantano"),
+    preparo: "Comece a preparar um ACHADO NA LAMA: mostre que aqui as coisas somem para baixo e às vezes voltam — e mostre uma que voltou, sem importância.",
+    subindo: "Volta uma segunda coisa, e essa tem dono conhecido.",
+    vespera: "O nível baixou, e dá para ver a forma de alguma coisa grande onde não devia haver nada.",
+    agora: "Agora ACONTECE: o que estava afundado aparece, e explica um sumiço que ninguém tinha ligado a ele.",
+    depois: "Mostre quem preferia que aquilo continuasse embaixo, e o que essa pessoa faz agora.",
+  },
+  {
+    id: "mata_que_olha", familia: "enigma", peso: 3,
+    nome: "a mata reparando em mim",
+    quando: (s) => chao(s, "floresta"),
+    preparo: "Comece a preparar a MATA: mostre as regras que quem vive aqui cumpre sem discutir — o que não se corta, por onde não se anda, o que se deixa na entrada.",
+    subindo: "Uma dessas regras é quebrada por alguém, e a mata responde de um jeito pequeno e específico.",
+    vespera: "Os sons noturnos pararam todos ao mesmo tempo, e faz uma hora que não voltam.",
+    agora: "Agora ACONTECE: a mata cobra a regra quebrada, e cobra de quem estiver por perto.",
+    depois: "Mostre como o lugar volta ao normal — e o que as pessoas passam a deixar na entrada agora.",
+  },
+  {
+    id: "fogo_na_mata", familia: "mundo", peso: 2,
+    nome: "um incêndio",
+    quando: (s) => chao(s, "floresta", "planicie"),
+    preparo: "Comece a preparar um INCÊNDIO: mostre o quanto está seco, e mostre alguém usando fogo por um motivo perfeitamente comum.",
+    subindo: "Há cheiro de queimado vindo da direção errada, e ninguém sabe de quem é.",
+    vespera: "Dá para ver a linha de fumaça daqui, e o vento virou para cá.",
+    agora: "Agora ACONTECE: o fogo chega ao que importa, e todo mundo larga o que estava fazendo.",
+    depois: "Mostre o que queimou e o que o fogo abriu: o que dá para ver agora que a mata escondia.",
+  },
+  {
+    id: "o_passo", familia: "mundo", peso: 3,
+    nome: "o passo que fecha",
+    quando: (s) => chao(s, "montanha", "colina"),
+    preparo: "Comece a preparar O PASSO: mostre que tudo aqui depende de uma passagem só, e mostre a rotina de quem vive de atravessá-la.",
+    subindo: "A passagem fica pior: uma pedra caiu, um trecho cedeu, e quem atravessa passa a cobrar mais.",
+    vespera: "Dizem que fecha com a próxima chuva, e a próxima chuva vem hoje.",
+    agora: "Agora ACONTECE: o passo fecha, e quem está de cada lado fica de cada lado.",
+    depois: "Mostre o que o fechamento fez com os dois lados: o que encareceu, quem ficou separado de quem, e quem lucra com a volta longa.",
+  },
+  {
+    id: "mare", familia: "mundo", peso: 3,
+    nome: "a maré decidindo",
+    quando: (s) => chao(s, "costa"),
+    preparo: "Comece a preparar a MARÉ: mostre a vida daqui acertada por ela — as horas de sair, as de voltar, o que fica exposto e o que some.",
+    subindo: "A maré vira o problema de alguém: um barco fora de hora, um caminho que só existe metade do dia, alguém que não voltou.",
+    vespera: "A água começa a subir e falta menos de uma hora para cobrir o caminho.",
+    agora: "Agora ACONTECE: a maré cobra a hora de quem não a respeitou.",
+    depois: "Mostre o que a maré trouxe e o que ela levou, e quem já está na praia recolhendo.",
+  },
+  {
+    id: "o_que_deu_a_praia", familia: "enigma", peso: 3,
+    nome: "o que veio dar na praia",
+    quando: (s) => chao(s, "costa"),
+    preparo: "Comece a preparar um NAUFRÁGIO DE LONGE: mostre a praia daqui e o que costuma chegar nela, e quem tem direito ao que chega.",
+    subindo: "Chega uma coisa que não é do costume, e a regra de quem fica com o quê não prevê esse caso.",
+    vespera: "Está encalhado desde a maré da manhã, e já tem gente em volta.",
+    agora: "Agora ACONTECE: o que veio do mar se revela — e não veio sozinho, ou não veio por acaso.",
+    depois: "Mostre o que a costa faz com o achado: quem o divide, quem o esconde, e o que passa a ser esperado do mar.",
+  },
+  {
+    id: "o_que_vem_de_longe", familia: "mundo", peso: 3,
+    nome: "o que se vê chegando com um dia de antecedência",
+    quando: (s) => chao(s, "planicie"),
+    preparo: "Comece a preparar uma CHEGADA VISÍVEL: mostre que daqui se enxerga longe, e mostre alguém que passa o dia olhando o horizonte porque é o ofício dele.",
+    subindo: "Aparece poeira na linha do horizonte, e ela não some — está vindo, e vai levar o dia inteiro para chegar.",
+    vespera: "Dá para contar quantos são, e já dá para ver o que eles carregam.",
+    agora: "Agora ACONTECE: o que vinha chega, e chega exatamente como se via de longe — o campo aberto não mente.",
+    depois: "Mostre o que ficou de quem passou: o que foi comido, o que foi levado, e o rastro que leva para onde eles foram.",
+  },
+  {
+    id: "colheita", familia: "mundo", peso: 3,
+    nome: "a colheita",
+    quando: (s) => chao(s, "planicie", "colina"),
+    preparo: "Comece a preparar a COLHEITA: mostre o ano inteiro deste lugar dependendo dela — quem plantou o quê, quem deve a quem, o que já foi vendido antes de existir.",
+    subindo: "Alguma coisa ameaça a colheita — tempo, praga, gente, prazo — e falta pouco para o ponto de colher.",
+    vespera: "É preciso colher amanhã, e não há braços para tudo.",
+    agora: "Agora ACONTECE: a colheita se decide num dia, e o que sobra é o que vai dar o ano.",
+    depois: "Mostre o ano que essa colheita comprou ou tirou: quem passa fome, quem enriquece, e quem vai embora.",
+  },
+  {
+    id: "atras_da_lomba", familia: "enigma", peso: 3,
+    nome: "o que estava do outro lado",
+    quando: (s) => chao(s, "colina"),
+    preparo: "Comece a preparar O OUTRO LADO: mostre como se anda aqui — sempre subindo e descendo, sempre sem ver o que vem depois da próxima lomba.",
+    subindo: "Chega sinal do outro lado sem que se veja o outro lado: fumaça, som, gado solto, gente descendo com pressa.",
+    vespera: "Falta uma subida, e de cima dá para ver tudo de uma vez.",
+    agora: "Agora ACONTECE: chego ao alto e o outro lado se mostra inteiro, de uma vez, e já estava assim há dias.",
+    depois: "Mostre o que muda por eu ter visto: quem mais sabe, quem vai perguntar, e o que já não dá para fingir que não existe.",
   },
 ];
 
