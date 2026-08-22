@@ -2644,6 +2644,75 @@ casar uma palavra e casar um pedaço de outra.
   no gelo abrem os mesmos assuntos de chão, e uma corte que depende de
   degelo para comer é outra história.
 
+## Os laços em muitas formas — v9.95
+
+"Romance é importante nas histórias, até nas mais sombrias — daí depende
+do romance né, um romance mais sombrio ou mais besteirol dependendo da
+história."
+
+- **~~Havia UM romance.~~** RESOLVIDO. Ele tinha uma forma só — a
+  convivência, o interesse, a declaração — e saía igual em toda campanha.
+
+  E a observação do pedido é a que aponta o conserto certo: um romance
+  sombrio e um besteirol **não são o mesmo assunto narrado com outra
+  voz**. São formas diferentes, com semente, véspera e sobretudo **preço**
+  diferentes. A voz muda o timbre; ela não inventa o leque.
+
+  A família dos laços foi de 9 para **19**. Sete formas de romance —
+  o romance lento, a **paixão imprudente**, o **amor do lado errado**, o
+  **amor antigo** (alguém que eu já amei, e a vida dela seguiu), **alguém
+  me quer e eu não**, o **triângulo**, o **casamento-contrato** — e mais o
+  aprendiz, o padrinho, o refém-hóspede, o inimigo que preciso ao meu lado.
+
+- **~~A corte não tinha laço próprio.~~** RESOLVIDO, era a pendência da
+  v9.94: **casamento arranjado** (cidade), **refém-hóspede** e **intriga
+  de corte** (capital), **afilhado político** (cidade + fama).
+
+- **~~O bioma não conversava com o porte.~~** RESOLVIDO, a outra
+  pendência. Uma capital no gelo e uma aldeia no gelo abriam os mesmos
+  assuntos de chão, e não são a mesma coisa: **um povoado sobrevive ao
+  lugar; uma cidade depende dele em escala — e essa dependência é
+  política.** O **porto** (costa + cidade), a **política da água** (deserto
+  + vila), a **cidade que come de fora** (gelo/montanha/deserto + cidade),
+  o **entreposto** que vive do pedágio (montanha/colina + vila + haver
+  para onde ir).
+
+### Quem separa as leves das duras não é a voz — é a estrutura
+
+Medido, com a mesma cena em três pontos da campanha:
+
+| onde | laços abertos |
+|---|---|
+| começo, aldeia | **8** — romance, amizade, paixão súbita, rivalidade, aprendiz |
+| meio, cidade | **16** — a traição na frente; abrem amor proibido, amor antigo, casamento-contrato |
+| fim, capital | **19** — todos, com refém-hóspede, intriga de corte e inimigo útil |
+
+Um amor que custa caro **precisa de campanha por baixo para custar**. E as
+leves estão lá desde o primeiro dia: um jogo em que só se pode amar depois
+da metade é um jogo sem juventude.
+
+### O terceiro homógrafo
+
+A suíte reprovou um assunto correto por procurar a palavra "voz": o
+`julgamento` diz *"o que passa a ser dito em voz baixa"* — fala, não o
+sistema de vozes. Antes disso foram **"role"** dentro de *controle* e
+**"cobre"** de *cobrir*.
+
+A lição virou regra: **um teste de acoplamento procura o acoplamento, não
+a palavra.** Agora ele verifica que nenhum `quando` lê a voz e que nenhum
+texto manda narrar num modo — as duas coisas que de fato quebrariam a
+divisão, e nenhuma delas confundível com português comum.
+
+### O que fica aberto
+
+- **69 assuntos e a família `mundo` empatou com `laco` em 19.** As duas
+  estão no teto do que a suíte permite (35% do acervo). Crescer qualquer
+  uma das duas agora exige crescer as outras junto.
+- **Nenhum laço termina.** Há sementes de romance, de rivalidade e de
+  dívida, e nenhuma forma de um laço **acabar** por desgaste — só a
+  despedida, que é ida embora. Um relacionamento que azeda sem ninguém
+  trair é material que falta.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na
