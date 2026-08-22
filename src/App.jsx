@@ -1307,7 +1307,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                                 {treino === false && <span className="tv-mono text-[9px] ml-1" style={{ color: T.danger }} title="Sem treino: desvantagem ao usar, e magia travada se for armadura">⚠ sem treino</span>}
                               </div>
                               <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>
-                                {it.detalhe || (it.tipo === "curiosidade" ? "curiosidade" : `${SLOT_ROTULO[it.tipo] || it.tipo} · ${it.raridade}`)}
+                                {it.detalhe || (it.tipo === "curiosidade" ? "curiosidade" : `${(fichaDoItem(it) || {}).rotulo || SLOT_ROTULO[it.tipo] || it.tipo} · ${it.raridade}`)}
                               </div>
                             </div>
                             <button onClick={() => onComprar && onComprar(m.id, it.nome)} disabled={!pode}
@@ -5808,7 +5808,7 @@ export default function Taverna() {
           }
         } else if (chave === "loot") {
           const rar = ["comum", "incomum", "raro", "epico", "lendario", "unico"].includes(arg.toLowerCase()) ? arg.toLowerCase() : "comum";
-          const it = gerarLoot(rar, { nivel: (pers || personagemRef.current || {}).nivel || 1 });
+          const it = gerarLoot(rar, { nivel: (pers || personagemRef.current || {}).nivel || 1, lex: (mundoAtual() || {}).lexico });
           setPersonagem((p) => ({ ...p, equipamento: [...(p.equipamento || []), it] }));
           msgs.push(`◆ Achado: ${it.nome} (${RARIDADE_ROTULO[it.raridade] || it.raridade})${it.poder ? ` — ${it.poder}` : ""}`);
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ITEM GERADO PELO SISTEMA] ${it.nome}, ${it.raridade}${it.poder ? `, poder: ${it.poder}` : ""}. Já está na mochila do herói — descreva o achado usando ESTE nome e estas propriedades, sem inventar outras.`;
@@ -6051,7 +6051,7 @@ export default function Taverna() {
             const e = fins[Math.min(i, Math.max(0, fins.length - 1))] || {};
             return { de: e.nome || "", x: e.x != null ? e.x : null, y: e.y != null ? e.y : null };
           };
-          if (esp.caiItem) caiuAqui.push(achadoDeEquipamento(gerarEspolioItem(fins, p2.nivel || 1), ondeCaiu(0)));
+          if (esp.caiItem) caiuAqui.push(achadoDeEquipamento(gerarEspolioItem(fins, p2.nivel || 1, (mundoAtual() || {}).lexico), ondeCaiu(0)));
           for (let i = 0; i < (esp.consumiveis || 0); i++) {
             const c = sortearConsumivel(p2.nivel || 1);
             if (!c) continue;
@@ -6080,7 +6080,7 @@ export default function Taverna() {
         if (salaCorrente && salaCorrente.tipo === "chefe") {
           const mm = masmorraRef.current;
           const sala = salaCorrente;
-          const rec = recompensaChefe(p2.nivel || 1);
+          const rec = recompensaChefe(p2.nivel || 1, (mundoAtual() || {}).lexico);
           /* v9.26: a luz que sobrou volta com o herói, junto do tesouro */
           /* v9.54: o chefe deixa ESSÊNCIA, e é a maior fonte do jogo. É a
              criatura mais carregada de poder que a masmorra põe na frente do
@@ -9161,7 +9161,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         return { de: e.nome || "", x: e.x != null ? e.x : null, y: e.y != null ? e.y : null };
       };
       if (esp.caiItem) {
-        const it = gerarEspolioItem(derrotados, p2.nivel || 1);
+        const it = gerarEspolioItem(derrotados, p2.nivel || 1, (mundoAtual() || {}).lexico);
         chaoNovos.push(achadoDeEquipamento(it, ondeCaiu(0)));
       }
       for (let i = 0; i < (esp.consumiveis || 0); i++) {
@@ -9950,7 +9950,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       pers = aplicarNivel({ ...pers, moedas: (pers.moedas || 0) + rec.moedas, xp: (pers.xp || 0) + rec.xp });
       const linhas = [`${tipoMissao(m.tipo).icone} MISSÃO CONCLUÍDA: ${m.titulo} — ${rec.moedas ? `+${rec.moedas} moedas · ` : "o pagamento não era em moedas · "}+${rec.xp} XP`];
       if (rec.item) {
-        const it = gerarLoot(rec.item, { nivel: pers.nivel || 1 });
+        const it = gerarLoot(rec.item, { nivel: pers.nivel || 1, lex: (mundoAtual() || {}).lexico });
         pers = { ...pers, equipamento: [...(pers.equipamento || []), it] };
         linhas.push(`✦ Recompensa: ${it.nome} (${RARIDADE_ROTULO[it.raridade] || it.raridade})`);
       }
@@ -12173,7 +12173,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (!custo) return;
     if ((personagem.essencia || 0) < custo.essencia) { pushMsgs([{ autor: "sistema", texto: `⚒ Essência insuficiente: forjar ${RARIDADE_ROTULO[raridade]} pede ⚗ ${custo.essencia} (você tem ${personagem.essencia || 0}). Desmonte equipamentos.` }]); return; }
     if ((personagem.moedas || 0) < custo.moedas) { pushMsgs([{ autor: "sistema", texto: `⚒ Moedas insuficientes: forjar ${RARIDADE_ROTULO[raridade]} pede ◉ ${custo.moedas}.` }]); return; }
-    const item = gerarLoot(raridade, { tipo: slot, nivel: personagem.nivel || 1 });
+    const item = gerarLoot(raridade, { tipo: slot, nivel: personagem.nivel || 1, lex: (mundoAtual() || {}).lexico });
     setPersonagem((p) => ({ ...p, essencia: (p.essencia || 0) - custo.essencia, moedas: (p.moedas || 0) - custo.moedas, equipamento: [...(p.equipamento || []), item] }));
     pushMsgs([{ autor: "sistema", texto: `⚒ Forjado: ${item.nome} (${RARIDADE_ROTULO[item.raridade] || item.raridade}) — na mochila de equipamentos` }]);
     bumpCont("forjados"); checarConquistas();
@@ -12326,7 +12326,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       let p2 = { ...personagem, moedas: (personagem.moedas || 0) + sala.moedas };
       if (sala.caiItem) {
         const rar = Math.random() < 0.5 ? "incomum" : Math.random() < 0.85 ? "raro" : "epico";
-        item = gerarLoot(rar, { nivel: personagem.nivel || 1 });
+        item = gerarLoot(rar, { nivel: personagem.nivel || 1, lex: (mundoAtual() || {}).lexico });
         p2 = { ...p2, equipamento: [...(p2.equipamento || []), item] };
       }
       setPersonagem(p2);
@@ -13587,7 +13587,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const semEstoqueGasto = (m) => ({ ...m, estoque: (m.estoque || []).filter((it) => !(comprados[m.id] || []).includes(it.nome)) });
     const lista = [];
     if (mercado && mercado.ambulante) lista.push(semEstoqueGasto(mercado.ambulante));
-    if (cidadeMercado) lista.push(...mercadoresDaCidade(cidadeMercado, diaRef.current, (personagem && personagem.nivel) || 1).map(semEstoqueGasto));
+    if (cidadeMercado) lista.push(...mercadoresDaCidade(cidadeMercado, diaRef.current, (personagem && personagem.nivel) || 1, (mundoAtual() || {}).lexico).map(semEstoqueGasto));
     /* CARTÓGRAFO (v9.14): quem vende papel põe os mapas das regiões que o
        herói ainda não conhece na banca. Some sozinho quando não há mais o que
        revelar — não fica um item morto na prateleira. */
@@ -13925,7 +13925,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        verdade. Sai por sorteio do sistema — sem envelope, não há mercador. */
     let notaAmbulante = "";
     {
-      const amb = talvezAmbulante(diaRef.current, personagem.nivel || 1);
+      const amb = talvezAmbulante(diaRef.current, personagem.nivel || 1, { lex: (mundoAtual() || {}).lexico });
       if (amb) {
         mercadoRef.current = { ...mercadoRef.current, ambulante: amb }; setMercado(mercadoRef.current);
         pushMsgs([{ autor: "sistema", texto: `🐴 Uma carroça de mercador cruza seu caminho — veja o que ele traz em Gestão › Mercado.` }]);

@@ -74,6 +74,11 @@ const TETOS = {
   povos: 8, oficios: 16, lugares: 10, criaturas: 10, faccoes: 4, naoExiste: 6,
   cidades: 8, tavernas: 4, nome: 24, parte: 16, terra: 40,
   texto: 170, curto: 40, medio: 70, adaptacao: 170,
+  /* v9.111: o nome de EQUIPAMENTO tem teto próprio. O de 24 era o de
+     nome de pessoa, e o item mais longo do catálogo da casa ("Armadura
+     de Couro de Dragão") tem 27 — o teto estava calibrado para outra
+     coisa e cortava peça legítima no meio. */
+  equipamento: 34,
 };
 
 /* ---------------- O ORÇAMENTO ----------------
@@ -96,6 +101,17 @@ const TETOS = {
 export const TETO_DO_BLOCO = 1700;
 
 const limpar = (s, max) => String(s == null ? "" : s).replace(/\s+/g, " ").trim().slice(0, max);
+/* Corta no fim de uma PALAVRA. Onde o texto é frase, cortar no
+   caractere é aceitável; onde ele é nome próprio, não é: "Aldric Vent"
+   ainda é um nome, "Vestes de Duelo Reforçad" é lixo na tela. */
+const aparar = (txt, tam) => {
+  const x = String(txt || "").trim();
+  if (x.length <= tam) return x;
+  const corte = x.slice(0, tam);
+  const espaco = corte.lastIndexOf(" ");
+  return (espaco > tam * 0.5 ? corte.slice(0, espaco) : corte).trim();
+};
+
 const lista = (v, max, tam) => (Array.isArray(v) ? v : [])
   .map((x) => limpar(x, tam))
   .filter(Boolean)
@@ -163,6 +179,36 @@ export const AMEACAS = ["fraco", "comum", "competente", "elite", "lendario"];
 
    É por isso que esta etapa é barata e a das habilidades não é: uma raça
    é consultada por nome em três lugares; uma habilidade, em quinze. */
+
+/* ---------------- O EQUIPAMENTO, PELA FORMA (v9.111) ----------------
+   Aqui a regra muda outra vez, e é a mais delicada das três.
+
+   Um TIPO DE LUGAR podia ser renomeado inteiro porque o tipo mecânico
+   viaja ao lado. Uma RAÇA precisou de duas colunas porque o nome dela é
+   identificador. Um ITEM precisa de mais que isso: renomear um machado
+   para "varinha" não quebraria só a busca — quebraria a AFORDÂNCIA. O
+   jogador leria "varinha", esperaria uma coisa leve que qualquer
+   conjurador segura, e receberia uma arma marcial de duas mãos que pede
+   Força e treino.
+
+   Então o léxico NÃO NOMEIA ITENS. Ele nomeia FORMAS, e o código sorteia
+   do balde que corresponde ao que a peça realmente é. Um machado nunca
+   vira varinha porque "varinha" mora no balde das armas leves de uma
+   mão. E a promessa deixa de ser falsa.
+
+   A lista espelha `FORMAS` em itens.js. Ela é literal em vez de
+   importada de propósito — o léxico não deve depender do catálogo de
+   equipamento para carregar —, e um teste confere que as duas batem. */
+import { FORMAS as FORMAS_MECANICAS } from "./itens.js";
+
+export const FORMAS_DO_EQUIPAMENTO = [
+  "arma_leve_uma", "arma_simples_uma", "arma_simples_dist",
+  "arma_marcial_uma", "arma_marcial_duas", "arma_marcial_dist",
+  "foco_uma", "foco_duas", "escudo",
+  "armadura_panos", "armadura_leve", "armadura_media", "armadura_pesada",
+  "elmo", "botas", "anel", "amuleto",
+];
+
 export const RACAS_DO_SISTEMA = [
   "Humano", "Elfo", "Anão", "Halfling", "Meio-orc", "Draconato", "Tiefling", "Gnomo", "Meio-elfo", "Goliath",
   "Terrano", "Colono Orbital", "Sintético", "Mutante", "Cromado", "Vagante",
@@ -302,6 +348,27 @@ export function garantirLexico(l) {
       .filter((x) => x.raca && x.chamado)
       .filter((x, i, a) => a.findIndex((y) => y.raca === x.raca) === i)
       .slice(0, RACAS_DO_SISTEMA.length),
+    /* v9.111: o banco de nomes POR FORMA, e ele é TUDO OU NADA.
+
+       Todo o resto do léxico degrada em pedaços: metade dos ofícios é
+       melhor que nenhum. O equipamento não, e o motivo é mecânico — a
+       defesa do herói é uma escada de armaduras, e um mundo sem o degrau
+       pesado tira CA do jogo inteiro. Meio catálogo renomeado também lê
+       como mundo quebrado: uma cota de malha ao lado de um manto de
+       auror. Nenhum renomeado lê como mundo genérico, que é honesto.
+
+       Cada forma precisa de pelo menos TRÊS nomes: com um só, todo
+       machado do mundo se chamaria a mesma coisa. */
+    equipamento: (() => {
+      const bruto = (o && o.equipamento && typeof o.equipamento === "object") ? o.equipamento : {};
+      const out = {};
+      for (const id of FORMAS_DO_EQUIPAMENTO) {
+        const nomes = lista(bruto[id], 8, TETOS.equipamento).map((x) => aparar(x, TETOS.equipamento)).filter(Boolean);
+        if (nomes.length < 3) return {};      /* falta uma: cai o banco inteiro */
+        out[id] = nomes;
+      }
+      return out;
+    })(),
     aLei: limpar(o.aLei, TETOS.texto),
     comoSeFala: limpar(o.comoSeFala, TETOS.texto),
   };
@@ -341,6 +408,16 @@ export function chamadoDoLugar(l, tipo) {
   const x = garantirLexico(l).lugares.find((p) => p.tipo === tipo);
   return (x && x.chamado) || "";
 }
+/* Os nomes de uma forma. Vazio quando o mundo não trouxe banco — e aí
+   quem chama usa o catálogo de sempre, que é o comportamento honesto. */
+export function nomesDaForma(l, forma) {
+  const e = garantirLexico(l).equipamento;
+  return (e && e[forma]) || [];
+}
+export function temEquipamentoProprio(l) {
+  return Object.keys(garantirLexico(l).equipamento).length === FORMAS_DO_EQUIPAMENTO.length;
+}
+
 /* Como uma raça se chama neste mundo. Devolve o nome canônico quando o
    léxico não a renomeou — nunca vazio, porque quem chama está desenhando
    uma tela e uma tela não pode ficar sem rótulo. */
@@ -406,8 +483,9 @@ REGRAS INEGOCIÁVEIS:
 4. MECANISMO, NÃO ADJETIVO. Em cada resposta de "funciona", diga COMO a coisa acontece (quem, onde, o que trava, o que dá errado), não que ela é sombria ou perigosa.
 5. DOIS CAMPOS TÊM LISTA FECHADA, e ela não é sugestão. Em "lugares", o "tipo" tem de ser EXATAMENTE uma das palavras listadas: são engrenagens do jogo e não mudam — o que você escolhe é como cada uma SE CHAMA aqui. Em "criaturas", a "ameaca" idem: ela decide a força do bicho, e um nome guardado no degrau errado promete uma coisa e entrega outra.
 6. AS RAÇAS TAMBÉM TÊM LISTA FECHADA, e o que você escolhe é só o NOME. Cada uma carrega um bônus de atributo que NÃO muda: você está dando a elas a palavra deste mundo, não inventando povos. Renomeie as que fizerem sentido e deixe de fora as que não fizerem — o que ficar de fora continua com o nome de sempre. Use a mesma cultura de "povos": "povos" é quem habita o mundo, "racas" é o que o jogador pode SER.
-7. PREENCHA TODOS OS DEGRAUS DE AMEAÇA e o máximo de tipos de lugar que fizerem sentido. Se um tipo parecer não existir neste mundo, invente o EQUIVALENTE dele em vez de pular — pular tira a coisa do jogo, e o jogo conta com ela.
-8. Português do Brasil. Cada campo de "funciona" no máximo duas frases.
+7. O EQUIPAMENTO É TUDO OU NADA, e o que você nomeia é a FORMA, nunca o item. Cada forma vem com o que ela É por baixo — pesada, de duas mãos, pede treino, trava magia. O nome que você der NÃO PODE CONTRADIZER ISSO: se a forma diz "arma de guerra pesada de duas mãos", um nome como "varinha" mente para o jogador, que vai escolhê-la achando que é leve. Preencha TODAS as dezessete, com 3 a 6 nomes cada. Se o mundo parecer não ter armadura pesada, invente o EQUIVALENTE dele — o sistema calcula a defesa numa escada e tirar um degrau tira proteção do jogo inteiro. Se você deixar UMA forma de fora, o banco inteiro é descartado.
+8. PREENCHA TODOS OS DEGRAUS DE AMEAÇA e o máximo de tipos de lugar que fizerem sentido. Se um tipo parecer não existir neste mundo, invente o EQUIVALENTE dele em vez de pular — pular tira a coisa do jogo, e o jogo conta com ela.
+9. Português do Brasil. Cada campo de "funciona" no máximo duas frases.
 
 Responda SÓ com este JSON, sem comentários e sem texto fora dele:
 
@@ -436,6 +514,9 @@ ${SISTEMAS.map((s) => `    "${s.id}": "${s.pergunta}"`).join(",\n")}
     "cidadeA": ["10 a 16 PRIMEIRAS partes de nome de cidade daqui (ex.: 'Porto', 'Alto', 'Setor')"],
     "cidadeB": ["10 a 16 SEGUNDAS partes, que se combinam com as de cima (ex.: 'do Norte', 'Baixo', '-9')"],
     "continente": "o nome da terra maior onde tudo isto acontece"
+  },
+  "equipamento": {
+${FORMAS_MECANICAS.map((f) => `    "${f.id}": ["3 a 6 nomes para: ${f.o}"]`).join(",\n")}
   },
   "racas": [
     { "raca": "<UM de: ${RACAS_DO_SISTEMA.join(", ")}>", "chamado": "como esse tipo de gente se chama NESTE mundo" }

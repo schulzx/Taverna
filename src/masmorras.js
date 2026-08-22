@@ -316,9 +316,9 @@ export function chefeDesgastado(mm, inimigos) {
   };
 }
 
-export function recompensaChefe(nivel) {
+export function recompensaChefe(nivel, lex = null) {
   const raridade = Math.random() < 0.7 ? "epico" : "lendario";
-  return { item: gerarLoot(raridade, { nivel }) };
+  return { item: gerarLoot(raridade, { nivel, lex }) };
 }
 
 export const ROTULO_SALA = { entrada: "Entrada", combate: "Combate", armadilha: "Armadilha", tesouro: "Tesouro", enigma: "Enigma", santuario: "Santuário", chave: "Guardião", chefe: "Chefe" };

@@ -153,30 +153,122 @@ const PISTAS_ARMADURA = [
 ];
 
 /* A ficha completa de um item: categoria, mãos e propriedades. */
+/* v9.111: A FICHA CARREGA A BASE CANÔNICA, e ela é o identificador.
+
+   Enquanto o nome do item era sempre o nome de catálogo, deduzir tudo do
+   nome funcionava. A partir do reskin o nome é a palavra DESTE mundo, e
+   deduzir dele seria o bug exato que o desenho previu: um Mago perderia
+   o treino extra na varinha dele por ela ter passado a se chamar outra
+   coisa.
+
+   `item.base` guarda o nome de catálogo. Quando ele falta — save antigo,
+   item que veio como string — o nome decide, como sempre decidiu, e nada
+   quebra. */
 export function fichaDoItem(item) {
   if (!item) return null;
   const nome = typeof item === "string" ? item : item.nome || "";
+  const base = (typeof item === "object" && item.base) || nome;
   const tipo = (typeof item === "object" && item.tipo) || "";
-  const n = norm(nome);
+  const n = norm(base);
 
   if (tipo === "escudo" || /escudo|broquel|aegis|pavês|paves/.test(n)) {
-    return { nome, familia: "escudo", cat: "escudo", rotulo: CAT_ARMADURA.escudo.nome, mao: 1, props: [] };
+    return { nome, base, familia: "escudo", cat: "escudo", rotulo: CAT_ARMADURA.escudo.nome, mao: 1, props: [] };
   }
   /* o `tipo` gravado no item manda; só quando ele falta é que o nome decide.
      Sem esta ordem, "Besta Leve" virava armadura por causa da palavra "leve". */
   if (tipo === "arma" || (!tipo && PISTAS_ARMA.some((p) => p.rx.test(n)))) {
     const exata = ARMAS.find((a) => n.includes(norm(a.nome)));
-    if (exata) return { nome, familia: "arma", cat: exata.cat, rotulo: CAT_ARMA[exata.cat].nome, mao: exata.mao, props: exata.props };
+    if (exata) return { nome, base, familia: "arma", cat: exata.cat, rotulo: CAT_ARMA[exata.cat].nome, mao: exata.mao, props: exata.props };
     const pista = PISTAS_ARMA.find((p) => p.rx.test(n)) || { cat: "simples_corpo", mao: 1 };
-    return { nome, familia: "arma", cat: pista.cat, rotulo: CAT_ARMA[pista.cat].nome, mao: pista.mao, props: [] };
+    return { nome, base, familia: "arma", cat: pista.cat, rotulo: CAT_ARMA[pista.cat].nome, mao: pista.mao, props: [] };
+  }
+  /* v9.111: E OS QUATRO SLOTS DE ACESSÓRIO TAMBÉM MANDAM. A regra ao
+     lado ("o tipo gravado manda; só quando ele falta é que o nome
+     decide") valia para arma e escudo e não para estes — e "Capuz de
+     Couro" casava com a pista `couro`, virava família armadura e a
+     ficha anunciava "armadura leve" num elmo. Com o reskin ele passaria
+     a ser NOMEADO do balde das armaduras: um elmo chamado "Sobretudo de
+     Couro". O erro é antigo; o nome pelo balde é que o deixou visível. */
+  if (tipo === "elmo" || tipo === "botas" || tipo === "anel" || tipo === "amuleto") {
+    return { nome, base, familia: tipo, cat: "acessorio", rotulo: tipo, props: [] };
   }
   if (tipo === "armadura" || PISTAS_ARMADURA.some((p) => p.rx.test(n))) {
     const exata = ARMADURAS.find((a) => n.includes(norm(a.nome)));
     const cat = exata ? exata.cat : (PISTAS_ARMADURA.find((p) => p.rx.test(n)) || { cat: "leve" }).cat;
-    return { nome, familia: "armadura", cat, rotulo: CAT_ARMADURA[cat].nome, props: [], peso: CAT_ARMADURA[cat].peso };
+    return { nome, base, familia: "armadura", cat, rotulo: CAT_ARMADURA[cat].nome, props: [], peso: CAT_ARMADURA[cat].peso };
   }
   /* elmo, botas, anel, amuleto: acessório, sem proficiência */
-  return { nome, familia: tipo || "acessorio", cat: "acessorio", rotulo: "acessório", props: [] };
+  return { nome, base, familia: tipo || "acessorio", cat: "acessorio", rotulo: "acessório", props: [] };
+}
+
+/* ---------------- AS FORMAS (v9.111) ----------------
+   O balde de que o nome nasce. Cada forma é um FORMATO MECÂNICO — não
+   um item —, e é ela que o léxico do mundo nomeia.
+
+   `o` é a afordância em palavras: o que o jogador entende ao ler o nome.
+   Ela vai ao Mestre junto do pedido, porque um nome que contradiz a
+   afordância é exatamente o desastre que este desenho existe para
+   evitar — e o Mestre só consegue não contradizê-la se souber qual é.
+
+   A lista é TOTAL e não parcial, e isso não é rigor por rigor: a defesa
+   do herói é calculada sobre uma escada de armaduras, e um mundo que
+   "não tem armadura pesada" tiraria um degrau de CA do jogo inteiro. Se
+   o mundo parece não ter, ele tem de inventar o equivalente DELE. */
+export const FORMAS = [
+  { id: "arma_leve_uma", o: "arma de uma mão, leve e rápida, para quem luta de perto sem treino pesado",
+    de: (f) => f.familia === "arma" && f.cat === "simples_corpo" && (f.props || []).includes("leve") },
+  { id: "arma_simples_uma", o: "arma simples de uma mão, corpo a corpo, que qualquer um sabe segurar",
+    de: (f) => f.familia === "arma" && f.cat === "simples_corpo" },
+  { id: "arma_simples_dist", o: "arma simples de arremesso ou disparo, usada com as duas mãos e de longe",
+    de: (f) => f.familia === "arma" && f.cat === "simples_dist" },
+  { id: "arma_marcial_uma", o: "arma de guerra de uma mão, que pede treino marcial",
+    de: (f) => f.familia === "arma" && f.cat === "marcial_corpo" && f.mao === 1 },
+  { id: "arma_marcial_duas", o: "arma de guerra pesada, de duas mãos, que pede treino marcial e força",
+    de: (f) => f.familia === "arma" && f.cat === "marcial_corpo" && f.mao === 2 },
+  { id: "arma_marcial_dist", o: "arma de guerra de longo alcance, que pede treino marcial",
+    de: (f) => f.familia === "arma" && f.cat === "marcial_dist" },
+  { id: "foco_uma", o: "objeto de conjurar que se segura numa mão só e não serve para bater",
+    de: (f) => f.familia === "arma" && f.cat === "arcana" && f.mao === 1 },
+  { id: "foco_duas", o: "objeto de conjurar grande, de duas mãos, que também serve de apoio",
+    de: (f) => f.familia === "arma" && f.cat === "arcana" },
+  { id: "escudo", o: "coisa que se leva na mão livre para aparar o golpe",
+    de: (f) => f.familia === "escudo" },
+  { id: "armadura_panos", o: "roupa sem proteção nenhuma, em que se conjura à vontade",
+    de: (f) => f.familia === "armadura" && f.cat === "panos" },
+  { id: "armadura_leve", o: "proteção leve, que não atrapalha andar em silêncio",
+    de: (f) => f.familia === "armadura" && f.cat === "leve" },
+  { id: "armadura_media", o: "proteção de meio peso, que já estorva a furtividade",
+    de: (f) => f.familia === "armadura" && f.cat === "media" },
+  { id: "armadura_pesada", o: "proteção pesada, que pede força e trava a magia de quem não tem treino",
+    de: (f) => f.familia === "armadura" && f.cat === "pesada" },
+  { id: "elmo", o: "o que se põe na cabeça",
+    de: (f) => f.familia === "elmo" },
+  { id: "botas", o: "o que se calça nos pés",
+    de: (f) => f.familia === "botas" },
+  { id: "anel", o: "coisa pequena que se usa no dedo e carrega um poder",
+    de: (f) => f.familia === "anel" },
+  { id: "amuleto", o: "coisa que se pendura no pescoço e carrega um poder",
+    de: (f) => f.familia === "amuleto" },
+];
+
+export function formaPorId(id) { return FORMAS.find((x) => x.id === id) || null; }
+
+/* A forma de um item. ORDEM IMPORTA: a lista vai da mais específica para
+   a mais geral, e a primeira que serve é a que vale — a adaga é
+   `arma_leve_uma` antes de ser `arma_simples_uma`, e o cajado de duas
+   mãos é `foco_duas` porque `foco_uma` exigiu mao === 1 e ele não passou.
+
+   Nunca devolve vazio: um item sem forma seria um item sem nome, e o
+   acessório é o balde de todo o resto. */
+export function formaDoItem(item) {
+  const f = fichaDoItem(item);
+  if (!f) return "";
+  for (const x of FORMAS) {
+    let bate = false;
+    try { bate = !!x.de(f); } catch { bate = false; }
+    if (bate) return x.id;
+  }
+  return "";
 }
 
 /* ---------------- QUEM SABE USAR O QUÊ ----------------
@@ -226,7 +318,11 @@ export function avaliarEquipar(pers, item, ranks) {
   const f = fichaDoItem(item);
   if (!f) return { pode: false, motivo: "item desconhecido", penalidades: [] };
   const prof = proficienciasDoHeroi(pers, ranks);
-  const nomeN = norm(f.nome);
+  /* v9.111: o treino extra confere contra a BASE, nunca contra o nome.
+     "Varinha Rúnica" na lista do Mago é um identificador de catálogo; se
+     a comparação fosse pelo nome de tela, renomear a varinha tiraria a
+     proficiência do Mago nela — a promessa falsa, invertida. */
+  const nomeN = norm(f.base || f.nome);
   const penalidades = [];
 
   if (f.familia === "arma") {

@@ -13,6 +13,8 @@ const d = (n) => Math.floor(Math.random() * n);
    de cada tabela de loot nunca saíram no jogo. */
 const sortear = (arr) => (arr && arr.length ? arr[Math.floor(Math.random() * arr.length)] : undefined);
 
+import { formaDoItem } from "./itens.js";
+import { nomesDaForma } from "./lexico.js";
 import { TIER as TIER_AFIXO, degrauDe, pesoDoPrefixo, tierDaBase, poderesPossiveis, concessaoPara, resumoDoItem, EFEITOS_DE_ATRIBUTO, CONCESSAO_DA_BASE } from "./afixos.js";
 
 export const RARIDADES = ["comum", "incomum", "raro", "epico", "lendario", "unico"];
@@ -141,9 +143,13 @@ function concordancia(par, baseNome) {
   const plural = /s$/i.test(primeiro);
   let forma = fem ? par[1] : par[0];
   if (plural) {
-    if (/[oa]$/.test(forma)) forma += "s";
-    else if (forma === "Anão") forma = "Anões";
+    /* v9.111: OS IRREGULARES VÊM PRIMEIRO. A regra geral ("termina em
+       o ou a, soma s") rodava antes e engolia "Anão", que termina em
+       "o" — o `else if` abaixo existia para ele e nunca era alcançado.
+       Saíam "Anãos Sapatos do Saltimbanco" em 48 de cada 4000 botas. */
+    if (forma === "Anão") forma = "Anões";
     else if (forma === "Anã") forma = "Anãs";
+    else if (/[oa]$/.test(forma)) forma += "s";
     else if (forma === "Real") forma = "Reais";
     else if (forma === "Celestial") forma = "Celestiais";
     else if (forma === "Abissal") forma = "Abissais";
@@ -159,7 +165,7 @@ function concordancia(par, baseNome) {
 
 /* Gera UM equipamento. raridade: id · nivel: nível do herói (escala o bônus)
    tipo: força um slot ("arma", "anel"…) ou null para sortear. */
-export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = null } = {}) {
+export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = null, lex = null } = {}) {
   /* rnd opcional (v9.2): com semente, o mesmo mercador tem sempre o mesmo
      estoque — sem ela, o sorteio é aleatório como sempre foi. */
   const rand = rnd || Math.random;
@@ -207,10 +213,24 @@ export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = nu
      "Lendário". Cada palavra agora mora num degrau mínimo, e a régua é a
      que o jogador aplicaria: quanto mais a palavra promete, mais alto ela
      mora. */
-  let nome = base.nome;
+  /* v9.111: O NOME VEM DA FORMA, e a FORMA vem da base — nunca o
+     contrário. `formaDoItem` traduz a peça no balde mecânico a que ela
+     pertence (arma marcial de duas mãos, armadura pesada, foco de uma
+     mão), e o mundo nomeia baldes, não itens.
+
+     É isso que impede o desastre: um machado nunca vira varinha porque
+     "varinha" mora no balde das armas leves de uma mão. O nome passa a
+     ser deste mundo e continua PARECENDO o que a peça é.
+
+     Sem banco do mundo, `nomesDaForma` volta vazio e o catálogo de
+     sempre vale — o comportamento honesto. */
+  const forma = formaDoItem({ nome: base.nome, tipo: slot });
+  const doMundo = lex ? nomesDaForma(lex, forma) : [];
+  const visivel = doMundo.length ? pickL(doMundo) : base.nome;
+  let nome = visivel;
   const dosMeus = PREFIXOS.filter((p) => pesoDoPrefixo(p) <= tier);
   const comPrefixo = dosMeus.length && (tier >= 2 ? true : tier === 1 ? rand() < 0.6 : rand() < 0.15);
-  if (comPrefixo) nome = `${concordancia(pickL(dosMeus), base.nome)} ${base.nome}`;
+  if (comPrefixo) nome = `${concordancia(pickL(dosMeus), visivel)} ${visivel}`;
   if (tier >= 2) nome = `${nome} ${pickL(SUFIXOS)}`;
 
   /* v6.6 — dano elemental em armas e resistência elemental em defesas (raro+) */
@@ -274,7 +294,10 @@ export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = nu
   const concede = degrau.concede ? concessaoPara(slot, base.nome, pickL) : "";
 
   return {
-    nome, tipo: slot, raridade, atributos,
+    /* `base` é o IDENTIFICADOR e nunca muda; `nome` é a palavra deste
+       mundo. A ficha lê a base para saber o que a peça é, e o jogador lê
+       o nome. É a mesma separação das raças, um degrau mais fundo. */
+    nome, base: base.nome, tipo: slot, raridade, atributos,
     poderes, ...(concede ? { concede } : {}),
     /* `poder` continua existindo porque a ficha, o mercado e o prompt já o
        leem — mas agora ele DESCREVE o que a mecânica faz, em vez de ser
@@ -299,12 +322,12 @@ export function raridadeDeAmeaca(ameaca) {
 }
 
 /* Espólio de vitória: um item gerado pela ameaça do inimigo mais forte. */
-export function gerarEspolioItem(inimigos, nivel = 1) {
+export function gerarEspolioItem(inimigos, nivel = 1, lex = null) {
   const ordem = { fraco: 0, comum: 1, competente: 2, elite: 3, lendario: 4 };
   const maisForte = (inimigos || []).reduce((m, e) => Math.max(m, ordem[e.ameaca] ?? 1), 1);
   const ameacaMax = Object.keys(ordem).find((k) => ordem[k] === maisForte) || "comum";
   const raridade = raridadeDeAmeaca(ameacaMax);
-  return gerarLoot(raridade, { nivel });
+  return gerarLoot(raridade, { nivel, lex });
 }
 
 /* ---------------- FORJA (desmontar → essência → forjar) ---------------- */

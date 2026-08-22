@@ -122,7 +122,7 @@ export function mapasAVenda(regioesOcultas = [], cidadesPorRegiao = {}) {
   });
 }
 
-export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1 }) {
+export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1, lex = null }) {
   const rnd = rngDe(semente);
   const t = tipo ? tipoMercador(tipo) : pick(rnd, TIPOS_MERCADOR.filter((x) => x.id !== "ambulante"));
   const nome = t.id === "ambulante" ? "Carroça na estrada" : `${pick(rnd, NOMES_LOJA_A)} ${pick(rnd, NOMES_LOJA_B)}`;
@@ -134,7 +134,7 @@ export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1
     let it = null;
     if (oQue === "consumivel") it = itemDeConsumivel(rnd, nivel);
     else if (oQue === "curiosidade") it = itemDeCuriosidade(rnd);
-    else it = gerarLoot(raridadeDaBanca(rnd, cidade), { tipo: oQue === "amuleto" ? "amuleto" : oQue, nivel, rnd });
+    else it = gerarLoot(raridadeDaBanca(rnd, cidade), { tipo: oQue === "amuleto" ? "amuleto" : oQue, nivel, rnd, lex });
     if (!it || vistos.has(it.nome)) continue;
     vistos.add(it.nome);
     estoque.push({ ...it, preco: precoDeVenda(it, cidade, { tipo: t.id }) });
@@ -149,7 +149,7 @@ export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1
 
 /* Quantos mercadores uma cidade sustenta — e quais. Determinístico por
    cidade + SEMANA: o estoque gira, mas não a cada passo do herói. */
-export function mercadoresDaCidade(cidade, dia = 1, nivel = 1) {
+export function mercadoresDaCidade(cidade, dia = 1, nivel = 1, lex = null) {
   if (!cidade || !cidade.nome) return [];
   const porte = cidade.porte || cidade.tipo || "cidade";
   if (porte === "ruina") return [];
@@ -163,14 +163,14 @@ export function mercadoresDaCidade(cidade, dia = 1, nivel = 1) {
     const t = pick(rnd, outros);
     if (!tipos.includes(t.id)) tipos.push(t.id); else tipos.push("geral");
   }
-  return tipos.map((t, i) => gerarMercador({ cidade, semente: `${cidade.nome}|${semana}|${t}|${i}`, nivel, tipo: t, dia }));
+  return tipos.map((t, i) => gerarMercador({ cidade, semente: `${cidade.nome}|${semana}|${t}|${i}`, nivel, tipo: t, dia, lex }));
 }
 
 /* Mercador ambulante: chance pequena por dia de viagem. */
 export const CHANCE_AMBULANTE = 0.12;
-export function talvezAmbulante(dia, nivel, { chance = CHANCE_AMBULANTE } = {}) {
+export function talvezAmbulante(dia, nivel, { chance = CHANCE_AMBULANTE, lex = null } = {}) {
   if (Math.random() > chance) return null;
-  return gerarMercador({ cidade: null, semente: `ambulante|${dia}|${Math.floor(Math.random() * 1e6)}`, nivel, tipo: "ambulante", dia });
+  return gerarMercador({ cidade: null, semente: `ambulante|${dia}|${Math.floor(Math.random() * 1e6)}`, nivel, tipo: "ambulante", dia, lex });
 }
 
 /* Resumo curto para o Mestre — ele narra a banca que EXISTE. */

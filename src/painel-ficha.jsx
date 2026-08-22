@@ -24,6 +24,7 @@ import { bonusProficiencia, ehProficiente } from "./regras.js";
 import { PERICIAS, garantirPericias, bonusDePericia, passivoDe, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente } from "./pericias.js";
 import { garantirDadosVida } from "./descanso.js";
 import { chamadoDaRaca } from "./lexico.js";
+import { fichaDoItem } from "./itens.js";
 
 const sinal = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -266,15 +267,27 @@ export function FichaVisual({
             <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>Nada equipado — de mãos vazias e sem proteção.</div>
           ) : (
             <div className="flex flex-wrap gap-1.5">
-              {[...armas, ...defesas].map(([slot, it]) => (
-                <span key={slot} title={`${it.nome}${it.poder ? ` — ${it.poder}` : ""}`}
-                  className="tv-mono text-[10px] px-2 py-1 rounded-lg truncate" style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.ink, maxWidth: "100%" }}>
+              {[...armas, ...defesas].map(([slot, it]) => {
+                /* v9.111: A LINHA DE BAIXO É DO SISTEMA, e ela é obrigatória.
+                   O nome do item agora é a palavra deste mundo, e nenhum nome
+                   de mundo grita "arma marcial de duas mãos" como "Montante"
+                   gritava. Esta linha é o que impede o apelido de virar
+                   promessa falsa: o nome é do mundo, a forma é do sistema. */
+                const fi = fichaDoItem(it);
+                const forma = fi ? [fi.rotulo, fi.mao === 2 ? "2 mãos" : "", ...(fi.props || [])].filter(Boolean).join(" · ") : "";
+                return (
+                <span key={slot} title={`${it.nome}${fi && fi.base && fi.base !== it.nome ? ` (o sistema vê: ${fi.base})` : ""}${forma ? ` — ${forma}` : ""}${it.poder ? ` — ${it.poder}` : ""}`}
+                  className="tv-mono text-[10px] px-2 py-1 rounded-lg" style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.ink, maxWidth: "100%" }}>
+                  <span className="truncate block">
                   <span style={{ color: T.inkDim }}>{slot === "arma" ? "⚔" : slot === "escudo" ? "🛡" : slot === "armadura" ? "🧥" : "◆"}</span> {it.nome}
                   {it.atributos && Object.entries(it.atributos).map(([k, v]) => (
                     <span key={k} style={{ color: T.ok }}> {sinal(v)}{k === "dano" ? "dan" : k === "defesa" ? "def" : k.slice(0, 3)}</span>
                   ))}
+                  </span>
+                  {forma && <span className="block text-[8px] truncate" style={{ color: T.inkDim }}>{forma}</span>}
                 </span>
-              ))}
+                );
+              })}
             </div>
           )}
           {proficiencias && (
