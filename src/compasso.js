@@ -125,6 +125,16 @@ export function garantirCompasso(c) {
     /* o alvo sorteado para este movimento, dentro da faixa de `dura` */
     alvo: Math.max(1, n(o.alvo, 3)),
     assunto: typeof o.assunto === "string" ? o.assunto : "",
+    /* ---------------- DE QUEM A ONDA FALA (v9.97) ----------------
+       Escolhido na SEMENTE, junto com o assunto, e carregado até o preço.
+       Antes disso o envelope dizia "ponha alguém no meu caminho" e a IA
+       escolhia — e escolhia gente nova, porque inventar é mais fácil que
+       lembrar. Agora o sistema diz o NOME, e o nome sai do elenco que já
+       existe nesta campanha.
+
+       É também o que permite o laço ser registrado: quando a onda chega
+       ao clímax, o sistema sabe com quem aquilo aconteceu. */
+    quem: typeof o.quem === "string" ? o.quem : "",
     usados: (Array.isArray(o.usados) ? o.usados : []).slice(-8),
     familias: (Array.isArray(o.familias) ? o.familias : []).slice(-4),
     /* quantas ondas completas esta campanha já deu — o compasso não some
@@ -151,13 +161,28 @@ function sortearDuracao(mov, sorte) {
    holofote pede o pilar que está passando fome, e a família de cada
    assunto sabe a que pilar serve.
    ============================================================ */
-export function escolherAssunto(sit = {}, { sorte = Math.random, compasso = null, preferir = null } = {}) {
+export function escolherAssunto(sit = {}, { sorte = Math.random, compasso = null, preferir = null, elenco = null } = {}) {
   const c = garantirCompasso(compasso);
   const recentes = new Set(c.usados.slice(-NAO_REPETIR_ASSUNTO));
   const famRecentes = new Set(c.familias.slice(-NAO_REPETIR_FAMILIA));
 
+  const lacos = (elenco && elenco.lacos) || {};
+  const aqui = (elenco && elenco.aqui) || [];
+
   let abertos = ASSUNTOS.filter((a) => {
     try { if (a.quando && !a.quando(sit)) return false; } catch { return false; }
+    /* ---------------- O QUE O ASSUNTO EXIGE DO ELENCO (v9.97) --------
+       Um "amor que termina" precisa que haja um amor. A trava anterior
+       era `precisa: "gente"`, que só garantia que existisse ALGUÉM — e
+       com ela o sistema mandava terminar um amor que nunca começou, o que
+       obriga a IA a inventá-lo inteiro só para poder acabá-lo.
+
+       `exige` pergunta pelo laço concreto; `pede` pergunta se há alguém
+       na cena para ser nomeado. Sem candidato, o assunto não abre — o
+       lado seguro de uma lacuna continua sendo o silêncio. */
+    if (a.exige && !(lacos[a.exige] || []).length) return false;
+    if (a.exigeRompido && !(lacos.rompidos || []).length) return false;
+    if (a.pede === "pessoa" && !a.exige && !a.exigeRompido && !aqui.length) return false;
     /* a mesma trava de memória do Bibliotecário: um assunto que exige
        histórico e o encontra vazio manda a IA inventar a lembrança */
     if (a.precisa === "gente" && !sit.temGenteConhecida) return false;
@@ -194,7 +219,7 @@ export function escolherAssunto(sit = {}, { sorte = Math.random, compasso = null
    que o jogador já está travando são duas cenas grandes no mesmo turno, e
    a segunda apaga a primeira.
    ============================================================ */
-export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segurar = false, preferir = null } = {}) {
+export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segurar = false, preferir = null, elenco = null } = {}) {
   const c = garantirCompasso(compasso);
   if (segurar) return { compasso: c, virou: false, porque: "a onda espera: já há cena grande em curso" };
 
@@ -207,6 +232,7 @@ export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segur
   const prox = movimentoPorOrdem((mov.ordem + 1) % MOVIMENTOS.length);
   const voltou = prox.ordem === 0;
   let assunto = c.assunto;
+  let quem = c.quem;
   let usados = c.usados;
   let familias = c.familias;
 
@@ -214,7 +240,7 @@ export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segur
      uma cena que não comporta nada —, a onda fica no respiro mais um
      tempo em vez de germinar no vazio. */
   if (prox.id === "semente") {
-    const a = escolherAssunto(sit, { sorte, compasso: c, preferir });
+    const a = escolherAssunto(sit, { sorte, compasso: c, preferir, elenco });
     if (!a) {
       return {
         compasso: { ...c, movimento: "respiro", turnos: 0, alvo: sortearDuracao(MOVIMENTOS[0], sorte) },
@@ -224,6 +250,22 @@ export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segur
     assunto = a.id;
     usados = [...c.usados, a.id].slice(-8);
     familias = [...c.familias, a.familia].slice(-4);
+    /* e QUEM: do balde que o assunto pede. A ordem importa — quem exige um
+       laço tira do laço, quem exige um rompimento tira dos rompidos, e só
+       quem declara `pede: "pessoa"` tira da cena.
+
+       O ÚLTIMO "SÓ" É O QUE IMPORTA: a primeira versão desta linha dava
+       nome a TODO assunto, e com isso um achado de documento e uma
+       tentação de poder saíam com "e é com Marta" grampeado no envelope —
+       o sistema enfiando gente numa cena que não pede gente. Um assunto
+       que não declara precisar de pessoa fica sem nome, e o envelope
+       simplesmente não fala de ninguém. */
+    const lacos = (elenco && elenco.lacos) || {};
+    const balde = a.exige ? (lacos[a.exige] || [])
+      : a.exigeRompido ? (lacos.rompidos || [])
+        : a.pede === "pessoa" ? ((elenco && elenco.aqui) || [])
+          : [];
+    quem = balde.length ? String(balde[Math.floor(sorte() * balde.length)]) : "";
   }
 
   const novo = {
@@ -232,10 +274,11 @@ export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segur
     turnos: 0,
     alvo: sortearDuracao(prox, sorte),
     assunto: voltou ? "" : assunto,
+    quem: voltou ? "" : quem,
     usados, familias,
     voltas: c.voltas + (voltou ? 1 : 0),
   };
-  return { compasso: novo, virou: true, movimento: prox, de: mov, assunto: assuntoPorId(assunto), voltou };
+  return { compasso: novo, virou: true, movimento: prox, de: mov, assunto: assuntoPorId(assunto), quem: novo.quem, voltou };
 }
 
 /* ============================================================
@@ -258,12 +301,22 @@ REGRA DESTE ENVELOPE (obrigatória): aconteça com o que JÁ está na mesa — a
 REGRA DESTE ENVELOPE (obrigatória): não existe "e tudo voltou ao normal". Mostre uma consequência CONCRETA em duas ou três frases — em coisa, em gente ou em rotina. NÃO cobre PV, moeda nem item: quem mexe na ficha é o sistema. E NÃO abra a próxima ameaça: este é o fim de uma respiração, não o começo da outra.`,
 };
 
+/* O NOME entra no envelope, e entra no fim: a instrução do assunto vem
+   primeiro porque é ela que diz o que fazer, e o nome é a âncora que
+   impede a IA de resolver "alguém" inventando gente. Uma linha, e só
+   quando o sistema de fato escolheu alguém. */
+function comNome(txt, quem) {
+  if (!quem) return txt;
+  return `${txt}
+E É COM ${quem.toUpperCase()}: esta pessoa já existe nesta campanha e é dela que se trata, do começo ao fim desta história. NÃO troque por outra e NÃO invente ninguém para o papel.`;
+}
+
 export function envelopeDoCompasso(r) {
   if (!r || !r.virou || !r.movimento || !r.movimento.fala) return "";
   const a = r.assunto;
   if (!a) return "";
   const f = TEXTO[r.movimento.id];
-  return f ? f(a) : "";
+  return f ? comNome(f(a), r.quem) : "";
 }
 
 /* O jogador não vê nada disto. O compasso é bastidor puro: saber que se

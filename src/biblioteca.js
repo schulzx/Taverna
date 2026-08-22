@@ -153,6 +153,15 @@ export function garantirSituacao(s) {
     pilarRecente: t("pilarRecente"),
     temObjetos: b("temObjetos"),
     temLugarVisitado: b("temLugarVisitado"),
+    /* NÃO há `lacosDePe` aqui, e é a TERCEIRA vez nesta sessão que um
+       campo meu nasce sem leitor — depois de `bioma` e `longeDeCasa` na
+       v9.93. Ele contaria os laços de pé, nenhum assunto o consultava, e a
+       garantia de leitor o pegou no mesmo minuto.
+
+       O que os assuntos precisam saber sobre laço não é QUANTOS: é COM
+       QUEM, e isso chega pelo `elenco` do compasso, que carrega os nomes.
+       A contagem seria uma resposta pior para uma pergunta que ninguém
+       fez. */
     pvBaixo: b("pvBaixo"),
     nivel: n("nivel", 1),
     fama: n("fama", 0),

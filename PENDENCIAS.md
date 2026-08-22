@@ -2794,6 +2794,92 @@ pedaço em vez de casar a coisa.
   RELAÇÃO no registro de gente — quem é próximo de quem — resolveria, e
   serviria a muito mais que isto.
 
+## O laço vira registro, e a onda sabe de quem fala — v9.97
+
+As duas pendências eram a mesma peça vista de dois lados, e por isso
+saíram juntas.
+
+- **~~Os fins não sabiam de quem falavam.~~** RESOLVIDO. O sistema
+  escolhia "um amor que termina" sem saber se havia um casal registrado: a
+  trava era `precisa: "gente"`, que só garante que existe **alguém**. Com
+  ela, o Mestre mandava terminar um amor que nunca começou — e a IA tinha
+  de inventá-lo inteiro só para poder acabá-lo.
+
+  O registro de gente ganhou **`laco`**: tipo (amizade, amor, rivalidade,
+  dívida, aprendizado), força de 1 a 3, o dia em que começou, e se está
+  rompido. `relacao` continua respondendo "de que lado essa pessoa está",
+  que é pergunta de facção; `laco` responde **o que ela é de mim**, que é
+  outra coisa — dá para ser aliado de quem não se conhece e inimigo de
+  quem se amou.
+
+- **~~E a onda não sabia de quem falava.~~** RESOLVIDO na mesma peça, e
+  esta é a que mais muda a mesa. O envelope dizia *"ponha alguém no meu
+  caminho"* e a IA escolhia — **e escolhia gente nova, porque inventar é
+  mais fácil que lembrar.**
+
+  Agora a SEMENTE escolhe um NOME do elenco que já existe, a onda o carrega
+  até o preço, e todo envelope termina com *"e é com Marta: esta pessoa já
+  existe nesta campanha e é dela que se trata, do começo ao fim desta
+  história"*.
+
+  E **só quem pede pessoa recebe nome**: um achado de documento e uma
+  tentação de poder ficam sem, porque enfiar gente numa cena que não pede
+  gente é o mesmo defeito com o sinal trocado.
+
+- **~~Nenhum laço se consertava.~~** RESOLVIDO. A **reaproximação** (um
+  diz alguma coisa que não é um pedido de desculpas, e o outro aceita como
+  se fosse), o **perdão** (ela diz por que fez, e o motivo não a inocenta)
+  e o **reconhecimento tardio** (eu julguei errado, e ela sabia e não se
+  defendeu). Todos exigem um laço **rompido** — reatar sem ter rompido
+  seria um laço nascendo do nada.
+
+  E **quem reata não reata onde parou**: a força volta um degrau abaixo,
+  porque fingir que nada aconteceu apagaria o que aconteceu.
+
+### O círculo, medido
+
+Trezentos turnos com três pessoas no elenco produziram, sozinhos, esta
+relação:
+
+```
+amizade         → Marta: amizade, força 1
+briga_que_fica  → Marta: rompido
+rivalidade      → Marta: vira rivalidade
+```
+
+Três atos que nenhuma linha de código escreveu — saíram da onda, do
+registro e do tempo. E só **3 de 26** clímaxes levaram nome: os outros 23
+não falavam de ninguém, e corretamente.
+
+### A garantia de leitor chegou aos laços
+
+Todo tipo **exigido** tem de ter quem o **crie**, e todo tipo criado tem
+de existir no catálogo. Foi o que pegou **"proteção"**, que viveu dez
+minutos nesta versão: exigido por um assunto, criado por nenhum. O fim
+daquele assunto virou o do **aprendizado**, que é o certo — o aprendiz que
+supera o mestre.
+
+### Quatro campos meus nasceram sem leitor nesta sessão
+
+`bioma` e `longeDeCasa` (v9.93), `lacosDePe` e `contarLacos` (esta). Todos
+apagados pela catraca no minuto seguinte. O padrão é meu e vale registrar:
+**ao construir infraestrutura eu escrevo a API "completa", e a catraca vai
+aparando o que ninguém pediu.** É exatamente o trabalho dela — e `bioma`
+voltou na v9.94 quando catorze regras passaram a precisar dele.
+
+### O que fica aberto
+
+- **O laço não sobe ao prompt.** O Mestre sabe que Marta é um amor
+  rompido; a IA não — ela só recebe o nome no envelope. Uma linha no
+  resumo de gente ("Marta: amor, rompido no dia 40") custaria pouco e
+  daria à narração o que hoje só o sistema enxerga.
+- **Rivalidade e dívida não terminam.** São firmadas e nunca exigidas: os
+  fins cobrem amizade, amor e aprendizado. Uma rivalidade que se resolve
+  — no respeito ou no sangue — é material que falta.
+- **O laço é sempre com o herói.** Não há laço entre dois NPCs, e é o que
+  faria o mundo ter vida própria: dois nomes do registro que são alguma
+  coisa um do outro, sem mim no meio.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

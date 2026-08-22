@@ -8,7 +8,7 @@ import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste, dificuldadePorPerfil } from "./bestiario.js";
-import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt } from "./npcs.js";
+import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, TIPOS_DE_LACO } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
 import { rolarClima, rolarEncontro, CLIMAS } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
@@ -10915,6 +10915,24 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     } catch { return {}; }
   };
 
+  /* ---------------- O ELENCO QUE A ONDA CONSULTA (v9.97) ----------------
+     "Os fins não sabem de quem falam: o sistema escolhe 'um amor que
+     termina' sem saber se há um casal registrado nesta campanha."
+
+     Agora sabe. `aqui` é quem está na cena e pode ser nomeado numa
+     semente; `lacos` é quem já é alguma coisa de mim, por tipo. Um "amor
+     que termina" só abre se houver um amor — e o nome dela sai daqui, não
+     da imaginação de quem narra. */
+  const elencoDaOnda = () => {
+    try {
+      const p0 = fichaViva() || {};
+      const el = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [] });
+      const lacos = { rompidos: comLaco(npcsRef.current, { rompido: true }) };
+      for (const t of TIPOS_DE_LACO) lacos[t.id] = comLaco(npcsRef.current, { tipo: t.id, rompido: false });
+      return { aqui: (el.aqui || []).map((x) => x.nome).filter(Boolean), lacos };
+    } catch { return { aqui: [], lacos: {} }; }
+  };
+
   const situacaoDaMesa = ({ fio = "" } = {}) => {
     const p0 = fichaViva() || {};
     const h = historiaRef.current || {};
@@ -11009,6 +11027,27 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      Não por hierarquia: o envelope do compasso JÁ diz do que a cena trata
      e em que tempo, e uma forma por cima disso seria o sistema dando duas
      instruções de composição para a mesma cena. */
+  /* Firma, fortalece, rompe ou reata — conforme o assunto declarou. Só no
+     clímax: nem a semente nem a véspera mexem no registro, porque até o
+     clímax nada aconteceu de fato. */
+  const registrarLacoDaOnda = (r) => {
+    try {
+      if (!r || !r.virou || !r.movimento || r.movimento.id !== "climax") return;
+      const a = r.assunto, quem = r.quem;
+      if (!a || !quem) return;
+      const chave = Object.keys(npcsRef.current || {}).find((k) => k.toLowerCase() === quem.toLowerCase());
+      if (!chave) return;
+      const npc = npcsRef.current[chave];
+      let novo = npc;
+      if (a.firma) novo = firmarLaco(npc, a.firma, diaRef.current);
+      else if (a.reata) novo = firmarLaco(npc, ((npc.laco || {}).tipo) || "amizade", diaRef.current);
+      else if (a.rompe) novo = romperLaco(npc, diaRef.current);
+      if (novo === npc) return;
+      npcsRef.current = { ...npcsRef.current, [chave]: novo };
+      setNpcs(npcsRef.current);
+    } catch { /* registrar nunca pode custar o turno */ }
+  };
+
   const talvezAndarOCompasso = (conteudo) => {
     try {
       if (String(conteudo || "").trimStart().startsWith("[")) return "";
@@ -11032,8 +11071,18 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const r = avancarCompasso(compassoRef.current, sit, {
         segurar: !!combateRef.current || !!masmorraRef.current || !!jornadaRef.current,
         preferir: sit.pilarFaminto,
+        elenco: elencoDaOnda(),
       });
       compassoRef.current = r.compasso;
+      /* ---------------- O CLÍMAX REGISTRA (v9.97) ----------------
+         É aqui que o círculo fecha: a semente escolheu o nome, a onda o
+         carregou, e o clímax grava o que aconteceu entre nós dois. Sem
+         isto o laço existiria só na narração — e o que existe só na
+         narração o sistema não pode consultar depois.
+
+         E o registro é do SISTEMA, nunca da IA: ela narra o beijo, o
+         sistema anota que há um amor. */
+      registrarLacoDaOnda(r);
       return envelopeDoCompasso(r);
     } catch { return ""; /* a onda nunca pode custar o turno */ }
   };

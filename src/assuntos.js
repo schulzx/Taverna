@@ -153,7 +153,7 @@ export const ASSUNTOS = [
 
   /* ==================== OS LAÇOS ==================== */
   {
-    id: "romance", familia: "laco", peso: 4,
+    id: "romance", familia: "laco", peso: 4, pede: "pessoa", firma: "amor",
     nome: "um romance",
     quando: (s) => s.pessoaNaCena || s.emCidade,
     preparo: "Comece a preparar um ROMANCE, e comece pelo mundano: ponha alguém no meu caminho por um motivo que não tem nada a ver comigo, e deixe essa pessoa ser interessante ANTES de ser possível.",
@@ -163,7 +163,7 @@ export const ASSUNTOS = [
     depois: "Mostre o que isso mudou no cotidiano: o que ficou diferente entre nós dois, quem reparou, e o que essa pessoa passa a esperar sem cobrar.",
   },
   {
-    id: "amizade", familia: "laco", peso: 3,
+    id: "amizade", familia: "laco", peso: 3, pede: "pessoa", firma: "amizade",
     nome: "uma amizade que se prova",
     quando: (s) => s.temGrupo || s.pessoaNaCena,
     preparo: "Comece a preparar uma AMIZADE: mostre alguém dividindo comigo uma coisa pequena e própria — comida, uma queixa, um ofício. Sem pedir nada.",
@@ -173,7 +173,7 @@ export const ASSUNTOS = [
     depois: "Mostre a conta que ninguém cobrou: o que essa pessoa perdeu por ter feito aquilo, e como ela evita o assunto.",
   },
   {
-    id: "traicao", familia: "laco", peso: 4,
+    id: "traicao", familia: "laco", peso: 4, exige: "amizade", rompe: true,
     nome: "uma traição",
     quando: (s) => (s.temGenteConhecida || s.temGrupo) && s.momento >= 0.35,
     preparo: "Comece a preparar uma TRAIÇÃO. Nada de suspeita ainda: mostre alguém próximo com um PROBLEMA meu-alheio — uma dívida, uma família presa, um medo. Deixe o problema respirar sozinho.",
@@ -193,7 +193,7 @@ export const ASSUNTOS = [
     depois: "Mostre o que o reencontro fez com os dois: o que foi dito, o que não coube, e se ela volta a sumir.",
   },
   {
-    id: "rivalidade", familia: "laco", peso: 3,
+    id: "rivalidade", familia: "laco", peso: 3, pede: "pessoa", firma: "rivalidade",
     nome: "uma rivalidade",
     quando: (s) => s.emCidade,
     preparo: "Comece a preparar uma RIVALIDADE: ponha alguém competente no mesmo ofício que o meu, fazendo o meu trabalho bem, sem hostilidade nenhuma.",
@@ -213,7 +213,7 @@ export const ASSUNTOS = [
     depois: "Mostre o que essa história me acrescentou e o que ela me custou perante os outros.",
   },
   {
-    id: "divida_de_honra", familia: "laco", peso: 3,
+    id: "divida_de_honra", familia: "laco", peso: 3, pede: "pessoa", firma: "divida",
     nome: "uma dívida de honra",
     quando: (s) => s.pessoaNaCena,
     preparo: "Comece a preparar uma DÍVIDA DE HONRA: alguém me faz um favor que eu não pedi e recusa pagamento, dizendo que não é nada.",
@@ -659,7 +659,7 @@ export const ASSUNTOS = [
      e sobretudo o PREÇO. As mais duras pedem `momento` adiantado, porque
      um amor que custa caro precisa de campanha por baixo para custar. */
   {
-    id: "paixao_subita", familia: "laco", peso: 3,
+    id: "paixao_subita", familia: "laco", peso: 3, pede: "pessoa", firma: "amor",
     nome: "uma paixão imprudente",
     quando: (s) => s.pessoaNaCena || s.emCidade,
     preparo: "Comece a preparar uma PAIXÃO SÚBITA: ponha alguém na cena fazendo uma coisa difícil muito bem, e deixe eu ver isso de perto. Sem apresentação e sem conversa.",
@@ -669,7 +669,7 @@ export const ASSUNTOS = [
     depois: "Mostre a manhã seguinte pelo lado prático: o que ficou combinado sem ser dito, quem viu, e o que essa pressa vai custar a um dos dois.",
   },
   {
-    id: "amor_proibido", familia: "laco", peso: 3,
+    id: "amor_proibido", familia: "laco", peso: 3, pede: "pessoa", firma: "amor",
     nome: "um amor do lado errado",
     quando: (s) => s.emCidade && s.momento >= 0.35,
     preparo: "Comece a preparar um AMOR DO LADO ERRADO: estabeleça bem as duas partes que aqui não se misturam — famílias, ofícios, fés, facções — e por que essa regra existe.",
@@ -679,7 +679,7 @@ export const ASSUNTOS = [
     depois: "Mostre o preço em quem NÃO estava apaixonado: as famílias, os aliados, quem fica sem falar com quem.",
   },
   {
-    id: "amor_antigo", familia: "laco", peso: 3, precisa: "gente",
+    id: "amor_antigo", familia: "laco", peso: 3, exige: "amor",
     nome: "alguém que eu já amei",
     quando: (s) => s.emCidade && s.momento >= 0.4 && s.genteLonge > 0,
     preparo: "Comece a preparar um AMOR ANTIGO: deixe cair uma referência a uma coisa que eu vivi com alguém desta campanha, dita por terceiros, sem drama.",
@@ -739,7 +739,7 @@ export const ASSUNTOS = [
     depois: "Mostre como os outros passam a me tratar por eu ser de alguém — inclusive quem gostava de mim antes.",
   },
   {
-    id: "mestre_e_aprendiz", familia: "laco", peso: 3,
+    id: "mestre_e_aprendiz", familia: "laco", peso: 3, pede: "pessoa", firma: "aprendizado",
     nome: "alguém quer aprender comigo",
     quando: (s) => s.nivel >= 5 && (s.pessoaNaCena || s.emCidade),
     preparo: "Comece a preparar um APRENDIZ: ponha alguém jovem por perto observando o que eu faço, sem falar comigo e sem atrapalhar.",
@@ -810,7 +810,7 @@ export const ASSUNTOS = [
      Estas vivem em `perda` e não em `laco` de propósito: o que elas
      tratam não é a ligação — é o que fica quando ela deixa de existir. */
   {
-    id: "esfriamento", familia: "perda", peso: 3, precisa: "gente",
+    id: "esfriamento", familia: "perda", peso: 3, exige: "amizade", rompe: true,
     nome: "uma amizade que esfria",
     quando: (s) => s.momento >= 0.35 && (s.pessoaNaCena || s.gentePorPerto > 0),
     preparo: "Comece a preparar um ESFRIAMENTO: mostre alguém próximo de mim ocupado com a própria vida — sem mágoa, sem briga, apenas com menos tempo.",
@@ -820,7 +820,7 @@ export const ASSUNTOS = [
     depois: "Mostre o buraco prático: a tarefa que a gente fazia junto e agora é minha, e o lugar onde essa pessoa não está mais.",
   },
   {
-    id: "briga_que_fica", familia: "perda", peso: 3, precisa: "gente",
+    id: "briga_que_fica", familia: "perda", peso: 3, exige: "amizade", rompe: true,
     nome: "a briga que não repara",
     quando: (s) => s.momento >= 0.4 && (s.pessoaNaCena || s.temGrupo),
     preparo: "Comece a preparar um DESENTENDIMENTO: mostre duas pessoas próximas de mim com posições opostas sobre uma coisa pequena e concreta — e as duas com razão do lado delas.",
@@ -830,7 +830,7 @@ export const ASSUNTOS = [
     depois: "Mostre os dois continuando a conviver com aquilo entre eles, sem reconciliação e sem ruptura — que é o pior dos dois mundos.",
   },
   {
-    id: "cresceram_para_lados", familia: "perda", peso: 3, precisa: "passado",
+    id: "cresceram_para_lados", familia: "perda", peso: 3, exige: "amizade", rompe: true,
     nome: "cada um virou outra coisa",
     quando: (s) => s.momento >= 0.5 && (s.temGrupo || s.gentePorPerto > 0),
     preparo: "Comece a preparar uma DISTÂNCIA: mostre alguém do meu convívio bom numa coisa em que eu não sou, e gostando disso.",
@@ -840,7 +840,7 @@ export const ASSUNTOS = [
     depois: "Mostre o carinho que sobra sem intimidade: como duas pessoas que se querem bem se tratam quando já não se conhecem.",
   },
   {
-    id: "decepcao", familia: "perda", peso: 3, precisa: "gente",
+    id: "decepcao", familia: "perda", peso: 3, exige: "amizade", rompe: true,
     nome: "eu vi uma coisa que não desvejo",
     quando: (s) => s.momento >= 0.35 && s.pessoaNaCena,
     preparo: "Comece a preparar uma DECEPÇÃO: estabeleça alguém que eu admiro por um motivo específico, e mostre esse motivo em ação.",
@@ -850,7 +850,7 @@ export const ASSUNTOS = [
     depois: "Mostre a relação continuando com isso dentro: o que eu paro de pedir a ela, e o que ela para de fazer na minha frente.",
   },
   {
-    id: "amor_que_acaba", familia: "perda", peso: 3, precisa: "gente",
+    id: "amor_que_acaba", familia: "perda", peso: 3, exige: "amor", rompe: true,
     nome: "um amor que termina",
     quando: (s) => s.momento >= 0.45 && (s.pessoaNaCena || s.gentePorPerto > 0),
     preparo: "Comece a preparar um FIM: mostre um casal desta campanha resolvendo uma coisa doméstica, bem, com o desgaste aparecendo só na eficiência.",
@@ -860,7 +860,7 @@ export const ASSUNTOS = [
     depois: "Mostre a divisão prática do que era dos dois — as coisas, os lugares, a gente — e quem fica com o quê.",
   },
   {
-    id: "quem_nao_precisa_mais", familia: "perda", peso: 2,
+    id: "quem_nao_precisa_mais", familia: "perda", peso: 2, exige: "aprendizado", rompe: true,
     nome: "alguém que já não precisa de mim",
     quando: (s) => s.momento >= 0.5 && s.nivel >= 5,
     preparo: "Comece a preparar uma AUTONOMIA: mostre alguém que dependia de mim resolvendo sozinha uma coisa pequena que antes ela me pedia.",
@@ -1024,6 +1024,47 @@ export const ASSUNTOS = [
     vespera: "Falta uma peça, e ela está numa frase que já foi dita nesta campanha.",
     agora: "Agora ACONTECE: a resposta se revela — e ela estava ali desde o começo, dita por alguém que não sabia o que estava dizendo.",
     depois: "Mostre o que se faz com quem falou sem saber: se lhe contam, e o que isso muda para essa pessoa.",
+  },
+
+  /* ============ OS LAÇOS QUE SE CONSERTAM ============
+     Até aqui um laço nascia e acabava, e não havia volta. A
+     reaproximação depois do esfriamento e o perdão depois da decepção
+     eram o par que faltava — e são o que impede a campanha longa de virar
+     uma lista de gente que já foi alguma coisa para mim.
+
+     Todos exigem um laço ROMPIDO: reatar sem ter rompido é um laço
+     nascendo do nada, que é a mesma invenção que o registro veio
+     impedir. E quem reata não reata onde parou — a força volta um degrau
+     abaixo, porque fingir que nada aconteceu apagaria o que aconteceu. */
+  {
+    id: "reaproximacao", familia: "laco", peso: 3, exigeRompido: true, reata: true,
+    nome: "uma reaproximação",
+    quando: (s) => s.momento >= 0.45,
+    preparo: "Comece a preparar uma REAPROXIMAÇÃO: ponha essa pessoa e eu no mesmo lugar por um motivo que não tem nada a ver com nós dois, e faça os dois agirem com naturalidade forçada.",
+    subindo: "Aparece uma tarefa que os dois fazem melhor juntos, e nenhum dos dois propõe — acontece.",
+    vespera: "Estamos os dois esperando a mesma coisa, sem mais ninguém por perto.",
+    agora: "Agora ACONTECE: um dos dois diz alguma coisa que não é um pedido de desculpas, e o outro aceita como se fosse.",
+    depois: "Mostre o que voltou e o que não volta: o que a gente faz de novo junto, e o assunto que os dois agora contornam.",
+  },
+  {
+    id: "perdao", familia: "laco", peso: 3, exigeRompido: true, reata: true,
+    nome: "um perdão",
+    quando: (s) => s.momento >= 0.5,
+    preparo: "Comece a preparar um PERDÃO: mostre essa pessoa pagando pelo que fez, de um jeito que ninguém exigiu e que eu não pedi.",
+    subindo: "O que ela vem fazendo passa a custar caro a ela, e ela continua fazendo sem me procurar.",
+    vespera: "Ela está aqui, e desta vez não vai embora antes de eu decidir.",
+    agora: "Agora ACONTECE: ela diz por que fez o que fez — e o motivo não a inocenta. A palavra volta para mim.",
+    depois: "Mostre o que a decisão fez com nós dois e com quem estava olhando, e o que essa pessoa faz com o resto do dia.",
+  },
+  {
+    id: "reconhecimento_tardio", familia: "laco", peso: 2, exigeRompido: true, reata: true,
+    nome: "descobri que eu estava errado",
+    quando: (s) => s.momento >= 0.5 && s.temPassado,
+    preparo: "Comece a preparar uma REVISÃO: faça surgir informação nova sobre uma coisa antiga — sem que ela toque, ainda, no que aconteceu entre nós dois.",
+    subindo: "A informação nova encaixa exatamente onde eu tinha certeza, e não encaixa do jeito que eu achava.",
+    vespera: "Falta confirmar com uma pessoa só, e ela está a uma rua daqui.",
+    agora: "Agora ACONTECE: fica claro que eu julguei errado, e que essa pessoa sabia e não se defendeu.",
+    depois: "Mostre o que se faz com um erro que já custou anos: o que dá para devolver, o que não dá, e se ela quer de volta.",
   },
 ];
 
