@@ -258,7 +258,7 @@ export const DESAFIOS = [
     id: "escutar",
     /* "ouço passos" é narração, não perícia. Escutar como AÇÃO precisa de
        alvo ou de esforço declarado — sem isso, todo turno viraria teste. */
-    rx: /\b(escuto (a|à|na|no|atr[aá]s|pela|pelo)|fico escutando|encosto o ouvido|presto o ouvido|apuro os ouvidos|escuto com aten)/,
+    rx: /\b(escuto (a\b|à\b|na\b|no\b|atr[aá]s|pela|pelo)|fico escutando|encosto o ouvido|presto o ouvido|apuro os ouvidos|escuto com aten)/,
     pericia: "percepcao", alvo: "escuta", minutos: 2, barulho: false,
     rotulo: "escutar", dcPadrao: DC("comum"),
     /* v9.64: antes do dado, o mundo diz se HÁ o que ouvir. Sem isto, este
@@ -314,7 +314,7 @@ export const DESAFIOS = [
   },
   {
     id: "escalar",
-    rx: /\b(escal|trepo|subo (o|a|pel)|me i[cç]o|galgo|escalar)/,
+    rx: /\b(escal|trepo|subo (o\b|a\b|pel)|me i[cç]o|galgo|escalar)/,
     pericia: "atletismo", alvo: "escalada", minutos: 5, barulho: false,
     rotulo: "escalar", dcPadrao: DC("incomum"), corpo: true,
   },
@@ -326,7 +326,7 @@ export const DESAFIOS = [
   },
   {
     id: "bater_carteira",
-    rx: /\b(bato a carteira|surrupi|furto (a|o|dele|dela)|punguei|punho a bolsa|tiro do bolso dele|roubo a bolsa|planto)/,
+    rx: /\b(bato a carteira|surrupi|furto (a\b|o\b|dele|dela)|punguei|punho a bolsa|tiro do bolso dele|roubo a bolsa|planto)/,
     pericia: "prestidigitacao", alvo: "furto", minutos: 1, barulho: false, testemunha: true,
     rotulo: "mão leve", dcPadrao: DC("incomum"),
   },
@@ -449,7 +449,7 @@ export const DESAFIOS = [
   },
   {
     id: "saltar",
-    rx: /\b(salto (o|a|para|por cima|sobre)|pulo (o|a|para|por cima|sobre|do)|dou um salto|me atiro (para|sobre|por))/,
+    rx: /\b(salto (o\b|a\b|para|por cima|sobre)|pulo (o\b|a\b|para|por cima|sobre|do\b)|dou um salto|me atiro (para|sobre|por))/,
     pericia: "atletismo", alvo: "salto", minutos: 0, barulho: false,
     rotulo: "saltar o vão", dcPadrao: DC("incomum"), corpo: true, queda: true,
   },
@@ -458,7 +458,7 @@ export const DESAFIOS = [
        a tranca está antes no catálogo. Aqui mora o resto do que é peso —
        a pedra, a grade, o que precisa ser segurado antes de cair. */
     id: "forcar",
-    rx: /\b(empurro (a|o)|arrasto (a|o)|levanto (a|o|esse|essa)|movo (a|a pedra|o bloco)|seguro (a|o) (porta|port[aã]o|grade|pedra|viga|corda)|entorto|arranco (a|o) (grade|barra|tabua|t[aá]bua))/,
+    rx: /\b(empurro (a\b|o\b)|arrasto (a\b|o\b)|levanto (a\b|o\b|esse|essa)|movo (a\b|a pedra|o bloco)|seguro (a|o) (porta|port[aã]o|grade|pedra|viga|corda)|entorto|arranco (a|o) (grade|barra|tabua|t[aá]bua))/,
     pericia: "atletismo", alvo: "peso", minutos: 5, barulho: true,
     rotulo: "vencer o peso", dcPadrao: DC("incomum"), corpo: true,
   },
@@ -480,7 +480,7 @@ export const DESAFIOS = [
        algo; quem é envenenado está sofrendo algo. A segunda ninguém pede —
        e por isso não há aqui nenhum "resisto ao veneno". */
     id: "aguentar",
-    rx: /\b(seguro o f[oô]lego|prendo a respira[cç][aã]o|aguento (a|o|mais|firme|em p[eé])|suporto (a|o)|cerro os dentes|fico de p[eé]|marcho (a|sem|mais)|viro a noite|bebo com ele)/,
+    rx: /\b(seguro o f[oô]lego|prendo a respira[cç][aã]o|aguento (a\b|o\b|mais|firme|em p[eé])|suporto (a\b|o\b)|cerro os dentes|fico de p[eé]|marcho (a\b|sem|mais)|viro a noite|bebo com ele)/,
     pericia: "fortitude", alvo: "aguentar", minutos: 5, barulho: false,
     rotulo: "aguentar", dcPadrao: DC("incomum"), corpo: true,
   },

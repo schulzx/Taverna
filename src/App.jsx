@@ -3077,7 +3077,13 @@ export default function Taverna() {
     if (!m || lexicoLendoRef.current) return;
     lexicoLendoRef.current = true; setLendoMundo(true);
     try {
-      const texto = await chamarModelo(pedidoDoLexico(m), [{ role: "user", content: "Leia o mundo acima e devolva só o JSON." }], 3000, "json");
+            /* v9.113: 8.192, que é o teto do próprio `api/mestre.js`. Eram
+         3.000, e as etapas 7 e 9 puseram `equipamento` (17 formas) e
+         `racas` (16) no pedido: o JSON completo passou de ~9 mil para
+         15.371 caracteres e o modelo era cortado no meio de `nomes`.
+         Resultado, achado jogando: o Mestre respondia um léxico certo,
+         o JSON não fechava, e o mundo nascia medieval em silêncio. */
+      const texto = await chamarModelo(pedidoDoLexico(m), [{ role: "user", content: "Leia o mundo acima e devolva só o JSON." }], 8192, "json");
       /* o leitor É o do léxico, e não o do Mestre: aquele devolve só os
          campos da narração e descartaria isto inteiro, em silêncio. */
       const lex = lerLexico(lexicoDoTexto(texto));
@@ -3085,9 +3091,15 @@ export default function Taverna() {
         mundoRef.current = { ...(mundoRef.current || m), lexico: lex };
         setMundo((v) => ({ ...(v || m), lexico: lex }));
       }
-    } catch {
+    } catch (e) {
       /* fica genérico, e isso é um desfecho previsto — não um erro a
-         mostrar. O jogador não pediu um léxico; ele pediu um mundo. */
+         mostrar. O jogador não pediu um léxico; ele pediu um mundo.
+
+         Mas no DESENVOLVIMENTO ele aparece: este `catch` mudo escondeu
+         por uma etapa inteira o léxico sendo descartado por corte de
+         token, e "o mundo ficou genérico" não é um sintoma que alguém
+         perceba olhando. */
+      calou("lerOMundo", e);
     } finally { lexicoLendoRef.current = false; setLendoMundo(false); }
   };
   const sementeMundo = () => `${nomeCampanhaRef.current || nomeCampanha || "aventura"}|${(mundoAtual() && mundoAtual().genero) || ""}`;
@@ -3959,7 +3971,7 @@ export default function Taverna() {
       /* quem fala pela oposição é o mais forte de pé: um bando tem uma
          intenção só, e é a de quem manda nele. */
       const voz = vivos.reduce((a, b) => ((b.nivel || 0) + PESO_AMEACA[b.ameaca] * 10 > (a.nivel || 0) + PESO_AMEACA[a.ameaca] * 10 ? b : a), vivos[0]);
-      const mente = menteDaCriatura(voz.nome, voz.desc);
+      const mente = menteDaCriatura(voz.nome, voz.desc, (mundoAtual() || {}).lexico);
       const av = avaliarEncontro(vivos, p0);
       const mm = masmorraRef.current;
       return {
@@ -10101,6 +10113,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const candidatas = ofertasDaqui({
       semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,
       base: baseMundoRef.current, genero: generoMundo(), nivel: p.nivel || 1, quantas: 6,
+      molde: moldeMundo(), lex: (mundoAtual() || {}).lexico,
       evitar: abertas.flatMap((q) => [q.titulo, q.dador]),
     });
     if (!candidatas.length) return;
@@ -12528,6 +12541,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     muralRef.current = ofertasDaqui({
       semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,
       base: baseMundoRef.current, genero: generoMundo(),
+      molde: moldeMundo(), lex: (mundoAtual() || {}).lexico,
       nivel: (personagem && personagem.nivel) || 1, quantas: 3,
       /* nada de pregar no mural o que já está no diário */
       evitar: garantirMissoes(missoesRef.current)

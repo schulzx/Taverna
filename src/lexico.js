@@ -165,6 +165,19 @@ export const TIPOS_DE_LUGAR = [
    pela ficção, foi enganado pelo sistema. */
 export const AMEACAS = ["fraco", "comum", "competente", "elite", "lendario"];
 
+/* v9.113: A MENTE DA CRIATURA, e ela é lista fechada como a ameaça.
+
+   `adversario.js` decide a primeira coisa de toda luta por aqui: quem
+   PENSA negocia e foge, quem é BESTA não faz refém, quem é MORTO não
+   teme morrer. Ele classificava por NOME, com uma lista de palavras de
+   fantasia — e num mundo criado pelo léxico o bestiário é "larva de
+   fenda", "farrapo de névoa", "triturador de asfalto". Nenhum casava, e
+   uma larva acabava fazendo refém.
+
+   Quem sabe é quem inventou o bicho. Custa um campo aqui e nada no
+   prompt de turno. */
+export const MENTES = ["besta", "morto", "pensa"];
+
 /* ---------------- AS RAÇAS, PELAS DUAS COLUNAS (v9.109) ----------------
    Aqui a regra muda de forma, e é a que o desenho do equipamento previu.
    Um tipo de lugar podia ser renomeado inteiro porque o `tipo` mecânico
@@ -291,6 +304,9 @@ export function garantirLexico(l) {
     criaturas: (Array.isArray(o.criaturas) ? o.criaturas : [])
       .map((x) => ({
         ameaca: AMEACAS.includes(String((x && x.ameaca) || "").toLowerCase().trim()) ? String(x.ameaca).toLowerCase().trim() : "",
+        /* v9.113: e a MENTE. Vazio é legítimo — aí o Adversário volta a
+           classificar pelo nome, que é o certo para mundo sem léxico. */
+        mente: MENTES.includes(String((x && x.mente) || "").toLowerCase().trim()) ? String(x.mente).toLowerCase().trim() : "",
         nomes: lista(x && x.nomes, 6, TETOS.curto),
       }))
       .filter((x) => x.ameaca && x.nomes.length)
@@ -410,6 +426,18 @@ export function chamadoDoLugar(l, tipo) {
 }
 /* Os nomes de uma forma. Vazio quando o mundo não trouxe banco — e aí
    quem chama usa o catálogo de sempre, que é o comportamento honesto. */
+/* A mente que o mundo declarou para um bicho, pelo NOME dele. Vazio
+   quando o mundo não disse — e aí quem chama classifica como sempre. */
+export function menteDoBicho(l, nome) {
+  const alvo = String(nome || "").toLowerCase().trim();
+  if (!alvo) return "";
+  for (const c of garantirLexico(l).criaturas) {
+    if (!c.mente) continue;
+    if (c.nomes.some((x) => alvo.includes(String(x).toLowerCase()))) return c.mente;
+  }
+  return "";
+}
+
 export function nomesDaForma(l, forma) {
   const e = garantirLexico(l).equipamento;
   return (e && e[forma]) || [];
@@ -502,7 +530,7 @@ ${SISTEMAS.map((s) => `    "${s.id}": "${s.pergunta}"`).join(",\n")}
     { "tipo": "<UM de: ${TIPOS_DE_LUGAR.join(", ")}>", "chamado": "como esse tipo de lugar se chama NESTE mundo", "nomes": ["3 a 6 nomes próprios de lugares assim"] }
   ],
   "criaturas": [
-    { "ameaca": "<UM de: ${AMEACAS.join(", ")}>", "nomes": ["3 a 6 nomes de coisas dessa força que ameaçam as pessoas aqui"] }
+    { "ameaca": "<UM de: ${AMEACAS.join(", ")}>", "mente": "<UM de: ${MENTES.join(", ")} — besta é bicho que não faz plano, morto é o que não teme morrer nem negocia, pensa é gente ou coisa com vontade>", "nomes": ["3 a 6 nomes de coisas dessa força que ameaçam as pessoas aqui"] }
   ],
   "faccoes": [{ "nome": "nome próprio de uma potência daqui", "quer": "o que ela quer, em meia linha" }],
   "cidades": ["8 nomes próprios de cidade no estilo deste mundo"],
@@ -542,16 +570,76 @@ ${FORMAS_MECANICAS.map((f) => `    "${f.id}": ["3 a 6 nomes para: ${f.o}"]`).joi
    casa já catalogou do lado das regras — a diferença é que aqui ele não
    deixa rastro nenhum, porque o caminho de falha do léxico é justamente
    "fica genérico". */
+/* ---------------- O RESGATE DO JSON CORTADO (v9.113) ----------------
+   Fecha o que ficou aberto e joga fora só o último item, o incompleto.
+
+   Isto não é remendo de conveniência: é a diferença entre perder um
+   campo e perder o mundo. Antes, um corte de token descartava o léxico
+   inteiro e a campanha nascia medieval sem ninguém saber por quê — foi
+   exatamente o que aconteceu numa partida de teste, com o Mestre tendo
+   respondido certo.
+
+   Percorre caractere a caractere porque precisa saber quando está
+   DENTRO de uma string: uma chave dentro de aspas não abre nada, e
+   contar sem olhar isso fecharia no lugar errado. */
+function fecharJSON(cru) {
+  const pilha = [];
+  let dentroDeAspas = false, escapado = false, ultimoSeguro = -1;
+  for (let i = 0; i < cru.length; i++) {
+    const c = cru[i];
+    if (escapado) { escapado = false; continue; }
+    if (c === "\\") { escapado = true; continue; }
+    if (c === '"') { dentroDeAspas = !dentroDeAspas; continue; }
+    if (dentroDeAspas) continue;
+    if (c === "{" || c === "[") pilha.push(c);
+    else if (c === "}" || c === "]") pilha.pop();
+    /* uma vírgula no nível 1 fecha um campo inteiro do léxico: é o
+       último ponto em que dá para cortar sem levar meio campo junto */
+    else if (c === "," && pilha.length === 1) ultimoSeguro = i;
+  }
+  if (!pilha.length) return null;
+  if (ultimoSeguro < 0) return null;
+  /* corta no último campo completo e fecha o que a pilha diz que abriu */
+  const corte = cru.slice(0, ultimoSeguro);
+  const p2 = [];
+  let asp = false, esc = false;
+  for (let i = 0; i < corte.length; i++) {
+    const c = corte[i];
+    if (esc) { esc = false; continue; }
+    if (c === "\\") { esc = true; continue; }
+    if (c === '"') { asp = !asp; continue; }
+    if (asp) continue;
+    if (c === "{" || c === "[") p2.push(c);
+    else if (c === "}" || c === "]") p2.pop();
+  }
+  return corte + p2.reverse().map((c) => (c === "{" ? "}" : "]")).join("");
+}
+
 export function lexicoDoTexto(texto) {
   try {
     const limpo = String(texto || "").replace(/```json/gi, "").replace(/```/g, "").trim();
-    const i = limpo.indexOf("{"), f = limpo.lastIndexOf("}");
-    if (i < 0 || f <= i) return null;
-    const cru = limpo.slice(i, f + 1);
+    const i = limpo.indexOf("{");
+    if (i < 0) return null;
+    const f = limpo.lastIndexOf("}");
+    const cru = f > i ? limpo.slice(i, f + 1) : limpo.slice(i);
     try { return JSON.parse(cru); } catch { /* segue */ }
     /* a vírgula sobrando é o erro de JSON mais comum de modelo, e é o
        único que vale a pena tentar consertar: o resto é adivinhação */
-    try { return JSON.parse(cru.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]")); } catch { return null; }
+    try { return JSON.parse(cru.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]")); } catch { /* segue */ }
+    /* v9.113: e a resposta CORTADA no meio, que era o caso que custava
+       o mundo inteiro. Tenta a partir do texto sem aparar pelo último
+       "}" — num JSON truncado esse "}" é de um objeto interno e leva
+       junto todo o resto que veio bom. */
+    for (const tentativa of [limpo.slice(i), cru]) {
+      const fechado = fecharJSON(tentativa);
+      if (!fechado) continue;
+      try {
+        const o = JSON.parse(fechado);
+        try { if (import.meta.env && import.meta.env.DEV) console.warn("[lexico] resposta cortada; resgatados", Object.keys(o).length, "campos"); } catch { /* fora do Vite */ }
+        return o;
+      } catch { /* segue */ }
+    }
+    return null;
   } catch { return null; }
 }
 

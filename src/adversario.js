@@ -42,6 +42,8 @@
    QUEM ela bate. O COMO continua sendo do Narrador.
    ============================================================ */
 
+import { menteDoBicho } from "./lexico.js";
+
 const limpar = (v, n) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n);
 
 /* ---------------- A PRIORIDADE DE ALVO ----------------
@@ -177,7 +179,17 @@ const RX_MORTO = /(esquel[ée]t|zumbi|morto[- ]viv|carca[çc]a|espectr|fantasma|
 const RX_BICHO = /\b(lobo|urso|rato|aranha|serpente|cobra|javali|le[ãa]o|tigre|corvo|morcego|inseto|escorpi[ãa]o|verme|slime|gosma|limo|sanguessuga|abelha|vespa|formiga|hiena|chacal|crocodilo|jacar[ée]|tubar[ãa]o|falc[ãa]o|[áa]guia|gafanhoto|centop[ée]ia|besouro|cão|c[ãa]es|matilha|fera|bicho|besta)(?:s|es)?(?![a-zà-ÿ])/i;
 const RX_PENSA = /\b(bandido|salteador|guarda|soldado|mercen[áa]rio|cultista|assassino|ladr[ãa]o|feiticeir|mago|bruxo|sacerdote|capit[ãa]o|caçador|arqueir|l[âa]mina|punho|irmandade|ordem|s[íi]ndico|agente|inquisidor|goblin|orc|kobold|gnoll|hobgoblin|ogro|troll|gigante|drag[ãa]o|demônio|diabo|fada|elfo|an[ãa]o)(?:s|es)?(?![a-zà-ÿ])/i;
 
-export function menteDaCriatura(nome, desc = "") {
+/* v9.113: O MUNDO TEM A PALAVRA FINAL, e ela vem antes de qualquer
+   regex. As listas abaixo são de fantasia medieval e acertam nela; num
+   mundo criado pelo léxico elas não têm chance — "larva de fenda" e
+   "farrapo de névoa" não casam com nada e caíam todas em "pensa",
+   deixando sete intenções sem disparar nunca. */
+export function menteDaCriatura(nome, desc = "", lex = null) {
+  if (lex) {
+    let doMundo = "";
+    try { doMundo = menteDoBicho(lex, nome); } catch { doMundo = ""; }
+    if (doMundo) return doMundo;
+  }
   const txt = String(nome || "") + " " + String(desc || "");
   if (RX_MORTO.test(txt)) return "morto";
   /* o BICHO antes de quem PENSA, e o motivo é o "Rato Gigante": num nome

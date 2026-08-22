@@ -208,7 +208,7 @@ function afinidade(molde, vontade) {
 
 /* ---------------- O MATERIAL ----------------
    Tudo o que um molde pode pedir, retirado do mundo que já existe. */
-function materialDe({ rnd, pessoa, aqui, mapa, genero, nivel }) {
+function materialDe({ rnd, pessoa, aqui, mapa, genero, nivel, molde = null, lex = null }) {
   const bichos = (aqui.criaturas || []).filter((c) => (c.nivel || 1) <= nivel + 3);
   const banco = criaturasDoGenero(genero).filter((c) => (c.nivelRef || 1) <= nivel + 3);
   const criatura = bichos.length ? pick(rnd, bichos)
@@ -223,8 +223,12 @@ function materialDe({ rnd, pessoa, aqui, mapa, genero, nivel }) {
     criatura, cidade, segredo, outro, local,
     objeto: segredo ? (OBJETO_DO_SEGREDO[segredo.tipo] || "objeto guardado") : null,
     /* quem sumiu não está na base: é alguém de fora, e por isso nasce aqui
-       com nome próprio — determinístico, para nunca trocar de nome */
-    sumido: nomePessoa(genero, undefined, rnd),
+       com nome próprio — determinístico, para nunca trocar de nome.
+
+       v9.113: e COM O LÉXICO. Sem ele saía "Tirar Falk de lá" num mundo
+       de caçadores modernos — o nome de quem sumiu é a única coisa da
+       oferta que o jogador lê antes de aceitar. */
+    sumido: nomePessoa(genero, undefined, rnd, lex),
   };
 }
 
@@ -254,10 +258,10 @@ export function precoDaOferta({ tipo, nivel, etapas, risco }) {
 /* ---------------- A OFERTA DE UMA PESSOA ----------------
    Determinística pelo NOME dela: a mesma pessoa oferece o mesmo
    trabalho hoje, amanhã e no save do mês que vem. */
-export function ofertaDePessoa({ semente, pessoa, aqui, mapa, genero = "Fantasia medieval", nivel = 1 }) {
+export function ofertaDePessoa({ semente, pessoa, aqui, mapa, genero = "Fantasia medieval", nivel = 1, molde: moldeDoMundo = null, lex = null }) {
   if (!pessoa || !pessoa.nome || !aqui || !aqui.cidade) return null;
   const rnd = rngDe(`${semente}|oferta|${idDaGente(aqui.cidade.nome, pessoa)}`);
-  const mat = materialDe({ rnd, pessoa, aqui, mapa, genero, nivel });
+  const mat = materialDe({ rnd, pessoa, aqui, mapa, genero, nivel, molde: moldeDoMundo, lex });
   const possiveis = MOLDES.filter((m) => temMaterial(m, mat));
   if (!possiveis.length) return null;
   /* sorteio com peso: o molde que atende a vontade dela sai três vezes
@@ -265,7 +269,7 @@ export function ofertaDePessoa({ semente, pessoa, aqui, mapa, genero = "Fantasia
   const urna = [];
   for (const m of possiveis) for (let i = 0; i < afinidade(m, pessoa.vontade); i++) urna.push(m);
   const molde = pick(rnd, urna);
-  const corpo = molde.montar({ ...mat, pessoa, aqui, mapa, rnd, nivel, genero });
+  const corpo = molde.montar({ ...mat, pessoa, aqui, mapa, rnd, nivel, genero, lex });
   if (!corpo || !corpo.etapas || !corpo.etapas.length) return null;
   /* O gancho de cada molde AFIRMA um nexo entre a vontade e o serviço ("a
      viagem é a única chance disso acontecer"). Isso só é verdade quando o
@@ -299,13 +303,20 @@ export function ofertaDePessoa({ semente, pessoa, aqui, mapa, genero = "Fantasia
 /* ---------------- O QUE ESTA CIDADE TEM PARA OFERECER ----------------
    Uma volta pela base do mundo, uma oferta por pessoa. Não é o mural:
    é o estoque de que o mural (e o Mestre) tiram. */
-export function ofertasDaqui({ semente, mapa, cidade, base, genero = "Fantasia medieval", nivel = 1, quantas = 3, evitar = [] }) {
-  const aqui = oQueExisteAqui(semente, mapa, cidade, base, genero);
+export function ofertasDaqui({ semente, mapa, cidade, base, genero = "Fantasia medieval", nivel = 1, quantas = 3, evitar = [], molde = null, lex = null }) {
+  /* v9.113: `molde` e `lex` chegam aqui, e a falta deles era visível na
+     primeira cena do jogo: num mundo de caçadores modernos o mural
+     oferecia "Jarl Mata-Lobos" mandando o herói a "Pedra da Serpente".
+
+     `oQueExisteAqui` recebe sete argumentos e esta chamada passava
+     cinco. `mundo-base.js` passa os sete nas três chamadas dele; este
+     arquivo foi escrito antes de o léxico existir e ficou para trás. */
+  const aqui = oQueExisteAqui(semente, mapa, cidade, base, genero, molde, lex);
   if (!aqui || !aqui.gente || !aqui.gente.length) return [];
   const proibido = new Set(evitar.map(norm));
   const todas = [];
   for (const p of aqui.gente) {
-    const of = ofertaDePessoa({ semente, pessoa: p, aqui, mapa, genero, nivel });
+    const of = ofertaDePessoa({ semente, pessoa: p, aqui, mapa, genero, nivel, molde, lex });
     if (!of) continue;
     if (proibido.has(norm(of.titulo)) || proibido.has(norm(of.dador))) continue;
     todas.push(of);

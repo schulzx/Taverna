@@ -226,7 +226,16 @@ export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = nu
      sempre vale — o comportamento honesto. */
   const forma = formaDoItem({ nome: base.nome, tipo: slot });
   const doMundo = lex ? nomesDaForma(lex, forma) : [];
-  const visivel = doMundo.length ? pickL(doMundo) : base.nome;
+  /* v9.113: A PRIMEIRA LETRA SOBE. O catálogo da casa é capitalizado
+     ("Espada Longa", "Elmo de Ferro") e o Mestre devolve o banco do
+     mundo em minúscula — ele está listando categorias, não batizando
+     peças. Sem isto a bolsa mostrava "adaga de membrana" ao lado de
+     "Antigo anel de pixel", e nome de item em caixa baixa lê como erro
+     de digitação do jogo em vez de estilo do mundo.
+
+     Só a primeira: "tampa de bueiro" não vira "Tampa De Bueiro". */
+  const daForma = doMundo.length ? pickL(doMundo) : base.nome;
+  const visivel = daForma ? daForma.charAt(0).toUpperCase() + daForma.slice(1) : base.nome;
   let nome = visivel;
   const dosMeus = PREFIXOS.filter((p) => pesoDoPrefixo(p) <= tier);
   const comPrefixo = dosMeus.length && (tier >= 2 ? true : tier === 1 ? rand() < 0.6 : rand() < 0.15);
