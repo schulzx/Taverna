@@ -2713,6 +2713,87 @@ divisão, e nenhuma delas confundível com português comum.
   despedida, que é ida embora. Um relacionamento que azeda sem ninguém
   trair é material que falta.
 
+## O fim dos laços, e as famílias magras — v9.96
+
+Duas pendências que se resolviam juntas, e é por isso que foram feitas
+juntas: **os laços que terminam pertencem à família `perda`** — que era
+exatamente onde havia espaço.
+
+- **~~Nenhum laço terminava.~~** RESOLVIDO. Havia semente de romance, de
+  rivalidade e de dívida, e nenhuma forma de um laço acabar **por
+  desgaste** — só a despedida, que é ida embora. Um relacionamento que
+  azeda sem ninguém trair é a coisa mais comum que existe entre pessoas, e
+  o jogo não tinha uma linha sobre ela.
+
+  Seis formas: o **esfriamento** (ninguém falta a nada; só ninguém procura
+  mais), a **briga que não repara** (os dois com razão, e a frase que não
+  dá para desdizer), **cada um virou outra coisa**, a **decepção** (vi uma
+  mesquinharia e não desvejo), o **amor que termina** *sem grito, sem
+  culpado e sem cena*, e **alguém que já não precisa de mim**.
+
+  Nenhuma delas depende de antagonista, e nenhuma culpa ninguém — é o
+  ponto inteiro. E todas terminam **sem reconciliação e sem ruptura**, que
+  é o que as separa da despedida e o que faz doer.
+
+  **Um laço não acaba antes de existir.** Medido: no começo da campanha a
+  presença delas é **0%**; do meio em diante, 8–9%. Um "amor que termina"
+  no dia 3 é um amor que a IA teria de inventar inteiro para poder
+  terminar.
+
+- **~~`mundo` e `laco` no teto.~~** RESOLVIDO. As duas estavam em 27% do
+  acervo com a suíte permitindo 35%, e crescer qualquer uma exigia crescer
+  as outras junto. Então as outras cresceram:
+
+  | família | antes | agora |
+  |---|---|---|
+  | laço | 19 | 19 |
+  | mundo | 19 | 19 |
+  | enigma | 10 | **14** |
+  | luta | 7 | **13** |
+  | perda | 7 | **13** |
+  | poder | 7 | **12** |
+
+  **90 assuntos**, a maior família em **21%**, e a distância entre a maior
+  e a menor caiu para 7. O teto deixou de apertar.
+
+  A luta ganhou o **torneio**, a questão do **vencido**, o **bicho** (não
+  um monstro: assustado antes de bravo), o **assaltante que eu conheço**,
+  o treino que passa do ponto e a **ordem de matar**. O poder ganhou **meu
+  nome agindo sem mim**, o **pedido impossível**, **delegar**, **o que eu
+  já não posso fazer** e **o peso que só eu carrego**. O enigma ganhou a
+  **versão que mudou**, o **mapa que não bate com o chão**, **alguém já
+  sabia** e a **resposta que já tinha sido dita**.
+
+  Na prática: o repertório de uma cena vai de **33 formas** no começo da
+  campanha a **67** no fim.
+
+### O quarto falso positivo da mesma família
+
+A suíte reprovou `amor_que_acaba` por procurar a palavra "culpado" — e o
+texto dizia *"acaba sem grito, **sem culpado** e sem cena"*. Era a
+negação.
+
+Antes: **"role"** dentro de *controle*, **"cobre"** de *cobrir*, **"voz"**
+como fala. Quatro numa sessão, e a lição geral vale para todo teste desta
+casa:
+
+> **Um texto que PROÍBE uma coisa contém a palavra dessa coisa.** Procurar
+> a palavra reprova exatamente a linha que faz a coisa certa.
+
+É a mesma raiz do `\b` que já mordeu esta casa cinco vezes: casar um
+pedaço em vez de casar a coisa.
+
+### O que fica aberto
+
+- **Nenhum laço se conserta.** Agora eles nascem e acabam, e não há forma
+  de um voltar — a reaproximação depois do esfriamento, o perdão depois da
+  decepção. É o par que falta.
+- **Os fins não sabem de quem falam.** O sistema escolhe "um amor que
+  termina" sem saber se há um casal registrado nesta campanha; a trava é
+  `precisa: "gente"`, que só garante que existe alguém. Um campo de
+  RELAÇÃO no registro de gente — quem é próximo de quem — resolveria, e
+  serviria a muito mais que isto.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na
