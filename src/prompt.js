@@ -47,6 +47,7 @@ import { PAUTA_PROMPT } from "./pauta.js";
 import { REGISTRO_PROMPT } from "./registro.js";
 import { INTERPRETE_PROMPT } from "./interprete.js";
 import { ANTAGONISTA_PROMPT } from "./antagonista.js";
+import { ALIADO_PROMPT } from "./aliado.js";
 import { CELULAS_PROMPT } from "./celulas.js";
 import { VIAGEM_PROMPT } from "./viagem.js";
 import { RESOLVER_PROMPT } from "./resolver.js";
@@ -268,6 +269,8 @@ ${CONSUMIVEIS_PROMPT}
 ${so("gente", INTERPRETE_PROMPT)}
 
 ${so("vilao", ANTAGONISTA_PROMPT)}
+
+${so("grupo", ALIADO_PROMPT)}
 
 ${so("grupo", COMPANHEIROS_PROMPT)}
 ${so("combate", REACOES_PROMPT)}

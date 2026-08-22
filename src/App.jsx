@@ -83,6 +83,7 @@ import { garantirEspaco, paraPauta } from "./geografo.js";
 import { porNaPauta, textoDaPauta, garantirPauta } from "./pauta.js";
 import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta } from "./interprete.js";
 import { escolherCorpo, corpoPorId, garantirSaber, chegouAteEle, oQueEleNaoSabe, certezaDe, responder, paraPauta as vilaoParaPauta, envelopeDoCorpo } from "./antagonista.js";
+import { garantirAliados, nascerAliado, andarVontade, cruzouOCodigo, vontadePorId, codigoPorId, DIAS_ATE_APODRECER, paraPauta as aliadoParaPauta } from "./aliado.js";
 import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resumoDoRegistro } from "./registro.js";
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
@@ -3948,6 +3949,17 @@ export default function Taverna() {
       p = porNaPauta(p, "gente", r.linhas);
       for (const m of r.marcas) elencoMemRef.current = marcarMovimento(elencoMemRef.current, m.nome, m.id, m.gesto);
     }
+    /* v9.108: O ALIADO AGE POR CONTA PRÓPRIA. Um por turno, e só um: o
+       silêncio dos outros é o que faz a vez de cada um valer alguma
+       coisa. */
+    {
+      const r = aliadoParaPauta(aliadosDaCena());
+      if (r.linhas.length) {
+        p = porNaPauta(p, "aliado", r.linhas);
+        marcarQueFalou(r.quem);
+        if (r.vaiEmbora) aliadoVaiEmbora(r.quem);
+      }
+    }
     /* v9.107: A AMEAÇA PENSA. Duas linhas no máximo — o que ela concluiu
        e o que faz por causa disso. A leitura sobe junto de propósito: sem
        ela a resposta parece arbitrária, e com ela o Narrador sabe se está
@@ -3964,6 +3976,92 @@ export default function Taverna() {
       diaAtual: diaRef.current,
     }));
     return p;
+  };
+
+  /* ---------------- QUEM ANDA COMIGO (v9.108) ----------------
+     Traduz o grupo para a situação que o acervo do aliado sabe ler. A
+     alma de cada um nasce na primeira vez que ele é visto e nunca muda:
+     uma pessoa que troca de código toda semana não tem código. */
+  const aliadosDaCena = () => {
+    try {
+      const p0 = fichaViva() || personagem || {};
+      const grupo = p0.grupo || [];
+      if (!grupo.length) return [];
+      const mem = garantirAliados(aliadosRef.current);
+      const pares = paresEntre(npcsRef.current);
+      const ctxAto = contextoDoAto();
+      return grupo.map((g) => {
+        const nome = g.nome || "";
+        if (!mem[nome]) mem[nome] = nascerAliado(nome);
+        const a = mem[nome];
+        if (a.saiu) return null;
+        const v = vontadePorId(a.vontade);
+        const atrito = pares.find((x) => x.tipo === "rivalidade" && (x.a === nome || x.b === nome)
+          && grupo.some((o) => (o.nome || "") === (x.a === nome ? x.b : x.a)));
+        return {
+          nome,
+          vontade: a.vontade,
+          vontadeTexto: (v && v.o) || "",
+          apodrecerTexto: (v && v.apodrece) || "",
+          etapa: a.etapa,
+          apodrecendo: a.parada >= DIAS_ATE_APODRECER * 0.6,
+          apodreceu: a.apodreceu,
+          codigoTexto: (codigoPorId(a.codigos[0]) || {}).o || "",
+          cruzouAgora: !!cruzouOCodigo(a, contextoDoAto()),
+          cruzou: a.cruzou,
+          vinculo: Number(g.vinculo) || 50,
+          calado: a.calado,
+          atritoCom: atrito ? (atrito.a === nome ? atrito.b : atrito.a) : "",
+          publico: !!cidadeAtualRef.current && !acampadoRef.current,
+          emCidade: !!cidadeAtualRef.current,
+          acampado: !!acampadoRef.current,
+          emCombate: !!combateRef.current,
+          ato: atoDoTurnoRef.current,
+          /* o contexto do ato entra JUNTO da cena: as opiniões leem os
+             dois e separá-los foi o que fez a primeira versão calar */
+          ...ctxAto,
+        };
+      }).filter(Boolean);
+    } catch { return []; }
+  };
+
+  /* O contexto que o CÓDIGO consulta. Grosseiro de propósito: um código
+     cruzado por engano custa uma cena; um nunca cruzado custa o módulo
+     inteiro, porque a peça que faz a relação gastar deixa de existir. */
+  const contextoDoAto = () => {
+    const p0 = fichaViva() || personagem || {};
+    return {
+      ato: atoDoTurnoRef.current,
+      presente: (p0.grupo || []).length > 0,
+      emCombate: !!combateRef.current,
+      rendido: false,
+      suborno: atoDoTurnoRef.current === "paguei" && /suborn|calar|compr[oa]/i.test(String(ultimaAcaoRef.current || "")),
+      alguemPrecisava: atoDoTurnoRef.current === "ignorei" && (contRef.current.pedidosRecusados || 0) > 0,
+      quebreiPromessa: false, roubeiPobre: false, fugi: (contRef.current.fugas || 0) > 0,
+      escolhiEstranho: false, usoProibido: false, saqueiCorpo: false, quebreiLei: false,
+      poupei: (contRef.current.poupados || 0) > 0,
+    };
+  };
+  const ultimaAcaoRef = useRef("");
+
+  /* Depois de falar, ele cala por um tempo. E quem NÃO falou fica mais
+     perto da vez dele — é o que faz o grupo se revezar sozinho. */
+  const marcarQueFalou = (quem) => {
+    const mem = garantirAliados(aliadosRef.current);
+    for (const [nome, a] of Object.entries(mem)) {
+      mem[nome] = { ...a, calado: nome === quem ? 0 : a.calado + 1 };
+    }
+    aliadosRef.current = mem;
+  };
+
+  const aliadoVaiEmbora = (quem) => {
+    const mem = garantirAliados(aliadosRef.current);
+    if (!mem[quem]) return;
+    mem[quem] = { ...mem[quem], saiu: true };
+    aliadosRef.current = mem;
+    mudarFicha((p) => ({ ...p, grupo: (p.grupo || []).filter((g) => (g.nome || "") !== quem) }));
+    pushMsgs([{ autor: "sistema", texto: `${quem} pegou as coisas dele e foi embora.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[O COMPANHEIRO FOI EMBORA — CANON] ${quem} saiu do grupo, por decisão dele. Narre a saída na cena, sem discussão longa e sem chance de convencê-lo hoje. Ele não morreu: continua no mundo, e lembra por que saiu.`;
   };
 
   /* ---------------- A MENTE DA AMEAÇA (v9.107) ----------------
@@ -4219,6 +4317,11 @@ export default function Taverna() {
   /* v9.107: o que CHEGOU até a ameaça, com a fonte de cada linha, e o dia
      do último movimento dela. A exigência da fonte é o que impede o
      acervo de derivar para "ele simplesmente sabe". */
+  /* v9.108: a alma de cada companheiro — vontade, código, quanto tempo
+     está calado, quantas vezes cruzaram a linha dele. Nasce sorteada do
+     NOME, de forma determinística: o mesmo companheiro tem sempre a mesma
+     alma, em qualquer save. */
+  const aliadosRef = useRef({});
   const saberRef = useRef([]);
   const vilaoAgiuRef = useRef(-99);
   /* e o ATO do herói neste turno, lido do que ele escreveu. É o que a
@@ -4617,7 +4720,7 @@ export default function Taverna() {
     setStatusSave("salvando");
     const dados = {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, registro: registroRef.current, elencoMem: elencoMemRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
+      combate: combateRef.current, registro: registroRef.current, elencoMem: elencoMemRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
@@ -6845,6 +6948,7 @@ export default function Taverna() {
     /* v9.106: o ATO do herói, lido do que ele escreveu, ANTES da Pauta —
        é o que a maioria dos movimentos do Intérprete consulta. */
     atoDoTurnoRef.current = atoDoTexto(conteudo);
+    ultimaAcaoRef.current = String(conteudo || "").slice(0, 200);
     const pauta = textoDaPauta(pautaDoTurno(), { turno: turnoDeRegistroRef.current + 1 });
     /* guardado antes da resposta: "a luta acabou neste turno" é a
        diferença entre o que havia e o que ficou */
@@ -7258,7 +7362,7 @@ export default function Taverna() {
     capituloNovoRef.current = null;
     personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
     setPersonagem(pers);
-    registroRef.current = []; elencoMemRef.current = {}; saberRef.current = []; vilaoAgiuRef.current = -99; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
+    registroRef.current = []; elencoMemRef.current = {}; aliadosRef.current = {}; saberRef.current = []; vilaoAgiuRef.current = -99; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
     if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); }
     npcTurnoRef.current = 0; definirAcampado(false);
     /* GEOGRAFIA GERADA PELO SISTEMA (v7.5): o continente nasce PRONTO —
@@ -7355,7 +7459,7 @@ export default function Taverna() {
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
       setRolagem(sv.rolagem || null);
       setCombate(sv.combate || null); combateRef.current = sv.combate || null;
-      registroRef.current = garantirRegistro(sv.registro); elencoMemRef.current = garantirElenco(sv.elencoMem); saberRef.current = garantirSaber(sv.saber); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
+      registroRef.current = garantirRegistro(sv.registro); elencoMemRef.current = garantirElenco(sv.elencoMem); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
       turnoDeRegistroRef.current = registroRef.current.length ? registroRef.current[registroRef.current.length - 1].t : 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       npcsRef.current = sv.npcs && typeof sv.npcs === "object" ? sv.npcs : {}; setNpcs(npcsRef.current); npcTurnoRef.current = 0;
@@ -13049,6 +13153,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          sem nunca ter visto o relógio vazio — e um ponteiro que já começa
          andado ensina que o ponteiro anda sozinho, que é o oposto do que
          este sistema quer dizer. */
+      /* v9.108: e a VONTADE dos companheiros anda — ou apodrece. Se o
+         herói nunca ajuda, ela se resolve mal sozinha, e é isso que a
+         torna real em vez de decorativa. */
+      {
+        const mem = garantirAliados(aliadosRef.current);
+        for (const [nome, a] of Object.entries(mem)) mem[nome] = andarVontade(a, { ajudou: false, dias: 1 });
+        aliadosRef.current = mem;
+      }
       tiquear("noite", { porque: "mais uma noite passou" });
       semearRelogiosAgora();
       /* v9.19: a noite zera o orçamento de lutas do dia — é o outro lado da
