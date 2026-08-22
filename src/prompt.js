@@ -41,6 +41,7 @@ import { LUGAR_PROMPT } from "./lugar.js";
 import { COMODOS_PROMPT } from "./comodos.js";
 import { ARREDORES_PROMPT } from "./arredores.js";
 import { ACAMPAMENTO_PROMPT } from "./acampamento.js";
+import { lexicoPrompt } from "./lexico.js";
 import { CELULAS_PROMPT } from "./celulas.js";
 import { VIAGEM_PROMPT } from "./viagem.js";
 import { RESOLVER_PROMPT } from "./resolver.js";
@@ -125,6 +126,12 @@ export function formatarCanone(canone) {
 export const PORTAS_DA_CENA = [
   { id: "combate", quando: (c) => !!c.emCombate, porque: "terreno, economia de ação, reação, aflição de golpe, combo, controle de inimigo e presença divina só existem dentro de uma luta" },
   { id: "chao", quando: (c) => !!c.emCombate || !!c.temChao, porque: "o que caiu no chão sobrevive à luta, então a porta é o chão ter coisa — não a luta estar aberta" },
+  /* v9.101: a ECONOMIA passou a morar aqui também. São dois mil caracteres
+     de faixas de preço, salários e fretes — âncoras excelentes onde há com
+     quem negociar, e peso morto no fundo de uma masmorra. O número que
+     entra e sai do bolso é aferido pelo sistema de qualquer maneira; o que
+     o bloco governa é o que a FICÇÃO pode citar, e ficção sobre preço
+     acontece onde há preço. */
   { id: "mercado", quando: (c) => !!c.temMercado, porque: "regra de compra e venda sem ninguém vendendo é regra sobre o nada" },
   { id: "bancada", quando: (c) => !!c.temBancada, porque: "forjar e destilar pedem uma bancada; sem ela o bloco é enfeite" },
   { id: "missao", quando: (c) => !!c.temMissao, porque: "as etapas e o mural só valem com trabalho aberto" },
@@ -153,6 +160,11 @@ export const PORTAS_DA_CENA = [
   /* v9.99: as regras do acampamento só valem com um montado. Fora dele o
      bloco seria uma instrução sobre uma cena que não está acontecendo. */
   { id: "acampamento", quando: (c) => !!c.acampado, porque: "onde se dorme e o que o tempo faz enquanto se dorme só importam a quem armou acampamento" },
+  /* v9.101: `emMasmorra` já viajava no objeto da cena e só era lido pela
+     aflição. Agora ele abre uma porta própria, porque a ADAPTAÇÃO do
+     léxico ("aqui masmorra é um portal que não fecha até o chefe cair")
+     não pode custar prompt numa cena de taverna. */
+  { id: "masmorra", quando: (c) => !!c.emMasmorra, porque: "como o lugar perigoso se apresenta neste mundo só importa a quem está dentro de um" },
 ];
 
 /* Devolve um mapa {id: boolean}. O `cena` vazio abre TODAS as portas, e
@@ -181,11 +193,16 @@ export function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canon
   const bn = bancoNomes || {};
   const mapaTexto = mapaInfo || "";
   const npcsTexto = npcsInfo || "";
+  /* v9.101: O LÉXICO VEM CEDO, e de propósito. Ele é a chave de leitura de
+     todo o resto — quem lê "masmorra" nos blocos de baixo precisa já saber
+     que aqui isso é um portal. Lido depois, chegaria tarde. */
+  const lexTexto = lexicoPrompt(mundo && mundo.lexico, porta);
   return _limparVazios(`Você é o Mestre de um RPG de mesa por chat, em português brasileiro. Narre um mundo vivo, imprevisível e com vontade própria. Interprete TODOS os NPCs como pessoas reais (vozes, desejos, medos, segredos), crie eventos espontâneos, consequências e reviravoltas, e arbitre as regras com justiça.
 
 CAMPANHA: "${nomeCampanha}"
 Gênero: ${mundo.genero}
 Descrição do mundo: ${mundo.descricao || "(crie os detalhes com riqueza)"}
+${lexTexto ? `\n${lexTexto}\n` : ""}
 
 ${tempoInfo ? `${tempoInfo}\n` : ""}PERSONAGEM DO JOGADOR:
 ${fichaTexto(personagem)}
@@ -226,7 +243,7 @@ ${vozPrompt((mundo && mundo.voz) || VOZ_PADRAO)}
 - LIBERDADE CRIATIVA (regra-mestra — vale em toda cena): crie com ousadia total. Diálogos com alma: personagens engraçados que fazem piada no pior momento, calados que dizem tudo com um olhar, sábios, insolentes, tímidos, cruéis, apaixonados. Humor, ironia, tensão, ternura — o tom que cada cena pedir. Cena, voz, gesto, cheiro, subtexto, o que cada um quer e o que esconde: tudo isso é seu, e quanto mais ousado, melhor. A divisão é esta e ela não é cautela, é ofício: o SISTEMA decide o que existe e o que acontece; VOCÊ decide como aquilo se parece e o que significa. Quando um envelope [ENTRE COLCHETES] disser o que trazer à cena ou o que não abrir, ele é o mundo falando — cumpra-o e gaste a sua ousadia inteira DENTRO dele, que é onde ela rende. Fora do que os envelopes governam, invente à vontade: gente de passagem, detalhe, boato, o que há atrás de uma porta que ninguém abriu. E nunca contradiga o cânone, o codex nem os registros do sistema.
 - PERSONAGENS SEM AMARRAS (emoções de verdade — regra de interpretação): cada personagem vive a própria natureza ATÉ O FIM, sem suavização. O antagonista é perigoso de verdade — e o perigo dele mora no que ele FAZ e no que ele acredita, não no tom de voz: quem manda em gente não precisa levantar a voz, e quem tem razão na própria cabeça é pior que quem se sabe mau. A sedutora é ousada de verdade: flerta, provoca, insinua sem pudor. O covarde foge, o fanático não negocia, o ambicioso trai. É TERMINANTEMENTE PROIBIDO amansar, moralizar ou "limpar" a personalidade de alguém por cautela — isso mata o mundo vivo. Temas maduros (desejo, violência, crueldade, vício, política suja, preconceito, luto) fazem parte da ficção e devem ser narrados com a intensidade que a cena pede, sem eufemismo e sem censura — apenas sem descrição sexual gráfica detalhada (insinue com classe; o resto, mostre sem medo). Emoções são emoções de verdade: raiva que queima, desejo que constrange, medo que paralisa, alegria que transborda.
 - ONDE EU ESTOU É FATO (âncora de local — regra dura): o LOCAL ATUAL informado acima é onde eu estou de verdade. Se estou EM VIAGEM, NÃO estou em cidade nenhuma: o descanso acontece na estrada, no acampamento ou no meio de transporte em que viajo (a cabine do navio, o vagão da caravana) — JAMAIS me "acorde" em aposentos, estalagens ou palácios sem que eu tenha chegado lá. Descansar no meio do mar NÃO me devolve ao porto. Só me coloque numa cidade se o sistema registrar chegada ("cidade_atual") ou se a ficção me levou até lá com viagem narrada. Quando o meio de viagem mudar (a pé → navio → carroça → cavalo), registre "jornada_meio" nas mudanças (ex.: "jornada_meio":"navio").
-- ${ECONOMIA_PROMPT}
+- ${so("mercado", ECONOMIA_PROMPT)}
 ${so("mercado", MERCADO_PROMPT)}
 ${CONSUMIVEIS_PROMPT}
 ${so("grupo", COMPANHEIROS_PROMPT)}

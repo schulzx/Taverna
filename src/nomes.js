@@ -6,6 +6,9 @@
    ============================================================ */
 
 import { nomeDeTaverna } from "./toponimia.js";
+/* v9.101: o LEXICO entra antes do genero nos bancos de gente. Devolve
+   null quando o mundo nao tem um, e ai a linha e a de sempre. */
+import { povosDo, oficiosDo } from "./lexico.js";
 
 /* utilitário de sorteio determinístico opcional ou aleatório */
 /* `rnd` opcional (v9.8): passando um gerador semeado, o mesmo mundo produz
@@ -143,12 +146,26 @@ const OCUPACOES = {
   "Steampunk": ["inventor", "aeronauta", "relojoeiro(a)", "industrial", "detetive", "aristocrata", "maquinista", "cientista", "jornalista", "capitão(ã)"],
 };
 
-/* Uma pessoa completa e variada */
-export function pessoaDiversa(genero, rnd = Math.random) {
+/* Uma pessoa completa e variada.
+
+   v9.101: `lex` é o LÉXICO DO MUNDO, e ele entra ANTES do gênero na
+   mesma linha que sempre existiu:
+
+     OCUPACOES[g] || OCUPACOES["Fantasia medieval"]
+
+   vira
+
+     oficiosDo(lex) || OCUPACOES[g] || OCUPACOES[padrão]
+
+   Nada mais muda. Num mundo de caçadores, o povoador para de sortear
+   ferreiro e escriba porque o primeiro termo passou a existir; num mundo
+   sem léxico, `oficiosDo` devolve null e a linha é a de antes, caractere
+   por caractere. */
+export function pessoaDiversa(genero, rnd = Math.random, lex = null) {
   const g = genero || "Fantasia medieval";
   const sexo = rnd() < 0.5 ? "masc" : "fem";
-  const racas = RACAS_POR_GENERO[g] || RACAS_POR_GENERO["Fantasia medieval"];
-  const ocupacoes = OCUPACOES[g] || OCUPACOES["Fantasia medieval"];
+  const racas = povosDo(lex) || RACAS_POR_GENERO[g] || RACAS_POR_GENERO["Fantasia medieval"];
+  const ocupacoes = oficiosDo(lex) || OCUPACOES[g] || OCUPACOES["Fantasia medieval"];
   return {
     nome: nomePessoa(g, sexo, rnd),
     genero_pessoa: sexo === "masc" ? "homem" : "mulher",
@@ -160,11 +177,11 @@ export function pessoaDiversa(genero, rnd = Math.random) {
 export { TRACOS_PESSOA };
 
 /* Um elenco pronto de N pessoas variadas, com gênero equilibrado */
-export function elencoDiverso(genero, n = 6) {
+export function elencoDiverso(genero, n = 6, lex = null) {
   const g = genero || "Fantasia medieval";
   const out = [];
   for (let i = 0; i < n; i++) {
-    const p = pessoaDiversa(g);
+    const p = pessoaDiversa(g, Math.random, lex);
     // força alternância de gênero para garantir equilíbrio real
     if (i % 2 === 0) { p.genero_pessoa = "mulher"; p.nome = nomePessoa(g, "fem"); }
     else { p.genero_pessoa = "homem"; p.nome = nomePessoa(g, "masc"); }

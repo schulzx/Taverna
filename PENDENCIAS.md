@@ -3216,6 +3216,145 @@ preposição.
   construído pelo jogador, é ali que o terceiro degrau precisa aparecer
   fora dos muros.
 
+## O léxico do mundo — v9.101
+
+O relato: "se eu criar um mundo sobre Solo Leveling e colocar sobre os
+caçadores, quase não vão falar sobre isso; o nosso mundo gerado é
+genérico".
+
+### Por que era genérico
+
+A causa não era a IA desobedecer — era o sistema. Todo gerador desta casa
+já é parametrizado por gênero e resolve num banco:
+
+```js
+const ocupacoes = OCUPACOES[g] || OCUPACOES["Fantasia medieval"];
+```
+
+`locaisDaCidade`, `genteDoLocal`, `criaturasDaRegiao`, `nomeCidade`,
+`pessoaDiversa` — todos fazem isso. **A costura já existia.** O que não
+existia era uma sétima entrada: a lista de bancos tem seis e está fechada
+em `constantes.js`. A descrição do jogador era o único lugar do sistema
+que sabia de caçadores, e chegava ao prompt como uma linha solta enquanto
+o sistema despejava ferreiro, taverneiro e capela por cima. A IA obedecia
+o sistema acima da descrição — que é exatamente o que ela foi treinada a
+fazer aqui.
+
+### As duas metades, e a segunda importa mais
+
+**Vocabulário:** onze palavras que mudam a cor de tudo. Masmorra é
+portal, criatura é besta, taverna é sede da guilda. Barato e visível.
+
+**Como as coisas funcionam aqui:** quinze sistemas do código ganham a
+forma que têm NESTE mundo. Não é mecânica nova — as salas, o chefe, a
+chave e as tochas continuam sendo `masmorras.js`, com os mesmos números.
+O que muda é que o Mestre passa a saber que aqui aquilo *se apresenta*
+como um portal que se abre sozinho num lugar público e não fecha enquanto
+o chefe lá dentro respirar. O sistema é o esqueleto; o léxico é a carne.
+
+### As quatro regras
+
+1. **Palavras, nunca números.** Nada de habilidade, magia, custo, dano,
+   dificuldade ou raridade — o catálogo é onde o equilíbrio mora. Um
+   léxico que pudesse escrever "rank S dá +5" seria um jailbreak.
+2. **Campo a campo, e vazio quer dizer "use o seu".** A validação não
+   aceita nem recusa o léxico inteiro: cada campo passa sozinho, e o que
+   falha fica vazio. Um mundo com metade do léxico é melhor que um sem
+   nenhum, e muito melhor que um que não abre.
+3. **O mundo que a obra evoca, não a obra.** Se a descrição citar uma
+   história que existe, gera-se as regras e os papéis que ela evoca, com
+   nomes próprios novos. O mundo fica do jogador, não é cópia.
+4. **Cada adaptação chega na cena que a usa.** Quinze adaptações no
+   prompt de toda cena seriam mil e quinhentos caracteres para explicar,
+   na taverna, como funciona uma masmorra. Elas viajam pelas PORTAS DA
+   CENA que já existiam; só quatro ficam sempre ligadas, porque são o
+   mundo e não o momento.
+
+### O orçamento, que foi o problema difícil
+
+O bloco sem limite custava **5.648 caracteres** no pior caso e estourava
+os dois tetos do prompt. Um teto por campo não resolveria (quinze
+adaptações de 170 já dão 2.550). O que resolve é **teto no total,
+preenchido por prioridade**: vocabulário, lei, a adaptação da cena que
+está aberta AGORA, e o resto se sobrar. `TETO_DO_BLOCO = 1700`, com a
+moldura contada dentro — um orçamento que ignorasse o próprio cabeçalho
+estouraria por 350 toda vez.
+
+Resultado medido: **1.659 caracteres no pior caso**, cena comum em 61,4
+mil, teto em 83,5 mil.
+
+**E os dois guardas do prompt mudaram, deliberadamente.** O teto subiu de
+82 para 85 mil — é a soma sintética de todas as portas abertas ao mesmo
+tempo, que nenhuma cena real produz. E a linha "a cena comum continua
+ENCOLHENDO" foi **substituída** por uma melhor: *o léxico nunca custa
+mais que o orçamento dele*. Aquela media uma tendência, e a tendência era
+boa enquanto o que entrava valia menos que o que já estava; deixou de
+servir no dia em que entrou algo que vale mais. O que precisa de guarda
+daqui para a frente não é o tamanho do prompt — é o custo deste recurso,
+que tem orçamento próprio e não pode crescer sozinho.
+
+De quebra, a **economia foi para trás da porta do mercado**: dois mil
+caracteres de faixas de preço são âncoras excelentes onde há com quem
+negociar e peso morto no fundo de uma masmorra.
+
+### O bug que a partida de teste pegou
+
+A primeira versão passava a resposta pelo `extrairJSON` do jogo — o
+leitor de JSON da casa, o caminho óbvio. Só que ele termina em
+`sanearResposta`, que devolve exatamente `{narrativa, perigo, rolagem,
+mudancas, sugestoes}` e **descarta o resto**. O léxico chegava inteiro do
+modelo e era jogado fora em silêncio: a criação não quebrava, nada
+avisava, e o mundo saía genérico como antes — que é o caminho de falha
+previsto do léxico, e por isso o bug não deixava rastro nenhum.
+
+É a armadilha de sempre desta casa, do outro lado: **reusar um leitor
+construído para outro contrato**. O léxico ganhou o seu, com teste.
+
+### Verificado na tela
+
+Campanha criada do zero com a descrição de um mundo de caçadores e
+portais, com o Léxico respondido por stub:
+
+- A tela do personagem disse "o seu mundo foi lido" enquanto a ficha era
+  montada — a chamada sai ao fim da tela do mundo e não segura ninguém.
+- O prompt do primeiro turno trouxe o bloco inteiro: vocabulário, a lei,
+  as adaptações de **cidade e mercado** (a cena era urbana), as quatro de
+  sempre, as ausências e como se fala. A adaptação da **masmorra não
+  estava lá** — a porta estava fechada.
+- O elenco pronto veio inteiro deste mundo: *funcionário da Associação,
+  curandeiro de guilda, repórter, vendedor de equipamento*; povos *civil,
+  caçador desperto, guia*; cidades *Porto Alto, Setor Leste*. **Nenhum
+  ferreiro, taverneiro ou escriba em lugar nenhum do prompt.**
+- Ao entrar num portal, o envelope chegou na frente:
+  `[NESTE MUNDO — O LUGAR PERIGOSO] portais se abrem sozinhos… e não
+  fecham enquanto o chefe lá dentro respirar` — e a porta da masmorra
+  abriu no prompt do mesmo turno.
+
+### O que FALTA, e é bastante
+
+Esta versão fez o **prompt** e o **povoamento que a IA usa**. A base
+gerada por código continua genérica, e é a fase 2:
+
+- **Os NOMES PRÓPRIOS de pessoa.** O ponto mais visível que ficou:
+  "Alaric Punho-de-Pedra, vendedor de equipamento" num mundo moderno. O
+  léxico não tem campo de nomes, e `nomePessoa` continua lendo o banco do
+  gênero. É o primeiro item da fase 2 e o mais barato.
+- **As raças jogáveis** na criação do personagem continuam Elfo, Anão,
+  Halfling. Elas têm bônus de atributo, então são catálogo — mas nada
+  impede um apelido por cima do mesmo bônus.
+- **`locaisDaCidade`, `genteDoLocal`, `criaturasDaRegiao`,
+  `chefesDoMundo`, `segredosDaCidade`** ainda sorteiam das tabelas
+  medievais. É onde mora a taverna e a capela que o jogador vê no mapa.
+- **Os nomes das cidades do MAPA** vêm de `geografia.js`, que roda na
+  criação e tem gerador próprio (o `cidades` do léxico só alimenta o
+  banco que a IA usa para inventar). Precisa da ordem certa: o léxico
+  chega antes da ficha, mas o mapa é gerado ao começar.
+- **A premissa** — a história pré-moldada. Fica para depois, e não pede
+  motor novo: `historia.js`, `vilao.js` e `compasso.js` já sabem tocar
+  uma história que se completa; falta semeá-los com o mundo em vez de com
+  o genérico.
+- **O Geógrafo** — não começou.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

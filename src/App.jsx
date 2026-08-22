@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
+import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
@@ -2598,7 +2599,7 @@ function TelaMundo({ concluir }) {
   );
 }
 
-function TelaPersonagem({ mundo, concluir }) {
+function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false }) {
   mundo = mundo || { genero: "Fantasia medieval" };
   const [nome, setNome] = useState("");
   const [conceito, setConceito] = useState("");
@@ -2631,7 +2632,17 @@ function TelaPersonagem({ mundo, concluir }) {
     <div className="tv-fade max-w-2xl mx-auto w-full px-6 py-10 overflow-y-auto tv-scroll">
       <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.violetSoft }}>Passo 2 de 2 · O herói (ou não)</div>
       <h1 className="tv-display text-4xl md:text-5xl mb-3" style={{ color: T.ink }}>Quem entra nesse mundo?</h1>
-      <p className="tv-body mb-8" style={{ color: T.inkDim }}>Mundo: <em style={{ color: T.amberSoft }}>{mundo.genero}</em>. Dê nome, conceito e distribua {PONTOS_TOTAIS} pontos.</p>
+      <p className="tv-body mb-3" style={{ color: T.inkDim }}>Mundo: <em style={{ color: T.amberSoft }}>{mundo.genero}</em>. Dê nome, conceito e distribua {PONTOS_TOTAIS} pontos.</p>
+      {/* v9.101: O MUNDO SENDO LIDO. A leitura acontece enquanto o jogador
+          monta a ficha, e ela leva menos tempo que isso — mas leva ALGUM, e
+          um trabalho invisível que muda o jogo inteiro merece uma linha.
+          Ela não pede espera nem trava o botão: se o léxico não chegar, a
+          campanha começa igual, só genérica. */}
+      <div className="rounded-xl px-3 py-2 mb-6 tv-body text-xs" style={{ background: T.panelSoft, border: `1px solid ${mundoLido ? T.violet : T.line}`, color: mundoLido ? T.violetSoft : T.inkDim }}>
+        {lendoMundo ? "📖 Lendo o seu mundo… — enquanto você monta a ficha, o sistema está traduzindo a sua descrição em gente, lugares e nomes próprios deste lugar."
+          : mundoLido ? "📖 O seu mundo foi lido: a gente, os ofícios, os lugares e as ameaças daqui entraram no sistema."
+            : "📖 O mundo será montado a partir da sua descrição."}
+      </div>
       <div className="grid md:grid-cols-2 gap-4 mb-4">
         <div className="flex gap-2">
           <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do personagem" className="flex-1 rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
@@ -2792,12 +2803,17 @@ class LimiteErro extends React.Component {
   }
 }
 
-function gerarBancoNomes(genero) {
-  const g = (genero && genero.genero) || genero || "Fantasia medieval";
-  const cidades = [], tavernas = [];
-  for (let i = 0; i < 8; i++) cidades.push(nomeCidade(g));
-  for (let i = 0; i < 4; i++) tavernas.push(nomeTaverna(g));
-  const elenco = elencoDiverso(g, 6);
+/* v9.101: o mesmo banco, a mesma seção do prompt, o mesmo custo — outro
+   conteúdo. Esta é a parte do léxico que não paga caractere nenhum: a
+   lista de nomes prontos que o Mestre usa para POVOAR já existia e já
+   era enviada; ela só passa a ser deste mundo em vez de ser do gênero.
+   Sem léxico, cai nos bancos de sempre, linha por linha. */
+function gerarBancoNomes(mundo) {
+  const g = (mundo && mundo.genero) || mundo || "Fantasia medieval";
+  const lex = mundo && mundo.lexico;
+  const cidades = cidadesDo(lex) || (() => { const a = []; for (let i = 0; i < 8; i++) a.push(nomeCidade(g)); return a; })();
+  const tavernas = tavernasDo(lex) || (() => { const a = []; for (let i = 0; i < 4; i++) a.push(nomeTaverna(g)); return a; })();
+  const elenco = elencoDiverso(g, 6, lex);
   return { cidades: [...new Set(cidades)], tavernas: [...new Set(tavernas)], elenco };
 }
 
@@ -3035,6 +3051,36 @@ export default function Taverna() {
      remontado com campanha sem nome e mundo vazio toda vez que o cânone ou o
      registro de pessoas mudava, e o Mestre perdia contexto sem ninguém ver. */
   const mundoAtual = () => mundoRef.current || mundo || null;
+  /* ---------------- A LEITURA DO MUNDO (v9.101) ----------------
+     A única chamada de IA desta casa que NÃO narra nada. Ela roda uma vez
+     por campanha, entre a tela do mundo e a do personagem, e o que ela
+     devolve vira cânone que o código passa a defender.
+
+     DISPARA CEDO E NÃO SEGURA NINGUÉM. Sai no instante em que o jogador
+     termina de descrever o mundo, enquanto ele monta a ficha — que leva
+     bem mais do que a chamada. Quando ele aperta "começar", o léxico já
+     está lá. Se não estiver, o jogo começa mesmo assim: um mundo que não
+     abre é pior que um mundo genérico, e esta é a única chamada do jogo
+     que acontece antes de existir save para proteger. */
+  const lexicoLendoRef = useRef(false);
+  const [lendoMundo, setLendoMundo] = useState(false);
+  const lerOMundo = async (m) => {
+    if (!m || lexicoLendoRef.current) return;
+    lexicoLendoRef.current = true; setLendoMundo(true);
+    try {
+      const texto = await chamarModelo(pedidoDoLexico(m), [{ role: "user", content: "Leia o mundo acima e devolva só o JSON." }], 3000, "json");
+      /* o leitor É o do léxico, e não o do Mestre: aquele devolve só os
+         campos da narração e descartaria isto inteiro, em silêncio. */
+      const lex = lerLexico(lexicoDoTexto(texto));
+      if (lex.gerado) {
+        mundoRef.current = { ...(mundoRef.current || m), lexico: lex };
+        setMundo((v) => ({ ...(v || m), lexico: lex }));
+      }
+    } catch {
+      /* fica genérico, e isso é um desfecho previsto — não um erro a
+         mostrar. O jogador não pediu um léxico; ele pediu um mundo. */
+    } finally { lexicoLendoRef.current = false; setLendoMundo(false); }
+  };
   const sementeMundo = () => `${nomeCampanhaRef.current || nomeCampanha || "aventura"}|${(mundoAtual() && mundoAtual().genero) || ""}`;
   const generoMundo = () => (mundoAtual() && mundoAtual().genero) || "Fantasia medieval";
   /* v9.40: a FORMA do mundo desta campanha. Todo gerador que fala de lugar
@@ -6952,11 +6998,15 @@ export default function Taverna() {
     if (!cap) { baseMundoRef.current = garantirBase(null); setBaseMundo(baseMundoRef.current); }
     confidenciasRef.current = [];
     mercadoRef.current = { comprados: {}, ambulante: null }; setMercado(mercadoRef.current);
-    if (!cap) bancoNomesRef.current = gerarBancoNomes(mundo);
+    if (!cap) bancoNomesRef.current = gerarBancoNomes(mundoAtual());
     systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null);
     setCombate(null); combateRef.current = null;   /* fim de campanha: nao ha ficha para limpar */
     setFase("jogo");
+    /* v9.101: a mesa fica sabendo que o mundo dela foi lido. É a única
+       linha do léxico que o jogador vê, e ela é sobre o MUNDO — não sobre
+       o sistema que a produziu. */
+    { const fl = falaDoLexico(mundoAtual() && mundoAtual().lexico); if (fl && !cap) pushMsgs([{ autor: "sistema", texto: fl }]); }
     if (cap) {
       pushMsgs([{ autor: "sistema", texto: linhaDoNovoCapitulo(historiaRef.current.capitulo, cap.forma) }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoNovoCapitulo(cap.reg, cap.forma, { anos: cap.anos, heroiAnterior: cap.heroiAnterior, cidade: cidadeAtualRef.current })}`;
@@ -11601,7 +11651,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       ? `🕯 Você acende a primeira das suas ${mm.tochas} tochas. Cada passagem consome uma — o que sobrar volta para a mochila na saída.`
       : `🕯 Você não tem uma única tocha. Vai entrar no escuro — desvantagem em tudo, e o que mora lá enxerga melhor que você.` }]);
     const extraTempo = avancarMinutos(MINUTOS_SALA_MASMORRA);
-    enviar(`[MASMORRA — ENTRADA · ${mm.nome}] Descobri a entrada de "${mm.nome}". O SISTEMA gerou a planta: ${mm.salas.length} câmaras em ${Math.max(...mm.salas.map((x) => x.camada))} níveis de profundidade, com passagens que se ramificam, um portão lacrado no fundo e a chave escondida com um guardião. Levo ${mm.tochas} tochas — cada passagem consome uma. Descreva a fachada e a atmosfera do primeiro salão em 2-4 frases, costurando com a cena atual${cidadeAtualRef.current ? ` (perto de ${cidadeAtualRef.current})` : ""}. Mencione que há mais de um caminho adiante. NÃO invente o que há nas salas — o sistema revela cada uma quando eu escolher a passagem.${extraTempo}`, personagem);
+    /* v9.101: e A FORMA QUE ISTO TEM NESTE MUNDO chega junto, no instante
+       em que a masmorra abre. As salas, o chefe e a chave continuam sendo
+       os do `masmorras.js`; o que o envelope acrescenta é a carne — o
+       portal que não fecha enquanto o chefe respira, se for esse o mundo. */
+    const vestido = envelopeDaAdaptacao(mundoAtual() && mundoAtual().lexico, "masmorra");
+    enviar(`${vestido ? vestido + " " : ""}[MASMORRA — ENTRADA · ${mm.nome}] Descobri a entrada de "${mm.nome}". O SISTEMA gerou a planta: ${mm.salas.length} câmaras em ${Math.max(...mm.salas.map((x) => x.camada))} níveis de profundidade, com passagens que se ramificam, um portão lacrado no fundo e a chave escondida com um guardião. Levo ${mm.tochas} tochas — cada passagem consome uma. Descreva a fachada e a atmosfera do primeiro salão em 2-4 frases, costurando com a cena atual${cidadeAtualRef.current ? ` (perto de ${cidadeAtualRef.current})` : ""}. Mencione que há mais de um caminho adiante. NÃO invente o que há nas salas — o sistema revela cada uma quando eu escolher a passagem.${extraTempo}`, personagem);
   };
 
   const irParaSala = (id) => {
@@ -13689,8 +13744,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       </header>
 
       {fase === "menu" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaMenu irNovo={() => setFase("mundo")} continuar={continuar} temSave={temSave} /></div>}
-      {fase === "mundo" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaMundo concluir={(m, nome) => { setMundo(m); setNomeCampanha(nome); setFase("personagem"); }} /></div>}
-      {fase === "personagem" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaPersonagem mundo={mundo} concluir={iniciar} /></div>}
+      {fase === "mundo" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaMundo concluir={(m, nome) => { setMundo(m); mundoRef.current = m; setNomeCampanha(nome); setFase("personagem"); lerOMundo(m); }} /></div>}
+      {fase === "personagem" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaPersonagem mundo={mundo} concluir={iniciar} lendoMundo={lendoMundo} mundoLido={!!(mundo && mundo.lexico && mundo.lexico.gerado)} /></div>}
 
       {fase === "jogo" && personagem && (
         <div className="flex flex-1 min-h-0 relative">

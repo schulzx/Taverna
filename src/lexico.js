@@ -1,0 +1,412 @@
+/* ============================================================
+   O LÉXICO DO MUNDO (v9.101) — o sétimo gênero
+
+   O relato: "se eu criar um mundo sobre Solo Leveling e colocar sobre
+   os caçadores, quase não vão falar sobre isso; o nosso mundo gerado é
+   genérico".
+
+   É verdade, e a causa não é a IA desobedecer — é o SISTEMA. Todo
+   gerador desta casa já é parametrizado por gênero e resolve num banco:
+
+     const ocupacoes = OCUPACOES[g] || OCUPACOES["Fantasia medieval"];
+
+   `locaisDaCidade`, `genteDoLocal`, `criaturasDaRegiao`, `nomeCidade`,
+   `nomeDeLocal`, `pessoaDiversa` — todos fazem isso. A costura existe.
+   O que não existe é uma sétima entrada: a lista de bancos tem seis e
+   está fechada em `constantes.js`. A descrição que o jogador escreveu é
+   o ÚNICO lugar do sistema que sabe de caçadores, e ela chega ao prompt
+   como uma linha solta enquanto o sistema despeja ferreiro, taverneiro e
+   capela por cima. A IA obedece o sistema acima da descrição, porque foi
+   exatamente isso que a gente treinou ela a fazer.
+
+   ---------------- AS DUAS METADES ----------------
+
+   O léxico tem duas metades, e a segunda é a que importa mais.
+
+   A primeira é o VOCABULÁRIO: como as coisas se chamam. Masmorra é
+   portal, criatura é besta, taverna é sede da guilda. Barato e visível.
+
+   A segunda é COMO AS COISAS FUNCIONAM AQUI, e ela é a diferença entre
+   trocar uma palavra e adaptar um sistema. O exemplo que a trouxe:
+
+     "uma dungeon seria um portal, e em Solo Leveling existem portais
+      que levam a mundos e dungeons que só acabam quando se vence o
+      boss — o mestre criaria as dungeons em forma de portais".
+
+   Isso não é uma mecânica nova. As salas, o chefe no fundo, a chave no
+   miolo, as tochas: tudo continua sendo `masmorras.js`, com os mesmos
+   números. O que muda é COMO AQUILO SE APRESENTA — o portal que se abre
+   sozinho num lugar público, que não fecha enquanto o chefe respira,
+   que engole quem entra despreparado. O sistema é o esqueleto; o léxico
+   é a carne. E o Mestre precisa das duas para não narrar um calabouço
+   de pedra num mundo que não tem nenhum.
+
+   ---------------- QUATRO REGRAS ----------------
+
+   1) PALAVRAS, NUNCA NÚMEROS. O léxico renomeia, repovoa e reveste. Ele
+      não cria habilidade, não cria magia, não mexe em custo, dano,
+      dificuldade nem raridade — essas continuam saindo do catálogo, que
+      é onde o equilíbrio mora. Um léxico que pudesse escrever "caçador
+      rank S ganha +5" seria um jailbreak em cima do jogo inteiro.
+
+   2) CAMPO A CAMPO, E VAZIO É "USE O SEU". A validação não aceita nem
+      recusa o léxico inteiro: cada campo passa sozinho. O que não veio,
+      ou veio errado, fica VAZIO — e vazio quer dizer, para todo leitor,
+      "não tenho, use o banco genérico". Um mundo com metade do léxico é
+      melhor que um mundo sem nenhum, e muito melhor que um que não abre.
+
+   3) O MUNDO QUE A OBRA EVOCA, NÃO A OBRA. Se a descrição citar uma
+      história que existe, o que se gera são as REGRAS e os PAPÉIS que
+      ela evoca, com nomes próprios novos. Não é só a coisa certa a
+      fazer: é o mundo ficar do jogador, e não uma cópia de segunda mão.
+
+   4) CADA ADAPTAÇÃO CHEGA NA CENA QUE A USA. As quinze adaptações não
+      cabem todas no prompt de toda cena — seriam mil e quinhentos
+      caracteres por turno para dizer, na taverna, como funciona uma
+      masmorra. Elas viajam pelas PORTAS DA CENA que já existem: a do
+      portal entra quando se está num, a da luta quando há luta. Só
+      quatro ficam sempre ligadas, porque são o mundo e não a cena.
+   ============================================================ */
+
+/* Os tetos existem por causa do orçamento do prompt, que está apertado.
+   Cada um foi escolhido pelo que a seção correspondente já gastava. */
+const TETOS = {
+  povos: 8, oficios: 16, lugares: 10, criaturas: 10, faccoes: 4, naoExiste: 6,
+  cidades: 8, tavernas: 4,
+  texto: 170, curto: 40, medio: 70, adaptacao: 170,
+};
+
+/* ---------------- O ORÇAMENTO ----------------
+   O bloco inteiro do léxico nunca passa disto, e o número não é um
+   palpite: o prompt de uma cena comum estava em 58,9 mil caracteres com
+   o gatilho em 59 mil, e o de "todas as portas abertas" em 81,9 mil com
+   o teto em 82 mil. Um bloco sem limite os estourava nos dois lados —
+   o pior caso somava 5,6 mil caracteres.
+
+   Um teto por campo não resolveria: quinze adaptações de 170 já dão
+   2.550. O que resolve é um teto no TOTAL, preenchido por prioridade —
+   e a prioridade é a que o Mestre precisaria se só pudesse ler uma
+   linha: primeiro como as coisas se chamam, depois a lei, depois a
+   adaptação da cena que está aberta AGORA, e por último o resto.
+
+   O que não couber é cortado em silêncio. Não há aviso porque não há o
+   que avisar: o léxico é rico de propósito, e o prompt leva dele o que
+   cabe na cena de hoje — uma cena de masmorra leva a masmorra, e a de
+   amanhã leva a de amanhã. */
+export const TETO_DO_BLOCO = 1700;
+
+const limpar = (s, max) => String(s == null ? "" : s).replace(/\s+/g, " ").trim().slice(0, max);
+const lista = (v, max, tam) => (Array.isArray(v) ? v : [])
+  .map((x) => limpar(x, tam))
+  .filter(Boolean)
+  .filter((x, i, a) => a.indexOf(x) === i)
+  .slice(0, max);
+
+/* ---------------- COMO AS COISAS SE CHAMAM ----------------
+   O campo mais barato de todos: onze palavras que mudam a cor de todo o
+   resto. O sistema continua chamando de masmorra por dentro, porque por
+   dentro é masmorra mesmo. O apelido é a boca, não a mecânica. */
+export const COISAS = [
+  { id: "heroi", padrao: "aventureiro", o: "o que o herói é neste mundo" },
+  { id: "grupo", padrao: "grupo", o: "quem anda com ele" },
+  { id: "taverna", padrao: "taverna", o: "onde se encontra gente e trabalho" },
+  { id: "masmorra", padrao: "masmorra", o: "o lugar perigoso em que se entra para sair com alguma coisa" },
+  { id: "monstro", padrao: "criatura", o: "o que ameaça as pessoas" },
+  { id: "faccao", padrao: "facção", o: "os grupos que disputam poder" },
+  { id: "cidade", padrao: "cidade", o: "os assentamentos" },
+  { id: "moeda", padrao: "moedas", o: "com que se paga" },
+  { id: "magia", padrao: "magia", o: "o poder que foge do comum" },
+  { id: "relicario", padrao: "relíquia", o: "o objeto raro que muda uma vida" },
+  { id: "autoridade", padrao: "a guarda", o: "quem manda e cobra ordem" },
+];
+export function coisaPorId(id) { return COISAS.find((c) => c.id === id) || null; }
+
+/* ---------------- COMO AS COISAS FUNCIONAM ----------------
+   Cada entrada aponta para um SISTEMA que já existe no código e diz
+   como ele se apresenta neste mundo. `porta` é a porta da cena que a
+   carrega — `null` quer dizer sempre ligada, e as quatro que são `null`
+   são as que descrevem o MUNDO, não a cena.
+
+   `pergunta` é o que se pede ao Léxico na criação, e ela é escrita para
+   puxar o MECANISMO, não o adjetivo: "como se entra, como se sai, o que
+   acontece com quem não vence" rende portal-que-não-fecha; "descreva as
+   masmorras deste mundo" rende masmorra com outro nome. */
+export const SISTEMAS = [
+  { id: "heroi", porta: null, rotulo: "O QUE É UM AVENTUREIRO AQUI",
+    pergunta: "quem são as pessoas como o herói neste mundo: como alguém vira uma delas, quem as reconhece, e por que a gente comum não faz o que elas fazem" },
+  { id: "poder", porta: null, rotulo: "DE ONDE VEM O PODER",
+    pergunta: "como se explica, na ficção deste mundo, alguém fazer o que os outros não fazem — e como se fica mais forte (o sistema já tem níveis e habilidades: diga como isso APARECE aqui, sem inventar mecânica)" },
+  { id: "fama", porta: null, rotulo: "COMO A REPUTAÇÃO ANDA",
+    pergunta: "como a reputação de alguém se mede e circula neste mundo: quem registra, quem espalha, o que muda quando ela sobe" },
+  { id: "ameaca", porta: null, rotulo: "QUE FORMA TEM UMA AMEAÇA GRANDE",
+    pergunta: "que forma toma um antagonista de verdade neste mundo, e por que ninguém o parou ainda" },
+  { id: "masmorra", porta: "masmorra", rotulo: "O LUGAR PERIGOSO",
+    pergunta: "o lugar perigoso em que se entra para sair com alguma coisa: como ele aparece, como se entra, o que há no fundo, como se sai, e o que acontece com quem entra e não vence" },
+  { id: "combate", porta: "combate", rotulo: "COMO SE BRIGA",
+    pergunta: "como é uma briga aqui: com o quê se luta, quem costuma lutar junto, o que é golpe baixo e o que é honra" },
+  { id: "morte", porta: "combate", rotulo: "O QUE ACONTECE COM QUEM CAI",
+    pergunta: "o que acontece com quem cai em combate neste mundo: quem recolhe, o que se faz com o corpo, o que se diz" },
+  { id: "tesouro", porta: "combate", rotulo: "COMO SE ACHA COISA BOA",
+    pergunta: "de onde sai o equipamento raro aqui, quem o avalia e quem o compra" },
+  { id: "viagem", porta: "viagem", rotulo: "COMO SE VAI DE UM LUGAR A OUTRO",
+    pergunta: "como se atravessa distância neste mundo, quem viaja e quem não pode, e o que dá errado no caminho" },
+  { id: "cidade", porta: "cidade", rotulo: "COMO É UM ASSENTAMENTO",
+    pergunta: "como é uma cidade daqui por dentro: o que se vê na rua, quem manda, do que as pessoas têm medo" },
+  { id: "mercado", porta: "mercado", rotulo: "COMO SE COMPRA E SE VENDE",
+    pergunta: "como se compra e se vende neste mundo: onde, com quê, e o que não se vende em público" },
+  { id: "missao", porta: "missao", rotulo: "DE ONDE VEM TRABALHO",
+    pergunta: "de onde vem trabalho para gente como o herói: quem contrata, como o pedido chega, e como se combina o pagamento" },
+  { id: "acampamento", porta: "acampamento", rotulo: "COMO SE DESCANSA",
+    pergunta: "como e onde gente como o herói descansa neste mundo, e o que se faz nessas horas paradas" },
+  { id: "grupo", porta: "grupo", rotulo: "COMO SE ANDA ACOMPANHADO",
+    pergunta: "como se forma um grupo aqui: quem se junta a quem, o que se combina antes, e como se divide o que se ganha" },
+  { id: "ermo", porta: "ermo", rotulo: "O QUE HÁ ENTRE OS LUGARES",
+    pergunta: "o que existe no espaço entre os assentamentos deste mundo, e por que as pessoas evitam ou atravessam" },
+];
+export function sistemaPorId(id) { return SISTEMAS.find((s) => s.id === id) || null; }
+/* As que valem em toda cena, porque falam do mundo e não do momento. */
+export const SEMPRE = SISTEMAS.filter((s) => !s.porta).map((s) => s.id);
+
+/* ---------------- A GARANTIA ----------------
+   Recebe qualquer coisa e devolve um léxico. Campo inválido vira vazio,
+   e vazio é a palavra combinada para "use o banco genérico". */
+export function garantirLexico(l) {
+  const o = l && typeof l === "object" ? l : {};
+  const cham = {};
+  for (const c of COISAS) {
+    const v = limpar(o.chamado && o.chamado[c.id], TETOS.curto);
+    /* o apelido igual ao padrão não é apelido: guardá-lo só gastaria
+       prompt para dizer que nada mudou */
+    if (v && v.toLowerCase() !== c.padrao.toLowerCase()) cham[c.id] = v;
+  }
+  const funciona = {};
+  for (const s of SISTEMAS) {
+    const v = limpar(o.funciona && o.funciona[s.id], TETOS.adaptacao);
+    if (v) funciona[s.id] = v;
+  }
+  return {
+    v: 1,
+    gerado: !!o.gerado,
+    chamado: cham,
+    funciona,
+    povos: lista(o.povos, TETOS.povos, TETOS.curto),
+    oficios: lista(o.oficios, TETOS.oficios, TETOS.curto),
+    criaturas: lista(o.criaturas, TETOS.criaturas, TETOS.curto),
+    naoExiste: lista(o.naoExiste, TETOS.naoExiste, TETOS.curto),
+    cidades: lista(o.cidades, TETOS.cidades, TETOS.curto),
+    tavernas: lista(o.tavernas, TETOS.tavernas, TETOS.medio),
+    lugares: (Array.isArray(o.lugares) ? o.lugares : [])
+      .map((x) => ({ tipo: limpar(x && x.tipo, TETOS.curto), exemplo: limpar(x && x.exemplo, TETOS.medio) }))
+      .filter((x) => x.tipo)
+      .slice(0, TETOS.lugares),
+    faccoes: (Array.isArray(o.faccoes) ? o.faccoes : [])
+      .map((x) => ({ nome: limpar(x && x.nome, TETOS.curto), quer: limpar(x && x.quer, TETOS.medio) }))
+      .filter((x) => x.nome)
+      .slice(0, TETOS.faccoes),
+    aLei: limpar(o.aLei, TETOS.texto),
+    comoSeFala: limpar(o.comoSeFala, TETOS.texto),
+  };
+}
+
+/* Um léxico existe de verdade quando tem com que trabalhar. Abaixo disso
+   ele é ruído: melhor o genérico, que ao menos é coerente consigo. */
+export function lexicoVale(l) {
+  const x = garantirLexico(l);
+  const peso = Object.keys(x.chamado).length + Object.keys(x.funciona).length * 2
+    + x.povos.length + x.oficios.length + x.lugares.length + x.criaturas.length
+    + (x.aLei ? 2 : 0);
+  return peso >= 12;
+}
+
+/* ---------------- OS LEITORES ----------------
+   Cada um responde "o léxico tem isto?" e, se não tiver, devolve null
+   para que o banco genérico responda. É a mesma forma do
+   `OCUPACOES[g] || OCUPACOES[padrão]` que já existia — só que agora o
+   primeiro termo pode vir do mundo. */
+export function oficiosDo(l) { const x = garantirLexico(l); return x.oficios.length >= 4 ? x.oficios : null; }
+export function povosDo(l) { const x = garantirLexico(l); return x.povos.length >= 2 ? x.povos : null; }
+export function criaturasDo(l) { const x = garantirLexico(l); return x.criaturas.length >= 3 ? x.criaturas : null; }
+export function cidadesDo(l) { const x = garantirLexico(l); return x.cidades.length >= 3 ? x.cidades : null; }
+export function tavernasDo(l) { const x = garantirLexico(l); return x.tavernas.length >= 2 ? x.tavernas : null; }
+export function comoChamam(l, id) {
+  const x = garantirLexico(l);
+  const c = coisaPorId(id);
+  return (c && x.chamado[id]) || (c && c.padrao) || "";
+}
+/* A adaptação de UM sistema, para quem vai abrir esse sistema agora. É
+   por aqui que o envelope da masmorra passa a dizer "e aqui masmorra é
+   isto" no instante em que a masmorra abre. */
+export function comoFunciona(l, id) { return garantirLexico(l).funciona[id] || ""; }
+
+/* ---------------- O PEDIDO ----------------
+   O prompt que gera o léxico. Roda UMA vez, na criação, com o modelo
+   forte: é frio, ninguém está esperando um turno, e o que sair daqui vai
+   governar a campanha inteira. Vale o gasto. */
+export function pedidoDoLexico(mundo) {
+  const m = mundo || {};
+  const genero = limpar(m.genero, 60) || "Fantasia medieval";
+  const desc = limpar(m.descricao, 1200);
+  return `Você é o Léxico: quem decide como um mundo de RPG se chama e como ele funciona, antes de a primeira cena existir.
+
+O jogador criou este mundo:
+· Gênero: ${genero}
+· Descrição dele, palavra por palavra: "${desc || "(não escreveu nada — trabalhe só com o gênero)"}"
+
+O sistema deste jogo já tem TODAS as mecânicas prontas e elas NÃO mudam: níveis, habilidades de catálogo, combate por rodadas, masmorras com salas e um chefe no fundo, viagem por dias de estrada, mercado, missões, descanso, fama. Sua tarefa NÃO é criar mecânica nenhuma — é dizer como cada uma dessas coisas APARECE neste mundo, para que o Mestre pare de narrar um calabouço de pedra num mundo que não tem nenhum.
+
+Exemplo do que se espera, para ficar claro: num mundo de caçadores modernos, a masmorra do sistema continua tendo salas, chefe e chave — mas ela SE APRESENTA como um portal que se abre sozinho num lugar público, que não fecha enquanto o chefe lá dentro respirar, e que engole quem entra despreparado. Mesmas regras, outra carne.
+
+REGRAS INEGOCIÁVEIS:
+1. PALAVRAS, NUNCA NÚMEROS. Não invente habilidade, magia, poder, rank com bônus, dano, dificuldade nem preço. Nada de mecânica nova, nenhum número. Você nomeia, povoa e reveste; quem equilibra é o código.
+2. SE A DESCRIÇÃO CITAR UMA HISTÓRIA QUE EXISTE, entregue o MUNDO QUE ELA EVOCA — as regras, os papéis, o tom, a estrutura social —, com NOMES PRÓPRIOS NOVOS, inventados por você. Nunca use nomes de personagens, lugares ou organizações da obra citada, nem frases dela. O mundo tem de ser do jogador, não uma cópia.
+3. FIDELIDADE ACIMA DE CRIATIVIDADE. Se ele escreveu "caçadores", tudo é de caçadores — não caçadores com um reino medieval em volta.
+4. MECANISMO, NÃO ADJETIVO. Em cada resposta de "funciona", diga COMO a coisa acontece (quem, onde, o que trava, o que dá errado), não que ela é sombria ou perigosa.
+5. Português do Brasil. Cada campo de "funciona" no máximo duas frases.
+
+Responda SÓ com este JSON, sem comentários e sem texto fora dele:
+
+{
+  "chamado": {
+${COISAS.map((c) => `    "${c.id}": "como se chama ${c.o} (genérico: \\"${c.padrao}\\")"`).join(",\n")}
+  },
+  "funciona": {
+${SISTEMAS.map((s) => `    "${s.id}": "${s.pergunta}"`).join(",\n")}
+  },
+  "povos": ["os povos/tipos de gente deste mundo, 3 a 8 — substituem 'elfo, anão, halfling'"],
+  "oficios": ["do que as pessoas vivem aqui, 8 a 16 — substituem 'ferreiro, taverneiro, escriba'"],
+  "lugares": [{ "tipo": "espécie de lugar que existe nas cidades daqui", "exemplo": "um nome próprio de exemplo" }],
+  "criaturas": ["o que ameaça as pessoas neste mundo, 4 a 10"],
+  "faccoes": [{ "nome": "nome próprio de uma potência daqui", "quer": "o que ela quer, em meia linha" }],
+  "cidades": ["8 nomes próprios de cidade no estilo deste mundo"],
+  "tavernas": ["4 nomes próprios para o lugar onde se encontra gente e trabalho"],
+  "naoExiste": ["3 a 6 coisas que o gênero faria esperar e que NESTE mundo não existem"],
+  "aLei": "a UMA regra que rege este mundo e não regeria outro — no máximo duas frases",
+  "comoSeFala": "como as pessoas falam aqui: registro, gírias próprias, o que é tabu dizer — no máximo duas frases"
+}`;
+}
+
+/* ---------------- O LEITOR DO TEXTO ----------------
+   O léxico tem CONTRATO PRÓPRIO e por isso precisa do próprio leitor.
+
+   A primeira versão passava a resposta pelo `extrairJSON` do jogo, que
+   parecia o caminho óbvio — é o leitor de JSON da casa. Só que ele
+   termina em `sanearResposta`, que devolve exatamente
+   {narrativa, perigo, rolagem, mudancas, sugestoes} e descarta o resto.
+   O léxico chegava inteiro do modelo e era jogado fora em silêncio: a
+   criação não quebrava, não avisava nada, e o mundo saía genérico como
+   antes. Levou uma partida de teste para aparecer.
+
+   Reusar um leitor feito para outro contrato é o mesmo erro que esta
+   casa já catalogou do lado das regras — a diferença é que aqui ele não
+   deixa rastro nenhum, porque o caminho de falha do léxico é justamente
+   "fica genérico". */
+export function lexicoDoTexto(texto) {
+  try {
+    const limpo = String(texto || "").replace(/```json/gi, "").replace(/```/g, "").trim();
+    const i = limpo.indexOf("{"), f = limpo.lastIndexOf("}");
+    if (i < 0 || f <= i) return null;
+    const cru = limpo.slice(i, f + 1);
+    try { return JSON.parse(cru); } catch { /* segue */ }
+    /* a vírgula sobrando é o erro de JSON mais comum de modelo, e é o
+       único que vale a pena tentar consertar: o resto é adivinhação */
+    try { return JSON.parse(cru.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]")); } catch { return null; }
+  } catch { return null; }
+}
+
+/* Lê a resposta. Nunca lança: um léxico que quebra a criação é pior que
+   um mundo genérico, e a criação é o único momento do jogo em que o
+   jogador ainda não tem nada para perder — nem para salvar. */
+export function lerLexico(obj) {
+  try {
+    const l = garantirLexico(obj);
+    if (!lexicoVale(l)) return garantirLexico(null);
+    return { ...l, gerado: true };
+  } catch {
+    return garantirLexico(null);
+  }
+}
+
+/* ---------------- O QUE SOBE AO PROMPT ----------------
+   Só o que NADA MAIS diz. Os nomes de cidade, as tavernas e o elenco já
+   têm seção própria e passam a ser preenchidos pelo léxico — mudam de
+   conteúdo sem mudar de custo. O que sobra de novo é o vocabulário, a
+   lei, as ausências e as adaptações da cena que está aberta.
+
+   `portas` é o mapa {id: boolean} que `prompt.js` já monta. Sem ele,
+   entram só as quatro de sempre — que é o comportamento certo para quem
+   chamar sem saber da cena. */
+export function lexicoPrompt(l, portas = null) {
+  const x = garantirLexico(l);
+  if (!x.gerado) return "";
+  /* A FILA DE PRIORIDADE. Quem está no topo entra sempre; quem está no
+     fim entra se sobrar. A adaptação da cena ABERTA vem antes das de
+     sempre de propósito: se o herói está dentro de um portal agora, como
+     o portal funciona vale mais que como a reputação circula. */
+  const fila = [];
+  const ap = Object.entries(x.chamado).map(([k, v]) => {
+    const c = coisaPorId(k);
+    return c ? `${c.padrao} = ${v}` : "";
+  }).filter(Boolean);
+  if (ap.length) fila.push(`COMO AS COISAS SE CHAMAM AQUI (use SEMPRE a palavra da direita; a da esquerda é a etiqueta interna do sistema): ${ap.join(" · ")}.`);
+  if (x.aLei) fila.push(`A LEI DESTE MUNDO: ${x.aLei}`);
+  const daCena = [], deSempre = [];
+  for (const s of SISTEMAS) {
+    const t = x.funciona[s.id];
+    if (!t) continue;
+    if (s.porta === null) deSempre.push(`${s.rotulo}: ${t}`);
+    else if (portas && portas[s.porta]) daCena.push(`${s.rotulo}: ${t}`);
+  }
+  fila.push(...daCena, ...deSempre);
+  if (x.naoExiste.length) fila.push(`NÃO EXISTE NESTE MUNDO (nunca ponha em cena): ${x.naoExiste.join(", ")}.`);
+  if (x.criaturas.length) fila.push(`O QUE AMEAÇA AS PESSOAS: ${x.criaturas.join(", ")}.`);
+  if (x.comoSeFala) fila.push(`COMO SE FALA: ${x.comoSeFala}`);
+  /* e o corte, em silêncio: o que não cabe hoje cabe na cena de amanhã.
+
+     A MOLDURA CONTA. O orçamento é do BLOCO, não da lista dentro dele —
+     o cabeçalho, o rodapé e as quebras de linha sobem no prompt como
+     qualquer outro caractere, e um teto que ignorasse a própria moldura
+     estouraria por trezentos e cinquenta toda vez. */
+  const cabeca = "═══ O MUNDO É ESTE (léxico da criação — CÂNONE, acima de qualquer hábito de gênero) ═══\n";
+  const pe = "\nAs mecânicas do sistema NÃO mudam por causa disto: o que muda é a carne. Quando um envelope usar a etiqueta genérica (\"masmorra\", \"taverna\", \"criatura\", \"moedas\"), narre com a palavra e a forma DESTE mundo — a etiqueta é do código, a cena é da ficção.\n═══════════════════════════════════════";
+  const disponivel = TETO_DO_BLOCO - cabeca.length - pe.length;
+  const partes = [];
+  let gasto = 0;
+  for (const t of fila) {
+    if (gasto + t.length + 1 > disponivel) continue;
+    partes.push(t); gasto += t.length + 1;
+  }
+  if (!partes.length) return "";
+  return `${cabeca}${partes.join("\n")}${pe}`;
+}
+
+/* O envelope de uma adaptação, para quando o SISTEMA abre aquele sistema
+   e quer que a IA veja a forma dele no instante em que ele acontece. */
+export function envelopeDaAdaptacao(l, id) {
+  const t = comoFunciona(l, id);
+  const s = sistemaPorId(id);
+  if (!t || !s) return "";
+  return `[NESTE MUNDO — ${s.rotulo}] ${t} As regras e os números do sistema continuam valendo exatamente como vieram; o que muda é como isto se parece e como as pessoas falam disso.`;
+}
+
+/* ---------------- A LINHA DA MESA ----------------
+   A primeira versão desta função dizia "19 coisas próprias deste lugar e
+   15 sistemas adaptados entraram no jogo", e o teste a derrubou por uma
+   razão que vale mais que a linha: O SISTEMA NÃO FALA DE SI MESMO. O
+   jogador não adaptou quinze sistemas — ele criou um mundo, e o que
+   aparece na tela tem de ser o mundo.
+
+   Então a mesa recebe a coisa mais característica que o léxico produziu:
+   a lei deste lugar, se houver uma, ou as palavras que ele passou a usar.
+   Nenhum número, nenhuma contagem, nenhuma menção ao que fez isso. */
+export function falaDoLexico(l) {
+  const x = garantirLexico(l);
+  if (!x.gerado) return "";
+  if (x.aLei) return `📖 A lei deste mundo: ${x.aLei}`;
+  const ap = Object.entries(x.chamado).slice(0, 3).map(([k, v]) => {
+    const c = coisaPorId(k);
+    return c ? `${c.padrao} é ${v}` : "";
+  }).filter(Boolean);
+  if (ap.length) return `📖 Neste mundo, ${ap.join(", ")}.`;
+  if (x.criaturas.length) return `📖 O que ameaça as pessoas aqui: ${x.criaturas.slice(0, 3).join(", ")}.`;
+  return "";
+}
