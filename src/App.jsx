@@ -2646,7 +2646,7 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
       <div className="grid md:grid-cols-2 gap-4 mb-4">
         <div className="flex gap-2">
           <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do personagem" className="flex-1 rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
-          <button type="button" onClick={() => setNome(nomePessoa(mundo.genero))} className="rounded-xl px-4 shrink-0" style={{ border: `1px solid ${T.line}`, color: T.amberSoft }} title="Sortear um nome">🎲</button>
+          <button type="button" onClick={() => setNome(nomePessoa(mundo.genero, undefined, Math.random, mundo.lexico))} className="rounded-xl px-4 shrink-0" style={{ border: `1px solid ${T.line}`, color: T.amberSoft }} title="Sortear um nome">🎲</button>
         </div>
         <input value={conceito} onChange={(e) => setConceito(e.target.value)} placeholder="Conceito (ex.: ladra de relíquias arrependida)" className="rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
       </div>
@@ -3557,12 +3557,12 @@ export default function Taverna() {
           return true;
         }
         case "aqui": {
-          const t = resumoDaqui(sementeMundo(), mapaRef.current, cidadeAqui, baseMundoRef.current, generoMundo(), moldeMundo());
+          const t = resumoDaqui(sementeMundo(), mapaRef.current, cidadeAqui, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);
           godLinha(t || "⚡ Sem base para este lugar (você não está numa cidade).");
           return true;
         }
         case "chefes": {
-          const t = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), moldeMundo());
+          const t = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), (mundoAtual() || {}).lexico);
           godLinha(t || "⚡ Nenhum chefe vivo neste mundo.");
           return true;
         }
@@ -5430,7 +5430,7 @@ export default function Taverna() {
            vem, é descoberto pelo panteão. Era isto que fazia um deus entrar
            na luta como um orc qualquer: sem Regra do Degrau e sem presença. */
         const comBase = (combateRef.current.inimigos || []).map((e) => {
-          const ficha = chefePorNome(sementeMundo(), mapaRef.current, generoMundo(), e.nome)
+          const ficha = chefePorNome(sementeMundo(), mapaRef.current, generoMundo(), e.nome, (mundoAtual() || {}).lexico)
             || criaturaPorNome(sementeMundo(), mapaRef.current, generoMundo(), e.nome);
           if (!ficha) return e;
           msgs.push(`📖 ${e.nome} está na base do mundo: nível ${ficha.nivel}${ficha.gd ? ` · GD ${ficha.gd}` : ""}${ficha.personalidade ? ` · ${ficha.personalidade}` : ""}.`);
@@ -5618,7 +5618,7 @@ export default function Taverna() {
        Isto RATIFICA a narração, não a contradiz: por isso continua aqui,
        depois, e não no portão. */
     try {
-      const m = mencionadosNaCena(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), resp.narrativa, moldeMundo());
+      const m = mencionadosNaCena(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), resp.narrativa, moldeMundo(), (mundoAtual() || {}).lexico);
       const ids = [
         ...m.locais.map((l) => idDoLocal(cidadeAtualRef.current, l)),
         ...m.gente.map((p) => idDaGente(cidadeAtualRef.current, p)),
@@ -6656,8 +6656,8 @@ export default function Taverna() {
           return resumoComodosPrompt(comodosDoLocal(sementeMundo(), dono, generoMundo(), moldeMundo()), dono.nome);
         } catch { return ""; }
       })();
-      const aqui = [forma, ondeEstou, comodosAqui, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo()), shape, viag, ermoAqui, fora, saidas].filter(Boolean).join("\n\n");
-      const chefes = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), moldeMundo());
+      const aqui = [forma, ondeEstou, comodosAqui, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico), shape, viag, ermoAqui, fora, saidas].filter(Boolean).join("\n\n");
+      const chefes = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), (mundoAtual() || {}).lexico);
       /* QUEM ESTÁ EM CENA (v9.9): presentes, ausentes com a distância em dias,
          e o que foi dito em particular — as duas regras que impedem o aliado
          de teletransportar e o estranho de saber o que não ouviu. */
@@ -6913,7 +6913,7 @@ export default function Taverna() {
        vilão — o capítulo novo tem de recomeçar pelo clima, senão a
        revelação do segundo já nasce gasta. */
     const herdeiro = gerarHerdeiro(nemesisRef.current, {
-      nome: nomePessoa(bancoNomesRef.current), cont: contRef.current,
+      nome: nomePessoa(generoMundo(), undefined, Math.random, (mundoAtual() || {}).lexico), cont: contRef.current,
       stats: { dominios: dominiosDe(mapaRef.current).length }, dia: diaRef.current,
     });
     nemesisRef.current = herdeiro; setNemesis(herdeiro);
@@ -6940,7 +6940,10 @@ export default function Taverna() {
     /* GEOGRAFIA GERADA PELO SISTEMA (v7.5): o continente nasce PRONTO —
        regiões com bioma, cidades com porte e população, rotas com dias de
        viagem. O Mestre narra em cima de fatos fixos, não inventa caminhos. */
-    const geo = gerarGeografia(`${nomeCampanha || "aventura"}|${(mundo && mundo.genero) || ""}`, moldePorId((mundo && mundo.molde) || MOLDE_PADRAO));
+    /* v9.102: e o LÉXICO nomeia as cidades. Ele chega durante a criação da
+       ficha, que é bem antes daqui — e quando não chega, o mapa nasce com
+       os nomes de sempre, que é o caminho seguro. */
+    const geo = gerarGeografia(`${nomeCampanha || "aventura"}|${(mundo && mundo.genero) || ""}`, moldePorId((mundo && mundo.molde) || MOLDE_PADRAO), (mundoAtual() || {}).lexico);
     /* NÉVOA (v9.14): o mundo nasce inteiro, mas o herói só conhece o chão em
        que está. A primeira cidade é a casa dele — abre de saída, senão o
        Mestre começaria sem lugar nenhum para narrar. O resto se descobre
@@ -6986,7 +6989,7 @@ export default function Taverna() {
        justamente ele que o jogador vai cruzar antes de saber o fim. */
     nemesisRef.current = !cap ? null
       : cap.forma === "durante" ? garantirVilao(nemesisRef.current)
-        : gerarHerdeiro(nemesisRef.current, { nome: nomePessoa(bancoNomesRef.current), cont: contRef.current, stats: {}, dia: diaRef.current });
+        : gerarHerdeiro(nemesisRef.current, { nome: nomePessoa(generoMundo(), undefined, Math.random, (mundoAtual() || {}).lexico), cont: contRef.current, stats: {}, dia: diaRef.current });
     setNemesis(nemesisRef.current);
     famaPatamarRef.current = 0;
     if (!cap) reinoRef.current = {};
@@ -7042,7 +7045,7 @@ export default function Taverna() {
         mapaRef.current = garantirGeografia(mapaRef.current, `taverna|${sv.personagem && sv.personagem.nome ? sv.personagem.nome : "save"}`);
       } else {
         /* save antigo sem mapa: gera o mundo inteiro por código (v7.5) */
-        const geo = gerarGeografia(`taverna|${sv.personagem && sv.personagem.nome ? sv.personagem.nome : "save"}`, moldePorId((sv.mundo && sv.mundo.molde) || MOLDE_PADRAO));
+        const geo = gerarGeografia(`taverna|${sv.personagem && sv.personagem.nome ? sv.personagem.nome : "save"}`, moldePorId((sv.mundo && sv.mundo.molde) || MOLDE_PADRAO), sv.mundo && sv.mundo.lexico);
         mapaRef.current = { cidades: geo.cidades, faccoes: (sv.mapa && sv.mapa.faccoes) || [], continente: geo.continente, regioes: geo.regioes, rotas: geo.rotas };
       }
       /* MIGRAÇÃO DA NÉVOA (v9.14). O mapa passou a nascer no escuro, mas
@@ -10006,7 +10009,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     achadoDe: (attr) => {
       try {
         if (combateRef.current) return null;
-        return achavelAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), attr);
+        return achavelAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), attr, moldeMundo(), (mundoAtual() || {}).lexico);
       } catch { return null; }
     },
   });
@@ -10455,7 +10458,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        lugar que esconde algo e procurar no vazio: o sistema já sabe qual é
        o caso, e o Mestre nunca precisa decidir se "tinha alguma coisa ali". */
     const achado = (!extra.dificuldade && !combateRef.current)
-      ? achavelAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), t.atributo)
+      ? achavelAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), t.atributo, moldeMundo(), (mundoAtual() || {}).lexico)
       : null;
     /* provas de rito têm dificuldade fixa de catálogo — nada de escala */
     const dcFinal = extra.dificuldade != null ? extra.dificuldade : achado ? achado.dc : dc;
@@ -12075,7 +12078,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (famaAtual() < 20) return;
     if (Math.random() > 0.35) return;
     const n = gerarVilao({
-      nome: nomePessoa((mundo && mundo.genero) || "Fantasia medieval"),
+      nome: nomePessoa((mundo && mundo.genero) || "Fantasia medieval", undefined, Math.random, (mundoAtual() || {}).lexico),
       cont: contRef.current,
       stats: { dominios: dominiosDe(mapaRef.current).length },
       dia: diaRef.current,

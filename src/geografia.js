@@ -8,6 +8,9 @@
    ============================================================ */
 
 import { moldePorId } from "./moldes.js";
+/* v9.102: o LEXICO nomeia as cidades do mapa quando o mundo tem um.
+   Devolve null sem lexico, e ai o molde e o banco generico respondem. */
+import { partesDeCidade, continenteDo } from "./lexico.js";
 
 /* ---------------- PARÂMETROS DE PORTE ----------------
    Faixas de população por tipo de assentamento — âncora para o
@@ -196,10 +199,15 @@ const pickR = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
    A régua é a do olho, não a do compasso: só recusa o nome quando ele está
    na METADE errada do mapa. Uma cidade no meio pode se chamar do Norte sem
    ofender ninguém — o que ofende é a do Norte estar ao sul da do Sul. */
-const RX_NORTE = /\bdo norte\b|\bsetentrional\b|\bboreal\b/i;
-const RX_SUL = /\bdo sul\b|\bvento sul\b|\bmeridional\b|\baustral\b/i;
-const RX_LESTE = /\bdo leste\b|\boriental\b|\bdo nascente\b/i;
-const RX_OESTE = /\bdo oeste\b|\bocidental\b|\bdo poente\b/i;
+/* v9.102: E O CARDEAL SOZINHO TAMBÉM. Os bancos de sempre só produzem a
+   forma com preposição ("do Norte"), e por isso a régua nunca precisou
+   olhar para "Norte" solto. O léxico produz: um mundo urbano nomeia
+   "Setor Leste" e "Cidade Sul", e a primeira medição achou uma "Sul" no
+   alto do mapa. A palavra sozinha mente igual. */
+const RX_NORTE = /\bdo norte\b|\bnorte\b|\bsetentrional\b|\bboreal\b/i;
+const RX_SUL = /\bdo sul\b|\bvento sul\b|\bsul\b|\bmeridional\b|\baustral\b/i;
+const RX_LESTE = /\bdo leste\b|\bleste\b|\boriental\b|\bdo nascente\b/i;
+const RX_OESTE = /\bdo oeste\b|\boeste\b|\bocidental\b|\bdo poente\b/i;
 
 export function nomeMenteSobreOLugar(nome, x, y) {
   const n = String(nome || "");
@@ -213,9 +221,27 @@ export function nomeMenteSobreOLugar(nome, x, y) {
   return false;
 }
 
-function nomeCidade(rnd, usados, molde, x = null, y = null) {
-  const A = (molde && molde.nomes && molde.nomes.a) || CIDADE_A;
-  const Bn = (molde && molde.nomes && molde.nomes.b) || CIDADE_B;
+/* O nome da terra maior: o do léxico quando há, o do molde quando não. */
+function nomeDaTerra(lex, padrao) { return continenteDo(lex) || padrao; }
+
+/* v9.102: o LEXICO nomeia ANTES do molde. A primeira versao pos o molde
+   na frente, com um argumento que soava bem — "uma torre nomeia os
+   degraus dela melhor que qualquer outro" — e ele estava errado por um
+   fato: o molde PADRAO traz `NOMES_SUPERFICIE`, que e palavra por palavra
+   o banco generico. Com o molde na frente o lexico nunca ganhava, e um
+   mundo de cacadores nascia com "Monte do Rei" e "Nova Brumoso".
+
+   A divisao certa e outra: o molde diz a FORMA do mundo (topologia,
+   portes, biomas, regioes) e o lexico diz a IDENTIDADE dele. Identidade
+   ganha de sabor padrao. E a torre, que era o exemplo, nem passa por
+   aqui: os andares dela sao nomeados noutro lugar.
+
+   `nomeMenteSobreOLugar` continua valendo por cima dos dois: um nome do
+   lexico que diga "do Norte" no sul e recusado como qualquer outro. */
+function nomeCidade(rnd, usados, molde, x = null, y = null, lex = null) {
+  const doLex = partesDeCidade(lex);
+  const A = (doLex && doLex.a) || (molde && molde.nomes && molde.nomes.a) || CIDADE_A;
+  const Bn = (doLex && doLex.b) || (molde && molde.nomes && molde.nomes.b) || CIDADE_B;
   for (let t = 0; t < 12; t++) {
     const nome = `${pickR(rnd, A)} ${pickR(rnd, Bn)}`;
     if (usados.has(nome.toLowerCase())) continue;
@@ -347,16 +373,16 @@ const entreR = (rnd, a, b) => a + Math.floor(rnd() * (b - a + 1));
    Um andar da Torre é um registro de cidade com `z` no lugar de `x,y`, e
    por isso missões, viagem, ofertas e mapa continuam funcionando sem uma
    linha de mudança — só o vocabulário na tela muda. */
-export function gerarGeografia(semente, molde) {
+export function gerarGeografia(semente, molde, lex = null) {
   const m = moldePorId(molde && molde.id ? molde.id : molde);
-  if (m.topologia === "pilha") return mundoEmPilha(semente, m);
-  if (m.topologia === "grafo") return mundoEmGrafo(semente, m);
-  return mundoContinental(semente, m);
+  if (m.topologia === "pilha") return mundoEmPilha(semente, m, lex);
+  if (m.topologia === "grafo") return mundoEmGrafo(semente, m, lex);
+  return mundoContinental(semente, m, lex);
 }
 
 /* A TORRE: uma coluna de andares. Não há norte nem sul — há acima e
    abaixo, e o perigo é função da altura. */
-function mundoEmPilha(semente, m) {
+function mundoEmPilha(semente, m, lex = null) {
   const rnd = rngDe(semente);
   const usadosC = new Set();
   /* o molde promete cem andares; herdando as faixas do continental, a Torre
@@ -371,7 +397,7 @@ function mundoEmPilha(semente, m) {
     if (!secoes[iSec]) {
       secoes[iSec] = {
         nome: `${pickR(rnd, ["Base", "Meio", "Alto", "Coroa", "Fundo", "Vão"])} ${["I", "II", "III", "IV", "V", "VI"][iSec] || iSec + 1}`,
-        continente: "A Torre", bioma: pickR(rnd, m.biomas).id, cx: 50, cy: 50,
+        continente: nomeDaTerra(lex, "A Torre"), bioma: pickR(rnd, m.biomas).id, cx: 50, cy: 50,
       };
     }
     const porte = z === quantos ? "átrio" : z % porSecao === 0 ? "andar-mestre" : z <= 2 ? "patamar" : "andar";
@@ -379,7 +405,7 @@ function mundoEmPilha(semente, m) {
       nome: nomeDeAndar(rnd, z, usadosC),
       tipo: porte, porte,
       populacao: populacaoDe(porte, rnd),
-      regiao: secoes[iSec].nome, continente: "A Torre",
+      regiao: secoes[iSec].nome, continente: nomeDaTerra(lex, "A Torre"),
       bioma: pickR(rnd, m.biomas).id,
       faccao: null, relacao: "neutra", locais: [], sede: false, notas: "",
       /* x,y existem só porque o painel de mapa desenha num plano; quem
@@ -388,11 +414,11 @@ function mundoEmPilha(semente, m) {
       descoberta: z <= 1,
     });
   }
-  return { continente: "A Torre", continentes: [{ nome: "A Torre", regioes: secoes.map((s) => s.nome) }], regioes: secoes, cidades, rotas: gerarRotas(cidades, m) };
+  return { continente: nomeDaTerra(lex, "A Torre"), continentes: [{ nome: nomeDaTerra(lex, "A Torre"), regioes: secoes.map((s) => s.nome) }], regioes: secoes, cidades, rotas: gerarRotas(cidades, m) };
 }
 
 /* O BRAÇO ESTELAR: pontos esparsos em três eixos, ligados por saltos. */
-function mundoEmGrafo(semente, molde) {
+function mundoEmGrafo(semente, molde, lex = null) {
   const m = molde;
   const rnd = rngDe(semente);
   const usadosC = new Set(), usadosR = new Set();
@@ -402,7 +428,7 @@ function mundoEmGrafo(semente, molde) {
     let nome;
     do { nome = `${pickR(rnd, (m.nomesRegiao || {}).a || REGIAO_A)} ${pickR(rnd, (m.nomesRegiao || {}).b || REGIAO_B)}`; } while (usadosR.has(nome));
     usadosR.add(nome);
-    regioes.push({ nome, continente: "O Braço", bioma: pickR(rnd, m.biomas).id, cx: 20 + rnd() * 60, cy: 20 + rnd() * 60 });
+    regioes.push({ nome, continente: nomeDaTerra(lex, "O Braço"), bioma: pickR(rnd, m.biomas).id, cx: 20 + rnd() * 60, cy: 20 + rnd() * 60 });
   }
   const cidades = [];
   for (const reg of regioes) {
@@ -413,9 +439,9 @@ function mundoEmGrafo(semente, molde) {
       const px = Math.max(4, Math.min(96, Math.round(reg.cx + (rnd() - 0.5) * 30)));
       const py = Math.max(4, Math.min(96, Math.round(reg.cy + (rnd() - 0.5) * 30)));
       cidades.push({
-        nome: nomeCidade(rnd, usadosC, molde, px, py), tipo: porte, porte,
+        nome: nomeCidade(rnd, usadosC, molde, px, py, lex), tipo: porte, porte,
         populacao: populacaoDe(porte, rnd),
-        regiao: reg.nome, continente: "O Braço", bioma: pickR(rnd, m.biomas).id,
+        regiao: reg.nome, continente: nomeDaTerra(lex, "O Braço"), bioma: pickR(rnd, m.biomas).id,
         faccao: null, relacao: "neutra", locais: [], sede: false, notas: "",
         x: px,
         y: py,
@@ -424,7 +450,7 @@ function mundoEmGrafo(semente, molde) {
       });
     }
   }
-  return { continente: "O Braço", continentes: [{ nome: "O Braço", regioes: regioes.map((r) => r.nome) }], regioes, cidades, rotas: gerarRotas(cidades, m) };
+  return { continente: nomeDaTerra(lex, "O Braço"), continentes: [{ nome: nomeDaTerra(lex, "O Braço"), regioes: regioes.map((r) => r.nome) }], regioes, cidades, rotas: gerarRotas(cidades, m) };
 }
 
 function nomeDeAndar(rnd, z, usados) {
@@ -438,7 +464,7 @@ function nomeDeAndar(rnd, z, usados) {
   return f;
 }
 
-function mundoContinental(semente, molde) {
+function mundoContinental(semente, molde, lex = null) {
   const rnd = rngDe(semente);
   const usadosR = new Set(), usadosC = new Set(), usadosK = new Set();
   const F = FAIXAS_MUNDO;
@@ -450,9 +476,22 @@ function mundoContinental(semente, molde) {
   /* continentes: quase sempre um, às vezes dois, raramente três */
   const nCont = rnd() < 0.62 ? 1 : rnd() < 0.8 ? 2 : entreR(rnd, 2, F.continentes[1]);
   const continentes = [];
+  /* v9.102: o léxico nomeia o PRIMEIRO continente, que é onde a campanha
+     acontece. Os outros continuam saindo das sílabas — um mundo que só
+     nomeia a terra em que se está é honesto: as outras ainda não foram
+     descobertas, e um nome do léxico para cada uma seria o léxico
+     inventando lugares que ele não descreveu. */
+  const daTerra = continenteDo(lex);
   for (let c = 0; c < nCont; c++) {
     let nome;
+    /* O SORTEIO ACONTECE DE QUALQUER JEITO, e só depois o nome é trocado.
+       A primeira versão saltava o `do/while` quando o léxico tinha nome —
+       e saltar o sorteio significa não consumir o gerador, o que
+       desalinha TODA a geração daí para baixo: o mesmo mundo nascia com
+       outro número de cidades só por ter ganhado um nome. O gerador é
+       determinístico por semente, e determinismo se quebra assim. */
     do { nome = `${pickR(rnd, CONT_A)}${pickR(rnd, CONT_B)}`; } while (usadosK.has(nome));
+    if (c === 0 && daTerra && !usadosK.has(daTerra)) nome = daTerra;
     usadosK.add(nome);
     continentes.push({ nome, regioes: [] });
   }
@@ -494,7 +533,7 @@ function mundoContinental(semente, molde) {
       const x = Math.max(6, Math.min(94, Math.round(reg.cx + (rnd() - 0.5) * 24)));
       const y = Math.max(6, Math.min(94, Math.round(reg.cy + (rnd() - 0.5) * 24)));
       cidades.push({
-        nome: nomeCidade(rnd, usadosC, molde, x, y),
+        nome: nomeCidade(rnd, usadosC, molde, x, y, lex),
         tipo: porte, porte,
         populacao: populacaoDe(porte, rnd),
         regiao: reg.nome, continente: reg.continente, bioma: reg.bioma,
@@ -507,7 +546,7 @@ function mundoContinental(semente, molde) {
   while (cidades.length < F.minCidades) {
     const reg = regioes[cidades.length % regioes.length];
     cidades.push({
-      nome: nomeCidade(rnd, usadosC, molde, Math.round(reg.cx), Math.round(reg.cy)), tipo: P[1], porte: P[1],
+      nome: nomeCidade(rnd, usadosC, molde, Math.round(reg.cx), Math.round(reg.cy), lex), tipo: P[1], porte: P[1],
       populacao: populacaoDe(P[1], rnd), regiao: reg.nome, continente: reg.continente, bioma: reg.bioma,
       faccao: null, relacao: "neutra", locais: [], sede: false, notas: "",
       x: Math.round(reg.cx), y: Math.round(reg.cy), descoberta: false,

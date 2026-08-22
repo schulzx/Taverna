@@ -3355,6 +3355,184 @@ gerada por código continua genérica, e é a fase 2:
   o genérico.
 - **O Geógrafo** — não começou.
 
+## Os nomes próprios são deste mundo — v9.102
+
+O buraco mais visível da v9.101: um mundo de caçadores modernos gerava
+**"Alaric Punho-de-Pedra, vendedor de equipamento de caçada"**. Os ofícios
+e os povos já vinham do léxico; os nomes continuavam saindo do banco do
+gênero, e a incoerência ficava dentro da mesma linha da ficha.
+
+Nome próprio é o campo **mais seguro** do léxico inteiro: não há mecânica
+atrás de um nome. Nada no sistema consulta "Aldric" para decidir coisa
+nenhuma — o registro de gente é por chave, e a chave é o nome que estiver
+lá.
+
+### O que passou a ser do mundo
+
+- **Gente:** primeiros nomes masculinos e femininos, e sobrenomes. Vale
+  para o elenco pronto do prompt, para a gente da base de cada cidade,
+  para os chefes humanoides e para o dado de nome da criação.
+- **Cidades do mapa:** duas listas de partes que se combinam. Oito nomes
+  prontos não bastariam — um continente tem vinte e cinco assentamentos e
+  eles repetiriam na terceira região. As partes dão centenas.
+- **A terra maior:** o continente onde a campanha acontece. Só o
+  primeiro: os outros continuam saindo das sílabas, porque um léxico que
+  nomeasse continentes que ele não descreveu estaria inventando lugares.
+
+### Tudo ou nada, por banco
+
+Meio banco daqui com meio banco medieval poria "Aldric" ao lado de
+"Min-ji" na mesma taverna — pior que qualquer um dos dois puros. Então
+`nomesDo` exige os três campos e `partesDeCidade` exige os dois; faltando
+um, o banco inteiro cai no genérico.
+
+### Quatro bugs que a medição achou
+
+1. **O molde vencia o léxico, sempre.** `nomeCidade` punha o molde na
+   frente com um argumento que soava bem ("uma torre nomeia os degraus
+   dela melhor que qualquer outro") e estava errado por um fato: o molde
+   PADRÃO traz `NOMES_SUPERFICIE`, que é palavra por palavra o banco
+   genérico. O mundo de caçadores nascia com "Monte do Rei". A divisão
+   certa é outra — o molde diz a FORMA (topologia, portes, biomas), o
+   léxico diz a IDENTIDADE, e identidade ganha de sabor padrão.
+2. **O nome do continente pulava o sorteio.** Quando o léxico tinha um
+   nome, o `do/while` era saltado — e saltar o sorteio é não consumir o
+   gerador, o que desalinha TODA a geração daí para baixo. O mesmo mundo
+   nascia com outro número de cidades só por ter ganhado um nome.
+   Determinismo por semente se quebra assim.
+3. **`pessoaDiversa` nomeava sem o léxico.** Povo e ofício daqui, nome de
+   lá — a pior das três combinações, porque a incoerência cabe numa linha
+   só.
+4. **E `elencoDiverso` re-sorteava o nome depois.** O reequilíbrio de
+   gênero chama `nomePessoa` de novo, e essa segunda chamada não recebia
+   o léxico. O nome nascia certo e era sobrescrito na linha seguinte. A
+   regra morava em dois caminhos e um deles não sabia dela — de novo.
+
+### De quebra: o cardeal sozinho também mente
+
+`nomeMenteSobreOLugar` (v9.55) recusa "Vila do Norte" no sul do mapa. Os
+bancos de sempre só produzem a forma com preposição, e por isso a régua
+nunca precisou olhar para "Norte" solto. O léxico produz: um mundo urbano
+nomeia "Setor Leste" e "Cidade Sul", e a medição achou uma "Sul" no alto
+do mapa. As quatro expressões passaram a aceitar a palavra sozinha.
+
+### Verificado na tela
+
+Campanha criada do zero com um mundo de caçadores:
+
+```
+ELENCO: Camila Costa (caçador desperto, corretor de essência) ·
+        Diego Almeida (guia, repórter) · Yuna Park (caçador rank E) ·
+        Ren Silva (civil, repórter) · Rafael Sung (curandeiro de guilda)
+MAPA:   Novo Central · Zona Marítima · Bairro Central · Porto Nova …
+TERRA:  a Península de Hanbeom
+```
+
+Vinte e cinco cidades, nenhuma do banco medieval, nenhum nome de fantasia
+no elenco.
+
+---
+
+## O RESKIN DE EQUIPAMENTO — desenho, sem código ainda
+
+A pergunta que abriu isto, e ela é a certa:
+
+> "se ele cria um mundo de Harry Potter ele não vê machado de matar
+> dragão, e sim varinha de matar dragão, mas isso ainda ficaria difícil
+> de equilibrar pois uma classe que não consegue usar um machado
+> conseguiria provavelmente usar uma varinha, e ao ver varinha ele
+> acharia que o item realmente fosse uma varinha, mas na verdade o
+> sistema vê como um machado"
+
+### O problema tem nome: o apelido cria uma promessa falsa
+
+Um item desta casa carrega três camadas, e só uma delas pode mudar:
+
+1. **A MECÂNICA** — 1d12, duas mãos, marcial, Força, corte. Intocável.
+2. **A AFORDÂNCIA** — o que o jogador precisa entender para decidir: é
+   pesada, ocupa as duas mãos, pede treino marcial, é corpo a corpo, rola
+   em Força. É isto que "varinha" mente sobre.
+3. **A APARÊNCIA** — a palavra.
+
+Renomear a camada 3 é seguro. Renomear de um jeito que contradiga a
+camada 2 é o desastre que a pergunta descreve.
+
+### A regra que resolve: o nome vem da FORMA, não do item
+
+O léxico **não renomeia itens**. Ele escreve um banco de nomes **por
+formato mecânico** — e o formato já existe no código (`CAT_ARMA`,
+`CAT_ARMADURA`, `PROPS`, os sete slots). O código sorteia o nome do balde
+que corresponde ao que a peça REALMENTE é:
+
+```
+marcial · corpo · duas mãos · Força   → "cajado de guerra", "báculo de duelo"
+simples · distância · Destreza        → "varinha de arremesso", "pó de fada"
+armadura pesada                       → "manto de duelo reforçado"
+```
+
+Um machado nunca vira varinha, porque "varinha" mora no balde das armas
+leves à distância. E a promessa deixa de ser falsa: um cajado de guerra
+PARECE pesado, PARECE de duas mãos, PARECE pedir treino — que é
+exatamente o que ele é.
+
+### A segunda regra: o mapeamento é TOTAL, nunca parcial
+
+A tentação seguinte seria dizer "num mundo de Harry Potter não existe
+armadura pesada, então não gere". **Isso quebra o balanço:** a defesa do
+herói é calculada sobre uma escada de armaduras, e tirar um degrau tira
+CA do jogo inteiro.
+
+Então o léxico é OBRIGADO a nomear todos os formatos. Se o mundo parece
+não ter armadura pesada, ele tem de inventar o equivalente DELE — "vestes
+de duelo encantadas", "manto de aurors". E isso é uma pergunta de
+construção de mundo melhor do que a que a gente faria de outro jeito.
+
+Consequência prática: para equipamento, a validação é **tudo ou nada**,
+ao contrário do resto do léxico. Um mundo com metade das armas renomeadas
+lê como mundo quebrado; um mundo com nenhuma lê como mundo genérico, que
+é honesto.
+
+### A terceira regra: a ficha nunca mente
+
+A ficha já mostra a forma ao lado do nome — na partida de teste apareceu
+`A Comedora de Reis · ARMA · ÚNICO · 1D6 · FORÇA`. Com o reskin ela
+passaria a ser a rede de segurança oficial: o nome é do mundo, a linha
+de baixo é do sistema, e ela é obrigatória.
+
+### Onde eu NÃO mexeria: habilidades e classes
+
+Aqui a resposta é diferente, e é um "não" quase categórico. **O nome de
+uma habilidade é um IDENTIFICADOR**, não um rótulo:
+
+- `estaPreparada(pers, hab)` casa por `hab.nome`
+- `concedidaPorItem` casa `item.concede === hab.nome`
+- o Mestre manda `[HABILIDADE] Bola de Fogo` e o sistema procura por nome
+- recarga, custo, combos e o caderno todos indexam por nome
+
+Apelidar um identificador é como se troca tudo de lugar sem querer. Se um
+dia valer a pena, o desenho seria: **duas colunas** (`nome` canônico,
+que o código usa e nunca muda, e `comoSeChama`, que só a tela e a
+narração veem), mais uma tabela de tradução no prompt e uma busca reversa
+para quando a IA escrever o apelido de volta. É caro em prompt, cria uma
+superfície de falha nova, e o ganho é menor que o do equipamento — o
+jogador lê o nome de uma magia muito menos vezes do que lê o nome do
+lugar onde está.
+
+**Raças** ficam no meio: o bônus é visível no card e não há proficiência
+envolvida, então um apelido por cima do mesmo bônus é barato e seguro. É
+o candidato natural depois do equipamento.
+
+### A ordem que eu proporia
+
+1. **Lugares e criaturas** (`locaisDaCidade`, `criaturasDaRegiao`) — o
+   `tipo` é mecânico e fica; só o NOME muda. Risco zero, e é a taverna e
+   a capela que aparecem no mapa hoje.
+2. **Raças jogáveis** — apelido por cima do mesmo bônus.
+3. **Equipamento pela forma**, com as três regras acima e um teste que
+   proíba um nome de um balde aparecer em outro.
+4. **Habilidades** — provavelmente nunca, ou por último, e só com as duas
+   colunas.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

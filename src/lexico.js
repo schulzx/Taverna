@@ -72,7 +72,7 @@
    Cada um foi escolhido pelo que a seção correspondente já gastava. */
 const TETOS = {
   povos: 8, oficios: 16, lugares: 10, criaturas: 10, faccoes: 4, naoExiste: 6,
-  cidades: 8, tavernas: 4,
+  cidades: 8, tavernas: 4, nome: 24, parte: 16, terra: 40,
   texto: 170, curto: 40, medio: 70, adaptacao: 170,
 };
 
@@ -203,6 +203,29 @@ export function garantirLexico(l) {
       .map((x) => ({ nome: limpar(x && x.nome, TETOS.curto), quer: limpar(x && x.quer, TETOS.medio) }))
       .filter((x) => x.nome)
       .slice(0, TETOS.faccoes),
+    /* ---------------- OS NOMES PRÓPRIOS (v9.102) ----------------
+       O buraco mais visível da v9.101: o mundo de caçadores gerou
+       "Alaric Punho-de-Pedra, vendedor de equipamento". Os ofícios e os
+       povos já vinham do léxico; os NOMES continuavam saindo do banco do
+       gênero, e um nome de fantasia num mundo moderno desmente tudo o que
+       a linha ao lado acabou de afirmar.
+
+       Nome próprio é o campo mais seguro do léxico inteiro: não há
+       mecânica atrás de um nome. Nada consulta "Aldric" para decidir
+       coisa nenhuma — o registro de gente é por chave, e a chave é o
+       nome que estiver lá. */
+    nomes: {
+      masc: lista(o.nomes && o.nomes.masc, 24, TETOS.nome),
+      fem: lista(o.nomes && o.nomes.fem, 24, TETOS.nome),
+      sobrenome: lista(o.nomes && o.nomes.sobrenome, 24, TETOS.nome),
+      /* as cidades do MAPA nascem da combinação de duas partes, e não da
+         lista de oito nomes prontos: um continente tem catorze a vinte
+         assentamentos, e oito nomes prontos repetiriam na terceira
+         região. As partes dão centenas. */
+      cidadeA: lista(o.nomes && o.nomes.cidadeA, 16, TETOS.parte),
+      cidadeB: lista(o.nomes && o.nomes.cidadeB, 16, TETOS.parte),
+      continente: limpar(o.nomes && o.nomes.continente, TETOS.terra),
+    },
     aLei: limpar(o.aLei, TETOS.texto),
     comoSeFala: limpar(o.comoSeFala, TETOS.texto),
   };
@@ -214,7 +237,7 @@ export function lexicoVale(l) {
   const x = garantirLexico(l);
   const peso = Object.keys(x.chamado).length + Object.keys(x.funciona).length * 2
     + x.povos.length + x.oficios.length + x.lugares.length + x.criaturas.length
-    + (x.aLei ? 2 : 0);
+    + (x.aLei ? 2 : 0) + (nomesDo(x) ? 4 : 0) + (partesDeCidade(x) ? 2 : 0);
   return peso >= 12;
 }
 
@@ -228,6 +251,21 @@ export function povosDo(l) { const x = garantirLexico(l); return x.povos.length 
 export function criaturasDo(l) { const x = garantirLexico(l); return x.criaturas.length >= 3 ? x.criaturas : null; }
 export function cidadesDo(l) { const x = garantirLexico(l); return x.cidades.length >= 3 ? x.cidades : null; }
 export function tavernasDo(l) { const x = garantirLexico(l); return x.tavernas.length >= 2 ? x.tavernas : null; }
+/* Os nomes de gente só valem em BLOCO: metade do banco deste mundo com
+   metade do banco medieval produziria "Aldric" ao lado de "Min-ji" na
+   mesma taverna, que é pior do que os dois bancos puros. Ou os três
+   campos vieram, ou nenhum vale. */
+export function nomesDo(l) {
+  const x = garantirLexico(l).nomes;
+  if (x.masc.length >= 6 && x.fem.length >= 6 && x.sobrenome.length >= 4) return x;
+  return null;
+}
+/* As partes de nome de cidade, pela mesma razão e com o mesmo tudo-ou-nada. */
+export function partesDeCidade(l) {
+  const x = garantirLexico(l).nomes;
+  return (x.cidadeA.length >= 6 && x.cidadeB.length >= 6) ? { a: x.cidadeA, b: x.cidadeB } : null;
+}
+export function continenteDo(l) { return garantirLexico(l).nomes.continente || ""; }
 export function comoChamam(l, id) {
   const x = garantirLexico(l);
   const c = coisaPorId(id);
@@ -279,6 +317,14 @@ ${SISTEMAS.map((s) => `    "${s.id}": "${s.pergunta}"`).join(",\n")}
   "faccoes": [{ "nome": "nome próprio de uma potência daqui", "quer": "o que ela quer, em meia linha" }],
   "cidades": ["8 nomes próprios de cidade no estilo deste mundo"],
   "tavernas": ["4 nomes próprios para o lugar onde se encontra gente e trabalho"],
+  "nomes": {
+    "masc": ["12 a 20 primeiros nomes masculinos como se dão NESTE mundo — a cultura, a língua e a época dele, não os do gênero"],
+    "fem": ["12 a 20 primeiros nomes femininos, idem"],
+    "sobrenome": ["12 a 20 sobrenomes, alcunhas ou o que faça as vezes de sobrenome aqui"],
+    "cidadeA": ["10 a 16 PRIMEIRAS partes de nome de cidade daqui (ex.: 'Porto', 'Alto', 'Setor')"],
+    "cidadeB": ["10 a 16 SEGUNDAS partes, que se combinam com as de cima (ex.: 'do Norte', 'Baixo', '-9')"],
+    "continente": "o nome da terra maior onde tudo isto acontece"
+  },
   "naoExiste": ["3 a 6 coisas que o gênero faria esperar e que NESTE mundo não existem"],
   "aLei": "a UMA regra que rege este mundo e não regeria outro — no máximo duas frases",
   "comoSeFala": "como as pessoas falam aqui: registro, gírias próprias, o que é tabu dizer — no máximo duas frases"

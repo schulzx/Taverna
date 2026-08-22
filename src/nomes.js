@@ -8,7 +8,7 @@
 import { nomeDeTaverna } from "./toponimia.js";
 /* v9.101: o LEXICO entra antes do genero nos bancos de gente. Devolve
    null quando o mundo nao tem um, e ai a linha e a de sempre. */
-import { povosDo, oficiosDo } from "./lexico.js";
+import { povosDo, oficiosDo, nomesDo } from "./lexico.js";
 
 /* utilitário de sorteio determinístico opcional ou aleatório */
 /* `rnd` opcional (v9.8): passando um gerador semeado, o mesmo mundo produz
@@ -108,8 +108,13 @@ export function nomeCidade(genero, rnd = Math.random) {
    sorteia é a toponímia — 25 nomes para um mundo de catorze cidades
    repetiam entre criações, e o jogador notou em três. */
 export function nomeTaverna(genero, rnd = Math.random) { return nomeDeTaverna(genero, rnd); }
-export function nomePessoa(genero, sexo, rnd = Math.random) {
-  const b = bancoDe(genero);
+/* v9.102: e o LÉXICO manda no nome próprio, quando o mundo tem um. É o
+   campo mais seguro de todos — nada no sistema consulta "Aldric" para
+   decidir coisa nenhuma —, e era o mais visível dos que faltavam: um
+   "Alaric Punho-de-Pedra" desmente, sozinho, a linha ao lado que diz que
+   ele é vendedor de equipamento de caçada. */
+export function nomePessoa(genero, sexo, rnd = Math.random, lex = null) {
+  const b = nomesDo(lex) || bancoDe(genero);
   const primeiro = sexo === "fem" ? sortear(b.fem, rnd) : sexo === "masc" ? sortear(b.masc, rnd) : sortear(rnd() < 0.5 ? b.masc : b.fem, rnd);
   const comSobrenome = rnd() < 0.6;
   return comSobrenome ? `${primeiro} ${sortear(b.sobrenome, rnd)}` : primeiro;
@@ -167,7 +172,11 @@ export function pessoaDiversa(genero, rnd = Math.random, lex = null) {
   const racas = povosDo(lex) || RACAS_POR_GENERO[g] || RACAS_POR_GENERO["Fantasia medieval"];
   const ocupacoes = oficiosDo(lex) || OCUPACOES[g] || OCUPACOES["Fantasia medieval"];
   return {
-    nome: nomePessoa(g, sexo, rnd),
+    /* v9.102: o `lex` também no NOME. Sem esta linha, a base nascia com
+       povo e ofício deste mundo e nome do banco medieval — que é a pior
+       das três combinações, porque a incoerência fica dentro da mesma
+       linha da ficha: "Aldric, caçador desperto, corretor de essência". */
+    nome: nomePessoa(g, sexo, rnd, lex),
     genero_pessoa: sexo === "masc" ? "homem" : "mulher",
     raca: sortear(racas, rnd),
     ocupacao: sortear(ocupacoes, rnd),
@@ -182,9 +191,16 @@ export function elencoDiverso(genero, n = 6, lex = null) {
   const out = [];
   for (let i = 0; i < n; i++) {
     const p = pessoaDiversa(g, Math.random, lex);
-    // força alternância de gênero para garantir equilíbrio real
-    if (i % 2 === 0) { p.genero_pessoa = "mulher"; p.nome = nomePessoa(g, "fem"); }
-    else { p.genero_pessoa = "homem"; p.nome = nomePessoa(g, "masc"); }
+    /* força alternância de gênero para garantir equilíbrio real.
+
+       v9.102: e o SEGUNDO sorteio também precisa do léxico. Sem isto, o
+       nome nascia deste mundo em `pessoaDiversa` e era sobrescrito aqui
+       por um do banco do gênero — e o elenco do prompt saía com "Ursa
+       Pé-Leve, motorista de resgate", que é a incoerência inteira dentro
+       de uma linha só. A regra morava em dois caminhos e um deles não
+       sabia dela. */
+    if (i % 2 === 0) { p.genero_pessoa = "mulher"; p.nome = nomePessoa(g, "fem", Math.random, lex); }
+    else { p.genero_pessoa = "homem"; p.nome = nomePessoa(g, "masc", Math.random, lex); }
     out.push(p);
   }
   return out;

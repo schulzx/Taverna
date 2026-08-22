@@ -141,14 +141,18 @@ const MODOS = [
   "trata todo mundo por apelido", "tem sempre pressa", "para no meio da frase e recomeça",
 ];
 
-export function genteDoLocal(semente, local, genero = "Fantasia medieval", molde = null) {
+/* v9.102: `lex` é o LÉXICO DO MUNDO, e ele entra por último em toda esta
+   família de funções — do mesmo jeito que `molde` entrou antes dele. É
+   quem faz a gente da base ter nome, povo e ofício DAQUI: sem ele, um
+   mundo de caçadores ficava povoado por Aldric, o ferreiro. */
+export function genteDoLocal(semente, local, genero = "Fantasia medieval", molde = null, lex = null) {
   if (!local) return [];
   const VONT = moldePorId(molde && molde.id ? molde.id : molde).vontades || VONTADES;
   const rnd = rngDe(`${semente}|gente|${local.id}`);
   const quantos = entre(rnd, 2, 3);
   const out = [];
   for (let i = 0; i < quantos; i++) {
-    const p = pessoaDiversa(genero, rnd);
+    const p = pessoaDiversa(genero, rnd, lex);
     out.push({
       id: `${local.id}|${i}`,
       nome: p.nome,
@@ -251,7 +255,7 @@ const PERSONALIDADES_CHEFE = [
   "pede desculpas antes de matar", "chama todo mundo pelo nome certo",
 ];
 
-export function chefesDoMundo(semente, mapa, genero = "Fantasia medieval") {
+export function chefesDoMundo(semente, mapa, genero = "Fantasia medieval", lex = null) {
   const regioes = (mapa && mapa.regioes) || [];
   const cidades = (mapa && mapa.cidades) || [];
   if (!regioes.length && !cidades.length) return [];
@@ -263,7 +267,7 @@ export function chefesDoMundo(semente, mapa, genero = "Fantasia medieval") {
     const principal = i === 0;
     const base = pick(rnd, banco);
     const humanoide = rnd() < 0.45;
-    const nome = humanoide ? nomePessoa(genero, undefined, rnd) : base.nome;
+    const nome = humanoide ? nomePessoa(genero, undefined, rnd, lex) : base.nome;
     const titulo = pick(rnd, TITULOS);
     const reg = regioes.length ? pick(rnd, regioes) : null;
     const covil = cidades.length ? pick(rnd, cidades) : null;
@@ -413,8 +417,8 @@ export function foiSaqueado(base, id) { return garantirBase(base).saqueados.incl
    se existe algo procurável AQUI com aquele atributo, e é a dificuldade do
    PRÓPRIO segredo que vale — não a genérica do pedido. Quem decide se achou
    é o dado; o Mestre só narra o que já foi decidido. */
-export function achavelAqui(semente, mapa, nomeCidade, base, genero, atributo = "percepcao", molde = null) {
-  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde);
+export function achavelAqui(semente, mapa, nomeCidade, base, genero, atributo = "percepcao", molde = null, lex = null) {
+  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde, lex);
   if (!q) return null;
   const cands = [
     ...(q.segredos || []).map((s) => ({ ...s, especie: "segredo", onde: `em ${s.local}` })),
@@ -465,12 +469,12 @@ function cidadeSintetica(semente, nome) {
   return { nome, porte: pick(rnd, portes), tipo: "cidade", bioma: pick(rnd, biomas), regiao: "", avulsa: true };
 }
 
-export function oQueExisteAqui(semente, mapa, nomeCidade, base, genero = "Fantasia medieval", molde = null) {
+export function oQueExisteAqui(semente, mapa, nomeCidade, base, genero = "Fantasia medieval", molde = null, lex = null) {
   const cidade = ((mapa && mapa.cidades) || []).find((c) => c.nome === nomeCidade) || cidadeSintetica(semente, nomeCidade);
   if (!cidade) return null;
   const locais = locaisDaCidade(semente, cidade, genero, molde);
   const gente = [];
-  for (const l of locais) for (const p of genteDoLocal(semente, l, genero, molde)) if (!estaMorto(base, p.nome)) gente.push(p);
+  for (const l of locais) for (const p of genteDoLocal(semente, l, genero, molde, lex)) if (!estaMorto(base, p.nome)) gente.push(p);
   const segredos = segredosDaCidade(semente, cidade, genero, molde).filter((s) => !foiSaqueado(base, s.id));
   const regiao = ((mapa && mapa.regioes) || []).find((r) => r.nome === cidade.regiao);
   const bichos = regiao ? criaturasDaRegiao(semente, regiao, genero) : [];
@@ -488,10 +492,10 @@ export function oQueExisteAqui(semente, mapa, nomeCidade, base, genero = "Fantas
    "já apareceu", e ele para de reapresentar quem o jogador já conhece. */
 const semAcento = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
-export function mencionadosNaCena(semente, mapa, nomeCidade, base, genero, narrativa, molde = null) {
+export function mencionadosNaCena(semente, mapa, nomeCidade, base, genero, narrativa, molde = null, lex = null) {
   const texto = semAcento(narrativa);
   if (!texto.trim()) return { locais: [], gente: [] };
-  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde);
+  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde, lex);
   if (!q) return { locais: [], gente: [] };
   /* ---------------- O ARTIGO COLADO NA PREPOSIÇÃO (v9.58) ----------------
      Achado quando os nomes passaram a ser gerados: quase todo local agora
@@ -536,8 +540,8 @@ export const idDoLocal = (cidade, l) => (l && l.id) || `${cidade}|local|${(l && 
 export const idDaGente = (cidade, p) => `${cidade}|gente|${(p && p.nome) || ""}`;
 
 /* O bloco que entra no prompt. Curto de propósito: é ficha, não literatura. */
-export function resumoDaqui(semente, mapa, nomeCidade, base, genero, molde = null) {
-  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde);
+export function resumoDaqui(semente, mapa, nomeCidade, base, genero, molde = null, lex = null) {
+  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde, lex);
   if (!q) return "";
   const marca = (id) => (foiRevelado(base, id) ? " ✓" : "");
   const locais = q.locais.map((l) => `${l.icone} ${l.nome} (${l.tipo})${marca(idDoLocal(q.cidade.nome, l))}`).join(" · ");
@@ -554,10 +558,10 @@ ${seg ? `- Escondido (NUNCA revele sem que o jogador procure e passe no teste): 
 }
 
 /* Ficha de um chefe pelo nome — usada para reconciliar o combate_iniciar. */
-export function chefePorNome(semente, mapa, genero, nome) {
+export function chefePorNome(semente, mapa, genero, nome, lex = null) {
   const alvo = String(nome || "").toLowerCase();
   if (!alvo) return null;
-  return chefesDoMundo(semente, mapa, genero).find((c) => alvo.includes(c.nomeCurto.toLowerCase()) || c.nome.toLowerCase() === alvo) || null;
+  return chefesDoMundo(semente, mapa, genero, lex).find((c) => alvo.includes(c.nomeCurto.toLowerCase()) || c.nome.toLowerCase() === alvo) || null;
 }
 export function criaturaPorNome(semente, mapa, genero, nome) {
   const alvo = String(nome || "").toLowerCase();
@@ -569,8 +573,8 @@ export function criaturaPorNome(semente, mapa, genero, nome) {
   return null;
 }
 
-export function resumoChefesPrompt(semente, mapa, base, genero) {
-  const cs = chefesDoMundo(semente, mapa, genero).filter((c) => !estaMorto(base, c.nome) && !estaMorto(base, c.nomeCurto));
+export function resumoChefesPrompt(semente, mapa, base, genero, lex = null) {
+  const cs = chefesDoMundo(semente, mapa, genero, lex).filter((c) => !estaMorto(base, c.nome) && !estaMorto(base, c.nomeCurto));
   if (!cs.length) return "";
   const linha = (c) => `${c.nome} — ${c.linha === "principal" ? "LINHA PRINCIPAL" : "secundário"}, nível ${c.nivel}${c.gd ? `, GD ${c.gd}` : ""}, ${c.regiao ? `nos arredores de ${c.regiao}` : "paradeiro incerto"}${c.covil ? ` (covil perto de ${c.covil})` : ""}; ${c.personalidade}; ${c.motivo}`;
   return `CHEFES QUE JÁ EXISTEM NESTE MUNDO (do sistema — apresente-os quando a história pedir, na ordem que você achar melhor; NÃO invente outros): ${cs.map(linha).join(" || ")}.`;
