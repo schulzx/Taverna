@@ -49,6 +49,7 @@ export const SECOES = [
   { id: "momento", rotulo: "MOMENTO", prio: 3, o: "a batida da história" },
   { id: "forma", rotulo: "FORMA", prio: 5, o: "o formato desta cena" },
   { id: "gente", rotulo: "A GENTE", prio: 6, o: "o que cada um faz" },
+  { id: "contra", rotulo: "CONTRA", prio: 5, o: "o que a oposição quer, e em quem bate" },
   { id: "aliado", rotulo: "O ALIADO", prio: 7, o: "quem anda comigo" },
   { id: "vilao", rotulo: "O VILÃO", prio: 6, o: "o que a ameaça fez" },
   { id: "antes", rotulo: "ANTES", prio: 8, o: "o que já aconteceu aqui" },

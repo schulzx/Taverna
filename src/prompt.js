@@ -42,6 +42,7 @@ import { COMODOS_PROMPT } from "./comodos.js";
 import { ARREDORES_PROMPT } from "./arredores.js";
 import { ACAMPAMENTO_PROMPT } from "./acampamento.js";
 import { lexicoPrompt, chamadoDaRaca } from "./lexico.js";
+import { ADVERSARIO_PROMPT } from "./adversario.js";
 import { GEOGRAFO_PROMPT } from "./geografo.js";
 import { PAUTA_PROMPT } from "./pauta.js";
 import { REGISTRO_PROMPT } from "./registro.js";
@@ -130,6 +131,15 @@ export function formatarCanone(canone) {
    App monta a partir dos refs vivos; ausente ou vazio, tudo entra — que é
    exatamente o comportamento de antes desta versão. */
 export const PORTAS_DA_CENA = [
+  /* v9.110: NÃO SE DESCANSA EM COMBATE, e o código já proibia isso desde
+     a v9.99 — `podeArrumar` recusa trocar magia ou sintonia na luta, e o
+     descanso inteiro passa por lá. O bloco continuava subindo mesmo assim,
+     seiscentos e vinte e cinco caracteres de regra sobre uma coisa que
+     não pode acontecer, na cena mais cara do jogo.
+
+     A porta não é economia: é a mesma regra dos dois lados. Uma regra que
+     mora só num dos dois caminhos é como este projeto fabrica bug. */
+  { id: "descanso", quando: (c) => !c.emCombate, porque: "descanso curto, longo e dado de vida não existem no meio de uma luta — e o código já os recusa lá" },
   { id: "combate", quando: (c) => !!c.emCombate, porque: "terreno, economia de ação, reação, aflição de golpe, combo, controle de inimigo e presença divina só existem dentro de uma luta" },
   { id: "chao", quando: (c) => !!c.emCombate || !!c.temChao, porque: "o que caiu no chão sobrevive à luta, então a porta é o chão ter coisa — não a luta estar aberta" },
   /* v9.101: a ECONOMIA passou a morar aqui também. São dois mil caracteres
@@ -293,7 +303,7 @@ ${PERICIAS_PROMPT}
 
 ${HEROISMO_PROMPT}
 
-${DESCANSO_PROMPT}
+${so("descanso", DESCANSO_PROMPT)}
 
 ${so("acampamento", ACAMPAMENTO_PROMPT)}
 
@@ -311,6 +321,7 @@ ${so("gatilho", GATILHOS_PROMPT)}
 
 ${so("invocacao", INVOCACOES_PROMPT)}
 
+${so("combate", ADVERSARIO_PROMPT)}
 ${so("combate", CONTROLE_PROMPT)}
 
 ${so("regrapropria", HABILIDADES_PROMPT)}

@@ -18,6 +18,7 @@ import { proficienciaDe, fichaDoItem, danoDaArma, modDoGolpe } from "./itens.js"
 import { estaSintonizado } from "./sintonia.js";
 import { estaInvisivel } from "./gatilhos.js";
 import { estaVirado } from "./controle.js";
+import { escolherAlvo } from "./adversario.js";
 
 export function d(n) { return 1 + Math.floor(Math.random() * n); }
 
@@ -195,7 +196,49 @@ export function resumoDoAtaque(r) {
 /* v9.54: `rodada` e `provocado` entram aqui porque é aqui que a família de
    CONTROLE mora — a única das cinco que não cabia numa tabela lida na hora
    do golpe. Os dois têm padrão, então toda chamada antiga segue idêntica. */
-export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0, grade = null, heroi = null, aliados = [], rodada = 1, provocado = false }) {
+/* Quem cura de verdade, para a prioridade "o_curandeiro" não ser uma
+   promessa vazia: é a classe que tem o quê, não a que soa clerical. */
+const CURAM = ["Clérigo", "Druida", "Bardo"];
+
+/* v9.110: as bandeiras que o ADVERSÁRIO lê para escolher o alvo. Elas
+   nascem aqui porque só o motor sabe: "perto" é alcance contra a grade,
+   "bloqueia" é quem está fisicamente entre o bicho e o resto. */
+function bandeirasDosAlvos(alvos, inim, grade, pos) {
+  const comAlcance = alvos.map((a) => {
+    let perto = true;
+    try {
+      const alc = alcanca(grade, { ...inim }, a.onde || pos, { distancia: !!inim.distancia, alcanceM: inim.distancia ? 36 : null });
+      perto = !!alc.ok && !(alc.penalidade > 0);
+    } catch { perto = true; }
+    const cls = (a.ent && a.ent.classe) || "";
+    const perfil = cls ? perfilCombate(cls) : null;
+    return {
+      ref: a.ref, nome: a.nome, i: a.i,
+      vida: a.ent.vida, vidaMax: a.ent.vidaMax || a.ent.vida || 1, nivel: a.ent.nivel || 1,
+      heroi: a.ref === "jogador",
+      conjurador: !!perfil && (perfil.tipo === "conjurador" || perfil.tipo === "misto"),
+      cura: CURAM.includes(cls),
+      carrega: !!(a.ent && a.ent.carregaAChave),
+      meFeriu: !!(a.ent && a.ent.feriu === inim.nome),
+      perto,
+    };
+  });
+  /* BLOQUEIA é quem está no caminho, e sem grade isso ainda é decidível:
+     é o da frente — quem aguenta apanhar. Deixar a bandeira sempre vazia
+     faria seis intenções caírem no comportamento antigo sem avisar. */
+  const dePe = comAlcance.filter((x) => x.vida > 0);
+  if (dePe.length) {
+    let frente = dePe[0], nota = -Infinity;
+    for (const x of dePe) {
+      const q = (x.perto ? 100 : 0) + (x.conjurador ? -50 : 0) + (x.vida || 0);
+      if (q > nota) { nota = q; frente = x; }
+    }
+    frente.bloqueia = true;
+  }
+  return comAlcance;
+}
+
+export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0, grade = null, heroi = null, aliados = [], rodada = 1, provocado = false, prioridade = "" }) {
   const vivos = (inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
   const pos = heroi || jogador;
   const alvosPossiveis = [
@@ -223,10 +266,23 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
       const vivosAlvo = alvosDele.filter((a) => (a.ent.vida || 0) > 0);
       if (!vivosAlvo.length) break;
       let alvo;
-      /* v9.54: PROVOCADO, ninguém desvia o olhar. É a metade que dá sentido à
-         outra: sem isto, "o grupo age livre" seria uma frase, porque o
-         companheiro continuaria apanhando em 35% dos golpes. */
-      if (!virado && !provocado && vivosAlvo.length > 1 && Math.random() < 0.35) {
+      /* v9.110: A PRIORIDADE DO ADVERSÁRIO vem antes de tudo o que é
+         sorteio, e depois da provocação e da marionete, que são regras
+         DURAS — uma intenção não desfaz uma provocação, senão provocar
+         deixaria de ser uma decisão do jogador.
+
+         Falha aberta: sem prioridade, ou com uma que não acha ninguém, o
+         sorteio de sempre continua valendo. Uma intenção nunca pode
+         custar o turno de um inimigo. */
+      let daIntencao = null;
+      if (prioridade && !virado && !provocado && vivosAlvo.length > 1) {
+        const bandeiras = bandeirasDosAlvos(vivosAlvo, inim, grade, pos);
+        const esc = escolherAlvo(prioridade, bandeiras);
+        if (esc) daIntencao = vivosAlvo.find((x) => x.nome === esc.nome && x.ref === esc.ref) || null;
+      }
+      if (daIntencao) {
+        alvo = daIntencao;
+      } else if (!virado && !provocado && vivosAlvo.length > 1 && Math.random() < 0.35) {
         const comps = vivosAlvo.filter((a) => a.ref === "grupo");
         alvo = comps.length ? comps[Math.floor(Math.random() * comps.length)] : vivosAlvo[0];
       } else if (virado && vivosAlvo.length > 1) {

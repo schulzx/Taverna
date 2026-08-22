@@ -46,7 +46,8 @@ import { PERICIAS, periciaPorId, garantirPericias, periciasIniciais, bonusDePeri
 import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, podeGastar, gastarHeroismo, validarDeclaracao, envelopeDeclaracao, envelopeRefazer, resumoHeroismoPrompt, HEROISMO_PROMPT } from "./heroismo.js";
 import { dadoDeVida, garantirDadosVida, dadosQueVoltam, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT } from "./descanso.js";
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, MAX_RELOGIOS, RELOGIOS_PROMPT } from "./relogios.js";
-import { avaliarEncontro, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
+import { menteDaCriatura, intencaoDaVez, intencaoPorId, linhaDaLuta, envelopeDaVirada, ADVERSARIO_PROMPT } from "./adversario.js";
+import { avaliarEncontro, PESO_AMEACA, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
 import { montarGrade, garantirGrade, posicionar, posicionarPerto, alcanca, caminhar, alcancaveisDe, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, mapaEmTexto, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, quadradosDe, distanciaM, tamanhoDe, ladoDe, alcanceNatural, terrenoDificil, temCobertura, ehParede, regiaoDe, m2q, q2m, centroDe, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO, GRID_PROMPT } from "./grid.js";
 import { deslocamentoDe, passoEfetivo, passoComSelecao, passoDeHabilidade, deslocamentoDeCriatura, resumoDeslocamento, resumoDeslocamentoPrompt, MOVIMENTO_PROMPT } from "./movimento.js";
 import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPreparada, ehPreparavel, preparadasIniciais, alternarPreparada, podeLancar, ehRitual, motivoDoCaderno, MINUTOS_RITUAL, resumoMagiasPrompt, MAGIAS_PROMPT } from "./magias.js";
@@ -3921,6 +3922,93 @@ export default function Taverna() {
      Um lugar só, ordenado e com teto, para tudo o que o Mestre decidiu.
      Nasce com o Geógrafo dentro; cada sistema se muda para cá quando
      chegar a vez dele. */
+  /* ---------------- O QUE A OPOSIÇÃO QUER (v9.110) ----------------
+     Traduz o combate para a situação que o acervo do Adversário sabe
+     ler. As palavras do LUGAR vêm do Geógrafo prontas — duas versões do
+     mesmo chão seria a garantia de que uma das duas ia mentir. */
+  /* Os alvos como o Adversário os enxerga. Serve só para a LINHA da
+     Pauta poder nomear quem apanha — a escolha de verdade acontece
+     dentro do `turnoDosInimigos`, com as bandeiras que só o motor sabe
+     (alcance contra a grade, quem está no caminho). */
+  const alvosDaLuta = () => {
+    try {
+      const p0 = fichaViva() || personagem || {};
+      const grupo = (p0.grupo || []).filter((g) => (g.vida || 0) > 0);
+      return [
+        { ref: "jogador", nome: p0.nome, vida: p0.vida, vidaMax: p0.vidaMax, nivel: p0.nivel, heroi: true,
+          conjurador: perfilCombate(p0.classe || "").tipo === "conjurador" },
+        ...grupo.map((g, i) => ({ ref: "grupo", nome: g.nome, vida: g.vida, vidaMax: g.vidaMax || g.vida, nivel: g.nivel || 1, i,
+          conjurador: perfilCombate(g.classe || "").tipo === "conjurador",
+          cura: ["Clérigo", "Druida", "Bardo"].includes(g.classe || "") })),
+      ];
+    } catch (e) { return calou("alvosDaLuta", e); }
+  };
+
+  const lutaDaMesa = () => {
+    try {
+      const c = combateRef.current;
+      if (!c || !(c.inimigos || []).length) return null;
+      const p0 = fichaViva() || personagem || {};
+      const vivos = (c.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
+      if (!vivos.length) return null;
+      const e = espacoDaMesa();
+      const grupo = (p0.grupo || []).filter((g) => (g.vida || 0) > 0);
+      const somaVida = vivos.reduce((s, x) => s + (x.vida || 0), 0);
+      const somaMax = vivos.reduce((s, x) => s + (x.vidaMax || x.vida || 1), 0) || 1;
+      /* quem fala pela oposição é o mais forte de pé: um bando tem uma
+         intenção só, e é a de quem manda nele. */
+      const voz = vivos.reduce((a, b) => ((b.nivel || 0) + PESO_AMEACA[b.ameaca] * 10 > (a.nivel || 0) + PESO_AMEACA[a.ameaca] * 10 ? b : a), vivos[0]);
+      const mente = menteDaCriatura(voz.nome, voz.desc);
+      const av = avaliarEncontro(vivos, p0);
+      const mm = masmorraRef.current;
+      return {
+        nome: voz.nome, ameaca: voz.ameaca || "comum",
+        ehBicho: mente === "besta", ehMorto: mente === "morto",
+        ehTropa: vivos.length >= 4 && new Set(vivos.map((x) => x.nome)).size <= 2,
+        ehChefe: !!voz.chefe || voz.ameaca === "lendario",
+        pensa: mente !== "besta" && mente !== "morto",
+        rodada: c.rodada || 1,
+        quantos: vivos.length, quantosEram: (c.inimigos || []).length,
+        minhaVida: (voz.vida || 0) / (voz.vidaMax || voz.vida || 1),
+        vidaDosMeus: somaVida / somaMax,
+        faixa: (av && av.faixa && av.faixa.id) || "",
+        heroiVida: (p0.vida || 0) / (p0.vidaMax || 1),
+        heroiCaido: (p0.vida || 0) <= 0,
+        heroiSozinho: grupo.length === 0,
+        quantosDoOutroLado: 1 + grupo.length,
+        temConjurador: [p0, ...grupo].some((x) => perfilCombate(x.classe || "").tipo === "conjurador"),
+        temCurandeiro: grupo.some((x) => ["Clérigo", "Druida", "Bardo"].includes(x.classe || "")),
+        alguemFerido: [p0, ...grupo].some((x) => (x.vida || 0) > 0 && (x.vida || 0) < (x.vidaMax || 1) * 0.5),
+        heroiFamoso: famaAtual() >= 45,
+        heroiCarrega: (mm && !mm.encerrada && mm.temChave) ? "a chave da masmorra" : "",
+        apertado: e.apertado, aberto: e.aberto, fundo: e.fundo, alto: e.alto,
+        agua: e.agua, escuro: e.luz === "escuro", saidas: e.saidas,
+        publico: e.publico, emMasmorra: e.emMasmorra,
+        ondeCai: e.alto ? (e.emMasmorra ? "o poço da sala" : "a beira") : "",
+        euEmbosquei: !!c.emboscada && !c.surpresaDoJogador,
+        fuiEmboscado: !!c.emboscada && !!c.surpresaDoJogador,
+        temRefem: !!c.refem, temCivil: e.gentePorPerto > 0 && !e.emMasmorra,
+        protejoAlgo: (mm && !mm.encerrada && voz.chefe) ? "o que está atrás dele" : "",
+        protegidoQuebrou: false,
+        querSaber: "",
+        temLider: vivos.length > 1, liderCaiu: (c.inimigos || []).some((x) => x.chefe && (x.derrotado || (x.vida || 0) <= 0)),
+        doVilao: !!(nemesisRef.current && nemesisRef.current.nome) && !!c.doVilao,
+        ordemDoVilao: (c.doVilao && (nemesisRef.current || {}).arquetipo) ? "o que a ameaça mandou" : "",
+      };
+    } catch (e) { calou("lutaDaMesa", e); return null; }
+  };
+
+  /* A intenção da luta e o que ela virou. A memória é por COMBATE: sem
+     ela não existe "virou", existe só "agora é outra" — e um inimigo que
+     troca de plano toda rodada não tem plano. */
+  const intencaoDaLuta = () => {
+    const s = lutaDaMesa();
+    if (!s) return null;
+    const v = intencaoDaVez(s, { antes: intencaoRef.current || "" });
+    if (!v || !v.intencao) return null;
+    return { ...v, situacao: s };
+  };
+
   const pautaDoTurno = () => {
     let p = garantirPauta(null);
     /* quem está longe já é calculado pelo elenco da cena — o Geógrafo lê
@@ -3952,6 +4040,23 @@ export default function Taverna() {
     /* v9.108: O ALIADO AGE POR CONTA PRÓPRIA. Um por turno, e só um: o
        silêncio dos outros é o que faz a vez de cada um valer alguma
        coisa. */
+    /* v9.110: O ADVERSÁRIO. Uma linha, e ela é a mesma coisa que a
+       mecânica vai fazer: a prioridade de alvo desta intenção é a que
+       entra no `turnoDosInimigos` logo abaixo. Uma intenção que não muda
+       o alvo seria adjetivo. */
+    {
+      const v = intencaoDaLuta();
+      if (v) {
+        const antes = intencaoRef.current || "";
+        intencaoRef.current = v.intencao.id;
+        p = porNaPauta(p, "contra", linhaDaLuta(v.situacao, alvosDaLuta(), { antes }));
+        /* a VIRADA é fato consumado e vai ao canon, não à Pauta: a Pauta
+           diz o que vale agora, o canon diz o que já aconteceu e não se
+           desfaz. Sai uma vez só, na rodada em que virou. */
+        const env = envelopeDaVirada(v.situacao, { antes });
+        if (env) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${env}`;
+      }
+    }
     {
       const r = aliadoParaPauta(aliadosDaCena());
       if (r.linhas.length) {
@@ -4332,6 +4437,10 @@ export default function Taverna() {
      alma, em qualquer save. */
   const aliadosRef = useRef({});
   const saberRef = useRef([]);
+  /* v9.110: a intenção da luta em curso. Por COMBATE, e zerada quando
+     ele acaba: uma intenção que sobrevive à luta seria um bando novo
+     nascendo já com o plano do bando anterior. */
+  const intencaoRef = useRef("");
   const vilaoAgiuRef = useRef(-99);
   /* e o ATO do herói neste turno, lido do que ele escreveu. É o que a
      maioria dos movimentos do Intérprete consulta. */
@@ -5884,7 +5993,7 @@ export default function Taverna() {
         else combateOciosoRef.current += 1;
         if (combateOciosoRef.current >= 2) {
           combateOciosoRef.current = 0;
-          combateRef.current = null; setCombate(null); limparConjuracoesDaLuta(null);
+          combateRef.current = null; intencaoRef.current = ""; setCombate(null); limparConjuracoesDaLuta(null);
           msgs.push("⚔ O confronto se dissolve — o painel de combate se fecha.");
         }
       } else combateOciosoRef.current = 0;
@@ -7343,7 +7452,7 @@ export default function Taverna() {
     eventosRef.current = { locais: [], global: null, semGlobalDesde: 0, seq: 1 }; setEventos(eventosRef.current);
     masmorraRef.current = null; setMasmorra(null);
     jornadaRef.current = null; setJornada(null);
-    combateRef.current = null; setCombate(null);
+    combateRef.current = null; intencaoRef.current = ""; setCombate(null);
     mesaRef.current = garantirMesa(null);
     estanteRef.current = garantirEstante(null);
     /* O HERDEIRO. Ele entra em "espreita" e na fase do rumor, como qualquer
@@ -7441,7 +7550,7 @@ export default function Taverna() {
     if (!cap) bancoNomesRef.current = gerarBancoNomes(mundoAtual());
     systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null);
-    setCombate(null); combateRef.current = null;   /* fim de campanha: nao ha ficha para limpar */
+    setCombate(null); combateRef.current = null; intencaoRef.current = "";   /* fim de campanha: nao ha ficha para limpar */
     setFase("jogo");
     /* v9.101: a mesa fica sabendo que o mundo dela foi lido. É a única
        linha do léxico que o jogador vê, e ela é sobre o MUNDO — não sobre
@@ -8973,7 +9082,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (!c || !(c.inimigos || []).length) return false;
     const todosCairam = c.inimigos.every((e) => e.derrotado || (e.vida || 0) <= 0);
     if (!todosCairam) return false;
-    combateRef.current = null; setCombate(null); combateOciosoRef.current = 0;
+    combateRef.current = null; intencaoRef.current = ""; setCombate(null); combateOciosoRef.current = 0;
     /* v9.46: acabou a luta, acabou a conjuração. Sem isto a fera invocada
        viraria companheiro permanente pela porta dos fundos — e o teto do
        grupo, o vínculo e o XP não sabem lidar com uma criatura que não é
@@ -9202,6 +9311,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       inimigos: combPos.inimigos, jogador: persBase, grupo: persBase.grupo || [],
       gdJogador: grauDe(divindadeRef.current), grade: gradeAtual, heroi: lugarHeroi, aliados: aliadosAgora,
       rodada: rodadaAgora, provocado: provocandoAgora,
+      /* v9.110: e é AQUI que a linha da Pauta vira verdade. A mesma
+         intenção que o Narrador leu escolhe em quem o golpe cai. */
+      prioridade: (intencaoPorId(intencaoRef.current) || {}).alvo || "",
     });
     const linhasSis = [];
     let danoNoJogador = 0;
@@ -9521,7 +9633,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   /* PASSAR O TEMPO (deliberado): simula N horas; quanto mais horas, mais o mundo muda */
   const passarTempo = (horas) => {
     if (bloqueado || acampadoRef.current) return;
-    if (combateRef.current) { combateRef.current = null; setCombate(null); combateOciosoRef.current = 0; limparConjuracoesDaLuta(null); }
+    if (combateRef.current) { combateRef.current = null; intencaoRef.current = ""; setCombate(null); combateOciosoRef.current = 0; limparConjuracoesDaLuta(null); }
     setMostrarHoras(false);
     const escala = horas <= 3 ? "algumas horas (mudanças pequenas)" : horas <= 8 ? "boa parte do dia (mudanças perceptíveis)" : horas <= 16 ? "quase um dia inteiro (mudanças significativas)" : "um dia completo (o mundo se move bastante)";
     pushMsgs([{ autor: "sistema", texto: `🕐 Você deixa ${horas}h passarem…` }]);
@@ -12963,7 +13075,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      Mestre narra o que passou, proporcional ao tempo (nunca exagerado). */
   const acampar = () => {
     if (acampadoRef.current || bloqueado) return;
-    if (combateRef.current) { combateRef.current = null; setCombate(null); combateOciosoRef.current = 0; limparConjuracoesDaLuta(null); }
+    if (combateRef.current) { combateRef.current = null; intencaoRef.current = ""; setCombate(null); combateOciosoRef.current = 0; limparConjuracoesDaLuta(null); }
     definirAcampado(true);
     /* v9.99: ONDE se acampa passa a ser decisão do CÓDIGO. Antes o sistema
        só sabia responder dentro de uma cidade; fora dos muros dizia
