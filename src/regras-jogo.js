@@ -61,9 +61,12 @@ export function evoluirCompanheiro(g) {
    ECONOMIA (dados de vida finitos, um longo por dia, PM preso à noite).
    Aqui ficou só o que sempre foi daqui: as condições, que somem por regra
    de catálogo e não por fração de PV. */
-export function aplicarDescanso(pers, tipo, msgs, dia = 0) {
+export function aplicarDescanso(pers, tipo, msgs, dia = 0, abrigo = null) {
   const longo = tipo === "longo";
-  const r = longo ? aplicarLongo(pers, dia) : aplicarCurto(pers);
+  /* v9.100: `abrigo` é o degrau do sítio do acampamento (ao relento, sob
+     teto, cama de verdade). Só a noite inteira o lê: uma hora de cochilo
+     não devolve dado nenhum, com teto ou sem. */
+  const r = longo ? aplicarLongo(pers, dia, abrigo) : aplicarCurto(pers);
   let p = r.pers;
   r.msgs.forEach((m) => msgs.push(m));
   /* Condições: quem some com qual descanso é decisão do CATÁLOGO (v9.0) —

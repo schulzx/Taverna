@@ -18,6 +18,48 @@
    sentido quando equipar significa alguma coisa.
    ============================================================ */
 
+/* ---------------- O QUE SE TROCA COM UMA LUTA CORRENDO (v9.100) ----------------
+   Anotado na v9.99 e verdadeiro desde sempre: dava para vestir armadura
+   completa no meio da briga. A ficha abre com um toque, o slot troca, a
+   defesa sobe, e a rodada seguinte encontra o herói de placas.
+
+   O remendo NÃO é proibir de equipar — esta casa já decidiu, na v9.13,
+   que abrir a bolsa não custa o turno, e voltar atrás disso seria
+   desmanchar uma decisão boa por causa de outra. O remendo é o relógio:
+   uma rodada tem SEIS SEGUNDOS, e o que não cabe em seis segundos não
+   cabe numa rodada.
+
+   Empunhar uma arma cabe. Enfiar um anel cabe. Afivelar um elmo, apertar
+   as correias de um escudo, calçar botas e — principalmente — vestir uma
+   armadura de placas, que ninguém veste sozinho, não cabem. Não é uma
+   regra nova: é a mesma régua do 5e (arma é interação de objeto,
+   armadura leva minutos), escrita aqui em segundos porque em segundos
+   ela se explica sozinha ao jogador.
+
+   Fora de combate continua tudo livre, como sempre foi. */
+export const SEGUNDOS_DA_RODADA = 6;
+export const TROCA_DE_SLOT = {
+  arma: { segundos: 1, como: "empunhar é um gesto de mão" },
+  anel: { segundos: 2, como: "um anel entra num dedo" },
+  amuleto: { segundos: 3, como: "passa pela cabeça e pronto" },
+  escudo: { segundos: 60, como: "as correias passam pelo braço e apertam com a outra mão" },
+  elmo: { segundos: 60, como: "a fivela é debaixo do queixo, e você precisa das duas mãos" },
+  botas: { segundos: 120, como: "é preciso sentar e calçar" },
+  armadura: { segundos: 600, como: "as fivelas são nas costas — ninguém veste uma armadura sozinho, e ninguém a veste de pé no meio de uma briga" },
+};
+export function trocaDeSlot(slot) {
+  return TROCA_DE_SLOT[String(slot || "")] || TROCA_DE_SLOT.arma;
+}
+export function podeTrocarAgora(slot, { emCombate = false } = {}) {
+  const t = trocaDeSlot(slot);
+  if (!emCombate || t.segundos <= SEGUNDOS_DA_RODADA) return { ok: true, motivo: "", segundos: t.segundos };
+  return {
+    ok: false,
+    segundos: t.segundos,
+    motivo: `isso não se troca no meio da luta: ${t.como}, e uma rodada tem ${SEGUNDOS_DA_RODADA} segundos`,
+  };
+}
+
 /* ---------------- CATEGORIAS ---------------- */
 export const CAT_ARMA = {
   simples_corpo: { id: "simples_corpo", nome: "arma simples corpo a corpo", classe: "simples" },

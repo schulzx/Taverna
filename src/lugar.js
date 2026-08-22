@@ -290,12 +290,24 @@ export function ehAPropriaCidade(nome, cidade) {
 /* Os nomes vêm da ficção com artigo colado ("a fazenda de Jessa"), e
    "em a fazenda" saiu feio na tela no primeiro teste. A contração é
    burra de propósito: só resolve o artigo inicial, que é o caso real. */
+/* v9.100: e o INDEFINIDO também. "Você monta acampamento uma estalagem em
+   Forte do Vigia" foi o que apareceu na tela quando o sítio do
+   acampamento passou por aqui: o mapa devolve "uma estalagem em X", "um
+   refúgio aliado em X", e a contração só conhecia "a" e "o". A regra do
+   português é a mesma dos dois lados — em+uma=numa, em+um=num —, e as
+   quatro linhas de baixo são a mesma burrice deliberada das quatro de
+   cima. Ordem importa: "as" antes de "a", "uma" antes de "um", senão o
+   prefixo curto casa primeiro e come a palavra errada. */
 export function comEm(nome) {
   const s = String(nome || "").trim();
-  if (/^a\s+/i.test(s)) return `n${s.replace(/^a\s+/i, "a ")}`;
-  if (/^o\s+/i.test(s)) return `n${s.replace(/^o\s+/i, "o ")}`;
   if (/^as\s+/i.test(s)) return `n${s.replace(/^as\s+/i, "as ")}`;
   if (/^os\s+/i.test(s)) return `n${s.replace(/^os\s+/i, "os ")}`;
+  if (/^a\s+/i.test(s)) return `n${s.replace(/^a\s+/i, "a ")}`;
+  if (/^o\s+/i.test(s)) return `n${s.replace(/^o\s+/i, "o ")}`;
+  if (/^umas\s+/i.test(s)) return `n${s.replace(/^umas\s+/i, "umas ")}`;
+  if (/^uns\s+/i.test(s)) return `n${s.replace(/^uns\s+/i, "uns ")}`;
+  if (/^uma\s+/i.test(s)) return `n${s.replace(/^uma\s+/i, "uma ")}`;
+  if (/^um\s+/i.test(s)) return `n${s.replace(/^um\s+/i, "um ")}`;
   return `em ${s}`;
 }
 
@@ -303,10 +315,13 @@ export function comEm(nome) {
    Cambaleante" foi o que apareceu na primeira passada. */
 export function comDe(nome) {
   const s = String(nome || "").trim();
-  if (/^a\s+/i.test(s)) return `d${s.replace(/^a\s+/i, "a ")}`;
-  if (/^o\s+/i.test(s)) return `d${s.replace(/^o\s+/i, "o ")}`;
   if (/^as\s+/i.test(s)) return `d${s.replace(/^as\s+/i, "as ")}`;
   if (/^os\s+/i.test(s)) return `d${s.replace(/^os\s+/i, "os ")}`;
+  if (/^a\s+/i.test(s)) return `d${s.replace(/^a\s+/i, "a ")}`;
+  if (/^o\s+/i.test(s)) return `d${s.replace(/^o\s+/i, "o ")}`;
+  /* e o INDEFINIDO fica de fora deste: "duma estalagem" é português
+     correto e não é o português que se fala nesta mesa. Cai no `de ` de
+     baixo, que já dizia "de uma estalagem" — que é o certo aqui. */
   return `de ${s}`;
 }
 

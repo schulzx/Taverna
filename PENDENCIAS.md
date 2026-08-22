@@ -3113,6 +3113,109 @@ todas, e em viagem usa o bioma da cidade de onde se partiu.
   ermo hostil e dormir numa gruta seca valem o mesmo — de propósito, por
   ora: um campo sem leitor seria mais uma regra escrita sem código atrás.
 
+## O abrigo ganha leitor, e o corpo volta a ser corpo — v9.100
+
+As duas coisas que a v9.99 deixou anotadas, fechadas.
+
+### O sítio deixa de ser só um nome
+
+A anotação era: "o sítio diz ONDE e só — dormir exposto num ermo e dormir
+numa gruta seca valem o mesmo". Um campo sem ninguém que o leia é mais
+uma regra escrita sem código atrás, e por isso o `abrigo` só entrou agora,
+junto com quem o lê.
+
+Os **49 sítios** declaram um dos três degraus — **ao relento** (20),
+**sob algum teto** (28), **cama de verdade** (1 a bordo, mais as cidades)
+— e o degrau move os **dados de vida** da noite inteira um para cada
+lado. Os dados são o único recurso do jogo que só volta dormindo, e por
+isso são o único em que dormir mal pode significar alguma coisa.
+
+O meio da régua é o comportamento anterior, exatamente: metade dos dados,
+como sempre foi. Quem dorme numa gruta continua onde estava. Quem chega à
+estalagem ganha um; quem dorme na chuva perde um. Um dado é pouco de
+propósito — não é para tornar o ermo impossível, é para que "aguento mais
+meio dia de estrada e durmo com teto" volte a ser uma pergunta.
+
+**E o piso e o teto engolem a régua com frequência.** No nível 1 há um
+dado só; com quase tudo inteiro, o dado a mais não tem onde entrar. Isso
+virou o problema interessante desta versão: o painel do acampamento
+promete ANTES do clique e o descanso cumpre DEPOIS, e a primeira versão
+repetia a fórmula nos dois lugares — duas fórmulas que divergiriam na
+primeira mudança, e que já mentiam na primeira noite. `dadosQueVoltam`
+passou a ser o único lugar onde a conta existe, com três leitores (o
+descanso que aplica, a linha que anuncia, o painel que promete), e ela
+devolve `valeu`: o ajuste que **sobrou** depois do piso e do teto. É o
+único número que se pode mostrar sem prometer o que não vem — um número
+que mente uma vez deixa de ser lido para sempre.
+
+### O corpo volta a ser corpo
+
+A outra anotação: dava para vestir armadura completa no meio da luta.
+
+O remendo não foi proibir de equipar. Esta casa decidiu na v9.13 que
+abrir a bolsa não custa o turno, e desmanchar uma decisão boa por causa
+de outra seria trocar um problema por dois. O remendo é o **relógio**:
+uma rodada tem seis segundos, e o que não cabe em seis segundos não cabe
+numa rodada.
+
+```
+arma      1s   empunhar é um gesto de mão            → livre na luta
+anel      2s   um anel entra num dedo                → livre na luta
+amuleto   3s   passa pela cabeça e pronto            → livre na luta
+escudo   60s   as correias passam pelo braço         → só fora da luta
+elmo     60s   a fivela é debaixo do queixo          → só fora da luta
+botas   120s   é preciso sentar e calçar             → só fora da luta
+armadura 600s  as fivelas são nas costas             → só fora da luta
+```
+
+Não é regra nova: é a régua do 5e (arma é interação de objeto, armadura
+leva minutos), escrita em segundos porque em segundos ela se explica
+sozinha ao jogador. Vale para tirar tanto quanto para pôr — quem não
+consegue afivelar no meio da briga também não consegue arrancar —, e vale
+para o companheiro, que tem o mesmo corpo e a mesma rodada. Fora de
+combate, tudo livre como sempre foi.
+
+### De quebra: a contração que só conhecia o artigo definido
+
+Apareceu na tela: **"Você monta acampamento uma estalagem em Forte do
+Vigia"**. O `nome` de um sítio é uma continuação de frase e o mapa devolve
+um sintagma com artigo indefinido; `comEm` (v9.39) só sabia contrair "a"
+e "o". Agora sabe *em+uma=numa* e *em+um=num*, com "as" antes de "a" e
+"uma" antes de "um" na ordem dos testes — senão o prefixo curto casa
+primeiro e come a palavra errada.
+
+`comDe` ficou de fora de propósito: "duma estalagem" é português correto
+e não é o português que se fala nesta mesa.
+
+E o único texto do mapa que já começa com a palavra que a frase acabou de
+dizer — "acampamento na região" — perde a repetição em vez de ganhar
+preposição.
+
+### Verificado na tela
+
+- Save antigo, acampado antes desta versão: o painel não mostra sítio
+  nenhum e a noite rende o padrão. O caminho seguro é o que roda.
+- Estalagem em Forte do Vigia, nível 8, 6 de 8 dados gastos: o painel
+  prometeu "a noite inteira devolve um dado a mais" e a noite entregou
+  **+5 (7/8)**, com a linha "🛏 cama de verdade: um dado de vida a mais
+  de volta". Com o abrigo neutro (a taverna), nenhuma linha — não havia o
+  que anunciar.
+- Em combate, com quatro relíquias na mochila: **arma e amuleto entraram**;
+  **elmo e armadura foram recusados**, cada um com a sua frase.
+
+### Anotado para depois
+
+- **O escudo é o caso duvidoso.** No 5e ele custa uma AÇÃO, não minutos;
+  aqui ele caiu entre os que levam tempo, porque não existe caminho para
+  gastar a ação a partir da ficha e inventar um contradiria a v9.13. Se
+  um dia a economia de ação ganhar uma porta pela interface, o escudo é o
+  primeiro que deve mudar de lado.
+- **A cama de verdade é quase só da cidade.** Dos 49 sítios da tabela só
+  a cabine do navio dá o degrau 2; todo o resto vem do mapa. É o desenho
+  — o ermo não deveria ter hotel —, mas se um dia houver um refúgio
+  construído pelo jogador, é ali que o terceiro degrau precisa aparecer
+  fora dos muros.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

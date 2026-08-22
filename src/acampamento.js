@@ -47,60 +47,90 @@ import { comEm, comDe } from "./lugar.js";
 
 const pick = (sorte, arr) => arr[Math.floor(sorte() * arr.length)] || arr[0];
 
+/* ---------------- O ABRIGO (v9.100) ----------------
+   A v9.99 deixou o sítio dizer ONDE e mais nada, e anotou o porquê: um
+   campo sem ninguém que o leia é mais uma regra escrita sem código atrás.
+   Este é o leitor.
+
+   O abrigo decide QUANTOS DADOS DE VIDA a noite inteira devolve. É o
+   único recurso do jogo que só volta dormindo, e por isso é o único em
+   que dormir mal significa alguma coisa. A régua tem o comportamento
+   antigo no MEIO — metade dos dados, como sempre foi —, e os dois lados
+   valem um dado para cima ou para baixo: quem chega à estalagem ganha,
+   quem dorme na chuva perde, e quem dorme numa gruta continua exatamente
+   onde estava antes desta versão.
+
+   Um dado é pouco de propósito. Não é para tornar o ermo impossível — é
+   para que "aguento mais meio dia de estrada e durmo com teto" volte a
+   ser uma pergunta. */
+export const ABRIGOS = [
+  { nivel: 0, rotulo: "ao relento", nota: "sem teto: o frio, o orvalho e o barulho entram a noite inteira", dados: -1 },
+  { nivel: 1, rotulo: "sob algum teto", nota: "coberto, ainda que improvisado — dá para dormir de verdade", dados: 0 },
+  { nivel: 2, rotulo: "cama de verdade", nota: "paredes, porta e um colchão: o corpo relaxa como não relaxa na estrada", dados: 1 },
+];
+export function abrigoPorNivel(n) {
+  const i = Math.max(0, Math.min(ABRIGOS.length - 1, Math.round(Number(n) || 0)));
+  return ABRIGOS[i];
+}
+/* Sítio ausente devolve 1 — o do meio, que é o comportamento de antes.
+   Um save antigo acampado não pode acordar pior por causa de um campo
+   que não existia quando ele deitou. */
+export function abrigoDoSitio(s) { return abrigoPorNivel(s && s.abrigo != null ? s.abrigo : 1); }
+
 /* ---------------- O CAMPO ABERTO, POR BIOMA ----------------
    `dentro` é o detalhe concreto que a narração tem de usar: sem ele o
    Mestre recebe um substantivo e devolve a mesma fogueira genérica que
    ele já devolvia. Com ele, a cena tem uma coisa para tocar. */
 export const SITIOS_DO_ERMO = {
   planicie: [
-    { id: "murundu", icone: "⛺", nome: "atrás de um murundu de terra", dentro: "o único quebra-vento em léguas, e ele mal cobre um homem sentado" },
-    { id: "cerca_velha", icone: "⛺", nome: "encostado numa cerca de pedra caída", dentro: "pedra empilhada por alguém, há muito tempo, para separar o que já não é de ninguém" },
-    { id: "arvore_sozinha", icone: "🌳", nome: "sob a única árvore do descampado", dentro: "uma árvore que virou marco de estrada por não ter concorrência" },
-    { id: "vala_seca", icone: "⛺", nome: "dentro de uma vala seca", dentro: "abaixo da linha do horizonte — de longe, ninguém vê a fogueira" },
-    { id: "moita_alta", icone: "🌾", nome: "no meio do capim alto", dentro: "o capim range com o vento a noite inteira e é impossível saber se é só vento" },
+    { id: "murundu", icone: "⛺", abrigo: 0, nome: "atrás de um murundu de terra", dentro: "o único quebra-vento em léguas, e ele mal cobre um homem sentado" },
+    { id: "cerca_velha", icone: "⛺", abrigo: 0, nome: "encostado numa cerca de pedra caída", dentro: "pedra empilhada por alguém, há muito tempo, para separar o que já não é de ninguém" },
+    { id: "arvore_sozinha", icone: "🌳", abrigo: 1, nome: "sob a única árvore do descampado", dentro: "uma árvore que virou marco de estrada por não ter concorrência" },
+    { id: "vala_seca", icone: "⛺", abrigo: 1, nome: "dentro de uma vala seca", dentro: "abaixo da linha do horizonte — de longe, ninguém vê a fogueira" },
+    { id: "moita_alta", icone: "🌾", abrigo: 0, nome: "no meio do capim alto", dentro: "o capim range com o vento a noite inteira e é impossível saber se é só vento" },
   ],
   floresta: [
-    { id: "clareira", icone: "🌲", nome: "numa clareira redonda", dentro: "um círculo de céu aberto no meio do fechado, com o chão limpo demais para ser acaso" },
-    { id: "raizes", icone: "🌲", nome: "entre as raízes de uma árvore enorme", dentro: "raízes que fazem paredes, e um vão no meio do tamanho exato de duas pessoas" },
-    { id: "tronco_caido", icone: "🪵", nome: "ao abrigo de um tronco tombado", dentro: "o tronco caiu faz anos e está oco: dá para dormir dentro dele, se a chuva apertar" },
-    { id: "beira_do_riacho", icone: "💧", nome: "à margem de um riacho", dentro: "água corrente ao lado, que resolve a sede e apaga qualquer som que se aproxime" },
-    { id: "carvoaria", icone: "🔥", nome: "numa carvoaria abandonada", dentro: "o chão ainda é preto e ainda é quente um palmo abaixo" },
+    { id: "clareira", icone: "🌲", abrigo: 0, nome: "numa clareira redonda", dentro: "um círculo de céu aberto no meio do fechado, com o chão limpo demais para ser acaso" },
+    { id: "raizes", icone: "🌲", abrigo: 1, nome: "entre as raízes de uma árvore enorme", dentro: "raízes que fazem paredes, e um vão no meio do tamanho exato de duas pessoas" },
+    { id: "tronco_caido", icone: "🪵", abrigo: 1, nome: "ao abrigo de um tronco tombado", dentro: "o tronco caiu faz anos e está oco: dá para dormir dentro dele, se a chuva apertar" },
+    { id: "beira_do_riacho", icone: "💧", abrigo: 0, nome: "à margem de um riacho", dentro: "água corrente ao lado, que resolve a sede e apaga qualquer som que se aproxime" },
+    { id: "carvoaria", icone: "🔥", abrigo: 1, nome: "numa carvoaria abandonada", dentro: "o chão ainda é preto e ainda é quente um palmo abaixo" },
   ],
   colina: [
-    { id: "afloramento", icone: "🪨", nome: "sob um afloramento de rocha", dentro: "uma laje inclinada que serve de teto para três, e para mais ninguém" },
-    { id: "encosta_ao_vento", icone: "⛰", nome: "no lado abrigado da encosta", dentro: "o vento bate do outro lado do morro e passa por cima sem tocar" },
-    { id: "cume", icone: "⛰", nome: "logo abaixo do cume", dentro: "de lá se vê a estrada inteira nos dois sentidos, e a estrada inteira vê a fogueira" },
-    { id: "curral_velho", icone: "⛺", nome: "dentro de um curral abandonado", dentro: "muro de pedra na altura do peito e nenhum animal há muitos anos" },
+    { id: "afloramento", icone: "🪨", abrigo: 1, nome: "sob um afloramento de rocha", dentro: "uma laje inclinada que serve de teto para três, e para mais ninguém" },
+    { id: "encosta_ao_vento", icone: "⛰", abrigo: 1, nome: "no lado abrigado da encosta", dentro: "o vento bate do outro lado do morro e passa por cima sem tocar" },
+    { id: "cume", icone: "⛰", abrigo: 0, nome: "logo abaixo do cume", dentro: "de lá se vê a estrada inteira nos dois sentidos, e a estrada inteira vê a fogueira" },
+    { id: "curral_velho", icone: "⛺", abrigo: 1, nome: "dentro de um curral abandonado", dentro: "muro de pedra na altura do peito e nenhum animal há muitos anos" },
   ],
   montanha: [
-    { id: "gruta_rasa", icone: "🕳", nome: "numa gruta rasa", dentro: "fundo demais para o vento, raso demais para esconder o que está lá dentro" },
-    { id: "sob_a_saliencia", icone: "🪨", nome: "sob uma saliência de pedra", dentro: "pedra por cima, precipício a três passos e nenhuma lenha por perto" },
-    { id: "passo_estreito", icone: "⛰", nome: "num rebaixo do passo", dentro: "o passo estreita ali e qualquer coisa que suba tem de passar pelo fogo" },
-    { id: "ruina_de_pastor", icone: "🏚", nome: "numa cabana de pastor sem teto", dentro: "quatro paredes de pedra seca, sem porta e sem telhado, cheias de lã velha" },
+    { id: "gruta_rasa", icone: "🕳", abrigo: 1, nome: "numa gruta rasa", dentro: "fundo demais para o vento, raso demais para esconder o que está lá dentro" },
+    { id: "sob_a_saliencia", icone: "🪨", abrigo: 1, nome: "sob uma saliência de pedra", dentro: "pedra por cima, precipício a três passos e nenhuma lenha por perto" },
+    { id: "passo_estreito", icone: "⛰", abrigo: 0, nome: "num rebaixo do passo", dentro: "o passo estreita ali e qualquer coisa que suba tem de passar pelo fogo" },
+    { id: "ruina_de_pastor", icone: "🏚", abrigo: 1, nome: "numa cabana de pastor sem teto", dentro: "quatro paredes de pedra seca, sem porta e sem telhado, cheias de lã velha" },
   ],
   deserto: [
-    { id: "duna_abrigo", icone: "🏜", nome: "na face abrigada de uma duna", dentro: "a areia guarda o calor do dia até a madrugada, e depois solta um frio absurdo" },
-    { id: "wadi", icone: "🏜", nome: "num leito seco de rio", dentro: "pedra lisa e areia, e a certeza de que se chover em algum lugar longe a água vem por aqui" },
-    { id: "oasis", icone: "🌴", nome: "à beira de um poço de estrada", dentro: "água salobra, três tamareiras e as marcas de quem parou aqui antes" },
-    { id: "coluna_caida", icone: "🏛", nome: "à sombra de uma coluna caída", dentro: "pedra lavrada saindo da areia — quem a ergueu não deixou mais nada" },
+    { id: "duna_abrigo", icone: "🏜", abrigo: 0, nome: "na face abrigada de uma duna", dentro: "a areia guarda o calor do dia até a madrugada, e depois solta um frio absurdo" },
+    { id: "wadi", icone: "🏜", abrigo: 0, nome: "num leito seco de rio", dentro: "pedra lisa e areia, e a certeza de que se chover em algum lugar longe a água vem por aqui" },
+    { id: "oasis", icone: "🌴", abrigo: 1, nome: "à beira de um poço de estrada", dentro: "água salobra, três tamareiras e as marcas de quem parou aqui antes" },
+    { id: "coluna_caida", icone: "🏛", abrigo: 0, nome: "à sombra de uma coluna caída", dentro: "pedra lavrada saindo da areia — quem a ergueu não deixou mais nada" },
   ],
   pantano: [
-    { id: "ilhota", icone: "🌿", nome: "numa ilhota de terra firme", dentro: "o único chão que não afunda em cem passos, e ele tem o tamanho de um quarto" },
-    { id: "palafita", icone: "🪵", nome: "num estrado de troncos sobre a água", dentro: "alguém amarrou esses troncos, e as amarras estão novas demais" },
-    { id: "raiz_de_mangue", icone: "🌿", nome: "sobre raízes de mangue", dentro: "dormir a um palmo da água escura, ouvindo o que se mexe embaixo" },
-    { id: "barco_encalhado", icone: "🛶", nome: "dentro de um barco encalhado", dentro: "casco virado, meio enterrado no lodo, e seco por dentro" },
+    { id: "ilhota", icone: "🌿", abrigo: 0, nome: "numa ilhota de terra firme", dentro: "o único chão que não afunda em cem passos, e ele tem o tamanho de um quarto" },
+    { id: "palafita", icone: "🪵", abrigo: 0, nome: "num estrado de troncos sobre a água", dentro: "alguém amarrou esses troncos, e as amarras estão novas demais" },
+    { id: "raiz_de_mangue", icone: "🌿", abrigo: 0, nome: "sobre raízes de mangue", dentro: "dormir a um palmo da água escura, ouvindo o que se mexe embaixo" },
+    { id: "barco_encalhado", icone: "🛶", abrigo: 1, nome: "dentro de um barco encalhado", dentro: "casco virado, meio enterrado no lodo, e seco por dentro" },
   ],
   costa: [
-    { id: "enseada", icone: "🌊", nome: "numa enseada de pedra", dentro: "o barulho da maré cobre a conversa, e cobre também qualquer passo na areia" },
-    { id: "duna_de_praia", icone: "🏖", nome: "atrás das dunas da praia", dentro: "capim de duna, areia fria e a linha da maré alta marcada bem ali" },
-    { id: "caverna_da_mare", icone: "🕳", nome: "numa gruta acima da maré alta", dentro: "seca por pouco: a marca de água escura está na altura do joelho" },
-    { id: "casco", icone: "⚓", nome: "ao abrigo de um casco naufragado", dentro: "as costelas de um navio de bom tamanho, e nenhuma sepultura por perto" },
+    { id: "enseada", icone: "🌊", abrigo: 0, nome: "numa enseada de pedra", dentro: "o barulho da maré cobre a conversa, e cobre também qualquer passo na areia" },
+    { id: "duna_de_praia", icone: "🏖", abrigo: 0, nome: "atrás das dunas da praia", dentro: "capim de duna, areia fria e a linha da maré alta marcada bem ali" },
+    { id: "caverna_da_mare", icone: "🕳", abrigo: 1, nome: "numa gruta acima da maré alta", dentro: "seca por pouco: a marca de água escura está na altura do joelho" },
+    { id: "casco", icone: "⚓", abrigo: 1, nome: "ao abrigo de um casco naufragado", dentro: "as costelas de um navio de bom tamanho, e nenhuma sepultura por perto" },
   ],
   gelo: [
-    { id: "muro_de_neve", icone: "❄", nome: "atrás de um muro de neve cortada", dentro: "blocos cortados e empilhados por mãos suas, e o vento passa por cima" },
-    { id: "fenda", icone: "❄", nome: "numa fenda entre lajes de gelo", dentro: "azul por dentro, sem vento, e estalando de hora em hora" },
-    { id: "sob_o_pinheiro", icone: "🌲", nome: "sob um pinheiro carregado de neve", dentro: "os galhos baixos formam uma tenda e o chão embaixo está seco" },
-    { id: "abrigo_de_caca", icone: "🏚", nome: "num abrigo de caçadores", dentro: "lenha empilhada por quem passou antes, pela regra de que o próximo vai precisar" },
+    { id: "muro_de_neve", icone: "❄", abrigo: 0, nome: "atrás de um muro de neve cortada", dentro: "blocos cortados e empilhados por mãos suas, e o vento passa por cima" },
+    { id: "fenda", icone: "❄", abrigo: 1, nome: "numa fenda entre lajes de gelo", dentro: "azul por dentro, sem vento, e estalando de hora em hora" },
+    { id: "sob_o_pinheiro", icone: "🌲", abrigo: 1, nome: "sob um pinheiro carregado de neve", dentro: "os galhos baixos formam uma tenda e o chão embaixo está seco" },
+    { id: "abrigo_de_caca", icone: "🏚", abrigo: 1, nome: "num abrigo de caçadores", dentro: "lenha empilhada por quem passou antes, pela regra de que o próximo vai precisar" },
   ],
 };
 
@@ -108,11 +138,11 @@ export const SITIOS_DO_ERMO = {
    Quem desceu não dorme na floresta lá de cima. Dorme atrás de uma
    porta que ele mesmo fechou, e isso é uma cena diferente. */
 export const SITIOS_DE_MASMORRA = [
-  { id: "sala_limpa", icone: "🏚", nome: "na sala que vocês acabaram de limpar", dentro: "o que sobrou da luta ainda está no chão, e ninguém teve vontade de arrastar para fora" },
-  { id: "atras_da_porta", icone: "🚪", nome: "atrás de uma porta escorada", dentro: "a porta não tem tranca, então foi escorada com o que havia: pedra, um banco, o próprio peso" },
-  { id: "nicho_da_escada", icone: "🕳", nome: "num nicho ao pé da escada", dentro: "de lá se ouve tudo o que desce, com muita antecedência" },
-  { id: "cripta_vazia", icone: "⚰", nome: "numa cripta já saqueada", dentro: "nichos vazios nas paredes, e quem os esvaziou não foi vocês" },
-  { id: "poco_seco", icone: "🕳", nome: "no fundo de um poço seco", dentro: "uma saída só, para cima, e ela funciona nos dois sentidos" },
+  { id: "sala_limpa", icone: "🏚", abrigo: 1, nome: "na sala que vocês acabaram de limpar", dentro: "o que sobrou da luta ainda está no chão, e ninguém teve vontade de arrastar para fora" },
+  { id: "atras_da_porta", icone: "🚪", abrigo: 1, nome: "atrás de uma porta escorada", dentro: "a porta não tem tranca, então foi escorada com o que havia: pedra, um banco, o próprio peso" },
+  { id: "nicho_da_escada", icone: "🕳", abrigo: 1, nome: "num nicho ao pé da escada", dentro: "de lá se ouve tudo o que desce, com muita antecedência" },
+  { id: "cripta_vazia", icone: "⚰", abrigo: 1, nome: "numa cripta já saqueada", dentro: "nichos vazios nas paredes, e quem os esvaziou não foi vocês" },
+  { id: "poco_seco", icone: "🕳", abrigo: 1, nome: "no fundo de um poço seco", dentro: "uma saída só, para cima, e ela funciona nos dois sentidos" },
 ];
 
 /* ---------------- EM VIAGEM, POR ÁGUA OU POR TERRA ----------------
@@ -121,22 +151,22 @@ export const SITIOS_DE_MASMORRA = [
    clareira é impossível — e era exatamente o erro que a instrução antiga
    proibia com maiúsculas em vez de resolver. */
 export const SITIOS_EMBARCADOS = [
-  { id: "convés", icone: "⛵", nome: "no convés, enrolado numa vela velha", dentro: "o balanço, o rangido do cordame e a vigia trocando de turno em cima" },
-  { id: "porao", icone: "⚓", nome: "no porão, entre a carga", dentro: "cheiro de breu e água parada, e o casco batendo do outro lado da tábua" },
-  { id: "cabine", icone: "🛏", nome: "numa cabine apertada", dentro: "uma tábua presa à parede, do tamanho de um homem, e nada mais" },
+  { id: "convés", icone: "⛵", abrigo: 0, nome: "no convés, enrolado numa vela velha", dentro: "o balanço, o rangido do cordame e a vigia trocando de turno em cima" },
+  { id: "porao", icone: "⚓", abrigo: 1, nome: "no porão, entre a carga", dentro: "cheiro de breu e água parada, e o casco batendo do outro lado da tábua" },
+  { id: "cabine", icone: "🛏", abrigo: 2, nome: "numa cabine apertada", dentro: "uma tábua presa à parede, do tamanho de um homem, e nada mais" },
 ];
 
 export const SITIOS_DE_COMBOIO = [
-  { id: "sob_o_carro", icone: "🛞", nome: "debaixo de uma carroça da caravana", dentro: "o eixo por cima da cabeça e as vozes dos outros viajantes em volta" },
-  { id: "roda_de_fogo", icone: "🔥", nome: "no círculo de carroças", dentro: "as carroças fecham um círculo e o fogo fica no meio, com vigias de duas em duas horas" },
-  { id: "beira_da_tropa", icone: "⛺", nome: "na borda do acampamento da tropa", dentro: "gente estranha dormindo perto, o que é conforto e é risco na mesma medida" },
+  { id: "sob_o_carro", icone: "🛞", abrigo: 1, nome: "debaixo de uma carroça da caravana", dentro: "o eixo por cima da cabeça e as vozes dos outros viajantes em volta" },
+  { id: "roda_de_fogo", icone: "🔥", abrigo: 1, nome: "no círculo de carroças", dentro: "as carroças fecham um círculo e o fogo fica no meio, com vigias de duas em duas horas" },
+  { id: "beira_da_tropa", icone: "⛺", abrigo: 0, nome: "na borda do acampamento da tropa", dentro: "gente estranha dormindo perto, o que é conforto e é risco na mesma medida" },
 ];
 
 export const SITIOS_DE_ESTRADA = [
-  { id: "acostamento", icone: "🛣", nome: "no acostamento, longe do leito da estrada", dentro: "longe o bastante para não ser pisado, perto o bastante para ouvir quem passa de noite" },
-  { id: "marco", icone: "🪧", nome: "ao pé de um marco de estrada", dentro: "uma pedra com légua e nome, e o nome já está quase apagado" },
-  { id: "abrigo_de_estrada", icone: "🏚", nome: "num abrigo de estrada", dentro: "telhado, três paredes e o costume de que ninguém é dono dele por mais de uma noite" },
-  { id: "ponte", icone: "🌉", nome: "debaixo de uma ponte", dentro: "seco, escondido, e é o primeiro lugar onde qualquer outro viajante também pensaria em dormir" },
+  { id: "acostamento", icone: "🛣", abrigo: 0, nome: "no acostamento, longe do leito da estrada", dentro: "longe o bastante para não ser pisado, perto o bastante para ouvir quem passa de noite" },
+  { id: "marco", icone: "🪧", abrigo: 0, nome: "ao pé de um marco de estrada", dentro: "uma pedra com légua e nome, e o nome já está quase apagado" },
+  { id: "abrigo_de_estrada", icone: "🏚", abrigo: 1, nome: "num abrigo de estrada", dentro: "telhado, três paredes e o costume de que ninguém é dono dele por mais de uma noite" },
+  { id: "ponte", icone: "🌉", abrigo: 1, nome: "debaixo de uma ponte", dentro: "seco, escondido, e é o primeiro lugar onde qualquer outro viajante também pensaria em dormir" },
 ];
 
 /* ---------------- A CHAVE DO CONTEXTO ----------------
@@ -178,7 +208,7 @@ export function escolherSitio(ctx = {}, sorte = Math.random) {
   /* 2. LUGAR NOMEADO — o herói está num ponto dos arredores, e ele tem nome */
   if (c.lugar && c.lugar.nome) {
     return {
-      id: "no_lugar", icone: "⛺", chave, tipo: "lugar",
+      id: "no_lugar", icone: "⛺", abrigo: 1, chave, tipo: "lugar",
       nome: `dentro ${comDe(c.lugar.nome)}`,
       dentro: "o próprio lugar serve de abrigo — use o que ele tem, não invente outro sítio",
       texto: `${comEm(c.lugar.nome)}${c.cidade ? ` (nos arredores de ${c.cidade})` : ""}`,
@@ -211,7 +241,19 @@ export function escolherSitio(ctx = {}, sorte = Math.random) {
     const l = localDeDescanso(c.mapa, c.cidade, c.faccao);
     const icone = l.tipo === "sede" ? "🏛" : l.tipo === "casa" ? "🏠" : l.tipo === "aliada" ? "🤝" : l.tipo === "hostil" ? "⚠" : l.tipo === "estalagem" ? "🛏" : "⛺";
     return {
-      id: l.tipo, icone, chave, tipo: l.tipo, nome: l.texto, texto: l.texto,
+      /* o `nome` é uma CONTINUAÇÃO de frase ("monta acampamento …"), e o
+         mapa devolve um sintagma ("uma estalagem em X"): sem a contração
+         saía "monta acampamento uma estalagem em Forte do Vigia".
+
+         E um dos textos do mapa já começa com a própria palavra —
+         "acampamento na região" —, que na frase vira "monta acampamento
+         em acampamento na região". Aí o que se tira não é o artigo, é a
+         repetição. */
+      id: l.tipo, icone, chave, tipo: l.tipo, texto: l.texto,
+      nome: /^acampamento\b/i.test(l.texto) ? l.texto.replace(/^acampamento\s*/i, "") || "em campo aberto" : comEm(l.texto),
+      /* o esconderijo em território hostil tem teto e não tem sossego; o
+         acampamento dentro dos muros é acampamento como qualquer outro */
+      abrigo: l.tipo === "hostil" ? 1 : l.tipo === "acampamento" ? 0 : 2,
       dentro: l.tipo === "sede" ? "é a sua casa: a autoridade e o conforto aparecem em quem serve e em como falam com você"
         : l.tipo === "hostil" ? "território inimigo: dormir aqui é escolher entre o frio e ser visto"
           : l.tipo === "estalagem" ? "um quarto pago, com parede fina e gente do outro lado dela"
@@ -236,7 +278,8 @@ export function sitioDaVez(anterior, ctx = {}, sorte = Math.random) {
 /* A linha que o jogador lê na mesa. */
 export function falaDoSitio(sitio) {
   if (!sitio) return "⛺ Você monta acampamento.";
-  return `${sitio.icone || "⛺"} Você monta acampamento ${sitio.nome}.`;
+  const a = abrigoDoSitio(sitio);
+  return `${sitio.icone || "⛺"} Você monta acampamento ${sitio.nome} — ${a.rotulo}.`;
 }
 
 /* O envelope: o sítio como FATO, não como sugestão. */
@@ -245,6 +288,7 @@ export function envelopeDoSitio(sitio) {
   const partes = [
     `[ACAMPAMENTO — O SÍTIO É DO SISTEMA] Montei acampamento ${sitio.texto}.`,
     sitio.dentro ? `O que há aqui: ${sitio.dentro}.` : "",
+    `Abrigo: ${abrigoDoSitio(sitio).rotulo} — ${abrigoDoSitio(sitio).nota}. Deixe isso no corpo das pessoas: quem dorme ao relento acorda duro e de mau humor, quem dorme em cama acorda inteiro.`,
     "Este é o lugar: descreva-o e use o que ele tem. NÃO escolha outro sítio, NÃO me mude de lugar e NÃO invente um abrigo melhor que este.",
     sitio.proibido,
     "A partir de agora é uma pausa segura: NÃO faça o mundo avançar, NÃO gere eventos externos nem passagem de tempo. Conduza conversas — companheiros puxam papo, revelam histórias. Descreva brevemente o sítio e deixe aberto para conversa.",
@@ -288,4 +332,5 @@ export function podeArrumar({ emCombate = false, acampado = false } = {}) {
 export const ACAMPAMENTO_PROMPT = `ACAMPAMENTO (v9.99 — o sítio é do sistema):
 · ONDE se acampa é decisão do CÓDIGO, não sua. O envelope [ACAMPAMENTO] traz o sítio pronto: use-o como está, descreva o que ele tem e não troque por outro.
 · Enquanto o acampamento está montado o tempo NÃO corre: nada de eventos, nada de horas passando, nada de mundo avançando. É espaço de conversa.
+· O ABRIGO do sítio é fato do sistema e já custou (ou rendeu) fôlego: narre o corpo, nunca os números.
 · Levantar acampamento SEM descanso é legítimo: o herói só arrumou as coisas e seguiu. Nesse caso não houve sono, não houve cura e passaram-se minutos, não horas.`;

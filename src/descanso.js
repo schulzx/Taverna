@@ -112,17 +112,59 @@ export function aplicarCurto(pers) {
   return { pers: { ...pers, mana, grupo }, msgs };
 }
 
-export function aplicarLongo(pers, dia) {
+/* ---------------- A CONTA DA NOITE (v9.100) ----------------
+   Quantos dados a noite inteira devolve, e se o abrigo mudou alguma
+   coisa. Está aqui fora, e exportada, porque três lugares precisam da
+   MESMA resposta: o descanso que aplica, a linha que anuncia e o painel
+   do acampamento que promete antes de o jogador clicar.
+
+   Foi por isso que ela virou função. O painel começou repetindo a
+   fórmula com outras palavras — "a noite devolve um dado a mais" — e uma
+   fórmula repetida é uma fórmula que vai divergir. Pior: ela já mentia
+   na primeira noite, porque no nível 1 há um dado só e o piso engole os
+   dois lados da régua. Um número que mente uma vez deixa de ser lido
+   para sempre.
+
+   `valeu` é o ajuste que SOBROU depois do piso e do teto: zero quando o
+   abrigo não mudou o resultado, mesmo tendo mudado a conta. É o único
+   número que se pode mostrar ao jogador sem prometer o que não vem. */
+export function dadosQueVoltam(pers, abrigo = null) {
+  const d = garantirDadosVida(pers);
+  const ajuste = (abrigo && Number(abrigo.dados)) || 0;
+  const base = Math.max(1, Math.floor(d.total / 2));
+  const devolve = Math.max(1, base + ajuste);
+  const gastos = Math.max(0, d.gastos - devolve);
+  const semAbrigo = Math.max(0, d.gastos - base);
+  return { total: d.total, devolve, gastos, valeu: gastos === semAbrigo ? 0 : ajuste };
+}
+
+/* `abrigo` é o degrau do sítio do acampamento — `{ dados: -1|0|+1,
+   rotulo }`, montado por `acampamento.js`. `null` é o comportamento de
+   antes da v9.100, e é o padrão de propósito: quem chama sem saber do
+   sítio (save antigo, teste, outro caminho) recebe exatamente a regra
+   antiga. */
+export function aplicarLongo(pers, dia, abrigo = null) {
   const msgs = [];
   const d = garantirDadosVida(pers);
   /* metade dos dados de volta, no mínimo um: é a regra que faz uma noite
      não apagar um dia inteiro de desgaste. Duas noites seguidas até
-     recuperam tudo — mas custam dois dias do relógio do mundo. */
-  const devolve = Math.max(1, Math.floor(d.total / 2));
-  const gastos = Math.max(0, d.gastos - devolve);
+     recuperam tudo — mas custam dois dias do relógio do mundo.
+
+     v9.100: e o ABRIGO move essa metade um dado para cada lado. */
+  const conta = dadosQueVoltam(pers, abrigo);
+  const gastos = conta.gastos;
   const grupo = (pers.grupo || []).map((g) => ({ ...g, vida: g.vidaMax }));
   msgs.push(`🌙 Descanso longo — PV e PM cheios para você e o grupo.`);
   if (d.gastos > 0) msgs.push(`🩹 Dados de vida: +${d.gastos - gastos} de volta (${d.total - gastos}/${d.total}).`);
+  /* O ABRIGO SÓ FALA QUANDO MUDOU ALGUMA COISA, e a comparação é com o
+     RESULTADO, não com a fórmula. No nível 1 há um dado só e o piso
+     segura os dois lados; com quase tudo inteiro, o dado a mais não tem
+     onde entrar. Anunciar nos dois casos seria o sistema prometendo o que
+     a sua própria régua acabou de engolir — e um número que mente uma vez
+     deixa de ser lido para sempre. */
+  if (abrigo && abrigo.rotulo && conta.valeu !== 0) {
+    msgs.push(`${conta.valeu > 0 ? "🛏" : "🥶"} ${abrigo.rotulo}: um dado de vida a ${conta.valeu > 0 ? "mais" : "menos"} de volta.`);
+  }
   return {
     pers: { ...pers, vida: pers.vidaMax, mana: pers.manaMax, grupo, dadosVida: { total: d.total, gastos }, ultimoLongo: dia },
     msgs,

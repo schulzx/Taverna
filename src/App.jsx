@@ -43,7 +43,7 @@ import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito
 import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, envelopeDoTeste } from "./testes.js";
 import { PERICIAS, periciaPorId, garantirPericias, periciasIniciais, bonusDePericia, passivoDe, resolucaoAutomatica, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente, resumoPericiasPrompt, PERICIAS_PROMPT } from "./pericias.js";
 import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, podeGastar, gastarHeroismo, validarDeclaracao, envelopeDeclaracao, envelopeRefazer, resumoHeroismoPrompt, HEROISMO_PROMPT } from "./heroismo.js";
-import { dadoDeVida, garantirDadosVida, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT } from "./descanso.js";
+import { dadoDeVida, garantirDadosVida, dadosQueVoltam, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT } from "./descanso.js";
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, MAX_RELOGIOS, RELOGIOS_PROMPT } from "./relogios.js";
 import { avaliarEncontro, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
 import { montarGrade, garantirGrade, posicionar, posicionarPerto, alcanca, caminhar, alcancaveisDe, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, mapaEmTexto, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, quadradosDe, distanciaM, tamanhoDe, ladoDe, alcanceNatural, terrenoDificil, temCobertura, ehParede, regiaoDe, m2q, q2m, centroDe, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO, GRID_PROMPT } from "./grid.js";
@@ -77,13 +77,13 @@ import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMo
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
 import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao } from "./portao.js";
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
-import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar } from "./acampamento.js";
+import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
 import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra } from "./rastro.js";
 import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, resolvidaPeloSistema, PERGUNTAS_AOS_MORTOS, abrirInterrogatorio, perguntarAoMorto, envelopeDoMorto, textoDeIdentificacao, localizarNoMapa, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
-import { avaliarEquipar, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
+import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
 import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./ui.jsx";
@@ -3892,6 +3892,10 @@ export default function Taverna() {
      acampamento e montar de novo cinco minutos depois devolva o MESMO
      afloramento de rocha — é o mesmo afloramento de rocha. */
   const sitioRef = useRef(null);
+  /* e no estado também: o painel do acampamento precisa DESENHAR o sítio,
+     e é lá que o jogador escolhe entre a noite inteira e o cochilo —
+     escolher sem ver onde se está dormindo é escolher no escuro. */
+  const [sitio, setSitio] = useState(null);
   /* MURAL DE CONTRATOS (v6.3): 3 trabalhos por tabela, recompensa paga por código */
   /* no máximo um trabalho oferecido por dia — o mundo tem gente precisando de
      ajuda, não uma fila de recrutadores no seu ombro */
@@ -4281,7 +4285,7 @@ export default function Taverna() {
     setStatusSave("salvando");
     const dados = {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current,
+      combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
@@ -6978,6 +6982,11 @@ export default function Taverna() {
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       npcsRef.current = sv.npcs && typeof sv.npcs === "object" ? sv.npcs : {}; setNpcs(npcsRef.current); npcTurnoRef.current = 0;
       definirAcampado(!!sv.acampado);
+      /* v9.100: o sítio volta com o acampamento. Sem esta linha, recarregar
+         a página dentro do acampamento apagaria onde se estava dormindo — e
+         a noite renderia o padrão, não o que o painel prometeu. */
+      sitioRef.current = (sv.acampado && sv.sitio && typeof sv.sitio === "object") ? sv.sitio : null;
+      setSitio(sitioRef.current);
       if (sv.mapa && sv.mapa.cidades && sv.mapa.cidades.length) {
         mapaRef.current = sv.mapa;
         mapaRef.current = garantirGeografia(mapaRef.current, `taverna|${sv.personagem && sv.personagem.nome ? sv.personagem.nome : "save"}`);
@@ -11423,6 +11432,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   };
 
   const equipar = (item) => {
+    /* v9.100: A REGRA DO CORPO. Uma rodada tem seis segundos, e vestir
+       armadura não cabe em seis segundos. Não é a bolsa que ficou cara —
+       é o corpo que continua sendo corpo. */
+    const slotDoItem = item && (item.tipo || "arma");
+    const agora = podeTrocarAgora(slotDoItem, { emCombate: !!combateRef.current });
+    if (!agora.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${item.nome}: ${agora.motivo}.` }]); return; }
     /* PROFICIÊNCIA (v9.11): equipar o que você não sabe usar não é proibido —
        é caro. O sistema deixa vestir e diz o preço na hora, em vez de esconder
        a regra e deixar o jogador achar que está tudo bem. */
@@ -11457,6 +11472,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   };
 
   const desequipar = (slot) => {
+    /* tirar custa o mesmo que pôr: quem não consegue afivelar a armadura
+       no meio da briga também não consegue arrancá-la */
+    const agora = podeTrocarAgora(slot, { emCombate: !!combateRef.current });
+    if (!agora.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${agora.motivo}.` }]); return; }
     setPersonagem((p) => {
       const equipados = { ...(p.equipados || {}) };
       delete equipados[slot];
@@ -11486,6 +11505,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      ele não equipar". Bônus valem no combate por código (arma = dano, defesa = CA). */
   const equiparComp = (nomeComp, item) => {
     if (!item || !item.nome) return;
+    /* o companheiro tem o mesmo corpo e a mesma rodada */
+    const agoraC = podeTrocarAgora(item.tipo || "arma", { emCombate: !!combateRef.current });
+    if (!agoraC.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${nomeComp} não pode: ${agoraC.motivo}.` }]); return; }
     setPersonagem((p) => ({
       ...p,
       grupo: (p.grupo || []).map((g) => {
@@ -11505,6 +11527,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   };
 
   const desequiparComp = (nomeComp, slot) => {
+    const agoraD = podeTrocarAgora(slot, { emCombate: !!combateRef.current });
+    if (!agoraD.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${nomeComp} não pode: ${agoraD.motivo}.` }]); return; }
     setPersonagem((p) => ({
       ...p,
       grupo: (p.grupo || []).map((g) => {
@@ -12461,7 +12485,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       faccao: faccaoJogadorRef.current,
       bioma: biomaDaqui(),
     });
-    sitioRef.current = sitio;
+    sitioRef.current = sitio; setSitio(sitio);
     pushMsgs([{ autor: "sistema", texto: `${falaDoSitio(sitio)} O tempo pausa — converse à vontade, arrume o que precisar levar, e escolha como sair.` }]);
     enviar(envelopeDoSitio(sitio), personagem);
   };
@@ -12482,6 +12506,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (!acampadoRef.current || bloqueado) return;
     definirAcampado(false);
     const reinoMsg = avancarMinutos(MINUTOS_ARRUMANDO);
+    setSitio(null);
     pushMsgs([{ autor: "sistema", texto: `⛺ Você levanta acampamento sem descansar — ${MINUTOS_ARRUMANDO} minutos arrumando as coisas. Nada de PV, nada de PM: você só arrumou o que leva.` }]);
     enviar(`[FIM DO ACAMPAMENTO — SEM DESCANSO] Levantei acampamento SEM dormir e SEM descansar: parei só o tempo de arrumar as coisas (${MINUTOS_ARRUMANDO} minutos). NÃO houve sono, NÃO houve cura, NÃO houve noite — PV e PM continuam exatamente como estavam, e não me pergunte como foi a noite porque não houve noite. Passaram-se MINUTOS: nada de amanhecer, nada de eventos grandes, nada de tempo correndo. O mundo volta a andar de onde parou; retome a cena AQUI MESMO, no mesmo lugar, e me convide a agir.${reinoMsg}`, personagem);
   };
@@ -12512,8 +12537,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       pushMsgs([{ autor: "sistema", texto: `🌙 ${chk.motivo}. Este acampamento vale como descanso curto.` }]);
     }
     definirAcampado(false);
+    setSitio(null);
     const msgs = [];
-    let pers = aplicarDescanso(personagemRef.current || personagem, tipoReal, msgs, diaRef.current);
+    /* v9.100: o ABRIGO do sítio entra aqui, e só aqui. É o único lugar do
+       jogo em que dormir mal custa alguma coisa — os dados de vida são o
+       único recurso que só volta dormindo. Quem DIZ o que aconteceu é o
+       descanso, onde os números estão: daqui só sai o degrau. */
+    let pers = aplicarDescanso(personagemRef.current || personagem, tipoReal, msgs, diaRef.current, abrigoDoSitio(sitioRef.current));
     tipo = tipoReal;
     /* v9.16: o descanso longo garante PISO de 1 ponto de heroismo. Piso e
        nao soma: quem chega com 3 nao vira 4, senao acampar viraria fabrica
@@ -13883,6 +13913,29 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             {acampado && (
               <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.amber}`, marginRight: "68px" }}>
                 <div className="tv-mono text-xs uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>⛺ Acampamento — o tempo está pausado</div>
+                {/* v9.100: ONDE se está dormindo, e o que isso custa. A
+                    decisão entre a noite inteira e o cochilo é tomada
+                    NESTE painel, e tomá-la sem ver o sítio é tomá-la no
+                    escuro — o sistema sabia e não dizia. */}
+                {sitio && (() => {
+                  const ab = abrigoDoSitio(sitio);
+                  const valeu = dadosQueVoltam(personagem, ab).valeu;
+                  return (
+                    <div className="rounded-lg px-2.5 py-1.5 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                      <div className="tv-body text-[12px]" style={{ color: T.ink }}>
+                        {sitio.icone || "⛺"} {sitio.nome}
+                      </div>
+                      {/* v9.100: o que a noite REALMENTE renderia, perguntado a
+                          quem faz a conta. Repetir a fórmula aqui daria uma
+                          promessa que o piso engole no nível 1 — e um número
+                          que mente uma vez deixa de ser lido para sempre. */}
+                      <div className="tv-body text-[10px] mt-0.5" style={{ color: valeu < 0 ? T.danger : valeu > 0 ? T.amberSoft : T.inkDim }}>
+                        {ab.rotulo} — {ab.nota}
+                        {valeu !== 0 && <span className="tv-mono"> · a noite inteira devolve {valeu > 0 ? "um dado a mais" : "um dado a menos"}</span>}
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="tv-body text-sm mb-3" style={{ color: T.inkDim }}>Aqui se descansa <span style={{ color: T.amberSoft }}>e</span> se arruma o que se leva — o caderno de magias e os objetos de poder só se mexem daqui. Quando quiser retomar a jornada, escolha como sair:</div>
                 {/* v9.17: o PV do descanso curto sai daqui, um dado por vez.
                     É a decisão que o acampamento não tinha — e ela precisa
