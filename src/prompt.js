@@ -40,6 +40,7 @@ import { OFERTAS_PROMPT } from "./ofertas.js";
 import { LUGAR_PROMPT } from "./lugar.js";
 import { COMODOS_PROMPT } from "./comodos.js";
 import { ARREDORES_PROMPT } from "./arredores.js";
+import { ACAMPAMENTO_PROMPT } from "./acampamento.js";
 import { CELULAS_PROMPT } from "./celulas.js";
 import { VIAGEM_PROMPT } from "./viagem.js";
 import { RESOLVER_PROMPT } from "./resolver.js";
@@ -149,6 +150,9 @@ export const PORTAS_DA_CENA = [
      rua tem a lista de LOCAIS; quem está dentro tem a de CÔMODOS, e mandar
      as duas juntas é convidar o Mestre a misturar as escalas. */
   { id: "comodos", quando: (c) => !!c.dentroDeUmLocal, porque: "o quarto de cima, a adega e a cripta só existem para quem está no prédio que os tem" },
+  /* v9.99: as regras do acampamento só valem com um montado. Fora dele o
+     bloco seria uma instrução sobre uma cena que não está acontecendo. */
+  { id: "acampamento", quando: (c) => !!c.acampado, porque: "onde se dorme e o que o tempo faz enquanto se dorme só importam a quem armou acampamento" },
 ];
 
 /* Devolve um mapa {id: boolean}. O `cena` vazio abre TODAS as portas, e
@@ -247,6 +251,8 @@ ${PERICIAS_PROMPT}
 ${HEROISMO_PROMPT}
 
 ${DESCANSO_PROMPT}
+
+${so("acampamento", ACAMPAMENTO_PROMPT)}
 
 ${RELOGIOS_PROMPT}
 

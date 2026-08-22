@@ -319,6 +319,21 @@ export const CUSTO_FORJA = {
   epico: { essencia: 55, moedas: 120 },
   lendario: { essencia: 130, moedas: 300 },
 };
+/* ---------------- O BOTÃO SOBRE O CUSTO QUE NÃO EXISTE (v9.99) ----------------
+   Relato: "A forja está com erro undefined is not an object evaluating
+   'ae.essencia'". Era isto, e é o bug mais típico desta casa.
+
+   A v9.82 acrescentou "unico" a RARIDADES e DELIBERADAMENTE não o
+   acrescentou a CUSTO_FORJA: forjar a única peça do mundo seria
+   fabricá-la, e a tabela recusar o único é a regra funcionando. Só que
+   a TELA da forja percorria RARIDADES — a lista de todas as raridades
+   que existem — e para cada uma lia `CUSTO_FORJA[rar].essencia`. Na
+   sexta volta o custo era `undefined`, e a forja inteira morria ao
+   abrir: não era o botão do único que quebrava, era o painel.
+
+   A regra ("o único não se forja") morava num só dos dois caminhos.
+   Aqui ela passa a morar num lugar só, e quem oferece lê daqui. */
+export const RARIDADES_FORJAVEIS = RARIDADES.filter((r) => !!CUSTO_FORJA[r]);
 /* v9.82: `??` e não `||` — o único rende ZERO, e `|| 2` transformava esse
    zero de volta em dois. A relíquia voltaria a ser desmontável por engano,
    e o botão da forja apareceria sobre a única peça do mundo que não pode

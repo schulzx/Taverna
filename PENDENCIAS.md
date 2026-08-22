@@ -3010,6 +3010,109 @@ lado seguro: o laço encontra candidatos em vez de nunca disparar. Era o
   laço de automação que não os trate trava sem erro nenhum. Não é defeito
   do jogo — é nota para a próxima vez que alguém for testar assim.
 
+## O acampamento, e o que só se arruma nele — v9.99
+
+Quatro coisas relatadas de uma vez, e três delas eram a mesma: o
+acampamento existia como botão e não como lugar.
+
+### Quem escolhe onde se dorme
+
+Era a IA. `localDeDescanso` sabia responder dentro de uma cidade — sede,
+casa da facção, refúgio aliado, estalagem — e fora dos muros devolvia
+"acampamento em campo aberto", que não é um lugar: é a ausência de um.
+Dali para a frente quem inventava a clareira, a gruta ou o afloramento de
+rocha era o Mestre, cena a cena, sem nada com que estar em desacordo — e
+por isso o mesmo herói dormia três noites seguidas em três mundos.
+
+`acampamento.js` (v9.99) escolhe o sítio pelo que o sistema já sabia:
+bioma da região, perna da estrada, meio da viagem, masmorra, lugar
+nomeado dos arredores. **49 sítios**, entre 4 e 5 por bioma nos oito
+biomas, mais masmorra, estrada, embarcado e comboio. Ordem de decisão: o
+mais específico ganha — masmorra > lugar nomeado > viagem > cidade >
+campo aberto.
+
+Cada sítio carrega a **chave** do contexto que o gerou, e é isso que faz
+levantar acampamento e montar de novo cinco minutos depois devolver o
+mesmo afloramento de rocha. Só quando a chave muda o sorteio roda de novo.
+
+E o `meio` da viagem passa a decidir se há chão embaixo: quem viaja de
+navio dorme a bordo, quem viaja de caravana dorme no círculo de carroças.
+Antes havia uma instrução em maiúsculas proibindo a estalagem — proibir o
+errado não é o mesmo que dizer o certo.
+
+### A terceira porta
+
+O acampamento era de mão única: entrava-se para dormir e só se saía
+dormindo. Como ele é também o único lugar onde se arruma o que se leva,
+uma troca de magia custava uma noite inteira de mundo — e regra impagável
+é regra que o jogador contorna. **Sair sem descansar** custa 20 minutos
+de relógio, não cura nada, e o envelope diz à IA que não houve noite.
+
+### O que só se arruma no acampamento
+
+O relato: "as habilidades estão sendo preparadas fora do acampamento, e
+ainda pior, no meio da batalha dá pra preparar magias".
+
+A segunda é a que quebra o jogo. Se dá para trocar o caderno no meio da
+luta, PREPARAR deixa de existir: o jogador esquece a magia certa, abre a
+ficha, prepara a magia certa e fecha. O teto de quantas cabem na cabeça
+continua valendo e não raciona mais nada, porque o que ele racionava era
+a **aposta** — decidir de manhã sem saber o que a tarde traz.
+
+A v9.33 tinha um bom motivo para pôr o caderno na ficha (o jogador
+procurou lá e não achou) e concluiu que "preparar fora do descanso não
+quebra nada". Quebrava: só não quebrava enquanto ninguém tentasse fazer
+isso durante uma briga.
+
+`podeArrumar` mora num lugar só e é lida por três: o caderno, a sintonia
+e a tela. O painel **fica** na ficha — achar onde se arruma continua
+valendo —, mas fora do acampamento ele mostra e não deixa mexer, dizendo
+por quê e para onde ir. E a função recusa também, porque botão
+desabilitado é sugestão e função que recusa é regra.
+
+### A forja que morria ao abrir
+
+`undefined is not an object evaluating 'ae.essencia'`. A v9.82 acrescentou
+`unico` a `RARIDADES` e deliberadamente não o acrescentou a
+`CUSTO_FORJA` — forjar a única peça do mundo seria fabricá-la. Mas a tela
+percorria `RARIDADES` e lia `CUSTO_FORJA[rar].essencia`: na sexta volta o
+custo era `undefined` e o painel inteiro caía. Não era o botão do único
+que quebrava — era a forja.
+
+A regra morava num só dos dois caminhos, que é como quase todo bug desta
+casa nasce. Agora existe `RARIDADES_FORJAVEIS`, derivada da tabela de
+custos, e a tela lê dali.
+
+### De quebra: o bioma num lugar só
+
+A mesma busca estava copiada em quatro lugares, e as quatro cópias tinham
+o mesmo furo — fora de cidade devolviam "planicie". Quem forrageava no
+meio de um pântano colhia flor de planície. `biomaDaqui()` responde por
+todas, e em viagem usa o bioma da cidade de onde se partiu.
+
+### Verificado na tela
+
+- A forja abre com cinco raridades (Comum→Lendário), sem o único e sem erro.
+- O acampamento montado num lugar nomeado: "dentro do Escudo das Velas",
+  com a contração certa, e o envelope proibindo a volta à cidade.
+- Sair sem descansar: 12:29 → 12:49, sem cura, com o envelope
+  `[FIM DO ACAMPAMENTO — SEM DESCANSO]` no prompt.
+- Um Mago fora do acampamento: as três magias visíveis, cinzas, travadas,
+  com "🔒 isso se arruma no acampamento".
+- O mesmo Mago acampado: botões vivos, 1/2 → 2/2 ao preparar.
+- O mesmo Mago em combate: travados, com "🔒 no meio da luta não se
+  arruma nada". Forçando o clique com o `disabled` removido, o contador
+  não se move — a função recusa.
+
+### Anotado para depois
+
+- **Equipar não é gatilhado por nada.** Dá para vestir armadura completa
+  no meio da luta. É a mesma família do caderno, mas o remendo certo não
+  é proibir: é custar ação, e isso mexe na economia de turno.
+- **O sítio não tem consequência.** Ele diz ONDE e só. Dormir exposto num
+  ermo hostil e dormir numa gruta seca valem o mesmo — de propósito, por
+  ora: um campo sem leitor seria mais uma regra escrita sem código atrás.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na

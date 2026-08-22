@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
-import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
+import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
@@ -14,7 +14,7 @@ import { rolarClima, rolarEncontro, CLIMAS } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
-import { RARIDADES, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
+import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
 import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca } from "./masmorras.js";
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDaAbordagem, ICONE_OFERTA } from "./ofertas.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
@@ -77,6 +77,7 @@ import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMo
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
 import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao } from "./portao.js";
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
+import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar } from "./acampamento.js";
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
@@ -1012,7 +1013,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lugar = null, aoIrAoLugar = null, aoViajar = null }) {
+function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lugar = null, aoIrAoLugar = null, aoViajar = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1148,7 +1149,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                   dentro do acampamento. Preparar fora do descanso não quebra
                   nada: o que a regra raciona é QUANTAS cabem na cabeça, e
                   esse teto é o mesmo em qualquer hora do dia. */}
-              <PainelCaderno personagem={personagem} onPreparar={onPrepararMagia} />
+              <PainelCaderno personagem={personagem} onPreparar={onPrepararMagia} travado={arrumar.ok ? "" : arrumar.motivo} />
               {/* v9.32: as dádivas passam a dizer COMO se usam. O jogador leu
                   "Dádiva do Destino" na tela e escreveu: "não entendi como
                   usar e não ficou claro se aconteceu algo". As passivas dizem
@@ -1728,7 +1729,12 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                     </select>
                     <button onClick={() => setForjaAberta(false)} className="tv-mono text-[11px] px-2 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>✕</button>
                   </div>
-                  {RARIDADES.map((rar) => {
+                  {/* v9.99: RARIDADES_FORJAVEIS, e não RARIDADES. O único
+                      existe na lista de raridades e não existe na tabela de
+                      custos — de propósito —, e percorrer a lista errada
+                      fazia `c` vir undefined na sexta volta e a forja
+                      inteira morrer ao abrir. */}
+                  {RARIDADES_FORJAVEIS.map((rar) => {
                     const c = CUSTO_FORJA[rar];
                     const okE = (personagem.essencia || 0) >= c.essencia, okM = (personagem.moedas || 0) >= c.moedas;
                     return (
@@ -2452,7 +2458,7 @@ function PainelHabilidades({ personagem, selecionar, fechar, escolhidas = [], li
 
    Agora é um componente só, desenhado nos DOIS lugares, e ele aparece
    mesmo quando está vazio — dizendo por quê. */
-function PainelCaderno({ personagem, onPreparar, compacto = false }) {
+function PainelCaderno({ personagem, onPreparar, compacto = false, travado = "" }) {
   const prep = garantirPreparadas(personagem);
   const teto = limitePreparadas(personagem);
   const lista = preparaveisDe(personagem);
@@ -2471,16 +2477,25 @@ function PainelCaderno({ personagem, onPreparar, compacto = false }) {
             {lista.map((h) => {
               const on = prep.includes(h.nome);
               return (
-                <button key={h.nome} onClick={() => onPreparar(h.nome)}
-                  title={`${h.descricao || ""}${ehRitual(h) ? "\n\nRitual: fora de combate dá para conduzi-la mesmo sem preparar, pagando tempo." : ""}`}
+                <button key={h.nome} onClick={() => onPreparar(h.nome)} disabled={!!travado}
+                  title={`${h.descricao || ""}${ehRitual(h) ? "\n\nRitual: fora de combate dá para conduzi-la mesmo sem preparar, pagando tempo." : ""}${travado ? `\n\n${travado}` : ""}`}
                   className="tv-mono text-[10px] px-2 py-1 rounded-full"
-                  style={{ background: on ? T.violet : "transparent", color: on ? T.onSecond : T.inkDim, border: `1px solid ${on ? T.violet : T.line}` }}>
+                  style={{ background: on ? T.violet : "transparent", color: on ? T.onSecond : T.inkDim, border: `1px solid ${on ? T.violet : T.line}`, opacity: travado ? 0.5 : 1, cursor: travado ? "not-allowed" : "pointer" }}>
                   {on ? "📖" : "📕"} {h.nome} <span style={{ opacity: 0.7 }}>{Math.max(0, Number(h.custo) || 0)}PM</span>{ehRitual(h) ? " ⏳" : ""}
                 </button>
               );
             })}
           </div>
-          {!compacto && (
+          {/* v9.99: o painel FICA na ficha — achar onde se arruma continua
+              valendo, e foi por isso que a v9.33 o trouxe para cá. O que
+              muda é que fora do acampamento ele MOSTRA e não deixa mexer,
+              dizendo por quê: um caderno em branco ensinaria de novo que o
+              jogador procurou no lugar errado. */}
+          {travado ? (
+            <div className="tv-body text-[10px] mt-1.5" style={{ color: T.amberSoft }}>
+              🔒 {travado}.
+            </div>
+          ) : !compacto && (
             <div className="tv-body text-[10px] mt-1.5" style={{ color: T.inkDim }}>
               Toque para preparar ou guardar. Só as preparadas aparecem no botão ✦ Habilidades — as guardadas voltam a caber no próximo descanso longo, e as marcadas com ⏳ ainda podem ser conduzidas como ritual fora da luta.
             </div>
@@ -3873,6 +3888,10 @@ export default function Taverna() {
   /* MASMORRA (v6.3): masmorra ativa gerada por tabela — o app resolve as salas */
   const masmorraRef = useRef(null);
   const [masmorra, setMasmorra] = useState(null);
+  /* v9.99: o sítio do acampamento atual. Guardado para que levantar
+     acampamento e montar de novo cinco minutos depois devolva o MESMO
+     afloramento de rocha — é o mesmo afloramento de rocha. */
+  const sitioRef = useRef(null);
   /* MURAL DE CONTRATOS (v6.3): 3 trabalhos por tabela, recompensa paga por código */
   /* no máximo um trabalho oferecido por dia — o mundo tem gente precisando de
      ajuda, não uma fila de recrutadores no seu ombro */
@@ -3953,6 +3972,22 @@ export default function Taverna() {
      dizia só de onde e desde quando — o Mestre não sabia sequer o destino,
      e por isso escrevia "a estrada segue" turno após turno sem nunca
      apertar o ritmo. */
+  /* ---------------- O BIOMA DE ONDE EU ESTOU (v9.99) ----------------
+     Esta busca estava copiada em quatro lugares, e as quatro cópias
+     tinham o mesmo furo: fora de cidade devolviam "planicie". Quem
+     forrageia no meio de um pântano colhia flor de planície, e o
+     acampamento da estrada nascia sempre no mesmo descampado.
+
+     Em viagem o bioma é o da cidade DE ONDE parti — a estrada atravessa
+     a paisagem das duas pontas, e a de partida é a única que o sistema
+     tem certeza de já ter visto. */
+  const biomaDaqui = () => {
+    const cs = (mapaRef.current && mapaRef.current.cidades) || [];
+    const acha = (nome) => (cs.find((c) => c.nome === nome) || {}).bioma || "";
+    const j = jornadaRef.current;
+    return acha(cidadeAtualRef.current) || (j ? acha(j.de) || acha(j.para) : "") || "planicie";
+  };
+
   const localAtualTxt = () => jornadaRef.current
     ? `${(linhaDaViagem(jornadaRef.current) || `EM VIAGEM desde ${jornadaRef.current.de || "a última parada"}`).replace(/^🧭 /, "EM VIAGEM: ")} — não estou em cidade nenhuma`
     : lugarRef.current
@@ -9826,7 +9861,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         const extras = [];
         persT = { ...persT, moedas: (persT.moedas || 0) + rec.moedas };
         for (let i = 0; i < rec.componentes; i++) {
-          const c = colherComponentes(((mapaRef.current.cidades || []).find((x) => x.nome === cidadeAtualRef.current) || {}).bioma || "planicie", 0)[0];
+          const c = colherComponentes(biomaDaqui(), 0)[0];
           if (c) { persT = { ...persT, inventario: [...(persT.inventario || []), itemComponente(c.id)] }; extras.push(`${c.icone} ${c.nome}`); }
         }
         for (let i = 0; i < rec.consumiveis; i++) {
@@ -11231,9 +11266,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   };
 
   /* ---------------- SINTONIA (v9.23) ----------------
-     Um clique liga ou solta. Livre no acampamento: a decisão que importa é
-     QUAIS três, não em que instante trocar. */
+     Um clique liga ou solta, e SÓ no acampamento (v9.99): a decisão que
+     importa é QUAIS três, e ela só vale se for tomada antes de saber o que
+     vem — trocar no meio da luta é não escolher. */
   const alternarPoder = (nome) => {
+    const pode = podeArrumar({ emCombate: !!combateRef.current, acampado: acampadoRef.current });
+    if (!pode.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${pode.motivo}.` }]); return; }
     const p0 = personagemRef.current || personagem;
     const r = alternarSintonia(p0, nome);
     if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${r.motivo}.` }]); return; }
@@ -11243,9 +11281,17 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   };
 
   /* ---------------- O CADERNO (v9.21) ----------------
-     Um clique prepara ou guarda. Livre no acampamento, como tudo nesta casa:
-     a decisão que importa é O QUE levar, não em que instante decidir. */
+     Um clique prepara ou guarda, e SÓ no acampamento (v9.99). A v9.33 dizia
+     "preparar fora do descanso não quebra nada" — e quebrava, só não
+     enquanto ninguém tentasse durante uma luta: se dá para trocar o caderno
+     no meio da briga, PREPARAR deixa de existir. O teto de quantas cabem na
+     cabeça continua valendo e não raciona mais nada, porque o que ele
+     racionava era a APOSTA: decidir de manhã sem saber o que a tarde traz. */
   const prepararMagia = (nome) => {
+    /* v9.99: e é aqui que ele MORDE, não só na tela. Um botão desabilitado
+       é uma sugestão; a função que recusa é a regra. */
+    const pode = podeArrumar({ emCombate: !!combateRef.current, acampado: acampadoRef.current });
+    if (!pode.ok) { pushMsgs([{ autor: "sistema", texto: `📕 ${pode.motivo}.` }]); return; }
     const p0 = personagemRef.current || personagem;
     const r = alternarPreparada(p0, nome);
     if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `📕 ${r.motivo}.` }]); return; }
@@ -11669,7 +11715,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   /* FORRAGEAR (5e): caçar e colher pela trilha. Gasta tempo, mas repõe. */
   const forragearAqui = () => {
     if (bloqueado || combateRef.current) return;
-    const bioma = (cidadeAtualRef.current && (mapaRef.current.cidades || []).find((c) => c.nome === cidadeAtualRef.current)?.bioma) || "planicie";
+    const bioma = biomaDaqui();
     const r = forragear(bioma, atributoEfetivo(personagem, "percepcao"));
     const extra = avancarMinutos(240);
     /* OFÍCIO (v9.13): meio dia no mato não rende só comida. O que dá para
@@ -12399,18 +12445,45 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (acampadoRef.current || bloqueado) return;
     if (combateRef.current) { combateRef.current = null; setCombate(null); combateOciosoRef.current = 0; limparConjuracoesDaLuta(null); }
     definirAcampado(true);
-    const local = localDeDescanso(mapaRef.current, cidadeAtualRef.current, faccaoJogadorRef.current);
-    const rotulo = local.tipo === "sede" ? "🏛 Você recolhe-se à sede da sua guilda"
-                 : local.tipo === "casa" ? "🏠 Você recolhe-se a uma casa da sua facção"
-                 : local.tipo === "aliada" ? "🤝 Você é acolhido por aliados"
-                 : local.tipo === "hostil" ? "⚠ Você se esconde em território hostil"
-                 : local.tipo === "estalagem" ? "🛏 Você aluga um quarto na estalagem"
-                 : "⛺ Você monta acampamento";
-    const emViagem = !!jornadaRef.current;
-    pushMsgs([{ autor: "sistema", texto: `${emViagem ? "⛺ Você faz uma parada de descanso em plena viagem" : rotulo}. O tempo pausa — converse com o grupo à vontade. Escolha um descanso para retomar a jornada.` }]);
-    enviar(`[ACAMPAMENTO${emViagem ? " EM VIAGEM" : ` em ${local.texto}`}] ${emViagem
-      ? `Parei para descansar NO MEIO DA VIAGEM — local atual: ${localAtualTxt()}. O descanso acontece aqui mesmo: no acampamento à beira da estrada, na cabine do navio, no vagão da caravana — conforme o meio em que viajo. É TERMINANTEMENTE PROIBIDO me colocar em estalagem, aposentos ou cidade: eu NÃO cheguei a lugar nenhum ainda.`
-      : `Montei acampamento/descanso em: ${local.texto}.`} A partir de agora é uma pausa segura: NÃO faça o mundo avançar, NÃO gere eventos externos nem passagem de tempo. Conduza conversas — companheiros puxam papo, revelam histórias. ${emViagem ? "Reflita o descanso itinerante na cena (fogueira, balanço do mar, turnos de vigia)." : "Se for a sede da guilda ou casa da facção, reflita esse conforto/autoridade na cena."} Descreva brevemente o local e deixe aberto para conversa.`, personagem);
+    /* v9.99: ONDE se acampa passa a ser decisão do CÓDIGO. Antes o sistema
+       só sabia responder dentro de uma cidade; fora dos muros dizia
+       "acampamento em campo aberto", que não é um lugar — é a ausência de
+       um —, e dali para a frente quem inventava a clareira, a gruta ou o
+       afloramento de rocha era o Mestre, cena a cena, sem nada com que
+       estar em desacordo. O sistema já sabia o bioma, a estrada, a
+       masmorra e o lugar nomeado; faltava usar. */
+    const sitio = sitioDaVez(sitioRef.current, {
+      masmorra: masmorraRef.current,
+      lugar: lugarRef.current,
+      jornada: jornadaRef.current,
+      cidade: cidadeAtualRef.current,
+      mapa: mapaRef.current,
+      faccao: faccaoJogadorRef.current,
+      bioma: biomaDaqui(),
+    });
+    sitioRef.current = sitio;
+    pushMsgs([{ autor: "sistema", texto: `${falaDoSitio(sitio)} O tempo pausa — converse à vontade, arrume o que precisar levar, e escolha como sair.` }]);
+    enviar(envelopeDoSitio(sitio), personagem);
+  };
+
+  /* ---------------- LEVANTAR SEM DESCANSAR (v9.99) ----------------
+     O acampamento era porta de mão única: entrava-se para dormir e só se
+     saía dormindo. Mas ele é também o único lugar onde se arruma o que se
+     leva — o caderno, a sintonia, o que fica com quem —, e cobrar uma
+     noite inteira por uma troca de magia é cobrar um dia de mundo por uma
+     decisão de mochila. Sem esta porta, fechar o caderno no acampamento
+     seria uma regra impagável, e regra impagável é regra que o jogador
+     contorna.
+
+     Passam-se MINUTOS, não horas: nada se cura, nada se recarrega, o
+     relógio anda o tanto que arrumar as coisas custa. */
+  const MINUTOS_ARRUMANDO = 20;
+  const levantarSemDescansar = () => {
+    if (!acampadoRef.current || bloqueado) return;
+    definirAcampado(false);
+    const reinoMsg = avancarMinutos(MINUTOS_ARRUMANDO);
+    pushMsgs([{ autor: "sistema", texto: `⛺ Você levanta acampamento sem descansar — ${MINUTOS_ARRUMANDO} minutos arrumando as coisas. Nada de PV, nada de PM: você só arrumou o que leva.` }]);
+    enviar(`[FIM DO ACAMPAMENTO — SEM DESCANSO] Levantei acampamento SEM dormir e SEM descansar: parei só o tempo de arrumar as coisas (${MINUTOS_ARRUMANDO} minutos). NÃO houve sono, NÃO houve cura, NÃO houve noite — PV e PM continuam exatamente como estavam, e não me pergunte como foi a noite porque não houve noite. Passaram-se MINUTOS: nada de amanhecer, nada de eventos grandes, nada de tempo correndo. O mundo volta a andar de onde parou; retome a cena AQUI MESMO, no mesmo lugar, e me convide a agir.${reinoMsg}`, personagem);
   };
 
   /* ---------------- DADOS DE VIDA (v9.17) ----------------
@@ -13085,7 +13158,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* NAVEGAÇÃO (5e): terreno difícil pode fazer o grupo se perder. */
     let notaErmos = "";
     {
-      const bioma = (cidadeAtualRef.current && (mapaRef.current.cidades || []).find((c) => c.nome === cidadeAtualRef.current)?.bioma) || "planicie";
+      const bioma = biomaDaqui();
       /* v9.44: o Cartógrafo soma no teste de rota — "reduz a chance de se
          perder" era a promessa, e este é o único dado que decide isso. */
       const nav = testarNavegacao(bioma, atributoEfetivo(personagem, "percepcao") + bonusDeNavegacao(personagem), (mapaRef.current.cidades || []).length > 3);
@@ -13810,7 +13883,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             {acampado && (
               <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.amber}`, marginRight: "68px" }}>
                 <div className="tv-mono text-xs uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>⛺ Acampamento — o tempo está pausado</div>
-                <div className="tv-body text-sm mb-3" style={{ color: T.inkDim }}>Converse com o grupo à vontade. Quando quiser retomar a jornada, escolha um descanso:</div>
+                <div className="tv-body text-sm mb-3" style={{ color: T.inkDim }}>Aqui se descansa <span style={{ color: T.amberSoft }}>e</span> se arruma o que se leva — o caderno de magias e os objetos de poder só se mexem daqui. Quando quiser retomar a jornada, escolha como sair:</div>
                 {/* v9.17: o PV do descanso curto sai daqui, um dado por vez.
                     É a decisão que o acampamento não tinha — e ela precisa
                     estar ANTES dos botões de sair, senão o jogador só
@@ -13893,6 +13966,16 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     🌙 Descanso longo <span style={{ opacity: 0.7 }}>· {podeDescansoLongo(personagem, dia).pode ? "tudo, uma vez por dia" : "já dormiu hoje — valerá como curto"}</span>
                   </Botao>
                 </div>
+                {/* v9.99: A TERCEIRA PORTA. O acampamento era de mão única —
+                    entrava-se para dormir e só se saía dormindo —, e como ele
+                    também é o único lugar onde se arruma o que se leva, uma
+                    troca de magia custava uma noite inteira de mundo. Regra
+                    impagável é regra que o jogador contorna. */}
+                <button onClick={levantarSemDescansar} disabled={bloqueado}
+                  className="w-full tv-mono text-[11px] px-3 py-2 rounded-lg mt-2"
+                  style={{ border: `1px dashed ${T.line}`, color: T.inkDim, opacity: bloqueado ? 0.45 : 1 }}>
+                  🎒 Sair sem descansar <span style={{ opacity: 0.7 }}>· só arrumei as coisas ({MINUTOS_ARRUMANDO} min, sem cura)</span>
+                </button>
               </div>
             )}
 
@@ -14105,7 +14188,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} /></LimiteErro>
+          <LimiteErro><PainelLateral aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
