@@ -3216,6 +3216,325 @@ preposição.
   construído pelo jogador, é ali que o terceiro degrau precisa aparecer
   fora dos muros.
 
+# O MESTRE COMPLETO — desenho da estrutura definitiva
+
+*Revisão de 68 módulos, 1.610 regras exportadas e os 55 blocos de prompt.
+Escrito antes de qualquer código.*
+
+---
+
+## 1. O padrão que já existe, e que ainda não tinha nome
+
+O Bibliotecário não é um módulo especial. Ele é uma FORMA, e essa forma já
+foi construída cinco vezes nesta casa sem nunca ter sido nomeada. Nomeá-la
+é o que permite repeti-la de propósito.
+
+**O CONSELHEIRO tem seis peças:**
+
+| peça | o que é | exemplo no Bibliotecário |
+|---|---|---|
+| **acervo** | catálogo de opções, cada uma com condição legível por máquina | 191 `JOGADAS` com `quando(situacao)` |
+| **situação** | um retrato normalizado que o acervo sabe ler | `garantirSituacao` — 31 campos |
+| **vetos** | o que NUNCA pode ser proposto, e que falha FECHADO | `VETOS` (veto quebrado corta, não passa) |
+| **afinidades** | o que a situação torna mais provável — multiplicativo, com piso e teto | 9 `AFINIDADES`, produto travado em [0.2, 6] |
+| **memória** | não repetir | `NAO_REPETIR = 8`, `NAO_REPETIR_GESTO = 3` |
+| **envelope** | a resposta entregue como FATO, não como sugestão | `envelopeDaCena` |
+
+E uma sétima peça que só alguns têm, e que é a que separa um conselheiro
+bom de um barulhento: a **cadência** — de quanto em quanto tempo ele tem
+direito de falar. O Bibliotecário fala de 2 em 2 turnos numa mesa fria e
+nunca numa mesa em brasa.
+
+### Os cinco conselheiros que já existem
+
+| conselheiro | arquivo | responde | acervo |
+|---|---|---|---|
+| **Bibliotecário** | `estante.js` + `biblioteca.js` | que FORMA esta cena tem | 191 jogadas · 22 gestos · 9 escolas |
+| **Compasso** | `assuntos.js` + `compasso.js` | de que a história trata AGORA e em que batida está | 99 assuntos · 6 famílias · 6 movimentos |
+| **Mestre da Mesa** | `mestria.js` | o RITMO: temperatura, pilar faminto, concessão, brilho, aviso | 4 temperaturas · 3 pilares · 6 fios |
+| **Oráculo** | `oraculo.js` | SIM ou NÃO sobre o mundo, e a iniciativa dele | 6 perguntas do sistema · 6 movimentos do mundo |
+| **Árbitro** | `desafios.js` | qual teste, quão difícil, o que a falha custa | 31 desafios · 27 custos · 8 ações rápidas |
+
+Seis mil linhas de conselheiro já construídas. O que segue é o que falta.
+
+### E um conselheiro de outra natureza
+
+O **Léxico** (v9.101) decide UMA VEZ, na criação, e o que ele decide vira
+cânone que o código defende. É uma segunda espécie, e vale distinguir as
+duas porque elas têm regras diferentes:
+
+- **conselheiro de turno** — barato, frio, roda sempre, nunca chama IA
+- **conselheiro de criação** — caro, roda uma vez, pode chamar IA, e o que
+  produz é validado e congelado
+
+Quase tudo o que vem abaixo é da primeira espécie.
+
+---
+
+## 2. As três ausências
+
+### AUSÊNCIA 1 — O GEÓGRAFO (o espaço)
+
+**O que existe:** `mapa`, `geografia`, `arredores`, `lugar`, `celulas`,
+`viagem`, `comodos`, `toponimia`, `cena`, `grid`, `movimento`,
+`masmorras`, `acampamento`. Treze módulos que sabem de espaço.
+
+**O que falta:** uma superfície de consulta, e DOIS julgamentos que hoje
+ninguém faz.
+
+1. **O que o lugar PERMITE.** Um corredor não comporta oito inimigos
+   flanqueando. Um pântano não comporta uma carga a cavalo. Uma taverna
+   cheia não comporta um duelo sem plateia. Hoje quem arbitra isso é a IA,
+   e ela arbitra sempre a favor da cena que já tem na cabeça.
+2. **O deslocamento impossível.** "Ele acabou de chegar de Monte do Vigia"
+   — são dois dias, e passaram-se três horas. É um detector, irmão dos que
+   moram em `violacoesDoTurno`.
+
+O "onde está cada um" já existe e funciona: `elencoDaCena` foi visto
+rodando na partida de prova.
+
+**Acervo:** ~40 `AFORDÂNCIAS DO ESPAÇO` — cada uma diz o que o tipo de
+lugar comporta e o que ele impede, com `quando` sobre (tipo de lugar,
+bioma, dentro/fora, quantos cabem, luz, saídas).
+
+---
+
+### AUSÊNCIA 2 — O INTÉRPRETE (a gente)
+
+**A maior de todas, e a que mais muda o jogo.**
+
+Hoje NADA no sistema decide o que uma pessoa FAZ. Confirmado por varredura:
+`npcs.js` é registro (quem ela é), `social.js` é a conta da persuasão
+(consigo convencê-la), `mundo-base.js` dá `vontade` e `modo` (sabor para
+o prompt). O único `comportamento` do código é de BICHO, e é uma palavra
+solta.
+
+Quem decide o que Marta faz quando o herói mente na frente dela é a IA,
+livre. E é exatamente daí que vem a incoerência que este projeto passou
+dois anos combatendo em todas as outras frentes: a ferreira desconfiada
+que de repente conta tudo, o guarda subornável que de repente é íntegro, o
+amigo que não reage ao que acabou de ver.
+
+**O acervo:** ~120 `MOVIMENTOS DE PESSOA`, em ~10 gestos (esquiva,
+aproxima, testa, cobra, protege, entrega, recua, ameaça, oferece, cala).
+Cada um com `quando` sobre uma **situação de pessoa** normalizada:
+
+```
+quem é       papel, temperamento, o que quer, o que teme
+comigo       relação, laço, força do laço, o que me deve, o que eu sei dela
+agora        o que acabou de acontecer, quem mais escuta, onde estamos,
+             se ela está em perigo, se mentiram para ela, se foi tocada
+             no que ela esconde
+```
+
+**A peça que só este conselheiro tem: as LINHAS QUE NÃO SE CRUZAM.** Cada
+pessoa carrega uma ou duas coisas que ela nunca faz — e isso é um VETO
+por pessoa, não por cena. É o que impede a IA de fazer o covarde heroico
+porque a cena pediu.
+
+**Os companheiros entram aqui**, e não em módulo próprio: um companheiro é
+um NPC que está sempre presente. Ganha peso maior por isso. Hoje eles são
+móveis fora do combate — `companheiros.js` dá classe e decisão de luta, e
+mais nada.
+
+**A regra que protege a narração** — e ela vale para o conselho inteiro,
+mas aqui é vital:
+
+> **O Mestre decide O QUE e COM QUEM. Nunca o COMO.**
+>
+> O Intérprete diz *"Marta muda de assunto e olha para a porta"*. Ele
+> nunca diz *"Marta diz: '…'"*. A fala é do Narrador, sempre.
+
+---
+
+### AUSÊNCIA 3 — O ADVERSÁRIO (a oposição como cena)
+
+`combate.js` sabe a mecânica (`turnoDosInimigos`), `orcamento.js` sabe se
+a luta é justa, `emboscada.js` pega a investida. Mas a única coisa que o
+sistema sabe sobre a VONTADE do inimigo é `querFugir`.
+
+Um Mestre nunca roda "seis goblins atacam". Ele roda "seis goblins estão
+te empurrando para a beira do poço". Essa é a diferença entre um combate e
+uma cena, e ela é decidível.
+
+**Acervo:** ~40 `INTENÇÕES DE LUTA`, com `quando` sobre (que criatura,
+quantos, terreno, quem está ganhando, há reféns, há saída). Cada uma
+dita:
+
+- **o que a oposição quer** — matar, capturar, atrasar, empurrar para
+  algum lugar, proteger uma coisa, arrancar uma informação, fugir com algo
+- **prioridade de alvo** — o ferido, o conjurador, o que carrega a coisa
+- **a condição de quebra** — em que ponto isto desmonta e vira outra coisa
+
+Isso alimenta `turnoDosInimigos` (prioridade de alvo é mecânica) E o
+envelope (a intenção é ficção). Duas saídas do mesmo acervo.
+
+---
+
+## 3. A quarta ausência, que não é um conselheiro
+
+### A MEMÓRIA DO MUNDO (o livro-razão)
+
+`consequencias.js` é só o preço de uma falha crítica. `fama`, `reino`,
+`decretos`, `correio` reagem cada um na sua pista. Nada responde:
+
+> **"O herói fez X há três dias. O que o mundo faz sobre isso AGORA?"**
+
+Isto não é um acervo com `quando` — é um **livro-razão**. Cada ato
+notável vira uma linha:
+
+```
+o quê · quando · onde · quem viu · peso · já cobrado?
+```
+
+E um conselheiro pequeno em cima dele decide quando o mundo cobra, e por
+qual das ~30 formas de cobrança (o boato que volta torto, o parente que
+aparece, a conta que chega, a porta que se fecha, o presente de quem
+lembrou).
+
+As peças já existem espalhadas: `contadores`, `confidencias`,
+`tentativas`, `descobertas`, as `marcas` do vilão, `fatos` do oráculo.
+O que falta é o registro único e o cobrador.
+
+---
+
+## 4. A PAUTA DO TURNO — o que amarra tudo
+
+Hoje o Mestre fala em envelopes soltos, empilhados em `notaRef`. Funciona,
+está testado, e não escala: cada conselheiro novo empilha mais um.
+
+A **Pauta** é a mesma informação, ordenada e única — e é a forma literal do
+que foi pedido: *"o mestre passa os pontos e o narrador liga"*.
+
+```
+[PAUTA DO TURNO 41]
+ONDE      no Escudo das Velas, dentro de Forte do Vigia. Chove.
+          O lugar comporta: conversa baixa, saída pelos fundos. Não comporta: correria.
+QUEM      Marta (ferreira · rompeu comigo) · Ubba (amizade profunda)
+MOMENTO   subida da onda — "a dívida que se acerta", com Ubba
+FORMA     uma confidência ao pé do balcão
+A GENTE   Marta muda de assunto se tocarem no irmão
+          Ubba se põe entre mim e a porta
+ACABOU DE falhei em escutar (Percepção 11 vs 13)
+NÃO PODE  ninguém sabe da carta · Cedric está a dois dias daqui
+```
+
+**Por que ela vem cedo e não no fim:** três conselheiros novos, cada um
+escrevendo o próprio envelope, e depois um refactor juntando os três — é
+fazer o trabalho duas vezes. A Pauta nasce junto do primeiro conselheiro
+novo e os outros já nascem dentro dela.
+
+**Por que ela não é só cosmética:** ela dá o único lugar onde se pode
+ORÇAR o que o Mestre diz por turno. Hoje não há teto para envelopes
+empilhados. Com a Pauta há — e ela corta por prioridade, como o léxico já
+faz.
+
+---
+
+## 5. O que eu NÃO transformaria em conselheiro
+
+Um desenho sem espaço negativo é uma lista de desejos. Estes ficam de
+fora, e por motivo:
+
+- **A textura sensorial** (cheiro, som, luz). É o ofício do Narrador, e é
+  a única coisa que ele faz melhor que qualquer tabela. Um conselheiro
+  aqui produziria descrição por catálogo, que é o oposto do que se quer.
+- **O diálogo.** Mesma razão, com força dobrada. O Intérprete diz o que a
+  pessoa FAZ; a fala é do Narrador.
+- **A física fina** (isto pega fogo? o gelo aguenta?). `desafios.js` já
+  cobre o que vira teste. O resto é improviso, e improviso é dele.
+- **O tempo** — `calendario` + `relogios` já são conselheiros em tudo
+  menos no nome.
+- **A recompensa** — `loot`, `afixos`, `relicas`, `conquistas` cobrem o
+  mecânico; a batida `preço`/`depois` do compasso cobre o dramático.
+- **A economia** — `economia.js` + `mercado.js` + `orcamento.js` já
+  decidem tudo o que é decidível.
+
+---
+
+## 6. A ordem, e por quê
+
+### Trilha A — os conselheiros
+
+**A1. O GEÓGRAFO + a PAUTA (juntos).**
+O menor dos três, o que já foi pedido por nome, e o que reúne dado que já
+existe. A Pauta nasce como a entrega DELE — um consumidor só, provado em
+jogo, sem refactor de big-bang. Depois os outros adotam.
+
+**A2. O INTÉRPRETE.**
+O maior ganho por caractere de prompt gasto, e o acervo mais caro de
+escrever (~120 movimentos, na escala do `estante.js`). Faz o mundo parar
+de ser um teatro que só se move quando o herói entra.
+
+**A3. O ADVERSÁRIO.**
+Depende do Geógrafo (a intenção usa o terreno) e fica muito melhor com o
+Intérprete (um inimigo é gente). Por isso é terceiro, não por ser menor.
+
+**A4. A MEMÓRIA DO MUNDO.**
+Depende de todos os outros para ter o que cobrar, e é a que fecha o
+círculo: o mundo passa a lembrar.
+
+### Trilha B — o léxico continua descendo
+
+Independente da trilha A, e cada item é pequeno:
+
+**B1. Lugares e criaturas.** `locaisDaCidade` e `criaturasDaRegiao`. O
+`tipo` é mecânico e fica; só o NOME muda. **Risco zero** — é a taverna e
+a capela que aparecem no mapa hoje, num mundo que não tem nenhuma das
+duas. Deveria vir logo: é o que resta mais visível.
+
+**B2. Raças jogáveis.** Apelido por cima do mesmo bônus. O card já mostra
+o bônus, e não há proficiência envolvida.
+
+**B3. Equipamento pela FORMA.** As três regras já escritas: o nome vem do
+formato mecânico e nunca do item; o mapeamento é total, nunca parcial; a
+ficha nunca mente. Mais um teste que proíba um nome de um balde aparecer
+em outro.
+
+**B4. Habilidades.** Por último, ou nunca — o nome é identificador.
+
+### A ordem que eu tocaria de fato
+
+```
+1. B1  lugares e criaturas       (pequeno, visível, risco zero)
+2. A1  Geógrafo + Pauta          (a espinha)
+3. A2  Intérprete                (o maior ganho)
+4. B2  raças                     (pequeno, encaixa no intervalo)
+5. A3  Adversário
+6. B3  equipamento pela forma
+7. A4  Memória do Mundo
+```
+
+---
+
+## 7. Os riscos, sem maquiar
+
+**1. O prompt.** Três conselheiros novos querendo espaço é o risco número
+um. A cena comum está em 61,4 mil com teto declarado de 62. As defesas:
+as PORTAS DA CENA (já existem), a Pauta com orçamento próprio e corte por
+prioridade, e a regra de que o Intérprete gasta uma linha POR PESSOA
+PRESENTE — não por pessoa registrada.
+
+**2. O Narrador ficar sem nada para fazer.** Se o Mestre decide demais, a
+prosa seca. A defesa é a regra do COMO: nenhum conselheiro descreve, nomeia
+fala ou escolhe adjetivo. E o bloco LIBERDADE CRIATIVA continua valendo,
+com uma linha nova — *quanto mais o envelope diz, mais ousadia cabe dentro
+dele*.
+
+**3. O tamanho dos acervos.** `estante.js` tem 1.296 linhas e levou uma
+sessão inteira. O Intérprete é dessa escala. Não dá para fazer em meia
+hora, e fingir que dá é o que produz catálogo raso.
+
+**4. A garantia de leitor, multiplicada.** Cada conselheiro novo traz
+campos novos na situação. A catraca desta casa — todo campo que um
+`quando` lê tem de ser normalizado E entregue — passa a valer sobre
+quatro situações diferentes. Precisa de um teste que percorra os quatro
+acervos e confira campo por campo, como o do Bibliotecário já faz.
+
+**5. Determinismo.** Quatro conselheiros sorteando no mesmo turno é
+superfície nova para dessincronizar semente — o bug do continente da
+v9.102 em quatro cópias. Cada um precisa do próprio gerador derivado.
+
 ## O léxico do mundo — v9.101
 
 O relato: "se eu criar um mundo sobre Solo Leveling e colocar sobre os
