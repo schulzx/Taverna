@@ -63,6 +63,8 @@ const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-
    o QUANTO O JOGADOR SABE. É essa escada que o medidor de ódio não
    tinha, e é ela que faz a revelação existir.
    ============================================================ */
+import { corpoPorId, escolherCorpo, comoCai } from "./antagonista.js";
+
 export const FASES = [
   {
     id: "rumor", nome: "O rumor", ordem: 0, revela: "nada",
@@ -216,6 +218,10 @@ export function escolherArquetipo(cont = {}, stats = {}, sorte = Math.random) {
 }
 
 export function gerarVilao({ nome = "", cont = {}, stats = {}, dia = 0, sorte = Math.random } = {}) {
+  /* v9.107: a ameaça nasce com um CORPO — pessoa, conselho, bando, coisa
+     antiga ou instituição —, e ele muda o ritmo do plano e o que
+     significa derrubá-la. */
+  const corpo = escolherCorpo(sorte);
   const arq = escolherArquetipo(cont, stats, sorte);
   const assinatura = arq.assinaturas[Math.floor(sorte() * arq.assinaturas.length)] || arq.assinaturas[0];
   return {
@@ -229,6 +235,7 @@ export function gerarVilao({ nome = "", cont = {}, stats = {}, dia = 0, sorte = 
     odio: 0,
 
     /* e o que faz dele um vilão */
+    corpo,
     arquetipo: arq.id,
     crenca: arq.crenca,
     metodo: arq.metodo,
@@ -395,10 +402,19 @@ export function linhaDaHeranca(v) {
 
 export const DIAS_POR_PASSO = 6;
 
+/* v9.107: e o CORPO da ameaça multiplica esse número. Um conselho
+   precisa concordar antes de agir; um bando não precisa de nada. É a
+   primeira consequência mecânica de "um vilão pode ser um grupo de
+   dragões ou um deus" — e é o que impede o corpo de ser só sabor. */
+export function diasDoPasso(v) {
+  const r = Number(corpoPorId(v && v.corpo).ritmo) || 1;
+  return Math.max(2, Math.round(DIAS_POR_PASSO * r));
+}
+
 export function podeAvancar(v, { dia = 0 } = {}) {
   if (!v || v.status === "derrotada") return false;
   if (v.passo >= TOTAL_DE_PASSOS - 1) return false;
-  return (dia - (v.ultimoPasso ?? v.origemDia ?? 0)) >= DIAS_POR_PASSO;
+  return (dia - (v.ultimoPasso ?? v.origemDia ?? 0)) >= diasDoPasso(v);
 }
 
 export function avancarPlano(v, { dia = 0, alvo = null } = {}) {
@@ -585,8 +601,17 @@ REGRA DESTE ENVELOPE (obrigatória): ele ESCAPA, e escapa custando alguma coisa 
 
 export function envelopeDaQueda(v, causa = "") {
   if (!v) return "";
-  return `[O VILÃO CAIU — CANON E IRREVERSÍVEL] ${v.nome}, ${v.titulo}, está morto${causa ? ` — ${causa}` : ""}. O plano dele parou onde estava, e o que ele tomou fica tomado até alguém retomar.
-REGRA DESTE ENVELOPE (obrigatória): narre o fim e, na mesma cena, o que ele DEIXOU — gente que acreditava nele e agora não tem no que acreditar, um lugar que continua nas mãos dele mesmo depois de morto, uma frase dele que as pessoas ainda repetem. NÃO invente um sucessor, NÃO diga que "havia um plano maior" e NÃO o ressuscite de forma nenhuma. Ele acabou; o rastro, não.`;
+  /* v9.107: A QUEDA TEM A FORMA DO CORPO. Este envelope afirmava "está
+     morto" para qualquer ameaça, e o texto só servia a uma pessoa. Um
+     conselho não morre inteiro; uma instituição não tem quem matar; uma
+     coisa antiga não se mata assim. Dizer "morto" para as cinco formas
+     era o sistema empurrando quatro mundos para dentro de um. */
+  const c = comoCai(v.corpo);
+  const cab = c.sobrevive
+    ? `[A AMEAÇA CAIU — CANON E IRREVERSÍVEL] Quem estava na frente de ${v.nome} caiu${causa ? ` — ${causa}` : ""}, e ${c.queda}.`
+    : `[O VILÃO CAIU — CANON E IRREVERSÍVEL] ${v.nome}, ${v.titulo}, está morto${causa ? ` — ${causa}` : ""}. O plano dele parou onde estava, e o que ele tomou fica tomado até alguém retomar.`;
+  return `${cab}
+REGRA DESTE ENVELOPE (obrigatória): narre o fim e, na mesma cena, o que ele DEIXOU — gente que acreditava nele e agora não tem no que acreditar, um lugar que continua nas mãos dele mesmo depois de morto, uma frase dele que as pessoas ainda repetem. NÃO invente um sucessor, NÃO diga que "havia um plano maior" e NÃO o ressuscite de forma nenhuma.${c.sobrevive ? " E NÃO trate isto como o fim de tudo: o que sobra continua, e continua sabendo o que aconteceu." : " Ele acabou; o rastro, não."}`;
 }
 
 export function linhaDaQueda(v) {

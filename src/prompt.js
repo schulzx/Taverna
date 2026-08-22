@@ -46,6 +46,7 @@ import { GEOGRAFO_PROMPT } from "./geografo.js";
 import { PAUTA_PROMPT } from "./pauta.js";
 import { REGISTRO_PROMPT } from "./registro.js";
 import { INTERPRETE_PROMPT } from "./interprete.js";
+import { ANTAGONISTA_PROMPT } from "./antagonista.js";
 import { CELULAS_PROMPT } from "./celulas.js";
 import { VIAGEM_PROMPT } from "./viagem.js";
 import { RESOLVER_PROMPT } from "./resolver.js";
@@ -173,6 +174,9 @@ export const PORTAS_DA_CENA = [
      ermo, a masmorra vazia. Daqui para a frente todo AGENTE novo nasce
      atrás de uma porta, senão o teto do prompt vira enfeite. */
   { id: "gente", quando: (c) => !!c.temGente, porque: "o que a gente em cena faz só importa quando há gente em cena" },
+  /* v9.107: a ameaça só pensa depois de existir. Antes do primeiro
+     vilão da campanha, o bloco seria uma regra sobre coisa nenhuma. */
+  { id: "vilao", quando: (c) => !!c.temVilao, porque: "como a ameaça pensa só importa depois de haver uma ameaça" },
   { id: "masmorra", quando: (c) => !!c.emMasmorra, porque: "como o lugar perigoso se apresenta neste mundo só importa a quem está dentro de um" },
 ];
 
@@ -262,6 +266,8 @@ ${vozPrompt((mundo && mundo.voz) || VOZ_PADRAO)}
 ${so("mercado", MERCADO_PROMPT)}
 ${CONSUMIVEIS_PROMPT}
 ${so("gente", INTERPRETE_PROMPT)}
+
+${so("vilao", ANTAGONISTA_PROMPT)}
 
 ${so("grupo", COMPANHEIROS_PROMPT)}
 ${so("combate", REACOES_PROMPT)}

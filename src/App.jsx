@@ -82,6 +82,7 @@ import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } 
 import { garantirEspaco, paraPauta } from "./geografo.js";
 import { porNaPauta, textoDaPauta, garantirPauta } from "./pauta.js";
 import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta } from "./interprete.js";
+import { escolherCorpo, corpoPorId, garantirSaber, chegouAteEle, oQueEleNaoSabe, certezaDe, responder, paraPauta as vilaoParaPauta, envelopeDoCorpo } from "./antagonista.js";
 import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resumoDoRegistro } from "./registro.js";
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
@@ -3947,6 +3948,14 @@ export default function Taverna() {
       p = porNaPauta(p, "gente", r.linhas);
       for (const m of r.marcas) elencoMemRef.current = marcarMovimento(elencoMemRef.current, m.nome, m.id, m.gesto);
     }
+    /* v9.107: A AMEAÇA PENSA. Duas linhas no máximo — o que ela concluiu
+       e o que faz por causa disso. A leitura sobe junto de propósito: sem
+       ela a resposta parece arbitrária, e com ela o Narrador sabe se está
+       encenando um vilão que acertou ou um que se enganou. */
+    {
+      const r = respostaDaAmeaca();
+      if (r) p = porNaPauta(p, "vilao", vilaoParaPauta(r, { nome: (nemesisRef.current || {}).nome || "a ameaça" }));
+    }
     p = porNaPauta(p, "antes", arquivistaParaPauta(registroRef.current, {
       onde: linhaDoLugarDaMesa(),
       quem: (elencoDaOnda().aqui || []),
@@ -3955,6 +3964,74 @@ export default function Taverna() {
       diaAtual: diaRef.current,
     }));
     return p;
+  };
+
+  /* ---------------- A MENTE DA AMEAÇA (v9.107) ----------------
+     O retrato que o Sistema Vilão lê. Nenhum campo é inventado: o plano
+     vem de `vilao.js`, o que chegou até ele vem do livro-razão, e o
+     herói pelos olhos dele sai da ficha e dos contadores. */
+  const menteDaAmeaca = () => {
+    const v = nemesisRef.current;
+    if (!v || !v.nome) return null;
+    const p0 = fichaViva() || personagem || {};
+    const saber = garantirSaber(saberRef.current);
+    const naoSabe = oQueEleNaoSabe(saber, (registroRef.current || []).filter((x) => x.peso >= 2));
+    return {
+      nome: v.nome, arquetipo: v.arquetipo, corpo: v.corpo || "pessoa",
+      passo: v.passo || 0, conhecido: !!v.conhecido, marcas: (v.marcas || []).length,
+      quanto: saber.length,
+      certezaMax: saber.reduce((a, x) => Math.max(a, certezaDe(x)), 0),
+      ignora: naoSabe.length,
+      fama: Math.round(famaAtual()),
+      nivel: p0.nivel || 1,
+      heroiFerido: (p0.vida || 0) < (p0.vidaMax || 1) * 0.5,
+      heroiSozinho: !(p0.grupo || []).length,
+      heroiRico: (p0.moedas || 0) >= 300,
+      heroiMatou: (contRef.current.inimigosDerrotados || 0) > 0,
+      heroiPoupou: (contRef.current.poupados || 0) > 0,
+      heroiFugiu: (contRef.current.fugas || 0) > 0,
+      heroiAceitouAlgo: (contRef.current.contratos || 0) > 0,
+      perto: !!(v.marcas || []).some((m) => String(m).includes(cidadeAtualRef.current || "\u0000")),
+      dia: diaRef.current,
+      desdeQueAgiu: diaRef.current - vilaoAgiuRef.current,
+    };
+  };
+
+  /* ---------------- O QUE CHEGA ATÉ ELA (v9.107) ----------------
+     Nada aqui inventa informação: as três fontes já existiam no jogo e
+     nunca tinham sido lidas como OUVIDOS.
+
+       · as MARCAS do plano são gente dela na região — quem age perto de
+         uma marca é visto por ela
+       · a FAMA corre sozinha: acima do patamar, o nome chega
+       · e o RESTO é boato, que é a fonte de menor certeza — e é
+         justamente de certeza baixa que nasce uma leitura errada
+
+     Roda no fim do turno, sobre a linha que o Registro acabou de
+     escrever. Só o que PESOU chega: ninguém conta a um vilão que o herói
+     comprou uma corda. */
+  const chegarAteAAmeaca = (linha) => {
+    try {
+      const v = nemesisRef.current;
+      if (!v || !v.nome || !linha || linha.peso < 2) return;
+      const perto = (v.marcas || []).some((m) => String(m || "").includes(cidadeAtualRef.current || "\u0000"));
+      const fama = famaAtual();
+      const fonte = perto ? "marca" : fama >= 45 ? "fama" : fama >= 20 ? "boato" : "";
+      if (!fonte) return;   /* ninguém contou: e é isto que ele NÃO sabe */
+      saberRef.current = chegouAteEle(saberRef.current, {
+        o: linha.oQue, fonte, dia: diaRef.current, sobre: (linha.quem || [])[0] || "",
+      });
+    } catch { /* o que a ameaça sabe nunca pode custar um turno */ }
+  };
+
+  const respostaDaAmeaca = () => {
+    try {
+      const m = menteDaAmeaca();
+      if (!m) return null;
+      const r = responder(m);
+      if (r) vilaoAgiuRef.current = diaRef.current;
+      return r;
+    } catch { return null; }
   };
 
   /* ---------------- QUEM ESTÁ NA CENA, PARA O INTÉRPRETE (v9.106) ----------------
@@ -4053,6 +4130,7 @@ export default function Taverna() {
       emMasmorra: !!(mm && !mm.encerrada),
       /* v9.106: há alguém em cena? É a porta do Intérprete. */
       temGente: pessoasDaCena().length > 0,
+      temVilao: !!(nemesisRef.current && nemesisRef.current.nome),
       temChao: (chaoRef.current || []).length > 0,
       emCidade: !!cidadeAtualRef.current,
       /* dentro de um PRÉDIO da cidade — não nos arredores. A régua é a
@@ -4138,6 +4216,11 @@ export default function Taverna() {
   /* v9.106: o que cada pessoa já fez, por pessoa. O que Marta fez três
      turnos atrás não volta; Ubba pode fazer a mesma coisa. */
   const elencoMemRef = useRef({});
+  /* v9.107: o que CHEGOU até a ameaça, com a fonte de cada linha, e o dia
+     do último movimento dela. A exigência da fonte é o que impede o
+     acervo de derivar para "ele simplesmente sabe". */
+  const saberRef = useRef([]);
+  const vilaoAgiuRef = useRef(-99);
   /* e o ATO do herói neste turno, lido do que ele escreveu. É o que a
      maioria dos movimentos do Intérprete consulta. */
   const atoDoTurnoRef = useRef("nada");
@@ -4534,7 +4617,7 @@ export default function Taverna() {
     setStatusSave("salvando");
     const dados = {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, registro: registroRef.current, elencoMem: elencoMemRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
+      combate: combateRef.current, registro: registroRef.current, elencoMem: elencoMemRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
@@ -7005,6 +7088,9 @@ export default function Taverna() {
            lembrar de burocracia em vez de história. */
         const doJogador = [...mensagensRef.current].reverse().find((m) => m.autor === "jogador");
         anotarOTurno({ oQue: String((doJogador && doJogador.texto) || conteudo || "").replace(/^\[[^\]]*\]\s*/, "").slice(0, 90), peso });
+        /* e o que pesou pode ter chegado até a ameaça — por marca, por
+           fama ou por boato, e a fonte fica escrita na linha */
+        chegarAteAAmeaca(registroRef.current[registroRef.current.length - 1]);
       } catch { /* a memória nunca pode custar um turno */ }
       turnoContRef.current += 1;
       /* v9.105: aqui morava a chamada de IA que reescrevia o livro. Agora
@@ -7172,7 +7258,7 @@ export default function Taverna() {
     capituloNovoRef.current = null;
     personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
     setPersonagem(pers);
-    registroRef.current = []; elencoMemRef.current = {}; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
+    registroRef.current = []; elencoMemRef.current = {}; saberRef.current = []; vilaoAgiuRef.current = -99; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
     if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); }
     npcTurnoRef.current = 0; definirAcampado(false);
     /* GEOGRAFIA GERADA PELO SISTEMA (v7.5): o continente nasce PRONTO —
@@ -7269,7 +7355,7 @@ export default function Taverna() {
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
       setRolagem(sv.rolagem || null);
       setCombate(sv.combate || null); combateRef.current = sv.combate || null;
-      registroRef.current = garantirRegistro(sv.registro); elencoMemRef.current = garantirElenco(sv.elencoMem); turnoContRef.current = 0;
+      registroRef.current = garantirRegistro(sv.registro); elencoMemRef.current = garantirElenco(sv.elencoMem); saberRef.current = garantirSaber(sv.saber); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
       turnoDeRegistroRef.current = registroRef.current.length ? registroRef.current[registroRef.current.length - 1].t : 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       npcsRef.current = sv.npcs && typeof sv.npcs === "object" ? sv.npcs : {}; setNpcs(npcsRef.current); npcTurnoRef.current = 0;
