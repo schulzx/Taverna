@@ -2952,6 +2952,64 @@ da metade (aí não existe na prática).
   entre duas pessoas presentes e depois nunca mais ser tocado se elas se
   separarem — o registro guarda, mas nada volta a puxá-lo.
 
+## A partida de prova — v9.98
+
+Uma campanha jogada do zero, com um Mestre falso no lugar da IA, para ver
+os sistemas trabalhando de verdade. Voz escolhida: **Sombrio**.
+
+### O que se viu em jogo
+
+O prompt chegou com as duas peças novas: `A SUA VOZ — SOMBRIO` e a linha
+do ritmo, que muda a cada movimento da onda. E a onda rodou inteira,
+três vezes:
+
+```
+0  PREPARAÇÃO   "há alguma coisa se formando ao fundo, e ninguém deu por ela"
+1  APERTA       "a coisa aperta, e dá para agir contra"
+2  A FORMA      ← o Bibliotecário preenche o turno em que o compasso cala
+3  O MUNDO RESPONDE + CUSTO + TESTE
+4  A UM PASSO   "está a um passo de acontecer"
+5  AGORA        "está acontecendo"
+6  O MUNDO SE MEXE + O QUE FICOU
+7  —            ← o respiro, mudo, como projetado
+8  A FORMA
+10 PREPARAÇÃO   ← a segunda onda começa
+```
+
+Também apareceram, sem serem procurados: `SEM TESTE — DECISÃO DO SISTEMA`
+(a concessão do governador do dado), `DESTINO NÃO RECONHECIDO` (o
+resolver recusando em vez de inventar), e a interceptação de "escuto a
+mesa ao lado" como teste de Percepção.
+
+Os quatro NPCs registrados durante a partida chegaram ao prompt na hora,
+com papel, relação e lugar.
+
+### O que NÃO deu para exercitar com um Mestre falso
+
+- **O sistema de laços.** Ele precisa de um clímax de assunto que peça
+  pessoa, e no dia 1 quase todos estão fechados por `momento` — 23% do
+  acervo pede pessoa, e a maioria desses exige campanha por baixo. Foi
+  verificado por simulação direta dos módulos (400 turnos, duas relações
+  inteiras com nascimento, ruptura e reconciliação, mais uma dívida entre
+  dois NPCs).
+- **O vilão e o capítulo.** Andam por dia de campanha; a partida cobriu
+  uma manhã.
+
+### Uma coisa que a partida provou e eu não tinha certeza
+
+`elencoDaCena` recebe NPCs cujo `local` a IA preenche livremente — e na
+partida ela pôs `local: "aqui"`, que não é nome de cidade nenhuma. O
+elenco resolve isso para **"aqui, paradeiro não registrado"**, que é o
+lado seguro: o laço encontra candidatos em vez de nunca disparar. Era o
+único ponto em que a cadeia inteira poderia falhar em silêncio.
+
+### O que a partida deixou anotado
+
+- **Uma sessão longa é difícil de dirigir por fora.** Testes de dado
+  param o turno e exigem dois cliques (`Rolar`, depois `Continuar`), e um
+  laço de automação que não os trate trava sem erro nenhum. Não é defeito
+  do jogo — é nota para a próxima vez que alguém for testar assim.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na
