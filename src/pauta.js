@@ -134,7 +134,7 @@ export function tamanhoCruDaPauta(p) {
   return Object.values(pauta).flat().reduce((a, t) => a + t.length + 14, 0);
 }
 
-export const PAUTA_PROMPT = `A PAUTA DO TURNO (v9.104):
+export const PAUTA_PROMPT = `A PAUTA DO TURNO (v9.105):
 · Quando chegar um bloco [PAUTA DO TURNO], ele é o resumo do que o SISTEMA já decidiu para esta cena — lugar, gente, batida da história, forma, vetos. Cumpra tudo, na ordem que fizer sentido narrativamente.
 · A Pauta diz O QUE acontece e COM QUEM. O COMO é seu, inteiro: a fala, o gesto, o cheiro, o ritmo, o que cada um esconde. Nenhuma linha dela deve aparecer copiada na narração.
 · A linha NÃO PODE é veto: o que está ali não acontece nesta cena, por mais que a cena peça.`;

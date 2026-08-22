@@ -44,6 +44,7 @@ import { ACAMPAMENTO_PROMPT } from "./acampamento.js";
 import { lexicoPrompt } from "./lexico.js";
 import { GEOGRAFO_PROMPT } from "./geografo.js";
 import { PAUTA_PROMPT } from "./pauta.js";
+import { REGISTRO_PROMPT } from "./registro.js";
 import { CELULAS_PROMPT } from "./celulas.js";
 import { VIAGEM_PROMPT } from "./viagem.js";
 import { RESOLVER_PROMPT } from "./resolver.js";
@@ -183,7 +184,13 @@ export function portasAbertas(cena) {
    para trás e o prompt viraria uma escada de buracos. */
 const _limparVazios = (t) => String(t).replace(/\n{3,}/g, "\n\n");
 
-export function montarSystemPrompt(nomeCampanha, mundo, personagem, livro, canone, bancoNomes, mapaInfo, historiaInfo, questsInfo, npcsInfo, tempoInfo, divindadeInfo = "", tituloInfo = "", cena = null) {
+/* v9.105: O LIVRO SAIU DA ASSINATURA. Ele era um resumo de 220 palavras
+   escrito por IA a cada 8 turnos, e quase tudo o que ele guardava virou
+   dado estruturado — laço, relógios, missões, fase do arco, plano do
+   vilão, marcas, confidências, tentativas, fama. Ele reescrevia em prosa
+   o que o sistema já sabe em campo, e custava uma chamada de rede.
+   Quem lembra agora é o REGISTRO, e ele não resume: recupera. */
+export function montarSystemPrompt(nomeCampanha, mundo, personagem, canone, bancoNomes, mapaInfo, historiaInfo, questsInfo, npcsInfo, tempoInfo, divindadeInfo = "", tituloInfo = "", cena = null) {
   const porta = portasAbertas(cena);
   /* `so` é a única forma deste arquivo esconder alguma coisa: o bloco entra
      inteiro ou não entra. Nada de meio bloco — regra pela metade é pior do
@@ -209,7 +216,7 @@ ${lexTexto ? `\n${lexTexto}\n` : ""}
 ${tempoInfo ? `${tempoInfo}\n` : ""}PERSONAGEM DO JOGADOR:
 ${fichaTexto(personagem)}
 Começa com ${MOEDAS_INICIAIS} moedas.
-${canoneTexto ? `\n═══ CÂNONE (VERDADES IMUTÁVEIS — nunca contradiga; se o jogador citar algo daqui, RECONHEÇA, não invente) ═══\n${canoneTexto}\n═══════════════════════════════════════\n` : ""}${livro ? `\nLIVRO DA CAMPANHA (resumo dos acontecimentos — o CÂNONE acima tem prioridade sobre este resumo):\n${livro}\n` : ""}
+${canoneTexto ? `\n═══ CÂNONE (VERDADES IMUTÁVEIS — nunca contradiga; se o jogador citar algo daqui, RECONHEÇA, não invente) ═══\n${canoneTexto}\n═══════════════════════════════════════\n` : ""}
 === REGRAS DE JOGO (baseadas em RPGs de mesa clássicos) ===
 
 ROLAGENS (v9.68 — você NÃO pede nenhuma, nunca):
@@ -312,6 +319,7 @@ ${so("missao", MISSOES_PROMPT)}
 ${so("missao", OFERTAS_PROMPT)}
 
 ${PAUTA_PROMPT}
+${REGISTRO_PROMPT}
 
 ${GEOGRAFO_PROMPT}
 

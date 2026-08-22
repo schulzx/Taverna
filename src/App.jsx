@@ -81,6 +81,7 @@ import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, item
 import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
 import { garantirEspaco, paraPauta } from "./geografo.js";
 import { porNaPauta, textoDaPauta, garantirPauta } from "./pauta.js";
+import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resumoDoRegistro } from "./registro.js";
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
@@ -137,6 +138,17 @@ async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto
 /* decodifica escapes (\n, \", \t...) de um pedaço de string JSON */
 /* parsing de resposta extraído para ./json.js (v8.6) */
 
+/* ---------------- A JANELA DE HISTÓRICO (v9.105) ----------------
+   Eram 18 turnos, e o número foi escolhido quando o LIVRO ocupava mil
+   caracteres do prompt e custava uma chamada de rede a cada oito jogadas.
+   Com o livro fora, esse espaço voltou — e o passado recente é a coisa
+   que o Narrador mais usa e que nenhum sistema substitui: é dali que sai
+   o fio da conversa.
+
+   Trinta, e não mais: o passado REMOTO agora é recuperado com precisão
+   pelo Arquivista, e histórico bruto é a forma mais cara de lembrar. */
+export const JANELA_DE_HISTORICO = 30;
+
 async function chamarMestre(system, historico) {
   /* histórico já está no formato Messages API: [{role, content}, ...] */
   /* 18 mensagens bastam: o cânone (fatos imutáveis) e o livro (resumo do arco)
@@ -146,13 +158,13 @@ async function chamarMestre(system, historico) {
      DeepSeek escreve prosa MAIS longa que o Gemini — com 2600 a resposta
      truncava no meio do JSON e a tela mostrava "…". O teto não custa —
      só se paga pelo que é gerado. */
-  let texto = await chamarModelo(system, historico.slice(-18), 3600, "json");
+  let texto = await chamarModelo(system, historico.slice(-JANELA_DE_HISTORICO), 3600, "json");
   let resp = extrairJSON(texto);
   /* REDE DE SEGURANÇA (v7.0.2): se veio JSON válido mas SEM narrativa (o "…"
      na tela), tenta UMA segunda vez com um empurrão explícito antes de
      desistir. */
   if (!resp.narrativa || resp.narrativa === "…" || resp.narrativa.startsWith("O Mestre hesita")) {
-    const reforco = [...historico.slice(-18), { role: "user", content: "[SISTEMA] Sua resposta anterior chegou sem o campo \"narrativa\". Responda de novo, em JSON, com \"narrativa\" SEMPRE preenchida (é o texto que o jogador lê)." }];
+    const reforco = [...historico.slice(-JANELA_DE_HISTORICO), { role: "user", content: "[SISTEMA] Sua resposta anterior chegou sem o campo \"narrativa\". Responda de novo, em JSON, com \"narrativa\" SEMPRE preenchida (é o texto que o jogador lê)." }];
     texto = await chamarModelo(system, reforco, 3600, "json");
     const resp2 = extrairJSON(texto);
     if (resp2.narrativa && resp2.narrativa !== "…" && !resp2.narrativa.startsWith("O Mestre hesita")) {
@@ -164,32 +176,20 @@ async function chamarMestre(system, historico) {
   return resp;
 }
 
-/* LIVRO DA CAMPANHA (v9.7) — a memória longa do Mestre.
-   A cada 8 turnos um arquivista relê as narrativas recentes e reescreve o
-   livro: NPCs, promessas, dívidas, pontas soltas. É o que o Mestre lembra
-   depois que o histórico bruto sai da janela.
+/* v9.105: O LIVRO DA CAMPANHA MORREU AQUI, e a razão vale ficar.
 
-   Esta função morava em json.js desde a modularização — sem `export`, sem
-   ninguém a importar, e chamando `chamarModelo`, que vive AQUI. Ou seja:
-   estava quebrada nos dois sentidos e derrubava o fim de todo oitavo turno.
-   O lugar dela é junto de chamarMestre, porque ela fala com a rede — json.js
-   é o arquivo puro, sem estado e sem chamada externa. */
-async function gerarLivro(livroAtual, narrativas) {
-  const system = `Você é o arquivista de uma campanha de RPG. Atualize o LIVRO DA CAMPANHA: um registro fiel e conciso dos FATOS que o Mestre precisa lembrar para manter continuidade. Em tópicos curtos: NPCs conhecidos e a relação com o herói; promessas/dívidas/juramentos; inimigos e aliados; locais importantes; itens/segredos; pontas soltas. Máx 220 palavras. Responda SOMENTE com o texto do livro em tópicos, sem preâmbulo.`;
-  const conteudo = `LIVRO ATUAL:
-${livroAtual || "(vazio)"}
+   Ele era um arquivista de IA: a cada 8 turnos relia as narrativas e
+   reescrevia 220 palavras de "NPCs, promessas, dívidas, pontas soltas".
+   Custava uma chamada de rede por bloco de turnos e mil caracteres de
+   prompt — e resumia, com perda, aquilo que o sistema foi aprendendo a
+   guardar em campo: laço, relógios, missões, fase do arco, plano do
+   vilão, marcas, confidências, tentativas, descobertas, fama.
 
-NOVOS ACONTECIMENTOS (mais recentes):
-${narrativas.slice(-16).join("\n\n")}`;
-  try {
-    /* tarefa "leve": o livro é burocracia de arquivista, não narração —
-       vai para o modelo barato no servidor (roteamento por tarefa) */
-    const r = await chamarModelo(system, [{ role: "user", content: conteudo }], 600, "texto", "leve");
-    return (r || "").trim();
-  } catch {
-    return livroAtual;
-  }
-}
+   Quem lembra agora é o REGISTRO (`registro.js`), e a diferença que
+   importa é esta: ele não RESUME, ele RECUPERA. Uma linha por turno,
+   escrita por código, e o Arquivista devolve as três que importam a
+   ESTA cena. O custo no prompt é fixo para sempre — uma campanha de mil
+   turnos entrega as mesmas três linhas que uma de trinta. */
 
 /* primitivas de interface extraídas para ./ui.jsx (v8.8) */
 
@@ -2926,7 +2926,9 @@ export default function Taverna() {
   const [temSave, setTemSave] = useState(null);
 
   const systemRef = useRef("");
-  const livroRef = useRef("");
+  /* v9.105: o REGISTRO no lugar do livro. Uma linha por turno, escrita
+     por código, podada por peso. */
+  const registroRef = useRef([]);
   const notaRef = useRef("");
   /* v9.45: o que o herói fez de mãos desde o último turno de verdade. Não é
      estado de jogo — é uma fila de recibos que espera o próximo `enviar`. */
@@ -3932,7 +3934,59 @@ export default function Taverna() {
     });
     p = porNaPauta(p, "onde", g.onde);
     p = porNaPauta(p, "naoPode", g.naoPode);
+    /* v9.105: O ARQUIVISTA. Ele não resume a campanha — recupera as três
+       linhas que importam a ESTA cena, com esta gente, neste lugar. O
+       custo é fixo para sempre: uma campanha de mil turnos entrega as
+       mesmas três que uma de trinta. */
+    p = porNaPauta(p, "antes", arquivistaParaPauta(registroRef.current, {
+      onde: linhaDoLugarDaMesa(),
+      quem: (elencoDaOnda().aqui || []),
+      assunto: (compassoRef.current || {}).assunto || "",
+      turnoAtual: turnoDeRegistroRef.current,
+      diaAtual: diaRef.current,
+    }));
     return p;
+  };
+
+  /* O rótulo curto do lugar, que o registro guarda e o Arquivista casa.
+     Curto de propósito: "no Escudo das Velas" casa com "no Escudo das
+     Velas, dentro de Forte do Vigia" na comparação por prefixo. */
+  const linhaDoLugarDaMesa = () => {
+    const mm = masmorraRef.current;
+    if (mm && !mm.encerrada) return mm.nome;
+    if (lugarRef.current && lugarRef.current.nome) return lugarRef.current.nome;
+    if (jornadaRef.current) return `estrada para ${jornadaRef.current.para || "adiante"}`;
+    return cidadeAtualRef.current || "";
+  };
+
+  /* ---------------- A LINHA DO TURNO (v9.105) ----------------
+     Escrita por CÓDIGO, com o que o Mestre já sabia neste instante. O
+     peso é o que decide quanto tempo ela sobrevive, e ele sai do que de
+     fato aconteceu — não de um palpite sobre importância. */
+  const turnoDeRegistroRef = useRef(0);
+  const anotarOTurno = ({ oQue = "", peso = 0 } = {}) => {
+    if (!oQue) return;
+    /* o mesmo ato não vira duas linhas: um teste que parte o turno em dois
+       é UM acontecimento, e registrá-lo duas vezes faria o Arquivista
+       devolver a mesma coisa dita de duas maneiras */
+    const ultima = registroRef.current[registroRef.current.length - 1];
+    if (ultima && ultima.oQue === oQue && ultima.dia === diaRef.current) {
+      if (peso > ultima.peso) registroRef.current = [...registroRef.current.slice(0, -1), { ...ultima, peso }];
+      return;
+    }
+    turnoDeRegistroRef.current += 1;
+    const { aqui } = elencoDaOnda();
+    registroRef.current = anotar(registroRef.current, {
+      t: turnoDeRegistroRef.current,
+      dia: diaRef.current,
+      onde: linhaDoLugarDaMesa(),
+      quem: aqui,
+      assunto: (compassoRef.current || {}).assunto || "",
+      oQue,
+      peso,
+      /* quem VIU é quem estava — é o que o Cobrador e o Vilão vão ler */
+      viu: aqui,
+    });
   };
 
   const cenaDoPrompt = () => {
@@ -4416,7 +4470,7 @@ export default function Taverna() {
     setStatusSave("salvando");
     const dados = {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, livro: livroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
+      combate: combateRef.current, registro: registroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
@@ -5438,7 +5492,7 @@ export default function Taverna() {
         }
       }
       if (tocouMapa) { mp2 = garantirGeografia(mp2, "taverna|canone"); mapaRef.current = mp2; setMapa(mp2); }
-      systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, c, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
+      systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, c, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     }
     /* PESSOAS (registro de NPCs): o Mestre envia "npcs"; e como blindagem de
        memória, qualquer PESSOA do cânone sem ficha entra no registro por código. */
@@ -5464,7 +5518,7 @@ export default function Taverna() {
       }
       if (tocou) {
         npcsRef.current = reg; setNpcs(reg);
-        systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
+        systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       }
     }
     setPersonagem(pers);
@@ -6234,7 +6288,7 @@ export default function Taverna() {
          próximo reload. */
       if (!msgs.length && !tocouCanone && !tocouElenco) return;
       /* o prompt precisa enxergar TUDO já no PRÓXIMO turno */
-      if (tocouCanone || tocouElenco || msgs.length) systemRef.current = montarSystemPrompt(nomeCampanha, mundo, p, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
+      if (tocouCanone || tocouElenco || msgs.length) systemRef.current = montarSystemPrompt(nomeCampanha, mundo, p, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
       salvar({ personagem: p });
     } catch { /* o cronista NUNCA atrapalha o jogo — falhou, vida segue */ }
@@ -6352,7 +6406,7 @@ export default function Taverna() {
     if (pf) msgs.push(`✨ ${pf > 0 ? "+" : ""}${pf} Pontos de Fé (${novo.pf} PF)`);
     if (depois > antes) {
       msgs.push(`🌟 ASCENSÃO! Seu nome ganha peso no cosmos: agora você é ${tituloDe(depois)} (GD ${depois}).`);
-      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
+      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ASCENSÃO — REGISTRO DO SISTEMA] O jogador subiu para GD ${depois} (${tituloDe(depois)}). Isso é fato: narre os sinais dessa transformação aos poucos, à altura do marco.`;
     }
     return msgs;
@@ -6554,7 +6608,7 @@ export default function Taverna() {
     devocaoRef.current = dep.devocao; setDevocao(dep.devocao);
     divindadeRef.current = { ...dv, despertar: true, panteao, fieis: Math.max(50, fieisTotais(mapaRef.current, dep.devocao)), pf: dv.pf };
     setDivindade(divindadeRef.current);
-    systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
+    systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     if (silencioso) {
       /* SAVE VETERANO (v7.4.1): nível alto carregado do disco — o sistema
          abre a ascensão SEM cutucar o Mestre (evita dupla narração com o
@@ -6641,7 +6695,10 @@ export default function Taverna() {
        instrução sobre o que fazer nela — a ordem importa para quem lê.
        Por ora ela carrega o Geógrafo; os outros sistemas se mudam para
        dentro dela quando chegar a vez de cada um. */
-    const pauta = textoDaPauta(pautaDoTurno(), { turno: turnoContRef.current + 1 });
+    const pauta = textoDaPauta(pautaDoTurno(), { turno: turnoDeRegistroRef.current + 1 });
+    /* guardado antes da resposta: "a luta acabou neste turno" é a
+       diferença entre o que havia e o que ficou */
+    const combateAntes = !!combateRef.current;
     const nota = [pauta, oficina, notaRef.current, doCompasso, formaDaCena].filter(Boolean).join("\n");
     notaRef.current = "";
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
@@ -6801,7 +6858,7 @@ export default function Taverna() {
        muda sem haver turno (recalibrar, carregar save). */
     systemRef.current = montarSystemPrompt(
       nomeCampanhaRef.current || nomeCampanha, mundoAtual(), persAtual || personagemRef.current || personagem,
-      livroRef.current, canoneRef.current, bancoNomesRef.current,
+      canoneRef.current, bancoNomesRef.current,
       (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(),
       resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current),
       tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt(),
@@ -6856,17 +6913,40 @@ export default function Taverna() {
          acabado de acontecer. Agora o save é a primeira coisa da fila, e cada
          serviço de manutenção falha sozinho, sem levar os outros junto. */
       setTimeout(() => salvar({ personagem: pers, historico: histFinal, rolagem: resp.rolagem || null }), 0);
+      /* v9.105: A LINHA DESTE TURNO. Escrita por código, com o que o
+         sistema já sabia — nenhuma IA relê nada. O PESO é derivado do que
+         de fato aconteceu, não de um palpite sobre importância:
+
+           3 · alguém morreu, o vilão andou, o capítulo virou
+           2 · a onda bateu no clímax, ou uma luta acabou
+           1 · rolou dado, ou houve gente com nome na cena
+           0 · o tecido do dia, que some em três dias
+
+         O que o jogador ESCREVEU é o que fica na linha, e não a narração:
+         a narração é do Narrador e muda a cada leitura; a ação é do
+         jogador e é o que ele vai lembrar de ter feito. */
+      try {
+        const houveDado = !!(resp && resp.rolagem) || /🎲/.test(String(narrativaFinal || ""));
+        const acabouLuta = !!(combateAntes && !combateRef.current);
+        const noClimax = /AGORA ACONTECE|está acontecendo/i.test(String(doCompasso || ""));
+        const alguemCaiu = /morre|morreu|matei|matou|caiu morto/i.test(String(narrativaFinal || "").slice(0, 600));
+        const { aqui } = elencoDaOnda();
+        const peso = alguemCaiu ? 3 : (noClimax || acabouLuta) ? 2 : (houveDado || aqui.length) ? 1 : 0;
+        /* O QUE O JOGADOR FEZ, e não o que o sistema escreveu. Quando um
+           teste de dado parte o turno em dois, o `conteudo` do segundo é
+           um envelope do próprio sistema — e guardar isso faria a memória
+           lembrar de burocracia em vez de história. */
+        const doJogador = [...mensagensRef.current].reverse().find((m) => m.autor === "jogador");
+        anotarOTurno({ oQue: String((doJogador && doJogador.texto) || conteudo || "").replace(/^\[[^\]]*\]\s*/, "").slice(0, 90), peso });
+      } catch { /* a memória nunca pode custar um turno */ }
       turnoContRef.current += 1;
+      /* v9.105: aqui morava a chamada de IA que reescrevia o livro. Agora
+         o que roda é a PODA do registro — barata, local, sem rede. De 8
+         em 8 turnos porque podar não é de graça e a memória não muda de
+         forma a cada jogada. */
       if (turnoContRef.current >= 8) {
         turnoContRef.current = 0;
-        try {
-          const narrativas = mensagensRef.current.filter((x) => x.autor === "mestre").map((x) => x.texto);
-          gerarLivro(livroRef.current, narrativas).then((l) => {
-            if (l) { livroRef.current = l; bancoNomesRef.current = gerarBancoNomes(mundo); systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, l, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt()); salvar({ livro: l }); }
-          }).catch(() => { /* o livro pode falhar; a campanha não */ });
-        } catch (e) {
-          pushMsgs([{ autor: "sistema", texto: `⚠ O arquivista tropeçou ao atualizar o livro da campanha (${String((e && e.message) || e).slice(0, 120)}). O turno está salvo; se repetir, me mostre esta mensagem.` }]);
-        }
+        try { registroRef.current = podar(registroRef.current, { dia: diaRef.current }); } catch { /* podar nunca pode custar um turno */ }
       }
       /* FISCAL DE MISSÕES + ESCRIBA: correm em paralelo, sem travar o turno */
       try { cronistaDoTurno(pers, narrativaFinal); } catch { /* idem */ }
@@ -7025,7 +7105,7 @@ export default function Taverna() {
     capituloNovoRef.current = null;
     personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
     setPersonagem(pers);
-    livroRef.current = ""; turnoContRef.current = 0;
+    registroRef.current = []; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
     if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); }
     npcTurnoRef.current = 0; definirAcampado(false);
     /* GEOGRAFIA GERADA PELO SISTEMA (v7.5): o continente nasce PRONTO —
@@ -7093,7 +7173,7 @@ export default function Taverna() {
     confidenciasRef.current = [];
     mercadoRef.current = { comprados: {}, ambulante: null }; setMercado(mercadoRef.current);
     if (!cap) bancoNomesRef.current = gerarBancoNomes(mundoAtual());
-    systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, "", {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
+    systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null);
     setCombate(null); combateRef.current = null;   /* fim de campanha: nao ha ficha para limpar */
     setFase("jogo");
@@ -7122,7 +7202,8 @@ export default function Taverna() {
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
       setRolagem(sv.rolagem || null);
       setCombate(sv.combate || null); combateRef.current = sv.combate || null;
-      livroRef.current = sv.livro || ""; turnoContRef.current = 0;
+      registroRef.current = garantirRegistro(sv.registro); turnoContRef.current = 0;
+      turnoDeRegistroRef.current = registroRef.current.length ? registroRef.current[registroRef.current.length - 1].t : 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       npcsRef.current = sv.npcs && typeof sv.npcs === "object" ? sv.npcs : {}; setNpcs(npcsRef.current); npcTurnoRef.current = 0;
       definirAcampado(!!sv.acampado);
@@ -7282,7 +7363,7 @@ export default function Taverna() {
       setMissoes(missoesRef.current);
       setQuests([...questsRef.current]);
       bancoNomesRef.current = gerarBancoNomes(sv.mundo);
-      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, sv.livro || "", canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
+      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       setFase("jogo");
       /* DESPERTAR NO CARREGAMENTO (v7.4.1): save veterano nível ≥15 nunca
          disparava o despertar (ele só checava DEPOIS de um turno). */
@@ -9458,7 +9539,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (v.virou) {
         historiaRef.current = v.historia;
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeVirada(v)}`;
-        systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), personagemRef.current || personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
+        systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), personagemRef.current || personagem, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       }
       /* sem salvar aqui de propósito: quem chamou está no meio de um turno e
          vai gravar no fim dele, e `salvar` já leva historiaRef por padrão */
@@ -13515,7 +13596,7 @@ Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a
     try {
       const sys = `Você é o ARQUIVISTA da campanha "${nomeCampanha}". Um save antigo deixou os números do herói para trás da lenda. Leia o LIVRO e o CÂNONE e proponha os números JUSTOS de hoje, baseando-se SÓ no que aconteceu na história (feitos, combates vencidos, anos de estrada). Responda SOMENTE JSON no formato: {"nivel": <inteiro 1-20>, "atributos": {"forca":0-5,"destreza":0-5,"vigor":0-5,"intelecto":0-5,"presenca":0-5,"percepcao":0-5}, "dadivas": <inteiro 0-6, só se nivel 20: quantas dádivas épicas os feitos justificam>, "justificativa": "2-3 frases citando os feitos que sustentam a proposta"}.
 REFERÊNCIAS DE ESCALA (novas regras): o nível 20 é o ápice mortal e custa 355.000 XP acumulados — só conceda se a lenda for realmente monumental (impérios, deuses enfrentados, décadas de estrada). Atributos vão de 0 a +5; a PROFICIÊNCIA (+2 a +6 pelo nível) é somada pelo sistema por cima, então não a embuta nos atributos. Se o herói estiver no nível 20 e a história sustentar feitos ainda maiores, proponha dádivas épicas (cada uma equivale a ~30.000 XP além do ápice).`;
-      const conteudo = `LIVRO DA CAMPANHA:\n${livroRef.current || "(vazio)"}\n\nCÂNONE:\n${formatarCanone(canoneRef.current)}\n\nHERÓI HOJE: nível ${personagem.nivel}; atributos ${JSON.stringify(personagem.atributos)}; classe ${personagem.classe || "—"}; ${(personagem.dadivas || []).length} dádivas épicas.\nCONTADORES REAIS DO SISTEMA (a verdade dos feitos): ${JSON.stringify(contRef.current)}\nDOMÍNIOS: ${dominiosDe(mapaRef.current).length} · fama ${Math.round(famaAtual())}/100 · dia ${diaRef.current} da campanha.`;
+      const conteudo = `O QUE ESTA CAMPANHA FEZ (registro do sistema, sem resumo de IA):\n${resumoDoRegistro(registroRef.current)}\n\nCÂNONE:\n${formatarCanone(canoneRef.current)}\n\nHERÓI HOJE: nível ${personagem.nivel}; atributos ${JSON.stringify(personagem.atributos)}; classe ${personagem.classe || "—"}; ${(personagem.dadivas || []).length} dádivas épicas.\nCONTADORES REAIS DO SISTEMA (a verdade dos feitos): ${JSON.stringify(contRef.current)}\nDOMÍNIOS: ${dominiosDe(mapaRef.current).length} · fama ${Math.round(famaAtual())}/100 · dia ${diaRef.current} da campanha.`;
       const r = await chamarModelo(sys, [{ role: "user", content: conteudo }], 800, "json", "leve");
       const j = parseObjetoTolerante(r);
       if (!j || j.nivel == null) throw new Error("o arquivista não respondeu com números");
@@ -13573,7 +13654,7 @@ REFERÊNCIAS DE ESCALA (novas regras): o nível 20 é o ápice mortal e custa 35
  "guildaNivel":1-5}
 Regras: nível dos companheiros coerente com o tempo de estrada e os feitos (quem acompanha um herói nível ${personagem.nivel} desde o início NÃO está no nível 1); marque doJogador=true SÓ na facção que o herói lidera; cidades com relacao "jogador" são as que ele domina; inclua só pessoas/facções/cidades que EXISTEM na história.
 SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descrições longas; limites — até 12 npcs, 8 facções, 12 cidades. Se houver mais, escolha os mais importantes.`;
-      const conteudo = `LIVRO DA CAMPANHA:\n${livroRef.current || "(vazio)"}\n\nCÂNONE:\n${formatarCanone(canoneRef.current)}\n\nGRUPO HOJE: ${(personagem.grupo || []).map((g) => `${g.nome} (nível ${g.nivel ?? 1})`).join(", ") || "sem companheiros"}\nMAPA HOJE: ${(mapaRef.current.cidades || []).map((c) => c.nome).join(", ") || "vazio"}\nFACÇÕES HOJE: ${(mapaRef.current.faccoes || []).map((f) => f.nome).join(", ") || "nenhuma"}\nPESSOAS HOJE: ${Object.keys(npcsRef.current).join(", ") || "ninguém"}`;
+      const conteudo = `O QUE ESTA CAMPANHA FEZ (registro do sistema, sem resumo de IA):\n${resumoDoRegistro(registroRef.current)}\n\nCÂNONE:\n${formatarCanone(canoneRef.current)}\n\nGRUPO HOJE: ${(personagem.grupo || []).map((g) => `${g.nome} (nível ${g.nivel ?? 1})`).join(", ") || "sem companheiros"}\nMAPA HOJE: ${(mapaRef.current.cidades || []).map((c) => c.nome).join(", ") || "vazio"}\nFACÇÕES HOJE: ${(mapaRef.current.faccoes || []).map((f) => f.nome).join(", ") || "nenhuma"}\nPESSOAS HOJE: ${Object.keys(npcsRef.current).join(", ") || "ninguém"}`;
       const r = await chamarModelo(sys, [{ role: "user", content: conteudo }], 3000, "json", "leve");
       const j = parseObjetoTolerante(r);
       if (!j) throw new Error("o arquivista não respondeu com o estado do mundo");
@@ -13636,7 +13717,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
       if (gn !== guildaRef.current.nivel) { const g = { ...guildaRef.current, nivel: gn }; guildaRef.current = g; setGuilda(g); msgs.push(`🏛 Guilda recalibrada para o nível ${gn}`); }
     }
     /* 5) O prompt precisa enxergar o mundo novo já no próximo turno */
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Recalibração de save: o estado do mundo (guilda, domínios, potências, pessoas, companheiros) foi atualizado para refletir tudo que já aconteceu. Trate os registros atuais como verdade.`;
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })).concat([{ autor: "sistema", texto: "⚖ Mundo recalibrado. Confira Gestão: Grupo, Pessoas, Guilda, Domínios e Diplomacia agora contam a sua história." }]));
     setRecalM(null);
@@ -13666,7 +13747,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
  "caminho": "fe" | "deicidio" | "reliquia" (COMO ele ascendeu — deicidio se matou uma divindade e tomou o domínio, reliquia se drenou uma fonte antiga por ritual, fe se acumulou culto),
  "divindades": [{"nome":"","dominio":"","gd":2-4,"temperamento":"","culto":""}]}
 ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói cultuado localmente (mil fiéis); gd 2 = semideus, cultos em várias cidades (10 mil); gd 3 = divindade menor, templos, milagres atendidos (100 mil); gd 4 = divindade maior, religião continental (1 milhão). TETO POR NÍVEL (regra dura do sistema — nunca proponha acima disso): o herói é nível ${personagem.nivel}, então o GD máximo possível hoje é ${gdMaximoPorNivel(personagem.nivel || 1)} (nv15-16 → GD 1; nv17-18 → GD 2; nv19 → GD 3; nv20 → GD 4). Só marque desperto=true se o nível é ≥ 15 E há sinais de culto/poder divino na história. fieis e pf coerentes com o gd proposto (mínimos: gd1≥1000, gd2≥10000, gd3≥100000, gd4≥1000000). Se a história NÃO mostra divindade nenhuma no mundo, devolva "divindades": []. Máx. 6 divindades, só as que EXISTEM na história.`;
-      const conteudo = `LIVRO DA CAMPANHA:\n${livroRef.current || "(vazio)"}\n\nCÂNONE:\n${formatarCanone(canoneRef.current)}\n\nHERÓI: ${personagem.nome}, nível ${personagem.nivel}, ${patamarDe(personagem.nivel).nome}\nASCENSÃO REGISTRADA HOJE: desperto=${dv.despertar ? "sim" : "não"}, ${dv.fieis} fiéis, ${dv.pf} PF, GD ${grauDe(dv)}, domínio "${dv.dominio || "—"}", patrono "${dv.patrono || "—"}", panteão: ${(dv.panteao || []).map((d) => `${d.nome} (GD ${d.gd})`).join(", ") || "vazio"}`;
+      const conteudo = `O QUE ESTA CAMPANHA FEZ (registro do sistema, sem resumo de IA):\n${resumoDoRegistro(registroRef.current)}\n\nCÂNONE:\n${formatarCanone(canoneRef.current)}\n\nHERÓI: ${personagem.nome}, nível ${personagem.nivel}, ${patamarDe(personagem.nivel).nome}\nASCENSÃO REGISTRADA HOJE: desperto=${dv.despertar ? "sim" : "não"}, ${dv.fieis} fiéis, ${dv.pf} PF, GD ${grauDe(dv)}, domínio "${dv.dominio || "—"}", patrono "${dv.patrono || "—"}", panteão: ${(dv.panteao || []).map((d) => `${d.nome} (GD ${d.gd})`).join(", ") || "vazio"}`;
       const r = await chamarModelo(sys, [{ role: "user", content: conteudo }], 2500, "json", "leve");
       const j = parseObjetoTolerante(r);
       if (!j) throw new Error("o arquivista não respondeu com o estado da ascensão");
@@ -13728,7 +13809,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     if (dv.dominio) msgs.push(`🌌 Domínio: ${dv.dominio}`);
     if (pan.length) msgs.push(`🏛 Panteão: ${pan.map((d) => `${d.nome} (GD ${d.gd})`).join(", ")}`);
     /* O Mestre precisa TRATAR isso como fato já no próximo turno */
-    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, livroRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
+    systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ASCENSÃO — RECALIBRAÇÃO DO SISTEMA] O estado divino do herói foi alinhado com a história já jogada: GD ${depois} (${tituloDe(depois)}), ${dv.fieis} fiéis, ${dv.pf} PF${dv.dominio ? `, domínio ${dv.dominio}` : ""}${dv.patrono ? `, patrono ${dv.patrono}` : ""}. Trate como verdade estabelecida — a história já o reconhecia assim.`;
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
     setRecalAsc(null);
