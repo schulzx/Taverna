@@ -363,7 +363,13 @@ export function garantirLexico(l) {
       }))
       .filter((x) => x.raca && x.chamado)
       .filter((x, i, a) => a.findIndex((y) => y.raca === x.raca) === i)
-      .slice(0, RACAS_DO_SISTEMA.length),
+      .slice(0, RACAS_DO_SISTEMA.length)
+      /* v9.113: TUDO OU NADA, como o equipamento. Numa partida de teste
+         saiu "normal · Elfo · Anão · fendido · Draconato · tocado" na
+         mesma lista: metade renomeada lê como mundo quebrado, e é a
+         metade que sobrou que denuncia a outra. Nenhuma renomeada lê
+         como genérico, que ao menos é coerente consigo. */
+      .reduce((acc, _, __, todas) => (todas.length === RACAS_DO_SISTEMA.length ? todas : []), []),
     /* v9.111: o banco de nomes POR FORMA, e ele é TUDO OU NADA.
 
        Todo o resto do léxico degrada em pedaços: metade dos ofícios é
@@ -510,7 +516,7 @@ REGRAS INEGOCIÁVEIS:
 3. FIDELIDADE ACIMA DE CRIATIVIDADE. Se ele escreveu "caçadores", tudo é de caçadores — não caçadores com um reino medieval em volta.
 4. MECANISMO, NÃO ADJETIVO. Em cada resposta de "funciona", diga COMO a coisa acontece (quem, onde, o que trava, o que dá errado), não que ela é sombria ou perigosa.
 5. DOIS CAMPOS TÊM LISTA FECHADA, e ela não é sugestão. Em "lugares", o "tipo" tem de ser EXATAMENTE uma das palavras listadas: são engrenagens do jogo e não mudam — o que você escolhe é como cada uma SE CHAMA aqui. Em "criaturas", a "ameaca" idem: ela decide a força do bicho, e um nome guardado no degrau errado promete uma coisa e entrega outra.
-6. AS RAÇAS TAMBÉM TÊM LISTA FECHADA, e o que você escolhe é só o NOME. Cada uma carrega um bônus de atributo que NÃO muda: você está dando a elas a palavra deste mundo, não inventando povos. Renomeie as que fizerem sentido e deixe de fora as que não fizerem — o que ficar de fora continua com o nome de sempre. Use a mesma cultura de "povos": "povos" é quem habita o mundo, "racas" é o que o jogador pode SER.
+6. AS RAÇAS TAMBÉM TÊM LISTA FECHADA, e o que você escolhe é só o NOME. Cada uma carrega um bônus de atributo que NÃO muda: você está dando a elas a palavra deste mundo, não inventando povos. RENOMEIE TODAS, sem exceção: uma ficha com metade dos nomes deste mundo e metade com os de sempre lê pior que uma ficha inteira genérica, porque a metade que sobrou denuncia a outra. Se um tipo de gente parecer não existir aqui, dê a ele o nome do que MAIS SE APROXIMA neste mundo — a mecânica dele continua no jogo de qualquer forma, e sem nome daqui ela aparece com o nome de outro lugar. Use a mesma cultura de "povos": "povos" é quem habita o mundo, "racas" é o que o jogador pode SER.
 7. O EQUIPAMENTO É TUDO OU NADA, e o que você nomeia é a FORMA, nunca o item. Cada forma vem com o que ela É por baixo — pesada, de duas mãos, pede treino, trava magia. O nome que você der NÃO PODE CONTRADIZER ISSO: se a forma diz "arma de guerra pesada de duas mãos", um nome como "varinha" mente para o jogador, que vai escolhê-la achando que é leve. Preencha TODAS as dezessete, com 3 a 6 nomes cada. Se o mundo parecer não ter armadura pesada, invente o EQUIVALENTE dele — o sistema calcula a defesa numa escada e tirar um degrau tira proteção do jogo inteiro. Se você deixar UMA forma de fora, o banco inteiro é descartado.
 8. PREENCHA TODOS OS DEGRAUS DE AMEAÇA e o máximo de tipos de lugar que fizerem sentido. Se um tipo parecer não existir neste mundo, invente o EQUIVALENTE dele em vez de pular — pular tira a coisa do jogo, e o jogo conta com ela.
 9. Português do Brasil. Cada campo de "funciona" no máximo duas frases.
@@ -679,6 +685,22 @@ export function lexicoPrompt(l, portas = null) {
   }).filter(Boolean);
   if (ap.length) fila.push(`COMO AS COISAS SE CHAMAM AQUI (use SEMPRE a palavra da direita; a da esquerda é a etiqueta interna do sistema): ${ap.join(" · ")}.`);
   if (x.aLei) fila.push(`A LEI DESTE MUNDO: ${x.aLei}`);
+  /* v9.113: O VETO SOBE, e antes dos parágrafos. Ele vinha no fim da fila
+     e numa cena com portas abertas nunca cabia: numa partida de teste, num
+     mundo cujo léxico diz "não há cavalos como meio de transporte", o
+     Narrador pôs uma carroça na rua no segundo dia.
+
+     É a regra que a Pauta já enuncia: um veto cortado é exatamente como a
+     incoerência entra, e ele não avisa que foi cortado. Cento e cinquenta
+     caracteres de proibição direta valem mais que um parágrafo sobre como
+     a reputação circula — aquilo o Mestre infere, isto ele não tem como. */
+  if (x.naoExiste.length) fila.push(`NÃO EXISTE NESTE MUNDO (nunca ponha em cena): ${x.naoExiste.join(", ")}.`);
+  /* e os nomes dos LUGARES, pelo mesmo motivo: são curtos, são a palavra
+     que o Narrador vai escrever, e ficavam abaixo do corte junto com o
+     veto — foi assim que "taverna" continuou aparecendo num mundo que
+     chama aquilo de cantina. */
+  const chamados = x.lugares.filter((p) => p.chamado).map((p) => `${p.tipo} = ${p.chamado}`);
+  if (chamados.length) fila.push(`E OS LUGARES SE CHAMAM: ${chamados.join(" · ")}.`);
   const daCena = [], deSempre = [];
   for (const s of SISTEMAS) {
     const t = x.funciona[s.id];
@@ -687,14 +709,6 @@ export function lexicoPrompt(l, portas = null) {
     else if (portas && portas[s.porta]) daCena.push(`${s.rotulo}: ${t}`);
   }
   fila.push(...daCena, ...deSempre);
-  if (x.naoExiste.length) fila.push(`NÃO EXISTE NESTE MUNDO (nunca ponha em cena): ${x.naoExiste.join(", ")}.`);
-  /* v9.103: os LUGARES sobem com o nome que têm aqui. Custa pouco e
-     resolve o que o vocabulário sozinho não resolvia: o Mestre lia
-     "masmorra = portal" e continuava escrevendo "a taverna", porque
-     taverna não estava na lista de apelidos — ela é um tipo do mundo,
-     não uma etiqueta do sistema. */
-  const chamados = x.lugares.filter((p) => p.chamado).map((p) => `${p.tipo} = ${p.chamado}`);
-  if (chamados.length) fila.push(`E OS LUGARES SE CHAMAM: ${chamados.join(" · ")}.`);
   const bichos = criaturasDo(x);
   if (bichos) fila.push(`O QUE AMEAÇA AS PESSOAS: ${bichos.slice(0, 8).join(", ")}.`);
   if (x.comoSeFala) fila.push(`COMO SE FALA: ${x.comoSeFala}`);

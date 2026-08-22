@@ -6629,8 +6629,17 @@ export default function Taverna() {
       try {
         if (Array.isArray(r.pessoas) && r.pessoas.length) {
           let reg = npcsRef.current, tocou = false;
+          /* v9.113: O HERÓI NÃO É NPC. O Cronista devolveu "Íris Vantel —
+             fendida, caçadora de fendas" e o sistema registrou: a partir
+             dali ela entrava no elenco da cena, virava `viu` de todo
+             registro (testemunha de si mesma), virava linha do Intérprete
+             dizendo ao Narrador o que ela faz — quando o que ela faz é a
+             única coisa que o JOGADOR decide — e virava boca pela qual o
+             Vilão podia saber das coisas. */
+          const euMesmo = String((personagemRef.current || personagem || {}).nome || "").toLowerCase().trim();
           r.pessoas.slice(0, 4).forEach((n) => {
             if (!n || !n.nome) return;
+            if (euMesmo && String(n.nome).toLowerCase().trim() === euMesmo) return;
             const chave = Object.keys(reg).find((k) => k.toLowerCase() === String(n.nome).toLowerCase());
             if (!tocou) { reg = { ...reg }; tocou = true; }
             if (chave) reg[chave] = mesclarNPC(reg[chave], n);
@@ -7389,15 +7398,38 @@ export default function Taverna() {
         const houveDado = !!(resp && resp.rolagem) || /🎲/.test(String(narrativaFinal || ""));
         const acabouLuta = !!(combateAntes && !combateRef.current);
         const noClimax = /AGORA ACONTECE|está acontecendo/i.test(String(doCompasso || ""));
-        const alguemCaiu = /morre|morreu|matei|matou|caiu morto/i.test(String(narrativaFinal || "").slice(0, 600));
+        /* v9.113: A MORTE PRECISA SER DE ALGUÉM.
+
+           Era `/morre|morreu|matei|matou|caiu morto/`, e o Mestre escreve
+           prosa: "o mais baixo para onde a luz da praça morre" gravou o
+           turno com peso 3. Peso 3 nunca é podado, é o que chega ao Vilão
+           como coisa sabida e é a dívida que o Cobrador cobra primeiro —
+           uma frase figurada assombrava a campanha inteira.
+
+           Agora: verbo inequívoco, ou `morre/morreu` com sujeito animado
+           colado. "Ele morreu" e "Vera morreu" ficam; "a luz morre" sai. */
+        const alguemCaiu = /\b(matei|matou|matamos|assassin\w+|caiu mort[oa]|caíram mort[oa]s|mort[oa] no ch[ãa]o|est[áa] mort[oa]|foi mort[oa]|sangrou at[ée] morrer)\b/i.test(String(narrativaFinal || "").slice(0, 600))
+          || /\b(ele|ela|eles|elas|voc[êe]|[A-ZÁÉÍÓÚÂÊÔÃÕ][a-zà-ÿ]+)\s+(morre|morreu|morreram)\b/.test(String(narrativaFinal || "").slice(0, 600))
+          || /\bmorreu (nos|no|na|em|ali|aqui|antes|depois|logo|sem|com)\b/i.test(String(narrativaFinal || "").slice(0, 600));
         const { aqui } = elencoDaOnda();
         const peso = alguemCaiu ? 3 : (noClimax || acabouLuta) ? 2 : (houveDado || aqui.length) ? 1 : 0;
         /* O QUE O JOGADOR FEZ, e não o que o sistema escreveu. Quando um
            teste de dado parte o turno em dois, o `conteudo` do segundo é
            um envelope do próprio sistema — e guardar isso faria a memória
            lembrar de burocracia em vez de história. */
-        const doJogador = [...mensagensRef.current].reverse().find((m) => m.autor === "jogador");
-        anotarOTurno({ oQue: String((doJogador && doJogador.texto) || conteudo || "").replace(/^\[[^\]]*\]\s*/, "").slice(0, 90), peso });
+        /* v9.113: e NÃO é qualquer mensagem de autor "jogador". A abertura
+           da campanha ("Comece a aventura: apresente o mundo com riqueza…")
+           entra por esse canal porque tecnicamente vem do jogador, e o
+           livro-razão passava a ter uma dívida cobrável em cima da
+           instrução que abriu o jogo — o mundo cobrando o herói por uma
+           frase que ele nunca disse.
+
+           A regra é a que o comentário acima já enunciava para o caso do
+           dado: o que fica na linha é o que o JOGADOR fez. */
+        const doSistema = /^(Comece a aventura|\[|Continuando de onde)/;
+        const doJogador = [...mensagensRef.current].reverse()
+          .find((m) => m.autor === "jogador" && !doSistema.test(String(m.texto || "").trim()));
+        anotarOTurno({ oQue: doSistema.test(String(conteudo || "").trim()) && !doJogador ? "" : String((doJogador && doJogador.texto) || conteudo || "").replace(/^\[[^\]]*\]\s*/, ""), peso });
         /* e o que pesou pode ter chegado até a ameaça — por marca, por
            fama ou por boato, e a fonte fica escrita na linha */
         chegarAteAAmeaca(registroRef.current[registroRef.current.length - 1]);

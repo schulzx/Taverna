@@ -73,7 +73,20 @@ export function pesoPorNivel(n) {
    antigo de menor peso sai primeiro. */
 export const TETO_DE_LINHAS = 900;
 
-const limpar = (s, max = 90) => String(s == null ? "" : s).replace(/\s+/g, " ").trim().slice(0, max);
+/* v9.113: CORTA NO FIM DE UMA PALAVRA. O `oQue` de uma linha vai à
+   Pauta e daí ao Narrador, e ele lia coisas como `por "Saco a fa"` —
+   um pedaço de frase que ele tem de fingir que faz sentido. É o mesmo
+   defeito do nome de equipamento na v9.111, no lugar onde ele mais
+   aparece. Reticências para o Narrador saber que a frase continua. */
+const limpar = (s, max = 90) => {
+  const x = String(s == null ? "" : s).replace(/\s+/g, " ").trim();
+  if (x.length <= max) return x;
+  /* a reticência entra DENTRO do teto: o teto é o teto, e um leitor que
+     conta caracteres não pode receber 91 onde o contrato diz 90 */
+  const corte = x.slice(0, max - 1);
+  const espaco = corte.lastIndexOf(" ");
+  return (espaco > (max - 1) * 0.6 ? corte.slice(0, espaco) : corte).trim() + "…";
+};
 const nomes = (v, max = 4) => (Array.isArray(v) ? v : [])
   .map((x) => limpar(typeof x === "string" ? x : (x && x.nome) || "", 30))
   .filter(Boolean)
