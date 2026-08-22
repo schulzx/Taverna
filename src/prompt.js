@@ -45,6 +45,7 @@ import { lexicoPrompt } from "./lexico.js";
 import { GEOGRAFO_PROMPT } from "./geografo.js";
 import { PAUTA_PROMPT } from "./pauta.js";
 import { REGISTRO_PROMPT } from "./registro.js";
+import { INTERPRETE_PROMPT } from "./interprete.js";
 import { CELULAS_PROMPT } from "./celulas.js";
 import { VIAGEM_PROMPT } from "./viagem.js";
 import { RESOLVER_PROMPT } from "./resolver.js";
@@ -167,6 +168,11 @@ export const PORTAS_DA_CENA = [
      aflição. Agora ele abre uma porta própria, porque a ADAPTAÇÃO do
      léxico ("aqui masmorra é um portal que não fecha até o chefe cair")
      não pode custar prompt numa cena de taverna. */
+  /* v9.106: a porta da GENTE. O acervo do Intérprete só tem o que dizer
+     quando há alguém na cena — e cena sem ninguém é comum: a estrada, o
+     ermo, a masmorra vazia. Daqui para a frente todo AGENTE novo nasce
+     atrás de uma porta, senão o teto do prompt vira enfeite. */
+  { id: "gente", quando: (c) => !!c.temGente, porque: "o que a gente em cena faz só importa quando há gente em cena" },
   { id: "masmorra", quando: (c) => !!c.emMasmorra, porque: "como o lugar perigoso se apresenta neste mundo só importa a quem está dentro de um" },
 ];
 
@@ -255,6 +261,8 @@ ${vozPrompt((mundo && mundo.voz) || VOZ_PADRAO)}
 - ${so("mercado", ECONOMIA_PROMPT)}
 ${so("mercado", MERCADO_PROMPT)}
 ${CONSUMIVEIS_PROMPT}
+${so("gente", INTERPRETE_PROMPT)}
+
 ${so("grupo", COMPANHEIROS_PROMPT)}
 ${so("combate", REACOES_PROMPT)}
 ${BASE_PROMPT}

@@ -81,6 +81,7 @@ import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, item
 import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
 import { garantirEspaco, paraPauta } from "./geografo.js";
 import { porNaPauta, textoDaPauta, garantirPauta } from "./pauta.js";
+import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta } from "./interprete.js";
 import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resumoDoRegistro } from "./registro.js";
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
@@ -3938,6 +3939,14 @@ export default function Taverna() {
        linhas que importam a ESTA cena, com esta gente, neste lugar. O
        custo é fixo para sempre: uma campanha de mil turnos entrega as
        mesmas três que uma de trinta. */
+    /* v9.106: O INTÉRPRETE. Uma linha por pessoa presente, no máximo
+       três. Ele diz o que cada uma FAZ; o que ela DIZ continua sendo do
+       Narrador, e é onde ele é insubstituível. */
+    {
+      const r = interpreteParaPauta(pessoasDaCena(), { elenco: elencoMemRef.current });
+      p = porNaPauta(p, "gente", r.linhas);
+      for (const m of r.marcas) elencoMemRef.current = marcarMovimento(elencoMemRef.current, m.nome, m.id, m.gesto);
+    }
     p = porNaPauta(p, "antes", arquivistaParaPauta(registroRef.current, {
       onde: linhaDoLugarDaMesa(),
       quem: (elencoDaOnda().aqui || []),
@@ -3946,6 +3955,53 @@ export default function Taverna() {
       diaAtual: diaRef.current,
     }));
     return p;
+  };
+
+  /* ---------------- QUEM ESTÁ NA CENA, PARA O INTÉRPRETE (v9.106) ----------------
+     Traduz o registro de gente para a situação que o acervo sabe ler.
+     Nenhum campo é inventado: relação e laço vêm de `npcs.js`, o que ela
+     quer e teme vem da base do mundo, e o ATO vem do que o jogador
+     acabou de escrever. */
+  const pessoasDaCena = () => {
+    try {
+      const p0 = fichaViva() || personagem || {};
+      const { aqui } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [] });
+      const quantos = aqui.length;
+      const daBase = oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);
+      const confid = confidenciasRef.current || [];
+      return aqui.map((x) => {
+        const nome = typeof x === "string" ? x : x.nome;
+        const n = npcsRef.current[nome] || {};
+        const l = garantirLaco(n.laco);
+        const daBaseEla = ((daBase && daBase.gente) || []).find((g) => g.nome === nome) || {};
+        const noGrupo = (p0.grupo || []).some((g) => (g.nome || "") === nome);
+        return {
+          nome,
+          papel: n.papel || daBaseEla.papel || "",
+          temperamento: n.traco || daBaseEla.traco || "",
+          quer: daBaseEla.vontade || n.notas || "",
+          teme: n.segredo || "",
+          relacao: n.relacao || "desconhecido",
+          laco: (l && l.tipo) || "",
+          forcaDoLaco: (l && !l.rompido && l.forca) || 0,
+          rompido: !!(l && l.rompido),
+          euDevo: /d[íi]vida|devo|prometi/i.test(String(n.notas || "")) || (l && l.tipo === "divida"),
+          sabeDeMim: confid.some((c) => (c.ouvintes || []).includes(nome)),
+          euSeiDela: !!n.segredo,
+          primeiraVez: !n.conhecidoEm && !noGrupo,
+          ato: atoDoTurnoRef.current,
+          quantosEscutam: Math.max(0, quantos - 1),
+          aSos: quantos <= 1,
+          emPerigo: !!combateRef.current || (personagemRef.current || personagem || {}).vida < ((personagemRef.current || personagem || {}).vidaMax || 1) * 0.35,
+          emCombate: !!combateRef.current,
+          noLugarDela: !!(lugarRef.current && daBaseEla.local && lugarRef.current.nome === daBaseEla.local),
+          tocaramNoSegredo: !!n.segredo && /segredo|verdade|passado|de onde|quem [ée]/i.test(atoDoTurnoRef.current === "pedi" ? "pergunta" : ""),
+          ehCompanheiro: noGrupo,
+          fama: Math.round(famaAtual()),
+          noite: ehNoite(minutoRef.current),
+        };
+      });
+    } catch { return []; }
   };
 
   /* O rótulo curto do lugar, que o registro guarda e o Arquivista casa.
@@ -3995,6 +4051,8 @@ export default function Taverna() {
     return {
       emCombate: !!combateRef.current,
       emMasmorra: !!(mm && !mm.encerrada),
+      /* v9.106: há alguém em cena? É a porta do Intérprete. */
+      temGente: pessoasDaCena().length > 0,
       temChao: (chaoRef.current || []).length > 0,
       emCidade: !!cidadeAtualRef.current,
       /* dentro de um PRÉDIO da cidade — não nos arredores. A régua é a
@@ -4077,6 +4135,12 @@ export default function Taverna() {
      acampamento e montar de novo cinco minutos depois devolva o MESMO
      afloramento de rocha — é o mesmo afloramento de rocha. */
   const sitioRef = useRef(null);
+  /* v9.106: o que cada pessoa já fez, por pessoa. O que Marta fez três
+     turnos atrás não volta; Ubba pode fazer a mesma coisa. */
+  const elencoMemRef = useRef({});
+  /* e o ATO do herói neste turno, lido do que ele escreveu. É o que a
+     maioria dos movimentos do Intérprete consulta. */
+  const atoDoTurnoRef = useRef("nada");
   /* e no estado também: o painel do acampamento precisa DESENHAR o sítio,
      e é lá que o jogador escolhe entre a noite inteira e o cochilo —
      escolher sem ver onde se está dormindo é escolher no escuro. */
@@ -4470,7 +4534,7 @@ export default function Taverna() {
     setStatusSave("salvando");
     const dados = {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, registro: registroRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
+      combate: combateRef.current, registro: registroRef.current, elencoMem: elencoMemRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
@@ -6695,6 +6759,9 @@ export default function Taverna() {
        instrução sobre o que fazer nela — a ordem importa para quem lê.
        Por ora ela carrega o Geógrafo; os outros sistemas se mudam para
        dentro dela quando chegar a vez de cada um. */
+    /* v9.106: o ATO do herói, lido do que ele escreveu, ANTES da Pauta —
+       é o que a maioria dos movimentos do Intérprete consulta. */
+    atoDoTurnoRef.current = atoDoTexto(conteudo);
     const pauta = textoDaPauta(pautaDoTurno(), { turno: turnoDeRegistroRef.current + 1 });
     /* guardado antes da resposta: "a luta acabou neste turno" é a
        diferença entre o que havia e o que ficou */
@@ -7105,7 +7172,7 @@ export default function Taverna() {
     capituloNovoRef.current = null;
     personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
     setPersonagem(pers);
-    registroRef.current = []; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
+    registroRef.current = []; elencoMemRef.current = {}; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
     if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); }
     npcTurnoRef.current = 0; definirAcampado(false);
     /* GEOGRAFIA GERADA PELO SISTEMA (v7.5): o continente nasce PRONTO —
@@ -7202,7 +7269,7 @@ export default function Taverna() {
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
       setRolagem(sv.rolagem || null);
       setCombate(sv.combate || null); combateRef.current = sv.combate || null;
-      registroRef.current = garantirRegistro(sv.registro); turnoContRef.current = 0;
+      registroRef.current = garantirRegistro(sv.registro); elencoMemRef.current = garantirElenco(sv.elencoMem); turnoContRef.current = 0;
       turnoDeRegistroRef.current = registroRef.current.length ? registroRef.current[registroRef.current.length - 1].t : 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       npcsRef.current = sv.npcs && typeof sv.npcs === "object" ? sv.npcs : {}; setNpcs(npcsRef.current); npcTurnoRef.current = 0;
