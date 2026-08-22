@@ -47,6 +47,7 @@ import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, pod
 import { dadoDeVida, garantirDadosVida, dadosQueVoltam, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT } from "./descanso.js";
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, MAX_RELOGIOS, RELOGIOS_PROMPT } from "./relogios.js";
 import { menteDaCriatura, intencaoDaVez, intencaoPorId, linhaDaLuta, envelopeDaVirada, ADVERSARIO_PROMPT } from "./adversario.js";
+import { consultarCobrador, linhaDoMundo, envelopeDoMundo } from "./cobrador.js";
 import { avaliarEncontro, PESO_AMEACA, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
 import { montarGrade, garantirGrade, posicionar, posicionarPerto, alcanca, caminhar, alcancaveisDe, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, mapaEmTexto, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, quadradosDe, distanciaM, tamanhoDe, ladoDe, alcanceNatural, terrenoDificil, temCobertura, ehParede, regiaoDe, m2q, q2m, centroDe, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO, GRID_PROMPT } from "./grid.js";
 import { deslocamentoDe, passoEfetivo, passoComSelecao, passoDeHabilidade, deslocamentoDeCriatura, resumoDeslocamento, resumoDeslocamentoPrompt, MOVIMENTO_PROMPT } from "./movimento.js";
@@ -4009,8 +4010,26 @@ export default function Taverna() {
     return { ...v, situacao: s };
   };
 
+  /* O QUE O MUNDO FAZ SOBRE UMA COISA DE TRÊS DIAS ATRÁS (v9.112).
+     Ele lê o REGISTRO, que já é o livro-razão: o quê, quando, onde,
+     quem viu, o peso e agora o ato. Nada de estrutura nova. */
+  const oQueOMundoCobra = () => {
+    try {
+      return consultarCobrador(registroRef.current, {
+        dia: diaRef.current,
+        cobradas: cobradasRef.current,
+        fama: Math.round(famaAtual()),
+        ultimaCobranca: ultimaCobrancaRef.current,
+        ultimasFormas: formasCobradasRef.current,
+        publico: !!(espacoDaMesa() || {}).publico,
+        temGente: pessoasDaCena().length > 0,
+      });
+    } catch (e) { calou("oQueOMundoCobra", e); return null; }
+  };
+
   const pautaDoTurno = () => {
     let p = garantirPauta(null);
+    cobrouAgoraRef.current = false;
     /* quem está longe já é calculado pelo elenco da cena — o Geógrafo lê
        dali em vez de refazer a conta, porque duas versões da mesma
        verdade é como nasce o balanceamento fantasma desta casa */
@@ -4072,6 +4091,22 @@ export default function Taverna() {
     {
       const r = respostaDaAmeaca();
       if (r) p = porNaPauta(p, "vilao", vilaoParaPauta(r, { nome: (nemesisRef.current || {}).nome || "a ameaça" }));
+    }
+    /* v9.112: O MUNDO LEMBROU. Raro de propósito — uma vez a cada cinco
+       dias, no máximo. A dívida só é marcada como cobrada DEPOIS de a
+       linha entrar na Pauta: marcar antes perderia a conta para sempre
+       se ela não coubesse, e em silêncio. */
+    {
+      const r = oQueOMundoCobra();
+      const linha = r ? linhaDoMundo(r) : "";
+      if (linha) {
+        p = porNaPauta(p, "mundo", linha);
+        cobrouAgoraRef.current = true;
+        cobradasRef.current = [...cobradasRef.current, r.chave].slice(-200);
+        ultimaCobrancaRef.current = diaRef.current;
+        formasCobradasRef.current = [...formasCobradasRef.current, r.cobranca.id].slice(-6);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoMundo(r)}`;
+      }
     }
     p = porNaPauta(p, "antes", arquivistaParaPauta(registroRef.current, {
       onde: linhaDoLugarDaMesa(),
@@ -4309,6 +4344,30 @@ export default function Taverna() {
      peso é o que decide quanto tempo ela sobrevive, e ele sai do que de
      fato aconteceu — não de um palpite sobre importância. */
   const turnoDeRegistroRef = useRef(0);
+  /* O CONTEXTO DESTE ATO, e não o da campanha (v9.112).
+
+     `contextoDoAto()` lê `poupei` e `fugi` de contadores acumulados —
+     "você já poupou alguém alguma vez" —, e é assim que o ALIADO precisa
+     deles: ele te conhece e lembra do que você é.
+
+     No LIVRO-RAZÃO cada linha é UM ato, e o acumulado ali mente. Saiu
+     isto numa prova de sessenta dias: "alguém da família de quem caiu
+     aparece — por poupei o último e mandei embora. Mesma palavra,
+     escopo diferente: o Aliado pergunta quem você é, o Cobrador pergunta
+     o que você fez naquele dia. */
+  const contextoDesteAto = () => {
+    const ato = atoDoTurnoRef.current;
+    const txt = String(ultimaAcaoRef.current || "");
+    return {
+      ato,
+      emCombate: !!combateRef.current,
+      suborno: ato === "paguei" && /suborn|calar|compr[oa]/i.test(txt),
+      poupei: ato === "feri" && /poupe|poupo|deixei viver|deixo viver|n[ãa]o mat|mandei embora|solt[eo]/i.test(txt),
+      fugi: /fujo|fugi|corro daqui|corri|recuo|recuei|me afasto|dou as costas/i.test(txt),
+      alguemPrecisava: ato === "ignorei" && /pedi[ur]|implor|socorr|ajuda|precisa/i.test(txt),
+    };
+  };
+
   const anotarOTurno = ({ oQue = "", peso = 0 } = {}) => {
     if (!oQue) return;
     /* o mesmo ato não vira duas linhas: um teste que parte o turno em dois
@@ -4331,6 +4390,10 @@ export default function Taverna() {
       peso,
       /* quem VIU é quem estava — é o que o Cobrador e o Vilão vão ler */
       viu: aqui,
+      /* v9.112: e o ATO com o contexto DESTE ato — nunca o da campanha,
+         que é o que o Aliado lê e o que faria a linha mentir. */
+      ...contextoDesteAto(),
+      publico: !!(espacoDaMesa() || {}).publico,
     });
   };
 
@@ -4343,6 +4406,8 @@ export default function Taverna() {
       /* v9.106: há alguém em cena? É a porta do Intérprete. */
       temGente: pessoasDaCena().length > 0,
       temVilao: !!(nemesisRef.current && nemesisRef.current.nome),
+      /* v9.112: a Pauta deste turno traz uma cobrança do mundo? */
+      temCobranca: !!cobrouAgoraRef.current,
       temChao: (chaoRef.current || []).length > 0,
       emCidade: !!cidadeAtualRef.current,
       /* dentro de um PRÉDIO da cidade — não nos arredores. A régua é a
@@ -4440,6 +4505,17 @@ export default function Taverna() {
   /* v9.110: a intenção da luta em curso. Por COMBATE, e zerada quando
      ele acaba: uma intenção que sobrevive à luta seria um bando novo
      nascendo já com o plano do bando anterior. */
+  /* v9.112: O LIVRO-RAZÃO. `cobradasRef` guarda a chave de cada dívida
+     já cobrada — o mesmo ato nunca é cobrado duas vezes —, e
+     `ultimaCobrancaRef` o dia da última, que é a cadência. Sem ela o
+     herói ativo levaria uma consequência por turno e o mundo viraria
+     perseguição, que é o oposto de ter vida própria. */
+  const cobradasRef = useRef([]);
+  /* e as últimas formas usadas, para o mundo não ter um tique */
+  const formasCobradasRef = useRef([]);
+  /* e se a cobrança entrou na Pauta DESTE turno — é a porta do bloco */
+  const cobrouAgoraRef = useRef(false);
+  const ultimaCobrancaRef = useRef(-99);
   const intencaoRef = useRef("");
   const vilaoAgiuRef = useRef(-99);
   /* e o ATO do herói neste turno, lido do que ele escreveu. É o que a
@@ -4838,7 +4914,7 @@ export default function Taverna() {
     setStatusSave("salvando");
     const dados = {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, registro: registroRef.current, elencoMem: elencoMemRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
+      combate: combateRef.current, registro: registroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
@@ -7480,7 +7556,7 @@ export default function Taverna() {
     capituloNovoRef.current = null;
     personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
     setPersonagem(pers);
-    registroRef.current = []; elencoMemRef.current = {}; aliadosRef.current = {}; saberRef.current = []; vilaoAgiuRef.current = -99; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
+    registroRef.current = []; cobradasRef.current = []; ultimaCobrancaRef.current = -99; formasCobradasRef.current = []; elencoMemRef.current = {}; aliadosRef.current = {}; saberRef.current = []; vilaoAgiuRef.current = -99; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
     if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); }
     npcTurnoRef.current = 0; definirAcampado(false);
     /* GEOGRAFIA GERADA PELO SISTEMA (v7.5): o continente nasce PRONTO —
@@ -7577,7 +7653,12 @@ export default function Taverna() {
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
       setRolagem(sv.rolagem || null);
       setCombate(sv.combate || null); combateRef.current = sv.combate || null;
-      registroRef.current = garantirRegistro(sv.registro); elencoMemRef.current = garantirElenco(sv.elencoMem); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
+      registroRef.current = garantirRegistro(sv.registro);
+      /* v9.112: o livro-razão. Sem ele o mundo cobraria de novo, a cada
+         recarga, todas as contas que já cobrou. */
+      cobradasRef.current = Array.isArray(sv.cobradas) ? sv.cobradas.map(String).slice(-200) : [];
+      ultimaCobrancaRef.current = Number.isFinite(sv.ultimaCobranca) ? sv.ultimaCobranca : -99;
+      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
       turnoDeRegistroRef.current = registroRef.current.length ? registroRef.current[registroRef.current.length - 1].t : 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       npcsRef.current = sv.npcs && typeof sv.npcs === "object" ? sv.npcs : {}; setNpcs(npcsRef.current); npcTurnoRef.current = 0;

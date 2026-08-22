@@ -95,6 +95,20 @@ export function garantirLinha(l) {
        impossível: ninguém lembra quem estava numa cena de trinta dias
        atrás — só o registro. */
     viu: nomes(o.viu, 4),
+    /* v9.112: O ATO CLASSIFICADO, que o Intérprete já calcula e que
+       morria no fim do turno. `oQue` é texto livre e serve para LER;
+       o Cobrador precisa DECIDIR, e não se decide sobre texto livre.
+
+       O contexto vem junto pelo mesmo motivo que o Aliado precisou
+       dele na v9.108: sem ele, metade das formas de cobrança tem
+       condição sempre falsa e cala em silêncio. */
+    ato: limpar(o.ato, 20),
+    suborno: !!o.suborno,
+    fugi: !!o.fugi,
+    poupei: !!o.poupei,
+    alguemPrecisava: !!o.alguemPrecisava,
+    emCombate: !!o.emCombate,
+    publico: !!o.publico,
   };
 }
 

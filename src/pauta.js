@@ -52,6 +52,7 @@ export const SECOES = [
   { id: "contra", rotulo: "CONTRA", prio: 5, o: "o que a oposição quer, e em quem bate" },
   { id: "aliado", rotulo: "O ALIADO", prio: 7, o: "quem anda comigo" },
   { id: "vilao", rotulo: "O VILÃO", prio: 6, o: "o que a ameaça fez" },
+  { id: "mundo", rotulo: "O MUNDO", prio: 7, o: "o que o mundo cobra ou paga por um ato antigo" },
   { id: "antes", rotulo: "ANTES", prio: 8, o: "o que já aconteceu aqui" },
   { id: "acabou", rotulo: "ACABOU DE", prio: 3, o: "o que o sistema resolveu agora" },
   { id: "naoPode", rotulo: "NÃO PODE", prio: 2, o: "os vetos desta cena" },

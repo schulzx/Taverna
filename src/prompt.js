@@ -43,6 +43,7 @@ import { ARREDORES_PROMPT } from "./arredores.js";
 import { ACAMPAMENTO_PROMPT } from "./acampamento.js";
 import { lexicoPrompt, chamadoDaRaca } from "./lexico.js";
 import { ADVERSARIO_PROMPT } from "./adversario.js";
+import { COBRADOR_PROMPT } from "./cobrador.js";
 import { GEOGRAFO_PROMPT } from "./geografo.js";
 import { PAUTA_PROMPT } from "./pauta.js";
 import { REGISTRO_PROMPT } from "./registro.js";
@@ -139,6 +140,12 @@ export const PORTAS_DA_CENA = [
 
      A porta não é economia: é a mesma regra dos dois lados. Uma regra que
      mora só num dos dois caminhos é como este projeto fabrica bug. */
+  /* v9.112: o bloco do Cobrador ensina a encenar uma LINHA da Pauta, e
+     o mundo cobra uma vez a cada cinco dias. Sem a linha ele é regra
+     sobre coisa nenhuma em quatro turnos de cada cinco. A porta não
+     estima: a Pauta é montada antes do prompt no mesmo turno, e ela diz
+     se a linha entrou. */
+  { id: "cobranca", quando: (c) => !!c.temCobranca, porque: "a instrução de encenar uma cobrança do mundo só serve no turno em que a Pauta traz uma" },
   { id: "descanso", quando: (c) => !c.emCombate, porque: "descanso curto, longo e dado de vida não existem no meio de uma luta — e o código já os recusa lá" },
   { id: "combate", quando: (c) => !!c.emCombate, porque: "terreno, economia de ação, reação, aflição de golpe, combo, controle de inimigo e presença divina só existem dentro de uma luta" },
   { id: "chao", quando: (c) => !!c.emCombate || !!c.temChao, porque: "o que caiu no chão sobrevive à luta, então a porta é o chão ter coisa — não a luta estar aberta" },
@@ -348,6 +355,7 @@ ${so("missao", OFERTAS_PROMPT)}
 
 ${PAUTA_PROMPT}
 ${REGISTRO_PROMPT}
+${so("cobranca", COBRADOR_PROMPT)}
 
 ${GEOGRAFO_PROMPT}
 
