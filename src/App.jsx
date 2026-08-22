@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
-import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo } from "./lexico.js";
+import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, chamadoDaRaca } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
@@ -9,7 +9,7 @@ import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste, dificuldadePorPerfil } from "./bestiario.js";
-import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, firmarEntre, paresEntre, TIPOS_DE_LACO } from "./npcs.js";
+import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, firmarEntre, paresEntre, garantirLaco, TIPOS_DE_LACO } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
 import { rolarClima, rolarEncontro, CLIMAS } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
@@ -73,7 +73,7 @@ import { tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, 
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
-import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, BASE_PROMPT } from "./mundo-base.js";
+import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, oQueExisteAqui, BASE_PROMPT } from "./mundo-base.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
 import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao } from "./portao.js";
@@ -675,7 +675,7 @@ function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar })
           <div>
             <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>{ehFuturista ? "Origem" : "Raça"}</div>
             <select value={raca} onChange={(e) => setRaca(e.target.value)} className="w-full rounded-lg p-2 tv-body text-xs outline-none" style={campo}>
-              {racasDisp.map((r) => <option key={r.nome} value={r.nome}>{r.nome}</option>)}
+              {racasDisp.map((r) => <option key={r.nome} value={r.nome}>{chamadoDaRaca(mundo.lexico, r.nome)}</option>)}
             </select>
           </div>
           <div>
@@ -2661,9 +2661,9 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
         <div>
           <div className="tv-mono text-xs uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>{["Ficção científica", "Cyberpunk", "Pós-apocalíptico"].includes(mundo.genero) ? "Origem" : "Raça"}</div>
           <select value={raca} onChange={(e) => setRaca(e.target.value)} className="w-full rounded-xl p-3 tv-body text-sm outline-none" style={campo}>
-            {racasDisp.map((r) => <option key={r.nome} value={r.nome}>{r.nome}</option>)}
+            {racasDisp.map((r) => <option key={r.nome} value={r.nome}>{chamadoDaRaca(mundo.lexico, r.nome)}</option>)}
           </select>
-          {rObj && <div className="tv-body text-xs mt-1.5" style={{ color: T.inkDim }}>{rObj.desc} <span style={{ color: T.amberSoft }}>{Object.entries(rObj.bonus).map(([k, v]) => `+${v} ${(ATRIBUTOS.find((a) => a.id === k) || {}).nome || k}`).join(", ")}</span>{rObj.traco && <><br /><span style={{ color: T.violetSoft }}>✦ {rObj.traco}</span></>}</div>}
+          {rObj && <div className="tv-body text-xs mt-1.5" style={{ color: T.inkDim }}>{chamadoDaRaca(mundo.lexico, rObj.nome) !== rObj.nome ? <span style={{ color: T.inkDim }}>({rObj.nome}) </span> : null}{rObj.desc} <span style={{ color: T.amberSoft }}>{Object.entries(rObj.bonus).map(([k, v]) => `+${v} ${(ATRIBUTOS.find((a) => a.id === k) || {}).nome || k}`).join(", ")}</span>{rObj.traco && <><br /><span style={{ color: T.violetSoft }}>✦ {rObj.traco}</span></>}</div>}
         </div>
         <div>
           <div className="tv-mono text-xs uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Profissão</div>
@@ -4022,7 +4022,7 @@ export default function Taverna() {
           ...ctxAto,
         };
       }).filter(Boolean);
-    } catch { return []; }
+    } catch (e) { return calou("aliadosDaCena", e); }
   };
 
   /* O contexto que o CÓDIGO consulta. Grosseiro de propósito: um código
@@ -4137,6 +4137,15 @@ export default function Taverna() {
      Nenhum campo é inventado: relação e laço vêm de `npcs.js`, o que ela
      quer e teme vem da base do mundo, e o ATO vem do que o jogador
      acabou de escrever. */
+  /* v9.109: quem alimenta um AGENTE avisa quando morre. O silêncio de um
+     conselheiro é indistinguível de uma cena sem ninguém, e foi assim que
+     dois imports faltando ficaram duas etapas escondidos. Só no
+     desenvolvimento: o jogador nunca vê o sistema falar de si mesmo. */
+  const calou = (onde, e) => {
+    try { if (import.meta.env && import.meta.env.DEV) console.warn("[" + onde + "] calou:", e); } catch { /* fora do Vite */ }
+    return [];
+  };
+
   const pessoasDaCena = () => {
     try {
       const p0 = fichaViva() || personagem || {};
@@ -4176,7 +4185,7 @@ export default function Taverna() {
           noite: ehNoite(minutoRef.current),
         };
       });
-    } catch { return []; }
+    } catch (e) { return calou("pessoasDaCena", e); }
   };
 
   /* O rótulo curto do lugar, que o registro guarda e o Arquivista casa.

@@ -149,6 +149,25 @@ export const TIPOS_DE_LUGAR = [
    pela ficção, foi enganado pelo sistema. */
 export const AMEACAS = ["fraco", "comum", "competente", "elite", "lendario"];
 
+/* ---------------- AS RAÇAS, PELAS DUAS COLUNAS (v9.109) ----------------
+   Aqui a regra muda de forma, e é a que o desenho do equipamento previu.
+   Um tipo de lugar podia ser renomeado inteiro porque o `tipo` mecânico
+   fica ao lado do nome. Uma RAÇA não: o nome DELA é o identificador —
+   `racaPorNome` procura por ele, a ficha guarda por ele, o bônus de
+   atributo sai dele.
+
+   Então são duas colunas: o `nome` canônico, que o código usa e que
+   nunca muda, e o `chamado`, que só a tela e a narração veem. O bônus
+   continua exatamente o mesmo — um "caçador desperto" que é Humano por
+   dentro ganha +1 em tudo, e o card continua mostrando isso.
+
+   É por isso que esta etapa é barata e a das habilidades não é: uma raça
+   é consultada por nome em três lugares; uma habilidade, em quinze. */
+export const RACAS_DO_SISTEMA = [
+  "Humano", "Elfo", "Anão", "Halfling", "Meio-orc", "Draconato", "Tiefling", "Gnomo", "Meio-elfo", "Goliath",
+  "Terrano", "Colono Orbital", "Sintético", "Mutante", "Cromado", "Vagante",
+];
+
 /* ---------------- COMO AS COISAS FUNCIONAM ----------------
    Cada entrada aponta para um SISTEMA que já existe no código e diz
    como ele se apresenta neste mundo. `porta` é a porta da cena que a
@@ -272,6 +291,17 @@ export function garantirLexico(l) {
       cidadeB: lista(o.nomes && o.nomes.cidadeB, 16, TETOS.parte),
       continente: limpar(o.nomes && o.nomes.continente, TETOS.terra),
     },
+    /* v9.109: e como cada raça do sistema se chama aqui. A lista é
+       fechada: um nome que o código não conhece não entra, porque não
+       haveria bônus atrás dele. */
+    racas: (Array.isArray(o.racas) ? o.racas : [])
+      .map((x) => ({
+        raca: RACAS_DO_SISTEMA.find((r) => r.toLowerCase() === String((x && x.raca) || "").toLowerCase().trim()) || "",
+        chamado: limpar(x && x.chamado, TETOS.curto),
+      }))
+      .filter((x) => x.raca && x.chamado)
+      .filter((x, i, a) => a.findIndex((y) => y.raca === x.raca) === i)
+      .slice(0, RACAS_DO_SISTEMA.length),
     aLei: limpar(o.aLei, TETOS.texto),
     comoSeFala: limpar(o.comoSeFala, TETOS.texto),
   };
@@ -311,6 +341,15 @@ export function chamadoDoLugar(l, tipo) {
   const x = garantirLexico(l).lugares.find((p) => p.tipo === tipo);
   return (x && x.chamado) || "";
 }
+/* Como uma raça se chama neste mundo. Devolve o nome canônico quando o
+   léxico não a renomeou — nunca vazio, porque quem chama está desenhando
+   uma tela e uma tela não pode ficar sem rótulo. */
+export function chamadoDaRaca(l, nome) {
+  const x = garantirLexico(l).racas.find((r) => r.raca === nome);
+  return (x && x.chamado) || String(nome || "");
+}
+export function racasRenomeadas(l) { return garantirLexico(l).racas; }
+
 export function nomesDeLugar(l, tipo) {
   const x = garantirLexico(l).lugares.find((p) => p.tipo === tipo);
   return x && x.nomes.length >= 2 ? x.nomes : null;
@@ -366,8 +405,9 @@ REGRAS INEGOCIÁVEIS:
 3. FIDELIDADE ACIMA DE CRIATIVIDADE. Se ele escreveu "caçadores", tudo é de caçadores — não caçadores com um reino medieval em volta.
 4. MECANISMO, NÃO ADJETIVO. Em cada resposta de "funciona", diga COMO a coisa acontece (quem, onde, o que trava, o que dá errado), não que ela é sombria ou perigosa.
 5. DOIS CAMPOS TÊM LISTA FECHADA, e ela não é sugestão. Em "lugares", o "tipo" tem de ser EXATAMENTE uma das palavras listadas: são engrenagens do jogo e não mudam — o que você escolhe é como cada uma SE CHAMA aqui. Em "criaturas", a "ameaca" idem: ela decide a força do bicho, e um nome guardado no degrau errado promete uma coisa e entrega outra.
-6. PREENCHA TODOS OS DEGRAUS DE AMEAÇA e o máximo de tipos de lugar que fizerem sentido. Se um tipo parecer não existir neste mundo, invente o EQUIVALENTE dele em vez de pular — pular tira a coisa do jogo, e o jogo conta com ela.
-7. Português do Brasil. Cada campo de "funciona" no máximo duas frases.
+6. AS RAÇAS TAMBÉM TÊM LISTA FECHADA, e o que você escolhe é só o NOME. Cada uma carrega um bônus de atributo que NÃO muda: você está dando a elas a palavra deste mundo, não inventando povos. Renomeie as que fizerem sentido e deixe de fora as que não fizerem — o que ficar de fora continua com o nome de sempre. Use a mesma cultura de "povos": "povos" é quem habita o mundo, "racas" é o que o jogador pode SER.
+7. PREENCHA TODOS OS DEGRAUS DE AMEAÇA e o máximo de tipos de lugar que fizerem sentido. Se um tipo parecer não existir neste mundo, invente o EQUIVALENTE dele em vez de pular — pular tira a coisa do jogo, e o jogo conta com ela.
+8. Português do Brasil. Cada campo de "funciona" no máximo duas frases.
 
 Responda SÓ com este JSON, sem comentários e sem texto fora dele:
 
@@ -397,6 +437,9 @@ ${SISTEMAS.map((s) => `    "${s.id}": "${s.pergunta}"`).join(",\n")}
     "cidadeB": ["10 a 16 SEGUNDAS partes, que se combinam com as de cima (ex.: 'do Norte', 'Baixo', '-9')"],
     "continente": "o nome da terra maior onde tudo isto acontece"
   },
+  "racas": [
+    { "raca": "<UM de: ${RACAS_DO_SISTEMA.join(", ")}>", "chamado": "como esse tipo de gente se chama NESTE mundo" }
+  ],
   "naoExiste": ["3 a 6 coisas que o gênero faria esperar e que NESTE mundo não existem"],
   "aLei": "a UMA regra que rege este mundo e não regeria outro — no máximo duas frases",
   "comoSeFala": "como as pessoas falam aqui: registro, gírias próprias, o que é tabu dizer — no máximo duas frases"

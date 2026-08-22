@@ -23,6 +23,7 @@ import { Retrato, sementeDe, estadoDe } from "./ui.jsx";
 import { bonusProficiencia, ehProficiente } from "./regras.js";
 import { PERICIAS, garantirPericias, bonusDePericia, passivoDe, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente } from "./pericias.js";
 import { garantirDadosVida } from "./descanso.js";
+import { chamadoDaRaca } from "./lexico.js";
 
 const sinal = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -182,7 +183,7 @@ export function FichaVisual({
         <div className="min-w-0 flex-1">
           <div className="tv-display text-2xl leading-tight truncate" style={{ color: T.ink }}>{p.nome}</div>
           <div className="tv-mono text-[10px] uppercase tracking-widest truncate" style={{ color: T.amberSoft }}>
-            {[p.raca, p.classe, p.subclasse].filter(Boolean).join(" · ") || "sem caminho"} <span style={{ color: T.inkDim }}>· nv {nivel}</span>
+            {[chamadoDaRaca((mundo || {}).lexico, p.raca), p.classe, p.subclasse].filter(Boolean).join(" · ") || "sem caminho"} <span style={{ color: T.inkDim }}>· nv {nivel}</span>
           </div>
           {tituloInfo && (
             <div className="tv-mono text-[10px] truncate" style={{ color: tituloInfo.divino ? T.violetSoft : T.inkDim }}>
