@@ -105,7 +105,7 @@ function plantarLocais(rnd, locais, forma) {
   });
 }
 
-export function PlantaCidade({ semente, cidade, genero, molde, lugar, aoSelecionar, selecionado, aoIr = null }) {
+export function PlantaCidade({ semente, cidade, genero, molde, lex = null, lugar, aoSelecionar, selecionado, aoIr = null }) {
   if (!cidade || !cidade.nome) {
     return <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você não está em cidade nenhuma agora — o mapa do mundo mostra onde você anda.</div>;
   }
@@ -113,7 +113,7 @@ export function PlantaCidade({ semente, cidade, genero, molde, lugar, aoSelecion
   /* v9.54: a forma vem da POPULAÇÃO e do BIOMA, não de uma constante. Uma
      aldeia de 190 almas deixa de ter a mesma muralha de uma capital. */
   const forma = formaDaCidade(cidade);
-  const locais = plantarLocais(rnd, locaisDaCidade(semente, cidade, genero, molde), forma);
+  const locais = plantarLocais(rnd, locaisDaCidade(semente, cidade, genero, molde, lex), forma);
   const dMuro = muralha(rngDe(`${semente}|muro|${cidade.nome}`), forma);
   const R = forma.raio, Ay = forma.aperto;
   /* v9.55: o cinturão também sai da água. O ângulo do arredor vem de

@@ -22,6 +22,9 @@
 
 import { rngDe } from "./geografia.js";
 import { pessoaDiversa, nomeTaverna, nomePessoa } from "./nomes.js";
+/* v9.103: o léxico nomeia lugar e bicho. O TIPO e a AMEAÇA continuam
+   sendo do código — o que vem daqui é só a palavra. */
+import { nomesDeLugar, chamadoDoLugar, criaturasDaAmeaca } from "./lexico.js";
 import { nomeDeLocal } from "./toponimia.js";
 import { criaturasDoGenero } from "./bestiario.js";
 import { moldePorId } from "./moldes.js";
@@ -84,7 +87,7 @@ const NOME_LOCAL = {
    não tem docas nem taverna — tem fogueira, feira do degrau e o portal. O
    parâmetro é o último e tem padrão, então quem ainda não passa molde
    continua gerando o sobremundo de sempre. */
-export function locaisDaCidade(semente, cidade, genero = "Fantasia medieval", molde = null) {
+export function locaisDaCidade(semente, cidade, genero = "Fantasia medieval", molde = null, lex = null) {
   if (!cidade || !cidade.nome) return [];
   const M = moldePorId(molde && molde.id ? molde.id : molde);
   const TABELA = M.locais || LOCAIS;
@@ -115,10 +118,27 @@ export function locaisDaCidade(semente, cidade, genero = "Fantasia medieval", mo
        banco próprio: uma Torre nomeia os degraus dela melhor do que o
        sobremundo nomearia. E NOME_LOCAL sobrevive como rede: um tipo que a
        toponímia não conheça continua tendo nome. */
+    /* v9.103: O LÉXICO PRIMEIRO, o molde depois, o genérico por último.
+       A ordem é a mesma que a v9.102 acertou nas cidades: o molde diz a
+       FORMA do mundo e o léxico diz a IDENTIDADE dele. E os moldes
+       exóticos não perdem nada — a Torre tem tipos de local que não
+       existem na lista fechada do léxico, então ele não tem o que dizer
+       sobre elas e o molde responde naturalmente. */
+    /* e o mesmo cuidado aqui: `nomeDeLocal` gasta três ou quatro sorteios
+       e `pick` gasta um. Com o gerador compartilhado, ligar o léxico
+       mudaria o nome de TODOS os locais seguintes — o que não quebra
+       mecânica nenhuma, mas é a mesma armadilha e não vale deixar armada. */
+    const rl = rngDe(`${semente}|nome-local|${cidade.nome}|${l.tipo}`);
+    const doLex = nomesDeLugar(lex, l.tipo);
     const nomes = M.nomesLocal && M.nomesLocal[l.tipo];
-    const nome = nomes ? pick(rnd, nomes)
-      : (nomeDeLocal(l.tipo, genero, rnd) || (NOME_LOCAL[l.tipo] ? pick(rnd, NOME_LOCAL[l.tipo]) : l.tipo));
-    return { id: `${cidade.nome}|${l.tipo}`, tipo: l.tipo, icone: l.icone, nome, cidade: cidade.nome, porte: cidade.porte || cidade.tipo, papeis: l.papeis };
+    const nome = doLex ? pick(rl, doLex)
+      : nomes ? pick(rl, nomes)
+        : (nomeDeLocal(l.tipo, genero, rl) || (NOME_LOCAL[l.tipo] ? pick(rl, NOME_LOCAL[l.tipo]) : l.tipo));
+    /* `chamado` é COMO ESSE TIPO SE DIZ aqui — "sede da guilda" no lugar
+       de "taverna". O `tipo` fica intocado, porque é por ele que o
+       mercado é procurado, o cômodo é desenhado e o porte conta. */
+    const chamado = chamadoDoLugar(lex, l.tipo);
+    return { id: `${cidade.nome}|${l.tipo}`, tipo: l.tipo, icone: l.icone, nome, chamado, cidade: cidade.nome, porte: cidade.porte || cidade.tipo, papeis: l.papeis };
   });
 }
 
@@ -183,8 +203,8 @@ const SEGREDOS = [
   { tipo: "relicario", icone: "📿", o: "um relicário guardado longe dos olhos", acha: "percepcao", dc: 17 },
 ];
 
-export function segredosDaCidade(semente, cidade, genero = "Fantasia medieval", molde = null) {
-  const locais = locaisDaCidade(semente, cidade, genero, molde);
+export function segredosDaCidade(semente, cidade, genero = "Fantasia medieval", molde = null, lex = null) {
+  const locais = locaisDaCidade(semente, cidade, genero, molde, lex);
   if (!locais.length) return [];
   const rnd = rngDe(`${semente}|segredos|${cidade.nome}`);
   const quantos = (PESO_PORTE[cidade.porte || cidade.tipo] || 3) >= 4 ? 2 : 1;
@@ -211,21 +231,46 @@ const COMPORTAMENTOS = [
   "dorme meses e acorda faminta", "tem medo de sinos", "cheira sangue a quilômetros",
 ];
 
-export function criaturasDaRegiao(semente, regiao, genero = "Fantasia medieval") {
+export function criaturasDaRegiao(semente, regiao, genero = "Fantasia medieval", lex = null) {
   if (!regiao || !regiao.nome) return [];
   const rnd = rngDe(`${semente}|bichos|${regiao.nome}`);
   const banco = criaturasDoGenero(genero);
   const quantos = entre(rnd, 3, 5);
+  /* DOIS CONJUNTOS, e a separação é o conserto: `usadas` guarda os nomes
+     do BESTIÁRIO e é o que o laço de seleção consulta; `ditos` guarda os
+     nomes que o léxico já gastou. Com um conjunto só, um nome do léxico
+     entrava na conta da seleção e mudava QUAL criatura era sorteada — e
+     com ela a ameaça, o nível e o peso no orçamento. A promessa desta
+     versão é que só o nome muda, e essa promessa mora aqui. */
   const usadas = new Set();
+  const ditos = new Set();
   const out = [];
   for (let i = 0; i < quantos; i++) {
     let c = null;
     for (let t = 0; t < 12 && !c; t++) { const cand = pick(rnd, banco); if (!usadas.has(cand.nome)) c = cand; }
     if (!c) break;
     usadas.add(c.nome);
+    /* v9.103: O NOME VEM DO DEGRAU DE AMEAÇA, e é a mesma regra que vai
+       valer para o equipamento. A ameaça decide PV, defesa, dano e o peso
+       no orçamento do encontro: um nome tirado do balde errado promete um
+       bicho e entrega outro, e quem foi enganado não foi pela ficção — foi
+       pelo sistema. Sem léxico, o nome do bestiário, como sempre. */
+    /* GERADOR PRÓPRIO, e é o que garante a promessa: sortear o nome pelo
+       `rnd` da função consumiria o gerador e mudaria a criatura seguinte.
+       Com um gerador derivado, o bestiário é sorteado exatamente igual com
+       ou sem léxico — e a única diferença entre os dois mundos é a
+       palavra. */
+    const bancoDaqui = criaturasDaAmeaca(lex, c.ameaca);
+    let nomeDaqui = c.nome;
+    if (bancoDaqui) {
+      const rn = rngDe(`${semente}|nome-bicho|${regiao.nome}|${i}`);
+      const livres = bancoDaqui.filter((x) => !ditos.has(x));
+      nomeDaqui = pick(rn, livres.length ? livres : bancoDaqui);
+      ditos.add(nomeDaqui);
+    }
     out.push({
       id: `${regiao.nome}|${c.nome}`,
-      nome: c.nome, ameaca: c.ameaca, nivel: c.nivelRef, desc: c.desc, agil: c.agil,
+      nome: nomeDaqui, ameaca: c.ameaca, nivel: c.nivelRef, desc: c.desc, agil: c.agil,
       regiao: regiao.nome, bioma: regiao.bioma,
       comportamento: pick(rnd, COMPORTAMENTOS),
     });
@@ -472,12 +517,12 @@ function cidadeSintetica(semente, nome) {
 export function oQueExisteAqui(semente, mapa, nomeCidade, base, genero = "Fantasia medieval", molde = null, lex = null) {
   const cidade = ((mapa && mapa.cidades) || []).find((c) => c.nome === nomeCidade) || cidadeSintetica(semente, nomeCidade);
   if (!cidade) return null;
-  const locais = locaisDaCidade(semente, cidade, genero, molde);
+  const locais = locaisDaCidade(semente, cidade, genero, molde, lex);
   const gente = [];
   for (const l of locais) for (const p of genteDoLocal(semente, l, genero, molde, lex)) if (!estaMorto(base, p.nome)) gente.push(p);
   const segredos = segredosDaCidade(semente, cidade, genero, molde).filter((s) => !foiSaqueado(base, s.id));
   const regiao = ((mapa && mapa.regioes) || []).find((r) => r.nome === cidade.regiao);
-  const bichos = regiao ? criaturasDaRegiao(semente, regiao, genero) : [];
+  const bichos = regiao ? criaturasDaRegiao(semente, regiao, genero, lex) : [];
   /* o que existe NO CHÃO por perto: masmorras e caches do ermo (v9.9) */
   const perto = masmorrasDoMundo(semente, mapa).filter((m) => m.cidadeProxima === cidade.nome || m.regiao === cidade.regiao);
   const caches = tesourosDoMundo(semente, mapa).filter((t) => (t.perto === cidade.nome || t.regiao === cidade.regiao) && !foiSaqueado(base, t.id));
@@ -563,11 +608,11 @@ export function chefePorNome(semente, mapa, genero, nome, lex = null) {
   if (!alvo) return null;
   return chefesDoMundo(semente, mapa, genero, lex).find((c) => alvo.includes(c.nomeCurto.toLowerCase()) || c.nome.toLowerCase() === alvo) || null;
 }
-export function criaturaPorNome(semente, mapa, genero, nome) {
+export function criaturaPorNome(semente, mapa, genero, nome, lex = null) {
   const alvo = String(nome || "").toLowerCase();
   if (!alvo) return null;
   for (const r of (mapa && mapa.regioes) || []) {
-    const achou = criaturasDaRegiao(semente, r, genero).find((c) => alvo.includes(c.nome.toLowerCase()));
+    const achou = criaturasDaRegiao(semente, r, genero, lex).find((c) => alvo.includes(c.nome.toLowerCase()));
     if (achou) return achou;
   }
   return null;

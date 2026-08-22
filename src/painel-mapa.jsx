@@ -11,7 +11,7 @@ import { ondeEstou, pontoDoHeroi } from "./rastro.js";
 import { PlantaCidade } from "./planta-cidade.jsx";
 import { arredoresDaCidade } from "./arredores.js";
 
-export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindade, jornada = null, masmorra = null, molde = null, semente = "", genero = "Fantasia medieval", lugar = null, aoIrAoLugar = null, aoViajar = null }) {
+export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindade, jornada = null, masmorra = null, molde = null, semente = "", genero = "Fantasia medieval", lex = null, lugar = null, aoIrAoLugar = null, aoViajar = null }) {
   const [selecionada, setSelecionada] = React.useState(null);
   const cidadeAqui = (mapa?.cidades || []).find((c) => cidadeAtual && (c.nome || "").toLowerCase() === String(cidadeAtual).toLowerCase()) || null;
   const podeCidade = !!cidadeAqui && !jornada;
@@ -137,7 +137,7 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
     return (
       <div>
         {seletorEscala}
-        <PlantaCidade semente={semente} cidade={cidadeAqui} genero={genero} molde={molde} lugar={lugar}
+        <PlantaCidade semente={semente} cidade={cidadeAqui} genero={genero} molde={molde} lex={lex} lugar={lugar}
           selecionado={selecionada} aoSelecionar={setSelecionada} aoIr={aoIrAoLugar} />
       </div>
     );

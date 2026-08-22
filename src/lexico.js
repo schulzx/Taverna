@@ -121,6 +121,34 @@ export const COISAS = [
 ];
 export function coisaPorId(id) { return COISAS.find((c) => c.id === id) || null; }
 
+/* ---------------- OS LUGARES, PELO TIPO (v9.103) ----------------
+   Aqui vale a mesma regra escrita para o equipamento, e que vale para o
+   léxico inteiro: O NOME VEM DA FORMA, NUNCA DA COISA.
+
+   O `tipo` de um local é MECÂNICO — o mercado é procurado por "mercado",
+   `comodos.js` desenha por tipo, o porte decide quantos e quais existem.
+   Ele não muda nunca. O que muda é como aquele tipo SE CHAMA neste mundo
+   e que nomes próprios ele recebe.
+
+   Num mundo de caçadores a "taverna" continua sendo `taverna` para o
+   código — e "sede da guilda" para os olhos, com nomes como "Guilda
+   Aurora". A forja continua forja, e é a "loja de equipamento".
+
+   E o mapeamento é POR TIPO CONHECIDO: um tipo que o léxico invente não
+   entra, porque não haveria nada mecânico para ele ser. */
+export const TIPOS_DE_LUGAR = [
+  "taverna", "mercado", "templo", "forja", "quartel", "cadeia",
+  "biblioteca", "docas", "arena", "cemitério", "guilda", "casa de banhos",
+];
+
+/* ---------------- AS CRIATURAS, PELA AMEAÇA ----------------
+   Mesma régua, e aqui ela é vital: a ameaça decide PV, defesa, dano e
+   quanto a criatura pesa no orçamento do encontro. Um nome guardado no
+   balde errado promete um bicho e entrega outro — e o jogador que lê
+   "rastejante de fenda" e encontra o PV de um dragão não foi enganado
+   pela ficção, foi enganado pelo sistema. */
+export const AMEACAS = ["fraco", "comum", "competente", "elite", "lendario"];
+
 /* ---------------- COMO AS COISAS FUNCIONAM ----------------
    Cada entrada aponta para um SISTEMA que já existe no código e diz
    como ele se apresenta neste mundo. `porta` é a porta da cena que a
@@ -191,14 +219,32 @@ export function garantirLexico(l) {
     funciona,
     povos: lista(o.povos, TETOS.povos, TETOS.curto),
     oficios: lista(o.oficios, TETOS.oficios, TETOS.curto),
-    criaturas: lista(o.criaturas, TETOS.criaturas, TETOS.curto),
+    /* v9.103: as criaturas passam a vir POR AMEAÇA. Uma lista solta de
+       nomes não pode nomear bicho nenhum — ela não sabe qual deles é o
+       fraco. O que vier sem ameaça é descartado como qualquer campo
+       inválido: vazio quer dizer "use o seu". */
+    criaturas: (Array.isArray(o.criaturas) ? o.criaturas : [])
+      .map((x) => ({
+        ameaca: AMEACAS.includes(String((x && x.ameaca) || "").toLowerCase().trim()) ? String(x.ameaca).toLowerCase().trim() : "",
+        nomes: lista(x && x.nomes, 6, TETOS.curto),
+      }))
+      .filter((x) => x.ameaca && x.nomes.length)
+      .filter((x, i, a) => a.findIndex((y) => y.ameaca === x.ameaca) === i),
     naoExiste: lista(o.naoExiste, TETOS.naoExiste, TETOS.curto),
     cidades: lista(o.cidades, TETOS.cidades, TETOS.curto),
     tavernas: lista(o.tavernas, TETOS.tavernas, TETOS.medio),
+    /* v9.103: os lugares passam a ser POR TIPO MECÂNICO. `tipo` tem de
+       ser um dos que o código conhece; `chamado` é como ele se chama
+       aqui; `nomes` são os nomes próprios. Tipo inventado não entra. */
     lugares: (Array.isArray(o.lugares) ? o.lugares : [])
-      .map((x) => ({ tipo: limpar(x && x.tipo, TETOS.curto), exemplo: limpar(x && x.exemplo, TETOS.medio) }))
-      .filter((x) => x.tipo)
-      .slice(0, TETOS.lugares),
+      .map((x) => ({
+        tipo: TIPOS_DE_LUGAR.includes(String((x && x.tipo) || "").toLowerCase().trim()) ? String(x.tipo).toLowerCase().trim() : "",
+        chamado: limpar(x && x.chamado, TETOS.curto),
+        nomes: lista(x && x.nomes, 6, TETOS.medio),
+      }))
+      .filter((x) => x.tipo && (x.chamado || x.nomes.length))
+      .filter((x, i, a) => a.findIndex((y) => y.tipo === x.tipo) === i)
+      .slice(0, TIPOS_DE_LUGAR.length),
     faccoes: (Array.isArray(o.faccoes) ? o.faccoes : [])
       .map((x) => ({ nome: limpar(x && x.nome, TETOS.curto), quer: limpar(x && x.quer, TETOS.medio) }))
       .filter((x) => x.nome)
@@ -248,7 +294,27 @@ export function lexicoVale(l) {
    primeiro termo pode vir do mundo. */
 export function oficiosDo(l) { const x = garantirLexico(l); return x.oficios.length >= 4 ? x.oficios : null; }
 export function povosDo(l) { const x = garantirLexico(l); return x.povos.length >= 2 ? x.povos : null; }
-export function criaturasDo(l) { const x = garantirLexico(l); return x.criaturas.length >= 3 ? x.criaturas : null; }
+/* A lista chapada, para o prompt dizer o que ameaça as pessoas aqui. */
+export function criaturasDo(l) {
+  const todas = garantirLexico(l).criaturas.flatMap((c) => c.nomes);
+  return todas.length >= 3 ? todas : null;
+}
+/* E o banco de UM degrau, para nomear um bicho sem mentir sobre o que ele
+   é. Devolve null com menos de dois nomes: um nome só faria a região
+   inteira ter a mesma besta. */
+export function criaturasDaAmeaca(l, ameaca) {
+  const c = garantirLexico(l).criaturas.find((x) => x.ameaca === ameaca);
+  return c && c.nomes.length >= 2 ? c.nomes : null;
+}
+/* Como um tipo de lugar se chama aqui, e que nomes próprios ele recebe. */
+export function chamadoDoLugar(l, tipo) {
+  const x = garantirLexico(l).lugares.find((p) => p.tipo === tipo);
+  return (x && x.chamado) || "";
+}
+export function nomesDeLugar(l, tipo) {
+  const x = garantirLexico(l).lugares.find((p) => p.tipo === tipo);
+  return x && x.nomes.length >= 2 ? x.nomes : null;
+}
 export function cidadesDo(l) { const x = garantirLexico(l); return x.cidades.length >= 3 ? x.cidades : null; }
 export function tavernasDo(l) { const x = garantirLexico(l); return x.tavernas.length >= 2 ? x.tavernas : null; }
 /* Os nomes de gente só valem em BLOCO: metade do banco deste mundo com
@@ -299,7 +365,9 @@ REGRAS INEGOCIÁVEIS:
 2. SE A DESCRIÇÃO CITAR UMA HISTÓRIA QUE EXISTE, entregue o MUNDO QUE ELA EVOCA — as regras, os papéis, o tom, a estrutura social —, com NOMES PRÓPRIOS NOVOS, inventados por você. Nunca use nomes de personagens, lugares ou organizações da obra citada, nem frases dela. O mundo tem de ser do jogador, não uma cópia.
 3. FIDELIDADE ACIMA DE CRIATIVIDADE. Se ele escreveu "caçadores", tudo é de caçadores — não caçadores com um reino medieval em volta.
 4. MECANISMO, NÃO ADJETIVO. Em cada resposta de "funciona", diga COMO a coisa acontece (quem, onde, o que trava, o que dá errado), não que ela é sombria ou perigosa.
-5. Português do Brasil. Cada campo de "funciona" no máximo duas frases.
+5. DOIS CAMPOS TÊM LISTA FECHADA, e ela não é sugestão. Em "lugares", o "tipo" tem de ser EXATAMENTE uma das palavras listadas: são engrenagens do jogo e não mudam — o que você escolhe é como cada uma SE CHAMA aqui. Em "criaturas", a "ameaca" idem: ela decide a força do bicho, e um nome guardado no degrau errado promete uma coisa e entrega outra.
+6. PREENCHA TODOS OS DEGRAUS DE AMEAÇA e o máximo de tipos de lugar que fizerem sentido. Se um tipo parecer não existir neste mundo, invente o EQUIVALENTE dele em vez de pular — pular tira a coisa do jogo, e o jogo conta com ela.
+7. Português do Brasil. Cada campo de "funciona" no máximo duas frases.
 
 Responda SÓ com este JSON, sem comentários e sem texto fora dele:
 
@@ -312,8 +380,12 @@ ${SISTEMAS.map((s) => `    "${s.id}": "${s.pergunta}"`).join(",\n")}
   },
   "povos": ["os povos/tipos de gente deste mundo, 3 a 8 — substituem 'elfo, anão, halfling'"],
   "oficios": ["do que as pessoas vivem aqui, 8 a 16 — substituem 'ferreiro, taverneiro, escriba'"],
-  "lugares": [{ "tipo": "espécie de lugar que existe nas cidades daqui", "exemplo": "um nome próprio de exemplo" }],
-  "criaturas": ["o que ameaça as pessoas neste mundo, 4 a 10"],
+  "lugares": [
+    { "tipo": "<UM de: ${TIPOS_DE_LUGAR.join(", ")}>", "chamado": "como esse tipo de lugar se chama NESTE mundo", "nomes": ["3 a 6 nomes próprios de lugares assim"] }
+  ],
+  "criaturas": [
+    { "ameaca": "<UM de: ${AMEACAS.join(", ")}>", "nomes": ["3 a 6 nomes de coisas dessa força que ameaçam as pessoas aqui"] }
+  ],
   "faccoes": [{ "nome": "nome próprio de uma potência daqui", "quer": "o que ela quer, em meia linha" }],
   "cidades": ["8 nomes próprios de cidade no estilo deste mundo"],
   "tavernas": ["4 nomes próprios para o lugar onde se encontra gente e trabalho"],
@@ -404,7 +476,15 @@ export function lexicoPrompt(l, portas = null) {
   }
   fila.push(...daCena, ...deSempre);
   if (x.naoExiste.length) fila.push(`NÃO EXISTE NESTE MUNDO (nunca ponha em cena): ${x.naoExiste.join(", ")}.`);
-  if (x.criaturas.length) fila.push(`O QUE AMEAÇA AS PESSOAS: ${x.criaturas.join(", ")}.`);
+  /* v9.103: os LUGARES sobem com o nome que têm aqui. Custa pouco e
+     resolve o que o vocabulário sozinho não resolvia: o Mestre lia
+     "masmorra = portal" e continuava escrevendo "a taverna", porque
+     taverna não estava na lista de apelidos — ela é um tipo do mundo,
+     não uma etiqueta do sistema. */
+  const chamados = x.lugares.filter((p) => p.chamado).map((p) => `${p.tipo} = ${p.chamado}`);
+  if (chamados.length) fila.push(`E OS LUGARES SE CHAMAM: ${chamados.join(" · ")}.`);
+  const bichos = criaturasDo(x);
+  if (bichos) fila.push(`O QUE AMEAÇA AS PESSOAS: ${bichos.slice(0, 8).join(", ")}.`);
   if (x.comoSeFala) fila.push(`COMO SE FALA: ${x.comoSeFala}`);
   /* e o corte, em silêncio: o que não cabe hoje cabe na cena de amanhã.
 
