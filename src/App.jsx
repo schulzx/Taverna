@@ -5,6 +5,7 @@ import { criarCidade, criarFaccao, cidadesDominadas, localDeDescanso, resumoMapa
 import { cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
+import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste, dificuldadePorPerfil } from "./bestiario.js";
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt } from "./npcs.js";
@@ -2498,6 +2499,7 @@ function TelaMundo({ concluir }) {
   const [descricao, setDescricao] = useState("");
   const [estrutura, setEstrutura] = useState("jornada");
   const [molde, setMolde] = useState(MOLDE_PADRAO);
+  const [voz, setVoz] = useState(VOZ_PADRAO);
   const campo = { background: T.panel, border: `1px solid ${T.line}`, color: T.ink };
   return (
     <div className="tv-fade max-w-2xl mx-auto w-full px-6 py-10 overflow-y-auto tv-scroll">
@@ -2557,9 +2559,25 @@ function TelaMundo({ concluir }) {
           </button>
         ))}
       </div>
+      {/* ---------------- A VOZ (v9.92) ----------------
+          Ela não toca NADA da estrutura: o arco, o compasso, o vilão e o
+          Bibliotecário decidem igual em todas. O que muda é a boca que
+          conta o que o sistema decidiu — e é por isso que dá para ter
+          oito sem multiplicar o jogo por oito. */}
+      <div className="tv-mono text-xs uppercase tracking-widest mb-2 mt-2" style={{ color: T.violetSoft }}>A voz do narrador</div>
+      <p className="tv-body text-sm mb-3" style={{ color: T.inkDim }}>Como a história é contada — o tamanho da frase, o que se descreve, como as pessoas falam e do que se ri. Não muda o mundo nem o que acontece nele.</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+        {VOZES.map((v) => (
+          <button key={v.id} onClick={() => setVoz(v.id)} className="text-left rounded-xl p-4 transition-all" style={{ background: voz === v.id ? T.panelSoft : T.panel, border: `1px solid ${voz === v.id ? T.amber : T.line}` }}>
+            <div className="tv-display text-lg" style={{ color: voz === v.id ? T.amberSoft : T.ink }}>{v.icone} {v.nome}</div>
+            <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{v.resumo}</div>
+            <div className="tv-body text-xs mt-2 italic" style={{ color: T.inkDim, opacity: 0.75 }}>“{v.exemplo}”</div>
+          </button>
+        ))}
+      </div>
       <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={4} placeholder="Ex.: Um arquipélago flutuante onde a magia vem das marés. Piratas do céu disputam relíquias de um império afundado nas nuvens…" className="w-full rounded-xl p-4 tv-body text-sm outline-none resize-none" style={campo} />
       <div className="mt-6 flex justify-end">
-        <Botao primario desativado={!genero || !nome.trim()} onClick={() => concluir({ genero: genero.label, descricao, estrutura, molde }, nome.trim())}>Continuar →</Botao>
+        <Botao primario desativado={!genero || !nome.trim()} onClick={() => concluir({ genero: genero.label, descricao, estrutura, molde, voz }, nome.trim())}>Continuar →</Botao>
       </div>
     </div>
   );

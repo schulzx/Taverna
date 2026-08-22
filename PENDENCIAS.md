@@ -2435,6 +2435,74 @@ falha aparece e um teste oco não. Regex com `\b` não passa mais por
 - **A onda não conversa com o vilão.** O passo dele e o clímax do
   compasso podem cair no mesmo turno; nada os coordena.
 
+## As vozes do narrador — v9.92
+
+"Modos de narrador. Podemos ter o narrador épico, que criará histórias
+como Senhor dos Anéis e Harry Potter; o narrador taverneiro, tipo Vox
+Machina e Mighty Nein; o que cria histórias tipo Frieren. Essas narrações
+não ficam apenas em modo de narrar, mas sim em tons e expressões — o
+taverneiro fala palavrões e gírias."
+
+**Oito vozes**, escolhidas na criação do mundo:
+
+```
+⚔ Épico          grave, largo e antigo — o mundo pesa mais que o herói
+🍺 Taverneiro     solto, sujo e falado — ninguém está impressionado
+🍂 Contemplativo  calmo, terno e sem pressa — o pequeno é que é grande
+🕯 Sombrio        frio, concreto e paciente — o mundo não quer o herói aqui
+🎭 Picaresco      leve e cheio de gente — o mundo é engraçado porque é gente demais
+📜 Cronista       sóbrio e factual — conta como quem viu, não como quem sente
+🔥 Febril         intenso e acelerado — tudo é agora, e agora é grande
+🌙 Fábula         encantado e cruel — o mundo tem regras, e elas se cumprem
+```
+
+**O que a voz NÃO toca — e é o que a torna barata:** nada da estrutura. O
+arco é o mesmo, o compasso é o mesmo, o vilão nasce igual, o Bibliotecário
+escolhe as mesmas formas. Trocar de voz não muda **uma** decisão do
+sistema. É por isso que dá para ter oito sem multiplicar o jogo por oito.
+
+**O que ela toca**, e é mais que "estilo": o tamanho da frase, o que se
+descreve e o que se corta, o quanto cabe palavrão, como as pessoas se
+tratam, e de onde vem a graça. Cada voz tem **seis campos** — o que faz, o
+erro característico dela, o ritmo do período, o léxico, a fonte do humor,
+e uma frase de exemplo no registro certo. O exemplo é a metade que faz as
+outras funcionarem: voz é a coisa que a IA mais erra por falta de amostra.
+
+O palavrão foi o exemplo do pedido e é a prova de que as vozes diferem de
+verdade: o taverneiro tem *"palavrão à vontade quando cabe no
+personagem"*; o épico, *"ninguém xinga: a raiva sai por gesto"*; a fábula,
+*"sem palavrão — aqui as palavras têm poder e ninguém as gasta à toa"*.
+
+### O orçamento foi pago, e o compasso pagou
+
+O bloco da voz custa ~1.500 caracteres em todo turno. Ele foi pago com o
+que a v9.91 tornou obsoleto:
+
+- **`RITMO E VARIEDADE NARRATIVA`** (−671) — quatro linhas mandando a IA
+  "alternar conscientemente entre os elementos", "não repetir o loop de
+  urgências" e "plantar pistas 5-10 cenas antes de um twist". É
+  exatamente o que o compasso faz agora, e a IA fazia **cego**, sem ver a
+  curva. Ficaram dois maestros, e o do prompt regia de olhos fechados.
+- **`DESFECHOS TÊM PESO`** (−355) — a metade que dizia "não ressuscite a
+  mesma ameaça" virou código: o vilão derrubado não volta (v9.83), o
+  capítulo fecha (v9.84) e o seguinte nasce por herança em vez de ser o
+  mesmo reciclado (v9.90).
+- **`ESTILO`** (−142) e o teto de palavras (−90) — o primeiro dizia como
+  narrar, que agora é da voz; o segundo mandava a IA adivinhar quando o
+  momento é grande, e o compasso manda a tensão em todo turno.
+
+**Teto 81.289 · cena comum 58.934**, abaixo do fio de 59.000.
+
+### O que fica aberto
+
+- **A voz não pode ser trocada depois.** Ela é escolhida na criação e
+  fica. Trocar no meio é barato tecnicamente (é um campo de `mundo`), mas
+  não há tela para isso — e um capítulo novo seria o momento natural de
+  oferecer a troca.
+- **A voz não conversa com o compasso.** Um clímax na voz contemplativa e
+  um respiro na voz febril são os dois momentos em que a voz e o ritmo
+  puxam para lados opostos, e nada os concilia hoje.
+
 ## Mestre e prompt
 
 - ~~**O prompt de sistema ainda passa de 75 mil caracteres**~~ RESOLVIDO na
