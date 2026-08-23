@@ -67,6 +67,7 @@
 import { PESO_AMEACA, multiplicadorDeGrupo } from "./orcamento.js";
 import { nomePessoa } from "./nomes.js";
 import { rngDe } from "./geografia.js";
+import { poderDe, baseDoNivel, multiplicadorTipico, formatarPoder } from "./poder.js";
 
 /* ---------------- A TRAVA ----------------
    Dez, e não quinze: é o patamar em que a ficha já tem subclasse, um
@@ -264,6 +265,28 @@ export function convocar({
    A soma do que cada um de pé aguenta. É o número que decide se a frente
    dura mais uma rodada, e é ele que faz um curandeiro valer o lugar
    dele: quem devolve gente de pé aumenta esta soma na rodada seguinte. */
+/* O PODER DE QUEM ATENDEU (v9.116). A hoste não tem ficha — tem nível e
+   papel —, então o poder dela sai da curva típica daquele patamar, que é
+   a mesma tradução que o conteúdo usa. É o número que aparece ao lado de
+   cada nome na barra: sem ele, "atenderam 22" é uma contagem, e o jogador
+   não tem como saber se atendeu gente ou multidão. */
+export function poderDoConvocado(h) {
+  const n = Math.max(1, Number(h && h.nivel) || NIVEL_MINIMO_CONVOCADO);
+  return Math.round(baseDoNivel(n) * multiplicadorTipico(n));
+}
+
+export function poderDaHoste(hoste) {
+  return (hoste || []).filter((h) => h && !h.morto).reduce((s, h) => s + poderDoConvocado(h), 0);
+}
+
+/* O chefe de uma raid tem de ser inalcançável sozinho, e agora dá para
+   dizer isso com número em vez de com adjetivo. */
+export function poderDoChefe(raid) {
+  const n = Math.max(1, Number(raid && raid.nivelChefe) || 1);
+  const gd = portePorId(raid && raid.porte).gd;
+  return Math.round(baseDoNivel(n) * multiplicadorTipico(n) * Math.pow(2.1, gd));
+}
+
 export function forcaDaFrente(hoste) {
   return (hoste || [])
     .filter((h) => h && !h.caido && !h.morto)
@@ -488,7 +511,7 @@ export function envelopeDaConvocacao(raid) {
     const meus = r.hoste.filter((h) => h.origem === o.id);
     return meus.length ? `${o.rotulo}: ${meus.map((h) => `${h.nome} (${papelPorId(h.papel).rotulo}${h.notas ? `, ${h.notas}` : ""})`).join(", ")}` : "";
   }).filter(Boolean).join(" · ");
-  return `[RAID — CONVOCAÇÃO, DECIDIDA PELO SISTEMA] ${p.o}. ${r.chefe} está no fim disto, e ${p.alcance} respondeu ao chamado. Quem veio, e é ESTA a lista, sem acrescentar e sem tirar: ${porOrigem}.
+  return `[RAID — CONVOCAÇÃO, DECIDIDA PELO SISTEMA] ${p.o}. ${r.chefe} está no fim disto — uma coisa que nenhum dos que vieram derruba sozinho, nem todos eles juntos —, e ${p.alcance} respondeu ao chamado. Quem veio, e é ESTA a lista, sem acrescentar e sem tirar: ${porOrigem}.
 Esta é a PREPARAÇÃO, não a luta: encene a reunião. Cada um se APRESENTA — quem é, de onde veio, e por que atendeu —, e quem veio por mim fala diferente de quem nunca me viu. Não precisa dar fala a todos: dê a quatro ou cinco, e deixe o resto existir no movimento do acampamento. NÃO comece a batalha, NÃO mate ninguém aqui e NÃO deixe ninguém prometer que vai morrer. Termine com a coisa ainda longe e a vez comigo.`;
 }
 

@@ -76,8 +76,9 @@ import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from
 import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, BASE_PROMPT } from "./mundo-base.js";
-import { dificuldadeDaMasmorra, envelopeDaDificuldade } from "./dificuldade.js";
-import { abrirRaid, garantirRaid, rodadaDaFrente, envelopeDaConvocacao, envelopeDaRodada, envelopeDoRompimento, fimDaRaid, comitivaDaRaid, tirarComitiva, portePorId, papelPorId, podeAbrirRaid, NIVEL_MINIMO as NIVEL_MINIMO_RAID, RAID_PROMPT } from "./raids.js";
+import { dificuldadeDaMasmorra, envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
+import { poderDe, poderDoItem, pontosDoItem, trocaDeItem, formatarPoder, contaDoPoder } from "./poder.js";
+import { abrirRaid, garantirRaid, rodadaDaFrente, envelopeDaConvocacao, envelopeDaRodada, envelopeDoRompimento, fimDaRaid, comitivaDaRaid, tirarComitiva, portePorId, papelPorId, podeAbrirRaid, poderDaHoste, poderDoChefe, poderDoConvocado, NIVEL_MINIMO as NIVEL_MINIMO_RAID, RAID_PROMPT } from "./raids.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
 import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao } from "./portao.js";
@@ -621,7 +622,7 @@ function TrilhoAbas({ abaAtiva, aoClicar, nGrupo, desperto }) {
   );
 }
 
-function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, descricao, habilidades, ehVoce, semente, xpComp, vinculo }) {
+function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, descricao, habilidades, ehVoce, semente, xpComp, vinculo, ficha = null, comparadoA = null }) {
   const [verHabs, setVerHabs] = React.useState(false); // habilidades sob demanda — cartão limpo
   return (
     <div className="rounded-xl p-4" style={{ background: T.panelSoft, border: `1px solid ${ehVoce ? T.amber : T.line}` }}>
@@ -631,7 +632,26 @@ function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, de
           <div className="flex items-baseline justify-between gap-2">
             <div className="tv-display text-xl leading-tight truncate" style={{ color: T.ink }}>{nome}</div>
             <div className="flex items-center gap-1.5 shrink-0">
-              {nivel != null && <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}>NV {nivel}</span>}
+              {nivel != null && <span className="tv-mono text-[10px]" style={{ color: T.inkDim }}>NV {nivel}</span>}
+              {/* O PODER DE CADA UM (v9.116). No cartão, ao lado do nível,
+                  porque é aqui que o pedido queria: "saber se o personagem é
+                  fraco ou forte pra entrar no grupo". Um nível ao lado do
+                  outro não responde isso — dois níveis 12 podem valer três
+                  vezes um ao outro. */}
+              {ficha && (() => {
+                const pd = poderDe(ficha);
+                const meu = comparadoA ? poderDe(comparadoA).total : 0;
+                const frac = meu ? pd.total / meu : 1;
+                const cor = !comparadoA ? T.amber : frac >= 0.8 ? T.ok : frac >= 0.4 ? T.amberSoft : T.danger;
+                return (
+                  <span className="tv-mono text-[10px]" style={{ color: cor }}
+                    title={comparadoA
+                      ? `${contaDoPoder(pd)} — ${Math.round(frac * 100)}% do seu poder`
+                      : contaDoPoder(pd)}>
+                    ⚡ {formatarPoder(pd.total)}
+                  </span>
+                );
+              })()}
               {ehVoce && <span className="tv-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: T.amber, color: T.onAccent }}>Você</span>}
             </div>
           </div>
@@ -1530,12 +1550,12 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
         {aba === "gestao" && subGestao === "grupo" && (
           <>
             <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Grupo · {1 + (personagem.grupo || []).filter((g) => !g.invocada).length} de {1 + MAX_COMPANHEIROS}</div>
-            <CartaoMembro nome={personagem.nome} subtitulo={personagem.conceito} nivel={personagem.nivel} vida={personagem.vida} vidaMax={personagem.vidaMax} mana={personagem.mana} manaMax={personagem.manaMax} habilidades={personagem.habilidades} semente={sementeDe(personagem)} ehVoce />
+            <CartaoMembro nome={personagem.nome} subtitulo={personagem.conceito} nivel={personagem.nivel} vida={personagem.vida} vidaMax={personagem.vidaMax} mana={personagem.mana} manaMax={personagem.manaMax} habilidades={personagem.habilidades} semente={sementeDe(personagem)} ficha={personagem} ehVoce />
             {(personagem.grupo || []).length === 0 ? (
               <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você viaja sozinho — por enquanto. Aliados podem se juntar a você.</div>
             ) : (personagem.grupo || []).map((m, i) => (
               <div key={i}>
-                <CartaoMembro nome={m.nome} subtitulo={[m.conceito, m.classe, m.subclasse].filter(Boolean).join(" · ")} nivel={m.nivel} vida={m.vida} vidaMax={m.vidaMax} descricao={m.descricao} habilidades={m.habilidades} semente={sementeDe(m)} xpComp={m.xp || 0} vinculo={m.vinculo ?? VINCULO_INICIAL} />
+                <CartaoMembro nome={m.nome} subtitulo={[m.conceito, m.classe, m.subclasse].filter(Boolean).join(" · ")} nivel={m.nivel} vida={m.vida} vidaMax={m.vidaMax} descricao={m.descricao} habilidades={m.habilidades} semente={sementeDe(m)} xpComp={m.xp || 0} vinculo={m.vinculo ?? VINCULO_INICIAL} ficha={m} comparadoA={personagem} />
                 <div className="flex flex-wrap gap-1 mt-1">
                   <button onClick={() => setAbrirCaminho(abrirCaminho === m.nome ? null : m.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.violetSoft }}>
                     {m.classe ? "⚔ trilhar novo caminho" : "⚔ definir caminho"}
@@ -1687,6 +1707,14 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                           <div className="min-w-0">
                             <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{it.nome}</div>
                             <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>{SLOT_ROTULO[it.tipo] || it.tipo} · {it.raridade}{fichaDeCombateTexto(it) ? <span style={{ color: T.inkDim }}> · {fichaDeCombateTexto(it)}</span> : null}</div>
+                            {/* O QUE ESTA PEÇA TE DÁ (v9.116). Em pontos de
+                                poder, não em porcentagem: é o mesmo número da
+                                ficha, e é assim que o jogador compara duas
+                                peças sem fazer conta. */}
+                            <div className="tv-mono text-[9px] mt-0.5" style={{ color: T.amber }}
+                              title={`Índice desta peça: ${poderDoItem(it)}. Ele não muda com o seu nível — é o que permite comparar duas peças. O que muda é quanto ele vale para VOCÊ.`}>
+                              ⚡ {formatarPoder(pontosDoItem(it, personagem))} de poder
+                            </div>
                           </div>
                           <button onClick={() => desequipar(slot)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>tirar</button>
                         </div>
@@ -1716,6 +1744,28 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
                         <div className="min-w-0">
                           <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{it.nome}</div>
                           <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>{SLOT_ROTULO[it.tipo] || it.tipo} · {it.raridade}{fichaDeCombateTexto(it) ? <span style={{ color: T.inkDim }}> · {fichaDeCombateTexto(it)}</span> : null}</div>
+                          {/* A TROCA, e não só o valor da peça (v9.116). Na
+                              mochila a pergunta do jogador não é "quanto isto
+                              vale" — é "vale a pena trocar?", e as duas têm
+                              respostas diferentes quando já há coisa no
+                              espaço. O verde e o vermelho respondem a segunda.
+
+                              E o número de baixo continua sendo o índice
+                              bruto, porque é ele que compara duas peças da
+                              MESMA raridade — que o pedido diz, com razão,
+                              que não valem a mesma coisa. */}
+                          {(() => {
+                            const tr = trocaDeItem(it, personagem);
+                            return (
+                              <div className="tv-mono text-[9px] mt-0.5"
+                                style={{ color: tr.delta > 0 ? T.ok : tr.delta < 0 ? T.danger : T.inkDim }}
+                                title={tr.atual
+                                  ? `Trocaria ${tr.atual.nome} (índice ${poderDoItem(tr.atual)}) por esta (índice ${poderDoItem(it)}). Menos poder pode valer a pena por uma habilidade que só esta peça dá.`
+                                  : `O espaço está vazio: esta peça soma ${formatarPoder(pontosDoItem(it, personagem))} inteiros. Índice ${poderDoItem(it)}.`}>
+                                ⚡ {tr.delta >= 0 ? "+" : "−"}{formatarPoder(Math.abs(tr.delta))} de poder{tr.atual ? " na troca" : ""}
+                              </div>
+                            );
+                          })()}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">{(personagem.grupo || []).length > 0 && (
                           <select value="" onChange={(e) => { if (e.target.value) transferirItem("eu", e.target.value, "equipamento", it.nome); }} className="tv-mono text-[10px] rounded px-1 py-1" style={{ background: T.panel, color: T.violetSoft, border: `1px solid ${T.line}` }}>
@@ -6768,8 +6818,15 @@ export default function Taverna() {
             const fichaElenco = Object.values(npcsRef.current).find((n) => (n.nome || "").toLowerCase() === nome.toLowerCase());
             const nivelC = Math.max(1, (p.nivel || 1) - 2);
             const vidaMaxC = 10 + (nivelC - 1) * 3;
-            grupoAtual.push({ nome, conceito: (fichaElenco && fichaElenco.papel) || "", nivel: nivelC, vida: vidaMaxC, vidaMax: vidaMaxC, descricao: (fichaElenco && fichaElenco.notas) || "", habilidades: [], semente: `npc|${nome}|${(fichaElenco && fichaElenco.papel) || ""}`, vinculo: VINCULO_INICIAL, marcos: [] });
-            msgs.push(`⚑ ${nome} juntou-se ao grupo — ficha registrada pelo sistema.`);
+            const novoComp = { nome, conceito: (fichaElenco && fichaElenco.papel) || "", nivel: nivelC, vida: vidaMaxC, vidaMax: vidaMaxC, descricao: (fichaElenco && fichaElenco.notas) || "", habilidades: [], semente: `npc|${nome}|${(fichaElenco && fichaElenco.papel) || ""}`, vinculo: VINCULO_INICIAL, marcos: [] };
+            grupoAtual.push(novoComp);
+            /* QUANTO ELE SOMA (v9.116). "Fulano juntou-se ao grupo" não diz
+               se veio ajuda ou bagagem — e o pedido é explícito em que o
+               jogador precisa saber "se o personagem é fraco ou forte pra
+               entrar no grupo". O peso responde com número e com uma
+               palavra, que é o que se lê primeiro. */
+            const peso = pesarCompanheiro(novoComp, p);
+            msgs.push(`⚑ ${nome} juntou-se ao grupo — ⚡ ${formatarPoder(peso.poder)} de poder, ${peso.veredito}.`);
             notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RECRUTAMENTO — REGISTRO DO SISTEMA] ${nome} agora FAZ PARTE do grupo do herói (nível ${nivelC}, ${vidaMaxC} PV — ficha criada pelo sistema, você não precisa mandar "grupo_adicionar"). Trate-o como companheiro presente nas cenas: opina, ajuda em combate, viaja junto.`;
           });
           if (grupoAtual.length !== (p.grupo || []).length) { p = { ...p, grupo: grupoAtual }; setPersonagem(p); }
@@ -14805,11 +14862,20 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   <div className="tv-mono text-[10px] uppercase tracking-widest truncate" style={{ color: cor }}>
                     {portePorId(raid.porte).icone} {raid.nome}
                   </div>
-                  <div className="tv-mono text-[10px] shrink-0" style={{ color: T.inkDim }}>rodada {raid.rodada}</div>
+                  <div className="tv-mono text-[10px] shrink-0 flex items-center gap-2">
+                    {/* ⚡ A CONTA DA RAID (v9.116). Sem número, "atenderam 22"
+                        é uma contagem; com ele o jogador vê por que a hoste
+                        não derruba a coisa sozinha — e por que ela ainda
+                        assim vale cada baixa. */}
+                    <span style={{ color: T.ok }} title={`Poder de quem ainda está de pé, somado`}>⚡ {formatarPoder(poderDaHoste(raid.hoste))}</span>
+                    <span style={{ color: T.danger }} title={`Poder de ${raid.chefe} — é por isso que a hoste segura e não derruba`}>☠ {formatarPoder(poderDoChefe(raid))}</span>
+                    <span style={{ color: T.inkDim }}>rodada {raid.rodada}</span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1 mb-2 flex-wrap">
                   {raid.hoste.map((h) => (
-                    <span key={h.nome} title={`${h.nome} — ${papelPorId(h.papel).rotulo}${h.morto ? " · morreu" : h.caido ? " · caído" : ""}`}
+                    <span key={h.nome}
+                      title={`${h.nome} — ${papelPorId(h.papel).rotulo} · nv ${h.nivel} · ⚡ ${formatarPoder(poderDoConvocado(h))}${h.morto ? " · MORREU" : h.caido ? " · caído" : ""}`}
                       style={{
                         width: 9, height: 9, borderRadius: 99, display: "inline-block",
                         background: h.morto ? "transparent" : h.caido ? T.line : T.ok,

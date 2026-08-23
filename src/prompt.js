@@ -38,6 +38,7 @@ import { CHAO_PROMPT } from "./chao.js";
 import { MISSOES_PROMPT } from "./missoes.js";
 import { OFERTAS_PROMPT } from "./ofertas.js";
 import { RAID_PROMPT } from "./raids.js";
+import { PODER_PROMPT } from "./poder.js";
 import { LUGAR_PROMPT } from "./lugar.js";
 import { COMODOS_PROMPT } from "./comodos.js";
 import { ARREDORES_PROMPT } from "./arredores.js";
@@ -201,6 +202,14 @@ export const PORTAS_DA_CENA = [
      vale três frases nos turnos em que existe e é peso morto em todos os
      outros, que é a definição de porta. */
   { id: "raid", quando: (c) => !!c.emRaid, porque: "as regras do chamado só valem enquanto há um chamado em curso" },
+  /* v9.116: a porta do PORTE. A primeira tentativa pendurou o bloco do
+     poder na porta da GENTE e a pior cena real passou o teto por sete
+     caracteres. O conserto não era encolher o texto até caber raspando —
+     margem de sete não é guarda, é tripwire, e esta casa já escreveu
+     isso. Era ver que a porta estava errada: o que este bloco governa é
+     como as PESSOAS reagem ao tamanho do herói, e dentro de uma luta
+     isso não decide nada — quem decide é o dado. Fora dela, decide tudo. */
+  { id: "porte", quando: (c) => !!c.temGente && !c.emCombate, porque: "o tamanho do herói aparece em como as pessoas o tratam, e dentro de uma luta quem responde é o dado" },
 ];
 
 /* Devolve um mapa {id: boolean}. O `cena` vazio abre TODAS as portas, e
@@ -359,6 +368,8 @@ ${so("missao", MISSOES_PROMPT)}
 ${so("missao", OFERTAS_PROMPT)}
 
 ${so("raid", RAID_PROMPT)}
+
+${so("porte", PODER_PROMPT)}
 
 
 ${PAUTA_PROMPT}

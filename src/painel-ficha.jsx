@@ -19,6 +19,7 @@
 
 import React from "react";
 import { T, ATRIBUTOS } from "./constantes.js";
+import { poderDe, poderDoGrupo, formatarPoder, contaDoPoder } from "./poder.js";
 import { Retrato, sementeDe, estadoDe } from "./ui.jsx";
 import { bonusProficiencia, ehProficiente } from "./regras.js";
 import { PERICIAS, garantirPericias, bonusDePericia, passivoDe, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente } from "./pericias.js";
@@ -194,6 +195,28 @@ export function FichaVisual({
           )}
           {tituloAtivo ? <div className="tv-mono text-[10px]" style={{ color: T.amber }}>★ ❝ {tituloAtivo} ❞</div> : null}
         </div>
+        {/* ---------------- O PODER (v9.116) ----------------
+            No cabeçalho, ao lado do rosto, porque é o número que resume
+            todos os outros — e porque o pedido é explícito em que ele tem
+            de ser visível. O tooltip abre a conta inteira: um total sem as
+            parcelas seria um número mágico, e o jogador não saberia se
+            falta nível, atributo ou espada. */}
+        {(() => {
+          const pd = poderDe(p);
+          const g = poderDoGrupo(p);
+          return (
+            <div className="text-right shrink-0" title={contaDoPoder(pd)}>
+              <div className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>Poder</div>
+              <div className="tv-display text-2xl leading-none" style={{ color: T.amber }}>{formatarPoder(pd.total)}</div>
+              {g.quantos > 0 && (
+                <div className="tv-mono text-[9px] mt-0.5" style={{ color: T.violetSoft }}
+                  title={`Com o grupo: ${formatarPoder(g.total)}${g.aparado ? " (aparado pelo teto — quem apanha é você)" : ""}`}>
+                  grupo {formatarPoder(g.total)}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       <div className="p-3 space-y-3">
@@ -208,6 +231,26 @@ export function FichaVisual({
             cor={ataques > 1 || (golpe && golpe.dados > 1) ? T.amberSoft : T.ink}
             titulo={golpe ? `${golpe.texto} — os dois eixos da sua classe: quantos golpes saem e quanto dado cada um carrega` : "Quantos golpes saem numa ação de ataque, pela sua classe e nível"} />
         </div>
+
+        {/* A CONTA, aberta. É a diferença entre um índice e um número
+            mágico: cada linha diz de onde veio uma fatia do poder, e o
+            jogador lê ali o que mexer para subir. */}
+        {(() => {
+          const pd = poderDe(p);
+          const partes = pd.partes.filter((x) => Math.abs(x.fracao) >= 0.005);
+          if (!partes.length) return null;
+          return (
+            <div className="flex items-center gap-1.5 flex-wrap px-1">
+              <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>de onde vem</span>
+              {partes.map((x) => (
+                <span key={x.id} className="tv-mono text-[9px] px-1.5 py-0.5 rounded" title={`${x.rotulo}: ${x.fracao > 0 ? "+" : ""}${Math.round(x.fracao * 100)}% do seu nível = ${formatarPoder(x.pontos)} de poder`}
+                  style={{ color: x.fracao >= 0 ? T.amberSoft : T.danger, border: `1px solid ${T.line}` }}>
+                  {x.rotulo} {x.pontos >= 0 ? "+" : "−"}{formatarPoder(Math.abs(x.pontos))}
+                </span>
+              ))}
+            </div>
+          );
+        })()}
 
         {proximo ? (
           <div className="tv-mono text-[9px] px-1" style={{ color: T.inkDim }} title="O próximo degrau de combate da sua classe">
