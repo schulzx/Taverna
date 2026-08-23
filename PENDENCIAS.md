@@ -4560,3 +4560,65 @@ E dois achados de tabela, dos que só aparecem quando se mexe:
 
 Margem que ficou apertada e vale vigiar: a PIOR CENA REAL está em 79.916 de
 um teto de 80.000. O guarda não foi movido.
+
+## v9.119 — o elenco ganha posição, e a quest passa a ser só do Mestre
+
+Duas coisas no mesmo pedido, e a segunda é a que muda o jogo.
+
+**AS PESSOAS TÊM PONTO, E ELE É DERIVADO.** O registro sempre soube o
+`local` de cada um ("atrás do balcão do Quintal", "em Rio do Sul"), e local
+nunca foi posição: não dava para perguntar quem está perto, para que lado,
+nem a quantos dias. O Geógrafo passou a ler esse mesmo texto e devolver
+coordenada — e a decisão de não GUARDAR um `coord` na ficha é a lição do
+cinturão da v9.118: um segundo fato sobre a mesma pessoa fica velho no
+instante em que o Mestre escreve um `local` novo. A leitura tem cinco
+degraus, do que sabe mais para o que sabe menos, e o último é `null`:
+paradeiro não registrado é uma resposta. O que é palpite ("atrás do
+balcão" não nomeia cidade nenhuma — supõe-se aqui) vai marcado como
+palpite na tela, porque um chute desenhado como fato é pior que nenhum
+desenho.
+
+Isso é da TELA, não do prompt: o Mestre já recebe quem está presente pelo
+elenco da cena e quem não chega pelo veto, e nenhum dos dois precisa da
+coordenada para dizer o que diz.
+
+**NINGUÉM MAIS OFERECE MISSÃO NUMA CONVERSA.** Havia três fontes de missão
+disputando as mesmas oito vagas do diário: a trama do Mestre (v9.117, com a
+intenção do arco e a fase do vilão, não opcional), a pessoa que o sistema
+escolhia para abordar o herói, e o campo `missao_oferecida`. As duas
+últimas eram opcionais, negociadas na cena, e o jogador não tinha como
+distinguir o fio da história de um bico de aldeão.
+
+Agora só existe um lugar onde se procura trabalho. Quem quer o herói num
+serviço PREGA UM CARTAZ e menciona que pregou; o resto está no mural, em
+duas pilhas — o mundo em cima, como sempre, e "Oferecidos a você" embaixo.
+Os oferecidos atravessam a renovação do mural: foram pregados por alguém,
+não sorteados, e apagá-los num descanso longo seria o mundo esquecer um
+pedido que ele mesmo fez.
+
+Na tela, uma linha por trabalho: "Fulano tem um trabalho no mural." As duas
+linhas do aviso antigo e o "👤 Fulano entrou para o elenco" saíram.
+
+**A MIGRAÇÃO, e por que ela não é opcional.** O save do jogador tinha TRÊS
+missões "oferecida" paradas no diário — exatamente a coisa que saiu de
+cena. Deixá-las ali manteria na tela o que se pediu para tirar. Ao
+carregar, o que converte vira cartaz na pilha dos oferecidos; o que NÃO
+converter fica onde está, com o botão de sempre. É por isso que
+`responderOferta`, `envelopeDeAceite` e `envelopeDeRecusa` continuam de pé:
+migração que perde alguma coisa em silêncio é pior do que migração nenhuma.
+
+Três coisas saíram por serem repetição, e o orçamento pagou a conta:
+
+- `envelopeDeOferta` — dizia "narre a oferta e PARE, esperando a resposta",
+  e ninguém mais faz uma oferta. Regra sem quem a dispare.
+- A regra "aceitar e recusar são botões do jogador" no bloco fixo das
+  missões: nas únicas vezes em que ainda pode disparar (save antigo), quem
+  a diz é o próprio `envelopeDeAceite`, palavra por palavra.
+- "Ninguém oferece missão numa conversa" estava escrita nos DOIS blocos, e
+  os dois entram pela mesma porta (`missao`) — sempre juntos.
+
+Dois defeitos achados na própria tela, não nos testes: o herói aparecia na
+lista "onde está cada um" (o Mestre registra o personagem do jogador no
+elenco de vez em quando) contradizendo o ⌖ logo acima; e "Cartazes
+disponíveis" ficava com um título e nada embaixo quando o mural só tinha
+oferecidos — escondendo justamente o botão de procurar cartazes.

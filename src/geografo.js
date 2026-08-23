@@ -38,7 +38,7 @@
    ============================================================ */
 
 import { ondeEstou, pontoDoHeroi } from "./rastro.js";
-import { linhaDeLugar } from "./lugar.js";
+import { linhaDeLugar, pontoDoLugar } from "./lugar.js";
 import { comoChamam } from "./lexico.js";
 import { garantirCoord, coordDe, kmEntre, rumoEntre, enderecoDe, maisPertoDe, linhaDePonto, formatarDistancia } from "./coordenadas.js";
 import { arredoresDaCidade } from "./arredores.js";
@@ -351,6 +351,81 @@ export function posicaoDoHeroi(ctx = {}) {
   });
   if (!eu) return null;
   return { coord: garantirCoord(eu.coord || eu), naEstrada: !!eu.naEstrada, de: eu.de || null, para: eu.para || null, fracao: Number(eu.fracao) || 0 };
+}
+
+/* ---------------- ONDE ESTÁ CADA UM DA HISTÓRIA (v9.119) ----------------
+   A posição de uma pessoa é DERIVADA, nunca guardada, e a escolha é a
+   mesma que os arredores ensinaram na v9.118: o `local` dela é a verdade
+   ("atrás do balcão do Quintal", "na forja", "em Rio do Sul") e a
+   coordenada é a leitura desse texto. Guardar um `coord` na ficha criaria
+   um segundo fato sobre a mesma pessoa, e ele ficaria velho no instante
+   em que o Mestre escrevesse um `local` novo — que é exatamente como o
+   mapa passou a discordar do texto sobre o cinturão das cidades.
+
+   A ordem de leitura é a de quem sabe mais:
+
+   1) QUEM ANDA COMIGO ESTÁ ONDE EU ESTOU. Não há texto que ganhe disso.
+   2) O `local` nomeia um arredor daquela cidade — o moinho, a capela —,
+      e o ponto é o dele, que o sistema já gerou.
+   3) O `local` ou a `cidade` nomeiam um assentamento do mapa: o ponto é
+      o dele, com um deslocamento em METROS tirado do nome da pessoa, para
+      que o ferreiro não fique no mesmo tijolo que o taverneiro — e fique
+      sempre no mesmo tijolo.
+   4) O texto não nomeia lugar nenhum ("atrás do balcão"): a pessoa está
+      onde o herói está. É a MESMA suposição que `elencoDaCena` faz desde
+      a v9.99 para não mandar para longe quem está sentado à mesa — e ela
+      vai marcada como `suposto`, porque um palpite desenhado como fato é
+      pior do que nenhum desenho.
+   5) Sem nada disso, `null`. Paradeiro não registrado é uma resposta. */
+export function posicaoDePessoa(npc, ctx = {}) {
+  if (!npc || !npc.nome) return null;
+  if (String(npc.status || "").toLowerCase().includes("morto")) return null;
+  const nome = semAc(npc.nome);
+  if ((ctx.grupo || []).some((g) => g && semAc(g.nome) === nome)) {
+    const eu = posicaoDoHeroi(ctx);
+    return eu && eu.coord ? { coord: eu.coord, onde: "anda comigo", comigo: true, suposto: false } : null;
+  }
+  const cidades = ((ctx.mapa && ctx.mapa.cidades) || []).filter((c) => c && c.nome && c.x != null);
+  const texto = semAc(`${npc.cidade || ""} ${npc.local || ""}`);
+  const daqui = cidades.find((c) => semAc(c.nome) === semAc(ctx.cidadeAtual)) || null;
+  const cidade = cidades.find((c) => texto.includes(semAc(c.nome))) || null;
+  const dona = cidade || daqui;
+  if (!dona) return null;
+  if (npc.local) {
+    const arr = arredoresDaCidade(ctx.semente || "", dona)
+      .find((a) => texto.includes(semAc(a.nome).replace(/^(a|o|as|os)\s+/, "")) || texto.includes(semAc(a.tipo)));
+    if (arr) return { coord: coordDe(arr), onde: arr.nome, comigo: false, suposto: false };
+  }
+  const ponto = pontoDoLugar(npc.local || npc.nome, dona, "dentro") || coordDe(dona);
+  if (!ponto) return null;
+  return { coord: ponto, onde: npc.local || dona.nome, comigo: false, suposto: !cidade };
+}
+
+/* O elenco inteiro com posição, do mais perto para o mais longe. É o que
+   a tela desenha; o prompt continua recebendo QUEM ESTÁ PRESENTE pelo
+   elenco da cena e QUEM NÃO CHEGA pelo veto — nenhum dos dois precisa da
+   coordenada para dizer o que diz, e o prompt não tem folga para ela. */
+export function ondeEstaOElenco(npcs, ctx = {}) {
+  const eu = posicaoDoHeroi(ctx);
+  /* O HERÓI NÃO É UM DELES, e às vezes está na lista: o Mestre registra o
+     personagem do jogador no elenco de vez em quando, e o registro aceita.
+     Sem esta linha a tela mostrava "Íris Vantel · a 110 m" logo abaixo do
+     ⌖ que diz onde Íris está — a mesma pessoa em dois lugares, e o jogador
+     lendo os dois. */
+  const heroi = semAc(ctx.heroi || "");
+  const out = [];
+  for (const n of Object.values(npcs || {})) {
+    if (heroi && n && semAc(n.nome) === heroi) continue;
+    const p = posicaoDePessoa(n, ctx);
+    if (!p || !p.coord) continue;
+    out.push({
+      nome: n.nome, papel: n.papel || "", relacao: n.relacao || "desconhecido",
+      onde: p.onde, coord: p.coord, comigo: p.comigo, suposto: p.suposto,
+      km: eu && eu.coord ? kmEntre(eu.coord, p.coord) : null,
+      rumo: eu && eu.coord ? rumoEntre(eu.coord, p.coord) : null,
+    });
+  }
+  return out.sort((a, b) => (a.km == null ? Infinity : a.km) - (b.km == null ? Infinity : b.km));
 }
 
 /* Tudo que tem posição e nome perto do herói: os arredores da cidade em

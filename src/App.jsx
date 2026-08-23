@@ -17,7 +17,7 @@ import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
 import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca } from "./masmorras.js";
-import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDaAbordagem, ICONE_OFERTA } from "./ofertas.js";
+import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA } from "./ofertas.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
 import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano, resistenciasEquipadas } from "./danos.js";
@@ -65,7 +65,7 @@ import { garantirCompasso, avancarCompasso, envelopeDoCompasso, resumoCompasso, 
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
-import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
+import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { resumoArredoresPrompt, arredoresDaCidade, arredorPorTexto } from "./arredores.js";
@@ -817,8 +817,12 @@ function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio, onDefinirRelacao, 
    Só aparece depois do despertar (nível NIVEL_DESPERTAR). Rastreável: o
    jogador VÊ a própria força e a de cada deus — e quando tem vantagem. */
 /* PainelAscensao extraído para ./painel-ascensao.jsx (v8.8) */
-function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garantirMural, acampado, decretos, pregarDecreto, cancelarDecreto, moedas, cofre, nivel }) {
+function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garantirMural, acampado, decretos, pregarDecreto, cancelarDecreto, moedas, cofre, nivel, cidadeAtual = "" }) {
   const ativos = (quests || []).filter((q) => q.contrato && q.status === "ativa");
+  /* Duas pilhas no mesmo mural: o que a cidade quer feito, e o que alguém
+     pregou depois de falar com o herói. */
+  const doMundo = (mural || []).filter((c) => c && !c.oferecido);
+  const oferecidos = (mural || []).filter((c) => c && c.oferecido);
   const [formAberto, setFormAberto] = React.useState(false);
   const [fTipo, setFTipo] = React.useState("cabeca");
   const [fAlvo, setFAlvo] = React.useState("");
@@ -862,6 +866,9 @@ function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garant
         <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{c.descricao}</div>
         <div className="tv-mono text-[9px] mt-1" style={{ color: T.violetSoft }}>
           assina {c.dador}{c.dadorPapel ? `, ${c.dadorPapel}` : ""}{c.dadorLocal ? ` · ${c.dadorLocal}` : ""}
+          {/* o cartaz de outra cidade continua valendo, e precisa dizer que é
+              de lá: a primeira etapa é procurar quem assinou */}
+          {c.cidade && cidadeAtual && String(c.cidade).toLowerCase() !== String(cidadeAtual).toLowerCase() ? ` · em ${c.cidade}` : ""}
         </div>
         {/* o prazo vai no cartaz, antes do botão: aceitar sem saber que o
             tempo conta seria armadilha, não pressão */}
@@ -902,15 +909,33 @@ function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garant
       )}
       <div>
         <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mb-1.5" style={{ color: T.amber }}>Cartazes disponíveis</p>
-        {(mural || []).length === 0 ? (
+        {/* v9.119: o vazio é o do MUNDO, não o do mural inteiro. Com os
+            oferecidos na outra pilha, um mural só de oferecidos deixava esta
+            seção com um título e nada embaixo — e escondia o botão de
+            procurar cartazes, que é justamente o que faltava fazer ali. */}
+        {doMundo.length === 0 ? (
           <div className="text-center py-6">
             <div className="tv-body text-sm italic mb-3" style={{ color: T.inkDim }}>Nenhum cartaz por aqui…</div>
             <button onClick={() => garantirMural(true)} className="tv-mono text-[10px] px-3 py-1.5 rounded" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>📌 procurar cartazes</button>
           </div>
         ) : (
-          <div className="space-y-2">{mural.map(cartaz)}</div>
+          <div className="space-y-2">{doMundo.map(cartaz)}</div>
         )}
       </div>
+      {/* ---------------- OFERECIDOS A VOCÊ (v9.119) ----------------
+          A missão que uma pessoa oferecia na conversa vinha parar no diário,
+          com aceita/recusa, e disputava as vagas com a trama da história —
+          que é do Mestre e não é opcional. Agora quem quer o herói num
+          serviço prega o papel e menciona. Estes ficam ABAIXO dos do mundo
+          de propósito: o mural é da cidade primeiro, e o pedido de alguém é
+          o que veio depois. Eles atravessam a renovação do mural, porque
+          foram pregados por alguém e não sorteados. */}
+      {oferecidos.length > 0 && (
+        <div>
+          <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mb-1.5" style={{ color: T.violetSoft }}>Oferecidos a você</p>
+          <div className="space-y-2">{oferecidos.map(cartaz)}</div>
+        </div>
+      )}
       {acampado && <div className="tv-body text-[11px] italic text-center" style={{ color: T.inkDim }}>Dica: ao sair do acampamento com um descanso longo, cartazes novos aparecem no mural.</div>}
 
       {/* SEUS DECRETOS: o reverso do mural — você oferece ouro, o mundo trabalha */}
@@ -1293,9 +1318,9 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
 
         {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} />}
         {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"}  onMilagre={onMilagreUI} mapa={mapa} devocao={devocao} onEncararProva={onEncararProva} onDesistirRito={onDesistirRito} />}
-        {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} jornada={jornada} masmorra={masmorra} molde={molde} semente={sementeMundo} genero={generoMundo} lex={lexicoMundo} lugar={lugar} aoIrAoLugar={aoIrAoLugar} aoViajar={aoViajar} />}
+        {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} jornada={jornada} masmorra={masmorra} molde={molde} semente={sementeMundo} genero={generoMundo} lex={lexicoMundo} lugar={lugar} aoIrAoLugar={aoIrAoLugar} aoViajar={aoViajar} npcs={npcs} grupo={personagem.grupo || []} heroi={personagem.nome} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} />}
-        {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} />}
+        {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} cidadeAtual={cidadeAtual} />}
         {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} mortosBase={mortosBase} />}
 
         {aba === "gestao" && subGestao === "diplomacia" && <PainelDiplomacia mapa={mapa} faccaoJogador={faccaoJogador} onDiplomacia={onDiplomacia} onPresente={onPresente} cofre={guilda && guilda.cofre} />}
@@ -6116,7 +6141,6 @@ export default function Taverna() {
           : criarNPC(n.nome, { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: n.conhecidoEm != null ? n.conhecidoEm : diaRef.current });
         if (!tocou) { reg = { ...reg }; tocou = true; }
         reg[chave || n.nome] = ficha;
-        if (!chave) msgs.push(`👤 ${n.nome} entrou para o elenco`);
       });
       for (const [nome, f] of Object.entries(canoneRef.current || {})) {
         if (!f || !String(f.tipo || "").toLowerCase().includes("pessoa")) continue;
@@ -6659,7 +6683,7 @@ export default function Taverna() {
         "SEÇÃO grupo: \"entraram\" = nomes de pessoas que ACEITARAM de fato acompanhar o herói como companheiros de jornada NESTE turno (o Mestre narrando \"vou com você\" conta). Se o convite foi recusado ou só um encontro casual, [].",
         "SEÇÃO teste_sugerido: se o Mestre CONCEDEU de graça algo grande que deveria ter exigido convencimento — uma criatura anciã entregando seu poder, um rei cedendo o trono, um inimigo virando aliado do nada — preencha {\"atributo\":\"Presença|Intelecto|Força|Destreza|Vigor\",\"perfil\":\"dificil|formidavel\",\"motivo\":\"o que precisava ser provado\"}. Concessões pequenas e naturais da história NÃO entram. Na maioria dos turnos: null.",
         "SEÇÃO combate (só se houver COMBATENTES listados): \"mortes_narradas\" = inimigos que a NARRATIVA declarou mortos/destruídos/desfeitos NESTE turno. Liste só nomes da lista de combatentes; se ninguém morreu na narração, [].",
-        "SEÇÃO missao_oferecida (v9.27): se alguém em cena OFERECEU um trabalho ao herói — um nobre desesperado, um capitão precisando de escolta, um aldeão com um problema —, descreva a proposta em {\"titulo\":\"nome curto do trabalho\",\"tipo\":\"contrato|favor\",\"dador\":\"quem ofereceu\",\"descricao\":\"uma frase\",\"paga\":15,\"prazo\":0,\"etapas\":[{\"tipo\":\"ir_a|derrotar|achar|falar_com|levar_a\",\"alvo\":\"nome exato de cidade, criatura, pessoa ou objeto\",\"item\":\"só para levar_a\",\"quantos\":1}]}. De 1 a 3 etapas, todas CONCRETAS e verificáveis — \"ganhar a confiança\" não é etapa. Só quando alguém de fato ofereceu algo NESTE turno; caso contrário, null.",
+        "SEÇÃO missao_oferecida (v9.119 — isto vira CARTAZ NO MURAL, não missão no diário): se alguém em cena deixou claro que quer um serviço feito — um nobre desesperado, um capitão precisando de escolta, um aldeão com um problema —, descreva o trabalho em {\"titulo\":\"nome curto do trabalho\",\"tipo\":\"contrato|favor\",\"dador\":\"de quem é o serviço\",\"descricao\":\"uma frase\",\"paga\":15,\"prazo\":0,\"etapas\":[{\"tipo\":\"ir_a|derrotar|achar|falar_com|levar_a\",\"alvo\":\"nome exato de cidade, criatura, pessoa ou objeto\",\"item\":\"só para levar_a\",\"quantos\":1}]}. De 1 a 3 etapas, todas CONCRETAS e verificáveis — \"ganhar a confiança\" não é etapa. O sistema prega o papel no mural e o herói decide lá: não registre aceite nem recusa. Só quando alguém de fato quis um serviço NESTE turno; caso contrário, null.",
         "CAMPO \"paga\": o número EXATO de moedas que a cena prometeu (o cartaz que diz \"paga-se 15 moedas\" é 15). Se o combinado NÃO é dinheiro — um favor em troca de informação, uma dívida, uma porta que se abre —, \"paga\": 0. Se ninguém falou de pagamento, \"paga\": null e o sistema arbitra. NUNCA invente um valor.",
         "SEÇÃO lugar (v9.39): onde o herói está AO FIM deste turno. Se ele está num ponto NOMEADO fora da cidade, \"lugar\": \"a fazenda de Jessa\" (nome curto, como se diz em voz alta: uma fazenda, um moinho, uma gruta, o acampamento da tocaia) — e REPITA esse nome em todo turno em que ele continuar lá. Se ele está dentro da cidade, a palavra exata \"cidade\". Se você não souber dizer, null. Isto é o que impede o sistema de achar que ele voltou para a cidade sem ter voltado.",
         "CAMPO \"prazo\": só quando a CENA impôs pressa em número de noites (\"até a próxima lua\", \"antes que ela morra\", \"tenho três dias\") — use 4, 6 ou 8, o mais próximo do que foi dito. Sem pressa dita, \"prazo\": 0. Não invente urgência: prazo em toda missão não pressiona em nenhuma.",
@@ -6695,26 +6719,27 @@ export default function Taverna() {
           if (aviso) msgs.push(aviso);
         }
       } catch { /* nunca derruba o turno */ }
-      /* ---- SEÇÃO missão oferecida (v9.27) ----
+      /* ---- SEÇÃO missão oferecida (v9.27, redirecionada na v9.119) ----
          O Mestre traz o nobre desesperado; o sistema decide o que aquilo
          vira. Proposta sem etapa verificável é recusada em silêncio — é a
-         trava que impede "ganhe a confiança do barão" de virar missão. */
+         trava que impede "ganhe a confiança do barão" de virar missão.
+
+         O que mudou é o DESTINO. A proposta não vira mais uma missão
+         esperando sim ou não no diário: vira um CARTAZ no mural, com o
+         mesmo formato dos outros, e o jogador decide lá. Missão que é da
+         história chega por outra porta (a trama) e não se recusa; o resto
+         é papel pregado, e papel pregado espera. */
       try {
         const prop = r.missao_oferecida;
         if (prop && typeof prop === "object" && prop.titulo) {
-          const ac = ofertaDoMestre(missoesRef.current, prop, {
-            nivel: p.nivel || 1, dia: diaRef.current,
-            mundo: mundoDasMissoes(p),
+          const cartaz = cartazDaProposta(
             /* se a cena disse um preço e o Cronista não o repetiu, o preço da
                cena ainda vale — o jogador leu aquele número */
-            moedasNaCena: precoNoTexto(narrativa),
-          });
-          if (ac.ok) {
-            missoesRef.current = ac.missoes; setMissoes(ac.missoes);
-            const et = etapaAtual(ac.missao);
-            msgs.push(`${tipoMissao(ac.missao.tipo).icone} Ofereceram um trabalho: ${ac.missao.titulo}${ac.missao.dador ? ` (${ac.missao.dador})` : ""} — abra o Diário para aceitar ou recusar.`);
-            if (et) msgs.push(`   primeiro passo: ${textoDaEtapa(et)} · paga ${textoDaPaga(ac.missao)}`);
-            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeOferta(ac.missao)}`;
+            { ...prop, paga: Number.isFinite(Number(prop.paga)) ? prop.paga : precoNoTexto(narrativa) },
+            { cidade: cidadeAtualRef.current, nivel: p.nivel || 1 });
+          if (cartaz && pregarNoMural(cartaz)) {
+            msgs.push(`📋 ${cartaz.dador || "Alguém"} tem um trabalho no mural.`);
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoRecado(cartaz)}`;
           }
         }
       } catch { /* proposta malformada nunca derruba o turno */ }
@@ -8057,6 +8082,34 @@ export default function Taverna() {
             recompensa: recompensaDe({ tipo: q.tipo === "principal" ? "principal" : "favor", nivel: (pers && pers.nivel) || 1, etapas: 1 }),
             criadaEm: sv.dia || 0,
           })));
+      }
+      /* ---- MIGRAÇÃO (v9.119): a oferta parada no diário vai para o mural ----
+         Quem estava jogando quando esta versão chegou tinha ofertas penduradas
+         no diário esperando um sim ou um não. Deixá-las ali seria manter na
+         tela exatamente a coisa que saiu de cena — e o jogador continuaria com
+         três "aceitar/recusar" num lugar que não é mais o de decidir isso.
+
+         Converte o que dá: uma oferta tem os mesmos campos de que o cartaz
+         precisa. O que NÃO converter fica onde está, com o botão de sempre —
+         é por isso que `responderOferta` continua de pé. Migração que perde
+         alguma coisa em silêncio é pior do que migração nenhuma. */
+      {
+        const oferecidas = missoesRef.current.filter((q) => q.status === "oferecida");
+        if (oferecidas.length) {
+          const jaNoMural = new Set((muralRef.current || []).map((c) => semNome(c.titulo)));
+          const novos = [], ficam = [];
+          for (const q of oferecidas) {
+            const c = jaNoMural.has(semNome(q.titulo)) ? null : cartazDaProposta(
+              { ...q, paga: (q.recompensa && q.recompensa.moedas) != null ? q.recompensa.moedas : q.moedasPrometidas },
+              { cidade: sv.cidadeAtual || "", nivel: (pers && pers.nivel) || 1 });
+            if (c) novos.push(c); else ficam.push(q.titulo);
+          }
+          if (novos.length) {
+            muralRef.current = [...(muralRef.current || []), ...novos];
+            setMural(muralRef.current);
+            missoesRef.current = missoesRef.current.filter((q) => q.status !== "oferecida" || ficam.includes(q.titulo));
+          }
+        }
       }
       setMissoes(missoesRef.current);
       setQuests([...questsRef.current]);
@@ -10573,23 +10626,19 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (!candidatas.length) return;
     const conhecidos = new Set(Object.keys(npcsRef.current || {}).map((n) => n.toLowerCase()));
     const of = candidatas.find((c) => conhecidos.has(String(c.dador).toLowerCase())) || candidatas[0];
-    const r = ofertaDoMestre(missoesRef.current, propostaDaOferta(of), {
-      nivel: p.nivel || 1, dia: diaRef.current,
-      mundo: mundoDasMissoes(p),
-      /* quem oferece está na sua frente: nada de "encontre quem já te achou" */
-      dadorPresente: true,
-    });
-    if (!r.ok) return;
+    /* v9.119: O TRABALHO VAI PARA O MURAL, NÃO PARA O DIÁRIO. Antes ele
+       virava missão "oferecida" ali mesmo, com duas linhas no log e um
+       aceita/recusa no diário — uma segunda fonte de missões, opcional,
+       disputando as mesmas vagas com a trama da história, que não é
+       opcional. Agora quem quer o herói num serviço prega o papel e
+       menciona; o herói vai ao mural se quiser. */
+    if (!pregarNoMural({ ...of, oferecido: true })) return;
     ultimoTrabalhoDiaRef.current = diaRef.current;
-    missoesRef.current = r.missoes; setMissoes(r.missoes);
-    const et = etapaAtual(r.missao);
     /* o aviso espera a cena: quem o solta é `aplicarResposta`, depois da
-       narração em que o Mestre encena a abordagem */
-    trabalhoPendenteRef.current = [
-      `${of.icone || "📋"} ${of.dador} tem um trabalho: ${r.missao.titulo} — abra o Diário para aceitar ou recusar.`,
-      ...(et ? [`   primeiro passo: ${textoDaEtapa(et)} · paga ${textoDaPaga(r.missao)}`] : []),
-    ];
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaAbordagem(of)}`;
+       narração em que o Mestre encena a menção. Uma linha, e só: o log é a
+       cena, e o cartaz já diz o resto quando o jogador abrir o mural. */
+    trabalhoPendenteRef.current = [`${of.icone || "📋"} ${of.dador} tem um trabalho no mural.`];
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoRecado(of)}`;
   };
 
   /* A resposta do jogador a uma oferta. Recusar é uma resposta legítima, e o
@@ -13129,9 +13178,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      cartazes são os trabalhos que a gente desta cidade já queria ver feitos,
      lidos direto da base do mundo. Cada pessoa tem um serviço, sempre o
      mesmo, e o cartaz é só o papel onde ele foi parar. */
+  /* Quantos cartazes de gente que falou com o herói o mural guarda. Eles
+     sobrevivem à renovação — foram pregados POR ALGUÉM, não sorteados —,
+     e sem teto a pilha cresceria para sempre. */
+  const TETO_OFERECIDOS = 6;
+
   const garantirMural = (forcar = false) => {
     if (!forcar && (muralRef.current || []).length > 0) return;
-    muralRef.current = ofertasDaqui({
+    const mundo = ofertasDaqui({
       semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,
       base: baseMundoRef.current, genero: generoMundo(),
       molde: moldeMundo(), lex: (mundoAtual() || {}).lexico,
@@ -13141,7 +13195,35 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         .filter((q) => ["ativa", "oferecida", "concluida"].includes(q.status))
         .flatMap((q) => [q.titulo, q.dador]),
     });
+    /* v9.119: OS OFERECIDOS ATRAVESSAM A RENOVAÇÃO. Os do mundo são a
+       janela para o que esta cidade quer feito e se refazem a cada descanso
+       longo; os oferecidos são de alguém que falou com o herói e pregou o
+       papel — apagá-los num descanso seria o mundo esquecer um pedido que
+       ele mesmo fez. Ficam abaixo dos do mundo, na seção própria. */
+    const oferecidos = (muralRef.current || []).filter((c) => c && c.oferecido).slice(-TETO_OFERECIDOS);
+    muralRef.current = [...mundo, ...oferecidos];
     setMural(muralRef.current);
+  };
+
+  /* Prega um cartaz no mural. Uma porta só, para o trabalho que o sistema
+     sorteia e o que a ficção inventa nunca discordarem sobre a forma nem
+     sobre quando o papel já está lá. */
+  const pregarNoMural = (cartaz) => {
+    if (!cartaz || !cartaz.titulo) return false;
+    const chave = (c) => `${semNome(c.dador || "")}|${semNome(c.titulo || "")}`;
+    const atual = muralRef.current || [];
+    if (atual.some((c) => chave(c) === chave(cartaz))) return false;
+    /* o que já está no diário não volta ao mural: seria oferecer de novo o
+       serviço que o herói já pegou */
+    const jaNoDiario = garantirMissoes(missoesRef.current)
+      .filter((q) => ["ativa", "oferecida", "concluida"].includes(q.status))
+      .some((q) => semNome(q.titulo) === semNome(cartaz.titulo));
+    if (jaNoDiario) return false;
+    const doMundo = atual.filter((c) => !c.oferecido);
+    const oferecidos = [...atual.filter((c) => c.oferecido), cartaz].slice(-TETO_OFERECIDOS);
+    muralRef.current = [...doMundo, ...oferecidos];
+    setMural(muralRef.current);
+    return true;
   };
 
   const aceitarContrato = (c) => {

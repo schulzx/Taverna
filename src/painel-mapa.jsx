@@ -8,7 +8,7 @@ import { RELACOES, blobPath, centrosDeRegiao, gerarEstradas } from "./mapa.js";
 import { PORTES } from "./geografia.js";
 import { ESTADOS_FE, estadoFe, feDaCidade, temploDaCidade, temploDe, fieisDaCidade, heresiaDaCidade, patronoDaCidade, resumoNumerico } from "./devocao.js";
 import { ondeEstou, pontoDoHeroi } from "./rastro.js";
-import { rastrearOTurno } from "./geografo.js";
+import { rastrearOTurno, ondeEstaOElenco } from "./geografo.js";
 import { linhaDePonto, formatarDistancia } from "./coordenadas.js";
 import { PlantaCidade } from "./planta-cidade.jsx";
 import { arredoresDaCidade } from "./arredores.js";
@@ -24,7 +24,7 @@ function noPergaminho(cidade, arredor, raio) {
   };
 }
 
-export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindade, jornada = null, masmorra = null, molde = null, semente = "", genero = "Fantasia medieval", lex = null, lugar = null, aoIrAoLugar = null, aoViajar = null }) {
+export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindade, jornada = null, masmorra = null, molde = null, semente = "", genero = "Fantasia medieval", lex = null, lugar = null, aoIrAoLugar = null, aoViajar = null, npcs = null, grupo = [], heroi = "" }) {
   const [selecionada, setSelecionada] = React.useState(null);
   const cidadeAqui = (mapa?.cidades || []).find((c) => cidadeAtual && (c.nome || "").toLowerCase() === String(cidadeAtual).toLowerCase()) || null;
   const podeCidade = !!cidadeAqui && !jornada;
@@ -139,6 +139,10 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
      partida à chegada, e sumia da fazenda de volta para a praça. */
   const eu = pontoDoHeroi({ cidadeAtual, jornada, mapa, lugar, masmorra });
   const rast = rastrearOTurno({ cidadeAtual, jornada, masmorra, mapa, lugar, semente });
+  /* v9.119: e o elenco também tem ponto. A posição de cada um é derivada do
+     local que o registro guarda — nada de um segundo campo para ficar velho
+     — e é aqui que ela vira o rastreio que o jogador vê. */
+  const elenco = ondeEstaOElenco(npcs, { cidadeAtual, jornada, masmorra, mapa, lugar, semente, grupo, heroi });
   const seletorEscala = podeCidade ? (
     <div className="flex gap-1.5 mb-3">
       {[{ id: "mundo", rotulo: "🌍 Mundo" }, { id: "cidade", rotulo: `🏘 ${cidadeAqui.nome}` }].map((k) => (
@@ -455,6 +459,34 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
           );
         })}
       </div>
+      {/* ---------------- ONDE ESTÁ CADA UM (v9.119) ----------------
+          O registro sempre soube o LOCAL de cada pessoa da história, e local
+          nunca foi posição: não dava para perguntar quem está perto, para
+          que lado, nem a quantos dias. Esta lista é a leitura que o Geógrafo
+          faz do mesmo texto — derivada, nunca guardada — e o que é palpite
+          vai marcado como palpite, porque um chute desenhado como fato é
+          pior do que nenhum desenho. */}
+      {elenco.length > 0 && (
+        <div className="mt-3">
+          <div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Onde está cada um ({elenco.length})</div>
+          <div className="space-y-1">
+            {elenco.slice(0, 14).map((e, i) => (
+              <div key={"el-" + i} className="rounded-lg px-3 py-1.5 flex items-baseline justify-between gap-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                <span className="tv-body text-xs truncate" style={{ color: T.ink }}>
+                  {e.comigo ? "🚶 " : e.suposto ? "· " : "📍 "}{e.nome}
+                  {e.papel ? <span style={{ color: T.inkDim }}> · {e.papel}</span> : null}
+                </span>
+                <span className="tv-mono text-[9px] shrink-0" style={{ color: e.comigo ? T.amberSoft : T.inkDim }}>
+                  {e.comigo ? "anda comigo" : `${e.rumo ? `${e.rumo.curto} ` : ""}${formatarDistancia(e.km || 0)}`}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="tv-mono text-[9px] mt-1" style={{ color: T.inkDim }}>
+            📍 paradeiro registrado · «·» sem lugar nomeado — suposto aqui
+          </div>
+        </div>
+      )}
       {rodapeNevoa}
     </div>
   );

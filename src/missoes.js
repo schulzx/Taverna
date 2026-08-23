@@ -21,11 +21,19 @@
       que tem na bolsa, quem está no registro, que dia é, que
       relógio encheu. Se não dá para conferir, não é etapa.
 
-   2) O MESTRE OFERECE, O JOGADOR ACEITA, O SISTEMA MONTA. Ele
-      conhece a ficção — deixe que ele traga o nobre desesperado à
-      taverna. Mas o que vira missão, com quantas etapas e por qual
-      recompensa, é o código que decide. E o jogador escolhe: uma
-      oferta recusada é uma oferta, não uma missão.
+   2) O MESTRE PROPÕE, O SISTEMA MONTA. Ele conhece a ficção — deixe
+      que ele traga o nobre desesperado à taverna. Mas o que vira
+      missão, com quantas etapas e por qual recompensa, é o código que
+      decide.
+
+      v9.119: E O ONDE MUDOU. Este parágrafo dizia "o jogador aceita:
+      uma oferta recusada é uma oferta, não uma missão", e a oferta
+      morava no DIÁRIO, com sim e não. Desde que a quest passou a ser
+      do Mestre (v9.117) isso virou uma segunda fonte de missões,
+      opcional, disputando as mesmas oito vagas com o fio da história —
+      e o jogador não tinha como distinguir uma coisa da outra. Agora
+      quem quer um serviço feito PREGA UM CARTAZ: a decisão continua
+      sendo dele, e acontece no mural, que é onde se procura trabalho.
 
    3) NEM TUDO SE RECUSA. A nêmesis que te caça, o evento global que
       engole a região, o abalo divino que sacode os seus fiéis — não
@@ -526,13 +534,18 @@ export function textoDaPaga(m) {
   return `◉ ${r.moedas}${r.combinada ? " (o combinado)" : ""} · ${r.xp} XP${r.item ? ` · item ${r.item}` : ""}`;
 }
 
-export function envelopeDeOferta(m) {
-  const r = m.recompensa || {};
-  const preco = r.moedas
-    ? `O pagamento combinado é ${r.moedas} moedas — se voltar a falar de preço, é ESSE número, nenhum outro.`
-    : `Este trabalho NÃO se paga em moedas: o combinado é outro (um favor, uma informação, uma porta que se abre). Não prometa dinheiro por ele.`;
-  return `[MISSÃO OFERECIDA — REGISTRADA PELO SISTEMA] ${m.dador ? `${m.dador} ofereceu` : "Ofereceram"} um trabalho: "${m.titulo}". ${preco}${temPrazo(m) ? ` Há PRAZO: ${m.prazo} noites, e o sistema conta as noites sozinho — se esgotar, a missão falha. Deixe a pressa clara na fala de quem oferece.` : ""} O sistema registrou a proposta e as etapas; eu ainda NÃO aceitei. Narre a oferta sendo feita — a pessoa, o tom, a urgência — e depois PARE e espere minha resposta. Não presuma que eu aceitei, não comece a missão, não me empurre para ela e não ofereça de novo o mesmo serviço com outro nome.`;
-}
+/* v9.119: O ENVELOPE DE OFERTA SAIU DAQUI. Ele dizia ao Narrador "o
+   sistema registrou a proposta, narre a oferta e PARE, esperando a
+   resposta" — e ninguém mais faz uma proposta ao herói: o trabalho de
+   quem quer alguma coisa feita vai para o mural, e quem tira o papel de
+   lá é o jogador, sem cena de negociação. Regra sem quem a dispare é o
+   avesso do defeito que esta casa mais persegue, e sai pela mesma porta.
+
+   O que ficou: `responderOferta`, `envelopeDeAceite` e `envelopeDeRecusa`
+   continuam de pé para os saves que já tinham uma missão "oferecida"
+   parada no diário quando esta versão chegou. Nenhum caminho novo cria
+   uma; tirar a saída delas deixaria aquele jogador com um sim/não que
+   não tem mais botão. */
 
 /* v9.36: aceitar não é falar. O botão registra; a fala é minha, e vem no
    turno seguinte — "aceito com prazer" e "o que você pede sorrindo eu faço
@@ -559,13 +572,21 @@ ${at.map(linha).join("\n") || "- (nenhuma ativa)"}${of.length ? `\nOFERECIDAS, �
 Trate as etapas como o que elas são: o que EU preciso fazer. Você pode encenar o caminho, mas não marca etapa, não conclui missão e não paga recompensa. E nunca liste as etapas futuras para mim — deixe a próxima aparecer quando chegar a vez dela.`;
 }
 
-export const MISSOES_PROMPT = `MISSÕES (v9.27):
+/* A regra "ninguém oferece missão numa conversa" mora em OFERTAS_PROMPT e
+   só lá: os dois blocos entram pela MESMA porta (`missao`), então dizê-la
+   aqui também seria pagar duas vezes por uma lição que se aprende uma. */
+export const MISSOES_PROMPT = `MISSÕES (v9.119 — a quest é do MESTRE; o resto é papel no mural):
 - Missão é uma sequência de ETAPAS que o SISTEMA confere sozinho. Você não abre, não avança, não encerra e não paga — tudo isso chega por envelope.
-- Você PODE oferecer trabalho quando a ficção pedir, pelo campo "missao_oferecida": um nobre desesperado na taverna, um capitão precisando de escolta. Proponha só o que se traduz em etapas concretas (chegar a um lugar, derrotar alguém, encontrar um objeto, entregar algo, encontrar uma pessoa). "Ganhar a confiança de alguém" não é etapa — é cena, e cena você já sabe fazer.
-- Oferta é oferta: depois de narrá-la, PARE e espere a resposta do jogador. Não presuma aceite, não comece a missão, não empurre.
+- Quando a ficção pedir um trabalho que você inventou, use "missao_oferecida": o sistema transforma em cartaz do mural. Proponha só o que se traduz em etapas concretas (chegar a um lugar, derrotar alguém, encontrar um objeto, entregar algo, encontrar uma pessoa). "Ganhar a confiança de alguém" não é etapa — é cena, e cena você já sabe fazer.
 - DIGA O PREÇO NA CENA e mande o mesmo número no campo "paga": o cartaz que promete 15 moedas e o diário que anuncia 43 são duas verdades sobre o mesmo trabalho. Se o combinado não é dinheiro — um favor, uma informação, uma dívida —, "paga": 0, e não invente moedas depois.
 - UM TRABALHO, UMA MISSÃO. O contrato no mural e a pessoa que vem falar dele são a MESMA missão: não ofereça de novo com outro título. E nunca peça ao jogador que "encontre" quem está falando com ele agora.
-- Missões que o mundo impõe (nêmesis, evento global, abalo divino) não são oferecidas — elas chegam ativas, e o jogador não pode recusá-las.
+- As missões da HISTÓRIA (a trama do sistema, nêmesis, evento global, abalo divino) chegam ATIVAS e não se recusam. Elas são o fio; o mural é trabalho.
 - PRAZO é do sistema. Algumas missões correm contra o tempo, e isso vira um relógio que anda uma casa por NOITE dormida. Você pode encenar a pressa — a viúva que olha a porta, o mercador que fala em "antes da lua cheia" —, mas NUNCA conte as noites, nunca diga que o prazo venceu e nunca dê tempo extra: quando esgota, o sistema avisa por envelope.
-- Aceitar e recusar são BOTÕES do jogador, e a fala vem depois: quando o envelope disser que aceitei ou recusei, NÃO narre o acordo — espere as minhas palavras e reaja a elas.
 - NUNCA diga ao jogador quais são as etapas seguintes de uma missão. Ele sabe o que fazer agora; o resto é história por acontecer.`;
+/* v9.119: SAIU DAQUI a regra "aceitar e recusar são botões do jogador, e a
+   fala vem depois". Ela governava a oferta parada no diário, que nenhum
+   caminho novo cria — e nas duas únicas vezes em que ainda pode disparar
+   (um save antigo com uma oferta pendente) quem a diz é o próprio
+   `envelopeDeAceite`, palavra por palavra, na hora em que ela vale. Um
+   bloco fixo que repete o envelope custa em todo turno com a porta aberta
+   e ensina uma vez só, como o bloco dos arredores custava na v9.118. */

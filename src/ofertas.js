@@ -390,16 +390,73 @@ function fatos(of) {
   return `${preco}${prazo}${of.daItem ? ` ${of.dador} entrega em mãos: ${of.daItem} (o sistema já pôs na minha bolsa — não envie itens).` : ""}${of.objeto ? ` O que se procura chama-se "${of.objeto}" — use exatamente esse nome quando eu encontrar, e mande-o com "adicionar_itens".` : ""}`;
 }
 
-export function envelopeDaAbordagem(of) {
-  return `[OFERTA DE TRABALHO — MONTADA PELO SISTEMA, AINDA NÃO ACEITA] ${of.dador}${of.dadorPapel ? `, ${of.dadorPapel}` : ""}${of.dadorLocal ? `, em ${of.dadorLocal}` : ""}, procura o herói para oferecer isto: "${of.titulo}". ${of.descricao} ${fatos(of)}
+/* ============================================================
+   O RECADO (v9.119) — ninguém oferece trabalho na cena
 
-Encene a abordagem em 3 ou 4 frases: ${of.dadorModo ? `${of.dador} ${of.dadorModo}` : `o jeito de ${of.dador}`}, o que a pessoa diz, o que ela evita dizer. ${of.gancho ? `A verdade por trás do pedido, que deve transparecer sem ser explicada: ${of.gancho}.` : ""} Depois PARE: eu aceito ou recuso no diário, e é de lá que a resposta vem. Não presuma aceite, não comece o serviço, não invente etapa nem prazo.`;
+   Até aqui uma pessoa do mundo parava o herói e oferecia um serviço; a
+   missão nascia no DIÁRIO com status "oferecida" e o jogador aceitava ou
+   recusava lá. Duas coisas erradas nisso, e a segunda é a que importa:
+
+   A primeira é de tela. Toda oferta gastava duas linhas do log ("Fulano
+   tem um trabalho…" mais "primeiro passo… paga…"), e o log é a cena.
+
+   A SEGUNDA É DE AUTORIDADE. Desde a v9.117 a quest é do Mestre e não é
+   opcional: ela carrega a intenção do arco e a fase do vilão. Uma segunda
+   fonte de missões, opcional, negociada na conversa, competia com ela
+   pelas mesmas oito vagas do diário — e o jogador não tinha como
+   distinguir o fio da história de um bico de aldeão.
+
+   Agora só há um lugar onde se procura trabalho: o MURAL. Quem quer o
+   herói num serviço PREGA UM CARTAZ e menciona isso; o herói vai lá se
+   quiser. O que muda para o Narrador é uma frase: em vez de encenar a
+   proposta, ele encena a menção.
+   ============================================================ */
+export function envelopeDoRecado(of) {
+  return `[TRABALHO PREGADO NO MURAL — PELO SISTEMA] ${of.dador}${of.dadorPapel ? `, ${of.dadorPapel}` : ""}${of.dadorLocal ? `, em ${of.dadorLocal}` : ""} quer uma coisa feita e já pregou o cartaz no mural: "${of.titulo}". ${of.descricao} ${fatos(of)}
+
+Encene em 1 ou 2 frases que a pessoa MENCIONA o serviço e diz que o papel está no mural — ${of.dadorModo ? `${of.dador} ${of.dadorModo}` : `no jeito de ${of.dador}`}. ${of.gancho ? `O que está por trás e não se explica: ${of.gancho}.` : ""} Depois siga a cena de onde ela estava. NÃO ofereça o trabalho a mim, não pergunte se eu aceito, não negocie preço e não comece o serviço: quem tira o papel do mural sou eu, quando eu quiser.`;
 }
 
 export function envelopeDoCartaz(of) {
   return `[CARTAZ DO MURAL — ESCRITO PELO SISTEMA] Peguei no mural um contrato: "${of.titulo}". ${of.descricao} Quem assina é ${of.dador}${of.dadorPapel ? `, ${of.dadorPapel}` : ""}${of.dadorLocal ? `, que fica em ${of.dadorLocal}` : ""}. ${fatos(of)}
 
 Reconheça na ficção que eu peguei o cartaz — o papel na mão, quem olhou, o que se comenta sobre esse serviço — em 2 ou 3 frases, e siga a cena de onde eu estava. NÃO resolva nada do serviço agora e NÃO conclua a missão: quem marca etapa é o sistema.`;
+}
+
+/* ---------------- O QUE O MESTRE PROPÔS VIRA CARTAZ ----------------
+   O campo `missao_oferecida` continua existindo — a ficção inventa
+   serviços que nenhuma tabela previu, e é bom que invente. O que mudou é
+   o DESTINO: a proposta não vira mais uma missão esperando resposta no
+   diário; vira um papel no mural, com o mesmo formato dos outros, e o
+   jogador decide lá.
+
+   O preço obedece a mesma regra de sempre: o que a cena prometeu vale; o
+   sistema só calcula o que ninguém combinou. Sem etapa que o código saiba
+   conferir, não há cartaz — a trava da v9.27 continua inteira. */
+export function cartazDaProposta(prop, { cidade = "", nivel = 1, icone = "📋" } = {}) {
+  if (!prop || !String(prop.titulo || "").trim()) return null;
+  const etapas = (Array.isArray(prop.etapas) ? prop.etapas : []).filter((e) => e && e.tipo && e.alvo);
+  if (!etapas.length) return null;
+  const titulo = String(prop.titulo).trim().slice(0, 60);
+  const dador = String(prop.dador || "").trim().slice(0, 40);
+  const tipo = prop.tipo === "contrato" ? "contrato" : "favor";
+  const nv = Number(prop.nivel) > 0 ? Math.round(Number(prop.nivel)) : nivel;
+  const paga = Number.isFinite(Number(prop.paga)) && Number(prop.paga) >= 0
+    ? Math.round(Number(prop.paga))
+    : precoDaOferta({ tipo, nivel: nv, etapas: etapas.length, risco: 1 });
+  return {
+    id: `of_recado_${norm(dador)}_${norm(titulo)}`.replace(/[^a-z0-9]+/g, "_").slice(0, 60),
+    molde: "recado", icone, tipo,
+    titulo, descricao: String(prop.descricao || "").trim().slice(0, 200),
+    dador, dadorPapel: String(prop.dadorPapel || "").slice(0, 40), dadorLocal: String(prop.dadorLocal || "").slice(0, 40),
+    dadorModo: "", dadorVontade: "",
+    cidade, etapas, nivel: nv, paga,
+    prazo: noitesDePrazo(prop.prazo),
+    daItem: null, objeto: null, gancho: "",
+    /* a marca que põe o cartaz na seção de baixo do mural: este não é do
+       mundo, é de alguém que falou com o herói */
+    oferecido: true,
+  };
 }
 
 /* A oferta vira a proposta que `aceitarProposta` sabe validar. Um lugar
@@ -414,7 +471,8 @@ export function propostaDaOferta(of) {
   };
 }
 
-export const OFERTAS_PROMPT = `TRABALHOS OFERECIDOS (v9.37 — quem monta é o sistema):
-- Quando alguém do mundo oferecer serviço ao herói, o trabalho chega a você por envelope, PRONTO: quem oferece, o que se pede, quais etapas e quanto paga. Nada disso é seu para inventar ou renegociar.
-- O seu trabalho é a CENA: a voz, o gesto, a hesitação, o que a pessoa esconde. É a parte que nenhuma tabela faz.
-- Continue livre para propor trabalho pelo campo "missao_oferecida" quando a ficção pedir — uma promessa feita numa conversa vira missão. O sistema valida, calcula e recusa o que não vira etapa.`;
+export const OFERTAS_PROMPT = `TRABALHO DO MUNDO (v9.119 — só o MURAL, nunca a cena):
+- NINGUÉM oferece missão ao herói numa conversa. Um morador que quer alguma coisa feita PREGA UM CARTAZ NO MURAL e, no máximo, menciona isso — "deixei um papel no mural", "tem um serviço meu pregado lá". Nunca pergunte se o herói aceita, nunca negocie preço, nunca comece o serviço: quem tira o papel do mural é ele, quando quiser.
+- Quando o sistema pregar um cartaz por causa desta cena, você recebe um envelope pronto. Encene a MENÇÃO em uma ou duas frases e siga; o resto está no mural.
+- O campo "missao_oferecida" continua servindo para a ficção que você inventa — mas ele vira CARTAZ, não proposta: o sistema prega no mural e o herói decide lá. Só o que se traduz em etapas concretas vira papel.
+- Missão que é da HISTÓRIA não passa por aqui e não se recusa: ela chega pelo envelope de missão do sistema, já ativa.`;
