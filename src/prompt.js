@@ -37,6 +37,7 @@ import { MOVIMENTO_PROMPT } from "./movimento.js";
 import { CHAO_PROMPT } from "./chao.js";
 import { MISSOES_PROMPT } from "./missoes.js";
 import { OFERTAS_PROMPT } from "./ofertas.js";
+import { RAID_PROMPT } from "./raids.js";
 import { LUGAR_PROMPT } from "./lugar.js";
 import { COMODOS_PROMPT } from "./comodos.js";
 import { ARREDORES_PROMPT } from "./arredores.js";
@@ -196,6 +197,10 @@ export const PORTAS_DA_CENA = [
      vilão da campanha, o bloco seria uma regra sobre coisa nenhuma. */
   { id: "vilao", quando: (c) => !!c.temVilao, porque: "como a ameaça pensa só importa depois de haver uma ameaça" },
   { id: "masmorra", quando: (c) => !!c.emMasmorra, porque: "como o lugar perigoso se apresenta neste mundo só importa a quem está dentro de um" },
+  /* v9.115: a RAID. Um chamado continental é raro por definição — o bloco
+     vale três frases nos turnos em que existe e é peso morto em todos os
+     outros, que é a definição de porta. */
+  { id: "raid", quando: (c) => !!c.emRaid, porque: "as regras do chamado só valem enquanto há um chamado em curso" },
 ];
 
 /* Devolve um mapa {id: boolean}. O `cena` vazio abre TODAS as portas, e
@@ -353,6 +358,8 @@ ${so("missao", MISSOES_PROMPT)}
 
 ${so("missao", OFERTAS_PROMPT)}
 
+${so("raid", RAID_PROMPT)}
+
 
 ${PAUTA_PROMPT}
 ${REGISTRO_PROMPT}
@@ -497,7 +504,7 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
   }
 }
 O campo "canone" é opcional: inclua-o só quando houver um fato durável a registrar ou atualizar. Cada chave é o NOME da entidade; os campos (tipo, papel, genero, local, status, notas) são todos opcionais — preencha os relevantes. Para atualizar, reenvie a mesma chave com os campos novos.
-SINAIS (canal barato — prefira-o sempre que existir): em vez de calcular e enviar números, mande um sinal curto e o SISTEMA resolve pela tabela. Sinais aceitos: "fe:sussurro|feito|proeza|marco" (o herói fez algo que rende fé — o sistema converte em fiéis conforme a fama dele; sussurro = notado por poucos, feito = a cidade comenta, proeza = a região conta, marco = muda a história); "milagre:<id>" (o herói gastou fé num milagre: bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar — o sistema cobra os PF e aplica o efeito); "viagem:<destino>" (o herói pôs o pé na estrada rumo a outro lugar — o sistema assume clima, encontros do trecho e passagem de tempo; NÃO narre a viagem inteira, só a partida); "masmorra:<nome>" (o herói vai enfrentar um covil, cripta, torre, fortaleza ou chefe — o sistema GERA as salas, os perigos e o chefe, e conduz sala a sala; você narra a entrada e depois só o que cada sala mandar); "loot:comum|incomum|raro|epico|lendario" (o herói encontrou um item — o sistema GERA o item com nome, afixos e poder, e te devolve os dados para você descrever o achado; NÃO escreva você o objeto de equipamento, é mais caro e sai incoerente); "ascender:deicidio|reliquia" (o herói venceu TODAS as provas de um caminho de ascensão — o sistema aplica o grau e as consequências); "dominio:<texto>" e "patrono:<texto>" (só na primeira vez que a ficção os revelar). Nunca invente PF nem número de fiéis: mande o sinal e narre a cena.
+SINAIS (canal barato — prefira-o sempre que existir): em vez de calcular e enviar números, mande um sinal curto e o SISTEMA resolve pela tabela. Sinais aceitos: "fe:sussurro|feito|proeza|marco" (o herói fez algo que rende fé — o sistema converte em fiéis conforme a fama dele; sussurro = notado por poucos, feito = a cidade comenta, proeza = a região conta, marco = muda a história); "milagre:<id>" (o herói gastou fé num milagre: bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar — o sistema cobra os PF e aplica o efeito); "viagem:<destino>" (o herói pôs o pé na estrada rumo a outro lugar — o sistema assume clima, encontros do trecho e passagem de tempo; NÃO narre a viagem inteira, só a partida); "masmorra:<nome>" (o herói vai enfrentar um covil, cripta, torre, fortaleza ou chefe — o sistema GERA as salas, os perigos e o chefe, e conduz sala a sala; você narra a entrada e depois só o que cada sala mandar); "loot:comum|incomum|raro|epico|lendario" (o herói encontrou um item — o sistema GERA o item com nome, afixos e poder, e te devolve os dados para você descrever o achado; NÃO escreva você o objeto de equipamento, é mais caro e sai incoerente); "raid:<nome da coisa>" (uma ameaça que ninguém derruba sozinho — o sistema convoca quem atende, monta a horda e conduz a frente; recusa em silêncio se o herói ainda não a alcança); "ascender:deicidio|reliquia" (o herói venceu TODAS as provas de um caminho de ascensão — o sistema aplica o grau e as consequências); "dominio:<texto>" e "patrono:<texto>" (só na primeira vez que a ficção os revelar). Nunca invente PF nem número de fiéis: mande o sinal e narre a cena.
 Regras do formato: "perigo" e "mudancas" são null quando não há; nunca os coloque dentro de "narrativa". "narrativa" é sempre uma string simples. Tipos de equipamento: arma, armadura, elmo, botas, anel, amuleto, escudo. Raridades: comum, incomum, raro, epico, lendario. Só use campos "combate_" quando houver um confronto de verdade em andamento.`);
 }
 

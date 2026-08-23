@@ -77,6 +77,7 @@ import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeV
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, BASE_PROMPT } from "./mundo-base.js";
 import { dificuldadeDaMasmorra, envelopeDaDificuldade } from "./dificuldade.js";
+import { abrirRaid, garantirRaid, rodadaDaFrente, envelopeDaConvocacao, envelopeDaRodada, envelopeDoRompimento, fimDaRaid, comitivaDaRaid, tirarComitiva, portePorId, papelPorId, podeAbrirRaid, NIVEL_MINIMO as NIVEL_MINIMO_RAID, RAID_PROMPT } from "./raids.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
 import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao } from "./portao.js";
@@ -2969,6 +2970,7 @@ export default function Taverna() {
   const [ofertaCapitulo, setOfertaCapitulo] = useState(null);
   const capituloNovoRef = useRef(null);
   const sinalMasmorraRef = useRef(null);  // Mestre (ou o rastro) pediu para abrir masmorra
+  const sinalRaidRef = useRef(null);      // o Mestre anunciou um chamado — a raid abre no turno seguinte
   const destinoViagemRef = useRef("");    // para onde o herói disse que ia — desenha a estrada no mapa
   const salaEmCursoRef = useRef(null);    // sala da masmorra cujo combate está aberto
   const [alvosGolpe, setAlvosGolpe] = useState([]); // alvo escolhido para cada golpe do turno
@@ -4416,6 +4418,8 @@ export default function Taverna() {
     return {
       emCombate: !!combateRef.current,
       emMasmorra: !!(mm && !mm.encerrada),
+      /* v9.115: há um chamado em curso? É a porta da raid. */
+      emRaid: !!(raidRef.current && raidRef.current.fase === "luta"),
       /* v9.106: há alguém em cena? É a porta do Intérprete. */
       temGente: pessoasDaCena().length > 0,
       temVilao: !!(nemesisRef.current && nemesisRef.current.nome),
@@ -4499,6 +4503,12 @@ export default function Taverna() {
   /* MASMORRA (v6.3): masmorra ativa gerada por tabela — o app resolve as salas */
   const masmorraRef = useRef(null);
   const [masmorra, setMasmorra] = useState(null);
+
+  /* A RAID (v9.115) — vive ao lado da masmorra porque é a mesma natureza
+     de coisa: um estado grande que toma conta da cena enquanto dura e que
+     é do SISTEMA de ponta a ponta. As duas nunca coexistem. */
+  const raidRef = useRef(null);
+  const [raid, setRaid] = useState(null);
   /* v9.99: o sítio do acampamento atual. Guardado para que levantar
      acampamento e montar de novo cinco minutos depois devolva o MESMO
      afloramento de rocha — é o mesmo afloramento de rocha. */
@@ -4930,7 +4940,7 @@ export default function Taverna() {
       combate: combateRef.current, registro: registroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
-      masmorra: masmorraRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
+      masmorra: masmorraRef.current, raid: raidRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
       historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
@@ -5866,6 +5876,21 @@ export default function Taverna() {
         } else if (chave === "masmorra") {
           if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) {
             sinalMasmorraRef.current = arg || "";
+          }
+        } else if (chave === "raid") {
+          /* A TRAVA É AQUI, e não na cena. Se o Mestre anunciar um chamado
+             a um herói que não o alcança, o sistema recusa e DIZ por quê —
+             deixar passar seria juntar trinta veteranos em volta de alguém
+             que é a primeira baixa deles. */
+          const persR = pers || personagemRef.current || {};
+          const chk = podeAbrirRaid(persR);
+          if (!chk.pode) {
+            msgs.push(`⚑ O chamado não é para você ainda: ${chk.motivo}.`);
+          } else if (combateRef.current || acampadoRef.current || masmorraRef.current || raidRef.current) {
+            /* silêncio: um chamado no meio de outra cena grande apagaria a
+               que já está em curso, e a onda do compasso já aprendeu isso */
+          } else {
+            sinalRaidRef.current = arg || "";
           }
         } else if (chave === "ascender" && dvAtual && dvAtual.despertar) {
           const cam = caminhoPorId(arg.toLowerCase());
@@ -7156,6 +7181,11 @@ export default function Taverna() {
     talvezAndarNaCidade(conteudo);
     const doCompasso = talvezAndarOCompasso(conteudo);
     const formaDaCena = doCompasso ? "" : talvezDarFormaACena(conteudo);
+    /* A FRENTE ANDA UMA RODADA POR TURNO MEU (v9.115), e anda aqui, no
+       mesmo lugar em que todo sistema de turno anda. Uma rodada por turno,
+       nunca um laço: se a frente resolvesse tudo de uma vez, o jogador
+       leria o desfecho da raid em vez de atravessá-lo. */
+    const daFrente = String(conteudo || "").trimStart().startsWith("[RAID") ? "" : rodarAFrente();
     /* v9.104: A PAUTA VEM NA FRENTE. Ela é o que o SISTEMA decidiu, e o
        Narrador precisa saber ONDE a cena acontece antes de ler qualquer
        instrução sobre o que fazer nela — a ordem importa para quem lê.
@@ -7169,7 +7199,7 @@ export default function Taverna() {
     /* guardado antes da resposta: "a luta acabou neste turno" é a
        diferença entre o que havia e o que ficou */
     const combateAntes = !!combateRef.current;
-    const nota = [pauta, oficina, notaRef.current, doCompasso, formaDaCena].filter(Boolean).join("\n");
+    const nota = [pauta, oficina, notaRef.current, doCompasso, formaDaCena, daFrente].filter(Boolean).join("\n");
     notaRef.current = "";
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
     /* RODAPÉ DO SISTEMA (v7.0.2): lembrete curto colado SÓ na mensagem atual
@@ -7375,6 +7405,9 @@ export default function Taverna() {
       } else if (sinalMasmorraRef.current !== null) {
         const nomeMm = sinalMasmorraRef.current; sinalMasmorraRef.current = null;
         setTimeout(() => entrarMasmorra(nomeMm), 400);
+      } else if (sinalRaidRef.current !== null) {
+        const chefeR = sinalRaidRef.current; sinalRaidRef.current = null;
+        setTimeout(() => abrirONossoChamado(chefeR), 400);
       }
       /* GRAVAR PRIMEIRO (v9.7). O que vem depois daqui é manutenção: o livro,
          o escriba, o despertar. Nada disso pode custar o turno do jogador — e
@@ -7572,6 +7605,7 @@ export default function Taverna() {
     questsRef.current = []; setQuests([]);
     eventosRef.current = { locais: [], global: null, semGlobalDesde: 0, seq: 1 }; setEventos(eventosRef.current);
     masmorraRef.current = null; setMasmorra(null);
+    raidRef.current = null; setRaid(null);
     jornadaRef.current = null; setJornada(null);
     combateRef.current = null; intencaoRef.current = ""; setCombate(null);
     mesaRef.current = garantirMesa(null);
@@ -7640,6 +7674,7 @@ export default function Taverna() {
        fica, porque um lugar descoberto não se esconde de novo */
     if (!cap) { descobRef.current = []; setDescobertas([]); }
     masmorraRef.current = null; setMasmorra(null);
+    raidRef.current = null; setRaid(null);
     /* v9.37: o mural nasce vazio de propósito — os cartazes são o que a gente
        DESTA cidade quer ver feito, e na criação ainda não há cidade nenhuma.
        Ele se enche sozinho quando o jogador o abre. */
@@ -7758,6 +7793,11 @@ export default function Taverna() {
           setTimeout(() => pushMsgs([{ autor: "sistema", texto: "🕳 A masmorra em andamento era do formato antigo (corredor linear) e foi encerrada. As novas são ramificadas: passagens com pistas, chave escondida e tochas que se gastam." }]), 300);
         } else { masmorraRef.current = ehNova ? mmA : null; setMasmorra(masmorraRef.current); }
       }
+      /* A RAID atravessa o save (v9.115): ela dura muitos turnos e
+         perder a hoste no meio seria perder os mortos junto. `garantirRaid`
+         é a catraca — save antigo não tem o campo e vira null, e um save
+         torto vira uma raid coerente em vez de derrubar o carregamento. */
+      raidRef.current = sv.raid ? garantirRaid(sv.raid) : null; setRaid(raidRef.current);
       muralRef.current = Array.isArray(sv.mural) ? sv.mural : []; setMural(muralRef.current);
       decretosRef.current = Array.isArray(sv.decretos) ? sv.decretos : []; setDecretos(decretosRef.current);
       diaRef.current = sv.dia || 1; setDia(diaRef.current);
@@ -9307,6 +9347,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       personagemRef.current = p2;
       setPersonagem(p2);
       espolioNoChaoRef.current = caiuNoChao;
+    }
+    /* O FIM DA RAID MORA AQUI (v9.115), no mesmo lugar em que toda luta
+       acaba. Pôr um segundo caminho de encerramento seria a repetição
+       favorita desta casa: o chefe da raid cai como qualquer inimigo cai,
+       e é essa a única passagem por onde isso acontece. */
+    if (raidRef.current && (raidRef.current.fase === "luta")) {
+      const caiuOChefe = derrotados.some((e) => e && e.nome === raidRef.current.chefe);
+      if (caiuOChefe) encerrarARaid(true);
     }
     pushMsgs([
       { autor: "sistema", texto: "⚔ Todos os inimigos caíram — o combate termina." },
@@ -12369,6 +12417,111 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     enviar(`${vestido ? vestido + " " : ""}${dif ? envelopeDaDificuldade(dif, `a masmorra "${mm.nome}"`) + " " : ""}[MASMORRA — ENTRADA · ${mm.nome}] Descobri a entrada de "${mm.nome}". O SISTEMA gerou a planta: ${mm.salas.length} câmaras em ${Math.max(...mm.salas.map((x) => x.camada))} níveis de profundidade, com passagens que se ramificam, um portão lacrado no fundo e a chave escondida com um guardião. Levo ${mm.tochas} tochas — cada passagem consome uma. Descreva a fachada e a atmosfera do primeiro salão em 2-4 frases, costurando com a cena atual${cidadeAtualRef.current ? ` (perto de ${cidadeAtualRef.current})` : ""}. Mencione que há mais de um caminho adiante. NÃO invente o que há nas salas — o sistema revela cada uma quando eu escolher a passagem.${extraTempo}`, personagem);
   };
 
+  /* ============================================================
+     A RAID (v9.115) — abrir, rodar, romper, encerrar
+
+     Quatro momentos, e são quatro porque cada um resolve uma pergunta
+     diferente:
+
+       ABRIR    quem atende ao chamado, e a apresentação de quem veio
+       RODAR    a frente contra a horda, uma rodada por turno do jogador
+       ROMPER   a linha cede e a coisa chega ao herói — daí é combate
+       ENCERRAR o chefe cai (ou o herói cai), e a hoste vai embora
+
+     O que NUNCA acontece aqui: a hoste ferir o chefe. Ela segura, morre
+     segurando e abre janela; quem fecha é o jogador. Se a linha pudesse
+     vencer, a raid seria um filme a que se assiste, e o pedido dizia o
+     contrário — "o player vê tudo", não "o player olha".
+     ============================================================ */
+  const abrirONossoChamado = (chefeNome = "") => {
+    if (raidRef.current || combateRef.current || masmorraRef.current || acampadoRef.current) return;
+    const pIn = personagemRef.current || personagem;
+    const r = abrirRaid({
+      semente: `${sementeMundo()}|raid|${diaRef.current}`,
+      pers: pIn,
+      npcs: npcsRef.current || {},
+      faccoes: ((mapaRef.current || {}).faccoes) || [],
+      genero: generoMundo(),
+      lex: (mundoAtual() || {}).lexico,
+      chefe: chefeNome || "a coisa que veio",
+    });
+    if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⚑ ${r.motivo}.` }]); return; }
+    const raidNova = garantirRaid({ ...r.raid, fase: "luta" });
+    raidRef.current = raidNova; setRaid(raidNova);
+    const p = portePorId(raidNova.porte);
+    /* TODOS ENTRAM NO GRUPO, e é pedido explícito. `daRaid` marca quem
+       veio pelo chamado — sem essa marca, o fim da raid levaria embora
+       os companheiros de verdade junto com os convocados. */
+    const comitiva = comitivaDaRaid(raidNova);
+    const persComHoste = { ...pIn, grupo: [...(pIn.grupo || []), ...comitiva] };
+    setPersonagem(persComHoste); personagemRef.current = persComHoste;
+    pushMsgs([{ autor: "sistema", texto: `${p.icone} ${p.nome.toUpperCase()} — ${raidNova.chefe}. ${raidNova.hoste.length} atenderam; ${p.alcance} está olhando para cá.` }]);
+    pushMsgs([{ autor: "sistema", texto: `⚑ Eles andam com você até isto acabar. A linha segura a horda — o chefe é seu.` }]);
+    enviar(envelopeDaConvocacao(raidNova), persComHoste);
+  };
+
+  /* UMA RODADA POR TURNO DO JOGADOR. Não é um laço: se a frente
+     resolvesse tudo de uma vez, o jogador leria o desfecho em vez de
+     atravessá-lo, e a raid inteira caberia numa mensagem. */
+  const rodarAFrente = () => {
+    const r0 = raidRef.current;
+    if (!r0 || r0.fase !== "luta" || r0.rompeu) return "";
+    const out = rodadaDaFrente(r0, { rnd: Math.random });
+    raidRef.current = out.raid; setRaid(out.raid);
+    /* a hoste do painel acompanha a frente: quem caiu aparece caído na
+       ficha do grupo, e não continua de pé em dois lugares diferentes */
+    const persAtual = personagemRef.current || personagem;
+    const porNome = new Map(out.raid.hoste.map((h) => [h.nome, h]));
+    const grupoNovo = (persAtual.grupo || []).map((g) => {
+      const h = g.daRaid && porNome.get(g.nome);
+      return h ? { ...g, vida: h.morto ? 0 : h.caido ? 0 : Math.max(1, g.vida || h.vidaMax) } : g;
+    });
+    const persNovo = { ...persAtual, grupo: grupoNovo };
+    setPersonagem(persNovo); personagemRef.current = persNovo;
+    for (const l of out.ledger) {
+      if (l.tipo === "morreu") pushMsgs([{ autor: "sistema", texto: `☠ ${l.nome || l.quem} (${papelPorId(l.papel).rotulo}) morreu na linha.` }]);
+    }
+    let env = envelopeDaRodada(out.raid, out.ledger, { abatidos: out.abatidos });
+    if (out.raid.rompeu) {
+      env += `\n${envelopeDoRompimento(out.raid)}`;
+      pushMsgs([{ autor: "sistema", texto: `⚑ A frente rompeu. ${out.raid.chefe} chega até você.` }]);
+      /* e AGORA vira combate de verdade: o chefe, e o que furou a linha */
+      const sobra = Math.max(1, Math.min(3, Math.round(out.raid.horda / 20)));
+      const inimigos = [{ nome: out.raid.chefe, ameaca: "lendario", nivel: out.raid.nivelChefe, gd: portePorId(out.raid.porte).gd }];
+      for (let i = 0; i < sobra; i++) inimigos.push({ nome: `O que passou (${i + 1})`, ameaca: "competente", nivel: out.raid.nivelChefe - 6 });
+      const ab = abrirCombate(inimigos, { pers: personagemRef.current });
+      if (ab.msgs.length) pushMsgs(ab.msgs.map((m) => ({ autor: "sistema", texto: m })));
+      if (ab.pers) { setPersonagem(ab.pers); personagemRef.current = ab.pers; }
+      if (ab.nota) env += `\n${ab.nota}`;
+    }
+    return env;
+  };
+
+  const encerrarARaid = (venceu) => {
+    const r0 = raidRef.current;
+    if (!r0) return;
+    const fim = fimDaRaid(r0, { venceu });
+    raidRef.current = null; setRaid(null);
+    const persAtual = personagemRef.current || personagem;
+    const persNovo = { ...persAtual, grupo: tirarComitiva(persAtual.grupo || []) };
+    setPersonagem(persNovo); personagemRef.current = persNovo;
+    if (venceu) {
+      pushMsgs([{ autor: "sistema", texto: `⚑ ${r0.chefe} caiu. Sobreviveram ${fim.sobreviveram.length} dos ${r0.hoste.length}${fim.mortos.length ? `; ficaram ${fim.mortos.length}: ${fim.mortos.slice(0, 6).join(", ")}${fim.mortos.length > 6 ? "…" : ""}` : ""}.` }]);
+      /* XP pelo caminho de sempre, e a fama pelo CONTADOR: ela é derivada
+         em `calcularFama`, e escrever um número de fama à mão criaria uma
+         segunda fonte para o mesmo valor. Uma raid é o que o contador já
+         sabe contar — um lendário que caiu, e vale mais quanto maior foi
+         o chamado. */
+      const persPago = aplicarNivel({ ...(personagemRef.current || persNovo), xp: ((personagemRef.current || persNovo).xp || 0) + fim.xp });
+      setPersonagem(persPago); personagemRef.current = persPago;
+      bumpCont("lendariosDerrotados", fim.lendarios);
+      pushMsgs([{ autor: "sistema", texto: `✦ +${fim.xp} XP pelo chamado.` }]);
+    } else {
+      pushMsgs([{ autor: "sistema", texto: `⚑ O chamado se desfez. Quem sobrou vai embora.` }]);
+    }
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RAID — ENCERRADA PELO SISTEMA] ${venceu ? `${r0.chefe} caiu, e caiu pela mão do herói.` : `O chamado acabou sem a coisa cair.`} ${fim.mortos.length ? `Não voltaram: ${fim.mortos.join(", ")} — e não voltam mesmo.` : "Ninguém ficou para trás."} Quem sobreviveu se despede e volta para onde veio: eles NÃO seguem comigo depois desta cena. Narre a dispersão, sem discurso e sem promessa de reencontro.`;
+  };
+
   const irParaSala = (id) => {
     const mm = masmorraRef.current;
     if (!mm || bloqueado || acampadoRef.current) return;
@@ -14614,6 +14767,47 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 ))}
               </div>
             )}
+
+            {/* A BARRA DA RAID (v9.115). O jogador precisa ver a linha
+                encolhendo: sem isto, "a frente rompeu" chegaria como uma
+                surpresa em vez de como o fim de uma conta que ele estava
+                acompanhando. Os mortos ficam listados de propósito — morte
+                de raid é definitiva, e a lista é o preço na tela. */}
+            {raid && raid.fase === "luta" && (() => {
+              const dePe = raid.hoste.filter((h) => !h.caido && !h.morto);
+              const caidos = raid.hoste.filter((h) => h.caido && !h.morto);
+              const cor = raid.rompeu ? T.danger : dePe.length <= raid.hoste.length / 3 ? T.danger : T.amber;
+              return (
+              <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-3.5" style={{ background: T.panel, border: `1px solid ${cor}`, marginRight: "68px" }}>
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="tv-mono text-[10px] uppercase tracking-widest truncate" style={{ color: cor }}>
+                    {portePorId(raid.porte).icone} {raid.nome}
+                  </div>
+                  <div className="tv-mono text-[10px] shrink-0" style={{ color: T.inkDim }}>rodada {raid.rodada}</div>
+                </div>
+                <div className="flex items-center gap-1 mb-2 flex-wrap">
+                  {raid.hoste.map((h) => (
+                    <span key={h.nome} title={`${h.nome} — ${papelPorId(h.papel).rotulo}${h.morto ? " · morreu" : h.caido ? " · caído" : ""}`}
+                      style={{
+                        width: 9, height: 9, borderRadius: 99, display: "inline-block",
+                        background: h.morto ? "transparent" : h.caido ? T.line : T.ok,
+                        border: `1px solid ${h.morto ? T.danger : h.caido ? T.inkDim : T.ok}`,
+                      }} />
+                  ))}
+                </div>
+                <div className="tv-body text-[11px]" style={{ color: raid.rompeu ? T.danger : T.inkDim }}>
+                  {raid.rompeu
+                    ? `A linha cedeu. ${raid.chefe} chegou até você — a partir daqui é você quem derruba.`
+                    : `${dePe.length} de pé${caidos.length ? ` · ${caidos.length} caído${caidos.length > 1 ? "s" : ""}` : ""} segurando a horda. Eles não ferem ${raid.chefe}: quem o derruba é você.`}
+                </div>
+                {raid.mortos.length > 0 && (
+                  <div className="tv-mono text-[10px] mt-1.5" style={{ color: T.danger }} title="morte de raid é definitiva">
+                    ☠ não voltam: {raid.mortos.join(", ")}
+                  </div>
+                )}
+              </div>
+              );
+            })()}
 
             {masmorra && !acampado && (() => {
               const prog = progressoMasmorra(masmorra);
