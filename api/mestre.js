@@ -214,8 +214,15 @@ export default async function handler(req, res) {
          O único ramo que produz isso é a fila não TER o gemini — mas de
          fora não havia como distinguir "não configurado" de "configurado e
          falhou em silêncio", porque as duas coisas devolvem a mesma
-         palavra. Uma linha aqui responde as duas para sempre. */
-      if (out.texto) { res.status(200).json({ texto: out.texto, provedor: p.id, fila: fila.map((x) => x.id) }); return; }
+         palavra. Uma linha aqui responde as duas para sempre.
+
+         E `falharam` responde a pergunta seguinte, que so apareceu depois:
+         a fila TINHA o gemini, ele estava na FRENTE, e mesmo assim quem
+         respondeu foi o deepseek. Ou seja, o reserva foi tentado e caiu —
+         em silencio, porque so o 502 (todos falharam) contava o motivo. Um
+         reserva que nunca funciona nao e um reserva: e um jogo sem Mestre
+         no dia em que o primeiro sair do ar. */
+      if (out.texto) { res.status(200).json({ texto: out.texto, provedor: p.id, fila: fila.map((x) => x.id), falharam: tentativas }); return; }
       tentativas.push(`${p.id} (${out.erro}${out.corpo ? `: ${out.corpo}` : ""})`);
     }
     res.status(502).json({ erro: `Todos os provedores falharam — ${tentativas.join(" · ")}`.slice(0, 400) });
