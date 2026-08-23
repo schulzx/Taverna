@@ -4403,3 +4403,38 @@ verificação **na tela**:
 - **Geração de imagem.** Adiado desde cedo. Exige `api/imagem.js` com a
   chave em variável de ambiente da Vercel (nunca no cliente) e IndexedDB ou
   URL externa para guardar — a cota do localStorage já está apertada.
+
+## v9.115 — dificuldade, raids, e o diálogo pela metade
+
+### O que ficou provado
+
+- **Dificuldade** em quests e masmorras: quatro patamares relativos, medidos
+  contra nível + atributo concentrado + equipamento + grupo, com teto de
+  compensação (quem apanha é o herói). O tooltip abre a conta inteira, para o
+  jogador saber se falta nível, gente ou espada. Duas portas que discordavam
+  passaram a concordar: o mapa anunciava "Poço de Raízes, nível 11" e quem
+  entrava recebia uma masmorra feita no nível do herói.
+- **Raids**: chamado com 10 a 30 convocados conforme o porte, chefe 6 a 15
+  níveis acima, horda em maré, nível mínimo dos dois lados, e a hoste inteira
+  no grupo até acabar. A rodada tem FRENTE (massa, resolvida por código) e
+  DUELO (o painel de sempre). Cem raids simuladas antes de ligar à tela.
+
+### O diálogo: o que caiu, o que foi consertado, o que falta
+
+Cinco experimentos, ~130 turnos contra a API real. **Caíram**: a voz sozinha,
+o tamanho do prompt (87 mil caracteres), o histórico (18 turnos encadeados) e
+o vazamento de envelope — nenhuma reproduziu o defeito.
+
+**Consertado e medido**: a voz taverneiro pedia "frase quebrada, fragmento sem
+verbo" e "ninguém fala bonito", e a única forma que o modelo tem de falar feio
+em português é errar concordância (2,9% → 0%). E o rótulo de sistema na boca de
+gente — duas capturas da partida: "— Você quer causar boa impressão" (rótulo de
+`desafios.js`) e "— A data chegou" (texto do envelope).
+
+**O que continua sem resposta, e é o mais provável**: os ~130 turnos foram
+TODOS servidos pelo DeepSeek. O `/api/mestre` cai para o Gemini em silêncio, e
+até agora os dois rodavam os mesmos números de temperatura e penalidade — que
+não são a mesma escala nas duas APIs. Agora cada um tem a sua variável e o
+provedor fica registrado no save. **Falta o A/B entre os dois**, e ele depende
+do deploy: em oito minutos de espera o `/api` no ar ainda respondia com o
+código antigo (o parâmetro `provedor` no corpo era ignorado).
