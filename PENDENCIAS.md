@@ -4474,3 +4474,30 @@ dificuldade no lugar do delta de nível.
   a hoste e o chefe da raid.
 - A dificuldade virou DIVISÃO em vez de subtração, e os cortes não se moveram:
   três acima ainda é Fácil, seis abaixo ainda é Difícil.
+
+## v9.117 — as quests passam a ser do Mestre
+
+Três defeitos numa partida real, na mesma missão: "matar três lobos num
+lugar que se chamava A Loja do Norte", "quando cheguei os lobos não estavam
+lá", "iam me mandando de lugar em lugar e não chegava nunca".
+
+- **O terceiro era estrutural, e é o pior que este projeto já teve.** A
+  etapa `derrotar` só CONFERIA se você tinha matado o bicho. Nada, em lugar
+  nenhum do código, fazia o bicho aparecer — a missão era um pedido ao
+  Narrador para abrir um combate que o prompt o proíbe de abrir. Ele
+  obedeceu às duas ordens da única forma possível: pegadas e sombras, para
+  sempre. Agora quem entrega é o sistema, e a etapa tem ENDEREÇO.
+- **O ninho não é na loja.** O molde da praga recebia `local`, que é o lugar
+  de TRABALHO de quem pede. Passou a receber o ermo — os pontos fora dos
+  muros, que existiam desde a v9.9 e que nenhum molde tinha lido.
+- **O mundo genérico em silêncio.** A leitura do léxico é uma chamada só, no
+  instante mais frágil do jogo, e não tinha retentativa. Agora tem duas, e
+  se as duas caírem o jogador FICA SABENDO.
+
+E a mudança que o pedido trouxe: **quest é do Mestre, mural é do mundo.** A
+trama carrega uma INTENÇÃO tirada da etapa do arco e da fase do vilão — os
+sistemas que já sabiam para onde a história ia e que nunca tinham sido
+consultados na hora de dar missão. Quando a fase do vilão pede uma batida,
+ela é a intenção, e o sorteio não opina. O que acontece no meio (a
+emboscada, o encontro, a presa) é executado pelo CÓDIGO. O mural continua
+sorteado e opcional; a trama não é.

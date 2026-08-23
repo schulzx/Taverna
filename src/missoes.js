@@ -50,11 +50,21 @@ export const ETAPAS = {
   ir_a: {
     id: "ir_a", icone: "🧭",
     texto: (e) => `Chegar a ${e.alvo}`,
-    ver: (e, m) => norm(m.cidadeAtual) === norm(e.alvo),
+    /* v9.117: o alvo pode ser um LUGAR, e não só uma cidade. Antes só se
+       conferia `cidadeAtual`, então uma missão que mandava a uma cabana,
+       a uma torre caída ou a uma boca de mina nunca cumpria a etapa —
+       o herói chegava e o diário continuava dizendo "chegar a". */
+    ver: (e, m) => (e.lugar
+      ? norm((m.lugarAtual && m.lugarAtual.nome) || m.lugarAtual) === norm(e.alvo)
+      : norm(m.cidadeAtual) === norm(e.alvo)),
   },
   derrotar: {
     id: "derrotar", icone: "⚔",
-    texto: (e) => `Derrotar ${e.alvo}${e.quantos > 1 ? ` (${e.quantos})` : ""}`,
+    /* v9.117: e ONDE. O jogador que reclamou tinha razão duas vezes: a
+       missão não dizia onde a presa estava, e o sistema não a fazia
+       aparecer. O `onde` conserta a primeira metade — a segunda é a
+       caçada, em tramas.js, que abre a luta quando ele chega ali. */
+    texto: (e) => `Derrotar ${e.alvo}${e.quantos > 1 ? ` (${e.quantos})` : ""}${e.onde ? ` — ${e.onde}` : ""}`,
     ver: (e, m) => (m.derrotados || []).filter((n) => norm(n).includes(norm(e.alvo))).length >= (e.quantos || 1),
   },
   achar: {
@@ -91,6 +101,11 @@ export function textoDaEtapa(e) { return etapaDef(e.tipo).texto(e); }
 /* ---------------- OS TIPOS DE MISSÃO ---------------- */
 export const TIPOS = {
   principal: { id: "principal", icone: "★", rotulo: "Principal", forcada: true },
+  /* v9.117: A TRAMA. É a missão do MESTRE — carrega uma intenção da
+     história e não é opcional, porque uma história que se pode recusar no
+     diário não é uma história, é um cardápio. O mural continua sendo o
+     mundo: avulso, opcional, por dinheiro. */
+  trama: { id: "trama", icone: "✦", rotulo: "Do Mestre", forcada: true },
   contrato: { id: "contrato", icone: "📋", rotulo: "Contrato", forcada: false },
   favor: { id: "favor", icone: "🤝", rotulo: "Favor", forcada: false },
   cacada: { id: "cacada", icone: "🐺", rotulo: "Caçada", forcada: true },
@@ -114,7 +129,7 @@ export const MAX_ATIVAS = 8;
    só o que ninguém combinou. E `moedasPrometidas: 0` é um combinado
    legítimo: favor por informação não paga em moeda, paga em favor. */
 export function recompensaDe({ tipo = "favor", nivel = 1, etapas = 3, moedasPrometidas = null }) {
-  const base = { contrato: 1, favor: 1.2, cacada: 1.6, principal: 2.2, global: 2.5, divina: 2.5 }[tipo] || 1;
+  const base = { contrato: 1, favor: 1.2, cacada: 1.6, trama: 1.8, principal: 2.2, global: 2.5, divina: 2.5 }[tipo] || 1;
   const peso = base * (0.7 + etapas * 0.15);
   const combinada = Number.isFinite(moedasPrometidas) && moedasPrometidas >= 0;
   return {
@@ -157,6 +172,11 @@ export function garantirMissoes(lista) {
       alvo: String(e.alvo || ""), item: String(e.item || ""),
       quantos: Math.max(1, Number(e.quantos) || 1),
       dia: Number(e.dia) || 0, relogioId: String(e.relogioId || ""), rotulo: String(e.rotulo || ""),
+      /* v9.117: ONDE a presa está, e se o alvo é um LUGAR em vez de uma
+         cidade. Sem estes dois a etapa não tem como ser entregue nem
+         conferida — e uma etapa que não pode ser cumprida é a missão dos
+         três lobos de novo. */
+      onde: String(e.onde || "").slice(0, 60), lugar: !!e.lugar,
       feito: !!e.feito,
     })).slice(0, 5),
     /* v9.38: em NOITES, não em dias — o relógio de prazo tem gatilho "noite",
@@ -171,6 +191,23 @@ export function garantirMissoes(lista) {
        Zero é "não sei": save antigo não vira nível 1 por conveniência,
        porque um diário inteiro marcado "Fácil" ensina a não olhar. */
     nivel: Math.max(0, Math.floor(Number(q.nivel) || 0)),
+    /* ---------------- A TRAMA VIAJA COM A MISSÃO (v9.117) ----------------
+       `intencao` é o que o Mestre quer que esta missão realize; `virada` é
+       o que o SISTEMA vai fazer acontecer no meio dela. Os dois moram aqui,
+       e não num registro à parte, porque foi justamente a separação entre
+       "a missão" e "o que faz a missão acontecer" que produziu uma caçada
+       de três lobos que nunca encontrava os lobos. */
+    intencao: String(q.intencao || "").slice(0, 30),
+    veiculo: String(q.veiculo || "").slice(0, 30),
+    virada: q.virada && typeof q.virada === "object" ? {
+      tipo: String(q.virada.tipo || "").slice(0, 20),
+      apos: Math.max(0, Math.floor(Number(q.virada.apos) || 0)),
+      onde: String(q.virada.onde || "").slice(0, 60),
+      papel: String(q.virada.papel || "").slice(0, 60),
+      quantos: Math.max(1, Math.floor(Number(q.virada.quantos) || 1)),
+      ameaca: String(q.virada.ameaca || "comum").slice(0, 20),
+      feita: !!q.virada.feita,
+    } : null,
     recompensa: q.recompensa || null,
     /* v9.27: veio da era em que quest era um título sem etapa. Não dá para
        conferir, então só o jogador pode encerrá-la. */
@@ -180,10 +217,10 @@ export function garantirMissoes(lista) {
   }));
 }
 
-export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status, moedasPrometidas = null, prazo = 0 }) {
+export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status, moedasPrometidas = null, prazo = 0, intencao = "", veiculo = "", virada = null }) {
   const m = garantirMissoes([{
     id, titulo, tipo, descricao, dador, etapas, criadaEm: dia, prazo: noitesDePrazo(prazo),
-    nivel,
+    nivel, intencao, veiculo, virada,
     status: status || (ehForcada(tipo) ? "ativa" : "oferecida"),
   }])[0];
   if (!m || !m.etapas.length) return null;

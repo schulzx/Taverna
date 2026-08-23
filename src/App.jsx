@@ -65,7 +65,7 @@ import { garantirCompasso, avancarCompasso, envelopeDoCompasso, resumoCompasso, 
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
-import { garantirMissoes, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
+import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { resumoArredoresPrompt, arredoresDaCidade } from "./arredores.js";
@@ -78,6 +78,7 @@ import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficie
 import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, BASE_PROMPT } from "./mundo-base.js";
 import { dificuldadeDaMasmorra, envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
 import { poderDe, poderDoItem, pontosDoItem, trocaDeItem, formatarPoder, contaDoPoder } from "./poder.js";
+import { montarTrama, viradaDevida, envelopeDaTrama, envelopeDoQueVira, intencaoDaTramaPorId } from "./tramas.js";
 import { abrirRaid, garantirRaid, rodadaDaFrente, envelopeDaConvocacao, envelopeDaRodada, envelopeDoRompimento, fimDaRaid, comitivaDaRaid, tirarComitiva, portePorId, papelPorId, podeAbrirRaid, poderDaHoste, poderDoChefe, poderDoConvocado, NIVEL_MINIMO as NIVEL_MINIMO_RAID, RAID_PROMPT } from "./raids.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
@@ -3145,11 +3146,26 @@ export default function Taverna() {
      que acontece antes de existir save para proteger. */
   const lexicoLendoRef = useRef(false);
   const [lendoMundo, setLendoMundo] = useState(false);
-  const lerOMundo = async (m) => {
+  /* ---------------- A LEITURA DO MUNDO (v9.117) ----------------
+     Ela tem DUAS chances, e o silêncio acabou.
+
+     Um jogador escreveu "universo de solo leveling", o léxico não veio, e
+     o mundo nasceu medieval — sem que nada na tela dissesse por quê. Ele
+     jogou a partida inteira achando que a descrição não servia para nada.
+
+     A causa mais provável é a mais banal: uma chamada que falhou. É uma
+     chamada só, no instante mais frágil do jogo (a criação), e não tinha
+     retentativa nenhuma. Agora tem duas tentativas — e se as duas caírem,
+     o jogador FICA SABENDO. Um mundo genérico é um desfecho aceitável; um
+     mundo genérico em segredo não é, porque o jogador não tem como
+     distinguir "o sistema ignorou o que eu escrevi" de "o sistema tentou
+     e falhou", e a primeira leitura é a que ele vai fazer. */
+  const lerOMundo = async (m, { tentativa = 1 } = {}) => {
     if (!m || lexicoLendoRef.current) return;
     lexicoLendoRef.current = true; setLendoMundo(true);
+    let conseguiu = false;
     try {
-            /* v9.113: 8.192, que é o teto do próprio `api/mestre.js`. Eram
+      /* v9.113: 8.192, que é o teto do próprio `api/mestre.js`. Eram
          3.000, e as etapas 7 e 9 puseram `equipamento` (17 formas) e
          `racas` (16) no pedido: o JSON completo passou de ~9 mil para
          15.371 caracteres e o modelo era cortado no meio de `nomes`.
@@ -3160,20 +3176,22 @@ export default function Taverna() {
          campos da narração e descartaria isto inteiro, em silêncio. */
       const lex = lerLexico(lexicoDoTexto(texto));
       if (lex.gerado) {
+        conseguiu = true;
         mundoRef.current = { ...(mundoRef.current || m), lexico: lex };
         setMundo((v) => ({ ...(v || m), lexico: lex }));
       }
     } catch (e) {
-      /* fica genérico, e isso é um desfecho previsto — não um erro a
-         mostrar. O jogador não pediu um léxico; ele pediu um mundo.
-
-         Mas no DESENVOLVIMENTO ele aparece: este `catch` mudo escondeu
-         por uma etapa inteira o léxico sendo descartado por corte de
-         token, e "o mundo ficou genérico" não é um sintoma que alguém
-         perceba olhando. */
+      /* no DESENVOLVIMENTO ele aparece: este `catch` mudo escondeu por uma
+         etapa inteira o léxico sendo descartado por corte de token, e "o
+         mundo ficou genérico" não é um sintoma que alguém perceba. */
       calou("lerOMundo", e);
     } finally { lexicoLendoRef.current = false; setLendoMundo(false); }
+
+    if (conseguiu) return;
+    if (tentativa < 2) { await lerOMundo(m, { tentativa: tentativa + 1 }); return; }
+    pushMsgs([{ autor: "sistema", texto: `🌍 Não consegui ler o seu mundo — ${m.genero === "Universo próprio" ? "a sua descrição" : "o gênero escolhido"} não virou vocabulário próprio, e a campanha começa com o genérico. Comece uma campanha nova para tentar de novo; o texto que você escreveu é o que alimenta essa leitura, e quanto mais concreto ele for, melhor ela sai.` }]);
   };
+
   const sementeMundo = () => `${nomeCampanhaRef.current || nomeCampanha || "aventura"}|${(mundoAtual() && mundoAtual().genero) || ""}`;
   const generoMundo = () => (mundoAtual() && mundoAtual().genero) || "Fantasia medieval";
   /* v9.40: a FORMA do mundo desta campanha. Todo gerador que fala de lugar
@@ -4489,6 +4507,8 @@ export default function Taverna() {
       emMasmorra: !!(mm && !mm.encerrada),
       /* v9.115: há um chamado em curso? É a porta da raid. */
       emRaid: !!(raidRef.current && raidRef.current.fase === "luta"),
+      /* v9.117: há uma missão DO SISTEMA aberta? É a porta da trama. */
+      temTrama: (missoesRef.current || []).some((m) => m && m.status === "ativa" && m.tipo === "trama"),
       /* v9.106: há alguém em cena? É a porta do Intérprete. */
       temGente: pessoasDaCena().length > 0,
       temVilao: !!(nemesisRef.current && nemesisRef.current.nome),
@@ -5009,7 +5029,7 @@ export default function Taverna() {
       combate: combateRef.current, registro: registroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
-      masmorra: masmorraRef.current, raid: raidRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
+      masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
       historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
@@ -6580,6 +6600,10 @@ export default function Taverna() {
     const p = persAtual || personagemRef.current || personagem || {};
     return {
       cidadeAtual: cidadeAtualRef.current,
+      /* v9.117: e ONDE dentro dela. Uma etapa que manda a uma cabana, a
+         uma torre caída ou a uma boca de mina não tem como ser conferida
+         por `cidadeAtual` — o herói chegava e o diário não sabia. */
+      lugarAtual: lugarRef.current || null,
       derrotados: [...((baseMundoRef.current || {}).mortos || []), ...(derrotadosDaSessaoRef.current || [])],
       inventario: p.inventario || [], equipamento: p.equipamento || [],
       npcs: npcsRef.current, dia: diaRef.current, relogios: relogiosRef.current,
@@ -7265,6 +7289,19 @@ export default function Taverna() {
        nunca um laço: se a frente resolvesse tudo de uma vez, o jogador
        leria o desfecho da raid em vez de atravessá-lo. */
     const daFrente = String(conteudo || "").trimStart().startsWith("[RAID") ? "" : rodarAFrente();
+    /* A MISSÃO DO MESTRE E A VIRADA DELA (v9.117), no mesmo ponto em que
+       todo sistema de turno anda. A ordem importa: primeiro se VIRA o que
+       já estava em curso (a emboscada, a presa que aparece) e só depois se
+       dá missão nova — senão o turno em que a caçada acontece seria também
+       o turno em que uma trama nova chega, e as duas dividiriam a cena. */
+    /* A VIRADA NÃO TEM GUARDA DE COLCHETE, e a primeira versão tinha —
+       custou a prova na tela. O turno em que o jogador continua depois de
+       uma rolagem chega como "[ROLAGEM] …", e é exatamente o turno em que
+       ele acabou de PROCURAR a praga: com o guarda, a caçada não
+       disparava justamente na hora em que devia. Ela já é idempotente
+       (`cacadasFeitasRef`), então o guarda não protegia de nada. */
+    const daVirada = talvezVirar();
+    const daTrama = daVirada ? "" : (String(conteudo || "").trimStart().startsWith("[") ? "" : talvezDarUmaTrama());
     /* v9.104: A PAUTA VEM NA FRENTE. Ela é o que o SISTEMA decidiu, e o
        Narrador precisa saber ONDE a cena acontece antes de ler qualquer
        instrução sobre o que fazer nela — a ordem importa para quem lê.
@@ -7278,7 +7315,7 @@ export default function Taverna() {
     /* guardado antes da resposta: "a luta acabou neste turno" é a
        diferença entre o que havia e o que ficou */
     const combateAntes = !!combateRef.current;
-    const nota = [pauta, oficina, notaRef.current, doCompasso, formaDaCena, daFrente].filter(Boolean).join("\n");
+    const nota = [pauta, oficina, notaRef.current, doCompasso, formaDaCena, daFrente, daVirada, daTrama].filter(Boolean).join("\n");
     notaRef.current = "";
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
     /* RODAPÉ DO SISTEMA (v7.0.2): lembrete curto colado SÓ na mensagem atual
@@ -7877,6 +7914,13 @@ export default function Taverna() {
          é a catraca — save antigo não tem o campo e vira null, e um save
          torto vira uma raid coerente em vez de derrubar o carregamento. */
       raidRef.current = sv.raid ? garantirRaid(sv.raid) : null; setRaid(raidRef.current);
+      /* v9.117: o que a trama precisa LEMBRAR entre sessões. Sem isto, um
+         save recarregado reabriria a mesma caçada e repetiria a mesma
+         intenção — apresentar o rosto do vilão duas vezes não é uma
+         repetição, é desfazer a primeira. */
+      cacadasFeitasRef.current = Array.isArray(sv.cacadasFeitas) ? sv.cacadasFeitas : [];
+      tramasFeitasRef.current = Array.isArray(sv.tramasFeitas) ? sv.tramasFeitas : [];
+      intencoesFeitasRef.current = Array.isArray(sv.intencoesFeitas) ? sv.intencoesFeitas : [];
       muralRef.current = Array.isArray(sv.mural) ? sv.mural : []; setMural(muralRef.current);
       decretosRef.current = Array.isArray(sv.decretos) ? sv.decretos : []; setDecretos(decretosRef.current);
       diaRef.current = sv.dia || 1; setDia(diaRef.current);
@@ -10186,6 +10230,222 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      A recompensa é paga AQUI, por código, e o envelope avisa o Mestre para
      não pagar de novo. Antes, terminar uma missão da história era
      exatamente igual a abandoná-la: nada acontecia dos dois jeitos. */
+  /* ============================================================
+     O MESTRE DÁ UMA MISSÃO (v9.117)
+
+     "as quests serão do mestre, mural do mundo … a quest acompanha a
+     intenção do mestre e do mundo, não serão mais eventos aleatórios."
+
+     A diferença com `talvezOferecerTrabalho` (o mural) é toda a diferença
+     do pedido: lá se sorteia um molde a partir de quem está por perto, e o
+     resultado é o que for. Aqui se pergunta primeiro O QUE A HISTÓRIA
+     PRECISA agora — pela etapa do arco, pela fase do vilão e pelo
+     movimento da onda —, e só então se procura um veículo que sirva.
+
+     Uma por vez. Duas tramas abertas seriam duas intenções competindo
+     pela mesma cena, e o Mestre passaria a ter dois planos.
+     ============================================================ */
+  const tramasFeitasRef = useRef([]);
+  const intencoesFeitasRef = useRef([]);
+
+  const materialDaTrama = () => {
+    try {
+      const aqui = oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);
+      const cid = ((mapaRef.current || {}).cidades || []);
+      const vizinhas = cid.filter((c) => c.descoberta && c.nome !== cidadeAtualRef.current);
+      const fora = cidadeAtualRef.current ? arredoresDaCidade(sementeMundo(), (aqui && aqui.cidade) || { nome: cidadeAtualRef.current }) : [];
+      const gente = (aqui && aqui.gente) || [];
+      const conhecidos = Object.values(npcsRef.current || {}).filter((n) => n && n.nome && String(n.status || "").toLowerCase() !== "morto");
+      /* quem PEDE é de preferência alguém que o herói já conhece: um pedido
+         de estranho é um cartaz, e cartaz é o mural */
+      const pessoa = conhecidos.length ? { nome: conhecidos[0].nome, papel: conhecidos[0].papel || "" }
+        : (gente.length ? gente[0] : null);
+      return {
+        cidade: vizinhas.length ? vizinhas[0] : null,
+        pessoa,
+        local: ((aqui && aqui.locais) || [])[0] || null,
+        criatura: ((aqui && aqui.criaturas) || [])[0] || null,
+        /* O ERMO, e não um local da cidade. Foi aqui que nasceu "Praga em A
+           Loja do Norte": o material entregava o LUGAR DE TRABALHO de quem
+           pedia, e um ninho de bicho não se faz numa loja. */
+        ermo: fora.length ? fora[Math.floor(Math.random() * fora.length)] : null,
+        sumido: nomePessoa(generoMundo(), undefined, Math.random, (mundoAtual() || {}).lexico),
+        objeto: "pacote lacrado",
+      };
+    } catch { return {}; }
+  };
+
+  const situacaoDaTrama = () => {
+    const h = historiaRef.current || {};
+    const est = estruturaPorId(h.estrutura);
+    const nEt = Math.max(1, (est.etapas || []).length - 1);
+    const v = nemesisRef.current;
+    const vivo = v && v.status !== "derrotada" && v.nome;
+    const c = garantirCompasso(compassoRef.current);
+    const p0 = fichaViva() || personagem || {};
+    return {
+      momento: (Number(h.etapa) || 0) / nEt,
+      faseVilao: vivo ? v.fase : "",
+      temVilao: !!vivo, vilaoConhecido: !!(vivo && v.conhecido),
+      movimento: c.movimento, assunto: c.assunto,
+      temGrupo: (p0.grupo || []).length > 0,
+      temCidadeVizinha: (((mapaRef.current || {}).cidades) || []).some((x) => x.descoberta && x.nome !== cidadeAtualRef.current),
+      temGenteConhecida: Object.keys(npcsRef.current || {}).length > 0,
+      temPromessaAberta: (missoesAtivas(missoesRef.current) || []).length > 0,
+      nivel: p0.nivel || 1,
+      intencoesFeitas: intencoesFeitasRef.current,
+      tramasFeitas: tramasFeitasRef.current,
+    };
+  };
+
+  const talvezDarUmaTrama = () => {
+    try {
+      if (combateRef.current || masmorraRef.current || acampadoRef.current || raidRef.current) return "";
+      /* uma por vez */
+      if ((missoesRef.current || []).some((m) => m.status === "ativa" && m.tipo === "trama")) return "";
+      /* e não no respiro: o respiro existe para NÃO haver nada em jogo */
+      const c = garantirCompasso(compassoRef.current);
+      if (c.movimento === "respiro") return "";
+      const t = montarTrama({ situacao: situacaoDaTrama(), material: materialDaTrama() });
+      if (!t) return "";
+      const m = criarMissao({
+        id: `${t.id}_${diaRef.current}`, titulo: t.titulo, tipo: "trama", status: "ativa",
+        descricao: t.descricao, dador: t.dador, etapas: t.etapas,
+        nivel: t.nivel, dia: diaRef.current,
+        intencao: t.intencao, veiculo: t.veiculo, virada: t.virada,
+      });
+      if (!m) return "";
+      missoesRef.current = [...(missoesRef.current || []), m]; setMissoes(missoesRef.current);
+      intencoesFeitasRef.current = [...intencoesFeitasRef.current, t.intencao].slice(-12);
+      tramasFeitasRef.current = [...tramasFeitasRef.current, t.veiculo].slice(-8);
+      pushMsgs([{ autor: "sistema", texto: `✦ ${m.titulo} — entrou no diário. Esta é do Mestre: não se recusa.` }]);
+      return envelopeDaTrama(t);
+    } catch (e) { calou("talvezDarUmaTrama", e); return ""; }
+  };
+
+  /* ============================================================
+     A VIRADA ACONTECE (v9.117) — o conserto dos três lobos
+
+     "quando cheguei os lobos não estavam lá … iam me mandando de lugar em
+     lugar atrás dos lobos e não chegava nunca, o mestre narrava pegadas e
+     sombras."
+
+     A etapa `derrotar` só CONFERIA. Nada, em lugar nenhum do código,
+     fazia o bicho aparecer — a missão era um pedido ao Narrador para
+     abrir um combate que o prompt o proíbe de abrir. Ele fez a única
+     coisa possível com duas ordens contrárias: narrou pegadas para
+     sempre.
+
+     Daqui em diante quem entrega é o SISTEMA. Duas réguas, porque são
+     dois momentos diferentes:
+
+       POR ETAPA   a escolta chega à cidade e a emboscada abre. A virada é
+                   `apos: N` e dispara quando a etapa N é cumprida.
+
+       POR LUGAR   a caçada. Não dá para esperar a etapa, porque a etapa É
+                   matar o bicho: ela dispara quando o herói PISA no lugar
+                   marcado, e é isso que impede a caçada eterna.
+     ============================================================ */
+  /* ONDE EU ESTOU são DOIS nomes, e a caçada tem de aceitar os dois. O
+     herói está na Praça de Escambo, DENTRO de Baixo do Eco: uma caçada
+     endereçada à cidade tem de valer em qualquer canto dela, e uma
+     endereçada a um ponto do ermo não pode valer na cidade. Testar só o
+     nome mais interno reprovava a primeira; testar só a cidade aprovaria
+     a segunda em lugar errado. */
+  const ondeEstou = () => [(lugarRef.current && lugarRef.current.nome) || "", cidadeAtualRef.current || ""].filter(Boolean);
+  const mesmoLugar = (a, b) => {
+    const n = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/^(a|o|as|os)\s+/, "").trim();
+    return !!n(a) && !!n(b) && (n(a) === n(b) || n(a).includes(n(b)) || n(b).includes(n(a)));
+  };
+
+  /* A caçada já entregue, para não abrir a mesma luta duas vezes se o
+     jogador sair do lugar e voltar. Viaja no save. */
+  const cacadasFeitasRef = useRef([]);
+
+  /* A PRESA APARECE, e isto vale para TODA missão ativa — inclusive as do
+     mural. A queixa que originou tudo isto era de um trabalho de mural, e
+     consertar só as tramas deixaria o defeito de pé exatamente onde ele
+     foi encontrado. Basta a etapa dizer ONDE. */
+  const talvezCacar = () => {
+    if (combateRef.current || acampadoRef.current || masmorraRef.current || raidRef.current) return "";
+    for (const m of (missoesRef.current || [])) {
+      if (m.status !== "ativa") continue;
+      const i = (m.etapas || []).findIndex((e) => e && !e.feito);
+      const e = i >= 0 ? m.etapas[i] : null;
+      if (!e || e.tipo !== "derrotar" || !e.onde) continue;
+      const chave = `${m.id}|${i}`;
+      if (cacadasFeitasRef.current.includes(chave)) continue;
+      if (!ondeEstou().some((x) => mesmoLugar(x, e.onde))) continue;
+      const quantos = Math.max(1, Number(e.quantos) || 1);
+      const inimigos = Array.from({ length: quantos }, (_, k) => ({
+        nome: quantos > 1 ? `${e.alvo} ${k + 1}` : e.alvo,
+        ameaca: (m.virada && m.virada.ameaca) || "comum",
+      }));
+      const ab = abrirCombate(inimigos, { pers: personagemRef.current });
+      if (ab.msgs.length) pushMsgs(ab.msgs.map((x) => ({ autor: "sistema", texto: x })));
+      if (ab.pers) { setPersonagem(ab.pers); personagemRef.current = ab.pers; }
+      cacadasFeitasRef.current = [...cacadasFeitasRef.current, chave].slice(-40);
+      pushMsgs([{ autor: "sistema", texto: `⚔ ${e.alvo}${quantos > 1 ? ` — são ${quantos}` : ""}. Estavam aqui.` }]);
+      if (m.virada && !m.virada.feita) {
+        m.virada = { ...m.virada, feita: true };
+        missoesRef.current = [...missoesRef.current]; setMissoes(missoesRef.current);
+      }
+      return `${envelopeDoQueVira({ tipo: "cacada" }, { alvo: e.alvo })}${ab.nota ? `\n${ab.nota}` : ""}`;
+    }
+    return "";
+  };
+
+  const talvezVirar = () => {
+    let env = talvezCacar();
+    if (env) return env;
+    const ms = missoesRef.current || [];
+    for (const m of ms) {
+      if (m.status !== "ativa" || !m.virada || m.virada.feita) continue;
+      const v = m.virada;
+      const feitas = (m.etapas || []).filter((e) => e.feito).length;
+      const vilao = nemesisRef.current;
+      const nomeDoVilao = vilao && vilao.status !== "derrotada" && vilao.conhecido ? vilao.nome : "";
+
+      /* a caçada já foi entregue por `talvezCacar`, que vale para TODA
+         missão com endereço — inclusive as do mural, que foi de onde a
+         queixa veio. Consertar só as tramas deixaria o defeito de pé
+         exatamente no lugar em que ele foi encontrado. */
+      if (v.tipo === "cacada") continue;
+
+      const devida = viradaDevida(m, { etapasFeitas: feitas });
+      if (!devida) continue;
+
+      if (devida.tipo === "emboscada") {
+        if (combateRef.current || acampadoRef.current) continue;
+        const quantos = Math.max(1, devida.quantos || 3);
+        const inimigos = Array.from({ length: quantos }, (_, i) => ({
+          nome: nomeDoVilao ? `Homem de ${nomeDoVilao} ${i + 1}` : `Emboscador ${i + 1}`,
+          ameaca: devida.ameaca || "competente",
+        }));
+        const ab = abrirCombate(inimigos, { pers: personagemRef.current });
+        if (ab.msgs.length) pushMsgs(ab.msgs.map((t) => ({ autor: "sistema", texto: t })));
+        if (ab.pers) { setPersonagem(ab.pers); personagemRef.current = ab.pers; }
+        pushMsgs([{ autor: "sistema", texto: `⚔ ${devida.onde || "No caminho"}: fecham a passagem — são ${quantos}.` }]);
+        env += `${env ? "\n" : ""}${envelopeDoQueVira(devida, { vilao: nomeDoVilao })}${ab.nota ? `\n${ab.nota}` : ""}`;
+      } else if (devida.tipo === "encontro" || devida.tipo === "revelacao") {
+        /* encontro e revelação NÃO abrem combate: entregam a cena, e o que
+           se decide nela continua sendo do jogador. Os dois são nomeados
+           aqui de propósito — um tipo declarado em tramas.js e sem leitor
+           deste lado é uma virada que não acontece, que é exatamente o
+           defeito que a etapa `derrotar` era. O teste confere os dois
+           lados justamente por isso. */
+        const quem = devida.tipo === "encontro"
+          ? (nomeDoVilao && intencaoDaTramaPorId(m.intencao) && /rosto|guerra/.test(String(nemesisRef.current.fase || "")) ? nomeDoVilao : "")
+          : "";
+        env += `${env ? "\n" : ""}${envelopeDoQueVira(devida, { quem })}`;
+        pushMsgs([{ autor: "sistema", texto: `✦ ${m.titulo}: a coisa vira aqui.` }]);
+      }
+      m.virada = { ...devida, feita: true };
+    }
+    if (env) { missoesRef.current = [...ms]; setMissoes(missoesRef.current); }
+    return env;
+  };
+
   const conferirAsMissoes = (persAtual) => {
     const p = persAtual || personagemRef.current || personagem || {};
     const r = conferirMissoes(missoesRef.current, mundoDasMissoes(p));

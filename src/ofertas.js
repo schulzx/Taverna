@@ -44,6 +44,7 @@
 
 import { rngDe } from "./geografia.js";
 import { nomePessoa } from "./nomes.js";
+import { arredoresDaCidade } from "./arredores.js";
 import { oQueExisteAqui, idDaGente } from "./mundo-base.js";
 import { criaturasDoGenero } from "./bestiario.js";
 import { recompensaDe, noitesDePrazo } from "./missoes.js";
@@ -98,7 +99,7 @@ export const MOLDES = [
   {
     id: "cacada", tipo: "contrato", icone: "🏹", risco: 1.2, prazo: 0, precisa: ["criatura"],
     vontades: ["vingança", "medo de dormir", "lembrado por algo", "coragem"],
-    montar: ({ pessoa, criatura, aqui }) => ({
+    montar: ({ pessoa, criatura, aqui, ermo }) => ({
       titulo: `A caçada de ${pessoa.nome}`,
       /* o comportamento da criatura vem da base e às vezes DIZ a mesma coisa
          que a metade de cima da frase — "Atirador ronda os arredores —
@@ -108,17 +109,23 @@ export const MOLDES = [
         const como = String(criatura.comportamento || "").trim();
         return `${abertura}${acrescenta(como, abertura) ? ` — ${como}` : ""}. ${pessoa.nome} quer o bicho morto.`;
       })(),
-      etapas: [{ tipo: "derrotar", alvo: criatura.nome, quantos: 1 }],
+      etapas: [{ tipo: "derrotar", alvo: criatura.nome, quantos: 1, onde: (ermo && ermo.nome) || "" }],
       gancho: `${pessoa.nome} ${pessoa.vontade}, e a caçada tem a ver com isso`,
     }),
   },
   {
     id: "praga", tipo: "contrato", icone: "🧹", risco: 1.6, prazo: 6, precisa: ["criatura"],
     vontades: ["protege alguém", "cuida de um filho", "trai o patrão"],
-    montar: ({ pessoa, criatura, local }) => ({
-      titulo: `Praga em ${local.nome}`,
-      descricao: `${criatura.nome} se multiplicou perto de ${local.nome} — são três, pelo menos. ${pessoa.nome} quer o lugar limpo.`,
-      etapas: [{ tipo: "derrotar", alvo: criatura.nome, quantos: 3 }],
+    montar: ({ pessoa, criatura, local, ermo }) => ({
+      /* O NINHO NÃO É NA LOJA (v9.117). Este molde recebia `local`, que é o
+         LUGAR DE TRABALHO de quem pede — e foi assim que uma partida real
+         ganhou "Praga em A Loja do Norte" e três lobos dentro de um
+         comércio. O ninho é no ERMO, que é onde bicho faz ninho, e o
+         `onde` da etapa é o que permite ao sistema fazer a presa aparecer
+         quando o herói chegar lá. */
+      titulo: `Praga ${ermo && ermo.nome ? `em ${ermo.nome}` : "nos arredores"}`,
+      descricao: `${criatura.nome} se multiplicou ${ermo && ermo.nome ? `em ${ermo.nome}` : "nos arredores"} — são três, pelo menos. ${pessoa.nome} quer o lugar limpo${local && local.nome ? `: é perto demais de ${local.nome}` : ""}.`,
+      etapas: [{ tipo: "derrotar", alvo: criatura.nome, quantos: 3, onde: (ermo && ermo.nome) || "" }],
       gancho: `${pessoa.nome} ${pessoa.vontade}, e a praga ameaça exatamente isso`,
     }),
   },
@@ -208,7 +215,7 @@ function afinidade(molde, vontade) {
 
 /* ---------------- O MATERIAL ----------------
    Tudo o que um molde pode pedir, retirado do mundo que já existe. */
-function materialDe({ rnd, pessoa, aqui, mapa, genero, nivel, molde = null, lex = null }) {
+function materialDe({ rnd, semente, pessoa, aqui, mapa, genero, nivel, molde = null, lex = null }) {
   const bichos = (aqui.criaturas || []).filter((c) => (c.nivel || 1) <= nivel + 3);
   const banco = criaturasDoGenero(genero).filter((c) => (c.nivelRef || 1) <= nivel + 3);
   const criatura = bichos.length ? pick(rnd, bichos)
@@ -219,8 +226,13 @@ function materialDe({ rnd, pessoa, aqui, mapa, genero, nivel, molde = null, lex 
   const vizinhos = (aqui.gente || []).filter((p) => p.nome !== pessoa.nome);
   const outro = vizinhos.length ? pick(rnd, vizinhos) : null;
   const local = (aqui.locais || []).find((l) => l.nome === pessoa.local) || (aqui.locais || [])[0] || { nome: pessoa.local || aqui.cidade.nome };
+  /* O ERMO — os pontos FORA dos muros, que já existiam desde a v9.9 e que
+     nenhum molde tinha lido. É onde bicho faz ninho e onde gente some, e
+     é a diferença entre uma caçada que tem endereço e uma que não tem. */
+  const fora = arredoresDaCidade(semente, aqui.cidade);
+  const ermo = fora.length ? pick(rnd, fora) : null;
   return {
-    criatura, cidade, segredo, outro, local,
+    criatura, cidade, segredo, outro, local, ermo,
     objeto: segredo ? (OBJETO_DO_SEGREDO[segredo.tipo] || "objeto guardado") : null,
     /* quem sumiu não está na base: é alguém de fora, e por isso nasce aqui
        com nome próprio — determinístico, para nunca trocar de nome.
@@ -286,7 +298,7 @@ export function precoDaOferta({ tipo, nivel, etapas, risco }) {
 export function ofertaDePessoa({ semente, pessoa, aqui, mapa, genero = "Fantasia medieval", nivel = 1, molde: moldeDoMundo = null, lex = null }) {
   if (!pessoa || !pessoa.nome || !aqui || !aqui.cidade) return null;
   const rnd = rngDe(`${semente}|oferta|${idDaGente(aqui.cidade.nome, pessoa)}`);
-  const mat = materialDe({ rnd, pessoa, aqui, mapa, genero, nivel, molde: moldeDoMundo, lex });
+  const mat = materialDe({ rnd, semente, pessoa, aqui, mapa, genero, nivel, molde: moldeDoMundo, lex });
   const possiveis = MOLDES.filter((m) => temMaterial(m, mat));
   if (!possiveis.length) return null;
   /* sorteio com peso: o molde que atende a vontade dela sai três vezes

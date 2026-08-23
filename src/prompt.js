@@ -39,6 +39,7 @@ import { MISSOES_PROMPT } from "./missoes.js";
 import { OFERTAS_PROMPT } from "./ofertas.js";
 import { RAID_PROMPT } from "./raids.js";
 import { PODER_PROMPT } from "./poder.js";
+import { TRAMAS_PROMPT } from "./tramas.js";
 import { LUGAR_PROMPT } from "./lugar.js";
 import { COMODOS_PROMPT } from "./comodos.js";
 import { ARREDORES_PROMPT } from "./arredores.js";
@@ -210,6 +211,12 @@ export const PORTAS_DA_CENA = [
      como as PESSOAS reagem ao tamanho do herói, e dentro de uma luta
      isso não decide nada — quem decide é o dado. Fora dela, decide tudo. */
   { id: "porte", quando: (c) => !!c.temGente && !c.emCombate, porque: "o tamanho do herói aparece em como as pessoas o tratam, e dentro de uma luta quem responde é o dado" },
+  /* v9.117: a porta da TRAMA. A regra fala das missões DO SISTEMA — a
+     intenção obrigatória, a virada que chega pronta, a proibição de
+     resolver com pegadas. Sem trama aberta ela é uma instrução sobre
+     coisa nenhuma, e a porta `missao` era larga demais: ela abre também
+     para o mural, que é justamente o que esta regra NÃO governa. */
+  { id: "trama", quando: (c) => !!c.temTrama, porque: "a missão do sistema só tem regra enquanto existe uma aberta; o mural é outra coisa" },
 ];
 
 /* Devolve um mapa {id: boolean}. O `cena` vazio abre TODAS as portas, e
@@ -366,6 +373,8 @@ ${so("chao", CHAO_PROMPT)}
 ${so("missao", MISSOES_PROMPT)}
 
 ${so("missao", OFERTAS_PROMPT)}
+
+${so("trama", TRAMAS_PROMPT)}
 
 ${so("raid", RAID_PROMPT)}
 
