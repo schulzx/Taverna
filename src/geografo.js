@@ -37,9 +37,11 @@
    Narrador, e continuará sendo.
    ============================================================ */
 
-import { ondeEstou } from "./rastro.js";
+import { ondeEstou, pontoDoHeroi } from "./rastro.js";
 import { linhaDeLugar } from "./lugar.js";
 import { comoChamam } from "./lexico.js";
+import { garantirCoord, coordDe, kmEntre, rumoEntre, enderecoDe, maisPertoDe, linhaDePonto, formatarDistancia } from "./coordenadas.js";
+import { arredoresDaCidade } from "./arredores.js";
 
 /* ---------------- A SITUAÇÃO DO ESPAÇO ----------------
    Trinta campos que os `quando` do acervo sabem ler. Vale aqui a
@@ -303,6 +305,132 @@ export function linhaDoLugar(ctx = {}) {
   return partes.join(" · ");
 }
 
+/* ============================================================
+   O RASTREIO (v9.118) — o Geógrafo assume as coordenadas
+
+   Até aqui este arquivo respondia ONDE SE ESTÁ com um NOME: "em Baixo do
+   Eco", "a caminho de Rio do Sul", "dentro da Cripta, câmara 3". É a
+   resposta certa para uma pessoa e a resposta errada para um sistema,
+   porque nome não se subtrai. Com nome não dá para perguntar quanto
+   falta, para que lado fica, o que está mais perto, se alguém teve tempo
+   de chegar — e essas quatro perguntas são exatamente as que o mundo
+   errava quando errava lugar.
+
+   Agora o Geógrafo é o dono da POSIÇÃO: a do herói e a de quem faz parte
+   da história. Ele não guarda coordenada nenhuma — quem guarda são o
+   mapa, o lugar e a jornada, cada um do seu jeito e desde sempre. Ele
+   junta os três num ponto só, e é esse ponto que a tela desenha e que o
+   Mestre recebe em TODO turno.
+
+   POR QUE UM PONTO E NÃO UMA LISTA DE NOMES: porque um ponto responde
+   sozinho as perguntas que ninguém tinha como fazer. O moinho fica a
+   dois quilômetros e meio a nordeste. A cidade vizinha fica a cento e
+   quarenta e oito a leste, e portanto ninguém veio de lá esta manhã. O
+   herói andou sessenta e dois dos cento e oitenta quilômetros da
+   estrada, e por isso ainda não se avistam os telhados.
+   ============================================================ */
+
+const semAc = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+
+/* Quantos pontos vizinhos entram na linha. Três: o suficiente para o
+   Mestre saber para onde se pode ir daqui, e pouco o bastante para a
+   linha caber num orçamento de prompt que já está no talo. */
+export const VIZINHOS_NA_LINHA = 3;
+
+/* Abaixo disto não se "vai" a lugar nenhum: é a mesma praça, o mesmo
+   quarteirão, o mesmo prédio. Um vizinho a duzentos metros do herói que
+   está dentro da cidade é a própria cidade, e a linha ONDE já a nomeou. */
+export const PASSO_QUE_NAO_CONTA = 0.4;   // km
+
+/* Onde o herói está, como coordenada. `null` quando o mundo ainda não
+   tem mapa — e `null` é a resposta honesta, não o centro do pergaminho. */
+export function posicaoDoHeroi(ctx = {}) {
+  const eu = pontoDoHeroi({
+    cidadeAtual: ctx.cidadeAtual, jornada: ctx.jornada, mapa: ctx.mapa,
+    lugar: ctx.lugar, masmorra: ctx.masmorra,
+  });
+  if (!eu) return null;
+  return { coord: garantirCoord(eu.coord || eu), naEstrada: !!eu.naEstrada, de: eu.de || null, para: eu.para || null, fracao: Number(eu.fracao) || 0 };
+}
+
+/* Tudo que tem posição e nome perto do herói: os arredores da cidade em
+   que ele está e os assentamentos que ele conhece. Nada é inventado aqui
+   — são os mesmos pontos que o pergaminho desenha. */
+export function pontosDoMundo(ctx = {}) {
+  const cidades = ((ctx.mapa && ctx.mapa.cidades) || []).filter((c) => c && c.nome && c.descoberta !== false && c.x != null);
+  /* O CINTURÃO É DE QUEM ESTÁ NA CIDADE. Durante a viagem `cidadeAtual`
+     continua sendo a de ONDE SE SAIU — é a convenção da jornada desde a
+     v9.29 —, e a primeira tela na estrada trouxe "o poço fundo (a
+     nordeste, 671 km)" na lista do que está por perto. Um moinho a
+     seiscentos quilômetros não é vizinho de ninguém: é o cinturão de uma
+     cidade que ficou três dias para trás. Na estrada, só assentamentos. */
+  const aqui = ctx.jornada ? null : (cidades.find((c) => semAc(c.nome) === semAc(ctx.cidadeAtual)) || null);
+  const fora = aqui ? arredoresDaCidade(ctx.semente || "", aqui) : [];
+  return [
+    ...fora.map((a) => ({ nome: a.nome, tipo: "arredor", coord: coordDe(a) })),
+    ...cidades.map((c) => ({ nome: c.nome, tipo: "assentamento", coord: coordDe(c) })),
+  ];
+}
+
+/* O pacote do turno. Uma chamada, e dela saem a linha do Mestre e o que
+   a tela desenha — porque duas contas da mesma posição é como nasce o
+   marcador que discorda do texto. */
+export function rastrearOTurno(ctx = {}) {
+  const eu = posicaoDoHeroi(ctx);
+  if (!eu || !eu.coord) return null;
+  /* Nem o chão que se pisa nem o lugar em que se está entram na lista do
+     que está PERTO: dizer "você está a zero metros de você" gasta prompt
+     para não informar nada, e foi o que apareceu na primeira tela — "Baixo
+     do Eco (0 m, 1 min a pé)" logo abaixo de "você está em Baixo do Eco".
+
+     Quem peneira é a DISTÂNCIA, e não o nome. A primeira versão tirava a
+     cidade atual pelo nome, e isso apagava a informação mais útil que o
+     herói fora dos muros pode receber: a que lado e a que distância fica a
+     cidade a que ele vai voltar. Pela distância, o mesmo filtro acerta os
+     dois casos — dentro dos muros ela está a zero e sai; da fazenda ela
+     está a dois quilômetros e meio e fica.
+
+     O nome só peneira o LUGAR em que se está, porque ele costuma ser um
+     dos pontos da lista (a fazenda é um arredor) e por um fio de
+     arredondamento poderia escapar da peneira de distância.
+
+     Na ESTRADA nem uma peneira nem outra tiram a origem: ela é um vizinho
+     de verdade, com um lado e uma distância que crescem a cada avanço. */
+  const daqui = eu.naEstrada ? new Set() : new Set([semAc((ctx.lugar && ctx.lugar.nome) || "")].filter(Boolean));
+  const perto = maisPertoDe(eu.coord, pontosDoMundo(ctx), { quantos: VIZINHOS_NA_LINHA + 3 })
+    .filter((p) => !daqui.has(semAc(p.nome)) && p.km > PASSO_QUE_NAO_CONTA)
+    .slice(0, VIZINHOS_NA_LINHA);
+  const marcha = eu.naEstrada && eu.de && eu.para ? {
+    rumo: rumoEntre(coordDe(eu.de), coordDe(eu.para)),
+    feitos: kmEntre(coordDe(eu.de), eu.coord),
+    faltam: kmEntre(eu.coord, coordDe(eu.para)),
+    de: eu.de.nome, para: eu.para.nome,
+  } : null;
+  return { coord: eu.coord, endereco: enderecoDe(eu.coord, { z: true }), naEstrada: eu.naEstrada, marcha, perto };
+}
+
+/* ---------------- AS DUAS LINHAS, E POR QUE SÃO DUAS ----------------
+   O ENDEREÇO custa vinte caracteres e responde "onde estou": vai no ONDE,
+   junto do nome do lugar, e nunca é cortado.
+
+   Na estrada ele leva o RUMO junto, e só o rumo: quanto já se andou e
+   quanto falta já está no envelope da viagem, em horas e em avanços — e
+   dizer a mesma coisa em quilômetros seria a terceira versão do mesmo
+   número. O lado para onde se marcha é a única coisa que faltava lá. */
+export function linhaDoRastreio(r) {
+  if (!r || !r.coord) return "";
+  const rumo = r.marcha && r.marcha.rumo ? ` · marcha ${r.marcha.rumo.rotulo}` : "";
+  return `⌖ ${r.endereco}${rumo}`;
+}
+
+/* A VIZINHANÇA custa quase dez vezes mais, e vale menos numa conversa de
+   taverna do que a segunda pessoa presente. Sai numa seção própria, de
+   prioridade baixa, e é o orçamento da Pauta que decide se ela cabe. */
+export function linhaDosVizinhos(r) {
+  if (!r || !r.perto || !r.perto.length) return "";
+  return r.perto.map(linhaDePonto).join(" · ");
+}
+
 /* ---------------- O DESLOCAMENTO IMPOSSÍVEL ----------------
    A pergunta que ninguém fazia: cabe, no tempo que passou, o que a
    narração acabou de afirmar?
@@ -317,14 +445,23 @@ export function linhaDoLugar(ctx = {}) {
    que elas não passaram. E ele entra na Pauta ANTES, não depois — prevenir
    custa uma linha; corrigir custa uma chamada, uma cena e a confiança do
    jogador na narração, que foi o que o portão ensinou. */
-export function quemNaoChega(longe = [], { quantos = 2 } = {}) {
+/* v9.118: e com QUANTO. Os dias já estavam certos; o que faltava era o
+   lado e a distância — os dois fatos que transformam "está longe" em
+   uma posição que o Narrador pode usar sem inventar nada por cima. */
+export function quemNaoChega(longe = [], { quantos = 2, mapa = null, coord = null } = {}) {
+  const cidades = (mapa && mapa.cidades) || [];
+  const aqui = garantirCoord(coord);
   return (longe || [])
     .filter((f) => f && f.nome && Number(f.dias) > 0)
     .sort((a, b) => a.dias - b.dias)
     .slice(0, quantos)
     .map((f) => {
       const h = Math.round(Number(f.dias) * 24);
-      return `${f.nome} está em ${f.onde}, a ${f.dias} ${f.dias === 1 ? "dia" : "dias"} daqui — não entra nesta cena sem ${h}h de estrada narradas`;
+      const c = cidades.find((x) => x && semAc(x.nome) === semAc(f.onde));
+      const p = aqui && c ? coordDe(c) : null;
+      const r = p ? rumoEntre(aqui, p) : null;
+      const quanto = p ? ` (${r ? `${r.rotulo}, ` : ""}${formatarDistancia(kmEntre(aqui, p))})` : "";
+      return `${f.nome} está em ${f.onde}${quanto}, a ${f.dias} ${f.dias === 1 ? "dia" : "dias"} daqui — não entra nesta cena sem ${h}h de estrada narradas`;
     });
 }
 
@@ -336,14 +473,20 @@ export function paraPauta(ctx = {}) {
   const esp = garantirEspaco(ctx.espaco);
   const r = consultarGeografo(esp);
   const onde = [linhaDoLugar(ctx)];
+  /* v9.118: o ENDEREÇO entra aqui, junto do nome do lugar. É a mesma
+     frase — onde estou — dita com a precisão que faltava; separá-las
+     convidaria as duas a discordar. A vizinhança sai por outra porta. */
+  const rast = rastrearOTurno(ctx);
+  if (rast) onde.push(linhaDoRastreio(rast));
   if (r.permite.length) onde.push(`comporta: ${r.permite.join("; ")}`);
   const naoPode = [];
   if (r.impede.length) naoPode.push(`o lugar não comporta: ${r.impede.join("; ")}`);
-  naoPode.push(...quemNaoChega(ctx.longe || []));
-  return { onde, naoPode };
+  naoPode.push(...quemNaoChega(ctx.longe || [], { mapa: ctx.mapa, coord: rast && rast.coord }));
+  return { onde, naoPode, daqui: rast ? [linhaDosVizinhos(rast)].filter(Boolean) : [] };
 }
 
 export const GEOGRAFO_PROMPT = `O ESPAÇO (v9.104 — o sistema mede, você narra):
 · A linha ONDE da Pauta é o lugar, e ela é fato: a cena acontece ali, e não num lugar parecido que caiba melhor no que você quer contar.
 · "comporta" e "não comporta" são o que o ESPAÇO permite, não o que a trama permite. Se o lugar não comporta cercar por vários lados, a luta acontece de outro jeito — e é isso que faz cada lugar parecer diferente dos outros.
-· DISTÂNCIA É TEMPO. Ninguém aparece vindo de outra cidade sem que os dias tenham passado. Se alguém precisa chegar, a chegada é uma cena que custa a estrada.`;
+· DISTÂNCIA É TEMPO. Ninguém aparece vindo de outra cidade sem que os dias tenham passado. Se alguém precisa chegar, a chegada é uma cena que custa a estrada.
+· A linha ⌖ é a posição EXATA e o que há em volta, com rumo e distância. É por ela que se decide o que se alcança daqui e para que lado fica cada coisa.`;

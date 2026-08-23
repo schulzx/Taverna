@@ -4501,3 +4501,62 @@ consultados na hora de dar missão. Quando a fase do vilão pede uma batida,
 ela é a intenção, e o sorteio não opina. O que acontece no meio (a
 emboscada, o encontro, a presa) é executado pelo CÓDIGO. O mural continua
 sorteado e opcional; a trama não é.
+
+## v9.118 — o mundo passa a ter endereço
+
+O pedido: coordenadas em tudo, com o Geógrafo por conta das do herói e das
+de quem faz parte da história, para que a tela mostre o jogador em tempo
+real e o Mestre receba a posição exata em todo turno — não só o nome.
+
+O jogo já tinha posição. O que ele nunca teve foi UMA posição: cada módulo
+que falava de espaço inventou o seu jeito de dizer onde, e um mundo com
+seis jeitos de dizer "onde" não sabe onde nada está. Três defeitos que
+estavam lá dentro, e que só apareceram quando se pôs uma régua entre os
+módulos em vez de dentro de cada um:
+
+- **O cinturão mentia por cinquenta vezes.** Um arredor nascia com `dist =
+  6 + rnd() * 5` unidades do mapa — de 150 a 275 km — enquanto o mesmo
+  registro dizia que aquele moinho ficava a 35 minutos a pé. Duas verdades
+  sobre a mesma coisa, e a que o jogador via desenhada era a errada. Agora
+  a coordenada é DERIVADA da caminhada e não pode mais discordar dela.
+- **O marcador da estrada estava cravado no meio.** `pontoDoHeroi` usava
+  fração 0,5 fixa desde a v9.29, com o comentário honesto de que mostrar no
+  meio era a leitura honesta de "estou indo" — e era, enquanto ninguém
+  media a estrada. Desde a v9.56 a jornada conta minutos andados de minutos
+  totais: a tela mentia com um número que o sistema tinha certo do lado.
+- **Lugar não tinha ponto nenhum.** "dentro", "arredores" e "perto" são
+  três palavras onde devia haver um número — dois lugares "nos arredores"
+  podiam estar em lados opostos da cidade e nada sabia disso.
+
+DUAS ESCALAS, e a separação é a decisão de projeto que sustenta o resto:
+`x,y` são o pergaminho (unidades de 25 km) e `mx,my` são METROS a partir
+dali. Poderiam ser um número só e não podem: doze metros valem 0,00048
+unidade, e um float que carrega o continente perde a mesa do canto na
+terceira casa. E o que não tem posição devolve `null`, nunca o centro do
+mapa — um paradeiro desconhecido no meio do pergaminho fica a uma distância
+exata de tudo, e ninguém percebe.
+
+O que a sonda ensinou sobre o ORÇAMENTO, e vale registrar porque foi o
+único lugar em que quase se pagou caro: a vizinhança com rumo e distância
+custa ~170 caracteres, e pendurada no ONDE (prioridade 1) ela empurrava
+para fora, numa cena cheia, a segunda pessoa presente, a FORMA da cena, a
+linha do Intérprete e a do Vilão. Quatro coisas que fazem a cena, por três
+moinhos aonde ninguém ia. O endereço (17 caracteres) ficou no ONDE; a
+vizinhança virou a seção DAQUI, de prioridade baixa, e quem decide se ela
+cabe é o orçamento — que decide certo.
+
+E dois achados de tabela, dos que só aparecem quando se mexe:
+
+- O bloco fixo dos ARREDORES repetia, palavra por palavra, as duas regras
+  que o envelope já dizia logo abaixo da lista, atrás de uma porta que só
+  abre quando o envelope existe: ele nunca apareceu sozinho. Saiu, e pagou
+  a linha nova do Geógrafo com troco (cena comum 61.486 → 61.225).
+- **Uma porta tem DOIS leitores possíveis nesta casa.** Sem nenhum
+  `so("cidade", …)` sobrando, a porta `cidade` parecia abrir para o vazio —
+  e quase foi removida. Quem a lê é o LÉXICO, que tem "COMO É UM
+  ASSENTAMENTO" pendurado nela desde a v9.101; tirá-la apagaria em silêncio
+  a explicação de como uma cidade se apresenta neste mundo. A invariante
+  nova mede os dois leitores.
+
+Margem que ficou apertada e vale vigiar: a PIOR CENA REAL está em 79.916 de
+um teto de 80.000. O guarda não foi movido.

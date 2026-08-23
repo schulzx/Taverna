@@ -45,6 +45,19 @@
    incoerência entra — e um veto cortado não avisa que foi cortado. */
 export const SECOES = [
   { id: "onde", rotulo: "ONDE", prio: 1, o: "o lugar, e o que ele permite" },
+  /* v9.118: O QUE SE ALCANÇA DAQUI, e por que é uma seção e não mais uma
+     linha do ONDE. A lista de vizinhos com rumo e distância custa cerca de
+     170 caracteres, e a sonda mostrou o preço exato de pendurá-la no ONDE
+     (prioridade 1): numa cena cheia ela empurrava para fora a segunda
+     pessoa presente, a FORMA da cena, a linha do Intérprete e a do Vilão.
+     Quatro coisas que fazem a cena, trocadas por três moinhos aonde
+     ninguém ia.
+
+     Numa seção própria, de prioridade baixa, quem decide é o orçamento, e
+     ele decide certo: em cena vazia a lista entra, em cena cheia a gente
+     ganha dela. O endereço exato continua no ONDE, porque custa vinte
+     caracteres e é a resposta à pergunta "onde estou". */
+  { id: "daqui", rotulo: "DAQUI", prio: 7, o: "o que se alcança daqui, com rumo e distância" },
   { id: "quem", rotulo: "QUEM", prio: 4, o: "quem está presente" },
   { id: "momento", rotulo: "MOMENTO", prio: 3, o: "a batida da história" },
   { id: "forma", rotulo: "FORMA", prio: 5, o: "o formato desta cena" },

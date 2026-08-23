@@ -39,6 +39,8 @@
       lugar na MESMA frase.
    ============================================================ */
 
+import { progressoDaViagem } from "./viagem.js";
+
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 /* ---------------- O QUE DESLIGA TUDO ----------------
@@ -231,20 +233,41 @@ export function ondeEstou({ cidadeAtual = "", jornada = null, masmorra = null, m
 }
 
 /* Ponto no mapa (0-100) do herói — inclusive no meio da estrada, que é
-   onde ele mais ficava invisível. Fração 0.5: a viagem é um trecho, não
-   um ponto, e mostrá-lo no meio é a leitura honesta de "estou indo". */
-export function pontoDoHeroi({ cidadeAtual = "", jornada = null, mapa = null } = {}) {
+   onde ele mais ficava invisível.
+
+   v9.118: E AGORA ELE É O PONTO CERTO. A fração era 0.5 cravada, com o
+   comentário honesto de que "mostrá-lo no meio é a leitura honesta de
+   'estou indo'" — e era, enquanto ninguém media a estrada. Desde a v9.56
+   a jornada conta minutos andados de minutos totais, e `progressoDaViagem`
+   devolve a fração de verdade. O marcador ficava parado no meio de uma
+   viagem de treze avanços: no primeiro ele já estava na metade, no
+   décimo segundo ainda estava. A tela mentia com um número que o próprio
+   sistema tinha certo do lado.
+
+   O LUGAR também entra. O herói que sai da cidade para a fazenda continuava
+   desenhado na cidade, porque ninguém perguntava ao `lugar` onde ele era. */
+export function pontoDoHeroi({ cidadeAtual = "", jornada = null, mapa = null, lugar = null, masmorra = null } = {}) {
   const cidades = (mapa && mapa.cidades) || [];
   const acha = (nome) => cidades.find((c) => norm(c.nome) === norm(nome)) || null;
   if (jornada) {
     const a = acha(jornada.de);
     const b = acha(jornada.para);
-    if (a && b) return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, naEstrada: true, de: a, para: b };
-    if (a) return { x: a.x, y: a.y, naEstrada: true, de: a, para: null };
+    const p = progressoDaViagem(jornada);
+    const f = p ? Math.max(0, Math.min(1, p.fracao)) : 0.5;
+    if (a && b) return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, naEstrada: true, de: a, para: b, fracao: f };
+    if (a) return { x: a.x, y: a.y, naEstrada: true, de: a, para: null, fracao: f };
     return null;
   }
+  /* dentro do covil, o ponto é o da boca por onde se entrou — registrada
+     na abertura, porque é a única hora em que alguém sabe onde ela é */
+  if (masmorra && masmorra.coord && Number.isFinite(Number(masmorra.coord.x))) {
+    return { x: Number(masmorra.coord.x), y: Number(masmorra.coord.y), naEstrada: false, de: null, para: null, coord: masmorra.coord, noCovil: true };
+  }
+  if (lugar && lugar.coord && Number.isFinite(Number(lugar.coord.x))) {
+    return { x: Number(lugar.coord.x), y: Number(lugar.coord.y), naEstrada: false, de: null, para: null, coord: lugar.coord, noLugar: lugar.nome };
+  }
   const c = acha(cidadeAtual);
-  return c ? { x: c.x, y: c.y, naEstrada: false, de: null, para: null } : null;
+  return c ? { x: c.x, y: c.y, naEstrada: false, de: null, para: null, coord: { x: c.x, y: c.y, z: c.z || 0, mx: 0, my: 0 } } : null;
 }
 
 /* ---------------- OS ENVELOPES ---------------- */

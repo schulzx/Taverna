@@ -68,10 +68,10 @@ import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, 
 import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeOferta, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
-import { resumoArredoresPrompt, arredoresDaCidade } from "./arredores.js";
+import { resumoArredoresPrompt, arredoresDaCidade, arredorPorTexto } from "./arredores.js";
 import { abrirViagem, andar, pausarViagem, retomarViagem, progressoDaViagem, comTrechos, trechoAtual, minutosPorAvanco, relogioDoAvanco, resumoViagemPrompt, linhaDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
-import { tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
+import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
@@ -85,7 +85,7 @@ import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaC
 import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao } from "./portao.js";
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
-import { garantirEspaco, paraPauta } from "./geografo.js";
+import { garantirEspaco, paraPauta, posicaoDoHeroi, rastrearOTurno } from "./geografo.js";
 import { porNaPauta, textoDaPauta, garantirPauta } from "./pauta.js";
 import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta } from "./interprete.js";
 import { escolherCorpo, corpoPorId, garantirSaber, chegouAteEle, oQueEleNaoSabe, certezaDe, responder, paraPauta as vilaoParaPauta, envelopeDoCorpo } from "./antagonista.js";
@@ -3876,7 +3876,15 @@ export default function Taverna() {
     if (!alvo || !alvo.nome || !nomeCidade) return false;
     if (lugarRef.current && semNome(lugarRef.current.nome) === semNome(alvo.nome)) return false;
     const distancia = alvo.onde === "arredores" ? "arredores" : "dentro";
-    const novo = definirLugar(alvo.nome, { cidade: nomeCidade, dia: diaRef.current, distancia, dentroDe: alvo.dentroDe || "" });
+    /* v9.118: TODO LUGAR NASCE COM PONTO. O arredor já sabe onde fica — ele
+       nasceu com coordenada na v9.51 e ninguém a lia. Um cômodo se ancora no
+       PRÉDIO, não na cidade: o quarto de cima é metros acima do salão, e
+       ancorar na praça o poria a metros da praça, que é outro lugar. */
+    const cidAqui = cidadeSobOsPes();
+    const ancora = alvo.onde === "comodo" && alvo.dentroDe
+      ? { nome: alvo.dentroDe, ...(pontoDoLugar(alvo.dentroDe, cidAqui, "dentro") || {}) }
+      : cidAqui;
+    const novo = definirLugar(alvo.nome, { cidade: nomeCidade, dia: diaRef.current, distancia, dentroDe: alvo.dentroDe || "", ancora, coord: alvo.coord || null });
     if (!novo) return false;
     lugarRef.current = novo; setLugar(novo);
     /* o cinturão é uma caminhada de verdade; o outro lado da praça, não; e a
@@ -4137,14 +4145,17 @@ export default function Taverna() {
        verdade é como nasce o balanceamento fantasma desta casa */
     const { longe } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (personagemRef.current || personagem || {}).grupo || [] });
     const g = paraPauta({
+      ...contextoDoEspaco(),
       espaco: espacoDaMesa(),
-      cidadeAtual: cidadeAtualRef.current, jornada: jornadaRef.current, masmorra: masmorraRef.current,
-      mapa: mapaRef.current, lugar: lugarRef.current, lex: (mundoAtual() || {}).lexico,
+      lex: (mundoAtual() || {}).lexico,
       sitio: acampadoRef.current ? sitioRef.current : null,
       clima: (climaRef.current && climaRef.current.rotulo) || "",
       longe,
     });
     p = porNaPauta(p, "onde", g.onde);
+    /* v9.118: a vizinhança tem seção própria e prioridade baixa — numa cena
+       cheia a gente presente ganha dela, e é isso que se quer */
+    p = porNaPauta(p, "daqui", g.daqui);
     p = porNaPauta(p, "naoPode", g.naoPode);
     /* v9.105: O ARQUIVISTA. Ele não resume a campanha — recupera as três
        linhas que importam a ESTA cena, com esta gente, neste lugar. O
@@ -4440,6 +4451,24 @@ export default function Taverna() {
     if (jornadaRef.current) return `estrada para ${jornadaRef.current.para || "adiante"}`;
     return cidadeAtualRef.current || "";
   };
+
+  /* ---------------- O ESPAÇO, NUMA CHAMADA (v9.118) ----------------
+     Cinco lugares deste arquivo montavam à mão o mesmo objeto para
+     perguntar onde o herói está — cidade, jornada, masmorra, mapa, lugar —
+     e bastava um deles esquecer um campo para o Geógrafo responder sobre
+     um herói que não era este. Agora é uma função só, e quem quiser
+     acrescentar um campo acrescenta para todos de uma vez. */
+  const contextoDoEspaco = () => ({
+    cidadeAtual: cidadeAtualRef.current,
+    jornada: jornadaRef.current,
+    masmorra: masmorraRef.current,
+    mapa: mapaRef.current,
+    lugar: lugarRef.current,
+    semente: sementeMundo(),
+  });
+  /* Onde eu estou, em coordenada. É esta a posição que a tela desenha, que
+     o Mestre recebe e que a boca de uma masmorra guarda ao ser aberta. */
+  const meuPonto = () => { try { return (posicaoDoHeroi(contextoDoEspaco()) || {}).coord || null; } catch (e) { calou("meuPonto", e); return null; } };
 
   /* ---------------- A LINHA DO TURNO (v9.105) ----------------
      Escrita por CÓDIGO, com o que o Mestre já sabia neste instante. O
@@ -4790,7 +4819,12 @@ export default function Taverna() {
         return locais.some((l) => semA(l.nome) === semA(cru)) ? "dentro" : null;
       } catch { return null; }
     })();
-    const novo = definirLugar(cru, { cidade, dia: diaRef.current, distancia: dist });
+    /* v9.118: se o nome é um arredor que o sistema gerou, o ponto é o DELE —
+       o moinho não muda de lado da cidade porque foi o Mestre quem o nomeou
+       desta vez. Sem arredor, a cidade é a âncora e o nome decide o resto. */
+    const cidAncora = cidadeSobOsPes();
+    const arr = cidAncora ? (() => { try { return arredorPorTexto(sementeMundo(), cidAncora, cru); } catch { return null; } })() : null;
+    const novo = definirLugar(cru, { cidade, dia: diaRef.current, distancia: dist, ancora: cidAncora, coord: (arr && arr.coord) || null });
     if (!novo || ehOMesmoLugar(novo, lugarRef.current)) return null;
     lugarRef.current = novo; setLugar(novo);
     return `📍 Você está ${comEm(textoDoLugar(novo))}.`;
@@ -12726,7 +12760,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        transforma "eu me abasteci?" numa pergunta com resposta. */
     const pIn = personagemRef.current || personagem;
     const supIn = garantirSuprimentos(pIn.suprimentos);
-    const mm = { ...(nomeSugerido ? { ...mmBase, nome: nomeSugerido.slice(0, 50) } : mmBase), tochas: supIn.tochas };
+    /* v9.118: a boca do covil guarda ONDE ela é. É a única hora em que
+       alguém sabe: quem entra sabe de onde entrou, e depois disso o herói
+       está "na masmorra", que não é lugar nenhum no mapa. Sem isto, sair de
+       uma cripta devolvia o marcador para o centro da cidade. */
+    const mm = { ...(nomeSugerido ? { ...mmBase, nome: nomeSugerido.slice(0, 50) } : mmBase), tochas: supIn.tochas, coord: meuPonto() };
     const persIn = { ...pIn, suprimentos: { ...supIn, tochas: 0 } };
     setPersonagem(persIn); personagemRef.current = persIn;
     masmorraRef.current = mm; setMasmorra(mm);
@@ -14569,7 +14607,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          "escreva o que você faz". Mas quem nunca viu isso não adivinha, e a
          primeira barra é o lugar de dizer, uma vez só. */
       const primeira = (jornadaRef.current.andadoMin || 0) <= minutosPorAvanco(jornadaRef.current);
-      if (linha) pushMsgs([{ autor: "sistema", texto: `${linha}${primeira ? " · escreva que segue viagem para avançar" : ""}` }]);
+      /* v9.118: e o ponto anda junto. A barra dizia a porcentagem e o mapa
+         desenhava o herói cravado no meio do trecho — agora as duas contam a
+         mesma marcha, e o jogador vê a casa da grade mudar embaixo do pé. */
+      const r = (() => { try { return rastrearOTurno(contextoDoEspaco()); } catch (e) { calou("rastreioDaEstrada", e); return null; } })();
+      if (linha) pushMsgs([{ autor: "sistema", texto: `${linha}${r ? ` · ⌖ ${r.endereco}` : ""}${primeira ? " · escreva que segue viagem para avançar" : ""}` }]);
     }
     /* MERCADOR AMBULANTE (v9.2): uma carroça na estrada, com estoque de
        verdade. Sai por sorteio do sistema — sem envelope, não há mercador. */

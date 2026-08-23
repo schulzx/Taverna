@@ -30,6 +30,7 @@
    ============================================================ */
 
 import { rngDe } from "./geografia.js";
+import { unidadesAPe, coordDe, kmEntre, rumoEntre, aPeEmTexto } from "./coordenadas.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 
@@ -83,8 +84,24 @@ export function arredoresDaCidade(semente, cidade) {
   const passo = 360 / Math.max(1, escolhidos.length);
   return escolhidos.map((t, i) => {
     const ang = (i * passo + rnd() * passo * 0.7) * (Math.PI / 180);
-    const dist = 6 + rnd() * 5;                    // em unidades do mapa-mundo
+    /* ---------------- A DISTÂNCIA VEM DO RELÓGIO (v9.118) ----------------
+       Até aqui a posição no mapa era sorteada entre 6 e 11 unidades da
+       cidade — de 150 a 275 km — enquanto o mesmo registro dizia que o
+       moinho ficava a trinta e cinco minutos a pé. Duas verdades sobre a
+       mesma coisa, e a que o jogador via desenhada era a errada.
+
+       Agora só existe uma: a caminhada. A coordenada é derivada dela, e
+       nunca mais pode discordar. `retidao` é o que separa o caminho da
+       linha reta — quem anda quarenta minutos não está a quarenta
+       minutos em linha reta, porque nenhuma estrada é reta. Ela ocupa o
+       mesmo sorteio que a distância crua ocupava, de propósito: mudar a
+       ordem dos sorteios trocaria o nome de todo arredor de todo mundo
+       já salvo. */
+    const retidao = 0.7 + rnd() * 0.25;
     const minutos = Math.round(t.minutos * (0.8 + rnd() * 0.5));
+    const dist = unidadesAPe(minutos) * retidao;
+    const x = Math.max(0, Math.min(100, (cidade.x || 50) + Math.cos(ang) * dist));
+    const y = Math.max(0, Math.min(100, (cidade.y || 50) + Math.sin(ang) * dist));
     return {
       id: `${cidade.nome}|arredor|${t.tipo}`,
       tipo: t.tipo, icone: t.icone,
@@ -93,12 +110,21 @@ export function arredoresDaCidade(semente, cidade) {
       dono: pick(rnd, DONOS),
       minutos,
       /* posição no mapa-mundo, já somada à da cidade */
-      x: Math.max(2, Math.min(98, (cidade.x || 50) + Math.cos(ang) * dist)),
-      y: Math.max(2, Math.min(98, (cidade.y || 50) + Math.sin(ang) * dist)),
+      x, y,
+      coord: coordDe({ x, y }),
       /* posição no mapa da cidade: mesmo ângulo, raio fixo fora dos muros */
       ang: ang,
     };
   });
+}
+
+/* A que rumo e a que distância um arredor fica da sua cidade. Deriva da
+   posição — nunca de um segundo campo guardado, que é como a v9.51
+   deixou o mapa dizer uma coisa e o texto outra. */
+export function ondeFicaOArredor(cidade, arredor) {
+  const c = coordDe(cidade), a = coordDe(arredor);
+  if (!c || !a) return null;
+  return { coord: a, km: kmEntre(c, a), rumo: rumoEntre(c, a) };
 }
 
 /* O jogador escreveu "vou até o moinho": qual arredor é esse? Aceita o
@@ -114,8 +140,7 @@ export function arredorPorTexto(semente, cidade, texto) {
 }
 
 export function tempoDeIda(arredor) {
-  const m = Math.max(5, Number(arredor && arredor.minutos) || 30);
-  return m >= 60 ? `${(m / 60).toFixed(1).replace(".0", "")} h a pé` : `${m} min a pé`;
+  return aPeEmTexto(Math.max(5, Number(arredor && arredor.minutos) || 30));
 }
 
 /* O que o Mestre lê. Curto de propósito: é uma lista de existências, não
@@ -123,11 +148,19 @@ export function tempoDeIda(arredor) {
 export function resumoArredoresPrompt(semente, cidade) {
   const lista = arredoresDaCidade(semente, cidade);
   if (!lista.length) return "";
-  return `FORA DOS MUROS DE ${String(cidade.nome).toUpperCase()} (existe de verdade, gerado pelo sistema — use, não invente outro): ${lista.map((a) => `${a.icone} ${a.nome} (${tempoDeIda(a)}; ${a.dono})`).join(" · ")}.
+  return `FORA DOS MUROS DE ${String(cidade.nome).toUpperCase()} (existe de verdade, gerado pelo sistema — use estes, não invente outro e não renomeie nenhum): ${lista.map((a) => {
+    const o = ondeFicaOArredor(cidade, a);
+    return `${a.icone} ${a.nome} (${o && o.rumo ? `${o.rumo.rotulo}, ` : ""}${tempoDeIda(a)}; ${a.dono})`;
+  }).join(" · ")}.
 - Estes lugares são PAISAGEM, não segredo: qualquer morador sabe apontar o caminho. O que acontece DENTRO deles é que é descoberta.
 - Quando o herói for a um deles, registre "lugar_atual" com o nome exato daqui. A ida custa MINUTOS, nunca dias — não transforme em viagem.`;
 }
 
-export const ARREDORES_PROMPT = `ARREDORES (v9.51):
-- Toda cidade tem um punhado de lugares fora dos muros — fazenda, moinho, capela, ruína, mina — que o SISTEMA gera e lista no envelope. São a paisagem daquela cidade: não invente outros, não renomeie os que existem e não os trate como descoberta rara.
-- Ir a um deles é uma caminhada de minutos, não uma viagem. Registre "lugar_atual" com o nome exato, e o sistema cuida do relógio e da volta.`;
+/* v9.118: O BLOCO FIXO DOS ARREDORES SAIU DAQUI, e não foi para caber.
+   Ele dizia duas regras — "não invente outros, não renomeie, não trate
+   como segredo" e "a ida custa minutos, não dias" — e o envelope acima
+   dizia as mesmas duas, logo abaixo da lista. A porta que abria o bloco é
+   `emCidade`, exatamente a condição que faz o envelope existir: ele nunca
+   apareceu sem o envelope junto. Regra repetida não ensina duas vezes,
+   custa duas. O que era só dele — "não renomeie" — subiu para o cabeçalho
+   do envelope, que é onde a lista está e onde a tentação de renomear é. */

@@ -8,8 +8,21 @@ import { RELACOES, blobPath, centrosDeRegiao, gerarEstradas } from "./mapa.js";
 import { PORTES } from "./geografia.js";
 import { ESTADOS_FE, estadoFe, feDaCidade, temploDaCidade, temploDe, fieisDaCidade, heresiaDaCidade, patronoDaCidade, resumoNumerico } from "./devocao.js";
 import { ondeEstou, pontoDoHeroi } from "./rastro.js";
+import { rastrearOTurno } from "./geografo.js";
+import { linhaDePonto, formatarDistancia } from "./coordenadas.js";
 import { PlantaCidade } from "./planta-cidade.jsx";
 import { arredoresDaCidade } from "./arredores.js";
+
+/* O ponto de leitura de um arredor no pergaminho: o RUMO verdadeiro, o raio
+   de quem precisa enxergar. Um símbolo de mapa, como a montanha desenhada
+   maior que a montanha. */
+function noPergaminho(cidade, arredor, raio) {
+  const ang = Number(arredor && arredor.ang) || 0;
+  return {
+    x: Math.max(1, Math.min(99, (cidade.x || 50) + Math.cos(ang) * raio)),
+    y: Math.max(1, Math.min(99, (cidade.y || 50) + Math.sin(ang) * raio)),
+  };
+}
 
 export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindade, jornada = null, masmorra = null, molde = null, semente = "", genero = "Fantasia medieval", lex = null, lugar = null, aoIrAoLugar = null, aoViajar = null }) {
   const [selecionada, setSelecionada] = React.useState(null);
@@ -121,7 +134,11 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
      desenhar. Agora o ponto existe sempre, e no meio da viagem ele cai no
      meio do trecho, com a estrada tracejada ligando as duas pontas. */
   const onde = ondeEstou({ cidadeAtual, jornada, masmorra, mapa });
-  const eu = pontoDoHeroi({ cidadeAtual, jornada, mapa });
+  /* v9.118: o marcador passa a saber do LUGAR e do COVIL, e a fração da
+     estrada é a de verdade. Antes ele ficava cravado no meio do trecho da
+     partida à chegada, e sumia da fazenda de volta para a praça. */
+  const eu = pontoDoHeroi({ cidadeAtual, jornada, mapa, lugar, masmorra });
+  const rast = rastrearOTurno({ cidadeAtual, jornada, masmorra, mapa, lugar, semente });
   const seletorEscala = podeCidade ? (
     <div className="flex gap-1.5 mb-3">
       {[{ id: "mundo", rotulo: "🌍 Mundo" }, { id: "cidade", rotulo: `🏘 ${cidadeAqui.nome}` }].map((k) => (
@@ -144,10 +161,30 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
   }
   return (
     <div>
-      <div className="rounded-xl px-3 py-2 mb-3 flex items-baseline gap-2" style={{ background: T.panelSoft, border: `1px solid ${onde.tipo === "estrada" ? T.violet : onde.tipo === "masmorra" ? T.danger : T.line}` }}>
-        <span style={{ fontSize: 13 }}>{onde.tipo === "estrada" ? "🧭" : onde.tipo === "masmorra" ? "🕳" : "📍"}</span>
-        <span className="tv-body text-sm" style={{ color: T.ink }}>{onde.rotulo}</span>
-        {onde.detalhe && <span className="tv-body text-[11px]" style={{ color: T.inkDim }}>· {onde.detalhe}</span>}
+      {/* v9.118: O ENDEREÇO. A caixa dizia o NOME do lugar, e nome não se
+          subtrai: não respondia para que lado fica o moinho, nem quanto
+          falta de estrada, nem o que dá para alcançar a pé daqui. Agora ela
+          diz a casa da grade, o par exato e o que está em volta — a mesma
+          linha que o Mestre recebe em todo turno, para que a tela e a
+          narração nunca discordem sobre onde o herói está. */}
+      <div className="rounded-xl px-3 py-2 mb-3" style={{ background: T.panelSoft, border: `1px solid ${onde.tipo === "estrada" ? T.violet : onde.tipo === "masmorra" ? T.danger : T.line}` }}>
+        <div className="flex items-baseline gap-2">
+          <span style={{ fontSize: 13 }}>{onde.tipo === "estrada" ? "🧭" : onde.tipo === "masmorra" ? "🕳" : "📍"}</span>
+          <span className="tv-body text-sm" style={{ color: T.ink }}>{onde.rotulo}</span>
+          {onde.detalhe && <span className="tv-body text-[11px]" style={{ color: T.inkDim }}>· {onde.detalhe}</span>}
+          {rast && <span className="tv-mono text-[10px] ml-auto shrink-0" style={{ color: T.amberSoft }}>⌖ {rast.endereco}</span>}
+        </div>
+        {rast && rast.marcha && (
+          <div className="tv-mono text-[10px] mt-1" style={{ color: T.violetSoft }}>
+            {formatarDistancia(rast.marcha.feitos)} desde {rast.marcha.de} · faltam {formatarDistancia(rast.marcha.faltam)} até {rast.marcha.para}
+            {rast.marcha.rumo ? ` · seguindo ${rast.marcha.rumo.rotulo}` : ""}
+          </div>
+        )}
+        {rast && rast.perto.length > 0 && (
+          <div className="tv-mono text-[10px] mt-1" style={{ color: T.inkDim }}>
+            daqui: {rast.perto.map(linhaDePonto).join(" · ")}
+          </div>
+        )}
       </div>
       {seletorEscala}
       {faccaoJogador && (
@@ -226,20 +263,37 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
               tivesse esquecido no portão. Agora toda cidade PISADA guarda o
               seu, desenhado apagado; a de agora continua viva e cheia. Mapa
               velho é assim: o que você andou fica, mais fraco. */}
+          {/* v9.118: O CINTURÃO É SÍMBOLO, NÃO ESCALA. Até aqui ele era
+              desenhado na coordenada crua, e a coordenada crua estava errada:
+              6 a 11 unidades da cidade, ou seja de 150 a 275 km, para um
+              moinho que o próprio registro dizia ficar a trinta e cinco
+              minutos a pé. Agora a coordenada é a verdadeira — três
+              quilômetros, 0,12 unidade — e nessa escala o cinturão inteiro
+              cabe DENTRO do ponto da cidade, invisível.
+              A saída é a de qualquer mapa de papel: um símbolo maior do que a
+              coisa, no RUMO certo. O ângulo é o de verdade, o raio é de
+              leitura, e a escala honesta é a da planta da cidade — que é onde
+              uma caminhada de meia hora tem tamanho. */}
           {cidades.filter((c) => c && c.pisada && (!cidadeAqui || c.nome !== cidadeAqui.nome)).map((c) => (
-            arredoresDaCidade(semente, c).map((a, i) => (
-              <g key={`arv-${c.nome}-${i}`} opacity="0.32">
-                <line x1={c.x} y1={c.y} x2={a.x} y2={a.y} stroke="#8a7550" strokeWidth="0.2" strokeDasharray="0.6 1" />
-                <circle cx={a.x} cy={a.y} r="0.6" fill="none" stroke="#7a6748" strokeWidth="0.18" />
+            arredoresDaCidade(semente, c).map((a, i) => {
+              const p = noPergaminho(c, a, 1.7);
+              return (
+                <g key={`arv-${c.nome}-${i}`} opacity="0.32">
+                  <line x1={c.x} y1={c.y} x2={p.x} y2={p.y} stroke="#8a7550" strokeWidth="0.2" strokeDasharray="0.6 1" />
+                  <circle cx={p.x} cy={p.y} r="0.6" fill="none" stroke="#7a6748" strokeWidth="0.18" />
+                </g>
+              );
+            })
+          ))}
+          {cidadeAqui && arredoresDaCidade(semente, cidadeAqui).map((a, i) => {
+            const p = noPergaminho(cidadeAqui, a, 2.4);
+            return (
+              <g key={`ar-${i}`}>
+                <line x1={cidadeAqui.x} y1={cidadeAqui.y} x2={p.x} y2={p.y} stroke="#8a7550" strokeWidth="0.25" strokeDasharray="0.8 0.8" opacity="0.7" />
+                <circle cx={p.x} cy={p.y} r="0.9" fill="#a08a5e" stroke="#5c4a30" strokeWidth="0.2" />
               </g>
-            ))
-          ))}
-          {cidadeAqui && arredoresDaCidade(semente, cidadeAqui).map((a, i) => (
-            <g key={`ar-${i}`}>
-              <line x1={cidadeAqui.x} y1={cidadeAqui.y} x2={a.x} y2={a.y} stroke="#8a7550" strokeWidth="0.25" strokeDasharray="0.8 0.8" opacity="0.7" />
-              <circle cx={a.x} cy={a.y} r="0.9" fill="#a08a5e" stroke="#5c4a30" strokeWidth="0.2" />
-            </g>
-          ))}
+            );
+          })}
           {/* montanhas decorativas por região */}
           {centrosDeRegiao(cidades).map((r, i) => (
             <g key={`mt-${i}`} stroke="#6d5c40" strokeWidth="0.4" fill="none" opacity="0.6">

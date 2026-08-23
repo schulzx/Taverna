@@ -37,6 +37,9 @@
       sempre a favor da cena que ele já tem na cabeça, que é a cidade.
    ============================================================ */
 
+import { coordDe, garantirCoord, deslocar, kmAPe } from "./coordenadas.js";
+import { rngDe } from "./geografia.js";
+
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
 /* Quanto custa ir e voltar. Um lugar do dia a dia da região não vira
@@ -64,6 +67,43 @@ export function distanciaPorTexto(nome) {
   const n = norm(nome);
   if (!n) return "arredores";
   return RX_DENTRO.test(n) ? "dentro" : "arredores";
+}
+
+/* ============================================================
+   O LUGAR PASSA A TER PONTO (v9.118)
+
+   As três distâncias acima são boas para dizer QUANTO custa a volta, e
+   é para isso que elas nasceram. Elas não servem para dizer ONDE: dois
+   lugares "nos arredores" podem estar em lados opostos da cidade, e o
+   sistema não tinha como saber que a fazenda fica ao norte e o moinho
+   ao sul — nem, portanto, que ir de um ao outro custa alguma coisa.
+
+   O ponto sai do NOME e da âncora, e por isso é o mesmo para sempre: a
+   fazenda de Jessa não muda de lado da cidade entre um turno e outro.
+
+   A escala muda com a distância, e tem de mudar. Um cômodo mora em
+   METROS a partir do centro do assentamento — o pergaminho de cem por
+   cem não enxerga um corredor, e fingir que enxerga é perder o
+   corredor. Um arredor mora em unidades do pergaminho, como tudo mais.
+   ============================================================ */
+
+/* Quantos minutos de caminhada cada distância representa. É o mesmo
+   número que o texto da volta promete, agora servindo também de régua
+   para o ponto — uma verdade só. */
+export const MINUTOS_DA_DISTANCIA = { dentro: 2, arredores: 40, perto: 240 };
+
+export function pontoDoLugar(nome, ancora, distancia = "arredores") {
+  const base = coordDe(ancora);
+  if (!base || !nome) return null;
+  const rnd = rngDe(`lugar|${norm(nome)}|${norm((ancora && ancora.nome) || "")}`);
+  const graus = rnd() * 360;
+  const min = MINUTOS_DA_DISTANCIA[distancia] || MINUTOS_DA_DISTANCIA.arredores;
+  const km = kmAPe(min) * (0.7 + rnd() * 0.6);
+  if (distancia === "dentro") {
+    const m = km * 1000, r = graus * Math.PI / 180;
+    return garantirCoord({ ...base, mx: base.mx + Math.sin(r) * m, my: base.my - Math.cos(r) * m });
+  }
+  return deslocar(base, graus, km);
 }
 
 /* ============================================================
@@ -259,13 +299,19 @@ export function garantirLugar(l) {
     dentroDe: String(l.dentroDe || "").slice(0, 60).trim(),
     distancia: DISTANCIAS[l.distancia] ? l.distancia : "arredores",
     desde: Number.isFinite(l.desde) ? l.desde : 0,
+    /* v9.118: onde este lugar fica, de verdade. `null` num save antigo é o
+       normal e é honesto — o lugar existe, o ponto ainda não foi ancorado. */
+    coord: garantirCoord(l.coord),
   };
 }
 
-export function definirLugar(nome, { cidade = "", dia = 0, distancia = null, dentroDe = "" } = {}) {
+export function definirLugar(nome, { cidade = "", dia = 0, distancia = null, dentroDe = "", ancora = null, coord = null } = {}) {
   /* sem distância declarada, o NOME decide — quem chama não deveria precisar
      saber se "o segundo andar da torre" é uma escada ou uma caminhada */
-  return garantirLugar({ nome, cidade, dia, dentroDe, distancia: distancia || distanciaPorTexto(nome), desde: dia });
+  const d = distancia || distanciaPorTexto(nome);
+  /* a coordenada pronta ganha da âncora: quem já sabe o ponto exato — o
+     arredor que o jogador nomeou — não deve receber um sorteado por cima */
+  return garantirLugar({ nome, cidade, dia, dentroDe, distancia: d, desde: dia, coord: garantirCoord(coord) || pontoDoLugar(nome, ancora, d) });
 }
 
 /* O mesmo lugar de novo não é um lugar novo: evita reanunciar a cada

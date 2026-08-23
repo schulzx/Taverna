@@ -42,7 +42,6 @@ import { PODER_PROMPT } from "./poder.js";
 import { TRAMAS_PROMPT } from "./tramas.js";
 import { LUGAR_PROMPT } from "./lugar.js";
 import { COMODOS_PROMPT } from "./comodos.js";
-import { ARREDORES_PROMPT } from "./arredores.js";
 import { ACAMPAMENTO_PROMPT } from "./acampamento.js";
 import { lexicoPrompt, chamadoDaRaca, chamadoDaProfissao } from "./lexico.js";
 import { ADVERSARIO_PROMPT } from "./adversario.js";
@@ -169,7 +168,15 @@ export const PORTAS_DA_CENA = [
   { id: "ascensao", quando: (c) => !!c.despertou, porque: "o rito de subir ao panteão não existe antes do despertar" },
   { id: "invocacao", quando: (c) => !!c.invoca, porque: "quem não chama nada não precisa das regras do que foi chamado" },
   { id: "gatilho", quando: (c) => !!c.temGatilho, porque: "invisibilidade e afins: só de quem as tem na ficha" },
-  { id: "cidade", quando: (c) => !!c.emCidade, porque: "o cinturão de fazendas e moinhos é da cidade onde se está" },
+  /* v9.118: A PORTA DA CIDADE CONTINUA, e ela quase morreu por engano. O
+     bloco fixo dos arredores saiu daqui (o envelope dizia as mesmas duas
+     regras logo abaixo da lista), e sem nenhum `so("cidade", …)` a porta
+     parecia abrir para o vazio. Não abre: quem a lê é o LÉXICO, que tem um
+     sistema "COMO É UM ASSENTAMENTO" pendurado nela desde a v9.101.
+     Tirá-la apagava, em silêncio, a explicação de como uma cidade se
+     apresenta neste mundo. Uma porta tem DOIS leitores possíveis nesta
+     casa, e olhar para um só é como nasce o buraco que ninguém vê. */
+  { id: "cidade", quando: (c) => !!c.emCidade, porque: "como um assentamento se apresenta neste mundo só importa a quem está num" },
   /* aflição nasce de golpe de criatura, de arma ou de armadilha — e os três
      só existem numa luta ou lá embaixo. Fora disso não há de onde vir. */
   { id: "aflicao", quando: (c) => !!c.emCombate || !!c.emMasmorra, porque: "veneno, atordoamento e queimadura vêm de golpe ou de armadilha, e os dois moram na luta e na masmorra" },
@@ -389,7 +396,6 @@ ${GEOGRAFO_PROMPT}
 
 ${LUGAR_PROMPT}
 ${so("comodos", COMODOS_PROMPT)}
-${so("cidade", ARREDORES_PROMPT)}
 ${so("ermo", CELULAS_PROMPT)}
 ${so("viagem", VIAGEM_PROMPT)}
 ${RESOLVER_PROMPT}
