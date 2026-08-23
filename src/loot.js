@@ -14,7 +14,7 @@ const d = (n) => Math.floor(Math.random() * n);
 const sortear = (arr) => (arr && arr.length ? arr[Math.floor(Math.random() * arr.length)] : undefined);
 
 import { formaDoItem } from "./itens.js";
-import { nomesDaForma } from "./lexico.js";
+import { nomesDaForma, afixosDoGrau, sufixosDo } from "./lexico.js";
 import { TIER as TIER_AFIXO, degrauDe, pesoDoPrefixo, tierDaBase, poderesPossiveis, concessaoPara, resumoDoItem, EFEITOS_DE_ATRIBUTO, CONCESSAO_DA_BASE } from "./afixos.js";
 
 export const RARIDADES = ["comum", "incomum", "raro", "epico", "lendario", "unico"];
@@ -137,7 +137,15 @@ const ATRIBUTOS_PERSONAGEM = ["forca", "destreza", "vigor", "intelecto", "presen
 const ROTULO_ATTR = { forca: "Força", destreza: "Destreza", vigor: "Vigor", intelecto: "Intelecto", presenca: "Presença", percepcao: "Percepção" };
 
 /* Concordância do prefixo com o nome base (gênero e número). */
+const maiuscula = (x) => { const s0 = String(x || ""); return s0 ? s0.charAt(0).toUpperCase() + s0.slice(1) : s0; };
+
 function concordancia(par, baseNome) {
+  /* v9.114: LOCUÇÃO NÃO FLEXIONA, nem em gênero nem em número. Esta
+     função foi escrita para adjetivo, e o banco do mundo entrega coisas
+     como "de patrulha" e "com núcleo" — saía "de patrulhas Botas de
+     Pelagem". Uma palavra concorda; duas ou mais, não. */
+  const cru = Array.isArray(par) ? par[0] : par;
+  if (/s/.test(String(cru || "").trim())) return maiuscula(cru);
   const primeiro = (baseNome || "").split(" ")[0];
   const fem = /a(s)?$/i.test(primeiro) || /^(Veste|Aegis|Coifa|Manga)/.test(primeiro);
   const plural = /s$/i.test(primeiro);
@@ -160,6 +168,10 @@ function concordancia(par, baseNome) {
     if (forma === "Leve") forma = "Leves";
     else if (["Elegante", "Radiante", "Flamejante"].includes(forma)) forma += "s";
   }
+  /* v9.114: e a primeira letra sobe. O banco do mundo vem em minúscula —
+     o Mestre está listando qualidades, não batizando peças — e saía
+     "usado Escudo Torre" ao lado de "Antigo Anel de Rubi". */
+  forma = maiuscula(forma);
   return forma;
 }
 
@@ -237,10 +249,24 @@ export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = nu
   const daForma = doMundo.length ? pickL(doMundo) : base.nome;
   const visivel = daForma ? daForma.charAt(0).toUpperCase() + daForma.slice(1) : base.nome;
   let nome = visivel;
-  const dosMeus = PREFIXOS.filter((p) => pesoDoPrefixo(p) <= tier);
+  /* v9.114: O AFIXO TAMBÉM VEM DO MUNDO — e ele não é renomeado palavra
+     por palavra, é escolhido POR DEGRAU.
+
+     `pesoDoPrefixo` consulta uma tabela por palavra, e uma palavra que o
+     mundo inventou não está nela: cairia no padrão 1 e a régua de
+     raridade que a v9.80 construiu deixaria de valer. Como o mundo
+     entrega os prefixos JÁ separados por degrau, aqui não se pergunta o
+     peso de nada — pega-se de qualquer degrau até o `tier`, que é
+     exatamente o que o filtro fazia. */
+  const doMundoAfixo = lex ? [] : null;
+  if (lex) for (let g = 0; g <= tier; g++) doMundoAfixo.push(...afixosDoGrau(lex, g));
+  const dosMeus = (doMundoAfixo && doMundoAfixo.length) ? doMundoAfixo : PREFIXOS.filter((p) => pesoDoPrefixo(p) <= tier);
   const comPrefixo = dosMeus.length && (tier >= 2 ? true : tier === 1 ? rand() < 0.6 : rand() < 0.15);
   if (comPrefixo) nome = `${concordancia(pickL(dosMeus), visivel)} ${visivel}`;
-  if (tier >= 2) nome = `${nome} ${pickL(SUFIXOS)}`;
+  if (tier >= 2) {
+    const sufs = lex ? sufixosDo(lex) : [];
+    nome = `${nome} ${pickL(sufs.length ? sufs : SUFIXOS)}`;
+  }
 
   /* v6.6 — dano elemental em armas e resistência elemental em defesas (raro+) */
   const ELEMENTOS = ["fogo", "gelo", "raio", "veneno", "sagrado", "sombrio", "arcano"];

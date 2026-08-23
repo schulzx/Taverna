@@ -9,7 +9,7 @@ import { marcoDe } from "./vinculos.js";
 import { relacaoNPC } from "./npcs.js";
 import { conquistaPorId } from "./conquistas.js";
 import { RARIDADE_ROTULO } from "./loot.js";
-import { chamadoDaRaca } from "./lexico.js";
+import { chamadoDaRaca, chamadoDaProfissao } from "./lexico.js";
 
 const linha = (s = "") => `${s}\n`;
 
@@ -34,7 +34,7 @@ export function gerarCronica({ nomeCampanha, mundo, personagem: p, conquistasIds
   md += linha(`**${p.nome}**${tituloAtivo ? `, ❝ ${tituloAtivo} ❞` : ""} — ${p.conceito || "aventureiro"}.`);
   md += linha();
   const caminho = [chamadoDaRaca((mundo || {}).lexico, p.raca), p.classe, p.subclasse].filter(Boolean).join(" · ");
-  md += linha(`- **Nível** ${p.nivel || 1}${p.antecedente ? ` · **Antecedente:** ${p.antecedente}` : ""}${caminho ? ` · **Caminho:** ${caminho}` : ""}${p.profissao ? ` · ${p.profissao}` : ""}`);
+  md += linha(`- **Nível** ${p.nivel || 1}${p.antecedente ? ` · **Antecedente:** ${p.antecedente}` : ""}${caminho ? ` · **Caminho:** ${caminho}` : ""}${p.profissao ? ` · ${chamadoDaProfissao((mundo || {}).lexico, p.profissao)}` : ""}`);
   md += linha(`- **Fama:** ${fama}/100 — ${pf.rotulo} (${pf.nota})`);
   if ((p.cicatrizes || []).length) {
     md += linha(`- **Cicatrizes:**`);

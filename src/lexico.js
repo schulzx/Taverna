@@ -222,6 +222,37 @@ export const FORMAS_DO_EQUIPAMENTO = [
   "elmo", "botas", "anel", "amuleto",
 ];
 
+/* v9.114: e os OFÍCIOS JOGÁVEIS. `oficios` (acima) é o que os NPCs
+   fazem da vida e não tem mecânica atrás; isto aqui são as doze
+   profissões da FICHA, cada uma com um efeito no código. Duas listas
+   parecidas com destinos diferentes, e a diferença é a mecânica. */
+/* ---------------- OS AFIXOS, POR DEGRAU (v9.114) ----------------
+   O prefixo de um item carrega um DEGRAU, e é ele que decide em que
+   raridade a palavra pode aparecer: "Rústico" no 0, "Lendário" no 4.
+   A v9.80 pôs essa régua de pé depois de um item comum sair "Lendário"
+   e todo nome bonito do jogo perder o crédito.
+
+   Por isso o mundo não renomeia prefixo por prefixo: ele preenche os
+   CINCO DEGRAUS, e a posição na lista é que decide a raridade. É a
+   mesma forma das criaturas por ameaça, e pelo mesmo motivo — o degrau
+   é mecânica e não muda; a palavra é do mundo.
+
+   `o` é o que o degrau significa, e vai ao Mestre junto do pedido: sem
+   isso ele não tem como saber que a palavra do degrau 4 precisa soar
+   como a coisa mais rara que este mundo produz. */
+export const DEGRAUS_DE_AFIXO = [
+  { n: 0, o: "comum e sem graça — descreve o estado da peça, não promete nada" },
+  { n: 1, o: "um pouco melhor que o normal: bem-feita, bem cuidada, de boa procedência" },
+  { n: 2, o: "tem alguma coisa dentro: trabalho especial, material raro, um efeito" },
+  { n: 3, o: "peça de mestre, das que se contam histórias" },
+  { n: 4, o: "a coisa mais rara que este mundo produz — uma por geração" },
+];
+
+export const PROFISSOES_DO_SISTEMA = [
+  "Ferreiro", "Alquimista", "Herborista", "Cartógrafo", "Escriba", "Cozinheiro",
+  "Joalheiro", "Curtidor", "Minerador", "Caçador de Recompensas", "Mercador", "Médico de Campo",
+];
+
 export const RACAS_DO_SISTEMA = [
   "Humano", "Elfo", "Anão", "Halfling", "Meio-orc", "Draconato", "Tiefling", "Gnomo", "Meio-elfo", "Goliath",
   "Terrano", "Colono Orbital", "Sintético", "Mutante", "Cromado", "Vagante",
@@ -391,6 +422,50 @@ export function garantirLexico(l) {
       }
       return out;
     })(),
+    /* v9.114: os ofícios da FICHA, pelas mesmas duas colunas das raças e
+       com o mesmo tudo-ou-nada. O nome é identificador — `profissaoDe`
+       casa por ele e o efeito sai dali —, o chamado é só tela. */
+    profissoes: (() => {
+      const bruto = (Array.isArray(o.profissoes) ? o.profissoes : [])
+        .map((x) => ({
+          profissao: PROFISSOES_DO_SISTEMA.find((r) => r.toLowerCase() === String((x && x.profissao) || "").toLowerCase().trim()) || "",
+          chamado: limpar(x && x.chamado, TETOS.curto),
+        }))
+        .filter((x) => x.profissao && x.chamado)
+        .filter((x, i, a) => a.findIndex((y) => y.profissao === x.profissao) === i);
+      return bruto.length === PROFISSOES_DO_SISTEMA.length ? bruto : [];
+    })(),
+    /* v9.114: os afixos do mundo, por degrau. Tudo-ou-nada: um degrau
+       vazio faria os itens daquela raridade voltarem ao banco medieval
+       enquanto os vizinhos falam a língua do mundo. */
+    afixos: (() => {
+      const bruto = (o && o.afixos && typeof o.afixos === "object") ? o.afixos : {};
+      /* v9.114: A GARANTIA TEM DE SER IDEMPOTENTE. Este é o único campo
+         que entra numa forma ({grau0..}) e sai noutra ({prefixos:{0..}}),
+         e `garantirLexico` roda muitas vezes sobre o mesmo léxico — uma
+         em `lerLexico` e outra em cada leitor. Sem esta linha, a segunda
+         passada não achava `grau0`, nenhum degrau tinha três nomes e o
+         banco do mundo era zerado logo depois de ser aceito. */
+      if (bruto.prefixos && typeof bruto.prefixos === "object") {
+        const p2 = {};
+        for (const d of DEGRAUS_DE_AFIXO) {
+          const lst = lista(bruto.prefixos[d.n], 6, TETOS.curto);
+          if (lst.length < 3) return { prefixos: {}, sufixos: [] };
+          p2[d.n] = lst;
+        }
+        const sf = lista(bruto.sufixos, 12, TETOS.curto);
+        return sf.length >= 6 ? { prefixos: p2, sufixos: sf } : { prefixos: {}, sufixos: [] };
+      }
+      const out = { prefixos: {}, sufixos: [] };
+      for (const d of DEGRAUS_DE_AFIXO) {
+        const lst = lista(bruto[`grau${d.n}`], 6, TETOS.curto);
+        if (lst.length < 3) return { prefixos: {}, sufixos: [] };
+        out.prefixos[d.n] = lst;
+      }
+      out.sufixos = lista(bruto.sufixos, 12, TETOS.curto);
+      if (out.sufixos.length < 6) return { prefixos: {}, sufixos: [] };
+      return out;
+    })(),
     aLei: limpar(o.aLei, TETOS.texto),
     comoSeFala: limpar(o.comoSeFala, TETOS.texto),
   };
@@ -451,6 +526,47 @@ export function nomesDaForma(l, forma) {
 export function temEquipamentoProprio(l) {
   return Object.keys(garantirLexico(l).equipamento).length === FORMAS_DO_EQUIPAMENTO.length;
 }
+
+/* ---------------- O FEMININO POR REGRA ----------------
+   Pedir [masculino, feminino] dobraria o campo num JSON que já estoura
+   o teto. Em português o adjetivo terminado em -o faz -a, o terminado
+   em -ão faz -ã, e o resto é invariável ("Militar", "Industrial",
+   "Cinza", "Feroz"). Cobre quase tudo; o que não cobre sai invariável,
+   que é o erro pequeno — "a Blindada" errado é pior que "a Militar"
+   certo, e o segundo é o que acontece por padrão. */
+export function feminizar(palavra) {
+  const p = String(palavra || "").trim();
+  if (!p) return p;
+  /* LOCUÇÃO NÃO FLEXIONA. "de patrulha", "com núcleo", "do Primeiro
+     Portão" qualificam sem concordar — e a regra ão→ã, que é de
+     adjetivo, transformava "do Primeiro Portão" em "do Primeiro Portã".
+     Uma palavra flexiona; duas ou mais, não. */
+  if (/\s/.test(p)) return p;
+  if (/ão$/.test(p)) return p.slice(0, -2) + "ã";
+  if (/o$/.test(p)) return p.slice(0, -1) + "a";
+  return p;
+}
+
+/* Os prefixos de um degrau, no par [masculino, feminino] que o loot
+   espera. Vazio quando o mundo não trouxe banco. */
+export function afixosDoGrau(l, grau) {
+  const a = garantirLexico(l).afixos;
+  const lst = (a && a.prefixos && a.prefixos[grau]) || [];
+  return lst.map((x) => [x, feminizar(x)]);
+}
+export function sufixosDo(l) { const a = garantirLexico(l).afixos; return (a && a.sufixos) || []; }
+export function temAfixosProprios(l) {
+  const a = garantirLexico(l).afixos;
+  return !!a && Object.keys(a.prefixos || {}).length === DEGRAUS_DE_AFIXO.length && (a.sufixos || []).length >= 6;
+}
+
+/* Como um ofício da ficha se chama neste mundo. Devolve o nome do
+   catálogo quando o mundo não o renomeou. */
+export function chamadoDaProfissao(l, nome) {
+  const x = garantirLexico(l).profissoes.find((r) => r.profissao === nome);
+  return (x && x.chamado) || String(nome || "");
+}
+export function profissoesRenomeadas(l) { return garantirLexico(l).profissoes; }
 
 /* Como uma raça se chama neste mundo. Devolve o nome canônico quando o
    léxico não a renomeou — nunca vazio, porque quem chama está desenhando
@@ -518,8 +634,10 @@ REGRAS INEGOCIÁVEIS:
 5. DOIS CAMPOS TÊM LISTA FECHADA, e ela não é sugestão. Em "lugares", o "tipo" tem de ser EXATAMENTE uma das palavras listadas: são engrenagens do jogo e não mudam — o que você escolhe é como cada uma SE CHAMA aqui. Em "criaturas", a "ameaca" idem: ela decide a força do bicho, e um nome guardado no degrau errado promete uma coisa e entrega outra.
 6. AS RAÇAS TAMBÉM TÊM LISTA FECHADA, e o que você escolhe é só o NOME. Cada uma carrega um bônus de atributo que NÃO muda: você está dando a elas a palavra deste mundo, não inventando povos. RENOMEIE TODAS, sem exceção: uma ficha com metade dos nomes deste mundo e metade com os de sempre lê pior que uma ficha inteira genérica, porque a metade que sobrou denuncia a outra. Se um tipo de gente parecer não existir aqui, dê a ele o nome do que MAIS SE APROXIMA neste mundo — a mecânica dele continua no jogo de qualquer forma, e sem nome daqui ela aparece com o nome de outro lugar. Use a mesma cultura de "povos": "povos" é quem habita o mundo, "racas" é o que o jogador pode SER.
 7. O EQUIPAMENTO É TUDO OU NADA, e o que você nomeia é a FORMA, nunca o item. Cada forma vem com o que ela É por baixo — pesada, de duas mãos, pede treino, trava magia. O nome que você der NÃO PODE CONTRADIZER ISSO: se a forma diz "arma de guerra pesada de duas mãos", um nome como "varinha" mente para o jogador, que vai escolhê-la achando que é leve. Preencha TODAS as dezessete, com 3 a 6 nomes cada. Se o mundo parecer não ter armadura pesada, invente o EQUIVALENTE dele — o sistema calcula a defesa numa escada e tirar um degrau tira proteção do jogo inteiro. Se você deixar UMA forma de fora, o banco inteiro é descartado.
-8. PREENCHA TODOS OS DEGRAUS DE AMEAÇA e o máximo de tipos de lugar que fizerem sentido. Se um tipo parecer não existir neste mundo, invente o EQUIVALENTE dele em vez de pular — pular tira a coisa do jogo, e o jogo conta com ela.
-9. Português do Brasil. Cada campo de "funciona" no máximo duas frases.
+8. AS DOZE PROFISSÕES DA FICHA são as mesmas doze, sempre, e cada uma carrega um efeito no código que NÃO muda — quem cura mais no descanso continua curando mais, chame-se ele curandeiro ou enfermeiro de contenção. Dê a TODAS o ofício deste mundo que mais se aproxima do que a palavra descreve, e não invente ofício que o sistema não tem. Se faltar uma, o banco inteiro é descartado. Não confunda com "oficios", que é do que a gente comum vive: estes doze são o que o JOGADOR pode ser.
+9. OS AFIXOS TÊM DEGRAU, e o degrau é mecânica. Em "afixos", cada grau diz o quanto a palavra PROMETE: a do grau 0 sai num item vagabundo, a do grau 4 só na coisa mais rara que existe. Uma palavra grandiosa no grau 0 faz todo nome bonito do jogo perder o crédito. Cada afixo é UMA PALAVRA SÓ no MASCULINO SINGULAR — o sistema faz o feminino e o plural sozinho, e uma locução como "de contenção" fica torta na frente do nome — e preencha os cinco graus e os sufixos, ou o banco inteiro é descartado.
+10. PREENCHA TODOS OS DEGRAUS DE AMEAÇA e o máximo de tipos de lugar que fizerem sentido. Se um tipo parecer não existir neste mundo, invente o EQUIVALENTE dele em vez de pular — pular tira a coisa do jogo, e o jogo conta com ela.
+11. Português do Brasil. Cada campo de "funciona" no máximo duas frases.
 
 Responda SÓ com este JSON, sem comentários e sem texto fora dele:
 
@@ -552,6 +670,13 @@ ${SISTEMAS.map((s) => `    "${s.id}": "${s.pergunta}"`).join(",\n")}
   "equipamento": {
 ${FORMAS_MECANICAS.map((f) => `    "${f.id}": ["3 a 6 nomes para: ${f.o}"]`).join(",\n")}
   },
+  "afixos": {
+${DEGRAUS_DE_AFIXO.map((d) => `    "grau${d.n}": ["3 a 6 adjetivos de UMA PALAVRA SÓ, no masculino singular, que qualificam uma peça de equipamento neste mundo (nada de \"de algo\" nem \"com algo\": eles vão ANTES do nome e uma locução ali fica torta) — ${d.o}"]`).join(",\n")}
+    , "sufixos": ["6 a 12 complementos no formato \"do/da X\" para o nome de um item lendário deste mundo (ex.: \"do Vazio\", \"da Última Guerra\") — nomes de coisas, lugares e gente QUE EXISTAM AQUI"]
+  },
+  "profissoes": [
+    { "profissao": "<UM de: ${PROFISSOES_DO_SISTEMA.join(", ")}>", "chamado": "o ofício deste mundo que MAIS SE APROXIMA do que essa palavra descreve" }
+  ],
   "racas": [
     { "raca": "<UM de: ${RACAS_DO_SISTEMA.join(", ")}>", "chamado": "como esse tipo de gente se chama NESTE mundo" }
   ],

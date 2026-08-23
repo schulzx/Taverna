@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
-import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, chamadoDaRaca } from "./lexico.js";
+import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, chamadoDaRaca, chamadoDaProfissao } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
@@ -695,7 +695,7 @@ function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar })
           <div>
             <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>Profissão</div>
             <select value={profissao} onChange={(e) => setProfissao(e.target.value)} className="w-full rounded-lg p-2 tv-body text-xs outline-none" style={campo}>
-              {PROFISSOES.map((pr) => <option key={pr.nome} value={pr.nome}>{pr.nome}</option>)}
+              {PROFISSOES.map((pr) => <option key={pr.nome} value={pr.nome}>{chamadoDaProfissao(mundo.lexico, pr.nome)}</option>)}
             </select>
           </div>
           <button onClick={() => { trocarCaminho(alvo, { raca, classe, subclasse, profissao }); fechar(); }}
@@ -2670,9 +2670,9 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
         <div>
           <div className="tv-mono text-xs uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Profissão</div>
           <select value={profissao} onChange={(e) => setProfissao(e.target.value)} className="w-full rounded-xl p-3 tv-body text-sm outline-none" style={campo}>
-            {PROFISSOES.map((pr) => <option key={pr.nome} value={pr.nome}>{pr.nome}</option>)}
+            {PROFISSOES.map((pr) => <option key={pr.nome} value={pr.nome}>{chamadoDaProfissao(mundo.lexico, pr.nome)}</option>)}
           </select>
-          {(() => { const pr = PROFISSOES.find((x) => x.nome === profissao); return pr ? <div className="tv-body text-xs mt-1.5" style={{ color: T.inkDim }}>{pr.beneficio}</div> : null; })()}
+          {(() => { const pr = PROFISSOES.find((x) => x.nome === profissao); if (!pr) return null; const apelido = chamadoDaProfissao(mundo.lexico, pr.nome); return <div className="tv-body text-xs mt-1.5" style={{ color: T.inkDim }}>{apelido !== pr.nome ? <span style={{ color: T.inkDim }}>({pr.nome}) </span> : null}{pr.beneficio}</div>; })()}
         </div>
       </div>
 
@@ -13278,7 +13278,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        jogo em que dormir mal custa alguma coisa — os dados de vida são o
        único recurso que só volta dormindo. Quem DIZ o que aconteceu é o
        descanso, onde os números estão: daqui só sai o degrau. */
-    let pers = aplicarDescanso(personagemRef.current || personagem, tipoReal, msgs, diaRef.current, abrigoDoSitio(sitioRef.current));
+    let pers = aplicarDescanso(personagemRef.current || personagem, tipoReal, msgs, diaRef.current, abrigoDoSitio(sitioRef.current), (mundoAtual() || {}).lexico);
     tipo = tipoReal;
     /* v9.16: o descanso longo garante PISO de 1 ponto de heroismo. Piso e
        nao soma: quem chega com 3 nao vira 4, senao acampar viraria fabrica
