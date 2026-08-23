@@ -102,7 +102,22 @@ export function pautaVazia(p) { return Object.keys(garantirPauta(p)).length === 
 export function textoDaPauta(p, { teto = TETO_DA_PAUTA, turno = 0 } = {}) {
   const pauta = garantirPauta(p);
   if (pautaVazia(pauta)) return "";
-  const cabeca = `[PAUTA DO TURNO${turno ? ` ${turno}` : ""} — decidido pelo SISTEMA. Ligue os pontos e conte COMO aconteceu; o que está aqui é o QUE e o COM QUEM, e não se discute.]`;
+  /* v9.115: A REGRA SAI DO COMENTÁRIO E VAI PARA O PROMPT.
+
+     Está escrito no cabeçalho deste arquivo desde a v9.104 — "se uma linha
+     da Pauta pode ser copiada para a narração como está, ela está errada" —
+     e nunca foi dito a quem narra. Regra escrita sem código atrás, que é o
+     defeito que esta casa mais repete.
+
+     Duas capturas da partida do jogador, em turnos seguidos: o envelope
+     trazia o rótulo de teste "causar boa impressão" e o mercador disse
+     "— Você quer causar boa impressão"; o envelope dizia "a data chega" e
+     ele disse "— A data chegou". Rótulo de painel na boca de gente. E é
+     assim que sai uma fala que não é de ninguém.
+
+     Custa cerca de cem caracteres do orçamento da Pauta, e paga: uma linha
+     de seção a menos vale menos que uma fala inteira que não existe. */
+  const cabeca = `[PAUTA DO TURNO${turno ? ` ${turno}` : ""} — decidido pelo SISTEMA. Ligue os pontos e conte COMO aconteceu; o que está aqui é o QUE e o COM QUEM, e não se discute. Estas palavras são ETIQUETA DE SISTEMA: nenhuma delas entra na narrativa, e nenhuma entra na boca de um personagem — ninguém neste mundo fala em rótulo.]`;
   const pe = "";
   /* candidatas: uma entrada por LINHA, para o corte ser fino */
   const cand = [];

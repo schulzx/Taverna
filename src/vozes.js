@@ -71,8 +71,21 @@ export const VOZES = [
       "corte a descrição pela metade e gaste o espaço em diálogo",
     ],
     naoFaz: "não vire palhaçada. A piada é de quem está com medo, não do narrador debochando da cena — quando a coisa fica séria, os mesmos personagens ficam sérios, e é esse contraste que faz a voz funcionar",
-    frase: "curta, quebrada, com fragmento sem verbo. Fala em cima de fala",
-    boca: "palavrão à vontade quando cabe no personagem — merda, porra, filho da puta, caralho —, apelido em vez de nome, e ninguém fala bonito de propósito. Quem se machuca xinga antes de gemer",
+    /* v9.115: SAIU A LICENÇA PARA ERRAR, e ficou o registro inteiro.
+
+       O `frase` mandava "quebrada, com fragmento sem verbo" e o `boca`
+       dizia que "ninguém fala bonito de propósito". As duas coisas juntas
+       pedem uma só ao modelo, e a única forma que ele conhece de falar
+       feio em português é errar concordância: saíram "cê volta com os
+       bolso cheio" e "levo umas moeda adiantado", que não são sotaque —
+       são ruído, e é o que o jogador estava lendo.
+
+       O que se queria (gíria, contração, apelido, palavrão, fala em cima
+       de fala) não precisa disso, e continua tudo aqui. Medido: 2,9% das
+       falas com erro de gramática antes, 0% depois, num corpo de 64 falas
+       julgadas por revisor à parte. */
+    frase: "curta e falada, com interrupção e fala em cima de fala. Cortada pelo RITMO, nunca pela gramática",
+    boca: "palavrão à vontade quando cabe no personagem — merda, porra, filho da puta, caralho —, apelido em vez de nome, gíria e a contração da fala viva ('tá', 'cê', 'pra', 'né'). Quem se machuca xinga antes de gemer. Ninguém fala BONITO, mas todo mundo fala CERTO: gíria e contração sim, concordância errada não",
     graca: "constante e de sobrevivência: gente ridícula levada a sério, o comentário na hora errada, o azar absurdo",
     exemplo: "O sujeito atrás do balcão nem levanta a cabeça. \"Se for briga, é lá fora. Se for bebida, é prata na mesa. Se for as duas, escolhe uma.\"",
   },

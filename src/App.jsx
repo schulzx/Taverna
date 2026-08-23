@@ -131,6 +131,17 @@ import { agruparMensagens } from "./resumo.js";
 
 /* prompt do Mestre extraído para ./prompt.js (v8.6) */
 
+/* QUEM RESPONDEU O ÚLTIMO TURNO (v9.115). O `/api/mestre` tem dois
+   provedores e cai do primeiro para o segundo em silêncio — um 429 basta.
+   Se os dois escrevem diferente, o jogador vê o narrador mudar de estilo
+   sem que nada no jogo tenha mudado, e quem for investigar não tem por
+   onde começar: não fica registro em lugar nenhum de qual dos dois falou.
+
+   Isto não vai para a tela, e é de propósito: o sistema não fala de si
+   mesmo, só aparece ao jogador o que é gameplay. Fica no console em
+   desenvolvimento e no save, que é onde quem investiga vai olhar. */
+export const ultimoProvedorRef = { atual: "", historico: [] };
+
 async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto", tarefa = "mestre") {
   const response = await fetch("/api/mestre", {
     method: "POST",
@@ -139,6 +150,14 @@ async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.erro || `HTTP ${response.status}`);
+  if (data.provedor) {
+    const trocou = ultimoProvedorRef.atual && ultimoProvedorRef.atual !== data.provedor;
+    ultimoProvedorRef.atual = data.provedor;
+    ultimoProvedorRef.historico = [...ultimoProvedorRef.historico, data.provedor].slice(-40);
+    /* a TROCA é o que interessa, não o provedor: é o instante em que a
+       prosa pode mudar de dono sem aviso */
+    if (trocou && typeof console !== "undefined") console.info(`[taverna] o Mestre trocou de provedor: agora é ${data.provedor}`);
+  }
   return data.texto || "";
 }
 
@@ -4942,6 +4961,9 @@ export default function Taverna() {
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
       historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
+      /* v9.115: quem respondeu. Duas linhas no save que valem por uma
+         investigação inteira quando a prosa sair torta de novo. */
+      provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -10682,7 +10704,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (provaAsc) resolverProvaAscensao(provaAsc, passou);
       return;
     }
-    enviar(`${preRefazer}[ROLAGEM] Teste de ${r.atributo || "sorte"} (${r.motivo})${notaVant}: rolei ${valor}, modificador +${mod}${notaBuff}, total ${total}${dc != null ? `, dificuldade ${dc}` : ""}. Resultado: ${resultado}. Narre as consequências de forma coerente com o resultado.`, personagemRef.current || personagem);
+    enviar(`${preRefazer}[ROLAGEM] Teste de ${r.atributo || "sorte"} (${r.motivo})${notaVant}: rolei ${valor}, modificador +${mod}${notaBuff}, total ${total}${dc != null ? `, dificuldade ${dc}` : ""}. Resultado: ${resultado}. Narre as consequências de forma coerente com o resultado. O nome entre parênteses é o RÓTULO do painel, não é fala de ninguém: narre o gesto que ele nomeia e não repita essas palavras — muito menos na boca de um personagem.`, personagemRef.current || personagem);
   };
 
   /* ---------------- A AÇÃO ADJUDICADA (v9.59) ----------------

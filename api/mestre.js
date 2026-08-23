@@ -13,7 +13,7 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).json({ erro: "Use POST" }); return; }
   try {
-    const { system, messages, maxTokens, formato, tarefa } = req.body || {};
+    const { system, messages, maxTokens, formato, tarefa, provedor: provedorPedido } = req.body || {};
     if (!system || !Array.isArray(messages) || messages.length === 0) {
       res.status(400).json({ erro: "Pedido inválido" }); return;
     }
@@ -124,8 +124,29 @@ export default async function handler(req, res) {
       const generationConfig = {
         maxOutputTokens: teto,
         thinkingConfig: { thinkingLevel: "LOW" },
-        temperature: tarefa === "leve" ? 0.3 : Number(process.env.DS_TEMPERATURA || 1),
-        frequencyPenalty: Number(process.env.DS_PENALIDADE || 0.3),
+        /* ---------------- O MESMO NÚMERO NÃO É A MESMA COISA (v9.115) ----------------
+           A v9.75 pôs os dois provedores sob a mesma régua, e a razão escrita
+           era boa: "duas configurações para a mesma decisão é a mesma coisa
+           que duas portas para a mesma regra". Só que aqui não são duas
+           portas para a mesma regra — são duas ESCALAS diferentes com o
+           mesmo nome. `frequency_penalty` da OpenAI e `frequencyPenalty` do
+           Gemini não têm a mesma unidade nem o mesmo efeito, e 0,3 num não
+           quer dizer 0,3 no outro. Copiar o número entre os dois é a mesma
+           classe de erro que copiar uma tabela de peso: parece uma regra só,
+           e são duas contas.
+
+           E o risco não é hipotético neste arquivo: o comentário do DeepSeek
+           logo acima já avisa que penalidade alta em português "estraga a
+           concordância — o modelo foge das preposições e dos artigos que ele
+           já gastou". É exatamente o defeito que o jogador relatou. No
+           reserva, que ninguém nunca mediu, ela vai a ZERO: a anti-repetição
+           que ela comprava vale menos do que a gramática que ela pode custar,
+           e o Gemini repete menos que o DeepSeek de saída.
+
+           Cada um com a sua variável, para poder ser ajustado sem mexer no
+           outro — que era justamente o que a régua única impedia. */
+        temperature: tarefa === "leve" ? 0.3 : Number(process.env.GM_TEMPERATURA || 0.85),
+        frequencyPenalty: Number(process.env.GM_PENALIDADE || 0),
       };
       if (emJson) generationConfig.responseMimeType = "application/json";
       const safetySettings = [
@@ -165,7 +186,16 @@ export default async function handler(req, res) {
     /* ---------- Roteador de provedor ----------
        Ordem: a da variável PROVEDOR; sem ela, DeepSeek primeiro (se houver
        chave). Só entram na fila provedores COM chave configurada. */
-    const preferido = (process.env.PROVEDOR || "").toLowerCase();
+    /* O PEDIDO PODE ESCOLHER (v9.115). Antes, a ordem dos provedores era uma
+       variável de ambiente e nada mais — o que significa que a única forma de
+       comparar os dois era um redeploy, e que ninguém nunca comparou.
+
+       Isso importa porque a queda para o reserva é SILENCIOSA: um 429 do
+       DeepSeek manda o turno para o Gemini e ninguém fica sabendo. Se o
+       narrador escreve diferente nos dois, o jogador vê o estilo mudar sem
+       que nada no jogo tenha mudado — e quem for investigar não tem como
+       saber qual dos dois respondeu. */
+    const preferido = String(provedorPedido || process.env.PROVEDOR || "").toLowerCase();
     const fila = [];
     if (process.env.DEEPSEEK_API_KEY) fila.push({ id: "deepseek", fn: chamarDeepSeek });
     if (process.env.GEMINI_API_KEY) fila.push({ id: "gemini", fn: chamarGemini });
