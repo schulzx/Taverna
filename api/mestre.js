@@ -207,7 +207,15 @@ export default async function handler(req, res) {
     const tentativas = [];
     for (const p of fila) {
       const out = await p.fn();
-      if (out.texto) { res.status(200).json({ texto: out.texto, provedor: p.id }); return; }
+      /* QUEM ESTAVA NA FILA, e não só quem respondeu (v9.116).
+
+         Custou uma investigação inteira: o cliente no ar já tinha o código
+         de hoje, o pedido pedia `gemini`, e a resposta vinha `deepseek`.
+         O único ramo que produz isso é a fila não TER o gemini — mas de
+         fora não havia como distinguir "não configurado" de "configurado e
+         falhou em silêncio", porque as duas coisas devolvem a mesma
+         palavra. Uma linha aqui responde as duas para sempre. */
+      if (out.texto) { res.status(200).json({ texto: out.texto, provedor: p.id, fila: fila.map((x) => x.id) }); return; }
       tentativas.push(`${p.id} (${out.erro}${out.corpo ? `: ${out.corpo}` : ""})`);
     }
     res.status(502).json({ erro: `Todos os provedores falharam — ${tentativas.join(" · ")}`.slice(0, 400) });
