@@ -6,6 +6,7 @@ import React from "react";
 import { T } from "./constantes.js";
 import { ESTRUTURAS, estruturaPorId } from "./historia.js";
 import { ativas as missoesAtivas, ofertas as missoesOferecidas, garantirMissoes, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, textoDaPaga, temPrazo, textoDoPrazo } from "./missoes.js";
+import { dificuldadeDaMissao } from "./dificuldade.js";
 
 /* ---------------- O CARTÃO DA MISSÃO (v9.27) ----------------
    A regra de desenho é uma só, e ela é de gameplay: mostrar o que
@@ -16,8 +17,9 @@ import { ativas as missoesAtivas, ofertas as missoesOferecidas, garantirMissoes,
    Uma lista inteira aberta transformaria a aventura num checklist,
    e um cartão sem etapa nenhuma é o que existia antes: um bilhete
    que não dizia o que fazer. */
-function CartaoMissao({ m, aoResponder, aoEncerrarLegado }) {
+function CartaoMissao({ m, aoResponder, aoEncerrarLegado, pers = null }) {
   const t = tipoMissao(m.tipo);
+  const dif = dificuldadeDaMissao(m, pers);
   const p = progressoMissao(m);
   const atual = etapaAtual(m);
   const oferta = m.status === "oferecida";
@@ -32,8 +34,21 @@ function CartaoMissao({ m, aoResponder, aoEncerrarLegado }) {
         <span className="tv-body text-sm" style={{ color: T.ink }}>
           {m.status === "concluida" ? "✓ " : m.status === "falhada" ? "✗ " : m.status === "recusada" ? "— " : `${t.icone} `}{m.titulo}
         </span>
-        <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ color: cor === T.line ? T.inkDim : cor, border: `1px solid ${cor === T.line ? T.line : cor}` }}>
-          {oferta ? "OFERTA" : t.rotulo.toUpperCase()}
+        <span className="flex items-baseline gap-1.5 shrink-0">
+          {/* O PATAMAR (v9.115) — e ele fica ao lado do tipo de propósito:
+              é a segunda coisa que o jogador precisa saber sobre um
+              trabalho, logo depois de que trabalho é. Some quando acaba,
+              porque dificuldade é informação para DECIDIR, e depois de
+              concluída não há mais nada a decidir. */}
+          {dif && !fim && (
+            <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded" title={`${dif.patamar.nota} — ${dif.porque}`}
+              style={{ color: T[dif.patamar.cor] || T.inkDim, border: `1px solid ${T[dif.patamar.cor] || T.line}` }}>
+              {dif.patamar.icone} {dif.patamar.rotulo.toUpperCase()}
+            </span>
+          )}
+          <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ color: cor === T.line ? T.inkDim : cor, border: `1px solid ${cor === T.line ? T.line : cor}` }}>
+            {oferta ? "OFERTA" : t.rotulo.toUpperCase()}
+          </span>
         </span>
       </div>
       {m.dador && <div className="tv-body text-[11px] mt-0.5" style={{ color: T.inkDim }}>de {m.dador}</div>}
@@ -106,7 +121,7 @@ function CartaoMissao({ m, aoResponder, aoEncerrarLegado }) {
   );
 }
 
-export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, missoes = [], aoResponderMissao, aoEncerrarLegado }) {
+export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, missoes = [], aoResponderMissao, aoEncerrarLegado, pers = null }) {
   const [trocando, setTrocando] = React.useState(false);
   const est = estruturaPorId((historia || {}).estrutura);
   const todas = garantirMissoes(missoes);
@@ -146,11 +161,11 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
           </div>
         )}
       </div>
-      {ofertasM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.violetSoft }}>Ofereceram a você</div><div className="space-y-2 mb-4">{ofertasM.map((m) => <CartaoMissao key={m.id} m={m} aoResponder={aoResponderMissao} />)}</div></>)}
+      {ofertasM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.violetSoft }}>Ofereceram a você</div><div className="space-y-2 mb-4">{ofertasM.map((m) => <CartaoMissao key={m.id} pers={pers} m={m} aoResponder={aoResponderMissao} />)}</div></>)}
       {ativasM.length === 0 && ofertasM.length === 0 && <div className="tv-body text-sm italic mb-4" style={{ color: T.inkDim }}>Nenhuma missão em curso — elas surgem conforme a história se abre, e você decide quais aceitar.</div>}
-      {principaisM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.amberSoft }}>O que o mundo impôs</div><div className="space-y-2 mb-4">{principaisM.map((m) => <CartaoMissao key={m.id} m={m} aoEncerrarLegado={aoEncerrarLegado} />)}</div></>)}
-      {secundariasM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>O que você aceitou</div><div className="space-y-2 mb-4">{secundariasM.map((m) => <CartaoMissao key={m.id} m={m} aoEncerrarLegado={aoEncerrarLegado} />)}</div></>)}
-      {encerradasM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Encerradas</div><div className="space-y-2">{encerradasM.slice(-8).reverse().map((m) => <CartaoMissao key={m.id} m={m} />)}</div></>)}
+      {principaisM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.amberSoft }}>O que o mundo impôs</div><div className="space-y-2 mb-4">{principaisM.map((m) => <CartaoMissao key={m.id} pers={pers} m={m} aoEncerrarLegado={aoEncerrarLegado} />)}</div></>)}
+      {secundariasM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>O que você aceitou</div><div className="space-y-2 mb-4">{secundariasM.map((m) => <CartaoMissao key={m.id} pers={pers} m={m} aoEncerrarLegado={aoEncerrarLegado} />)}</div></>)}
+      {encerradasM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Encerradas</div><div className="space-y-2">{encerradasM.slice(-8).reverse().map((m) => <CartaoMissao key={m.id} pers={pers} m={m} />)}</div></>)}
 
       {/* FIOS DO MUNDO (v7.2): evento global em curso + fios locais com prazo */}
       {eventos && eventos.global && (

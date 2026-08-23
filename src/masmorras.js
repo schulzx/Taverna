@@ -135,7 +135,16 @@ export function gerarMasmorra(genero, nivel, nomeSugerido = "") {
   for (const pid of anterior) salas.find((x) => x.id === pid).saidas.push(chefe.id);
 
   const completas = garantirCaminhos(salas);
-  return { nome, salas: completas, atual: 0, tochas: tochasIniciais(completas), chave: false, ritmo: "normal", saques: { moedas: 0, itens: 0 }, encerrada: false };
+  /* O NÍVEL FICA GRAVADO (v9.115). A masmorra nascia com um nível, gastava
+     ele para escolher bicho, armadilha e tesouro, e o esquecia — de dentro
+     não havia como saber o tamanho do lugar em que se estava.
+
+     Era a mesma perda que a missão tinha: guardava-se o PREÇO e jogava-se
+     fora o TAMANHO. E aqui doía mais, porque o mapa ANUNCIA o nível da
+     masmorra ("Poço de Raízes, nível 11") e quem entrava recebia outra,
+     feita no nível do herói. O cartaz e o chão contando histórias
+     diferentes sobre o mesmo lugar. */
+  return { nome, nivel: Math.max(1, Math.round(Number(nivel) || 1)), salas: completas, atual: 0, tochas: tochasIniciais(completas), chave: false, ritmo: "normal", saques: { moedas: 0, itens: 0 }, encerrada: false };
 }
 
 /* ---------------- QUANTAS TOCHAS (v9.54) ----------------

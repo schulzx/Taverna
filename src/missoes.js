@@ -163,6 +163,14 @@ export function garantirMissoes(lista) {
        e medir em dias faria a barra andar num ritmo diferente do número que
        o jogador leu no cartaz. 0 é o normal: a maioria das missões espera. */
     prazo: Math.max(0, Math.floor(Number(q.prazo) || 0)),
+    /* O NÍVEL DO TRABALHO (v9.115) — a dificuldade precisa dele.
+       Ele sempre existiu no ato de criar (`recompensaDe` o consome) e
+       morria ali: a missão guardava o PREÇO e esquecia o TAMANHO. Sem
+       este campo o diário não tem como dizer se o contrato é do tamanho
+       do herói, e o jogador descobre o tamanho morrendo.
+       Zero é "não sei": save antigo não vira nível 1 por conveniência,
+       porque um diário inteiro marcado "Fácil" ensina a não olhar. */
+    nivel: Math.max(0, Math.floor(Number(q.nivel) || 0)),
     recompensa: q.recompensa || null,
     /* v9.27: veio da era em que quest era um título sem etapa. Não dá para
        conferir, então só o jogador pode encerrá-la. */
@@ -175,6 +183,7 @@ export function garantirMissoes(lista) {
 export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status, moedasPrometidas = null, prazo = 0 }) {
   const m = garantirMissoes([{
     id, titulo, tipo, descricao, dador, etapas, criadaEm: dia, prazo: noitesDePrazo(prazo),
+    nivel,
     status: status || (ehForcada(tipo) ? "ativa" : "oferecida"),
   }])[0];
   if (!m || !m.etapas.length) return null;
@@ -328,10 +337,17 @@ export function aceitarProposta(lista, prop, { nivel = 1, dia = 0, mundo = null,
 
   const prometido = Number.isFinite(Number(prop.paga)) && Number(prop.paga) >= 0 ? Number(prop.paga)
     : precoNoTexto(`${titulo} ${proposta.descricao}`);
+  /* O NÍVEL É DO TRABALHO, não de quem aceita (v9.115). O cartaz mostrou
+     um patamar antes da decisão; se a missão renascesse com o nível do
+     herói, o patamar mudaria no ato de aceitar — e o jogador teria lido
+     uma promessa que o diário não cumpre. O do herói só entra quando o
+     trabalho não traz o seu, que é o caso das propostas que nascem de uma
+     conversa e não de um cartaz. */
+  const nivelDoTrabalho = Number(prop.nivel) > 0 ? Math.round(Number(prop.nivel)) : nivel;
   const m = criarMissao({
     titulo, tipo: TIPOS[prop.tipo] ? prop.tipo : "favor",
     descricao: proposta.descricao, dador: proposta.dador,
-    etapas, nivel, dia, prazo: prop.prazo,
+    etapas, nivel: nivelDoTrabalho, dia, prazo: prop.prazo,
     moedasPrometidas: prometido != null ? prometido : moedasNaCena,
   });
   if (!m) return { ok: false, motivo: "proposta malformada" };

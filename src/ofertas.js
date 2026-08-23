@@ -248,6 +248,31 @@ function temMaterial(molde, mat) {
    um contrato do mural e uma missão arbitrada pelo sistema não podem
    pagar em escalas diferentes, ou o jogador aprende a preferir a
    porta que paga melhor em vez da história que quer viver. */
+/* ---------------- O NÍVEL DO TRABALHO (v9.115) ----------------
+   A dificuldade precisava de um número que o trabalho trouxesse de casa,
+   e até aqui não havia nenhum: a missão nascia com o nível do HERÓI, o
+   que faz todo contrato do diário sair "à altura" e transforma o rótulo
+   em enfeite — se nada varia, ninguém olha.
+
+   O número não é novo, só nunca tinha sido lido assim. `risco` já
+   distingue uma entrega (0,9) de uma praga (1,6) desde a v9.37, e a
+   criatura do molde já vem com o nível dela. Falta o espalhamento, e ele
+   é o ponto: um mural em que tudo é do tamanho do herói não é um mural, é
+   um corredor. Alguns trabalhos TÊM de estar acima — é o que dá sentido a
+   voltar mais forte — e o cartaz agora diz isso antes, e não depois.
+
+   Determinístico pela mesma semente da oferta: o mesmo cartaz vale o
+   mesmo amanhã e no save do mês que vem. */
+export function nivelDaOferta({ nivel = 1, risco = 1, criatura = null, rnd }) {
+  const doRisco = (Number(risco) || 1) - 1;
+  const sorteio = rnd ? Math.floor(rnd() * 7) - 2 : 0;   /* −2 a +4 */
+  const doBicho = criatura && Number(criatura.nivel) > 0 ? Number(criatura.nivel) : 0;
+  const meu = (Number(nivel) || 1) + doRisco * 3 + sorteio;
+  /* o bicho é PISO, não média: um contrato para matar coisa de nível 12
+     não é de nível 5 porque o sorteio quis */
+  return Math.max(1, Math.round(Math.max(meu, doBicho)));
+}
+
 export function precoDaOferta({ tipo, nivel, etapas, risco }) {
   if (!risco) return 0;
   const base = recompensaDe({ tipo, nivel, etapas }).moedas;
@@ -280,7 +305,11 @@ export function ofertaDePessoa({ semente, pessoa, aqui, mapa, genero = "Fantasia
   const gancho = afinidade(molde, pessoa.vontade) > 1
     ? corpo.gancho
     : `${pessoa.nome} ${pessoa.vontade} — pode não ter nada a ver com o pedido`;
-  const paga = precoDaOferta({ tipo: molde.tipo, nivel, etapas: corpo.etapas.length, risco: molde.risco });
+  /* O NÍVEL PRÓPRIO, e o preço sai dele. Trabalho mais duro paga mais:
+     as duas coisas têm de sair do mesmo número, senão o cartaz promete
+     um risco e cobra outro. */
+  const nivelDoTrabalho = nivelDaOferta({ nivel, risco: molde.risco, criatura: mat.criatura, rnd });
+  const paga = precoDaOferta({ tipo: molde.tipo, nivel: nivelDoTrabalho, etapas: corpo.etapas.length, risco: molde.risco });
   return {
     id: `of_${idDaGente(aqui.cidade.nome, pessoa)}`.replace(/\s+/g, "_"),
     molde: molde.id, icone: molde.icone, tipo: molde.tipo,
@@ -290,6 +319,7 @@ export function ofertaDePessoa({ semente, pessoa, aqui, mapa, genero = "Fantasia
     dadorVontade: pessoa.vontade || "",
     cidade: aqui.cidade.nome,
     etapas: corpo.etapas,
+    nivel: nivelDoTrabalho,
     paga,
     /* o molde é quem sabe se a coisa espera: três dos oito correm contra o
        tempo, e o número vai no cartaz antes de o jogador decidir */
@@ -366,6 +396,9 @@ export function propostaDaOferta(of) {
   return {
     titulo: of.titulo, tipo: of.tipo, dador: of.dador,
     descricao: of.descricao, paga: of.paga, prazo: of.prazo || 0, etapas: of.etapas,
+    /* o nível viaja junto: sem ele a missão renasceria com o do herói e a
+       dificuldade que o cartaz mostrou mudaria ao ser aceita */
+    nivel: of.nivel || 0,
   };
 }
 

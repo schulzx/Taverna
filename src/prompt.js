@@ -353,6 +353,7 @@ ${so("missao", MISSOES_PROMPT)}
 
 ${so("missao", OFERTAS_PROMPT)}
 
+
 ${PAUTA_PROMPT}
 ${REGISTRO_PROMPT}
 ${so("cobranca", COBRADOR_PROMPT)}

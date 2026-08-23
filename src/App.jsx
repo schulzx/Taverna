@@ -75,7 +75,8 @@ import { tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, 
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
-import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, oQueExisteAqui, BASE_PROMPT } from "./mundo-base.js";
+import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, BASE_PROMPT } from "./mundo-base.js";
+import { dificuldadeDaMasmorra, envelopeDaDificuldade } from "./dificuldade.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
 import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao } from "./portao.js";
@@ -1249,7 +1250,7 @@ function PainelLateral({ aba, fechar, personagem, mundo, equipar, desequipar, de
           </>
         )}
 
-        {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} />}
+        {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} />}
         {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"}  onMilagre={onMilagreUI} mapa={mapa} devocao={devocao} onEncararProva={onEncararProva} onDesistirRito={onDesistirRito} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} jornada={jornada} masmorra={masmorra} molde={molde} semente={sementeMundo} genero={generoMundo} lex={lexicoMundo} lugar={lugar} aoIrAoLugar={aoIrAoLugar} aoViajar={aoViajar} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} />}
@@ -12313,7 +12314,24 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const entrarMasmorra = (nomeSugerido = "") => {
     if (acampadoRef.current || masmorraRef.current) return;
     if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para explorar uma masmorra no meio de um combate." }]); return; }
-    const mmBase = gerarMasmorra((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1);
+    /* O NÍVEL VEM DO MAPA, quando o mapa conhece este lugar (v9.115).
+       O prompt anuncia "⛏ Poço de Raízes (mina, nível 11, 7 salas)" desde
+       a v9.9, e ao entrar o jogo gerava outra masmorra, no nível do herói.
+       Duas portas para o mesmo lugar, contando números diferentes — e a
+       que o jogador tinha lido era a que não valia.
+
+       Sem correspondência no mapa (a IA batizou uma entrada nova), o nível
+       do herói continua sendo o palpite certo: é o único dado que existe. */
+    const doMapa = (() => {
+      const alvo = String(nomeSugerido || "").toLowerCase().trim();
+      if (!alvo) return null;
+      try {
+        return masmorrasDoMundo(sementeMundo(), mapaRef.current)
+          .find((m) => String(m.nome || "").toLowerCase().trim() === alvo) || null;
+      } catch { return null; }
+    })();
+    const nivelDaMasmorra = doMapa && doMapa.nivel > 0 ? doMapa.nivel : (personagem.nivel || 1);
+    const mmBase = gerarMasmorra((mundo && mundo.genero) || "Fantasia medieval", nivelDaMasmorra);
     /* LUZ DE VERDADE (v9.26): a masmorra inventava as próprias tochas, e as
        que o jogador comprava no mercado não serviam para nada. Agora a luz
        da expedição É a da mochila: as tochas saem dos suprimentos ao entrar
@@ -12335,7 +12353,20 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        os do `masmorras.js`; o que o envelope acrescenta é a carne — o
        portal que não fecha enquanto o chefe respira, se for esse o mundo. */
     const vestido = envelopeDaAdaptacao(mundoAtual() && mundoAtual().lexico, "masmorra");
-    enviar(`${vestido ? vestido + " " : ""}[MASMORRA — ENTRADA · ${mm.nome}] Descobri a entrada de "${mm.nome}". O SISTEMA gerou a planta: ${mm.salas.length} câmaras em ${Math.max(...mm.salas.map((x) => x.camada))} níveis de profundidade, com passagens que se ramificam, um portão lacrado no fundo e a chave escondida com um guardião. Levo ${mm.tochas} tochas — cada passagem consome uma. Descreva a fachada e a atmosfera do primeiro salão em 2-4 frases, costurando com a cena atual${cidadeAtualRef.current ? ` (perto de ${cidadeAtualRef.current})` : ""}. Mencione que há mais de um caminho adiante. NÃO invente o que há nas salas — o sistema revela cada uma quando eu escolher a passagem.${extraTempo}`, personagem);
+    /* O TAMANHO DA COISA, DITO ANTES (v9.115). O jogador descobria o
+       tamanho de uma masmorra morrendo nela, que é a forma mais cara de
+       descobrir. O patamar é comparativo — a mesma cripta é Fácil para
+       quem passou dela e Impossível para quem chegou ontem —, e por isso
+       ele é informação sobre a DECISÃO, não sobre o lugar.
+
+       Duas saídas, e são deliberadamente diferentes: ao JOGADOR vai o
+       rótulo com a conta aberta, para ele saber se falta nível, gente ou
+       espada; ao NARRADOR vai só a instrução de cena, nunca o rótulo nem
+       o número — rótulo de sistema na boca de personagem é o defeito que
+       esta casa mais paga. */
+    const dif = dificuldadeDaMasmorra(mm, persIn);
+    if (dif) pushMsgs([{ autor: "sistema", texto: `${dif.patamar.icone} ${mm.nome} — ${dif.patamar.rotulo.toUpperCase()}: ${dif.patamar.nota}. (${dif.porque})` }]);
+    enviar(`${vestido ? vestido + " " : ""}${dif ? envelopeDaDificuldade(dif, `a masmorra "${mm.nome}"`) + " " : ""}[MASMORRA — ENTRADA · ${mm.nome}] Descobri a entrada de "${mm.nome}". O SISTEMA gerou a planta: ${mm.salas.length} câmaras em ${Math.max(...mm.salas.map((x) => x.camada))} níveis de profundidade, com passagens que se ramificam, um portão lacrado no fundo e a chave escondida com um guardião. Levo ${mm.tochas} tochas — cada passagem consome uma. Descreva a fachada e a atmosfera do primeiro salão em 2-4 frases, costurando com a cena atual${cidadeAtualRef.current ? ` (perto de ${cidadeAtualRef.current})` : ""}. Mencione que há mais de um caminho adiante. NÃO invente o que há nas salas — o sistema revela cada uma quando eu escolher a passagem.${extraTempo}`, personagem);
   };
 
   const irParaSala = (id) => {
