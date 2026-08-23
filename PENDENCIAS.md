@@ -4431,10 +4431,46 @@ em português é errar concordância (2,9% → 0%). E o rótulo de sistema na bo
 gente — duas capturas da partida: "— Você quer causar boa impressão" (rótulo de
 `desafios.js`) e "— A data chegou" (texto do envelope).
 
-**O que continua sem resposta, e é o mais provável**: os ~130 turnos foram
-TODOS servidos pelo DeepSeek. O `/api/mestre` cai para o Gemini em silêncio, e
-até agora os dois rodavam os mesmos números de temperatura e penalidade — que
-não são a mesma escala nas duas APIs. Agora cada um tem a sua variável e o
-provedor fica registrado no save. **Falta o A/B entre os dois**, e ele depende
-do deploy: em oito minutos de espera o `/api` no ar ainda respondia com o
-código antigo (o parâmetro `provedor` no corpo era ignorado).
+**FECHADO (v9.116), e a hipótese que eu tinha era falsa.** Eu suspeitava do
+provedor de reserva: o `/api/mestre` cai do DeepSeek para o Gemini em
+silêncio, e os dois rodavam os mesmos números de temperatura e penalidade —
+que não são a mesma escala nas duas APIs. Fiz a resposta dizer QUEM estava
+na fila e QUEM caiu, e a fila respondeu:
+
+```
+fila: ["gemini","deepseek"]   ← o gemini na frente, a pedido
+respondeu: deepseek
+falharam: gemini (429: "Your prepayment credits are depleted")
+```
+
+O reserva está sem crédito. Ou seja: **todo turno que o jogador já jogou foi
+servido pelo DeepSeek** — os mesmos ~130 turnos que eu medi. A hipótese
+morreu com evidência.
+
+Sobra o que já estava consertado, e a conferência final com o prompt real de
+hoje (87.652 caracteres, voz taverneiro) deu **0 de 31 falas com erro de
+gramática**, contra 2,9% antes — com o registro inteiro no lugar ("cê", "tá",
+"num tem cara de quem vai voltar", palavrão à vontade).
+
+**Um defeito NOVO, e não é de código:** o jogo não tem reserva. Se o DeepSeek
+sair do ar ou acabar o crédito, não há Mestre nenhum — o Gemini falha em
+todas as tentativas. Recarregar o crédito do Gemini (ou tirar a chave, para
+o erro ser honesto) é decisão de quem paga.
+
+## v9.116 — o PODER
+
+Um índice numérico para "quão forte é isto", e ele passou a mandar na
+dificuldade no lugar do delta de nível.
+
+- **Os âncoras do pedido são teste**: nível 5 típico dá 414, nível 20 típico
+  dá 48,1 mil. Quem mexer num peso e quebrá-los descobre no teste.
+- **Base vezes multiplicador**, e não base mais pontos: é o que faz
+  equipamento continuar importando no fim do jogo.
+- **Tudo o que fortalece tem número**, e há uma varredura que percorre afixos,
+  dádivas e 200 itens gerados atrás de efeito sem peso. Zero sem peso, zero
+  peso sobrando.
+- **Na tela**: o total e a conta aberta na ficha, o valor de cada peça
+  equipada, a TROCA na mochila, o poder de cada companheiro comparado ao seu,
+  a hoste e o chefe da raid.
+- A dificuldade virou DIVISÃO em vez de subtração, e os cortes não se moveram:
+  três acima ainda é Fácil, seis abaixo ainda é Difícil.
