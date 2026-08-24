@@ -108,6 +108,8 @@ import { PainelCodex } from "./painel-codex.jsx";
 import { PainelDiario } from "./painel-diario.jsx";
 import { PainelDiplomacia } from "./painel-diplomacia.jsx";
 import { PainelMapa } from "./painel-mapa.jsx";
+import { criarSala, garantirSala, sentarNaSala, sairDaSala, sentarFicha, assentoDe, ocupados as ocupadosDaSala, salaCheia, todosProntos, porAcao, acaoDe, quemFalta, turnoCompleto, textoDoTurno, limparTurno, normalizarCodigo, codigoValido, RECADOS, recadoValido, envelopeDaSala, LUGARES } from "./sala.js";
+import { abrirCanal, novoIdDeParticipante, cabeNoFio } from "./transporte.js";
 import { aplicarNivel, evoluirCompanheiro, aplicarDescanso, recargaPadrao, aplicarMudancas, bonusEquip, bonusEfeito, atributoEfetivo, tickEfeitos, processarCombate, migrarPersonagem } from "./regras-jogo.js";
 import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, consumirDia, RITMOS_VIAGEM, ritmoViagem, marchaForcada, testarNavegacao, forragear, efeitoExaustao, recuperarExaustao, resumoErmos } from "./ermos.js";
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, sortearDadiva, resumoEpico } from "./regras.js";
@@ -2706,6 +2708,13 @@ function TelaMundo({ concluir }) {
 function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false }) {
   mundo = mundo || { genero: "Fantasia medieval" };
   const [nome, setNome] = useState("");
+  /* v9.120: SOBRENOME. Dois campos porque eles não servem para a mesma
+     coisa — o primeiro é de quem tem intimidade, o de família é de quem não
+     tem —, e é essa escolha, feita fala a fala, que mostra distância sem
+     ninguém precisar explicar. Continua opcional: quem não quiser um
+     sobrenome joga como sempre jogou. */
+  const [sobrenome, setSobrenome] = useState("");
+  const nomeInteiro = [nome.trim(), sobrenome.trim()].filter(Boolean).join(" ");
   const [conceito, setConceito] = useState("");
   const [historia, setHistoria] = useState("");
   const racasDisp = racasDoGenero(mundo.genero);
@@ -2749,11 +2758,20 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
       </div>
       <div className="grid md:grid-cols-2 gap-4 mb-4">
         <div className="flex gap-2">
-          <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do personagem" className="flex-1 rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
-          <button type="button" onClick={() => setNome(nomePessoa(mundo.genero, undefined, Math.random, mundo.lexico))} className="rounded-xl px-4 shrink-0" style={{ border: `1px solid ${T.line}`, color: T.amberSoft }} title="Sortear um nome">🎲</button>
+          <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome" className="flex-1 min-w-0 rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
+          <input value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} placeholder="Sobrenome (opcional)" className="flex-1 min-w-0 rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
+          {/* o sorteio entrega o nome inteiro deste mundo; aqui ele se parte
+              nos dois campos, para o jogador ver o que é o quê antes de mexer */}
+          <button type="button" onClick={() => { const p = String(nomePessoa(mundo.genero, undefined, Math.random, mundo.lexico) || "").trim().split(/\s+/); setNome(p[0] || ""); setSobrenome(p.slice(1).join(" ")); }}
+            className="rounded-xl px-4 shrink-0" style={{ border: `1px solid ${T.line}`, color: T.amberSoft }} title="Sortear um nome">🎲</button>
         </div>
         <input value={conceito} onChange={(e) => setConceito(e.target.value)} placeholder="Conceito (ex.: ladra de relíquias arrependida)" className="rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
       </div>
+      {sobrenome.trim() && (
+        <div className="tv-body text-xs -mt-2 mb-4" style={{ color: T.inkDim }}>
+          No mundo você é <span style={{ color: T.ink }}>{nomeInteiro}</span> — quem tem intimidade chama de <span style={{ color: T.amberSoft }}>{nome.trim() || "…"}</span>, quem não tem chama de <span style={{ color: T.violetSoft }}>{sobrenome.trim()}</span>.
+        </div>
+      )}
       <textarea value={historia} onChange={(e) => setHistoria(e.target.value)} rows={3} placeholder="História e segredos (opcional) — o Mestre vai usar isso contra e a favor de você…" className="w-full rounded-xl p-4 tv-body text-sm outline-none resize-none mb-6" style={campo} />
 
       <div className="grid md:grid-cols-2 gap-4 mb-2">
@@ -2830,10 +2848,15 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
         <div className="tv-mono text-xs" style={{ color: T.inkDim }}>PV: <span style={{ color: T.ink }}>{vidaMax}</span> · PM: <span style={{ color: T.violetSoft }}>{manaMax}</span> · Moedas: <span style={{ color: T.amberSoft }}>{MOEDAS_INICIAIS}</span></div>
         <Botao primario desativado={!nome.trim() || !conceito.trim() || restantes !== 0}
           onClick={() => concluir(comDom({
-            nome: nome.trim(), conceito: conceito.trim(), historia: historia.trim(),
+            /* `nome` continua sendo o nome INTEIRO, e tem de continuar: cento e
+               poucos lugares deste código casam pessoa por ele — elenco, missão,
+               combate, laço, cânone. O primeiro e o de família viajam ao lado,
+               para quem precisa escolher entre os dois. */
+            nome: nomeInteiro, primeiroNome: nome.trim(), sobrenome: sobrenome.trim(),
+            conceito: conceito.trim(), historia: historia.trim(),
             raca, classe, subclasse, profissao,
             antecedente: antObj.nome, antecedenteGancho: antObj.gancho,
-            semente: `${nome.trim()}|${conceito.trim()}|${Math.floor(Math.random() * 100000)}`,
+            semente: `${nomeInteiro}|${conceito.trim()}|${Math.floor(Math.random() * 100000)}`,
             atributos: attrFinais, vida: vidaMax + (antObj.pv || 0), vidaMax: vidaMax + (antObj.pv || 0), mana: manaMax + (antObj.pm || 0), manaMax: manaMax + (antObj.pm || 0),
             /* a criação é o piso da ficha: nem o respec desce abaixo dela (v9.6) */
             baseAtributos: { ...attrFinais }, pontosAtr: 0, atributosVersao: 1,
@@ -2849,7 +2872,108 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
   );
 }
 
-function TelaMenu({ irNovo, continuar, temSave }) {
+/* ============================================================
+   A SALA, NA TELA (v9.120)
+
+   Uma tela só para os dois estados de espera, porque eles são o mesmo
+   momento visto dos dois lados: o anfitrião esperando alguém entrar, e o
+   convidado esperando o mundo ficar pronto. Ela não decide nada — mostra
+   o código, quem já sentou e qual é o próximo passo de quem está olhando.
+
+   A REGRA DA TELA: nunca prometer o que não se pode saber. Não há como
+   distinguir "a sala não existe" de "o anfitrião ainda não abriu", e por
+   isso a tela não afirma nenhuma das duas — diz o que fazer.
+   ============================================================ */
+function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoEntrar, aoCriarMundo, aoSair, temMundo, tipoDoCanal }) {
+  const m = sala || {};
+  const lugares = m.lugares || [];
+  const meuAssento = lugares.findIndex((l) => l && l.id === eu);
+  const cheia = lugares.filter(Boolean).length >= 2;
+  const semCodigo = !m.codigo;
+  const campo = { background: T.panel, border: `1px solid ${T.line}`, color: T.ink };
+  return (
+    <div className="tv-fade max-w-lg mx-auto w-full px-6 py-10">
+      <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.violetSoft }}>Mesa de dois</div>
+      <h1 className="tv-display text-4xl mb-4" style={{ color: T.ink }}>{souAnfitriao ? "A sua sala está aberta" : semCodigo ? "Entrar numa sala" : "Na sala"}</h1>
+
+      {semCodigo ? (
+        <>
+          <p className="tv-body mb-4" style={{ color: T.inkDim }}>Digite o código que o seu amigo passou. São seis caracteres.</p>
+          <div className="flex gap-2 mb-2">
+            <input value={codigoDigitado} onChange={(e) => aoDigitar(e.target.value)} onKeyDown={(e) => e.key === "Enter" && aoEntrar(codigoDigitado)}
+              placeholder="ABC123" maxLength={12}
+              className="flex-1 rounded-xl p-4 tv-mono text-lg tracking-[0.3em] text-center outline-none uppercase" style={campo} />
+            <button onClick={() => aoEntrar(codigoDigitado)} className="rounded-xl px-5 tv-mono text-[11px]" style={{ background: T.violet, color: T.onAccent, fontWeight: 600 }}>entrar</button>
+          </div>
+        </>
+      ) : (
+        <div className="rounded-2xl p-4 mb-4" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
+          <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>Código da sala</div>
+          <div className="tv-display text-4xl tracking-[0.25em]" style={{ color: T.amberSoft }}>{m.codigo}</div>
+          {souAnfitriao && <div className="tv-body text-xs mt-2" style={{ color: T.inkDim }}>Passe estes seis caracteres para quem vai jogar com você.</div>}
+        </div>
+      )}
+
+      {!semCodigo && (
+        <div className="space-y-2 mb-4">
+          {[0, 1].map((i) => {
+            const l = lugares[i];
+            const sou = l && l.id === eu;
+            return (
+              <div key={i} className="rounded-xl px-4 py-3 flex items-center justify-between gap-2"
+                style={{ background: T.panelSoft, border: `1px solid ${l ? (sou ? T.amber : T.violet) : T.line}`, opacity: l ? 1 : 0.5 }}>
+                <span className="tv-body text-sm" style={{ color: l ? T.ink : T.inkDim }}>
+                  {l ? `${i + 1}. ${l.ficha ? l.ficha.nome : (sou ? "você" : "o outro jogador")}` : `${i + 1}. cadeira vazia`}
+                  {/* a marca só entra quando o rótulo é o NOME do personagem:
+                      antes dela existir ficha, "você · você" era a mesma
+                      palavra duas vezes na mesma linha */}
+                  {sou && l && l.ficha ? <span className="tv-mono text-[9px]" style={{ color: T.amberSoft }}> · você</span> : null}
+                </span>
+                <span className="tv-mono text-[9px] shrink-0" style={{ color: l && l.ficha ? T.ok : T.inkDim }}>
+                  {!l ? "esperando" : l.ficha ? "✓ ficha pronta" : "montando a ficha…"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {erro ? <div className="tv-body text-xs mb-3" style={{ color: T.danger }}>⚠ {erro}</div> : null}
+
+      {/* O PRÓXIMO PASSO, e só ele: uma tela de espera que lista tudo o que
+          pode acontecer é uma tela que não ajuda a esperar. */}
+      {!semCodigo && (
+        <div className="rounded-xl px-4 py-3 mb-4 tv-body text-sm" style={{ background: T.panelSoft, border: `1px solid ${T.line}`, color: T.inkDim }}>
+          {souAnfitriao && !cheia && "Esperando o segundo jogador entrar com o código. Você já pode criar o mundo enquanto isso — o sistema aproveita o tempo para ler a sua descrição."}
+          {souAnfitriao && cheia && !temMundo && "Os dois estão na sala. Crie o mundo: quando ele ficar pronto, os dois montam o personagem ao mesmo tempo."}
+          {souAnfitriao && cheia && temMundo && meuAssento >= 0 && !(lugares[meuAssento] || {}).ficha && "Agora monte o seu personagem."}
+          {souAnfitriao && cheia && temMundo && meuAssento >= 0 && (lugares[meuAssento] || {}).ficha && "A sua ficha está pronta. Esperando a do outro jogador para a aventura começar."}
+          {!souAnfitriao && meuAssento < 0 && "Batendo na porta… Se não abrir em alguns segundos, confira o código e se o anfitrião já criou a sala."}
+          {!souAnfitriao && meuAssento >= 0 && !temMundo && "Você entrou. O anfitrião está criando o mundo — assim que ele terminar, você monta o seu personagem."}
+          {!souAnfitriao && meuAssento >= 0 && temMundo && !(lugares[meuAssento] || {}).ficha && "O mundo ficou pronto. Monte o seu personagem."}
+          {!souAnfitriao && meuAssento >= 0 && temMundo && (lugares[meuAssento] || {}).ficha && "A sua ficha foi enviada. O anfitrião abre a aventura assim que estiver tudo pronto."}
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        {souAnfitriao && !temMundo && <Botao primario onClick={aoCriarMundo}>Criar o mundo →</Botao>}
+        {souAnfitriao && temMundo && meuAssento >= 0 && !(lugares[meuAssento] || {}).ficha && <Botao primario onClick={aoCriarMundo}>Montar o personagem →</Botao>}
+        <Botao onClick={aoSair}>Sair da sala</Botao>
+      </div>
+
+      {/* O QUE ESTE FIO ALCANÇA. Está na tela, e não só no código, porque é a
+          diferença entre uma sala que não funcionou e uma sala que nunca
+          prometeu funcionar dali. */}
+      <div className="tv-mono text-[9px] mt-6 leading-relaxed" style={{ color: T.inkDim }}>
+        {tipoDoCanal === "mudo"
+          ? "⚠ Este navegador não tem canal disponível — a sala não vai conversar."
+          : "Nesta versão a sala liga duas janelas do MESMO computador (duas abas, duas janelas ou dois perfis). Levar a mesa para dois aparelhos diferentes precisa de um ponto de encontro na internet, e é a próxima peça."}
+      </div>
+    </div>
+  );
+}
+
+function TelaMenu({ irNovo, continuar, temSave, criarSala, entrarSala }) {
   return (
     <div className="tv-fade flex-1 flex flex-col items-center justify-center px-6 py-10">
       <div className="text-center mb-10">
@@ -2875,6 +2999,17 @@ function TelaMenu({ irNovo, continuar, temSave }) {
           <div className="tv-display text-2xl" style={{ color: T.ink }}>{temSave ? "Nova campanha" : "Começar a jogar"}</div>
           <div className="tv-body text-sm" style={{ color: T.inkDim }}>Você, o Mestre e um mundo inteiro por criar</div>
         </button>
+        {/* ---------------- A SEGUNDA CADEIRA (v9.120) ---------------- */}
+        <div className="rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.violet}` }}>
+          <div className="tv-display text-xl mb-1" style={{ color: T.violetSoft }}>Jogar em dois</div>
+          <div className="tv-body text-xs mb-3" style={{ color: T.inkDim }}>Um cria o mundo e passa o código; o outro entra. Os dois montam o personagem e começam no mesmo grupo, na mesma cena.</div>
+          <button onClick={criarSala} className="w-full rounded-xl px-3 py-2.5 mb-2 tv-mono text-[11px]" style={{ background: T.violet, color: T.onAccent, fontWeight: 600 }}>
+            🎲 Criar uma sala
+          </button>
+          <button onClick={entrarSala} className="w-full rounded-xl px-3 py-2.5 tv-mono text-[11px]" style={{ border: `1px solid ${T.violet}`, color: T.violetSoft }}>
+            🔑 Entrar com um código
+          </button>
+        </div>
       </div>
       {temSave && <p className="tv-body text-xs mt-6" style={{ color: T.inkDim }}>Começar uma nova campanha substitui a anterior neste dispositivo.</p>}
     </div>
@@ -3128,6 +3263,21 @@ export default function Taverna() {
      registro fechado quando o turno acaba. Fosse cada peça escrevendo
      direto na mesa, um turno com dado e perigo viraria dois turnos. */
   const mesaRef = useRef(garantirMesa(null));
+  /* ---------------- A SALA DE DOIS (v9.120) ----------------
+     `null` enquanto a campanha for de um jogador só, que é o caso de
+     todas as que já existem. Nada aqui muda o jogo de quem joga sozinho:
+     as portas novas só abrem quando há uma sala. */
+  const [sala, setSalaEstado] = useState(null);
+  const salaRef = useRef(null);
+  const setSala = (nova) => { salaRef.current = nova; setSalaEstado(nova); };
+  /* um id por ABA, não por pessoa: é assim que se testa a mesa sozinho,
+     com duas janelas, e é assim que a mesma pessoa em dois aparelhos são
+     dois participantes */
+  const euRef = useRef(novoIdDeParticipante());
+  const canalRef = useRef(null);
+  const souAnfitriaoRef = useRef(false);
+  const [codigoDigitado, setCodigoDigitado] = useState("");
+  const [erroDaSala, setErroDaSala] = useState("");
   /* v9.85: a memoria da estante — quais FORMAS o mestre ja usou. Vive ao
      lado da mesa porque tem a mesma natureza: memoria curta de oficio, que
      nao e fato do mundo e nao entra na cronica. */
@@ -4563,6 +4713,9 @@ export default function Taverna() {
       emRaid: !!(raidRef.current && raidRef.current.fase === "luta"),
       /* v9.117: há uma missão DO SISTEMA aberta? É a porta da trama. */
       temTrama: (missoesRef.current || []).some((m) => m && m.status === "ativa" && m.tipo === "trama"),
+      /* v9.120: a porta da mesa de dois abre quando há de fato duas
+         cadeiras ocupadas — não quando há uma sala aberta e vazia. */
+      emSala: ocupadosDaSala(salaRef.current).length >= LUGARES,
       /* v9.106: há alguém em cena? É a porta do Intérprete. */
       temGente: pessoasDaCena().length > 0,
       temVilao: !!(nemesisRef.current && nemesisRef.current.nome),
@@ -5125,6 +5278,11 @@ export default function Taverna() {
       saveRef.current = dados;
       setTemSave(dados);
       setStatusSave("salvo");
+      /* v9.120: e o mundo atravessa o fio. Sai daqui, e não do fim do turno,
+         porque TODO caminho que muda o jogo passa por `salvar` — o turno, o
+         combate, o mercado, o descanso. Pendurar a publicação num só deles
+         deixaria o convidado com uma tela velha nos outros. */
+      try { publicarEstado(dados); } catch (e) { calou("publicarEstado", e); }
       if (podou && !avisoPodaRef.current) {
         avisoPodaRef.current = true;
         pushMsgs([{ autor: "sistema", texto: "💾 O save estava grande demais para o navegador: poddo só o histórico antigo de mensagens (o mundo, a ficha, o cânone e as missões seguem intactos)." }]);
@@ -7800,6 +7958,25 @@ export default function Taverna() {
   };
 
   const iniciar = (pers) => {
+    /* ---------------- A SEGUNDA CADEIRA ENTRA NO GRUPO (v9.120) ----------------
+       O personagem do outro jogador não é um NPC nem um convidado da cena:
+       ele é membro do grupo desde o primeiro turno, com ficha, poder e vez
+       na iniciativa. É o que o GRUPO já sabia fazer por um companheiro, com
+       a diferença de que este tem um humano decidindo por ele — e é por isso
+       que a sala coube neste jogo sem refazer o turno. */
+    if (salaRef.current && souAnfitriaoRef.current) {
+      const outro = garantirSala(salaRef.current).lugares.find((l) => l && l.id !== euRef.current && l.ficha);
+      if (outro) {
+        const comp = garantirFichaCompanheiro({
+          ...outro.ficha,
+          /* a marca que impede o sistema de jogar por ele: quem decide é
+             quem está do outro lado do fio */
+          deJogador: true, dono: outro.id,
+        });
+        pers = { ...pers, grupo: [...(pers.grupo || []).filter((g) => g && g.nome !== comp.nome), comp] };
+      }
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaSala(salaRef.current)}`;
+    }
     /* ---------------- CAPÍTULO OU CAMPANHA (v9.90) ----------------
        A mesma tela de criação serve às duas, e a diferença mora aqui: num
        capítulo NOVO o mundo não se refaz. O cânone, o mapa, quem morreu,
@@ -7894,10 +8071,38 @@ export default function Taverna() {
       enviar("[ABERTURA DE CAPÍTULO] Abra o capítulo conforme o envelope acima.", pers, []);
       return;
     }
-    enviar(`Comece a aventura: apresente o mundo com riqueza, situe meu personagem numa cena de abertura marcante com pelo menos um NPC interessante, e termine com um gancho que me convide a agir. (Minhas habilidades iniciais já foram concedidas pelo SISTEMA: ${(pers.habilidades || []).map((h) => h.nome).join(", ") || "nenhuma"} — NÃO envie "adicionar_habilidades".)`, pers, []);
+    /* ---------------- A ABERTURA (v9.120) ----------------
+       Ela era uma linha: "apresente o mundo com riqueza, situe meu
+       personagem numa cena marcante e termine com um gancho". O resultado
+       era o jogador CAÍDO no mundo — uma taverna bonita, um estranho
+       interessante, e nenhuma resposta para as duas perguntas que ele de
+       fato tem no primeiro minuto: que lugar é este, e o que eu estou
+       fazendo aqui.
+
+       Agora a abertura tem PARTES, e a última delas é a que faltava: a
+       intenção do Mestre já está na mesa. A trama é forçada aqui porque o
+       compasso nasce em respiro — sem isto, a única cena da campanha em
+       que o Mestre não tem para onde puxar é a primeira. */
+    { const env = talvezDarUmaTrama({ forcar: true }); if (env) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${env}`; }
+    enviar(abrirACampanha(pers), pers, []);
   };
 
-  const continuar = (comResumo) => {
+  /* O pedido de abertura. Longo de propósito e cobrado uma vez só na
+     campanha inteira: é o turno que decide se o jogador entende onde está. */
+  const abrirACampanha = (pers) => {
+    const habs = (pers.habilidades || []).map((h) => h.nome).join(", ") || "nenhuma";
+    return `[ABERTURA DA CAMPANHA] Este é o primeiro turno. Narre a abertura em QUATRO partes, nesta ordem e sem títulos — tudo em prosa corrida:
+
+1) O MUNDO. Que lugar é este, dito por dentro: o que o move, quem manda, do que se vive, e a LEI dele — a coisa que aqui é verdade e não seria em outro lugar. Concreto: um cheiro, um som, um preço, uma regra que todo mundo obedece sem discutir.
+2) ONDE EU ESTOU. A cidade e o ponto exato dentro dela, com o que se vê e se ouve daqui. O sistema já decidiu o lugar — use o que está no envelope, não invente outro.
+3) QUEM EU SOU AQUI. Não repita a minha ficha: mostre o que o meu conceito e o meu passado significam NESTE mundo — como as pessoas daqui olham para alguém como eu, o que isso me abre e o que me fecha. E por que eu estou neste ponto agora, fazendo o que estou fazendo. Eu preciso terminar a leitura sabendo o que vim fazer aqui.
+4) O PRIMEIRO FIO. Ponha em cena a coisa que o sistema já mandou por envelope de missão e deixe-a puxar: alguém que fala comigo, um sinal, um pedido, um problema que me alcança. Não anuncie que é uma missão, não liste etapas e não peça a minha resposta — só faça o mundo vir até mim, de um jeito em que ficar parado seja a escolha mais difícil.
+
+Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que você faz?".
+(As minhas habilidades iniciais já foram concedidas pelo SISTEMA: ${habs} — NÃO envie "adicionar_habilidades".)`;
+  };
+
+  const continuar = (comResumo, { silencioso = false } = {}) => {
     const sv = saveRef.current || temSave;
     if (!sv) { pushMsgs([{ autor: "sistema", texto: "Nenhuma aventura salva encontrada." }]); return; }
     try {
@@ -8118,14 +8323,18 @@ export default function Taverna() {
       setFase("jogo");
       /* DESPERTAR NO CARREGAMENTO (v7.4.1): save veterano nível ≥15 nunca
          disparava o despertar (ele só checava DEPOIS de um turno). */
-      setTimeout(() => checarDespertar(pers, true), 900);
+      /* v9.120: no convidado da sala isto seria o despertar do personagem
+         do OUTRO caindo na tela dele. O mundo que ele veste é o mesmo; a
+         ficha que a tela chama de "minha" é a do anfitrião, e os avisos
+         que são da ficha não são dele. */
+      if (!silencioso) setTimeout(() => checarDespertar(pers, true), 900);
       /* ---- A MORTE ATRAVESSA A RECARGA (v9.42) ----
          A tela de tombamento vivia só no estado da sessão: recarregar a
          página voltava direto para a campanha com o herói "morto" na ficha e
          nenhuma escolha cobrada. Dava para tombar e seguir jogando, o que
          esvazia a única regra do jogo que tem preço de verdade. A morte está
          no save; a tela agora nasce dele. */
-      if (pers && pers.morto) setTimeout(() => abrirDesfechoDaMorte(), 700);
+      if (!silencioso && pers && pers.morto) setTimeout(() => abrirDesfechoDaMorte(), 700);
       /* RELÓGIOS (v9.18): semeia no carregamento para que o save antigo — que
          já tem nêmesis odiando e evento global correndo — abra com os
          ponteiros na tela em vez de esperar a próxima noite. Idempotente:
@@ -8587,6 +8796,171 @@ export default function Taverna() {
      tudo em silêncio — a ação sumia, os movimentos já tinham sido descontados
      e a tela ficava parada sem explicação. Agora o erro aparece no chat, com
      nome, e o turno segue para o Mestre em vez de morrer no meio. */
+  /* ============================================================
+     A SALA POR DENTRO (v9.120)
+
+     Quatro funções e um leitor de recados. Tudo o que é REGRA — quem
+     senta, de quem é a vez, como as duas ações viram um turno — mora em
+     `sala.js`; tudo o que é REDE mora em `transporte.js`. O que sobra
+     aqui é a costura: ligar o fio ao estado que já existe.
+
+     O ANFITRIÃO É O DONO DO MUNDO. Ele chama o Mestre, resolve o turno e
+     manda o resultado. O convidado escreve o que faz e recebe o mundo
+     pronto — não porque a opinião dele valha menos, mas porque duas
+     máquinas rolando os mesmos dados dariam dois resultados, e o jogo
+     passaria a ter duas verdades sobre o mesmo golpe.
+     ============================================================ */
+
+  const mandarRecado = (tipo, carga = {}) => {
+    const c = canalRef.current;
+    if (!c) return false;
+    const r = { tipo, de: euRef.current, ...carga };
+    if (!cabeNoFio(r)) { calou("recadoGrande", new Error(tipo)); return false; }
+    return c.enviar(r);
+  };
+
+  /* O anfitrião publica a sala sempre que ela muda: é a única fonte da
+     verdade sobre quem está sentado e quem já tem ficha. */
+  const publicarSala = (nova) => {
+    if (!souAnfitriaoRef.current) return;
+    const m = garantirSala(nova || salaRef.current);
+    mandarRecado(RECADOS.sala, { sala: m, mundo: mundoRef.current || mundo, nomeCampanha: nomeCampanhaRef.current || nomeCampanha });
+  };
+
+  /* E publica o MUNDO depois de cada turno. Vai o save inteiro, de
+     propósito: um estado parcial obrigaria os dois lados a concordar sobre
+     o que mudou, e é exatamente aí que duas verdades nascem. */
+  const publicarEstado = (dados) => {
+    if (!souAnfitriaoRef.current || !salaRef.current) return;
+    const m = garantirSala(salaRef.current);
+    mandarRecado(RECADOS.estado, { sala: { ...m, versao: m.versao + 1 }, save: dados });
+    setSala({ ...m, versao: m.versao + 1 });
+  };
+
+  const aoReceberRecado = (r) => {
+    try {
+      if (!recadoValido(r) || r.de === euRef.current) return;
+      /* ---- do lado do ANFITRIÃO ---- */
+      if (souAnfitriaoRef.current) {
+        if (r.tipo === RECADOS.ola) {
+          const res = sentarNaSala(salaRef.current, { id: r.de, nome: r.nome || "", quando: Date.now() });
+          if (!res.ok) { mandarRecado(RECADOS.sala, { sala: garantirSala(salaRef.current), recusado: r.de, motivo: res.motivo }); return; }
+          setSala(res.sala);
+          publicarSala(res.sala);
+          return;
+        }
+        if (r.tipo === RECADOS.ficha) {
+          const nova = sentarFicha(salaRef.current, r.de, r.ficha);
+          setSala(nova); publicarSala(nova);
+          return;
+        }
+        if (r.tipo === RECADOS.acao) {
+          const nova = porAcao(salaRef.current, r.de, r.texto);
+          setSala(nova);
+          publicarSala(nova);
+          /* se o anfitrião já tinha escrito a dele, o turno sai agora */
+          if (turnoCompleto(nova) && faseRef.current === "jogo") dispararTurnoDaSala(nova);
+          return;
+        }
+        if (r.tipo === RECADOS.saiu) {
+          const nova = sairDaSala(salaRef.current, r.de);
+          setSala(nova); publicarSala(nova);
+          pushMsgs([{ autor: "sistema", texto: "🚪 O outro jogador saiu da sala." }]);
+        }
+        return;
+      }
+      /* ---- do lado do CONVIDADO ---- */
+      if (r.tipo === RECADOS.sala) {
+        if (r.recusado === euRef.current) { setErroDaSala(r.motivo || "não foi possível entrar"); return; }
+        setSala(garantirSala(r.sala));
+        if (r.mundo && !mundoRef.current) { mundoRef.current = r.mundo; setMundo(r.mundo); }
+        if (r.nomeCampanha) { nomeCampanhaRef.current = r.nomeCampanha; setNomeCampanha(r.nomeCampanha); }
+        /* o mundo do anfitrião chegou e eu ainda não tenho ficha: é a minha
+           vez de montar o personagem — e o léxico dele já veio junto */
+        if (r.mundo && faseRef.current === "sala" && assentoDe(r.sala, euRef.current) >= 0
+          && !(garantirSala(r.sala).lugares.find((l) => l && l.id === euRef.current) || {}).ficha) setFase("personagem");
+        return;
+      }
+      if (r.tipo === RECADOS.estado) {
+        setSala(garantirSala(r.sala));
+        aplicarMundoDaSala(r.save);
+        return;
+      }
+      if (r.tipo === RECADOS.saiu) pushMsgs([{ autor: "sistema", texto: "🚪 O anfitrião saiu da sala." }]);
+    } catch (e) { calou("aoReceberRecado", e); }
+  };
+
+  /* O convidado recebe o mundo e o veste. `saveRef` + `continuar` é a porta
+     que este código já tinha para transformar um save em tela: usar outra
+     seria escrever uma segunda versão da mesma coisa, e uma delas ficaria
+     para trás na primeira mudança de formato. */
+  const aplicarMundoDaSala = (sv) => {
+    if (!sv || typeof sv !== "object") return;
+    saveRef.current = sv;
+    try { continuar(false, { silencioso: true }); } catch (e) { calou("aplicarMundoDaSala", e); }
+  };
+
+  const abrirCanalDaSala = (codigo) => {
+    try { if (canalRef.current) canalRef.current.fechar(); } catch { /* já fechado */ }
+    canalRef.current = abrirCanal(codigo, { aoReceber: aoReceberRecado });
+    return canalRef.current;
+  };
+
+  const criarSalaDeDois = () => {
+    souAnfitriaoRef.current = true;
+    const nova = criarSala({ anfitriao: euRef.current, nome: "" });
+    setSala(nova);
+    abrirCanalDaSala(nova.codigo);
+    setErroDaSala("");
+    setFase("sala");
+  };
+
+  const entrarNaSalaPeloCodigo = (cru) => {
+    const cod = normalizarCodigo(cru);
+    if (!codigoValido(cod)) { setErroDaSala("Esse código não está completo."); return; }
+    souAnfitriaoRef.current = false;
+    setSala(garantirSala({ codigo: cod }));
+    abrirCanalDaSala(cod);
+    setErroDaSala("");
+    setFase("sala");
+    /* bate na porta. Se ninguém responder, o aviso da tela diz o que fazer —
+       não há como distinguir "sala não existe" de "o anfitrião ainda não
+       abriu", e prometer a diferença seria mentir. */
+    mandarRecado(RECADOS.ola, { nome: "" });
+    setTimeout(() => mandarRecado(RECADOS.ola, { nome: "" }), 1200);
+  };
+
+  const largarASala = () => {
+    try { mandarRecado(RECADOS.saiu, {}); canalRef.current && canalRef.current.fechar(); } catch { /* nada aberto */ }
+    canalRef.current = null; souAnfitriaoRef.current = false; setSala(null); setErroDaSala("");
+  };
+
+  /* A minha ficha entra na cadeira. No anfitrião ela senta direto; no
+     convidado ela viaja — e nos dois casos o passo seguinte é o mesmo:
+     esperar o outro. */
+  const sentarMinhaFicha = (ficha) => {
+    if (souAnfitriaoRef.current) {
+      const nova = sentarFicha(salaRef.current, euRef.current, ficha);
+      setSala(nova); publicarSala(nova);
+      return nova;
+    }
+    mandarRecado(RECADOS.ficha, { ficha });
+    setFase("sala");
+    return salaRef.current;
+  };
+
+  /* O turno a duas mãos. Só o anfitrião chega aqui: ele junta as duas ações
+     na ordem das cadeiras e manda UM pedido, porque a cena é uma só. */
+  const dispararTurnoDaSala = (m) => {
+    const s = garantirSala(m || salaRef.current);
+    if (!turnoCompleto(s)) return false;
+    const texto = textoDoTurno(s);
+    const limpa = limparTurno(s);
+    setSala(limpa); publicarSala(limpa);
+    try { agirInterno(texto); } catch (e) { calou("turnoDaSala", e); }
+    return true;
+  };
+
   const agir = (texto) => {
     /* v9.42: morto não age. A tela de tombamento cobre tudo, mas cobrir não é
        impedir — e um caminho que ainda funciona por baixo do pano é o mesmo
@@ -8594,6 +8968,28 @@ export default function Taverna() {
     const pm = fichaViva();
     if (pm && pm.morto && !String(texto || "").trimStart().startsWith("/")) {
       abrirDesfechoDaMorte();
+      return;
+    }
+    /* ---------------- NUMA SALA, A AÇÃO ESPERA A OUTRA (v9.120) ----------------
+       A ordem é fixa e é ela que faz a mesa valer a pena: o segundo jogador
+       escreve DEPOIS de ler o primeiro, e por isso pode responder a ele
+       dentro do mesmo turno. Se o turno saísse na primeira ação, seriam dois
+       jogos de um jogador se revezando. */
+    if (salaRef.current) {
+      const nova = porAcao(salaRef.current, euRef.current, texto);
+      setSala(nova);
+      setEntrada("");
+      if (!souAnfitriaoRef.current) {
+        mandarRecado(RECADOS.acao, { texto: String(texto || "").trim() });
+        pushMsgs([{ autor: "sistema", texto: `✍ ${quemFalta(nova).length ? `Você escreveu. Esperando ${quemFalta(nova).join(" e ")}…` : "Você escreveu. O turno vai sair."}` }]);
+        return;
+      }
+      publicarSala(nova);
+      if (!turnoCompleto(nova)) {
+        pushMsgs([{ autor: "sistema", texto: `✍ Você escreveu. Esperando ${quemFalta(nova).join(" e ")}…` }]);
+        return;
+      }
+      dispararTurnoDaSala(nova);
       return;
     }
     try { agirInterno(texto); }
@@ -10385,14 +10781,20 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     };
   };
 
-  const talvezDarUmaTrama = () => {
+  const talvezDarUmaTrama = ({ forcar = false } = {}) => {
     try {
       if (combateRef.current || masmorraRef.current || acampadoRef.current || raidRef.current) return "";
       /* uma por vez */
       if ((missoesRef.current || []).some((m) => m.status === "ativa" && m.tipo === "trama")) return "";
-      /* e não no respiro: o respiro existe para NÃO haver nada em jogo */
+      /* e não no respiro: o respiro existe para NÃO haver nada em jogo.
+         v9.120: MENOS NA ABERTURA. O compasso nasce em "respiro" — é o
+         padrão de `garantirCompasso` —, e por isso a primeira cena da
+         campanha era a única em que o Mestre não tinha intenção nenhuma na
+         mão. O jogador era posto no mundo e largado ali, com um gancho
+         improvisado no lugar do fio da história. A abertura é justamente
+         onde a indução tem de começar. */
       const c = garantirCompasso(compassoRef.current);
-      if (c.movimento === "respiro") return "";
+      if (!forcar && c.movimento === "respiro") return "";
       const t = montarTrama({ situacao: situacaoDaTrama(), material: materialDaTrama() });
       if (!t) return "";
       const m = criarMissao({
@@ -13213,6 +13615,16 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const chave = (c) => `${semNome(c.dador || "")}|${semNome(c.titulo || "")}`;
     const atual = muralRef.current || [];
     if (atual.some((c) => chave(c) === chave(cartaz))) return false;
+    /* ---------------- UMA PESSOA, UM TRABALHO (achado na tela) ----------------
+       Zulmira do Sino apareceu DUAS vezes no mural no mesmo turno: uma pelo
+       trabalho que o sistema escolheu pregar por ela (🏹) e outra pelo que o
+       Mestre relatou da própria cena (📋). Títulos diferentes, mesma pessoa,
+       mesmo serviço — e duas linhas iguais no log.
+
+       A regra que resolve isso não é nova: `ofertas.js` a escreve desde a
+       v9.37 na terceira decisão dele, "cada pessoa tem UM trabalho, para
+       sempre". Faltava valer também para o que a ficção prega. */
+    if (cartaz.dador && atual.some((c) => c.oferecido && semNome(c.dador || "") === semNome(cartaz.dador))) return false;
     /* o que já está no diário não volta ao mural: seria oferecer de novo o
        serviço que o herói já pegou */
     const jaNoDiario = garantirMissoes(missoesRef.current)
@@ -15078,9 +15490,16 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         </div>
       </header>
 
-      {fase === "menu" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaMenu irNovo={() => setFase("mundo")} continuar={continuar} temSave={temSave} /></div>}
-      {fase === "mundo" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaMundo concluir={(m, nome) => { setMundo(m); mundoRef.current = m; setNomeCampanha(nome); setFase("personagem"); lerOMundo(m); }} /></div>}
-      {fase === "personagem" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaPersonagem mundo={mundo} concluir={iniciar} lendoMundo={lendoMundo} mundoLido={!!(mundo && mundo.lexico && mundo.lexico.gerado)} /></div>}
+      {fase === "menu" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaMenu irNovo={() => { largarASala(); setFase("mundo"); }} continuar={(r) => { largarASala(); continuar(r); }} temSave={temSave} criarSala={criarSalaDeDois} entrarSala={() => { souAnfitriaoRef.current = false; setSala(null); setCodigoDigitado(""); setErroDaSala(""); setFase("sala"); }} /></div>}
+      {fase === "sala" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaSala
+        sala={sala} eu={euRef.current} souAnfitriao={souAnfitriaoRef.current} erro={erroDaSala}
+        codigoDigitado={codigoDigitado} aoDigitar={setCodigoDigitado} aoEntrar={entrarNaSalaPeloCodigo}
+        temMundo={!!(mundo && mundo.genero && nomeCampanha)}
+        tipoDoCanal={(canalRef.current || {}).tipo || ""}
+        aoCriarMundo={() => setFase(mundo && nomeCampanha ? "personagem" : "mundo")}
+        aoSair={() => { largarASala(); setFase("menu"); }} /></div>}
+      {fase === "mundo" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaMundo concluir={(m, nome) => { setMundo(m); mundoRef.current = m; setNomeCampanha(nome); setFase(salaRef.current ? "sala" : "personagem"); lerOMundo(m); if (salaRef.current) setTimeout(() => publicarSala(), 60); }} /></div>}
+      {fase === "personagem" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaPersonagem mundo={mundo} concluir={(pers) => { if (!salaRef.current) return iniciar(pers); const nova = sentarMinhaFicha(pers); if (souAnfitriaoRef.current) { if (todosProntos(nova)) iniciar(pers); else { setFase("sala"); } } }} lendoMundo={lendoMundo} mundoLido={!!(mundo && mundo.lexico && mundo.lexico.gerado)} /></div>}
 
       {fase === "jogo" && personagem && (
         <div className="flex flex-1 min-h-0 relative">

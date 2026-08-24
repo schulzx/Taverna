@@ -47,6 +47,7 @@ import { lexicoPrompt, chamadoDaRaca, chamadoDaProfissao } from "./lexico.js";
 import { ADVERSARIO_PROMPT } from "./adversario.js";
 import { COBRADOR_PROMPT } from "./cobrador.js";
 import { GEOGRAFO_PROMPT } from "./geografo.js";
+import { SALA_PROMPT } from "./sala.js";
 import { PAUTA_PROMPT } from "./pauta.js";
 import { REGISTRO_PROMPT } from "./registro.js";
 import { INTERPRETE_PROMPT } from "./interprete.js";
@@ -78,9 +79,22 @@ import { INVOCACOES_PROMPT } from "./invocacoes.js";
 import { CONTROLE_PROMPT } from "./controle.js";
 import { HABILIDADES_PROMPT } from "./habilidades.js";
 
+/* ---------------- COMO SE CHAMA E COMO SE TRATA (v9.120) ----------------
+   O jogador passa a dar NOME e SOBRENOME, e os dois não servem para a mesma
+   coisa: quem tem intimidade chama pelo primeiro, quem não tem chama pelo de
+   família — e é essa escolha, feita fala a fala, que mostra distância sem
+   ninguém precisar dizer "eles não são próximos". Sem sobrenome, nada muda:
+   a linha some e todo mundo usa o nome que existe. */
+export function comoChamarOHeroi(p) {
+  const primeiro = String((p && p.primeiroNome) || "").trim();
+  const sobre = String((p && p.sobrenome) || "").trim();
+  if (!primeiro || !sobre) return "";
+  return `\nCOMO SE CHAMA: "${primeiro}" é o nome, "${sobre}" é o de família. Quem tem intimidade, afeto ou hierarquia por baixo usa "${primeiro}"; conhecido de pouco tempo, autoridade, inimigo e estranho usam "${sobre}" (ou o nome inteiro, quando o momento for formal). Trocar de tratamento no meio de uma conversa é um gesto, e um gesto forte — use quando alguém se aproximar ou se afastar de verdade.`;
+}
+
 export function fichaTexto(p) {
   const attrs = ATRIBUTOS.map((a) => `${a.nome}: +${p.atributos[a.id]}`).join(", ");
-  return `Nome: ${p.nome} · Conceito: ${p.conceito} · Nível ${p.nivel}
+  return `Nome: ${p.nome} · Conceito: ${p.conceito} · Nível ${p.nivel}${comoChamarOHeroi(p)}
 História: ${p.historia || "(desconhecida — revele aos poucos)"}${p.antecedente ? `
 Antecedente: ${p.antecedente}${p.antecedenteGancho ? ` — GANCHO (teça na ficção, cedo ou tarde): ${p.antecedenteGancho}` : ""}` : ""}
 Atributos: ${attrs} · PV máx ${p.vidaMax} · PM máx ${p.manaMax}`;
@@ -176,6 +190,9 @@ export const PORTAS_DA_CENA = [
      Tirá-la apagava, em silêncio, a explicação de como uma cidade se
      apresenta neste mundo. Uma porta tem DOIS leitores possíveis nesta
      casa, e olhar para um só é como nasce o buraco que ninguém vê. */
+  /* v9.120: a segunda cadeira. Numa campanha de um jogador só este bloco
+     seria uma regra sobre gente que não existe. */
+  { id: "sala", quando: (c) => !!c.emSala, porque: "a mesa de dois só existe quando há duas pessoas nela" },
   { id: "cidade", quando: (c) => !!c.emCidade, porque: "como um assentamento se apresenta neste mundo só importa a quem está num" },
   /* aflição nasce de golpe de criatura, de arma ou de armadilha — e os três
      só existem numa luta ou lá embaixo. Fora disso não há de onde vir. */
@@ -386,6 +403,7 @@ ${so("trama", TRAMAS_PROMPT)}
 ${so("raid", RAID_PROMPT)}
 
 ${so("porte", PODER_PROMPT)}
+${so("sala", SALA_PROMPT)}
 
 
 ${PAUTA_PROMPT}

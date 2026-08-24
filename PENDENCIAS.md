@@ -4622,3 +4622,81 @@ lista "onde está cada um" (o Mestre registra o personagem do jogador no
 elenco de vez em quando) contradizendo o ⌖ logo acima; e "Cartazes
 disponíveis" ficava com um título e nada embaixo quando o mural só tinha
 oferecidos — escondendo justamente o botão de procurar cartazes.
+
+## v9.120 — a abertura, o sobrenome e a segunda cadeira
+
+### A abertura, e a peça mecânica que faltava nela
+
+O pedido de abertura era UMA linha: "apresente o mundo com riqueza, situe
+meu personagem numa cena marcante e termine com um gancho". O resultado era
+o jogador CAÍDO no mundo — uma taverna bonita, um estranho interessante, e
+nenhuma resposta para as duas perguntas que ele de fato tem no primeiro
+minuto: que lugar é este, e o que eu vim fazer aqui.
+
+Agora ela tem quatro partes (o mundo e a lei dele · onde estou · quem eu
+sou NESTE mundo · o primeiro fio). E a parte que não é texto: **a trama é
+forçada na abertura.** O compasso nasce em `respiro` — é o padrão de
+`garantirCompasso` — e por isso a primeira cena da campanha era a única em
+que o Mestre não tinha intenção nenhuma na mão. A indução começa
+justamente ali.
+
+Provado na campanha de teste: o Mestre abriu com a lei do mundo ("todo nome
+riscado na parede é uma promessa à montanha"), situou a heroína na praça em
+frente à Casa do Sino, disse o que o passado dela significa ali ("vale mais
+que pedras — e também fecha portas") e pôs o taverneiro a puxar a trama que
+o sistema tinha acabado de criar.
+
+### O sobrenome
+
+Dois campos, porque não servem para a mesma coisa: quem tem intimidade chama
+pelo primeiro, quem não tem chama pelo de família — e essa escolha, feita
+fala a fala, mostra distância sem ninguém precisar explicar. `nome` continua
+sendo o nome INTEIRO, e tem de continuar: cento e poucos lugares deste
+código casam pessoa por ele. Na tela: "— Vantel. — Belmiro chama, e o nome
+sai estranho, como se ele tivesse ensaiado."
+
+### A segunda cadeira
+
+`sala.js` (a regra) + `transporte.js` (o fio) + a costura no App. O arquivo
+da regra é pequeno de propósito: o GRUPO já sabia quase tudo. Um companheiro
+decidido por um humano é a mesma peça no tabuleiro, com outra mão em cima —
+e é por isso que a mesa coube sem refazer o turno.
+
+Três decisões que vale registrar:
+
+- **Um anfitrião, e ele manda.** Sem servidor não há árbitro neutro: se os
+  dois lados calculassem o turno, dois dados decidiriam a mesma rolagem e o
+  jogo teria duas verdades sobre o mesmo golpe.
+- **A ordem é fixa** — jogador 1, jogador 2, e só então o Mestre. É o que
+  permite ao segundo responder ao primeiro dentro do MESMO turno; sem isso
+  seriam dois jogos de um jogador se revezando. Provado na tela: "Kael,
+  atrás de Íris, não perde o ritmo: — Quanto paga?"
+- **O mundo atravessa em `salvar`**, e não no fim do turno: TODO caminho que
+  muda o jogo passa por lá (turno, combate, mercado, descanso). Pendurar a
+  publicação num só deles deixaria o convidado com uma tela velha nos outros.
+
+**O QUE ESTA VERSÃO NÃO FAZ, e está escrito no arquivo e na tela.** O canal
+de hoje é o do NAVEGADOR: duas abas, duas janelas ou dois perfis na MESMA
+máquina. Ele não atravessa a internet, e não existe forma de atravessar sem
+um terceiro ponto que guarde e repasse — uma função serverless não guarda
+estado entre chamadas, e o WebRTC precisa de alguém para apresentar um lado
+ao outro. É uma escolha de infraestrutura, e é de quem paga a conta. O que
+o desenho garante é que ela custe UM arquivo: sala, cadeiras, ordem das
+ações e sincronização do mundo já funcionam por cima da interface do
+transporte e foram testados por ela.
+
+Dois defeitos achados na tela e não nos testes:
+
+- **Zulmira do Sino pregou dois cartazes no mesmo turno** — um pelo trabalho
+  que o sistema escolheu por ela, outro pelo que o Mestre relatou da cena.
+  Títulos diferentes, mesma pessoa. A regra que resolve já estava escrita em
+  `ofertas.js` desde a v9.37 ("cada pessoa tem UM trabalho, para sempre");
+  faltava valer também para o que a ficção prega.
+- **"O ninho de as figueiras"** — a contração era feita à mão no molde e só
+  conhecia o artigo "a ". Passou a sair de `comDe`/`comEm`, em `lugar.js`:
+  contração é regra do português, não do molde, e cada molde que inventa a
+  sua erra num caso diferente.
+
+Margem a vigiar: a soma sintética de todas as portas está em 89.943 de
+90.000. A porta `sala` não custa nada a quem joga sozinho — a cena comum
+não se moveu (61.225) —, mas o guarda do pior caso ficou no fio.

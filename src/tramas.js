@@ -65,6 +65,7 @@
    ============================================================ */
 
 import { FASES, faseDe } from "./vilao.js";
+import { comDe, comEm } from "./lugar.js";
 
 const limpar = (v, n) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n);
 const inteiro = (v, d = 0) => (Number.isFinite(Number(v)) ? Math.round(Number(v)) : d);
@@ -287,8 +288,13 @@ export const VEICULOS = [
     id: "limpar_o_ninho", serve: ["apertar_o_mundo", "abrir_o_mundo", "dar_o_degrau"],
     precisa: ["criatura", "ermo"],
     montar: ({ criatura, ermo, pessoa }) => ({
-      titulo: `O ninho ${ermo.nome ? `d${ermo.nome.startsWith("a ") ? "" : "e "}${ermo.nome}` : "no ermo"}`,
-      descricao: `${criatura.nome} fez ninho ${ermo.nome ? `em ${ermo.nome}` : "perto daqui"}, e ${pessoa ? pessoa.nome : "o povo daqui"} não consegue mais passar por lá.`,
+      /* v9.120: a contração vem de `lugar.js`, e não daqui. A que morava
+         nesta linha só conhecia o artigo "a " — e "as figueiras" virou "O
+         ninho de as figueiras" na primeira campanha em que saiu. Contração
+         é regra do português, não do molde: quem a resolve tem de ser um
+         lugar só, senão cada molde inventa a sua e cada uma erra num caso. */
+      titulo: `O ninho ${ermo.nome ? comDe(ermo.nome) : "no ermo"}`,
+      descricao: `${criatura.nome} fez ninho ${ermo.nome ? comEm(ermo.nome) : "perto daqui"}, e ${pessoa ? pessoa.nome : "o povo daqui"} não consegue mais passar por lá.`,
       etapas: [{ tipo: "derrotar", alvo: criatura.nome, quantos: 3, onde: ermo.nome || "" }],
     }),
     /* A CAÇADA É A VIRADA. É este tipo que impede a missão dos três lobos
