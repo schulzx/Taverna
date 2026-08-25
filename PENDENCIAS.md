@@ -4744,3 +4744,43 @@ justamente que a rota não sabe o que é uma cadeira.
 
 **Pendente do lado de quem paga a conta:** o `KV_REST_API_TOKEN` foi colado
 num log de conversa e precisa ser rotacionado no painel do Upstash.
+
+## v9.122 — a sala travava com as duas fichas prontas
+
+Dois defeitos da primeira sala de verdade, os dois só visíveis com duas
+pessoas de fato sentadas.
+
+**A AVENTURA NÃO ABRIA.** As duas fichas ficavam marcadas como prontas e a
+tela não saía do lugar. O começo estava pendurado num caminho só — o
+anfitrião apertando "Começar aventura" —, e ali ele perguntava se estava
+todo mundo pronto. Quando a segunda ficha chega DEPOIS, pelo fio, ninguém
+refazia a pergunta.
+
+É a regra desta casa outra vez, e desta vez ela mordeu a peça mais nova:
+**toda regra que mora num só de dois caminhos vira bug.** O recado de AÇÃO
+já fazia certo (confere `turnoCompleto` e dispara); o de FICHA não conferia
+`todosProntos`. As provas agora medem os dois caminhos — um só deles verde
+era exatamente o estado que travou a sala.
+
+**O LÉXICO NÃO CHEGAVA NO CONVIDADO.** A leitura do mundo é assíncrona e
+leva quase um minuto — é o que a tela de criação diz enquanto o jogador
+monta a ficha. O anfitrião publicava a sala no instante em que o mundo era
+criado, ou seja ANTES de o léxico existir, e nada republicava depois. E a
+outra metade do mesmo defeito estava do lado de lá: o convidado só aceitava
+o mundo se ainda não tivesse um (`if (r.mundo && !mundoRef.current)`), então
+recusaria a versão nova mesmo se ela chegasse.
+
+O resultado era o convidado escolhendo raça e classe com os nomes genéricos
+no único momento em que isso se vê. Provado depois do conserto: nas duas
+telas, "Estivador · Mareeiro · Guindaste · Moço de Cais".
+
+**E uma terceira coisa, achada na releitura e não na tela.** O canal fica
+aberto a sessão inteira e guardava a função que recebeu na hora em que foi
+aberto — a de UM render. Enquanto ela só mexia em refs, isso passou
+despercebido; a partir do momento em que o recado de ficha precisa chamar
+`iniciar`, que lê estado de verdade, a função velha começaria a abrir a
+campanha com o mundo de antes. Agora o canal chama um ponteiro que se
+atualiza a cada render — o mesmo padrão que `salvarRef2` já usava aqui.
+
+A tela também parou de mentir: com as duas fichas prontas ela dizia
+"esperando a do outro jogador" logo abaixo dos dois ✓.

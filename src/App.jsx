@@ -2889,6 +2889,10 @@ function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoE
   const lugares = m.lugares || [];
   const meuAssento = lugares.findIndex((l) => l && l.id === eu);
   const cheia = lugares.filter(Boolean).length >= 2;
+  /* a tela não pode dizer "esperando a do outro" quando não falta ninguém:
+     foi o que apareceu na primeira sala de verdade, com as duas fichas
+     marcadas como prontas logo acima da frase */
+  const todasAsFichas = cheia && lugares.every((l) => l && l.ficha);
   const semCodigo = !m.codigo;
   const campo = { background: T.panel, border: `1px solid ${T.line}`, color: T.ink };
   return (
@@ -2947,11 +2951,13 @@ function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoE
           {souAnfitriao && !cheia && "Esperando o segundo jogador entrar com o código. Você já pode criar o mundo enquanto isso — o sistema aproveita o tempo para ler a sua descrição."}
           {souAnfitriao && cheia && !temMundo && "Os dois estão na sala. Crie o mundo: quando ele ficar pronto, os dois montam o personagem ao mesmo tempo."}
           {souAnfitriao && cheia && temMundo && meuAssento >= 0 && !(lugares[meuAssento] || {}).ficha && "Agora monte o seu personagem."}
-          {souAnfitriao && cheia && temMundo && meuAssento >= 0 && (lugares[meuAssento] || {}).ficha && "A sua ficha está pronta. Esperando a do outro jogador para a aventura começar."}
+          {souAnfitriao && cheia && temMundo && meuAssento >= 0 && (lugares[meuAssento] || {}).ficha && !todasAsFichas && "A sua ficha está pronta. Esperando a do outro jogador para a aventura começar."}
+          {souAnfitriao && todasAsFichas && "As duas fichas estão prontas — abrindo a aventura…"}
           {!souAnfitriao && meuAssento < 0 && "Batendo na porta… Se não abrir em alguns segundos, confira o código e se o anfitrião já criou a sala."}
           {!souAnfitriao && meuAssento >= 0 && !temMundo && "Você entrou. O anfitrião está criando o mundo — assim que ele terminar, você monta o seu personagem."}
           {!souAnfitriao && meuAssento >= 0 && temMundo && !(lugares[meuAssento] || {}).ficha && "O mundo ficou pronto. Monte o seu personagem."}
-          {!souAnfitriao && meuAssento >= 0 && temMundo && (lugares[meuAssento] || {}).ficha && "A sua ficha foi enviada. O anfitrião abre a aventura assim que estiver tudo pronto."}
+          {!souAnfitriao && meuAssento >= 0 && temMundo && (lugares[meuAssento] || {}).ficha && !todasAsFichas && "A sua ficha foi enviada. O anfitrião abre a aventura assim que estiver tudo pronto."}
+          {!souAnfitriao && todasAsFichas && "As duas fichas estão prontas — o anfitrião está abrindo a aventura. O primeiro turno chega aqui em alguns segundos."}
         </div>
       )}
 
@@ -3373,6 +3379,19 @@ export default function Taverna() {
         conseguiu = true;
         mundoRef.current = { ...(mundoRef.current || m), lexico: lex };
         setMundo((v) => ({ ...(v || m), lexico: lex }));
+        /* ---------------- E O CONVIDADO PRECISA SABER (v9.122) ----------------
+           A leitura do mundo é ASSÍNCRONA e demora — é o que a tela de
+           criação diz enquanto o jogador monta a ficha. O anfitrião publicava
+           a sala no instante em que o mundo era criado, ou seja, ANTES de o
+           léxico existir; e nada republicava depois.
+
+           O convidado ficava então com o mundo genérico para sempre: raça e
+           classe sem os nomes daquele lugar, no exato momento em que ele
+           escolhe as duas. O mundo dele e o do anfitrião eram mundos
+           diferentes na única tela em que isso se vê. */
+        if (salaRef.current && souAnfitriaoRef.current) {
+          try { publicarSala(); } catch (e) { calou("lexicoParaASala", e); }
+        }
       }
     } catch (e) {
       /* no DESENVOLVIMENTO ele aparece: este `catch` mudo escondeu por uma
@@ -8871,6 +8890,23 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
         if (r.tipo === RECADOS.ficha) {
           const nova = sentarFicha(salaRef.current, r.de, r.ficha);
           setSala(nova); publicarSala(nova);
+          /* ---------------- A ÚLTIMA FICHA ABRE A AVENTURA (v9.122) ----------------
+             Achado jogando, na primeira sala de verdade: as duas fichas ficaram
+             prontas e a tela não saiu do lugar.
+
+             O começo estava pendurado num caminho só — o do anfitrião apertando
+             "Começar aventura" — e ali ele perguntava se estava todo mundo
+             pronto. Quando a segunda ficha chega DEPOIS, pelo fio, ninguém
+             refazia a pergunta. É o mesmo defeito que a ação do turno não tem:
+             lá o `acao` confere `turnoCompleto` e dispara; aqui o `ficha` não
+             conferia `todosProntos`.
+
+             É a regra desta casa de novo: toda regra que mora num só de dois
+             caminhos vira bug. */
+          if (todosProntos(nova) && faseRef.current !== "jogo") {
+            const minha = (nova.lugares.find((l) => l && l.id === euRef.current) || {}).ficha;
+            if (minha) iniciar(minha);
+          }
           return;
         }
         if (r.tipo === RECADOS.acao) {
@@ -8892,7 +8928,10 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       if (r.tipo === RECADOS.sala) {
         if (r.recusado === euRef.current) { setErroDaSala(r.motivo || "não foi possível entrar"); return; }
         setSala(garantirSala(r.sala));
-        if (r.mundo && !mundoRef.current) { mundoRef.current = r.mundo; setMundo(r.mundo); }
+        /* o mundo do anfitrião ganha SEMPRE, e não só na primeira vez: o
+           léxico chega depois do mundo, e "só se eu ainda não tiver um"
+           deixava o convidado preso na versão genérica. */
+        if (r.mundo) { mundoRef.current = r.mundo; setMundo(r.mundo); }
         if (r.nomeCampanha) { nomeCampanhaRef.current = r.nomeCampanha; setNomeCampanha(r.nomeCampanha); }
         /* o mundo do anfitrião chegou e eu ainda não tenho ficha: é a minha
            vez de montar o personagem — e o léxico dele já veio junto */
@@ -8919,9 +8958,22 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
     try { continuar(false, { silencioso: true }); } catch (e) { calou("aplicarMundoDaSala", e); }
   };
 
+  /* ---------------- O LEITOR NÃO PODE ENVELHECER (v9.122) ----------------
+     O canal fica aberto por toda a sessão e guarda a função que recebeu na
+     hora em que foi aberto — a de UM render. Enquanto ela só mexia em refs,
+     isso passou despercebido; a partir do momento em que o recado de ficha
+     precisa chamar `iniciar`, que lê estado de verdade, a função velha
+     começaria a abrir a campanha com o mundo de antes.
+
+     O ponteiro que se atualiza a cada render tira a classe inteira de bug de
+     cima da mesa, e é o mesmo padrão que `salvarRef2` já usa aqui para o
+     save que roda quando a aba se esconde. */
+  const aoReceberRef = useRef(() => {});
+  useEffect(() => { aoReceberRef.current = aoReceberRecado; });
+
   const abrirCanalDaSala = (codigo) => {
     try { if (canalRef.current) canalRef.current.fechar(); } catch { /* já fechado */ }
-    canalRef.current = abrirCanal(codigo, { aoReceber: aoReceberRecado });
+    canalRef.current = abrirCanal(codigo, { aoReceber: (r) => aoReceberRef.current(r) });
     return canalRef.current;
   };
 
