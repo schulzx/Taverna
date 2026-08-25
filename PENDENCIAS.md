@@ -4700,3 +4700,47 @@ Dois defeitos achados na tela e não nos testes:
 Margem a vigiar: a soma sintética de todas as portas está em 89.943 de
 90.000. A porta `sala` não custa nada a quem joga sozinho — a cena comum
 não se moveu (61.225) —, mas o guarda do pior caso ficou no fio.
+
+## v9.121 — a sala atravessa a internet
+
+O que faltava para a mesa de dois sair da mesma máquina era um ponto de
+encontro. `api/sala.js` é ele: o lado de lá do transporte, a caixa onde os
+recados ficam enquanto o outro jogador não olha. Upstash Redis por REST,
+escolhido por um motivo concreto e não por preferência — é um `fetch`, e
+por isso **não entrou dependência nova** no `package.json`, que neste
+projeto está fora do git de propósito.
+
+**DUAS CHAVES, e a separação é o desenho inteiro.** A `fila` guarda recados
+pequenos; o `mundo` mora numa chave que se sobrescreve. O save passa dos 80
+KB e o convidado pergunta "mudou alguma coisa?" a cada dois segundos: se o
+mundo andasse na fila, ele estaria puxando 80 KB para ouvir "não", e uma
+sessão de sessenta turnos deixaria cinco megabytes de saves velhos que
+ninguém vai ler. Na fila anda um ponteiro de poucos bytes.
+
+O transporte **parte e remonta** o recado sem que ninguém acima saiba — foi
+por isso que `sala.js` e o App não mudaram de uma linha. E os dois canais (a
+aba do lado e a rede) ficam abertos juntos, com o carimbo compartilhado:
+quem joga na mesma máquina continua recebendo na hora, e ninguém precisa
+escolher um modo.
+
+Um defeito pego antes de rodar, na releitura: publicar adiantava o índice de
+leitura até o fim da fila, "para não reler o próprio recado" — e com isso
+pulava o que o outro tivesse publicado no meio-tempo, que é justamente a
+ação dele no turno. Quem descarta o eco é o carimbo, que já fazia esse
+trabalho e não descarta mais nada.
+
+Provado contra o deploy de verdade, não em simulação: publicar, ler só o que
+é novo, o ponteiro do mundo, buscar o mundo, recusar código malformado e
+limpar a sala. E na tela — um participante que chegou **só pela rede**, sem
+tocar no canal local do navegador, foi sentado pelo anfitrião e recebeu a
+sala de volta pelo mesmo caminho.
+
+Duas coisas que o checador ganhou de brinde: `async` entrou na lista de
+palavras-chave do `check-imports` (a falta era dele, não do código: qualquer
+arquivo com uma arrow assíncrona virava suspeita), e a prova de que a rota
+não julga regra de jogo passou a medir o CÓDIGO em vez da prosa — a primeira
+versão procurava a palavra "cadeira" e batia no comentário que explica
+justamente que a rota não sabe o que é uma cadeira.
+
+**Pendente do lado de quem paga a conta:** o `KV_REST_API_TOKEN` foi colado
+num log de conversa e precisa ser rotacionado no painel do Upstash.

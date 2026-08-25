@@ -158,6 +158,10 @@ function canalLocal(cod, entregar) {
     fechar: () => {
       if (bc) { try { bc.close(); } catch { /* já fechado */ } }
       try { window.removeEventListener("storage", noStorage); } catch { /* nada a remover */ }
+      /* o canal de reserva escreve no `localStorage`, e uma sala fechada não
+         precisa deixar o último recado dela lá para sempre. Apagar dispara um
+         evento com `newValue` nulo, que o leitor acima já ignora. */
+      try { window.localStorage.removeItem(chave); } catch { /* modo privado */ }
     },
   };
 }
