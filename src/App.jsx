@@ -2884,7 +2884,7 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
    distinguir "a sala não existe" de "o anfitrião ainda não abriu", e por
    isso a tela não afirma nenhuma das duas — diz o que fazer.
    ============================================================ */
-function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoEntrar, aoCriarMundo, aoSair, temMundo, tipoDoCanal, falhaDoCanal = "" }) {
+function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoEntrar, aoCriarMundo, aoMontarFicha, aoSair, temMundo, tipoDoCanal, falhaDoCanal = "", lendoMundo = false }) {
   const m = sala || {};
   const lugares = m.lugares || [];
   const meuAssento = lugares.findIndex((l) => l && l.id === eu);
@@ -2944,26 +2944,46 @@ function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoE
 
       {erro ? <div className="tv-body text-xs mb-3" style={{ color: T.danger }}>⚠ {erro}</div> : null}
 
+      {/* A LEITURA DO MUNDO leva quase um minuto, e é ela que dá a este lugar
+          os nomes dele — raça, ofício, o que é um covil aqui. Ela não trava
+          nada: quem quiser montar a ficha antes, monta, e os nomes chegam
+          depois. Mas quem não sabe que ela existe fica olhando uma tela
+          parada sem entender o que está esperando. */}
+      {!semCodigo && lendoMundo && (
+        <div className="rounded-xl px-4 py-3 mb-4 tv-body text-sm" style={{ background: T.panelSoft, border: `1px solid ${T.violet}`, color: T.violetSoft }}>
+          📖 Lendo o mundo… — o sistema está traduzindo a descrição em gente, lugares e nomes próprios daqui. É isso que dá nome às raças e aos ofícios, e por isso a ficha espera. Costuma levar de meio minuto a dois.
+        </div>
+      )}
+
       {/* O PRÓXIMO PASSO, e só ele: uma tela de espera que lista tudo o que
           pode acontecer é uma tela que não ajuda a esperar. */}
       {!semCodigo && (
         <div className="rounded-xl px-4 py-3 mb-4 tv-body text-sm" style={{ background: T.panelSoft, border: `1px solid ${T.line}`, color: T.inkDim }}>
           {souAnfitriao && !cheia && "Esperando o segundo jogador entrar com o código. Você já pode criar o mundo enquanto isso — o sistema aproveita o tempo para ler a sua descrição."}
-          {souAnfitriao && cheia && !temMundo && "Os dois estão na sala. Crie o mundo: quando ele ficar pronto, os dois montam o personagem ao mesmo tempo."}
-          {souAnfitriao && cheia && temMundo && meuAssento >= 0 && !(lugares[meuAssento] || {}).ficha && "Agora monte o seu personagem."}
+          {souAnfitriao && cheia && !temMundo && !lendoMundo && "Os dois estão na sala. Crie o mundo: quando ele ficar pronto, os dois montam o personagem ao mesmo tempo."}
+          {souAnfitriao && cheia && temMundo && !lendoMundo && meuAssento >= 0 && !(lugares[meuAssento] || {}).ficha && "Agora monte o seu personagem."}
           {souAnfitriao && cheia && temMundo && meuAssento >= 0 && (lugares[meuAssento] || {}).ficha && !todasAsFichas && "A sua ficha está pronta. Esperando a do outro jogador para a aventura começar."}
           {souAnfitriao && todasAsFichas && "As duas fichas estão prontas — abrindo a aventura…"}
           {!souAnfitriao && meuAssento < 0 && "Batendo na porta… Se não abrir em alguns segundos, confira o código e se o anfitrião já criou a sala."}
-          {!souAnfitriao && meuAssento >= 0 && !temMundo && "Você entrou. O anfitrião está criando o mundo — assim que ele terminar, você monta o seu personagem."}
-          {!souAnfitriao && meuAssento >= 0 && temMundo && !(lugares[meuAssento] || {}).ficha && "O mundo ficou pronto. Monte o seu personagem."}
+          {!souAnfitriao && meuAssento >= 0 && !temMundo && !lendoMundo && "Você entrou. O anfitrião está criando o mundo — assim que ele terminar, você monta o seu personagem."}
+          {!souAnfitriao && meuAssento >= 0 && temMundo && !lendoMundo && !(lugares[meuAssento] || {}).ficha && "O mundo ficou pronto. Monte o seu personagem."}
           {!souAnfitriao && meuAssento >= 0 && temMundo && (lugares[meuAssento] || {}).ficha && !todasAsFichas && "A sua ficha foi enviada. O anfitrião abre a aventura assim que estiver tudo pronto."}
           {!souAnfitriao && todasAsFichas && "As duas fichas estão prontas — o anfitrião está abrindo a aventura. O primeiro turno chega aqui em alguns segundos."}
         </div>
       )}
 
       <div className="flex flex-wrap gap-2">
+        {/* DOIS BOTÕES, DUAS AÇÕES. Antes era um só, e ele adivinhava para
+            onde ir olhando se já havia mundo — o que fazia a decisão depender
+            de um estado que sobrevivia da sala anterior. Botão que infere a
+            intenção erra quando o estado mente. */}
         {souAnfitriao && !temMundo && <Botao primario onClick={aoCriarMundo}>Criar o mundo →</Botao>}
-        {souAnfitriao && temMundo && meuAssento >= 0 && !(lugares[meuAssento] || {}).ficha && <Botao primario onClick={aoCriarMundo}>Montar o personagem →</Botao>}
+        {/* durante a leitura o botão some dos DOIS lados. Não é capricho: o
+            léxico é o que dá nome à raça e ao ofício, e montar a ficha antes
+            dele é escolher entre "Humano, Elfo, Anão" num mundo que não tem
+            nenhum dos três. A espera sempre termina — quando a leitura falha,
+            o anfitrião avisa a sala do mesmo jeito. */}
+        {temMundo && !lendoMundo && meuAssento >= 0 && !(lugares[meuAssento] || {}).ficha && <Botao primario onClick={aoMontarFicha}>Montar o personagem →</Botao>}
         <Botao onClick={aoSair}>Sair da sala</Botao>
       </div>
 
@@ -3402,6 +3422,11 @@ export default function Taverna() {
 
     if (conseguiu) return;
     if (tentativa < 2) { await lerOMundo(m, { tentativa: tentativa + 1 }); return; }
+    /* desistiu: a sala precisa saber, senão o convidado espera para sempre
+       uma leitura que não vem mais */
+    if (salaRef.current && souAnfitriaoRef.current) {
+      try { publicarSala(); } catch (e) { calou("desistiParaASala", e); }
+    }
     pushMsgs([{ autor: "sistema", texto: `🌍 Não consegui ler o seu mundo — ${m.genero === "Universo próprio" ? "a sua descrição" : "o gênero escolhido"} não virou vocabulário próprio, e a campanha começa com o genérico. Comece uma campanha nova para tentar de novo; o texto que você escreveu é o que alimenta essa leitura, e quanto mais concreto ele for, melhor ela sai.` }]);
   };
 
@@ -8862,7 +8887,14 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
   const publicarSala = (nova) => {
     if (!souAnfitriaoRef.current) return;
     const m = garantirSala(nova || salaRef.current);
-    mandarRecado(RECADOS.sala, { sala: m, mundo: mundoRef.current || mundo, nomeCampanha: nomeCampanhaRef.current || nomeCampanha });
+    /* `lendo` viaja junto porque é ele que segura o convidado na sala até o
+       léxico chegar. Sem isso o convidado cairia na ficha com o mundo
+       genérico e escolheria raça e ofício antes de este lugar ter nome. */
+    mandarRecado(RECADOS.sala, {
+      sala: m, mundo: mundoRef.current || mundo,
+      nomeCampanha: nomeCampanhaRef.current || nomeCampanha,
+      lendo: !!lexicoLendoRef.current,
+    });
   };
 
   /* E publica o MUNDO depois de cada turno. Vai o save inteiro, de
@@ -8933,9 +8965,18 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
            deixava o convidado preso na versão genérica. */
         if (r.mundo) { mundoRef.current = r.mundo; setMundo(r.mundo); }
         if (r.nomeCampanha) { nomeCampanhaRef.current = r.nomeCampanha; setNomeCampanha(r.nomeCampanha); }
-        /* o mundo do anfitrião chegou e eu ainda não tenho ficha: é a minha
-           vez de montar o personagem — e o léxico dele já veio junto */
-        if (r.mundo && faseRef.current === "sala" && assentoDe(r.sala, euRef.current) >= 0
+        /* ---------------- ESPERAR A LEITURA (v9.123) ----------------
+           O mundo do anfitrião chegou e eu ainda não tenho ficha: é a minha
+           vez de montar o personagem — MENOS enquanto o léxico estiver sendo
+           lido. Era o que o jogador reparou: a ficha abria com "Humano, Elfo,
+           Anão" num mundo de caçadores de espíritos, porque a leitura leva
+           quase um minuto e a tela não esperava por ela.
+
+           Quando a leitura falha, `lendo` também vira falso e o convidado
+           entra assim mesmo: uma espera que não termina seria pior do que o
+           mundo genérico. */
+        setLendoMundo(!!r.lendo);
+        if (r.mundo && !r.lendo && faseRef.current === "sala" && assentoDe(r.sala, euRef.current) >= 0
           && !(garantirSala(r.sala).lugares.find((l) => l && l.id === euRef.current) || {}).ficha) setFase("personagem");
         return;
       }
@@ -8977,8 +9018,26 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
     return canalRef.current;
   };
 
+  /* ---------------- SALA NOVA, MUNDO NOVO (v9.123) ----------------
+     Achado jogando: abrir a segunda sala pulava a criação do mundo e caía
+     direto na ficha.
+
+     `mundo` e `nomeCampanha` são estado do componente e sobrevivem à volta
+     ao menu — e a tela da sala decidia o próximo passo perguntando se eles
+     existiam. Existiam: eram os da sala anterior. A sala nova nascia com o
+     mundo da antiga, com o léxico da antiga, e o convidado receberia esse
+     mundo como se fosse o combinado.
+
+     Uma sala é uma campanha nova. Esquecer o mundo aqui é o que faz a
+     pergunta da tela ter uma resposta verdadeira. */
+  const esquecerOMundo = () => {
+    mundoRef.current = null; setMundo(null);
+    nomeCampanhaRef.current = ""; setNomeCampanha("");
+  };
+
   const criarSalaDeDois = () => {
     souAnfitriaoRef.current = true;
+    esquecerOMundo();
     const nova = criarSala({ anfitriao: euRef.current, nome: "" });
     setSala(nova);
     abrirCanalDaSala(nova.codigo);
@@ -8990,6 +9049,9 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
     const cod = normalizarCodigo(cru);
     if (!codigoValido(cod)) { setErroDaSala("Esse código não está completo."); return; }
     souAnfitriaoRef.current = false;
+    /* e o convidado também esquece: com um mundo velho na mão, a tela diria
+       "monte o seu personagem" antes de o anfitrião ter criado coisa alguma */
+    esquecerOMundo();
     setSala(garantirSala({ codigo: cod }));
     abrirCanalDaSala(cod);
     setErroDaSala("");
@@ -15567,7 +15629,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         codigoDigitado={codigoDigitado} aoDigitar={setCodigoDigitado} aoEntrar={entrarNaSalaPeloCodigo}
         temMundo={!!(mundo && mundo.genero && nomeCampanha)}
         tipoDoCanal={canalNaTela.tipo} falhaDoCanal={canalNaTela.falha}
-        aoCriarMundo={() => setFase(mundo && nomeCampanha ? "personagem" : "mundo")}
+        aoCriarMundo={() => setFase("mundo")} aoMontarFicha={() => setFase("personagem")}
+        lendoMundo={lendoMundo}
         aoSair={() => { largarASala(); setFase("menu"); }} /></div>}
       {fase === "mundo" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaMundo concluir={(m, nome) => { setMundo(m); mundoRef.current = m; setNomeCampanha(nome); setFase(salaRef.current ? "sala" : "personagem"); lerOMundo(m); if (salaRef.current) setTimeout(() => publicarSala(), 60); }} /></div>}
       {fase === "personagem" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaPersonagem mundo={mundo} concluir={(pers) => { if (!salaRef.current) return iniciar(pers); const nova = sentarMinhaFicha(pers); if (souAnfitriaoRef.current) { if (todosProntos(nova)) iniciar(pers); else { setFase("sala"); } } }} lendoMundo={lendoMundo} mundoLido={!!(mundo && mundo.lexico && mundo.lexico.gerado)} /></div>}

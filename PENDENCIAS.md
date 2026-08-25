@@ -4784,3 +4784,39 @@ atualiza a cada render — o mesmo padrão que `salvarRef2` já usava aqui.
 
 A tela também parou de mentir: com as duas fichas prontas ela dizia
 "esperando a do outro jogador" logo abaixo dos dois ✓.
+
+## v9.123 — a sala nova herdava o mundo da anterior
+
+Achado jogando, na segunda sala: criar uma sala nova pulava a criação do
+mundo e caía direto na ficha.
+
+`mundo` e `nomeCampanha` são estado do componente e **sobrevivem à volta ao
+menu**. A tela da sala decidia o próximo passo perguntando se eles existiam
+— e existiam: eram os da sala anterior. A sala nova nascia com o mundo E o
+léxico da antiga, e o convidado receberia esse mundo como se fosse o
+combinado. Uma sala é uma campanha nova; esquecer o mundo ao abrir ou entrar
+numa é o que faz a pergunta da tela ter resposta verdadeira.
+
+**O defeito de desenho por trás** vale mais do que o sintoma: era UM botão
+adivinhando para onde ir a partir de um estado que podia mentir
+(`setFase(mundo && nomeCampanha ? "personagem" : "mundo")`). Agora são dois
+botões e duas ações. Botão que infere a intenção erra quando o estado mente,
+e o estado sempre acaba mentindo.
+
+**E a ficha passou a esperar o léxico.** A leitura do mundo leva de meio
+minuto a dois, e é ela que dá nome à raça e ao ofício deste lugar. O
+convidado caía na ficha antes dela e escolhia entre "Humano, Elfo, Anão" num
+mundo de caçadores de espíritos. Agora a sala publica `lendo` junto do
+mundo, a tela mostra a leitura como o passo atual e o botão de montar a
+ficha some dos dois lados enquanto ela dura.
+
+Isso é uma diferença deliberada em relação ao jogo de um jogador só, onde a
+leitura nunca travou o botão (v9.101). A razão: na sala há uma sala de
+espera que não existe sozinho, e o custo de montar cedo é maior — são duas
+pessoas, e a tela do convidado depende do léxico do anfitrião. A espera
+sempre termina: quando a leitura FALHA, o anfitrião avisa a sala do mesmo
+jeito, e os dois entram com o mundo genérico em vez de esperar para sempre.
+
+Uma linha da tela que a prova na tela pegou: durante a leitura ela dizia
+"📖 Lendo o mundo…" e "O mundo ficou pronto. Monte o seu personagem." uma
+embaixo da outra.
