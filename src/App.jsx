@@ -2884,7 +2884,7 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
    distinguir "a sala não existe" de "o anfitrião ainda não abriu", e por
    isso a tela não afirma nenhuma das duas — diz o que fazer.
    ============================================================ */
-function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoEntrar, aoCriarMundo, aoSair, temMundo, tipoDoCanal }) {
+function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoEntrar, aoCriarMundo, aoSair, temMundo, tipoDoCanal, falhaDoCanal = "" }) {
   const m = sala || {};
   const lugares = m.lugares || [];
   const meuAssento = lugares.findIndex((l) => l && l.id === eu);
@@ -2964,10 +2964,12 @@ function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoE
       {/* O QUE ESTE FIO ALCANÇA. Está na tela, e não só no código, porque é a
           diferença entre uma sala que não funcionou e uma sala que nunca
           prometeu funcionar dali. */}
-      <div className="tv-mono text-[9px] mt-6 leading-relaxed" style={{ color: T.inkDim }}>
+      <div className="tv-mono text-[9px] mt-6 leading-relaxed" style={{ color: tipoDoCanal === "rede" ? T.ok : T.inkDim }}>
         {tipoDoCanal === "mudo"
           ? "⚠ Este navegador não tem canal disponível — a sala não vai conversar."
-          : "Nesta versão a sala liga duas janelas do MESMO computador (duas abas, duas janelas ou dois perfis). Levar a mesa para dois aparelhos diferentes precisa de um ponto de encontro na internet, e é a próxima peça."}
+          : tipoDoCanal === "rede"
+            ? "🌐 A sala está no ar: os dois podem jogar de aparelhos diferentes. A sala se guarda sozinha por um dia — fechem tudo e voltem com o mesmo código."
+            : `Por enquanto esta sala só liga janelas DESTA máquina. O ponto de encontro na internet não respondeu${falhaDoCanal ? ` (${falhaDoCanal})` : ""} — vale conferir a conexão e o deploy.`}
       </div>
     </div>
   );
@@ -3278,6 +3280,23 @@ export default function Taverna() {
   const souAnfitriaoRef = useRef(false);
   const [codigoDigitado, setCodigoDigitado] = useState("");
   const [erroDaSala, setErroDaSala] = useState("");
+  /* O canal só vira "rede" DEPOIS da primeira espiada bem-sucedida, e isso
+     acontece fora do React. Sem alguém perguntando, a tela da sala continuaria
+     dizendo "só liga janelas desta máquina" com o fio já no ar. Guarda o
+     estado em vez de um contador: quem lê a tela quer o tipo e a falha, não
+     um número que só existe para forçar repintura. */
+  const [canalNaTela, setCanalNaTela] = useState({ tipo: "", falha: "" });
+  useEffect(() => {
+    if (fase !== "sala") return undefined;
+    const olhar = () => {
+      const c = canalRef.current;
+      const e = c && typeof c.estado === "function" ? c.estado() : { tipo: "", falha: "" };
+      setCanalNaTela((v) => (v.tipo === e.tipo && v.falha === e.falha ? v : e));
+    };
+    olhar();
+    const t = setInterval(olhar, 1500);
+    return () => clearInterval(t);
+  }, [fase]);
   /* v9.85: a memoria da estante — quais FORMAS o mestre ja usou. Vive ao
      lado da mesa porque tem a mesma natureza: memoria curta de oficio, que
      nao e fato do mundo e nao entra na cronica. */
@@ -15495,7 +15514,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         sala={sala} eu={euRef.current} souAnfitriao={souAnfitriaoRef.current} erro={erroDaSala}
         codigoDigitado={codigoDigitado} aoDigitar={setCodigoDigitado} aoEntrar={entrarNaSalaPeloCodigo}
         temMundo={!!(mundo && mundo.genero && nomeCampanha)}
-        tipoDoCanal={(canalRef.current || {}).tipo || ""}
+        tipoDoCanal={canalNaTela.tipo} falhaDoCanal={canalNaTela.falha}
         aoCriarMundo={() => setFase(mundo && nomeCampanha ? "personagem" : "mundo")}
         aoSair={() => { largarASala(); setFase("menu"); }} /></div>}
       {fase === "mundo" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaMundo concluir={(m, nome) => { setMundo(m); mundoRef.current = m; setNomeCampanha(nome); setFase(salaRef.current ? "sala" : "personagem"); lerOMundo(m); if (salaRef.current) setTimeout(() => publicarSala(), 60); }} /></div>}
