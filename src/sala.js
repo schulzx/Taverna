@@ -152,10 +152,6 @@ export function ocupados(sala) {
   return garantirSala(sala).lugares.filter(Boolean);
 }
 
-export function salaCheia(sala) {
-  return ocupados(sala).length >= LUGARES;
-}
-
 /* A ficha entra na cadeira, não numa lista à parte: é dela que sai o nome
    na tela, o grupo do começo e a ordem das ações. */
 export function sentarFicha(sala, id, ficha) {
@@ -186,12 +182,11 @@ export function acaoDe(sala, id) {
   return garantirSala(sala).turno.acoes[id] || "";
 }
 
-/* Falta quem ainda não escreveu. É esta lista que a tela mostra — "esperando
-   Kael" —, porque um turno parado sem dizer por quem é um turno travado. */
-export function quemFalta(sala) {
-  const m = garantirSala(sala);
-  return m.lugares.filter((l) => l && !m.turno.acoes[l.id]).map((l) => l.nome || "alguém");
-}
+/* v9.124: `quemFalta` e `salaCheia` saíram. A faixa da vez mostra linha por
+   linha quem já escreveu e quem não, com o texto inteiro de quem escreveu —
+   ela responde melhor do que uma lista de nomes, e depois dela as duas
+   ficaram sem leitor nenhum na fonte. Regra exportada que só as provas usam
+   é regra sem dono. */
 
 export function turnoCompleto(sala) {
   const m = garantirSala(sala);

@@ -4820,3 +4820,38 @@ jeito, e os dois entram com o mundo genérico em vez de esperar para sempre.
 Uma linha da tela que a prova na tela pegou: durante a leitura ela dizia
 "📖 Lendo o mundo…" e "O mundo ficou pronto. Monte o seu personagem." uma
 embaixo da outra.
+
+## v9.124 — a vez à vista
+
+A ordem fixa do turno (jogador 1, jogador 2, depois o Mestre) existe para o
+segundo poder responder ao primeiro DENTRO do mesmo turno — combinar um
+gesto, responder uma pergunta, segurar a porta enquanto o outro sobe.
+
+Só que o que o outro escreveu **só aparecia quando os dois já tinham
+fechado**. A afordância existia no prompt e não existia na tela, e sem ela a
+ordem não servia para nada: era um revezamento com aparência de mesa.
+
+A faixa fica ACIMA da caixa de escrever, e não no log, de propósito. O que
+está escrito ainda não aconteceu — é intenção, e pode ser trocada até o
+turno sair. Uma linha no log seria um fato; a faixa é uma mesa com as cartas
+viradas para cima, e ela some quando o turno vira fato.
+
+Duas coisas saíram junto:
+
+- **O log parou de dar recibo.** Duas linhas de "✍ Você escreveu. Esperando
+  Fulano…" por turno enchiam a cena de burocracia, e a faixa diz a mesma
+  coisa melhor: mostra o texto inteiro de quem escreveu.
+- **`quemFalta` e `salaCheia` saíram da fonte.** Depois da faixa, as duas
+  ficaram sem leitor nenhum em `src/` — vivas só nas provas, que é o
+  loophole do `check-mortas` e não uma justificativa. Regra exportada que só
+  as provas usam é regra sem dono.
+
+E o convidado passou a saber que o turno saiu: quem chama o Mestre é o
+anfitrião, então o convidado não tem `carregando` — entre a faixa sumir e a
+narração chegar havia quinze segundos de tela parada que não dizia se tinha
+travado ou se estava trabalhando.
+
+Provado na tela, com as duas abas: a convidada perguntou, a faixa apareceu
+nos dois lados com o texto dela, o anfitrião leu e RESPONDEU dentro do mesmo
+turno — e o Mestre resolveu os dois na ordem, com a taverneira respondendo à
+pergunta da Clara na cena.

@@ -108,7 +108,7 @@ import { PainelCodex } from "./painel-codex.jsx";
 import { PainelDiario } from "./painel-diario.jsx";
 import { PainelDiplomacia } from "./painel-diplomacia.jsx";
 import { PainelMapa } from "./painel-mapa.jsx";
-import { criarSala, garantirSala, sentarNaSala, sairDaSala, sentarFicha, assentoDe, ocupados as ocupadosDaSala, salaCheia, todosProntos, porAcao, acaoDe, quemFalta, turnoCompleto, textoDoTurno, limparTurno, normalizarCodigo, codigoValido, RECADOS, recadoValido, envelopeDaSala, LUGARES } from "./sala.js";
+import { criarSala, garantirSala, sentarNaSala, sairDaSala, sentarFicha, assentoDe, ocupados as ocupadosDaSala, todosProntos, porAcao, acaoDe, turnoCompleto, textoDoTurno, limparTurno, normalizarCodigo, codigoValido, RECADOS, recadoValido, envelopeDaSala, LUGARES } from "./sala.js";
 import { abrirCanal, novoIdDeParticipante, cabeNoFio } from "./transporte.js";
 import { aplicarNivel, evoluirCompanheiro, aplicarDescanso, recargaPadrao, aplicarMudancas, bonusEquip, bonusEfeito, atributoEfetivo, tickEfeitos, processarCombate, migrarPersonagem } from "./regras-jogo.js";
 import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, consumirDia, RITMOS_VIAGEM, ritmoViagem, marchaForcada, testarNavegacao, forragear, efeitoExaustao, recuperarExaustao, resumoErmos } from "./ermos.js";
@@ -3311,6 +3311,11 @@ export default function Taverna() {
      dizendo "só liga janelas desta máquina" com o fio já no ar. Guarda o
      estado em vez de um contador: quem lê a tela quer o tipo e a falha, não
      um número que só existe para forçar repintura. */
+  /* v9.124: o convidado não tem `carregando` — quem chama o Mestre é o
+     anfitrião. Sem isto, o intervalo entre o turno sair e a narração chegar
+     é uma tela parada que não diz se travou ou se está trabalhando. */
+  const [oMestreTecendo, setOMestreTecendo] = useState(false);
+  const turnoVistoRef = useRef(0);
   const [canalNaTela, setCanalNaTela] = useState({ tipo: "", falha: "" });
   useEffect(() => {
     if (fase !== "sala") return undefined;
@@ -4704,6 +4709,27 @@ export default function Taverna() {
     lugar: lugarRef.current,
     semente: sementeMundo(),
   });
+  /* ---------------- O QUE A FAIXA DA VEZ MOSTRA (v9.124) ----------------
+     `null` fora de uma sala e enquanto ninguém escreveu: uma faixa vazia
+     dizendo "ainda escrevendo…" nas duas linhas ocuparia a tela para não
+     informar nada. Ela nasce no instante em que a primeira ação entra e
+     morre quando o turno sai. */
+  const vezDaSala = (() => {
+    const m = sala;
+    if (!m || !m.lugares) return null;
+    const ocupadas = m.lugares.filter(Boolean);
+    if (ocupadas.length < 2) return null;
+    const acoes = (m.turno || {}).acoes || {};
+    if (!Object.keys(acoes).length) return null;
+    /* lê pela porta do módulo, e não por dentro do objeto: quem sabe o que é
+       a ação de alguém é `sala.js`, e uma segunda leitura aqui envelheceria
+       no dia em que a forma do turno mudasse */
+    return ocupadas.map((l) => ({
+      id: l.id, nome: l.nome || "o outro jogador", sou: l.id === euRef.current,
+      escreveu: !!acaoDe(m, l.id), texto: acaoDe(m, l.id),
+    }));
+  })();
+
   /* Onde eu estou, em coordenada. É esta a posição que a tela desenha, que
      o Mestre recebe e que a boca de uma masmorra guarda ao ser aberta. */
   const meuPonto = () => { try { return (posicaoDoHeroi(contextoDoEspaco()) || {}).coord || null; } catch (e) { calou("meuPonto", e); return null; } };
@@ -8964,6 +8990,15 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
            léxico chega depois do mundo, e "só se eu ainda não tiver um"
            deixava o convidado preso na versão genérica. */
         if (r.mundo) { mundoRef.current = r.mundo; setMundo(r.mundo); }
+        /* o número do turno andou e as ações sumiram: o anfitrião juntou as
+           duas e mandou. A narração vem no `estado`, e é ele que apaga isto. */
+        {
+          const t = garantirSala(r.sala).turno;
+          if (t.numero > turnoVistoRef.current) {
+            turnoVistoRef.current = t.numero;
+            if (!Object.keys(t.acoes || {}).length && faseRef.current === "jogo") setOMestreTecendo(true);
+          }
+        }
         if (r.nomeCampanha) { nomeCampanhaRef.current = r.nomeCampanha; setNomeCampanha(r.nomeCampanha); }
         /* ---------------- ESPERAR A LEITURA (v9.123) ----------------
            O mundo do anfitrião chegou e eu ainda não tenho ficha: é a minha
@@ -8982,6 +9017,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       }
       if (r.tipo === RECADOS.estado) {
         setSala(garantirSala(r.sala));
+        setOMestreTecendo(false);
         aplicarMundoDaSala(r.save);
         return;
       }
@@ -9112,16 +9148,17 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       const nova = porAcao(salaRef.current, euRef.current, texto);
       setSala(nova);
       setEntrada("");
+      /* v9.124: sem linha no log. Quem diz que você escreveu, e o que o
+         outro escreveu, é a FAIXA logo acima da caixa — e ela diz melhor,
+         porque mostra o texto inteiro e some quando o turno vira fato. Duas
+         linhas de "✍ Você escreveu. Esperando Fulano…" por turno enchiam a
+         cena de recibo. */
       if (!souAnfitriaoRef.current) {
         mandarRecado(RECADOS.acao, { texto: String(texto || "").trim() });
-        pushMsgs([{ autor: "sistema", texto: `✍ ${quemFalta(nova).length ? `Você escreveu. Esperando ${quemFalta(nova).join(" e ")}…` : "Você escreveu. O turno vai sair."}` }]);
         return;
       }
       publicarSala(nova);
-      if (!turnoCompleto(nova)) {
-        pushMsgs([{ autor: "sistema", texto: `✍ Você escreveu. Esperando ${quemFalta(nova).join(" e ")}…` }]);
-        return;
-      }
+      if (!turnoCompleto(nova)) return;
       dispararTurnoDaSala(nova);
       return;
     }
@@ -16201,6 +16238,44 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   aoGastar={usarHeroismo}
                   aoFechar={() => setHeroAberto(false)}
                 />
+              )}
+              {/* ---------------- A VEZ, À VISTA (v9.124) ----------------
+                  A ordem fixa do turno existe para o segundo poder responder
+                  ao primeiro DENTRO do mesmo turno — combinar um gesto,
+                  responder a uma pergunta, segurar a porta enquanto o outro
+                  sobe. Só que o que o outro escreveu só aparecia quando os
+                  DOIS já tinham fechado: a afordância existia no prompt e não
+                  existia na tela, e sem ela a ordem não servia para nada.
+
+                  Aqui, e não no log, de propósito. O que está escrito ainda
+                  não aconteceu — é intenção, e pode ser trocada até o turno
+                  sair. Uma linha no log seria um fato; esta faixa é uma mesa
+                  com as cartas viradas para cima, e ela some quando o turno
+                  vira fato. */}
+              {oMestreTecendo && !vezDaSala && (
+                <div className="rounded-2xl px-3 py-2 mb-2 tv-mono text-[11px]" style={{ background: T.panelSoft, border: `1px solid ${T.violet}`, color: T.violetSoft }}>
+                  ✦ As duas ações saíram — o Mestre está tecendo o turno.
+                </div>
+              )}
+              {vezDaSala && (
+                <div className="rounded-2xl px-3 py-2 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
+                  <div className="tv-mono text-[9px] uppercase tracking-[0.2em] mb-1.5" style={{ color: T.violetSoft }}>Neste turno</div>
+                  <div className="space-y-1">
+                    {vezDaSala.map((v) => (
+                      <div key={v.id} className="flex items-baseline gap-2">
+                        <span className="tv-mono text-[10px] shrink-0" style={{ color: v.escreveu ? T.amberSoft : T.inkDim, minWidth: 92 }}>
+                          {v.sou ? "você" : v.nome}
+                        </span>
+                        <span className="tv-body text-[13px] min-w-0" style={{ color: v.escreveu ? T.ink : T.inkDim, fontStyle: v.escreveu ? "normal" : "italic" }}>
+                          {v.escreveu ? v.texto : "ainda escrevendo…"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="tv-mono text-[9px] mt-1.5" style={{ color: T.inkDim }}>
+                    O turno sai quando os dois escreverem. Dá para reescrever a sua até lá.
+                  </div>
+                </div>
               )}
               {/* LINHA 2 — escrita: largura inteira, campo alto e confortável */}
               <div className="flex gap-2 rounded-2xl p-2 min-w-0" style={{ background: T.panel, border: `1px solid ${milagreSel ? T.amber : habsSel.length ? T.violet : T.line}` }}>
