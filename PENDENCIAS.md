@@ -4855,3 +4855,69 @@ Provado na tela, com as duas abas: a convidada perguntou, a faixa apareceu
 nos dois lados com o texto dela, o anfitrião leu e RESPONDEU dentro do mesmo
 turno — e o Mestre resolveu os dois na ordem, com a taverneira respondendo à
 pergunta da Clara na cena.
+
+## v9.125 — o campo de batalha desenhado
+
+A regra do combate tático já existia inteira desde a v9.34: parede, estorvo,
+terreno difícil, cobertura, linha de visão, alcance por faixa, tamanho de
+miúdo a imenso, caminho com custo, área de efeito. O que faltava era a
+PINTURA.
+
+A malha era feita de `<button>` num `inline-grid` de CSS, com emoji dentro e
+um pixel de vão. Dizia a verdade inteira e parecia uma planilha — o resto do
+jogo é grimório noturno, e a luta, que é o momento mais tenso da mesa, era o
+único lugar com cara de Excel. E o lado do quadrado ficava preso entre 9 e
+18 px: 18 px não é alvo de dedo, então no telefone o tabuleiro compacto era
+decorativo e só a tela cheia servia para jogar.
+
+Agora é SVG, num arquivo próprio (`grade-de-batalha.jsx`, 164 linhas a menos
+no `App.jsx`). **Nenhuma regra mudou**: os mesmos alcançáveis de
+`alcancaveisDe`, a mesma área de `quadradosDaArea`, o mesmo `onMover` que
+cobra o caminho e o golpe livre. O quadrado virou uma unidade e o tamanho
+virou problema do CSS, então o mesmo desenho serve o polegar e o mouse.
+
+O que mudou de desenho, e por quê:
+
+- **O véu, em vez da mancha.** A primeira versão pintava de dourado o que dá
+  para alcançar — e o alcance quase sempre é a maior parte do campo, então o
+  tabuleiro inteiro virava lama com buracos onde havia gente. Escurecer o
+  que NÃO se alcança diz a mesma coisa pelo avesso e deixa o chão em paz. A
+  cor do contorno é que carrega o sentido: âmbar é o seu passo, violeta é o
+  alcance da habilidade.
+- **Sem buracos.** Quadrado ocupado não é alcançável — não dá para parar em
+  cima de ninguém — e sem tapar esses furos cada ficha dentro do seu passo
+  ganhava um tracejado em volta e uma sombra embaixo: a tela dizia
+  "selecionado" onde a regra dizia apenas "ocupado". O que não escoa até a
+  borda do campo é buraco, e entra no conjunto só para o desenho.
+- **A inicial, e não o emoji.** 🧍🛡👹 eram invisíveis nos 18 px antigos e
+  viraram desenho animado colorido quando o quadrado cresceu — bitmap de
+  outra paleta no meio de um jogo âmbar sobre violeta. A inicial no serifado
+  da casa é ficha de tabuleiro: diz QUEM é aquilo, não só de que lado está.
+  A legenda mudou junto, porque legenda que descreve o desenho anterior
+  ensina o jogador a procurar o que não está lá.
+- **O passo anda.** `caminhar` sempre devolveu o caminho e nada olhava para
+  ele: o x,y trocava e a ficha aparecia do outro lado do salão. Agora a rota
+  é refeita entre onde ele estava e onde está — mesma busca, determinística
+  — e a ficha a percorre quadrado a quadrado, com o rastro desenhado atrás.
+  Passar o cursor por um quadrado alcançável mostra a rota pontilhada e
+  quanto custa antes do clique.
+- **As regiões viraram legenda de planta baixa.** O Mestre narra "no vão da
+  porta", nunca "quadrado 3,8". O nome só existia no balão de ajuda; agora
+  está escrito no canto de cada faixa — no canto, e não no meio, porque o
+  meio é por onde as fichas andam.
+- **O compacto continua sendo um relance.** Deixar o SVG crescer à vontade
+  cai no defeito oposto, que a v9.34 já tinha diagnosticado: um campo de
+  16×16 com 34 px de lado empurra a narração para fora da tela. O teto é a
+  ALTURA — 320 px — e o quadrado fica com o que sobrar. A tela cheia é que
+  serve o dedo.
+
+Provado numa bancada temporária que montou os três cenários fora de um
+combate real: taverna, masmorra e floresta, com ogro de 2×2, magia de área e
+mira. O passo foi medido no relógio — herói em (1,3), clique em (6,8), rastro
+crescendo a cada 60 ms e a ficha chegando em ~360 ms pela rota curva
+`(1,3)→(1,4)→(2,5)→(3,5)→(4,6)→(5,7)→(6,8)`. A bancada foi apagada.
+
+Quatro provas da suíte nova nasceram erradas, casando com o COMENTÁRIO que
+explicava a remoção do emoji em vez de com o código — o mesmo deslize que
+esta base já corrigiu uma vez. Agora `teste-grade.mjs` mede o arquivo sem os
+comentários.

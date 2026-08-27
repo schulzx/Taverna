@@ -49,7 +49,7 @@ import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, 
 import { menteDaCriatura, intencaoDaVez, intencaoPorId, linhaDaLuta, envelopeDaVirada, ADVERSARIO_PROMPT } from "./adversario.js";
 import { consultarCobrador, linhaDoMundo, envelopeDoMundo } from "./cobrador.js";
 import { avaliarEncontro, PESO_AMEACA, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
-import { montarGrade, garantirGrade, posicionar, posicionarPerto, alcanca, caminhar, alcancaveisDe, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, mapaEmTexto, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, quadradosDe, distanciaM, tamanhoDe, ladoDe, alcanceNatural, terrenoDificil, temCobertura, ehParede, regiaoDe, m2q, q2m, centroDe, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO, GRID_PROMPT } from "./grid.js";
+import { montarGrade, garantirGrade, posicionar, posicionarPerto, alcanca, caminhar, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, mapaEmTexto, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, distanciaM, tamanhoDe, ladoDe, alcanceNatural, ehParede, m2q, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO } from "./grid.js";
 import { deslocamentoDe, passoEfetivo, passoComSelecao, passoDeHabilidade, deslocamentoDeCriatura, resumoDeslocamento, resumoDeslocamentoPrompt, MOVIMENTO_PROMPT } from "./movimento.js";
 import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPreparada, ehPreparavel, preparadasIniciais, alternarPreparada, podeLancar, ehRitual, motivoDoCaderno, MINUTOS_RITUAL, resumoMagiasPrompt, MAGIAS_PROMPT } from "./magias.js";
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
@@ -108,6 +108,7 @@ import { PainelCodex } from "./painel-codex.jsx";
 import { PainelDiario } from "./painel-diario.jsx";
 import { PainelDiplomacia } from "./painel-diplomacia.jsx";
 import { PainelMapa } from "./painel-mapa.jsx";
+import { GridDeBatalha } from "./grade-de-batalha.jsx";
 import { criarSala, garantirSala, sentarNaSala, sairDaSala, sentarFicha, assentoDe, ocupados as ocupadosDaSala, todosProntos, porAcao, acaoDe, turnoCompleto, textoDoTurno, limparTurno, normalizarCodigo, codigoValido, RECADOS, recadoValido, envelopeDaSala, LUGARES } from "./sala.js";
 import { abrirCanal, novoIdDeParticipante, cabeNoFio } from "./transporte.js";
 import { aplicarNivel, evoluirCompanheiro, aplicarDescanso, recargaPadrao, aplicarMudancas, bonusEquip, bonusEfeito, atributoEfetivo, tickEfeitos, processarCombate, migrarPersonagem } from "./regras-jogo.js";
@@ -2009,170 +2010,6 @@ function BlocoSistema({ visiveis = [], dobradas = [], saldo = "" }) {
   );
 }
 
-/* ---------------- O GRID DE BATALHA (v9.34) ----------------
-   O que estava aqui antes eram três colunas com o nome do lugar e quem
-   estava nele. Resolvia "ando ou fico" e mais nada — e desde que a magia
-   de área passou a pegar aliado de verdade, "mais nada" virou pouco: o
-   jogador precisa ver a FORMA do que vai soltar, não uma coluna acesa.
-
-   O tabuleiro é desenhado em tamanho de relance dentro do painel e abre
-   em tela cheia com um toque. Foi a escolha deliberada entre as duas
-   alternativas: sempre grande empurra a narração para baixo (a queixa de
-   dois turnos atrás) e só-no-botão faz o jogador escrever às cegas.
-
-   E ele NÃO é o meio de entrada. Tocar num quadrado é atalho para quem
-   quer precisão; a via normal continua sendo escrever a ação. */
-function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null }) {
-  const [aberto, setAberto] = React.useState(false);
-  /* ---------------- ANDAR OU MIRAR (v9.41) ----------------
-     O toque no quadrado passou a querer dizer duas coisas, e duas coisas
-     sem aviso é ambiguidade. Então há um modo, e ele diz na cara qual é:
-     sem habilidade selecionada só existe andar; com uma habilidade de
-     área selecionada, o tabuleiro abre já mirando, porque quem acabou de
-     escolher Bola de Fogo quer dizer ONDE ela cai, não dar dois passos. */
-  const podeMirar = !!(alcanceMira && alcanceMira.tamanho && onMirar);
-  const [modo, setModo] = React.useState("andar");
-  React.useEffect(() => { setModo(podeMirar ? "mirar" : "andar"); }, [podeMirar, alcanceMira && alcanceMira.nome]);
-  const mirando = podeMirar && modo === "mirar";
-  const grade = combate && combate.grade ? combate.grade : null;
-  const g = garantirGrade(grade);
-  if (!g) return null;
-  const heroi = combate.heroi;
-  const aliados = (combate.aliados || []).map((a, i) => ({ ...a, ...(grupo[i] || {}), x: a.x, y: a.y }));
-  const inimigos = (combate.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
-  const colados = heroi ? adjacentes(heroi, inimigos) : [];
-
-  const ocupados = ocupacaoDe([...inimigos, ...aliados], heroi);
-  const podeIr = (heroi && podeMover && !mirando) ? alcancaveisDe(grade, heroi, { ocupados, deslocamentoM: passoM, ignoraDificil }) : new Set();
-  const naArea = new Set((previsao && previsao.quadrados || []).map((q) => `${q.x},${q.y}`));
-  const noAlcance = (alcanceMira && alcanceMira.quadrados) || new Set();
-
-  /* quem ocupa cada quadrado, com o rótulo só no canto superior esquerdo */
-  const mapa = new Map();
-  const poe = (ent, tipo, cor) => {
-    if (!ent || ent.x == null) return;
-    quadradosDe(ent).forEach((q, i) => mapa.set(`${q.x},${q.y}`, { ent, tipo, cor, chefe: i === 0 }));
-  };
-  aliados.forEach((a) => { if ((a.vida || 0) > 0) poe(a, "aliado", T.ok); });
-  inimigos.forEach((e) => poe(e, "inimigo", T.danger));
-  poe(heroi, "heroi", T.amber);
-
-  const desenhar = (lado) => (
-    <div className="inline-grid" style={{ gridTemplateColumns: `repeat(${g.largura}, ${lado}px)`, gap: 1 }}>
-      {Array.from({ length: g.altura }).flatMap((_, y) => Array.from({ length: g.largura }).map((__, x) => {
-        const k = `${x},${y}`;
-        const parede = ehParede(grade, x, y);
-        const oc = mapa.get(k);
-        const alvo = naArea.has(k);
-        const indo = podeIr.has(k);
-        const tiro = mirando && noAlcance.has(k);
-        const alvoMira = mira && mira.x === x && mira.y === y;
-        const dificil = terrenoDificil(grade, x, y);
-        const cob = !parede && temCobertura(grade, x, y);
-        const fundo = parede ? "#0b0912"
-          : alvo ? "rgba(220,80,60,0.34)"
-          : oc ? (oc.tipo === "heroi" ? "rgba(232,163,61,0.30)" : oc.tipo === "aliado" ? "rgba(90,190,120,0.26)" : "rgba(220,80,60,0.22)")
-          : indo ? "rgba(232,163,61,0.10)"
-          : tiro ? "rgba(150,120,220,0.13)"
-          : dificil ? "rgba(120,100,70,0.16)"
-          : cob ? "rgba(120,140,190,0.12)" : T.panelSoft;
-        /* mirar não se importa com parede nem com quem está em cima: a magia
-           cai onde o jogador apontar, contanto que ele enxergue o ponto */
-        const clicavel = mirando ? tiro : indo;
-        const titulo = oc
-          ? `${oc.ent.nome}${oc.ent.vidaMax ? ` — ${oc.ent.vida}/${oc.ent.vidaMax} PV` : ""}${ladoDe(oc.ent) > 1 ? ` · ${tamanhoDe(oc.ent).nome}` : ""} · ${nomeDoLugar(grade, x, y)}${tiro ? " — dá para acertar aqui" : ""}`
-          : `${nomeDoLugar(grade, x, y)}${parede ? " (parede)" : ""}${dificil ? " · terreno difícil" : ""}${cob ? " · cobertura +2" : ""}${indo ? " — dá para chegar aqui neste turno" : ""}${tiro ? ` — dá para fazer ${alcanceMira.nome} cair aqui` : ""}`;
-        return (
-          <button key={k} title={titulo}
-            disabled={!clicavel}
-            onClick={() => { if (!clicavel) return; if (mirando) onMirar({ x, y }); else onMover && onMover({ x, y }); }}
-            style={{
-              width: lado, height: lado, background: fundo, padding: 0, lineHeight: 1,
-              border: `1px solid ${alvoMira ? T.violetSoft : alvo ? T.danger : oc && oc.tipo === "heroi" ? T.amber : indo ? "rgba(232,163,61,0.35)" : tiro ? "rgba(150,120,220,0.30)" : T.line}`,
-              cursor: clicavel ? "pointer" : "default", fontSize: Math.max(7, Math.round(lado * 0.55)),
-              color: oc ? (oc.tipo === "heroi" ? T.amberSoft : oc.tipo === "aliado" ? T.ok : T.danger) : T.violetSoft,
-              fontWeight: 700, overflow: "hidden",
-            }}>
-            {oc && oc.chefe ? (oc.tipo === "heroi" ? "🧍" : oc.tipo === "aliado" ? "🛡" : "👹") : alvoMira ? "◎" : ""}
-          </button>
-        );
-      }))}
-    </div>
-  );
-
-  const cabecalho = (
-    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-      <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>
-        campo · {g.largura}×{g.altura} quadrados de 1,5 m
-      </span>
-      {colados.length > 0 && (
-        <span className="tv-mono text-[9px]" style={{ color: T.danger }} title="Sair de perto de um inimigo dá a ele um golpe livre">
-          ⚡ sair custa {colados.length === 1 ? "um golpe livre" : `${colados.length} golpes livres`}
-        </span>
-      )}
-      <span className="tv-mono text-[9px]" style={{ color: passoM > 0 ? T.inkDim : T.danger }}
-        title="O que sobra do seu passo nesta rodada. Andar não gasta a ação: dá para dar dois passos, contornar e ainda golpear.">
-        👣 {metrosTxt(passoM)} de {metrosTxt(passoTotal)} m nesta rodada
-      </span>
-      {podeMirar && (
-        <button onClick={() => setModo((m) => (m === "mirar" ? "andar" : "mirar"))}
-          title={mirando ? "Voltar a andar pelo tabuleiro" : `Escolher onde ${alcanceMira.nome} vai cair`}
-          className="tv-mono text-[9px] px-2 py-0.5 rounded-full"
-          style={{ background: mirando ? T.violet : "transparent", color: mirando ? T.onSecond : T.violetSoft, border: `1px solid ${T.violet}` }}>
-          {mirando ? `◎ mirando ${alcanceMira.nome} — toque onde cai` : `👣 andando — toque para mirar ${alcanceMira.nome}`}
-        </button>
-      )}
-      {previsao && (
-        <span className="tv-mono text-[9px] px-2 py-0.5 rounded-full" style={{ color: previsao.aliados.length ? T.danger : T.amberSoft, border: `1px solid ${previsao.aliados.length ? T.danger : T.amber}` }}>
-          {previsao.aliados.length ? "💢" : "◎"} {previsao.nome} ({previsao.forma}{previsao.raio ? ` de ${previsao.raio} m` : ""}): {previsao.inimigos.length} inimigo{previsao.inimigos.length === 1 ? "" : "s"}
-          {previsao.aliados.length ? ` · PEGA ${previsao.aliados.join(", ")}` : " · nenhum aliado na área"}
-        </span>
-      )}
-      <button onClick={() => setAberto(true)} title="Abrir o campo em tela cheia"
-        className="tv-mono text-[9px] ml-auto px-2 py-0.5 rounded-full" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>
-        ⤢ ampliar
-      </button>
-    </div>
-  );
-
-  /* o lado do quadrado: grande o bastante para o dedo na tela cheia,
-     pequeno o bastante para caber no painel sem rolar */
-  const ladoCompacto = Math.max(9, Math.min(18, Math.floor(560 / g.largura)));
-
-  return (
-    <div className="mb-2">
-      {cabecalho}
-      <div className="overflow-x-auto tv-scroll">{desenhar(ladoCompacto)}</div>
-      {aberto && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4" style={{ background: "rgba(8,6,14,0.92)", backdropFilter: "blur(3px)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setAberto(false); }}>
-          <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.amberSoft }}>
-            {g.cenario} · {g.largura}×{g.altura} quadrados de 1,5 m
-          </div>
-          <div className="overflow-auto tv-scroll" style={{ maxHeight: "70vh", maxWidth: "96vw" }}>
-            {desenhar(Math.max(16, Math.min(30, Math.floor(Math.min(window.innerWidth * 0.9 / g.largura, window.innerHeight * 0.62 / g.altura)))))}
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-3 mt-3 tv-mono text-[10px]" style={{ color: T.inkDim }}>
-            <span style={{ color: T.amberSoft }}>🧍 você</span>
-            <span style={{ color: T.ok }}>🛡 grupo</span>
-            <span style={{ color: T.danger }}>👹 inimigo</span>
-            <span>▪ dourado claro: dá para chegar aí neste turno</span>
-            <span>▪ roxo claro: até onde a habilidade alcança</span>
-            <span>▪ vermelho: a área da magia selecionada</span>
-          </div>
-          {(inimigos.length > 0 && heroi) && (
-            <div className="tv-body text-[11px] mt-2 text-center" style={{ color: T.inkDim, maxWidth: 640 }}>
-              {inimigos.map((e) => `${e.nome} a ${Math.round(distanciaM(heroi, e))} m${ladoDe(e) > 1 ? ` (${tamanhoDe(e).nome.toLowerCase()}, alcança ${alcanceNatural(e)} m)` : ""}`).join(" · ")}
-            </div>
-          )}
-          <button onClick={() => setAberto(false)} className="mt-3 rounded-xl px-5 py-2 tv-mono text-sm" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>
-            Fechar e agir →
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 /* ---------------- EXAMINAR (v9.41) ----------------
    O painel que substitui "eu examino e pego os itens" — a frase que o
