@@ -5036,3 +5036,61 @@ A carta de tarô e a tábua já carregam o vocabulário de ornamento, e uma
 terceira moldura no mesmo jogo vira ruído; além disso a ficha mora dentro da
 gaveta lateral, e eu não conseguiria vê-la sem uma campanha inteira rodando —
 não vale entregar enfeite que não olhei.
+
+## v9.129 — a espinha: fase 1 do plano
+
+O mundo sempre nasceu inteiro e determinístico da semente: regiões, cidades,
+fações, masmorras, esconderijos, segredos, gente, chefes. A HISTÓRIA não. Ela
+era o que o Narrador improvisava mais os sorteios de `tramas.js` — e era por
+isso que ela era a única coisa da mesa que ninguém conseguia conferir. Onde
+não há decisão tomada antes, quem decide é quem está falando na hora.
+
+`historia.js` já tinha a FORMA — as estruturas dramáticas, os marcos que
+pesam, o custo que cada momento cobra para virar. Faltava o CONTEÚDO. É isso
+que `saga.js` estende, uma vez só, na criação do mundo.
+
+**Três regras sustentam o resto:**
+
+1. **A espinha só aponta para o que existe.** Cidade do mapa, gente da base,
+   bicho daquela região, chefe que o mundo já criou. Um marco que aponte para
+   quem não existe é a caçada dos três lobos em escala de campanha.
+2. **Toda condição é do vocabulário que já se confere.** As etapas de
+   `missoes.js` têm `ver()`; a espinha não inventa um segundo jeito de dizer
+   "cumprido", porque dois jeitos seriam dois jeitos de discordar.
+3. **O ato é dimensionado pela conta do próprio arco.** `custoDaEtapa` já
+   dizia quanto peso cada momento precisa para virar; a espinha põe marcos
+   até somar isso. O arco passa a virar quando os marcos do ato acabam, em
+   vez de virar por acúmulo de acaso.
+
+**A seção `momento` da Pauta finalmente tem leitor.** Ela estava declarada em
+`pauta.js` desde a v9.104 — "a batida da história", prioridade 3 — e nunca era
+preenchida. A espinha é exatamente o que faltava ali.
+
+**Uma etapa nova: `revelar`.** A primeira sonda estendeu uma espinha inteira
+que se cumpria ANDANDO: "o que a capela esconde" fechava com `ir_a`, presença,
+que é o defeito que a v9.128 acabou de consertar no resgate. Agora a condição
+lê `base.revelados` — a lista do que já foi apresentado em cena.
+
+**Dois feitios ficaram de fora, e as ausências estão escritas no arquivo:**
+
+- **Entrega.** `levar_a` confere se o item está na bolsa, e nada no jogo põe
+  "o fardo pesado demais para um só" na mão do herói. A primeira sonda estendeu
+  justamente esse marco como abertura da campanha — impossível de cumprir, bem
+  no lugar onde a história começa.
+- **Masmorra.** "Descer em X" só se cumpriria por `ir_a`, e chegar à boca da
+  mina não é descer. A masmorra sabe quais salas foram resolvidas mas não
+  publica um sinal de CONCLUÍDA que as etapas saibam ler.
+
+Outras três coisas que a sonda pegou antes de qualquer jogador: o confronto
+final nascia em PRIMEIRO lugar do ato (e o resto do ato acontecia depois do
+clímax); "acabar com Lich ×3" — matilha é coisa de bicho pequeno, e agora
+`quantos` sai da ameaça; e a campanha abria com três "encontrar fulano" em
+fila, que não é um começo, é uma lista de chamada.
+
+**Save antigo não ganha espinha.** Estender no meio de uma campanha em curso
+inventaria um passado que ninguém viveu — a espinha fica vazia e o jogo segue
+como sempre seguiu.
+
+E não há resumo de progresso exportado: uma barra dizendo "12 de 29 marcos"
+conta ao jogador que existe uma estrutura, e saber que faltam dezessete é
+saber que a história não acaba agora.

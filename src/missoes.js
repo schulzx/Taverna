@@ -92,6 +92,17 @@ export const ETAPAS = {
     ver: (e, m) => norm(m.cidadeAtual) === norm(e.alvo)
       && [...(m.inventario || []), ...(m.equipamento || [])].some((i) => norm(typeof i === "string" ? i : i && i.nome).includes(norm(e.item))),
   },
+  /* ---------------- REVELAR (v9.129) ----------------
+     `ir_a` se cumpre por presença, e presença não é descoberta: um marco que
+     diz "o que a capela esconde" e fecha porque o herói passou pela porta é a
+     mesma mentira do resgate que se cumpria ao chegar. O que existe de
+     verdade é `base.revelados` — a lista do que já foi apresentado em cena —
+     e agora as etapas sabem lê-la. */
+  revelar: {
+    id: "revelar", icone: "🗝",
+    texto: (e) => `Descobrir o que ${e.alvo} esconde`,
+    ver: (e, m) => (m.revelados || []).some((id) => norm(id).includes(norm(e.alvo))),
+  },
   aguentar: {
     id: "aguentar", icone: "⏳",
     texto: (e) => `Sobreviver até o dia ${e.dia}`,

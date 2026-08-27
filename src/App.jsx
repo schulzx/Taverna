@@ -86,6 +86,7 @@ import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao }
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
 import { garantirEspaco, paraPauta, posicaoDoHeroi, rastrearOTurno } from "./geografo.js";
+import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, envelopeDaEspinha, linhaDoMarco } from "./saga.js";
 import { porNaPauta, textoDaPauta, garantirPauta } from "./pauta.js";
 import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta } from "./interprete.js";
 import { escolherCorpo, corpoPorId, garantirSaber, chegouAteEle, oQueEleNaoSabe, certezaDe, responder, paraPauta as vilaoParaPauta, envelopeDoCorpo } from "./antagonista.js";
@@ -3090,6 +3091,10 @@ export default function Taverna() {
   const [alvosGolpe, setAlvosGolpe] = useState([]); // alvo escolhido para cada golpe do turno
   const alvosGolpeRef = useRef([]); // marca ataque do jogador neste turno
   const historiaRef = useRef(garantirHistoria({ estrutura: "jornada", etapa: 0 }));
+  /* v9.129: A ESPINHA. Estendida uma vez, na criacao do mundo, e a partir
+     dali so encolhe: cada marco que cai fica marcado e nunca volta. Ela
+     nao decide nada em tempo de turno — ja decidiu tudo antes. */
+  const espinhaRef = useRef(garantirEspinha(null));
   const questsRef = useRef([]);
   /* MISSÕES (v9.27): a lista nova, com etapas que o sistema confere. As
      `quests` antigas continuam existindo só o tempo da migração. */
@@ -4252,6 +4257,10 @@ export default function Taverna() {
       longe,
     });
     p = porNaPauta(p, "onde", g.onde);
+    /* v9.129: A SECAO `momento` estava declarada em `pauta.js` desde a v9.104
+       e nunca era preenchida — uma porta sem leitor. A espinha e o leitor
+       dela: "a batida da historia" e exatamente o marco em que se esta. */
+    p = porNaPauta(p, "momento", envelopeDaEspinha(espinhaRef.current, historiaRef.current.etapa, estruturaPorId(historiaRef.current.estrutura)));
     /* v9.118: a vizinhança tem seção própria e prioridade baixa — numa cena
        cheia a gente presente ganha dela, e é isso que se quer */
     p = porNaPauta(p, "daqui", g.daqui);
@@ -5187,7 +5196,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
+      historia: historiaRef.current, espinha: espinhaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
@@ -6768,6 +6777,9 @@ export default function Taverna() {
       derrotados: [...((baseMundoRef.current || {}).mortos || []), ...(derrotadosDaSessaoRef.current || [])],
       inventario: p.inventario || [], equipamento: p.equipamento || [],
       npcs: npcsRef.current, dia: diaRef.current, relogios: relogiosRef.current,
+      /* v9.129: o que já foi apresentado em cena. É o que a etapa `revelar`
+         lê — descobrir é diferente de passar pela porta. */
+      revelados: (baseMundoRef.current || {}).revelados || [],
     };
   };
 
@@ -7961,6 +7973,22 @@ export default function Taverna() {
       faccaoJogadorRef.current = "";
     }
     cidadeAtualRef.current = (inicial && inicial.nome) || "";
+    /* ---------------- A ESPINHA E ESTENDIDA AQUI (v9.129) ----------------
+       Depois do mapa e da cidade de partida, e antes do primeiro turno. E o
+       unico momento em que ela e escrita: dali em diante o mundo so a
+       cumpre. A cidade inicial entra porque a espinha caminha para FORA —
+       os primeiros marcos ficam a mao, o ultimo no ponto mais longe. */
+    if (!cap) {
+      espinhaRef.current = estenderEspinha({
+        semente: sementeMundo(),
+        mapa: mapaRef.current,
+        genero: generoMundo(),
+        molde: moldeMundo(),
+        lex: (mundoAtual() || {}).lexico,
+        estrutura: historiaRef.current.estrutura,
+        cidadeInicial: cidadeAtualRef.current,
+      });
+    }
     jornadaRef.current = null; setJornada(null);
     eventosRef.current = { locais: [], global: null, semGlobalDesde: 0, seq: 1 }; setEventos(eventosRef.current);
     guildaRef.current = { nivel: 1, cofre: 0 }; setGuilda(guildaRef.current);
@@ -8205,6 +8233,10 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
          cria zerado — o arco continua exatamente no momento em que estava e
          passa a andar pelo motor daqui em diante. */
       historiaRef.current = garantirHistoria(sv.historia && sv.historia.estrutura ? sv.historia : { estrutura: (sv.mundo && sv.mundo.estrutura) || "jornada", etapa: 0 });
+      /* save antigo nao tem espinha: ela fica vazia e o jogo segue como
+         sempre seguiu. Estender no meio de uma campanha ja em curso
+         inventaria um passado que ninguem viveu. */
+      espinhaRef.current = garantirEspinha(sv.espinha || null);
       questsRef.current = Array.isArray(sv.quests) ? sv.quests : [];
       /* MIGRAÇÃO (v9.27): a quest antiga era um título e uma descrição, sem
          etapas — não dá para inventar retroativamente onde o jogador estava
@@ -11000,6 +11032,26 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
 
   const conferirAsMissoes = (persAtual) => {
     const p = persAtual || personagemRef.current || personagem || {};
+    /* ---------------- A ESPINHA CONFERE PELA MESMA PORTA (v9.129) ----------------
+       Mesmo mundo, mesmo `ver()` das etapas. Dois jeitos de dizer "cumprido"
+       seriam dois jeitos de discordar — e o que a espinha promete e que o
+       marco cai pelo mesmo fato que faria uma missao andar. */
+    {
+      const mundoAgora = mundoDasMissoes(p);
+      const ce = conferirEspinha(espinhaRef.current, mundoAgora, (cond, m) => etapaDef(cond.tipo).ver(cond, m));
+      if (ce.cumpridos.length) {
+        espinhaRef.current = ce.espinha;
+        for (const m of ce.cumpridos) {
+          /* o marco empurra o ARCO pelo peso do proprio feitio: e assim que
+             a espinha e a forma dramatica andam casadas em vez de cada uma
+             contar a sua historia */
+          historiaRef.current = registrarMarco(historiaRef.current, feitioDe(m.feitio).peso, m.titulo);
+          pushMsgs([{ autor: "sistema", texto: `✦ ${linhaDoMarco(m)}` }]);
+        }
+        setHistoria(historiaRef.current);
+        salvar({ espinha: espinhaRef.current, historia: historiaRef.current });
+      }
+    }
     const r = conferirMissoes(missoesRef.current, mundoDasMissoes(p));
     if (!r.avancos.length) return p;
     missoesRef.current = r.missoes; setMissoes(r.missoes);
