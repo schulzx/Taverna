@@ -28,6 +28,10 @@ import { nomesDeLugar, chamadoDoLugar, criaturasDaAmeaca } from "./lexico.js";
 import { nomeDeLocal } from "./toponimia.js";
 import { criaturasDoGenero } from "./bestiario.js";
 import { moldePorId } from "./moldes.js";
+/* v9.136: a INDOLE. Cada pessoa do mundo nasce com traços que não brigam
+   entre si, um medo que só acorda quando a coisa está na cena, uma força e
+   — se ela for de voltar — um propósito com condição de amadurecer. */
+import { indoleDe } from "./indole.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const entre = (rnd, a, b) => a + Math.floor(rnd() * (b - a + 1));
@@ -185,6 +189,7 @@ export function genteDoLocal(semente, local, genero = "Fantasia medieval", molde
       local: local.nome,
       cidade: local.cidade,
     });
+    out[out.length - 1].indole = indoleDe(semente, out[out.length - 1]);
   }
   return out;
 }

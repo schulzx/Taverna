@@ -5411,3 +5411,62 @@ caracteres. O guarda pegou.
 O Intérprete é consultado **uma vez por turno**, em `enviar`, porque o ator
 precisa do movimento antes de a Pauta ser montada. Consultar duas vezes
 sortearia dois movimentos: a pessoa faria uma coisa e falaria sobre outra.
+
+## v9.136 — a índole: quem a pessoa é
+
+Três módulos, três perguntas, e faltava a primeira:
+
+```
+indole.js      quem ela É
+interprete.js  o que ela FAZ
+falas.js       o que ela DIZ
+```
+
+Até aqui a personalidade de alguém era **uma string solta** — um `traco`
+sorteado, mais um `modo` e uma `vontade`. E os vetos que governam o que ela
+nunca faz saíam de **regex em cima dessa string**: quem tivesse "reservado"
+no traço não entregava, quem tivesse "covarde" não ameaçava. Funcionava por
+acidente de vocabulário — bastava a lista de traços mudar uma palavra para
+metade dos vetos calar.
+
+Agora cada pessoa do mundo nasce com estrutura, determinística pela semente:
+de um a três **traços que não brigam entre si**, um **medo**, uma **força**,
+uma **relevância** e — se ela for de voltar — um **propósito**.
+
+**O cuidado com o propósito.** "Trair o herói" é a ideia mais forte da lista
+e a mais fácil de estragar: um propósito que seja só etiqueta que o Narrador
+lê é adjetivo, e adjetivo devolve a decisão para a IA. Então todo propósito
+tem três partes obrigatórias — o que ele é, **o que o faz amadurecer** (e
+isso o sistema confere: dias de convívio, força do laço, favores, um segredo
+que ela soube), e o que muda no mundo quando acontece. Nenhum amadurece no
+dia zero, e um cumprido não acontece de novo.
+
+**Propósito é de quem volta.** Figurante nunca carrega plano secreto: um
+mundo em que cada taverneiro tem um é um mundo sem taverneiro nenhum — o
+jogador para de acreditar em qualquer um deles. E o propósito casa com os
+traços: um fiel não nasce querendo trair.
+
+**O medo só acorda com a coisa na cena.** Medo que aparece sempre vira
+maneirismo, e maneirismo não é medo. Cada um traz o que o desperta — um nome
+de bicho entre os inimigos, o lugar, a noite — e o que a pessoa faz quando
+acorda.
+
+**O apelido manda.** A sonda devolveu *"Corwin Sem-Medo · calado, fiel,
+MEDROSO"*. O apelido é parte do nome e o jogador o lê primeiro; uma índole
+que o contradiz não é ironia, é o mundo se desmentindo na mesma linha. Agora
+o que o nome afirma entra antes do sorteio.
+
+**A chave é o NOME, e não o id** — é o que torna a índole derivável de
+qualquer lugar, como o rosto já era. Com o id na frente, a mesma Fina teria
+uma índole na base e outra na ficha do elenco, e a segunda seria a errada.
+
+Ligada em quatro pontas: a gente do mundo nasce com ela, o Intérprete lê os
+vetos da estrutura (as regex ficam como rede para save antigo), o **ator** a
+recebe inteira — com o propósito como INTENÇÃO SECRETA que ele é proibido de
+anunciar — e a ficha do elenco mostra traços, medo e força. **O propósito não
+aparece na ficha**: ler o fundo falso numa lista mataria a única coisa que
+ele tem.
+
+Um defeito meu no caminho: pus a chamada da índole dentro do `PainelPessoas`,
+que é componente à parte e não tem `sementeMundo()` no escopo — erro de
+execução que o build não pega. Passou a vir por prop.

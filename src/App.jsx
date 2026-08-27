@@ -93,6 +93,7 @@ import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaPro
 import { porNaPauta, textoDaPauta, garantirPauta } from "./pauta.js";
 import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta } from "./interprete.js";
 import { dossieDe, promptDoAtor, pedidoDoAtor, garantirFala, envelopeDasFalas, MAX_BOCAS } from "./falas.js";
+import { indoleDe, linhaDaIndole } from "./indole.js";
 import { escolherCorpo, corpoPorId, garantirSaber, chegouAteEle, oQueEleNaoSabe, certezaDe, responder, paraPauta as vilaoParaPauta, envelopeDoCorpo } from "./antagonista.js";
 import { garantirAliados, nascerAliado, andarVontade, cruzouOCodigo, vontadePorId, codigoPorId, DIAS_ATE_APODRECER, paraPauta as aliadoParaPauta } from "./aliado.js";
 import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resumoDoRegistro } from "./registro.js";
@@ -760,7 +761,7 @@ function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar })
 }
 
 /* PainelDiario extraído para ./painel-diario.jsx (v8.8) */
-function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio, onDefinirRelacao, mortosBase = [] }) {
+function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio, onDefinirRelacao, mortosBase = [], semente = "" }) {
   /* o registro é a união de quem o Mestre anotou e de quem o SISTEMA matou:
      alguém da base do mundo pode ter morrido sem nunca ter virado ficha */
   const mortosSet = new Set((mortosBase || []).map((m) => String(m).toLowerCase()));
@@ -787,6 +788,14 @@ function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio, onDefinirRelacao, 
           </div>
           <div className="tv-body text-xs italic truncate" style={{ color: T.inkDim }}>{[n.papel, n.genero, n.local ? `em ${n.local}` : "", n.conhecidoEm != null ? (n.conhecidoEm > 0 ? `conhecido(a) no dia ${n.conhecidoEm}` : "antes do dia 1") : ""].filter(Boolean).join(" · ") || "—"}</div>
           {n.notas && <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{n.notas}</div>}
+          {/* v9.136: quem ela É. A índole é derivável do nome, como o rosto —
+              então vale para a gente da base E para quem o Mestre registrou.
+              O PROPÓSITO não entra aqui de propósito: ele é o fundo falso, e
+              lê-lo numa ficha mataria a única coisa que ele tem. */}
+          {(() => {
+            const li = semente ? linhaDaIndole(indoleDe(semente, n)) : "";
+            return li ? <div className="tv-mono text-[9px] mt-1" style={{ color: T.violetSoft }}>{li}</div> : null;
+          })()}
           {onDefinirRelacao && !morto && (
             <div className="flex items-center gap-1.5 mt-1.5">
               <span className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.inkDim }}>relação:</span>
@@ -1348,7 +1357,7 @@ function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], 
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} jornada={jornada} masmorra={masmorra} molde={molde} semente={sementeMundo} genero={generoMundo} lex={lexicoMundo} lugar={lugar} aoIrAoLugar={aoIrAoLugar} aoViajar={aoViajar} npcs={npcs} grupo={personagem.grupo || []} heroi={personagem.nome} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} />}
         {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} cidadeAtual={cidadeAtual} />}
-        {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} mortosBase={mortosBase} />}
+        {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas semente={sementeMundo} npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} grupoCheio={(personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} mortosBase={mortosBase} />}
 
         {aba === "gestao" && subGestao === "diplomacia" && <PainelDiplomacia mapa={mapa} faccaoJogador={faccaoJogador} onDiplomacia={onDiplomacia} onPresente={onPresente} cofre={guilda && guilda.cofre} />}
         {aba === "gestao" && subGestao === "correio" && <PainelCorreio correio={correio} faccoes={((mapa && mapa.faccoes) || []).filter((f) => f && f.nome && !f.doJogador && f.relacao !== "jogador").map((f) => f.nome)} dia={dia} moedas={personagem.moedas || 0} enviarCarta={enviarCarta} responderPeticao={responderPeticao} />}
@@ -7499,6 +7508,21 @@ export default function Taverna() {
         const d = dossieDe(m.pessoa, {
           faz: m.faz, gesto: m.gesto, proibidos: m.proibidos,
           acao: conteudo, outros: nomes.filter((n) => n !== m.nome), lugar,
+          /* v9.136: a cena, para a indole saber se o medo dela esta acordado
+             — medo que aparece sempre vira maneirismo, e maneirismo nao e
+             medo. E o convivio, que e o que faz um proposito amadurecer. */
+          cena: {
+            inimigos: ((combateRef.current || {}).inimigos) || [],
+            presentes: pessoasDaCena(),
+            noite: (minutoRef.current || 0) < 6 * 60 || (minutoRef.current || 0) >= 20 * 60,
+            convivio: {
+              dias: Math.max(0, diaRef.current - (((npcsRef.current || {})[m.nome] || {}).conhecidoEm ?? diaRef.current)),
+              forcaDoLaco: Number((m.pessoa || {}).forcaDoLaco) || 0,
+              meDeve: !!(m.pessoa || {}).meDeve, euDevo: !!(m.pessoa || {}).euDevo,
+              sabeDeMim: !!(m.pessoa || {}).sabeDeMim, euSeiDela: !!(m.pessoa || {}).euSeiDela,
+              euGanhei: !!(m.pessoa || {}).euGanhei,
+            },
+          },
         });
         if (!d) return null;
         try {

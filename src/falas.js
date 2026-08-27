@@ -49,6 +49,8 @@
 /* Duas bocas por turno, no máximo. Três pessoas falando é uma cena que o
    jogador não consegue responder, e cada boca é uma chamada — o teto é de
    ritmo antes de ser de custo. */
+import { paraODossie } from "./indole.js";
+
 export const MAX_BOCAS = 2;
 
 /* A fala é curta por regra. O ator que escreve parágrafo está narrando, e
@@ -63,7 +65,7 @@ const limpar = (s) => String(s || "")
 /* ---------------- O DOSSIÊ ----------------
    Tudo o que o ator recebe, e nada além. Se um campo não estiver aqui, ele
    não sabe — e é isso que o impede de decidir o que existe no mundo. */
-export function dossieDe(pessoa, { faz = "", gesto = "", proibidos = [], acao = "", outros = [], lugar = "" } = {}) {
+export function dossieDe(pessoa, { faz = "", gesto = "", proibidos = [], acao = "", outros = [], lugar = "", cena = {} } = {}) {
   const p = pessoa || {};
   const nome = String(p.nome || "").slice(0, 40);
   if (!nome) return null;
@@ -79,6 +81,10 @@ export function dossieDe(pessoa, { faz = "", gesto = "", proibidos = [], acao = 
     outros: (outros || []).slice(0, 3).map((x) => String(x).slice(0, 40)),
     acao: String(acao || "").slice(0, 240),
     lugar: String(lugar || "").slice(0, 50),
+    /* v9.136: quem ela É. Os traços, o medo SE ele estiver acordado nesta
+       cena, a força, e o propósito — que vai mesmo antes de amadurecer,
+       porque é ele que dá fundo falso à fala desde o primeiro encontro. */
+    indole: paraODossie(p.indole, { inimigos: cena.inimigos, lugar, presentes: cena.presentes, noite: cena.noite, convivio: cena.convivio }),
   };
 }
 
@@ -101,6 +107,10 @@ export function promptDoAtor(d) {
     `Você É ${d.nome}. Não narra, não descreve a cena, não explica: FALA, como esta pessoa falaria.`,
     d.papel ? `QUEM VOCÊ É: ${d.papel}.${d.temperamento ? ` ${d.temperamento}.` : ""}` : "",
     d.quer ? `O QUE VOCÊ QUER: ${d.quer}.` : "",
+    (d.indole && d.indole.tracos.length) ? `COMO VOCÊ É: ${d.indole.tracos.join("; ")}.` : "",
+    (d.indole && d.indole.forca) ? `NO QUE VOCÊ É BOM: ${d.indole.forca}.` : "",
+    (d.indole && d.indole.medo) ? `O QUE VOCÊ TEME, E ESTÁ AQUI: ${d.indole.medo}.` : "",
+    (d.indole && d.indole.proposito) ? `A SUA INTENÇÃO SECRETA: ${d.indole.proposito} NUNCA a anuncie: ela aparece no que você escolhe dizer, não no que você conta.` : "",
     d.relacao ? `O QUE ELA É SUA: ${d.relacao}.` : "",
     /* o veto vem por último entre as instruções de quem ele é, porque é a
        última coisa que ele lê antes de falar — e é a que mais se perde */

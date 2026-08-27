@@ -44,6 +44,8 @@
    O movimento por baixo do movimento. Servem para o mesmo que os gestos
    do Bibliotecário: impedir que dois movimentos diferentes produzam a
    mesma cena, e dar ao veto uma unidade maior que a entrada. */
+import { vetosDaIndole } from "./indole.js";
+
 export const GESTOS = [
   { id: "esquiva", o: "sai de perto do assunto sem sair do lugar" },
   { id: "aproxima", o: "encurta a distância — física, ou de confiança" },
@@ -162,6 +164,12 @@ export function linhaPorId(id) { return LINHAS.find((l) => l.id === id) || null;
 export function gestosProibidos(pessoa) {
   const p = garantirPessoa(pessoa);
   const fora = new Set();
+  /* v9.136: os vetos da ÍNDOLE entram primeiro. As LINHAS abaixo derivam o
+     veto de REGEX em cima do temperamento escrito à mão — funcionava por
+     acidente de vocabulário, e bastava a lista de traços mudar uma palavra
+     para metade delas calar. A índole é estrutura; as linhas ficam como rede
+     para quem ainda não tem índole (save antigo, gente que o Mestre criou). */
+  for (const g of vetosDaIndole((pessoa && pessoa.indole) || null)) fora.add(g);
   for (const l of LINHAS) {
     let vale = false;
     try { vale = !!l.quando(p); } catch { vale = false; }
