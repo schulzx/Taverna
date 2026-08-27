@@ -5144,3 +5144,65 @@ Três defeitos meus, achados por sonda antes de qualquer jogador:
 E uma prova minha nasceu errada: ela media a palavra "tesouro" e pegava a
 própria proibição do envelope ("não transforme isto em achado de tesouro").
 O que não pode existir é PAGAMENTO, e é isso que ela mede agora.
+
+## v9.131 — o contrato do Narrador
+
+Pergunta do autor: já que a IA não é mais o Mestre e só narra, tudo o que
+está no prompt ainda é necessário?
+
+**Medido, e a resposta é sim — mas em outra forma do que eu supus.** A
+primeira medição que fiz atribuiu errado: o regex de cabeçalho engoliu tudo
+depois de "ROLAGENS" até o próximo título em caixa alta, e me fez ver um
+bloco de 13.896 caracteres de instrução de rolagem que não existe. Medido por
+ITEM, o prompt é plano: 191 itens, o maior com 4.823, e nenhum bloco gordo de
+"como decidir".
+
+O que ele tem é outra coisa:
+
+```
+90,5%  proibição ou atribuição ao sistema   (155 itens)
+ 3,1%  ofício de narrar                     (8 itens)
+ 4,9%  fato do mundo                        (28 itens)
+
+46× "NÃO"   26× "NUNCA"   8× "PROIBIDO"   112× "o sistema"
+```
+
+O prompt não está cheio de regras de decisão. Está cheio da **cicatriz de
+cada decisão que foi tirada da IA**: cada sistema que virou código deixou
+para trás uma proibição avisando que ela não decide mais aquilo.
+
+**E a contradição estava na primeira linha.** O prompt abria com *"Você é o
+Mestre de um RPG de mesa por chat… e arbitre as regras com justiça"* — e
+gastava os outros 58 mil caracteres tomando isso de volta.
+
+Agora ele abre com o CONTRATO: o Narrador sabe que o Mestre desta mesa é o
+sistema, que já leu a cena, consultou os conselheiros, rolou o que havia e
+decidiu; e que o trabalho dele é o que nenhum código faz — contar como
+aconteceu, com a voz de um mestre de mesa que tem a história inteira na
+cabeça.
+
+**O contrato foi pago com duplicação, não com corte.** Ele custou 719
+caracteres e disparou o gatilho que o plano já tinha sinalizado: a cena
+sintética de todas as portas estava a 57 caracteres do teto. A regra da casa
+proíbe consertar orçamento raspando ou movendo guarda, então saiu o que o
+contrato passou a dizer:
+
+- `TURNO_PROMPT` inteiro, de `turno.js`. Ele se chamava "QUEM DECIDE O QUÊ" e
+  era, palavra por palavra, o contrato: a mesma divisão, a mesma regra do
+  envelope. Duas cópias da fronteira entre o sistema e quem narra é o começo
+  de duas fronteiras.
+- Três frases de `LIBERDADE CRIATIVA` — inclusive *"o SISTEMA decide o que
+  existe e o que acontece; VOCÊ decide como aquilo se parece"*, que era a
+  terceira cópia da mesma frase no mesmo prompt.
+- A frase dos envelopes já rolados, em `COLCHETES SÃO META`.
+
+Resultado: pior cena real de 80.670 para **79.542**, sintética de 90.662 para
+**89.534** — e a folga do gatilho voltou de 57 para 466 caracteres.
+
+**O QUE NÃO FOI FEITO, E POR QUÊ.** As 46 proibições continuam lá. Apagá-las
+em bloco seria regressão: muitas nasceram porque o modelo fez a coisa errada,
+e estão registradas neste arquivo. O critério para apagar uma é objetivo, e
+vira fase própria do plano: **uma proibição só sai quando um sistema torna o
+mau resultado impossível** — quando o envelope é autoridade e o código
+sobrescreve. Proibição que protege algo que nenhum sistema cobre não é
+excesso de texto: é conselheiro faltando.

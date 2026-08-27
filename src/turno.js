@@ -344,6 +344,8 @@ export function linhaDaDecisao(d) {
 /* Três linhas, e a terceira é a que importa. As outras duas quase se
    repetem em DESAFIOS_PROMPT — este bloco sobe em todo turno, então cada
    frase aqui é cobrada na campanha inteira. */
-export const TURNO_PROMPT = `QUEM DECIDE O QUÊ (v9.61):
-- Todo turno passa primeiro pelo SISTEMA, que decide se aquilo é comando, magia, movimento, ação que pede dado, pergunta ao mundo ou cena. Chegou a você SEM envelope: é cena, ficção pura, narre. Chegou COM envelope: aquilo já aconteceu, e você não reabre nem recalcula.
-- A divisão não muda: o sistema decide o que é VERDADE e o que ACONTECE; você decide como aquilo se PARECE e o que SIGNIFICA. Toda a riqueza do mundo está do seu lado da linha — as pessoas, as vozes, o peso das coisas. O que não está é arbitrar regra.`;
+/* NÃO HÁ MAIS UM `TURNO_PROMPT` (v9.131). Ele dizia "QUEM DECIDE O QUÊ" e
+   era, palavra por palavra, o contrato de abertura do Narrador: a mesma
+   divisão, a mesma regra do envelope. Duas cópias da fronteira entre o
+   sistema e quem narra é o começo de duas fronteiras. A que ficou é a
+   primeira coisa que ele lê. */
