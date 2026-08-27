@@ -140,6 +140,7 @@ export const PROPOSITOS = [
     precisa: "que o herói confie nela — laço forte, ou um segredo dele na mão",
     madura: (c) => (c.forcaDoLaco >= 2 || c.sabeDeMim) && c.dias >= 6,
     vira: "ela entrega o herói a quem paga, e o que ela sabe passa a ser sabido",
+    efeito: { tipo: "relacao", relacao: "inimigo" },
     exige: ["traidor", "ganancioso", "rancoroso", "medroso"],
   },
   {
@@ -148,6 +149,7 @@ export const PROPOSITOS = [
     precisa: "convivência: dias juntos e laço que cresceu",
     madura: (c) => c.forcaDoLaco >= 2 && c.dias >= 10,
     vira: "ela declara, e a partir daí faz por ele o que não faz por ninguém",
+    efeito: { tipo: "relacao", relacao: "romance" },
     exige: ["galanteador", "compassivo", "fiel", "humilde"],
   },
   {
@@ -156,6 +158,7 @@ export const PROPOSITOS = [
     precisa: "que ela o veja fazer algo grande, e que o laço exista",
     madura: (c) => c.forcaDoLaco >= 1 && c.euGanhei && c.dias >= 3,
     vira: "ela pede para ir junto, e é um pedido de verdade — recusar custa",
+    efeito: { tipo: "convite" },
     exige: ["corajoso", "curioso", "tagarela", "galanteador"],
   },
   {
@@ -164,14 +167,16 @@ export const PROPOSITOS = [
     precisa: "que ela lhe deva alguma coisa, ou que ele já tenha lutado por ela",
     madura: (c) => c.meDeve && c.dias >= 4,
     vira: "ela pede o serviço, e a conta dela vira problema dele",
+    efeito: { tipo: "missao", etapa: "derrotar", titulo: (n) => `A conta de ${n}` },
     exige: ["rancoroso", "orgulhoso", "cruel", "medonho"],
   },
   {
     id: "proteger", nome: "proteger o herói até o fim",
     o: "decidiu, e não avisou ninguém que decidiu",
     precisa: "que ele a tenha protegido primeiro, ou que o laço seja dos fortes",
-    madura: (c) => c.forcaDoLaco >= 3 || (c.euDevo && c.dias >= 5),
+    madura: (c) => (c.forcaDoLaco >= 3 && c.dias >= 3) || (c.euDevo && c.dias >= 5),
     vira: "ela se põe na frente na hora errada, e o custo é dela",
+    efeito: { tipo: "relacao", relacao: "aliado" },
     exige: ["fiel", "corajoso", "compassivo"],
   },
   {
@@ -180,6 +185,7 @@ export const PROPOSITOS = [
     precisa: "estar perto o bastante para conhecer o que ele carrega",
     madura: (c) => c.dias >= 5 && c.forcaDoLaco >= 1,
     vira: "some um item da bolsa, e ela some da cidade por uns dias",
+    efeito: { tipo: "furto" },
     exige: ["ganancioso", "traidor", "medroso"],
   },
   {
@@ -188,6 +194,7 @@ export const PROPOSITOS = [
     precisa: "que ela tenha visto o herói fazer algo que não podia",
     madura: (c) => c.euSeiDela === false && c.sabeDeMim && c.dias >= 3,
     vira: "a autoridade daqui passa a saber, e a cidade muda de temperatura",
+    efeito: { tipo: "relacao", relacao: "rival" },
     exige: ["medroso", "traidor", "humilde"],
   },
   {
@@ -196,6 +203,7 @@ export const PROPOSITOS = [
     precisa: "que ela conte, e contar exige laço",
     madura: (c) => c.forcaDoLaco >= 2 && c.dias >= 7,
     vira: "ela pede ajuda para desfazer o que fez, e paga o que puder",
+    efeito: { tipo: "missao", etapa: "falar_com", titulo: (n) => `O que ${n} fez` },
     exige: ["compassivo", "fiel", "humilde", "supersticioso"],
   },
   {
@@ -204,6 +212,7 @@ export const PROPOSITOS = [
     precisa: "tempo de observação, e nada mais",
     madura: (c) => c.dias >= 4,
     vira: "ela arma uma situação pequena e desonesta, e olha o que ele faz",
+    efeito: { tipo: "relacao", relacao: "neutro" },
     exige: ["curioso", "calado", "orgulhoso", "medonho"],
   },
 ];
@@ -323,12 +332,21 @@ export function garantirConvivio(c) {
   };
 }
 
+const DIAS_ATE_QUALQUER_PLANO = 3;
+
 export function propositoMaduro(indole, convivio) {
   const i = garantirIndole(indole);
   if (!i.proposito || i.cumprido) return null;
   const p = propositoPorId(i.proposito);
   if (!p) return null;
   const c = garantirConvivio(convivio);
+  /* A CATRACA DOS DIAS. A sonda pegou 24 pessoas em mil disparando no dia do
+     encontro: o `proteger` guardava o piso de dias em UM SÓ dos dois ramos
+     do `||`, e o outro passava direto. Consertei a linha — mas a linha era o
+     sintoma. O piso agora mora num caminho só, aqui, e nenhuma condição
+     futura pode esquecê-lo: ninguém revela plano nenhum no dia em que o
+     herói o conheceu, por mais forte que o resto pareça. */
+  if (c.dias < DIAS_ATE_QUALQUER_PLANO) return null;
   let pronto = false;
   try { pronto = !!p.madura(c); } catch { pronto = false; }
   return pronto ? p : null;
@@ -336,6 +354,29 @@ export function propositoMaduro(indole, convivio) {
 
 export function cumprir(indole) {
   return { ...garantirIndole(indole), cumprido: true };
+}
+
+/* ---------------- O PROPÓSITO ACONTECE ----------------
+   Faltava a outra ponta: o ator sabia que "a hora chegou" e nada no mundo
+   mudava. Um propósito que amadurece e não acontece é a mesma etiqueta de
+   antes, só que com condição — e quem faz acontecer é o MESTRE, não a IA.
+
+   Isto devolve o EFEITO em forma de pedido: o módulo é puro e não é dono da
+   ficha, do elenco nem do diário. Quem aplica é o App, num lugar só. */
+export function dispararProposito(indole, pessoa, convivio) {
+  const p = propositoMaduro(indole, convivio);
+  if (!p) return null;
+  const nome = String((pessoa && pessoa.nome) || "").slice(0, 40);
+  if (!nome) return null;
+  const ef = p.efeito || null;
+  return {
+    proposito: p.id,
+    nome,
+    titulo: ef && typeof ef.titulo === "function" ? ef.titulo(nome) : "",
+    efeito: ef ? { ...ef, titulo: undefined } : null,
+    linha: `✦ ${nome}: ${p.nome}.`,
+    envelope: `[PROPÓSITO — RESOLVIDO PELO SISTEMA] ${nome} chegou onde queria chegar: ${p.nome}. ${p.vira}. Isto acontece NESTA cena, e é fato — narre o momento em que se revela, em duas ou três frases, sem anunciar que era um plano e sem desfazê-lo depois. Não invente outro desfecho para ela.`,
+  };
 }
 
 /* ---------------- O QUE O ATOR E A PAUTA RECEBEM ----------------

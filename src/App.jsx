@@ -75,7 +75,7 @@ import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, e
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
-import { locaisDaCidade, garantirBase, porSituacao, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, BASE_PROMPT } from "./mundo-base.js";
+import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, BASE_PROMPT } from "./mundo-base.js";
 import { dificuldadeDaMasmorra, envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
 import { poderDe, poderDoItem, pontosDoItem, trocaDeItem, formatarPoder, contaDoPoder } from "./poder.js";
 import { montarTrama, viradaDevida, envelopeDaTrama, envelopeDoQueVira, intencaoDaTramaPorId } from "./tramas.js";
@@ -93,7 +93,7 @@ import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaPro
 import { porNaPauta, textoDaPauta, garantirPauta } from "./pauta.js";
 import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta } from "./interprete.js";
 import { dossieDe, promptDoAtor, pedidoDoAtor, garantirFala, envelopeDasFalas, MAX_BOCAS } from "./falas.js";
-import { indoleDe, linhaDaIndole } from "./indole.js";
+import { indoleDe, linhaDaIndole, dispararProposito } from "./indole.js";
 import { escolherCorpo, corpoPorId, garantirSaber, chegouAteEle, oQueEleNaoSabe, certezaDe, responder, paraPauta as vilaoParaPauta, envelopeDoCorpo } from "./antagonista.js";
 import { garantirAliados, nascerAliado, andarVontade, cruzouOCodigo, vontadePorId, codigoPorId, DIAS_ATE_APODRECER, paraPauta as aliadoParaPauta } from "./aliado.js";
 import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resumoDoRegistro } from "./registro.js";
@@ -3126,6 +3126,7 @@ export default function Taverna() {
      devolveram. Os dois vivem entre `enviar` e a montagem da Pauta. */
   const interpreteRef = useRef(null);
   const falasDoTurnoRef = useRef([]);
+  const propositosDoTurnoRef = useRef([]);
   /* ---------------- AS CASAS DO MUNDO (v9.133) — fase 4 ----------------
      Nascem com o mundo, da mesma semente. A do jogador nao e uma quarta
      variavel: e a entrada desta lista que tem `membro: true`, porque so se
@@ -4327,6 +4328,11 @@ export default function Taverna() {
       p = porNaPauta(p, "gente", r.linhas);
       if (!interpreteRef.current) for (const m of r.marcas) elencoMemRef.current = marcarMovimento(elencoMemRef.current, m.nome, m.id, m.gesto);
       p = porNaPauta(p, "fala", envelopeDasFalas(falasDoTurnoRef.current));
+      /* v9.137: a seção ACABOU ("o que o sistema resolveu agora") estava
+         declarada na Pauta e não tinha UM produtor sequer. É exatamente o
+         lugar do propósito que amadureceu: o Mestre já resolveu, e o
+         Narrador só narra o momento em que aparece. */
+      p = porNaPauta(p, "acabou", (propositosDoTurnoRef.current || []).map((x) => x.envelope).join("\n"));
     }
     /* v9.108: O ALIADO AGE POR CONTA PRÓPRIA. Um por turno, e só um: o
        silêncio dos outros é o que faz a vez de cada um valer alguma
@@ -7496,6 +7502,108 @@ export default function Taverna() {
 
      Falha nao custa turno: se o ator nao responde, a pessoa fica calada e o
      Narrador narra como sempre narrou. */
+  /* ---------------- O PROPÓSITO ACONTECE (v9.137) ----------------
+     A v9.136 deu a cada pessoa um propósito com condição de maturação, e o
+     ator passou a saber que "a hora chegou". Só que NADA no mundo mudava —
+     e propósito que amadurece sem consequência é a mesma etiqueta de antes,
+     agora com data. Quem faz acontecer é o Mestre.
+
+     Roda ANTES das bocas, para que a fala já saia de dentro do fato. */
+  const indoleDaPessoa = (pessoa) => {
+    /* a gente da base já nasce com índole; a que o Narrador trouxe, não —
+       e a chave é o NOME, então derivar aqui dá a MESMA índole */
+    if (pessoa && pessoa.indole) return pessoa.indole;
+    return indoleDe(sementeMundo(), pessoa || {});
+  };
+
+  const outraCidade = (semente) => {
+    const cs = ((mapaRef.current || {}).cidades || []).filter((c) => c && c.nome && c.nome !== cidadeAtualRef.current);
+    if (!cs.length) return "";
+    return cs[Math.abs(semente) % cs.length].nome;
+  };
+
+  const dispararPropositos = (conteudo) => {
+    try {
+      if (String(conteudo || "").trimStart().startsWith("[")) return [];
+      const mov = ((interpreteRef.current || {}).movimentos || []);
+      const feitos = [];
+      for (const m of mov) {
+        if (propositoCumprido(baseMundoRef.current, m.nome)) continue;
+        const pes = m.pessoa || {};
+        const d = dispararProposito(indoleDaPessoa(pes), pes, {
+          dias: Math.max(0, diaRef.current - (((npcsRef.current || {})[m.nome] || {}).conhecidoEm ?? diaRef.current)),
+          forcaDoLaco: Number(pes.forcaDoLaco) || 0,
+          meDeve: !!pes.meDeve, euDevo: !!pes.euDevo,
+          sabeDeMim: !!pes.sabeDeMim, euSeiDela: !!pes.euSeiDela, euGanhei: !!pes.euGanhei,
+        });
+        if (!d) continue;
+        /* um por turno: dois planos secretos amadurecendo na mesma cena é
+           uma cena que ninguém acredita */
+        if (!aplicarProposito(d)) continue;
+        baseMundoRef.current = cumprirProposito(baseMundoRef.current, d.nome, d.proposito);
+        setBaseMundo(baseMundoRef.current);
+        feitos.push(d);
+        break;
+      }
+      if (feitos.length) salvar({ baseMundo: baseMundoRef.current });
+      return feitos;
+    } catch { return []; }
+  };
+
+  /* O efeito em si. Devolve `false` quando o mundo não tem como sustentá-lo
+     — furto sem bolsa, missão sem outra cidade no mapa — e aí o propósito
+     NÃO é marcado como cumprido: ele espera a próxima cena em vez de virar
+     uma promessa que o jogador leu e nunca viu acontecer. */
+  const aplicarProposito = (d) => {
+    const ef = d.efeito || {};
+    if (ef.tipo === "relacao") {
+      definirRelacao(d.nome, ef.relacao);
+      pushMsgs([{ autor: "sistema", texto: `${d.linha}` }]);
+      return true;
+    }
+    if (ef.tipo === "convite") {
+      pushMsgs([{ autor: "sistema", texto: `${d.linha} Ela quer ir junto — o convite é seu para aceitar ou não.` }]);
+      return true;
+    }
+    if (ef.tipo === "furto") {
+      const inv = (fichaViva() || {}).inventario || [];
+      /* bolsa quase vazia não é lugar de ladrão: roubar a última coisa de
+         alguém é punição, e o propósito é história */
+      if (inv.length < 2) return false;
+      const i = Math.abs(hashSemente(`${d.nome}|furto`)) % inv.length;
+      const alvo = typeof inv[i] === "string" ? inv[i] : (inv[i] && inv[i].nome);
+      if (!alvo) return false;
+      setPersonagem((p) => {
+        const idx = (p.inventario || []).findIndex((x) => (typeof x === "string" ? x : (x && x.nome)) === alvo);
+        if (idx === -1) return p;
+        const nv = [...p.inventario]; nv.splice(idx, 1);
+        return { ...p, inventario: nv };
+      });
+      pushMsgs([{ autor: "sistema", texto: `${d.linha} Sumiu da bolsa: ${alvo}.` }]);
+      d.envelope += ` O que sumiu foi: ${alvo}.`;
+      return true;
+    }
+    if (ef.tipo === "missao") {
+      const destino = outraCidade(hashSemente(d.nome));
+      /* uma etapa só, e ela EXIGE viagem. `falar_com` a própria pessoa
+         cumpriria no mesmo turno — ela está aqui, e chegar não é cumprir. */
+      if (!destino) return false;
+      const m = criarMissao({
+        titulo: d.titulo || `O pedido de ${d.nome}`,
+        tipo: "favor", dador: d.nome, dia: diaRef.current, status: "ativa",
+        nivel: Math.max(1, Number((fichaViva() || {}).nivel) || 1),
+        descricao: `${d.nome} pediu, e o que ela pede está em ${destino}.`,
+        etapas: [{ tipo: "ir_a", alvo: destino }],
+      });
+      if (!m) return false;
+      missoesRef.current = [...missoesRef.current, m]; setMissoes(missoesRef.current);
+      salvar({ missoes: missoesRef.current });
+      pushMsgs([{ autor: "sistema", texto: `${d.linha} 🤝 ${m.titulo} — ${destino}.` }]);
+      return true;
+    }
+    return false;
+  };
+
   const colherAsFalas = async (conteudo) => {
     try {
       if (String(conteudo || "").trimStart().startsWith("[")) return [];
@@ -7593,6 +7701,7 @@ export default function Taverna() {
        por colchete nao e frase do jogador) nem sem gente na cena. */
     interpreteRef.current = interpreteParaPauta(pessoasDaCena(), { elenco: elencoMemRef.current });
     for (const m of interpreteRef.current.marcas) elencoMemRef.current = marcarMovimento(elencoMemRef.current, m.nome, m.id, m.gesto);
+    propositosDoTurnoRef.current = dispararPropositos(conteudo);
     falasDoTurnoRef.current = await colherAsFalas(conteudo);
     const pauta = textoDaPauta(pautaDoTurno(), { turno: turnoDeRegistroRef.current + 1 });
     /* guardado antes da resposta: "a luta acabou neste turno" é a

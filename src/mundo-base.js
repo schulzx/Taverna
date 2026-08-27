@@ -469,6 +469,17 @@ export function ondeEsta(base, nome) {
   return r ? { onde: r.onde || "", quem: r.quem || "" } : { onde: "", quem: "" };
 }
 
+export function propositoCumprido(base, nome) {
+  return !!garantirBase(base).propositos[chaveDeGente(nome)];
+}
+
+export function cumprirProposito(base, nome, qual = "") {
+  const b = garantirBase(base);
+  const k = chaveDeGente(nome);
+  if (!k) return b;
+  return { ...b, propositos: { ...b.propositos, [k]: String(qual || "sim").slice(0, 20) } };
+}
+
 export function porSituacao(base, nome, situacao, { onde = "", quem = "" } = {}) {
   const b = garantirBase(base);
   const k = chaveDeGente(nome);
@@ -490,6 +501,10 @@ export function garantirBase(b) {
     /* v9.130: a situação de quem importa. Save antigo vem sem, e sem
        situação todo mundo é `livre` — que é o que sempre foi. */
     situacoes: (o.situacoes && typeof o.situacoes === "object") ? o.situacoes : {},
+    /* v9.137: os propósitos que já aconteceram. A índole é derivada da
+       semente e não guarda nada; o que ACONTECEU precisa de lugar, senão a
+       mesma traição se repetiria toda vez que a pessoa entrasse em cena. */
+    propositos: (o.propositos && typeof o.propositos === "object") ? o.propositos : {},
     mortos: Array.isArray(o.mortos) ? o.mortos : [],            // nome riscado no registro
     saqueados: Array.isArray(o.saqueados) ? o.saqueados : [],   // segredo já achado
     versao: 1,

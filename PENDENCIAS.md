@@ -5470,3 +5470,63 @@ ele tem.
 Um defeito meu no caminho: pus a chamada da índole dentro do `PainelPessoas`,
 que é componente à parte e não tem `sementeMundo()` no escopo — erro de
 execução que o build não pega. Passou a vir por prop.
+
+## v9.137 — o propósito acontece
+
+A versão anterior deu a cada pessoa um plano secreto com condição de
+maturação, e o ator passou a saber que "a hora chegou". Só que **nada no
+mundo mudava**. Um propósito que amadurece sem consequência é a mesma
+etiqueta de antes, agora com data: o jogador lê a promessa e nunca vê o
+pagamento. Quem faz acontecer é o Mestre.
+
+Cada propósito ganhou um **efeito que o código sabe aplicar**:
+
+```
+trair, delatar, testar, apaixonar, proteger  →  a relação muda de verdade
+roubar                                        →  some um item da bolsa
+seguir                                        →  ela pede para ir junto
+usar, redimir                                 →  nasce uma missão
+```
+
+**O Mestre não promete o que não pode entregar.** Bolsa com menos de dois
+itens não é roubada — tirar a última coisa de alguém é punição, e o
+propósito é história. Missão não nasce sem destino. E quando o efeito não
+pode ser aplicado, o propósito **não é marcado como cumprido**: ele espera a
+próxima cena, em vez de virar uma linha que o jogador leu e nunca viu
+acontecer.
+
+**A missão exige viagem, e não conversa.** A primeira forma que escrevi
+tinha etapa `falar_com` a própria pessoa — e ela está de pé na sua frente.
+Cumpriria no mesmo turno em que nasceu. Chegar não é cumprir, e falar com
+quem já está aqui é menos que chegar.
+
+**Um por turno.** Dois planos secretos amadurecendo na mesma cena é uma cena
+em que ninguém acredita.
+
+**A seção ACABOU ganhou dono.** Ela estava declarada na Pauta desde sempre —
+*"o que o sistema resolveu agora"*, prioridade 3 — e não tinha **um produtor
+sequer**. Orçamento reservado para ninguém. É exatamente o lugar disto.
+
+**O que o Narrador recebe é fato consumado**: o que aconteceu, com ordem de
+narrar o momento em que se revela, proibição de anunciar que era um plano e
+proibição de desfazê-lo depois.
+
+### O que a sonda pegou, e o que ela ensinou
+
+Mil pessoas, com o convívio no máximo e `dias: 0`:
+
+```
+disparam no dia do encontro ........ 24 de 1000
+```
+
+Vinte e quatro pessoas revelando o plano de uma vida no dia em que
+conheceram o herói. A causa: o `proteger` guardava o piso de dias em **um só
+dos dois ramos** de um `||` — o outro passava direto. É a cicatriz de sempre:
+*toda regra que mora num só de dois caminhos vira bug*.
+
+Consertei a linha, mas a linha era o sintoma. **O piso passou a morar num
+caminho só**, na catraca, antes de qualquer condição ser consultada — e
+nenhuma condição futura pode esquecê-lo. Depois: **zero em mil e quinhentas**,
+e a distribuição com tempo não mudou.
+
+E ele não é exportado: regra que só as provas usam é regra sem dono.
