@@ -20,7 +20,7 @@ import React from "react";
 import { T } from "./constantes.js";
 import { Botao } from "./ui.jsx";
 import {
-  oficioPorId, leisDa, nomeDoPosto, degrauDe, DEGRAUS, resumoDaGuilda,
+  oficioPorId, leisDa, nomeDoPosto, degrauDaCasa, DEGRAUS, resumoDaGuilda,
   podeMandar, podeDelegar, faixaDeAtrito, NIVEL_PARA_FUNDAR, CUSTO_DE_FUNDAR,
   FALTAS_ATE_EXPULSAR, OFICIOS,
 } from "./guildas.js";
@@ -139,7 +139,7 @@ export function PainelGuilda({
 
   /* ---------------- COM CASA ---------------- */
   const of = r.oficio;
-  const proxExige = r.degrau.i < DEGRAUS.length - 1 ? degrauDe(r.degrau.i + 1).exige : r.contribuicao;
+  const proxExige = r.degrau.i < DEGRAUS.length - 1 ? degrauDaCasa(r.degrau.i + 1).exige : r.contribuicao;
   const anterior = r.degrau.exige;
   const frac = proxExige > anterior ? (r.contribuicao - anterior) / (proxExige - anterior) : 1;
   const mandar = podeMandar(minha);
@@ -163,14 +163,27 @@ export function PainelGuilda({
           </div>
         </div>
 
+        {/* duas linhas, e nao uma: a descricao do degrau e longa e colidia
+            com "faltam N para X" quando as duas dividiam a mesma linha */}
         <div className="mt-2.5">
-          <div className="flex items-baseline justify-between tv-mono text-[9px] mb-1" style={{ color: T.inkDim }}>
-            <span>{r.degrau.o}</span>
-            {r.proximo && <span>faltam {r.falta} para {r.proximo}</span>}
-          </div>
+          {r.proximo && (
+            <div className="tv-mono text-[9px] mb-1 text-right" style={{ color: T.amberSoft }}>
+              faltam {r.falta} para {r.proximo}
+            </div>
+          )}
           <Barra frac={frac} cor={T.amber} />
+          <div className="tv-mono text-[9px] mt-1" style={{ color: T.inkDim }}>{r.degrau.o}</div>
         </div>
 
+        {r.emProva && (
+          <div className="rounded-lg px-2.5 py-2 mt-2.5" style={{ background: T.panel, border: `1px solid ${T.violet}` }}>
+            <div className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.violetSoft }}>Em prova</div>
+            <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>
+              Você está na casa, mas ainda não é da casa. A prova de ingresso está no diário —
+              até ela cair, não há trabalho, nem cofre, nem gente às suas ordens.
+            </div>
+          </div>
+        )}
         {r.faltas > 0 && (
           <div className="tv-mono text-[9px] mt-2" style={{ color: r.ateExpulsar <= 3 ? T.danger : T.amberSoft }}>
             ⚠ {r.faltas} falta{r.faltas > 1 ? "s" : ""} anotada{r.faltas > 1 ? "s" : ""} — {r.ateExpulsar} até a porta da rua

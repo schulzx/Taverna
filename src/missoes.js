@@ -299,15 +299,19 @@ export function garantirMissoes(lista) {
        caminho — a missão chegaria ao fim sem saber a quem pertencia. */
     guilda: String(q.guilda || "").slice(0, 40),
     contribui: Math.max(0, Math.floor(Number(q.contribui) || 0)),
+    /* v9.134: e a PROVA DE INGRESSO e uma missao a parte das outras da casa:
+       so ela transforma candidato em membro. Sem a marca, qualquer trabalho
+       concluido fecharia o ingresso, e a prova viraria enfeite de novo. */
+    prova: !!q.prova,
     relogioId: q.relogioId || null,
     criadaEm: Number.isFinite(q.criadaEm) ? q.criadaEm : 0,
   }));
 }
 
-export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status, moedasPrometidas = null, prazo = 0, intencao = "", veiculo = "", virada = null, legado = false, guilda = "", contribui = 0 }) {
+export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status, moedasPrometidas = null, prazo = 0, intencao = "", veiculo = "", virada = null, legado = false, guilda = "", contribui = 0, prova = false }) {
   const m = garantirMissoes([{
     id, titulo, tipo, descricao, dador, etapas, criadaEm: dia, prazo: noitesDePrazo(prazo),
-    nivel, intencao, veiculo, virada, legado, guilda, contribui,
+    nivel, intencao, veiculo, virada, legado, guilda, contribui, prova,
     status: status || (ehForcada(tipo) ? "ativa" : "oferecida"),
   }])[0];
   if (!m || !m.etapas.length) return null;

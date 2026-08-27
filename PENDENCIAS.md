@@ -5311,3 +5311,45 @@ E o varredor pegou dois exports sem leitor — `atritar` e `fazerAsPazes`. Não
 era excesso: era a guerra existindo sem nada que a alimentasse. Nasceu daí
 `sangueEntreCasas`, que conta só o que ainda não foi contado — senão o mesmo
 defunto levaria duas casas à guerra por recontagem diária.
+
+## v9.134 — a prova de ingresso vira prova, e os nomes saem do apelido
+
+Dois buracos que eu mesmo tinha apontado ao entregar a fase 4.
+
+**A PROVA ERA UM ENFEITE NA PORTA.** Ela era um título e uma frase, e o
+jogador entrava assim mesmo. Agora é um TRABALHO, com etapa que o motor
+confere, e enquanto ela não cai ele está **na casa sem ser da casa**: não
+pega trabalho, não toca no cofre, não manda em ninguém. Só a missão marcada
+`prova` transforma candidato em membro — sem a marca, qualquer contrato
+concluído fecharia o ingresso e a prova voltaria a ser enfeite.
+
+A prova sai do mesmo molde do trabalho do dia a dia, no nível mais baixo: a
+prova de um recruta é tarefa de recruta, não contrato de capitão. E `umTrabalho`
+passou a ser o único lugar que sabe montar um — dois montadores seriam duas
+ideias do que a casa pede.
+
+`podeEntrarNaCasa` deixou de devolver a prova junto: ela responde "a porta
+abre?", e montar uma prova precisa do mundo — cidade, gente, bicho. Devolver
+uma prova pela metade era prometer o que a função não tinha como cumprir.
+
+**E OS NOMES.** O varredor de imports acusou seis suspeitas: `App.jsx` usando
+"entrar" e "sair" de `guildas.js` sem importar, `painel-guilda.jsx` usando
+"fundar" e "admitir". Eram falsos positivos — o varredor via as palavras em
+props como `aoEntrar` —, mas o sintoma era real: o módulo exportava
+`entrar`, `sair`, `fundar`, `admitir`, verbos comuns demais para viverem
+soltos num projeto escrito em português. **Todo consumidor teve de apelidar
+na importação.** Quando todo mundo precisa apelidar, o nome está errado na
+origem — e esta casa já decidiu isso duas vezes (`mesa.js` → `sala.js`,
+`entrarNaSala` → `sentarNaSala`).
+
+Renomeado na fonte, e nenhum apelido sobrou: `entrarNaCasa`, `sairDaCasa`,
+`fundarCasa`, `admitirNaCasa`, `expulsarDaCasa`, `punirNaCasa`,
+`contribuirNaCasa`, `delegarNaCasa`, `conferirLeisDaCasa`, `degrauDaCasa`.
+
+`linhaDaGuilda` morreu junto: existiu por um commit e não tinha onde morar —
+o painel mostra tudo e o Narrador recebe o envelope. Resumo sem leitor é
+export morto.
+
+**O painel foi visto na tela**, nos dois estados. Um defeito de layout saiu
+daí: a descrição do degrau e o "faltam 190 para Capitão" dividiam a mesma
+linha e colidiam.

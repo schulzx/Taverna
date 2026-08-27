@@ -29,6 +29,14 @@
    SÓ SE PERTENCE A UMA. Sem isso não há escolha: o jogador entraria em
    todas e a rivalidade entre elas viraria decoração. Uma guilda é uma porta
    que fecha outras, e é isso que faz a porta valer.
+   ---------------- OS NOMES ----------------
+
+   Tudo aqui termina em "Casa" — `entrarNaCasa`, `sairDaCasa`, `punirNaCasa`.
+   Nao e verbosidade: a primeira versao exportava `entrar`, `sair`, `fundar`
+   e `admitir`, verbos comuns demais para viverem soltos num projeto escrito
+   em portugues. Todo consumidor teve de apelidar na importacao, e o varredor
+   passou a ver "entrar" em qualquer prop chamada `aoEntrar`. Quando todo
+   mundo precisa apelidar, o nome esta errado na origem.
    ============================================================ */
 import { rngDe } from "./geografia.js";
 import { nomePessoa } from "./nomes.js";
@@ -183,7 +191,7 @@ export const DEGRAUS = [
   { i: 3, exige: 400, saque: 600, delegados: 3, nivelMax: 14, o: "manda em três, e a casa ouve o que ele diz" },
   { i: 4, exige: 800, saque: 2000, delegados: 6, nivelMax: 20, o: "a casa é dele em tudo menos no nome" },
 ];
-export function degrauDe(i) { return DEGRAUS[Math.max(0, Math.min(DEGRAUS.length - 1, Number(i) || 0))]; }
+export function degrauDaCasa(i) { return DEGRAUS[Math.max(0, Math.min(DEGRAUS.length - 1, Number(i) || 0))]; }
 export function nomeDoPosto(g, i) {
   const of = oficioPorId(g && g.oficio);
   return of.postos[Math.max(0, Math.min(of.postos.length - 1, Number(i) || 0))];
@@ -214,6 +222,10 @@ export function garantirGuilda(g) {
     })),
     /* o que vale para o JOGADOR nesta casa — 0 quando ele não é membro */
     membro: !!o.membro,
+    /* v9.134: entrar e ser ACEITO sao coisas diferentes. Enquanto a prova
+       nao cai, ele esta na casa mas nao e da casa: nao pega trabalho, nao
+       toca no cofre e nao manda em ninguem. */
+    emProva: !!o.emProva,
     posto: Math.max(0, Math.min(4, Math.round(Number(o.posto) || 0))),
     contribuicao: Math.max(0, Math.round(Number(o.contribuicao) || 0)),
     faltas: Math.max(0, Math.round(Number(o.faltas) || 0)),
@@ -310,7 +322,7 @@ function membrosDe(semente, of, sede, genero, lex, peso) {
 
 /* ---------------- ENTRAR ----------------
    E poder ser recusado, que é o que faz aceitar valer alguma coisa. */
-export function podeEntrar(g, pers, ctx = {}) {
+export function podeEntrarNaCasa(g, pers, ctx = {}) {
   const G = garantirGuilda(g);
   const of = oficioPorId(G.oficio);
   const nivel = Number(pers && pers.nivel) || 1;
@@ -322,58 +334,69 @@ export function podeEntrar(g, pers, ctx = {}) {
   if (moedas < of.entrada.taxa) return { ok: false, motivo: `a taxa de ingresso é ◉ ${of.entrada.taxa}, e você tem ◉ ${moedas}` };
   /* uma casa em guerra não abre a porta para desconhecido */
   if (G.guerraCom) return { ok: false, motivo: `${G.nome} está em guerra e não aceita ninguém de fora agora` };
-  return { ok: true, taxa: of.entrada.taxa, prova: provaDeIngresso(G) };
+  /* v9.134: a prova NAO sai daqui. `podeEntrar` responde "a porta abre?", e
+     montar a prova precisa do mundo — cidade, gente, bicho. Devolver uma
+     prova pela metade era prometer o que esta funcao nao tem como cumprir. */
+  return { ok: true, taxa: of.entrada.taxa };
 }
 
-/* A prova é uma tarefa de verdade, no vocabulário de etapas que o resto do
-   jogo confere. Entrar sem provar nada seria assinar uma lista. */
-export function provaDeIngresso(g) {
+/* ---------------- A PROVA DE INGRESSO (v9.134) ----------------
+   Era um titulo e uma frase, e o jogador entrava assim mesmo — o que fazia
+   dela um enfeite na porta. Agora e um TRABALHO, com etapa que o motor
+   confere, e enquanto ela nao cai ele esta na casa sem ser da casa.
+
+   Ela sai do mesmo molde do trabalho da casa, no nivel mais baixo: a prova
+   de um recruta e uma tarefa de recruta, e nao um contrato de capitao. */
+export function provaDeIngresso(g, ctx = {}) {
   const G = garantirGuilda(g);
   const of = oficioPorId(G.oficio);
   const rnd = rngDe(`${G.id}|prova`);
-  const t = pick(rnd, of.trabalhos);
+  const t = umTrabalho(G, of, rnd, ctx, 1);
+  if (!t) return null;
   return {
-    titulo: `A prova de ${G.nome}`,
-    descricao: `Antes do nome da casa, o trabalho: ${of.o}. ${G.mestre} quer ver com os próprios olhos.`,
-    tipo: t,
-    paga: 0,
+    ...t,
+    id: `prova|${G.id}`,
+    icone: "✋",
+    titulo: `A prova de ${G.nome}: ${t.titulo}`,
+    descricao: `Antes do nome da casa, o trabalho. ${G.mestre} quer ver com os próprios olhos.`,
+    paga: 0, contribui: 30, prova: true,
   };
 }
 
-export function entrar(g, { dia = 0 } = {}) {
+export function entrarNaCasa(g, { dia = 0 } = {}) {
   const G = garantirGuilda(g);
-  return { ...G, membro: true, posto: 0, contribuicao: 0, faltas: 0, entrouEm: dia, vistoEm: dia, pagouEm: dia };
+  return { ...G, membro: true, emProva: true, posto: 0, contribuicao: 0, faltas: 0, entrouEm: dia, vistoEm: dia, pagouEm: dia };
 }
 
-export function sair(g) {
+export function sairDaCasa(g) {
   const G = garantirGuilda(g);
-  return { ...G, membro: false, posto: 0, contribuicao: 0, faltas: 0 };
+  return { ...G, membro: false, emProva: false, posto: 0, contribuicao: 0, faltas: 0 };
 }
 
 /* ---------------- SUBIR ----------------
    Contribuição é o que a casa conta: trabalho feito por ela, ouro no cofre,
    rival derrubado. Nunca conversa. */
-export function contribuir(g, quanto, motivo = "") {
+export function contribuirNaCasa(g, quanto, motivo = "") {
   const G = garantirGuilda(g);
   if (!G.membro) return { guilda: G, subiu: null };
   const antes = G.posto;
   const c = Math.max(0, G.contribuicao + Math.max(0, Math.round(quanto)));
   let posto = antes;
-  while (posto < DEGRAUS.length - 1 && c >= degrauDe(posto + 1).exige) posto += 1;
+  while (posto < DEGRAUS.length - 1 && c >= degrauDaCasa(posto + 1).exige) posto += 1;
   const nova = { ...G, contribuicao: c, posto };
-  return { guilda: nova, subiu: posto > antes ? { de: antes, para: posto, nome: nomeDoPosto(nova, posto), o: degrauDe(posto).o, motivo } : null };
+  return { guilda: nova, subiu: posto > antes ? { de: antes, para: posto, nome: nomeDoPosto(nova, posto), o: degrauDaCasa(posto).o, motivo } : null };
 }
 
 /* ---------------- CAIR ----------------
    Falta tem peso, e peso derruba. Três degraus abaixo de zero é a porta da
    rua: uma casa que nunca expulsa não tem lei, tem recomendação. */
 export const FALTAS_ATE_EXPULSAR = 8;
-export function punir(g, falta) {
+export function punirNaCasa(g, falta) {
   const G = garantirGuilda(g);
   if (!G.membro || !falta) return { guilda: G, caiu: null, expulso: false };
   const faltas = G.faltas + Math.max(1, Number(falta.peso) || 1);
   if (faltas >= FALTAS_ATE_EXPULSAR) {
-    return { guilda: { ...sair(G), faltas: 0 }, caiu: null, expulso: true, motivo: falta.falta };
+    return { guilda: { ...sairDaCasa(G), faltas: 0 }, caiu: null, expulso: true, motivo: falta.falta };
   }
   /* cada duas faltas custam um degrau */
   const perde = Math.floor(faltas / 3) > Math.floor(G.faltas / 3) && G.posto > 0;
@@ -387,7 +410,7 @@ export function punir(g, falta) {
 
 /* Passa o olho em todas as leis da casa e devolve a primeira infração. Uma
    por vez, de propósito: três punições no mesmo turno viram tela de erro. */
-export function conferirLeis(g, ctx = {}) {
+export function conferirLeisDaCasa(g, ctx = {}) {
   const G = garantirGuilda(g);
   if (!G.membro || G.doJogador) return null;
   for (const lei of leisDa(G)) {
@@ -409,7 +432,7 @@ export function dizimoDe(g, paga) {
 }
 
 /* ---------------- FUNDAR A SUA ---------------- */
-export function podeFundar(pers, ctx = {}) {
+export function podeFundarCasa(pers, ctx = {}) {
   const nivel = Number(pers && pers.nivel) || 1;
   const moedas = (Number(pers && pers.moedas) || 0) + (Number(ctx.cofre) || 0);
   if (nivel < NIVEL_PARA_FUNDAR) return { ok: false, motivo: `fundar casa é coisa de nível ${NIVEL_PARA_FUNDAR} — você tem ${nivel}` };
@@ -419,7 +442,7 @@ export function podeFundar(pers, ctx = {}) {
   return { ok: true, custo: CUSTO_DE_FUNDAR };
 }
 
-export function fundar({ nome, oficio, cidade, mestre, dia = 0, grupo = [] }) {
+export function fundarCasa({ nome, oficio, cidade, mestre, dia = 0, grupo = [] }) {
   const of = oficioPorId(oficio);
   return garantirGuilda({
     id: `guilda|minha|${norm(nome).replace(/\s+/g, "-").slice(0, 20)}`,
@@ -440,10 +463,10 @@ export function fundar({ nome, oficio, cidade, mestre, dia = 0, grupo = [] }) {
    quem não é seu seria dar ao jogador uma alavanca que a ficção não tem. */
 export function podeMandar(g) {
   const G = garantirGuilda(g);
-  return G.membro && (G.doJogador || G.posto >= 3);
+  return G.membro && !G.emProva && (G.doJogador || G.posto >= 3);
 }
 
-export function admitir(g, pessoa) {
+export function admitirNaCasa(g, pessoa) {
   const G = garantirGuilda(g);
   if (!podeMandar(G)) return { guilda: G, ok: false, motivo: "não é você quem admite nesta casa" };
   if (!pessoa || !pessoa.nome) return { guilda: G, ok: false, motivo: "sem nome" };
@@ -452,7 +475,7 @@ export function admitir(g, pessoa) {
   return { guilda: { ...G, membros: [...G.membros, { nome: pessoa.nome, posto: 0, papel: pessoa.papel || "recém-admitido", fora: false }] }, ok: true };
 }
 
-export function expulsar(g, nome) {
+export function expulsarDaCasa(g, nome) {
   const G = garantirGuilda(g);
   if (!podeMandar(G)) return { guilda: G, ok: false, motivo: "não é você quem expulsa nesta casa" };
   const tem = G.membros.some((m) => norm(m.nome) === norm(nome));
@@ -555,11 +578,33 @@ const MOLDES = {
 };
 export function moldeDeTrabalho(id) { return MOLDES[id] || MOLDES.caca; }
 
+/* UM trabalho, e um so lugar que sabe montar um. A prova de ingresso e o
+   trabalho do dia a dia saem daqui pelo mesmo caminho — dois montadores
+   seriam duas ideias do que a casa pede. */
+function umTrabalho(G, of, rnd, ctx, nivel, tipos = null) {
+  const { cidades = [], gente = [], criaturas = [], lugares = [] } = ctx || {};
+  const tipo = pick(rnd, tipos && tipos.length ? tipos : of.trabalhos);
+  const M = moldeDeTrabalho(tipo);
+  const banco = M.o === "cidade" ? cidades : M.o === "gente" ? gente : M.o === "criatura" ? criaturas : lugares;
+  if (!banco.length) return null;
+  const escolhido = pick(rnd, banco);
+  const alvo = String((escolhido && escolhido.nome) || escolhido);
+  const nv = Math.max(1, Number(nivel) || 1);
+  return {
+    tipo, icone: M.icone, titulo: M.titulo(alvo),
+    descricao: `${G.nome} paga por isto. ${of.o}.`,
+    dador: G.mestre, dadorLocal: G.sede, guilda: G.id,
+    nivel: nv, paga: 20 + nv * 14 + entre(rnd, 0, 20),
+    contribui: 20 + nv * 6, etapas: [M.etapa(alvo)],
+  };
+}
+
 export function trabalhosDaCasa(g, { semente = "", dia = 0, nivel = 1, cidades = [], gente = [], criaturas = [], lugares = [], quantos = 3 } = {}) {
   const G = garantirGuilda(g);
-  if (!G.membro) return [];
+  /* em prova nao ha trabalho da casa: primeiro a prova, e ela e uma so */
+  if (!G.membro || G.emProva) return [];
   const of = oficioPorId(G.oficio);
-  const teto = degrauDe(G.posto).nivelMax;
+  const teto = degrauDaCasa(G.posto).nivelMax;
   const rnd = rngDe(`${semente}|trabalho|${G.id}|${Math.floor(dia / 3)}`);
   const out = [];
   /* a sonda devolveu "O peregrino de Vantel" e "O peregrino de Zulmira" no
@@ -568,26 +613,10 @@ export function trabalhosDaCasa(g, { semente = "", dia = 0, nivel = 1, cidades =
   const usados = new Set();
   for (let i = 0; i < quantos; i++) {
     const livres = of.trabalhos.filter((x) => !usados.has(x));
-    const tipo = pick(rnd, livres.length ? livres : of.trabalhos);
-    usados.add(tipo);
-    const M = moldeDeTrabalho(tipo);
-    const banco = M.o === "cidade" ? cidades : M.o === "gente" ? gente : M.o === "criatura" ? criaturas : lugares;
-    if (!banco.length) continue;
-    const alvo = String(pick(rnd, banco).nome || pick(rnd, banco));
-    const nv = Math.max(1, Math.min(teto, nivel + entre(rnd, -1, 2)));
-    out.push({
-      id: `casa|${G.id}|${dia}|${i}`,
-      icone: M.icone,
-      titulo: M.titulo(alvo),
-      descricao: `${G.nome} paga por isto. ${of.o}.`,
-      dador: G.mestre,
-      dadorLocal: G.sede,
-      guilda: G.id,
-      nivel: nv,
-      paga: 20 + nv * 14 + entre(rnd, 0, 20),
-      contribui: 20 + nv * 6,
-      etapas: [M.etapa(alvo)],
-    });
+    const t = umTrabalho(G, of, rnd, { cidades, gente, criaturas, lugares }, Math.max(1, Math.min(teto, nivel + entre(rnd, -1, 2))), livres.length ? livres : of.trabalhos);
+    if (!t) continue;
+    usados.add(t.tipo);
+    out.push({ ...t, id: `casa|${G.id}|${dia}|${i}` });
   }
   /* EM GUERRA, a casa só quer uma coisa. É o que faz a guerra pesar em vez
      de ser uma palavra no painel. */
@@ -603,10 +632,10 @@ export function trabalhosDaCasa(g, { semente = "", dia = 0, nivel = 1, cidades =
    imprime ouro. */
 export function podeDelegar(g) {
   const G = garantirGuilda(g);
-  return G.membro ? degrauDe(G.posto).delegados : 0;
+  return G.membro && !G.emProva ? degrauDaCasa(G.posto).delegados : 0;
 }
 
-export function delegar(g, trabalho, quem, { dia = 0 } = {}) {
+export function delegarNaCasa(g, trabalho, quem, { dia = 0 } = {}) {
   const G = garantirGuilda(g);
   const vagas = podeDelegar(G);
   if (!vagas) return { ok: false, motivo: `no posto de ${nomeDoPosto(G, G.posto)} ninguém obedece a você ainda` };
@@ -629,7 +658,7 @@ export function delegar(g, trabalho, quem, { dia = 0 } = {}) {
   };
 }
 
-export function resolverTarefa(t, rnd = Math.random) {
+export function resolverTarefaDaCasa(t, rnd = Math.random) {
   if (!t) return null;
   const d = Math.floor(rnd() * 100) + 1;
   if (d <= t.chance) return { ...t, desfecho: "feito" };
@@ -644,12 +673,10 @@ export const DESFECHO_TAREFA = {
 };
 
 /* ---------------- O QUE VAI À PAUTA ---------------- */
-export function linhaDaGuilda(g) {
-  const G = garantirGuilda(g);
-  if (!G.membro) return "";
-  const guerra = G.guerraCom ? ` · EM GUERRA` : "";
-  return `${oficioPorId(G.oficio).icone} ${G.nome} — ${nomeDoPosto(G, G.posto)}${guerra}`;
-}
+/* NAO HA uma `linhaDaGuilda` de uma linha so. Ela existiu por um commit e
+   nao tinha onde morar: o painel mostra tudo, e o Narrador recebe o
+   envelope. Resumo sem leitor e export morto, e export morto mente na
+   primeira leitura. */
 
 export function envelopeDaGuilda(g) {
   const G = garantirGuilda(g);
@@ -662,8 +689,8 @@ export function envelopeDaGuilda(g) {
 export function resumoDaGuilda(g) {
   const G = garantirGuilda(g);
   if (!G.membro) return null;
-  const d = degrauDe(G.posto);
-  const prox = G.posto < DEGRAUS.length - 1 ? degrauDe(G.posto + 1) : null;
+  const d = degrauDaCasa(G.posto);
+  const prox = G.posto < DEGRAUS.length - 1 ? degrauDaCasa(G.posto + 1) : null;
   return {
     nome: G.nome, oficio: oficioPorId(G.oficio),
     posto: nomeDoPosto(G, G.posto), degrau: d,
@@ -672,6 +699,6 @@ export function resumoDaGuilda(g) {
     proximo: prox ? nomeDoPosto(G, G.posto + 1) : "",
     faltas: G.faltas, ateExpulsar: FALTAS_ATE_EXPULSAR - G.faltas,
     cofre: G.cofre, saque: d.saque, delegados: d.delegados,
-    guerra: G.guerraCom, doJogador: G.doJogador,
+    guerra: G.guerraCom, doJogador: G.doJogador, emProva: G.emProva,
   };
 }

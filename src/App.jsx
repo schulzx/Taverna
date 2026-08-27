@@ -87,7 +87,7 @@ import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, item
 import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
 import { garantirEspaco, paraPauta, posicaoDoHeroi, rastrearOTurno } from "./geografo.js";
 import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, envelopeDaEspinha, linhaDoMarco } from "./saga.js";
-import { guildasDoMundo, garantirGuilda, podeEntrar as podeEntrarNaCasa, entrar as entrarNaCasa, sair as sairDaCasa, contribuir as contribuirNaCasa, punir as punirNaCasa, conferirLeis as conferirLeisDaCasa, dizimoDe, podeFundar as podeFundarCasa, fundar as fundarCasa, admitir as admitirNaCasa, expulsar as expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegar as delegarNaCasa, resolverTarefa as resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, envelopeDaGuilda, linhaDaGuilda, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDe as degrauDaCasa } from "./guildas.js";
+import { guildasDoMundo, garantirGuilda, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, dizimoDe, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, envelopeDaGuilda, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
 import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { porNaPauta, textoDaPauta, garantirPauta } from "./pauta.js";
@@ -11135,7 +11135,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           const d = dizimoDe(casa, rec.moedas);
           if (d > 0) { pers = { ...pers, moedas: Math.max(0, (pers.moedas || 0) - d) }; linhas.push(`◉ ${d} de dizimo para o cofre de ${casa.nome}`); }
           const rc = contribuirNaCasa({ ...casa, cofre: casa.cofre + d }, m.contribui || 0, m.titulo);
-          trocarCasa(rc.guilda);
+          /* a prova cumprida e o que transforma candidato em membro */
+          const virou = !!(casa.emProva && m.prova);
+          trocarCasa(virou ? { ...rc.guilda, emProva: false } : rc.guilda);
+          if (virou) linhas.push(`✋ ${casa.nome} aceitou você — ${postoDaCasa(casa, casa.posto)} de verdade agora.`);
           if (rc.subiu) linhas.push(`⬆ ${rc.subiu.nome} em ${casa.nome} — ${rc.subiu.o}`);
         }
       }
@@ -11855,6 +11858,22 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     }
     const nova = entrarNaCasa(g, { dia: diaRef.current });
     trocarCasa(nova);
+    /* v9.134: a prova era um titulo e uma frase, e o jogador entrava assim
+       mesmo. Agora ela e uma MISSAO — enquanto nao cai, ele esta na casa sem
+       ser da casa: nao pega trabalho, nao toca no cofre, nao manda. */
+    const prova = provaDeIngresso(nova, oQueACasaPodeApontar());
+    if (prova) {
+      const mp = criarMissao({
+        titulo: prova.titulo, tipo: "contrato", descricao: prova.descricao, dador: prova.dador,
+        etapas: prova.etapas, nivel: prova.nivel, dia: diaRef.current, status: "ativa",
+        moedasPrometidas: 0, guilda: nova.id, contribui: prova.contribui, prova: true,
+      });
+      if (mp) {
+        missoesRef.current = [...missoesRef.current, mp]; setMissoes(missoesRef.current);
+        salvar({ missoes: missoesRef.current });
+        pushMsgs([{ autor: "sistema", texto: `✋ ${prova.titulo} — a casa quer ver antes de aceitar.` }]);
+      }
+    }
     pushMsgs([
       { autor: "jogador", texto: `✋ Bato à porta d${nova.nome.startsWith("A ") ? "" : "e "}${nova.nome}.` },
       { autor: "sistema", texto: `${oficioDaCasa(nova.oficio).icone} Você entrou como ${postoDaCasa(nova, 0)}${r.taxa ? ` — ◉ ${r.taxa} de taxa` : ""}.` },
@@ -11882,15 +11901,23 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     enviar(`Fundei ${nova.nome}.`, p2);
   };
 
+  const oQueACasaPodeApontar = () => {
+    try {
+      const q = oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);
+      return {
+        cidades: (mapaRef.current.cidades || []).filter((c) => c.descoberta !== false),
+        gente: (q && q.gente) || [], criaturas: (q && q.criaturas) || [], lugares: (q && q.locais) || [],
+      };
+    } catch { return { cidades: [], gente: [], criaturas: [], lugares: [] }; }
+  };
+
   const trabalhosDaMinhaCasa = (() => {
     const g = minhaCasa(); if (!g) return [];
     try {
-      const q = oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);
       return trabalhosDaCasa(g, {
         semente: sementeMundo(), dia: diaRef.current,
         nivel: (personagemRef.current || personagem || {}).nivel || 1,
-        cidades: (mapaRef.current.cidades || []).filter((c) => c.descoberta !== false),
-        gente: (q && q.gente) || [], criaturas: (q && q.criaturas) || [], lugares: (q && q.locais) || [],
+        ...oQueACasaPodeApontar(),
       });
     } catch { return []; }
   })();
