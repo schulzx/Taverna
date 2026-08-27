@@ -5259,3 +5259,55 @@ vira nada. Cair em `ir_a` é a rede de quem já tem missão; ali seria o buraco.
 
 Escoltar e proteger continuam em `falar_com`: são promessas de DURAÇÃO, e o
 sistema ainda não sabe medir "chegou inteiro".
+
+## v9.133 — o motor de guildas: fase 4 do plano
+
+A "guilda" era `{ nivel, cofre }` dentro do `App.jsx`: um cofre e um botão de
+melhorar. Não existia arquivo, não existiam casas no mundo, não existia
+entrar, não existia posto. O jogador não geria nada — depositava. E o bloco
+que se chamava guilda no painel nunca foi guilda: era a renda do DOMÍNIO de
+quem lidera uma facção.
+
+**Duas regras decidiram o desenho inteiro.**
+
+**LEI QUE O SISTEMA NÃO SABE CONFERIR É ADJETIVO.** "Seja leal", "honre a
+casa", "guarde os segredos" são bonitos e não valem nada: não há como saber
+se foram quebrados, então quem julga vira o Narrador — e é disso que esta
+casa passou meses saindo. As cinco leis daqui têm leitor no código: o dízimo
+é cobrado, a exclusividade olha o mural, o sangue olha quem caiu, a presença
+olha o calendário, a mensalidade olha a bolsa. Uma guilda que não pode punir
+é um clube com nome bonito.
+
+**SÓ SE PERTENCE A UMA.** Sem isso não há escolha: o jogador entraria em
+todas e a rivalidade viraria decoração. Uma guilda é uma porta que fecha
+outras, e é isso que faz a porta valer.
+
+**O que existe agora:** sete ofícios, cada um com postos próprios, leis
+próprias, trabalho próprio e alguém que ele despreza. Casas nascidas com o
+mundo, da mesma semente, com sede, mestre, lema, cofre, poder e membros.
+Entrar é um ato com taxa e prova, e pode ser recusado. Subir custa
+contribuição — trabalho feito pela casa e ouro no cofre. Cada degrau destrava
+o que se sente: nível de contrato, saque do cofre, quantos você manda. Faltas
+derrubam o posto e, no fim, põem na rua. Delegar tira gente da casa por dias,
+com chance de não voltar. O atrito entre casas sobe por FATO — gente de outra
+casa caindo —, e no teto vira guerra, que muda o trabalho que a casa oferece.
+As pazes custam do cofre.
+
+**Fundar é a formatura: nível 10 e ◉ 1500.** Cinco seria cedo demais para a
+escada de postos ter significado — ele fundaria antes de saber o que uma
+guilda faz. Entrar numa, por outro lado, vale desde o primeiro dia.
+
+**O mural genérico continua.** Quem quiser jogar sem casa joga; o painel da
+guilda é outra porta, não a substituição da primeira.
+
+Três defeitos de qualidade que a sonda pegou antes de qualquer jogador: o
+nome da casa não combinava com o ofício ("A Mesa da Moeda" para escribas, "A
+Confraria Velha" para mercenários) porque a cabeça do nome vinha da lista
+genérica; três trabalhos do mesmo molde saíam no mesmo lote; e
+`nomeDeLocal(tipo, genero, rnd)` recebeu o léxico na vaga do gênero, o que
+fazia o sorteio virar `undefined` e estourar na primeira guilda.
+
+E o varredor pegou dois exports sem leitor — `atritar` e `fazerAsPazes`. Não
+era excesso: era a guerra existindo sem nada que a alimentasse. Nasceu daí
+`sangueEntreCasas`, que conta só o que ainda não foi contado — senão o mesmo
+defunto levaria duas casas à guerra por recontagem diária.

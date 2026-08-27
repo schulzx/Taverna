@@ -294,15 +294,20 @@ export function garantirMissoes(lista) {
     /* v9.27: veio da era em que quest era um título sem etapa. Não dá para
        conferir, então só o jogador pode encerrá-la. */
     legado: !!q.legado,
+    /* v9.133: DE QUEM É O TRABALHO. Uma missão da casa rende contribuição ao
+       posto quando fecha, e sem estes dois campos a catraca os apagava no
+       caminho — a missão chegaria ao fim sem saber a quem pertencia. */
+    guilda: String(q.guilda || "").slice(0, 40),
+    contribui: Math.max(0, Math.floor(Number(q.contribui) || 0)),
     relogioId: q.relogioId || null,
     criadaEm: Number.isFinite(q.criadaEm) ? q.criadaEm : 0,
   }));
 }
 
-export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status, moedasPrometidas = null, prazo = 0, intencao = "", veiculo = "", virada = null, legado = false }) {
+export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status, moedasPrometidas = null, prazo = 0, intencao = "", veiculo = "", virada = null, legado = false, guilda = "", contribui = 0 }) {
   const m = garantirMissoes([{
     id, titulo, tipo, descricao, dador, etapas, criadaEm: dia, prazo: noitesDePrazo(prazo),
-    nivel, intencao, veiculo, virada, legado,
+    nivel, intencao, veiculo, virada, legado, guilda, contribui,
     status: status || (ehForcada(tipo) ? "ativa" : "oferecida"),
   }])[0];
   if (!m || !m.etapas.length) return null;
