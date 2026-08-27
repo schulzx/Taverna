@@ -38,6 +38,59 @@ export const FONT_CSS = `
 .tv-scroll::-webkit-scrollbar-thumb { background: #2E2745; border-radius: 4px; }
 @keyframes tvSlide { from { transform: translateX(24px); opacity: 0;} to { transform: none; opacity: 1;} }
 .tv-slide { animation: tvSlide .25s ease both; }
+
+/* ---------------- A CORTIÇA E O PAPEL (v9.127) ----------------
+   O mural era uma lista de retângulos iguais dentro de um painel igual a
+   todos os outros. Ele é a única tela do jogo que representa um OBJETO do
+   mundo — uma tábua com papéis pregados — e não custa nada dizer isso.
+
+   Tudo aqui é gradiente e sombra: nem um arquivo de imagem entra no
+   repositório, e a cortiça continua sendo cortiça no telefone e no monitor.
+   E nada de cortiça bege com papel creme: o jogo é âmbar sobre violeta
+   escuro, e uma tábua clara no meio disso não seria charme, seria mancha. */
+.tv-cortica {
+  background-color: #1A1424;
+  background-image:
+    radial-gradient(rgba(232,163,61,.13) 1.1px, transparent 1.6px),
+    radial-gradient(rgba(139,123,216,.11) 1px, transparent 1.5px),
+    radial-gradient(rgba(234,228,214,.07) 1.2px, transparent 1.7px),
+    radial-gradient(ellipse at 22% 18%, rgba(232,163,61,.05), transparent 55%),
+    radial-gradient(ellipse at 78% 72%, rgba(139,123,216,.05), transparent 55%);
+  background-size: 17px 17px, 29px 25px, 11px 21px, 100% 100%, 100% 100%;
+  background-position: 0 0, 7px 11px, 3px 5px, 0 0, 0 0;
+  box-shadow: inset 0 0 46px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.04);
+  border: 7px solid #3B2A1B;
+  border-radius: 14px;
+  outline: 1px solid rgba(150,112,66,.4);
+  outline-offset: -8px;
+}
+.tv-cartaz {
+  background-image: linear-gradient(155deg, #241D33 0%, #1C1729 62%, #191426 100%);
+  border: 1px solid rgba(232,163,61,.16);
+  box-shadow: 0 7px 16px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.04);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+/* o giro fica no embrulho e o levantar no papel: assim o passar do dedo
+   endireita o cartaz sem brigar com o ângulo que ele tem parado */
+.tv-pregado:hover .tv-cartaz { transform: translateY(-3px); box-shadow: 0 13px 26px rgba(0,0,0,.62); }
+/* o percevejo atravessa o papel, e não paira acima dele: em cima da borda
+   ele vira uma continha solta no ar. Fica DENTRO do cartaz, com a sombra
+   curta que uma cabeça de alfinete faz no papel. */
+.tv-percevejo {
+  position: absolute; top: 6px; left: 50%; margin-left: -6px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #FFE2AC, #D98F22 58%, #6E4207);
+  box-shadow: 0 1px 2px rgba(0,0,0,.75), 0 0 0 1px rgba(0,0,0,.45), 0 3px 5px rgba(0,0,0,.35);
+}
+.tv-percevejo.tv-roxo { background: radial-gradient(circle at 34% 28%, #E4DEFF, #8A78D8 58%, #3B3072); }
+
+/* A VINHETA: o canto da tela escurece de leve, e o meio — onde a narração
+   acontece — parece iluminado. É a coisa mais barata que existe para dar
+   profundidade, e some sozinha em quem tiver o brilho baixo. */
+.tv-vinheta {
+  position: fixed; inset: 0; pointer-events: none; z-index: 1;
+  background: radial-gradient(120% 85% at 50% 42%, transparent 52%, rgba(4,3,8,.45) 100%);
+}
 `;
 
 export const GENEROS = [

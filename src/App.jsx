@@ -857,10 +857,18 @@ function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garant
   };
   /* O cartaz mostra QUEM assina e ONDE encontrá-lo: é a primeira etapa do
      serviço, e sem isso o jogador pega um papel que não leva a lugar nenhum. */
+  /* O GIRO DE CADA PAPEL (v9.127) sai do id, e não de um sorteio: um cartaz
+     que muda de ângulo a cada vez que a tela redesenha não é um papel
+     pregado, é um papel tremendo. */
+  const giro = (id) => (((hashSemente(String(id || "")) % 340) / 100) - 1.7).toFixed(2);
   const cartaz = (c) => {
     const icone = c.icone || ICONE_OFERTA[c.molde] || "📜";
     return (
-      <div key={c.id} className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+      <div key={c.id} className="tv-pregado" style={{ transform: `rotate(${giro(c.id)}deg)` }}>
+      <div className="tv-cartaz relative rounded-xl p-3 pt-6">
+        {/* o percevejo diz de que pilha o papel é sem precisar de rótulo:
+            âmbar é da cidade, roxo é de alguém que falou com você */}
+        <span className={`tv-percevejo${c.oferecido ? " tv-roxo" : ""}`} />
         <div className="flex items-start justify-between gap-2">
           <span className="tv-display text-base leading-tight" style={{ color: T.ink }}>{icone} {c.titulo}</span>
           <span className="tv-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0" style={{ border: `1px solid ${c.paga ? T.amber : T.violet}`, color: c.paga ? T.amberSoft : T.violetSoft }}>
@@ -887,6 +895,7 @@ function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garant
           ✍ aceitar contrato
         </button>
       </div>
+      </div>
     );
   };
   return (
@@ -911,8 +920,16 @@ function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garant
           </div>
         </div>
       )}
+      {/* ---------------- A TÁBUA (v9.127) ----------------
+          As duas pilhas passam a viver na mesma tábua, porque é isso que
+          elas são: papéis pregados no mesmo lugar. O mural é a única tela do
+          jogo que representa um OBJETO do mundo, e enquanto era uma lista de
+          retângulos num painel igual aos outros isso não aparecia em lugar
+          nenhum. Cortiça, moldura e percevejo são gradiente e sombra — nem
+          um arquivo de imagem entrou no repositório. */}
+      <div className="tv-cortica p-4 space-y-5">
       <div>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mb-1.5" style={{ color: T.amber }}>Cartazes disponíveis</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mb-3" style={{ color: T.amber }}>Cartazes disponíveis</p>
         {/* v9.119: o vazio é o do MUNDO, não o do mural inteiro. Com os
             oferecidos na outra pilha, um mural só de oferecidos deixava esta
             seção com um título e nada embaixo — e escondia o botão de
@@ -923,7 +940,7 @@ function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garant
             <button onClick={() => garantirMural(true)} className="tv-mono text-[10px] px-3 py-1.5 rounded" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>📌 procurar cartazes</button>
           </div>
         ) : (
-          <div className="space-y-2">{doMundo.map(cartaz)}</div>
+          <div className="space-y-4">{doMundo.map(cartaz)}</div>
         )}
       </div>
       {/* ---------------- OFERECIDOS A VOCÊ (v9.119) ----------------
@@ -936,10 +953,11 @@ function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garant
           foram pregados por alguém e não sorteados. */}
       {oferecidos.length > 0 && (
         <div>
-          <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mb-1.5" style={{ color: T.violetSoft }}>Oferecidos a você</p>
-          <div className="space-y-2">{oferecidos.map(cartaz)}</div>
+          <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mb-3" style={{ color: T.violetSoft }}>Oferecidos a você</p>
+          <div className="space-y-4">{oferecidos.map(cartaz)}</div>
         </div>
       )}
+      </div>
       {acampado && <div className="tv-body text-[11px] italic text-center" style={{ color: T.inkDim }}>Dica: ao sair do acampamento com um descanso longo, cartazes novos aparecem no mural.</div>}
 
       {/* SEUS DECRETOS: o reverso do mural — você oferece ouro, o mundo trabalha */}
@@ -15474,6 +15492,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   return (
     <div className="flex flex-col" style={{ background: T.bg, height: "100dvh", maxHeight: "100dvh", overflow: "hidden" }}>
       <style>{FONT_CSS}</style>
+      {/* a vinheta é a última camada e não recebe toque nenhum: escurece o
+          canto da tela para o meio, onde a narração acontece, parecer
+          iluminado */}
+      <div className="tv-vinheta" aria-hidden="true" />
 
       <header className="flex items-center justify-between px-4 md:px-5 py-3 shrink-0 sticky top-0 z-30" style={{ borderBottom: `1px solid ${T.line}`, background: T.panel }}>
         <div className="flex items-center gap-2 min-w-0">

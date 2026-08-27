@@ -4988,3 +4988,51 @@ E três provas da suíte nova nasceram medindo a coisa errada: `semente=`
 contado como `ente=`, `opacity="0.25"` contado como limiar de ferimento, e
 uma conta minha de cabeça (10/30 é 0,333 — maior que 0,33, logo "ferido" e
 não "grave"). Todas corrigidas para medir o que roda.
+
+## v9.127 — a tábua, o papel e a vinheta
+
+O mural é a única tela do jogo que representa um OBJETO do mundo: uma tábua
+com papéis pregados nos portões e nas tavernas. Enquanto foi uma lista de
+retângulos iguais dentro de um painel igual a todos os outros, isso não
+aparecia em lugar nenhum.
+
+Agora as duas pilhas — os cartazes da cidade e os que alguém pregou depois de
+falar com o herói — dividem a mesma tábua de cortiça, com moldura de madeira,
+e cada papel tem seu percevejo. **Âmbar é da cidade, roxo é de alguém que
+falou com você**: a cor da cabeça do alfinete diz de que pilha o papel é sem
+gastar uma palavra a mais na tela.
+
+Tudo é gradiente, sombra e borda. **Nem um arquivo de imagem entrou no
+repositório**, e a prova defende isso: um `url()` na folha de estilo é a
+primeira imagem entrando pela porta dos fundos, e ela muda como a Vercel
+constrói e quanto o jogador baixa.
+
+E nada de cortiça bege com papel creme. O jogo é âmbar sobre violeta escuro;
+uma tábua clara no meio disso não seria charme, seria mancha — e o texto
+claro sobre ela ficaria ilegível.
+
+**O giro de cada cartaz sai do id, e não de um sorteio.** Um papel que muda
+de ângulo a cada vez que a tela redesenha não está pregado, está tremendo. O
+mesmo cartaz tem sempre a mesma inclinação, e passar o dedo por cima o
+levanta e o endireita — o giro mora no embrulho e o levantar no papel,
+justamente para os dois não brigarem.
+
+**A vinheta** escurece o canto da tela para o meio, onde a narração acontece,
+parecer iluminado. Duas decisões dela são de segurança e não de gosto:
+`pointer-events: none`, porque uma camada fixa por cima do jogo inteiro sem
+isso deixa o jogo bonito e inerte — e o sintoma ("não consigo clicar em
+nada") não aponta para o enfeite; e `z-index: 1`, abaixo de tudo que é
+painel (o cabeçalho é z-30, a gaveta lateral z-40, as janelas z-50), porque
+uma vinheta por cima disso escureceria justamente a ficha e o mural, que é
+onde se lê número.
+
+Três coisas foram consertadas depois de olhar a tela: a cortiça não tinha
+textura visível (as manchas estavam claras demais para o fundo escuro), a
+moldura de madeira sumia contra o fundo do app, e o percevejo pairava ACIMA
+da borda do papel como uma continha solta no ar em vez de atravessá-lo.
+
+**O que NÃO foi feito, e por quê.** A moldura lavrada na ficha ficou de fora.
+A carta de tarô e a tábua já carregam o vocabulário de ornamento, e uma
+terceira moldura no mesmo jogo vira ruído; além disso a ficha mora dentro da
+gaveta lateral, e eu não conseguiria vê-la sem uma campanha inteira rodando —
+não vale entregar enfeite que não olhei.
