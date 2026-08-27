@@ -241,6 +241,11 @@ export const DESAFIOS = [
        procurar ÁGUA no ermo é Sobrevivência, e nenhuma das duas é revirar
        um cômodo — mas as três dizem "examino" e "procuro". */
     naoSe: /\b(pessoa|gente|rosto|olhos del[ae]|taverneir|ferreir|mercador|guarda|capit[aã]|sacerdot|ac[oó]lito|estalajadeir|curandeir|algu[eé]m|homem|mulher|rapaz|mo[cç]a|velh[oa]|companheir|amig|aliad|informante|contato|comprador|vendedor|barqueir|cocheir|dono d|taverneira)|\b(verific|confiro|checo)\w*\s+(se\s+)?[^.]{0,24}\b(trancad|destrancad|fechad|abert|porta|fechadura|cadeado|tranca)\b|\b(corpo|cad[aá]ver|ferimento|ferido|morto|doente|pulso)\b|\b(procuro|acho|busco)\s+(a|o|um|uma)?\s*(agua|[aá]gua|abrigo|po[cç]o|comida|caminho|norte|rumo|lenha)\b/,
+    /* v9.130: e o guarda que FALTAVA. A lista acima conhece oficios; esta
+       linha conhece gente — se a frase nomeia alguem que o jogo tem no
+       elenco, na base ou na espinha, isto e uma PROCURA, e procurar alguem
+       nunca foi revirar um comodo. */
+    naoSeCom: (txt, ctx) => !!(ctx && typeof ctx.ehPessoaConhecida === "function" && ctx.ehPessoaConhecida(txt)),
     pericia: "percepcao", alvo: "busca", minutos: 10, barulho: false,
     rotulo: "vasculhar o lugar",
     /* a dificuldade sai do que existe aqui; sem nada, o sistema ainda deixa
@@ -837,7 +842,13 @@ export function lerAcao(texto, ctx = {}) {
      esta versão fecha. */
   const pedido = detectarPedidoDeTeste(cru);
   const daAcao = pedido ? norm(semOPedidoDeTeste(cru)) : t;
-  const d = DESAFIOS.find((x) => x.rx.test(daAcao) && !(x.naoSe && x.naoSe.test(daAcao)));
+  /* ---------------- O GUARDA QUE PERGUNTA (v9.130) ----------------
+     `naoSe` e uma lista de palavras, e lista de palavras nao reconhece nome
+     proprio: "procuro por sinais de Ione" nao tem taverneiro nem alguem, e
+     por isso `buscar` ganhou a frase e pagou um tesouro. `naoSeCom` pergunta
+     ao CONTEXTO em vez de adivinhar pelo texto — que e o que esta casa faz
+     em todo o resto. */
+  const d = DESAFIOS.find((x) => x.rx.test(daAcao) && !(x.naoSe && x.naoSe.test(daAcao)) && !(x.naoSeCom && x.naoSeCom(daAcao, ctx)));
   if (!d) {
     /* ---------------- TESTE NÃO SE PEDE (v9.64) ----------------
        O prompt já dizia isto ao Mestre desde a v9.59 — "o jogador NÃO pede

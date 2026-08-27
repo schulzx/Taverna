@@ -87,6 +87,7 @@ import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, item
 import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
 import { garantirEspaco, paraPauta, posicaoDoHeroi, rastrearOTurno } from "./geografo.js";
 import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, envelopeDaEspinha, linhaDoMarco } from "./saga.js";
+import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { porNaPauta, textoDaPauta, garantirPauta } from "./pauta.js";
 import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta } from "./interprete.js";
 import { escolherCorpo, corpoPorId, garantirSaber, chegouAteEle, oQueEleNaoSabe, certezaDe, responder, paraPauta as vilaoParaPauta, envelopeDoCorpo } from "./antagonista.js";
@@ -11677,6 +11678,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     emCombate: !!combateRef.current,
     tentativas: tentativasRef.current,
     dia: diaRef.current,
+    /* v9.130: o guarda de `buscar` pergunta ao elenco em vez de adivinhar
+       pelo texto. Sem isto, todo nome proprio que o jogo conhece continua
+       caindo em "vasculhar o lugar". */
+    ehPessoaConhecida: (txt) => { try { return !!nomeProcurado(txt, nomesConhecidos()); } catch { return false; } },
     achadoDe: (attr) => {
       try {
         if (combateRef.current) return null;
@@ -11701,6 +11706,61 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      para dentro do `lerAcao`, e mudou de sentido: em vez de FABRICAR o
      desafio que a perícia nomeada sugeria, agora ela devolve o veredicto
      `naoSePede`. Rolagem deixou de ser algo que se pede. */
+  /* ---------------- QUEM O JOGO CONHECE (v9.130) — fase 2 ----------------
+     O elenco vivo, o grupo, a gente desta cidade e quem a espinha promete.
+     E a lista que o guarda de `buscar` consulta para saber que uma frase
+     nomeia GENTE, e e a mesma lista que a procura percorre depois. Uma so,
+     de proposito: duas listas de quem existe seriam dois mundos. */
+  const nomesConhecidos = () => {
+    const out = [];
+    for (const n of Object.values(npcsRef.current || {})) if (n && n.nome) out.push(n.nome);
+    for (const g of ((personagemRef.current || personagem || {}).grupo || [])) if (g && g.nome) out.push(g.nome);
+    for (const p of genteDaqui()) if (p && p.nome) out.push(p.nome);
+    for (const a of ((espinhaRef.current || {}).atos || [])) for (const m of (a.marcos || [])) {
+      if (m.feito) continue;
+      if (m.quem) out.push(m.quem);
+    }
+    return [...new Set(out)];
+  };
+
+  const genteDaqui = () => {
+    try {
+      const q = oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);
+      return (q && q.gente) || [];
+    } catch { return []; }
+  };
+
+  /* ---------------- PROCURAR ALGUEM (v9.130) ----------------
+     "Procuro por sinais de Ione" abria VASCULHAR O LUGAR e pagava um tesouro.
+     Agora a frase que nomeia gente conhecida vira uma pergunta ao mundo, e a
+     resposta e onde a pessoa esta — nunca prata.
+
+     Quando ela esta aqui e ESCONDIDA, isto devolve false de proposito: ai ha
+     mesmo o que rolar, e o teste normal assume. O que muda e o premio, que
+     passa a ser ela. */
+  const procurarAlguem = (acao) => {
+    if (rolagem || carregando || combateRef.current) return false;
+    if (!ehProcura(acao)) return false;
+    const nome = nomeProcurado(acao, nomesConhecidos());
+    if (!nome) return false;
+    const r = procurarPessoa(nome, {
+      npcs: npcsRef.current,
+      grupo: (personagemRef.current || personagem || {}).grupo || [],
+      genteDaqui: genteDaqui(),
+      espinha: espinhaRef.current,
+      base: baseMundoRef.current,
+      cidadeAtual: cidadeAtualRef.current,
+      lugarAtual: (lugarRef.current && lugarRef.current.nome) || "",
+      mapa: mapaRef.current,
+      presentes: pessoasDaCena(),
+    });
+    if (!r || procuraPedeDado(r)) return false;
+    pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: linhaDaProcura(r) }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaProcura(r)}`;
+    enviar(acao, fichaViva() || personagem);
+    return true;
+  };
+
   const veredictoDaAcao = (acao) => {
     if (rolagem || carregando) return null;
     try {
@@ -11713,6 +11773,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   };
 
   const adjudicarAcao = (acao) => {
+    /* a procura vem ANTES: se a frase nomeia gente, ela nunca foi um desafio
+       de vasculhar, e deixar o catalogo julgar primeiro era exatamente o
+       caminho que pagava tesouro por perguntar de alguem */
+    if (procurarAlguem(acao)) return true;
     const v = veredictoDaAcao(acao);
     if (!v) return false;
     /* v9.70: TODA recusa do sistema conta como falha para a cobrança, não

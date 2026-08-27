@@ -433,10 +433,58 @@ export function tesourosDoMundo(semente, mapa) {
 
 /* ---------------- O LIVRO-RAZÃO ----------------
    O ÚNICO pedaço que vai para o save. Três listas de texto. */
+/* ---------------- A SITUAÇÃO DE CADA UM (v9.130) — fase 2 ----------------
+   Gente marcante deixa de ser só um fato para o Narrador citar e passa a ter
+   ESTADO. Sem isto não há resgate que se possa conferir: "tirar Ione de lá"
+   precisa de um "lá" e de um estado que mude quando ela sai.
+
+   Cinco degraus, e só. Um catálogo maior seria um catálogo que ninguém
+   consegue mudar por ato de jogo — e situação que nada altera é adjetivo. */
+export const SITUACOES = {
+  livre: "livre",
+  escondida: "escondida",
+  cativa: "cativa",
+  ferida: "ferida",
+  morta: "morta",
+};
+const SITS = Object.values(SITUACOES);
+
+export function situacaoDe(base, nome) {
+  const b = garantirBase(base);
+  const k = chaveDeGente(nome);
+  /* os mortos vieram antes das situações e continuam mandando: um save que
+     só tem a lista de mortos não pode ressuscitar ninguém por omissão */
+  if (b.mortos.some((x) => chaveDeGente(x) === k)) return SITUACOES.morta;
+  return b.situacoes[k] ? b.situacoes[k].situacao : SITUACOES.livre;
+}
+
+export function ondeEsta(base, nome) {
+  const b = garantirBase(base);
+  const r = b.situacoes[chaveDeGente(nome)];
+  return r ? { onde: r.onde || "", quem: r.quem || "" } : { onde: "", quem: "" };
+}
+
+export function porSituacao(base, nome, situacao, { onde = "", quem = "" } = {}) {
+  const b = garantirBase(base);
+  const k = chaveDeGente(nome);
+  if (!k) return b;
+  const sit = SITS.includes(situacao) ? situacao : SITUACOES.livre;
+  /* pôr alguém como morta escreve nos DOIS lugares: a lista de mortos é o
+     que o resto do jogo já lê, e deixá-la de fora criaria uma pessoa morta
+     para a procura e viva para todo o resto */
+  const mortos = sit === SITUACOES.morta ? juntar(b.mortos, k) : b.mortos;
+  return { ...b, mortos, situacoes: { ...b.situacoes, [k]: { situacao: sit, onde: String(onde).slice(0, 60), quem: String(quem).slice(0, 40) } } };
+}
+
+const chaveDeGente = (n) => String(n || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+
 export function garantirBase(b) {
   const o = b && typeof b === "object" ? b : {};
   return {
     revelados: Array.isArray(o.revelados) ? o.revelados : [],   // já apresentado em cena
+    /* v9.130: a situação de quem importa. Save antigo vem sem, e sem
+       situação todo mundo é `livre` — que é o que sempre foi. */
+    situacoes: (o.situacoes && typeof o.situacoes === "object") ? o.situacoes : {},
     mortos: Array.isArray(o.mortos) ? o.mortos : [],            // nome riscado no registro
     saqueados: Array.isArray(o.saqueados) ? o.saqueados : [],   // segredo já achado
     versao: 1,
@@ -448,7 +496,7 @@ export function saquear(base, id) { return { ...garantirBase(base), saqueados: j
 export function matar(base, nome) {
   const n = String(nome || "").trim();
   if (!n) return garantirBase(base);
-  return { ...garantirBase(base), mortos: juntar(garantirBase(base).mortos, n) };
+  return porSituacao({ ...garantirBase(base), mortos: juntar(garantirBase(base).mortos, n) }, n, SITUACOES.morta);
 }
 export function estaMorto(base, nome) {
   const n = String(nome || "").trim().toLowerCase();

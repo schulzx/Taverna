@@ -5094,3 +5094,53 @@ como sempre seguiu.
 E não há resumo de progresso exportado: uma barra dizendo "12 de 29 marcos"
 conta ao jogador que existe uma estrutura, e saber que faltam dezessete é
 saber que a história não acaba agora.
+
+## v9.130 — procurar alguém: fase 2 do plano
+
+"Procuro por sinais de Ione". O sistema abriu VASCULHAR O LUGAR, pediu
+Percepção, o herói passou — e recebeu uma arma escondida com pressa e sessenta
+moedas. Nada de Ione.
+
+**A regra já estava escrita.** O desafio `buscar` tem um guarda cujo próprio
+comentário diz, com todas as letras: *"PROCURAR UMA PESSOA NÃO É VASCULHAR UM
+LUGAR, e a diferença é cara"*. Só que o guarda é uma **lista de palavras** —
+taverneiro, ferreiro, mercador, guarda, alguém — e Ione não é nenhuma delas.
+Ele sabia reconhecer ofícios e não sabia reconhecer gente.
+
+E o jogo conhece Ione. Ela está no elenco, ou na base da cidade, ou é um marco
+da espinha. A pergunta certa nunca foi "esta frase tem palavra de pessoa?" —
+era **"esta frase tem o nome de alguém que existe?"**.
+
+Entrou um segundo guarda, `naoSeCom`, que pergunta ao CONTEXTO em vez de
+adivinhar pelo texto — que é o que esta casa faz em todo o resto. E há uma
+lista só de quem o jogo conhece: elenco vivo, grupo, gente desta cidade e quem
+a espinha promete. Uma só, de propósito: duas listas de quem existe seriam
+dois mundos.
+
+**Procurar alguém deixou de ser um teste contra a tabela de tesouro.** Virou
+pergunta ao mundo, com seis respostas e nenhuma em moedas: ela anda com você;
+está aqui à vista; está aqui e não quer ser achada (aí sim há dado, e o que
+está em jogo é ela); está em outro lugar, com rumo e distância; morreu; ou
+nunca passou por aqui — e saber isso é informação, que é o que uma procura
+devia render mesmo quando falha.
+
+**A SITUAÇÃO DE CADA UM.** Gente marcante deixou de ser um fato para o Narrador
+citar e passou a ter estado: `livre`, `escondida`, `cativa`, `ferida`, `morta`,
+com onde e com quem. Sem isso não há resgate que se possa conferir — "tirar
+Ione de lá" precisa de um "lá" e de um estado que mude quando ela sai. Morrer
+agora escreve nos dois lugares: a lista de mortos, que metade do jogo já lê, e
+a situação, que a procura consulta.
+
+Três defeitos meus, achados por sonda antes de qualquer jogador:
+
+- `situacaoDe` comparava a chave normalizada contra a lista de mortos **crua**,
+  então todo morto de save antigo voltava a `livre` — o tipo de engano que só
+  aparece quando alguém procura um defunto.
+- O rumo saía como `[object Object]` na cara do jogador: `rumoEntre` devolve o
+  rumo inteiro, e o que entra numa frase é o rótulo dele.
+- Quem estava **cativa** era encontrada "sem dificuldade", porque o degrau da
+  gente da cidade devolvia `aqui` sem olhar o estado.
+
+E uma prova minha nasceu errada: ela media a palavra "tesouro" e pegava a
+própria proibição do envelope ("não transforme isto em achado de tesouro").
+O que não pode existir é PAGAMENTO, e é isso que ela mede agora.
