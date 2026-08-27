@@ -99,7 +99,8 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./ui.jsx";
+import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato } from "./ui.jsx";
+import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./semente.js";
 import { FichaVisual } from "./painel-ficha.jsx";
 import { SeloHeroismo, PainelHeroismo } from "./painel-heroismo.jsx";
 import { FaixaRelogios } from "./painel-relogios.jsx";
@@ -488,7 +489,7 @@ function ModalCena({ personagem, combate, mundo, nomeCampanha, fechar }) {
           <div className="flex flex-wrap items-end justify-center gap-3 mb-2">
             {aliados.map((a, i) => (
               <div key={i} className="flex flex-col items-center gap-1" style={{ width: 74 }}>
-                <Retrato semente={sementeDe(a)} tamanho={i === 0 ? 60 : 50} anel={i === 0 ? T.amber : T.violet} estado={estadoDe(a.vida, a.vidaMax)} />
+                <Retrato semente={sementeDe(a)} ente={a} tamanho={i === 0 ? 60 : 50} anel={i === 0 ? T.amber : T.violet} estado={estadoDe(a.vida, a.vidaMax)} />
                 <span className="tv-body text-xs text-center leading-tight truncate w-full" style={{ color: T.ink }}>{a.nome}</span>
                 {i === 0 && <span className="tv-mono text-[8px] uppercase" style={{ color: T.amberSoft }}>você</span>}
               </div>
@@ -504,7 +505,7 @@ function ModalCena({ personagem, combate, mundo, nomeCampanha, fechar }) {
               <div className="flex flex-wrap items-end justify-center gap-3">
                 {inimigos.map((e, i) => (
                   <div key={i} className="flex flex-col items-center gap-1" style={{ width: 74 }}>
-                    <Retrato semente={sementeDe(e)} tamanho={54} anel={T.danger} estado={estadoDe(e.vida, e.vidaMax, true)} />
+                    <Retrato semente={sementeDe(e)} ente={e} inimigo tamanho={54} anel={T.danger} estado={estadoDe(e.vida, e.vidaMax, true)} />
                     <span className="tv-body text-xs text-center leading-tight truncate w-full" style={{ color: T.ink }}>{e.nome}</span>
                   </div>
                 ))}
@@ -631,7 +632,7 @@ function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, de
   return (
     <div className="rounded-xl p-4" style={{ background: T.panelSoft, border: `1px solid ${ehVoce ? T.amber : T.line}` }}>
       <div className="flex items-start gap-3">
-        <Retrato semente={semente || nome} tamanho={48} anel={ehVoce ? T.amber : T.line} estado={estadoDe(vida, vidaMax)} />
+        <Retrato semente={semente || nome} ente={ficha || { nome, nivel, vida, vidaMax, semente }} tamanho={48} anel={ehVoce ? T.amber : T.line} estado={estadoDe(vida, vidaMax)} />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
             <div className="tv-display text-xl leading-tight truncate" style={{ color: T.ink }}>{nome}</div>
@@ -771,7 +772,7 @@ function PainelPessoas({ npcs, grupo, onConvidar, grupoCheio, onDefinirRelacao, 
     const convidavel = !ehGrupo && !morto && n.relacao !== "inimigo" && onConvidar;
     return (
       <div key={`${ehGrupo ? "g" : "n"}-${n.nome}`} className="rounded-xl p-3 flex items-start gap-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}`, opacity: morto ? 0.55 : 1 }}>
-        <Retrato semente={n.semente || n.nome} tamanho={46} anel={rel.cor} estado={morto ? "grave" : "normal"} />
+        <Retrato semente={n.semente || n.nome} ente={n} legenda={n.papel || ""} tamanho={46} anel={rel.cor} estado={morto ? "grave" : "normal"} />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
             {/* v9.8: quem morreu fica com o nome RISCADO — é o jeito mais
@@ -2260,7 +2261,7 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
         {combate.inimigos.map((e, i) => (
           <div key={i} className="rounded-xl p-2.5" style={{ background: T.panelSoft, border: `1px solid ${e.derrotado ? T.line : T.danger}`, opacity: e.derrotado ? 0.5 : 1 }}>
             <div className="flex items-center gap-2.5">
-              <div style={{ filter: e.derrotado ? "grayscale(1)" : "none" }}><Retrato semente={sementeDe(e)} tamanho={40} anel={e.derrotado ? T.line : T.danger} estado={estadoDe(e.vida, e.vidaMax, true)} /></div>
+              <div style={{ filter: e.derrotado ? "grayscale(1)" : "none" }}><Retrato semente={sementeDe(e)} ente={e} inimigo tamanho={40} anel={e.derrotado ? T.line : T.danger} estado={estadoDe(e.vida, e.vidaMax, true)} /></div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="tv-display text-lg leading-tight truncate" style={{ color: e.derrotado ? T.inkDim : T.ink, textDecoration: e.derrotado ? "line-through" : "none" }}>{e.nome}</span>
@@ -15485,6 +15486,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           {fase === "jogo" && nomeCampanha && <span className="tv-mono text-[10px] uppercase tracking-widest truncate hidden sm:inline" style={{ color: T.inkDim }}>· {nomeCampanha}</span>}
         </div>
         <div className="flex items-center gap-3 shrink-0">
+          {/* este retrato NÃO abre carta: ele já é o botão que abre a ficha, e
+              botão dentro de botão é o tipo de coisa que passa no teste e
+              falha no dedo. A carta do herói abre pelo retrato de dentro da
+              ficha, onde há espaço para ela. */}
           {fase === "jogo" && personagem && (
             <button onClick={() => setAba("ficha")} className="shrink-0" title="Abrir ficha">
               <Retrato semente={sementeDe(personagem)} tamanho={32} anel={T.amber} estado={estadoDe(personagem.vida, personagem.vidaMax)} />

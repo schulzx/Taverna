@@ -20,7 +20,8 @@
 import React from "react";
 import { T, ATRIBUTOS } from "./constantes.js";
 import { poderDe, poderDoGrupo, formatarPoder, contaDoPoder } from "./poder.js";
-import { Retrato, sementeDe, estadoDe } from "./ui.jsx";
+import { Retrato } from "./ui.jsx";
+import { sementeDe, estadoDe } from "./semente.js";
 import { bonusProficiencia, ehProficiente } from "./regras.js";
 import { PERICIAS, garantirPericias, bonusDePericia, passivoDe, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente } from "./pericias.js";
 import { garantirDadosVida } from "./descanso.js";
@@ -181,7 +182,7 @@ export function FichaVisual({
     <div className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${T.line}`, background: T.panelSoft }}>
       {/* ---- cabeçalho: quem é ---- */}
       <div className="flex items-center gap-3 p-3" style={{ background: T.panel, borderBottom: `1px solid ${T.line}` }}>
-        <Retrato semente={sementeDe(p)} tamanho={58} anel={tituloInfo && tituloInfo.divino ? T.violet : T.amber} estado={estadoDe(p.vida, p.vidaMax)} />
+        <Retrato semente={sementeDe(p)} ente={p} lex={(mundo || {}).lexico} legenda={(tituloInfo && tituloInfo.titulo) || ""} tamanho={58} anel={tituloInfo && tituloInfo.divino ? T.violet : T.amber} estado={estadoDe(p.vida, p.vidaMax)} />
         <div className="min-w-0 flex-1">
           <div className="tv-display text-2xl leading-tight truncate" style={{ color: T.ink }}>{p.nome}</div>
           <div className="tv-mono text-[10px] uppercase tracking-widest truncate" style={{ color: T.amberSoft }}>

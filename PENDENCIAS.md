@@ -4921,3 +4921,70 @@ Quatro provas da suíte nova nasceram erradas, casando com o COMENTÁRIO que
 explicava a remoção do emoji em vez de com o código — o mesmo deslize que
 esta base já corrigiu uma vez. Agora `teste-grade.mjs` mede o arquivo sem os
 comentários.
+
+## v9.126 — a carta de tarô
+
+O rosto já existia desde a v8.8, e é bom: `tracos()` deriva pele, cabelo,
+olhos, penteado, barba e cicatriz de uma semente fixada na criação, e o mesmo
+personagem dá sempre a mesma cara — sem IA de imagem, sem custo, sem um byte
+de arquivo, para um elenco que não tem fim. O que faltava era um lugar onde
+esse rosto fosse GRANDE. Numa bolinha de 44 px o rosto é um crachá: serve
+para não confundir dois companheiros e nada mais.
+
+Agora todo retrato do jogo abre uma carta. Moldura de régua dupla com
+lavrado nos cantos, nicho em arcada com raios atrás da cabeça, o busto com
+veste e gola, o naipe, o nome gravado e a linha de raça e ofício.
+
+**Três coisas são derivadas, e nenhuma é sorteada na hora:**
+
+- **O número é o nível, em romano.** Uma carta cujo número sobe é a única
+  numeração honesta aqui: diz onde a pessoa está agora, e muda com ela.
+- **O naipe é o atributo mais alto** — espada, flecha, escudo, livro, cálice,
+  olho. Não é enfeite: é a frase mais curta que se pode dizer sobre alguém
+  que ainda não se conhece, e sai de um número que o sistema já tem. O empate
+  cai para a ordem em que a ficha mostra os atributos, que é a ordem que o
+  jogador já leu. Quem não tem atributo nenhum — um figurante, um bicho —
+  recebe naipe pela semente: nenhuma carta nasce sem naipe, do mesmo jeito
+  que nenhum agente nasce mudo.
+- **A veste, o forro e o céu saem da semente**, então a carta de Fulano é
+  sempre a mesma carta.
+
+**A arrumação que isso obrigou.** O rosto morava soldado dentro do `Retrato`,
+que é uma bolinha. Copiá-lo para a carta teria criado duas versões da mesma
+pessoa, e elas divergiriam no primeiro ajuste — uma pessoa com dois rostos
+dependendo de onde se olha é o tipo de defeito que ninguém reporta porque
+parece impressão. Então virou peça, e as duas molduras pedem a mesma peça:
+
+- `semente.js` — a conta: hash, gerador, sorteio preso à semente, traços,
+  estado do ferimento. Saiu de dentro de um `.jsx` porque nenhuma prova em
+  Node conseguia sequer importar de lá.
+- `rosto.jsx` — o desenho da cara, e só.
+- `taro.js` — o número e a escolha do naipe.
+- `carta-taro.jsx` — a moldura, o nicho e os seis emblemas.
+
+**E o retrato abre a própria carta.** A alternativa era o App guardar "que
+carta está aberta" e enfiar um callback em cada painel que desenha gente —
+são sete lugares, dentro de quatro componentes que não sabem nada sobre
+cartas. Prop atravessando componente que não usa é exatamente como uma regra
+deixa de valer num dos caminhos: alguém acrescenta o oitavo retrato e esquece
+de passar. Aqui basta entregar a PESSOA; sem ela, o retrato continua a
+bolinha muda que sempre foi. O único que não abre carta é o do cabeçalho:
+ele já é o botão que abre a ficha, e botão dentro de botão passa no teste e
+falha no dedo.
+
+Duas correções durante o trabalho, as duas do mesmo tipo — regra reescrita
+dentro do desenho:
+
+- a primeira versão pôs o rosto a 3,05 de escala e ele engoliu o nicho: virou
+  o crachá do grupo ampliado, com um par de ombros espremido embaixo. Uma
+  carta de tarô é FIGURA — a cabeça ocupa o terço de cima e o corpo sustenta
+  o resto.
+- a carta reescreveu à mão os limiares do ferimento (0,25 / 0,55 / 0,33 /
+  0,66) que `estadoDe` já define. Dois lugares decidindo quando alguém está
+  grave é o começo de uma carta que mostra sangue enquanto a bolinha do grupo
+  mostra a pessoa inteira.
+
+E três provas da suíte nova nasceram medindo a coisa errada: `semente=`
+contado como `ente=`, `opacity="0.25"` contado como limiar de ferimento, e
+uma conta minha de cabeça (10/30 é 0,333 — maior que 0,33, logo "ferido" e
+não "grave"). Todas corrigidas para medir o que roda.
