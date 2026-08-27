@@ -104,6 +104,29 @@ export const ETAPAS = {
   },
 };
 export function etapaDef(t) { return ETAPAS[t] || ETAPAS.ir_a; }
+
+/* ---------------- O TIPO QUE O SISTEMA NÃO CONHECE (v9.128) ----------------
+   `ir_a` era o destino de todo tipo desconhecido, e `ir_a` é a ÚNICA etapa
+   que se cumpre sozinha: basta o herói andar até lá. Quando o Mestre escreve
+   `resgatar`, `escoltar` ou `libertar` — verbos que ele tem toda razão de
+   escrever, porque são o que a cena pede —, o sistema lia "chegar", e a
+   missão de resgate se dava por cumprida com o herói parado no lugar e
+   ninguém resgatado.
+
+   Um verbo desconhecido não vira presença. Vira a etapa mais próxima que
+   AINDA precisa de alguma coisa acontecer: gente vira `falar_com`, briga
+   vira `derrotar`, coisa vira `achar`. Se nada disso casar, aí sim `ir_a` —
+   mas aí o texto do Mestre também não prometia mais do que chegar. */
+export function tipoDaEtapa(e) {
+  if (ETAPAS[e && e.tipo]) return e.tipo;
+  const t = norm(e && e.tipo);
+  if (/resgat|salv|libert|escolt|encontr|procur|achar_pessoa|falar|convenc|persuad|recrut/.test(t)) return "falar_com";
+  if (/derrot|mat|cac|caç|abat|destru|limp|expuls|venc/.test(t)) return "derrotar";
+  if (/entreg|levar|carreg|transport/.test(t)) return e && e.item ? "levar_a" : "ir_a";
+  if (/achar|recuper|roub|pegar|colher|obter|trazer/.test(t)) return "achar";
+  if (/sobreviv|aguent|resist/.test(t)) return "aguentar";
+  return "ir_a";
+}
 export function textoDaEtapa(e) { return etapaDef(e.tipo).texto(e); }
 
 /* ---------------- OS TIPOS DE MISSÃO ---------------- */
@@ -176,7 +199,7 @@ export function garantirMissoes(lista) {
     /* "oferecida" espera o jogador; "ativa" está em curso; depois, fim */
     status: ["oferecida", "ativa", "concluida", "falhada", "recusada"].includes(q.status) ? q.status : "ativa",
     etapas: (Array.isArray(q.etapas) ? q.etapas : []).map((e) => ({
-      tipo: ETAPAS[e.tipo] ? e.tipo : "ir_a",
+      tipo: tipoDaEtapa(e),
       alvo: String(e.alvo || ""), item: String(e.item || ""),
       quantos: Math.max(1, Number(e.quantos) || 1),
       dia: Number(e.dia) || 0, relogioId: String(e.relogioId || ""), rotulo: String(e.rotulo || ""),

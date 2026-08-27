@@ -399,7 +399,13 @@ const ESCONDERIJOS = [
 const CONTEUDOS = [
   "moedas antigas de um reino que não existe mais", "uma arma que alguém escondeu com pressa",
   "cartas de amor e uma escritura de terra", "componentes de ritual embrulhados em couro",
-  "o pagamento de um contrato que nunca foi cumprido", "um mapa marcando outro esconderijo",
+  "o pagamento de um contrato que nunca foi cumprido",
+  /* v9.128: aqui havia "um mapa marcando outro esconderijo", e o mapa não
+     marcava nada — virava prata como todo o resto. Promessa de mecânica que
+     não existe é pior do que item nenhum: o jogador guarda o mapa a campanha
+     inteira esperando o segundo esconderijo. Volta no dia em que o achado
+     souber revelar outro ponto no pergaminho. */
+  "um cofre de viagem com o fecho arrombado",
   "joias soltas e um dedo mumificado", "frascos que ainda estão bons",
 ];
 
@@ -477,13 +483,25 @@ export function achavelAqui(semente, mapa, nomeCidade, base, genero, atributo = 
 /* O que o achado rende. Prosa vira coisa: o sistema lê o conteúdo e decide o
    que entra na bolsa, para o Mestre não ter que arbitrar recompensa. */
 export function recompensaDoAchado(achado) {
-  if (!achado) return { moedas: 0, componentes: 0, consumiveis: 0 };
+  if (!achado) return { moedas: 0, componentes: 0, consumiveis: 0, arma: false };
   const dc = achado.dc || 14;
   const txt = String(achado.o || achado.conteudo || "").toLowerCase();
-  const moedas = /moeda|joia|pagamento|escritura|contrato/.test(txt) ? dc * 12 : dc * 4;
+  /* ---------------- O QUE O TEXTO PROMETE, A BOLSA ENTREGA (v9.128) ----------------
+     Achado jogando: "uma arma que alguém escondeu com pressa" caía aqui, não
+     casava com nenhum padrão de moeda e virava `dc * 4` de prata. O jogador
+     lia "arma", abria a bolsa e achava dinheiro — e ele tem razão de esperar
+     a arma: o texto não era uma metáfora, era um inventário.
+
+     Toda linha da tabela de conteúdos precisa ter para onde ir. Quando não
+     tem, a saída não é reescrever a promessa em letra miúda: é entregar. */
+  const arma = /\barma\b|lâmina|lamina|espada|punhal|adaga|machado|arco\b/.test(txt);
+  const moedas = arma
+    /* quem acha uma arma acha a arma, e o troco é o que estava junto dela */
+    ? Math.max(4, Math.round(dc * 1.5))
+    : /moeda|joia|pagamento|escritura|contrato/.test(txt) ? dc * 12 : dc * 4;
   const componentes = /componente|ritual|erva|ossos|relicário|relicario/.test(txt) ? 2 : 0;
   const consumiveis = /frasco|poç|poc|elixir/.test(txt) ? 1 : 0;
-  return { moedas, componentes, consumiveis };
+  return { moedas, componentes, consumiveis, arma };
 }
 
 /* O envelope do achado: fato fixo, para o Mestre descrever sem inventar. */
@@ -491,6 +509,7 @@ export function envelopeDoAchado(achado, rec) {
   if (!achado) return "";
   const onde = achado.especie === "tesouro" ? `${achado.onde} (perto de ${achado.perto})` : achado.onde;
   const ganho = [
+    rec.arma ? "a arma em si, que já está na bolsa" : "",
     rec.moedas ? `◉ ${rec.moedas} moedas` : "",
     rec.componentes ? `${rec.componentes} componente(s) de ofício` : "",
     rec.consumiveis ? `${rec.consumiveis} consumível` : "",

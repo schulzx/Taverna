@@ -8506,8 +8506,23 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       alcanceComMetamagia(Math.max(1.5, Number((geometriaDe(h) || {}).alcance) || 36), meta),
       (ignora && ignora.alcanceM) || 0,
     );
+    /* ---------------- O ALCANCE VALE PARA A MAGIA TAMBÉM (v9.128) ----------------
+       Aqui morava `const pool = atingiveis.length ? atingiveis : vivos`, e
+       esse "senão todos" era a regra inteira indo pelo ralo: quando NINGUÉM
+       estava ao alcance — atrás de uma bancada, do outro lado da parede, longe
+       demais —, a lista de atingíveis vinha vazia e a habilidade caía de volta
+       em todos os vivos. O zumbi encoberto morria de Projétil Arcano sem que
+       nada pudesse acertá-lo.
+
+       O caminho da ARMA, vinte linhas acima, sempre fez a coisa certa: sem
+       ninguém ao alcance ele RECUSA, com o motivo. Era a mesma regra escrita
+       em dois lugares e viva num só. Agora a magia recusa pela mesma porta,
+       e quem paga o PM é o disparo que acontece. */
     const atingiveis = vivos.filter((e) => alcanca(gradeH, meuLugarH, e, { alcanceM: alcanceMagia }).ok);
-    const pool = atingiveis.length ? atingiveis : vivos;
+    if (!atingiveis.length) {
+      return { semAlcance: true, motivo: `${h.nome} não alcança ninguém daqui — ${vivos.map((e) => `${e.nome} está em ${nomeDoLugar(gradeH, e.x, e.y)}, a uns ${Math.round(distanciaM(meuLugarH, e))} m${!linhaDeVisao(gradeH, meuLugarH, e) ? " e sem linha de visão" : ""}`).join("; ")}. O alcance de ${h.nome} é ${metrosTxt(alcanceMagia)} m.` };
+    }
+    const pool = atingiveis;
     const declaradoH = (alvosGolpeRef.current || []).find(Boolean);
     /* ---------------- ONDE A ÁREA CAI (v9.41) ----------------
        Com um ponto de mira escolhido, o CENTRO da forma é o ponto — e o
@@ -9640,6 +9655,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         }
         sequencia.push(h);
         const desfechoH = resolverHabilidadeOfensiva(h, acao, pers, { combo, mira: miraDoTurno });
+        /* v9.128: sem ninguém ao alcance a habilidade NÃO sai, e o PM não é
+           cobrado. Cobrar por um disparo que a regra recusou seria punir o
+           jogador por uma parede que a tela não tinha mostrado. */
+        if (desfechoH && desfechoH.semAlcance) {
+          pushMsgs([{ autor: "sistema", texto: `📏 ${desfechoH.motivo}` }]);
+          continue;
+        }
         /* a magia pode ter drenado vida, queimado o próprio grupo ou encerrado
            a luta: sem reler a ficha viva aqui, a habilidade seguinte partiria
            da cópia anterior e desfaria tudo isso */
@@ -9744,6 +9766,15 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (buffC.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${buffC.nota}`;
       const miraCitada = miraRef.current; miraRef.current = null; setMira(null);
       const desfechoC = resolverHabilidadeOfensiva(habCitada, acao, pers, { mira: miraCitada });
+      /* v9.128: neste caminho o PM já foi anunciado antes de resolver, então
+         a recusa por alcance DEVOLVE o custo em vez de reordenar a cobrança.
+         O jogador que escreveu o nome da magia numa frase não viu tabuleiro
+         nenhum: cobrar dele a parede seria cobrar o que ele não podia ver. */
+      if (desfechoC && desfechoC.semAlcance) {
+        pers = mudarFicha((p) => ({ ...p, mana: Math.min(p.manaMax || 0, (p.mana || 0) + custo) }));
+        pushMsgs([{ autor: "sistema", texto: `📏 ${desfechoC.motivo} — os ${custo} PM voltaram.` }]);
+        return;
+      }
       pers = fichaViva() || pers;
       const fechouCit = fecharSeTodosCairam(pers);
       const rvC = fechouCit ? { pers: fichaViva() || pers, texto: "" } : fecharMeuTurno(fichaViva() || pers);
@@ -10558,7 +10589,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (!gradeP || !meuP) return null;
     const geo = geometriaDe(h);
     const atingiveis = vivos.filter((e) => alcanca(gradeP, meuP, e, { alcanceM: Math.max(1.5, Number(geo.alcance) || 36) }).ok);
-    const pool = atingiveis.length ? atingiveis : vivos;
+    /* v9.128: a MESMA linha morava aqui, e o efeito era pior do que no
+       disparo — a previsão desenhava a explosão em cima de quem estava fora
+       de alcance, e o jogador escolhia a magia olhando uma promessa que a
+       regra ia recusar. Prever é dizer o que vai acontecer; sem isso é só
+       um desenho bonito. */
+    const pool = atingiveis;
+    if (!pool.length) return null;
     const declarado = (alvosGolpe || []).find(Boolean);
     /* o ponto que o jogador escolheu manda; sem escolha, o alvo declarado;
        sem nenhum dos dois, o primeiro que dá para acertar */
@@ -11504,6 +11541,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         for (let i = 0; i < rec.consumiveis; i++) {
           const cc = sortearConsumivel(persT.nivel || 1);
           if (cc) { persT = { ...persT, inventario: [...(persT.inventario || []), itemConsumivel(cc.id)] }; extras.push(`${cc.icone} ${cc.nome}`); }
+        }
+        /* v9.128: quando o esconderijo diz ARMA, sai arma. O texto do achado
+           é inventário, não metáfora — quem lê "uma arma que alguém escondeu
+           com pressa" e recebe prata foi enganado pelo próprio sistema. */
+        if (rec.arma) {
+          const a = gerarLoot("comum", { tipo: "arma", nivel: persT.nivel || 1, lex: (mundoRef.current || {}).lexico || null });
+          if (a) { persT = { ...persT, inventario: [...(persT.inventario || []), a] }; extras.push(`${a.icone || "🗡"} ${a.nome}`); }
         }
         setPersonagem(persT);
         registrarSaque(r.achado.id);

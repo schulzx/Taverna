@@ -123,7 +123,16 @@ export function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9
      sem habilidade selecionada só existe andar; com uma habilidade de
      área selecionada, o tabuleiro abre já mirando, porque quem acabou de
      escolher Bola de Fogo quer dizer ONDE ela cai, não dar dois passos. */
-  const podeMirar = !!(alcanceMira && alcanceMira.tamanho && onMirar);
+  /* ---------------- SÓ A ÁREA SE MIRA (v9.128) ----------------
+     Achado jogando: com Projétil Arcano selecionado — alvo único, sem área —
+     o tabuleiro abria o modo de mirar e deixava marcar quadrados à frente do
+     inimigo. O ponto não fazia nada: o disparo só lê a mira quando a
+     habilidade tem forma. Marcar um lugar que o sistema ignora é pior do que
+     não poder marcar: o jogador acha que decidiu onde a magia cai.
+
+     O ALCANCE continua aparecendo para as duas — é informação, e é o que
+     responde "daqui eu acerto?". Mirar, não: isso é das que têm forma. */
+  const podeMirar = !!(alcanceMira && alcanceMira.area && alcanceMira.tamanho && onMirar);
   const [modo, setModo] = React.useState("andar");
   React.useEffect(() => { setModo(podeMirar ? "mirar" : "andar"); }, [podeMirar, alcanceMira && alcanceMira.nome]);
   const mirando = podeMirar && modo === "mirar";
@@ -303,6 +312,13 @@ export function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9
             <Contorno linhas={contorno(alcanceCheio)} cor={mirando ? T.violet : T.amber} largura={0.045} tracejado="0.22 0.18" opacidade={0.6} />
           </g>
         )}
+        {/* v9.128: a habilidade de alvo único não se mira, mas ALCANÇA — e é
+            o alcance que responde à pergunta que o jogador está fazendo
+            quando olha o tabuleiro com uma magia na mão. Sai como contorno,
+            por cima do véu do passo, sem disputar com ele. */}
+        {!mirando && alcanceMira && alcanceMira.quadrados && alcanceMira.quadrados.size > 0 && (
+          <Contorno linhas={contorno(alcanceMira.quadrados)} cor={T.violet} largura={0.05} tracejado="0.12 0.2" opacidade={0.7} />
+        )}
         {naArea.size > 0 && (
           <g>
             {[...naArea].map((k) => { const [x, y] = k.split(",").map(Number); return <rect key={`a${k}`} x={x} y={y} width="1" height="1" fill="rgba(216,106,91,0.26)" />; })}
@@ -392,6 +408,13 @@ export function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9
       {rotaPrevista && (
         <span className="tv-mono text-[9px]" style={{ color: T.amberSoft }}>
           ↳ {metrosTxt(rotaPrevista.custoM)} m até ali
+        </span>
+      )}
+      {/* a de alvo único diz o alcance em palavras, já que não tem botão */}
+      {!podeMirar && alcanceMira && alcanceMira.nome && (
+        <span className="tv-mono text-[9px] px-2 py-0.5 rounded-full" style={{ color: T.violetSoft, border: `1px solid ${T.violet}` }}
+          title="O tracejado roxo é até onde esta habilidade chega. Fora dele, não há disparo — e o PM não é gasto.">
+          ◎ {alcanceMira.nome} alcança {metrosTxt(alcanceMira.alcanceM)} m
         </span>
       )}
       {podeMirar && (
