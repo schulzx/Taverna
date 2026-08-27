@@ -10,7 +10,7 @@
    um terceiro ponto. Uma função serverless não guarda estado entre
    chamadas; quem guarda é o Redis do Upstash, e o token dele fica AQUI,
    na variável de ambiente — nunca no navegador, exatamente como a chave
-   do Mestre em `api/mestre.js`.
+   do Mestre em `api/narrador.js`.
 
    ---------------- DUAS CHAVES, E POR QUE DUAS ----------------
 

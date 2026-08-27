@@ -555,5 +555,5 @@ Regras do formato: "perigo" e "mudancas" são null quando não há; nunca os col
 /* ---------------- Ponte de IA (produção) ---------------- */
 
 /* Ponte de produção: o navegador NUNCA vê a chave da API.
-   A chamada vai para /api/mestre (função no servidor da Vercel),
+   A chamada vai para /api/narrador (função no servidor da Vercel),
    que fala com a Anthropic usando a chave guardada em variável de ambiente. */

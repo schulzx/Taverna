@@ -130,14 +130,14 @@ import { agruparMensagens } from "./resumo.js";
    TAVERNA — versão jogável (Artifact) · Mestre por IA
    Solo · criação de mundo/personagem · d20 manual · habilidades
    níveis/XP · moedas · companheiros vivos · memória · salvamento
-   Versão de produção: IA via /api/mestre (chave protegida no servidor).
+   Versão de produção: IA via /api/narrador (chave protegida no servidor).
    ============================================================ */
 
 /* constantes e tema extraídos para ./constantes.js (v8.6) */
 
 /* prompt do Mestre extraído para ./prompt.js (v8.6) */
 
-/* QUEM RESPONDEU O ÚLTIMO TURNO (v9.115). O `/api/mestre` tem dois
+/* QUEM RESPONDEU O ÚLTIMO TURNO (v9.115). O `/api/narrador` tem dois
    provedores e cai do primeiro para o segundo em silêncio — um 429 basta.
    Se os dois escrevem diferente, o jogador vê o narrador mudar de estilo
    sem que nada no jogo tenha mudado, e quem for investigar não tem por
@@ -148,8 +148,8 @@ import { agruparMensagens } from "./resumo.js";
    desenvolvimento e no save, que é onde quem investiga vai olhar. */
 export const ultimoProvedorRef = { atual: "", historico: [] };
 
-async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto", tarefa = "mestre") {
-  const response = await fetch("/api/mestre", {
+async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto", tarefa = "narrador") {
+  const response = await fetch("/api/narrador", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ system, messages, maxTokens, formato, tarefa }),
@@ -3246,7 +3246,7 @@ export default function Taverna() {
     lexicoLendoRef.current = true; setLendoMundo(true);
     let conseguiu = false;
     try {
-      /* v9.113: 8.192, que é o teto do próprio `api/mestre.js`. Eram
+      /* v9.113: 8.192, que é o teto do próprio `api/narrador.js`. Eram
          3.000, e as etapas 7 e 9 puseram `equipamento` (17 formas) e
          `racas` (16) no pedido: o JSON completo passou de ~9 mil para
          15.371 caracteres e o modelo era cortado no meio de `nomes`.

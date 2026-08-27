@@ -5,10 +5,10 @@
    Se PROVEDOR não existir, o app escolhe sozinho: DeepSeek se houver chave,
    senão Gemini. Se o provedor escolhido falhar, o outro cobre (quando tem chave).
 
-   O jogo chama POST /api/mestre com { system, messages, maxTokens, formato, tarefa }.
+   O jogo chama POST /api/narrador com { system, messages, maxTokens, formato, tarefa }.
    formato "json" liga saída JSON garantida (response_format / responseMimeType).
    ROTEAMENTO POR TAREFA: "leve" (livro/resumo/burocracia) vai para o modelo
-   barato do provedor; "mestre" (padrão) vai para o modelo forte.
+   barato do provedor; "narrador" (padrão) vai para o modelo forte.
    É o mesmo princípio do resto do app: nem toda tarefa merece o modelo caro. */
 export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).json({ erro: "Use POST" }); return; }
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     const pausa = (ms) => new Promise((ok) => setTimeout(ok, ms));
 
     /* ---------- DeepSeek (OpenAI-compatível) ----------
-       MESTRE: deepseek-v4-pro (US$ 0,435/M in · 0,87/M out — ~14x mais barato
+       NARRADOR: deepseek-v4-pro (US$ 0,435/M in · 0,87/M out — ~14x mais barato
        que o Gemini Pro na saída). LEVE: deepseek-v4-flash (quase de graça).
        Thinking DESLIGADO: raciocínio oculto queima tokens de saída e atrasa a
        narrativa sem ganho visível para mestre de RPG com regras por código. */
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
               /* TEMPERATURA POR TAREFA. A burocracia (livro/resumo) fica a
                  0.3: ali criatividade é defeito — queremos fidelidade aos fatos.
 
-                 v9.45 — O MESTRE DESCE DE 1.1 PARA 0.85. A recomendação de
+                 v9.45 — O NARRADOR DESCE DE 1.1 PARA 0.85. A recomendação de
                  1.3 para "escrita criativa" é dada para inglês, prosa livre e
                  prompt curto. Aqui não é nada disso: é português, é saída em
                  JSON e o prompt de sistema passa de 90 mil caracteres. Nessas
