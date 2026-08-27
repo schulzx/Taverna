@@ -19,6 +19,7 @@ import { CONSUMIVEIS, consumivelPorId, itemConsumivel, descricaoCurta } from "./
 import { valorDeItem, PRECO_VENDA } from "./economia.js";
 import { PORTES } from "./geografia.js";
 import { nomesDeLugar } from "./lexico.js";
+import { fatorDoLugar, generoDoItem, vocacaoDe } from "./comercio.js";
 
 /* RNG determinístico — a mesma cidade na mesma semana dá a mesma banca */
 function rngDe(semente) {
@@ -88,15 +89,49 @@ export function fatorPorte(cidade) {
   return 1;
 }
 
-export function precoDeVenda(item, cidade, mercador) {
-  const base = item && item.valor != null ? item.valor : valorDeItem(item);
-  const f = fatorPorte(cidade) * ((mercador && tipoMercador(mercador.tipo).ageio) || 1);
-  return Math.max(1, Math.round(base * f));
+/* ---------------- OS DOIS LADOS DO BALCÃO ----------------
+   v9.138, e este nome foi consertado na origem: até aqui isto se chamava
+   `precoDeVenda` — e `profissoes.js` também exporta um `precoDeVenda`, que
+   significa O CONTRÁRIO. Lá é o que o herói RECEBE ao vender; aqui era o que
+   ele PAGA para comprar. Duas funções com o mesmo nome e sentidos opostos,
+   e o App importa as duas: o dia em que alguém precisasse desta aqui, ela
+   entraria em conflito com aquela em silêncio, e o jogo pagaria por espada
+   o preço de sucata.
+
+   Agora o nome diz de que lado do balcão está: `precoDaBanca` é o que a
+   banca COBRA, `precoQueOferecem` é o que ela PAGA.
+
+   v9.138: o LUGAR entra na conta. Antes o preço só conhecia o porte, e o
+   mesmo martelo custava igual na aldeia de mineiros e no vilarejo de
+   pescadores. Agora a vocação da cidade, a estação e o que o próprio herói
+   já esvaziou da prateleira mexem no número — e o `porques` diz por quê,
+   porque preço que se move sem motivo é o Mestre sendo arbitrário.
+
+   As duas funções antigas continuam com a MESMA assinatura e a mesma
+   resposta: quem só quer o número chama elas. `comMotivo` é para quem vai
+   mostrar o motivo na tela. */
+export function precoDaBanca(item, cidade, mercador, ctx = {}) {
+  return precoDaBancaComMotivo(item, cidade, mercador, ctx).preco;
 }
-/* quanto o mercador PAGA por algo que você traz */
-export function precoDeCompra(item, cidade) {
+export function precoDaBancaComMotivo(item, cidade, mercador, { dia = 1, pressoes = null } = {}) {
   const base = item && item.valor != null ? item.valor : valorDeItem(item);
-  return Math.max(1, Math.round(base * PRECO_VENDA * fatorPorte(cidade)));
+  const lug = fatorDoLugar(item, cidade, { dia, pressoes, vendendo: false });
+  const f = fatorPorte(cidade) * ((mercador && tipoMercador(mercador.tipo).ageio) || 1) * lug.fator;
+  return { preco: Math.max(1, Math.round(base * f)), porques: lug.porques, genero: lug.genero };
+}
+
+/* quanto o mercador PAGA por algo que você traz. O mesmo mundo, do outro
+   lado do balcão: onde sobra, ele paga pouco; onde falta, ele paga bem. */
+export function precoQueOferecem(item, cidade, ctx = {}) {
+  return precoQueOferecemComMotivo(item, cidade, ctx).preco;
+}
+export function precoQueOferecemComMotivo(item, cidade, { dia = 1, pressoes = null } = {}) {
+  const base = item && item.valor != null ? item.valor : valorDeItem(item);
+  const lug = fatorDoLugar(item, cidade, { dia, pressoes, vendendo: true });
+  return {
+    preco: Math.max(1, Math.round(base * PRECO_VENDA * fatorPorte(cidade) * lug.fator)),
+    porques: lug.porques, genero: lug.genero,
+  };
 }
 
 /* ---------------- ESTOQUE ---------------- */
@@ -137,7 +172,7 @@ export function mapasAVenda(regioesOcultas = [], cidadesPorRegiao = {}) {
   });
 }
 
-export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1, lex = null, ordem = 0 }) {
+export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1, lex = null, ordem = 0, pressoes = null }) {
   const rnd = rngDe(semente);
   const t = tipo ? tipoMercador(tipo) : pick(rnd, TIPOS_MERCADOR.filter((x) => x.id !== "ambulante"));
   /* v9.113: O NOME DA BANCA VEM DO MUNDO, quando o mundo tem um. O
@@ -154,9 +189,23 @@ export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1
   const nome = t.id === "ambulante"
     ? (doMundo.length ? `${doMundo[Math.floor(rnd() * doMundo.length)]} (ambulante)` : "Carroça na estrada")
     : (doMundo.length ? doMundo[ordem % doMundo.length] : generico);
+  /* v9.138: A PRATELEIRA SABE ONDE ESTÁ. A cidade que produz um gênero tem
+     mais dele; a que o manda buscar longe quase não o tem. Sem isto, a
+     aldeia de pescadores expunha meia dúzia de peitorais de placas e a
+     vocação era só um número no preço — e um preço alto numa prateleira
+     cheia diz ao jogador que o mundo é uma tabela, não um lugar.
+
+     O ambulante é a exceção, e de propósito: ele é justamente quem traz o
+     que não há. É a razão de alguém parar a carroça dele. */
+  const voc = t.id === "ambulante" ? null : vocacaoDe(cidade);
+  const sobra = (g) => !!(voc && voc.produz.includes(g));
+  const falta = (g) => !!(voc && voc.falta.includes(g));
   const quantos = t.id === "ambulante" ? 3 + Math.floor(rnd() * 3) : 4 + Math.floor(rnd() * 4);
   const estoque = [];
   const vistos = new Set();
+  /* tentativas, e não itens: o que a cidade não tem CONSOME a vaga em vez
+     de ser substituído por outra coisa — é assim que a banca da vila fica
+     mesmo mais magra que a da capital */
   for (let i = 0; i < quantos; i++) {
     const oQue = pick(rnd, t.vende);
     let it = null;
@@ -164,8 +213,23 @@ export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1
     else if (oQue === "curiosidade") it = itemDeCuriosidade(rnd);
     else it = gerarLoot(raridadeDaBanca(rnd, cidade), { tipo: oQue === "amuleto" ? "amuleto" : oQue, nivel, rnd, lex });
     if (!it || vistos.has(it.nome)) continue;
+    const g = generoDoItem(it);
+    if (falta(g) && rnd() < 0.65) continue;
     vistos.add(it.nome);
-    estoque.push({ ...it, preco: precoDeVenda(it, cidade, { tipo: t.id }) });
+    const pv = precoDaBancaComMotivo(it, cidade, { tipo: t.id }, { dia, pressoes });
+    estoque.push({ ...it, preco: pv.preco, porques: pv.porques, genero: pv.genero });
+    /* e o que sobra aqui, sobra mesmo: a serra de montanha põe um segundo
+       ferro na bancada */
+    if (sobra(g) && rnd() < 0.5 && estoque.length < quantos + 2) {
+      const extra = oQue === "consumivel" ? itemDeConsumivel(rnd, nivel)
+        : oQue === "curiosidade" ? itemDeCuriosidade(rnd)
+        : gerarLoot(raridadeDaBanca(rnd, cidade), { tipo: oQue === "amuleto" ? "amuleto" : oQue, nivel, rnd, lex });
+      if (extra && !vistos.has(extra.nome)) {
+        vistos.add(extra.nome);
+        const pe = precoDaBancaComMotivo(extra, cidade, { tipo: t.id }, { dia, pressoes });
+        estoque.push({ ...extra, preco: pe.preco, porques: pe.porques, genero: pe.genero });
+      }
+    }
   }
   return {
     id: `${t.id}|${semente}`,
@@ -177,7 +241,7 @@ export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1
 
 /* Quantos mercadores uma cidade sustenta — e quais. Determinístico por
    cidade + SEMANA: o estoque gira, mas não a cada passo do herói. */
-export function mercadoresDaCidade(cidade, dia = 1, nivel = 1, lex = null) {
+export function mercadoresDaCidade(cidade, dia = 1, nivel = 1, lex = null, { pressoes = null } = {}) {
   if (!cidade || !cidade.nome) return [];
   const porte = cidade.porte || cidade.tipo || "cidade";
   if (porte === "ruina") return [];
@@ -196,7 +260,7 @@ export function mercadoresDaCidade(cidade, dia = 1, nivel = 1, lex = null) {
      mudaria quais bancas esta cidade tem. É a regra que o bug do
      continente deixou na v9.102. */
   const desloc = Math.floor(rngDe(`nome-banca|${cidade.nome}`)() * 97);
-  return tipos.map((t, i) => gerarMercador({ cidade, semente: `${cidade.nome}|${semana}|${t}|${i}`, nivel, tipo: t, dia, lex, ordem: desloc + i }));
+  return tipos.map((t, i) => gerarMercador({ cidade, semente: `${cidade.nome}|${semana}|${t}|${i}`, nivel, tipo: t, dia, lex, ordem: desloc + i, pressoes }));
 }
 
 /* Mercador ambulante: chance pequena por dia de viagem. */

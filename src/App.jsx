@@ -29,7 +29,8 @@ import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./econo
 import { rolarAflicao, aflicaoDe } from "./aflicoes.js";
 import { escolherReacao, resolverReacao, resumoReacoesPrompt } from "./reacoes.js";
 import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara, CONSUMIVEIS } from "./pocoes.js";
-import { mercadoresDaCidade, talvezAmbulante, precoDeCompra, mapasAVenda, resumoMercadoPrompt } from "./mercado.js";
+import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, resumoMercadoPrompt, tipoMercador } from "./mercado.js";
+import { envelopeDoComercio, generoDoItem, generoPorId, apertarProcura, podePagar, pechinchar, dificuldadeDaPechincha, linhaDoPreco, vocacaoDe } from "./comercio.js";
 import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
 import { criarCondicao, tickCondicoes, limparPorDescanso, resumoCondicoesPrompt, estadoDeRolagem, mecanicaDe } from "./condicoes.js";
@@ -1124,7 +1125,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null }) {
+function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1376,10 +1377,32 @@ function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], 
                 <span className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Sua bolsa</span>
                 <span className="tv-mono text-xl font-semibold" style={{ color: T.amber }}>◉ {personagem.moedas || 0}</span>
               </div>
+              {/* v9.138: POR QUE O PREÇO É ESTE. O jogador que vê a poção a
+                  ◉ 90 numa serra e a ◉ 48 no porto precisa saber que não foi
+                  sorteio — se ele não souber, o mundo vira uma tabela. */}
+              {comercioAqui && (
+                <div className="rounded-xl px-4 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                  <div className="tv-body text-sm" style={{ color: T.ink }}>
+                    {cidadeMercado ? cidadeMercado.nome : "Aqui"} é <span style={{ color: T.amber }}>{comercioAqui.nome}</span> — {comercioAqui.o}.
+                  </div>
+                  <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>
+                    Sobra {comercioAqui.produz.map((g) => (generoPorId(g) || {}).nome).join(" e ")}
+                    {comercioAqui.falta.length ? `; falta ${comercioAqui.falta.map((g) => (generoPorId(g) || {}).nome).join(" e ")}` : ", e por aqui quase tudo passa"}.
+                  </div>
+                </div>
+              )}
               {bancas.map((m) => (
                 <div key={m.id} className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
                   <div className="tv-display text-lg" style={{ color: T.ink }}>{m.icone} {m.nome}</div>
                   <div className="tv-body text-xs mb-2 italic" style={{ color: T.inkDim }}>{m.rotulo} — {m.desc}</div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="tv-mono text-[10px]" style={{ color: T.inkDim }} title="O que ele ainda tem na gaveta hoje — é o teto do que pode pagar por algo seu">gaveta ◉ {m.caixa}</span>
+                    {m.barganha ? (
+                      <span className="tv-mono text-[10px]" style={{ color: m.barganha.ok ? T.ok : T.danger }}>{m.barganha.ok ? "✓" : "✗"} {m.barganha.texto}</span>
+                    ) : (
+                      <button onClick={() => onPechinchar && onPechinchar(m.id)} className="tv-mono text-[10px] px-2 py-1 rounded-lg" style={{ border: `1px solid ${T.amberSoft}`, color: T.amberSoft }} title="Uma proposta por dia. Se ele se ofender, o preço sobe.">pechinchar</button>
+                    )}
+                  </div>
                   {!m.estoque.length ? (
                     <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>Prateleiras vazias. Volte noutra semana.</div>
                   ) : (
@@ -1413,6 +1436,7 @@ function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], 
                               <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>
                                 {it.detalhe || (it.tipo === "curiosidade" ? "curiosidade" : `${(fichaDoItem(it) || {}).rotulo || SLOT_ROTULO[it.tipo] || it.tipo} · ${it.raridade}`)}
                               </div>
+                              {linhaDoPreco(it.porques) && <div className="tv-body text-[10px] italic truncate" style={{ color: T.amberSoft }}>{linhaDoPreco(it.porques)}</div>}
                             </div>
                             <button onClick={() => onComprar && onComprar(m.id, it.nome)} disabled={!pode}
                               className="tv-mono text-[10px] px-2.5 py-1.5 rounded-lg shrink-0"
@@ -1440,14 +1464,26 @@ function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], 
                 }, {}));
                 return (
                   <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-                    <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Vender (metade do valor)</div>
+                    <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Vender — quem compra é quem lida com aquilo, e paga do que tem</div>
                     <div className="space-y-1.5">
                       {agrupado.slice(0, 30).map((v) => (
                         <div key={`${v.origem}|${v.nome}`} className="rounded-lg px-2.5 py-2 flex items-center gap-2" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
                           <span className="tv-body text-sm flex-1 min-w-0 truncate" style={{ color: T.ink }}>{v.nome}{v.qtd > 1 ? <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}> ×{v.qtd}</span> : null}</span>
-                          <button onClick={() => onVender && onVender(v.nome, v.origem)} className="tv-mono text-[10px] px-2.5 py-1.5 rounded-lg shrink-0" style={{ border: `1px solid ${T.ok}`, color: T.ok }}>
-                            vender ◉ {precoDeVenda(personagem, precoDeCompra(v.it, cidadeMercado))}
-                          </button>
+                          {(() => {
+                            /* v9.138: a etiqueta e o cofre saem da MESMA
+                               função. Antes o botão dizia um número que o
+                               mercador podia não ter — e o jogador só
+                               descobria depois de clicar. */
+                            const of = ofertaPor ? ofertaPor(v.it) : { valor: 0, quem: null, motivo: "" };
+                            return (
+                              <button onClick={() => onVender && onVender(v.nome, v.origem)} disabled={!of.quem}
+                                title={of.quem ? `${of.quem.nome} compra${linhaDoPreco(of.porques) ? ` — ${linhaDoPreco(of.porques)}` : ""}` : of.motivo}
+                                className="tv-mono text-[10px] px-2.5 py-1.5 rounded-lg shrink-0"
+                                style={{ border: `1px solid ${of.quem ? T.ok : T.line}`, color: of.quem ? T.ok : T.inkDim, opacity: of.quem ? 1 : 0.5 }}>
+                                {of.quem ? `vender ◉ ${of.valor}` : "ninguém compra"}
+                              </button>
+                            );
+                          })()}
                         </div>
                       ))}
                     </div>
@@ -1455,7 +1491,7 @@ function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], 
                 );
               })()}
               <div className="tv-body text-xs" style={{ color: T.inkDim }}>
-                O estoque é do sistema e gira a cada semana de jogo — a mesma banca, no mesmo dia, tem sempre as mesmas coisas. Preços sobem em capitais e caem em vilas. O Mestre narra a conversa; quem cobra é o sistema.
+                O estoque é do sistema e gira a cada semana de jogo — a mesma banca, no mesmo dia, tem sempre as mesmas coisas. O preço vem do que este lugar produz e do que lhe falta, da estação, e do quanto você mesmo já levou daqui. Cada mercador ouve uma proposta por dia, e tem um fundo de gaveta. O Narrador conta a conversa; quem cobra é o sistema.
               </div>
             </>
           );
@@ -4281,6 +4317,11 @@ export default function Taverna() {
     } catch (e) { calou("oQueOMundoCobra", e); return null; }
   };
 
+  /* Achar a cidade no mapa era feito em três lugares, cada um com a sua
+     própria comparação de caixa e de acento. Um lugar só. */
+  const cidadeDoMapa = (nome) => ((mapaRef.current && mapaRef.current.cidades) || [])
+    .find((c) => String(c.nome || "").toLowerCase() === String(nome || "").toLowerCase()) || null;
+
   const pautaDoTurno = () => {
     let p = garantirPauta(null);
     cobrouAgoraRef.current = false;
@@ -4297,6 +4338,10 @@ export default function Taverna() {
       longe,
     });
     p = porNaPauta(p, "onde", g.onde);
+    /* v9.138: o que este lugar produz e o que lhe falta. Vai em ONDE porque
+       é geografia antes de ser economia — a praça de um porto e a de uma
+       serra não se parecem, e o Narrador nunca teve como saber disso. */
+    p = porNaPauta(p, "onde", envelopeDoComercio(cidadeDoMapa(cidadeAtualRef.current), diaRef.current));
     /* v9.129: A SECAO `momento` estava declarada em `pauta.js` desde a v9.104
        e nunca era preenchida — uma porta sem leitor. A espinha e o leitor
        dela: "a batida da historia" e exatamente o marco em que se esta. */
@@ -8247,7 +8292,7 @@ export default function Taverna() {
     devocaoRef.current = garantirDevocao(null, mapaRef.current, divindadeRef.current); setDevocao(devocaoRef.current);
     if (!cap) { baseMundoRef.current = garantirBase(null); setBaseMundo(baseMundoRef.current); }
     confidenciasRef.current = [];
-    mercadoRef.current = { comprados: {}, ambulante: null }; setMercado(mercadoRef.current);
+    mercadoRef.current = { comprados: {}, ambulante: null, pressoes: {}, gastos: {}, pechinchas: {} }; setMercado(mercadoRef.current);
     if (!cap) bancoNomesRef.current = gerarBancoNomes(mundoAtual());
     systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null);
@@ -8432,8 +8477,8 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       compassoRef.current = garantirCompasso(sv.compasso);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
-        ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null }
-        : { comprados: {}, ambulante: null };
+        ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null, pressoes: sv.mercado.pressoes || {}, gastos: sv.mercado.gastos || {}, pechinchas: sv.mercado.pechinchas || {} }
+        : { comprados: {}, ambulante: null, pressoes: {}, gastos: {}, pechinchas: {} };
       setMercado(mercadoRef.current);
       if (divindadeRef.current.despertar) {
         divindadeRef.current = { ...divindadeRef.current, fieis: fieisTotais(mapaRef.current, devocaoRef.current) };
@@ -15438,15 +15483,19 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      O estoque não mora no save: é derivado da cidade + semana. O save
      guarda só o que JÁ FOI COMPRADO, para o item não voltar à prateleira,
      e o ambulante da estrada enquanto ele estiver por perto. */
-  const mercadoRef = useRef({ comprados: {}, ambulante: null });
+  /* v9.138: `pressoes` é o que o próprio herói já esvaziou da praça,
+     `gastos` é o que cada mercador já tirou da gaveta hoje e `pechinchas` é
+     a única barganha que cada um aceita por dia. As três são ESTADO — o
+     resto do mercado continua derivado da semente e não ocupa save. */
+  const mercadoRef = useRef({ comprados: {}, ambulante: null, pressoes: {}, gastos: {}, pechinchas: {} });
   const [mercado, setMercado] = useState(mercadoRef.current);
-  const cidadeMercado = ((mapa && mapa.cidades) || []).find((c) => (c.nome || "").toLowerCase() === String(cidadeAtualRef.current || "").toLowerCase()) || null;
+  const cidadeMercado = cidadeDoMapa(cidadeAtualRef.current);
   const mercadoAqui = (() => {
     const comprados = (mercado && mercado.comprados) || {};
     const semEstoqueGasto = (m) => ({ ...m, estoque: (m.estoque || []).filter((it) => !(comprados[m.id] || []).includes(it.nome)) });
     const lista = [];
     if (mercado && mercado.ambulante) lista.push(semEstoqueGasto(mercado.ambulante));
-    if (cidadeMercado) lista.push(...mercadoresDaCidade(cidadeMercado, diaRef.current, (personagem && personagem.nivel) || 1, (mundoAtual() || {}).lexico).map(semEstoqueGasto));
+    if (cidadeMercado) lista.push(...mercadoresDaCidade(cidadeMercado, diaRef.current, (personagem && personagem.nivel) || 1, (mundoAtual() || {}).lexico, { pressoes: (mercado && mercado.pressoes) || {} }).map(semEstoqueGasto));
     /* CARTÓGRAFO (v9.14): quem vende papel põe os mapas das regiões que o
        herói ainda não conhece na banca. Some sozinho quando não há mais o que
        revelar — não fica um item morto na prateleira. */
@@ -15465,7 +15514,21 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        etiqueta que o jogador lê e a moeda que sai do bolso saem daqui — se o
        desconto morasse só em `comprarNoMercado`, a banca anunciaria um preço
        e cobraria outro, que é a pior forma de dar um benefício. */
-    return lista.map((l) => ({ ...l, estoque: (l.estoque || []).map((it) => ({ ...it, preco: precoDeCompraPara(personagem, it.preco) })) }));
+    /* v9.138: A PECHINCHA MORA AQUI, com o desconto da profissão, pelo
+       mesmo motivo que ele mora aqui desde a v9.44: a etiqueta que o jogador
+       lê e a moeda que sai do bolso saem da MESMA linha. Barganha aplicada
+       só no caixa é uma banca que anuncia um preço e cobra outro. */
+    const barg = (mercado && mercado.pechinchas) || {};
+    return lista.map((l) => {
+      const b = barg[l.id];
+      const aj = (b && b.dia === diaRef.current && b.ajuste) || 1;
+      return {
+        ...l,
+        caixa: podePagar(l, cidadeMercado, diaRef.current, ((mercado && mercado.gastos && mercado.gastos[l.id] && mercado.gastos[l.id].dia === diaRef.current) ? mercado.gastos[l.id].moedas : 0)),
+        barganha: (b && b.dia === diaRef.current) ? b : null,
+        estoque: (l.estoque || []).map((it) => ({ ...it, preco: Math.max(1, Math.round(precoDeCompraPara(personagem, it.preco) * aj)) })),
+      };
+    });
   })();
 
   const comprarNoMercado = (mercadorId, nomeItem) => {
@@ -15499,11 +15562,83 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     setPersonagem(p);
     const comprados = { ...(mercadoRef.current.comprados || {}) };
     comprados[mercadorId] = [...(comprados[mercadorId] || []), it.nome];
-    mercadoRef.current = { ...mercadoRef.current, comprados }; setMercado(mercadoRef.current);
+    /* v9.138: comprar aperta a procura. Levar todas as poções da vila e
+       achar a próxima pelo mesmo preço é a cidade fingindo que nada
+       aconteceu — a pressão cede sozinha com os dias. */
+    mercadoRef.current = {
+      ...mercadoRef.current, comprados,
+      pressoes: apertarProcura(mercadoRef.current.pressoes, cidadeMercado, generoDoItem(it), diaRef.current),
+    };
+    setMercado(mercadoRef.current);
+    salvar({ mercado: mercadoRef.current });
     pushMsgs([{ autor: "sistema", texto: `🛒 Comprado: ${it.nome} por ◉ ${it.preco} (restam ◉ ${p.moedas}).` }]);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[COMPRA — JÁ REGISTRADA PELO SISTEMA] Comprei "${it.nome}" de ${m.nome} por ◉ ${it.preco}. O item já está comigo e as moedas já saíram — não envie item nem moeda. Narre a troca e o vendedor, se a cena estiver acontecendo agora.`;
     salvar({ personagem: p });
     checarConquistas(p);
+  };
+
+  /* ---------------- QUEM COMPRA O QUE EU TRAGO (v9.138) ----------------
+     Vender era um botão sem ninguém do outro lado: metade do valor, sempre,
+     viesse de quem viesse. Duas coisas faltavam, e as duas se sentem.
+
+     O BOTICÁRIO NÃO COMPRA MONTANTE. Cada banca lida com uma faixa, e a
+     mesma tabela que decide o que ela vende decide o que ela aceita.
+
+     E A GAVETA TEM FUNDO. O ferreiro de uma aldeia de duzentas almas não
+     tem três mil moedas — e o jogador que traz a relíquia para lá precisa
+     OUVIR isso, em vez de receber um número inventado com um zero a mais.
+     Quando ninguém aqui alcança o preço, a resposta é a cidade grande.
+
+     Um lugar só: a etiqueta do botão e a moeda que entra no cofre saem
+     daqui, e por isso não podem discordar. */
+  const gastoHojeDe = (id) => {
+    const g = (mercadoRef.current.gastos || {})[id];
+    return g && g.dia === diaRef.current ? g.moedas || 0 : 0;
+  };
+
+  const ofertaPor = (item) => {
+    const it = typeof item === "string" ? { nome: item } : (item || {});
+    const tipo = String(it.tipo || "").toLowerCase();
+    const base = precoQueOferecemComMotivo(it, cidadeMercado, { dia: diaRef.current, pressoes: (mercadoRef.current.pressoes) || {} });
+    const valor = Math.max(1, precoDeVenda(personagemRef.current || personagem, base.preco));
+    /* quem lida com isto — e o item sem tipo (a sucata que vem como texto)
+       o Armazém aceita, porque é o que um armazém é */
+    const cabem = (mercadoAqui || []).filter((m) => {
+      const t = tipoMercador(m.tipo);
+      return !tipo || m.tipo === "geral" || m.tipo === "ambulante" || t.vende.includes(tipo);
+    });
+    if (!cabem.length) return { valor, quem: null, motivo: "ninguém aqui lida com isso", porques: base.porques };
+    /* entre os que lidam, o que ainda TEM como pagar */
+    const podem = cabem.filter((m) => podePagar(m, cidadeMercado, diaRef.current, gastoHojeDe(m.id)) >= valor);
+    if (!podem.length) {
+      const maior = cabem.reduce((a, m) => Math.max(a, podePagar(m, cidadeMercado, diaRef.current, gastoHojeDe(m.id))), 0);
+      return { valor, quem: null, motivo: `ninguém aqui tem ◉ ${valor} hoje (o mais cheio chega a ◉ ${maior})`, porques: base.porques };
+    }
+    return { valor, quem: podem[0], motivo: "", porques: base.porques };
+  };
+
+  /* ---------------- A PECHINCHA (v9.138) ----------------
+     Uma por mercador por dia, e ela CUSTA quando falha. Sem custo não é
+     negociação: é um botão de desconto que o jogador aperta até sair o
+     número que ele quer, e aí o preço deixa de significar qualquer coisa.
+
+     O dado é rolado aqui porque é aqui que a ficha mora; o módulo só sabe
+     o que fazer com o resultado. */
+  const pechincharCom = (mercadorId) => {
+    const m = (mercadoAqui || []).find((x) => x.id === mercadorId);
+    if (!m) return;
+    const jah = (mercadoRef.current.pechinchas || {})[mercadorId];
+    if (jah && jah.dia === diaRef.current) { pushMsgs([{ autor: "sistema", texto: `⛔ ${m.nome} já ouviu a sua proposta hoje.` }]); return; }
+    const pers = personagemRef.current || personagem;
+    const b = bonusDePericia(pers, "persuasao", atributoEfetivo(pers, "presenca")).total;
+    const cd = dificuldadeDaPechincha(cidadeMercado, m);
+    const r = pechinchar({ bonus: b, dificuldade: cd });
+    const pech = { ...(mercadoRef.current.pechinchas || {}), [mercadorId]: { dia: diaRef.current, ajuste: r.ajuste, texto: r.texto, ok: r.ok } };
+    mercadoRef.current = { ...mercadoRef.current, pechinchas: pech };
+    setMercado(mercadoRef.current); salvar({ mercado: mercadoRef.current });
+    const quanto = Math.round(Math.abs(1 - r.ajuste) * 100);
+    pushMsgs([{ autor: "sistema", texto: `🤝 Pechincha com ${m.nome}: d20 ${r.d20}${b >= 0 ? "+" : ""}${b} = ${r.total} contra ${cd} — ${r.texto}${quanto ? ` (${r.ajuste < 1 ? "−" : "+"}${quanto}%)` : ""}.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[PECHINCHA — JÁ RESOLVIDA PELO SISTEMA] Regateei com ${m.nome} e ${r.texto}. Narre a troca de olhares e a frase dele; não invente outro resultado nem outro número.`;
   };
 
   const venderNoMercado = (nomeItem, origem) => {
@@ -15519,14 +15654,25 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        Mercador conhece o comprador. O acréscimo é da PROFISSÃO e entra aqui,
        no mesmo lugar onde a etiqueta da tela é calculada — se entrasse só num
        dos dois, o botão prometeria um número e o cofre receberia outro. */
-    const valor = precoDeVenda(personagem, precoDeCompra(typeof item === "string" ? { nome: item } : item, cidadeMercado));
+    const of = ofertaPor(item);
+    if (!of.quem) { pushMsgs([{ autor: "sistema", texto: `⛔ ${nomeItem}: ${of.motivo}.` }]); return; }
+    const valor = of.valor;
+    const gastos = { ...(mercadoRef.current.gastos || {}) };
+    gastos[of.quem.id] = { dia: diaRef.current, moedas: gastoHojeDe(of.quem.id) + valor };
+    /* vender também mexe na praça, do outro lado: quem despeja dez adagas
+       na mesma vila recebe menos pela décima */
+    mercadoRef.current = {
+      ...mercadoRef.current, gastos,
+      pressoes: apertarProcura(mercadoRef.current.pressoes, cidadeMercado, generoDoItem(typeof item === "string" ? { nome: item } : item), diaRef.current),
+    };
+    setMercado(mercadoRef.current);
     const p = {
       ...personagem,
       moedas: (personagem.moedas || 0) + valor,
       [origem]: lista.filter((_, i) => i !== idx),
     };
     setPersonagem(p);
-    pushMsgs([{ autor: "sistema", texto: `🛒 Vendido: ${nomeItem} por ◉ ${valor} (bolsa: ◉ ${p.moedas}).` }]);
+    pushMsgs([{ autor: "sistema", texto: `🛒 Vendido: ${nomeItem} a ${of.quem.nome} por ◉ ${valor} (bolsa: ◉ ${p.moedas}).${linhaDoPreco(of.porques) ? ` — ${linhaDoPreco(of.porques)}` : ""}` }]);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VENDA — JÁ REGISTRADA PELO SISTEMA] Vendi "${nomeItem}" por ◉ ${valor}. O item saiu da minha bolsa e as moedas entraram — não repita os números.`;
     salvar({ personagem: p });
   };
@@ -16824,7 +16970,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} /></LimiteErro>
+          <LimiteErro><PainelLateral guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

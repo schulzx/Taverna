@@ -5530,3 +5530,80 @@ nenhuma condição futura pode esquecê-lo. Depois: **zero em mil e quinhentas**
 e a distribuição com tempo não mudou.
 
 E ele não é exportado: regra que só as provas usam é regra sem dono.
+
+## v9.138 — o comércio: o que este lugar produz, e o que lhe falta
+
+O mercado da v9.2 já era do sistema — estoque determinístico, preço da
+tabela, nada inventado pelo Narrador. O que ele **não tinha era mundo**: o
+mesmo martelo custava igual na aldeia de mineiros e no vilarejo de
+pescadores, só o porte mexia no número. Um mercado sem geografia não é
+economia: é uma tabela com desconto.
+
+**Gênero, e não tipo.** A serra barateia a espada, o escudo e o elmo pela
+mesma razão — ninguém extrai "elmo" do chão, extrai metal. Escrever a regra
+por tipo seria escrevê-la três vezes e esquecer a quarta. Cinco gêneros:
+metal, couro, erva, relíquia, papel.
+
+**Dez vocações**, tiradas do bioma e do porte que o mundo já tinha e o
+mercado nunca leu. O que sobra sai a ×0,75; o que vem de longe, a ×1,4. O
+**porte manda mais que o bioma** — uma capital é corte mesmo encravada na
+montanha, senão ela venderia trigo barato e cobraria caro por uma coroa. E o
+porto **não falta de nada**, de propósito: a exceção é o que faz as outras
+significarem alguma coisa.
+
+**A prateleira sabe onde está.** O que falta na cidade quase não aparece na
+banca, e consome a vaga em vez de ser trocado por outra coisa — é assim que
+a banca da vila fica mesmo mais magra que a da capital. O ambulante é a
+exceção: ele é justamente quem traz o que não há.
+
+**A estação entra na conta.** O calendário existe desde a v6 e o mercado
+nunca o leu. Inverno não é uma palavra na tela: é erva a ×1,35 porque nada
+cresce, e couro a ×0,85 porque toda casa tem pele sobrando.
+
+**A procura do próprio herói.** Cada compra deixa pressão no gênero, naquela
+cidade, e ela cede em quatro dias. Há teto: sem ele um herói rico dobrava o
+preço de tudo e o mercado virava uma parede.
+
+**A gaveta tem fundo.** O ferreiro de duzentas almas não tem três mil moedas
+— e quem leva a relíquia para lá precisa ouvir isso, em vez de receber um
+número inventado com um zero a mais. Vender também deixou de ser um botão
+sem ninguém do outro lado: **quem compra é quem lida com aquilo**, e paga do
+que tem hoje.
+
+**A pechincha custa quando falha.** Uma por mercador por dia. Sem custo não
+é negociação: é um botão de desconto que o jogador aperta até sair o número
+que ele quer, e aí o preço deixa de significar coisa alguma.
+
+**E o preço diz por quê.** "Baixo valente produz relíquia", "Primavera
+encareceu couro", "procuraram muito erva aqui". Preço que se move sem motivo
+é o Mestre sendo arbitrário — que é exatamente o que este projeto passou os
+últimos meses tirando da IA.
+
+### Dois defeitos que as provas pegaram
+
+**A colisão de nomes.** `mercado.js` exportava `precoDeVenda` e
+`profissoes.js` também — **significando o contrário**. Lá é o que o herói
+recebe ao vender; aqui era o que ele paga para comprar. O App importa os
+dois. No dia em que alguém precisasse desta, ela entraria em conflito com
+aquela em silêncio, e o jogo pagaria por espada o preço de sucata. Corrigido
+na origem: `precoDaBanca` é o que a banca **cobra**, `precoQueOferecem` é o
+que ela **paga**.
+
+**O 20 natural virava ofensa.** Na pechincha, o ramo do fracasso estava
+escrito antes do ramo do acerto crítico — então um 20 natural rolado por
+quem não tem lábia nenhuma caía no fracasso antes de chegar ao seu. A
+exceção comia a regra por ordem de leitura, e o jogador via a face mais alta
+do dado virar um mercador ofendido. Os naturais decidem primeiro, os dois
+juntos, antes de qualquer faixa.
+
+E um export meu que nasceu morto: `vocacaoPorId`, escrito por simetria com o
+`generoPorId`. Ninguém procura vocação por id — quem quer a de um lugar tem
+o lugar na mão.
+
+### Provado no jogo, não só nas provas
+
+Campanha criada do zero no navegador, sem API nenhuma. A praça de uma
+capital de corte mostrou a vocação, a gaveta de cada banca, o motivo debaixo
+de cada preço; a pechincha falhou com d20 8+1=9 contra 15 e **subiu 8% em
+todos os preços daquela banca e em nenhuma outra**; e a venda entregou ao
+cofre exatamente o número que o botão prometia.
