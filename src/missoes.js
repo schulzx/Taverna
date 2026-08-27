@@ -254,6 +254,14 @@ export function garantirMissoes(lista) {
       alvo: String(e.alvo || ""), item: String(e.item || ""),
       quantos: Math.max(1, Number(e.quantos) || 1),
       dia: Number(e.dia) || 0, relogioId: String(e.relogioId || ""), rotulo: String(e.rotulo || ""),
+      /* v9.141: PRAZO RELATIVO. `aguentar` sempre leu um dia ABSOLUTO, e
+         quem monta uma trama não sabe que dia é hoje — `tramas.js` escrevia
+         `dias: 1` querendo dizer "aguente um dia a partir de agora", o leitor
+         procurava `dia`, e a normalização punha 0 no lugar. Resultado: uma
+         missão que nascia dizendo "Sobreviver até o dia 0" e se concluía
+         sozinha no primeiro turno. Agora o relativo existe como campo, e é
+         `criarMissao` quem o resolve — porque é lá que se sabe o "hoje". */
+      dias: Math.max(0, Number(e.dias) || 0),
       /* v9.117: ONDE a presa está, e se o alvo é um LUGAR em vez de uma
          cidade. Sem estes dois a etapa não tem como ser entregue nem
          conferida — e uma etapa que não pode ser cumprida é a missão dos
@@ -314,7 +322,18 @@ export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = ""
     nivel, intencao, veiculo, virada, legado, guilda, contribui, prova,
     status: status || (ehForcada(tipo) ? "ativa" : "oferecida"),
   }])[0];
-  if (!m || !m.etapas.length) return null;
+  if (!m) return null;
+  /* AQUI SE SABE O HOJE, e só aqui: um prazo relativo vira data. */
+  m.etapas = m.etapas.map((e) => (e.dias > 0 && !e.dia ? { ...e, dia: (Number(dia) || 0) + e.dias } : e));
+  /* ---------------- A CATRACA DO PRAZO (v9.141) ----------------
+     Etapa de espera cujo dia já passou não é etapa: é uma linha que o
+     diário escreve e risca no mesmo turno. Pior que inútil — mente ao
+     jogador sobre o que a missão pede.
+
+     Some aqui, e não no conferente: uma missão que nasce sem etapa nenhuma
+     não deve nascer. */
+  m.etapas = m.etapas.filter((e) => !(e.tipo === "aguentar" && e.dia <= (Number(dia) || 0)));
+  if (!m.etapas.length) return null;
   m.recompensa = recompensaDe({ tipo, nivel, etapas: m.etapas.length, moedasPrometidas });
   return m;
 }

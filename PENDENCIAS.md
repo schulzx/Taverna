@@ -5775,3 +5775,47 @@ como *"⚑ reivindicar Andar 1 — das Correntes · ◉ 395 do cofre, 4 dias"*, 
 quatro dias depois: **"Andar 1 — das Correntes é sua."** A aba de Domínios
 abriu com a conta, o imposto, as obras e a lista de quem pode governar. E
 "+ Sable" entrou para a casa.
+
+## v9.141 — o prazo que já nascia vencido
+
+Numa campanha de prova, a primeira missão do jogo apareceu assim:
+
+```
+⏳ Ficar de olho em Fogo do Patamar: Sobreviver até o dia 0 ✓ (1/1)
+✦ MISSÃO CONCLUÍDA — +57 moedas · +89 XP
+```
+
+Nasceu, cumpriu-se e **pagou**, tudo no mesmo turno.
+
+A causa é a cicatriz do nome na origem, na sua forma mais silenciosa:
+`tramas.js` escrevia `dias: 1` querendo dizer *"aguente um dia a partir de
+agora"*. `missoes.js` lia `dia`, absoluto. A normalização fazia
+`Number(undefined) || 0` e o prazo virava **zero** — uma data no passado. Os
+dois lados estavam sintaticamente corretos e nenhum varredor tinha o que
+acusar.
+
+Duas metades no conserto, e a segunda é a que importa:
+
+**O relativo passou a existir como campo**, e quem o resolve é `criarMissao`
+— porque é lá, e só lá, que se sabe que dia é hoje. Quem monta uma trama não
+tem como saber.
+
+**E a catraca**: etapa de espera cujo dia já passou não vira etapa. Some
+antes do conferente, e se a missão ficar sem etapa nenhuma, ela não nasce.
+Melhor não existir do que existir mentindo sobre o que pede.
+
+### A prova é da família, não da instância
+
+A asserção que interessa roda **todas as tramas do jogo** com material de
+verdade, passa cada uma por `criarMissao` como o App passa, e mede duas
+coisas: que nenhuma seja engolida pela normalização, e que **nenhuma esteja
+cumprida no dia em que nasceu**. Antes do conserto ela teria acusado a trama
+do vigia; da próxima vez que alguém escrever um campo com o nome que o leitor
+não lê, ela quebra em todas as tramas de uma vez, em vez de esperar que um
+jogador tope com aquela.
+
+Um erro meu no caminho: sobrescrevi um `teste-prazo.mjs` que já existia, em
+vez de somar a ele. O maquinário de prazo continua coberto por
+`teste-missoes.mjs` — relógio, falha por tempo, "missão sem prazo não ganha
+relógio" — e o varredor de regras mortas segue em zero, então não ficou
+regra sem leitor; mas as asserções extras daquele arquivo se perderam.
