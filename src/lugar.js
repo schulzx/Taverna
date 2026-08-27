@@ -371,6 +371,19 @@ export function comDe(nome) {
   return `de ${s}`;
 }
 
+/* v9.142: e o terceiro irmão, que faltava. "Você propôs um acordo a A
+   Ordem do Vácuo" foi o que a diplomacia pôs na tela na primeira passada —
+   os nomes das potências vêm com artigo colado, como os dos lugares. A
+   mesma burrice deliberada: só o artigo inicial, "as" antes de "a". */
+export function comA(nome) {
+  const s = String(nome || "").trim();
+  if (/^as\s+/i.test(s)) return `à${s.replace(/^as\s+/i, "s ")}`;
+  if (/^os\s+/i.test(s)) return `ao${s.replace(/^os\s+/i, "s ")}`;
+  if (/^a\s+/i.test(s)) return `à${s.replace(/^a\s+/i, " ")}`;
+  if (/^o\s+/i.test(s)) return `ao${s.replace(/^o\s+/i, " ")}`;
+  return `a ${s}`;
+}
+
 export function textoDoLugar(l) {
   if (!l) return "";
   const d = distanciaDe(l.distancia);

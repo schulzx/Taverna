@@ -5819,3 +5819,92 @@ vez de somar a ele. O maquinário de prazo continua coberto por
 `teste-missoes.mjs` — relógio, falha por tempo, "missão sem prazo não ganha
 relógio" — e o varredor de regras mortas segue em zero, então não ficou
 regra sem leitor; mas as asserções extras daquele arquivo se perderam.
+
+## v9.142 — a diplomacia: quem decide é o código, e não a IA
+
+Esta era a última sala da casa em que a IA ainda decidia o que existe. O
+texto que o jogo mandava ao Narrador dizia, com todas as letras:
+
+> "O líder de X responde NA FICÇÃO conforme poder, personalidade, medos e
+> ambições: pode aceitar, exigir condições, adiar ou recusar — **a decisão é
+> dele(a)**. Se um acordo for firmado, registre em `mapa_faccoes`."
+
+O jogador apertava um botão, a IA inventava a resposta e depois escrevia o
+tratado de volta no mundo. Todo o resto do projeto foi feito para tirar
+exatamente isso dela.
+
+**E havia um segundo buraco.** A aba lia só `mapa.faccoes`, que existe apenas
+quando a IA nomeia alguém — enquanto o mundo **já nasce com sete casas
+geradas por código**, com ofício, sede, leis, membros e poder. Campanha nova
+abria a aba e via "nenhuma potência conhecida" com sete potências de pé ali
+fora. Agora as duas fontes viram a mesma coisa.
+
+### O que uma potência quer
+
+Antes ela tinha nome, tipo, líder e poder — e nada que se pudesse pesar.
+Agora tem **apetite**, **medo** e **orgulho**, derivados do nome como a
+índole de uma pessoa: a mesma potência quer sempre a mesma coisa, e nada
+disso ocupa save.
+
+O veredito sai de: apreço, o que ela ama e o que despreza, o poder dos dois
+lados, a sua fama, o medo dela, e o que você fez desde a última vez. E ele
+**se explica** — decisão que não se explica é a mesma arbitrariedade de
+antes, só que com outro dono.
+
+**A condição é conferível**: tributo do cofre, guerra a quem ela odeia, ou
+dias de espera. Exigência que o sistema não sabe olhar é adjetivo, e adjetivo
+devolve a decisão à IA.
+
+**E a guerra custa.** `gestao.js` dizia desde a v6.5: *"guerra: sem bônus —
+os efeitos da guerra são ficção do Mestre"*. Declarar guerra não fazia
+absolutamente nada. Agora morde por dia, no ânimo dos seus domínios, e o
+quanto morde sai do poder de quem está do outro lado.
+
+**O painel mostra o veredito antes do clique.** Isso não estraga a decisão: a
+decisão é o que você faz para *mudar* o veredito. Sem isso, apertar botão é
+jogar dado.
+
+### Três defeitos que as provas pegaram
+
+**O zero que virava quarenta.** `Number(v.apreco) || APRECO_INICIAL` devolve
+40 quando o apreço é 0 — uma potência que passasse a te odiar por completo
+voltava a neutra na primeira normalização, isto é, no próximo save. É a
+mesma armadilha do prazo da v9.141, do outro lado: lá o zero entrava sem
+querer, aqui ele saía sem querer.
+
+**A ofensa impossível.** O painel e o envelope falavam de um presente que
+ofende. Medi os vinte e quatro cruzamentos de apetite e orgulho: o pior deles
+ainda dava +2, então `ofendeu` **nunca** era verdade. Promessa que o código
+não entrega é adjetivo. O peso do orgulho subiu, e agora 95 em 400 se
+ofendem.
+
+**E o "a A Ordem do Vácuo".** Os nomes das potências vêm com artigo colado,
+como os dos lugares. `lugar.js` tinha `comEm` e `comDe` desde sempre, e
+faltava o terceiro irmão — `comA`, para "à Ordem", "ao Reino".
+
+### E o varredor que media prosa
+
+O `check-imports` acusou `painel-diplomacia.jsx: usa "presentear" sem
+importar` — e a "chamada" era **a palavra impressa no botão**. Um varredor
+que grita por engano perde o único valor que tem, que é ser acreditado.
+Agora ele descarta o texto entre tags e as strings, e exige que um uso seja
+seguido de algo que só aparece em código. Provei que ele continua pegando o
+real removendo um import de verdade.
+
+### Provado no jogo
+
+```
+[Diplomacia] Proponho um acordo comercial à Câmara da Borda.
+📜 A Câmara da Borda aceita — mas exige que você espere 3 dias e volte.
+   ↓ tentei cumprir cedo demais
+⛔ A Câmara da Borda ainda quer ver: faltam 1 dia.
+   ↓ passei o dia
+📜 Condição cumprida — A Câmara da Borda firmou comércio.
+   apreço 40 → 52, e os vereditos melhoraram junto
+```
+
+### O que fica anotado
+
+`A decisão é dele(a)` ainda existe **no convite ao grupo**: quando você chama
+alguém para andar com você, quem decide continua sendo a IA. É a mesma porta,
+noutro corredor.
