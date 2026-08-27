@@ -5679,3 +5679,99 @@ crava o calendário sem rodar o dia do reino.
 
 O que não pude ver na tela: a revolta, que exige a felicidade abaixo de 25
 por oito dias seguidos. Está coberta por prova.
+
+## v9.140 — a maçaneta: a casa toma a cidade, e o convite deixa de ser invisível
+
+O jogador abriu a aba de Domínios e não viu nada. A causa não era um defeito
+da v9.139: era que **todo aquele sistema estava atrás de uma porta que só o
+modo criativo abria**. `relacao: "jogador"` era escrito num único lugar do
+código inteiro, e esse lugar era o comando `/dominar`. O painel dizia
+"conquiste ou funde cidades na história" e não havia conquista nenhuma atrás
+da frase.
+
+Eu tinha provado a v9.139 **injetando cidades à mão no save** — mobiliei o
+cômodo inteiro do lado de dentro de uma porta sem maçaneta, e não notei
+porque nunca tentei entrar pela porta.
+
+### A porta é a casa
+
+Quatro condições que o sistema confere, e nenhuma delas é adjetivo:
+
+```
+· que você MANDE na casa — quem serve não entrega cidades
+· que ela tenha PODER para alcançar aquele porte
+· que o cofre DELA pague — não o seu bolso
+· e que você esteja LÁ; de longe isso é planilha, não conquista
+```
+
+E uma quinta que não impede, **cobra**: a sua fama. Uma cidade que nunca
+ouviu falar de você aceita a bandeira e não aceita o dono — o domínio nasce
+com o povo já furioso, e a revolta da v9.139 começa a contar no primeiro dia.
+
+Nada disso acontece no clique: a reivindicação leva dias, e nesses dias a
+cidade ainda não é sua.
+
+### O segundo número parado
+
+`poder` existia desde a v9.133: nascia entre 20 e 50 no mundo, nascia em 8
+numa casa recém-fundada — e **nada no jogo inteiro jamais escrevia nele**.
+Passou despercebido porque nada dependia dele. Agora depende, então cresce
+com o que a casa faz: o dízimo que o membro traz, o trabalho concluído, a
+cidade tomada. Sem isso, fundar uma casa seria um beco: ela ficaria pequena
+para sempre.
+
+### O convite estava lá, escondido
+
+Você procurou onde chamar alguém para a guilda e concluiu que não havia
+lugar nenhum. Havia — dentro de uma seção recolhida, e **só renderizado para
+quem já é do terceiro degrau**. Sem posto, o bloco inteiro sumia sem uma
+palavra.
+
+Recurso que some sem explicar é indistinguível de recurso que não existe. É
+a mesma falha do governador mudo da v9.139, e a mesma da porta sem maçaneta:
+**o sistema calando em vez de dizer o que falta.** Agora a seção aparece
+sempre, e quando você não pode admitir, ela diz por quê e qual é o seu posto.
+
+### O terceiro defeito: tabela que enumera esquece o próximo mundo
+
+Abri a campanha de prova e ela saiu na Torre. A sede da primeira guilda era
+*"Andar 2 — do Poço"* — e nenhuma das minhas tabelas conhecia esse nome.
+
+O jogo tem **quatro formas de mundo e vinte portes**: terras abertas, Torre
+(patamar, andar, andar-mestre, átrio), arquipélago (fundeadouro, porto,
+forte, porto franco) e o braço estelar (colônia, sistema, base, capital
+orbital). Quatro tabelas do projeto enumeravam apenas os sete das terras
+abertas e caíam no valor padrão para os outros treze, **em silêncio**:
+
+```
+o que custa tomar um lugar   (minha, desta versão)
+a gaveta do mercador         (minha, da v9.138)
+o fator de porte no preço    (da v9.2)
+a renda diária de um domínio (da v6.5)
+```
+
+Um patamar de 800 almas rendia 12 por dia — exatamente o que rende uma
+cidade de oito mil. As quatro passaram a **derivar da população**, que todo
+porte declara em `geografia.js` desde sempre. Uma regra, vinte portes, e a
+próxima forma de mundo já nasce coberta.
+
+Com uma exceção, e ela se explica: a fortaleza rende três vezes o que a sua
+gente renderia. A tabela antiga lhe dava 15, mais que a uma cidade de oito
+mil, e tinha razão — quem guarda um passo cobra pedágio, e pedágio não
+depende de quantos moram ali.
+
+**E derivar não pode descalibrar o que já estava certo.** A minha primeira
+curva mandou a vila de 5 para 12 e, no preço, a aldeia de 0,70 para 1,01 —
+apagando de lambuja a regra mais antiga do mercado, "preço sobe em capital e
+cai em vila". As curvas passam pelos pontos que as tabelas cravavam, e as
+âncoras agora são prova.
+
+### Provado no jogo, do zero
+
+Campanha nova, sem API e **sem injetar nada no save**: fundei a Casa do
+Corvo, o painel disse *"a Casa do Corvo tem poder 8 e Andar 1 — das
+Correntes exige 23"*, depositei no cofre até a casa crescer, o botão acendeu
+como *"⚑ reivindicar Andar 1 — das Correntes · ◉ 395 do cofre, 4 dias"*, e
+quatro dias depois: **"Andar 1 — das Correntes é sua."** A aba de Domínios
+abriu com a conta, o imposto, as obras e a lista de quem pode governar. E
+"+ Sable" entrou para a casa.

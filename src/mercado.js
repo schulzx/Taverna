@@ -80,13 +80,23 @@ export const CURIOSIDADES = [
 /* ---------------- PREÇO ----------------
    Base do catálogo de economia, com o modificador de porte da cidade e o
    ágio do mercador. Vender rende metade — a mesma regra de sempre. */
+/* v9.140: pelo TAMANHO do lugar, e não por uma lista de nomes. Esta função
+   conhecia seis portes das terras abertas e devolvia 1 para os outros
+   catorze — numa campanha na Torre ou no arquipélago, o porte simplesmente
+   não existia para o preço. */
 export function fatorPorte(cidade) {
-  const p = (cidade && (cidade.porte || cidade.tipo)) || "cidade";
-  if (p === "aldeia" || p === "vila") return 0.7;
-  if (p === "capital") return 1.3;
-  if (p === "metropole") return 1.5;
-  if (p === "fortaleza") return 1.15;
-  return 1;
+  const p = String((cidade && (cidade.porte || cidade.tipo)) || "cidade");
+  const P = PORTES[p];
+  if (!P) return 1;
+  const almas = Math.max(20, (P.min + P.max) / 2);
+  /* A CURVA PASSA PELOS DOIS PONTOS QUE A TABELA ANTIGA CRAVAVA: aldeia em
+     0,70 e metrópole em 1,50. A primeira versão desta reta era mais mansa e
+     mandou a aldeia para 1,01 — o que apagava, sem avisar, a regra mais
+     antiga deste arquivo: preço sobe em capital e cai em vila. Derivar em
+     vez de enumerar não pode custar o comportamento que se estava
+     derivando. */
+  const f = 0.111 + 0.263 * Math.log10(Math.max(1, almas));
+  return Math.round(Math.max(0.6, Math.min(1.5, f)) * 100) / 100;
 }
 
 /* ---------------- OS DOIS LADOS DO BALCÃO ----------------

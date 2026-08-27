@@ -9,14 +9,36 @@
 
 import { feDaCidade, bonusRendaDevocao } from "./devocao.js";
 import { contaDoDominio, custeioDe } from "./dominios.js";
+import { PORTES } from "./geografia.js";
 
-/* Renda diária base por tipo de cidade dominada */
-export const RENDA_CIDADE = { vila: 5, cidade: 12, capital: 25, fortaleza: 15, ruina: 2 };
+/* ---------------- RENDA DIÁRIA DE UM DOMÍNIO ----------------
+   v9.140: DERIVADA DA POPULAÇÃO. Isto era uma tabela com cinco nomes —
+   vila, cidade, capital, fortaleza, ruína — e o jogo tem vinte portes em
+   quatro formas de mundo. Tomei um "patamar" da Torre (800 almas) e ele
+   rendia 12 por dia: exatamente o que rende uma cidade de oito mil, porque
+   caía no valor padrão sem dizer nada.
 
-/* A sede da guilda rende o dobro (é o centro de tudo) */
+   Tabela que enumera nomes esquece a próxima forma de mundo, e esquece em
+   silêncio. A população cada porte já declara desde sempre. */
+const GUARNICAO = new Set(["fortaleza", "forte", "base"]);
+
 export function rendaDeCidade(c) {
-  const base = RENDA_CIDADE[(c.tipo || "cidade").toLowerCase()] ?? RENDA_CIDADE.cidade;
-  return c.sede ? base * 2 : base;
+  const porte = String((c && (c.porte || c.tipo)) || "cidade").toLowerCase();
+  if (porte === "ruina") return 2;
+  const P = PORTES[porte];
+  const almas = P ? Math.max(20, (P.min + P.max) / 2) : 8000;
+  /* A CURVA PASSA PELOS PONTOS QUE A TABELA ANTIGA CRAVAVA: vila (≈900
+     almas) em 5, cidade (≈8.250) em 12, capital (≈47.500) em 25. Derivar em
+     vez de enumerar não pode mudar, de lambuja, o que já estava calibrado —
+     a primeira reta que escrevi mandava a vila para 12 e a cidade para 23. */
+  let base = Math.max(1, Math.round(0.34 * Math.pow(almas, 0.395)));
+  /* A ÚNICA EXCEÇÃO, e ela é explicável: guarnição rende além da sua gente.
+     A tabela antiga dava 15 a uma fortaleza de mil almas, mais que a uma
+     cidade de oito mil, e tinha razão — quem guarda um passo cobra pedágio,
+     e pedágio não depende de quantos moram ali. */
+  if (GUARNICAO.has(porte)) base *= 3;
+  /* a sede da guilda rende o dobro: é o centro de tudo */
+  return c && c.sede ? base * 2 : base;
 }
 
 /* Domínios = cidades com relacao "jogador" (o mapa já as conhece —

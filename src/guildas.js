@@ -376,6 +376,36 @@ export function sairDaCasa(g) {
 /* ---------------- SUBIR ----------------
    Contribuição é o que a casa conta: trabalho feito por ela, ouro no cofre,
    rival derrubado. Nunca conversa. */
+/* ---------------- A CASA CRESCE (v9.140) ----------------
+   `poder` existia desde a v9.133: nascia entre 20 e 50 no mundo, nascia em 8
+   numa casa recém-fundada — e NUNCA MAIS SE MEXIA. Nada no jogo inteiro
+   escrevia nele. Era um número na ficha da guilda que só servia de enfeite,
+   e uma casa fundada pelo jogador ficava pequena para sempre.
+
+   Isto passou despercebido porque nada dependia de `poder`. Agora depende:
+   é ele que decide se a sua casa alcança uma cidade — e um número que
+   governa alguma coisa não pode ser um número parado.
+
+   Cresce com o que a casa FAZ, e devagar de propósito: uma casa grande é
+   obra de meses de jogo, não de uma tarde de cliques. */
+export const PODER_MAX = 100;
+export const CRESCE = {
+  tarefa: 1,       // um trabalho da casa concluído
+  contribuicao: 0.02, // por moeda que o membro traz ao cofre
+  prova: 2,        // um novo membro que passou na prova
+  dominio: 6,      // uma cidade que passou para a bandeira da casa
+  paz: 3,          // uma rixa encerrada sem sangue
+};
+
+export function crescerACasa(g, quanto, motivo = "") {
+  const G = garantirGuilda(g);
+  const q = Number(quanto) || 0;
+  if (q <= 0) return { guilda: G, subiu: 0 };
+  const antes = G.poder;
+  const poder = Math.max(1, Math.min(PODER_MAX, Math.round((G.poder + q) * 100) / 100));
+  return { guilda: { ...G, poder }, subiu: Math.round((poder - antes) * 100) / 100, motivo };
+}
+
 export function contribuirNaCasa(g, quanto, motivo = "") {
   const G = garantirGuilda(g);
   if (!G.membro) return { guilda: G, subiu: null };
@@ -383,7 +413,9 @@ export function contribuirNaCasa(g, quanto, motivo = "") {
   const c = Math.max(0, G.contribuicao + Math.max(0, Math.round(quanto)));
   let posto = antes;
   while (posto < DEGRAUS.length - 1 && c >= degrauDaCasa(posto + 1).exige) posto += 1;
-  const nova = { ...G, contribuicao: c, posto };
+  /* o que o membro traz também engorda a casa: é o mesmo ato visto do
+     outro lado, e ele mora num lugar só */
+  const nova = crescerACasa({ ...G, contribuicao: c, posto }, Math.max(0, Math.round(quanto)) * CRESCE.contribuicao).guilda;
   return { guilda: nova, subiu: posto > antes ? { de: antes, para: posto, nome: nomeDoPosto(nova, posto), o: degrauDaCasa(posto).o, motivo } : null };
 }
 

@@ -27,6 +27,7 @@
 
 import { indoleDe } from "./indole.js";
 import { vocacaoDe, generoPorId } from "./comercio.js";
+import { PORTES } from "./geografia.js";
 
 /* ---------------- O IMPOSTO ----------------
    Três degraus, e cada um é uma troca. O do meio não é "o certo": é o que
@@ -335,4 +336,121 @@ export function oQueAOficinaFaz(cidade) {
   if (!v || !v.produz.length) return "";
   const g = generoPorId(v.produz[0]);
   return g ? `aqui, barateia ${g.nome} em mais 15%` : "";
+}
+
+/* ============================================================
+   A MAÇANETA (v9.140) — como uma cidade passa a ser sua
+
+   Este módulo inteiro estava do lado de dentro de uma porta que não tinha
+   como abrir. `relacao: "jogador"` era escrito num ÚNICO lugar do código:
+   o comando `/dominar` do modo criativo. O painel dizia "conquiste ou funde
+   cidades na história" e não havia conquista nenhuma atrás da frase — a
+   ficção nunca virava posse.
+
+   Construí governo, imposto, obras, custeio, governador e revolta, e provei
+   tudo injetando cidades à mão no save. Cômodo mobiliado, porta sem
+   maçaneta. É a cicatriz número um da casa: regra escrita sem código atrás.
+
+   A porta é a GUILDA, e ela cobra quatro coisas que o sistema sabe conferir:
+
+     · que você MANDE na casa — quem serve não entrega cidades;
+     · que a casa tenha PODER para alcançar aquele porte;
+     · que o cofre DELA pague, e não o seu bolso;
+     · e que você esteja LÁ. Reivindicar de longe é planilha, não conquista.
+
+   E há uma quinta que não impede, mas cobra: a sua FAMA. Uma cidade que não
+   ouviu falar de você aceita a bandeira e não aceita você — o domínio nasce
+   com o povo furioso, e a revolta já começa a contar.
+   ============================================================ */
+
+/* ---------------- O TAMANHO DO LUGAR ----------------
+   A primeira versão disto era uma tabela por NOME de porte: aldeia, vila,
+   cidade, capital, metrópole, fortaleza. Abri uma campanha na Torre e a
+   sede da primeira guilda era "Andar 2 — do Poço": nenhum daqueles nomes.
+
+   O jogo tem QUATRO formas de mundo e DEZESSETE portes — terras abertas,
+   Torre (patamar, andar, andar-mestre, átrio), arquipélago (fundeadouro,
+   porto, forte) e o braço estelar (colônia, sistema, base). Uma tabela que
+   enumera nomes esquece a próxima forma de mundo, e esquece em silêncio:
+   cai no valor padrão e cobra por um patamar de vinte almas o mesmo que
+   por uma cidade.
+
+   Então não se enumera: DERIVA-SE DA POPULAÇÃO, que todo porte já declara
+   em `geografia.js` desde sempre. Uma regra, dezessete portes, e a décima
+   oitava forma de mundo já nasce coberta. */
+const porteDe = (c) => String((c && (c.porte || c.tipo)) || "cidade");
+
+/* 0 num lugar de vinte almas, 1 numa metrópole. Escala logarítmica porque
+   população é logarítmica: de 300 para 1.500 muda tudo, de 80 mil para 300
+   mil muda pouco para quem vai governar. */
+export function pesoDoPorte(cidade) {
+  const P = PORTES[porteDe(cidade)];
+  const almas = P ? Math.max(20, (P.min + P.max) / 2) : 8000;
+  const l = Math.log10(almas);
+  return Math.max(0, Math.min(1, (l - Math.log10(20)) / (Math.log10(190000) - Math.log10(20))));
+}
+
+export const poderExigido = (c) => Math.round(10 + 80 * pesoDoPorte(c));
+export const custoDeTomar = (c) => Math.round(200 + 7800 * Math.pow(pesoDoPorte(c), 2));
+export const diasDeTomar = (c) => Math.round(3 + 21 * Math.pow(pesoDoPorte(c), 1.5));
+/* fama que o lugar espera de quem se diz dono dele */
+export const famaEsperada = (c) => Math.round(120 * Math.pow(pesoDoPorte(c), 2));
+
+/* Devolve SEMPRE o mesmo formato, com o motivo em português — o painel
+   mostra o motivo mesmo quando não dá, porque um botão apagado sem
+   explicação é indistinguível de um recurso que não existe. Foi assim que
+   este módulo inteiro passou despercebido. */
+export function podeTomarCidade({ guilda, mandaNaCasa = false, cidade, aqui = false, fama = 0 }) {
+  const c = cidade || null;
+  const nao = (motivo) => ({ pode: false, motivo, cidade: c });
+  if (!c || !c.nome) return nao("nenhuma cidade aqui");
+  if (porteDe(c) === "ruina") return nao("ruína não se governa: não há a quem cobrar");
+  if (c.relacao === "jogador") return nao("já é sua");
+  const g = guilda || null;
+  if (!g || !g.id) return nao("é preciso uma casa — cidade se toma com gente, e não sozinho");
+  if (!mandaNaCasa) return nao("você serve nesta casa, não manda nela");
+  if (!aqui) return nao("é preciso estar na cidade: de longe isso é planilha, não conquista");
+  const exige = poderExigido(c);
+  if ((g.poder || 0) < exige) return nao(`a ${g.nome} tem poder ${Math.floor(g.poder || 0)} e ${c.nome} exige ${exige}`);
+  const custo = custoDeTomar(c);
+  if ((g.cofre || 0) < custo) return nao(`faltam ◉ ${custo - Math.floor(g.cofre || 0)} no cofre da casa`);
+  const espera = famaEsperada(c);
+  return {
+    pode: true, motivo: "", cidade: c, custo, dias: diasDeTomar(c),
+    /* não impede — cobra. A cidade aceita a bandeira e não aceita você. */
+    aRevelia: fama < espera,
+    espera,
+  };
+}
+
+/* O que fica guardado enquanto a reivindicação corre. Uma cidade não muda
+   de dono no clique: some gente, alguém protesta, e leva dias. */
+export function comecarATomar(cidade, dia, aRevelia) {
+  return { cidade: String((cidade && cidade.nome) || cidade || "").slice(0, 40), desde: Number(dia) || 1, aRevelia: !!aRevelia };
+}
+
+export function tomadaPronta(tomando, cidade, dia) {
+  if (!tomando || !tomando.cidade) return false;
+  return (dia - tomando.desde) >= diasDeTomar(cidade);
+}
+
+/* A cidade recém-tomada não começa em paz: ela começa no humor que a sua
+   fama comprou. Abaixo do que ela esperava, o povo já entra furioso — e a
+   fúria da v9.139 começa a contar no primeiro dia. */
+export const HUMOR_AO_TOMAR = 52;
+export const HUMOR_A_REVELIA = 18;
+
+export function humorAoTomar(aRevelia) {
+  return aRevelia ? HUMOR_A_REVELIA : HUMOR_AO_TOMAR;
+}
+
+export function envelopeDaTomada(cidade, { aRevelia = false, casa = "" } = {}) {
+  if (!cidade || !cidade.nome) return "";
+  return [
+    `${cidade.nome} passou para a bandeira${casa ? ` da ${casa}` : " sua"}. Isto é FATO, e já está feito.`,
+    aRevelia
+      ? "O povo não pediu isto e não conhece você: aceitou a bandeira e não aceitou o dono. Narre o silêncio na praça, quem cospe no chão, quem fecha a janela — e não amanse."
+      : "A cidade já tinha ouvido falar de você, e isso comprou paciência. Narre o dia em que a bandeira subiu, sem festa e sem tragédia.",
+    "Não desfaça a posse e não invente um cerco que a retome.",
+  ].join(" ");
 }

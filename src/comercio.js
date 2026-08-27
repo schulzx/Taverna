@@ -26,6 +26,7 @@
    ============================================================ */
 
 import { estacaoDe } from "./calendario.js";
+import { PORTES } from "./geografia.js";
 
 /* ---------------- OS GÊNEROS ----------------
    Não são os tipos de item — são as CLASSES DE MERCADORIA, que é o que uma
@@ -265,12 +266,21 @@ export function fatorDoLugar(item, cidade, { dia = 1, pressoes = null, vendendo 
 
    Determinística por mercador e por DIA: quem volta amanhã encontra a
    gaveta refeita; quem insiste hoje encontra o que sobrou. */
-export const CAIXA_BASE = { ruina: 0, aldeia: 90, vila: 220, fortaleza: 300, cidade: 650, capital: 1600, metropole: 3200 };
+/* v9.140: DERIVADA DA POPULAÇÃO, e não de uma lista de nomes. A primeira
+   versão enumerava os sete portes das terras abertas — e o jogo tem quatro
+   formas de mundo e vinte portes. Numa campanha na Torre, um patamar de
+   vinte almas caía no padrão e tinha a gaveta de uma cidade. Lista de nomes
+   esquece a próxima forma de mundo, e esquece em silêncio. */
 const CAIXA_POR_TIPO = { relicario: 1.8, geral: 1.0, ferreiro: 0.9, boticario: 0.7, ambulante: 0.6 };
 
 export function caixaDe(mercador, cidade, dia = 1) {
   const porte = String((cidade && (cidade.porte || cidade.tipo)) || (mercador && mercador.tipo === "ambulante" ? "vila" : "cidade"));
-  const base = CAIXA_BASE[porte] != null ? CAIXA_BASE[porte] : 400;
+  if (porte === "ruina") return 0;
+  const P = PORTES[porte];
+  const almas = P ? Math.max(20, (P.min + P.max) / 2) : 8000;
+  /* raiz, e não proporção: a metrópole tem trezentas vezes a gente da
+     aldeia e não trezentas vezes o dinheiro numa gaveta só */
+  const base = Math.round(28 * Math.sqrt(almas));
   const t = CAIXA_POR_TIPO[(mercador && mercador.tipo) || "geral"] || 1;
   /* a variação do dia é pequena de propósito: a gaveta OSCILA, não sorteia */
   const osc = 0.8 + (hash(`caixa|${(mercador && mercador.id) || ""}|${dia}`) % 41) / 100;

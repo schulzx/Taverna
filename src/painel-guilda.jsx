@@ -71,7 +71,7 @@ function CartaoDaCasa({ g, aoEntrar, motivo }) {
 
 export function PainelGuilda({
   guildas = [], minha = null, personagem = {}, cidadeAtual = "", tarefas = [], elenco = [],
-  aoEntrar, aoSair, aoPegarTrabalho, aoDelegar, aoPromover, aoExpulsar, aoAdmitir,
+  aoEntrar, aoSair, aoPegarTrabalho, aoDelegar, aoPromover, aoExpulsar, aoAdmitir, aoTomar, podeTomar = null,
   aoFundar, aoSacar, aoDepositar, aoPedirPazes, trabalhos = [], motivoDeEntrar,
 }) {
   const [verMembros, setVerMembros] = React.useState(false);
@@ -282,6 +282,32 @@ export function PainelGuilda({
       )}
 
       {/* ---- a casa ---- */}
+      {/* ---------------- TOMAR A CIDADE (v9.140) ----------------
+          A porta que faltava. Aparece sempre que há casa, e quando não dá,
+          diz o que falta — poder, cofre ou estar aqui. */}
+      {podeTomar && (
+        <div className="rounded-xl px-3 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${podeTomar.pode ? T.amber : T.line}` }}>
+          <Rotulo>Tomar esta cidade para a casa</Rotulo>
+          {podeTomar.emCurso ? (
+            <div className="tv-body text-xs" style={{ color: T.amberSoft }}>⚑ {podeTomar.emCurso.cidade} — faltam {podeTomar.emCurso.faltam} dia{podeTomar.emCurso.faltam === 1 ? "" : "s"}.</div>
+          ) : podeTomar.pode ? (
+            <>
+              <button onClick={() => aoTomar && aoTomar()} className="w-full tv-mono text-[11px] px-3 py-2 rounded-lg"
+                style={{ background: T.amber, color: T.onAccent, border: `1px solid ${T.amber}`, fontWeight: 600 }}>
+                ⚑ reivindicar {podeTomar.cidade.nome} · ◉ {podeTomar.custo} do cofre, {podeTomar.dias} dias
+              </button>
+              {podeTomar.aRevelia && (
+                <div className="tv-body text-[11px] italic mt-1" style={{ color: T.danger }}>
+                  Ninguém aqui sabe quem você é: a cidade aceitaria a bandeira e não o dono, e nasceria já furiosa.
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="tv-body text-[11px] italic" style={{ color: T.inkDim }}>{podeTomar.motivo}.</div>
+          )}
+        </div>
+      )}
+
       <div>
         <button onClick={() => setVerMembros((v) => !v)} className="w-full text-left">
           <Rotulo>{verMembros ? "▾" : "▸"} A casa · {(minha.membros || []).length} pessoas</Rotulo>
@@ -302,18 +328,29 @@ export function PainelGuilda({
                 )}
               </div>
             ))}
-            {mandar && (
-              <div className="pt-1">
-                <Rotulo>Admitir do elenco</Rotulo>
+            {/* v9.140: ANTES ISTO SÓ EXISTIA PARA QUEM JÁ MANDAVA. Sem posto,
+                o bloco inteiro sumia — e um recurso que some sem dizer por quê
+                é indistinguível de um recurso que não existe. Foi exatamente
+                assim que o jogador procurou onde convidar alguém e concluiu
+                que não havia lugar nenhum. Agora aparece sempre, e quando não
+                dá, diz o que falta. */}
+            <div className="pt-1">
+              <Rotulo>Trazer gente para a casa</Rotulo>
+              {!mandar ? (
+                <div className="tv-body text-[11px] italic" style={{ color: T.inkDim }}>
+                  Quem admite nesta casa é do terceiro degrau para cima — você é {nomeDoPosto(minha, minha.posto)}.
+                  {minha.doJogador ? "" : " Numa casa que não é sua, trazer gente é direito de quem já subiu."}
+                </div>
+              ) : (
                 <div className="flex flex-wrap gap-1">
                   {elenco.filter((p) => !(minha.membros || []).some((m) => m.nome === p.nome)).slice(0, 10).map((p) => (
                     <button key={p.nome} onClick={() => aoAdmitir(p)} className="tv-mono text-[10px] px-2 py-1 rounded"
                       style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>+ {p.nome}</button>
                   ))}
-                  {elenco.length === 0 && <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>ninguém conhecido para admitir ainda</span>}
+                  {elenco.length === 0 && <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>ninguém conhecido para admitir ainda — o elenco enche conforme você conhece gente</span>}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
       </div>
