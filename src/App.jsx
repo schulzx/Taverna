@@ -20,6 +20,7 @@ import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acend
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA } from "./ofertas.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
+import { OBRAS, IMPOSTOS, impostoPorId, obraPorId, garantirGovernos, garantirGoverno, equilibrioDe, contaDoDominio, podeErguer, comecarObra, obraPronta, terminarObra, pulsoDaFuria, revoltaAgora, bonusDeObras, fatorDaOficina, envelopeDoDominio, oQueAOficinaFaz, DESCONTO_DA_OFICINA } from "./dominios.js";
 import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano, resistenciasEquipadas } from "./danos.js";
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, MINUTOS_RODADA_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, rumorDoDia } from "./fama.js";
@@ -1125,7 +1126,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null }) {
+function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1583,7 +1584,7 @@ function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], 
         })()}
 
         {aba === "gestao" && subGestao === "dominios" && (() => {
-          const { porCidade, total } = rendaDominios(mapa, devocao);
+          const { porCidade, total, custeio, liquido } = rendaDominios(mapa, devocao, { governos, semente: sementeMundo, reino });
           const g = guilda || { nivel: 1 };
           const temGuilda = !!faccaoJogador;
           const desperto = !!(divindade && divindade.despertar);
@@ -1593,8 +1594,13 @@ function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], 
           return (
             <>
               <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
-                <span className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Renda total/dia</span>
-                <span className="tv-mono text-xl font-semibold" style={{ color: T.ok }}>+{Math.round(total * (temGuilda ? multGuilda(g.nivel) : 1))}</span>
+                <div>
+                  <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Renda líquida/dia</div>
+                  {/* v9.139: o custeio existe, e por isso a bruta sozinha
+                      mentiria. Guarnição e pedreiro recebem em moeda. */}
+                  <div className="tv-mono text-[9px]" style={{ color: T.inkDim }}>bruta +{Math.round(total * (temGuilda ? multGuilda(g.nivel) : 1))} · custeio −{custeio}</div>
+                </div>
+                <span className="tv-mono text-xl font-semibold" style={{ color: liquido >= 0 ? T.ok : T.danger }}>{liquido >= 0 ? "+" : ""}{Math.round(total * (temGuilda ? multGuilda(g.nivel) : 1)) - custeio}</span>
               </div>
               <div className="space-y-2">
                 {porCidade.map((c) => {
@@ -1631,8 +1637,85 @@ function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], 
                             </div>
                           )}
                         </div>
-                        <span className="tv-mono text-sm shrink-0" style={{ color: T.ok }}>+{Math.round(c.renda * (temGuilda ? multGuilda(g.nivel) : 1) * (v ? fatorFelicidade(v.felicidade) : 1))}/dia</span>
+                        {(() => {
+                          const liq = Math.round(c.renda * (temGuilda ? multGuilda(g.nivel) : 1) * (v ? fatorFelicidade(v.felicidade) : 1)) - c.custeio;
+                          return <span className="tv-mono text-sm shrink-0" style={{ color: liq >= 0 ? T.ok : T.danger }}>{liq >= 0 ? "+" : ""}{liq}/dia</span>;
+                        })()}
                       </div>
+                      {/* ---------------- GOVERNAR (v9.139) ----------------
+                          Esta aba era a única da gestão sem um botão: o
+                          jogador via números subirem e descerem e não tinha
+                          o que decidir. Três decisões, e cada uma dói de
+                          algum lado. */}
+                      {(() => {
+                        const gv = garantirGoverno((governos || {})[c.nome]);
+                        const imp = impostoPorId(gv.imposto);
+                        const emObra = gv.obrando ? obraPorId(gv.obrando.id) : null;
+                        const faltam = emObra ? Math.max(0, emObra.dias - (dia - gv.obrando.desde)) : 0;
+                        const rev = revoltaAgora(gv, dia);
+                        const conta = c.conta;
+                        return (
+                          <div className="mt-2 pt-2 space-y-2" style={{ borderTop: `1px solid ${T.line}` }}>
+                            {rev && !rev.caiu && (
+                              <div className="tv-body text-[11px] rounded-lg px-2 py-1" style={{ color: T.danger, border: `1px solid ${T.danger}` }}>
+                                🔥 fúria há {dia - gv.furiaDesde} dia(s) — se nada mudar, {c.nome} se perde em {rev.faltam}.
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1">
+                              <span className="tv-mono text-[9px] uppercase tracking-wider mr-1" style={{ color: T.inkDim }}>imposto</span>
+                              {IMPOSTOS.map((x) => (
+                                <button key={x.id} onClick={() => onImposto && onImposto(c.nome, x.id)} title={x.o}
+                                  className="tv-mono text-[10px] px-2 py-1 rounded-lg"
+                                  style={{ background: x.id === imp.id ? T.amber : "transparent", color: x.id === imp.id ? T.onAccent : T.inkDim, border: `1px solid ${x.id === imp.id ? T.amber : T.line}` }}>
+                                  {x.icone} {x.nome}
+                                </button>
+                              ))}
+                            </div>
+                            {conta && (
+                              <div className="tv-mono text-[9px]" style={{ color: T.inkDim }}>
+                                {conta.linhas.map((l) => `${l.o} ${l.v >= 0 ? "+" : ""}${l.v}`).join("  ·  ")}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1.5">
+                              <span className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.inkDim }}>governa</span>
+                              <select value={gv.governador} onChange={(e) => onGovernador && onGovernador(c.nome, e.target.value)}
+                                className="tv-mono text-[10px] px-1.5 py-1 rounded-lg flex-1 min-w-0"
+                                style={{ background: T.panel, color: T.ink, border: `1px solid ${T.line}` }}>
+                                <option value="">você, de longe</option>
+                                {Object.values(npcs || {}).filter((n) => n && n.nome && n.status !== "morto").slice(0, 40).map((n) => (
+                                  <option key={n.nome} value={n.nome}>{n.nome}</option>
+                                ))}
+                              </select>
+                            </div>
+                            {gv.governador && conta && conta.governador.linhas.length > 0 && (
+                              <div className="tv-body text-[10px] italic" style={{ color: T.amberSoft }}>{conta.governador.linhas.join(" · ")}</div>
+                            )}
+                            {emObra ? (
+                              <div className="tv-body text-[11px]" style={{ color: T.amberSoft }}>{emObra.icone} {emObra.nome} — faltam {faltam} dia{faltam === 1 ? "" : "s"}.</div>
+                            ) : (
+                              <div className="flex flex-wrap gap-1">
+                                {OBRAS.filter((o) => !gv.obras.includes(o.id)).map((o) => {
+                                  const chk = podeErguer(gv, o.id, { cofre: g.cofre || 0 });
+                                  const extra = o.produz ? ` — ${oQueAOficinaFaz(((mapa && mapa.cidades) || []).find((x) => x.nome === c.nome))}` : "";
+                                  return (
+                                    <button key={o.id} onClick={() => onErguerObra && onErguerObra(c.nome, o.id)} disabled={!chk.pode}
+                                      title={`${o.o} — ${o.porque}${extra}. ◉ ${o.custo}, ${o.dias} dias, custeio ${o.custeio}/dia${chk.pode ? "" : ` · ${chk.motivo}`}`}
+                                      className="tv-mono text-[10px] px-2 py-1 rounded-lg"
+                                      style={{ border: `1px solid ${chk.pode ? T.line : "transparent"}`, color: chk.pode ? T.ink : T.inkDim, opacity: chk.pode ? 1 : 0.4 }}>
+                                      {o.icone} {o.nome.toLowerCase()} ◉{o.custo}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            {gv.obras.length > 0 && (
+                              <div className="tv-body text-[10px]" style={{ color: T.inkDim }}>
+                                de pé: {gv.obras.map((id) => `${(obraPorId(id) || {}).icone} ${(obraPorId(id) || {}).nome}`).join(", ")}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                       {desperto && (
                         <div className="mt-2 pt-2" style={{ borderTop: `1px solid ${T.line}` }}>
                           {tAtual && <div className="tv-body text-[11px] mb-1" style={{ color: T.violetSoft }}>{tAtual.icone} {tAtual.nome} — +{tAtual.feDia.toFixed(1)}% de fé e +{tAtual.pf} PF por dia, felicidade de equilíbrio +{tAtual.felicidade}.</div>}
@@ -4342,6 +4425,17 @@ export default function Taverna() {
        é geografia antes de ser economia — a praça de um porto e a de uma
        serra não se parecem, e o Narrador nunca teve como saber disso. */
     p = porNaPauta(p, "onde", envelopeDoComercio(cidadeDoMapa(cidadeAtualRef.current), diaRef.current));
+    /* v9.139: e, se este chão for seu, o que você decidiu sobre ele. Só
+       quando o herói está lá — governo de longe não é o que se vê na praça. */
+    {
+      const cd = cidadeDoMapa(cidadeAtualRef.current);
+      if (cd && cd.relacao === "jogador") {
+        p = porNaPauta(p, "onde", envelopeDoDominio(cd, (governosRef.current || {})[cd.nome], {
+          felicidade: ((reinoRef.current || {})[cd.nome] || {}).felicidade,
+          semente: sementeMundo(),
+        }));
+      }
+    }
     /* v9.129: A SECAO `momento` estava declarada em `pauta.js` desde a v9.104
        e nunca era preenchida — uma porta sem leitor. A espinha e o leitor
        dela: "a batida da historia" e exatamente o marco em que se esta. */
@@ -4914,6 +5008,12 @@ export default function Taverna() {
   const [dia, setDia] = useState(1);
   const reinoRef = useRef({});
   const [reino, setReino] = useState({});
+  /* v9.139: O GOVERNO. Só o que é DECISÃO mora aqui — imposto, obras, a obra
+     em andamento, quem manda e há quantos dias a cidade está furiosa.
+     População e felicidade continuam sendo de `reino.js`, de quem sempre
+     foram. */
+  const governosRef = useRef({});
+  const [governos, setGovernos] = useState({});
   /* TEMPO DA CAMPANHA (v6.5): o app conta os dias — a âncora da memória.
      "Nos conhecemos no dia X" vira fato verificável; antes dele, impossível. */
   const minutoRef = useRef(AMANHECER + 60); // a aventura começa de manhã
@@ -5297,7 +5397,7 @@ export default function Taverna() {
       combate: combateRef.current, registro: registroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
-      masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
+      masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
       historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
@@ -8293,6 +8393,7 @@ export default function Taverna() {
     if (!cap) { baseMundoRef.current = garantirBase(null); setBaseMundo(baseMundoRef.current); }
     confidenciasRef.current = [];
     mercadoRef.current = { comprados: {}, ambulante: null, pressoes: {}, gastos: {}, pechinchas: {} }; setMercado(mercadoRef.current);
+    governosRef.current = {}; setGovernos({});
     if (!cap) bancoNomesRef.current = gerarBancoNomes(mundoAtual());
     systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null);
@@ -8486,6 +8587,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       }
       famaPatamarRef.current = sv.famaPatamar || 0;
       reinoRef.current = garantirReino(sv.reino && typeof sv.reino === "object" ? sv.reino : {}, mapaRef.current) || {}; setReino(reinoRef.current);
+      governosRef.current = garantirGovernos(sv.governos, mapaRef.current); setGovernos(governosRef.current);
       /* BLINDAGEM v6.5: pessoas de saves antigos sem data de encontro ganham
          "dia 0" (= antes do registro de dias) — nunca um passado inventado. */
       let regTocou = false;
@@ -14716,12 +14818,70 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       diaRef.current += 1;
       /* TEMPLOS (v8.9): onde há para onde rezar, o povo aguenta mais —
          o equilíbrio da felicidade daquele domínio sobe com o templo. */
-      const { reino: nr, evento } = processarDiaReino(r, mapaRef.current, alvosFelicidade(mapaRef.current, devocaoRef.current));
+      /* v9.139: o alvo da felicidade deixou de ser 55 fixo. Ele responde ao
+         imposto, às obras e a quem governa — é o que faz da aba um governo:
+         a decisão de hoje aparece na cidade daqui a alguns dias, e não no
+         mesmo instante em que o botão é apertado. O templo continua somando
+         por cima, porque a fé e o governo são coisas diferentes. */
+      const alvos = (() => {
+        const doTemplo = alvosFelicidade(mapaRef.current, devocaoRef.current);
+        const out = {};
+        for (const [nome, g] of Object.entries(governosRef.current || {})) {
+          const base = equilibrioDe({ semente: sementeMundo(), gov: g });
+          out[nome] = Math.max(0, Math.min(100, base + ((doTemplo[nome] || 55) - 55)));
+        }
+        for (const [nome, v] of Object.entries(doTemplo)) if (out[nome] == null) out[nome] = v;
+        return out;
+      })();
+      const { reino: nr, evento } = processarDiaReino(r, mapaRef.current, alvos);
       r = nr;
-      if (evento) {
+      /* v9.139: A OBRA BARRA O EVENTO. É a forma mais concreta de uma
+         construção existir: o celeiro não dá pontos — o celeiro faz a praga
+         nos celeiros parar de acontecer. Sem isto, "obra" seria um número
+         somado a outro número. */
+      const barrado = evento && (bonusDeObras((governosRef.current || {})[evento.cidade]).impede).has(evento.evento.id);
+      if (evento && !barrado) {
         eventos.push(evento);
         cofreDeltaTotal += evento.cofreDelta || 0;
         bumpCont("eventosReino");
+      }
+
+      /* ---------------- O DIA DO GOVERNO (v9.139) ----------------
+         Três coisas precisam do dia passando: a obra que fica pronta (obra
+         que termina no clique é item de loja), a fúria que conta os dias, e
+         a cidade que se perde. */
+      {
+        let govs = { ...(governosRef.current || {}) };
+        let mudou = false;
+        for (const [nome, g0] of Object.entries(govs)) {
+          let g = g0;
+          const pronta = obraPronta(g, diaRef.current);
+          if (pronta) {
+            g = terminarObra(g); mudou = true;
+            pushMsgs([{ autor: "sistema", texto: `${pronta.icone} ${nome}: ${pronta.nome} de pé — ${pronta.porque}.` }]);
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[OBRA CONCLUÍDA — JÁ APLICADA PELO SISTEMA] Em ${nome} ficou pronta: ${pronta.nome}. Narre o que muda na cidade; não invente outra obra nem desfaça esta.`;
+          }
+          const fel = (r[nome] && r[nome].felicidade) != null ? r[nome].felicidade : 55;
+          const g2 = pulsoDaFuria(g, fel, diaRef.current);
+          if (g2 !== g) { g = g2; mudou = true; }
+          const rev = revoltaAgora(g, diaRef.current);
+          if (rev && rev.caiu) {
+            /* A CIDADE SAI. O evento "murmúrios de revolta" existia desde a
+               v6.5 e não levava a nada: baixava um número que voltava a
+               subir sozinho. Um reino que não pode ser perdido não é um
+               reino, é um placar. */
+            mapaRef.current = { ...mapaRef.current, cidades: (mapaRef.current.cidades || []).map((c) => (c.nome === nome ? { ...c, relacao: "neutra", sede: false } : c)) };
+            setMapa(mapaRef.current);
+            delete govs[nome]; mudou = true;
+            const nr2 = { ...r }; delete nr2[nome]; r = nr2;
+            pushMsgs([{ autor: "sistema", texto: `🔥 ${nome} se revoltou e não é mais sua. ${rev.prazo} dias de fúria, e ninguém desceu o imposto.` }]);
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[REVOLTA — JÁ RESOLVIDA PELO SISTEMA] ${nome} deixou de ser um domínio seu: o povo tomou a cidade depois de ${rev.prazo} dias de fúria. Narre a queda — quem abriu o portão, o que ficou para trás. Não a devolva e não invente um cerco que a retome.`;
+          } else if (rev && rev.faltam <= 3) {
+            pushMsgs([{ autor: "sistema", texto: `⚠ ${nome} está a ${rev.faltam} dia${rev.faltam === 1 ? "" : "s"} da revolta.` }]);
+          }
+          if (govs[nome]) govs[nome] = g;
+        }
+        if (mudou) { governosRef.current = govs; setGovernos(govs); }
       }
       /* ---------------- A CASA, POR DIA (v9.133) ----------------
          Quem foi mandado volta, e a lei olha o calendario. As duas coisas
@@ -15272,7 +15432,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const temGuilda = !!faccaoJogadorRef.current;
     const nDominios = dominiosDe(mapaRef.current).length;
     if ((!temGuilda && !nDominios) || dias <= 0) return 0;
-    const porDia = rendaDiariaTotal(mapaRef.current, guildaRef.current.nivel, temGuilda);
+    const porDia = rendaDiariaTotal(mapaRef.current, guildaRef.current.nivel, temGuilda, devocaoRef.current, { governos: governosRef.current, semente: sementeMundo(), reino: reinoRef.current });
     const ganho = Math.round(porDia * dias * fatorMedioReino(reinoRef.current) * estacaoDe(diaRef.current).fatorRenda); // povo feliz produz mais; inverno aperta
     if (ganho <= 0) return 0;
     const g = { ...guildaRef.current, cofre: guildaRef.current.cofre + ganho };
@@ -15281,6 +15441,46 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     checarConquistas();
     return ganho;
   }, [pushMsgs]);
+
+  /* ---------------- GOVERNAR (v9.139) ----------------
+     As três decisões. Cada uma escreve no governo daquela cidade e em mais
+     nada — a felicidade, a renda e a revolta leem daqui no dia seguinte,
+     porque governo que surte efeito no clique é um botão, não um governo. */
+  const mexerNoGoverno = (nome, f) => {
+    const atual = garantirGoverno((governosRef.current || {})[nome]);
+    const novo = f(atual);
+    if (!novo || novo === atual) return null;
+    governosRef.current = { ...(governosRef.current || {}), [nome]: novo };
+    setGovernos(governosRef.current);
+    salvar({ governos: governosRef.current });
+    return novo;
+  };
+
+  const definirImposto = (nome, id) => {
+    const imp = impostoPorId(id);
+    if (!mexerNoGoverno(nome, (g) => (g.imposto === imp.id ? g : { ...g, imposto: imp.id }))) return;
+    pushMsgs([{ autor: "sistema", texto: `${imp.icone} ${nome}: imposto ${imp.nome} — ${imp.o}.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[IMPOSTO — JÁ APLICADO PELO SISTEMA] Mandei cobrar imposto ${imp.nome} em ${nome}. Narre como a ordem chega à praça; não invente o número nem o efeito.`;
+  };
+
+  const erguerObra = (nome, obraId) => {
+    const g = garantirGoverno((governosRef.current || {})[nome]);
+    const chk = podeErguer(g, obraId, { cofre: guildaRef.current.cofre || 0 });
+    if (!chk.pode) { pushMsgs([{ autor: "sistema", texto: `⛔ ${chk.motivo}.` }]); return; }
+    const o = chk.obra;
+    guildaRef.current = { ...guildaRef.current, cofre: guildaRef.current.cofre - o.custo };
+    setGuilda(guildaRef.current);
+    mexerNoGoverno(nome, (x) => comecarObra(x, obraId, diaRef.current));
+    pushMsgs([{ autor: "sistema", texto: `${o.icone} ${nome}: ${o.nome} começou — ◉ ${o.custo} do cofre, ${o.dias} dias.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[OBRA INICIADA — JÁ PAGA PELO SISTEMA] Mandei erguer ${o.nome} em ${nome}: ${o.o}. Leva ${o.dias} dias. Narre os pedreiros chegando; não a termine antes do tempo.`;
+  };
+
+  const nomearGovernador = (nome, quem) => {
+    if (!mexerNoGoverno(nome, (g) => ({ ...g, governador: String(quem || "").slice(0, 40) }))) return;
+    if (!quem) { pushMsgs([{ autor: "sistema", texto: `🏛 ${nome} volta a ser governada por você, de longe.` }]); return; }
+    pushMsgs([{ autor: "sistema", texto: `🏛 ${quem} governa ${nome} em seu nome.` }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[GOVERNADOR — JÁ NOMEADO PELO SISTEMA] Pus ${quem} para governar ${nome}. Narre a nomeação e o que a cidade acha; não invente o que essa pessoa é.`;
+  };
 
   const depositarCofre = (valor) => {
     const v = Math.min(valor, personagem.moedas || 0);
@@ -15495,7 +15695,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const semEstoqueGasto = (m) => ({ ...m, estoque: (m.estoque || []).filter((it) => !(comprados[m.id] || []).includes(it.nome)) });
     const lista = [];
     if (mercado && mercado.ambulante) lista.push(semEstoqueGasto(mercado.ambulante));
-    if (cidadeMercado) lista.push(...mercadoresDaCidade(cidadeMercado, diaRef.current, (personagem && personagem.nivel) || 1, (mundoAtual() || {}).lexico, { pressoes: (mercado && mercado.pressoes) || {} }).map(semEstoqueGasto));
+    if (cidadeMercado) lista.push(...mercadoresDaCidade(cidadeMercado, diaRef.current, (personagem && personagem.nivel) || 1, (mundoAtual() || {}).lexico, {
+      pressoes: (mercado && mercado.pressoes) || {},
+      /* v9.139: a casa de ofício de um domínio seu barateia aqui o que esta
+         cidade produz. É a primeira vez que uma decisão de governo aparece
+         na etiqueta de um preço. */
+      oficina: (g) => { const f = fatorDaOficina((governos || {})[cidadeMercado.nome], g, cidadeMercado); return f === 1 ? null : { fator: f, porque: "a casa de ofício daqui fabrica isto" }; },
+    }).map(semEstoqueGasto));
     /* CARTÓGRAFO (v9.14): quem vende papel põe os mapas das regiões que o
        herói ainda não conhece na banca. Some sozinho quando não há mais o que
        revelar — não fica um item morto na prateleira. */
@@ -16970,7 +17176,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} /></LimiteErro>
+          <LimiteErro><PainelLateral guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onDiplomacia={diplomacia} onPresente={presentearFaccao} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

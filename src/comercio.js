@@ -222,7 +222,7 @@ export function apertarProcura(pressoes, cidade, genero, dia) {
 export const FATOR_PRODUZ = 0.75;
 export const FATOR_FALTA = 1.4;
 
-export function fatorDoLugar(item, cidade, { dia = 1, pressoes = null, vendendo = false } = {}) {
+export function fatorDoLugar(item, cidade, { dia = 1, pressoes = null, vendendo = false, extra = null } = {}) {
   const g = generoDoItem(item);
   if (!g) return { fator: 1, genero: "", porques: [] };
   const v = vocacaoDe(cidade);
@@ -246,6 +246,14 @@ export function fatorDoLugar(item, cidade, { dia = 1, pressoes = null, vendendo 
        vender: é o mesmo fato visto dos dois lados, e ele mora num lugar só */
     f *= vendendo ? 1 - Math.min(0.35, pr) : 1 + pr;
     porques.push(vendendo ? `a praça está cheia de ${generoPorId(g).nome}` : `procuraram muito ${generoPorId(g).nome} aqui`);
+  }
+  /* v9.139: um fator de FORA, com motivo. É por aqui que uma decisão de
+     governo chega ao preço — a casa de ofício de um domínio barateia o que
+     aquela cidade produz. Vem como número porque `dominios.js` já lê este
+     módulo, e módulo que se lê de volta é um ciclo. */
+  if (extra && extra.fator && extra.fator !== 1) {
+    f *= extra.fator;
+    if (extra.porque) porques.push(extra.porque);
   }
   return { fator: f, genero: g, porques };
 }

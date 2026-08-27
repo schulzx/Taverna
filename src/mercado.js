@@ -113,9 +113,9 @@ export function fatorPorte(cidade) {
 export function precoDaBanca(item, cidade, mercador, ctx = {}) {
   return precoDaBancaComMotivo(item, cidade, mercador, ctx).preco;
 }
-export function precoDaBancaComMotivo(item, cidade, mercador, { dia = 1, pressoes = null } = {}) {
+export function precoDaBancaComMotivo(item, cidade, mercador, { dia = 1, pressoes = null, extra = null } = {}) {
   const base = item && item.valor != null ? item.valor : valorDeItem(item);
-  const lug = fatorDoLugar(item, cidade, { dia, pressoes, vendendo: false });
+  const lug = fatorDoLugar(item, cidade, { dia, pressoes, vendendo: false, extra });
   const f = fatorPorte(cidade) * ((mercador && tipoMercador(mercador.tipo).ageio) || 1) * lug.fator;
   return { preco: Math.max(1, Math.round(base * f)), porques: lug.porques, genero: lug.genero };
 }
@@ -125,9 +125,9 @@ export function precoDaBancaComMotivo(item, cidade, mercador, { dia = 1, pressoe
 export function precoQueOferecem(item, cidade, ctx = {}) {
   return precoQueOferecemComMotivo(item, cidade, ctx).preco;
 }
-export function precoQueOferecemComMotivo(item, cidade, { dia = 1, pressoes = null } = {}) {
+export function precoQueOferecemComMotivo(item, cidade, { dia = 1, pressoes = null, extra = null } = {}) {
   const base = item && item.valor != null ? item.valor : valorDeItem(item);
-  const lug = fatorDoLugar(item, cidade, { dia, pressoes, vendendo: true });
+  const lug = fatorDoLugar(item, cidade, { dia, pressoes, vendendo: true, extra });
   return {
     preco: Math.max(1, Math.round(base * PRECO_VENDA * fatorPorte(cidade) * lug.fator)),
     porques: lug.porques, genero: lug.genero,
@@ -172,7 +172,7 @@ export function mapasAVenda(regioesOcultas = [], cidadesPorRegiao = {}) {
   });
 }
 
-export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1, lex = null, ordem = 0, pressoes = null }) {
+export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1, lex = null, ordem = 0, pressoes = null, oficina = null }) {
   const rnd = rngDe(semente);
   const t = tipo ? tipoMercador(tipo) : pick(rnd, TIPOS_MERCADOR.filter((x) => x.id !== "ambulante"));
   /* v9.113: O NOME DA BANCA VEM DO MUNDO, quando o mundo tem um. O
@@ -216,7 +216,7 @@ export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1
     const g = generoDoItem(it);
     if (falta(g) && rnd() < 0.65) continue;
     vistos.add(it.nome);
-    const pv = precoDaBancaComMotivo(it, cidade, { tipo: t.id }, { dia, pressoes });
+    const pv = precoDaBancaComMotivo(it, cidade, { tipo: t.id }, { dia, pressoes, extra: oficina && oficina(generoDoItem(it)) });
     estoque.push({ ...it, preco: pv.preco, porques: pv.porques, genero: pv.genero });
     /* e o que sobra aqui, sobra mesmo: a serra de montanha põe um segundo
        ferro na bancada */
@@ -226,7 +226,7 @@ export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1
         : gerarLoot(raridadeDaBanca(rnd, cidade), { tipo: oQue === "amuleto" ? "amuleto" : oQue, nivel, rnd, lex });
       if (extra && !vistos.has(extra.nome)) {
         vistos.add(extra.nome);
-        const pe = precoDaBancaComMotivo(extra, cidade, { tipo: t.id }, { dia, pressoes });
+        const pe = precoDaBancaComMotivo(extra, cidade, { tipo: t.id }, { dia, pressoes, extra: oficina && oficina(generoDoItem(extra)) });
         estoque.push({ ...extra, preco: pe.preco, porques: pe.porques, genero: pe.genero });
       }
     }
@@ -241,7 +241,7 @@ export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1
 
 /* Quantos mercadores uma cidade sustenta — e quais. Determinístico por
    cidade + SEMANA: o estoque gira, mas não a cada passo do herói. */
-export function mercadoresDaCidade(cidade, dia = 1, nivel = 1, lex = null, { pressoes = null } = {}) {
+export function mercadoresDaCidade(cidade, dia = 1, nivel = 1, lex = null, { pressoes = null, oficina = null } = {}) {
   if (!cidade || !cidade.nome) return [];
   const porte = cidade.porte || cidade.tipo || "cidade";
   if (porte === "ruina") return [];
@@ -260,7 +260,7 @@ export function mercadoresDaCidade(cidade, dia = 1, nivel = 1, lex = null, { pre
      mudaria quais bancas esta cidade tem. É a regra que o bug do
      continente deixou na v9.102. */
   const desloc = Math.floor(rngDe(`nome-banca|${cidade.nome}`)() * 97);
-  return tipos.map((t, i) => gerarMercador({ cidade, semente: `${cidade.nome}|${semana}|${t}|${i}`, nivel, tipo: t, dia, lex, ordem: desloc + i, pressoes }));
+  return tipos.map((t, i) => gerarMercador({ cidade, semente: `${cidade.nome}|${semana}|${t}|${i}`, nivel, tipo: t, dia, lex, ordem: desloc + i, pressoes, oficina }));
 }
 
 /* Mercador ambulante: chance pequena por dia de viagem. */

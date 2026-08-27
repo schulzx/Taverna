@@ -5607,3 +5607,75 @@ capital de corte mostrou a vocação, a gaveta de cada banca, o motivo debaixo
 de cada preço; a pechincha falhou com d20 8+1=9 contra 15 e **subiu 8% em
 todos os preços daquela banca e em nenhuma outra**; e a venda entregou ao
 cofre exatamente o número que o botão prometia.
+
+## v9.139 — o governo: governar um domínio, e não assistir a ele
+
+O sistema de domínios existia desde a v6.5 e era honesto no que fazia: renda
+por tipo de cidade, população e felicidade vivas, eventos por tabela, zero
+tokens. Mas era um **painel, não um governo**. Abrindo a aba, o jogador via
+números subirem e descerem e não tinha **um único botão**. A felicidade
+derivava sozinha para 55, os eventos aconteciam com ele, e a única decisão
+possível era erguer um templo — que é do sistema de devoção.
+
+Quatro decisões, e cada uma dói de algum lado:
+
+**O imposto.** Três degraus. O do meio não é "o certo": é o que não mexe em
+nada, e por isso a escolha é uma escolha. Nenhum é bom nos dois lados —
+isso seria a opção óbvia, e opção óbvia não é decisão.
+
+**As obras.** Seis, e nenhuma é só um bônus de renda. Obra que só dá renda é
+um botão que imprime ouro; estas mexem no equilíbrio da felicidade, no
+custeio, e sobretudo **barram eventos**: o celeiro não dá pontos — o celeiro
+faz a *praga nos celeiros* parar de acontecer. É a forma mais concreta de
+uma construção existir. E cada uma leva dias: obra que termina no clique é
+item de loja.
+
+**O custeio.** Sem conta a pagar, domínio é só renda e nenhuma decisão sobre
+dinheiro pesa. Guarnição e muralha numa vila **deixam a conta negativa** — e
+o painel mostra isso em vermelho.
+
+**O governador.** É aqui que os domínios encontram a índole. Desde a v9.136
+toda pessoa nasce com traços, e um deles é `traidor` — mas isso só chegava à
+*fala*. Um domínio é o lugar onde ter posto um traidor no comando **custa**.
+O efeito é pequeno de propósito: é um dedo na balança, e uma razão para você
+se importar com quem aquela pessoa é.
+
+**E a cidade pode ser perdida.** O evento "murmúrios de revolta" existia
+desde a v6.5 e não levava a nada: baixava um número que voltava a subir
+sozinho. Agora a fúria conta os dias, o jogador é avisado com antecedência,
+a muralha e o quartel atrasam a queda — e no prazo a cidade **sai do mapa**.
+Um reino que não pode ser perdido não é um reino, é um placar.
+
+**E uma decisão de governo chega à etiqueta de um preço.** A casa de ofício
+faz a cidade fabricar o que só extraía, e o gênero que ela produz fica mais
+15% barato ali. É a primeira vez que algo decidido na aba de gestão aparece
+na praça — e foi preciso abrir uma porta em `comercio.js` para um fator vindo
+de fora, com motivo, porque `dominios.js` já lê aquele módulo e módulo que se
+lê de volta é um ciclo.
+
+### O defeito que a sonda no jogo pegou
+
+Nomeei Varek governador e **o painel ficou mudo**: nenhuma linha, nenhum
+número mudado. A tabela do mando cobria dez dos dezessete traços. Medido:
+
+```
+governadores que não faziam nada ....... 164 de 600
+```
+
+Vinte e sete por cento das nomeações eram um clique sem efeito — o que lê
+como recurso quebrado, e não como "esta pessoa governa sem deixar marca". Se
+a índole vale, ela vale inteira: os dezessete têm cadeira, e a prova quebra
+no dia em que nascer um décimo oitavo traço sem uma. Depois: **zero em 600**,
+e Varek passou a dizer o que é — *"generoso: dá do cofre da cidade sem
+perguntar a você"*, com `governador −6` na conta.
+
+### Provado no jogo
+
+Domínio injetado num save local, sem API. A aba mostrou a conta aberta
+(`capital +50 · imposto pesado +22 · governador −6`), o imposto pesado moveu
+a bruta na hora, a obra saiu do cofre (`◉ 150, 4 dias`) e **ficou pronta
+quando o dia passou de verdade** — não com o `/dia` do modo criativo, que
+crava o calendário sem rodar o dia do reino.
+
+O que não pude ver na tela: a revolta, que exige a felicidade abaixo de 25
+por oito dias seguidos. Está coberta por prova.

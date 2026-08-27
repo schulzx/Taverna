@@ -8,6 +8,7 @@
    ============================================================ */
 
 import { feDaCidade, bonusRendaDevocao } from "./devocao.js";
+import { contaDoDominio, custeioDe } from "./dominios.js";
 
 /* Renda diária base por tipo de cidade dominada */
 export const RENDA_CIDADE = { vila: 5, cidade: 12, capital: 25, fortaleza: 15, ruina: 2 };
@@ -28,15 +29,29 @@ export function dominiosDe(mapa) {
    DEVOÇÃO (v8.9): povo que reza pelo herói dizima, peregrina e gasta na
    cidade — até +25% de renda. O bônus é opcional: sem devoção passada,
    a conta é exatamente a de antes. */
-export function rendaDominios(mapa, devocao) {
+/* v9.139: O GOVERNO ENTRA NA CONTA. Até aqui a renda de um domínio era o
+   tipo da cidade e mais nada — o jogador não tinha decisão nenhuma que
+   mexesse neste número. Agora o imposto que ele escolheu, as obras que
+   mandou erguer e quem ele pôs no comando entram aqui, e o CUSTEIO sai.
+
+   A conta é feita em `dominios.js`, num lugar só: se a etiqueta do painel e
+   o que cai no cofre discordarem, é porque alguém a fez duas vezes. */
+export function rendaDominios(mapa, devocao, { governos = null, semente = "", reino = null } = {}) {
   const porCidade = dominiosDe(mapa).map((c) => {
     const base = rendaDeCidade(c);
     const fe = devocao ? feDaCidade(devocao, c.nome) : 0;
     const mult = devocao ? bonusRendaDevocao(fe) : 1;
-    return { nome: c.nome, tipo: c.tipo || "cidade", sede: !!c.sede, base, fe, multFe: mult, renda: base * mult };
+    const gov = governos ? governos[c.nome] : null;
+    const fel = (reino && reino[c.nome] && reino[c.nome].felicidade) != null ? reino[c.nome].felicidade : 55;
+    const conta = contaDoDominio({ semente, cidade: c, gov, rendaBase: base * mult, felicidade: fel });
+    return {
+      nome: c.nome, tipo: c.tipo || "cidade", sede: !!c.sede, base, fe, multFe: mult,
+      renda: conta.bruta, custeio: conta.custeio, liquido: conta.liquido, conta,
+    };
   });
   const total = porCidade.reduce((s, c) => s + c.renda, 0);
-  return { porCidade, total };
+  const custeio = porCidade.reduce((s, c) => s + c.custeio, 0);
+  return { porCidade, total, custeio, liquido: total - custeio };
 }
 
 /* ---------------- GUILDA ----------------
@@ -68,10 +83,16 @@ export function efeitoTratados(mapa) {
 }
 
 /* Renda diária total = (contratos da guilda + domínios) × multiplicadores + tributos */
-export function rendaDiariaTotal(mapa, nivel, temGuilda, devocao) {
-  const { total } = rendaDominios(mapa, devocao);
+export function rendaDiariaTotal(mapa, nivel, temGuilda, devocao, ctx = {}) {
+  const { total, custeio } = rendaDominios(mapa, devocao, ctx);
   const contratos = temGuilda ? rendaContratos(nivel) : 0;
   const mult = temGuilda ? multGuilda(nivel) : 1;
   const { bonusPct, tributo } = efeitoTratados(mapa);
-  return Math.round((contratos + total) * mult * (1 + bonusPct)) + tributo;
+  /* o custeio sai DEPOIS dos multiplicadores: soldado e pedreiro recebem em
+     moeda, e não em percentual do que o império rende */
+  return Math.round((contratos + total) * mult * (1 + bonusPct)) + tributo - custeio;
 }
+
+/* NAO HA um `custeioTotal` exportado: quem quer a soma pede `rendaDominios`,
+   que ja a devolve com a renda ao lado. Uma funcao que so soma de novo o que
+   a outra acabou de somar e a segunda casa onde o numero pode divergir. */
