@@ -75,7 +75,7 @@ import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, e
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
-import { locaisDaCidade, garantirBase, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, BASE_PROMPT } from "./mundo-base.js";
+import { locaisDaCidade, garantirBase, porSituacao, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, BASE_PROMPT } from "./mundo-base.js";
 import { dificuldadeDaMasmorra, envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
 import { poderDe, poderDoItem, pontosDoItem, trocaDeItem, formatarPoder, contaDoPoder } from "./poder.js";
 import { montarTrama, viradaDevida, envelopeDaTrama, envelopeDoQueVira, intencaoDaTramaPorId } from "./tramas.js";
@@ -6781,6 +6781,9 @@ export default function Taverna() {
       /* v9.129: o que já foi apresentado em cena. É o que a etapa `revelar`
          lê — descobrir é diferente de passar pela porta. */
       revelados: (baseMundoRef.current || {}).revelados || [],
+      /* v9.132: a base inteira, porque a etapa de resgate pergunta a
+         SITUACAO de alguem — e quem sabe normalizar nome e ela. */
+      base: baseMundoRef.current,
     };
   };
 
@@ -11054,6 +11057,18 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       }
     }
     const r = conferirMissoes(missoesRef.current, mundoDasMissoes(p));
+    /* ---------------- A FALHA DESCRITA (v9.132) — fase 3 ----------------
+       Ate aqui so o PRAZO fazia uma missao fracassar. Uma missao de resgate
+       cuja pessoa morreu ficava ativa para sempre, esperando um resgate que
+       nao pode mais acontecer — e o jogador nunca sabia que tinha perdido. */
+    if ((r.falhadas || []).length) {
+      missoesRef.current = r.missoes; setMissoes(r.missoes);
+      for (const f of r.falhadas) {
+        pushMsgs([{ autor: "sistema", texto: `✖ ${f.missao.titulo} — ${f.motivo}.` }]);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MISSAO PERDIDA — RESOLVIDO PELO SISTEMA] "${f.missao.titulo}" fracassou: ${f.motivo}. Isto e fato consumado e nao se desfaz. Deixe o peso disso aparecer na cena em uma ou duas frases — nao ofereca uma segunda chance, nao sugira que houve engano, e nao reabra o assunto nos proximos turnos.`;
+      }
+      salvar({ missoes: missoesRef.current });
+    }
     if (!r.avancos.length) return p;
     missoesRef.current = r.missoes; setMissoes(r.missoes);
     pushMsgs(r.avancos.map((a) => ({ autor: "sistema", texto: linhaEtapa(a) })));
@@ -13844,6 +13859,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       dadorPresente: false,
     });
     if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${r.motivo}.` }]); return; }
+    /* v9.132: uma missao de resgate AFIRMA que alguem esta preso. Sem
+       escrever isso no mundo, a etapa nasceria cumprida — todo mundo e
+       `livre` por omissao, inclusive quem nunca foi levado. */
+    for (const c2 of (r.cativeiros || [])) {
+      baseMundoRef.current = porSituacao(baseMundoRef.current, c2.nome, c2.situacao, { onde: c2.onde });
+    }
+    if ((r.cativeiros || []).length) salvar({ baseMundo: baseMundoRef.current });
     /* contrato do mural nasce ATIVO: pegar o papel já é aceitar */
     const aceita = { ...r.missao, status: "ativa" };
     missoesRef.current = r.missoes.map((m) => (m.id === aceita.id ? aceita : m));

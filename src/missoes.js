@@ -48,6 +48,11 @@
    ============================================================ */
 
 import { criarRelogio } from "./relogios.js";
+/* v9.132: a etapa de resgate le a SITUACAO da pessoa, que e o estado que
+   a fase 2 criou. `mundo-base.js` nao importa `missoes.js`, entao nao ha
+   ciclo — e a alternativa seria copiar a normalizacao do nome para ca,
+   que e como nascem duas verdades sobre a mesma pessoa. */
+import { situacaoDe, SITUACOES } from "./mundo-base.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -92,6 +97,31 @@ export const ETAPAS = {
     ver: (e, m) => norm(m.cidadeAtual) === norm(e.alvo)
       && [...(m.inventario || []), ...(m.equipamento || [])].some((i) => norm(typeof i === "string" ? i : i && i.nome).includes(norm(e.item))),
   },
+  /* ---------------- RESGATAR (v9.132) — fase 3 ----------------
+     Resgatar era o verbo que o Mestre escrevia e que o sistema nao sabia
+     conferir. Na v9.128 ele passou a virar `falar_com`, que ja era melhor do
+     que virar `chegar` — mas encontrar nao e tirar de la.
+
+     Agora a condicao e a MUDANCA DE SITUACAO que a fase 2 trouxe: a pessoa
+     deixou de estar cativa ou ferida, e nao morreu no caminho. E a missao
+     nasce PONDO a pessoa em cativeiro, porque essa e a premissa que ela
+     afirma: sem isso a etapa nasceria cumprida — todo mundo e `livre` por
+     omissao, inclusive quem nunca foi preso. */
+  resgatar: {
+    id: "resgatar", icone: "⛓",
+    texto: (e) => `Tirar ${e.alvo} de la`,
+    ver: (e, m) => {
+      const s = situacaoDe(m.base, e.alvo);
+      return s !== SITUACOES.cativa && s !== SITUACOES.ferida && s !== SITUACOES.morta;
+    },
+    /* A FALHA DESCRITA: ate aqui so o PRAZO fazia uma missao fracassar, e
+       era isso que tornava o resto do fracasso invisivel. Um resgate tem um
+       fim ruim obvio e ele precisa existir: se a pessoa morre, nao ha o que
+       resgatar, e a missao nao fica esperando para sempre. */
+    falha: (e, m) => situacaoDe(m.base, e.alvo) === SITUACOES.morta,
+    falhaTexto: (e) => `${e.alvo} morreu antes do resgate`,
+  },
+
   /* ---------------- REVELAR (v9.129) ----------------
      `ir_a` se cumpre por presença, e presença não é descoberta: um marco que
      diz "o que a capela esconde" e fecha porque o herói passou pela porta é a
@@ -128,15 +158,25 @@ export function etapaDef(t) { return ETAPAS[t] || ETAPAS.ir_a; }
    AINDA precisa de alguma coisa acontecer: gente vira `falar_com`, briga
    vira `derrotar`, coisa vira `achar`. Se nada disso casar, aí sim `ir_a` —
    mas aí o texto do Mestre também não prometia mais do que chegar. */
-export function tipoDaEtapa(e) {
+export function tipoDaEtapa(e, { estrito = false } = {}) {
   if (ETAPAS[e && e.tipo]) return e.tipo;
   const t = norm(e && e.tipo);
-  if (/resgat|salv|libert|escolt|encontr|procur|achar_pessoa|falar|convenc|persuad|recrut/.test(t)) return "falar_com";
+  /* v9.132: resgatar tem etapa propria agora. Escoltar e proteger ainda
+     nao — sao promessas de DURACAO, e o sistema nao sabe medir "chegou
+     inteiro". Vao para `falar_com`, que ao menos exige encontrar. */
+  if (/resgat|salv|libert|solt|tirar de/.test(t)) return "resgatar";
+  if (/escolt|encontr|procur|achar_pessoa|falar|convenc|persuad|recrut/.test(t)) return "falar_com";
   if (/derrot|mat|cac|caç|abat|destru|limp|expuls|venc/.test(t)) return "derrotar";
   if (/entreg|levar|carreg|transport/.test(t)) return e && e.item ? "levar_a" : "ir_a";
   if (/achar|recuper|roub|pegar|colher|obter|trazer/.test(t)) return "achar";
   if (/sobreviv|aguent|resist/.test(t)) return "aguentar";
-  return "ir_a";
+  /* ---------------- O ESTRITO (v9.132) ----------------
+     Cair em `ir_a` e a rede: melhor uma etapa fraca do que uma etapa perdida,
+     quando a missao ja existe. Mas na PORTA DO MESTRE a mesma rede vira um
+     buraco — "ganhar a confianca do barao" viraria "chegar a ganhar a
+     confianca do barao", e o adjetivo que o filtro antigo barrava passaria a
+     virar missao. La, verbo que ninguem reconhece nao vira nada. */
+  return estrito ? "" : "ir_a";
 }
 export function textoDaEtapa(e) { return etapaDef(e.tipo).texto(e); }
 
@@ -259,10 +299,10 @@ export function garantirMissoes(lista) {
   }));
 }
 
-export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status, moedasPrometidas = null, prazo = 0, intencao = "", veiculo = "", virada = null }) {
+export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status, moedasPrometidas = null, prazo = 0, intencao = "", veiculo = "", virada = null, legado = false }) {
   const m = garantirMissoes([{
     id, titulo, tipo, descricao, dador, etapas, criadaEm: dia, prazo: noitesDePrazo(prazo),
-    nivel, intencao, veiculo, virada,
+    nivel, intencao, veiculo, virada, legado,
     status: status || (ehForcada(tipo) ? "ativa" : "oferecida"),
   }])[0];
   if (!m || !m.etapas.length) return null;
@@ -290,12 +330,28 @@ export function progresso(m) {
    que a sequência conta. */
 export function conferir(lista, mundo = {}) {
   const ms = garantirMissoes(lista);
-  const avancos = [], concluidas = [];
+  const avancos = [], concluidas = [], falhadas = [];
   const out = ms.map((m) => {
     if (m.status !== "ativa") return m;
     const i = m.etapas.findIndex((e) => !e.feito);
     if (i < 0) return m;
     const e = m.etapas[i];
+    /* ---------------- A FALHA DESCRITA (v9.132) — fase 3 ----------------
+       Ate aqui, a UNICA coisa que fazia uma missao fracassar era o prazo. O
+       resto do fracasso era invisivel: a pessoa a resgatar morria e a missao
+       ficava ativa para sempre, esperando um resgate que nao pode mais
+       acontecer. Uma missao sem fim ruim alcancavel nao e uma missao, e um
+       corredor. */
+    const def = etapaDef(e.tipo);
+    if (typeof def.falha === "function") {
+      let quebrou = false;
+      try { quebrou = !!def.falha(e, mundo); } catch { quebrou = false; }
+      if (quebrou) {
+        const perdida = { ...m, status: "falhada" };
+        falhadas.push({ missao: perdida, etapa: e, motivo: def.falhaTexto ? def.falhaTexto(e) : "o que ela pedia deixou de ser possivel" });
+        return perdida;
+      }
+    }
     if (!etapaDef(e.tipo).ver(e, mundo)) return m;
     const etapas = m.etapas.map((x, k) => (k === i ? { ...x, feito: true } : x));
     const fim = etapas.every((x) => x.feito);
@@ -304,7 +360,7 @@ export function conferir(lista, mundo = {}) {
     if (fim) concluidas.push(novo);
     return novo;
   });
-  return { missoes: out, avancos, concluidas };
+  return { missoes: out, avancos, concluidas, falhadas };
 }
 
 /* ---------------- DUAS MISSÕES SÃO A MESMA MISSÃO? ----------------
@@ -398,7 +454,20 @@ export function aceitarProposta(lista, prop, { nivel = 1, dia = 0, mundo = null,
     return { ok: false, motivo: "essa pessoa já lhe deu esse mesmo trabalho" };
   }
 
-  let etapas = (Array.isArray(prop.etapas) ? prop.etapas : []).filter((e) => e && ETAPAS[e.tipo] && (e.alvo || e.dia || e.relogioId));
+  /* ---------------- A ETAPA DESCONHECIDA SUMIA (v9.132) ----------------
+     Esta linha filtrava por `ETAPAS[e.tipo]`, e o efeito era pior do que
+     parecia: o Mestre escrevia `{tipo:"resgatar", alvo:"Ione"}` e a etapa
+     nao virava outra coisa — ela DESAPARECIA. Sobrava o `ir_a` do lugar, e
+     a missao de resgate fechava quando o heroi chegava, com ninguem
+     resgatado. Era a causa do relato que abriu a v9.128, e a correcao de
+     la (`garantirMissoes` deixando de cair em `ir_a`) nunca chegou aqui,
+     porque este filtro roda antes.
+
+     Agora o verbo desconhecido passa pelo mesmo tradutor do resto da casa. */
+  let etapas = (Array.isArray(prop.etapas) ? prop.etapas : [])
+    .filter((e) => e && (e.alvo || e.dia || e.relogioId))
+    .map((e) => ({ ...e, tipo: tipoDaEtapa(e, { estrito: true }) }))
+    .filter((e) => !!e.tipo);
   /* QUEM ESTÁ NA SUA FRENTE NÃO SE PROCURA. Ubba propôs um favor em troca de
      informação e a primeira etapa virou "Encontrar Ubba" — o jogador estava
      falando com ele naquele instante. A etapa nasceu cumprida e mentindo.
@@ -413,6 +482,22 @@ export function aceitarProposta(lista, prop, { nivel = 1, dia = 0, mundo = null,
      não é um passo, é uma linha morta no diário */
   if (mundo) etapas = etapas.filter((e) => { try { return !etapaDef(e.tipo).ver(e, mundo); } catch { return true; } });
   if (!etapas.length) return { ok: false, motivo: "nenhuma etapa que o sistema saiba conferir" };
+  /* ---------------- CHEGAR NAO E CUMPRIR (v9.132) ----------------
+     `ir_a` e a unica etapa que se cumpre so de andar ate la. Uma missao do
+     MESTRE feita so de chegadas nao e uma missao: e um itinerario que se
+     fecha sozinho enquanto o servico continua por fazer.
+
+     A regra vale so nesta porta. As tramas do sistema tem missoes de viagem
+     legitimas — "ir a X" e o trabalho inteiro —, e elas nascem por
+     `criarMissao`, do outro lado. Aqui, quem prometeu um servico tem de
+     dizer qual e o servico. */
+  /* v9.132: e a missao NASCE LEGADO, nao recusada. Esta casa apara proposta
+     torta em vez de devolve-la — o Mestre sugere, o codigo decide o que vale.
+     `legado` ja existe para exatamente isto: missao que o sistema nao sabe
+     conferir e que so o jogador encerra. Assim o servico continua no diario,
+     e o que deixa de acontecer e o diario fechar sozinho quando o heroi
+     pisar no lugar. */
+  const soChegadas = etapas.every((e) => e.tipo === "ir_a");
 
   const prometido = Number.isFinite(Number(prop.paga)) && Number(prop.paga) >= 0 ? Number(prop.paga)
     : precoNoTexto(`${titulo} ${proposta.descricao}`);
@@ -428,9 +513,17 @@ export function aceitarProposta(lista, prop, { nivel = 1, dia = 0, mundo = null,
     descricao: proposta.descricao, dador: proposta.dador,
     etapas, nivel: nivelDoTrabalho, dia, prazo: prop.prazo,
     moedasPrometidas: prometido != null ? prometido : moedasNaCena,
+    legado: soChegadas,
   });
   if (!m) return { ok: false, motivo: "proposta malformada" };
-  return { ok: true, missoes: [...atual, m], missao: m };
+  /* A PREMISSA VIRA ESTADO. Uma missao de resgate afirma que alguem esta
+     preso; sem escrever isso no mundo, a etapa nasceria cumprida, porque
+     todo mundo e `livre` por omissao. Sai daqui como PEDIDO — este modulo e
+     puro e nao e dono da base —, e quem aplica e o App, num lugar so. */
+  const cativeiros = m.etapas
+    .filter((e) => e.tipo === "resgatar" && e.alvo)
+    .map((e) => ({ nome: e.alvo, situacao: "cativa", onde: e.onde || "" }));
+  return { ok: true, missoes: [...atual, m], missao: m, cativeiros };
 }
 
 /* O jogador encerra à mão o que o sistema não tem como conferir — só as de

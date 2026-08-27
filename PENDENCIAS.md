@@ -5206,3 +5206,56 @@ vira fase própria do plano: **uma proibição só sai quando um sistema torna o
 mau resultado impossível** — quando o envelope é autoridade e o código
 sobrescreve. Proibição que protege algo que nenhum sistema cobre não é
 excesso de texto: é conselheiro faltando.
+
+## v9.132 — a quest verificável: fase 3 do plano
+
+**A causa real do bug que abriu tudo não era a que a v9.128 consertou.**
+
+O relato: missão de resgatar alguém num lugar, o herói chega, e o sistema dá
+a missão por cumprida sem ninguém ali. A v9.128 achou `garantirMissoes`
+fazendo todo tipo desconhecido cair em `ir_a` — a única etapa que se cumpre
+só de andar — e consertou. Mas a correção **nunca chegou ao caminho que
+importava**:
+
+```js
+// aceitarProposta, a porta do Mestre
+.filter((e) => e && ETAPAS[e.tipo] && (e.alvo || e.dia || e.relogioId))
+```
+
+Aqui a etapa desconhecida não virava outra coisa: ela **desaparecia**. O
+Mestre escrevia `{tipo:"resgatar", alvo:"Ione"}`, a etapa sumia, sobrava o
+`ir_a` do lugar, e a missão fechava na chegada. Este filtro roda ANTES de
+`garantirMissoes`.
+
+**A etapa `resgatar`.** Condição: a pessoa deixou de estar cativa ou ferida,
+e não morreu no caminho — a mudança de situação que a fase 2 trouxe. Na
+v9.128 `resgatar` virava `falar_com`, que já era melhor do que virar
+`chegar`; mas encontrar não é tirar de lá.
+
+**A premissa vira estado.** Uma missão de resgate afirma que alguém está
+preso. Sem escrever isso no mundo, a etapa nasceria cumprida — todo mundo é
+`livre` por omissão, inclusive quem nunca foi levado. `aceitarProposta`
+devolve os cativeiros como PEDIDO (o módulo é puro e não é dono da base) e o
+App aplica num lugar só.
+
+**Chegar não fecha uma missão do Mestre.** Uma missão feita só de chegadas
+nasce `legado`: entra no diário, mas o sistema não a encerra sozinho. Não é
+recusa — esta casa **apara** proposta torta em vez de devolvê-la, e `legado`
+já existia para exatamente isto. A regra vale só nesta porta: as tramas do
+sistema têm missões de viagem legítimas, e nascem do outro lado.
+
+**A FALHA DESCRITA.** Até aqui, a única coisa que fazia uma missão fracassar
+era o prazo — e era isso que tornava o resto do fracasso invisível. Uma
+missão de resgate cuja pessoa morreu ficava ativa para sempre, esperando um
+resgate que não pode mais acontecer. Agora a etapa pode declarar o próprio
+fim ruim, e o Narrador recebe a perda como fato consumado, sem segunda
+chance.
+
+**Um defeito meu, pego pelas provas.** Ao traduzir todo verbo desconhecido em
+vez de descartá-lo, eu desliguei sem perceber a trava que impedia adjetivo de
+virar missão — "ganhar a confiança do barão" voltaria a passar. `tipoDaEtapa`
+ganhou modo **estrito**: na porta do Mestre, verbo que ninguém reconhece não
+vira nada. Cair em `ir_a` é a rede de quem já tem missão; ali seria o buraco.
+
+Escoltar e proteger continuam em `falar_com`: são promessas de DURAÇÃO, e o
+sistema ainda não sabe medir "chegou inteiro".
