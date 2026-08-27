@@ -374,13 +374,18 @@ export function paraPauta(pessoas = [], { sorte = Math.random, elenco = null, qu
     .filter((p) => p.nome)
     .sort((a, b) => (b.forcaDoLaco - a.forcaDoLaco) || (b.ehCompanheiro - a.ehCompanheiro))
     .slice(0, quantas);
+  const movimentos = [];
   for (const p of ordenadas) {
     const m = consultarInterprete(p, { sorte, elenco });
     if (!m) continue;
     linhas.push(`${p.nome} ${m.faz}`);
     marcas.push({ nome: p.nome, id: m.id, gesto: m.gesto });
+    /* v9.135: e o MOVIMENTO inteiro, com a pessoa e os vetos dela. O gesto
+       ja ia a Pauta; isto vai ao ATOR, que precisa saber o que ela esta
+       fazendo enquanto fala — e o que ela nunca faria. */
+    movimentos.push({ pessoa: p, nome: p.nome, faz: m.faz, gesto: m.gesto, proibidos: gestosProibidos(p) });
   }
-  return { linhas, marcas };
+  return { linhas, marcas, movimentos };
 }
 
 export const INTERPRETE_PROMPT = `A GENTE EM CENA (v9.106):

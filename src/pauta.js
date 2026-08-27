@@ -62,6 +62,10 @@ export const SECOES = [
   { id: "momento", rotulo: "MOMENTO", prio: 3, o: "a batida da história" },
   { id: "forma", rotulo: "FORMA", prio: 5, o: "o formato desta cena" },
   { id: "gente", rotulo: "A GENTE", prio: 6, o: "o que cada um faz" },
+  /* v9.135: e o que cada um DISSE, palavra por palavra. Prioridade 2 porque
+     e o conteudo da cena: cortar a fala de alguem que ja falou seria pior do
+     que cortar o lugar onde ele falou. */
+  { id: "fala", rotulo: "A FALA", prio: 2, o: "o que cada um disse, palavra por palavra" },
   { id: "contra", rotulo: "CONTRA", prio: 5, o: "o que a oposição quer, e em quem bate" },
   { id: "aliado", rotulo: "O ALIADO", prio: 7, o: "quem anda comigo" },
   { id: "vilao", rotulo: "O VILÃO", prio: 6, o: "o que a ameaça fez" },

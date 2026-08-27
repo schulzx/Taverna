@@ -5353,3 +5353,61 @@ export morto.
 **O painel foi visto na tela**, nos dois estados. Um defeito de layout saiu
 daí: a descrição do degrau e o "faltam 190 para Capitão" dividiam a mesma
 linha e colidiam.
+
+## v9.135 — o Intérprete ganha boca
+
+O `interprete.js` decidia o que uma pessoa FAZ e parava ali. O cabeçalho dele
+dizia, com todas as letras: *"O Intérprete diz O QUE a pessoa FAZ. Nunca o
+que ela DIZ. A fala é do Narrador, sempre."* Esta versão move essa linha.
+
+**A sonda A/B contra a API real, antes de escrever código.** Três cenas, dois
+arranjos, duas rodadas. E ela mediu o contrário do que eu previa.
+
+O que eu previa — prompt do Narrador caindo um terço — **não acontece**. O
+filtro da sonda era grosseiro e arrancava dele o cânone, o bestiário e parte
+do formato da resposta; o B daquele teste rodava com um prompt quebrado. O
+material que de fato muda de dono são 2.787 caracteres, **4,8%**.
+
+O que ela mediu de verdade foi outra coisa. Pedindo aos dois arranjos um
+campo OBRIGATÓRIO na resposta:
+
+```
+chamada única, com 58 mil caracteres de instrução ...... 1 de 6
+chamada do ator, com 1,7 mil ........................... 6 de 6
+```
+
+**A chamada grande deixa cair pedaços do contrato; a pequena não.** E o
+código já sabia: `App.jsx:201` tem uma rede de segurança que REPETE a chamada
+quando a narrativa volta vazia. O jogo já paga por essa falha hoje.
+
+Latência: 7,2s contra 8,8s. Não dobra, porque as bocas vão em paralelo entre
+si, no modelo barato, com prompt minúsculo.
+
+**O que isto é.** Não um segundo Narrador — uma segunda BOCA. O ator recebe
+quem a pessoa é, o que ela quer, o que ela NUNCA faz e o gesto que o sistema
+já escolheu, e devolve só a fala. Quem costura continua sendo o Narrador;
+quem decide continua sendo o Mestre. A regra da casa fica de pé.
+
+**O ganho real, e é um só:** os vetos por pessoa chegam à FALA. O acervo de
+`interprete.js` guarda desde a v9.106 o que cada um nunca faz — o covarde não
+ameaça, o sacerdote não ameaça em público, o guarda não se esquiva do
+assunto. Isso governava o GESTO e nunca chegou à fala, porque chegava ao
+Narrador como uma linha entre dezenas. Agora é a única coisa que o ator
+daquela pessoa tem na frente.
+
+**Duas correções minhas, no mesmo passo.**
+
+Tirei quatro blocos do prompt do Narrador para o ator, e as provas pegaram —
+com razão. `PERSONAGENS SEM AMARRAS` carrega um **limite deliberado de
+conteúdo**, e limite deliberado não muda de dono sem alguém decidir que muda;
+amansar e moralizar valem para a NARRAÇÃO também, porque o Narrador conta o
+antagonista mesmo nos turnos em que ninguém fala; e `DIVERSIDADE VIVA` é
+sobre povoar o mundo, que é dele. **Revertido: o ator não levou nada.**
+
+E o comentário que escrevi para explicar a remoção caiu DENTRO do template
+literal do prompt — virou texto do prompt e estourou o orçamento em 836
+caracteres. O guarda pegou.
+
+O Intérprete é consultado **uma vez por turno**, em `enviar`, porque o ator
+precisa do movimento antes de a Pauta ser montada. Consultar duas vezes
+sortearia dois movimentos: a pessoa faria uma coisa e falaria sobre outra.

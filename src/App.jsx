@@ -92,6 +92,7 @@ import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { porNaPauta, textoDaPauta, garantirPauta } from "./pauta.js";
 import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta } from "./interprete.js";
+import { dossieDe, promptDoAtor, pedidoDoAtor, garantirFala, envelopeDasFalas, MAX_BOCAS } from "./falas.js";
 import { escolherCorpo, corpoPorId, garantirSaber, chegouAteEle, oQueEleNaoSabe, certezaDe, responder, paraPauta as vilaoParaPauta, envelopeDoCorpo } from "./antagonista.js";
 import { garantirAliados, nascerAliado, andarVontade, cruzouOCodigo, vontadePorId, codigoPorId, DIAS_ATE_APODRECER, paraPauta as aliadoParaPauta } from "./aliado.js";
 import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resumoDoRegistro } from "./registro.js";
@@ -3112,6 +3113,10 @@ export default function Taverna() {
      dali so encolhe: cada marco que cai fica marcado e nunca volta. Ela
      nao decide nada em tempo de turno — ja decidiu tudo antes. */
   const espinhaRef = useRef(garantirEspinha(null));
+  /* v9.135: o Interprete lido deste turno, e as falas que os atores
+     devolveram. Os dois vivem entre `enviar` e a montagem da Pauta. */
+  const interpreteRef = useRef(null);
+  const falasDoTurnoRef = useRef([]);
   /* ---------------- AS CASAS DO MUNDO (v9.133) — fase 4 ----------------
      Nascem com o mundo, da mesma semente. A do jogador nao e uma quarta
      variavel: e a entrada desta lista que tem `membro: true`, porque so se
@@ -4305,9 +4310,14 @@ export default function Taverna() {
        três. Ele diz o que cada uma FAZ; o que ela DIZ continua sendo do
        Narrador, e é onde ele é insubstituível. */
     {
-      const r = interpreteParaPauta(pessoasDaCena(), { elenco: elencoMemRef.current });
+      /* v9.135: o Interprete e consultado UMA vez por turno, em `enviar`,
+         porque o ATOR precisa do movimento antes de a Pauta ser montada.
+         Consultar duas vezes sortearia dois movimentos e marcaria memoria
+         duas vezes — a pessoa faria uma coisa e falaria sobre outra. */
+      const r = interpreteRef.current || interpreteParaPauta(pessoasDaCena(), { elenco: elencoMemRef.current });
       p = porNaPauta(p, "gente", r.linhas);
-      for (const m of r.marcas) elencoMemRef.current = marcarMovimento(elencoMemRef.current, m.nome, m.id, m.gesto);
+      if (!interpreteRef.current) for (const m of r.marcas) elencoMemRef.current = marcarMovimento(elencoMemRef.current, m.nome, m.id, m.gesto);
+      p = porNaPauta(p, "fala", envelopeDasFalas(falasDoTurnoRef.current));
     }
     /* v9.108: O ALIADO AGE POR CONTA PRÓPRIA. Um por turno, e só um: o
        silêncio dos outros é o que faz a vez de cada um valer alguma
@@ -7470,6 +7480,38 @@ export default function Taverna() {
     return original;
   };
 
+  /* ---------------- O ATOR (v9.135) ----------------
+     Uma chamada por boca, no modelo barato, com o dossie daquela pessoa e
+     nada mais. Elas vao em paralelo entre si: a fala de uma nao depende da
+     outra, e serializar so somaria segundos.
+
+     Falha nao custa turno: se o ator nao responde, a pessoa fica calada e o
+     Narrador narra como sempre narrou. */
+  const colherAsFalas = async (conteudo) => {
+    try {
+      if (String(conteudo || "").trimStart().startsWith("[")) return [];
+      const mov = (interpreteRef.current || {}).movimentos || [];
+      if (!mov.length) return [];
+      const nomes = mov.map((m) => m.nome);
+      const lugar = (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "";
+      const escolhidos = mov.slice(0, MAX_BOCAS);
+      const ditas = await Promise.all(escolhidos.map(async (m) => {
+        const d = dossieDe(m.pessoa, {
+          faz: m.faz, gesto: m.gesto, proibidos: m.proibidos,
+          acao: conteudo, outros: nomes.filter((n) => n !== m.nome), lugar,
+        });
+        if (!d) return null;
+        try {
+          const bruto = await chamarModelo(promptDoAtor(d), [{ role: "user", content: pedidoDoAtor(d) }], 220, "json", "leve");
+          const j = extrairJSON(bruto);
+          const fala = garantirFala(j && j.fala);
+          return fala ? { nome: d.nome, fala } : null;
+        } catch { return null; }
+      }));
+      return ditas.filter(Boolean);
+    } catch { return []; }
+  };
+
   const enviar = useCallback(async (conteudo, persAtual, histBase) => {
     setCarregando(true); setFalha(null);
     /* O que EU pedi neste turno — só a minha frase distingue "o Mestre me
@@ -7520,6 +7562,14 @@ export default function Taverna() {
        é o que a maioria dos movimentos do Intérprete consulta. */
     atoDoTurnoRef.current = atoDoTexto(conteudo);
     ultimaAcaoRef.current = String(conteudo || "").slice(0, 200);
+    /* ---------------- AS BOCAS (v9.135) ----------------
+       Antes da Pauta, porque a fala e conteudo dela. O Interprete decide o
+       que cada um FAZ; o ator diz o que ele DIZ, uma chamada pequena por
+       pessoa, em paralelo. Nao roda em envelope do sistema (o que comeca
+       por colchete nao e frase do jogador) nem sem gente na cena. */
+    interpreteRef.current = interpreteParaPauta(pessoasDaCena(), { elenco: elencoMemRef.current });
+    for (const m of interpreteRef.current.marcas) elencoMemRef.current = marcarMovimento(elencoMemRef.current, m.nome, m.id, m.gesto);
+    falasDoTurnoRef.current = await colherAsFalas(conteudo);
     const pauta = textoDaPauta(pautaDoTurno(), { turno: turnoDeRegistroRef.current + 1 });
     /* guardado antes da resposta: "a luta acabou neste turno" é a
        diferença entre o que havia e o que ficou */
