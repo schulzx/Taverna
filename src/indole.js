@@ -411,3 +411,96 @@ export function paraODossie(indole, ctx = {}) {
 }
 
 export const RELEVANTE = (indole) => garantirIndole(indole).relevancia !== "figurante";
+
+/* ============================================================
+   O CONVITE (v9.143) — quem decide se anda com você
+
+   Sobrou uma porta em que a IA ainda decidia o que existe. Convidar alguém
+   para o grupo mandava ao Narrador:
+
+     "A decisão é dele(a): pode aceitar (registre em `grupo_adicionar` com a
+      ficha completa), recusar com jeito, ou pedir uma condição."
+
+   A ficha já era do sistema desde a v9.116 — só o SIM ficou com a IA. E
+   ficou justamente onde havia mais material para decidir por código: desde
+   a v9.136 esta pessoa tem traços, medo, força e, às vezes, um plano.
+
+   O que pesa é a mesma coisa que pesaria numa mesa de verdade: quem ela é,
+   há quanto tempo ela te conhece, o que você fez por ela, e quem você é
+   para o mundo.
+   ============================================================ */
+
+/* Quanto cada traço puxa para dentro do grupo, ou para longe dele. */
+export const VONTADE_DE_IR = {
+  corajoso: +14, curioso: +12, tagarela: +8, galanteador: +8, fiel: +10,
+  compassivo: +8, generoso: +6, humilde: +4, corajosoNota: 0,
+  medroso: -20, calado: -6, orgulhoso: -8, rancoroso: -10, cruel: -8,
+  medonho: -6, supersticioso: -6, ganancioso: -4,
+  /* E O TRAIDOR ACEITA FÁCIL. Não é bondade: é que andar junto é a posição
+     de onde se trai. É a linha desta tabela que mais interessa ao jogo. */
+  traidor: +12,
+};
+
+export const CONVITE_ACEITA = 55;
+export const CONVITE_TALVEZ = 35;
+
+export function pesarConvite(indole, { convivio = {}, fama = 0, grupoCheio = false } = {}) {
+  const i = garantirIndole(indole);
+  const c = garantirConvivio(convivio);
+  const porques = [];
+  if (grupoCheio) return { resposta: "recusa", porques: ["não há lugar no seu grupo"], exigencia: null };
+
+  let peso = 30;
+  for (const t of i.tracos || []) {
+    const v = VONTADE_DE_IR[t];
+    if (!v) continue;
+    peso += v;
+    const nome = (TRACOS.find((x) => x.id === t) || {}).o;
+    if (nome) porques.push(`${t}: ${nome}`);
+  }
+
+  /* O TEMPO PESA MAIS QUE QUALQUER TRAÇO. Ninguém larga a vida para andar
+     com quem conheceu ontem, por mais simpático que seja. */
+  const dias = Math.min(20, c.dias);
+  peso += dias * 1.5;
+  if (c.dias <= 1) porques.push("vocês se conheceram ontem");
+  else if (c.dias >= 10) porques.push(`vocês se conhecem há ${c.dias} dias`);
+
+  peso += (c.forcaDoLaco || 0) * 7;
+  if (c.meDeve) { peso += 10; porques.push("ela te deve"); }
+  if (c.euDevo) { peso -= 6; porques.push("você deve a ela"); }
+  if (c.euGanhei) { peso += 6; porques.push("você já a ajudou"); }
+
+  /* a sua lenda: quem tem nome atrai quem não tem */
+  if (fama >= 60) { peso += 12; porques.push("a sua lenda chegou antes de você"); }
+  else if (fama < 10) { peso -= 6; porques.push("ninguém sabe quem você é"); }
+
+  /* quem já queria ir, vai. `seguir` é o único propósito que se cumpre
+     ACEITANDO — e não seria justo o sistema ignorar isso. */
+  if (i.proposito === "seguir") { peso += 25; porques.push("ela já queria ir"); }
+
+  if (peso >= CONVITE_ACEITA) return { resposta: "aceita", porques, exigencia: null };
+  if (peso >= CONVITE_TALVEZ) return { resposta: "exige", porques, exigencia: exigenciaDoConvite(i, c) };
+  return { resposta: "recusa", porques, exigencia: null };
+}
+
+/* A condição tem de ser CONFERÍVEL, como toda condição desta casa. São
+   duas, e o sistema sabe olhar as duas. */
+export function exigenciaDoConvite(indole, convivio) {
+  const i = garantirIndole(indole);
+  if ((i.tracos || []).includes("ganancioso")) {
+    return { tipo: "paga", moedas: 120, o: "◉ 120 adiantados — ela não anda de graça" };
+  }
+  const faltam = Math.max(1, 5 - (garantirConvivio(convivio).dias || 0));
+  return { tipo: "convivio", dias: faltam, o: `mais ${faltam} dia${faltam === 1 ? "" : "s"} de estrada juntos antes de decidir` };
+}
+
+export function envelopeDoConvite(nome, veredito) {
+  const v = veredito || {};
+  const corpo = {
+    aceita: "A resposta é SIM, e ela já está com você.",
+    exige: `A resposta é UM TALVEZ com preço: ela quer ${(v.exigencia || {}).o}.`,
+    recusa: "A resposta é NÃO.",
+  }[v.resposta] || "";
+  return `[CONVITE — RESOLVIDO PELO SISTEMA] Você convidou ${nome} para andar com você. ${corpo} O que pesou: ${(v.porques || []).join("; ")}. Narre SÓ a reação e as palavras ${nome === "ela" ? "dela" : `de ${nome}`}, em primeira pessoa, aqui mesmo onde vocês estão, com ESTE desfecho e nenhum outro. Não invente outra resposta, não narre partida, despedida, preparativos nem passagem de tempo: ninguém saiu do lugar por causa de um convite.`;
+}

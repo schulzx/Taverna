@@ -5908,3 +5908,60 @@ real removendo um import de verdade.
 `A decisão é dele(a)` ainda existe **no convite ao grupo**: quando você chama
 alguém para andar com você, quem decide continua sendo a IA. É a mesma porta,
 noutro corredor.
+
+## v9.143 — o convite: quem decide se anda com você
+
+A última porta em que a IA decidia o que existe. Convidar alguém para o
+grupo mandava ao Narrador:
+
+> "A decisão é dele(a): pode aceitar (registre em `grupo_adicionar` com a
+> ficha completa), recusar com jeito, ou pedir uma condição."
+
+A ficha já era do sistema desde a v9.116 — **só o sim ficou com a IA**. E
+ficou justamente onde havia mais material para decidir por código: desde a
+v9.136 esta pessoa tem traços, medo, força e, às vezes, um plano.
+
+O que pesa é o que pesaria numa mesa de verdade: quem ela é, há quanto tempo
+te conhece, o que você fez por ela, e quem você é para o mundo.
+
+```
+no primeiro dia, sem fama ......... 400 de 500 recusam
+20 dias, laço forte, fama 80 ...... 400+ de 500 aceitam
+```
+
+**O tempo pesa mais que qualquer traço.** Ninguém larga a vida para andar
+com quem conheceu ontem, por mais simpático que seja.
+
+**E o traidor aceita fácil.** Não é bondade: andar junto é a posição de onde
+se trai. É a linha desta tabela que mais interessa ao jogo.
+
+**A condição é conferível**, como toda condição desta casa: moeda adiantada
+(o ganancioso não anda de graça) ou mais dias de estrada. E o sistema recusa
+comprar a segunda — *isso é tempo, e tempo não se compra*.
+
+**O painel mostra o veredito antes do clique**, com o porquê no título.
+
+### A ficha ganhou um dono
+
+A montagem do companheiro morava dentro do laço que lê `grupo_adicionar` da
+resposta da IA. O convite precisava dela também, e duas cópias seria a
+segunda ficando para trás na primeira mudança. Agora os dois caminhos
+chamam a mesma função.
+
+### O defeito que só a prova no jogo pegaria
+
+A tela disse **"Ume Petrov juntou-se ao grupo"** e o save disse **`grupo:
+[]`**.
+
+O convite recrutava e logo depois chamava `enviar(envelope, personagem)` —
+com o `personagem` do closure, que ainda era o de **antes** do recrutamento.
+O turno voltava, gravava aquele, e o companheiro sumia no mesmo segundo em
+que entrou.
+
+Nenhuma suíte pegaria isso: as duas metades estavam certas em separado, e o
+erro era a ficha velha atravessando a porta. Quem recruta passou a devolver
+a ficha nova, e é ela que segue para o turno — inclusive com a moeda da paga
+já descontada, em vez de um `setPersonagem` em paralelo, que era o caminho
+de volta ao mesmo buraco.
+
+Depois: `grupo: ["Ume Petrov nv10"]` no save.
