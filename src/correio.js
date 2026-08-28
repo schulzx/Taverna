@@ -5,7 +5,35 @@
    jogador, com prazo para aceitar ou recusar. A IA só narra os envelopes —
    é proibida de inventar atos oficiais de facções fora deste sistema. */
 
+import { potenciaDe, pesarProposta, apetitePorId, aprecoDe, mexerNoApreco, fichaDe } from "./diplomacia.js";
+
 export const CUSTO_CARTA = 10; // mensageiro + selo
+
+/* ---------------- A CARTA E A MESA (v9.144) ----------------
+   O correio nasceu na v7.0 e sempre foi honesto no que fazia: cartas
+   chegam em dias, petições vencem, tudo por tabela e sem um token. O que
+   ele NÃO tinha era memória de com quem estava falando.
+
+   `chanceResposta` era `base + fama/250` — uma moeda ao ar. Uma potência
+   que te adora recusava exatamente tanto quanto uma que te odeia, e o que
+   você tivesse feito por ela no mundo não pesava um grama. Pior: como as
+   cartas FIRMAM TRATADO, o correio virou uma segunda diplomacia paralela à
+   da v9.142 — recusado na mesa, você pedia por carta e tentava a sorte até
+   sair. Duas balanças para o mesmo peso, e a segunda desfazendo a primeira.
+
+   Agora a carta usa A MESMA BALANÇA da mesa. O que o correio guarda de seu
+   é o que só ele tem: a distância, o prazo, e o fato de que uma carta parte
+   e você não pode voltar atrás. */
+
+/* que proposta da mesa cada tipo de carta é. O que não está aqui não firma
+   tratado nenhum, e continua sendo o que sempre foi. */
+export const CARTA_E_PROPOSTA = {
+  alianca: "alianca",
+  casamento: "alianca",
+  paz: "comercio",
+  tributo: "vassalagem",
+  guerra: "guerra",
+};
 
 export const TIPOS_CARTA = {
   alianca:   { icone: "🤝", nome: "Proposta de aliança",      base: 0.45, resposta: true,  desc: "Tratado de aliança entre as duas facções." },
@@ -25,11 +53,49 @@ export function garantirCorreio(c) {
 }
 
 /* Chance de aceite de uma carta do jogador, modulada por fama e liderança. */
-export function chanceResposta(tipo, { fama = 0, ehLider = false } = {}) {
+/* A CHANCE CONTINUA EXISTINDO para o que não é ato de estado — cortesia,
+   conselho, pedido de auxílio. Uma carta de cortesia não precisa de mesa
+   diplomática; ela precisa de um mensageiro que chegue. */
+export function chanceResposta(tipo, { fama = 0, ehLider = false, apreco = null } = {}) {
   const t = TIPOS_CARTA[tipo];
   if (!t) return 0.5;
-  let ch = t.base + fama / 250 + (ehLider ? 0.05 : 0);
+  /* v9.144: e mesmo aqui, quem te conhece responde melhor. O apreço entra
+     como deslocamento em torno do neutro (40): quem te adora ganha até
+     +0,30, quem te detesta perde o mesmo. */
+  const doApreco = apreco == null ? 0 : ((apreco - 40) / 60) * 0.3;
+  const ch = t.base + fama / 250 + (ehLider ? 0.05 : 0) + doApreco;
   return Math.max(0.05, Math.min(0.95, ch));
+}
+
+/* ---------------- O VEREDITO DE UMA CARTA ----------------
+   Devolve `{ aceita, porques, viaMesa }`. `viaMesa` diz qual balança
+   pesou, porque o jogador tem direito de saber se levou um não de peso ou
+   um não de azar. */
+export function pesarCarta(carta, { potencia = null, dip = null, fama = 0, meuPoder = 0, dia = 1, ehLider = false } = {}) {
+  const acao = CARTA_E_PROPOSTA[carta && carta.tipo];
+  const ap = potencia ? aprecoDe(dip, potencia.nome) : null;
+  if (!acao || !potencia) {
+    return { aceita: Math.random() < chanceResposta(carta && carta.tipo, { fama, ehLider, apreco: ap }), porques: [], viaMesa: false };
+  }
+  /* A OFERTA EM MOEDA VALE ALGUMA COISA, e até aqui não valia nada: o
+     número aparecia na mensagem e não entrava em conta nenhuma. Ela sobe o
+     apreço só para o peso desta carta — quem paga, paga por esta. */
+  const doOuro = Math.min(20, Math.round((Number(carta.oferta) || 0) / 40));
+  const dipComOferta = doOuro ? mexerNoApreco(dip, potencia.nome, doOuro) : dip;
+  const v = pesarProposta({ potencia, acao, dip: dipComOferta, fama, meuPoder, dia });
+  if (!v) return { aceita: false, porques: ["a carta não pedia nada que se possa firmar"], viaMesa: false };
+  const porques = [...v.porques];
+  if (doOuro) porques.push(`a oferta de ◉ ${carta.oferta} pesou`);
+  /* de longe, a condição não tem como ser negociada: quem exigiria, recusa
+     por carta — e diz o que queria. */
+  if (v.resposta === "exige") {
+    /* o ganho do ouro é relatado nos TRÊS desfechos, e não só no sim: o
+       ouro partiu junto com a carta e chegou lá de qualquer jeito. Um campo
+       que existe num ramo e some no outro é a mesma coisa que não existir —
+       quem lê acaba tratando `undefined` como zero e a conta some. */
+    return { aceita: false, porques: [...porques, `queria ${(v.exigencia || {}).o}, e isso não se combina por carta`], viaMesa: true, exigencia: v.exigencia, ganhoDeApreco: doOuro };
+  }
+  return { aceita: v.resposta === "aceita", porques, viaMesa: true, ganhoDeApreco: doOuro };
 }
 
 export function criarCarta({ para, tipo, oferta = 0, mensagem = "", dia = 1, de = null }) {
@@ -69,12 +135,35 @@ const TIPOS_PETICAO = [
   { tipo: "comercio",         icone: "⚖️", texto: (de) => `${de} propõe acordo comercial (+renda enquanto vigorar).`, peso: 3 },
 ];
 
-export function gerarPeticao({ faccoes = [], dia = 1 } = {}) {
+/* v9.144: O QUE ELA PEDE SAI DO QUE ELA QUER. Antes a petição era sorteio
+   cego: a mesma potência que "quer ouro, e não esconde" podia mandar uma
+   proposta de casamento e nunca um pedido de tributo. O apetite da v9.142
+   já dizia o que cada uma persegue — faltava alguém perguntar. */
+const PEDE_POR_APETITE = {
+  moeda: ["exigencia_tributo", "comercio"],
+  terra: ["ameaca", "exigencia_tributo"],
+  braco: ["pedido_alianca", "pedido_ajuda"],
+  segredo: ["pedido_alianca", "oferta_casamento"],
+  fe: ["oferta_casamento", "pedido_alianca"],
+  sangue: ["ameaca", "pedido_ajuda"],
+};
+
+export function gerarPeticao({ faccoes = [], dia = 1, potencias = null } = {}) {
   if (!faccoes.length) return null;
-  const pool = TIPOS_PETICAO.flatMap((t) => Array(t.peso).fill(t));
-  const t = pool[Math.floor(Math.random() * pool.length)];
   const de = faccoes[Math.floor(Math.random() * faccoes.length)];
-  return { id: null, de, tipo: t.tipo, icone: t.icone, texto: t.texto(de), recebidaEm: dia, prazo: dia + 3, status: "pendente" };
+  const pot = (potencias || []).find((x) => x && x.nome === de) || potenciaDe({ nome: de });
+  const querem = (pot && PEDE_POR_APETITE[pot.apetite]) || null;
+  const pool = querem
+    ? TIPOS_PETICAO.filter((t) => querem.includes(t.tipo))
+    : TIPOS_PETICAO.flatMap((t) => Array(t.peso).fill(t));
+  const t = (pool.length ? pool : TIPOS_PETICAO)[Math.floor(Math.random() * (pool.length || TIPOS_PETICAO.length))];
+  return {
+    id: null, de, tipo: t.tipo, icone: t.icone, texto: t.texto(de),
+    /* o porquê, para o jogador e para o Narrador: uma exigência sem motivo
+       é ruído; com motivo, é uma potência agindo como ela é */
+    porque: pot ? apetitePorId(pot.apetite).o : "",
+    recebidaEm: dia, prazo: dia + 3, status: "pendente",
+  };
 }
 
 /* Efeitos ao ACEITAR uma petição (recusar quase sempre só decepciona). */
@@ -98,10 +187,10 @@ export function resolverPeticao(p, aceite) {
 
 /* Processamento diário: respostas chegam, petições novas surgem (~15%/dia),
    petições vencidas expiram. Retorna mensagens (envelopes) e efeitos somados. */
-export function processarDiaCorreio(correio, { dia = 1, fama = 0, ehLider = false, faccoes = [] } = {}) {
+export function processarDiaCorreio(correio, { dia = 1, fama = 0, ehLider = false, faccoes = [], potencias = [], dip = null, meuPoder = 0 } = {}) {
   const c = garantirCorreio(correio);
   const msgs = [];
-  const ef = { felicidade: 0, moedas: 0, tratadosAdd: [], tratadosRem: [] };
+  const ef = { felicidade: 0, moedas: 0, tratadosAdd: [], tratadosRem: [], aprecoAdd: [] };
 
   /* respostas às cartas do jogador */
   c.enviadas = c.enviadas.filter((carta) => {
@@ -112,15 +201,23 @@ export function processarDiaCorreio(correio, { dia = 1, fama = 0, ehLider = fals
       ef.felicidade -= 8;
       msgs.push(`[CORREIO — GUERRA DECLARADA] A declaração de guerra chegou a ${carta.para}. Os tambores soam: ${carta.para} mobiliza suas forças. A guerra é oficial e registrada.`);
       c.historico.unshift({ ...carta, status: "guerra", respondidaEm: dia });
-    } else if (Math.random() < chanceResposta(carta.tipo, { fama, ehLider })) {
-      const e = efeitoAceite(carta.tipo, carta);
-      ef.felicidade += e.felicidade; ef.moedas += e.moedas;
-      ef.tratadosAdd.push(...e.tratadosAdd); ef.tratadosRem.push(...e.tratadosRem);
-      msgs.push(`[CORREIO — RESPOSTA: ACEITA] ${carta.para} ACEITOU: ${t.icone || ""} ${t.nome || carta.tipo}${carta.oferta ? ` (oferta de ◉ ${carta.oferta})` : ""}. ${e.nota ? `Resultado: ${e.nota}.` : ""}${carta.tipo === "conselho" ? " O Mestre escreve o conselho recebido na voz do destinatário." : ""}`);
-      c.historico.unshift({ ...carta, status: "aceita", respondidaEm: dia });
     } else {
-      msgs.push(`[CORREIO — RESPOSTA: RECUSADA] ${carta.para} RECUSOU: ${t.icone || ""} ${t.nome || carta.tipo}${carta.oferta ? ` (oferta de ◉ ${carta.oferta})` : ""}. O selo voltou quebrado.`);
-      c.historico.unshift({ ...carta, status: "recusada", respondidaEm: dia });
+      const pot = (potencias || []).find((x) => x && x.nome === carta.para) || null;
+      const v = pesarCarta(carta, { potencia: pot, dip, fama, meuPoder, dia, ehLider });
+      /* quem pagou, pagou: a oferta sobe o apreço mesmo quando a resposta é
+         não — o ouro chegou lá, e ninguém devolve ouro */
+      if (carta.oferta > 0 && pot) ef.aprecoAdd.push({ nome: carta.para, quanto: Math.min(20, Math.round(carta.oferta / 40)) });
+      const porque = v.porques.length ? ` O que pesou: ${v.porques.join("; ")}.` : "";
+      if (v.aceita) {
+        const e = efeitoAceite(carta.tipo, carta);
+        ef.felicidade += e.felicidade; ef.moedas += e.moedas;
+        ef.tratadosAdd.push(...e.tratadosAdd); ef.tratadosRem.push(...e.tratadosRem);
+        msgs.push(`[CORREIO — RESPOSTA: ACEITA] ${carta.para} ACEITOU: ${t.icone || ""} ${t.nome || carta.tipo}${carta.oferta ? ` (oferta de ◉ ${carta.oferta})` : ""}. ${e.nota ? `Resultado: ${e.nota}.` : ""}${porque}${carta.tipo === "conselho" ? " O Mestre escreve o conselho recebido na voz do destinatário." : ""}`);
+        c.historico.unshift({ ...carta, status: "aceita", respondidaEm: dia });
+      } else {
+        msgs.push(`[CORREIO — RESPOSTA: RECUSADA] ${carta.para} RECUSOU: ${t.icone || ""} ${t.nome || carta.tipo}${carta.oferta ? ` (oferta de ◉ ${carta.oferta})` : ""}. O selo voltou quebrado.${porque}`);
+        c.historico.unshift({ ...carta, status: "recusada", respondidaEm: dia });
+      }
     }
     return false;
   });
@@ -138,11 +235,11 @@ export function processarDiaCorreio(correio, { dia = 1, fama = 0, ehLider = fals
   /* nova petição do mundo (~15%/dia, máx. 3 pendentes) */
   const pendentes = c.recebidas.filter((p) => p.status === "pendente").length;
   if (faccoes.length && pendentes < 3 && Math.random() < 0.15) {
-    const p = gerarPeticao({ faccoes, dia });
+    const p = gerarPeticao({ faccoes, dia, potencias });
     if (p) {
       p.id = `pet_${dia}_${Math.floor(Math.random() * 9999)}`;
       c.recebidas.unshift(p);
-      msgs.push(`[CORREIO — PETIÇÃO RECEBIDA] ${p.icone} ${p.texto} Prazo: até o dia ${p.prazo}. O jogador decide na aba Correio.`);
+      msgs.push(`[CORREIO — PETIÇÃO RECEBIDA] ${p.icone} ${p.texto}${p.porque ? ` (${p.de} ${p.porque}.)` : ""} Prazo: até o dia ${p.prazo}. O jogador decide na aba Correio.`);
     }
   }
 

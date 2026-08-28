@@ -262,7 +262,10 @@ export function pesarProposta({ potencia, acao, dip = null, fama = 0, meuPoder =
   if (inimigosComuns.length && ap.id === "sangue") { peso += 8; porques.push("você luta a guerra dela"); }
 
   /* já pediram isso há pouco: insistir cansa */
-  if (f.ultimaEm && dia - f.ultimaEm < 3) { peso -= 12; porques.push("você pediu isto anteontem"); }
+  /* `ultimaEm: 0` é "nunca pediu", e não "pediu no dia zero" — o mesmo
+     zero mentindo que fez o apreço voltar a 40 na v9.142. Sem o `> 0`, a
+     primeira carta do jogo já vinha com esta penalidade colada. */
+  if (f.ultimaEm > 0 && dia - f.ultimaEm < 3) { peso -= 12; porques.push("você pediu isto anteontem"); }
 
   const alvo = EXIGE_APRECO[acao];
   if (peso >= alvo + 15) return { resposta: "aceita", porques, exigencia: null };

@@ -5965,3 +5965,69 @@ já descontada, em vez de um `setPersonagem` em paralelo, que era o caminho
 de volta ao mesmo buraco.
 
 Depois: `grupo: ["Ume Petrov nv10"]` no save.
+
+## v9.144 — o correio encontra a mesa
+
+O correio nasceu na v7.0 e sempre foi honesto no que fazia: cartas chegam em
+dias, petições vencem, tudo por tabela e sem um token. O que ele **não tinha
+era memória de com quem estava falando**.
+
+`chanceResposta` era `base + fama/250` — uma moeda ao ar. Uma potência que te
+adora recusava exatamente tanto quanto uma que te odeia, e o que você tivesse
+feito por ela não pesava um grama.
+
+E pior: como as cartas **firmam tratado**, o correio era uma segunda
+diplomacia paralela à da v9.142 — recusado na mesa, bastava pedir por carta e
+tentar a sorte até sair. **Duas balanças para o mesmo peso, e a segunda
+desfazendo a primeira.**
+
+Agora o que é ato de estado — aliança, paz, tributo, casamento, guerra — passa
+pela **mesma balança da mesa**. O que não é (cortesia, conselho, auxílio)
+continua na chance, mas agora com o apreço dentro dela.
+
+**O correio guarda o que só ele tem**: a distância, o prazo, e o fato de que
+uma carta parte e não volta. De longe **não se negocia condição** — quem
+exigiria, recusa por carta, e diz o que queria.
+
+**A oferta em moeda passou a valer.** O número aparecia na mensagem e não
+entrava em conta nenhuma. Agora pesa (com teto — não se compra uma aliança
+com uma carroça de ouro) e sobe o apreço **mesmo quando a resposta é não**:
+o ouro chegou lá, e ninguém devolve ouro.
+
+**E o que ela pede sai do que ela quer.** A petição era sorteio cego: quem
+"quer ouro, e não esconde" podia mandar proposta de casamento e nunca um
+pedido de tributo. O apetite da v9.142 já dizia o que cada uma persegue —
+faltava alguém perguntar.
+
+### O zero mentindo pela terceira vez
+
+`ultimaEm: 0` significa "nunca pediu", e estava sendo lido como "pediu no dia
+zero": a **primeira** carta do jogo já vinha com a penalidade de insistência
+colada. É o mesmo zero do apreço na v9.142 e do prazo na v9.141.
+
+### O varredor que faltava, e o erro que me pegou duas vezes
+
+Abri a aba de Correio e o painel inteiro caiu na rede do `LimiteErro`:
+
+```
+ReferenceError: potenciasAqui is not defined
+    at PainelLateral
+```
+
+`PainelLateral` é um componente **à parte**, declarado antes de `Taverna` —
+nada de dentro de `Taverna` está no escopo dele. Chamei `potenciasAqui()` ali
+dentro, e o build passou limpo, e as 135 suítes passaram verdes, porque suíte
+de módulo não monta React.
+
+**Foi a segunda vez.** Na v9.136 foi `sementeMundo()` dentro de
+`PainelPessoas`, exatamente igual.
+
+Então virou o quinto varredor: `check-escopo` extrai os ajudantes declarados
+dentro de `Taverna` e procura chamadas deles na região dos componentes.
+
+E ele **não pegou na primeira tentativa**: eu excluía qualquer ponto antes do
+nome, para não casar `obj.metodo()` — e com isso deixei passar
+`...potenciasAqui()`, que era o caso real. Varredor que não pega é pior do
+que varredor nenhum, porque dá a sensação de estar coberto. Corrigido para
+distinguir o ponto do spread do ponto do acesso, e provado recolocando o
+defeito: build limpo, 135 suítes verdes, **e o varredor gritando**.

@@ -1382,7 +1382,7 @@ function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], 
         {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas semente={sementeMundo} npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} onBancar={onBancarConvite} vereditoConvite={vereditoConvite} grupoCheio={(personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} mortosBase={mortosBase} />}
 
         {aba === "gestao" && subGestao === "diplomacia" && <PainelDiplomacia potencias={potencias} dip={dip} veredito={veredito} onDiplomacia={onDiplomacia} onPresente={onPresente} onCumprir={onCumprirExigencia} cofre={guilda && guilda.cofre} temCasa={!!minhaCasa} />}
-        {aba === "gestao" && subGestao === "correio" && <PainelCorreio correio={correio} faccoes={((mapa && mapa.faccoes) || []).filter((f) => f && f.nome && !f.doJogador && f.relacao !== "jogador").map((f) => f.nome)} dia={dia} moedas={personagem.moedas || 0} enviarCarta={enviarCarta} responderPeticao={responderPeticao} />}
+        {aba === "gestao" && subGestao === "correio" && <PainelCorreio correio={correio} faccoes={[...new Set([...((mapa && mapa.faccoes) || []).filter((f) => f && f.nome && !f.doJogador && f.relacao !== "jogador").map((f) => f.nome), ...(potencias || []).filter((x) => !x.doJogador).map((x) => x.nome)])]} dia={dia} moedas={personagem.moedas || 0} enviarCarta={enviarCarta} responderPeticao={responderPeticao} />}
 
         {/* MERCADO (v9.2): estoque e preço do sistema; a IA só narra a cena */}
         {aba === "gestao" && subGestao === "talentos" && <PainelTalentos personagem={personagem} grupo={personagem.grupo || []} onAprender={onAprenderHab} onRespec={onRespec} onEscolherSubclasse={onEscolherSubclasse} onEscolherEspecializacao={onEscolherEspecializacao} onSubirAtributo={onSubirAtributo} onRespecAtributos={onRespecAtributos} />}
@@ -15014,13 +15014,27 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const faccNomes = ((mapaRef.current && mapaRef.current.faccoes) || [])
         .filter((f) => f && f.nome && !f.doJogador && f.relacao !== "jogador")
         .map((f) => f.nome);
+      /* v9.144: A CARTA PASSA PELA MESMA BALANÇA DA MESA. Sem isto o
+         correio era uma segunda diplomacia por sorteio: recusado na mesa,
+         bastava insistir por carta até sair. */
+      const potsCorreio = potenciasAqui().filter((x) => !x.doJogador);
       const pc = processarDiaCorreio(correioRef.current, {
         dia: diaRef.current,
         fama: famaAtual(),
         ehLider: cidadesDominadas(mapaRef.current).length > 0 || !!(mapaRef.current.faccoes || []).some((f) => f.doJogador),
-        faccoes: faccNomes,
+        faccoes: [...new Set([...faccNomes, ...potsCorreio.map((x) => x.nome)])],
+        potencias: potsCorreio,
+        dip: diplomaciaRef.current,
+        meuPoder: meuPoderDiplomatico(),
       });
       correioRef.current = pc.correio; setCorreio(pc.correio);
+      /* o ouro que foi junto com a carta chegou lá, e ninguém devolve ouro:
+         sobe o apreço mesmo quando a resposta é não */
+      if ((pc.efeitos.aprecoAdd || []).length) {
+        let d = diplomaciaRef.current;
+        for (const a of pc.efeitos.aprecoAdd) d = mexerNoApreco(d, a.nome, a.quanto);
+        guardarDiplomacia(d);
+      }
       aplicarEfeitosCorreio(pc.efeitos);
       pc.msgs.forEach((m) => {
         pushMsgs([{ autor: "sistema", texto: `✉️ ${m.replace(/^\[CORREIO — [^\]]+\]\s*/, "")}` }]);
