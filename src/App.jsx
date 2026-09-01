@@ -8,7 +8,7 @@ import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoD
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
-import { criaturasDoGenero, completarInimigo, TABELA_TESTES, avaliarTeste, dificuldadePorPerfil } from "./bestiario.js";
+import { criaturasDoGenero, completarInimigo, dificuldadePorPerfil } from "./bestiario.js";
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, firmarEntre, paresEntre, garantirLaco, TIPOS_DE_LACO } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
 import { rolarClima, rolarEncontro, CLIMAS } from "./encontros.js";
@@ -6896,46 +6896,17 @@ export default function Taverna() {
         dispararPerigo(resp.perigo);
       }
     } catch { /* perigo mal descrito nunca custa o turno */ }
-    let rolagemFinal = null;
-    if (rolagemFinal && (rolagemFinal.dificuldade != null || rolagemFinal.perfil)) {
-      const attrT = ATRIBUTOS.find((x) => x.nome.toLowerCase() === (rolagemFinal.atributo || "").toLowerCase());
-      const modT = attrT ? atributoEfetivo(pers, attrT.id) : 0;
-      /* DIFICULDADE POR PERFIL (v7.4.2): o Mestre manda o perfil ("digno",
-         "dificil", "formidavel") e o CÓDIGO calcula o número a partir do
-         modificador do herói — desafio digno rola dado em qualquer nível */
-      const dcPerfil = dificuldadePorPerfil(modT, rolagemFinal.perfil);
-      if (dcPerfil != null) rolagemFinal = { ...rolagemFinal, dificuldade: dcPerfil };
-      /* janela rolável: dificuldade impossível (falha mesmo com 20) é
-         recalibrada para o teto formidável — teste impossível o Mestre nega,
-         não testa */
-      if (rolagemFinal.dificuldade != null && rolagemFinal.dificuldade > modT + 19) rolagemFinal = { ...rolagemFinal, dificuldade: modT + 14 };
-      if (avaliarTeste(modT, rolagemFinal.dificuldade) === "auto") rolagemFinal = { ...rolagemFinal, auto: true };
-    }
-    /* v9.32: a Dádiva da Vontade de Ferro dá VANTAGEM em resistência mental e
-       contra medo. Ela mora aqui, no ponto por onde todo teste do Mestre
-       passa, e é lida do motivo — porque é assim que o pedido chega: em
-       português, não em campo estruturado. */
-    if (rolagemFinal && !rolagemFinal.vantagem && (temVantagemMental(pers) || vantagemMentalDeTraco(pers))) {
-      const alvoTxt = `${rolagemFinal.motivo || ""} ${rolagemFinal.atributo || ""} ${rolagemFinal.rotulo || ""}`.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-      if (/(medo|terror|pavor|amedront|encant|enfeiti|domin|charme|ilus|mental|sanidade|vontade|possess|hipno|controle da mente|persuas[aã]o resistir)/.test(alvoTxt)) {
-        rolagemFinal = { ...rolagemFinal, vantagem: true, desvantagem: false, porVantagem: temVantagemMental(pers) ? "Vontade de Ferro" : textoDoTraco(pers).split(":")[0] };
-      }
-    }
-    /* v9.44: o traço de origem entra pela MESMA porta. O Elfo tem vantagem em
-       Percepção e o Meio-elfo em Presença — a frase está na tela de criação
-       desde a primeira versão, e este é o único ponto por onde todo teste do
-       Mestre passa. Vantagem e desvantagem se anulam (5e): se o herói já
-       rolava com desvantagem, o traço não vira vantagem, apaga a penalidade. */
-    if (rolagemFinal && !rolagemFinal.vantagem) {
-      const attrT2 = ATRIBUTOS.find((x) => x.nome.toLowerCase() === String(rolagemFinal.atributo || "").toLowerCase());
-      if (attrT2 && vantagemDeTraco(pers, attrT2.id)) {
-        const marca = textoDoTraco(pers).split(":")[0];
-        rolagemFinal = rolagemFinal.desvantagem
-          ? { ...rolagemFinal, desvantagem: false, porVantagem: `${marca} (anula a desvantagem)` }
-          : { ...rolagemFinal, vantagem: true, porVantagem: marca };
-      }
-    }
-    setRolagem(rolagemFinal);
+    /* v9.145: aqui morava a leitura do pedido de rolagem do Narrador —
+       perfil, dificuldade, vantagem por dádiva e por traço de origem. A
+       v9.68 fechou esse canal ("a IA para de pedir dado") e deixou a
+       máquina para trás: `rolagemFinal` era declarada como null e nunca
+       recebia nada, então as quarenta linhas seguintes eram um `if` que
+       nunca abria. As duas regras que pareciam morar só aqui rodam no
+       canal vivo, onde o próprio sistema pede o teste.
+
+       O que fica é o gesto que sempre foi verdadeiro: chegou resposta do
+       Narrador, a rolagem anterior sai da tela. */
+    setRolagem(null);
     /* CÓDEX: novos companheiros, quase-morte e checagem de conquistas do turno */
     {
       const antes = (persAtual.grupo || []).length, agora = (pers.grupo || []).length;

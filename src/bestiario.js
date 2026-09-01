@@ -68,18 +68,14 @@ export function completarInimigo(e, nivelJogador) {
    inventar números e usar o perfil. Os dois nunca puderam ser verdade ao mesmo
    tempo: a dificuldade é derivada do modificador do herói desde a v9.15, e um
    número fixo é recalibrado assim que chega. Ficou o que decide de verdade. */
-export const TABELA_TESTES = `COMO MEDIR UM TESTE (você escolhe o PERFIL; o sistema calcula o número):
-· "facil" = desafio leve, errar é azar. · "digno" = à altura do herói (o padrão). · "dificil" = exige perícia real, falha provável sem preparo. · "formidavel" = no limite do possível, sucesso é feito memorável.
-· Um "digno" é digno em qualquer nível — o sistema converte pelo modificador do herói, então o perfil nunca envelhece.
-QUANDO NÃO PEDIR TESTE: ação TRIVIAL para o patamar dele (um Herói não testa para intimidar um goblin, uma Lenda não testa para escalar um muro); ação sem consequência interessante na falha; ação impossível (negue, não teste). Contra algo de patamar MUITO acima: perfil "formidavel", e mesmo o sucesso dá efeito parcial.
-REGRA DE OURO: teste só quando o resultado é incerto E a falha gera história.`;
-
-/* Decisor por código: o app transforma testes triviais em sucesso automático. */
-export function avaliarTeste(modificador, dificuldade) {
-  const dc = Number(dificuldade) || 12;
-  if (dc <= (modificador || 0) + 2) return "auto";   // não há como falhar de verdade
-  return "rolar";
-}
+/* v9.145: aqui moravam TABELA_TESTES (o bloco que ensinava o Narrador a
+   escolher o PERFIL de um teste) e avaliarTeste (que convertia o trivial em
+   sucesso automatico). Os dois serviam ao canal de rolagem da IA, fechado na
+   v9.68 — e ficaram exportados por mais setenta e sete versoes, com a tabela
+   subindo no prompt de todo turno para ensinar a escolher um campo que ja nao
+   existia. Export morto mente na primeira leitura: quem lesse este arquivo
+   concluiria que a IA ainda pede dado. Quem pede dado agora e o sistema, e
+   ele nao precisa de nenhum dos dois. */
 
 /* DIFICULDADE POR PERFIL (v7.4.2): a tabela fixa (12/15/18) ficava pequena
    para heróis de nível alto — tudo virava sucesso automático e o d20 sumia.
