@@ -101,6 +101,7 @@ import { garantirAliados, nascerAliado, andarVontade, cruzouOCodigo, vontadePorI
 import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resumoDoRegistro } from "./registro.js";
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
+import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo } from "./arquivo.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
 import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra } from "./rastro.js";
@@ -1166,7 +1167,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null }) {
+function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1397,7 +1398,7 @@ function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], 
         {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} />}
         {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"}  onMilagre={onMilagreUI} mapa={mapa} devocao={devocao} onEncararProva={onEncararProva} onDesistirRito={onDesistirRito} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} jornada={jornada} masmorra={masmorra} molde={molde} semente={sementeMundo} genero={generoMundo} lex={lexicoMundo} lugar={lugar} aoIrAoLugar={aoIrAoLugar} aoViajar={aoViajar} npcs={npcs} grupo={personagem.grupo || []} heroi={personagem.nome} />}
-        {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} />}
+        {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} onExportarSave={onExportarSave} />}
         {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} cidadeAtual={cidadeAtual} />}
         {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas semente={sementeMundo} npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} onBancar={onBancarConvite} vereditoConvite={vereditoConvite} grupoCheio={(personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} mortosBase={mortosBase} />}
 
@@ -3045,7 +3046,26 @@ function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoE
   );
 }
 
-function TelaMenu({ irNovo, continuar, temSave, criarSala, entrarSala }) {
+function TelaMenu({ irNovo, continuar, temSave, criarSala, entrarSala, aoLerArquivo, aoConfirmarImportacao, aoDesfazerImportacao, aoExportar }) {
+  /* três estados, e cada um é uma frase que a tela precisa poder dizer:
+     "o arquivo tem isto", "não deu", "pronto, e dá para voltar atrás" */
+  const [lido, setLido] = React.useState(null);
+  const [erroArq, setErroArq] = React.useState("");
+  const [importado, setImportado] = React.useState(false);
+  const entradaRef = React.useRef(null);
+  const escolher = (ev) => {
+    const f = ev.target.files && ev.target.files[0];
+    ev.target.value = "";   /* escolher o MESMO arquivo de novo tem que disparar */
+    if (!f) return;
+    setErroArq(""); setLido(null); setImportado(false);
+    const fr = new FileReader();
+    fr.onerror = () => setErroArq("Não consegui ler esse arquivo.");
+    fr.onload = () => {
+      const r = aoLerArquivo(String(fr.result || ""));
+      if (r.ok) setLido(r); else setErroArq(r.erro);
+    };
+    fr.readAsText(f);
+  };
   return (
     <div className="tv-fade flex-1 flex flex-col items-center justify-center px-6 py-10">
       <div className="text-center mb-10">
@@ -3081,6 +3101,48 @@ function TelaMenu({ irNovo, continuar, temSave, criarSala, entrarSala }) {
           <button onClick={entrarSala} className="w-full rounded-xl px-3 py-2.5 tv-mono text-[11px]" style={{ border: `1px solid ${T.violet}`, color: T.violetSoft }}>
             🔑 Entrar com um código
           </button>
+        </div>
+        {/* ---------------- A CAMPANHA EM ARQUIVO (v9.147) ----------------
+            Discreto de propósito: quem chega para jogar quer os botões de
+            cima. Isto é para quem vai trocar de navegador, de máquina, ou
+            teve o cache limpo — e para essa pessoa ele precisa estar AQUI,
+            no menu, e não numa aba de dentro do jogo que ela já não
+            consegue mais abrir. */}
+        <div className="rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
+          <div className="tv-mono text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: T.inkDim }}>A campanha em arquivo</div>
+          <div className="tv-body text-xs mb-3" style={{ color: T.inkDim }}>O save mora só neste navegador. Um arquivo atravessa a limpeza de cache, a troca de máquina e o navegador novo.</div>
+          <div className="flex gap-2">
+            {temSave && (
+              <button onClick={aoExportar} className="flex-1 rounded-xl px-3 py-2.5 tv-mono text-[11px]" style={{ border: `1px solid ${T.line}`, color: T.ink }}>
+                💾 Guardar em arquivo
+              </button>
+            )}
+            <button onClick={() => entradaRef.current && entradaRef.current.click()} className="flex-1 rounded-xl px-3 py-2.5 tv-mono text-[11px]" style={{ border: `1px solid ${T.line}`, color: T.ink }}>
+              📂 Trazer de um arquivo
+            </button>
+            <input ref={entradaRef} type="file" accept=".json,application/json" onChange={escolher} className="hidden" />
+          </div>
+          {erroArq && <p className="tv-body text-xs mt-3" style={{ color: T.amberSoft }}>{erroArq}</p>}
+          {/* O QUE VEM NO ARQUIVO, ANTES DE QUALQUER COISA SER APAGADA. */}
+          {lido && !importado && (
+            <div className="mt-3 rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+              <div className="tv-body text-sm" style={{ color: T.ink }}>{lido.linha}</div>
+              {(lido.avisos || []).map((a, i) => <div key={i} className="tv-body text-[11px] mt-1" style={{ color: T.inkDim }}>· {a}</div>)}
+              {temSave && <div className="tv-body text-[11px] mt-2" style={{ color: T.amberSoft }}>Isto substitui “{temSave.nomeCampanha}” neste dispositivo. Dá para voltar atrás depois.</div>}
+              <button onClick={() => { const r = aoConfirmarImportacao(); if (r.ok) { setImportado(true); setLido(null); } else setErroArq(r.erro); }}
+                className="w-full mt-3 rounded-xl px-3 py-2.5 tv-mono text-[11px]" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>
+                Carregar esta campanha
+              </button>
+            </div>
+          )}
+          {importado && (
+            <div className="mt-3 rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+              <div className="tv-body text-sm" style={{ color: T.ink }}>Campanha carregada — ela está em “Continuar aventura”, ali em cima.</div>
+              <button onClick={() => { if (aoDesfazerImportacao()) setImportado(false); }} className="mt-2 tv-mono text-[10px] underline" style={{ color: T.inkDim }}>
+                desfazer e voltar à anterior
+              </button>
+            </div>
+          )}
         </div>
       </div>
       {temSave && <p className="tv-body text-xs mt-6" style={{ color: T.inkDim }}>Começar uma nova campanha substitui a anterior neste dispositivo.</p>}
@@ -5404,6 +5466,61 @@ export default function Taverna() {
     if (cresceu && !longeDoFim && !rolagem) fimRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [mensagens]); // eslint-disable-line
 
+  /* ---------------- TRAZER DE UM ARQUIVO (v9.147) ----------------
+     O gesto mais perigoso do jogo inteiro: ele apaga meses de campanha e
+     não tem como pedir desculpa depois. Por isso são DOIS passos.
+
+     LER não grava nada. Ela abre o envelope e devolve campanha, herói,
+     nível e dia — o suficiente para o jogador reconhecer o que está
+     prestes a carregar. Ninguém deve descobrir o que importou depois de
+     importar.
+
+     CONFIRMAR é a única que escreve, e guarda o save que está saindo em
+     `taverna_save_anterior` antes. Essa é a SEGUNDA rede, não a primeira:
+     desfazer é bom, mas "é isto que vou apagar, confirma?" é melhor do
+     que "já apaguei, quer de volta?".
+
+     E as duas só acontecem no MENU. Com o jogo montado, o autossave
+     gravaria por cima da importação no turno seguinte e a campanha
+     trazida evaporaria sem nenhuma mensagem de erro — que é a pior forma
+     de perder um save, porque o jogador acha que funcionou. */
+  const importPendenteRef = useRef(null);
+
+  const lerArquivoDeSave = (texto) => {
+    const r = abrirArquivo(texto);
+    importPendenteRef.current = r.ok ? r.save : null;
+    return r.ok ? { ok: true, linha: linhaDoResumo(r.resumo), avisos: r.avisos } : { ok: false, erro: r.erro };
+  };
+
+  const confirmarImportacao = () => {
+    const bruto = importPendenteRef.current;
+    if (!bruto) return { ok: false, erro: "Nenhum arquivo lido." };
+    try {
+      const anterior = localStorage.getItem("taverna_save_v1");
+      if (anterior) localStorage.setItem("taverna_save_anterior", anterior);
+      localStorage.setItem("taverna_save_v1", JSON.stringify(bruto));
+    } catch { return { ok: false, erro: "O navegador recusou gravar (memória cheia?). Nada foi alterado." }; }
+    const sv = { ...bruto };
+    if (sv.personagem) sv.personagem = migrarPersonagem(sv.personagem);
+    saveRef.current = sv; setTemSave(sv);
+    importPendenteRef.current = null;
+    return { ok: true, tinhaAnterior: !!localStorage.getItem("taverna_save_anterior") };
+  };
+
+  /* A SEGUNDA REDE. Uma importação confirmada por engano deixa de ser
+     definitiva enquanto o jogador não começar a jogar por cima dela. */
+  const desfazerImportacao = () => {
+    try {
+      const anterior = localStorage.getItem("taverna_save_anterior");
+      if (!anterior) return false;
+      localStorage.setItem("taverna_save_v1", anterior);
+      localStorage.removeItem("taverna_save_anterior");
+      const sv = JSON.parse(anterior);
+      if (sv && sv.personagem) sv.personagem = migrarPersonagem(sv.personagem);
+      saveRef.current = sv; setTemSave(sv);
+      return true;
+    } catch { return false; }
+  };
   /* carrega o save deste dispositivo na abertura */
   useEffect(() => {
     try {
@@ -15181,6 +15298,26 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     enviar(`[CORREIO — PETIÇÃO ${aceite ? "ACEITA" : "RECUSADA"}] ${p.texto} → EU DECIDI: ${aceite ? "ACEITEI" : "RECUSEI"}.${ef.nota ? ` Consequência (já aplicada pelo sistema): ${ef.nota}.` : ""}${ef.moedas ? ` Moedas: ${ef.moedas > 0 ? "+" : ""}${ef.moedas} (já aplicado).` : ""} Narre a reação de ${p.de} e as ondas que isso faz no mundo.${SO_ISSO}`);
   };
 
+  /* ---------------- A CAMPANHA SAI DO NAVEGADOR (v9.147) ----------------
+     A única cópia de meses de saga era uma chave de localStorage. O jogo já
+     exportava a CRÔNICA — a saga em letra de forma, bonita e ilegível para a
+     máquina. Faltava o contrário: o estado, em arquivo, que volta. */
+  const exportarSave = () => {
+    const sv = saveRef.current || temSave;
+    if (!sv || !sv.personagem) { pushMsgs([{ autor: "sistema", texto: "💾 Não há campanha salva para exportar ainda." }]); return; }
+    const texto = textoDoArquivo(sv, { versao: VERSAO, leva: LEVA });
+    const blob = new Blob([texto], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = nomeDoArquivo(sv);
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    /* do MENU não sai mensagem: escrever no diário de uma campanha que
+       nem foi aberta seria sujar o registro com um gesto que não é do
+       mundo. O botão de lá se explica sozinho. */
+    if (faseRef.current === "jogo") pushMsgs([{ autor: "sistema", texto: `💾 Campanha exportada — ${nomeDoArquivo(sv)}. Guarde o arquivo: ele volta por "Trazer de um arquivo" no menu.` }]);
+  };
+
   /* CRÔNICA (v6.9): baixa a saga em Markdown — gerada por código dos registros. */
   const exportarCronica = (md) => {
     const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
@@ -16831,7 +16968,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         </div>
       </header>
 
-      {fase === "menu" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaMenu irNovo={() => { largarASala(); setFase("mundo"); }} continuar={(r) => { largarASala(); continuar(r); }} temSave={temSave} criarSala={criarSalaDeDois} entrarSala={() => { souAnfitriaoRef.current = false; setSala(null); setCodigoDigitado(""); setErroDaSala(""); setFase("sala"); }} /></div>}
+      {fase === "menu" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaMenu irNovo={() => { largarASala(); setFase("mundo"); }} continuar={(r) => { largarASala(); continuar(r); }} temSave={temSave} aoLerArquivo={lerArquivoDeSave} aoConfirmarImportacao={confirmarImportacao} aoDesfazerImportacao={desfazerImportacao} aoExportar={exportarSave} criarSala={criarSalaDeDois} entrarSala={() => { souAnfitriaoRef.current = false; setSala(null); setCodigoDigitado(""); setErroDaSala(""); setFase("sala"); }} /></div>}
       {fase === "sala" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaSala
         sala={sala} eu={euRef.current} souAnfitriao={souAnfitriaoRef.current} erro={erroDaSala}
         codigoDigitado={codigoDigitado} aoDigitar={setCodigoDigitado} aoEntrar={entrarNaSalaPeloCodigo}
@@ -17480,7 +17617,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} /></LimiteErro>
+          <LimiteErro><PainelLateral guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>

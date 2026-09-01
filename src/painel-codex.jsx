@@ -20,7 +20,7 @@ const CATEGORIAS_CONQUISTA = [
   { id: "lenda", rotulo: "Lenda", ids: ["nv5", "nv10", "nv15", "nv20", "nome_conhecido", "lenda_viva", "nemesis_surgida", "nemesis_vencida", "primeiro_cronica"] },
 ];
 
-export function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, mundo, npcs, mapa, personagem, nomeCampanha, guilda, reino, dia, nemesis, faccaoJogador, onExportarCronica }) {
+export function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, mundo, npcs, mapa, personagem, nomeCampanha, guilda, reino, dia, nemesis, faccaoJogador, onExportarCronica, onExportarSave }) {
   const [subCodex, setSubCodex] = React.useState("conquistas");
   const desb = (conquistas && conquistas.desbloqueadas) || {};
   const nDesb = CONQUISTAS.filter((c) => desb[c.id]).length;
@@ -168,6 +168,19 @@ export function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobert
               style={{ background: T.amber, color: T.onAccent, border: `1px solid ${T.amber}` }}>
               📜 baixar crônica (.md)
             </button>
+            {/* A CRÔNICA É PARA LER; O SAVE É PARA VOLTAR (v9.147).
+                Quem baixa a crônica achando que fez backup descobre tarde
+                demais — então as duas ficam juntas, e a linha diz qual é
+                qual. */}
+            {onExportarSave && (
+              <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                <div className="tv-body text-xs mb-2" style={{ color: T.inkDim }}>A crônica acima é para <em>ler</em>. Para <em>voltar</em> — em outro navegador, em outra máquina, ou depois de o cache ser limpo — o que serve é o save.</div>
+                <button onClick={onExportarSave}
+                  className="w-full tv-mono text-xs px-3 py-2.5 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.ink }}>
+                  💾 guardar a campanha em arquivo (.json)
+                </button>
+              </div>
+            )}
             <div className="rounded-xl p-3 max-h-72 overflow-y-auto" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
               <pre className="tv-body text-[11px] whitespace-pre-wrap" style={{ color: T.ink }}>{md}</pre>
             </div>
