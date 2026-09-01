@@ -10,6 +10,8 @@
    ROTEAMENTO POR TAREFA: "leve" (livro/resumo/burocracia) vai para o modelo
    barato do provedor; "narrador" (padrão) vai para o modelo forte.
    É o mesmo princípio do resto do app: nem toda tarefa merece o modelo caro. */
+import { lerUso } from "../src/custo.js";
+
 export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).json({ erro: "Use POST" }); return; }
   try {
@@ -107,7 +109,8 @@ export default async function handler(req, res) {
       if (!r || !r.ok) return { erro: ultimoErro, corpo: r ? (await r.text()).slice(0, 250) : "" };
       const data = await r.json();
       const texto = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
-      return texto ? { texto } : { erro: "resposta vazia", corpo: "" };
+      const uso = lerUso(data);
+      return texto ? { texto, uso: uso ? { ...uso, modelo: data.model || "" } : null } : { erro: "resposta vazia", corpo: "" };
     };
 
     /* ---------- Google Gemini (reserva) ---------- */
@@ -180,7 +183,8 @@ export default async function handler(req, res) {
       const cand = data.candidates && data.candidates[0];
       const texto = ((cand && cand.content && cand.content.parts) || []).map((p) => p.text || "").filter(Boolean).join("\n");
       if (!texto) return { erro: `sem texto (${(cand && cand.finishReason) || (data.promptFeedback && data.promptFeedback.blockReason) || "vazio"})`, corpo: "" };
-      return { texto };
+      const uso = lerUso(data);
+      return { texto, uso: uso ? { ...uso, modelo: data.modelVersion || "" } : null };
     };
 
     /* ---------- Roteador de provedor ----------
@@ -222,7 +226,7 @@ export default async function handler(req, res) {
          em silencio, porque so o 502 (todos falharam) contava o motivo. Um
          reserva que nunca funciona nao e um reserva: e um jogo sem Mestre
          no dia em que o primeiro sair do ar. */
-      if (out.texto) { res.status(200).json({ texto: out.texto, provedor: p.id, fila: fila.map((x) => x.id), falharam: tentativas }); return; }
+      if (out.texto) { res.status(200).json({ texto: out.texto, provedor: p.id, fila: fila.map((x) => x.id), falharam: tentativas, uso: out.uso ? { ...out.uso, tarefa: tarefa || "narrador" } : null }); return; }
       tentativas.push(`${p.id} (${out.erro}${out.corpo ? `: ${out.corpo}` : ""})`);
     }
     res.status(502).json({ erro: `Todos os provedores falharam — ${tentativas.join(" · ")}`.slice(0, 400) });

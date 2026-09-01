@@ -40,7 +40,7 @@ import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisT
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
-import { BRAND, SLOGAN, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, FONT_CSS, GENEROS, ATRIBUTOS } from "./constantes.js";
+import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, FONT_CSS, GENEROS, ATRIBUTOS } from "./constantes.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
 import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito, naturezaDaHabilidade, tipoDeDanoDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
 import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, envelopeDoTeste } from "./testes.js";
@@ -100,6 +100,7 @@ import { escolherCorpo, corpoPorId, garantirSaber, chegouAteEle, oQueEleNaoSabe,
 import { garantirAliados, nascerAliado, andarVontade, cruzouOCodigo, vontadePorId, codigoPorId, DIAS_ATE_APODRECER, paraPauta as aliadoParaPauta } from "./aliado.js";
 import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resumoDoRegistro } from "./registro.js";
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
+import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
 import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra } from "./rastro.js";
@@ -157,6 +158,16 @@ import { agruparMensagens } from "./resumo.js";
    desenvolvimento e no save, que é onde quem investiga vai olhar. */
 export const ultimoProvedorRef = { atual: "", historico: [] };
 
+/* O QUE O TURNO CUSTOU (v9.146). Mesma casa e mesmo motivo do ref acima:
+   o provedor devolve a contagem de tokens em TODA resposta, e o jogo
+   vinha jogando fora. Sem isto, "custo de token é produto" é uma frase
+   sem número atrás — e cortar prompt vira chute.
+
+   Não vai para a tela, pela mesma lei que mantém o provedor fora dela: o
+   preço da API não é gameplay. Vive no save, no console e no /custo do
+   modo criativo, que é o canal que já existe para este tipo de pergunta. */
+export const custoRef = { atual: CUSTO_ZERO() };
+
 async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto", tarefa = "narrador") {
   const response = await fetch("/api/narrador", {
     method: "POST",
@@ -172,6 +183,15 @@ async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto
     /* a TROCA é o que interessa, não o provedor: é o instante em que a
        prosa pode mudar de dono sem aviso */
     if (trocou && typeof console !== "undefined") console.info(`[taverna] o Mestre trocou de provedor: agora é ${data.provedor}`);
+  }
+  if (data.uso) {
+    custoRef.atual = somarChamada(custoRef.atual, { ...data.uso, tarefa });
+    /* O CACHE É A LINHA QUE DECIDE A CONTA: um token de entrada relido
+       custa cerca de um décimo de um novo, e o prompt de sistema é a
+       maior parte da entrada de todo turno. Se ele nunca bate, alguma
+       coisa está reescrevendo o COMEÇO do prompt a cada jogada — e isso
+       é um defeito de dinheiro que nenhum outro número denuncia. */
+    if (typeof console !== "undefined" && console.debug) console.debug(`[taverna] turno: ${data.uso.entrada} de entrada (${data.uso.cache || 0} do cache) + ${data.uso.saida} de saída`);
   }
   return data.texto || "";
 }
@@ -3032,7 +3052,7 @@ function TelaMenu({ irNovo, continuar, temSave, criarSala, entrarSala }) {
         <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
         <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
         <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>v8.9 · economia de ação</p>
+        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>{VERSAO} · {LEVA}</p>
       </div>
       <div className="grid gap-4 w-full max-w-sm">
         {temSave && (
@@ -3673,6 +3693,11 @@ export default function Taverna() {
     try {
       switch (c.cmd) {
         case "ajuda": godLinha(textoDeAjuda()); return true;
+        /* v9.146: o único lugar do jogo onde o preço da API aparece. Não é
+           gameplay, então não tem painel — mas alguém precisa poder
+           perguntar, e este é o canal que já existe para perguntas que o
+           Mestre não vê. */
+        case "custo": godLinha("⚡ CUSTO DESTA CAMPANHA\n" + linhasDoCusto(custoRef.atual, { dia: diaRef.current }).map((l) => "  " + l).join("\n")); return true;
 
         /* ---- ficha ---- */
         case "nivel": {
@@ -5436,6 +5461,7 @@ export default function Taverna() {
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
+      custo: custoRef.atual,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -8594,6 +8620,9 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       famaPatamarRef.current = sv.famaPatamar || 0;
       reinoRef.current = garantirReino(sv.reino && typeof sv.reino === "object" ? sv.reino : {}, mapaRef.current) || {}; setReino(reinoRef.current);
       governosRef.current = garantirGovernos(sv.governos, mapaRef.current); setGovernos(governosRef.current);
+      /* o acumulado de custo atravessa a recarga da página: sem isto ele
+         mediria a aba aberta, e não a campanha. */
+      custoRef.atual = sv.custo && typeof sv.custo === "object" && typeof sv.custo.chamadas === "number" ? sv.custo : CUSTO_ZERO();
       tomandoRef.current = (sv.tomando && sv.tomando.cidade) ? sv.tomando : null; setTomando(tomandoRef.current);
       diplomaciaRef.current = garantirDiplomacia(sv.diplomacia); setDiploState(diplomaciaRef.current);
       /* BLINDAGEM v6.5: pessoas de saves antigos sem data de encontro ganham

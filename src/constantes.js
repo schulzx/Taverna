@@ -8,6 +8,14 @@ import { xpDoProximoNivel, XP_POR_DADIVA } from "./regras.js";
 export const BRAND = "Taverna";
 export const SLOGAN = "toda lenda começa aqui";
 
+/* A VERSÃO, num lugar só (v9.146). Ela ficou parada em "v8.9 · economia
+   de ação" da v8.9 até a v9.145, escrita à mão dentro de um JSX no meio
+   do App — que é exatamente onde um número vai para ser esquecido.
+   Aqui ela fica ao lado do resto do que a casa sabe sobre si mesma, e um
+   varredor confere que o App não voltou a escrevê-la à mão. */
+export const VERSAO = "v9.146";
+export const LEVA = "o custo do turno";
+
 export const XP_POR_NIVEL = (nivel) => xpDoProximoNivel(nivel) ?? XP_POR_DADIVA;
 export const MOEDAS_INICIAIS = 15;
 export const PONTOS_TOTAIS = 6;

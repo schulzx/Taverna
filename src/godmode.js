@@ -20,6 +20,7 @@
    `args` descreve o formato para a ajuda e para a validação. */
 export const COMANDOS = [
   { cmd: "ajuda", args: "", grupo: "geral", desc: "lista todos os comandos" },
+  { cmd: "custo", args: "", grupo: "geral", desc: "quanto esta campanha já custou em tokens e em dólares" },
   { cmd: "nivel", args: "<1-20>", grupo: "ficha", desc: "define o nível (PV/PM e pontos recalculados)" },
   { cmd: "xp", args: "<n>", grupo: "ficha", desc: "soma XP (sobe de nível pela tabela normal)" },
   { cmd: "pontos", args: "<hab|atr> <n>", grupo: "ficha", desc: "dá pontos de habilidade ou de atributo" },
