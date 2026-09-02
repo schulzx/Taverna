@@ -12,8 +12,14 @@
    É o mesmo princípio do resto do app: nem toda tarefa merece o modelo caro. */
 import { lerUso } from "../src/custo.js";
 
+import { deixarEntrar } from "./_portao.js";
+
 export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).json({ erro: "Use POST" }); return; }
+  /* v9.155: O PORTAO. Sem ele esta rota respondia a internet inteira —
+     e quem achasse a URL gastaria as chaves de graca, sem nem abrir o
+     jogo. Vem antes de tudo: nao se paga pela contagem de um robo. */
+  { const p = await deixarEntrar(req); if (!p.ok) { res.status(p.status).json({ erro: p.erro }); return; } }
   try {
     const { system, messages, maxTokens, formato, tarefa, provedor: provedorPedido } = req.body || {};
     if (!system || !Array.isArray(messages) || messages.length === 0) {
