@@ -23,7 +23,47 @@ const LUGARES = ["Cripta", "Catacumba", "Mina", "Caverna", "Ruína", "Tumba", "E
 const EPITETOS = ["dos Sussurros", "do Rei Caído", "das Correntes", "do Musgo Negro", "das Ossadas", "do Sino Rachado", "das Águas Paradas", "do Olho Cego", "das Sombras", "do Voto Quebrado", "da Serpente", "dos Ratos", "do Silêncio", "das Brasas", "da Névoa", "do Eremita"];
 const ARMADILHAS = ["chão que desaba sobre estacas", "dardos disparados das paredes", "gás esverdeado", "pedra que rola pelo corredor", "lâminas oscilantes no teto", "piso que vira alçapão", "fios que derrubam potes de fogo", "estátua que cospe areia cega"];
 const SANTUARIOS = ["fonte de água límpida", "altar coberto de musgo luminoso", "acampamento abandonado com provisões", "estátua com as mãos em concha", "jardim subterrâneo de cogumelos brancos"];
-const ENIGMAS = ["uma porta com três alavancas e uma inscrição gasta", "um espelho que mostra a sala diferente", "estátuas que apontam para direções distintas", "um poço de onde sobe uma voz que faz perguntas", "runas que brilham numa sequência que se repete", "uma balança antiga com pesos estranhos"];
+/* As quatro trancas, e o que cada uma pede. `dicas` é o que a sala
+   ensina a quem erra — na ordem em que ela ensina. */
+export const TRANCAS = [
+  {
+    id: "mecanismo", atributo: "destreza", rotulo: "mecanismo", artigo: "O",
+    o: "uma porta com três alavancas e uma inscrição gasta",
+    dicas: [
+      "as três alavancas têm marcas de uso desiguais — uma foi puxada muito mais",
+      "a inscrição fala de uma ORDEM, não de um número",
+      "a do meio range ao ceder; as outras duas não fazem som nenhum",
+    ],
+  },
+  {
+    id: "inscricao", atributo: "intelecto", rotulo: "inscrição", artigo: "A",
+    o: "runas frias que piscam numa sequência que se repete",
+    dicas: [
+      "a sequência repete a cada sete piscadas, e a sétima é mais longa",
+      "duas runas são a mesma letra em idades diferentes da língua",
+      "o que está escrito não é uma ordem: é um nome",
+    ],
+  },
+  {
+    id: "padrao", atributo: "percepcao", rotulo: "padrão", artigo: "O",
+    o: "estátuas que apontam para direções diferentes",
+    dicas: [
+      "uma das estátuas foi girada há pouco — o pó no pedestal está limpo de um lado",
+      "as direções não apontam para portas: apontam para o teto",
+      "há uma marca no chão onde todas as linhas se cruzariam",
+    ],
+  },
+  {
+    id: "peso", atributo: "vigor", rotulo: "peso", artigo: "A balança de",
+    o: "uma balança antiga com pesos estranhos e um poço embaixo",
+    dicas: [
+      "os pratos não estão nivelados, e o desnível é sempre o mesmo",
+      "um dos pesos é oco — pesa menos do que o tamanho promete",
+      "o poço embaixo não é armadilha: é o contrapeso",
+    ],
+  },
+];
+export const trancaPorId = (id) => TRANCAS.find((t) => t.id === id) || TRANCAS[0];
 
 /* PISTAS: o que se percebe da soleira ANTES de entrar. É a informação que
    transforma "apertar avançar" em decisão — e algumas mentem um pouco. */
@@ -56,7 +96,10 @@ function conteudoSala(tipo, genero, nivel, profunda) {
   if (tipo === "combate") return { inimigos: rolarGrupo(genero, nivel).map((c) => ({ nome: c.nome, ameaca: c.ameaca })) };
   if (tipo === "armadilha") return { nomeArmadilha: sortear(ARMADILHAS), dano: Math.round((2 + nivel * 0.8 + d(4)) * bonus) };
   if (tipo === "tesouro") return { moedas: Math.round((10 + nivel * 3 + d(20)) * bonus), caiItem: Math.random() < (profunda ? 0.8 : 0.5) };
-  if (tipo === "enigma") return { cena: sortear(ENIGMAS) };
+  /* v9.151: a sala de enigma nasce com uma TRANCA — qual atributo a abre
+     e o que ela ensina a quem erra. O campo cena continua para o
+     Narrador ter a imagem, mas quem julga agora e o sistema. */
+  if (tipo === "enigma") { const tr = sortear(TRANCAS); return { cena: tr.o, tranca: tr.id, tentativasEnigma: 0 }; }
   if (tipo === "santuario") return { cena: sortear(SANTUARIOS), curaPct: 0.25, tochas: 2 };
   if (tipo === "chave") return { inimigos: rolarGrupo(genero, nivel).map((c) => ({ nome: c.nome, ameaca: c.ameaca })), guardaChave: true };
   return {};
@@ -399,4 +442,234 @@ export function resultadoBusca(sala, rolagemTotal) {
 /* Armadilha NÃO percebida dispara ao entrar; percebida pode ser evitada. */
 export function armadilhaDispara(sala) {
   return !!(sala && sala.segredo && sala.segredo.perigo && !sala.segredo.revelado);
+}
+
+/* ============================================================
+   O ENIGMA DEIXA DE SER PROSA (v9.151)
+
+   Era a última porta da masmorra em que a IA decidia o que existe E
+   julgava se deu certo. O envelope dizia, com todas as letras:
+
+     "A sala trava o caminho com: [uma frase]. Apresente a cena e o
+      desafio NA FICÇÃO — me deixe resolver."
+
+   Ou seja: o Narrador inventava o enigma, ouvia a resposta do jogador e
+   decidia sozinho se ela servia. Nenhuma das três coisas é dele. E o
+   sintoma disso não é abstrato: um enigma julgado por quem quer contar
+   uma boa cena abre quando a cena precisa que abra, e o jogador aprende
+   em duas masmorras que basta escrever com confiança.
+
+   ---------------- O QUE UM ENIGMA É, MECANICAMENTE ----------------
+
+   É uma tranca com CHAVE DECLARADA. Cada tipo de enigma diz qual
+   atributo o abre — o mecanismo pede dedos, a inscrição pede letras, o
+   padrão pede olho. Isso importa porque transforma "o jogador é
+   inteligente?" em "o PERSONAGEM tem a ferramenta?", que é a pergunta
+   que um RPG faz.
+
+   ---------------- FALHAR É PROGRESSO ----------------
+
+   A regra que define este módulo: cada tentativa que falha ENTREGA UMA
+   PISTA e baixa a dificuldade da próxima. Uma sala trancada que o
+   jogador não consegue passar é uma campanha morta, e um enigma que se
+   resolve num dado só não é enigma, é uma fechadura.
+
+   Então o enigma não é um muro: é um SUMIDOURO DE TEMPO. Dez minutos por
+   tentativa, e tempo numa masmorra é tocha e é o que vaga pelos
+   corredores. O jogador que insiste passa; ele paga em luz. É a mesma
+   escolha que o desgaste do chefe já oferece do outro lado.
+   ============================================================ */
+
+
+/* ---------------- O PREÇO DE CADA TENTATIVA ----------------
+   Dez minutos é o mesmo que buscar uma sala (`TEMPO.turnoBuscaMasmorra`),
+   e é de propósito: examinar uma tranca custa o que examinar um quarto
+   custa. Números diferentes para o mesmo gesto seriam duas regras. */
+export const MINUTOS_POR_TENTATIVA = 10;
+
+/* Quanto a dificuldade cai a cada pista. Três pistas tiram seis do alvo —
+   o bastante para virar o jogo de um personagem que não tem o atributo,
+   e não o bastante para tornar a primeira tentativa irrelevante. */
+export const ALIVIO_POR_DICA = 2;
+
+export function enigmaDaSala(sala) {
+  const t = trancaPorId(sala && sala.tranca);
+  return { ...t, tentativas: Math.max(0, Number((sala || {}).tentativasEnigma) || 0) };
+}
+
+/* A dificuldade é o PERFIL de sempre, resolvido pelo modificador do herói,
+   menos o que as pistas já entregaram. O piso existe porque a última
+   pista praticamente diz a resposta: a partir dali é um formalismo, e um
+   formalismo que trava a campanha seria pior do que não ter enigma. */
+export function dificuldadeDoEnigma(base, tentativas) {
+  const n = Math.max(0, Number(tentativas) || 0);
+  return Math.max(8, Math.round(Number(base) || 14) - n * ALIVIO_POR_DICA);
+}
+
+/* Devolve o que aconteceu — nunca o que se deve narrar. */
+export function tentarEnigma(sala, { total, dc }) {
+  const e = enigmaDaSala(sala);
+  const abriu = Number(total) >= Number(dc);
+  const proxima = e.tentativas + 1;
+  return {
+    abriu,
+    tranca: e.id,
+    rotulo: e.rotulo,
+    artigo: e.artigo,
+    tentativa: proxima,
+    /* a pista da tentativa que acabou de falhar; quando acabam, a sala
+       não tem mais o que ensinar e só resta insistir */
+    dica: abriu ? "" : (e.dicas[e.tentativas] || ""),
+    semMaisDicas: !abriu && e.tentativas >= e.dicas.length,
+    minutos: MINUTOS_POR_TENTATIVA,
+  };
+}
+
+/* O ARTIGO SAI DA TABELA, e não de um `a` fixo na frase. "A mecanismo" foi
+   o que a primeira versão escreveu — e concordância errada numa linha do
+   sistema estraga mais do que parece: ela é a única frase da tela que o
+   jogador sabe que não foi a IA que escreveu, então ela tem de estar
+   certa. Mesmo motivo do `comA` em `lugar.js`. */
+export function falaDoEnigma(r) {
+  if (!r) return "";
+  const quem = `${r.artigo || "A"} ${r.rotulo}`;
+  if (r.abriu) return `🔮 ${quem} cede na ${r.tentativa}ª tentativa.`;
+  return `🔮 ${quem} não cede (${r.tentativa}ª tentativa, −${MINUTOS_POR_TENTATIVA} min)${r.dica ? ` — mas você nota: ${r.dica}.` : r.semMaisDicas ? " — e a sala já não tem mais o que ensinar." : ""}`;
+}
+
+/* O envelope diz o que ACONTECEU, e proíbe as três coisas que o antigo
+   pedia: inventar o enigma, julgar a resposta e resolver a sala. */
+export function envelopeDoEnigma(r, e, pos = "") {
+  if (!r) return "";
+  const cab = `[MASMORRA — ${pos} · ENIGMA ${r.abriu ? "ABERTO" : "RESISTIU"} — RESOLVIDO PELO SISTEMA] A sala trava o caminho com ${e.o}. Eu tentei abrir usando ${e.rotulo}, e o sistema rolou: ${r.abriu ? "PASSOU" : "FALHOU"} (tentativa ${r.tentativa}).`;
+  if (r.abriu) {
+    return `${cab}
+REGRA DESTE ENVELOPE (obrigatória): narre a tranca cedendo em duas ou três frases — o mecanismo que enfim obedece, o que há do outro lado. NÃO invente um enigma diferente do que está escrito aqui, NÃO explique a solução como se fosse minha ideia e NÃO me dê nada além da passagem.`;
+  }
+  return `${cab}${r.dica ? ` A sala me ensinou uma coisa: ${r.dica}.` : ""}
+REGRA DESTE ENVELOPE (obrigatória): eu NÃO abri. Narre a tentativa e o que ela custou em duas ou três frases${r.dica ? ", e mostre na ficção a coisa que eu notei — como observação minha, não como resposta pronta" : ""}. NÃO abra a passagem, NÃO revele a solução, NÃO ofereça uma saída alternativa e NÃO deixe a resposta escapar numa descrição. Depois devolva a palavra para mim.`;
+}
+
+
+/* ============================================================
+   O CHEFE VIRA (v9.151) — fases por PV, e não por vontade da IA
+
+   O chefe da masmorra era um combate comum, maior. Ele já tinha uma
+   coisa boa — o DESGASTE, que faz cada sala limpa tirar vida dele —, e
+   isso resolve o antes do confronto. Faltava o durante: um chefe que faz
+   a mesma coisa do primeiro ao último golpe é um saco de pontos de vida.
+
+   ---------------- O QUE UMA FASE PODE SER AQUI ----------------
+
+   Só quatro coisas, e as quatro são coisas que o combate JÁ resolve
+   sozinho. Isso não é preguiça: é a diferença entre uma fase e um
+   adjetivo. Se a virada não muda um número que o sistema usa, ela é o
+   Narrador dizendo "ele fica mais perigoso" — e o jogador não sente nada.
+
+     ENFURECE  sobe a ameaça um degrau. É a maior das quatro, porque a
+               ameaça manda em três lugares de uma vez: bônus de ataque,
+               dano por golpe e QUANTOS golpes ele dá por rodada (elite
+               bate duas vezes; lendário, até três).
+     ENCOURA   soma defesa. O jogador erra mais, e a luta estica.
+     CHAMA     traz capangas. Muda o problema de tático para aritmético:
+               agora há mais de um alvo e o dano entra por mais lados.
+     REERGUE   devolve vida. A única que pode frustrar, e por isso é a
+               única com teto: nunca passa da metade do que ele tinha.
+
+   ---------------- POR QUE DUAS, E NÃO TRÊS ----------------
+
+   Metade e um quarto. Três viradas numa luta que dura seis rodadas
+   significaria virar quase todo turno, e uma surpresa que acontece
+   sempre deixa de ser surpresa.
+
+   ---------------- O MESMO CHEFE VIRA SEMPRE IGUAL ----------------
+
+   As viradas saem do NOME, como a índole das pessoas e a altura das
+   paredes. O Colosso do Sino Rachado é sempre o que se encoura e depois
+   chama; quem lutou com ele uma vez sabe, e esse saber vale alguma
+   coisa. Sorteio a cada luta apagaria isso e não daria nada em troca.
+   ============================================================ */
+
+export const LIMIARES = [0.5, 0.25];
+
+export const VIRADAS = [
+  { id: "enfurece", diz: "se enfurece", nota: "a fúria dele passa a ser método: mais golpes, e mais fundo" },
+  { id: "encoura", diz: "endurece", nota: "a pele ou a guarda dele fecha — acertá-lo passa a ser trabalho" },
+  { id: "chama", diz: "chama os seus", nota: "ele não estava sozinho, e agora os outros vêm" },
+  { id: "reergue", diz: "se reergue", nota: "alguma coisa nele se remenda — não milagre, teimosia" },
+];
+export const viradaPorId = (id) => VIRADAS.find((v) => v.id === id) || VIRADAS[0];
+
+/* O mesmo truque de semente do resto da casa: soma dos códigos do nome.
+   Determinístico, barato, e nada precisa ser guardado. */
+const semear = (nome) => {
+  let h = 0;
+  for (const c of String(nome || "chefe")) h = (h * 31 + c.charCodeAt(0)) % 100000;
+  return h;
+};
+
+/* Duas viradas DIFERENTES: repetir "endurece" duas vezes seria a mesma
+   luta duas vezes, e o segundo limiar existe justamente para o jogador
+   ter de mudar de plano de novo. */
+export function fasesDoChefe(nome) {
+  const h = semear(nome);
+  const primeira = h % VIRADAS.length;
+  const segunda = (primeira + 1 + (Math.floor(h / VIRADAS.length) % (VIRADAS.length - 1))) % VIRADAS.length;
+  return LIMIARES.map((em, i) => ({ em, virada: VIRADAS[i === 0 ? primeira : segunda].id }));
+}
+
+const ESCADA = ["fraco", "comum", "competente", "elite", "lendario"];
+const subir = (a) => ESCADA[Math.min(ESCADA.length - 1, Math.max(0, ESCADA.indexOf(a)) + 1)];
+
+/* Aplica a virada ao chefe. Devolve o chefe novo, os capangas que
+   entram (se entram) e a linha que o jogador lê — os três nascem juntos,
+   porque a frase que descreve uma coisa que o sistema não fez é
+   exatamente o defeito que este módulo veio consertar. */
+export function aplicarVirada(chefe, viradaId) {
+  const v = viradaPorId(viradaId);
+  const c = { ...chefe };
+  let capangas = [];
+  if (v.id === "enfurece") c.ameaca = subir(c.ameaca);
+  if (v.id === "encoura") c.defesa = (c.defesa || 12) + 3;
+  if (v.id === "reergue") {
+    const teto = Math.round((c.vidaMax || 1) * 0.5);
+    c.vida = Math.min(teto, (c.vida || 0) + Math.round((c.vidaMax || 1) * 0.15));
+  }
+  if (v.id === "chama") {
+    capangas = [{ nome: "Servo do Chefe", ameaca: "comum", chamado: true }];
+  }
+  return { chefe: c, capangas, virada: v };
+}
+
+/* Qual limiar acabou de ser cruzado, se algum. Compara ANTES e DEPOIS
+   porque um golpe grande pode cruzar os dois de uma vez — e nesse caso
+   vale o mais fundo: o chefe não faz duas cenas no mesmo instante. */
+export function viradaAoCruzar(chefe, vidaAntes, vidaAgora, jaViradas = []) {
+  const max = Number(chefe && chefe.vidaMax) || 0;
+  if (!max || vidaAgora <= 0) return null;
+  const feitas = new Set(Array.isArray(jaViradas) ? jaViradas : []);
+  const fases = fasesDoChefe(chefe && chefe.nome);
+  let escolhida = null;
+  for (const f of fases) {
+    const limiar = max * f.em;
+    if (feitas.has(f.em)) continue;
+    if (vidaAntes > limiar && vidaAgora <= limiar) escolhida = f;
+  }
+  return escolhida;
+}
+
+/* O NOME DIZ DE QUEM E A VIRADA, e nao so que houve uma. Tres modulos
+   ja tinham "virada": adversario.js (a do vilao), historia.js (a do arco)
+   e tramas.js, que registrou o mesmo aperto em comentario. A colisao
+   quebrou o build na hora — e o conserto e na ORIGEM, nunca um apelido
+   no import: apelido conserta um arquivo e deixa a armadilha de pe. */
+export function falaDaViradaDoChefe(nome, v, pct) {
+  if (!v) return "";
+  return `💀 ${nome} ${v.diz} — ${pct}% de vida.`;
+}
+
+export function envelopeDaViradaDoChefe(nome, v, pct) {
+  if (!v) return "";
+  return `[CHEFE — VIRADA APLICADA PELO SISTEMA] ${nome} cruzou ${pct}% de vida e o sistema JÁ mudou a luta: ele ${v.diz}. O que isso é, por dentro: ${v.nota}.
+REGRA DESTE ENVELOPE (obrigatória): narre a virada em uma ou duas frases, como um momento — o instante em que a luta muda de assunto. NÃO invente número nenhum, NÃO declare morte de ninguém e NÃO desfaça a virada no turno seguinte: ela vale até o fim da luta.`;
 }

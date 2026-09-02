@@ -16,7 +16,7 @@ import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } fr
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
-import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca } from "./masmorras.js";
+import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe } from "./masmorras.js";
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA } from "./ofertas.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
@@ -9157,7 +9157,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
          mortal não colhe quem está três degraus de divindade acima. */
       const gdJC = grauDe(divindadeRef.current);
       const col = colherPorLimiar(comb.inimigos, limiar, { podeCair: (e) => !imunePorEscopo(gdJC, Math.max(0, Number(e.gd) || 0)) });
-      combateRef.current = { ...comb, inimigos: col.lista, economia: comb.economia, log: combateRef.current.log };
+      combateRef.current = { ...comb, inimigos: virarChefeSePreciso(comb.inimigos, col.lista), economia: comb.economia, log: combateRef.current.log };
       setCombate(combateRef.current);
       const um = col.nomes.length === 1;
       if (col.nomes.length) {
@@ -9445,7 +9445,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       partes.push(`${alvo.nome} — ${r.desastre ? "erro desastroso" : "errou"} (d20=${r.d20}${r.bonus ? `+${r.bonus}` : ""}=${r.total} vs ${r.ca})`);
       linhasSis.push({ autor: "sistema", texto: `✦ ${pers.nome} · ${h.nome} → ${alvo.nome}: ${r.desastre ? "erro desastroso" : "errou"}` });
     }
-    combateRef.current = { ...comb, inimigos: locais, economia: comb.economia, log: combateRef.current.log };
+    combateRef.current = { ...comb, inimigos: virarChefeSePreciso(comb.inimigos, locais), economia: comb.economia, log: combateRef.current.log };
     setCombate(combateRef.current);
     if (linhasSis.length) pushMsgs(linhasSis);
     /* a ficha que entrou aqui já é a mais nova (o PM saiu dela) e virou a ficha
@@ -12171,6 +12171,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* TESTE PEDIDO PELO JOGADOR (v9.6): envelope próprio e mais duro. Numa mesa,
        falhar num teste de Percepção significa não saber — e o mestre não pode
        consolar com meia-pista. A regra vai escrita dentro do envelope. */
+    /* ---------------- O ENIGMA TEM DESFECHO PROPRIO (v9.151) ----------------
+       Ele nao passa pelos envelopes de teste do jogador: a tranca guarda
+       quantas vezes ja foi tentada, cobra tempo e entrega uma pista quando
+       resiste. Sai antes porque nao ha o que somar dos outros ramos. */
+    if (r.origem === "enigma" && r.enigma) {
+      resolverEnigma(r.enigma.salaId, total, dc);
+      return;
+    }
     if (r.origem === "pedido") {
       const provaAsc = r.provaAscensao || null;
       const des = r.desafio || null;
@@ -14600,8 +14608,102 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       pushMsgs([{ autor: "sistema", texto: `⛲ Santuário: ${sala.cena} — todos recuperam ~25% de PV e PM` }]);
       enviar(`[MASMORRA — ${pos} · SANTUÁRIO RESOLVIDO PELO SISTEMA] A sala é um refúgio: ${sala.cena}. O grupo inteiro já recuperou parte de PV e PM (aplicado pelo app — NÃO envie cura). Narre o respiro — é um bom momento para uma conversa curta do grupo.${avisoSegredo}${extraTempo}`, p2);
     } else if (sala.tipo === "enigma") {
-      enviar(`[MASMORRA — ${pos} · ENIGMA] A sala trava o caminho com: ${sala.cena}. Apresente a cena e o desafio NA FICÇÃO — me deixe tentar resolver com palavras ou ações. Se eu travar, dê pistas; se eu resolver (ou der uma solução esperta), o caminho abre.${avisoSegredo}${extraTempo}`, personagem);
+      /* ---------------- O ENIGMA VIRA ROLAGEM (v9.151) ----------------
+         O envelope antigo pedia ao Narrador que inventasse o enigma,
+         ouvisse a minha resposta e julgasse se ela servia. Nenhuma das
+         três é dele. Um enigma julgado por quem quer contar uma boa cena
+         abre quando a cena precisa que abra — e o jogador aprende em duas
+         masmorras que basta escrever com confiança.
+
+         A tranca declara o ATRIBUTO que a abre, e a pergunta deixa de ser
+         "o jogador é esperto?" para ser "o personagem tem a ferramenta?",
+         que é a pergunta que um RPG faz. */
+      abrirEnigma(sala);
     }
+  };
+
+  /* ---------------- A VIRADA DO CHEFE (v9.151) ----------------
+     O chefe já tinha o DESGASTE, que resolve o ANTES do confronto: cada
+     sala limpa tira vida dele. Faltava o DURANTE — um chefe que faz a
+     mesma coisa do primeiro ao último golpe é um saco de pontos de vida.
+
+     A virada muda um número que o combate USA (a ameaça, que manda em
+     acerto, dano e quantos golpes por rodada; a defesa; a vida; ou o
+     número de corpos em campo). Se mudasse só a prosa, seria o Narrador
+     dizendo "ele fica mais perigoso" — e o jogador não sentiria nada.
+
+     Recebe a lista ANTES e a DEPOIS porque um golpe grande pode cruzar
+     os dois limiares de uma vez, e nesse caso vale o mais fundo: o chefe
+     não faz duas cenas no mesmo instante. */
+  const virarChefeSePreciso = (antes, depois) => {
+    try {
+      const mm = masmorraRef.current;
+      if (!mm) return depois;   /* fases são da masmorra; luta de estrada não tem chefe */
+      const sala = (mm.salas || []).find((s) => s.id === mm.atual);
+      if (!sala || sala.tipo !== "chefe") return depois;
+      const alvo = (depois || []).find((e) => e && !e.chamado && !e.derrotado);
+      if (!alvo) return depois;
+      const velho = (antes || []).find((e) => e && e.nome === alvo.nome);
+      if (!velho) return depois;
+      const v = viradaAoCruzar(alvo, velho.vida, alvo.vida, alvo.viradasFeitas || []);
+      if (!v) return depois;
+      const r = aplicarVirada(alvo, v.virada);
+      const pct = Math.round((alvo.vida / (alvo.vidaMax || 1)) * 100);
+      pushMsgs([{ autor: "sistema", texto: falaDaViradaDoChefe(alvo.nome, r.virada, pct) }]);
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaViradaDoChefe(alvo.nome, r.virada, pct)}`;
+      const novo = { ...r.chefe, viradasFeitas: [...(alvo.viradasFeitas || []), v.em] };
+      return [...(depois || []).map((e) => (e.nome === alvo.nome ? novo : e)),
+        ...r.capangas.map((c) => completarInimigo(c, (personagemRef.current || personagem).nivel || 1))];
+    } catch (e) { calou("virarChefeSePreciso", e); return depois; }
+  };
+
+  /* ---------------- A TENTATIVA CONTRA A TRANCA (v9.151) ----------------
+     Vai pelo MESMO canal de rolagem que o resto do jogo usa, e não por um
+     caminho paralelo: um segundo jeito de rolar dado seria uma segunda
+     economia de vantagem, traço e dádiva — e as três já moram lá. */
+  const abrirEnigma = (sala) => {
+    const e = enigmaDaSala(sala);
+    const attr = ATRIBUTOS.find((x) => x.id === e.atributo);
+    const mod = atributoEfetivo(personagemRef.current || personagem, e.atributo);
+    /* a base é o perfil DIFÍCIL de sempre, resolvido pelo modificador do
+       herói; as pistas já achadas descontam dali. */
+    const base = dificuldadePorPerfil(mod, "dificil");
+    const dc = dificuldadeDoEnigma(base, e.tentativas);
+    setRolagem({
+      atributo: attr ? attr.nome : "Intelecto",
+      /* SEM O ARTIGO: a tela do dado escreve "Teste de " na frente, e o
+         resultado era "Teste de O padrao". O artigo serve a FALA ("O padrao
+         cede"), que e outra frase. */
+      rotulo: e.rotulo,
+      motivo: `abrir ${e.o}`,
+      origem: "enigma", tipo: e.atributo, dificuldade: dc, enigma: { salaId: sala.id },
+    });
+  };
+
+  /* O desfecho, quando o dado para de rodar. */
+  const resolverEnigma = (salaId, total, dc) => {
+    const mm = masmorraRef.current;
+    const sala = mm && (mm.salas || []).find((s) => s.id === salaId);
+    if (!sala) return;
+    const e = enigmaDaSala(sala);
+    const r = tentarEnigma(sala, { total, dc });
+    /* a sala GUARDA quantas vezes já foi tentada: é o que faz a próxima
+       ser mais fácil, e é o que sobrevive ao recuo e à recarga. */
+    const salas = (mm.salas || []).map((s) => (s.id === salaId ? { ...s, tentativasEnigma: r.tentativa } : s));
+    masmorraRef.current = r.abriu ? marcarResolvida({ ...mm, salas }, salaId) : { ...mm, salas };
+    setMasmorra(masmorraRef.current);
+    pushMsgs([{ autor: "sistema", texto: falaDoEnigma(r) }]);
+    /* dez minutos por tentativa: examinar uma tranca custa o que examinar
+       um quarto custa, e tempo aqui embaixo é tocha. */
+    const tx = avancarMinutos(MINUTOS_POR_TENTATIVA);
+    if (tx) pushMsgs([{ autor: "sistema", texto: tx }]);
+    /* GRAVA ANTES DE FALAR COM A REDE. O turno seguinte salvaria isto de
+       qualquer forma, mas amarrar o progresso da masmorra a uma chamada de
+       API que pode falhar e como se perde tentativa: o jogador gastou dez
+       minutos de tocha e o save nao sabe. */
+    salvar({});
+    const prog = progressoMasmorra(masmorraRef.current);
+    enviar(envelopeDoEnigma(r, e, `${mm.nome} · camada ${sala.camada} · ${prog.visitadas}/${prog.total} salas`), personagemRef.current || personagem);
   };
 
   /* FORRAGEAR (5e): caçar e colher pela trilha. Gasta tempo, mas repõe. */
@@ -17460,6 +17562,25 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   style={{ background: T.panelSoft, color: T.amberSoft, border: `1px solid ${T.amber}`, opacity: (bloqueado || combate) ? 0.45 : 1 }}>
                   🔎 Procurar nesta sala <span style={{ color: T.inkDim }}>(10 min · rolagem de Percepção)</span>
                 </button>
+                {/* ---------------- TENTAR A TRANCA DE NOVO (v9.151) ----------------
+                    Sem isto, a pista que a falha entrega e a dificuldade que
+                    ela derruba ficam inalcançáveis: o jogador teria de sair e
+                    voltar, gastando uma tocha para reabrir uma porta que ele
+                    nunca fechou. "Falhar é progresso" não vale nada se o
+                    progresso não tem botão. */}
+                {(() => {
+                  const aqui = (masmorra.salas || []).find((s) => s.id === masmorra.atual);
+                  if (!aqui || aqui.tipo !== "enigma" || aqui.resolvida) return null;
+                  const e = enigmaDaSala(aqui);
+                  return (
+                    <button onClick={() => abrirEnigma(aqui)} disabled={bloqueado || !!combate}
+                      className="w-full tv-mono text-[11px] px-3 py-2 rounded-lg mb-2"
+                      style={{ background: T.panelSoft, color: T.violetSoft, border: `1px solid ${T.violet}`, opacity: (bloqueado || combate) ? 0.45 : 1 }}>
+                      🔮 Tentar {e.artigo.toLowerCase()} {e.rotulo} de novo
+                      <span style={{ color: T.inkDim }}> ({MINUTOS_POR_TENTATIVA} min{e.tentativas > 0 ? ` · ${e.tentativas} tentativa(s), −${e.tentativas * 2} na dificuldade` : ""})</span>
+                    </button>
+                  );
+                })()}
                 <div className="tv-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Passagens</div>
                 <div className="space-y-1.5">
                   {saidas.length === 0 && <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>Sem saídas adiante — só resta voltar ou sair.</div>}
