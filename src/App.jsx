@@ -103,6 +103,7 @@ import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDa
 import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
 import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo } from "./arquivo.js";
 import { abrir as abrirAbas, estaAberta, subsAbertas, novidades, falaDaNovidade, TODAS_AS_PORTAS } from "./abas.js";
+import { cabecalhoDaCena } from "./palco.js";
 import { houveIntervalo, recapitular, textoDoRecap, envelopeDaRetomada, ehHoraDeParar, falaDoFim } from "./sessoes.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
@@ -642,6 +643,41 @@ const SO_ISSO = ` ESCOPO DESTE TURNO (obrigatório): responda SOMENTE ao que est
 const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D", unico: "#E8615B" };
 const SLOT_ROTULO = { arma: "Arma", armadura: "Armadura", elmo: "Elmo", botas: "Botas", anel: "Anel", amuleto: "Amuleto", escudo: "Escudo" };
 const SLOTS_ORDEM = ["arma", "escudo", "armadura", "elmo", "botas", "anel", "amuleto"];
+
+/* ---------------- O CABEÇALHO DE CENA (v9.157) ----------------
+   O jogo sabia onde o herói está com uma precisão que nenhum
+   concorrente tem — cidade, local, bioma, hora, clima, andar da
+   masmorra — e a tela não dizia nada. O lugar vivia só dentro da prosa,
+   e quem entrasse no meio de uma sessão precisava ler três parágrafos
+   para trás para saber onde estava.
+
+   O TOM é o que faz isto ser cenário e não etiqueta: uma faixa fina da
+   cor do bioma, com a força da luz daquela hora. A mesma cripta é uma
+   coisa ao meio-dia e outra às três da manhã, e o sistema já sabia. */
+function CabecalhoDaCena({ cena }) {
+  if (!cena) return null;
+  const { tom } = cena;
+  /* a cor entra como VÉU sobre o painel da casa, e não como fundo
+     próprio: um cabeçalho com paleta inteira por bioma faria o jogo
+     parecer sete jogos diferentes. */
+  const veu = Math.round(10 + tom.luz * 26);
+  return (
+    <div className="tv-fade rounded-2xl px-4 py-3 mb-4 flex items-center gap-3"
+      style={{
+        background: `linear-gradient(100deg, ${tom.cor}${veu.toString(16).padStart(2, "0")} 0%, ${T.panel} 62%)`,
+        border: `1px solid ${T.line}`, borderLeft: `3px solid ${tom.cor}`,
+      }}>
+      <span className="text-xl leading-none shrink-0" aria-hidden="true">{cena.icone}</span>
+      <div className="min-w-0 flex-1">
+        <div className="tv-display text-lg leading-tight truncate" style={{ color: T.ink }}>{cena.titulo}</div>
+        {cena.onde && (
+          <div className="tv-mono text-[10px] uppercase tracking-wider truncate" style={{ color: T.inkDim }}>{cena.onde}</div>
+        )}
+      </div>
+      <div className="tv-mono text-[10px] shrink-0 text-right" style={{ color: T.amberSoft }}>{cena.quando}</div>
+    </div>
+  );
+}
 
 function TrilhoAbas({ abaAtiva, aoClicar, nGrupo, desperto, codexAberto = true }) {
   return (
@@ -12518,6 +12554,25 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      booleanos. É o que o mantém testável sem montar React — e o que
      impede que a regra de quando a Diplomacia aparece acabe escrita
      dentro de um JSX. */
+  /* v9.157: o cabeçalho sai dos mesmos refs que o resto do turno lê.
+     Nada é inventado aqui: quando um sistema não sabe, o campo não
+     aparece — e quando nenhum sabe, o cabeçalho inteiro some. */
+  const cenaDoPalco = () => {
+    try {
+      const aqui = cidadeDoMapa(cidadeAtualRef.current) || {};
+      return cabecalhoDaCena({
+        cidade: cidadeAtualRef.current || "",
+        regiao: aqui.regiao || "",
+        bioma: aqui.bioma || "",
+        lugar: lugarRef.current,
+        masmorra: masmorraRef.current,
+        jornada: jornadaRef.current,
+        minuto: minutoRef.current,
+        clima: climaRef.current,
+      });
+    } catch (e) { calou("cenaDoPalco", e); return null; }
+  };
+
   const estadoDasAbas = () => {
     const p = personagemRef.current || personagem || {};
     const c = correioRef.current || {};
@@ -17360,6 +17415,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         <div className="flex flex-1 min-h-0 relative">
           <main className="flex-1 flex flex-col min-w-0">
             <div ref={areaRef} onScroll={aoRolar} className="tv-scroll tv-espaco-abas flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-4" >
+              <CabecalhoDaCena cena={cenaDoPalco()} />
               {agruparMensagens(mensagens).map((item, k) => {
                 /* v9.32: as linhas do sistema chegam AGRUPADAS. Uma rodada de
                    combate empurrava vinte balões iguais entre a ação do
