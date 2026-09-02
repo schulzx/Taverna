@@ -61,7 +61,10 @@ const PERDOADAS = {
   "godmode.js": ["GODMODE_AVISO"],
   "itens.js": ["PROPS"],
   "movimento.js": ["DESLOCAMENTO_LIGEIRO"],
-  "regras.js": ["xpParaNivel"],
+  /* v9.154: `xpParaNivel` saiu da lista — o Juiz lê a curva para saber o
+     VÃO de cada nível, e todo XP do jogo passou a ser uma fração dele.
+     A função esperou muitas versões por um leitor; perdão que sobra é
+     dívida escondida, e este varredor existe para não deixar sobrar. */
 };
 
 sec("1. NENHUM MÓDULO MUDO");

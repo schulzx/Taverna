@@ -9,6 +9,7 @@
 import { alcanca, bonusDefesaEm } from "./grid.js";
 import { defesaDeGuarda, estaIntocavel, esquivaDeGuarda, DEFESA_NUA } from "./habilidades.js";
 
+import { xpDeCombate } from "./juiz.js";
 import { perfilDeCriatura, perfilDe, multiplicadorDano, iconeDano, resistenciasEquipadas, elementoDaArma } from "./danos.js";
 import { mecanicaDe } from "./condicoes.js";
 import { golpeDaVez } from "./aflicoes.js";
@@ -447,11 +448,16 @@ const XP_AMEACA = { fraco: 15, comum: 30, competente: 50, elite: 90, lendario: 1
 const MOEDAS_AMEACA = { fraco: [1, 6], comum: [4, 12], competente: [8, 20], elite: [15, 40], lendario: [40, 100] };
 const CHANCE_ITEM = { fraco: 0.05, comum: 0.12, competente: 0.25, elite: 0.45, lendario: 0.8 };
 
-export function gerarEspolios(inimigosDerrotados) {
-  let xp = 0, moedas = 0, chance = 0;
+export function gerarEspolios(inimigosDerrotados, nivelHeroi = 1) {
+  /* ---------------- O ESPÓLIO ESCALA (v9.154) ----------------
+     `XP_AMEACA` dava 90 por um elite, viesse ele no nível 2 ou no 18 — e
+     a curva do 5e é exponencial. No 2 aquilo era metade de um nível; no
+     18, um centésimo. O Juiz paga uma FRAÇÃO do vão, então sete a doze
+     lutas sobem um degrau em qualquer ponto da escada. */
+  let moedas = 0, chance = 0;
   const lista = inimigosDerrotados || [];
+  const xp = xpDeCombate(lista, nivelHeroi);
   for (const e of lista) {
-    xp += XP_AMEACA[e.ameaca] || 30;
     const [a, b] = MOEDAS_AMEACA[e.ameaca] || [4, 12];
     moedas += a + Math.floor(Math.random() * (b - a + 1));
     chance = Math.max(chance, CHANCE_ITEM[e.ameaca] || 0.12);

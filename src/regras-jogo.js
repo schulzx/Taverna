@@ -5,6 +5,7 @@
    sem React e sem tocar na interface.
    Extraído do App.jsx na modularização.
    ============================================================ */
+import { xpDoFeito, grauValido, falaDoFeito, envelopeDoPV, aferirPresente, envelopeDoPresente, envelopeDaHabilidadeRecusada } from "./juiz.js";
 import { ATRIBUTOS, XP_POR_NIVEL, MAX_COMPANHEIROS } from "./constantes.js";
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, XP_POR_DADIVA } from "./regras.js";
 import { chamadoDaProfissao } from "./lexico.js";
@@ -106,7 +107,7 @@ export function aplicarDescanso(pers, tipo, msgs, dia = 0, abrigo = null, lex = 
    1t para 3+ PM, livre abaixo disso). */
 export function recargaPadrao(custo) { return custo >= 6 ? 2 : custo >= 3 ? 1 : 0; }
 
-export function aplicarMudancas(pers, m, msgs) {
+export function aplicarMudancas(pers, m, msgs, notas = []) {
   /* DANO AMBIENTAL PADRONIZADO (v7.4.2): queda, fogo, veneno, armadilha —
      o Mestre envia só a SEVERIDADE e o código calcula pelo PV máximo do
      herói. Acaba o "dragão cospe 8 de dano" no nível 20. */
@@ -134,6 +135,20 @@ export function aplicarMudancas(pers, m, msgs) {
       if (m.moedas !== justo) { moedas = Math.max(0, pers.moedas + justo); msgs.push(`⚖ Venda aferida pelo sistema: ◉ ${justo} (metade do valor de tabela — o preço falado era ◉ ${m.moedas})`); moedasAferidas = true; }
     }
   }
+  /* ---------------- O PRESENTE TEM TETO (v9.154) ----------------
+     A venda já era aferida e a compra já ficava na faixa justa. O buraco
+     era a moeda que não vem de troca nenhuma: um `+500` passava inteiro,
+     e dinheiro do nada estraga a economia mais rápido do que qualquer
+     preço errado. */
+  if (m.moedas > 0 && !moedasAferidas) {
+    const af = aferirPresente(m.moedas, pers.nivel || 1);
+    if (af) {
+      moedas = Math.max(0, pers.moedas + af.justo);
+      msgs.push(`⚖ Recompensa aferida pelo sistema: ◉ ${af.justo} (o falado era ◉ ${af.pedido})`);
+      notas.push(envelopeDoPresente(af));
+      moedasAferidas = true;
+    }
+  }
   if (m.moedas < 0) {
     const comprados = [...(m.adicionar_itens || []), ...(m.adicionar_equipamento || [])];
     if (comprados.length) {
@@ -150,7 +165,16 @@ export function aplicarMudancas(pers, m, msgs) {
   }
   inv = inv.filter((i) => !(m.remover_itens || []).some((r) => nomeItem(i).toLowerCase() === String(r).toLowerCase()));
   let habs = [...pers.habilidades];
-  (m.adicionar_habilidades || []).forEach((h) => { if (h?.nome && !habs.some((x) => x.nome.toLowerCase() === h.nome.toLowerCase())) habs.push({ nome: h.nome, custo: Math.max(0, h.custo || 1), descricao: h.descricao || "", recarga: h.recarga != null ? Math.max(0, Number(h.recarga) || 0) : recargaPadrao(Math.max(0, h.custo || 1)) }); });
+  /* ---------------- A HABILIDADE DO HERÓI É DELE (v9.154) ----------------
+     O prompt dizia NUNCA desde sempre, e o código aplicava assim mesmo —
+     contradição viva por cento e quarenta e cinco versões. Proibição que
+     o sistema não confere é adjetivo.
+
+     Companheiros e inimigos seguem livres (mais abaixo): para eles a
+     regra sempre foi outra, e continua. */
+  const habsRecusadas = (m.adicionar_habilidades || []).map((h) => h && h.nome).filter(Boolean);
+  if (habsRecusadas.length) notas.push(envelopeDaHabilidadeRecusada(habsRecusadas));
+  ([]).forEach((h) => { if (h?.nome && !habs.some((x) => x.nome.toLowerCase() === h.nome.toLowerCase())) habs.push({ nome: h.nome, custo: Math.max(0, h.custo || 1), descricao: h.descricao || "", recarga: h.recarga != null ? Math.max(0, Number(h.recarga) || 0) : recargaPadrao(Math.max(0, h.custo || 1)) }); });
   habs = habs.filter((h) => !(m.remover_habilidades || []).some((r) => h.nome.toLowerCase() === r.toLowerCase()));
   let grupo = [...pers.grupo];
   (m.grupo_adicionar || []).forEach((g) => {
@@ -250,12 +274,23 @@ export function aplicarMudancas(pers, m, msgs) {
   novo.equipamento = equip;
   if (!novo.equipados) novo.equipados = pers.equipados || {};
 
-  if (Math.max(0, m.xp || 0)) {
-    novo = aplicarNivel({ ...novo, xp: novo.xp + Math.max(0, m.xp || 0) });
+  /* ---------------- O XP É DO JUIZ (v9.154) ----------------
+     `m.xp` era um número livre, e o prompt pedia 10 a 60 — contra uma
+     curva exponencial. Medido: no nível 10 subir custava 140 lutas, e a
+     progressão morria por volta do 6. Agora a IA manda o GRAU do feito
+     (`feito: "marco"`) e a tabela paga a fração do vão.
+
+     Um `m.xp` cru que ainda chegue é ignorado de propósito: aceitar os
+     dois canais manteria as duas economias vivas, e duas economias para
+     a mesma coisa é como a divergência nasce. */
+  const grauDoTurno = grauValido(m.feito) ? String(m.feito) : null;
+  const xpGanho = grauDoTurno ? xpDoFeito(grauDoTurno, pers.nivel || 1) : 0;
+  if (xpGanho > 0) {
+    novo = aplicarNivel({ ...novo, xp: novo.xp + xpGanho });
     /* Companheiros evoluem JUNTOS por código: 60% do XP do herói, sempre.
        (Antes dependia do Mestre enviar "grupo_xp" — e ele quase nunca enviava,
        deixando companheiros congelados no nível 1.) */
-    const xpComp = Math.floor(Math.max(0, m.xp || 0) * 0.6);
+    const xpComp = Math.floor(xpGanho * 0.6);
     if (xpComp > 0) {
       novo.grupo = (novo.grupo || []).map((g) => {
         const ev = evoluirCompanheiro({ ...g, xp: (g.xp || 0) + xpComp });
@@ -270,11 +305,13 @@ export function aplicarMudancas(pers, m, msgs) {
   if (m.vida) msgs.push(m.vida < 0 ? `Você perdeu ${-m.vida} PV.` : `Você recuperou ${m.vida} PV.`);
   if (m.mana) msgs.push(m.mana < 0 ? `Você gastou ${-m.mana} PM.` : `Você recuperou ${m.mana} PM.`);
   if (m.moedas && !moedasAferidas) msgs.push(m.moedas > 0 ? `◉ +${m.moedas} moedas` : `◉ −${-m.moedas} moedas`);
-  if (m.xp) msgs.push(`✧ +${m.xp} XP`);
+  /* a linha diz o QUE foi, e nao so quanto: o jogador precisa aprender a
+     diferenca entre uma miudez e um marco, senao o numero e ruido. */
+  if (xpGanho) msgs.push(falaDoFeito(grauDoTurno, xpGanho));
   if (novo.nivel > pers.nivel) msgs.push(`✦ NÍVEL ${novo.nivel} ALCANÇADO!`);
   (m.adicionar_itens || []).forEach((i) => msgs.push(`Item obtido: ${nomeItem(i)}`));
   (m.remover_itens || []).forEach((i) => msgs.push(`Item perdido: ${nomeItem(i)}`));
-  (m.adicionar_habilidades || []).forEach((h) => h?.nome && msgs.push(`✦ Nova habilidade: ${h.nome} (${Math.max(0, h.custo || 1)} PM)`));
+  if (habsRecusadas.length) msgs.push(`⛔ ${habsRecusadas.join(", ")} — habilidade de herói sai da árvore da classe, ao subir de nível.`);
   return novo;
 }
 
@@ -325,7 +362,7 @@ export function tickEfeitos(pers) {
 
 /* Processa mudanças de combate. Recebe o estado atual (ou null) e as mudanças,
    devolve o novo estado de combate e mensagens. Combate é transitório (fora da ficha). */
-export function processarCombate(combateAtual, m, msgs) {
+export function processarCombate(combateAtual, m, msgs, notas = []) {
   if (!m) return combateAtual;
   let inimigos = combateAtual ? [...combateAtual.inimigos] : [];
 
@@ -337,6 +374,10 @@ export function processarCombate(combateAtual, m, msgs) {
     const comp = completarInimigo(ini, m.__nivelJogador || 1);
     inimigos.push({ ...comp, gd: Math.max(0, Math.min(4, Number(ini.gd) || 0)), derrotado: false, semente: `inimigo|${comp.nome}|${comp.ameaca || ""}` });
     msgs.push(`⚔ ${comp.nome} entra no combate! (${comp.vida} PV)`);
+    /* v9.154: se o PV pedido saiu da janela da criatura, o Narrador precisa
+       saber — senao ele descreve um colosso que o sistema fez de tamanho
+       normal, e as duas verdades ficam na mesma cena. */
+    if (comp.pvAferido) { msgs.push(`⚖ PV aferido: ${comp.pvAferido.pedido} → ${comp.vida} (faixa ${comp.pvAferido.faixa[0]}–${comp.pvAferido.faixa[1]})`); notas.push(envelopeDoPV(comp.pvAferido, comp.nome)); }
   });
 
   (m.combate_inimigo_vida || []).forEach((cv) => {

@@ -6426,7 +6426,14 @@ export default function Taverna() {
       Object.entries(pers.habRecarga).forEach(([k, t]) => { const nt = (Number(t) || 0) - 1; if (nt > 0) rec[k] = nt; });
       pers = { ...pers, habRecarga: rec };
     }
-    if (resp.mudancas) pers = aplicarMudancas(pers, resp.mudancas, msgs);
+    if (resp.mudancas) {
+      /* v9.154: as recusas do Juiz viajam para o Narrador. Sem isto ele
+         narra o poder que o sistema acabou de negar, e o jogador ve as
+         duas coisas na mesma tela. */
+      const notasDoJuiz = [];
+      pers = aplicarMudancas(pers, resp.mudancas, msgs, notasDoJuiz);
+      for (const nt of notasDoJuiz) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${nt}`;
+    }
     /* ---------------- A COBRANÇA (v9.70) ----------------
        "Se ela disse 'você acha 100 moedas e uma poção de vida', então o
        mestre credita 100 moedas e uma poção de vida."
@@ -6798,7 +6805,9 @@ export default function Taverna() {
           }
         }
       } catch { /* conferir a lista nunca pode custar a luta */ }
-      const novoCombate = processarCombate(combateRef.current, resp.mudancas, msgs);
+      const notasDoCombate = [];
+      const novoCombate = processarCombate(combateRef.current, resp.mudancas, msgs, notasDoCombate);
+      for (const nt of notasDoCombate) notaRef.current = `${notaRef.current ? notaRef.current + String.fromCharCode(10) : ""}${nt}`;
       combateRef.current = novoCombate;
       setCombate(novoCombate);
       /* PRESENÇA DIVINA (v7.4 — COM MODERAÇÃO): só dispara quando uma
@@ -6884,7 +6893,7 @@ export default function Taverna() {
           ...derrotadosDaSessaoRef.current,
           ...(resp.mudancas.__inimigosFinais || []).map((e) => e && e.nome).filter(Boolean),
         ].slice(-120);
-        const espBruto = gerarEspolios(resp.mudancas.__inimigosFinais || []);
+        const espBruto = gerarEspolios(resp.mudancas.__inimigosFinais || [], (pers || personagem).nivel || 1);
         /* v9.44: o Caçador de Recompensas cobra pelo trabalho. O acréscimo é
            sobre as MOEDAS, não sobre o XP — quem vive de contrato ganha mais
            dinheiro pela mesma caçada, não experiência mais rápido. */
@@ -10673,7 +10682,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* v9.44: mesmo acréscimo do outro caminho de vitória — o Caçador de
        Recompensas ganha o mesmo, quer a luta feche pelo golpe dele, quer
        feche pela narrativa do Mestre. */
-    const espCru = gerarEspolios(derrotados);
+    const espCru = gerarEspolios(derrotados, (personagemRef.current || personagem).nivel || 1);
     const esp = { ...espCru, moedas: moedasDeEspolio(persBase || personagemRef.current || personagem, espCru.moedas) };
     const msgsU = [];
     /* CALCULA FORA DO UPDATER (v9.13). Isto morava dentro de
@@ -10734,6 +10743,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       }
       personagemRef.current = p2;
       setPersonagem(p2);
+      /* v9.154: GRAVA. O espolio entrava na memoria e esperava o proximo
+         turno da IA para ser salvo — fechar a aba logo depois da luta perdia
+         o XP, as moedas e o que caiu no chao. E a quarta vez nesta linhagem
+         que estado muda sem gravar (o companheiro na v9.143, o mantimento e
+         o enigma na v9.150-151); o padrão da casa é passar a ficha nova pelo
+         `extra`, porque `salvar` monta o save a partir do `personagem` do
+         closure — que dentro do mesmo tique ainda é o de antes. */
+      salvar({ personagem: p2 });
       espolioNoChaoRef.current = caiuNoChao;
     }
     /* O FIM DA RAID MORA AQUI (v9.115), no mesmo lugar em que toda luta

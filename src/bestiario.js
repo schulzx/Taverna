@@ -5,6 +5,7 @@
    ou é trivial para o patamar. O Mestre consulta, não inventa.
    ============================================================ */
 import { pvEsperadoInimigo, bonusDeAmeaca } from "./combate.js";
+import { pvNaJanela } from "./juiz.js";
 
 /* ---------------- CRIATURAS (fantasia) ---------------- */
 /* v9.152: `des` é a destreza de verdade, e `agil` passa a ser o que ele
@@ -57,9 +58,17 @@ export function completarInimigo(e, nivelJogador) {
   const base = [...CRIATURAS_FANTASIA, ...ARQUETIPOS].find((c) => nome.toLowerCase().includes(c.nome.toLowerCase()));
   const ameaca = e.ameaca || (base ? base.ameaca : "comum");
   const nivel = e.nivel || (base ? base.nivelRef : Math.max(1, nivelJogador || 1));
-  const vidaMax = e.vidaMax || e.vida || pvEsperadoInimigo(nivelJogador || nivel, ameaca);
+  /* ---------------- O PV É SUGESTÃO, NÃO DECRETO (v9.154) ----------------
+     Quando a IA mandava `vidaMax`, valia o que ela mandou — e o número ali
+     decide se a luta dura duas rodadas ou doze. A janela é generosa (metade
+     a uma vez e meia): o chefe da ficção pode ser mais duro que o da tabela;
+     o que ele não pode é ser outra criatura. */
+  const esperado = pvEsperadoInimigo(nivelJogador || nivel, ameaca);
+  const janela = pvNaJanela(e.vidaMax || e.vida || 0, esperado);
+  const vidaMax = janela.pv;
   return {
     ...e, nome, ameaca, nivel, vidaMax,
+    ...(janela.aferido ? { pvAferido: janela } : {}),
     vida: e.vida !== undefined ? e.vida : vidaMax,
     defesa: e.defesa || 10 + Math.floor(bonusDeAmeaca(ameaca) / 2) + ((e.agil ?? (base && base.agil)) ? 2 : 0),
     /* v9.152: a destreza vem da FICHA da criatura quando o nome bate no
