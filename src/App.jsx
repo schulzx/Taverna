@@ -102,6 +102,7 @@ import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resu
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
 import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo } from "./arquivo.js";
+import { abrir as abrirAbas, estaAberta, subsAbertas, novidades, falaDaNovidade, TODAS_AS_PORTAS } from "./abas.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
 import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra } from "./rastro.js";
@@ -632,16 +633,19 @@ const ABAS = [{ id: "gestao", rotulo: "Gestão", icone: "🏛" }, { id: "diario"
    administrativo: o Mestre responde AQUILO e nada mais. */
 const SO_ISSO = ` ESCOPO DESTE TURNO (obrigatório): responda SOMENTE ao que este envelope pede, na cena e no lugar onde já estou. NÃO inicie viagem, combate, missão ou cena nova; NÃO mude de local; NÃO faça o tempo passar; NÃO invente personagem, item ou recompensa. Termine devolvendo a palavra para mim.`;
 
-const SUBS_GESTAO = [{ id: "ficha", rotulo: "Ficha" }, { id: "grupo", rotulo: "Grupo" }, { id: "pessoas", rotulo: "Pessoas" }, { id: "talentos", rotulo: "Talentos" }, { id: "mercado", rotulo: "Mercado" }, { id: "guilda", rotulo: "Guilda" }, { id: "dominios", rotulo: "Domínios" }, { id: "diplomacia", rotulo: "Diplomacia" }, { id: "correio", rotulo: "Correio" }, { id: "mural", rotulo: "Mural" }];
+/* v9.148: o catálogo das sub-abas mora em `abas.js` agora, com a condição
+   de abertura de cada uma colada nela. Escrito aqui, numa linha só no meio
+   do arquivo, ele não teria onde caber a regra — e a regra de quando a
+   Diplomacia aparece é justamente o que não pode morrer dentro de um JSX. */
 
 const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D", unico: "#E8615B" };
 const SLOT_ROTULO = { arma: "Arma", armadura: "Armadura", elmo: "Elmo", botas: "Botas", anel: "Anel", amuleto: "Amuleto", escudo: "Escudo" };
 const SLOTS_ORDEM = ["arma", "escudo", "armadura", "elmo", "botas", "anel", "amuleto"];
 
-function TrilhoAbas({ abaAtiva, aoClicar, nGrupo, desperto }) {
+function TrilhoAbas({ abaAtiva, aoClicar, nGrupo, desperto, codexAberto = true }) {
   return (
     <nav className="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-1.5 py-2 pl-1.5" aria-label="Painéis">
-      {ABAS.filter((a) => !a.soDesperto || desperto).map((aba) => {
+      {ABAS.filter((a) => (!a.soDesperto || desperto) && (a.id !== "codex" || codexAberto)).map((aba) => {
         const ativa = abaAtiva === aba.id;
         return (
           <button key={aba.id} onClick={() => aoClicar(ativa ? null : aba.id)}
@@ -1167,13 +1171,22 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null }) {
+function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
   const [confirmarRemover, setConfirmarRemover] = React.useState(null);
-  const [subGestao, setSubGestao] = React.useState("ficha");    // sub-aba dentro de Gestão
+  const [subEscolhida, setSubGestao] = React.useState("ficha");    // sub-aba dentro de Gestão
+  const abertasAqui = subsAbertas(abasAbertas, estadoDasAbas);
+  /* O NOME CONTINUA `subGestao` de propósito: há uma dezena de
+     comparações `subGestao === "..."` painel abaixo, e renomeá-las para
+     acomodar esta linha seria uma dezena de chances de errar uma. Aqui
+     ele deixa de ser o estado e passa a ser a LEITURA dele: a escolhida,
+     se a porta estiver aberta; senão a Ficha, que é `sempre` e nunca
+     some. Um save antigo com `subGestao: "dominios"` abriria num
+     conteúdo sem aba na barra, e isso lê como quebrado. */
+  const subGestao = abertasAqui.some((s) => s.id === subEscolhida) ? subEscolhida : "ficha";
   const [valorCofre, setValorCofre] = React.useState("");       // quanto depositar/sacar da guilda
   const [verHabsFicha, setVerHabsFicha] = React.useState(false); // habilidades da ficha sob demanda
   mundo = mundo || { genero: "Fantasia medieval" };
@@ -1192,7 +1205,7 @@ function PainelLateral({ guildasMundo = [], minhaCasa = null, tarefasCasa = [], 
 
         {aba === "gestao" && (
           <div className="flex flex-wrap gap-1.5 -mt-2">
-            {SUBS_GESTAO.map((s) => (
+            {subsAbertas(abasAbertas, estadoDasAbas).map((s) => (
               <button key={s.id} onClick={() => setSubGestao(s.id)}
                 className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full"
                 style={{ background: subGestao === s.id ? T.amber : T.panelSoft, color: subGestao === s.id ? T.onAccent : T.inkDim, border: `1px solid ${subGestao === s.id ? T.amber : T.line}`, fontWeight: 600 }}>
@@ -3295,6 +3308,13 @@ export default function Taverna() {
   });
   useEffect(() => { mostrarRolagensRef.current = mostrarRolagens; try { localStorage.setItem("taverna_cfg_rolagens", mostrarRolagens ? "1" : "0"); } catch {} }, [mostrarRolagens]);
   const [temSave, setTemSave] = useState(null);
+  /* ---------------- O QUE JÁ IMPORTA (v9.148) ----------------
+     A lista das abas que o jogador já destravou. Guardada, e não
+     recalculada: a condição é um GATILHO, e sair da cidade não pode
+     fechar o Mercado. Uma barra que muda de tamanho a cada cena não
+     pode ser aprendida. */
+  const abasAbertasRef = useRef([]);
+  const [abasAbertas, setAbasAbertas] = useState([]);
 
   const systemRef = useRef("");
   /* v9.105: o REGISTRO no lugar do livro. Uma linha por turno, escrita
@@ -5567,6 +5587,14 @@ export default function Taverna() {
   }, []);
 
   const salvar = useCallback((extra = {}) => {
+    /* v9.148: ANTES de montar `dados`, e a ordem é o conserto. `dados`
+       carrega `abasAbertas: abasAbertasRef.current`; conferir depois
+       gravava o registro velho, e a aba que acabara de abrir era
+       anunciada na tela e perdida no save — voltando fechada na recarga.
+       `salvar` é o ponto certo pela mesma razão que a publicação do
+       estado da sala mora aqui: é por onde todo caminho que muda o jogo
+       passa. Só que tem de ser no começo dele, não no fim. */
+    try { conferirAbas(); } catch (e) { calou("conferirAbas", e); }
     setStatusSave("salvando");
     const dados = {
       nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico,
@@ -5579,6 +5607,7 @@ export default function Taverna() {
          investigação inteira quando a prosa sair torta de novo. */
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
       custo: custoRef.atual,
+      abasAbertas: abasAbertasRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -8740,6 +8769,18 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       /* o acumulado de custo atravessa a recarga da página: sem isto ele
          mediria a aba aberta, e não a campanha. */
       custoRef.atual = sv.custo && typeof sv.custo === "object" && typeof sv.custo.chamadas === "number" ? sv.custo : CUSTO_ZERO();
+      /* SAVE ANTIGO ABRE TUDO. Quem já jogava tinha as dez sub-abas na tela;
+         escondê-las agora seria tirar do jogador o que ele já usava — e
+         "sumiu a minha guilda" é o relato que isso geraria. A porta é para
+         quem começa, não para quem já está dentro. */
+      abasAbertasRef.current = Array.isArray(sv.abasAbertas) ? sv.abasAbertas
+        : TODAS_AS_PORTAS.slice();
+      setAbasAbertas(abasAbertasRef.current);
+      /* e o registro é acertado CALADO: `estaAberta` mostra a aba assim que
+         a condição vale, então ao abrir uma campanha três delas já estão na
+         tela. Anunciá-las no primeiro salvamento seria dar notícia de uma
+         coisa que o jogador está vendo há dez minutos. */
+      try { conferirAbas({ calado: true }); } catch {}
       tomandoRef.current = (sv.tomando && sv.tomando.cidade) ? sv.tomando : null; setTomando(tomandoRef.current);
       diplomaciaRef.current = garantirDiplomacia(sv.diplomacia); setDiploState(diplomaciaRef.current);
       /* BLINDAGEM v6.5: pessoas de saves antigos sem data de encontro ganham
@@ -12319,6 +12360,53 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      Nenhuma regra mora aqui: tudo o que decide esta em `guildas.js`, e este
      bloco so aciona, guarda e conta ao jogador. */
   const minhaCasa = () => (guildasRef.current || []).find((g) => g.membro) || null;
+
+  /* ---------------- O ESTADO RASO DAS ABAS (v9.148) ----------------
+     `abas.js` não conhece mapa, correio nem personagem: recebe números e
+     booleanos. É o que o mantém testável sem montar React — e o que
+     impede que a regra de quando a Diplomacia aparece acabe escrita
+     dentro de um JSX. */
+  const estadoDasAbas = () => {
+    const p = personagemRef.current || personagem || {};
+    const c = correioRef.current || {};
+    return {
+      nivel: p.nivel || 1,
+      pontos: (p.pontosHab || 0) + (p.pontosAtr || 0),
+      conhecidos: Object.keys(npcsRef.current || {}).length,
+      temBanca: !!(mercadoAqui && mercadoAqui.length),
+      naCasa: !!minhaCasa(),
+      /* A CASA DAQUI, e não as casas do mundo: o mundo nasce com quatro, e
+         contar a existência delas abria a aba no primeiro segundo do jogo
+         para alguém que não conhecia nenhuma. A sede é o endereço; se ela
+         é aqui, dá para bater na porta hoje. */
+      casaAqui: (guildasRef.current || []).some((g) => g && g.sede && g.sede === cidadeAtualRef.current),
+      /* e política exige eu ser parte de alguma coisa — antes de
+         pertencer, não há sequer quem me atenda. */
+      temFaccao: !!minhaCasa() || !!faccaoJogadorRef.current,
+      dominios: dominiosDe(mapaRef.current).length,
+      podeTomar: !!(minhaCasa() && podeTomarAqui && podeTomarAqui().pode),
+      potencias: potenciasAqui().length,
+      cartas: (c.recebidas || []).length + (c.enviadas || []).length,
+      temMural: (muralRef.current || []).length > 0,
+      conquistas: Object.keys((conqRef.current || {}).desbloqueadas || {}).length,
+      /* descobertas é ARRAY e conquistas é objeto — contar os dois com
+         Object.keys funcionaria por acidente no array (as chaves são os
+         índices) e pararia de funcionar no dia em que a forma mudasse. */
+      descobertas: (descobRef.current || []).length,
+    };
+  };
+
+  /* O GATILHO, e a linha que ele diz. Uma aba que aparece calada é uma
+     aba que ninguém nota: o jogador está olhando a narrativa, não a
+     barra. Uma linha, na vez em que acontece. */
+  const conferirAbas = ({ calado = false } = {}) => {
+    const antes = abasAbertasRef.current;
+    const depois = abrirAbas(antes, estadoDasAbas());
+    if (depois.length === antes.length) return;
+    abasAbertasRef.current = depois; setAbasAbertas(depois);
+    const novas = novidades(antes, depois);
+    if (novas.length && !calado) pushMsgs(novas.map((id) => ({ autor: "sistema", texto: falaDaNovidade(id) })));
+  };
   const guardarCasas = (lista) => {
     guildasRef.current = lista; setGuildasMundo(lista);
     salvar({ guildas: lista });
@@ -17616,8 +17704,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
           </main>
 
-          <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} />
-          <LimiteErro><PainelLateral guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} /></LimiteErro>
+          <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />
+          <LimiteErro><PainelLateral abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
