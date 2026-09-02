@@ -41,6 +41,11 @@ export const GENEROS = [
   { id: "erva",     nome: "erva",     o: "o que se colhe, seca e ferve",    tipos: ["consumivel"] },
   { id: "reliquia", nome: "relíquia", o: "o que veio de longe ou de antes", tipos: ["anel", "amuleto", "curiosidade"] },
   { id: "papel",    nome: "papel",    o: "traçados, cartas e cópias",       tipos: ["mapa"] },
+  /* v9.150: o que se leva na estrada. Entra como gênero e não como
+     tabela própria porque um saco de rações numa vila agrícola tem de
+     custar menos do que num forte de montanha — e o motivo disso já
+     está escrito aqui. Uma segunda tabela seria uma segunda economia. */
+  { id: "mantimento", nome: "mantimento", o: "o que se leva para aguentar a estrada", tipos: ["mantimento"] },
 ];
 export const generoPorId = (id) => GENEROS.find((g) => g.id === id) || null;
 
@@ -69,7 +74,7 @@ export function generoDoItem(item) {
 export const VOCACOES = [
   {
     id: "mineradora", nome: "de mineração", o: "vive do que arranca da pedra",
-    produz: ["metal"], falta: ["erva"], biomas: ["montanha", "colina"], peso: 3,
+    produz: ["metal"], falta: ["erva", "mantimento"], biomas: ["montanha", "colina"], peso: 3,
     cheiro: "poeira de pedra e fumaça de forja",
   },
   {
@@ -79,37 +84,37 @@ export const VOCACOES = [
   },
   {
     id: "agricola", nome: "agrícola", o: "vive do que planta",
-    produz: ["erva"], falta: ["metal"], biomas: ["planicie", "colina"], peso: 3,
+    produz: ["erva", "mantimento"], falta: ["metal"], biomas: ["planicie", "colina"], peso: 3,
     cheiro: "palha, esterco e pão saindo do forno",
   },
   {
     id: "portuaria", nome: "portuária", o: "vive do que atraca",
-    produz: ["reliquia", "erva"], falta: [], biomas: ["costa"], peso: 4,
+    produz: ["reliquia", "erva", "mantimento"], falta: [], biomas: ["costa"], peso: 4,
     cheiro: "sal, piche e peixe",
   },
   {
     id: "pastoril", nome: "pastoril", o: "vive do rebanho",
-    produz: ["couro"], falta: ["reliquia"], biomas: ["planicie", "colina", "montanha"], peso: 2,
+    produz: ["couro", "mantimento"], falta: ["reliquia"], biomas: ["planicie", "colina", "montanha"], peso: 2,
     cheiro: "lã molhada e curral",
   },
   {
     id: "salina", nome: "de sal", o: "vive de conservar o que os outros pescam",
-    produz: ["erva"], falta: ["couro"], biomas: ["deserto", "costa"], peso: 2,
+    produz: ["erva", "mantimento"], falta: ["couro"], biomas: ["deserto", "costa"], peso: 2,
     cheiro: "salmoura e sol",
   },
   {
     id: "turfeira", nome: "de turfa e ervas", o: "vive do que só cresce onde ninguém quer morar",
-    produz: ["erva"], falta: ["metal", "couro"], biomas: ["pantano"], peso: 3,
+    produz: ["erva", "mantimento"], falta: ["metal", "couro"], biomas: ["pantano"], peso: 3,
     cheiro: "lodo e fumaça doce",
   },
   {
     id: "cacadora", nome: "de caça no gelo", o: "vive do que ainda se move no frio",
-    produz: ["couro"], falta: ["erva"], biomas: ["gelo"], peso: 3,
+    produz: ["couro"], falta: ["erva", "mantimento"], biomas: ["gelo"], peso: 3,
     cheiro: "gordura queimada e couro curtido",
   },
   {
     id: "guarnicao", nome: "de guarnição", o: "vive de armar quem passa",
-    produz: ["metal"], falta: ["reliquia"], biomas: [], portes: ["fortaleza"], peso: 5,
+    produz: ["metal"], falta: ["reliquia", "mantimento"], biomas: [], portes: ["fortaleza"], peso: 5,
     cheiro: "óleo de arma e sopa de caserna",
   },
   {
@@ -161,10 +166,13 @@ export function vocacaoDe(cidade) {
 
    Fator por gênero; o que não está na tabela não se mexe. */
 export const ESTACAO_MEXE = {
-  Primavera: { erva: 0.82, couro: 1.05 },
-  Verão:     { erva: 0.92, metal: 1.05, couro: 1.10 },
-  Outono:    { erva: 0.75, reliquia: 0.95, metal: 0.95 },
-  Inverno:   { erva: 1.35, couro: 0.85, metal: 1.05 },
+  /* v9.150: o mantimento entra nas quatro. O outono é a colheita e o
+     inverno é o preço dela — é a única mercadoria do jogo em que a
+     estação vira notícia para quem vai pegar a estrada. */
+  Primavera: { erva: 0.82, couro: 1.05, mantimento: 1.05 },
+  Verão:     { erva: 0.92, metal: 1.05, couro: 1.10, mantimento: 0.95 },
+  Outono:    { erva: 0.75, reliquia: 0.95, metal: 0.95, mantimento: 0.80 },
+  Inverno:   { erva: 1.35, couro: 0.85, metal: 1.05, mantimento: 1.40 },
 };
 
 const nomeDaEstacao = (dia) => {

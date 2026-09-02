@@ -15,6 +15,7 @@
    ============================================================ */
 
 import { gerarLoot, RARIDADE_ROTULO } from "./loot.js";
+import { SUPRIMENTOS, garantirSuprimentos } from "./ermos.js";
 import { CONSUMIVEIS, consumivelPorId, itemConsumivel, descricaoCurta } from "./pocoes.js";
 import { valorDeItem, PRECO_VENDA } from "./economia.js";
 import { PORTES } from "./geografia.js";
@@ -295,3 +296,90 @@ export const MERCADO_PROMPT = `MERCADO E COMÉRCIO (v9.2 — o sistema tem o est
 - Negociar na ficção é ótimo: o vendedor pode ser simpático, desconfiado, tagarela, pode oferecer chá, pode contar de onde veio a mercadoria. O que não muda é o número — quem cobra é o sistema.
 - Se o jogador pedir algo que a banca não tem, diga que não tem (e, se fizer sentido, para onde ele deveria ir). Falta de estoque é ficção boa, não obstáculo.
 - Mercador ambulante na estrada aparece por sorteio do sistema, com envelope próprio. Sem envelope, não há mercador — não crie um só porque a cena pede.`;
+
+/* ============================================================
+   O BALCÃO DE MANTIMENTOS (v9.150)
+
+   O jogo cobrava comida por dia e por boca, punia com exaustão quando
+   ela acabava, e não dava nenhuma forma de repor. `SUPRIMENTOS` existia
+   em `ermos.js` com um preço fixo desde sempre, e o preço fixo nunca
+   tinha sido cobrado de ninguém — não havia balcão.
+
+   ELE NÃO É UM MERCADOR. Os mercadores da praça são sorteados: têm
+   estoque próprio, personalidade, humor e podem não aparecer. Ração e
+   água não são assim — qualquer lugar onde mora gente tem as duas, e um
+   herói que chega numa vila e não encontra pão porque o dado não quis
+   é o jogo punindo por acaso uma coisa que ele mesmo tornou obrigatória.
+
+   Então o balcão é da CIDADE, e não de alguém. O que varia é o PREÇO,
+   e ele varia pelo mesmo motor de todo o resto: quem produz vende
+   barato, quem depende de comboio vende caro, e o inverno cobra a sua
+   parte.
+   ============================================================ */
+
+/* O kit é o único que não se acumula: são corda, saco de dormir,
+   pederneira e panela, e ninguém carrega dois. `garantirSuprimentos` já
+   o guarda como booleano — comprar o segundo seria queimar 25 moedas
+   por nada, e a loja tem de saber disso antes de oferecer. */
+export const UNICO = new Set(["kit"]);
+
+export function precoDoSuprimento(id, cidade, { dia = 1, pressoes = null, extra = null } = {}) {
+  const s = SUPRIMENTOS[id];
+  if (!s) return null;
+  /* o item de mentira existe só para o motor de gênero: `fatorDoLugar`
+     decide pelo `tipo`, e mantimento é um tipo como qualquer outro */
+  const lug = fatorDoLugar({ tipo: "mantimento", nome: s.nome }, cidade, { dia, pressoes, vendendo: false, extra });
+  const f = fatorPorte(cidade) * lug.fator;
+  return { id, nome: s.nome, icone: s.icone, desc: s.desc, base: s.preco, preco: Math.max(1, Math.round(s.preco * f)), porques: lug.porques };
+}
+
+/* A prateleira inteira, na ordem em que ela importa: primeiro o que
+   acaba todo dia, depois o que se compra uma vez na vida. */
+export const ORDEM_DO_BALCAO = ["racoes", "agua", "tochas", "kit"];
+
+export function balcaoDeMantimentos(cidade, { dia = 1, pressoes = null, extra = null, temKit = false } = {}) {
+  if (!cidade || !cidade.nome) return [];
+  return ORDEM_DO_BALCAO
+    .filter((id) => !(UNICO.has(id) && temKit))
+    .map((id) => precoDoSuprimento(id, cidade, { dia, pressoes, extra }))
+    .filter(Boolean);
+}
+/* ---------------- O AVISO DE PARTIR SEM COMIDA ----------------
+   O jogo já dizia "os suprimentos estão no fim" DENTRO da viagem, que é
+   tarde: nesse ponto a única saída é voltar ou passar fome. O aviso que
+   serve é o de antes — na cidade, com o balcão do lado.
+
+   ELE COBRA A FOLGA, E NÃO A VIAGEM INTEIRA, e essa distinção veio da
+   prova no jogo. A primeira versão exigia comida para todos os dias da
+   rota, e numa viagem de 44 dias com três bocas ela dizia "faltam 131
+   rações" — um número tecnicamente certo e completamente inútil:
+   ninguém carrega 131 rações, e um aviso que pede o impossível é um
+   aviso que se aprende a ignorar.
+
+   Uma jornada longa não se provisiona na partida. Ela se alimenta de
+   forrageamento e das vilas do caminho — o jogo já tem as duas coisas.
+   O que a pessoa precisa saber ao pôr o pé na estrada é se ela tem a
+   FOLGA para o começo, e dois dias é o menor número que ainda permite
+   escolher: com um dia, ela já está decidindo entre a fome e a volta.
+
+   A duração da rota não some da conta: ela entra na FRASE, como contexto
+   do tamanho da empreitada, e não como exigência. */
+export const DIAS_DE_FOLGA = 2;
+
+export function faltaComidaParaPartir(suprimentos, bocas, diasDeViagem = 1) {
+  const s = garantirSuprimentos(suprimentos);
+  const b = Math.max(1, Number(bocas) || 1);
+  const dias = Math.min(Math.floor(s.racoes / b), Math.floor(s.agua / b));
+  const rota = Math.max(1, Math.round(Number(diasDeViagem) || 1));
+  if (dias >= DIAS_DE_FOLGA) return null;
+  const longa = rota > DIAS_DE_FOLGA;
+  return {
+    dias, precisa: DIAS_DE_FOLGA, bocas: b, rota,
+    faltamRacoes: Math.max(0, DIAS_DE_FOLGA * b - s.racoes),
+    faltamAguas: Math.max(0, DIAS_DE_FOLGA * b - s.agua),
+    diz: (dias <= 0
+      ? `Você não tem comida nem água para um dia de estrada${b > 1 ? ` — e são ${b} bocas` : ""}.`
+      : `Você tem ${dias} dia(s) de comida e água${b > 1 ? ` para ${b} bocas` : ""}.`)
+      + (longa ? ` A rota leva ${rota} dia(s) — o resto sai do caminho.` : ""),
+  };
+}
