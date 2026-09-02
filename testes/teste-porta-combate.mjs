@@ -101,7 +101,19 @@ sec("4. A FRONTEIRA — o que governa o INSTANTE em que a luta abre");
 
 sec("5. E O CORTE FOI PARA ALGUM LUGAR");
 {
-  t("a cena comum encolheu abaixo de 55k", TAVERNA.length < 55000);
+  /* ESTA LINHA MUDOU NA v9.153, e o motivo vale mais do que o número.
+     Ela dizia "abaixo de 55k" e passou a falhar quando a reordenação
+     acrescentou 846 caracteres — o cabeçalho da seção ESTADO DESTE TURNO
+     e as frases que apontam para ela.
+
+     O prompt cresceu e ficou OITO VEZES mais barato, porque o que se
+     paga não é o tamanho: é a parte que muda. Com o estado no fim, 98%
+     do texto vira prefixo relido, e prefixo relido custa um décimo.
+
+     Então o teto continua, para o texto não engordar sem ninguém ver —
+     mas quem mede o que importa agora é `teste-reordem.mjs`, e é lá que
+     um retrocesso de verdade aparece. */
+  t("a cena comum segue abaixo de 57k", TAVERNA.length < 57000);
   t("e a luta continua maior que ela", LUTA.length > TAVERNA.length);
   /* a diferença entre as duas é exatamente o que a porta segura */
   t("a porta do combate vale mais de 3k", LUTA.length - TAVERNA.length > 3000);
