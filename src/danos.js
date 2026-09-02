@@ -45,6 +45,27 @@ export function perfilDeCriatura(nome, desc) {
   return { ataque: "fisico", resist: [], fraqueza: [], imune: [] };
 }
 
+/* ---------------- A FICHA MANDA MAIS QUE O NOME (v9.152) ----------------
+   Uma criatura que declara o próprio perfil sabe mais sobre si do que uma
+   expressão regular sabe sobre o nome dela. A regex continua embaixo,
+   como rede: o Narrador pode abrir combate com qualquer nome, e para
+   "Coisa Sem Nome" a ficha não tem o que dizer.
+
+   Isto não importa `bestiario.js` de propósito — bestiario → combate →
+   danos, e o ciclo se fecharia. Lê o campo do objeto que já recebe. */
+export function perfilDe(ente) {
+  const p = ente && ente.perfil;
+  if (p && typeof p === "object") {
+    return {
+      ataque: p.ataque || "fisico",
+      resist: Array.isArray(p.resist) ? p.resist : [],
+      fraqueza: Array.isArray(p.fraqueza) ? p.fraqueza : [],
+      imune: Array.isArray(p.imune) ? p.imune : [],
+    };
+  }
+  return perfilDeCriatura(ente && ente.nome, ente && ente.desc);
+}
+
 /* Multiplicador + rótulo ao bater num perfil com um tipo de dano. */
 export function multiplicadorDano(tipo, perfil) {
   if (!tipo || tipo === "fisico" || !perfil) {

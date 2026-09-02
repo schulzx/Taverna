@@ -21,7 +21,7 @@ import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, car
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
 import { OBRAS, IMPOSTOS, impostoPorId, obraPorId, garantirGovernos, garantirGoverno, equilibrioDe, contaDoDominio, podeErguer, comecarObra, obraPronta, terminarObra, pulsoDaFuria, revoltaAgora, bonusDeObras, fatorDaOficina, envelopeDoDominio, oQueAOficinaFaz, podeTomarCidade, comecarATomar, tomadaPronta, humorAoTomar, envelopeDaTomada, diasDeTomar } from "./dominios.js";
-import { perfilDeCriatura, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano, resistenciasEquipadas } from "./danos.js";
+import { perfilDeCriatura, perfilDe, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano, resistenciasEquipadas } from "./danos.js";
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, MINUTOS_RODADA_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, rumorDoDia } from "./fama.js";
 import { gerarVilao, gerarHerdeiro, linhaDaHeranca, garantirVilao, avancarPlano, podeAvancar, escolherAlvo, levaForma, faseDe, linhaDoAvanco as linhaDoVilao, envelopeDoAvanco, resumoVilaoPrompt, podeCair, envelopeDaQueda, envelopeDaQuedaCedoDemais, linhaDaQueda, TOTAL_DE_PASSOS } from "./vilao.js";
@@ -651,7 +651,11 @@ function TrilhoAbas({ abaAtiva, aoClicar, nGrupo, desperto, codexAberto = true }
         return (
           <button key={aba.id} onClick={() => aoClicar(ativa ? null : aba.id)}
             className="flex flex-col items-center justify-center gap-0.5 rounded-l-xl transition-all"
-            style={{ width: 52, height: 58, background: ativa ? T.panelSoft : T.panel, border: `1px solid ${ativa ? T.amber : T.line}`, borderRight: "none", color: ativa ? T.amberSoft : T.inkDim }}>
+            style={{ width: 52, height: 58, background: ativa ? T.panelSoft : T.panel, /* v9.152: as tres bordas separadas, e nao `border` + `borderRight`. O
+               React avisa a cada render que misturar a forma curta com a longa
+               produz bug de estilo — e o aviso repetido enche o console, que e
+               a mesma rede onde eu procuro defeito de verdade. */
+              borderTop: `1px solid ${ativa ? T.amber : T.line}`, borderBottom: `1px solid ${ativa ? T.amber : T.line}`, borderLeft: `1px solid ${ativa ? T.amber : T.line}`, color: ativa ? T.amberSoft : T.inkDim }}>
             <span className="text-base leading-none">{aba.icone}</span>
             <span className="tv-mono text-[9px] uppercase tracking-wider">{aba.rotulo}</span>
             {aba.id === "gestao" && nGrupo > 0 && <span className="tv-mono text-[9px] leading-none rounded-full px-1" style={{ background: T.violet, color: T.onSecond }}>{nGrupo}</span>}
@@ -3672,7 +3676,12 @@ export default function Taverna() {
     const ordem = rolarIniciativa([
       { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") + iniciativaDeTraco(pers) + iniciativaDeItem(pers) },
       ...(pers.grupo || []).map((g2) => ({ nome: g2.nome, lado: "aliado", modDestreza: 1 })),
-      ...g.inimigos.map((e) => ({ nome: e.nome, lado: "inimigo", modDestreza: e.agil ? 2 : 0 })),
+      /* v9.152: a DESTREZA da criatura, e nao mais o booleano. Com `agil ? 2 : 0`
+         o Slime e o Golem de Pedra entravam na ordem do turno empatados com o
+         Ogro, e o Batedor — cuja descricao inteira e "rapido, fragil" — ganhava
+         o mesmo +2 do Goblin. O bestiario sempre soube a diferenca; era o
+         booleano que nao cabia. */
+      ...g.inimigos.map((e) => ({ nome: e.nome, lado: "inimigo", modDestreza: Number(e.des) || 0 })),
     ]);
     reacaoUsadaRef.current = false;
     const novo = { ...comb, inimigos: g.inimigos, grade: g.grade, heroi: g.heroi, aliados: g.aliados, ordem, rodada: 1, recursos: novosRecursos() };
@@ -5820,7 +5829,7 @@ export default function Taverna() {
           bonusAtaque: Math.max(pers.atributos?.forca || 0, pers.atributos?.destreza || 0) + 2 + Math.floor((nv - 1) / 4),
           danoBase: Math.round(danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)) * 0.6),
           condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
-          tipoDano: elementoDaArma(pers), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
+          tipoDano: elementoDaArma(pers), perfilAlvo: perfilDe(alvo),
         });
         let pv = alvo.vida;
         if (rr.dano > 0) {
@@ -6691,17 +6700,17 @@ export default function Taverna() {
         }
       }
     }
-    /* COMPATIBILIDADE: formato antigo "fe":{fieis,pf} de saves/respostas v7.4-7.5 */
-    if (resp.mudancas && resp.mudancas.fe && typeof resp.mudancas.fe === "object" && divindadeRef.current && divindadeRef.current.despertar) {
-      const fe = resp.mudancas.fe;
-      const fieis = Math.round(Number(fe.fieis) || 0), pf = Math.round(Number(fe.pf) || 0);
-      if (fieis || pf) msgs.push(...ganharFe(Math.max(-50, Math.min(1000, fieis)), Math.max(-60, Math.min(60, pf)), "registrado pelo Mestre"));
-      const dv = { ...divindadeRef.current };
-      let tocou = false;
-      if (fe.dominio && !dv.dominio) { dv.dominio = String(fe.dominio).slice(0, 60); tocou = true; msgs.push(`🌌 Domínio revelado: ${dv.dominio}`); }
-      if (fe.patrono && !dv.patrono) { dv.patrono = String(fe.patrono).slice(0, 60); tocou = true; }
-      if (tocou) { divindadeRef.current = dv; setDivindade(dv); }
-    }
+    /* v9.152: aqui morava a compatibilidade com o formato antigo
+       "fe":{fieis,pf}, de respostas das versoes 7.4 e 7.5. Ela sobreviveu
+       cento e quarenta e cinco versoes depois de a fe passar a viajar por
+       SINAL, e o prompt de hoje nao ensina esse objeto em lugar nenhum —
+       conferido antes de tirar: nenhuma ocorrencia em prompt.js.
+
+       Codigo de compatibilidade que nao pode mais ser acionado nao e
+       inofensivo: ele e um segundo caminho para mexer na divindade, e o
+       proximo a ler este arquivo tem de decidir se ele importa. Sai.
+
+       (Ele lia RESPOSTA, e nao save: nenhuma campanha salva depende disto.) */
     /* CÂNONE: mescla fatos duráveis; campos novos atualizam, nunca apagam a ficha */
     if (resp.mudancas && resp.mudancas.canone && typeof resp.mudancas.canone === "object") {
       const c = { ...canoneRef.current };
@@ -9097,7 +9106,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
            avatar são o corpo batendo, não um buff mágico. */
         danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)) + bArma.bonus + danoDeDadiva + danoDaForma(pers),
         condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
-        tipoDano: elementoDaArma(pers), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
+        tipoDano: elementoDaArma(pers), perfilAlvo: perfilDe(alvo),
         bonusDefesaAlvo: bonusDefesaEm(gradeDaLuta, alvo),
         criticoEm: critMin,
         /* v9.44: sem treino na arma ou na armadura, o golpe sai torto — é o
@@ -9309,7 +9318,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       /* v9.21: o tipo de dano sai da habilidade — elemento no nome, senão a
          escola da classe. Antes ia "magico", que não existe na tabela: toda
          magia era rotulada FÍSICA e nenhuma fraqueza ou resistência casava. */
-      tipoDano: tipoDeDanoDaHabilidade(h, pers), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
+      tipoDano: tipoDeDanoDaHabilidade(h, pers), perfilAlvo: perfilDe(alvo),
       resistAlvo: resistenciasEquipadas(alvo),
       /* v9.54: quem ignora cobertura rola como se o alvo estivesse em campo
          aberto; quem ignora armadura rola contra o corpo, não contra a placa.

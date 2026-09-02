@@ -41,7 +41,7 @@
    ============================================================ */
 
 import { criarCondicao } from "./condicoes.js";
-import { perfilDeCriatura } from "./danos.js";
+import { perfilDe } from "./danos.js";
 
 const NORM = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 const txtDe = (h) => NORM(`${(h && h.nome) || ""} ${(h && h.descricao) || ""}`);
@@ -161,7 +161,7 @@ export function aplicarControle(inimigos, regra, { rodada = 1, alvoNome = "", no
 
   /* ---- PARAR e CALAR: viram CONDIÇÃO, que o jogo já sabe cobrar ---- */
   const elegiveis = (() => {
-    if (regra.modo === "calar") return vivos.filter((e) => perfilDeCriatura(e.nome, e.desc).ataque !== "fisico");
+    if (regra.modo === "calar") return vivos.filter((e) => perfilDe(e).ataque !== "fisico");
     if (regra.escopo === "todos") return vivos;
     const citado = alvoNome ? vivos.find((e) => NORM(e.nome) === NORM(alvoNome)) : null;
     const um = citado || vivos[0];

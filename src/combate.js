@@ -9,7 +9,7 @@
 import { alcanca, bonusDefesaEm } from "./grid.js";
 import { defesaDeGuarda, estaIntocavel, esquivaDeGuarda, DEFESA_NUA } from "./habilidades.js";
 
-import { perfilDeCriatura, multiplicadorDano, iconeDano, resistenciasEquipadas, elementoDaArma } from "./danos.js";
+import { perfilDeCriatura, perfilDe, multiplicadorDano, iconeDano, resistenciasEquipadas, elementoDaArma } from "./danos.js";
 import { mecanicaDe } from "./condicoes.js";
 import { golpeDaVez } from "./aflicoes.js";
 import { decidirAcaoCompanheiro, valorDaCura, danoDaHabilidadeComp } from "./companheiros.js";
@@ -297,7 +297,7 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
       const alc = alcanca(grade, { ...inim }, alvo.onde || pos, { distancia: !!inim.distancia, alcanceM: inim.distancia ? 36 : null });
       if (!alc.ok) continue;
       const penalidadeZona = alc.penalidade || 0;
-      const perfilInim = perfilDeCriatura(inim.nome, inim.desc);
+      const perfilInim = perfilDe(inim);
       /* `ehAtacanteInimigo` só serve para dizer de que lado está o ALVO, e a
          marionete bate em quem está do lado de lá. Sem esta linha, o golpe
          dela rolaria contra a defesa de um herói que não existe. */
@@ -404,7 +404,7 @@ export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido =
         /* v9.21: mesmo conserto do lado do jogador — "magico" nao e um tipo
            de dano, e mandar isso fazia a habilidade do companheiro sair
            rotulada como fisica e passar por cima de toda resistencia. */
-        tipoDano: tipoDeDanoDaHabilidade(plano.habilidade, comp), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
+        tipoDano: tipoDeDanoDaHabilidade(plano.habilidade, comp), perfilAlvo: perfilDe(alvo),
       });
       acoes.push({ companheiro: comp.nome, tipo: "habilidade", habilidade: plano.habilidade, custo: Number(plano.habilidade.custo) || 0, alvoNome: alvo.nome, r });
       continue;
@@ -413,7 +413,7 @@ export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido =
       atacante: comp.nome, alvo, ehAtacanteInimigo: false,
       bonusAtaque: 2 + (comp.nivel || 1), danoBase: 4 + (comp.nivel || 1) + bonusArmaComp + d(4),
       condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [], vantagem: furioso(comp.nome),
-      tipoDano: elementoDaArma(comp), perfilAlvo: perfilDeCriatura(alvo.nome, alvo.desc),
+      tipoDano: elementoDaArma(comp), perfilAlvo: perfilDe(alvo),
     });
     acoes.push({ companheiro: comp.nome, tipo: "ataque", alvoNome: alvo.nome, r });
   }
@@ -767,7 +767,7 @@ export function ehRetirada(texto) {
    um por inimigo, independente de quantos ataques ele tenha na rodada. */
 export function oportunidadesContraOJogador(inimigos, jogador, gdJogador = 0) {
   return (inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0).map((inim) => {
-    const perfil = perfilDeCriatura(inim.nome, inim.desc);
+    const perfil = perfilDe(inim);
     const r = ataqueDeOportunidade(inim, jogador,
       bonusDeAmeaca(inim.ameaca) + 2 * ((inim.gd || 0) - (gdJogador || 0)),
       danoDe(inim, true), { ehAtacanteInimigo: true, tipoDano: perfil.ataque });

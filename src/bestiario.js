@@ -7,39 +7,43 @@
 import { pvEsperadoInimigo, bonusDeAmeaca } from "./combate.js";
 
 /* ---------------- CRIATURAS (fantasia) ---------------- */
-const C = (nome, ameaca, nivelRef, agil, desc) => ({ nome, ameaca, nivelRef, agil: !!agil, desc });
+/* v9.152: `des` é a destreza de verdade, e `agil` passa a ser o que ele
+   sempre foi na prática — "esta criatura é rápida?". Derivar em vez de
+   guardar os dois evita a única coisa pior do que um booleano grosseiro:
+   um booleano que discorda do número ao lado dele. */
+const C = (nome, ameaca, nivelRef, des, desc, perfil = null) => ({ nome, ameaca, nivelRef, des: Number(des) || 0, agil: (Number(des) || 0) >= 2, desc, ...(perfil ? { perfil } : {}) });
 export const CRIATURAS_FANTASIA = [
-  C("Slime", "fraco", 1, false, "gosma lenta e previsível"),
-  C("Rato Gigante", "fraco", 1, true, "praga de esgoto"),
-  C("Lobo", "fraco", 1, true, "caça em bando"),
-  C("Goblin", "fraco", 1, true, "covarde em grupo pequeno, atrevido em bando"),
-  C("Bandido", "comum", 2, false, "gente desesperada com aço barato"),
-  C("Esqueleto", "comum", 2, false, "osso animado sem medo"),
-  C("Zumbi", "comum", 2, false, "lento, incansável"),
-  C("Lobo Atroz", "comum", 3, true, "alfa de presas longas"),
-  C("Cultista", "comum", 3, false, "fanático com magia menor"),
-  C("Ogro", "competente", 4, false, "força bruta e pouco cérebro"),
-  C("Troll", "competente", 5, false, "regenera se não queimar"),
-  C("Elemental Menor", "competente", 5, false, "fúria de um elemento"),
-  C("Golem de Pedra", "elite", 7, false, "imune a medo, lento e esmagador"),
-  C("Quimera", "elite", 8, true, "três cabeças, três mortes"),
-  C("Gigante", "elite", 9, false, "cada golpe derruba muralhas"),
-  C("Dragão Jovem", "lendario", 10, true, "sopro devastador, orgulho maior ainda"),
-  C("Lich", "lendario", 12, false, "arquimago morto-vivo com filactério"),
-  C("Dragão Ancião", "lendario", 16, true, "uma calamidade com asas"),
+  C("Slime", "fraco", 1, -2, "gosma lenta e previsível"),
+  C("Rato Gigante", "fraco", 1, 3, "praga de esgoto"),
+  C("Lobo", "fraco", 1, 2, "caça em bando"),
+  C("Goblin", "fraco", 1, 2, "covarde em grupo pequeno, atrevido em bando"),
+  C("Bandido", "comum", 2, 1, "gente desesperada com aço barato"),
+  C("Esqueleto", "comum", 2, 1, "osso animado sem medo"),
+  C("Zumbi", "comum", 2, -2, "lento, incansável"),
+  C("Lobo Atroz", "comum", 3, 2, "alfa de presas longas"),
+  C("Cultista", "comum", 3, 0, "fanático com magia menor"),
+  C("Ogro", "competente", 4, -1, "força bruta e pouco cérebro"),
+  C("Troll", "competente", 5, 0, "regenera se não queimar", { ataque: "fisico", fraqueza: ["fogo"], resist: [] }),
+  C("Elemental Menor", "competente", 5, 1, "fúria de um elemento", { ataque: "fogo", resist: ["fogo"], fraqueza: ["gelo"] }),
+  C("Golem de Pedra", "elite", 7, -2, "imune a medo, lento e esmagador"),
+  C("Quimera", "elite", 8, 2, "três cabeças, três mortes", { ataque: "fogo", resist: ["fogo"], fraqueza: [] }),
+  C("Gigante", "elite", 9, -1, "cada golpe derruba muralhas", { ataque: "fisico", resist: ["fisico"], fraqueza: [] }),
+  C("Dragão Jovem", "lendario", 10, 2, "sopro devastador, orgulho maior ainda"),
+  C("Lich", "lendario", 12, 1, "arquimago morto-vivo com filactério"),
+  C("Dragão Ancião", "lendario", 16, 3, "uma calamidade com asas"),
 ];
 
 /* Arquétipos genéricos — servem a qualquer gênero (sci-fi, cyberpunk, etc.) */
 export const ARQUETIPOS = [
-  C("Capanga", "fraco", 1, false, "músculo descartável"),
-  C("Batedor", "fraco", 2, true, "rápido, frágil"),
-  C("Soldado", "comum", 3, false, "treinado e disciplinado"),
-  C("Atirador", "comum", 3, true, "perigoso à distância"),
-  C("Brutamontes", "competente", 5, false, "aguenta e devolve"),
-  C("Sentinela Blindada", "elite", 7, false, "muralha ambulante"),
-  C("Comandante", "elite", 8, false, "perigoso e tático"),
-  C("Colosso", "lendario", 11, false, "máquina/besta de cerco"),
-  C("Horror", "lendario", 13, true, "o que não deveria existir"),
+  C("Capanga", "fraco", 1, 0, "músculo descartável"),
+  C("Batedor", "fraco", 2, 4, "rápido, frágil"),
+  C("Soldado", "comum", 3, 1, "treinado e disciplinado"),
+  C("Atirador", "comum", 3, 3, "perigoso à distância"),
+  C("Brutamontes", "competente", 5, -1, "aguenta e devolve"),
+  C("Sentinela Blindada", "elite", 7, -2, "muralha ambulante", { ataque: "fisico", resist: ["fisico"], fraqueza: ["raio"] }),
+  C("Comandante", "elite", 8, 2, "perigoso e tático"),
+  C("Colosso", "lendario", 11, -2, "máquina/besta de cerco", { ataque: "fisico", resist: ["fisico", "veneno"], fraqueza: ["raio"] }),
+  C("Horror", "lendario", 13, 3, "o que não deveria existir", { ataque: "sombrio", resist: ["sombrio", "veneno"], fraqueza: ["sagrado"] }),
 ];
 
 export function criaturasDoGenero(genero) {
@@ -58,6 +62,17 @@ export function completarInimigo(e, nivelJogador) {
     ...e, nome, ameaca, nivel, vidaMax,
     vida: e.vida !== undefined ? e.vida : vidaMax,
     defesa: e.defesa || 10 + Math.floor(bonusDeAmeaca(ameaca) / 2) + ((e.agil ?? (base && base.agil)) ? 2 : 0),
+    /* v9.152: a destreza vem da FICHA da criatura quando o nome bate no
+       bestiario. Quando nao bate — e nao bate sempre, porque o Narrador pode
+       abrir combate com qualquer nome —, zero: o desconhecido nao e rapido
+       nem lento, e inventar um numero para ele seria o sistema adivinhando. */
+    /* v9.152: o PERFIL vem da base pelo mesmo motivo que a destreza — e
+       esquecer de copia-lo aqui foi como eu descobri que a tabela pode estar
+       certa e o jogo nao ver nada: o Troll ganhou a fraqueza a fogo em
+       bestiario.js e continuou imune a ela em combate, porque a ficha que
+       chega na luta e a que sai daqui. */
+    ...(e.perfil || (base && base.perfil) ? { perfil: e.perfil || base.perfil } : {}),
+    des: e.des ?? (base ? base.des : 0),
     agil: e.agil ?? (base ? base.agil : false),
   };
 }
