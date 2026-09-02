@@ -103,6 +103,7 @@ import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDa
 import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
 import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo } from "./arquivo.js";
 import { abrir as abrirAbas, estaAberta, subsAbertas, novidades, falaDaNovidade, TODAS_AS_PORTAS } from "./abas.js";
+import { houveIntervalo, recapitular, textoDoRecap, envelopeDaRetomada, ehHoraDeParar, falaDoFim } from "./sessoes.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
 import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra } from "./rastro.js";
@@ -2199,11 +2200,27 @@ function PainelBancada({ bancada = [], despensa = [], onForjar, bloqueado }) {
    ler a cena não precisa fazer nada. */
 function BlocoSistema({ visiveis = [], dobradas = [], saldo = "" }) {
   const [aberto, setAberto] = useState(false);
-  const pilula = (txt, i) => (
+  /* ---------------- A FORMA SEGUE O CONTEÚDO (v9.149) ----------------
+     A pílula centralizada foi feita para o aviso de uma linha ("⛔ item
+     equipado"), e serve muito bem para isso. O recap da retomada é uma
+     LISTA — lugar, o que pesou, o que ficou devendo — e dentro da pílula
+     ele virava um parágrafo corrido e centralizado: as quebras de linha
+     sumiam e seis fatos viravam um muro.
+
+     A regra não é "recap tem forma própria", é mais simples e vale para
+     o que vier depois: texto com quebra de linha é bloco, texto sem
+     quebra é pílula. Quem escreve a mensagem decide a forma sem precisar
+     saber que esta função existe. */
+  const pilula = (txt, i) => (String(txt).includes("\n") ? (
+    <div key={i} className="tv-fade flex justify-center">
+      <div className="tv-mono text-xs px-4 py-3 rounded-xl whitespace-pre-line max-w-xl w-full"
+        style={{ background: T.panelSoft, color: T.violetSoft, border: `1px solid ${T.line}` }}>{txt}</div>
+    </div>
+  ) : (
     <div key={i} className="tv-fade flex justify-center">
       <span className="tv-mono text-xs px-3 py-1.5 rounded-full text-center" style={{ background: T.panelSoft, color: T.violetSoft }}>{txt}</span>
     </div>
-  );
+  ));
   return (
     <div className="space-y-2">
       {visiveis.map(pilula)}
@@ -3313,6 +3330,12 @@ export default function Taverna() {
      recalculada: a condição é um GATILHO, e sair da cidade não pode
      fechar o Mercado. Uma barra que muda de tamanho a cada cena não
      pode ser aprendida. */
+  /* ---------------- A SESSÃO (v9.149) ----------------
+     `ateODia` corta o que já foi recapitulado: sem ele a segunda volta
+     repetiria a primeira e a décima seria ilegível. `turnos` e
+     `sugeriu` guardam o outro lado — um clímax por sessão, e não antes
+     de o jogador ter jogado alguma coisa. */
+  const sessaoRef = useRef({ ateODia: 0, turnos: 0, sugeriu: false });
   const abasAbertasRef = useRef([]);
   const [abasAbertas, setAbasAbertas] = useState([]);
 
@@ -5608,6 +5631,7 @@ export default function Taverna() {
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
       custo: custoRef.atual,
       abasAbertas: abasAbertasRef.current,
+      sessao: sessaoRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -6878,6 +6902,7 @@ export default function Taverna() {
           masmorraRef.current = null; setMasmorra(null);
           bumpCont("masmorrasConcluidas");
           chefeCaido = true;
+          talvezFecharSessao("chefe");
         } else if (masmorraRef.current && salaEmCursoRef.current !== null) {
           resolverSalaAposCombate();
         }
@@ -8448,6 +8473,7 @@ export default function Taverna() {
     });
     nemesisRef.current = herdeiro; setNemesis(herdeiro);
     pushMsgs([{ autor: "sistema", texto: linhaDoNovoCapitulo(h.capitulo, f.id) }]);
+    talvezFecharSessao("capitulo");
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoNovoCapitulo(reg, f.id, { anos, cidade: cidadeAtualRef.current })}`;
     salvar();
     enviar("[ABERTURA DE CAPÍTULO] Abra o capítulo conforme o envelope acima.", personagemRef.current, []);
@@ -8888,8 +8914,36 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
          ponteiros na tela em vez de esperar a próxima noite. Idempotente:
          `temDaFonte` impede o segundo relógio da mesma origem. */
       setTimeout(() => semearRelogiosAgora(), 1100);
+      /* ---------------- O ANTERIORMENTE (v9.149) ----------------
+         Antes, isto era uma chamada de rede pedindo à IA que lesse o
+         histórico bruto e escrevesse 120 palavras. Duas coisas erradas:
+         o jogador tinha de PEDIR (e quem esteve fora dez dias é
+         justamente quem não sabe que precisa), e quem lembrava era a IA
+         — que podia contradizer o cânone e cobrava por isso.
+
+         Agora o recap sai do REGISTRO, por código, de graça, e aparece
+         sozinho sempre que houve intervalo. Ele não pode errar o que
+         aconteceu porque ele É o que aconteceu. */
+      const volta = houveIntervalo(sv.salvoEm);
+      const recap = (volta.sim || comResumo) ? recapitular({
+        registro: registroRef.current, dia: diaRef.current, lugar: cidadeAtualRef.current || (lugarRef.current || {}).nome || "",
+        grupo: (pers && pers.grupo) || [], missoes: missoesRef.current, relogios: relogiosRef.current,
+        nomeCampanha: sv.nomeCampanha, desdeODia: (sv.sessao && sv.sessao.ateODia) || 0, quando: volta.quando,
+      }) : null;
+      if (recap && recap.vale && !silencioso) {
+        pushMsgs([{ autor: "sistema", texto: textoDoRecap(recap) }]);
+        /* daqui para a frente, o que já foi contado não se conta de novo */
+        sessaoRef.current = { ateODia: diaRef.current, turnos: 0, sugeriu: false };
+      } else {
+        sessaoRef.current = { ateODia: (sv.sessao && sv.sessao.ateODia) || 0, turnos: 0, sugeriu: false };
+      }
+      /* e a CENA só é reaberta a pedido: é a única parte disto que o
+         código não sabe fazer, e a única que custa uma chamada. */
       if (comResumo && !sv.rolagem) {
-        enviar(`[RESUMO DE SESSÃO] Retomando "${sv.nomeCampanha}". Abra com "Anteriormente, em ${sv.nomeCampanha}…" e recapitule os principais acontecimentos em até 120 palavras, tom de série. Depois reapresente a cena atual e me convide a agir. Sem rolagem e sem mudanças nesta resposta.`, pers, sv.historico || []);
+        enviar(recap && recap.vale
+          ? envelopeDaRetomada(recap, volta.quando)
+          : `[RETOMADA] Voltei a "${sv.nomeCampanha}". Reabra a cena onde eu parei em duas ou três frases e devolva a palavra para mim. Não recapitule, não faça o tempo passar e não inicie cena nova.`,
+          pers, sv.historico || []);
       }
     } catch (e) {
       setFase("menu");
@@ -11993,6 +12047,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        vier — a ação declarada, a salvaguarda, a prova. É a conta que
        responde "já houve dado demais nos últimos turnos?". */
     texturaRef.current = { ...texturaRef.current, rolou: true };
+    sessaoRef.current = { ...sessaoRef.current, turnos: (sessaoRef.current.turnos || 0) + 1 };
     const mod = modPend;
     const total = valor + mod;
     const dc = r.dificuldade;
@@ -12399,6 +12454,15 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   /* O GATILHO, e a linha que ele diz. Uma aba que aparece calada é uma
      aba que ninguém nota: o jogador está olhando a narrativa, não a
      barra. Uma linha, na vez em que acontece. */
+  /* v9.149: o clímax que acabou de acontecer vira uma linha, uma vez. */
+  const talvezFecharSessao = (momento) => {
+    const s = sessaoRef.current;
+    const fim = ehHoraDeParar(momento, { jaSugeriu: s.sugeriu, turnosNaSessao: s.turnos });
+    if (!fim) return;
+    sessaoRef.current = { ...s, sugeriu: true };
+    pushMsgs([{ autor: "sistema", texto: falaDoFim(fim, { dia: diaRef.current }) }]);
+  };
+
   const conferirAbas = ({ calado = false } = {}) => {
     const antes = abasAbertasRef.current;
     const depois = abrirAbas(antes, estadoDasAbas());
