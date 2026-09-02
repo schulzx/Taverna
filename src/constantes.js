@@ -13,8 +13,8 @@ export const SLOGAN = "toda lenda começa aqui";
    do App — que é exatamente onde um número vai para ser esquecido.
    Aqui ela fica ao lado do resto do que a casa sabe sobre si mesma, e um
    varredor confere que o App não voltou a escrevê-la à mão. */
-export const VERSAO = "v9.155";
-export const LEVA = "o portao";
+export const VERSAO = "v9.156";
+export const LEVA = "o celular";
 
 export const XP_POR_NIVEL = (nivel) => xpDoProximoNivel(nivel) ?? XP_POR_DADIVA;
 export const MOEDAS_INICIAIS = 15;
@@ -46,6 +46,27 @@ export const FONT_CSS = `
 .tv-scroll::-webkit-scrollbar-thumb { background: #2E2745; border-radius: 4px; }
 @keyframes tvSlide { from { transform: translateX(24px); opacity: 0;} to { transform: none; opacity: 1;} }
 .tv-slide { animation: tvSlide .25s ease both; }
+
+/* ---------------- O ESPAÇO DO TRILHO (v9.156) ----------------
+   O trilho de abas é lateral no monitor e barra inferior no telefone, e
+   cada forma cobra o seu espaço num lado diferente. Isto estava escrito
+   catorze vezes como um padding-right de 68px em linha — o que num
+   telefone reservava dezoito por cento da largura para uma barra que
+   nem está ali.
+
+   (Sem crase neste comentário de propósito: ele mora DENTRO da template
+   literal do CSS, e uma crase aqui fecha a literal e derruba o build —
+   foi exatamente o que aconteceu na primeira tentativa.)
+
+   tv-espaco-abas é a reserva: nada embaixo, no telefone; 68px à direita
+   a partir do monitor. Uma decisão num lugar só, e a próxima tela nasce
+   certa sem ninguém lembrar dela. */
+.tv-espaco-abas { padding-right: 0; padding-bottom: 4.75rem; }
+.tv-margem-abas { margin-right: 0; }
+@media (min-width: 768px) {
+  .tv-espaco-abas { padding-right: 68px; padding-bottom: 0; }
+  .tv-margem-abas { margin-right: 68px; }
+}
 
 /* ---------------- A CORTIÇA E O PAPEL (v9.127) ----------------
    O mural era uma lista de retângulos iguais dentro de um painel igual a

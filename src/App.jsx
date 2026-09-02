@@ -645,13 +645,17 @@ const SLOTS_ORDEM = ["arma", "escudo", "armadura", "elmo", "botas", "anel", "amu
 
 function TrilhoAbas({ abaAtiva, aoClicar, nGrupo, desperto, codexAberto = true }) {
   return (
-    <nav className="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-1.5 py-2 pl-1.5" aria-label="Painéis">
+    /* v9.156: BARRA EMBAIXO NO TELEFONE, trilho na lateral no monitor.
+       O polegar alcança a base da tela; a lateral direita de um telefone
+       de seis polegadas, não. */
+    <nav className="fixed z-40 flex gap-1.5 inset-x-0 bottom-0 flex-row justify-around px-2 py-1.5 md:inset-x-auto md:bottom-auto md:right-0 md:top-1/2 md:-translate-y-1/2 md:flex-col md:justify-start md:py-2 md:pl-1.5 md:px-0" aria-label="Painéis"
+      style={{ background: T.bg, borderTop: `1px solid ${T.line}` }}>
       {ABAS.filter((a) => (!a.soDesperto || desperto) && (a.id !== "codex" || codexAberto)).map((aba) => {
         const ativa = abaAtiva === aba.id;
         return (
           <button key={aba.id} onClick={() => aoClicar(ativa ? null : aba.id)}
-            className="flex flex-col items-center justify-center gap-0.5 rounded-l-xl transition-all"
-            style={{ width: 52, height: 58, background: ativa ? T.panelSoft : T.panel, /* v9.152: as tres bordas separadas, e nao `border` + `borderRight`. O
+            className="flex flex-1 md:flex-none flex-col items-center justify-center gap-0.5 rounded-xl md:rounded-l-xl md:rounded-r-none transition-all"
+            style={{ minWidth: 52, maxWidth: 96, height: 52, background: ativa ? T.panelSoft : T.panel, /* v9.152: as tres bordas separadas, e nao `border` + `borderRight`. O
                React avisa a cada render que misturar a forma curta com a longa
                produz bug de estilo — e o aviso repetido enche o console, que e
                a mesma rede onde eu procuro defeito de verdade. */
@@ -1202,7 +1206,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
   return (
     <>
       <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,.45)" }} onClick={fechar} />
-      <aside className="tv-slide tv-scroll fixed right-0 inset-y-0 z-40 w-80 max-w-[88vw] overflow-y-auto p-5 flex flex-col gap-5" style={{ background: T.panel, borderLeft: `1px solid ${T.line}` }}>
+      <aside className="tv-slide tv-scroll fixed right-0 inset-y-0 z-40 w-full md:w-80 md:max-w-[88vw] overflow-y-auto p-4 md:p-5 flex flex-col gap-5" style={{ background: T.panel, borderLeft: `1px solid ${T.line}` }}>
         <div className="flex items-center justify-between">
           <h2 className="tv-display text-2xl" style={{ color: T.ink }}>{aba === "gestao" ? "Gestão" : aba === "diario" ? "Diário" : aba === "mapa" ? "Mapa" : aba === "codex" ? "Códex" : aba === "ascensao" ? "Ascensão" : "Inventário"}</h2>
           <button onClick={fechar} className="tv-mono text-lg px-2" style={{ color: T.inkDim }}>✕</button>
@@ -2366,7 +2370,7 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
   /* v9.13: o botão "encerrar turno" saiu. Agir É encerrar — o que está aqui
      agora é só o lembrete de quantos movimentos cabem NESTA declaração. */
   return (
-    <div className="tv-fade mx-4 md:mx-8 mt-1 mb-3 rounded-2xl p-3" style={{ background: T.panel, border: `1px solid ${T.danger}`, marginRight: "68px" }}>
+    <div className="tv-fade tv-margem-abas mx-4 md:mx-8 mt-1 mb-3 rounded-2xl p-3" style={{ background: T.panel, border: `1px solid ${T.danger}` }}>
       <div className="tv-mono text-[10px] uppercase tracking-widest mb-2 flex items-center gap-1.5 flex-wrap" style={{ color: T.danger }}>
         <span>⚔ Em combate</span>
         <span style={{ color: T.inkDim }}>· {combate.inimigos.filter((e) => !e.derrotado).length} de pé</span>
@@ -2591,7 +2595,7 @@ function PainelHabilidades({ personagem, selecionar, fechar, escolhidas = [], li
   const listaGuardadas = filtrar(guardadas);
   const muitas = tudo.length > 6;
   return (
-    <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.violet}`, marginRight: "68px" }}>
+    <div className="tv-fade tv-margem-abas mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.violet}` }}>
       <div className="flex items-center justify-between mb-3">
         <div className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.violetSoft }}>
           Habilidades · {personagem.mana}/{personagem.manaMax} PM
@@ -17355,7 +17359,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       {fase === "jogo" && personagem && (
         <div className="flex flex-1 min-h-0 relative">
           <main className="flex-1 flex flex-col min-w-0">
-            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-4" style={{ paddingRight: "68px" }}>
+            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll tv-espaco-abas flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-4" >
               {agruparMensagens(mensagens).map((item, k) => {
                 /* v9.32: as linhas do sistema chegam AGRUPADAS. Uma rodada de
                    combate empurrava vinte balões iguais entre a ação do
@@ -17438,7 +17442,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               );
             })()}
             {acoesAbertas && (
-              <div className="px-4 md:px-8 pb-2 shrink-0" style={{ paddingRight: "68px" }}>
+              <div className="tv-espaco-abas px-4 md:px-8 pb-2 shrink-0" >
                 <div className="rounded-2xl p-3" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.amberSoft }}>Ações — toque para preencher e complete o alvo</span>
@@ -17482,7 +17486,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             )}
 
             {milagreSel && !rolagem && (
-              <div className="tv-fade px-4 md:px-8 pb-1.5" style={{ paddingRight: "68px" }}>
+              <div className="tv-fade tv-espaco-abas px-4 md:px-8 pb-1.5" >
                 <div className="inline-flex items-center gap-2 rounded-full pl-3.5 pr-1.5 py-1.5" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
                   <span className="tv-mono text-xs" style={{ color: T.amber }}>{milagreSel.icone} {milagreSel.nome} · {milagreSel.pf} PF — diga como você o usa</span>
                   <button onClick={() => setMilagreSel(null)} className="tv-mono text-xs rounded-full w-5 h-5 flex items-center justify-center" style={{ background: T.line, color: T.inkDim }}>✕</button>
@@ -17491,7 +17495,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             )}
 
             {habsSel.length > 0 && !rolagem && (
-              <div className="tv-fade px-4 md:px-8 pb-1.5 flex flex-wrap gap-1.5" style={{ paddingRight: "68px" }}>
+              <div className="tv-fade tv-espaco-abas px-4 md:px-8 pb-1.5 flex flex-wrap gap-1.5" >
                 {habsSel.map((h, i) => (
                   <div key={i} className="inline-flex items-center gap-2 rounded-full pl-3.5 pr-1.5 py-1.5" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
                     <span className="tv-mono text-xs" style={{ color: T.violetSoft }}>✦ {h.nome} · {h.custo} PM</span>
@@ -17511,7 +17515,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               const caidos = raid.hoste.filter((h) => h.caido && !h.morto);
               const cor = raid.rompeu ? T.danger : dePe.length <= raid.hoste.length / 3 ? T.danger : T.amber;
               return (
-              <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-3.5" style={{ background: T.panel, border: `1px solid ${cor}`, marginRight: "68px" }}>
+              <div className="tv-fade tv-margem-abas mx-4 md:mx-8 mb-2 rounded-2xl p-3.5" style={{ background: T.panel, border: `1px solid ${cor}` }}>
                 <div className="flex items-center justify-between gap-2 mb-1.5">
                   <div className="tv-mono text-[10px] uppercase tracking-widest truncate" style={{ color: cor }}>
                     {portePorId(raid.porte).icone} {raid.nome}
@@ -17558,7 +17562,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               const recuos = saidasDeRecuo(masmorra);
               const escuro = noEscuro(masmorra);
               return (
-              <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-3.5" style={{ background: T.panel, border: `1px solid ${escuro ? T.danger : T.violet}`, marginRight: "68px" }}>
+              <div className="tv-fade tv-margem-abas mx-4 md:mx-8 mb-2 rounded-2xl p-3.5" style={{ background: T.panel, border: `1px solid ${escuro ? T.danger : T.violet}` }}>
                 <div className="flex items-center justify-between gap-2 mb-1.5">
                   <div className="tv-mono text-[10px] uppercase tracking-widest truncate" style={{ color: T.violetSoft }}>🕳 {masmorra.nome}</div>
                   <div className="tv-mono text-[10px] shrink-0 flex items-center gap-2">
@@ -17640,7 +17644,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             })()}
 
             {acampado && (
-              <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.amber}`, marginRight: "68px" }}>
+              <div className="tv-fade tv-margem-abas mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
                 <div className="tv-mono text-xs uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>⛺ Acampamento — o tempo está pausado</div>
                 {/* v9.100: ONDE se está dormindo, e o que isso custa. A
                     decisão entre a noite inteira e o cochilo é tomada
@@ -17768,7 +17772,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 fecha, e oferece-la de novo transformaria o fim numa opcao
                 de menu. */}
             {ofertaCapitulo && (
-              <div className="px-4 md:px-8 pb-3">
+              <div className="tv-espaco-abas px-4 md:px-8 pb-3">
                 <div className="rounded-xl p-3" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
                   <div className="tv-mono text-[11px] mb-2" style={{ color: T.inkDim }}>
                     A historia continua — de onde voce quiser olha-la.
@@ -17806,7 +17810,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               </div>
             )}
 
-            <div className="px-4 md:px-8 flex items-center gap-3 md:gap-4 pb-1.5 flex-wrap" style={{ paddingRight: "68px" }}>
+            <div className="tv-espaco-abas px-4 md:px-8 flex items-center gap-3 md:gap-4 pb-1.5 flex-wrap" >
               <BarraMini rotulo="PV" atual={personagem.vida} max={personagem.vidaMax} cor={T.amber} corBaixa={T.danger} />
               <BarraMini rotulo="PM" atual={personagem.mana} max={personagem.manaMax} cor={T.violet} />
               <span className="tv-mono text-[10px] shrink-0" style={{ color: T.amberSoft }}>NV {personagem.nivel}</span>
@@ -17826,7 +17830,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               const mec = mecanicaDe(personagem.condicoes || []);
               const rol = estadoDeRolagem(personagem.condicoes || []);
               return (
-                <div className="px-4 md:px-8 flex items-center gap-1.5 pb-1.5 flex-wrap" style={{ paddingRight: "68px" }}>
+                <div className="tv-espaco-abas px-4 md:px-8 flex items-center gap-1.5 pb-1.5 flex-wrap" >
                   {(personagem.condicoes || []).map((c, i) => (
                     <span key={`c${i}`} className="tv-mono text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1" title={c.efeito || ""}
                       style={{ background: c.tipo === "bom" ? "#1f3320" : "#33201f", border: `1px solid ${c.tipo === "bom" ? T.ok : T.danger}`, color: c.tipo === "bom" ? T.ok : T.danger }}>
@@ -17867,7 +17871,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             <FaixaRelogios relogios={relogios} />
 
             {mostrarHoras && (
-              <div className="tv-fade mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.amber}`, marginRight: "68px" }}>
+              <div className="tv-fade tv-margem-abas mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
                 <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.amberSoft }}>🕐 Passar o tempo · quanto o mundo se move</div>
                 <div className="flex flex-wrap gap-2">
                   {[1, 2, 4, 6, 8, 12, 24].map((h) => (
@@ -17883,7 +17887,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 um turno só, ela vira ruído — e o botão que pedia ao jogador
                 para mandar o mundo viver some junto, porque o mundo já vive. */}
             {(
-            <div className="px-4 md:px-8 shrink-0" style={{ paddingRight: "68px", paddingBottom: rolagem ? "6px" : "20px" }}>
+            <div className="tv-espaco-abas px-4 md:px-8 shrink-0" style={{ paddingBottom: rolagem ? "6px" : "20px" }}>
               {/* LINHA 1 — ferramentas: rótulos sempre visíveis, sem roubar espaço da escrita */}
               <div className="flex items-center gap-1.5 mb-2">
                 <button onClick={() => { setAcoesAbertas((v) => !v); setHabAbertas(false); }} disabled={bloqueado} className="tv-mono text-[11px] rounded-full px-3 py-1.5"
@@ -17987,7 +17991,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             )}
 
             {rolagem && !carregando && (
-              <div className="tv-fade px-4 md:px-8 pb-5 flex justify-center" style={{ paddingRight: "68px" }}>
+              <div className="tv-fade tv-espaco-abas px-4 md:px-8 pb-5 flex justify-center" >
                 <div className="tv-pulse flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl px-4 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
                   <span className="tv-mono text-xs text-center" style={{ color: T.ink }}>🎲 Teste de {rolagem.rotulo || rolagem.atributo || "sorte"}{rolagem.dificuldade != null ? ` · dif. ${rolagem.dificuldade}` : ""} — <em className="tv-body" style={{ color: T.inkDim }}>{rolagem.motivo}</em>{rolagem.porVantagem ? <span style={{ color: T.violetSoft }}> · ✦ {rolagem.porVantagem}</span> : null}</span>
                   <Botao primario pequeno desativado={dadoRolando} onClick={() => { if (!dadoRolando) setDadoRolando(true); }}>Rolar d20{modPend !== 0 ? ` (+${modPend})` : ""}</Botao>
