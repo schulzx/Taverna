@@ -45,6 +45,19 @@ export const EVENTOS_REINO = [
   { id: "incendio", titulo: "Incêndio acidental", peso: 5, fel: -10, cofre: (pop) => -Math.round(pop / 50), txt: (c) => `Um incêndio destruiu casas em ${c}. Reconstruir vai custar — e o povo quer respostas.` },
   { id: "boato", titulo: "Boato de ameaça", peso: 8, fel: -6, cofre: () => 0, txt: (c) => `Corre em ${c} um boato de guerra no horizonte. Ninguém sabe de onde veio, mas todos repetem.` },
   { id: "disputa", titulo: "Disputa entre guildas locais", peso: 6, fel: -5, cofre: () => 0, txt: (c) => `Comerciantes rivais de ${c} se acusam de sabotagem e o mercado amanheceu tenso.` },
+  /* ---------------- v9.168: A MESA FARTA ----------------
+     Onze eventos davam reinado repetido no segundo mês de governo. Os
+     nove novos seguem a forma exata dos velhos: peso, felicidade, cofre
+     em função da população, e um texto que nomeia a cidade. */
+  { id: "feira_grande", titulo: "Feira das redondezas", peso: 9, fel: +5, cofre: (pop) => Math.round(pop / 50), txt: (c) => `As aldeias vizinhas trouxeram tudo o que têm para vender em ${c}. Três dias de barulho bom.` },
+  { id: "casamento", titulo: "Casamento sonado", peso: 8, fel: +6, cofre: () => 0, txt: (c) => `Duas famílias conhecidas de ${c} se juntaram em festa aberta. Sobrou vinho até para a guarda.` },
+  { id: "veio_mineral", titulo: "Veio descoberto", peso: 4, fel: +3, cofre: (pop) => Math.round(pop / 25), txt: (c) => `Cavadores acharam um veio novo perto de ${c}. Enquanto durar, o cofre agradece.` },
+  { id: "teatro", titulo: "Companhia de teatro", peso: 7, fel: +5, cofre: (pop) => Math.round(pop / 100), txt: (c) => `Uma trupe mambembe armou palco em ${c} — e a peça fala de um governante parecido demais com você.` },
+  { id: "heroi_local", titulo: "Feito de gente daqui", peso: 6, fel: +4, cofre: () => 0, txt: (c) => `Alguém de ${c} fez uma coisa corajosa e todo mundo conta uma versão maior. A cidade anda de peito estufado.` },
+  { id: "seca", titulo: "Seca teimosa", peso: 6, fel: -10, cofre: (pop) => -Math.round(pop / 80), txt: (c) => `Faz semanas que não chove em ${c}. Os poços baixaram e as rezas subiram.` },
+  { id: "enchente", titulo: "Enchente", peso: 5, fel: -8, pop: (pop) => -Math.round(pop * 0.01) - 1, cofre: (pop) => -Math.round(pop / 60), txt: (c) => `O rio tomou as ruas baixas de ${c}. Água na altura do joelho e móveis na rua.` },
+  { id: "forasteiros", titulo: "Leva de forasteiros", peso: 6, fel: -2, pop: (pop) => Math.round(pop * 0.02) + 4, cofre: () => 0, txt: (c) => `Gente de fora chegou de vez a ${c} — braços novos, bocas novas, e olhares tortos dos antigos.` },
+  { id: "cobranca_coroa", titulo: "Cobrança de fora", peso: 5, fel: -4, cofre: (pop) => -Math.round(pop / 45), txt: (c) => `Um poder maior mandou cobradores a ${c} com selo e escolta. Pagar doeu; não pagar doeria mais.` },
   { id: "rebeliao", titulo: "Murmúrios de revolta", peso: 99, fel: -15, soSeInfeliz: true, cofre: () => 0, txt: (c) => `Em ${c} o descontentamento virou cochicho aberto contra o seu governo. Se nada mudar, pode virar chama.` },
 ];
 

@@ -152,6 +152,17 @@ export const MANDO = {
   curioso:     { renda: +0.04, felicidade: -2, o: "mexe no que estava quieto, e nem tudo gosta de ser mexido" },
   supersticioso: { renda: -0.04, felicidade: +4, o: "para a cidade em dia santo, e o povo agradece" },
   rancoroso:   { renda: +0.04, felicidade: -7, o: "cobra dívida velha de quem já tinha esquecido" },
+  /* v9.168: os oito traços novos da índole, cada um com a sua cadeira —
+     a lei desta tabela é "se a índole vale, ela vale inteira", e ela
+     morde no dia em que nascer traço sem linha aqui */
+  teimoso:     { renda: 0,     felicidade: -2, o: "mantém a decisão errada por firmeza" },
+  desconfiado: { renda: +0.03, felicidade: -4, o: "audita tudo, e ofende quem era honesto" },
+  vaidoso:     { renda: -0.06, felicidade: +2, o: "gasta em fachada o que faltava no celeiro" },
+  pratico:     { renda: +0.06, felicidade: -1, o: "corta o supérfluo, inclusive a festa" },
+  sonhador:    { renda: -0.04, felicidade: +5, o: "promete obras que ninguém pediu, e o povo sonha junto" },
+  invejoso:    { renda: +0.02, felicidade: -5, o: "taxa mais quem prospera" },
+  brincalhao:  { renda: 0,     felicidade: +6, o: "faz o povo rir até do imposto" },
+  frio:        { renda: +0.04, felicidade: -3, o: "decide pelo número, e o número não vê rosto" },
 };
 
 export function efeitoDoGovernador(semente, nome) {

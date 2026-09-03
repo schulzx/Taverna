@@ -56,17 +56,30 @@ export const TRACOS = [
   { id: "traidor", nome: "de fé curta", o: "serve enquanto serve a ele", briga: ["fiel"], nunca: ["protege"], puxa: ["entrega"] },
   { id: "galanteador", nome: "galanteador", o: "flerta como quem cumprimenta", briga: ["calado", "medonho"], nunca: [], puxa: ["aproxima"] },
   { id: "calado", nome: "calado", o: "fala o mínimo e olha o resto", briga: ["galanteador", "tagarela"], nunca: ["entrega", "aproxima"], puxa: ["observa"] },
-  { id: "tagarela", nome: "tagarela", o: "enche o silêncio antes que ele exista", briga: ["calado"], nunca: [], puxa: ["entrega"] },
-  { id: "medonho", nome: "medonho", o: "faz o ar pesar quando entra", briga: ["galanteador"], nunca: ["aproxima"], puxa: ["ameaca"] },
+  { id: "tagarela", nome: "tagarela", o: "enche o silêncio antes que ele exista", briga: ["calado", "frio"], nunca: [], puxa: ["entrega"] },
+  { id: "medonho", nome: "medonho", o: "faz o ar pesar quando entra", briga: ["galanteador", "brincalhao"], nunca: ["aproxima"], puxa: ["ameaca"] },
   { id: "ganancioso", nome: "ganancioso", o: "põe preço em tudo, inclusive em favor", briga: ["generoso"], nunca: ["entrega"], puxa: ["cobra"] },
-  { id: "generoso", nome: "generoso", o: "dá antes de perguntar se pode", briga: ["ganancioso"], nunca: ["cobra"], puxa: ["entrega"] },
+  { id: "generoso", nome: "generoso", o: "dá antes de perguntar se pode", briga: ["ganancioso", "invejoso"], nunca: ["cobra"], puxa: ["entrega"] },
   { id: "orgulhoso", nome: "orgulhoso", o: "não diminui na frente de ninguém", briga: ["humilde"], nunca: ["recua"], puxa: ["ameaca"] },
-  { id: "humilde", nome: "humilde", o: "aceita ser pequeno sem sofrer com isso", briga: ["orgulhoso"], nunca: ["ameaca"], puxa: ["recua"] },
+  { id: "humilde", nome: "humilde", o: "aceita ser pequeno sem sofrer com isso", briga: ["orgulhoso", "teimoso", "vaidoso"], nunca: ["ameaca"], puxa: ["recua"] },
   { id: "cruel", nome: "cruel", o: "acha graça no que dói nos outros", briga: ["compassivo"], nunca: ["protege"], puxa: ["ameaca"] },
   { id: "compassivo", nome: "compassivo", o: "não passa por cima de quem caiu", briga: ["cruel"], nunca: ["ameaca"], puxa: ["protege"] },
-  { id: "curioso", nome: "curioso", o: "pergunta o que não lhe cabe", briga: [], nunca: ["esquiva"], puxa: ["aproxima"] },
-  { id: "supersticioso", nome: "supersticioso", o: "lê sinal em tudo e obedece a todos", briga: [], nunca: [], puxa: ["esquiva"] },
+  { id: "curioso", nome: "curioso", o: "pergunta o que não lhe cabe", briga: ["desconfiado"], nunca: ["esquiva"], puxa: ["aproxima"] },
+  { id: "supersticioso", nome: "supersticioso", o: "lê sinal em tudo e obedece a todos", briga: ["pratico"], nunca: [], puxa: ["esquiva"] },
   { id: "rancoroso", nome: "rancoroso", o: "guarda o que lhe fizeram, com data", briga: [], nunca: ["entrega"], puxa: ["cobra"] },
+  /* ---------------- v9.168: A MESA FARTA ----------------
+     Dezessete traços davam elenco repetido na segunda cidade. Os oito
+     novos falam o mesmo vocabulário do Intérprete (gestos que existem)
+     e declaram as próprias brigas — a lei do traço-que-não-convive vale
+     para eles como para os velhos. */
+  { id: "teimoso", nome: "teimoso", o: "não muda de ideia nem com prova na mesa", briga: ["humilde"], nunca: ["recua"], puxa: ["testa"] },
+  { id: "desconfiado", nome: "desconfiado", o: "procura o anzol em toda isca", briga: ["curioso"], nunca: ["entrega"], puxa: ["testa"] },
+  { id: "vaidoso", nome: "vaidoso", o: "se arruma até para dormir e sabe quem olhou", briga: ["humilde"], nunca: ["recua"], puxa: ["aproxima"] },
+  { id: "pratico", nome: "prático", o: "resolve primeiro e sente depois", briga: ["supersticioso", "sonhador"], nunca: ["cala"], puxa: ["oferece"] },
+  { id: "sonhador", nome: "sonhador", o: "fala do que ainda não existe como se existisse", briga: ["pratico"], nunca: ["cobra"], puxa: ["oferece"] },
+  { id: "invejoso", nome: "invejoso", o: "mede o que os outros têm antes de cumprimentar", briga: ["generoso"], nunca: ["protege"], puxa: ["testa"] },
+  { id: "brincalhao", nome: "brincalhão", o: "faz graça inclusive na hora errada", briga: ["medonho"], nunca: ["ameaca"], puxa: ["aproxima"] },
+  { id: "frio", nome: "de gelo", o: "não se abala e não comemora", briga: ["tagarela"], nunca: ["aproxima"], puxa: ["cala"] },
 ];
 export function tracoPorId(id) { return TRACOS.find((t) => t.id === id) || null; }
 
@@ -91,6 +104,14 @@ export const MEDOS = [
   { id: "escuro", do: "escuro", acorda: /noite|caverna|cripta|masmorra|túnel|tunel|porão|porao|escuro/i, faz: "quer luz na mão antes de andar" },
   { id: "fogo", do: "fogo", acorda: /fogo|chama|incêndio|incendio|fornalha|forja|pira/i, faz: "mantém distância e conta as saídas" },
   { id: "sangue", do: "sangue", acorda: /sangue|ferido|ferimento|cadáver|cadaver|corpo/i, faz: "desvia os olhos e engole em seco" },
+  /* v9.168: seis medos novos, cada um com o gatilho conferível que a lei
+     exige — medo que não acorda é adjetivo */
+  { id: "doenca", do: "doença", acorda: /peste|praga|doen[çc]a|febre|lepra|tosse|cont[áa]gio/i, faz: "não toca em nada e respira curto" },
+  { id: "silencio", do: "lugares abandonados", acorda: /abandonad|vazio|deserto de gente|ruína|ruina|fantasma/i, faz: "fala só para ouvir uma voz qualquer" },
+  { id: "miudos", do: "bicho miúdo", acorda: /rato|aranha|inseto|enxame|verme|escorpi|larva/i, faz: "sobe no que der e aponta sem palavra" },
+  { id: "tempestade", do: "tempestade", acorda: /tempestade|trov[ãa]o|raio|vendaval|nevasca|granizo/i, faz: "conta os segundos entre o clarão e o som" },
+  { id: "autoridade", do: "gente de posto", acorda: /nobre|lorde|senhor d|juiz|coroa|trono|bar[ãa]o|prefeito|governador/i, faz: "tira o chapéu e responde olhando o chão" },
+  { id: "fome", do: "passar fome de novo", acorda: /fome|colheita|celeiro|ra[çc][ãa]o|inverno|escassez/i, faz: "guarda metade de tudo o que recebe" },
 ];
 export function medoPorId(id) { return MEDOS.find((m) => m.id === id) || null; }
 
@@ -120,9 +141,22 @@ export const FORCAS = [
   { id: "letra", o: "lê e escreve, o que por aqui é raro", pericia: "investigacao" },
   { id: "mata", o: "conhece a mata como quem nasceu nela", pericia: "sobrevivencia" },
   { id: "pe", o: "some sem fazer barulho", pericia: "furtividade" },
-  { id: "reza", o: "sabe as rezas certas e quando dizê-las", pericia: "religiao" },
+  /* v9.168: "religiao" e "oficio" não existiam em pericias.js — as duas
+     apontavam para perícia fantasma desde que nasceram, e ninguém viu
+     porque o campo ainda não tinha leitor com número. Saberes é onde a
+     religião e o conhecimento de matéria moram de verdade. */
+  { id: "reza", o: "sabe as rezas certas e quando dizê-las", pericia: "saberes" },
   { id: "conta", o: "faz conta de cabeça e não erra", pericia: "intuicao" },
-  { id: "ferro", o: "entende de ferro e do que ele aguenta", pericia: "oficio" },
+  { id: "ferro", o: "entende de ferro e do que ele aguenta", pericia: "saberes" },
+  /* v9.168: sete forças novas — a roda das dezoito perícias ganha mais
+     raios, cada um apontando para uma que existe */
+  { id: "costas", o: "carrega o que dois não carregam", pericia: "fortitude" },
+  { id: "sela", o: "monta qualquer coisa que tenha crina ou rédea", pericia: "montaria" },
+  { id: "palco", o: "prende uma sala inteira quando conta uma história", pericia: "atuacao" },
+  { id: "cara", o: "mente com a cara mais limpa da região", pericia: "enganacao" },
+  { id: "agulha_e_cha", o: "cose ferida e sabe de que mato é o chá", pericia: "medicina" },
+  { id: "trepa", o: "sobe onde só gato sobe", pericia: "acrobacia" },
+  { id: "grito", o: "mete medo em gente maior que ele", pericia: "intimidacao" },
 ];
 export function forcaPorId(id) { return FORCAS.find((f) => f.id === id) || null; }
 
@@ -214,6 +248,46 @@ export const PROPOSITOS = [
     vira: "ela arma uma situação pequena e desonesta, e olha o que ele faz",
     efeito: { tipo: "relacao", relacao: "neutro" },
     exige: ["curioso", "calado", "orgulhoso", "medonho"],
+  },
+  /* ---------------- v9.168: A MESA FARTA ----------------
+     Quatro propósitos novos, pela mesma lei dos nove: condição de
+     amadurecer conferível no estado do jogo, efeito que o App já sabe
+     executar, e traços que o exigem. */
+  {
+    id: "desafiar", nome: "provar que é melhor que o herói",
+    o: "viu o herói vencer e não dormiu direito desde então",
+    precisa: "tê-lo visto ganhar alguma coisa em público",
+    madura: (c) => c.euGanhei && c.dias >= 4,
+    vira: "ela o desafia diante de gente — e perder na frente de todos não é opção para ela",
+    efeito: { tipo: "relacao", relacao: "rival" },
+    exige: ["orgulhoso", "corajoso", "invejoso", "teimoso"],
+  },
+  {
+    id: "vender_o_que_sabe", nome: "vender o que sabe sobre o herói",
+    o: "vive de informação, e o herói virou mercadoria valiosa",
+    precisa: "saber dele alguma coisa que valha moeda",
+    madura: (c) => c.sabeDeMim && c.dias >= 5,
+    vira: "o que ela sabe aparece à venda no lugar errado — e quem compra aparece depois",
+    efeito: { tipo: "relacao", relacao: "rival" },
+    exige: ["ganancioso", "calado", "curioso", "desconfiado"],
+  },
+  {
+    id: "adotar", nome: "fazer do herói a família que perdeu",
+    o: "perdeu alguém e o herói tem o jeito de quem foi perdido",
+    precisa: "convivência longa e laço de verdade",
+    madura: (c) => c.forcaDoLaco >= 2 && c.dias >= 8,
+    vira: "ela passa a tratá-lo como sangue: mesa posta, conselho não pedido, e o nome dele defendido em público",
+    efeito: { tipo: "relacao", relacao: "aliado" },
+    exige: ["generoso", "compassivo", "supersticioso", "sonhador"],
+  },
+  {
+    id: "herdar_o_oficio", nome: "ensinar o que sabe antes que seja tarde",
+    o: "é a última que sabe fazer o que faz, e as mãos já tremem",
+    precisa: "tempo de convivência e um laço mínimo",
+    madura: (c) => c.forcaDoLaco >= 1 && c.dias >= 9,
+    vira: "ela oferece o ofício inteiro — o que sabe, para quem ficar quando ela não estiver",
+    efeito: { tipo: "missao", etapa: "falar_com", titulo: (n) => `O que ${n} ensina` },
+    exige: ["humilde", "calado", "fiel", "pratico"],
   },
 ];
 export function propositoPorId(id) { return PROPOSITOS.find((p) => p.id === id) || null; }
@@ -439,6 +513,10 @@ export const VONTADE_DE_IR = {
   /* E O TRAIDOR ACEITA FÁCIL. Não é bondade: é que andar junto é a posição
      de onde se trai. É a linha desta tabela que mais interessa ao jogo. */
   traidor: +12,
+  /* v9.168: os oito traços novos votam também — traço sem voto é traço
+     que a catraca do convite derruba, e com razão */
+  teimoso: -4, desconfiado: -8, vaidoso: +4, pratico: +2,
+  sonhador: +12, invejoso: -6, brincalhao: +8, frio: -4,
 };
 
 export const CONVITE_ACEITA = 55;

@@ -23,6 +23,13 @@ export const CLIMAS = [
   { id: "tempestade", rotulo: "tempestade", icone: "⛈", peso: 7, nota: "visão ruim, raios; desvantagem em ataques à distância" },
   { id: "calor", rotulo: "calor opressivo", icone: "🔥", peso: 3, nota: "cansaço dobrado; água vale ouro" },
   { id: "frio", rotulo: "frio cortante", icone: "❄", peso: 3, nota: "dedos dormentes; quem não se agasalha sofre" },
+  /* v9.168: quatro céus a mais — o clima é a primeira frase de quase toda
+     cena de estrada, e oito frases se esgotam numa campanha. Id novo sem
+     viés de estação cai no multiplicador 1, que é o comportamento certo. */
+  { id: "garoa", rotulo: "garoa fina", icone: "🌦", peso: 10, nota: "não limpa nem molha — tudo fica pela metade, inclusive o ânimo" },
+  { id: "granizo", rotulo: "granizo", icone: "🧊", peso: 2, nota: "pedras de gelo; bicho e gente procuram teto" },
+  { id: "abafado", rotulo: "ar abafado", icone: "🌡", peso: 6, nota: "ar parado de véspera de tempestade; pavios curtos" },
+  { id: "ceu_estranho", rotulo: "céu de cor errada", icone: "🌌", peso: 2, nota: "o céu tem uma cor que não devia; supersticiosos não saem de casa" },
 ];
 const POOL_CLIMA = CLIMAS.flatMap((c) => Array(c.peso).fill(c));
 

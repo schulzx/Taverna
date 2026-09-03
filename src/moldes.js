@@ -154,6 +154,13 @@ const VONTADES_SUPERFICIE = [
   "quer comprar a liberdade de alguém", "acredita numa profecia que ninguém leva a sério",
   "trai o patrão em pequenas coisas", "tem medo de dormir", "juntou dinheiro para uma viagem impossível",
   "cuida de um filho que não é dele", "espera um navio que talvez não venha",
+  /* v9.168: a mesa farta — dez a mais por molde, porque na segunda cidade
+     o jogador já reconhecia as vontades da primeira */
+  "paga em segredo a dívida de outra pessoa", "quer ser enterrado em outro lugar e já pagou a viagem",
+  "colecionou provas contra alguém poderoso e tem medo de usá-las", "perdeu a fé e finge que não",
+  "quer aprender a ler antes que o olho acabe", "promete todo ano que vai embora na primavera",
+  "guarda o quarto de alguém como estava no último dia", "deve um nome a uma criança que ainda não nasceu",
+  "quer ver o mar uma vez, só uma", "ensaia há anos a coragem de dizer uma coisa a alguém",
 ];
 
 const VONTADES_TORRE = [
@@ -164,6 +171,12 @@ const VONTADES_TORRE = [
   "trocou o próprio nome por uma passagem", "protege um andar que já está perdido",
   "junta espólios para pagar o pedágio", "tem medo do que ouve pelo vão",
   "quer morrer mais alto do que nasceu", "decora o mapa de andares que ninguém confirmou",
+  /* v9.168: a mesa farta */
+  "nasceu num andar que não existe mais", "vende lembranças de baixo a quem nunca desceu",
+  "guarda a bota de quem caiu no vão", "afirma que os andares trocam de lugar quando ninguém olha",
+  "cobra pedágio num degrau que não é dele", "escreve o nome em toda parede que alcança",
+  "tem um irmão dois andares acima que não responde aos recados", "junta cordas — só cordas, e não diz para quê",
+  "reza para o que mora acima do último andar", "desceu uma vez e jurou nunca mais",
 ];
 
 const VONTADES_MAR = [
@@ -174,6 +187,12 @@ const VONTADES_MAR = [
   "sonha em ter um casco só seu", "protege um motim que ainda não aconteceu",
   "sabe onde o governador guarda o ouro e cala", "tem medo de água parada",
   "quer voltar para um porto que já não existe", "carrega uma bandeira que não pode mostrar",
+  /* v9.168: a mesa farta */
+  "enterrou moedas em três ilhas e esqueceu uma", "deve uma vida a um afogado e paga em velas",
+  "reconhece todo navio pelo pano, e um deles a faz tremer", "quer limpar o nome de um pirata enforcado",
+  "escuta o mar com um sino de mergulho quebrado", "nunca aprendeu a nadar e mata quem contar",
+  "guarda a última carta de um navio que sumiu inteiro", "aposta o barco toda lua cheia e sempre recupera",
+  "quer um mapa que prove que a ilha dela existe", "canta para a tempestade porque uma vez funcionou",
 ];
 
 const VONTADES_ESTELAR = [
@@ -184,6 +203,12 @@ const VONTADES_ESTELAR = [
   "sonha em ver um céu com nuvens", "protege uma IA que deveria ter sido apagada",
   "sabe por que a estação foi evacuada e cala", "tem medo de dormir em criogenia",
   "quer levar as cinzas de alguém para casa", "espera uma resposta que leva anos-luz",
+  /* v9.168: a mesa farta */
+  "nasceu em trânsito e não consta em colônia nenhuma", "paga prestação de um corpo que não é o de fábrica",
+  "viu uma coisa pela escotilha e ninguém acredita", "colhe amostras de todo porto para um jardim secreto",
+  "deve o resgate da própria criogenia e os juros correm", "escreve para um endereço que a guerra apagou do mapa",
+  "quer morrer num planeta, qualquer planeta", "guarda o traje de vácuo de alguém que não voltou da caminhada",
+  "vendeu a passagem de volta e diz que foi escolha", "conserta um rádio que só pega uma estação morta",
 ];
 
 /* ---------------- OS NOMES DOS LOCAIS ----------------
