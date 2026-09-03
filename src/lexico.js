@@ -99,6 +99,8 @@ const TETOS = {
    cabe na cena de hoje — uma cena de masmorra leva a masmorra, e a de
    amanhã leva a de amanhã. */
 export const TETO_DO_BLOCO = 1700;
+/* o bloco da cena (v9.162) tem orçamento separado e menor: ver lexicoDaCena */
+export const TETO_DA_CENA = 700;
 
 const limpar = (s, max) => String(s == null ? "" : s).replace(/\s+/g, " ").trim().slice(0, max);
 /* Corta no fim de uma PALAVRA. Onde o texto é frase, cortar no
@@ -796,7 +798,7 @@ export function lerLexico(obj) {
    `portas` é o mapa {id: boolean} que `prompt.js` já monta. Sem ele,
    entram só as quatro de sempre — que é o comportamento certo para quem
    chamar sem saber da cena. */
-export function lexicoPrompt(l, portas = null) {
+export function lexicoPrompt(l) {
   const x = garantirLexico(l);
   if (!x.gerado) return "";
   /* A FILA DE PRIORIDADE. Quem está no topo entra sempre; quem está no
@@ -826,14 +828,17 @@ export function lexicoPrompt(l, portas = null) {
      chama aquilo de cantina. */
   const chamados = x.lugares.filter((p) => p.chamado).map((p) => `${p.tipo} = ${p.chamado}`);
   if (chamados.length) fila.push(`E OS LUGARES SE CHAMAM: ${chamados.join(" · ")}.`);
-  const daCena = [], deSempre = [];
+  /* v9.162: a adaptação DA CENA saiu daqui — mora em lexicoDaCena e desce
+     para o fim do prompt. Este bloco ficou o mesmo para a campanha
+     inteira, e é essa mesmice que o torna cacheável: só entra aqui o que
+     não depende de onde o herói está. */
+  const deSempre = [];
   for (const s of SISTEMAS) {
     const t = x.funciona[s.id];
-    if (!t) continue;
-    if (s.porta === null) deSempre.push(`${s.rotulo}: ${t}`);
-    else if (portas && portas[s.porta]) daCena.push(`${s.rotulo}: ${t}`);
+    if (!t || s.porta !== null) continue;
+    deSempre.push(`${s.rotulo}: ${t}`);
   }
-  fila.push(...daCena, ...deSempre);
+  fila.push(...deSempre);
   const bichos = criaturasDo(x);
   if (bichos) fila.push(`O QUE AMEAÇA AS PESSOAS: ${bichos.slice(0, 8).join(", ")}.`);
   if (x.comoSeFala) fila.push(`COMO SE FALA: ${x.comoSeFala}`);
@@ -849,6 +854,47 @@ export function lexicoPrompt(l, portas = null) {
   const partes = [];
   let gasto = 0;
   for (const t of fila) {
+    if (gasto + t.length + 1 > disponivel) continue;
+    partes.push(t); gasto += t.length + 1;
+  }
+  if (!partes.length) return "";
+  return `${cabeca}${partes.join("\n")}${pe}`;
+}
+
+/* ---------------- A ADAPTAÇÃO DA CENA, SEPARADA (v9.162) ----------------
+   O lexicoPrompt de cima é o MESMO para a campanha inteira: chamado sem
+   portas, ele entrega só o que não depende de onde o herói está. O que
+   depende — como é um assentamento aqui, como é uma masmorra aqui — sai
+   por esta função e desce para a zona de regras da cena, no fim do
+   prompt.
+
+   O motivo é dinheiro: o cache de prefixo morre no primeiro byte que
+   muda, e a adaptação da cena morava a 5% do texto — cruzar um portão de
+   cidade reescrevia o topo do prompt e cobrava os 95% restantes cheios.
+   A mesma frase, dita no fim, custa um décimo. */
+export function lexicoDaCena(l, portas) {
+  const x = garantirLexico(l);
+  if (!x.gerado || !portas) return "";
+  const daCena = [];
+  for (const s of SISTEMAS) {
+    const t = x.funciona[s.id];
+    if (!t || s.porta === null) continue;
+    if (portas[s.porta]) daCena.push(`${s.rotulo}: ${t}`);
+  }
+  if (!daCena.length) return "";
+  /* o mesmo corte silencioso do bloco fixo: o que não cabe hoje cabe na
+     cena de amanhã — e a moldura conta no orçamento, como sempre.
+
+     O teto daqui é PRÓPRIO e menor: dar ao bloco da cena os mesmos 1700
+     do bloco fixo dobraria o pior caso do léxico no prompt — e a suíte
+     do orçamento mordeu exatamente isso na primeira rodada. Adaptação de
+     cena é frase, não parágrafo: 700 dá para três delas. */
+  const cabeca = "═══ COMO ISTO FUNCIONA NESTE MUNDO (adaptação do léxico à cena aberta) ═══\n";
+  const pe = "\n═══════════════════════════════════════";
+  const disponivel = TETO_DA_CENA - cabeca.length - pe.length;
+  const partes = [];
+  let gasto = 0;
+  for (const t of daCena) {
     if (gasto + t.length + 1 > disponivel) continue;
     partes.push(t); gasto += t.length + 1;
   }

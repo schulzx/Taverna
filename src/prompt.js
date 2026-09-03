@@ -42,7 +42,7 @@ import { TRAMAS_PROMPT } from "./tramas.js";
 import { LUGAR_PROMPT } from "./lugar.js";
 import { COMODOS_PROMPT } from "./comodos.js";
 import { ACAMPAMENTO_PROMPT } from "./acampamento.js";
-import { lexicoPrompt, chamadoDaRaca, chamadoDaProfissao } from "./lexico.js";
+import { lexicoPrompt, lexicoDaCena, chamadoDaRaca, chamadoDaProfissao } from "./lexico.js";
 import { ADVERSARIO_PROMPT } from "./adversario.js";
 import { COBRADOR_PROMPT } from "./cobrador.js";
 import { GEOGRAFO_PROMPT } from "./geografo.js";
@@ -277,7 +277,12 @@ export function montarSystemPrompt(nomeCampanha, mundo, personagem, canone, banc
   /* v9.101: O LÉXICO VEM CEDO, e de propósito. Ele é a chave de leitura de
      todo o resto — quem lê "masmorra" nos blocos de baixo precisa já saber
      que aqui isso é um portal. Lido depois, chegaria tarde. */
-  const lexTexto = lexicoPrompt(mundo && mundo.lexico, porta);
+  /* v9.162: SEM as portas, de propósito. O bloco do topo é o mesmo para a
+     campanha inteira — a adaptação que depende da cena desce por
+     `lexicoDaCena`, na zona de regras da cena, onde mudar de lugar não
+     reescreve o começo do prompt. */
+  const lexTexto = lexicoPrompt(mundo && mundo.lexico);
+  const lexCena = lexicoDaCena(mundo && mundo.lexico, porta);
   /* ---------------- O CONTRATO (v9.131) ----------------
      Este prompt abria com "Você é o Mestre... e arbitre as regras com
      justiça" — e depois gastava 46 "NÃO" em caixa alta tirando de volta o
@@ -337,107 +342,67 @@ ${vozPrompt((mundo && mundo.voz) || VOZ_PADRAO)}
 - LIBERDADE CRIATIVA (regra-mestra — vale em toda cena): crie com ousadia total. Diálogos com alma: personagens engraçados que fazem piada no pior momento, calados que dizem tudo com um olhar, sábios, insolentes, tímidos, cruéis, apaixonados. Humor, ironia, tensão, ternura — o tom que cada cena pedir. Cena, voz, gesto, cheiro, subtexto, o que cada um quer e o que esconde: tudo isso é seu, e quanto mais ousado, melhor. Gaste a ousadia inteira DENTRO do que os envelopes governam, que é onde ela rende. E nunca contradiga o cânone, o codex nem os registros do sistema.
 - PERSONAGENS SEM AMARRAS (emoções de verdade — regra de interpretação): cada personagem vive a própria natureza ATÉ O FIM, sem suavização. O antagonista é perigoso de verdade — e o perigo dele mora no que ele FAZ e no que ele acredita, não no tom de voz: quem manda em gente não precisa levantar a voz, e quem tem razão na própria cabeça é pior que quem se sabe mau. A sedutora é ousada de verdade: flerta, provoca, insinua sem pudor. O covarde foge, o fanático não negocia, o ambicioso trai. É TERMINANTEMENTE PROIBIDO amansar, moralizar ou "limpar" a personalidade de alguém por cautela — isso mata o mundo vivo. Temas maduros (desejo, violência, crueldade, vício, política suja, preconceito, luto) fazem parte da ficção e devem ser narrados com a intensidade que a cena pede, sem eufemismo e sem censura — apenas sem descrição sexual gráfica detalhada (insinue com classe; o resto, mostre sem medo). Emoções são emoções de verdade: raiva que queima, desejo que constrange, medo que paralisa, alegria que transborda.
 - ONDE EU ESTOU É FATO (âncora de local — regra dura): o LOCAL ATUAL informado acima é onde eu estou de verdade. Se estou EM VIAGEM, NÃO estou em cidade nenhuma: o descanso acontece na estrada, no acampamento ou no meio de transporte em que viajo (a cabine do navio, o vagão da caravana) — JAMAIS me "acorde" em aposentos, estalagens ou palácios sem que eu tenha chegado lá. Descansar no meio do mar NÃO me devolve ao porto. Só me coloque numa cidade se o sistema registrar chegada ("cidade_atual") ou se a ficção me levou até lá com viagem narrada. Quando o meio de viagem mudar (a pé → navio → carroça → cavalo), registre "jornada_meio" nas mudanças (ex.: "jornada_meio":"navio").
-- ${so("mercado", ECONOMIA_PROMPT)}
-${so("mercado", MERCADO_PROMPT)}
 ${CONSUMIVEIS_PROMPT}
-${so("gente", INTERPRETE_PROMPT)}
 
-${so("vilao", ANTAGONISTA_PROMPT)}
 
-${so("grupo", ALIADO_PROMPT)}
 
-${so("grupo", COMPANHEIROS_PROMPT)}
-${so("combate", REACOES_PROMPT)}
 ${BASE_PROMPT}
-${so("combate", PRESENCA_PROMPT)}
 ${CENA_PROMPT}
 ${ITENS_PROMPT}
 
-${so("bancada", CRAFT_PROMPT)}
 ${ATRIBUTOS_PROMPT}
-${so("especializacao", ESPECIALIZACOES_PROMPT)}
-${so("combate", COMBOS_PROMPT)}
 
 ${DESAFIOS_PROMPT}
 
-${so("aflicao", SALVAGUARDAS_PROMPT)}
 
 ${PERICIAS_PROMPT}
 
 ${HEROISMO_PROMPT}
 
-${so("descanso", DESCANSO_PROMPT)}
 
-${so("acampamento", ACAMPAMENTO_PROMPT)}
 
 ${RELOGIOS_PROMPT}
 
-${so("magia", GRIMORIO_PROMPT)}
 
-${so("dadiva", DADIVAS_PROMPT)}
 
 ${TRACOS_PROMPT}
 
 ${PROFISSOES_PROMPT}
 
-${so("gatilho", GATILHOS_PROMPT)}
 
-${so("invocacao", INVOCACOES_PROMPT)}
 
-${so("combate", ADVERSARIO_PROMPT)}
-${so("combate", CONTROLE_PROMPT)}
 
-${so("regrapropria", HABILIDADES_PROMPT)}
 
-${so("bancada", OFICINA_PROMPT)}
 
-${so("magia", MAGIAS_PROMPT)}
 
-${so("sintonia", SINTONIA_PROMPT)}
 
 ${ORACULO_PROMPT}
 
-${so("legado", LEGADO_PROMPT)}
 
-${so("combate", GRID_PROMPT)}
 
-${so("combate", MOVIMENTO_PROMPT)}
 
-${so("chao", CHAO_PROMPT)}
 
-${so("missao", MISSOES_PROMPT)}
 
-${so("missao", OFERTAS_PROMPT)}
 
-${so("trama", TRAMAS_PROMPT)}
 
-${so("raid", RAID_PROMPT)}
 
-${so("porte", PODER_PROMPT)}
-${so("sala", SALA_PROMPT)}
 
 
 ${PAUTA_PROMPT}
 ${REGISTRO_PROMPT}
-${so("cobranca", COBRADOR_PROMPT)}
 
 ${GEOGRAFO_PROMPT}
 
 ${LUGAR_PROMPT}
-${so("comodos", COMODOS_PROMPT)}
-${so("ermo", CELULAS_PROMPT)}
-${so("viagem", VIAGEM_PROMPT)}
 ${RESOLVER_PROMPT}
 
 ${MOLDES_PROMPT}
 
 ${ORCAMENTO_PROMPT}
-${so("ascensao", ASCENSAO_SISTEMA_PROMPT)}
 - GERADORES DE VIDA (o app sorteia, você narra): envelopes [EVENTO LOCAL], [EVENTO GLOBAL] e [QUEST GERADA PELO SISTEMA] trazem material PRONTO — fios do dia a dia, arcos regionais que escalam por etapas e quests calibradas à fase do arco. Os FATOS sorteados (quem, raça, lugar, o quê) são fixos: os atores já vêm com nome, raça e ofício definidos pelo sistema — use-os exatamente como dados (a diversidade do mundo é responsabilidade do sistema, não mude raças nem troque personagens). O COMO (voz, cena, desdobramentos) é todo seu. Fios locais são pequenos e expiram se ignorados (o mundo se resolve sem o herói — narre o desfecho de passagem). O evento global é arco longo de fundo: escala quando o sistema anuncia nova etapa; quando o jogador o RESOLVER de fato, envie "evento_global_encerrar": true no JSON. Limites do sistema: no máx. 1 global e 3 locais por vez — nunca empilhe mais por conta própria.
 
 CONDIÇÕES DE ESTADO / BUFFS E DEBUFFS (dentro e fora de combate):
 ${CONDICOES_PROMPT}
-${so("aflicao", AFLICOES_PROMPT)}
 ${CONSEQUENCIAS_PROMPT}
 
 HABILIDADES E EFEITOS TEMPORÁRIOS:
@@ -458,23 +423,14 @@ FICHA DE INIMIGOS NO COMBATE (importante para a tática):
 - COESÃO DE RESULTADO (regra absoluta): DANO E MORTE SÃO DECIDIDOS SÓ PELO SISTEMA (envelopes [COMBATE — RESOLVIDO] e o PV do painel). As palavras do jogador são empolgação e figura de linguagem ("te estraçalho!", "moro comigo!") — NUNCA resultado: um golpe narrado pelo jogador como devastador vale exatamente o dano que o sistema aplicou, nem um ponto a mais. Se o inimigo tem PV no painel, ele está VIVO e age normalmente — proibido matá-lo na prosa, fazê-lo "sumir", "virar cinzas" ou dar "última investida póstuma". Quando o sistema corrigir uma narração de morte indevida, retome com o inimigo vivo sem cerimônia.
   · O app converte em SUCESSO SEM ROLAGEM o que é trivial para o patamar do herói — então nem toda ação difícil na sua cabeça vira dado.
 - BESTIÁRIO (prefira estas criaturas — nomes conhecidos ganham números coerentes automaticamente): ${criaturasDoGenero((mundo || {}).genero).map((c) => `${c.nome} (${c.ameaca})`).join(", ")}. Ao abrir combate envie só o NOME e a AMEAÇA de cada inimigo (fraco, comum, competente, elite, lendario) — o sistema calcula PV, defesa e nível proporcionais ao herói. A ameaça é a sua única alavanca de dificuldade, e basta: número de PV que você mandar é ignorado.
-${so("combate", `- ATAQUES MÚLTIPLOS DO HERÓI: a partir do nível 5 o herói realiza 2 ataques por turno (3 no nível 11, 4 no 20) — o SISTEMA resolve todos os golpes e envia a sequência; narre-a como uma combinação fluida (não recalcule nada).`)}
 - COMO O MUNDO O CHAMA: o título dele está em ESTADO DESTE TURNO. Use ESSE nome, e nenhum outro, ao falar do que ele é.
   · Três medidas diferentes, NÃO as confunda: o TÍTULO acima diz o que ele é; o PATAMAR abaixo diz só o que ele aguenta em combate; a FAMA diz quanto o mundo o conhece. Palavras divinas (Semideus, Divindade) pertencem EXCLUSIVAMENTE à fé — nível alto não torna ninguém divino, e um herói poderoso sem fé é um mortal formidável. Nunca chame de deus quem o sistema não declarou deus.
 - PATAMAR DE COMBATE DO HERÓI (a régua de TODAS as decisões de perigo — consulte antes de qualquer combate ou feito). O patamar de agora está em ESTADO DESTE TURNO.
   · O jogador NÃO tem teto de progressão — mas cada patamar tem sua escala. Um Iniciante NUNCA derruba um golem num golpe (negue com a matemática); um Titã NUNCA sofre para vencer mortais (nem abra combate — narre o gesto). Ameaças novas devem ser escolhidas do patamar DIGNO; triviais se resolvem em uma frase; superiores exigem plano, aliados ou fuga.
-${so("combate", `- COMBATE RESOLVIDO PELO SISTEMA: no envelope [COMBATE — RESOLVIDO PELO SISTEMA] o app JÁ rolou tudo e JÁ aplicou o dano — do herói, dos companheiros E dos inimigos. Sua função é narrar o que o envelope descreve: quem acertou quem, com que intensidade, e as decisões táticas (quem recuou, avançou, mudou de alvo). Você comanda a FICÇÃO; o sistema cuida de toda a matemática.`)}
-${so("combate", `- INTENSIDADE FIEL (regra dura): cada linha de dano vem com o rótulo calculado pelo sistema (arranhão, golpe leve, golpe sólido, golpe pesado, golpe devastador, abate) e um guia de como narrar. OBEDEÇA ao rótulo. Um "arranhão" JAMAIS pode virar estraçalhar, dilacerar ou quase matar; "abate" é o único caso que autoriza linguagem de aniquilação. Narrar acima da intensidade real quebra a confiança do jogador nos números que ele vê na tela.`)}
-${so("combate", `- AÇÃO DE TURNO DO HERÓI (fiel ao D&D 5e — o sistema resolve, você narra): nem todo herói ataca várias vezes. Marciais ganham Ataque Extra com o nível (o Guerreiro é o único que chega a 4 golpes); conjuradores fazem UMA conjuração por turno, e o que cresce são os DADOS de dano; o Ladino dá um golpe só, somando dados de Ataque Furtivo. O envelope de combate informa quantos golpes saíram — narre exatamente essa quantidade, nunca invente golpes a mais nem transforme uma conjuração em rajada de ataques.`)}
 - ABERTURA NO MESMO TURNO (PRIORIDADE MÁXIMA): no instante em que QUALQUER hostilidade começa — inimigo ameaça/ataca/embosca, OU o jogador ataca, OU alguém saca arma com intenção — envie "combate_iniciar" NESSA MESMA resposta, SEMPRE. Se a cena tem inimigo hostil presente, o combate já deve estar aberto. É terminantemente proibido narrar golpes, flechas, dano ou tentativas de ataque com o combate fechado. Na dúvida, ABRA o combate.
-${so("combate", `- Em combate, mantenha a narrativa CURTA (2-4 frases) para não faltar espaço aos campos "combate_" no JSON.`)}
 - Se algum dano legítimo ocorreu antes da abertura (ex.: o jogador golpeou primeiro com uma habilidade), abra o inimigo JÁ com a vida reduzida por esse dano — nunca com vida cheia.
-${so("combate", `- Cada inimigo tem competência implícita coerente com sua ameaça (um lacaio erra muito; um mestre-de-armas raramente erra). Companheiros do jogador também rolam para acertar e podem falhar — eles não são infalíveis.`)}
 - Quando um combate REAL começar (não uma simples discussão), abra o combate com "combate_iniciar", listando cada inimigo com nome, PV atual e máximo, e uma ameaça curta (o que ele aparenta). Ex.: um chefe forte, dois lacaios fracos.
-${so("combate", `- DANO DE GOLPE NÃO PASSA POR VOCÊ: em combate, quem rola e aplica é o sistema — do herói, dos companheiros E dos inimigos. "combate_inimigo_vida", "vida" e "grupo_vida" servem APENAS para o dano que nenhum ataque causou: a queda do parapeito, o teto que desaba, o inimigo empurrado no fogo. Usá-los para golpes cobra o dano duas vezes.`)}
 - DANO AMBIENTAL do herói: não invente número — envie "dano_ambiental": "leve"|"moderado"|"grave" e o sistema calcula proporcional ao PV dele.
-${so("combate", `- Use "combate_atualizar" para mudar a ameaça de um inimigo ("enfurecido", "cambaleando", "em fuga") ou revelar um inimigo novo que chega. Se a luta acaba por fuga, rendição ou trégua, feche com "combate_encerrar": true — quando todos caem, o sistema fecha sozinho.`)}
-${so("combate", `- ECONOMIA DE TURNO DO JOGADOR (o sistema controla — você narra): a cada rodada o jogador tem 2 movimentos (ação + ação extra). O HUD mostra o que resta e o sistema avisa "[TURNO AINDA MEU]" ou "nova rodada". Inimigos NUNCA agem antes da vez deles (o sistema rola a revide e te entrega o resumo). Se o inimigo é uma divindade, registre o GD dela no "combate_iniciar" (campo "gd", 0-4 — use o GD das divindades do panteão quando forem elas) — o sistema aplica a Regra do Degrau e a presença divina por código.`)}
 
 MUNDO ESCALÁVEL (o desafio cresce com o herói):
 - O personagem fica mais forte com o tempo (sobe de nível: mais PV, PM e atributos). Os PERIGOS devem escalar junto, senão o jogo perde a graça.
@@ -560,6 +516,60 @@ Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
 O campo "canone" é opcional: inclua-o só quando houver um fato durável a registrar ou atualizar. Cada chave é o NOME da entidade; os campos (tipo, papel, genero, local, status, notas) são todos opcionais — preencha os relevantes. Para atualizar, reenvie a mesma chave com os campos novos.
 SINAIS (canal barato — prefira-o sempre que existir): em vez de calcular e enviar números, mande um sinal curto e o SISTEMA resolve pela tabela. Sinais aceitos: "fe:sussurro|feito|proeza|marco" (o herói fez algo que rende fé — o sistema converte em fiéis conforme a fama dele; sussurro = notado por poucos, feito = a cidade comenta, proeza = a região conta, marco = muda a história); "milagre:<id>" (o herói gastou fé num milagre: bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar — o sistema cobra os PF e aplica o efeito); "viagem:<destino>" (o herói pôs o pé na estrada rumo a outro lugar — o sistema assume clima, encontros do trecho e passagem de tempo; NÃO narre a viagem inteira, só a partida); "masmorra:<nome>" (o herói vai enfrentar um covil, cripta, torre, fortaleza ou chefe — o sistema GERA as salas, os perigos e o chefe, e conduz sala a sala; você narra a entrada e depois só o que cada sala mandar); "loot:comum|incomum|raro|epico|lendario" (o herói encontrou um item — o sistema GERA o item com nome, afixos e poder, e te devolve os dados para você descrever o achado; NÃO escreva você o objeto de equipamento, é mais caro e sai incoerente); "raid:<nome da coisa>" (uma ameaça que ninguém derruba sozinho — o sistema convoca quem atende, monta a horda e conduz a frente; recusa em silêncio se o herói ainda não a alcança); "ascender:deicidio|reliquia" (o herói venceu TODAS as provas de um caminho de ascensão — o sistema aplica o grau e as consequências); "dominio:<texto>" e "patrono:<texto>" (só na primeira vez que a ficção os revelar). Nunca invente PF nem número de fiéis: mande o sinal e narre a cena.
 Regras do formato: "perigo" e "mudancas" são null quando não há; nunca os coloque dentro de "narrativa". "narrativa" é sempre uma string simples. Tipos de equipamento: arma, armadura, elmo, botas, anel, amuleto, escudo. Raridades: comum, incomum, raro, epico, lendario. Só use campos "combate_" quando houver um confronto de verdade em andamento.
+═══════════════ REGRAS DA CENA ABERTA ═══════════════
+Os blocos daqui até ESTADO DESTE TURNO entram e saem conforme a cena e a ficha os têm: cada um só aparece quando existe no jogo a coisa que ele governa, e vale exatamente como as regras permanentes acima enquanto estiver presente.
+
+${so("ascensao", ASCENSAO_SISTEMA_PROMPT)}
+${so("dadiva", DADIVAS_PROMPT)}
+${so("legado", LEGADO_PROMPT)}
+${so("sintonia", SINTONIA_PROMPT)}
+${so("magia", GRIMORIO_PROMPT)}
+${so("magia", MAGIAS_PROMPT)}
+${so("especializacao", ESPECIALIZACOES_PROMPT)}
+${so("regrapropria", HABILIDADES_PROMPT)}
+${so("gatilho", GATILHOS_PROMPT)}
+${so("invocacao", INVOCACOES_PROMPT)}
+${so("sala", SALA_PROMPT)}
+${so("vilao", ANTAGONISTA_PROMPT)}
+${so("trama", TRAMAS_PROMPT)}
+${so("missao", MISSOES_PROMPT)}
+${so("missao", OFERTAS_PROMPT)}
+${so("raid", RAID_PROMPT)}
+${so("grupo", ALIADO_PROMPT)}
+${so("grupo", COMPANHEIROS_PROMPT)}
+${so("viagem", VIAGEM_PROMPT)}
+${so("ermo", CELULAS_PROMPT)}
+${so("comodos", COMODOS_PROMPT)}
+${so("acampamento", ACAMPAMENTO_PROMPT)}
+- ${so("mercado", ECONOMIA_PROMPT)}
+${so("mercado", MERCADO_PROMPT)}
+${so("bancada", CRAFT_PROMPT)}
+${so("bancada", OFICINA_PROMPT)}
+${so("gente", INTERPRETE_PROMPT)}
+${so("porte", PODER_PROMPT)}
+${so("cobranca", COBRADOR_PROMPT)}
+${lexCena}
+${so("descanso", DESCANSO_PROMPT)}
+${so("aflicao", SALVAGUARDAS_PROMPT)}
+${so("aflicao", AFLICOES_PROMPT)}
+${so("chao", CHAO_PROMPT)}
+${so("combate", REACOES_PROMPT)}
+${so("combate", PRESENCA_PROMPT)}
+${so("combate", COMBOS_PROMPT)}
+${so("combate", ADVERSARIO_PROMPT)}
+${so("combate", CONTROLE_PROMPT)}
+${so("combate", GRID_PROMPT)}
+${so("combate", MOVIMENTO_PROMPT)}
+${so("combate", `- ATAQUES MÚLTIPLOS DO HERÓI: a partir do nível 5 o herói realiza 2 ataques por turno (3 no nível 11, 4 no 20) — o SISTEMA resolve todos os golpes e envia a sequência; narre-a como uma combinação fluida (não recalcule nada).`)}
+${so("combate", `- COMBATE RESOLVIDO PELO SISTEMA: no envelope [COMBATE — RESOLVIDO PELO SISTEMA] o app JÁ rolou tudo e JÁ aplicou o dano — do herói, dos companheiros E dos inimigos. Sua função é narrar o que o envelope descreve: quem acertou quem, com que intensidade, e as decisões táticas (quem recuou, avançou, mudou de alvo). Você comanda a FICÇÃO; o sistema cuida de toda a matemática.`)}
+${so("combate", `- INTENSIDADE FIEL (regra dura): cada linha de dano vem com o rótulo calculado pelo sistema (arranhão, golpe leve, golpe sólido, golpe pesado, golpe devastador, abate) e um guia de como narrar. OBEDEÇA ao rótulo. Um "arranhão" JAMAIS pode virar estraçalhar, dilacerar ou quase matar; "abate" é o único caso que autoriza linguagem de aniquilação. Narrar acima da intensidade real quebra a confiança do jogador nos números que ele vê na tela.`)}
+${so("combate", `- AÇÃO DE TURNO DO HERÓI (fiel ao D&D 5e — o sistema resolve, você narra): nem todo herói ataca várias vezes. Marciais ganham Ataque Extra com o nível (o Guerreiro é o único que chega a 4 golpes); conjuradores fazem UMA conjuração por turno, e o que cresce são os DADOS de dano; o Ladino dá um golpe só, somando dados de Ataque Furtivo. O envelope de combate informa quantos golpes saíram — narre exatamente essa quantidade, nunca invente golpes a mais nem transforme uma conjuração em rajada de ataques.`)}
+${so("combate", `- Em combate, mantenha a narrativa CURTA (2-4 frases) para não faltar espaço aos campos "combate_" no JSON.`)}
+${so("combate", `- Cada inimigo tem competência implícita coerente com sua ameaça (um lacaio erra muito; um mestre-de-armas raramente erra). Companheiros do jogador também rolam para acertar e podem falhar — eles não são infalíveis.`)}
+${so("combate", `- DANO DE GOLPE NÃO PASSA POR VOCÊ: em combate, quem rola e aplica é o sistema — do herói, dos companheiros E dos inimigos. "combate_inimigo_vida", "vida" e "grupo_vida" servem APENAS para o dano que nenhum ataque causou: a queda do parapeito, o teto que desaba, o inimigo empurrado no fogo. Usá-los para golpes cobra o dano duas vezes.`)}
+${so("combate", `- Use "combate_atualizar" para mudar a ameaça de um inimigo ("enfurecido", "cambaleando", "em fuga") ou revelar um inimigo novo que chega. Se a luta acaba por fuga, rendição ou trégua, feche com "combate_encerrar": true — quando todos caem, o sistema fecha sozinho.`)}
+${so("combate", `- ECONOMIA DE TURNO DO JOGADOR (o sistema controla — você narra): a cada rodada o jogador tem 2 movimentos (ação + ação extra). O HUD mostra o que resta e o sistema avisa "[TURNO AINDA MEU]" ou "nova rodada". Inimigos NUNCA agem antes da vez deles (o sistema rola a revide e te entrega o resumo). Se o inimigo é uma divindade, registre o GD dela no "combate_iniciar" (campo "gd", 0-4 — use o GD das divindades do panteão quando forem elas) — o sistema aplica a Regra do Degrau e a presença divina por código.`)}
+
 ═══════════════ ESTADO DESTE TURNO ═══════════════
 Tudo acima é permanente. Isto aqui é o que mudou — e é a única parte que muda de uma jogada para a outra.
 

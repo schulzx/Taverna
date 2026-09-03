@@ -25,7 +25,11 @@ sec("1) O LIVRO MORREU");
   ok(/registroRef = useRef\(\[\]\)/.test(app), "o Registro tomou o lugar");
   ok(/registro: registroRef\.current/.test(app), "é salvo");
   ok(/registroRef\.current = garantirRegistro\(sv\.registro\)/.test(app), "e recarregado");
-  ok(/JANELA_DE_HISTORICO = 30/.test(app), "e a janela de histórico bruto subiu de 18 para 30 com o espaço que sobrou");
+  /* v9.162: a janela fixa virou ANCORADA (janela.js) — o slice(-30)
+     deslizava uma mensagem por turno e serrava o cache de prefixo. O que
+     esta linha guardava (histórico bruto generoso, já que o Registro
+     paga o resto) continua: o piso da janela nova é 24 e o teto 47. */
+  ok(/janelaAncorada\(historico\)/.test(app), "e a janela de histórico bruto é a ancorada — quem diz o tamanho é janela.js");
 }
 
 sec("2) A LINHA E O PESO");

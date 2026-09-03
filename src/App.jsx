@@ -104,6 +104,7 @@ import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
 import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo } from "./arquivo.js";
 import { abrir as abrirAbas, estaAberta, subsAbertas, novidades, falaDaNovidade, TODAS_AS_PORTAS } from "./abas.js";
 import { cabecalhoDaCena } from "./palco.js";
+import { janelaAncorada } from "./janela.js";
 import { houveIntervalo, recapitular, textoDoRecap, envelopeDaRetomada, ehHoraDeParar, falaDoFim } from "./sessoes.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
@@ -204,16 +205,12 @@ async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto
 /* decodifica escapes (\n, \", \t...) de um pedaço de string JSON */
 /* parsing de resposta extraído para ./json.js (v8.6) */
 
-/* ---------------- A JANELA DE HISTÓRICO (v9.105) ----------------
-   Eram 18 turnos, e o número foi escolhido quando o LIVRO ocupava mil
-   caracteres do prompt e custava uma chamada de rede a cada oito jogadas.
-   Com o livro fora, esse espaço voltou — e o passado recente é a coisa
-   que o Narrador mais usa e que nenhum sistema substitui: é dali que sai
-   o fio da conversa.
-
-   Trinta, e não mais: o passado REMOTO agora é recuperado com precisão
-   pelo Arquivista, e histórico bruto é a forma mais cara de lembrar. */
-export const JANELA_DE_HISTORICO = 30;
+/* ---------------- A JANELA DE HISTÓRICO (v9.105 → v9.162) ----------------
+   Eram 18 turnos, depois 30. O NÚMERO estava certo; o CORTE estava
+   errado: `slice(-30)` desliza uma mensagem por turno, o começo da
+   janela muda, e o provedor cobra o histórico inteiro cheio, todo
+   turno — a serra que o /custo denunciava. A conta e o porquê moram
+   em janela.js: âncora fixa, salto raro, prefixo vivo. */
 
 async function chamarMestre(system, historico) {
   /* histórico já está no formato Messages API: [{role, content}, ...] */
@@ -224,13 +221,13 @@ async function chamarMestre(system, historico) {
      DeepSeek escreve prosa MAIS longa que o Gemini — com 2600 a resposta
      truncava no meio do JSON e a tela mostrava "…". O teto não custa —
      só se paga pelo que é gerado. */
-  let texto = await chamarModelo(system, historico.slice(-JANELA_DE_HISTORICO), 3600, "json");
+  let texto = await chamarModelo(system, janelaAncorada(historico), 3600, "json");
   let resp = extrairJSON(texto);
   /* REDE DE SEGURANÇA (v7.0.2): se veio JSON válido mas SEM narrativa (o "…"
      na tela), tenta UMA segunda vez com um empurrão explícito antes de
      desistir. */
   if (!resp.narrativa || resp.narrativa === "…" || resp.narrativa.startsWith("O Mestre hesita")) {
-    const reforco = [...historico.slice(-JANELA_DE_HISTORICO), { role: "user", content: "[SISTEMA] Sua resposta anterior chegou sem o campo \"narrativa\". Responda de novo, em JSON, com \"narrativa\" SEMPRE preenchida (é o texto que o jogador lê)." }];
+    const reforco = [...janelaAncorada(historico), { role: "user", content: "[SISTEMA] Sua resposta anterior chegou sem o campo \"narrativa\". Responda de novo, em JSON, com \"narrativa\" SEMPRE preenchida (é o texto que o jogador lê)." }];
     texto = await chamarModelo(system, reforco, 3600, "json");
     const resp2 = extrairJSON(texto);
     if (resp2.narrativa && resp2.narrativa !== "…" && !resp2.narrativa.startsWith("O Mestre hesita")) {

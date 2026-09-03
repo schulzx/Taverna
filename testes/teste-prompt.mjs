@@ -7,7 +7,7 @@
    sistema faz sozinho desde que o combate virou codigo.                     */
 import fs from "node:fs";
 import { montarSystemPrompt } from "../src/prompt.js";
-import { TETO_DO_BLOCO, lerLexico, COISAS, SISTEMAS } from "../src/lexico.js";
+import { TETO_DO_BLOCO, TETO_DA_CENA, lerLexico, COISAS, SISTEMAS } from "../src/lexico.js";
 
 /* um léxico no TETO de todos os campos: é o pior caso, e o pior caso é o
    que se projeta */
@@ -102,8 +102,12 @@ sec("1. o tamanho — a razao da faxina");
     const semLex = montarSystemPrompt("C", { genero: "Fantasia medieval" }, pers, {}, { elenco: [], cidades: [], tavernas: [] }, "", "", "", "", "", "", "Mortal", cenaC);
     const comLex = montarSystemPrompt("C", { genero: "Fantasia medieval", lexico: LEX_CHEIO }, pers, {}, { elenco: [], cidades: [], tavernas: [] }, "", "", "", "", "", "", "Mortal", cenaC);
     const custo = comLex.length - semLex.length;
-    console.log(`      léxico no pior caso custa ${custo} caracteres (orçamento ${TETO_DO_BLOCO})`);
-    t("o léxico nunca custa mais que o orçamento dele, por mais rico que o mundo seja", custo <= TETO_DO_BLOCO);
+    /* v9.162: o léxico virou DOIS blocos com dois orçamentos — o fixo
+       (1700, o mesmo a campanha inteira, cacheável) e o da cena (700, no
+       fim do prompt, onde mudar de lugar não reescreve o começo). O
+       custo total pode somar os dois; o que não pode é passar da soma. */
+    console.log(`      léxico no pior caso custa ${custo} caracteres (orçamento ${TETO_DO_BLOCO} + ${TETO_DA_CENA})`);
+    t("o léxico nunca custa mais que os dois orçamentos dele somados", custo <= TETO_DO_BLOCO + TETO_DA_CENA);
     /* ---------------- A MÉTRICA QUE IMPORTA (v9.106) ----------------
        O "teto" sempre foi o prompt com TODAS as portas abertas — e esse
        número soma estados que se excluem: não se está em combate E em
@@ -125,7 +129,16 @@ sec("1. o tamanho — a razao da faxina");
     const pior = montarSystemPrompt("C", { genero: "Fantasia medieval", lexico: LEX_CHEIO }, pers20, {}, { elenco: [], cidades: [], tavernas: [] }, "", "", "", "", "", "", "Mortal", piorReal);
     const tetoComLex = montarSystemPrompt("C", { genero: "Fantasia medieval", lexico: LEX_CHEIO }, pers20, {}, { elenco: [], cidades: [], tavernas: [] }, "", "", "", "", "", "", "Mortal");
     console.log(`      PIOR CENA REAL: ${pior.length} · soma sintética de todas as portas: ${tetoComLex.length}`);
-    t("a PIOR CENA REAL cabe abaixo de 80 mil caracteres", pior.length < 80000);
+    /* v9.162: DE 80 PARA 82 MIL, com a razão escrita porque mover um
+       guarda em silêncio é pior do que não ter guarda. O que entrou foi
+       a zona de REGRAS DA CENA ABERTA (a faixa e a explicação, ~330
+       letras) e o bloco da cena do léxico, que antes disputava o teto do
+       bloco fixo e agora tem os 700 próprios. O bruto subiu ~1.300; o
+       COBRADO caiu: a zona mora no fim do prompt, e o que vem antes dela
+       — 95% do texto — agora sobrevive à troca de cena a um décimo do
+       preço. Pagar 2% a mais de bruto para cachear 95% é o negócio da
+       leva inteira. */
+    t("a PIOR CENA REAL cabe abaixo de 82 mil caracteres", pior.length < 82000);
     /* a soma sintética continua sendo olhada, com folga declarada para os
        quatro sistemas que ainda faltam do conselho (Vilão, Aliado,
        Adversário, Cobrador — uns quinhentos caracteres cada) */
@@ -144,7 +157,9 @@ sec("1. o tamanho — a razao da faxina");
        subiu 181 letras — a linha do sinal) e a PIOR CENA REAL em 79.609,
        abaixo do teto de 80 mil. Este aqui continua só como tripwire de
        crescimento total. */
-    t("e a soma de todas as portas fica abaixo de 90 mil, com folga para o resto do conselho", tetoComLex.length < 90000);
+    /* v9.162: de 90 para 92 mil, pela mesma zona da cena aberta que moveu
+       o guarda de cima — e pela mesma razão de valor. */
+    t("e a soma de todas as portas fica abaixo de 92 mil, com folga para o resto do conselho", tetoComLex.length < 92000);
   }
 
   /* ---------------- O OFÍCIO DA CENA (v9.77) ----------------

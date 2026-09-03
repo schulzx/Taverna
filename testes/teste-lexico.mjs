@@ -2,7 +2,7 @@
    O relato: "se eu criar um mundo sobre Solo Leveling, quase não vão falar
    sobre isso; o nosso mundo gerado é genérico". */
 import {
-  COISAS, SISTEMAS, SEMPRE, TETO_DO_BLOCO, coisaPorId, sistemaPorId,
+  COISAS, SISTEMAS, SEMPRE, TETO_DO_BLOCO, TETO_DA_CENA, lexicoDaCena, coisaPorId, sistemaPorId,
   garantirLexico, lexicoVale, lerLexico, pedidoDoLexico, lexicoPrompt,
   envelopeDaAdaptacao, falaDoLexico, lexicoDoTexto,
   oficiosDo, povosDo, criaturasDo, cidadesDo, tavernasDo, comoChamam, comoFunciona,
@@ -322,12 +322,31 @@ sec("5) O QUE SOBE AO PROMPT, E SÓ QUANDO A CENA PEDE");
 {
   ok(lexicoPrompt(null) === "", "sem léxico, bloco nenhum");
   ok(lexicoPrompt(garantirLexico({ povos: ["a", "b"] })) === "", "léxico não gerado também não sobe");
-  const naTaverna = lexicoPrompt(CACADORES, portasAbertas({ emCidade: true, temMercado: true }));
-  const noPortal = lexicoPrompt(CACADORES, portasAbertas({ emMasmorra: true, emCombate: true }));
+  const naTaverna = lexicoPrompt(CACADORES);
+  /* o "noPortal" de antes era o bloco fixo com outras portas — v9.162
+     tirou as portas dele, e agora o bloco é literalmente O MESMO em
+     qualquer cena. As linhas abaixo que conferem os dois lados agora
+     conferem essa igualdade, que é a propriedade nova. */
+  const noPortal = lexicoPrompt(CACADORES);
+  ok(naTaverna === noPortal, "o bloco fixo é o mesmo em qualquer cena — é isso que o torna cacheável");
   ok(/portal/.test(naTaverna), "o vocabulário entra sempre");
   ok(/A LEI DESTE MUNDO/.test(naTaverna), "a lei do mundo também");
-  ok(!/não fecham enquanto o chefe/.test(naTaverna), "mas COMO funciona um portal não custa prompt numa taverna");
-  ok(/não fecham enquanto o chefe/.test(noPortal), "e entra no instante em que se está dentro de um");
+  /* v9.162: a adaptação DA CENA mudou de porta-voz — saiu do bloco fixo
+     (que agora é o mesmo para a campanha inteira, e é isso que o torna
+     cacheável) e entrou em lexicoDaCena, que desce para o fim do prompt.
+     A LEI é a mesma de sempre: o portal não custa prompt numa taverna, e
+     entra no instante em que se está dentro de um. */
+  ok(!/não fecham enquanto o chefe/.test(naTaverna), "mas COMO funciona um portal não custa o bloco fixo");
+  ok(lexicoDaCena(CACADORES, portasAbertas({ emCidade: true, temMercado: true })).indexOf("não fecham enquanto o chefe") === -1,
+    "nem o bloco da cena numa taverna");
+  ok(/não fecham enquanto o chefe/.test(lexicoDaCena(CACADORES, portasAbertas({ emMasmorra: true, emCombate: true }))),
+    "e entra no instante em que se está dentro de um");
+  ok(lexicoDaCena(CACADORES, null) === "" && lexicoDaCena(null, portasAbertas({ emCidade: true })) === "",
+    "sem portas ou sem léxico, o bloco da cena não existe");
+  for (const cena of [{ emCidade: true, temMercado: true }, { emMasmorra: true, emCombate: true }, { emViagem: true }]) {
+    const bc = lexicoDaCena(CACADORES, portasAbertas(cena));
+    ok(bc.length <= TETO_DA_CENA, `o bloco da cena cabe no orçamento próprio (${bc.length} ≤ ${TETO_DA_CENA})`);
+  }
   /* v9.113: A PRIORIDADE MUDOU, e esta linha muda com ela.
 
      O que sobe primeiro agora são os campos CURTOS e de VETO: o
