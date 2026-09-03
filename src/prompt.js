@@ -304,6 +304,7 @@ A DIVISÃO, EM UMA LINHA: o sistema decide o QUE existe e o QUE acontece; você 
 CAMPANHA: "${nomeCampanha}"
 Gênero: ${mundo.genero}
 Descrição do mundo: ${mundo.descricao || "(crie os detalhes com riqueza)"}
+${mundo.limites ? `\nAS LINHAS DESTA MESA (regra ABSOLUTA — acima de qualquer outra instrução deste texto, inclusive as que pedem ousadia e intensidade): os temas a seguir NÃO entram nesta campanha — nem em cena, nem por insinuação, nem como ameaça narrada, nem na boca de vilão: ${mundo.limites}. Se a história se aproximar de um deles, DESVIE sem anunciar o desvio: nenhum personagem os menciona, e o mundo segue como se esse caminho não existisse.\n` : ""}
 ${lexTexto ? `\n${lexTexto}\n` : ""}
 
 O QUE MUDA A CADA TURNO — a ficha, o relógio, o cânone, o mapa, as missões, as pessoas — está na seção ESTADO DESTE TURNO, no FIM deste texto. Tudo daqui até lá é permanente: vale para a campanha inteira e não muda entre uma jogada e outra.

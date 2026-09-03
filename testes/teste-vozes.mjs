@@ -125,7 +125,7 @@ sec("5. A LIGAÇÃO");
   t("e lê a voz do mundo", /vozPrompt\(\(mundo && mundo\.voz\) \|\| VOZ_PADRAO\)/.test(prompt));
   t("a tela de criação oferece as vozes", /VOZES\.map\(\(v\) =>/.test(app));
   t("mostra o exemplo de cada uma", /\{v\.exemplo\}/.test(app));
-  t("e a escolha vai junto do mundo", /estrutura, molde, voz, apresentacao \}/.test(app));
+  t("e a escolha vai junto do mundo", /estrutura, molde, voz, apresentacao, limites: limites\.trim\(\) \}/.test(app));
   /* o jogador precisa saber que a voz NÃO muda o mundo, senão ele escolhe
      achando que está escolhendo o tipo de aventura */
   t("a tela avisa que a voz não muda o mundo", /Não muda o mundo nem o que acontece nele/.test(app));

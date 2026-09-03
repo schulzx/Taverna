@@ -125,7 +125,7 @@ sec("6. A APRESENTAÇÃO ENTRA POR CONTEXTO, E O MUNDO A ESCOLHE");
   t("com a escolha do mundo", /apresentacao: \(mundo \|\| \{\}\)\.apresentacao \|\| "estrita"/.test(APP));
   /* a tela do mundo oferece as DUAS, sem opinar — é escolha de mesa */
   t("a tela do mundo pergunta", /id: "estrita", nome: "🏰 Clássica"/.test(APP) && /id: "livre", nome: "🌈 Plural"/.test(APP));
-  t("e a escolha viaja com o mundo", /estrutura, molde, voz, apresentacao \}/.test(APP));
+  t("e a escolha viaja com o mundo", /estrutura, molde, voz, apresentacao, limites: limites\.trim\(\) \}/.test(APP));
   /* o padrão é o clássico: o plural é opt-in de quem senta à mesa */
   t("o padrão é a estrita", /useState\("estrita"\)/.test(APP));
 }

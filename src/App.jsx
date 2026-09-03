@@ -1308,7 +1308,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarLenda, recalibrarMundo, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null }) {
+function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1475,18 +1475,11 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
               )}
             </div>
             {abrirCaminho === "eu" && <SeletorCaminho mundo={mundo} alvo="eu" atual={personagem} acampado={acampado} trocarCaminho={trocarCaminho} fechar={() => setAbrirCaminho(null)} />}
-            {recalibrarLenda && (
-              <button onClick={recalibrarLenda} className="w-full tv-mono text-[10px] px-2 py-1.5 rounded-lg"
+            {recalibrarSave && (
+              <button onClick={recalibrarSave} className="w-full tv-mono text-[10px] px-2 py-1.5 rounded-lg"
                 style={{ border: `1px dashed ${T.line}`, color: T.inkDim }}
-                title="Se sua lenda cresceu mais que seus números (save antigo), o Mestre relê a campanha e propõe nível e atributos coerentes — você confirma antes de aplicar.">
-                ⚖ recalibrar lenda (save antigo)
-              </button>
-            )}
-            {recalibrarMundo && (
-              <button onClick={recalibrarMundo} className="w-full tv-mono text-[10px] px-2 py-1.5 rounded-lg"
-                style={{ border: `1px dashed ${T.line}`, color: T.inkDim }}
-                title="O arquivista relê a campanha e propõe o estado dos sistemas que o save antigo não conhecia: companheiros (nível/classe), pessoas, potências e tratados, cidades dominadas e nível da guilda. Você confirma antes de aplicar.">
-                ⚖ recalibrar mundo · guilda, pessoas, domínios
+                title="Para save de versão antiga: o arquivista relê a campanha inteira e propõe, em dois passos, os números do herói (nível, atributos) e o estado do mundo (companheiros, pessoas, potências, domínios, guilda). Você confirma cada passo antes de aplicar.">
+                ⚖ recalibrar save antigo · a lenda e o mundo
               </button>
             )}
             {(personagem.condicoes || []).length > 0 && (
@@ -2875,6 +2868,10 @@ function TelaMundo({ concluir }) {
      como o tom de violência: o jogo não opina, oferece as duas e cumpre
      a que foi escolhida — quem decide é quem senta para jogar. */
   const [apresentacao, setApresentacao] = useState("estrita");
+  /* v9.164: AS LINHAS DA MESA. Toda mesa de verdade pergunta isto antes
+     da primeira cena, e um jogo que se leva a sério pergunta também.
+     O texto vai literal para o prompt como regra absoluta. */
+  const [limites, setLimites] = useState("");
   const campo = { background: T.panel, border: `1px solid ${T.line}`, color: T.ink };
   return (
     <div className="tv-fade max-w-2xl mx-auto w-full px-6 py-10 overflow-y-auto tv-scroll">
@@ -2964,8 +2961,11 @@ function TelaMundo({ concluir }) {
         ))}
       </div>
       <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={4} placeholder="Ex.: Um arquipélago flutuante onde a magia vem das marés. Piratas do céu disputam relíquias de um império afundado nas nuvens…" className="w-full rounded-xl p-4 tv-body text-sm outline-none resize-none" style={campo} />
+      <div className="tv-mono text-xs uppercase tracking-widest mb-2 mt-6" style={{ color: T.violetSoft }}>As linhas desta mesa</div>
+      <p className="tv-body text-sm mb-3" style={{ color: T.inkDim }}>O que NÃO entra nesta campanha, em nenhuma cena — toda mesa de verdade pergunta isto antes de começar. Opcional, e dá para deixar em branco.</p>
+      <textarea value={limites} onChange={(e) => setLimites(e.target.value)} rows={2} maxLength={300} placeholder="Ex.: nada de mal a crianças, sem tortura detalhada, sem aranhas…" className="w-full rounded-xl p-4 tv-body text-sm outline-none resize-none" style={campo} />
       <div className="mt-6 flex justify-end">
-        <Botao primario desativado={!genero || !nome.trim()} onClick={() => concluir({ genero: genero.label, descricao, estrutura, molde, voz, apresentacao }, nome.trim())}>Continuar →</Botao>
+        <Botao primario desativado={!genero || !nome.trim()} onClick={() => concluir({ genero: genero.label, descricao, estrutura, molde, voz, apresentacao, limites: limites.trim() }, nome.trim())}>Continuar →</Botao>
       </div>
     </div>
   );
@@ -3349,6 +3349,22 @@ function TelaMenu({ irNovo, continuar, temSave, criarSala, entrarSala, aoLerArqu
         <div className="rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
           <div className="tv-mono text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: T.inkDim }}>A campanha em arquivo</div>
           <div className="tv-body text-xs mb-3" style={{ color: T.inkDim }}>O save mora só neste navegador. Um arquivo atravessa a limpeza de cache, a troca de máquina e o navegador novo.</div>
+          {/* ---------------- A COBRANÇA DO BACKUP (v9.164) ----------------
+              Só aparece quando a cópia está VELHA (ou nunca existiu): um
+              aviso permanente vira papel de parede, e papel de parede não
+              salva campanha nenhuma. Sete dias é o prazo — quem joga toda
+              noite acumula uma semana de história por cópia. */}
+          {temSave && (() => {
+            const dias = temSave.backupEm ? Math.floor((Date.now() - temSave.backupEm) / 86400000) : null;
+            if (dias != null && dias < 7) return null;
+            return (
+              <div className="rounded-xl px-3 py-2 mb-3 tv-body text-xs" style={{ background: T.panelSoft, border: `1px solid ${T.amber}`, color: T.amberSoft }}>
+                🛟 {dias == null
+                  ? `"${temSave.nomeCampanha}" nunca teve uma cópia em arquivo — se este navegador limpar o cache, ela se perde inteira.`
+                  : `A última cópia de "${temSave.nomeCampanha}" tem ${dias} dias — tudo o que aconteceu desde então vive só neste navegador.`}
+              </div>
+            );
+          })()}
           <div className="flex gap-2">
             {temSave && (
               <button onClick={aoExportar} className="flex-1 rounded-xl px-3 py-2.5 tv-mono text-[11px]" style={{ border: `1px solid ${T.line}`, color: T.ink }}>
@@ -3537,6 +3553,9 @@ export default function Taverna() {
   });
   useEffect(() => { mostrarRolagensRef.current = mostrarRolagens; try { localStorage.setItem("taverna_cfg_rolagens", mostrarRolagens ? "1" : "0"); } catch {} }, [mostrarRolagens]);
   const [temSave, setTemSave] = useState(null);
+  /* quando foi a última cópia em arquivo — carregado do save, carimbado
+     por exportarSave, e persistido por salvar() como qualquer campo */
+  const backupEmRef = useRef(null);
   /* ---------------- O QUE JÁ IMPORTA (v9.148) ----------------
      A lista das abas que o jogador já destravou. Guardada, e não
      recalculada: a condição é um GATILHO, e sair da cidade não pode
@@ -5871,6 +5890,7 @@ export default function Taverna() {
       custo: custoRef.atual,
       abasAbertas: abasAbertasRef.current,
       sessao: sessaoRef.current,
+      backupEm: backupEmRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
@@ -8948,6 +8968,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       nevoaVersaoRef.current = 1;
       faccaoJogadorRef.current = sv.faccaoJogador || "";
       cidadeAtualRef.current = sv.cidadeAtual || "";
+      backupEmRef.current = sv.backupEm || null;
       /* v9.54: a marca `pisada` nasce nesta versão, e sem esta linha a cidade
          onde o save parou nunca a ganharia — o herói sairia dela e veria o
          cinturão que ele acabou de percorrer sumir do pergaminho, que é
@@ -15851,6 +15872,18 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     a.href = url; a.download = nomeDoArquivo(sv);
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
+    /* O CARIMBO DO BACKUP (v9.164): a data da última cópia mora no save
+       para o menu saber quando cobrar. Grava direto no armazenamento
+       porque a exportação do MENU acontece com o jogo desmontado — ali
+       não existe `salvar()` para carregar o carimbo. Em jogo, o próximo
+       `salvar()` preserva o campo porque ele viaja no próprio save. */
+    backupEmRef.current = Date.now();
+    try {
+      const sv2 = { ...sv, backupEm: backupEmRef.current };
+      saveRef.current = sv2;
+      localStorage.setItem("taverna_save_v1", JSON.stringify(sv2));
+      if (temSave) setTemSave(sv2);
+    } catch (e) { calou("carimboDoBackup", e); }
     /* do MENU não sai mensagem: escrever no diário de uma campanha que
        nem foi aberta seria sujar o registro com um gesto que não é do
        mundo. O botão de lá se explica sozinho. */
@@ -17203,6 +17236,24 @@ Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a
      cânone e PROPÕE nível/atributos; o app calcula PV/PM pelas tabelas e
      o jogador confirma. Uma chamada leve, sob demanda. */
   const [recal, setRecal] = useState(null); // null | "pedindo" | { proposta, justificativa }
+  /* ---------------- UM ASSISTENTE SÓ (v9.164) ----------------
+     "Recalibrar lenda" e "recalibrar mundo" eram dois botões tracejados
+     lado a lado, e quem chega com um save antigo não tem como saber que
+     precisa dos DOIS — nem em que ordem. A pessoa clicava num, achava
+     que estava pronto, e o grupo continuava no nível 1.
+
+     Agora é uma porta só: o passo da lenda roda, o jogador decide
+     (aplicar OU manter), e o passo do mundo entra sozinho em seguida —
+     recusar a proposta da lenda não pode cancelar a do mundo, porque
+     são perguntas independentes sobre o mesmo save. */
+  const cadeiaRecalRef = useRef(false);
+  const recalibrarSave = () => { cadeiaRecalRef.current = true; recalibrarLenda(); };
+  const seguirParaOMundo = () => {
+    if (!cadeiaRecalRef.current) return;
+    cadeiaRecalRef.current = false;
+    recalibrarMundo();
+  };
+
   const recalibrarLenda = async () => {
     if (bloqueado || recal === "pedindo") return;
     setAba(null);
@@ -17246,6 +17297,7 @@ REFERÊNCIAS DE ESCALA (novas regras): o nível 20 é o ápice mortal e custa 35
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Recalibração de save: meus números oficiais agora são nível ${p.nivel}, PV ${p.vidaMax}, PM ${p.manaMax}, proficiência +${p.prof}${p.dadivas ? `, ${p.dadivas} dádivas épicas` : ""} — coerentes com tudo que já vivi. Trate-os como verdade daqui em diante.`;
     setRecal(null);
     setTimeout(() => checarConquistas(), 0);
+    seguirParaOMundo();
   };
 
   /* RECALIBRAR MUNDO: o irmão do "recalibrar lenda" para os SISTEMAS que o
@@ -18266,12 +18318,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />
-          <LimiteErro><PainelLateral abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarLenda={recalibrarLenda} recalibrarMundo={recalibrarMundo} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} /></LimiteErro>
+          <LimiteErro><PainelLateral abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
             <div className="rounded-2xl p-5 w-80 space-y-3" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
-              <h3 className="tv-display text-xl" style={{ color: T.ink }}>⚖ Recalibrar lenda</h3>
+              <h3 className="tv-display text-xl" style={{ color: T.ink }}>⚖ A lenda <span className="tv-mono text-xs" style={{ color: T.inkDim }}>· passo 1 de 2</span></h3>
               {recal === "pedindo" ? (
                 <p className="tv-body text-sm italic" style={{ color: T.inkDim }}>O arquivista relê o livro da campanha e os seus feitos…</p>
               ) : (
@@ -18283,7 +18335,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     <div className="tv-mono text-[10px] mt-1" style={{ color: T.inkDim }}>{Object.entries(recal.proposta.atributos).map(([k, v]) => `${k.slice(0, 3).toUpperCase()} ${v}`).join(" · ")}</div>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => setRecal(null)} className="flex-1 tv-mono text-xs px-2 py-2 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>manter como está</button>
+                    {/* manter a lenda NÃO cancela o passo do mundo: são
+                        perguntas independentes sobre o mesmo save */}
+                    <button onClick={() => { setRecal(null); seguirParaOMundo(); }} className="flex-1 tv-mono text-xs px-2 py-2 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>manter como está</button>
                     <button onClick={aplicarRecalibragem} className="flex-1 tv-mono text-xs px-2 py-2 rounded-lg font-semibold" style={{ background: T.amber, color: T.onAccent, border: `1px solid ${T.amber}` }}>aplicar</button>
                   </div>
                 </>
@@ -18295,7 +18349,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         {recalM && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
             <div className="rounded-2xl p-5 w-80 space-y-3 tv-scroll overflow-y-auto" style={{ background: T.panel, border: `1px solid ${T.amber}`, maxHeight: "80vh" }}>
-              <h3 className="tv-display text-xl" style={{ color: T.ink }}>⚖ Recalibrar mundo</h3>
+              <h3 className="tv-display text-xl" style={{ color: T.ink }}>⚖ O mundo <span className="tv-mono text-xs" style={{ color: T.inkDim }}>· passo 2 de 2</span></h3>
               {recalM === "pedindo" ? (
                 <p className="tv-body text-sm italic" style={{ color: T.inkDim }}>O arquivista relê o livro, o cânone e os registros — companheiros, pessoas, potências, cidades, guilda…</p>
               ) : (
