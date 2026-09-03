@@ -13,8 +13,8 @@ export const SLOGAN = "toda lenda começa aqui";
    do App — que é exatamente onde um número vai para ser esquecido.
    Aqui ela fica ao lado do resto do que a casa sabe sobre si mesma, e um
    varredor confere que o App não voltou a escrevê-la à mão. */
-export const VERSAO = "v9.159";
-export const LEVA = "a ficha de mesa";
+export const VERSAO = "v9.160";
+export const LEVA = "o corpo sente";
 
 export const XP_POR_NIVEL = (nivel) => xpDoProximoNivel(nivel) ?? XP_POR_DADIVA;
 export const MOEDAS_INICIAIS = 15;
@@ -46,6 +46,16 @@ export const FONT_CSS = `
 .tv-scroll::-webkit-scrollbar-thumb { background: #2E2745; border-radius: 4px; }
 @keyframes tvSlide { from { transform: translateX(24px); opacity: 0;} to { transform: none; opacity: 1;} }
 .tv-slide { animation: tvSlide .25s ease both; }
+
+/* ---------------- O CORPO SENTE (v9.160) ----------------
+   O clarao de dano e o pulso de agonia do bloco do heroi. Um golpe que
+   so muda um numero e um golpe que o jogador nao sente: o clarao dura
+   menos de um segundo e morre sozinho; a agonia (um terco da vida)
+   pulsa ate alguem fazer alguma coisa a respeito. */
+@keyframes tvDano { 0% { box-shadow: 0 0 0 rgba(216,106,91,0); } 20% { box-shadow: 0 0 22px rgba(216,106,91,.85); } 100% { box-shadow: 0 0 0 rgba(216,106,91,0); } }
+.tv-dano { animation: tvDano .7s ease both; }
+@keyframes tvAgonia { 0%, 100% { box-shadow: 0 0 6px rgba(216,106,91,.25); } 50% { box-shadow: 0 0 16px rgba(216,106,91,.6); } }
+.tv-agonia { animation: tvAgonia 1.6s ease infinite; }
 
 /* ---------------- O ESPAÇO DO TRILHO (v9.156) ----------------
    O trilho de abas é lateral no monitor e barra inferior no telefone, e

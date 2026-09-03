@@ -17393,6 +17393,25 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
   const irMenu = () => { setAba(null); setHabAbertas(false); setHabsSel([]); setEntrada(""); setDadoRolando(false); setFase("menu"); };
 
+  /* ---------------- O CORPO SENTE (v9.160) ----------------
+     O clarão de dano do bloco do herói. Compara a vida de agora com a
+     última vista: caiu, o bloco acende vermelho por um instante. É efeito
+     e não evento porque a vida muda por dez caminhos (golpe, veneno,
+     marcha forçada, maldição) — escutar a MUDANÇA pega todos de uma vez,
+     e um caminho novo de dano nasce já fazendo o bloco acender. */
+  const vidaVistaRef = useRef(null);
+  const [feridaRecente, setFeridaRecente] = useState(false);
+  useEffect(() => {
+    const v = personagem ? personagem.vida : null;
+    const antes = vidaVistaRef.current;
+    vidaVistaRef.current = v;
+    if (antes != null && v != null && v < antes) {
+      setFeridaRecente(true);
+      const tid = setTimeout(() => setFeridaRecente(false), 750);
+      return () => clearTimeout(tid);
+    }
+  }, [personagem && personagem.vida]);
+
   /* v9.42: `morto` NÃO entra aqui de propósito. A tela de tombamento é um
      overlay que cobre a página inteira — para o jogador, tudo abaixo dela já
      está fora de alcance, e travar o campo por cima disso só serviria para
@@ -17426,19 +17445,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           {fase === "jogo" && nomeCampanha && <span className="tv-mono text-[10px] uppercase tracking-widest truncate hidden sm:inline" style={{ color: T.inkDim }}>· {nomeCampanha}</span>}
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          {/* este retrato NÃO abre carta: ele já é o botão que abre a ficha, e
-              botão dentro de botão é o tipo de coisa que passa no teste e
-              falha no dedo. A carta do herói abre pelo retrato de dentro da
-              ficha, onde há espaço para ela. */}
-          {fase === "jogo" && personagem && (
-            <button onClick={() => setAba("gestao")} className="shrink-0" title="Abrir ficha">
-              {/* v9.158: a ficha é SUB-ABA da Gestão desde que as abas se
-                  fundiram — e este atalho continuou pedindo `setAba("ficha")`,
-                  uma aba que não existe: o painel abria com o título errado e
-                  o corpo vazio. A Gestão já nasce na ficha. */}
-              <Retrato semente={sementeDe(personagem)} ente={personagem} semCarta tamanho={32} anel={T.amber} estado={estadoDe(personagem.vida, personagem.vidaMax)} />
-            </button>
-          )}
+          {/* o retrato saiu do cabeçalho (v9.160): o atalho da ficha agora é
+              o bloco do herói na barra de status — dois retratos do mesmo
+              herói na mesma tela eram duas verdades visuais, e a de baixo é
+              a que reage a dano. */}
           {fase === "jogo" && statusSave && <span className="tv-mono text-[10px] uppercase tracking-wider" style={{ color: statusSave === "erro" ? T.danger : T.inkDim }}>{statusSave === "salvando" ? "salvando…" : statusSave === "erro" ? "⚠ FALHA AO SALVAR" : "✓ salvo"}</span>}
           {fase === "jogo" && !acampado && <button onClick={acampar} disabled={bloqueado} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Montar acampamento"><span style={{ color: T.amberSoft, fontSize: 15 }}>⛺</span></button>}
           {fase === "jogo" && <button onClick={() => setMostrarRolagens((v) => !v)} className="rounded-lg p-1.5" style={{ border: `1px solid ${mostrarRolagens ? T.amber : T.line}` }} title={mostrarRolagens ? "Rolagens de combate: visíveis" : "Rolagens de combate: ocultas"}><span style={{ color: mostrarRolagens ? T.amberSoft : T.inkDim, fontSize: 13 }}>🎲</span></button>}
@@ -17914,9 +17924,45 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             )}
 
             <div className="tv-espaco-abas px-4 md:px-8 flex items-center gap-3 md:gap-4 pb-1.5 flex-wrap" >
-              <BarraMini rotulo="PV" atual={personagem.vida} max={personagem.vidaMax} cor={T.amber} corBaixa={T.danger} />
-              <BarraMini rotulo="PM" atual={personagem.mana} max={personagem.manaMax} cor={T.violet} />
-              <span className="tv-mono text-[10px] shrink-0" style={{ color: T.amberSoft }}>NV {personagem.nivel}</span>
+              {/* ---------------- O BLOCO DO HERÓI (v9.160) ----------------
+                  PV e PM eram duas barrinhas anônimas ao lado da data, como
+                  se a vida do herói e o relógio fossem informação do mesmo
+                  peso. Agora elas moram COLADAS no retrato — que já reage
+                  sozinho (a xilogravura muda a cara com o estado) — e o
+                  bloco inteiro sente: clarão quando a vida cai, pulso
+                  vermelho na agonia. É também o atalho da ficha, no lugar
+                  do retrato que morava no cabeçalho: dois retratos do mesmo
+                  herói na mesma tela eram duas verdades visuais. */}
+              {(() => {
+                const grave = personagem.vidaMax > 0 && personagem.vida / personagem.vidaMax <= 1 / 3;
+                return (
+              <button onClick={() => setAba("gestao")} title="Abrir ficha"
+                className={`flex items-center gap-2 rounded-xl pl-1 pr-2 py-1 shrink-0 ${feridaRecente ? "tv-dano" : grave ? "tv-agonia" : ""}`}
+                style={{ background: T.panel, border: `1px solid ${feridaRecente || grave ? T.danger : T.line}` }}>
+                <div className="relative shrink-0" style={{ paddingBottom: 2, paddingRight: 2 }}>
+                  <Retrato semente={sementeDe(personagem)} ente={personagem} semCarta tamanho={34} anel={grave ? T.danger : T.amber} estado={estadoDe(personagem.vida, personagem.vidaMax)} />
+                  <span className="absolute bottom-0 right-0 w-4 h-4 flex items-center justify-center" title={`Nível ${personagem.nivel}`}
+                    style={{ background: T.amber, borderRadius: 3, transform: "rotate(45deg)", border: `1.5px solid ${T.panel}` }}>
+                    <span className="tv-mono text-[8px]" style={{ transform: "rotate(-45deg)", color: T.onAccent, fontWeight: 700 }}>{personagem.nivel}</span>
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5" title={`Vida: ${personagem.vida}/${personagem.vidaMax}`}>
+                    <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: T.bg }}>
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(0, Math.min(100, (personagem.vida / (personagem.vidaMax || 1)) * 100))}%`, background: grave ? T.danger : T.amber }} />
+                    </div>
+                    <span className="tv-mono text-[9px]" style={{ color: grave ? T.danger : T.ink }}>{personagem.vida}<span style={{ color: T.inkDim }}>/{personagem.vidaMax}</span></span>
+                  </div>
+                  <div className="flex items-center gap-1.5" title={`Mana: ${personagem.mana}/${personagem.manaMax}`}>
+                    <div className="w-20 h-1 rounded-full overflow-hidden" style={{ background: T.bg }}>
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(0, Math.min(100, (personagem.mana / (personagem.manaMax || 1)) * 100))}%`, background: T.violet }} />
+                    </div>
+                    <span className="tv-mono text-[9px]" style={{ color: T.violetSoft }}>{personagem.mana}<span style={{ color: T.inkDim }}>/{personagem.manaMax}</span></span>
+                  </div>
+                </div>
+              </button>
+                );
+              })()}
               <span className="tv-mono text-[10px] shrink-0" title={`${estacaoDe(dia).nome} — ${estacaoDe(dia).nota} · o app controla o relógio`} style={{ color: T.inkDim }}>📅 {dataTxt(dia)} · {horaTxt(minuto)}{ehNoite(minuto) ? " 🌙" : ""} {estacaoDe(dia).icone}</span>
               {clima && <span className="tv-mono text-[10px] shrink-0" title={clima.nota} style={{ color: T.inkDim }}>{clima.icone} {clima.rotulo}</span>}
               {/* v9.39: estar fora da cidade agora é um estado do jogo, então
