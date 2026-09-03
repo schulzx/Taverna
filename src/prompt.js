@@ -56,6 +56,8 @@ import { CELULAS_PROMPT } from "./celulas.js";
 import { VIAGEM_PROMPT } from "./viagem.js";
 import { RESOLVER_PROMPT } from "./resolver.js";
 import { MOLDES_PROMPT } from "./moldes.js";
+/* v9.165: a lei da forma — a trava, a chave e a cena são do sistema */
+import { LEI_DA_FORMA_PROMPT } from "./lei-da-forma.js";
 import { ORCAMENTO_PROMPT } from "./orcamento.js";
 import { ESPECIALIZACOES_PROMPT } from "./especializacoes.js";
 import { ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
@@ -398,6 +400,8 @@ ${LUGAR_PROMPT}
 ${RESOLVER_PROMPT}
 
 ${MOLDES_PROMPT}
+
+${LEI_DA_FORMA_PROMPT}
 
 ${ORCAMENTO_PROMPT}
 - GERADORES DE VIDA (o app sorteia, você narra): envelopes [EVENTO LOCAL], [EVENTO GLOBAL] e [QUEST GERADA PELO SISTEMA] trazem material PRONTO — fios do dia a dia, arcos regionais que escalam por etapas e quests calibradas à fase do arco. Os FATOS sorteados (quem, raça, lugar, o quê) são fixos: os atores já vêm com nome, raça e ofício definidos pelo sistema — use-os exatamente como dados (a diversidade do mundo é responsabilidade do sistema, não mude raças nem troque personagens). O COMO (voz, cena, desdobramentos) é todo seu. Fios locais são pequenos e expiram se ignorados (o mundo se resolve sem o herói — narre o desfecho de passagem). O evento global é arco longo de fundo: escala quando o sistema anuncia nova etapa; quando o jogador o RESOLVER de fato, envie "evento_global_encerrar": true no JSON. Limites do sistema: no máx. 1 global e 3 locais por vez — nunca empilhe mais por conta própria.

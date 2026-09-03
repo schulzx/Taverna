@@ -282,6 +282,10 @@ export const MOLDES = [
     /* perigo plano: quem decide a ameaça é o nível do herói e a região */
     progressao: null,
     gatilho: null,
+    /* v9.165: a lei das Terras Abertas é NÃO TER TRAVA. A estrada franca é a
+       identidade do molde — declarada aqui de propósito, para que "aberto"
+       seja uma escolha lida pelo porteiro, e não um campo esquecido. */
+    lei: null,
     nomes: NOMES_SUPERFICIE,
     nomesRegiao: REGIOES_SUPERFICIE,
     generoPadrao: "Fantasia medieval",
@@ -308,7 +312,10 @@ export const MOLDES = [
     vontades: VONTADES_TORRE,
     /* o degrau é a régua: cada andar acima pesa mais que o anterior */
     progressao: { por: "z", perigoPorPasso: 0.12, rotulo: "cada andar acima é 12% mais perigoso" },
-    gatilho: { nome: "o portal do andar", verbo: "atravessar", regra: "só se sobe pelo portal, e o portal só abre de baixo para cima" },
+    gatilho: { nome: "o portal do andar", verbo: "atravessar", regra: "só se sobe pelo portal ao andar seguinte, e o portal só abre quando o guardião do andar cai" },
+    /* v9.165: a promessa do gatilho vira código — quem executa é
+       lei-da-forma.js: trava a subida, gera o guardião, abre a passagem */
+    lei: { id: "guardiao" },
     nomes: NOMES_SUPERFICIE,
     nomesRegiao: REGIOES_TORRE,
     nomesLocal: NOMES_LOCAL_TORRE,
@@ -337,6 +344,10 @@ export const MOLDES = [
     vontades: VONTADES_MAR,
     progressao: null,
     gatilho: { nome: "a maré", verbo: "esperar", regra: "certas rotas só abrem na maré ou com vento a favor" },
+    /* v9.165: a maré é função do dia — cerca de um terço das rotas fecha e
+       abre num ciclo de seis dias, com três de janela. Esperar um a três
+       dias se resolve dormindo, e dormir num porto é cena, não castigo. */
+    lei: { id: "mare", periodo: 6, janela: 3 },
     nomes: NOMES_MAR,
     nomesRegiao: REGIOES_MAR,
     nomesLocal: NOMES_LOCAL_MAR,
@@ -362,6 +373,9 @@ export const MOLDES = [
     vontades: VONTADES_ESTELAR,
     progressao: null,
     gatilho: { nome: "o motor de salto", verbo: "acionar", regra: "só se viaja entre sistemas ligados por rota de salto conhecida" },
+    /* v9.165: e a regra tem dentes — sem rota registrada no grafo, o motor
+       não salta; atravessa-se o Braço sistema a sistema, que é a lei */
+    lei: { id: "rota" },
     nomes: NOMES_ESTELAR,
     nomesRegiao: REGIOES_ESTELAR,
     nomesLocal: NOMES_LOCAL_ESTELAR,

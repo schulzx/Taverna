@@ -73,6 +73,9 @@ import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmC
 import { resumoArredoresPrompt, arredoresDaCidade, arredorPorTexto } from "./arredores.js";
 import { abrirViagem, andar, pausarViagem, retomarViagem, progressoDaViagem, comTrechos, trechoAtual, minutosPorAvanco, relogioDoAvanco, resumoViagemPrompt, linhaDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
+/* v9.165: a LEI DA FORMA — o porteiro do molde. A trava antes da partida,
+   a chave na morte do guardião, a cena criada pelo sistema quando abre. */
+import { garantirForma, travaDaPartida, chaveDaMorte, guardiaoPorNome, leiParaPauta, envelopeDaPassagem, envelopeDaTrava, falaDaTrava } from "./lei-da-forma.js";
 import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, comA, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
@@ -3736,6 +3739,10 @@ export default function Taverna() {
   const compassoRef = useRef(garantirCompasso(null));
   const texturaRef = useRef({});
   const baseMundoRef = useRef(garantirBase(null));
+  /* v9.165: o que a lei da forma lembra — quais andares já tiveram o
+     guardião vencido. Ref sem estado porque nenhuma tela desenha isto:
+     quem lê é o porteiro, a Pauta e o save. */
+  const formaRef = useRef(garantirForma(null));
   /* A SEMENTE PRECISA VIR DE REF (v9.14). Estas duas funções liam `mundo` e
      `nomeCampanha` do estado — e são chamadas de dentro de aplicarResposta,
      que é um useCallback com deps [pushMsgs]. Ou seja: a closure congelava os
@@ -4433,6 +4440,25 @@ export default function Taverna() {
     if (!n || estaMortoNaBase(baseMundoRef.current, n)) return;
     baseMundoRef.current = matarNaBase(baseMundoRef.current, n);
     setBaseMundo(baseMundoRef.current);
+    /* v9.165: a morte pode ser a CHAVE da lei da forma — se quem caiu é o
+       guardião do andar em que estamos, o SISTEMA abre a passagem e cria a
+       cena, aqui, no instante do registro. Nunca um pedido ao Narrador para
+       que ele "faça acontecer": foi esse pedido que produziu pegadas eternas. */
+    try {
+      const abriu = chaveDaMorte({
+        molde: moldeMundo(), semente: sementeMundo(), mapa: mapaRef.current,
+        forma: formaRef.current, lex: (mundoAtual() || {}).lexico, genero: generoMundo(),
+        cidadeAtual: cidadeAtualRef.current,
+      }, n);
+      if (abriu) {
+        formaRef.current = abriu.forma;
+        pushMsgs([{ autor: "sistema", texto: abriu.para
+          ? `⚿ ${abriu.guardiao.nomeCurto} caiu — a passagem para ${abriu.para} está aberta.`
+          : `⚿ ${abriu.guardiao.nomeCurto} caiu — e acima daqui não existe mais nada.` }]);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaPassagem((mundoAtual() || {}).lexico, moldeMundo(), abriu)}`;
+        salvar({ forma: formaRef.current });
+      }
+    } catch { /* a chave nunca pode custar o registro da morte */ }
   };
   /* CONSUMO PARA O CÂNONE (v9.14): o esconderijo esvazia de vez. Era a morte
      a ÚNICA coisa que saía da base; agora o achado sai também, e é isso que
@@ -4860,6 +4886,18 @@ export default function Taverna() {
        cheia a gente presente ganha dela, e é isso que se quer */
     p = porNaPauta(p, "daqui", g.daqui);
     p = porNaPauta(p, "naoPode", g.naoPode);
+    /* v9.165: A LEI DA FORMA na cena — quem guarda este andar, o estado da
+       maré do porto. Só parado em cidade: no meio da estrada a linha do
+       andar de trás seria mentira sobre o lugar onde a cena está. */
+    if (!jornadaRef.current) {
+      const lf = leiParaPauta({
+        molde: moldeMundo(), semente: sementeMundo(), mapa: mapaRef.current,
+        forma: formaRef.current, lex: (mundoAtual() || {}).lexico, genero: generoMundo(),
+        cidadeAtual: cidadeAtualRef.current, dia: diaRef.current,
+      });
+      p = porNaPauta(p, "onde", lf.onde);
+      p = porNaPauta(p, "naoPode", lf.naoPode);
+    }
     /* v9.105: O ARQUIVISTA. Ele não resume a campanha — recupera as três
        linhas que importam a ESTA cena, com esta gente, neste lugar. O
        custo é fixo para sempre: uma campanha de mil turnos entrega as
@@ -5626,6 +5664,29 @@ export default function Taverna() {
       (semA(r.de) === semA(de) && semA(r.para) === semA(para)) ||
       (semA(r.de) === semA(para) && semA(r.para) === semA(de))) || null;
   };
+  /* ---------------- O PORTEIRO DO MOLDE (v9.165) ----------------
+     A pergunta única antes de toda partida: a lei da forma deixa? Vive
+     numa função só porque há QUATRO bocas de partida — o rastro, o
+     resolver, a resposta à escolha e o botão — e a lei conferida em três
+     delas é exatamente como a quarta vira o furo. Na dúvida (erro, save
+     estranho, jornada já aberta), não morde: jogador preso é pior que
+     qualquer incoerência que a trava evitaria. */
+  const travaDaFormaDaqui = (destino) => {
+    try {
+      if (jornadaRef.current) return null;   // já na estrada: a lei mordeu (ou passou) na partida
+      return travaDaPartida({
+        molde: moldeMundo(), semente: sementeMundo(), mapa: mapaRef.current,
+        forma: formaRef.current, lex: (mundoAtual() || {}).lexico, genero: generoMundo(),
+        de: cidadeAtualRef.current, para: destino, dia: diaRef.current,
+      });
+    } catch { return null; }
+  };
+  /* A recusa inteira: a linha da tela e o envelope para o Narrador encenar
+     a tentativa sem deixá-la virar viagem. */
+  const recusarPartida = (trava, destino) => {
+    pushMsgs([{ autor: "sistema", texto: falaDaTrava(trava) }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaTrava(trava, cidadeAtualRef.current, destino)}`;
+  };
   /* ---------------- QUERER PARTIR (v9.57) ----------------
      O resolver só é chamado quando há INTENÇÃO DE IR. Sem esta porta, toda
      frase que mencionasse "a capital" viraria uma viagem — inclusive "o
@@ -5883,7 +5944,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current,
+      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
@@ -7024,6 +7085,10 @@ export default function Taverna() {
            na luta como um orc qualquer: sem Regra do Degrau e sem presença. */
         const comBase = (combateRef.current.inimigos || []).map((e) => {
           const ficha = chefePorNome(sementeMundo(), mapaRef.current, generoMundo(), e.nome, (mundoAtual() || {}).lexico)
+            /* v9.165: o guardião do andar vem ANTES da criatura genérica —
+               "Ogro, o Sino do Andar" casaria com o ogro comum do bestiário
+               e entraria na luta com o nível errado */
+            || guardiaoPorNome(sementeMundo(), mapaRef.current, generoMundo(), e.nome, (mundoAtual() || {}).lexico, moldeMundo())
             || criaturaPorNome(sementeMundo(), mapaRef.current, generoMundo(), e.nome, (mundoAtual() || {}).lexico);
           if (!ficha) return e;
           msgs.push(`📖 ${e.nome} está na base do mundo: nível ${ficha.nivel}${ficha.gd ? ` · GD ${ficha.gd}` : ""}${ficha.personalidade ? ` · ${ficha.personalidade}` : ""}.`);
@@ -8871,6 +8936,7 @@ export default function Taverna() {
     divindadeRef.current = garantirDivindade(null); setDivindade(divindadeRef.current);
     devocaoRef.current = garantirDevocao(null, mapaRef.current, divindadeRef.current); setDevocao(devocaoRef.current);
     if (!cap) { baseMundoRef.current = garantirBase(null); setBaseMundo(baseMundoRef.current); }
+    if (!cap) formaRef.current = garantirForma(null);
     confidenciasRef.current = [];
     mercadoRef.current = { comprados: {}, ambulante: null, pressoes: {}, gastos: {}, pechinchas: {} }; setMercado(mercadoRef.current);
     governosRef.current = {}; setGovernos({});
@@ -9041,6 +9107,10 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
          Depois disso, o número da ascensão passa a ser a soma do mapa. */
       devocaoRef.current = garantirDevocao(sv.devocao, mapaRef.current, divindadeRef.current); setDevocao(devocaoRef.current);
       baseMundoRef.current = garantirBase(sv.baseMundo); setBaseMundo(baseMundoRef.current);
+      /* v9.165: save de antes da lei da forma não tem `forma` — e a garantia
+         devolve o vazio, que para o porteiro quer dizer "nenhum andar vencido
+         ainda", que é o estado honesto de quem nunca enfrentou guardião */
+      formaRef.current = garantirForma(sv.forma);
       tentativasRef.current = garantirTentativas(sv.tentativas);
       fatosRef.current = garantirFatos(sv.fatos);
       /* v9.69: a CADÊNCIA do mundo também é estado de save. Sem isto os dois
@@ -10070,6 +10140,15 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       const escolhida = respostaDaEscolha(acao, pend.candidatos);
       escolhaPendenteRef.current = null;
       if (escolhida) {
+        /* v9.165: até a resposta à escolha passa pelo porteiro — a lista de
+           opções foi montada antes de a lei opinar */
+        const tvLei = travaDaFormaDaqui(escolhida.nome);
+        if (tvLei) {
+          pushMsgs([{ autor: "jogador", texto: acao }]);
+          recusarPartida(tvLei, escolhida.nome);
+          enviar(`Tentei partir para ${escolhida.nome}, mas o caminho está fechado. Narre a tentativa e o que a impede.`, personagem);
+          return true;
+        }
         sinalViagemRef.current = escolhida.nome; destinoViagemRef.current = escolhida.nome;
         pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `🧭 ${escolhida.nome} — a caminho.` }]);
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(escolhida.nome, cidadeAtualRef.current)}`;
@@ -10108,9 +10187,15 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
         } else {
           const part = detectarPartida(acao, ctxRastro);
           if (part) {
-            sinalViagemRef.current = part.destino || "";
-            destinoViagemRef.current = part.destino || "";
-            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(part.destino, cidadeAtualRef.current)}`;
+            /* v9.165: o porteiro confere ANTES de armar o sinal — se a lei
+               trava, o Narrador encena a tentativa e a viagem não nasce */
+            const tvLei = travaDaFormaDaqui(part.destino);
+            if (tvLei) recusarPartida(tvLei, part.destino);
+            else {
+              sinalViagemRef.current = part.destino || "";
+              destinoViagemRef.current = part.destino || "";
+              notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(part.destino, cidadeAtualRef.current)}`;
+            }
           } else if (querPartir(acao)) {
             /* ---------------- A TAVERNA NÃO É UMA CIDADE (v9.58) ----------------
                v9.61: o `&& !alvoLocalPedido(acao)` que morava aqui subiu para a
@@ -10144,9 +10229,15 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
             const r = resolverLugar(acao, mapaRef.current, { extra: pistasDoCanone(), excluir: cidadeAtualRef.current });
             if (r.tipo === "achei") {
               const nome = r.escolha.cidade.nome;
-              sinalViagemRef.current = nome; destinoViagemRef.current = nome;
-              pushMsgs([{ autor: "sistema", texto: `🧭 Entendi "${acao.trim()}" como ${nome}${r.escolha.porque.length ? ` (${r.escolha.porque.join(", ")})` : ""}.` }]);
-              notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(nome, cidadeAtualRef.current)}`;
+              /* v9.165: o mesmo porteiro da porta de cima — quatro bocas,
+                 uma lei */
+              const tvLei = travaDaFormaDaqui(nome);
+              if (tvLei) recusarPartida(tvLei, nome);
+              else {
+                sinalViagemRef.current = nome; destinoViagemRef.current = nome;
+                pushMsgs([{ autor: "sistema", texto: `🧭 Entendi "${acao.trim()}" como ${nome}${r.escolha.porque.length ? ` (${r.escolha.porque.join(", ")})` : ""}.` }]);
+                notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(nome, cidadeAtualRef.current)}`;
+              }
             } else if (r.tipo === "ambiguo") {
               escolhaPendenteRef.current = { candidatos: r.candidatos, oQueDisse: acao };
               pushMsgs([{ autor: "sistema", texto: perguntaDeAmbiguidade(r, acao) }]);
@@ -16955,6 +17046,18 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
 
   const viajar = (destino = "") => {
     if (acampadoRef.current) return;
+    /* v9.165: a quarta boca do porteiro — botões e sinais do Mestre chegam
+       direto aqui, sem passar pela interceptação. Confere ANTES de qualquer
+       efeito (rastro, clima, encontro): uma partida negada não deixa pegada. */
+    if (!jornadaRef.current) {
+      const alvoLei = destino || destinoViagemRef.current || "";
+      const tvLei = alvoLei ? travaDaFormaDaqui(alvoLei) : null;
+      if (tvLei) {
+        pushMsgs([{ autor: "sistema", texto: falaDaTrava(tvLei) }]);
+        destinoViagemRef.current = "";
+        return;
+      }
+    }
     /* pôr o pé na estrada de verdade encerra o sublocal: viagem entre cidades
        e um ponto nos arredores são estados que não convivem */
     if (lugarRef.current) { lugarRef.current = null; setLugar(null); }

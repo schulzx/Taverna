@@ -289,6 +289,13 @@ export const SISTEMAS = [
     pergunta: "de onde sai o equipamento raro aqui, quem o avalia e quem o compra" },
   { id: "viagem", porta: "viagem", rotulo: "COMO SE VAI DE UM LUGAR A OUTRO",
     pergunta: "como se atravessa distância neste mundo, quem viaja e quem não pode, e o que dá errado no caminho" },
+  /* v9.165: a carne da LEI DA FORMA. O osso é sempre o mesmo — a trava
+     conferida por código, a chave detectada pelo sistema —; o que o mundo
+     escolhe é como a abertura SE MOSTRA. É a pergunta que faz um portal
+     acender numa torre e uma permissão carimbada chegar numa cidade-estado,
+     sobre a mesma mecânica. */
+  { id: "passagem", porta: "viagem", rotulo: "O QUE ABRE UMA PASSAGEM FECHADA",
+    pergunta: "quando um caminho deste mundo está travado (um portal cego, uma rota fechada, uma porta que não reconhece), o que o abre e como a abertura se mostra a quem está perto — um portal que acende, uma chave que se forma, um selo que cede, uma permissão que chega" },
   { id: "cidade", porta: "cidade", rotulo: "COMO É UM ASSENTAMENTO",
     pergunta: "como é uma cidade daqui por dentro: o que se vê na rua, quem manda, do que as pessoas têm medo" },
   { id: "mercado", porta: "mercado", rotulo: "COMO SE COMPRA E SE VENDE",
