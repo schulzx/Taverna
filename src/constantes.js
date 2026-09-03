@@ -13,8 +13,8 @@ export const SLOGAN = "toda lenda começa aqui";
    do App — que é exatamente onde um número vai para ser esquecido.
    Aqui ela fica ao lado do resto do que a casa sabe sobre si mesma, e um
    varredor confere que o App não voltou a escrevê-la à mão. */
-export const VERSAO = "v9.160";
-export const LEVA = "o corpo sente";
+export const VERSAO = "v9.161";
+export const LEVA = "o palco do combate";
 
 export const XP_POR_NIVEL = (nivel) => xpDoProximoNivel(nivel) ?? XP_POR_DADIVA;
 export const MOEDAS_INICIAIS = 15;
@@ -56,6 +56,16 @@ export const FONT_CSS = `
 .tv-dano { animation: tvDano .7s ease both; }
 @keyframes tvAgonia { 0%, 100% { box-shadow: 0 0 6px rgba(216,106,91,.25); } 50% { box-shadow: 0 0 16px rgba(216,106,91,.6); } }
 .tv-agonia { animation: tvAgonia 1.6s ease infinite; }
+
+/* ---------------- O PALCO DO COMBATE (v9.161) ----------------
+   O numero de dano sobe do quadrado de quem apanhou e some (as unidades
+   sao as do SVG do tabuleiro: 1 = um quadrado de 1,5 m). A faixa do
+   chefe abre, respira e fecha sozinha — 3,2 s, o tempo de ler uma
+   frase curta duas vezes. */
+@keyframes tvFlutua { 0% { opacity: 0; transform: translateY(0.3px); } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-0.9px); } }
+.tv-flutua { animation: tvFlutua 1.35s ease-out both; }
+@keyframes tvFaixa { 0% { opacity: 0; transform: scaleY(0.3); } 10% { opacity: 1; transform: none; } 85% { opacity: 1; } 100% { opacity: 0; } }
+.tv-faixa { animation: tvFaixa 3.2s ease both; }
 
 /* ---------------- O ESPAÇO DO TRILHO (v9.156) ----------------
    O trilho de abas é lateral no monitor e barra inferior no telefone, e

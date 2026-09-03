@@ -97,9 +97,11 @@ sec("6. A LEGENDA DESCREVE O QUE ESTÁ DESENHADO");
      ensina o jogador a procurar o que não está lá. */
   const semEmoji = !/🧍|🛡|👹/.test(CODIGO);
   t("os emojis saíram do tabuleiro", semEmoji);
-  t("e saíram da legenda junto", semEmoji && /a inicial de cada um/.test(CODIGO));
-  t("a ficha desenha a inicial do nome", /String\(ent\.nome \|\| "\?"\)\.trim\(\)\.charAt\(0\)\.toUpperCase\(\)/.test(G));
-  t("o herói leva o próprio nome, e não um rótulo colado", /<Ficha ent=\{heroi\} rotulo="você"/.test(G));
+  /* v9.161: a inicial deu lugar ao ROSTO — a xilogravura fez a cara dizer
+     mais que a letra, e a legenda acompanhou de novo */
+  t("e saíram da legenda junto", semEmoji && /o rosto de cada um/.test(CODIGO));
+  t("a ficha desenha o rosto da casa", /<Rosto semente=\{sementeDe\(ent\)\} estado=\{estadoDe\(pv, pvMax, tipo === "inimigo"\)\} ente=\{ent\} \/>/.test(G));
+  t("o herói entra com a ficha completa por baixo", /<Ficha ent=\{\{ \.\.\.\(heroiFicha \|\| \{\}\), \.\.\.heroi \}\} rotulo="você"/.test(G));
   t("o balão de cada quadrado continua dizendo o lugar", /nomeDoLugar\(grade, x, y\)/.test(G));
 }
 
@@ -107,7 +109,10 @@ sec("7. O COMPACTO CONTINUA SENDO UM RELANCE");
 {
   /* A v9.34 já tinha diagnosticado o defeito oposto: tabuleiro sempre grande
      empurra a narração para fora da tela. O teto é a altura. */
-  t("o lado do quadrado tem teto pela altura do campo", /Math\.min\(34, 320 \/ g\.altura\)/.test(G));
+  /* v9.161: o teto subiu de 320 para 380 px — o combate era o painel mais
+     espremido da mesa — mas continua sendo um TETO: a lei protegida aqui é
+     que o compacto não empurra a narração para fora da tela */
+  t("o lado do quadrado tem teto pela altura do campo", /Math\.min\(40, 380 \/ g\.altura\)/.test(G));
   t("a tela cheia cabe na janela, não numa conta de pixel", /min\(94vw, \$\{Math\.round\(\(68 \* g\.largura\) \/ g\.altura\)\}vh\)/.test(G));
   t("e o botão de ampliar continua existindo", /⤢ ampliar/.test(G));
 }

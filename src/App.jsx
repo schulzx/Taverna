@@ -2398,7 +2398,7 @@ function PainelExame({ itens = [], raio = 0, aoPegar, aoFechar }) {
   );
 }
 
-function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover, grupo = [], passoM = 9, passoTotal = 9, ignoraDificil = false, previsao = null, mira = null, onMirar, alcanceMira = null, acaoBonus = false }) {
+function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover, grupo = [], heroiFicha = null, passoM = 9, passoTotal = 9, ignoraDificil = false, previsao = null, mira = null, onMirar, alcanceMira = null, acaoBonus = false }) {
   const [bolsaAberta, setBolsaAberta] = useState(false);
   if (!combate || !combate.inimigos || combate.inimigos.length === 0) return null;
   const eco = combate.economia || { acao: 1, extra: 1 };
@@ -2439,7 +2439,7 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
           zonas que ela vai varrer acendem antes do clique, com a conta de
           quantos companheiros estão dentro. O preço aparece antes de ser
           pago; a escolha continua inteiramente do jogador. */}
-      <GridDeBatalha combate={combate} grupo={grupo} previsao={previsao}
+      <GridDeBatalha combate={combate} grupo={grupo} heroiFicha={heroiFicha} previsao={previsao}
         passoM={passoM} passoTotal={passoTotal} ignoraDificil={ignoraDificil} podeMover={passoM >= 1.5} onMover={onMover}
         mira={mira} onMirar={onMirar} alcanceMira={alcanceMira} />
       {/* POÇÕES À MÃO (v9.2): as três mais úteis, a um toque.
@@ -17522,7 +17522,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               acaoTexto={resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1).texto}
               onDeclararAlvo={(i, nome) => { const a = [...alvosGolpeRef.current]; a[i] = nome; alvosGolpeRef.current = a; setAlvosGolpe([...a]); }}
               onLimparAlvos={() => { alvosGolpeRef.current = []; setAlvosGolpe([]); }}
-              onMover={moverPara} grupo={personagem.grupo || []}
+              onMover={moverPara} grupo={personagem.grupo || []} heroiFicha={personagem}
               {...(() => {
                 /* o passo que o grid acende é o que SOBROU da rodada, já
                    corrigido pelo que estiver selecionado (Voo alcança mais) */

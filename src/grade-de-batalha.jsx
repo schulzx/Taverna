@@ -23,6 +23,15 @@
 import React from "react";
 import { T } from "./constantes.js";
 import { garantirGrade, alcancaveisDe, ocupacaoDe, adjacentes, caminhar, quadradosDe, ladoDe, tamanhoDe, ehParede, ehEstorvo, terrenoDificil, temCobertura, nomeDoLugar, distanciaM, alcanceNatural, metrosTxt } from "./grid.js";
+/* v9.161: a ficha do tabuleiro ganha ROSTO — o mesmo da bolinha do grupo e
+   da carta de tarô, porque uma pessoa com três caras conforme o painel é o
+   defeito que o rosto único veio matar. E a faixa do chefe lê a MESMA
+   tabela de viradas que o sistema aplicou: `viradasFeitas` guarda o limiar
+   cruzado, e `fasesDoChefe` é determinístico pelo nome — reler não é
+   recalcular, é abrir o mesmo livro na mesma página. */
+import { Rosto } from "./rosto.jsx";
+import { sementeDe, estadoDe } from "./semente.js";
+import { fasesDoChefe, viradaPorId } from "./masmorras.js";
 
 const K = (x, y) => `${x},${y}`;
 
@@ -84,6 +93,9 @@ const Contorno = ({ linhas, cor, largura = 0.05, tracejado = null, opacidade = 1
    dela que sai o deslizamento. Quem move de verdade é o sistema; isto aqui
    só evita que a ficha pisque de um canto ao outro. */
 function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null }) {
+  /* o clipPath precisa de id único e ESTÁVEL: derivado de x,y ele trocaria
+     no meio do deslizamento e o rosto piscaria a cada passo */
+  const uid = React.useId();
   const r = lado * 0.40;
   const cx = x + lado / 2, cy = y + lado / 2;
   const pv = Math.max(0, ent.vida || 0), pvMax = Math.max(0, ent.vidaMax || 0);
@@ -91,22 +103,27 @@ function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null }) {
   const rArco = r + lado * 0.07;
   const volta = 2 * Math.PI * rArco;
   const corVida = frac == null ? cor : frac <= 1 / 3 ? T.danger : frac <= 2 / 3 ? T.amber : T.ok;
-  /* A INICIAL, E NÃO UM EMOJI (v9.125): 🧍🛡👹 eram invisíveis nos 18 px da
-     malha antiga e viraram desenho animado colorido quando o quadrado
-     cresceu — bitmap de outra paleta, no meio de um jogo que é âmbar sobre
-     violeta. A inicial no serifado da casa é ficha de tabuleiro: diz QUEM
-     é aquilo, não só de que lado está, e cresce sem trair o tom. */
-  const inicial = String(ent.nome || "?").trim().charAt(0).toUpperCase();
+  /* O ROSTO, E NÃO A INICIAL (v9.161): a inicial da v9.125 era o certo
+     enquanto o rosto era desenho animado — "T" dizia mais que um boneco.
+     A xilogravura inverteu a conta: Troll 1 e Troll 2 têm caras diferentes
+     (a semente sai do nome), o mago tem chapéu no tabuleiro como tem na
+     carta, e o estado muda a expressão AQUI também — o inimigo pressionado
+     fica furioso no quadrado dele. Uma pessoa, uma cara, em todo painel. */
+  const s = (2 * r * 0.94) / 64;
   return (
     <g style={{ transform: `translate(${cx}px, ${cy}px)`, transition: `transform ${ms}ms linear` }}>
       {tipo === "heroi" && <circle r={r * 1.5} fill={T.amber} opacity={0.12} />}
       <circle r={r} fill="#100e1a" stroke={cor} strokeWidth={lado * 0.055} />
+      <clipPath id={uid}><circle r={r * 0.94} /></clipPath>
+      <g clipPath={`url(#${uid})`} style={{ pointerEvents: "none" }}>
+        <g transform={`translate(${-32 * s} ${-30.5 * s}) scale(${s})`}>
+          <Rosto semente={sementeDe(ent)} estado={estadoDe(pv, pvMax, tipo === "inimigo")} ente={ent} />
+        </g>
+      </g>
       {frac != null && (
         <circle r={rArco} fill="none" stroke={corVida} strokeWidth={0.075} strokeLinecap="round"
           strokeDasharray={`${volta * frac} ${volta}`} transform="rotate(-90)" opacity={0.85} />
       )}
-      <text className="tv-display" textAnchor="middle" dominantBaseline="central" fill={cor}
-        style={{ fontSize: lado * 0.5, fontWeight: 700, pointerEvents: "none" }}>{inicial}</text>
       {grande && (
         <text className="tv-mono" textAnchor="middle" y={r + lado * 0.4} fill={cor} opacity={0.8}
           style={{ fontSize: 0.26, pointerEvents: "none" }}>{rotulo || ent.nome}</text>
@@ -115,8 +132,80 @@ function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null }) {
   );
 }
 
-export function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null }) {
+export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null }) {
   const [aberto, setAberto] = React.useState(false);
+
+  /* ---------------- O DANO FLUTUA (v9.161) ----------------
+     O golpe acontecia em dois lugares desligados: o número na linha do
+     sistema e o anel de vida encolhendo. Agora o próprio tabuleiro diz
+     QUANTO e EM QUEM — o número sobe do quadrado de quem apanhou e some.
+     Escuta a MUDANÇA da vida, como o clarão do bloco do herói: a vida cai
+     por golpe, veneno, área, e um efeito sobre o número pega todos. */
+  const seqRef = React.useRef(0);
+  const vidasRef = React.useRef(new Map());
+  const [flutuantes, setFlutuantes] = React.useState([]);
+  React.useEffect(() => {
+    if (!combate) { vidasRef.current = new Map(); return; }
+    const agora = new Map();
+    const todos = [];
+    const h = combate.heroi;
+    if (h && h.x != null) todos.push({ ent: { ...(heroiFicha || {}), ...h }, id: "heroi" });
+    (combate.aliados || []).forEach((a, i) => { const ent = { ...a, ...(grupo[i] || {}), x: a.x, y: a.y }; if (ent.x != null) todos.push({ ent, id: `al:${ent.nome || i}` }); });
+    (combate.inimigos || []).forEach((e, i) => { if (e.x != null) todos.push({ ent: e, id: `in:${e.nome || i}` }); });
+    const novos = [];
+    for (const { ent, id } of todos) {
+      const v = Math.max(0, ent.vida || 0);
+      agora.set(id, v);
+      const antes = vidasRef.current.get(id);
+      if (antes != null && v !== antes) {
+        const delta = v - antes;
+        novos.push({
+          chave: seqRef.current++,
+          x: ent.x + ladoDe(ent) / 2, y: ent.y + 0.22,
+          texto: delta > 0 ? `+${delta}` : `${delta}`,
+          cor: delta > 0 ? T.ok : "#FF9A85",
+        });
+      }
+    }
+    vidasRef.current = agora;
+    if (novos.length) {
+      setFlutuantes((f) => [...f, ...novos]);
+      const chaves = new Set(novos.map((n) => n.chave));
+      const tid = setTimeout(() => setFlutuantes((f) => f.filter((x) => !chaves.has(x.chave))), 1400);
+      return () => clearTimeout(tid);
+    }
+  }, [combate]);
+
+  /* ---------------- A FAIXA DO CHEFE (v9.161) ----------------
+     A virada já valia (v9.151: ameaça, defesa, capangas ou vida — números
+     que o sistema aplica) e já saía como linha no chat. Mas a linha rola
+     para cima com o resto; o MOMENTO merece o palco. `viradasFeitas`
+     guarda o limiar cruzado, e o nome do chefe reabre a mesma tabela
+     determinística — a faixa não decide nada, anuncia o que foi feito. */
+  const viradasRef = React.useRef(null);
+  const [faixa, setFaixa] = React.useState(null);
+  React.useEffect(() => {
+    const lista = (combate && combate.inimigos) || [];
+    /* na primeira leitura só se memoriza: uma luta retomada de um save no
+       meio da segunda fase não pode reanunciar a virada antiga */
+    if (viradasRef.current == null) {
+      viradasRef.current = new Map(lista.map((e) => [e.nome, (e.viradasFeitas || []).length]));
+      return;
+    }
+    for (const e of lista) {
+      const n = (e.viradasFeitas || []).length;
+      const antes = viradasRef.current.get(e.nome) || 0;
+      viradasRef.current.set(e.nome, n);
+      if (n > antes) {
+        const limiar = (e.viradasFeitas || [])[n - 1];
+        const fase = fasesDoChefe(e.nome).find((x) => x.em === limiar);
+        const v = viradaPorId(fase && fase.virada);
+        setFaixa({ nome: e.nome, diz: v.diz, nota: v.nota, chave: seqRef.current++ });
+        const tid = setTimeout(() => setFaixa(null), 3200);
+        return () => clearTimeout(tid);
+      }
+    }
+  }, [combate]);
   /* ---------------- ANDAR OU MIRAR (v9.41) ----------------
      O toque no quadrado passou a querer dizer duas coisas, e duas coisas
      sem aviso é ambiguidade. Então há um modo, e ele diz na cara qual é:
@@ -242,7 +331,18 @@ export function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9
        diagnosticado — um tabuleiro de 16×16 com 34 px de lado empurra a
        narração para fora da tela. Então o teto é a ALTURA: 320 px de campo,
        e o quadrado fica com o que sobrar. A tela cheia é que serve o dedo. */
-    <div style={{ width: "100%", maxWidth: grande ? `min(94vw, ${Math.round((68 * g.largura) / g.altura)}vh)` : g.largura * Math.min(34, 320 / g.altura), aspectRatio: `${g.largura} / ${g.altura}`, margin: "0 auto" }}>
+    /* v9.161: o campo compacto cresceu de 320 para 380 px de teto — o
+       combate é o momento mais tenso da mesa e era o painel mais espremido
+       dela. `position: relative` é o chão da faixa do chefe. */
+    <div style={{ position: "relative", width: "100%", maxWidth: grande ? `min(94vw, ${Math.round((68 * g.largura) / g.altura)}vh)` : g.largura * Math.min(40, 380 / g.altura), aspectRatio: `${g.largura} / ${g.altura}`, margin: "0 auto" }}>
+      {faixa && (
+        <div className="tv-faixa" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", zIndex: 5 }}>
+          <div className="px-4 py-2 text-center w-full" style={{ background: "linear-gradient(90deg, transparent, rgba(102,26,26,0.94) 16%, rgba(102,26,26,0.94) 84%, transparent)" }}>
+            <div className="tv-display" style={{ color: T.amberSoft, fontSize: "clamp(15px, 3vw, 24px)", fontWeight: 700, letterSpacing: 1 }}>💀 {faixa.nome} {faixa.diz}</div>
+            <div className="tv-mono text-[9px] uppercase tracking-widest mt-0.5" style={{ color: T.ink, opacity: 0.85 }}>{faixa.nota}</div>
+          </div>
+        </div>
+      )}
       <svg viewBox={`0 0 ${g.largura} ${g.altura}`} style={{ width: "100%", height: "100%", display: "block", borderRadius: 10, background: "#141020", border: `1px solid ${T.line}` }}>
         <defs>
           <pattern id="tv-lama" width="0.5" height="0.5" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
@@ -354,12 +454,26 @@ export function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9
             <Ficha key={`in${e.nome}-${i}`} ent={e} tipo="inimigo" cor={T.danger} x={e.x} y={e.y} lado={ladoDe(e)} ms={260} grande={grande} />
           ) : null)}
           {heroi && heroi.x != null && (
-            <Ficha ent={heroi} rotulo="você" tipo="heroi" cor={T.amber} lado={ladoDe(heroi)} grande={grande}
+            /* a ficha completa entra por baixo: a entidade da grade só tem
+               nome e lugar, e o rosto precisa da classe e da vida — a
+               posição da grade ganha por cima, que é a verdade do turno */
+            <Ficha ent={{ ...(heroiFicha || {}), ...heroi }} rotulo="você" tipo="heroi" cor={T.amber} lado={ladoDe(heroi)} grande={grande}
               x={andando ? andando.rota[andando.i].x : heroi.x}
               y={andando ? andando.rota[andando.i].y : heroi.y}
               ms={andando ? andando.ms : 260} />
           )}
         </g>
+
+        {/* O DANO FLUTUA: por cima das fichas, fora do alcance do toque */}
+        {flutuantes.length > 0 && (
+          <g style={{ pointerEvents: "none" }}>
+            {flutuantes.map((f) => (
+              <text key={f.chave} className="tv-mono tv-flutua" x={f.x} y={f.y} textAnchor="middle"
+                fill={f.cor} stroke="#0B0912" strokeWidth="0.035" paintOrder="stroke"
+                style={{ fontSize: 0.55, fontWeight: 700 }}>{f.texto}</text>
+            ))}
+          </g>
+        )}
 
         {/* A CAMADA DO TOQUE, por último e por cima: cada quadrado continua
             sendo um alvo com nome, inclusive os que não dão para clicar —
@@ -453,7 +567,7 @@ export function GridDeBatalha({ combate, grupo = [], previsao = null, passoM = 9
               legenda que descreve o desenho anterior é pior do que nenhuma —
               ela ensina a procurar o que não está lá. */}
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-3 tv-mono text-[10px]" style={{ color: T.inkDim, maxWidth: "min(640px, 100%)" }}>
-            <span style={{ color: T.amberSoft }}>◍ a inicial de cada um</span>
+            <span style={{ color: T.amberSoft }}>◍ o rosto de cada um</span>
             <span>· o anel é a vida</span>
             <span>· <b style={{ color: T.amber }}>tracejado dourado</b>: até onde se chega neste turno</span>
             <span>· <b style={{ color: T.violetSoft }}>tracejado roxo</b>: até onde a habilidade alcança</span>
