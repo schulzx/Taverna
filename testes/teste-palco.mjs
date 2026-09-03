@@ -130,7 +130,12 @@ sec("5. A COSTURA — no topo, e sem inventar");
   const iArea = APP.indexOf("tv-scroll tv-espaco-abas flex-1 overflow-y-auto");
   const iCab = APP.indexOf("<CabecalhoDaCena cena={cenaDoPalco()} />");
   t("fica dentro da área que rola", iCab > iArea);
-  t("e é a primeira coisa dela", iCab - iArea < 400);
+  /* v9.170 (mesa-jogo-v2): o selo "MESTRE ATIVO" passou a abrir o painel da
+     narrativa, então o cabeçalho da cena virou a SEGUNDA coisa. A folga
+     sobe de 400 para 900 caracteres para caber o selo — o que a lei
+     protege é que o lugar venha antes da primeira palavra do Narrador, e
+     isso continua valendo. */
+  t("e vem antes da primeira palavra do Narrador", iCab - iArea < 900);
   /* o tom entra como VÉU sobre o painel da casa, e não como fundo próprio */
   t("a cor é um véu, não um fundo", /linear-gradient\(100deg, \$\{tom\.cor\}\$\{veu/.test(APP));
   t("com a barra do bioma na borda", /borderLeft: `3px solid \$\{tom\.cor\}`/.test(APP));

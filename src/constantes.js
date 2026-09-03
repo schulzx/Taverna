@@ -13,8 +13,8 @@ export const SLOGAN = "toda lenda começa aqui";
    do App — que é exatamente onde um número vai para ser esquecido.
    Aqui ela fica ao lado do resto do que a casa sabe sobre si mesma, e um
    varredor confere que o App não voltou a escrevê-la à mão. */
-export const VERSAO = "v9.169";
-export const LEVA = "a porta redesenhada";
+export const VERSAO = "v9.170";
+export const LEVA = "a mesa redesenhada";
 
 export const XP_POR_NIVEL = (nivel) => xpDoProximoNivel(nivel) ?? XP_POR_DADIVA;
 export const MOEDAS_INICIAIS = 15;
@@ -99,8 +99,8 @@ export const FONT_CSS = `
 .tv-espaco-abas { padding-right: 0; padding-bottom: 4.75rem; }
 .tv-margem-abas { margin-right: 0; }
 @media (min-width: 768px) {
-  .tv-espaco-abas { padding-right: 68px; padding-bottom: 0; }
-  .tv-margem-abas { margin-right: 68px; }
+  .tv-espaco-abas { padding-right: 0; padding-bottom: 0; }
+  .tv-margem-abas { margin-right: 0; }
 }
 
 /* ---------------- A CORTIÇA E O PAPEL (v9.127) ----------------

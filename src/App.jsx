@@ -116,7 +116,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo } from "./ui.jsx";
+import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre } from "./ui.jsx";
 import heroTaverna from "./assets/taverna-hero.png";
 import marcaTaverna from "./assets/taverna-marca.jpg";
 import { CartaDeTaro, CartaVerso } from "./carta-taro.jsx";
@@ -776,26 +776,56 @@ function CabecalhoDaCena({ cena }) {
   );
 }
 
+/* ---------------- O TRILHO (v9.170) ----------------
+   Redesenhado em `mesa-jogo-v2`: botões quadrados de 72, ícone de traço
+   em cima e rótulo embaixo, numa coluna que vive DENTRO do fluxo em vez
+   de flutuar sobre a lateral direita.
+
+   E é essa a mudança que importa. Até aqui o trilho era `fixed right-0` e
+   o painel lateral também — os dois dividiam a mesma borda, e o trilho
+   ficava POR CIMA do painel aberto. A coluna em fluxo acaba com a
+   sobreposição, e `tv-espaco-abas` deixa de precisar reservar 68px à
+   direita no monitor (no telefone o trilho continua sendo barra de baixo,
+   porque o polegar alcança a base e não alcança a lateral).
+
+   AS ABAS SÃO AS DO JOGO, NÃO AS DO DESENHO. O desenho propunha BESTIAR /
+   ITENS / BÔLSA / MAPA / CÓDEX / DIÁRIO — um conjunto que não existe aqui
+   e que deixaria as dez sub-abas de Gestão sem porta, além de sumir com a
+   Ascensão. O que veio do desenho é a FORMA; o destino continua sendo o
+   que o jogo tem, e cada um ganhou um glifo distinto (o desenho repetia o
+   livro em dois botões diferentes). */
+const GLIFO_DA_ABA = {
+  gestao: IconeEspada,
+  diario: IconeLivro,
+  inv: IconeBolsa,
+  mapa: IconeMapa,
+  codex: IconeCaveira,
+  ascensao: IconeLosango,
+};
+
 function TrilhoAbas({ abaAtiva, aoClicar, nGrupo, desperto, codexAberto = true }) {
   return (
-    /* v9.156: BARRA EMBAIXO NO TELEFONE, trilho na lateral no monitor.
-       O polegar alcança a base da tela; a lateral direita de um telefone
-       de seis polegadas, não. */
-    <nav className="fixed z-40 flex gap-1.5 inset-x-0 bottom-0 flex-row justify-around px-2 py-1.5 md:inset-x-auto md:bottom-auto md:right-0 md:top-1/2 md:-translate-y-1/2 md:flex-col md:justify-start md:py-2 md:pl-1.5 md:px-0" aria-label="Painéis"
-      style={{ background: T.bg, borderTop: `1px solid ${T.line}` }}>
+    <nav className="flex gap-1.5 shrink-0 fixed inset-x-0 bottom-0 z-40 flex-row justify-around px-2 py-1.5 md:static md:z-auto md:flex-col md:justify-start md:px-0 md:py-0 md:gap-3"
+      aria-label="Painéis" style={{ background: T.bg }}>
       {ABAS.filter((a) => (!a.soDesperto || desperto) && (a.id !== "codex" || codexAberto)).map((aba) => {
         const ativa = abaAtiva === aba.id;
+        const Glifo = GLIFO_DA_ABA[aba.id];
         return (
           <button key={aba.id} onClick={() => aoClicar(ativa ? null : aba.id)}
-            className="flex flex-1 md:flex-none flex-col items-center justify-center gap-0.5 rounded-xl md:rounded-l-xl md:rounded-r-none transition-all"
-            style={{ minWidth: 52, maxWidth: 96, height: 52, background: ativa ? T.panelSoft : T.panel, /* v9.152: as tres bordas separadas, e nao `border` + `borderRight`. O
-               React avisa a cada render que misturar a forma curta com a longa
-               produz bug de estilo — e o aviso repetido enche o console, que e
-               a mesma rede onde eu procuro defeito de verdade. */
-              borderTop: `1px solid ${ativa ? T.amber : T.line}`, borderBottom: `1px solid ${ativa ? T.amber : T.line}`, borderLeft: `1px solid ${ativa ? T.amber : T.line}`, color: ativa ? T.amberSoft : T.inkDim }}>
-            <span className="text-base leading-none">{aba.icone}</span>
-            <span className="tv-mono text-[9px] uppercase tracking-wider">{aba.rotulo}</span>
-            {aba.id === "gestao" && nGrupo > 0 && <span className="tv-mono text-[9px] leading-none rounded-full px-1" style={{ background: T.violet, color: T.onSecond }}>{nGrupo}</span>}
+            className="relative flex flex-1 md:flex-none flex-col items-center justify-center gap-1.5 rounded-lg transition-all h-[52px] md:w-[72px] md:h-[72px]"
+            style={{
+              minWidth: 52, maxWidth: 96,
+              background: ativa ? T.panelSoft : T.panel,
+              border: `1px solid ${ativa ? T.amber : T.line}`,
+              color: ativa ? T.amberSoft : T.inkDim,
+            }}>
+            {Glifo
+              ? <Glifo tamanho={24} cor={ativa ? T.amberSoft : T.inkDim} />
+              : <span className="text-base leading-none">{aba.icone}</span>}
+            <span className="tv-mono text-[9px] uppercase tracking-[0.9px]">{aba.rotulo}</span>
+            {aba.id === "gestao" && nGrupo > 0 && (
+              <span className="absolute top-1 right-1 tv-mono text-[9px] leading-none rounded-full px-1" style={{ background: T.violet, color: T.onSecond }}>{nGrupo}</span>
+            )}
           </button>
         );
       })}
@@ -3347,7 +3377,7 @@ function TelaMenu({ irNovo, continuar, temSave, criarSala, entrarSala, aoLerArqu
             style={{ background: T.panel, border: `2px solid ${T.amber}`, boxShadow: "0 0 16px rgba(232,163,61,0.2)" }}>
             <img src={marcaTaverna} alt="" className="w-full h-full object-cover" />
           </div>
-          <h1 className="tv-display text-[48px] leading-[1.05] uppercase" style={{ color: T.ink }}>A {BRAND}</h1>
+          <h1 className="tv-display text-[48px] leading-[1.05] uppercase" style={{ color: T.ink }}>{BRAND}</h1>
         </div>
         <p className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.amberSoft }}>{SLOGAN}</p>
       </div>
@@ -17833,7 +17863,18 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       {fase === "jogo" && personagem && (
         <div className="flex flex-1 min-h-0 relative">
           <main className="flex-1 flex flex-col min-w-0">
-            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll tv-espaco-abas flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-4" >
+            {/* ---------------- O PAINEL DA NARRATIVA (v9.170) ----------------
+                Vem de `mesa-jogo-v2`: o log deixa de flutuar no fundo da tela
+                e passa a morar numa moldura própria, com um fundo um tom
+                acima do chão. É o que separa "o texto que o jogo escreve" de
+                "a moldura em que o jogo acontece" — e é o que dá ao selo do
+                Mestre um lugar para existir. */}
+            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll tv-espaco-abas flex-1 overflow-y-auto mx-4 md:mx-8 mt-3 md:mt-4 px-5 md:px-8 py-6 space-y-4 rounded-2xl"
+              style={{ background: "rgba(23,19,34,0.48)", border: `1px solid ${T.line}` }} >
+              <div className="flex items-center gap-2">
+                <PontoMestre tamanho={16} />
+                <span className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.amberSoft }}>Mestre ativo</span>
+              </div>
               <CabecalhoDaCena cena={cenaDoPalco()} />
               {agruparMensagens(mensagens).map((item, k) => {
                 /* v9.32: as linhas do sistema chegam AGRUPADAS. Uma rodada de
@@ -18297,31 +18338,41 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   herói na mesma tela eram duas verdades visuais. */}
               {(() => {
                 const grave = personagem.vidaMax > 0 && personagem.vida / personagem.vidaMax <= 1 / 3;
+                /* v9.170 (mesa-jogo-v2): o retrato cresce de 34 para 44 e o
+                   selo de nível vira etiqueta no canto; PV e PM deixam de ser
+                   duas barrinhas anônimas e passam a ser barras ROTULADAS de
+                   140, com o valor à direita — a vida do herói para de ter o
+                   mesmo peso visual que o relógio. O clarão e o pulso ficam:
+                   um golpe que só muda um número é um golpe que não se sente.
+
+                   (Comentário em JS, e não em JSX: aqui dentro do `return` ele
+                   seria um segundo nó raiz, que é erro de sintaxe — a casa já
+                   tropeçou nisso duas vezes.) */
                 return (
               <button onClick={() => setAba("gestao")} title="Abrir ficha"
-                className={`flex items-center gap-2 rounded-xl pl-1 pr-2 py-1 shrink-0 ${feridaRecente ? "tv-dano" : grave ? "tv-agonia" : ""}`}
+                className={`flex items-center gap-4 rounded-xl px-2 py-1.5 shrink-0 ${feridaRecente ? "tv-dano" : grave ? "tv-agonia" : ""}`}
                 style={{ background: T.panel, border: `1px solid ${feridaRecente || grave ? T.danger : T.line}` }}>
-                <div className="relative shrink-0" style={{ paddingBottom: 2, paddingRight: 2 }}>
-                  <Retrato semente={sementeDe(personagem)} ente={personagem} semCarta tamanho={34} anel={grave ? T.danger : T.amber} estado={estadoDe(personagem.vida, personagem.vidaMax)} />
-                  <span className="absolute bottom-0 right-0 w-4 h-4 flex items-center justify-center" title={`Nível ${personagem.nivel}`}
-                    style={{ background: T.amber, borderRadius: 3, transform: "rotate(45deg)", border: `1.5px solid ${T.panel}` }}>
-                    <span className="tv-mono text-[8px]" style={{ transform: "rotate(-45deg)", color: T.onAccent, fontWeight: 700 }}>{personagem.nivel}</span>
+                <div className="relative shrink-0">
+                  <Retrato semente={sementeDe(personagem)} ente={personagem} semCarta tamanho={44} anel={grave ? T.danger : T.amber} estado={estadoDe(personagem.vida, personagem.vidaMax)} />
+                  <span className="absolute -bottom-1 -right-1 flex items-center justify-center rounded" title={`Nível ${personagem.nivel}`}
+                    style={{ background: T.amber, padding: "1px 4px" }}>
+                    <span className="tv-mono text-[9px] tracking-[0.9px]" style={{ color: T.bg }}>NIV {personagem.nivel}</span>
                   </span>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-1.5" title={`Vida: ${personagem.vida}/${personagem.vidaMax}`}>
-                    <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: T.bg }}>
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(0, Math.min(100, (personagem.vida / (personagem.vidaMax || 1)) * 100))}%`, background: grave ? T.danger : T.amber }} />
+                {[
+                  { rot: "PV (VIDA)", atual: personagem.vida, max: personagem.vidaMax, cor: grave ? T.danger : T.amber, leito: "rgba(232,163,61,0.13)" },
+                  { rot: "PM (MANA)", atual: personagem.mana, max: personagem.manaMax, cor: T.violetSoft, leito: "rgba(176,165,236,0.13)" },
+                ].map((b) => (
+                  <div key={b.rot} className="flex flex-col gap-1 w-[110px] md:w-[140px]" title={`${b.rot}: ${b.atual}/${b.max}`}>
+                    <div className="flex items-baseline justify-between">
+                      <span className="tv-mono text-[9px] tracking-[0.9px]" style={{ color: T.ink }}>{b.rot}</span>
+                      <span className="tv-mono text-[11px]" style={{ color: T.ink, fontWeight: 700 }}>{b.atual}/{b.max}</span>
                     </div>
-                    <span className="tv-mono text-[9px]" style={{ color: grave ? T.danger : T.ink }}>{personagem.vida}<span style={{ color: T.inkDim }}>/{personagem.vidaMax}</span></span>
-                  </div>
-                  <div className="flex items-center gap-1.5" title={`Mana: ${personagem.mana}/${personagem.manaMax}`}>
-                    <div className="w-20 h-1 rounded-full overflow-hidden" style={{ background: T.bg }}>
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(0, Math.min(100, (personagem.mana / (personagem.manaMax || 1)) * 100))}%`, background: T.violet }} />
+                    <div className="h-2.5 rounded p-[2px] flex items-center" style={{ background: b.leito, border: `1px solid ${T.line}` }}>
+                      <div className="h-1.5 rounded-sm transition-all duration-500" style={{ width: `${Math.max(0, Math.min(100, (b.atual / (b.max || 1)) * 100))}%`, background: b.cor }} />
                     </div>
-                    <span className="tv-mono text-[9px]" style={{ color: T.violetSoft }}>{personagem.mana}<span style={{ color: T.inkDim }}>/{personagem.manaMax}</span></span>
                   </div>
-                </div>
+                ))}
               </button>
                 );
               })()}
@@ -18491,8 +18542,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   </div>
                 </div>
               )}
-              {/* LINHA 2 — escrita: largura inteira, campo alto e confortável */}
-              <div className="flex gap-2 rounded-2xl p-2 min-w-0" style={{ background: T.panel, border: `1px solid ${milagreSel ? T.amber : habsSel.length ? T.violet : T.line}` }}>
+              {/* LINHA 2 — escrita: largura inteira, campo alto e confortável.
+                  v9.170 (mesa-jogo-v2): o campo passa a ter o FUNDO DO CHÃO
+                  dentro da barra de painel — ele afunda em vez de flutuar —, e
+                  o balão à esquerda diz, sem palavra nenhuma, que ali se
+                  escreve. A borda continua mudando de cor com o que está
+                  armado (milagre em âmbar, habilidade em violeta). */}
+              <div className="flex items-center gap-3 rounded-lg p-2 min-w-0" style={{ background: T.bg, border: `1.5px solid ${milagreSel ? T.amber : habsSel.length ? T.violet : T.line}` }}>
+                <span className="shrink-0 pl-2"><IconeBalao tamanho={16} /></span>
                 <input value={entrada} onChange={(e) => setEntrada(e.target.value)} onKeyDown={(e) => e.key === "Enter" && agir(entrada)}
                   placeholder={rolagem ? "Role o dado abaixo…" : milagreSel ? `Como você manifesta ${milagreSel.nome}?` : habsSel.length ? `Como você usa ${habsSel.map((h) => h.nome).join(" e ")}?` : "O que você faz? Fale, aja, explore…"}
                   disabled={bloqueado} className="flex-1 bg-transparent outline-none tv-body text-[15px] px-3 py-1.5 min-w-0" style={{ color: T.ink }} />

@@ -49,8 +49,16 @@ sec("2. O BLOCO SENTE — as três caras dele");
   const bloco = APP.slice(APP.indexOf("O BLOCO DO HERÓI"), APP.indexOf("O BLOCO DO HERÓI") + 3200);
   t("o retrato reage pelo estado", /estado=\{estadoDe\(personagem\.vida, personagem\.vidaMax\)\}/.test(bloco));
   t("o anel avermelha na agonia", /anel=\{grave \? T\.danger : T\.amber\}/.test(bloco));
-  t("a barra de vida também", /background: grave \? T\.danger : T\.amber/.test(bloco));
-  t("e o nível mora no losango", /rotate\(45deg\)/.test(bloco));
+  /* v9.170 (mesa-jogo-v2): a barra de vida passou a ser montada por tabela
+     — as duas barras nascem do mesmo `map`, e a cor da agonia entra pelo
+     campo `cor` de uma delas em vez de estar escrita no JSX. */
+  t("a barra de vida também avermelha", /cor: grave \? T\.danger : T\.amber/.test(bloco));
+  /* e o nível saiu do losango: virou ETIQUETA "NIV n" colada no canto do
+     retrato, que é o que o redesenho pede. O losango girado não sobreviveu
+     ao retrato de 44 — a 34 ele cabia no canto, a 44 ele briga com a
+     moldura. O que a lei protege continua sendo "o nível é visível sem
+     abrir nada". */
+  t("e o nível vira etiqueta no canto", /NIV \{personagem\.nivel\}/.test(bloco));
 }
 
 sec("3. UM RETRATO DO HERÓI POR TELA");
@@ -62,7 +70,10 @@ sec("3. UM RETRATO DO HERÓI POR TELA");
   t("o bloco abre a ficha", /<button onClick=\{\(\) => setAba\("gestao"\)\} title="Abrir ficha"/.test(APP));
   /* dentro de botão, o retrato não pode abrir carta — mesmo contrato do
      antigo atalho */
-  t("sem carta dentro do botão", /ente=\{personagem\} semCarta tamanho=\{34\}/.test(APP));
+  /* v9.170: o retrato cresceu de 34 para 44 no redesenho. O que a lei
+     protege é o `semCarta` — dentro de um botão, abrir a carta de tarô
+     seria um clique dentro de outro. */
+  t("sem carta dentro do botão", /ente=\{personagem\} semCarta tamanho=\{44\}/.test(APP));
   /* as barrinhas anônimas de PV/PM DO HERÓI saíram — o bloco é a única
      casa delas. As BarraMini que ficaram são de outras pessoas: o
      companheiro no cartão dele e o inimigo no combate. */
