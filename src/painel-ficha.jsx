@@ -18,7 +18,7 @@
    ============================================================ */
 
 import React from "react";
-import { T, ATRIBUTOS } from "./constantes.js";
+import { T, ATRIBUTOS, XP_POR_NIVEL } from "./constantes.js";
 import { poderDe, poderDoGrupo, formatarPoder, contaDoPoder } from "./poder.js";
 import { Retrato } from "./ui.jsx";
 import { sementeDe, estadoDe } from "./semente.js";
@@ -27,25 +27,44 @@ import { PERICIAS, garantirPericias, bonusDePericia, passivoDe, limiteTreinadas,
 import { garantirDadosVida } from "./descanso.js";
 import { chamadoDaRaca } from "./lexico.js";
 import { fichaDoItem } from "./itens.js";
+/* v9.159: os leitores dos escudos do corpo e do passo. Nenhum deles decide
+   nada aqui — tracos.js, dadivas.js, danos.js e movimento.js já calculavam
+   tudo isto para o combate; a ficha só passou a MOSTRAR o que sempre valeu. */
+import { efeitoDe, textoDoTraco } from "./tracos.js";
+import { imunidadesDe } from "./dadivas.js";
+import { resistenciasEquipadas, rotuloDano, iconeDano } from "./danos.js";
+import { CONDICOES } from "./condicoes.js";
+import { deslocamentoDe } from "./movimento.js";
 
 const sinal = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
 /* ---------------- peças ---------------- */
 
-/* O bloco de atributo: modificador GRANDE, valor pequeno embaixo.
-   O ponto de destaque é a proficiência — o anel âmbar diz, sem
-   legenda, "aqui você soma o bônus de classe". */
+/* O bloco de atributo virou MEDALHÃO (v9.159): o hexágono das fichas de
+   mesa modernas, com o modificador grande dentro e o valor bruto num
+   selo que morde a ponta de baixo. A proficiência continua sendo a
+   borda âmbar — a forma mudou, a linguagem não.
+
+   O botão de gastar ponto mora FORA do hexágono: clip-path corta os
+   filhos junto com a caixa, e um botão cortado ao meio é um botão que
+   ninguém acha. */
+const HEXAGONO = "polygon(50% 0%, 100% 26%, 100% 74%, 50% 100%, 0% 74%, 0% 26%)";
 function BlocoAtributo({ id, nome, valor, mod, proficiente, onSubir, podeSubir }) {
   return (
-    <div className="relative rounded-xl flex flex-col items-center justify-center py-2"
-      style={{ background: T.panel, border: `1.5px solid ${proficiente ? T.amber : T.line}`, minHeight: "74px" }}
+    <div className="relative pb-2.5"
       title={`${nome}${proficiente ? " — proficiente: soma o bônus de classe nas rolagens" : ""}`}>
-      <div className="tv-mono text-[8px] uppercase tracking-widest" style={{ color: proficiente ? T.amberSoft : T.inkDim }}>{nome.slice(0, 3)}</div>
-      <div className="tv-display text-2xl leading-none" style={{ color: T.ink, fontWeight: 700 }}>{sinal(mod)}</div>
-      <div className="tv-mono text-[9px] mt-0.5 px-1.5 rounded-full" style={{ background: T.panelSoft, color: T.inkDim }}>{valor}</div>
+      <div style={{ clipPath: HEXAGONO, background: proficiente ? T.amber : T.line, padding: "1.5px" }}>
+        <div className="flex flex-col items-center justify-center py-2.5"
+          style={{ clipPath: HEXAGONO, background: T.panel, minHeight: "72px" }}>
+          <div className="tv-mono text-[8px] uppercase tracking-widest" style={{ color: proficiente ? T.amberSoft : T.inkDim }}>{nome.slice(0, 3)}</div>
+          <div className="tv-display text-2xl leading-none" style={{ color: T.ink, fontWeight: 700 }}>{sinal(mod)}</div>
+        </div>
+      </div>
+      <div className="absolute left-1/2 bottom-0 tv-mono text-[9px] px-1.5 py-px rounded-full"
+        style={{ transform: "translateX(-50%)", background: T.panelSoft, border: `1px solid ${proficiente ? T.amber : T.line}`, color: T.inkDim }}>{valor}</div>
       {podeSubir && (
         <button onClick={() => onSubir && onSubir(id)} title={`Gastar ponto em ${nome}`}
-          className="absolute -top-1.5 -right-1.5 tv-mono text-[10px] w-5 h-5 rounded-full leading-none"
+          className="absolute -top-1.5 -right-1 tv-mono text-[10px] w-5 h-5 rounded-full leading-none"
           style={{ background: T.amber, color: T.onAccent, border: `1px solid ${T.amber}`, fontWeight: 700 }}>+</button>
       )}
     </div>
@@ -64,16 +83,20 @@ function Vital({ rotulo, valor, sub, cor = T.ink, titulo }) {
   );
 }
 
-function Barra({ atual, max, cor, rotulo }) {
+/* `forte` é a barra que se olha primeiro (v9.159): a vida ganha o dobro
+   de altura e o número em display — na referência de mesa, o PV é a
+   coisa mais gorda da ficha, porque é a pergunta que se faz com a
+   espada já no ar. */
+function Barra({ atual, max, cor, rotulo, forte = false }) {
   const pct = Math.max(0, Math.min(100, ((atual || 0) / (max || 1)) * 100));
   return (
     <div>
       <div className="flex items-baseline justify-between mb-1">
         <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>{rotulo}</span>
-        <span className="tv-mono text-[11px]" style={{ color: cor }}>{atual}<span style={{ color: T.inkDim }}>/{max}</span></span>
+        <span className={forte ? "tv-display text-lg leading-none" : "tv-mono text-[11px]"} style={{ color: cor, fontWeight: forte ? 700 : 400 }}>{atual}<span className={forte ? "tv-mono text-[10px]" : ""} style={{ color: T.inkDim, fontWeight: 400 }}>/{max}</span></span>
       </div>
-      <div className="h-2 rounded-full overflow-hidden" style={{ background: T.panel }}>
-        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: cor, transition: "width .3s ease" }} />
+      <div className={`${forte ? "h-3.5" : "h-2"} rounded-full overflow-hidden`} style={{ background: T.panel, border: forte ? `1px solid ${T.line}` : "none" }}>
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: forte ? `linear-gradient(90deg, ${cor}, ${cor}CC)` : cor, transition: "width .3s ease" }} />
       </div>
     </div>
   );
@@ -179,14 +202,34 @@ export function FichaVisual({
   const defesas = Object.entries(equipados).filter(([slot]) => slot !== "arma" && slot !== "escudo");
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${T.line}`, background: T.panelSoft }}>
-      {/* ---- cabeçalho: quem é ---- */}
-      <div className="flex items-center gap-3 p-3" style={{ background: T.panel, borderBottom: `1px solid ${T.line}` }}>
-        <Retrato semente={sementeDe(p)} ente={p} lex={(mundo || {}).lexico} legenda={(tituloInfo && tituloInfo.titulo) || ""} tamanho={58} anel={tituloInfo && tituloInfo.divino ? T.violet : T.amber} estado={estadoDe(p.vida, p.vidaMax)} />
+    /* `shrink-0` é lei aqui (v9.159): este contêiner vive como filho
+       direto de um flex-col rolável, e overflow-hidden zera o min-height
+       de item de flex — sem o shrink-0 ele é o ÚNICO filho disposto a
+       encolher, e encolhe até virar uma linha de 2px. */
+    <div className="rounded-2xl overflow-hidden shrink-0" style={{ border: `1px solid ${T.line}`, background: T.panelSoft }}>
+      {/* ---- cabeçalho: quem é (v9.159, no desenho das fichas de mesa) ----
+          O retrato vira CARTA: moldura própria com o escudo de nível
+          mordendo a base — o nível deixa de ser um "nv 10" perdido no
+          meio de uma linha e vira a insígnia que toda ficha de mesa põe
+          embaixo do rosto. E a experiência sobe para cá, porque nome,
+          nível e o quanto falta para o próximo são a MESMA pergunta. */}
+      <div className="p-3" style={{ background: `linear-gradient(135deg, ${T.panel} 0%, #1B1528 100%)`, borderBottom: `1px solid ${T.line}` }}>
+        <div className="flex items-center gap-3">
+        <div className="relative shrink-0 pb-2">
+          <div className="rounded-xl p-1" style={{ background: T.panelSoft, border: `1.5px solid ${tituloInfo && tituloInfo.divino ? T.violet : T.amber}` }}>
+            <Retrato semente={sementeDe(p)} ente={p} lex={(mundo || {}).lexico} legenda={(tituloInfo && tituloInfo.titulo) || ""} tamanho={64} anel={T.line} estado={estadoDe(p.vida, p.vidaMax)} />
+          </div>
+          <div className="absolute left-1/2 bottom-0 w-6 h-6 flex items-center justify-center"
+            title={`Nível ${nivel}`}
+            style={{ transform: "translateX(-50%) rotate(45deg)", background: T.amber, borderRadius: 5, border: `2px solid ${T.panelSoft}` }}>
+            <span className="tv-mono text-[10px]" style={{ transform: "rotate(-45deg)", color: T.onAccent, fontWeight: 700 }}>{nivel}</span>
+          </div>
+        </div>
         <div className="min-w-0 flex-1">
           <div className="tv-display text-2xl leading-tight truncate" style={{ color: T.ink }}>{p.nome}</div>
           <div className="tv-mono text-[10px] uppercase tracking-widest truncate" style={{ color: T.amberSoft }}>
-            {[chamadoDaRaca((mundo || {}).lexico, p.raca), p.classe, p.subclasse].filter(Boolean).join(" · ") || "sem caminho"} <span style={{ color: T.inkDim }}>· nv {nivel}</span>
+            {/* o nível saiu desta linha: ele mora no escudo sob o retrato */}
+            {[chamadoDaRaca((mundo || {}).lexico, p.raca), p.classe, p.subclasse].filter(Boolean).join(" · ") || "sem caminho"}
           </div>
           {tituloInfo && (
             <div className="tv-mono text-[10px] truncate" style={{ color: tituloInfo.divino ? T.violetSoft : T.inkDim }}>
@@ -218,20 +261,91 @@ export function FichaVisual({
             </div>
           );
         })()}
+        </div>
+        {/* a régua da experiência: o xp é relativo ao nível (regras.js), e
+            é por isso que a barra zera a cada subida — ela mede o vão até
+            o próximo degrau, não a vida inteira */}
+        {(() => {
+          const teto = XP_POR_NIVEL(nivel);
+          const pct = Math.max(0, Math.min(100, ((p.xp || 0) / (teto || 1)) * 100));
+          return (
+            <div className="mt-2.5" title={`Experiência: ${p.xp || 0} de ${teto} para o nível ${nivel + 1}`}>
+              <div className="flex items-baseline justify-between mb-1">
+                <span className="tv-mono text-[8px] uppercase tracking-widest" style={{ color: T.inkDim }}>Experiência</span>
+                <span className="tv-mono text-[9px]" style={{ color: T.amberSoft }}>{p.xp || 0}<span style={{ color: T.inkDim }}> / {teto} · nv {nivel + 1}</span></span>
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: T.bg }}>
+                <div className="h-full rounded-full" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${T.amber}, ${T.amberSoft})`, transition: "width .3s ease" }} />
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       <div className="p-3 space-y-3">
-        {/* ---- os vitais: o que se consulta no meio do turno ---- */}
-        <div className="grid grid-cols-4 gap-1.5">
+        {/* ---- os vitais: o que se consulta no meio do turno ----
+            v9.159: o PASSO entrou na fileira. Ele sempre foi calculado
+            (movimento.js pesa armadura, condição e exaustão) e sempre
+            valeu no tabuleiro — mas só aparecia DENTRO do combate, e a
+            pergunta "eu alcanço?" se faz antes de a luta começar. */}
+        {(() => {
+          const desloc = deslocamentoDe(p);
+          return (
+        <div className="grid grid-cols-5 gap-1.5">
           <Vital rotulo="Defesa" valor={defesa} cor={T.amberSoft} titulo="Quão difícil é te acertar (10 + destreza + armadura e escudo)" />
           <Vital rotulo="Iniciativa" valor={sinal(iniciativa)} titulo="O que você soma ao d20 para decidir quem age primeiro" />
           <Vital rotulo="Proficiência" valor={sinal(prof)} titulo={`Bônus de proficiência do nível ${nivel} — soma no que você domina`} />
+          <Vital rotulo="Passo" valor={desloc.parado ? "0 m" : `${desloc.andar} m`}
+            sub={desloc.voar ? `voo ${desloc.voar} m` : null}
+            cor={desloc.parado ? T.danger : T.ink}
+            titulo={`Quanto você anda num turno${desloc.fontes && desloc.fontes.length ? ` — mexendo no passo: ${desloc.fontes.join(", ")}` : ""}`} />
           <Vital rotulo={golpe && golpe.tipo === "conjurador" ? "Conjuração" : "Ataques"}
             valor={golpe && golpe.tipo === "conjurador" ? `${golpe.dados}d${golpe.face}` : ataques}
             sub={golpe && golpe.tipo !== "conjurador" ? `× ${golpe.dados}d${golpe.face}` : "por turno"}
             cor={ataques > 1 || (golpe && golpe.dados > 1) ? T.amberSoft : T.ink}
             titulo={golpe ? `${golpe.texto} — os dois eixos da sua classe: quantos golpes saem e quanto dado cada um carrega` : "Quantos golpes saem numa ação de ataque, pela sua classe e nível"} />
         </div>
+          );
+        })()}
+
+        {/* ---- os escudos do corpo (v9.159) ----
+            Resistência de raça, redução do anão, imunidade de dádiva e de
+            item, a mente firme do gnomo: tudo isto já VALIA em combate — e
+            não estava escrito em lugar nenhum da ficha. Regra que vale e
+            não aparece é regra que o jogador não usa a favor. */}
+        {(() => {
+          const ef = efeitoDe(p);
+          const resist = [...new Set([...(Array.isArray(ef.resistencia) ? ef.resistencia : []), ...resistenciasEquipadas(p)])];
+          const reducoes = ef.reduzDano && typeof ef.reduzDano === "object" ? Object.entries(ef.reduzDano) : [];
+          const imunes = [...new Set([...(Array.isArray(ef.imune) ? ef.imune : []), ...imunidadesDe(p)])];
+          if (!resist.length && !reducoes.length && !imunes.length && !ef.vantagemMental) return null;
+          const doTraco = textoDoTraco(p);
+          const chip = "tv-mono text-[9px] px-1.5 py-0.5 rounded";
+          return (
+            <div className="flex items-center gap-1.5 flex-wrap px-1" title={doTraco}>
+              <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>escudos do corpo</span>
+              {resist.map((t) => (
+                <span key={`r${t}`} className={chip} title={`Resistência: dano de ${rotuloDano(t)} cai pela metade`}
+                  style={{ color: T.ok, border: `1px solid ${T.line}` }}>{iconeDano(t)} {rotuloDano(t)} ½</span>
+              ))}
+              {reducoes.map(([t, v]) => (
+                <span key={`d${t}`} className={chip} title={`Redução: todo dano de ${rotuloDano(t)} chega ${v} menor`}
+                  style={{ color: T.ok, border: `1px solid ${T.line}` }}>{iconeDano(t)} {rotuloDano(t)} −{v}</span>
+              ))}
+              {imunes.map((c) => {
+                const cond = CONDICOES[c];
+                return (
+                  <span key={`i${c}`} className={chip} title={`Imunidade: ${cond ? cond.rotulo : c} não pega em você`}
+                    style={{ color: T.violetSoft, border: `1px solid ${T.violet}` }}>{cond ? `${cond.icone} ${cond.rotulo}` : c} ∅</span>
+                );
+              })}
+              {ef.vantagemMental && (
+                <span className={chip} title="Mente firme: vantagem para resistir a medo, encanto e domínio"
+                  style={{ color: T.violetSoft, border: `1px solid ${T.line}` }}>🧠 mente firme</span>
+              )}
+            </div>
+          );
+        })()}
 
         {/* A CONTA, aberta. É a diferença entre um índice e um número
             mágico: cada linha diz de onde veio uma fatia do poder, e o
@@ -260,7 +374,7 @@ export function FichaVisual({
         ) : null}
 
         <div className="grid grid-cols-2 gap-3">
-          <Barra atual={p.vida} max={p.vidaMax} cor={T.danger} rotulo="Vida" />
+          <Barra atual={p.vida} max={p.vidaMax} cor={T.danger} rotulo="Vida" forte />
           <Barra atual={p.mana} max={p.manaMax} cor={T.violet} rotulo="Mana" />
           {/* v9.17: o fôlego de reserva. Fica colado nas barras porque é a
               mesma pergunta — "quanto ainda dá para aguentar?" — só que a
@@ -382,8 +496,9 @@ export function FichaVisual({
               </div>
             </div>
           )}
+          {/* o XP saiu daqui (v9.159): ele mora na régua do cabeçalho — o
+              mesmo número em dois cantos é como as duas verdades nascem */}
           <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>◉ {p.moedas || 0}</span>
-          <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>XP {p.xp || 0}</span>
           {(p.cicatrizes || []).length > 0 && (
             <span className="tv-mono text-[9px]" style={{ color: T.danger }} title={p.cicatrizes.map((c) => `${c.nome} — ${c.descricao}`).join("\n")}>
               🩸 {p.cicatrizes.length} cicatriz{p.cicatrizes.length > 1 ? "es" : ""}

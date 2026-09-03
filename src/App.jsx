@@ -1237,7 +1237,6 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
   const [verHabsFicha, setVerHabsFicha] = React.useState(false); // habilidades da ficha sob demanda
   mundo = mundo || { genero: "Fantasia medieval" };
   if (!aba) return null;
-  const xpProx = XP_POR_NIVEL(personagem.nivel);
   const equipados = personagem.equipados || {};
   const equipDisponivel = (personagem.equipamento || []).filter((e) => !Object.values(equipados).some((x) => x?.nome === e.nome));
   return (
@@ -1300,7 +1299,9 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
               </button>
             </div>
             <div className="space-y-2.5">
-              <BarraMini rotulo="XP" atual={personagem.xp} max={xpProx} cor={T.ok} />
+              {/* a barra de XP saiu daqui (v9.159): a régua mora no cabeçalho
+                  da FichaVisual, logo acima — o mesmo número duas vezes na
+                  mesma tela é como as duas verdades nascem */}
               <div className="flex items-center gap-2 flex-wrap">
                 {(personagem.nivel || 1) >= 20 && (
                   <span className="tv-mono text-[10px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>
