@@ -140,7 +140,10 @@ sec("7. A TELA MOSTRA ANTES, E TUDO ENTRA POR PROP");
     t(`e chega no render`, new RegExp(`${p}=\\{`).test(APP));
   }
   const TELA = APP.slice(APP.indexOf("function TelaMenu({"), APP.indexOf("/* ---------------- Aplicação de mudanças"));
-  t("o botão de trazer existe", /Trazer de um arquivo/.test(TELA));
+  /* v9.169: o rótulo encurtou de "Trazer de um arquivo" para "Trazer de
+     arquivo" no redesenho — o botão passou a dividir a linha com o de
+     guardar, e o artigo não cabia. A porta continua sendo a mesma. */
+  t("o botão de trazer existe", /Trazer de arquivo/.test(TELA));
   t("o de guardar também", /Guardar em arquivo/.test(TELA));
   t("só aceita .json", /accept="\.json,application\/json"/.test(TELA));
   /* escolher o MESMO arquivo duas vezes tem que disparar de novo — sem

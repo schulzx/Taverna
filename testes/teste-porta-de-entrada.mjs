@@ -49,10 +49,17 @@ sec("2. A COBRANÇA DO BACKUP");
   t("e grava direto quando o jogo está desmontado", /localStorage\.setItem\("taverna_save_v1", JSON\.stringify\(sv2\)\)/.test(APP));
   t("em jogo, o carimbo viaja no save", /backupEm: backupEmRef\.current,/.test(APP));
   t("e volta do save no carregamento", /backupEmRef\.current = sv\.backupEm \|\| null;/.test(APP));
-  /* só cobra quando está velha: aviso permanente vira papel de parede */
-  t("o menu só cobra depois de sete dias", /if \(dias != null && dias < 7\) return null;/.test(APP));
+  /* só cobra quando está velha: aviso permanente vira papel de parede.
+
+     v9.169: A LEI É A MESMA, A REDAÇÃO MUDOU. O redesenho do menu
+     (`taverna-menu-v2-game`) trocou o `return null` no meio do JSX por um
+     booleano nomeado calculado antes do return — `cobrarBackup` —, e o
+     nome do dia virou `diasSemCopia` porque agora ele também é lido pelo
+     texto da caixa. O que se prova continua sendo o mesmo: nunca copiou
+     OU passou de sete dias. */
+  t("o menu só cobra depois de sete dias", /cobrarBackup = !!temSave && \(diasSemCopia == null \|\| diasSemCopia >= 7\)/.test(APP));
   t("quem nunca copiou ouve a versão dura", /nunca teve uma cópia em arquivo/.test(APP));
-  t("quem copiou ouve a idade", /tem \$\{dias\} dias — tudo o que aconteceu desde então vive só neste navegador/.test(APP));
+  t("quem copiou ouve a idade", /tem \$\{diasSemCopia\} dias — tudo o que aconteceu desde então vive só neste navegador/.test(APP));
 }
 
 sec("3. AS LINHAS DA MESA");

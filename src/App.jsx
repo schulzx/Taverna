@@ -116,7 +116,9 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato } from "./ui.jsx";
+import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo } from "./ui.jsx";
+import heroTaverna from "./assets/taverna-hero.png";
+import marcaTaverna from "./assets/taverna-marca.jpg";
 import { CartaDeTaro, CartaVerso } from "./carta-taro.jsx";
 import { AjusteDoRetrato } from "./rosto.jsx";
 import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./semente.js";
@@ -3287,9 +3289,21 @@ function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoE
   );
 }
 
+/* ---------------- A PORTA DE ENTRADA (v9.169) ----------------
+   Redesenhada no Figma (`taverna-menu-v2-game`) e trazida de lá com as
+   medidas do desenho: banner de 260, pilha de cartões de 520, corpo em
+   14 e rótulo de botão em 9 com entrelinha larga.
+
+   O QUE O DESENHO NÃO MOSTRA, E QUE CONTINUA AQUI: a leitura do arquivo
+   de save tem três estados — "o arquivo tem isto", "não deu", e "pronto,
+   e dá para voltar atrás". O desenho retrata a tela em repouso; a tela de
+   verdade precisa saber dizer as três coisas, e elas moram dentro do
+   cartão do arquivo, que é onde a ação começou.
+
+   E AS DUAS REGRAS DE APARIÇÃO seguem valendo: os dois primeiros cartões
+   só existem com save, e a cobrança do backup só acende quando a cópia
+   está velha (ou nunca existiu) — aviso permanente vira papel de parede. */
 function TelaMenu({ irNovo, continuar, temSave, criarSala, entrarSala, aoLerArquivo, aoConfirmarImportacao, aoDesfazerImportacao, aoExportar }) {
-  /* três estados, e cada um é uma frase que a tela precisa poder dizer:
-     "o arquivo tem isto", "não deu", "pronto, e dá para voltar atrás" */
   const [lido, setLido] = React.useState(null);
   const [erroArq, setErroArq] = React.useState("");
   const [importado, setImportado] = React.useState(false);
@@ -3307,82 +3321,130 @@ function TelaMenu({ irNovo, continuar, temSave, criarSala, entrarSala, aoLerArqu
     };
     fr.readAsText(f);
   };
+
+  /* a idade da última cópia decide se a caixa âmbar acende */
+  const diasSemCopia = temSave ? (temSave.backupEm ? Math.floor((Date.now() - temSave.backupEm) / 86400000) : null) : 0;
+  const cobrarBackup = !!temSave && (diasSemCopia == null || diasSemCopia >= 7);
+
+  const cartao = { background: T.panel, border: `1px solid ${T.line}` };
+  const botaoPequeno = "flex-1 min-w-0 rounded-lg px-4 py-2 tv-mono text-[9px] tracking-[0.9px] transition-all";
+
   return (
-    <div className="tv-fade flex-1 flex flex-col items-center justify-center px-6 py-10">
-      <div className="text-center mb-10">
-        <div className="flex justify-center mb-4"><IconeCaneca tamanho={52} cor={T.amber} /></div>
-        <h1 className="tv-display text-6xl md:text-7xl tracking-wide" style={{ color: T.ink }}>{BRAND}</h1>
-        <p className="tv-mono text-xs uppercase tracking-[0.3em] mt-2" style={{ color: T.inkDim }}>{SLOGAN}</p>
-        <p className="tv-mono text-[9px] uppercase tracking-[0.2em] mt-3" style={{ color: T.amberSoft }}>{VERSAO} · {LEVA}</p>
-      </div>
-      <div className="grid gap-4 w-full max-w-sm">
-        {temSave && (
-          <button onClick={() => continuar(false)} className="text-left rounded-2xl p-5 flex flex-col gap-1" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
-            <div className="tv-display text-2xl" style={{ color: T.amberSoft }}>Continuar aventura</div>
-            <div className="tv-body text-sm" style={{ color: T.inkDim }}>{temSave.nomeCampanha} · {temSave.personagem?.nome} · Nível {temSave.personagem?.nivel}</div>
-          </button>
-        )}
-        {temSave && (
-          <button onClick={() => continuar(true)} className="text-left rounded-2xl p-4 flex items-center gap-2" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
-            <span style={{ color: T.amberSoft }}>📜</span>
-            <span className="tv-body text-sm" style={{ color: T.ink }}>Continuar com resumo <span style={{ color: T.inkDim }}>— "Anteriormente, em…"</span></span>
-          </button>
-        )}
-        <button onClick={irNovo} className="text-left rounded-2xl p-5 flex flex-col gap-1" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
-          <div className="tv-display text-2xl" style={{ color: T.ink }}>{temSave ? "Nova campanha" : "Começar a jogar"}</div>
-          <div className="tv-body text-sm" style={{ color: T.inkDim }}>Você, o Mestre e um mundo inteiro por criar</div>
-        </button>
-        {/* ---------------- A SEGUNDA CADEIRA (v9.120) ---------------- */}
-        <div className="rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.violet}` }}>
-          <div className="tv-display text-xl mb-1" style={{ color: T.violetSoft }}>Jogar em dois</div>
-          <div className="tv-body text-xs mb-3" style={{ color: T.inkDim }}>Um cria o mundo e passa o código; o outro entra. Os dois montam o personagem e começam no mesmo grupo, na mesma cena.</div>
-          <button onClick={criarSala} className="w-full rounded-xl px-3 py-2.5 mb-2 tv-mono text-[11px]" style={{ background: T.violet, color: T.onAccent, fontWeight: 600 }}>
-            🎲 Criar uma sala
-          </button>
-          <button onClick={entrarSala} className="w-full rounded-xl px-3 py-2.5 tv-mono text-[11px]" style={{ border: `1px solid ${T.violet}`, color: T.violetSoft }}>
-            🔑 Entrar com um código
-          </button>
+    <div className="tv-fade flex-1 flex flex-col items-center gap-8 px-8 pb-12">
+      {/* ---- o banner: a primeira imagem grande do jogo, e ela abre a porta ---- */}
+      <div className="w-full shrink-0 overflow-hidden rounded-b-[24px]">
+        <div className="relative h-[260px] w-full">
+          <img src={heroTaverna} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          {/* o degradê entrega a foto ao fundo do app em vez de cortá-la seco */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: `linear-gradient(to bottom, rgba(0,0,0,0) 50%, ${T.bg} 100%)` }} />
         </div>
-        {/* ---------------- A CAMPANHA EM ARQUIVO (v9.147) ----------------
-            Discreto de propósito: quem chega para jogar quer os botões de
-            cima. Isto é para quem vai trocar de navegador, de máquina, ou
-            teve o cache limpo — e para essa pessoa ele precisa estar AQUI,
-            no menu, e não numa aba de dentro do jogo que ela já não
-            consegue mais abrir. */}
-        <div className="rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
-          <div className="tv-mono text-[10px] uppercase tracking-[0.18em] mb-2" style={{ color: T.inkDim }}>A campanha em arquivo</div>
-          <div className="tv-body text-xs mb-3" style={{ color: T.inkDim }}>O save mora só neste navegador. Um arquivo atravessa a limpeza de cache, a troca de máquina e o navegador novo.</div>
-          {/* ---------------- A COBRANÇA DO BACKUP (v9.164) ----------------
-              Só aparece quando a cópia está VELHA (ou nunca existiu): um
-              aviso permanente vira papel de parede, e papel de parede não
-              salva campanha nenhuma. Sete dias é o prazo — quem joga toda
-              noite acumula uma semana de história por cópia. */}
-          {temSave && (() => {
-            const dias = temSave.backupEm ? Math.floor((Date.now() - temSave.backupEm) / 86400000) : null;
-            if (dias != null && dias < 7) return null;
-            return (
-              <div className="rounded-xl px-3 py-2 mb-3 tv-body text-xs" style={{ background: T.panelSoft, border: `1px solid ${T.amber}`, color: T.amberSoft }}>
-                🛟 {dias == null
-                  ? `"${temSave.nomeCampanha}" nunca teve uma cópia em arquivo — se este navegador limpar o cache, ela se perde inteira.`
-                  : `A última cópia de "${temSave.nomeCampanha}" tem ${dias} dias — tudo o que aconteceu desde então vive só neste navegador.`}
+      </div>
+
+      {/* ---- a marca ---- */}
+      <div className="flex flex-col items-center gap-3 shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 shrink-0 overflow-hidden rounded-xl flex items-center justify-center"
+            style={{ background: T.panel, border: `2px solid ${T.amber}`, boxShadow: "0 0 16px rgba(232,163,61,0.2)" }}>
+            <img src={marcaTaverna} alt="" className="w-full h-full object-cover" />
+          </div>
+          <h1 className="tv-display text-[48px] leading-[1.05] uppercase" style={{ color: T.ink }}>A {BRAND}</h1>
+        </div>
+        <p className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.amberSoft }}>{SLOGAN}</p>
+      </div>
+
+      {/* ---- a pilha de ações: 520 de largura, como no desenho ---- */}
+      <div className="flex flex-col items-center gap-4 w-full max-w-[520px]">
+        {temSave && (
+          <button onClick={() => continuar(false)}
+            className="relative w-full text-left flex items-center gap-4 p-5 rounded-2xl transition-all"
+            style={{ background: T.panel, border: `2.5px solid ${T.danger}`, boxShadow: "0 8px 10px rgba(216,106,91,0.15), inset 0 1px 0 0 rgba(255,255,255,0.06)" }}>
+            <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+              <div className="flex items-center gap-2">
+                {/* o ponto aceso: 8 de caixa, 12 de brilho transbordando */}
+                <span className="relative block shrink-0" style={{ width: 8, height: 8 }}>
+                  <span className="absolute" style={{ inset: "-25%" }}><PontoAtivo tamanho={12} /></span>
+                </span>
+                <span className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>Continuar aventura</span>
               </div>
-            );
-          })()}
-          <div className="flex gap-2">
+              <span className="tv-body text-xs leading-[1.55] truncate" style={{ color: T.violetSoft }}>
+                {temSave.nomeCampanha} · {temSave.personagem?.nome} · Nível {temSave.personagem?.nivel}
+              </span>
+            </div>
+            <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center" style={{ background: T.danger }}>
+              <IconeSeta tamanho={16} cor={T.ink} />
+            </span>
+          </button>
+        )}
+
+        {temSave && (
+          <button onClick={() => continuar(true)} className="w-full text-left flex items-center gap-4 p-4 rounded-xl" style={cartao}>
+            <IconeLivro tamanho={20} />
+            <span className="tv-body text-sm leading-[1.65]" style={{ color: T.inkDim }}>
+              Continuar com resumo — <span style={{ color: T.ink }}>“Anteriormente, em…”</span>
+            </span>
+          </button>
+        )}
+
+        <button onClick={irNovo} className="w-full text-left flex items-start gap-4 p-[18px] rounded-xl" style={cartao}>
+          <span className="shrink-0 rounded-lg p-2.5" style={{ background: "rgba(46,39,69,0.67)" }}>
+            <IconeFaiscas tamanho={20} />
+          </span>
+          <span className="flex-1 min-w-0 flex flex-col gap-1">
+            <span className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>{temSave ? "Nova campanha" : "Começar a jogar"}</span>
+            <span className="tv-body text-sm leading-[1.65]" style={{ color: T.inkDim }}>Você, o Mestre e um mundo inteiro por criar.</span>
+          </span>
+        </button>
+
+        {/* ---------------- A SEGUNDA CADEIRA (v9.120) ---------------- */}
+        <div className="w-full flex flex-col gap-4 p-5 rounded-2xl" style={{ background: T.panel, border: `1px solid ${T.violetSoft}` }}>
+          <div className="flex items-center gap-3">
+            <IconeDois tamanho={20} />
+            <span className="tv-display text-xl leading-[1.25]" style={{ color: T.violetSoft }}>Jogar em dois</span>
+          </div>
+          <p className="tv-body text-sm leading-[1.65]" style={{ color: T.inkDim }}>
+            Um cria o mundo e passa o código; o outro entra. Os dois montam o personagem e começam no mesmo grupo, na mesma cena.
+          </p>
+          <div className="flex gap-3">
+            <button onClick={criarSala} className={botaoPequeno} style={{ background: T.violetSoft, color: T.bg }}>Criar uma sala</button>
+            <button onClick={entrarSala} className={botaoPequeno} style={{ border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>Entrar com código</button>
+          </div>
+        </div>
+
+        {/* ---------------- A CAMPANHA EM ARQUIVO (v9.147) ---------------- */}
+        <div className="w-full flex flex-col gap-4 p-5 rounded-2xl" style={cartao}>
+          <div className="flex items-center gap-3">
+            <IconeArquivo tamanho={20} />
+            <span className="tv-display text-xl leading-[1.25] uppercase" style={{ color: T.amberSoft }}>A campanha em arquivo</span>
+          </div>
+          <p className="tv-body text-sm leading-[1.65]" style={{ color: T.inkDim }}>
+            O save mora só neste navegador. Um arquivo atravessa a limpeza de cache, a troca de máquina e o navegador novo.
+          </p>
+
+          {/* A COBRANÇA DO BACKUP (v9.164): só quando a cópia está velha. */}
+          {cobrarBackup && (
+            <div className="flex items-start gap-2.5 p-3 rounded-lg" style={{ background: "rgba(232,163,61,0.05)", border: "1px solid rgba(232,163,61,0.19)" }}>
+              <span className="shrink-0 mt-0.5"><IconeAviso tamanho={16} /></span>
+              <p className="tv-body text-xs leading-[1.55]" style={{ color: T.amber }}>
+                {diasSemCopia == null
+                  ? `“${temSave.nomeCampanha}” nunca teve uma cópia em arquivo — se este navegador limpar o cache, ela se perde inteira.`
+                  : `A última cópia de “${temSave.nomeCampanha}” tem ${diasSemCopia} dias — tudo o que aconteceu desde então vive só neste navegador.`}
+              </p>
+            </div>
+          )}
+
+          <div className="flex gap-3">
             {temSave && (
-              <button onClick={aoExportar} className="flex-1 rounded-xl px-3 py-2.5 tv-mono text-[11px]" style={{ border: `1px solid ${T.line}`, color: T.ink }}>
-                💾 Guardar em arquivo
-              </button>
+              <button onClick={aoExportar} className={botaoPequeno} style={{ border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>Guardar em arquivo</button>
             )}
-            <button onClick={() => entradaRef.current && entradaRef.current.click()} className="flex-1 rounded-xl px-3 py-2.5 tv-mono text-[11px]" style={{ border: `1px solid ${T.line}`, color: T.ink }}>
-              📂 Trazer de um arquivo
-            </button>
+            <button onClick={() => entradaRef.current && entradaRef.current.click()} className={botaoPequeno} style={{ border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>Trazer de arquivo</button>
             <input ref={entradaRef} type="file" accept=".json,application/json" onChange={escolher} className="hidden" />
           </div>
-          {erroArq && <p className="tv-body text-xs mt-3" style={{ color: T.amberSoft }}>{erroArq}</p>}
+
+          {erroArq && <p className="tv-body text-xs" style={{ color: T.amberSoft }}>{erroArq}</p>}
+
           {/* O QUE VEM NO ARQUIVO, ANTES DE QUALQUER COISA SER APAGADA. */}
           {lido && !importado && (
-            <div className="mt-3 rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+            <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
               <div className="tv-body text-sm" style={{ color: T.ink }}>{lido.linha}</div>
               {(lido.avisos || []).map((a, i) => <div key={i} className="tv-body text-[11px] mt-1" style={{ color: T.inkDim }}>· {a}</div>)}
               {temSave && <div className="tv-body text-[11px] mt-2" style={{ color: T.amberSoft }}>Isto substitui “{temSave.nomeCampanha}” neste dispositivo. Dá para voltar atrás depois.</div>}
@@ -3393,7 +3455,7 @@ function TelaMenu({ irNovo, continuar, temSave, criarSala, entrarSala, aoLerArqu
             </div>
           )}
           {importado && (
-            <div className="mt-3 rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+            <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
               <div className="tv-body text-sm" style={{ color: T.ink }}>Campanha carregada — ela está em “Continuar aventura”, ali em cima.</div>
               <button onClick={() => { if (aoDesfazerImportacao()) setImportado(false); }} className="mt-2 tv-mono text-[10px] underline" style={{ color: T.inkDim }}>
                 desfazer e voltar à anterior
@@ -3401,8 +3463,9 @@ function TelaMenu({ irNovo, continuar, temSave, criarSala, entrarSala, aoLerArqu
             </div>
           )}
         </div>
+
+        {temSave && <p className="tv-body text-xs text-center" style={{ color: T.inkDim }}>Começar uma nova campanha substitui a anterior neste dispositivo.</p>}
       </div>
-      {temSave && <p className="tv-body text-xs mt-6" style={{ color: T.inkDim }}>Começar uma nova campanha substitui a anterior neste dispositivo.</p>}
     </div>
   );
 }
