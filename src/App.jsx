@@ -103,7 +103,7 @@ import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDa
 import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
 import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo } from "./arquivo.js";
 import { abrir as abrirAbas, estaAberta, subsAbertas, novidades, falaDaNovidade, TODAS_AS_PORTAS } from "./abas.js";
-import { cabecalhoDaCena } from "./palco.js";
+import { cabecalhoDaCena, TONS, TOM_PADRAO } from "./palco.js";
 import { janelaAncorada } from "./janela.js";
 import { houveIntervalo, recapitular, textoDoRecap, envelopeDaRetomada, ehHoraDeParar, falaDoFim } from "./sessoes.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
@@ -114,6 +114,7 @@ import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
 import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato } from "./ui.jsx";
+import { CartaDeTaro, CartaVerso } from "./carta-taro.jsx";
 import { AjusteDoRetrato } from "./rosto.jsx";
 import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./semente.js";
 import { FichaVisual } from "./painel-ficha.jsx";
@@ -557,7 +558,7 @@ function ModalCena({ personagem, combate, mundo, nomeCampanha, fechar }) {
    entrega PONTOS — de habilidade e de atributo — e o jogador gasta quando
    quiser, na ficha, olhando a build inteira. É o que torna a multiclasse
    possível: ninguém planeja um mago-guerreiro num modal de meio segundo. */
-function ModalNivel({ nivel, personagem, escolher }) {
+function ModalNivel({ nivel, personagem, escolher, lex = null }) {
   const ganhoHab = pontosNoNivel(nivel);
   const ganhoAtr = pontosAtributoNoNivel(nivel);
   const teto = tetoAtributo(nivel);
@@ -565,6 +566,19 @@ function ModalNivel({ nivel, personagem, escolher }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.9)", backdropFilter: "blur(4px)" }}>
       <div className="tv-fade w-full max-w-md rounded-2xl p-6 tv-scroll overflow-y-auto" style={{ background: T.panel, border: `1px solid ${T.amber}`, maxHeight: "90vh" }}>
+        {/* ---------------- A VIRADA (v9.163) ----------------
+            Subir de nível abria uma nota fiscal: "Nível 7", dois números,
+            um botão. O jogo TEM um objeto cerimonial — a carta de tarô,
+            cujo número é o próprio nível em romano — e o único momento em
+            que esse número muda passava sem ela. Agora a carta entra de
+            costas e vira: o verso, o respiro, a revelação com o numeral
+            novo. É o mesmo componente da ficha; o modal só o vira. */}
+        <div className="tv-vira-palco mx-auto mb-4" style={{ width: "min(200px, 52vw)" }}>
+          <div className="tv-vira">
+            <div className="tv-vira-face"><CartaDeTaro ente={{ ...personagem, nivel }} lex={lex} /></div>
+            <div className="tv-vira-verso"><CartaVerso /></div>
+          </div>
+        </div>
         <div className="text-center mb-5">
           <div className="tv-mono text-xs uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>✦ Nível alcançado ✦</div>
           <div className="tv-display text-5xl" style={{ color: T.ink }}>Nível {nivel}</div>
@@ -589,6 +603,86 @@ function ModalNivel({ nivel, personagem, escolher }) {
           Gaste onde quiser em <b style={{ color: T.amberSoft }}>Gestão › Talentos</b> — habilidades da sua classe, de outra classe, ou nos atributos que a sua build pede.
         </div>
         <div className="text-center"><Botao primario onClick={() => escolher()}>Continuar →</Botao></div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- O ESPÓLIO REVELADO (v9.163) ----------------
+   Um item lendário chegava como uma linha de sistema entre outras dez:
+   "◆ Achado: Flamejante Stiletto das Profundezas (Lendário)". O sistema
+   gera nome, afixos e poderes com todo o capricho — e a revelação, que é
+   o segundo melhor momento de qualquer RPG, passava no rodapé.
+
+   Só raro para cima: revelar item comum ensinaria a fechar o modal sem
+   ler, e aí o lendário passaria batido também. O comum continua na linha
+   de sistema, que é o tamanho dele. */
+function RevelacaoDoEspolio({ item, fechar }) {
+  if (!item) return null;
+  const cor = RARIDADE_COR[item.raridade] || T.amber;
+  const attrs = Object.entries(item.atributos || {}).filter(([k]) => k !== "elemento");
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(6,4,10,0.92)", backdropFilter: "blur(5px)" }}>
+      <div className="tv-fade w-full max-w-sm rounded-2xl p-6 text-center tv-reliquia"
+        style={{ background: T.panel, border: `1.5px solid ${cor}`, boxShadow: `0 0 42px ${cor}55, inset 0 0 24px ${cor}11` }}>
+        <div className="tv-mono text-[10px] uppercase tracking-[0.3em] mb-3" style={{ color: cor }}>
+          ✦ {RARIDADE_ROTULO[item.raridade] || item.raridade} ✦
+        </div>
+        <div className="tv-display text-3xl leading-tight mb-1" style={{ color: T.ink }}>{item.nome}</div>
+        <div className="tv-mono text-[10px] uppercase tracking-widest mb-4" style={{ color: T.inkDim }}>
+          {SLOT_ROTULO[item.tipo] || item.tipo}{item.base && item.base !== item.nome ? ` · ${item.base}` : ""}
+        </div>
+        {attrs.length > 0 && (
+          <div className="flex items-center justify-center gap-1.5 flex-wrap mb-3">
+            {attrs.map(([k, v]) => (
+              <span key={k} className="tv-mono text-[10px] px-2 py-0.5 rounded-full" style={{ border: `1px solid ${T.line}`, color: T.ok }}>
+                +{v} {k === "dano" ? "dano" : k === "defesa" ? "defesa" : k.slice(0, 3)}
+              </span>
+            ))}
+            {item.atributos && item.atributos.elemento && (
+              <span className="tv-mono text-[10px] px-2 py-0.5 rounded-full" style={{ border: `1px solid ${cor}`, color: cor }}>{item.atributos.elemento}</span>
+            )}
+          </div>
+        )}
+        {(item.poderes || []).map((p) => (
+          <div key={p.nome} className="rounded-xl px-3 py-2 mb-2 text-left" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+            <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: cor }}>✧ {p.nome}</div>
+            {p.diz && <div className="tv-body text-xs italic mt-0.5" style={{ color: T.inkDim }}>{p.diz}</div>}
+          </div>
+        ))}
+        <div className="tv-body text-xs mt-3 mb-4" style={{ color: T.inkDim }}>Já está na sua mochila — equipe pela Bolsa.</div>
+        <Botao primario onClick={fechar}>Guardar →</Botao>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- A CHEGADA (v9.163) ----------------
+   Trocar de cidade era uma linha de sistema. A chegada é o momento mais
+   repetido de qualquer campanha de estrada — e um dos que mais situam:
+   ONDE eu estou agora, o que é este lugar. A faixa abre com o nome
+   grande, diz a região e o que a cidade é, e some sozinha: chegada é
+   cena de passagem, não modal — bloquear o jogador toda viagem seria
+   cobrar pedágio pelo cenário. */
+function FaixaDeChegada({ chegada, limpar }) {
+  React.useEffect(() => {
+    if (!chegada) return;
+    const tid = setTimeout(limpar, 3600);
+    return () => clearTimeout(tid);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chegada && chegada.chave]);
+  if (!chegada) return null;
+  const tom = (TONS[chegada.bioma] || TOM_PADRAO);
+  return (
+    <div className="tv-faixa fixed inset-x-0 top-16 z-40 flex justify-center pointer-events-none px-4">
+      <div className="px-8 py-3 text-center rounded-2xl" style={{ background: `linear-gradient(100deg, ${tom.cor}30 0%, ${T.panel}F2 40%)`, border: `1px solid ${T.line}`, borderLeft: `3px solid ${tom.cor}`, backdropFilter: "blur(4px)", maxWidth: "min(560px, 92vw)" }}>
+        <div className="tv-mono text-[9px] uppercase tracking-[0.3em] mb-0.5" style={{ color: T.amberSoft }}>você chega a</div>
+        <div className="tv-display text-3xl leading-tight" style={{ color: T.ink }}>{chegada.cidade}</div>
+        {(chegada.regiao || tom.diz) && (
+          <div className="tv-mono text-[10px] uppercase tracking-widest mt-0.5" style={{ color: T.inkDim }}>
+            {[chegada.regiao, tom.diz, chegada.tipo].filter(Boolean).join(" · ")}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -3409,6 +3503,10 @@ export default function Taverna() {
   const [heroAberto, setHeroAberto] = useState(false);
   /* v9.25: a tela de desfecho da morte — null quando o herói está vivo */
   const [desfechoMorte, setDesfechoMorte] = useState(null);
+  /* os dois momentos da v9.163: o espólio raro-ou-melhor que abre em
+     revelação, e a faixa de chegada que se apaga sozinha */
+  const [espolioRevelado, setEspolioRevelado] = useState(null);
+  const [chegada, setChegada] = useState(null);
   const golpeRecenteRef = useRef(null);
   /* v9.5: um turno pode carregar mais de uma habilidade, uma por movimento */
   const [habsSel, setHabsSel] = useState([]);
@@ -6630,6 +6728,12 @@ export default function Taverna() {
         }
         mapaRef.current = pisarNaCidade(mapaRef.current, md.cidade_atual); setMapa(mapaRef.current);
         abrirNevoaDaVizinhanca(md.cidade_atual, msgs);
+        /* A FAIXA DE CHEGADA (v9.163): só quando de fato se TROCOU de
+           cidade — reafirmar a cidade em que já estou não é chegar */
+        if (trocouCidade) {
+          const cid = cidadeDoMapa(md.cidade_atual) || {};
+          setChegada({ cidade: md.cidade_atual, regiao: cid.regiao || "", bioma: cid.bioma || "", tipo: cid.tipo || "", chave: Date.now() });
+        }
       }
       if (md.jornada_meio && jornadaRef.current) {
         jornadaRef.current = { ...jornadaRef.current, meio: String(md.jornada_meio).slice(0, 40) };
@@ -6767,6 +6871,10 @@ export default function Taverna() {
           const rar = ["comum", "incomum", "raro", "epico", "lendario", "unico"].includes(arg.toLowerCase()) ? arg.toLowerCase() : "comum";
           const it = gerarLoot(rar, { nivel: (pers || personagemRef.current || {}).nivel || 1, lex: (mundoAtual() || {}).lexico });
           setPersonagem((p) => ({ ...p, equipamento: [...(p.equipamento || []), it] }));
+          /* raro para cima abre a REVELAÇÃO (v9.163); o comum fica na linha
+             de sistema, que é o tamanho dele — revelar tudo ensinaria a
+             fechar sem ler */
+          if (["raro", "epico", "lendario", "unico"].includes(it.raridade)) setEspolioRevelado(it);
           msgs.push(`◆ Achado: ${it.nome} (${RARIDADE_ROTULO[it.raridade] || it.raridade})${it.poder ? ` — ${it.poder}` : ""}`);
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ITEM GERADO PELO SISTEMA] ${it.nome}, ${it.raridade}${it.poder ? `, poder: ${it.poder}` : ""}. Já está na mochila do herói — descreva o achado usando ESTE nome e estas propriedades, sem inventar outras.`;
         } else if (chave === "dominio" && dvAtual && dvAtual.despertar && arg && !dvAtual.dominio) {
@@ -18244,8 +18352,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
       {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} modificador={modPend} aoConcluir={concluirRolagem} heroismo={garantirHeroismo(personagem)} destino={refazerDisponivel(personagem) + refazerDeTracoDisponivel(personagem)} aoRefazer={pagarRefazer} />}
       {desfechoMorte && <OverlayMorte estado={desfechoMorte} nomeMorto={personagem.nome} aoVoltar={voltarDosMortos} aoHerdar={seguirComHerdeiro} />}
+      {fase === "jogo" && espolioRevelado && <RevelacaoDoEspolio item={espolioRevelado} fechar={() => setEspolioRevelado(null)} />}
+      {fase === "jogo" && <FaixaDeChegada chegada={chegada} limpar={() => setChegada(null)} />}
       {fase === "jogo" && personagem?.nivelPendentes > 0 && !carregando && !dadoRolando && (
-        <ModalNivel nivel={personagem.nivel - personagem.nivelPendentes + 1} personagem={personagem} escolher={confirmarNivel} />
+        <ModalNivel nivel={personagem.nivel - personagem.nivelPendentes + 1} personagem={personagem} escolher={confirmarNivel} lex={(mundoAtual() || {}).lexico} />
       )}
 
       {verCena && personagem && <ModalCena personagem={personagem} combate={combate} mundo={mundo} nomeCampanha={nomeCampanha} fechar={() => setVerCena(false)} />}

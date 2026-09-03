@@ -192,3 +192,46 @@ export function CartaDeTaro({ ente, legenda = "", lex = null, inimigo = false, a
     </div>
   );
 }
+
+/* ---------------- O VERSO (v9.163) ----------------
+   A carta ganhou verso porque ganhou um momento de VIRAR: a subida de
+   nivel abre com a carta de costas e a revela. Um verso e UM SO para o
+   baralho inteiro - verso que muda por pessoa entrega a carta antes da
+   virada, que e exatamente o que um verso existe para nao fazer.
+
+   Tudo geometrico e da paleta da casa: a trama em losango, a moldura
+   dupla e uma face de d20 no centro. Nenhum texto - verso que explica
+   e rotulo, nao mistério. */
+export function CartaVerso() {
+  return (
+    <svg viewBox="0 0 300 480" style={{ width: "100%", height: "auto", display: "block", filter: "drop-shadow(0 18px 40px rgba(0,0,0,0.55))" }}>
+      <defs>
+        <linearGradient id="cv-fundo" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#1B1628" />
+          <stop offset="100%" stopColor="#120F1C" />
+        </linearGradient>
+        <pattern id="cv-trama" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <path d="M0 13 H26 M13 0 V26" stroke="#E8A33D" strokeWidth="0.7" opacity="0.14" />
+          <circle cx="13" cy="13" r="1.2" fill="#8B7BD8" opacity="0.3" />
+        </pattern>
+      </defs>
+      <rect x="1" y="1" width="298" height="478" rx="16" fill="url(#cv-fundo)" stroke="#8C7A4A" strokeWidth="2" />
+      <rect x="12" y="12" width="276" height="456" rx="10" fill="url(#cv-trama)" stroke="#8C7A4A" strokeWidth="0.8" opacity="0.85" />
+      <rect x="20" y="20" width="260" height="440" rx="7" fill="none" stroke="#8C7A4A" strokeWidth="0.5" opacity="0.4" />
+      {/* a face do d20: o simbolo da mesa, sem escrever nada */}
+      <g transform="translate(150 240)">
+        <circle r="64" fill="#171322" stroke="#8C7A4A" strokeWidth="1.2" opacity="0.95" />
+        <circle r="56" fill="none" stroke="#8C7A4A" strokeWidth="0.5" opacity="0.5" />
+        <path d="M0 -40 L35 -12 L21 33 L-21 33 L-35 -12 Z" fill="#1E1930" stroke="#E8A33D" strokeWidth="2" />
+        <path d="M0 -40 L0 33 M-35 -12 L35 -12 M-21 33 L0 -12 L21 33" stroke="#E8A33D" strokeWidth="0.7" opacity="0.45" fill="none" />
+      </g>
+      {/* as quatro folhas dos cantos, as mesmas da frente */}
+      {[[22, 22, 1, 1], [278, 22, -1, 1], [22, 458, 1, -1], [278, 458, -1, -1]].map(([x, y, sx, sy], i) => (
+        <g key={i} transform={`translate(${x} ${y}) scale(${sx} ${sy})`} stroke="#8C7A4A" strokeWidth="0.9" fill="none" opacity="0.55">
+          <path d="M0 14 C0 6 6 0 14 0" />
+          <circle cx="5" cy="5" r="1.4" fill="#8C7A4A" stroke="none" />
+        </g>
+      ))}
+    </svg>
+  );
+}

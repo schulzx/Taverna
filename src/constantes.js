@@ -13,8 +13,8 @@ export const SLOGAN = "toda lenda começa aqui";
    do App — que é exatamente onde um número vai para ser esquecido.
    Aqui ela fica ao lado do resto do que a casa sabe sobre si mesma, e um
    varredor confere que o App não voltou a escrevê-la à mão. */
-export const VERSAO = "v9.162";
-export const LEVA = "o cache inteiro";
+export const VERSAO = "v9.163";
+export const LEVA = "os momentos";
 
 export const XP_POR_NIVEL = (nivel) => xpDoProximoNivel(nivel) ?? XP_POR_DADIVA;
 export const MOEDAS_INICIAIS = 15;
@@ -66,6 +66,21 @@ export const FONT_CSS = `
 .tv-flutua { animation: tvFlutua 1.35s ease-out both; }
 @keyframes tvFaixa { 0% { opacity: 0; transform: scaleY(0.3); } 10% { opacity: 1; transform: none; } 85% { opacity: 1; } 100% { opacity: 0; } }
 .tv-faixa { animation: tvFaixa 3.2s ease both; }
+
+/* ---------------- A VIRADA DA CARTA (v9.163) ----------------
+   A subida de nivel abre com a carta de COSTAS e a revela. O palco da
+   perspectiva fica no pai; a carta gira uma vez, com um respiro antes
+   (o jogador precisa VER o verso para a virada valer alguma coisa).
+   As duas faces escondem o proprio dorso; o verso ja nasce virado. */
+.tv-vira-palco { perspective: 1200px; }
+.tv-vira { position: relative; transform-style: preserve-3d; animation: tvVira 1.1s cubic-bezier(.2,.7,.3,1) .45s both; }
+@keyframes tvVira { from { transform: rotateY(180deg); } to { transform: rotateY(0deg); } }
+.tv-vira-face { backface-visibility: hidden; }
+.tv-vira-verso { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; }
+/* o brilho do espolio raro: pulsa devagar, na cor que a raridade mandar
+   (a cor entra por box-shadow inline; aqui mora so o ritmo) */
+@keyframes tvReliquia { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.25); } }
+.tv-reliquia { animation: tvReliquia 2.4s ease infinite; }
 
 /* ---------------- O ESPAÇO DO TRILHO (v9.156) ----------------
    O trilho de abas é lateral no monitor e barra inferior no telefone, e
