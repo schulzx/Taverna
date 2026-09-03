@@ -74,10 +74,13 @@ export function BarraMini({ rotulo, atual, max, cor, corBaixa }) {
 
    Aqui basta entregar a PESSOA. Sem `ente`, o retrato continua o que sempre
    foi: uma bolinha que não faz nada quando você toca. */
-export function Retrato({ semente, tamanho = 44, anel = T.line, corSubstituta, estado = "normal", ente = null, inimigo = false, legenda = "", lex = null }) {
+export function Retrato({ semente, tamanho = 44, anel = T.line, corSubstituta, estado = "normal", ente = null, inimigo = false, legenda = "", lex = null, semCarta = false }) {
   const [aberta, setAberta] = React.useState(false);
   const t = tracos(semente);
-  const abre = ente ? () => setAberta(true) : null;
+  /* `semCarta` existe para o retrato que já mora dentro de outro botão
+     (o do cabeçalho abre a ficha): ele precisa do `ente` para vestir o
+     traje da classe, mas botão dentro de botão falha no dedo */
+  const abre = ente && !semCarta ? () => setAberta(true) : null;
   return (
     <>
       <svg width={tamanho} height={tamanho} viewBox="0 0 64 64"
@@ -86,7 +89,7 @@ export function Retrato({ semente, tamanho = 44, anel = T.line, corSubstituta, e
         onKeyDown={abre ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setAberta(true); } } : undefined}
         style={{ borderRadius: "50%", border: `2px solid ${anel}`, background: corSubstituta || t.fundo, display: "block", cursor: abre ? "pointer" : "default" }}>
         {abre ? <title>Ver a carta de {ente.nome || "quem é este"}</title> : null}
-        <Rosto semente={semente} estado={estado} />
+        <Rosto semente={semente} estado={estado} ente={ente} />
       </svg>
       {aberta && <CartaDeTaro ente={ente} inimigo={inimigo} legenda={legenda} lex={lex} aoFechar={() => setAberta(false)} />}
     </>

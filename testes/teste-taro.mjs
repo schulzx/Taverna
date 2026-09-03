@@ -70,8 +70,11 @@ sec("4. O ROSTO É UM SÓ — a bolinha e a carta desenham a mesma pessoa");
   /* Se cada moldura desenhasse o seu rosto, divergiriam no primeiro ajuste,
      e a mesma pessoa teria duas caras dependendo de onde se olha. */
   t("existe uma peça de rosto só", /export function Rosto\(/.test(CRU("rosto.jsx")));
-  t("a bolinha a usa", /<Rosto semente=\{semente\} estado=\{estado\} \/>/.test(UI));
-  t("a carta usa a mesma", /<Rosto semente=\{semente\} estado=\{estado\} \/>/.test(CARTA));
+  /* v9.158: o rosto passou a receber a PESSOA além da semente — a classe
+     veste o traje e o sexo dá a geometria. O que a lei protege é o mesmo
+     de sempre: os dois desenham com a MESMA chamada, byte a byte. */
+  t("a bolinha a usa", /<Rosto semente=\{semente\} estado=\{estado\} ente=\{ente\} \/>/.test(UI));
+  t("a carta usa a mesma", /<Rosto semente=\{semente\} estado=\{estado\} ente=\{ente\} \/>/.test(CARTA));
   t("e ninguém mais redesenha traço de rosto", !/formatoRosto|penteado/.test(CARTA) && !/formatoRosto|penteado/.test(UI));
   /* a conta saiu do .jsx para poder ser provada — foi o que permitiu esta
      suíte existir */
@@ -106,7 +109,9 @@ sec("6. TODO RETRATO ABRE A CARTA, E NENHUM PAINEL PRECISOU SABER DISSO");
      que não usa é exatamente como uma regra deixa de valer num dos caminhos
      — alguém acrescenta o oitavo retrato e esquece de passar. */
   t("o retrato guarda a própria carta", /const \[aberta, setAberta\] = React\.useState\(false\)/.test(UI));
-  t("e só vira botão quando recebe a pessoa", /const abre = ente \? \(\) => setAberta\(true\) : null;/.test(UI));
+  /* v9.158: `semCarta` entrou para o retrato que já mora dentro de outro
+     botão — ele veste o traje sem virar segundo botão */
+  t("e só vira botão quando recebe a pessoa", /const abre = ente && !semCarta \? \(\) => setAberta\(true\) : null;/.test(UI));
   t("sem pessoa, continua uma bolinha muda", /role=\{abre \? "button" : undefined\}/.test(UI));
   t("dá para abrir pelo teclado", /e\.key === "Enter" \|\| e\.key === " "/.test(UI));
   /* os lugares que passaram a entregar a pessoa */
@@ -114,12 +119,15 @@ sec("6. TODO RETRATO ABRE A CARTA, E NENHUM PAINEL PRECISOU SABER DISSO");
      todo retrato conta como se fosse a pessoa, e a prova jura que estão
      todos ligados quando nenhum está */
   const entes = (APP.match(/<Retrato [^>]*\sente=\{/g) || []).length;
-  t(`o App entrega a pessoa em ${entes} retratos`, entes === 5);
+  t(`o App entrega a pessoa em ${entes} retratos`, entes === 6);
   t("a ficha também", /<Retrato semente=\{sementeDe\(p\)\} ente=\{p\}/.test(semComentarios(CRU("painel-ficha.jsx"))));
   t("o inimigo abre carta de inimigo", (APP.match(/ente=\{e\} inimigo/g) || []).length === 2);
   /* e o retrato do cabeçalho NÃO: ele já é o botão que abre a ficha, e
      botão dentro de botão passa no teste e falha no dedo */
-  t("o do cabeçalho continua sendo só o atalho da ficha", /<button onClick=\{\(\) => setAba\("ficha"\)\}[\s\S]{0,120}<Retrato semente=\{sementeDe\(personagem\)\} tamanho=\{32\}/.test(APP));
+  /* v9.158: o atalho aponta para a GESTÃO (a ficha é sub-aba dela desde a
+     fusão das abas — `setAba("ficha")` abria painel de título errado e
+     corpo vazio), e o retrato veste o traje sem virar segundo botão */
+  t("o do cabeçalho continua sendo só o atalho da ficha", /<button onClick=\{\(\) => setAba\("gestao"\)\}[\s\S]{0,460}<Retrato semente=\{sementeDe\(personagem\)\} ente=\{personagem\} semCarta/.test(APP));
 }
 
 console.log(`\ntarô v9.126: ${bons} passaram, ${maus} falharam`);

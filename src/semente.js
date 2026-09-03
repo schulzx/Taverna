@@ -56,3 +56,61 @@ export function estadoDe(vida, vidaMax, inimigo = false) {
 export function sementeDe(ent) {
   return ent?.semente || ent?.nome || "herói";
 }
+
+/* ============================================================
+   AS FEIÇÕES (v9.158) — os eixos do retrato de xilogravura
+
+   O rosto antigo tinha um eixo só: a semente. O novo tem quatro, e três
+   deles vêm do MUNDO, não do sorteio:
+
+     SEXO         quem a pessoa é — "homem"/"mulher" na ficha dela
+     CLASSE       o que ela veste — o retrato de um mago tem de dizer mago
+     SUBCLASSE    o acento — UMA cor, num lugar só
+     SEMENTE      o resto: queixo, cabelo, marca, expressão de base
+
+   ---------------- A APRESENTAÇÃO ----------------
+
+   Na criação do mundo o jogador escolhe: apresentação ESTRITA (retrato
+   de mulher é feminino, de homem é masculino, sempre) ou LIVRE (uma
+   minoria semeada — cerca de um em sete — apresenta-se diferente do que
+   a ficha diz). É escolha de mesa, como tom de violência: o jogo não
+   opina, oferece as duas e cumpre a que foi escolhida.
+
+   `fixo: true` é para quem ESCOLHEU a própria cara — o herói do jogador
+   e qualquer companheiro montado à mão. Sobre esses, o sorteio da
+   apresentação nunca passa: seria o gerador desfazendo uma decisão que
+   não é dele.
+   ============================================================ */
+/* Lido do objeto, e não desestruturado na assinatura: `= {}` cobre
+   `undefined` e NÃO cobre `null` — a armadilha da v9.149, de novo, e pela
+   mesma razão: o que chega aqui é ficha de jogo, que é exatamente o tipo
+   de coisa que vem nula no dia em que um save vem pela metade. */
+export function feicoes(semente, opcoes) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const genero = o.genero || "", apresentacao = o.apresentacao || "estrita", fixo = o.fixo === true;
+  const rand = rng(hashSemente("feicoes|" + (semente || "herói")));
+  /* a ordem dos sorteios é contrato: mudar a ordem muda a cara de todo
+     mundo que já existe. Novos eixos entram SEMPRE no fim. */
+  const sorteioApresentacao = rand();
+  const sorteioCruza = rand();
+  let fem = genero === "mulher" ? true : genero === "homem" ? false : sorteioApresentacao < 0.5;
+  if (!fixo && apresentacao === "livre" && sorteioCruza < 1 / 7) fem = !fem;
+  return {
+    fem,
+    /* geometria do queixo DENTRO da faixa da apresentação: nem todo homem
+       tem o mesmo maxilar, nem toda mulher o mesmo — a faixa é que muda */
+    queixo: rand(),
+    cabelo: Math.floor(rand() * 4),
+    barba: !fem && rand() < 0.55 ? 1 + Math.floor(rand() * 3) : 0,
+    franja: rand() < 0.5,
+  };
+}
+
+/* O ACENTO DA SUBCLASSE: uma cor, sempre a mesma para a mesma subclasse,
+   sem tabela para manter — subclasse nova nasce com cor no dia em que
+   nasce. A paleta é curta e da casa: acento é tempero, não fantasia. */
+export const ACENTOS = ["#E8A33D", "#8B7BD8", "#7BC98F", "#D86A5B", "#5BA8D8", "#C9A227", "#B06AC9", "#D88A5B"];
+export function acentoDe(subclasse) {
+  if (!subclasse) return "#8B7BD8";
+  return ACENTOS[hashSemente("acento|" + String(subclasse)) % ACENTOS.length];
+}

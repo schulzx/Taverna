@@ -130,21 +130,17 @@ export function CartaDeTaro({ ente, legenda = "", lex = null, inimigo = false, a
         {estrelas.map((e, i) => (
           <circle key={i} cx={e.x} cy={e.y} r={e.s} fill={forro} opacity={e.o} />
         ))}
-        {/* o busto: ombros, gola e forro. A capa é o que dá silhueta — sem
-            ela o rosto flutua como cabeça decepada.
-
-            v9.126: a primeira tentativa pôs o rosto a 3,05 de escala e ele
-            engoliu o nicho — virou o crachá do grupo ampliado, com um par de
-            ombros espremido embaixo. Uma carta de tarô é FIGURA: a cabeça
-            ocupa o terço de cima e o corpo sustenta o resto. */}
-        <path d="M150 224 C104 228 80 256 72 302 L228 302 C220 256 196 228 150 224 Z" fill={veste} />
-        <path d="M150 226 C130 229 120 244 116 302 L184 302 C180 244 170 229 150 226 Z" fill={forro} opacity="0.18" />
-        <path d="M150 228 L137 248 L150 263 L163 248 Z" fill={forro} opacity="0.65" />
-        <path d="M72 302 C80 256 104 228 150 224" fill="none" stroke={forro} strokeWidth="1.5" opacity="0.45" />
-        <path d="M228 302 C220 256 196 228 150 224" fill="none" stroke={forro} strokeWidth="1.5" opacity="0.45" />
+        {/* o busto agora é o do PRÓPRIO rosto (v9.158): a xilogravura traz
+            ombros, veste e o traje da classe. A capa genérica que a carta
+            desenhava por baixo viraria um segundo corpo — saiu. O que fica
+            da carta é o pedestal: a saia que leva os ombros até a base do
+            nicho, no tom da veste da carta, para a figura não flutuar. */}
+        <path d="M97 260 C90 274 84 288 79 302 L221 302 C216 288 210 274 203 260 L150 265 Z" fill={veste} />
+        <path d="M79 302 C84 288 90 274 97 260" fill="none" stroke={forro} strokeWidth="1.2" opacity="0.4" />
+        <path d="M221 302 C216 288 210 274 203 260" fill="none" stroke={forro} strokeWidth="1.2" opacity="0.4" />
         {/* e o rosto, o MESMO que a bolinha do grupo desenha */}
-        <g transform="translate(150 182) scale(2.15) translate(-32 -30)">
-          <Rosto semente={semente} estado={estado} />
+        <g transform="translate(150 176) scale(2.5) translate(-32 -30)">
+          <Rosto semente={semente} estado={estado} ente={ente} />
         </g>
       </g>
       <path d="M40 300 L40 190 A110 110 0 0 1 260 190 L260 300" fill="none" stroke={regua} strokeWidth="1.6" opacity="0.8" />

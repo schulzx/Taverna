@@ -113,6 +113,7 @@ import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
 import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato } from "./ui.jsx";
+import { AjusteDoRetrato } from "./rosto.jsx";
 import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./semente.js";
 import { FichaVisual } from "./painel-ficha.jsx";
 import { SeloHeroismo, PainelHeroismo } from "./painel-heroismo.jsx";
@@ -2778,6 +2779,10 @@ function TelaMundo({ concluir }) {
   const [estrutura, setEstrutura] = useState("jornada");
   const [molde, setMolde] = useState(MOLDE_PADRAO);
   const [voz, setVoz] = useState(VOZ_PADRAO);
+  /* v9.158: como a gente deste mundo se APRESENTA. É escolha de mesa,
+     como o tom de violência: o jogo não opina, oferece as duas e cumpre
+     a que foi escolhida — quem decide é quem senta para jogar. */
+  const [apresentacao, setApresentacao] = useState("estrita");
   const campo = { background: T.panel, border: `1px solid ${T.line}`, color: T.ink };
   return (
     <div className="tv-fade max-w-2xl mx-auto w-full px-6 py-10 overflow-y-auto tv-scroll">
@@ -2853,9 +2858,22 @@ function TelaMundo({ concluir }) {
           </button>
         ))}
       </div>
+      <div className="tv-mono text-xs uppercase tracking-widest mb-2 mt-2" style={{ color: T.violetSoft }}>A gente deste mundo</div>
+      <p className="tv-body text-sm mb-3" style={{ color: T.inkDim }}>Como as pessoas se apresentam nos retratos. Só muda a aparência de quem habita o mundo — nunca as regras.</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+        {[
+          { id: "estrita", nome: "🏰 Clássica", desc: "A aparência segue a ficha, sempre: mulheres com traços femininos, homens com traços masculinos." },
+          { id: "livre", nome: "🌈 Plural", desc: "A maioria segue a ficha — e uma parte da gente do mundo se apresenta do seu próprio jeito." },
+        ].map((a) => (
+          <button key={a.id} onClick={() => setApresentacao(a.id)} className="text-left rounded-xl p-4 transition-all" style={{ background: apresentacao === a.id ? T.panelSoft : T.panel, border: `1px solid ${apresentacao === a.id ? T.amber : T.line}` }}>
+            <div className="tv-display text-lg" style={{ color: apresentacao === a.id ? T.amberSoft : T.ink }}>{a.nome}</div>
+            <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{a.desc}</div>
+          </button>
+        ))}
+      </div>
       <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={4} placeholder="Ex.: Um arquipélago flutuante onde a magia vem das marés. Piratas do céu disputam relíquias de um império afundado nas nuvens…" className="w-full rounded-xl p-4 tv-body text-sm outline-none resize-none" style={campo} />
       <div className="mt-6 flex justify-end">
-        <Botao primario desativado={!genero || !nome.trim()} onClick={() => concluir({ genero: genero.label, descricao, estrutura, molde, voz }, nome.trim())}>Continuar →</Botao>
+        <Botao primario desativado={!genero || !nome.trim()} onClick={() => concluir({ genero: genero.label, descricao, estrutura, molde, voz, apresentacao }, nome.trim())}>Continuar →</Botao>
       </div>
     </div>
   );
@@ -2871,6 +2889,10 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
      sobrenome joga como sempre jogou. */
   const [sobrenome, setSobrenome] = useState("");
   const nomeInteiro = [nome.trim(), sobrenome.trim()].filter(Boolean).join(" ");
+  /* v9.158: o sexo entrou na ficha porque o RETRATO precisa dele — maxilar,
+     ombro, cabelo e barba saem daqui, não do sorteio. Sem escolher, o
+     gerador chutaria a cara do único personagem que o jogador desenhou. */
+  const [sexo, setSexo] = useState(null);
   const [conceito, setConceito] = useState("");
   const [historia, setHistoria] = useState("");
   const racasDisp = racasDoGenero(mundo.genero);
@@ -2918,10 +2940,19 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
           <input value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} placeholder="Sobrenome (opcional)" className="flex-1 min-w-0 rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
           {/* o sorteio entrega o nome inteiro deste mundo; aqui ele se parte
               nos dois campos, para o jogador ver o que é o quê antes de mexer */}
-          <button type="button" onClick={() => { const p = String(nomePessoa(mundo.genero, undefined, Math.random, mundo.lexico) || "").trim().split(/\s+/); setNome(p[0] || ""); setSobrenome(p.slice(1).join(" ")); }}
+          {/* o dado respeita o sexo escolhido: sortear "Aldric" para quem
+              acabou de marcar mulher seria o botão desmentindo o formulário */}
+          <button type="button" onClick={() => { const p = String(nomePessoa(mundo.genero, sexo === "mulher" ? "fem" : sexo === "homem" ? "masc" : undefined, Math.random, mundo.lexico) || "").trim().split(/\s+/); setNome(p[0] || ""); setSobrenome(p.slice(1).join(" ")); }}
             className="rounded-xl px-4 shrink-0" style={{ border: `1px solid ${T.line}`, color: T.amberSoft }} title="Sortear um nome">🎲</button>
         </div>
         <input value={conceito} onChange={(e) => setConceito(e.target.value)} placeholder="Conceito (ex.: ladra de relíquias arrependida)" className="rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
+      </div>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="tv-body text-sm mr-1" style={{ color: T.inkDim }}>Seu herói é</span>
+        {[["homem", "♂ Homem"], ["mulher", "♀ Mulher"]].map(([id, rotulo]) => (
+          <button key={id} type="button" onClick={() => setSexo(id)} className="rounded-xl px-4 py-2 tv-body text-sm transition-all"
+            style={{ background: sexo === id ? T.panelSoft : T.panel, border: `1px solid ${sexo === id ? T.amber : T.line}`, color: sexo === id ? T.amberSoft : T.ink }}>{rotulo}</button>
+        ))}
       </div>
       {sobrenome.trim() && (
         <div className="tv-body text-xs -mt-2 mb-4" style={{ color: T.inkDim }}>
@@ -3002,8 +3033,12 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="tv-mono text-xs" style={{ color: T.inkDim }}>PV: <span style={{ color: T.ink }}>{vidaMax}</span> · PM: <span style={{ color: T.violetSoft }}>{manaMax}</span> · Moedas: <span style={{ color: T.amberSoft }}>{MOEDAS_INICIAIS}</span></div>
-        <Botao primario desativado={!nome.trim() || !conceito.trim() || restantes !== 0}
+        <Botao primario desativado={!nome.trim() || !conceito.trim() || !sexo || restantes !== 0}
           onClick={() => concluir(comDom({
+            /* o retrato lê estes dois: o sexo dá a geometria, e `feicoesFixas`
+               diz que esta cara foi ESCOLHIDA — nem no mundo plural o sorteio
+               da apresentação passa por cima de quem decidiu a própria */
+            genero: sexo, feicoesFixas: true,
             /* `nome` continua sendo o nome INTEIRO, e tem de continuar: cento e
                poucos lugares deste código casam pessoa por ele — elenco, missão,
                combate, laço, cânone. O primeiro e o de família viajam ao lado,
@@ -17364,7 +17399,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      a guarda dentro de `agir`, que deixa o `/comando` passar. */
   const bloqueado = carregando || !!rolagem;
 
+  /* A APRESENTAÇÃO DOS RETRATOS (v9.158) é decisão do mundo, tomada uma
+     vez na criação — e os retratos são desenhados em dezenas de painéis.
+     Entra por contexto porque passar a escolha de mão em mão por sete
+     componentes é como uma regra deixa de valer num dos caminhos. */
+  const ajusteRetrato = { apresentacao: (mundo || {}).apresentacao || "estrita" };
+
   return (
+    <AjusteDoRetrato.Provider value={ajusteRetrato}>
     <div className="flex flex-col" style={{ background: T.bg, height: "100dvh", maxHeight: "100dvh", overflow: "hidden" }}>
       <style>{FONT_CSS}</style>
       {/* a vinheta é a última camada e não recebe toque nenhum: escurece o
@@ -17388,8 +17430,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               falha no dedo. A carta do herói abre pelo retrato de dentro da
               ficha, onde há espaço para ela. */}
           {fase === "jogo" && personagem && (
-            <button onClick={() => setAba("ficha")} className="shrink-0" title="Abrir ficha">
-              <Retrato semente={sementeDe(personagem)} tamanho={32} anel={T.amber} estado={estadoDe(personagem.vida, personagem.vidaMax)} />
+            <button onClick={() => setAba("gestao")} className="shrink-0" title="Abrir ficha">
+              {/* v9.158: a ficha é SUB-ABA da Gestão desde que as abas se
+                  fundiram — e este atalho continuou pedindo `setAba("ficha")`,
+                  uma aba que não existe: o painel abria com o título errado e
+                  o corpo vazio. A Gestão já nasce na ficha. */}
+              <Retrato semente={sementeDe(personagem)} ente={personagem} semCarta tamanho={32} anel={T.amber} estado={estadoDe(personagem.vida, personagem.vidaMax)} />
             </button>
           )}
           {fase === "jogo" && statusSave && <span className="tv-mono text-[10px] uppercase tracking-wider" style={{ color: statusSave === "erro" ? T.danger : T.inkDim }}>{statusSave === "salvando" ? "salvando…" : statusSave === "erro" ? "⚠ FALHA AO SALVAR" : "✓ salvo"}</span>}
@@ -18179,5 +18225,6 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         </div>
       )}
     </div>
+    </AjusteDoRetrato.Provider>
   );
 }
