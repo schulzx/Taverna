@@ -58,7 +58,23 @@ sec("2. COM DOMÍNIO, SÓ O JOGO ENTRA");
     t("sem origem NÃO entra", !P.origemAceita(pedido({})).ok);
     t("e o motivo é dito", P.origemAceita(pedido({})).motivo === "sem origem");
     t("outro site não entra", !P.origemAceita(pedido({ origin: "https://malandro.example" })).ok);
-    t("nem o localhost, quando há domínio", !P.origemAceita(pedido({ origin: "http://localhost:5173" })).ok);
+    /* v9.171: O LOCALHOST PASSA A ENTRAR, e a lei mudou porque a premissa
+       da v9.155 estava errada. Ela dizia que quem desenvolve não tem
+       domínio configurado — mas o `vite dev` não tem `/api` e fala com a
+       API DE PRODUÇÃO, onde a Vercel sempre põe `VERCEL_URL`. Resultado:
+       jogar localmente devolvia 403 sempre, o léxico morria junto e o
+       mundo nascia genérico sem ninguém saber por quê.
+
+       E soltar o localhost não abre nada: `Origin` só vale vindo de
+       navegador, nenhum site de verdade mora em localhost, e quem monta a
+       requisição à mão já forjava qualquer origem antes disso — contra
+       esse quem defende é o teto diário. */
+    t("o localhost entra, mesmo com domínio", P.origemAceita(pedido({ origin: "http://localhost:5173" })).ok);
+    t("e diz que é desenvolvimento", P.origemAceita(pedido({ origin: "http://localhost:5173" })).motivo === "desenvolvimento");
+    t("127.0.0.1 também", P.origemAceita(pedido({ origin: "http://127.0.0.1:4173" })).ok);
+    /* mas o que só PARECE local não entra: o sufixo é a armadilha óbvia */
+    t("mas localhost.malandro.com não", !P.origemAceita(pedido({ origin: "http://localhost.malandro.com" })).ok);
+    t("nem um caminho depois do host", !P.origemAceita(pedido({ origin: "http://localhost:5173/roubo" })).ok);
     /* pré-visualizações mudam de subdomínio a cada deploy; recusá-las
        tornaria impossível testar o que se vai publicar */
     t("pré-visualização da Vercel entra", P.origemAceita(pedido({ origin: "https://taverna-git-abc123.vercel.app" })).ok);
@@ -127,6 +143,23 @@ sec("6. A RECUSA EXPLICA, E NÃO ENTREGA NADA");
      chave da fechadura junto com o aviso de que ela existe */
   t("sem entregar o domínio certo", !/vercel\.app/.test(bloqueado.erro));
   t("sem citar variável de ambiente", !/VERCEL_URL|ORIGENS_EXTRA/.test(bloqueado.erro));
+  /* v9.171: A RECUSA GANHOU DIAGNÓSTICO, e a regra de cima passou a valer
+     para o CORPO INTEIRO, não só para a frase. Um 403 mudo custou uma
+     tarde: o léxico e o Mestre morriam juntos e nada dizia por quê. Agora
+     o motivo e a origem RECEBIDA viajam — a origem é o que o próprio
+     pedido mandou, então devolvê-la não informa nada de novo a quem
+     pediu. O que não viaja, e não pode voltar a viajar, é a lista de
+     permitidas: essa é a chave da fechadura. */
+  t("agora diz o motivo", bloqueado.motivo === "origem não autorizada");
+  t("e ecoa a origem recebida", bloqueado.origem === "https://malandro.example");
+  const corpoInteiro = JSON.stringify(bloqueado);
+  t("mas o corpo NÃO entrega as permitidas", !/vercel\.app/.test(corpoInteiro) && bloqueado.permitidas === undefined);
+  /* e as rotas repassam o diagnóstico — sem isso ele morre no servidor */
+  for (const r of ["narrador", "sala", "voz"]) {
+    const src = readFileSync(new URL(`../api/${r}.js`, import.meta.url), "utf8");
+    t(`${r} repassa motivo e origem`, /motivo: p\.motivo, origem: p\.origem/.test(src));
+    t(`${r} não repassa as permitidas`, !/permitidas: p\.permitidas/.test(src));
+  }
   const passou = await comAmbiente({ VERCEL_URL: "taverna.vercel.app" }, () => P.deixarEntrar(pedido({ origin: "https://taverna.vercel.app" })));
   t("e o jogo entra", passou.ok);
 }

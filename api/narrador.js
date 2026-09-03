@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   /* v9.155: O PORTAO. Sem ele esta rota respondia a internet inteira —
      e quem achasse a URL gastaria as chaves de graca, sem nem abrir o
      jogo. Vem antes de tudo: nao se paga pela contagem de um robo. */
-  { const p = await deixarEntrar(req); if (!p.ok) { res.status(p.status).json({ erro: p.erro }); return; } }
+  { const p = await deixarEntrar(req); if (!p.ok) { res.status(p.status).json({ erro: p.erro, motivo: p.motivo, origem: p.origem }); return; } }
   try {
     const { system, messages, maxTokens, formato, tarefa, provedor: provedorPedido } = req.body || {};
     if (!system || !Array.isArray(messages) || messages.length === 0) {

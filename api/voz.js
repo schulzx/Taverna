@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   /* v9.155: a voz tambem gasta chave de terceiro, e ficou de fora do
      portao na primeira passada — a rota mais facil de esquecer e a que
      nao se parece com as outras. */
-  { const p = await deixarEntrar(req); if (!p.ok) return res.status(p.status).json({ erro: p.erro }); }
+  { const p = await deixarEntrar(req); if (!p.ok) return res.status(p.status).json({ erro: p.erro, motivo: p.motivo, origem: p.origem }); }
 
   const chave = process.env.FISH_AUDIO_KEY;
   if (!chave) return res.status(500).json({ erro: "Voz não configurada no servidor (FISH_AUDIO_KEY)." });

@@ -46,6 +46,28 @@ export function origensPermitidas() {
   return out;
 }
 
+/* ---------------- A MÁQUINA DE QUEM DESENVOLVE (v9.171) ----------------
+   A v9.155 deixou o localhost de fora "porque quem desenvolve não tem
+   domínio configurado". A premissa estava errada, e custou caro: o
+   `vite dev` NÃO TEM `/api` — ele repassa para a API que já está no ar
+   (ver vite.config.js), e lá a Vercel sempre põe `VERCEL_URL`. Ou seja,
+   a situação "sem domínio configurado" nunca acontece do lado que
+   responde, e jogar localmente devolvia 403 SEMPRE.
+
+   O estrago era maior do que parecia porque o léxico é uma chamada de IA
+   como qualquer outra: ele morria no mesmo 403, em silêncio, e o mundo
+   nascia genérico. Quem testava via duas coisas sem relação aparente —
+   "o Mestre não responde" e "o léxico não agiu" — e eram a mesma.
+
+   LIBERAR O LOCALHOST NÃO ENFRAQUECE O QUE ESTE PORTÃO DEFENDE. `Origin`
+   só é confiável quando vem de navegador, e nenhum site de verdade mora
+   em localhost: nenhuma PÁGINA hostil pode reivindicar essa origem. Quem
+   monta a requisição à mão já podia forjar qualquer origem antes desta
+   linha — contra esse, quem defende é o teto diário, que conta por
+   endereço e não olha a origem. */
+const ehDaMaquinaLocal = (origem) =>
+  /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(origem);
+
 export function origemAceita(req) {
   const permitidas = origensPermitidas();
   /* SEM DOMÍNIO CONFIGURADO, o portão fica aberto — é a máquina de quem
@@ -53,6 +75,7 @@ export function origemAceita(req) {
   if (!permitidas.length) return { ok: true, motivo: "sem domínio configurado" };
   const h = req.headers || {};
   const origem = String(h.origin || "").replace(/\/+$/, "");
+  if (origem && ehDaMaquinaLocal(origem)) return { ok: true, motivo: "desenvolvimento" };
   /* Requisição sem `Origin` não veio de página nenhuma: é `curl`, script
      ou robô. Um navegador SEMPRE manda este cabeçalho num POST de outra
      origem, e manda também nas da mesma origem para `fetch`. */
@@ -125,7 +148,25 @@ export async function dentroDoTeto(req) {
    Redis. Barrar o robô antes de pagar pela contagem dele. */
 export async function deixarEntrar(req) {
   const o = origemAceita(req);
-  if (!o.ok) return { ok: false, status: 403, erro: "Este endereço só responde ao jogo." };
+  /* v9.171: a recusa passa a DIZER o que aconteceu. A mensagem para quem
+     joga continua a mesma — ela não é lugar de detalhe de infraestrutura —,
+     mas `motivo` e `origem` viajam no corpo, e é isso que transforma "o
+     Mestre não respondeu" numa linha que se lê no console e se conserta.
+     Sem isso, a única pista era um 403 mudo.
+
+     E NÃO VAI A LISTA DE PERMITIDAS. A primeira versão disto mandava, e
+     seria desfazer a regra que este arquivo já tinha: a recusa não diz
+     qual origem seria aceita, porque dizer é entregar a chave junto com o
+     aviso de que a fechadura existe. `origem` é o que o próprio pedido
+     mandou — devolvê-la não informa nada que quem pediu já não soubesse. */
+  if (!o.ok) {
+    return {
+      ok: false, status: 403,
+      erro: "Este endereço só responde ao jogo.",
+      motivo: o.motivo,
+      origem: String((req.headers || {}).origin || "(nenhuma)"),
+    };
+  }
   const t = await dentroDoTeto(req);
   if (!t.ok) {
     return {
