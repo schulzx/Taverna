@@ -62,6 +62,47 @@ export const TRANCAS = [
       "o poço embaixo não é armadilha: é o contrapeso",
     ],
   },
+  /* ---------------- v9.167: A MESA FARTA ----------------
+     Quatro trancas cobriam quatro atributos — Força e Presença nunca
+     abriam porta nenhuma, e o herói forte resolvia todo enigma com o
+     atributo dos outros. As quatro novas fecham a roda: cada atributo
+     da ficha tem uma tranca que é DELE. */
+  {
+    id: "arrimo", atributo: "forca", rotulo: "arrimo", artigo: "O",
+    o: "uma laje de pedra fora do eixo, com marcas de alavanca em volta",
+    dicas: [
+      "as marcas de alavanca são todas de quem tentou pelo lado errado",
+      "a laje balança um dedo quando se empurra embaixo, e nada quando se empurra em cima",
+      "o eixo não quebrou: saiu do encaixe — e encaixe tem direção",
+    ],
+  },
+  {
+    id: "selo", atributo: "presenca", rotulo: "selo", artigo: "O",
+    o: "um selo de cera negra que esquenta quando alguém se aproxima",
+    dicas: [
+      "a cera esquenta mais quando se fala com ela do que quando se toca",
+      "há três nomes riscados na soleira — e um espaço em branco",
+      "o selo não pede uma senha: pede uma AFIRMAÇÃO, dita como quem manda",
+    ],
+  },
+  {
+    id: "agulha", atributo: "destreza", rotulo: "agulha", artigo: "A",
+    o: "uma fechadura de doze agulhas finas, e um chão limpo demais na frente",
+    dicas: [
+      "das doze agulhas, só três têm o brilho de quem trabalha — as outras são isca",
+      "o chão limpo é onde os dedos dos apressados caíram",
+      "a terceira agulha só cede depois que as outras duas ficam presas juntas",
+    ],
+  },
+  {
+    id: "contas", atributo: "intelecto", rotulo: "contas", artigo: "As",
+    o: "um ábaco de pedra na parede, com uma dívida gravada embaixo",
+    dicas: [
+      "a dívida gravada tem três parcelas, e a soma delas está errada de propósito",
+      "duas pedras do ábaco não deslizam — já estão na posição certa",
+      "o que se paga aqui não é o total: é o TROCO",
+    ],
+  },
 ];
 export const trancaPorId = (id) => TRANCAS.find((t) => t.id === id) || TRANCAS[0];
 
@@ -597,6 +638,12 @@ export const VIRADAS = [
   { id: "encoura", diz: "endurece", nota: "a pele ou a guarda dele fecha — acertá-lo passa a ser trabalho" },
   { id: "chama", diz: "chama os seus", nota: "ele não estava sozinho, e agora os outros vêm" },
   { id: "reergue", diz: "se reergue", nota: "alguma coisa nele se remenda — não milagre, teimosia" },
+  /* v9.167: DUAS a mais, não quatro — cada virada precisa de um efeito
+     que o código EXECUTA (ameaça, defesa, vida, capangas são os botões
+     que existem), e virada de fachada é a regra escrita sem código
+     atrás, que é o defeito que este módulo veio matar. */
+  { id: "escancara", diz: "joga a guarda fora", nota: "ele para de se defender de vez: fica fácil de acertar e muito pior de levar — o tempo passa a correr contra quem hesita" },
+  { id: "convoca_o_braco", diz: "chama o braço-direito", nota: "não é a horda: é UM, o de confiança, e ele chega sabendo lutar" },
 ];
 export const viradaPorId = (id) => VIRADAS.find((v) => v.id === id) || VIRADAS[0];
 
@@ -637,6 +684,15 @@ export function aplicarVirada(chefe, viradaId) {
   }
   if (v.id === "chama") {
     capangas = [{ nome: "Servo do Chefe", ameaca: "comum", chamado: true }];
+  }
+  /* v9.167: as duas novas. A troca do escancara é honesta nos dois
+     sentidos — a defesa cai de verdade e a ameaça sobe DOIS degraus. */
+  if (v.id === "escancara") {
+    c.defesa = Math.max(8, (c.defesa || 12) - 2);
+    c.ameaca = subir(subir(c.ameaca));
+  }
+  if (v.id === "convoca_o_braco") {
+    capangas = [{ nome: "Braço-direito do Chefe", ameaca: "competente", chamado: true }];
   }
   return { chefe: c, capangas, virada: v };
 }

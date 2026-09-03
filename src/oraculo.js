@@ -567,6 +567,42 @@ export const MOVIMENTOS_DO_MUNDO = [
     fio: () => "o que já se comenta por aqui",
     diz: "a notícia de algo que já aconteceu chega até você",
   },
+  /* ---------------- v9.167: A MESA FARTA ----------------
+     Seis vozes eram pouco para um mundo que se mexe: numa campanha longa
+     o jogador reconhecia o repertório. As cinco novas puxam fios que o
+     jogo JÁ mantinha e o oráculo não via — a casa, os nomes grandes da
+     região, o covil, os tratados, a terra que é do jogador. A trava
+     continua inteira: nada aqui inventa trama, só escolhe fio aberto. */
+  {
+    id: "guilda", peso: 2,
+    quando: (c) => !!c.minhaGuilda,
+    fio: (c) => c.minhaGuilda,
+    diz: "a casa a que você pertence tem um assunto que não espera",
+  },
+  {
+    id: "chefe", peso: 2,
+    quando: (c) => !!c.chefeDaRegiao,
+    fio: (c) => c.chefeDaRegiao,
+    diz: "um nome grande desta região se mexe, e o movimento respinga",
+  },
+  {
+    id: "covil", peso: 1,
+    quando: (c) => !!c.masmorraProxima,
+    fio: (c) => c.masmorraProxima,
+    diz: "o rumor do lugar perigoso volta a circular, com um detalhe novo",
+  },
+  {
+    id: "tratado", peso: 1,
+    quando: (c) => !!c.faccaoAliada,
+    fio: (c) => c.faccaoAliada,
+    diz: "quem tem acordo com você cobra ou entrega a parte dele",
+  },
+  {
+    id: "dominio", peso: 2,
+    quando: (c) => !!c.cidadeSua,
+    fio: (c) => c.cidadeSua,
+    diz: "a terra que é sua manda notícia que não podia esperar",
+  },
 ];
 
 /* Com que frequência o mundo se mexe. Cadência larga, e mais larga

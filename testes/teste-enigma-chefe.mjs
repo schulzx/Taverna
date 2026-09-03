@@ -29,12 +29,17 @@ const sec = (s) => console.log("\n" + s);
 
 sec("1. A TRANCA DECLARA QUAL FERRAMENTA A ABRE");
 {
-  t("são quatro trancas", M.TRANCAS.length === 4);
-  /* a pergunta deixa de ser "o jogador é esperto?" e passa a ser "o
-     PERSONAGEM tem a ferramenta?", que é a pergunta que um RPG faz */
+  /* v9.167: quatro → oito. A lei antiga dizia "nenhuma pede força" —
+     mas o espírito dela sempre foi "a pergunta é se o PERSONAGEM tem a
+     ferramenta", e força É uma ferramenta da ficha: com quatro trancas
+     o herói forte abria toda porta com o atributo dos outros. Agora a
+     roda fecha: os seis atributos têm tranca, e a de força pede TÉCNICA
+     (direção, encaixe, alavanca) como qualquer outra — bruta continua
+     não abrindo nada, e as três pistas dela provam isso. */
+  t("são oito trancas", M.TRANCAS.length === 8);
   const attrs = M.TRANCAS.map((x) => x.atributo);
-  t("cada uma pede um atributo diferente", new Set(attrs).size === 4);
-  t("e nenhuma pede força bruta só", !attrs.includes("forca"));
+  t("os seis atributos da ficha têm tranca", ["forca", "destreza", "vigor", "intelecto", "presenca", "percepcao"].every((a) => attrs.includes(a)));
+  t("e a de força não é bruta: ensina técnica", M.TRANCAS.filter((x) => x.atributo === "forca").every((x) => x.dicas.length === 3));
   t("toda tranca tem três pistas", M.TRANCAS.every((x) => x.dicas.length === 3));
   t("e nenhuma pista é vazia", M.TRANCAS.every((x) => x.dicas.every((d) => d && d.length > 15)));
   /* o artigo sai da tabela: "A mecanismo" foi o que a primeira versão
@@ -179,7 +184,10 @@ sec("6. O MESMO CHEFE VIRA SEMPRE IGUAL");
   /* três viradas numa luta de seis rodadas seria virar quase todo turno,
      e surpresa que acontece sempre deixa de ser surpresa */
   t("e não são três", M.LIMIARES.length === 2);
-  t("as quatro viradas aparecem no mundo", new Set(nomes.flatMap((n) => M.fasesDoChefe(n).map((x) => x.virada))).size === 4);
+  /* v9.167: quatro → seis viradas, e a amostra cresceu junto — com oito
+     nomes as seis não tinham como aparecer todas */
+  const muitosNomes = [...nomes, "Verme Rei", "Abade Cego", "Gigante do Poço", "Rainha de Sal", "O Enforcado", "Matrona das Teias", "Cão de Ferro", "O Devorador", "Bispo Rachado", "Aranha-Mãe", "O Sineiro", "Carrasco Mudo"];
+  t("as seis viradas aparecem no mundo", new Set(muitosNomes.flatMap((n) => M.fasesDoChefe(n).map((x) => x.virada))).size === M.VIRADAS.length);
 }
 
 sec("7. O LIMIAR SE CRUZA UMA VEZ SÓ");

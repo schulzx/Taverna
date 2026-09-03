@@ -90,6 +90,61 @@ export const ESTRUTURAS = [
       { nome: "Acerto de Contas", instrucao: "As consequências da verdade: justiça, vingança, perdão ou encobrimento — escolha do jogador. Feche os destinos de cada envolvido. Epílogo — e pare aí: não ofereça um novo caso, quem decide se há outro é o jogador." },
     ],
   },
+  /* ---------------- v9.167: A MESA FARTA ----------------
+     Quatro estruturas eram pouco: a terceira campanha já repetia a
+     segunda. As quatro novas não são resskins — cada uma promete uma
+     EXPERIÊNCIA que as outras não dão: subir degrau a degrau, cobrar
+     uma dívida, segurar uma linha que cede, herdar as perguntas de um
+     morto. As leis da casa valem para todas: o nome da etapa nunca
+     aparece em descrição nenhuma (spoiler), o desfecho exige
+     antagonista vivo, e o fim manda PARAR — recomeçar é do jogador. */
+  {
+    id: "escalada",
+    nome: "A Escalada",
+    desc: "Um degrau de cada vez, e cada um cobra mais que o anterior. Para quem quer medir até onde aguenta subir — e o que deixa para trás no caminho.",
+    etapas: [
+      { nome: "O Primeiro Degrau", instrucao: "Estabeleça de onde o herói parte e o que SUBIR significa neste mundo (andares, patentes, círculos, ranks). A primeira conquista chega rápido e dá gosto. Mostre quem sobe junto — e quem ficou embaixo, olhando." },
+      { nome: "O Ar Rarefeito", instrucao: "As subidas seguintes cobram: rivais no mesmo degrau, aliados que não acompanham, o corpo e a bolsa sentindo. Apresente à distância quem domina os degraus de cima. Missões e caçadas são degraus — trate cada vitória como altura ganha." },
+      { nome: "O Platô", instrucao: "A subida trava: um obstáculo que esforço não resolve — um guardião, uma regra, um preço inaceitável. O herói descobre o que a escalada custou aos outros. Plante AQUI o motivo verdadeiro de subir, ou de parar." },
+      { nome: "O Degrau Proibido", instrucao: "O caminho para o alto passa por onde ninguém deveria passar. O antagonista se interpõe em pessoa: o degrau é DELE. Perder aqui é cair de verdade — e a queda também é história, não game over." },
+      { nome: "O Topo", instrucao: "O confronto pelo último degrau, contra o que foi construído a subida inteira. Vencer redefine o que o topo é: mostre a vista e mostre o preço. Depois do fim, um epílogo em paz — e pare aí: se existe outra subida, quem decide é o jogador." },
+    ],
+  },
+  {
+    id: "divida",
+    nome: "Dívida de Sangue",
+    desc: "Alguém tirou o que não volta. Para quem precisa cobrar — e vai descobrir quanto de si mesmo está disposto a gastar até fechar a conta.",
+    etapas: [
+      { nome: "A Ferida", instrucao: "Estabeleça a perda no passado próximo do herói e o culpado — um nome, um símbolo, um rastro. O mundo comum já não serve: tudo vira meio para a cobrança. A primeira pista aponta a direção, não o endereço." },
+      { nome: "O Rastro", instrucao: "A perseguição por camadas: capangas, cúmplices, quem lucrou calado. Cada um sabe um pedaço e cobra algo para falar. O culpado sente a aproximação e reage — o caçador também vira caça." },
+      { nome: "O Espelho", instrucao: "O custo aparece: o que o herói fez para chegar até aqui o aproxima de quem persegue. Alguém que ele ama nomeia isso em voz alta. E o culpado ganha rosto, história e uma razão — que explica, mas NÃO absolve." },
+      { nome: "O Ajuste", instrucao: "O confronto com o culpado, no terreno dele. A escolha é do jogador: sangue, justiça, perdão ou algo pior que a morte. Cada saída tem preço, e nenhuma devolve o que foi tirado — não esconda isso." },
+      { nome: "O Saldo", instrucao: "O que sobra do herói quando a dívida fecha. Feche os destinos de quem ajudou e de quem atrapalhou. Epílogo em paz ou em cinzas — e pare aí: a próxima história, se houver, é decisão do jogador." },
+    ],
+  },
+  {
+    id: "cerco",
+    nome: "A Linha Escura",
+    desc: "O mundo está perdendo. Para quem prefere segurar uma posição a atravessar um mapa — sabendo que nem tudo que se defende se salva.",
+    etapas: [
+      { nome: "Os Sinais", instrucao: "Estabeleça o lugar a defender e a coisa que avança (praga, horda, inverno, silêncio). Os primeiros sinais chegam pequenos e mal lidos. Apresente quem vive aqui — é por essas pessoas que a linha vale alguma coisa." },
+      { nome: "A Primeira Queda", instrucao: "Algo que parecia seguro cai. A ameaça ganha forma e método; o custo ganha nome próprio. As pessoas reagem mal — fuga, negação, oportunismo. Missões são reforço, resgate e informação." },
+      { nome: "O Aperto", instrucao: "A ameaça fecha por todos os lados e os recursos minguam. Cada decisão fecha uma porta: o que se defende, o que se abandona. Relógios e prazos são o tabuleiro. Quem está por trás do avanço se revela." },
+      { nome: "A Escolha Impossível", instrucao: "Não dá para salvar tudo. Ponha na mesa duas perdas e nenhuma saída limpa — a escolha é do jogador, e ela define o final. Prepare o rompimento do cerco com o que as escolhas pouparam." },
+      { nome: "O Amanhecer", instrucao: "O confronto que decide se a linha segura: contra a fonte da ameaça, com as forças que sobraram. Vitória ou derrota, mostre o custo em cada rosto salvo e em cada ausência. Epílogo — e pare aí: reconstruir é outra história, e ela é do jogador." },
+    ],
+  },
+  {
+    id: "heranca",
+    nome: "A Herança",
+    desc: "O que um morto deixou agora é seu: o título, a casa, os inimigos e as perguntas. Para quem quer descobrir de quem herdou — e decidir o que fazer com isso.",
+    etapas: [
+      { nome: "O Inventário", instrucao: "Estabeleça o que foi herdado (um lugar, um posto, um mapa, um nome) e de quem. Junto do presente, as primeiras contas: credores, dependentes, invejosos. Alguma coisa no espólio não fecha — mostre, não explique." },
+      { nome: "As Contas Abertas", instrucao: "As dívidas do morto vêm cobrar: dinheiro, favores, rancores. Cada credor conta uma versão de quem ele foi, e as versões brigam entre si. O jogador administra o que recebeu enquanto pergunta o que recebeu de verdade." },
+      { nome: "A Sombra Comprida", instrucao: "A verdade sobre o morto muda o valor do que ele deixou: o que parecia bênção tem sangue, ou o que parecia vergonha tem grandeza. Quem o destruiu — ou quem ele destruiu — volta. E agora o alvo é quem herdou." },
+      { nome: "O Nome do Morto", instrucao: "O confronto com o que o morto deixou armado: o inimigo dele é seu, a promessa dele vence com você. A escolha do jogador: honrar, romper ou reescrever o nome que passou a carregar. Depois, epílogo — e pare aí: o resto da vida de quem herda não se narra de uma vez, vive-se." },
+    ],
+  },
 ];
 
 export function estruturaPorId(id) { return ESTRUTURAS.find((e) => e.id === id) || ESTRUTURAS[0]; }

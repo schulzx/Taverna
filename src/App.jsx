@@ -80,7 +80,7 @@ import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, e
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
-import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, BASE_PROMPT } from "./mundo-base.js";
+import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, chefesDoMundo, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, BASE_PROMPT } from "./mundo-base.js";
 import { dificuldadeDaMasmorra, envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
 import { poderDe, poderDoItem, pontosDoItem, trocaDeItem, formatarPoder, contaDoPoder } from "./poder.js";
 import { montarTrama, viradaDevida, envelopeDaTrama, envelopeDoQueVira, intencaoDaTramaPorId } from "./tramas.js";
@@ -14333,6 +14333,37 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         faccaoHostil: faccao ? faccao.nome : null,
         npcComVontade: alguem ? { nome: alguem.nome, vontade: alguem.vontade } : null,
         nemesis: (nemesisRef.current && nemesisRef.current.nome) || null,
+        /* v9.167: os fios que o jogo já mantinha e o oráculo não via.
+           Cada um é material vivo de outro sistema — a trava do "só fio
+           que existe" é cumprida por construção. */
+        minhaGuilda: (() => { try { const g = minhaCasa(); return (g && g.nome) || null; } catch { return null; } })(),
+        chefeDaRegiao: (() => {
+          try {
+            const cd = cidadeDoMapa(cidadeAtualRef.current);
+            if (!cd) return null;
+            const ch = chefesDoMundo(sementeMundo(), mapaRef.current, generoMundo(), (mundoAtual() || {}).lexico)
+              .find((x) => x.regiao === cd.regiao && !estaMortoNaBase(baseMundoRef.current, x.nome));
+            return (ch && ch.nome) || null;
+          } catch { return null; }
+        })(),
+        masmorraProxima: (() => {
+          try {
+            const mm = masmorrasDoMundo(sementeMundo(), mapaRef.current).find((x) => x.cidadeProxima === cidadeAtualRef.current);
+            return (mm && mm.nome) || null;
+          } catch { return null; }
+        })(),
+        faccaoAliada: (() => {
+          try {
+            const f = ((mapaRef.current || {}).faccoes || []).find((x) => x.tratado === "comercio" || x.tratado === "alianca");
+            return (f && f.nome) || null;
+          } catch { return null; }
+        })(),
+        cidadeSua: (() => {
+          try {
+            const c = ((mapaRef.current || {}).cidades || []).find((x) => x.relacao === "jogador" && x.nome !== cidadeAtualRef.current);
+            return (c && c.nome) || null;
+          } catch { return null; }
+        })(),
       });
       if (!mv) return;
       desdeMundoRef.current = 0;
@@ -15381,7 +15412,15 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const n = gerarVilao({
       nome: nomePessoa((mundo && mundo.genero) || "Fantasia medieval", undefined, Math.random, (mundoAtual() || {}).lexico),
       cont: contRef.current,
-      stats: { dominios: dominiosDe(mapaRef.current).length },
+      /* v9.167: o retrato ficou mais rico — os arquétipos novos leem
+         diplomacia, guerra e bolsa, e sem estes campos eles nunca
+         nasceriam (nasceDe falso para sempre é arquétipo morto) */
+      stats: {
+        dominios: dominiosDe(mapaRef.current).length,
+        tratados: ((mapaRef.current || {}).faccoes || []).filter((f) => f.tratado === "comercio" || f.tratado === "alianca").length,
+        guerras: ((mapaRef.current || {}).faccoes || []).filter((f) => f.tratado === "guerra").length,
+        moedas: (personagemRef.current || {}).moedas || 0,
+      },
       dia: diaRef.current,
     });
     nemesisRef.current = n; setNemesis(n);

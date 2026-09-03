@@ -164,6 +164,59 @@ export const ARQUETIPOS = [
     quer: "que você perca tudo do mesmo jeito que ele perdeu: de dentro, por gente conhecida",
     assinaturas: ["um objeto seu, perdido há tempo, devolvido sem bilhete", "conhecidos que param de olhar nos olhos", "uma dívida antiga quitada por mão desconhecida"],
   },
+  /* ---------------- v9.167: A MESA FARTA ----------------
+     Seis retratos eram pouco: quem joga duas campanhas parecidas via o
+     mesmo vilão. Os seis novos leem contadores que já existiam e ninguém
+     lia — a quase-morte, a forja, os tratados, a bolsa. A regra 5 segue
+     inteira: cada um é o jogador com um passo a mais. */
+  {
+    id: "credor", nome: "O Credor", peso: 2,
+    nasceDe: (c, s) => (s.moedas || 0) >= 400 || (c.contratosConcluidos || 0) >= 5,
+    crenca: "tudo o que você tem foi adiantado por alguém — e juro que não se cobra vira presente",
+    metodo: "nunca ameaça: compra a dívida de quem você ama e espera você perceber sozinho",
+    quer: "que você venha, de vontade própria, perguntar o preço — porque aí a mercadoria é você",
+    assinaturas: ["recibos antigos com o seu nome em letras que não são suas", "credores da cidade quitados de um dia para o outro", "um cofre vazio com um bilhete de agradecimento"],
+  },
+  {
+    id: "penitente", nome: "O Penitente", peso: 2,
+    nasceDe: (c) => (c.quaseMorte || 0) > 0 || (c.desastres || 0) >= 3,
+    crenca: "o mundo sobrevive a você por sorte, e sorte não é um plano — alguém precisa fazer a conta",
+    metodo: "colige cada erro seu, com testemunha e data, e mostra a quem você salvou depois",
+    quer: "que o mundo veja o que você custa antes de decidir se ainda te quer",
+    assinaturas: ["uma lista dos seus fracassos pregada onde você dormiu", "testemunhas dos seus piores dias mudando de cidade", "flores no lugar exato onde você quase morreu"],
+  },
+  {
+    id: "colecionador", nome: "O Colecionador", peso: 2,
+    nasceDe: (c) => (c.forjados || 0) >= 2 || (c.lendariosDerrotados || 0) >= 1,
+    crenca: "o raro pertence a quem sabe guardá-lo — e o mundo deixa coisa única na mão de qualquer um",
+    metodo: "não rouba: chega depois, quando a coisa já trocou de mãos duas vezes e ninguém lembra a origem",
+    quer: "a peça que falta — e a peça que falta, cedo ou tarde, é uma que está com você",
+    assinaturas: ["vitrines vazias com o veludo ainda marcado", "compradores pagando o triplo por coisas suas", "um inventário dos seus pertences que você nunca escreveu"],
+  },
+  {
+    id: "cortesao", nome: "O Cortesão", peso: 2,
+    nasceDe: (c, s) => (s.tratados || 0) > 0 || (c.presentes || 0) >= 2,
+    crenca: "ninguém é leal — as pessoas só ainda não ouviram a oferta certa",
+    metodo: "não luta com você: janta com os seus aliados, um por um, e cada jantar custa uma porta",
+    quer: "que você chegue ao fim com a espada na mão e ninguém do seu lado para ver",
+    assinaturas: ["amigos desmarcando com gentileza demais", "um brinde à sua saúde numa mesa em que você não estava", "cartas suas respondidas por outra mão"],
+  },
+  {
+    id: "vendedor_de_medo", nome: "O Vendedor de Medo", peso: 2,
+    nasceDe: (c) => (c.perigosEstrada || 0) >= 3 || (c.combatesVencidos || 0) >= 8,
+    crenca: "a segurança é a única mercadoria que o freguês compra chorando e agradece",
+    metodo: "planta o perigo com uma mão e vende a proteção com a outra, sempre um dia depois",
+    quer: "uma região inteira pagando a ele para se proteger do que ele mesmo solta",
+    assinaturas: ["a guarda nova chegando sempre na manhã seguinte ao ataque", "bichos soltos longe demais do habitat", "cobradores de 'taxa de muralha' com sotaque de fora"],
+  },
+  {
+    id: "fomentador", nome: "O Fomentador", peso: 2,
+    nasceDe: (c, s) => (s.guerras || 0) > 0 || (c.combatesVencidos || 0) >= 12,
+    crenca: "a paz é só o intervalo em que os fracos recontam as moedas — a guerra é o estado honesto do mundo",
+    metodo: "arma os dois lados de toda briga e cobra em terra o que ninguém pode pagar em ouro",
+    quer: "uma guerra grande o bastante para ninguém mais lembrar como era antes dela",
+    assinaturas: ["o mesmo ferreiro assinando as armas dos dois lados", "boatos idênticos correndo em cidades rivais", "um mapa em que as fronteiras já estão desenhadas erradas"],
+  },
   {
     id: "arquiteto", nome: "O Arquiteto", peso: 2,
     nasceDe: () => true,
@@ -304,7 +357,7 @@ export const HERANCAS = [
     crenca: (v) => `${v} não era o monstro que contaram — e quem contou precisa pagar pela versão que virou verdade`,
     metodo: "não esconde de quem sabe: procura testemunhas, junta o que foi dito, e cobra uma por uma",
     quer: "que a história seja corrigida em praça pública, custe o que custar a quem a escreveu",
-    porque: "é a herança mais humana das seis: quem sobra de um vilão morto quase nunca é outro vilão — é gente de luto, e luto com razão é mais perigoso que ambição",
+    porque: "é a herança mais humana de todas: quem sobra de um vilão morto quase nunca é outro vilão — é gente de luto, e luto com razão é mais perigoso que ambição",
   },
   {
     id: "herdeiro_do_plano", peso: 3, herdaCrenca: true,
@@ -350,6 +403,65 @@ export const HERANCAS = [
     metodo: "estuda antes de aparecer: conhece o meu nome, os meus hábitos e a minha gente antes de eu saber que existe",
     quer: "provar que o herói e o monstro são o mesmo degrau da mesma escada",
     porque: "é o espelho, mas ganho: a fama do jogador virou o motivo, e essa é a única herança em que a culpa é inteiramente dele",
+  },
+  /* ---------------- v9.167: A MESA FARTA ----------------
+     Seis heranças eram pouco para um jogo de capítulos: na terceira
+     queda o jogador já conhecia todas as formas de o mal voltar. As seis
+     novas seguem a mesma lei — cada uma reinterpreta o capítulo anterior
+     de um jeito que nenhuma outra faz. */
+  {
+    id: "credor_do_morto", peso: 2, herdaCrenca: false,
+    quem: "quem financiava o que ele fazia",
+    liga: (v) => `pagava as contas de ${v} e perdeu o investimento na queda`,
+    crenca: (v) => `${v} era um instrumento, e instrumento que quebra se substitui — o projeto nunca foi dele`,
+    metodo: "não pisa em campo: contrata, três candidatos por vez, e testa cada um em mim antes de escolher",
+    quer: "recuperar com juros o que a queda custou, e desta vez sem apostar tudo num rosto só",
+    porque: "revela que o capítulo passado tinha um andar acima: o vilão tinha patrão, e o patrão fez as contas",
+  },
+  {
+    id: "desertor", peso: 2, herdaCrenca: false,
+    quem: "quem abandonou o barco dele antes do fim",
+    liga: (v) => `serviu a ${v}, viu o defeito do plano por dentro, e saiu antes de a conta chegar`,
+    crenca: (v) => `${v} era fraco demais para a própria ideia — a ideia continua certa, faltava estômago`,
+    metodo: "refaz o plano do antecessor com as correções que ele se recusou a ouvir, começando pelo erro que o derrubou",
+    quer: "provar que a queda foi de gerência, não de projeto",
+    porque: "o herói vence o mesmo plano duas vezes e ele NÃO é o mesmo: a segunda versão nasceu da autópsia da primeira",
+  },
+  {
+    id: "juiz", peso: 2, herdaCrenca: false,
+    quem: "quem julgou os que sobraram",
+    liga: (v) => `presidiu os processos contra a gente de ${v}, e descobriu o gosto do martelo`,
+    crenca: (v) => `alguém precisa varrer o que ${v} deixou — e vassoura que funciona não se guarda no armário`,
+    metodo: "confisca, interdita e prende em nome da limpeza, e a definição de sujeira cresce um palmo por semana",
+    quer: "que o estado de exceção vire estado, com ele segurando a exceção",
+    porque: "a vitória do herói deu a alguém o pretexto: o mal seguinte veste a toga, e combatê-lo parece defender o anterior",
+  },
+  {
+    id: "semente", peso: 2, herdaCrenca: true,
+    quem: "o que ele deixou plantado para depois",
+    liga: (v) => `é a carta que ${v} escreveu para o caso de cair — e ele caiu`,
+    crenca: null,
+    metodo: "cresce onde ninguém olha, seguindo instruções deixadas por escrito, sem improvisar uma vírgula",
+    quer: "florescer na data marcada, que já estava marcada antes de a espada descer",
+    porque: "o vilão previu a própria queda e jogou uma carta para além dela: o jogador venceu a partida que o morto já tinha descontado",
+  },
+  {
+    id: "gemeo", peso: 2, herdaCrenca: false,
+    quem: "a metade que ninguém viu",
+    liga: (v) => `dividia o nome com ${v} — um era o rosto, o outro sempre foi as mãos`,
+    crenca: (v) => `${v} levou a fama e levou a queda; o trabalho, esse nunca parou`,
+    metodo: "continua fazendo exatamente o que sempre fez, agora sem precisar dividir nem esconder de dentro",
+    quer: "o que os dois sempre quiseram — só que inteiro, e sem testemunha de berço",
+    porque: "reinterpreta o capítulo passado linha a linha: metade dos crimes não era de quem caiu, e a metade que sobrou é a mais cuidadosa",
+  },
+  {
+    id: "saudade", peso: 2, herdaCrenca: false,
+    quem: "os que prosperavam debaixo dele",
+    liga: (v) => `viviam bem sob a ordem de ${v}, e a queda dele levou junto o arranjo`,
+    crenca: (v) => `com ${v} a rua era limpa, o pão tinha preço e ninguém mexia com a gente — chame do que quiser, funcionava`,
+    metodo: "não conspira no escuro: abaixo-assinado, procissão, dinheiro junto — e um candidato a sucessor por semana",
+    quer: "a volta do arranjo, com ou sem o morto dentro",
+    porque: "a mais desconfortável: gente comum, com saudade sincera e razão pequena — e o herói não tem em quem bater",
   },
 ];
 export function herancaPorId(id) { return HERANCAS.find((h) => h.id === id) || null; }

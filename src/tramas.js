@@ -173,6 +173,77 @@ export const INTENCOES = [
     quer: "amarrar uma ponta antes do desfecho",
     aoMestre: "esta missão fecha alguma coisa que ficou aberta na campanha. Não abra nada novo aqui: o que se pede é o encerramento, e ele pode doer",
   },
+  /* ---------------- v9.167: A MESA FARTA ----------------
+     Onze intenções eram pouco: na segunda campanha o jogador já tinha
+     visto todas. As onze novas obedecem à mesma lei das velhas — cada
+     `quando` lê o MOTOR (arco, grupo, facção, nível, o que o mundo tem),
+     nunca o acaso — e cada uma quer uma coisa que nenhuma outra quer. */
+  {
+    id: "provar_o_companheiro", peso: 8,
+    quando: (s) => s.temGrupo && s.momento >= 0.25 && s.momento < 0.75,
+    quer: "apertar um companheiro até o que ele quer aparecer",
+    aoMestre: "esta missão puxa um companheiro do grupo para o centro: o que ELE quer e o que a tarefa pede não cabem juntos. Dê a ele a cena — o herói assiste, ajuda ou atrapalha, mas o dilema é do companheiro",
+  },
+  {
+    id: "desenterrar_a_ferida", peso: 7,
+    quando: (s) => s.temGenteConhecida && s.momento >= 0.2,
+    quer: "fazer a ferida antiga do lugar abrir de novo",
+    aoMestre: "esta missão desenterra uma coisa que este lugar fez de errado e enterrou — se o mundo tem um passado declarado, use-o. Quem pede quer fechar a ferida; quem esconde tem nome e motivo. Ninguém sai limpo",
+  },
+  {
+    id: "dar_um_rival", peso: 8, uma: true,
+    quando: (s) => s.momento >= 0.15 && s.momento < 0.6,
+    quer: "pôr no caminho alguém do mesmo ofício, do outro lado da fila",
+    aoMestre: "no meio desta missão o herói cruza com alguém que faz o que ele faz — atrás do mesmo alvo, pelo outro caminho. NÃO é gente do vilão e NÃO é inimigo: é rival. Deixe-o ganhar ou perder por pouco, e deixe-o voltar",
+  },
+  {
+    id: "pagar_uma_bondade", peso: 6,
+    quando: (s) => s.temGenteConhecida && s.momento >= 0.4,
+    quer: "fazer o mundo devolver um bem que o herói fez",
+    aoMestre: "no meio desta missão chega uma ajuda inesperada de alguém que o herói tratou bem — cite o gesto antigo pelo nome. Um mundo que só cobra ensina a não plantar; este também paga",
+  },
+  {
+    id: "armar_o_covil", peso: 8,
+    quando: (s) => s.temMasmorra && s.momento < 0.7,
+    quer: "fazer o lugar perigoso da região deixar de ser cenário",
+    aoMestre: "esta missão aponta para o covil que o mundo já tem: alguma coisa lá dentro passou a importar AGORA — saiu de lá, foi levada para lá, acordou. Entrar é escolha do jogador; dar o motivo é o seu trabalho",
+  },
+  {
+    id: "dividir_a_mesa", peso: 9,
+    quando: (s) => s.temFaccao && s.momento >= 0.35,
+    quer: "obrigar o herói a escolher entre dois lados com razão",
+    aoMestre: "esta missão serve a dois senhores: cumpri-la como um pede é falhar com o outro. Os dois lados têm razão e memória — a escolha fica de pé e volta depois. NÃO ofereça a saída que agrada aos dois",
+  },
+  {
+    id: "trazer_o_passado_dele", peso: 7, uma: true,
+    quando: (s) => s.momento >= 0.2 && s.momento < 0.8,
+    quer: "fazer o passado do herói bater à porta com pernas",
+    aoMestre: "quem aparece nesta missão conhecia o herói de antes da campanha — use o conceito e o antecedente da ficha. Essa pessoa sabe dele uma coisa que o grupo não sabe, e não veio à toa",
+  },
+  {
+    id: "mostrar_o_tamanho", peso: 6,
+    quando: (s) => s.nivel >= 8,
+    quer: "fazer o mundo reagir ao tamanho que o herói ficou",
+    aoMestre: "esta missão existe porque o herói ficou GRANDE: quem pede tem medo dele, quem paga paga demais, quem olha desvia o olho. Poder muda como as portas se abrem — e alguém, por causa disso, tranca a dele",
+  },
+  {
+    id: "fazer_escolher", peso: 9,
+    quando: (s) => s.momento >= 0.55,
+    quer: "pôr duas coisas certas na mesa e só uma mão",
+    aoMestre: "no meio desta missão duas urgências legítimas se abrem ao mesmo tempo, e não dá para as duas. NÃO invente a terceira saída e NÃO deixe a escolha sair de graça: o lado não escolhido acontece",
+  },
+  {
+    id: "espalhar_o_nome", peso: 5,
+    quando: (s) => s.momento < 0.5 && s.temCidadeVizinha,
+    quer: "fazer o nome do herói chegar a algum lugar antes dele",
+    aoMestre: "esta missão termina com testemunhas: o que o herói fizer aqui vira história contada na próxima cidade — melhorada ou piorada. Escolha UM detalhe da resolução e faça dele o centro do boato",
+  },
+  {
+    id: "por_um_prazo", peso: 7,
+    quando: (s) => s.momento >= 0.45,
+    quer: "fazer o tempo virar adversário declarado",
+    aoMestre: "esta missão tem hora: o que ela protege estraga, foge ou fecha. Diga o prazo NA FICÇÃO (a lua, a feira, a maré) e cumpra-o — chegar tarde não falha a missão, muda o que se encontra lá",
+  },
   /* A REDE. Sem uma intenção sempre disponível, uma campanha sem vilão e
      no meio do arco não teria nenhuma — e o Mestre voltaria a não dar
      quest nenhuma, que é o estado de antes com mais código. */
@@ -331,6 +402,70 @@ export const VEICULOS = [
       etapas: [{ tipo: "ir_a", alvo: local.nome, lugar: true }],
     }),
     virada: { apos: 0, tipo: "revelacao", onde: "no meio do que sobrou" },
+  },
+  /* ---------------- v9.167: A MESA FARTA ----------------
+     Seis veículos novos, banais como manda o desenho — o transporte não
+     rouba a cena da intenção. Cada um usa uma virada que o App já sabe
+     executar e material que o mundo já produz. */
+  {
+    id: "cacar_a_fera", serve: ["armar_o_covil", "mostrar_o_tamanho", "dar_um_rival", "dar_o_degrau"],
+    precisa: ["criatura", "ermo"],
+    montar: ({ criatura, ermo, pessoa }) => ({
+      titulo: `A cabeça de ${criatura.nome}`,
+      descricao: `Há recompensa pela cabeça de um ${criatura.nome} ${ermo.nome ? comDe(ermo.nome) : "da região"}${pessoa ? `, e ${pessoa.nome} garante o pagamento` : ""}.`,
+      etapas: [{ tipo: "derrotar", alvo: criatura.nome, quantos: 1, onde: ermo.nome || "" }],
+    }),
+    virada: { apos: 0, tipo: "cacada", quantos: 1, ameaca: "elite" },
+  },
+  {
+    id: "achar_quem_sabe", serve: ["desenterrar_a_ferida", "trazer_o_passado_dele", "plantar_a_marca"],
+    precisa: ["local", "pessoa"],
+    montar: ({ pessoa, local }) => ({
+      titulo: `Quem sabe está em ${local.nome}`,
+      descricao: `${pessoa.nome} jura que alguém em ${local.nome} sabe o que ninguém conta — e paga para que a pergunta seja feita por outra boca.`,
+      etapas: [{ tipo: "ir_a", alvo: local.nome, lugar: true }],
+    }),
+    virada: { apos: 0, tipo: "encontro", onde: "lá dentro", papel: "quem sabe — e tem medo do que sabe" },
+  },
+  {
+    id: "guardar_a_noite", serve: ["por_um_prazo", "provar_o_companheiro", "mostrar_a_mao", "apertar_o_mundo"],
+    precisa: ["local", "pessoa"],
+    montar: ({ pessoa, local }) => ({
+      titulo: `A noite em claro em ${local.nome}`,
+      descricao: `${pessoa.nome} precisa que ${local.nome} atravesse esta noite inteiro — e não diz de quem tem medo.`,
+      etapas: [{ tipo: "aguentar", dias: 1 }],
+    }),
+    virada: { apos: 0, tipo: "emboscada", onde: "na calada da noite", quantos: 2, ameaca: "competente" },
+  },
+  {
+    id: "dois_recados", serve: ["dividir_a_mesa", "fazer_escolher", "declarar_a_guerra"],
+    precisa: ["cidade", "pessoa"],
+    montar: ({ pessoa, cidade, objeto }) => ({
+      titulo: `Dois recados para ${cidade.nome}`,
+      descricao: `${pessoa.nome} manda um ${objeto} a ${cidade.nome} — e avisa que outra gente mandou o contrário, pela mesma estrada.`,
+      etapas: [{ tipo: "ir_a", alvo: cidade.nome }],
+    }),
+    virada: { apos: 0, tipo: "encontro", onde: "na chegada", papel: "quem serve ao outro recado" },
+  },
+  {
+    id: "o_leilao", serve: ["mostrar_o_tamanho", "dar_um_rival", "tirar_algo", "apresentar_o_rosto"],
+    precisa: ["local", "pessoa"],
+    montar: ({ pessoa, local, objeto }) => ({
+      titulo: `O lance em ${local.nome}`,
+      descricao: `${pessoa.nome} quer um ${objeto} que vai a lance em ${local.nome} — e quer mais ainda saber QUEM dá os outros lances.`,
+      etapas: [{ tipo: "ir_a", alvo: local.nome, lugar: true }],
+    }),
+    virada: { apos: 0, tipo: "encontro", onde: "entre os lances", papel: "quem cobre qualquer oferta" },
+  },
+  {
+    id: "a_palavra_dada", serve: ["pagar_uma_bondade", "dar_um_aliado", "fechar_o_fio", "espalhar_o_nome"],
+    precisa: ["cidade", "pessoa"],
+    montar: ({ pessoa, cidade }) => ({
+      titulo: `A palavra dada a ${pessoa.nome}`,
+      descricao: `${pessoa.nome} chama o herói a ${cidade.nome} para acertar uma palavra antiga — e garante que desta vez quem paga é quem deve.`,
+      etapas: [{ tipo: "ir_a", alvo: cidade.nome }],
+    }),
+    virada: { apos: 0, tipo: "revelacao", onde: "na hora do acerto" },
   },
 ];
 
