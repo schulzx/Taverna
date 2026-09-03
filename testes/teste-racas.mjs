@@ -4,7 +4,7 @@
    jogador levantou sobre equipamento: um apelido que vira afordância
    falsa. Aqui ele não vira, porque a coluna mecânica não se mexe — e é
    isso que se mede abaixo, campo por campo. */
-import { RACAS_DO_SISTEMA, garantirLexico, chamadoDaRaca, racasRenomeadas, pedidoDoLexico } from "../src/lexico.js";
+import { RACAS_DO_SISTEMA, GRUPOS_DE_RACA, GENEROS_FUTURISTAS, garantirLexico, chamadoDaRaca, racasRenomeadas, pedidoDoLexico } from "../src/lexico.js";
 import { RACAS, ORIGENS, racaPorNome, racasDoGenero } from "../src/classes.js";
 import { origemDe, efeitoDe } from "../src/tracos.js";
 import { velocidadeDaRaca, deslocamentoDe } from "../src/movimento.js";
@@ -53,17 +53,29 @@ t("nome de fora não entra", !racasRenomeadas(lex).some((r) => r.chamado === "N�
 t("entrada torta não quebra", racasRenomeadas(lex).every((r) => r.raca && r.chamado));
 t("e as dezesseis entram", racasRenomeadas(lex).length === RACAS_DO_SISTEMA.length);
 
-console.log("\n== TUDO OU NADA ==");
+console.log("\n== TUDO OU NADA, POR GRUPO ==");
 /* achado jogando: a ficha oferecia "normal · Elfo · Anão · fendido ·
    Draconato · tocado" na mesma lista. Metade renomeada lê pior que
-   nenhuma renomeada, porque a metade que sobrou denuncia a outra. */
-const faltando = garantirLexico({ racas: bancoCheio.slice(0, RACAS_DO_SISTEMA.length - 1) });
-t("faltando UMA raça, o banco inteiro cai", racasRenomeadas(faltando).length === 0,
-  "metade renomeada é o pior dos dois mundos");
-t("e aí toda raça volta ao nome de sempre", chamadoDaRaca(faltando, "Humano") === "Humano");
-t("uma sem chamado também derruba",
-  racasRenomeadas(garantirLexico({ racas: bancoCheio.map((x, i) => (i === 3 ? { ...x, chamado: "" } : x)) })).length === 0);
-t("o pedido manda renomear todas", /RENOMEIE TODAS, sem exceção/.test(pedidoDoLexico({ genero: "Universo próprio", descricao: "x" })));
+   nenhuma renomeada, porque a metade que sobrou denuncia a outra.
+
+   v9.166: A LEI MUDOU DE ALCANCE, não de espírito. O tudo-ou-nada
+   valia sobre AS DEZESSEIS — e obrigava um mundo medieval a batizar
+   "Sintético", que ele nunca mostra, ou perder o banco inteiro. Agora
+   vale POR GRUPO (fantasia/futuro), porque os dois grupos nunca
+   aparecem na mesma ficha: é DENTRO do grupo que a metade renomeada
+   denuncia a outra. As asserções abaixo fotografam a lei nova. */
+const faltando = garantirLexico({ racas: bancoCheio.slice(0, RACAS_DO_SISTEMA.length - 1) });   /* cai a última: Vagante, do futuro */
+t("faltando uma do FUTURO, só o grupo do futuro cai",
+  racasRenomeadas(faltando).length === GRUPOS_DE_RACA.fantasia.length &&
+  racasRenomeadas(faltando).every((r) => GRUPOS_DE_RACA.fantasia.includes(r.raca)),
+  "o grupo completo sobrevive; o incompleto some inteiro");
+t("e as raças do grupo caído voltam ao nome de sempre", chamadoDaRaca(faltando, "Vagante") === "Vagante" && chamadoDaRaca(faltando, "Terrano") === "Terrano");
+const semUmaFantasia = garantirLexico({ racas: bancoCheio.map((x, i) => (i === 3 ? { ...x, chamado: "" } : x)) });   /* i=3 é Halfling, da fantasia */
+t("uma sem chamado derruba o grupo dela inteiro",
+  racasRenomeadas(semUmaFantasia).every((r) => GRUPOS_DE_RACA.futuro.includes(r.raca)) &&
+  chamadoDaRaca(semUmaFantasia, "Humano") === "Humano");
+t("o pedido manda renomear todas as listadas", /RENOMEIE TODAS AS LISTADAS/.test(pedidoDoLexico({ genero: "Universo próprio", descricao: "x" })));
+t("e ensina que nome de raça é nome de povo", /NOME DE POVO/.test(pedidoDoLexico({ genero: "Universo próprio", descricao: "x" })) && /NUNCA adjetivo solto/.test(pedidoDoLexico({ genero: "Universo próprio", descricao: "x" })));
 
 console.log("\n== A COLUNA MECÂNICA NÃO SE MEXE ==");
 /* o coração da etapa: renomeada ou não, a raça continua a mesma coisa
@@ -108,7 +120,19 @@ t("a ficha guarda o canônico", racaPorNome("Anão") !== null && racaPorNome("Fi
 
 console.log("\n== O PEDIDO AO MESTRE ==");
 const pedido = pedidoDoLexico({ genero: "Fantasia medieval", descricao: "caçadores modernos e portais" });
-t("o pedido lista as raças", RACAS_DO_SISTEMA.every((n) => pedido.includes(n)));
+/* v9.166: o pedido lista só as raças que ESTE mundo oferece — pedir nome
+   para "Sintético" num mundo medieval era a fábrica dos nomes tortos */
+t("o pedido medieval lista as raças de fantasia", GRUPOS_DE_RACA.fantasia.every((n) => pedido.includes(n)));
+t("e não pede nome para as do futuro", !GRUPOS_DE_RACA.futuro.some((n) => pedido.includes(`, ${n},`) || pedido.includes(`: ${n},`)));
+const pedidoCyber = pedidoDoLexico({ genero: "Cyberpunk", descricao: "neon e chuva" });
+t("o pedido cyberpunk lista as origens do futuro", GRUPOS_DE_RACA.futuro.every((n) => pedidoCyber.includes(n)));
+/* e os grupos literais batem com o corte real de classes.js — o mesmo
+   contrato do equipamento: literal aqui, conferido aqui */
+t("os grupos espelham racasDoGenero",
+  JSON.stringify(GRUPOS_DE_RACA.fantasia) === JSON.stringify(racasDoGenero("Fantasia medieval").map((r) => r.nome)) &&
+  JSON.stringify(GRUPOS_DE_RACA.futuro) === JSON.stringify(racasDoGenero("Cyberpunk").map((r) => r.nome)));
+t("e a lista de gêneros futuristas também bate",
+  GENEROS_FUTURISTAS.every((g) => racasDoGenero(g).map((r) => r.nome).join() === GRUPOS_DE_RACA.futuro.join()));
 t("o pedido tem o campo", pedido.includes('"racas"'));
 t("o pedido diz que a lista é fechada", /AS RAÇAS TAMBÉM TÊM LISTA FECHADA/.test(pedido));
 t("o pedido separa povos de racas", /"povos" é quem habita o mundo/.test(pedido));

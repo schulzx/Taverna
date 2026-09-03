@@ -24,7 +24,7 @@ import { rngDe } from "./geografia.js";
 import { pessoaDiversa, nomeTaverna, nomePessoa } from "./nomes.js";
 /* v9.103: o léxico nomeia lugar e bicho. O TIPO e a AMEAÇA continuam
    sendo do código — o que vem daqui é só a palavra. */
-import { nomesDeLugar, chamadoDoLugar, criaturasDaAmeaca } from "./lexico.js";
+import { nomesDeLugar, chamadoDoLugar, criaturasDaAmeaca, titulosDo } from "./lexico.js";
 import { nomeDeLocal } from "./toponimia.js";
 import { criaturasDoGenero } from "./bestiario.js";
 import { moldePorId } from "./moldes.js";
@@ -318,7 +318,11 @@ export function chefesDoMundo(semente, mapa, genero = "Fantasia medieval", lex =
     const base = pick(rnd, banco);
     const humanoide = rnd() < 0.45;
     const nome = humanoide ? nomePessoa(genero, undefined, rnd, lex) : base.nome;
-    const titulo = pick(rnd, TITULOS);
+    /* v9.166: o título sai do léxico quando o mundo tem os seus — "o Rei
+       Emprestado" num mundo cyberpunk denunciava o gerador na primeira
+       aparição. Uma chamada de rnd num caso e no outro: o mundo sem
+       léxico sorteia exatamente o que sempre sorteou. */
+    const titulo = pick(rnd, titulosDo(lex) || TITULOS);
     const reg = regioes.length ? pick(rnd, regioes) : null;
     const covil = cidades.length ? pick(rnd, cidades) : null;
     /* o principal é o teto do mundo; os secundários variam muito de propósito */

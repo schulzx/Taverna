@@ -74,6 +74,9 @@ const TETOS = {
   povos: 8, oficios: 16, lugares: 10, criaturas: 10, faccoes: 4, naoExiste: 6,
   cidades: 8, tavernas: 4, nome: 24, parte: 16, terra: 40,
   texto: 170, curto: 40, medio: 70, adaptacao: 170,
+  /* v9.166: um acontecimento do passado é uma frase, não um parágrafo —
+     "a Queda do Segundo Sol, há 40 anos, deixou o céu cinza" cabe em 110 */
+  passado: 110,
   /* v9.111: o nome de EQUIPAMENTO tem teto próprio. O de 24 era o de
      nome de pessoa, e o item mais longo do catálogo da casa ("Armadura
      de Couro de Dragão") tem 27 — o teto estava calibrado para outra
@@ -98,7 +101,13 @@ const TETOS = {
    que avisar: o léxico é rico de propósito, e o prompt leva dele o que
    cabe na cena de hoje — uma cena de masmorra leva a masmorra, e a de
    amanhã leva a de amanhã. */
-export const TETO_DO_BLOCO = 1700;
+/* v9.166: 1700 → 2000. O PASSADO entrou na fila fixa (duas a quatro
+   frases, ~350 caracteres com o rótulo) e sem teto novo ele empurraria
+   os bichos e o "como se fala" para fora do bloco toda vez — o corte
+   silencioso derrubando exatamente o que a versão veio acrescentar. Os
+   trezentos cabem: as guardas absolutas do prompt têm folga medida em
+   milhares, e a suíte do orçamento morde se isso deixar de ser verdade. */
+export const TETO_DO_BLOCO = 2000;
 /* o bloco da cena (v9.162) tem orçamento separado e menor: ver lexicoDaCena */
 export const TETO_DA_CENA = 700;
 
@@ -255,10 +264,31 @@ export const PROFISSOES_DO_SISTEMA = [
   "Joalheiro", "Curtidor", "Minerador", "Caçador de Recompensas", "Mercador", "Médico de Campo",
 ];
 
-export const RACAS_DO_SISTEMA = [
-  "Humano", "Elfo", "Anão", "Halfling", "Meio-orc", "Draconato", "Tiefling", "Gnomo", "Meio-elfo", "Goliath",
-  "Terrano", "Colono Orbital", "Sintético", "Mutante", "Cromado", "Vagante",
-];
+/* v9.166: AS RAÇAS TÊM DOIS GRUPOS, e o tudo-ou-nada passa a ser POR
+   GRUPO. O defeito que isto conserta: o pedido exigia renomear AS
+   DEZESSEIS, inclusive "Sintético" e "Cromado" num mundo medieval —
+   raças que aquele mundo nunca mostra. O modelo, obrigado a batizar o
+   que não existe ali, entregava nome torto; e quando pulava uma, o
+   banco INTEIRO caía e a campanha nascia com elfo e anão de sempre.
+   Metade do "nomes esquisitos" das raças nascia desta exigência.
+
+   Agora o pedido lista só as raças que ESTE mundo oferece (as do
+   gênero), e a garantia aceita qualquer grupo que venha completo. A
+   régua da v9.113 continua intacta onde importa: DENTRO de um grupo é
+   tudo ou nada, porque é dentro dele que a metade renomeada denuncia
+   a outra — os dois grupos nunca aparecem na mesma ficha.
+
+   A lista é literal em vez de importada de classes.js de propósito
+   (o léxico não deve carregar o catálogo de classes), e um teste
+   confere que as duas batem — o mesmo contrato do equipamento. */
+export const GRUPOS_DE_RACA = {
+  fantasia: ["Humano", "Elfo", "Anão", "Halfling", "Meio-orc", "Draconato", "Tiefling", "Gnomo", "Meio-elfo", "Goliath"],
+  futuro: ["Terrano", "Colono Orbital", "Sintético", "Mutante", "Cromado", "Vagante"],
+};
+/* espelha o corte de racasDoGenero em classes.js — literal, testado */
+export const GENEROS_FUTURISTAS = ["Ficção científica", "Cyberpunk", "Pós-apocalíptico"];
+export const racasDoMundo = (genero) => (GENEROS_FUTURISTAS.includes(String(genero || "")) ? GRUPOS_DE_RACA.futuro : GRUPOS_DE_RACA.fantasia);
+export const RACAS_DO_SISTEMA = [...GRUPOS_DE_RACA.fantasia, ...GRUPOS_DE_RACA.futuro];
 
 /* ---------------- COMO AS COISAS FUNCIONAM ----------------
    Cada entrada aponta para um SISTEMA que já existe no código e diz
@@ -298,6 +328,14 @@ export const SISTEMAS = [
     pergunta: "quando um caminho deste mundo está travado (um portal cego, uma rota fechada, uma porta que não reconhece), o que o abre e como a abertura se mostra a quem está perto — um portal que acende, uma chave que se forma, um selo que cede, uma permissão que chega" },
   { id: "cidade", porta: "cidade", rotulo: "COMO É UM ASSENTAMENTO",
     pergunta: "como é uma cidade daqui por dentro: o que se vê na rua, quem manda, do que as pessoas têm medo" },
+  /* v9.166: DUAS PERGUNTAS QUE FALTAVAM AO TREINAMENTO. A justiça e a fé
+     são o que o Mestre mais improvisa numa cena de cidade — quem prende,
+     quem julga, a quem se reza — e improvisava com o hábito do gênero,
+     que é exatamente o que o léxico existe para substituir. */
+  { id: "justica", porta: "cidade", rotulo: "COMO A LEI COBRA AQUI",
+    pergunta: "o que acontece com quem quebra a lei neste mundo: quem prende, quem julga, o que se pune de verdade e o que todo mundo faz e ninguém pune" },
+  { id: "fe", porta: "cidade", rotulo: "A QUEM SE REZA",
+    pergunta: "o que as pessoas comuns deste mundo veneram ou temem de joelhos, como isso aparece na rua e no dia a dia, e o que a fé promete a quem cumpre" },
   { id: "mercado", porta: "mercado", rotulo: "COMO SE COMPRA E SE VENDE",
     pergunta: "como se compra e se vende neste mundo: onde, com quê, e o que não se vende em público" },
   { id: "missao", porta: "missao", rotulo: "DE ONDE VEM TRABALHO",
@@ -404,12 +442,16 @@ export function garantirLexico(l) {
       .filter((x) => x.raca && x.chamado)
       .filter((x, i, a) => a.findIndex((y) => y.raca === x.raca) === i)
       .slice(0, RACAS_DO_SISTEMA.length)
-      /* v9.113: TUDO OU NADA, como o equipamento. Numa partida de teste
-         saiu "normal · Elfo · Anão · fendido · Draconato · tocado" na
-         mesma lista: metade renomeada lê como mundo quebrado, e é a
-         metade que sobrou que denuncia a outra. Nenhuma renomeada lê
-         como genérico, que ao menos é coerente consigo. */
-      .reduce((acc, _, __, todas) => (todas.length === RACAS_DO_SISTEMA.length ? todas : []), []),
+      /* v9.113: TUDO OU NADA — "normal · Elfo · Anão · fendido" na mesma
+         lista lê como mundo quebrado, e é a metade que sobrou que denuncia
+         a outra. v9.166: a régua vira POR GRUPO: um mundo medieval renomeia
+         as dez de fantasia e nunca mostra as seis do futuro — exigir as
+         dezesseis era o que forçava nome torto e derrubava banco bom. */
+      .reduce((acc, _, __, todas) => {
+        const tem = new Set(todas.map((x) => x.raca));
+        const aceitas = new Set(Object.values(GRUPOS_DE_RACA).filter((g) => g.every((r) => tem.has(r))).flat());
+        return todas.filter((x) => aceitas.has(x.raca));
+      }, []),
     /* v9.111: o banco de nomes POR FORMA, e ele é TUDO OU NADA.
 
        Todo o resto do léxico degrada em pedaços: metade dos ofícios é
@@ -477,6 +519,16 @@ export function garantirLexico(l) {
     })(),
     aLei: limpar(o.aLei, TETOS.texto),
     comoSeFala: limpar(o.comoSeFala, TETOS.texto),
+    /* v9.166: O PASSADO QUE TODOS CARREGAM. Sem ele, todo mundo do léxico
+       nascia no dia da criação: nenhuma guerra velha para o taverneiro
+       culpar, nenhuma ferida que explique por que a guarda revista
+       estrangeiro. São os dois ou três fatos que qualquer NPC cita. */
+    passado: lista(o.passado, 4, TETOS.passado),
+    /* e OS TÍTULOS: como este mundo chama os seus temidos. O banco de
+       "a Mão Fria" e "o Segundo Sol" era medieval no osso — um chefe de
+       mundo cyberpunk intitulado "o Rei Emprestado" denuncia o gerador
+       na primeira aparição. */
+    titulos: lista(o.titulos, 12, TETOS.curto),
   };
 }
 
@@ -486,6 +538,7 @@ export function lexicoVale(l) {
   const x = garantirLexico(l);
   const peso = Object.keys(x.chamado).length + Object.keys(x.funciona).length * 2
     + x.povos.length + x.oficios.length + x.lugares.length + x.criaturas.length
+    + x.passado.length
     + (x.aLei ? 2 : 0) + (nomesDo(x) ? 4 : 0) + (partesDeCidade(x) ? 2 : 0);
   return peso >= 12;
 }
@@ -496,6 +549,12 @@ export function lexicoVale(l) {
    `OCUPACOES[g] || OCUPACOES[padrão]` que já existia — só que agora o
    primeiro termo pode vir do mundo. */
 export function oficiosDo(l) { const x = garantirLexico(l); return x.oficios.length >= 4 ? x.oficios : null; }
+/* O passado só vale com dois ou mais fatos: um fato solto vira A única
+   história do mundo, repetida por toda boca. */
+export function passadoDo(l) { const x = garantirLexico(l); return x.passado.length >= 2 ? x.passado : null; }
+/* Os títulos pedem quatro no mínimo — os chefes do mundo são quatro a
+   seis, e com menos títulos que chefes dois deles dividiriam o mesmo. */
+export function titulosDo(l) { const x = garantirLexico(l); return x.titulos.length >= 4 ? x.titulos : null; }
 export function povosDo(l) { const x = garantirLexico(l); return x.povos.length >= 2 ? x.povos : null; }
 /* A lista chapada, para o prompt dizer o que ameaça as pessoas aqui. */
 export function criaturasDo(l) {
@@ -641,7 +700,7 @@ REGRAS INEGOCIÁVEIS:
 3. FIDELIDADE ACIMA DE CRIATIVIDADE. Se ele escreveu "caçadores", tudo é de caçadores — não caçadores com um reino medieval em volta.
 4. MECANISMO, NÃO ADJETIVO. Em cada resposta de "funciona", diga COMO a coisa acontece (quem, onde, o que trava, o que dá errado), não que ela é sombria ou perigosa.
 5. DOIS CAMPOS TÊM LISTA FECHADA, e ela não é sugestão. Em "lugares", o "tipo" tem de ser EXATAMENTE uma das palavras listadas: são engrenagens do jogo e não mudam — o que você escolhe é como cada uma SE CHAMA aqui. Em "criaturas", a "ameaca" idem: ela decide a força do bicho, e um nome guardado no degrau errado promete uma coisa e entrega outra.
-6. AS RAÇAS TAMBÉM TÊM LISTA FECHADA, e o que você escolhe é só o NOME. Cada uma carrega um bônus de atributo que NÃO muda: você está dando a elas a palavra deste mundo, não inventando povos. RENOMEIE TODAS, sem exceção: uma ficha com metade dos nomes deste mundo e metade com os de sempre lê pior que uma ficha inteira genérica, porque a metade que sobrou denuncia a outra. Se um tipo de gente parecer não existir aqui, dê a ele o nome do que MAIS SE APROXIMA neste mundo — a mecânica dele continua no jogo de qualquer forma, e sem nome daqui ela aparece com o nome de outro lugar. Use a mesma cultura de "povos": "povos" é quem habita o mundo, "racas" é o que o jogador pode SER.
+6. AS RAÇAS TAMBÉM TÊM LISTA FECHADA, e o que você escolhe é só o NOME. Cada uma carrega um bônus de atributo que NÃO muda: você está dando a elas a palavra deste mundo, não inventando povos. O nome de uma raça é NOME DE POVO: substantivo próprio com maiúscula, de uma ou duas palavras, do jeito que esse povo é chamado nas ruas ("Forjado", "Filho da Fenda", "Kessariano"). NUNCA adjetivo solto em minúscula ("fendido", "tocado"), nunca descrição ("os que vivem embaixo"), nunca nome de povo de obra famosa. RENOMEIE TODAS AS LISTADAS: metade renomeada lê pior que uma ficha inteira genérica, porque a metade que sobrou denuncia a outra. Se um tipo de gente parecer não existir aqui, dê a ele o nome do que MAIS SE APROXIMA neste mundo — a mecânica dele continua no jogo de qualquer forma, e sem nome daqui ela aparece com o nome de outro lugar. Use a mesma cultura de "povos": "povos" é quem habita o mundo, "racas" é o que o jogador pode SER.
 7. O EQUIPAMENTO É TUDO OU NADA, e o que você nomeia é a FORMA, nunca o item. Cada forma vem com o que ela É por baixo — pesada, de duas mãos, pede treino, trava magia. O nome que você der NÃO PODE CONTRADIZER ISSO: se a forma diz "arma de guerra pesada de duas mãos", um nome como "varinha" mente para o jogador, que vai escolhê-la achando que é leve. Preencha TODAS as dezessete, com 3 a 6 nomes cada. Se o mundo parecer não ter armadura pesada, invente o EQUIVALENTE dele — o sistema calcula a defesa numa escada e tirar um degrau tira proteção do jogo inteiro. Se você deixar UMA forma de fora, o banco inteiro é descartado.
 8. AS DOZE PROFISSÕES DA FICHA são as mesmas doze, sempre, e cada uma carrega um efeito no código que NÃO muda — quem cura mais no descanso continua curando mais, chame-se ele curandeiro ou enfermeiro de contenção. Dê a TODAS o ofício deste mundo que mais se aproxima do que a palavra descreve, e não invente ofício que o sistema não tem. Se faltar uma, o banco inteiro é descartado. Não confunda com "oficios", que é do que a gente comum vive: estes doze são o que o JOGADOR pode ser.
 9. OS AFIXOS TÊM DEGRAU, e o degrau é mecânica. Em "afixos", cada grau diz o quanto a palavra PROMETE: a do grau 0 sai num item vagabundo, a do grau 4 só na coisa mais rara que existe. Uma palavra grandiosa no grau 0 faz todo nome bonito do jogo perder o crédito. Cada afixo é UMA PALAVRA SÓ no MASCULINO SINGULAR — o sistema faz o feminino e o plural sozinho, e uma locução como "de contenção" fica torta na frente do nome — e preencha os cinco graus e os sufixos, ou o banco inteiro é descartado.
@@ -687,8 +746,10 @@ ${DEGRAUS_DE_AFIXO.map((d) => `    "grau${d.n}": ["3 a 6 adjetivos de UMA PALAVR
     { "profissao": "<UM de: ${PROFISSOES_DO_SISTEMA.join(", ")}>", "chamado": "o ofício deste mundo que MAIS SE APROXIMA do que essa palavra descreve" }
   ],
   "racas": [
-    { "raca": "<UM de: ${RACAS_DO_SISTEMA.join(", ")}>", "chamado": "como esse tipo de gente se chama NESTE mundo" }
+    { "raca": "<UM de: ${racasDoMundo(genero).join(", ")}>", "chamado": "como esse tipo de gente se chama NESTE mundo" }
   ],
+  "passado": ["2 a 4 acontecimentos do passado deste mundo que TODO MUNDO conhece e ainda pesam — o que foi, há quanto tempo, o que sobrou; uma frase curta cada"],
+  "titulos": ["6 a 12 títulos ou epítetos com que este mundo chama os seus poderosos e temidos (na linha de \\"a Mão Fria\\", \\"o Segundo Sol\\" — mas na língua e na época DESTE mundo)"],
   "naoExiste": ["3 a 6 coisas que o gênero faria esperar e que NESTE mundo não existem"],
   "aLei": "a UMA regra que rege este mundo e não regeria outro — no máximo duas frases",
   "comoSeFala": "como as pessoas falam aqui: registro, gírias próprias, o que é tabu dizer — no máximo duas frases"
@@ -819,6 +880,10 @@ export function lexicoPrompt(l) {
   }).filter(Boolean);
   if (ap.length) fila.push(`COMO AS COISAS SE CHAMAM AQUI (use SEMPRE a palavra da direita; a da esquerda é a etiqueta interna do sistema): ${ap.join(" · ")}.`);
   if (x.aLei) fila.push(`A LEI DESTE MUNDO: ${x.aLei}`);
+  /* v9.166: o passado logo depois da lei — é o segundo fato que toda boca
+     do mundo cita, e ele é imutável pela campanha inteira: cacheável */
+  const pas = passadoDo(x);
+  if (pas) fila.push(`O PASSADO QUE TODOS CARREGAM (fatos consumados — cite-os, não os reescreva): ${pas.join(" · ")}`);
   /* v9.113: O VETO SOBE, e antes dos parágrafos. Ele vinha no fim da fila
      e numa cena com portas abertas nunca cabia: numa partida de teste, num
      mundo cujo léxico diz "não há cavalos como meio de transporte", o
