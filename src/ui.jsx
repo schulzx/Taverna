@@ -261,6 +261,61 @@ export function IconeOlho({ tamanho = 14, cor = T.ink }) {
     </svg>
   );
 }
+
+/* ---------------- OS ÍCONES DOS GÊNEROS (v9.173) ----------------
+   De `criacao-mundo-v2`. O horror cósmico e o pós-apocalíptico reusam o
+   olho e a caveira que já existem — é o mesmo glifo do Lucide, só noutra
+   caixa, e o viewBox escala sozinho.
+
+   A BÚSSOLA VEIO QUEBRADA do Figma: só o círculo exportou, sem a agulha.
+   Fica como veio, porque completá-la de cabeça seria eu desenhando um
+   ícone e chamando de "o desenho" — e um círculo pelado ao lado de
+   "Steampunk" é justamente o tipo de coisa que se conserta reexportando. */
+export function IconeCastelo({ tamanho = 20, cor = T.amberSoft }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 20 20" fill="none">
+      <path d="M8.3332 4.16667V2.5M11.6668 4.16667V2.5M12.5002 17.5V15C12.5002 14.337 12.2368 13.7011 11.7679 13.2322C11.299 12.7634 10.6631 12.5 10 12.5C9.33691 12.5 8.70097 12.7634 8.23209 13.2322C7.76321 13.7011 7.4998 14.337 7.4998 15V17.5M15.0004 2.5V9.16667M15.0004 4.16667H4.9996M18.334 9.16667H1.666M18.334 7.5V15.8333C18.334 16.2754 18.1584 16.6993 17.8458 17.0118C17.5332 17.3244 17.1093 17.5 16.6672 17.5H3.3328C2.89074 17.5 2.46678 17.3244 2.15419 17.0118C1.84161 16.6993 1.666 16.2754 1.666 15.8333V7.5M4.9996 2.5V9.16667" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconeTerminal({ tamanho = 20, cor = T.amberSoft }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 20 20" fill="none">
+      <path d="M10 15.834H16.666M3.334 14.1671L8.3335 9.16657L3.334 4.166" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconeFoguete({ tamanho = 20, cor = T.amberSoft }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 20 20" fill="none">
+      <path d="M10.0007 12.4993V16.666C10.0007 16.666 12.5257 16.2077 13.334 14.9993C14.234 13.6493 13.334 10.8327 13.334 10.8327M10.0007 12.4993C11.1646 12.0564 12.2813 11.498 13.334 10.8327M10.0007 12.4993L7.50067 9.99954M7.50067 9.99954C7.94412 8.84906 8.5025 7.74626 9.16733 6.70787C10.1383 5.15536 11.4904 3.87708 13.0948 2.99462C14.6993 2.11215 16.5029 1.65485 18.334 1.66621C18.334 3.93287 17.684 7.916 13.334 10.8327M7.50067 9.99954L3.334 9.999C3.334 9.999 3.79233 7.474 5.00067 6.66566C6.35067 5.76566 9.16733 6.70787 9.16733 6.70787M3.75067 13.7496C2.50067 14.7996 2.084 17.9163 2.084 17.9163C2.084 17.9163 5.20067 17.4996 6.25067 16.2496C6.84233 15.5496 6.834 14.4746 6.17567 13.8246C5.85176 13.5154 5.42508 13.3368 4.97752 13.323C4.52997 13.3091 4.09306 13.461 3.75067 13.7496Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconeBussola({ tamanho = 20, cor = T.amberSoft }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 20 20" fill="none">
+      <path d="M10 18.334C14.6027 18.334 18.334 14.6027 18.334 10C18.334 5.39726 14.6027 1.666 10 1.666C5.39726 1.666 1.666 5.39726 1.666 10C1.666 14.6027 5.39726 18.334 10 18.334Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/* ---------------- A DIVISÓRIA RÚNICA (v9.173) ----------------
+   Linha, gema, linha. Aparece oito vezes na criação do mundo e é o que
+   transforma uma rolagem longuíssima em capítulos — sem ela, a tela é um
+   formulário de três mil pixels sem respiro nenhum. */
+export function DivisoriaRunica() {
+  return (
+    <div className="flex items-center gap-5 w-full py-2" aria-hidden="true">
+      <div className="flex-1 h-px" style={{ background: T.line }} />
+      <div className="shrink-0" style={{ width: 8, height: 8, transform: "rotate(45deg)", border: `1px solid ${T.amber}` }} />
+      <div className="flex-1 h-px" style={{ background: T.line }} />
+    </div>
+  );
+}
 export function BarraMini({ rotulo, atual, max, cor, corBaixa }) {
   const pct = Math.max(0, Math.min(100, max > 0 ? (atual / max) * 100 : 0));
   const baixa = pct <= 33;

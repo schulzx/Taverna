@@ -128,7 +128,11 @@ sec("5. A LIGAÇÃO");
   t("e a escolha vai junto do mundo", /estrutura, molde, voz, apresentacao, limites: limites\.trim\(\) \}/.test(app));
   /* o jogador precisa saber que a voz NÃO muda o mundo, senão ele escolhe
      achando que está escolhendo o tipo de aventura */
-  t("a tela avisa que a voz não muda o mundo", /Não muda o mundo nem o que acontece nele/.test(app));
+  /* v9.173: a frase foi reescrita no redesenho da criação do mundo — o
+     cabeçalho da seção agora diz "Muda a BOCA, não o mundo: o que acontece
+     continua vindo do sistema". A lei é a mesma e continua na tela; o que
+     mudou foi a redação, que ficou mais curta e mais direta. */
+  t("a tela avisa que a voz não muda o mundo", /Muda a BOCA, não o mundo/.test(app));
 
   /* E O QUE O COMPASSO TORNOU OBSOLETO SAIU: o bloco que mandava a IA
      alternar elementos e não repetir o loop de urgências pedia a ela o

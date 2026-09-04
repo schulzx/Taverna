@@ -65,7 +65,8 @@ sec("2. A COBRANÇA DO BACKUP");
 sec("3. AS LINHAS DA MESA");
 {
   t("a criação do mundo pergunta", /As linhas desta mesa/.test(APP));
-  t("é opcional e diz que é", /Opcional, e dá para deixar em branco/.test(APP));
+  /* v9.173: a mesma promessa, agora dentro do parêntese do placeholder */
+  t("é opcional e diz que é", /opcional, e dá para deixar em branco/i.test(APP));
   t("com teto de tamanho", /maxLength=\{300\}/.test(APP));
   t("e viaja com o mundo", /limites: limites\.trim\(\) \}/.test(APP));
   /* a regra entra no prompt como ABSOLUTA — acima da ousadia, que é a

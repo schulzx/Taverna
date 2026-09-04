@@ -39,7 +39,7 @@ import { custoDaFalhaCritica, linhaDoCusto, notaDoCusto } from "./consequencias.
 import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, perderFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
-import { MOLDES, MOLDE_PADRAO, moldePorId, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
+import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, FONT_CSS, GENEROS, ATRIBUTOS } from "./constantes.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
 import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito, naturezaDaHabilidade, tipoDeDanoDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
@@ -116,7 +116,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho } from "./ui.jsx";
+import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica } from "./ui.jsx";
 import heroTaverna from "./assets/taverna-hero.png";
 import marcaTaverna from "./assets/taverna-marca.jpg";
 import { CartaDeTaro, CartaVerso } from "./carta-taro.jsx";
@@ -2922,6 +2922,31 @@ function PainelCaderno({ personagem, onPreparar, compacto = false, travado = "" 
 
 /* ---------------- Telas de criação ---------------- */
 
+/* ---------------- A CRIAÇÃO DO MUNDO (v9.173) ----------------
+   Redesenhada em `criacao-mundo-v2`. A tela mais decisiva do jogo era a
+   mais apertada: 672px de coluna para sete gêneros, quatro moldes, oito
+   arcos, oito vozes e dois textos longos — tudo empilhado numa fita
+   vertical sem respiro.
+
+   Agora a coluna tem 1040, as escolhas vêm em DUAS COLUNAS de cartões
+   com ícone e descrição, e as seções são separadas por divisória rúnica.
+   Cada seção ganhou cabeçalho de três linhas — sobrelinha, título e o
+   que aquilo decide no jogo —, que é o que faz a pessoa entender que
+   está escolhendo o motor da campanha, e não preenchendo um cadastro.
+
+   DUAS COISAS DO DESENHO NÃO ENTRARAM, E É DE PROPÓSITO:
+
+   Os selos "PREFERIDO" (na Torre) e "REQUISITADO" (no Taverneiro). O
+   jogo não mede preferência de ninguém — inventar popularidade para
+   empurrar uma escolha é mentir para quem senta à mesa, e a primeira
+   campanha da pessoa não deveria ser decidida por um selo falso.
+
+   E o texto da APRESENTAÇÃO. O desenho descreve "Clássica" como
+   concordância medieval e "Plural" como linguagem neutra de gênero — e
+   não é isso que o botão faz. Ele decide se o RETRATO das pessoas do
+   mundo cumpre o gênero da ficha sempre, ou se cerca de uma em sete se
+   apresenta diferente. Descrever errado uma mecânica é pior do que não
+   descrevê-la: a pessoa escolhe uma coisa achando que escolheu outra. */
 function TelaMundo({ concluir }) {
   const [nome, setNome] = useState("");
   const [genero, setGenero] = useState(null);
@@ -2937,100 +2962,207 @@ function TelaMundo({ concluir }) {
      da primeira cena, e um jogo que se leva a sério pergunta também.
      O texto vai literal para o prompt como regra absoluta. */
   const [limites, setLimites] = useState("");
-  const campo = { background: T.panel, border: `1px solid ${T.line}`, color: T.ink };
+
+  const GLIFO_DO_GENERO = {
+    "Fantasia medieval": IconeCastelo,
+    "Ficção científica": IconeFoguete,
+    Cyberpunk: IconeTerminal,
+    "Horror cósmico": IconeOlho,
+    "Pós-apocalíptico": IconeCaveira,
+    Steampunk: IconeBussola,
+    "Universo próprio": IconeFaiscas,
+  };
+
+  const Cabecalho = ({ sobre, titulo, diz }) => (
+    <div className="flex flex-col gap-1.5 w-full">
+      <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.violetSoft }}>{sobre}</div>
+      <div className="tv-display text-2xl leading-[1.2]" style={{ color: T.amberSoft }}>{titulo}</div>
+      <div className="tv-body text-[11px] leading-[1.5]" style={{ color: T.inkDim }}>{diz}</div>
+    </div>
+  );
+
+  /* o cartão de escolha, e é o mesmo para gênero, molde, arco e voz —
+     o que muda é o que se põe dentro dele */
+  const Cartao = ({ ativo, aoClicar, children, compacto }) => (
+    <button onClick={aoClicar} className={`text-left w-full rounded-xl flex flex-col gap-2 transition-all ${compacto ? "p-4" : "p-5"}`}
+      style={{
+        background: T.panel,
+        border: `${ativo ? 1.5 : 1}px solid ${ativo ? T.amber : T.line}`,
+        boxShadow: ativo ? "0 4px 8px rgba(232,163,61,0.12)" : "none",
+      }}>
+      {children}
+    </button>
+  );
+  const LinhaDoCartao = ({ Glifo, titulo, ativo }) => (
+    <div className="flex items-center justify-between w-full gap-3">
+      <div className="flex items-center gap-3 min-w-0">
+        {Glifo && <span className="shrink-0"><Glifo tamanho={20} cor={ativo ? T.amberSoft : T.inkDim} /></span>}
+        <span className="tv-display text-xl leading-[1.25] truncate" style={{ color: T.ink }}>{titulo}</span>
+      </div>
+      {ativo && <span className="shrink-0 rounded-full" style={{ width: 10, height: 10, background: T.amber }} />}
+    </div>
+  );
+  const Desc = ({ children }) => <div className="tv-body text-xs leading-[1.55]" style={{ color: T.inkDim }}>{children}</div>;
+
+  /* as escolhas em duas colunas: a lista chega inteira e se parte no meio,
+     porque duas colunas escritas à mão saem do lugar quando o catálogo
+     cresce — e ele cresceu de quatro para oito arcos nesta mesma leva */
+  const emDuas = (lista, desenhar) => {
+    const meio = Math.ceil(lista.length / 2);
+    return (
+      <div className="flex flex-col md:flex-row gap-4 md:gap-5 w-full">
+        {[lista.slice(0, meio), lista.slice(meio)].map((col, i) => (
+          <div key={i} className="flex-1 min-w-0 flex flex-col gap-4">{col.map(desenhar)}</div>
+        ))}
+      </div>
+    );
+  };
+
+  const campoLongo = { background: T.panel, border: `1px solid ${T.line}`, color: T.ink };
+
   return (
-    <div className="tv-fade max-w-2xl mx-auto w-full px-6 py-10 overflow-y-auto tv-scroll">
-      <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.violetSoft }}>Passo 1 de 2 · O mundo</div>
-      <h1 className="tv-display text-4xl md:text-5xl mb-3" style={{ color: T.ink }}>Que realidade vamos criar?</h1>
-      <p className="tv-body mb-6" style={{ color: T.inkDim }}>Dê um nome à campanha, escolha um gênero e descreva o que quiser. O Mestre preenche o resto com detalhes vivos.</p>
-      <div className="flex gap-2 mb-4">
-        <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome da campanha (ex.: A Maré de Ferro)" maxLength={40} className="flex-1 rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
-        {genero && <button type="button" onClick={() => setNome(`As Crônicas de ${nomeCidade(genero.label)}`)} className="rounded-xl px-4 shrink-0" style={{ border: `1px solid ${T.line}`, color: T.amberSoft }} title="Sortear um nome">🎲</button>}
+    <div className="tv-fade w-full overflow-y-auto tv-scroll">
+      {/* ---- o cabeçalho ilustrado: a mesma taverna do menu ---- */}
+      <div className="relative w-full flex flex-col items-center justify-end px-6 pt-16 pb-10" style={{ borderBottom: `1px solid ${T.line}`, minHeight: 300 }}>
+        <img src={heroTaverna} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, rgba(14,12,21,0) 0%, rgba(14,12,21,0.6) 60%, ${T.bg} 100%)` }} />
+        <div className="relative flex flex-col items-center gap-4 w-full max-w-[800px] text-center">
+          <span className="tv-mono text-[9px] tracking-[0.9px] rounded px-3 py-1" style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.violetSoft }}>
+            PASSO 1 DE 2 · O MUNDO
+          </span>
+          <h1 className="tv-display text-[48px] leading-[1.05]" style={{ color: T.amberSoft }}>Que realidade vamos criar?</h1>
+          <p className="tv-body text-sm leading-[1.65]" style={{ color: T.ink }}>
+            Dê um nome à campanha, escolha um gênero e descreva o que quiser. O Mestre preenche o resto com detalhes vivos.
+          </p>
+        </div>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-        {GENEROS.map((g) => (
-          <button key={g.id} onClick={() => setGenero(g)} className="text-left rounded-xl p-4 transition-all" style={{ background: genero?.id === g.id ? T.panelSoft : T.panel, border: `1px solid ${genero?.id === g.id ? T.amber : T.line}` }}>
-            <div className="tv-display text-lg" style={{ color: genero?.id === g.id ? T.amberSoft : T.ink }}>{g.label}</div>
-            <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{g.dica}</div>
-          </button>
+
+      <div className="w-full max-w-[1040px] mx-auto px-6 py-10 flex flex-col gap-6">
+        {/* ---- o nome ---- */}
+        <div className="flex flex-col gap-2.5 w-full">
+          <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.violetSoft }}>Nome da campanha</div>
+          <div className="flex items-center gap-3 rounded-xl px-4 py-3.5" style={{ background: T.panel, border: `1px solid ${nome.trim() ? T.amber : T.line}` }}>
+            <span className="shrink-0"><IconeEspada tamanho={18} cor={nome.trim() ? T.amberSoft : T.inkDim} /></span>
+            <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="A Maré de Ferro" maxLength={40}
+              className="flex-1 min-w-0 bg-transparent outline-none tv-display text-xl" style={{ color: T.ink }} />
+            {nome.trim() && <span className="tv-mono text-[9px] tracking-[0.9px] shrink-0" style={{ color: T.amberSoft }}>ATIVO</span>}
+          </div>
+        </div>
+
+        <DivisoriaRunica />
+
+        {/* ---- o gênero ---- */}
+        <Cabecalho sobre="Escolha o gênero" titulo="Gênero da campanha"
+          diz="Isso dita as tabelas geradoras do Mestre, os arquétipos e as ameaças que habitam a escuridão." />
+        {emDuas(GENEROS.filter((g) => g.id !== "livre"), (g) => (
+          <Cartao key={g.id} ativo={genero && genero.id === g.id} aoClicar={() => setGenero(g)}>
+            <LinhaDoCartao Glifo={GLIFO_DO_GENERO[g.label]} titulo={g.label} ativo={genero && genero.id === g.id} />
+            <Desc>{g.dica}</Desc>
+          </Cartao>
         ))}
-      </div>
-      {/* v9.40: a FORMA do mundo, separada do sabor. O gênero decide nomes,
-          raças e criaturas; o molde decide se existe norte e sul ou só
-          acima e abaixo — e os dois se combinam livremente. */}
-      <div className="tv-mono text-xs uppercase tracking-widest mb-2 mt-2" style={{ color: T.violetSoft }}>A forma do mundo</div>
-      <p className="tv-body text-sm mb-3" style={{ color: T.inkDim }}>Onde a campanha acontece — e como se anda por lá. O sistema gera o mundo inteiro a partir disso.</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-        {MOLDES.map((m) => (
-          <button key={m.id} onClick={() => setMolde(m.id)} className="text-left rounded-xl p-4 transition-all" style={{ background: molde === m.id ? T.panelSoft : T.panel, border: `1px solid ${molde === m.id ? T.amber : T.line}` }}>
-            <div className="tv-display text-lg" style={{ color: molde === m.id ? T.amberSoft : T.ink }}>{m.icone} {m.nome}</div>
-            <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{m.desc}</div>
-            <div className="tv-mono text-[9px] mt-1.5 uppercase tracking-widest" style={{ color: T.violetSoft }}>
-              {m.assentamento.plural} · {m.viagem.verbo} · {m.eixos.join("/")}
+        {GENEROS.filter((g) => g.id === "livre").map((g) => (
+          <Cartao key={g.id} ativo={genero && genero.id === g.id} aoClicar={() => setGenero(g)}>
+            <LinhaDoCartao Glifo={GLIFO_DO_GENERO[g.label]} titulo={g.label} ativo={genero && genero.id === g.id} />
+            <Desc>{g.dica}</Desc>
+          </Cartao>
+        ))}
+
+        <DivisoriaRunica />
+
+        {/* ---- a forma do mundo ---- */}
+        <Cabecalho sobre="A forma do mundo" titulo="Molde do universo"
+          diz="Decide que eixos existem, o que é um lugar habitado, como se viaja — e a LEI que trava a passagem." />
+        {emDuas(moldesDisponiveis(), (m) => (
+          <Cartao key={m.id} ativo={molde === m.id} aoClicar={() => setMolde(m.id)}>
+            <LinhaDoCartao titulo={`${m.icone} ${m.nome}`} ativo={molde === m.id} />
+            <Desc>{m.desc}</Desc>
+          </Cartao>
+        ))}
+
+        <DivisoriaRunica />
+
+        {/* ---- o arco ---- */}
+        <Cabecalho sobre="Estrutura da história" titulo="O arco da campanha"
+          diz="A espinha que o Mestre segue. O momento em que você está NUNCA aparece na tela — saber que vem um abismo é esperá-lo em vez de vivê-lo." />
+        {emDuas(ESTRUTURAS, (e) => (
+          <Cartao key={e.id} ativo={estrutura === e.id} aoClicar={() => setEstrutura(e.id)} compacto>
+            <div className="flex items-center justify-between w-full gap-3">
+              <span className="tv-display text-xl leading-[1.25] truncate" style={{ color: T.ink }}>{e.nome}</span>
+              {estrutura === e.id && <span className="shrink-0"><IconeSeta tamanho={14} cor={T.amberSoft} /></span>}
             </div>
-          </button>
+            <Desc>{e.desc}</Desc>
+          </Cartao>
         ))}
-      </div>
-      <div className="tv-mono text-xs uppercase tracking-widest mb-2 mt-2" style={{ color: T.violetSoft }}>Estrutura da história</div>
-      <p className="tv-body text-sm mb-3" style={{ color: T.inkDim }}>O arco que guiará a campanha — o Mestre segue essa espinha dramática, e as missões surgem dentro dela.</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-        {ESTRUTURAS.map((e) => (
-          <button key={e.id} onClick={() => setEstrutura(e.id)} className="text-left rounded-xl p-4 transition-all" style={{ background: estrutura === e.id ? T.panelSoft : T.panel, border: `1px solid ${estrutura === e.id ? T.amber : T.line}` }}>
-            <div className="tv-display text-lg" style={{ color: estrutura === e.id ? T.amberSoft : T.ink }}>{e.nome}</div>
-            <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{e.desc}</div>
-            {/* ---------------- O SPOILER MAIOR SAIU DAQUI (v9.84) ----------------
-                Esta linha listava o arco inteiro na tela de criação:
-                "O CHAMADO → A TRAVESSIA → PROVAÇÕES → O ABISMO → A
-                TRANSFORMAÇÃO → O RETORNO". Antes de escrever o nome do
-                personagem, o jogador já sabia que ia haver um abismo, e
-                mais ou menos quando.
 
-                O painel do diário tirou a fila de etapas na v9.28 pela
-                razão certa — ver que está em "Provações" é saber que ainda
-                vem "O Abismo" —, e a tela de criação continuou mostrando a
-                mesma coisa, inteira, no primeiro minuto da campanha.
+        <DivisoriaRunica />
 
-                O que fica é o que o jogador precisa escolher: o TIPO de
-                história. Onde ele está dentro dela é bastidor, e o que vem
-                depois é a história. */}
-          </button>
+        {/* ---- a voz ---- */}
+        <Cabecalho sobre="A voz do Mestre" titulo="Como ele narra"
+          diz="Muda a BOCA, não o mundo: o que acontece continua vindo do sistema, e nenhuma voz inventa regra." />
+        {emDuas(VOZES, (v) => (
+          <Cartao key={v.id} ativo={voz === v.id} aoClicar={() => setVoz(v.id)}>
+            <LinhaDoCartao titulo={`${v.icone} ${v.nome}`} ativo={voz === v.id} />
+            <Desc>{v.resumo}</Desc>
+            {/* O EXEMPLO FICA. O cartão do desenho tem só uma linha de
+                descrição, e a suíte das vozes pegou o que isso custava: oito
+                adjetivos ("grave", "solto", "calmo") não deixam ninguém OUVIR
+                a diferença — a amostra deixa. É a mesma razão pela qual o
+                exemplo sobe ao prompt: voz é a coisa que se escolhe pelo
+                ouvido, não pela etiqueta. */}
+            <div className="tv-body text-xs italic leading-[1.55] pt-1" style={{ color: voz === v.id ? T.amberSoft : T.inkDim, borderTop: `1px solid ${T.line}` }}>
+              {v.exemplo}
+            </div>
+          </Cartao>
         ))}
-      </div>
-      {/* ---------------- A VOZ (v9.92) ----------------
-          Ela não toca NADA da estrutura: o arco, o compasso, o vilão e o
-          Bibliotecário decidem igual em todas. O que muda é a boca que
-          conta o que o sistema decidiu — e é por isso que dá para ter
-          oito sem multiplicar o jogo por oito. */}
-      <div className="tv-mono text-xs uppercase tracking-widest mb-2 mt-2" style={{ color: T.violetSoft }}>A voz do narrador</div>
-      <p className="tv-body text-sm mb-3" style={{ color: T.inkDim }}>Como a história é contada — o tamanho da frase, o que se descreve, como as pessoas falam e do que se ri. Não muda o mundo nem o que acontece nele.</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-        {VOZES.map((v) => (
-          <button key={v.id} onClick={() => setVoz(v.id)} className="text-left rounded-xl p-4 transition-all" style={{ background: voz === v.id ? T.panelSoft : T.panel, border: `1px solid ${voz === v.id ? T.amber : T.line}` }}>
-            <div className="tv-display text-lg" style={{ color: voz === v.id ? T.amberSoft : T.ink }}>{v.icone} {v.nome}</div>
-            <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{v.resumo}</div>
-            <div className="tv-body text-xs mt-2 italic" style={{ color: T.inkDim, opacity: 0.75 }}>“{v.exemplo}”</div>
-          </button>
-        ))}
-      </div>
-      <div className="tv-mono text-xs uppercase tracking-widest mb-2 mt-2" style={{ color: T.violetSoft }}>A gente deste mundo</div>
-      <p className="tv-body text-sm mb-3" style={{ color: T.inkDim }}>Como as pessoas se apresentam nos retratos. Só muda a aparência de quem habita o mundo — nunca as regras.</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-        {[
-          { id: "estrita", nome: "🏰 Clássica", desc: "A aparência segue a ficha, sempre: mulheres com traços femininos, homens com traços masculinos." },
-          { id: "livre", nome: "🌈 Plural", desc: "A maioria segue a ficha — e uma parte da gente do mundo se apresenta do seu próprio jeito." },
-        ].map((a) => (
-          <button key={a.id} onClick={() => setApresentacao(a.id)} className="text-left rounded-xl p-4 transition-all" style={{ background: apresentacao === a.id ? T.panelSoft : T.panel, border: `1px solid ${apresentacao === a.id ? T.amber : T.line}` }}>
-            <div className="tv-display text-lg" style={{ color: apresentacao === a.id ? T.amberSoft : T.ink }}>{a.nome}</div>
-            <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{a.desc}</div>
-          </button>
-        ))}
-      </div>
-      <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={4} placeholder="Ex.: Um arquipélago flutuante onde a magia vem das marés. Piratas do céu disputam relíquias de um império afundado nas nuvens…" className="w-full rounded-xl p-4 tv-body text-sm outline-none resize-none" style={campo} />
-      <div className="tv-mono text-xs uppercase tracking-widest mb-2 mt-6" style={{ color: T.violetSoft }}>As linhas desta mesa</div>
-      <p className="tv-body text-sm mb-3" style={{ color: T.inkDim }}>O que NÃO entra nesta campanha, em nenhuma cena — toda mesa de verdade pergunta isto antes de começar. Opcional, e dá para deixar em branco.</p>
-      <textarea value={limites} onChange={(e) => setLimites(e.target.value)} rows={2} maxLength={300} placeholder="Ex.: nada de mal a crianças, sem tortura detalhada, sem aranhas…" className="w-full rounded-xl p-4 tv-body text-sm outline-none resize-none" style={campo} />
-      <div className="mt-6 flex justify-end">
-        <Botao primario desativado={!genero || !nome.trim()} onClick={() => concluir({ genero: genero.label, descricao, estrutura, molde, voz, apresentacao, limites: limites.trim() }, nome.trim())}>Continuar →</Botao>
+
+        <DivisoriaRunica />
+
+        {/* ---- a apresentação ---- */}
+        <Cabecalho sobre="Apresentação" titulo="Como a gente deste mundo se apresenta"
+          diz="Escolha de mesa. Vale para os RETRATOS que o mundo gera — quem você criar nunca é sorteado." />
+        <div className="flex flex-col md:flex-row gap-4 w-full">
+          {[
+            { id: "estrita", nome: "🏰 Clássica", diz: "O retrato cumpre o gênero da ficha, sempre." },
+            { id: "livre", nome: "🌈 Plural", diz: "A maioria cumpre — e cerca de uma pessoa em sete se apresenta diferente." },
+          ].map((a) => (
+            <button key={a.id} onClick={() => setApresentacao(a.id)} className="flex-1 text-left rounded-xl p-4 flex items-start gap-3"
+              style={{ background: T.panel, border: `${apresentacao === a.id ? 1.5 : 1}px solid ${apresentacao === a.id ? T.amber : T.line}` }}>
+              <span className="shrink-0 mt-1.5 rounded-full" style={{ width: 12, height: 12, background: apresentacao === a.id ? T.amber : "transparent", border: `1px solid ${apresentacao === a.id ? T.amber : T.line}` }} />
+              <span className="flex flex-col gap-1 min-w-0">
+                <span className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>{a.nome}</span>
+                <Desc>{a.diz}</Desc>
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <DivisoriaRunica />
+
+        {/* ---- os dois textos longos ---- */}
+        <div className="flex flex-col gap-2.5 w-full">
+          <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.violetSoft }}>Descreva o mundo (opcional)</div>
+          <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={5}
+            placeholder="Escreva livremente sobre as forças que moldam este mundo. Se preferir, deixe em branco: o Mestre conjura uma visão a partir do gênero escolhido acima…"
+            className="w-full rounded-xl p-4 tv-body text-sm outline-none resize-none leading-[1.65]" style={campoLongo} />
+        </div>
+        <div className="flex flex-col gap-2.5 w-full">
+          <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.violetSoft }}>As linhas desta mesa</div>
+          <textarea value={limites} onChange={(e) => setLimites(e.target.value)} rows={3} maxLength={300}
+            placeholder="O que NÃO entra nesta campanha. Ex.: nada de mal a crianças, sem tortura detalhada, sem aranhas… (opcional, e dá para deixar em branco)"
+            className="w-full rounded-xl p-4 tv-body text-sm outline-none resize-none leading-[1.65]" style={campoLongo} />
+        </div>
+
+        <DivisoriaRunica />
+
+        {/* ---- o botão ---- */}
+        <div className="flex flex-col items-center gap-3 w-full pb-4">
+          <Botao primario desativado={!genero || !nome.trim()} onClick={() => concluir({ genero: genero.label, descricao, estrutura, molde, voz, apresentacao, limites: limites.trim() }, nome)}>
+            FORJAR ESTE MUNDO →
+          </Botao>
+          <div className="tv-body text-xs text-center" style={{ color: T.inkDim }}>
+            O Léxico lê estas escolhas uma vez, com o modelo forte, e escreve o vocabulário e as leis deste mundo.
+          </div>
+        </div>
       </div>
     </div>
   );
