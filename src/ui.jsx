@@ -324,6 +324,108 @@ export function IconeDado({ tamanho = 28, cor = T.amberSoft }) {
     </svg>
   );
 }
+/* ============================================================
+   AS PRIMITIVAS DAS TELAS DE CRIAÇÃO (v9.176)
+
+   Elas moram AQUI FORA, e a razão é um defeito de verdade que custou
+   uma tela inteira: na v9.174 elas estavam definidas DENTRO de
+   `TelaPersonagem`, e o resultado foi que só dava para escrever uma
+   letra por vez em nome, sobrenome e conceito.
+
+   O motivo é a identidade do componente. `const Campo = (...) => ...`
+   dentro do corpo de uma função de render cria uma FUNÇÃO NOVA a cada
+   render. Para o React, função nova é TIPO novo — e tipo novo não é o
+   mesmo componente que estava ali: ele desmonta a subárvore inteira e
+   monta outra no lugar. O `<input>` morre e nasce a cada tecla, e com
+   ele morre o foco e o cursor. O jogador digita uma letra, o campo se
+   fecha, ele clica de novo, digita outra.
+
+   A regra que sai disso, e ela vale para toda tela nova deste projeto:
+   COMPONENTE NÃO SE DEFINE DENTRO DE OUTRO COMPONENTE. Se ele precisa
+   de algo do de fora, isso vira prop. É a mesma lei que `check-escopo`
+   já cobra dos componentes declarados antes de `Taverna`, agora pela
+   segunda razão: lá era escopo, aqui é remontagem.
+   ============================================================ */
+export function RotuloDoCampo({ children }) {
+  return <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.inkDim }}>{children}</div>;
+}
+
+export function TituloDeSecao({ children, direita }) {
+  return (
+    <div className="flex items-end justify-between gap-4 w-full">
+      <div className="tv-display text-2xl leading-[1.2]" style={{ color: T.amberSoft }}>{children}</div>
+      {direita}
+    </div>
+  );
+}
+
+export function CabecalhoDeSecao({ sobre, titulo, diz }) {
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.violetSoft }}>{sobre}</div>
+      <div className="tv-display text-2xl leading-[1.2]" style={{ color: T.amberSoft }}>{titulo}</div>
+      <div className="tv-body text-[11px] leading-[1.5]" style={{ color: T.inkDim }}>{diz}</div>
+    </div>
+  );
+}
+
+export function CampoRotulado({ rotulo, children }) {
+  return (
+    <div className="flex-1 min-w-0 flex flex-col gap-2">
+      <RotuloDoCampo>{rotulo}</RotuloDoCampo>
+      {children}
+    </div>
+  );
+}
+
+export function DescricaoCurta({ children, cor }) {
+  return <div className="tv-body text-xs leading-[1.55]" style={{ color: cor || T.inkDim }}>{children}</div>;
+}
+
+/* o cartão de escolha é o mesmo para gênero, molde, arco e voz — o que
+   muda é o que se põe dentro dele */
+export function CartaoDeEscolha({ ativo, aoClicar, compacto, children }) {
+  return (
+    <button onClick={aoClicar} className={`text-left w-full rounded-xl flex flex-col gap-2 transition-all ${compacto ? "p-4" : "p-5"}`}
+      style={{
+        background: T.panel,
+        border: `${ativo ? 1.5 : 1}px solid ${ativo ? T.amber : T.line}`,
+        boxShadow: ativo ? "0 4px 8px rgba(232,163,61,0.12)" : "none",
+      }}>
+      {children}
+    </button>
+  );
+}
+
+export function LinhaDoCartao({ Glifo, titulo, ativo }) {
+  return (
+    <div className="flex items-center justify-between w-full gap-3">
+      <div className="flex items-center gap-3 min-w-0">
+        {Glifo && <span className="shrink-0"><Glifo tamanho={20} cor={ativo ? T.amberSoft : T.inkDim} /></span>}
+        <span className="tv-display text-xl leading-[1.25] truncate" style={{ color: T.ink }}>{titulo}</span>
+      </div>
+      {ativo && <span className="shrink-0 rounded-full" style={{ width: 10, height: 10, background: T.amber }} />}
+    </div>
+  );
+}
+
+/* As escolhas em duas colunas. A lista chega inteira e se parte no meio,
+   porque duas colunas escritas à mão saem do lugar quando o catálogo
+   cresce — e ele cresceu de quatro para oito arcos numa leva só.
+
+   É função, não componente: ela devolve JSX mas não é montada como tipo,
+   então não sofre da remontagem descrita acima. */
+export function duasColunas(lista, desenhar) {
+  const meio = Math.ceil(lista.length / 2);
+  return (
+    <div className="flex flex-col md:flex-row gap-4 md:gap-5 w-full">
+      {[lista.slice(0, meio), lista.slice(meio)].map((col, i) => (
+        <div key={i} className="flex-1 min-w-0 flex flex-col gap-4">{col.map(desenhar)}</div>
+      ))}
+    </div>
+  );
+}
+
 export function BarraMini({ rotulo, atual, max, cor, corBaixa }) {
   const pct = Math.max(0, Math.min(100, max > 0 ? (atual / max) * 100 : 0));
   const baixa = pct <= 33;

@@ -110,7 +110,11 @@ sec("4. NADA SABIDO É NADA MOSTRADO");
   t("mas o título fica", so.titulo === "Vila");
   t("sem clima, só o momento", !/·/.test(so.quando) && /manhã/.test(so.quando));
   /* o componente respeita isso */
-  t("o componente não desenha o nulo", /function CabecalhoDaCena\(\{ cena \}\) \{\n  if \(!cena\) return null;/.test(APP));
+  /* v9.176: a régua não pode depender do FIM DE LINHA. Ela casava `\n`
+     literal, e este repositório roda com `autocrlf` — num clone novo o
+     arquivo chega em CRLF e a prova falharia sem ninguém ter tocado em
+     nada. `\s*` cobre os dois, e a lei continua a mesma. */
+  t("o componente não desenha o nulo", /function CabecalhoDaCena\(\{ cena \}\) \{\s*if \(!cena\) return null;/.test(APP));
   t("e some com a linha vazia", /\{cena\.onde && \(/.test(APP));
 }
 

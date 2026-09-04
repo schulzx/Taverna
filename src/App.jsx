@@ -116,7 +116,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado } from "./ui.jsx";
+import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, LinhaDoCartao, duasColunas } from "./ui.jsx";
 import heroTaverna from "./assets/taverna-hero.png";
 import marcaTaverna from "./assets/taverna-marca.jpg";
 import { CartaDeTaro, CartaVerso } from "./carta-taro.jsx";
@@ -3004,51 +3004,6 @@ function TelaMundo({ concluir }) {
     "Universo próprio": IconeFaiscas,
   };
 
-  const Cabecalho = ({ sobre, titulo, diz }) => (
-    <div className="flex flex-col gap-1.5 w-full">
-      <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.violetSoft }}>{sobre}</div>
-      <div className="tv-display text-2xl leading-[1.2]" style={{ color: T.amberSoft }}>{titulo}</div>
-      <div className="tv-body text-[11px] leading-[1.5]" style={{ color: T.inkDim }}>{diz}</div>
-    </div>
-  );
-
-  /* o cartão de escolha, e é o mesmo para gênero, molde, arco e voz —
-     o que muda é o que se põe dentro dele */
-  const Cartao = ({ ativo, aoClicar, children, compacto }) => (
-    <button onClick={aoClicar} className={`text-left w-full rounded-xl flex flex-col gap-2 transition-all ${compacto ? "p-4" : "p-5"}`}
-      style={{
-        background: T.panel,
-        border: `${ativo ? 1.5 : 1}px solid ${ativo ? T.amber : T.line}`,
-        boxShadow: ativo ? "0 4px 8px rgba(232,163,61,0.12)" : "none",
-      }}>
-      {children}
-    </button>
-  );
-  const LinhaDoCartao = ({ Glifo, titulo, ativo }) => (
-    <div className="flex items-center justify-between w-full gap-3">
-      <div className="flex items-center gap-3 min-w-0">
-        {Glifo && <span className="shrink-0"><Glifo tamanho={20} cor={ativo ? T.amberSoft : T.inkDim} /></span>}
-        <span className="tv-display text-xl leading-[1.25] truncate" style={{ color: T.ink }}>{titulo}</span>
-      </div>
-      {ativo && <span className="shrink-0 rounded-full" style={{ width: 10, height: 10, background: T.amber }} />}
-    </div>
-  );
-  const Desc = ({ children }) => <div className="tv-body text-xs leading-[1.55]" style={{ color: T.inkDim }}>{children}</div>;
-
-  /* as escolhas em duas colunas: a lista chega inteira e se parte no meio,
-     porque duas colunas escritas à mão saem do lugar quando o catálogo
-     cresce — e ele cresceu de quatro para oito arcos nesta mesma leva */
-  const emDuas = (lista, desenhar) => {
-    const meio = Math.ceil(lista.length / 2);
-    return (
-      <div className="flex flex-col md:flex-row gap-4 md:gap-5 w-full">
-        {[lista.slice(0, meio), lista.slice(meio)].map((col, i) => (
-          <div key={i} className="flex-1 min-w-0 flex flex-col gap-4">{col.map(desenhar)}</div>
-        ))}
-      </div>
-    );
-  };
-
   const campoLongo = { background: T.panel, border: `1px solid ${T.line}`, color: T.ink };
 
   return (
@@ -3083,57 +3038,57 @@ function TelaMundo({ concluir }) {
         <DivisoriaRunica />
 
         {/* ---- o gênero ---- */}
-        <Cabecalho sobre="Escolha o gênero" titulo="Gênero da campanha"
+        <CabecalhoDeSecao sobre="Escolha o gênero" titulo="Gênero da campanha"
           diz="Isso dita as tabelas geradoras do Mestre, os arquétipos e as ameaças que habitam a escuridão." />
-        {emDuas(GENEROS.filter((g) => g.id !== "livre"), (g) => (
-          <Cartao key={g.id} ativo={genero && genero.id === g.id} aoClicar={() => setGenero(g)}>
+        {duasColunas(GENEROS.filter((g) => g.id !== "livre"), (g) => (
+          <CartaoDeEscolha key={g.id} ativo={genero && genero.id === g.id} aoClicar={() => setGenero(g)}>
             <LinhaDoCartao Glifo={GLIFO_DO_GENERO[g.label]} titulo={g.label} ativo={genero && genero.id === g.id} />
-            <Desc>{g.dica}</Desc>
-          </Cartao>
+            <DescricaoCurta>{g.dica}</DescricaoCurta>
+          </CartaoDeEscolha>
         ))}
         {GENEROS.filter((g) => g.id === "livre").map((g) => (
-          <Cartao key={g.id} ativo={genero && genero.id === g.id} aoClicar={() => setGenero(g)}>
+          <CartaoDeEscolha key={g.id} ativo={genero && genero.id === g.id} aoClicar={() => setGenero(g)}>
             <LinhaDoCartao Glifo={GLIFO_DO_GENERO[g.label]} titulo={g.label} ativo={genero && genero.id === g.id} />
-            <Desc>{g.dica}</Desc>
-          </Cartao>
+            <DescricaoCurta>{g.dica}</DescricaoCurta>
+          </CartaoDeEscolha>
         ))}
 
         <DivisoriaRunica />
 
         {/* ---- a forma do mundo ---- */}
-        <Cabecalho sobre="A forma do mundo" titulo="Molde do universo"
+        <CabecalhoDeSecao sobre="A forma do mundo" titulo="Molde do universo"
           diz="Decide que eixos existem, o que é um lugar habitado, como se viaja — e a LEI que trava a passagem." />
-        {emDuas(moldesDisponiveis(), (m) => (
-          <Cartao key={m.id} ativo={molde === m.id} aoClicar={() => setMolde(m.id)}>
+        {duasColunas(moldesDisponiveis(), (m) => (
+          <CartaoDeEscolha key={m.id} ativo={molde === m.id} aoClicar={() => setMolde(m.id)}>
             <LinhaDoCartao titulo={`${m.icone} ${m.nome}`} ativo={molde === m.id} />
-            <Desc>{m.desc}</Desc>
-          </Cartao>
+            <DescricaoCurta>{m.desc}</DescricaoCurta>
+          </CartaoDeEscolha>
         ))}
 
         <DivisoriaRunica />
 
         {/* ---- o arco ---- */}
-        <Cabecalho sobre="Estrutura da história" titulo="O arco da campanha"
+        <CabecalhoDeSecao sobre="Estrutura da história" titulo="O arco da campanha"
           diz="A espinha que o Mestre segue. O momento em que você está NUNCA aparece na tela — saber que vem um abismo é esperá-lo em vez de vivê-lo." />
-        {emDuas(ESTRUTURAS, (e) => (
-          <Cartao key={e.id} ativo={estrutura === e.id} aoClicar={() => setEstrutura(e.id)} compacto>
+        {duasColunas(ESTRUTURAS, (e) => (
+          <CartaoDeEscolha key={e.id} ativo={estrutura === e.id} aoClicar={() => setEstrutura(e.id)} compacto>
             <div className="flex items-center justify-between w-full gap-3">
               <span className="tv-display text-xl leading-[1.25] truncate" style={{ color: T.ink }}>{e.nome}</span>
               {estrutura === e.id && <span className="shrink-0"><IconeSeta tamanho={14} cor={T.amberSoft} /></span>}
             </div>
-            <Desc>{e.desc}</Desc>
-          </Cartao>
+            <DescricaoCurta>{e.desc}</DescricaoCurta>
+          </CartaoDeEscolha>
         ))}
 
         <DivisoriaRunica />
 
         {/* ---- a voz ---- */}
-        <Cabecalho sobre="A voz do Mestre" titulo="Como ele narra"
+        <CabecalhoDeSecao sobre="A voz do Mestre" titulo="Como ele narra"
           diz="Muda a BOCA, não o mundo: o que acontece continua vindo do sistema, e nenhuma voz inventa regra." />
-        {emDuas(VOZES, (v) => (
-          <Cartao key={v.id} ativo={voz === v.id} aoClicar={() => setVoz(v.id)}>
+        {duasColunas(VOZES, (v) => (
+          <CartaoDeEscolha key={v.id} ativo={voz === v.id} aoClicar={() => setVoz(v.id)}>
             <LinhaDoCartao titulo={`${v.icone} ${v.nome}`} ativo={voz === v.id} />
-            <Desc>{v.resumo}</Desc>
+            <DescricaoCurta>{v.resumo}</DescricaoCurta>
             {/* O EXEMPLO FICA. O cartão do desenho tem só uma linha de
                 descrição, e a suíte das vozes pegou o que isso custava: oito
                 adjetivos ("grave", "solto", "calmo") não deixam ninguém OUVIR
@@ -3143,13 +3098,13 @@ function TelaMundo({ concluir }) {
             <div className="tv-body text-xs italic leading-[1.55] pt-1" style={{ color: voz === v.id ? T.amberSoft : T.inkDim, borderTop: `1px solid ${T.line}` }}>
               {v.exemplo}
             </div>
-          </Cartao>
+          </CartaoDeEscolha>
         ))}
 
         <DivisoriaRunica />
 
         {/* ---- a apresentação ---- */}
-        <Cabecalho sobre="Apresentação" titulo="Como a gente deste mundo se apresenta"
+        <CabecalhoDeSecao sobre="Apresentação" titulo="Como a gente deste mundo se apresenta"
           diz="Escolha de mesa. Vale para os RETRATOS que o mundo gera — quem você criar nunca é sorteado." />
         <div className="flex flex-col md:flex-row gap-4 w-full">
           {[
@@ -3161,7 +3116,7 @@ function TelaMundo({ concluir }) {
               <span className="shrink-0 mt-1.5 rounded-full" style={{ width: 12, height: 12, background: apresentacao === a.id ? T.amber : "transparent", border: `1px solid ${apresentacao === a.id ? T.amber : T.line}` }} />
               <span className="flex flex-col gap-1 min-w-0">
                 <span className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>{a.nome}</span>
-                <Desc>{a.diz}</Desc>
+                <DescricaoCurta>{a.diz}</DescricaoCurta>
               </span>
             </button>
           ))}
@@ -3249,22 +3204,7 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
     setAtributos({ ...atributos, [id]: nv });
   };
 
-  const Rotulo = ({ children }) => (
-    <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.inkDim }}>{children}</div>
-  );
-  const Titulo = ({ children, direita }) => (
-    <div className="flex items-end justify-between gap-4 w-full">
-      <div className="tv-display text-2xl leading-[1.2]" style={{ color: T.amberSoft }}>{children}</div>
-      {direita}
-    </div>
-  );
   const caixa = { background: T.panel, border: `1px solid ${T.line}`, color: T.ink };
-  const Campo = ({ rotulo, children }) => (
-    <div className="flex-1 min-w-0 flex flex-col gap-2">
-      <Rotulo>{rotulo}</Rotulo>
-      {children}
-    </div>
-  );
   const entrada = "w-full rounded-lg px-4 py-3.5 tv-body text-xs outline-none";
   const escolha = "w-full rounded-lg px-4 py-3 tv-display text-xl outline-none appearance-none";
 
@@ -3299,7 +3239,7 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
 
         {/* ---- identidade ---- */}
         <div className="flex flex-col gap-5 w-full">
-          <Titulo>Identidade do aventureiro</Titulo>
+          <TituloDeSecao>Identidade do aventureiro</TituloDeSecao>
           <div className="flex items-end gap-6 w-full">
             {/* o dado respeita o sexo escolhido: sortear "Aldric" para quem
                 acabou de marcar mulher seria o botão desmentindo o formulário */}
@@ -3310,22 +3250,22 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
               <IconeDado tamanho={28} />
             </button>
             <div className="flex-1 min-w-0 flex flex-col md:flex-row gap-6">
-              <Campo rotulo="Nome">
+              <CampoRotulado rotulo="Nome">
                 <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="ex.: Ume" className={entrada} style={caixa} />
-              </Campo>
-              <Campo rotulo="Sobrenome (opcional)">
+              </CampoRotulado>
+              <CampoRotulado rotulo="Sobrenome (opcional)">
                 <input value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} placeholder="ex.: das Fendas" className={entrada} style={caixa} />
-              </Campo>
+              </CampoRotulado>
             </div>
           </div>
-          <Campo rotulo="Conceito">
+          <CampoRotulado rotulo="Conceito">
             <input value={conceito} onChange={(e) => setConceito(e.target.value)} placeholder="Escreva uma breve frase que resuma a alma do seu herói — ex.: ladra de relíquias arrependida" className={entrada} style={caixa} />
-          </Campo>
+          </CampoRotulado>
         </div>
 
         {/* ---- o sexo ---- */}
         <div className="flex flex-col gap-3 w-full">
-          <Rotulo>Seu herói é</Rotulo>
+          <RotuloDoCampo>Seu herói é</RotuloDoCampo>
           <div className="flex flex-col md:flex-row gap-4 w-full">
             {[["homem", "♂ Homem"], ["mulher", "♀ Mulher"]].map(([id, rot]) => (
               <button key={id} onClick={() => setSexo(id)} className="flex-1 rounded-lg py-3.5 tv-display text-xl"
@@ -3338,51 +3278,108 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
 
         {/* ---- origens e caminhos ---- */}
         <div className="flex flex-col gap-5 w-full">
-          <Titulo>Origens e caminhos</Titulo>
+          <TituloDeSecao>Origens e caminhos</TituloDeSecao>
           <div className="flex flex-col md:flex-row gap-6 w-full">
             <div className="flex-1 min-w-0 flex flex-col gap-6">
-              <Campo rotulo={ehFuturista ? "Origem" : "Raça"}>
+              <CampoRotulado rotulo={ehFuturista ? "Origem" : "Raça"}>
                 <select value={raca} onChange={(e) => setRaca(e.target.value)} className={escolha} style={caixa}>
                   {racasDisp.map((r) => <option key={r.nome} value={r.nome}>{chamadoDaRaca(mundo.lexico, r.nome)}</option>)}
                 </select>
-              </Campo>
-              <Campo rotulo="Classe">
+                {/* v9.176: A ESCOLHA VOLTA A DIZER O QUE FAZ. O redesenho da
+                    v9.174 trocou os cartões por selects e levou junto a
+                    descrição, o bônus e o traço — quem escolhia raça passou a
+                    escolher no escuro, e o bônus de atributo é justamente a
+                    parte que muda a ficha. Um seletor sem consequência visível
+                    não é uma escolha, é um sorteio com passos extras. */}
+                {rObj && (
+                  <div className="flex flex-col gap-1 pt-0.5">
+                    <DescricaoCurta>
+                      {chamadoDaRaca(mundo.lexico, rObj.nome) !== rObj.nome && <span style={{ color: T.inkDim }}>({rObj.nome}) </span>}
+                      {rObj.desc}
+                    </DescricaoCurta>
+                    <div className="tv-mono text-[10px] tracking-[0.5px]" style={{ color: T.amberSoft }}>
+                      {Object.entries(rObj.bonus || {}).map(([k, v]) => `+${v} ${(ATRIBUTOS.find((a) => a.id === k) || {}).nome || k}`).join(" · ")}
+                    </div>
+                    {rObj.traco && <DescricaoCurta cor={T.violetSoft}>✦ {rObj.traco}</DescricaoCurta>}
+                  </div>
+                )}
+              </CampoRotulado>
+              <CampoRotulado rotulo="Classe">
                 <select value={classe} onChange={(e) => { setClasse(e.target.value); setSubclasse(classePorNome(e.target.value).subclasses[0].nome); }} className={escolha} style={caixa}>
                   {CLASSES.map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
                 </select>
-              </Campo>
+                {cObj && (
+                  <div className="flex flex-col gap-1 pt-0.5">
+                    <DescricaoCurta>{cObj.desc}</DescricaoCurta>
+                    <div className="tv-mono text-[10px] tracking-[0.5px]" style={{ color: T.amberSoft }}>
+                      {cObj.vidaBase} de vida base · {cObj.manaBase} de mana base · chave: {(ATRIBUTOS.find((a) => a.id === cObj.atributoChave) || {}).nome || cObj.atributoChave}
+                    </div>
+                  </div>
+                )}
+              </CampoRotulado>
             </div>
             <div className="flex-1 min-w-0 flex flex-col gap-6">
-              <Campo rotulo="Profissão">
+              <CampoRotulado rotulo="Profissão">
                 <select value={profissao} onChange={(e) => setProfissao(e.target.value)} className={escolha} style={caixa}>
                   {PROFISSOES.map((p) => <option key={p.nome} value={p.nome}>{chamadoDaProfissao(mundo.lexico, p.nome)}</option>)}
                 </select>
-              </Campo>
-              <Campo rotulo="Caminho (subclasse)">
+                {(() => {
+                  const pObj = PROFISSOES.find((p) => p.nome === profissao);
+                  return pObj ? (
+                    <div className="flex flex-col gap-1 pt-0.5">
+                      <DescricaoCurta>{pObj.desc}</DescricaoCurta>
+                      {pObj.beneficio && <DescricaoCurta cor={T.amberSoft}>✦ {pObj.beneficio}</DescricaoCurta>}
+                    </div>
+                  ) : null;
+                })()}
+              </CampoRotulado>
+              <CampoRotulado rotulo="Caminho (subclasse)">
                 <select value={subclasse} onChange={(e) => setSubclasse(e.target.value)} className={escolha} style={caixa}>
                   {(cObj?.subclasses || []).map((s) => <option key={s.nome} value={s.nome}>{s.nome}</option>)}
                 </select>
-              </Campo>
+                {(() => {
+                  const sObj = (cObj?.subclasses || []).find((x) => x.nome === subclasse);
+                  return sObj ? <DescricaoCurta>{sObj.desc}</DescricaoCurta> : null;
+                })()}
+              </CampoRotulado>
             </div>
           </div>
-          <Campo rotulo="Antecedente — quem você era antes">
+          <CampoRotulado rotulo="Antecedente — quem você era antes">
             <select value={antecedenteId} onChange={(e) => setAntecedenteId(e.target.value)} className={escolha} style={caixa}>
               {ANTECEDENTES.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
             </select>
-          </Campo>
-          {antObj && <div className="tv-body text-xs leading-[1.55]" style={{ color: T.inkDim }}>{antObj.gancho}</div>}
+          </CampoRotulado>
+          {antObj && (
+            <div className="flex flex-col gap-1">
+              <DescricaoCurta>{antObj.desc}</DescricaoCurta>
+              <DescricaoCurta cor={T.violetSoft}>✦ {antObj.gancho}</DescricaoCurta>
+              {/* o que o passado PAGA. Ele não é só sabor: mexe em PV, PM,
+                  bolsa e mochila, e quem escolhe merece ver o preço. */}
+              {(() => {
+                const ganhos = [
+                  antObj.pv ? `+${antObj.pv} PV` : "",
+                  antObj.pm ? `+${antObj.pm} PM` : "",
+                  antObj.moedas ? `+${antObj.moedas} moedas` : "",
+                  antObj.item ? antObj.item : "",
+                ].filter(Boolean);
+                return ganhos.length ? (
+                  <div className="tv-mono text-[10px] tracking-[0.5px]" style={{ color: T.amberSoft }}>{ganhos.join(" · ")}</div>
+                ) : null;
+              })()}
+            </div>
+          )}
         </div>
 
         {/* ---- os atributos ---- */}
         <div className="flex flex-col gap-5 w-full">
-          <Titulo direita={
+          <TituloDeSecao direita={
             <span className="flex items-center gap-2 shrink-0">
               <span className="rounded-full" style={{ width: 6, height: 6, background: restantes === 0 ? T.ok : T.amber }} />
               <span className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: restantes === 0 ? T.ok : T.amber }}>
                 {restantes} ponto{restantes !== 1 ? "s" : ""} restante{restantes !== 1 ? "s" : ""}
               </span>
             </span>
-          }>Atributos</Titulo>
+          }>Atributos</TituloDeSecao>
           <div className="flex flex-col gap-4 w-full">
             {[0, 2, 4].map((i) => (
               <div key={i} className="flex flex-col md:flex-row gap-4 w-full">
@@ -3408,7 +3405,7 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
 
         {/* ---- a história ---- */}
         <div className="flex flex-col gap-2.5 w-full">
-          <Rotulo>História e segredos (opcional)</Rotulo>
+          <RotuloDoCampo>História e segredos (opcional)</RotuloDoCampo>
           <textarea value={historia} onChange={(e) => setHistoria(e.target.value)} rows={5}
             placeholder="O Mestre vai usar isso contra e a favor de você…"
             className="w-full rounded-lg p-4 tv-body text-sm outline-none resize-none leading-[1.65]" style={caixa} />

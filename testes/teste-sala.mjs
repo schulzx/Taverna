@@ -171,7 +171,7 @@ sec("8. a abertura da campanha (v9.120)");
      acima em vez de texto-fantasma dentro — placeholder some quando se
      digita, e um rótulo que some é um rótulo que não estava lá. O campo
      separado continua existindo, que é o que esta linha protege. */
-  t("o sobrenome existe na criação", /<Campo rotulo="Sobrenome \(opcional\)">/.test(APP));
+  t("o sobrenome existe na criação", /<CampoRotulado rotulo="Sobrenome \(opcional\)">/.test(APP));
   t("e viaja separado do nome inteiro", /primeiroNome: nome\.trim\(\), sobrenome: sobrenome\.trim\(\)/.test(APP));
 }
 
