@@ -225,5 +225,32 @@ sec("10. O ENVELOPE É FATO, NÃO SUGESTÃO");
   t("sem governador, diz que é você", /Ninguém governa em seu nome/.test(D.envelopeDoDominio(CIDADE, vazio(), {})));
 }
 
+
+sec("A FELICIDADE DIZ O QUE ELA FAZ (v9.189)");
+{
+  /* `painel-dominios-v2` foi redesenhado a partir do que o painel faz — renda
+     líquida com bruto e custeio, cidade com felicidade, imposto em três
+     faixas, obra em curso com custeio para sempre, governador com a índole
+     dele, e os eventos que a cidade produz sozinha. E aí apareceu o buraco.
+
+     `fatorFelicidade` multiplica a renda da cidade desde sempre, e a tela
+     mostrava só a carinha e o número. Quem via "😐 64" não tinha como saber
+     que aquilo valia +14% no ouro, nem que subir para 90 valeria +40%. */
+  t("a felicidade multiplica a renda", R.fatorFelicidade(100) === 1.5 && R.fatorFelicidade(0) === 0.5);
+  t("e no meio da escada também", R.fatorFelicidade(64) === 1.14);
+  t("lixo cai dentro da escada", R.fatorFelicidade(-40) === 0.5 && R.fatorFelicidade(400) === 1.5);
+  t("a tela diz o fator", /×\{fatorFelicidade\(fel\)\.toLocaleString\("pt-BR", \{ minimumFractionDigits: 2 \}\)\} na renda/.test(APP));
+  t("lendo da tabela e não de conta própria", /import \{ garantirReino, fatorMedioReino, fatorFelicidade/.test(APP));
+
+  /* E O PENHASCO TEM NOME. O aviso de revolta existia, mas só depois de a
+     fúria começar: entre 25 e 40 o jogador via amarelo e nenhuma noção de
+     quão perto do buraco estava. */
+  t("a fúria tem um limiar com nome", D.FURIA_ABAIXO_DE === 25);
+  t("e ele é importado em vez de digitado", /import \{ OBRAS, IMPOSTOS, FURIA_ABAIXO_DE,/.test(APP));
+  t("a tela avisa antes de cair", /abaixo de \$\{FURIA_ABAIXO_DE\} a fúria começa a contar/.test(APP));
+  t("e só quando ainda não está em fúria", /fel < FURIA_ABAIXO_DE \+ 15 && !rev \?/.test(APP));
+  /* acima da faixa de perigo a linha não grita */
+  t("a linha só fica vermelha perto do buraco", /color: fel < FURIA_ABAIXO_DE \+ 15 \? T\.danger : T\.inkDim/.test(APP));
+}
 console.log(`\ndominios v9.139: ${bons} passaram, ${maus} falharam`);
 process.exit(maus ? 1 : 0);

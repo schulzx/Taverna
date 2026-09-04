@@ -20,7 +20,7 @@ import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acend
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA } from "./ofertas.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
-import { OBRAS, IMPOSTOS, impostoPorId, obraPorId, garantirGovernos, garantirGoverno, equilibrioDe, contaDoDominio, podeErguer, comecarObra, obraPronta, terminarObra, pulsoDaFuria, revoltaAgora, bonusDeObras, fatorDaOficina, envelopeDoDominio, oQueAOficinaFaz, podeTomarCidade, comecarATomar, tomadaPronta, humorAoTomar, envelopeDaTomada, diasDeTomar } from "./dominios.js";
+import { OBRAS, IMPOSTOS, FURIA_ABAIXO_DE, impostoPorId, obraPorId, garantirGovernos, garantirGoverno, equilibrioDe, contaDoDominio, podeErguer, comecarObra, obraPronta, terminarObra, pulsoDaFuria, revoltaAgora, bonusDeObras, fatorDaOficina, envelopeDoDominio, oQueAOficinaFaz, podeTomarCidade, comecarATomar, tomadaPronta, humorAoTomar, envelopeDaTomada, diasDeTomar } from "./dominios.js";
 import { perfilDeCriatura, perfilDe, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano, resistenciasEquipadas } from "./danos.js";
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, MINUTOS_RODADA_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, rumorDoDia } from "./fama.js";
@@ -2267,12 +2267,34 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
                           <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{tAtual ? `${tAtual.icone} ` : ""}{c.nome} {c.sede && <span className="tv-mono text-[9px]" style={{ color: T.amberSoft }}>· SEDE</span>}</div>
                           <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.inkDim }}>{c.tipo}{v ? ` · ${v.populacao.toLocaleString("pt-BR")} almas` : ""}</div>
                           {fel != null && (
-                            <div className="flex items-center gap-1.5 mt-1">
-                              <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: T.panel }}>
-                                <div className="h-full rounded-full" style={{ width: `${fel}%`, background: corFel }} />
+                            <>
+                              <div className="flex items-center gap-1.5 mt-1">
+                                <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: T.panel }}>
+                                  <div className="h-full rounded-full" style={{ width: `${fel}%`, background: corFel }} />
+                                </div>
+                                <span className="tv-mono text-[9px] shrink-0" style={{ color: corFel }}>{fel >= 70 ? "😊" : fel >= 40 ? "😐" : "😠"} {fel}</span>
                               </div>
-                              <span className="tv-mono text-[9px] shrink-0" style={{ color: corFel }}>{fel >= 70 ? "😊" : fel >= 40 ? "😐" : "😠"} {fel}</span>
-                            </div>
+                              {/* v9.189 (`painel-dominios-v2`): A FELICIDADE DIZ O
+                                  QUE ELA FAZ. `fatorFelicidade` multiplica a renda
+                                  desta cidade desde sempre — 0,5 + felicidade/100,
+                                  ou seja, meia renda no fundo do poço e uma vez e
+                                  meia no topo — e a tela mostrava só a carinha e o
+                                  número. O jogador via "😐 64" e não tinha como
+                                  saber que aquilo valia +14% no ouro, nem que subir
+                                  para 90 valeria +40%. Regra que vale e não aparece
+                                  é regra que ninguém usa a favor.
+
+                                  E O PENHASCO TEM NOME: abaixo de FURIA_ABAIXO_DE a
+                                  fúria começa a contar os dias até a cidade sair das
+                                  suas mãos. O aviso de revolta já existia — mas só
+                                  DEPOIS da queda; entre 25 e 40 o jogador via uma
+                                  carinha amarela e nenhuma noção de quão perto do
+                                  buraco estava. */}
+                              <div className="tv-mono text-[9px] mt-0.5" style={{ color: fel < FURIA_ABAIXO_DE + 15 ? T.danger : T.inkDim }}>
+                                ×{fatorFelicidade(fel).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} na renda
+                                {fel < FURIA_ABAIXO_DE + 15 && !rev ? ` · abaixo de ${FURIA_ABAIXO_DE} a fúria começa a contar` : ""}
+                              </div>
+                            </>
                           )}
                           {est && (
                             <div className="flex items-center gap-1.5 mt-1">
