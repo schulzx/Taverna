@@ -118,6 +118,7 @@ import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
 import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, LinhaDoCartao, duasColunas } from "./ui.jsx";
 import heroTaverna from "./assets/taverna-hero.png";
+import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
 import { CartaDeTaro, CartaVerso } from "./carta-taro.jsx";
 import { AjusteDoRetrato } from "./rosto.jsx";
@@ -134,7 +135,7 @@ import { PainelMapa } from "./painel-mapa.jsx";
 import { GridDeBatalha } from "./grade-de-batalha.jsx";
 import { criarSala, garantirSala, sentarNaSala, sairDaSala, sentarFicha, assentoDe, ocupados as ocupadosDaSala, todosProntos, porAcao, acaoDe, turnoCompleto, textoDoTurno, limparTurno, normalizarCodigo, codigoValido, RECADOS, recadoValido, envelopeDaSala, LUGARES } from "./sala.js";
 import { abrirCanal, novoIdDeParticipante, cabeNoFio } from "./transporte.js";
-import { aplicarNivel, evoluirCompanheiro, aplicarDescanso, recargaPadrao, aplicarMudancas, bonusEquip, bonusEfeito, atributoEfetivo, tickEfeitos, processarCombate, migrarPersonagem } from "./regras-jogo.js";
+import { aplicarNivel, PV_POR_NIVEL, PM_POR_NIVEL, evoluirCompanheiro, aplicarDescanso, recargaPadrao, aplicarMudancas, bonusEquip, bonusEfeito, atributoEfetivo, tickEfeitos, processarCombate, migrarPersonagem } from "./regras-jogo.js";
 import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, consumirDia, RITMOS_VIAGEM, ritmoViagem, marchaForcada, testarNavegacao, forragear, efeitoExaustao, recuperarExaustao, resumoErmos } from "./ermos.js";
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, sortearDadiva, resumoEpico } from "./regras.js";
 import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, processarDiaCorreio } from "./correio.js";
@@ -563,51 +564,73 @@ function ModalCena({ personagem, combate, mundo, nomeCampanha, fechar }) {
    entrega PONTOS — de habilidade e de atributo — e o jogador gasta quando
    quiser, na ficha, olhando a build inteira. É o que torna a multiclasse
    possível: ninguém planeja um mago-guerreiro num modal de meio segundo. */
+/* ---------------- A VIRADA (v9.178) — `momento-level-up-v2` ----------------
+
+   A forma veio do desenho: o brilho dourado atrás de tudo, o rótulo miúdo
+   sobre o numeral grande, o cartão de âmbar com a pessoa dentro, a régua e
+   as pílulas do que se ganhou. E a virada da v9.163 continua no lugar dela:
+   o jogo TEM um objeto cerimonial — a carta de tarô, cujo número é o próprio
+   nível em romano — e ele entra de costas e vira. O desenho pedia um retrato
+   redondo; a carta é o retrato desta casa, e ela sabe dizer o número.
+
+   O QUE O DESENHO PEDIA E NÃO ENTROU: as duas cartas de habilidade
+   ("Sombra Longa" / "Fôlego de Pedra"), com um botão ESCOLHER em cada.
+   Subir de nível aqui não é escolher entre dois poderes prontos: rende
+   PONTOS, e eles se gastam em Gestão › Talentos, com a árvore inteira à
+   vista — inclusive em outra classe. Desenhar duas cartas seria trocar a
+   build por um sorteio de duas.
+
+   E AS PÍLULAS LEEM A TABELA. Diziam "+3 PV máx · +2 PM máx" enquanto
+   `aplicarNivel` dava seis e quatro: a tela anunciava metade do que a regra
+   entregava, e ninguém conferia porque o número estava escrito à mão. */
 function ModalNivel({ nivel, personagem, escolher, lex = null }) {
   const ganhoHab = pontosNoNivel(nivel);
   const ganhoAtr = pontosAtributoNoNivel(nivel);
   const teto = tetoAtributo(nivel);
   const tetoAnterior = tetoAtributo(nivel - 1);
+  const pilulas = [
+    `+${PV_POR_NIVEL} PV MÁX`,
+    `+${PM_POR_NIVEL} PM MÁX`,
+    `+${ganhoHab} HABILIDADE`,
+    `+${ganhoAtr} ATRIBUTO`,
+  ];
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.9)", backdropFilter: "blur(4px)" }}>
-      <div className="tv-fade w-full max-w-md rounded-2xl p-6 tv-scroll overflow-y-auto" style={{ background: T.panel, border: `1px solid ${T.amber}`, maxHeight: "90vh" }}>
-        {/* ---------------- A VIRADA (v9.163) ----------------
-            Subir de nível abria uma nota fiscal: "Nível 7", dois números,
-            um botão. O jogo TEM um objeto cerimonial — a carta de tarô,
-            cujo número é o próprio nível em romano — e o único momento em
-            que esse número muda passava sem ela. Agora a carta entra de
-            costas e vira: o verso, o respiro, a revelação com o numeral
-            novo. É o mesmo componente da ficha; o modal só o vira. */}
-        <div className="tv-vira-palco mx-auto mb-4" style={{ width: "min(200px, 52vw)" }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 overflow-hidden" style={{ background: "rgba(8,6,14,0.9)", backdropFilter: "blur(4px)" }}>
+      {/* o brilho é do desenho, e é só isto: um círculo de âmbar borrado.
+          Fica atrás e não recebe dedo nenhum. */}
+      <img src={brilhoDourado} alt="" aria-hidden className="absolute pointer-events-none select-none"
+        style={{ width: 880, height: 880, left: "50%", top: "50%", transform: "translate(-50%,-50%)" }} />
+      <div className="tv-fade relative w-full rounded-2xl p-7 tv-scroll overflow-y-auto flex flex-col gap-4 items-center"
+        style={{ background: T.panel, border: `1.5px solid ${T.amber}`, maxWidth: 480, maxHeight: "90vh", boxShadow: "0 8px 12px rgba(232,163,61,0.15)" }}>
+        <div className="flex flex-col gap-2 items-center text-center">
+          <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.amberSoft }}>A lenda cresce</div>
+          <div className="tv-display text-5xl leading-[1.05]" style={{ color: T.ink }}>Nível {nivel}</div>
+        </div>
+        <div className="tv-vira-palco" style={{ width: "min(200px, 52vw)" }}>
           <div className="tv-vira">
             <div className="tv-vira-face"><CartaDeTaro ente={{ ...personagem, nivel }} lex={lex} /></div>
             <div className="tv-vira-verso"><CartaVerso /></div>
           </div>
         </div>
-        <div className="text-center mb-5">
-          <div className="tv-mono text-xs uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>✦ Nível alcançado ✦</div>
-          <div className="tv-display text-5xl" style={{ color: T.ink }}>Nível {nivel}</div>
-          <div className="tv-body text-sm mt-2" style={{ color: T.inkDim }}>+3 PV máx · +2 PM máx · vida e mana restauradas.</div>
+        <div className="flex flex-col gap-1 items-center text-center w-full">
+          <div className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>{personagem.nome}</div>
+          <div className="tv-mono text-[9px] tracking-[0.9px] uppercase" style={{ color: T.inkDim }}>
+            {personagem.classe} · Nível {nivel}
+          </div>
         </div>
-        <div className="space-y-2 mb-5">
-          <div className="rounded-xl p-3 flex items-center justify-between" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
-            <span className="tv-body text-sm" style={{ color: T.ink }}>Pontos de habilidade</span>
-            <span className="tv-mono text-sm font-semibold" style={{ color: T.violetSoft }}>+{ganhoHab}</span>
-          </div>
-          <div className="rounded-xl p-3 flex items-center justify-between" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
-            <span className="tv-body text-sm" style={{ color: T.ink }}>Pontos de atributo</span>
-            <span className="tv-mono text-sm font-semibold" style={{ color: T.amber }}>+{ganhoAtr}</span>
-          </div>
+        <div className="w-full" style={{ height: 1, background: T.line }} />
+        <div className="flex flex-wrap gap-3 items-center justify-center">
+          {pilulas.map((p) => (
+            <span key={p} className="tv-mono text-[9px] tracking-[0.9px] rounded-md px-2.5 py-1" style={{ background: "rgba(232,163,61,0.07)", color: T.amberSoft }}>{p}</span>
+          ))}
           {teto > tetoAnterior && (
-            <div className="rounded-xl p-3 tv-body text-xs" style={{ background: T.panelSoft, border: `1px dashed ${T.ok}`, color: T.ok }}>
-              O teto dos atributos subiu para +{teto}.
-            </div>
+            <span className="tv-mono text-[9px] tracking-[0.9px] rounded-md px-2.5 py-1" style={{ background: "rgba(123,201,143,0.07)", color: T.ok }}>TETO +{teto}</span>
           )}
         </div>
-        <div className="tv-body text-xs text-center mb-4" style={{ color: T.inkDim }}>
-          Gaste onde quiser em <b style={{ color: T.amberSoft }}>Gestão › Talentos</b> — habilidades da sua classe, de outra classe, ou nos atributos que a sua build pede.
+        <div className="tv-body text-xs text-center leading-[1.55]" style={{ color: T.inkDim }}>
+          Vida e mana restauradas. Gaste os pontos em <b style={{ color: T.amberSoft }}>Gestão › Talentos</b> — habilidades da sua classe, de outra classe, ou nos atributos que a sua build pede.
         </div>
-        <div className="text-center"><Botao primario onClick={() => escolher()}>Continuar →</Botao></div>
+        <Botao primario onClick={() => escolher()}>Continuar →</Botao>
       </div>
     </div>
   );
@@ -7640,8 +7663,14 @@ export default function Taverna() {
           const ess = essenciaDeEspolio(resp.mudancas.__inimigosFinais || []);
           if (ess > 0) { p2.essencia = (p2.essencia || 0) + ess; msgs.push(`⚗ +${ess} de essência — o que sobra quando algo com poder morre.`); }
         }
-        let subiu = 0;
-        while (p2.xp >= XP_POR_NIVEL(p2.nivel)) { p2.xp -= XP_POR_NIVEL(p2.nivel); p2.nivel += 1; p2.nivelPendentes = (p2.nivelPendentes || 0) + 1; subiu++; }
+        /* UMA ESCADA SÓ. Esta linha era um laço à mão que subia o nível e
+           contava o pendente — e não dava PV, nem PM, nem a dádiva épica do
+           nível 20. Quem subia de nível MATANDO subia mais fraco do que quem
+           subia entregando uma missão, e ninguém via porque os dois caminhos
+           imprimem a mesma frase. `aplicarNivel` é a escada da casa. */
+        const nivelAntes = p2.nivel;
+        p2 = aplicarNivel(p2);
+        const subiu = p2.nivel - nivelAntes;
         p2.grupo = (p2.grupo || []).map((g) => { if (g.invocada) return g; const ev = evoluirCompanheiro({ ...g, xp: (g.xp || 0) + esp.xp }); const m2 = ev._subiu; delete ev._subiu; if (m2) msgs.push(`✦ ${g.nome} subiu para o nível ${ev.nivel}!`); return ev; });
         msgs.push(`◉ Espólios: +${esp.moedas} moedas · +${esp.xp} XP${subiu ? ` · ✦ NÍVEL ${p2.nivel}!` : ""}`);
         pers = p2;
@@ -11468,7 +11497,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         p2.essencia = (p2.essencia || 0) + essenciaGanha;
         msgsU.push(`⚗ +${essenciaGanha} de essência — o que sobra quando algo com poder morre.`);
       }
-      while (p2.xp >= XP_POR_NIVEL(p2.nivel)) { p2.xp -= XP_POR_NIVEL(p2.nivel); p2.nivel += 1; p2.nivelPendentes = (p2.nivelPendentes || 0) + 1; }
+      /* a mesma escada do outro caminho de espólio: `aplicarNivel`, e não um
+         laço à mão que esquece o corpo e a dádiva */
+      p2 = aplicarNivel(p2);
       p2.grupo = (p2.grupo || []).map((g) => { if (g.invocada) return g; const ev = evoluirCompanheiro({ ...g, xp: (g.xp || 0) + esp.xp }); delete ev._subiu; return ev; });
       /* PRESENÇA DIVINA expira com o fim do combate — não vira debuff eterno */
       p2.condicoes = (p2.condicoes || []).filter((c) => !(c.origem || "").startsWith("presença de"));

@@ -26,6 +26,13 @@ import { garantirSintonia, sintoniaInicial, atributosValem } from "./sintonia.js
 import { comDom, repousarTracos } from "./tracos.js";
 import { curaExtraDoHeroi, curaExtraDoGrupo } from "./profissoes.js";
 
+/* O QUE UM NÍVEL RENDE DE CORPO. Estavam soltos dentro do laço, e a tela
+   do nível anunciava "+3 PV máx · +2 PM máx" — metade do que a regra dá de
+   verdade. Nome próprio para os dois, para que a tela leia da tabela em vez
+   de repetir um número de cabeça. */
+export const PV_POR_NIVEL = 6;
+export const PM_POR_NIVEL = 4;
+
 export function aplicarNivel(pers) {
   let { xp, nivel, nivelPendentes, vidaMax, manaMax, vida, mana } = pers;
   let dadivas = [...(pers.dadivas || [])];
@@ -42,7 +49,7 @@ export function aplicarNivel(pers) {
     const custo = XP_POR_NIVEL(nivel);
     if (xp < custo) break;
     xp -= custo; nivel += 1; nivelPendentes += 1;
-    vidaMax += 6; manaMax += 4; vida = vidaMax; mana = manaMax;
+    vidaMax += PV_POR_NIVEL; manaMax += PM_POR_NIVEL; vida = vidaMax; mana = manaMax;
   }
   return { ...pers, xp, nivel, nivelPendentes, vidaMax, manaMax, vida, mana, dadivas, dadivasPendentes };
 }
