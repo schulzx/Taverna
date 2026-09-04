@@ -90,14 +90,35 @@ export function PainelDiplomacia({ potencias = [], dip = null, veredito, onDiplo
                     </button>
                   );
                 })}
-                {onPresente && (
-                  <button onClick={() => onPresente(p.nome)} disabled={!temCasa || (cofre || 0) < custo}
-                    title={temCasa ? `◉ ${custo} do cofre — ${ap.o}, então isto ${ap.presente >= 1.1 ? "impressiona" : ap.presente >= 0.9 ? "serve" : "pode soar pouco"}` : "Presentear exige uma casa (o cofre e os mensageiros são dela)"}
-                    className="tv-mono text-[10px] px-1.5 py-1.5 rounded col-span-2"
-                    style={{ border: `1px solid ${T.amber}`, color: T.amberSoft, opacity: (!temCasa || (cofre || 0) < custo) ? 0.4 : 1 }}>
-                    🎁 presentear · ◉ {custo} do cofre
-                  </button>
-                )}
+                {onPresente && (() => {
+                  /* ---------------- O PRESENTE DIZ SE PEGA (v9.190) ----------------
+                     Redesenhado em `painel-diplomacia-v2`. Todas as quatro
+                     propostas desta grade mostram o veredito ANTES do clique —
+                     é a lei desta tela. O presente era a única que não: ele
+                     mostrava o preço, e escondia num `title` a única coisa que
+                     importa, que é se ele PEGA. Num telefone o title não
+                     existe, então lá o botão era um sorteio de ◉ 200.
+
+                     `ap.presente` é o multiplicador do apreço desta potência
+                     por ouro — quem mede poder não se compra com moeda, e é
+                     isso que a linha de baixo passa a dizer em voz alta. */
+                  const semCasa = !temCasa;
+                  const semCofre = (cofre || 0) < custo;
+                  const pega = ap.presente >= 1.1 ? { diz: "isto impressiona", cor: T.ok }
+                    : ap.presente >= 0.9 ? { diz: "isto serve", cor: T.amberSoft }
+                      : { diz: "pode soar pouco — ela não se compra com ouro", cor: T.danger };
+                  return (
+                    <button onClick={() => onPresente(p.nome)} disabled={semCasa || semCofre}
+                      title={semCasa ? "Presentear exige uma casa (o cofre e os mensageiros são dela)" : `${ap.o}`}
+                      className="tv-mono text-[10px] px-1.5 py-1.5 rounded col-span-2 text-left"
+                      style={{ border: `1px solid ${T.amber}`, color: T.amberSoft, opacity: (semCasa || semCofre) ? 0.4 : 1 }}>
+                      <div>🎁 presentear · ◉ {custo} do cofre</div>
+                      <div className="tv-mono text-[9px]" style={{ color: semCasa ? T.inkDim : semCofre ? T.danger : pega.cor }}>
+                        {semCasa ? "exige uma casa" : semCofre ? `o cofre tem ◉ ${cofre || 0}` : pega.diz}
+                      </div>
+                    </button>
+                  );
+                })()}
               </div>
             )}
           </div>

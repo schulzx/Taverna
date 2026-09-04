@@ -241,5 +241,24 @@ sec("10. O JOGADOR VÊ ANTES DE APERTAR");
   t("e o estado é salvo", /salvar\(\{ diplomacia: d \}\)/.test(APP));
 }
 
+
+sec("O PRESENTE DIZ SE PEGA (v9.190)");
+{
+  /* `painel-diplomacia-v2` foi redesenhado a partir do que o painel faz — o
+     que ela quer, o que ela teme, a barra de apreço, a exigência pendente e
+     o veredito em cada uma das quatro propostas. E aí ficou visível que o
+     PRESENTE era a única ação sem veredito na tela: ele mostrava o preço, e
+     escondia num `title` a única coisa que importa — se ele pega. Num
+     telefone o title não existe, e lá o botão era um sorteio de ◉ 200. */
+  t("o botão do presente diz o preço", /🎁 presentear · ◉ \{custo\} do cofre/.test(PAINEL));
+  t("e diz, em linha visível, se o presente pega", /\{semCasa \? "exige uma casa" : semCofre \? `o cofre tem ◉ \$\{cofre \|\| 0\}` : pega\.diz\}/.test(PAINEL));
+  t("a leitura sai do multiplicador da potência", /ap\.presente >= 1\.1 \? \{ diz: "isto impressiona"/.test(PAINEL));
+  t("com as três faixas", /isto serve/.test(PAINEL) && /pode soar pouco — ela não se compra com ouro/.test(PAINEL));
+  /* e os dois motivos de estar travado agora se distinguem: sem casa é uma
+     coisa, cofre curto é outra, e antes as duas davam o mesmo botão apagado */
+  t("sem casa e sem cofre dizem coisas diferentes", /const semCasa = !temCasa;/.test(PAINEL) && /const semCofre = \(cofre \|\| 0\) < custo;/.test(PAINEL));
+  /* o multiplicador é da tabela, e não inventado aqui */
+  t("o apreço por ouro é da tabela", D.APETITES.every((a) => typeof a.presente === "number"));
+}
 console.log(`\ndiplomacia v9.142: ${bons} passaram, ${maus} falharam`);
 process.exit(maus ? 1 : 0);
