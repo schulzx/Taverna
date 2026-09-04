@@ -682,11 +682,26 @@ Narre o fechamento em 3 ou 4 frases: ${rec.moedas ? "quem paga, o que diz" : "co
 
 /* O que a missão paga, em uma linha — a mesma frase na tela, no diário e
    no envelope. Duas verdades sobre o mesmo trabalho foi o bug. */
+/* ---------------- A PAGA INTEIRA (v9.193) ----------------
+   Redesenhado em `aba-diario-v2`, e é o mesmo defeito que o mural tinha: a
+   linha sub-relatava a recompensa. A FAMA nunca aparecia — e fama é sistema
+   de verdade nesta casa, ela muda como o mundo trata o herói —, e no ramo
+   "sem moedas" o ITEM também sumia, justamente onde ele mais importa: um
+   favor que não paga moeda nenhuma e entrega uma peça rara lia como
+   "pagamento é outro" e ponto.
+
+   Agora as duas metades montam a mesma lista, e o que sobra some em vez de
+   virar "· 0 fama". */
 export function textoDaPaga(m) {
   const r = (m && m.recompensa) || null;
   if (!r) return "";
-  if (!r.moedas) return `sem moedas — o pagamento é outro · ${r.xp} XP`;
-  return `◉ ${r.moedas}${r.combinada ? " (o combinado)" : ""} · ${r.xp} XP${r.item ? ` · item ${r.item}` : ""}`;
+  const partes = [];
+  if (r.moedas) partes.push(`◉ ${r.moedas}${r.combinada ? " (o combinado)" : ""}`);
+  if (r.xp) partes.push(`${r.xp} XP`);
+  if (r.fama) partes.push(`+${r.fama} fama`);
+  if (r.item) partes.push(`item ${r.item}`);
+  if (!partes.length) return "";
+  return r.moedas ? partes.join(" · ") : `sem moedas — o pagamento é outro · ${partes.join(" · ")}`;
 }
 
 /* v9.119: O ENVELOPE DE OFERTA SAIU DAQUI. Ele dizia ao Narrador "o

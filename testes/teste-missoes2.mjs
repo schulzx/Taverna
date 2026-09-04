@@ -112,5 +112,42 @@ t("chegar ao Porto fecha a missão", c.concluidas.length === 1 && c.avancos.leng
 t("etapa restante tem texto", textoDaEtapa({ tipo: "ir_a", alvo: "Porto" }) === "Chegar a Porto");
 t("sem etapa atual quando acaba", etapaAtual(c.missoes[0]) === null);
 
+
+/* ---------------- A PAGA INTEIRA (v9.193) ----------------
+   `aba-diario-v2` foi redesenhada a partir do que o diário faz — o arco com
+   a etapa em curso, os pontos das etapas de cada missão, a etapa atual por
+   extenso, o patamar de dificuldade, a paga e o prazo. E aí apareceu o mesmo
+   defeito que o mural tinha: a linha da paga SUB-RELATAVA a recompensa.
+
+   A FAMA nunca aparecia — e fama é sistema de verdade aqui, ela muda como o
+   mundo trata o herói. E no ramo "sem moedas" o ITEM também sumia,
+   justamente onde ele mais importa: um favor que não paga moeda nenhuma e
+   entrega uma peça rara lia como "o pagamento é outro" e ponto. */
+console.log("\n[a paga inteira]");
+{
+  const comTudo = { recompensa: { moedas: 180, xp: 320, fama: 9, item: "raro", combinada: false } };
+  const linha = textoDaPaga(comTudo);
+  t("a paga diz as moedas", /◉ 180/.test(linha));
+  t("o XP", /320 XP/.test(linha));
+  t("a fama, que nunca aparecia", /\+9 fama/.test(linha));
+  t("e o item", /item raro/.test(linha));
+
+  /* o combinado continua marcado: preço dito na cena é preço da cena */
+  t("o preço combinado se identifica", /\(o combinado\)/.test(textoDaPaga({ recompensa: { moedas: 60, xp: 100, combinada: true } })));
+
+  /* SEM MOEDAS: o ramo em que o item mais importa, e onde ele sumia */
+  const favor = { recompensa: { moedas: 0, xp: 240, fama: 7, item: "incomum", combinada: true } };
+  const lf = textoDaPaga(favor);
+  t("sem moedas continua dizendo que o pagamento é outro", /sem moedas/.test(lf));
+  t("mas agora diz o XP", /240 XP/.test(lf));
+  t("a fama", /\+7 fama/.test(lf));
+  t("e o item, que antes sumia justamente aqui", /item incomum/.test(lf));
+
+  /* NADA SABIDO É NADA MOSTRADO: o que não existe some, em vez de virar zero */
+  t("sem fama, não escreve fama", !/fama/.test(textoDaPaga({ recompensa: { moedas: 10, xp: 20 } })));
+  t("sem item, não escreve item", !/item/.test(textoDaPaga({ recompensa: { moedas: 10, xp: 20 } })));
+  t("sem recompensa nenhuma, linha vazia", textoDaPaga({}) === "" && textoDaPaga(null) === "");
+  t("e recompensa vazia também não vira ruído", textoDaPaga({ recompensa: { moedas: 0, xp: 0 } }) === "");
+}
 console.log(`\nmissões v9.36: ${ok} passaram, ${fail} falharam`);
 process.exit(fail ? 1 : 0);
