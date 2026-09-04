@@ -18755,7 +18755,16 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 acima do chão. É o que separa "o texto que o jogo escreve" de
                 "a moldura em que o jogo acontece" — e é o que dá ao selo do
                 Mestre um lugar para existir. */}
-            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll tv-espaco-abas flex-1 overflow-y-auto mx-4 md:mx-8 mt-3 md:mt-4 px-5 md:px-8 py-6 space-y-4 rounded-2xl"
+            {/* v9.196: `overflow-x-hidden` é TRAVA, e não conserto. A CSS diz
+                que, quando um eixo não é `visible`, o outro deixa de ser: um
+                `overflow-y-auto` sozinho entrega um rolamento lateral de
+                brinde, e qualquer filho largo demais faz o painel do Mestre
+                deslizar para os lados no telefone. O conserto é o filho caber
+                (a fileira acima quebra a linha); isto aqui garante que o
+                próximo filho largo demais apareça como texto cortado — que se
+                vê e se conserta — em vez de virar deriva lateral, que ninguém
+                associa à causa. */}
+            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll tv-espaco-abas flex-1 overflow-y-auto overflow-x-hidden mx-4 md:mx-8 mt-3 md:mt-4 px-5 md:px-8 py-6 space-y-4 rounded-2xl"
               style={{ background: "rgba(23,19,34,0.48)", border: `1px solid ${T.line}` }} >
               <VinhetaDaCena bioma={biomaDaqui()} />
               <div className="flex items-center gap-2">
@@ -19252,7 +19261,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                    tropeçou nisso duas vezes.) */
                 return (
               <button onClick={() => setAba("gestao")} title="Abrir ficha"
-                className={`flex items-center gap-4 rounded-xl px-2 py-1.5 shrink-0 ${feridaRecente ? "tv-dano" : grave ? "tv-agonia" : ""}`}
+                className={`flex items-center gap-4 rounded-xl px-2 py-1.5 min-w-0 w-full md:w-auto ${feridaRecente ? "tv-dano" : grave ? "tv-agonia" : ""}`}
                 style={{ background: T.panel, border: `1px solid ${feridaRecente || grave ? T.danger : T.line}` }}>
                 <div className="relative shrink-0">
                   <Retrato semente={sementeDe(personagem)} ente={personagem} semCarta tamanho={44} anel={grave ? T.danger : T.amber} estado={estadoDe(personagem.vida, personagem.vidaMax)} />
@@ -19265,7 +19274,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   { rot: "PV (VIDA)", atual: personagem.vida, max: personagem.vidaMax, cor: grave ? T.danger : T.amber, leito: "rgba(232,163,61,0.13)" },
                   { rot: "PM (MANA)", atual: personagem.mana, max: personagem.manaMax, cor: T.violetSoft, leito: "rgba(176,165,236,0.13)" },
                 ].map((b) => (
-                  <div key={b.rot} className="flex flex-col gap-1 w-[110px] md:w-[140px]" title={`${b.rot}: ${b.atual}/${b.max}`}>
+                  /* v9.196: a barra ENCOLHE antes de estourar. 110px fixos por
+                     barra mais o retrato não cabem num telefone de 360, e os
+                     seis pixels que sobravam saíam pela direita — cortados pela
+                     trava do painel, que é o certo, mas cortados. Agora as duas
+                     dividem o que houver no telefone e voltam aos 140 fixos a
+                     partir do monitor, onde o peso visual da vida foi decidido
+                     na v9.160 e continua valendo. */
+                  <div key={b.rot} className="flex flex-col gap-1 flex-1 min-w-0 md:flex-none md:w-[140px]" title={`${b.rot}: ${b.atual}/${b.max}`}>
                     <div className="flex items-baseline justify-between">
                       <span className="tv-mono text-[9px] tracking-[0.9px]" style={{ color: T.ink }}>{b.rot}</span>
                       <span className="tv-mono text-[11px]" style={{ color: T.ink, fontWeight: 700 }}>{b.atual}/{b.max}</span>
@@ -19353,7 +19369,18 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             {(
             <div className="tv-espaco-abas px-4 md:px-8 shrink-0" style={{ paddingBottom: rolagem ? "6px" : "20px" }}>
               {/* LINHA 1 — ferramentas: rótulos sempre visíveis, sem roubar espaço da escrita */}
-              <div className="flex items-center gap-1.5 mb-2">
+              {/* ---------------- A FILEIRA QUEBRA A LINHA (v9.196) ----------------
+                  No telefone esta fileira pedia 370px e recebia 298: os quatro
+                  botões de modo mais o selo de heroísmo empurrado pela direita
+                  não cabem em 375. Sem `flex-wrap` ela transbordava, e o painel
+                  da narrativa inteiro passava a arrastar para os lados — porque
+                  `overflow-y-auto` faz o eixo X computar `auto` sozinho quando o
+                  outro não é `visible`. O jogador via o texto do Mestre deslizar
+                  de lado ao rolar.
+
+                  A fileira irmã, a do combate, já quebrava a linha desde sempre.
+                  Esta era a única que não. */}
+              <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                 <button onClick={() => { setAcoesAbertas((v) => !v); setHabAbertas(false); }} disabled={bloqueado} className="tv-mono text-[11px] rounded-full px-3 py-1.5"
                   style={{ background: acoesAbertas ? T.amber : "transparent", color: acoesAbertas ? T.onAccent : T.amberSoft, border: `1px solid ${T.amber}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
                   ⚔ Ações

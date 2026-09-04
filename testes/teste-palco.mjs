@@ -146,5 +146,36 @@ sec("5. A COSTURA — no topo, e sem inventar");
   t("e a força do véu vem da luz", /const veu = Math\.round\(10 \+ tom\.luz \* 26\)/.test(APP));
 }
 
+
+sec("O MEIO NÃO ANDA PARA OS LADOS (v9.196)");
+{
+  /* Queixa de quem jogou no telefone: o painel do Mestre — a narrativa, os
+     botões de modo e a caixa de texto — arrastava para os lados ao rolar.
+
+     A causa não era o rolamento: era um filho largo demais mais uma regra de
+     CSS pouco conhecida. Quando um eixo de `overflow` não é `visible`, o
+     outro deixa de ser também — então `overflow-y-auto` sozinho entrega um
+     rolamento lateral de brinde, e basta um filho estourar para o painel
+     inteiro derivar. */
+  t("o painel da narrativa tranca o eixo lateral", /tv-scroll tv-espaco-abas flex-1 overflow-y-auto overflow-x-hidden/.test(APP));
+
+  /* A FILEIRA DE MODO QUEBRA A LINHA. No telefone ela pedia 370px e recebia
+     298: quatro botões mais o selo de heroísmo empurrado pela direita não
+     cabem em 375. A fileira irmã, a do combate, já quebrava desde sempre —
+     esta era a única que não. */
+  const fileiras = APP.match(/className="flex items-center gap-1\.5 mb-2[^"]*"/g) || [];
+  t("as duas fileiras de modo existem", fileiras.length === 2);
+  t("e as DUAS quebram a linha", fileiras.every((f) => /flex-wrap/.test(f)));
+
+  /* A BARRA DO HERÓI ENCOLHE ANTES DE ESTOURAR. 110px fixos por barra mais o
+     retrato não cabem num telefone de 320, e os pixels que sobravam saíam
+     pela direita. No telefone ela toma a linha inteira e as duas barras
+     dividem o que houver; a partir do monitor voltam aos 140 fixos, que é o
+     peso visual decidido na v9.160. */
+  t("a barra do herói toma a linha no telefone", /px-2 py-1\.5 min-w-0 w-full md:w-auto/.test(APP));
+  t("e as barras dividem o espaço lá, e são fixas aqui", /flex flex-col gap-1 flex-1 min-w-0 md:flex-none md:w-\[140px\]/.test(APP));
+  /* o que NÃO pode voltar: largura fixa sem escape no telefone */
+  t("não sobrou barra de largura fixa sem escape", !/flex flex-col gap-1 w-\[110px\] md:w-\[140px\]/.test(APP));
+}
 console.log(`\npalco v9.157: ${bons} passaram, ${maus} falharam`);
 process.exit(maus ? 1 : 0);
