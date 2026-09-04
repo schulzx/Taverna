@@ -667,6 +667,22 @@ export function podeDelegar(g) {
   return G.membro && !G.emProva ? degrauDaCasa(G.posto).delegados : 0;
 }
 
+/* ---------------- O VEREDITO ANTES DO CLIQUE (v9.188) ----------------
+   Estas duas contas viviam DENTRO de `delegarNaCasa`, e por isso só
+   existiam depois de a pessoa já ter saído porta afora: o jogador escolhia
+   o trabalho sem saber quanto ele leva, e escolhia o membro sem saber a
+   chance dele. As duas saem de dados que a tela já tem na mão — o nível do
+   trabalho e o posto do membro —, então esconder era escolha, não limite.
+
+   É a mesma lei que o convite de companheiro e a diplomacia já seguem:
+   quem vai gastar uma pessoa por três dias tem direito de saber o preço
+   antes. `delegarNaCasa` passou a ler daqui, para que não existam duas
+   réguas dizendo números diferentes sobre a mesma coisa. */
+export const diasDoTrabalho = (trabalho) => 1 + Math.ceil((Number(trabalho && trabalho.nivel) || 1) / 3);
+
+export const chanceDoMembro = (membro, trabalho) =>
+  Math.max(15, Math.min(90, 45 + (Number(membro && membro.posto) || 0) * 12 - (Number(trabalho && trabalho.nivel) || 1) * 3));
+
 export function delegarNaCasa(g, trabalho, quem, { dia = 0 } = {}) {
   const G = garantirGuilda(g);
   const vagas = podeDelegar(G);
@@ -675,8 +691,9 @@ export function delegarNaCasa(g, trabalho, quem, { dia = 0 } = {}) {
   if (!m) return { ok: false, motivo: "essa pessoa não está na casa, ou já saiu em serviço" };
   const membros = G.membros.map((x) => (norm(x.nome) === norm(quem) ? { ...x, fora: true } : x));
   /* quanto melhor o posto dele, melhor a chance — e a dificuldade do
-     trabalho puxa para o outro lado */
-  const chance = Math.max(15, Math.min(90, 45 + m.posto * 12 - (Number(trabalho.nivel) || 1) * 3));
+     trabalho puxa para o outro lado. A conta mora acima, para que a tela
+     possa mostrá-la ANTES do clique sem virar uma segunda régua. */
+  const chance = chanceDoMembro(m, trabalho);
   return {
     ok: true,
     guilda: { ...G, membros },
@@ -684,7 +701,7 @@ export function delegarNaCasa(g, trabalho, quem, { dia = 0 } = {}) {
       id: `tarefa|${G.id}|${dia}|${norm(quem).slice(0, 12)}`,
       quem: m.nome, posto: m.posto,
       titulo: trabalho.titulo, paga: trabalho.paga, contribui: trabalho.contribui || 0,
-      dias: 1 + Math.ceil((Number(trabalho.nivel) || 1) / 3),
+      dias: diasDoTrabalho(trabalho),
       desde: dia, chance,
     },
   };

@@ -240,5 +240,50 @@ sec("11. LIGADA AO JOGO");
   t("o painel existe", /<PainelGuilda/.test(APP));
 }
 
+
+sec("O VEREDITO ANTES DO CLIQUE (v9.188)");
+{
+  /* Ao redesenhar `painel-guilda-v2` a partir do que o painel faz, apareceu
+     o buraco: prazo e chance eram calculados DENTRO de `delegarNaCasa`, e
+     por isso só existiam depois de a pessoa já ter saído porta afora. O
+     jogador escolhia o trabalho sem saber se perdia alguém por um dia ou
+     por quatro, e escolhia o membro sem saber a chance dele. As duas contas
+     saem de dados que a tela já tem — o nível do trabalho e o posto do
+     membro. Esconder era escolha, não limite. */
+  const { readFileSync } = await import("node:fs");
+  const semComentarios = (x) => x.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  const PAINEL = semComentarios(readFileSync("../src/painel-guilda.jsx", "utf8"));
+
+  t("o prazo tem nome próprio", typeof G.diasDoTrabalho === "function");
+  t("e a chance também", typeof G.chanceDoMembro === "function");
+  /* o prazo depende só do trabalho: 1 + teto(nível / 3) */
+  t("o mínimo são dois dias — ninguém volta no mesmo dia", G.diasDoTrabalho({ nivel: 1 }) === 2);
+  t("um de nível 3 leva 2", G.diasDoTrabalho({ nivel: 3 }) === 2);
+  t("um de nível 9 leva 4", G.diasDoTrabalho({ nivel: 9 }) === 4);
+  t("e lixo cai no mínimo em vez de quebrar", G.diasDoTrabalho(null) === 2 && G.diasDoTrabalho({}) === 2);
+  /* a chance sobe com o posto e desce com a dificuldade */
+  t("posto melhor, chance melhor", G.chanceDoMembro({ posto: 3 }, { nivel: 2 }) > G.chanceDoMembro({ posto: 1 }, { nivel: 2 }));
+  t("trabalho mais duro, chance pior", G.chanceDoMembro({ posto: 2 }, { nivel: 9 }) < G.chanceDoMembro({ posto: 2 }, { nivel: 1 }));
+  t("nunca passa de 90", G.chanceDoMembro({ posto: 20 }, { nivel: 1 }) === 90);
+  t("nem cai abaixo de 15", G.chanceDoMembro({ posto: 0 }, { nivel: 40 }) === 15);
+
+  /* UMA RÉGUA SÓ: delegar tem de dar exatamente o número que a tela mostrou */
+  const casa = G.garantirGuilda({
+    id: "c1", nome: "A Corda", oficio: "laminas", membro: true, posto: 3, sede: "Vila",
+    membros: [{ nome: "Doran", posto: 2, papel: "veterano", fora: false }],
+  });
+  const trabalho = { id: "t1", titulo: "Escoltar", nivel: 6, paga: 100, contribui: 8 };
+  const d = G.delegarNaCasa(casa, trabalho, "Doran", { dia: 4 });
+  t("delegar funciona", d.ok === true);
+  t("e o prazo da tarefa é o mesmo que a tela mostrou", d.tarefa.dias === G.diasDoTrabalho(trabalho));
+  t("e a chance também", d.tarefa.chance === G.chanceDoMembro({ posto: 2 }, trabalho));
+
+  /* E A TELA MOSTRA OS DOIS ANTES DO CLIQUE */
+  t("o cartão do trabalho diz o prazo", /\{diasDoTrabalho\(t\)\} dia\{diasDoTrabalho\(t\) > 1 \? "s" : ""\}/.test(PAINEL));
+  t("cada membro da lista diz a chance dele", /const ch = chanceDoMembro\(m, t\);/.test(PAINEL) && /\{ch\}%/.test(PAINEL));
+  t("e a chance vem colorida pela faixa", /ch >= 65 \? T\.ok : ch >= 40 \? T\.amberSoft : T\.danger/.test(PAINEL));
+  /* e o painel não recalcula nada por conta própria */
+  t("o painel não tem régua própria", !/45 \+ .*12 - .*3/.test(PAINEL) && !/1 \+ Math\.ceil/.test(PAINEL));
+}
 console.log(`\nguildas v9.133: ${bons} passaram, ${maus} falharam`);
 process.exit(maus ? 1 : 0);

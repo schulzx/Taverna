@@ -22,7 +22,7 @@ import { Botao } from "./ui.jsx";
 import {
   oficioPorId, leisDa, nomeDoPosto, degrauDaCasa, DEGRAUS, resumoDaGuilda,
   podeMandar, podeDelegar, faixaDeAtrito, NIVEL_PARA_FUNDAR, CUSTO_DE_FUNDAR,
-  FALTAS_ATE_EXPULSAR, OFICIOS,
+  FALTAS_ATE_EXPULSAR, OFICIOS, diasDoTrabalho, chanceDoMembro,
 } from "./guildas.js";
 
 const Barra = ({ frac, cor }) => (
@@ -238,7 +238,12 @@ export function PainelGuilda({
                   <span className="tv-display text-base leading-tight" style={{ color: T.ink }}>{t.icone} {t.titulo}</span>
                   <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>◉ {t.paga}</span>
                 </div>
-                <div className="tv-mono text-[9px] mt-1" style={{ color: T.violetSoft }}>nível {t.nivel} · rende {t.contribui} de contribuição</div>
+                {/* v9.188: O PRAZO ENTROU. Ele era calculado só na hora de
+                    delegar, e o jogador escolhia o trabalho sem saber se
+                    perdia a pessoa por um dia ou por quatro. */}
+                <div className="tv-mono text-[9px] mt-1" style={{ color: T.violetSoft }}>
+                  nível {t.nivel} · {diasDoTrabalho(t)} dia{diasDoTrabalho(t) > 1 ? "s" : ""} · rende {t.contribui} de contribuição
+                </div>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <button onClick={() => aoPegarTrabalho(t)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>✍ eu faço</button>
                   {vagas > 0 && (
@@ -250,13 +255,21 @@ export function PainelGuilda({
                 </div>
                 {delegando === t.id && (
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {(minha.membros || []).filter((m) => !m.fora).map((m) => (
-                      <button key={m.nome} onClick={() => { aoDelegar(t, m.nome); setDelegando(null); }}
-                        className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.ink }}
-                        title={`${nomeDoPosto(minha, m.posto)} — ${m.papel}`}>
-                        {m.nome} · {nomeDoPosto(minha, m.posto)}
-                      </button>
-                    ))}
+                    {/* v9.188: E A CHANCE DE CADA UM, ANTES DO CLIQUE. O posto
+                        do membro decide metade dela, e o jogador só descobria
+                        depois — com a pessoa já fora por três dias. Mesma lei
+                        do convite de companheiro e da diplomacia. */}
+                    {(minha.membros || []).filter((m) => !m.fora).map((m) => {
+                      const ch = chanceDoMembro(m, t);
+                      const cor = ch >= 65 ? T.ok : ch >= 40 ? T.amberSoft : T.danger;
+                      return (
+                        <button key={m.nome} onClick={() => { aoDelegar(t, m.nome); setDelegando(null); }}
+                          className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${cor}`, color: T.ink }}
+                          title={`${nomeDoPosto(minha, m.posto)} — ${m.papel} · ${ch}% de dar certo neste trabalho`}>
+                          {m.nome} · {nomeDoPosto(minha, m.posto)} <span style={{ color: cor }}>{ch}%</span>
+                        </button>
+                      );
+                    })}
                     {(minha.membros || []).every((m) => m.fora) && <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>todos já estão fora em serviço</span>}
                   </div>
                 )}
