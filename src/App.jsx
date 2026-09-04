@@ -116,7 +116,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, LinhaDoCartao, duasColunas } from "./ui.jsx";
+import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, LinhaDoCartao, duasColunas } from "./ui.jsx";
 import heroTaverna from "./assets/taverna-hero.png";
 import marcaTaverna from "./assets/taverna-marca.jpg";
 import { CartaDeTaro, CartaVerso } from "./carta-taro.jsx";
@@ -3445,7 +3445,43 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
   );
 }
 
-function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoEntrar, aoCriarMundo, aoMontarFicha, aoSair, temMundo, tipoDoCanal, falhaDoCanal = "", lendoMundo = false }) {
+/* ============================================================
+   A SALA, NA TELA (v9.177) — redesenhada em `sala-multiplayer-v2`
+
+   Uma tela só para os dois estados de espera, porque eles são o mesmo
+   momento visto dos dois lados: o anfitrião esperando alguém entrar, e o
+   convidado esperando o mundo ficar pronto. Ela não decide nada — mostra
+   o código, quem já sentou e qual é o próximo passo de quem está olhando.
+
+   A REGRA DA TELA: nunca prometer o que não se pode saber. Não há como
+   distinguir "a sala não existe" de "o anfitrião ainda não abriu", e por
+   isso a tela não afirma nenhuma das duas — diz o que fazer.
+
+   ---------------- O QUE O DESENHO PEDIA E NÃO ENTROU ----------------
+
+   Este foi o desenho mais distante do jogo até aqui, e vale escrever o
+   porquê de cada corte — todos são a mesma regra: não desenhar o que não
+   existe, porque uma tela que promete vira defeito no primeiro clique.
+
+   QUATRO CADEIRAS, com "2 / 4 JOGADORES". A mesa é de DOIS: `sala.js`
+   tem dois lugares, o turno sai quando os DOIS escrevem, e a ordem fixa
+   existe para o segundo responder ao primeiro. Desenhar duas vagas
+   abertas seria convidar para uma festa que não há.
+
+   UM CHAT DE GRUPO, com histórico e campo de escrita. O canal da sala
+   carrega o aperto de mão do mundo e da ficha e as ações do turno — não
+   há conversa livre. Implementar a caixa seria implementar a metade que
+   se vê de um recurso que não existe.
+
+   DIFICULDADE E DURAÇÃO ESTIMADA. O jogo não tem dificuldade de sessão
+   nem estima duração. No lugar delas, o painel mostra o que a sessão
+   REALMENTE tem: o gênero, a forma do mundo, o arco e a voz.
+
+   "CONEXÃO INSTANTÂNEA ATIVA", em verde e sem condição. É exatamente o
+   que esta tela não pode dizer: o canal pode estar mudo, pode ser só
+   local, e o rodapé continua dizendo qual dos três é.
+   ============================================================ */
+function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoEntrar, aoCriarMundo, aoMontarFicha, aoSair, temMundo, tipoDoCanal, falhaDoCanal = "", lendoMundo = false, mundo = null, nomeCampanha = "" }) {
   const m = sala || {};
   const lugares = m.lugares || [];
   const meuAssento = lugares.findIndex((l) => l && l.id === eu);
@@ -3456,107 +3492,203 @@ function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoE
   const todasAsFichas = cheia && lugares.every((l) => l && l.ficha);
   const semCodigo = !m.codigo;
   const campo = { background: T.panel, border: `1px solid ${T.line}`, color: T.ink };
-  return (
-    <div className="tv-fade max-w-lg mx-auto w-full px-6 py-10">
-      <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.violetSoft }}>Mesa de dois</div>
-      <h1 className="tv-display text-4xl mb-4" style={{ color: T.ink }}>{souAnfitriao ? "A sua sala está aberta" : semCodigo ? "Entrar numa sala" : "Na sala"}</h1>
+  const [copiado, setCopiado] = React.useState(false);
 
-      {semCodigo ? (
-        <>
-          <p className="tv-body mb-4" style={{ color: T.inkDim }}>Digite o código que o seu amigo passou. São seis caracteres.</p>
-          <div className="flex gap-2 mb-2">
-            <input value={codigoDigitado} onChange={(e) => aoDigitar(e.target.value)} onKeyDown={(e) => e.key === "Enter" && aoEntrar(codigoDigitado)}
-              placeholder="ABC123" maxLength={12}
-              className="flex-1 rounded-xl p-4 tv-mono text-lg tracking-[0.3em] text-center outline-none uppercase" style={campo} />
-            <button onClick={() => aoEntrar(codigoDigitado)} className="rounded-xl px-5 tv-mono text-[11px]" style={{ background: T.violet, color: T.onAccent, fontWeight: 600 }}>entrar</button>
+  /* ---- quem entra com código: uma tela curta, e ela basta ---- */
+  if (semCodigo) {
+    return (
+      <div className="tv-fade max-w-lg mx-auto w-full px-6 py-16 flex flex-col gap-5">
+        <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.violetSoft }}>Mesa de dois</div>
+        <h1 className="tv-display text-[48px] leading-[1.05]" style={{ color: T.amberSoft }}>Entrar numa sala</h1>
+        <p className="tv-body text-sm leading-[1.65]" style={{ color: T.ink }}>Digite o código que a outra pessoa passou. São seis caracteres.</p>
+        <div className="flex gap-3">
+          <input value={codigoDigitado} onChange={(e) => aoDigitar(e.target.value)} onKeyDown={(e) => e.key === "Enter" && aoEntrar(codigoDigitado)}
+            placeholder="ABC123" maxLength={12}
+            className="flex-1 min-w-0 rounded-lg px-4 py-3.5 tv-mono text-lg tracking-[0.3em] text-center outline-none uppercase" style={campo} />
+          <button onClick={() => aoEntrar(codigoDigitado)} className="rounded-lg px-6 tv-mono text-[9px] tracking-[0.9px]" style={{ background: T.violetSoft, color: T.bg }}>ENTRAR</button>
+        </div>
+        {erro && <div className="tv-body text-xs" style={{ color: T.amberSoft }}>{erro}</div>}
+        <button onClick={aoSair} className="self-start tv-mono text-[10px] underline" style={{ color: T.inkDim }}>voltar ao menu</button>
+      </div>
+    );
+  }
+
+  const acaoPrimaria = souAnfitriao && !temMundo
+    ? { rotulo: "CRIAR O MUNDO", ao: aoCriarMundo }
+    : temMundo && !lendoMundo && meuAssento >= 0 && !(lugares[meuAssento] || {}).ficha
+      ? { rotulo: "MONTAR O PERSONAGEM", ao: aoMontarFicha }
+      : null;
+
+  /* a linha que diz o que fazer agora, do ponto de vista de quem olha */
+  const oQueFazer = souAnfitriao
+    ? (!cheia ? "Esperando a outra pessoa entrar com o código."
+      : !temMundo ? "Os dois sentaram. Crie o mundo — ele vale para a mesa inteira."
+        : lendoMundo ? "O mundo está sendo lido: é isso que dá nome às raças, aos ofícios e aos lugares daqui."
+          : meuAssento >= 0 && !(lugares[meuAssento] || {}).ficha ? "Agora monte o seu personagem."
+            : !todasAsFichas ? "A sua ficha está pronta. Esperando a do outro jogador."
+              : "As duas fichas estão prontas — abrindo a aventura…")
+    : (meuAssento < 0 ? "Sentando à mesa…"
+      : !temMundo ? "O anfitrião está criando o mundo."
+        : lendoMundo ? "O mundo está sendo lido — falta pouco."
+          : !(lugares[meuAssento] || {}).ficha ? "O mundo ficou pronto. Monte o seu personagem."
+            : !todasAsFichas ? "A sua ficha foi enviada. O anfitrião abre a aventura quando a dele estiver pronta."
+              : "As duas fichas estão prontas — o primeiro turno chega em alguns segundos.");
+
+  const canal = tipoDoCanal === "rede"
+    ? { cor: T.ok, marca: "● SALA NA INTERNET", diz: "As duas janelas podem estar em máquinas diferentes." }
+    : tipoDoCanal === "mudo"
+      ? { cor: T.danger, marca: "● SEM PONTO DE ENCONTRO", diz: "O canal não respondeu — esta sala não liga ninguém agora." }
+      : { cor: T.amberSoft, marca: "● SÓ NESTA MÁQUINA", diz: `O ponto de encontro na internet não respondeu${falhaDoCanal ? ` (${falhaDoCanal})` : ""} — por enquanto a sala só liga janelas deste computador.` };
+
+  /* função que DEVOLVE JSX, e não componente: componente definido dentro
+     do render é tipo novo a cada volta, e o React desmonta e remonta a
+     subárvore inteira — aqui isso faria o retrato piscar a cada tique da
+     sala. Chamada como `{cadeira(...)}`, não há remontagem. */
+  const cadeira = (lugar, i) => {
+    const sou = lugar && lugar.id === eu;
+    const pronta = !!(lugar && lugar.ficha);
+    return (
+      <div key={i} className="flex-1 min-w-0 flex items-center gap-4 p-4 rounded-[14px]"
+        style={{
+          background: lugar ? T.panel : "rgba(23,19,34,0.31)",
+          border: `${pronta ? 1.5 : 1}px ${lugar ? "solid" : "dashed"} ${pronta ? T.ok : T.line}`,
+        }}>
+        <div className="shrink-0 w-12 h-12 rounded-full flex items-center justify-center overflow-hidden" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
+          {/* o retrato é GERADO, como em toda a casa: a mesma pessoa tem a
+              mesma cara na sala, no grupo e na carta */}
+          {pronta
+            ? <Retrato semente={sementeDe(lugar.ficha)} ente={lugar.ficha} semCarta tamanho={46} anel={sou ? T.amber : T.line} />
+            : <IconeMaisGente tamanho={18} />}
+        </div>
+        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+          <div className="tv-display text-xl leading-[1.25] truncate" style={{ color: lugar ? T.ink : T.inkDim }}>
+            {pronta ? lugar.ficha.nome : lugar ? (sou ? "Você" : "O outro jogador") : "Cadeira vazia"}
           </div>
-        </>
-      ) : (
-        <div className="rounded-2xl p-4 mb-4" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
-          <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>Código da sala</div>
-          <div className="tv-display text-4xl tracking-[0.25em]" style={{ color: T.amberSoft }}>{m.codigo}</div>
-          {souAnfitriao && <div className="tv-body text-xs mt-2" style={{ color: T.inkDim }}>Passe estes seis caracteres para quem vai jogar com você.</div>}
+          <div className="tv-body text-xs leading-[1.55]" style={{ color: T.inkDim, opacity: lugar ? 1 : 0.6 }}>
+            {/* SENTADO NÃO É MONTANDO: antes de o mundo existir ninguém pode
+                montar ficha nenhuma, e dizer que está montando seria a tela
+                inventando um trabalho que ainda não começou */}
+            {pronta ? `${lugar.ficha.classe || ""}${lugar.ficha.nivel ? ` · Nível ${lugar.ficha.nivel}` : ""}` || "ficha enviada"
+              : lugar ? (temMundo ? (lendoMundo ? "esperando a leitura do mundo" : "montando a ficha…") : "sentado, à espera do mundo")
+                : `esperando quem tem o código`}
+          </div>
         </div>
-      )}
+        {pronta && (
+          <span className="shrink-0 flex items-center gap-1 rounded-full px-2.5 py-1.5" style={{ background: "rgba(123,201,143,0.10)" }}>
+            <IconeCheck tamanho={10} />
+            <span className="tv-mono text-[9px] tracking-[0.9px]" style={{ color: T.ok }}>PRONTO</span>
+          </span>
+        )}
+        {sou && !pronta && <span className="shrink-0 tv-mono text-[9px]" style={{ color: T.amberSoft }}>VOCÊ</span>}
+      </div>
+    );
+  };
 
-      {!semCodigo && (
-        <div className="space-y-2 mb-4">
-          {[0, 1].map((i) => {
-            const l = lugares[i];
-            const sou = l && l.id === eu;
-            return (
-              <div key={i} className="rounded-xl px-4 py-3 flex items-center justify-between gap-2"
-                style={{ background: T.panelSoft, border: `1px solid ${l ? (sou ? T.amber : T.violet) : T.line}`, opacity: l ? 1 : 0.5 }}>
-                <span className="tv-body text-sm" style={{ color: l ? T.ink : T.inkDim }}>
-                  {l ? `${i + 1}. ${l.ficha ? l.ficha.nome : (sou ? "você" : "o outro jogador")}` : `${i + 1}. cadeira vazia`}
-                  {/* a marca só entra quando o rótulo é o NOME do personagem:
-                      antes dela existir ficha, "você · você" era a mesma
-                      palavra duas vezes na mesma linha */}
-                  {sou && l && l.ficha ? <span className="tv-mono text-[9px]" style={{ color: T.amberSoft }}> · você</span> : null}
-                </span>
-                <span className="tv-mono text-[9px] shrink-0" style={{ color: l && l.ficha ? T.ok : T.inkDim }}>
-                  {!l ? "esperando" : l.ficha ? "✓ ficha pronta" : "montando a ficha…"}
-                </span>
+  const linhaDaSessao = (rotulo, valor) => (
+    <div key={rotulo} className="flex items-start justify-between gap-4 w-full">
+      <span className="tv-body text-xs shrink-0" style={{ color: T.inkDim }}>{rotulo}</span>
+      <span className="tv-body text-sm text-right" style={{ color: T.ink }}>{valor}</span>
+    </div>
+  );
+
+  return (
+    <div className="tv-fade w-full flex flex-col min-h-full">
+      {/* ---- o banner atrás do cabeçalho ---- */}
+      <div className="relative w-full shrink-0" style={{ borderBottom: `1px solid ${T.line}` }}>
+        <img src={heroTaverna} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0" style={{ background: `linear-gradient(184deg, rgba(14,12,21,0) 28%, rgba(14,12,21,0.8) 68%, rgba(14,12,21,0.96) 86%)` }} />
+        <div className="relative flex items-center justify-between gap-4 px-6 md:px-10 py-6 flex-wrap">
+          <div className="flex items-center gap-4 min-w-0">
+            <button onClick={aoSair} title="Sair da sala" className="shrink-0 rounded-lg p-2.5" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
+              <IconeChevronEsq tamanho={16} />
+            </button>
+            <div className="min-w-0">
+              <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.amberSoft }}>Mesa de dois</div>
+              <div className="tv-display text-xl leading-[1.25] truncate" style={{ color: T.ink }}>
+                {souAnfitriao ? "A sua sala está aberta" : "Na sala"}
               </div>
-            );
-          })}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.inkDim }}>Código da sala:</span>
+            <span className="tv-mono text-[10px] tracking-[1px] rounded-lg px-4 py-2" style={{ background: T.panel, border: `1.5px solid ${T.amber}`, color: T.amberSoft, boxShadow: "0 0 6px rgba(232,163,61,0.13)" }}>
+              {m.codigo}
+            </span>
+          </div>
         </div>
-      )}
-
-      {erro ? <div className="tv-body text-xs mb-3" style={{ color: T.danger }}>⚠ {erro}</div> : null}
-
-      {/* A LEITURA DO MUNDO leva quase um minuto, e é ela que dá a este lugar
-          os nomes dele — raça, ofício, o que é um covil aqui. Ela não trava
-          nada: quem quiser montar a ficha antes, monta, e os nomes chegam
-          depois. Mas quem não sabe que ela existe fica olhando uma tela
-          parada sem entender o que está esperando. */}
-      {!semCodigo && lendoMundo && (
-        <div className="rounded-xl px-4 py-3 mb-4 tv-body text-sm" style={{ background: T.panelSoft, border: `1px solid ${T.violet}`, color: T.violetSoft }}>
-          📖 Lendo o mundo… — o sistema está traduzindo a descrição em gente, lugares e nomes próprios daqui. É isso que dá nome às raças e aos ofícios, e por isso a ficha espera. Costuma levar de meio minuto a dois.
-        </div>
-      )}
-
-      {/* O PRÓXIMO PASSO, e só ele: uma tela de espera que lista tudo o que
-          pode acontecer é uma tela que não ajuda a esperar. */}
-      {!semCodigo && (
-        <div className="rounded-xl px-4 py-3 mb-4 tv-body text-sm" style={{ background: T.panelSoft, border: `1px solid ${T.line}`, color: T.inkDim }}>
-          {souAnfitriao && !cheia && "Esperando o segundo jogador entrar com o código. Você já pode criar o mundo enquanto isso — o sistema aproveita o tempo para ler a sua descrição."}
-          {souAnfitriao && cheia && !temMundo && !lendoMundo && "Os dois estão na sala. Crie o mundo: quando ele ficar pronto, os dois montam o personagem ao mesmo tempo."}
-          {souAnfitriao && cheia && temMundo && !lendoMundo && meuAssento >= 0 && !(lugares[meuAssento] || {}).ficha && "Agora monte o seu personagem."}
-          {souAnfitriao && cheia && temMundo && meuAssento >= 0 && (lugares[meuAssento] || {}).ficha && !todasAsFichas && "A sua ficha está pronta. Esperando a do outro jogador para a aventura começar."}
-          {souAnfitriao && todasAsFichas && "As duas fichas estão prontas — abrindo a aventura…"}
-          {!souAnfitriao && meuAssento < 0 && "Batendo na porta… Se não abrir em alguns segundos, confira o código e se o anfitrião já criou a sala."}
-          {!souAnfitriao && meuAssento >= 0 && !temMundo && !lendoMundo && "Você entrou. O anfitrião está criando o mundo — assim que ele terminar, você monta o seu personagem."}
-          {!souAnfitriao && meuAssento >= 0 && temMundo && !lendoMundo && !(lugares[meuAssento] || {}).ficha && "O mundo ficou pronto. Monte o seu personagem."}
-          {!souAnfitriao && meuAssento >= 0 && temMundo && (lugares[meuAssento] || {}).ficha && !todasAsFichas && "A sua ficha foi enviada. O anfitrião abre a aventura assim que estiver tudo pronto."}
-          {!souAnfitriao && todasAsFichas && "As duas fichas estão prontas — o anfitrião está abrindo a aventura. O primeiro turno chega aqui em alguns segundos."}
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-2">
-        {/* DOIS BOTÕES, DUAS AÇÕES. Antes era um só, e ele adivinhava para
-            onde ir olhando se já havia mundo — o que fazia a decisão depender
-            de um estado que sobrevivia da sala anterior. Botão que infere a
-            intenção erra quando o estado mente. */}
-        {souAnfitriao && !temMundo && <Botao primario onClick={aoCriarMundo}>Criar o mundo →</Botao>}
-        {/* durante a leitura o botão some dos DOIS lados. Não é capricho: o
-            léxico é o que dá nome à raça e ao ofício, e montar a ficha antes
-            dele é escolher entre "Humano, Elfo, Anão" num mundo que não tem
-            nenhum dos três. A espera sempre termina — quando a leitura falha,
-            o anfitrião avisa a sala do mesmo jeito. */}
-        {temMundo && !lendoMundo && meuAssento >= 0 && !(lugares[meuAssento] || {}).ficha && <Botao primario onClick={aoMontarFicha}>Montar o personagem →</Botao>}
-        <Botao onClick={aoSair}>Sair da sala</Botao>
       </div>
 
-      {/* O QUE ESTE FIO ALCANÇA. Está na tela, e não só no código, porque é a
-          diferença entre uma sala que não funcionou e uma sala que nunca
-          prometeu funcionar dali. */}
-      <div className="tv-mono text-[9px] mt-6 leading-relaxed" style={{ color: tipoDoCanal === "rede" ? T.ok : T.inkDim }}>
-        {tipoDoCanal === "mudo"
-          ? "⚠ Este navegador não tem canal disponível — a sala não vai conversar."
-          : tipoDoCanal === "rede"
-            ? "🌐 A sala está no ar: os dois podem jogar de aparelhos diferentes. A sala se guarda sozinha por um dia — fechem tudo e voltem com o mesmo código."
-            : `Por enquanto esta sala só liga janelas DESTA máquina. O ponto de encontro na internet não respondeu${falhaDoCanal ? ` (${falhaDoCanal})` : ""} — vale conferir a conexão e o deploy.`}
+      <div className="flex-1 flex flex-col lg:flex-row gap-7 px-6 md:px-10 pt-7 pb-10 w-full">
+        {/* ---- as duas cadeiras ---- */}
+        <div className="flex-1 min-w-0 flex flex-col gap-6">
+          <div className="flex items-center justify-between gap-4">
+            <span className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>Quem senta à mesa</span>
+            <span className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.inkDim }}>
+              {lugares.filter(Boolean).length} / 2 jogadores
+            </span>
+          </div>
+          <div className="flex flex-col md:flex-row gap-4">
+            {[0, 1].map((i) => cadeira(lugares[i] || null, i))}
+          </div>
+          {erro && <div className="tv-body text-xs" style={{ color: T.amberSoft }}>{erro}</div>}
+        </div>
+
+        {/* ---- o que a sessão é, e o que fazer agora ---- */}
+        <div className="w-full lg:w-[400px] shrink-0 flex flex-col gap-6">
+          <div className="flex flex-col gap-4 p-5 rounded-2xl" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
+            <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.amber }}>A sessão</div>
+            {temMundo ? (
+              <div className="flex flex-col gap-3">
+                {nomeCampanha && linhaDaSessao("Campanha", nomeCampanha)}
+                {mundo && mundo.genero && linhaDaSessao("Gênero", mundo.genero)}
+                {mundo && mundo.molde && linhaDaSessao("Forma do mundo", moldePorId(mundo.molde).nome)}
+                {mundo && mundo.estrutura && linhaDaSessao("Arco", estruturaPorId(mundo.estrutura).nome)}
+                {mundo && mundo.voz && linhaDaSessao("Voz do Mestre", vozPorId(mundo.voz).nome)}
+              </div>
+            ) : (
+              <div className="tv-body text-xs leading-[1.55]" style={{ color: T.inkDim }}>
+                O mundo ainda não foi criado. Quando o anfitrião criar, ele aparece aqui — e vale para a mesa inteira.
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-3 p-5 rounded-2xl" style={{ background: T.panel, border: `1px solid ${T.violet}` }}>
+            <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.violetSoft }}>O que acontece agora</div>
+            <div className="tv-body text-sm leading-[1.65]" style={{ color: T.ink }}>{oQueFazer}</div>
+            {lendoMundo && (
+              <div className="tv-mono text-[9px] tracking-[0.9px] rounded-md px-2 py-1.5" style={{ background: "rgba(232,163,61,0.04)", border: "1px solid rgba(232,163,61,0.13)", color: T.amber }}>
+                📖 LENDO O MUNDO…
+              </div>
+            )}
+            <div className="tv-body text-xs leading-[1.55]" style={{ color: T.inkDim }}>
+              O turno só sai quando os dois escreverem — e até lá qualquer um reescreve a sua ação.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ---- o rodapé: o estado do canal, e o que dá para fazer ---- */}
+      <div className="shrink-0 flex flex-col md:flex-row items-start md:items-center gap-4 px-6 md:px-10 pt-5 pb-6 w-full" style={{ borderTop: `1px solid ${T.line}` }}>
+        <div className="flex-1 min-w-0 flex flex-col gap-1">
+          {/* NUNCA "conexão ativa" sem condição: o canal tem três estados, e
+              a tela diz qual deles é o de agora */}
+          <span className="tv-mono text-[9px] tracking-[0.9px]" style={{ color: canal.cor }}>{canal.marca}</span>
+          <span className="tv-body text-xs leading-[1.55]" style={{ color: T.inkDim }}>{canal.diz}</span>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <button onClick={() => { try { navigator.clipboard.writeText(m.codigo); setCopiado(true); setTimeout(() => setCopiado(false), 1800); } catch { /* sem área de transferência: o código está na tela */ } }}
+            className="flex items-center gap-2 rounded-[10px] px-6 py-3.5" style={{ background: T.panel, border: `1.5px solid ${T.violetSoft}` }}>
+            <IconePartilhar tamanho={16} />
+            <span className="tv-mono text-[9px] tracking-[0.9px]" style={{ color: T.violetSoft }}>{copiado ? "CÓDIGO COPIADO" : "COPIAR O CÓDIGO"}</span>
+          </button>
+          {acaoPrimaria && (
+            <button onClick={acaoPrimaria.ao} className="flex items-center gap-2 rounded-[10px] px-7 py-3.5"
+              style={{ background: T.amber, boxShadow: "0 4px 8px rgba(232,163,61,0.25)" }}>
+              <IconePlay tamanho={16} />
+              <span className="tv-mono text-[9px] tracking-[0.9px]" style={{ color: T.bg }}>{acaoPrimaria.rotulo}</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -18098,7 +18230,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         temMundo={!!(mundo && mundo.genero && nomeCampanha)}
         tipoDoCanal={canalNaTela.tipo} falhaDoCanal={canalNaTela.falha}
         aoCriarMundo={() => setFase("mundo")} aoMontarFicha={() => setFase("personagem")}
-        lendoMundo={lendoMundo}
+        lendoMundo={lendoMundo} mundo={mundo} nomeCampanha={nomeCampanha}
         aoSair={() => { largarASala(); setFase("menu"); }} /></div>}
       {fase === "mundo" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaMundo concluir={(m, nome) => { setMundo(m); mundoRef.current = m; setNomeCampanha(nome); setFase(salaRef.current ? "sala" : "personagem"); lerOMundo(m); if (salaRef.current) setTimeout(() => publicarSala(), 60); }} /></div>}
       {fase === "personagem" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaPersonagem mundo={mundo} concluir={(pers) => { if (!salaRef.current) return iniciar(pers); const nova = sentarMinhaFicha(pers); if (souAnfitriaoRef.current) { if (todosProntos(nova)) iniciar(pers); else { setFase("sala"); } } }} lendoMundo={lendoMundo} mundoLido={!!(mundo && mundo.lexico && mundo.lexico.gerado)} /></div>}

@@ -263,8 +263,12 @@ sec("10. os dois defeitos da primeira sala de verdade (v9.122)");
   /* E A TELA NÃO PODE MENTIR ENQUANTO ISSO. Com as duas fichas marcadas como
      prontas logo acima, a frase dizia "esperando a do outro jogador". */
   t("a tela sabe quando não falta ninguém", /const todasAsFichas = cheia && lugares\.every\(\(l\) => l && l\.ficha\);/.test(APP));
-  t("e para de dizer que espera quem já chegou", /\(lugares\[meuAssento\] \|\| \{\}\)\.ficha && !todasAsFichas/.test(APP));
-  t("o convidado também recebe uma frase que corresponde", /o anfitrião está abrindo a aventura/.test(APP));
+  /* v9.177 (`sala-multiplayer-v2`): a tela foi redesenhada e as duas frases
+     mudaram de forma. A régua deixou de casar a EXPRESSÃO antiga e passou a
+     casar a LEI: a frase de espera só existe atrás de `!todasAsFichas`, e o
+     convidado continua tendo a sua versão da mesma linha. */
+  t("e para de dizer que espera quem já chegou", /!todasAsFichas \? "A sua ficha está pronta\. Esperando a do outro jogador\."/.test(APP));
+  t("o convidado também recebe uma frase que corresponde", /O anfitrião abre a aventura quando a dele estiver pronta/.test(APP));
 
   /* O LEITOR DO CANAL NÃO PODE ENVELHECER. Ele fica aberto a sessão inteira e
      guardava a função de UM render; enquanto ela só mexia em refs, ninguém
@@ -300,7 +304,8 @@ sec("12. o convidado espera a leitura do mundo (v9.123)");
      "Humano, Elfo, Anão" num mundo de caçadores de espíritos. */
   t("a sala publicada conta se o mundo está sendo lido", /lendo: !!lexicoLendoRef\.current/.test(APP));
   t("e o convidado só monta a ficha quando a leitura acaba", /if \(r\.mundo && !r\.lendo && faseRef\.current === "sala"/.test(APP));
-  t("a tela da sala mostra a leitura acontecendo", /📖 Lendo o mundo…/.test(APP));
+  /* v9.177: o mesmo selo, agora em versalete no painel "o que acontece agora" */
+  t("a tela da sala mostra a leitura acontecendo", /📖 LENDO O MUNDO…/.test(APP));
   /* uma espera que não termina seria pior do que o mundo genérico: quando a
      leitura FALHA, o anfitrião também avisa, e o convidado entra assim mesmo */
   t("desistir da leitura também avisa a sala", /desistiParaASala/.test(APP));

@@ -119,7 +119,11 @@ sec("6. TODO RETRATO ABRE A CARTA, E NENHUM PAINEL PRECISOU SABER DISSO");
      todo retrato conta como se fosse a pessoa, e a prova jura que estão
      todos ligados quando nenhum está */
   const entes = (APP.match(/<Retrato [^>]*\sente=\{/g) || []).length;
-  t(`o App entrega a pessoa em ${entes} retratos`, entes === 6);
+  /* v9.177: passaram a SETE. A sala redesenhada (`sala-multiplayer-v2`)
+     mostra o retrato de quem já sentou, e ele veste o traje da classe como
+     todos os outros — com `semCarta`, porque a cadeira inteira já é área de
+     toque. Sobe a conta, e a lei é a mesma. */
+  t(`o App entrega a pessoa em ${entes} retratos`, entes === 7);
   t("a ficha também", /<Retrato semente=\{sementeDe\(p\)\} ente=\{p\}/.test(semComentarios(CRU("painel-ficha.jsx"))));
   t("o inimigo abre carta de inimigo", (APP.match(/ente=\{e\} inimigo/g) || []).length === 2);
   /* e o retrato do cabeçalho NÃO: ele já é o botão que abre a ficha, e

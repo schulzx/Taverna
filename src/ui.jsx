@@ -426,6 +426,47 @@ export function duasColunas(lista, desenhar) {
   );
 }
 
+
+/* ---------------- OS ÍCONES DA SALA (v9.177) ---------------- */
+export function IconeChevronEsq({ tamanho = 16, cor = T.ink }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 16 16" fill="none">
+      <path d="M10 12L6 8L10 4" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconeCheck({ tamanho = 10, cor = T.ok }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 10 10" fill="none">
+      <path d="M8.333 2.5L3.75013 7.083L1.667 4.99982" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconeMaisGente({ tamanho = 18, cor = T.inkDim }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 18 18" fill="none">
+      <path d="M12.0002 15.75V14.25C12.0002 13.4544 11.6841 12.6913 11.1215 12.1287C10.5588 11.5661 9.79571 11.25 9 11.25H4.49964C3.70393 11.25 2.9408 11.5661 2.37815 12.1287C1.8155 12.6913 1.4994 13.4544 1.4994 14.25V15.75M14.2504 6V10.5M16.5006 8.25H12.0002M9.75006 5.25C9.75006 6.90685 8.40681 8.25 6.74982 8.25C5.09283 8.25 3.74958 6.90685 3.74958 5.25C3.74958 3.59315 5.09283 2.25 6.74982 2.25C8.40681 2.25 9.75006 3.59315 9.75006 5.25Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconePartilhar({ tamanho = 16, cor = T.violetSoft }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 16 16" fill="none">
+      <path d="M5.72656 9.00659L10.2799 11.6601M10.2732 4.33955L5.72656 6.9931M14 3.33296C14 4.43762 13.1046 5.33312 12 5.33312C10.8954 5.33312 10 4.43762 10 3.33296C10 2.2283 10.8954 1.3328 12 1.3328C13.1046 1.3328 14 2.2283 14 3.33296ZM6 8C6 9.10466 5.10457 10.0002 4 10.0002C2.89543 10.0002 2 9.10466 2 8C2 6.89534 2.89543 5.99984 4 5.99984C5.10457 5.99984 6 6.89534 6 8ZM14 12.667C14 13.7717 13.1046 14.6672 12 14.6672C10.8954 14.6672 10 13.7717 10 12.667C10 11.5624 10.8954 10.6669 12 10.6669C13.1046 10.6669 14 11.5624 14 12.667Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconePlay({ tamanho = 16, cor = T.bg }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 16 16" fill="none">
+      <path d="M3.51208 2.66554C3.39457 2.8686 3.33273 3.09905 3.3328 3.33364V12.6664C3.33273 12.9009 3.39457 13.1314 3.51208 13.3345C3.62958 13.5375 3.7986 13.706 4.00205 13.8228C4.2055 13.9397 4.43619 14.0008 4.67082 14C4.90546 13.9992 5.13573 13.9365 5.33838 13.8183L13.3394 9.15192C13.541 9.03446 13.7083 8.86614 13.8245 8.66378C13.9407 8.46142 14.0018 8.2321 14.0016 7.99876C14.0014 7.76541 13.9399 7.53621 13.8234 7.33405C13.7068 7.13189 13.5392 6.96385 13.3374 6.84674L5.33838 2.18172C5.13573 2.06348 4.90546 2.0008 4.67082 2.00001C4.43619 1.99921 4.2055 2.06033 4.00205 2.17718C3.7986 2.29404 3.62958 2.46249 3.51208 2.66554Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
 export function BarraMini({ rotulo, atual, max, cor, corBaixa }) {
   const pct = Math.max(0, Math.min(100, max > 0 ? (atual / max) * 100 : 0));
   const baixa = pct <= 33;
