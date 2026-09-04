@@ -123,7 +123,10 @@ sec("6. TODO RETRATO ABRE A CARTA, E NENHUM PAINEL PRECISOU SABER DISSO");
      mostra o retrato de quem já sentou, e ele veste o traje da classe como
      todos os outros — com `semCarta`, porque a cadeira inteira já é área de
      toque. Sobe a conta, e a lei é a mesma. */
-  t(`o App entrega a pessoa em ${entes} retratos`, entes === 7);
+  /* v9.180: e OITO. A tela do fim (`momento-morte-legado-v2`) põe o retrato
+     do herói no anel do memorial, com `estado="grave"` — quem tombou tem a
+     mesma cara que teve a campanha inteira. */
+  t(`o App entrega a pessoa em ${entes} retratos`, entes === 8);
   t("a ficha também", /<Retrato semente=\{sementeDe\(p\)\} ente=\{p\}/.test(semComentarios(CRU("painel-ficha.jsx"))));
   t("o inimigo abre carta de inimigo", (APP.match(/ente=\{e\} inimigo/g) || []).length === 2);
   /* e o retrato do cabeçalho NÃO: ele já é o botão que abre a ficha, e

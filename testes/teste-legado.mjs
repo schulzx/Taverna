@@ -73,5 +73,37 @@ console.log("  " + rp.slice(0, 130));
 ok(/2 vez/.test(rp), "diz quantas voltas");
 ok(/sem transformar em tema/.test(rp), "e pede que apareça sem virar monólogo");
 
+
+/* ---------------- 7. A TELA DO FIM (v9.180) ----------------
+   Redesenhada em `momento-morte-legado-v2`. O desenho traz TRÊS colunas de
+   ação, e só duas existem: "Último Save — volte ao último ponto de descanso
+   com penalidades mínimas" não existe e não deve existir. A morte nesta casa
+   custa ouro e uma cicatriz que não sara, ou custa a ficha inteira; uma
+   terceira porta que desfaz o que aconteceu apagaria as outras duas, e com
+   elas o peso de tudo o que veio antes. Esta seção prende isso no lugar. */
+console.log("\n[7. A TELA DO FIM]");
+{
+  const { readFileSync } = await import("node:fs");
+  const semComentarios = (x) => x.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  const APP = semComentarios(readFileSync("../src/App.jsx", "utf8"));
+  ok(/function OverlayMorte\(/.test(APP), "a tela do fim existe");
+  /* AS DUAS PORTAS, E SÓ ELAS */
+  ok(/aoVoltar\(o\.id\)/.test(APP), "a porta de voltar chama a volta com a forma escolhida");
+  ok(/aoHerdar\(nome\)/.test(APP), "a porta do legado chama o herdeiro pelo nome digitado");
+  ok(!/[Úú]ltimo [Ss]ave/.test(APP) && !/penalidades m[íi]nimas/.test(APP),
+    "e não há terceira porta que desfaça a morte");
+  /* O PROCESSO, NÃO SÓ O VEREDITO (v9.42, e sobreviveu ao redesenho) */
+  ok(/os dados que decidiram/.test(APP), "os dados que decidiram continuam na tela");
+  ok(/1 natural — vale DUAS falhas/.test(APP), "com a regra do 1 natural escrita por extenso");
+  /* ONDE ELE CAIU: um memorial sem lugar é uma lápide em branco — e segue a
+     lei do palco, que manda sumir quando não se sabe */
+  ok(/const ondeCaiu = local && local\.titulo/.test(APP), "o memorial diz onde o herói caiu");
+  ok(/\{ondeCaiu && </.test(APP), "e a linha some quando não há cena");
+  ok(/local=\{cenaDoPalco\(\)\}/.test(APP), "lendo do mesmo palco que o cabeçalho da cena lê");
+  /* O CORPO DO HERDEIRO SAI DA TABELA: era `* 6` e `* 4` digitados à mão, a
+     mesma família de defeito que a v9.178 achou na tela do nível */
+  ok(/\(h\.nivel - 1\) \* PV_POR_NIVEL/.test(APP) && /\(h\.nivel - 1\) \* PM_POR_NIVEL/.test(APP),
+    "e o corpo do herdeiro é contado pela tabela, não por número solto");
+}
 console.log(falhas ? `\n${falhas} FALHA(S)` : "\nTudo passou");
 process.exit(falhas ? 1 : 0);

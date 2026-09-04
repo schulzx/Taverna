@@ -272,7 +272,25 @@ async function chamarMestre(system, historico) {
    o herdeiro está sempre disponível — se voltar fosse a única opção
    possível quando falta ouro, o jogador travaria a campanha por
    estar pobre, que é a pior forma de acabar uma história. */
-function OverlayMorte({ estado, nomeMorto, aoVoltar, aoHerdar }) {
+/* ---------------- O FIM, E O QUE VEM DEPOIS (v9.180) ----------------
+   Redesenhada em `momento-morte-legado-v2`: a faixa de cima, o cartão
+   memorial com o retrato no anel, e as colunas de ação embaixo.
+
+   O DESENHO TRAZ TRÊS COLUNAS, e só duas existem. "O Legado" é o herdeiro,
+   e ele está aqui. "Último Save — volte ao último ponto de descanso com
+   penalidades mínimas" NÃO EXISTE e não deve existir: a morte nesta casa
+   custa ouro e uma cicatriz que não sara, ou custa a ficha inteira. Uma
+   terceira porta que desfaz o que aconteceu apagaria as outras duas, e com
+   elas o peso de tudo o que veio antes. "Novo Herói do nível 1" também sai:
+   quem pega o fio começa no nível que a herança manda, e não do zero.
+
+   E O DESENHO NÃO SABE DO MELHOR PEDAÇO. Onde ele põe um epitáfio inventado,
+   esta tela põe OS DADOS QUE DECIDIRAM. Foi a lição da v9.42: quem tombava
+   com dois sucessos e uma falha na mão olhava para a tela sem entender — o
+   dado que decidiu tinha sido um 1 natural, que vale DUAS falhas, e isso só
+   estava escrito no chat, atrás da própria tela. Um desfecho que o jogador
+   não consegue reconstruir vira sorte. */
+function OverlayMorte({ estado, nomeMorto, aoVoltar, aoHerdar, local = null, personagem = null }) {
   const [nome, setNome] = useState("");
   const { formas, heranca: h } = estado;
   /* ---------------- O PROCESSO, NÃO SÓ O VEREDITO (v9.42) ----------------
@@ -284,76 +302,105 @@ function OverlayMorte({ estado, nomeMorto, aoVoltar, aoHerdar }) {
   const m = estado.morte || {};
   const rolagens = m.rolagens || [];
   const corDoDado = (t) => (t === "sucesso" ? T.ok : t === "falha2" ? T.danger : t === "falha" ? T.amberSoft : T.violetSoft);
+  /* ONDE ELE CAIU. O jogo sabe — `cenaDoPalco()` responde cidade, lugar,
+     masmorra ou estrada — e a tela do fim nunca dizia. Um memorial sem lugar
+     é uma lápide em branco. Segue a lei do palco: nada sabido é nada
+     mostrado, e por isso a linha some quando não há cena. */
+  const ondeCaiu = local && local.titulo ? [local.titulo, local.onde].filter(Boolean).join(" · ") : "";
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 overflow-y-auto" style={{ background: "rgba(6,4,10,0.94)", backdropFilter: "blur(6px)" }}>
-      <div className="tv-fade w-full max-w-lg my-auto">
-        <div className="text-center mb-4">
-          <div className="tv-display text-4xl mb-1" style={{ color: T.danger }}>{nomeMorto} tomba.</div>
-          <div className="tv-body text-sm" style={{ color: T.inkDim }}>A campanha continua. O que ela custa daqui em diante é escolha sua.</div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 overflow-y-auto overflow-x-hidden" style={{ background: "rgba(6,4,10,0.94)", backdropFilter: "blur(6px)" }}>
+      <div aria-hidden className="fixed pointer-events-none"
+        style={{ width: 650, height: 650, left: "50%", top: "50%", transform: "translate(-50%,-50%)", background: `radial-gradient(circle, ${T.danger}22 0%, ${T.danger}0C 40%, transparent 66%)` }} />
+      <div className="tv-fade relative w-full max-w-3xl my-auto flex flex-col gap-8 items-center">
+        <div className="flex flex-col gap-2 items-center text-center">
+          <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.danger }}>Narrativa interrompida</div>
+          <div className="tv-display text-5xl leading-[1.05]" style={{ color: T.ink }}>{nomeMorto} tomba.</div>
         </div>
 
-        {rolagens.length > 0 && (
-          <div className="rounded-2xl p-4 mb-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-            <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>☠ os dados que decidiram</div>
-            <div className="space-y-1 mb-2">
-              {rolagens.map((r, i) => (
-                <div key={i} className="flex items-baseline gap-2">
-                  <span className="tv-mono text-[10px] w-4 shrink-0" style={{ color: T.inkDim }}>{i + 1}º</span>
-                  <span className="tv-mono text-sm w-8 shrink-0 text-right" style={{ color: corDoDado(r.tipo), fontWeight: 700 }}>{r.rolo}</span>
-                  <span className="tv-body text-[12px]" style={{ color: r.tipo === "falha2" ? T.danger : T.inkDim }}>
-                    {r.tipo === "falha2" ? "1 natural — vale DUAS falhas" : r.tipo === "sucesso" ? "10 ou mais — resiste" : r.tipo === "revive" ? "20 natural — de volta à luta" : "abaixo de 10 — enfraquece"}
-                  </span>
-                </div>
-              ))}
+        {/* o cartão memorial: o retrato no anel, quem foi, onde caiu, e a
+            conta que o matou — que é o epitáfio verdadeiro desta casa */}
+        <div className="w-full rounded-2xl p-8 flex flex-col gap-5 items-center" style={{ background: T.panel, border: `1px solid ${T.line}`, maxWidth: 480 }}>
+          {personagem && (
+            <div className="rounded-full p-0.5" style={{ border: `1px solid ${T.line}` }}>
+              <Retrato semente={sementeDe(personagem)} ente={personagem} semCarta tamanho={80} anel={T.danger} estado="grave" />
             </div>
-            <div className="tv-mono text-[10px] pt-2" style={{ color: T.inkDim, borderTop: `1px solid ${T.line}` }}>
-              {m.sucessos || 0} sucesso{(m.sucessos || 0) === 1 ? "" : "s"} · <span style={{ color: T.danger }}>{m.falhas || 0} falha{(m.falhas || 0) === 1 ? "" : "s"}</span> — três falhas encerram, e o 1 natural conta por duas.
-            </div>
+          )}
+          <div className="flex flex-col gap-1.5 items-center text-center">
+            <div className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>{nomeMorto}</div>
+            {ondeCaiu && <div className="tv-mono text-[9px] uppercase tracking-[0.9px]" style={{ color: T.danger }}>Caiu em {ondeCaiu}</div>}
           </div>
-        )}
-
-        <div className="rounded-2xl p-4 mb-3" style={{ background: T.panel, border: `1px solid ${formas.possivel ? T.amber : T.line}` }}>
-          <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: formas.possivel ? T.amberSoft : T.inkDim }}>✨ Voltar</div>
-          {formas.possivel ? (
+          {rolagens.length > 0 && (
             <>
-              <div className="tv-body text-xs mb-3" style={{ color: T.inkDim }}>
-                Você volta com uma fração do PV e uma cicatriz permanente — dessas que não saram. A próxima volta custará bem mais cara.
-              </div>
-              <div className="flex flex-col gap-2">
-                {formas.opcoes.map((o) => (
-                  <button key={o.id} onClick={() => aoVoltar(o.id)} className="text-left rounded-xl px-3 py-2"
-                    style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="tv-body text-sm" style={{ color: T.ink }}>{o.rotulo}</span>
-                      <span className="tv-mono text-xs" style={{ color: T.amber }}>{o.custo}</span>
-                    </div>
-                    <div className="tv-body text-[11px] mt-0.5" style={{ color: T.inkDim }}>{o.detalhe}</div>
-                  </button>
+              <div className="w-full" style={{ height: 1, background: T.line }} />
+              <div className="w-full flex flex-col gap-1">
+                <div className="tv-mono text-[9px] uppercase tracking-[0.9px] mb-1" style={{ color: T.inkDim }}>☠ os dados que decidiram</div>
+                {rolagens.map((r, i) => (
+                  <div key={i} className="flex items-baseline gap-2">
+                    <span className="tv-mono text-[10px] w-4 shrink-0" style={{ color: T.inkDim }}>{i + 1}º</span>
+                    <span className="tv-mono text-sm w-8 shrink-0 text-right" style={{ color: corDoDado(r.tipo), fontWeight: 700 }}>{r.rolo}</span>
+                    <span className="tv-body text-[12px]" style={{ color: r.tipo === "falha2" ? T.danger : T.inkDim }}>
+                      {r.tipo === "falha2" ? "1 natural — vale DUAS falhas" : r.tipo === "sucesso" ? "10 ou mais — resiste" : r.tipo === "revive" ? "20 natural — de volta à luta" : "abaixo de 10 — enfraquece"}
+                    </span>
+                  </div>
                 ))}
+                <div className="tv-mono text-[10px] pt-2 mt-1" style={{ color: T.inkDim, borderTop: `1px solid ${T.line}` }}>
+                  {m.sucessos || 0} sucesso{(m.sucessos || 0) === 1 ? "" : "s"} · <span style={{ color: T.danger }}>{m.falhas || 0} falha{(m.falhas || 0) === 1 ? "" : "s"}</span> — três falhas encerram, e o 1 natural conta por duas.
+                </div>
               </div>
             </>
-          ) : (
-            <div className="tv-body text-xs" style={{ color: T.inkDim }}>{formas.motivo}.</div>
           )}
+          <div className="tv-body text-sm text-center leading-[1.65]" style={{ color: T.inkDim }}>
+            A campanha continua. O que ela custa daqui em diante é escolha sua.
+          </div>
         </div>
 
-        <div className="rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.violet}` }}>
-          <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.violetSoft }}>⚜ Passar o fio</div>
-          <div className="tv-body text-xs mb-2" style={{ color: T.inkDim }}>
-            Alguém pega a espada e continua — no <strong style={{ color: T.ink }}>mesmo mundo</strong>: as mesmas cidades, o mesmo mapa, a mesma gente.
-            Começa no nível {h.nivel} com ◉ {h.moedas}.
-            {h.guardado.length ? ` Os objetos de poder de ${nomeMorto} vão para o túmulo — ${h.guardado.join(", ")} — e podem virar tesouro de outra aventura.` : ""}
+        {/* as colunas de ação: DUAS, e não as três do desenho */}
+        <div className="w-full flex flex-col md:flex-row gap-4 items-stretch justify-center">
+          <div className="flex-1 min-w-0 rounded-xl p-[18px] flex flex-col gap-2" style={{ background: T.panel, border: `1px solid ${formas.possivel ? T.amber : T.line}`, maxWidth: 340 }}>
+            <div className="tv-mono text-[9px] uppercase tracking-[0.9px]" style={{ color: formas.possivel ? T.amberSoft : T.inkDim }}>✨ Voltar</div>
+            <div className="tv-display text-lg leading-[1.3]" style={{ color: T.ink }}>Pagar para voltar</div>
+            {formas.possivel ? (
+              <>
+                <div className="tv-body text-[10px] leading-[1.45]" style={{ color: T.inkDim }}>
+                  Você volta com uma fração do PV e uma cicatriz permanente — dessas que não saram. A próxima volta custará bem mais cara.
+                </div>
+                <div className="flex flex-col gap-2 mt-1">
+                  {formas.opcoes.map((o) => (
+                    <button key={o.id} onClick={() => aoVoltar(o.id)} className="text-left rounded-[10px] px-3 py-2"
+                      style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="tv-body text-sm" style={{ color: T.ink }}>{o.rotulo}</span>
+                        <span className="tv-mono text-xs" style={{ color: T.amber }}>{o.custo}</span>
+                      </div>
+                      <div className="tv-body text-[11px] mt-0.5" style={{ color: T.inkDim }}>{o.detalhe}</div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="tv-body text-[10px] leading-[1.45]" style={{ color: T.inkDim }}>{formas.motivo}.</div>
+            )}
           </div>
-          <div className="flex gap-2">
-            <input value={nome} onChange={(e) => setNome(e.target.value)} onKeyDown={(e) => e.key === "Enter" && nome.trim() && aoHerdar(nome)}
-              placeholder="Nome de quem continua…" maxLength={30}
-              className="flex-1 rounded-lg px-3 py-2 tv-body text-sm outline-none min-w-0"
-              style={{ background: T.panelSoft, border: `1px solid ${T.line}`, color: T.ink }} />
-            <button onClick={() => nome.trim() && aoHerdar(nome)} disabled={!nome.trim()}
-              className="rounded-lg px-4 tv-mono text-xs shrink-0"
-              style={{ background: nome.trim() ? T.violet : T.panelSoft, color: nome.trim() ? T.onSecond : T.inkDim, fontWeight: 600 }}>
-              Continuar →
-            </button>
+
+          <div className="flex-1 min-w-0 rounded-xl p-[18px] flex flex-col gap-2" style={{ background: T.panel, border: `1px solid ${T.violet}`, maxWidth: 340 }}>
+            <div className="tv-mono text-[9px] uppercase tracking-[0.9px]" style={{ color: T.violetSoft }}>⚜ Legado</div>
+            <div className="tv-display text-lg leading-[1.3]" style={{ color: T.ink }}>Passar o fio</div>
+            <div className="tv-body text-[10px] leading-[1.45]" style={{ color: T.inkDim }}>
+              Alguém pega a espada e continua — no <strong style={{ color: T.ink }}>mesmo mundo</strong>: as mesmas cidades, o mesmo mapa, a mesma gente.
+              Começa no nível {h.nivel} com ◉ {h.moedas}.
+              {h.guardado.length ? ` Os objetos de poder de ${nomeMorto} vão para o túmulo — ${h.guardado.join(", ")} — e podem virar tesouro de outra aventura.` : ""}
+            </div>
+            <div className="flex gap-2 mt-1">
+              <input value={nome} onChange={(e) => setNome(e.target.value)} onKeyDown={(e) => e.key === "Enter" && nome.trim() && aoHerdar(nome)}
+                placeholder="Nome de quem continua…" maxLength={30}
+                className="flex-1 rounded-lg px-3 py-2 tv-body text-sm outline-none min-w-0"
+                style={{ background: T.panelSoft, border: `1px solid ${T.line}`, color: T.ink }} />
+              <button onClick={() => nome.trim() && aoHerdar(nome)} disabled={!nome.trim()}
+                className="rounded-lg px-4 tv-mono text-xs shrink-0"
+                style={{ background: nome.trim() ? T.violet : T.panelSoft, color: nome.trim() ? T.onSecond : T.inkDim, fontWeight: 600 }}>
+                Continuar →
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -14218,7 +14265,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       grupo: (p.grupo || []),
     };
     /* recalcula PV/PM pelo nível novo e devolve os pontos daquele patamar */
-    const np = migrarPersonagem({ ...base, vidaMax: 10 + (h.nivel - 1) * 6, manaMax: 8 + (h.nivel - 1) * 4, vida: 10 + (h.nivel - 1) * 6, mana: 8 + (h.nivel - 1) * 4, pontosHab: pontosTotais(h.nivel), pontosAtr: pontosAtributoDisponiveis({ ...base, nivel: h.nivel }) });
+    const np = migrarPersonagem({ ...base, vidaMax: 10 + (h.nivel - 1) * PV_POR_NIVEL, manaMax: 8 + (h.nivel - 1) * PM_POR_NIVEL, vida: 10 + (h.nivel - 1) * PV_POR_NIVEL, mana: 8 + (h.nivel - 1) * PM_POR_NIVEL, pontosHab: pontosTotais(h.nivel), pontosAtr: pontosAtributoDisponiveis({ ...base, nivel: h.nivel }) });
     setPersonagem(np); personagemRef.current = np;
     setDesfechoMorte(null);
     pushMsgs([
@@ -19141,7 +19188,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       )}
 
       {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} modificador={modPend} aoConcluir={concluirRolagem} heroismo={garantirHeroismo(personagem)} destino={refazerDisponivel(personagem) + refazerDeTracoDisponivel(personagem)} aoRefazer={pagarRefazer} />}
-      {desfechoMorte && <OverlayMorte estado={desfechoMorte} nomeMorto={personagem.nome} aoVoltar={voltarDosMortos} aoHerdar={seguirComHerdeiro} />}
+      {desfechoMorte && <OverlayMorte estado={desfechoMorte} nomeMorto={personagem.nome} personagem={personagem} local={cenaDoPalco()} aoVoltar={voltarDosMortos} aoHerdar={seguirComHerdeiro} />}
       {fase === "jogo" && espolioRevelado && <RevelacaoDoEspolio item={espolioRevelado} fechar={() => setEspolioRevelado(null)} />}
       {fase === "jogo" && <FaixaDeChegada chegada={chegada} limpar={() => setChegada(null)} />}
       {fase === "jogo" && personagem?.nivelPendentes > 0 && !carregando && !dadoRolando && (
