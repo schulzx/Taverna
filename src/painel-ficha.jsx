@@ -20,7 +20,7 @@
 import React from "react";
 import { T, ATRIBUTOS, XP_POR_NIVEL } from "./constantes.js";
 import { poderDe, poderDoGrupo, formatarPoder, contaDoPoder } from "./poder.js";
-import { Retrato } from "./ui.jsx";
+import { Retrato, CartaoDeDado } from "./ui.jsx";
 import { sementeDe, estadoDe } from "./semente.js";
 import { bonusProficiencia, ehProficiente } from "./regras.js";
 import { PERICIAS, garantirPericias, bonusDePericia, passivoDe, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente } from "./pericias.js";
@@ -283,6 +283,35 @@ export function FichaVisual({
       </div>
 
       <div className="p-3 space-y-3">
+        {/* ---- DE ONDE ELE VEM (v9.183) — de `painel-ficha-v2` ----
+            O desenho põe raça e antecedente como cartões próprios ao lado do
+            retrato, e foi aí que apareceu o buraco: a raça vivia espremida na
+            linha de subtítulo, junto de classe e subclasse, e o ANTECEDENTE
+            não aparecia em lugar nenhum da ficha. Ele decide perícia inicial,
+            PV, PM, moedas e item de partida — e o gancho dele é o fio que o
+            Mestre puxa. Uma ficha que não diz de onde a pessoa veio é meia
+            ficha.
+
+            (O resto do `painel-ficha-v2` não entrou, e o motivo está no
+            commit: ele desenha uma ficha MAIS POBRE do que esta. Os seis
+            "testes de resistência" seriam uma segunda cópia da fileira de
+            atributos sem regra nenhuma atrás — o jogo não tem salvaguarda
+            por atributo, tem o atributo-chave da classe, e ele já acende a
+            borda âmbar do medalhão.) */}
+        {(p.raca || p.antecedente) && (
+          <div className="flex gap-2">
+            {p.raca && (
+              <div className="flex-1 min-w-0">
+                <CartaoDeDado rotulo="Raça" valor={chamadoDaRaca((mundo || {}).lexico, p.raca)} />
+              </div>
+            )}
+            {p.antecedente && (
+              <div className="flex-1 min-w-0">
+                <CartaoDeDado rotulo="Antecedente" valor={p.antecedente} titulo={p.antecedenteGancho || ""} />
+              </div>
+            )}
+          </div>
+        )}
         {/* ---- os vitais: o que se consulta no meio do turno ----
             v9.159: o PASSO entrou na fileira. Ele sempre foi calculado
             (movimento.js pesa armadura, condição e exaustão) e sempre

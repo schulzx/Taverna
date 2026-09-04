@@ -477,6 +477,40 @@ export function IconeAlfinete({ tamanho = 13, cor = T.amberSoft }) {
     </svg>
   );
 }
+
+/* ============================================================
+   AS PRIMITIVAS DOS PAINÉIS (v9.183)
+
+   Os painéis laterais do Figma (`painel-ficha-v2` e irmãos) falam todos a
+   mesma língua, e é uma língua boa: cartão rotulado, ladrilho de número,
+   linha de nome-e-valor, barra de medida, item com glifo, etiqueta. Elas
+   entram AQUI uma a uma, à medida que o painel que as usa chega: primitiva
+   sem leitor é export morto, e a catraca de `teste-ligacao` cobra isso na
+   mesma hora — foi ela que apontou as cinco escritas cedo demais.
+
+   Elas moram AQUI FORA pela lei da v9.176: componente definido dentro de
+   outro componente é tipo novo a cada render, e o React remonta a
+   subárvore — o que num painel com campo de texto significa perder o foco
+   a cada tecla. Ver [[componente-dentro-do-render]].
+   ============================================================ */
+
+/* o cartão rotulado: mesma ideia do ladrilho, mas para texto em vez de
+   número — nome de raça, de antecedente, de ofício */
+export function CartaoDeDado({ rotulo, valor, titulo, borda }) {
+  return (
+    <div className="w-full flex flex-col gap-0.5 p-2.5 rounded-[10px]" title={titulo || undefined}
+      style={{ background: T.bg, border: `1px solid ${borda || T.line}` }}>
+      <div className="tv-mono text-[9px] uppercase tracking-[0.9px]" style={{ color: T.inkDim }}>{rotulo}</div>
+      <div className="tv-body text-[11px] leading-[1.5]" style={{ color: T.ink }}>{valor}</div>
+    </div>
+  );
+}
+
+
+
+
+
+
 export function BarraMini({ rotulo, atual, max, cor, corBaixa }) {
   const pct = Math.max(0, Math.min(100, max > 0 ? (atual / max) * 100 : 0));
   const baixa = pct <= 33;
