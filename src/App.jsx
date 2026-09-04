@@ -756,6 +756,37 @@ const SLOTS_ORDEM = ["arma", "escudo", "armadura", "elmo", "botas", "anel", "amu
    O TOM é o que faz isto ser cenário e não etiqueta: uma faixa fina da
    cor do bioma, com a força da luz daquela hora. A mesma cripta é uma
    coisa ao meio-dia e outra às três da manhã, e o sistema já sabia. */
+/* ---------------- A VINHETA DA CENA (v9.175) ----------------
+   De `mesa-jogo-v2`: uma faixa de 160 no topo do painel da narrativa,
+   com a arte do bioma em que a cena acontece. Trinta imagens, uma por
+   bioma dos quatro moldes, servidas de `public/cenas` — ou seja, fora
+   do pacote: cada uma só é buscada quando aquele bioma entra em cena, e
+   fica em cache depois. Nenhuma pesa no primeiro carregamento.
+
+   O DEGRADÊ NÃO É ENFEITE. Ele apaga a metade de baixo da imagem contra
+   o fundo do painel, e é isso que impede a arte de brigar com a primeira
+   linha do Mestre — a vinheta ambienta e sai da frente.
+
+   E SE A ARTE NÃO EXISTIR, NÃO APARECE NADA. Um bioma novo entra no
+   jogo antes de alguém desenhar a cena dele, e uma moldura vazia com um
+   ícone de imagem quebrada é pior do que faixa nenhuma: parece defeito,
+   e não é. `onError` some com o bloco inteiro. */
+function VinhetaDaCena({ bioma }) {
+  const [falhou, setFalhou] = React.useState(false);
+  /* trocar de bioma tem de dar uma segunda chance: a arte da floresta
+     faltar não quer dizer que a do deserto falte */
+  React.useEffect(() => { setFalhou(false); }, [bioma]);
+  if (!bioma || falhou) return null;
+  return (
+    <div className="w-full rounded-lg overflow-hidden relative shrink-0" style={{ height: 160 }}>
+      <img src={`/cenas/${bioma}.webp`} alt="" loading="lazy" onError={() => setFalhou(true)}
+        className="absolute inset-0 w-full h-full object-cover" />
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: "linear-gradient(to bottom, rgba(23,19,34,0) 50%, rgba(23,19,34,0.8) 100%)" }} />
+    </div>
+  );
+}
+
 function CabecalhoDaCena({ cena }) {
   if (!cena) return null;
   const { tom } = cena;
@@ -18086,6 +18117,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 Mestre um lugar para existir. */}
             <div ref={areaRef} onScroll={aoRolar} className="tv-scroll tv-espaco-abas flex-1 overflow-y-auto mx-4 md:mx-8 mt-3 md:mt-4 px-5 md:px-8 py-6 space-y-4 rounded-2xl"
               style={{ background: "rgba(23,19,34,0.48)", border: `1px solid ${T.line}` }} >
+              <VinhetaDaCena bioma={biomaDaqui()} />
               <div className="flex items-center gap-2">
                 <PontoMestre tamanho={16} />
                 <span className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.amberSoft }}>Mestre ativo</span>
