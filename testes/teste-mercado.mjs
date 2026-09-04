@@ -76,5 +76,36 @@ const escolha2 = melhorCuraPara({ vida: 10, vidaMax: 90 }, bolsa);
 ok(escolha2 && escolha2.c.id === "cura_g", "com muito dano, usa a grande: " + (escolha2 && escolha2.c.nome));
 
 console.log("\n[o que o Mestre lê]\n  " + resumoMercadoPrompt(m1));
+
+/* ---------------- A LINHA DE VENDA DIZ O QUE É (v9.187) ----------------
+   `painel-mercado-v2` foi redesenhado a partir do que o painel faz de
+   verdade — bolsa, vocação do lugar, mantimentos com o porquê do preço,
+   banca com gaveta e pechincha, vitrine com a marca de treino — e foi ao
+   desenhar a seção de venda que o buraco apareceu.
+
+   A vitrine de COMPRA mostra slot e raridade em cor. A lista de VENDA
+   mostrava só o nome. Quem tinha dois elmos, um comum e um lendário,
+   vendia no escuro — e este é o único lugar do jogo em que um clique tira
+   um item da mochila para sempre. */
+console.log("\n[a linha de venda diz o que é]");
+{
+  const { readFileSync } = await import("node:fs");
+  const semComentarios = (x) => x.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  const APP = semComentarios(readFileSync("../src/App.jsx", "utf8"));
+  const i = APP.indexOf("Vender — quem compra é quem lida com aquilo");
+  ok(i > 0, "a seção de venda existe");
+  const bloco = APP.slice(i, i + 2600);
+  ok(/\{\(fichaDoItem\(v\.it\) \|\| \{\}\)\.rotulo \|\| SLOT_ROTULO\[v\.it\.tipo\] \|\| v\.it\.tipo\} · \{v\.it\.raridade\}/.test(bloco),
+    "a linha diz o que a peça é e de que raridade");
+  ok(/color: RARIDADE_COR\[v\.it\.raridade\] \|\| T\.inkDim/.test(bloco),
+    "na cor da raridade, a mesma tabela da vitrine de compra");
+  ok(/border: `1px solid \$\{v\.it && v\.it\.raridade \? \(RARIDADE_COR\[v\.it\.raridade\] \|\| T\.line\) : T\.line\}`/.test(bloco),
+    "e a borda do cartão acende junto");
+  /* NADA SABIDO É NADA MOSTRADO: consumível e componente não têm raridade,
+     e a linha some em vez de escrever "undefined" */
+  ok(/\{v\.it && v\.it\.raridade && \(/.test(bloco), "e a linha some no item que não tem raridade");
+  /* a oferta continua saindo da MESMA função que o cofre lê */
+  ok(/const of = ofertaPor \? ofertaPor\(v\.it\) :/.test(bloco), "o valor continua vindo de ofertaPor");
+}
 console.log(falhas ? `\n${falhas} FALHA(S)` : "\nTudo passou");
 process.exit(falhas ? 1 : 0);

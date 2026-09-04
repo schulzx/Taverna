@@ -2098,8 +2098,23 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
                     <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Vender — quem compra é quem lida com aquilo, e paga do que tem</div>
                     <div className="space-y-1.5">
                       {agrupado.slice(0, 30).map((v) => (
-                        <div key={`${v.origem}|${v.nome}`} className="rounded-lg px-2.5 py-2 flex items-center gap-2" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
-                          <span className="tv-body text-sm flex-1 min-w-0 truncate" style={{ color: T.ink }}>{v.nome}{v.qtd > 1 ? <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}> ×{v.qtd}</span> : null}</span>
+                        <div key={`${v.origem}|${v.nome}`} className="rounded-lg px-2.5 py-2 flex items-center gap-2" style={{ background: T.panel, border: `1px solid ${v.it && v.it.raridade ? (RARIDADE_COR[v.it.raridade] || T.line) : T.line}` }}>
+                          {/* v9.187 (`painel-mercado-v2`): A LINHA DE VENDA DIZ O
+                              QUE É. Ela mostrava só o nome — e a vitrine de
+                              compra, logo acima, mostra slot e raridade em cor.
+                              Quem tinha dois elmos, um comum e um lendário,
+                              vendia no escuro. Aqui é o único lugar do jogo em
+                              que um clique tira um item da mochila para sempre;
+                              a ficha e a cor da raridade são o que separa
+                              "vendi o ferro velho" de "vendi a Coroa". */}
+                          <span className="flex-1 min-w-0">
+                            <span className="tv-body text-sm block truncate" style={{ color: T.ink }}>{v.nome}{v.qtd > 1 ? <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}> ×{v.qtd}</span> : null}</span>
+                            {v.it && v.it.raridade && (
+                              <span className="tv-mono text-[9px] uppercase tracking-wider block truncate" style={{ color: RARIDADE_COR[v.it.raridade] || T.inkDim }}>
+                                {(fichaDoItem(v.it) || {}).rotulo || SLOT_ROTULO[v.it.tipo] || v.it.tipo} · {v.it.raridade}
+                              </span>
+                            )}
+                          </span>
                           {(() => {
                             /* v9.138: a etiqueta e o cofre saem da MESMA
                                função. Antes o botão dizia um número que o
