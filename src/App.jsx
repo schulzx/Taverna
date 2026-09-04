@@ -1323,9 +1323,12 @@ function PainelPessoas({ npcs, grupo, onConvidar, onBancar, vereditoConvite, gru
   if (!lista.length && !(grupo || []).length) {
     return <div className="tv-body text-sm italic text-center py-10" style={{ color: T.inkDim }}>Ninguém conhecido ainda. As pessoas marcantes que você encontrar aparecerão aqui — com rosto, relação e tudo que você sabe sobre elas.</div>;
   }
+  /* a mesma régua do cartão, e não uma segunda: morto é quem o Mestre marcou
+     como morto OU quem o sistema matou */
+  const ehIdo = (n) => String(n.status || "").toLowerCase().includes("morto") || mortosSet.has((n.nome || "").toLowerCase());
   const cartao = (n, ehGrupo) => {
     const rel = relacaoNPC(ehGrupo ? "companheiro" : n.relacao);
-    const morto = (n.status || "").toLowerCase().includes("morto") || mortosSet.has((n.nome || "").toLowerCase());
+    const morto = ehIdo(n);
     const convidavel = !ehGrupo && !morto && n.relacao !== "inimigo" && onConvidar;
     return (
       <div key={`${ehGrupo ? "g" : "n"}-${n.nome}`} className="rounded-xl p-3 flex items-start gap-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}`, opacity: morto ? 0.55 : 1 }}>
@@ -1337,7 +1340,13 @@ function PainelPessoas({ npcs, grupo, onConvidar, onBancar, vereditoConvite, gru
             <span className="tv-display text-lg leading-tight truncate" style={{ color: T.ink, textDecoration: morto ? "line-through" : "none", textDecorationColor: T.danger, textDecorationThickness: "2px" }}>{n.nome}{morto ? " ☠" : ""}</span>
             <span className="tv-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0" style={{ border: `1px solid ${rel.cor}`, color: rel.cor }}>{rel.rotulo}</span>
           </div>
-          <div className="tv-body text-xs italic truncate" style={{ color: T.inkDim }}>{[n.papel, n.genero, n.local ? `em ${n.local}` : "", n.conhecidoEm != null ? (n.conhecidoEm > 0 ? `conhecido(a) no dia ${n.conhecidoEm}` : "antes do dia 1") : ""].filter(Boolean).join(" · ") || "—"}</div>
+          {/* v9.185 (`painel-pessoas-v2`): O PAPEL GANHOU LINHA PRÓPRIA. Ele
+              dividia uma linha truncada com gênero, lugar e o dia em que a
+              pessoa foi conhecida — e num painel de 320px o truncate comia
+              justamente o contexto, que é o que faz a pessoa ser DAQUELE
+              lugar e daquele dia. O desenho separa os dois, e está certo. */}
+          {n.papel && <div className="tv-mono text-[9px] uppercase tracking-[0.9px] truncate" style={{ color: T.violetSoft }}>{n.papel}</div>}
+          <div className="tv-body text-xs italic truncate" style={{ color: T.inkDim }}>{[n.genero, n.local ? `em ${n.local}` : "", n.conhecidoEm != null ? (n.conhecidoEm > 0 ? `conhecido(a) no dia ${n.conhecidoEm}` : "antes do dia 1") : ""].filter(Boolean).join(" · ") || (n.papel ? "" : "—")}</div>
           {n.notas && <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{n.notas}</div>}
           {/* v9.136: quem ela É. A índole é derivável do nome, como o rosto —
               então vale para a gente da base E para quem o Mestre registrou.
@@ -1389,10 +1398,23 @@ function PainelPessoas({ npcs, grupo, onConvidar, onBancar, vereditoConvite, gru
       </div>
     );
   };
+  /* A CONTAGEM DO REGISTRO (v9.185, de `painel-pessoas-v2`). O painel abria
+     direto na lista: quem já tinha vinte pessoas anotadas não tinha como
+     saber que eram vinte, nem quantas já haviam morrido. É o número que diz
+     o tamanho da campanha, e ele não estava em lugar nenhum. */
+  const deFora = lista.filter((n) => !nomesGrupo.has((n.nome || "").toLowerCase()));
+  const todas = [...(grupo || []).map((g) => ({ nome: g.nome })), ...deFora];
+  const idos = todas.filter(ehIdo).length;
   return (
     <div className="space-y-2">
+      <div className="flex items-baseline justify-between gap-3 pb-2" style={{ borderBottom: `1px solid ${T.line}` }}>
+        <span className="tv-body text-xs" style={{ color: T.inkDim }}>Quem você conhece nesta campanha</span>
+        <span className="tv-mono text-[10px] uppercase tracking-[1px] shrink-0" style={{ color: T.amberSoft }}>
+          {todas.length - idos} {todas.length - idos === 1 ? "vivo" : "vivos"}{idos ? ` · ${idos} ${idos === 1 ? "ido" : "idos"}` : ""}
+        </span>
+      </div>
       {(grupo || []).map((g) => { const f = fichaDe(g.nome) || {}; return cartao({ nome: g.nome, papel: [g.classe, g.subclasse].filter(Boolean).join(" · ") || g.conceito, notas: g.descricao, semente: g.semente, relacao: f.relacao, conhecidoEm: f.conhecidoEm != null ? f.conhecidoEm : 0 }, true); })}
-      {lista.filter((n) => !nomesGrupo.has((n.nome || "").toLowerCase())).map((n) => cartao(n, false))}
+      {deFora.map((n) => cartao(n, false))}
     </div>
   );
 }
