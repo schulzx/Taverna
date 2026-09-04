@@ -202,7 +202,10 @@ sec("6. E O APP ENTREGA AS TRÊS MEMÓRIAS NOVAS");
   t("a fala vem do histórico de mensagens", /mensagensRef\.current[\s\S]{0,120}autor === "mestre"/.test(chamada));
   t("o objeto vem do inventário", /temObjetos: \(p0\.inventario \|\| \[\]\)\.length/.test(chamada));
   t("o lugar vem das cidades pisadas", /temLugarVisitado: cidadesPisadas\(mapaRef\.current\)/.test(chamada));
-  t("e cidadesPisadas está importada", /import \{ cidadesPisadas,/.test(app));
+  /* v9.181: `PORTES` entrou na frente da lista quando a cerimônia do lugar
+     novo passou a dizer o porte da cidade. A lei é que a função venha da
+     geografia — e não que ela seja a primeira da linha. */
+  t("e cidadesPisadas está importada", /import \{[^}]*\bcidadesPisadas\b[^}]*\} from "\.\/geografia\.js"/.test(app));
   /* o gesto tem de ser marcado nos DOIS canais, senão a memória fica cega
      em metade dos turnos e o defeito volta pela porta que ninguém olhou */
   t("o gesto é marcado no canal do envelope", /marcarJogada\(estanteRef\.current, j\.id, j\.gesto\)/.test(app));

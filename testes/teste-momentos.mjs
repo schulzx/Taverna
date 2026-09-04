@@ -96,5 +96,46 @@ sec("4. OS MOMENTOS SÓ EXISTEM EM JOGO");
   t("a chegada também", /const \[chegada, setChegada\] = useState\(null\);/.test(APP));
 }
 
+sec("5. O LUGAR NOVO — a cerimônia da primeira pisada (v9.181)");
+{
+  /* A faixa é para CHEGAR; a cerimônia é para chegar PELA PRIMEIRA VEZ. A
+     distinção não foi inventada para caber o desenho: `geografia.js` guarda
+     `pisada` em cada cidade desde a v9.51, para separar "ouvi falar" de "pus
+     o pé". Chegar a uma cidade conhecida continua sendo a faixa que se apaga
+     sozinha, e a lei da v9.163 vale inteira. */
+  t("a cerimônia existe", /function CerimoniaDoLugarNovo\(\{ lugar, fechar \}\)/.test(APP));
+  t("e a faixa continua existindo ao lado dela", /function FaixaDeChegada\(\{ chegada, limpar \}\)/.test(APP));
+  /* A PERGUNTA É FEITA ANTES DE PISAR: depois de `pisarNaCidade` ninguém
+     consegue mais saber se era a primeira vez. */
+  t("a primeira pisada é medida antes de pisar",
+    APP.indexOf("const primeiraPisada =") < APP.indexOf("mapaRef.current = pisarNaCidade(mapaRef.current, md.cidade_atual)")
+    && /const primeiraPisada = !\(\(cidadeDoMapa\(md\.cidade_atual\) \|\| \{\}\)\.pisada\);/.test(APP));
+  t("primeira vez abre a cerimônia", /if \(primeiraPisada\) setLugarNovo\(/.test(APP));
+  t("e o retorno continua na faixa", /else setChegada\(\{ cidade: md\.cidade_atual/.test(APP));
+  /* e as duas só existem em jogo, como todo momento desta casa */
+  t("a cerimônia só na fase de jogo", /fase === "jogo" && lugarNovo && <CerimoniaDoLugarNovo/.test(APP));
+  t("e nasce vazia", /const \[lugarNovo, setLugarNovo\] = useState\(null\);/.test(APP));
+
+  /* O QUE O DESENHO PEDIA E NÃO ENTROU: "PERIGO: ALTO" e "RECURSOS:
+     MODERADO". Uma cidade não tem nível de perigo nem de recursos nesta
+     casa — quem tem dificuldade é o encontro, e quem tem vocação é o
+     mercado. */
+  t("não inventou perigo de cidade", !/PERIGO/.test(APP.slice(APP.indexOf("function CerimoniaDoLugarNovo"), APP.indexOf("function FaixaDeChegada"))));
+  const bloco = APP.slice(APP.indexOf("function CerimoniaDoLugarNovo"), APP.indexOf("function FaixaDeChegada"));
+  t("nem recursos", !/RECURSOS|Recursos/.test(bloco));
+  /* as pílulas mostram o que a cidade DE FATO guarda */
+  t("mostra quantos moram nela", /rot: "Habitantes"/.test(bloco));
+  t("de que terreno ela é", /rot: "Terreno", diz: tom\.diz/.test(bloco));
+  t("e de quem ela é", /rot: c\.faccao \? "Sob" : "Relação"/.test(bloco));
+  /* e cada pílula some quando o dado não existe — nada sabido é nada
+     mostrado, a lei do palco */
+  t("cada pílula some sem o dado", /\]\.filter\(Boolean\);/.test(bloco));
+  t("a caixa de notas só abre com texto dentro", /\{c\.notas && \(/.test(bloco));
+  t("e o subtítulo também", /\{subtitulo && </.test(bloco));
+  /* o tom do bioma é o mesmo do cabeçalho e da faixa: uma tabela só */
+  t("o tom vem da tabela do palco", /const tom = TONS\[c\.bioma\] \|\| TOM_PADRAO;/.test(bloco));
+  t("e o porte vem da geografia", /PORTES\[c\.porte \|\| c\.tipo\]/.test(bloco));
+}
+
 console.log(`\nmomentos v9.163: ${bons} passaram, ${maus} falharam`);
 process.exit(maus ? 1 : 0);

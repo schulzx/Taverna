@@ -3,7 +3,7 @@ import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./n
 import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, chamadoDaRaca, chamadoDaProfissao } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
-import { cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
+import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
@@ -116,7 +116,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, LinhaDoCartao, duasColunas } from "./ui.jsx";
+import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, LinhaDoCartao, duasColunas } from "./ui.jsx";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -791,6 +791,89 @@ function RevelacaoDoEspolio({ item, fechar }) {
    grande, diz a região e o que a cidade é, e some sozinha: chegada é
    cena de passagem, não modal — bloquear o jogador toda viagem seria
    cobrar pedágio pelo cenário. */
+
+/* ---------------- O LUGAR NOVO (v9.181) — `momento-lugar-novo-v2` ----------
+
+   A faixa acima é para CHEGAR; esta tela é para chegar PELA PRIMEIRA VEZ.
+
+   A distinção não foi inventada para caber o desenho: `geografia.js` guarda
+   `pisada` em cada cidade desde a v9.51, justamente para separar "ouvi falar"
+   de "pus o pé". Chegar a uma cidade que já se conhece continua sendo a
+   faixa que se apaga sozinha — a lei da v9.163 vale inteira, e cobrar um
+   clique a cada viagem seria pedágio pelo cenário. Pisar num lugar novo
+   acontece uma vez por cidade na campanha toda, e essa merece o palco.
+
+   O QUE O DESENHO PEDIA E NÃO ENTROU: "PERIGO: ALTO" e "RECURSOS: MODERADO".
+   Uma cidade não tem nível de perigo nem de recursos nesta casa — quem tem
+   dificuldade é o encontro, e quem tem vocação é o mercado. As pílulas
+   mostram o que a cidade DE FATO guarda: quantos moram nela, de que terreno
+   ela é, e de quem ela é.
+
+   E A CAIXA DE DESCRIÇÃO SÓ APARECE COM TEXTO DENTRO. O desenho a preenche
+   com prosa de ambientação; aqui ela carrega as `notas` que o Mestre já
+   escreveu sobre o lugar, e some quando não há nenhuma — a mesma lei do
+   palco: nada sabido é nada mostrado. */
+function CerimoniaDoLugarNovo({ lugar, fechar }) {
+  if (!lugar) return null;
+  const c = lugar;
+  const tom = TONS[c.bioma] || TOM_PADRAO;
+  const porte = (PORTES[c.porte || c.tipo] || {}).rotulo || c.tipo || "";
+  /* o rótulo do porte vem em minúscula da geografia, onde ele vive no meio
+     de uma linha; aqui ele ABRE a linha e precisa de maiúscula */
+  const subtitulo = [porte ? porte[0].toUpperCase() + porte.slice(1) : "", c.regiao].filter(Boolean).join(" · ");
+  const corDaRelacao = c.relacao === "jogador" ? T.ok : c.relacao === "hostil" ? T.danger : T.inkDim;
+  const relacao = c.relacao === "jogador" ? "sua" : c.relacao || "";
+  const pilulas = [
+    Number(c.populacao) > 0 && { rot: "Habitantes", diz: Number(c.populacao).toLocaleString("pt-BR"), cor: T.amberSoft, borda: T.amber },
+    tom.diz && { rot: "Terreno", diz: tom.diz, cor: T.ink, borda: tom.cor },
+    relacao && { rot: c.faccao ? "Sob" : "Relação", diz: c.faccao || relacao, cor: corDaRelacao, borda: corDaRelacao },
+  ].filter(Boolean);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 overflow-y-auto overflow-x-hidden" style={{ background: "rgba(8,6,14,0.94)", backdropFilter: "blur(5px)" }}>
+      {/* o brilho de baixo do desenho, na cor do bioma — é ele que faz a
+          mesma cerimônia parecer outra num pântano e numa montanha */}
+      <div aria-hidden className="fixed pointer-events-none"
+        style={{ width: 800, height: 400, left: "50%", bottom: -100, transform: "translateX(-50%)", background: `radial-gradient(ellipse at center, ${tom.cor}2E 0%, ${tom.cor}12 45%, transparent 72%)` }} />
+      <div className="tv-fade relative w-full my-auto flex flex-col gap-8 items-center" style={{ maxWidth: 640 }}>
+        <div className="flex items-center gap-2 rounded-[20px] px-4 py-2" style={{ background: T.panel, border: `1px solid ${T.amber}`, boxShadow: "0 4px 6px rgba(232,163,61,0.13)" }}>
+          <IconeAlfinete tamanho={13} />
+          <span className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.amberSoft }}>Novo lugar descoberto</span>
+        </div>
+
+        <div className="flex flex-col gap-4 items-center w-full">
+          <div className="tv-display text-5xl leading-[1.05] text-center uppercase" style={{ color: T.ink }}>{c.nome}</div>
+          {subtitulo && <div className="tv-display text-xl leading-[1.25] text-center" style={{ color: T.amberSoft }}>{subtitulo}</div>}
+          <div style={{ width: 120, height: 2, background: `linear-gradient(90deg, transparent, ${tom.cor}, transparent)` }} />
+        </div>
+
+        {c.notas && (
+          <div className="w-full rounded-xl p-6" style={{ background: "rgba(23,19,34,0.63)", border: `1px solid ${T.line}`, backdropFilter: "blur(8px)" }}>
+            <div className="tv-body text-sm leading-[1.65] text-center" style={{ color: T.inkDim }}>{c.notas}</div>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-8 items-center w-full">
+          {pilulas.length > 0 && (
+            <div className="flex gap-4 items-center justify-center flex-wrap">
+              {pilulas.map((p) => (
+                <div key={p.rot} className="flex gap-2 items-center rounded-md px-3.5 py-1.5" style={{ background: `${p.borda}14`, border: `1px solid ${p.borda}` }}>
+                  <span className="tv-mono text-[9px] uppercase tracking-[0.9px]" style={{ color: p.cor, opacity: 0.75 }}>{p.rot}:</span>
+                  <span className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: p.cor }}>{p.diz}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <button onClick={fechar} className="flex gap-2.5 items-center justify-center rounded-lg px-12 py-3.5"
+            style={{ background: T.amber, boxShadow: "0 0 12px rgba(232,163,61,0.33)" }}>
+            <span className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.bg }}>Entrar</span>
+            <IconeSeta tamanho={11} cor={T.bg} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FaixaDeChegada({ chegada, limpar }) {
   React.useEffect(() => {
     if (!chegada) return;
@@ -4116,6 +4199,7 @@ export default function Taverna() {
      revelação, e a faixa de chegada que se apaga sozinha */
   const [espolioRevelado, setEspolioRevelado] = useState(null);
   const [chegada, setChegada] = useState(null);
+  const [lugarNovo, setLugarNovo] = useState(null);
   const golpeRecenteRef = useRef(null);
   /* v9.5: um turno pode carregar mais de uma habilidade, uma por movimento */
   const [habsSel, setHabsSel] = useState([]);
@@ -7397,13 +7481,21 @@ export default function Taverna() {
           mapaRef.current = dsc.mapa; setMapa(mapaRef.current);
           msgs.push(`🗺 ${dsc.nova} entrou no seu mapa.`);
         }
+        /* PRIMEIRA PISADA, ANTES DE PISAR (v9.181): `pisarNaCidade` marca o
+           lugar, e depois dela ninguém consegue mais saber se era a primeira
+           vez. A pergunta é feita aqui, um instante antes. */
+        const primeiraPisada = !((cidadeDoMapa(md.cidade_atual) || {}).pisada);
         mapaRef.current = pisarNaCidade(mapaRef.current, md.cidade_atual); setMapa(mapaRef.current);
         abrirNevoaDaVizinhanca(md.cidade_atual, msgs);
         /* A FAIXA DE CHEGADA (v9.163): só quando de fato se TROCOU de
-           cidade — reafirmar a cidade em que já estou não é chegar */
+           cidade — reafirmar a cidade em que já estou não é chegar.
+           E QUEM PISA PELA PRIMEIRA VEZ ganha a cerimônia inteira em vez da
+           faixa: chegar acontece toda viagem, descobrir acontece uma vez por
+           cidade na campanha toda. */
         if (trocouCidade) {
           const cid = cidadeDoMapa(md.cidade_atual) || {};
-          setChegada({ cidade: md.cidade_atual, regiao: cid.regiao || "", bioma: cid.bioma || "", tipo: cid.tipo || "", chave: Date.now() });
+          if (primeiraPisada) setLugarNovo({ ...cid, nome: cid.nome || md.cidade_atual });
+          else setChegada({ cidade: md.cidade_atual, regiao: cid.regiao || "", bioma: cid.bioma || "", tipo: cid.tipo || "", chave: Date.now() });
         }
       }
       if (md.jornada_meio && jornadaRef.current) {
@@ -19191,6 +19283,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       {desfechoMorte && <OverlayMorte estado={desfechoMorte} nomeMorto={personagem.nome} personagem={personagem} local={cenaDoPalco()} aoVoltar={voltarDosMortos} aoHerdar={seguirComHerdeiro} />}
       {fase === "jogo" && espolioRevelado && <RevelacaoDoEspolio item={espolioRevelado} fechar={() => setEspolioRevelado(null)} />}
       {fase === "jogo" && <FaixaDeChegada chegada={chegada} limpar={() => setChegada(null)} />}
+      {fase === "jogo" && lugarNovo && <CerimoniaDoLugarNovo lugar={lugarNovo} fechar={() => setLugarNovo(null)} />}
       {fase === "jogo" && personagem?.nivelPendentes > 0 && !carregando && !dadoRolando && (
         <ModalNivel nivel={personagem.nivel - personagem.nivelPendentes + 1} personagem={personagem} escolher={confirmarNivel} lex={(mundoAtual() || {}).lexico} />
       )}

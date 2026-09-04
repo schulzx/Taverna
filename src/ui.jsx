@@ -467,6 +467,16 @@ export function IconePlay({ tamanho = 16, cor = T.bg }) {
     </svg>
   );
 }
+
+/* o alfinete de `momento-lugar-novo-v2` — o único glifo do desenho que a
+   casa ainda não tinha */
+export function IconeAlfinete({ tamanho = 13, cor = T.amberSoft }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 13 13" fill="none">
+      <path d="M6.82551 11.8083C7.83291 10.9384 10.8329 8.12143 10.8329 5.41663C10.8329 4.26726 10.3764 3.16495 9.56382 2.35222C8.75125 1.53949 7.64916 1.0829 6.5 1.0829C5.35084 1.0829 4.24875 1.53949 3.43618 2.35222C2.6236 3.16495 2.1671 4.26726 2.1671 5.41663C2.1671 8.12143 5.16709 10.9384 6.17449 11.8083C6.26834 11.8789 6.38258 11.9171 6.5 11.9171C6.61742 11.9171 6.73166 11.8789 6.82551 11.8083Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
 export function BarraMini({ rotulo, atual, max, cor, corBaixa }) {
   const pct = Math.max(0, Math.min(100, max > 0 ? (atual / max) * 100 : 0));
   const baixa = pct <= 33;
