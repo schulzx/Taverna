@@ -181,5 +181,47 @@ sec("8. O ZERO QUE MENTIA DE NOVO");
   t("quem pediu ontem, leva", D.pesarProposta({ potencia: P, acao: "comercio", dip: d, dia: 31 }).porques.some((x) => /anteontem/.test(x)));
 }
 
+
+sec("AS DUAS PORTAS TÊM PREÇO (v9.191)");
+{
+  /* `painel-correio-v2` foi redesenhado a partir do que o correio faz — a
+     petição com prazo, os tratados em vigor, o formulário da carta e as
+     cartas a caminho com dia de resposta. E aí apareceu o defeito.
+
+     `resolverPeticao` sempre soube o que cada porta custa; a tela mostrava o
+     texto e dois botões. E RECUSAR UMA AMEAÇA vira guerra metade das vezes,
+     sem isso estar escrito em lugar nenhum — guerra come ânimo em todos os
+     domínios, todo dia. Descobrir depois do clique é armadilha. */
+  t("o efeito de cada petição é uma tabela", !!C.EFEITO_DA_PETICAO && Object.keys(C.EFEITO_DA_PETICAO).length === 6);
+  t("a chance de guerra tem nome", C.CHANCE_DE_GUERRA_AO_RECUSAR === 0.5);
+  t("e a leitura existe", typeof C.leituraDaPeticao === "function");
+
+  /* UMA RÉGUA SÓ: o que a leitura promete é o que o efeito aplica */
+  for (const tipo of Object.keys(C.EFEITO_DA_PETICAO)) {
+    const p = { tipo, de: "A Casa" };
+    const ef = C.resolverPeticao(p, true);
+    const e = C.EFEITO_DA_PETICAO[tipo];
+    t(`${tipo}: o efeito sai da tabela`, ef.moedas === e.moedas && ef.felicidade === e.felicidade);
+    t(`${tipo}: o tratado também`, (ef.tratadosAdd[0] || {}).tratado === (e.tratado || undefined));
+  }
+
+  /* A LEITURA DIZ O PREÇO EM PALAVRAS */
+  t("tributo diz o ouro", /◉ 120/.test(C.leituraDaPeticao({ tipo: "exigencia_tributo" }).aceitar));
+  t("aliança diz o tratado", /tratado de aliança/.test(C.leituraDaPeticao({ tipo: "pedido_alianca" }).aceitar));
+  t("comércio diz que RENDE", /\+ ◉ 60/.test(C.leituraDaPeticao({ tipo: "comercio" }).aceitar));
+  t("auxílio diz as duas coisas", /◉ 100/.test(C.leituraDaPeticao({ tipo: "pedido_ajuda" }).aceitar) && /apoio/.test(C.leituraDaPeticao({ tipo: "pedido_ajuda" }).aceitar));
+  /* e a porta de recusar diz a chance, e não uma certeza */
+  t("recusar ameaça diz a chance", C.leituraDaPeticao({ tipo: "ameaca" }).recusar === "50% de virar guerra");
+  t("e marca a petição como perigosa", C.leituraDaPeticao({ tipo: "ameaca" }).perigoso === true);
+  t("as outras só decepcionam", C.leituraDaPeticao({ tipo: "comercio" }).recusar === "só decepciona");
+  t("e lixo não quebra", !!C.leituraDaPeticao(null).aceitar && !!C.leituraDaPeticao({}).recusar);
+
+  /* E A TELA MOSTRA OS DOIS, MAIS O MOTIVO DE ELA ESTAR PEDINDO */
+  t("a tela lê a leitura", /const leitura = leituraDaPeticao\(p\);/.test(APP));
+  t("o botão de aceitar diz o preço", /\{leitura\.aceitar\}/.test(APP));
+  t("o de recusar diz o risco", /\{leitura\.recusar\}/.test(APP));
+  t("e a borda acende na ameaça", /border: `1px solid \$\{leitura\.perigoso \? T\.danger : T\.amber\}`/.test(APP));
+  t("o porquê da petição finalmente aparece", /\{p\.porque && </.test(APP));
+}
 console.log(`\ncorreio v9.144: ${bons} passaram, ${maus} falharam`);
 process.exit(maus ? 1 : 0);

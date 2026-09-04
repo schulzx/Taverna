@@ -166,22 +166,63 @@ export function gerarPeticao({ faccoes = [], dia = 1, potencias = null } = {}) {
   };
 }
 
+/* ---------------- O PREÇO DAS DUAS PORTAS (v9.191) ----------------
+   Estes números viviam dentro de um `switch`, e por isso só existiam DEPOIS
+   do clique: a tela mostrava o texto da petição e dois botões, e o jogador
+   aceitava sem saber que ia perder ◉ 120 — ou recusava uma ameaça sem saber
+   que metade das vezes ela vira guerra.
+
+   Agora a tabela é o lugar da verdade, `resolverPeticao` a executa e a tela
+   a LÊ. Uma régua só: o que a leitura promete é exatamente o que o efeito
+   aplica, e não há como as duas discordarem sem alguém mexer aqui.
+
+   `chanceDeGuerra` fica separado porque recusar uma ameaça é a única porta
+   com sorte dentro — e a leitura tem de dizer isso como chance, e não como
+   certeza. */
+export const EFEITO_DA_PETICAO = {
+  pedido_alianca:    { moedas: 0,    felicidade: 4, tratado: "alianca" },
+  pedido_ajuda:      { moedas: -100, felicidade: 2, tratado: "apoio" },
+  exigencia_tributo: { moedas: -120, felicidade: 0, tratado: null },
+  ameaca:            { moedas: -80,  felicidade: 0, tratado: null, nota: "submissão comprada" },
+  oferta_casamento:  { moedas: 0,    felicidade: 6, tratado: "casamento" },
+  comercio:          { moedas: 60,   felicidade: 0, tratado: "comercio" },
+};
+
+export const CHANCE_DE_GUERRA_AO_RECUSAR = 0.5;
+
+const ROTULO_DE_TRATADO = { alianca: "aliança", apoio: "apoio", casamento: "casamento", comercio: "comércio", guerra: "guerra" };
+
+/* O QUE CADA PORTA CUSTA, em palavras — para a tela dizer antes do clique. */
+export function leituraDaPeticao(p) {
+  const e = EFEITO_DA_PETICAO[(p && p.tipo) || ""] || { moedas: 0, felicidade: 0, tratado: null };
+  const aceitar = [];
+  if (e.moedas) aceitar.push(`${e.moedas > 0 ? "+" : "−"} ◉ ${Math.abs(e.moedas)}`);
+  if (e.tratado) aceitar.push(`tratado de ${ROTULO_DE_TRATADO[e.tratado] || e.tratado}`);
+  if (e.felicidade) aceitar.push(`${e.felicidade > 0 ? "+" : "−"}${Math.abs(e.felicidade)} de ânimo`);
+  const ehAmeaca = p && p.tipo === "ameaca";
+  return {
+    aceitar: aceitar.length ? aceitar.join(" · ") : "nada muda de imediato",
+    recusar: ehAmeaca
+      ? `${Math.round(CHANCE_DE_GUERRA_AO_RECUSAR * 100)}% de virar guerra`
+      : "só decepciona",
+    perigoso: ehAmeaca,
+  };
+}
+
 /* Efeitos ao ACEITAR uma petição (recusar quase sempre só decepciona). */
 export function resolverPeticao(p, aceite) {
   const ef = { felicidade: 0, moedas: 0, tratadosAdd: [], tratadosRem: [], nota: "" };
   if (!aceite) {
-    if (p.tipo === "ameaca" && Math.random() < 0.5) { ef.tratadosAdd.push({ faccao: p.de, tratado: "guerra" }); ef.felicidade = -8; ef.nota = "a ameaça virou guerra"; }
+    if (p.tipo === "ameaca" && Math.random() < CHANCE_DE_GUERRA_AO_RECUSAR) { ef.tratadosAdd.push({ faccao: p.de, tratado: "guerra" }); ef.felicidade = -8; ef.nota = "a ameaça virou guerra"; }
     else ef.nota = "petição recusada";
     return ef;
   }
-  switch (p.tipo) {
-    case "pedido_alianca":   ef.tratadosAdd.push({ faccao: p.de, tratado: "alianca" }); ef.felicidade = 4; break;
-    case "pedido_ajuda":     ef.moedas = -100; ef.tratadosAdd.push({ faccao: p.de, tratado: "apoio" }); ef.felicidade = 2; break;
-    case "exigencia_tributo": ef.moedas = -120; break;
-    case "ameaca":           ef.moedas = -80; ef.nota = "submissão comprada"; break;
-    case "oferta_casamento": ef.tratadosAdd.push({ faccao: p.de, tratado: "casamento" }); ef.felicidade = 6; break;
-    case "comercio":         ef.tratadosAdd.push({ faccao: p.de, tratado: "comercio" }); ef.moedas = 60; break;
-  }
+  const e = EFEITO_DA_PETICAO[p.tipo];
+  if (!e) return ef;
+  ef.moedas = e.moedas;
+  ef.felicidade = e.felicidade;
+  if (e.tratado) ef.tratadosAdd.push({ faccao: p.de, tratado: e.tratado });
+  if (e.nota) ef.nota = e.nota;
   return ef;
 }
 

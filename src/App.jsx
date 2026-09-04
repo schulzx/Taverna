@@ -138,7 +138,7 @@ import { abrirCanal, novoIdDeParticipante, cabeNoFio } from "./transporte.js";
 import { aplicarNivel, PV_POR_NIVEL, PM_POR_NIVEL, evoluirCompanheiro, aplicarDescanso, recargaPadrao, aplicarMudancas, bonusEquip, bonusEfeito, atributoEfetivo, tickEfeitos, processarCombate, migrarPersonagem } from "./regras-jogo.js";
 import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, consumirDia, RITMOS_VIAGEM, ritmoViagem, marchaForcada, testarNavegacao, forragear, efeitoExaustao, recuperarExaustao, resumoErmos } from "./ermos.js";
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, sortearDadiva, resumoEpico } from "./regras.js";
-import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, processarDiaCorreio } from "./correio.js";
+import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, leituraDaPeticao, processarDiaCorreio } from "./correio.js";
 import { gerarDadivaUnica, envelopeDaUnica, todasAsLinhas as linhasDeDadivas, ataquesExtras, danoExtraDeDadiva, descontoDePM, bonusSocialDeDadiva, temVantagemMental, dobraMovimento, ignoraTerrenoDificil, criticoMinimo, imuneA, vantagemDeItem, iniciativaDeItem, refazerDisponivel, gastarRefazer, repousarDadivas, segundoFolegoDisponivel, gastarSegundoFolego, resumoDadivasPrompt, DADIVAS_PROMPT } from "./dadivas.js";
 import { comDom, vantagemDeTraco, vantagemMentalDeTraco, imuneDeTraco, iniciativaDeTraco, ignoraDificilPorTraco, oficioDeTraco, refazerDeTracoDisponivel, gastarRefazerDeTraco, sorteDisponivel, gastarSorte, firmeDisponivel, gastarFirme, repousarTracos, abrirCombateTracos, amortecerDano, textoDoTraco, resumoTracosPrompt } from "./tracos.js";
 import { bonusDeBancada, componentesExtras, bonusDeNavegacao, despojosExtras, bonusDeTeste, precoDeVenda, precoDeCompraPara, moedasDeEspolio, resumoProfissaoPrompt } from "./profissoes.js";
@@ -1633,14 +1633,42 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
     <div className="space-y-3">
       {/* petições recebidas — exigem decisão */}
       {pendentes.map((p) => (
-        <div key={p.id} className="rounded-xl p-3 tv-fade" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
-          <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.amber }}>✉️ petição recebida · dia {p.recebidaEm} · prazo: dia {p.prazo}{dia >= p.prazo ? " (último dia!)" : ""}</div>
-          <div className="tv-body text-sm mt-1" style={{ color: T.ink }}>{p.icone} {p.texto}</div>
-          <div className="grid grid-cols-2 gap-1.5 mt-2">
-            <button onClick={() => responderPeticao(p.id, true)} className="tv-mono text-[10px] px-1.5 py-1.5 rounded font-bold" style={{ background: T.amber, color: T.onAccent }}>aceitar</button>
-            <button onClick={() => responderPeticao(p.id, false)} className="tv-mono text-[10px] px-1.5 py-1.5 rounded" style={{ border: `1px solid ${T.danger}`, color: T.danger }}>recusar</button>
-          </div>
-        </div>
+        (() => {
+          /* ---------------- AS DUAS PORTAS TÊM PREÇO (v9.191) ----------------
+             Redesenhado em `painel-correio-v2`. `resolverPeticao` sempre soube
+             o que cada porta custa — ◉ 120 de tributo, ◉ 100 de auxílio, um
+             tratado, um tanto de ânimo — e a tela mostrava o texto e dois
+             botões. O jogador aceitava no escuro.
+
+             E o pior: RECUSAR UMA AMEAÇA VIRA GUERRA metade das vezes, e isso
+             não estava escrito em lugar nenhum. Guerra come ânimo em todos os
+             domínios, todo dia; descobrir isso depois de clicar "recusar" é a
+             definição de armadilha.
+
+             A leitura sai da mesma tabela que o efeito aplica — não há como
+             as duas discordarem. E `porque` (o apetite da potência, que a
+             v9.144 passou a usar para escolher o que ela pede) finalmente
+             aparece: uma exigência sem motivo é ruído. */
+          const leitura = leituraDaPeticao(p);
+          const ultimo = dia >= p.prazo;
+          return (
+            <div key={p.id} className="rounded-xl p-3 tv-fade" style={{ background: T.panelSoft, border: `1px solid ${leitura.perigoso ? T.danger : T.amber}` }}>
+              <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: ultimo ? T.danger : T.amber }}>✉️ petição recebida · dia {p.recebidaEm} · prazo: dia {p.prazo}{ultimo ? " (último dia!)" : ""}</div>
+              <div className="tv-body text-sm mt-1" style={{ color: T.ink }}>{p.icone} {p.texto}</div>
+              {p.porque && <div className="tv-body text-[11px] italic mt-0.5" style={{ color: T.violetSoft }}>{p.porque}</div>}
+              <div className="grid grid-cols-2 gap-1.5 mt-2">
+                <button onClick={() => responderPeticao(p.id, true)} className="tv-mono text-[10px] px-1.5 py-1.5 rounded text-left" style={{ background: T.amber, color: T.onAccent }}>
+                  <div style={{ fontWeight: 700 }}>aceitar</div>
+                  <div className="tv-mono text-[9px]">{leitura.aceitar}</div>
+                </button>
+                <button onClick={() => responderPeticao(p.id, false)} className="tv-mono text-[10px] px-1.5 py-1.5 rounded text-left" style={{ border: `1px solid ${T.danger}`, color: T.danger }}>
+                  <div style={{ fontWeight: 700 }}>recusar</div>
+                  <div className="tv-mono text-[9px]" style={{ color: leitura.perigoso ? T.danger : T.inkDim }}>{leitura.recusar}</div>
+                </button>
+              </div>
+            </div>
+          );
+        })()
       ))}
 
       {/* tratados firmados pelo correio */}
