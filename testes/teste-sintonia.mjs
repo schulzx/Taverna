@@ -78,5 +78,43 @@ ok(/DORMENTES/.test(rp), "diz quais estão dormentes");
 ok(/Nunca descreva o efeito mágico de um item dormente/.test(rp), "e proíbe o Mestre de acordar a magia sozinho");
 ok(rp.length < 600, `enxuto: ${rp.length} caracteres`);
 
+
+/* ---------------- O SELO NA BOLSA (v9.194) ----------------
+   `aba-bolsa-v2` foi redesenhada a partir do que a bolsa faz — moedas, o que
+   está no corpo por slot com raridade e ficha de combate, o que está na
+   mochila, e os consumíveis e componentes que não competem por sintonia.
+
+   E aí apareceu o buraco. A regra da sintonia é DURA: o herói só sustenta
+   três objetos de poder, e os demais ficam dormentes — continuam aço e
+   couro, mas a magia não responde, e o prompt PROÍBE o Mestre de narrar o
+   poder de um item dormente. A bolsa nunca dizia qual era qual. O jogador
+   equipava a Coroa Perdida, lia "concede Invisibilidade" no próprio cartão,
+   e ficava esperando um poder que estava desligado. A contagem morava noutro
+   painel, longe do objeto. */
+console.log("\n[o selo de sintonia na bolsa]");
+{
+  const { readFileSync } = await import("node:fs");
+  const APP = readFileSync("../src/App.jsx", "utf8").replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  ok(/\{pedeSintonia\(it\) && \(\(\) => \{/.test(APP), "o selo só aparece em peça que PEDE sintonia");
+  ok(/const ligado = estaSintonizado\(personagem, it\);/.test(APP), "e lê o estado da mesma função do resto da casa");
+  ok(/✦ sintonizado — o poder responde/.test(APP), "diz quando o poder responde");
+  ok(/○ dormente — é só metal enquanto não sintonizar/.test(APP), "e diz quando ele dorme");
+  ok(/Você sustenta \$\{MAX_SINTONIA\} objetos de poder ao mesmo tempo/.test(APP), "o porquê vem do teto da tabela, não de um número digitado");
+
+  /* e a régua da tela é a mesma da regra: item que não pede sintonia está
+     sempre inteiro, e por isso não ganha selo nenhum */
+  const coroa = I("Coroa Perdida", "lendario", { poderes: [{ id: "x", nome: "Sussurro" }] });
+  /* a coroa precisa estar COM o herói: `alternarSintonia` recebe a chave e
+     recusa item que não está na mão — foi assim que esta régua nasceu errada */
+  const p = migrarPersonagem({ nome: "Prova", nivel: 5, equipados: { amuleto: coroa }, sintonizados: [] });
+  ok(estaSintonizado(p, I("Espada Curta", "comum")) === true, "aço comum está sempre inteiro");
+  ok(pedeSintonia(I("Espada Curta", "comum")) === false, "e por isso não recebe selo");
+  ok(pedeSintonia(coroa) === true, "a peça de poder pede");
+  const solto = { ...p, sintonizados: [] };
+  ok(estaSintonizado(solto, coroa) === false, "e dorme enquanto não for sintonizada");
+  const r = alternarSintonia(solto, "Coroa Perdida");
+  ok(r.ok && estaSintonizado({ ...solto, sintonizados: r.sintonizados }, coroa) === true, "sintonizar acende o selo");
+  ok(alternarSintonia({ ...solto, sintonizados: r.sintonizados }, "Coroa Perdida").acao === "soltou", "e soltar apaga de novo");
+}
 console.log(falhas ? `\n${falhas} FALHA(S)` : "\nTudo passou");
 process.exit(falhas ? 1 : 0);

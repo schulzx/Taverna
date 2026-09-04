@@ -2642,6 +2642,33 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
                           </div>
                           <button onClick={() => desequipar(slot)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>tirar</button>
                         </div>
+                        {/* ---------------- SINTONIZADO OU DORMENTE (v9.194) ----------------
+                            Redesenhado em `aba-bolsa-v2`. A regra existe e é
+                            DURA: o herói só sustenta três objetos de poder, e
+                            os demais ficam dormentes — continuam aço e couro,
+                            mas a magia não responde, e o prompt proíbe o Mestre
+                            de narrar o poder de um item dormente.
+
+                            A bolsa nunca dizia qual era qual. O jogador
+                            equipava a Coroa Perdida, via "+2 PRE · concede
+                            Invisibilidade" escrito no cartão, e ficava
+                            esperando um poder que estava desligado — sem nada
+                            na tela que explicasse por quê. A contagem morava
+                            noutro painel, longe do objeto.
+
+                            Só aparece em peça que PEDE sintonia: pôr um selo
+                            em toda faca comum seria transformar a regra em
+                            papel de parede. */}
+                        {pedeSintonia(it) && (() => {
+                          const ligado = estaSintonizado(personagem, it);
+                          return (
+                            <div className="tv-mono text-[9px] mt-1.5 px-1.5 py-1 rounded inline-block"
+                              style={{ border: `1px solid ${ligado ? T.ok : T.line}`, color: ligado ? T.ok : T.inkDim }}
+                              title={ligado ? "O poder deste objeto responde." : `Você sustenta ${MAX_SINTONIA} objetos de poder ao mesmo tempo. Enquanto este dorme, ele serve como aço e couro — e o Mestre não pode narrar a magia dele.`}>
+                              {ligado ? "✦ sintonizado — o poder responde" : "○ dormente — é só metal enquanto não sintonizar"}
+                            </div>
+                          );
+                        })()}
                         {(it.atributos && Object.keys(it.atributos).length > 0) && (
                           <div className="flex flex-wrap gap-1.5 mt-2">
                             {Object.entries(it.atributos).map(([k, v]) => (
