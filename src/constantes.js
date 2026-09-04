@@ -13,7 +13,7 @@ export const SLOGAN = "toda lenda começa aqui";
    do App — que é exatamente onde um número vai para ser esquecido.
    Aqui ela fica ao lado do resto do que a casa sabe sobre si mesma, e um
    varredor confere que o App não voltou a escrevê-la à mão. */
-export const VERSAO = "v9.196";
+export const VERSAO = "v9.197";
 export const LEVA = "o foco e a explicação";
 
 export const XP_POR_NIVEL = (nivel) => xpDoProximoNivel(nivel) ?? XP_POR_DADIVA;
@@ -108,11 +108,30 @@ export const FONT_CSS = `
 
    tv-espaco-abas é a reserva: nada embaixo, no telefone; 68px à direita
    a partir do monitor. Uma decisão num lugar só, e a próxima tela nasce
-   certa sem ninguém lembrar dela. */
-.tv-espaco-abas { padding-right: 0; padding-bottom: 4.75rem; }
+   certa sem ninguém lembrar dela.
+
+   ---------------- E O PADDING-RIGHT FOI EMBORA (v9.197) ----------------
+   A reserva da direita morreu na v9.170, quando o trilho saiu de fixed e
+   virou coluna em fluxo: de la para ca o valor era 0 nos dois lados da
+   media query. Mas a DECLARACAO ficou — e uma declaracao de padding-right
+   ganha de px-4 na cascata, entao todo elemento que usava as duas classes
+   juntas (eram dez) tinha 16px a esquerda e ZERO a direita.
+
+   Foi a queixa de quem jogou no telefone: o meio da tela parecia pregado na
+   borda direita. Nao era o rolamento — era esta linha, apagando metade do
+   respiro de cada bloco. Reserva que nao reserva nada nao fica "por via das
+   duvidas": ela sai, porque continua mandando na cascata mesmo valendo 0.
+
+   (De novo sem crase: o aviso acima nesta mesma caixa e literal, e eu
+   tropecei nele ao escrever este paragrafo.)
+
+   O que sobra é o que ainda é verdade: no telefone a barra de abas é fixa
+   embaixo e come 64px, então quem encosta nela reserva esse espaço. UMA
+   VEZ — e não em dez elementos aninhados, que era o buraco vertical. */
+.tv-espaco-abas { padding-bottom: 4.75rem; }
 .tv-margem-abas { margin-right: 0; }
 @media (min-width: 768px) {
-  .tv-espaco-abas { padding-right: 0; padding-bottom: 0; }
+  .tv-espaco-abas { padding-bottom: 0; }
   .tv-margem-abas { margin-right: 0; }
 }
 

@@ -44,8 +44,16 @@ sec("2. A RESERVA VIROU UMA DECISÃO COM NOME");
   t("e a de margem também", /\.tv-margem-abas \{/.test(CSS));
   /* NO TELEFONE a reserva é EMBAIXO (onde a barra está), e não à
      direita — que é a inversão inteira desta onda */
-  t("no telefone, reserva embaixo", /\.tv-espaco-abas \{ padding-right: 0; padding-bottom: [\d.]+rem; \}/.test(CSS));
-  t("e nada à direita", /padding-right: 0/.test(CSS));
+  /* v9.197: O `padding-right` FOI EMBORA, e a régua mudou de lado. Ela
+     cobrava que a declaração existisse valendo 0 — e era justamente essa
+     declaração que quebrava a tela no telefone: `padding-right` ganha de
+     `px-4` na cascata, então dez elementos ficavam com 16px à esquerda e
+     ZERO à direita. Reserva que não reserva nada não fica "por via das
+     dúvidas": ela continua mandando. Agora a lei é a ausência dela. */
+  t("no telefone, reserva embaixo", /\.tv-espaco-abas \{ padding-bottom: [\d.]+rem; \}/.test(CSS));
+  /* a régua caça a DECLARAÇÃO, e não a palavra: a caixa de comentário acima
+     dela conta a história do defeito e cita o nome da propriedade */
+  t("e a classe não mexe mais na direita", !/padding-rights*:/.test(CSS));
   /* NO MONITOR a reserva é ZERO — e isso é a lei ficando mais forte, não
      mais fraca. v9.170 (mesa-jogo-v2): o trilho saiu de `fixed right-0` e
      virou coluna DENTRO do fluxo, ao lado do painel da narrativa. Espaço
@@ -53,7 +61,7 @@ sec("2. A RESERVA VIROU UMA DECISÃO COM NOME");
      buraco de 68px no monitor — e era esse `fixed` que fazia o trilho
      ficar POR CIMA do painel lateral aberto, que também é `right-0`. */
   const md = CSS.slice(CSS.indexOf("@media (min-width: 768px)"), CSS.indexOf("@media (min-width: 768px)") + 260);
-  t("no monitor, nada à direita (o trilho está no fluxo)", /padding-right: 0/.test(md));
+  t("no monitor, a reserva de baixo some (o trilho está no fluxo)", /\.tv-espaco-abas \{ padding-bottom: 0; \}/.test(md));
   t("e nada embaixo", /padding-bottom: 0/.test(md));
   t("a margem acompanha", /margin-right: 0/.test(md));
   /* o comentário guarda a armadilha que derrubou o build: este bloco mora
@@ -98,10 +106,22 @@ sec("5. AS TELAS DE JOGO CARREGAM A CLASSE");
      o trilho do monitor volta a cobrir conteúdo */
   const quantas = (APP.match(/tv-espaco-abas/g) || []).length;
   const margens = (APP.match(/tv-margem-abas/g) || []).length;
-  t(`a reserva é usada em ${quantas} telas`, quantas >= 8);
+  /* v9.197: A RESERVA VALE UMA VEZ, E NÃO DEZ. Ela estava em dez elementos
+     ANINHADOS — o painel que rola, a fileira do herói, a dos modos, a caixa
+     de escrita —, e cada um somava 76px de reserva sobre o de fora. Era esse
+     o buraco vertical que sobrava no telefone.
+
+     Agora quem reserva é o CONVÉS: o bloco que de fato encosta na barra de
+     abas. E ele é irmão do painel que rola, e não filho — antes a barra de
+     vida, os modos e a caixa saíam da tela junto com a prosa numa cena
+     comprida, e escrever exigia rolar até o fim. */
+  t(`a reserva é usada em ${quantas} lugar(es)`, quantas >= 1 && quantas <= 3);
   t(`e a margem em ${margens}`, margens >= 4);
-  t("a área que rola também reserva", /tv-scroll tv-espaco-abas flex-1 overflow-y-auto/.test(APP));
-  t("a linha de escrita também", /className="tv-espaco-abas px-4 md:px-8 shrink-0"/.test(APP));
+  t("quem reserva é o convés", /className="tv-espaco-abas shrink-0 flex flex-col"/.test(APP));
+  t("a área que rola NÃO reserva mais", /className="tv-scroll flex-1 overflow-y-auto overflow-x-hidden/.test(APP));
+  t("e a linha de escrita também não", /className="px-4 md:px-8 shrink-0" style=\{\{ paddingBottom:/.test(APP));
+  /* O CONVÉS FICA: é o que separa "o jogo na mão" de "o jogo que foge" */
+  t("o convés é irmão do painel, e não filho", APP.indexOf('className="tv-espaco-abas shrink-0 flex flex-col"') > APP.indexOf('className="tv-scroll flex-1 overflow-y-auto'));
 }
 
 console.log(`\ncelular v9.156: ${bons} passaram, ${maus} falharam`);

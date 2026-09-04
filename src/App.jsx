@@ -18764,7 +18764,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 próximo filho largo demais apareça como texto cortado — que se
                 vê e se conserta — em vez de virar deriva lateral, que ninguém
                 associa à causa. */}
-            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll tv-espaco-abas flex-1 overflow-y-auto overflow-x-hidden mx-4 md:mx-8 mt-3 md:mt-4 px-5 md:px-8 py-6 space-y-4 rounded-2xl"
+            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll flex-1 overflow-y-auto overflow-x-hidden mx-4 md:mx-8 mt-3 md:mt-4 px-5 md:px-8 py-6 space-y-4 rounded-2xl"
               style={{ background: "rgba(23,19,34,0.48)", border: `1px solid ${T.line}` }} >
               <VinhetaDaCena bioma={biomaDaqui()} />
               <div className="flex items-center gap-2">
@@ -18854,7 +18854,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               );
             })()}
             {acoesAbertas && (
-              <div className="tv-espaco-abas px-4 md:px-8 pb-2 shrink-0" >
+              <div className="px-4 md:px-8 pb-2 shrink-0" >
                 <div className="rounded-2xl p-3" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.amberSoft }}>Ações — toque para preencher e complete o alvo</span>
@@ -18913,7 +18913,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             )}
 
             {milagreSel && !rolagem && (
-              <div className="tv-fade tv-espaco-abas px-4 md:px-8 pb-1.5" >
+              <div className="tv-fade px-4 md:px-8 pb-1.5" >
                 <div className="inline-flex items-center gap-2 rounded-full pl-3.5 pr-1.5 py-1.5" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
                   <span className="tv-mono text-xs" style={{ color: T.amber }}>{milagreSel.icone} {milagreSel.nome} · {milagreSel.pf} PF — diga como você o usa</span>
                   <button onClick={() => setMilagreSel(null)} className="tv-mono text-xs rounded-full w-5 h-5 flex items-center justify-center" style={{ background: T.line, color: T.inkDim }}>✕</button>
@@ -18922,7 +18922,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             )}
 
             {habsSel.length > 0 && !rolagem && (
-              <div className="tv-fade tv-espaco-abas px-4 md:px-8 pb-1.5 flex flex-wrap gap-1.5" >
+              <div className="tv-fade px-4 md:px-8 pb-1.5 flex flex-wrap gap-1.5" >
                 {habsSel.map((h, i) => (
                   <div key={i} className="inline-flex items-center gap-2 rounded-full pl-3.5 pr-1.5 py-1.5" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
                     <span className="tv-mono text-xs" style={{ color: T.violetSoft }}>✦ {h.nome} · {h.custo} PM</span>
@@ -19199,7 +19199,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 fecha, e oferece-la de novo transformaria o fim numa opcao
                 de menu. */}
             {ofertaCapitulo && (
-              <div className="tv-espaco-abas px-4 md:px-8 pb-3">
+              <div className="px-4 md:px-8 pb-3">
                 <div className="rounded-xl p-3" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
                   <div className="tv-mono text-[11px] mb-2" style={{ color: T.inkDim }}>
                     A historia continua — de onde voce quiser olha-la.
@@ -19237,7 +19237,22 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               </div>
             )}
 
-            <div className="tv-espaco-abas px-4 md:px-8 flex items-center gap-3 md:gap-4 pb-1.5 flex-wrap" >
+              <div ref={fimRef} style={{ height: 8 }} />
+            </div>
+
+            {/* ---------------- O CONVÉS (v9.197) ----------------
+                Desenhado em `mesa-jogo-mobile`, o primeiro desenho de telefone
+                que este arquivo tem. Até aqui a barra de vida, os quatro modos
+                e a caixa de texto viviam DENTRO do painel que rola: numa cena
+                comprida eles saíam da tela junto com a prosa, e para escrever
+                era preciso rolar até o fim. Num telefone isso é o jogo inteiro
+                escapando da mão.
+
+                Agora eles são IRMÃOS do painel — a cena rola por baixo, o
+                convés fica. É a mesma ideia da barra de abas embaixo, que já
+                estava certa: o que se toca todo turno não se procura. */}
+            <div className="tv-espaco-abas shrink-0 flex flex-col">
+            <div className="px-4 md:px-8 flex items-center gap-3 md:gap-4 pb-1.5 flex-wrap" >
               {/* ---------------- O BLOCO DO HERÓI (v9.160) ----------------
                   PV e PM eram duas barrinhas anônimas ao lado da data, como
                   se a vida do herói e o relógio fossem informação do mesmo
@@ -19261,7 +19276,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                    tropeçou nisso duas vezes.) */
                 return (
               <button onClick={() => setAba("gestao")} title="Abrir ficha"
-                className={`flex items-center gap-4 rounded-xl px-2 py-1.5 min-w-0 w-full md:w-auto ${feridaRecente ? "tv-dano" : grave ? "tv-agonia" : ""}`}
+                className={`flex items-center gap-3 md:gap-4 rounded-xl px-2.5 py-2 min-w-0 w-full md:w-auto ${feridaRecente ? "tv-dano" : grave ? "tv-agonia" : ""}`}
                 style={{ background: T.panel, border: `1px solid ${feridaRecente || grave ? T.danger : T.line}` }}>
                 <div className="relative shrink-0">
                   <Retrato semente={sementeDe(personagem)} ente={personagem} semCarta tamanho={44} anel={grave ? T.danger : T.amber} estado={estadoDe(personagem.vida, personagem.vidaMax)} />
@@ -19270,6 +19285,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     <span className="tv-mono text-[9px] tracking-[0.9px]" style={{ color: T.bg }}>NIV {personagem.nivel}</span>
                   </span>
                 </div>
+                {/* v9.197: EMPILHADAS NO TELEFONE. Lado a lado em 375px cada barra
+                    fica com 94 — curta demais para se ler como barra, e a vida do
+                    herói vira um traço ao lado do relógio. Empilhadas ocupam a
+                    largura toda do cartão; a partir do monitor voltam às duas
+                    colunas de 140 que a v9.160 escolheu. */}
+                <div className="flex flex-col md:flex-row gap-2 md:gap-4 flex-1 min-w-0">
                 {[
                   { rot: "PV (VIDA)", atual: personagem.vida, max: personagem.vidaMax, cor: grave ? T.danger : T.amber, leito: "rgba(232,163,61,0.13)" },
                   { rot: "PM (MANA)", atual: personagem.mana, max: personagem.manaMax, cor: T.violetSoft, leito: "rgba(176,165,236,0.13)" },
@@ -19281,7 +19302,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                      dividem o que houver no telefone e voltam aos 140 fixos a
                      partir do monitor, onde o peso visual da vida foi decidido
                      na v9.160 e continua valendo. */
-                  <div key={b.rot} className="flex flex-col gap-1 flex-1 min-w-0 md:flex-none md:w-[140px]" title={`${b.rot}: ${b.atual}/${b.max}`}>
+                  <div key={b.rot} className="flex flex-col gap-1 w-full min-w-0 md:w-[140px]" title={`${b.rot}: ${b.atual}/${b.max}`}>
                     <div className="flex items-baseline justify-between">
                       <span className="tv-mono text-[9px] tracking-[0.9px]" style={{ color: T.ink }}>{b.rot}</span>
                       <span className="tv-mono text-[11px]" style={{ color: T.ink, fontWeight: 700 }}>{b.atual}/{b.max}</span>
@@ -19291,9 +19312,15 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     </div>
                   </div>
                 ))}
+                </div>
               </button>
                 );
               })()}
+              {/* v9.197: o selo do heroísmo mora AQUI, ao lado do herói. Ele é
+                  recurso dele; pendurado na direita da fileira de modos, ficava
+                  sozinho numa linha própria no telefone — órfão, e longe da
+                  única coisa a que se refere. */}
+              <SeloHeroismo pontos={garantirHeroismo(personagem)} aceso={heroAberto} aoAbrir={() => setHeroAberto((v) => !v)} />
               <span className="tv-mono text-[10px] shrink-0" title={`${estacaoDe(dia).nome} — ${estacaoDe(dia).nota} · o app controla o relógio`} style={{ color: T.inkDim }}>📅 {dataTxt(dia)} · {horaTxt(minuto)}{ehNoite(minuto) ? " 🌙" : ""} {estacaoDe(dia).icone}</span>
               {clima && <span className="tv-mono text-[10px] shrink-0" title={clima.nota} style={{ color: T.inkDim }}>{clima.icone} {clima.rotulo}</span>}
               {/* v9.39: estar fora da cidade agora é um estado do jogo, então
@@ -19310,7 +19337,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               const mec = mecanicaDe(personagem.condicoes || []);
               const rol = estadoDeRolagem(personagem.condicoes || []);
               return (
-                <div className="tv-espaco-abas px-4 md:px-8 flex items-center gap-1.5 pb-1.5 flex-wrap" >
+                <div className="px-4 md:px-8 flex items-center gap-1.5 pb-1.5 flex-wrap" >
                   {(personagem.condicoes || []).map((c, i) => (
                     <span key={`c${i}`} className="tv-mono text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1" title={c.efeito || ""}
                       style={{ background: c.tipo === "bom" ? "#1f3320" : "#33201f", border: `1px solid ${c.tipo === "bom" ? T.ok : T.danger}`, color: c.tipo === "bom" ? T.ok : T.danger }}>
@@ -19367,7 +19394,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 um turno só, ela vira ruído — e o botão que pedia ao jogador
                 para mandar o mundo viver some junto, porque o mundo já vive. */}
             {(
-            <div className="tv-espaco-abas px-4 md:px-8 shrink-0" style={{ paddingBottom: rolagem ? "6px" : "20px" }}>
+            <div className="px-4 md:px-8 shrink-0" style={{ paddingBottom: rolagem ? "6px" : "20px" }}>
               {/* LINHA 1 — ferramentas: rótulos sempre visíveis, sem roubar espaço da escrita */}
               {/* ---------------- A FILEIRA QUEBRA A LINHA (v9.196) ----------------
                   No telefone esta fileira pedia 370px e recebia 298: os quatro
@@ -19380,14 +19407,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
                   A fileira irmã, a do combate, já quebrava a linha desde sempre.
                   Esta era a única que não. */}
-              <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                <button onClick={() => { setAcoesAbertas((v) => !v); setHabAbertas(false); }} disabled={bloqueado} className="tv-mono text-[11px] rounded-full px-3 py-1.5"
+              <div className="grid grid-cols-4 gap-1.5 mb-2 md:flex md:items-center md:flex-wrap">
+                <button onClick={() => { setAcoesAbertas((v) => !v); setHabAbertas(false); }} disabled={bloqueado} className="flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 tv-mono text-[9px] md:text-[11px] rounded-xl md:rounded-full px-1 md:px-3 py-1.5 leading-tight text-center"
                   style={{ background: acoesAbertas ? T.amber : "transparent", color: acoesAbertas ? T.onAccent : T.amberSoft, border: `1px solid ${T.amber}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
-                  ⚔ Ações
+                  <span className="text-[13px] md:text-[11px] leading-none">⚔</span><span>Ações</span>
                 </button>
-                <button onClick={() => { setHabAbertas((v) => !v); setAcoesAbertas(false); }} disabled={bloqueado} className="tv-mono text-[11px] rounded-full px-3 py-1.5"
+                <button onClick={() => { setHabAbertas((v) => !v); setAcoesAbertas(false); }} disabled={bloqueado} className="flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 tv-mono text-[9px] md:text-[11px] rounded-xl md:rounded-full px-1 md:px-3 py-1.5 leading-tight text-center"
                   style={{ background: habAbertas ? T.violet : "transparent", color: habAbertas ? T.onSecond : T.violetSoft, border: `1px solid ${T.violet}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
-                  ✦ Habilidades
+                  <span className="text-[13px] md:text-[11px] leading-none">✦</span><span>Habilidades</span>
                 </button>
                 {/* EXAMINAR (v9.41): o "segurar a tecla" do Baldur's Gate. Mostra
                     tudo o que dá para catar por perto e deixa o jogador escolher.
@@ -19396,16 +19423,16 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     recurso que ninguém aprende a usar. */}
                 <button onClick={() => setExaminando((v) => !v)} disabled={bloqueado}
                   title={chaoPerto.length ? `${chaoPerto.length} coisa(s) caída(s) por perto` : "Nada caído por perto"}
-                  className="tv-mono text-[11px] rounded-full px-3 py-1.5 flex items-center gap-1"
+                  className="flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 tv-mono text-[9px] md:text-[11px] rounded-xl md:rounded-full px-1 md:px-3 py-1.5 leading-tight text-center"
                   style={{ background: examinando ? T.ok : "transparent", color: examinando ? T.onAccent : chaoPerto.length ? T.ok : T.inkDim, border: `1px solid ${chaoPerto.length ? T.ok : T.line}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
-                  🔍 Examinar
+                  <span className="text-[13px] md:text-[11px] leading-none">🔍</span><span>Examinar</span>
                   {chaoPerto.length > 0 && (
                     <span className="tv-mono text-[9px] px-1.5 rounded-full" style={{ background: examinando ? T.onAccent : T.ok, color: examinando ? T.ok : T.onAccent }}>{chaoPerto.length}</span>
                   )}
                 </button>
-                <button onClick={() => setMostrarHoras((v) => !v)} disabled={bloqueado || acampado} title="Passar o tempo" className="tv-mono text-[11px] rounded-full px-3 py-1.5"
+                <button onClick={() => setMostrarHoras((v) => !v)} disabled={bloqueado || acampado} title="Passar o tempo" className="flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 tv-mono text-[9px] md:text-[11px] rounded-xl md:rounded-full px-1 md:px-3 py-1.5 leading-tight text-center"
                   style={{ background: mostrarHoras ? T.amber : "transparent", color: mostrarHoras ? T.onAccent : T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600, opacity: (bloqueado || acampado) ? 0.4 : 1 }}>
-                  🕐 Tempo
+                  <span className="text-[13px] md:text-[11px] leading-none">🕐</span><span>Tempo</span>
                 </button>
                 {/* v9.31: os botões "Viajar" e "Masmorra" saíram. Desde o
                     rastro, os dois módulos abrem sozinhos quando o herói põe o
@@ -19417,9 +19444,6 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 {/* v9.16: o selo fica SEMPRE visível, aceso ou apagado. Recurso
                     que o jogador precisa abrir um painel para lembrar que tem
                     é recurso que ele não gasta — e que portanto não existe. */}
-                <div className="ml-auto">
-                  <SeloHeroismo pontos={garantirHeroismo(personagem)} aceso={heroAberto} aoAbrir={() => setHeroAberto((v) => !v)} />
-                </div>
               </div>
               {examinando && (
                 <PainelExame itens={chaoPerto} raio={combate ? RAIO_EXAME : 0}
@@ -19488,7 +19512,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             )}
 
             {rolagem && !carregando && (
-              <div className="tv-fade tv-espaco-abas px-4 md:px-8 pb-5 flex justify-center" >
+              <div className="tv-fade px-4 md:px-8 pb-5 flex justify-center" >
                 <div className="tv-pulse flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl px-4 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
                   <span className="tv-mono text-xs text-center" style={{ color: T.ink }}>🎲 Teste de {rolagem.rotulo || rolagem.atributo || "sorte"}{rolagem.dificuldade != null ? ` · dif. ${rolagem.dificuldade}` : ""} — <em className="tv-body" style={{ color: T.inkDim }}>{rolagem.motivo}</em>{rolagem.porVantagem ? <span style={{ color: T.violetSoft }}> · ✦ {rolagem.porVantagem}</span> : null}</span>
                   <Botao primario pequeno desativado={dadoRolando} onClick={() => { if (!dadoRolando) setDadoRolando(true); }}>Rolar d20{modPend !== 0 ? ` (+${modPend})` : ""}</Botao>
@@ -19496,7 +19520,6 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               </div>
             )}
 
-              <div ref={fimRef} style={{ height: 8 }} />
             </div>
 
             {/* botão flutuante: volta para a última mensagem / área de ação */}

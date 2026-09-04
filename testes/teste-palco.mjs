@@ -131,7 +131,7 @@ sec("5. A COSTURA — no topo, e sem inventar");
   t("e o clima", /clima: climaRef\.current/.test(APP));
   /* ACIMA da narrativa, porque responde antes dela: a primeira palavra do
      Narrador já supõe o lugar */
-  const iArea = APP.indexOf("tv-scroll tv-espaco-abas flex-1 overflow-y-auto");
+  const iArea = APP.indexOf("tv-scroll flex-1 overflow-y-auto");
   const iCab = APP.indexOf("<CabecalhoDaCena cena={cenaDoPalco()} />");
   t("fica dentro da área que rola", iCab > iArea);
   /* v9.170 (mesa-jogo-v2): o selo "MESTRE ATIVO" passou a abrir o painel da
@@ -157,24 +157,28 @@ sec("O MEIO NÃO ANDA PARA OS LADOS (v9.196)");
      outro deixa de ser também — então `overflow-y-auto` sozinho entrega um
      rolamento lateral de brinde, e basta um filho estourar para o painel
      inteiro derivar. */
-  t("o painel da narrativa tranca o eixo lateral", /tv-scroll tv-espaco-abas flex-1 overflow-y-auto overflow-x-hidden/.test(APP));
+  /* v9.197: a reserva da barra saiu daqui — ela agora vale uma vez, no
+     convés, que é quem encosta na barra. A trava do eixo lateral fica. */
+  t("o painel da narrativa tranca o eixo lateral", /tv-scroll flex-1 overflow-y-auto overflow-x-hidden/.test(APP));
 
-  /* A FILEIRA DE MODO QUEBRA A LINHA. No telefone ela pedia 370px e recebia
-     298: quatro botões mais o selo de heroísmo empurrado pela direita não
-     cabem em 375. A fileira irmã, a do combate, já quebrava desde sempre —
-     esta era a única que não. */
-  const fileiras = APP.match(/className="flex items-center gap-1\.5 mb-2[^"]*"/g) || [];
-  t("as duas fileiras de modo existem", fileiras.length === 2);
-  t("e as DUAS quebram a linha", fileiras.every((f) => /flex-wrap/.test(f)));
+  /* v9.197: A FILEIRA DE MODO VIROU GRADE. Quebrar a linha resolvia o
+     estouro mas deixava a tela torta — duas pílulas em cima, uma embaixo e o
+     selo de heroísmo pendurado sozinho na direita. Agora são quatro tijolos
+     iguais, glifo em cima e rótulo embaixo, na mesma língua da barra de abas
+     do rodapé; no monitor voltam a ser pílulas em fileira. */
+  t("no telefone os modos são quatro tijolos iguais", /className="grid grid-cols-4 gap-1.5 mb-2 md:flex md:items-center md:flex-wrap"/.test(APP));
+  t("e a fileira do combate continua quebrando a linha", /className="flex items-center gap-1.5 mb-2 flex-wrap"/.test(APP));
+  /* O SELO DO HEROÍSMO SAIU da fileira de modos: ele é recurso do HERÓI, e
+     pendurado ali ficava órfão numa linha própria no telefone */
+  t("o heroísmo mora ao lado do herói", APP.indexOf("<SeloHeroismo pontos={garantirHeroismo(personagem)}") < APP.indexOf("estacaoDe(dia).nome"));
+  t("e não sobrou selo pendurado na direita", !/<div className="ml-auto">s*<SeloHeroismo/.test(APP));
 
-  /* A BARRA DO HERÓI ENCOLHE ANTES DE ESTOURAR. 110px fixos por barra mais o
-     retrato não cabem num telefone de 320, e os pixels que sobravam saíam
-     pela direita. No telefone ela toma a linha inteira e as duas barras
-     dividem o que houver; a partir do monitor voltam aos 140 fixos, que é o
-     peso visual decidido na v9.160. */
-  t("a barra do herói toma a linha no telefone", /px-2 py-1\.5 min-w-0 w-full md:w-auto/.test(APP));
-  t("e as barras dividem o espaço lá, e são fixas aqui", /flex flex-col gap-1 flex-1 min-w-0 md:flex-none md:w-\[140px\]/.test(APP));
-  /* o que NÃO pode voltar: largura fixa sem escape no telefone */
+  /* A BARRA DO HERÓI: toma a linha no telefone, e as duas medidas EMPILHAM.
+     Lado a lado em 375px cada uma fica com 94 — curta demais para se ler como
+     barra, e a vida do herói vira um traço ao lado do relógio. */
+  t("a barra do herói toma a linha no telefone", /rounded-xl px-2.5 py-2 min-w-0 w-full md:w-auto/.test(APP));
+  t("as duas medidas empilham no telefone", /className="flex flex-col md:flex-row gap-2 md:gap-4 flex-1 min-w-0"/.test(APP));
+  t("e cada uma volta aos 140 fixos no monitor", /flex flex-col gap-1 w-full min-w-0 md:w-\[140px\]/.test(APP));
   t("não sobrou barra de largura fixa sem escape", !/flex flex-col gap-1 w-\[110px\] md:w-\[140px\]/.test(APP));
 }
 console.log(`\npalco v9.157: ${bons} passaram, ${maus} falharam`);
