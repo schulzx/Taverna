@@ -47,5 +47,29 @@ acoes.forEach(a => console.log(`  ${a.companheiro}: ${a.tipo}${a.habilidade ? " 
 ok(acoes.some(a => a.tipo === "cura" && a.valor > 0), "com o herói caído, alguém cura DE VERDADE (com valor)");
 
 console.log("\n[o que o Mestre lê]\n  " + resumoGrupoPrompt(grupo));
+
+/* ---------------- O PM DO COMPANHEIRO NA TELA (v9.184) ----------------
+   `painel-grupo-v2` desenha duas barras por membro, e foi ao trazer isso que
+   apareceu o buraco: `companheiros.js` dá manaMax a todo companheiro desde
+   sempre, o resumo que o Mestre lê já dizia "12/16 PM", e as habilidades
+   deles cobram PM — mas o cartão do painel passava só vida. Quem comandava o
+   grupo não tinha como saber se o curandeiro ainda podia curar. */
+console.log("\n[o PM do companheiro chega ao painel]");
+{
+  const { readFileSync } = await import("node:fs");
+  const APP = readFileSync("../src/App.jsx", "utf8");
+  const c = garantirFichaCompanheiro({ nome: "Prova", classe: "Clérigo", nivel: 3 });
+  ok(c.manaMax > 0, "o companheiro nasce com mana máxima");
+  ok(c.mana != null, "e com mana de agora");
+  /* o cartão só desenha a barra de mana quando manaMax chega — e chegava
+     `undefined` para todo companheiro */
+  ok(/\{manaMax != null && <BarraMini rotulo="PM"/.test(APP), "o cartão desenha PM quando recebe manaMax");
+  ok(/nivel=\{m\.nivel\} vida=\{m\.vida\} vidaMax=\{m\.vidaMax\} mana=\{m\.mana\} manaMax=\{m\.manaMax\}/.test(APP),
+    "e o painel do grupo passa os dois");
+  /* o cabeçalho de `painel-grupo-v2`: o ponto vivo, e a contagem que o
+     desenho não faz */
+  ok(/O grupo de aventura · \{1 \+ \(personagem\.grupo \|\| \[\]\)\.filter\(\(g\) => !g\.invocada\)\.length\} de \{1 \+ MAX_COMPANHEIROS\}/.test(APP),
+    "o cabeçalho conta quantos cabem ainda");
+}
 console.log(falhas ? `\n${falhas} FALHA(S)` : "\nTudo passou");
 process.exit(falhas ? 1 : 0);

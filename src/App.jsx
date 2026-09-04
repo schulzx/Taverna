@@ -2353,13 +2353,27 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
 
         {aba === "gestao" && subGestao === "grupo" && (
           <>
-            <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Grupo · {1 + (personagem.grupo || []).filter((g) => !g.invocada).length} de {1 + MAX_COMPANHEIROS}</div>
+            {/* o cabeçalho de `painel-grupo-v2`: o ponto vivo antes do rótulo.
+                A contagem fica, porque ela responde a pergunta que o desenho
+                não faz — quantos cabem ainda. */}
+            <div className="flex items-center gap-2">
+              <span className="rounded-full shrink-0" style={{ width: 6, height: 6, background: T.violetSoft }} />
+              <span className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.violetSoft }}>
+                O grupo de aventura · {1 + (personagem.grupo || []).filter((g) => !g.invocada).length} de {1 + MAX_COMPANHEIROS}
+              </span>
+            </div>
             <CartaoMembro nome={personagem.nome} subtitulo={personagem.conceito} nivel={personagem.nivel} vida={personagem.vida} vidaMax={personagem.vidaMax} mana={personagem.mana} manaMax={personagem.manaMax} habilidades={personagem.habilidades} semente={sementeDe(personagem)} ficha={personagem} ehVoce />
             {(personagem.grupo || []).length === 0 ? (
               <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você viaja sozinho — por enquanto. Aliados podem se juntar a você.</div>
             ) : (personagem.grupo || []).map((m, i) => (
               <div key={i}>
-                <CartaoMembro nome={m.nome} subtitulo={[m.conceito, m.classe, m.subclasse].filter(Boolean).join(" · ")} nivel={m.nivel} vida={m.vida} vidaMax={m.vidaMax} descricao={m.descricao} habilidades={m.habilidades} semente={sementeDe(m)} xpComp={m.xp || 0} vinculo={m.vinculo ?? VINCULO_INICIAL} ficha={m} comparadoA={personagem} />
+                {/* v9.184: o PM do companheiro entrou. Ele SEMPRE existiu —
+                    `companheiros.js` dá manaMax a todo mundo, o Mestre recebe
+                    "12/16 PM" na linha do prompt, e as habilidades dele cobram
+                    PM — mas este cartão passava só vida, e a barra de mana só
+                    aparece quando `manaMax` chega. Quem comandava o grupo não
+                    tinha como saber se o curandeiro ainda podia curar. */}
+                <CartaoMembro nome={m.nome} subtitulo={[m.conceito, m.classe, m.subclasse].filter(Boolean).join(" · ")} nivel={m.nivel} vida={m.vida} vidaMax={m.vidaMax} mana={m.mana} manaMax={m.manaMax} descricao={m.descricao} habilidades={m.habilidades} semente={sementeDe(m)} xpComp={m.xp || 0} vinculo={m.vinculo ?? VINCULO_INICIAL} ficha={m} comparadoA={personagem} />
                 <div className="flex flex-wrap gap-1 mt-1">
                   <button onClick={() => setAbrirCaminho(abrirCaminho === m.nome ? null : m.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.violetSoft }}>
                     {m.classe ? "⚔ trilhar novo caminho" : "⚔ definir caminho"}
