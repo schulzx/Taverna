@@ -165,36 +165,79 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
   const arvore = arvoreDaClasse(personagem, abaClasse);
   const rankAtual = ranks[abaClasse] || 0;
 
-  /* o mesmo cartão serve para a árvore da classe e a da subclasse */
-  const cartaoHabilidades = (lista) => (
-    <div className="space-y-1.5">
-      {lista.map((h) => {
-        const cor = h.dominada ? T.ok : h.pode ? T.violet : T.line;
-        return (
-          <div key={h.nome} className="rounded-xl px-3 py-2.5" style={{ background: h.dominada ? T.panel : T.panelSoft, border: `1px solid ${cor}`, opacity: h.dominada || h.pode ? 1 : 0.55 }}>
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="tv-display text-base" style={{ color: h.dominada ? T.ok : T.ink }}>
-                {h.dominada ? "✓ " : h.pode ? "" : "🔒 "}{h.nome}
-              </span>
-              <span className="tv-mono text-[9px] shrink-0" style={{ color: T.violetSoft }}>{h.custo} PM · degrau {h.nivel}</span>
+  /* ---------------- A ÁRVORE POR DEGRAUS (v9.186) ----------------
+     Redesenhada em `painel-talentos-v2`. Até aqui a árvore era uma LISTA
+     CHATA: dezoito cartões em fila, cada um com "degrau 7" em letra de nove
+     pixels no canto. A regra da casa é uma só — habilidade de degrau N exige
+     N−1 degraus naquela classe — e ela é exatamente o que a lista escondia.
+     Quem olhava não via progressão nenhuma: via dezoito coisas, umas acesas
+     e outras apagadas, sem entender por quê.
+
+     Agrupadas por degrau, com o degrau alcançado aceso e os de cima
+     apagados, a árvore vira árvore: dá para ver onde se está, o que o
+     próximo degrau custa, e quantos degraus faltam para o de cima. O custo
+     em pontos sai do cabeçalho do degrau porque ele é do DEGRAU e não da
+     habilidade — 1–3 custam 1 ponto, 4–7 custam 2, 8+ custam 3 —, e o motivo
+     de estar fechado também: repeti-lo em cada cartão era dizer a mesma
+     frase três vezes na mesma tela.
+
+     O mesmo cartão serve para a árvore da classe, a da subclasse e a da
+     especialização. */
+  const cartaoHabilidades = (lista) => {
+    const degraus = [];
+    for (const h of lista) {
+      const n = h.nivel || 1;
+      let g = degraus.find((x) => x.n === n);
+      if (!g) { g = { n, itens: [] }; degraus.push(g); }
+      g.itens.push(h);
+    }
+    degraus.sort((a, b) => a.n - b.n);
+    return (
+      <div className="space-y-2.5">
+        {degraus.map((g) => {
+          /* ABERTO é o degrau em que já dá para gastar (ou onde já se
+             gastou): é a mesma pergunta que `podePegarHabilidade` responde
+             por habilidade, subida um nível */
+          const aberto = g.itens.some((h) => h.dominada || h.pode);
+          const custoDoDeg = g.itens[0] ? g.itens[0].custoPontos : 1;
+          const fechada = g.itens.find((h) => !h.dominada && !h.pode);
+          return (
+            <div key={g.n} className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="tv-mono text-[10px] uppercase tracking-[1px] shrink-0" style={{ color: aberto ? T.amberSoft : T.inkDim }}>Degrau {g.n}</span>
+                <span className="flex-1 min-w-[12px]" style={{ height: 1, background: aberto ? T.amber : T.line }} />
+                <span className="tv-mono text-[9px] shrink-0 truncate" style={{ color: T.inkDim, maxWidth: "60%" }}>
+                  {aberto ? `${custoDoDeg} ponto${custoDoDeg > 1 ? "s" : ""}` : (fechada && fechada.motivo) || ""}
+                </span>
+              </div>
+              {g.itens.map((h) => {
+                const cor = h.dominada ? T.ok : h.pode ? T.violet : T.line;
+                return (
+                  <div key={h.nome} className="rounded-xl px-3 py-2.5" style={{ background: h.dominada ? T.panel : T.panelSoft, border: `1px solid ${cor}`, opacity: h.dominada || h.pode ? 1 : 0.55 }}>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="tv-display text-base" style={{ color: h.dominada ? T.ok : T.ink }}>
+                        {h.dominada ? "✓ " : h.pode ? "" : "🔒 "}{h.nome}
+                      </span>
+                      {/* o degrau saiu daqui: ele agora é o cabeçalho da fileira */}
+                      <span className="tv-mono text-[9px] shrink-0" style={{ color: T.violetSoft }}>{h.custo} PM</span>
+                    </div>
+                    <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{h.descricao}</div>
+                    {!h.dominada && h.pode && (
+                      <button onClick={() => onAprender && onAprender(abaClasse, h.nome)}
+                        className="w-full tv-mono text-[10px] px-3 py-1.5 rounded-lg mt-2"
+                        style={{ background: T.violet, color: "#14101F", fontWeight: 600 }}>
+                        aprender · {h.custoPontos} ponto{h.custoPontos > 1 ? "s" : ""}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{h.descricao}</div>
-            {!h.dominada && (
-              h.pode ? (
-                <button onClick={() => onAprender && onAprender(abaClasse, h.nome)}
-                  className="w-full tv-mono text-[10px] px-3 py-1.5 rounded-lg mt-2"
-                  style={{ background: T.violet, color: "#14101F", fontWeight: 600 }}>
-                  aprender · {h.custoPontos} ponto{h.custoPontos > 1 ? "s" : ""}
-                </button>
-              ) : (
-                <div className="tv-mono text-[10px] mt-1.5" style={{ color: T.inkDim }}>{h.motivo}</div>
-              )
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
+          );
+        })}
+      </div>
+    );
+  };
 
   /* ---- ESPECIALIZAÇÃO: o terceiro andar (v9.6) ----
      Só aparece depois que a subclasse existe. Ir fundo aqui consome quase
