@@ -168,5 +168,42 @@ for (const m of mural) {
   t("e há ganchos que se abstêm", semNexo > 0);
 }
 
+
+/* ---------------- A RECOMPENSA INTEIRA NO CARTAZ (v9.192) ----------------
+   `painel-mural-v2` foi redesenhado como a tábua que ele é — papel pregado,
+   percevejo âmbar para o cartaz da cidade e roxo para o de quem falou com
+   você, quem assina, o prazo antes do botão. E aí o defeito ficou óbvio.
+
+   O cartaz mostrava só as moedas. "sem moedas" lê como "não paga nada" —
+   quando um favor paga em XP, em fama e às vezes num item. O jogador passava
+   reto justamente pelo serviço que mais rendia da tábua. */
+console.log("\n[a recompensa inteira no cartaz]");
+{
+  const { readFileSync } = await import("node:fs");
+  const APP = readFileSync("../src/App.jsx", "utf8").replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+
+  /* um favor sem moeda combinada continua rendendo — e muito */
+  const favor = recompensaDe({ tipo: "favor", nivel: 6, etapas: 4, moedasPrometidas: 0 });
+  t("favor sem moeda ainda rende XP", favor.xp > 0);
+  t("e rende fama", favor.fama > 0);
+  t("mas a moeda combinada é respeitada", favor.moedas === 0 && favor.combinada === true);
+
+  /* e a conta do cartaz é a MESMA que o aceite aplica */
+  const como = { tipo: "cacada", nivel: 8, etapas: 3, moedasPrometidas: 150 };
+  const a = recompensaDe(como), b = recompensaDe(como);
+  t("a conta é determinística", a.xp === b.xp && a.moedas === b.moedas && a.fama === b.fama);
+  t("item só nas grandes", recompensaDe({ tipo: "contrato", nivel: 3, etapas: 2 }).item === null);
+  t("e nas grandes ele vem", !!recompensaDe({ tipo: "global", nivel: 12, etapas: 4 }).item);
+
+  /* A TELA LÊ A MESMA FUNÇÃO, e com os campos que o cartaz já carrega */
+  t("o cartaz lê recompensaDe", /const rec = recompensaDe\(\{ tipo: c\.tipo \|\| "contrato", nivel: c\.nivel \|\| nivel \|\| 1, etapas: \(c\.etapas \|\| \[\]\)\.length \|\| 3, moedasPrometidas: c\.paga \}\);/.test(APP));
+  t("e mostra o XP", /\+\{rec\.xp\} XP/.test(APP));
+  t("a fama, quando há", /\{rec\.fama > 0 && </.test(APP));
+  t("e o item, quando há", /\{rec\.item && </.test(APP));
+  /* `propostaDaOferta` continua levando o nível junto: sem ele a missão
+     renasceria com o nível do herói e a conta do cartaz mudaria ao aceitar */
+  const p = propostaDaOferta({ titulo: "x", tipo: "contrato", nivel: 7, etapas: [1, 2, 3] });
+  t("a proposta leva o nível do cartaz", p.nivel === 7);
+}
 console.log(`\nofertas v9.37: ${ok} passaram, ${fail} falharam`);
 process.exit(fail ? 1 : 0);

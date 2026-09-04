@@ -1482,6 +1482,25 @@ function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garant
           </span>
         </div>
         <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{c.descricao}</div>
+        {/* ---------------- A RECOMPENSA INTEIRA (v9.192) ----------------
+            Redesenhado em `painel-mural-v2`. O cartaz mostrava só as moedas, e
+            "sem moedas" lê como "não paga nada" — quando um favor paga em XP,
+            em fama e às vezes num item. O jogador passava reto pelo serviço
+            que mais rendia da tábua.
+
+            `recompensaDe` é função pura de tipo, nível e etapas, e o cartaz
+            carrega os três desde a v9.119 — então a conta é a MESMA que o
+            aceite vai aplicar, e não uma estimativa. */}
+        {(() => {
+          const rec = recompensaDe({ tipo: c.tipo || "contrato", nivel: c.nivel || nivel || 1, etapas: (c.etapas || []).length || 3, moedasPrometidas: c.paga });
+          return (
+            <div className="flex flex-wrap gap-1 mt-1">
+              <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${T.ok}`, color: T.ok }}>+{rec.xp} XP</span>
+              {rec.fama > 0 && <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>+{rec.fama} fama</span>}
+              {rec.item && <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${T.violet}`, color: T.violetSoft }}>item {rec.item}</span>}
+            </div>
+          );
+        })()}
         <div className="tv-mono text-[9px] mt-1" style={{ color: T.violetSoft }}>
           assina {c.dador}{c.dadorPapel ? `, ${c.dadorPapel}` : ""}{c.dadorLocal ? ` · ${c.dadorLocal}` : ""}
           {/* o cartaz de outra cidade continua valendo, e precisa dizer que é
