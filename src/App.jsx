@@ -644,24 +644,60 @@ function ModalNivel({ nivel, personagem, escolher, lex = null }) {
 
    Só raro para cima: revelar item comum ensinaria a fechar o modal sem
    ler, e aí o lendário passaria batido também. O comum continua na linha
-   de sistema, que é o tamanho dele. */
+   de sistema, que é o tamanho dele.
+
+   ---------------- A FORMA, DE `momento-loot-epico-v2` (v9.179) ----------------
+
+   O desenho trouxe o brilho atrás de tudo, o rótulo miúdo sobre o título,
+   a moldura tracejada em volta da peça e as duas cartas de efeito lado a
+   lado. Três coisas mudaram de verdade ao trazer isso para cá.
+
+   O BRILHO SEGUE A RARIDADE. No desenho ele é violeta porque o item é
+   épico; um violeta fixo mentiria no lendário, que é âmbar, e no único,
+   que é vermelho. A cor sai de `RARIDADE_COR`, como a borda já saía.
+
+   A MOLDURA GUARDA O GLIFO QUE O JOGO JÁ USA. O desenho põe arte do item
+   ali dentro; a Taverna não desenha peças, e inventar uma arte por item
+   seria prometer um acervo que não existe. Dentro da moldura vai o `✦`
+   que `chao.js` dá a todo equipamento — o símbolo desta casa para "isto é
+   uma peça", grande.
+
+   E A CONCESSÃO FINALMENTE APARECE. `afixos.js` chama a concessão de "o
+   que faz o lendário ser lendário": ela põe uma habilidade do catálogo na
+   mão do herói, de graça. A revelação nunca a mostrou — o jogador via os
+   poderes e os números e não via a única coisa que muda o que ele PODE
+   FAZER. É a segunda carta do desenho, e agora ela tem conteúdo. */
 function RevelacaoDoEspolio({ item, fechar }) {
   if (!item) return null;
   const cor = RARIDADE_COR[item.raridade] || T.amber;
   const attrs = Object.entries(item.atributos || {}).filter(([k]) => k !== "elemento");
+  const poderes = item.poderes || [];
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(6,4,10,0.92)", backdropFilter: "blur(5px)" }}>
-      <div className="tv-fade w-full max-w-sm rounded-2xl p-6 text-center tv-reliquia"
-        style={{ background: T.panel, border: `1.5px solid ${cor}`, boxShadow: `0 0 42px ${cor}55, inset 0 0 24px ${cor}11` }}>
-        <div className="tv-mono text-[10px] uppercase tracking-[0.3em] mb-3" style={{ color: cor }}>
-          ✦ {RARIDADE_ROTULO[item.raridade] || item.raridade} ✦
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 overflow-hidden" style={{ background: "rgba(6,4,10,0.92)", backdropFilter: "blur(5px)" }}>
+      <div aria-hidden className="absolute pointer-events-none"
+        style={{ width: 700, height: 700, left: "50%", top: "50%", transform: "translate(-50%,-50%)", background: `radial-gradient(circle, ${cor}2B 0%, ${cor}0F 42%, transparent 68%)` }} />
+      <div className="tv-fade relative w-full rounded-[20px] p-8 tv-scroll overflow-y-auto flex flex-col gap-5 items-center tv-reliquia"
+        style={{ background: T.panel, border: `2px solid ${cor}`, maxWidth: 460, maxHeight: "90vh", boxShadow: `0 12px 16px ${cor}30, inset 0 0 24px ${cor}11` }}>
+        <div className="flex flex-col gap-1.5 items-center text-center">
+          <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: cor }}>Achado no espólio</div>
+          <div className="tv-display text-[30px] leading-[1.15]" style={{ color: T.ink }}>{item.nome}</div>
         </div>
-        <div className="tv-display text-3xl leading-tight mb-1" style={{ color: T.ink }}>{item.nome}</div>
-        <div className="tv-mono text-[10px] uppercase tracking-widest mb-4" style={{ color: T.inkDim }}>
-          {SLOT_ROTULO[item.tipo] || item.tipo}{item.base && item.base !== item.nome ? ` · ${item.base}` : ""}
+        <span className="tv-mono text-[9px] tracking-[0.9px] uppercase rounded px-2.5 py-1" style={{ background: `${cor}22`, color: cor }}>
+          {RARIDADE_ROTULO[item.raridade] || item.raridade}
+        </span>
+        {/* a moldura do desenho, com o glifo que o jogo já dá a todo
+            equipamento — a Taverna não desenha peças */}
+        <div className="rounded-xl p-4 flex items-center justify-center" style={{ background: "rgba(14,12,21,0.5)", border: `1px dashed ${cor}` }}>
+          <span aria-hidden style={{ width: 100, height: 100, fontSize: 68, lineHeight: "100px", color: cor, textAlign: "center", display: "block" }}>✦</span>
+        </div>
+        <div className="flex flex-col gap-2 items-center text-center w-full">
+          <div className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>
+            {SLOT_ROTULO[item.tipo] || item.tipo}{item.base && item.base !== item.nome ? ` · ${item.base}` : ""}
+          </div>
+          {item.descricao && <div className="tv-body text-sm leading-[1.65] italic" style={{ color: T.inkDim }}>“{item.descricao}”</div>}
         </div>
         {attrs.length > 0 && (
-          <div className="flex items-center justify-center gap-1.5 flex-wrap mb-3">
+          <div className="flex items-center justify-center gap-1.5 flex-wrap">
             {attrs.map(([k, v]) => (
               <span key={k} className="tv-mono text-[10px] px-2 py-0.5 rounded-full" style={{ border: `1px solid ${T.line}`, color: T.ok }}>
                 +{v} {k === "dano" ? "dano" : k === "defesa" ? "defesa" : k.slice(0, 3)}
@@ -672,14 +708,30 @@ function RevelacaoDoEspolio({ item, fechar }) {
             )}
           </div>
         )}
-        {(item.poderes || []).map((p) => (
-          <div key={p.nome} className="rounded-xl px-3 py-2 mb-2 text-left" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-            <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: cor }}>✧ {p.nome}</div>
-            {p.diz && <div className="tv-body text-xs italic mt-0.5" style={{ color: T.inkDim }}>{p.diz}</div>}
+        {(poderes.length > 0 || item.concede) && (
+          <div className="grid gap-4 w-full" style={{ gridTemplateColumns: poderes.length + (item.concede ? 1 : 0) > 1 ? "1fr 1fr" : "1fr" }}>
+            {poderes.map((p) => (
+              <div key={p.id || p.nome} className="rounded-[10px] px-4 py-3.5 flex flex-col gap-1.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                <div className="tv-mono text-[9px] uppercase tracking-[0.9px]" style={{ color: cor }}>Poder</div>
+                <div className="tv-body text-xs leading-[1.55]" style={{ color: T.ink }}>{p.nome}</div>
+                {p.diz && <div className="tv-body text-[11px] leading-[1.5]" style={{ color: T.inkDim }}>{p.diz}</div>}
+              </div>
+            ))}
+            {item.concede && (
+              <div className="rounded-[10px] px-4 py-3.5 flex flex-col gap-1.5" style={{ background: T.panelSoft, border: `1px solid ${cor}` }}>
+                <div className="tv-mono text-[9px] uppercase tracking-[0.9px]" style={{ color: cor }}>Concessão</div>
+                <div className="tv-body text-xs leading-[1.55]" style={{ color: T.ink }}>{item.concede}</div>
+                <div className="tv-body text-[11px] leading-[1.5]" style={{ color: T.inkDim }}>
+                  Enquanto estiver equipado e sintonizado, você usa sem gastar PM.
+                </div>
+              </div>
+            )}
           </div>
-        ))}
-        <div className="tv-body text-xs mt-3 mb-4" style={{ color: T.inkDim }}>Já está na sua mochila — equipe pela Bolsa.</div>
-        <Botao primario onClick={fechar}>Guardar →</Botao>
+        )}
+        <div className="flex flex-col gap-3 items-center">
+          <Botao primario onClick={fechar}>Guardar →</Botao>
+          <div className="tv-body text-[10px] leading-[1.45]" style={{ color: T.inkDim }}>Já está na sua mochila — equipe pela Bolsa.</div>
+        </div>
       </div>
     </div>
   );

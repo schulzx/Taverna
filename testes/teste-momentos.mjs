@@ -48,7 +48,19 @@ sec("2. O ESPÓLIO REVELADO — raro para cima, e só");
   t("a revelação existe", /function RevelacaoDoEspolio\(\{ item, fechar \}\)/.test(APP));
   t("só raro para cima a abre", /if \(\["raro", "epico", "lendario", "unico"\]\.includes\(it\.raridade\)\) setEspolioRevelado\(it\)/.test(APP));
   t("a cor é a da raridade, da tabela de sempre", /const cor = RARIDADE_COR\[item\.raridade\]/.test(APP));
-  t("os poderes entram com o `diz` deles", /\(item\.poderes \|\| \[\]\)\.map/.test(APP) && /\{p\.diz\}/.test(APP));
+  /* v9.179 (`momento-loot-epico-v2`): a lista de poderes saiu de dentro do
+     JSX para uma variável, porque a grade do desenho precisa CONTAR quantas
+     cartas há para decidir uma ou duas colunas. A lei é a mesma: todo poder
+     aparece com o `diz` dele. */
+  t("os poderes entram com o `diz` deles", /const poderes = item\.poderes \|\| \[\];/.test(APP) && /poderes\.map/.test(APP) && /\{p\.diz\}/.test(APP));
+  /* E A CONCESSÃO PASSOU A APARECER. `afixos.js` a chama de "o que faz o
+     lendário ser lendário" — ela põe uma habilidade do catálogo na mão do
+     herói, de graça — e a revelação não a mostrava: o jogador via os números
+     e não via a única coisa que muda o que ele PODE FAZER. */
+  t("e a concessão finalmente aparece", /\{item\.concede && \(/.test(APP) && /\{item\.concede\}<\/div>/.test(APP));
+  t("dizendo que ela sai sem PM", /você usa sem gastar PM/.test(APP));
+  /* o brilho de trás segue a raridade: violeta fixo mentiria no lendário */
+  t("o brilho de trás é da cor da raridade", /radial-gradient\(circle, \$\{cor\}/.test(APP));
   t("e diz onde o item já está", /Já está na sua mochila/.test(APP));
   /* a revelação NÃO entrega nada: o item entrou na mochila ANTES dela —
      fechar o modal sem ler não pode custar o item */
