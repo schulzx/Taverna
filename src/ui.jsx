@@ -218,6 +218,49 @@ export function PontoMestre({ tamanho = 16, cor = T.amber }) {
     </svg>
   );
 }
+
+/* ---------------- OS ÍCONES DO COMBATE (v9.172) ----------------
+   De `mesa-combate-v2`. Todos em caixa de 14, que é o tamanho que o
+   desenho usa nos botões de ação e no selo da ameaça. */
+export function IconeEscudoAlerta({ tamanho = 14, cor = T.danger }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 14 14" fill="none">
+      <path d="M7 4.66631V6.99972M7 9.33313H7.00583M11.6662 7.58334C11.6662 10.5001 9.62474 11.9585 7.19831 12.8043C7.07125 12.8474 6.93324 12.8453 6.80752 12.7985C4.37526 11.9585 2.3338 10.5001 2.3338 7.58334V3.49987C2.3338 3.34516 2.39525 3.19678 2.50464 3.08738C2.61402 2.97798 2.76238 2.91652 2.91708 2.91652C4.08362 2.91652 5.54181 2.2165 6.55671 1.3298C6.68028 1.22421 6.83747 1.1662 7 1.1662C7.16253 1.1662 7.31972 1.22421 7.44329 1.3298C8.46402 2.22233 9.91637 2.91652 11.0829 2.91652C11.2376 2.91652 11.386 2.97798 11.4954 3.08738C11.6047 3.19678 11.6662 3.34516 11.6662 3.49987V7.58334Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconeEscudo({ tamanho = 14, cor = T.ink }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 14 14" fill="none">
+      <path d="M7.19831 12.8043C9.62474 11.9585 11.6662 10.5001 11.6662 7.58334V3.49987C11.6662 3.34516 11.6047 3.19678 11.4954 3.08738C11.386 2.97798 11.2376 2.91652 11.0829 2.91652C9.91637 2.91652 8.46402 2.22233 7.44329 1.3298C7.31972 1.22421 7.16253 1.1662 7 1.1662C6.83747 1.1662 6.68028 1.22421 6.55671 1.3298C5.54181 2.2165 4.08362 2.91652 2.91708 2.91652C2.76238 2.91652 2.61402 2.97798 2.50464 3.08738C2.39525 3.19678 2.3338 3.34516 2.3338 3.49987V7.58334C2.3338 10.5001 4.37526 11.9585 6.80752 12.7985C6.93324 12.8453 7.07125 12.8474 7.19831 12.8043Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconeSetaEsq({ tamanho = 14, cor = T.ink }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 14 14" fill="none">
+      <path d="M7 2.9162L2.9162 7L7 11.0838M2.9162 7H11.0838" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconeFrasco({ tamanho = 14, cor = T.ink }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 14 14" fill="none">
+      <path d="M2.625 1.75H11.375M3.5 1.75V11.0833C3.5 11.3928 3.62292 11.6895 3.84171 11.9083C4.0605 12.1271 4.35725 12.25 4.66667 12.25H9.33333C9.64275 12.25 9.9395 12.1271 10.1583 11.9083C10.3771 11.6895 10.5 11.3928 10.5 11.0833V1.75M3.5 8.16667H10.5" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconeOlho({ tamanho = 14, cor = T.ink }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 14 14" fill="none">
+      <path d="M1.20266 6.79757C1.15405 6.92854 1.15405 7.07261 1.20266 7.20357C1.67615 8.35166 2.47988 9.3333 3.51194 10.024C4.54401 10.7148 5.75794 11.0835 6.99983 11.0835C8.24172 11.0835 9.45565 10.7148 10.4877 10.024C11.5198 9.3333 12.3235 8.35166 12.797 7.20357C12.8456 7.07261 12.8456 6.92854 12.797 6.79757C12.3235 5.64949 11.5198 4.66785 10.4877 3.9771C9.45565 3.28635 8.24172 2.9176 6.99983 2.9176C5.75794 2.9176 4.54401 3.28635 3.51194 3.9771C2.47988 4.66785 1.67615 5.64949 1.20266 6.79757Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
 export function BarraMini({ rotulo, atual, max, cor, corBaixa }) {
   const pct = Math.max(0, Math.min(100, max > 0 ? (atual / max) * 100 : 0));
   const baixa = pct <= 33;

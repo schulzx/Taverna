@@ -116,7 +116,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre } from "./ui.jsx";
+import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho } from "./ui.jsx";
 import heroTaverna from "./assets/taverna-hero.png";
 import marcaTaverna from "./assets/taverna-marca.jpg";
 import { CartaDeTaro, CartaVerso } from "./carta-taro.jsx";
@@ -702,15 +702,20 @@ function FaixaDeChegada({ chegada, limpar }) {
    não pedido. Só 1 em 7 modos permite tensão/interrupção. */
 /* AÇÕES PRONTAS (estilo BG3): um toque preenche a ação no campo — o jogador
    completa o alvo/detalhe e envia. Zero tokens para "inventar" a ação. */
+/* v9.172 (`mesa-combate-v2`): as quatro ações que o desenho ilustra ganham
+   o TRAÇO no lugar do emoji — o emoji muda de desenho em cada sistema
+   operacional, e numa fileira de dez botões isso vira dez estilos. As
+   outras seis seguem com emoji até haver glifo para elas: meia fileira
+   traçada e meia de emoji seria pior que uma fileira inteira de emoji. */
 const ACOES_PRONTAS = [
-  { icone: "⚔", rotulo: "Atacar", texto: "Ataco " },
-  { icone: "🛡", rotulo: "Esquivar", texto: "Fico em postura defensiva, esquivando e me protegendo neste turno" },
+  { icone: "⚔", glifo: IconeEspada, rotulo: "Atacar", texto: "Ataco " },
+  { icone: "🛡", glifo: IconeEscudo, rotulo: "Esquivar", texto: "Fico em postura defensiva, esquivando e me protegendo neste turno" },
   { icone: "✋", rotulo: "Empurrar", texto: "Empurro com força " },
   { icone: "🦵", rotulo: "Derrubar", texto: "Tento derrubar no chão " },
-  { icone: "🏃", rotulo: "Correr", texto: "Corro em disparada para " },
+  { icone: "🏃", glifo: IconeSetaEsq, rotulo: "Correr", texto: "Corro em disparada para " },
   { icone: "🤸", rotulo: "Saltar", texto: "Salto sobre " },
   { icone: "🫥", rotulo: "Esconder", texto: "Me escondo nas sombras, buscando cobertura" },
-  { icone: "🔍", rotulo: "Procurar", texto: "Examino o lugar com atenção, procurando " },
+  { icone: "🔍", glifo: IconeOlho, rotulo: "Procurar", texto: "Examino o lugar com atenção, procurando " },
   { icone: "🤝", rotulo: "Ajudar", texto: "Ajudo " },
   { icone: "😤", rotulo: "Intimidar", texto: "Intimido com olhar e presença " },
   { icone: "🗣", rotulo: "Persuadir", texto: "Tento persuadir " },
@@ -2645,17 +2650,42 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
           </div>
         </div>
       )}
+      {/* ---------------- A ORDEM DE INICIATIVA (v9.172) ----------------
+          De `mesa-combate-v2`: as fichinhas em linha viraram LINHAS, uma por
+          combatente, com o número num selo à esquerda e o nome legível ao
+          lado. A da vez ganha borda âmbar, fundo aceso e a palavra AGINDO —
+          antes, quem estava agindo era indistinguível de quem esperava, e
+          era essa a única pergunta que a lista existia para responder. */}
       {Array.isArray(combate.ordem) && combate.ordem.length > 0 && (
-        <div className="rounded-xl p-2 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-          <div className="tv-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Ordem de iniciativa</div>
-          <div className="flex items-center gap-1 flex-wrap">
+        <div className="rounded-xl p-2.5 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+          <div className="tv-mono text-[10px] uppercase tracking-[1px] mb-2" style={{ color: T.violetSoft }}>Ordem de iniciativa</div>
+          <div className="flex flex-col gap-1.5">
             {combate.ordem.map((c, i) => {
               const caiu = (combate.inimigos || []).some((e) => e.nome === c.nome && (e.derrotado || e.vida <= 0));
-              const cor = c.lado === "inimigo" ? T.danger : c.lado === "heroi" ? T.amber : T.violetSoft;
+              const daVez = !caiu && i === 0;
               return (
-                <span key={c.nome + i} className="tv-mono text-[10px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${cor}`, color: cor, opacity: caiu ? 0.35 : 1, textDecoration: caiu ? "line-through" : "none" }}>
-                  {c.iniciativa} {c.nome}
-                </span>
+                <div key={c.nome + i} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2"
+                  style={{
+                    background: daVez ? "rgba(232,163,61,0.10)" : "transparent",
+                    border: `${daVez ? 1.5 : 1}px solid ${daVez ? T.amber : T.line}`,
+                    boxShadow: daVez ? "0 0 8px rgba(232,163,61,0.13)" : "none",
+                    opacity: caiu ? 0.35 : 1,
+                  }}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="tv-mono text-[11px] rounded px-2 py-0.5 shrink-0" style={{ background: daVez ? T.amber : T.line, color: daVez ? T.bg : T.inkDim, fontWeight: 700 }}>
+                      {c.iniciativa}
+                    </span>
+                    <span className="tv-display text-base truncate" style={{ color: daVez ? T.amberSoft : T.ink, textDecoration: caiu ? "line-through" : "none" }}>
+                      {c.nome}
+                    </span>
+                  </div>
+                  {daVez && (
+                    <span className="flex items-center gap-1 shrink-0">
+                      <PontoAtivo tamanho={8} cor={T.amber} />
+                      <span className="tv-mono text-[9px] tracking-[0.54px]" style={{ color: T.amberSoft }}>AGINDO</span>
+                    </span>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -17965,11 +17995,26 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     <button onClick={() => setAcoesAbertas(false)} className="tv-mono text-[10px] px-2" style={{ color: T.inkDim }}>✕</button>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {ACOES_PRONTAS.map((a) => (
-                      <button key={a.rotulo} onClick={() => { setEntrada(a.texto); setAcoesAbertas(false); }} className="tv-mono text-[11px] px-2.5 py-1.5 rounded-lg" style={{ background: T.panelSoft, color: T.ink, border: `1px solid ${T.line}` }}>
-                        {a.icone} {a.rotulo}
-                      </button>
-                    ))}
+                    {ACOES_PRONTAS.map((a) => {
+                      /* v9.172: a geometria do botão vem de `mesa-combate-v2` —
+                         px-16/py-10, canto de 8, ícone e rótulo lado a lado.
+                         Atacar recebe o destaque âmbar que o desenho dá a ele:
+                         é a ação que o jogador procura primeiro. */
+                      const primeira = a.rotulo === "Atacar";
+                      const Glifo = a.glifo;
+                      return (
+                        <button key={a.rotulo} onClick={() => { setEntrada(a.texto); setAcoesAbertas(false); }}
+                          className="tv-mono text-[11px] px-4 py-2.5 rounded-lg flex items-center gap-2"
+                          style={{
+                            background: primeira ? T.line : T.panel,
+                            color: primeira ? T.amberSoft : T.ink,
+                            border: `1px solid ${primeira ? T.amberSoft : T.line}`,
+                          }}>
+                          {Glifo ? <Glifo tamanho={14} cor={primeira ? T.amberSoft : T.ink} /> : <span>{a.icone}</span>}
+                          {a.rotulo}
+                        </button>
+                      );
+                    })}
                   </div>
                   {/* ---------------- A PORTA DOS FUNDOS (v9.59.1) ----------------
                       Estes botões diziam "Pedir um teste" e chamavam a rolagem

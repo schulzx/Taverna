@@ -32,6 +32,7 @@ import { garantirGrade, alcancaveisDe, ocupacaoDe, adjacentes, caminhar, quadrad
 import { Rosto } from "./rosto.jsx";
 import { sementeDe, estadoDe } from "./semente.js";
 import { fasesDoChefe, viradaPorId } from "./masmorras.js";
+import { IconeEscudoAlerta } from "./ui.jsx";
 
 const K = (x, y) => `${x},${y}`;
 
@@ -200,7 +201,10 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
         const limiar = (e.viradasFeitas || [])[n - 1];
         const fase = fasesDoChefe(e.nome).find((x) => x.em === limiar);
         const v = viradaPorId(fase && fase.virada);
-        setFaixa({ nome: e.nome, diz: v.diz, nota: v.nota, chave: seqRef.current++ });
+        /* v9.172: a vida vai junto. `mesa-combate-v2` põe a barra do chefe
+           dentro da faixa — anunciar "ele endureceu" sem dizer quanto falta
+           é meia notícia, e é a metade menos útil das duas. */
+        setFaixa({ nome: e.nome, diz: v.diz, nota: v.nota, vida: e.vida, vidaMax: e.vidaMax, chave: seqRef.current++ });
         const tid = setTimeout(() => setFaixa(null), 3200);
         return () => clearTimeout(tid);
       }
@@ -336,10 +340,27 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
        dela. `position: relative` é o chão da faixa do chefe. */
     <div style={{ position: "relative", width: "100%", maxWidth: grande ? `min(94vw, ${Math.round((68 * g.largura) / g.altura)}vh)` : g.largura * Math.min(40, 380 / g.altura), aspectRatio: `${g.largura} / ${g.altura}`, margin: "0 auto" }}>
       {faixa && (
-        <div className="tv-faixa" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", zIndex: 5 }}>
-          <div className="px-4 py-2 text-center w-full" style={{ background: "linear-gradient(90deg, transparent, rgba(102,26,26,0.94) 16%, rgba(102,26,26,0.94) 84%, transparent)" }}>
-            <div className="tv-display" style={{ color: T.amberSoft, fontSize: "clamp(15px, 3vw, 24px)", fontWeight: 700, letterSpacing: 1 }}>💀 {faixa.nome} {faixa.diz}</div>
-            <div className="tv-mono text-[9px] uppercase tracking-widest mt-0.5" style={{ color: T.ink, opacity: 0.85 }}>{faixa.nota}</div>
+        /* v9.172 (`mesa-combate-v2`): a faixa deixa de ser um letreiro
+           centrado e vira o CABEÇALHO do chefe — nome em vermelho de perigo à
+           esquerda, o selo da ameaça à direita, e a barra de vida embaixo
+           atravessando a largura toda. O degradê some: o desenho usa o fundo
+           escuro da casa com uma borda, que deixa o tabuleiro visível por
+           trás em vez de apagá-lo no meio da luta. */
+        <div className="tv-faixa" style={{ position: "absolute", left: 0, right: 0, top: 0, pointerEvents: "none", zIndex: 5 }}>
+          <div className="px-4 pt-3 pb-2.5" style={{ background: "linear-gradient(175deg, rgba(14,12,21,0.94) 25%, rgba(23,19,34,0.75) 60%, rgba(14,12,21,1) 75%)", borderBottom: `1px solid ${T.line}` }}>
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="min-w-0">
+                <div className="tv-display" style={{ color: T.danger, fontSize: "clamp(15px, 2.6vw, 24px)", fontWeight: 700, lineHeight: 1.1 }}>{faixa.nome} {faixa.diz}</div>
+                <div className="tv-mono text-[10px] uppercase tracking-[1px] mt-1" style={{ color: T.inkDim }}>{faixa.nota}</div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <IconeEscudoAlerta tamanho={14} />
+                <span className="tv-mono text-[11px]" style={{ color: T.ink, fontWeight: 700 }}>AMEAÇA CRÍTICA</span>
+              </div>
+            </div>
+            <div className="h-2 rounded overflow-hidden w-full" style={{ background: "rgba(46,39,69,0.48)" }}>
+              <div className="h-full" style={{ width: `${Math.max(0, Math.min(100, (faixa.vida / (faixa.vidaMax || 1)) * 100))}%`, background: T.danger }} />
+            </div>
           </div>
         </div>
       )}
