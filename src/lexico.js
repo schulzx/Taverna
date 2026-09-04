@@ -433,7 +433,29 @@ export function garantirLexico(l) {
     },
     /* v9.109: e como cada raça do sistema se chama aqui. A lista é
        fechada: um nome que o código não conhece não entra, porque não
-       haveria bônus atrás dele. */
+       haveria bônus atrás dele.
+
+       ---------------- POR QUE CLASSE E ANTECEDENTE NÃO ENTRAM (v9.195) ----
+       A pergunta aparece toda vez que alguém lê uma ficha deste jogo:
+       "Cavador de Cúpulas · Ladino · Assassino" mistura a palavra do mundo
+       com a do sistema, e parece descuido. Não é.
+
+       O que o léxico renomeia é o que tem INDIREÇÃO DE EXIBIÇÃo atrás.
+       `chamadoDaRaca` existe justamente para isso: o save guarda "Anão", o
+       bônus continua sendo o do anão, e a tela mostra "Cavador de Cúpulas".
+       A raça nunca é chave de nada.
+
+       Classe é o contrário: o NOME dela é chave em `classePorNome`, em
+       `lequeDaClasse`, em `ATRIBUTO_CHAVE_CLASSE` e nos degraus de
+       `ranksDoPersonagem` — é o identificador que a árvore de talentos, a
+       multiclasse e a lista de habilidades usam para se encontrar. O mesmo
+       vale para o antecedente em `periciasDoAntecedente`.
+
+       Renomeá-los aqui exigiria a mesma indireção em uma dúzia de telas, e
+       um erro nela não apareceria como nome errado: apareceria como uma
+       árvore de talentos vazia. Se um dia a casa quiser isso, o caminho é
+       construir `chamadoDaClasse` PRIMEIRO, e só então abrir o campo no
+       prompt — nunca o contrário. */
     racas: (Array.isArray(o.racas) ? o.racas : [])
       .map((x) => ({
         raca: RACAS_DO_SISTEMA.find((r) => r.toLowerCase() === String((x && x.raca) || "").toLowerCase().trim()) || "",

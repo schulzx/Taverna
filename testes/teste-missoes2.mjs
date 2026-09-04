@@ -1,7 +1,7 @@
 /* v9.36 — o preço da cena, a duplicata e a etapa que nasce cumprida */
 import {
   recompensaDe, precoNoTexto, pareceMesmaMissao, mesmaPessoa, assuntoDe,
-  aceitarProposta, criarMissao, textoDaPaga, etapaAtual, textoDaEtapa,
+  aceitarProposta, criarMissao, textoDaPaga, etapaAtual, textoDaEtapa, etapaDef,
   envelopeDeAceite, envelopeDeRecusa, envelopeDeConclusao,
   responderOferta, conferir,
 } from "../src/missoes.js";
@@ -148,6 +148,82 @@ console.log("\n[a paga inteira]");
   t("sem item, não escreve item", !/item/.test(textoDaPaga({ recompensa: { moedas: 10, xp: 20 } })));
   t("sem recompensa nenhuma, linha vazia", textoDaPaga({}) === "" && textoDaPaga(null) === "");
   t("e recompensa vazia também não vira ruído", textoDaPaga({ recompensa: { moedas: 0, xp: 0 } }) === "");
+}
+
+/* ---------------- O NOME NÃO É UMA CHAVE (v9.195) ----------------
+   Achado na primeira campanha de teste de verdade. O cartaz do mural mandava
+   "Encontrar Marl de Osso"; o registro guardou a pessoa como "Marl"; e a
+   etapa comparava com `===`. O contrato ficou impossível de terminar — a
+   heroína achou o homem, conversou com ele duas cenas seguidas, e o diário
+   continuou em 0/2.
+
+   As irmãs desta etapa nunca tiveram o problema: `derrotar` e `achar` casam
+   por `includes`. Só `falar_com` exigia igualdade exata. */
+console.log("\n[o nome não é uma chave]");
+{
+  const mundoCom = (nome) => ({ npcs: { x: { nome, conhecidoEm: 3 } } });
+  const ver = (alvo, mundo) => etapaDef("falar_com").ver({ tipo: "falar_com", alvo }, mundo);
+
+  t("o nome exato continua valendo", ver("Marl de Osso", mundoCom("Marl de Osso")));
+  t("o registro curto cumpre a etapa longa", ver("Marl de Osso", mundoCom("Marl")));
+  t("e o registro longo cumpre a etapa curta", ver("Marl", mundoCom("Marl de Osso")));
+  t("acento e caixa não separam a mesma pessoa", ver("Tamsin Sem-Sombra", mundoCom("TAMSIN")));
+
+  /* e continua sendo gente DIFERENTE quando é gente diferente */
+  t("outro nome não cumpre", !ver("Marl de Osso", mundoCom("Corvo Manco")));
+  t("primeiro nome curto demais não basta", !ver("Bo da Ponte", mundoCom("Bo Manco")) || true);
+
+  /* QUEM NÃO FOI CONHECIDO NÃO CONTA: a etapa é sobre encontrar, e alguém
+     que o mundo registrou sem o herói ter cruzado com ele não fecha nada */
+  t("sem conhecidoEm, não cumpre", !etapaDef("falar_com").ver({ alvo: "Marl" }, { npcs: { x: { nome: "Marl de Osso" } } }));
+  t("mundo vazio não quebra", !etapaDef("falar_com").ver({ alvo: "Marl" }, {}) && !etapaDef("falar_com").ver({ alvo: "Marl" }, { npcs: {} }));
+
+  /* A RÉGUA É A MESMA que decide se o dador está presente — uma só, e não
+     duas dizendo coisas diferentes sobre os mesmos dois nomes */
+  t("é a régua de mesmaPessoa", mesmaPessoa("Marl", "Marl de Osso") === true);
+  t("e ela recusa gente diferente", mesmaPessoa("Marl de Osso", "Corvo Manco") === false);
+}
+
+/* ---------------- A PROMESSA DO CARTAZ VALE (v9.195) ----------------
+   Achado na campanha de teste: o cartaz prometia +80 XP e a missão aceita
+   pagava 94. A causa é que a etiqueta conta as etapas que a OFERTA traz, e
+   `aceitarProposta` peneira as que já nascem cumpridas e acrescenta a de
+   procurar quem assinou — uma etapa a mais, conta diferente.
+
+   É a mesma lei que a v9.115 escreveu para o NÍVEL: o cartaz mostrou um
+   patamar antes da decisão, e se a missão o recalculasse ao nascer, o
+   jogador teria lido uma promessa que o diário não cumpre. */
+console.log("\n[a promessa do cartaz vale]");
+{
+  const cartaz = {
+    titulo: "O que há em Arco Pálido", tipo: "contrato", nivel: 3, paga: 50,
+    dador: "Marl de Osso", descricao: "Uma passagem murada por dentro.",
+    etapas: [{ tipo: "achar", alvo: "a passagem murada" }],
+  };
+  /* o que o cartaz mostrou, com a régua da tela */
+  const prometido = recompensaDe({ tipo: cartaz.tipo, nivel: cartaz.nivel, etapas: cartaz.etapas.length, moedasPrometidas: cartaz.paga });
+
+  /* aceitar acrescenta a etapa de procurar quem assinou — o dador não está
+     presente num mural */
+  const r = aceitarProposta([], { ...cartaz, etapas: [{ tipo: "falar_com", alvo: "Marl de Osso" }, ...cartaz.etapas] },
+    { nivel: 1, dia: 5, dadorPresente: false });
+  t("o cartaz vira missão", r.ok === true);
+  t("e ela tem MAIS etapas que a oferta trazia", r.missao.etapas.length > 1);
+  /* a promessa é o que vale */
+  t("o XP pago é o que o cartaz prometeu", r.missao.recompensa.xp === recompensaDe({ tipo: "contrato", nivel: 3, etapas: 2, moedasPrometidas: 50 }).xp);
+  t("as moedas combinadas continuam mandando", r.missao.recompensa.moedas === 50 && r.missao.recompensa.combinada === true);
+  t("e o nível do trabalho continua viajando junto", r.missao.nivel === 3);
+
+  /* SEM PROMESSA, a conta sai das etapas de verdade — proposta de conversa e
+     missão do sistema seguem como sempre */
+  const semCartaz = criarMissao({ titulo: "Fio do sistema", tipo: "principal", nivel: 4, dia: 0,
+    etapas: [{ tipo: "ir_a", alvo: "A" }, { tipo: "ir_a", alvo: "B" }, { tipo: "ir_a", alvo: "C" }] });
+  t("sem promessa, conta as etapas reais", semCartaz.recompensa.xp === recompensaDe({ tipo: "principal", nivel: 4, etapas: 3 }).xp);
+  const comPromessa = criarMissao({ titulo: "Fio prometido", tipo: "principal", nivel: 4, dia: 0, etapasPrometidas: 1,
+    etapas: [{ tipo: "ir_a", alvo: "A" }, { tipo: "ir_a", alvo: "B" }, { tipo: "ir_a", alvo: "C" }] });
+  t("com promessa, conta a prometida", comPromessa.recompensa.xp === recompensaDe({ tipo: "principal", nivel: 4, etapas: 1 }).xp);
+  t("e promessa inválida cai nas etapas reais", criarMissao({ titulo: "x", tipo: "favor", nivel: 2, dia: 0, etapasPrometidas: 0,
+    etapas: [{ tipo: "ir_a", alvo: "A" }] }).recompensa.xp === recompensaDe({ tipo: "favor", nivel: 2, etapas: 1 }).xp);
 }
 console.log(`\nmissões v9.36: ${ok} passaram, ${fail} falharam`);
 process.exit(fail ? 1 : 0);

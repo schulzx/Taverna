@@ -86,10 +86,30 @@ export const ETAPAS = {
     ver: (e, m) => [...(m.inventario || []), ...(m.equipamento || [])]
       .some((i) => norm(typeof i === "string" ? i : i && i.nome).includes(norm(e.alvo))),
   },
+  /* ---------------- O NOME NÃO É UMA CHAVE (v9.195) ----------------
+     Esta etapa exigia igualdade EXATA de nome, e por isso não se cumpria
+     nunca quando as duas pontas escreviam a mesma pessoa de jeitos
+     diferentes. Aconteceu na primeira campanha de teste: o cartaz do mural
+     mandava "Encontrar Marl de Osso", o registro guardou "Marl", e o
+     contrato ficou impossível de terminar — o herói achou o homem, conversou
+     com ele duas cenas seguidas, e o diário continuou em 0/2.
+
+     As irmãs desta etapa nunca tiveram esse problema: `derrotar` e `achar`
+     casam por `includes`. Só `falar_com` comparava com `===`, e a diferença
+     não era decisão nenhuma — era descuido.
+
+     `mesmaPessoa` é a régua que esta casa já usa para dizer se dois nomes
+     são a mesma gente (é ela que decide se o dador está presente, logo ali
+     em `aceitarProposta`). Comparar pelo primeiro nome aceita "Marl" por
+     "Marl de Osso" e "Vera Corda-Curta" por "Vera" — e recusa apelido curto
+     demais para significar alguém. Duas pessoas com o mesmo primeiro nome no
+     mesmo elenco confundiriam a etapa, e esse é o preço: um contrato que
+     fecha cedo demais é infinitamente melhor do que um que não fecha nunca. */
   falar_com: {
     id: "falar_com", icone: "💬",
     texto: (e) => `Encontrar ${e.alvo}`,
-    ver: (e, m) => Object.values(m.npcs || {}).some((n) => n && norm(n.nome) === norm(e.alvo) && n.conhecidoEm != null),
+    ver: (e, m) => Object.values(m.npcs || {}).some((n) => n && n.conhecidoEm != null
+      && (norm(n.nome) === norm(e.alvo) || mesmaPessoa(n.nome, e.alvo))),
   },
   levar_a: {
     id: "levar_a", icone: "📦",
@@ -316,7 +336,7 @@ export function garantirMissoes(lista) {
   }));
 }
 
-export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status, moedasPrometidas = null, prazo = 0, intencao = "", veiculo = "", virada = null, legado = false, guilda = "", contribui = 0, prova = false }) {
+export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status, moedasPrometidas = null, etapasPrometidas = null, prazo = 0, intencao = "", veiculo = "", virada = null, legado = false, guilda = "", contribui = 0, prova = false }) {
   const m = garantirMissoes([{
     id, titulo, tipo, descricao, dador, etapas, criadaEm: dia, prazo: noitesDePrazo(prazo),
     nivel, intencao, veiculo, virada, legado, guilda, contribui, prova,
@@ -334,7 +354,25 @@ export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = ""
      não deve nascer. */
   m.etapas = m.etapas.filter((e) => !(e.tipo === "aguentar" && e.dia <= (Number(dia) || 0)));
   if (!m.etapas.length) return null;
-  m.recompensa = recompensaDe({ tipo, nivel, etapas: m.etapas.length, moedasPrometidas });
+  /* ---------------- A PROMESSA VALE (v9.195) ----------------
+     `etapasPrometidas` existe pela mesma razão que `nivel` viaja junto da
+     proposta desde a v9.115: o cartaz mostrou uma recompensa ANTES da
+     decisão, e se a missão a recalculasse ao nascer, o jogador teria lido
+     uma promessa que o diário não cumpre.
+
+     E era isso que estava acontecendo. Na primeira campanha de teste o
+     cartaz prometia +80 XP e a missão pagava 94: o cartaz conta as etapas
+     que a oferta traz, e `aceitarProposta` peneira as que já nascem
+     cumpridas e acrescenta a de procurar quem assinou. Uma etapa a mais,
+     conta diferente.
+
+     Quando ninguém prometeu nada — proposta que nasce de conversa, missão
+     do sistema —, a conta continua saindo das etapas de verdade. */
+  m.recompensa = recompensaDe({
+    tipo, nivel,
+    etapas: Number(etapasPrometidas) > 0 ? Math.round(Number(etapasPrometidas)) : m.etapas.length,
+    moedasPrometidas,
+  });
   return m;
 }
 
@@ -536,11 +574,18 @@ export function aceitarProposta(lista, prop, { nivel = 1, dia = 0, mundo = null,
      trabalho não traz o seu, que é o caso das propostas que nascem de uma
      conversa e não de um cartaz. */
   const nivelDoTrabalho = Number(prop.nivel) > 0 ? Math.round(Number(prop.nivel)) : nivel;
+  /* v9.195: E A CONTA DA RECOMPENSA TAMBÉM É A DO CARTAZ. Pela mesma razão
+     do nível, logo acima: o mural mostra a recompensa antes da decisão, e
+     as etapas mudam de número no ato de aceitar — esta função peneira as
+     que já nascem cumpridas e acrescenta a de procurar quem assinou. Sem
+     isto o cartaz prometia +80 XP e o diário pagava 94. */
+  const etapasDoCartaz = Array.isArray(prop.etapas) && prop.etapas.length ? prop.etapas.length : null;
   const m = criarMissao({
     titulo, tipo: TIPOS[prop.tipo] ? prop.tipo : "favor",
     descricao: proposta.descricao, dador: proposta.dador,
     etapas, nivel: nivelDoTrabalho, dia, prazo: prop.prazo,
     moedasPrometidas: prometido != null ? prometido : moedasNaCena,
+    etapasPrometidas: etapasDoCartaz,
     legado: soChegadas,
   });
   if (!m) return { ok: false, motivo: "proposta malformada" };

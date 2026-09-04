@@ -3603,14 +3603,30 @@ function TelaMundo({ concluir }) {
         <DivisoriaRunica />
 
         {/* ---- o botão ---- */}
-        <div className="flex flex-col items-center gap-3 w-full pb-4">
-          <Botao primario desativado={!genero || !nome.trim()} onClick={() => concluir({ genero: genero.label, descricao, estrutura, molde, voz, apresentacao, limites: limites.trim() }, nome)}>
-            FORJAR ESTE MUNDO →
-          </Botao>
-          <div className="tv-body text-xs text-center" style={{ color: T.inkDim }}>
-            O Léxico lê estas escolhas uma vez, com o modelo forte, e escreve o vocabulário e as leis deste mundo.
-          </div>
-        </div>
+        {/* ---------------- O BOTÃO DIZ O QUE FALTA (v9.195) ----------------
+            Esta tela é longa e rola por vários blocos, e o botão ficava
+            apagado sem apontar nada. Na primeira campanha de teste eu travei
+            aqui: tinha escrito o nome, escolhido molde, arco e voz, e o botão
+            continuava morto — faltava o gênero, doze telas acima. Um botão
+            desativado que não diz por quê manda o jogador procurar. */}
+        {(() => {
+          const falta = [!nome.trim() && "o nome da campanha", !genero && "o gênero"].filter(Boolean);
+          return (
+            <div className="flex flex-col items-center gap-3 w-full pb-4">
+              <Botao primario desativado={falta.length > 0} onClick={() => concluir({ genero: genero.label, descricao, estrutura, molde, voz, apresentacao, limites: limites.trim() }, nome)}>
+                FORJAR ESTE MUNDO →
+              </Botao>
+              {falta.length > 0 && (
+                <div className="tv-mono text-[10px] text-center" style={{ color: T.amberSoft }}>
+                  falta {falta.join(" e ")}
+                </div>
+              )}
+              <div className="tv-body text-xs text-center" style={{ color: T.inkDim }}>
+                O Léxico lê estas escolhas uma vez, com o modelo forte, e escreve o vocabulário e as leis deste mundo.
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
@@ -3900,6 +3916,22 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
                  Redistribui livremente na ficha depois — a criação não é armadilha. */
               pericias: periciasIniciais({ classe, antecedente: antObj.nome }), periciasVersao: 1,
             }))}>ENTRAR NA TAVERNA →</Botao>
+          {/* v9.195: e aqui também. Esta tela é ainda mais longa que a do
+              mundo, e o campo que faltava na campanha de teste — o sexo do
+              herói — fica no meio dela, entre o conceito e os atributos. */}
+          {(() => {
+            const falta = [
+              !nome.trim() && "o nome",
+              !conceito.trim() && "o conceito",
+              !sexo && "quem o herói é",
+              restantes !== 0 && (restantes > 0 ? `distribuir ${restantes} ponto${restantes > 1 ? "s" : ""}` : "tirar pontos a mais"),
+            ].filter(Boolean);
+            return falta.length > 0 ? (
+              <div className="tv-mono text-[10px] text-center" style={{ color: T.amberSoft }}>
+                falta {falta.join(" · ")}
+              </div>
+            ) : null;
+          })()}
           <div className="tv-body text-xs text-center" style={{ color: T.inkDim }}>Sua lenda aguarda no próximo salão.</div>
         </div>
       </div>
