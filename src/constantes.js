@@ -13,7 +13,7 @@ export const SLOGAN = "toda lenda começa aqui";
    do App — que é exatamente onde um número vai para ser esquecido.
    Aqui ela fica ao lado do resto do que a casa sabe sobre si mesma, e um
    varredor confere que o App não voltou a escrevê-la à mão. */
-export const VERSAO = "v9.181";
+export const VERSAO = "v9.182";
 export const LEVA = "o foco e a explicação";
 
 export const XP_POR_NIVEL = (nivel) => xpDoProximoNivel(nivel) ?? XP_POR_DADIVA;
@@ -81,6 +81,19 @@ export const FONT_CSS = `
    (a cor entra por box-shadow inline; aqui mora so o ritmo) */
 @keyframes tvReliquia { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.25); } }
 .tv-reliquia { animation: tvReliquia 2.4s ease infinite; }
+/* o sigilo da recalibragem (v9.182): dois anéis em sentidos opostos, e um
+   ponto que pisca no passo em curso. Devagar de propósito — a espera é de
+   verdade (o arquivista relê a campanha inteira), e um giro rápido faria
+   parecer travado. */
+@keyframes tvGira { to { transform: rotate(360deg); } }
+@keyframes tvGiraAoContrario { to { transform: rotate(-360deg); } }
+@keyframes tvPisca { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+.tv-anel-fora { animation: tvGiraAoContrario 24s linear infinite; }
+.tv-anel-dentro { animation: tvGira 3.2s linear infinite; }
+.tv-pisca { animation: tvPisca 1.2s ease infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
+}
 
 /* ---------------- O ESPAÇO DO TRILHO (v9.156) ----------------
    O trilho de abas é lateral no monitor e barra inferior no telefone, e

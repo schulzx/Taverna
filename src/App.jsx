@@ -792,6 +792,116 @@ function RevelacaoDoEspolio({ item, fechar }) {
    cena de passagem, não modal — bloquear o jogador toda viagem seria
    cobrar pedágio pelo cenário. */
 
+
+/* OS PASSOS DA RECALIBRAGEM. Ficavam escritos à mão no título de cada
+   caixa ("passo 1 de 2", "passo 2 de 2"), em dois lugares que ninguém
+   obrigava a concordar. Agora são uma tabela, e a cerimônia da espera conta
+   os mesmos passos que a caixa da decisão anuncia. */
+const PASSOS_DO_SAVE = ["A lenda do herói — nível, atributos, corpo", "O mundo e os seus sistemas — gente, potências, cidades, guilda"];
+const PASSOS_DA_ASCENSAO = ["A ascensão divina — grau, fiéis e domínio"];
+
+/* ---------------- A RECALIBRAGEM (v9.182) — `momento-recalibrar-v2` --------
+
+   Recalibrar é a operação mais estranha da casa: o arquivista relê o livro
+   inteiro da campanha e propõe os números justos de hoje. Leva dezenas de
+   segundos, acontece em até três passos, e até aqui a espera era uma caixa
+   de 320px com uma frase em itálico. O jogador não tinha como saber se
+   faltava um passo ou dois, nem se algo tinha travado.
+
+   O desenho trouxe o livro-razão com os passos, e ele é a peça que faltava:
+   a espera passa a ter FORMA, e a forma diz quantos passos são e em qual
+   deles estamos.
+
+   O QUE ELE NÃO SABIA: a porcentagem sai da CONTA DE PASSOS, e não de um
+   número escolhido para ficar bonito. Com dois passos ela vale 0% e 50%;
+   com um, 0%. Uma barra que anda sozinha durante uma espera de duração
+   desconhecida seria a mentira mais fácil desta tela.
+
+   E NADA É APLICADO AQUI. A cerimônia é só a espera; o que o arquivista
+   propõe ainda passa pela caixa de decisão, com "manter como está" ao lado
+   de "aplicar". O rodapé diz isso, porque uma tela que enche a barra até o
+   fim ensina que algo já aconteceu. */
+function CerimoniaDaRecalibragem({ passos, atual, lendo }) {
+  const total = Math.max(1, (passos || []).length);
+  const feito = Math.max(0, Math.min(total, atual));
+  const pct = Math.round((feito / total) * 100);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 overflow-y-auto overflow-x-hidden" style={{ background: "rgba(8,6,14,0.94)", backdropFilter: "blur(5px)" }}>
+      <div aria-hidden className="fixed pointer-events-none"
+        style={{ width: 700, height: 700, left: "50%", top: "calc(50% - 50px)", transform: "translate(-50%,-50%)", background: `radial-gradient(circle, ${T.violetSoft}26 0%, ${T.violetSoft}0D 42%, transparent 68%)` }} />
+      <div aria-hidden className="fixed pointer-events-none"
+        style={{ width: 500, height: 500, left: "calc(50% - 250px)", top: "calc(50% + 100px)", transform: "translate(-50%,-50%)", background: `radial-gradient(circle, ${T.amber}1A 0%, transparent 66%)` }} />
+
+      <div className="tv-fade relative w-full my-auto flex flex-col gap-10 items-center" style={{ maxWidth: 560 }}>
+        <div className="flex flex-col gap-3 items-center text-center w-full">
+          <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.violetSoft }}>Atualização de campo</div>
+          <div className="tv-display text-5xl leading-[1.05] uppercase" style={{ color: T.ink }}>Recalibração</div>
+          {lendo && <div className="tv-display text-xl leading-[1.25]" style={{ color: T.inkDim }}>{lendo}</div>}
+        </div>
+
+        {/* o sigilo: o anel tracejado de fora, o arco de dentro e o núcleo.
+            O arco é desenhado aqui em vez de vir como imagem porque ele é um
+            arco de círculo — traço, raio e cor cabem em três atributos, e a
+            cor precisa ser o token da casa. */}
+        <div className="relative shrink-0" style={{ width: 180, height: 180 }}>
+          <div className="tv-anel-fora absolute inset-0 rounded-full" style={{ border: `1px dashed ${T.violetSoft}`, opacity: 0.4 }} />
+          <svg className="tv-anel-dentro absolute" width="140" height="140" viewBox="0 0 140 140" fill="none" style={{ left: 20, top: 20 }}>
+            <circle cx="70" cy="70" r="66" stroke={T.amber} strokeWidth="2" strokeLinecap="round" strokeDasharray="311 104" />
+          </svg>
+          <div className="absolute flex items-center justify-center rounded-[40px]"
+            style={{ width: 80, height: 80, left: 50, top: 50, background: T.panel, border: `2px solid ${T.violetSoft}`, boxShadow: "0 0 10px rgba(176,165,236,0.27)" }}>
+            <IconeFaiscas tamanho={26} cor={T.violetSoft} />
+          </div>
+        </div>
+
+        <div className="w-full rounded-2xl p-6 flex flex-col gap-4" style={{ background: T.panel, border: `1px solid ${T.line}`, maxWidth: 480 }}>
+          <div className="flex flex-col gap-3">
+            {passos.map((p, i) => (
+              <React.Fragment key={p}>
+                {i > 0 && <div style={{ height: 1, background: T.line }} />}
+                <div className="flex items-center justify-between gap-4">
+                  <span className="tv-body text-sm leading-[1.65]" style={{ color: i > feito ? T.inkDim : T.ink }}>{p}</span>
+                  {i < feito ? (
+                    <span className="flex items-center gap-1.5">
+                      <span className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.violetSoft }}>Lido</span>
+                      <IconeCheck tamanho={11} cor={T.violetSoft} />
+                    </span>
+                  ) : i === feito ? (
+                    <span className="flex items-center gap-1.5">
+                      <span className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.amber }}>Lendo…</span>
+                      <span className="tv-pisca rounded-full" style={{ width: 6, height: 6, background: T.amber }} />
+                    </span>
+                  ) : (
+                    <span className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.inkDim, opacity: 0.6 }}>À espera</span>
+                  )}
+                </div>
+              </React.Fragment>
+            ))}
+          </div>
+          {total > 1 && (
+            <>
+              <div style={{ height: 1.5, background: T.line }} />
+              <div className="flex flex-col gap-2">
+                <div className="flex items-start justify-between">
+                  <span className="tv-mono text-[9px] uppercase tracking-[0.9px]" style={{ color: T.inkDim }}>Passos lidos</span>
+                  <span className="tv-mono text-[10px] tracking-[1px]" style={{ color: T.amberSoft }}>{feito} de {total} · {pct}%</span>
+                </div>
+                <div className="w-full rounded overflow-hidden" style={{ height: 8, background: T.bg }}>
+                  <div className="h-full rounded" style={{ width: `${pct}%`, background: T.amber, boxShadow: "0 0 8px rgba(232,163,61,0.53)" }} />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="tv-body text-xs leading-[1.55] text-center" style={{ color: T.inkDim, maxWidth: 560 }}>
+          O arquivista está lendo, e nada foi mudado ainda. O que ele propuser aparece na próxima tela, com “manter como está” ao lado de “aplicar”.
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- O LUGAR NOVO (v9.181) — `momento-lugar-novo-v2` ----------
 
    A faixa acima é para CHEGAR; esta tela é para chegar PELA PRIMEIRA VEZ.
@@ -19195,13 +19305,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />
           <LimiteErro><PainelLateral abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
-        {recal && (
+        {recal === "pedindo" && (
+          <CerimoniaDaRecalibragem passos={PASSOS_DO_SAVE} atual={0} lendo="O arquivista relê o livro da campanha e os seus feitos…" />
+        )}
+        {recal && recal !== "pedindo" && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
             <div className="rounded-2xl p-5 w-80 space-y-3" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
-              <h3 className="tv-display text-xl" style={{ color: T.ink }}>⚖ A lenda <span className="tv-mono text-xs" style={{ color: T.inkDim }}>· passo 1 de 2</span></h3>
-              {recal === "pedindo" ? (
-                <p className="tv-body text-sm italic" style={{ color: T.inkDim }}>O arquivista relê o livro da campanha e os seus feitos…</p>
-              ) : (
+              <h3 className="tv-display text-xl" style={{ color: T.ink }}>⚖ A lenda <span className="tv-mono text-xs" style={{ color: T.inkDim }}>· passo 1 de {PASSOS_DO_SAVE.length}</span></h3>
+              {(
                 <>
                   <p className="tv-body text-sm" style={{ color: T.inkDim }}>{recal.justificativa}</p>
                   <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
@@ -19221,13 +19332,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </div>
         )}
         {/* RECALIBRAGEM DO MUNDO: estado proposto dos sistemas, decisão do jogador */}
-        {recalM && (
+        {recalM === "pedindo" && (
+          <CerimoniaDaRecalibragem passos={PASSOS_DO_SAVE} atual={1} lendo="O arquivista relê o cânone e os registros — companheiros, pessoas, potências, cidades, guilda…" />
+        )}
+        {recalM && recalM !== "pedindo" && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
             <div className="rounded-2xl p-5 w-80 space-y-3 tv-scroll overflow-y-auto" style={{ background: T.panel, border: `1px solid ${T.amber}`, maxHeight: "80vh" }}>
-              <h3 className="tv-display text-xl" style={{ color: T.ink }}>⚖ O mundo <span className="tv-mono text-xs" style={{ color: T.inkDim }}>· passo 2 de 2</span></h3>
-              {recalM === "pedindo" ? (
-                <p className="tv-body text-sm italic" style={{ color: T.inkDim }}>O arquivista relê o livro, o cânone e os registros — companheiros, pessoas, potências, cidades, guilda…</p>
-              ) : (
+              <h3 className="tv-display text-xl" style={{ color: T.ink }}>⚖ O mundo <span className="tv-mono text-xs" style={{ color: T.inkDim }}>· passo {PASSOS_DO_SAVE.length} de {PASSOS_DO_SAVE.length}</span></h3>
+              {(
                 <>
                   <p className="tv-body text-sm" style={{ color: T.inkDim }}>{recalM.justificativa}</p>
                   <div className="rounded-xl p-3 space-y-1.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
@@ -19250,13 +19362,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </div>
         )}
 
-        {recalAsc && (
+        {recalAsc === "pedindo" && (
+          <CerimoniaDaRecalibragem passos={PASSOS_DA_ASCENSAO} atual={0} lendo="O arquivista procura sinais de culto, milagres e divindades…" />
+        )}
+        {recalAsc && recalAsc !== "pedindo" && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.6)" }}>
             <div className="rounded-2xl p-5 w-80 space-y-3 tv-scroll overflow-y-auto" style={{ background: T.panel, border: `1px solid ${T.violetSoft}`, maxHeight: "80vh" }}>
               <h3 className="tv-display text-xl" style={{ color: T.ink }}>⚖ Recalibrar ascensão</h3>
-              {recalAsc === "pedindo" ? (
-                <p className="tv-body text-sm italic" style={{ color: T.inkDim }}>O arquivista relê o livro e o cânone em busca de sinais de culto, milagres e divindades…</p>
-              ) : (
+              {(
                 <>
                   <p className="tv-body text-sm" style={{ color: T.inkDim }}>{recalAsc.justificativa}</p>
                   <div className="rounded-xl p-3 space-y-1.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>

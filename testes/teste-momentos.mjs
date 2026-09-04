@@ -137,5 +137,61 @@ sec("5. O LUGAR NOVO — a cerimônia da primeira pisada (v9.181)");
   t("e o porte vem da geografia", /PORTES\[c\.porte \|\| c\.tipo\]/.test(bloco));
 }
 
+sec("6. A RECALIBRAGEM — a espera ganhou forma (v9.182)");
+{
+  /* Recalibrar é a operação mais estranha da casa: o arquivista relê o livro
+     inteiro e propõe os números justos de hoje. Leva dezenas de segundos, e
+     até aqui a espera era uma caixa de 320px com uma frase em itálico — o
+     jogador não sabia se faltava um passo ou dois, nem se algo travou. */
+  t("a cerimônia existe", /function CerimoniaDaRecalibragem\(\{ passos, atual, lendo \}\)/.test(APP));
+  const bloco = APP.slice(APP.indexOf("function CerimoniaDaRecalibragem"), APP.indexOf("function CerimoniaDoLugarNovo"));
+
+  /* OS PASSOS SÃO UMA TABELA. Estavam escritos à mão no título de cada caixa
+     ("passo 1 de 2", "passo 2 de 2"), em dois lugares que ninguém obrigava a
+     concordar. */
+  t("os passos do save são uma tabela", /const PASSOS_DO_SAVE = \[/.test(APP));
+  t("e os da ascensão também", /const PASSOS_DA_ASCENSAO = \[/.test(APP));
+  t("o título da caixa conta pela tabela", /passo 1 de \{PASSOS_DO_SAVE\.length\}/.test(APP));
+  t("e o do segundo passo também", /passo \{PASSOS_DO_SAVE\.length\} de \{PASSOS_DO_SAVE\.length\}/.test(APP));
+  /* sem os comentários: a régua que diz "este número não está escrito à mão"
+     acusaria o próprio comentário que conta a história do defeito. E aqui a
+     limpeza é local porque outras seções desta suíte procuram justamente por
+     comentários (a faixa de chegada é achada pelo cabeçalho dela). */
+  const semComentarios = APP.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  t("não sobrou 'de 2' escrito à mão", !/passo \d+ de \d+/.test(semComentarios));
+
+  /* A PORCENTAGEM SAI DA CONTA DE PASSOS. Uma barra que anda sozinha durante
+     uma espera de duração desconhecida seria a mentira mais fácil da tela. */
+  t("a porcentagem vem dos passos", /const pct = Math\.round\(\(feito \/ total\) \* 100\);/.test(bloco));
+  t("e a barra usa essa mesma conta", /width: `\$\{pct\}%`/.test(bloco));
+  t("a barra só aparece quando há mais de um passo", /\{total > 1 && \(/.test(bloco));
+
+  /* OS TRÊS ESTADOS DE UM PASSO: lido, lendo, à espera. */
+  t("o passo já lido diz lido", /Lido<\/span>/.test(bloco));
+  t("o passo em curso pisca", /className="tv-pisca rounded-full"/.test(bloco));
+  t("e o que vem depois diz que espera", /À espera<\/span>/.test(bloco));
+  t("o pisca respeita quem pediu menos movimento", /prefers-reduced-motion: reduce/.test(CSS));
+  t("e os anéis também", /\.tv-anel-fora, \.tv-anel-dentro, \.tv-pisca \{ animation: none; \}/.test(CSS));
+
+  /* NADA É APLICADO NA CERIMÔNIA: ela é só a espera, e o rodapé diz isso —
+     uma tela que enche a barra até o fim ensina que algo já aconteceu. */
+  t("o rodapé diz que nada mudou ainda", /nada foi mudado ainda/.test(bloco));
+  t("e aponta a decisão que vem depois", /“manter como está” ao lado de “aplicar”/.test(bloco));
+
+  /* AS TRÊS ESPERAS PASSAM PELA MESMA CERIMÔNIA */
+  t("a lenda espera nela", /\{recal === "pedindo" && \(\s*<CerimoniaDaRecalibragem passos=\{PASSOS_DO_SAVE\} atual=\{0\}/.test(APP));
+  t("o mundo também, no passo seguinte", /\{recalM === "pedindo" && \(\s*<CerimoniaDaRecalibragem passos=\{PASSOS_DO_SAVE\} atual=\{1\}/.test(APP));
+  t("e a ascensão, com o passo dela", /\{recalAsc === "pedindo" && \(\s*<CerimoniaDaRecalibragem passos=\{PASSOS_DA_ASCENSAO\} atual=\{0\}/.test(APP));
+  /* e a caixa da decisão só abre quando há proposta */
+  t("a caixa da lenda só abre com proposta", /\{recal && recal !== "pedindo" && \(/.test(APP));
+  t("a do mundo também", /\{recalM && recalM !== "pedindo" && \(/.test(APP));
+  t("e a da ascensão", /\{recalAsc && recalAsc !== "pedindo" && \(/.test(APP));
+
+  /* o sigilo reusa o glifo que a casa já tem, e o arco é desenhado porque é
+     arco de círculo — traço, raio e cor cabem em três atributos */
+  t("o núcleo usa o glifo da casa", /<IconeFaiscas tamanho=\{26\} cor=\{T\.violetSoft\} \/>/.test(bloco));
+  t("e o arco é um arco, com a cor do token", /stroke=\{T\.amber\} strokeWidth="2" strokeLinecap="round" strokeDasharray/.test(bloco));
+}
+
 console.log(`\nmomentos v9.163: ${bons} passaram, ${maus} falharam`);
 process.exit(maus ? 1 : 0);
