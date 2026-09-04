@@ -316,6 +316,14 @@ export function DivisoriaRunica() {
     </div>
   );
 }
+
+export function IconeDado({ tamanho = 28, cor = T.amberSoft }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 28 28" fill="none">
+      <path d="M18.6667 9.33333H18.6783M18.6667 14H18.6783M18.6667 18.6667H18.6783M9.33333 9.33333H9.345M9.33333 14H9.345M9.33333 18.6667H9.345M5.83333 3.5H22.1667C23.4553 3.5 24.5 4.54467 24.5 5.83333V22.1667C24.5 23.4553 23.4553 24.5 22.1667 24.5H5.83333C4.54467 24.5 3.5 23.4553 3.5 22.1667V5.83333C3.5 4.54467 4.54467 3.5 5.83333 3.5Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
 export function BarraMini({ rotulo, atual, max, cor, corBaixa }) {
   const pct = Math.max(0, Math.min(100, max > 0 ? (atual / max) * 100 : 0));
   const baixa = pct <= 33;

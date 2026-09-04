@@ -116,7 +116,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica } from "./ui.jsx";
+import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado } from "./ui.jsx";
 import heroTaverna from "./assets/taverna-hero.png";
 import marcaTaverna from "./assets/taverna-marca.jpg";
 import { CartaDeTaro, CartaVerso } from "./carta-taro.jsx";
@@ -3168,19 +3168,29 @@ function TelaMundo({ concluir }) {
   );
 }
 
+/* ---------------- A CRIAÇÃO DO PERSONAGEM (v9.174) ----------------
+   Redesenhada em `criacao-personagem-v2`, com o mesmo vocabulário da
+   criação do mundo: banner ilustrado, coluna de 1040, títulos de seção
+   e campos rotulados.
+
+   A MUDANÇA QUE MAIS IMPORTA está nos atributos. Eles eram uma grade de
+   cartões com dois botões de texto colados; agora cada um é uma linha
+   com nome, o que ele SERVE, e o par −/valor/+ à direita. O valor é o
+   único número em âmbar da tela — é para ele que o olho vai quando
+   sobra ponto, e é ele que trava o botão de começar.
+
+   E o dado de nome sai de um botãozinho quadrado ao lado do campo para
+   um medalhão de 80 na frente da linha: é a única coisa desta tela que
+   o jogo faz POR você, e ela merecia ser encontrável. */
 function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false }) {
-  mundo = mundo || { genero: "Fantasia medieval" };
   const [nome, setNome] = useState("");
-  /* v9.120: SOBRENOME. Dois campos porque eles não servem para a mesma
-     coisa — o primeiro é de quem tem intimidade, o de família é de quem não
-     tem —, e é essa escolha, feita fala a fala, que mostra distância sem
-     ninguém precisar explicar. Continua opcional: quem não quiser um
-     sobrenome joga como sempre jogou. */
+  /* v9.143: o sobrenome é campo próprio. O nome inteiro continua sendo a
+     chave de tudo — cento e poucos lugares casam pessoa por ele —, mas o
+     primeiro e o de família viajam ao lado para quem precisa escolher. */
   const [sobrenome, setSobrenome] = useState("");
   const nomeInteiro = [nome.trim(), sobrenome.trim()].filter(Boolean).join(" ");
-  /* v9.158: o sexo entrou na ficha porque o RETRATO precisa dele — maxilar,
-     ombro, cabelo e barba saem daqui, não do sorteio. Sem escolher, o
-     gerador chutaria a cara do único personagem que o jogador desenhou. */
+  /* v9.158: o sexo é pergunta obrigatória — o retrato de xilogravura lê
+     daqui, e sem resposta não há cara certa para desenhar. */
   const [sexo, setSexo] = useState(null);
   const [conceito, setConceito] = useState("");
   const [historia, setHistoria] = useState("");
@@ -3196,7 +3206,7 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
   const restantes = PONTOS_TOTAIS - usados;
   const cObj = classePorNome(classe);
   const rObj = racaPorNome(raca);
-  /* atributos finais = distribuídos + bônus racial */
+  const ehFuturista = ["Ficção científica", "Cyberpunk", "Pós-apocalíptico"].includes(mundo.genero);
   const attrFinais = Object.fromEntries(ATRIBUTOS.map((a) => [a.id, (atributos[a.id] || 0) + ((rObj?.bonus || {})[a.id] || 0)]));
   const vidaMax = (cObj?.vidaBase || 10) + attrFinais.vigor * 2;
   const manaMax = (cObj?.manaBase || 8) + attrFinais.intelecto * 2;
@@ -3207,163 +3217,206 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
     if (d > 0 && restantes <= 0) return;
     setAtributos({ ...atributos, [id]: nv });
   };
-  const campo = { background: T.panel, border: `1px solid ${T.line}`, color: T.ink };
+
+  const Rotulo = ({ children }) => (
+    <div className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.inkDim }}>{children}</div>
+  );
+  const Titulo = ({ children, direita }) => (
+    <div className="flex items-end justify-between gap-4 w-full">
+      <div className="tv-display text-2xl leading-[1.2]" style={{ color: T.amberSoft }}>{children}</div>
+      {direita}
+    </div>
+  );
+  const caixa = { background: T.panel, border: `1px solid ${T.line}`, color: T.ink };
+  const Campo = ({ rotulo, children }) => (
+    <div className="flex-1 min-w-0 flex flex-col gap-2">
+      <Rotulo>{rotulo}</Rotulo>
+      {children}
+    </div>
+  );
+  const entrada = "w-full rounded-lg px-4 py-3.5 tv-body text-xs outline-none";
+  const escolha = "w-full rounded-lg px-4 py-3 tv-display text-xl outline-none appearance-none";
+
   return (
-    <div className="tv-fade max-w-2xl mx-auto w-full px-6 py-10 overflow-y-auto tv-scroll">
-      <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.violetSoft }}>Passo 2 de 2 · O herói (ou não)</div>
-      <h1 className="tv-display text-4xl md:text-5xl mb-3" style={{ color: T.ink }}>Quem entra nesse mundo?</h1>
-      <p className="tv-body mb-3" style={{ color: T.inkDim }}>Mundo: <em style={{ color: T.amberSoft }}>{mundo.genero}</em>. Dê nome, conceito e distribua {PONTOS_TOTAIS} pontos.</p>
-      {/* v9.101: O MUNDO SENDO LIDO. A leitura acontece enquanto o jogador
-          monta a ficha, e ela leva menos tempo que isso — mas leva ALGUM, e
-          um trabalho invisível que muda o jogo inteiro merece uma linha.
-          Ela não pede espera nem trava o botão: se o léxico não chegar, a
-          campanha começa igual, só genérica. */}
-      <div className="rounded-xl px-3 py-2 mb-6 tv-body text-xs" style={{ background: T.panelSoft, border: `1px solid ${mundoLido ? T.violet : T.line}`, color: mundoLido ? T.violetSoft : T.inkDim }}>
-        {lendoMundo ? "📖 Lendo o seu mundo… — enquanto você monta a ficha, o sistema está traduzindo a sua descrição em gente, lugares e nomes próprios deste lugar."
-          : mundoLido ? "📖 O seu mundo foi lido: a gente, os ofícios, os lugares e as ameaças daqui entraram no sistema."
-            : "📖 O mundo será montado a partir da sua descrição."}
-      </div>
-      <div className="grid md:grid-cols-2 gap-4 mb-4">
-        <div className="flex gap-2">
-          <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome" className="flex-1 min-w-0 rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
-          <input value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} placeholder="Sobrenome (opcional)" className="flex-1 min-w-0 rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
-          {/* o sorteio entrega o nome inteiro deste mundo; aqui ele se parte
-              nos dois campos, para o jogador ver o que é o quê antes de mexer */}
-          {/* o dado respeita o sexo escolhido: sortear "Aldric" para quem
-              acabou de marcar mulher seria o botão desmentindo o formulário */}
-          <button type="button" onClick={() => { const p = String(nomePessoa(mundo.genero, sexo === "mulher" ? "fem" : sexo === "homem" ? "masc" : undefined, Math.random, mundo.lexico) || "").trim().split(/\s+/); setNome(p[0] || ""); setSobrenome(p.slice(1).join(" ")); }}
-            className="rounded-xl px-4 shrink-0" style={{ border: `1px solid ${T.line}`, color: T.amberSoft }} title="Sortear um nome">🎲</button>
-        </div>
-        <input value={conceito} onChange={(e) => setConceito(e.target.value)} placeholder="Conceito (ex.: ladra de relíquias arrependida)" className="rounded-xl p-4 tv-body text-sm outline-none" style={campo} />
-      </div>
-      <div className="flex items-center gap-2 mb-4">
-        <span className="tv-body text-sm mr-1" style={{ color: T.inkDim }}>Seu herói é</span>
-        {[["homem", "♂ Homem"], ["mulher", "♀ Mulher"]].map(([id, rotulo]) => (
-          <button key={id} type="button" onClick={() => setSexo(id)} className="rounded-xl px-4 py-2 tv-body text-sm transition-all"
-            style={{ background: sexo === id ? T.panelSoft : T.panel, border: `1px solid ${sexo === id ? T.amber : T.line}`, color: sexo === id ? T.amberSoft : T.ink }}>{rotulo}</button>
-        ))}
-      </div>
-      {sobrenome.trim() && (
-        <div className="tv-body text-xs -mt-2 mb-4" style={{ color: T.inkDim }}>
-          No mundo você é <span style={{ color: T.ink }}>{nomeInteiro}</span> — quem tem intimidade chama de <span style={{ color: T.amberSoft }}>{nome.trim() || "…"}</span>, quem não tem chama de <span style={{ color: T.violetSoft }}>{sobrenome.trim()}</span>.
-        </div>
-      )}
-      <textarea value={historia} onChange={(e) => setHistoria(e.target.value)} rows={3} placeholder="História e segredos (opcional) — o Mestre vai usar isso contra e a favor de você…" className="w-full rounded-xl p-4 tv-body text-sm outline-none resize-none mb-6" style={campo} />
-
-      <div className="grid md:grid-cols-2 gap-4 mb-2">
-        <div>
-          <div className="tv-mono text-xs uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>{["Ficção científica", "Cyberpunk", "Pós-apocalíptico"].includes(mundo.genero) ? "Origem" : "Raça"}</div>
-          <select value={raca} onChange={(e) => setRaca(e.target.value)} className="w-full rounded-xl p-3 tv-body text-sm outline-none" style={campo}>
-            {racasDisp.map((r) => <option key={r.nome} value={r.nome}>{chamadoDaRaca(mundo.lexico, r.nome)}</option>)}
-          </select>
-          {rObj && <div className="tv-body text-xs mt-1.5" style={{ color: T.inkDim }}>{chamadoDaRaca(mundo.lexico, rObj.nome) !== rObj.nome ? <span style={{ color: T.inkDim }}>({rObj.nome}) </span> : null}{rObj.desc} <span style={{ color: T.amberSoft }}>{Object.entries(rObj.bonus).map(([k, v]) => `+${v} ${(ATRIBUTOS.find((a) => a.id === k) || {}).nome || k}`).join(", ")}</span>{rObj.traco && <><br /><span style={{ color: T.violetSoft }}>✦ {rObj.traco}</span></>}</div>}
-        </div>
-        <div>
-          <div className="tv-mono text-xs uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Profissão</div>
-          <select value={profissao} onChange={(e) => setProfissao(e.target.value)} className="w-full rounded-xl p-3 tv-body text-sm outline-none" style={campo}>
-            {PROFISSOES.map((pr) => <option key={pr.nome} value={pr.nome}>{chamadoDaProfissao(mundo.lexico, pr.nome)}</option>)}
-          </select>
-          {(() => { const pr = PROFISSOES.find((x) => x.nome === profissao); if (!pr) return null; const apelido = chamadoDaProfissao(mundo.lexico, pr.nome); return <div className="tv-body text-xs mt-1.5" style={{ color: T.inkDim }}>{apelido !== pr.nome ? <span style={{ color: T.inkDim }}>({pr.nome}) </span> : null}{pr.beneficio}</div>; })()}
+    <div className="tv-fade w-full overflow-y-auto tv-scroll">
+      {/* ---- o banner: a mesma taverna das outras portas ---- */}
+      <div className="relative w-full flex flex-col items-center justify-end px-6 pt-14 pb-8" style={{ borderBottom: `1px solid ${T.line}`, minHeight: 260 }}>
+        <img src={heroTaverna} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, rgba(14,12,21,0) 0%, rgba(14,12,21,0.6) 60%, ${T.bg} 100%)` }} />
+        <div className="relative flex flex-col items-center gap-4 w-full max-w-[800px] text-center">
+          <span className="tv-mono text-[9px] tracking-[0.9px] rounded px-3 py-1" style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.violetSoft }}>
+            PASSO 2 DE 2 · O HERÓI (OU NÃO)
+          </span>
+          <h1 className="tv-display text-[48px] leading-[1.05]" style={{ color: T.amberSoft }}>Quem entra nesse mundo?</h1>
+          <p className="tv-body text-sm leading-[1.65]" style={{ color: T.ink }}>
+            Mundo: {mundo.genero}. Dê nome, conceito e distribua {PONTOS_TOTAIS} pontos.
+          </p>
         </div>
       </div>
 
-      <div className="mb-6">
-        <div className="tv-mono text-xs uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Antecedente · quem você era antes</div>
-        <select value={antecedenteId} onChange={(e) => setAntecedenteId(e.target.value)} className="w-full rounded-xl p-3 tv-body text-sm outline-none" style={campo}>
-          {ANTECEDENTES.map((a) => <option key={a.id} value={a.id}>{a.icone} {a.nome}</option>)}
-        </select>
-        <div className="rounded-xl p-3 mt-1.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-          <div className="tv-body text-xs" style={{ color: T.ink }}>{antObj.desc}</div>
-          <div className="tv-body text-[11px] italic mt-1" style={{ color: T.inkDim }}>🎭 Gancho: {antObj.gancho}</div>
-          <div className="tv-mono text-[10px] mt-1.5" style={{ color: T.amberSoft }}>
-            {[antObj.item ? `◆ ${antObj.item}` : null, antObj.pv ? `+${antObj.pv} PV` : null, antObj.pm ? `+${antObj.pm} PM` : null, antObj.moedas ? `+${antObj.moedas} moedas` : null].filter(Boolean).join("  ·  ") || "—"}
-          </div>
+      <div className="w-full max-w-[1040px] mx-auto px-6 py-10 flex flex-col gap-8">
+        {/* v9.101: O MUNDO SENDO LIDO. A leitura acontece enquanto o jogador
+            monta a ficha, e ela leva menos tempo que isso — mas leva ALGUM, e
+            um trabalho invisível que muda o jogo inteiro merece uma linha.
+            Ela não pede espera nem trava o botão: se o léxico não chegar, a
+            campanha começa igual, só genérica. */}
+        <div className="rounded-lg px-4 py-2.5 tv-body text-xs" style={{ background: T.panelSoft, border: `1px solid ${mundoLido ? T.violet : T.line}`, color: mundoLido ? T.violetSoft : T.inkDim }}>
+          {lendoMundo ? "📖 Lendo o seu mundo… — enquanto você monta a ficha, o sistema está traduzindo a sua descrição em gente, lugares e nomes próprios deste lugar."
+            : mundoLido ? "📖 O seu mundo foi lido: a gente, os ofícios, os lugares e as ameaças daqui entraram no sistema."
+              : "📖 O mundo será montado a partir da sua descrição."}
         </div>
-      </div>
 
-      <div className="grid md:grid-cols-2 gap-4 mb-6">
-        <div>
-          <div className="tv-mono text-xs uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Classe</div>
-          <select value={classe} onChange={(e) => { setClasse(e.target.value); setSubclasse(classePorNome(e.target.value).subclasses[0].nome); }} className="w-full rounded-xl p-3 tv-body text-sm outline-none" style={campo}>
-            {CLASSES.map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
-          </select>
-          {cObj && <div className="tv-body text-xs mt-1.5" style={{ color: T.inkDim }}>{cObj.desc}</div>}
-        </div>
-        <div>
-          <div className="tv-mono text-xs uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Caminho (subclasse)</div>
-          <select value={subclasse} onChange={(e) => setSubclasse(e.target.value)} className="w-full rounded-xl p-3 tv-body text-sm outline-none" style={campo}>
-            {(cObj?.subclasses || []).map((sc) => <option key={sc.nome} value={sc.nome}>{sc.nome}</option>)}
-          </select>
-          {(() => { const sc = (cObj?.subclasses || []).find((x) => x.nome === subclasse); return sc ? <div className="tv-body text-xs mt-1.5" style={{ color: T.inkDim }}>{sc.desc} <span style={{ color: T.violetSoft }}>Especializações: {sc.especializacoes.join(" · ")}</span></div> : null; })()}
-        </div>
-      </div>
-
-      {habsIniciais.length > 0 && (
-        <div className="rounded-xl p-3 mb-6" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-          <div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.violetSoft }}>Habilidades iniciais de {classe}</div>
-          <div className="tv-body text-xs" style={{ color: T.inkDim }}>{habsIniciais.map((h) => `${h.nome} (${h.custo} PM)`).join(" · ")}</div>
-        </div>
-      )}
-      <div className="flex items-baseline justify-between mb-3">
-        <div className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.inkDim }}>Atributos (0 a +{ATRIBUTO_MAX_CRIACAO})</div>
-        <div className="tv-mono text-sm" style={{ color: restantes === 0 ? T.ok : T.amber }}>{restantes} ponto{restantes !== 1 ? "s" : ""} restante{restantes !== 1 ? "s" : ""}</div>
-      </div>
-      <div className="grid md:grid-cols-2 gap-3 mb-6">
-        {ATRIBUTOS.map((a) => (
-          <div key={a.id} className="rounded-xl p-4 flex items-center justify-between gap-3" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
-            <div><div className="tv-display text-lg leading-none" style={{ color: T.ink }}>{a.nome}</div><div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{a.desc}</div></div>
-            <div className="flex items-center gap-2">
-              <Botao pequeno onClick={() => ajustar(a.id, -1)}>−</Botao>
-              <span className="tv-mono w-8 text-center font-semibold" style={{ color: T.amber }}>+{atributos[a.id]}</span>
-              <Botao pequeno onClick={() => ajustar(a.id, 1)}>+</Botao>
+        {/* ---- identidade ---- */}
+        <div className="flex flex-col gap-5 w-full">
+          <Titulo>Identidade do aventureiro</Titulo>
+          <div className="flex items-end gap-6 w-full">
+            {/* o dado respeita o sexo escolhido: sortear "Aldric" para quem
+                acabou de marcar mulher seria o botão desmentindo o formulário */}
+            <button type="button" title="Sortear um nome deste mundo"
+              onClick={() => { const p = String(nomePessoa(mundo.genero, sexo === "mulher" ? "fem" : sexo === "homem" ? "masc" : undefined, Math.random, mundo.lexico) || "").split(" "); setNome(p[0] || ""); setSobrenome(p.slice(1).join(" ")); }}
+              className="shrink-0 w-20 h-20 rounded-full flex items-center justify-center"
+              style={{ background: T.panel, border: `1.5px solid ${T.amber}`, boxShadow: "0 0 6px rgba(232,163,61,0.15)" }}>
+              <IconeDado tamanho={28} />
+            </button>
+            <div className="flex-1 min-w-0 flex flex-col md:flex-row gap-6">
+              <Campo rotulo="Nome">
+                <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="ex.: Ume" className={entrada} style={caixa} />
+              </Campo>
+              <Campo rotulo="Sobrenome (opcional)">
+                <input value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} placeholder="ex.: das Fendas" className={entrada} style={caixa} />
+              </Campo>
             </div>
           </div>
-        ))}
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="tv-mono text-xs" style={{ color: T.inkDim }}>PV: <span style={{ color: T.ink }}>{vidaMax}</span> · PM: <span style={{ color: T.violetSoft }}>{manaMax}</span> · Moedas: <span style={{ color: T.amberSoft }}>{MOEDAS_INICIAIS}</span></div>
-        <Botao primario desativado={!nome.trim() || !conceito.trim() || !sexo || restantes !== 0}
-          onClick={() => concluir(comDom({
-            /* o retrato lê estes dois: o sexo dá a geometria, e `feicoesFixas`
-               diz que esta cara foi ESCOLHIDA — nem no mundo plural o sorteio
-               da apresentação passa por cima de quem decidiu a própria */
-            genero: sexo, feicoesFixas: true,
-            /* `nome` continua sendo o nome INTEIRO, e tem de continuar: cento e
-               poucos lugares deste código casam pessoa por ele — elenco, missão,
-               combate, laço, cânone. O primeiro e o de família viajam ao lado,
-               para quem precisa escolher entre os dois. */
-            nome: nomeInteiro, primeiroNome: nome.trim(), sobrenome: sobrenome.trim(),
-            conceito: conceito.trim(), historia: historia.trim(),
-            raca, classe, subclasse, profissao,
-            antecedente: antObj.nome, antecedenteGancho: antObj.gancho,
-            semente: `${nomeInteiro}|${conceito.trim()}|${Math.floor(Math.random() * 100000)}`,
-            atributos: attrFinais, vida: vidaMax + (antObj.pv || 0), vidaMax: vidaMax + (antObj.pv || 0), mana: manaMax + (antObj.pm || 0), manaMax: manaMax + (antObj.pm || 0),
-            /* a criação é o piso da ficha: nem o respec desce abaixo dela (v9.6) */
-            baseAtributos: { ...attrFinais }, pontosAtr: 0, atributosVersao: 1,
-            nivel: 1, xp: 0, moedas: MOEDAS_INICIAIS + (antObj.moedas || 0), nivelPendentes: 0,
-            inventario: antObj.item ? [antObj.item] : [], habilidades: habsIniciais, grupo: [],
-            efeitos: [], condicoes: [], equipamento: [], equipados: {},
-            /* v9.15: nasce treinado no que a classe e o passado justificam.
-               Redistribui livremente na ficha depois — a criação não é armadilha. */
-            pericias: periciasIniciais({ classe, antecedente: antObj.nome }), periciasVersao: 1,
-          }))}>Começar aventura →</Botao>
+          <Campo rotulo="Conceito">
+            <input value={conceito} onChange={(e) => setConceito(e.target.value)} placeholder="Escreva uma breve frase que resuma a alma do seu herói — ex.: ladra de relíquias arrependida" className={entrada} style={caixa} />
+          </Campo>
+        </div>
+
+        {/* ---- o sexo ---- */}
+        <div className="flex flex-col gap-3 w-full">
+          <Rotulo>Seu herói é</Rotulo>
+          <div className="flex flex-col md:flex-row gap-4 w-full">
+            {[["homem", "♂ Homem"], ["mulher", "♀ Mulher"]].map(([id, rot]) => (
+              <button key={id} onClick={() => setSexo(id)} className="flex-1 rounded-lg py-3.5 tv-display text-xl"
+                style={{ background: sexo === id ? T.panelSoft : T.panel, border: `${sexo === id ? 1.5 : 1}px solid ${sexo === id ? T.amber : T.line}`, color: sexo === id ? T.amberSoft : T.ink }}>
+                {rot}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ---- origens e caminhos ---- */}
+        <div className="flex flex-col gap-5 w-full">
+          <Titulo>Origens e caminhos</Titulo>
+          <div className="flex flex-col md:flex-row gap-6 w-full">
+            <div className="flex-1 min-w-0 flex flex-col gap-6">
+              <Campo rotulo={ehFuturista ? "Origem" : "Raça"}>
+                <select value={raca} onChange={(e) => setRaca(e.target.value)} className={escolha} style={caixa}>
+                  {racasDisp.map((r) => <option key={r.nome} value={r.nome}>{chamadoDaRaca(mundo.lexico, r.nome)}</option>)}
+                </select>
+              </Campo>
+              <Campo rotulo="Classe">
+                <select value={classe} onChange={(e) => { setClasse(e.target.value); setSubclasse(classePorNome(e.target.value).subclasses[0].nome); }} className={escolha} style={caixa}>
+                  {CLASSES.map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
+                </select>
+              </Campo>
+            </div>
+            <div className="flex-1 min-w-0 flex flex-col gap-6">
+              <Campo rotulo="Profissão">
+                <select value={profissao} onChange={(e) => setProfissao(e.target.value)} className={escolha} style={caixa}>
+                  {PROFISSOES.map((p) => <option key={p.nome} value={p.nome}>{chamadoDaProfissao(mundo.lexico, p.nome)}</option>)}
+                </select>
+              </Campo>
+              <Campo rotulo="Caminho (subclasse)">
+                <select value={subclasse} onChange={(e) => setSubclasse(e.target.value)} className={escolha} style={caixa}>
+                  {(cObj?.subclasses || []).map((s) => <option key={s.nome} value={s.nome}>{s.nome}</option>)}
+                </select>
+              </Campo>
+            </div>
+          </div>
+          <Campo rotulo="Antecedente — quem você era antes">
+            <select value={antecedenteId} onChange={(e) => setAntecedenteId(e.target.value)} className={escolha} style={caixa}>
+              {ANTECEDENTES.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
+            </select>
+          </Campo>
+          {antObj && <div className="tv-body text-xs leading-[1.55]" style={{ color: T.inkDim }}>{antObj.gancho}</div>}
+        </div>
+
+        {/* ---- os atributos ---- */}
+        <div className="flex flex-col gap-5 w-full">
+          <Titulo direita={
+            <span className="flex items-center gap-2 shrink-0">
+              <span className="rounded-full" style={{ width: 6, height: 6, background: restantes === 0 ? T.ok : T.amber }} />
+              <span className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: restantes === 0 ? T.ok : T.amber }}>
+                {restantes} ponto{restantes !== 1 ? "s" : ""} restante{restantes !== 1 ? "s" : ""}
+              </span>
+            </span>
+          }>Atributos</Titulo>
+          <div className="flex flex-col gap-4 w-full">
+            {[0, 2, 4].map((i) => (
+              <div key={i} className="flex flex-col md:flex-row gap-4 w-full">
+                {ATRIBUTOS.slice(i, i + 2).map((a) => (
+                  <div key={a.id} className="flex-1 min-w-0 flex items-center justify-between gap-4 rounded-[10px] p-4" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
+                    <div className="flex-1 min-w-0 flex flex-col gap-1">
+                      <span className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>{a.nome}</span>
+                      <span className="tv-body text-[11px] leading-[1.5]" style={{ color: T.inkDim }}>{a.desc}</span>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <button onClick={() => ajustar(a.id, -1)} className="w-6 h-6 rounded-xl flex items-center justify-center tv-mono text-[10px]"
+                        style={{ background: T.bg, border: `1px solid ${T.line}`, color: T.inkDim }}>−</button>
+                      <span className="tv-display text-2xl leading-[1.2] w-7 text-center" style={{ color: T.amber }}>+{atributos[a.id]}</span>
+                      <button onClick={() => ajustar(a.id, 1)} className="w-6 h-6 rounded-xl flex items-center justify-center tv-mono text-[10px]"
+                        style={{ background: T.bg, border: `1px solid ${restantes > 0 ? T.amber : T.line}`, color: restantes > 0 ? T.amber : T.inkDim }}>+</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ---- a história ---- */}
+        <div className="flex flex-col gap-2.5 w-full">
+          <Rotulo>História e segredos (opcional)</Rotulo>
+          <textarea value={historia} onChange={(e) => setHistoria(e.target.value)} rows={5}
+            placeholder="O Mestre vai usar isso contra e a favor de você…"
+            className="w-full rounded-lg p-4 tv-body text-sm outline-none resize-none leading-[1.65]" style={caixa} />
+        </div>
+
+        {/* ---- o começo ---- */}
+        <div className="flex flex-col items-center gap-3 w-full pb-4">
+          <Botao primario desativado={!nome.trim() || !conceito.trim() || !sexo || restantes !== 0}
+            onClick={() => concluir(comDom({
+              /* o retrato lê estes dois: o sexo dá a geometria, e `feicoesFixas`
+                 diz que esta cara foi ESCOLHIDA — nem no mundo plural o sorteio
+                 da apresentação passa por cima de quem decidiu a própria */
+              genero: sexo, feicoesFixas: true,
+              /* `nome` continua sendo o nome INTEIRO, e tem de continuar: cento e
+                 poucos lugares deste código casam pessoa por ele — elenco, missão,
+                 combate, laço, cânone. O primeiro e o de família viajam ao lado,
+                 para quem precisa escolher entre os dois. */
+              nome: nomeInteiro, primeiroNome: nome.trim(), sobrenome: sobrenome.trim(),
+              conceito: conceito.trim(), historia: historia.trim(),
+              raca, classe, subclasse, profissao,
+              antecedente: antObj.nome, antecedenteGancho: antObj.gancho,
+              semente: `${nomeInteiro}|${conceito.trim()}|${Math.floor(Math.random() * 100000)}`,
+              atributos: attrFinais, vida: vidaMax + (antObj.pv || 0), vidaMax: vidaMax + (antObj.pv || 0), mana: manaMax + (antObj.pm || 0), manaMax: manaMax + (antObj.pm || 0),
+              /* a criação é o piso da ficha: nem o respec desce abaixo dela (v9.6) */
+              baseAtributos: { ...attrFinais }, pontosAtr: 0, atributosVersao: 1,
+              nivel: 1, xp: 0, moedas: MOEDAS_INICIAIS + (antObj.moedas || 0), nivelPendentes: 0,
+              inventario: antObj.item ? [antObj.item] : [], habilidades: habsIniciais, grupo: [],
+              efeitos: [], condicoes: [], equipamento: [], equipados: {},
+              /* v9.15: nasce treinado no que a classe e o passado justificam.
+                 Redistribui livremente na ficha depois — a criação não é armadilha. */
+              pericias: periciasIniciais({ classe, antecedente: antObj.nome }), periciasVersao: 1,
+            }))}>ENTRAR NA TAVERNA →</Botao>
+          <div className="tv-body text-xs text-center" style={{ color: T.inkDim }}>Sua lenda aguarda no próximo salão.</div>
+        </div>
       </div>
     </div>
   );
 }
 
-/* ============================================================
-   A SALA, NA TELA (v9.120)
-
-   Uma tela só para os dois estados de espera, porque eles são o mesmo
-   momento visto dos dois lados: o anfitrião esperando alguém entrar, e o
-   convidado esperando o mundo ficar pronto. Ela não decide nada — mostra
-   o código, quem já sentou e qual é o próximo passo de quem está olhando.
-
-   A REGRA DA TELA: nunca prometer o que não se pode saber. Não há como
-   distinguir "a sala não existe" de "o anfitrião ainda não abriu", e por
-   isso a tela não afirma nenhuma das duas — diz o que fazer.
-   ============================================================ */
 function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoEntrar, aoCriarMundo, aoMontarFicha, aoSair, temMundo, tipoDoCanal, falhaDoCanal = "", lendoMundo = false }) {
   const m = sala || {};
   const lugares = m.lugares || [];

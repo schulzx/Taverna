@@ -167,7 +167,11 @@ sec("8. a abertura da campanha (v9.120)");
      em respiro e a PRIMEIRA cena é a única sem intenção nenhuma na mão */
   t("a trama é forçada na abertura", /talvezDarUmaTrama\(\{ forcar: true \}\)/.test(APP));
   t("e o respiro só é ignorado quando se força", /if \(!forcar && c\.movimento === "respiro"\) return "";/.test(APP));
-  t("o sobrenome existe na criação", /placeholder="Sobrenome \(opcional\)"/.test(APP));
+  /* v9.174: no redesenho (`criacao-personagem-v2`) todo campo ganhou ETIQUETA
+     acima em vez de texto-fantasma dentro — placeholder some quando se
+     digita, e um rótulo que some é um rótulo que não estava lá. O campo
+     separado continua existindo, que é o que esta linha protege. */
+  t("o sobrenome existe na criação", /<Campo rotulo="Sobrenome \(opcional\)">/.test(APP));
   t("e viaja separado do nome inteiro", /primeiroNome: nome\.trim\(\), sobrenome: sobrenome\.trim\(\)/.test(APP));
 }
 
