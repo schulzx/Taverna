@@ -13,6 +13,8 @@ import { T } from "./constantes.js";
 import { Rosto } from "./rosto.jsx";
 import { tracos } from "./semente.js";
 import { CartaDeTaro } from "./carta-taro.jsx";
+/* A brasa e conta (`brasas.js`) e o campo e desenho — mesma divisao do rosto. */
+import { quantasBrasas, HALO, brasaEm, forcaDoHalo } from "./brasas.js";
 
 export function Botao({ children, onClick, primario, desativado, pequeno, className = "" }) {
   return (
@@ -555,4 +557,118 @@ export function Retrato({ semente, tamanho = 44, anel = T.line, corSubstituta, e
       {aberta && <CartaDeTaro ente={ente} inimigo={inimigo} legenda={legenda} lex={lex} aoFechar={() => setAberta(false)} />}
     </>
   );
+}
+
+/* ============================================================
+   O CAMPO DE BRASAS (v9.198) — o fogo que o menu ganhou no Figma
+
+   A tabela mora em `brasas.js` e prova-se em Node; aqui só se pinta.
+
+   TRÊS DECISÕES QUE NÃO SÃO ENFEITE:
+
+   1. O halo dos cantos é ESTÁTICO — não depende do tempo. Redesenhá-lo
+      a cada quadro seria refazer sessenta vezes por segundo uma imagem
+      que nunca muda. Fica guardado e é carimbado.
+
+   2. Quem não quer movimento recebe UM quadro parado, e não uma tela
+      vazia: o desenho continua lá, só não anda. Tirar as brasas inteiras
+      de quem pediu menos animação seria tirar a taverna junto.
+
+   3. A tela é `aria-hidden` e não recebe dedo. É atmosfera; não há nada
+      aqui que alguém precise ler ou tocar.
+   ============================================================ */
+export function CampoDeBrasas({ className = "" }) {
+  const telaRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const tela = telaRef.current;
+    if (!tela || typeof window === "undefined") return;
+    const ctx = tela.getContext("2d");
+    if (!ctx) return;   /* navegador sem canvas 2D: a tela fica só escura */
+
+    const parado = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let larg = 0, alt = 0, halo = null, pedido = 0, vivo = true;
+
+    /* o halo, pintado uma vez em tiras: a força é altura × borda, então
+       cada tira horizontal é um degradê lateral só */
+    const guardarHalo = () => {
+      halo = document.createElement("canvas");
+      halo.width = Math.max(1, Math.round(larg)); halo.height = Math.max(1, Math.round(alt));
+      const h = halo.getContext("2d");
+      if (!h) { halo = null; return; }
+      const TIRAS = 28, [r, g, b] = HALO.rgb;
+      for (let i = 0; i < TIRAS; i++) {
+        const y = (i + 0.5) / TIRAS;
+        const meio = forcaDoHalo(0, y);           /* a borda decide o resto */
+        if (meio <= 0.002) continue;
+        const grad = h.createLinearGradient(0, 0, halo.width, 0);
+        for (let k = 0; k <= 10; k++) {
+          const fx = k / 10;
+          grad.addColorStop(fx, `rgba(${r},${g},${b},${forcaDoHalo(fx, y).toFixed(4)})`);
+        }
+        h.fillStyle = grad;
+        h.fillRect(0, (i / TIRAS) * halo.height, halo.width, halo.height / TIRAS + 1);
+      }
+    };
+
+    const medir = () => {
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const cx = tela.getBoundingClientRect();
+      larg = cx.width; alt = cx.height;
+      if (larg < 1 || alt < 1) return false;
+      tela.width = Math.round(larg * dpr); tela.height = Math.round(alt * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      guardarHalo();
+      return true;
+    };
+
+    const pintar = (tempo) => {
+      ctx.clearRect(0, 0, larg, alt);
+      if (halo) ctx.drawImage(halo, 0, 0, larg, alt);
+      /* aditivo: brasa é luz, e luz soma — sobrepostas, clareiam */
+      ctx.globalCompositeOperation = "lighter";
+      for (let i = 0; i < quantasBrasas(larg); i++) {
+        const b = brasaEm(i, tempo);
+        if (b.forca <= 0.01 || b.y < -0.05 || b.y > 1.2) continue;
+        const px = b.x * larg, py = b.y * alt;
+        const [r, g, bl] = b.cor.rgb;
+        /* O BRILHO EM VOLTA DO NÚCLEO: quatro vezes e meia o raio, e a
+           TRÊS DÉCIMOS da força — os dois números são do shader. Escrevi
+           0,55 na primeira versão e as brasas viraram bokeh: bolas moles
+           do tamanho de uma moeda passando por cima do texto do cartão.
+           O que faz brasa parecer brasa é o núcleo pequeno e aceso, não
+           o halo; o halo é só o ar quente em volta dele. */
+        const brilho = ctx.createRadialGradient(px, py, 0, px, py, b.raio * 4.5);
+        brilho.addColorStop(0, `rgba(${r},${g},${bl},${(b.forca * 0.3).toFixed(3)})`);
+        brilho.addColorStop(1, `rgba(${r},${g},${bl},0)`);
+        ctx.fillStyle = brilho;
+        ctx.beginPath(); ctx.arc(px, py, b.raio * 4.5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = `rgba(${r},${g},${bl},${Math.min(1, b.forca).toFixed(3)})`;
+        ctx.beginPath(); ctx.arc(px, py, b.raio, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalCompositeOperation = "source-over";
+    };
+
+    const nascimento = performance.now();
+    const quadro = (agora) => {
+      if (!vivo) return;
+      pintar((agora - nascimento) / 1000);
+      pedido = requestAnimationFrame(quadro);
+    };
+
+    if (!medir()) return undefined;
+    if (parado) pintar(0); else pedido = requestAnimationFrame(quadro);
+
+    const aoRedimensionar = () => { if (medir() && parado) pintar(0); };
+    const observador = typeof ResizeObserver !== "undefined" ? new ResizeObserver(aoRedimensionar) : null;
+    if (observador) observador.observe(tela); else window.addEventListener("resize", aoRedimensionar);
+
+    return () => {
+      vivo = false;
+      if (pedido) cancelAnimationFrame(pedido);
+      if (observador) observador.disconnect(); else window.removeEventListener("resize", aoRedimensionar);
+    };
+  }, []);
+
+  return <canvas ref={telaRef} aria-hidden className={`absolute inset-0 w-full h-full pointer-events-none ${className}`} />;
 }

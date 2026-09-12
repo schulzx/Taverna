@@ -64,6 +64,9 @@ import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriat
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo } from "./agressao.js";
 import { consultarBiblioteca, garantirEstante, marcarJogada, trechoDaJogada, podeFormaDeCena, contarTurnoDeCena, zerarCadenciaDaCena, envelopeDaCena } from "./biblioteca.js";
 import { garantirCompasso, avancarCompasso, envelopeDoCompasso, resumoCompasso, barraDoCompasso } from "./compasso.js";
+/* O LIVRO DE PROMESSAS (v9.199) — o razao do que foi insinuado. Conta em
+   promessas.js, provado em Node; aqui so se registra e se persiste. */
+import { garantirLivro, semear, regar, pagar } from "./promessas.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -116,7 +119,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, LinhaDoCartao, duasColunas } from "./ui.jsx";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, LinhaDoCartao, duasColunas } from "./ui.jsx";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -4229,7 +4232,7 @@ function TelaMenu({ irNovo, continuar, temSave, criarSala, entrarSala, aoLerArqu
   const botaoPequeno = "flex-1 min-w-0 rounded-lg px-4 py-2 tv-mono text-[9px] tracking-[0.9px] transition-all";
 
   return (
-    <div className="tv-fade flex-1 flex flex-col items-center gap-8 px-8 pb-12">
+    <div className="tv-fade relative flex-1 flex flex-col items-center gap-8 px-8 pb-12">
       {/* ---- o banner: a primeira imagem grande do jogo, e ela abre a porta ---- */}
       <div className="w-full shrink-0 overflow-hidden rounded-b-[24px]">
         <div className="relative h-[260px] w-full">
@@ -4365,6 +4368,12 @@ function TelaMenu({ irNovo, continuar, temSave, criarSala, entrarSala, aoLerArqu
 
         {temSave && <p className="tv-body text-xs text-center" style={{ color: T.inkDim }}>Começar uma nova campanha substitui a anterior neste dispositivo.</p>}
       </div>
+
+      {/* ---- AS BRASAS (v9.198) ----
+         O shader "Taverna Embers" do Figma, pela tabela dele. Vem depois
+         de tudo porque no desenho ele é efeito SOBRE a tela pronta — e
+         brasa é luz, que soma em vez de tapar. */}
+      <CampoDeBrasas />
     </div>
   );
 }
@@ -4700,6 +4709,10 @@ export default function Taverna() {
      estante porque tem a mesma natureza: memória de ofício, que não é fato
      do mundo e não entra na crônica. */
   const compassoRef = useRef(garantirCompasso(null));
+  /* o razao das sementes: nasce vazio e e alimentado pelo vilao (e, nas
+     proximas fases, pela espinha e pelos itens). Nunca some na virada de
+     capitulo — a promessa atravessa o ato. */
+  const promessasRef = useRef(garantirLivro(null));
   const texturaRef = useRef({});
   const baseMundoRef = useRef(garantirBase(null));
   /* v9.165: o que a lei da forma lembra — quais andares já tiveram o
@@ -6907,7 +6920,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
+      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
@@ -10106,6 +10119,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       mesaRef.current = garantirMesa(sv.mesa);
       estanteRef.current = garantirEstante(sv.estante);
       compassoRef.current = garantirCompasso(sv.compasso);
+      promessasRef.current = garantirLivro(sv.promessas);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
         ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null, pressoes: sv.mercado.pressoes || {}, gastos: sv.mercado.gastos || {}, pechinchas: sv.mercado.pechinchas || {} }
@@ -16463,6 +16477,15 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     }
     nemesisRef.current = { ...n, status: "derrotada", odio: 0, mortaEm: diaRef.current, comoMorreu: causa || "" };
     setNemesis(nemesisRef.current);
+    /* a semente do vilao se paga quando ele cai: a promessa da campanha
+       inteira, enfim colhida. So paga se madura — um vilao derrubado cedo
+       demais (o que podeCair impede) nao teria a maturidade, e o Livro
+       concorda com essa recusa sem precisar saber dela. */
+    try {
+      const Lv = garantirLivro(promessasRef.current);
+      const semV = Lv.sementes.find((x) => x.dona === "vilao" && x.alvo === (n.nome || "") && x.estado === "madura");
+      if (semV) promessasRef.current = pagar(Lv, semV.id, { dia: diaRef.current, colheita: "a queda de " + (n.nome || "o vilao") }).livro;
+    } catch (e) { /* pagar nunca pode custar a queda */ }
     /* o registro de pessoas é a memória do Mestre: ela precisa constar morta lá */
     const chave = Object.keys(npcsRef.current || {}).find((k) => k.toLowerCase() === (n.nome || "").toLowerCase());
     if (chave && String(npcsRef.current[chave].status || "").toLowerCase() !== "morto") {
@@ -16584,6 +16607,25 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const r = avancarPlano(nemesisRef.current, { dia: diaRef.current, alvo });
     if (!r) return;
     nemesisRef.current = r.vilao; setNemesis(r.vilao);
+
+    /* ---------------- O VILAO ESCREVE NO LIVRO (v9.199) ----------------
+       Cada degrau da escada de revelacao e uma insinuacao de quem ele e.
+       O Livro guarda essa progressao para que a catraca a enxergue: no
+       "rosto" (terceira rega) a semente amadurece, e so entao uma virada
+       sobre o vilao podera colher. A verdade fica no antagonista.js; aqui
+       mora so o rastro do que foi mostrado. */
+    try {
+      const L = garantirLivro(promessasRef.current);
+      const nomeVilao = r.vilao.nome || "";
+      const semVilao = L.sementes.find((x) => x.dona === "vilao" && x.alvo === nomeVilao && x.estado !== "paga" && x.estado !== "murcha");
+      const FORMA_DA_FASE = { rumor: "aviso_do_bebado", marca: "brasao_limado", mao: "conserto_invisivel", rosto: "nome_na_lamina", guerra: "posto_sem_guarda", queda: "nome_na_lamina" };
+      const faseId = (r.fase && r.fase.id) || "rumor";
+      if (!semVilao) {
+        promessasRef.current = semear(L, { forma: FORMA_DA_FASE[faseId] || "aviso_do_bebado", dona: "vilao", ato: 0, peso: "pesado", alvo: nomeVilao, material: "um sinal de " + (nomeVilao || "quem move as sombras") + ": " + ((r.fase && r.fase.revela) || "algo se aproxima"), dia: diaRef.current }).livro;
+      } else {
+        promessasRef.current = regar(L, semVilao.id, { dia: diaRef.current, cena: faseId }).livro;
+      }
+    } catch (e) { /* o Livro nunca pode custar o passo do vilao */ }
 
     /* A REVELAÇÃO é o ÚNICO momento em que o sistema fala em voz de sistema
        sobre ele — porque é um marco da campanha, e o jogador precisa saber
