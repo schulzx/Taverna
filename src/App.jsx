@@ -83,6 +83,9 @@ import { garantirReviravolta, elegerReviravoltas, sementesDaReviravolta, podeRev
 /* O PESO DA CENA (v9.204) — luto e gloria como movimento. Conta em
    peso.js; o App junta os fatos de evento e a pauta cala o mercado. */
 import { pesoDaCena, vetoDoPeso, seguraOCompasso } from "./peso.js";
+/* O ENCALHE (v9.205) — o sabio percebe o aluno perdido, e o mundo vai
+   busca-lo. Conta em encalhe.js; o App le o encalhe e sobe a escada. */
+import { garantirEscada, subirEscada } from "./encalhe.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -4744,6 +4747,9 @@ export default function Taverna() {
      turno (uma traicao revelada, uma morte). Lidos pela pauta e pelo
      compasso, e limpos quando a pauta os consome — o peso e um beat. */
   const fatosDoPesoRef = useRef({});
+  /* a escada do encalhe: 0 = solto; sobe um degrau por vez enquanto o
+     jogador estiver parado, e desce a zero ao primeiro movimento. */
+  const escadaRef = useRef(garantirEscada(null));
   const texturaRef = useRef({});
   const baseMundoRef = useRef(garantirBase(null));
   /* v9.165: o que a lei da forma lembra — quais andares já tiveram o
@@ -6977,7 +6983,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
+      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, escada: escadaRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
@@ -9265,6 +9271,32 @@ export default function Taverna() {
      arco (dias, nao turnos) e so revela quando a catraca deixa (tres
      sementes maduras). A verdade fica aqui — a pauta nunca a vaza antes
      da hora. Aditivo e defensivo: nunca pode custar o turno. */
+  /* ---------------- O ENCALHE (v9.205) ----------------
+     Le se o jogador esta parado (repeticao vazia, nunca curiosidade) e,
+     se estiver, sobe a escada no ritmo dos dias e manda o mundo busca-lo
+     com um motivo verdadeiro. Explorar nao dispara; mover-se derruba a
+     escada a zero. Aditivo e defensivo. Sinais de leitura barata entram
+     agora (missoes abertas, diario parado); os demais acendem quando o
+     dado ficar acessivel. */
+  const snapshotDoEncalhe = () => {
+    try {
+      const abertas = (missoesAtivas(missoesRef.current) || []).length;
+      const reg = Array.isArray(registroRef.current) ? registroRef.current : [];
+      const ultimoDia = reg.reduce((m, x) => Math.max(m, Number(x && x.dia) || 0), 0);
+      const diasSemDiario = reg.length ? Math.max(0, diaRef.current - ultimoDia) : 0;
+      return { missoesAbertas: abertas, tetoMissoes: 6, diasSemDiario };
+    } catch (e) { return {}; }
+  };
+  const mexerNoEncalhe = () => {
+    try {
+      const r = subirEscada(escadaRef.current, snapshotDoEncalhe(), { dia: diaRef.current });
+      escadaRef.current = r.escada;
+      if (r.intervencao) {
+        notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + "[O MUNDO VAI BUSCAR — encalhe, degrau " + r.escada.degrau + "] " + r.intervencao.diz + ".";
+      }
+    } catch (e) { calou("mexerNoEncalhe", e); }
+  };
+
   const mexerNaReviravolta = () => {
     try {
       if (elegerReviravoltas(sementeMundo()).menor !== "aliado_agente") return;
@@ -9498,6 +9530,7 @@ export default function Taverna() {
     for (const m of interpreteRef.current.marcas) elencoMemRef.current = marcarMovimento(elencoMemRef.current, m.nome, m.id, m.gesto);
     propositosDoTurnoRef.current = dispararPropositos(conteudo);
     mexerNaReviravolta();
+    mexerNoEncalhe();
     falasDoTurnoRef.current = await colherAsFalas(conteudo);
     const pauta = textoDaPauta(pautaDoTurno(conteudo), { turno: turnoDeRegistroRef.current + 1 });
     /* guardado antes da resposta: "a luta acabou neste turno" é a
@@ -10238,6 +10271,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       compassoRef.current = garantirCompasso(sv.compasso);
       promessasRef.current = garantirLivro(sv.promessas);
       reviravoltaRef.current = garantirReviravolta(sv.reviravolta);
+      escadaRef.current = garantirEscada(sv.escada);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
         ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null, pressoes: sv.mercado.pressoes || {}, gastos: sv.mercado.gastos || {}, pechinchas: sv.mercado.pechinchas || {} }
