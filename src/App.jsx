@@ -93,6 +93,9 @@ import { garantirPosturaAtiva, derivarPostura, moralDoInimigo, viesDoOraculo, fa
 /* OS EPISODIOS (v9.207) — as subestruturas que o momento aciona. Conta em
    episodios.js; o App abre, semeia no Livro, avanca e fecha no arco. */
 import { garantirEpisodio, episodioQueAbre, sementesDoEpisodio, avancarEpisodio, envelopeDoEpisodio } from "./episodios.js";
+/* A MEMORIA DO GESTO (v9.208) — o mundo lembra como te trataram e cobra
+   quando a mare vira. Conta em gesto.js. */
+import { garantirGestos, registrarGesto, cobrarNaVirada, envelopeDaMemoria } from "./gesto.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -4766,6 +4769,9 @@ export default function Taverna() {
   const posturaRef = useRef(garantirPosturaAtiva(null));
   /* o episodio em curso (uma subestrutura acionada), ou null. Um por vez. */
   const episodioRef = useRef(null);
+  /* o razao dos gestos: quem tratou o heroi como, em qual postura. Cobrado
+     e pago quando a postura vira. */
+  const gestosRef = useRef([]);
   const ultimoPesoRef = useRef({ peso: null, dia: 0 });
   const texturaRef = useRef({});
   const baseMundoRef = useRef(garantirBase(null));
@@ -7006,7 +7012,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, escada: escadaRef.current, postura: posturaRef.current, episodio: episodioRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
+      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, escada: escadaRef.current, postura: posturaRef.current, episodio: episodioRef.current, gestos: gestosRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
@@ -9391,9 +9397,30 @@ export default function Taverna() {
     } catch (e) { calou("mexerNoEpisodio", e); }
   };
 
+  /* que gesto POSITIVO cada postura dura registra para quem esta ao lado:
+     na crise/escassez, ajudou escondido; no luto, ficou; na cacada, escondeu. */
+  const GESTO_DA_POSTURA = { crise: "ajudou_escondido", escassez: "ajudou_escondido", luto: "ficou", cacada: "escondeu_voce" };
   const mexerNaPostura = () => {
-    try { posturaRef.current = derivarPostura(posturaRef.current, snapshotDePosturas(), { dia: diaRef.current }); }
-    catch (e) { calou("mexerNaPostura", e); }
+    try {
+      const r = derivarPostura(posturaRef.current, snapshotDePosturas(), { dia: diaRef.current });
+      posturaRef.current = { postura: r.postura, desde: r.desde != null ? r.desde : (posturaRef.current || {}).desde || 0 };
+      if (!r.mudou) return;
+      /* A VIRADA (v9.208). Ao ENTRAR numa postura dura, quem esta ao lado do
+         heroi fica marcado como quem ficou. Ao entrar numa boa, o mundo
+         paga o que devia — e cobra de quem se aproveitou. */
+      const nova = r.postura;
+      const gesto = GESTO_DA_POSTURA[nova];
+      if (gesto) {
+        const grupo = ((fichaViva() || personagem || {}).grupo) || [];
+        for (const g of grupo) if (g && g.nome) gestosRef.current = registrarGesto(gestosRef.current, { quem: g.nome, gesto, postura: nova, dia: diaRef.current });
+      }
+      const cob = cobrarNaVirada(gestosRef.current, { para: nova, dia: diaRef.current });
+      gestosRef.current = cob.ledger;
+      if (cob.pagamentos.length) {
+        const env = envelopeDaMemoria(cob.pagamentos);
+        if (env) notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + env;
+      }
+    } catch (e) { calou("mexerNaPostura", e); }
   };
 
   const mexerNoEncalhe = () => {
@@ -9452,6 +9479,7 @@ export default function Taverna() {
         promessasRef.current = L;
         reviravoltaRef.current = { ...rev, revelada: true };
         fatosDoPesoRef.current = { ...fatosDoPesoRef.current, traicaoRevelada: true };
+        try { gestosRef.current = registrarGesto(gestosRef.current, { quem: rev.alvo, gesto: "delatou", postura: (posturaRef.current || {}).postura, dia: diaRef.current }); } catch (e) {}
         const passos = oDiaSeguinte("aliado_agente", { alvo: rev.alvo, vilao: (nemesisRef.current || {}).nome || "" });
         notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + "[A MASCARA CAI — " + rev.alvo + " servia ao vilao] " + revelacaoDe("aliado_agente") + ". Encene: " + passos.join("; ") + ".";
       }
@@ -10385,6 +10413,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       escadaRef.current = garantirEscada(sv.escada);
       posturaRef.current = garantirPosturaAtiva(sv.postura);
       episodioRef.current = garantirEpisodio(sv.episodio);
+      gestosRef.current = garantirGestos(sv.gestos);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
         ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null, pressoes: sv.mercado.pressoes || {}, gastos: sv.mercado.gastos || {}, pechinchas: sv.mercado.pechinchas || {} }
