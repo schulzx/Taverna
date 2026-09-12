@@ -69,7 +69,7 @@ import { garantirCompasso, avancarCompasso, envelopeDoCompasso, resumoCompasso, 
 import { garantirLivro, semear, regar, pagar } from "./promessas.js";
 /* ITENS UTEIS (v9.200) — a lei que mata o item inerte. Classifica em
    itens-uteis.js; o efeito da semente fala com o Livro, o resto narra. */
-import { acaoDaBolsa, sementeDoItem, colheitaDoItem, verboPorId } from "./itens-uteis.js";
+import { acaoDaBolsa, sementeDoItem, colheitaDoItem, verboPorId, classeDoItem } from "./itens-uteis.js";
 /* A MESA POSTA (v9.201) — o juizo da acao. Catalogo em mesa-posta.js; a
    aposta (as duas versoes da cena) entra na pauta quando a acao casa. */
 import { situacaoQueCasa, apostas } from "./mesa-posta.js";
@@ -9433,55 +9433,80 @@ export default function Taverna() {
     } catch (e) { calou("mexerNoEncalhe", e); }
   };
 
-  const mexerNaReviravolta = () => {
+  /* que forma consegue achar um ALVO vivo agora. E o detector de cada
+     reviravolta — a soNasceSe traduzida em refs. Duas tem sinal barato
+     hoje (o aliado traidor, o item de origem vaga); as demais ficam
+     dormentes ate ganharem detector, como fio solto do mundo. */
+  const alvoDaReviravolta = (forma) => {
     try {
-      if (elegerReviravoltas(sementeMundo()).menor !== "aliado_agente") return;
       const v = nemesisRef.current;
       const temVilao = !!(v && v.status !== "derrotada" && v.nome);
-      let rev = reviravoltaRef.current;
-      if (rev && rev.revelada) return;
-      /* 1. ELEGER: um aliado do grupo cujo proposito e trair */
-      if (!rev) {
-        if (!temVilao) return;
+      if (forma === "aliado_agente") {
+        if (!temVilao) return null;
         const grupo = ((fichaViva() || personagem || {}).grupo) || [];
         const traidor = grupo.find((g) => { try { return indoleDaPessoa(g).proposito === "trair"; } catch (e) { return false; } });
-        if (!traidor || !traidor.nome) return;
-        rev = garantirReviravolta({ forma: "aliado_agente", alvo: traidor.nome, eleitaEm: diaRef.current });
+        return (traidor && traidor.nome) ? traidor.nome : null;
+      }
+      if (forma === "heranca_roubada") {
+        const inv = ((fichaViva() || personagem || {}).inventario) || [];
+        const item = inv.find((x) => { try { return classeDoItem(x) === "semente"; } catch (e) { return false; } });
+        if (!item) return null;
+        return typeof item === "string" ? item : (item.nome || "a heranca");
+      }
+      return null;
+    } catch (e) { return null; }
+  };
+  /* que reviravoltas acendem o peso da traicao (Furia) e a delacao */
+  const TRAICAO = ["aliado_agente", "informante_duplo", "trai_para_proteger"];
+
+  const mexerNaReviravolta = () => {
+    try {
+      const menor = elegerReviravoltas(sementeMundo()).menor;
+      if (!menor) return;
+      let rev = reviravoltaRef.current;
+      if (rev && rev.revelada) return;
+      /* 1. ELEGER: a forma do mundo, quando o detector dela acha um alvo vivo */
+      if (!rev) {
+        const alvo = alvoDaReviravolta(menor);
+        if (!alvo) return;
+        rev = garantirReviravolta({ forma: menor, alvo, eleitaEm: diaRef.current });
         reviravoltaRef.current = rev;
       }
       const ato = Math.max(0, Number((historiaRef.current || {}).etapa) || 0);
-      /* 2. SEMEAR (uma vez) as tres sementes no Livro */
+      /* 2. SEMEAR (uma vez) as sementes da forma no Livro */
       if (!rev.semeada) {
         let L = garantirLivro(promessasRef.current);
-        for (const spec of sementesDaReviravolta("aliado_agente", { alvo: rev.alvo, ato, dia: diaRef.current })) {
+        for (const spec of sementesDaReviravolta(rev.forma, { alvo: rev.alvo, ato, dia: diaRef.current })) {
           L = semear(L, { forma: spec.forma, dona: spec.dona, peso: spec.peso, alvo: spec.alvo, ato: spec.ato, dia: spec.dia }).livro;
         }
         promessasRef.current = L;
         reviravoltaRef.current = { ...rev, semeada: true, regadaEm: diaRef.current };
         return;
       }
-      /* 3. REGAR uma semente imatura, no ritmo do arco (a cada DIAS_ENTRE_REGAS) */
+      /* 3. REGAR uma semente imatura, no ritmo do arco */
       if (diaRef.current - (rev.regadaEm || 0) >= DIAS_ENTRE_REGAS) {
         const L = garantirLivro(promessasRef.current);
         const imatura = L.sementes.find((x) => x.dona === "reviravolta" && x.alvo === rev.alvo && (x.estado === "semeada" || x.estado === "regada"));
         if (imatura) {
-          promessasRef.current = regar(L, imatura.id, { dia: diaRef.current, cena: "a mascara" }).livro;
+          promessasRef.current = regar(L, imatura.id, { dia: diaRef.current, cena: "a virada" }).livro;
           reviravoltaRef.current = { ...rev, regadaEm: diaRef.current };
           return;
         }
       }
-      /* 4. REVELAR quando a catraca deixa (tres sementes maduras) */
-      if (podeRevelar("aliado_agente", promessasRef.current, { alvo: rev.alvo })) {
+      /* 4. REVELAR quando a catraca deixa (sementes maduras o bastante) */
+      if (podeRevelar(rev.forma, promessasRef.current, { alvo: rev.alvo })) {
         let L = garantirLivro(promessasRef.current);
         for (const x of L.sementes.filter((s2) => s2.dona === "reviravolta" && s2.alvo === rev.alvo && s2.estado === "madura")) {
-          L = pagar(L, x.id, { dia: diaRef.current, colheita: revelacaoDe("aliado_agente") }).livro;
+          L = pagar(L, x.id, { dia: diaRef.current, colheita: revelacaoDe(rev.forma) }).livro;
         }
         promessasRef.current = L;
         reviravoltaRef.current = { ...rev, revelada: true };
-        fatosDoPesoRef.current = { ...fatosDoPesoRef.current, traicaoRevelada: true };
-        try { gestosRef.current = registrarGesto(gestosRef.current, { quem: rev.alvo, gesto: "delatou", postura: (posturaRef.current || {}).postura, dia: diaRef.current }); } catch (e) {}
-        const passos = oDiaSeguinte("aliado_agente", { alvo: rev.alvo, vilao: (nemesisRef.current || {}).nome || "" });
-        notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + "[A MASCARA CAI — " + rev.alvo + " servia ao vilao] " + revelacaoDe("aliado_agente") + ". Encene: " + passos.join("; ") + ".";
+        if (TRAICAO.includes(rev.forma)) {
+          fatosDoPesoRef.current = { ...fatosDoPesoRef.current, traicaoRevelada: true };
+          try { gestosRef.current = registrarGesto(gestosRef.current, { quem: rev.alvo, gesto: "delatou", postura: (posturaRef.current || {}).postura, dia: diaRef.current }); } catch (e) {}
+        }
+        const passos = oDiaSeguinte(rev.forma, { alvo: rev.alvo, vilao: (nemesisRef.current || {}).nome || "" });
+        notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + "[A VIRADA — " + revelacaoDe(rev.forma) + "] Encene como consequencia do que ja foi semeado: " + passos.join("; ") + ".";
       }
     } catch (e) { calou("mexerNaReviravolta", e); }
   };

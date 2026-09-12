@@ -68,6 +68,117 @@ export const FORMAS = [
       `a relação com ${alvo || "ele"} vira inimigo — e o grupo viu`,
     ],
   },
+  {
+    id: "heranca_roubada",
+    familia: "objetos",
+    porte: "menor",
+    nome: "A herança é roubada — o dono aparece",
+    soNasceSe: (c) => !!c.temItemDeOrigemVaga,
+    sementes: [
+      { forma: "nome_na_lamina", peso: "leve" },
+      { forma: "mao_que_treme", peso: "leve" },
+    ],
+    pesoDaColheita: "medio",
+    revela: "o item que você herdou foi tirado de alguém — e esse alguém veio buscar",
+    oDiaSeguinte: (alvo) => [
+      "o dono verdadeiro do item se apresenta, com prova",
+      "devolver, pagar ou provar posse — a escolha é do jogador, e cada uma cobra",
+      "a índole do dono decide se é ameaça, súplica ou proposta",
+    ],
+  },
+  {
+    id: "trai_para_proteger",
+    familia: "mascaras",
+    porte: "menor",
+    nome: "Trai para proteger alguém",
+    soNasceSe: (c) => !!c.temCompanheiroComFamilia,
+    sementes: [
+      { forma: "selo_refeito", peso: "leve" },
+      { forma: "generosidade_estranha", peso: "leve" },
+    ],
+    pesoDaColheita: "medio",
+    revela: "o companheiro te traiu — mas para salvar alguém que o vilão tem nas mãos",
+    oDiaSeguinte: (alvo) => [
+      "o vilão revela o refém que forçava a mão de " + (alvo || "ele"),
+      "a tração vira missão de resgate — se o herói escolher perdoar",
+      "o vínculo com " + (alvo || "ele") + " decide se ele fica ou parte",
+    ],
+  },
+  {
+    id: "informante_duplo",
+    familia: "traicoes",
+    porte: "menor",
+    nome: "O informante sempre vendeu para os dois",
+    soNasceSe: (c) => (c.vezesQueUsouInformante || 0) >= 3,
+    sementes: [
+      { forma: "moeda_estrangeira", peso: "leve" },
+      { forma: "elogio_que_vigia", peso: "leve" },
+    ],
+    pesoDaColheita: "medio",
+    revela: "o informante em quem você confiava vendia cada palavra também ao vilão",
+    oDiaSeguinte: (alvo, vilao) => [
+      "tudo que passou por " + (alvo || "ele") + " está no dossiê de " + (vilao || "o vilão"),
+      "o Livro lista o que foi vendido — o antagonista sabia mais do que parecia",
+      "calar, virar ou usar o informante de volta: três saídas, três preços",
+    ],
+  },
+  {
+    id: "contratante_servia",
+    familia: "patronos",
+    porte: "maior",
+    nome: "O contratante da primeira missão servia ao vilão",
+    soNasceSe: (c) => !!c.temVilao && !!c.primeiraMissaoDeNpcVivo,
+    sementes: [
+      { forma: "presente_cedo", peso: "leve" },
+      { forma: "elogio_que_vigia", peso: "leve" },
+      { forma: "margem_anotada", peso: "leve" },
+    ],
+    pesoDaColheita: "pesado",
+    revela: "quem te deu a primeira missão servia ao vilão — tudo que ela rendeu foi mapeamento seu",
+    oDiaSeguinte: (alvo, vilao) => [
+      (vilao || "o vilão") + " ganha o dossiê retroativo de tudo que você fez desde o começo",
+      "a primeira missão se relê inteira — cada favor foi um passo do plano dele",
+      "confrontar " + (alvo || "o contratante") + " ou usar o que ele não sabe que você sabe",
+    ],
+  },
+  {
+    id: "cidade_dizimo",
+    familia: "lugares",
+    porte: "maior",
+    nome: "A cidade acolhedora paga dízimo ao vilão",
+    soNasceSe: (c) => !!c.temVilao && !!c.temCidadeProsperaSobAmeaca,
+    sementes: [
+      { forma: "preco_estranho", peso: "leve" },
+      { forma: "loja_fechada", peso: "leve" },
+      { forma: "sino_fora_de_hora", peso: "leve" },
+    ],
+    pesoDaColheita: "pesado",
+    revela: "a cidade que te acolheu compra a própria paz pagando dízimo ao vilão",
+    oDiaSeguinte: (alvo, vilao) => [
+      "a paz da cidade era comprada — e libertá-la custa essa paz",
+      "os notáveis que sorriam sabiam; expor divide a cidade em dois",
+      "cortar o dízimo aperta " + (vilao || "o vilão") + " e põe a cidade na mira dele",
+    ],
+  },
+  {
+    id: "mestre_treinou",
+    familia: "passado",
+    porte: "maior",
+    nome: "O mestre de ofício treinou o vilão primeiro",
+    soNasceSe: (c) => !!c.temVilao && !!c.antecedenteComOficio,
+    sementes: [
+      { forma: "promessa_pequena", peso: "leve" },
+      { forma: "margem_anotada", peso: "leve" },
+      { forma: "duas_cronicas", peso: "leve" },
+    ],
+    pesoDaColheita: "pesado",
+    revela: "o mestre que te ensinou o ofício ensinou o vilão primeiro — ele conhece cada gesto seu",
+    oDiaSeguinte: (alvo, vilao) => [
+      (vilao || "o vilão") + " conhece cada gesto do herói ANTES dele — vencer exige desaprender",
+      "o mestre " + (alvo || "") + " sabia, e calou — a confiança nele reprecifica tudo",
+      "buscar o mestre por respostas, ou por contas: a índole dele decide o tom",
+    ],
+  },
 ];
 
 export const formaPorId = (id) => FORMAS.find((f) => f.id === id) || null;
@@ -85,8 +196,11 @@ export function elegerReviravoltas(seedMundo) {
   const h = hashSemente("reviravolta|" + String(seedMundo || "aventura"));
   const menores = FORMAS.filter((f) => f.porte === "menor");
   const maiores = FORMAS.filter((f) => f.porte === "maior");
-  const menor = menores.length ? menores[h % menores.length].id : null;
-  const maior = maiores.length ? maiores[(h >> 8) % maiores.length].id : null;
+  /* `>>> 8` (sem sinal): com `>> 8` o deslocamento herda o bit de sinal e o
+     índice podia sair negativo — e negativo % n é negativo, o que acessava
+     fora do array. Só apareceu quando passou a haver mais de uma maior. */
+  const menor = menores.length ? menores[(h >>> 0) % menores.length].id : null;
+  const maior = maiores.length ? maiores[(h >>> 8) % maiores.length].id : null;
   /* nunca a mesma forma nos dois papéis */
   return { menor, maior: maior === menor ? null : maior };
 }
