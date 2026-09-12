@@ -74,7 +74,22 @@ sec("6. o duelo não deixa cicatriz (lei vi)");
   t("a ficha sai como entrou", JSON.stringify(f) === antes);
 }
 
-sec("7. ligado ao jogo (D2)");
+sec("6b. D3 — as duas portas");
+{
+  /* o justo é BLINDADO: a marca do roster sozinha não basta — um pronto
+     convertido para campanha cresce, e nível 7 com marca não é aferido */
+  const a = P.montarPronto("voto"), b = P.montarPronto("flecha");
+  const crescido = { ...a, nivel: 7 };
+  t("pronto crescido em campanha NÃO é duelo justo", D.tipoDoDuelo(crescido, b) === "amistoso");
+  /* a porta da campanha lê o save e devolve CÓPIA */
+  const svFalso = JSON.stringify({ personagem: { nome: "Bruna", classe: "Ladino", vidaMax: 30, vida: 12, nivel: 5, atributos: { destreza: 2 } } });
+  const h = D.heroiDoSave(svFalso);
+  t("o herói sai do save inteiro", h && h.nome === "Bruna" && h.nivel === 5);
+  t("é cópia: mexer nele não toca o original", (() => { const o = { personagem: { nome: "X", classe: "Mago", vidaMax: 10 } }; const c = D.heroiDoSave(o); c.nome = "Y"; return o.personagem.nome === "X"; })());
+  t("save sem herói devolve null, falando com silêncio", D.heroiDoSave("{}") === null && D.heroiDoSave("lixo{") === null && D.heroiDoSave(null) === null);
+}
+
+sec("7. ligado ao jogo (D2 + D3)");
 {
   t("o App importa o duelo", /from "\.\/duelo\.js"/.test(APP));
   t("o menu tem a porta Duelo", /irDuelo/.test(APP) && /Duelo<\/span>/.test(APP));
@@ -82,6 +97,10 @@ sec("7. ligado ao jogo (D2)");
   t("o código do meu lado se copia para mandar", /codigoDaFicha\(minha\)/.test(APP));
   t("o selo aparece na tela (o juiz é visível)", /selo da luta/.test(APP));
   t("o duelo justo é anunciado quando é justo", /DUELO JUSTO/.test(APP));
+  /* D3: a porta da campanha é LEITURA do território da historia */
+  t("a porta da campanha existe e lê o território certo", /heroiDoSave\(localStorage\.getItem\(espacoDoSave\("historia"\)\)\)/.test(APP));
+  t("sem campanha, a porta diz por quê", /Nenhuma campanha nesta mesa/.test(APP));
+  t("com campanha, a porta chama o herói pelo nome", /Meu herói da campanha — /.test(APP));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

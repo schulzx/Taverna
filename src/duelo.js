@@ -86,11 +86,28 @@ export function resumoParaAviso(ficha) {
     doRoster: !!ficha.pronto,
   };
 }
-/* o duelo é JUSTO quando os dois vêm do roster (mesmo nível, mesmo
-   orçamento — provado pela catraca da arena); qualquer outra mistura é
-   AMISTOSO declarado. */
+/* o duelo é JUSTO quando os dois vêm do roster NO NÍVEL do roster (mesmo
+   nível, mesmo orçamento — provado pela catraca da arena). A marca
+   sozinha não basta: um pronto convertido para campanha ("dar a ele uma
+   vida") carrega a marca e CRESCE — e um nível 7 com a marca não é mais
+   o duelista aferido. Qualquer outra mistura é AMISTOSO declarado. */
+import { NIVEL_DO_PRONTO } from "./prontos.js";
 export function tipoDoDuelo(fichaA, fichaB) {
-  return (fichaA && fichaA.pronto && fichaB && fichaB.pronto) ? "justo" : "amistoso";
+  const aferido = (f) => f && f.pronto && (f.nivel || 1) === NIVEL_DO_PRONTO;
+  return (aferido(fichaA) && aferido(fichaB)) ? "justo" : "amistoso";
+}
+
+/* ---------------- A PORTA DA CAMPANHA (D3) ----------------
+   Lê o herói do save salvo — LEITURA, nunca escrita: a ficha entra no
+   duelo em cópia e o save não sabe que a briga existiu (lei vi). Vem
+   crua do território da historia; quem chama passa o texto do save. */
+export function heroiDoSave(brutoDoSave) {
+  try {
+    const sv = typeof brutoDoSave === "string" ? JSON.parse(brutoDoSave) : brutoDoSave;
+    const p = sv && sv.personagem;
+    if (!p || !p.nome || !p.classe || !(p.vidaMax > 0)) return null;
+    return JSON.parse(JSON.stringify(p));
+  } catch { return null; }
 }
 
 /* ---------------- A SÉRIE, NARRADA SECA ---------------- */

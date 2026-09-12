@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, chamadoDaRaca, chamadoDaProfissao } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
@@ -107,7 +107,7 @@ import { mundoDaNoite, posturaDaNoite, tetoDoMarco, veredito as vereditoDaNoite,
 import { criarTorneio, garantirTorneio, correrForaDeTela, minhaLuta, meuRival, registrarMinhaLuta, faseCompleta, avancarFase as avancarFaseTorneio, epilogar, envelopeDaChave, provocacaoDoRival } from "./torneio.js";
 /* O DUELO (v9.219 — D2): jogador contra jogador com o determinismo por
    juiz. Codigo de ficha, selo, serie seca. Conta em duelo.js. */
-import { codigoDaFicha, fichaDoCodigo, resumoParaAviso, tipoDoDuelo, duelar, rivalDaCasa } from "./duelo.js";
+import { codigoDaFicha, fichaDoCodigo, resumoParaAviso, tipoDoDuelo, duelar, rivalDaCasa, heroiDoSave } from "./duelo.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -4340,12 +4340,18 @@ function TelaNoite({ concluir, voltar }) {
    do roster. Amistoso vs justo declarado ANTES do aceite. */
 function TelaDuelo({ voltar }) {
   const [meuId, setMeuId] = useState(null);
+  const [lado, setLado] = useState("roster");
   const [modoOp, setModoOp] = useState("casa");
   const [codigo, setCodigo] = useState("");
   const [erro, setErro] = useState("");
   const [resultado, setResultado] = useState(null);
   const [semente, setSemente] = useState(() => `duelo|${Math.floor(Math.random() * 1e9)}`);
-  const minha = meuId ? montarPronto(meuId) : null;
+  /* D3: a porta da campanha — LEITURA do territorio da historia. O heroi
+     entra em copia; o save nunca sabe que a briga existiu (lei vi). */
+  const heroiCampanha = useMemo(() => {
+    try { return heroiDoSave(localStorage.getItem(espacoDoSave("historia"))); } catch { return null; }
+  }, []);
+  const minha = lado === "campanha" ? heroiCampanha : (meuId ? montarPronto(meuId) : null);
   const doCodigo = modoOp === "codigo" && codigo.trim() ? fichaDoCodigo(codigo) : null;
   const rival = modoOp === "casa" ? (meuId ? rivalDaCasa(meuId, semente) : null) : (doCodigo && doCodigo.ok ? { ficha: doCodigo.ficha } : null);
   const avisoA = minha ? resumoParaAviso(minha) : null;
@@ -4367,7 +4373,14 @@ function TelaDuelo({ voltar }) {
       {!resultado && (<>
         <div className="w-full max-w-[680px] flex flex-col gap-2">
           <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>O meu lado</div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="flex gap-2">
+            <button onClick={() => setLado("roster")} className="flex-1 tv-mono text-[11px] py-2.5 rounded-lg"
+              style={{ background: lado === "roster" ? T.panelSoft : T.panel, border: `1px solid ${lado === "roster" ? T.amber : T.line}`, color: lado === "roster" ? T.amberSoft : T.inkDim }}>Um do roster (o duelo justo)</button>
+            <button onClick={() => heroiCampanha && setLado("campanha")} disabled={!heroiCampanha} className="flex-1 tv-mono text-[11px] py-2.5 rounded-lg"
+              style={{ background: lado === "campanha" ? T.panelSoft : T.panel, border: `1px solid ${lado === "campanha" ? T.amber : T.line}`, color: !heroiCampanha ? T.line : lado === "campanha" ? T.amberSoft : T.inkDim }}>
+              {heroiCampanha ? `Meu herói da campanha — ${heroiCampanha.nome}` : "Nenhuma campanha nesta mesa"}</button>
+          </div>
+          {lado === "roster" && <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {PRONTOS.map((p) => (
               <button key={p.id} onClick={() => setMeuId(p.id)} className="text-left p-2.5 rounded-lg"
                 style={{ background: meuId === p.id ? T.panelSoft : T.panel, border: `1px solid ${meuId === p.id ? T.amber : T.line}` }}>
@@ -4375,7 +4388,7 @@ function TelaDuelo({ voltar }) {
                 <div className="tv-mono text-[9px] uppercase" style={{ color: T.violetSoft }}>{p.papel}</div>
               </button>
             ))}
-          </div>
+          </div>}
           {minha && <button onClick={() => { try { navigator.clipboard.writeText(codigoDaFicha(minha)); setErro("código copiado — mande a quem for te enfrentar"); } catch { setErro("não deu para copiar — o navegador travou a área de transferência"); } }}
             className="tv-mono text-[10px] self-start px-3 py-1.5 rounded" style={{ border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>COPIAR O CÓDIGO DESTE LADO</button>}
         </div>
