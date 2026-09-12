@@ -33,6 +33,14 @@ const comProposito = (qual) => {
 sec("1. TODO PROPÓSITO SABE VIRAR ATO");
 {
   t("nenhum propósito ficou sem efeito", I.PROPOSITOS.every((x) => x.efeito && x.efeito.tipo));
+  /* G6 (v9.210): de 13 para 24 propósitos */
+  t("são 24 propósitos", I.PROPOSITOS.length === 24, String(I.PROPOSITOS.length));
+  t("ids únicos", new Set(I.PROPOSITOS.map((x) => x.id)).size === 24);
+  t("os onze novos existem", ["guardar_tumulo", "divida_de_sangue", "recuperar_nome", "esconder_filho", "vinganca_silenciosa", "provar_ao_pai", "morrer_com_honra", "sabotar_de_dentro", "encontrar_quem_partiu", "comprar_liberdade", "nao_ser_esquecido"].every((id) => I.propositoPorId(id)));
+  /* as três partes obrigatórias, e madura() executável sem estourar */
+  t("todo propósito tem as três partes (o que quer, o que precisa, no que vira)", I.PROPOSITOS.every((x) => x.o && x.precisa && x.vira));
+  t("todo exige aponta traço real", (() => { const T = new Set(I.TRACOS.map((t) => t.id)); return I.PROPOSITOS.every((x) => x.exige.length && x.exige.every((tr) => T.has(tr))); })());
+  t("todo madura() é executável", I.PROPOSITOS.every((x) => { try { x.madura({ forcaDoLaco: 3, sabeDeMim: true, dias: 20, euGanhei: true, meDeve: true, euDevo: true, euSeiDela: false }); return true; } catch { return false; } }));
   const tipos = new Set(I.PROPOSITOS.map((x) => x.efeito.tipo));
   /* cada tipo tem de ter braço no App — efeito sem quem o aplique é
      promessa que o jogador lê e nunca vê. Medido DENTRO de `aplicarProposito`:
