@@ -78,6 +78,7 @@ sec("1. NENHUM MÓDULO MUDO");
   const AGUARDANDO = {
     /* v9.216: arena.js SAIU — torneio.js a lê (o credor veio buscar) */
     "torneio.js": "a Noite jogável no App (M6) — leva As Duas Mesas",
+    "uma-noite.js": "a Noite jogável no App (M6) — leva As Duas Mesas",
   };
   const mudos = [];
   for (const f of arqs) {

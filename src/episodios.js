@@ -131,6 +131,9 @@ export function garantirEpisodio(e) {
     aberto: e.aberto !== false,
     desde: Math.max(0, n(e.desde, 0)),
     avancouEm: Math.max(0, n(e.avancouEm, 0)),
+    /* v9.217: cenas resolvidas DENTRO do marco atual — so o ritmo por cena
+       le; no ritmo por dia fica em zero e nada muda (save antigo idem) */
+    cenas: Math.max(0, n(e.cenas, 0)),
   };
 }
 
@@ -171,9 +174,27 @@ export function envelopeDoEpisodio(estado) {
    arco). Quando passa do último, fecha — e quem chama registra o marco no
    arco. Devolve o estado novo e se fechou. */
 export const DIAS_ENTRE_MARCOS = 3;
-export function avancarEpisodio(estado, { dia = 0 } = {}) {
+/* v9.217 (lei-mae das Duas Mesas): o ritmo por CENA entra como OPCAO —
+   nunca copia. No preset rapida os marcos andam por cenas resolvidas
+   (cenaResolvida incrementa) e, na cena-limite, o marco EMPURRA: o mundo
+   resolve e anda. O ritmo por dia — o default da campanha — segue
+   intocado, linha por linha. */
+export function cenaResolvida(estado) {
+  const e = garantirEpisodio(estado);
+  if (!e || !e.aberto) return e;
+  return { ...e, cenas: e.cenas + 1 };
+}
+export function avancarEpisodio(estado, { dia = 0, ritmo = "dia", teto = 3 } = {}) {
   const e = garantirEpisodio(estado);
   if (!e || !e.aberto) return { episodio: e, fechou: false, avancou: false };
+  if (ritmo === "cena") {
+    if (e.cenas < Math.max(1, teto)) return { episodio: e, fechou: false, avancou: false };
+    const ep2 = episodioPorId(e.id);
+    if (e.marco >= ep2.marcos.length - 1) {
+      return { episodio: { ...e, aberto: false }, fechou: true, avancou: false, pesoNoArco: ep2.fecha, empurrou: true };
+    }
+    return { episodio: { ...e, marco: e.marco + 1, cenas: 0, avancouEm: dia }, fechou: false, avancou: true, empurrou: true };
+  }
   if (dia - e.avancouEm < DIAS_ENTRE_MARCOS) return { episodio: e, fechou: false, avancou: false };
   const ep = episodioPorId(e.id);
   if (e.marco >= ep.marcos.length - 1) {
