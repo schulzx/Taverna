@@ -170,7 +170,7 @@ function sortearDuracao(mov, sorte, folego) {
    holofote pede o pilar que está passando fome, e a família de cada
    assunto sabe a que pilar serve.
    ============================================================ */
-export function escolherAssunto(sit = {}, { sorte = Math.random, compasso = null, preferir = null, elenco = null } = {}) {
+export function escolherAssunto(sit = {}, { sorte = Math.random, compasso = null, preferir = null, preferirTom = null, elenco = null } = {}) {
   const c = garantirCompasso(compasso);
   const recentes = new Set(c.usados.slice(-NAO_REPETIR_ASSUNTO));
   const famRecentes = new Set(c.familias.slice(-NAO_REPETIR_FAMILIA));
@@ -212,7 +212,7 @@ export function escolherAssunto(sit = {}, { sorte = Math.random, compasso = null
 
   const peso = (a) => {
     const f = familiaPorId(a.familia);
-    return Math.max(1, a.peso || 1) * (preferir && f && f.pilar === preferir ? 2 : 1);
+    return Math.max(1, a.peso || 1) * (preferir && f && f.pilar === preferir ? 2 : 1) * (preferirTom === "pesado" && a.pesado ? 3 : 1);
   };
   const total = abertos.reduce((n, a) => n + peso(a), 0);
   let corte = sorte() * total;
@@ -232,7 +232,7 @@ export function escolherAssunto(sit = {}, { sorte = Math.random, compasso = null
    que o jogador já está travando são duas cenas grandes no mesmo turno, e
    a segunda apaga a primeira.
    ============================================================ */
-export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segurar = false, preferir = null, elenco = null, folego = null } = {}) {
+export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segurar = false, preferir = null, preferirTom = null, elenco = null, folego = null } = {}) {
   const c = garantirCompasso(compasso);
   if (segurar) return { compasso: c, virou: false, porque: "a onda espera: já há cena grande em curso" };
 
@@ -254,7 +254,7 @@ export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segur
      uma cena que não comporta nada —, a onda fica no respiro mais um
      tempo em vez de germinar no vazio. */
   if (prox.id === "semente") {
-    const a = escolherAssunto(sit, { sorte, compasso: c, preferir, elenco });
+    const a = escolherAssunto(sit, { sorte, compasso: c, preferir, preferirTom, elenco });
     if (!a) {
       return {
         compasso: { ...c, movimento: "respiro", turnos: 0, alvo: sortearDuracao(MOVIMENTOS[0], sorte, folego) },

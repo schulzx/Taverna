@@ -359,7 +359,7 @@ export const ASSUNTOS = [
 
   /* ==================== A PERDA ==================== */
   {
-    id: "divida_vence", familia: "perda", peso: 3,
+    id: "divida_vence", familia: "perda", pesado: true, peso: 3,
     nome: "uma dívida que vence",
     quando: (s) => s.emCidade || s.temPromessa,
     preparo: "Comece a preparar uma DÍVIDA: estabeleça que alguém deve alguma coisa a alguém, com prazo, e que isso é normal aqui.",
@@ -369,7 +369,7 @@ export const ASSUNTOS = [
     depois: "Mostre o que a cobrança tirou e de quem: quase nunca de quem devia, quase sempre de quem estava por perto.",
   },
   {
-    id: "casa_perdida", familia: "perda", peso: 3, precisa: "lugar",
+    id: "casa_perdida", familia: "perda", pesado: true, peso: 3, precisa: "lugar",
     nome: "um lugar que deixa de ser meu",
     quando: (s) => s.momento >= 0.4,
     preparo: "Comece a preparar a PERDA DE UM LUGAR: mostre um lugar desta campanha funcionando bem, com gente dentro fazendo o de sempre.",
@@ -379,7 +379,7 @@ export const ASSUNTOS = [
     depois: "Mostre onde foi parar quem estava lá dentro, e o que aquele lugar virou.",
   },
   {
-    id: "morte_natural", familia: "perda", peso: 2, precisa: "gente",
+    id: "morte_natural", familia: "perda", pesado: true, peso: 2, precisa: "gente",
     nome: "alguém morre sem violência",
     quando: (s) => s.emCidade && s.momento >= 0.45,
     preparo: "Comece a preparar uma MORTE SEM VIOLÊNCIA: mostre alguém velho ou doente desta campanha ainda em atividade, fazendo o que faz.",
@@ -389,7 +389,7 @@ export const ASSUNTOS = [
     depois: "Mostre o vazio prático que ficou: o que ela sabia e ninguém mais sabe, e quem vai ter de aprender.",
   },
   {
-    id: "reputacao", familia: "perda", peso: 3,
+    id: "reputacao", familia: "perda", pesado: true, peso: 3,
     nome: "meu nome vira outra coisa",
     quando: (s) => s.fama >= 25,
     preparo: "Comece a preparar uma VIRADA DE REPUTAÇÃO: mostre uma versão do que eu fiz circulando com um detalhe torto, dita por quem me acha ótimo.",
@@ -399,7 +399,7 @@ export const ASSUNTOS = [
     depois: "Mostre onde a versão nova pegou: que portas fecharam, quem passou a me olhar diferente, e o que eu não consigo mais desmentir.",
   },
   {
-    id: "sacrificio_alheio", familia: "perda", peso: 3,
+    id: "sacrificio_alheio", familia: "perda", pesado: true, peso: 3,
     nome: "alguém paga no meu lugar",
     quando: (s) => (s.temGrupo || s.temGenteConhecida) && s.momento >= 0.5,
     preparo: "Comece a preparar um SACRIFÍCIO ALHEIO: mostre alguém assumindo uma responsabilidade pequena que era minha, sem alarde.",
@@ -411,7 +411,7 @@ export const ASSUNTOS = [
 
   /* ==================== O PODER ==================== */
   {
-    id: "tentacao", familia: "poder", peso: 3,
+    id: "tentacao", familia: "poder", pesado: true, peso: 3,
     nome: "um poder oferecido",
     quando: (s) => s.momento >= 0.35,
     preparo: "Comece a preparar uma OFERTA DE PODER: mostre que existe, neste mundo, uma coisa que dá vantagem real — e mostre alguém usando-a bem.",
@@ -421,7 +421,7 @@ export const ASSUNTOS = [
     depois: "Mostre o que a decisão fez comigo aos olhos dos outros — inclusive se eu recusei.",
   },
   {
-    id: "responsabilidade", familia: "poder", peso: 3,
+    id: "responsabilidade", familia: "poder", pesado: true, peso: 3,
     nome: "gente esperando ordem",
     quando: (s) => s.nivel >= 5 && s.emCidade,
     preparo: "Comece a preparar uma RESPONSABILIDADE: mostre um grupo de pessoas com um problema comum e sem ninguém que resolva.",
@@ -431,7 +431,7 @@ export const ASSUNTOS = [
     depois: "Mostre o que a decisão fez com o grupo: quem obedeceu, quem saiu, e o que passou a ser esperado de mim.",
   },
   {
-    id: "limite", familia: "poder", peso: 3,
+    id: "limite", familia: "poder", pesado: true, peso: 3,
     nome: "o limite do que eu sou",
     quando: (s) => s.pvBaixo || s.momento >= 0.6,
     preparo: "Comece a preparar um LIMITE: mostre uma tarefa do tipo que eu resolvo bem, e mostre alguém competente falhando nela.",
@@ -441,7 +441,7 @@ export const ASSUNTOS = [
     depois: "Mostre o que eu precisei pedir, e a quem — e o que pedir custou.",
   },
   {
-    id: "sucessao", familia: "poder", peso: 2,
+    id: "sucessao", familia: "poder", pesado: true, peso: 2,
     nome: "quem fica no lugar de quem manda",
     quando: (s) => s.emCidade && s.momento >= 0.45 && portePeloMenos(s, "cidade"),
     preparo: "Comece a preparar uma SUCESSÃO: mostre quem manda neste lugar em atividade, e mostre que essa pessoa não é eterna.",
@@ -457,7 +457,7 @@ export const ASSUNTOS = [
      que muda numa capital não é o tamanho — é que existe um LUGAR onde as
      decisões são tomadas, e gente cuja vida inteira é chegar perto dele. */
   {
-    id: "audiencia", familia: "poder", peso: 3,
+    id: "audiencia", familia: "poder", pesado: true, peso: 3,
     nome: "uma audiência que eu consegui",
     quando: (s) => s.emCidade && portePeloMenos(s, "capital"),
     preparo: "Comece a preparar uma AUDIÊNCIA: mostre a máquina de quem manda — a antessala, a fila, quem decide quem entra, e o que custa furá-la.",
@@ -497,7 +497,7 @@ export const ASSUNTOS = [
     depois: "Mostre o que ficou do encontro: o que foi prometido em nome de quem, e quem paga por isso.",
   },
   {
-    id: "guilda_em_guerra", familia: "poder", peso: 3,
+    id: "guilda_em_guerra", familia: "poder", pesado: true, peso: 3,
     nome: "duas guildas disputando",
     quando: (s) => s.emCidade && portePeloMenos(s, "cidade"),
     preparo: "Comece a preparar uma DISPUTA DE GUILDAS: mostre dois ofícios da cidade dependendo da mesma coisa — uma rota, uma matéria, um privilégio.",
@@ -542,7 +542,7 @@ export const ASSUNTOS = [
     depois: "Mostre o que fazer com o que apareceu: quem o reclama, quem quer que volte para baixo, e o que ele muda do que se contava aqui.",
   },
   {
-    id: "frio_que_mata", familia: "perda", peso: 3,
+    id: "frio_que_mata", familia: "perda", pesado: true, peso: 3,
     nome: "o frio cobrando",
     quando: (s) => chao(s, "gelo"),
     preparo: "Comece a preparar o FRIO: mostre a rotina inteira deste lugar organizada em torno de não morrer congelado — a lenha, as horas, quem dorme com quem.",
@@ -552,7 +552,7 @@ export const ASSUNTOS = [
     depois: "Mostre o que o frio levou e o que sobrou de rancor entre quem escolheu e quem foi escolhido.",
   },
   {
-    id: "febre_do_pantano", familia: "perda", peso: 3,
+    id: "febre_do_pantano", familia: "perda", pesado: true, peso: 3,
     nome: "a febre que vem da água parada",
     quando: (s) => chao(s, "pantano"),
     preparo: "Comece a preparar a FEBRE: mostre que aqui todo mundo convive com ela — quem já teve, o que se toma, o que se evita fazer ao anoitecer.",
@@ -774,7 +774,7 @@ export const ASSUNTOS = [
     depois: "Mostre o que o porto reorganizou: quem ficou sem trabalho, o que encareceu, e que rota passou a ser tentada por desespero.",
   },
   {
-    id: "oasis", familia: "poder", peso: 3,
+    id: "oasis", familia: "poder", pesado: true, peso: 3,
     nome: "quem manda na água",
     quando: (s) => chao(s, "deserto") && portePeloMenos(s, "vila"),
     preparo: "Comece a preparar a POLÍTICA DA ÁGUA: mostre que este lugar só existe por causa de uma fonte, e mostre quem administra o acesso a ela.",
@@ -810,7 +810,7 @@ export const ASSUNTOS = [
      Estas vivem em `perda` e não em `laco` de propósito: o que elas
      tratam não é a ligação — é o que fica quando ela deixa de existir. */
   {
-    id: "esfriamento", familia: "perda", peso: 3, exige: "amizade", rompe: true,
+    id: "esfriamento", familia: "perda", pesado: true, peso: 3, exige: "amizade", rompe: true,
     nome: "uma amizade que esfria",
     quando: (s) => s.momento >= 0.35 && (s.pessoaNaCena || s.gentePorPerto > 0),
     preparo: "Comece a preparar um ESFRIAMENTO: mostre alguém próximo de mim ocupado com a própria vida — sem mágoa, sem briga, apenas com menos tempo.",
@@ -820,7 +820,7 @@ export const ASSUNTOS = [
     depois: "Mostre o buraco prático: a tarefa que a gente fazia junto e agora é minha, e o lugar onde essa pessoa não está mais.",
   },
   {
-    id: "briga_que_fica", familia: "perda", peso: 3, exige: "amizade", rompe: true,
+    id: "briga_que_fica", familia: "perda", pesado: true, peso: 3, exige: "amizade", rompe: true,
     nome: "a briga que não repara",
     quando: (s) => s.momento >= 0.4 && (s.pessoaNaCena || s.temGrupo),
     preparo: "Comece a preparar um DESENTENDIMENTO: mostre duas pessoas próximas de mim com posições opostas sobre uma coisa pequena e concreta — e as duas com razão do lado delas.",
@@ -830,7 +830,7 @@ export const ASSUNTOS = [
     depois: "Mostre os dois continuando a conviver com aquilo entre eles, sem reconciliação e sem ruptura — que é o pior dos dois mundos.",
   },
   {
-    id: "cresceram_para_lados", familia: "perda", peso: 3, exige: "amizade", rompe: true,
+    id: "cresceram_para_lados", familia: "perda", pesado: true, peso: 3, exige: "amizade", rompe: true,
     nome: "cada um virou outra coisa",
     quando: (s) => s.momento >= 0.5 && (s.temGrupo || s.gentePorPerto > 0),
     preparo: "Comece a preparar uma DISTÂNCIA: mostre alguém do meu convívio bom numa coisa em que eu não sou, e gostando disso.",
@@ -840,7 +840,7 @@ export const ASSUNTOS = [
     depois: "Mostre o carinho que sobra sem intimidade: como duas pessoas que se querem bem se tratam quando já não se conhecem.",
   },
   {
-    id: "decepcao", familia: "perda", peso: 3, exige: "amizade", rompe: true,
+    id: "decepcao", familia: "perda", pesado: true, peso: 3, exige: "amizade", rompe: true,
     nome: "eu vi uma coisa que não desvejo",
     quando: (s) => s.momento >= 0.35 && s.pessoaNaCena,
     preparo: "Comece a preparar uma DECEPÇÃO: estabeleça alguém que eu admiro por um motivo específico, e mostre esse motivo em ação.",
@@ -850,7 +850,7 @@ export const ASSUNTOS = [
     depois: "Mostre a relação continuando com isso dentro: o que eu paro de pedir a ela, e o que ela para de fazer na minha frente.",
   },
   {
-    id: "amor_que_acaba", familia: "perda", peso: 3, exige: "amor", rompe: true,
+    id: "amor_que_acaba", familia: "perda", pesado: true, peso: 3, exige: "amor", rompe: true,
     nome: "um amor que termina",
     quando: (s) => s.momento >= 0.45 && (s.pessoaNaCena || s.gentePorPerto > 0),
     preparo: "Comece a preparar um FIM: mostre um casal desta campanha resolvendo uma coisa doméstica, bem, com o desgaste aparecendo só na eficiência.",
@@ -860,7 +860,7 @@ export const ASSUNTOS = [
     depois: "Mostre a divisão prática do que era dos dois — as coisas, os lugares, a gente — e quem fica com o quê.",
   },
   {
-    id: "quem_nao_precisa_mais", familia: "perda", peso: 2, exige: "aprendizado", rompe: true,
+    id: "quem_nao_precisa_mais", familia: "perda", pesado: true, peso: 2, exige: "aprendizado", rompe: true,
     nome: "alguém que já não precisa de mim",
     quando: (s) => s.momento >= 0.5 && s.nivel >= 5,
     preparo: "Comece a preparar uma AUTONOMIA: mostre alguém que dependia de mim resolvendo sozinha uma coisa pequena que antes ela me pedia.",
@@ -934,7 +934,7 @@ export const ASSUNTOS = [
 
   /* ============ O PODER, EM MAIS FORMAS ============ */
   {
-    id: "meu_nome_age_sozinho", familia: "poder", peso: 3,
+    id: "meu_nome_age_sozinho", familia: "poder", pesado: true, peso: 3,
     nome: "meu nome agindo sem mim",
     quando: (s) => s.fama >= 25,
     preparo: "Comece a preparar uma REPUTAÇÃO ATIVA: mostre alguém invocando o meu nome numa conversa em que eu não estou, para conseguir uma coisa pequena.",
@@ -944,7 +944,7 @@ export const ASSUNTOS = [
     depois: "Mostre o que eu faço com a promessa alheia — e o que passa a valer dizer o meu nome aqui.",
   },
   {
-    id: "pedido_impossivel", familia: "poder", peso: 3,
+    id: "pedido_impossivel", familia: "poder", pesado: true, peso: 3,
     nome: "só eu poderia fazer isso",
     quando: (s) => s.nivel >= 6 && (s.pessoaNaCena || s.emCidade),
     preparo: "Comece a preparar um PEDIDO: mostre um problema deste lugar que ninguém daqui tem como resolver, e mostre as pessoas convivendo com ele há anos.",
@@ -954,7 +954,7 @@ export const ASSUNTOS = [
     depois: "Mostre o que a resposta fez com este lugar — inclusive se eu recusei, e principalmente então.",
   },
   {
-    id: "delegar", familia: "poder", peso: 3,
+    id: "delegar", familia: "poder", pesado: true, peso: 3,
     nome: "entregar nas mãos de outro",
     quando: (s) => s.nivel >= 6 && (s.temGrupo || s.gentePorPerto > 0),
     preparo: "Comece a preparar uma DELEGAÇÃO: mostre que tenho mais coisa para fazer do que dá, e mostre alguém capaz por perto.",
@@ -964,7 +964,7 @@ export const ASSUNTOS = [
     depois: "Mostre o resultado e quem leva a culpa ou o crédito por ele aos olhos dos outros.",
   },
   {
-    id: "porta_que_o_poder_fecha", familia: "poder", peso: 3,
+    id: "porta_que_o_poder_fecha", familia: "poder", pesado: true, peso: 3,
     nome: "o que eu já não posso fazer",
     quando: (s) => s.fama >= 45 || s.nivel >= 9,
     preparo: "Comece a preparar uma PERDA DE LIBERDADE: mostre uma coisa simples e cotidiana que eu costumava fazer sem que ninguém reparasse.",
@@ -974,7 +974,7 @@ export const ASSUNTOS = [
     depois: "Mostre o arranjo que eu passo a ter de fazer para conseguir o que antes era de graça.",
   },
   {
-    id: "peso_que_so_eu_carrego", familia: "poder", peso: 2,
+    id: "peso_que_so_eu_carrego", familia: "poder", pesado: true, peso: 2,
     nome: "a coisa que ninguém mais pode segurar",
     quando: (s) => s.momento >= 0.55 && s.nivel >= 7,
     preparo: "Comece a preparar um FARDO: mostre uma coisa perigosa ou valiosa deste mundo passando de mão em mão, e o estrago que ela fez em cada uma.",
@@ -1073,7 +1073,7 @@ export const ASSUNTOS = [
      — e uma dívida que se quita são o outro lado delas, e sem esse lado o
      registro só acumula. */
   {
-    id: "fim_da_rivalidade", familia: "perda", peso: 3, exige: "rivalidade", rompe: true,
+    id: "fim_da_rivalidade", familia: "perda", pesado: true, peso: 3, exige: "rivalidade", rompe: true,
     nome: "a rivalidade se resolve",
     quando: (s) => s.momento >= 0.5,
     preparo: "Comece a preparar um DESFECHO DE RIVALIDADE: ponha essa pessoa e eu diante do mesmo problema, cada um do seu jeito, e deixe os dois jeitos funcionarem.",
@@ -1083,7 +1083,7 @@ export const ASSUNTOS = [
     depois: "Mostre o que sobra entre nós dois sem a disputa: se é amizade morna, indiferença, ou uma saudade esquisita da briga.",
   },
   {
-    id: "divida_quitada", familia: "perda", peso: 3, exige: "divida", rompe: true,
+    id: "divida_quitada", familia: "perda", pesado: true, peso: 3, exige: "divida", rompe: true,
     nome: "a dívida se acerta",
     quando: (s) => s.momento >= 0.4,
     preparo: "Comece a preparar um ACERTO: mostre essa pessoa e eu tratando do assunto pendente de lado, cada um fingindo que já não pesa.",

@@ -15587,6 +15587,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         preferir: sit.pilarFaminto,
         elenco: elencoDaOnda(),
         folego: folegoDaLeitura(leitura.leitura),
+        /* G8 (v9.212): o tempero do Termometro, enfim consumido — quando o
+           jogador passeia, a prateleira pesada (perda, poder) e preferida
+           na proxima semente da onda. */
+        preferirTom: leitura.tempero === "prateleira_pesada" ? "pesado" : null,
       });
       compassoRef.current = r.compasso;
       /* ---------------- O CLÍMAX REGISTRA (v9.97) ----------------
