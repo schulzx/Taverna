@@ -45,6 +45,7 @@
 export const ESTRUTURAS = [
   {
     id: "jornada",
+    espinha: true,
     nome: "Jornada do Herói",
     desc: "Uma epopeia pessoal: um herói, um mundo que muda com ele, e um preço que ninguém escapa de pagar. Do tamanho de uma vida.",
     etapas: [
@@ -58,6 +59,7 @@ export const ESTRUTURAS = [
   },
   {
     id: "arquipelago",
+    espinha: true,
     nome: "Arquipélago",
     desc: "Muitas histórias ao mesmo tempo, cada uma com gente e dramas próprios. Você escolhe onde estar, e o que deixa para trás continua acontecendo.",
     etapas: [
@@ -69,6 +71,7 @@ export const ESTRUTURAS = [
   },
   {
     id: "reinado",
+    espinha: true,
     nome: "Ascensão do Reino",
     desc: "Terra, gente e poder. Para quem prefere a mesa de mapas à estrada — e descobre que governar cobra mais que lutar.",
     etapas: [
@@ -80,6 +83,7 @@ export const ESTRUTURAS = [
   },
   {
     id: "misterio",
+    espinha: true,
     nome: "Mistério em Camadas",
     desc: "Alguma coisa aconteceu, e a explicação não fecha. Para quem prefere entender a vencer — e aguenta descobrir que estava enganado.",
     etapas: [

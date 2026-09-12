@@ -127,7 +127,11 @@ sec("6. LIGADO AO TURNO, E ANTES DA BOCA");
      as bocas — ela lê quem tem propósito de trair, então precisa do estado
      dos propósitos já disparado, e vem antes da narração. A ordem que esta
      asserção protege — propósitos ANTES das bocas — segue intacta. */
-  t("antes das bocas", /dispararPropositos\(conteudo\);[\s\S]{0,80}?falasDoTurnoRef\.current = await colherAsFalas/.test(APP));
+  /* v9.207: entre os propósitos e as bocas correm agora os mexer* do turno
+     (reviravolta, encalhe, postura, episódio) — todos leem o estado que os
+     propósitos deixaram e vêm antes da narração. A ordem que importa —
+     propósitos ANTES das bocas — segue intacta; só cresceu o miolo. */
+  t("antes das bocas", /dispararPropositos\(conteudo\);[\s\S]{0,220}?falasDoTurnoRef\.current = await colherAsFalas/.test(APP));
   t("não dispara em envelope do sistema", /const dispararPropositos = \(conteudo\) => \{\s*try \{\s*if \(String\(conteudo \|\| ""\)\.trimStart\(\)\.startsWith\("\["\)\) return \[\];/.test(APP));
   t("falhar não custa o turno", /const dispararPropositos = \(conteudo\) => \{\s*try \{/.test(APP) && /\} catch \{ return \[\]; \}\s*\};\s*\n\s*const aplicarProposito/.test(APP));
   t("o que aconteceu é salvo", /if \(feitos\.length\) salvar\(\{ baseMundo: baseMundoRef\.current \}\);/.test(APP));

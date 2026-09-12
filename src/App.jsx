@@ -90,6 +90,9 @@ import { garantirEscada, subirEscada } from "./encalhe.js";
    do momento (termometro, fama, vilao, relogio, estacao); o adversario le
    o vies de moral. Conta em posturas.js. */
 import { garantirPosturaAtiva, derivarPostura, moralDoInimigo } from "./posturas.js";
+/* OS EPISODIOS (v9.207) — as subestruturas que o momento aciona. Conta em
+   episodios.js; o App abre, semeia no Livro, avanca e fecha no arco. */
+import { garantirEpisodio, episodioQueAbre, sementesDoEpisodio, avancarEpisodio, envelopeDoEpisodio } from "./episodios.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -3566,7 +3569,11 @@ function TelaMundo({ concluir }) {
         {/* ---- o arco ---- */}
         <CabecalhoDeSecao sobre="Estrutura da história" titulo="O arco da campanha"
           diz="A espinha que o Mestre segue. O momento em que você está NUNCA aparece na tela — saber que vem um abismo é esperá-lo em vez de vivê-lo." />
-        {duasColunas(ESTRUTURAS, (e) => (
+        {/* v9.207: o menu mostra só as ESPINHAS de vida inteira; as quatro
+            formas de acontecimento (cerco, dívida, escalada, herança) desceram
+            um andar e viram EPISÓDIOS que o sistema aciona. Saves antigos que
+            escolheram uma delas continuam válidos — estruturaPorId acha as 8. */}
+        {duasColunas(ESTRUTURAS.filter((e) => e.espinha), (e) => (
           <CartaoDeEscolha key={e.id} ativo={estrutura === e.id} aoClicar={() => setEstrutura(e.id)} compacto>
             <div className="flex items-center justify-between w-full gap-3">
               <span className="tv-display text-xl leading-[1.25] truncate" style={{ color: T.ink }}>{e.nome}</span>
@@ -4757,6 +4764,8 @@ export default function Taverna() {
   /* a postura ativa do mundo, com sua permanencia; e o ultimo peso visto,
      para a postura ler luto/gloria/vergonha por um ou dois dias. */
   const posturaRef = useRef(garantirPosturaAtiva(null));
+  /* o episodio em curso (uma subestrutura acionada), ou null. Um por vez. */
+  const episodioRef = useRef(null);
   const ultimoPesoRef = useRef({ peso: null, dia: 0 });
   const texturaRef = useRef({});
   const baseMundoRef = useRef(garantirBase(null));
@@ -5905,6 +5914,9 @@ export default function Taverna() {
       if (casa) p = porNaPauta(p, "onde", envelopeDaGuilda(casa));
     }
     p = porNaPauta(p, "momento", envelopeDaEspinha(espinhaRef.current, historiaRef.current.etapa, estruturaPorId(historiaRef.current.estrutura)));
+    /* o episodio em curso fala pelo mesmo canal do arco: e a batida de
+       dentro da batida — o cerco que a Jornada esta vivendo agora. */
+    if (episodioRef.current && episodioRef.current.aberto) p = porNaPauta(p, "momento", envelopeDoEpisodio(episodioRef.current));
     /* v9.118: a vizinhança tem seção própria e prioridade baixa — numa cena
        cheia a gente presente ganha dela, e é isso que se quer */
     p = porNaPauta(p, "daqui", g.daqui);
@@ -6994,7 +7006,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, escada: escadaRef.current, postura: posturaRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
+      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, escada: escadaRef.current, postura: posturaRef.current, episodio: episodioRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
@@ -9333,6 +9345,52 @@ export default function Taverna() {
       };
     } catch (e) { return {}; }
   };
+  /* ---------------- OS EPISODIOS (v9.207) ----------------
+     Abre uma subestrutura quando os fatos maduram (e planta as sementes
+     dela no Livro antes), avanca um marco por vez, e ao fechar registra
+     um marco no arco — o episodio e capitulo da espinha, nao desvio.
+     Um por vez. Aditivo e defensivo. So a Linha Escura tem condicao de
+     leitura barata agora; as demais acendem quando o dado ficar acessivel. */
+  const snapshotDoEpisodio = () => {
+    try {
+      const dominios = (typeof dominiosDe === "function") ? (dominiosDe(mapaRef.current) || []) : [];
+      const rels = Array.isArray(relogiosRef.current) ? relogiosRef.current : [];
+      const relAlto = rels.reduce((m, r) => Math.max(m, (Number(r.segmentos) > 0 ? (Number(r.cheios) || 0) / Number(r.segmentos) : 0)), 0);
+      const pesoRecente = (ultimoPesoRef.current && diaRef.current - ultimoPesoRef.current.dia <= 2) ? ultimoPesoRef.current.peso : null;
+      return {
+        temLugarAmado: dominios.length > 0,
+        relogioRegionalAlto: relAlto >= 0.66,
+        pesoRecente,
+      };
+    } catch (e) { return {}; }
+  };
+  const mexerNoEpisodio = () => {
+    try {
+      const ato = Math.max(0, Number((historiaRef.current || {}).etapa) || 0);
+      if (episodioRef.current && episodioRef.current.aberto) {
+        const r = avancarEpisodio(episodioRef.current, { dia: diaRef.current });
+        episodioRef.current = r.episodio;
+        if (r.fechou) {
+          /* aninha no ato: o episodio fechado avanca o arco */
+          try { const rr = registrarMarco(historiaRef.current, r.pesoNoArco || "missao", "episodio: " + episodioRef.current.id); historiaRef.current = rr.historia; setHistoria(historiaRef.current); } catch (e) {}
+          episodioRef.current = null;
+        }
+        return;
+      }
+      /* nada aberto: talvez abrir */
+      const espinha = (historiaRef.current || {}).estrutura || "jornada";
+      const abre = episodioQueAbre(snapshotDoEpisodio(), { ativo: episodioRef.current, espinha });
+      if (!abre) return;
+      /* semeia no Livro ANTES de abrir */
+      let L = garantirLivro(promessasRef.current);
+      for (const spec of sementesDoEpisodio(abre, { ato, dia: diaRef.current })) {
+        L = semear(L, { forma: spec.forma, dona: spec.dona, peso: spec.peso, alvo: spec.alvo, ato: spec.ato, dia: spec.dia }).livro;
+      }
+      promessasRef.current = L;
+      episodioRef.current = garantirEpisodio({ id: abre, marco: 0, aberto: true, desde: diaRef.current, avancouEm: diaRef.current });
+    } catch (e) { calou("mexerNoEpisodio", e); }
+  };
+
   const mexerNaPostura = () => {
     try { posturaRef.current = derivarPostura(posturaRef.current, snapshotDePosturas(), { dia: diaRef.current }); }
     catch (e) { calou("mexerNaPostura", e); }
@@ -9583,6 +9641,7 @@ export default function Taverna() {
     mexerNaReviravolta();
     mexerNoEncalhe();
     mexerNaPostura();
+    mexerNoEpisodio();
     falasDoTurnoRef.current = await colherAsFalas(conteudo);
     const pauta = textoDaPauta(pautaDoTurno(conteudo), { turno: turnoDeRegistroRef.current + 1 });
     /* guardado antes da resposta: "a luta acabou neste turno" é a
@@ -10325,6 +10384,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       reviravoltaRef.current = garantirReviravolta(sv.reviravolta);
       escadaRef.current = garantirEscada(sv.escada);
       posturaRef.current = garantirPosturaAtiva(sv.postura);
+      episodioRef.current = garantirEpisodio(sv.episodio);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
         ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null, pressoes: sv.mercado.pressoes || {}, gastos: sv.mercado.gastos || {}, pechinchas: sv.mercado.pechinchas || {} }
