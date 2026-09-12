@@ -53,6 +53,16 @@ sec("1. AS FASES — você sente antes de ver");
 sec("2. OS ARQUÉTIPOS — o vilão nasce de como VOCÊ jogou");
 {
   t("há arquétipos", ARQUETIPOS.length >= 6);
+  /* G5 (v9.209): de 12 para 20 — oito arquétipos novos */
+  t("são 20 arquétipos", ARQUETIPOS.length === 20, String(ARQUETIPOS.length));
+  t("ids únicos", new Set(ARQUETIPOS.map((a) => a.id)).size === 20);
+  t("os oito novos existem", ["viuva_do_trono", "profeta_queimado", "crianca_antiga", "general_sem_guerra", "boticaria", "santo_vivo", "domador", "almiranta"].every((id) => arquetipoPorId(id).id === id));
+  t("todo nasceDe é função que não estoura com estado vazio", ARQUETIPOS.every((a) => { try { a.nasceDe({}, {}); return true; } catch { return false; } }));
+  /* nenhum arquétipo (fora o fallback arquiteto) nasce sem condição real */
+  t("nenhum novo nasce de graça (só o arquiteto é fallback)", ARQUETIPOS.filter((a) => a.id !== "arquiteto").every((a) => a.nasceDe({}, {}) === false));
+  /* o Santo Vivo nasce da fama alta — a stat que o App passou a fornecer */
+  t("o Santo Vivo nasce da fama alta", arquetipoPorId("santo_vivo").nasceDe({}, { fama: 60 }) === true && arquetipoPorId("santo_vivo").nasceDe({}, { fama: 10 }) === false);
+  t("nenhuma assinatura se repete entre arquétipos", (() => { const all = ARQUETIPOS.flatMap((a) => a.assinaturas); return new Set(all).size === all.length; })());
   t("todos têm crença dizível", ARQUETIPOS.every((a) => a.crenca.length > 40));
   t("todos querem alguma coisa", ARQUETIPOS.every((a) => a.quer.length > 20));
   t("e todos têm método", ARQUETIPOS.every((a) => a.metodo.length > 20));

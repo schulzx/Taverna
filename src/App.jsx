@@ -16785,6 +16785,7 @@ REGRA DESTE ENVELOPE (obrigatÃ³ria): trate o resto da minha frase normalmente â€
         tratados: ((mapaRef.current || {}).faccoes || []).filter((f) => f.tratado === "comercio" || f.tratado === "alianca").length,
         guerras: ((mapaRef.current || {}).faccoes || []).filter((f) => f.tratado === "guerra").length,
         moedas: (personagemRef.current || {}).moedas || 0,
+        fama: Math.round(famaAtual()),
       },
       dia: diaRef.current,
     });
