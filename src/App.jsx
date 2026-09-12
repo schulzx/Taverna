@@ -80,6 +80,9 @@ import { lerTermometro, folegoDaLeitura } from "./termometro.js";
    semeada no Livro e revelada quando a catraca deixa. Conta em
    reviravoltas.js; o App elege, planta, rega e revela. */
 import { garantirReviravolta, elegerReviravoltas, sementesDaReviravolta, podeRevelar, oDiaSeguinte, revelacaoDe, DIAS_ENTRE_REGAS } from "./reviravoltas.js";
+/* O PESO DA CENA (v9.204) — luto e gloria como movimento. Conta em
+   peso.js; o App junta os fatos de evento e a pauta cala o mercado. */
+import { pesoDaCena, vetoDoPeso, seguraOCompasso } from "./peso.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -4737,6 +4740,10 @@ export default function Taverna() {
   /* a reviravolta eleita deste mundo: null ate uma se eleger. Determinada
      pela semente do mundo, semeada no Livro, revelada pela catraca. */
   const reviravoltaRef = useRef(null);
+  /* os fatos que acendem uma cena de peso, acumulados pelos eventos do
+     turno (uma traicao revelada, uma morte). Lidos pela pauta e pelo
+     compasso, e limpos quando a pauta os consome — o peso e um beat. */
+  const fatosDoPesoRef = useRef({});
   const texturaRef = useRef({});
   const baseMundoRef = useRef(garantirBase(null));
   /* v9.165: o que a lei da forma lembra — quais andares já tiveram o
@@ -5983,6 +5990,20 @@ export default function Taverna() {
       turnoAtual: turnoDeRegistroRef.current,
       diaAtual: diaRef.current,
     }));
+    /* ---------------- O PESO DA CENA (v9.204) ----------------
+       Reconhece a gravidade dos fatos do turno, poe o peso na pauta e
+       CALA o mundo pelo canal do veto (mercado, oferta e trabalho somem).
+       Um peso por cena — pesoDaCena ja garante isso. Consome e limpa: o
+       peso e um beat, e "solta" e o jogador seguir quando quiser. */
+    try {
+      const cena = pesoDaCena(fatosDoPesoRef.current);
+      if (cena) {
+        p = porNaPauta(p, "peso", "Esta cena tem PESO: " + cena.nome + " — " + cena.diz + ". Quem tem laco com isto comparece.");
+        p = porNaPauta(p, "naoPode", vetoDoPeso(cena.peso));
+      }
+      fatosDoPesoRef.current = {};
+    } catch (e) { /* o peso nunca pode custar o turno */ }
+
     /* ---------------- A MESA POSTA (v9.201) ----------------
        Quando a acao declarada casa com uma situacao conhecida, as DUAS
        versoes da cena chegam ao Narrador ANTES do dado — e a de falha
@@ -9289,6 +9310,7 @@ export default function Taverna() {
         }
         promessasRef.current = L;
         reviravoltaRef.current = { ...rev, revelada: true };
+        fatosDoPesoRef.current = { ...fatosDoPesoRef.current, traicaoRevelada: true };
         const passos = oDiaSeguinte("aliado_agente", { alvo: rev.alvo, vilao: (nemesisRef.current || {}).nome || "" });
         notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + "[A MASCARA CAI — " + rev.alvo + " servia ao vilao] " + revelacaoDe("aliado_agente") + ". Encene: " + passos.join("; ") + ".";
       }
@@ -15354,7 +15376,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          Nunca muda a ordem dos movimentos — so quantos turnos cada um dura. */
       const leitura = lerTermometro(snapshotDoTermometro());
       const r = avancarCompasso(compassoRef.current, sit, {
-        segurar: !!combateRef.current || !!masmorraRef.current || !!jornadaRef.current,
+        segurar: !!combateRef.current || !!masmorraRef.current || !!jornadaRef.current || seguraOCompasso((pesoDaCena(fatosDoPesoRef.current) || {}).peso),
         preferir: sit.pilarFaminto,
         elenco: elencoDaOnda(),
         folego: folegoDaLeitura(leitura.leitura),

@@ -76,6 +76,9 @@ export const SECOES = [
      casa com uma situacao conhecida da Mesa Posta — advisoria, e por isso
      de prioridade media: importa, mas cede a fala e ao veto se faltar teto. */
   { id: "mesa", rotulo: "A APOSTA", prio: 4, o: "as duas versoes da cena, antes do dado" },
+  /* v9.204: a gravidade da cena. Prioridade 2 porque e conteudo — cortar o
+     peso de um velorio seria pior do que cortar o lugar onde ele acontece. */
+  { id: "peso", rotulo: "O PESO", prio: 2, o: "a gravidade desta cena, e o que o mundo cala" },
   { id: "naoPode", rotulo: "NÃO PODE", prio: 2, o: "os vetos desta cena" },
 ];
 
