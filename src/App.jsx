@@ -55,7 +55,7 @@ import { montarGrade, garantirGrade, posicionar, posicionarPerto, alcanca, camin
 import { deslocamentoDe, passoEfetivo, passoComSelecao, passoDeHabilidade, deslocamentoDeCriatura, resumoDeslocamento, resumoDeslocamentoPrompt, MOVIMENTO_PROMPT } from "./movimento.js";
 import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPreparada, ehPreparavel, preparadasIniciais, alternarPreparada, podeLancar, ehRitual, motivoDoCaderno, MINUTOS_RITUAL, resumoMagiasPrompt, MAGIAS_PROMPT } from "./magias.js";
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
-import { consultar, ehPerguntaAoMundo, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, perguntarPeloSistema, envelopeDaPerguntaDoSistema, linhaDaPerguntaDoSistema, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
+import { consultar, ehPerguntaAoMundo, tipoDaPergunta, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, perguntarPeloSistema, envelopeDaPerguntaDoSistema, linhaDaPerguntaDoSistema, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
 import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao } from "./turno.js";
 import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobrancaNegada } from "./cobranca.js";
 import { lerPoder, lerConsumo, habilidadeDeclarada, falaDoPoder, envelopeDoPoder } from "./poderes.js";
@@ -89,7 +89,7 @@ import { garantirEscada, subirEscada } from "./encalhe.js";
 /* AS POSTURAS DO MUNDO (v9.206) — a mesma acao, outro resultado. Derivadas
    do momento (termometro, fama, vilao, relogio, estacao); o adversario le
    o vies de moral. Conta em posturas.js. */
-import { garantirPosturaAtiva, derivarPostura, moralDoInimigo } from "./posturas.js";
+import { garantirPosturaAtiva, derivarPostura, moralDoInimigo, viesDoOraculo, fatorDeMercado } from "./posturas.js";
 /* OS EPISODIOS (v9.207) — as subestruturas que o momento aciona. Conta em
    episodios.js; o App abre, semeia no Livro, avanca e fecha no arco. */
 import { garantirEpisodio, episodioQueAbre, sementesDoEpisodio, avancarEpisodio, envelopeDoEpisodio } from "./episodios.js";
@@ -14985,8 +14985,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const p = personagemRef.current || personagem || {};
     const faccaoEmGuerra = (((mapaRef.current || {}).faccoes) || []).find((f) => f.tratado === "guerra");
     const cidade = ((mapaRef.current || {}).cidades || []).find((c) => c.nome === cidadeAtualRef.current);
+    /* G3 (v9.207): a postura do mundo tempera a chance de uma pergunta ao
+       mundo — no apice o teu nome abre portas, na crise o mundo aperta. O
+       vies e por TIPO, entao so aplica a pergunta daquela especie; entra
+       pelo gancho ctx.ajustes que ja existe, sem tocar o oraculo. */
+    const _viesOraculo = viesDoOraculo((posturaRef.current || {}).postura, tipoDaPergunta(pergunta));
     const r = consultar(pergunta, {
       fama: famaAtual(),
+      ajustes: _viesOraculo ? [_viesOraculo] : [],
       emGuerra: faccaoEmGuerra ? faccaoEmGuerra.nome : null,
       dominaAqui: !!(cidade && cidade.faccao && cidade.faccao === faccaoJogadorRef.current),
       gd: grauDe(divindadeRef.current),
@@ -18148,12 +18154,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      lugar, no instante do gesto. */
   const balcaoAqui = () => balcaoDeMantimentos(cidadeMercado, {
     dia: diaRef.current, pressoes: (mercadoRef.current || {}).pressoes || {},
+    extra: fatorDeMercado((posturaRef.current || {}).postura, { vendendo: false }),
     temKit: garantirSuprimentos((personagemRef.current || personagem).suprimentos).kit,
   });
 
   const comprarSuprimento = (id, quantos = 1) => {
     const p = personagemRef.current || personagem;
-    const s = precoDoSuprimento(id, cidadeMercado, { dia: diaRef.current, pressoes: (mercadoRef.current || {}).pressoes || {} });
+    const s = precoDoSuprimento(id, cidadeMercado, { dia: diaRef.current, pressoes: (mercadoRef.current || {}).pressoes || {}, extra: fatorDeMercado((posturaRef.current || {}).postura, { vendendo: false }) });
     if (!s) return;
     const q = id === "kit" ? 1 : Math.max(1, Math.round(Number(quantos) || 1));
     const custo = s.preco * q;
@@ -18241,7 +18248,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const ofertaPor = (item) => {
     const it = typeof item === "string" ? { nome: item } : (item || {});
     const tipo = String(it.tipo || "").toLowerCase();
-    const base = precoQueOferecemComMotivo(it, cidadeMercado, { dia: diaRef.current, pressoes: (mercadoRef.current.pressoes) || {} });
+    const base = precoQueOferecemComMotivo(it, cidadeMercado, { dia: diaRef.current, pressoes: (mercadoRef.current.pressoes) || {}, extra: fatorDeMercado((posturaRef.current || {}).postura, { vendendo: true }) });
     const valor = Math.max(1, precoDeVenda(personagemRef.current || personagem, base.preco));
     /* quem lida com isto — e o item sem tipo (a sucata que vem como texto)
        o Armazém aceita, porque é o que um armazém é */

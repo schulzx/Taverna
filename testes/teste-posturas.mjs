@@ -81,6 +81,28 @@ sec("4. TEMPERA, NÃO DECIDE: o viés de moral do adversário");
   t("a tática específica ainda vence o viés (calar a magia > receoso)", comConjurador && comConjurador.intencao.id === "calar_a_magia");
 }
 
+sec("4b. G3: o oráculo e o mercado leem a postura (via ganchos que já existem)");
+{
+  /* ORÁCULO: o viés é por TIPO de pergunta — só aplica à espécie certa */
+  const socialApice = M.viesDoOraculo("apice", "social");
+  t("no Ápice o social ganha (teu nome abre portas)", socialApice && socialApice.delta >= 5);
+  t("mas o Ápice não mexe no perigo (viés é por tipo)", M.viesDoOraculo("apice", "perigo") === null);
+  t("na Caçada o perigo fica mais provável", (M.viesDoOraculo("cacada", "perigo") || {}).delta >= 5);
+  t("na Suspeita o social despenca", (M.viesDoOraculo("suspeita", "social") || {}).delta <= -5);
+  t("postura neutra não dá viés", M.viesDoOraculo("bonanca", "social") === null);
+  t("todo viés carrega o motivo (vai à tela do oráculo)", ["apice", "crise", "cacada", "suspeita"].every((p) => ["social", "perigo"].some((tp) => { const v = M.viesDoOraculo(p, tp); return !v || v.motivo; })));
+
+  /* MERCADO: o fator é por lado do balcão */
+  const crEspolio = M.fatorDeMercado("crise", { vendendo: true });
+  t("na Crise pagam menos pelo teu espólio (vender < 1)", crEspolio && crEspolio.fator < 1);
+  const apCompra = M.fatorDeMercado("apice", { vendendo: false });
+  t("no Ápice o preço de compra sobe (> 1)", apCompra && apCompra.fator > 1);
+  t("na Escassez a compra encarece", (M.fatorDeMercado("escassez", { vendendo: false }) || {}).fator > 1);
+  t("a Festa dá desconto na compra", (M.fatorDeMercado("festa", { vendendo: false }) || {}).fator < 1);
+  t("postura neutra não mexe no preço", M.fatorDeMercado("bonanca", { vendendo: true }) === null);
+  t("todo fator carrega o porquê (vai à conta do preço)", ["apice", "crise", "escassez", "festa"].every((p) => [true, false].every((v) => { const f = M.fatorDeMercado(p, { vendendo: v }); return !f || f.porque; })));
+}
+
 sec("5. a config e o console de autor");
 {
   t("configDaPostura devolve os 8 botões", Object.keys(M.configDaPostura("crise")).length === 8);
@@ -90,10 +112,13 @@ sec("5. a config e o console de autor");
 
 sec("6. ligado ao jogo — e nunca anunciada");
 {
-  t("o App importa as posturas", /import \{ garantirPosturaAtiva, derivarPostura, moralDoInimigo \}/.test(APP));
+  t("o App importa as posturas", /import \{[^}]*derivarPostura[^}]*\} from "\.\/posturas\.js"/.test(APP));
   t("há um ref e ele entra no save", /posturaRef/.test(APP) && /postura: posturaRef\.current/.test(APP));
   t("a postura é derivada por turno", /mexerNaPostura\(\)/.test(APP) && /derivarPostura\(posturaRef\.current/.test(APP));
   t("o adversário recebe o viés de moral", /posturaMoral: moralDoInimigo/.test(APP));
+  /* G3: o oráculo e o mercado leem a postura pelos ganchos existentes */
+  t("o oráculo recebe o viés da postura (por tipo)", /viesDoOraculo\(\(posturaRef\.current \|\| \{\}\)\.postura, tipoDaPergunta/.test(APP));
+  t("o mercado recebe o fator da postura (venda e balcão)", /fatorDeMercado\(\(posturaRef\.current \|\| \{\}\)\.postura, \{ vendendo: true \}\)/.test(APP) && /fatorDeMercado\(\(posturaRef\.current \|\| \{\}\)\.postura, \{ vendendo: false \}\)/.test(APP));
   /* QUINTA LEI: o sistema não fala de si mesmo. A postura NÃO vira linha de
      pauta nem mensagem ao jogador — só tempera tabelas. */
   t("a postura nunca é anunciada ao jogador (sem seção de pauta própria)", !/porNaPauta\([^)]*postura/.test(APP) && !/pushMsgs[^;]*postura/i.test(APP));

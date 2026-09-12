@@ -195,10 +195,54 @@ export function derivarPostura(ativa, leituras, { dia = 0 } = {}) {
   return { ...at, mudou: false, postura: at.postura };
 }
 
-/* ---------------- O QUE OS CONSUMIDORES LEEM ---------------- */
+/* ---------------- O QUE OS CONSUMIDORES LEEM ----------------
+   O botão de cada sistema, agora em número onde o sistema precisa de
+   número. O adversário lê `moralDoInimigo`; o oráculo lê `viesDoOraculo`
+   (um ajuste {delta, motivo} para a pergunta daquele tipo); o mercado lê
+   `fatorDeMercado` (um {fator, porque} para o lado do balcão). Os dois
+   últimos entram por ganchos que já existem — ctx.ajustes e extra.fator —,
+   então nenhum módulo econômico é tocado: a postura só tempera. */
 export function moralDoInimigo(posturaId) {
   const p = posturaPorId(posturaId);
   return p ? p.moral : 0;
+}
+
+/* o viés do oráculo, por TIPO de pergunta (social · perigo · mundo). O
+   nome de herói abre portas sociais; a crise e a caçada fazem o perigo
+   mais provável; a suspeita fecha o social. Nunca mente o dado — só move
+   a chance de uma pergunta ao MUNDO, que é o que a postura governa. */
+const VIES_ORACULO = {
+  apice: { social: { delta: 8, motivo: "seu nome abre portas" } },
+  festa: { social: { delta: 8, motivo: "hoje a cidade é sua" } },
+  promessa: { social: { delta: 3, motivo: "começam a te reconhecer" } },
+  crise: { social: { delta: -8, motivo: "o mundo aperta quem já está caído" }, perigo: { delta: 5, motivo: "abutres rondam o ferido" } },
+  suspeita: { social: { delta: -8, motivo: "desconfiam de você agora" } },
+  anonimato: { social: { delta: -4, motivo: "ninguém sabe quem você é" } },
+  sombra: { perigo: { delta: 6, motivo: "algo se move nas sombras" } },
+  cacada: { perigo: { delta: 8, motivo: "você é o caçado" } },
+  vespera: { perigo: { delta: 6, motivo: "a véspera está tensa" } },
+};
+export function viesDoOraculo(posturaId, tipo) {
+  const m = VIES_ORACULO[posturaId];
+  return (m && m[tipo]) ? { ...m[tipo] } : null;
+}
+
+/* o fator do mercado, por lado do balcão. `vendendo` = o jogador vende
+   (o mercador PAGA); senão, o jogador compra (o mercador COBRA). No ápice
+   tudo sobe para quem pode pagar; na crise, compram teu espólio por menos;
+   na escassez, comida e lenha caras; na festa, desconto de gratidão. */
+const FATOR_MERCADO = {
+  apice: { compra: { fator: 1.25, porque: "o preço de herói: sobe para quem pode pagar" } },
+  festa: { compra: { fator: 0.85, porque: "desconto de gratidão, só hoje" } },
+  crise: { vende: { fator: 0.75, porque: "compram teu espólio por menos, sabendo do aperto" } },
+  escassez: { compra: { fator: 1.2, porque: "escassez: comida e lenha caras" } },
+  suspeita: { vende: { fator: 0.85, porque: "pagam menos a quem não confiam" } },
+};
+export function fatorDeMercado(posturaId, { vendendo = false } = {}) {
+  const m = FATOR_MERCADO[posturaId];
+  if (!m) return null;
+  const lado = vendendo ? m.vende : m.compra;
+  return lado ? { ...lado } : null;
 }
 export function configDaPostura(posturaId) {
   const p = posturaPorId(posturaId);
