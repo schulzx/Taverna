@@ -124,10 +124,14 @@ sec("6. O INSTANTE PERIGOSO — dois passos, e o segundo é o único que grava")
   t("e devolve a linha que a tela mostra", /linha: linhaDoResumo\(r\.resumo\)/.test(ler));
   /* e confirmar guarda o anterior ANTES de sobrescrever */
   const conf = H.slice(H.indexOf("const confirmarImportacao"), H.indexOf("const desfazerImportacao"));
-  t("confirmar copia o anterior primeiro", conf.indexOf("taverna_save_anterior") < conf.indexOf('setItem("taverna_save_v1"'));
+  /* v9.213: as chaves viraram territorio do modo (modos.js) — a intencao
+     segue identica: o anterior e copiado ANTES da sobrescrita, agora pelas
+     funcoes chaveAnterior()/chaveDoSave(), que na historia devolvem
+     exatamente as literais de sempre (teste-modos prova isso). */
+  t("confirmar copia o anterior primeiro", conf.indexOf("chaveAnterior()") < conf.indexOf("setItem(chaveDoSave()"));
   t("e o save entra migrado", /migrarPersonagem\(sv\.personagem\)/.test(conf));
   t("há como desfazer", /const desfazerImportacao = \(\) =>/.test(H));
-  t("e o desfazer restaura de verdade", /setItem\("taverna_save_v1", anterior\)/.test(H));
+  t("e o desfazer restaura de verdade", /setItem\(chaveDoSave\(\), anterior\)/.test(H));
 }
 
 sec("7. A TELA MOSTRA ANTES, E TUDO ENTRA POR PROP");

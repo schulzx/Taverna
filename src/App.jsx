@@ -96,6 +96,10 @@ import { garantirEpisodio, episodioQueAbre, sementesDoEpisodio, avancarEpisodio,
 /* A MEMORIA DO GESTO (v9.208) — o mundo lembra como te trataram e cobra
    quando a mare vira. Conta em gesto.js. */
 import { garantirGestos, registrarGesto, cobrarNaVirada, envelopeDaMemoria } from "./gesto.js";
+/* OS MODOS (v9.213) — a moldura das mesas: preset de flags e territorio de
+   save por modo. A lei-mae do documento As Duas Mesas: modo e lente sobre
+   o motor, nunca segundo jogo. Conta em modos.js. */
+import { MODO_PADRAO, garantirModo, modoDoSave, espacoDoSave, espacoAnterior } from "./modos.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -6926,36 +6930,44 @@ export default function Taverna() {
     const bruto = importPendenteRef.current;
     if (!bruto) return { ok: false, erro: "Nenhum arquivo lido." };
     try {
-      const anterior = localStorage.getItem("taverna_save_v1");
-      if (anterior) localStorage.setItem("taverna_save_anterior", anterior);
-      localStorage.setItem("taverna_save_v1", JSON.stringify(bruto));
+      const anterior = localStorage.getItem(chaveDoSave());
+      if (anterior) localStorage.setItem(chaveAnterior(), anterior);
+      localStorage.setItem(chaveDoSave(), JSON.stringify(bruto));
     } catch { return { ok: false, erro: "O navegador recusou gravar (memória cheia?). Nada foi alterado." }; }
     const sv = { ...bruto };
     if (sv.personagem) sv.personagem = migrarPersonagem(sv.personagem);
     saveRef.current = sv; setTemSave(sv);
     importPendenteRef.current = null;
-    return { ok: true, tinhaAnterior: !!localStorage.getItem("taverna_save_anterior") };
+    return { ok: true, tinhaAnterior: !!localStorage.getItem(chaveAnterior()) };
   };
 
   /* A SEGUNDA REDE. Uma importação confirmada por engano deixa de ser
      definitiva enquanto o jogador não começar a jogar por cima dela. */
   const desfazerImportacao = () => {
     try {
-      const anterior = localStorage.getItem("taverna_save_anterior");
+      const anterior = localStorage.getItem(chaveAnterior());
       if (!anterior) return false;
-      localStorage.setItem("taverna_save_v1", anterior);
-      localStorage.removeItem("taverna_save_anterior");
+      localStorage.setItem(chaveDoSave(), anterior);
+      localStorage.removeItem(chaveAnterior());
       const sv = JSON.parse(anterior);
       if (sv && sv.personagem) sv.personagem = migrarPersonagem(sv.personagem);
       saveRef.current = sv; setTemSave(sv);
       return true;
     } catch { return false; }
   };
+  /* O MODO DA MESA (v9.213). Nasce historia (o default absoluto: um save
+     sem campo modo E historia) e so muda quando um fluxo de criacao de
+     outro modo o definir — nunca em jogo. As duas chaves de localStorage
+     derivam dele: save e territorio. */
+  const modoRef = useRef(MODO_PADRAO);
+  const chaveDoSave = () => espacoDoSave(modoRef.current);
+  const chaveAnterior = () => espacoAnterior(modoRef.current);
+
   /* carrega o save deste dispositivo na abertura */
   useEffect(() => {
     try {
-      const bruto = localStorage.getItem("taverna_save_v1");
-      if (bruto) { const sv = JSON.parse(bruto); if (sv && sv.personagem) sv.personagem = migrarPersonagem(sv.personagem); saveRef.current = sv; setTemSave(sv); }
+      const bruto = localStorage.getItem(chaveDoSave());
+      if (bruto) { const sv = JSON.parse(bruto); if (sv && sv.personagem) sv.personagem = migrarPersonagem(sv.personagem); modoRef.current = modoDoSave(sv); saveRef.current = sv; setTemSave(sv); }
     } catch { /* save corrompido: ignora */ }
   }, []);
 
@@ -7012,6 +7024,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
+      modo: garantirModo(modoRef.current),
       historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, escada: escadaRef.current, postura: posturaRef.current, episodio: episodioRef.current, gestos: gestosRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
@@ -7040,7 +7053,7 @@ export default function Taverna() {
         historico: h.length > nMsg * 2 ? h.slice(-nMsg * 2) : h,
       };
     };
-    const gravar = (d) => { try { localStorage.setItem("taverna_save_v1", JSON.stringify(d)); return true; } catch { return false; } };
+    const gravar = (d) => { try { localStorage.setItem(chaveDoSave(), JSON.stringify(d)); return true; } catch { return false; } };
     let gravou = gravar(historicoEnxuto(250));
     let podou = false;
     if (!gravou) {
@@ -10438,6 +10451,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       escadaRef.current = garantirEscada(sv.escada);
       posturaRef.current = garantirPosturaAtiva(sv.postura);
       episodioRef.current = garantirEpisodio(sv.episodio);
+      modoRef.current = modoDoSave(sv);
       gestosRef.current = garantirGestos(sv.gestos);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
@@ -17434,7 +17448,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     try {
       const sv2 = { ...sv, backupEm: backupEmRef.current };
       saveRef.current = sv2;
-      localStorage.setItem("taverna_save_v1", JSON.stringify(sv2));
+      localStorage.setItem(chaveDoSave(), JSON.stringify(sv2));
       if (temSave) setTemSave(sv2);
     } catch (e) { calou("carimboDoBackup", e); }
     /* do MENU não sai mensagem: escrever no diário de uma campanha que
