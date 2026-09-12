@@ -86,6 +86,10 @@ import { pesoDaCena, vetoDoPeso, seguraOCompasso } from "./peso.js";
 /* O ENCALHE (v9.205) — o sabio percebe o aluno perdido, e o mundo vai
    busca-lo. Conta em encalhe.js; o App le o encalhe e sobe a escada. */
 import { garantirEscada, subirEscada } from "./encalhe.js";
+/* AS POSTURAS DO MUNDO (v9.206) — a mesma acao, outro resultado. Derivadas
+   do momento (termometro, fama, vilao, relogio, estacao); o adversario le
+   o vies de moral. Conta em posturas.js. */
+import { garantirPosturaAtiva, derivarPostura, moralDoInimigo } from "./posturas.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -4750,6 +4754,10 @@ export default function Taverna() {
   /* a escada do encalhe: 0 = solto; sobe um degrau por vez enquanto o
      jogador estiver parado, e desce a zero ao primeiro movimento. */
   const escadaRef = useRef(garantirEscada(null));
+  /* a postura ativa do mundo, com sua permanencia; e o ultimo peso visto,
+     para a postura ler luto/gloria/vergonha por um ou dois dias. */
+  const posturaRef = useRef(garantirPosturaAtiva(null));
+  const ultimoPesoRef = useRef({ peso: null, dia: 0 });
   const texturaRef = useRef({});
   const baseMundoRef = useRef(garantirBase(null));
   /* v9.165: o que a lei da forma lembra — quais andares já tiveram o
@@ -5816,6 +5824,8 @@ export default function Taverna() {
         temLider: vivos.length > 1, liderCaiu: (c.inimigos || []).some((x) => x.chefe && (x.derrotado || (x.vida || 0) <= 0)),
         doVilao: !!(nemesisRef.current && nemesisRef.current.nome) && !!c.doVilao,
         ordemDoVilao: (c.doVilao && (nemesisRef.current || {}).arquetipo) ? "o que a ameaça mandou" : "",
+        /* o vies da postura: o adversario fica receoso no apice, aproveitador na crise */
+        posturaMoral: moralDoInimigo((posturaRef.current || {}).postura),
       };
     } catch (e) { calou("lutaDaMesa", e); return null; }
   };
@@ -6003,6 +6013,7 @@ export default function Taverna() {
        peso e um beat, e "solta" e o jogador seguir quando quiser. */
     try {
       const cena = pesoDaCena(fatosDoPesoRef.current);
+      if (cena) ultimoPesoRef.current = { peso: cena.peso, dia: diaRef.current };
       if (cena) {
         p = porNaPauta(p, "peso", "Esta cena tem PESO: " + cena.nome + " — " + cena.diz + ". Quem tem laco com isto comparece.");
         p = porNaPauta(p, "naoPode", vetoDoPeso(cena.peso));
@@ -6983,7 +6994,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, escada: escadaRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
+      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, escada: escadaRef.current, postura: posturaRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
@@ -9287,6 +9298,46 @@ export default function Taverna() {
       return { missoesAbertas: abertas, tetoMissoes: 6, diasSemDiario };
     } catch (e) { return {}; }
   };
+  /* ---------------- A POSTURA DO MUNDO (v9.206) ----------------
+     Monta as leituras que ja existem e deriva a postura, com histerese. O
+     jogador nunca ve o rotulo; o mundo reage pela config de cada botao.
+     Aqui em G1 o consumidor vivo e o adversario (o vies de moral). */
+  const snapshotDePosturas = () => {
+    try {
+      const fama = famaAtual();
+      const term = lerTermometro(snapshotDoTermometro()).leitura;
+      const rels = Array.isArray(relogiosRef.current) ? relogiosRef.current : [];
+      const relAlto = rels.reduce((m, r) => Math.max(m, (Number(r.segmentos) > 0 ? (Number(r.cheios) || 0) / Number(r.segmentos) : 0)), 0);
+      let faseVilao = 0, rostoCaiu = false, alvoDoVilao = false;
+      try {
+        const v = nemesisRef.current;
+        if (v && v.status !== "derrotada") {
+          faseVilao = faseDe(v.fase).ordem;
+          rostoCaiu = !!v.conhecido || faseVilao >= 3;
+          alvoDoVilao = faseVilao >= 2 && Array.isArray(v.marcas) && v.marcas.length > 0;
+        }
+      } catch (e) {}
+      let estacaoDura = false;
+      try { estacaoDura = estacaoDe(diaRef.current).id === "inverno"; } catch (e) {}
+      const pesoRecente = (ultimoPesoRef.current && diaRef.current - ultimoPesoRef.current.dia <= 2) ? ultimoPesoRef.current.peso : null;
+      return {
+        termometro: term,
+        pesoRecente,
+        heroiAlvoDoVilao: alvoDoVilao,
+        faseVilao, rostoCaiu,
+        relogioAlto: relAlto >= 0.66,
+        semRelogio: rels.length === 0,
+        famaAlta: fama >= 60, famaBaixa: fama < 15,
+        estacaoDura,
+        arcoNoInicio: (Number((historiaRef.current || {}).etapa) || 0) <= 1,
+      };
+    } catch (e) { return {}; }
+  };
+  const mexerNaPostura = () => {
+    try { posturaRef.current = derivarPostura(posturaRef.current, snapshotDePosturas(), { dia: diaRef.current }); }
+    catch (e) { calou("mexerNaPostura", e); }
+  };
+
   const mexerNoEncalhe = () => {
     try {
       const r = subirEscada(escadaRef.current, snapshotDoEncalhe(), { dia: diaRef.current });
@@ -9531,6 +9582,7 @@ export default function Taverna() {
     propositosDoTurnoRef.current = dispararPropositos(conteudo);
     mexerNaReviravolta();
     mexerNoEncalhe();
+    mexerNaPostura();
     falasDoTurnoRef.current = await colherAsFalas(conteudo);
     const pauta = textoDaPauta(pautaDoTurno(conteudo), { turno: turnoDeRegistroRef.current + 1 });
     /* guardado antes da resposta: "a luta acabou neste turno" é a
@@ -10272,6 +10324,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       promessasRef.current = garantirLivro(sv.promessas);
       reviravoltaRef.current = garantirReviravolta(sv.reviravolta);
       escadaRef.current = garantirEscada(sv.escada);
+      posturaRef.current = garantirPosturaAtiva(sv.postura);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
         ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null, pressoes: sv.mercado.pressoes || {}, gastos: sv.mercado.gastos || {}, pechinchas: sv.mercado.pechinchas || {} }

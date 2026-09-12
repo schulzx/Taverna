@@ -264,6 +264,11 @@ export function garantirLuta(s) {
     liderCaiu: b(o.liderCaiu),
     doVilao: b(o.doVilao),
     ordemDoVilao: limpar(o.ordemDoVilao, 60),
+    /* O VIES DA POSTURA (v9.206): negativo = o mundo esta no apice do heroi
+       e os inimigos ficam receosos; positivo = crise/sombra e eles se
+       aproveitam. So tempera a margem — as intencoes especificas (calar a
+       magia, o refem) ganham sempre. Default 0: sem postura, nada muda. */
+    posturaMoral: num(o.posturaMoral, 0),
   };
 }
 
@@ -537,6 +542,22 @@ export const INTENCOES = [
     alvo: "quem_nao_e_o_heroi", quando: (s) => s.pensa && (s.faixa === "trivial" || s.faixa === "facil") && s.minhaVida > 0.8,
     quebra: (s) => s.minhaVida < 0.7, vira: null,
     porque: "a briga é fácil demais para ser levada a sério",
+  },
+
+  /* ---- O VIES DA POSTURA (v9.206): duas leituras que so acendem quando o
+     mundo pende para um lado. Peso 6: vencem a rede generica, perdem para
+     toda intencao tatica. Aditivas — leem so posturaMoral, e nada mais. ---- */
+  {
+    id: "receoso", peso: 6, quer: "so avançar com vantagem clara, e recuar ao menor sinal",
+    alvo: "quem_bloqueia", quando: (s) => s.posturaMoral <= -2 && s.pensa && s.minhaVida < 0.75 && !s.euEmbosquei,
+    quebra: (s) => s.minhaVida < 0.25, vira: "fugir_ferido",
+    porque: "o mundo trata este herói como lenda, e lenda mete medo",
+  },
+  {
+    id: "aproveitador", peso: 6, quer: "avançar no que já está ferido, sem dar trégua",
+    alvo: "o_ferido", quando: (s) => s.posturaMoral >= 2 && s.pensa && (s.heroiVida < 0.6 || s.alguemFerido),
+    quebra: () => false, vira: null,
+    porque: "o mundo cheira sangue neste herói, e ninguém recua de presa fácil",
   },
 
   /* ---- a REDE: sem isto o adversário fica mudo na cena mais comum ---- */
