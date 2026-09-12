@@ -147,9 +147,14 @@ export function garantirCompasso(c) {
   };
 }
 
-function sortearDuracao(mov, sorte) {
+function sortearDuracao(mov, sorte, folego) {
   const [a, b] = mov.dura;
-  return a + Math.floor(sorte() * (b - a + 1));
+  /* O FOLEGO (v9.202): o Termometro alonga o respiro de quem afoga e
+     encurta a subida de quem passeia. Ajusta QUANTOS turnos o movimento
+     dura — nunca a ORDEM dos movimentos. Piso de 1: um movimento de zero
+     turno some, e some seria mudar a onda. */
+  const extra = folego && Number.isFinite(Number(folego[mov.id])) ? Number(folego[mov.id]) : 0;
+  return Math.max(1, a + Math.floor(sorte() * (b - a + 1)) + extra);
 }
 
 /* ============================================================
@@ -227,7 +232,7 @@ export function escolherAssunto(sit = {}, { sorte = Math.random, compasso = null
    que o jogador já está travando são duas cenas grandes no mesmo turno, e
    a segunda apaga a primeira.
    ============================================================ */
-export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segurar = false, preferir = null, elenco = null } = {}) {
+export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segurar = false, preferir = null, elenco = null, folego = null } = {}) {
   const c = garantirCompasso(compasso);
   if (segurar) return { compasso: c, virou: false, porque: "a onda espera: já há cena grande em curso" };
 
@@ -252,7 +257,7 @@ export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segur
     const a = escolherAssunto(sit, { sorte, compasso: c, preferir, elenco });
     if (!a) {
       return {
-        compasso: { ...c, movimento: "respiro", turnos: 0, alvo: sortearDuracao(MOVIMENTOS[0], sorte) },
+        compasso: { ...c, movimento: "respiro", turnos: 0, alvo: sortearDuracao(MOVIMENTOS[0], sorte, folego) },
         virou: false, porque: "nenhum assunto cabe nesta cena: a onda respira mais um pouco",
       };
     }
@@ -297,7 +302,7 @@ export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segur
     ...c,
     movimento: prox.id,
     turnos: 0,
-    alvo: sortearDuracao(prox, sorte),
+    alvo: sortearDuracao(prox, sorte, folego),
     assunto: voltou ? "" : assunto,
     quem: voltou ? "" : quem,
     quem2: voltou ? "" : quem2,

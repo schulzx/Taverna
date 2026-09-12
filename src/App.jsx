@@ -73,6 +73,9 @@ import { acaoDaBolsa, sementeDoItem, colheitaDoItem, verboPorId } from "./itens-
 /* A MESA POSTA (v9.201) — o juizo da acao. Catalogo em mesa-posta.js; a
    aposta (as duas versoes da cena) entra na pauta quando a acao casa. */
 import { situacaoQueCasa, apostas } from "./mesa-posta.js";
+/* O TERMOMETRO (v9.202) — le o jogador e muda o folego da onda, nunca a
+   ordem. Conta em termometro.js; aqui so se monta o snapshot dos refs. */
+import { lerTermometro, folegoDaLeitura } from "./termometro.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -15231,6 +15234,34 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     } catch { /* registrar nunca pode custar o turno */ }
   };
 
+  /* ---------------- O SNAPSHOT DO TERMOMETRO (v9.202) ----------------
+     Monta, dos refs, o estado que o Termometro le. So os sinais de leitura
+     limpa entram agora; os demais defaultam desligados e acendem quando o
+     dado ficar acessivel — um snapshot parcial ainda da uma leitura sa,
+     porque sinal que nao liga simplesmente nao pesa. Defensivo de ponta a
+     ponta: ler o estado nunca pode custar o turno. */
+  const snapshotDoTermometro = () => {
+    try {
+      const p0 = fichaViva() || personagem || {};
+      const grupo = Array.isArray(p0.grupo) ? p0.grupo : [];
+      const frac = (e) => (e && Number(e.vidaMax) > 0 ? Number(e.vida) / Number(e.vidaMax) : null);
+      const fracaoPV = frac(p0);
+      const fracsGrupo = grupo.map(frac).filter((x) => x != null);
+      const fracaoGrupo = fracsGrupo.length ? fracsGrupo.reduce((a, b) => a + b, 0) / fracsGrupo.length : null;
+      const rels = Array.isArray(relogiosRef.current) ? relogiosRef.current : [];
+      const relogioMaisAlto = rels.reduce((m, r) => Math.max(m, (Number(r.segmentos) > 0 ? (Number(r.cheios) || 0) / Number(r.segmentos) : 0)), 0);
+      let faseVilao = 0;
+      try { const v = nemesisRef.current; if (v && v.status !== "derrotada") faseVilao = faseDe(v.fase).ordem; } catch (e) {}
+      let estacaoDura = false;
+      try { estacaoDura = estacaoDe(diaRef.current).id === "inverno"; } catch (e) {}
+      return {
+        fracaoPV, fracaoGrupo,
+        companheiroGrave: fracsGrupo.some((f) => f <= 0.33),
+        relogioMaisAlto, faseVilao, estacaoDura,
+      };
+    } catch (e) { return {}; }
+  };
+
   const talvezAndarOCompasso = (conteudo) => {
     try {
       if (String(conteudo || "").trimStart().startsWith("[")) return "";
@@ -15251,10 +15282,15 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         return "";
       }
       const sit = situacaoDaMesa();
+      /* O FOLEGO (v9.202): o Termometro le como o jogador chega a onda e
+         alonga o respiro de quem afoga, encurta a subida de quem passeia.
+         Nunca muda a ordem dos movimentos — so quantos turnos cada um dura. */
+      const leitura = lerTermometro(snapshotDoTermometro());
       const r = avancarCompasso(compassoRef.current, sit, {
         segurar: !!combateRef.current || !!masmorraRef.current || !!jornadaRef.current,
         preferir: sit.pilarFaminto,
         elenco: elencoDaOnda(),
+        folego: folegoDaLeitura(leitura.leitura),
       });
       compassoRef.current = r.compasso;
       /* ---------------- O CLÍMAX REGISTRA (v9.97) ----------------
