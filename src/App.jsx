@@ -105,6 +105,9 @@ import { MODO_PADRAO, garantirModo, modoDoSave, espacoDoSave, espacoAnterior } f
 import { PRONTOS, montarPronto, prontoPorId } from "./prontos.js";
 import { mundoDaNoite, posturaDaNoite, tetoDoMarco, veredito as vereditoDaNoite, converterParaCampanha, sortearNoite } from "./uma-noite.js";
 import { criarTorneio, garantirTorneio, correrForaDeTela, minhaLuta, meuRival, registrarMinhaLuta, faseCompleta, avancarFase as avancarFaseTorneio, epilogar, envelopeDaChave, provocacaoDoRival } from "./torneio.js";
+/* O DUELO (v9.219 — D2): jogador contra jogador com o determinismo por
+   juiz. Codigo de ficha, selo, serie seca. Conta em duelo.js. */
+import { codigoDaFicha, fichaDoCodigo, resumoParaAviso, tipoDoDuelo, duelar, rivalDaCasa } from "./duelo.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -4331,6 +4334,101 @@ function TelaNoite({ concluir, voltar }) {
   );
 }
 
+/* O DUELO (v9.219) — a arena entre jogadores. NADA aqui escreve em save:
+   o duelo nao deixa cicatriz (lei vi). O oponente chega por CODIGO (a
+   ficha de outro jogador, pilotada pela casa) ou a casa serve um rival
+   do roster. Amistoso vs justo declarado ANTES do aceite. */
+function TelaDuelo({ voltar }) {
+  const [meuId, setMeuId] = useState(null);
+  const [modoOp, setModoOp] = useState("casa");
+  const [codigo, setCodigo] = useState("");
+  const [erro, setErro] = useState("");
+  const [resultado, setResultado] = useState(null);
+  const [semente, setSemente] = useState(() => `duelo|${Math.floor(Math.random() * 1e9)}`);
+  const minha = meuId ? montarPronto(meuId) : null;
+  const doCodigo = modoOp === "codigo" && codigo.trim() ? fichaDoCodigo(codigo) : null;
+  const rival = modoOp === "casa" ? (meuId ? rivalDaCasa(meuId, semente) : null) : (doCodigo && doCodigo.ok ? { ficha: doCodigo.ficha } : null);
+  const avisoA = minha ? resumoParaAviso(minha) : null;
+  const avisoB = rival ? resumoParaAviso(rival.ficha) : null;
+  const tipo = minha && rival ? tipoDoDuelo(minha, rival.ficha) : null;
+  const pode = !!(minha && rival);
+  const Carta = ({ a }) => a ? (
+    <div className="flex-1 p-3 rounded-lg" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
+      <div className="tv-display text-lg" style={{ color: T.amberSoft }}>{a.nome}</div>
+      <div className="tv-mono text-[10px]" style={{ color: T.inkDim }}>{a.classe} · nível {a.nivel} · {a.vida} PV · defesa {a.defesa} · {a.arma}{a.doRoster ? " · do roster" : ""}</div>
+    </div>
+  ) : <div className="flex-1 p-3 rounded-lg tv-mono text-[11px]" style={{ background: T.panel, border: `1px dashed ${T.line}`, color: T.inkDim }}>—</div>;
+  return (
+    <div className="tv-fade flex-1 flex flex-col items-center gap-6 px-6 py-10 overflow-y-auto tv-scroll">
+      <div className="flex flex-col items-center gap-1">
+        <h1 className="tv-display text-4xl" style={{ color: T.ink }}>O Duelo</h1>
+        <p className="tv-body text-sm" style={{ color: T.inkDim }}>Melhor de três quedas. O prêmio é a briga — ninguém sai com cicatriz.</p>
+      </div>
+      {!resultado && (<>
+        <div className="w-full max-w-[680px] flex flex-col gap-2">
+          <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>O meu lado</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {PRONTOS.map((p) => (
+              <button key={p.id} onClick={() => setMeuId(p.id)} className="text-left p-2.5 rounded-lg"
+                style={{ background: meuId === p.id ? T.panelSoft : T.panel, border: `1px solid ${meuId === p.id ? T.amber : T.line}` }}>
+                <div className="tv-display text-sm" style={{ color: meuId === p.id ? T.amberSoft : T.ink }}>{p.nome}</div>
+                <div className="tv-mono text-[9px] uppercase" style={{ color: T.violetSoft }}>{p.papel}</div>
+              </button>
+            ))}
+          </div>
+          {minha && <button onClick={() => { try { navigator.clipboard.writeText(codigoDaFicha(minha)); setErro("código copiado — mande a quem for te enfrentar"); } catch { setErro("não deu para copiar — o navegador travou a área de transferência"); } }}
+            className="tv-mono text-[10px] self-start px-3 py-1.5 rounded" style={{ border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>COPIAR O CÓDIGO DESTE LADO</button>}
+        </div>
+        <div className="w-full max-w-[680px] flex flex-col gap-2">
+          <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>O outro lado</div>
+          <div className="flex gap-2">
+            {[["casa", "A casa serve um rival"], ["codigo", "Colar um código"]].map(([id, rot]) => (
+              <button key={id} onClick={() => { setModoOp(id); setErro(""); }} className="flex-1 tv-mono text-[11px] py-2.5 rounded-lg"
+                style={{ background: modoOp === id ? T.panelSoft : T.panel, border: `1px solid ${modoOp === id ? T.amber : T.line}`, color: modoOp === id ? T.amberSoft : T.inkDim }}>{rot}</button>
+            ))}
+          </div>
+          {modoOp === "codigo" && (<textarea value={codigo} onChange={(e) => setCodigo(e.target.value)} rows={3}
+            placeholder="Cole aqui o código de duelo de outro jogador…" className="w-full rounded-lg p-3 tv-mono text-[10px]"
+            style={{ background: T.bg, border: `1px solid ${doCodigo && !doCodigo.ok ? T.danger : T.line}`, color: T.ink }} />)}
+          {doCodigo && !doCodigo.ok && <div className="tv-mono text-[10px]" style={{ color: T.danger }}>{doCodigo.motivo}</div>}
+        </div>
+        {(avisoA || avisoB) && (
+          <div className="w-full max-w-[680px] flex flex-col gap-2">
+            <div className="flex gap-3"><Carta a={avisoA} /><div className="tv-display self-center" style={{ color: T.inkDim }}>×</div><Carta a={avisoB} /></div>
+            {tipo === "amistoso" && <div className="tv-body text-xs text-center" style={{ color: T.amberSoft }}>Duelo de taverna — ninguém confere o peso das luvas. Os dois lados estão à vista; o aceite é seu.</div>}
+            {tipo === "justo" && <div className="tv-mono text-[10px] text-center" style={{ color: T.ok }}>DUELO JUSTO — dois do roster: mesmo nível, mesmo orçamento.</div>}
+          </div>
+        )}
+        {erro && <div className="tv-mono text-[10px]" style={{ color: T.violetSoft }}>{erro}</div>}
+        <div className="flex items-center gap-3 w-full max-w-[680px]">
+          <button onClick={voltar} className="tv-mono text-xs px-4 py-3 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>VOLTAR</button>
+          <button disabled={!pode} onClick={() => pode && setResultado(duelar(minha, rival.ficha, { semente }))}
+            className="flex-1 tv-display text-lg py-3 rounded-lg" style={{ background: pode ? T.amber : T.panel, color: pode ? T.onAccent : T.inkDim, border: `1px solid ${pode ? T.amber : T.line}` }}>À ARENA →</button>
+        </div>
+      </>)}
+      {resultado && (
+        <div className="w-full max-w-[680px] flex flex-col gap-4">
+          <div className="text-center">
+            <div className="tv-display text-3xl" style={{ color: T.amberSoft }}>{resultado.vencedorNome} vence · {resultado.placar}</div>
+            <div className="tv-body text-sm" style={{ color: T.inkDim }}>{resultado.cronica}</div>
+            <div className="tv-mono text-[9px] mt-1" style={{ color: T.inkDim }}>selo da luta {resultado.selo} · duas máquinas com a mesma dupla e a mesma semente chegam a este mesmo selo</div>
+          </div>
+          {resultado.quedas.map((q) => (
+            <div key={q.numero} className="p-3 rounded-lg" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
+              <div className="tv-mono text-[10px] uppercase mb-1" style={{ color: T.violetSoft }}>{q.numero}ª queda · {q.nomeDoTerreno} · {q.vencedor} em {q.rodadas} rodada{q.rodadas === 1 ? "" : "s"}</div>
+              <div className="flex flex-col gap-0.5">{q.linhas.map((l, i) => <div key={i} className="tv-body text-[12px]" style={{ color: T.ink }}>{l}</div>)}</div>
+            </div>
+          ))}
+          <div className="flex gap-3">
+            <button onClick={() => { setResultado(null); setSemente(`duelo|${Math.floor(Math.random() * 1e9)}`); }} className="flex-1 tv-display text-lg py-3 rounded-lg" style={{ background: T.amber, color: T.onAccent }}>REVANCHE</button>
+            <button onClick={voltar} className="tv-mono text-xs px-4 py-3 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>MENU</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* O VEREDITO da noite — a partida fechou; tres saidas, todas de um clique. */
 function TelaVeredito({ v, aoRecomecar, aoDarUmaVida, aoMenu }) {
   if (!v) return null;
@@ -4351,7 +4449,7 @@ function TelaVeredito({ v, aoRecomecar, aoDarUmaVida, aoMenu }) {
   );
 }
 
-function TelaMenu({ irNovo, irNoite, continuar, temSave, criarSala, entrarSala, aoLerArquivo, aoConfirmarImportacao, aoDesfazerImportacao, aoExportar }) {
+function TelaMenu({ irNovo, irNoite, irDuelo, continuar, temSave, criarSala, entrarSala, aoLerArquivo, aoConfirmarImportacao, aoDesfazerImportacao, aoExportar }) {
   const [lido, setLido] = React.useState(null);
   const [erroArq, setErroArq] = React.useState("");
   const [importado, setImportado] = React.useState(false);
@@ -4443,7 +4541,7 @@ function TelaMenu({ irNovo, irNoite, continuar, temSave, criarSala, entrarSala, 
           </span>
         </button>
 
-        {/* UMA NOITE (v9.218) — a mesa curta, em voz de mundo */}
+        {/* O DUELO (v9.219) e UMA NOITE (v9.218) — as mesas novas, em voz de mundo */}
         <button onClick={irNoite} className="w-full text-left flex items-start gap-4 p-[18px] rounded-xl" style={cartao}>
           <span className="shrink-0 rounded-lg p-2.5" style={{ background: "rgba(46,39,69,0.67)" }}>
             <IconeDado tamanho={20} />
@@ -4451,6 +4549,15 @@ function TelaMenu({ irNovo, irNoite, continuar, temSave, criarSala, entrarSala, 
           <span className="flex-1 min-w-0 flex flex-col gap-1">
             <span className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>Uma Noite</span>
             <span className="tv-body text-sm leading-[1.65]" style={{ color: T.inkDim }}>20 a 30 minutos: um capítulo inteiro, ou o torneio até sobrar um.</span>
+          </span>
+        </button>
+        <button onClick={irDuelo} className="w-full text-left flex items-start gap-4 p-[18px] rounded-xl" style={cartao}>
+          <span className="shrink-0 rounded-lg p-2.5" style={{ background: "rgba(46,39,69,0.67)" }}>
+            <IconeEspada tamanho={20} />
+          </span>
+          <span className="flex-1 min-w-0 flex flex-col gap-1">
+            <span className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>Duelo</span>
+            <span className="tv-body text-sm leading-[1.65]" style={{ color: T.inkDim }}>Seu campeão contra o de outro jogador. Melhor de três. Sem cicatriz.</span>
           </span>
         </button>
 
@@ -19453,8 +19560,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         </div>
       </header>
 
-      {fase === "menu" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaMenu irNovo={() => { largarASala(); modoRef.current = MODO_PADRAO; setFase("mundo"); }} irNoite={() => { largarASala(); setFase("noite"); }} continuar={(r) => { largarASala(); continuar(r); }} temSave={temSave} aoLerArquivo={lerArquivoDeSave} aoConfirmarImportacao={confirmarImportacao} aoDesfazerImportacao={desfazerImportacao} aoExportar={exportarSave} criarSala={criarSalaDeDois} entrarSala={() => { souAnfitriaoRef.current = false; setSala(null); setCodigoDigitado(""); setErroDaSala(""); setFase("sala"); }} /></div>}
+      {fase === "menu" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaMenu irNovo={() => { largarASala(); modoRef.current = MODO_PADRAO; setFase("mundo"); }} irNoite={() => { largarASala(); setFase("noite"); }} irDuelo={() => { largarASala(); setFase("duelo"); }} continuar={(r) => { largarASala(); continuar(r); }} temSave={temSave} aoLerArquivo={lerArquivoDeSave} aoConfirmarImportacao={confirmarImportacao} aoDesfazerImportacao={desfazerImportacao} aoExportar={exportarSave} criarSala={criarSalaDeDois} entrarSala={() => { souAnfitriaoRef.current = false; setSala(null); setCodigoDigitado(""); setErroDaSala(""); setFase("sala"); }} /></div>}
       {fase === "noite" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaNoite concluir={(esc) => iniciarNoite(esc)} voltar={() => setFase("menu")} /></div>}
+      {fase === "duelo" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaDuelo voltar={() => setFase("menu")} /></div>}
       {fase === "veredito" && <div className="flex-1 min-h-0 flex flex-col"><TelaVeredito v={vereditoRef.current}
         aoRecomecar={() => { const N = noiteRef.current || {}; iniciarNoite({ prato: N.prato, prontoId: N.prontoId, episodioId: N.episodioId }); }}
         aoDarUmaVida={() => { convertidoRef.current = converterParaCampanha(fichaViva() || personagem); modoRef.current = MODO_PADRAO; setFase("mundo"); }}

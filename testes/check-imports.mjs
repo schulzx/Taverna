@@ -125,7 +125,7 @@ const GLOBAIS = new Set([
   "structuredClone", "queueMicrotask", "atob", "btoa", "crypto", "performance", "alert", "confirm", "prompt",
   "React", "useState", "useEffect", "useRef", "useCallback", "useMemo", "useLayoutEffect", "useReducer", "useContext",
   "Audio", "Image", "Event", "MouseEvent", "CustomEvent", "IntersectionObserver", "ResizeObserver", "MutationObserver",
-  "speechSynthesis", "SpeechSynthesisUtterance", "AudioContext", "webkitAudioContext", "TextEncoder", "TextDecoder",
+  "speechSynthesis", "SpeechSynthesisUtterance", "AudioContext", "webkitAudioContext", "TextEncoder", "TextDecoder", "Uint8Array",
   "globalThis", "process", "require",
   /* métodos de classe React: são definições, não chamadas a algo externo */
   "constructor", "render", "componentDidCatch", "getDerivedStateFromError", "componentDidMount", "componentWillUnmount", "setState",
