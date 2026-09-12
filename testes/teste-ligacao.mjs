@@ -76,7 +76,8 @@ sec("1. NENHUM MÓDULO MUDO");
      módulo, e a leva termina com a lista VAZIA (M6 confere). Perdão que
      sobra é dívida escondida — por isso o valor diz quem vem buscar. */
   const AGUARDANDO = {
-    "prontos.js": "o torneio (M4) e a escolha da Noite (M6) — leva As Duas Mesas",
+    /* v9.215: prontos.js SAIU — arena.js o lê (o credor veio buscar) */
+    "arena.js": "o torneio (M4) e o duelo nos trilhos (D2) — leva As Duas Mesas",
   };
   const mudos = [];
   for (const f of arqs) {

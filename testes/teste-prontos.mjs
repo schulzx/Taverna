@@ -61,9 +61,7 @@ sec("4. o montador produz ficha de verdade");
   t("o combate aceita: defesa calcula nos oito", fichas.every((f) => CB.defesaDe(f) >= 10));
   t("arma e armadura nascem EQUIPADAS", fichas.every((f) => f.equipados.arma && f.equipados.armadura));
   t("nenhuma peça equipada tem penalidade (proficiência conferida)", fichas.every((f) => {
-    const a = IT.avaliarEquipar(f, f.equipados.arma, {});
-    const b = IT.avaliarEquipar(f, f.equipados.armadura, {});
-    return a.penalidades.length === 0 && b.penalidades.length === 0;
+    return Object.values(f.equipados).every((it) => IT.avaliarEquipar(f, it, {}).penalidades.length === 0);
   }));
   t("habilidades iniciais da classe vêm juntas", fichas.every((f) => Array.isArray(f.habilidades) && f.habilidades.length > 0));
   t("perícias iniciais vêm treinadas", fichas.every((f) => f.pericias && Object.keys(f.pericias).length > 0));
