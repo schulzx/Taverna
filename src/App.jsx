@@ -70,6 +70,9 @@ import { garantirLivro, semear, regar, pagar } from "./promessas.js";
 /* ITENS UTEIS (v9.200) — a lei que mata o item inerte. Classifica em
    itens-uteis.js; o efeito da semente fala com o Livro, o resto narra. */
 import { acaoDaBolsa, sementeDoItem, colheitaDoItem, verboPorId } from "./itens-uteis.js";
+/* A MESA POSTA (v9.201) — o juizo da acao. Catalogo em mesa-posta.js; a
+   aposta (as duas versoes da cena) entra na pauta quando a acao casa. */
+import { situacaoQueCasa, apostas } from "./mesa-posta.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -5827,7 +5830,7 @@ export default function Taverna() {
   const cidadeDoMapa = (nome) => ((mapaRef.current && mapaRef.current.cidades) || [])
     .find((c) => String(c.nome || "").toLowerCase() === String(nome || "").toLowerCase()) || null;
 
-  const pautaDoTurno = () => {
+  const pautaDoTurno = (acaoDoTurno = "") => {
     let p = garantirPauta(null);
     cobrouAgoraRef.current = false;
     /* quem está longe já é calculado pelo elenco da cena — o Geógrafo lê
@@ -5970,6 +5973,18 @@ export default function Taverna() {
       turnoAtual: turnoDeRegistroRef.current,
       diaAtual: diaRef.current,
     }));
+    /* ---------------- A MESA POSTA (v9.201) ----------------
+       Quando a acao declarada casa com uma situacao conhecida, as DUAS
+       versoes da cena chegam ao Narrador ANTES do dado — e a de falha
+       nomeia a moeda, a lei que impede o "nada acontece". Casa
+       conservador (chave forte) e fica de fora do combate, que tem
+       resolucao propria. Nunca custa o turno. */
+    try {
+      if (!combateRef.current) {
+        const sit = situacaoQueCasa(acaoDoTurno);
+        if (sit) { const ap = apostas(sit); if (ap) p = porNaPauta(p, "mesa", "Se " + ap.sePassa, "Se " + ap.seFalha); }
+      }
+    } catch (e) { /* a aposta nunca pode custar o turno */ }
     return p;
   };
 
@@ -9393,7 +9408,7 @@ export default function Taverna() {
     for (const m of interpreteRef.current.marcas) elencoMemRef.current = marcarMovimento(elencoMemRef.current, m.nome, m.id, m.gesto);
     propositosDoTurnoRef.current = dispararPropositos(conteudo);
     falasDoTurnoRef.current = await colherAsFalas(conteudo);
-    const pauta = textoDaPauta(pautaDoTurno(), { turno: turnoDeRegistroRef.current + 1 });
+    const pauta = textoDaPauta(pautaDoTurno(conteudo), { turno: turnoDeRegistroRef.current + 1 });
     /* guardado antes da resposta: "a luta acabou neste turno" é a
        diferença entre o que havia e o que ficou */
     const combateAntes = !!combateRef.current;

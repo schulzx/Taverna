@@ -72,6 +72,10 @@ export const SECOES = [
   { id: "mundo", rotulo: "O MUNDO", prio: 7, o: "o que o mundo cobra ou paga por um ato antigo" },
   { id: "antes", rotulo: "ANTES", prio: 8, o: "o que já aconteceu aqui" },
   { id: "acabou", rotulo: "ACABOU DE", prio: 3, o: "o que o sistema resolveu agora" },
+  /* v9.201: as duas versoes da cena, antes do dado. So entra quando a acao
+     casa com uma situacao conhecida da Mesa Posta — advisoria, e por isso
+     de prioridade media: importa, mas cede a fala e ao veto se faltar teto. */
+  { id: "mesa", rotulo: "A APOSTA", prio: 4, o: "as duas versoes da cena, antes do dado" },
   { id: "naoPode", rotulo: "NÃO PODE", prio: 2, o: "os vetos desta cena" },
 ];
 

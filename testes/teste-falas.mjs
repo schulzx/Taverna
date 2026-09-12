@@ -92,7 +92,11 @@ sec("6. LIGADO AO JOGO, E SEM CUSTAR O TURNO");
 {
   t("o Intérprete é lido UMA vez por turno", /interpreteRef\.current = interpreteParaPauta\(pessoasDaCena\(\)/.test(APP));
   t("e a Pauta consome o que foi lido", /const r = interpreteRef\.current \|\| interpreteParaPauta/.test(APP));
-  t("as bocas são colhidas antes da Pauta", /falasDoTurnoRef\.current = await colherAsFalas\(conteudo\);[\s\S]{0,120}?textoDaPauta\(pautaDoTurno\(\)/.test(APP));
+  /* v9.201: pautaDoTurno passou a receber a ação do turno (a Mesa Posta lê
+     dela a aposta), então a chamada deixou de ter parênteses vazios. A
+     ordem que esta asserção protege — bocas colhidas ANTES da pauta —
+     segue intacta; só o literal da chamada mudou de () para (conteudo). */
+  t("as bocas são colhidas antes da Pauta", /falasDoTurnoRef\.current = await colherAsFalas\(conteudo\);[\s\S]{0,120}?textoDaPauta\(pautaDoTurno\(conteudo\)/.test(APP));
   t("e entram na seção da fala", /porNaPauta\(p, "fala", envelopeDasFalas\(falasDoTurnoRef\.current\)\)/.test(APP));
   /* em paralelo entre si: a fala de uma não depende da outra */
   t("as bocas vão em paralelo", /await Promise\.all\(escolhidos\.map\(async \(m\)/.test(APP));
