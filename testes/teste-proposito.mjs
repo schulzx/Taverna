@@ -123,7 +123,11 @@ sec("6. LIGADO AO TURNO, E ANTES DA BOCA");
 {
   t("dispara no turno", /propositosDoTurnoRef\.current = dispararPropositos\(conteudo\);/.test(APP));
   /* antes das falas: a fala tem de sair de dentro do fato */
-  t("antes das bocas", /dispararPropositos\(conteudo\);\s*falasDoTurnoRef\.current = await colherAsFalas/.test(APP));
+  /* v9.203: a reviravolta (mexerNaReviravolta) roda ENTRE os propósitos e
+     as bocas — ela lê quem tem propósito de trair, então precisa do estado
+     dos propósitos já disparado, e vem antes da narração. A ordem que esta
+     asserção protege — propósitos ANTES das bocas — segue intacta. */
+  t("antes das bocas", /dispararPropositos\(conteudo\);[\s\S]{0,80}?falasDoTurnoRef\.current = await colherAsFalas/.test(APP));
   t("não dispara em envelope do sistema", /const dispararPropositos = \(conteudo\) => \{\s*try \{\s*if \(String\(conteudo \|\| ""\)\.trimStart\(\)\.startsWith\("\["\)\) return \[\];/.test(APP));
   t("falhar não custa o turno", /const dispararPropositos = \(conteudo\) => \{\s*try \{/.test(APP) && /\} catch \{ return \[\]; \}\s*\};\s*\n\s*const aplicarProposito/.test(APP));
   t("o que aconteceu é salvo", /if \(feitos\.length\) salvar\(\{ baseMundo: baseMundoRef\.current \}\);/.test(APP));

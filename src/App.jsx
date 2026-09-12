@@ -76,6 +76,10 @@ import { situacaoQueCasa, apostas } from "./mesa-posta.js";
 /* O TERMOMETRO (v9.202) — le o jogador e muda o folego da onda, nunca a
    ordem. Conta em termometro.js; aqui so se monta o snapshot dos refs. */
 import { lerTermometro, folegoDaLeitura } from "./termometro.js";
+/* AS REVIRAVOLTAS (v9.203) — a verdade escondida, eleita na criacao,
+   semeada no Livro e revelada quando a catraca deixa. Conta em
+   reviravoltas.js; o App elege, planta, rega e revela. */
+import { garantirReviravolta, elegerReviravoltas, sementesDaReviravolta, podeRevelar, oDiaSeguinte, revelacaoDe, DIAS_ENTRE_REGAS } from "./reviravoltas.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -4730,6 +4734,9 @@ export default function Taverna() {
      proximas fases, pela espinha e pelos itens). Nunca some na virada de
      capitulo — a promessa atravessa o ato. */
   const promessasRef = useRef(garantirLivro(null));
+  /* a reviravolta eleita deste mundo: null ate uma se eleger. Determinada
+     pela semente do mundo, semeada no Livro, revelada pela catraca. */
+  const reviravoltaRef = useRef(null);
   const texturaRef = useRef({});
   const baseMundoRef = useRef(garantirBase(null));
   /* v9.165: o que a lei da forma lembra — quais andares já tiveram o
@@ -6949,7 +6956,7 @@ export default function Taverna() {
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
+      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
@@ -9230,6 +9237,64 @@ export default function Taverna() {
     return cs[Math.abs(semente) % cs.length].nome;
   };
 
+  /* ---------------- A MASCARA DO ALIADO (v9.203) ----------------
+     A primeira reviravolta, ponta a ponta. Eleita pela semente do mundo,
+     ela espera um aliado com o proposito de trair e um vilao; entao
+     semeia no Livro os tres sinais que a preparam, rega-os no ritmo do
+     arco (dias, nao turnos) e so revela quando a catraca deixa (tres
+     sementes maduras). A verdade fica aqui — a pauta nunca a vaza antes
+     da hora. Aditivo e defensivo: nunca pode custar o turno. */
+  const mexerNaReviravolta = () => {
+    try {
+      if (elegerReviravoltas(sementeMundo()).menor !== "aliado_agente") return;
+      const v = nemesisRef.current;
+      const temVilao = !!(v && v.status !== "derrotada" && v.nome);
+      let rev = reviravoltaRef.current;
+      if (rev && rev.revelada) return;
+      /* 1. ELEGER: um aliado do grupo cujo proposito e trair */
+      if (!rev) {
+        if (!temVilao) return;
+        const grupo = ((fichaViva() || personagem || {}).grupo) || [];
+        const traidor = grupo.find((g) => { try { return indoleDaPessoa(g).proposito === "trair"; } catch (e) { return false; } });
+        if (!traidor || !traidor.nome) return;
+        rev = garantirReviravolta({ forma: "aliado_agente", alvo: traidor.nome, eleitaEm: diaRef.current });
+        reviravoltaRef.current = rev;
+      }
+      const ato = Math.max(0, Number((historiaRef.current || {}).etapa) || 0);
+      /* 2. SEMEAR (uma vez) as tres sementes no Livro */
+      if (!rev.semeada) {
+        let L = garantirLivro(promessasRef.current);
+        for (const spec of sementesDaReviravolta("aliado_agente", { alvo: rev.alvo, ato, dia: diaRef.current })) {
+          L = semear(L, { forma: spec.forma, dona: spec.dona, peso: spec.peso, alvo: spec.alvo, ato: spec.ato, dia: spec.dia }).livro;
+        }
+        promessasRef.current = L;
+        reviravoltaRef.current = { ...rev, semeada: true, regadaEm: diaRef.current };
+        return;
+      }
+      /* 3. REGAR uma semente imatura, no ritmo do arco (a cada DIAS_ENTRE_REGAS) */
+      if (diaRef.current - (rev.regadaEm || 0) >= DIAS_ENTRE_REGAS) {
+        const L = garantirLivro(promessasRef.current);
+        const imatura = L.sementes.find((x) => x.dona === "reviravolta" && x.alvo === rev.alvo && (x.estado === "semeada" || x.estado === "regada"));
+        if (imatura) {
+          promessasRef.current = regar(L, imatura.id, { dia: diaRef.current, cena: "a mascara" }).livro;
+          reviravoltaRef.current = { ...rev, regadaEm: diaRef.current };
+          return;
+        }
+      }
+      /* 4. REVELAR quando a catraca deixa (tres sementes maduras) */
+      if (podeRevelar("aliado_agente", promessasRef.current, { alvo: rev.alvo })) {
+        let L = garantirLivro(promessasRef.current);
+        for (const x of L.sementes.filter((s2) => s2.dona === "reviravolta" && s2.alvo === rev.alvo && s2.estado === "madura")) {
+          L = pagar(L, x.id, { dia: diaRef.current, colheita: revelacaoDe("aliado_agente") }).livro;
+        }
+        promessasRef.current = L;
+        reviravoltaRef.current = { ...rev, revelada: true };
+        const passos = oDiaSeguinte("aliado_agente", { alvo: rev.alvo, vilao: (nemesisRef.current || {}).nome || "" });
+        notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + "[A MASCARA CAI — " + rev.alvo + " servia ao vilao] " + revelacaoDe("aliado_agente") + ". Encene: " + passos.join("; ") + ".";
+      }
+    } catch (e) { calou("mexerNaReviravolta", e); }
+  };
+
   const dispararPropositos = (conteudo) => {
     try {
       if (String(conteudo || "").trimStart().startsWith("[")) return [];
@@ -9410,6 +9475,7 @@ export default function Taverna() {
     interpreteRef.current = interpreteParaPauta(pessoasDaCena(), { elenco: elencoMemRef.current });
     for (const m of interpreteRef.current.marcas) elencoMemRef.current = marcarMovimento(elencoMemRef.current, m.nome, m.id, m.gesto);
     propositosDoTurnoRef.current = dispararPropositos(conteudo);
+    mexerNaReviravolta();
     falasDoTurnoRef.current = await colherAsFalas(conteudo);
     const pauta = textoDaPauta(pautaDoTurno(conteudo), { turno: turnoDeRegistroRef.current + 1 });
     /* guardado antes da resposta: "a luta acabou neste turno" é a
@@ -10149,6 +10215,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       estanteRef.current = garantirEstante(sv.estante);
       compassoRef.current = garantirCompasso(sv.compasso);
       promessasRef.current = garantirLivro(sv.promessas);
+      reviravoltaRef.current = garantirReviravolta(sv.reviravolta);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
         ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null, pressoes: sv.mercado.pressoes || {}, gastos: sv.mercado.gastos || {}, pechinchas: sv.mercado.pechinchas || {} }
