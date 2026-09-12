@@ -75,11 +75,11 @@ sec("1. NENHUM MÓDULO MUDO");
      perdão permanente: cada entrada aqui é removida na etapa que liga o
      módulo, e a leva termina com a lista VAZIA (M6 confere). Perdão que
      sobra é dívida escondida — por isso o valor diz quem vem buscar. */
-  const AGUARDANDO = {
-    /* v9.216: arena.js SAIU — torneio.js a lê (o credor veio buscar) */
-    "torneio.js": "a Noite jogável no App (M6) — leva As Duas Mesas",
-    "uma-noite.js": "a Noite jogável no App (M6) — leva As Duas Mesas",
-  };
+  /* v9.218: A LISTA NASCEU E MORREU NA MESMA LEVA — como prometido. O App
+     ligou torneio.js e uma-noite.js no M6; nenhum credor ficou esperando.
+     A lista fica VAZIA de proposito: se uma leva futura precisar dela, a
+     regra esta escrita acima e o precedente aqui. */
+  const AGUARDANDO = {};
   const mudos = [];
   for (const f of arqs) {
     if (FOLHAS.test(f)) continue;

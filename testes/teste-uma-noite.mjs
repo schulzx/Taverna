@@ -92,5 +92,22 @@ sec("7. me sirva qualquer coisa");
   t("resumoDaNoite condensa para o autor", N.resumoDaNoite({ episodioId: "a_subida", marco: 1, cenas: 2 }).postura === "promessa");
 }
 
+sec("8. ligada ao jogo (M6)");
+{
+  const { readFileSync } = await import("node:fs");
+  const semCom = (x) => x.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  const APP = semCom(readFileSync("../src/App.jsx", "utf8"));
+  t("o App importa a noite e os prontos", /from "\.\/uma-noite\.js"/.test(APP) && /from "\.\/prontos\.js"/.test(APP));
+  t("o menu tem a porta Uma Noite, em voz de mundo", /Uma Noite<\/span>/.test(APP) && /irNoite/.test(APP));
+  t("a tela da noite convida pelo NOME, nunca pelo marco", /CONVITE_DO_EPISODIO/.test(APP));
+  t("iniciarNoite prepara o terreno: sementes do episódio E do pronto", /sementesDoEpisodio\(episodioId/.test(APP) && /dona: "pronto"/.test(APP));
+  t("a postura da noite é declarada, não derivada", /posturaDaNoite\(episodioId\)/.test(APP));
+  t("os quatro motores de campanha dormem na noite", (APP.match(/modoRef\.current === "rapida"\) return;/g) || []).length >= 4);
+  t("o relógio-contrato vive: cena conta e o marco empurra", /cenaResolvida\(episodioRef\.current\)/.test(APP) && /tetoDoMarco\(/.test(APP) && /O MARCO EMPURRA/.test(APP));
+  t("o fim fecha em veredito com as contas do Livro", /vereditoDaNoite\(\{/.test(APP) && /fecharNoite\(/.test(APP));
+  t("a conversão pula a criação: o herói já existe", /convertidoRef\.current/.test(APP) && /converterParaCampanha\(fichaViva\(\)/.test(APP));
+  t("o mundo mínimo entra no lugar do continente", /geoDaNoiteRef\.current \|\| gerarGeografia/.test(APP));
+}
+
 console.log(`\n${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

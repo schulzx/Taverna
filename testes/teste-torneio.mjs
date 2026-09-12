@@ -71,5 +71,20 @@ sec("5. para a tela e para o Narrador");
   t("resumoDoTorneio condensa para o autor", (() => { const r = T.resumoDoTorneio(x); return r.fase === "quartas" && r.vivo === true; })());
 }
 
+sec("6. ligado ao jogo (M6)");
+{
+  const { readFileSync } = await import("node:fs");
+  const semCom = (x) => x.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  const APP = semCom(readFileSync("../src/App.jsx", "utf8"));
+  t("o App importa o torneio", /from "\.\/torneio\.js"/.test(APP));
+  t("a chave entra no save do território rapida", /torneio: torneioRef\.current/.test(APP) && /garantirTorneio\(sv\.torneio\)/.test(APP));
+  t("o botão da luta existe, e só entre lutas", /A PROXIMA LUTA/.test(APP) && /minhaLuta\(torneioRef\.current\)/.test(APP));
+  t("o rival entra com a defesa DE HERÓI explícita e a vida real", /defesa: defesaDe\(f, false\)/.test(APP) && /vida: f\.vidaMax/.test(APP));
+  t("a luta real só se REGISTRA na chave", /registrarMinhaLuta\(T, venci\)/.test(APP));
+  t("as chaves correm sozinhas e viram rumor", /correrForaDeTela\(T\)/.test(APP) && /RUMORES DA CHAVE/.test(APP));
+  t("eliminado tem epílogo; campeão tem cinto", /epilogar\(avancarFaseTorneio\(T\)\)/.test(APP) && /O cinto e seu/.test(APP));
+  t("a pauta leva a chave e o teto do interlúdio", /envelopeDaChave\(torneioRef\.current\)/.test(APP) && /INTERLUDIO DE ACAMPAMENTO/.test(APP));
+}
+
 console.log(`\n${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

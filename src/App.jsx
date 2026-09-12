@@ -92,7 +92,7 @@ import { garantirEscada, subirEscada } from "./encalhe.js";
 import { garantirPosturaAtiva, derivarPostura, moralDoInimigo, viesDoOraculo, fatorDeMercado } from "./posturas.js";
 /* OS EPISODIOS (v9.207) — as subestruturas que o momento aciona. Conta em
    episodios.js; o App abre, semeia no Livro, avanca e fecha no arco. */
-import { garantirEpisodio, episodioQueAbre, sementesDoEpisodio, avancarEpisodio, envelopeDoEpisodio } from "./episodios.js";
+import { garantirEpisodio, episodioQueAbre, sementesDoEpisodio, avancarEpisodio, envelopeDoEpisodio, cenaResolvida, episodioPorId } from "./episodios.js";
 /* A MEMORIA DO GESTO (v9.208) — o mundo lembra como te trataram e cobra
    quando a mare vira. Conta em gesto.js. */
 import { garantirGestos, registrarGesto, cobrarNaVirada, envelopeDaMemoria } from "./gesto.js";
@@ -100,6 +100,11 @@ import { garantirGestos, registrarGesto, cobrarNaVirada, envelopeDaMemoria } fro
    save por modo. A lei-mae do documento As Duas Mesas: modo e lente sobre
    o motor, nunca segundo jogo. Conta em modos.js. */
 import { MODO_PADRAO, garantirModo, modoDoSave, espacoDoSave, espacoAnterior } from "./modos.js";
+/* A NOITE JOGAVEL (v9.218 — M6): o roster, o Capitulo e o Torneio entram
+   na mesa. Conta em prontos.js, uma-noite.js e torneio.js. */
+import { PRONTOS, montarPronto, prontoPorId } from "./prontos.js";
+import { mundoDaNoite, posturaDaNoite, tetoDoMarco, veredito as vereditoDaNoite, converterParaCampanha, sortearNoite } from "./uma-noite.js";
+import { criarTorneio, garantirTorneio, correrForaDeTela, minhaLuta, meuRival, registrarMinhaLuta, faseCompleta, avancarFase as avancarFaseTorneio, epilogar, envelopeDaChave, provocacaoDoRival } from "./torneio.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -4250,7 +4255,103 @@ function TelaSala({ sala, eu, souAnfitriao, erro, aoDigitar, codigoDigitado, aoE
    E AS DUAS REGRAS DE APARIÇÃO seguem valendo: os dois primeiros cartões
    só existem com save, e a cobrança do backup só acende quando a cópia
    está velha (ou nunca existiu) — aviso permanente vira papel de parede. */
-function TelaMenu({ irNovo, continuar, temSave, criarSala, entrarSala, aoLerArquivo, aoConfirmarImportacao, aoDesfazerImportacao, aoExportar }) {
+/* O CONVITE de cada episodio — texto de mesa, sem spoiler de marco */
+const CONVITE_DO_EPISODIO = {
+  linha_escura: "Algo avança sobre um lugar que vale defender.",
+  a_cobranca: "Alguém levou o que era seu. Há um rastro.",
+  a_heranca: "O morto deixou mais do que contou.",
+  a_subida: "Há degraus. Você não veio para olhar.",
+  a_peregrinacao: "Um voto, uma estrada, um fim que não é o prometido.",
+  a_mascara_da_paz: "Todos sorriem. Alguém mente.",
+  a_cacada_invertida: "Você caça alguém grande. Alguém caça você.",
+  a_queda_reconstrucao: "Você perdeu tudo. A noite decide o que nasce das cinzas.",
+};
+function TelaNoite({ concluir, voltar }) {
+  const [prato, setPrato] = useState("capitulo");
+  const [prontoId, setProntoId] = useState(null);
+  const [episodioId, setEpisodioId] = useState(null);
+  const EPS = Object.keys(CONVITE_DO_EPISODIO);
+  const pronto = prontoPorId(prontoId);
+  const podeIr = prontoId && (prato === "torneio" || episodioId);
+  return (
+    <div className="tv-fade flex-1 flex flex-col items-center gap-7 px-6 py-10 overflow-y-auto tv-scroll">
+      <div className="flex flex-col items-center gap-1">
+        <h1 className="tv-display text-4xl" style={{ color: T.ink }}>Uma Noite</h1>
+        <p className="tv-body text-sm" style={{ color: T.inkDim }}>Vinte a trinta minutos. Uma história inteira, ou o torneio até sobrar um.</p>
+      </div>
+      {/* o prato */}
+      <div className="flex gap-3 w-full max-w-[680px]">
+        {[["capitulo", "O Capítulo", "Uma história curta, do primeiro sinal ao amanhecer."], ["torneio", "O Torneio", "A chave de oito. Sete te esperam. Sobra um."]].map(([id, rot, diz]) => (
+          <button key={id} onClick={() => setPrato(id)} className="flex-1 text-left p-4 rounded-xl"
+            style={{ background: prato === id ? T.panelSoft : T.panel, border: `1px solid ${prato === id ? T.amber : T.line}` }}>
+            <div className="tv-display text-xl" style={{ color: prato === id ? T.amberSoft : T.ink }}>{rot}</div>
+            <div className="tv-body text-xs" style={{ color: T.inkDim }}>{diz}</div>
+          </button>
+        ))}
+      </div>
+      {/* o lutador */}
+      <div className="w-full max-w-[680px] flex flex-col gap-2">
+        <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Quem entra na noite</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {PRONTOS.map((p) => (
+            <button key={p.id} onClick={() => setProntoId(p.id)} className="text-left p-3 rounded-lg"
+              style={{ background: prontoId === p.id ? T.panelSoft : T.panel, border: `1px solid ${prontoId === p.id ? T.amber : T.line}` }}>
+              <div className="tv-display text-base leading-tight" style={{ color: prontoId === p.id ? T.amberSoft : T.ink }}>{p.nome}</div>
+              <div className="tv-mono text-[9px] uppercase" style={{ color: T.violetSoft }}>{p.classe} · {p.papel}</div>
+              <div className="tv-body text-[11px] leading-snug mt-1" style={{ color: T.inkDim }}>{p.linha}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* a historia (so no Capitulo) — pelo NOME, nunca pelos marcos */}
+      {prato === "capitulo" && (
+        <div className="w-full max-w-[680px] flex flex-col gap-2">
+          <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>A história desta noite</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {EPS.map((id) => { const ep = episodioPorId(id); return (
+              <button key={id} onClick={() => setEpisodioId(id)} className="text-left p-3 rounded-lg"
+                style={{ background: episodioId === id ? T.panelSoft : T.panel, border: `1px solid ${episodioId === id ? T.amber : T.line}` }}>
+                <div className="tv-display text-base" style={{ color: episodioId === id ? T.amberSoft : T.ink }}>{ep.nome}</div>
+                <div className="tv-body text-[11px]" style={{ color: T.inkDim }}>{CONVITE_DO_EPISODIO[id]}</div>
+              </button>
+            ); })}
+          </div>
+        </div>
+      )}
+      <div className="flex items-center gap-3 w-full max-w-[680px]">
+        <button onClick={voltar} className="tv-mono text-xs px-4 py-3 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>VOLTAR</button>
+        <button onClick={() => { const st = sortearNoite(`noite|${Date.now()}`); concluir({ prato, prontoId: prontoId || st.pronto, episodioId: prato === "torneio" ? null : (episodioId || st.episodio) }); }}
+          className="tv-mono text-xs px-4 py-3 rounded-lg" style={{ border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>ME SIRVA QUALQUER COISA</button>
+        <button disabled={!podeIr} onClick={() => podeIr && concluir({ prato, prontoId, episodioId })}
+          className="flex-1 tv-display text-lg py-3 rounded-lg" style={{ background: podeIr ? T.amber : T.panel, color: podeIr ? T.onAccent : T.inkDim, border: `1px solid ${podeIr ? T.amber : T.line}` }}>
+          {prato === "torneio" ? "ENTRAR NA CHAVE →" : "ENTRAR NA NOITE →"}{pronto ? ` ` : ""}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* O VEREDITO da noite — a partida fechou; tres saidas, todas de um clique. */
+function TelaVeredito({ v, aoRecomecar, aoDarUmaVida, aoMenu }) {
+  if (!v) return null;
+  return (
+    <div className="tv-fade flex-1 flex flex-col items-center justify-center gap-6 px-6">
+      <h1 className="tv-display text-4xl" style={{ color: v.venceu ? T.amberSoft : T.danger }}>{v.titulo}</h1>
+      <div className="flex flex-col gap-2 max-w-[520px] text-center">
+        {v.linhas.map((l, i) => <p key={i} className="tv-body text-base" style={{ color: T.ink }}>{l}</p>)}
+        <p className="tv-mono text-[11px] mt-2" style={{ color: T.inkDim }}>{v.cronica}</p>
+      </div>
+      <div className="flex flex-col md:flex-row gap-3 w-full max-w-[520px]">
+        <button onClick={aoRecomecar} className="flex-1 tv-display text-lg py-3 rounded-lg" style={{ background: T.amber, color: T.onAccent }}>OUTRA NOITE</button>
+        {v.venceu && <button onClick={aoDarUmaVida} className="flex-1 tv-display text-lg py-3 rounded-lg" style={{ border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>DAR A ELE UMA VIDA</button>}
+        <button onClick={aoMenu} className="tv-mono text-xs px-4 py-3 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>MENU</button>
+      </div>
+      {v.venceu && <p className="tv-body text-xs max-w-[420px] text-center" style={{ color: T.inkDim }}>Dar a ele uma vida leva este herói — cicatrizes e bolsa — para uma campanha nova.</p>}
+    </div>
+  );
+}
+
+function TelaMenu({ irNovo, irNoite, continuar, temSave, criarSala, entrarSala, aoLerArquivo, aoConfirmarImportacao, aoDesfazerImportacao, aoExportar }) {
   const [lido, setLido] = React.useState(null);
   const [erroArq, setErroArq] = React.useState("");
   const [importado, setImportado] = React.useState(false);
@@ -4339,6 +4440,17 @@ function TelaMenu({ irNovo, continuar, temSave, criarSala, entrarSala, aoLerArqu
           <span className="flex-1 min-w-0 flex flex-col gap-1">
             <span className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>{temSave ? "Nova campanha" : "Começar a jogar"}</span>
             <span className="tv-body text-sm leading-[1.65]" style={{ color: T.inkDim }}>Você, o Mestre e um mundo inteiro por criar.</span>
+          </span>
+        </button>
+
+        {/* UMA NOITE (v9.218) — a mesa curta, em voz de mundo */}
+        <button onClick={irNoite} className="w-full text-left flex items-start gap-4 p-[18px] rounded-xl" style={cartao}>
+          <span className="shrink-0 rounded-lg p-2.5" style={{ background: "rgba(46,39,69,0.67)" }}>
+            <IconeDado tamanho={20} />
+          </span>
+          <span className="flex-1 min-w-0 flex flex-col gap-1">
+            <span className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>Uma Noite</span>
+            <span className="tv-body text-sm leading-[1.65]" style={{ color: T.inkDim }}>20 a 30 minutos: um capítulo inteiro, ou o torneio até sobrar um.</span>
           </span>
         </button>
 
@@ -5927,6 +6039,11 @@ export default function Taverna() {
     /* o episodio em curso fala pelo mesmo canal do arco: e a batida de
        dentro da batida — o cerco que a Jornada esta vivendo agora. */
     if (episodioRef.current && episodioRef.current.aberto) p = porNaPauta(p, "momento", envelopeDoEpisodio(episodioRef.current));
+    /* a Noite-torneio fala pelo mesmo canal: a chave, o rival, o teto do
+       interludio — instrucao de mesa, nunca nome de sistema */
+    if (modoRef.current === "rapida" && noiteRef.current && noiteRef.current.prato === "torneio" && torneioRef.current && !combateRef.current) {
+      p = porNaPauta(p, "momento", envelopeDaChave(torneioRef.current) + " " + provocacaoDoRival(torneioRef.current) + " [INTERLUDIO DE ACAMPAMENTO — curto: em ate DUAS cenas o sino da proxima chave toca. Nao invente lutas: a luta acontece quando o jogador entrar nela.]");
+    }
     /* v9.118: a vizinhança tem seção própria e prioridade baixa — numa cena
        cheia a gente presente ganha dela, e é isso que se quer */
     p = porNaPauta(p, "daqui", g.daqui);
@@ -6960,6 +7077,14 @@ export default function Taverna() {
      outro modo o definir — nunca em jogo. As duas chaves de localStorage
      derivam dele: save e territorio. */
   const modoRef = useRef(MODO_PADRAO);
+  /* A NOITE (v9.218): o estado da partida rapida — o prato, o episodio e
+     as contas da lei ix. `torneioRef` guarda a chave. `convertidoRef` e a
+     ponte de mao unica da conversao: o pronto que vai ganhar uma vida. */
+  const noiteRef = useRef(null);
+  const geoDaNoiteRef = useRef(null);
+  const vereditoRef = useRef(null);
+  const torneioRef = useRef(null);
+  const convertidoRef = useRef(null);
   const chaveDoSave = () => espacoDoSave(modoRef.current);
   const chaveAnterior = () => espacoAnterior(modoRef.current);
 
@@ -7025,7 +7150,7 @@ export default function Taverna() {
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
       modo: garantirModo(modoRef.current),
-      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, escada: escadaRef.current, postura: posturaRef.current, episodio: episodioRef.current, gestos: gestosRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
+      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, escada: escadaRef.current, postura: posturaRef.current, episodio: episodioRef.current, gestos: gestosRef.current, noite: noiteRef.current, torneio: torneioRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
@@ -9385,6 +9510,7 @@ export default function Taverna() {
   };
   const mexerNoEpisodio = () => {
     try {
+      if (modoRef.current === "rapida") return; /* a noite conduz o episodio (mexerNaNoite) */
       const ato = Math.max(0, Number((historiaRef.current || {}).etapa) || 0);
       if (episodioRef.current && episodioRef.current.aberto) {
         const r = avancarEpisodio(episodioRef.current, { dia: diaRef.current });
@@ -9413,8 +9539,136 @@ export default function Taverna() {
   /* que gesto POSITIVO cada postura dura registra para quem esta ao lado:
      na crise/escassez, ajudou escondido; no luto, ficou; na cacada, escondeu. */
   const GESTO_DA_POSTURA = { crise: "ajudou_escondido", escassez: "ajudou_escondido", luto: "ficou", cacada: "escondeu_voce" };
+  /* ---------------- A NOITE (v9.218 — M6) ----------------
+     O relogio-contrato da lei ix, vivo: cada turno narrado fora de
+     combate e uma CENA; na cena-limite o marco empurra; o fim fecha em
+     veredito. No Torneio, o mesmo motor detecta o fim da luta real,
+     registra na chave, corre as outras chaves e traz os rumores. */
+  const iniciarNoite = ({ prato = "capitulo", prontoId = "muralha", episodioId = null } = {}) => {
+    const semente = `noite|${prontoId}|${episodioId || prato}|${Math.floor(Math.random() * 1e9)}`;
+    modoRef.current = "rapida";
+    convertidoRef.current = null;
+    vereditoRef.current = null;
+    /* higiene de territorio: a noite nasce limpa dos motores de campanha */
+    promessasRef.current = garantirLivro(null);
+    reviravoltaRef.current = null;
+    escadaRef.current = garantirEscada(null);
+    gestosRef.current = [];
+    fatosDoPesoRef.current = {};
+    episodioRef.current = null;
+    torneioRef.current = null;
+    const pers = montarPronto(prontoId);
+    if (!pers) return;
+    const m = { genero: "Fantasia medieval", molde: MOLDE_PADRAO, estrutura: "jornada", voz: VOZ_PADRAO, apresentacao: "estrita" };
+    mundoRef.current = m; setMundo(m);
+    setNomeCampanha(`Uma Noite — ${pers.nome}`); nomeCampanhaRef.current = `Uma Noite — ${pers.nome}`;
+    geoDaNoiteRef.current = mundoDaNoite(semente);
+    noiteRef.current = { prato, prontoId, episodioId, semente, lutaEmCurso: false, cenasTotais: 0, fim: null };
+    /* a postura da noite: declarada, valida a partida inteira */
+    posturaRef.current = { postura: prato === "torneio" ? "festa" : posturaDaNoite(episodioId), desde: 0 };
+    if (prato === "capitulo" && episodioId) {
+      episodioRef.current = garantirEpisodio({ id: episodioId, marco: 0, aberto: true, desde: 0, avancouEm: 0 });
+      /* o terreno preparado: as sementes do episodio E as pessoais do pronto */
+      let L = garantirLivro(null);
+      for (const spec of sementesDoEpisodio(episodioId, { ato: 0, dia: 0 })) L = semear(L, spec).livro;
+      const pr = prontoPorId(prontoId);
+      for (const forma of (pr ? pr.sementes : [])) L = semear(L, { forma, dona: "pronto", peso: "leve", alvo: pers.nome, ato: 0, dia: 0 }).livro;
+      promessasRef.current = L;
+    }
+    if (prato === "torneio") {
+      let T = criarTorneio({ semente, meuPronto: prontoId });
+      const fora = correrForaDeTela(T);
+      torneioRef.current = fora.torneio;
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[UMA NOITE — O TORNEIO] O heroi entra na chave de oito de um torneio de arena. Abra no acampamento, vespera da primeira luta. ${fora.rumores.length ? "Rumores das outras chaves: " + fora.rumores.join("; ") + "." : ""}`;
+    } else {
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[UMA NOITE — O CAPITULO] Uma historia de UMA sessao: curta, densa, sem gordura de estrada. Abra ja dentro do clima do primeiro marco.`;
+    }
+    iniciar(pers);
+    geoDaNoiteRef.current = null;
+  };
+
+  const fecharNoite = (v) => {
+    if (!v) return;
+    vereditoRef.current = v;
+    noiteRef.current = { ...(noiteRef.current || {}), fim: v.venceu ? "venceu" : "caiu" };
+    try { salvar(); } catch (e) {}
+    setFase("veredito");
+  };
+  const mexerNaNoite = () => {
+    try {
+      if (modoRef.current !== "rapida" || !noiteRef.current || noiteRef.current.fim) return;
+      const N = noiteRef.current;
+      /* -------- O CAPITULO -------- */
+      if (N.prato === "capitulo" && episodioRef.current && episodioRef.current.aberto) {
+        if (combateRef.current) return; /* rodada de luta nao e cena nova */
+        episodioRef.current = cenaResolvida(episodioRef.current);
+        const teto = tetoDoMarco(episodioRef.current.id, episodioRef.current.marco);
+        const r = avancarEpisodio(episodioRef.current, { ritmo: "cena", teto, dia: diaRef.current });
+        episodioRef.current = r.episodio;
+        if (r.avancou) {
+          notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + "[O MARCO EMPURRA] O orcamento desta parte acabou: RESOLVA a pendencia em uma frase e ENTRE no proximo marco agora, na mesma resposta.";
+        }
+        if (r.fechou) {
+          const L = garantirLivro(promessasRef.current);
+          const pagas = L.sementes.filter((x) => x.estado === "paga").length;
+          const murchas = L.sementes.filter((x) => x.estado === "murcha").length;
+          const viva = fichaViva() || personagem || {};
+          fecharNoite(vereditoDaNoite({ episodioId: N.episodioId, pronto: N.prontoId, venceu: (viva.vida || 0) > 0, cenas: N.cenasTotais || 0, pagas, murchas }));
+          return;
+        }
+        noiteRef.current = { ...N, cenasTotais: (N.cenasTotais || 0) + 1 };
+        return;
+      }
+      /* -------- O TORNEIO -------- */
+      if (N.prato === "torneio" && torneioRef.current) {
+        let T = torneioRef.current;
+        /* o fim da luta real: a chave registra o que a mesa decidiu */
+        if (N.lutaEmCurso && !combateRef.current) {
+          const venci = ((fichaViva() || personagem || {}).vida || 0) > 0;
+          T = registrarMinhaLuta(T, venci);
+          noiteRef.current = { ...N, lutaEmCurso: false };
+          if (T.eliminadoEm) {
+            const ep = epilogar(avancarFaseTorneio(T));
+            torneioRef.current = ep.torneio;
+            const camp = ep.torneio.campeao ? prontoPorId(ep.torneio.campeao) : null;
+            fecharNoite({
+              titulo: "A chave te engoliu", venceu: false,
+              linhas: [
+                `Voce caiu na ${T.eliminadoEm}.`,
+                camp ? `${camp.nome} levou o cinto sem voce.` : "A chave terminou sem voce.",
+                "O acampamento ja fala de outra coisa.",
+              ],
+              cronica: `${(prontoPorId(N.prontoId) || {}).nome || "?"} · O Torneio · caiu na ${T.eliminadoEm}.`,
+            });
+            return;
+          }
+          if (faseCompleta(T)) T = avancarFaseTorneio(T);
+          if (T.campeao === T.meu) {
+            torneioRef.current = T;
+            fecharNoite({
+              titulo: "O cinto e seu", venceu: true,
+              linhas: [
+                `${(prontoPorId(N.prontoId) || {}).nome || "?"} atravessou a chave inteira.`,
+                "Sete entraram contra voce. Nenhum sobrou.",
+                "A bolsa e o nome desta noite sao seus.",
+              ],
+              cronica: `${(prontoPorId(N.prontoId) || {}).nome || "?"} · O Torneio · campeao.`,
+            });
+            return;
+          }
+          const fora = correrForaDeTela(T);
+          torneioRef.current = fora.torneio;
+          if (fora.rumores.length) notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + "[RUMORES DA CHAVE — chegam como conversa de acampamento] " + fora.rumores.join("; ") + ".";
+          return;
+        }
+        torneioRef.current = T;
+      }
+    } catch (e) { calou("mexerNaNoite", e); }
+  };
+
   const mexerNaPostura = () => {
     try {
+      if (modoRef.current === "rapida") return; /* a postura da noite e declarada, nao derivada */
       const r = derivarPostura(posturaRef.current, snapshotDePosturas(), { dia: diaRef.current });
       posturaRef.current = { postura: r.postura, desde: r.desde != null ? r.desde : (posturaRef.current || {}).desde || 0 };
       if (!r.mudou) return;
@@ -9437,6 +9691,7 @@ export default function Taverna() {
   };
 
   const mexerNoEncalhe = () => {
+    if (modoRef.current === "rapida") return; /* a noite nao encalha: o teto empurra */
     try {
       const r = subirEscada(escadaRef.current, snapshotDoEncalhe(), { dia: diaRef.current });
       escadaRef.current = r.escada;
@@ -9474,6 +9729,7 @@ export default function Taverna() {
 
   const mexerNaReviravolta = () => {
     try {
+      if (modoRef.current === "rapida") return; /* folego de campanha */
       const menor = elegerReviravoltas(sementeMundo()).menor;
       if (!menor) return;
       let rev = reviravoltaRef.current;
@@ -9708,6 +9964,7 @@ export default function Taverna() {
     mexerNoEncalhe();
     mexerNaPostura();
     mexerNoEpisodio();
+    mexerNaNoite();
     falasDoTurnoRef.current = await colherAsFalas(conteudo);
     const pauta = textoDaPauta(pautaDoTurno(conteudo), { turno: turnoDeRegistroRef.current + 1 });
     /* guardado antes da resposta: "a luta acabou neste turno" é a
@@ -10178,7 +10435,8 @@ export default function Taverna() {
     /* v9.102: e o LÉXICO nomeia as cidades. Ele chega durante a criação da
        ficha, que é bem antes daqui — e quando não chega, o mapa nasce com
        os nomes de sempre, que é o caminho seguro. */
-    const geo = gerarGeografia(`${nomeCampanha || "aventura"}|${(mundo && mundo.genero) || ""}`, moldePorId((mundo && mundo.molde) || MOLDE_PADRAO), (mundoAtual() || {}).lexico);
+    /* v9.218: numa Noite, o mundo minimo preparado substitui o continente */
+    const geo = geoDaNoiteRef.current || gerarGeografia(`${nomeCampanha || "aventura"}|${(mundo && mundo.genero) || ""}`, moldePorId((mundo && mundo.molde) || MOLDE_PADRAO), (mundoAtual() || {}).lexico);
     /* NÉVOA (v9.14): o mundo nasce inteiro, mas o herói só conhece o chão em
        que está. A primeira cidade é a casa dele — abre de saída, senão o
        Mestre começaria sem lugar nenhum para narrar. O resto se descobre
@@ -10453,6 +10711,8 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       episodioRef.current = garantirEpisodio(sv.episodio);
       modoRef.current = modoDoSave(sv);
       gestosRef.current = garantirGestos(sv.gestos);
+      noiteRef.current = sv.noite && typeof sv.noite === "object" ? sv.noite : null;
+      torneioRef.current = garantirTorneio(sv.torneio);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
         ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null, pressoes: sv.mercado.pressoes || {}, gastos: sv.mercado.gastos || {}, pechinchas: sv.mercado.pechinchas || {} }
@@ -19193,7 +19453,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         </div>
       </header>
 
-      {fase === "menu" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaMenu irNovo={() => { largarASala(); setFase("mundo"); }} continuar={(r) => { largarASala(); continuar(r); }} temSave={temSave} aoLerArquivo={lerArquivoDeSave} aoConfirmarImportacao={confirmarImportacao} aoDesfazerImportacao={desfazerImportacao} aoExportar={exportarSave} criarSala={criarSalaDeDois} entrarSala={() => { souAnfitriaoRef.current = false; setSala(null); setCodigoDigitado(""); setErroDaSala(""); setFase("sala"); }} /></div>}
+      {fase === "menu" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaMenu irNovo={() => { largarASala(); modoRef.current = MODO_PADRAO; setFase("mundo"); }} irNoite={() => { largarASala(); setFase("noite"); }} continuar={(r) => { largarASala(); continuar(r); }} temSave={temSave} aoLerArquivo={lerArquivoDeSave} aoConfirmarImportacao={confirmarImportacao} aoDesfazerImportacao={desfazerImportacao} aoExportar={exportarSave} criarSala={criarSalaDeDois} entrarSala={() => { souAnfitriaoRef.current = false; setSala(null); setCodigoDigitado(""); setErroDaSala(""); setFase("sala"); }} /></div>}
+      {fase === "noite" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaNoite concluir={(esc) => iniciarNoite(esc)} voltar={() => setFase("menu")} /></div>}
+      {fase === "veredito" && <div className="flex-1 min-h-0 flex flex-col"><TelaVeredito v={vereditoRef.current}
+        aoRecomecar={() => { const N = noiteRef.current || {}; iniciarNoite({ prato: N.prato, prontoId: N.prontoId, episodioId: N.episodioId }); }}
+        aoDarUmaVida={() => { convertidoRef.current = converterParaCampanha(fichaViva() || personagem); modoRef.current = MODO_PADRAO; setFase("mundo"); }}
+        aoMenu={() => { modoRef.current = MODO_PADRAO; setFase("menu"); }} /></div>}
       {fase === "sala" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaSala
         sala={sala} eu={euRef.current} souAnfitriao={souAnfitriaoRef.current} erro={erroDaSala}
         codigoDigitado={codigoDigitado} aoDigitar={setCodigoDigitado} aoEntrar={entrarNaSalaPeloCodigo}
@@ -19202,7 +19467,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         aoCriarMundo={() => setFase("mundo")} aoMontarFicha={() => setFase("personagem")}
         lendoMundo={lendoMundo} mundo={mundo} nomeCampanha={nomeCampanha}
         aoSair={() => { largarASala(); setFase("menu"); }} /></div>}
-      {fase === "mundo" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaMundo concluir={(m, nome) => { setMundo(m); mundoRef.current = m; setNomeCampanha(nome); setFase(salaRef.current ? "sala" : "personagem"); lerOMundo(m); if (salaRef.current) setTimeout(() => publicarSala(), 60); }} /></div>}
+      {fase === "mundo" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaMundo concluir={(m, nome) => { setMundo(m); mundoRef.current = m; setNomeCampanha(nome); nomeCampanhaRef.current = nome; if (convertidoRef.current) { const c = convertidoRef.current; convertidoRef.current = null; noiteRef.current = null; torneioRef.current = null; lerOMundo(m); iniciar(c); return; } setFase(salaRef.current ? "sala" : "personagem"); lerOMundo(m); if (salaRef.current) setTimeout(() => publicarSala(), 60); }} /></div>}
       {fase === "personagem" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaPersonagem mundo={mundo} concluir={(pers) => { if (!salaRef.current) return iniciar(pers); const nova = sentarMinhaFicha(pers); if (souAnfitriaoRef.current) { if (todosProntos(nova)) iniciar(pers); else { setFase("sala"); } } }} lendoMundo={lendoMundo} mundoLido={!!(mundo && mundo.lexico && mundo.lexico.gerado)} /></div>}
 
       {fase === "jogo" && personagem && (
@@ -19953,6 +20218,24 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     O turno sai quando os dois escreverem. Dá para reescrever a sua até lá.
                   </div>
                 </div>
+              )}
+              {modoRef.current === "rapida" && noiteRef.current && noiteRef.current.prato === "torneio" && !combate && torneioRef.current && minhaLuta(torneioRef.current) && !(noiteRef.current || {}).fim && (
+                <button onClick={() => {
+                  const rival = meuRival(torneioRef.current);
+                  if (!rival) return;
+                  const f = montarPronto(rival.id);
+                  /* o rival entra como alvo com a defesa DE HEROI explicita
+                     (o caminho de inimigo a honra) e a vida real da ficha;
+                     o dano dele sai da conta de elite — a mesa e do jogador,
+                     e a simetria perfeita vive na arena, nao aqui */
+                  combateRef.current = { inimigos: [{ nome: f.nome, vida: f.vidaMax, vidaMax: f.vidaMax, ameaca: "elite", defesa: defesaDe(f, false), derrotado: false, semente: `rival|${rival.id}`, pensa: true }], doTorneio: true };
+                  noiteRef.current = { ...noiteRef.current, lutaEmCurso: true };
+                  const r = abrirCombate(null, { jaNoRef: true });
+                  if (r && r.msgs && r.msgs.length) pushMsgs(r.msgs);
+                  enviar(`[A LUTA DA CHAVE COMECA] ${f.nome} entra na arena contra o heroi. Narre a abertura da luta — o publico, o terreno, o primeiro olhar. O SISTEMA ja abriu o combate.`, fichaViva() || personagem, []);
+                }} className="w-full tv-display text-lg py-2.5 rounded-lg mb-2" style={{ background: T.amber, color: T.onAccent }}>
+                  ⚔ A PROXIMA LUTA — {(meuRival(torneioRef.current) || {}).nome}
+                </button>
               )}
               {/* LINHA 2 — escrita: largura inteira, campo alto e confortável.
                   v9.170 (mesa-jogo-v2): o campo passa a ter o FUNDO DO CHÃO
