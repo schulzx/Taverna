@@ -174,6 +174,68 @@ export function pesoDoPapel(papel) {
 }
 
 /* ============================================================
+   QUEM VIVE DE CONTAR
+
+   A tabela de cima diz o que a pessoa tem A PERDER. Esta diz outra
+   coisa, que nenhuma linha de lá sabia dizer: que informação é o que
+   essa pessoa VENDE. O guarda que conta um boato fez um favor; o
+   informante que conta um boato fez o trabalho dele, e é a diferença
+   entre uma conversa e uma relação que se repete.
+
+   ELA NÃO ENTRA EM `PESO_DO_PAPEL`, de propósito. Uma linha a mais lá
+   mudaria a dificuldade de toda conversa de toda campanha em curso —
+   rebalancear a escada é outra conversa, e não esta. Aqui só se
+   RECONHECE o papel; nada muda de preço.
+   ============================================================ */
+export const PAPEIS_DE_INFORMANTE = [
+  /* quem tem a coisa no nome do ofício */
+  { id: "informante", rx: /informante|informador|dedo-?duro|alcaguete|delator/ },
+  /* quem é pago para estar onde não devia */
+  { id: "espiao", rx: /espia|espion/ },
+  /* o olho e o ouvido de alguém — e o alguém paga */
+  { id: "olheiro", rx: /olheir|ouvidos? d|observador/ },
+  /* quem vai na frente e volta com a palavra. O batedor DE CARTEIRAS
+     e o DE MANIFESTOS são outra gente inteiramente — um furta, o outro
+     confere papel —, e os dois moram no mundo deste jogo (nos moldes de
+     cidade e de concourse), então a linha precisa recuar deles. */
+  { id: "batedor", rx: /batedor(?!\s+de\s+(carteira|manifesto))/ },
+  /* quem não sabe nada, mas conhece quem sabe */
+  { id: "contato", rx: /contato|fixer|atravessador|intermediari/ },
+];
+
+export function ehInformante(papel) {
+  const p = norm(papel);
+  return !!p && PAPEIS_DE_INFORMANTE.some((x) => x.rx.test(p));
+}
+
+/* OS DEGRAUS QUE SÃO CONSULTA. Só os dois primeiros da escada: pedir
+   uma direção e pedir o que se comenta é pedir INFORMAÇÃO, que é o que
+   um informante entrega. Do favor para cima já se está pedindo que a
+   pessoa FAÇA alguma coisa — e quem pede um favor ao informante não o
+   está usando como informante, está usando como gente. */
+export const PEDIDOS_QUE_SAO_CONSULTA = ["cortesia", "conversa"];
+
+/* Esta conversa contou como ter ido buscar informação com quem vive de
+   vendê-la? Três portas, e as três têm de abrir:
+
+     o teste PASSOU     — perguntar e levar não é a mesma coisa;
+     o pedido era de INFORMAÇÃO — pelo id do degrau que a conta já traz;
+     e a pessoa VIVE DISSO.
+
+   A função só julga; ela não escreve em lugar nenhum. Quem guarda o
+   número é o registro, em `npcs.js`, e quem chama os dois no mesmo
+   instante é o App — é ele que tem a conta, a ficha e o resultado do
+   dado na mão quando o teste social se resolve. */
+export function consultouInformante(dados) {
+  /* `= {}` no destructuring não cobre `null` explícito, e um `null` aqui
+     é o caso normal: o App chama isto com o que tiver. */
+  const { conta = null, pessoa = null, passou = false } = dados || {};
+  if (!passou || !conta || !pessoa) return false;
+  if (!PEDIDOS_QUE_SAO_CONSULTA.includes(conta.tamanho)) return false;
+  return ehInformante(pessoa.papel);
+}
+
+/* ============================================================
    AS ALAVANCAS
 
    O que o herói pode pôr na mesa, e que o CÓDIGO consegue

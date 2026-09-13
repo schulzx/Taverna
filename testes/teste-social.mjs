@@ -8,7 +8,10 @@ import {
   ESCADA_DA_RELACAO, tamanhoDoPedido, tamanhoPorId, tamanhoPadrao, foraDaConversa,
   pesoDoPapel, alavancasNaMesa, dificuldadeSocial, moverRelacao,
   envelopeSocial, envelopeForaDaConversa, falaDosBlefes,
+  PAPEIS_DE_INFORMANTE, ehInformante, PEDIDOS_QUE_SAO_CONSULTA, consultouInformante,
 } from "../src/social.js";
+import { criarNPC, mesclarNPC, registrarConsulta, vezesQueUsouInformante } from "../src/npcs.js";
+import fs from "node:fs";
 import {
   lerAcao, registrarTentativa, CUSTO_DE_FALHAR, custoPorAlvo, desfechoDaFalha, falaDoCusto, envelopeDoCusto,
   quedaDe, rolarQueda, dcDaQueda,
@@ -304,6 +307,159 @@ sec("11. A APROXIMAÇÃO (v9.69) — a frase da elfa");
     t("dar uma cantada não é dar dinheiro", !cantada.social.alavancas.some((a) => a.id === "moeda"));
     const ouro = ler("tento convencer o guarda a abrir o portão, ofereço 300 moedas", guarda);
     t("mas oferecer 300 moedas continua sendo", ouro.social.alavancas.some((a) => a.id === "moeda"));
+  }
+}
+
+sec("12. QUEM VIVE DE CONTAR (R1) — o informante deixa traço");
+{
+  /* Arrancar informação é a coisa mais feita fora da luta, e até aqui não
+     deixava traço nenhum: o sistema não sabia separar a pessoa a quem se
+     perguntou uma vez daquela a quem se pergunta tudo há semanas — e a
+     segunda é uma relação, não uma conversa.
+
+     R1 só CRIA o sinal. Quem o lê é R2; aqui prova-se o julgamento, o
+     registro e a fiação, e mais nada. */
+
+  /* ---- o catálogo, e o que ele recusa ---- */
+  t(`há papéis de informante (${PAPEIS_DE_INFORMANTE.length})`, PAPEIS_DE_INFORMANTE.length >= 5);
+  t("cada um tem id e regra", PAPEIS_DE_INFORMANTE.every((x) => x.id && x.rx instanceof RegExp));
+  t("e nenhum id se repete", new Set(PAPEIS_DE_INFORMANTE.map((x) => x.id)).size === PAPEIS_DE_INFORMANTE.length);
+  for (const p of ["informante", "informador", "dedo-duro", "dedoduro", "alcaguete", "delator",
+    "espião", "espiã do porto", "espionagem", "olheiro da guilda", "os ouvidos do barão",
+    "observador", "batedor", "batedora", "contato na doca", "fixer", "atravessador", "intermediário"])
+    t(`"${p}" vive de contar`, ehInformante(p) === true);
+  /* O VIZINHO QUE NÃO É. O guarda que conta um boato fez um favor; o
+     informante que conta um boato fez o trabalho dele — e é a diferença
+     entre uma conversa e uma relação que se repete. Confundir os dois faria
+     toda campanha "usar informante" sem nunca ter procurado um. */
+  for (const p of ["taverneiro", "capitão da guarda", "mercador", "estalajadeiro", "ferreiro",
+    "sacerdote", "nobre", "camponês", "mendigo", "ladrão", "barqueira", "escriba"])
+    t(`"${p}" não é informante`, ehInformante(p) === false);
+  /* e os dois recuos escritos na tabela: batedor DE CARTEIRAS furta, e
+     batedor DE MANIFESTOS confere papel — nenhum dos dois vende notícia */
+  t("o batedor de carteiras não é informante", ehInformante("batedor de carteiras") === false);
+  t("nem o batedor de manifestos", ehInformante("batedor de manifestos") === false);
+  t("lixo não é informante",
+    [null, undefined, "", 0, {}, [], NaN, false].every((v) => ehInformante(v) === false));
+
+  /* A TABELA NÃO MEXE NO PREÇO, de propósito: uma linha a mais em
+     `PESO_DO_PAPEL` mudaria a dificuldade de toda conversa de toda campanha
+     em curso. Aqui só se RECONHECE o papel. */
+  t("nenhum papel de informante pesa na escada",
+    PAPEIS_DE_INFORMANTE.every((x) => pesoDoPapel(x.id) === null));
+  {
+    const semPapel = { nome: "Ninguém", papel: "", relacao: "desconhecido", segredo: "", notas: "" };
+    const espiao = { ...semPapel, nome: "Vir", papel: "espião" };
+    const frase = "pergunto o que se comenta na rua";
+    t("e a conta com informante sai igual à conta com ninguém",
+      dificuldadeSocial({ texto: frase, pessoa: espiao }).dc === dificuldadeSocial({ texto: frase, pessoa: semPapel }).dc);
+  }
+
+  /* ---- as três portas do julgamento ---- */
+  const espiao = { nome: "Vir", papel: "espião do porto", relacao: "desconhecido", segredo: "", notas: "" };
+  const taverneiro = { nome: "Bram", papel: "taverneiro", relacao: "amigo", segredo: "", notas: "" };
+  t(`os degraus que são consulta (${PEDIDOS_QUE_SAO_CONSULTA.join(", ")})`,
+    PEDIDOS_QUE_SAO_CONSULTA.length === 2 && PEDIDOS_QUE_SAO_CONSULTA.every((id) => !!tamanhoPorId(id)));
+  /* são os DOIS PRIMEIROS da escada, e isso não é coincidência: pedir uma
+     direção e pedir o que se comenta é pedir INFORMAÇÃO. Do favor para cima
+     já se está pedindo que a pessoa FAÇA alguma coisa. */
+  t("e são os dois mais baratos da escada",
+    PEDIDOS_QUE_SAO_CONSULTA.join() === TAMANHOS_DO_PEDIDO.slice(0, 2).map((x) => x.id).join());
+
+  const conta = (frase) => dificuldadeSocial({ texto: frase, pessoa: espiao });
+  const consulta = conta("pergunto o que se comenta na rua");
+  t("o pedido de informação é reconhecido como consulta", PEDIDOS_QUE_SAO_CONSULTA.includes(consulta.tamanho));
+  t("as três portas abertas contam",
+    consultouInformante({ conta: consulta, pessoa: espiao, passou: true }) === true);
+  /* AS TRÊS RECUSAS, uma a uma — cada porta fechada sozinha basta */
+  t("recusa 1: o teste falhou (perguntar e levar não é a mesma coisa)",
+    consultouInformante({ conta: consulta, pessoa: espiao, passou: false }) === false);
+  const favor = conta("me empresta a chave do armazém");
+  t("recusa 2: o pedido não era de informação",
+    !PEDIDOS_QUE_SAO_CONSULTA.includes(favor.tamanho)
+    && consultouInformante({ conta: favor, pessoa: espiao, passou: true }) === false);
+  t("recusa 3: a pessoa não vive disso",
+    consultouInformante({ conta: consulta, pessoa: taverneiro, passou: true }) === false);
+  /* e o lixo: `= {}` no destructuring não cobre `null` explícito, e um
+     `null` aqui é o caso normal — o App chama isto com o que tiver */
+  t("sem nada, não contou",
+    [null, undefined, {}, { passou: true }, { conta: consulta, passou: true },
+      { pessoa: espiao, passou: true }, { conta: null, pessoa: null, passou: true }]
+      .every((d) => consultouInformante(d) === false));
+  t("e conta sem tamanho não contou", consultouInformante({ conta: {}, pessoa: espiao, passou: true }) === false);
+
+  /* ---- o razão, em npcs.js ---- */
+  const reg0 = { Vir: criarNPC("Vir", { papel: "espião do porto" }), Bram: criarNPC("Bram", { papel: "taverneiro" }) };
+  t("gente nasce sem consulta nenhuma", reg0.Vir.consultas === 0 && reg0.Bram.consultas === 0);
+  const reg1 = registrarConsulta(reg0, "Vir");
+  t("registrar conta um", reg1.Vir.consultas === 1);
+  /* IMUTÁVEL, como tudo aqui: registro novo, ficha nova, nada mexido no
+     lugar — é o que deixa o autosave e o undo do App confiarem no ref */
+  t("e o registro de entrada não muda", reg0.Vir.consultas === 0 && reg1 !== reg0 && reg1.Vir !== reg0.Vir);
+  t("quem não foi consultado fica como estava", reg1.Bram === reg0.Bram);
+  const reg3 = registrarConsulta(registrarConsulta(reg1, "vir"), "VIR");
+  t("a caixa das letras é da IA, não minha", reg3.Vir.consultas === 3);
+  t("nome que não existe não quebra nem inventa ficha",
+    registrarConsulta(reg1, "Fulano") === reg1 && Object.keys(registrarConsulta(reg1, "Fulano")).length === 2);
+  t("registro nulo não quebra",
+    registrarConsulta(null, "Vir") === null && registrarConsulta(undefined, "Vir") === undefined);
+  t("e sem nome também não", registrarConsulta(reg1, "") === reg1 && registrarConsulta(reg1, null) === reg1);
+
+  /* ---- a soma da campanha ---- */
+  t("a campanha sem consulta vale zero", vezesQueUsouInformante(reg0) === 0);
+  t("e soma o que houve", vezesQueUsouInformante(reg3) === 3);
+  /* FICHA DE SAVE ANTIGO não tem o campo, e ficha mexida à mão pode ter
+     qualquer coisa nele: tudo que não é inteiro positivo vale zero. É o que
+     faz o campo novo não precisar de migração nenhuma. */
+  t("save antigo, sem o campo, vale zero", vezesQueUsouInformante({ Velho: { nome: "Velho", papel: "espião" } }) === 0);
+  t("e lixo no campo também",
+    vezesQueUsouInformante({
+      a: { consultas: null }, b: { consultas: "muitas" }, c: { consultas: -4 },
+      d: { consultas: NaN }, e: { consultas: {} }, f: {}, g: null,
+    }) === 0);
+  t("fração conta pelo inteiro de baixo", vezesQueUsouInformante({ a: { consultas: 2.9 } }) === 2);
+  t("registro vazio ou nulo vale zero",
+    vezesQueUsouInformante({}) === 0 && vezesQueUsouInformante(null) === 0 && vezesQueUsouInformante(undefined) === 0);
+  /* E CONTA OS MORTOS: o herói se apoiou naquela boca, e o que ela soube
+     dele não desaparece porque ela morreu. */
+  t("e os mortos continuam contando",
+    vezesQueUsouInformante({ ...reg3, Vir: { ...reg3.Vir, status: "morto" } }) === 3);
+
+  /* SOBREVIVE AO MERGE. Toda cena remescla a ficha de quem aparece; se o
+     merge zerasse o campo, o razão seria apagado no turno seguinte ao da
+     consulta e ninguém notaria — o número é bastidor. */
+  const mesclado = mesclarNPC(reg3.Vir, { local: "as docas", notas: "sabe do contrabando", papel: "espião do porto" });
+  t("mesclarNPC preserva a contagem", mesclado.consultas === 3);
+  t("e o merge muda o que tinha de mudar", mesclado.local === "as docas");
+  t("a soma sobrevive ao merge", vezesQueUsouInformante({ ...reg3, Vir: mesclado }) === 3);
+
+  /* ---- ligado ao jogo ---- */
+  {
+    const APP = fs.readFileSync("../src/App.jsx", "utf8");
+    const i = APP.indexOf("if (consultouInformante(");
+    t("a fiação existe no App", i > 0);
+    /* dentro do bloco social: é ele que tem a conta, a ficha e o resultado
+       do dado na mão no mesmo instante */
+    const iSocial = APP.indexOf("if (des && des.social)");
+    t("e mora dentro do bloco social", iSocial > 0 && iSocial < i);
+    /* o bloco é lido do `try {` que o abre até o `calou` que o fecha — é
+       assim que se prova que a fiação está DENTRO do embrulho, e não ao
+       lado dele com um try qualquer por perto */
+    const marca = 'catch (e) { calou("consultaDeInformante", e); }';
+    const fim = APP.indexOf(marca, i);
+    t("o calou fecha depois da fiação", fim > i);
+    const bloco = APP.slice(APP.lastIndexOf("try {", i), fim + marca.length);
+    t("julga com a conta, a pessoa e o resultado do dado",
+      /consultouInformante\(\{ conta: des\.social, pessoa: des\.pessoa, passou \}\)/.test(bloco));
+    t("e grava no razão de pessoas", /registrarConsulta\(npcsRef\.current, des\.pessoa\.nome\)/.test(bloco));
+    t("guardando no ref e no estado", /npcsRef\.current =/.test(bloco) && /setNpcs\(npcsRef\.current\)/.test(bloco));
+    /* NUNCA PODE CUSTAR O TURNO: um contador que estoura não pode derrubar
+       a cena nem engolir o envelope social logo abaixo */
+    t("tudo dentro de um try", /^try \{/.test(bloco));
+    t("e o catch é o calou da casa", /catch \(e\) \{ calou\("consultaDeInformante", e\); \}$/.test(bloco));
+    /* O SISTEMA NÃO FALA DE SI MESMO: a contagem é bastidor. O jogador vive
+       a consulta; o número só vai aparecer pelo efeito, quando R2 o ler. */
+    t("nada disto vai à tela", !/pushMsgs|setAviso|notaRef/.test(bloco));
   }
 }
 

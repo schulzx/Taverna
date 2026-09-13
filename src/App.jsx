@@ -9,7 +9,7 @@ import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, dificuldadePorPerfil } from "./bestiario.js";
-import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, firmarEntre, paresEntre, garantirLaco, TIPOS_DE_LACO } from "./npcs.js";
+import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, firmarEntre, paresEntre, garantirLaco, registrarConsulta, TIPOS_DE_LACO } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
 import { rolarClima, rolarEncontro } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
@@ -109,7 +109,7 @@ import { criarTorneio, garantirTorneio, correrForaDeTela, minhaLuta, meuRival, r
    juiz. Codigo de ficha, selo, serie seca. Conta em duelo.js. */
 import { codigoDaFicha, fichaDoCodigo, resumoParaAviso, tipoDoDuelo, duelar, rivalDaCasa, heroiDoSave, cartaDaFicha, cartaDoSelo, lerCarta, souLadoA, sementeDaSala, versoesBatem } from "./duelo.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
-import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
+import { moverRelacao, envelopeSocial, falaDosBlefes, consultouInformante } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
 import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
@@ -14407,6 +14407,25 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
             env = `${env}\n[RELAÇÃO — MUDADA PELO SISTEMA] O jeito que eu usei cobrou seu preço: ${des.pessoa.nome} agora me vê como ${relacaoNPC(depois).rotulo.toUpperCase()}. Isto é fato, e vale daqui em diante — trate essa pessoa assim na próxima vez que ela aparecer, sem que eu precise lembrar.`;
           }
         }
+        /* ---------------- QUEM VIVE DE CONTAR ----------------
+           Perguntar a quem vende informação, e LEVAR o que se pediu, deixa
+           traço: a mesma conversa com o mesmo informante, repetida, é uma
+           relação, e não um turno. Quem JULGA se contou é o social.js, que
+           conhece o tamanho do pedido e o papel de quem está na frente;
+           quem GUARDA é o registro de pessoas, que já atravessa o save
+           inteiro — nenhum campo novo precisa viajar.
+
+           Nada disto vai à tela. O jogador vive a consulta; a contagem é
+           bastidor, e só vai aparecer pelo efeito, quando ela pesar.
+
+           Dentro do calou porque um contador que estoura não pode
+           derrubar a cena nem engolir o envelope social logo abaixo. */
+        try {
+          if (consultouInformante({ conta: des.social, pessoa: des.pessoa, passou })) {
+            npcsRef.current = registrarConsulta(npcsRef.current, des.pessoa.nome);
+            setNpcs(npcsRef.current);
+          }
+        } catch (e) { calou("consultaDeInformante", e); }
       }
       if (custo) env = `${envQueda}${envelopeDoCusto(custo, des && des.rotulo)}\n${env}`;
       if (des && des.testemunha && !passou) {

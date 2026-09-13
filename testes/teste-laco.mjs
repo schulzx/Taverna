@@ -11,7 +11,7 @@
    Sem isto o laço existia só na narração, e o que existe só na narração o
    sistema não pode consultar depois. */
 import {
-  TIPOS_DE_LACO, tipoDeLacoPorId, FORCA_MAX, garantirLaco,
+  TIPOS_DE_LACO, tipoDeLacoPorId, FORCA_MAX, garantirLaco, RELACOES_NPC,
   firmarLaco, romperLaco, comLaco, criarNPC, firmarEntre, paresEntre, resumoNPCsParaPrompt,
 } from "../src/npcs.js";
 import { ASSUNTOS, assuntoPorId, escolherAssunto, garantirCompasso, avancarCompasso, envelopeDoCompasso } from "../src/compasso.js";
@@ -87,7 +87,21 @@ sec("3. OS ASSUNTOS DECLARAM O QUE PEDEM E O QUE DEIXAM");
      e foi exatamente o que aconteceu com "proteção", que viveu dez
      minutos nesta versão antes de a prova o pegar. */
   const tipos = new Set(TIPOS_DE_LACO.map((x) => x.id));
-  const criados = new Set(firmam.map((a) => a.firma));
+  /* MOTIVO DA MUDANÇA (R1): `criados` lia só `a.firma` e por isso acusava o
+     `familia`, o tipo novo, como "tipo do catálogo sem criador". A acusação
+     era falsa. A intenção desta asserção é, e sempre foi, "todo tipo de laço
+     tem COMO NASCER" — e desde a v9.98 há DUAS portas de nascimento: `firma`
+     (o laço comigo) e `firmaEntre` (o laço entre dois do elenco). A varredura
+     olhava para uma só, e o `familia` nasce pela outra, em
+     `dois_do_mesmo_sangue`. Quem estava cego era a varredura, não o catálogo:
+     afrouxar a linha — ou tirar o sangue da lista — apagaria a lei em vez de
+     cumpri-la. A união é a leitura literal da intenção escrita.
+     (Confiro que a mesma cegueira não existe em outra suíte: `TIPOS_DE_LACO`
+     só é varrido aqui.) */
+  const criados = new Set([
+    ...firmam.map((a) => a.firma),
+    ...ASSUNTOS.filter((a) => a.firmaEntre).map((a) => a.firmaEntre),
+  ]);
   const pedidos = new Set(exigem.map((a) => a.exige));
   const semCriador = [...pedidos].filter((x) => !criados.has(x));
   t(`todo laço exigido tem quem o crie${semCriador.length ? " — " + semCriador.join(", ") : ""}`, semCriador.length === 0);
@@ -273,6 +287,81 @@ sec("8. O LAÇO SOBE AO PROMPT");
      de casar a coisa. */
   const linhaLucan = txt.split("\n").find((l) => l.startsWith("• Lucan")) || "";
   t("quem não tem laço não ganha um", !linhaLucan.includes("comigo"));
+}
+
+sec("9. O SANGUE (R1) — o laço que ninguém escolheu");
+{
+  /* Os cinco primeiros tipos são laços que se ESCOLHEM: amizade, amor,
+     rivalidade, dívida, aprendizado. Por isso mesmo o sangue faltava —
+     ninguém escolhe de quem é filho, irmã ou pai, e um mundo sem nenhuma
+     família é um elenco que nasceu adulto e sozinho.
+
+     Este sinal é de R1: aqui só se prova que ele EXISTE e que os órgãos
+     velhos operam com ele. Quem vai LER o sangue é R2. */
+  const sangue = tipoDeLacoPorId("familia");
+  t("o sangue está no catálogo", !!sangue && sangue.id === "familia");
+  t("e diz o que é, como os outros", !!sangue && !!sangue.rotulo && !!sangue.diz);
+  /* a forma tem de ser a MESMA dos vizinhos, não parecida: um tipo com
+     campo a mais (ou a menos) é um tipo que algum leitor vai tratar
+     diferente sem saber por quê */
+  const chaves = (o) => Object.keys(o).sort().join(",");
+  t("com exatamente os mesmos campos dos vizinhos",
+    TIPOS_DE_LACO.every((x) => chaves(x) === chaves(TIPOS_DE_LACO[0])));
+  t("o rótulo é o do mundo, não o do id", !!sangue && sangue.rotulo === "família");
+
+  /* O HOMÔNIMO NÃO SE CONFUNDE: `RELACOES_NPC.familia` diz de que lado a
+     pessoa está COMIGO (e pesa na conversa); este diz que duas pessoas são
+     do mesmo sangue. Mesmo nome, duas tabelas, dois sentidos. */
+  t("o homônimo existe nas duas tabelas", !!RELACOES_NPC.familia && !!sangue);
+  t("e são duas coisas diferentes", RELACOES_NPC.familia !== sangue);
+
+  /* OS ÓRGÃOS VELHOS OPERAM COM ELE, sem uma linha nova em lugar nenhum */
+  t("garantirLaco aceita o tipo novo", garantirLaco({ tipo: "familia" }).tipo === "familia");
+  let reg = { Marta: criarNPC("Marta"), Ubba: criarNPC("Ubba"), Lucan: criarNPC("Lucan") };
+  reg = firmarEntre(reg, "Marta", "Ubba", "familia", 7);
+  t("firmarEntre grava o sangue nas duas pontas",
+    reg.Marta.entre.Ubba === "familia" && reg.Ubba.entre.Marta === "familia");
+  t("paresEntre acha o par de sangue", paresEntre(reg, "familia").length === 1);
+  t("e não confunde com outro tipo", paresEntre(reg, "amor").length === 0);
+  /* e o morto sai do par, como em qualquer outro tipo: a regra velha vale
+     para o tipo novo sem exceção */
+  t("morto sai do par de sangue",
+    paresEntre({ ...reg, Ubba: { ...reg.Ubba, status: "morto" } }, "familia").length === 0);
+
+  /* O SANGUE TAMBÉM VALE COMIGO — é o mesmo catálogo, e `comLaco` tem de
+     achá-lo como acha qualquer outro */
+  const comigo = { ...reg, Lucan: firmarLaco(reg.Lucan, "familia", 3) };
+  t("comLaco acha o sangue", comLaco(comigo, { tipo: "familia" }).join() === "Lucan");
+  t("e ele fortalece como os outros", firmarLaco(comigo.Lucan, "familia", 9).laco.forca === 2);
+
+  /* ROMPE E FICA. "Não se desfaz por vontade" é o que o tipo DIZ; o que o
+     registro faz é o que importa: um sangue rompido continua sendo sangue,
+     marcado, e é essa marca que deixa a reconciliação existir depois. */
+  const rompido = romperLaco(comigo.Lucan, 40);
+  t("o sangue rompe e fica marcado", rompido.laco.rompido === true && rompido.laco.rompidoEm === 40);
+  t("sem sumir: continua sendo sangue", rompido.laco.tipo === "familia");
+  const regRompido = { ...comigo, Lucan: rompido };
+  t("e continua achável como rompido", comLaco(regRompido, { rompido: true }).join() === "Lucan");
+  t("mas não como laço de pé", comLaco(regRompido, { tipo: "familia", rompido: false }).length === 0);
+
+  /* O CAMINHO PELO QUAL ELE NASCE EM PARTIDA: um assunto, e um só. */
+  const sangueAssunto = assuntoPorId("dois_do_mesmo_sangue");
+  t("há um assunto que firma o sangue", !!sangueAssunto && sangueAssunto.firmaEntre === "familia");
+  t("e é o único", ASSUNTOS.filter((a) => a.firmaEntre === "familia").length === 1);
+  /* A FORMA EXATA DOS VIZINHOS: os outros `pede: "duas"` são o molde, e um
+     campo a menos aqui é um tempo da onda que sairia vazio na tela. */
+  const vizinhos = ASSUNTOS.filter((a) => a.pede === "duas" && a.id !== "dois_do_mesmo_sangue");
+  t(`há vizinhos para comparar (${vizinhos.length})`, vizinhos.length >= 3);
+  const molde = [...new Set(vizinhos.flatMap((a) => Object.keys(a)))].sort();
+  t(`o assunto novo tem os mesmos campos dos vizinhos (${molde.join(", ")})`,
+    chaves(sangueAssunto) === molde.join(","));
+  t("é da família dos laços, como eles", sangueAssunto.familia === "laco");
+  t("e o peso é um dos que os vizinhos usam", vizinhos.some((a) => a.peso === sangueAssunto.peso));
+  /* e o tipo que ele firma TEM de existir no catálogo — a regra de leitor,
+     aplicada ao contrário: um `firmaEntre` inventado seria um laço que
+     nasce sem tipo */
+  t("e o que ele firma existe no catálogo", !!tipoDeLacoPorId(sangueAssunto.firmaEntre));
+  t("pede duas pessoas na cena, como os vizinhos", /gentePorPerto >= 2/.test(String(sangueAssunto.quando)));
 }
 
 console.log(`\nlaço v9.97: ${ok} passaram, ${mal} falharam`);

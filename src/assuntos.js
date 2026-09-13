@@ -1130,6 +1130,22 @@ export const ASSUNTOS = [
     depois: "Mostre de que lado o lugar ficou, e o que essa conta fez com a minha relação com cada uma delas.",
   },
   {
+    /* O sangue entra na lista dos pares por último e pelo mesmo motivo dos
+       outros três: o mundo tinha ódios, amores e contas entre a gente do
+       elenco, e ninguém era filho, irmão ou pai de ninguém. Uma cidade em
+       que duas pessoas se odeiam mas nenhuma tem parente é um elenco; uma
+       em que o ferreiro e a barqueira são irmãos, e a cidade não sabia, é
+       um lugar onde se mora. */
+    id: "dois_do_mesmo_sangue", familia: "laco", peso: 2, pede: "duas", firmaEntre: "familia",
+    nome: "dois que o mesmo sangue liga",
+    quando: (s) => s.emCidade && s.gentePorPerto >= 2,
+    preparo: "Comece a preparar uma SEMELHANÇA ENTRE OS DOIS: mostre essas duas pessoas repetindo o mesmo gesto, a mesma teimosia ou o mesmo jeito de calar, e não deixe ninguém na cena comentar isso.",
+    subindo: "Um terceiro nota a semelhança em voz alta, e uma das duas muda de assunto depressa demais.",
+    vespera: "Uma delas procurou a outra hoje, fora de hora, e pediu para falar a sós.",
+    agora: "Agora ACONTECE: fica dito na minha frente de que sangue os dois são um do outro — e pelo menos um deles não sabia.",
+    depois: "Mostre o que se faz com um parente que aparece pronto: o que cada um passa a dever ao outro, o que a cidade faz com a notícia, e onde eu fico nisso.",
+  },
+  {
     id: "escolher_entre_dois", familia: "laco", peso: 3, exigeEntre: "rivalidade",
     nome: "os dois querem que eu escolha",
     quando: (s) => s.momento >= 0.4,

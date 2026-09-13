@@ -144,5 +144,29 @@ sec("5. A VOZ NÃO ESCOLHE NADA DISTO");
   t("o sorteio funciona sem voz nenhuma", !!semVoz);
 }
 
+sec("6. O SANGUE ABRE ONDE O MUNDO TEM GENTE (R1)");
+{
+  /* O sinal novo de R1 do lado dos ASSUNTOS: o sangue é o quarto par do
+     elenco, e o único caminho pelo qual um laço `familia` nasce em partida.
+     A forma dele (campos, tipo firmado, catálogo) é provada na casa do laço,
+     em `teste-laco.mjs`; o que se cobra AQUI é o que esta suíte sabe cobrar
+     e a outra não — quando ele abre, que é o que decide se ele existe numa
+     partida ou só no arquivo. */
+  const sangue = assuntoPorId("dois_do_mesmo_sangue");
+  t("o sangue está entre os laços", !!sangue && sangue.familia === "laco");
+  t("abre na cidade com duas pessoas por perto",
+    abertosLaco({ momento: 0.5, porte: "cidade", gentePorPerto: 2 }).includes("dois_do_mesmo_sangue"));
+  /* ninguém é parente sozinho: com uma pessoa na cena o par não tem de onde
+     sair, e o assunto tem de ficar fechado */
+  t("e não abre com uma pessoa só",
+    !abertosLaco({ momento: 0.5, porte: "cidade", gentePorPerto: 1 }).includes("dois_do_mesmo_sangue"));
+  t("nem fora da cidade",
+    !abertosLaco({ momento: 0.5, porte: "cidade", gentePorPerto: 3, emCidade: false }).includes("dois_do_mesmo_sangue"));
+  /* e ele não pede momento nenhum: um parente que aparece é notícia em
+     qualquer altura da campanha, ao contrário da conta entre dois */
+  t("e vale desde o começo da campanha",
+    abertosLaco({ momento: 0, porte: "aldeia", gentePorPerto: 2 }).includes("dois_do_mesmo_sangue"));
+}
+
 console.log(`\nlaços v9.95: ${ok} passaram, ${mal} falharam`);
 process.exit(mal ? 1 : 0);

@@ -63,6 +63,19 @@ export const TIPOS_DE_LACO = [
   { id: "rivalidade", rotulo: "rivalidade", diz: "medimo-nos, e nenhum dos dois desiste" },
   { id: "divida", rotulo: "dívida", diz: "um de nós deve ao outro, e os dois sabem" },
   { id: "aprendizado", rotulo: "aprendizado", diz: "um ensina, o outro aprende — e nem sempre o que se quis ensinar" },
+  /* O SANGUE. Os cinco de cima são laços que se escolhem, e é justamente
+     por isso que este faltava: ninguém escolhe de quem é filho, irmã ou
+     pai, e um laço que não se escolhe pesa de outro jeito no dia em que
+     alguém põe a mão nele. Sem ele o mundo tinha amores, dívidas e
+     mestres, e nenhuma família — como se todo o elenco tivesse nascido
+     adulto e sozinho.
+
+     Ele é homônimo do `familia` de `RELACOES_NPC`, lá em cima, e os dois
+     não se confundem: aquele diz de que lado a pessoa está comigo (e
+     pesa na conversa, em `PESO_DA_RELACAO`); este diz que duas pessoas
+     são do mesmo sangue — e vale sobretudo ENTRE dois do elenco, que é
+     onde o mundo tem história sem mim no meio. */
+  { id: "familia", rotulo: "família", diz: "o mesmo sangue: nenhum dos dois escolheu, e não se desfaz por vontade" },
   /* NÃO há "proteção" aqui, e a ausência é deliberada: ele existiu por dez
      minutos nesta mesma versão, exigido por um assunto e criado por
      nenhum — a regra sem código atrás que esta casa passou a sessão
@@ -219,9 +232,66 @@ export function criarNPC(nome, dados = {}) {
     /* v9.98: e o que essa pessoa é dos OUTROS — o que faz o mundo ter vida
        sem mim no meio. Chave é o nome do outro, valor é o tipo. */
     entre: garantirEntre(dados.entre),
+    /* Quantas vezes se arrancou informação DESTA pessoa (ver o razão logo
+       abaixo). Zero é o normal: quase ninguém do mundo é consultado. */
+    consultas: contagem(dados.consultas),
     ultimaVez: dados.ultimaVez || 0,     // turno da última menção (p/ ordenar)
     semente: dados.semente || `npc|${nome}|${dados.papel || ""}`,
   };
+}
+
+/* ============================================================
+   O RAZÃO DAS CONSULTAS — quem já me contou demais
+
+   Arrancar informação de alguém é a coisa mais feita fora da luta, e
+   até aqui não deixava traço nenhum: cada conversa que dava certo com
+   o informante da cidade morria no turno em que acontecia. O sistema
+   não sabia separar a pessoa a quem se perguntou uma vez daquela a
+   quem se pergunta tudo há semanas — e a segunda é uma relação, não
+   uma conversa.
+
+   O NÚMERO MORA AQUI porque é o registro que persiste: a ficha
+   atravessa o save, e é dela que se sabe QUEM, não só quantas vezes.
+   Quem JULGA se uma conversa contou é `social.js`, que é o sistema que
+   resolve o pedido e conhece o tamanho dele. A direção é essa e só
+   essa — `social.js` lê daqui, este arquivo não lê de lá —, e quem
+   junta o julgamento ao razão é o App, que tem os dois na mão no mesmo
+   instante em que o teste se resolve.
+   ============================================================ */
+
+/* Ficha de save antigo não tem o campo, e ficha mexida à mão pode ter
+   qualquer coisa nele: tudo que não é um inteiro positivo vale zero.
+   `undefined` nunca sai daqui — é o que faz o campo novo não precisar de
+   migração nenhuma. */
+const contagem = (x) => {
+  const n = Math.floor(Number(x));
+  return Number.isFinite(n) && n > 0 ? n : 0;
+};
+
+/* Imutável, como tudo aqui: registro novo, ficha nova, nada mexido no
+   lugar. Aceita o nome como ele veio da cena (a caixa das letras é da
+   IA, não minha), pelo mesmo caminho de `firmarEntre`. */
+export function registrarConsulta(npcs, nome) {
+  if (!npcs || !nome) return npcs;
+  const k = Object.keys(npcs).find((x) => x.toLowerCase() === String(nome).toLowerCase());
+  if (!k) return npcs;
+  const ficha = npcs[k] || {};
+  return { ...npcs, [k]: { ...ficha, consultas: contagem(ficha.consultas) + 1 } };
+}
+
+/* Quantas vezes a campanha inteira se apoiou num informante.
+
+   SOMA TODO MUNDO, e é de propósito: só se registra consulta de quem é
+   informante (o julgamento fica em `social.js`), então quem tem número
+   aqui já passou por aquele portão — e este arquivo não pode perguntar
+   a `social.js` quem é informante sem inverter a direção dos imports.
+   Somar por quem tem consulta registrada é a conta mais simples que dá
+   a resposta certa.
+
+   E conta os MORTOS também: o herói se apoiou naquela boca, e o que ela
+   soube dele não desaparece porque ela morreu. */
+export function vezesQueUsouInformante(npcs) {
+  return Object.values(npcs || {}).reduce((s, n) => s + contagem(n && n.consultas), 0);
 }
 
 const semAc = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
