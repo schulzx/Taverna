@@ -188,6 +188,16 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   parâmetro já existe, é só usar) e ver se o vermelho tem outra causa por
   baixo. Linha "bug com teste que prova" — mas o teto é: se depois de semeado
   o vermelho voltar, é achado novo e sobe de peso.
+  **A conta fecha a suspeita (Claude, 13/09):** a asserção é
+  `vistos.size > 480` sobre 500 códigos de `ALFABETO_DO_CODIGO` (30 letras)
+  em `CODIGO_TAM` 6 — 30⁶ = 729 milhões de códigos. É aniversário puro:
+  colisões esperadas ≈ 500·499/2 ÷ 729e6 ≈ 0,017%, ou **cerca de 1 rodada
+  em 5.800**. Bate com "falhou uma vez e não repetiu em quatro". Não procure
+  outra causa antes de semear: injete `rnd` (o parâmetro já existe) e a
+  asserção passa a ser exata — com semente fixa, 500 códigos distintos são
+  sempre os mesmos 500. Vale varrer as outras suítes atrás do mesmo vício:
+  qualquer `t(...)` cuja verdade dependa de `Math.random` é uma prova que
+  mente uma vez a cada tantas — e a casa não sabe quantas são.
 
 - [ ] **`trai_para_proteger` fala de um vilão que ela não exige** · leve · de: testes (achado de R2) · 13/09
   A forma não pede vilão em lugar nenhum — nem no `soNasceSe`
