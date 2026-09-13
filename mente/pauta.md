@@ -27,6 +27,24 @@ Formato de um item:
   jogador **perder** a magia que pagou — mecânica que muda o que ele vive, em
   campanha viva. A pessoa decide se a magia de duração deve poder quebrar.
 
+- [ ] **a família defensiva é promessa que nenhum não-jogador cumpre** · pesado · de: backend+testes (achado de A3) · 13/09
+  A3 portou a guarda para a arena e o caminho **funciona** — provado com
+  ficha sintética (defesa 15→19, vence na rodada certa). Só que ele quase
+  nunca é pisado, e por dois motivos que se somam:
+  (a) **nenhum dos 9 nomes de `GUARDAS` (`habilidades.js:312`) casa com
+  `RX_BUFF` (`companheiros.js:89`)** — e `decidirAcaoCompanheiro` só chega
+  a uma guarda pelo plano `buff`, que exige `ehBuff`. Ou seja: companheiro
+  e duelista **nunca erguem guarda**, em campanha ou na arena. Só o herói
+  de carne e osso ergue, pela tela.
+  (b) `BUFF_DA_HABILIDADE.aplica` é `"dano"` para tudo (`efeitos.js:70`),
+  então "Escudo Arcano" — *"absorve o próximo dano"* — vira `+1 de dano
+  mágico`. Portado assim de propósito em A2 (regressão zero), mas A3 fez
+  isso **aparecer na narração da arena**, que é onde o jogador lê.
+  É pesado por consequência, não por custo: consertar (a) faz os
+  companheiros da campanha passarem a se defender, e consertar (b) muda o
+  que cinco habilidades fazem. As duas mexem no que o jogador vive. A
+  pessoa decide se a promessa defensiva deve valer para quem não é ele.
+
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
 
 A ordem é esta: a Arena primeiro (menor, e o Duelo está no ar hoje), as
@@ -51,37 +69,33 @@ deveria"* — o caminho caro, não o diagnóstico barato.
   dano após guarda 1,034×). A GUARDA já era módulo (`habilidades.js` desde a
   v9.53) e ficou lá — para A3 a arena não precisa de código novo de guarda,
   só de chamar `erguerGuarda`. Cinco achados anotados abaixo. Ver o diário.
-- [ ] **A3 · a arena consome os efeitos** · de: pessoa+conselheiro · 13/09
-  `arena.js` deixa de traduzir `buff`/`guarda` em prosa vazia e aplica o
-  módulo de A2: o buff dura, soma, e aparece no número. A narração da queda
-  passa a dizer o que mudou. A1 fica VERDE aqui — é o veredito da fase.
-  **São DUAS frentes, não uma** (achado de A1, 13/09): além de portar o
-  efeito, consertar o filtro de `meiaRodada` (`arena.js:137-139`). Ele
-  *tenta* tirar o buff da visão do piloto com `ehCuraDeGrupo || ehOfensiva`
-  e é furado — `ehOfensiva` (`companheiros.js:~95`) casa `RX_OFENSIVA`
-  contra nome **+ descrição**, e "Postura Defensiva" e "Escudo Arcano"
-  dizem "absorve o próximo dano": a palavra *dano* as deixa passar. Com o
-  efeito portado, o filtro inteiro deve cair (o comentário de
-  `arena.js:136` já prevê isso) — mas se cair sem o efeito valer, o buraco
-  aumenta. Promover as duas pendentes trocando `pendente(...)` pelo
-  `t(...)` já escrito no comentário de cada uma, contra os limiares da
-  tabela `MEDIDA_DO_BURACO` (`tetoDeAberturasMortas: 0`,
-  `razaoMaximaDeDanoAposGuarda: 0.9`).
-  **O que A2 deixou pronto (13/09):** a arena importa `src/efeitos.js` e pronto
-  — a pilha, o prazo e o nascimento já existem provados (`empilhar`,
-  `efeitoDeBuff`), e a GUARDA nunca precisou nascer: `habilidades.js` já tem
-  `erguerGuarda`/`defesaDeGuarda` e `combate.js:69/96/103` já os lê por
-  `defesaDe`. Herdado de A2, para decidir aqui: `APLICA_NA_NOTA` (`["testes"]`)
-  é menor que `APLICA_UNIVERSAL` (`["testes","todos"]`) — um efeito
-  `aplica: "todos"` **soma no número e não aparece** no "(inclui bônus de ...)".
-  Portado assim de propósito (regressão zero); `teste-efeitos.mjs` seção 9 trava
-  o comportamento atual com o motivo escrito. Se A3 fizer o buff aparecer na
-  narração, é essa asserção que fala primeiro.
-- [ ] **A4 · o equilíbrio refeito** · de: pessoa+conselheiro · 13/09
-  Com os efeitos valendo, a catraca de 35–65% do round-robin 8×8 vai sair
-  da faixa. Reajustar os prontos (atributos, magias, equipamento) até
-  voltar, e registrar no diário quem subiu e quem desceu, e por quê.
-  Equilíbrio é teste, não intenção.
+- [x] **A3 · a arena consome os efeitos** · feito em v9.225 (`6168a14`), 13/09
+  As duas frentes, na ordem: `arena.js` passou a aplicar de verdade
+  (`erguerGuarda` para quem casa com `GUARDAS`, `efeitoDeBuff`+`empilhar`
+  para o resto, `bonusDeDano`/`bonusDeArma` no golpe, `tickEfeitos` e
+  `expirarGuardas` uma vez por rodada) — e só então o filtro furado de
+  `meiaRodada` caiu inteiro. **Os dois números de A1 fechados:** aberturas
+  mortas 20/420 (4,8%) → **0 de 424**; meias-rodadas mortas 382 → **0**.
+  Na mesa real: 791 buffs firmados, 329 golpes com o bônus dentro, 409
+  efeitos vencendo o prazo. Ver o diário.
+- [ ] **A4 · o equilíbrio: conferir antes de mexer** · de: pessoa+conselheiro · 13/09
+  **Corrigido pelo orquestrador em 13/09, depois de A3:** a pauta previa
+  que a catraca de 35–65% sairia da faixa com os efeitos valendo. **Não
+  saiu** — os oito ficaram dentro, e a amplitude até APERTOU (36,2–61,0 =
+  24,8 pts antes; 41,9–61,9 = 20,0 pts depois): muralha 42,9→50,5 · sombra
+  47,1→54,3 · chama 36,2→42,4 · remendo 61,0→48,1 · voz 60,5→51,0 · flecha
+  55,7→61,9 · punho 38,1→50,0 · voto 58,6→41,9. Logo A4 **não é mais
+  "reajustar os prontos"**: é conferir se ainda há trabalho. Quem está na
+  borda é `flecha` (61,9%) — e o Caçador é justamente um dos dois prontos
+  (com `sombra`) que **não têm habilidade de buff nenhuma**, ou seja, foi o
+  que menos ganhou com A3 e mesmo assim subiu. Olhar isso primeiro; se a
+  conclusão for "nada a mexer", A4 fecha como conferência registrada no
+  diário — equilíbrio é teste, não intenção, e teste verde também é
+  resposta. Cuidado herdado: a sonda sintética de `teste-arena.mjs` seção 7
+  nasce das fichas de `muralha` e `punho`; rebalancear essas duas move a
+  razão (0,699 contra teto 0,9) e o ganho (1,95 contra piso 1). Se alguma
+  ficar vermelha depois de um rebalanceamento, é sinal legítimo — não se
+  afrouxa o limiar.
 
 ### Fase R — as reviravoltas em harmonia com o resto
 Decisão da pessoa (13/09): *"que o sistema de reviravoltas funcione em
@@ -112,6 +126,20 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   da revelação.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **o companheiro re-firma o buff que já está de pé** · médio · de: backend (achado de A3) · 13/09
+  `decidirAcaoCompanheiro` (`companheiros.js:139-143`) tem o comentário
+  *"buff logo no começo da luta (uma vez, não todo turno)"* — e permite o
+  buff nas rodadas 1 **e** 2, sem olhar se ele já está na ficha. Visto na
+  arena depois de A3: `"A Voz firma Inspiração"` duas vezes seguidas, com
+  `empilhar` só reiniciando o prazo — turno pago, nada comprado. É a mesma
+  família do buraco que A3 matou, uma ordem de grandeza menor, e o código
+  já declara a intenção certa: é fazer o código cumprir o comentário.
+  O conserto é olhar `efeitosDe(comp)` (`efeitos.js`) e `guardasAtivas`
+  (`habilidades.js`) antes de escolher — leitores que já existem, nada de
+  regra nova. Catraca: `teste-arena.mjs` seção 7 (o contador de buffs
+  firmados cai e o de golpes com bônus NÃO cai) + a catraca do equilíbrio
+  na faixa + `teste-companheiros.mjs`.
 
 - [ ] **"1 Hora" dura seis vezes menos que "1 hora"** · leve · de: testes (achado de A2) · 13/09
   `EFEITO_DA_MAGIA.rxLonga` (`efeitos.js`) é `/hora/` **sem o `i`**: uma magia

@@ -16,6 +16,83 @@ Formato:
 
 ---
 
+## 13/09 18:40 · v9.225 · A3 · a arena consome os efeitos · commit `6168a14`
+- **estado inicial:** 180/180 suítes verdes, 7/7 varredores limpos, árvore
+  limpa, HEAD `3fc1a5a`. A vez era A3 — o **veredito** da Fase A: a etapa em
+  que as duas provas pendentes de A1 tinham de virar asserção de verdade.
+- **conselheiro:** não chamado (pauta cheia, e a etapa já estava escrita).
+- **backend:** `src/arena.js`, e só ele. A guarda primeiro (`guardaDe` +
+  `erguerGuarda`, de `habilidades.js`), o buff depois (`efeitoDeBuff` +
+  `empilhar`, de `efeitos.js`), o bônus no golpe por `bonusDeDano` /
+  `bonusDeArma` (`combos.js`) e o prazo correndo uma vez por rodada
+  (`tickEfeitos` + `expirarGuardas`). **Nenhuma fórmula nova** — a lei-mãe da
+  arena é "nenhuma regra nova", e cada peça foi chamada de onde já morava. Só
+  então o filtro furado de `meiaRodada` caiu inteiro, e os imports
+  `ehCuraDeGrupo`/`ehOfensiva` saíram com ele.
+- **frontend:** não chamado — `arena.js` é módulo puro e a tela não mudou.
+- **testes:** `testes/teste-arena.mjs` — 22 ok · 1 falha → **28 ok · 0
+  falhas**. As duas pendentes de A1 promovidas, a asserção do filtro
+  reancorada, a medição renomeada (`m.meias` → `m.linhas`) e o retrato de
+  v9.222 preservado ao lado do de v9.225.
+- **os dois números de A1, fechados:**
+  - quedas que ABREM com duas meias-rodadas mortas: **20 de 420 (4,8%) → 0 de
+    424 (0,0%)**, contra `tetoDeAberturasMortas: 0`;
+  - dano depois da guarda: **1,034× → 0,699×**, contra
+    `razaoMaximaDeDanoAposGuarda: 0.9` — mas por sonda nova, ver abaixo;
+  - e a medição da mesa real: 791 buffs firmados, 329 golpes com o bônus
+    dentro, 409 efeitos vencendo o prazo. Meias-rodadas mortas: 382 → **0**.
+- **decisões médias tomadas:**
+  - **a pendente (2) foi reancorada, não promovida como estava — e o motivo
+    está escrito no arquivo.** A sonda de A1 media o dano do golpe seguinte a
+    uma linha `/ se guarda$/`, e essa linha **morreu junto com a coisa que ela
+    media**: era a prosa vazia que A3 matou. Promovê-la literalmente daria 0
+    golpe medido, razão 0,000 e verde automático — dívida visível trocada por
+    prova vazia, que é pior. O limiar **não** afrouxou (continua `0.9`, e
+    continua saindo de `MEDIDA_DO_BURACO`); o que mudou foi a âncora: dupla
+    sintética determinística, uma habilidade que casa com `GUARDAS` **e** com
+    `RX_BUFF`, medindo dano por golpe **tentado** (o erro conta zero, porque a
+    guarda de defesa mexe na chance de acertar e não no tamanho do dano — era
+    a outra metade do porquê de A1 dar 1,034). Razão 0,699. E o buff ganhou
+    sonda própria, com piso novo `ganhoMinimoDoBuffNoGolpe: 1` — ganho 1,95.
+  - **a asserção do filtro (seção 5) saiu de regex-no-fonte para prova de
+    comportamento**, com o motivo escrito: regex em fonte morre com o próximo
+    refatorador. A nova exige que a arena **firme** um buff que o filtro morto
+    barrava (Bênção e Inspiração aparecem na amostra).
+  - **`projecaoDe` passou a levar `guardas` junto** (decisão do backend, além
+    da letra do brief): duas das três famílias de guarda não somam defesa — a
+    de esquiva entorta o dado e a de intocável faz o golpe errar, e quem as lê
+    é `resolverAtaque`, no alvo. Sem isso, erguer uma delas não faria nada.
+    Conferido que não duplica número: `defesaDe(ent, true)` devolve
+    `ent.defesa` explícita e não re-soma.
+  - **o bônus entra DEPOIS do crítico**, e está escrito no código: somar antes
+    exigiria duplicar `resolverAtaque` dentro da arena, que é a regra copiada
+    que a lei-mãe proíbe. O buff sai um pouco mais barato aqui que na mesa da
+    campanha — declarado, não escondido.
+- **a prova morde (conferido, não prometido):** o `testes` rodou a suíte
+  contra três arenas mutantes no scratchpad — voltar o buff a prosa dá 6
+  falhas; erguer a guarda sem a projeção enxergá-la dá razão 1,071; empilhar o
+  efeito sem somar ao dano dá ganho 0,04. Nenhuma asserção nova passa de
+  qualquer jeito.
+- **a catraca do equilíbrio NÃO saiu da faixa** — e a pauta previa que sairia.
+  muralha 42,9→50,5 · sombra 47,1→54,3 · chama 36,2→42,4 · remendo 61,0→48,1 ·
+  voz 60,5→51,0 · flecha 55,7→61,9 · punho 38,1→50,0 · voto 58,6→41,9. A
+  amplitude APERTOU: 24,8 pts → 20,0 pts. Nada foi reajustado neste ciclo (era
+  A4 de propósito), e nenhuma suíte precisou virar `pendente`. **A4 foi
+  corrigido na pauta**: deixou de ser "reajustar os prontos" e virou "conferir
+  se ainda há trabalho", com `flecha` (61,9%) como quem está na borda.
+- **o que ficou:** três achados foram para a pauta. Um **pesado, para a
+  pessoa**: a família defensiva é promessa que nenhum não-jogador cumpre —
+  nenhum dos 9 nomes de `GUARDAS` casa com `RX_BUFF`, então companheiro e
+  duelista nunca erguem guarda, e `BUFF_DA_HABILIDADE.aplica` é `"dano"` para
+  tudo, o que faz "Escudo Arcano" virar `+1 de dano mágico` na narração. Um
+  **médio**: o companheiro re-firma o buff que já está de pé (o comentário de
+  `companheiros.js:139` já diz "uma vez, não todo turno" — é fazer o código
+  cumprir o comentário). E o item leve **"Em o fosso"**, que já estava aberto,
+  foi visto em toda queda olhada — continua esperando a vez.
+- **nota de higiene:** `CLAUDE.md` ainda diz "hoje `v9.221`" no padrão de
+  fase, quatro versões atrás. Não toquei — mexer na lei da casa sem pedido não
+  é do ciclo.
+
 ## 13/09 18:05 · v9.224 · A2 · os efeitos viram módulo puro · commit `a137790`
 - **estado inicial:** 179/179 suítes verdes, 7/7 varredores limpos, árvore
   limpa, HEAD `8fd6cbd`. A vez era a etapa A2 da Fase A — a segunda do bloco
