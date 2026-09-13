@@ -135,7 +135,7 @@ em `.claude/agents/orquestrador.md`; `/ciclo` roda um.
 Português, narrativo, o *porquê* antes do *o quê*. Terminar com:
 
 ```
-Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ```
 
 **Commit local** fecha toda fase verde — automático, dentro do ciclo.

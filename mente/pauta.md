@@ -17,47 +17,70 @@ Formato de um item:
 
 ## Para a pessoa decidir (pesado)
 
-- [ ] **subir ao remoto o que já está local** · pesado · de: Claude · 13/09
-  Os commits de `A mente e as maos` em diante (584a0cc, 60f639d, aae362c — e
-  tudo o que a mente commitar daqui em diante) estão só locais. `git push` é
-  deploy no Vercel — linha "git push" da tabela: decisão da pessoa, sempre.
+_(vazio — as quatro de 13/09 foram respondidas; ver "Aprovado" abaixo)_
 
-- [ ] **o Narrador está sem saldo** · pesado · de: conselheiro · 13/09
-  Jogado em 13/09: a Noite abriu, o primeiro turno chamou `api/narrador` e
-  voltou 502 — "deepseek-v4-flash: 402 Insufficient Balance · gemini-3.6-flash:
-  429 prepayment credits are depleted". Hoje ninguém consegue jogar Uma Vida
-  nem o Capítulo; só o Duelo seco e a chave do Torneio rodam. Linha "custa
-  dinheiro ou toca infra" — a pessoa decide qual provedor recarrega (ou se
-  troca a ordem da fila em `api/narrador.js`).
+## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
 
-- [ ] **a arena não porta os efeitos: toda queda abre com duas rodadas mortas** · pesado · de: conselheiro · 13/09
-  Visto no Duelo (A Muralha × A Chama, 3 quedas): as rodadas 1 e 2 de CADA
-  queda foram "A Muralha se guarda / A Chama se guarda", quatro linhas
-  iguais antes do primeiro golpe. Caminho: `arena.js:112-116` traduz
-  `buff`/`guarda` em "se guarda" sem efeito nenhum, e `companheiros.js:140-143`
-  manda o piloto abrir com buff nas rodadas ≤ 2; o filtro de `meiaRodada`
-  (`arena.js:137-139`) deveria tirar os buffs da mesa e aparentemente não
-  tira todos. Corrigir de verdade é portar o sistema de efeitos do App à
-  arena (o próprio módulo declara em `arena.js:133` que não porta) e refazer
-  a catraca de equilíbrio 35–65% — mecânica que muda o que o jogador vive.
-  Alternativa barata, também da pessoa: só o diagnóstico (teste em
-  `teste-arena.mjs` que conta quantas rodadas de abertura são "se guarda").
+A ordem é esta: a Arena primeiro (menor, e o Duelo está no ar hoje), as
+Reviravoltas depois. Dentro de cada fase, a etapa seguinte só começa com a
+anterior verde e commitada. Se uma etapa revelar que a próxima não é como
+está escrito aqui, o orquestrador corrige a etapa na pauta e diz no diário.
 
-- [ ] **metade das reviravoltas eleitas nunca nasce, e a maior nunca é lida** · pesado · de: conselheiro · 13/09
-  `elegerReviravoltas` (`reviravoltas.js:195`) sorteia por semente uma forma
-  MENOR entre quatro e uma MAIOR entre três. `alvoDaReviravolta`
-  (`App.jsx:9894`) só tem detector para `aliado_agente` e `heranca_roubada`:
-  num mundo que sorteou `trai_para_proteger` ou `informante_duplo` o alvo é
-  `null` para sempre e a virada não acontece. E `mexerNaReviravolta`
-  (`App.jsx:9919`) lê só `.menor` — as três formas maiores (patrono, cidade
-  que paga dízimo, mestre de ofício) são acervo escrito e nunca vivido.
-  Não achei tracker para `temCompanheiroComFamilia` (TIPOS_DE_LACO em
-  `npcs.js:60` não tem "família"), `vezesQueUsouInformante` nem
-  `antecedenteComOficio` (`antecedentes.js` não tem campo de ofício). As
-  saídas mudam o que o jogador vive: (a) eleger só entre formas com
-  detector — troca a verdade eleita de saves existentes; (b) ligar a maior
-  — segunda reviravolta por campanha; (c) criar os trackers — órgão novo.
-  A pessoa escolhe; qualquer uma vira fase com `teste-reviravolta.mjs`.
+### Fase A — a Arena passa a portar os efeitos
+Decisão da pessoa (13/09): *"vamos corrigir e deixar funcionando como
+deveria"* — o caminho caro, não o diagnóstico barato.
+
+- [ ] **A1 · a prova que mede o buraco** · de: pessoa+conselheiro · 13/09
+  Antes de consertar, medir. Em `teste-arena.mjs`: nenhuma queda abre com
+  duas meias-rodadas de "se guarda"; e um buff aplicado muda de verdade um
+  número da queda seguinte (hoje não muda). As duas nascem **pendentes** —
+  o helper `pendente(nome, motivo)` imprime "· pendente (A3)" e NÃO conta
+  como falha, para a árvore nunca ficar vermelha e a etapa seguinte nunca
+  confundir dívida com regressão. A3 promove as duas a asserção de verdade;
+  enquanto forem pendentes, elas já imprimem o número medido hoje (quantas
+  rodadas mortas por queda), que é o antes-e-depois da fase.
+- [ ] **A2 · os efeitos viram módulo puro** · de: pessoa+conselheiro · 13/09
+  O sistema de efeitos que hoje vive no `App.jsx` (buff, guarda, duração,
+  pilha) desce para um módulo próprio em `src/` provável em Node, sem mudar
+  o que o jogador vê na campanha. O App passa a chamar. Catraca: as suítes
+  de combate existentes continuam verdes — regressão zero em Uma Vida.
+- [ ] **A3 · a arena consome os efeitos** · de: pessoa+conselheiro · 13/09
+  `arena.js` deixa de traduzir `buff`/`guarda` em prosa vazia e aplica o
+  módulo de A2: o buff dura, soma, e aparece no número. A narração da queda
+  passa a dizer o que mudou. A1 fica VERDE aqui — é o veredito da fase.
+- [ ] **A4 · o equilíbrio refeito** · de: pessoa+conselheiro · 13/09
+  Com os efeitos valendo, a catraca de 35–65% do round-robin 8×8 vai sair
+  da faixa. Reajustar os prontos (atributos, magias, equipamento) até
+  voltar, e registrar no diário quem subiu e quem desceu, e por quê.
+  Equilíbrio é teste, não intenção.
+
+### Fase R — as reviravoltas em harmonia com o resto
+Decisão da pessoa (13/09): *"que o sistema de reviravoltas funcione em
+harmonia com todos os sistemas"* — ou seja, a saída (c)+(b) do conselheiro:
+**criar os trackers que faltam** e **ligar a forma maior**. A saída (a)
+(eleger só entre formas com detector) fica **recusada**: trocaria a verdade
+eleita de saves existentes, e campanha viva não perde o que sorteou.
+
+- [ ] **R1 · os trackers que faltam** · de: pessoa+conselheiro · 13/09
+  Três sinais não existem no mundo: família de companheiro (`TIPOS_DE_LACO`
+  em `npcs.js:60` não tem "família"), uso de informante, e ofício de
+  antecedente (`antecedentes.js` não tem o campo). Nascem onde os sistemas
+  que já os tocam vivem — laço em `npcs.js`, ofício em `antecedentes.js` —
+  e não como órgão à parte: **harmonia é isso**. Cada um com prova própria.
+- [ ] **R2 · toda forma eleita tem detector** · de: pessoa+conselheiro · 13/09
+  `alvoDaReviravolta` ganha detector para `trai_para_proteger` e
+  `informante_duplo`, lendo R1. Catraca nova e permanente: para cada forma
+  de `reviravoltas.js`, existe detector — um mundo nunca mais elege uma
+  virada que não pode acontecer.
+- [ ] **R3 · a maior enfim acontece** · de: pessoa+conselheiro · 13/09
+  `mexerNaReviravolta` lê só `.menor`; as três maiores (patrono, cidade do
+  dízimo, mestre de ofício) são acervo escrito e nunca vivido. Ligar, com a
+  regra de convivência: as duas não estouram na mesma cena, e a maior
+  respeita o Livro de Promessas (nada dispara sem semear).
+- [ ] **R4 · a suíte da fase** · de: pessoa+conselheiro · 13/09
+  `teste-reviravolta.mjs`: eleição determinística por semente, cada forma
+  com seu detector, a ordem menor→maior, e o Narrador só sabendo no turno
+  da revelação.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
 
@@ -166,7 +189,14 @@ Formato de um item:
 
 ## Recusado (com o motivo — para a mente não propor de novo)
 
-_(vazio)_
+- **eleger reviravolta só entre formas que já têm detector** · pessoa, 13/09
+  Era a saída barata para "metade das eleitas nunca nasce". Recusada: mudaria
+  a verdade eleita de saves existentes, e campanha viva nunca perde o que
+  sorteou. O caminho é criar os trackers (fase R).
+- **diagnosticar a arena sem corrigir** · pessoa, 13/09
+  Era a alternativa barata ao portar os efeitos (só um teste que conta as
+  rodadas mortas). Recusada: a pessoa pediu funcionando como deveria. O
+  teste continua existindo, mas como A1 de uma fase que termina verde.
 
 ---
 
