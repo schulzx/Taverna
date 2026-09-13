@@ -4,8 +4,10 @@
    semente = mesmo duelo, golpe a golpe); a ficha original nunca é mutada
    (o duelo não deixa cicatriz); toda queda TERMINA; e a CATRACA DO
    EQUILÍBRIO — o round-robin dos oito trava a taxa de vitória de todo
-   pronto entre 35% e 65%. Um pronto que domina quebra aqui, no dia em
-   que passou a dominar. */
+   pronto entre 35% e 65%, em quatro famílias de sementes independentes
+   e num retrato de baixa variância que ainda limita a AMPLITUDE entre o
+   topo e o fundo. Um pronto que domina quebra aqui, no dia em que passou
+   a dominar — mesmo que domine sem estourar a faixa sozinho. */
 
 const RAIZ = "../src/";
 const A = await import(RAIZ + "arena.js");
@@ -132,14 +134,116 @@ sec("5. os pilotos da casa lutam como gente da casa (lei x)");
   t("a poção sai da bolsa pelo aplicador oficial", /usarConsumivel\(eu, a\.item\)/.test(src) && /inventario\.splice/.test(src));
 }
 
+/* ============================================================
+   6. A CATRACA DO EQUILÍBRIO — o que mudou em A4, e por quê
+
+   O QUE ESTAVA AQUI (até v9.225): UMA chamada de `roundRobin({ sementes:
+   30 })` — a família "rr", 30 sementes por par —, e os oito dentro de
+   35%–65%. Uma amostra só.
+
+   POR QUE ELA NÃO BASTAVA. A4 mediu 49 famílias independentes de 30
+   sementes/par (a sonda fora da amostra) e achou ZERO estouros: a faixa
+   se sustenta, e por isso NENHUM número de pronto mudou neste ciclo. Mas
+   a mesma medição mostrou o desvio-padrão de cada pronto entre famílias:
+   σ ≈ 3,4 pts. Nos extremos observados, `flecha` chegou a 63,8% (1,2 pt
+   do teto) e `voz`/`voto` a 37,1% (2,1 pts do piso) — dentro da faixa,
+   mas por pouco, e por sorte da amostra. Pior: os 61,9% de `flecha` que
+   a família "rr" imprime são o MÁXIMO do intervalo dela própria (fora da
+   amostra `flecha` fica em 49,5–57,6, e 55,7% no retrato de 480
+   sementes/par). Uma amostra só prova SORTE, não estabilidade — e ainda
+   deixava o diário com um retrato enviesado do roster.
+
+   O QUE A NOVA PROVA. Dois dentes:
+
+   - DENTE 1, estabilidade entre famílias. Quatro famílias de sementes
+     INDEPENDENTES (o parâmetro `prefixo` que A4 abriu em `roundRobin`),
+     cada uma do mesmo tamanho da amostra antiga, e os oito dentro da
+     faixa em TODAS. "rr" continua sendo uma delas, de propósito: assim o
+     retrato histórico do diário (flecha 61,9 etc.) segue comparável ao
+     dígito. As outras três foram escolhidas ANTES de medir.
+   - DENTE 2, o retrato de baixa variância. Uma amostra grande (120
+     sementes/par), os oito na faixa E um teto de AMPLITUDE. Este é o
+     dente que morde o caso que a faixa sozinha não pega: um pronto que
+     vira dominante sem estourar o teto — ele sobe, os outros descem, e
+     cada um continua entre 35 e 65 enquanto a distância entre o topo e o
+     fundo abre. A faixa aguenta; a amplitude não.
+
+   O LIMIAR 35–65 NÃO AFROUXOU — é o mesmo piso e o mesmo teto de sempre,
+   e agora tem de valer em cinco amostras em vez de uma. A catraca só
+   ficou mais dura.
+
+   VERIFICADO CONTRA ARENA MUTANTE (uma cópia de `arena.js` fora do
+   projeto, com um empurrão em `prepararDuelista`). Com `sombra` — o topo
+   estrutural do roster — ganhando +3 de vida máxima, a catraca ANTIGA
+   ficaria VERDE: na família "rr" ele mede 59,5%, dentro da faixa. A nova
+   fica vermelha três vezes: 67,6% em "aa", 66,2% em "bb" e amplitude
+   22,1 pts no retrato. Com +14 de vida e +4/+3 de atributo, `sombra` vai
+   a 94–97% e as quatro famílias mordem de uma vez.
+   ============================================================ */
 sec("6. A CATRACA DO EQUILÍBRIO — teste, não intenção");
 {
-  const rr = A.roundRobin({ sementes: 30 });
-  const taxas = Object.entries(rr);
-  t("os oito jogam o round-robin completo", taxas.length === 8);
-  for (const [id, tx] of taxas) {
-    t(`${id} vence entre 35% e 65% (${(tx * 100).toFixed(1)}%)`, tx >= 0.35 && tx <= 0.65);
+  /* A TABELA DA CATRACA — piso, teto, famílias, tamanhos e amplitude
+     saem daqui, e a própria suíte os lê de volta (lei "se é número, é
+     tabela"). Toda semente é fixa no código: `roundRobin` deriva a
+     semente de cada duelo do prefixo, e nada aqui sorteia. */
+  const CATRACA_DO_EQUILIBRIO = {
+    piso: 0.35,
+    teto: 0.65,
+    /* "rr" é o padrão de `roundRobin` e o retrato do diário; as outras
+       três são famílias independentes, escolhidas antes da medição. */
+    familias: ["rr", "aa", "bb", "cc"],
+    sementesPorFamilia: 30,
+    familiaDoRetrato: "retrato",
+    sementesDoRetrato: 120,
+    /* O TETO DE AMPLITUDE, em pontos percentuais (topo − fundo do
+       retrato). A FOLGA, declarada: o retrato mede hoje 15,7 pts, então
+       o teto de 20 dá 4,3 pts de folga. O número não é chute. A
+       amplitude estrutural do roster é ~13,9 pts (retrato de 480
+       sementes/par: sombra 58,1 · flecha 55,7 · muralha 51,8 · remendo
+       49,6 · punho 48,7 · chama 46,5 · voz 45,4 · voto 44,2 — quem está
+       no topo é `sombra`, não `flecha`). A 120 sementes/par o ruído
+       ainda infla isso: oito famílias medidas deram amplitude 13,0 ± 2,3
+       (mínimo 9,9, máximo 16,2), e a nossa, "retrato", caiu no lado alto
+       dessa distribuição com 15,7.
+       POR QUE 20 E NÃO 16. A semente é fixa, mas qualquer mexida na
+       arena reembaralha o fluxo do RNG — na prática a amplitude é
+       RESORTEADA daquela distribuição a cada mudança de código. Um teto
+       colado nos 15,7 de hoje ficaria vermelho na primeira brisa, sem
+       nenhum pronto ter ficado dominante. 20 é ~3σ acima da média da
+       distribuição: a brisa não derruba.
+       POR QUE NÃO 25 OU 30. Precisa morder. Com teto 20, um pronto que
+       encoste em 64% (verde na faixa!) contra um fundo em 42% dá 22 pts
+       e fica VERMELHO aqui — que é exatamente o caso que este dente
+       existe para pegar. */
+    tetoDeAmplitude: 20,
+  };
+  const t0 = Date.now();
+  const naFaixa = (tx) => tx >= CATRACA_DO_EQUILIBRIO.piso && tx <= CATRACA_DO_EQUILIBRIO.teto;
+  const faixaEmPct = `${(CATRACA_DO_EQUILIBRIO.piso * 100).toFixed(0)}% e ${(CATRACA_DO_EQUILIBRIO.teto * 100).toFixed(0)}%`;
+
+  /* DENTE 1 — a faixa vale em toda família, não na que deu sorte */
+  for (const fam of CATRACA_DO_EQUILIBRIO.familias) {
+    const rr = A.roundRobin({ sementes: CATRACA_DO_EQUILIBRIO.sementesPorFamilia, prefixo: fam });
+    const taxas = Object.entries(rr);
+    t(`[${fam}] os oito jogam o round-robin completo`, taxas.length === 8);
+    for (const [id, tx] of taxas) {
+      t(`[${fam}] ${id} vence entre ${faixaEmPct} (${(tx * 100).toFixed(1)}%)`, naFaixa(tx));
+    }
   }
+
+  /* DENTE 2 — o retrato de baixa variância, e a distância entre topo e fundo */
+  const ret = A.roundRobin({ sementes: CATRACA_DO_EQUILIBRIO.sementesDoRetrato, prefixo: CATRACA_DO_EQUILIBRIO.familiaDoRetrato });
+  const pct = Object.values(ret).map((x) => x * 100);
+  const amplitude = Math.max(...pct) - Math.min(...pct);
+  const ordem = Object.entries(ret).sort((a, b) => b[1] - a[1]).map(([id, tx]) => `${id} ${(tx * 100).toFixed(1)}`).join(" · ");
+  console.log(`  ··  retrato de baixa variância (${CATRACA_DO_EQUILIBRIO.sementesDoRetrato} sementes/par): ${ordem}`);
+  for (const [id, tx] of Object.entries(ret)) {
+    t(`[retrato] ${id} vence entre ${faixaEmPct} (${(tx * 100).toFixed(1)}%)`, naFaixa(tx));
+  }
+  t(`a amplitude do retrato não passa de ${CATRACA_DO_EQUILIBRIO.tetoDeAmplitude} pts (${amplitude.toFixed(1)} pts entre o topo e o fundo)`,
+    amplitude <= CATRACA_DO_EQUILIBRIO.tetoDeAmplitude,
+    `topo ${Math.max(...pct).toFixed(1)}% · fundo ${Math.min(...pct).toFixed(1)}%`);
+  console.log(`  ··  a catraca levou ${Date.now() - t0}ms (${CATRACA_DO_EQUILIBRIO.familias.length} famílias de ${CATRACA_DO_EQUILIBRIO.sementesPorFamilia} + o retrato de ${CATRACA_DO_EQUILIBRIO.sementesDoRetrato})`);
 }
 
 /* ============================================================

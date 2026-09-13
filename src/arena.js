@@ -329,15 +329,20 @@ export function duelarProntos(idA, idB, { semente = "duelo", melhorDe = 3 } = {}
 }
 
 /* o round-robin completo do roster: todo par, muitas sementes. Devolve a
-   taxa de vitória de cada pronto — a suíte trava a faixa (35%–65%). */
-export function roundRobin({ sementes = 20, melhorDe = 3 } = {}) {
+   taxa de vitória de cada pronto — a suíte trava a faixa (35%–65%).
+   O `prefixo` escolhe a FAMÍLIA de sementes: uma família só é uma amostra, e
+   amostra tem ruído — o mesmo pronto oscila vários pontos de família para
+   família. A catraca precisa provar estabilidade ENTRE famílias independentes,
+   não a sorte de uma; por isso a família entra por parâmetro. O padrão "rr"
+   mantém, ao dígito, o retrato que a suíte já conhecia. */
+export function roundRobin({ sementes = 20, melhorDe = 3, prefixo = "rr" } = {}) {
   const vit = Object.fromEntries(PRONTOS.map((p) => [p.id, 0]));
   const jogos = Object.fromEntries(PRONTOS.map((p) => [p.id, 0]));
   for (let i = 0; i < PRONTOS.length; i++) {
     for (let j = i + 1; j < PRONTOS.length; j++) {
       const a = PRONTOS[i].id, b = PRONTOS[j].id;
       for (let s = 0; s < sementes; s++) {
-        const r = duelarProntos(a, b, { semente: `rr|${a}|${b}|${s}`, melhorDe });
+        const r = duelarProntos(a, b, { semente: `${prefixo}|${a}|${b}|${s}`, melhorDe });
         jogos[a]++; jogos[b]++;
         vit[r.vencedor === "A" ? a : b]++;
       }
