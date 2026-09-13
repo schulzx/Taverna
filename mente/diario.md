@@ -16,6 +16,59 @@ Formato:
 
 ---
 
+## 13/09 18:05 · v9.224 · A2 · os efeitos viram módulo puro · commit `HASH_A2`
+- **estado inicial:** 179/179 suítes verdes, 7/7 varredores limpos, árvore
+  limpa, HEAD `8fd6cbd`. A vez era a etapa A2 da Fase A — a segunda do bloco
+  aprovado, e a mais delicada, porque mexe no que a campanha já usa.
+- **conselheiro:** não chamado (pauta cheia, e a etapa já estava escrita).
+- **backend:** nasceu `src/efeitos.js` — puro, sem React, só depende de
+  `combos.js`. Seis tabelas nomeadas no lugar de constantes soltas
+  (`LIMITES_DO_EFEITO`, `BUFF_DA_HABILIDADE`, `EFEITO_DO_MILAGRE`,
+  `EFEITO_DA_MAGIA`, `APLICA_UNIVERSAL`, `APLICA_NA_NOTA`) e onze funções —
+  o nascimento (`efeitoDeBuff`, `efeitoDeMilagre`, `efeitoDeMagia`), a pilha
+  (`empilhar`, `retirar`), a leitura (`efeitosDe`, `buffsNaRolagem`,
+  `notaDosBuffs`) e a concentração (`efeitoEmConcentracao`,
+  `quebrarConcentracao`). `regras-jogo.js`, `pocoes.js` e `relicas.js`
+  passaram a ler a mesma pilha.
+- **frontend:** as seis trocas do mapa no `App.jsx`, por script `.cjs` com
+  âncora única — 26 linhas viraram 18, sem variável órfã e sem import morto.
+  A nota "(inclui bônus de ...)" sai byte a byte igual.
+- **testes:** `testes/teste-efeitos.mjs`, 168 asserções em 11 seções —
+  duração, decaimento (ponte com `tickEfeitos`), pilha, os dois casamentos,
+  imutabilidade, 25 casos de lixo, a conta do buff, a nota da rolagem, a
+  concentração, e a seção "ligado ao jogo". `npm test` 180/180 + 7/7.
+- **a catraca de regressão (o que esta etapa prometeu):** as dez suítes de
+  combate verdes sem uma asserção afrouxada, e **os dois números de A1
+  idênticos** — 20 de 420 aberturas mortas (4,8%) e dano depois da guarda
+  1,034×. As duas `pendente(...)` continuam pendentes: A2 não as promove,
+  elas são o veredito de A3. **Regressão zero em Uma Vida confirmada.**
+- **decisões médias tomadas:**
+  - **O que já era módulo ficou onde estava.** A GUARDA inteira já vive em
+    `habilidades.js` desde a v9.53 (`erguerGuarda`, `expirarGuardas`,
+    `defesaDeGuarda`) e `combate.js` já a lê — no `App.jsx` não sobrou guarda
+    solta, só chamadas. O relógio (`tickEfeitos`) e o modificador
+    (`bonusEfeito`, `atributoEfetivo`) ficaram em `regras-jogo.js`: movê-los
+    seria refazer `aplicarMudancas` inteira, risco grande e ganho zero para
+    A3. O alvo de A2 era o que estava **solto no App**, e é isso que desceu.
+  - **Três módulos vizinhos foram tocados de propósito.** `regras-jogo.js`,
+    `pocoes.js` e `relicas.js` repetiam a mesma pilha à mão. Fazê-los ler
+    `empilhar` é o que impede `efeitos.js` de nascer módulo mudo — a lei do
+    export morto vale no dia em que a regra nasce.
+  - **A pilha tinha duas regras convivendo sem ninguém saber**, e agora têm
+    nome: o canal do Mestre casa o nome **sem caixa** (`casamento: "solto"`),
+    o App, as poções e as relíquias casam **exato**. Portado como era — só
+    deixou de ser duas linhas parecidas em arquivos distantes.
+  - **Nada entrou em `calou(...)`, e é decisão, não esquecimento.** Os seis
+    sítios já estavam fora de `try/catch` antes, e a superfície de exceção
+    só diminuiu (o módulo trata `null` onde o código antigo estourava).
+    Embrulhar agora exigiria decidir o que vale `p`, `extraEscopo` e `pers`
+    quando falha — isso é desenho, não refatoração, e a promessa da etapa era
+    regressão zero. Fica anotado na pauta como item próprio.
+- **o que ficou:** cinco achados, todos **portados como estão** (a etapa era
+  refatoração; consertar é A3 ou item novo) e todos já na pauta como abertos.
+  Nenhuma etapa foi promovida a pesado, nada voltou vermelho, nenhuma
+  devolução foi necessária.
+
 ## 13/09 17:45 · v9.223 · A1 · a prova que mede o buraco · commit `a44da9c`
 - **estado inicial:** 179/179 suítes verdes, 7/7 varredores limpos, árvore
   limpa, HEAD `e35dfca`. Pauta com 4 etapas aprovadas (Fase A) + 4 (Fase R) +

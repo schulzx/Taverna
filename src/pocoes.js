@@ -14,6 +14,7 @@
    ============================================================ */
 
 import { criarCondicao } from "./condicoes.js";
+import { empilhar } from "./efeitos.js";
 
 const d = (n) => 1 + Math.floor(Math.random() * n);
 export function rolarDado(qtd, faces, fixo = 0) {
@@ -134,9 +135,9 @@ export function usarConsumivel(ent, idOuItem) {
     p.mana = Math.min(p.manaMax || antes, antes + bruto);
     texto = `${c.icone} ${c.nome}: ${textoDado(q, f, fx)} = ${bruto} → +${p.mana - antes} PM (${p.mana}/${p.manaMax})`;
   } else if (c.tipo === "atributo") {
-    const efeitos = (p.efeitos || []).filter((e) => e.nome !== c.nome);
-    efeitos.push({ nome: c.nome, bonus: c.bonus, turnos: c.turnos, aplica: c.rotulo, descricao: c.desc });
-    p.efeitos = efeitos;
+    /* v9.224: a pilha é de `efeitos.js` — o novo elixir substitui o de mesmo
+       nome e reinicia o prazo. Era esta mesma linha repetida em cinco lugares. */
+    p.efeitos = empilhar(p.efeitos, { nome: c.nome, bonus: c.bonus, turnos: c.turnos, aplica: c.rotulo, descricao: c.desc });
     texto = `${c.icone} ${c.nome}: +${c.bonus} em ${c.rotulo} por ${c.turnos} turnos`;
   } else if (c.tipo === "condicao") {
     const cond = criarCondicao(c.condicao, { origem: c.nome });

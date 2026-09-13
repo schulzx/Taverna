@@ -25,6 +25,7 @@ import { garantirPreparadas, preparadasIniciais, temCaderno } from "./magias.js"
 import { garantirSintonia, sintoniaInicial, atributosValem } from "./sintonia.js";
 import { comDom, repousarTracos } from "./tracos.js";
 import { curaExtraDoHeroi, curaExtraDoGrupo } from "./profissoes.js";
+import { LIMITES_DO_EFEITO, APLICA_UNIVERSAL, empilhar, retirar } from "./efeitos.js";
 
 /* O QUE UM NÍVEL RENDE DE CORPO. Estavam soltos dentro do laço, e a tela
    do nível anunciava "+3 PV máx · +2 PM máx" — metade do que a regra dá de
@@ -233,17 +234,20 @@ export function aplicarMudancas(pers, m, msgs, notas = []) {
 
   let novo = { ...pers, vida, mana, moedas, inventario: inv, habilidades: habs, grupo };
 
-  /* EFEITOS TEMPORÁRIOS (buffs com duração) — bônus limitado a +2 por equilíbrio */
+  /* EFEITOS TEMPORÁRIOS (buffs com duração) — os tetos são de `efeitos.js`
+     desde a v9.224: eram dois números soltos no meio deste laço, e a suíte
+     não tinha onde lê-los de volta. A pilha é a mesma de sempre (o novo
+     substitui o de mesmo nome), com o casamento SOLTO que este canal sempre
+     usou — o nome vem digitado pela IA, e caixa não pode criar duplicata. */
   let efeitos = [...(pers.efeitos || [])];
   (m.efeitos_adicionar || []).forEach((ef) => {
     if (!ef?.nome) return;
-    const bonus = Math.max(1, Math.min(2, ef.bonus ?? 2)); // teto de +2
-    const turnos = Math.max(1, Math.min(10, ef.turnos ?? 3)); // teto de 10 turnos
-    efeitos = efeitos.filter((e) => e.nome.toLowerCase() !== ef.nome.toLowerCase());
-    efeitos.push({ nome: ef.nome, bonus, turnos, aplica: ef.aplica || "", descricao: ef.descricao || "" });
+    const bonus = Math.max(LIMITES_DO_EFEITO.bonusMin, Math.min(LIMITES_DO_EFEITO.bonusMax, ef.bonus ?? LIMITES_DO_EFEITO.bonusPadrao));
+    const turnos = Math.max(LIMITES_DO_EFEITO.turnosMin, Math.min(LIMITES_DO_EFEITO.turnosMax, ef.turnos ?? LIMITES_DO_EFEITO.turnosPadrao));
+    efeitos = empilhar(efeitos, { nome: ef.nome, bonus, turnos, aplica: ef.aplica || "", descricao: ef.descricao || "" }, { casamento: "solto" });
     msgs.push(`✧ ${ef.nome} ativo (+${bonus} em ${ef.aplica || "testes"}, ${turnos} turno${turnos !== 1 ? "s" : ""})`);
   });
-  (m.efeitos_remover || []).forEach((nome) => { efeitos = efeitos.filter((e) => e.nome.toLowerCase() !== (nome || "").toLowerCase()); });
+  (m.efeitos_remover || []).forEach((nome) => { efeitos = retirar(efeitos, nome, { casamento: "solto" }); });
   novo.efeitos = efeitos;
 
   /* EQUIPAMENTOS obtidos (vão para a mochila de equipamentos, não equipados ainda) */
@@ -337,10 +341,16 @@ export function bonusEquip(pers, attrId) {
   });
   return b;
 }
+/* v9.224: "testes" e "todos" eram duas strings soltas nesta condição — os
+   dois rótulos coringa de `aplica`, que valem em qualquer rolagem. Viraram
+   `APLICA_UNIVERSAL`, em efeitos.js, ao lado dos outros números do órgão.
+   A conta é a mesma; só a régua mudou de casa. */
 export function bonusEfeito(pers, attrNome) {
   let b = 0;
+  const alvo = String(attrNome == null ? "" : attrNome).toLowerCase();
   (pers.efeitos || []).forEach((e) => {
-    if (!e.aplica || e.aplica.toLowerCase() === (attrNome || "").toLowerCase() || e.aplica.toLowerCase() === "testes" || e.aplica.toLowerCase() === "todos") b += e.bonus;
+    const ap = String(e.aplica == null ? "" : e.aplica).toLowerCase();
+    if (!e.aplica || ap === alvo || APLICA_UNIVERSAL.includes(ap)) b += e.bonus;
   });
   return b;
 }

@@ -17,7 +17,15 @@ Formato de um item:
 
 ## Para a pessoa decidir (pesado)
 
-_(vazio — as quatro de 13/09 foram respondidas; ver "Aprovado" abaixo)_
+- [ ] **a concentração está escrita e nunca acontece** · pesado · de: backend (achado de A2) · 13/09
+  `App.jsx:13082` testa quem está concentrando quando o jogador apanha, e o
+  teste **nunca dispara**: o campo `e.concentracao` existe em `condicoes.js:161`
+  e no catálogo do `grimorio.js`, mas **nenhum dos três nascimentos de efeito
+  o copia** para `pers.efeitos`. Regra 5e inteira inerte, da família do
+  "Comando: Atacar". Ligar é barato (uma linha em `efeitoDeMagia`), mas é
+  pesado por consequência, não por custo: passa a existir uma forma nova de o
+  jogador **perder** a magia que pagou — mecânica que muda o que ele vive, em
+  campanha viva. A pessoa decide se a magia de duração deve poder quebrar.
 
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
 
@@ -35,11 +43,14 @@ deveria"* — o caminho caro, não o diagnóstico barato.
   `MEDIDA_DO_BURACO`. **O número do "antes":** 420 quedas · 382 meias-rodadas
   mortas (0,91 por queda, 8,3% do total) · 20 quedas (4,8%) abrem com duas
   guardas · dano depois da guarda 1,034× o normal. Ver o diário.
-- [ ] **A2 · os efeitos viram módulo puro** · de: pessoa+conselheiro · 13/09
-  O sistema de efeitos que hoje vive no `App.jsx` (buff, guarda, duração,
-  pilha) desce para um módulo próprio em `src/` provável em Node, sem mudar
-  o que o jogador vê na campanha. O App passa a chamar. Catraca: as suítes
-  de combate existentes continuam verdes — regressão zero em Uma Vida.
+- [x] **A2 · os efeitos viram módulo puro** · feito em v9.224 (`HASH_A2`), 13/09
+  Nasceu `src/efeitos.js` (6 tabelas, 11 funções); o `App.jsx` perdeu as seis
+  duplicatas; `regras-jogo.js`, `pocoes.js` e `relicas.js` leem a mesma pilha.
+  `teste-efeitos.mjs` com 168 asserções. **Regressão zero conferida:** as dez
+  suítes de combate verdes e os dois números de A1 idênticos (20/420 = 4,8%;
+  dano após guarda 1,034×). A GUARDA já era módulo (`habilidades.js` desde a
+  v9.53) e ficou lá — para A3 a arena não precisa de código novo de guarda,
+  só de chamar `erguerGuarda`. Cinco achados anotados abaixo. Ver o diário.
 - [ ] **A3 · a arena consome os efeitos** · de: pessoa+conselheiro · 13/09
   `arena.js` deixa de traduzir `buff`/`guarda` em prosa vazia e aplica o
   módulo de A2: o buff dura, soma, e aparece no número. A narração da queda
@@ -56,6 +67,16 @@ deveria"* — o caminho caro, não o diagnóstico barato.
   `t(...)` já escrito no comentário de cada uma, contra os limiares da
   tabela `MEDIDA_DO_BURACO` (`tetoDeAberturasMortas: 0`,
   `razaoMaximaDeDanoAposGuarda: 0.9`).
+  **O que A2 deixou pronto (13/09):** a arena importa `src/efeitos.js` e pronto
+  — a pilha, o prazo e o nascimento já existem provados (`empilhar`,
+  `efeitoDeBuff`), e a GUARDA nunca precisou nascer: `habilidades.js` já tem
+  `erguerGuarda`/`defesaDeGuarda` e `combate.js:69/96/103` já os lê por
+  `defesaDe`. Herdado de A2, para decidir aqui: `APLICA_NA_NOTA` (`["testes"]`)
+  é menor que `APLICA_UNIVERSAL` (`["testes","todos"]`) — um efeito
+  `aplica: "todos"` **soma no número e não aparece** no "(inclui bônus de ...)".
+  Portado assim de propósito (regressão zero); `teste-efeitos.mjs` seção 9 trava
+  o comportamento atual com o motivo escrito. Se A3 fizer o buff aparecer na
+  narração, é essa asserção que fala primeiro.
 - [ ] **A4 · o equilíbrio refeito** · de: pessoa+conselheiro · 13/09
   Com os efeitos valendo, a catraca de 35–65% do round-robin 8×8 vai sair
   da faixa. Reajustar os prontos (atributos, magias, equipamento) até
@@ -91,6 +112,51 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   da revelação.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **"1 Hora" dura seis vezes menos que "1 hora"** · leve · de: testes (achado de A2) · 13/09
+  `EFEITO_DA_MAGIA.rxLonga` (`efeitos.js`) é `/hora/` **sem o `i`**: uma magia
+  cuja `duracao` diga "1 Hora" com maiúscula cai na faixa curta — 10 turnos em
+  vez de 60. Nenhum texto do catálogo escreve assim hoje, então é inerte; é uma
+  letra de distância de um bug de duração que ninguém veria acontecer. Linha
+  "bug com teste que prova": a prova escreve "1 Hora" e exige `turnosLongos`,
+  falha antes e passa depois. Fica em `teste-efeitos.mjs` seção 2.
+
+- [ ] **o milagre que manda zero recebe o padrão** · leve · de: testes (achado de A2) · 13/09
+  `efeitoDeMilagre` (`efeitos.js`) usa `||` onde a intenção é `??`: um efeito
+  com `{bonus: 0}` ou `{turnos: 0}` cai no padrão (2 e 5) em vez de valer zero
+  — "sem número" e "número zero" apagados em silêncio. Nenhum milagre do
+  catálogo manda zero hoje. Portado assim de propósito em A2 (regressão zero);
+  o conserto é `??` nos dois campos, com a prova que hoje trava o
+  comportamento atual invertida e o motivo escrito no comentário (lei "ao mover
+  uma asserção, escreva o motivo"). Linha "bug com teste que prova".
+
+- [ ] **o teto de turnos só vale para um dos dois canais** · leve · de: testes (achado de A2) · 13/09
+  `LIMITES_DO_EFEITO.turnosMax` (10) poda só o que o **Mestre** pede via
+  `aplicarMudancas`; o nascimento interno não passa por ele, e a magia de uma
+  hora dura 60 turnos legitimamente. É como sempre foi — mas agora está
+  escrito, e a tabela tem nome de "limites do efeito" sem limitar todos os
+  efeitos. Ou o teto do canal do Mestre ganha nome honesto
+  (`LIMITES_DO_CANAL_DO_MESTRE`), ou a tabela declara os dois tetos. Só nome e
+  comentário; nenhum número muda. Linha "comentário, nome, cabeçalho".
+
+- [ ] **os seis sítios de efeito no App estão fora do `calou(...)`** · médio · de: frontend (achado de A2) · 13/09
+  Os seis pontos que A2 refiou (`App.jsx` 7727, 9397, 12200, 13085, 13142,
+  14262) e as duas chamadas de `aplicarBuffDeHabilidade` (12481, 12598) estão
+  **todos fora de qualquer `try/catch`** — e já estavam antes de A2, que só
+  diminuiu a superfície de exceção. A lei "nunca pode custar o turno" pede o
+  `calou(...)`; A2 não embrulhou de propósito, porque decidir o que valem `p`,
+  `extraEscopo`, `pers` e `notaBuff` quando a coisa falha é desenho, não
+  refatoração. Cuidado que a etapa herda: 12200 embrulha um `cobrar` (pagamento
+  de PM) — exceção engolida ali dropa um custo em silêncio, o que é **pior** que
+  falhar à vista. O item é decidir caso a caso, não embrulhar em bloco.
+  Catraca: `teste-efeitos.mjs` + as dez suítes de combate.
+
+- [ ] **duas leituras de `.efeitos` que não passaram pelo módulo** · leve · de: frontend (achado de A2) · 13/09
+  `App.jsx:6721` (`(p.efeitos || []).some(...)`) e `:11487`
+  (`.find((e) => e.nome === ...)`) ganhariam a segurança de `efeitosDe` (que
+  aguenta `null` e buraco na lista), mas ficaram fora do mapa de A2 e portá-las
+  seria inventar leitor fora do acordado. Nenhuma urgência: são leituras, não
+  pilha. Linha "comentário, nome, cabeçalho" / limpeza.
 
 - [ ] **acender os sinais baratos do snapshot do episódio** · médio · de: conselheiro · 13/09
   `snapshotDoEpisodio` (`App.jsx:9684`) entrega só `temLugarAmado`,

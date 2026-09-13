@@ -43,6 +43,7 @@
    ============================================================ */
 
 import { criarCondicao } from "./condicoes.js";
+import { empilhar } from "./efeitos.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -284,9 +285,9 @@ export function usarAtivo(pers, rel, { dia = 0 } = {}) {
     if (tirou > 0) partes.push(`${tirou} condição${tirou === 1 ? "" : "ões"} embora`);
   }
   if (e.buff && e.buff.nome) {
-    const efeitos = (p.efeitos || []).filter((x) => x.nome !== e.buff.nome);
-    efeitos.push({ nome: e.buff.nome, bonus: e.buff.bonus, turnos: e.buff.turnos, aplica: e.buff.aplica || "todos", descricao: rel.ativo.diz });
-    p.efeitos = efeitos;
+    /* v9.224: a mesma pilha de `efeitos.js` que o elixir usa — acionar a
+       relíquia de novo renova o buff, não o soma a si mesmo. */
+    p.efeitos = empilhar(p.efeitos, { nome: e.buff.nome, bonus: e.buff.bonus, turnos: e.buff.turnos, aplica: e.buff.aplica || "todos", descricao: rel.ativo.diz });
     partes.push(`+${e.buff.bonus} em ${e.buff.aplica || "tudo"} por ${e.buff.turnos} turnos`);
   }
   p.relicaGastos = { ...garantirGastos(p), [rel.id]: dia };

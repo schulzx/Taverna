@@ -191,6 +191,7 @@ import { gatilhosDe, romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, 
 import { controleDe, aplicarControle, expirarControles, estaProvocando, CONTROLE_PROMPT } from "./controle.js";
 import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, expirarPorMinuto, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, temComandoAtacar, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
 import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, temRegraPropria, erguerGuarda, expirarGuardas, baixarGuardas, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, ignoraDoGolpe, linhaDoIgnorar, notaDoIgnorar, apressar, expirarPressa, baixarPressa, acoesPorRodada, HABILIDADES_PROMPT } from "./habilidades.js";
+import { empilhar, efeitoDeBuff, efeitoDeMilagre, efeitoDeMagia, efeitoEmConcentracao, quebrarConcentracao, notaDosBuffs } from "./efeitos.js";
 import { agruparMensagens } from "./resumo.js";
 
 /* ============================================================
@@ -7723,11 +7724,9 @@ export default function Taverna() {
        habilidade que o criou: fúria de guerreiro só levanta golpe físico. */
     let extraEscopo = "";
     if (res.cond.tipo === "bom") {
-      const forca = Math.max(1, Math.round((Number(h.custo) || 2) / 2));
-      const escopo = naturezaDaHabilidade(h, pers);
-      const efeito = { nome: h.nome, bonus: forca, turnos: res.cond.turnos || 3, aplica: "dano", escopo };
-      p = { ...p, efeitos: [...(p.efeitos || []).filter((e) => e.nome !== h.nome), efeito] };
-      extraEscopo = ` · +${forca} de dano ${escopo === "fisico" ? "físico" : "mágico"}`;
+      const buff = efeitoDeBuff(h, pers, res.cond.turnos);
+      p = { ...p, efeitos: empilhar(p.efeitos, buff.efeito) };
+      extraEscopo = buff.extraEscopo;
     }
     return {
       pers: p,
@@ -9395,9 +9394,7 @@ export default function Taverna() {
       notaMestre += ` A cura JÁ está nas fichas: eu recuperei ${curou} PV${nomes.length ? ` e o grupo também (${nomes.join(", ")})` : ""}. Narre o alívio, não os números.`;
     } else if (ef.tipo === "efeito") {
       aplicarNaFicha((p) => {
-        const efeitos = (p.efeitos || []).filter((e) => e.nome !== ef.nome);
-        efeitos.push({ nome: ef.nome, bonus: ef.bonus || 2, turnos: ef.turnos || 5, aplica: "todos", descricao: mil.desc });
-        return { ...p, efeitos };
+        return { ...p, efeitos: empilhar(p.efeitos, efeitoDeMilagre(ef, mil.desc)) };
       });
       msgs.push({ autor: "sistema", texto: `✧ ${ef.nome} ativo por ${ef.turnos} turnos` });
     } else if (ef.tipo === "dano_area" && combateRef.current) {
@@ -12200,9 +12197,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        turnos, e é a contagem que faz a magia acabar em vez de durar o quanto
        a cena convier */
     if (["invisibilidade", "voo", "luz"].includes(m.funcao)) {
-      const turnos = m.duracao && /hora/.test(m.duracao) ? 60 : 10;
-      const efeitos = [...(p0.efeitos || []).filter((e) => e.nome !== m.nome), { nome: m.nome, bonus: 0, turnos, aplica: "todos", descricao: m.descricao }];
-      const pers = cobrar({ ...p0, efeitos });
+      const dur = efeitoDeMagia(m);
+      const turnos = dur.turnos;
+      const pers = cobrar({ ...p0, efeitos: empilhar(p0.efeitos, dur.efeito) });
       pushMsgs([linhaJogador, { autor: "sistema", texto: `✧ ${m.nome} ativo por ${turnos} turnos · −${m.custo} PM` }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[${m.nome.toUpperCase()} — ATIVO, CONTADO PELO SISTEMA] A magia está em vigor por ${turnos} turnos: ${m.descricao} Trate como fato em toda cena até o sistema avisar que acabou — o mundo reage a isso (quem não me vê, não me acha; quem está no chão, não me alcança). Não a encerre por conta própria.`;
       enviar(`[${m.nome}] ${acao}`, pers);
@@ -13085,7 +13082,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (danoNoJogador > 0) {
       danoJaAplicadoRef.current = true;
       /* CONCENTRAÇÃO (5e): apanhou, testa para manter a magia de duração */
-      const concentrando = (persBase.efeitos || []).find((e) => e.concentracao);
+      const concentrando = efeitoEmConcentracao(persBase);
       if (concentrando) {
         const tc = testeConcentracao(danoNoJogador, atributoEfetivo(persBase, "vigor"));
         const extra = [];
@@ -13142,7 +13139,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       pushMsgs([{ autor: "sistema", texto: "🩸 Fúria persistente — você deveria cair, e não cai: fica com 1 PV (uma vez por descanso longo)." }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FÚRIA PERSISTENTE — APLICADA PELO SISTEMA] O golpe me levaria a 0 e eu fiquei de pé com 1 PV: é o traço da minha origem, e ele só faz isso uma vez por descanso longo. NÃO me trate como caído. Narre o corpo que se recusa — o joelho que trava, o ar que volta pelos dentes —, e deixe claro que agora qualquer coisa me derruba.`;
     }
-    if (persConcQuebrada) persAtual = { ...persAtual, efeitos: (persAtual.efeitos || []).filter((e) => e.nome !== persConcQuebrada) };
+    if (persConcQuebrada) persAtual = quebrarConcentracao(persAtual, persConcQuebrada);
     persAtual = aplicarCondicoesDosGolpes(acoes, persAtual);
 
     /* TURNO DOS COMPANHEIROS: atacam inimigos ou socorrem quem caiu.
@@ -14262,8 +14259,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        apressá-lo nem atrasá-lo com o que faz. */
     if (desastre) tiquear("falha", { porque: "você falhou feio" });
     else if (dc != null && (critico || total >= dc)) tiquear("sucesso", { porque: "você conseguiu o que queria" });
-    const buffs = (personagem.efeitos || []).filter((e) => !e.aplica || e.aplica.toLowerCase() === (r.atributo || "").toLowerCase() || e.aplica.toLowerCase() === "testes");
-    const notaBuff = buffs.length ? ` (inclui bônus de ${buffs.map((b) => b.nome).join(", ")})` : "";
+    const notaBuff = notaDosBuffs(personagem, r.atributo);
     pushMsgs([{ autor: "sistema", texto: `🎲 d20 → ${valor}${mod ? ` + ${mod}` : ""} = ${total}${dc != null ? ` vs dif. ${dc}` : ""} · ${resultado}${dadoAnterior != null ? ` ✧ (refeito — o primeiro deu ${dadoAnterior})` : ""}` }]);
     /* ---------------- O PREÇO DE FALHAR (v9.49) ----------------
        A terceira e última fonte de condição do jogo, agora que o Mestre
