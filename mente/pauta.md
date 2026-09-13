@@ -43,7 +43,7 @@ deveria"* — o caminho caro, não o diagnóstico barato.
   `MEDIDA_DO_BURACO`. **O número do "antes":** 420 quedas · 382 meias-rodadas
   mortas (0,91 por queda, 8,3% do total) · 20 quedas (4,8%) abrem com duas
   guardas · dano depois da guarda 1,034× o normal. Ver o diário.
-- [x] **A2 · os efeitos viram módulo puro** · feito em v9.224 (`HASH_A2`), 13/09
+- [x] **A2 · os efeitos viram módulo puro** · feito em v9.224 (`a137790`), 13/09
   Nasceu `src/efeitos.js` (6 tabelas, 11 funções); o `App.jsx` perdeu as seis
   duplicatas; `regras-jogo.js`, `pocoes.js` e `relicas.js` leem a mesma pilha.
   `teste-efeitos.mjs` com 168 asserções. **Regressão zero conferida:** as dez

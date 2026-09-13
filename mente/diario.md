@@ -16,7 +16,7 @@ Formato:
 
 ---
 
-## 13/09 18:05 · v9.224 · A2 · os efeitos viram módulo puro · commit `HASH_A2`
+## 13/09 18:05 · v9.224 · A2 · os efeitos viram módulo puro · commit `a137790`
 - **estado inicial:** 179/179 suítes verdes, 7/7 varredores limpos, árvore
   limpa, HEAD `8fd6cbd`. A vez era a etapa A2 da Fase A — a segunda do bloco
   aprovado, e a mais delicada, porque mexe no que a campanha já usa.
