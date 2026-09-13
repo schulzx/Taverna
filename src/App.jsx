@@ -69,7 +69,7 @@ import { garantirCompasso, avancarCompasso, envelopeDoCompasso, resumoCompasso, 
 import { garantirLivro, semear, regar, pagar } from "./promessas.js";
 /* ITENS UTEIS (v9.200) — a lei que mata o item inerte. Classifica em
    itens-uteis.js; o efeito da semente fala com o Livro, o resto narra. */
-import { acaoDaBolsa, sementeDoItem, colheitaDoItem, verboPorId, classeDoItem } from "./itens-uteis.js";
+import { acaoDaBolsa, sementeDoItem, colheitaDoItem, verboPorId } from "./itens-uteis.js";
 /* A MESA POSTA (v9.201) — o juizo da acao. Catalogo em mesa-posta.js; a
    aposta (as duas versoes da cena) entra na pauta quando a acao casa. */
 import { situacaoQueCasa, apostas } from "./mesa-posta.js";
@@ -79,7 +79,7 @@ import { lerTermometro, folegoDaLeitura } from "./termometro.js";
 /* AS REVIRAVOLTAS (v9.203) — a verdade escondida, eleita na criacao,
    semeada no Livro e revelada quando a catraca deixa. Conta em
    reviravoltas.js; o App elege, planta, rega e revela. */
-import { garantirReviravolta, elegerReviravoltas, sementesDaReviravolta, podeRevelar, oDiaSeguinte, revelacaoDe, DIAS_ENTRE_REGAS } from "./reviravoltas.js";
+import { garantirReviravolta, elegerReviravoltas, sementesDaReviravolta, podeRevelar, oDiaSeguinte, revelacaoDe, alvoDaForma, DIAS_ENTRE_REGAS } from "./reviravoltas.js";
 /* O PESO DA CENA (v9.204) — luto e gloria como movimento. Conta em
    peso.js; o App junta os fatos de evento e a pauta cala o mercado. */
 import { pesoDaCena, vetoDoPeso, seguraOCompasso } from "./peso.js";
@@ -9884,27 +9884,27 @@ export default function Taverna() {
     } catch (e) { calou("mexerNoEncalhe", e); }
   };
 
-  /* que forma consegue achar um ALVO vivo agora. E o detector de cada
-     reviravolta — a soNasceSe traduzida em refs. Duas tem sinal barato
-     hoje (o aliado traidor, o item de origem vaga); as demais ficam
-     dormentes ate ganharem detector, como fio solto do mundo. */
+  /* que forma consegue achar um ALVO vivo agora. As SETE formas tem
+     detector (v9.228): quem decide e reviravoltas.js, e aqui so se
+     junta o mundo que ele le — a semente, o vilao, o grupo e a bolsa da
+     ficha viva, o registro de pessoas, as missoes e o mapa. Cru: a
+     fachada normaliza e engole o proprio tropeco. A regra que morava
+     nesta funcao migrou inteira; duplicar seria as duas metades
+     discordando amanha. */
   const alvoDaReviravolta = (forma) => {
     try {
-      const v = nemesisRef.current;
-      const temVilao = !!(v && v.status !== "derrotada" && v.nome);
-      if (forma === "aliado_agente") {
-        if (!temVilao) return null;
-        const grupo = ((fichaViva() || personagem || {}).grupo) || [];
-        const traidor = grupo.find((g) => { try { return indoleDaPessoa(g).proposito === "trair"; } catch (e) { return false; } });
-        return (traidor && traidor.nome) ? traidor.nome : null;
-      }
-      if (forma === "heranca_roubada") {
-        const inv = ((fichaViva() || personagem || {}).inventario) || [];
-        const item = inv.find((x) => { try { return classeDoItem(x) === "semente"; } catch (e) { return false; } });
-        if (!item) return null;
-        return typeof item === "string" ? item : (item.nome || "a heranca");
-      }
-      return null;
+      const f = fichaViva() || personagem || {};
+      return alvoDaForma(forma, {
+        semente: sementeMundo(),
+        vilao: nemesisRef.current,
+        grupo: f.grupo,
+        inventario: f.inventario,
+        npcs: npcsRef.current,
+        personagem: { antecedente: f.antecedente },
+        missoes: missoesRef.current,
+        cidades: (mapaRef.current || {}).cidades,
+        cidadeAtual: cidadeAtualRef.current,
+      });
     } catch (e) { return null; }
   };
   /* que reviravoltas acendem o peso da traicao (Furia) e a delacao */
