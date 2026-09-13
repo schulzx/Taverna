@@ -16,6 +16,58 @@ Formato:
 
 ---
 
+## 13/09 17:45 · v9.223 · A1 · a prova que mede o buraco · commit `a44da9c`
+- **estado inicial:** 179/179 suítes verdes, 7/7 varredores limpos, árvore
+  limpa, HEAD `e35dfca`. Pauta com 4 etapas aprovadas (Fase A) + 4 (Fase R) +
+  9 abertos. A vez era da Fase A, etapa A1 — a primeira do bloco aprovado.
+- **conselheiro:** não chamado (pauta cheia: 8 etapas aprovadas e 9 abertos;
+  pensar de novo com pauta cheia é ruído).
+- **backend / frontend:** não chamados. A1 só mede — nada em `src/` mudou fora
+  do bump de `VERSAO`.
+- **testes:** seção 7 nova em `testes/teste-arena.mjs` (+128 linhas), com o
+  helper `pendente(nome, motivo)` que imprime "· pendente (A3)" e não toca
+  `bons`/`maus`; a tabela `MEDIDA_DO_BURACO` (sementes, molde de semente, e os
+  dois limiares que A3 tem de cumprir); a medição do round-robin dos oito; e as
+  duas provas pendentes, cada uma com o `t(...)` exato que a promove escrito no
+  comentário. 23 ok · 0 falhas; `npm test` 179/179 + 7/7.
+- **o número medido (o "antes" da fase, v9.222/223):** 420 quedas · 4584
+  meias-rodadas · **382 mortas ("se guarda") = 8,3% do total, 0,91 por queda** ·
+  **20 quedas (4,8%) abrem com duas meias-rodadas mortas** · dano sofrido logo
+  depois da guarda **1,034×** o normal (guardar não desconta nada) · 6 buffs no
+  repertório dos oito, 2 furam o filtro do piloto. Custo: 143ms.
+- **decisões médias tomadas:**
+  - **Confirmei o diagnóstico no código antes de escrever a prova, e ele tem
+    uma nuance que a pauta não dizia.** `meiaRodada` (`arena.js:137-139`)
+    *tenta* tirar o buff da visão do piloto com `ehCuraDeGrupo || ehOfensiva`,
+    mas o filtro é **furado**: `ehOfensiva` (`companheiros.js:~95`) casa
+    `RX_OFENSIVA` contra nome **+ descrição**, e "Postura Defensiva" e "Escudo
+    Arcano" dizem "absorve o próximo dano" — a palavra *dano* as faz passar.
+    Aí `decidirAcaoCompanheiro` testa `ehBuff` no passo 3, antes da ofensiva,
+    com 70% de chance nas rodadas 1–2. A causa-raiz da pauta (os efeitos não
+    são portados) continua certa; o que muda é que **A3 tem duas frentes**, não
+    uma: portar o efeito *e* consertar o filtro (ou deixá-lo cair, como o
+    comentário de `arena.js:136` já prevê). Acrescentei essa frente à descrição
+    de A3 na pauta.
+  - **A prova (2) mede um número observável, não o campo interno.** Não há como
+    espiar `efeitos` de fora (`simularQueda` cria o duelista por dentro, e o
+    `JSON.parse(JSON.stringify(...))` de `prepararDuelista` mata qualquer
+    proxy), e comparar um `prepararDuelista` avulso seria tautologia. A prova
+    compara o **dano sofrido logo depois da guarda** com o dano no resto das
+    meias-rodadas: hoje a razão é 1,034; quando a guarda valer, ela cai. É a
+    formulação que A3 promove com a menor reescrita — uma linha.
+  - **Nenhuma asserção contável nova nesta seção, de propósito.** Todo número
+    aqui (quedas, mortas, aberturas, razão) muda quando A3 consertar a arena;
+    travar um deles agora seria plantar asserção que A3 teria de apagar. Os
+    dois limiares de A3 (`tetoDeAberturasMortas: 0`,
+    `razaoMaximaDeDanoAposGuarda: 0.9`) já estão na tabela, esperando.
+  - **O molde de semente ficou travado na tabela** (`m|a|b|s`, 6 sementes por
+    par): outros moldes dão 413–431 quedas, e o número do "antes" tem de ser o
+    mesmo em qualquer máquina (lei v).
+- **o que ficou:** as duas pendentes são dívida visível até A3 — `rodar-tudo`
+  decide só pelo código de saída, então as linhas `··` não podem deixar a
+  árvore vermelha por acidente. A2 (os efeitos viram módulo puro) é o próximo
+  ciclo. Nada novo foi para "pesado"; nada novo para a pessoa decidir.
+
 ## 13/09 16:30 · v9.222 · o clima sazonal desce ao módulo · commit (ver `git log -1`)
 - **estado inicial:** 178/178 suítes verdes, 7/7 varredores limpos, árvore
   limpa, HEAD `aae362c`. Pauta com um só item em "Aberto" — e era pesado

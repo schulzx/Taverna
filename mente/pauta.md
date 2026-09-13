@@ -30,15 +30,11 @@ está escrito aqui, o orquestrador corrige a etapa na pauta e diz no diário.
 Decisão da pessoa (13/09): *"vamos corrigir e deixar funcionando como
 deveria"* — o caminho caro, não o diagnóstico barato.
 
-- [ ] **A1 · a prova que mede o buraco** · de: pessoa+conselheiro · 13/09
-  Antes de consertar, medir. Em `teste-arena.mjs`: nenhuma queda abre com
-  duas meias-rodadas de "se guarda"; e um buff aplicado muda de verdade um
-  número da queda seguinte (hoje não muda). As duas nascem **pendentes** —
-  o helper `pendente(nome, motivo)` imprime "· pendente (A3)" e NÃO conta
-  como falha, para a árvore nunca ficar vermelha e a etapa seguinte nunca
-  confundir dívida com regressão. A3 promove as duas a asserção de verdade;
-  enquanto forem pendentes, elas já imprimem o número medido hoje (quantas
-  rodadas mortas por queda), que é o antes-e-depois da fase.
+- [x] **A1 · a prova que mede o buraco** · feito em v9.223 (`a44da9c`), 13/09
+  Seção 7 de `teste-arena.mjs`, com `pendente(...)` e a tabela
+  `MEDIDA_DO_BURACO`. **O número do "antes":** 420 quedas · 382 meias-rodadas
+  mortas (0,91 por queda, 8,3% do total) · 20 quedas (4,8%) abrem com duas
+  guardas · dano depois da guarda 1,034× o normal. Ver o diário.
 - [ ] **A2 · os efeitos viram módulo puro** · de: pessoa+conselheiro · 13/09
   O sistema de efeitos que hoje vive no `App.jsx` (buff, guarda, duração,
   pilha) desce para um módulo próprio em `src/` provável em Node, sem mudar
@@ -48,6 +44,18 @@ deveria"* — o caminho caro, não o diagnóstico barato.
   `arena.js` deixa de traduzir `buff`/`guarda` em prosa vazia e aplica o
   módulo de A2: o buff dura, soma, e aparece no número. A narração da queda
   passa a dizer o que mudou. A1 fica VERDE aqui — é o veredito da fase.
+  **São DUAS frentes, não uma** (achado de A1, 13/09): além de portar o
+  efeito, consertar o filtro de `meiaRodada` (`arena.js:137-139`). Ele
+  *tenta* tirar o buff da visão do piloto com `ehCuraDeGrupo || ehOfensiva`
+  e é furado — `ehOfensiva` (`companheiros.js:~95`) casa `RX_OFENSIVA`
+  contra nome **+ descrição**, e "Postura Defensiva" e "Escudo Arcano"
+  dizem "absorve o próximo dano": a palavra *dano* as deixa passar. Com o
+  efeito portado, o filtro inteiro deve cair (o comentário de
+  `arena.js:136` já prevê isso) — mas se cair sem o efeito valer, o buraco
+  aumenta. Promover as duas pendentes trocando `pendente(...)` pelo
+  `t(...)` já escrito no comentário de cada uma, contra os limiares da
+  tabela `MEDIDA_DO_BURACO` (`tetoDeAberturasMortas: 0`,
+  `razaoMaximaDeDanoAposGuarda: 0.9`).
 - [ ] **A4 · o equilíbrio refeito** · de: pessoa+conselheiro · 13/09
   Com os efeitos valendo, a catraca de 35–65% do round-robin 8×8 vai sair
   da faixa. Reajustar os prontos (atributos, magias, equipamento) até
