@@ -16,6 +16,79 @@ Formato:
 
 ---
 
+## 13/09 19:05 · v9.226 · A4 · o equilíbrio conferido, e a catraca que prova estabilidade · commit `817f96f`
+- **estado inicial:** 180/180 suítes verdes, 7/7 varredores limpos, árvore
+  limpa, HEAD `08f9527`. A vez era A4 — a última etapa da Fase A, e desde a
+  correção feita depois de A3 ela não era mais "reajustar os prontos": era
+  **conferir se ainda há trabalho**. A pergunta, com número e não com opinião:
+  a faixa de 35–65% se sustenta **fora da amostra** que a suíte usa?
+- **conselheiro:** não chamado (pauta cheia, e a etapa já estava escrita).
+- **testes (a medição):** replicou o laço de `roundRobin` no scratchpad, sem
+  tocar em `src/`, e rodou **49 famílias de sementes independentes** (prefixos
+  novos e deslocamentos do índice), 30 sementes por par cada — o mesmo tamanho
+  de amostra da suíte —, mais um retrato de 480 sementes/par.
+- **A RESPOSTA: a faixa se sustentou. Zero estouros em 49 de 49 famílias.**
+  Nenhum pronto passou de 65% nem caiu de 35% em nenhuma delas. Logo **nada
+  foi rebalanceado neste ciclo**: nenhum número de pronto, de ficha ou de
+  tabela de arena mudou. Equilíbrio é teste, não intenção — e teste verde
+  também é resposta.
+- **e a medição desmentiu o suspeito.** A borda de `flecha` (61,9% na suíte)
+  **não é estrutural**: é o máximo do próprio intervalo dela. Fora da amostra
+  `flecha` mede 49,5–57,6, e 55,7% no retrato de 480. Quem está de fato no
+  topo é **`sombra` (58,1%)** — e é também o mais estável (7,1 pts de variação
+  entre famílias). O piso estrutural é `voto` (44,2%) e `voz` (45,4%);
+  `chama`, que na suíte marcava 42,4%, sobe para 46,5% no retrato. Ou seja: o
+  retrato que o diário vinha registrando era **enviesado por uma amostra só**.
+- **decisões médias tomadas:**
+  - **`roundRobin` ganhou o parâmetro `prefixo`** (`src/arena.js`), padrão
+    `"rr"`. Motivo: sem ele a catraca só sabe pedir UMA família, e uma família
+    é uma amostra. Padrão conferido ao dígito contra o retrato antigo — objeto
+    byte a byte igual. Refator de módulo puro sem mudar comportamento.
+  - **a catraca do equilíbrio foi ampliada de uma amostra para cinco**, com
+    tabela nomeada (`CATRACA_DO_EQUILIBRIO`: piso, teto, famílias, tamanhos,
+    teto de amplitude). Motivo, medido: com 30 sementes/par o desvio-padrão de
+    cada pronto é **σ ≈ 3,4 pts**, e nas 49 famílias os extremos chegaram a
+    63,8% (`flecha`, 1,2 pt do teto) e 37,1% (`voz`/`voto`, 2,1 pts do piso).
+    A catraca antiga provava **sorte**, não estabilidade. **O limiar 35–65 não
+    afrouxou** — é o mesmo piso e o mesmo teto, agora valendo em cinco
+    amostras em vez de uma.
+  - **nasceu um segundo dente: o teto de amplitude do retrato (20 pts).**
+    Motivo: a faixa sozinha não pega o pronto que vira dominante **sem**
+    estourar 65% — ele sobe, os outros descem, e cada um continua dentro
+    enquanto a distância topo–fundo abre. A folga está declarada no arquivo:
+    o retrato mede 15,7 pts hoje; a amplitude estrutural é ~13,9; oito
+    famílias de 120 sementes/par deram 13,0 ± 2,3. Teto colado em 16 ficaria
+    vermelho na primeira brisa (qualquer mexida na arena reembaralha o RNG e
+    re-sorteia a amplitude); 20 é ~3σ acima da média e ainda morde — topo em
+    64% (verde na faixa!) contra fundo em 42% dá 22 pts e fica vermelho.
+- **a catraca morde (conferido, não prometido):** o `testes` rodou a seção
+  contra cópias mutantes de `arena.js` no scratchpad. Com `sombra` ganhando
+  **+3 de vida**, a catraca ANTIGA ficaria **verde** (mede 59,5% na família
+  "rr"); a nova fica vermelha **três vezes** — 67,6% em "aa", 66,2% em "bb" e
+  amplitude 22,1 no retrato. Com +14 de vida e +4/+3 de atributo, `sombra` vai
+  a 94–97% e as quatro famílias mordem juntas. O limite honesto também está
+  escrito: +2 de vida (62,1%, amplitude 18,8) ainda passa.
+- **o preço, medido:** a seção 6 foi de ~0,5 s para 3,59 s; o `npm test`
+  inteiro, de 56,7 s para 59,6 s (**+2,9 s**). Pago de bom grado: é a única
+  catraca que guarda o equilíbrio do roster.
+- **A FASE A, FECHADA — o antes e o depois inteiro:**
+  - meias-rodadas mortas: **382 de 420 quedas (8,3% do total) → 0**;
+  - quedas que ABREM com duas meias-rodadas mortas: **20 de 420 (4,8%) → 0 de
+    424 (0,0%)**;
+  - dano depois da guarda: **1,034× o normal → 0,699×** (contra teto 0,9);
+  - amplitude do equilíbrio: **24,8 pts → 20,0 pts** na família "rr"
+    (15,7 pts no retrato de baixa variância, que é a medida honesta);
+  - e o que nasceu no caminho: `src/efeitos.js` (A2, 6 tabelas e 11 funções),
+    a arena consumindo os módulos que já existiam (A3), `teste-efeitos.mjs`
+    (168 asserções), a seção 7 de `teste-arena.mjs` (o veredito) e a catraca
+    de cinco amostras (A4). Quatro etapas, quatro versões, zero regressão.
+- **o que ficou:** nada novo foi para a pauta neste ciclo — A4 não abriu
+  frente, fechou. Os **dois itens pesados** da Fase A continuam esperando a
+  pessoa, e não são deste ciclo: a **concentração inerte** (regra 5e escrita e
+  que nunca acontece) e a **família defensiva que nenhum não-jogador cumpre**
+  (nenhum dos 9 nomes de `GUARDAS` casa com `RX_BUFF`). A próxima fase
+  aprovada é a **R — as reviravoltas**, começando por R1.
+
 ## 13/09 18:40 · v9.225 · A3 · a arena consome os efeitos · commit `6168a14`
 - **estado inicial:** 180/180 suítes verdes, 7/7 varredores limpos, árvore
   limpa, HEAD `3fc1a5a`. A vez era A3 — o **veredito** da Fase A: a etapa em

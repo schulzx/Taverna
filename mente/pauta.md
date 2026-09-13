@@ -52,9 +52,10 @@ Reviravoltas depois. Dentro de cada fase, a etapa seguinte só começa com a
 anterior verde e commitada. Se uma etapa revelar que a próxima não é como
 está escrito aqui, o orquestrador corrige a etapa na pauta e diz no diário.
 
-### Fase A — a Arena passa a portar os efeitos
+### Fase A — a Arena passa a portar os efeitos · **FECHADA em v9.226, 13/09**
 Decisão da pessoa (13/09): *"vamos corrigir e deixar funcionando como
-deveria"* — o caminho caro, não o diagnóstico barato.
+deveria"* — o caminho caro, não o diagnóstico barato. As quatro etapas
+verdes e commitadas; o antes-e-depois inteiro está no diário de A4.
 
 - [x] **A1 · a prova que mede o buraco** · feito em v9.223 (`a44da9c`), 13/09
   Seção 7 de `teste-arena.mjs`, com `pendente(...)` e a tabela
@@ -78,7 +79,25 @@ deveria"* — o caminho caro, não o diagnóstico barato.
   mortas 20/420 (4,8%) → **0 de 424**; meias-rodadas mortas 382 → **0**.
   Na mesa real: 791 buffs firmados, 329 golpes com o bônus dentro, 409
   efeitos vencendo o prazo. Ver o diário.
-- [ ] **A4 · o equilíbrio: conferir antes de mexer** · de: pessoa+conselheiro · 13/09
+- [x] **A4 · o equilíbrio: conferir antes de mexer** · feito em v9.226 (`817f96f`), 13/09
+  **Conferência, não reajuste — e a conferência passou.** 49 famílias de
+  sementes independentes fora da amostra da suíte: **zero estouros** de
+  35%/65%. Nenhum número de pronto mudou. A borda de `flecha` (61,9%) era
+  viés de amostra — fora dela mede 49,5–57,6, e quem está no topo é `sombra`
+  (58,1% no retrato de 480). O trabalho da etapa virou a **catraca**: de uma
+  amostra para cinco (4 famílias de 30 + retrato de 120), tabela
+  `CATRACA_DO_EQUILIBRIO`, e um dente novo — teto de amplitude (20 pts,
+  medido 15,7) que pega o pronto dominante que não estoura o teto sozinho.
+  Conferida contra arena mutante: `sombra` com +3 de vida passava na antiga,
+  falha três vezes na nova. Ver o diário.
+
+  **A FASE A ESTÁ FECHADA.** Meias-rodadas mortas 8,3% → 0; aberturas mortas
+  4,8% → 0,0%; dano após guarda 1,034× → 0,699×; amplitude 24,8 → 20,0 pts.
+  A próxima fase aprovada é a **R**, a partir de R1.
+
+<details>
+<summary>o texto original da etapa A4 (antes de ser executada)</summary>
+
   **Corrigido pelo orquestrador em 13/09, depois de A3:** a pauta previa
   que a catraca de 35–65% sairia da faixa com os efeitos valendo. **Não
   saiu** — os oito ficaram dentro, e a amplitude até APERTOU (36,2–61,0 =
@@ -96,6 +115,7 @@ deveria"* — o caminho caro, não o diagnóstico barato.
   razão (0,699 contra teto 0,9) e o ganho (1,95 contra piso 1). Se alguma
   ficar vermelha depois de um rebalanceamento, é sinal legítimo — não se
   afrouxa o limiar.
+</details>
 
 ### Fase R — as reviravoltas em harmonia com o resto
 Decisão da pessoa (13/09): *"que o sistema de reviravoltas funcione em
