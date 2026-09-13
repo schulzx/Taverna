@@ -104,15 +104,42 @@ para patch simples, e sempre com aspas simples.
 
 ---
 
+## A mente (autonomia por peso)
+
+O projeto tem uma mente que pensa e mãos que fazem, e roda em ciclos sem a
+pessoa presente. A pessoa só decide o **pesado**; o resto é decidido e feito
+automaticamente. O que pesa cada coisa é lei — e está aqui, não na cabeça de
+ninguém:
+
+| peso | quem decide | o que é |
+|---|---|---|
+| **leve** | o ciclo, sem anúncio | bug com teste que prova (falha antes, passa depois) · teste faltante para regra que existe · comentário, nome, cabeçalho · export morto · varredor novo para erro já visto |
+| **médio** | o ciclo, **com o motivo no diário** | rebalancear número dentro de tabela existente, com catraca provando · ampliar acervo numa tabela existente, no mesmo formato · ligar sinal dormente a tracker que já existe · refatorar módulo puro sem mudar comportamento · ajuste pequeno de tela (texto, ordem, botão morto que faltava esconder) |
+| **pesado** | **só a pessoa** | mudar uma lei desta casa ou o teto de prompt · órgão/modo/mecânica que muda o que o jogador vive · remover ou desligar o que existe · formato de save ou protocolo da sala (`api/sala`) · qualquer coisa que custe dinheiro ou toque infra (Vercel, Redis, chaves) · a voz do Narrador em massa (assuntos, falas) · **`git push`** |
+
+Na dúvida entre médio e pesado, é pesado. Os arquivos da mente:
+
+- `mente/pauta.md` — o que foi pensado e não feito, com peso. "Para a pessoa
+  decidir" no topo. "Recusado" no fim, com motivo — não se propõe de novo.
+- `mente/diario.md` — um bloco por ciclo: quem fez o quê, cada decisão média
+  com o motivo. É por aqui que a pessoa vê o processo.
+
+Os agentes: `conselheiro` (pensa, escreve a pauta), `orquestrador` (rege o
+ciclo), `backend` / `frontend` / `testes` (as mãos). O roteiro do ciclo está
+em `.claude/agents/orquestrador.md`; `/ciclo` roda um.
+
+---
+
 ## Commits
 
 Português, narrativo, o *porquê* antes do *o quê*. Terminar com:
 
 ```
-Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
 ```
 
-Só commitar/subir quando a pessoa pedir. `git push` faz deploy no Vercel.
+**Commit local** fecha toda fase verde — automático, dentro do ciclo.
+**`git push` é sempre da pessoa**: faz deploy no Vercel para jogadores reais.
 
 ---
 

@@ -3,5 +3,6 @@ dist/
 .vercel/
 .claude/*
 !.claude/agents/
+!.claude/skills/
 package-lock.json
 images/
