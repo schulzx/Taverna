@@ -107,7 +107,7 @@ import { mundoDaNoite, posturaDaNoite, tetoDoMarco, veredito as vereditoDaNoite,
 import { criarTorneio, garantirTorneio, correrForaDeTela, minhaLuta, meuRival, registrarMinhaLuta, faseCompleta, avancarFase as avancarFaseTorneio, epilogar, envelopeDaChave, provocacaoDoRival } from "./torneio.js";
 /* O DUELO (v9.219 — D2): jogador contra jogador com o determinismo por
    juiz. Codigo de ficha, selo, serie seca. Conta em duelo.js. */
-import { codigoDaFicha, fichaDoCodigo, resumoParaAviso, tipoDoDuelo, duelar, rivalDaCasa, heroiDoSave } from "./duelo.js";
+import { codigoDaFicha, fichaDoCodigo, resumoParaAviso, tipoDoDuelo, duelar, rivalDaCasa, heroiDoSave, cartaDaFicha, cartaDoSelo, lerCarta, souLadoA, sementeDaSala, versoesBatem } from "./duelo.js";
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
@@ -4351,9 +4351,46 @@ function TelaDuelo({ voltar }) {
   const heroiCampanha = useMemo(() => {
     try { return heroiDoSave(localStorage.getItem(espacoDoSave("historia"))); } catch { return null; }
   }, []);
+  /* D4: o duelo pelos trilhos da sala — canal proprio, cartas pequenas.
+     A ficha do outro chega como codigo; o selo confere as duas versoes. */
+  const [codigoSala, setCodigoSala] = useState("");
+  const [canalLigado, setCanalLigado] = useState(false);
+  const [fichaDoOutro, setFichaDoOutro] = useState(null);
+  const [seloDoOutro, setSeloDoOutro] = useState(null);
+  const canalDueloRef = useRef(null);
+  const meuIdCanalRef = useRef(`d${Math.random().toString(36).slice(2, 10)}`);
+  const idDoOutroRef = useRef(null);
+  useEffect(() => () => { try { canalDueloRef.current && canalDueloRef.current.fechar(); } catch {} }, []);
+  const conectarSala = () => {
+    const cod = normalizarCodigo(codigoSala);
+    if (!codigoValido(cod)) { setErro("código de sala inválido — 4 a 12 letras e números"); return; }
+    try { canalDueloRef.current && canalDueloRef.current.fechar(); } catch {}
+    setFichaDoOutro(null); setSeloDoOutro(null); idDoOutroRef.current = null;
+    const canal = abrirCanal(cod, { aoReceber: (r) => {
+      const c = lerCarta(r);
+      if (!c || c.de === meuIdCanalRef.current) return;
+      if (c.sub === "ficha") {
+        const f = fichaDoCodigo(c.codigo);
+        if (f.ok) { idDoOutroRef.current = c.de; setFichaDoOutro(f.ficha); }
+      }
+      if (c.sub === "selo") setSeloDoOutro(c.selo);
+    } });
+    canalDueloRef.current = canal;
+    setCanalLigado(true);
+    setErro("canal aberto — os dois lados precisam do MESMO código de sala");
+  };
+  /* minha ficha viaja quando existe e o canal esta de pe (e re-viaja
+     quando o outro chega, para quem entrou depois nao esperar no vazio) */
+  useEffect(() => {
+    if (!canalLigado || !minha || !canalDueloRef.current) return;
+    const carta = cartaDaFicha({ de: meuIdCanalRef.current, ficha: minha });
+    if (carta) canalDueloRef.current.enviar(carta);
+  }, [canalLigado, meuId, lado, fichaDoOutro]);
   const minha = lado === "campanha" ? heroiCampanha : (meuId ? montarPronto(meuId) : null);
   const doCodigo = modoOp === "codigo" && codigo.trim() ? fichaDoCodigo(codigo) : null;
-  const rival = modoOp === "casa" ? (meuId ? rivalDaCasa(meuId, semente) : null) : (doCodigo && doCodigo.ok ? { ficha: doCodigo.ficha } : null);
+  const rival = modoOp === "casa" ? (meuId ? rivalDaCasa(meuId, semente) : null)
+    : modoOp === "sala" ? (fichaDoOutro ? { ficha: fichaDoOutro } : null)
+    : (doCodigo && doCodigo.ok ? { ficha: doCodigo.ficha } : null);
   const avisoA = minha ? resumoParaAviso(minha) : null;
   const avisoB = rival ? resumoParaAviso(rival.ficha) : null;
   const tipo = minha && rival ? tipoDoDuelo(minha, rival.ficha) : null;
@@ -4395,11 +4432,22 @@ function TelaDuelo({ voltar }) {
         <div className="w-full max-w-[680px] flex flex-col gap-2">
           <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>O outro lado</div>
           <div className="flex gap-2">
-            {[["casa", "A casa serve um rival"], ["codigo", "Colar um código"]].map(([id, rot]) => (
+            {[["casa", "A casa serve um rival"], ["codigo", "Colar um código"], ["sala", "Pela sala, ao vivo"]].map(([id, rot]) => (
               <button key={id} onClick={() => { setModoOp(id); setErro(""); }} className="flex-1 tv-mono text-[11px] py-2.5 rounded-lg"
                 style={{ background: modoOp === id ? T.panelSoft : T.panel, border: `1px solid ${modoOp === id ? T.amber : T.line}`, color: modoOp === id ? T.amberSoft : T.inkDim }}>{rot}</button>
             ))}
           </div>
+          {modoOp === "sala" && (
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <input value={codigoSala} onChange={(e) => setCodigoSala(e.target.value.toUpperCase())} placeholder="Código da sala (o mesmo nos dois lados)"
+                  className="flex-1 rounded-lg p-2.5 tv-mono text-[11px]" style={{ background: T.bg, border: `1px solid ${T.line}`, color: T.ink }} />
+                <button onClick={conectarSala} className="tv-mono text-[11px] px-4 rounded-lg" style={{ border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>ABRIR O CANAL</button>
+              </div>
+              {canalLigado && <div className="tv-mono text-[10px]" style={{ color: fichaDoOutro ? T.ok : T.inkDim }}>
+                {fichaDoOutro ? `o outro lado chegou: ${fichaDoOutro.nome}` : "esperando o outro lado escolher o campeão…"}</div>}
+            </div>
+          )}
           {modoOp === "codigo" && (<textarea value={codigo} onChange={(e) => setCodigo(e.target.value)} rows={3}
             placeholder="Cole aqui o código de duelo de outro jogador…" className="w-full rounded-lg p-3 tv-mono text-[10px]"
             style={{ background: T.bg, border: `1px solid ${doCodigo && !doCodigo.ok ? T.danger : T.line}`, color: T.ink }} />)}
@@ -4415,7 +4463,22 @@ function TelaDuelo({ voltar }) {
         {erro && <div className="tv-mono text-[10px]" style={{ color: T.violetSoft }}>{erro}</div>}
         <div className="flex items-center gap-3 w-full max-w-[680px]">
           <button onClick={voltar} className="tv-mono text-xs px-4 py-3 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>VOLTAR</button>
-          <button disabled={!pode} onClick={() => pode && setResultado(duelar(minha, rival.ficha, { semente }))}
+          <button disabled={!pode} onClick={() => {
+            if (!pode) return;
+            if (modoOp === "sala") {
+              /* determinismo de ponta a ponta: mesma semente (o codigo da
+                 sala), mesma ordem (menor id e o lado A) — as duas maquinas
+                 contam a mesma luta sem juiz */
+              const souA = souLadoA(meuIdCanalRef.current, idDoOutroRef.current || "~");
+              const A = souA ? minha : rival.ficha;
+              const B = souA ? rival.ficha : minha;
+              const r = duelar(A, B, { semente: sementeDaSala(codigoSala) });
+              setResultado(r);
+              try { canalDueloRef.current && canalDueloRef.current.enviar(cartaDoSelo({ de: meuIdCanalRef.current, selo: r.selo })); } catch {}
+              return;
+            }
+            setResultado(duelar(minha, rival.ficha, { semente }));
+          }}
             className="flex-1 tv-display text-lg py-3 rounded-lg" style={{ background: pode ? T.amber : T.panel, color: pode ? T.onAccent : T.inkDim, border: `1px solid ${pode ? T.amber : T.line}` }}>À ARENA →</button>
         </div>
       </>)}
@@ -4425,6 +4488,9 @@ function TelaDuelo({ voltar }) {
             <div className="tv-display text-3xl" style={{ color: T.amberSoft }}>{resultado.vencedorNome} vence · {resultado.placar}</div>
             <div className="tv-body text-sm" style={{ color: T.inkDim }}>{resultado.cronica}</div>
             <div className="tv-mono text-[9px] mt-1" style={{ color: T.inkDim }}>selo da luta {resultado.selo} · duas máquinas com a mesma dupla e a mesma semente chegam a este mesmo selo</div>
+            {seloDoOutro && (versoesBatem(resultado.selo, seloDoOutro)
+              ? <div className="tv-mono text-[10px] mt-1" style={{ color: T.ok }}>✓ as duas máquinas contam a mesma luta</div>
+              : <div className="tv-mono text-[10px] mt-1" style={{ color: T.danger }}>as versões da luta não batem — este duelo se encerra aqui</div>)}
           </div>
           {resultado.quedas.map((q) => (
             <div key={q.numero} className="p-3 rounded-lg" style={{ background: T.panel, border: `1px solid ${T.line}` }}>

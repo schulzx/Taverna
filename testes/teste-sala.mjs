@@ -127,7 +127,11 @@ sec("6. o protocolo, e o transporte que não sabe de nada");
   t("todo recado tem tipo e remetente", A.recadoValido({ tipo: A.RECADOS.ola, de: "p2" }));
   t("recado sem remetente não vale", !A.recadoValido({ tipo: A.RECADOS.ola }));
   t("tipo inventado não vale", !A.recadoValido({ tipo: "sei_la", de: "p2" }));
-  t("os seis recados estão enumerados", Object.keys(A.RECADOS).length === 6);
+  /* v9.221 (D4): sete recados — o "duelo" entrou, e o carteiro da mesa
+     passou a levar tambem os codigos de ficha do Duelo pelos trilhos da
+     sala. A intencao segue: TODO recado enumerado e valido; o numero so
+     acompanha o catalogo. */
+  t("todos os recados estão enumerados", Object.keys(A.RECADOS).length === 7 && Object.values(A.RECADOS).every((t) => A.recadoValido({ tipo: t, de: "p2" })));
   /* fora do navegador o canal EXISTE e é mudo. Devolver null obrigaria todo
      chamador a testar, e um deles ia esquecer — é A REDE dos acervos. */
   const c = T.abrirCanal("PROVA1", { aoReceber: () => {} });

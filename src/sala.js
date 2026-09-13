@@ -225,6 +225,10 @@ export const RECADOS = {
   acao: "acao",         // convidado → anfitrião: o que eu faço neste turno
   estado: "estado",     // anfitrião → todos: o mundo depois do turno
   saiu: "saiu",         // qualquer um: estou saindo
+  /* v9.221 (D4): o duelo pega emprestado o carteiro da mesa — a carta leva
+     um codigo de ficha ou um selo de resultado, nunca o mundo. Quem le e a
+     tela do Duelo, com canal proprio; a mesa de campanha ignora o tipo. */
+  duelo: "duelo",
 };
 export function recadoValido(r) {
   return !!r && typeof r === "object" && Object.values(RECADOS).includes(r.tipo) && !!r.de;

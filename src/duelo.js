@@ -140,6 +140,36 @@ export function versoesBatem(seloMeu, seloDoOutro) {
   return !!seloMeu && seloMeu === seloDoOutro;
 }
 
+/* ---------------- AS CARTAS DO CANAL (D4) ----------------
+   O duelo pela sala usa o carteiro que já existe (transporte.js) com um
+   tipo próprio de recado — "duelo", registrado em sala.js. As cartas são
+   pequenas de propósito: um código de ficha ou um selo, nunca o mundo.
+   Quem é o lado A decide-se sem conversa: o MENOR id de participante —
+   as duas máquinas chegam à mesma ordem sozinhas, e a semente da série
+   é o código da sala: determinismo de ponta a ponta. */
+export const TIPO_DA_CARTA = "duelo"; /* = RECADOS.duelo (a suíte confere) */
+export function cartaDaFicha({ de, ficha }) {
+  const codigo = codigoDaFicha(ficha);
+  if (!de || !codigo) return null;
+  return { tipo: TIPO_DA_CARTA, sub: "ficha", de, codigo };
+}
+export function cartaDoSelo({ de, selo }) {
+  if (!de || !selo) return null;
+  return { tipo: TIPO_DA_CARTA, sub: "selo", de, selo };
+}
+export function lerCarta(r) {
+  if (!r || r.tipo !== TIPO_DA_CARTA || !r.de) return null;
+  if (r.sub === "ficha" && r.codigo) return { sub: "ficha", de: r.de, codigo: r.codigo };
+  if (r.sub === "selo" && r.selo) return { sub: "selo", de: r.de, selo: r.selo };
+  return null;
+}
+export function souLadoA(meuId, idDoOutro) {
+  return String(meuId) < String(idDoOutro);
+}
+export function sementeDaSala(codigoDaSala) {
+  return `sala|${String(codigoDaSala || "").trim().toUpperCase()}`;
+}
+
 /* ---------------- O TREINO DA CASA ----------------
    Sem código de ninguém, a casa oferece um rival do roster — o mesmo
    duelo, com a casa nos dois lados do balcão quando preciso. */

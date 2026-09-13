@@ -89,7 +89,24 @@ sec("6b. D3 — as duas portas");
   t("save sem herói devolve null, falando com silêncio", D.heroiDoSave("{}") === null && D.heroiDoSave("lixo{") === null && D.heroiDoSave(null) === null);
 }
 
-sec("7. ligado ao jogo (D2 + D3)");
+sec("6c. D4 — as cartas do canal");
+{
+  const S = await import(RAIZ + "sala.js");
+  t("sala.js e duelo.js falam a mesma língua", S.RECADOS.duelo === D.TIPO_DA_CARTA);
+  t("a carta do carteiro passa no recadoValido da sala", S.recadoValido({ tipo: "duelo", de: "d1" }));
+  const f = P.montarPronto("voz");
+  const carta = D.cartaDaFicha({ de: "d1", ficha: f });
+  t("a carta da ficha leva o código inteiro", carta && carta.sub === "ficha" && D.fichaDoCodigo(carta.codigo).ok);
+  t("a carta do selo é pequena de propósito", (() => { const c = D.cartaDoSelo({ de: "d1", selo: "abcd1234" }); return c && JSON.stringify(c).length < 100; })());
+  t("lerCarta aceita as duas e rejeita o resto", D.lerCarta(carta).de === "d1" && D.lerCarta({ tipo: "duelo", de: "x" }) === null && D.lerCarta({ tipo: "acao", de: "x" }) === null);
+  t("carta sem remetente não nasce", D.cartaDaFicha({ ficha: f }) === null && D.cartaDoSelo({ de: "d1" }) === null);
+  /* o lado A decide-se sem conversa: menor id — e as duas máquinas
+     chegam à mesma ordem sozinhas */
+  t("souLadoA é antissimétrico e determinístico", D.souLadoA("a1", "b2") === true && D.souLadoA("b2", "a1") === false);
+  t("a semente da sala normaliza o código", D.sementeDaSala(" arena7 ") === D.sementeDaSala("ARENA7"));
+}
+
+sec("7. ligado ao jogo (D2 + D3 + D4)");
 {
   t("o App importa o duelo", /from "\.\/duelo\.js"/.test(APP));
   t("o menu tem a porta Duelo", /irDuelo/.test(APP) && /Duelo<\/span>/.test(APP));
@@ -101,6 +118,12 @@ sec("7. ligado ao jogo (D2 + D3)");
   t("a porta da campanha existe e lê o território certo", /heroiDoSave\(localStorage\.getItem\(espacoDoSave\("historia"\)\)\)/.test(APP));
   t("sem campanha, a porta diz por quê", /Nenhuma campanha nesta mesa/.test(APP));
   t("com campanha, a porta chama o herói pelo nome", /Meu herói da campanha — /.test(APP));
+  /* D4: o duelo pelos trilhos, na tela */
+  t("a terceira porta do outro lado é a sala ao vivo", /Pela sala, ao vivo/.test(APP));
+  t("o canal do duelo é próprio e se fecha sozinho", /canalDueloRef/.test(APP) && /canalDueloRef\.current\.fechar\(\)/.test(APP));
+  t("o lado A é o menor id — sem conversa", /souLadoA\(meuIdCanalRef\.current/.test(APP));
+  t("a semente é o código da sala (determinismo de ponta a ponta)", /sementeDaSala\(codigoSala\)/.test(APP));
+  t("os selos se conferem na tela, e a divergência encerra falando", /as duas máquinas contam a mesma luta/.test(APP) && /as versões da luta não batem/.test(APP));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);
