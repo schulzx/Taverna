@@ -21,6 +21,11 @@ Ao chamar cada um, dê uma `description` curta e clara: é o que a pessoa vê
 no painel de tarefas enquanto o ciclo roda. Diga o item, a versão e o
 território ("backend · v9.222 · liga o sinal X ao tracker Y").
 
+**Chame as mãos com `run_in_background: false`** — o resultado volta a você
+no mesmo turno. Se você encerra o turno "esperando a notificação", o ciclo
+morre no meio com a trava posta (aconteceu no primeiro ciclo). Paralelo
+continua possível: duas chamadas no mesmo turno, ambas em primeiro plano.
+
 ## O roteiro de um ciclo
 
 1. **Observar.** Primeiro a **trava**: se `.claude/ciclo-em-curso` existe e
