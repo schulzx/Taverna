@@ -16,6 +16,105 @@ Formato:
 
 ---
 
+## 13/09 20:10 · v9.228 · R2 · toda forma eleita tem detector · commit `b0b561b`
+- **estado inicial:** árvore limpa, HEAD `5a7731d`, VERSÃO v9.227. A etapa
+  aprovada da vez era a **R2**, e ela nasceu credora: R1 cavou três sinais e
+  não gastou nenhum. `alvoDaReviravolta` (`App.jsx:9891`) sabia achar alvo para
+  **duas** das sete formas de `reviravoltas.js`; as outras cinco eram eleitas
+  pela semente e mudas para sempre.
+- **conselheiro:** não chamado (a etapa já estava escrita, e a pauta cheia).
+- **a decisão de arquitetura, e o porquê.** A pauta deixou a escolha em aberto:
+  o mapa forma→detector desce para módulo puro, ou a prova lê o `App.jsx` como
+  texto? **Desceu para módulo puro** — e foi morar **na própria forma**, como
+  campo `achaAlvo(mundo)` ao lado do `soNasceSe`. Dois motivos. (1) "Conta se
+  prova": decidir quem é o alvo é regra, e regra que mora na tela é regra que
+  não se prova — era a lei sendo burlada no lugar exato onde ela importa.
+  (2) A catraca fica **estrutural, não vigilante**: provar por texto do
+  `App.jsx` pega a forma que ninguém ligou, mas não impede ninguém de escrever
+  um detector que nunca acha nada; com o detector dentro da forma, `for (const
+  f of FORMAS)` já é a varredura, e não há como acrescentar forma sem passar
+  por ela. O `App.jsx` ficou com o que é dele: junta os refs e pergunta.
+- **backend:** `reviravoltas.js` ganhou `garantirMundo(m)` (o snapshot que
+  nasce do nada e do lixo), `alvoDaForma(forma, mundo)` (a fachada, com o
+  `try/catch` dentro) e **`achaAlvo` nas sete formas** — os dois antigos
+  portados do App sem mudar de comportamento, os cinco novos escritos sobre o
+  que R1 deixou. Desempate explícito e comentado em todo lugar onde a ordem de
+  inserção decidiria.
+- **frontend:** `App.jsx:9894-9909` — o miolo virou montagem de snapshot +
+  `alvoDaForma`. Os dois `find` (a índole do grupo, a classe do item) foram
+  apagados, não copiados. `classeDoItem` saiu do import (ficou sem uso no App;
+  segue com ≥2 leitores fora dele). Zero na tela, nenhum campo novo de save,
+  `mexerNaReviravolta` intocado.
+- **testes:** `teste-reviravolta.mjs` de 41 para **131 asserções** (+90), em
+  seis seções novas.
+- **decisões médias tomadas:**
+  - **as três formas MAIORES também ganharam detector**, fora do que a pauta
+    escreveu para R2. Motivo: a catraca desta etapa é *"para **cada** forma
+    existe detector"*, e uma catraca que nasce com três exceções não é catraca
+    — seria afrouxar a asserção para caber no código, que é justamente o que o
+    roteiro proíbe. Não é roubo de R3: elas seguem **inertes no jogo**, porque
+    `mexerNaReviravolta` só lê `.menor`, e o trabalho de R3 (ligar a maior, com
+    a regra de convivência) continua inteiro. Zero mudança no que o jogador
+    vive hoje.
+  - **`LIMIARES_DA_VIRADA`** (tabela nomeada): o `3` do informante estava
+    cravado no `soNasceSe` e ia ser copiado para o detector. Duas metades do
+    mesmo portão que podem discordar é bug esperando data. A tabela é a lei
+    "se é número, é tabela", e uma asserção varre de 0 a limiar+2 provando que
+    as duas metades nunca divergem.
+  - **`PAPEIS_DO_MESTRE`** (tabela nomeada), achado do backend: `mesmoPapel`
+    **não servia** para `mestre_treinou`. O ofício vem como "a forja" e o papel
+    como "ferreiro" — nunca compartilham palavra; e pior, `mesmoPapel` devolve
+    `true` quando um lado não tem palavra informativa, o que daria o mestre do
+    herói a qualquer figurante de papel vazio. A tabela é a ponte ofício→papel.
+- **a correção que a etapa revelou (e a pauta estava errada).** A pauta dizia,
+  para `trai_para_proteger`: *"o parente achado é o refém, ou seja o alvo"*.
+  **Não é.** O `oDiaSeguinte` da própria forma escreve *"o vilão revela o refém
+  que forçava a mão de {alvo}"* e *"o vínculo com {alvo} decide se ele fica ou
+  parte"*; e o `App.jsx:9958` põe `registrarGesto(..., gesto: "delatou")`
+  contra `rev.alvo`. O alvo é **o companheiro que traiu**; o parente é o refém.
+  Seguir a pauta ao pé da letra teria posto o refém como delator na Fúria. A
+  asserção que trava esse sentido tem o motivo escrito ao lado.
+- **a catraca, e como ela quebra.** Três dentes, e eles mordem dos dois lados:
+  toda forma tem `achaAlvo` (*"sem detector: espelho_que_mente"*); toda forma
+  tem linha em `MUNDOS_DE_PROVA` provando que o detector **acha alguém de
+  verdade** (*"sem mundo de prova: espelho_que_mente"*); e toda linha da tabela
+  é de uma forma que existe (*"linha órfã: forma_apagada"*), senão a tabela
+  apodrece. Mais o avesso, que pesa igual: nos seis mundos vazios e de lixo as
+  **sete** devolvem `null` — detector que acha alvo no nada é pior que detector
+  nenhum. Uma forma nova amanhã, sem detector, quebra no dia em que nascer.
+- **o que acontece com um save antigo.** Um save que já elegeu
+  `trai_para_proteger` vivia com o detector devolvendo `null` — ou seja, **nunca
+  guardou reviravolta nenhuma** (`mexerNaReviravolta` só grava depois de achar
+  alvo). Agora o detector acha, e a virada **elege hoje**, com `eleitaEm` no dia
+  corrente. As leis seguem de pé, e conferi uma a uma: ela **semeia no Livro de
+  Promessas antes de qualquer coisa** (o passo 2 do `mexerNaReviravolta` faz
+  `return` depois de semear), rega no ritmo de `DIAS_ENTRE_REGAS`, e só revela
+  quando `podeRevelar` deixa (as sementes maduras para o peso da colheita).
+  **Nada retroage e nada estoura na cara do jogador**; o Narrador continua sem
+  ver a verdade eleita antes do turno da revelação, porque nenhum bloco novo
+  entra na pauta — o alvo só vive dentro do Livro, com `material: null`.
+- **a dívida de R1, paga:** `vezesQueUsouInformante` ganhou o leitor de
+  produção que faltava — `reviravoltas.js` agora **chama a função**, e não só
+  cita o nome dela como propriedade, que era o que o `teste-ligacao` não sabia
+  distinguir.
+- **o que ficou:**
+  - **um vermelho intermitente em `teste-sala.mjs`**, visto **uma vez**
+    (`122 passaram, 1 falharam`) e **não reproduzido em quatro rodadas
+    seguintes** do `npm test` inteiro, nem rodando a suíte sozinha (123/0).
+    Território que R2 não tocou. Procurei a causa: o runner é **sequencial**
+    (`spawnSync` em laço), então não é cross-talk entre suítes; `sala.js` não
+    tem `Date.now` nem `setTimeout`; a suspeita que sobra é sorte não semeada
+    (`novoCodigo`/`criarSala` caem em `Math.random` quando ninguém injeta
+    `rnd`). Não fechei o diagnóstico e **não vou fingir que fechei** — foi para
+    a pauta como item aberto, com a evidência.
+  - **`trai_para_proteger` não exige vilão** (achado do `testes`): nem no
+    `soNasceSe` nem no `achaAlvo` — as duas metades concordam, que é a lei
+    desta etapa, então ficou verde. Mas o `oDiaSeguinte` dela escreve *"o vilão
+    revela o refém"*, e sem nêmesis de pé não há quem revele nem quem segure o
+    refém. É incoerência de texto contra portão, não bug de detector. Foi para
+    a pauta.
+  - **R3 não foi tocada.** Uma etapa por ciclo.
+
 ## 13/09 19:40 · v9.227 · R1 · os três sinais que o mundo não sabia dar · commit `9d2902f`
 - **estado inicial:** 180/180 suítes verdes, 7/7 varredores limpos, árvore
   limpa, HEAD `c9813f9`. A Fase A fechada; a vez era a **primeira etapa da

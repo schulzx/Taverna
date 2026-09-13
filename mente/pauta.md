@@ -137,33 +137,75 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   `App.jsx:14410` dentro de `calou(...)` e invisível na tela. 172 asserções
   novas; suíte nova `teste-antecedentes.mjs`. Nada de reviravolta foi ligado;
   a lista de espera do `teste-ligacao` ficou vazia. Ver o diário.
-- [ ] **R2 · toda forma eleita tem detector** · de: pessoa+conselheiro · 13/09
-  `alvoDaReviravolta` ganha detector para `trai_para_proteger` e
-  `informante_duplo`, lendo R1. Catraca nova e permanente: para cada forma
-  de `reviravoltas.js`, existe detector — um mundo nunca mais elege uma
-  virada que não pode acontecer.
-  **Herdado de R1 (o orquestrador escreveu, 13/09):** os dois detectores têm
-  a matéria pronta e o caminho mapeado. `trai_para_proteger` procura quem no
-  **grupo** tem laço `familia` com alguém vivo do elenco — a máquina é
-  `paresEntre(npcs, "familia")`, e o parente achado é o refém, ou seja **o
-  alvo**. `informante_duplo` soma `vezesQueUsouInformante(npcs)` e, quando
-  chega a 3, o alvo é o informante mais consultado (o campo `consultas` da
-  ficha diz quem). R2 é o **credor** de `vezesQueUsouInformante`: hoje o
-  único leitor dele fora da prova é `reviravoltas.js:112` como nome de
-  propriedade, o que a catraca não distingue — ligar o detector paga essa
-  dívida. `antecedenteComOficio` é de forma **maior** (`mestre_treinou`) e
-  cabe em R3; o leitor é `oficioDoAntecedente(personagem.antecedente)`.
+- [x] **R2 · toda forma eleita tem detector** · feito em v9.228 (`b0b561b`), 13/09
+  O detector **desceu para módulo puro** e foi morar **na própria forma**:
+  campo `achaAlvo(mundo)` ao lado do `soNasceSe`, nas **sete**, mais
+  `garantirMundo` e a fachada `alvoDaForma`. O `App.jsx` perdeu os dois `find`
+  que tinha dentro e virou só o que junta os refs. As **três maiores também
+  ganharam detector** (seguem inertes — `mexerNaReviravolta` só lê `.menor`),
+  porque catraca com três exceções não é catraca. Tabelas novas:
+  `LIMIARES_DA_VIRADA` (o `3` do informante saiu de cravado) e
+  `PAPEIS_DO_MESTRE` (a ponte ofício→papel; `mesmoPapel` não servia).
+  **A pauta estava errada num ponto, e a etapa corrigiu:** em
+  `trai_para_proteger` o alvo é **o companheiro que traiu**, não o parente —
+  o parente é o refém. O `oDiaSeguinte` da forma e o `registrarGesto(...,
+  "delatou")` do `App.jsx:9958` dizem quem é quem; seguir a pauta teria posto
+  o refém como delator na Fúria. `vezesQueUsouInformante` ganhou o leitor de
+  produção que R1 devia. 90 asserções novas (41→131). Ver o diário.
 - [ ] **R3 · a maior enfim acontece** · de: pessoa+conselheiro · 13/09
   `mexerNaReviravolta` lê só `.menor`; as três maiores (patrono, cidade do
   dízimo, mestre de ofício) são acervo escrito e nunca vivido. Ligar, com a
   regra de convivência: as duas não estouram na mesma cena, e a maior
   respeita o Livro de Promessas (nada dispara sem semear).
+  **Corrigido pelo orquestrador em 13/09, depois de R2:** a etapa ficou
+  **menor** do que estava escrita. Os detectores das três maiores já existem
+  e já se provam (`contratante_servia`, `cidade_dizimo`, `mestre_treinou` têm
+  `achaAlvo` e linha em `MUNDOS_DE_PROVA`), então R3 **não é mais detectar** —
+  é só **consumir**: `mexerNaReviravolta` passa a ler `.maior` junto com
+  `.menor`, com a regra de convivência. Herdado: `cidade_dizimo` devolve nome
+  de **cidade**, não de pessoa — o `TRAICAO` e o `registrarGesto` do
+  `App.jsx:9956-9958` assumem que `rev.alvo` é gente, e a maior vai precisar
+  desse cuidado.
 - [ ] **R4 · a suíte da fase** · de: pessoa+conselheiro · 13/09
   `teste-reviravolta.mjs`: eleição determinística por semente, cada forma
   com seu detector, a ordem menor→maior, e o Narrador só sabendo no turno
   da revelação.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **a suíte da sala ficou vermelha uma vez e não repetiu** · leve · de: orquestrador (achado de R2) · 13/09
+  No `npm test` de fechamento de R2, `teste-sala.mjs` deu `122 passaram, 1
+  falharam` — e **não reproduziu**: quatro rodadas seguidas do `npm test`
+  inteiro deram 181/181, e a suíte sozinha dá 123/0. Território que R2 não
+  tocou. O que já foi descartado: o runner é **sequencial** (`spawnSync` em
+  laço em `rodar-tudo.mjs`), então não é cross-talk entre suítes; `sala.js`
+  não tem `Date.now` nem `setTimeout`. **A suspeita que sobra é sorte não
+  semeada** — `novoCodigo(rnd = Math.random)` e `criarSala({rnd =
+  Math.random})` caem no `Math.random` quando ninguém injeta `rnd`, e
+  `teste-sala.mjs:29` gera 500 códigos assim. Isso fere "determinismo por
+  semente" dentro da própria prova: uma suíte que depende de sorte mente nos
+  dois sentidos. O trabalho é injetar `rnd` semeado nas chamadas da suíte (o
+  parâmetro já existe, é só usar) e ver se o vermelho tem outra causa por
+  baixo. Linha "bug com teste que prova" — mas o teto é: se depois de semeado
+  o vermelho voltar, é achado novo e sobe de peso.
+
+- [ ] **`trai_para_proteger` fala de um vilão que ela não exige** · leve · de: testes (achado de R2) · 13/09
+  A forma não pede vilão em lugar nenhum — nem no `soNasceSe`
+  (`temCompanheiroComFamilia`, e só) nem no `achaAlvo` que R2 escreveu. As
+  duas metades **concordam**, que era a lei de R2, e por isso ficou verde. Só
+  que o `oDiaSeguinte` dela escreve *"o vilão revela o refém que forçava a mão
+  de {alvo}"* — e sem nêmesis de pé não há quem revele nem quem segure o
+  refém. É incoerência entre o texto e o portão, não bug de detector: hoje a
+  virada pode cair numa campanha sem vilão e narrar um vilão que não existe
+  (o `oDiaSeguinte` só tem o fallback `"o vilão"`, sem nome). Duas saídas, e a
+  escolha é de quem mexer: **apertar o portão** (o `soNasceSe` passa a exigir
+  `temVilao`, e o `achaAlvo` junto — a forma classifica em `SEM_VILAO` na
+  seção 8f de `teste-reviravolta.mjs`, e a linha muda de lista) ou **soltar o
+  texto** (reescrever o `oDiaSeguinte` para funcionar sem vilão nomeado).
+  Apertar é o mais fiel ao que a forma diz que é. Leve porque `soNasceSe` não
+  tem leitor de produção — `elegerReviravoltas` sorteia por hash e não o
+  consulta —, então apertar o portão não tira virada de campanha nenhuma; se
+  a investigação mostrar que tira, sobe para médio.
 
 - [ ] **o companheiro re-firma o buff que já está de pé** · médio · de: backend (achado de A3) · 13/09
   `decidirAcaoCompanheiro` (`companheiros.js:139-143`) tem o comentário
