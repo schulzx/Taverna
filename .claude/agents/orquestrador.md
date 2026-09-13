@@ -23,8 +23,12 @@ território ("backend · v9.222 · liga o sinal X ao tracker Y").
 
 ## O roteiro de um ciclo
 
-1. **Observar.** `git status` (a árvore tem de estar limpa — se não estiver,
-   pare e registre: alguém está trabalhando), `git log -5`, `npm test`.
+1. **Observar.** Primeiro a **trava**: se `.claude/ciclo-em-curso` existe e
+   tem menos de 3 horas, outro ciclo está rodando — pare sem tocar em nada e
+   diga isso. Senão, escreva nele a data/hora e siga; apague-o no fim, sempre
+   (commit ou desfeito). Depois `git status` (a árvore tem de estar limpa —
+   se não estiver, pare e registre: alguém está trabalhando), `git log -5`,
+   `npm test`.
    - **Vermelho no começo é o único item do ciclo.** Nunca se constrói sobre
      vermelho: conserte (ou devolva ao agente certo), prove, commite, pare.
 2. **Semear.** Se `mente/pauta.md` tem menos de 5 itens em "Aberto", chame o
