@@ -8,6 +8,7 @@
    ============================================================ */
 import { criaturasDoGenero } from "./bestiario.js";
 import { gerarEspolios } from "./combate.js";
+import { BIAS_CLIMA } from "./calendario.js";
 
 const d100 = () => 1 + Math.floor(Math.random() * 100);
 
@@ -31,11 +32,33 @@ export const CLIMAS = [
   { id: "abafado", rotulo: "ar abafado", icone: "🌡", peso: 6, nota: "ar parado de véspera de tempestade; pavios curtos" },
   { id: "ceu_estranho", rotulo: "céu de cor errada", icone: "🌌", peso: 2, nota: "o céu tem uma cor que não devia; supersticiosos não saem de casa" },
 ];
-const POOL_CLIMA = CLIMAS.flatMap((c) => Array(c.peso).fill(c));
 
-export function rolarClima(atualId) {
-  let c = POOL_CLIMA[Math.floor(Math.random() * POOL_CLIMA.length)];
-  if (atualId && c.id === atualId) c = POOL_CLIMA[Math.floor(Math.random() * POOL_CLIMA.length)];
+/* v9.222: a conta sazonal desceu do App para cá. Até aqui a tela refazia
+   a rolagem por conta própria (BIAS_CLIMA sobre CLIMAS) e este módulo
+   rolava sem estação, com Math.random cravado e sem leitor — regra que
+   vive na tela não se prova. Agora o peso efetivo é uma função pura
+   (pesosDoClima) e a sorte entra por argumento, para a suíte semear.
+   Comportamento idêntico ao que o App fazia: multiplicador 0 tira o clima
+   do bolso, senão peso = max(1, round(peso × mult)); caiu no clima atual,
+   re-rola UMA vez. */
+export function pesosDoClima(estacaoId) {
+  const bias = (estacaoId != null && BIAS_CLIMA[estacaoId]) || {};
+  return CLIMAS.flatMap((clima) => {
+    const mult = bias[clima.id] != null ? bias[clima.id] : 1;
+    if (mult === 0) return [];
+    return [{ clima, peso: Math.max(1, Math.round(clima.peso * mult)) }];
+  });
+}
+
+export function rolarClima(atualId, opcoes = {}) {
+  /* = {} não cobre null explícito — a lei da casa. */
+  const { estacao = null, sorte = Math.random } = opcoes || {};
+  const pool = pesosDoClima(estacao).flatMap(({ clima, peso }) => Array(peso).fill(clima));
+  if (!pool.length) return null;
+  const tira = () => pool[Math.min(pool.length - 1, Math.floor(sorte() * pool.length))];
+  let c = tira();
+  const distintos = new Set(pool.map((x) => x.id)).size;
+  if (atualId && c.id === atualId && distintos > 1) c = tira();
   return c;
 }
 

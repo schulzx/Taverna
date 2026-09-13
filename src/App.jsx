@@ -11,7 +11,7 @@ import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHisto
 import { criaturasDoGenero, completarInimigo, dificuldadePorPerfil } from "./bestiario.js";
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, firmarEntre, paresEntre, garantirLaco, TIPOS_DE_LACO } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
-import { rolarClima, rolarEncontro, CLIMAS } from "./encontros.js";
+import { rolarClima, rolarEncontro } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
@@ -22,7 +22,7 @@ import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
 import { OBRAS, IMPOSTOS, FURIA_ABAIXO_DE, impostoPorId, obraPorId, garantirGovernos, garantirGoverno, equilibrioDe, contaDoDominio, podeErguer, comecarObra, obraPronta, terminarObra, pulsoDaFuria, revoltaAgora, bonusDeObras, fatorDaOficina, envelopeDoDominio, oQueAOficinaFaz, podeTomarCidade, comecarATomar, tomadaPronta, humorAoTomar, envelopeDaTomada, diasDeTomar } from "./dominios.js";
 import { perfilDeCriatura, perfilDe, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano, resistenciasEquipadas } from "./danos.js";
-import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, BIAS_CLIMA, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, MINUTOS_RODADA_COMBATE, AMANHECER } from "./calendario.js";
+import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, MINUTOS_RODADA_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, rumorDoDia } from "./fama.js";
 import { gerarVilao, gerarHerdeiro, linhaDaHeranca, garantirVilao, avancarPlano, podeAvancar, escolherAlvo, levaForma, faseDe, linhaDoAvanco as linhaDoVilao, envelopeDoAvanco, resumoVilaoPrompt, podeCair, envelopeDaQueda, envelopeDaQuedaCedoDemais, linhaDaQueda, TOTAL_DE_PASSOS } from "./vilao.js";
 import { gerarCronica } from "./cronica.js";
@@ -18947,18 +18947,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      A estrada rola por código: clima, encontro (perigo do bestiário, viajante,
      achado das tabelas, cena de mundo). O Mestre só recebe o resultado e narra. */
   /* CLIMA SAZONAL (v6.7): a estação do ano pesa a tabela de clima —
-     inverno congela, verão torra, outono enevoa. Tudo por código. */
-  const rolarClimaEstacao = (atualId) => {
-    const bias = BIAS_CLIMA[estacaoDe(diaRef.current).id] || {};
-    const pool = CLIMAS.flatMap((c) => {
-      const mult = bias[c.id] != null ? bias[c.id] : 1;
-      if (mult === 0) return [];
-      return Array(Math.max(1, Math.round(c.peso * mult))).fill(c);
-    });
-    let c = pool[Math.floor(Math.random() * pool.length)];
-    if (atualId && c.id === atualId && pool.length > 1) c = pool[Math.floor(Math.random() * pool.length)];
-    return c;
-  };
+     inverno congela, verão torra, outono enevoa. Tudo por código.
+     v9.222: a conta (BIAS_CLIMA sobre CLIMAS, a re-rolagem se caiu no
+     atual) vive em encontros.js e é provada em Node; aqui só se passa
+     a estação do dia. */
+  const rolarClimaEstacao = (atualId) => rolarClima(atualId, { estacao: estacaoDe(diaRef.current).id });
 
   const talvezMudarClima = (chance = 0.4) => {
     if (Math.random() >= chance) return null;
