@@ -1,5 +1,5 @@
 /* ============================================================
-   A ARENA (v9.215) — o duelo provável, uma peça para três mesas
+   A ARENA (v9.225) — o duelo provável, uma peça para três mesas
 
    Nasce a serviço do Torneio (M4: as chaves que correm sozinhas) e o
    Duelo (D2) a herda pronta. O trabalho dela: pôr duas fichas de HERÓI
@@ -25,6 +25,32 @@
    simulação e restaura no finally. Mesma dupla + mesma semente = mesmo
    duelo, golpe a golpe — o determinismo é o árbitro (lei v).
 
+   ---------------- O QUE DURA ALGUNS TURNOS (v9.225 · A3) ----------------
+
+   Até a v9.224 a arena traduzia buff e guarda em UMA LINHA DE PROSA e
+   descontava a mana: `prepararDuelista` criava `f.efeitos = []` e ninguém
+   nunca escrevia nele. A medição de A1 disse o tamanho do buraco — 382
+   meias-rodadas mortas em 420 quedas, 20 delas abrindo com duas, e o dano
+   logo depois da guarda em 1,034× o normal (ou seja: guardar não
+   descontava nada). O piloto pagava o turno e não comprava coisa alguma.
+
+   Agora compra, e **sem uma regra nova** — cada peça é chamada de onde já
+   morava (lei-mãe):
+
+   - a GUARDA por `erguerGuarda` (habilidades.js, v9.53). A defesa sobe
+     sozinha porque `projecaoDe` chama `defesaDe`, e `defesaDe` já soma
+     `defesaDeGuarda`. A projeção leva a lista de guardas junto, para as
+     guardas de esquiva e de intocável — que `resolverAtaque` já sabe ler
+     — não ficarem promessa pela metade.
+   - o BUFF por `efeitoDeBuff` (efeitos.js, v9.224) empilhado com
+     `empilhar`. O prazo sai de `BUFF_DA_HABILIDADE`; nenhum número de
+     regra mora aqui.
+   - o BÔNUS NO GOLPE por `bonusDeDano` / `bonusDeArma` (combos.js), que
+     são os leitores que respeitam o escopo físico/mágico.
+   - o PRAZO por `tickEfeitos` (regras-jogo.js) e `expirarGuardas`
+     (habilidades.js), uma vez por rodada — buff que não vence é buff
+     eterno, e buff eterno é regra nova pela porta dos fundos.
+
    ---------------- O QUE ELA NÃO FAZ ----------------
 
    Não muta a ficha original (trabalha em cópia — o duelo não deixa
@@ -35,9 +61,19 @@
    ============================================================ */
 
 import { turnoDosCompanheiros, defesaDe } from "./combate.js";
-import { ehCuraDeGrupo, ehOfensiva } from "./companheiros.js";
+import { empilhar, efeitoDeBuff } from "./efeitos.js";
+import { guardaDe, erguerGuarda, expirarGuardas } from "./habilidades.js";
+import { bonusDeDano, bonusDeArma } from "./combos.js";
+import { tickEfeitos } from "./regras-jogo.js";
 import { usarConsumivel } from "./pocoes.js";
 import { montarPronto, PRONTOS } from "./prontos.js";
+
+/* ---------------- A VOZ SECA ----------------
+   `tickEfeitos` e `expirarGuardas` devolvem linha na voz do App: emoji na
+   frente e ponto no fim. A arena narra seco. Tira o enfeite e deixa o
+   fato — e o que sai daqui nunca pode terminar em " se guarda" nem em
+   "(−N)", que são as duas réguas que a suíte lê. */
+const secar = (l) => String(l == null ? "" : l).replace(/^[^\p{L}\p{N}]+/u, "").replace(/\.$/, "");
 
 /* ---------------- OS TERRENOS DA QUEDA ----------------
    O vocabulário é o mesmo do combate da campanha (apertado, aberto,
@@ -72,21 +108,34 @@ function comSorteTravada(semente, fn) {
 export function prepararDuelista(ficha) {
   const f = JSON.parse(JSON.stringify(ficha));
   f.vida = f.vidaMax; f.mana = f.manaMax;
-  f.condicoes = []; f.efeitos = [];
+  /* a guarda entra junto de condições e efeitos: é da mesma família de
+     coisa com prazo, e um duelo que começasse com a guarda da luta
+     anterior de pé deixaria cicatriz (lei vi) */
+  f.condicoes = []; f.efeitos = []; f.guardas = [];
   return f;
 }
 function projecaoDe(f) {
   return {
     nome: f.nome, vida: f.vida, vidaMax: f.vidaMax,
-    /* defesa de HERÓI, explícita — o caminho de inimigo a honra */
+    /* defesa de HERÓI, explícita — o caminho de inimigo a honra, e ela já
+       traz `defesaDeGuarda` somada por `defesaDe` */
     defesa: defesaDe(f, false),
+    /* v9.225: as guardas viajam junto porque duas das três famílias não
+       somam defesa — a de esquiva entorta o dado e a de intocável faz o
+       golpe errar, e quem lê as duas é `resolverAtaque`, no alvo. Sem
+       isto, erguer uma delas não faria absolutamente nada: promessa pela
+       metade é o que esta etapa veio matar. Não duplica número nenhum —
+       `defesa` acima é explícita e o caminho de inimigo não re-soma. */
+    guardas: f.guardas || [],
     condicoes: f.condicoes || [], derrotado: false,
   };
 }
 
 /* aplica as ações que turnoDosCompanheiros devolveu: dano no outro lado,
-   cura e custo no próprio. Devolve linhas do que houve (o duelo seco). */
-function aplicarAcoes(acoes, eu, outro) {
+   cura, guarda, buff e custo no próprio. Devolve linhas do que houve (o
+   duelo seco). `rodada` entra porque a guarda vence por rodada, não por
+   turnos contados. */
+function aplicarAcoes(acoes, eu, outro, rodada) {
   const linhas = [];
   for (const a of acoes || []) {
     if (a.tipo === "cura") {
@@ -111,15 +160,58 @@ function aplicarAcoes(acoes, eu, outro) {
     }
     if (a.tipo === "buff" || a.tipo === "guarda") {
       if (a.custo) eu.mana = Math.max(0, (eu.mana || 0) - a.custo);
-      linhas.push(`${eu.nome} se guarda`);
+      const hab = a.habilidade;
+      /* A AÇÃO SECA: `turnoDosCompanheiros` emite `{tipo:"guarda"}` sem
+         habilidade nenhuma quando não há inimigo de pé. Não há o que
+         aplicar, e esta linha continua sendo a única meia-rodada morta
+         legítima da arena. */
+      if (!hab) { linhas.push(`${eu.nome} se guarda`); continue; }
+      /* 1. A GUARDA PRIMEIRO. É efeito de outra família — vence por RODADA
+         e soma à defesa, não ao golpe — e por isso tem de ser testada
+         antes: uma habilidade que casa com a tabela GUARDAS é guarda, e
+         transformá-la em buff de dano seria inventar o que ela faz. */
+      if (guardaDe(hab)) {
+        const defesaAntes = defesaDe(eu, false);
+        const g = erguerGuarda(eu, hab, rodada);
+        if (g && g.ok) {
+          eu.guardas = g.pers.guardas;
+          /* o valor que subiu, MEDIDO pela defesa de antes e de depois, e
+             não copiado da tabela: a guarda de esquiva e a de intocável não
+             somam defesa alguma, e escrever "+0" seria mentir um número. */
+          const ganho = defesaDe(eu, false) - defesaAntes;
+          linhas.push(`${eu.nome} ergue ${hab.nome}${ganho > 0 ? ` (defesa +${ganho})` : ""}`);
+        } else linhas.push(`${eu.nome} insiste numa guarda que já está de pé`);
+        continue;
+      }
+      /* 2. SENÃO, O BUFF. `turnos` vai indefinido de propósito: sem prazo
+         de condição, quem decide é `BUFF_DA_HABILIDADE.turnosPadrao` — a
+         tabela, nunca um número solto aqui. `empilhar` devolve lista nova
+         (o novo vence, e a de entrada não é tocada). */
+      const { efeito, extraEscopo } = efeitoDeBuff(hab, eu, undefined);
+      eu.efeitos = empilhar(eu.efeitos, efeito);
+      linhas.push(`${eu.nome} firma ${hab.nome}${extraEscopo}`);
       continue;
     }
     const r = a.r;
     if (!r) continue;
     if (a.custo) eu.mana = Math.max(0, (eu.mana || 0) - a.custo);
     if (r.dano > 0) {
-      outro.vida = Math.max(0, outro.vida - r.dano);
-      linhas.push(`${eu.nome} ${r.critico ? "acerta em cheio" : "acerta"} ${outro.nome} (−${r.dano})`);
+      /* O BUFF ENTRA NO NÚMERO — e entra DEPOIS do crítico. Quem rolou o
+         golpe foi `turnoDosCompanheiros`, que não conhece os efeitos de
+         quem bate; a arena só vê o resultado pronto. Somar antes exigiria
+         duplicar `resolverAtaque` aqui dentro, que é exatamente a regra
+         copiada que a lei-mãe proíbe. Então o bônus não é dobrado pelo
+         crítico: sai mais barato que na mesa da campanha, e está escrito
+         para ninguém precisar descobrir isso sozinho.
+         Quem soma são os leitores da casa (combos.js): `bonusDeDano`
+         respeita o escopo (fúria física não levanta feitiço) e
+         `bonusDeArma` é físico por definição — o cajado do mago ainda é um
+         pedaço de pau. */
+      const b = a.tipo === "habilidade" ? bonusDeDano(eu, a.habilidade) : bonusDeArma(eu);
+      const dano = r.dano + b.bonus;
+      const peso = b.bonus > 0 ? ` — ${b.fontes.join(", ")} pesa${b.fontes.length > 1 ? "m" : ""} no golpe` : "";
+      outro.vida = Math.max(0, outro.vida - dano);
+      linhas.push(`${eu.nome} ${r.critico ? "acerta em cheio" : "acerta"} ${outro.nome}${peso} (−${dano})`);
     } else {
       linhas.push(`${eu.nome} ${r.desastre ? "erra feio" : "erra"} ${outro.nome}`);
     }
@@ -127,22 +219,34 @@ function aplicarAcoes(acoes, eu, outro) {
   return linhas;
 }
 
-/* meia-rodada: `eu` age contra `outro`, pelas regras de companheiro.
-   O piloto enxerga só as habilidades cujo efeito o duelo aplica POR
-   INTEIRO — ataque e cura. Buff e defesa ("absorve o próximo dano")
-   dependem do sistema de efeitos do App, que a arena ainda não porta:
-   deixá-los na mesa fazia o piloto gastar turnos em promessas que a
-   simulação não cumpria, e o mago perdia por culpa da moldura, não da
-   classe. Quando os efeitos forem portáteis, o filtro cai. */
+/* meia-rodada: `eu` age contra `outro`, pelas regras de companheiro, com o
+   REPERTÓRIO INTEIRO na mesa.
+
+   O FILTRO QUE CAIU (v9.225 · A3). Daqui até a v9.224 havia uma visão
+   podada — as habilidades passavam por um filtro que só deixava ficar as
+   de cura de grupo e as ofensivas, pelos dois classificadores de
+   companheiros.js — e ela existia por um motivo honesto: a arena não portava efeito
+   nenhum, então buff e guarda viravam prosa, e deixá-los à mesa fazia o
+   piloto gastar turno em promessa que a simulação não cumpria; o mago
+   perdia por culpa da moldura, não da classe.
+
+   O filtro nunca funcionou. `ehOfensiva` (companheiros.js) casa
+   `RX_OFENSIVA` contra nome **e descrição**, e "Postura Defensiva" e
+   "Escudo Arcano" dizem *dano* na descrição ("absorve o próximo dano"):
+   as duas passavam por ele todos os dias. A1 mediu o preço — 382 meias
+   rodadas mortas, 20 quedas de 420 abrindo com duas.
+
+   Com `aplicarAcoes` aplicando o efeito de verdade, o filtro perdeu o
+   motivo e caiu inteiro: o piloto vê tudo o que a ficha tem, e o que ele
+   escolher a arena cumpre. E `eu` entra direto, sem cópia de visão — não
+   havia mais o que esconder dele. */
 function meiaRodada(eu, outro, rodada) {
   const alvo = projecaoDe(outro);
-  const visao = { ...eu, habilidades: (eu.habilidades || []).filter((h) => ehCuraDeGrupo(h) || ehOfensiva(h)) };
   /* o duelista entra também como `jogador`: o cérebro de companheiro só
      cura "quem está pior (inclui o herói)" — num duelo de um, o herói a
      proteger é ele mesmo. Sem isso o curandeiro nunca se curaria. */
-  const acoes = turnoDosCompanheiros({ grupo: [visao], inimigos: [alvo], jogador: visao, jogadorNome: eu.nome, rodada });
-  const linhas = aplicarAcoes(acoes, eu, outro);
-  return linhas;
+  const acoes = turnoDosCompanheiros({ grupo: [eu], inimigos: [alvo], jogador: eu, jogadorNome: eu.nome, rodada });
+  return aplicarAcoes(acoes, eu, outro, rodada);
 }
 
 /* ---------------- UMA QUEDA ----------------
@@ -166,6 +270,25 @@ export function simularQueda(fichaA, fichaB, { semente = "queda", terreno = null
         if (A.vida <= 0 || B.vida <= 0) break;
         const outro = quem === A ? B : A;
         linhas.push(...meiaRodada(quem, outro, rodada));
+      }
+      /* O PRAZO CORRE, uma vez por rodada, depois das duas meias-rodadas.
+         Efeito que não decrementa é buff eterno, e guarda que não vence é
+         armadura de graça — as duas seriam regra nova pela porta dos
+         fundos. Os dois relógios são os da casa (`tickEfeitos`,
+         `expirarGuardas`) e devolvem estado NOVO, que a arena escreve de
+         volta na cópia. Só corre com os dois de pé: relógio depois da
+         queda é ruído na narração. */
+      if (A.vida > 0 && B.vida > 0) {
+        for (const quem of ordem) {
+          const tk = tickEfeitos(quem);
+          quem.efeitos = tk.efeitos;
+          for (const msg of tk.msgs) linhas.push(`${quem.nome} — ${secar(msg)}`);
+          const eg = expirarGuardas(quem, rodada);
+          if (eg.linhas.length) {
+            quem.guardas = eg.pers.guardas || [];
+            for (const l of eg.linhas) linhas.push(`${quem.nome} — ${secar(l)}`);
+          }
+        }
       }
       rodada++;
     }
