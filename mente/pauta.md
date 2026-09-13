@@ -124,17 +124,35 @@ harmonia com todos os sistemas"* — ou seja, a saída (c)+(b) do conselheiro:
 (eleger só entre formas com detector) fica **recusada**: trocaria a verdade
 eleita de saves existentes, e campanha viva não perde o que sorteou.
 
-- [ ] **R1 · os trackers que faltam** · de: pessoa+conselheiro · 13/09
-  Três sinais não existem no mundo: família de companheiro (`TIPOS_DE_LACO`
-  em `npcs.js:60` não tem "família"), uso de informante, e ofício de
-  antecedente (`antecedentes.js` não tem o campo). Nascem onde os sistemas
-  que já os tocam vivem — laço em `npcs.js`, ofício em `antecedentes.js` —
-  e não como órgão à parte: **harmonia é isso**. Cada um com prova própria.
+- [x] **R1 · os trackers que faltam** · feito em v9.227 (`9d2902f`), 13/09
+  Os três nasceram dentro do sistema que já os tocava, nunca como órgão à
+  parte. **O sangue** em `npcs.js` (`TIPOS_DE_LACO` ganha o sexto tipo
+  `familia`) + **uma** onda em `assuntos.js` (`dois_do_mesmo_sangue`,
+  `firmaEntre`) para que ele possa ser firmado em partida. **O ofício** em
+  `antecedentes.js`: campo opcional em 8 das 12 entradas + `oficioDoAntecedente`,
+  que lê **id OU nome** (o save guarda o nome, não o id — o desenho errava
+  nisso). **O informante** em `social.js` (o julgamento: `PAPEIS_DE_INFORMANTE`,
+  `ehInformante`, `PEDIDOS_QUE_SAO_CONSULTA`, `consultouInformante`) + o razão
+  em `npcs.js` (`registrarConsulta`, `vezesQueUsouInformante`), fiado em
+  `App.jsx:14410` dentro de `calou(...)` e invisível na tela. 172 asserções
+  novas; suíte nova `teste-antecedentes.mjs`. Nada de reviravolta foi ligado;
+  a lista de espera do `teste-ligacao` ficou vazia. Ver o diário.
 - [ ] **R2 · toda forma eleita tem detector** · de: pessoa+conselheiro · 13/09
   `alvoDaReviravolta` ganha detector para `trai_para_proteger` e
   `informante_duplo`, lendo R1. Catraca nova e permanente: para cada forma
   de `reviravoltas.js`, existe detector — um mundo nunca mais elege uma
   virada que não pode acontecer.
+  **Herdado de R1 (o orquestrador escreveu, 13/09):** os dois detectores têm
+  a matéria pronta e o caminho mapeado. `trai_para_proteger` procura quem no
+  **grupo** tem laço `familia` com alguém vivo do elenco — a máquina é
+  `paresEntre(npcs, "familia")`, e o parente achado é o refém, ou seja **o
+  alvo**. `informante_duplo` soma `vezesQueUsouInformante(npcs)` e, quando
+  chega a 3, o alvo é o informante mais consultado (o campo `consultas` da
+  ficha diz quem). R2 é o **credor** de `vezesQueUsouInformante`: hoje o
+  único leitor dele fora da prova é `reviravoltas.js:112` como nome de
+  propriedade, o que a catraca não distingue — ligar o detector paga essa
+  dívida. `antecedenteComOficio` é de forma **maior** (`mestre_treinou`) e
+  cabe em R3; o leitor é `oficioDoAntecedente(personagem.antecedente)`.
 - [ ] **R3 · a maior enfim acontece** · de: pessoa+conselheiro · 13/09
   `mexerNaReviravolta` lê só `.menor`; as três maiores (patrono, cidade do
   dízimo, mestre de ofício) são acervo escrito e nunca vivido. Ligar, com a

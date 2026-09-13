@@ -16,6 +16,96 @@ Formato:
 
 ---
 
+## 13/09 19:40 · v9.227 · R1 · os três sinais que o mundo não sabia dar · commit `9d2902f`
+- **estado inicial:** 180/180 suítes verdes, 7/7 varredores limpos, árvore
+  limpa, HEAD `c9813f9`. A Fase A fechada; a vez era a **primeira etapa da
+  Fase R**, aprovada pela pessoa. Sete formas em `reviravoltas.js`, e três
+  delas com `soNasceSe` lendo sinal que **não existe no mundo**:
+  `temCompanheiroComFamilia`, `vezesQueUsouInformante >= 3`,
+  `antecedenteComOficio`.
+- **conselheiro:** não chamado (pauta cheia, e a etapa já estava escrita).
+- **a palavra da pessoa virou desenho.** *"Que o sistema de reviravoltas
+  funcione em harmonia com todos os sistemas"* — e é ela que decide **onde**
+  cada sinal nasce. Não um módulo `trackers.js` com os três juntos (que seria
+  o órgão à parte, e o contrário do pedido): cada um **dentro do sistema que
+  já o tocava**. O orquestrador mapeou o terreno antes de delegar; o dono de
+  cada sinal foi achado no código, não escolhido por conveniência.
+- **backend (os módulos puros):**
+  - **o sangue → `npcs.js`**, porque o laço é de npcs. `TIPOS_DE_LACO` ganha
+    o sexto tipo `familia`. As seis funções da máquina de laço (`garantirLaco`,
+    `firmarLaco`, `romperLaco`, `comLaco`, `firmarEntre`, `paresEntre`) já
+    operam por catálogo — nenhuma foi tocada.
+  - **o ofício → `antecedentes.js`**, o catálogo que já diz de onde a pessoa
+    veio. Campo **opcional** `oficio` em 8 das 12 entradas + `oficioDoAntecedente`.
+  - **o informante → `social.js` + `npcs.js`.** O informante já vivia no
+    `social.js`: é ele que sabe o tamanho do pedido (a escada `cortesia` /
+    `conversa` = informação) e o papel de quem está na frente. Lá ficou o
+    **julgamento** (`PAPEIS_DE_INFORMANTE`, `ehInformante`,
+    `PEDIDOS_QUE_SAO_CONSULTA`, `consultouInformante`); no registro de pessoas
+    ficou o **razão** (`registrarConsulta`, `vezesQueUsouInformante`), que já
+    atravessa o save inteiro.
+- **frontend (a fiação):** `App.jsx:14410-14428`, dentro do bloco
+  `if (des && des.social)`, depois do envelope / do ouro / da alavanca suja,
+  embrulhada em `try/catch` com `calou("consultaDeInformante", e)`. **Zero na
+  tela** — nenhum `pushMsgs`, nenhum badge, nenhum número. Nenhum campo novo
+  de save: `consultas` mora dentro da ficha do NPC, e `npcs` já vai inteiro
+  no save (`App.jsx:7335`) e volta inteiro no load (`:10769`).
+- **testes:** 172 asserções novas, cada sinal provado na casa do seu sistema —
+  `teste-laco.mjs` seção 9 (25) + `teste-lacos.mjs` seção 6 (5) para o sangue,
+  `teste-social.mjs` seção 12 (74) para o informante, e a suíte nova
+  `teste-antecedentes.mjs` (68) para o ofício, **porque o catálogo de
+  antecedentes nunca teve suíte de comportamento** — pendurar a prova em
+  `teste-prontos.mjs` seria medir uma coisa na casa de outra.
+- **decisões médias tomadas:**
+  - **um assunto novo em `assuntos.js`** (`dois_do_mesmo_sangue`, `pede:
+    "duas"`, `firmaEntre: "familia"`). Motivo: um tipo de laço que **nenhum
+    assunto cria** é exatamente a regra sem código atrás que esta casa passou
+    versões caçando — o sinal nasceria morto. É "ampliar acervo numa tabela
+    existente, no mesmo formato" (um, no molde exato dos três vizinhos), e
+    não "a voz do Narrador em massa", que é pesado.
+  - **`PESO_DO_PAPEL` NÃO ganhou linha de informante.** Motivo: aquela tabela
+    mede o que a pessoa **tem a perder**; ser informante diz o que ela
+    **vende**. Uma linha lá mudaria a DC de toda conversa em campanha viva —
+    rebalanceamento, e não desta etapa. A suíte agora **prova** que a tabela
+    nova não mexe no preço (`pesoDoPapel` nulo para os 18 papéis, e
+    `dificuldadeSocial` idêntica com e sem informante).
+  - **`oficioDoAntecedente` lê id OU nome**, e não passa por
+    `antecedentePorId`. Motivo: o desenho do orquestrador dizia "o save guarda
+    o id" e **estava errado** — `App.jsx:3964` e `prontos.js:183` gravam o
+    **nome** ("Herdeiro da Forja"). Um leitor só por id responderia `""` para
+    toda ficha que existe. Precedente de `pericias.js:106-115`. E
+    `antecedentePorId` cai no primeiro da lista quando não acha, o que daria o
+    ofício do Órfão (que não tem) a qualquer id errado.
+  - **uma asserção antiga cedeu — do lado certo.** `teste-laco.mjs`, "nenhum
+    tipo do catálogo sem criador", montava `criados` só de `a.firma` e
+    **ignorava `firmaEntre`**: cega a uma das duas portas de nascimento desde
+    a v9.98. Passou a unir as duas, **com o motivo escrito na linha** (lei da
+    casa). Cego estava o varredor, não o catálogo — afrouxar a asserção ou
+    tirar o sangue da lista apagaria a lei em vez de cumpri-la.
+- **compatibilidade (campanha viva não perde nada):** antecedente sem ofício
+  continua com bônus, item, PV, PM e gancho idênticos — provado pelo caminho
+  real (`montarPronto`), não contra número escrito à mão; ficha de save antigo
+  sem `consultas` vale 0 e sobrevive a `mesclarNPC`; um tipo a mais em
+  `TIPOS_DE_LACO` **não soma bloco ao prompt** (o objeto `lacos` de
+  `App.jsx:15858` é lido só por `compasso.js:178` e `:277`, nunca serializado
+  — o teto de prompt está intacto).
+- **o que ficou:** **a lista de espera do `teste-ligacao` ficou VAZIA** — não
+  foi preciso usá-la. Os sete exports novos são exercitados de verdade pelas
+  provas, e a catraca passou sozinha (2487 regras varridas). Fica dito, com
+  honestidade, que **o leitor de produção de `vezesQueUsouInformante` é R2**:
+  hoje quem o "referencia" fora da prova é `reviravoltas.js:112`, mas como
+  nome de propriedade (`c.vezesQueUsouInformante`), não como import — a
+  catraca conta por palavra e não distingue. R2 é o credor, e ele é a próxima
+  etapa da fase.
+- **nada de reviravolta foi ligado.** `reviravoltas.js` e `alvoDaReviravolta`
+  não foram tocados — R1 só cria os sinais e deixa o mundo rico. A vez de R2 é
+  a próxima: detector para `trai_para_proteger` e `informante_duplo`, lendo o
+  que nasceu aqui.
+- **prova final:** `npm run build` limpo, **181/181 suítes verdes, 7/7
+  varredores limpos**.
+
+---
+
 ## 13/09 19:05 · v9.226 · A4 · o equilíbrio conferido, e a catraca que prova estabilidade · commit `817f96f`
 - **estado inicial:** 180/180 suítes verdes, 7/7 varredores limpos, árvore
   limpa, HEAD `08f9527`. A vez era A4 — a última etapa da Fase A, e desde a
