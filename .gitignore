@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .vercel/
-.claude/
+.claude/*
+!.claude/agents/
 package-lock.json
 images/
