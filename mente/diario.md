@@ -16,6 +16,176 @@ Formato:
 
 ---
 
+## 14/09 13:05 · v9.240 · T3 · a salvaguarda no fim do turno · commit `<este>`
+- **estado inicial:** árvore limpa, HEAD `ace9c60`, VERSÃO v9.239, `npm test`
+  181/181 suítes + 9/9 varredores verde. Sem trava de ciclo (posta por mim). A vez
+  era **T3**, terceira etapa da Fase T, com a lei da pessoa: *"os testes de
+  resistência para alguns venenos — tipo, teste de salvaguarda de Constituição
+  exigido pelo veneno no final do turno."*
+- **conselheiro:** não chamado (etapa já escrita e aprovada; a pauta tem mais de
+  5 itens em "Aberto").
+- **backend:** a tabela `SALVAGUARDA_DO_FIM_DO_TURNO` em `condicoes.js`, no molde
+  de `CONCENTRACAO_DA_MAGIA` — regra geral + **critério de três testes que a suíte
+  lê de volta** + 7 exceções que permitem e 6 que não, cada uma com o motivo. Mais
+  `salvaguardaDeSaida`, `linhaDaSaidaDeCondicao` e `tentarSaidaNoFimDoTurno`. A
+  rolagem é **inteiramente** de `salvaguardas.js` — nenhum d20 novo. `App.jsx`
+  intocado.
+- **frontend:** 89 linhas nos três sítios do relógio de T1 (herói `:8293`, grupo
+  `:8364`, inimigos `:8414`), cada um em `try/catch` com `calou`, **sempre depois
+  de `tickCondicoes`**. Zero regra e zero frase de regra no App: o único texto que
+  ele fornece é o nome do dono.
+- **testes:** `teste-cond.mjs` 102 → **245**; `teste-sala.mjs` 123 → **125**.
+  **27 sabotagens em T3, 27 mordendo** (duas nasceram verdes e foram consertadas),
+  3 no `teste-sala`, 3 mordendo. Nenhuma asserção antiga movida.
+
+### O critério é que era a etapa, não a lista
+
+A pauta pedia "cada condição declara se permite salvaguarda". O risco dessa frase
+é virar lista de gosto — sete nomes escolhidos a dedo, que a suíte só prova
+copiando. O que nasceu no lugar foi **um critério de três testes**, escrito na
+tabela e lido de volta pela suíte, que deduz sozinho a posição de uma condição
+nova:
+
+1. **`turnos >= 2`** — com prazo de um turno a segunda chance chega no mesmo
+   instante em que o relógio já vence; rolar ali nunca muda nada. Corta
+   `atordoado` e `caido`.
+2. **Efeito sustentado, não ferimento** — a salvaguarda expulsa o que continua
+   agindo; ferida aberta e fogo pegado são estrago em curso, e a saída deles é
+   cura ou porta declarada. Corta `sangrando` e `queimando`.
+3. **Só ruim** — ninguém resiste à própria bênção (no 5e é literal: pode-se
+   falhar de propósito). Corta as 8 boas de uma vez.
+
+**7 ganharam**, cada uma com âncora 5e escrita na linha: `envenenado` vigor CD12
+(o exemplo da pessoa), `paralisado` vigor CD14 (Imobilizar), `agarrado` forca CD12
+(Golpe Enredante), `amedrontado` presenca CD12 (Medo), `cego` vigor CD12
+(Cegueira/Surdez), `enfraquecido` vigor CD12 (Raio do Enfraquecimento), `lento`
+vigor CD12 (Lentidão). **6 ruins não ganharam, com motivo por linha.** A
+convergência **7 + 6 + 8 = 21** é asserção: é o que transforma "ninguém ficou sem
+posição" em "a tabela fala do catálogo que existe".
+
+### A CD é herdada, o atributo não — e `cego` é a prova
+
+A CD sai da `resistir.dif` da própria condição onde existe (envenenado 12,
+paralisado 14, agarrado 12, amedrontado 12), e 12 onde não existe. **O mesmo
+veneno não pode ter duas forças, uma para pegar e outra para sair.** Mas só o
+número é herdado: `resistir` usa `"agilidade"` e `"vontade"`, que **não existem**
+em `ATRIBUTOS` nem em `SALVAGUARDAS`. São **duas perguntas diferentes** —
+entrada (`aflicoes.js`, "o veneno pega?") e saída ("o corpo expulsa?"). `cego` é
+o caso que prova: não tem entrada e tem saída; a porta que CEGA é Percepção, a
+que DESCEGA é Vigor.
+
+### O efeito, medido em número
+
+Conta fechada `E[D] = (1−(1−p)^N)/p` **e** Monte Carlo de 60 mil execuções pelo
+código real, semeado — os dois batem na segunda casa.
+
+| condição | prazo puro | CD | mod +0 | mod +2 | mod +4 | mod +6 |
+|---|---|---|---|---|---|---|
+| envenenado | 4t | 12 | **2,02t (−50%)** | 1,74t | 1,52t | 1,33t |
+| amedrontado · enfraquecido · lento | 3t | 12 | 1,85t (−38%) | 1,65t | 1,47t | 1,31t |
+| paralisado | 2t | 14 | 1,65t (−18%) | 1,55t | 1,45t | 1,35t |
+| agarrado · cego | 2t | 12 | 1,55t (−22%) | 1,45t | 1,35t | 1,25t |
+
+**As sete somavam 19 turnos de prazo puro; passam a somar 12,33 (mod 0) a 9,12
+(mod +6) — corte de 35% a 52%.** As seis ruins que não ganharam somam 10 turnos e
+não mudam um dado. Onde a condição dói (`envenenado`, 2/turno, 8 PV de prazo
+puro): mod +0 → **4,05 PV (−49%)**, saindo antes do prazo em **83%** das vezes.
+
+**A faixa do herói é a real, e foi conferida nos oito prontos:** salva de Vigor
+**+1 a +5**, mediana +3 (Muralha +5, Sombra +1). O `frontend` levantou alarme de
+que o herói passaria quase sempre — era artefato de ficha sintética com `vigor:
+15`; os atributos desta casa **já são modificadores** (0–3 em `prontos.js`). O
+inimigo rola dado cru (`modSemFicha: 0`, declarado com três motivos, o principal
+sendo que derivar bônus de `nivel`/`ameaca` seria um segundo sistema de atributos
+invisível). **O companheiro fica no meio sem ter um único atributo**, porque
+declara `classe` e a proficiência de salvaguarda entra sozinha: Guerreiro nv5
+rola com **+3**.
+
+### O que o jogador lê
+
+Voz de mundo, os dois números, sem nomear o mecanismo, sem depender de
+`mostrarRolagens`, e **nascida no módulo** — o App não monta uma sílaba:
+
+```
+🧪 O veneno afrouxa e sai do sangue — deu 20, e bastavam 12.
+😨 Irmã Vela: o medo solta a garganta — deu 18, e bastavam 12.
+🕸 Ogro Sarnento: o corpo se arranca do que o prendia — deu 17, e bastavam 12.
+```
+
+**Nasce só no sucesso, e é C2 pelo motivo inverso:** lá a linha só vem na queda
+porque uma a cada golpe aguentado seria ruído; aqui o evento é a saída, e uma
+linha a cada falha (sete condições × todo turno × todos os portadores) seria o
+mesmo ruído multiplicado. **Teto de prompt 81.927 → 81.927 chars**, crescimento
+estático zero — e o Mestre não precisou de nota nova, porque
+`resumoCondicoesPrompt` já viaja em todo turno e a condição que saiu some de lá
+sozinha. Fica dito que a folga contra o teto é de **73 caracteres**.
+
+### Decisões médias, com o motivo
+
+- **A ordem é contrato: relógio primeiro, salvaguarda depois.** Invertida, passar
+  na salvaguarda apagaria retroativamente o dano de um turno em que a vítima
+  esteve envenenada. O veneno cobra no turno; a chance vem no fim dele. A suíte
+  roda **as duas ordens e exige que discordem** (2 PV × 0 PV).
+- **O grupo virou passagem à parte, não embutida no `map` de T1.** Embutida, ela
+  obrigava a renomear `return { ...g, condicoes: t.condicoes }` — a linha exata
+  que uma asserção de T1 guarda. Em vez de mexer na asserção, o bloco ficou logo
+  depois, com `try/catch` próprio: mesma ordem, T1 byte a byte intocado, e um
+  estouro da salvaguarda não leva junto o tique que já rodou.
+- **`teste-sala.mjs` foi semeado** (item de "Aberto", `leve`, resolvido dentro
+  deste ciclo). A asserção `vistos.size > 480` sobre 500 `novoCodigo()` **sem
+  semente** é colisão de aniversário — 30⁶ ≈ 729 milhões, 124.750 pares, ~1 rodada
+  em **5.800** —, e já ficou vermelha duas vezes sem reproduzir (R2 e o meio de
+  T2). Hoje roda com `rng(hashSemente("taverna|sala|codigo"))` pelo parâmetro `rnd`
+  que já existia: **500/500, sempre**. **O 480 não desceu um dígito** — o número
+  estava certo; quem estava errado era a aposta. Duas asserções novas fecham o
+  buraco que semear sozinho deixaria (a mesma semente devolve os mesmos 500, e
+  `criarSala` repassa a costura).
+
+### O achado do ciclo: as duas sabotagens que nasceram verdes
+
+Das 27, duas passaram — e as duas estavam **no teste, não na produção**, que é o
+lugar mais perigoso de um verde falso.
+
+- **A varredura do canal `restauracao` pulava `condicoes.js` inteiro.** Um leitor
+  nascido dentro do próprio catálogo passava verde — e o arquivo que **declara** o
+  canal é justamente onde ele tem mais chance de ganhar leitor. É o mesmo vício do
+  recorte largo que T1 registrou, com outra roupa.
+- **A peneira do `concentrado` aceitava "qualquer `id:` na frente"**, e
+  `{ id: "concentrado" }` é exatamente como alguém **aplica** a condição: o
+  aplicador passava verde. Hoje a entrada do catálogo é reconhecida pela forma
+  inteira (`concentrado: { id:`).
+
+Ambas consertadas e re-sabotadas: **27/27**.
+
+### O que ficou
+
+- **`concentrado` NÃO ganhou salvaguarda, e segue problema de T4** — cai no teste
+  3 do critério (é `tipo: "bom"`). Continua `turnos: null`, `saiCom: []`, e nada o
+  aplica. **O zero está guardado na suíte**, junto com o do canal `restauracao`
+  (que **segue sem leitor**, de propósito — é T4): se qualquer um dos dois ganhar
+  leitor sem T4 ter acontecido, é vermelho. É o que impede T4 de nascer de carona.
+- **Não medido em mesa.** O instrumento de Uma Vida de T1 (`umavida|0..999`) não
+  sobreviveu no scratchpad, e reconstruí-lo exigiria pilotar o `App.jsx`. A conta
+  fechada e o Monte Carlo pelo código real concordam na segunda casa; a medição em
+  combate de verdade fica para quem precisar dela. Dito, não escondido.
+- **`protegido`/`defesaDe` não tocado** (segue em "Aberto"), nada consertado de
+  carona.
+- **Sete suítes com o mesmo vício do `teste-sala`, relatadas e não consertadas** —
+  vão para "Aberto". Rodadas 20× cada, zero vermelhas; nenhuma é da classe do
+  `teste-sala` (~1 em 5.800). A mais frágil é `teste-onda3.mjs:52` (`mult >= 1.9`,
+  Invocador medindo **1,990**, colado no limiar): qualquer ajuste de tabela que
+  leve o multiplicador a ~1,93 vira falha intermitente sem defeito real.
+- **Três achados de produção, nenhum de T3** — o principal: `tentarSaidaNoFimDoTurno(p, null)`
+  estoura, porque `= {}` no destructuring não cobre `null`. Padrão pré-existente em
+  quase toda a casa; nenhum dos três sítios passa `null` e os três estão em
+  `try/catch`. Vai para "Aberto".
+- **Para a pessoa:** `envenenado` cai pela metade (4t → 2,02t no dado cru) já no
+  inimigo, e é a maior mexida do lote — justamente na condição que ela citou. É o
+  5e ao pé da letra (o veneno de uma aranha gigante raramente gruda quatro
+  rodadas) e a CD **não foi afrouxada por gosto**: 12 é a `resistir.dif` que a
+  própria condição já declarava. Se ela quiser o veneno mais grudento, o lugar é
+  uma linha da tabela — CD ou prazo —, e a suíte lê a mudança de volta.
+
 ## 14/09 12:10 · v9.239 · T2 · a cura não limpa · commit `a6a6473` + este
 - **estado inicial:** árvore limpa, HEAD `7ae4ba1`, VERSÃO v9.238, `npm test`
   181/181 suítes + 8/8 varredores verde. Sem trava de ciclo (posta por mim). A vez

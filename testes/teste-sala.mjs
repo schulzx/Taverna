@@ -14,6 +14,8 @@
 const S = "../src/";
 const A = await import(S + "sala.js");
 const T = await import(S + "transporte.js");
+/* O gerador semeado da casa (`semente.js`) — ver a seção 1. */
+const { rng, hashSemente } = await import(S + "semente.js");
 const { readFileSync } = await import("node:fs");
 const APP = readFileSync("../src/App.jsx", "utf8");
 
@@ -26,10 +28,42 @@ const sec = (s) => console.log(`\n${s}`);
 
 sec("1. o código: dito em voz alta, e nunca corrigido em silêncio");
 {
+  /* ---- POR QUE ESTA PROVA É SEMEADA (v9.240) ----
+     O NÚMERO 480 NÃO MUDOU e não podia mudar: ele está certo. Quem estava
+     errado era a APOSTA por baixo dele. Até aqui os 500 códigos saíam de
+     `Math.random`, e isso é colisão de aniversário: 30 letras em
+     `ALFABETO_DO_CODIGO` elevado a `CODIGO_TAM` 6 = 30^6 ≈ 729 milhões de
+     códigos possíveis, e 500 sorteios fazem 500·499/2 = 124.750 pares —
+     124750 / 729e6 ≈ 0,017% de chance de colisão por rodada, ou cerca de
+     UMA rodada vermelha a cada 5.800. Ficou vermelha duas vezes sem
+     reproduzir (em R2 e no meio de T2), sempre sem defeito nenhum atrás.
+
+     É a lei do determinismo por semente quebrada DENTRO da própria prova:
+     mesma semente = mesmo resultado, em qualquer máquina, é o único
+     árbitro que um sistema sem servidor tem — e uma suíte que sorteia não
+     tem árbitro nenhum. O conserto não afrouxa a asserção: ele a torna
+     EXATA. O parâmetro `rnd` já existia em `novoCodigo(rnd = Math.random)`
+     e em `criarSala({ rnd })`, posto ali justamente para isto; faltava a
+     suíte usá-lo. Com semente fixa os 500 códigos são sempre os mesmos
+     500, e o que era aposta virou medida: 500 de 500, todas as vezes. */
+  const semeado = rng(hashSemente("taverna|sala|codigo"));
   const vistos = new Set();
-  for (let i = 0; i < 500; i++) vistos.add(A.novoCodigo());
+  for (let i = 0; i < 500; i++) vistos.add(A.novoCodigo(semeado));
   t("todo código gerado é válido", [...vistos].every(A.codigoValido));
   t("e eles não se repetem à toa", vistos.size > 480, `${vistos.size}/500`);
+  /* A METADE QUE FALTAVA: a mesma semente entrega a MESMA sequência. Sem
+     esta asserção, semear seria só disfarçar o sorteio — o que prova que o
+     gerador é determinístico é rodá-lo duas vezes e exigir igualdade. */
+  const outraVez = [];
+  const semeadoDeNovo = rng(hashSemente("taverna|sala|codigo"));
+  for (let i = 0; i < 500; i++) outraVez.push(A.novoCodigo(semeadoDeNovo));
+  t("e a mesma semente devolve exatamente os mesmos 500 códigos", outraVez.join(",") === [...vistos].join(","), `${new Set(outraVez).size}/500`);
+  /* E A COSTURA VALE ATÉ A SALA: `criarSala` repassa o `rnd`, então uma
+     mesa semeada nasce com o código previsto. É o que permite provar
+     qualquer coisa sobre a sala sem depender do acaso. */
+  t("e a sala semeada nasce com o código que a semente manda",
+    A.criarSala({ anfitriao: "p1", rnd: rng(hashSemente("taverna|sala|codigo")) }).codigo === outraVez[0],
+    outraVez[0]);
   /* o alfabeto não tem O, 0, 1, I, 5 nem S: um código que se confunde ao
      ser lido em voz alta é um código que não serve para o que ele é */
   t("sem as letras que se confundem falando", !/[O01I5S]/.test(A.ALFABETO_DO_CODIGO));

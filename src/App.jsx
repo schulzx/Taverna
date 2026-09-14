@@ -34,7 +34,7 @@ import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecem
 import { envelopeDoComercio, generoDoItem, generoPorId, apertarProcura, podePagar, pechinchar, dificuldadeDaPechincha, linhaDoPreco, vocacaoDe } from "./comercio.js";
 import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
-import { criarCondicao, tickCondicoes, limparPorDescanso, resumoCondicoesPrompt, estadoDeRolagem, mecanicaDe } from "./condicoes.js";
+import { criarCondicao, tickCondicoes, tentarSaidaNoFimDoTurno, limparPorDescanso, resumoCondicoesPrompt, estadoDeRolagem, mecanicaDe } from "./condicoes.js";
 import { custoDaFalhaCritica, linhaDoCusto, notaDoCusto } from "./consequencias.js";
 import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, perderFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
@@ -8289,6 +8289,36 @@ export default function Taverna() {
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONDIÇÃO — DANO JÁ APLICADO PELO SISTEMA] ${t.fontes.join(" e ")} me custou ${t.dano} PV neste turno (estou com ${pv}/${pers.vidaMax}). Mostre isso na ficção — o corpo cobrando o preço — mas NÃO envie dano nenhum por isso: já está cobrado.`;
       }
     }
+    /* --------- A SEGUNDA CHANCE, NO FIM DO TURNO (T3) · eu ---------
+       DEPOIS DO RELÓGIO, NUNCA ANTES, e a ordem é contrato escrito em
+       `condicoes.js`: o tique acima cobra o dano do turno e vence o prazo;
+       só então vem a chance de sair. Invertida, passar na salvaguarda
+       apagaria retroativamente o dano de um turno em que o corpo ESTEVE
+       envenenado — o veneno cobra no turno, a chance vem no fim dele.
+
+       DAQUI SÓ SAI FIAÇÃO. Quem dá segunda chance, com qual salvaguarda e
+       contra qual dificuldade, está em `SALVAGUARDA_DO_FIM_DO_TURNO`; a
+       frase que o jogador lê nasce em `linhaDaSaidaDeCondicao`, já em voz
+       de mundo e com os dois números. O App não escreve uma sílaba de
+       regra — aqui só o `modDe`, porque só eu tenho ficha de atributo para
+       somar, e quem sabe somá-la é `atributoEfetivo`.
+
+       NÃO FILTRA POR VIDA, ao contrário do irmão dos inimigos: quem cai
+       aqui fica em cena (`morrendo`), e o tempo passa para ele também.
+
+       E NÃO PODE CUSTAR O TURNO. O sítio do herói nunca esteve em
+       `try/catch`; este pedaço está. Se a porta estourar, a cena segue com
+       a condição de pé — que é exatamente o comportamento de antes desta
+       versão. */
+    try {
+      if ((pers.condicoes || []).length) {
+        const saida = tentarSaidaNoFimDoTurno(pers, { modDe: (a) => atributoEfetivo(pers, a) });
+        if (saida.mudou) {
+          pers = { ...pers, condicoes: saida.condicoes };
+          msgs.push(...saida.linhas);
+        }
+      }
+    } catch (e) { calou("salvaguarda-do-fim-do-turno", e); }
     /* ---------------- O RELÓGIO ALCANÇA O GRUPO (T1) ----------------
        `tickCondicoes` tinha dois sítios — eu, logo acima, e os inimigos,
        logo abaixo — e o grupo não tinha nenhum. Cinco sítios vivos
@@ -8330,6 +8360,43 @@ export default function Taverna() {
         msgs.push(...linhasDoGrupo);
       }
     } catch (e) { calou("prazo-da-condicao-do-grupo", e); }
+    /* ---- A SEGUNDA CHANCE DO COMPANHEIRO (T3) ----
+       DEPOIS DO RELÓGIO, como a minha: o tique de T1 acabou de rodar logo
+       acima, e só então vem a chance de sair.
+
+       E DE FORA DAQUELE `map`, DE PROPÓSITO. Embutida lá dentro, ela teria
+       de renomear a linha que escreve o prazo de volta na ficha — a linha
+       exata que T1 guarda com asserção — e um estouro seu levaria junto o
+       tique que já tinha rodado. Aqui o prazo é de T1 e sobrevive sozinho,
+       e esta passagem sai irmã do sítio do herói.
+
+       SEM `modDe`, e é medida do módulo, não esquecimento: o companheiro
+       não traz `atributos` na ficha, e derivar um modificador de nível ou
+       de ameaça seria regra nova e invisível. A metade da proficiência
+       dele entra sozinha, porque ele declara `classe` — um Guerreiro
+       aguenta veneno melhor que um Mago, que é o que a classe promete.
+
+       NÃO FILTRA POR VIDA, pelo mesmo motivo que o tique de T1 não filtra:
+       o companheiro caído continua na cena e pode ser erguido.
+
+       E só tira condição — o dano por turno do grupo segue fora, como T1
+       decidiu ali em cima. */
+    try {
+      const linhasDaSaida = [];
+      let mexeu = false;
+      const grupoComSaida = (pers.grupo || []).map((g) => {
+        if (!g || !((g.condicoes || []).length)) return g;
+        const saida = tentarSaidaNoFimDoTurno(g, { quem: g.nome });
+        if (!saida.mudou) return g;
+        mexeu = true;
+        linhasDaSaida.push(...saida.linhas);
+        return { ...g, condicoes: saida.condicoes };
+      });
+      if (mexeu) {
+        pers = { ...pers, grupo: grupoComSaida };
+        msgs.push(...linhasDaSaida);
+      }
+    } catch (e) { calou("salvaguarda-do-fim-do-turno-do-grupo", e); }
     /* o mesmo vale para quem está do outro lado: veneno num inimigo precisa
        matar o inimigo, não decorar a ficha dele */
     if (combateRef.current && (combateRef.current.inimigos || []).some((e) => (e.condicoes || []).length && !e.derrotado)) {
@@ -8343,7 +8410,27 @@ export default function Taverna() {
           msgs.push(`${t.fontes.join(" + ")} em ${e.nome}: −${t.dano} PV (${vida}/${e.vidaMax})${vida <= 0 ? " ☠" : ""}`);
         }
         t.expiradas.forEach((c) => msgs.push(`✓ ${e.nome}: ${c.nome} passou`));
-        return { ...e, condicoes: t.condicoes, vida, derrotado: e.derrotado || vida <= 0 };
+        /* A SEGUNDA CHANCE DO INIMIGO (T3) — depois do relógio, e SÓ DE PÉ:
+           o que o dano da condição acabou de derrubar sai de cena, e corpo
+           caído não se sacode de veneno. É a mesma leitura do filtro por
+           `derrotado` que este sítio já faz, e a diferença para o grupo é
+           de propósito — T1 escreveu o porquê ali em cima: o companheiro
+           caído continua na cena, o inimigo derrotado não.
+
+           Sem `modDe`: o bestiário não traz `atributos` e o inimigo não
+           declara classe nenhuma — ele fica no piso declarado na tabela,
+           que é o dado cru contra a dificuldade.
+
+           Em `try/catch` porque este sítio também nunca esteve em um: uma
+           salvaguarda que estoure não pode levar a luta junto. */
+        let condicoes = t.condicoes;
+        if (vida > 0) {
+          try {
+            const saida = tentarSaidaNoFimDoTurno({ ...e, condicoes: t.condicoes }, { quem: e.nome });
+            if (saida.mudou) { condicoes = saida.condicoes; msgs.push(...saida.linhas); }
+          } catch (err) { calou("salvaguarda-do-fim-do-turno-do-inimigo", err); }
+        }
+        return { ...e, condicoes, vida, derrotado: e.derrotado || vida <= 0 };
       });
       const nc = { ...comb, inimigos };
       combateRef.current = nc; setCombate(nc);

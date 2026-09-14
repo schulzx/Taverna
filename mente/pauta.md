@@ -264,15 +264,48 @@ Desde a **v9.2**: o veneno do companheiro é eterno, e a condição boa que
   inverso. **7 sabotagens, 7 mordendo** — inclusive a sutil, o canal sumindo.
   `teste-cond.mjs` 84 → **102**, `teste-relicas.mjs` 98 → **103**,
   `teste-mercado.mjs` 27 → **29**; nenhuma asserção antiga movida. Ver o diário.
-- [ ] **T3 · a salvaguarda no fim do turno** · de: pessoa · 14/09
-  5e: algumas condições dão nova chance ao fim do turno de quem as sofre —
-  veneno pedindo Vigor é o exemplo que a pessoa deu. **Tabela, não julgamento
-  no meio do código**: cada condição declara se permite salvaguarda, com qual
-  atributo e qual CD (no molde de `CONCENTRACAO_DA_MAGIA` e
-  `APLICACAO_DO_BUFF`). Vale para herói, companheiro e inimigo. O jogador lê
-  o resultado na linha que C2 criou — voz de mundo, os dois números, sem
-  nomear o mecanismo. Catraca: toda condição do catálogo declarou sua posição
-  (permite ou não), e nenhuma que permite fica sem CD.
+- [x] **T3 · a salvaguarda no fim do turno** · feito em v9.240, 14/09
+  **A etapa não era a lista de sete nomes — era o critério que os deduz.** A
+  pauta pedia "cada condição declara se permite", e o risco dessa frase é virar
+  lista de gosto que a suíte só prova copiando. `SALVAGUARDA_DO_FIM_DO_TURNO`
+  (`condicoes.js`) nasceu no molde de `CONCENTRACAO_DA_MAGIA` com **três testes
+  escritos e lidos de volta pela suíte**: (1) `turnos >= 2` — com prazo de um
+  turno a chance chega no instante em que o relógio já vence, e corta `atordoado`
+  e `caido`; (2) efeito **sustentado**, não ferimento — ferida aberta e fogo
+  pegado são estrago em curso, e cortam `sangrando` e `queimando`; (3) só `ruim`
+  — ninguém resiste à própria bênção, e corta as 8 boas de uma vez.
+  **7 ganharam**, cada uma com âncora 5e na linha: `envenenado` vigor 12 (o
+  exemplo da pessoa), `paralisado` vigor 14, `agarrado` forca 12, `amedrontado`
+  presenca 12, `cego` vigor 12, `enfraquecido` vigor 12, `lento` vigor 12. **6
+  ruins não**, com motivo por linha — `enfeiticado` porque dar-lhe saída aqui
+  **apagaria em silêncio a decisão de T2** (é a única cuja única saída é
+  `restauracao`). A convergência **7 + 6 + 8 = 21** é asserção.
+  **A CD é herdada da `resistir.dif`, o atributo não** — o mesmo veneno não pode
+  ter duas forças, uma para pegar e outra para sair; mas `resistir` usa
+  `"agilidade"`/`"vontade"`, que não existem em `SALVAGUARDAS`. São **duas
+  perguntas**: entrada (`aflicoes.js`) e saída. `cego` prova — não tem entrada e
+  tem saída; quem CEGA é Percepção, quem DESCEGA é Vigor.
+  **O efeito, por conta fechada e Monte Carlo de 60 mil (batem na 2ª casa):** as
+  sete somavam **19 turnos** de prazo puro e passam a somar **12,33 (mod 0) a
+  9,12 (mod +6) — corte de 35% a 52%**. `envenenado` 4t → **2,02t (−50%)** no dado
+  cru, saindo antes do prazo em 83% das vezes; em PV, 8 → **4,05 (−49%)**. A faixa
+  real do herói foi conferida nos oito prontos: salva de Vigor **+1 a +5**,
+  mediana +3. O inimigo rola cru (`modSemFicha: 0`, com três motivos escritos); o
+  companheiro fica no meio **sem ter um único atributo**, porque declara `classe`
+  e a proficiência entra sozinha (Guerreiro nv5, +3).
+  **A rolagem é inteiramente de `salvaguardas.js`** — nenhum d20 novo. **A frase
+  nasce no módulo** e o App não monta uma sílaba (só o nome do dono):
+  `🧪 O veneno afrouxa e sai do sangue — deu 20, e bastavam 12.` Nasce **só no
+  sucesso** — é C2 pelo motivo inverso: lá a linha vinha só na queda para não
+  virar ruído por rodada; aqui o evento é a saída. **Teto de prompt 81.927 →
+  81.927 chars**, crescimento estático zero (o Mestre já recebe
+  `resumoCondicoesPrompt` todo turno). **A ordem é contrato** — relógio primeiro,
+  salvaguarda depois —, e a suíte roda **as duas ordens exigindo que discordem**.
+  `teste-cond.mjs` 102 → **245**; **27 sabotagens, 27 mordendo** — e **duas
+  nasceram verdes, as duas no teste e não na produção**: a varredura de
+  `restauracao` pulava `condicoes.js` inteiro (onde o canal é declarado, e onde
+  ele tem mais chance de ganhar leitor), e a peneira do `concentrado` aceitava
+  qualquer `id:` na frente — ou seja, o **aplicador** passava verde. Ver o diário.
 - [ ] **T4 · as portas de saída declaradas** · de: pessoa · 14/09
   Se a cura não limpa, a limpeza vem de **magia, habilidade de classe e
   item** — e isso tem de existir de verdade, não virar condição sem saída.
@@ -301,6 +334,15 @@ Desde a **v9.2**: o veneno do companheiro é eterno, e a condição boa que
   limpa condição e exaustão por ser chave do mundo, não cura. Fica a decidir
   se deve deixar de se chamar "curar" — é frontend + `godmode.js`, e é
   cosmética de bastidor, não gameplay.
+  **Confirmado por T3 (14/09), e os dois zeros estão GUARDADOS na suíte:**
+  `concentrado` **não** ganhou salvaguarda (cai no teste 3 do critério — é
+  `tipo: "bom"`, e ninguém rola para se livrar da própria bênção), e o canal
+  `restauracao` **segue sem leitor**. `teste-cond.mjs` varre os 154 arquivos do
+  `src/` com peneira por contexto e **acende se qualquer um dos dois ganhar
+  leitor** — é o que impede T4 de nascer de carona, em pedaço, sem a catraca
+  "toda condição tem ao menos uma saída". T3 também deixa o alcance medido: das
+  13 ruins, **7 saem por salvaguarda**, e as **6** que não saem são o território
+  que T4 tem de cobrir por porta declarada.
 
 ### Fase B — o bônus do companheiro, se for lícito e justo
 Decisão da pessoa (14/09): *"se o bônus for lícito e justo não tem porque
@@ -826,18 +868,41 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
 
-- [ ] **a suíte da sala aposta no acaso, e às vezes perde** · leve · de: orquestrador (achado de T2) · 14/09
-  Pegado ao vivo: no meio do ciclo de T2 o `npm test` deu **180/181 · FALHARAM:
-  teste-sala.mjs** (`122 passaram, 1 falharam`) e, **na corrida seguinte, verde**
-  — com a árvore byte a byte igual. O sítio é `teste-sala.mjs:32`:
-  `t("e eles não se repetem à toa", vistos.size > 480)` sobre **500 chamadas de
-  `novoCodigo()` sem semente** — colisão de aniversário, que passa quase sempre e
-  falha de vez em quando. **É a lei do determinismo por semente quebrada dentro
-  da própria suíte**, e o preço é caro: um vermelho que não reproduz ensina a
-  mente a ignorar vermelho, e a árvore "limpa e verde" vira dúvida na hora de
-  subir. Conserto leve: semear o gerador na suíte (ou medir a taxa de colisão
-  contra um limiar deduzido do alfabeto e do comprimento, que é tabela). **Não
-  afrouxar o 480** — o número está certo; quem está errado é a aposta.
+- [x] **a suíte da sala aposta no acaso, e às vezes perde** · **RESOLVIDO em
+  v9.240 (T3)**, 14/09 — semeada com `rng(hashSemente("taverna|sala|codigo"))`
+  pelo parâmetro `rnd` que já existia em `novoCodigo` e em `criarSala`:
+  **500/500, sempre**. **O 480 não desceu um dígito** — o número estava certo;
+  quem estava errado era a aposta. A conta (30⁶ ≈ 729 milhões, 124.750 pares,
+  ~1 rodada em **5.800**) ficou escrita no comentário, com o motivo, que é lei
+  da casa para asserção mexida. Duas asserções novas fecham o buraco que semear
+  sozinho deixaria: a mesma semente devolve os **mesmos 500**, e `criarSala`
+  repassa a costura até o fim. `teste-sala.mjs` 123 → **125**; 3 sabotagens, 3
+  mordendo. Nenhum vermelho por outra causa apareceu por baixo.
+
+- [ ] **sete suítes ainda apostam no acaso, e uma está colada no limiar** · leve · de: testes (achado de T3) · 14/09
+  Varridas as 181 suítes atrás do mesmo vício que o `teste-sala` tinha: **24
+  produzem saída não-determinística**, e 23 foram rodadas 20× cada — **zero
+  vermelhas**. Nenhuma é da classe do `teste-sala` (~1 em 5.800), mas sete têm
+  margem que vale nomear, em σ: `teste-onda3.mjs:52` (**7 σ**),
+  `teste-oraculo.mjs:86` (5,7 σ, 4.000 `consultar()` **sem a costura `{ sorte }`
+  que já existe**), `teste-mercado.mjs:78` (5,6 σ), `teste-afl.mjs:59` (6,1 σ) e
+  `:66` (7,2 σ), `teste-movimento-hab.mjs:65` (6,2 σ), `teste-reacoes.mjs:39`
+  (7,5 σ). **A que importa é `teste-onda3.mjs:52`** (`mult >= 1.9`): o Invocador
+  mede **1,990**, colado no limiar — qualquer ajuste de tabela que leve o
+  multiplicador a ~1,93 vira falha intermitente **sem defeito real**, que é
+  exatamente o veneno que o `teste-sala` destilou por duas corridas. `teste-arena`
+  e `teste-masmorra` foram conferidos e **não** têm o vício. Conserto: a costura
+  de semente onde ela já existe, começando pelo oráculo e pelo onda3.
+
+- [ ] **`= {}` não cobre `null` em três portas novas** · leve · de: testes (achado de T3) · 14/09
+  `tentarSaidaNoFimDoTurno(p, null)` estoura: `{ modDe, d20 = null, quem = "" } = {}`
+  não cobre `null` explícito — a armadilha que o `CLAUDE.md` lista como lei e que
+  `semente.js:feicoes` já guarda com `opcoes && typeof opcoes === "object"`.
+  Severidade baixa e **não é defeito de T3**: nenhum dos três sítios passa `null`,
+  os três estão em `try/catch` com `calou`, e o padrão é pré-existente em quase
+  toda a casa. O valor do item não é a linha — é **varrer quantas portas do `src/`
+  têm o mesmo buraco** e decidir se vira varredor (`check-*.mjs`), que é a única
+  forma de a lei parar de ser conselho. Linha "varredor novo para erro já visto".
 - [ ] **o sonho dá vantagem eterna ao herói** · médio · de: backend (achado de T1) · 14/09
   **É a única condição genuinamente eterna do jogo hoje — e é do herói, não do
   grupo.** `App.jsx:18759` escreve `{ nome: "Inspirado", tipo: "bom", nota: … }`
@@ -1163,7 +1228,11 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   que este item tenha sido resolvido. Linha "teste faltante para regra que
   existe".
 
-- [ ] **a suíte da sala ficou vermelha uma vez e não repetiu** · leve · de: orquestrador (achado de R2) · 13/09
+- [x] **a suíte da sala ficou vermelha uma vez e não repetiu** · **RESOLVIDO em
+  v9.240 (T3)**, junto com o item irmão de 14/09 — era o mesmo defeito, visto
+  duas vezes com cinco dias de distância, e a conta de aniversário abaixo estava
+  certa: semear bastou, e nenhuma outra causa apareceu por baixo. O texto fica
+  como foi escrito, porque a investigação é o que ensina. · leve · de: orquestrador (achado de R2) · 13/09
   No `npm test` de fechamento de R2, `teste-sala.mjs` deu `122 passaram, 1
   falharam` — e **não reproduziu**: quatro rodadas seguidas do `npm test`
   inteiro deram 181/181, e a suíte sozinha dá 123/0. Território que R2 não
