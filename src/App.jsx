@@ -191,7 +191,7 @@ import { gatilhosDe, romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, 
 import { controleDe, aplicarControle, expirarControles, estaProvocando, CONTROLE_PROMPT } from "./controle.js";
 import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, expirarPorMinuto, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, temComandoAtacar, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
 import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, temRegraPropria, erguerGuarda, expirarGuardas, baixarGuardas, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, ignoraDoGolpe, linhaDoIgnorar, notaDoIgnorar, apressar, expirarPressa, baixarPressa, acoesPorRodada, HABILIDADES_PROMPT } from "./habilidades.js";
-import { empilhar, efeitoDeBuff, efeitoDeMilagre, efeitoDeMagia, efeitoEmConcentracao, quebrarConcentracao, notaDosBuffs, absorverDano } from "./efeitos.js";
+import { empilhar, firmarEfeito, efeitoDeBuff, efeitoDeMilagre, efeitoDeMagia, efeitoEmConcentracao, quebrarConcentracao, notaDosBuffs, absorverDano } from "./efeitos.js";
 import { agruparMensagens } from "./resumo.js";
 
 /* ============================================================
@@ -6605,6 +6605,45 @@ export default function Taverna() {
     } catch (e) { calou("concentracaoDoCompanheiro", e); return { pers: quem, linha: "" }; }
   };
 
+  /* ----------- E O QUE ELE JA SEGURAVA CEDE AQUI (v9.237 - C3) -----------
+     A terceira irma de `passarPeloAbrigo` e de `segurarOuPerder`, e nasce
+     pelo mesmo motivo das duas: sao TRES nascimentos que podem firmar
+     concentracao neste arquivo — o buff do heroi, o buff do companheiro e a
+     magia de duracao — e tres try/catch soltos sao tres chances de a regra
+     nascer diferente em cada um, que e a forma de bug que esta casa ja pagou.
+
+     DAQUI SAI SO FIACAO. Quantas cabem ao mesmo tempo e decisao de
+     `firmarEfeito` (efeitos.js), lendo o teto de `CONCENTRACAO_DA_MAGIA`; a
+     frase da que cede tambem e dele, ja em voz de mundo e com a que chega
+     dentro. O App nao monta uma silaba de texto de regra: fora de comentario,
+     a unica coisa que ele escreve na frase e o nome do dono, logo abaixo.
+
+     O NOME DO DONO E COISA DE TELA, pelo molde do abrigo e da quebra: o
+     modulo nao sabe de quem e a mesa. So o companheiro precisa do prefixo,
+     para o 🛡, o 💢 da batida e o 💢 da troca sairem irmaos na cena.
+
+     `linha` VAZIA E O UNICO SINAL de que nada cedeu, e ela vem vazia sempre
+     que o efeito nao concentra: e assim que pocao, reliquia, milagre e as 82
+     magias fora da porta ficam com regressao zero sem ninguem lembrar.
+
+     E O RECUO NAO PODE CUSTAR O BUFF. Se a porta estourar, o efeito ainda
+     tem de entrar: devolver a ficha intocada tiraria do jogador o que ele
+     acabou de pagar em PM e em turno. Entao o primeiro catch cai no
+     comportamento de ANTES desta versao (`empilhar` puro, ninguem cede) e so
+     o segundo desiste — nos dois casos a rodada segue, que e a lei. */
+  const firmarOuCeder = (quem, efeito, nome = "") => {
+    try {
+      const fe = firmarEfeito(quem, efeito);
+      if (!fe || !fe.pers) return { pers: quem, linha: "" };
+      if (!fe.linha) return { pers: fe.pers, linha: "" };
+      return { pers: fe.pers, linha: nome ? String(fe.linha).replace("💢 ", "💢 " + nome + " — ") : fe.linha };
+    } catch (e) {
+      calou("concentracaoFirmada", e);
+      try { return { pers: quem ? { ...quem, efeitos: empilhar(quem.efeitos, efeito) } : quem, linha: "" }; }
+      catch (e2) { calou("concentracaoFirmadaRecuo", e2); return { pers: quem, linha: "" }; }
+    }
+  };
+
   const pessoasDaCena = () => {
     try {
       const p0 = fichaViva() || personagem || {};
@@ -7822,14 +7861,29 @@ export default function Taverna() {
        a frase atrás da palavra "físico" fazia a nota jurar escola mágica a quem
        não dá dano nenhum. Falso aqui, a cláusula do bônus some inteira da nota. */
     let somaNoGolpe = false;
+    /* v9.237 (C3): a linha da magia que CEDE o lugar sobe separada do
+       `texto`, e nao colada nele: sao duas coisas diferentes para quem le —
+       o que ele acabou de erguer e o que isso derrubou —, e a segunda so
+       existe nos turnos em que houve troca. Vazia, ninguem empurra nada. */
+    let troca = "";
     if (res.cond.tipo === "bom") {
       const buff = efeitoDeBuff(h, pers, res.cond.turnos);
-      p = { ...p, efeitos: empilhar(p.efeitos, buff.efeito) };
+      /* A PORTA E `firmarOuCeder`, E NAO `empilhar` (v9.237 - C3). Desde C2b
+         este buff nasce sabendo que concentra (`efeitoDeBuff` pergunta ao
+         catalogo), e a pilha generica so substitui por NOME IGUAL: o heroi
+         ficava segurando Bencao e Invisibilidade ao mesmo tempo, contra a
+         regra que o proprio prompt promete, e `efeitoEmConcentracao` devolvia
+         a PRIMEIRA — uma batida podia derrubar a errada. Agora a que chega
+         toma o lugar, e o teto e o da tabela. */
+      const fe = firmarOuCeder(p, buff.efeito);
+      p = fe.pers;
+      troca = fe.linha;
       extraEscopo = buff.extraEscopo;
       try { somaNoGolpe = efeitoNoGolpe(buff.efeito); } catch (e) { calou("buffDeHabilidade", e); }
     }
     return {
       pers: p,
+      troca,
       texto: `${res.cond.icone} ${h.nome}: ${res.cond.nome}${res.cond.turnos ? ` (${res.cond.turnos}t)` : ""}${port.alvo === "aliados" ? " — em você e no grupo" : ""} · ${res.cond.efeito}${extraEscopo}`,
       nota: `[EFEITO APLICADO PELO SISTEMA] "${h.nome}" deixou ${port.alvo === "aliados" ? "eu e meu grupo" : "eu"} ${res.cond.nome.toLowerCase()} (${res.cond.efeito})${extraEscopo && somaNoGolpe ? `, e o bônus de dano vale só para o que é ${extraEscopo.includes("físico") ? "físico" : "mágico"}` : ""}. Já está na ficha — narre a manifestação e não envie condição nenhuma por isso.`,
     };
@@ -7924,12 +7978,21 @@ export default function Taverna() {
        nao existe" que P1 recusou. So `absorve` tem leitor (`absorverDano`),
        entao so a frase dele vai a tela. */
     let extraAbrigo = "";
+    /* v9.237 (C3): o companheiro tambem so segura uma. Mesma linha do heroi,
+       com o dono na frente — e vazia quando nada cedeu. */
+    let troca = "";
     try {
       if (res.cond.tipo === "bom") {
         const comp = (p.grupo || []).find((g) => g && g.nome === ac.companheiro);
         if (comp) {
           const buff = efeitoDeBuff(ac.habilidade, comp, res.cond.turnos);
-          p = { ...p, grupo: (p.grupo || []).map((g) => (g && g.nome === ac.companheiro ? { ...g, efeitos: empilhar(g.efeitos, buff.efeito) } : g)) };
+          /* A PORTA E `firmarOuCeder` (v9.237 - C3), como no heroi: o Clerigo
+             do grupo firma Bencao e Escudo da Fe, e com `empilhar` ele ficava
+             segurando as duas ao mesmo tempo. `fe.pers` E o companheiro novo,
+             ja com a pilha certa, entao ele entra inteiro no lugar de `g`. */
+          const fe = firmarOuCeder(comp, buff.efeito, ac.companheiro);
+          p = { ...p, grupo: (p.grupo || []).map((g) => (g && g.nome === ac.companheiro ? fe.pers : g)) };
+          troca = fe.linha;
           if ((Number(buff.efeito.absorve) || 0) > 0) extraAbrigo = buff.extraEscopo;
         }
       }
@@ -7937,6 +8000,7 @@ export default function Taverna() {
     const onde = port.alvo === "aliados" ? "no grupo inteiro" : `em ${ac.companheiro}`;
     return {
       pers: p,
+      troca,
       texto: `${res.cond.icone} ${ac.companheiro} · ${ac.habilidade.nome}: ${res.cond.nome} ${onde} — ${res.cond.efeito}${extraAbrigo}`,
       paraMestre: `${ac.companheiro} usou ${ac.habilidade.nome} e deixou ${onde} ${res.cond.nome.toLowerCase()} — já aplicado, narre o gesto`,
     };
@@ -12524,8 +12588,16 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (["invisibilidade", "voo", "luz"].includes(m.funcao)) {
       const dur = efeitoDeMagia(m);
       const turnos = dur.turnos;
-      const pers = cobrar({ ...p0, efeitos: empilhar(p0.efeitos, dur.efeito) });
-      pushMsgs([linhaJogador, { autor: "sistema", texto: `✧ ${m.nome} ativo por ${turnos} turnos · −${m.custo} PM` }]);
+      /* A PORTA E `firmarOuCeder`, E NAO `empilhar` (v9.237 - C3). Este e o
+         nascimento que C1 mediu: Voo, Invisibilidade e Luz atravessam
+         `efeitoDeMagia`, tres das quatro concentram, e a pilha generica so
+         substitui por NOME IGUAL — quem lancasse Voo e depois Invisibilidade
+         segurava as duas, contra o que o proprio prompt promete. A troca vem
+         LOGO DEPOIS do `✧ ativo por N turnos`: primeiro o que subiu, depois o
+         preco, que e a ordem em que a coisa acontece. */
+      const fe = firmarOuCeder(p0, dur.efeito);
+      const pers = cobrar(fe.pers);
+      pushMsgs([linhaJogador, { autor: "sistema", texto: `✧ ${m.nome} ativo por ${turnos} turnos · −${m.custo} PM` }, ...(fe.linha ? [{ autor: "sistema", texto: fe.linha }] : [])]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[${m.nome.toUpperCase()} — ATIVO, CONTADO PELO SISTEMA] A magia está em vigor por ${turnos} turnos: ${m.descricao} Trate como fato em toda cena até o sistema avisar que acabou — o mundo reage a isso (quem não me vê, não me acha; quem está no chão, não me alcança). Não a encerre por conta própria.`;
       enviar(`[${m.nome}] ${acao}`, pers);
       return true;
@@ -12803,6 +12875,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         const buffH = aplicarBuffDeHabilidade(h, pers);
         pers = buffH.pers;
         if (buffH.texto) linhas.push(buffH.texto);
+        /* v9.237 (C3): e depois dela, se algo cedeu o lugar. Nesta ordem de
+           proposito — primeiro o que subiu, depois o preco. */
+        if (buffH.troca) linhas.push(buffH.troca);
         if (buffH.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${buffH.nota}`;
         /* COMBO (v9.6): a habilidade que acabou de sair conversa com a anterior?
            O sistema reconhece, dá nome e multiplica — o Mestre recebe pronto. */
@@ -12920,7 +12995,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const buffC = aplicarBuffDeHabilidade(habCitada, pers);
       pers = mudarFicha(() => buffC.pers);
       habUsadaRef.current = true;
-      pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `✦ ${habCitada.nome} · gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}${recC > 0 ? ` · ⏳ recarga ${recC}t` : ""}` }, ...linhasCit.map((t) => ({ autor: "sistema", texto: t })), ...(buffC.texto ? [{ autor: "sistema", texto: buffC.texto }] : [])]);
+      pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `✦ ${habCitada.nome} · gastou ${custo} PM · restam ${pers.mana}/${pers.manaMax}${recC > 0 ? ` · ⏳ recarga ${recC}t` : ""}` }, ...linhasCit.map((t) => ({ autor: "sistema", texto: t })), ...(buffC.texto ? [{ autor: "sistema", texto: buffC.texto }] : []), ...(buffC.troca ? [{ autor: "sistema", texto: buffC.troca }] : [])]);
       if (buffC.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${buffC.nota}`;
       const miraCitada = miraRef.current; miraRef.current = null; setMira(null);
       const desfechoC = resolverHabilidadeOfensiva(habCitada, acao, pers, { mira: miraCitada });
@@ -13610,6 +13685,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         const r4 = buffDeCompanheiro(persAtual, ac);
         persAtual = gastarManaComp(r4.pers, ac.companheiro, ac.custo);
         if (r4.texto) pushMsgs([{ autor: "sistema", texto: r4.texto }]);
+        /* v9.237 (C3): e o que o companheiro largou para erguer isto. */
+        if (r4.troca) pushMsgs([{ autor: "sistema", texto: r4.troca }]);
         partesComp.push(r4.paraMestre);
       } else if (ac.tipo === "guarda") {
         /* ---------------- A GUARDA DO COMPANHEIRO (v9.232) ----------------

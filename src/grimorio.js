@@ -255,6 +255,22 @@ export const CONCENTRACAO_DA_MAGIA = {
   /* o valor que `M(...)` põe quando a magia não dura — e o único que dispensa
      a marca sem precisar de uma linha de exceção */
   semDuracao: "instantânea",
+  /* ---- O TETO (v9.237 · C3) ----
+     A outra metade da regra, e a que faltava. Até aqui a tabela só dizia O QUE
+     se segura; nunca disse QUANTAS ao mesmo tempo — e sem esse número o jogo
+     deixava o conjurador acumular promessas sem preço, que é exatamente o que
+     o comentário acima diz que a concentração existe para impedir. A medição
+     de C3: 5 das 12 classes podem segurar duas ou mais (o Mago e o Feiticeiro
+     chegam a três), e numa amostra de 2094 quedas da arena 316 das 1352
+     firmadas de concentração eram uma SEGUNDA por cima de outra — 23% delas.
+
+     O número é 1 porque é o do 5e e o que `ECONOMIA_ACAO_PROMPT` já promete ao
+     Narrador com todas as letras ("um conjurador mantém no máximo UMA magia de
+     duração por vez"). Mora aqui, e não dentro da função que o cobra, pela
+     lei-mãe: quem quiser um dia dar duas ao Mago de alto círculo mexe nesta
+     linha e a suíte lê a mudança de volta — em vez de caçar um `1` cravado no
+     meio de um `slice`. Quem o cobra é `firmarEfeito` (efeitos.js). */
+  quantasAoMesmoTempo: 1,
   excecoes: [
     { nome: "Escudo Arcano",
       porque: "dura UMA rodada e é anteparo de reação: acaba antes do próximo turno do conjurador, e não há prazo nenhum para um golpe interromper." },

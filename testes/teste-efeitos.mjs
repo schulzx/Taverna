@@ -48,6 +48,12 @@ const {
   efeitosDe, empilhar, retirar, efeitoDeBuff, efeitoDeMilagre, turnosDaMagia,
   efeitoDeMagia, efeitoEmConcentracao, quebrarConcentracao, buffsNaRolagem, notaDosBuffs,
   absorverDano,
+  /* v9.237 (C3): `firmarEfeito` entra pela mesma porta das outras — a irmã de
+     `empilhar` que conta quantas concentrações cabem. Nenhum nome saiu daqui:
+     as seções 1–18 leem exatamente o que liam, e `empilhar` continua na lista
+     porque a seção 19 o usa como CONTROLE (a regressão é provada contra ele,
+     chamada por chamada, e não contra uma cópia da expectativa). */
+  firmarEfeito,
 } = E;
 
 /* um herói mínimo: só o que o órgão dos efeitos olha */
@@ -507,7 +513,18 @@ sec("12. ligado ao jogo — os quatro leitores do órgão");
      jogador e some dentro do prompt, onde ninguém a vê. */
   t("o App importa a peneira do golpe", /import \{[^}]*\befeitoNoGolpe\b[^}]*\} from "\.\/combos\.js"/.test(app));
   t("e pergunta a ela antes de jurar escola na nota do Narrador", /efeitoNoGolpe\(buff\.efeito\)/.test(app));
-  t("o efeito nasce por efeitoDeBuff e vai para a pilha", /efeitoDeBuff\(h, pers, res\.cond\.turnos\)/.test(app) && /empilhar\(p\.efeitos, buff\.efeito\)/.test(app));
+  /* v9.237 (C3): A ÂNCORA MUDOU DE ENDEREÇO, E O MOTIVO É A PRÓPRIA ETAPA.
+     Ela exigia `empilhar(p.efeitos, buff.efeito)` — a pilha genérica, que só
+     substitui por NOME IGUAL. C3 trocou este sítio pela porta que sabe de
+     concentração (`firmarOuCeder` no App → `firmarEfeito` → `empilhar`),
+     porque desde C2b este buff nasce concentrando e o herói acabava segurando
+     duas magias ao mesmo tempo. Ou seja: a letra antiga passou a PROIBIR o
+     conserto desta versão. A intenção é a mesma e ficou mais forte — o efeito
+     continua nascendo por `efeitoDeBuff` e continua indo para a pilha, só que
+     agora por uma porta que conta quantas o herói pode segurar. O controle
+     negativo abaixo é o que impede o caminho velho de voltar em silêncio. */
+  t("o efeito nasce por efeitoDeBuff e vai para a pilha que conta a concentração", /efeitoDeBuff\(h, pers, res\.cond\.turnos\)/.test(app) && /const fe = firmarOuCeder\(p, buff\.efeito\);/.test(app));
+  t("e a pilha genérica não é mais o caminho deste sítio", !/empilhar\(p\.efeitos, buff\.efeito\)/.test(app));
   /* quem soma o golpe na arena também respeita a peneira — a metade que
      `check-protecao.mjs` não vê, porque ele não abre a arena. */
   t("a arena firma o buff pelo mesmo nascimento", /efeitoDeBuff\(hab, eu, undefined\)/.test(src("arena.js")));
@@ -947,14 +964,26 @@ sec("15. o abrigo NASCE no companheiro, e o relógio do grupo conta (P3)");
      não `> 0`. */
   t("o abrigo do companheiro NASCE pela porta única (`efeitoDeBuff`)",
     quantas(/efeitoDeBuff\(ac\.habilidade,\s*comp,\s*res\.cond\.turnos\)/g) === 1);
-  t("e entra em `comp.efeitos` pela pilha, não por atribuição solta",
-    quantas(/empilhar\(g\.efeitos,\s*buff\.efeito\)/g) === 1);
+  /* v9.237 (C3): MESMO MOVIMENTO DE ENDEREÇO, PELO MESMO MOTIVO. A âncora
+     pedia `empilhar(g.efeitos, buff.efeito)`; o companheiro passou a firmar
+     pela porta que conta a concentração, e `fe.pers` é o companheiro NOVO
+     inteiro, já com a pilha certa. A intenção — o efeito entra em
+     `comp.efeitos` por pilha, nunca por atribuição solta — sobreviveu, e veio
+     com o teto de "uma de cada vez" junto. */
+  t("e entra em `comp.efeitos` pela pilha que conta a concentração, não por atribuição solta",
+    quantas(/const fe = firmarOuCeder\(comp,\s*buff\.efeito,\s*ac\.companheiro\);/g) === 1);
+  t("e a pilha genérica não é mais o caminho deste sítio",
+    quantas(/empilhar\(g\.efeitos,\s*buff\.efeito\)/g) === 0);
   /* O EFEITO FICA EM QUEM CONJUROU, mesmo quando a condição se espalha —
      o mesmo que o herói já faz. Sem esta guarda, um abrigo por companheiro
      no grupo inteiro seria três escudos na mesma pele: o número crescendo
      sem teto que `ABSORCAO_DO_BUFF` existe para impedir. */
+  /* v9.237 (C3): a mesma guarda, no endereço novo. O que ela protege não
+     mudou — um abrigo por companheiro no grupo inteiro seriam três escudos
+     na mesma pele —, mudou só a forma da atribuição: `fe.pers` no lugar do
+     objeto montado à mão. */
   t("e vai para QUEM conjurou, não para o grupo inteiro",
-    /g\.nome === ac\.companheiro \? \{ \.\.\.g, efeitos: empilhar\(g\.efeitos, buff\.efeito\) \}/.test(APP));
+    /g\.nome === ac\.companheiro \? fe\.pers : g\)\)/.test(APP));
   /* LEI "nunca pode custar o turno": fiação nova no App entra em try/catch
      com `calou`. Um abrigo que estoura não pode derrubar a cena. */
   t("e a fiação nova cala em vez de custar o turno",
@@ -1563,6 +1592,396 @@ sec("18. o companheiro segura o que já conjura — o buff pergunta ao catálogo
   t("e a linha que o jogador lê é `tc.linha`, seca, com o nome de quem perdeu",
     /linhas\.push\(`\$\{outro\.nome\} — \$\{secar\(tc\.linha\)\}`\)/.test(ARENA));
   t("a arena não inventa frase de concentração nenhuma", !/escapa dos dedos/.test(ARENA));
+}
+
+/* ============================================================
+   19. UMA DE CADA VEZ — o teto da concentração (C3 · v9.237)
+
+   ONDE ENTRA E POR QUÊ AQUI. Depois da 18, e sem mover uma asserção das
+   dezoito: a 16 provou que o campo VIAJA, a 17 o que o jogador LÊ quando a
+   magia cai, a 18 que o buff aprendeu a perguntar ao catálogo. As três juntas
+   deixaram o herói e o companheiro capazes de segurar DUAS ao mesmo tempo —
+   e a regra da mesa diz uma. Esta seção é o teto, e é a última da Fase C.
+
+   O QUE A ETAPA CONSERTOU, medido antes. `empilhar` só substitui por NOME
+   IGUAL: quem lançava Voo e depois Invisibilidade ficava com as duas, e
+   `efeitoEmConcentracao` devolvia a PRIMEIRA da lista — uma batida derrubava
+   sempre a mais velha, que é regra decidida por sorte de array.
+
+   AS DUAS METADES DESTA PROVA, e nenhuma vale sem a outra:
+
+   - A METADE QUE MORDE: o teto existe, sai da tabela, é LIDO DE VOLTA pela
+     função (a sabotagem do teto 2 está embutida na seção, com o valor
+     restaurado no fim), a segunda derruba a primeira, quem fica é a NOVA, e a
+     frase diz as duas magias em voz de mundo.
+   - A METADE QUE NÃO PODE MORDER: regressão zero para quem não concentra.
+     `firmarEfeito` tem de ser `empilhar` e MAIS NADA para as 85 magias do
+     catálogo, para as 148 habilidades de classe que não concentram e para
+     todo lixo — e isso é provado contra a própria `empilhar`, chamada a
+     chamada, e não contra uma cópia da expectativa escrita aqui.
+
+   O DENTE DO BUG SILENCIOSO. Efeito COM a chave e SEM nome não entra na lista
+   (`empilhar` o recusa, e sempre recusou) — se ele derrubasse a concentração
+   mesmo assim, o jogador perderia a Bênção em troca de NADA, e nenhuma linha
+   da tela diria por quê. É o caso mais barato de escrever errado e o mais caro
+   de descobrir na mesa; por isso tem dente próprio.
+
+   O QUE ESTA SEÇÃO NÃO MEDE. O preço na mesa dos oito — quantas cessões
+   acontecem de verdade e o que elas fizeram com a conta do abrigo — é da
+   arena, e está em `teste-arena.mjs` (seções 7 e 11). Aqui é a REGRA; lá, o
+   que ela custa.
+   ============================================================ */
+sec("19. uma de cada vez — a nova toma o lugar da que ele segurava (C3)");
+{
+  const { CONCENTRACAO_DA_MAGIA, magiaPorNome, MAGIAS } = G;
+  const CL = await import(RAIZ + "classes.js");
+  const APP19 = readFileSync("../src/App.jsx", "utf8");
+  /* OS CONTROLES NEGATIVOS LEEM O CÓDIGO, NÃO A PROSA. Os comentários desta
+     casa citam de propósito o que o código deixou de fazer ("a porta é
+     `firmarOuCeder`, e não `empilhar`") — uma prova de ausência sobre o
+     arquivo cru acusaria a EXPLICAÇÃO da etapa em vez de uma regressão, e
+     quem viesse depois aprenderia a apagar o comentário para calar o teste. */
+  const soCodigo = (s) => s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+  const APP19_CODIGO = soCodigo(APP19);
+  const temChave = (ef) => Object.prototype.hasOwnProperty.call(ef || {}, "concentracao");
+  const heroiC = { nome: "H", classe: "Mago", nivel: 3, atributos: { vigor: 1 } };
+  /* a mesma comparação de identidade que a lei da imutabilidade pede: não é
+     "tem os mesmos nomes", é "são os MESMOS objetos, na mesma ordem" */
+  const mesmaLista = (a, b) => Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x, i) => x === b[i]);
+  const doCatalogo = (n) => efeitoDeMagia(magiaPorNome(n)).efeito;
+
+  /* ---------------- A RÉGUA, EM TABELA ----------------
+     Nenhum número desta seção é redigitado: o teto sai de
+     `CONCENTRACAO_DA_MAGIA` e a PALAVRA sai da promessa que o Narrador já
+     recebe em `ECONOMIA_ACAO_PROMPT`. A única coisa escrita aqui é a ponte
+     entre as duas — porque "UMA" e `1` são a mesma lei em duas línguas, e
+     quem mudar uma sem a outra tem de bater nesta seção. */
+  const MEDIDA_DO_TETO = {
+    /* a frase do prompt, palavra por palavra, com a quantidade capturada */
+    rxDaPromessa: /CONCENTRAÇÃO: um conjurador mantém no máximo (\p{Lu}+) magia de duração por vez/u,
+    /* a ponte da palavra para o número — três degraus bastam para qualquer
+       teto que esta casa venha a querer, e um quarto seria inventar futuro */
+    palavraEmNumero: { UMA: 1, DUAS: 2, TRÊS: 3 },
+    /* O NOME DO MECANISMO NÃO APARECE NA FRASE (lei "o sistema não fala de si
+       mesmo"). O jogador vê duas magias disputando as mãos de alguém, não um
+       teto de tabela sendo cobrado. */
+    rxMecanismo: /[Cc]oncentra|efeito|slot|teto|limite/,
+    /* o emoji da perda, o mesmo da queda de C2: é a mesma dor, e duas
+       pontuações diferentes para a mesma dor seriam a mesa gaguejando */
+    marcaDaPerda: "💢",
+    /* os NASCIMENTOS que podem segurar algo e por isso passam pela porta
+       nova: o buff do herói, o buff do companheiro e a magia de duração */
+    sitiosDoApp: 3,
+    /* e os módulos onde `empilhar` continua sendo o caminho, porque nenhum
+       deles produz concentração nenhuma — o frasco, a relíquia e o canal do
+       Mestre. Se `firmarEfeito` aparecer em qualquer um, a regra de magia
+       vazou para fora da magia. */
+    modulosDoGenerico: ["pocoes.js", "relicas.js", "regras-jogo.js"],
+  };
+
+  /* ---------------- (1) O TETO MORA NA TABELA, E A PROMESSA CONCORDA ---- */
+  const teto = CONCENTRACAO_DA_MAGIA.quantasAoMesmoTempo;
+  t("o teto tem nome e mora em `CONCENTRACAO_DA_MAGIA`", inteiroPositivo(teto), `veio ${JSON.stringify(teto)}`);
+  const promessa = readFileSync("../src/combate.js", "utf8").match(MEDIDA_DO_TETO.rxDaPromessa);
+  t("a promessa ao Narrador continua legível em `ECONOMIA_ACAO_PROMPT`", !!promessa,
+    "não achei a frase da concentração no prompt estático");
+  /* O DENTE QUE LIGA AS DUAS PONTAS. A tabela é o que o jogo CUMPRE; o prompt
+     é o que o jogo PROMETE. C3 nasceu justamente porque as duas discordavam —
+     a promessa dizia UMA e o código deixava segurar duas. Quem mexer numa
+     sem a outra reabre o mesmo buraco, e bate aqui. */
+  t("e a tabela cumpre exatamente o número que a promessa anuncia",
+    !!promessa && MEDIDA_DO_TETO.palavraEmNumero[promessa[1]] === teto,
+    `o prompt promete "${promessa ? promessa[1] : "?"}", a tabela diz ${teto}`);
+
+  /* ---------------- (2) A SEGUNDA DERRUBA A PRIMEIRA ------------------- */
+  const voo = doCatalogo("Voo");
+  const inv = doCatalogo("Invisibilidade");
+  const bencao = doCatalogo("Bênção");
+  t("as três magias desta prova concentram de verdade, pelo catálogo",
+    voo.concentracao === true && inv.concentracao === true && bencao.concentracao === true);
+
+  const comVoo = heroi({ efeitos: [{ nome: "Vigor de Urso", bonus: 2, turnos: 5 }, voo] });
+  const efeitosDeEntrada = comVoo.efeitos;
+  const r2 = firmarEfeito(comVoo, inv);
+  const segurando2 = r2.pers.efeitos.filter((e) => e.concentracao);
+  t("depois da segunda, só UMA concentração fica na ficha", segurando2.length === teto,
+    `ficaram ${segurando2.length}: ${nomes(segurando2)}`);
+  t("e a que fica é a NOVA, não a que já estava", (segurando2[0] || {}).nome === "Invisibilidade", nomes(segurando2));
+  t("e ela é o MESMO objeto que chegou, não uma cópia", segurando2[0] === inv);
+  t("`cedeu` nomeia quem saiu", JSON.stringify(r2.cedeu) === JSON.stringify(["Voo"]));
+  /* o que não concentra não é atingido: o teto é da concentração, não da
+     pilha — um herói não perde a poção de Vigor por ter lançado uma magia */
+  t("o efeito que NÃO concentra fica onde estava", nomes(r2.pers.efeitos) === "Vigor de Urso,Invisibilidade");
+  /* LEI DA IMUTABILIDADE, nos dois níveis: nem a lista de entrada nem a ficha
+     de entrada são tocadas, e a ficha que sai é outra. */
+  t("a ficha de entrada não foi mutada", mesmaLista(comVoo.efeitos, efeitosDeEntrada) && nomes(comVoo.efeitos) === "Vigor de Urso,Voo");
+  t("e a ficha que sai é OUTRA, não a mesma remexida", r2.pers !== comVoo && r2.pers.efeitos !== comVoo.efeitos);
+  t("e o resto da ficha atravessa inteiro", r2.pers.nome === comVoo.nome && r2.pers.nivel === comVoo.nivel);
+  /* e o consumidor concorda com a pilha: quem ficou é quem ele acha */
+  t("e o consumidor acha exatamente quem ficou", (efeitoEmConcentracao(r2.pers) || {}).nome === "Invisibilidade");
+
+  /* ---------------- (3) A FUNÇÃO LÊ O TETO DE VOLTA -------------------- */
+  /* A SABOTAGEM EMBUTIDA, e é o dente que separa "a tabela existe" de "a
+     tabela manda". Um `1` cravado dentro de um `slice` passaria em TODAS as
+     provas acima. Aqui o teto da tabela vira 2 por três chamadas: se a função
+     o lê, duas concentrações passam a conviver e a terceira derruba a MAIS
+     VELHA; se ele estiver cravado no código, a segunda continua derrubando a
+     primeira e estas três linhas ficam vermelhas.
+     O valor é restaurado num `finally` e a restauração é conferida logo
+     abaixo — uma suíte que deixasse a tabela torta envenenaria as seções
+     seguintes e a mentira apareceria em outro arquivo. */
+  let comTetoDois = null, restaurado = null;
+  try {
+    CONCENTRACAO_DA_MAGIA.quantasAoMesmoTempo = 2;
+    const a = firmarEfeito(heroi({ efeitos: [voo] }), bencao);
+    const b = firmarEfeito(a.pers, inv);
+    comTetoDois = { a, b };
+  } finally {
+    CONCENTRACAO_DA_MAGIA.quantasAoMesmoTempo = teto;
+    restaurado = CONCENTRACAO_DA_MAGIA.quantasAoMesmoTempo;
+  }
+  t("[teto 2] com o teto em 2, a segunda NÃO derruba a primeira — as duas convivem",
+    comTetoDois.a.cedeu.length === 0 && nomes(comTetoDois.a.pers.efeitos) === "Voo,Bênção",
+    nomes(comTetoDois.a.pers.efeitos));
+  t("[teto 2] e a terceira derruba a MAIS VELHA, não a do meio nem a que chegou",
+    JSON.stringify(comTetoDois.b.cedeu) === JSON.stringify(["Voo"])
+    && nomes(comTetoDois.b.pers.efeitos) === "Bênção,Invisibilidade",
+    `cedeu ${comTetoDois.b.cedeu.join(",")} · ficaram ${nomes(comTetoDois.b.pers.efeitos)}`);
+  t("e a suíte devolveu a tabela ao valor da casa", restaurado === teto);
+
+  /* E O TETO TORTO NÃO PODE DEVOLVER O ACÚMULO EM SILÊNCIO. Save de tabela
+     editada à mão, campo apagado num merge, número que virou texto: em todos
+     esses casos a função tem de cair no piso 1, que é a regra da mesa. Um
+     `Number(undefined)` virando NaN e o `slice` não derrubando ninguém seria
+     o bug de C3 voltando pela porta dos fundos. */
+  const tortos = [0, -1, NaN, "duas", null, undefined, {}, 0.4];
+  const acumulou = [];
+  for (const x of tortos) {
+    try {
+      CONCENTRACAO_DA_MAGIA.quantasAoMesmoTempo = x;
+      const r = firmarEfeito(heroi({ efeitos: [voo] }), inv);
+      if (r.pers.efeitos.filter((e) => e.concentracao).length !== 1) acumulou.push(JSON.stringify(x));
+    } finally { CONCENTRACAO_DA_MAGIA.quantasAoMesmoTempo = teto; }
+  }
+  t("teto torto na tabela cai no piso de 1 — nunca no acúmulo", acumulou.length === 0, acumulou.join(" | "));
+  t("e a tabela continua inteira depois de tudo isso", CONCENTRACAO_DA_MAGIA.quantasAoMesmoTempo === teto);
+
+  /* ---------------- (4) O DENTE DO BUG SILENCIOSO --------------------- */
+  /* efeito COM a chave e SEM nome: `empilhar` o recusa (ele nunca poderia ser
+     retirado depois), então ele não ocupa lugar nenhum. Se derrubasse a magia
+     do jogador assim mesmo, o jogador perderia a Bênção em troca de NADA. */
+  const semNome = [
+    { concentracao: true, bonus: 2, turnos: 5 },
+    { nome: "", concentracao: true }, { nome: null, concentracao: true },
+    { nome: 0, concentracao: true }, { nome: undefined, concentracao: true },
+    { nome: false, concentracao: true },
+  ];
+  const roubaram = semNome.filter((ef) => {
+    const r = firmarEfeito(heroi({ efeitos: [voo] }), ef);
+    return r.cedeu.length > 0 || r.linha !== "" || !r.pers.efeitos.some((e) => e.nome === "Voo");
+  });
+  t("efeito COM `concentracao` e SEM nome não entra e NÃO derruba ninguém",
+    roubaram.length === 0, `${roubaram.length} de ${semNome.length} roubaram o lugar sem ocupá-lo`);
+  /* o controle do controle: `"   "` tem nome "verdadeiro" para o `if` de
+     `empilhar` e entra de verdade — então ele derruba, e é certo que derrube.
+     Fica escrito para a linha acima não ser lida como "nome fraco não vale". */
+  const comBranco = firmarEfeito(heroi({ efeitos: [voo] }), { nome: "   ", concentracao: true });
+  t("já um nome só de espaços ENTRA na pilha, e por isso derruba mesmo", comBranco.cedeu.length === 1);
+  /* E A FRASE NÃO PODE FICAR COM UM BURACO NO LUGAR DO NOME. Um nome em branco
+     vindo de save torto daria "💢 Voo escapa dos dedos — ⟨nada⟩ toma o lugar
+     dela", e o jogador leria uma perda sem causa. A porta tem uma voz de
+     reserva para os dois lados da frase, e é ela que esta linha trava. */
+  t("e a frase usa a voz de reserva em vez de deixar o buraco",
+    /escapa dos dedos — o que ele acabou de erguer toma o lugar dela\.$/.test(comBranco.linha), comBranco.linha);
+  t("e do outro lado também — quem cede sem nome legível tem voz de reserva",
+    /^💢 o que ele segurava escapa dos dedos — Voo toma o lugar dela\.$/
+      .test(firmarEfeito(heroi({ efeitos: [{ nome: "   ", concentracao: true }] }), voo).linha));
+
+  /* ---------------- (5) RELANÇAR A MESMA NÃO É TROCA ------------------- */
+  const relancou = firmarEfeito(heroi({ efeitos: [inv] }), doCatalogo("Invisibilidade"));
+  t("relançar a MESMA magia não gera frase de cessão", relancou.linha === "" && relancou.cedeu.length === 0);
+  t("e continua havendo uma só na ficha", relancou.pers.efeitos.filter((e) => e.concentracao).length === 1);
+  /* e o prazo reinicia, que é o que `empilhar` sempre fez — a troca de C3 não
+     pode ter transformado um relançamento em perda */
+  t("e quem ficou é a recém-lançada, com o prazo de novo cheio",
+    relancou.pers.efeitos[0].nome === "Invisibilidade" && relancou.pers.efeitos[0].turnos === inv.turnos);
+
+  /* ---------------- (6) A FRASE ---------------------------------------- */
+  t("a frase começa pela marca da perda", r2.linha.startsWith(MEDIDA_DO_TETO.marcaDaPerda + " "), r2.linha);
+  t("e não diz o nome do mecanismo — nem \"concentração\", nem \"efeito\", nem \"teto\"",
+    !MEDIDA_DO_TETO.rxMecanismo.test(r2.linha), r2.linha);
+  t("ela nomeia a magia que CEDEU e a que TOMOU o lugar",
+    r2.linha.includes("Voo") && r2.linha.includes("Invisibilidade"), r2.linha);
+  t("e concorda no singular quando cede uma só",
+    / escapa dos dedos — /.test(r2.linha) && / o lugar dela\.$/.test(r2.linha), r2.linha);
+  /* DUAS CEDENDO: a ficha de SAVE ANTIGO, guardada antes desta versão com as
+     duas dentro. Não nasce mais por aqui, mas chega — e a frase tem de
+     concordar no plural em vez de listar a primeira e esquecer a outra. */
+  const saveAntigo = heroi({ efeitos: [bencao, doCatalogo("Escudo da Fé")] });
+  const r6 = firmarEfeito(saveAntigo, voo);
+  t("um save antigo com DUAS é reduzido a uma de uma vez só", r6.cedeu.length === 2
+    && r6.pers.efeitos.filter((e) => e.concentracao).length === teto, nomes(r6.pers.efeitos));
+  t("e a frase concorda no plural, com as duas nomeadas e o \"e\" antes da última",
+    /escapam dos dedos/.test(r6.linha) && / o lugar delas\.$/.test(r6.linha)
+    && /Bênção e Escudo da Fé/.test(r6.linha), r6.linha);
+  t("e a frase plural também não diz o nome do mecanismo", !MEDIDA_DO_TETO.rxMecanismo.test(r6.linha), r6.linha);
+  /* `cedeu` e a frase são a mesma verdade em dois formatos — se um dia se
+     soltarem, a tela diria uma coisa e a ficha faria outra */
+  t("`cedeu` e a frase dizem a mesma coisa", r6.cedeu.every((n) => r6.linha.includes(n))
+    && JSON.stringify(r6.cedeu) === JSON.stringify(["Bênção", "Escudo da Fé"]), r6.cedeu.join(","));
+  /* determinismo: a mesma entrada dá a mesma frase, sempre (lei v) */
+  t("a mesma entrada devolve a mesma frase", firmarEfeito(saveAntigo, voo).linha === r6.linha);
+  console.log(`  ··  a frase de uma: ${r2.linha}`);
+  console.log(`  ··  a frase de duas: ${r6.linha}`);
+
+  /* ---------------- (7) REGRESSÃO ZERO, CONTRA A PRÓPRIA `empilhar` ---- */
+  /* A METADE QUE NÃO PODE MORDER. Para todo efeito SEM a chave, `firmarEfeito`
+     tem de ser `empilhar` e mais nada — mesma lista, mesmos objetos, mesma
+     ordem, frase vazia, ninguém cedeu. A prova é feita CONTRA `empilhar`
+     chamada a chamada: comparar com uma expectativa escrita aqui provaria a
+     expectativa, não a regressão. */
+  const doAcervo = [];
+  for (const c of CL.CLASSES) for (const h of (c.habilidades || [])) doAcervo.push(h);
+  const paraCima = heroi({ efeitos: [{ nome: "Vigor de Urso", bonus: 2, turnos: 5 }, bencao] });
+  const divergiram = [], falaram = [];
+  const conferirRegressao = (rotulo, ef) => {
+    const r = firmarEfeito(paraCima, ef);
+    if (!mesmaLista(r.pers.efeitos, empilhar(paraCima.efeitos, ef))) divergiram.push(rotulo);
+    if (r.linha !== "" || r.cedeu.length !== 0) falaram.push(rotulo);
+  };
+  for (const m of MAGIAS) { const ef = efeitoDeMagia(m).efeito; if (!temChave(ef)) conferirRegressao(`magia ${m.nome}`, ef); }
+  for (const h of doAcervo) { const ef = efeitoDeBuff(h, heroiC).efeito; if (!temChave(ef)) conferirRegressao(`hab ${h.nome}`, ef); }
+  conferirRegressao("milagre", efeitoDeMilagre({ nome: "Graça" }, "a fé responde"));
+  for (const lixo of [null, undefined, {}, "", 0, { nome: "Sem Nada" }, { nome: "Falso", concentracao: false }]) {
+    conferirRegressao(`lixo ${JSON.stringify(lixo)}`, lixo);
+  }
+  t(`as ${MAGIAS.length} magias e as ${doAcervo.length} habilidades que NÃO concentram passam por \`firmarEfeito\` como passavam por \`empilhar\``,
+    divergiram.length === 0, divergiram.slice(0, 6).join(" | "));
+  t("e nenhuma delas gera frase ou faz alguém ceder", falaram.length === 0, falaram.slice(0, 6).join(" | "));
+  /* e a ficha de entrada pode ser lixo também: `null`, sem `efeitos`, com
+     `efeitos: null` — nenhum desses pode custar o turno */
+  const fichasTortas = [null, undefined, {}, { efeitos: null }, { efeitos: "nada" }, { efeitos: [null, voo, undefined] }];
+  const estourou = [];
+  for (const f of fichasTortas) {
+    for (const ef of [inv, { nome: "Vigor", bonus: 1 }, null]) {
+      try {
+        const r = firmarEfeito(f, ef);
+        if (!r || !("linha" in r) || !Array.isArray(r.cedeu)) estourou.push(`${JSON.stringify(f)} + ${JSON.stringify(ef)} devolveu torto`);
+      } catch (e) { estourou.push(`${JSON.stringify(f)} + ${JSON.stringify(ef)}: ${e.message}`); }
+    }
+  }
+  t("ficha nula, sem `efeitos` ou com buraco no meio não custa o turno", estourou.length === 0, estourou.slice(0, 3).join(" | "));
+  /* `= {}` no destructuring NÃO cobre `null` — a lei da casa em uma linha */
+  t("`firmarEfeito(null, ...)` devolve a ficha nula de volta, sem inventar uma",
+    firmarEfeito(null, inv).pers === null && firmarEfeito(null, inv).linha === "");
+  /* e o efeito que chega não é remexido: o objeto que entra é o que fica */
+  const novoIntacto = { ...inv };
+  firmarEfeito(heroi({ efeitos: [voo] }), inv);
+  t("o efeito que chega não é mutado pela porta", JSON.stringify(inv) === JSON.stringify(novoIntacto));
+
+  /* ---------------- (8) `efeitoEmConcentracao` NOS DOIS SENTIDOS ------- */
+  /* O DENTE QUE PROVA QUE A ESCOLHA É REGRA E NÃO ORDEM DE CHEGADA. Antes de
+     C3 isto era um `.find(...)`: devolvia a PRIMEIRA da lista, ou seja a mais
+     velha. Uma prova numa ordem só não distinguiria "devolve a última" de
+     "devolve a que por acaso está ali" — por isso a mesma trinca é lida nas
+     duas ordens, e as respostas TÊM de ser diferentes. */
+  const trinca = [voo, bencao, inv];
+  t("numa ficha de save antigo com três, o consumidor devolve a ÚLTIMA a entrar",
+    (efeitoEmConcentracao({ efeitos: trinca }) || {}).nome === "Invisibilidade");
+  t("e na ordem invertida devolve a outra — a escolha é regra, não sorte de array",
+    (efeitoEmConcentracao({ efeitos: [inv, bencao, voo] }) || {}).nome === "Voo");
+  /* REGRESSÃO DA SEÇÃO 16, no endereço novo: com UMA só, a resposta é a mesma
+     de sempre, e sem nenhuma continua `null`. A mudança de `.find` para o laço
+     de trás para a frente não pode ter mexido nesses dois. */
+  t("com uma só, devolve essa mesma", (efeitoEmConcentracao({ efeitos: [{ nome: "X" }, inv] }) || {}).nome === "Invisibilidade");
+  t("sem nenhuma, continua `null`", efeitoEmConcentracao({ efeitos: [{ nome: "X" }] }) === null
+    && efeitoEmConcentracao({ efeitos: [] }) === null && efeitoEmConcentracao({ efeitos: null }) === null
+    && efeitoEmConcentracao(null) === null);
+  t("e buraco no meio da lista não derruba a busca", (efeitoEmConcentracao({ efeitos: [inv, null, undefined] }) || {}).nome === "Invisibilidade");
+
+  /* ---------------- (9) LIGADO AO JOGO: OS TRÊS SÍTIOS DO APP ---------- */
+  const quantasNoApp = (rx) => (APP19.match(rx) || []).length;
+  t("o App importa a porta que conta a concentração",
+    /import \{[^}]*\bfirmarEfeito\b[^}]*\} from "\.\/efeitos\.js"/.test(APP19));
+  t("e ela chega ao App por UMA porta só (`firmarOuCeder`), definida uma vez",
+    quantasNoApp(/const firmarOuCeder = \(quem, efeito, nome = ""\) => \{/g) === 1);
+  t("que é quem chama `firmarEfeito` — e o resto do App não o chama por fora",
+    quantasNoApp(/\bfirmarEfeito\(/g) === 1);
+  const sitios = [
+    [/const fe = firmarOuCeder\(p, buff\.efeito\);/g, "o buff do herói"],
+    [/const fe = firmarOuCeder\(comp, buff\.efeito, ac\.companheiro\);/g, "o buff do companheiro"],
+    [/const fe = firmarOuCeder\(p0, dur\.efeito\);/g, "a magia de duração"],
+  ];
+  const faltando = sitios.filter(([rx]) => quantasNoApp(rx) !== 1).map(([, n]) => n);
+  t(`os ${MEDIDA_DO_TETO.sitiosDoApp} nascimentos que podem segurar algo passam pela porta`,
+    faltando.length === 0, `faltou: ${faltando.join(", ")}`);
+  /* e em mais nenhum: a definição é `const firmarOuCeder = (quem, ...)`, sem
+     parêntese colado ao nome, então este regex conta CHAMADAS e só elas. Um
+     quarto nascimento que aparecesse sem passar por esta seção bate aqui. */
+  t("e a porta é chamada exatamente nesses três sítios, e em mais nenhum",
+    quantasNoApp(/\bfirmarOuCeder\(/g) === MEDIDA_DO_TETO.sitiosDoApp,
+    `${quantasNoApp(/\bfirmarOuCeder\(/g)} chamadas`);
+  /* O CONTROLE NEGATIVO — o caminho velho não pode voltar em silêncio. É a
+     forma de regressão que esta etapa mais arrisca: um merge que restaure a
+     linha antiga deixa tudo compilando, tudo verde, e o herói segurando duas
+     de novo. */
+  t("a pilha genérica não é mais o caminho de nenhum dos três",
+    !/empilhar\(p\.efeitos, buff\.efeito\)/.test(APP19_CODIGO)
+    && !/empilhar\(g\.efeitos, buff\.efeito\)/.test(APP19_CODIGO)
+    && !/empilhar\(p0\.efeitos, dur\.efeito\)/.test(APP19_CODIGO));
+  /* LEI "nunca pode custar o turno" — e o RECUO É DE PROPÓSITO, não é bug.
+     Se a porta estourar, o efeito ainda tem de ENTRAR: devolver a ficha
+     intocada tiraria do jogador o buff que ele acabou de pagar em PM e em
+     turno. O recuo é o comportamento de ANTES desta versão (`empilhar` puro,
+     ninguém cede) — pior regra, nunca perda de propriedade. Fica escrito para
+     ninguém "consertar" isto achando que é um resto do código velho. */
+  /* E A PORTA TEM DE DEVOLVER O QUE A REGRA DECIDIU. Este é o dente contra a
+     sabotagem mais silenciosa desta etapa: uma porta que CHAMA `firmarEfeito`,
+     imprime a frase da troca e devolve a ficha DE ENTRADA passa em todas as
+     âncoras de cima — os três sítios continuam lá, o import continua lá, a
+     chamada continua lá — e o jogador lê que perdeu a Bênção enquanto continua
+     segurando as duas. O App não roda em Node, então o que se pode travar é a
+     forma dos dois retornos; são eles que dizem qual ficha sai. */
+  t("e a ficha que sai da porta é a que `firmarEfeito` devolveu, não a que entrou",
+    /if \(!fe\.linha\) return \{ pers: fe\.pers, linha: "" \};/.test(APP19)
+    && /return \{ pers: fe\.pers, linha: nome \? String\(fe\.linha\)\.replace\("💢 ", "💢 " \+ nome \+ " — "\) : fe\.linha \};/.test(APP19));
+  t("a fiação nova cala em vez de custar o turno", /calou\("concentracaoFirmada", e\)/.test(APP19));
+  t("e o recuo da porta guarda o buff pago: `empilhar` puro, ninguém cede",
+    /catch \(e\) \{\s*calou\("concentracaoFirmada", e\);\s*try \{ return \{ pers: quem \? \{ \.\.\.quem, efeitos: empilhar\(quem\.efeitos, efeito\) \} : quem, linha: "" \}; \}/.test(APP19));
+  t("e o recuo do recuo também cala", /calou\("concentracaoFirmadaRecuo", e2\)/.test(APP19));
+  /* O APP NÃO ESCREVE REGRA NEM PROSA. A frase inteira nasce no módulo; a
+     única coisa que a tela acrescenta é o nome do dono, pelo molde do abrigo.
+     Se o App começar a montar a frase, a troca passa a soar diferente na mesa
+     e na arena — e uma delas envelhece sem ninguém ver. */
+  t("o App não inventa a frase da troca — só põe o dono na frente",
+    /replace\("💢 ", "💢 " \+ nome \+ " — "\)/.test(APP19)
+    && !/escapa dos dedos/.test(APP19_CODIGO) && !/toma o lugar/.test(APP19_CODIGO));
+  /* e as três linhas sobem SEPARADAS do texto do buff: primeiro o que subiu,
+     depois o preço — a ordem em que a coisa acontece */
+  t("e a linha da troca sobe separada, nos três sítios da tela",
+    /if \(buffH\.troca\) linhas\.push\(buffH\.troca\);/.test(APP19)
+    && /if \(r4\.troca\) pushMsgs\(\[\{ autor: "sistema", texto: r4\.troca \}\]\);/.test(APP19)
+    && /\.\.\.\(fe\.linha \? \[\{ autor: "sistema", texto: fe\.linha \}\] : \[\]\)/.test(APP19));
+
+  /* ---------------- (10) O GENÉRICO CONTINUA GENÉRICO ------------------ */
+  /* A outra metade da decisão de projeto: a regra nova mora numa porta
+     PRÓPRIA justamente para não entrar no caminho do frasco de cerveja. Se
+     `firmarEfeito` aparecer na poção, na relíquia ou no canal do Mestre, uma
+     regra de magia vazou para onde não há magia nenhuma. */
+  const vazou = MEDIDA_DO_TETO.modulosDoGenerico.filter((f) => {
+    const s = readFileSync(RAIZ + f, "utf8");
+    return /\bfirmarEfeito\b/.test(s) || !/\bempilhar\(/.test(s);
+  });
+  t("o frasco, a relíquia e o canal do Mestre continuam na pilha genérica",
+    vazou.length === 0, vazou.join(", "));
+  /* e o milagre do App também: ele não tem tabela que declare concentração,
+     e inventá-la no nascimento seria pôr no efeito um número sem régua */
+  t("e o milagre do App também continua em `empilhar`",
+    /empilhar\(p\.efeitos, efeitoDeMilagre\(ef, mil\.desc\)\)/.test(APP19));
+  /* a arena é a quarta porta, e a prova dela mora em `teste-arena.mjs` (11) —
+     aqui fica só a ponte, para quem ler esta seção saber que ela existe */
+  t("e a quarta porta é a da arena, que importa `firmarEfeito` e não `empilhar`",
+    /import \{ firmarEfeito,/.test(readFileSync(RAIZ + "arena.js", "utf8")));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

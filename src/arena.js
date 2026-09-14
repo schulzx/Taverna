@@ -42,9 +42,11 @@
      `defesaDeGuarda`. A projeção leva a lista de guardas junto, para as
      guardas de esquiva e de intocável — que `resolverAtaque` já sabe ler
      — não ficarem promessa pela metade.
-   - o BUFF por `efeitoDeBuff` (efeitos.js, v9.224) empilhado com
-     `empilhar`. O prazo sai de `BUFF_DA_HABILIDADE`; nenhum número de
-     regra mora aqui.
+   - o BUFF por `efeitoDeBuff` (efeitos.js, v9.224) firmado por
+     `firmarEfeito` (v9.237 · C3 — era `empilhar` até então, e por isso o
+     duelista segurava duas concentrações ao mesmo tempo). O prazo sai de
+     `BUFF_DA_HABILIDADE` e o teto de `CONCENTRACAO_DA_MAGIA`; nenhum número
+     de regra mora aqui.
    - o BÔNUS NO GOLPE por `bonusDeDano` / `bonusDeArma` (combos.js), que
      são os leitores que respeitam o escopo físico/mágico.
    - o PRAZO por `tickEfeitos` (regras-jogo.js) e `expirarGuardas`
@@ -66,7 +68,7 @@
    ============================================================ */
 
 import { turnoDosCompanheiros, defesaDe, testeConcentracao } from "./combate.js";
-import { empilhar, efeitoDeBuff, absorverDano, efeitoEmConcentracao, quebrarConcentracao } from "./efeitos.js";
+import { firmarEfeito, efeitoDeBuff, absorverDano, efeitoEmConcentracao, quebrarConcentracao } from "./efeitos.js";
 import { guardaDe, erguerGuarda, expirarGuardas } from "./habilidades.js";
 import { bonusDeDano, bonusDeArma } from "./combos.js";
 import { tickEfeitos, atributoEfetivo } from "./regras-jogo.js";
@@ -190,11 +192,27 @@ function aplicarAcoes(acoes, eu, outro, rodada) {
       }
       /* 2. SENÃO, O BUFF. `turnos` vai indefinido de propósito: sem prazo
          de condição, quem decide é `BUFF_DA_HABILIDADE.turnosPadrao` — a
-         tabela, nunca um número solto aqui. `empilhar` devolve lista nova
-         (o novo vence, e a de entrada não é tocada). */
+         tabela, nunca um número solto aqui.
+
+         A PORTA É `firmarEfeito` DESDE A v9.237 (C3), e não `empilhar`. A
+         pilha genérica só substitui por NOME IGUAL, então o Remendo e o Voto
+         — os dois prontos que firmam Bênção e Escudo da Fé, as únicas duas
+         concentrações que o piloto chega a firmar na mesa dos oito — ficavam
+         segurando as duas ao mesmo tempo, e uma batida derrubava só uma.
+         Medido antes: 316 das 1352 firmadas de concentração em 2094 quedas
+         eram uma SEGUNDA por cima de outra. Agora a nova toma o lugar, o teto
+         é o de `CONCENTRACAO_DA_MAGIA`, e o duelista cede em voz alta.
+
+         A LINHA DA CEDIDA É A DO MÓDULO, seca, com o dono na frente — o mesmo
+         molde da mordida do abrigo e da queda de concentração logo abaixo. A
+         arena não escreve uma sílaba, e por isso a troca soa igual aqui e na
+         mesa da campanha. Quem não concentra passa por aqui exatamente como
+         passava: `linha` vem vazia e nada é empurrado. */
       const { efeito, extraEscopo } = efeitoDeBuff(hab, eu, undefined);
-      eu.efeitos = empilhar(eu.efeitos, efeito);
+      const fe = firmarEfeito(eu, efeito);
+      eu.efeitos = fe.pers.efeitos;
       linhas.push(`${eu.nome} firma ${hab.nome}${extraEscopo}`);
+      if (fe.linha) linhas.push(`${eu.nome} — ${secar(fe.linha)}`);
       continue;
     }
     const r = a.r;

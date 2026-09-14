@@ -37,6 +37,11 @@
    mesmo nome sai da lista e o recém-chegado entra no fim. Nada acumula,
    nada compara o maior — quem relança a bênção reinicia o prazo dela.
 
+   E É SÓ ESSA, DE PROPÓSITO (v9.237 · C3). A concentração tem uma segunda
+   regra — uma por vez, venha com o nome que vier — e ela NÃO mora aqui:
+   mora em `firmarEfeito`, logo abaixo. `empilhar` é o genérico da poção, da
+   relíquia e do canal do Mestre, e nenhum dos três segura coisa alguma.
+
    O que varia é o CASAMENTO do nome, e varia porque sempre variou: os
    catálogos e o App comparam o nome exato (`"Fúria" !== "fúria"`), e o
    canal do Mestre compara sem caixa, porque de lá o nome vem digitado
@@ -46,7 +51,7 @@
    ============================================================ */
 
 import { naturezaDaHabilidade, aplicacaoDoBuff } from "./combos.js";
-import { magiaPorNome, exigeConcentracao } from "./grimorio.js";
+import { magiaPorNome, exigeConcentracao, CONCENTRACAO_DA_MAGIA } from "./grimorio.js";
 
 /* ---------------- OS TETOS DO QUE VEM DE FORA ----------------
    O Mestre pede efeito por `efeitos_adicionar`, e o que ele pede passa
@@ -184,6 +189,75 @@ export function retirar(efeitos, nome, opcoes) {
   const { casamento = "exato" } = opcoes || {};
   const lista = Array.isArray(efeitos) ? efeitos.filter(Boolean) : [];
   return lista.filter((e) => !mesmoNome(e.nome, nome, casamento));
+}
+
+/* ---------------- A PILHA QUE SABE DE CONCENTRAÇÃO (v9.237 · C3) ----------
+   A irmã dedicada de `empilhar`, e existe porque `empilhar` NÃO pode aprender
+   isto. Ele é o genérico da casa — a poção (pocoes.js), a relíquia
+   (relicas.js) e o canal do Mestre (regras-jogo.js) passam por ele, e nenhum
+   dos três produz concentração nenhuma; ensinar concentração ao genérico seria
+   pôr uma regra de magia no caminho de um frasco de cerveja. Então a regra
+   nova mora numa porta própria, e só os NASCIMENTOS que podem segurar algo
+   passam por ela: são quatro, medidos — o buff do herói e o do companheiro
+   (`App.jsx`), a magia de duração do herói (`App.jsx`) e o buff do duelista
+   (`arena.js`). Os outros quatro sítios de `empilhar` continuam onde estavam.
+
+   O MOLDE É O DE `absorverDano`: recebe a ficha e o que chega, devolve ficha
+   NOVA mais a frase, não muta nada, e quem chama escolhe o que fazer com os
+   dois. Nenhuma regra é decidida por quem chama.
+
+   O TETO É DA TABELA, NUNCA DAQUI. `CONCENTRACAO_DA_MAGIA.quantasAoMesmoTempo`
+   diz quantas cabem; esta função só conta. Ela derruba as MAIS ANTIGAS até
+   caber — do jeito que `empilhar` já ordena a lista, a ordem de chegada é a
+   ordem do array, e quem entrou primeiro sai primeiro. Com o teto em 1 isso é
+   "a nova derruba a que estava", que é a regra da mesa; com o teto em 2 amanhã
+   seria "a nova derruba a mais velha das duas", sem uma linha de código nova.
+
+   REGRESSÃO ZERO PARA QUEM NÃO CONCENTRA, e é a metade que mais importa: se o
+   efeito que chega não tem a chave, esta função é `empilhar` e mais nada —
+   frase vazia, ninguém cedeu. `null`, `{}`, save antigo, poção, milagre e as
+   82 magias que não estão na porta passam por aqui exatamente como passavam.
+
+   E QUEM NÃO ENTROU NÃO DERRUBA NINGUÉM. `empilhar` recusa efeito sem nome
+   (ele nunca poderia ser retirado depois); um efeito assim, marcado com
+   `concentracao`, derrubaria a magia do jogador e não ocuparia o lugar dela —
+   o jogador perderia a Bênção em troca de nada. Por isso a porta confere que o
+   recém-chegado é mesmo o último da lista antes de cobrar o teto. */
+export function firmarEfeito(pers, novo, opcoes) {
+  if (!pers) return { pers, linha: "", cedeu: [] };
+  const empilhado = empilhar(pers.efeitos, novo, opcoes);
+  const entrou = empilhado.length > 0 && empilhado[empilhado.length - 1] === novo;
+  if (!entrou || !novo.concentracao) return { pers: { ...pers, efeitos: empilhado }, linha: "", cedeu: [] };
+
+  /* o teto vem da tabela e é lido com recuo: uma entrada torta (ausente, zero,
+     texto) não pode deixar o conjurador acumular de novo em silêncio — o piso
+     é 1, que é a própria regra da mesa */
+  const bruto = Math.round(Number(CONCENTRACAO_DA_MAGIA.quantasAoMesmoTempo));
+  const teto = Number.isFinite(bruto) && bruto > 0 ? bruto : 1;
+  /* as que JÁ estavam sendo seguradas, na ordem de chegada — a recém-chegada
+     não se conta, senão a magia derrubaria a si mesma quando o teto fosse 1 */
+  const antigas = empilhado.filter((e) => e.concentracao && e !== novo);
+  const cedem = antigas.slice(0, Math.max(0, antigas.length - (teto - 1)));
+  if (!cedem.length) return { pers: { ...pers, efeitos: empilhado }, linha: "", cedeu: [] };
+
+  const nomes = cedem.map((e) => (typeof e.nome === "string" && e.nome.trim()) || "o que ele segurava");
+  const muitas = nomes.length > 1;
+  const lista = muitas ? `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}` : nomes[0];
+  const quemChega = (typeof novo.nome === "string" && novo.nome.trim()) || "o que ele acabou de erguer";
+  return {
+    pers: { ...pers, efeitos: empilhado.filter((e) => !cedem.includes(e)) },
+    /* A FRASE É IRMÃ DA DE `testeConcentracao` (combate.js), palavra por
+       palavra no começo: mesmo ícone, mesmo "escapa dos dedos", mesmo
+       travessão. É a mesma perda para o jogador, e ler duas prosas diferentes
+       para a mesma perda seria a mesa gaguejando. O que muda é o MOTIVO depois
+       do travessão, e ele tem de estar lá: perder a Bênção porque se lançou Voo
+       é justo — perder sem entender por quê, não.
+       Voz de mundo, e o nome do mecanismo não aparece: quem lê vê duas magias
+       disputando as mãos de alguém, não um teto de tabela sendo cobrado. O dono
+       na frente é coisa de tela, como no abrigo — a porta sai seca. */
+    linha: `💢 ${lista} escapa${muitas ? "m" : ""} dos dedos — ${quemChega} toma o lugar ${muitas ? "delas" : "dela"}.`,
+    cedeu: nomes,
+  };
 }
 
 /* ---------------- NASCIMENTO 1: O BUFF DA HABILIDADE ----------------
@@ -397,9 +471,27 @@ export function absorverDano(pers, dano) {
 /* ---------------- A CONCENTRAÇÃO ----------------
    Uma magia de concentração é um efeito que o corpo segura: apanhou,
    testa; falhou, cai. O teste é de quem chama (`testeConcentracao`, em
-   combate.js); daqui sai só quem está sendo segurado e a ficha sem ele. */
+   combate.js); daqui sai só quem está sendo segurado e a ficha sem ele.
+
+   A ESCOLHA É REGRADA, E NÃO MAIS DA ORDEM DE CHEGADA (v9.237 · C3). Até aqui
+   isto era um `.find(...)`: numa ficha com duas concentrações ele devolvia a
+   PRIMEIRA da lista, ou seja a mais VELHA, e uma batida derrubava sempre a
+   errada — regra decidida por sorte de array, que é o que esta casa não
+   tolera. Com o teto de `CONCENTRACAO_DA_MAGIA` valendo, a ficha de duas não
+   nasce mais por aqui: ela só chega por SAVE ANTIGO (guardado antes desta
+   versão, com as duas dentro) e por ficha injetada à mão.
+
+   E NESSES DOIS CASOS QUEM FICA É A ÚLTIMA A ENTRAR, pelo motivo escrito: a
+   ordem do array é a ordem de chegada (`empilhar` põe o novo no fim), e a
+   última é exatamente a que `firmarEfeito` teria mantido se o save tivesse
+   passado por ela. A primeira nunca deveria ter sobrevivido àquele segundo
+   lançamento; escolhê-la agora seria deixar o save velho quebrar a magia que o
+   jogador acabou de erguer e continuar carregando o fantasma da anterior —
+   perder duas vezes pelo mesmo defeito. Quem sobra é o que o corpo segura. */
 export function efeitoEmConcentracao(pers) {
-  return efeitosDe(pers).find((e) => e.concentracao) || null;
+  const lista = efeitosDe(pers);
+  for (let i = lista.length - 1; i >= 0; i--) if (lista[i].concentracao) return lista[i];
+  return null;
 }
 
 export function quebrarConcentracao(pers, nome) {

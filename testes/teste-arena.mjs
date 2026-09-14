@@ -310,7 +310,14 @@ sec("6. A CATRACA DO EQUILÍBRIO — teste, não intenção");
        POR QUE NÃO 25 OU 30. Precisa morder. Com teto 20, um pronto que
        encoste em 64% (verde na faixa!) contra um fundo em 42% dá 22 pts
        e fica VERMELHO aqui — que é exatamente o caso que este dente
-       existe para pegar. */
+       existe para pegar.
+       REMEDIDA EM v9.237 (C3): 11,9 pts (topo `sombra` 55,1 · fundo `voz`
+       43,2), 8,1 pts de folga debaixo do mesmo teto de 20. Encolheu 3,8 pts
+       sem que ninguém equilibrasse nada — a amplitude é resorteada daquela
+       distribuição (13,0 ± 2,3) a cada mexida no código, e o retrato saiu do
+       lado alto dela para o lado baixo. É por isso que o teto é 20 e não 16:
+       ele tem de aguentar a viagem nos dois sentidos. Nada foi afrouxado, e
+       nenhum pronto saiu da faixa. */
     tetoDeAmplitude: 20,
   };
   const t0 = Date.now();
@@ -339,7 +346,13 @@ sec("6. A CATRACA DO EQUILÍBRIO — teste, não intenção");
      piso. Medido em v9.236 (famílias de 120): o MESMO `punho` na MESMA "cc",
      agora com 38,9% — 3,9 pt do piso. O pronto não mudou e nenhuma regra o
      tocou; os 2,7 pts que apareceram são o ruído do estimador antigo indo
-     embora. É o retrato desta linha ficando honesto, não a parede andando. */
+     embora. É o retrato desta linha ficando honesto, não a parede andando.
+     REMEDIDO EM v9.237 (C3): ainda `punho` em "cc", agora com 40,2% — 5,2 pt
+     do piso, e o pronto MAIS FINO continua sendo o mesmo. `punho` não tem
+     magia na ficha e não pode ser tocado pelo teto da concentração; o que
+     mexeu em 1,3 pt foi o fluxo global de sorte, que qualquer mexida na arena
+     reembaralha (o mesmo efeito que o bloco acima mediu em C2b, agora para o
+     lado bom). A faixa 35–65 e o teto de amplitude não foram tocados. */
   if (maisFina) {
     console.log(`  ··  margem mais fina das 4 famílias: ${maisFina.id} em "${maisFina.fam}" com ${maisFina.pct.toFixed(1)}% — ${maisFina.folga.toFixed(1)} pt da parede mais próxima (faixa ${faixaEmPct})`);
   }
@@ -413,6 +426,39 @@ sec("6. A CATRACA DO EQUILÍBRIO — teste, não intenção");
    é 316 contra os 329 de A3 — o turno de apoio compra hoje praticamente o
    mesmo que comprava, em outra moeda.
 
+   ---------------- E A MOEDA DEFENSIVA ENCOLHEU (v9.237 · C3) ----------------
+
+   O NÚMERO, DECLARADO COMO FATO: as mordidas de abrigo nesta amostra caíram
+   de 245 para 202 (−43), a ofensiva de 71 para 68, a soma de 316 para 270.
+   Medido nesta suíte, nesta amostra, com as mesmas sementes: a árvore em
+   `eadef55` mede 245/71/316; a mesma árvore com C3 mede 202/68/270.
+
+   POR QUE ISTO É A REGRA ESTANDO CERTA, E NÃO REGRESSÃO. C3 pôs o teto da
+   concentração para valer: um conjurador segura UMA magia de duração por vez,
+   e a que chega derruba a que estava. Na mesa dos oito isso tem dois donos —
+   `remendo` e `voto`, os únicos prontos que firmam DUAS de concentração
+   (Escudo da Fé, que é abrigo, e Bênção, que é apoio). Antes de C3 os dois
+   ficavam com as duas de pé; agora a segunda toma o lugar da primeira. Medido
+   na mesma amostra: 60 cessões, TODAS elas "Escudo da Fé → Bênção" (a
+   contagem está na seção 11). São 60 abrigos que deixaram de existir para
+   morder depois, e os 43 a menos saem daí.
+
+   O PILOTO FICOU BURRO DE PROPÓSITO, e é preciso dizer em voz alta. Ele firma
+   o abrigo e na rodada seguinte o joga fora por um bônus — porque
+   `decidirAcaoCompanheiro` não sabe que existe teto, e ENSINÁ-LO É OUTRA
+   ETAPA. A regra está certa; a escolha é que é ruim, e uma escolha ruim de um
+   piloto que ignora a regra é exatamente o que se espera no dia em que a
+   regra nasce. Consertar o piloto aqui seria esconder o custo em vez de
+   declará-lo.
+
+   POR QUE O PISO NÃO SE MEXE, E POR QUE O FATO NÃO VIRA LIMIAR. O piso das
+   metades continua 40 (`minimoDeCadaMetade`), e a defensiva mede 202 — 5,0×
+   o piso, folga de sobra. Cravar 202 como exigência seria trocar um dente que
+   pega o desabamento por um que grita a cada brisa do RNG; e subir o piso
+   para perto de 202 seria proibir a próxima etapa legítima (a que ensina o
+   piloto) de mexer neste número. O fato fica escrito e impresso; o dente
+   continua sendo o desabamento.
+
    O DENTE ANDA NOS DOIS SENTIDOS, e é aqui que o conserto é honesto ou não
    é. Se a soma fosse cobrada sozinha, a metade ofensiva poderia ir a ZERO
    com a defensiva segurando o verde — exatamente o buraco que a moeda velha
@@ -461,8 +507,10 @@ sec("7. o veredito da Fase A — o buraco de A1, fechado em A3");
        bônus dentro"). P1 tirou a família defensiva de dentro do golpe e P3
        fez o piloto preferi-la; a metade defensiva passou a ser paga em
        ABRIGO, que a régua `PESO` não enxerga. Medição na mesma amostra:
-       comPeso 329 (v9.225) → 108 (P1) → 75 (P3); abrigos que morderam
-       0 → 0 → 241. A SOMA das duas: 329 → 316. O piso continua 100 e
+       comPeso 329 (v9.225) → 108 (P1) → 75 (P3) → 68 (C3); abrigos que
+       morderam 0 → 0 → 241 → 202. A SOMA das duas: 329 → 316 → 270, ainda
+       2,7× o piso — a queda de C3 tem dono e está no cabeçalho desta seção
+       ("E A MOEDA DEFENSIVA ENCOLHEU"). O piso continua 100 e
        continua sendo cobrado — de `firmados`, de `dissipados` e agora da
        SOMA, que é o que a asserção sempre quis medir: "turno de apoio pago
        compra alguma coisa". */
@@ -493,7 +541,17 @@ sec("7. o veredito da Fase A — o buraco de A1, fechado em A3");
        desaba a zero, ou que cai pela metade outra vez.
 
        MARGEM DECLARADA (não é exigência, é o que se sabe hoje): ofensiva
-       75, 1,9× o piso; defensiva 241, 6,0× o piso. */
+       75, 1,9× o piso; defensiva 241, 6,0× o piso.
+
+       A MARGEM, REMEDIDA EM v9.237 (C3) — e o piso continua 40. Ofensiva 68
+       (1,7×), defensiva 202 (5,0×). A defensiva perdeu 43 mordidas porque o
+       teto da concentração passou a valer e `remendo`/`voto` deixaram de
+       segurar Escudo da Fé e Bênção ao mesmo tempo; o porquê inteiro está no
+       bloco "E A MOEDA DEFENSIVA ENCOLHEU", no cabeçalho desta seção. O piso
+       NÃO subiu para perto do número novo de propósito: a próxima etapa
+       legítima é ensinar o piloto a não jogar fora o abrigo que acabou de
+       firmar, e ela vai mexer neste número para cima. Um piso colado no
+       dígito de hoje reprovaria o conserto. */
     minimoDeCadaMetade: 40,
   };
   /* O RETRATO DE v9.222 — o "antes" do antes-e-depois, para a fase ter
@@ -663,9 +721,15 @@ sec("7. o veredito da Fase A — o buraco de A1, fechado em A3");
      A linha só carrega o número quando sobra dano ("N param ali"); quando o
      abrigo come a batida inteira ela diz "nada chega" e o número fica de
      fora — por isso `danoParado` é um PISO do que foi parado, nunca o total.
-     Medido hoje: 241 mordidas, 0 delas comendo a batida inteira, 964 pontos
+     Medido em P3: 241 mordidas, 0 delas comendo a batida inteira, 964 pontos
      parados, média 4,00 por mordida (a força de Escudo Arcano e Escudo da Fé
-     é 4, por `ABSORCAO_DO_BUFF`: custo 2 × porPM 2). */
+     é 4, por `ABSORCAO_DO_BUFF`: custo 2 × porPM 2).
+     REMEDIDO EM v9.237 (C3): 202 mordidas, 0 inteiras, 808 pontos parados — a
+     MÉDIA continua exatamente 4,00, e é essa a parte que importa aqui. O que
+     C3 mudou foi QUANTAS mordidas existem (o teto da concentração tirou de pé
+     60 Escudos da Fé; ver o cabeçalho desta seção), nunca o quanto cada uma
+     morde. Se um dia a média sair de 4,00, o que quebrou foi a absorção — e
+     não o teto. */
   console.log(`  ··  a defensiva tirou ao menos ${m.danoParado} pontos do golpe em ${m.abrigos} mordidas (média ${(m.danoParado / (m.abrigos || 1)).toFixed(2)}; ${m.comeu} comeram a batida inteira e não dizem o número)`);
   console.log(`  ··  buffs no repertório dos oito: ${BUFFS_DOS_OITO.length}, e ${BARRADAS_PELO_FILTRO_MORTO.length} deles o filtro morto barrava (${BARRADAS_PELO_FILTRO_MORTO.join(", ")})`);
   console.log(`  ··  sonda da guarda: ${mediaComGuarda.toFixed(2)} de dano por golpe tentado com a guarda de pé contra ${mediaSemGuarda.toFixed(2)} com ela caída — razão ${razao.toFixed(3)} (${g.nDentro} e ${g.nFora} golpes)`);
@@ -700,8 +764,12 @@ sec("7. o veredito da Fase A — o buraco de A1, fechado em A3");
      para comprá-la. P1 e P3 criaram a segunda (o abrigo que morde) e
      moveram metade do gasto para lá, DE PROPÓSITO: comPeso 329 → 108 → 75,
      abrigos 0 → 0 → 241. A parcela passa a ser a SOMA, que é o que a frase
-     sempre quis dizer, e o piso 100 fica onde estava — medida hoje 316,
-     contra os 329 de A3. Nenhum limiar desta seção desceu. */
+     sempre quis dizer, e o piso 100 fica onde estava — medida em P3 316,
+     contra os 329 de A3. Nenhum limiar desta seção desceu.
+     E C3 (v9.237) NÃO MEXEU NESTA ASSERÇÃO, só no número que ela lê: o teto
+     da concentração tirou 43 mordidas de abrigo da amostra (245 → 202) e a
+     soma foi a 270. Continua acima do piso 100 sem que ninguém o toque, que
+     é o sinal de que o dente mede o que dizia medir. */
   t("na mesa real o turno de apoio compra alguma coisa — e o prazo vence",
     m.firmados >= MEDIDA_DO_BURACO.minimoDaMesaReal && rendeu >= MEDIDA_DO_BURACO.minimoDaMesaReal && m.dissipados >= MEDIDA_DO_BURACO.minimoDaMesaReal,
     `${m.firmados} firmados, ${rendeu} rendeu (${m.comPeso} com bônus + ${m.abrigos} abrigos), ${m.dissipados} dissipados`);
@@ -1140,6 +1208,206 @@ sec("10. a concentração cai na arena (C2b)");
   t("a voz de depuração não vaza — nenhuma linha da arena diz o nome do mecanismo",
     q.mecanismoNaCena === 0 && MECANISMO.test(doModulo.texto),
     `${q.mecanismoNaCena} linhas na cena (e o \`texto\` do módulo, que fica fora dela, continua dizendo)`);
+}
+
+/* ============================================================
+   11. UMA DE CADA VEZ, TAMBÉM NA ARENA (C3 · v9.237)
+
+   A OUTRA METADE DA SEÇÃO 19 DE `teste-efeitos.mjs`. Lá mora a REGRA (o teto
+   sai da tabela, a segunda derruba a primeira, a frase não diz o nome do
+   mecanismo); aqui mora o que ela faz na mesa dos oito, lido SÓ pelas linhas
+   que o jogador leria — que é a única prova de que a ficha mudou junto.
+
+   O DUELISTA É A QUARTA PORTA. Os três nascimentos do App (o buff do herói, o
+   do companheiro, a magia de duração) passam por `firmarOuCeder`; o quarto é
+   `aplicarAcoes`, aqui, e passa por `firmarEfeito` direto — a arena não tem
+   `calou` nem tela, e o recuo dela é não existir.
+
+   POR QUE ÂNCORA NÃO BASTA, e é a lição que R4 cobrou desta casa: um regex
+   prova que a linha existe, nunca que ela faz o que diz. Por isso o dente
+   forte desta seção não é a âncora, é a MEDIÇÃO: em 420 quedas, nenhum
+   duelista chega a segurar duas concentrações ao mesmo tempo. Verificado nos
+   dois sentidos, na mesma amostra e com as mesmas sementes:
+
+   - a árvore de `eadef55` (antes de C3): 0 cessões, 60 momentos com DUAS de
+     pé — `O Remendo` segurando Escudo da Fé e Bênção, e uma batida derrubando
+     a errada;
+   - a árvore de C3: 60 cessões, 0 momentos com duas. O dente falha antes e
+     passa depois, que é o que se pede de um dente.
+
+   O PREÇO ESTÁ DECLARADO NA SEÇÃO 7 ("E A MOEDA DEFENSIVA ENCOLHEU"): as 60
+   cessões são as 60 vezes em que `remendo` e `voto` jogaram fora o abrigo que
+   tinham acabado de firmar, e é de lá que saem as 43 mordidas a menos. O
+   piloto não sabe do teto; ensiná-lo é outra etapa.
+   ============================================================ */
+sec("11. uma de cada vez, também na arena (C3)");
+{
+  const GR = await import(RAIZ + "grimorio.js");
+  const ARENA = readFileSync(RAIZ + "arena.js", "utf8");
+  /* OS CONTROLES NEGATIVOS LEEM O CÓDIGO, NÃO A PROSA. Os comentários desta
+     casa citam de propósito o que o código NÃO faz mais ("era `empilhar` até
+     então", "agora a nova toma o lugar") — um `!/empilhar/` sobre o arquivo
+     cru acusaria a EXPLICAÇÃO da etapa em vez de uma regressão, e quem viesse
+     depois aprenderia a apagar o comentário para calar o teste. Então o
+     arquivo é lido sem comentários antes de qualquer prova de ausência. */
+  const soCodigo = (s) => s.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+  const ARENA_CODIGO = soCodigo(ARENA);
+
+  const MEDIDA_DA_CESSAO = {
+    sementesPorPar: 6,
+    /* a MESMA amostra da seção 7, de propósito: é lá que o preço em mordidas
+       de abrigo está declarado, e medir a causa noutra amostra deixaria os
+       dois números sem como se conferirem */
+    semente: (a, b, s) => `m|${a}|${b}|${s}`,
+    /* O TETO DURO — é este o dente, e ele não tem folga nenhuma. Segurar duas
+       ao mesmo tempo é exatamente a doença que C3 veio curar; um só momento
+       já é a doença de volta. */
+    tetoDeDuplasSimultaneas: 0,
+    /* O PISO DA AMOSTRA, e ele existe para o teto acima não passar VAZIO: uma
+       arena que parasse de firmar concentração nenhuma mediria 0 duplas e 0
+       cessões, e ficaria verde sem provar coisa alguma.
+       Medido em v9.237: 60 cessões em 420 quedas. O piso é 15 — um quarto do
+       medido, a mesma proporção que `pisoDeEscapes` escolheu na seção 10 (5
+       para 20 medidos), e pelo mesmo motivo: o fluxo de sorte da arena é
+       reembaralhado por qualquer mexida no código, e um piso colado no dígito
+       de hoje fica vermelho na primeira brisa. 15 sobrevive à brisa e ainda
+       pega o caso que este dente existe para pegar — a porta voltando a ser
+       `empilhar`, que mede exatamente 0. */
+    pisoDeCessoes: 15,
+    /* o nome do mecanismo não pode vazar para a cena (lei "o sistema não fala
+       de si mesmo") — a mesma régua da seção 10 */
+    rxMecanismo: /[Cc]oncentra/,
+  };
+
+  /* ---------------- AS ÂNCORAS: a arena passa pela porta e não escreve ---- */
+  t("a arena firma pela porta que conta a concentração", /const fe = firmarEfeito\(eu, efeito\);/.test(ARENA));
+  t("e importa `firmarEfeito` de efeitos.js", /import \{ firmarEfeito,[^}]*\} from "\.\/efeitos\.js"/.test(ARENA));
+  /* CONTROLE NEGATIVO: a pilha genérica não é mais importada aqui. Era ela
+     que deixava o duelista segurar duas, e um merge que a devolvesse passaria
+     despercebido — o import continuaria válido e o código compilaria. */
+  t("e a pilha genérica não é mais importada na arena", !/\bempilhar\b/.test(ARENA_CODIGO));
+  /* A LINHA É DO MÓDULO, seca, com o dono na frente — o mesmo molde da
+     mordida do abrigo (P3) e da queda da concentração (C2). */
+  t("a linha da cessão é a do módulo, seca, com o dono na frente",
+    /linhas\.push\(`\$\{eu\.nome\} — \$\{secar\(fe\.linha\)\}`\)/.test(ARENA));
+  t("e só sobe quando alguém cedeu de verdade", /if \(fe\.linha\) linhas\.push/.test(ARENA));
+  t("a arena não inventa frase de cessão nenhuma",
+    !/toma o lugar/.test(ARENA_CODIGO) && !/escapa dos dedos/.test(ARENA_CODIGO));
+
+  /* ---------------- A MEDIÇÃO: 420 quedas, lidas pelas linhas ----------- */
+  const concentra = (n) => { const m = GR.magiaPorNome(n); return !!m && GR.exigeConcentracao(m); };
+  const FIRMA = /^(.+?) firma (.+?) · /;
+  const CEDE = /^(.+?) — (.+?) escapa dos dedos — (.+?) toma o lugar (dela|delas)$/;
+  const QUEBRA = /^(.+?) — (.+?) escapa dos dedos — o corpo aguentou/;
+  const DISSIPOU = /^(.+?) — (.+?) se dissipou$/;
+
+  const c = { quedas: 0, cessoes: 0, duplas: 0, semFirmaAntes: 0, chegaErrada: 0, mecanismoNaCena: 0, plural: 0, fantasmas: 0 };
+  const trocas = new Map();
+  const exemplos = [];
+  const t0 = Date.now();
+  for (let i = 0; i < P.PRONTOS.length; i++) {
+    for (let j = i + 1; j < P.PRONTOS.length; j++) {
+      const a = P.PRONTOS[i].id, b = P.PRONTOS[j].id;
+      for (let s = 0; s < MEDIDA_DA_CESSAO.sementesPorPar; s++) {
+        for (const queda of A.duelarProntos(a, b, { semente: MEDIDA_DA_CESSAO.semente(a, b, s) }).quedas) {
+          c.quedas++;
+          const ls = queda.linhas.slice(1);
+          /* quem segura o quê, por dono — lido só pelas linhas, como na 10 */
+          const seg = new Map();
+          const de = (dono) => { if (!seg.has(dono)) seg.set(dono, new Set()); return seg.get(dono); };
+          /* O FANTASMA — ver "E O QUE CEDEU TEM DE TER SUMIDO DA FICHA", junto
+             da asserção. Quem cedeu entra aqui e só sai se for firmado de
+             novo; qualquer linha de prazo ou de queda que ainda o nomeie é a
+             prova de que a arena narrou a troca sem aplicá-la. */
+          const cedidas = new Map();
+          const exDe = (dono) => { if (!cedidas.has(dono)) cedidas.set(dono, new Set()); return cedidas.get(dono); };
+          const fantasma = (dono, magia) => { if (exDe(dono).has(magia)) c.fantasmas++; };
+          /* a cessão é contabilizada por uma função só, porque ela aparece em
+             dois lugares do laço: solta (não deveria acontecer, e o dente
+             `semFirmaAntes` é quem diz isso) e colada na firma que a causou */
+          const cedeu = (m, esperada) => {
+            c.cessoes++;
+            if (/escapam dos dedos/.test(m[0])) c.plural++;
+            if (!de(m[1]).has(m[2])) c.semFirmaAntes++;
+            de(m[1]).delete(m[2]);
+            if (esperada === undefined ? !de(m[1]).has(m[3]) : m[3] !== esperada) c.chegaErrada++;
+            exDe(m[1]).add(m[2]);
+            trocas.set(`${m[2]} → ${m[3]}`, (trocas.get(`${m[2]} → ${m[3]}`) || 0) + 1);
+            if (exemplos.length < 1) exemplos.push(m[0]);
+          };
+          for (let k = 0; k < ls.length; k++) {
+            const l = ls[k];
+            if (MEDIDA_DA_CESSAO.rxMecanismo.test(l)) c.mecanismoNaCena++;
+            let m;
+            if ((m = l.match(QUEBRA))) { fantasma(m[1], m[2]); de(m[1]).delete(m[2]); continue; }
+            if ((m = l.match(DISSIPOU))) { fantasma(m[1], m[2]); de(m[1]).delete(m[2]); continue; }
+            if ((m = l.match(CEDE))) { cedeu(m); continue; }
+            if (!(m = l.match(FIRMA))) continue;
+            if (!concentra(m[2])) continue;
+            de(m[1]).add(m[2]);
+            exDe(m[1]).delete(m[2]);
+            /* A ORDEM DAS LINHAS É PARTE DA REGRA, e por isso a cessão é lida
+               AQUI e não no passo seguinte do laço: a arena empurra primeiro
+               "X firma Bênção" e só depois "X — Escudo da Fé escapa dos
+               dedos — Bênção toma o lugar dela". Ler as duas separadas faria
+               a contagem acusar uma dupla de mentira em todo par legítimo —
+               e foi o que a primeira versão desta medição fez. Cola-se a
+               cessão à firma que a causou, e a dupla medida passa a ser só a
+               que SOBREVIVE à linha seguinte. */
+            const proxima = (ls[k + 1] || "").match(CEDE);
+            if (proxima && proxima[1] === m[1]) { cedeu(proxima, m[2]); k++; }
+            if (de(m[1]).size > 1) c.duplas++;
+          }
+        }
+      }
+    }
+  }
+
+  console.log(`  ··  ${c.cessoes} cessões em ${c.quedas} quedas (os 28 pares dos oito, ${MEDIDA_DA_CESSAO.sementesPorPar} sementes cada) — ${Date.now() - t0}ms`);
+  /* FATO DECLARADO, não exigência: QUAIS trocas o piloto faz. Hoje é uma só,
+     e é a que explica o preço da seção 7 — `remendo` e `voto` firmam o abrigo
+     e na rodada seguinte o trocam pelo apoio. Uma segunda linha aparecendo
+     aqui amanhã é o piloto (ou o acervo) tendo mudado, e é assim que se fica
+     sabendo. */
+  console.log(`  ··  as trocas que a mesa dos oito faz: ${[...trocas.entries()].sort((x, y) => y[1] - x[1]).map(([k, v]) => `${k} (${v})`).join(" · ") || "nenhuma"}`);
+  if (exemplos.length) console.log(`  ··  a linha que o jogador lê: ${exemplos[0]}`);
+
+  /* O DENTE. Nenhum duelista segura duas ao mesmo tempo — medido pelas
+     linhas, em 420 quedas. Antes de C3 esta linha media 60. */
+  t("nenhum duelista chega a segurar duas concentrações ao mesmo tempo",
+    c.duplas <= MEDIDA_DA_CESSAO.tetoDeDuplasSimultaneas, `${c.duplas} momentos com duas de pé em ${c.quedas} quedas`);
+  /* E O PISO, que impede o dente de cima de passar vazio */
+  t(`e a troca acontece de verdade na mesa dos oito (piso ${MEDIDA_DA_CESSAO.pisoDeCessoes})`,
+    c.cessoes >= MEDIDA_DA_CESSAO.pisoDeCessoes, `${c.cessoes} cessões em ${c.quedas} quedas`);
+  /* NINGUÉM CEDE O QUE NÃO FIRMOU. Sem este dente, uma arena que narrasse a
+     cessão de uma magia que o duelista não tinha passaria nos dois de cima —
+     e o jogador leria que perdeu algo que nunca ergueu. */
+  t("ninguém cede o que não estava segurando", c.semFirmaAntes === 0, `${c.semFirmaAntes} cessões sem firma antes`);
+  /* E QUEM TOMA O LUGAR É QUEM ACABOU DE SUBIR — a outra metade da mesma
+     verdade: a frase tem de nomear a magia que causou a troca, não uma
+     terceira qualquer. */
+  t("e quem toma o lugar é exatamente a que acabou de ser firmada",
+    c.chegaErrada === 0, `${c.chegaErrada} cessões nomeando outra magia`);
+  /* O plural só pode nascer de save antigo, e a arena monta a ficha do zero:
+     na mesa dos oito toda cessão é de uma magia só. Se aparecer plural aqui,
+     o teto deixou de ser 1 sem ninguém ter dito. */
+  t("toda cessão da arena é de UMA magia — o plural não nasce em ficha montada do zero",
+    c.plural === 0, `${c.plural} cessões no plural`);
+  /* E O QUE CEDEU TEM DE TER SUMIDO DA FICHA, NÃO SÓ DA PROSA. Este é o dente
+     que a escada de sabotagem obrigou a escrever, e o achado mais útil do
+     ciclo: uma arena que NARRE a troca e não a aplique — `firmarEfeito`
+     chamado, `fe.linha` empurrada, mas `eu.efeitos` remendado à mão — passa em
+     todas as âncoras e engana até a contagem de duplas, porque a contagem lê
+     as linhas e a linha mente. O fio que ela não consegue cortar é o PRAZO: um
+     efeito que continua na ficha acaba vencendo, e a arena narra "X — Escudo
+     da Fé se dissipou" por uma magia que o jogador já leu que perdeu. Mesma
+     coisa para a queda de C2: o corpo não pode perder o que já largou.
+     Medido em v9.237: 0 fantasmas em 420 quedas. */
+  t("o que cedeu some da ficha, não só da prosa — nenhuma magia cedida vence prazo nem cai depois",
+    c.fantasmas === 0, `${c.fantasmas} linhas sobre magia que já tinha cedido`);
+  /* O SISTEMA NÃO FALA DE SI MESMO — a mesma régua da seção 10, agora com a
+     linha nova no meio da cena. */
+  t("e a cena continua sem dizer o nome do mecanismo", c.mecanismoNaCena === 0, `${c.mecanismoNaCena} linhas`);
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);
