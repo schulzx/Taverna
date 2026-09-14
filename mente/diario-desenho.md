@@ -19,6 +19,237 @@ Formato:
 
 ---
 
+## 14/09 23:40 · v9.249 · D4 · as formas escritas · commit `<hash>`
+
+**`mente/formas.md` deixou de estar vazio, e este é o primeiro ciclo sob a
+liberdade nova.** A pessoa disse hoje que *"a timidez é o defeito, não a
+ousadia"*, e a régua do pesado virou **uma pergunta só: o jogador teria de
+reaprender?** O que o ciclo devolve é um arquivo de **30 formas declaradas**,
+**quatro divergências de significado fechadas com os dois lados e quem cedeu
+em quê**, e — o que eu não esperava — **um defeito achado na própria peça que
+a mesa ia adotar**, que teria trocado em silêncio o gesto mais repetido do
+jogo.
+
+- **estado inicial:** `.claude/ciclo-desenho-em-curso` não existia — fila
+  livre; criei-a. `.claude/ciclo-em-curso` era do `orquestrador` em **N1**, na
+  mesma árvore, e **não a toquei**. `.claude/app-jsx` não existia e **não
+  precisei do bastão**: D4 é escrita e Figma, e disse isso às três mãos por
+  escrito. Antes de começar: **182/182 suítes verdes, 9/9 varredores limpos**.
+  Pauta de desenho: Fase D, 3 de 6 feitas.
+- **jogo / desenho:** chamados **juntos, no mesmo turno, os dois em primeiro
+  plano**, e depois mais duas voltas — porque uma etapa de forma não fecha num
+  turno e fingir que fecha é como a mesma ação ganha duas caras. Primeira
+  volta, **em arquivos separados de propósito** (`mente/d4-jogo.md` e
+  `mente/d4-desenho.md`): dois escritores no mesmo arquivo apagam-se, e o
+  `formas.md` é um só. Segunda volta: o `desenho` consolidou `formas.md` com
+  a arbitragem das quatro divergências; o `jogo`, ao mesmo tempo e noutro
+  arquivo, **julgou as 21 formas dele contra o momento** — 13 passaram limpas,
+  7 com ressalva, **1 reprovada no lugar**. Terceira volta: o `desenho` dobrou
+  o veredito.
+  A fronteira de autoria **funcionou como a pessoa a desenhou** e dá para
+  medir: o `jogo` não desenhou uma peça, e o `desenho` não escolheu uma
+  palavra. Onde os dois se tocaram, a divergência ficou escrita.
+- **aprendiz / oficial / testes:** **nenhum dos três foi chamado, de
+  propósito.** D4 não escreve código de produção. Um executor num ciclo sem
+  código é ruído, não paralelismo — é a mesma decisão de D3, e continua certa.
+- **o Figma:** o **mesmo** arquivo `Taverna — biblioteca`,
+  `e5wJUzInAssoebx5npssKc`, ampliado de **8 para 13 páginas**. Nenhum segundo
+  arquivo. Cinco peças novas — **A casa** (7 estados), **A escolha** (12),
+  **O interruptor** (4), **A linha** (4) e **O realce** (2) — mais dois eixos
+  novos (`Selo` *Mudou=Agora*, `Barra` *Mudou=Golpe/Ganho*). Tudo ligado a
+  variável, zero hex solto.
+  **E o `desenho` corrigiu a própria peça de D3**: o estado *Impedido* do
+  Botão caía a 45% e dava **1,19:1** — ilegível. Agora é sem preenchimento com
+  tinta cheia: **6,62:1**. O eixo mudou junto, e a mudança é a melhor frase do
+  ciclo: os dois estados não se separam por *volta / não volta*, e sim por
+  **quem tem de agir**.
+
+### A prova
+
+**`npm run build` limpo · 182/182 suítes verdes · 9/9 varredores limpos.**
+Nenhum arquivo de `src/` foi tocado — o verde é o mesmo de antes, e é por isso
+que ele prova pouco: **D4 não se defende por suíte, defende-se por número
+escrito dentro de cada forma.** Os que decidiram alguma coisa:
+
+| a decisão | o número que a sustenta |
+|---|---|
+| a chamada é uma peça só nos quatro modos | `Agir →` **720 px²** contra `⚔ A PRÓXIMA LUTA` **54.912 px²** = **76×**, **na mesma tela, a três centímetros** |
+| a opacidade sai do "não pode agora" | 40% → **2,02:1** · 45% → 2,25:1 · 60% → 3,03:1 · o *Impedido* de D3 → **1,19:1** |
+| o destrutivo troca de tinta | `#fff` sobre `danger` = **3,42:1 (reprova AA)** → `onAccent` = **5,34:1** |
+| o alvo de fechar vai a 44px | quatro `✕` medidos a **~20px**; *"um alvo que o dedo erra rouba mais cena que um alvo grande"* |
+| a reação precisa de controle | **6** reações com custo em PM, e `escolherReacao` gasta o PM do jogador sozinha (`App.jsx:7572`) |
+| o tabuleiro tem de vir à tela | a luta abriu com o campo **429 px abaixo da dobra**, `scrollTop = 0` de 1129 |
+
+### O defeito que o ciclo achou sozinho, e que vale mais que as 30 formas
+
+O `desenho` fabricou **A linha** — o campo de escrita do turno, 72px, prosa em
+Spectral. Ninguém tinha pedido a peça; ela apareceu ao contar (**23 campos de
+texto escritos à mão**, 19 no `App.jsx`, num projeto com 17 `outline-none`).
+O `jogo` foi ver o momento e achou o que nenhuma contagem acha: o campo do
+turno é um **`<input>`** onde `App.jsx:21216` faz `Enter → agir`. Um campo de
+72px com prosa é, na prática, um **`textarea`** — e em `textarea` o `Enter`
+**quebra linha**.
+
+Adotar a peça bonita sem essa regra **trocaria em silêncio o gesto mais
+repetido do Taverna**, centenas de vezes por campanha. Build limpo, suíte
+verde, e só o uso pegaria — a mesma família da armadilha que o `CLAUDE.md` já
+guarda ("componente dentro do render mata o foco"). Ficou escrito em
+`formas.md` como **condição de aceitação, não nota de rodapé**: `Enter` manda,
+`Shift+Enter` quebra; no telefone campo e chamada **não dividem a linha**
+(dividindo, sobrariam ~13 caracteres visíveis para escrever a ação central do
+jogo); e a última fala do Mestre não sai da tela com o teclado aberto —
+senão *"ele responde de memória"*, e a peça troca responder por lembrar.
+
+**É exatamente para isto que a mesa anda em par.**
+
+### As quatro divergências de significado — e quem cedeu em quê
+
+Todas fechadas em `mente/formas.md`, com os dois lados escritos.
+
+1. **confirmar / cancelar** → `Botao` *Papel=Recuo* nos doze lugares, sempre à
+   esquerda do confirmar; o destrutivo é **O gesto que custa**, e o `#fff` de
+   3,42:1 sai como **bug de acessibilidade, não como gosto**. **Ninguém
+   cedeu** — a fronteira de autoria já resolvia: a forma é uma e é do
+   `desenho`, a palavra é do momento e é do `jogo` (três palavras, amarradas
+   ao momento). A cessão que o `jogo` deixou escrita (*"cedo para uma palavra
+   só"*) **não foi gasta**, e ficou registrada: cessão guardada é o que faz a
+   próxima divergência fechar depressa.
+2. **fechar um painel** → o `✕` é da saída e de mais nada; as **cinco** ações
+   de perda que hoje usam o glifo da porta passam ao gesto que custa, com o
+   verbo escrito. **Cedeu o `jogo`:** a variante *discreta* deixa de ser
+   escolha livre — o glifo pode ser pequeno, **o alvo nunca** (44px nas 15).
+   **Cedeu o `desenho`:** a sobreposição da morte pode manter o fundo que não
+   fecha, porque é momento — desde que **diga na tela** que não há saída.
+3. **"não pode agora"** → dois estados, separados por **quem tem de agir**.
+   Eu tinha arbitrado isto como cessão do `jogo` — *"o campo está vazio"*
+   deixando de ser um terceiro estado —, e **o `jogo` recusou o rótulo**:
+   *"ele não insistiu, fez melhor."* O eixo novo do `desenho` tornou a cessão
+   **desnecessária**, e o `desenho` registrou assim em vez de alisar. É a
+   **segunda cessão escrita e não cobrada** da fase, e as duas ficam de pé:
+   uma divergência que fecha sem ninguém perder nada é a única que não deixa
+   ressentimento no código. **Cedeu o `desenho`:** os glifos do cabeçalho
+   podem ficar mudos na
+   tela, e o `jogo` disse **nominalmente quais** (a caneca, o `↓`, os nove
+   `✕` de fechar, o stepper, o `🔊`) e quais **não podem** (`⛺`, `📜`, `⚒`, o
+   par `▲`/`✕` da guilda e os quatro `✕` que descartam). Com a regra que
+   impede a leitura preguiçosa: **mudo na tela nunca é mudo para quem não vê
+   a tela.**
+4. **a ação principal entre os modos** → uma peça só, **mesma família e mesmo
+   tamanho de letra**; a largura é variante. **Cederam os dois:** o `jogo` no
+   tamanho (*"duas peças ensinam duas línguas; uma peça em dois tamanhos
+   ensina uma"*), o `desenho` na largura (a faixa do Duelo e do Torneio, onde
+   a chamada é cerimônia). O que **nenhum** cedeu — família e tamanho da
+   letra — é a decisão, porque é `tv-display 18px` contra `tv-mono 12px` que
+   faz parecer dois jogos.
+
+**E a quinta, que estava aberta desde D3, fechou:** a *escala de cerimônia*. O
+`desenho` fabricou o degrau que faltava (**O realce**) e o `jogo` trouxe a
+lista — com **a regra antes da lista**, que é o que a faz sobreviver a
+momentos novos: *sobe ao realce o que muda o que o jogador **pode fazer** a
+partir de agora, e só na primeira vez; o que só muda um número fica em nota.*
+Nove momentos sobem. E o `jogo` **aceitou por escrito o risco que o `desenho`
+registrou**: não usar véu para conquista nenhuma.
+
+### decisões médias tomadas
+
+- **Fabricar cinco peças que não existiam** (`médio` pela tabela nova: *criar
+  o que não existe*). O motivo é que **29 das 30 formas levam `[ainda não
+  existe]`** em *onde vive* — a única que existe em código existe **errada**
+  (`ui.jsx:27`, `opacity: 0.4`). Um arquivo de formas sem peça é uma lista de
+  desejos; com peça, é uma encomenda.
+- **Aposentar a opacidade como linguagem de "não pode agora"** (`médio`:
+  *alterar a forma do que existe, quando a nova é comprovadamente melhor*).
+  Comprovado por medida, e a medida é dura: **1,19:1** na peça que a própria
+  mesa tinha desenhado ontem. O que não pode ser clicado ainda precisa ser
+  lido.
+- **Rodar a dupla em três voltas em vez de uma.** Custou mais; o retorno foi o
+  `Enter` e a peça reprovada no lugar. Uma volta só teria entregue um arquivo
+  bonito e um defeito montado.
+- **Escrever forma para ação que não tem controle.** As seis entram em
+  `formas.md` **com forma declarada e `[ainda não existe]`** — porque, como
+  D1 avisou, o que não está na lista passa pela catraca por não existir.
+  Declarar o que falta é o que torna a falta cobrável.
+- **Mudar o `🎲` de lugar, não de peça.** Foi a única forma **reprovada** pelo
+  `jogo`, e o que ele reprovou foi o **endereço**: um interruptor que governa
+  o log não mora no cabeçalho, longe do que governa. O `desenho` cedeu no
+  lugar e manteve a peça — e o registro diz isso com essas palavras, porque
+  "a peça estava errada" e "a peça estava no sítio errado" são conclusões
+  diferentes para quem ler daqui a um mês.
+- **Duas decisões que o `desenho` tomou como suas**, porque o `jogo` lhas
+  devolveu: *"é a sua vez"* passa de *Tom=Aviso* para ***Tom=Bom*** (não é
+  um aviso, é a sua deixa) — com a nota afiada de que **se *Bom* e *Aviso*
+  saírem parecidos de `T`, isso é defeito de tabela, não da forma**; e o
+  custo do passo **nasce escrito na casa**, descendo à *Consequência* só
+  quando não couber legível — porque um custo que só existe no rato não
+  existe no telefone, que é o defeito que esta fase inteira persegue.
+- **Não fabriquei *A pergunta que expira***, pedida por nome pelo `jogo`. Ela
+  é o coração de uma proposta `pesado` que espera a pessoa, e **fabricar peça
+  para decisão que não foi tomada é inventar trabalho**. Ficou nomeada como
+  dívida, com o que teria de fazer, para que ninguém comece do zero no dia do
+  sim.
+
+### A ambição — o que fica para a pessoa decidir
+
+A pessoa pediu que todo ciclo de design entregasse **ao menos uma proposta
+ambiciosa**. Foram três, e as duas `pesado` estão no topo de
+`mente/pauta-desenho.md`:
+
+- **a rodada tem três batidas, e o jogador toca as três** — hoje as regras
+  modelam três coisas do jogador (mover, agir, reagir) e ele toca **uma e
+  meia**: numa luta inteira o `jogo` tocou **três** controles, dois deles
+  casas e um o `⛺` que encerrou a luta por engano. **Reagir não tem controle
+  nenhum** — e o melhor argumento é estudo citado com a origem dentro de casa:
+  o cabeçalho de `src/reacoes.js` diz que *"no 5e e no BG3 metade da tensão do
+  combate mora aqui"*, e sete linhas abaixo entrega a decisão ao sistema. **O
+  módulo diagnostica o problema e depois o causa.** O que o jogador reaprende
+  é **uma coisa só** — que o jogo pode lhe fazer uma pergunta no meio do turno
+  do inimigo, e que não responder é resposta válida —, e a regra de segurança
+  está escrita: **quem não responde, o sistema responde como hoje. Nada
+  regride.**
+- **o turno acontece mesmo quando o Narrador cala** — nasceu do buraco desta
+  fase, e é a pergunta de produto que a mesa não pode responder sozinha.
+- **nenhum número muda em silêncio** (do `desenho`) é `médio` pela régua nova
+  — o jogador não reaprende nada — e foi para "Aberto". Duas das suas três
+  peças já foram fabricadas hoje; o que falta é **conta, não tela**, e por
+  isso é da fila do sistema.
+
+### o que ficou
+
+- **O buraco, declarado antes que alguém o descubra: o `jogo` não jogou um
+  único turno narrado.** A quota do Narrador acabou (`Limite diário alcançado
+  (500 chamadas)`) — pela **segunda** vez nesta fase, depois de D1. O combate
+  foi medido com o Mestre calado e **a sala ao vivo não foi medida**: o que
+  `formas.md` diz da sala é leitura de código, não experiência. Cobertura com
+  buraco declarado vale mais que cobertura fingida.
+- **Cinco afirmações de D1 não eram verdade**, e estão corrigidas em
+  `formas.md` com a linha: o `🎲` **tem** estado visível (falta a **palavra**,
+  `App.jsx:20418`); o `✕` tem **6** tamanhos, não 4; são **10** assinaturas de
+  âmbar, não 13 — e o número que decide é **37 usos de `background: T.amber`**;
+  os véus têm **4** desfoques, não 5; e o `⤢ ampliar` **tem** rótulo — o
+  defeito dele não é ser mudo, é **mentir**: promete tela cheia e corta **33%**
+  do campo, com o próprio título fora da tela. Somam-se às duas que D3 já
+  tinha derrubado. **Herdar engano custa mais caro que medir de novo.**
+- **Dívida do território do sistema, anotada e não consertada, como manda a
+  lei.** Para o `conselheiro` pegar: (1) **`reacoes.js:96` sorteia com
+  `Math.random()`** — a lei é determinismo por semente, e é pré-requisito da
+  terceira batida; (2) **o orçamento de movimento não é escrito de volta**
+  quando a luta não tem `economia` (`const novaEco = eco ? {...} : eco`), e é
+  por isso que o medidor diz `9 de 9` depois de o jogador ter andado 7,5 m —
+  **o `jogo` andou; quem mente é o medidor**, e isso derruba de vez a versão
+  de D1 de que "não dá para se mover"; (3) o `⛺` **não escreve no log o que
+  fez**; (4) `bloqueado` apaga quatro painéis que não têm nada com a rolagem
+  (`App.jsx:20384`) — vai com G2.
+- **O Code Connect continua impossível nesta conta** (`tier: pro`). Com sete
+  peças novas ou alteradas, são agora **15 peças sem nó**, e o que impede a
+  biblioteca de divergir do código em silêncio continua sendo um script que
+  alguém tem de lembrar de rodar. Item da pessoa, já na pauta.
+- **O que D4 não fez, e é de propósito:** não consertou nada. Nenhuma cor,
+  nenhum botão, nenhuma tela. A etapa escreve a verdade e fabrica a peça; **a
+  primeira montagem é D5 em diante**, e conserto de carona aqui seria o mesmo
+  erro que D1 se recusou a cometer.
+
+---
+
 ## 14/09 20:58 · v9.246 · D3 · a biblioteca no Figma, e a estrada de volta · commit `0e3ee81`
 
 O primeiro ciclo em que o **Figma entrou de verdade**. A pessoa tinha feito a

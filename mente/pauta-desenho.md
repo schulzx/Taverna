@@ -20,6 +20,78 @@ Todos nasceram da medição de D1 (14/09). Nenhum é gosto: cada um tem o númer
 que o sustenta, e cada um mexe **no fluxo do jogo ou no que o jogador já usa**
 — por isso espera.
 
+**Os dois primeiros são de D4, e são a resposta ao pedido da pessoa de 14/09**
+(*"não precisam ficar tímidos e trabalhar apenas o que já existe"*). Pela
+régua nova, `pesado` é uma pergunta só — **o jogador teria de reaprender?** —
+e nos dois a resposta é sim, com o que ele reaprende dito por escrito.
+
+- [ ] **a rodada tem três batidas, e o jogador toca as três** · pesado · de: jogo · 14/09
+  **O que ele vive hoje.** Uma rodada de combate é: escrever uma frase, o
+  sistema resolver tudo, e ler vinte linhas. As regras já modelam **três**
+  coisas que são do jogador — mover, agir e reagir — e ele toca uma e meia.
+  **Mover** já é clicável e ninguém sabe: quando a luta abriu, o tabuleiro
+  estava **429 px abaixo da borda visível** e o scroller não rolou sozinho
+  (`scrollTop = 0` de 1129 possíveis); rolado até ao fim, **41 das 86 casas**
+  cabem na tela. **Agir** é um botão de **720 px²** (45×16) — enquanto, três
+  centímetros acima, na mesma tela, o `⚔ A PRÓXIMA LUTA` mede **54.912 px²**.
+  E **reagir não tem controle nenhum**: `src/reacoes.js` tem **seis** reações
+  com gatilho, custo em PM e resolução, e `escolherReacao` escolhe sozinha a
+  primeira que se aplica, **gastando o PM da ficha do jogador**
+  (`App.jsx:7572`, débito em `:7577`). Numa luta inteira o `jogo` tocou
+  **três** controles: duas casas e o `⛺` que encerrou a luta por engano.
+  **As três batidas.** *Primeira:* a luta começa e **o campo é a primeira
+  coisa que ele vê**. *Segunda:* antes de pisar, ele **vê o que o passo
+  custa**, na casa, e o medidor de metros diz a verdade. *Terceira:* o golpe
+  inimigo chega e, **antes de o dano assentar**, o jogo pergunta uma coisa
+  curta — *"Aparar? — corta metade"*. Ele responde, ou não responde.
+  **O que ele reaprende, e é uma coisa só:** que o jogo pode lhe fazer uma
+  pergunta no meio do turno do inimigo, e que **não responder é uma resposta
+  válida**. Nenhum botão sai do sítio, nenhum gesto antigo deixa de
+  funcionar — mas isso é o fluxo do combate, e o fluxo é da pessoa.
+  **Ao `backend`:** a janela é regra, sai de tabela nomeada; o padrão de quem
+  não responde é **byte a byte** o `escolherReacao` de hoje; a catraca é uma
+  frase — *mesma semente, ninguém responde, mesmo resultado de hoje*.
+  **Regressão zero, provada em Node.** *(E uma dívida que aparece de graça:
+  `reacoes.js:96` decide por `Math.random()` — a lei é determinismo por
+  semente, e o sorteio da reação hoje não a cumpre.)*
+  **Ao `desenho`:** a peça **A pergunta que expira**, que não existe e ficou
+  nomeada em `formas.md` como dívida — um controle que aparece, oferece uma
+  escolha com o preço escrito, e **some sozinho sem punir quem não
+  respondeu**. Não é *O gesto que custa* (esse espera para sempre) nem um véu
+  (esse toma a tela). Sem ela, a terceira batida não existe.
+  **O risco, dito pelo `jogo`:** um jogo que espera resposta pode virar um
+  jogo que cansa. Quatro defesas, e duas já são regra: (1) o sistema **já**
+  recusa gastar reação em arranhão (`reacoes.js:93-94`), então a janela herda
+  a parcimônia; (2) **uma por rodada**, que também já é regra; (3) **quem não
+  responde, o sistema responde como hoje — nada regride**; (4) se o jogador
+  deixar expirar algumas vezes seguidas, o jogo **para de perguntar** pelo
+  resto da luta, sem nomear o mecanismo.
+  **O melhor argumento é da própria casa** — estudo citado, e a origem é o
+  cabeçalho de `src/reacoes.js`: *"no 5e e no BG3 metade da tensão do combate
+  mora aqui: o golpe vem, e você tem uma janela para aparar…"*. Sete linhas
+  abaixo, o mesmo comentário entrega a decisão ao sistema. **O módulo
+  diagnostica o problema e depois o causa.** É o mesmo que a pessoa já
+  aprovou em S1 — *o motor não muda; o que muda é quando o jogador fica
+  sabendo* — aplicado à rodada em vez de à queda.
+
+- [ ] **o turno acontece mesmo quando o Narrador cala** · pesado · de: jogo · 14/09
+  **Experiência jogada, duas vezes na mesma fase** (D1 e D4): a quota do
+  Narrador acabou e **o jogo parou de ser jogável** — nem um turno de Uma
+  Vida, nem um do Capítulo. Mas o achado que importa é o contrário: **o
+  combate funcionou com o Mestre calado.** A luta abriu pelo sistema, o
+  `jogo` andou no tabuleiro, o log escreveu o passo, e o Mestre não disse uma
+  palavra. **O Taverna já tem um coração que bate sem a IA, e desliga-o por
+  inteiro quando ela cala.**
+  Depois: o turno resolve, o sistema escreve o que aconteceu na linguagem que
+  já escreve (o dado, o dano, o passo, o espólio), e **a narração é o que
+  falta, não o que impede**. É a lei da casa no caso extremo: *nunca pode
+  custar o turno.*
+  **É `pesado`** porque o jogador reaprende que existe um turno sem prosa, e
+  porque a pergunta de baixo é de produto — *o que o Taverna é quando o
+  Narrador não está?* Essa é dela, não da mesa. **Mas a mesa não pode calar
+  sobre ela:** foi a única coisa que impediu esta fase inteira de medir um
+  turno vivo.
+
 - [x] **A batalha toma a tela** · **APROVADA 14/09 — virou a Fase E** (tela própria de batalha + tabuleiro com endereço)
   O `jogo` jogou e mediu: o campo tático de 16×16 vive dentro do scroller
   narrativo de **301 px de altura** com `overflow: hidden auto`. O painel
@@ -75,6 +147,17 @@ que o sustenta, e cada um mexe **no fluxo do jogo ou no que o jogador já usa**
   `tv-display` de 18px com padding diferente em `rapida`/`duelo`. O
   `CLAUDE.md` diz que modo é *"lente sobre o mesmo motor, nunca um segundo
   jogo"*; visualmente, hoje, é um segundo jogo. Mover o que o jogador já usa.
+  *(**D4 decidiu a forma, e o número ficou pior do que parecia:** `Agir →` =
+  45×16 = **720 px²** contra `⚔ A PRÓXIMA LUTA` = 1144×48 = **54.912 px²** —
+  **76×**, e as duas **na mesma tela, a três centímetros uma da outra**. Não
+  é divergência entre modos: é dentro de uma tela, e o modo **padrão
+  absoluto** tem a menor chamada do jogo. A decisão está escrita em
+  `formas.md`: uma peça só, mesma família e mesmo tamanho de letra, a largura
+  como variante. **O que continua da pessoa é executá-la** — subir o `Agir →`
+  de 12px para 16px mexe no que o jogador já usa, e o `jogo` achou a
+  armadilha: o campo do turno é um `<input>` onde `Enter` manda, e a peça
+  nova é um `textarea` onde `Enter` quebra linha. **Trocaria em silêncio o
+  gesto mais repetido do jogo.**)*
 
 ## A lei que a pessoa deu à mesa (14/09)
 
@@ -293,17 +376,29 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
   de verdade, quais foram só de ida, e quanto da biblioteca ficou sem nó.
   Uma troca de mão única declarada vale mais que uma troca de mão dupla
   suposta.
-- [ ] **D4 · as formas escritas** · de: pessoa · 14/09
-  `mente/formas.md` deixa de estar vazio: toda ação que o jogador toca hoje
-  ganha sua forma declarada (quando, forma, movimento, onde vive, por quê,
-  peso), a partir de D1 e D3. Onde D1 achou duas caras para a mesma ação, a
-  dupla decide **uma** e escreve a discordância resolvida — começando pelas
-  10 famílias medidas.
-  *(acrescentado por D1, do que o `jogo` viu jogando: catalogar botão não
-  basta.* Entram também **as ações sem controle** — mover em combate, que o
-  jogo manda fazer e não dá forma de fazer — e **os controles sem rótulo**:
-  `⛺`, `🎲`, `⤢` no cabeçalho, cujo significado só existe em `title`.
-  Sem isso passam pela catraca por não existirem na lista.*)*
+- [x] **D4 · as formas escritas** · de: pessoa · 14/09 · **feito v9.249 · `<hash>`**
+  `mente/formas.md` deixou de estar vazio: **30 formas declaradas**, cada uma
+  com `quando` (do `jogo`, palavra por palavra) / `forma` / `movimento` /
+  `onde vive` / `por quê` / `peso`, nomeadas **pelo verbo do jogador**.
+  **29 das 30 levam `[ainda não existe]`** em *onde vive* — e a única que
+  existe em código existe **errada** (`ui.jsx:27`, `opacity: 0.4`). Seis são
+  **ações sem controle**, a maior sendo **reagir ao golpe** (6 reações com
+  custo em PM, e `escolherReacao` gasta o PM do jogador sozinha,
+  `App.jsx:7572`). Os **15 controles sem rótulo** (9 mudos) entraram numa
+  tabela com o verbo certo de cada um.
+  **As 4 divergências de significado fecharam por escrito, com os dois lados
+  e quem cedeu em quê** — e a quinta, a *escala de cerimônia* aberta desde
+  D3, fechou com a regra antes da lista. A biblioteca do Figma foi de **8
+  para 13 páginas** (A casa, A escolha, O interruptor, A linha, O realce),
+  mais dois eixos novos e a **correção da peça de D3** cujo *Impedido* dava
+  **1,19:1** e agora dá **6,62:1**.
+  **O achado que pagou o ciclo:** a peça nova do campo de escrita seria um
+  `textarea` onde o campo do turno é um `<input>` com `Enter → agir`
+  (`App.jsx:21216`) — adotá-la sem regra **trocaria em silêncio o gesto mais
+  repetido do jogo**. Virou condição de aceitação, não nota de rodapé.
+  **Cinco afirmações de D1 caíram** (o `🎲` tem estado, o `✕` tem 6 tamanhos,
+  são 10 assinaturas de âmbar, os véus têm 4 desfoques, e o `⤢ ampliar` não é
+  mudo — **é mentiroso**: corta 33% do campo). Medição inteira no diário.
 - [ ] **D5 · a catraca do desenho** · de: pessoa · 14/09
   *(reescrita por D1: como estava, era impossível. "Nenhuma cor literal fora
   da tabela" são **242 violações** hoje — e 71 delas são o pergaminho, um
@@ -364,6 +459,40 @@ _Os quinze abaixo saíram da medição de D1 (14/09). A ordem é por retorno:
 o barato e mecânico primeiro, o que precisa de decisão depois. Vários só
 fecham de verdade **depois de D2 e D5** — o item diz quando._
 
+- [ ] **nenhum número muda em silêncio** · médio · de: desenho · 14/09 (D4)
+  *A proposta ambiciosa do `desenho`, e ela é `médio` pela régua nova: a
+  pergunta do pesado é "o jogador teria de reaprender?", e aqui a resposta é
+  **não**. Nada muda de lugar, nada muda de nome, nenhum fluxo muda — o que
+  hoje acontece calado passa a acontecer à vista.*
+  **O diagnóstico:** o Taverna calcula um jogo inteiro e **conta** o
+  resultado em prosa cinzenta. 225 moedas entraram em dois turnos e o número
+  só existe dentro da Bolsa. O XP subiu e a barra já estava cheia quando o
+  jogador olhou. A vida caiu e a barra deslizou em 700 ms sem dizer quanto. A
+  primeira missão da campanha virou a quarta de seis pílulas iguais. **O jogo
+  tem o padrão certo e usa-o uma vez só** — o véu do dado.
+  **A lei proposta:** *todo valor de estado que muda entre um turno e o outro
+  veste a marca de "mudou agora", no lugar onde ele vive.* Três peças, e
+  **duas já foram fabricadas em D4**: o `Selo` com *Mudou=Agora* (halo, três
+  pulsos, e para) e a `Barra` com *Mudou=Golpe/Ganho* (o pedaço que saiu fica
+  visível, o número escrito, e a barra de XP **enche** no fim da missão em
+  vez de já estar cheia). A terceira é **O Realce** no log, também feita.
+  **O que falta é conta, não tela:** uma primitiva `Numero` que saiba a
+  diferença entre o valor de agora e o do turno passado, e entregue
+  `{ valor, delta, mudouAgora }`. Módulo puro, com suíte — **e por isso é da
+  fila do sistema**, não desta: a mesa pede, o `backend` escreve.
+  **O preço, dito por escrito:** movimento demais cansa, e esta lei põe
+  movimento em muitos lugares ao mesmo tempo. Três defesas, todas na forma: o
+  halo para depois de três pulsos; a marca vale **um turno** e some; e sob
+  `prefers-reduced-motion` **nada pulsa** — parada, a marca diz o mesmo. Se
+  ainda assim ficar demais, o corte é do `jogo`: **quais** números merecem a
+  marca é momento. O `jogo` já pôs o seu teto: **no máximo dois por turno, e
+  só para o que aconteceu *com* o jogador.**
+  **A prova de que não é gosto** é a lei que a pessoa deu à mesa — *"devemos
+  fazer o máximo para ter a experiência de um jogo e que ele realmente está
+  fazendo coisas — não só lendo e escrevendo"* — aplicada ao único lugar onde
+  cabe sem mexer em fluxo nenhum: os números que o jogo **já** calcula e
+  **já** mostra, e que hoje mudam sem que ninguém veja.
+
 - [ ] **os 80 literais que já são `T`** · leve · de: desenho · 14/09
   Dos 242 literais de cor nos arquivos de tela, **67 (28%) já são cores da
   tabela**: 24 hex idênticos a um valor de `T`, e 43 `rgba()` cujo RGB é
@@ -421,9 +550,16 @@ fecham de verdade **depois de D2 e D5** — o item diz quando._
   **rodapé no fim da página**; o botão `Nova campanha` que substitui está
   longe dali. É a coisa mais cara do jogo, protegida pelo texto mais
   distante.
-- [ ] **as moedas existem no HUD** · leve · de: jogo · 14/09
-  225 moedas ganhas em dois turnos, e o número só vive **dentro do painel
-  Bolsa**. O jogador não vê o que tem sem ir procurar.
+- [ ] **as moedas no cinturão** · leve · de: jogo · 14/09
+  *(medido no jogo carregado)* A barra de status mostra **NIV, PV, PM, XP, o
+  dia e o lugar** — e **não mostra o dinheiro**. `◉ 240` só existe **dentro**
+  do painel Bolsa, e é o número que decide toda compra, todo suborno, todo
+  presente e toda obra: o jogador abre uma gaveta para saber se pode pagar.
+  Com o **Selo de estado** fabricado em D3/D4, o cinturão do cabeçalho é
+  **montagem, não desenho novo** — nenhuma peça nova, nenhum fluxo mudado,
+  nada para reaprender.
+  *(substitui e absorve "as moedas existem no HUD", na fila desde D1: é o
+  mesmo item, e agora tem a peça que o torna barato.)*
 - [ ] **`.tv-margem-abas` é o padding-right da v9.197 outra vez, em
   `margin`** · leve · de: jogo · 14/09 (achado em D2)
   O comentário da própria classe conta, em vinte linhas, como uma
