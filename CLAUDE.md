@@ -228,8 +228,34 @@ dois, e a mudança saindo de tabela (logo, desfeita num commit).
 | peso | o que é |
 |---|---|
 | **leve** | espaçamento, alinhamento, contraste que corrige acessibilidade, cor literal virando token, microanimação de feedback com saída |
-| **médio** | componente novo com par no Figma e forma declarada · tela existente reorganizada sem mudar o fluxo · animação nova · **troca de paleta ou tipografia comprovada pela régua acima** |
-| **pesado** | **mudar o fluxo do jogo** (a batalha tomando a tela) · **remover ou mover o que o jogador já usa** — ali o custo é a memória de quem joga, e nenhum número resolve |
+| **médio** | **criar o que não existe** — tela, painel, botão, ícone, componente, animação · **alterar ou aposentar a forma do que existe**, quando a nova é comprovadamente melhor · reorganizar uma tela sem mudar o fluxo · trocar paleta ou tipografia |
+| **pesado** | **o que o jogador teria de reaprender** — mudar o fluxo (o que ele faz e em que ordem), tirar-lhe ou mudar de lugar algo de que ele depende, ou mexer no que o produto é. Ali o custo é a memória de quem joga, e nenhum número resolve |
+
+**A liberdade, dita pela pessoa em 14/09/2026:** *"são livres para criar e
+alterar tudo, podem fazer tudo o que for da parte visual — adicionar ou
+remover, alterar o que já existe — desde que seja comprovado, seja por
+estudo ou experiência, que aquilo é melhor. Não precisam ficar tímidos e
+trabalhar apenas o que já existe."*
+
+Então **a timidez é o defeito, não a ousadia.** Tela que não existe pode
+nascer; forma que existe pode ser aposentada; a paleta inteira pode mudar.
+O que não muda é que **"melhor" se demonstra**, e agora por três caminhos —
+qualquer um serve, desde que **escrito**:
+
+1. **Medida** — contraste, tamanho, cliques, tempo, densidade.
+2. **Estudo citado** — diretriz de plataforma, norma de acessibilidade,
+   pesquisa. *Citado*, com a origem: "é o padrão" sem fonte não é estudo.
+3. **Experiência jogada** — o `jogo` jogou o antes e o depois e diz o que
+   mudou. Vale tanto quanto número, e às vezes mais.
+
+O que continua proibido é o quarto caminho: **achar**. "Ficou melhor" sem
+nenhum dos três é opinião com confiança.
+
+**E a ambição é dever, não licença.** Toda etapa de design entrega, além do
+seu item, **ao menos uma proposta ambiciosa** em "Para a pessoa decidir" —
+algo que mudaria de verdade o que o jogador vive — ou escreve no diário por
+que naquele ciclo não havia nenhuma. Um ciclo que só faz o seguro está
+cumprindo a letra e falhando o pedido.
 
 **`aprendiz` e `frontend` nunca trabalham ao mesmo tempo** — dividem o mesmo
 `App.jsx`, e o segundo a salvar apaga o primeiro.

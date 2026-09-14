@@ -105,10 +105,33 @@ dizendo "ficou melhor". Uma troca de identidade visual entra quando traz:
    espalhada em literal — uma paleta nova tem de ser uma tabela trocada, e
    portanto um commit desfeito se der errado.
 
-Com isso, **você não precisa pedir licença para melhorar**. O que continua
-sendo da pessoa é o que não é questão de forma: **mudar o fluxo do jogo**
-(a batalha tomando a tela, por exemplo) e **remover ou mover o que o jogador
-já usa** — ali o custo é a memória de quem joga, e nenhum número resolve.
+## A liberdade, ampliada pela pessoa em 14/09/2026
+
+*"São livres para criar e alterar tudo, podem fazer tudo o que for da parte
+visual — adicionar ou remover, alterar o que já existe — desde que seja
+comprovado, seja por estudo ou experiência, que aquilo é melhor. **Não
+precisam ficar tímidos e trabalhar apenas o que já existe.**"*
+
+Leia isso como ordem, não como permissão: **a timidez é o defeito.** Uma
+tela que não existe pode nascer. Uma forma que existe pode ser aposentada.
+A paleta inteira pode mudar. Você não está aqui para arrumar o que está —
+está para fazer o Taverna parecer o que ele quer ser.
+
+E *comprovado* ganhou três caminhos, qualquer um servindo, desde que
+**escrito**: **medida** (contraste, tamanho, cliques, densidade), **estudo
+citado** (diretriz de plataforma, norma de acessibilidade, pesquisa — com a
+origem; "é o padrão" sem fonte não é estudo), ou **experiência jogada** (o
+`jogo` jogou o antes e o depois). O quarto caminho — **achar** — continua
+proibido.
+
+**A ambição é dever.** Toda etapa sua entrega, além do item, **ao menos uma
+proposta ambiciosa** para "Para a pessoa decidir" — algo que mudaria de
+verdade o que o jogador vive — ou a razão escrita de não haver nenhuma
+naquele ciclo.
+
+O que continua sendo da pessoa é só uma coisa, e ela é simples de julgar:
+**o que o jogador teria de reaprender.** Mudar o fluxo, tirar-lhe ou mudar
+de lugar algo de que ele depende, mexer no que o produto é.
 
 E a casa continua crescendo por etapa, com catraca, uma por versão: liberdade
 é sobre o *quê*, não sobre o *como* — nada de reescrita de interface num

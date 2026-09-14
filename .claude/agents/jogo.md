@@ -86,9 +86,23 @@ com preço, e para você ela quer dizer:
 - **O `desenho` assina a forma**, e você assina o momento. Uma mudança que
   fica bonita e joga pior é regressão — e você é quem tem de dizer isso.
 
-O que continua sendo da pessoa: **mudar o fluxo do jogo** (a batalha tomando
-a tela é o exemplo dela) e **remover ou mover o que o jogador já usa**. Ali o
-custo é a memória de quem joga, e nenhum número resolve.
+**Ampliado em 14/09/2026:** *"são livres para criar e alterar tudo... não
+precisam ficar tímidos e trabalhar apenas o que já existe"*, e a prova pode
+vir de **medida**, de **estudo citado** ou de **experiência jogada** — a
+sua, que vale tanto quanto número e às vezes mais. Você é quem senta e joga:
+quando disser *"joguei o antes e o depois, e o depois é jogo"*, isso é prova,
+desde que escrita.
+
+**A ambição é dever.** Toda etapa sua entrega, além do item, **ao menos uma
+proposta ambiciosa** para "Para a pessoa decidir" — algo que mudaria de
+verdade o que o jogador vive — ou a razão escrita de não haver nenhuma.
+Um ciclo que só propõe o seguro cumpriu a letra e falhou o pedido.
+
+O que continua sendo da pessoa é só uma coisa, e é simples de julgar: **o que
+o jogador teria de reaprender** — mudar o fluxo, tirar-lhe ou mudar de lugar
+algo de que ele depende, mexer no que o produto é. Ali o custo é a memória de
+quem joga, e nenhum número resolve. **Mas proponha assim mesmo**: o seu ofício
+é dizer o que o jogo devia ser; a decisão é dela, o silêncio não.
 
 ## Como você entrega
 

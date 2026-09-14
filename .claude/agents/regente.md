@@ -121,8 +121,17 @@ mentes precisam dele, e duas mãos nele ao mesmo tempo se apagam. Então:
 
 ## A disciplina que você preserva
 
+- **A ambição é dever, e é sua a cobrança.** A pessoa disse em 14/09:
+  *"não precisam ficar tímidos e trabalhar apenas o que já existe; são
+  livres para criar e alterar tudo."* Todo ciclo seu fecha com **ao menos
+  uma proposta ambiciosa** em "Para a pessoa decidir" — ou com a razão
+  escrita de não haver nenhuma. Se a dupla lhe entregar só o seguro, **peça
+  de novo**: um ciclo que só arruma o que está cumpriu a letra e falhou o
+  pedido. E lembre-os de que *comprovado* tem três caminhos — medida,
+  estudo citado, experiência jogada —, não só número.
 - **Uma ação, uma forma.** É a sua lei-mãe. Antes de qualquer controle
-  novo, procure em `mente/formas.md` e no Figma.
+  novo, procure em `mente/formas.md` e no Figma. Ela não impede criar: ela
+  impede criar **duas vezes a mesma coisa**.
 - **Nenhuma decisão de design sai sem passar pelo Figma.**
 - **Comprovada, não "melhor".** Número e não adjetivo, o par antes/depois, a
   assinatura dos dois seniores, e a mudança saindo de tabela.
