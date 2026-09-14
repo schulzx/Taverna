@@ -17,7 +17,12 @@ Formato de um item:
 
 ## Para a pessoa decidir (pesado)
 
-- [ ] **a concentração está escrita e nunca acontece** · pesado · de: backend (achado de A2) · 13/09
+_(vazio — as duas de 13/09 foram respondidas; ver "Aprovado" abaixo)_
+
+<details>
+<summary>as duas perguntas como foram feitas (e as respostas)</summary>
+
+- [x] **a concentração está escrita e nunca acontece** · pesado · de: backend (achado de A2) · 13/09
   `App.jsx:13082` testa quem está concentrando quando o jogador apanha, e o
   teste **nunca dispara**: o campo `e.concentracao` existe em `condicoes.js:161`
   e no catálogo do `grimorio.js`, mas **nenhum dos três nascimentos de efeito
@@ -45,7 +50,75 @@ Formato de um item:
   que cinco habilidades fazem. As duas mexem no que o jogador vive. A
   pessoa decide se a promessa defensiva deve valer para quem não é ele.
 
+</details>
+
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
+
+### Fase C — a concentração acontece
+Decisão da pessoa (13/09), com a regra ditada por ela: *"se a magia exige
+concentração e o personagem sofrer dano, ele tem que fazer um teste de
+resistência de constituição, a dificuldade CD seria igual a 10 ou metade do
+dano sofrido, o maior dos dois, daí se falhar a magia quebra."*
+
+**A regra já existe e é exatamente essa**: `testeConcentracao`
+(`combate.js:797`) faz `Math.max(10, Math.floor(dano/2))`, rola d20+modVigor
+e devolve `manteve`. Ela não é decisão desta fase — é achado confirmado. O
+que falta é o campo chegar até ela.
+
+- [ ] **C1 · o campo nasce e viaja** · de: pessoa · 13/09
+  `e.concentracao` existe em `condicoes.js:161` e no catálogo do
+  `grimorio.js`, mas **nenhum dos três nascimentos de efeito o copia** para
+  `pers.efeitos`. Fazer o campo atravessar (`efeitoDeMagia` e os irmãos, hoje
+  em `src/efeitos.js`), e conferir no catálogo que as magias de duração que
+  **devem** exigir concentração estão marcadas — a marcação é tabela, não
+  julgamento no meio do código. Prova: uma magia marcada nasce com o campo;
+  uma não marcada nasce sem; lixo (`null`, `{}`) não inventa concentração.
+- [ ] **C2 · a quebra acontece na mesa** · de: pessoa · 13/09
+  O `App.jsx:13082` já testa quem concentra quando o jogador apanha — com C1
+  ele passa a achar alguém. Conferir o caminho inteiro: o teste roda, a magia
+  cai, o efeito some da ficha, e o jogador **lê o que aconteceu** (a quebra é
+  gameplay: ele precisa saber que perdeu a magia, e por quê — CD, rolagem).
+  Vale para companheiro e inimigo conjurador também, não só para o herói.
+  Cuidado: o Narrador não ganha bloco novo — `ECONOMIA_ACAO_PROMPT` já
+  descreve a regra; o que muda por turno vai pela `pauta` dinâmica.
+- [ ] **C3 · uma de cada vez** · de: pessoa · 13/09
+  5e, e o próprio `ECONOMIA_ACAO_PROMPT` já promete: *"um conjurador mantém
+  no máximo UMA magia de duração por vez"*. Conferir se o jogo cumpre — se
+  conjurar a segunda derruba a primeira. Se já cumpre, é conferência
+  registrada e a fase fecha aqui; se não, é o conserto da etapa.
+
+### Fase P — a proteção vale para quem não é o jogador
+Decisão da pessoa (13/09): **consertar os dois**, sabendo que atinge Uma Vida
+e o Duelo (a premissa "é só no modo rápido" foi conferida no código e está
+errada: `turnoDosCompanheiros` é chamado em `App.jsx:13271`, o combate da
+campanha, e a mesma função pilota a arena).
+
+A ordem é a da mentira primeiro, porque é a que o jogador lê.
+
+- [ ] **P1 · o Escudo Arcano deixa de dar dano** · de: pessoa · 13/09
+  `BUFF_DA_HABILIDADE.aplica` (`efeitos.js:70`) é `"dano"` para tudo, então
+  "Escudo Arcano" — *absorve o próximo dano* — vira `+1 de dano mágico` na
+  narração. Foi portado assim em A2 de propósito (regressão zero), e A3 fez
+  isso aparecer na tela da arena. Classificar por **tabela**, não por regex
+  no meio do código: cada habilidade de buff declara o que ela aplica.
+  Catraca: nenhuma habilidade cujo texto promete absorver/proteger aplica
+  `dano`; e a narração da arena nunca diz "+N de dano" para uma defensiva.
+- [ ] **P2 · o piloto reconhece as nove guardas** · de: pessoa · 13/09
+  Nenhum dos 9 nomes de `GUARDAS` (`habilidades.js:312` — casca de carvalho,
+  pele arcana, forma dracônica, enxerto mecânico, elixir de combate, vazio
+  perfeito, dança sem vulto, nada me alcança, improvável) casa com `RX_BUFF`
+  (`companheiros.js:89` — bênção, inspirar, grito, canção, hino, postura,
+  escudo, barreira, proteção, fúria). O desencontro é de **vocabulário**, e
+  a lição é maior que o caso: `guardaDe(hab)` já existe e decide isso pela
+  tabela — o piloto deve **perguntar à tabela**, não adivinhar por regex de
+  nome. Catraca permanente: toda entrada de `GUARDAS` é reconhecível pelo
+  piloto; uma guarda nova amanhã não nasce invisível.
+- [ ] **P3 · medir o que mudou nos dois lados** · de: pessoa · 13/09
+  Com companheiro e duelista se defendendo, o combate muda em Uma Vida **e**
+  na arena. Medir antes de julgar, como a Fase A ensinou: a catraca de
+  equilíbrio (35–65% + o teto de amplitude de A4) vai reagir — se estourar,
+  o reajuste é o trabalho da etapa. E dizer no diário o efeito na campanha
+  (quanto mais o grupo sobrevive), porque isso o jogador vai sentir.
 
 A ordem é esta: a Arena primeiro (menor, e o Duelo está no ar hoje), as
 Reviravoltas depois. Dentro de cada fase, a etapa seguinte só começa com a
