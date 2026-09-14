@@ -124,6 +124,14 @@ function itens(bloco) {
    de qualquer leitura é mais barato que ensinar cada parser a desconfiar. */
 const semCerca = (txt) => txt.replace(/^```[\s\S]*?^```/gm, "");
 
+/* `<details>` é arquivo morto por convenção da casa: é onde vai a pergunta
+   já respondida e o texto da etapa antes de ser executada. O painel não
+   pode lê-lo — em 14/09 três decisões já respondidas continuaram a
+   aparecer como pendentes porque ficaram lá dentro sem o `[x]`, e a pessoa
+   as viu numa lista que jurava ser do que falta decidir. Marcar cada uma é
+   disciplina; ignorar o arquivo é estrutura, e estrutura não esquece. */
+const semArquivo = (txt) => txt.replace(/^<details>[\s\S]*?^<\/details>/gm, "");
+
 function seccao(txt, titulo) {
   /* `\Z` não existe em regex de JS — é escape de identidade para a letra
      "Z", e a seção morria no primeiro Z do texto. O fim de arquivo se diz
@@ -175,8 +183,8 @@ function commits() {
    duas filas, a mesma forma — o painel não sabe qual é "a principal", e é
    assim que deve ser. */
 function fila({ id, nome, pauta, diarioArq, travaArq, conduz }) {
-  const p = semCerca(ler(pauta));
-  const blocos = diario(semCerca(ler(diarioArq)));
+  const p = semArquivo(semCerca(ler(pauta)));
+  const blocos = diario(semArquivo(semCerca(ler(diarioArq))));
   return {
     id, nome, conduz,
     ciclo: trava(travaArq),

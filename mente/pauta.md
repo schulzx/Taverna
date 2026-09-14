@@ -21,7 +21,24 @@ _As quatro de 14/09 foram respondidas e viraram as fases T, B, F e I. Estas duas
 nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
 `Palavra de Coragem` faz na ficha e o jogo não cumpre._
 
-- [ ] **a habilidade de classe não tem resolvedor** · pesado · de: backend+testes (achado de T4) · 14/09
+- [ ] **a habilidade de classe não tem resolvedor — contar antes de decidir** · pesado · de: pessoa · 14/09
+  **A pessoa devolveu a pergunta (14/09):** *"quero sua opinião e a da mente
+  para qual a melhor forma de resolver isso; se os dois concordarem na
+  criação do novo órgão então assim seja, mas não vejo utilidade pra um
+  órgão cuidar de somente duas habilidades."* **Ela tem razão sobre o
+  tamanho, e a pergunta estava mal posta.** T4 contou só as habilidades que
+  prometem **remover condição** — e achou duas. Ninguém contou as que
+  prometem **qualquer outra mecânica** que o sistema não executa. Esse é o
+  número que decide, e ele não existe.
+  **O item, antes da decisão:** varrer as **148** `HAB(...)` de `classes.js`
+  e classificar cada uma — cumpre na mesa / é só prosa / **promete e não
+  cumpre**. Se o "promete e não cumpre" for um punhado, a saída barata é
+  ligá-las ao caminho que já existe (`magiaPorNome` + `resolvidaPeloSistema`
+  + `usarFuncaoMagica`), sem órgão nenhum. Se forem dezenas, é órgão e vale
+  a pena. **A pessoa decide depois de ver o número** — e a Fase V já resolve
+  a metade de `Palavra de Coragem` pelo caminho do PV temporário.
+  _(o texto original da pendente segue abaixo)_
+- [x] **a habilidade de classe não tem resolvedor** · **DEVOLVIDA pela pessoa 14/09** — substituída pelo item acima, que conta antes de decidir
   Medido em T4 e escrito na própria tabela, por linha: `Purificar` (Clérigo nv3,
   *"Remove condições ruins de um aliado"*) e `Palavra de Coragem` (nv4, *"Remove
   medo e concede PV temporário"*) são as **duas únicas** das 148 `HAB(...)` de
@@ -76,7 +93,7 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
   Narrador inventa), verbo novo no turno inimigo, nascimento de efeito e relógio.
   A pessoa decide se o inimigo deve conjurar — e, se sim, que isso é uma fase.
 
-- [ ] **o companheiro fica envenenado para sempre** · pesado · de: frontend+backend (achado de P3) · 14/09
+- [x] **o companheiro fica envenenado para sempre** · **RESPONDIDA 14/09 — virou a Fase T** (sistema de D&D: a cura não limpa; magia, habilidade, item e salvaguarda limpam). Fase T FECHADA em v9.241.
   **Seis** sítios escrevem condição em `pers.grupo` (`App.jsx` 5353, 7455, 7764,
   7849, 7851, 8643) e **zero** a decrementam: `tickCondicoes` tem exatamente dois
   sítios, o herói (`:8169`) e os inimigos (`:8185`). Consequência nos dois
@@ -91,7 +108,7 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
   decide. Catraca: `teste-comp.mjs` + âncora no `App.jsx`, o molde da seção 15 de
   `teste-efeitos.mjs`.
 
-- [ ] **o bônus de dano do companheiro nasce e é inerte** · pesado · de: backend+frontend (achado de P3) · 14/09
+- [x] **o bônus de dano do companheiro nasce e é inerte** · **RESPONDIDA 14/09 — virou a Fase B** ("se for lícito e justo, vamos fazer"). B1 e B1b feitos; B2 na fila.
   Medido e confirmado com grep: **`combate.js` não contém a palavra `efeitos` em
   linha nenhuma**. `bonusDeDano`/`bonusDeArma` têm 4 chamadores (`App.jsx` 11319,
   11585, 13186 e `arena.js:215`) e **nenhum** com ficha de companheiro; `defesaDe`
@@ -105,7 +122,7 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
   isso é da pessoa. Linha "ligar sinal dormente" no custo, `pesado` na
   consequência.
 
-- [ ] **quatro das cinco famílias defensivas ainda não protegem** · pesado · de: backend (achado de P3) · 14/09
+- [x] **quatro das cinco famílias defensivas ainda não protegem** · **RESPONDIDA 14/09 — virou a Fase F** ("todas devem cumprir o que prometem"). F1–F4 na fila.
   P1 criou cinco famílias em `APLICACAO_DO_BUFF` e P3 deu número e leitor a
   **uma**: `absorve`. Seguem com força zero `intocado` (18 habilidades),
   `amortece` (8), `protege` (8) e `nao_cai` (5) — **39 no total**, que prometem na
@@ -155,6 +172,73 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
 </details>
 
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
+
+### Fase N — a mente do inimigo (combate tático, sem IA generativa)
+Decisão da pessoa (14/09): *"uma inteligência (não IA generativa) de combate,
+onde o inimigo não ataca aleatoriamente ou sempre o player, ele decide por
+nível de inteligência — um inimigo muito inteligente com um healer
+atrapalhando vai tentar eliminar o healer primeiro; um de inteligência muito
+baixa provavelmente atacaria o tank. Isso deve valer para todos os modos."*
+
+É a fase que responde, de lambuja, a pendente *"o herói é um passageiro no
+próprio combate difícil"*: hoje **65% dos golpes vão no herói por sorteio
+cego**, e é esse sorteio que morre aqui. Não se conserta a porcentagem — se
+troca a razão dela.
+
+O terreno existe: `adversario.js` já tem intenções e `escolherAlvo`, e
+`perfilCombate` já lê a mesa. Falta a **régua de inteligência** e a leitura
+tática do que está acontecendo.
+
+- [ ] **N1 · o que o inimigo já sabe** · de: pessoa · 14/09
+  Medir antes de mexer: o que `escolherAlvo` decide hoje e com que entrada;
+  o que `INTENCOES` já cobre; que campo de inteligência as criaturas do
+  bestiário têm (ou não têm) e como se distribui. **Sem mudar nada.** A
+  linha de base do alvo (quem apanha, quanto) sai da régua de B1.
+- [ ] **N2 · a escada da inteligência** · de: pessoa · 14/09
+  Tabela nomeada: os degraus (animal, bruto, astuto, treinado, brilhante…),
+  **o que cada degrau enxerga** e **o que decide**. O animal vê o que está
+  perto e o que o feriu; o brilhante vê papel, recurso e ameaça futura. A
+  escada é tabela, com o degrau de cada criatura no bestiário — e quem não
+  declarar herda um padrão explícito. Nenhum número solto.
+- [ ] **N3 · ler a mesa: o papel de cada um** · de: pessoa · 14/09
+  Para mirar o curandeiro é preciso **saber que ele é curandeiro** — e saber
+  por observação, não por onisciência: quem curou na frente do inimigo é
+  conhecido; quem ainda não curou, não. O mesmo para o tanque (quem absorveu),
+  o artilheiro (quem doeu) e o frágil (quem caiu). Memória de combate por
+  criatura, determinística.
+- [ ] **N4 · a decisão, degrau por degrau** · de: pessoa · 14/09
+  `escolherAlvo` passa a compor: papel lido (N3) × degrau (N2) × intenção já
+  existente. O bruto vai no que está perto e no que bate mais; o brilhante
+  corta a cura primeiro. **Determinístico por semente**, e provável em Node.
+- [ ] **N5 · todos os modos, e a medida do que mudou** · de: pessoa · 14/09
+  Vale em Uma Vida, no Torneio e no Duelo — é o mesmo motor. Medir com a
+  régua de B1 e com a catraca da arena: quanto o herói deixou de ser o alvo
+  automático, quanto o combate ficou mais difícil, e se a faixa de 35–65%
+  se sustenta. **Se o combate tático deixar o jogo mais duro do que a pessoa
+  quer, isso é decisão dela, não ajuste silencioso.**
+
+### Fase V — o PV temporário
+Decisão da pessoa (14/09), com as regras ditadas por ela: *"da mesma forma
+da mesa: absorve o dano antes do PV real, não cura e não acumula; se você
+tem +4 e usa +10, deve escolher qual vai ser, ou o sistema escolhe
+automaticamente o maior."*
+
+- [ ] **V1 · o campo e a ordem do dano** · de: pessoa · 14/09
+  Campo novo na ficha; `absorverDano` consome o temporário **antes** do PV
+  real. **Não cura** (ganhar temporário não muda o PV atual) e **não
+  acumula**: ao receber um novo, fica **o maior dos dois** — e quando a
+  escolha for do jogador, ela aparece; senão o sistema fica com o maior, que
+  é a regra que a pessoa deu. Prazo próprio. Provado em Node, incluindo o
+  lixo (`null`, `{}`) e o empate.
+- [ ] **V2 · na mesa e na tela** · de: pessoa · 14/09
+  O jogador **vê** o escudo temporário e o vê sumir — barra de vida e ficha.
+  Vale para herói, companheiro e inimigo. A frase segue a linha de C2/T3:
+  voz de mundo, sem nomear o mecanismo. Catraca: o temporário nunca soma ao
+  PV real, nunca sobrevive ao prazo, e nunca é curado por cura.
+- [ ] **V3 · quem dá temporário passa a dar** · de: pessoa · 14/09
+  Com a mecânica de pé, as habilidades e magias que prometem PV temporário
+  na ficha passam a cumprir — `Palavra de Coragem` entre elas. Catraca
+  herdada de P1: nada promete na ficha e falha na mesa.
 
 A ordem das aprovadas em 14/09 é **T → B → F → I**, e ela tem motivo:
 T é bug vivo que atinge quem joga hoje; B é pequena e fecha a simetria que P3

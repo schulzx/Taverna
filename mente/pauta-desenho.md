@@ -20,7 +20,7 @@ Todos nasceram da medição de D1 (14/09). Nenhum é gosto: cada um tem o númer
 que o sustenta, e cada um mexe **no fluxo do jogo ou no que o jogador já usa**
 — por isso espera.
 
-- [ ] **A batalha toma a tela** · de: jogo · 14/09
+- [x] **A batalha toma a tela** · **APROVADA 14/09 — virou a Fase E** (tela própria de batalha + tabuleiro com endereço)
   O `jogo` jogou e mediu: o campo tático de 16×16 vive dentro do scroller
   narrativo de **301 px de altura** com `overflow: hidden auto`. O painel
   `Ações` abre **abaixo da dobra** — clica-se e não aparece nada. `⤢ ampliar`
@@ -28,28 +28,28 @@ que o sustenta, e cada um mexe **no fluxo do jogo ou no que o jogador já usa**
   scroller clipado**: o campo inteiro nunca foi visto, em partida nenhuma. Em
   1280×860 o jogo ocupa 560 px à esquerda e **mais de metade do ecrã fica
   preta**. Já estava marcado pesado no `CLAUDE.md`; agora tem a prova.
-- [ ] **O Duelo é jogado, não lido** · de: jogo · 14/09
+- [x] **O Duelo é jogado, não lido** · **APROVADA 14/09 — virou S1**
   **3 cliques do menu ao resultado final**, sem um turno pelo caminho. E o
   vencedor aparece **antes** das 48 linhas de log das três quedas — não há
   uma única linha de tensão no modo inteiro. Queda a queda, com o resultado
   por último.
-- [ ] **A sala ao vivo precisa de um momento partilhado** · de: jogo · 14/09
+- [x] **A sala ao vivo precisa de um momento partilhado** · **APROVADA 14/09 — virou S2**
   Testado em duas abas reais: a escolha sincroniza em ~1 s, o **resultado
   não**. Um lado viu a luta inteira; o outro ficou 10 s parado sem aviso,
   sem luz, sem "o duelo aconteceu". Mecanicamente correto (os selos batem);
   como experiência, dois jogadores lendo o mesmo PDF em salas separadas.
-- [ ] **O jogador precisa de uma forma de se mover que não dependa do
-  Narrador** · de: jogo · 14/09
+- [x] **O jogador precisa de uma forma de se mover que não dependa do
+  Narrador** · **APROVADA 14/09 — virou E2+E4** (o tabuleiro ganha endereço de xadrez, e a casa vira clicável)
   Três rodadas escrevendo "me aproximo" e o log só reportava o movimento do
   **inimigo**. Clicar numa casa dentro do próprio retângulo tracejado dourado
   não faz nada — a grelha não é clicável. Ao fim: `9 de 9 m nesta rodada`,
   **nunca andei um metro**, com o jogo mandando "aproxime-se primeiro".
-- [ ] **`Esc` fecha, e o fundo fecha, em toda sobreposição** · de: desenho · 14/09
+- [x] **`Esc` fecha, e o fundo fecha, em toda sobreposição** · **APROVADA 14/09 — virou G1**
   **15 sobreposições, 4 regras de fecho diferentes**, e `Escape` não fecha
   nenhuma (há 6 `onKeyDown` no `src/` inteiro, todos `Enter`). O jogador
   descobre caso a caso se sai clicando fora, num `✕` de 10px, ou num botão
   âmbar de 48px. É fluxo, e mexe no que o jogador já aprendeu.
-- [ ] **A escala de texto vira tabela** · de: desenho · 14/09
+- [x] **A escala de texto vira tabela** · **APROVADA 14/09 — virou a Fase L**, com a régua da pessoa: tamanhos comprovados por plataforma
   **18 degraus de tamanho**, e **542 dos 1.107 textos dimensionados (49%) são
   9px ou 10px** — em JetBrains Mono, a fonte "do que é máquina", que tem 682
   usos contra 315 do corpo. O contraste da paleta passa AA com folga
@@ -63,7 +63,113 @@ que o sustenta, e cada um mexe **no fluxo do jogo ou no que o jogador já usa**
   `CLAUDE.md` diz que modo é *"lente sobre o mesmo motor, nunca um segundo
   jogo"*; visualmente, hoje, é um segundo jogo. Mover o que o jogador já usa.
 
+## A lei que a pessoa deu à mesa (14/09)
+
+> *"Nós estamos criando um jogo. Apesar de seu coração ser em leitura,
+> devemos fazer o máximo para ter a experiência de um jogo e que ele
+> realmente está fazendo coisas — não só lendo e escrevendo."*
+
+Isto não é um item: é a régua de toda proposta desta fila. Sempre que o
+`jogo` e o `desenho` escolherem entre uma forma que **conta** o que
+aconteceu e uma forma que **deixa o jogador fazer**, a segunda ganha — e o
+que não puder ser feito deve ao menos ser **visto acontecendo**, não
+recebido pronto em prosa. A prosa continua sendo a protagonista; o que se
+recusa é que ela seja a **única** coisa que o jogador toca.
+
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
+
+### Fase E — a batalha tem tela, e o tabuleiro tem endereço
+Decisão da pessoa (14/09): *"seria interessante uma tela para a batalha,
+pois é um momento importante e a maioria das outras funções ficariam
+inúteis — quando entrar em batalha, uma tela só com o grid e as funções de
+batalha e utilitários."* E, para o mover: *"nosso grid pode ter letras e
+números, tipo um tabuleiro de xadrez, então se um player disser 'vou até
+H20' não teria a confusão que 'me aproximo do…' causa."*
+
+Duas decisões que se resolvem juntas, porque a segunda só faz sentido na
+primeira: hoje **o campo de 16×16 nunca foi visto inteiro**, vive num
+scroller de 301px, e o painel `Ações` abre abaixo da dobra.
+
+- [ ] **E1 · a tela desenhada antes de existir** · de: pessoa · 14/09
+  `jogo` e `desenho` **em par**, no Figma: o que a tela de batalha mostra e
+  o que ela esconde, onde fica o tabuleiro, onde ficam as ações, o que
+  acontece ao entrar e ao sair dela. O `jogo` decide o momento da troca (a
+  batalha começa e a tela vira); o `desenho`, a forma. Nada de código.
+  **Prova de entrada:** a proposta tem de caber em 1280×860 **e** num
+  celular — a pessoa citou a plataforma como critério (ver a Fase L).
+- [ ] **E2 · o endereço do tabuleiro** · de: pessoa · 14/09
+  Colunas por letra, linhas por número. É o que torna *"vou até H20"*
+  possível — e resolve, de quebra, a pendente de que **o jogador não
+  consegue se mover**: hoje a grelha não é clicável e escrever "me aproximo"
+  três rodadas não anda um metro. O endereço serve aos dois caminhos: o
+  clique na casa e a frase escrita. Cuidado do `backend`: a conversão
+  endereço↔coordenada é **regra**, sai de tabela e é provável em Node —
+  não nasce dentro da tela.
+- [ ] **E3 · a tela existe** · de: pessoa · 14/09
+  Construir o que E1 desenhou. **Precisa do bastão do `App.jsx`**, e é a
+  oportunidade da fila: cada pedaço da batalha que sair do App para um
+  arquivo próprio compra independência permanente. Mover vale mais que
+  remendar.
+- [ ] **E4 · mover é fazer** · de: pessoa · 14/09
+  A casa clicável, o endereço escrito, o alcance visível antes do passo (o
+  veredito antes do clique), e o log dizendo o que **você** fez — não só o
+  que o inimigo fez. Medir: quantas rodadas o jogador consegue se mover de
+  fato, contra as zero de hoje.
+
+### Fase S — o Duelo e a sala ganham momento
+Decisão da pessoa (14/09) sobre as duas: *"vamos corrigir."*
+
+- [ ] **S1 · o Duelo é jogado, não lido** · de: pessoa · 14/09
+  Hoje: **3 cliques do menu ao resultado**, e o vencedor aparece **antes**
+  das 48 linhas de log. Queda a queda, com o resultado por último — e o
+  jogador tocando alguma coisa entre uma queda e outra. O motor não muda:
+  a luta já é determinística e já está calculada; o que muda é **quando o
+  jogador fica sabendo**.
+- [ ] **S2 · a sala ao vivo tem um momento partilhado** · de: pessoa · 14/09
+  Medido em duas abas reais: a escolha sincroniza em ~1s, **o resultado
+  não** — um lado viu a luta, o outro ficou 10s parado sem aviso. Os dois
+  lados precisam ver *o duelo acontecendo*, ao mesmo tempo. Cuidado: o
+  protocolo da sala (`api/sala`) é **pesado** — se a solução exigir mudá-lo,
+  volta à pessoa.
+
+### Fase G — os gestos que o jogador já conhece
+Decisão da pessoa (14/09): *"vamos corrigir também."*
+
+- [ ] **G1 · `Esc` fecha, e o fundo fecha** · de: pessoa · 14/09
+  **15 sobreposições, 4 regras de fecho, e `Escape` não fecha nenhuma.**
+  Uma regra só, em todas: `Esc` fecha, clique no fundo fecha, e o `✕` tem
+  uma forma só (hoje são 8 visuais e 4 tamanhos). Catraca: nenhuma
+  sobreposição nova nasce sem as duas saídas.
+- [ ] **G2 · "não pode agora" recusa de verdade** · de: pessoa · 14/09
+  Achado de D1, da mesma família: **8 opacidades diferentes**, mas
+  `cursor: not-allowed` aparece **4 vezes no projeto inteiro**. A maioria
+  dos controles bloqueados fica translúcida e **continua clicável com
+  cursor de mão** — o clique não é recusado, apenas não acontece. Uma forma
+  só, e ela recusa.
+
+### Fase L — a letra, medida por plataforma
+Decisão da pessoa (14/09): *"nosso texto precisa ter padrões e tem que ser
+pensado na experiência do usuário em qual plataforma ele está usando; um
+celular não deve ter letra muito pequena, mas ao mesmo tempo não muito
+grande para não tomar muito espaço. Use tamanhos comprovados pra cada
+plataforma."*
+
+- [ ] **L1 · a escala, com fonte citada** · de: pessoa · 14/09
+  Hoje: **18 degraus de tamanho, e 542 dos 1.107 textos (49%) são 9px ou
+  10px** — em JetBrains Mono, a fonte "do que é máquina", que tem 682 usos
+  contra 315 do corpo. Nenhum alarme dispara porque a WCAG não tem piso de
+  tamanho; o contraste passa. A escala vira **tabela**, com um degrau por
+  papel (prosa, rótulo, número, título) e **dois valores por degrau: toque
+  e ponteiro**. *Comprovado* aqui significa **citar a origem** de cada piso
+  (as diretrizes de plataforma e de acessibilidade que o `desenho` for
+  buscar), não escolher por gosto — e o corpo de leitura é o degrau mais
+  importante, porque a prosa é a protagonista.
+- [ ] **L2 · a mesma tela nas duas mãos** · de: pessoa · 14/09
+  Aplicar a escala e **provar nas duas plataformas** com a mesma tela lado
+  a lado — o `desenho` tem as ferramentas de janela para emular o celular.
+  Medir o que a pessoa citou como critério: legível sem apertar os olhos,
+  e sem comer o espaço da cena. A fonte de máquina volta ao seu lugar: o
+  que é número é mono, o que é prosa não.
 
 ### Fase D — a casa ganha um desenho (a mesa de design nasce)
 Decisão da pessoa (14/09): três agentes novos — `jogo`, `desenho`, `aprendiz`
