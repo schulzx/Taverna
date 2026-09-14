@@ -264,7 +264,7 @@ Desde a **v9.2**: o veneno do companheiro é eterno, e a condição boa que
   inverso. **7 sabotagens, 7 mordendo** — inclusive a sutil, o canal sumindo.
   `teste-cond.mjs` 84 → **102**, `teste-relicas.mjs` 98 → **103**,
   `teste-mercado.mjs` 27 → **29**; nenhuma asserção antiga movida. Ver o diário.
-- [x] **T3 · a salvaguarda no fim do turno** · feito em v9.240, 14/09
+- [x] **T3 · a salvaguarda no fim do turno** · feito em v9.240 (`c6d290f`), 14/09
   **A etapa não era a lista de sete nomes — era o critério que os deduz.** A
   pauta pedia "cada condição declara se permite", e o risco dessa frase é virar
   lista de gosto que a suíte só prova copiando. `SALVAGUARDA_DO_FIM_DO_TURNO`

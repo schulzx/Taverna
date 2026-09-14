@@ -16,7 +16,7 @@ Formato:
 
 ---
 
-## 14/09 13:05 · v9.240 · T3 · a salvaguarda no fim do turno · commit `<este>`
+## 14/09 13:05 · v9.240 · T3 · a salvaguarda no fim do turno · commit `c6d290f`
 - **estado inicial:** árvore limpa, HEAD `ace9c60`, VERSÃO v9.239, `npm test`
   181/181 suítes + 9/9 varredores verde. Sem trava de ciclo (posta por mim). A vez
   era **T3**, terceira etapa da Fase T, com a lei da pessoa: *"os testes de
