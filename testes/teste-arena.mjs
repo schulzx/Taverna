@@ -31,6 +31,10 @@ const sec = (s) => console.log("\n" + s);
    `BARRADAS_PELO_FILTRO_MORTO` é a memória do filtro que caiu em A3: as
    habilidades de buff que ele deixava de fora da mesa. */
 const C = await import(RAIZ + "companheiros.js");
+/* P1 (v9.231): a seção 8 precisa saber quem, no repertório dos oito,
+   PROMETE abrigo — e quem decide isso é a tabela de combos.js, pelo
+   texto da habilidade. */
+const CB = await import(RAIZ + "combos.js");
 const BUFFS_DOS_OITO = [];
 for (const p of P.PRONTOS) {
   for (const h of P.montarPronto(p.id).habilidades) {
@@ -505,6 +509,107 @@ sec("7. o veredito da Fase A — o buraco de A1, fechado em A3");
   t("um buff aplicado muda de verdade um número da queda seguinte",
     razao <= MEDIDA_DO_BURACO.razaoMaximaDeDanoAposGuarda && ganhoDoBuff >= MEDIDA_DO_BURACO.ganhoMinimoDoBuffNoGolpe,
     `guarda: razão ${razao.toFixed(3)} (teto ${MEDIDA_DO_BURACO.razaoMaximaDeDanoAposGuarda}) · buff: ganho ${ganhoDoBuff.toFixed(2)} (piso ${MEDIDA_DO_BURACO.ganhoMinimoDoBuffNoGolpe})`);
+}
+
+/* ============================================================
+   8. A LINHA DE QUEDA NÃO PODE PROMETER O CONTRÁRIO DA FICHA (P1)
+
+   A DOENÇA. "A Chama firma Escudo Arcano · +1 de dano mágico" — a
+   habilidade promete uma barreira que absorve o próximo dano, e a linha
+   que o jogador lê na arena anuncia golpe. Duas frases opostas sobre a
+   mesma coisa, e ninguém as via porque a suíte nunca as mediu: a sonda
+   sintética da seção 7 usa "Postura de Ferro", um nome INVENTADO que não
+   promete proteção nenhuma, e por isso continuava (e continua) certa
+   dizendo "+2 de dano físico".
+
+   POR QUE SOBRE QUEDAS DE VERDADE. Montar a string à mão e conferir o
+   regex provaria o regex, não a arena. `aplicarAcoes` é quem escreve a
+   linha, e é dela que a mentira saía. Então a medida é a mesma da seção
+   7: os 28 pares dos oito prontos, sementes fixas, e as linhas que a
+   arena de fato escreveu. As sementes têm prefixo próprio ("p1|") para
+   esta seção não se pendurar no fluxo de RNG da outra — nenhuma das duas
+   sorteia, e as duas medem o mesmo motor por amostras independentes.
+
+   O DENTE ANDA NOS DOIS SENTIDOS. Se o rótulo emudecesse TODO buff, a
+   primeira metade ficaria verde sozinha e a arena pararia de dizer o
+   número a quem tem direito a ele. Por isso a ofensiva também é cobrada:
+   quem não promete abrigo continua anunciando "+N de dano" com escola.
+   ============================================================ */
+sec("8. a frase da queda — a defensiva não promete dano (P1)");
+{
+  const MEDIDA_DA_FRASE = {
+    sementesPorPar: 6,
+    semente: (a, b, s) => `p1|${a}|${b}|${s}`,
+    /* OS PISOS DA AMOSTRA, e é deles que depende a prova não ser vazia.
+       Uma arena que parasse de firmar buff mediria 0 linha e passaria
+       verde sem ter lido uma frase — o mesmo buraco que a seção 7
+       tapou com `golpesMinimosDaSonda`. Medidos hoje: 772 linhas de
+       buff firmado, 391 delas defensivas (Postura Defensiva e Escudo
+       Arcano) e 381 ofensivas (Bênção e Inspiração). Os pisos guardam a
+       ordem de grandeza, não o número. */
+    minimoDeFirmados: 200,
+    minimoDeDefensivas: 50,
+    minimoDeOfensivas: 50,
+  };
+
+  /* O NOME NÃO BASTA. `aplicacaoDoBuff` classifica pelo TEXTO, e o texto
+     é nome + descrição: "Postura Defensiva" não tem uma palavra de
+     abrigo no nome — quem promete metade do dano é a descrição dela.
+     Por isso a régua consulta a FICHA que o pronto carrega, e não a
+     string que a linha imprimiu. */
+  const FICHA_DO_REPERTORIO = new Map();
+  for (const p of P.PRONTOS) for (const h of P.montarPronto(p.id).habilidades) FICHA_DO_REPERTORIO.set(h.nome, h);
+
+  const LINHA_DO_BUFF = /^(.+?) firma (.+?) · (.+)$/;
+  const NUMERO_DE_DANO = /\+\d+ de dano/;
+  const FALA_DE_DANO = / de dano\b/;
+  const ESCOLA = /\+\d+ de dano (físico|mágico)$/;
+
+  const f = { firmados: 0, defensivas: 0, ofensivas: 0, semFicha: 0 };
+  const mentirosas = [], emudecidas = [];
+  const t0 = Date.now();
+  for (let i = 0; i < P.PRONTOS.length; i++) {
+    for (let j = i + 1; j < P.PRONTOS.length; j++) {
+      const a = P.PRONTOS[i].id, b = P.PRONTOS[j].id;
+      for (let s = 0; s < MEDIDA_DA_FRASE.sementesPorPar; s++) {
+        for (const q of A.duelarProntos(a, b, { semente: MEDIDA_DA_FRASE.semente(a, b, s) }).quedas) {
+          for (const l of q.linhas.slice(1)) {
+            const m = l.match(LINHA_DO_BUFF);
+            if (!m) continue;
+            const [, , nome, cauda] = m;
+            const hab = FICHA_DO_REPERTORIO.get(nome);
+            if (!hab) { f.semFicha++; continue; }
+            f.firmados++;
+            if (CB.aplicacaoDoBuff(hab)) {
+              f.defensivas++;
+              if (NUMERO_DE_DANO.test(cauda) || FALA_DE_DANO.test(cauda)) mentirosas.push(l);
+            } else {
+              f.ofensivas++;
+              if (!ESCOLA.test(cauda)) emudecidas.push(l);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  console.log(`  ··  ${f.firmados} linhas de buff firmado lidas nas quedas de verdade (${MEDIDA_DA_FRASE.sementesPorPar} sementes por par, prefixo "p1|")`);
+  console.log(`  ··  ${f.defensivas} delas de habilidade que promete abrigo (e não dizem número), ${f.ofensivas} de habilidade que levanta o golpe (e dizem)`);
+  console.log(`  ··  a leitura levou ${Date.now() - t0}ms`);
+
+  t("a arena firmou buff de sobra para a frase ser medida",
+    f.firmados >= MEDIDA_DA_FRASE.minimoDeFirmados, `${f.firmados} de piso ${MEDIDA_DA_FRASE.minimoDeFirmados}`);
+  t("e as duas famílias chegaram à mesa — defensiva e ofensiva",
+    f.defensivas >= MEDIDA_DA_FRASE.minimoDeDefensivas && f.ofensivas >= MEDIDA_DA_FRASE.minimoDeOfensivas,
+    `defensivas ${f.defensivas}, ofensivas ${f.ofensivas}`);
+  /* toda habilidade que o piloto firma vem do repertório do pronto: uma
+     linha sem ficha seria a arena narrando o que não está na mesa. */
+  t("toda linha firmada tem ficha por trás", f.semFicha === 0, `${f.semFicha} sem ficha`);
+
+  t("NENHUMA linha de defensiva diz \"+N de dano\" na arena",
+    mentirosas.length === 0, `${mentirosas.length} linhas, ex.: ${mentirosas.slice(0, 3).join(" | ")}`);
+  t("e toda linha de ofensiva continua dizendo o número e a escola",
+    emudecidas.length === 0, `${emudecidas.length} linhas, ex.: ${emudecidas.slice(0, 3).join(" | ")}`);
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

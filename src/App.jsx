@@ -42,7 +42,7 @@ import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } 
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, FONT_CSS, GENEROS, ATRIBUTOS } from "./constantes.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
-import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, escopoDoEfeito, naturezaDaHabilidade, tipoDeDanoDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
+import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, efeitoNoGolpe, escopoDoEfeito, naturezaDaHabilidade, tipoDeDanoDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
 import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, envelopeDoTeste } from "./testes.js";
 import { PERICIAS, periciaPorId, garantirPericias, periciasIniciais, bonusDePericia, passivoDe, resolucaoAutomatica, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente, resumoPericiasPrompt, PERICIAS_PROMPT } from "./pericias.js";
 import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, podeGastar, gastarHeroismo, validarDeclaracao, envelopeDeclaracao, envelopeRefazer, resumoHeroismoPrompt, HEROISMO_PROMPT } from "./heroismo.js";
@@ -7729,15 +7729,21 @@ export default function Taverna() {
        o buff vira também um efeito numérico, MARCADO com a natureza da
        habilidade que o criou: fúria de guerreiro só levanta golpe físico. */
     let extraEscopo = "";
+    /* v9.231: nem todo buff levanta golpe. Uma habilidade que promete abrigo
+       nasce sem número e com frase de corpo, e quem sabe disso é o módulo — ler
+       a frase atrás da palavra "físico" fazia a nota jurar escola mágica a quem
+       não dá dano nenhum. Falso aqui, a cláusula do bônus some inteira da nota. */
+    let somaNoGolpe = false;
     if (res.cond.tipo === "bom") {
       const buff = efeitoDeBuff(h, pers, res.cond.turnos);
       p = { ...p, efeitos: empilhar(p.efeitos, buff.efeito) };
       extraEscopo = buff.extraEscopo;
+      try { somaNoGolpe = efeitoNoGolpe(buff.efeito); } catch (e) { calou("buffDeHabilidade", e); }
     }
     return {
       pers: p,
       texto: `${res.cond.icone} ${h.nome}: ${res.cond.nome}${res.cond.turnos ? ` (${res.cond.turnos}t)` : ""}${port.alvo === "aliados" ? " — em você e no grupo" : ""} · ${res.cond.efeito}${extraEscopo}`,
-      nota: `[EFEITO APLICADO PELO SISTEMA] "${h.nome}" deixou ${port.alvo === "aliados" ? "eu e meu grupo" : "eu"} ${res.cond.nome.toLowerCase()} (${res.cond.efeito})${extraEscopo ? `, e o bônus de dano vale só para o que é ${extraEscopo.includes("físico") ? "físico" : "mágico"}` : ""}. Já está na ficha — narre a manifestação e não envie condição nenhuma por isso.`,
+      nota: `[EFEITO APLICADO PELO SISTEMA] "${h.nome}" deixou ${port.alvo === "aliados" ? "eu e meu grupo" : "eu"} ${res.cond.nome.toLowerCase()} (${res.cond.efeito})${extraEscopo && somaNoGolpe ? `, e o bônus de dano vale só para o que é ${extraEscopo.includes("físico") ? "físico" : "mágico"}` : ""}. Já está na ficha — narre a manifestação e não envie condição nenhuma por isso.`,
     };
   };
 

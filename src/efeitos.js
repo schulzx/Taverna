@@ -45,7 +45,7 @@
    distantes.
    ============================================================ */
 
-import { naturezaDaHabilidade } from "./combos.js";
+import { naturezaDaHabilidade, aplicacaoDoBuff } from "./combos.js";
 
 /* ---------------- OS TETOS DO QUE VEM DE FORA ----------------
    O Mestre pede efeito por `efeitos_adicionar`, e o que ele pede passa
@@ -66,7 +66,12 @@ export const LIMITES_DO_EFEITO = {
 
    `aplica: "dano"` é de propósito: este buff levanta o GOLPE, não a
    rolagem de atributo — quem soma a rolagem é quem tem `aplica` com
-   nome de atributo, "testes" ou "todos". */
+   nome de atributo, "testes" ou "todos".
+
+   E é o PADRÃO, não a sentença: uma habilidade que promete absorver ou
+   proteger sai por `APLICACAO_DO_BUFF` (combos.js) com outro rótulo e
+   outra frase. Quem não promete proteção nenhuma continua exatamente
+   aqui, no mesmo número e na mesma linha. */
 export const BUFF_DA_HABILIDADE = {
   custoPadrao: 2, divisorDoCusto: 2, forcaMinima: 1,
   turnosPadrao: 3, aplica: "dano",
@@ -136,7 +141,18 @@ export function retirar(efeitos, nome, opcoes) {
 /* ---------------- NASCIMENTO 1: O BUFF DA HABILIDADE ----------------
    Devolve o efeito E o pedaço de frase que o acompanha, porque a linha
    nasce junto do efeito nesta casa: se um dia a força mudar, a frase
-   muda no mesmo lugar. `turnos` é o prazo da condição que gerou o buff. */
+   muda no mesmo lugar. `turnos` é o prazo da condição que gerou o buff.
+
+   DOIS NASCIMENTOS, UMA PORTA (v9.231). A habilidade que promete
+   absorver ou proteger nasce com o rótulo da tabela e `bonus: 0` — pelo
+   mesmo motivo que a magia de invisibilidade nasce com zero: ela vale
+   pelo ESTADO, não pela soma. Escrever aqui a força que ninguém lê
+   seria trocar uma mentira por outra mais quieta; quem absorve o golpe
+   nesta casa é a REAÇÃO (reacoes.js), fora do turno, e o dia em que a
+   defensiva somar número é o dia em que alguém ler este rótulo.
+
+   Por isso a frase da defensiva NÃO traz número: ela diz o que o corpo
+   faz, e nada mais, porque nada mais é verdade hoje. */
 export function efeitoDeBuff(hab, pers, turnos) {
   const h = hab || {};
   const forca = Math.max(
@@ -144,10 +160,17 @@ export function efeitoDeBuff(hab, pers, turnos) {
     Math.round((Number(h.custo) || BUFF_DA_HABILIDADE.custoPadrao) / BUFF_DA_HABILIDADE.divisorDoCusto),
   );
   const escopo = naturezaDaHabilidade(h, pers);
+  const prazo = turnos || BUFF_DA_HABILIDADE.turnosPadrao;
+  const protecao = aplicacaoDoBuff(h);
+  if (protecao) {
+    return {
+      efeito: { nome: h.nome, bonus: 0, turnos: prazo, aplica: protecao.aplica, escopo },
+      extraEscopo: ` · ${protecao.conceito}`,
+    };
+  }
   return {
     efeito: {
-      nome: h.nome, bonus: forca,
-      turnos: turnos || BUFF_DA_HABILIDADE.turnosPadrao,
+      nome: h.nome, bonus: forca, turnos: prazo,
       aplica: BUFF_DA_HABILIDADE.aplica, escopo,
     },
     extraEscopo: ` · +${forca} de dano ${escopo === "fisico" ? "físico" : "mágico"}`,

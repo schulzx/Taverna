@@ -316,7 +316,100 @@ sec("8. a conta do buff — a força sai do custo em PM");
   t("e o jogador vê de onde veio", C.bonusDeDano(comBuff, { nome: "Investida" }).fontes.includes("Golpe Poderoso"));
 }
 
-sec("9. a nota da rolagem — a honestidade com o Narrador");
+/* ============================================================
+   9. A DEFENSIVA NÃO SOMA — e o que somava continua somando (P1, v9.231)
+
+   O ACHADO QUE FEZ ESTA SEÇÃO NASCER. A seção 8 acima crava o rótulo e a
+   frase do buff com habilidades OFENSIVAS — "X", "Golpe Poderoso",
+   "Rajada de Fogo", "Fúria". Ela continua inteira, e continua certa: o
+   PADRÃO de `BUFF_DA_HABILIDADE` ainda é "dano", e nenhuma asserção dela
+   mudou de lado. O que ela nunca mediu é o DESVIO — a habilidade cujo
+   texto promete absorver ou proteger. Foi por isso que "Escudo Arcano"
+   pôde prometer barreira na ficha e dizer "+1 de dano mágico" na linha
+   que o jogador lê durante versões, sem uma prova ficar vermelha.
+
+   Esta seção ACRESCENTA catraca; não inverte nenhuma.
+
+   ONDE MORA CADA METADE. O acervo inteiro (as 12 classes, as subclasses,
+   as especializações e o grimório) é varrido em `check-protecao.mjs`,
+   que mede a CLASSIFICAÇÃO. Aqui mora o NÚMERO: o que soma, o que não
+   soma, e — o dente que importa mais — o que continuava somando e tem de
+   continuar. `bonusEfeito` (regras-jogo.js) trata `aplica` vazio como
+   coringa universal; um rótulo novo podia ter virado coringa (todo save
+   antigo somando em tudo) ou mudo (todo efeito do Mestre calado), e as
+   duas regressões seriam silenciosas.
+   ============================================================ */
+sec("9. a defensiva não soma — e o que somava continua somando (P1)");
+{
+  const g = heroi();
+  /* a ficha vem escrita à mão, com a descrição do catálogo: quem
+     classifica é o TEXTO, e o texto é nome + descrição. */
+  const ESCUDO = { nome: "Escudo Arcano", custo: 4, descricao: "Barreira que absorve o próximo dano." };
+  const d = efeitoDeBuff(ESCUDO, g, undefined);
+
+  t("a defensiva não nasce com o rótulo padrão da tabela", d.efeito.aplica !== BUFF_DA_HABILIDADE.aplica);
+  t("e o rótulo dela está declarado fora do golpe", C.APLICA_FORA_DO_GOLPE.includes(d.efeito.aplica));
+  t("a peneira do golpe a recusa", C.efeitoNoGolpe(d.efeito) === false);
+  t("ela nasce sem força — a defensiva não soma número nenhum hoje", d.efeito.bonus === 0);
+  t("a frase dela fala do corpo e não traz número", !/de dano/.test(d.extraEscopo) && d.extraEscopo.trim().length > 0);
+  /* o PRAZO e o ESCOPO continuam saindo de onde sempre saíram: o desvio
+     é no rótulo e na frase, não no relógio. */
+  t("o prazo dela continua vindo da tabela", d.efeito.turnos === BUFF_DA_HABILIDADE.turnosPadrao);
+  t("e o prazo da condição continua mandando quando existe", efeitoDeBuff(ESCUDO, g, 7).efeito.turnos === 7);
+  t("e ela ainda carrega o escopo da habilidade", d.efeito.escopo === "magico");
+
+  /* O NÚMERO. `bonus: 0` sozinho não prova a peneira — um efeito de
+     proteção com força escrita (save mexido à mão, ou o dia em que a
+     defensiva ganhar número) tem de continuar fora do golpe. É este
+     efeito, e não o de cima, que prova que quem gateia é `aplica`. */
+  const comForca = { nome: "Escudo Arcano", bonus: 3, turnos: 3, aplica: d.efeito.aplica, escopo: "magico" };
+  const abrigado = heroi({ efeitos: [comForca] });
+  t("proteção com força escrita NÃO entra em bonusDeDano", C.bonusDeDano(abrigado, { nome: "Bola de Fogo" }).bonus === 0);
+  t("nem nas fontes que o jogador lê", C.bonusDeDano(abrigado, { nome: "Bola de Fogo" }).fontes.length === 0);
+  /* o de arma tem de ser FÍSICO para a prova morder: `bonusDeArma` já
+     descarta o que é mágico pelo escopo, e um escudo arcano sairia de lá
+     zerado mesmo sem a peneira do rótulo — verde sem provar nada. */
+  const abrigadoFisico = heroi({ efeitos: [{ nome: "Postura Defensiva", bonus: 3, turnos: 3, aplica: d.efeito.aplica, escopo: "fisico" }] });
+  t("nem em bonusDeArma, nem quando a proteção é física", C.bonusDeArma(abrigadoFisico).bonus === 0);
+  /* e não entra na lista dos IGNORADOS: dizer "Escudo Arcano não somou
+     no golpe" seria o sistema falando do próprio rótulo (lei iv). */
+  t("e nem na lista dos buffs ignorados", C.buffsIgnorados(abrigado, { nome: "Golpe Poderoso" }).length === 0);
+
+  /* ---- O DENTE DA COMPATIBILIDADE: o que somava tem de continuar ----
+     Três formas de efeito chegam aqui e NENHUMA passa pela tabela nova:
+     o save antigo (sem `aplica`), o milagre (`aplica: "todos"`) e o canal
+     do Mestre (`aplica` com nome de atributo). Se qualquer uma delas
+     mudasse de número, P1 teria trocado uma mentira por uma regressão. */
+  const SOMA = 2;
+  const velho = { nome: "Vigor Antigo", bonus: SOMA, turnos: 3 };              /* save antigo: sem `aplica` */
+  const milagre = { nome: "Graça", bonus: SOMA, turnos: 5, aplica: EFEITO_DO_MILAGRE.aplica };
+  const doMestre = { nome: "Mão Firme", bonus: SOMA, turnos: 3, aplica: "Destreza" };
+
+  for (const [rotulo, ef] of [["save antigo (sem `aplica`)", velho], ["milagre (`todos`)", milagre], ["canal do Mestre (`Destreza`)", doMestre]]) {
+    const p = heroi({ efeitos: [ef] });
+    t(`${rotulo} continua passando pela peneira do golpe`, C.efeitoNoGolpe(ef) === true);
+    t(`${rotulo} continua somando ${SOMA} no golpe`, C.bonusDeDano(p, { nome: "Golpe Poderoso" }).bonus === SOMA);
+    t(`${rotulo} continua somando ${SOMA} no golpe de arma`, C.bonusDeArma(p).bonus === SOMA);
+  }
+  /* A ROLAGEM (bonusEfeito, regras-jogo.js) — nada virou coringa, nada
+     virou mudo. O save antigo e o milagre valem em qualquer atributo; o
+     do Mestre vale no dele e só nele; a proteção não vale em nenhum,
+     porque ela levanta o corpo, não a rolagem. */
+  t("save antigo continua coringa na rolagem", R.bonusEfeito(heroi({ efeitos: [velho] }), "Força") === SOMA);
+  t("milagre continua coringa na rolagem", R.bonusEfeito(heroi({ efeitos: [milagre] }), "Percepção") === SOMA);
+  t("o do Mestre continua valendo no atributo dele", R.bonusEfeito(heroi({ efeitos: [doMestre] }), "Destreza") === SOMA);
+  t("e continua NÃO valendo em outro atributo", R.bonusEfeito(heroi({ efeitos: [doMestre] }), "Força") === 0);
+  t("a proteção não virou coringa de rolagem", R.bonusEfeito(abrigado, "Força") === 0);
+
+  /* O PADRÃO NÃO SE MEXEU. A prova de que o desvio é desvio: uma
+     habilidade que não promete abrigo nenhum sai daqui igual à seção 8. */
+  const ofensiva = efeitoDeBuff({ nome: "Golpe Poderoso", custo: 4 }, g, undefined);
+  t("quem não promete abrigo continua saindo com o rótulo da tabela", ofensiva.efeito.aplica === BUFF_DA_HABILIDADE.aplica);
+  t("com a força de sempre", ofensiva.efeito.bonus === Math.max(BUFF_DA_HABILIDADE.forcaMinima, Math.round(4 / BUFF_DA_HABILIDADE.divisorDoCusto)));
+  t("e com a frase de sempre", /\+\d+ de dano (físico|mágico)$/.test(ofensiva.extraEscopo));
+}
+
+sec("10. a nota da rolagem — a honestidade com o Narrador");
 {
   const comAplica = (aplica, nome = "Bênção") => heroi({ efeitos: [{ nome, bonus: 2, turnos: 3, aplica }] });
 
@@ -357,7 +450,7 @@ sec("9. a nota da rolagem — a honestidade com o Narrador");
   t("buffsNaRolagem pula o buraco da lista", buffsNaRolagem({ efeitos: [null, { nome: "A" }] }, "Força").length === 1);
 }
 
-sec("10. a concentração — o que o corpo segura");
+sec("11. a concentração — o que o corpo segura");
 {
   const p = heroi({ efeitos: [
     { nome: "Escudo", turnos: 3 },
@@ -376,7 +469,7 @@ sec("10. a concentração — o que o corpo segura");
   t("quebrar um nome ausente não mexe em nada", quebrarConcentracao(p, "Fogo").efeitos.length === 2);
 }
 
-sec("11. ligado ao jogo — os quatro leitores do órgão");
+sec("12. ligado ao jogo — os quatro leitores do órgão");
 {
   const src = (f) => readFileSync("../src/" + f, "utf8");
   const app = src("App.jsx");
@@ -390,6 +483,17 @@ sec("11. ligado ao jogo — os quatro leitores do órgão");
   t("e não reescreveu a pilha à mão no canal do Mestre", /empilhar\(efeitos, \{ nome: ef\.nome/.test(rg));
   t("o elixir usa a mesma pilha", /import \{ empilhar \} from "\.\/efeitos\.js"/.test(src("pocoes.js")));
   t("e a relíquia também", /import \{ empilhar \} from "\.\/efeitos\.js"/.test(src("relicas.js")));
+  /* P1 (v9.231): o buff da habilidade nasce no App, e é lá que a nota ao
+     Narrador jura escola ("o bônus vale só para o que é físico"). Se a
+     fiação não perguntar `efeitoNoGolpe`, a nota volta a jurar escola
+     mágica para quem não dá dano nenhum — a mentira sai da linha do
+     jogador e some dentro do prompt, onde ninguém a vê. */
+  t("o App importa a peneira do golpe", /import \{[^}]*\befeitoNoGolpe\b[^}]*\} from "\.\/combos\.js"/.test(app));
+  t("e pergunta a ela antes de jurar escola na nota do Narrador", /efeitoNoGolpe\(buff\.efeito\)/.test(app));
+  t("o efeito nasce por efeitoDeBuff e vai para a pilha", /efeitoDeBuff\(h, pers, res\.cond\.turnos\)/.test(app) && /empilhar\(p\.efeitos, buff\.efeito\)/.test(app));
+  /* quem soma o golpe na arena também respeita a peneira — a metade que
+     `check-protecao.mjs` não vê, porque ele não abre a arena. */
+  t("a arena firma o buff pelo mesmo nascimento", /efeitoDeBuff\(hab, eu, undefined\)/.test(src("arena.js")));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

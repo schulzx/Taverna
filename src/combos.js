@@ -123,6 +123,98 @@ export function efeitoVale(ef, hab, pers) {
   return escopo === naturezaDaHabilidade(hab, pers);
 }
 
+/* ---------------- O QUE UM BUFF APLICA (v9.231) ----------------
+   `BUFF_DA_HABILIDADE.aplica` (efeitos.js) é `"dano"` para TUDO — e era
+   "dano" até para quem prometia o contrário. "Escudo Arcano — barreira
+   que absorve o próximo dano" virava, na linha que o jogador lê, "+1 de
+   dano mágico". A ficha prometia proteção e o sistema entregava golpe:
+   duas frases opostas sobre a mesma habilidade.
+
+   Quem classifica é a TABELA, e ela classifica pelo TEXTO. O campo
+   `tipo` do catálogo não serve de espinha, e não serve por dois
+   motivos: ele erra ("Segundo Fôlego" é `defesa` e é cura; "Postura de
+   Vigília" é `defesa` e dá um golpe de graça em quem passar), e ele
+   falta — relíquia, poção, grimório e o que o piloto da arena escolhe
+   chegam aqui sem `tipo` nenhum.
+
+   O PADRÃO CONTINUA "dano". Esta tabela declara só o DESVIO: o que não
+   casa com nenhuma linha sai daqui exatamente como saía antes, no
+   número e na frase.
+
+   `conceito` é a frase que acompanha o efeito, e mora junto da
+   classificação pelo mesmo motivo que a força mora junto do buff: se um
+   dia a classificação mudar, a frase muda no mesmo lugar. Ela fala do
+   corpo, nunca do rótulo — e NÃO anuncia número, porque uma defensiva
+   ainda não soma número nenhum. Quem de fato absorve golpe nesta casa é
+   a REAÇÃO "Escudo Arcano" (reacoes.js), que corta o dano fora do turno
+   e não passa por aqui. */
+
+const SEM_ACENTO = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const textoDaHabilidade = (hab) =>
+  SEM_ACENTO(typeof hab === "string" ? hab : `${(hab && hab.nome) || ""} ${(hab && hab.descricao) || ""}`);
+
+/* O VETO, testado ANTES da tabela: a palavra "escudo" aparece dos DOIS
+   lados da briga. Quem atravessa armadura está atacando, quem desfaz uma
+   barreira está desfazendo a do outro, e quem promete "dano extra e
+   imunidade a medo" é buff de dano com um brinde. Sem esta linha, "Tiro
+   Perfurante", "Punho de Pedra" e "Marcha Sem Recuo" perderiam o golpe
+   que a própria ficha promete. */
+const RX_NAO_E_PROTECAO = /ignora (a |o )?(armadura|escudo|defesa|cobertura|penumbra|resistencia)|atravessa (a )?(armadura|escudo)|racha |perfura|dano (extra|aumentado|a mais|massivo|devastador)|dano dobra|dobra o dano|bate(m)? mais forte|desfaz|dissipa|arranca|acerta qualquer/;
+
+export const APLICACAO_DO_BUFF = [
+  {
+    id: "absorve", aplica: "protecao",
+    rx: /absorv|barreira|anteparo|escudo|cupula|casulo|cerca viva|armadura de|couro selvagem|pele de|escamas|vira escudo|recebe(m)? o dano por|assume o dano|dano por voce/,
+    conceito: "o próximo golpe encontra alguma coisa antes de encontrar carne",
+  },
+  {
+    id: "amortece", aplica: "protecao",
+    rx: /reduz.{0,16}dano|dano reduzido|dano.{0,16}metade|metade.{0,14}dano|doer metade|divide o dano|dividido entre/,
+    conceito: "o que vier chega abafado",
+  },
+  {
+    id: "nao_cai", aplica: "protecao",
+    rx: /golpe fatal|nao pode cair|nao cai|ninguem.{0,14}cai|abaixo de 1 pv|estabilizado|continua de pe/,
+    conceito: "há um chão abaixo do qual o corpo não desce hoje",
+  },
+  {
+    id: "intocado", aplica: "protecao",
+    rx: /imune|imunidade|anula o dano|anula efeitos|nenhum efeito|nem medo nem|desvia|esquiva|erra o original|golpe inimigo erra|em sua direcao erra|sem sofrer nada|para de sofrer dano|nao atravessa|nada te atinge|nenhum inimigo alcanca/,
+    conceito: "o que vem não encontra por onde entrar",
+  },
+  {
+    id: "protege", aplica: "protecao",
+    rx: /proteg|protetor|abriga|resiste a|resistencia a/,
+    conceito: "quem estava exposto deixa de estar",
+  },
+];
+
+/* Devolve a linha da tabela, ou `null` quando a habilidade não promete
+   proteção nenhuma — e `null` é o caminho do padrão, não um erro. */
+export function aplicacaoDoBuff(hab) {
+  const t = textoDaHabilidade(hab);
+  if (!t.trim() || RX_NAO_E_PROTECAO.test(t)) return null;
+  return APLICACAO_DO_BUFF.find((a) => a.rx.test(t)) || null;
+}
+
+/* ---------------- O RÓTULO GATEIA O NÚMERO ----------------
+   Trocar o rótulo sozinho não mudaria número nenhum: `bonusDeDano` e
+   `bonusDeArma` nunca leram `aplica` — filtravam só por escopo. Então a
+   mentira continuaria no NÚMERO e sairia só da frase. Daqui em diante o
+   golpe respeita o que o efeito declara aplicar.
+
+   É uma lista de EXCEÇÃO, e é curta de propósito: tudo o que não está
+   aqui soma no dano exatamente como somava antes — save antigo sem
+   `aplica`, efeito do canal do Mestre com nome de atributo e o efeito de
+   milagre com `aplica: "todos"` inclusive. Uma lista de permissão viraria
+   regressão silenciosa no dia em que alguém inventasse um rótulo novo. */
+export const APLICA_FORA_DO_GOLPE = ["protecao"];
+
+export function efeitoNoGolpe(ef) {
+  const ap = String(!ef || ef.aplica == null ? "" : ef.aplica).toLowerCase();
+  return !APLICA_FORA_DO_GOLPE.includes(ap);
+}
+
 /* Quanto os buffs ativos somam ao dano DESTA habilidade. É onde a resposta
    à pergunta do jogador vira número: Fúria de Batalha (+3 físico) não
    aparece aqui quando ele lança uma magia. */
@@ -133,6 +225,7 @@ export function bonusDeDano(pers, hab) {
   for (const ef of efeitos) {
     const b = Math.max(0, Number(ef.bonus) || 0);
     if (!b) continue;
+    if (!efeitoNoGolpe(ef)) continue;
     if (!efeitoVale(ef, hab, pers)) continue;
     total += b;
     usados.push(ef.nome || "efeito");
@@ -149,6 +242,7 @@ export function bonusDeArma(pers) {
   for (const ef of efeitos) {
     const b = Math.max(0, Number(ef.bonus) || 0);
     if (!b) continue;
+    if (!efeitoNoGolpe(ef)) continue;
     const escopo = escopoDoEfeito(ef, pers);
     if (escopo === "magico") continue;
     total += b;
@@ -158,10 +252,14 @@ export function bonusDeArma(pers) {
 }
 
 /* E os que NÃO valeram — para o sistema poder dizer isso na cara do jogador,
-   em vez de deixá-lo achar que o buff está somando. */
+   em vez de deixá-lo achar que o buff está somando.
+
+   Uma defensiva não entra nesta lista, e não entra de propósito: ela não
+   é um buff de dano que errou a escola, é outra coisa. Dizer "Escudo
+   Arcano não somou no golpe" seria o sistema falando do próprio rótulo. */
 export function buffsIgnorados(pers, hab) {
   return ((pers && pers.efeitos) || [])
-    .filter((ef) => (Number(ef.bonus) || 0) > 0 && !efeitoVale(ef, hab, pers))
+    .filter((ef) => (Number(ef.bonus) || 0) > 0 && efeitoNoGolpe(ef) && !efeitoVale(ef, hab, pers))
     .map((ef) => ef.nome || "efeito");
 }
 
