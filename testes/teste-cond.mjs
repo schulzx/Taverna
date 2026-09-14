@@ -2,8 +2,20 @@ import {
   normalizarCondicao, criarCondicao, mecanicaDe, estadoDeRolagem, tickCondicoes,
   limparPorDescanso, resumoCondicoesPrompt, listaCondicoes, condicaoPorId, CANAIS_DE_SAIDA,
   SALVAGUARDA_DO_FIM_DO_TURNO, salvaguardaDeSaida, linhaDaSaidaDeCondicao,
-  tentarSaidaNoFimDoTurno,
+  tentarSaidaNoFimDoTurno, CONDICOES,
+  PORTAS_DE_SAIDA, portaDeSaida, removerPelaPorta, linhaDaPortaDeSaida, coberturaDasCondicoes,
 } from "../src/condicoes.js";
+/* T4 lê a lista do ITEM de quem a escreveu, nunca de uma cópia aqui: o
+   `porItem` de `coberturaDasCondicoes` entra por argumento porque `pocoes.js`
+   IMPORTA `condicoes.js` e importá-lo de volta fecharia ciclo — a suíte não
+   tem esse problema, então é ela quem faz a ponte. Copiar os dez ids para cá
+   provaria que a suíte sabe digitar, não que o frasco remove. */
+import { CONSUMIVEIS } from "../src/pocoes.js";
+import { RELIQUIAS } from "../src/relicas.js";
+/* E a lista da MAGIA e da HABILIDADE de quem as guarda: `portas[].nome` é o
+   laço com o acervo, e um nome que morrer lá tem de acender aqui. */
+import { MAGIAS } from "../src/grimorio.js";
+import { CLASSES } from "../src/classes.js";
 /* T3 lê de volta de quem ROLA, não de uma cópia: os ids de atributo da tabela
    têm de existir em `SALVAGUARDAS`, e o bônus de proficiência tem de ser o
    mesmo número que `bonusDeSalvaguarda` soma. Copiar "3" aqui provaria que a
@@ -612,15 +624,21 @@ console.log("\n[T3 · a ordem é contrato] o relógio primeiro, a segunda chance
     "a condição que o relógio acabou de vencer não chega a rolar — a chance não é gasta à toa");
 }
 
-console.log("\n[T3 · o que a etapa NÃO fez, guardado como zero]:");
+console.log("\n[T3→T4 · os zeros que a etapa guardou, e o que os pagou]:");
 {
-  /* GUARDAR O ZERO É O QUE IMPEDE T4 DE NASCER DE CARONA. As duas coisas
-     abaixo estão MEDIDAS como ausentes hoje, de propósito, e o dia em que
-     T4 acontecer estas asserções ficam vermelhas — que é o sinal certo:
-     elas são a prova de que a porta de T4 ainda não foi aberta, e a etapa
-     que a abrir tem de vir aqui trocar o zero por uma prova de leitura. */
+  /* GUARDAR O ZERO FOI O QUE IMPEDIU T4 DE NASCER DE CARONA — e a seção
+     cumpriu o que prometia: as duas coisas abaixo estavam MEDIDAS como
+     ausentes, e T4 veio aqui, como estava escrito, trocar o zero pela prova
+     de leitura. O TÍTULO MUDOU JUNTO ("o que a etapa NÃO fez, guardado como
+     zero" → este), porque uma seção que diz zero e prova leitura é uma
+     mentira no console.
 
-  /* (a) O CANAL `restauracao` NASCE SEM LEITOR (T2 o criou assim; T4 o liga).
+     O QUE NÃO MUDOU, e é o ponto: a varredura é a MESMA, sobre o `src/`
+     inteiro, com a mesma peneira por contexto que a escada de sabotagem
+     apertou duas vezes. Só o SINAL dela virou, e por decisão escrita — em
+     vez de exigir zero leitor, exige leitor, e diz onde ele tem de morar. */
+
+  /* (a) O CANAL `restauracao` GANHOU LEITOR — era T4 quem o ligava.
      A varredura é sobre o `src/` inteiro, com piso de alcance, para não
      passar verde medindo lista vazia. */
   const { readdirSync, readFileSync } = await import("node:fs");
@@ -654,8 +672,52 @@ console.log("\n[T3 · o que a etapa NÃO fez, guardado como zero]:");
       if (!declara) leitores.push(`${f}:${texto.slice(0, m.index).split("\n").length}`);
     }
   }
-  ok(leitores.length === 0, `o canal "restauracao" segue sem leitor — é T4 quem o liga: ${leitores.join(", ") || "ninguém o lê"}`);
+  /* A ASSERÇÃO MOVEU, E O MOTIVO É ESTE. Até T3 ela era
+     `leitores.length === 0` — "o canal segue sem leitor, é T4 quem o liga".
+     T4 ligou, então o zero virou mentira; o que a asserção sempre quis dizer
+     é "o canal não é declaração morta", e isso agora se prova pelo lado de
+     cá. O piso é `>= 1` e não `=== 1` porque um leitor novo amanhã (o App
+     perguntando o canal a esta tabela, por exemplo) é crescimento legítimo;
+     o que NÃO pode voltar é o zero. */
+  ok(leitores.length >= 1, `o canal "restauracao" TEM leitor — T4 o ligou: ${leitores.join(", ") || "ninguém o lê"}`);
+  /* E ele tem de morar onde a tabela mora. Um leitor do canal nascido longe
+     de `condicoes.js` é uma segunda autoridade sobre a mesma palavra — a
+     doença que esta casa mais produziu —, e acende aqui no dia em que nascer. */
+  const foraDeCasa = leitores.filter((l) => !/^condicoes\.js:/.test(l));
+  ok(foraDeCasa.length === 0, `e o leitor mora no próprio catálogo, com a tabela: ${foraDeCasa.join(", ") || "só condicoes.js"}`);
+  /* O DENTE: apagado o leitor do texto, a varredura volta a zero. Sem isto a
+     asserção acima ficaria verde para sempre mesmo que a peneira parasse de
+     casar — foi o vício que a escada já achou duas vezes neste mesmo bloco. */
+  {
+    const textoSem = semBlocos(readFileSync("../src/condicoes.js", "utf8")).replace(/canal:\s*"restauracao"/g, 'canal: "SABOTADO"');
+    const aindaLeem = [...textoSem.matchAll(/"restauracao"/g)].filter((m) => {
+      const antes = textoSem.slice(Math.max(0, m.index - 120), m.index);
+      const depois = textoSem.slice(m.index + 13, m.index + 40);
+      return !(/saiCom:\s*\[[^\]]*$/.test(antes) || (/\bid:\s*$/.test(antes) && /^,\s*porDescanso:/.test(depois)));
+    });
+    ok(aindaLeem.length === 0, `sabotado o único leitor no texto, a varredura volta a acusar zero (${aindaLeem.length})`);
+  }
   ok(CANAIS_DE_SAIDA.find((c) => c.id === "restauracao").porDescanso === false, "…e ele continua declarado como porta que NÃO é descanso");
+  /* A AUTORIDADE DA MAGIA, provada pelos dois lados. O canal é lido como
+     CRITÉRIO (`PORTAS_DE_SAIDA.criterio[0]`) e a lista `remove` da magia é
+     escrita à mão — o que amarra as duas é esta asserção, e só ela. Sem ela,
+     acrescentar um id à Restauração sem declarar o canal passaria verde, e a
+     autoridade declarada viraria enfeite.
+
+     NÃO É IGUALDADE CRUA, e a diferença é deduzida em vez de perdoada: quem
+     declara o canal e a magia não alcança tem de ser exatamente quem o teste
+     2 do critério corta — o ferimento em curso, que é a mesma peneira que T3
+     já usou para deixar `sangrando` fora da salvaguarda. */
+  const declaramCanal = listaCondicoes().filter((c) => (c.saiCom || []).includes("restauracao")).map((c) => c.id).sort();
+  const daMagia = [...new Set(PORTAS_DE_SAIDA.portas.filter((p) => p.familia === "magia").flatMap((p) => portaDeSaida(p.nome).remove))].sort();
+  ok(declaramCanal.length >= 7, `${declaramCanal.length} condições declaram o canal (piso 7): ${declaramCanal.join(", ")}`);
+  const magiaSemCanal = daMagia.filter((id) => !declaramCanal.includes(id));
+  ok(magiaSemCanal.length === 0, `a magia não alcança nada que não declare o canal: ${magiaSemCanal.join(", ") || "nenhuma"}`);
+  const canalSemMagia = declaramCanal.filter((id) => !daMagia.includes(id));
+  const cortadasPeloTeste2 = canalSemMagia.filter((id) => /teste 2/i.test(salvaguardaDeSaida(id).porque || ""));
+  ok(canalSemMagia.join(",") === cortadasPeloTeste2.join(","),
+    `e quem declara o canal sem ser alcançada é só o ferimento em curso, cortado pelo teste 2: ${canalSemMagia.join(", ") || "ninguém"}`);
+  ok(/ferimento|fogo/i.test(String(PORTAS_DE_SAIDA.criterio[1])), "…e o teste 2 de T4 nomeia no próprio texto o que corta");
   /* A prova de comportamento, que é a que importa: `enfeiticado` é a única
      cuja ÚNICA saída declarada é esse canal, e ela não sai por lugar nenhum
      que não seja o próprio prazo. Dar-lhe salvaguarda aqui teria apagado a
@@ -665,17 +727,52 @@ console.log("\n[T3 · o que a etapa NÃO fez, guardado como zero]:");
   ok(tentarSaidaNoFimDoTurno(quemCarrega(["enfeiticado"]), { d20: 20 }).mudou === false, "…e nem um d20 20 a tira: a salvaguarda de saída não a alcança");
   ok(limparPorDescanso([criarCondicao("enfeiticado")], "longo").removidas.length === 0, "…nem a noite inteira, como T2 travou");
 
-  /* (b) `concentrado` SEGUE SEM SAÍDA NENHUMA. É o caso que a catraca de T4
-     ("toda condição tem ao menos uma saída") vai acender primeiro. T3 não o
-     conserta e não finge que conserta: ele é `tipo: "bom"`, cai no teste 3
-     do critério, e nada no `src/` o aplica — é armadilha latente, não bug
-     vivo, e é por isso que ele pôde esperar. */
+  /* (b) `concentrado` ERA A CONDIÇÃO SEM SAÍDA NENHUMA, e T4 o RESOLVEU —
+     não o perdoou. Foi o caso que a catraca de T4 ("toda condição tem ao
+     menos uma saída") acendeu primeiro, exatamente como esta seção previu.
+
+     DUAS DAS QUATRO ASSERÇÕES ABAIXO MUDARAM DE LADO, e o motivo vai escrito
+     em cada uma. O QUE NÃO MUDOU é o que continua sendo verdade e continua
+     importando: ele segue sem prazo (o relógio não o vence), segue sem
+     salvaguarda (é `tipo: "bom"` e cai no teste 3 do critério de T3), e nada
+     no `src/` o aplica. O conserto veio pela porta certa — o canal de
+     descanso, no catálogo —, e não fingindo que o relógio ou a salvaguarda
+     davam conta. */
   const con = condicaoPorId("concentrado");
   ok(con.turnos === null, "concentrado segue sem prazo: o relógio não o vence");
-  ok((con.saiCom || []).length === 0, "…sem canal de saída declarado");
+  /* MOVIDA POR T4: era `(con.saiCom || []).length === 0` — "sem canal de
+     saída declarado". T3 guardou aquele zero de propósito, para que T4 não
+     nascesse de carona; T4 chegou e o pagou. No 5e a concentração não
+     sobrevive a um descanso: quem para para respirar larga o que estava
+     segurando. Os DOIS canais, e não só o longo, porque uma hora de parada já
+     é mais que o teto de uma concentração inteira. A lista é lida por inteiro
+     (não `length >= 1`) porque perder o `"curto"` amanhã seria mudança de
+     regra, e mudança de regra tem de acender. */
+  ok((con.saiCom || []).join(",") === "curto,longo", `…e AGORA tem canal declarado: [${(con.saiCom || []).join(", ")}] — T4 pagou o zero que T3 guardou`);
   ok(salvaguardaDeSaida("concentrado").permite === false && salvaguardaDeSaida("concentrado").declarada === true,
     "…sem salvaguarda de saída, e com a posição declarada mesmo assim (a regra das boas o cobre)");
-  ok(limparPorDescanso([criarCondicao("concentrado")], "longo").removidas.length === 0, "…e a noite inteira não o pega, porque a regra implícita só vale para as ruins");
+  /* MOVIDA POR T4 pelo mesmo motivo, e é a METADE DE COMPORTAMENTO do de
+     cima: era `removidas.length === 0` — "a noite inteira não o pega, porque
+     a regra implícita só vale para as ruins". Continua verdade que a regra
+     implícita não o pega; o que mudou é que ele deixou de depender dela, por
+     canal ESCRITO. As duas asserções andam juntas: declarar o canal sem que o
+     descanso o tire seria promessa morta, que é a doença que T2 curou. */
+  ok(limparPorDescanso([criarCondicao("concentrado")], "longo").removidas.length === 1, "…e a noite inteira AGORA o larga — por canal escrito, não pela regra implícita das ruins");
+  ok(limparPorDescanso([criarCondicao("concentrado")], "curto").removidas.length === 1, "…e uma hora de parada também: no 5e a concentração não sobrevive a descanso nenhum");
+  /* O DENTE, e ele é a sabotagem que guarda o conserto: devolvido o
+     `saiCom: []` de antes, a condição volta a não ter saída nenhuma e a
+     catraca de T4 acende nela. É a prova de que o conserto é o canal, e não
+     alguma outra coisa que passou a cobri-lo por acaso. */
+  {
+    const antes = con.saiCom;
+    con.saiCom = [];
+    try {
+      ok(limparPorDescanso([criarCondicao("concentrado")], "longo").removidas.length === 0
+        && coberturaDasCondicoes().semSaida.join(",") === "concentrado",
+        "sabotado de volta para `saiCom: []`, ele volta a ser a condição sem saída nenhuma — e a catraca o acusa");
+    } finally { con.saiCom = antes; }
+  }
+  ok((con.saiCom || []).join(",") === "curto,longo" && coberturaDasCondicoes().semSaida.length === 0, "…e o catálogo volta inteiro depois da sabotagem");
   /* Mesma peneira por contexto, e a escada de sabotagem ensinou o mesmo
      aperto: a única aparição lícita do literal no `src/` inteiro é a
      PRÓPRIA entrada do catálogo (`concentrado: { id: "concentrado"`) — e ela
@@ -692,6 +789,443 @@ console.log("\n[T3 · o que a etapa NÃO fez, guardado como zero]:");
     }
   }
   ok(aplicam.length === 0, `e nada no src o APLICA, que é o que o mantém latente: ${aplicam.join(", ") || "nenhum sítio"}`);
+}
+
+/* ============================================================
+   T4 · AS PORTAS DE SAÍDA DECLARADAS (v9.241) — E A CATRACA QUE FECHA A FASE
+
+   A lei é da pessoa: *"cura normal apenas recupera PV mas não remove a
+   condição; daí vêm magias, habilidades de classe, itens e os testes de
+   resistência."* T2 provou a primeira metade (45 portas de cura, nenhuma
+   escreve em `condicoes`); T3 deu a segunda chance a sete condições; T4 abre
+   as portas declaradas e fecha a fase com a catraca que a pauta exige:
+   TODA CONDIÇÃO TEM AO MENOS UMA SAÍDA — prazo, salvaguarda ou porta.
+
+   ESTAS SEÇÕES SÃO NOVAS. As três asserções que MUDARAM estão lá em cima, na
+   seção [T3→T4], cada uma com o motivo escrito ao lado — nenhuma foi apagada
+   e nenhuma outra foi tocada para abrir espaço aqui.
+   ============================================================ */
+
+const T4 = PORTAS_DE_SAIDA;
+
+/* O PISO DO ALCANCE, no molde de `check-cura-nao-limpa.mjs` (que o escreveu
+   com piso de 35 portas / 8 arquivos) e de `MEDIDA_T3` logo acima. Uma
+   catraca que percorre um catálogo passa VERDE E VAZIA no dia em que a
+   leitura do catálogo quebrar — e "nenhuma condição sem saída" é a asserção
+   mais fácil do mundo de satisfazer com uma lista vazia. Os números são
+   `>=`, nunca `===`: acervo novo amanhã tem de entrar na varredura, não
+   derrubá-la. O único `<=` é o teto do que pode ficar sem saída, que é ZERO
+   e é a lei da etapa. */
+const MEDIDA_T4 = {
+  /* medido em 14/09: 21 condições — 13 ruins + 8 boas */
+  pisoDoCatalogo: 21, pisoDeRuins: 13, pisoDeBoas: 8,
+  /* as quatro colunas da conta, medidas na mesma data. Guardam o alcance de
+     CADA leitura em separado: um `limparPorDescanso` que parasse de casar
+     zeraria `descanso` e a catraca continuaria verde só com o prazo. */
+  pisoDePrazo: 19, pisoDeDescanso: 13, pisoDeSalvaguarda: 7, pisoDePorta: 13,
+  pisoComMaisDeUma: 13,
+  /* e o alcance de cada família que ABRE hoje */
+  pisoDeMagia: 6, pisoDeItem: 10,
+  /* A LEI DA ETAPA, cravada: nenhuma condição sem saída nenhuma. */
+  tetoSemSaida: 0,
+};
+
+/* AS EXCEÇÕES DECLARADAS, no molde de `CONCENTRACAO_DA_MAGIA.excecoes` e do
+   `NAO_E_CURA` de `check-cura-nao-limpa.mjs`: uma lista de perdão SEM MOTIVO
+   ESCRITO vira o lugar onde os bugs vão morar — bastaria acrescentar um id
+   para calar a catraca, e aí ela não protege mais nada.
+
+   HOJE ESTÁ VAZIA, E É O ESTADO CERTO: `concentrado` era a única candidata e
+   T4 o RESOLVEU em vez de o perdoar (canal de descanso, no catálogo). Se um
+   dia alguma condição precisar de fato ficar sem saída, ela entra aqui com o
+   `porque` escrito — e as duas asserções logo abaixo cobram tanto o motivo
+   quanto o dente inverso (perdão que sobra é dívida escondida). */
+const SEM_SAIDA_PERDOADA = [];
+
+/* A LISTA DO ITEM, LIDA DE QUEM A ESCREVEU. `porItem` entra por argumento em
+   `coberturaDasCondicoes` porque `pocoes.js` importa `condicoes.js` — a suíte
+   é quem pode fazer a ponte sem fechar ciclo. A colheita é RECURSIVA de
+   propósito: a `limpa` da relíquia mora em `ativo.efeito.limpa` hoje, e uma
+   relíquia nova que a ponha num `poderes[].efeito` continuaria sendo verdade
+   do acervo — um caminho cravado aqui deixaria de a ver em silêncio. */
+const colherLimpa = (no, achadas = []) => {
+  if (!no || typeof no !== "object") return achadas;
+  if (Array.isArray(no)) { for (const x of no) colherLimpa(x, achadas); return achadas; }
+  for (const [k, v] of Object.entries(no)) {
+    if (k === "limpa" && Array.isArray(v)) achadas.push(...v);
+    else colherLimpa(v, achadas);
+  }
+  return achadas;
+};
+const DO_CONSUMIVEL = [...new Set(CONSUMIVEIS.filter((c) => c.tipo === "limpa").flatMap((c) => c.remove || []))];
+const DA_RELIQUIA = [...new Set(colherLimpa(RELIQUIAS))];
+const REMOVIDAS_POR_ITEM = [...new Set([...DO_CONSUMIVEL, ...DA_RELIQUIA])].filter((id) => condicaoPorId(id));
+
+/* SABOTAR O CATÁLOGO E DEVOLVÊ-LO INTEIRO — inclusive na ORDEM, porque
+   `listaCondicoes()` é lida por outras seções e por `CONDICOES_PROMPT`, e uma
+   chave que volta para o fim do objeto é uma mudança silenciosa de ordem. */
+const comCatalogo = (mexer, fn) => {
+  const guardado = { ...CONDICOES };
+  try { mexer(); return fn(); }
+  finally {
+    for (const k of Object.keys(CONDICOES)) delete CONDICOES[k];
+    Object.assign(CONDICOES, guardado);
+  }
+};
+
+console.log("\n[T4 · A CATRACA QUE FECHA A FASE] toda condição tem ao menos uma saída:");
+{
+  const cob = coberturaDasCondicoes({ porItem: REMOVIDAS_POR_ITEM });
+
+  /* 1. O ALCANCE, ANTES DO DENTE. Sem estes pisos a catraca passaria verde
+     medindo lista vazia — que é exatamente como uma catraca morre. */
+  ok(cob.total >= MEDIDA_T4.pisoDoCatalogo, `a conta percorre o catálogo inteiro: ${cob.total} condições (piso ${MEDIDA_T4.pisoDoCatalogo})`);
+  ok(cob.total === listaCondicoes().length, "…e é o MESMO catálogo que o resto da suíte lê, não uma cópia");
+  ok(cob.ruins >= MEDIDA_T4.pisoDeRuins && cob.boas >= MEDIDA_T4.pisoDeBoas, `os dois lados de pé: ${cob.ruins} ruins, ${cob.boas} boas`);
+  ok(cob.ruins + cob.boas === cob.total, "…e toda condição é de um dos dois tipos: não há terceira gaveta");
+  ok(cob.prazo >= MEDIDA_T4.pisoDePrazo, `${cob.prazo} saem pelo prazo (piso ${MEDIDA_T4.pisoDePrazo})`);
+  ok(cob.descanso >= MEDIDA_T4.pisoDeDescanso, `${cob.descanso} saem por descanso (piso ${MEDIDA_T4.pisoDeDescanso})`);
+  ok(cob.salvaguarda >= MEDIDA_T4.pisoDeSalvaguarda, `${cob.salvaguarda} saem por salvaguarda (piso ${MEDIDA_T4.pisoDeSalvaguarda})`);
+  ok(cob.porta >= MEDIDA_T4.pisoDePorta, `${cob.porta} saem por porta declarada (piso ${MEDIDA_T4.pisoDePorta})`);
+  ok(cob.comMaisDeUma >= MEDIDA_T4.pisoComMaisDeUma, `${cob.comMaisDeUma} têm mais de uma saída (piso ${MEDIDA_T4.pisoComMaisDeUma})`);
+  /* A salvaguarda tem de bater com a OUTRA porta que a responde: se as duas
+     leituras discordarem, uma delas está medindo coisa nenhuma. */
+  const permitem = listaCondicoes().filter((c) => salvaguardaDeSaida(c.id).permite).length;
+  ok(cob.salvaguarda === permitem, `e a coluna da salvaguarda bate com \`salvaguardaDeSaida\`: ${cob.salvaguarda} = ${permitem}`);
+
+  /* 2. O DENTE — A LEI DA ETAPA. */
+  const semSaida = cob.semSaida.filter((id) => !SEM_SAIDA_PERDOADA.some((p) => p.id === id));
+  ok(semSaida.length <= MEDIDA_T4.tetoSemSaida,
+    `NENHUMA condição sem saída nenhuma (teto ${MEDIDA_T4.tetoSemSaida}): ${semSaida.join(", ") || "todas têm por onde sair"}`);
+  /* A lista de perdão cobra motivo POR LINHA — é a lei da casa aplicada à
+     tabela, no molde de `CONCENTRACAO_DA_MAGIA`. */
+  const semMotivo = SEM_SAIDA_PERDOADA.filter((p) => !p.id || !String(p.porque || "").trim()).map((p) => p.id || "?");
+  ok(semMotivo.length === 0, `toda exceção declarada traz o PORQUÊ escrito: ${semMotivo.join(", ") || "nenhuma exceção hoje"}`);
+  /* O DENTE INVERSO: perdão que parou de casar tem de sair, senão a lista
+     cresce e vira decoração — a mesma catraca dos dois sentidos de
+     `teste-ligacao` e de `check-cura-nao-limpa`. */
+  const perdaoMorto = SEM_SAIDA_PERDOADA.filter((p) => !cob.semSaida.includes(p.id)).map((p) => p.id);
+  ok(perdaoMorto.length === 0, `e nenhum perdão sobrando: ${perdaoMorto.join(", ") || "a lista está vazia, que é o estado certo"}`);
+
+  /* 3. O DENTE DO DENTE — a catraca MORDE. Uma condição nova que nasça sem
+     saída nenhuma tem de acender no dia em que nascer, e o molde é o que o
+     `backend` mediu: `{ turnos: null, tipo: "bom", saiCom: [] }`. É boa de
+     propósito, porque a RUIM sem canal cai na regra implícita do descanso
+     longo e teria saída — a armadilha é exatamente a condição BOA eterna,
+     que foi o que `concentrado` esperou trinta versões para alguém notar. */
+  const orfa = comCatalogo(
+    () => { CONDICOES.perpetua = { id: "perpetua", rotulo: "Perpétua", icone: "∞", tipo: "bom", turnos: null, saiCom: [], desc: "Nunca passa.", aliases: [] }; },
+    () => coberturaDasCondicoes({ porItem: REMOVIDAS_POR_ITEM }),
+  );
+  ok(orfa.semSaida.join(",") === "perpetua", `nascida uma condição sem saída, a catraca acende nela e só nela (${orfa.semSaida.join(", ") || "nenhuma"})`);
+  ok(orfa.total === cob.total + 1, "…e a conta a viu de verdade: o total subiu junto");
+  ok(coberturaDasCondicoes({ porItem: REMOVIDAS_POR_ITEM }).semSaida.length === 0 && !CONDICOES.perpetua, "…e o catálogo volta inteiro depois da sabotagem");
+
+  /* 4. O PISO DE ALCANCE MORDE. Esvaziado o catálogo, a catraca de cima
+     continuaria verde (lista vazia não tem ninguém sem saída) — e é o piso
+     que a salva. Sem esta prova, os `>=` de `MEDIDA_T4` seriam decoração. */
+  const vazia = comCatalogo(
+    () => { for (const k of Object.keys(CONDICOES)) delete CONDICOES[k]; },
+    () => coberturaDasCondicoes({ porItem: REMOVIDAS_POR_ITEM }),
+  );
+  ok(vazia.semSaida.length === 0 && vazia.total === 0,
+    "com o catálogo vazio a catraca passaria verde sem ter medido nada…");
+  ok(!(vazia.total >= MEDIDA_T4.pisoDoCatalogo) && !(vazia.prazo >= MEDIDA_T4.pisoDePrazo) && !(vazia.porta >= MEDIDA_T4.pisoDePorta),
+    "…e é o PISO DE ALCANCE que acende nesse caso, nas três colunas de uma vez");
+  ok(listaCondicoes().length === cob.total, "…e o catálogo volta inteiro depois desta sabotagem também");
+}
+
+console.log("\n[T4 · as três famílias, três autoridades] e o canal manda só na magia:");
+{
+  ok(Array.isArray(T4.familias) && T4.familias.length === 3, `a tabela declara as três famílias: ${T4.familias.map((f) => f.id).join(", ")}`);
+  const mancas = T4.familias.filter((f) => !String(f.autoridade || "").trim() || !String(f.porque || "").trim()).map((f) => f.id);
+  ok(mancas.length === 0, `e cada uma diz QUEM manda nela e POR QUÊ: ${mancas.join(", ") || "todas"}`);
+  ok(Array.isArray(T4.criterio) && T4.criterio.length === 3 && T4.criterio.every((s) => String(s).trim()), `o critério da magia é legível pela suíte: ${T4.criterio.length} testes escritos`);
+  ok(/restauracao/.test(String(T4.criterio[0])) && T4.canal === "restauracao", "o teste 1 nomeia o canal, e o canal está declarado na tabela");
+  const semPorque = T4.portas.filter((p) => !String(p.porque || "").trim()).map((p) => p.nome);
+  ok(semPorque.length === 0, `e toda porta traz o porquê por linha: ${semPorque.join(", ") || "todas"}`);
+
+  /* A DECISÃO MEDIDA, E É A QUE UM DESCUIDO FUTURO DESFAZ PRIMEIRO: o canal é
+     a autoridade da MAGIA e SÓ DELA. Poção e relíquia removem ids que o canal
+     não declara, e filtrar as portas existentes pelo canal apagaria essas
+     remoções EM SILÊNCIO — regressão que nenhuma prova de hoje pegaria, porque
+     o item continuaria "funcionando", só que tirando menos. */
+  const declaramCanal = listaCondicoes().filter((c) => (c.saiCom || []).includes("restauracao")).map((c) => c.id);
+  ok(REMOVIDAS_POR_ITEM.length >= MEDIDA_T4.pisoDeItem, `o item alcança ${REMOVIDAS_POR_ITEM.length} condições, lidas de \`pocoes.js\` e \`relicas.js\` (piso ${MEDIDA_T4.pisoDeItem})`);
+  ok(DO_CONSUMIVEL.length > 0 && DA_RELIQUIA.length > 0, `e as duas fontes foram lidas de verdade: ${DO_CONSUMIVEL.length} do consumível, ${DA_RELIQUIA.length} da relíquia`);
+  const foraDoCanal = REMOVIDAS_POR_ITEM.filter((id) => !declaramCanal.includes(id)).sort();
+  ok(foraDoCanal.length === 6, `${foraDoCanal.length} das que o item remove NÃO declaram o canal: ${foraDoCanal.join(", ")}`);
+  ok(foraDoCanal.join(",") === "agarrado,amedrontado,atordoado,caido,lento,queimando",
+    "…e são exatamente as seis que o `backend` mediu — a lista está escrita para que uma sétima, ou uma a menos, acenda");
+
+  /* A SABOTAGEM: a poção passando a ser filtrada pelo canal. A conta tem de
+     PERDER as seis — e o número real tem de continuar sendo o de cima. */
+  const filtrada = coberturaDasCondicoes({ porItem: REMOVIDAS_POR_ITEM.filter((id) => declaramCanal.includes(id)) });
+  const real = coberturaDasCondicoes({ porItem: REMOVIDAS_POR_ITEM });
+  ok(filtrada.porItem.length === REMOVIDAS_POR_ITEM.length - 6 && real.porItem.length === REMOVIDAS_POR_ITEM.length,
+    `filtrado o item pelo canal, ele perde as seis (${real.porItem.length} → ${filtrada.porItem.length}) — e é por isso que T4 não o filtra`);
+  ok(filtrada.porta < real.porta, `…e a cobertura por porta cairia de ${real.porta} para ${filtrada.porta}, em silêncio`);
+  /* E O AVISO FICA ESCRITO NA TABELA, não só aqui: a família do item nomeia
+     a regressão que evitou. Apagar essa frase é apagar o motivo. */
+  const fItem = T4.familias.find((f) => f.id === "item");
+  ok(/seis|6/.test(String(fItem.porque)) && foraDoCanal.every((id) => String(fItem.porque).includes(id)),
+    "e a própria tabela nomeia as seis que se perderiam — o motivo não mora só na suíte");
+
+  /* SEM O ITEM, A CATRACA CONTINUA DE PÉ. É a promessa escrita em
+     `coberturaDasCondicoes`: nenhuma condição depende SÓ do item para ter
+     saída. Quem chamar a conta sem passar `porItem` recebe menos cobertura,
+     nunca um falso alarme. */
+  const semItem = coberturaDasCondicoes();
+  ok(semItem.semSaida.length === 0, `sem a lista do item, nenhuma condição fica órfã: ${semItem.semSaida.join(", ") || "nenhuma"}`);
+  ok(semItem.porItem.length === 0 && semItem.porta < real.porta, `…e a conta é honesta sobre o que não viu (${semItem.porta} portas contra ${real.porta})`);
+  for (const lixo of [null, undefined, { porItem: null }, { porItem: ["banana", "", null] }, {}]) {
+    let r = null, estourou = false;
+    try { r = coberturaDasCondicoes(lixo); } catch { estourou = true; }
+    ok(!estourou && r && r.total === listaCondicoes().length, `lixo em \`opcoes\` (${JSON.stringify(lixo)}) não estoura a conta nem muda o catálogo`);
+  }
+}
+
+console.log("\n[T4 · a porta, por nome] `portaDeSaida` acha, herda e achata:");
+{
+  const menor = portaDeSaida("Restauração Menor");
+  const maior = portaDeSaida("Restauração Maior");
+  ok(menor && menor.familia === "magia" && menor.resolve === true, `a Menor é porta de magia e RESOLVE: ${menor.remove.join(", ")}`);
+  ok(menor.remove.join(",") === "envenenado,cego,paralisado", "…e tira o que o 5e manda: veneno, cegueira e paralisia");
+  /* A HERANÇA É REGRA, NÃO CÓPIA: a Maior tem três ids escritos e devolve
+     seis. Provado pela CONTINÊNCIA, não por uma lista copiada — se a Menor
+     crescer amanhã, a Maior cresce junto e esta asserção segue verde. */
+  ok(maior.remove.length === menor.remove.length + 3, `a Maior devolve ${maior.remove.length}: as ${menor.remove.length} da Menor mais as três dela`);
+  ok(menor.remove.every((id) => maior.remove.includes(id)), "a Maior alcança TUDO que a Menor alcança — um 5º círculo que não fizesse o do 2º seria armadilha de ficha");
+  ok(new Set(maior.remove).size === maior.remove.length, "…e sem repetir id nenhum: o `herdaDe` vem achatado e único");
+  ok(maior.remove.every((id) => !!condicaoPorId(id)), "todo id que a porta promete existe no catálogo — nome morto acende aqui");
+  /* A SABOTAGEM: a Maior deixando de herdar da Menor. É a regressão mais
+     barata de cometer (apagar uma linha) e a mais cara de notar em mesa. */
+  {
+    const linha = T4.portas.find((p) => p.nome === "Restauração Maior");
+    const antes = linha.herdaDe;
+    delete linha.herdaDe;
+    let sem = null;
+    try { sem = portaDeSaida("Restauração Maior"); } finally { linha.herdaDe = antes; }
+    ok(sem.remove.length === 3 && !sem.remove.includes("envenenado"),
+      `tirado o \`herdaDe\`, a Maior encolhe para ${sem.remove.length} e perde o veneno — é a herança que a segura`);
+    ok(portaDeSaida("Restauração Maior").remove.length === maior.remove.length, "…e a tabela volta inteira depois da sabotagem");
+  }
+
+  /* A PERGUNTA CHEGA DOS TRÊS JEITOS, e o nome é o LAÇO COM O ACERVO: um
+     nome que morrer no grimório ou em `classes.js` tem de acender aqui. */
+  const doGrimorio = MAGIAS.find((m) => m.nome === "Restauração Menor");
+  ok(!!doGrimorio && doGrimorio.funcao === "curar_condicao", "a Menor existe MESMO no grimório, com `funcao: curar_condicao`");
+  ok(portaDeSaida(doGrimorio) && portaDeSaida(doGrimorio).nome === menor.nome, "…e a consulta aceita o objeto da magia, não só o nome cru");
+  const habsDoClerigo = (CLASSES.find((c) => c.nome === "Clérigo") || {}).habilidades || [];
+  for (const nome of ["Purificar", "Palavra de Coragem"]) {
+    const hab = habsDoClerigo.find((h) => h.nome === nome);
+    ok(!!hab, `${nome} existe MESMO em classes.js (Clérigo nv${hab ? hab.nivel : "?"})`);
+    ok(!!hab && portaDeSaida(hab) && portaDeSaida(hab).familia === "habilidade", `…e a consulta a aceita pelo objeto da ficha`);
+  }
+  ok(portaDeSaida("restauracao MENOR").nome === "Restauração Menor", "o acento e a caixa não separam a pergunta da resposta");
+  for (const lixo of [null, undefined, "", "banana", {}, { nome: "" }, 0, [], "Restauração"]) {
+    ok(portaDeSaida(lixo) === null, `e ${JSON.stringify(lixo) || String(lixo)} não é porta nenhuma → null`);
+  }
+  /* TODA PORTA DA TABELA TEM DE APONTAR PARA ACERVO VIVO — o dente inverso,
+     no molde do `NAO_E_CURA` de `check-cura-nao-limpa`. */
+  const nomesDoAcervo = new Set([...MAGIAS.map((m) => m.nome), ...CLASSES.flatMap((c) => (c.habilidades || []).map((h) => h.nome))]);
+  const fantasmas = T4.portas.filter((p) => !nomesDoAcervo.has(p.nome)).map((p) => p.nome);
+  ok(fantasmas.length === 0, `toda porta declarada aponta para magia ou habilidade que existe: ${fantasmas.join(", ") || "todas"}`);
+  const herancasQuebradas = T4.portas.filter((p) => p.herdaDe && !T4.portas.some((q) => q.nome === p.herdaDe)).map((p) => p.nome);
+  ok(herancasQuebradas.length === 0, `e todo \`herdaDe\` aponta para porta que existe: ${herancasQuebradas.join(", ") || "todos"}`);
+}
+
+console.log("\n[T4 · a promessa não conta como saída] Purificar e Palavra de Coragem aguardam:");
+{
+  /* O PONTO HONESTO DA CONTA. As duas estão DECLARADAS e não RESOLVEM: não
+     existe resolvedor de habilidade de classe nesta casa. Contá-las seria a
+     cobertura passando VERDE numa promessa — que é a doença exata que T2
+     curou no catálogo (`saiCom: ["cura"]` sem leitor). */
+  const naoResolvem = T4.portas.filter((p) => !p.resolve);
+  ok(naoResolvem.length === 2 && naoResolvem.every((p) => p.familia === "habilidade"), `as duas que não resolvem são de habilidade: ${naoResolvem.map((p) => p.nome).join(", ")}`);
+  const semAguarda = naoResolvem.filter((p) => !String(p.aguarda || "").trim()).map((p) => p.nome);
+  ok(semAguarda.length === 0, `e cada uma diz O QUE espera, por escrito: ${semAguarda.join(", ") || "as duas"}`);
+  const cob = coberturaDasCondicoes({ porItem: REMOVIDAS_POR_ITEM });
+  ok(cob.aguardando.join(", ") === naoResolvem.map((p) => p.nome).join(", "), `a conta as devolve em \`aguardando\`, nunca em \`porta\`: ${cob.aguardando.join(", ")}`);
+  ok(cob.porHabilidade.length > 0, `…e o alcance delas fica registrado como informação (${cob.porHabilidade.join(", ")})`);
+  /* A SABOTAGEM: Purificar passando a contar como saída. A cobertura TEM de
+     mudar — se não mudar, é porque a conta nunca separou promessa de porta. */
+  {
+    const linha = T4.portas.find((p) => p.nome === "Purificar");
+    const antes = linha.resolve;
+    linha.resolve = true;
+    let com = null;
+    try { com = coberturaDasCondicoes({ porItem: REMOVIDAS_POR_ITEM }); } finally { linha.resolve = antes; }
+    ok(com.aguardando.length === cob.aguardando.length - 1 && !com.aguardando.includes("Purificar"),
+      `posta a resolver, Purificar sai de \`aguardando\` (${cob.aguardando.length} → ${com.aguardando.length}) — a conta lê o campo de verdade`);
+    ok(coberturaDasCondicoes({ porItem: REMOVIDAS_POR_ITEM }).aguardando.length === cob.aguardando.length, "…e a tabela volta inteira depois da sabotagem");
+  }
+  /* E A PORTA QUE NÃO RESOLVE NÃO TIRA NADA. Declarada não é ligada, e a
+     função não finge que é — é a metade de comportamento da asserção acima. */
+  const p = portaDeSaida("Purificar");
+  ok(p.resolve === false && p.remove.length > 0, `Purificar declara alcance (${p.remove.join(", ")}) e ainda assim não resolve`);
+  const r = removerPelaPorta({ condicoes: [criarCondicao("envenenado"), criarCondicao("cego")] }, p);
+  ok(r.mudou === false && r.removidas.length === 0 && r.condicoes.length === 2,
+    "…e chamada sobre quem carrega o que ela alcança, não tira uma única condição");
+}
+
+console.log("\n[T4 · a remoção] `removerPelaPorta` tira o que a porta alcança, e nada mais:");
+{
+  const portador = { nome: "Vera", vida: 9, condicoes: [criarCondicao("sangrando"), criarCondicao("envenenado"), criarCondicao("abencoado"), criarCondicao("cego")] };
+  const copia = JSON.stringify(portador);
+  const r = removerPelaPorta(portador, "Restauração Menor", { quem: "Vera" });
+  ok(r.mudou === true && r.removidas.map((i) => i.id).sort().join(",") === "cego,envenenado", `a Menor tira o que alcança: ${r.removidas.map((i) => i.id).join(", ")}`);
+  /* A ORDEM DA FICHA É PRESERVADA: quem fica, fica onde estava. O HUD lê essa
+     lista na ordem, e reordenar por acidente é a condição pulando de lugar na
+     tela sem nada ter acontecido. */
+  ok(r.condicoes.map((i) => i.id).join(",") === "sangrando,abencoado", `…e quem fica, fica na ordem em que estava: ${r.condicoes.map((i) => i.id).join(", ")}`);
+  ok(r.condicoes[0] === portador.condicoes[0], "…sendo os MESMOS objetos, não cópias — sem re-render de graça");
+  /* LEI DA CASA: estado é substituído, nunca mutado. */
+  ok(JSON.stringify(portador) === copia, "o portador recebido sai intocado — nem a ficha nem a lista dele são mexidas");
+  ok(r.condicoes !== portador.condicoes, "e a lista devolvida é OUTRA, não a mesma com menos itens");
+  /* A HERANÇA VISTA EM MESA, e não só na lista: numa ficha que carrega o que
+     só o 5º círculo alcança, a Menor tira duas e a Maior tira essas duas MAIS
+     a sua — é o superconjunto acontecendo num corpo, não numa asserção de
+     tabela. */
+  const dosDois = { condicoes: [criarCondicao("envenenado"), criarCondicao("exausto"), criarCondicao("cego")] };
+  const pelaMenor = removerPelaPorta(dosDois, "Restauração Menor");
+  const pelaMaior = removerPelaPorta(dosDois, "Restauração Maior");
+  ok(pelaMenor.removidas.length === 2 && pelaMaior.removidas.length === 3
+    && pelaMenor.removidas.every((i) => pelaMaior.removidas.some((j) => j.id === i.id)),
+    `na mesma ficha a Menor tira ${pelaMenor.removidas.length} e a Maior tira essas mesmas mais a exaustão (${pelaMaior.removidas.map((i) => i.id).join(", ")})`);
+  /* QUEM A PORTA NÃO ALCANÇA NÃO SAI, e é metade da lei da fase: a porta é
+     DECLARADA, não um apagador de condições. */
+  ok(!r.removidas.some((i) => i.id === "sangrando"), "o sangramento NÃO sai pela Restauração: é ferimento, e o teste 2 do critério o corta");
+  ok(!r.removidas.some((i) => i.id === "abencoado"), "…e a bênção também não: porta declarada não varre a ficha");
+
+  /* O TETO É LIDO DA TABELA, não cravado na função. `quantasPorVez: null` é
+     "todas as que alcança"; sabotado para 1, a mesma porta passa a tirar uma
+     — que é o "escolha uma por conjuração" do 5e, no dia em que a casa mudar
+     de ideia. Sem esta prova, `quantasPorVez` seria declaração morta. */
+  ok(T4.quantasPorVez === null && String(T4.porqueTodas || "").trim(), "o teto declara `null` (todas) e traz o motivo escrito ao lado");
+  {
+    const antes = T4.quantasPorVez;
+    T4.quantasPorVez = 1;
+    let um = null;
+    try { um = removerPelaPorta(portador, "Restauração Menor"); } finally { T4.quantasPorVez = antes; }
+    ok(um.removidas.length === 1, `posto o teto em 1, a mesma porta tira uma só (${um.removidas.map((i) => i.id).join(", ")})`);
+    ok(removerPelaPorta(portador, "Restauração Menor").removidas.length === 2, "…e a tabela volta inteira depois da sabotagem");
+  }
+
+  /* NADA A TIRAR É SILÊNCIO, NUNCA UMA LINHA MEIA-BOCA NA TELA. */
+  const nada = removerPelaPorta({ condicoes: [criarCondicao("sangrando")] }, "Restauração Menor");
+  ok(nada.mudou === false && nada.linha === "" && nada.condicoes.length === 1, "sobre quem não carrega nada que ela alcance, a porta não fala e não muda nada");
+  for (const [rotulo, valor] of [["null", null], ["indefinido", undefined], ["vazio", {}], ["condicoes null", { condicoes: null }], ["número", 7]]) {
+    let r2 = null, estourou = false;
+    try { r2 = removerPelaPorta(valor, "Restauração Maior", null); } catch { estourou = true; }
+    ok(!estourou && r2 && r2.mudou === false && r2.linha === "" && r2.condicoes.length === 0, `portador ${rotulo} não estoura a porta, e nada sai nem é dito`);
+  }
+  /* `opcoes` NULO é o caso que a lei da casa nomeia: `= {}` no destructuring
+     NÃO cobre `null` explícito. A linha acima já passa `null` de propósito. */
+  let semOpcoes = null, estourouOpcoes = false;
+  try { semOpcoes = removerPelaPorta(portador, "Restauração Menor", null); } catch { estourouOpcoes = true; }
+  ok(!estourouOpcoes && semOpcoes && semOpcoes.removidas.length === 2, "`opcoes` nulo não estoura: `= {}` não cobre `null`, e a função trata");
+  for (const lixo of [null, undefined, "", "banana", {}, 0]) {
+    const r3 = removerPelaPorta(portador, lixo);
+    ok(r3.mudou === false && r3.condicoes.length === portador.condicoes.length, `porta ${JSON.stringify(lixo) || String(lixo)} não tira nada de ninguém`);
+  }
+  /* CONDIÇÃO QUE O CATÁLOGO NÃO CONHECE não sai e não some — o mesmo
+     comportamento conservador do relógio e da salvaguarda. */
+  const fantasma = { id: "amaldicoado", nome: "Amaldiçoado", turnos: 2 };
+  const rF = removerPelaPorta({ condicoes: [fantasma, criarCondicao("envenenado")] }, "Restauração Menor");
+  ok(rF.removidas.length === 1 && rF.condicoes.length === 1 && rF.condicoes[0] === fantasma, "condição que o catálogo não conhece não é tirada por porta nenhuma, e continua sendo o mesmo objeto");
+}
+
+console.log("\n[T4 · a frase] voz de mundo, e nenhuma condição tem duas:");
+{
+  const portador = { condicoes: [criarCondicao("envenenado"), criarCondicao("cego")] };
+  const r = removerPelaPorta(portador, "Restauração Menor", { quem: "Vera" });
+  ok(r.linha.startsWith("🧪 Vera: "), `o jogador lê de quem é o corpo, com o ícone da PRIMEIRA que saiu: "${r.linha}"`);
+  /* A LEI DA CASA: o sistema não fala de si mesmo. Nem o nome da magia entra
+     — quem conjurou sabe o que conjurou; o que se vê é o corpo mudando. */
+  ok(!/salvaguard|CD|dificuldade|d20|rolagem|condi[çc]|restaura|porta|magia/i.test(r.linha), "…e sem uma sílaba do mecanismo: nem salvaguarda, nem CD, nem o nome da magia");
+  const semNome = removerPelaPorta(portador, "Restauração Menor").linha;
+  ok(/^🧪 [A-ZÁÉÍÓÚÂÊÔÃÕÇ]/.test(semNome), `sem nome, a frase é a do herói e começa em maiúscula: "${semNome}"`);
+  ok(r.linha.split(";").length === 2, "duas condições saíram, duas frases na mesma linha — uma por corpo que mudou");
+  /* A FRASE NÃO NASCE SOZINHA. */
+  ok(linhaDaPortaDeSaida(null, [criarCondicao("envenenado")]) === "", "sem porta, a frase é vazia");
+  ok(linhaDaPortaDeSaida(portaDeSaida("Restauração Menor"), []) === "", "sem ninguém que tenha saído, a frase é vazia");
+  ok(linhaDaPortaDeSaida(portaDeSaida("Restauração Menor"), [null, undefined, {}]) === "", "e lixo na lista de removidas não vira linha meia-boca");
+  /* NENHUMA CONDIÇÃO TEM DUAS FRASES. `alivio` só guarda as que faltavam; as
+     outras reusam a `sai` de T3, porque é a MESMA coisa que o jogador vê — e
+     duas frases para o mesmo corpo é a segunda verdade envelhecendo primeiro. */
+  const naSalvaguarda = SALVAGUARDA_DO_FIM_DO_TURNO.permitem.map((x) => x.id);
+  const duplicadas = Object.keys(T4.alivio).filter((id) => naSalvaguarda.includes(id));
+  ok(duplicadas.length === 0, `nenhuma condição tem duas frases de alívio: ${duplicadas.join(", ") || "nenhuma"}`);
+  const alivioOrfao = Object.keys(T4.alivio).filter((id) => !condicaoPorId(id));
+  ok(alivioOrfao.length === 0, `e toda frase de alívio aponta para condição viva: ${alivioOrfao.join(", ") || "todas"}`);
+  /* E TODA CONDIÇÃO QUE UMA PORTA QUE RESOLVE ALCANÇA TEM FRASE — senão a
+     porta se abre e o jogador não lê nada acontecendo com ele. */
+  const alcancadasQueResolvem = [...new Set(T4.portas.filter((p) => p.resolve).flatMap((p) => portaDeSaida(p.nome).remove))];
+  const mudas = alcancadasQueResolvem.filter((id) => !linhaDaPortaDeSaida(portaDeSaida("Restauração Maior"), [criarCondicao(id)]));
+  ok(mudas.length === 0, `toda condição que a magia tira tem frase de mundo: ${mudas.join(", ") || "todas falam"}`);
+}
+
+console.log("\n[T4 · REGRESSÃO ZERO] o que o descanso limpa é IDÊNTICO ao de antes:");
+{
+  /* A PROVA POR ASSERÇÃO, NÃO POR AFIRMAÇÃO. Três condições ganharam
+     `"restauracao"` em `saiCom` (`paralisado`, `enfraquecido`, `exausto`) e
+     uma ganhou os dois canais de descanso (`concentrado`). As listas abaixo
+     são as de ANTES de T4, escritas por extenso: uma mexida futura em
+     `saiCom` que mude o que a noite ou a parada levam acende aqui, mesmo que
+     toda outra prova da suíte continue verde.
+
+     `concentrado` é a ÚNICA diferença, e é a etapa inteira: ele era a
+     condição sem saída nenhuma. O efeito em mesa é ZERO e está medido na
+     seção [T3→T4] acima — nada no `src/` o aplica. */
+  const ANTES_CURTO = ["cego", "queimando", "sangrando"];
+  const ANTES_LONGO = ["agarrado", "amedrontado", "atordoado", "caido", "cego", "enfraquecido", "envenenado", "exausto", "lento", "paralisado", "queimando", "sangrando"];
+  const limpaNo = (canal) => listaCondicoes().filter((c) => limparPorDescanso([criarCondicao(c.id)], canal).removidas.length > 0).map((c) => c.id).sort();
+  const curto = limpaNo("curto"), longo = limpaNo("longo");
+  ok(curto.join(",") === [...ANTES_CURTO, "concentrado"].sort().join(","), `a parada de uma hora limpa as MESMAS de antes, mais concentrado: ${curto.join(", ")}`);
+  ok(longo.join(",") === [...ANTES_LONGO, "concentrado"].sort().join(","), `e a noite inteira idem: ${longo.join(", ")}`);
+  ok(ANTES_CURTO.every((id) => curto.includes(id)) && ANTES_LONGO.every((id) => longo.includes(id)), "nenhuma condição PAROU de sair por descanso — é a metade que mais custaria em mesa");
+  ok(curto.every((id) => longo.includes(id)), "…e tudo que a parada limpa a noite também limpa: a noite nunca faz menos que a hora");
+  ok(!longo.includes("enfeiticado"), "a noite continua NÃO quebrando encantamento — a decisão de T2, intacta");
+
+  /* AS TRÊS QUE GANHARAM O CANAL continuam saindo pelo descanso EXATAMENTE
+     como saíam. `paralisado` é o caso perigoso e tem prova própria logo
+     abaixo; as outras duas já diziam `"longo"` e a segunda palavra entrou ao
+     lado, não no lugar. */
+  for (const id of ["paralisado", "enfraquecido", "exausto"]) {
+    const c = condicaoPorId(id);
+    ok((c.saiCom || []).includes("restauracao") && (c.saiCom || []).includes("longo"), `${id} declara o canal novo SEM largar o "longo": [${(c.saiCom || []).join(", ")}]`);
+    ok(limparPorDescanso([criarCondicao(id)], "longo").removidas.length === 1, `…e a noite continua o levando, como sempre levou`);
+  }
+
+  /* A ARMADILHA EXATA QUE T2 MEDIU EM `enfeiticado`, agora em `paralisado`:
+     `saiCom` NÃO-VAZIO DESLIGA A REGRA IMPLÍCITA do descanso longo. Ele não
+     tinha canal nenhum e saía pela regra implícita; declarar só
+     `["restauracao"]` o teria tirado da noite EM SILÊNCIO. O `"longo"` junto
+     é obrigatório, e esta sabotagem é quem o guarda. */
+  {
+    const c = condicaoPorId("paralisado");
+    const antes = c.saiCom;
+    c.saiCom = ["restauracao"];
+    let sem = null;
+    try { sem = limparPorDescanso([criarCondicao("paralisado")], "longo"); } finally { c.saiCom = antes; }
+    ok(sem.removidas.length === 0, "tirado o `longo` de paralisado, a noite deixa de o levar — a regra implícita não volta, porque `saiCom` não-vazio a desliga");
+    ok(limparPorDescanso([criarCondicao("paralisado")], "longo").removidas.length === 1, "…e a tabela volta inteira depois da sabotagem");
+  }
+  /* E A PROVA DE QUE A REGRA IMPLÍCITA CONTINUA EXISTINDO para quem depende
+     dela: as ruins sem canal nenhum saem na noite. Se alguém a apagar, estas
+     cinco ficam presas para sempre e a catraca da fase acende. */
+  const semCanal = listaCondicoes().filter((c) => c.tipo === "ruim" && !(c.saiCom || []).length).map((c) => c.id).sort();
+  ok(semCanal.join(",") === "agarrado,amedrontado,atordoado,caido,lento", `as ${semCanal.length} ruins sem canal saem pela regra implícita: ${semCanal.join(", ")}`);
+  ok(semCanal.every((id) => longo.includes(id)), "…e a noite leva todas elas");
+
+  /* O ACERVO DO ITEM NÃO FOI TOCADO: as listas que `pocoes.js` e `relicas.js`
+     escrevem continuam sendo a palavra final delas, e estão aqui por extenso
+     para que uma mexida futura acenda — é o que T2 já guardou em
+     `check-cura-nao-limpa.mjs`, seção 4, pelo lado do texto-fonte. */
+  ok(DO_CONSUMIVEL.sort().join(",") === "amedrontado,atordoado,envenenado,exausto,sangrando", `o consumível \`tipo: "limpa"\` remove as mesmas cinco: ${DO_CONSUMIVEL.join(", ")}`);
+  ok(DA_RELIQUIA.sort().join(",") === "agarrado,caido,enfraquecido,envenenado,exausto,lento,queimando,sangrando", `e a relíquia as mesmas oito: ${DA_RELIQUIA.join(", ")}`);
+  ok(CONSUMIVEIS.filter((c) => c.tipo === "limpa").length === 4, `são quatro consumíveis de limpeza: ${CONSUMIVEIS.filter((c) => c.tipo === "limpa").map((c) => c.nome).join(", ")}`);
 }
 
 /* v9.49: aqui testava-se o cao de guarda que lia a narracao atras de
@@ -885,6 +1419,74 @@ console.log("\n[T3 · ligado ao jogo] os três sítios da salvaguarda no App.jsx
     ok(s.achou && !/\bcd\b|dificuldade|salvaguardaDeSaida|linhaDaSaidaDeCondicao|rolarSalvaguarda/i.test(s.bloco),
       `o sítio de ${nome} não escreve uma sílaba de regra: sem CD, sem atributo, sem montar frase`);
   }
+}
+
+/* ============================================================
+   T4 · LIGADO AO JOGO — a porta declarada no despachante das magias
+
+   NO MOLDE DAS DUAS SEÇÕES ACIMA, e pela mesma lição de R4: definição *E*
+   sítio. A metade de cima deste arquivo prova que a porta abre; se ninguém
+   a chamar, ela fica verde para sempre com o órgão desligado — que foi
+   exatamente o estado de `curar_condicao` desde que o grimório existe:
+   `resolvidaPeloSistema` dizia sim, `magiaDeFuncaoNaAcao` entregava a magia
+   ao despachante, e lá não havia ramo nenhum. Promessa morta.
+
+   E COM A ARMADILHA QUE T1 REGISTROU NO CARO: recorte de âncora mal feito
+   vira "o App inteiro", e as provas de AUSÊNCIA passam a acender por
+   encontrarem a palavra em qualquer outro lugar do arquivo. Por isso o
+   recorte vai do próprio `if` até a etiqueta do `calou`, tem teto de
+   tamanho, e TODA asserção exige o `achou`.
+   ============================================================ */
+console.log("\n[T4 · ligado ao jogo] a porta declarada no App.jsx:");
+{
+  const { readFileSync } = await import("node:fs");
+  const APP = readFileSync("../src/App.jsx", "utf8");
+  const quantas = (rx) => (APP.match(rx) || []).length;
+
+  ok(/import \{[^}]*portaDeSaida[^}]*\} from "\.\/condicoes\.js"/.test(APP) && /import \{[^}]*removerPelaPorta[^}]*\} from "\.\/condicoes\.js"/.test(APP),
+    "o App importa as duas portas do catálogo — a regra não foi recopiada para a tela");
+  const i = APP.indexOf('if (m.funcao === "curar_condicao") {');
+  const iFim = APP.indexOf('calou("porta-de-saida-da-magia", e)');
+  const achou = i > 0 && iFim > i;
+  const bloco = achou ? APP.slice(i, iFim) : "";
+  ok(achou, `o ramo de \`curar_condicao\` existe no despachante (${i})`);
+  ok(quantas(/if \(m\.funcao === "curar_condicao"\) \{/g) === 1, "e é um ramo só — não há duas verdades sobre a mesma função de magia");
+  ok(bloco.length > 0 && bloco.length < 2500, `e o recorte não virou "o App inteiro" (${bloco.length} chars)`);
+
+  /* NUNCA PODE CUSTAR O TURNO: fiação nova em `try/catch`, e o `try` tem de
+     ABRIR antes da chamada sem se fechar no meio do caminho. */
+  ok(quantas(/calou\("porta-de-saida-da-magia",\s*e\)/g) === 1, "a fiação nova cala em vez de custar o turno (`calou`), uma vez só");
+  const iTry = achou ? APP.lastIndexOf("try {", i + 60) : -1;
+  ok(achou && iTry > i && !/catch/.test(APP.slice(iTry, APP.indexOf("portaDeSaida(m.nome)", i))), "…e a chamada está DENTRO desse try, não ao lado dele");
+
+  /* O NOME DA MAGIA É A CHAVE, e é o que faz uma condição nova ser alcançada
+     amanhã sem este arquivo mudar uma linha: o App pergunta pelo nome e
+     recebe a lista já resolvida (com a herança da Maior somada). */
+  ok(achou && /const porta = portaDeSaida\(m\.nome\);/.test(bloco), "o App pergunta pelo NOME da magia — não escolhe a lista, e não sabe que a herança existe");
+  ok(achou && /removerPelaPorta\(quem, porta, \{ quem: nome \}\)/.test(bloco), "…e a remoção é a do módulo, com o nome de quem recebe o toque");
+  /* A LISTA NOVA VOLTA PARA A FICHA, nos dois lados da mesa. Porta que roda
+     em cópia é porta que não abriu: o save guardaria a condição de pé. */
+  ok(achou && /grupo: \(p0\.grupo \|\| \[\]\)\.map\(\(g\) => \(g === escolhido\.alvo \? \{ \.\.\.g, condicoes: r\.condicoes \} : g\)\)/.test(bloco), "a lista sem a condição é escrita de volta na ficha do companheiro…");
+  ok(achou && /\{ \.\.\.p0, condicoes: r\.condicoes \}/.test(bloco), "…e na minha, quando o toque é em mim");
+  /* A FRASE ENTRA INTEIRA, sem sufixo: ela nasceu no módulo, em voz de mundo. */
+  ok(achou && /texto: r\.linha \}/.test(bloco), "e a frase que nasceu no módulo é empurrada para a tela, palavra por palavra");
+
+  /* O VEREDITO ANTES DO CLIQUE, na versão desta casa: NÃO COBRA O QUE NÃO
+     ENTREGA. Sem nada ao alcance, os PM ficam e o turno não vai ao Mestre —
+     o espelho do `gastou: false` do antídoto. A prova é de ORDEM: a recusa
+     tem de vir ANTES do `cobrar`, senão o preço sai mesmo assim. */
+  const iRecusa = bloco.indexOf("if (!r.mudou)");
+  const iCobrar = bloco.indexOf("cobrar(");
+  ok(achou && iRecusa > 0 && iCobrar > iRecusa, `a recusa vem ANTES da cobrança (recusa ${iRecusa} → cobra ${iCobrar}) — gastar para nada é desperdício, não decisão`);
+  ok(achou && /os \$\{m\.custo\} PM ficam com você/.test(bloco), "…e o jogador lê que o preço ficou com ele");
+
+  /* O QUE O SÍTIO NÃO FAZ: escrever regra. Nem id de condição, nem lista de
+     alcance, nem frase montada à mão. Se um id do catálogo aparecer aqui,
+     existem duas verdades sobre a mesma porta — a doença que esta casa mais
+     produziu, e a razão de `remove` morar em `condicoes.js`. */
+  const idsNoApp = listaCondicoes().map((c) => c.id).filter((id) => new RegExp(`["']${id}["']`).test(bloco));
+  ok(achou && idsNoApp.length === 0, `o sítio não nomeia uma única condição: ${idsNoApp.join(", ") || "nenhuma"}`);
+  ok(achou && !/\bremove\b|saiCom|restauracao|quantasPorVez|PORTAS_DE_SAIDA/.test(bloco), "…nem copia o alcance, o canal ou o teto: tudo isso mora na tabela");
 }
 
 console.log(falhas ? `\n${falhas} FALHA(S)` : "\nTudo passou");

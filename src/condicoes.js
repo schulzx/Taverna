@@ -52,8 +52,14 @@ import { rolarSalvaguarda, linhaDaSalvaguarda } from "./salvaguardas.js";
 
    `porDescanso` é o que separa os dois mundos, e é lido de verdade:
    `limparPorDescanso` RECUSA qualquer canal que não seja de descanso,
-   para que uma cura futura não entre por essa porta. O canal
-   "restauracao" nasce sem leitor de propósito — quem o liga é T4. */
+   para que uma cura futura não entre por essa porta.
+
+   v9.241 (T4) · O CANAL GANHOU LEITOR. Ele nasceu sem um de propósito, e
+   quem o lê agora é `PORTAS_DE_SAIDA`, mais abaixo: o canal é a AUTORIDADE
+   DA MAGIA — diz o que uma magia de restauração pode alcançar, e nada
+   mais. Não é autoridade do item: a lista `remove` da poção e a `limpa` da
+   relíquia continuam sendo a palavra final delas, porque filtrá-las por
+   este canal apagaria seis remoções vivas (medido em `PORTAS_DE_SAIDA`). */
 export const CANAIS_DE_SAIDA = [
   { id: "curto", porDescanso: true, diz: "uma hora de parada" },
   { id: "longo", porDescanso: true, diz: "a noite inteira" },
@@ -106,7 +112,7 @@ export const CONDICOES = {
   },
   paralisado: {
     id: "paralisado", rotulo: "Paralisado", icone: "🥶", tipo: "ruim",
-    turnos: 2, perdeAcao: true, subst: "paralisia",
+    turnos: 2, perdeAcao: true, subst: "paralisia", saiCom: ["longo", "restauracao"],
     resistir: { attr: "vigor", dif: 14 },
     desc: "Corpo travado: perde a ação enquanto durar.",
     aliases: [/paralisad/, /imobilizad/, /congelad/, /petrificad/, /não consegue (se mover|mexer)/],
@@ -146,7 +152,7 @@ export const CONDICOES = {
   },
   enfraquecido: {
     id: "enfraquecido", rotulo: "Enfraquecido", icone: "💧", tipo: "ruim",
-    turnos: 3, desvantagem: true, danoReduzido: 2, saiCom: ["longo"],
+    turnos: 3, desvantagem: true, danoReduzido: 2, saiCom: ["longo", "restauracao"],
     desc: "Desvantagem e −2 no dano causado.",
     aliases: [/enfraquecid/, /sem forças/, /força (drenada|sugada)/, /debilitad/],
   },
@@ -158,7 +164,7 @@ export const CONDICOES = {
   },
   exausto: {
     id: "exausto", rotulo: "Exausto", icone: "😵", tipo: "ruim",
-    turnos: null, desvantagem: true, saiCom: ["longo"],
+    turnos: null, desvantagem: true, saiCom: ["longo", "restauracao"],
     desc: "Desvantagem até um descanso longo.",
     aliases: [/exaust/, /esgotad/, /não aguenta mais de cansaço/],
   },
@@ -206,9 +212,26 @@ export const CONDICOES = {
     desc: "+2 de defesa.",
     aliases: [/protegid[oa] por/, /escudo (mágico|arcano|divino)/, /barreira (envolve|cobre)/],
   },
+  /* v9.241 (T4) · A ÚNICA QUE NÃO TINHA SAÍDA NENHUMA, e agora tem.
+     Ela não vence no relógio (`turnos: null`), não ganha salvaguarda (é
+     `tipo: "bom"`, e ninguém rola para se livrar da própria bênção — teste 3
+     do critério de T3) e não cai na regra implícita do descanso longo, que só
+     vale para as RUINS. Era armadilha latente: no dia em que alguma porta a
+     aplicasse, ela seria permanente em quem a recebesse.
+
+     O conserto é o canal de descanso, e é o mais barato que existe: no 5e a
+     concentração não sobrevive a um descanso — quem para para respirar larga
+     o que estava segurando. Os DOIS canais, e não só o longo, porque uma hora
+     de parada já é mais que o teto de uma concentração inteira.
+
+     O EFEITO EM MESA É ZERO, MEDIDO: nada no `src/` nem no `App.jsx` aplica
+     esta condição (a maquinaria de concentração vive em `efeitos.js`, sobre
+     `pers.efeitos`, e nunca passou por aqui). `limparPorDescanso` antes
+     devolvia a lista inteira para ela nos dois canais, e continua devolvendo
+     para quem não a carrega — que é todo mundo. */
   concentrado: {
     id: "concentrado", rotulo: "Concentrado", icone: "🎯", tipo: "bom",
-    turnos: null, concentracao: true,
+    turnos: null, concentracao: true, saiCom: ["curto", "longo"],
     desc: "Mantendo um efeito: levar dano pode quebrar.",
     aliases: [/concentrad[oa] (em|no|na)/],
   },
@@ -345,11 +368,14 @@ export function tickCondicoes(condicoes = []) {
       quer pode falhar de propósito numa salvaguarda, e efeito benéfico não
       manda ninguém rolar. (Corta as oito boas, `concentrado` incluído.)
 
-   ---- O QUE ISTO NÃO FAZ ----
-   `concentrado` não ganha saída aqui, e ele é o caso que T4 tem de resolver:
-   é `tipo: "bom"`, cai no teste 3, e continua com `turnos: null`, `saiCom: []`
-   e nada que o aplique. Esta tabela não o conserta e não finge que o
-   conserta. O canal `restauracao` também não é lido daqui — ele é T4.
+   ---- O QUE ISTO NÃO FAZ, E QUEM FEZ DEPOIS ----
+   `concentrado` não ganha saída aqui: é `tipo: "bom"`, cai no teste 3, e
+   ninguém rola para se livrar da própria bênção. Esta tabela nunca fingiu
+   consertá-lo — quem o fez foi T4, e pela porta certa (o canal de descanso,
+   no catálogo, com o efeito em mesa medido em zero). O canal `restauracao`
+   também não é lido daqui: ele é a autoridade da MAGIA, e mora em
+   `PORTAS_DE_SAIDA`. As duas metades continuam separadas de propósito — a
+   salvaguarda é o corpo se livrando sozinho, a porta é alguém abrindo.
    ============================================================ */
 export const SALVAGUARDA_DO_FIM_DO_TURNO = {
   regra: "o prazo é a saída; a segunda chance no fim do turno é exceção declarada",
@@ -555,6 +581,308 @@ export function tentarSaidaNoFimDoTurno(portador, { modDe, d20 = null, quem = ""
   return { condicoes: ficam, saidas, linhas, linhasTecnicas, rolagens, mudou: saidas.length > 0 };
 }
 
+/* ============================================================
+   AS PORTAS DE SAÍDA DECLARADAS (v9.241 — T4)
+
+   A lei é da pessoa, palavra dela: *"cura normal apenas recupera PV mas não
+   remove a condição; daí vêm magias, habilidades de classe, itens e os testes
+   de resistência."* T2 provou a primeira metade — 45 portas de cura varridas,
+   nenhuma escreve em `condicoes`. T3 deu a segunda chance a sete condições.
+   Esta tabela é o resto da frase: SE A CURA NÃO LIMPA, A LIMPEZA TEM DE
+   EXISTIR DE VERDADE, por porta declarada, e nenhuma condição pode ficar sem
+   saída nenhuma.
+
+   ---- TRÊS FAMÍLIAS, TRÊS AUTORIDADES DIFERENTES ----
+   A tentação era uma autoridade só — "o canal `restauracao` manda em tudo" —
+   e ela estava MEDIDA como errada antes de ser escrita. Poção e relíquia
+   removem hoje SEIS ids que o canal não declara (`atordoado`, `amedrontado`,
+   `queimando`, `agarrado`, `lento`, `caido`); filtrar as portas existentes
+   pelo canal apagaria as seis em silêncio, que é exatamente o tipo de
+   regressão que esta casa não aceita de carona. Então:
+
+     MAGIA      → o canal `restauracao` é a autoridade. A magia alcança o que
+                  o catálogo declara alcançável por porta, e nada além.
+     HABILIDADE → a promessa escrita na própria habilidade, recortada pelo
+                  mesmo canal. Hoje NÃO RESOLVE (ver `aguarda`, abaixo).
+     ITEM       → a lista `remove` do consumível e a `limpa` da relíquia. Elas
+                  já existem, já dizem por escrito o que tiram e já funcionam
+                  (`pocoes.js`, `relicas.js`). T4 não toca numa vírgula delas:
+                  regressão zero é a lei, e o item é dono do que promete.
+
+   Por isso as linhas de ITEM não aparecem em `portas`: duplicá-las aqui seria
+   ter duas verdades sobre o mesmo frasco, e a segunda envelheceria primeiro.
+
+   ---- O CRITÉRIO DA MAGIA (três testes, nesta ordem) ----
+   Ele está em `criterio`, legível pela suíte, para a posição de uma condição
+   nova ser DEDUZIDA e não escolhida por gosto:
+
+   1. DECLARA O CANAL? `saiCom` inclui `restauracao`. É a metade mecânica, e a
+      única que a suíte confere sozinha. Sete condições o declaram.
+   2. É AFLIÇÃO OU É FERIMENTO? É o teste 2 de T3, e vale aqui pelo mesmo
+      motivo: restauração desfaz o que foi POSTO num corpo, não fecha o que
+      foi ABERTO nele. Ferida e fogo pegado se resolvem com ação, com cura ou
+      com o item que estanca e apaga — Ataduras e A Pele do Mundo, que já
+      existem. (Corta `sangrando`.)
+   3. O DEGRAU: a MENOR tira o que foi posto em você; a MAIOR tira também o que
+      foi TIRADO de você. Veneno, escuridão e trava são coisa posta e saem no
+      2º círculo; vontade, fôlego e força são coisa arrancada, e devolver é 5º.
+      É o 5e ao pé da letra nas duas listas, e é a única linha que precisa ser
+      lida em vez de deduzida — por isso cada porta traz o `porque`.
+
+   ---- O QUE MUDOU NO CATÁLOGO, E POR QUE NÃO É REGRESSÃO ----
+   Três condições passaram a declarar o canal para que as duas Restaurações
+   cumpram o que a própria descrição delas promete, e a medição está feita:
+
+     `paralisado`  não tinha `saiCom` NENHUM → `["longo", "restauracao"]`. Sem
+        canal, ele caía na regra implícita de que o descanso longo limpa toda
+        condição ruim; declarar `"longo"` JUNTO é obrigatório, porque `saiCom`
+        não-vazio desliga a regra implícita — foi essa a armadilha que T2
+        mediu em `enfeiticado`. Com as duas palavras, a noite continua
+        exatamente como estava.
+     `enfraquecido` e `exausto`  já diziam `["longo"]` → ganharam a segunda
+        palavra e o `"longo"` ficou onde estava.
+
+   Conferido nos dois canais de descanso, condição por condição: a lista do
+   que o curto limpa e a do que o longo limpa são IDÊNTICAS às de antes. E é
+   garantido por estrutura, não por sorte — `limparPorDescanso` é o ÚNICO
+   leitor de `saiCom` no projeto inteiro, e ele recusa qualquer canal que não
+   seja de descanso. O que acrescentar `"restauracao"` faz hoje é exatamente
+   nada; quem passa a ler a palavra é esta tabela, e só ela.
+
+   ---- QUANTAS DE UMA VEZ, E POR QUE TODAS ----
+   O 5e manda escolher UMA condição por conjuração. Aqui a porta tira TODAS as
+   que alcança, e a divergência fica escrita em vez de escondida: lá há um
+   jogador para escolher e uma mesa para esperar a escolha; aqui seria um
+   diálogo a mais no meio do turno para um caso raro (é preciso carregar duas
+   condições alcançáveis ao mesmo tempo). E é o que o acervo JÁ pratica — os
+   Sais Aromáticos tiram `atordoado` E `amedrontado` num gole, e a relíquia
+   limpa a lista inteira dela. Uma regra a menos, e a mesma em todo o jogo.
+   ============================================================ */
+export const PORTAS_DE_SAIDA = {
+  regra: "se a cura não limpa, a limpeza vem por porta declarada — magia, habilidade de classe ou item",
+  canal: "restauracao",
+  criterio: [
+    "a condição declara o canal `restauracao` em `saiCom` — o canal é a autoridade da MAGIA",
+    "é aflição posta no corpo ou na vontade, não ferimento aberto nem fogo em curso",
+    "o degrau: a Menor tira o que foi posto em você; a Maior tira também o que foi tirado de você",
+  ],
+  /* `quantasPorVez: null` = todas as que a porta alcança. Mora aqui, e não
+     dentro do laço que remove, pela lei-mãe: quem um dia quiser o "escolha
+     uma" do 5e mexe nesta linha e a suíte lê a mudança de volta. */
+  quantasPorVez: null,
+  porqueTodas:
+    "o 5e faz escolher uma porque lá há um jogador para escolher e uma mesa para esperar. Aqui seria um diálogo a mais no meio do turno, para o caso raro de duas alcançáveis ao mesmo tempo — e o acervo já limpa lista inteira (Sais Aromáticos, e toda relíquia com `limpa`).",
+
+  familias: [
+    {
+      id: "magia", autoridade: "o canal `restauracao` do catálogo de condições",
+      porque: "a magia não tem lista própria: ela lê o que o catálogo declara alcançável por porta. Assim uma condição nova que queira ser alcançada por Restauração se declara numa linha só, e nenhuma magia precisa ser editada.",
+    },
+    {
+      id: "habilidade", autoridade: "a promessa escrita na própria habilidade, recortada pelo mesmo canal",
+      porque: "a habilidade de classe diz em português o que tira, e o canal impede que 'remove condições ruins' vire 'remove tudo'. Ela ainda NÃO resolve — ver `aguarda` nas linhas.",
+    },
+    {
+      id: "item", autoridade: "a lista `remove` do consumível e a `limpa` da relíquia",
+      porque: "elas já existem, já funcionam e já dizem por escrito o que tiram. Passar a filtrá-las por este canal apagaria seis remoções vivas — `atordoado`, `amedrontado`, `queimando`, `agarrado`, `lento` e `caido` — em silêncio. O item é dono do que promete; T4 não toca nele.",
+    },
+  ],
+
+  /* AS PORTAS, POR NOME. O nome é o laço com o acervo, como em
+     `CONCENTRACAO_DA_MAGIA.excecoes`: a suíte confere que cada um destes
+     existe mesmo no grimório ou em `classes.js`, e um nome que morrer lá
+     acende aqui. `herdaDe` é a regra "a Maior alcança tudo que a Menor
+     alcança" escrita como regra, e não copiada como lista. */
+  portas: [
+    {
+      familia: "magia", nome: "Restauração Menor", fonte: "grimorio.js · 2º círculo · funcao curar_condicao",
+      remove: ["envenenado", "cego", "paralisado"], resolve: true,
+      porque: "é a lista do 5e ao pé da letra — Restauração Menor encerra cegueira, surdez, paralisia, veneno ou uma doença. As três que este catálogo tem são coisa POSTA no corpo: o veneno que corre, a escuridão que cai sobre o olho, a trava que prende o músculo. A descrição da magia já prometia veneno e cegueira; agora ela cumpre.",
+    },
+    {
+      familia: "magia", nome: "Restauração Maior", fonte: "grimorio.js · 5º círculo · funcao curar_condicao",
+      herdaDe: "Restauração Menor",
+      remove: ["enfeiticado", "exausto", "enfraquecido"], resolve: true,
+      porque: "as três do 5º círculo são o que foi TIRADO de alguém: a vontade capturada (encanto), o fôlego (um nível de exaustão) e a força drenada (o efeito que reduz atributo). No 5e as duas listas são disjuntas; aqui a Maior é SUPERCONJUNTO de propósito, porque um 5º círculo que não faz o que o 2º faz seria armadilha de ficha — a disjunção lá existe por economia de lista, não por lei de mundo.",
+    },
+    {
+      familia: "habilidade", nome: "Purificar", fonte: "classes.js · Clérigo nv3",
+      herdaDe: "Restauração Menor", remove: [], resolve: false,
+      aguarda: "um resolvedor de habilidade de classe — ele NÃO existe: o único caminho que o sistema executa por conta própria é `magiaPorNome` + `resolvidaPeloSistema`, e habilidade de classe não passa por lá. Construí-lo é mecânica nova, e mecânica nova sobe para a pessoa.",
+      porque: "a descrição diz 'remove condições ruins de um aliado', e sem recorte isso seria a Maior de graça num nível 3. O alcance dela é o da Menor: a mão do clérigo fazendo por disciplina o que o 2º círculo faz por magia.",
+    },
+    {
+      familia: "habilidade", nome: "Palavra de Coragem", fonte: "classes.js · Clérigo nv4",
+      remove: ["amedrontado"], resolve: false,
+      aguarda: "o mesmo resolvedor de habilidade de classe. E a outra metade da promessa — 'concede PV temporário' — não tem mecânica nenhuma nesta casa: não existe PV temporário em lugar algum do código. É item de acervo, não de T4.",
+      porque: "'remove medo' é uma condição só, e ela tem nome no catálogo. `amedrontado` não declara o canal `restauracao` e não precisa: o canal é a autoridade da MAGIA, e esta é a palavra de quem está do lado, não um círculo conjurado.",
+    },
+  ],
+
+  /* A FRASE, E ELA NÃO SE REPETE. Quatro das seis condições que a magia
+     alcança já têm a sua em `SALVAGUARDA_DO_FIM_DO_TURNO.permitem[].sai`, e é
+     a MESMA coisa que o jogador vê acontecer: o corpo largando o que o
+     prendia. Que tenha largado por um dado ou por uma mão aberta sobre ele
+     não muda o que se vê. Aqui só moram as que faltavam — e a suíte pode
+     exigir que nenhuma condição tenha duas frases. */
+  alivio: {
+    enfeiticado: "a vontade volta a ser sua, e o que você fez ainda está lá",
+    exausto: "o corpo lembra o que é ter fôlego",
+  },
+};
+
+/* A frase de mundo, por condição, de onde quer que ela more. Privada de
+   propósito: quem precisa dela é a linha, e a linha é a porta única. */
+function fraseDoAlivio(id) {
+  const t = SALVAGUARDA_DO_FIM_DO_TURNO.permitem.find((x) => x.id === id);
+  return (t && t.sai) || PORTAS_DE_SAIDA.alivio[id] || "";
+}
+
+/* A porta única para "este nome é uma porta de saída, e o que ela tira?".
+   Aceita o nome cru, a magia do grimório ou a habilidade da ficha — porque a
+   pergunta chega dos três jeitos. Devolve `remove` JÁ RESOLVIDO (com o
+   `herdaDe` somado) e SEMPRE achatado, para nenhum chamador ter de saber que
+   a herança existe. `null` é "não é porta nenhuma". */
+export function portaDeSaida(nomeOuObjeto) {
+  const bruto = nomeOuObjeto && typeof nomeOuObjeto === "object"
+    ? (nomeOuObjeto.nome || nomeOuObjeto.id || "")
+    : nomeOuObjeto;
+  const n = semAcento(bruto).trim();
+  if (!n) return null;
+  const achar = (alvo) => PORTAS_DE_SAIDA.portas.find((p) => semAcento(p.nome) === semAcento(alvo));
+  const p = achar(n);
+  if (!p) return null;
+  /* a profundidade é teto de segurança, não regra: uma herança circular
+     escrita por engano pararia aqui em vez de estourar a pilha */
+  const somar = (linha, profundidade) => {
+    if (!linha || profundidade > 4) return [];
+    const herdado = linha.herdaDe ? somar(achar(linha.herdaDe), profundidade + 1) : [];
+    return [...herdado, ...(linha.remove || [])];
+  };
+  const remove = [...new Set(somar(p, 0))].filter((id) => !!condicaoPorId(id));
+  return {
+    familia: p.familia, nome: p.nome, fonte: p.fonte || "",
+    remove, resolve: !!p.resolve, aguarda: p.aguarda || "", porque: p.porque,
+  };
+}
+
+/* A frase que o jogador lê quando uma porta se abre, e ela NASCE AQUI — não
+   na tela. É a irmã de `linhaDaSaidaDeCondicao`: voz de mundo, sem o nome do
+   mecanismo, e sem depender de `mostrarRolagens`, porque aqui não se rola
+   nada — a porta declarada não pede dado a ninguém.
+
+   O ícone é o da PRIMEIRA condição que saiu, não o da porta: o jogador está
+   vendo o corpo mudar, e é o corpo que tem ícone na tela dele. */
+export function linhaDaPortaDeSaida(porta, removidas, quem = "") {
+  const cats = (removidas || [])
+    .map((i) => condicaoPorId(i && i.id) || normalizarCondicao((i && (i.nome || i.id)) || ""))
+    .filter(Boolean);
+  if (!porta || !cats.length) return "";
+  const frases = cats.map((c) => fraseDoAlivio(c.id)).filter(Boolean);
+  if (!frases.length) return "";
+  const nome = String(quem || "").trim();
+  const junta = frases.join("; ");
+  const frase = nome ? junta : junta.charAt(0).toUpperCase() + junta.slice(1);
+  return `${cats[0].icone || "✓"} ${nome ? `${nome}: ` : ""}${frase}.`;
+}
+
+/* A REMOÇÃO POR PORTA DECLARADA, e ela é NOVA E PRÓPRIA — não reaproveita
+   `limparPorDescanso`. T2 trancou aquela porta de propósito: ela RECUSA canal
+   que não seja de descanso, justamente para que uma cura futura não entrasse
+   por ali fingindo ser tempo. Fazer a magia passar por lá seria arrombar a
+   fechadura que a etapa anterior pôs.
+
+   Serve os três portadores sem saber qual é — herói, companheiro e inimigo
+   guardam condição do mesmo jeito. Estado NOVO, sempre: a lista devolvida é
+   outra e o portador recebido não é tocado. `null` e `{}` devolvem o vazio
+   sem estourar. Uma porta que ainda não resolve (`resolve: false`) não tira
+   nada: declarada não é ligada, e esta função não finge que é. */
+export function removerPelaPorta(portador, porta, opcoes) {
+  /* `= {}` no destructuring NÃO cobre `null` explícito — lei da casa */
+  const { quem = "" } = opcoes || {};
+  const p = porta && typeof porta === "object" && Array.isArray(porta.remove) ? porta : portaDeSaida(porta);
+  const lista = (portador && portador.condicoes) || [];
+  const vazio = { condicoes: [...lista], removidas: [], linha: "", mudou: false, porta: p };
+  if (!p || !p.resolve || !p.remove.length) return vazio;
+  const alcancadas = lista.filter((inst) => {
+    const c = condicaoPorId(inst && inst.id) || normalizarCondicao((inst && inst.nome) || "");
+    return !!c && p.remove.includes(c.id);
+  });
+  /* O TETO É LIDO DA TABELA, não cravado aqui: `null` é "todas as que
+     alcança", e um número seria o "escolha uma por conjuração" do 5e, no dia
+     em que a casa mudar de ideia. Sem esta linha, `quantasPorVez` seria
+     declaração morta — a lei que T4 existe para cumprir. */
+  const teto = PORTAS_DE_SAIDA.quantasPorVez;
+  const saidas = Number.isFinite(teto) && teto > 0 ? alcancadas.slice(0, teto) : alcancadas;
+  if (!saidas.length) return vazio;
+  /* a ordem da ficha é preservada: quem fica, fica onde estava */
+  const ficam = lista.filter((inst) => !saidas.includes(inst));
+  return { condicoes: ficam, removidas: saidas, linha: linhaDaPortaDeSaida(p, saidas, quem), mudou: true, porta: p };
+}
+
+/* ---------------- A CONTA DA COBERTURA ----------------
+   A catraca que fecha a fase T: TODA CONDIÇÃO TEM AO MENOS UMA SAÍDA. Uma
+   condição nova amanhã sem saída nenhuma faz `semSaida` deixar de ser vazio, e
+   a suíte acende no dia em que ela nascer — que é o que `concentrado` esperou
+   trinta versões para alguém notar.
+
+   `porItem` ENTRA POR ARGUMENTO, e é a mesma razão declarada de `modDe` em
+   T3: `pocoes.js` IMPORTA este arquivo, então importá-lo de volta fecharia um
+   ciclo. Quem tem a lista passa a lista; quem não passa recebe a conta sem a
+   família do item — e o `semSaida` continua correto mesmo assim, porque
+   nenhuma condição depende SÓ do item para ter saída (medido: as que o item
+   alcança têm todas prazo, salvaguarda ou descanso por baixo).
+
+   A HABILIDADE NÃO CONTA COMO SAÍDA, e é o ponto honesto desta conta: ela
+   está DECLARADA e não RESOLVE. Sai em `aguardando`, nunca em `porta` — senão
+   a cobertura passaria verde contando uma promessa. */
+export function coberturaDasCondicoes(opcoes) {
+  const { porItem = [] } = opcoes || {};
+  const todas = listaCondicoes();
+  const doItem = new Set((porItem || []).filter((id) => condicaoPorId(id)));
+  const daMagia = new Set();
+  const daHabilidade = new Set();
+  /* `abrem` é o que de fato SE ABRE hoje: as famílias acima são informação, e
+     uma porta declarada que ainda não resolve não entra aqui — por família
+     nenhuma, nem no dia em que a magia tiver uma esperando. */
+  const abrem = new Set(doItem);
+  for (const linha of PORTAS_DE_SAIDA.portas) {
+    const p = portaDeSaida(linha.nome);
+    if (!p) continue;
+    const saco = p.familia === "magia" ? daMagia : p.familia === "habilidade" ? daHabilidade : null;
+    for (const id of p.remove) { if (saco) saco.add(id); if (p.resolve) abrem.add(id); }
+  }
+  const conta = { prazo: 0, descanso: 0, salvaguarda: 0, porta: 0, comMaisDeUma: 0 };
+  const semSaida = [];
+  for (const c of todas) {
+    const prazo = Number(c.turnos) > 0;
+    const descanso = limparPorDescanso([criarCondicao(c.id)], "curto").removidas.length > 0
+      || limparPorDescanso([criarCondicao(c.id)], "longo").removidas.length > 0;
+    const salva = salvaguardaDeSaida(c.id).permite === true;
+    /* só porta que RESOLVE conta como saída — a habilidade está declarada e
+       ainda não abre; contá-la seria a cobertura passando verde na promessa */
+    const porta = abrem.has(c.id);
+    if (prazo) conta.prazo++;
+    if (descanso) conta.descanso++;
+    if (salva) conta.salvaguarda++;
+    if (porta) conta.porta++;
+    const quantas = [prazo, descanso, salva, porta].filter(Boolean).length;
+    if (quantas > 1) conta.comMaisDeUma++;
+    if (quantas === 0) semSaida.push(c.id);
+  }
+  return {
+    total: todas.length,
+    ruins: todas.filter((c) => c.tipo === "ruim").length,
+    boas: todas.filter((c) => c.tipo === "bom").length,
+    ...conta,
+    porMagia: [...daMagia],
+    porItem: [...doItem],
+    porHabilidade: [...daHabilidade],
+    aguardando: PORTAS_DE_SAIDA.portas.filter((p) => !p.resolve).map((p) => p.nome),
+    semSaida,
+  };
+}
+
 /* O que um descanso limpa (o catálogo manda, não a ficção).
 
    v9.239 (T2) · A PORTA SÓ ABRE PARA CANAL DE DESCANSO. Antes, esta
@@ -625,4 +953,4 @@ export const CONDICOES_PROMPT = `CONDIÇÕES E EFEITOS (v9.49 — o sistema apli
 - VOCÊ NÃO APLICA NEM REMOVE CONDIÇÃO — não existe campo para isso e não existe frase que faça isso. Só três coisas põem uma condição em alguém: o combate (o sistema rola a aflição da arma, da magia ou do bicho), o tempo (o turno que vence, o descanso que limpa) e a FALHA CRÍTICA num teste. Nenhuma delas passa por você.
 - Quando a cena pedir uma consequência mecânica — a teia que prende, o veneno da taça, o degrau que cede —, NARRE o perigo acontecendo e repita-o em UMA frase no campo "perigo". Você não pede rolagem nenhuma: o sistema lê a frase, escolhe a salvaguarda, rola, cobra e aplica. Descrever a teia caindo é seu; dizer que ela prendeu, não.
 - Também não descreva alguém "envenenado", "atordoado", "sangrando", "cego" ou "paralisado" como estado de ficha se o envelope não disser que ele está: isso é afirmar mecânica que não existe. Descreva a cena, não o estado.
-- O caminho inverso vale igual: as condições ATIVAS chegam a você no rodapé de cada turno, e são fato. Enquanto o herói estiver ATORDOADO ou PARALISADO ele NÃO age — narre o corpo que não obedece, jamais uma ação normal. Enquanto estiver ENVENENADO ou SANGRANDO, mostre o preço disso na cena. E nunca anuncie que uma condição passou: quem a tira é o relógio ou o descanso.`;
+- O caminho inverso vale igual: as condições ATIVAS chegam a você no rodapé de cada turno, e são fato. Enquanto o herói estiver ATORDOADO ou PARALISADO ele NÃO age — narre o corpo que não obedece, jamais uma ação normal. Enquanto estiver ENVENENADO ou SANGRANDO, mostre o preço disso na cena. E nunca anuncie que uma condição passou: quem a tira é o sistema, nunca você.`;

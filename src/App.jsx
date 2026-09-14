@@ -34,7 +34,7 @@ import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecem
 import { envelopeDoComercio, generoDoItem, generoPorId, apertarProcura, podePagar, pechinchar, dificuldadeDaPechincha, linhaDoPreco, vocacaoDe } from "./comercio.js";
 import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
-import { criarCondicao, tickCondicoes, tentarSaidaNoFimDoTurno, limparPorDescanso, resumoCondicoesPrompt, estadoDeRolagem, mecanicaDe } from "./condicoes.js";
+import { criarCondicao, tickCondicoes, tentarSaidaNoFimDoTurno, limparPorDescanso, resumoCondicoesPrompt, estadoDeRolagem, mecanicaDe, portaDeSaida, removerPelaPorta } from "./condicoes.js";
 import { custoDaFalhaCritica, linhaDoCusto, notaDoCusto } from "./consequencias.js";
 import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, perderFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
@@ -12708,6 +12708,68 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       pushMsgs([linhaJogador, { autor: "sistema", texto: `🩶 ${m.nome}: +${cura} PV a você e ao grupo · −${m.custo} PM` }]);
       enviar(`[${m.nome} — CURA APLICADA PELO SISTEMA] Recuperei ${cura} PV e o grupo também. Não recalcule; narre o alívio. ${acao}`, pers);
       return true;
+    }
+
+    /* ---------------- A PORTA DECLARADA (v9.241 — T4) ----------------
+       Restauração Menor e Restauração Maior declaram `funcao: "curar_condicao"`
+       desde que o grimório existe, `resolvidaPeloSistema` sempre respondeu que
+       sim e `magiaDeFuncaoNaAcao` sempre as entregou aqui — e aqui não havia
+       ramo nenhum: as duas caíam no `return false` do fim, o turno seguia para
+       o Mestre e conjurá-las não tirava condição alguma. Promessa morta desde
+       sempre, e a única das funções de suporte do grimório que não cumpria.
+
+       DAQUI SÓ SAI FIAÇÃO. O que cada uma alcança (`remove`, já com a herança
+       da Menor somada na Maior), quantas tira por vez e a FRASE que o jogador
+       lê nascem em `condicoes.js` — `portaDeSaida` e `removerPelaPorta`. O App
+       não escreve uma sílaba de frase nem um id de condição: é a lição de C2,
+       C3 e T3, e é o que permite uma condição nova ser alcançada amanhã sem
+       este arquivo mudar uma linha.
+
+       QUEM RECEBE O TOQUE. A magia é de `toque` e serve os dois lados da mesa.
+       Se a ação nomeia um companheiro, é ele — declaração explícita ganha, como
+       no resto do despachante. Se não nomeia, sou eu; e se não há em mim o que
+       esta porta alcance, cai no primeiro do grupo que tenha. É a mesma régua
+       da poção cheia (v9.13): gastar para nada é desperdício, não decisão, e o
+       sistema segura antes de cobrar.
+
+       E NÃO COBRA O QUE NÃO ENTREGA. Sem nada ao alcance, os PM ficam e o turno
+       não vai ao Mestre — o espelho exato do `gastou: false` do antídoto em
+       `pocoes.js` e do "não está com nada que responda a esse nome" de
+       `identificar`, logo ali em cima.
+
+       E NÃO PODE CUSTAR O TURNO: fiação nova em `try/catch`. Se a porta
+       estourar, `calou` anota e o `return false` devolve a ação ao caminho
+       normal — nenhum PM cobrado, nenhuma cena derrubada. */
+    if (m.funcao === "curar_condicao") {
+      try {
+        const nn = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+        const porta = portaDeSaida(m.nome);
+        const abrir = (quem, nome) => ({ alvo: quem, r: removerPelaPorta(quem, porta, { quem: nome }) });
+        /* nome citado ganha, e o mais longo entre os citados — a mesma regra da
+           habilidade citada e da magia citada, três linhas acima */
+        const citado = (p0.grupo || [])
+          .filter((g) => g && String(g.nome || "").length >= 3 && nn(acao).includes(nn(g.nome)))
+          .sort((a, b) => String(b.nome).length - String(a.nome).length)[0] || null;
+        const emMim = abrir(p0, "");
+        const escolhido = citado ? abrir(citado, citado.nome)
+          : emMim.r.mudou ? emMim
+          : (p0.grupo || []).map((g) => (g && (g.condicoes || []).length ? abrir(g, g.nome) : null))
+              .filter((x) => x && x.r.mudou)[0] || emMim;
+        const r = escolhido.r;
+        if (!r.mudou) {
+          pushMsgs([linhaJogador, { autor: "sistema", texto: `✋ ${m.nome}: a mão se abre e não acha o que desfazer — os ${m.custo} PM ficam com você.` }]);
+          return true;
+        }
+        const noGrupo = escolhido.alvo !== p0;
+        const pers = cobrar(noGrupo
+          ? { ...p0, grupo: (p0.grupo || []).map((g) => (g === escolhido.alvo ? { ...g, condicoes: r.condicoes } : g)) }
+          : { ...p0, condicoes: r.condicoes });
+        /* o preço primeiro, depois o que o corpo fez — a ordem de `firmarOuCeder`
+           logo abaixo, e a linha do módulo entra INTEIRA, sem sufixo nenhum */
+        pushMsgs([linhaJogador, { autor: "sistema", texto: `🌿 ${m.nome} · −${m.custo} PM` }, { autor: "sistema", texto: r.linha }]);
+        enviar(`[${m.nome} — JÁ APLICADA PELO SISTEMA] ${r.linha} Isso é fato e já está na minha tela: não devolva o que saiu, não recalcule e não cobre outro preço. Narre o gesto e o alívio em UMA frase. ${acao}`, pers);
+        return true;
+      } catch (e) { calou("porta-de-saida-da-magia", e); return false; }
     }
 
     /* invisibilidade, voo e luz viram EFEITO com prazo — o sistema conta os
