@@ -53,7 +53,7 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
   A pessoa decide se a habilidade de classe deve poder resolver sozinha.
   Catraca já pronta e mordendo: a sabotagem `Purificar` com `resolve: true`.
 
-- [ ] **não existe PV temporário em lugar nenhum** · pesado · de: backend (achado de T4) · 14/09
+- [x] **não existe PV temporário em lugar nenhum** · **RESPONDIDA 14/09 — virou a Fase V**, com as regras que a pessoa ditou (absorve antes do PV real, não cura, não acumula, fica o maior) · pesado · de: backend (achado de T4) · 14/09
   A outra metade de `Palavra de Coragem` — *"concede PV temporário"* — não tem
   mecânica em nenhum arquivo do projeto. Não é ligar sinal dormente: é campo novo
   na ficha, ordem nova de consumo no dano (o temporário some antes do PV real),
@@ -61,7 +61,7 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
   É órgão, e é da pessoa. O 5e o usa em dezenas de lugares, então nasceria com
   leitores de sobra — mas muda o que o jogador vive em campanha viva.
 
-- [ ] **o herói é um passageiro no próprio combate difícil** · pesado · de: backend (achado de B1) · 14/09
+- [x] **o herói é um passageiro no próprio combate difícil** · **ABSORVIDA pela Fase N (14/09)** — o sorteio cego que manda 65% dos golpes nele morre em N4 · pesado · de: backend (achado de B1) · 14/09
   O primeiro número que a régua nova produziu, e não era o que ela foi buscar:
   o herói cai em **98,1%** dos combates do cenário `justo` e em **100,0%** dos do
   `duro` — quase sempre na rodada 1 ou 2. A partir dali a cena é *"três
@@ -173,49 +173,93 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
 
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
 
-### Fase N — a mente do inimigo (combate tático, sem IA generativa)
-Decisão da pessoa (14/09): *"uma inteligência (não IA generativa) de combate,
-onde o inimigo não ataca aleatoriamente ou sempre o player, ele decide por
-nível de inteligência — um inimigo muito inteligente com um healer
-atrapalhando vai tentar eliminar o healer primeiro; um de inteligência muito
-baixa provavelmente atacaria o tank. Isso deve valer para todos os modos."*
+### Fase N — a mente do combate (dos dois lados, sem IA generativa)
+Decisão da pessoa (14/09), em duas levas. Primeiro o inimigo: *"uma
+inteligência (não IA generativa) de combate, onde o inimigo decide por nível
+de inteligência — um inimigo muito inteligente com um healer atrapalhando
+vai tentar eliminar o healer primeiro; um de inteligência muito baixa
+provavelmente atacaria o tank. Isso deve valer para todos os modos."*
+Depois o grupo: *"os personagens precisam ter inteligência e serem
+estratégicos — um healer cura a pessoa que está prestes a morrer, buffa o
+dano do carry. Um personagem inteligente no grupo do player pode sugerir uma
+formação ou conduzir o combate."*
 
-É a fase que responde, de lambuja, a pendente *"o herói é um passageiro no
-próprio combate difícil"*: hoje **65% dos golpes vão no herói por sorteio
-cego**, e é esse sorteio que morre aqui. Não se conserta a porcentagem — se
-troca a razão dela.
+**São a mesma mente, com dois consumidores — e é assim que tem de ser
+construída.** Dois motores de decisão divergiriam no primeiro ajuste, e
+teríamos a mesma doença que a mesa de design existe para impedir, agora no
+combate. Um motor lê a mesa e decide; quem o chama é que muda.
 
-O terreno existe: `adversario.js` já tem intenções e `escolherAlvo`, e
-`perfilCombate` já lê a mesa. Falta a **régua de inteligência** e a leitura
-tática do que está acontecendo.
+**O número já existe:** `intelecto` é um dos seis atributos
+(`constantes.js:62` — *"Conhecimento, raciocínio, poder místico"*) e hoje só
+rola teste e magia. Ele não nasce nesta fase: **ganha um segundo leitor**.
+Quem não tem ficha — o inimigo — é que precisa do grau declarado.
 
-- [ ] **N1 · o que o inimigo já sabe** · de: pessoa · 14/09
-  Medir antes de mexer: o que `escolherAlvo` decide hoje e com que entrada;
-  o que `INTENCOES` já cobre; que campo de inteligência as criaturas do
-  bestiário têm (ou não têm) e como se distribui. **Sem mudar nada.** A
-  linha de base do alvo (quem apanha, quanto) sai da régua de B1.
-- [ ] **N2 · a escada da inteligência** · de: pessoa · 14/09
+**E esta fase absorve duas pendentes**, que não se resolvem sozinhas: *"o
+herói é um passageiro no próprio combate difícil"* (hoje 65% dos golpes vão
+nele **por sorteio cego**, e é o sorteio que morre aqui) e *"fazer a ofensiva
+do companheiro nascer de verdade"* — B2 mediu que o piloto escolhe buff 119
+vezes e o que nasce é quase sempre `Escudo da Fé`, proteção com bônus zero.
+**A saída não é reabrir a tabela de bônus: é fazer quem escolhe ter cabeça.**
+Só depois disso se pergunta se os números precisam mudar.
+
+- [ ] **N1 · o que os dois lados já sabem** · de: pessoa · 14/09
+  Medir antes de mexer, **nos dois lados**: o que `escolherAlvo`
+  (`adversario.js`) decide hoje e com que entrada; o que
+  `decidirAcaoCompanheiro` (`companheiros.js`) decide; o que `INTENCOES` já
+  cobre; como `intelecto` se distribui nas fichas e nos oito prontos; e que
+  grau de inteligência o bestiário tem (hoje: nenhum). Linha de base pela
+  régua de B1: quem apanha, quanto, e o que o grupo escolhe fazer. **Sem
+  mudar nada.**
+- [ ] **N2 · a escada, e de onde cada um tira o seu degrau** · de: pessoa · 14/09
   Tabela nomeada: os degraus (animal, bruto, astuto, treinado, brilhante…),
-  **o que cada degrau enxerga** e **o que decide**. O animal vê o que está
-  perto e o que o feriu; o brilhante vê papel, recurso e ameaça futura. A
-  escada é tabela, com o degrau de cada criatura no bestiário — e quem não
-  declarar herda um padrão explícito. Nenhum número solto.
+  **o que cada degrau enxerga** e **o que decide**. Duas fontes, uma escada:
+  o companheiro e o herói tiram o degrau do **`intelecto` da ficha**; a
+  criatura tira de um campo novo no bestiário, e quem não declarar herda um
+  padrão explícito. Nenhum número solto.
 - [ ] **N3 · ler a mesa: o papel de cada um** · de: pessoa · 14/09
   Para mirar o curandeiro é preciso **saber que ele é curandeiro** — e saber
-  por observação, não por onisciência: quem curou na frente do inimigo é
-  conhecido; quem ainda não curou, não. O mesmo para o tanque (quem absorveu),
-  o artilheiro (quem doeu) e o frágil (quem caiu). Memória de combate por
-  criatura, determinística.
+  por observação, não por onisciência: quem curou na frente de você é
+  conhecido; quem ainda não curou, não. O mesmo para o tanque (quem
+  absorveu), o carry (quem doeu) e o frágil (quem está prestes a cair).
+  **Serve aos dois lados**: é o mesmo olhar que faz o inimigo achar o alvo e
+  o curandeiro achar quem salvar. Memória de combate por combatente,
+  determinística.
 - [ ] **N4 · a decisão, degrau por degrau** · de: pessoa · 14/09
-  `escolherAlvo` passa a compor: papel lido (N3) × degrau (N2) × intenção já
-  existente. O bruto vai no que está perto e no que bate mais; o brilhante
-  corta a cura primeiro. **Determinístico por semente**, e provável em Node.
-- [ ] **N5 · todos os modos, e a medida do que mudou** · de: pessoa · 14/09
-  Vale em Uma Vida, no Torneio e no Duelo — é o mesmo motor. Medir com a
-  régua de B1 e com a catraca da arena: quanto o herói deixou de ser o alvo
-  automático, quanto o combate ficou mais difícil, e se a faixa de 35–65%
-  se sustenta. **Se o combate tático deixar o jogo mais duro do que a pessoa
-  quer, isso é decisão dela, não ajuste silencioso.**
+  O motor: papel lido (N3) × degrau (N2) × intenção existente. O bruto vai
+  no que está perto e no que bate mais; o brilhante corta a cura primeiro.
+  **Determinístico por semente, provável em Node, e chamado pelos dois
+  lados** — `escolherAlvo` e `decidirAcaoCompanheiro` passam a consumi-lo em
+  vez de cada um adivinhar do seu jeito.
+- [ ] **N5 · o grupo com cabeça** · de: pessoa · 14/09
+  O companheiro aplica o motor às **suas** escolhas: o curandeiro cura quem
+  está prestes a cair (e não quem tem menos PV em absoluto); quem dá buff dá
+  o **ofensivo ao carry** e o abrigo a quem vai apanhar; quem tem pouco
+  `intelecto` continua fazendo o óbvio. **É aqui que a ofensiva do
+  companheiro passa a nascer de verdade** — e só depois de medir isso se
+  pergunta se `BUFF_DA_HABILIDADE` precisa mudar. Medir com a régua de B1, e
+  a catraca da arena vigiando o outro lado.
+- [ ] **N6 · o companheiro fala, e o que ele diz é decisão** · de: pessoa · 14/09
+  *"Um personagem inteligente pode sugerir uma formação ou conduzir o
+  combate."* O que ele diz **sai do motor**, não da IA: o sistema decide a
+  sugestão (recuar, focar aquele, segurar a linha) e o Narrador só a põe em
+  palavras — é a lei da casa, *o Mestre é código e a IA só narra*. Quem fala
+  e com que frequência depende do degrau e da índole; um companheiro que
+  comenta todo turno é praga (`aliado.js` já avisa disso). **O teto de
+  prompt é sagrado:** nada de bloco novo — viaja pela `pauta` dinâmica.
+  Aqui entra a pendente *"o buff do companheiro é mudo em Uma Vida"*, e a
+  pessoa respondeu-a assim (14/09): ***"estamos fazendo um jogo, então
+  precisamos da gameplay"***. É a régua desta etapa: **feedback que o
+  jogador não vê não foi economizado, foi perdido.** O que o grupo faz por
+  ele — o buff que pesou no golpe, a cura que chegou a tempo, a formação
+  sugerida — tem de ser visível na hora em que acontece, não deduzido do
+  número no fim.
+- [ ] **N7 · todos os modos, e a conta do que mudou** · de: pessoa · 14/09
+  Vale em Uma Vida, no Torneio e no Duelo — é o mesmo motor, e os prontos da
+  arena passam a lutar com cabeça. Medir com a régua de B1 e com a catraca
+  de equilíbrio: quanto o herói deixou de ser o alvo automático, quanto o
+  combate ficou mais difícil, se a faixa de 35–65% se sustenta. **Se o
+  combate tático deixar o jogo mais duro do que a pessoa quer, isso é
+  decisão dela, não ajuste silencioso.**
 
 ### Fase V — o PV temporário
 Decisão da pessoa (14/09), com as regras ditadas por ela: *"da mesma forma
@@ -1046,7 +1090,7 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   `BUFF_DA_HABILIDADE`**, e muda o que o jogador vive em campanha viva. A régua de
   B1/B1b mede o antes e o depois sem trabalho novo.
 
-- [ ] **o buff do companheiro é mudo em Uma Vida** · pesado · de: achado de B2 · 14/09
+- [x] **o buff do companheiro é mudo em Uma Vida** · **RESPONDIDA 14/09 — virou parte de N6** · pesado · de: achado de B2 · 14/09
   Desde a v9.247 a ação do companheiro carrega `bonus`/`fontes`, e **só a arena os
   narra** (a frase "pesa no golpe", no Duelo). Em Uma Vida ninguém os lê: o jogador
   sente o buff só pelo dano maior. O comentário de `buffDeCompanheiro`
