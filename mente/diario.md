@@ -16,6 +16,239 @@ Formato:
 
 ---
 
+## 14/09 01:05 · v9.233 · P3 · a proteção enfim protege (A FASE P FECHA) · commit `99500c7`
+- **estado inicial:** árvore limpa, HEAD `a2bfe6e`, VERSÃO v9.232, `npm test`
+  181/181 suítes + 8/8 varredores verde. A vez era **P3**, a última etapa da
+  Fase P — e a pauta já dizia, corrigida depois de P2, que a etapa tinha virado
+  outra coisa: **a proteção ainda não protegia ninguém**, e enquanto não
+  protegesse o piloto não podia procurá-la.
+- **conselheiro:** não chamado (a etapa já estava escrita e aprovada).
+- **backend (duas mãos):** a absorção com número e com leitor
+  (`ABSORCAO_DO_BUFF` + `absorverDano` em `efeitos.js`, consumo em `arena.js`);
+  depois o recorte do piloto (`ehAbrigo` em `companheiros.js`, o terceiro
+  degrau) e as duas medições de Uma Vida.
+- **frontend (duas mãos):** a porta única `passarPeloAbrigo` e os 7 sítios de
+  dano do herói e do grupo; depois o **nascimento** do abrigo no companheiro
+  (`buffDeCompanheiro` passando a chamar `efeitoDeBuff`) e o irmão no relógio
+  (`tickEfeitos` sobre `pers.grupo`). Tudo em `calou(...)`.
+- **testes:** 193 asserções novas — `teste-efeitos.mjs` 201 → **387** (seções
+  13, 14 e 15), `check-protecao.mjs` 38 → **45** — mais o conserto do dente da
+  mesa real em `teste-arena.mjs` (76 → **79**).
+
+- **O QUE MUDOU EM UMA FRASE.** Desde sempre, *"absorve o próximo dano"* tirava
+  **zero** de dano de quem quer que fosse: P1 tirou a mentira do golpe (o Escudo
+  Arcano parou de narrar "+2 de dano mágico"), mas a defensiva nasceu com força
+  **zero** e sem leitor. Hoje ela **come do golpe e se gasta** — na mesa de Uma
+  Vida, na arena, no herói e no companheiro —, e o jogador lê quanto parou ali.
+
+- **O DESENHO ADOTADO CONTRA O DA PAUTA, e os números que decidiram.** A pauta
+  previa `absorve: N` numa entrada de `pers.guardas`, reusando `expirarGuardas`.
+  O backend mediu e adotou a **porta irmã**: `absorve: N` no próprio **efeito**
+  que `efeitoDeBuff` já cria, consumido por `absorverDano`.
+  - **Alcance.** A família `absorve` é **25 das 64** defensivas do acervo de 593
+    — a maior das cinco. Na arena, `GUARDAS` pega **0 dos 8 prontos** (fato que
+    P2 já cravara com teto 0); `absorve` pega **3** — Chama, Remendo e Voto —, e
+    os três estavam **abaixo de 50%** na catraca, que é onde a proteção deve
+    pesar.
+  - **Sítios novos de nascimento: zero.** `efeitoDeBuff` já era chamado nas duas
+    portas que ligam abrigo a ficha. Pela porta da guarda, as duas teriam de
+    aprender a rotear — e uma delas mora no App, ou seja metade da proteção
+    ficaria escura até a mão seguinte.
+  - **A convivência se dissolve:** há **1 colisão** no acervo inteiro (Forma
+    Dracônica casa com as duas tabelas), e a precedência que a resolve já estava
+    escrita e testada — `guardaDe` primeiro.
+  - **A seta de dependência não se mexe.** `habilidades.js` continua a única
+    folha do motor, com zero imports; o desenho da guarda exigiria
+    `habilidades.js → combos.js`.
+
+- **DE ONDE SAI O NÚMERO — e por que o teto é a parte que importa.**
+  `ABSORCAO_DO_BUFF` = `{ porPM: 2, custoPadrao: 2, minimo: 2, teto: 12 }`. A
+  régua sai do **custo**, como em `BUFF_DA_HABILIDADE`: 2 de golpe por PM, o
+  dobro da força ofensiva, porque um bônus de dano cobra em **todo** golpe dos
+  três turnos e este cobra **uma vez só**. Escudo Arcano (2 PM) come 4 · Muralha
+  de Gelo (5) come 10 · Pele de Pedra (7) come 12.
+  **O teto 12 foi medido, não escolhido:** um golpe na arena tem mediana **13** e
+  média 13,76, sobre duelistas de 24–36 PV, e uma queda dura 4,85 golpes
+  acertados. 12 é o maior número que ainda fica **abaixo** de um golpe mediano —
+  nem Globo de Invulnerabilidade (11 PM, 22 sem teto) apaga uma batida. É a
+  mesma lei que o comentário de `GUARDAS` já escrevera para a defesa: nada que
+  zere o golpe, porque defesa alta é a estatística que mais rápido quebra um
+  combate. **Prova na mesa real:** em 241 mordidas, **0 vezes** o abrigo comeu o
+  golpe inteiro.
+
+- **O RECORTE DO PILOTO: uma família, e o motivo é o fracasso de P2.** P2 mediu
+  a ampliação inteira e a catraca reprovou — `ehBuff` 33 → 75, `sombra` de 60,2
+  para **32,9** (piso 35), amplitude 15,8 → **25,7** (teto 20), +150 linhas de
+  abrigo **todas inertes**. A causa não era o tamanho: era a **força zero**. O
+  que mudou entre P2 e hoje foi **uma** família. Logo o recorte é o número: das
+  42 defensivas que o regex nunca viu, entram as **12** que compram alguma
+  coisa; as outras 30 (amortece 8 · nao_cai 5 · intocado 18 · protege 8) ficam
+  de fora até terem o que comprar. **`sombra` é a prova de que o recorte está no
+  lugar certo:** quem o derrubou em P2 foi "Esquiva Ágil", e Esquiva Ágil é
+  `intocado` — fora daqui. `ehBuff` no acervo: 33 → **45**.
+
+- **A CATRACA VOLTOU — e APERTOU, sem reajustar pronto nenhum.** Retrato de 120:
+  amplitude **15,0 → 12,7** pts (teto 20), os oito dentro de 35–65 nas quatro
+  famílias e no retrato. Quem subiu foi quem devia (os três donos de abrigo,
+  todos abaixo de 50: chama 49,9 → 54,4 · remendo 48,6 → 54,6 · voto 43,9 →
+  **52,0**); quem desceu foi o topo (sombra 58,9 → 54,2 · flecha 54,2 → 49,0).
+  **Nenhum pronto foi reajustado em toda a Fase P** — a licença de reajuste
+  existia e não precisou ser gasta. Conferido pelo orquestrador em corrida
+  própria da suíte, não só pelo relato.
+  **Margem fina registrada como fato:** `punho` na família `cc` mede 36,2%, a
+  1,2 pt do piso 35. Entrou na suíte como linha declarada, **sem virar
+  limiar** — folga convertida em teto seria um segundo teto por cima do 35–65.
+
+- **O EFEITO EM UMA VIDA, EM NÚMERO** (200 combates, sementes `umavida|0..199`,
+  Mago+Clérigo+Engenheiro nv5 + herói, teto 20 rodadas; medido **duas vezes**, a
+  segunda contra o caminho real do App, com os três portões de
+  `buffDeCompanheiro` e o prazo da condição no lugar do padrão):
+  - **cenário duro** (4 elites nv9): quedas de companheiro 566 → **563**; rodada
+    da 1ª queda 4,41 → **4,64**; PV restante do grupo 675 → **754** de 26400;
+    **918 pontos de dano parados em 153 abrigos**.
+  - **cenário brando** (3 comuns nv5): 0 quedas nos dois; PV restante 91,7% →
+    **93,3%**; **431 pontos parados em 75 abrigos**.
+  - **A leitura honesta, e ela é a que vale:** o "+11,7% de PV restante" do
+    cenário duro é real mas mede uma base de 2,6% do máximo — o grupo é quase
+    varrido nos dois casos. O par que não depende de quão letal é o cenário:
+    **918 e 431 pontos de dano que passam a parar no escudo em 200 combates**
+    (4,6 e 2,2 por combate), e **91% dos escudos nascidos chegam a morder** (153
+    de 168). A primeira medição dizia 954/159; a honesta é 918/153, 4% menor — o
+    backend trouxe a correção **contra si mesmo**, e é esta que fica.
+  - **E o controle que separa o crédito:** `companheiros.js` de HEAD mais o sítio
+    novo do App dá 563 quedas · 754 PV · 918 absorvido · 153 abrigos, **byte a
+    byte igual**. Ou seja: **o ganho inteiro de Uma Vida vem da absorção e do
+    nascimento; o recorte do piloto contribui zero em Uma Vida** — ele paga na
+    arena, onde os abrigos que morderam foram de **83 → 241** e o dano parado de
+    **332 → 964**.
+
+- **decisões médias tomadas (com o motivo):**
+  - **O nascimento do abrigo no companheiro foi fiado, e o portão que o
+    autorizou era um risco nomeado.** `buffDeCompanheiro` (`App.jsx`) **nunca**
+    chamava `efeitoDeBuff`: o companheiro escolhia o abrigo, a mesa consumia
+    abrigo, e o abrigo **nunca nascia** — o efeito medido em Uma Vida era
+    **zero**. O perigo de fiar era o de P2 (a guarda sem relógio virando +4
+    permanente), e por isso a mão só passou depois de **enumerar os leitores**:
+    `combate.js` não contém a palavra `efeitos` em linha nenhuma;
+    `bonusDeDano`/`bonusDeArma` só são chamados com a ficha do herói; `defesaDe`
+    não lê `efeitos`. O único leitor vivo é `absorverDano`, que **remove o efeito
+    ao gastá-lo**. Não há "+4 permanente" aqui.
+  - **Nasceu o irmão no relógio** (`tickEfeitos` sobre `pers.grupo`), porque o
+    que faltava era o prazo: sem ele o escudo atravessaria a porta da luta e
+    comeria o primeiro golpe da luta seguinte, inclusive depois de carregar o
+    save. Mora no tique do herói e **não** em `limparConjuracoesDaLuta`: guarda
+    vence por **rodada**, que só existe na luta; efeito vence por **turno**, que
+    é toda resposta do Mestre.
+  - **Só a cláusula da absorção vai à tela.** Anunciar "+N de dano" no
+    companheiro seria anunciar número que ninguém lê — a mesma recusa de P1.
+  - **O efeito fica em quem conjurou**, mesmo com `port.alvo === "aliados"` (é o
+    que `aplicarBuffDeHabilidade` já faz para o herói). Somar um abrigo por
+    companheiro seriam três escudos na mesma pele: é o número sem teto que esta
+    escolha evita.
+  - **O preço do esforço não gasta o abrigo** (`abriga: false`, por parâmetro
+    nomeado e não por adivinhação de string): dano auto-infligido não é golpe
+    chegando de fora, não há nada para um escudo encontrar. **A queda gasta** —
+    cair é o chão batendo em você.
+  - **Uma porta única no App** (`passarPeloAbrigo`) em vez de sete `try/catch`
+    soltos: sete catches são sete chances de um nascer diferente.
+  - **Os envelopes do Narrador passaram a dizer o que o corpo pagou**, não o que
+    a fonte rolou. Com o abrigo mordendo, "já cobrou X · NÃO mude o número"
+    viraria ordem para mentir.
+  - **O comentário que exagerava foi corrigido, e o achado foi do próprio
+    backend contra si.** O degrau "o abrigo de pé não se re-firma" dizia que
+    re-firmar "compra ZERO"; `empilhar` casa por nome e portanto **renova o
+    prazo**. O comentário passou a dizer as duas metades medidas: perde-se a
+    renovação (82 de 278 turnos, 6 PV em 200 combates, 0,02% — ruído) e ganha-se
+    o turno que volta a render na arena (golpes com bônus 42 → 75, e 1 pt de
+    folga para `punho` em `cc`).
+
+- **O DENTE DA MESA REAL: o proxy envelheceu, e o conserto não foi afrouxar.**
+  `teste-arena.mjs` ficou vermelho — `comPeso >= 100` medindo **75** (era 329 em
+  A3). A causa é a Fase P funcionando: P1 tirou a defensiva do golpe de propósito
+  (329 → 108) e P3 fez o piloto trocar bônus por abrigo. O número **migrou de
+  moeda**, e `comPeso` conta só a metade ofensiva.
+  **O piso 100 não desceu um dígito.** A parcela virou a **soma** que a frase
+  sempre quis medir — `rendeu = comPeso + abrigos` = **316** (75 + 241) contra os
+  329 de A3 —, e cada metade ganhou dente próprio com piso **40**, herdado do
+  `golpesMinimosDaSonda` que a **mesma tabela** já escolhera (abaixo disso a
+  prova passa vazia), em vez de inventar um segundo limiar.
+  **Provado por sabotagem, em cópia:** a arena parando de consumir efeito nenhum
+  dá **13 falhas**; a metade ofensiva zerada com a defensiva intacta dá **3** — e
+  é o caso que decide, porque a soma ficaria **verde** em 244 e quem morde é o
+  dente da metade. Sem ele, essa regressão passaria.
+
+- **A LIÇÃO DE R4 APLICADA AO QUE ACABOU DE NASCER.** O nascimento do abrigo no
+  companheiro é `const` local do `App.jsx` e portanto **invisível ao
+  `teste-ligacao`**: apagar as três linhas deixava a casa inteira verde, o mesmo
+  `mexerNaReviravolta()` de novo. A seção 15 mede **definição E sítio de
+  chamada**, conta ocorrências (`=== 1`) em vez de perguntar "existe?" — porque o
+  comentário logo acima repete os mesmos nomes e foi assim que uma âncora andou —
+  e recorta o ramo `aliados` **dentro** de `buffDeCompanheiro`, já que
+  `aplicarBuffDeHabilidade` tem um ramo homônimo 500 linhas acima que **tem**
+  `efeitos:`. **Quatro sabotagens, quatro vermelhos certeiros:** o nascimento
+  apagado (4 falhas), o irmão no relógio removido (3), a recusa de P1 caindo (1),
+  o abrigo se espalhando pelo grupo (1). Nenhuma passou, nenhuma gritou por
+  engano.
+  **Conferido em cópia pelo orquestrador**, de forma independente: a defensiva
+  voltando a nascer com força zero — o estado exato de P1/P2 — dá **16 falhas**
+  em três arquivos.
+
+- **A FASE P ESTÁ FECHADA. O antes-e-depois inteiro:**
+  - *"Absorve o próximo dano"* tirava **0** de dano de qualquer um, em qualquer
+    mesa → tira **918** pontos em 200 combates de Uma Vida e **964** na mesa dos
+    28 pares da arena.
+  - **Escudo Arcano narrava "+2 de dano mágico"** — uma defensiva que somava no
+    golpe → narra o abrigo, com o número que ele aguenta. 391 buffs defensivos
+    deixaram de somar em P1.
+  - **Companheiro e duelista nunca erguiam guarda:** 0 das 9 entradas de
+    `GUARDAS` era reconhecida pelo piloto → **9 de 9**, com **0 falsas guardas**
+    sobre as 593 habilidades do acervo.
+  - **O buff do companheiro em Uma Vida nunca chegava a `comp.efeitos`** —
+    nenhuma classificação de P1 o tocava, nem rótulo, nem frase → nasce pelo
+    caminho único do herói, com relógio próprio.
+  - **Abrigos que morderam na arena: 0 → 241.** Turnos de apoio que compram
+    alguma coisa: 329 (só ofensiva) → **316** (75 ofensiva + 241 defensiva).
+  - **A catraca de equilíbrio nunca saiu da faixa e apertou:** amplitude 20,0
+    (A4) → 15,8 (P1) → 15,8 (P2) → 15,0 → **12,7**. **Nenhum número de pronto
+    foi reajustado nas três etapas.**
+  - **A prova:** `teste-efeitos.mjs` 168 → 201 → **387**; `check-protecao.mjs`
+    nasceu em P1 com 38 e está em **45**; `teste-guardas.mjs` ganhou a seção 6 em
+    P2; `teste-arena.mjs` 64 → 69 → 76 → **79**, com o dente da mesa real medindo
+    as duas moedas.
+
+- **o que ficou (e por quê):**
+  - **As condições do grupo nunca vencem — e isto é anterior à Fase P.** Seis
+    sítios escrevem condição em `pers.grupo` e **zero** a decrementam: o
+    companheiro que leva veneno fica envenenado **para sempre**, e a condição boa
+    do próprio `buffDeCompanheiro` (que `turnoDosCompanheiros` **lê**, via
+    `condAtacante`) é vantagem permanente desde a v9.2. O efeito ganhou relógio
+    nesta etapa; a condição continua sem. Foi para a pauta, e é o maior dos
+    restos.
+  - **`turnoDosCompanheiros` não lê `efeitos`**, então o `bonus` de dano do
+    companheiro nasce e é inerte. Medido e confirmado com grep: `combate.js` não
+    contém a palavra em linha nenhuma. Foi para a pauta — ligá-lo faz número
+    crescer sem teto medido, e isso é etapa com catraca própria.
+  - **Quatro das cinco famílias de P1 seguem com força zero** (amortece 8 ·
+    nao_cai 5 · intocado 18 · protege 8 = 39 habilidades). `amortece` tem molde
+    pronto (`amortecerDano` já corta pela metade); `intocado` e `nao_cai` colidem
+    com `estaIntocavel` e com o teste de morte. Cada uma é a sua própria etapa.
+    Foi para a pauta.
+  - **Não há prova de COMPORTAMENTO do nascimento**, só âncora de texto:
+    `buffDeCompanheiro` é `const` dentro do componente e não se importa em Node.
+    O caminho, se um dia valer, é o backend extrair o miolo para `src/` — aí vira
+    export com leitor e o `teste-ligacao` passa a guardá-lo sozinho. Registrado.
+  - **O piso `minimo: 2` é inalcançável pelo catálogo** (as 25 da família medem
+    4–12): ele guarda a porta de fora — relíquia, poção —, não o acervo.
+    Registrado, não é defeito.
+  - **A forma "nada chega" nunca disparou** na mesa real (0 de 241): existe no
+    código, tem dente se aparecer, e por isso `danoParado` é um **piso** do que
+    foi parado, nunca o total.
+  - **Dívida pequena, registrada:** os comentários novos do `App.jsx` foram
+    escritos **sem acento** (a mão escolheu a segurança contra o vício de
+    codificação da casa). O arquivo está íntegro — 0 caracteres de substituição,
+    11.293 acentos — mas o estilo destoa dos vizinhos. Não vale um ciclo; vale a
+    nota.
+
 ## 14/09 00:05 · v9.232 · P2 · o piloto reconhece as nove guardas · commit `bdf94f4`
 - **estado inicial:** árvore limpa, HEAD `9bafcd4`, VERSÃO v9.231, `npm test`
   181/181 suítes + 8/8 varredores verde. A vez era **P2**, segunda etapa da

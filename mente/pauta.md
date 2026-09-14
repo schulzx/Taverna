@@ -17,7 +17,48 @@ Formato de um item:
 
 ## Para a pessoa decidir (pesado)
 
-_(vazio — as duas de 13/09 foram respondidas; ver "Aprovado" abaixo)_
+- [ ] **o companheiro fica envenenado para sempre** · pesado · de: frontend+backend (achado de P3) · 14/09
+  **Seis** sítios escrevem condição em `pers.grupo` (`App.jsx` 5353, 7455, 7764,
+  7849, 7851, 8643) e **zero** a decrementam: `tickCondicoes` tem exatamente dois
+  sítios, o herói (`:8169`) e os inimigos (`:8185`). Consequência nos dois
+  sentidos: o companheiro que leva veneno de um inimigo fica envenenado **até o
+  fim da campanha**, e a condição boa que o próprio `buffDeCompanheiro` aplica —
+  que `turnoDosCompanheiros` **lê**, via `condAtacante` — é vantagem permanente
+  **desde a v9.2**. É anterior à Fase P; P3 só o encontrou ao ligar o relógio dos
+  *efeitos* do grupo e ver que o das *condições* não existia. Consertar é dez
+  linhas no molde que P3 acabou de escrever — mas muda combate em campanha viva
+  nos dois sentidos (tira uma vantagem que o grupo tem há trinta versões e cura
+  um veneno que hoje é eterno), e save antigo carrega as duas coisas. A pessoa
+  decide. Catraca: `teste-comp.mjs` + âncora no `App.jsx`, o molde da seção 15 de
+  `teste-efeitos.mjs`.
+
+- [ ] **o bônus de dano do companheiro nasce e é inerte** · pesado · de: backend+frontend (achado de P3) · 14/09
+  Medido e confirmado com grep: **`combate.js` não contém a palavra `efeitos` em
+  linha nenhuma**. `bonusDeDano`/`bonusDeArma` têm 4 chamadores (`App.jsx` 11319,
+  11585, 13186 e `arena.js:215`) e **nenhum** com ficha de companheiro; `defesaDe`
+  (`combate.js:39`) também não lê `efeitos`. Ou seja: depois de P3 o buff do
+  companheiro **nasce** com `bonus: N` e ninguém o soma — a metade defensiva do
+  efeito vale (é `absorverDano` quem a lê), a ofensiva não. Por isso a tela só diz
+  a cláusula da absorção: anunciar "+N de dano" seria a mentira que P1 recusou.
+  Ensinar `turnoDosCompanheiros` a ler `efeitos` fecha a simetria — e faz o dano
+  do grupo crescer em Uma Vida **sem teto medido**, porque a catraca de equilíbrio
+  só existe para a arena. É a etapa que precisa nascer com catraca própria, e por
+  isso é da pessoa. Linha "ligar sinal dormente" no custo, `pesado` na
+  consequência.
+
+- [ ] **quatro das cinco famílias defensivas ainda não protegem** · pesado · de: backend (achado de P3) · 14/09
+  P1 criou cinco famílias em `APLICACAO_DO_BUFF` e P3 deu número e leitor a
+  **uma**: `absorve`. Seguem com força zero `intocado` (18 habilidades),
+  `amortece` (8), `protege` (8) e `nao_cai` (5) — **39 no total**, que prometem na
+  ficha e não cumprem na mesa, exatamente como `absorve` prometia até ontem. E
+  enquanto não cumprirem, o piloto **não pode** procurá-las: está medido em P2 que
+  mandá-lo gastar turno em defensiva inerte derruba a catraca (`sombra` 60,2 →
+  32,9). Cada uma é a sua própria etapa, com molde diferente: `amortece` tem o
+  caminho pronto (`amortecerDano` já corta pela metade), `intocado` e `nao_cai`
+  **colidem** com `estaIntocavel` e com o teste de morte e precisam de desenho
+  antes de código. É o material de uma fase irmã da P, e o tamanho dela é decisão
+  da pessoa. Catraca herdada, pronta: `check-protecao.mjs` + a catraca de
+  equilíbrio.
 
 <details>
 <summary>as duas perguntas como foram feitas (e as respostas)</summary>
@@ -32,7 +73,7 @@ _(vazio — as duas de 13/09 foram respondidas; ver "Aprovado" abaixo)_
   jogador **perder** a magia que pagou — mecânica que muda o que ele vive, em
   campanha viva. A pessoa decide se a magia de duração deve poder quebrar.
 
-- [ ] **a família defensiva é promessa que nenhum não-jogador cumpre** · pesado · de: backend+testes (achado de A3) · 13/09
+- [x] **a família defensiva é promessa que nenhum não-jogador cumpre** · pesado · de: backend+testes (achado de A3) · 13/09 — **respondida e cumprida pela Fase P (P1 · P2 · P3), fechada em v9.233**
   A3 portou a guarda para a arena e o caminho **funciona** — provado com
   ficha sintética (defesa 15→19, vence na rodada certa). Só que ele quase
   nunca é pisado, e por dois motivos que se somam:
@@ -159,33 +200,51 @@ A ordem é a da mentira primeiro, porque é a que o jogador lê.
 
 </details>
 
-- [ ] **P3 · medir o que mudou nos dois lados** · de: pessoa · 13/09
-  Com companheiro e duelista se defendendo, o combate muda em Uma Vida **e**
-  na arena. Medir antes de julgar, como a Fase A ensinou: a catraca de
-  equilíbrio (35–65% + o teto de amplitude de A4) vai reagir — se estourar,
-  o reajuste é o trabalho da etapa. E dizer no diário o efeito na campanha
-  (quanto mais o grupo sobrevive), porque isso o jogador vai sentir.
-  **A linha de base já existe, medida em P1 (13/09):** retrato de 120 com
-  amplitude **15,8** (teto 20), tudo dentro de 35–65; família `rr` muralha 49,0
-  · sombra 54,8 · chama 41,4 · remendo 48,6 · voz 51,4 · flecha 61,9 · punho
-  49,0 · voto 43,8. É contra estes números que P3 mede, não contra os de A4.
-  **Corrigido pelo orquestrador em 14/09, depois de P2 — e a correção muda o
-  trabalho da etapa.** P2 mediu e a catraca **não se mexeu**: a linha de base
-  acima continua idêntica em cada dígito, e o reajuste que esta etapa previa
-  **não tem o que reajustar** vindo de P2. O que P2 revelou é maior, e é isto
-  que P3 recebe: **a proteção ainda não protege ninguém**, e enquanto não
-  proteger o piloto não pode procurá-la. Está medido — ligar `aplicacaoDoBuff`
-  como AMPLIAÇÃO de `ehBuff` (o piloto reconhecendo a família defensiva inteira
-  de P1) foi tentado e **reprovado pela catraca**: `ehBuff` 37 → 75, `sombra`
-  despenca de 60,2 para **32,9** (piso 35), amplitude 15,8 → **25,7** (teto 20),
-  buffs firmados 772 → 943 com **+150 linhas de abrigo todas inertes**, e
-  `npm test` 180/181. Turno pago, nada comprado — a catraca mede exatamente
-  isso. Logo P3 é, na ordem: **(1)** a família `absorve` vira **guarda de uma
-  batida** — campo `absorve: N` em `pers.guardas`, consumido e apagado ao ser
-  gasto, reusando `expirarGuardas` (o desenho que P1 investigou e P2 confirmou
-  em número); **(2)** só então o piloto passa a procurar a defensiva; **(3)**
-  aí sim medir os dois lados e dizer no diário o efeito na campanha. Sem (1),
-  (2) é regressão provada.
+- [x] **P3 · a proteção enfim protege** · feito em v9.233 (`99500c7`), 14/09
+  **O desenho da pauta foi medido e trocado por um melhor.** Em vez de `absorve: N`
+  em `pers.guardas`, a absorção mora no próprio **efeito** que `efeitoDeBuff` já
+  cria, consumida por `absorverDano` (`efeitos.js`), com a tabela
+  `ABSORCAO_DO_BUFF` (2 por PM · teto **12**, medido contra golpe de mediana 13).
+  Decidiram quatro números: a família `absorve` é **25 das 64** defensivas do
+  acervo e pega **3 dos 8 prontos** (`GUARDAS` pega 0); **zero** sítios novos de
+  nascimento; **1** colisão no acervo, já resolvida por precedência; e a seta de
+  dependência não se mexe.
+  **O piloto procura uma família só, e o número é o motivo:** das 42 defensivas
+  que o regex nunca viu entram as **12** que compram alguma coisa (`ehAbrigo`);
+  as outras 30 seguem com força zero e ficariam inertes, que foi o fracasso
+  medido em P2. "Esquiva Ágil", que derrubou `sombra` a 32,9 lá, é `intocado` —
+  fora do recorte.
+  **A catraca voltou e APERTOU: amplitude 15,0 → 12,7** (teto 20), os oito em
+  35–65. Subiram os três donos de abrigo (chama 54,4 · remendo 54,6 · voto 52,0),
+  desceu o topo (sombra 54,2 · flecha 49,0). **Nenhum pronto reajustado** — a
+  licença existia e não foi gasta. Margem fina declarada como fato: `punho` em
+  `cc` a 1,2 pt do piso.
+  **Uma Vida, em número** (200 combates, `umavida|0..199`): **918 pontos de dano
+  parados em 153 abrigos** no cenário duro (quedas 566 → 563, 1ª queda 4,41 →
+  4,64, PV restante 675 → 754) e **431 em 75 abrigos** no brando (91,7% → 93,3%).
+  **91% dos escudos nascidos chegam a morder.** O ganho inteiro vem da absorção
+  e do nascimento no companheiro; o recorte do piloto rende **zero em Uma Vida**
+  e paga na arena (abrigos 83 → 241, dano parado 332 → 964).
+  **O achado que a etapa teve de consertar junto:** `buffDeCompanheiro` **nunca**
+  chamava `efeitoDeBuff` — o companheiro escolhia o abrigo, a mesa consumia
+  abrigo, e o abrigo nunca nascia. Fiado depois de enumerar os leitores (o caso
+  "+4 permanente" de P2 não se repete aqui), com o irmão no relógio
+  (`tickEfeitos` sobre `pers.grupo`).
+  **O dente da mesa real de A3 envelheceu e foi trocado, não afrouxado:** o piso
+  100 não desceu um dígito; a parcela virou a soma `rendeu = comPeso + abrigos`
+  (**316** = 75 + 241) e cada metade ganhou dente próprio. Seis sabotagens em
+  cópia provaram os dentes novos. Ver o diário.
+
+  **A FASE P ESTÁ FECHADA.** *"Absorve o próximo dano"* tirava **0** de dano de
+  qualquer um → tira **918** em 200 combates de Uma Vida e **964** na mesa dos 28
+  pares. Guardas reconhecidas pelo piloto **0 de 9 → 9 de 9**; abrigos que
+  morderam na arena **0 → 241**; o buff do companheiro, que nunca chegava a
+  `comp.efeitos`, passa a nascer pelo caminho único do herói e a vencer por
+  relógio próprio. A catraca de equilíbrio nunca saiu da faixa e apertou:
+  amplitude 20,0 (A4) → 15,8 → 15,8 → 15,0 → **12,7**, com **nenhum pronto
+  reajustado nas três etapas**. `teste-efeitos.mjs` 168 → **387**.
+
+  **A próxima fase aprovada na fila é a C**, a partir de **C1**.
 
 A ordem é esta: a Arena primeiro (menor, e o Duelo está no ar hoje), as
 Reviravoltas depois. Dentro de cada fase, a etapa seguinte só começa com a
@@ -336,6 +395,31 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   **Não há mais fase aprovada na fila** — o próximo ciclo pega de "Aberto".
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **o nascimento do abrigo só tem prova de texto** · médio · de: testes (achado de P3) · 14/09
+  A seção 15 de `teste-efeitos.mjs` crava o nascimento do abrigo no companheiro
+  por **âncora de regex**, e as quatro sabotagens provam que ela morde. Mas não há
+  prova de **comportamento** — nenhuma ficha de companheiro entra e sai com o
+  abrigo na lista —, e o motivo é estrutural: `buffDeCompanheiro` é `const` dentro
+  do componente e não se importa em Node. É o mesmo vício que R4 nomeou, uma
+  camada abaixo: âncora prova que a linha existe, nunca que ela faz o que diz.
+  O caminho é extrair o miolo para `src/` (o que decide o efeito, não o que mexe
+  no estado do React) — aí vira export com leitor e o `teste-ligacao` passa a
+  guardá-lo sozinho, e as âncoras de texto encolhem para o que só elas podem
+  medir. Linha "refatorar módulo puro sem mudar comportamento". Catraca: as
+  âncoras atuais continuam verdes durante a extração, e a suíte ganha o caso vivo.
+
+- [ ] **os comentários novos do `App.jsx` estão sem acento** · leve · de: orquestrador (achado de P3) · 14/09
+  A fiação de P3 (a porta `passarPeloAbrigo`, o nascimento, o irmão no relógio)
+  trouxe comentários bons e longos escritos **sem acento** — "proposito",
+  "heroi", "e" no lugar de "é". A mão escolheu a segurança contra o vício de
+  codificação da casa (a memória `powershell-corrompe-utf8`), e o arquivo está
+  íntegro — **0** caracteres de substituição, 11.293 acentos. Mas a lei é
+  "comentários em português", e ao lado dos vizinhos acentuados a diferença
+  salta. Conserto por script `.cjs` via `node`, nunca por PowerShell, e conferido
+  com a mesma contagem de `\uFFFD` que o achou. Linha "comentário, nome,
+  cabeçalho". Catraca: um varredor que conte caracteres de substituição em `src/`
+  já valeria por si — erro já visto, e caro.
 
 - [ ] **a guarda de pé não aparece em tela nenhuma** · médio · de: frontend+orquestrador (achado de P2) · 14/09
   `pers.guardas` só é lido no instante em que a guarda sobe e no instante em que
