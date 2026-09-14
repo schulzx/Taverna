@@ -17,7 +17,12 @@ Formato de um item:
 
 ## Para a pessoa decidir (pesado)
 
-- [ ] **C2c · o inimigo conjurador é órgão novo, não etapa** · pesado · de: medição de C2 · 14/09
+_(vazio — as quatro de 14/09 foram respondidas; viraram as fases T, B, F e I)_
+
+<details>
+<summary>as quatro perguntas como foram feitas (e as respostas)</summary>
+
+- [x] **C2c · o inimigo conjurador é órgão novo, não etapa** · **APROVADO** · pesado · de: medição de C2 · 14/09
   A Fase C previa que a quebra valesse também para o inimigo. **Medido em C2, e
   não cabe em etapa nenhuma da fase** — é o oposto exato do companheiro. A ficha
   de inimigo (**27** entradas em `bestiario.js`; `completarInimigo` entrega nome,
@@ -76,8 +81,10 @@ Formato de um item:
   da pessoa. Catraca herdada, pronta: `check-protecao.mjs` + a catraca de
   equilíbrio.
 
+</details>
+
 <details>
-<summary>as duas perguntas como foram feitas (e as respostas)</summary>
+<summary>as duas perguntas de 13/09 como foram feitas (e as respostas)</summary>
 
 - [x] **a concentração está escrita e nunca acontece** · pesado · de: backend (achado de A2) · 13/09
   `App.jsx:13082` testa quem está concentrando quando o jogador apanha, e o
@@ -110,6 +117,130 @@ Formato de um item:
 </details>
 
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
+
+A ordem das quatro aprovadas em 14/09 é **T → B → F → I**, e ela tem motivo:
+T é bug vivo que atinge quem joga hoje; B é pequena e fecha a simetria que P3
+deixou pela metade; F é a maior e precisa de desenho; I é órgão novo e o mais
+caro. Nenhuma começa antes de a anterior fechar verde.
+
+### Fase T — o relógio das condições, no sistema de D&D
+Decisão da pessoa (14/09), com a lei ditada por ela: *"vamos usar o sistema de
+D&D: cura normal apenas recupera PV mas não remove a condição; daí vêm magias,
+habilidades de classe, itens e os testes de resistência para alguns venenos —
+tipo, teste de salvaguarda de Constituição exigido pelo veneno no final do
+turno."*
+
+O buraco que a fase fecha: **seis** sítios escrevem condição em `pers.grupo`
+(`App.jsx` 5353, 7455, 7764, 7849, 7851, 8643) e **zero** a decrementam —
+`tickCondicoes` só tem dois sítios, o herói (`:8169`) e os inimigos (`:8185`).
+Desde a **v9.2**: o veneno do companheiro é eterno, e a condição boa que
+`buffDeCompanheiro` aplica é vantagem permanente. Nos dois sentidos.
+
+- [ ] **T1 · o relógio alcança o grupo** · de: pessoa · 14/09
+  `tickCondicoes` passa a valer para `pers.grupo`, no molde que P3 escreveu
+  para os efeitos. Catraca: nenhuma condição de companheiro sobrevive ao
+  próprio prazo; e o **dente inverso**, que é o que importa aqui — a condição
+  boa também vence (a vantagem de trinta versões acaba, e isso é o conserto,
+  não um efeito colateral). Medir o que muda em Uma Vida nos dois sentidos e
+  dizer no diário. Save antigo carrega condições eternas: decidir com o
+  `backend` se elas vencem ao carregar ou seguem até o prazo, e escrever o
+  porquê.
+- [ ] **T2 · a cura não limpa** · de: pessoa · 14/09
+  Lei da pessoa: **cura normal só devolve PV**. Conferir todo caminho de cura
+  (poção, descanso, magia de cura, habilidade) e provar que nenhum apaga
+  condição de carona. Se algum apaga hoje, é o conserto da etapa — e o
+  jogador precisa entender que curar não cura o veneno. Catraca permanente:
+  nenhuma porta de cura escreve em `condicoes`.
+- [ ] **T3 · a salvaguarda no fim do turno** · de: pessoa · 14/09
+  5e: algumas condições dão nova chance ao fim do turno de quem as sofre —
+  veneno pedindo Vigor é o exemplo que a pessoa deu. **Tabela, não julgamento
+  no meio do código**: cada condição declara se permite salvaguarda, com qual
+  atributo e qual CD (no molde de `CONCENTRACAO_DA_MAGIA` e
+  `APLICACAO_DO_BUFF`). Vale para herói, companheiro e inimigo. O jogador lê
+  o resultado na linha que C2 criou — voz de mundo, os dois números, sem
+  nomear o mecanismo. Catraca: toda condição do catálogo declarou sua posição
+  (permite ou não), e nenhuma que permite fica sem CD.
+- [ ] **T4 · as portas de saída declaradas** · de: pessoa · 14/09
+  Se a cura não limpa, a limpeza vem de **magia, habilidade de classe e
+  item** — e isso tem de existir de verdade, não virar condição sem saída.
+  Levantar o que o acervo já oferece (Restauração e irmãs no grimório,
+  habilidades, poções/relíquias), declarar por tabela o que cada uma remove,
+  e provar a catraca que fecha a fase: **toda condição tem ao menos uma
+  saída** — prazo, salvaguarda ou porta. Uma condição nova amanhã sem saída
+  quebra a suíte no dia em que nascer. O que faltar de acervo vira item; o
+  que exigir mecânica nova sobe para a pessoa.
+
+### Fase B — o bônus do companheiro, se for lícito e justo
+Decisão da pessoa (14/09): *"se o bônus for lícito e justo não tem porque
+deixarmos de lado, vamos fazer."* A condicional é a fase: **provar que é justo
+faz parte do trabalho**, não é preâmbulo.
+
+P3 deixou a simetria pela metade — o buff do companheiro nasce com `bonus: N`,
+a metade defensiva vale (`absorverDano` a lê) e a ofensiva não, porque
+`combate.js` **não contém a palavra `efeitos`** em linha nenhuma. Fechar isso
+faz o dano do grupo crescer em Uma Vida **sem teto medido**: a catraca de
+equilíbrio só existe para a arena.
+
+- [ ] **B1 · a régua que falta** · de: pessoa · 14/09
+  Não há instrumento que meça equilíbrio em **Uma Vida** — só na arena. Antes
+  de somar um ponto de dano, criar a medida: combates simulados em cenário
+  duro e brando (o molde que P3 já usou para medir 918 de dano parado), com
+  os números que importam — quedas, primeira queda, PV restante, duração. É a
+  régua que vai dizer se o bônus é justo, e serve a toda mudança futura de
+  combate. Sem ela, B2 não tem como ser aprovada por prova.
+- [ ] **B2 · a simetria fechada, se a régua deixar** · de: pessoa · 14/09
+  `turnoDosCompanheiros` aprende a ler `efeitos`, e o bônus ofensivo passa a
+  somar como o defensivo já soma. **A régua de B1 decide**: se o grupo ficar
+  forte demais, o trabalho da etapa é ajustar a tabela até ficar justo — e o
+  diário registra o número antes e depois. Se não der para ficar justo sem
+  mexer em lei, a etapa devolve à pessoa em vez de forçar.
+
+### Fase F — as quatro famílias que ainda prometem
+Decisão da pessoa (14/09): *"todas devem cumprir o que prometem."*
+
+P1 criou cinco famílias em `APLICACAO_DO_BUFF`; P3 deu número e leitor a uma
+(`absorve`). Seguem com força zero: `intocado` (18 habilidades), `amortece`
+(8), `protege` (8) e `nao_cai` (5) — **39 que prometem na ficha e não cumprem
+na mesa**. E está medido em P2 que o piloto **não pode** procurá-las enquanto
+forem inertes (mandá-lo gastar turno em promessa vazia derrubou a catraca:
+`sombra` 60,2 → 32,9).
+
+Uma família por etapa, nesta ordem — o caminho pronto primeiro, o que colide
+por último:
+
+- [ ] **F1 · `amortece` (8)** · de: pessoa · 14/09
+  Tem o caminho pronto: `amortecerDano` já corta pela metade. É a etapa que
+  estabelece o molde das outras três.
+- [ ] **F2 · `protege` (8)** · de: pessoa · 14/09
+- [ ] **F3 · `intocado` (18)** · de: pessoa · 14/09
+  **Colide com `estaIntocavel`** (a guarda de um turno da v9.53, que erra
+  antes do dado). Desenho antes de código: o que é intocável por um turno e o
+  que é "intocado" continuado não podem ser a mesma coisa, ou o combate acaba.
+- [ ] **F4 · `nao_cai` (5)** · de: pessoa · 14/09
+  **Colide com o teste de morte.** Desenho antes de código, e o cuidado é o
+  mesmo: uma promessa de não cair, cumprida errado, tira a morte do jogo.
+
+Em todas: catraca herdada pronta (`check-protecao.mjs` + a catraca de
+equilíbrio), e o piloto só passa a procurar a família **depois** de ela
+cumprir — a ordem que P2 provou em número.
+
+### Fase I — o inimigo conjurador
+Decisão da pessoa (14/09): *"aprovado, pode criar o órgão novo."*
+
+C2c foi medido por C2 e não é etapa, é órgão: ficha de inimigo **sem magia**,
+**zero** sítios escrevendo `efeitos` no inimigo, o relógio dos efeitos não o
+alcança, e dez sítios de dano sem porta única. Hoje o inimigo não conjura, não
+mantém concentração e não perde magia.
+
+- [ ] **I1 · o desenho antes do código** · de: pessoa · 14/09
+  Antes de escrever, responder por escrito na pauta (e trazer à pessoa se
+  esbarrar em lei): o inimigo ganha magia por bestiário ou por arquétipo? A
+  porta de dano única que falta é refatoração ou órgão? O que o Narrador
+  precisa saber por turno, e cabe na `pauta` dinâmica sem tocar o teto de
+  82k? Uma fase que começa desenhando é o que P3 e F3/F4 ensinaram.
+- [ ] **I2+ · as etapas que o desenho pedir** · de: pessoa · 14/09
+  Escritas ao fim de I1, com o mesmo rigor das outras fases: módulo puro,
+  fiação defensiva, suíte, catraca, medição em número.
 
 ### Fase C — a concentração acontece
 Decisão da pessoa (13/09), com a regra ditada por ela: *"se a magia exige
