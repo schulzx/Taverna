@@ -16,6 +16,119 @@ Formato:
 
 ---
 
+## 14/09 19:25 · v9.245 · B1b · a régua se corrige antes de medir · commit `2a818f9`
+
+- **estado inicial:** árvore limpa, HEAD `41f0faa`, VERSÃO v9.243, `npm test`
+  **182/182 suítes + 9/9 varredores** verde. Trava posta por mim. **Duas mentes:**
+  o `regente` rodava D2 ao lado **com o bastão do `App.jsx` na mão** — e este
+  ciclo **não tocou o `App.jsx` em linha nenhuma**, só o leu (foi ele que provou
+  a ordem da rodada). Durante o ciclo o regente commitou D2 (`5cf555c`, `49a494f`,
+  `e46b7f2`) e bumpou para v9.244; esta etapa sai em **v9.245**, pela lei do
+  número maior. Nenhum conflito: os dois arquivos deste commit são de testes.
+- **conselheiro:** não chamado (etapa aprovada já escrita; a pauta tem mais de 5
+  itens em "Aberto").
+
+### O item que ia ser, e o que ele virou
+
+O ciclo era **B2 · a simetria fechada** — ensinar `turnoDosCompanheiros` a ler
+`efeitos` para que o bônus ofensivo do companheiro somasse como o defensivo já
+soma. A condicional da pessoa (*"se o bônus for lícito e justo"*) manda medir
+antes, e B1 tinha deixado um aviso na mesa: a absorção medida em **63 abrigos
+contra os 153 de P3** — duas medições do mesmo fenômeno discordando pela metade,
+**na porta exata que B2 encosta**. Olhar antes era ordem. **Olhar mudou o item.**
+
+**Nenhuma das duas medições estava errada: a comparação é que era inválida** — e
+a régua tinha um defeito de fidelidade *outro*, que ninguém procurava.
+
+- **A divergência era um fantasma, e ele custou o ciclo.** A contagem de abrigos
+  depende de dois parâmetros de fiação que o diário de P3/T1 **nunca registrou**,
+  e cada um sozinho move mais do que a diferença toda: **o kit do herói** (é
+  escolha desta régua, não herança — tirando o kit, o duro vai de 66 para **33**
+  abrigos) e **a ordem do grupo na rodada** (com o grupo agindo antes dos
+  inimigos, a mesma régua mede **159 abrigos e 954 PV** — que é exatamente o
+  "954/159" que P3 registrou como sua **primeira** medição). O molde que alcança
+  o número perdido é **o que o App contradiz**: `resolverRevide` roda
+  `turnoDosInimigos` (`App.jsx:13591`) e só então `turnoDosCompanheiros`
+  (`:13830`). Some-se que esta régua é **mais nova que P3** — compõe o
+  `efeitos.js` de hoje, com C2b e C3, que não existiam em v9.233 e derrubam
+  abrigo (custo medido: no brando, 40 viram 30).
+- **O defeito verdadeiro estava ao lado: a ordem do teste de morte.** A régua
+  rolava a morte do herói **entre** os inimigos e o grupo; o App faz o contrário
+  — `resolverQueda` é chamada em `App.jsx:13940`, **depois** do turno dos
+  companheiros, e o cabeçalho de `resolverRevide` (`:13497`) diz isso com todas
+  as letras. **E não é cosmético:** o teste de morte mexe na ficha que o grupo
+  lê. Um `revive` põe o herói em 1 PV, e `decidirAcaoCompanheiro` decide pela
+  fração de vida do pior ferido — com a morte antes, a Clériga via um herói de pé
+  onde o App lhe mostra um herói no chão, **e curava outra pessoa**.
+
+### A linha de base corrigida — o retrato novo contra o qual B2 será julgada
+
+N = 1000, família `umavida`, cenário `justo`. Valor ± meia-largura do IC de 95%.
+
+| métrica | antes (v9.243) | **depois (v9.245)** |
+|---|---|---|
+| vitória | 49,80% ± 3,10 | **52,10% ± 3,10** |
+| quedas (de 3) | 1,822 ± 0,08 | **1,790 ± 0,080** |
+| PV do grupo (de 132) | 24,98 ± 1,90 | **25,88 ± 1,90** |
+| PV do herói (de 42) | 5,58 ± 0,55 | **5,795 ± 0,556** |
+| primeira queda (rodada) | 4,30 ± 0,13 | **4,300 ± 0,127** |
+| rodadas | 7,73 ± 0,10 | **7,701 ± 0,105** |
+| dano desferido | 260,62 ± 4,94 | **261,53 ± 4,97** |
+| dano sofrido | 274,74 ± 3,69 | **272,25 ± 3,71** |
+| PV parados no abrigo | 1,75 ± 0,18 | **1,752 ± 0,178** |
+| abrigos | — | **0,292 ± 0,030** |
+| queda do herói | 98,10% | **98,10%** |
+| TPK | 50,20% | **47,90%** |
+| estourou o teto | 0,00% | **0,00%** |
+
+As quatro famílias independentes concordam nas treze. **Duro:** 8,8% de vitória ·
+2,82 quedas · 3,11 PV. **Brando:** 100% · 0 quedas · 94,2% de PV. E o retrato de
+200 combates no duro, contra o de T1: 1ª queda **4,72** (T1: 4,41 → 4,64), quedas
+**556** (T1: 566 → 563), PV do grupo **835** (T1: 675 → 754) — **três dos cinco
+caem em cima, e caíram depois do conserto**: o acordo de 4,41 que a régua antiga
+exibia era acordo por engano.
+
+### Decisões médias tomadas (com o motivo)
+
+- **O item do ciclo mudou de B2 para o conserto da régua, e B2 espera.** Motivo:
+  uma régua com defeito conhecido não pode medir o antes e o depois de B2. Se o
+  conserto e a mudança saíssem na mesma versão, o par antes/depois que a pessoa
+  pediu no diário estaria **confundido** — não se saberia quanto do movimento foi
+  do bônus e quanto foi do instrumento. Régua primeiro, uma etapa por ciclo.
+- **A sabotagem 1 subiu de 4 elites nv7 para nv8, e o piso não se moveu um
+  dígito.** Depois do conserto, a sabotagem antiga passou a medir **36,4%** contra
+  um piso de 35%: **parou de morder**, e dente que não morde não é dente. A saída
+  não foi mexer no piso (35%–65% é lei da casa, herdada da arena) e sim tornar a
+  sabotagem uma sabotagem de novo. **O que se perdeu está escrito no comentário**,
+  porque perder resolução em silêncio é pior do que perdê-la: a menor mudança de
+  dureza que a faixa pega hoje é de **dois** níveis, não de um.
+- **A folga mínima caiu de 3,70 para 3,45 margens e NÃO foi comprada de volta.**
+  Subir o teto de PV de 35 para 36 devolveria os dois décimos que o conserto
+  custou — e seria afrouxar um dente por cosmética. A lei escrita é "mais de 2
+  margens", e 3,45 passa longe.
+- **Uma asserção mudou de rótulo, nenhuma mudou de condição.** A linha "a 2000 as
+  famílias discordam em `danoSofrido`" afirmava uma discordância que o conserto
+  **desfez** (a 2000 as quatro agora concordam nas treze). A condição é a mesma
+  (`n < maior degrau`); o que mudou é o motivo, e ele está reescrito no
+  comentário, como a lei da casa exige de toda asserção mexida.
+
+### O que ficou
+
+- **B2 segue aberta, e agora com escada nova.** Medida depois do conserto: +0
+  **52,1%** · +1 55,1% · +2 58,4% · +3 61,3% · +4 64,0% · +5 **66,6% — vermelho
+  nos dois tetos**. Cada ponto de dano por golpe do grupo vale **~2,9** pontos de
+  vitória (era ~3,5 na medida velha), e a catraca fecha em **+5**.
+- **E a divergência não pode mais envenenar B2, caia para que lado cair:** a
+  absorção inteira, de zero a cheia, vale **3,6 pontos de vitória e 2,10 PV** no
+  `justo`; **dobrá-la** — o tamanho exato da disputa 378 × 918 — custa **1,2 ponto
+  e 1,02 PV**, menos de uma margem em cada. Está escrito no cabeçalho do módulo.
+- **`src/` intocado outra vez.** Como em B1, esta etapa não somou um ponto de
+  dano: os dois arquivos do commit são `testes/regua-combate.mjs` e
+  `testes/teste-regua.mjs` (mais VERSÃO, pauta e diário). `App.jsx` não foi
+  aberto para escrita em momento nenhum — o bastão era do regente.
+
+---
+
 ## 14/09 18:05 · v9.243 · B1 · a régua que falta · commit `322dee7`
 
 - **estado inicial:** árvore limpa, HEAD `85c23e8`, VERSÃO v9.241, `npm test`

@@ -366,7 +366,8 @@ Desde a **v9.2**: o veneno do companheiro é eterno, e a condição boa que
   produção. **Teto de prompt: crescimento estático zero nas quatro versões**, e
   `CONDICOES_PROMPT` na verdade encolheu (−10 em T2, −2 em T4), porque as duas
   vezes em que ele mentia foram consertadas trocando palavra por palavra.
-  **A próxima da fila aprovada é a Fase B; B1 fechou em v9.243 e a vez é de B2.**
+  **A próxima da fila aprovada é a Fase B; B1 fechou em v9.243, B1b consertou a
+  régua em v9.245, e a vez é de B2.**
 
 ### Fase B — o bônus do companheiro, se for lícito e justo
 Decisão da pessoa (14/09): *"se o bônus for lícito e justo não tem porque
@@ -402,18 +403,37 @@ equilíbrio só existe para a arena.
   verde** (4 elites nv7 → 34,2%; 3 elites nv9 → 76,2%; grupo nv7 → 90,2%).
   **O que B2 vai querer:** cada ponto de dano por golpe do grupo vale **~3,5
   pontos de vitória**, e a catraca fica vermelha por volta de **+4/+5**.
+- [x] **B1b · a régua se corrige antes de medir** · feito em v9.245 (`2a818f9`), 14/09
+  Nasceu de olhar a divergência que B1 mandou olhar — e o veredito é que **ela
+  não existia**: a contagem de abrigos depende de dois parâmetros que o diário
+  de P3/T1 nunca registrou (o kit do herói, 66 → **33** abrigos sozinho; e a
+  ordem do grupo na rodada, que reproduz o "954/159" de P3 **com o molde que o
+  App contradiz**), e esta régua ainda é mais nova que P3 (compõe C2b e C3, que
+  derrubam abrigo). O cabeçalho que acusava a divergência foi reescrito com os
+  números que a desmontam. **Mas o olhar achou um defeito de verdade ao lado:**
+  a régua rolava o teste de morte do herói **antes** do turno do grupo, e o App
+  faz o contrário (`App.jsx:13591` → `:13830` → `resolverQueda` em `:13940`). Não
+  é cosmético — `decidirAcaoCompanheiro` lê a ficha que o teste de morte acabou
+  de mexer, e a Clériga curava a pessoa errada. Retrato do `justo` depois do
+  conserto: vitória **49,8 → 52,1%**, quedas 1,822 → **1,790**, PV do grupo
+  24,98 → **25,88**, 1ª queda **4,30** (igual). `src/` intocado, `App.jsx` só
+  lido. **Sabotagem 1 subiu de nv7 para nv8** (a de nv7 parou de morder — 36,4%
+  contra o piso de 35%); o piso não se moveu, e a resolução perdida (dois níveis,
+  não um) está escrita. Folga mínima **3,45 margens**, não comprada de volta.
 - [ ] **B2 · a simetria fechada, se a régua deixar** · de: pessoa · 14/09
   `turnoDosCompanheiros` aprende a ler `efeitos`, e o bônus ofensivo passa a
-  somar como o defensivo já soma. **A régua de B1 decide**: se o grupo ficar
-  forte demais, o trabalho da etapa é ajustar a tabela até ficar justo — e o
-  diário registra o número antes e depois. Se não der para ficar justo sem
-  mexer em lei, a etapa devolve à pessoa em vez de forçar.
-  **B1 deixou duas coisas na mesa para esta etapa.** (a) A escada já está medida:
-  +1 → 52,5% · +2 → 56,5% · +3 → 60,3%, e o teto de PV do grupo é o dente mais
-  sensível (+1 já sai da margem) enquanto a vitória é o mais estável. (b) **A
-  absorção divergiu de P3 pela metade** — esta régua mede 378 PV parados em 63
-  abrigos, T1 mediu 918 em 153. O escudo nasce menos da metade das vezes. É a
-  mesma porta que B2 encosta: **olhar antes, não depois**.
+  somar como o defensivo já soma. **A régua decide**: se o grupo ficar forte
+  demais, o trabalho da etapa é ajustar a tabela até ficar justo — e o diário
+  registra o número antes e depois. Se não der para ficar justo sem mexer em
+  lei, a etapa devolve à pessoa em vez de forçar.
+  **A régua está consertada e a mesa está posta** (B1b, v9.245). (a) A linha de
+  base a bater: vitória **52,1%**, quedas **1,790**, PV do grupo **25,88**, 1ª
+  queda **4,300**. (b) A escada re-medida: +1 → 55,1% · +2 → 58,4% · +3 → 61,3%
+  · +4 → 64,0% · +5 → **66,6%, vermelho nos dois tetos**. Cada ponto de dano por
+  golpe vale **~2,9** pontos de vitória, e o teto de PV do grupo continua sendo o
+  dente mais sensível (+1 já sai da margem) enquanto a vitória é o mais estável.
+  (c) **A divergência da absorção foi resolvida e não atrapalha mais**: a absorção
+  inteira vale 3,6 pontos de vitória, e dobrá-la custa 1,2 — menos de uma margem.
 
 ### Fase F — as quatro famílias que ainda prometem
 Decisão da pessoa (14/09): *"todas devem cumprir o que prometem."*
