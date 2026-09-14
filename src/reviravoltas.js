@@ -600,13 +600,105 @@ export function garantirReviravolta(r) {
     /* o último dia em que uma semente foi regada: espaça as regas por
        dias, para a máscara cair no ritmo do arco e não em quatro turnos */
     regadaEm: Math.max(0, Number(r.regadaEm) || 0),
+    /* v9.229: o dia em que ela CAIU. É a partida da folga entre uma
+       virada e a seguinte, e por isso não dava para derivar de nada:
+       `revelada` diz que caiu, e não quando. Save antigo não tem o campo
+       e cai em 0 — uma menor revelada num save de ontem satisfaz
+       qualquer folga, que é exatamente o que se quer (ninguém deve ser
+       punido por ter revelado antes de o campo existir). */
+    reveladaEm: Math.max(0, Number(r.reveladaEm) || 0),
   };
 }
 
+/* ============================================================
+   R3 (v9.229) — O RITMO DAS DUAS VIRADAS
+
+   Até aqui havia uma virada por campanha na prática: `elegerReviravoltas`
+   devolvia `{ menor, maior }` e o App lia só `.menor`. As três maiores
+   eram acervo escrito e nunca vivido.
+
+   Ligar a maior não é só "ler também o `.maior`": duas viradas no mesmo
+   mundo precisam de uma regra de convivência, e ela tem de ser
+   ESTRUTURAL — quem chama não pode ser obrigado a lembrar. Por isso a
+   pergunta que o App faz deixa de ser "já posso revelar?" (uma por
+   virada, duas respostas independentes, duas podendo ser `true` no mesmo
+   turno) e passa a ser "DE QUEM É A VEZ?", que só tem uma resposta.
+   ============================================================ */
+
+/* Os números do ritmo. Um lugar só, porque a menor e a maior medem a
+   MESMA grandeza — dias — e duas cópias de um número são duas chances de
+   discordar amanhã. */
+export const RITMO_DAS_VIRADAS = {
+  /* dias entre uma rega e outra, por porte.
+
+     MENOR: 3, e é o mesmo três que já estava aqui — regressão zero é
+     literal. Ele também é o `DIAS_ENTRE_MARCOS` de `episodios.js`, o
+     passo em que um episódio respira: a menor amadurece no compasso do
+     episódio (três sementes leves, uma rega cada, nove dias — a vida de
+     um episódio inteiro).
+
+     MAIOR: 6, o dobro. A maior é a virada da CAMPANHA, e o dobro é o que
+     a tira do compasso da cena e a põe no do arco. Mas o número não é
+     "dobro porque soa maior": três sementes a seis dias são DEZOITO dias,
+     e o episódio mais longo do catálogo (quatro marcos, três dias cada)
+     vive DOZE. Isto é o que importa: nenhum episódio dura o
+     amadurecimento inteiro da maior. A lei "não atropela episódio
+     aberto" ADIA a maior, e um adiamento que durasse mais que a espera
+     seria um cancelamento disfarçado — o defeito de R2 (acervo escrito
+     que não pode acontecer) com outra roupa. */
+  diasEntreRegas: { menor: 3, maior: 6 },
+
+  /* dias de digestão entre uma virada e a seguinte. 3 = um marco de
+     episódio: o mundo vive uma batida inteira do `oDiaSeguinte` da
+     primeira antes de a segunda poder cair. Duas viradas coladas não são
+     duas viradas — são uma cena confusa, e o jogador não consegue dizer
+     qual revelação explicava qual sinal. */
+  folgaEntreViradas: 3,
+
+  /* quantos dias a maior espera a menor APARECER antes de nascer por
+     conta própria. 9 = o amadurecimento inteiro da menor (três regas de
+     três dias): se em todo esse tempo o mundo não deu um alvo vivo a
+     ela, não vai dar.
+
+     Sem esta linha, "a menor vem primeiro" viraria "a maior nunca
+     acontece" em toda campanha cujo detector da menor não acha ninguém —
+     o herói que anda sozinho e a máscara do aliado, por exemplo, ou a
+     campanha sem item de origem vaga. Seria repetir, um andar acima,
+     exatamente o bug que R3 veio corrigir. */
+  diasDeEsperaPelaMenor: 9,
+};
+
 /* quantos dias entre uma rega e outra: a reviravolta amadurece devagar,
-   como um vilão — três sementes, alguns dias cada, uma revelação que
-   parecia estar vindo desde sempre. Porque estava. */
-export const DIAS_ENTRE_REGAS = 3;
+   como um vilão — sementes, alguns dias cada, uma revelação que parecia
+   estar vindo desde sempre. Porque estava.
+
+   Continua sendo o número DA MENOR, e continua com o mesmo valor; o que
+   mudou é que ele LÊ a tabela em vez de repetir o 3 por conta própria. */
+export const DIAS_ENTRE_REGAS = RITMO_DAS_VIRADAS.diasEntreRegas.menor;
+
+/* o ritmo de uma forma, sem o chamador precisar saber o porte dela: a
+   forma diz se é menor ou maior, a tabela diz o número. Forma
+   desconhecida cai no ritmo da menor, que é o conservador — regar mais
+   cedo não revela mais cedo, quem decide isso é a catraca do Livro. */
+export function diasEntreRegasDe(forma) {
+  const f = formaPorId(forma);
+  const d = RITMO_DAS_VIRADAS.diasEntreRegas;
+  return (f && d[f.porte]) || d.menor;
+}
+
+/* o mesmo alvo, pela PESSOA (ou pelo lugar) e não pela grafia.
+
+   A contaminação no Livro é por igualdade exata — `podeColher` filtra
+   `dona` + `alvo` com `===` —, mas a confusão na mesa é por quem: "José"
+   e "Jose" são o mesmo homem para o jogador, e duas viradas sobre ele
+   seriam duas viradas sobre a mesma pessoa mesmo que o Livro não
+   misturasse nada. Recusamos pelo critério mais largo.
+
+   Compara STRING, e só: `cidade_dizimo` devolve nome de cidade, não de
+   gente, e nada aqui supõe uma pessoa do outro lado. Alvo vazio nunca é
+   "o mesmo" que coisa nenhuma — senão duas viradas sem alvo pareceriam
+   colidir. */
+const mesmoAlvo = (a, b) => !!norm(a) && norm(a) === norm(b);
 
 /* ---------------- AS SEMENTES QUE ELA PLANTA ----------------
    Traduz a forma nas sementes que o Livro semeia. O App passa cada uma a
@@ -629,6 +721,177 @@ export function podeRevelar(forma, livro, { alvo = "" } = {}) {
   const f = formaPorId(forma);
   if (!f) return false;
   return podeColher(livro, { peso: f.pesoDaColheita, dona: "reviravolta", alvo });
+}
+
+/* ---------------- DE QUEM É A VEZ (R3) ----------------
+   A arbitragem entre a menor e a maior, num turno. Devolve UM NOME —
+   `"menor"`, `"maior"` ou `""` — e é isso que torna "as duas não estouram
+   na mesma cena" estrutural: não há resposta em que as duas caibam, então
+   não há como quem chama esquecer de escolher.
+
+   POR QUE O LIVRO ENTRA AQUI, e não um par de booleanos `pronta`: se a
+   maturidade viesse de fora, o App poderia perguntar "de quem é a vez?",
+   ouvir "maior" e descobrir só depois que a maior não está madura — e a
+   menor, que estava, teria perdido o turno em silêncio. Com o Livro
+   dentro, a resposta já é final: quem sai daqui pode revelar agora.
+
+   O `motivo` é BASTIDOR — vai para a suíte e para o diário de
+   desenvolvimento, nunca para a tela. O sistema não fala de si mesmo.
+
+   A ORDEM DAS TRANCAS é a ordem das leis, e cada uma tem seu porquê
+   escrito onde está. */
+export function quemPodeRevelar(o) {
+  const a = o && typeof o === "object" ? o : {};
+  const dia = Math.max(0, Number(a.dia) || 0);
+  const livro = a.livro;
+  /* `garantirReviravolta` engole `null`, `undefined` e forma que não
+     existe mais — os refs do App entregam `null` explícito, e `= {}` no
+     destructuring não cobre isso */
+  const menor = garantirReviravolta(a.menor);
+  const maior = garantirReviravolta(a.maior);
+
+  /* ① A MENOR PRIMEIRO, e SEM NENHUMA CONDIÇÃO NOVA. É exatamente a
+     catraca que ela já tinha: madura no Livro, cai. Episódio aberto não a
+     segurava e não passa a segurar; folga não a segurava e não passa a
+     segurar. Numa campanha que já roda, este ramo devolve no dia N
+     precisamente o que a v9.228 devolvia. */
+  if (menor && !menor.revelada && podeRevelar(menor.forma, livro, { alvo: menor.alvo })) {
+    return { quem: "menor", motivo: "a menor está madura, e a menor vem primeiro" };
+  }
+
+  if (!maior) return { quem: "", motivo: "não há maior eleita" };
+  if (maior.revelada) return { quem: "", motivo: "a maior já caiu" };
+
+  /* ② a maior não cai por cima de uma menor EM CURSO. A maior é a virada
+     da campanha, não um evento a mais: se a menor foi eleita e ainda não
+     caiu, o arco ainda está pagando aquela dívida. */
+  if (menor && !menor.revelada) {
+    return { quem: "", motivo: "a menor está em curso — a maior não cai por cima dela" };
+  }
+
+  /* ③ nem sobre o ALVO da menor. Com os DOIS nascimentos guardados
+     (`maiorPodeNascer` e `menorPodeNascer`), esta tranca virou fundo de
+     gaveta — nenhuma ordem de nascimento produz mais um par colidido. Ela
+     fica porque SAVE não nasce, é lido: um save escrito por um build em
+     que só um dos lados tinha guarda traz o par colidido pronto, e aí as
+     sementes das duas estão misturadas no Livro (o filtro de `podeColher`
+     é `dona` + `alvo`, e a dona é "reviravolta" nas duas) — a maior
+     colheria o que a menor plantou, a catraca paga com dinheiro alheio.
+     Barrar aqui não muda a menor: ela já passou pelo ramo ①. */
+  if (menor && mesmoAlvo(menor.alvo, maior.alvo)) {
+    return { quem: "", motivo: "a maior divide o alvo com a menor — as sementes estão misturadas" };
+  }
+
+  /* ④ não atropela episódio aberto. Um episódio é uma promessa de forma
+     já feita ao jogador; a virada da campanha caindo no meio dele
+     transforma as duas coisas em ruído. A espera é finita por desenho —
+     ver `diasEntreRegas.maior` na tabela. */
+  if (a.episodioAberto) {
+    return { quem: "", motivo: "há episódio aberto — a maior espera ele fechar" };
+  }
+
+  /* ⑤ a folga desde a virada anterior. Sem menor revelada, `reveladaEm`
+     é 0 e a folga já está vencida em qualquer dia útil — a maior sozinha
+     não tem de esperar ninguém. */
+  const caiuEm = menor ? menor.reveladaEm : 0;
+  if (dia - caiuEm < RITMO_DAS_VIRADAS.folgaEntreViradas) {
+    return { quem: "", motivo: "a folga desde a virada anterior ainda não passou" };
+  }
+
+  /* ⑥ e só então a catraca do Livro: nada dispara sem semear. */
+  if (!podeRevelar(maior.forma, livro, { alvo: maior.alvo })) {
+    return { quem: "", motivo: "as sementes da maior ainda não amadureceram" };
+  }
+
+  return { quem: "maior", motivo: "a maior está madura, sem menor em curso e sem episódio aberto" };
+}
+
+/* ---------------- A MAIOR PODE NASCER? (R3) ----------------
+   O guarda do nascimento. Duas coisas, e as duas são regra:
+
+   · NUNCA O MESMO ALVO DA MENOR. `elegerReviravoltas` garante formas
+     diferentes, e não alvos diferentes: `aliado_agente` (o traidor do
+     grupo) e `contratante_servia` (quem encomendou a primeira missão)
+     podem perfeitamente ser a mesma pessoa. Se fossem, as sementes das
+     duas se somariam no Livro — mesma `dona`, mesmo `alvo` — e uma
+     pagaria a catraca da outra. Duas máscaras no mesmo rosto também não é
+     reviravolta: é o jogador achando que entendeu errado.
+
+   · A MENOR TEM A PREFERÊNCIA, MAS NÃO PARA SEMPRE. Enquanto a menor não
+     nasceu, o campo é dela até `diasDeEsperaPelaMenor`. Depois disso a
+     maior nasce sozinha: há campanhas em que o detector da menor eleita
+     nunca acha alvo (o herói que anda sem grupo, a bolsa sem item de
+     origem vaga), e travar a maior nelas seria escrever de novo o bug que
+     esta etapa veio desfazer.
+
+   `alvoDaMaior` é o que `alvoDaForma` devolveu — string não-vazia ou
+   `null`. Sem alvo não nasce nada, e isso é a primeira tranca: uma virada
+   sem dono planta semente sem dono no Livro, que é pior que virada
+   nenhuma. O alvo pode ser um LUGAR (`cidade_dizimo`), e nada aqui supõe
+   gente. */
+export function maiorPodeNascer(menorEleita, alvoDaMaior, opcoes) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const dia = Math.max(0, Number(o.dia) || 0);
+  const alvo = String(alvoDaMaior == null ? "" : alvoDaMaior).trim();
+  if (!alvo) return false;
+  const menor = garantirReviravolta(menorEleita);
+  if (!menor) return dia >= RITMO_DAS_VIRADAS.diasDeEsperaPelaMenor;
+  return !mesmoAlvo(menor.alvo, alvo);
+}
+
+/* ---------------- A MENOR PODE NASCER? (a tranca simétrica) ----------------
+   A irmã de `maiorPodeNascer`, e pela mesma lei: nunca o mesmo alvo. O
+   guarda de um lado só deixava o caminho inverso aberto — a maior nasce
+   no dia 9 sobre alguém, a menor acha a MESMA pessoa no dia 12, e as duas
+   plantam sob `dona: "reviravolta"` + o mesmo `alvo`. Aí a menor colhe as
+   três sementes que a maior plantou (a catraca "pesado" paga com dinheiro
+   alheio) e a tranca ③ de `quemPodeRevelar` tranca a maior para sempre —
+   acervo escrito que não pode mais acontecer, que é o bug de R2 outra vez.
+
+   ---------------- QUEM CEDE, E POR QUÊ É A MENOR ----------------
+
+   A intuição diz que devia ceder a MAIOR: ela nasceu no lugar que não era
+   dela, e a menor é o degrau do arco, que não deveria esperar por
+   ninguém. A intuição está certa sobre a culpa e errada sobre a física.
+
+   CEDER É DEVOLVER O ALVO, E A MAIOR NÃO CONSEGUE DEVOLVER: no turno em
+   que nasce ela já plantou, e as três sementes estão no Livro com aquele
+   nome. Uma maior que "cedesse" sairia de cena deixando exatamente a
+   herança que causou o problema — e a menor colheria assim mesmo. Tirá-la
+   de lá seria cirurgia no Livro (murchar semente alheia, ou reescrever a
+   dona de sementes já plantadas), que é mecanismo grande para consertar um
+   caso de borda. A menor, que ainda não plantou nada, cede de graça.
+
+   E O QUE ELA PERDE É MENOS DO QUE PARECE. A campanha não fica sem
+   história sobre aquela pessoa — fica com a MAIOR, que é a maior das
+   duas. O que a menor perde é o direito de ser a segunda máscara no mesmo
+   rosto, e duas máscaras no mesmo rosto não é reviravolta: é o jogador
+   achando que entendeu errado.
+
+   E ELA NÃO FICA REFÉM. Não há prazo aqui — ao contrário da irmã, que
+   espera `diasDeEsperaPelaMenor` — porque a menor não está esperando nada:
+   o detector dela roda de novo no turno seguinte, e o alvo dele é do
+   mundo, não do contrato. A boca mais consultada muda, o grupo muda, o
+   par de sangue muda. Ela nasce no dia em que o mundo lhe der outra
+   pessoa. A assimetria é de propósito, e está na assinatura: a irmã tem
+   `dia`, esta não.
+
+   VALE COM A MAIOR JÁ REVELADA, e isso não é rigor de sobra: ao revelar,
+   o App paga só as sementes MADURAS: as imaturas ficam no Livro com aquele
+   alvo, e o passo de rega da menor (`dona` + `alvo` + imatura) regaria as
+   sobras da maior como se fossem dela. O alvo da maior é dela antes e
+   depois de a máscara cair.
+
+   REGRESSÃO ZERO: sem maior eleita — o caso comum, e o único que existia
+   até v9.228 — devolve `true` sempre, e a menor nasce sem perguntar nada a
+   ninguém, como sempre nasceu. Alvo vazio devolve `false`, que é
+   exatamente o que o App já fazia por conta própria. */
+export function menorPodeNascer(maiorEleita, alvoDaMenor) {
+  const alvo = String(alvoDaMenor == null ? "" : alvoDaMenor).trim();
+  if (!alvo) return false;
+  const maior = garantirReviravolta(maiorEleita);
+  if (!maior) return true;
+  return !mesmoAlvo(maior.alvo, alvo);
 }
 
 /* ---------------- O DIA SEGUINTE ----------------

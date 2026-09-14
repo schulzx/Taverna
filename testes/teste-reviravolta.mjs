@@ -121,7 +121,20 @@ sec("7. ligado ao jogo");
   /* G7 (v9.211): o handler ficou GENÉRICO por forma — usa rev.forma, não
      mais "aliado_agente" cravado; e a virada cai pelo Livro para qualquer
      forma cujo detector ache um alvo. */
-  t("o handler elege, semeia, rega e revela por forma", /mexerNaReviravolta/.test(APP) && /podeRevelar\(rev\.forma/.test(APP));
+  /* v9.229 (R3) — A ÂNCORA MUDOU, E O MOTIVO FICA ESCRITO. A asserção
+     antiga era `/podeRevelar\(rev\.forma/`: ela guardava que o App
+     perguntava a catraca do Livro com a FORMA ELEITA na mão, e era assim
+     que a pergunta existia — uma virada, uma pergunta. R3 pôs duas
+     viradas no mesmo mundo, e a pergunta passou a ser "de quem é a vez?",
+     que só tem UMA resposta; exigir a pergunta antiga de volta seria
+     exigir de volta o turno em que as duas podem estourar juntas. No
+     lugar dela, as duas asserções que guardam o mesmo ganho: o ciclo de
+     uma virada continua genérico por forma, e a revelação sai de uma
+     pergunta só. */
+  t("o ciclo de uma virada é genérico por forma (semeia e rega por rev.forma)",
+    /mexerNaReviravolta/.test(APP) && /sementesDaReviravolta\(rev\.forma/.test(APP) && /diasEntreRegasDe\(rev\.forma\)/.test(APP));
+  t("e a revelação sai de UMA pergunta, não de uma por virada",
+    /quemPodeRevelar\(/.test(APP) && !/podeRevelar\(rev\.forma/.test(APP));
   t("a virada cai pelo Livro (paga as sementes da forma)", /A VIRADA/.test(APP) && /sementesDaReviravolta\(rev\.forma/.test(APP));
   /* v9.228 (R2) — A ÂNCORA MUDOU, E O MOTIVO FICA ESCRITO. A asserção
      antiga era `/alvoDaReviravolta/ && /"heranca_roubada"/`: ela guardava
@@ -500,6 +513,684 @@ sec("8g. as outras quatro: o que cada detector recusa");
        shell, e uma normalização que perdeu o acento só se descobre no dia
        em que um nome com til deixa de casar */
     Object.values(R.PAPEIS_DO_MESTRE).every((ws) => ws.length > 0 && ws.every((w) => w.length >= 4 && w === w.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase())));
+}
+
+/* ============================================================
+   9. R3 (v9.229) — A MAIOR ENFIM ACONTECE
+
+   Até aqui havia uma virada por campanha na prática: `elegerReviravoltas`
+   devolvia `{ menor, maior }` e só a menor era vivida. As três maiores
+   ganharam detector em R2 e continuaram inertes — acervo escrito que não
+   pode acontecer, que é o bug de sempre com roupa de enredo.
+
+   Ligar a segunda virada é escrever uma REGRA DE CONVIVÊNCIA, e é ela
+   que esta seção prova. Oito leis, e cada uma tem o seu bloco:
+
+     ① as duas não estouram na mesma cena   (9d, exaustivo)
+     ② a maior semeia antes de abrir        (9e)
+     ③ a menor vem primeiro — e a espera é finita (9f)
+     ④ não atropela episódio aberto         (9g)
+     ⑤ nunca o mesmo alvo                   (9h, e a tranca simétrica em 9h2/9h3)
+     ⑥ determinismo por semente             (9i)
+     ⑦ o Narrador não vê antes da revelação (9k)
+     ⑧ regressão zero da menor              (9, 9b, e a varredura de 9g)
+
+   E ELAS SÃO A CATRACA DO EXPORT MORTO. `maiorPodeNascer` e
+   `menorPodeNascer` passam no `teste-ligacao` por falso positivo — o
+   varredor conta a menção dos dois nomes num comentário de
+   `quemPodeRevelar`. Os leitores de verdade são este arquivo e o App; sem
+   eles a regra nasceria sem prova e ninguém avisaria.
+   ============================================================ */
+const EP = await import(RAIZ + "episodios.js");
+
+const MENORES = R.FORMAS.filter((f) => f.porte === "menor").map((f) => f.id);
+const MAIORES = R.FORMAS.filter((f) => f.porte === "maior").map((f) => f.id);
+/* as duas cobaias das leis: as duas de colheita PESADA (três sementes,
+   três maduras para colher), que é o caso mais exigente das duas pontas */
+const MENOR = "aliado_agente";
+const MAIOR = "contratante_servia";
+
+/* planta as sementes de uma forma no Livro, com dona "reviravolta" e
+   alvo — exatamente como o App as planta — e rega até madurarem. As
+   sementes das reviravoltas são todas LEVES: uma rega basta para cada. */
+const semearNo = (L, forma, alvo, { maduras = true, quantas = Infinity, dia = 1 } = {}) => {
+  let i = 0;
+  for (const spec of R.sementesDaReviravolta(forma, { alvo })) {
+    const r = P.semear(L, spec);
+    L = r.livro;
+    if (maduras && i < quantas) L = P.regar(L, r.semente.id, { dia }).livro;
+    i++;
+  }
+  return L;
+};
+/* um Livro montado a partir de vários plantios: é assim que as sementes
+   das duas viradas convivem no MESMO Livro, que é o caso real */
+const livroDe = (...plantios) => plantios.reduce((L, p) => semearNo(L, p.forma, p.alvo, p), P.garantirLivro(null));
+
+sec("9. R3 — a tabela do ritmo (LEI 8: regressão zero da menor)");
+{
+  const T = R.RITMO_DAS_VIRADAS;
+  t("RITMO_DAS_VIRADAS é tabela, com as três linhas do ritmo",
+    !!T && !!T.diasEntreRegas && typeof T.folgaEntreViradas === "number" && typeof T.diasDeEsperaPelaMenor === "number");
+  t("a tabela tem um ritmo para cada porte, e só para eles",
+    R.PORTES.every((p) => typeof T.diasEntreRegas[p] === "number") && Object.keys(T.diasEntreRegas).length === R.PORTES.length);
+  /* REGRESSÃO ZERO, literal: o três da menor é o mesmo três de v9.228 —
+     só mudou de casa. Mexer nele muda o ritmo de toda campanha viva. */
+  t("o ritmo da menor continua 3 (o mesmo número de v9.228)", T.diasEntreRegas.menor === 3);
+  t("DIAS_ENTRE_REGAS continua 3 e LÊ a tabela (não é uma segunda cópia do três)",
+    R.DIAS_ENTRE_REGAS === 3 && R.DIAS_ENTRE_REGAS === T.diasEntreRegas.menor);
+  t("a maior rega no dobro do tempo da menor", T.diasEntreRegas.maior === 6 && T.diasEntreRegas.maior === 2 * T.diasEntreRegas.menor);
+
+  /* O PORQUÊ DO SEIS, lido de volta das DUAS tabelas e nunca copiado: o
+     amadurecimento inteiro da maior tem de passar do episódio mais longo
+     do catálogo. Se não passasse, a lei ④ ("adia a maior enquanto houver
+     episódio aberto") seria um cancelamento disfarçado — o defeito de R2
+     com outra roupa. Se alguém encurtar o ritmo da maior, ou criar um
+     episódio de seis marcos, esta asserção acusa. */
+  const marcosDoMaisLongo = Math.max(...EP.EPISODIOS.map((e) => e.marcos.length));
+  const episodioMaisLongo = marcosDoMaisLongo * EP.DIAS_ENTRE_MARCOS;
+  const sementesDaMaior = Math.max(...MAIORES.map((id) => R.formaPorId(id).sementes.length));
+  const amadurecimentoDaMaior = sementesDaMaior * T.diasEntreRegas.maior;
+  t(`o amadurecimento da maior (${amadurecimentoDaMaior}d) passa do episódio mais longo (${episodioMaisLongo}d) — adiar não é cancelar`,
+    amadurecimentoDaMaior > episodioMaisLongo, `${sementesDaMaior} sementes × ${T.diasEntreRegas.maior}d vs ${marcosDoMaisLongo} marcos × ${EP.DIAS_ENTRE_MARCOS}d`);
+
+  t("a folga entre viradas é um marco de episódio (o mundo vive uma batida inteira)",
+    T.folgaEntreViradas === 3 && T.folgaEntreViradas === EP.DIAS_ENTRE_MARCOS);
+  t("a espera pela menor é o amadurecimento INTEIRO dela (3 sementes × 3 dias)",
+    T.diasDeEsperaPelaMenor === 9 && T.diasDeEsperaPelaMenor === R.formaPorId(MENOR).sementes.length * T.diasEntreRegas.menor);
+}
+
+sec("9b. diasEntreRegasDe: o ritmo pela forma, sem o chamador saber o porte");
+{
+  const erradas = MENORES.filter((id) => R.diasEntreRegasDe(id) !== R.DIAS_ENTRE_REGAS);
+  t("TODA menor rega no ritmo de sempre (regressão zero, forma a forma)", erradas.length === 0, erradas.join(", "));
+  const errMaior = MAIORES.filter((id) => R.diasEntreRegasDe(id) !== R.RITMO_DAS_VIRADAS.diasEntreRegas.maior);
+  t("TODA maior rega no ritmo do arco", errMaior.length === 0, errMaior.join(", "));
+  /* forma nova entra classificada: se uma forma ganhar um porte que a
+     tabela não prevê, o ritmo dela cai fora da faixa e quebra aqui */
+  t("nenhuma forma rega fora da faixa da tabela",
+    R.FORMAS.every((f) => { const d = R.diasEntreRegasDe(f.id); return d >= R.DIAS_ENTRE_REGAS && d <= R.RITMO_DAS_VIRADAS.diasEntreRegas.maior; }));
+  /* o lixo cai no ritmo CONSERVADOR: regar mais cedo não revela mais
+     cedo — quem decide isso é a catraca do Livro */
+  for (const [rotulo, x] of [["null", null], ["undefined", undefined], ["forma que não existe", "forma_que_nao_existe"], ["número", 7], ["objeto", {}], ["string vazia", ""]])
+    t(`${rotulo}: cai no ritmo da menor (o conservador)`, R.diasEntreRegasDe(x) === R.DIAS_ENTRE_REGAS);
+}
+
+sec("9c. garantirReviravolta ganhou reveladaEm (e o save antigo não é punido)");
+{
+  t("reveladaEm sai saneado de string", R.garantirReviravolta({ forma: MENOR, reveladaEm: "12" }).reveladaEm === 12);
+  t("negativo vira 0", R.garantirReviravolta({ forma: MENOR, reveladaEm: -5 }).reveladaEm === 0);
+  t("lixo vira 0", R.garantirReviravolta({ forma: MENOR, reveladaEm: "ontem" }).reveladaEm === 0 && R.garantirReviravolta({ forma: MENOR, reveladaEm: null }).reveladaEm === 0);
+  /* SAVE ANTIGO: não tem o campo e cai em 0. O comportamento que isso
+     compra se prova em 9f — folga vencida em qualquer dia útil. */
+  t("save de antes do campo: reveladaEm 0", R.garantirReviravolta({ forma: MENOR, alvo: "Ume", revelada: true }).reveladaEm === 0);
+  t("e os campos antigos continuam inteiros ao lado dele", (() => {
+    const g = R.garantirReviravolta({ forma: MENOR, alvo: "Ume", semeada: 1, regadaEm: "5", eleitaEm: 2, revelada: 1, reveladaEm: 8 });
+    return g.forma === MENOR && g.alvo === "Ume" && g.semeada === true && g.regadaEm === 5 && g.eleitaEm === 2 && g.revelada === true && g.reveladaEm === 8;
+  })());
+}
+
+sec("9d. LEI 1 — as duas não estouram na mesma cena (exaustivo sobre o estado)");
+{
+  const A = "Ume", B = "Halvard";
+  /* Cada eixo é um ESTADO REAL DO SAVE, e não um exemplo: a virada não
+     eleita, a eleita com sementes verdes, a eleita madura, e a já caída
+     — nas três grafias de `reveladaEm` que existem em disco (save antigo
+     sem campo, caída hoje, caída há muito). O produto dos eixos é a
+     prova: não há entrada em que a resposta caiba para as duas. */
+  const eixoMenor = [
+    { rotulo: "não eleita", rev: () => null, planta: null },
+    { rotulo: "eleita, sementes verdes", rev: () => ({ forma: MENOR, alvo: A }), planta: { maduras: false } },
+    { rotulo: "eleita, meio madura", rev: () => ({ forma: MENOR, alvo: A }), planta: { quantas: 2 } },
+    { rotulo: "eleita, madura", rev: () => ({ forma: MENOR, alvo: A }), planta: {} },
+    { rotulo: "revelada (save antigo, sem reveladaEm)", rev: () => ({ forma: MENOR, alvo: A, revelada: true }), planta: {} },
+    { rotulo: "revelada hoje", rev: (dia) => ({ forma: MENOR, alvo: A, revelada: true, reveladaEm: dia }), planta: {} },
+    { rotulo: "revelada há muito", rev: () => ({ forma: MENOR, alvo: A, revelada: true, reveladaEm: 1 }), planta: {} },
+  ];
+  const eixoMaior = (alvo) => [
+    { rotulo: "não eleita", rev: () => null, planta: null },
+    { rotulo: "eleita, sementes verdes", rev: () => ({ forma: MAIOR, alvo }), planta: { maduras: false } },
+    { rotulo: "eleita, madura", rev: () => ({ forma: MAIOR, alvo }), planta: {} },
+    { rotulo: "revelada", rev: () => ({ forma: MAIOR, alvo, revelada: true, reveladaEm: 1 }), planta: {} },
+  ];
+
+  let casos = 0, ambasAptas = 0;
+  const foraDoAlfabeto = [], semMotivo = [], mentiuMenor = [], mentiuMaior = [], preferiuAMaior = [], instaveis = [];
+  for (const [rotuloAlvo, alvoMaior] of [["alvos diferentes", B], ["MESMO alvo da menor", A]]) {
+    for (const em of eixoMenor) {
+      for (const ma of eixoMaior(alvoMaior)) {
+        for (const episodioAberto of [false, true]) {
+          for (const dia of [0, 1, 3, 9, 20]) {
+            const plantios = [];
+            if (em.planta) plantios.push({ forma: MENOR, alvo: A, ...em.planta });
+            if (ma.planta) plantios.push({ forma: MAIOR, alvo: alvoMaior, ...ma.planta });
+            const livro = livroDe(...plantios);
+            const menor = em.rev(dia), maior = ma.rev(dia);
+            const caso = `${rotuloAlvo} · menor ${em.rotulo} · maior ${ma.rotulo} · ep=${episodioAberto} · dia=${dia}`;
+            casos++;
+
+            const v = R.quemPodeRevelar({ menor, maior, livro, episodioAberto, dia });
+            const v2 = R.quemPodeRevelar({ menor, maior, livro, episodioAberto, dia });
+            if (JSON.stringify(v) !== JSON.stringify(v2)) instaveis.push(caso);
+            if (!["menor", "maior", ""].includes(v.quem)) foraDoAlfabeto.push(caso + " → " + JSON.stringify(v.quem));
+            if (typeof v.motivo !== "string" || !v.motivo) semMotivo.push(caso);
+
+            /* A APTIDÃO DE CADA UMA, medida por fora e pela catraca do
+               Livro — é o que torna a prova não-circular */
+            const menorApta = !!menor && !menor.revelada && R.podeRevelar(MENOR, livro, { alvo: A });
+            const maiorApta = !!maior && !maior.revelada && R.podeRevelar(MAIOR, livro, { alvo: alvoMaior });
+            if (v.quem === "menor" && !menorApta) mentiuMenor.push(caso);
+            if (v.quem === "maior" && !maiorApta) mentiuMaior.push(caso);
+            if (menorApta && maiorApta) {
+              ambasAptas++;
+              /* AS DUAS CABERIAM, E SÓ UMA SAI. É a lei ① em forma de
+                 conta: a resposta é um NOME, nunca um par, e quando as
+                 duas estão maduras a vez é sempre da menor. */
+              if (v.quem !== "menor") preferiuAMaior.push(caso + " → " + v.quem);
+            }
+          }
+        }
+      }
+    }
+  }
+  console.log(`      ${casos} combinações de estado · ${ambasAptas} em que as DUAS caberiam`);
+  t(`a resposta é sempre UM nome de ${casos} combinações ("menor", "maior" ou "")`, foraDoAlfabeto.length === 0, foraDoAlfabeto.slice(0, 3).join(" · "));
+  t("toda resposta vem com motivo escrito (o bastidor da suíte)", semMotivo.length === 0, semMotivo.slice(0, 3).join(" · "));
+  t("a mesma entrada dá sempre a mesma resposta", instaveis.length === 0, instaveis.slice(0, 3).join(" · "));
+  t("quando diz 'menor', a menor pode mesmo revelar agora", mentiuMenor.length === 0, mentiuMenor.slice(0, 3).join(" · "));
+  t("quando diz 'maior', a maior pode mesmo revelar agora", mentiuMaior.length === 0, mentiuMaior.slice(0, 3).join(" · "));
+  /* a prova não pode ser vazia: se nunca houvesse caso em que as duas
+     cabem, o exaustivo acima não estaria provando nada */
+  t("existem combinações em que as duas caberiam (a prova não é vazia)", ambasAptas > 0, String(ambasAptas));
+  t("e em TODAS elas sai a menor — as duas nunca estouram na mesma cena", preferiuAMaior.length === 0, preferiuAMaior.slice(0, 3).join(" · "));
+}
+
+sec("9e. LEI 2 — a maior semeia antes de abrir (e a catraca dela é por alvo)");
+{
+  /* o cenário base de toda esta seção: a menor já caiu há muito (ramos ②
+     e ③ vencidos), sem episódio aberto, folga vencida — de modo que a
+     ÚNICA coisa que pode fechar a maior é a catraca do Livro */
+  const menorCaida = { forma: MENOR, alvo: "Ume", revelada: true, reveladaEm: 1 };
+  const maior = { forma: MAIOR, alvo: "Halvard" };
+  const pergunta = (livro) => R.quemPodeRevelar({ menor: menorCaida, maior, livro, episodioAberto: false, dia: 30 });
+
+  t("Livro vazio: a maior não abre", pergunta(P.garantirLivro(null)).quem === "");
+  t("Livro null: a maior não abre (e não estoura)", pergunta(null).quem === "");
+  t("sementes semeadas e nunca regadas: a maior não abre", pergunta(livroDe({ forma: MAIOR, alvo: "Halvard", maduras: false })).quem === "");
+  t("duas das três maduras: ainda não (a colheita da maior é pesada)", pergunta(livroDe({ forma: MAIOR, alvo: "Halvard", quantas: 2 })).quem === "");
+  const cheio = livroDe({ forma: MAIOR, alvo: "Halvard" });
+  t("três maduras: A MAIOR ENFIM ACONTECE", pergunta(cheio).quem === "maior", pergunta(cheio).motivo);
+  t("e a recusa por imaturidade nomeia as sementes no motivo", /semente/i.test(pergunta(P.garantirLivro(null)).motivo), pergunta(P.garantirLivro(null)).motivo);
+
+  /* A SEPARAÇÃO POR ALVO. `podeColher` filtra `dona` + `alvo`, e a dona é
+     "reviravolta" nas DUAS viradas — é só o alvo que as separa no Livro.
+     Um Livro com as três maduras da MENOR não paga um grão da catraca da
+     maior; se pagasse, a maior colheria o que a menor plantou e a
+     catraca estaria pagando com dinheiro alheio. */
+  const soDaMenor = livroDe({ forma: MENOR, alvo: "Ume" });
+  t("as três maduras da menor NÃO abrem a maior (a catraca é dona+alvo)", pergunta(soDaMenor).quem === "");
+  t("e essas mesmas três continuam bastando para a própria menor", R.podeRevelar(MENOR, soDaMenor, { alvo: "Ume" }));
+  t("a catraca da maior, no mesmo Livro, continua fechada", !R.podeRevelar(MAIOR, soDaMenor, { alvo: "Halvard" }));
+  /* nem uma mistura generosa abre: seis maduras, todas de outros alvos */
+  const alheias = livroDe({ forma: MENOR, alvo: "Ume" }, { forma: MAIOR, alvo: "Brida" });
+  t("seis maduras de outros alvos não abrem a maior", pergunta(alheias).quem === "", JSON.stringify(pergunta(alheias)));
+  t("e bastam as três do alvo CERTO, no meio das alheias",
+    pergunta(livroDe({ forma: MENOR, alvo: "Ume" }, { forma: MAIOR, alvo: "Brida" }, { forma: MAIOR, alvo: "Halvard" })).quem === "maior");
+
+  /* a catraca vale para TODA maior da prateleira, não só para a cobaia */
+  const frouxas = MAIORES.filter((id) => R.quemPodeRevelar({ menor: menorCaida, maior: { forma: id, alvo: "Halvard" }, livro: P.garantirLivro(null), dia: 30 }).quem !== "");
+  t("nenhuma das três maiores abre com o Livro vazio", frouxas.length === 0, frouxas.join(", "));
+  const travadas = MAIORES.filter((id) => R.quemPodeRevelar({ menor: menorCaida, maior: { forma: id, alvo: "Halvard" }, livro: livroDe({ forma: id, alvo: "Halvard" }), dia: 30 }).quem !== "maior");
+  t("e as TRÊS abrem com as próprias sementes maduras (nenhuma é inerte)", travadas.length === 0, travadas.join(", "));
+}
+
+sec("9f. LEI 3 — a menor vem primeiro, e a espera por ela é finita");
+{
+  const maior = { forma: MAIOR, alvo: "Halvard" };
+  const soDaMaior = livroDe({ forma: MAIOR, alvo: "Halvard" });
+  const tudoMaduro = livroDe({ forma: MENOR, alvo: "Ume" }, { forma: MAIOR, alvo: "Halvard" });
+
+  const emCurso = R.quemPodeRevelar({ menor: { forma: MENOR, alvo: "Ume" }, maior, livro: soDaMaior, dia: 30 });
+  t("menor eleita e ainda não revelada: a maior não cai por cima dela", emCurso.quem === "", JSON.stringify(emCurso));
+  t("e o motivo diz que a menor está em curso", /menor/i.test(emCurso.motivo), emCurso.motivo);
+  t("sem menor eleita, a maior madura cai sozinha", R.quemPodeRevelar({ menor: null, maior, livro: soDaMaior, dia: 30 }).quem === "maior");
+  t("as duas maduras: a menor passa na frente", R.quemPodeRevelar({ menor: { forma: MENOR, alvo: "Ume" }, maior, livro: tudoMaduro, dia: 30 }).quem === "menor");
+  t("caída a menor, a vez passa para a maior", R.quemPodeRevelar({ menor: { forma: MENOR, alvo: "Ume", revelada: true, reveladaEm: 1 }, maior, livro: tudoMaduro, dia: 30 }).quem === "maior");
+
+  /* A FOLGA entre uma virada e a seguinte: o mundo vive uma batida
+     inteira do `oDiaSeguinte` da primeira antes de a segunda cair */
+  const FOLGA = R.RITMO_DAS_VIRADAS.folgaEntreViradas;
+  const caiuNoDia10 = { forma: MENOR, alvo: "Ume", revelada: true, reveladaEm: 10 };
+  const colados = [], espacados = [];
+  for (let d = 10; d <= 10 + FOLGA + 2; d++)
+    (R.quemPodeRevelar({ menor: caiuNoDia10, maior, livro: soDaMaior, dia: d }).quem === "maior" ? espacados : colados).push(d);
+  t(`duas viradas coladas não são duas viradas: ${FOLGA} dias de digestão`, colados.length === FOLGA && espacados[0] === 10 + FOLGA, `fechada em ${colados.join(",")} · aberta em ${espacados.join(",")}`);
+  /* SAVE ANTIGO (reveladaEm 0): a folga já está vencida em qualquer dia
+     útil — ninguém é punido por ter revelado antes de o campo existir */
+  t("menor caída num save sem reveladaEm: a folga já está vencida", R.quemPodeRevelar({ menor: { forma: MENOR, alvo: "Ume", revelada: true }, maior, livro: soDaMaior, dia: FOLGA }).quem === "maior");
+
+  /* O ESCAPE DO NASCIMENTO. Sem esta linha, "a menor vem primeiro"
+     viraria "a maior nunca acontece" em toda campanha cujo detector da
+     menor não acha ninguém (o herói que anda sem grupo, a bolsa sem item
+     de origem vaga) — repetindo, um andar acima, exatamente o bug que R3
+     veio desfazer. */
+  const ESP = R.RITMO_DAS_VIRADAS.diasDeEsperaPelaMenor;
+  const cedo = [], tarde = [];
+  for (let d = 0; d <= ESP + 5; d++) (R.maiorPodeNascer(null, "Halvard", { dia: d }) ? tarde : cedo).push(d);
+  t(`antes de ${ESP} dias a maior não nasce sem a menor (o campo é dela)`, cedo.length === ESP && cedo[cedo.length - 1] === ESP - 1, cedo.join(","));
+  t(`a partir de ${ESP} dias ela nasce sozinha (a espera é finita)`, tarde.length === 6 && tarde[0] === ESP, tarde.join(","));
+  t("sem opções, o dia é 0 e a maior ainda espera", R.maiorPodeNascer(null, "Halvard") === false);
+  t("undefined no lugar da menor é o mesmo que menor nenhuma", R.maiorPodeNascer(undefined, "Halvard", { dia: ESP }) === true);
+  /* com a menor JÁ NASCIDA o relógio da espera não se aplica: o que
+     decide o nascimento da maior passa a ser o alvo, e mais nada */
+  t("com a menor nascida, a maior nasce no dia 1 se o alvo for outro", R.maiorPodeNascer({ forma: MENOR, alvo: "Ume" }, "Halvard", { dia: 1 }) === true);
+}
+
+sec("9g. LEI 4 — episódio aberto adia a maior, e NÃO segura a menor");
+{
+  const maior = { forma: MAIOR, alvo: "Halvard" };
+  const menorCaida = { forma: MENOR, alvo: "Ume", revelada: true, reveladaEm: 1 };
+  const cheio = livroDe({ forma: MAIOR, alvo: "Halvard" });
+  const comEp = R.quemPodeRevelar({ menor: menorCaida, maior, livro: cheio, episodioAberto: true, dia: 30 });
+  t("com episódio aberto, a maior madura espera ele fechar", comEp.quem === "", JSON.stringify(comEp));
+  t("e o motivo nomeia o episódio", /epis/i.test(comEp.motivo), comEp.motivo);
+  t("fechado o episódio, ela cai no mesmo dia", R.quemPodeRevelar({ menor: menorCaida, maior, livro: cheio, episodioAberto: false, dia: 30 }).quem === "maior");
+  /* qualquer verdade sobre `episodioAberto` adia — o App entrega o que
+     tiver, e um objeto de episódio no lugar de um booleano é adiamento */
+  t("um episódio de verdade (objeto) também adia", R.quemPodeRevelar({ menor: menorCaida, maior, livro: cheio, episodioAberto: { id: "x", aberto: true }, dia: 30 }).quem === "");
+
+  /* REGRESSÃO ZERO, E É O PONTO DESTA ASSERÇÃO. A menor NUNCA teve o
+     episódio como condição, e R3 não pode ter-lhe acrescentado uma: numa
+     campanha viva, com episódio aberto, a menor madura tem de cair no dia
+     N exatamente como caía na v9.228. Se esta asserção cair, o R3 tirou
+     dias de jogo de quem já estava jogando — e ninguém veria, porque a
+     virada simplesmente demoraria mais. */
+  const menorMadura = livroDe({ forma: MENOR, alvo: "Ume" });
+  t("a menor madura cai COM episódio aberto (regressão zero em campanha viva)",
+    R.quemPodeRevelar({ menor: { forma: MENOR, alvo: "Ume" }, maior, livro: menorMadura, episodioAberto: true, dia: 1 }).quem === "menor");
+  t("e cai também sem maior nenhuma eleita (a campanha de quem já jogava)",
+    R.quemPodeRevelar({ menor: { forma: MENOR, alvo: "Ume" }, maior: null, livro: menorMadura, episodioAberto: true, dia: 1 }).quem === "menor");
+
+  /* a varredura da regressão: para TODA menor da prateleira, em todo dia
+     e com o episódio dos dois jeitos, a menor madura cai. Nenhuma das
+     trancas novas (folga, episódio, alvo) pode tê-la alcançado. */
+  const seguradas = [];
+  for (const id of MENORES) {
+    const L = livroDe({ forma: id, alvo: "Ume" });
+    for (const dia of [0, 1, 3, 9, 30]) {
+      for (const ep of [true, false]) {
+        for (const outra of [null, maior, { forma: MAIOR, alvo: "Ume" }]) {
+          const v = R.quemPodeRevelar({ menor: { forma: id, alvo: "Ume" }, maior: outra, livro: L, episodioAberto: ep, dia });
+          if (v.quem !== "menor") seguradas.push(`${id}@dia${dia}·ep=${ep} → ${v.quem || v.motivo}`);
+        }
+      }
+    }
+  }
+  t("nenhuma menor madura é segurada por episódio, folga, dia ou maior eleita", seguradas.length === 0, seguradas.slice(0, 3).join(" · "));
+}
+
+sec("9h. LEI 5 — nunca o mesmo alvo (e a comparação perdoa acento e caixa)");
+{
+  const DIA = 30;
+  t("maiorPodeNascer recusa o alvo da menor", R.maiorPodeNascer({ forma: MENOR, alvo: "Ume" }, "Ume", { dia: DIA }) === false);
+  t("e aceita outro alvo", R.maiorPodeNascer({ forma: MENOR, alvo: "Ume" }, "Brida", { dia: DIA }) === true);
+  /* "José" e "Jose" são o mesmo homem para o jogador. A contaminação no
+     Livro é por igualdade exata, mas a confusão na MESA é por quem: duas
+     máscaras no mesmo rosto não é reviravolta, é o jogador achando que
+     entendeu errado. Recusamos pelo critério mais largo. */
+  for (const [a, b] of [["José", "jose"], ["JOSÉ", "josé"], ["José", "  JOSE  "], ["Ümë", "ume"], ["Vão Frio", "vao frio"]])
+    t(`"${a}" e "${b}" são o mesmo alvo`, R.maiorPodeNascer({ forma: MENOR, alvo: a }, b, { dia: DIA }) === false);
+  t('"Josefa" não é "José" (o perdão não engole gente diferente)', R.maiorPodeNascer({ forma: MENOR, alvo: "José" }, "Josefa", { dia: DIA }) === true);
+  /* sem alvo não nasce nada: uma virada sem dono planta semente sem dono
+     no Livro, que é pior que virada nenhuma */
+  for (const [rotulo, x] of [["null", null], ["undefined", undefined], ["vazio", ""], ["só espaços", "   "], ["quebra de linha", "\n\t "]])
+    t(`maior sem alvo (${rotulo}) não nasce, nem depois da espera`, R.maiorPodeNascer(null, x, { dia: 99 }) === false);
+  /* "SEM ALVO" É O QUE `alvoDaForma` PODE DEVOLVER, e nada mais: ela
+     devolve string não-vazia ou `null`, e é a única coisa que o App passa
+     aqui (App.jsx, `alvoDaReviravolta`). Um número 0 vira o alvo "0" e
+     nasce — fica registrado que isso É o comportamento, e que ele não é
+     alcançável pela fachada; se um dia alguém passar outra coisa por
+     aqui, esta linha é o aviso de que a tranca é só contra vazio. */
+  t("0 vira o alvo '0' e nasce (inalcançável pela fachada, mas é o que a tranca faz)", R.maiorPodeNascer(null, 0, { dia: 99 }) === true);
+  t("e a fachada só entrega string não-vazia ou null", (() => {
+    const a = R.alvoDaForma(MAIOR, MUNDOS_DE_PROVA[MAIOR].mundo);
+    return (typeof a === "string" && !!a.trim()) && R.alvoDaForma(MAIOR, null) === null;
+  })());
+
+  /* A SEGUNDA TRANCA, dentro de `quemPodeRevelar`. O caso que a primeira
+     não alcança é a menor nascer DEPOIS da maior e cair no mesmo alvo —
+     aí as sementes das duas estão misturadas no Livro (dona
+     "reviravolta" nas duas) e a maior colheria o que a menor plantou. */
+  const misturado = livroDe({ forma: MENOR, alvo: "José" }, { forma: MAIOR, alvo: "José" });
+  const v = R.quemPodeRevelar({ menor: { forma: MENOR, alvo: "José", revelada: true, reveladaEm: 1 }, maior: { forma: MAIOR, alvo: "jose" }, livro: misturado, dia: DIA });
+  t("a segunda tranca morde com acento e caixa diferentes", v.quem === "", JSON.stringify(v));
+  t("e o motivo fala do alvo dividido", /alvo/i.test(v.motivo), v.motivo);
+  t("alvos de gente diferente passam pela segunda tranca",
+    R.quemPodeRevelar({ menor: { forma: MENOR, alvo: "José", revelada: true, reveladaEm: 1 }, maior: { forma: MAIOR, alvo: "Josefa" }, livro: livroDe({ forma: MAIOR, alvo: "Josefa" }), dia: DIA }).quem === "maior");
+  /* alvo vazio nunca é "o mesmo" que coisa nenhuma — senão duas viradas
+     sem alvo pareceriam colidir, e o ramo ③ trancaria por engano */
+  t("duas viradas sem alvo não colidem",
+    R.quemPodeRevelar({ menor: { forma: MENOR, alvo: "", revelada: true, reveladaEm: 1 }, maior: { forma: MAIOR, alvo: "" }, livro: livroDe({ forma: MAIOR, alvo: "" }), dia: DIA }).quem === "maior");
+  /* e a tranca NÃO alcança a menor: ela já passou pelo ramo ① */
+  t("a menor madura cai mesmo dividindo o alvo com a maior",
+    R.quemPodeRevelar({ menor: { forma: MENOR, alvo: "José" }, maior: { forma: MAIOR, alvo: "José" }, livro: misturado, dia: DIA }).quem === "menor");
+}
+
+sec("9h2. LEI 5, o outro lado — menorPodeNascer (a tranca simétrica)");
+{
+  /* O BURACO QUE FALTAVA. `maiorPodeNascer` guardava um lado só: a maior
+     nasce sobre alguém no dia 9, o detector da MENOR acha a mesma pessoa
+     no dia 12, e as duas plantam sob `dona: "reviravolta"` + o mesmo
+     `alvo`. Aí a menor colhe as três sementes que a maior plantou — a
+     catraca "pesado" paga com dinheiro alheio — e a tranca ③ de
+     `quemPodeRevelar` tranca a maior para sempre. O cenário inteiro está
+     montado em 9h3; aqui prova-se a tranca, decisão por decisão. */
+
+  /* REGRESSÃO ZERO, e é a linha que mais pesa: sem maior eleita — o caso
+     comum, e o único que existia até v9.228 — a menor nasce sem perguntar
+     nada a ninguém. Se esta varredura cair, R3 tirou viradas de quem já
+     estava jogando, e ninguém veria: a menor simplesmente nunca nasceria. */
+  const SEM_MAIOR = [["null", null], ["undefined", undefined], ["{}", {}], ["string crua", "uma maior"],
+    ["número", 7], ["forma que sumiu da prateleira", { forma: "sumiu", alvo: "José" }]];
+  const barrados = SEM_MAIOR.filter(([, m]) => R.menorPodeNascer(m, "José") !== true);
+  t("sem maior eleita (nem lixo no lugar dela), a menor nasce sempre", barrados.length === 0, barrados.map(([r]) => r).join(","));
+  t("e nasce para qualquer alvo que o detector devolva",
+    ["Ume", "Halvard", "Brida", "Vão Frio", "José"].every((a) => R.menorPodeNascer(null, a) === true));
+
+  /* sem alvo não nasce nada — a mesma primeira tranca da irmã: uma virada
+     sem dono planta semente sem dono no Livro, que é pior que virada
+     nenhuma. É o que o App já fazia por conta própria antes de v9.229. */
+  for (const [rotulo, x] of [["null", null], ["undefined", undefined], ["vazio", ""], ["só espaços", "   "], ["quebra de linha", "\n\t "]])
+    t(`menor sem alvo (${rotulo}) não nasce, nem sem maior nenhuma`, R.menorPodeNascer(null, x) === false);
+
+  /* O MESMO ALVO DA MAIOR, pelo mesmo `mesmoAlvo` da irmã: a contaminação
+     no Livro é por igualdade exata, mas a confusão na mesa é por QUEM.
+     Duas máscaras no mesmo rosto não é reviravolta. */
+  const maiorDePe = { forma: MAIOR, alvo: "José" };
+  t("menorPodeNascer recusa o alvo da maior", R.menorPodeNascer(maiorDePe, "José") === false);
+  t("e aceita outra pessoa", R.menorPodeNascer(maiorDePe, "Brida") === true);
+  for (const [a, b] of [["José", "jose"], ["JOSÉ", "josé"], ["José", "  JOSE  "], ["Ümë", "ume"], ["Vão Frio", "vao frio"]])
+    t(`"${a}" e "${b}" são o mesmo alvo, também deste lado`, R.menorPodeNascer({ forma: MAIOR, alvo: a }, b) === false);
+  t('"Josefa" não é "José" (o perdão não engole gente diferente)', R.menorPodeNascer({ forma: MAIOR, alvo: "José" }, "Josefa") === true);
+  /* alvo vazio nunca é "o mesmo" que coisa nenhuma: uma maior sem alvo não
+     reserva o mundo inteiro */
+  t("maior sem alvo não tranca alvo nenhum", R.menorPodeNascer({ forma: MAIOR, alvo: "" }, "José") === true);
+
+  /* VALE COM A MAIOR JÁ REVELADA, e isso é REGRA, não rigor de sobra. Ao
+     revelar, o App paga só as sementes MADURAS (App.jsx, `revelarAVirada`:
+     filtra `estado === "madura"`); as imaturas ficam no Livro com aquele
+     alvo, e o passo de rega da menor (`dona` + `alvo` + imatura) regaria as
+     sobras da maior como se fossem dela. Abaixo, o mecanismo inteiro. */
+  const ALVO_CAIDO = "Halvard";
+  let parcial = semearNo(P.garantirLivro(null), MAIOR, ALVO_CAIDO, { maduras: true, quantas: 2, dia: 9 });
+  const antesDeRevelar = parcial.sementes.filter((s) => s.dona === "reviravolta" && s.alvo === ALVO_CAIDO).length;
+  for (const s of P.sementesMaduras(parcial, { dona: "reviravolta", alvo: ALVO_CAIDO })) parcial = P.pagar(parcial, s.id, { dia: 10 }).livro;
+  const sobras = parcial.sementes.filter((s) => s.dona === "reviravolta" && s.alvo === ALVO_CAIDO && (s.estado === "semeada" || s.estado === "regada"));
+  t("a maior revelada deixa sementes imaturas no Livro, com o alvo dela",
+    antesDeRevelar === 3 && sobras.length === 1, `${antesDeRevelar} plantadas · ${sobras.length} sobrando`);
+  t("e é exatamente o que a rega da menor pegaria (dona + alvo + imatura)",
+    sobras.every((s) => s.dona === "reviravolta" && s.alvo === ALVO_CAIDO));
+  t("por isso `revelada: true` NÃO libera o alvo — ele é dela antes e depois da máscara cair",
+    R.menorPodeNascer({ forma: MAIOR, alvo: ALVO_CAIDO, revelada: true, reveladaEm: 10 }, ALVO_CAIDO) === false);
+  t("e a maior revelada continua não trancando outra pessoa",
+    R.menorPodeNascer({ forma: MAIOR, alvo: ALVO_CAIDO, revelada: true, reveladaEm: 10 }, "Ume") === true);
+
+  /* A ASSIMETRIA É DE PROPÓSITO, E ESTÁ NA ASSINATURA: a irmã tem `dia` (o
+     escape `diasDeEsperaPelaMenor`), esta NÃO tem. A menor não fica refém
+     de prazo nenhum porque o detector dela roda de novo no turno seguinte e
+     o alvo vem do mundo, não do contrato. Esta varredura existe para que o
+     dia em que alguém acrescentar um prazo aqui a asserção acuse — e não
+     para repetir a implementação: ela mede que a resposta com DOIS
+     argumentos é a mesma com qualquer terceiro. */
+  const TERCEIROS = [undefined, null, {}, { dia: 0 }, { dia: 9 }, { dia: 99 }, { dia: -50 },
+    { dia: "ontem" }, { diasDeEsperaPelaMenor: 0 }, "hoje", 0, 99];
+  const casos = [[null, "José"], [maiorDePe, "José"], [maiorDePe, "Brida"], [maiorDePe, ""], [null, null],
+    [{ forma: MAIOR, alvo: "José", revelada: true }, "José"]];
+  const mudaram = [];
+  for (const [m, a] of casos) {
+    const base = R.menorPodeNascer(m, a);
+    for (const op of TERCEIROS) if (R.menorPodeNascer(m, a, op) !== base) mudaram.push(`${JSON.stringify(m)}/${a} com ${JSON.stringify(op)}`);
+  }
+  t("nenhum terceiro argumento muda a resposta (ela ignora opções — não há prazo aqui)", mudaram.length === 0, mudaram.slice(0, 3).join(" · "));
+  t("a assinatura declara os dois argumentos, e só eles (a irmã declara três)",
+    R.menorPodeNascer.length === 2 && R.maiorPodeNascer.length === 3, `menor:${R.menorPodeNascer.length} · maior:${R.maiorPodeNascer.length}`);
+  /* e o que a menor perde é o direito de ser a segunda máscara no mesmo
+     rosto: no turno seguinte, com outro alvo do mundo, ela nasce */
+  t("recusada num alvo, ela nasce no outro que o mundo der (não fica refém)",
+    R.menorPodeNascer(maiorDePe, "José") === false && R.menorPodeNascer(maiorDePe, "Ume") === true);
+
+  /* AS DUAS TRANCAS SÃO A MESMA LEI, lida das duas pontas: nenhum par de
+     alvos pode ser aceito pelos dois lados quando é a mesma pessoa, e
+     nenhum pode ser recusado pelos dois quando são pessoas diferentes. */
+  const PARES = [["José", "José"], ["José", "jose"], ["José", "Josefa"], ["Ume", "Halvard"], ["Vão Frio", "vao frio"]];
+  const assimetricos = PARES.filter(([a, b]) =>
+    R.menorPodeNascer({ forma: MAIOR, alvo: a }, b) !== R.maiorPodeNascer({ forma: MENOR, alvo: a }, b, { dia: 99 }));
+  t("as duas trancas dão a mesma resposta sobre o mesmo par de alvos", assimetricos.length === 0, assimetricos.map((p) => p.join("/")).join(" · "));
+}
+
+sec("9h3. R3 — o cenário que originou o conserto, de ponta a ponta");
+{
+  /* O LIVRO MONTADO COMO O APP O MONTA: a maior nasce e semeia sobre um
+     alvo; dias depois o detector da menor acha a MESMA pessoa. É o caminho
+     inverso do que `maiorPodeNascer` já guardava, e era o único que
+     restava aberto até v9.229. */
+  const ALVO = "José";                                    /* a mesma pessoa, dos dois detectores */
+  const ESP = R.RITMO_DAS_VIRADAS.diasDeEsperaPelaMenor;
+  const DIA_DA_MAIOR = ESP;        /* dia 9: a espera venceu, o detector da menor nunca achou ninguém */
+  const DIA_DA_MENOR = ESP + 3;    /* dia 12: o mundo enfim dá um alvo à menor — e é o mesmo */
+
+  /* TURNO 1 (dia 9), passo 2 do App: a maior nasce sozinha e planta */
+  t("dia 9: sem menor nascida e vencida a espera, a maior nasce", R.maiorPodeNascer(null, ALVO, { dia: DIA_DA_MAIOR }) === true);
+  const maior = R.garantirReviravolta({ forma: MAIOR, alvo: ALVO, eleitaEm: DIA_DA_MAIOR });
+  const livro = semearNo(P.garantirLivro(null), MAIOR, ALVO, { maduras: true, dia: DIA_DA_MAIOR });
+  const dela = P.sementesMaduras(livro, { dona: "reviravolta", alvo: ALVO }).length;
+  t("e planta as três sementes DELA no Livro, sob dona 'reviravolta' e o alvo", dela === 3, String(dela));
+
+  /* O MUNDO SEM A TRANCA (v9.228), montado para que a asserção guarde o
+     PORQUÊ e não só o sintoma. Nada aqui chama `menorPodeNascer`: é o que
+     acontecia quando ela não existia. */
+  const intrusa = R.garantirReviravolta({ forma: MENOR, alvo: ALVO, eleitaEm: DIA_DA_MENOR });
+  t("sem a tranca, a menor colheria de graça as três sementes da MAIOR (o filtro do Livro é dona + alvo)",
+    R.podeRevelar(MENOR, livro, { alvo: ALVO }) === true && !intrusa.semeada);
+  const roubo = R.quemPodeRevelar({ menor: intrusa, maior, livro, episodioAberto: false, dia: DIA_DA_MENOR });
+  t("e levaria o turno sem ter plantado nada — a catraca paga com dinheiro alheio", roubo.quem === "menor", JSON.stringify(roubo));
+  /* e a conta chega: o App paga as maduras daquele alvo, que eram da maior */
+  let depois = livro;
+  for (const s of P.sementesMaduras(depois, { dona: "reviravolta", alvo: ALVO })) depois = P.pagar(depois, s.id, { dia: DIA_DA_MENOR }).livro;
+  t("a revelação da intrusa paga as sementes da maior, e o Livro dela fica vazio",
+    P.sementesMaduras(depois, { dona: "reviravolta", alvo: ALVO }).length === 0 && R.podeRevelar(MAIOR, depois, { alvo: ALVO }) === false);
+  const caida = { ...intrusa, revelada: true, reveladaEm: DIA_DA_MENOR };
+  const paraSempre = [];
+  for (const d of [DIA_DA_MENOR, DIA_DA_MENOR + 3, 60, 200, 9999]) {
+    const v = R.quemPodeRevelar({ menor: caida, maior, livro: depois, episodioAberto: false, dia: d });
+    if (v.quem === "maior") paraSempre.push(d);
+  }
+  t("e a tranca ③ trancaria a maior PARA SEMPRE — acervo escrito que não pode mais acontecer (o bug de R2 outra vez)",
+    paraSempre.length === 0, "caiu nos dias: " + paraSempre.join(","));
+
+  /* E AGORA O MUNDO COM A TRANCA (v9.229): o mesmo turno 2, pela porta
+     que o App usa. */
+  t("dia 12: a menor NÃO nasce no alvo da maior", R.menorPodeNascer(maior, ALVO) === false);
+  t("nem com a grafia de perto — é a mesma pessoa na mesa", R.menorPodeNascer(maior, "  jose ") === false);
+  t("a maior mantém as próprias sementes (ninguém colheu nada)",
+    P.sementesMaduras(livro, { dona: "reviravolta", alvo: ALVO }).length === 3 && R.podeRevelar(MAIOR, livro, { alvo: ALVO }) === true);
+  const livre = R.quemPodeRevelar({ menor: null, maior, livro, episodioAberto: false, dia: DIA_DA_MENOR });
+  t("e ela NÃO fica trancada: madura e sem menor por cima, a vez é dela", livre.quem === "maior", JSON.stringify(livre));
+  /* a menor não ficou sem história: no turno em que o mundo lhe der outra
+     pessoa, ela nasce — e aí as duas convivem, cada uma no seu alvo */
+  const outra = R.garantirReviravolta({ forma: MENOR, alvo: "Ume", eleitaEm: DIA_DA_MENOR + 1 });
+  t("no turno seguinte, com outro alvo, a menor nasce", R.menorPodeNascer(maior, "Ume") === true && outra.alvo === "Ume");
+  const doisAlvos = semearNo(livro, MENOR, "Ume", { maduras: true, dia: DIA_DA_MENOR + 1 });
+  t("e as duas convivem no mesmo Livro sem misturar sementes",
+    P.sementesMaduras(doisAlvos, { dona: "reviravolta", alvo: ALVO }).length === 3
+    && P.sementesMaduras(doisAlvos, { dona: "reviravolta", alvo: "Ume" }).length === 3);
+  t("a menor madura cai primeiro, e a maior cai depois, com o acervo intacto",
+    R.quemPodeRevelar({ menor: outra, maior, livro: doisAlvos, dia: DIA_DA_MENOR + 1 }).quem === "menor"
+    && R.quemPodeRevelar({ menor: { ...outra, revelada: true, reveladaEm: DIA_DA_MENOR + 1 }, maior, livro: doisAlvos, dia: DIA_DA_MENOR + 9 }).quem === "maior");
+}
+
+sec("9i. LEI 6 — determinismo por semente, e as três maiores alcançáveis");
+{
+  const sementes = [];
+  for (let i = 0; i < 300; i++) sementes.push("mundo-" + i + "|fantasia");
+  const instaveis = sementes.filter((s) => JSON.stringify(R.elegerReviravoltas(s)) !== JSON.stringify(R.elegerReviravoltas(s)));
+  t("a mesma semente dá sempre a mesma dupla (300 mundos)", instaveis.length === 0, instaveis.slice(0, 3).join(","));
+  const vistasMenor = new Set(sementes.map((s) => R.elegerReviravoltas(s).menor));
+  const vistasMaior = new Set(sementes.map((s) => R.elegerReviravoltas(s).maior));
+  /* ACERVO ELEITO QUE NUNCA SAI é a mesma família de bug de R2: forma
+     escrita que não pode acontecer. Cada maior tem de sair eleita em
+     ALGUMA semente, senão ela é enfeite — e esta é a etapa em que as três
+     passam a acontecer. */
+  const nuncaMaior = MAIORES.filter((id) => !vistasMaior.has(id));
+  t("as TRÊS maiores são alcançáveis (nenhuma é enfeite)", nuncaMaior.length === 0, "nunca eleitas: " + nuncaMaior.join(", "));
+  const nuncaMenor = MENORES.filter((id) => !vistasMenor.has(id));
+  t("as QUATRO menores também", nuncaMenor.length === 0, "nunca eleitas: " + nuncaMenor.join(", "));
+  /* o `>>> 8` sem sinal: com `>> 8` o índice saía negativo, e negativo % n
+     acessa fora do array — o defeito só apareceu quando passou a haver
+     mais de uma maior, que é exatamente agora */
+  const duplasRuins = sementes.filter((s) => {
+    const e = R.elegerReviravoltas(s);
+    return !e.menor || !e.maior || e.menor === e.maior
+      || R.formaPorId(e.menor).porte !== "menor" || R.formaPorId(e.maior).porte !== "maior";
+  });
+  t("toda eleição devolve uma menor e uma maior válidas, e nunca a mesma forma", duplasRuins.length === 0, duplasRuins.slice(0, 3).join(","));
+  t("a semente do lixo também elege (e sempre a mesma dupla)",
+    JSON.stringify(R.elegerReviravoltas(null)) === JSON.stringify(R.elegerReviravoltas("aventura")) && !!R.elegerReviravoltas(undefined).maior);
+}
+
+sec("9j. quemPodeRevelar e maiorPodeNascer no nada e no lixo");
+{
+  const madura = livroDe({ forma: MAIOR, alvo: "Halvard" });
+  const LIXOS = [
+    ["null", null],
+    ["undefined", undefined],
+    ["{}", {}],
+    ["string crua", "de quem é a vez?"],
+    ["número", 7],
+    /* `= {}` no destructuring NÃO cobre `null` explícito, que é
+       exatamente o que um ref não inicializado entrega ao App */
+    ["campos null explícitos", { menor: null, maior: null, livro: null, episodioAberto: null, dia: null }],
+    ["formas que sumiram da prateleira", { menor: { forma: "sumiu" }, maior: { forma: "sumiu_tambem" }, livro: madura, dia: 30 }],
+    ["dia negativo", { menor: null, maior: { forma: MAIOR, alvo: "Halvard" }, livro: madura, dia: -50 }],
+    ["dia que não é número", { menor: null, maior: { forma: MAIOR, alvo: "Halvard" }, livro: madura, dia: "ontem" }],
+    ["livro que não é livro", { menor: null, maior: { forma: MAIOR, alvo: "Halvard" }, livro: "um livro", dia: 30 }],
+  ];
+  for (const [rotulo, x] of LIXOS) {
+    let v;
+    try { v = R.quemPodeRevelar(x); } catch (e) { v = { quem: "ESTOUROU: " + e.message, motivo: "" }; }
+    t(`${rotulo}: devolve um nome e um motivo, sem estourar`, ["menor", "maior", ""].includes(v.quem) && typeof v.motivo === "string" && !!v.motivo, JSON.stringify(v));
+  }
+  t("forma que não existe mais no save não elege ninguém", R.quemPodeRevelar({ menor: { forma: "sumiu" }, maior: { forma: "sumiu" }, livro: madura, dia: 99 }).quem === "");
+  /* dia negativo e dia-lixo caem em 0, e no dia 0 a folga ainda não
+     passou: o lixo nunca abre uma virada mais cedo */
+  t("dia negativo não abre a maior mais cedo", R.quemPodeRevelar({ menor: null, maior: { forma: MAIOR, alvo: "Halvard" }, livro: madura, dia: -50 }).quem === "");
+  for (const [rotulo, op] of [["null", null], ["undefined", undefined], ["string", "hoje"], ["dia que não é número", { dia: "ontem" }], ["dia negativo", { dia: -9 }]])
+    t(`maiorPodeNascer com opções ${rotulo}: cai no dia 0, e a espera vale`, R.maiorPodeNascer(null, "Halvard", op) === false);
+  /* menor que `garantirReviravolta` não reconhece é o mesmo que menor
+     nenhuma — e aí volta a valer a espera, que é o lado conservador */
+  t("menor-lixo é o mesmo que menor nenhuma", R.maiorPodeNascer("uma menor", "Halvard", { dia: 99 }) === true && R.maiorPodeNascer({ forma: "sumiu", alvo: "Halvard" }, "Halvard", { dia: 0 }) === false);
+}
+
+sec("9k. LEI 7 — o Narrador descobre junto: nada de bloco novo no prompt");
+{
+  /* O TETO É SAGRADO, e quem o guarda são duas catracas que já existem.
+     Esta seção não remede o prompt — mede que as catracas continuam no
+     lugar, porque uma etapa que apagasse uma delas passaria sem ninguém
+     ver. Os números medidos ficam no relato desta versão. */
+  const TP = readFileSync("./teste-prompt.mjs", "utf8");
+  t("a catraca do teto de prompt continua de pé (teste-prompt.mjs: PIOR CENA REAL < 82000)",
+    /PIOR CENA REAL/.test(TP) && /pior\.length < 82000/.test(TP));
+  t("e a da soma de todas as portas também (< 92000)", /tetoComLex\.length < 92000/.test(TP));
+  const TG = readFileSync("./teste-geografo.mjs", "utf8");
+  t("a catraca do teto da PAUTA continua de pé (teste-geografo.mjs: TETO_DA_PAUTA)",
+    /TETO_DA_PAUTA/.test(TG) && /<= TETO_DA_PAUTA/.test(TG));
+
+  /* A PROVA POR TEXTO SOBRE O APP, e o que ela vale. Os dois leitores da
+     verdade eleita são `revelacaoDe` (a frase da inversão) e
+     `oDiaSeguinte` (as consequências). Se os dois só são CHAMADOS dentro
+     do handler da virada, e lá dentro só depois da catraca que abre a
+     revelação, então nenhum caminho do App põe a verdade no prompt antes
+     do turno em que ela cai.
+
+     ISSO NÃO PROVA O TETO, e não se finge que prova: um bloco estático
+     novo poderia entrar no prompt por outro caminho, sem tocar nestes
+     dois nomes — quem guarda isso é `teste-prompt.mjs`, acima. O que esta
+     asserção guarda é o VAZAMENTO DA VERDADE, que é a lei desta linha. */
+  const semImports = APP.replace(/^import .*$/gm, "");
+  const chamadas = (s) => (s.match(/\b(?:revelacaoDe|oDiaSeguinte)\s*\(/g) || []).length;
+  const revelar = (semImports.match(/const revelarAVirada = [\s\S]*?\n {2}\};/) || [""])[0];
+  t("a revelação é um bloco só no App (revelarAVirada)", !!revelar);
+  t("revelacaoDe e oDiaSeguinte são chamados SÓ dentro dela",
+    !!revelar && chamadas(revelar) > 0 && chamadas(semImports) === chamadas(revelar),
+    `App inteiro: ${chamadas(semImports)} · revelarAVirada: ${chamadas(revelar)}`);
+  /* e o bloco da revelação só roda no ramo de quem tem a vez: cada
+     chamada de `revelarAVirada` está atrás de um `vez.quem === ...` */
+  const handler = (semImports.match(/const mexerNaReviravolta = [\s\S]*?calou\("mexerNaReviravolta"/) || [""])[0];
+  const antesDeCada = [];
+  handler.replace(/revelarAVirada\s*\(/g, (m, i) => { antesDeCada.push(handler.slice(Math.max(0, i - 160), i)); return m; });
+  t("e ela só é chamada no ramo de quem tem a vez",
+    !!handler && antesDeCada.length >= 2 && antesDeCada.every((antes) => /vez\.quem === "(?:menor|maior)"/.test(antes)),
+    `${antesDeCada.length} chamadas no handler`);
+  t("a verdade eleita entra no prompt num lugar só, pela nota do turno", (APP.match(/\[A VIRADA/g) || []).length === 1, String((APP.match(/\[A VIRADA/g) || []).length));
+  /* o `motivo` da arbitragem é BASTIDOR — a suíte o lê, a tela nunca. Se
+     ele aparecer na nota do turno ou num texto de tela, o sistema passou
+     a falar de si mesmo. */
+  t("o motivo da arbitragem não vaza para a tela nem para a nota", !/vez\.motivo/.test(APP));
+}
+
+sec("9l. ligado ao jogo (R3)");
+{
+  /* A CATRACA DO EXPORT MORTO, do lado desta suíte. `teste-ligacao` conta
+     MENÇÕES, e por isso perdoa `maiorPodeNascer` por falso positivo — o
+     nome aparece num comentário dentro de `quemPodeRevelar`. Quem exige
+     leitor de verdade é esta lista: se o App deixar de ligar um destes,
+     cai aqui, com o nome.
+
+     A LISTA CRESCEU PARA CINCO em v9.229 (era quatro): `menorPodeNascer`
+     entrou, e pelo mesmo motivo que a irmã — o comentário de
+     `quemPodeRevelar` cita os DOIS nomes, então o varredor perdoa os dois.
+     A contagem mudou de "os quatro órgãos" para "os cinco" por isso. */
+  const R3 = ["quemPodeRevelar", "maiorPodeNascer", "menorPodeNascer", "diasEntreRegasDe", "RITMO_DAS_VIRADAS"];
+  const naoExportados = R3.filter((n) => typeof R[n] === "undefined");
+  t("os cinco órgãos de R3 existem no módulo", naoExportados.length === 0, "não exportados: " + naoExportados.join(", "));
+
+  /* AS QUATRO QUE O APP CHAMA. Os dois guardas de nascimento são os que
+     mais precisam desta linha: passam no `teste-ligacao` por FALSO
+     POSITIVO — o varredor conta a menção deles num comentário dentro de
+     `quemPodeRevelar` —, e sem leitor de verdade nasceriam sem prova e
+     ninguém avisaria. `menorPodeNascer` entrou aqui em v9.229, no mesmo
+     molde da irmã: a âncora exige `if (nome(`, que é chamada e não
+     menção. */
+  const APELOS = {
+    quemPodeRevelar: /quemPodeRevelar\(\{/,
+    maiorPodeNascer: /if \(maiorPodeNascer\(/,
+    menorPodeNascer: /if \(menorPodeNascer\(/,
+    diasEntreRegasDe: /diasEntreRegasDe\(rev\.forma\)/,
+  };
+  const naoChamados = Object.keys(APELOS).filter((n) => !APELOS[n].test(APP));
+  t("o App CHAMA as quatro (leitor de verdade, não menção em comentário)", naoChamados.length === 0, "não chamados: " + naoChamados.join(", "));
+  /* a quarta é TABELA, e tabela não se chama: `RITMO_DAS_VIRADAS` é lida
+     por dentro do módulo (DIAS_ENTRE_REGAS, diasEntreRegasDe,
+     quemPodeRevelar, maiorPodeNascer) e por esta suíte. Quem a lê de fora
+     é o teste, e é assim que "se é número, é tabela" se prova. */
+  t("RITMO_DAS_VIRADAS é lida de fora do módulo (é o que faz dela tabela, e não constante solta)",
+    R.RITMO_DAS_VIRADAS.diasEntreRegas.menor === R.DIAS_ENTRE_REGAS && R.RITMO_DAS_VIRADAS.folgaEntreViradas > 0);
+
+  t("há ref para a maior, e ela entra no save e volta dele",
+    /reviravoltaMaiorRef/.test(APP) && /reviravoltaMaior: reviravoltaMaiorRef\.current/.test(APP) && /garantirReviravolta\(sv\.reviravoltaMaior\)/.test(APP));
+  t("a maior nasce com o alvo do detector, e só com a licença do módulo",
+    /alvoDaReviravolta\(maior\)/.test(APP) && /maiorPodeNascer\(reviravoltaRef\.current, alvoMaior/.test(APP));
+  /* e o simétrico: cada guarda tem de receber A OUTRA virada. Trocar os
+     refs aqui passaria em qualquer teste de comportamento (as duas
+     assinaturas aceitam qualquer reviravolta) e desligaria as duas trancas
+     em silêncio — por isso a âncora nomeia o ref, dos dois lados. */
+  t("a menor também só nasce com a licença do módulo, e a licença olha a MAIOR",
+    /alvoDaReviravolta\(menor\)/.test(APP) && /menorPodeNascer\(reviravoltaMaiorRef\.current,/.test(APP));
+  t("a virada revelada anota o DIA (é a partida da folga até a seguinte)", /reveladaEm: diaRef\.current/.test(APP));
+  t("o episódio aberto chega à arbitragem pelo App", /episodioAberto:/.test(APP));
+  /* o que JÁ estava ligado continua ligado: a menor não pode ter perdido
+     fiação nesta etapa (regressão zero, do lado do App) */
+  t("a fiação da menor continua de pé", /elegerReviravoltas\(sementeMundo\(\)\)/.test(APP) && /reviravolta: reviravoltaRef\.current/.test(APP) && /sementesDaReviravolta\(rev\.forma/.test(APP));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

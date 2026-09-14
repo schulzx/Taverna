@@ -79,7 +79,7 @@ import { lerTermometro, folegoDaLeitura } from "./termometro.js";
 /* AS REVIRAVOLTAS (v9.203) — a verdade escondida, eleita na criacao,
    semeada no Livro e revelada quando a catraca deixa. Conta em
    reviravoltas.js; o App elege, planta, rega e revela. */
-import { garantirReviravolta, elegerReviravoltas, sementesDaReviravolta, podeRevelar, oDiaSeguinte, revelacaoDe, alvoDaForma, DIAS_ENTRE_REGAS } from "./reviravoltas.js";
+import { garantirReviravolta, elegerReviravoltas, sementesDaReviravolta, quemPodeRevelar, maiorPodeNascer, menorPodeNascer, diasEntreRegasDe, oDiaSeguinte, revelacaoDe, alvoDaForma } from "./reviravoltas.js";
 /* O PESO DA CENA (v9.204) — luto e gloria como movimento. Conta em
    peso.js; o App junta os fatos de evento e a pauta cala o mercado. */
 import { pesoDaCena, vetoDoPeso, seguraOCompasso } from "./peso.js";
@@ -5060,6 +5060,12 @@ export default function Taverna() {
   /* a reviravolta eleita deste mundo: null ate uma se eleger. Determinada
      pela semente do mundo, semeada no Livro, revelada pela catraca. */
   const reviravoltaRef = useRef(null);
+  /* R3 (v9.229): a virada MAIOR, irma da menor e com o mesmo ciclo (eleger,
+     semear, regar, revelar). Mora num REF PROPRIO, e nao num campo dentro do
+     outro, porque tem alvo proprio, sementes proprias e ritmo proprio — e
+     porque assim o save antigo, que so tem `reviravolta`, continua lendo o
+     que sempre leu, e a maior simplesmente nasce null nele. */
+  const reviravoltaMaiorRef = useRef(null);
   /* os fatos que acendem uma cena de peso, acumulados pelos eventos do
      turno (uma traicao revelada, uma morte). Lidos pela pauta e pelo
      compasso, e limpos quando a pauta os consome — o peso e um beat. */
@@ -7337,7 +7343,7 @@ export default function Taverna() {
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
       modo: garantirModo(modoRef.current),
-      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, escada: escadaRef.current, postura: posturaRef.current, episodio: episodioRef.current, gestos: gestosRef.current, noite: noiteRef.current, torneio: torneioRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
+      historia: historiaRef.current, espinha: espinhaRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, reviravoltaMaior: reviravoltaMaiorRef.current, escada: escadaRef.current, postura: posturaRef.current, episodio: episodioRef.current, gestos: gestosRef.current, noite: noiteRef.current, torneio: torneioRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
@@ -9735,6 +9741,7 @@ export default function Taverna() {
     /* higiene de territorio: a noite nasce limpa dos motores de campanha */
     promessasRef.current = garantirLivro(null);
     reviravoltaRef.current = null;
+    reviravoltaMaiorRef.current = null;
     escadaRef.current = garantirEscada(null);
     gestosRef.current = [];
     fatosDoPesoRef.current = {};
@@ -9907,59 +9914,157 @@ export default function Taverna() {
       });
     } catch (e) { return null; }
   };
-  /* que reviravoltas acendem o peso da traicao (Furia) e a delacao */
+  /* que reviravoltas acendem o peso da traicao (Furia) e a delacao.
+
+     R3 (v9.229): NENHUMA MAIOR ENTRA AQUI, e e de proposito — quem vier
+     "consertar" a lista amanha, leia antes. O alvo de `cidade_dizimo` e uma
+     CIDADE, nao gente: `registrarGesto({ quem: rev.alvo, gesto: "delatou" })`
+     poria uma delacao na conta de um lugar, e o elenco passaria a ter um
+     nome que ninguem pode olhar na cara. As outras duas maiores revelam um
+     PASSADO (quem assinou a primeira missao, quem ensinou o oficio), e nao
+     uma delacao de agora: acender `traicaoRevelada` nelas seria a Furia
+     cobrando de um fato antigo o preco de uma facada recente. */
   const TRAICAO = ["aliado_agente", "informante_duplo", "trai_para_proteger"];
 
+  /* ---------------- O CICLO DE UMA VIRADA (R3) ----------------
+     Semear (uma vez) e regar (no ritmo DA FORMA). Devolve a virada nova
+     quando fez um gesto, e `null` quando nao fez nada — e assim o "um gesto
+     por turno" fica na mao de quem chama, visivel, em vez de escondido em
+     tres `return` no meio de um corpo que agora cuida de duas. */
+  const cuidarDasSementes = (rev, ato) => {
+    if (!rev || rev.revelada) return null;
+    /* SEMEAR (uma vez) as sementes da forma no Livro */
+    if (!rev.semeada) {
+      let L = garantirLivro(promessasRef.current);
+      for (const spec of sementesDaReviravolta(rev.forma, { alvo: rev.alvo, ato, dia: diaRef.current })) {
+        L = semear(L, { forma: spec.forma, dona: spec.dona, peso: spec.peso, alvo: spec.alvo, ato: spec.ato, dia: spec.dia }).livro;
+      }
+      promessasRef.current = L;
+      return { ...rev, semeada: true, regadaEm: diaRef.current };
+    }
+    /* REGAR uma semente imatura, no ritmo do arco. O numero vem da FORMA e
+       nao mais cravado aqui: para a menor `diasEntreRegasDe` devolve o mesmo
+       3 de sempre (regressao zero literal), e a maior anda no dobro, que e o
+       compasso do arco e nao o da cena. */
+    if (diaRef.current - (rev.regadaEm || 0) >= diasEntreRegasDe(rev.forma)) {
+      const L = garantirLivro(promessasRef.current);
+      const imatura = L.sementes.find((x) => x.dona === "reviravolta" && x.alvo === rev.alvo && (x.estado === "semeada" || x.estado === "regada"));
+      if (imatura) {
+        promessasRef.current = regar(L, imatura.id, { dia: diaRef.current, cena: "a virada" }).livro;
+        return { ...rev, regadaEm: diaRef.current };
+      }
+    }
+    return null;
+  };
+
+  /* A REVELACAO. Paga as sementes maduras DAQUELA virada (o filtro e por
+     alvo, e e por isso que as duas nunca podem dividir alvo), acende o que
+     ela acende e deixa a nota do turno. Grava `reveladaEm`: e por esse dia
+     que a folga ate a virada seguinte se mede, e `revelada` sozinho diz que
+     caiu sem dizer quando. */
+  const revelarAVirada = (rev) => {
+    let L = garantirLivro(promessasRef.current);
+    for (const x of L.sementes.filter((s2) => s2.dona === "reviravolta" && s2.alvo === rev.alvo && s2.estado === "madura")) {
+      L = pagar(L, x.id, { dia: diaRef.current, colheita: revelacaoDe(rev.forma) }).livro;
+    }
+    promessasRef.current = L;
+    if (TRAICAO.includes(rev.forma)) {
+      fatosDoPesoRef.current = { ...fatosDoPesoRef.current, traicaoRevelada: true };
+      try { gestosRef.current = registrarGesto(gestosRef.current, { quem: rev.alvo, gesto: "delatou", postura: (posturaRef.current || {}).postura, dia: diaRef.current }); } catch (e) {}
+    }
+    /* a nota do turno, e so do turno: e por aqui que o Narrador descobre a
+       verdade eleita, no mesmo instante que o jogador. Nada disto vira bloco
+       no prompt, e o `motivo` da arbitragem nunca sai do bastidor. */
+    const passos = oDiaSeguinte(rev.forma, { alvo: rev.alvo, vilao: (nemesisRef.current || {}).nome || "" });
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + "[A VIRADA — " + revelacaoDe(rev.forma) + "] Encene como consequencia do que ja foi semeado: " + passos.join("; ") + ".";
+    return { ...rev, revelada: true, reveladaEm: diaRef.current };
+  };
+
+  /* ---------------- AS DUAS VIRADAS, UM TURNO (R3) ----------------
+     A ORDEM E A LEI. A menor cuida das sementes dela primeiro e, se fez
+     alguma coisa, o turno acabou — e exatamente a sequencia da v9.228, com
+     os mesmos `return`, para uma campanha em curso nao sentir nada.
+
+     Depois vem a UNICA pergunta sobre revelar: `quemPodeRevelar` devolve um
+     nome so, e por isso nao existe o turno em que as duas estouram. O que
+     era `if (rev && rev.revelada) return` no alto do corpo SUMIU de
+     proposito: com duas viradas, aquele corte pararia a maior por causa da
+     menor, que e o bug que esta etapa veio desfazer.
+
+     E so por ultimo a maior semeia/rega. E depois da revelacao porque uma
+     semente plantada hoje nao amadurece hoje: adiantar o passo da maior
+     custaria o turno da menor sem comprar nada. */
   const mexerNaReviravolta = () => {
     try {
       if (modoRef.current === "rapida") return; /* folego de campanha */
-      const menor = elegerReviravoltas(sementeMundo()).menor;
-      if (!menor) return;
-      let rev = reviravoltaRef.current;
-      if (rev && rev.revelada) return;
-      /* 1. ELEGER: a forma do mundo, quando o detector dela acha um alvo vivo */
-      if (!rev) {
-        const alvo = alvoDaReviravolta(menor);
-        if (!alvo) return;
-        rev = garantirReviravolta({ forma: menor, alvo, eleitaEm: diaRef.current });
-        reviravoltaRef.current = rev;
-      }
+      const { menor, maior } = elegerReviravoltas(sementeMundo());
+      const dia = diaRef.current;
       const ato = Math.max(0, Number((historiaRef.current || {}).etapa) || 0);
-      /* 2. SEMEAR (uma vez) as sementes da forma no Livro */
-      if (!rev.semeada) {
-        let L = garantirLivro(promessasRef.current);
-        for (const spec of sementesDaReviravolta(rev.forma, { alvo: rev.alvo, ato, dia: diaRef.current })) {
-          L = semear(L, { forma: spec.forma, dona: spec.dona, peso: spec.peso, alvo: spec.alvo, ato: spec.ato, dia: spec.dia }).livro;
+
+      /* 1. ELEGER A MENOR: a forma do mundo, quando o detector dela acha um
+         alvo vivo — e, desde v9.229, so com a licenca do modulo tambem deste
+         lado. `menorPodeNascer` recusa o alvo que a MAIOR ja tomou: as duas
+         plantam sob a mesma dona ("reviravolta"), o filtro do Livro e dona +
+         alvo, e uma menor nascida por cima colheria as sementes que a maior
+         plantou — e a terceira tranca de `quemPodeRevelar` trancaria a maior
+         para sempre. Ela nao leva `dia` como a irma, e isso e de proposito:
+         a menor nao fica refem de prazo nenhum, porque o detector dela roda
+         de novo no turno seguinte e o alvo vem do mundo, nao do contrato.
+         Sem alvo, ela simplesmente ainda nao nasceu — e agora isso deixou de
+         abortar o orgao inteiro (a guarda engole o alvo vazio, como a da
+         maior ja engolia). */
+      if (menor && !reviravoltaRef.current) {
+        const alvo = alvoDaReviravolta(menor);
+        if (menorPodeNascer(reviravoltaMaiorRef.current, alvo)) {
+          reviravoltaRef.current = garantirReviravolta({ forma: menor, alvo, eleitaEm: dia });
         }
-        promessasRef.current = L;
-        reviravoltaRef.current = { ...rev, semeada: true, regadaEm: diaRef.current };
+      }
+      /* 2. ELEGER A MAIOR, so com a licenca do modulo: nunca no mesmo alvo da
+         menor (as sementes das duas se somariam no Livro), e so depois da
+         espera quando a menor ainda nao nasceu.
+
+         A ORDEM — menor antes da maior — CONTINUA SERVINDO com as duas
+         trancas, e nao por sorte: os dois passos sao SEQUENCIAIS dentro do
+         mesmo turno, e o passo 1 ja escreveu `reviravoltaRef.current` antes
+         de este aqui le-lo. Nao existe, portanto, o turno em que cada uma
+         olhou a outra enquanto ela ainda era `null`: se hoje os dois
+         detectores apontam a MESMA pessoa, a menor nasce (a preferencia e
+         dela, como manda o modulo) e a maior ja a ve de pe e recusa. O
+         caminho inverso — maior nascida ontem, menor achando o mesmo alvo
+         hoje — e exatamente o que a tranca nova do passo 1 fecha. Por isso
+         nada foi reordenado. */
+      if (maior && !reviravoltaMaiorRef.current) {
+        const alvoMaior = alvoDaReviravolta(maior);
+        if (maiorPodeNascer(reviravoltaRef.current, alvoMaior, { dia })) {
+          reviravoltaMaiorRef.current = garantirReviravolta({ forma: maior, alvo: alvoMaior, eleitaEm: dia });
+        }
+      }
+
+      /* 3. A MENOR SEMEIA OU REGA — e, se fez, o turno acabou */
+      const passoDaMenor = cuidarDasSementes(reviravoltaRef.current, ato);
+      if (passoDaMenor) { reviravoltaRef.current = passoDaMenor; return; }
+
+      /* 4. DE QUEM E A VEZ. Uma pergunta, uma resposta, e quem sai dela ja
+         pode revelar agora — a catraca do Livro esta dentro dela. */
+      const vez = quemPodeRevelar({
+        menor: reviravoltaRef.current,
+        maior: reviravoltaMaiorRef.current,
+        livro: promessasRef.current,
+        episodioAberto: !!(episodioRef.current && episodioRef.current.aberto),
+        dia,
+      });
+      if (vez.quem === "menor" && reviravoltaRef.current) {
+        reviravoltaRef.current = revelarAVirada(reviravoltaRef.current);
         return;
       }
-      /* 3. REGAR uma semente imatura, no ritmo do arco */
-      if (diaRef.current - (rev.regadaEm || 0) >= DIAS_ENTRE_REGAS) {
-        const L = garantirLivro(promessasRef.current);
-        const imatura = L.sementes.find((x) => x.dona === "reviravolta" && x.alvo === rev.alvo && (x.estado === "semeada" || x.estado === "regada"));
-        if (imatura) {
-          promessasRef.current = regar(L, imatura.id, { dia: diaRef.current, cena: "a virada" }).livro;
-          reviravoltaRef.current = { ...rev, regadaEm: diaRef.current };
-          return;
-        }
+      if (vez.quem === "maior" && reviravoltaMaiorRef.current) {
+        reviravoltaMaiorRef.current = revelarAVirada(reviravoltaMaiorRef.current);
+        return;
       }
-      /* 4. REVELAR quando a catraca deixa (sementes maduras o bastante) */
-      if (podeRevelar(rev.forma, promessasRef.current, { alvo: rev.alvo })) {
-        let L = garantirLivro(promessasRef.current);
-        for (const x of L.sementes.filter((s2) => s2.dona === "reviravolta" && s2.alvo === rev.alvo && s2.estado === "madura")) {
-          L = pagar(L, x.id, { dia: diaRef.current, colheita: revelacaoDe(rev.forma) }).livro;
-        }
-        promessasRef.current = L;
-        reviravoltaRef.current = { ...rev, revelada: true };
-        if (TRAICAO.includes(rev.forma)) {
-          fatosDoPesoRef.current = { ...fatosDoPesoRef.current, traicaoRevelada: true };
-          try { gestosRef.current = registrarGesto(gestosRef.current, { quem: rev.alvo, gesto: "delatou", postura: (posturaRef.current || {}).postura, dia: diaRef.current }); } catch (e) {}
-        }
-        const passos = oDiaSeguinte(rev.forma, { alvo: rev.alvo, vilao: (nemesisRef.current || {}).nome || "" });
-        notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + "[A VIRADA — " + revelacaoDe(rev.forma) + "] Encene como consequencia do que ja foi semeado: " + passos.join("; ") + ".";
-      }
+
+      /* 5. e so entao a maior cuida das dela */
+      const passoDaMaior = cuidarDasSementes(reviravoltaMaiorRef.current, ato);
+      if (passoDaMaior) reviravoltaMaiorRef.current = passoDaMaior;
     } catch (e) { calou("mexerNaReviravolta", e); }
   };
 
@@ -10889,6 +10994,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       compassoRef.current = garantirCompasso(sv.compasso);
       promessasRef.current = garantirLivro(sv.promessas);
       reviravoltaRef.current = garantirReviravolta(sv.reviravolta);
+      reviravoltaMaiorRef.current = garantirReviravolta(sv.reviravoltaMaior);
       escadaRef.current = garantirEscada(sv.escada);
       posturaRef.current = garantirPosturaAtiva(sv.postura);
       episodioRef.current = garantirEpisodio(sv.episodio);
