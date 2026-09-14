@@ -169,25 +169,37 @@ que falta é o campo chegar até ela.
   **pior cena real 81935 → 81935 chars**, crescimento estático zero.
   Conferido vivo com a queda de verdade (rodadas 2 e 4 aguentaram em silêncio,
   a 5 derrubou Voo). `teste-efeitos.mjs` 421 → **463**. Ver o diário.
-- [ ] **C2b · o companheiro segura o que já conjura** · de: medição de C2 · 14/09
-  **Medido em C2, e é o contrário do que a pauta supunha:** o companheiro **já
-  conjura magia de concentração** — ela é que não sabe. **8 das 148 habilidades
-  de classe são magias do catálogo pelo nome, e 5 concentram**: um Clérigo
-  companheiro de nível 3 sai da ficha com **Bênção** e **Escudo da Fé**, e o
-  piloto já as escolhe (`ehBuff`/`ehAbrigo`). Nos oito prontos da arena são
-  **28 magias de concentração** na ficha, **13** escolhíveis.
-  O que falta não é dar-lhe magia: é o efeito **nascer sabendo** —
-  `efeitoDeBuff` perguntando ao catálogo pelo nome (`magiaPorNome` +
-  `exigeConcentracao`). **0 tabela nova, 0 sítio novo de nascimento, 1 import
-  novo** (`efeitos.js` → `grimorio.js`). O relógio já existe nos dois
-  (`App.jsx:8155`, `arena.js:303`).
-  **O cuidado que manda, e ele vem medido:** essa porta é a **mesma do herói**
-  (`aplicarBuffDeHabilidade`), então o raio é **herói + companheiro**, não
-  companheiro — meça antes, não depois, ou cinco habilidades do herói passam a
-  concentrar sem ninguém ter contado. O que nasce depois: as chamadas de
-  `testeConcentracao` onde o companheiro apanha (`App.jsx:13353`, `:11702`,
-  `:17167`, `arena.js:230`) e a linha que o jogador lê quando ele perde a magia.
-  Catraca: a seção 17 de `teste-efeitos.mjs` + a catraca de equilíbrio da arena.
+- [x] **C2b · o companheiro segura o que já conjura** · feito em v9.236 (`0f96fd6`), 14/09
+  **O cuidado de C2 era o coração da etapa, e a medição que ele mandou fazer
+  corrigiu dois números desta pauta.** A porta é a mesma do herói, então o raio
+  foi medido **antes**: **"cinco habilidades do herói" são três** (Bênção, Escudo
+  da Fé, Invisibilidade) — Voo e Marca do Caçador casam com o catálogo mas **não
+  abrem condição nenhuma** em `aflicaoDe`, e `efeitoDeBuff` nunca é chamado por
+  elas. **"13 escolhíveis" nos prontos são quatro**: 13 é quantas o piloto
+  *enxerga*, 5 entram só pelo ramo ofensivo e 4 por cura; `chama` e `voz` carregam
+  8 e 7 magias de concentração e **nenhuma** vira efeito. Colisão de nome: zero.
+  **A porta é o catálogo, nunca a habilidade:** `exigeConcentracao(h)` com a ficha
+  responderia `false` **em silêncio** para tudo. `magiaPorNome` primeiro.
+  **A cobrança entra por uma porta só** — `segurarOuPerder` (`App.jsx:6593`), irmã
+  de `passarPeloAbrigo` —, nos quatro sítios sempre sobre a ficha **pós-abrigo**
+  (o escudo que comeu a batida já pagou por ela), só em quem fica de pé, só quando
+  o golpe tirou PV. **O jogador lê a frase de C2, palavra por palavra**, com o dono
+  na frente e sem `mostrarRolagens`: `💢 Irmã Vela — Bênção escapa dos dedos — o
+  corpo aguentou 9, e era preciso 10.` Em 168 quedas na arena: **10 quebras**,
+  todas de Bênção (Remendo 6, Voto 4). Escudo da Fé nunca quebra — `absorverDano`
+  já o consumiu antes de o dano restante chegar ao teste.
+  **A catraca de equilíbrio ficou vermelha e a culpa era dela.** `punho`, que não
+  tem uma magia na ficha, caiu a 32,9% em "cc" — e uma cópia da arena com o saque
+  mantido e **toda consequência de jogo apagada** mede os **mesmos 32,9%**.
+  Famílias de 30 sementes davam **~10% de vermelho falso a cada mexida no código**.
+  Conserto do **instrumento**, um número só: **30 → 120 sementes por família**
+  (o tamanho que a tabela já chamava de baixa variância). Piso 35, teto 65 e teto
+  de amplitude **intocados**; o retrato **não** cresceu junto, porque ali mais
+  precisão afrouxaria. Escada de sabotagem refeita nos dois instrumentos: o único
+  vermelho que some é o falso positivo, que acendia igual na árvore sã. **Nenhum
+  pronto reajustado.** Margem mais fina honesta: `punho`/"cc" **38,9%**, 3,9 pt do
+  piso. `teste-efeitos.mjs` 463 → **482**; `teste-arena.mjs` ganhou a seção 10.
+  Ver o diário.
 - [ ] **C3 · uma de cada vez** · de: pessoa · 13/09
   5e, e o próprio `ECONOMIA_ACAO_PROMPT` já promete: *"um conjurador mantém
   no máximo UMA magia de duração por vez"*. Conferir se o jogo cumpre — se
@@ -204,6 +216,14 @@ que falta é o campo chegar até ela.
   provado — `testeConcentracao.linha` acabou de mostrar que texto com número
   nasce no módulo, em voz de mundo, e o App só empurra. A linha da magia que cede
   lugar é irmã dela, não invenção nova.
+  **Acrescentado por C2b (14/09), e é um caso a mais, não outro item:** agora que
+  `efeitoDeBuff` pergunta ao catálogo, o **herói** pode segurar um buff de
+  habilidade *e* uma magia de duração concentrando ao mesmo tempo — e
+  `efeitoEmConcentracao` devolve o **primeiro** que encontra, então uma batida
+  pode derrubar a errada. É a mesma doença que C3 já descreve (`empilhar` só
+  substitui por nome igual), agora com dois nascimentos alimentando-a em vez de
+  um. O teto `quantasAoMesmoTempo: 1` em `CONCENTRACAO_DA_MAGIA` cobre os dois.
+  **E o companheiro entra junto:** ele também passa a poder segurar duas.
 
 ### Fase P — a proteção vale para quem não é o jogador
 Decisão da pessoa (13/09): **consertar os dois**, sabendo que atinge Uma Vida
@@ -472,6 +492,41 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   **Não há mais fase aprovada na fila** — o próximo ciclo pega de "Aberto".
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **o dente da amplitude está encolhendo sozinho, e ninguém mandou** · médio · de: testes+orquestrador (achado de C2b) · 14/09
+  Conferido de passagem ao refazer a escada de sabotagem de C2b, e é o achado mais
+  incômodo do ciclo: **o aperto da sabotagem `sombra +3` vem diminuindo a cada
+  ciclo, sem que ninguém mexa em limiar nem em pronto.** Em A4 (v9.225) ela dava
+  **3 vermelhos**; na árvore de antes de C2b, **1** (amplitude 20,8, teto 20);
+  depois de C2b, **0** — amplitude **19,6, a 0,4 pt do teto**. O motivo é o que
+  `tetoDeAmplitude` já avisava que aconteceria: amplitude é máximo menos mínimo do
+  **retrato**, e o retrato é resorteado a cada mexida na arena. Ou seja, o dente 2
+  — o único que pega a sabotagem que deixa todo mundo **dentro** de 35–65 — está a
+  0,4 pt de parar de morder, por sorte e não por equilíbrio. C2b **não o tocou de
+  propósito** (o conserto de lá foi das famílias, e crescer o retrato junto teria
+  afrouxado justamente este dente — está escrito na tabela).
+  Médio **só a medição**: quantas amplitudes o retrato produz em N sementes
+  independentes, qual a distribuição real hoje contra a de A4, e se 20 ainda é o
+  número certo. **Qualquer conserto que mexa no teto ou num pronto é pesado e vai
+  para a pessoa** — teto é limiar, e rebalancear pronto muda o que o jogador vive.
+  A saída que pode ser média é a terceira: um retrato maior **com o teto
+  recalibrado na mesma medição**, que é aperto e não folga. Catraca: a própria
+  escada de sabotagem, que agora está escrita em `teste-arena.mjs`.
+
+- [ ] **o Narrador não sabe que a magia do companheiro caiu** · médio · de: frontend (achado de C2b) · 14/09
+  C2 fez a quebra do **herói** chegar ao Mestre por nota dinâmica, cumprindo a
+  promessa de `ECONOMIA_ACAO_PROMPT` (*"quando quebrar, narre o efeito se
+  desfazendo"*) com crescimento estático zero. C2b fez o **companheiro** quebrar de
+  verdade — e deixou a nota de fora, com a conta feita: a pior cena real mede
+  **81935 chars, margem 65** para o teto de 82.000; a nota do herói custa ~370
+  chars; e herói e companheiro podem cair **na mesma rodada de inimigos**. Uma
+  segunda nota ali **estoura o teto**, e o teto de prompt é sagrado. Então o
+  jogador lê a queda na cena e o Mestre pode narrar o companheiro ainda abençoado
+  no turno seguinte — o mesmo furo que "o Narrador esquece a guarda", um item
+  abaixo, e provavelmente a **mesma solução**: uma nota só que cubra os dois donos,
+  ou a nota do herói comprimida até caber a segunda. **Se a conta de caracteres não
+  fechar, o item sobe de peso.** Catraca: o varredor do teto + a seção 17 de
+  `teste-efeitos.mjs`, que já conta a nota do herói.
 
 - [ ] **o herói apanha em seis sítios e a concentração só é testada em um** · médio · de: medição de C2 · 14/09
   `testeConcentracao` tem **1 chamador de produção**: `App.jsx:13379`, o turno dos

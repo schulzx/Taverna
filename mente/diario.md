@@ -16,6 +16,163 @@ Formato:
 
 ---
 
+## 14/09 03:09 · v9.236 · C2b · o companheiro segura o que já conjura · commit `0f96fd6`
+- **estado inicial:** árvore limpa, HEAD `3791b26`, VERSÃO v9.235, `npm test`
+  181/181 suítes + 8/8 varredores verde. Sem trava de ciclo. A vez era **C2b**,
+  a etapa que o próprio C2 escreveu na pauta ao medir e se desfazer em três.
+- **conselheiro:** não chamado (a etapa já estava escrita e aprovada).
+- **backend:** mediu o raio **antes** de escrever comportamento, depois ligou
+  `efeitoDeBuff` (`efeitos.js`) ao catálogo — `magiaPorNome` + `exigeConcentracao`,
+  um import novo — e pôs a cobrança em `arena.js:235-267`.
+- **frontend:** as três chamadas do `App.jsx` por **uma porta só**,
+  `segurarOuPerder` (`:6593`), irmã de `passarPeloAbrigo`; os sítios andaram
+  (`:13436`, `:11756`, `:17284`). Conferência viva sem tocar em save nenhum.
+- **testes:** consertou a catraca de equilíbrio que ficou vermelha, e o conserto
+  foi no **instrumento**; `teste-arena.mjs` ganhou a seção 10 (a arena *cobra* a
+  concentração). `teste-efeitos.mjs` 463 → **482** (seção 18, do backend).
+
+- **A MEDIÇÃO VEIO PRIMEIRO PORQUE A PORTA É A MESMA DO HERÓI, e ela corrigiu
+  dois números da pauta.** `aplicarBuffDeHabilidade` serve os dois, então ligar o
+  companheiro liga o herói junto — C2 avisou, e o aviso valeu. **"Cinco
+  habilidades do herói" são três:** Bênção, Escudo da Fé e Invisibilidade. Voo e
+  Marca do Caçador casam com o catálogo mas **não abrem condição nenhuma** em
+  `aflicaoDe`, então `efeitoDeBuff` nunca é chamado por elas — o raio do herói é
+  3, e está travado nominalmente na suíte. **"13 escolhíveis" nos prontos são
+  quatro:** 13 é quantas o piloto *enxerga*, 5 entram só pelo ramo ofensivo (viram
+  golpe, nunca efeito) e 4 por cura; só Bênção e Escudo da Fé, no Remendo e no
+  Voto, chegam a `efeitoDeBuff`. `chama` e `voz` carregam 8 e 7 magias de
+  concentração e **nenhuma** vira efeito. Colisão de nome: **zero**.
+
+- **DECISÃO MÉDIA: a porta é o catálogo, nunca a habilidade.** `exigeConcentracao`
+  aceita o objeto que recebe; passar `h` (a ficha) direto responderia **`false` em
+  silêncio** para tudo, e o bug seria invisível — a magia nasceria sem concentrar
+  e ninguém saberia. Pior: abriria um **segundo lugar** para a regra morar, contra
+  a lei "se é número, é tabela". `magiaPorNome(h.nome)` primeiro, a pergunta
+  depois. A chave nasce só quando é verdade (ausente, nunca `false`).
+
+- **A CATRACA FICOU VERMELHA, E A MEDIÇÃO MOSTROU QUE A CULPA ERA DELA.** Uma
+  asserção só: `[cc] punho vence entre 35% e 65% (32,9%)`. **`punho` não tem uma
+  magia na ficha nem um efeito de concentração para segurar** — não pode ser
+  afetado pela regra nova. A prova que fechou o caso: uma cópia da arena de C2b
+  com o **saque mantido na condição e na frequência exatas** e **toda consequência
+  de jogo apagada** (nada quebra, nenhuma linha nasce) mede os **mesmos 32,9%**,
+  dígito por dígito. A sorte da arena é um fluxo global travado por semente: um
+  d20 a mais reembaralha tudo o que vem depois dele. O retrato de baixa variância,
+  que não sente isso, não se moveu — `punho` 45,4 → 45,6.
+
+- **DECISÃO MÉDIA: o conserto é do instrumento, e é um número só — 30 → 120
+  sementes por família.** A cegueira foi medida antes de ser consertada: 40
+  famílias independentes de 30 sementes/par sobre a arena **sã** dão σ de 3,3–4,3
+  pts e **1 em 40 já traz um pronto fora da faixa sem nada ter quebrado** — com
+  quatro famílias por rodada, **~10% de vermelho falso a cada mexida no código**.
+  A 120 sementes: σ 1,5–2,2 e **0 em 20**. Piso 35, teto 65, as quatro famílias, o
+  retrato e o teto de amplitude **intocados**: subiu a precisão do estimador,
+  nunca a severidade do dente. 120 é o número que a própria tabela já chamava de
+  baixa variância duas linhas abaixo — a família herda a fronteira em vez de
+  inventar uma segunda. Custo: `teste-arena.mjs` 11,1 s → 25,9 s; `npm test`
+  ~80 s → 95 s.
+- **E a prova de que os dentes continuam mordendo, que era a trava desta decisão.**
+  A escada de sabotagem (`sombra` ganhando vida) foi refeita com a **suíte
+  inteira**, nos dois instrumentos — vermelhos de 30 → de 120: +2 `1→0` · +3
+  `1→0` · +5 `3→2` · +8 `7→6`. **O vermelho que some é sempre o mesmo, `[cc]
+  punho` — e ele acende idêntico na árvore sã.** Um vermelho que aparece com e sem
+  a sabotagem não é detecção, é o ruído da página; descontado ele, os dois
+  instrumentos pegam exatamente as mesmas sabotagens. A sabotagem registrada no
+  diário de A4, rodada na árvore em que foi registrada, fica vermelha **nos dois**,
+  pelo mesmo dente e com o mesmo dígito.
+- **DUAS SAÍDAS MAIS FÁCEIS FORAM RECUSADAS, e o motivo é o mesmo nas duas.**
+  (a) **Trocar a família "cc"** por outra semente: as três irmãs foram escolhidas
+  **antes** de medir, e está escrito na tabela de propósito; trocar justamente a
+  que saiu vermelha é catar a semente **depois** de ver o resultado — a família
+  nova ficaria verde porque foi catada para ficar, e o dente passaria a medir a
+  sorte de quem escolhe. (b) **Crescer o retrato junto:** ali mais precisão
+  **afrouxaria**. Amplitude é máximo menos mínimo, ruído infla essa distância, e o
+  teto de 20 foi calibrado a 120 sementes/par — amostra maior mediria amplitude
+  menor pelo mero sumiço do ruído e daria folga nova debaixo do mesmo teto, sem
+  ninguém ter equilibrado nada. **Nenhum número de pronto foi reajustado.**
+- **A margem mais fina, honesta:** `punho` em "cc" com **38,9% — 3,9 pt do piso**
+  (era 36,2%/1,2 pt a 30 sementes, e 32,9% no dia em que quebrou). Mesmo pronto,
+  mesma família: os 2,7 pts que apareceram são ruído indo embora, não parede
+  andando. Amplitude do retrato **12,6** (teto 20).
+
+- **DECISÃO MÉDIA: a cobrança entra por uma porta só, não por três.** Três
+  `try/catch` soltos nos três sítios seriam três chances de a regra nascer
+  diferente em cada um — o vício que a Fase A veio matar. `segurarOuPerder(quem,
+  dano, nome)` é `calou("concentracaoDoCompanheiro", ...)` e devolve `linha: ""`
+  como único sinal de que nada aconteceu. Nos quatro sítios (os três do App mais o
+  da arena) a conta é a mesma: sobre a ficha **pós-abrigo** (o escudo que comeu a
+  batida já pagou por ela — testar sobre a ficha velha devolveria o escudo já
+  consumido), só em quem fica **de pé**, só quando o golpe **tirou PV**.
+- **O que o jogador lê é a frase de C2, palavra por palavra.** O App não monta uma
+  sílaba — `grep "escapa dos dedos" src/App.jsx` volta vazio; ele põe só o dono na
+  frente, pelo mesmo molde de `passarPeloAbrigo`, para o 🛡 e o 💢 do companheiro
+  saírem irmãos na cena. E **independe de `mostrarRolagens`**, como a do herói:
+
+  `💢 Irmã Vela — Bênção escapa dos dedos — o corpo aguentou 9, e era preciso 10.`
+
+  Na arena, com o nome do duelista: `O Remendo — Bênção escapa dos dedos — …`
+- **O efeito no combate, medido:** em 168 quedas na arena, **10 quebras**, todas de
+  **Bênção**, só no Remendo (6) e no Voto (4) — 0,06 por queda. **Escudo da Fé
+  nunca quebra**, e por um motivo correto: `absorverDano` já o consumiu antes de o
+  dano restante chegar ao teste.
+
+- **DECISÃO MÉDIA: o companheiro NÃO ganha nota ao Narrador na quebra, e é o que
+  mais quero registrado.** C2 mediu a pior cena real em **81935 chars, margem 65**
+  para o teto de 82.000. A nota do herói custa ~370 chars no turno da queda, e
+  herói e companheiro podem cair **na mesma rodada de inimigos** — uma segunda
+  nota ali **estoura o teto**, e o teto de prompt é sagrado. A conta não fecha
+  sozinha e o canal não estava no recorte da etapa: fica na pauta como item, não
+  como dívida silenciosa.
+- **DECISÃO MÉDIA: o companheiro não ganha a linha 🎲 de `mostrarRolagens`.** Dar
+  uma exigiria inventar o formato da voz de bastidor com o dono prefixado, e a
+  frase de C2 já é independente do portão — o jogador lê o porquê de qualquer
+  jeito. Assimetria consciente com o herói, não esquecimento.
+- **DECISÃO MÉDIA: a conferência viva foi bancada determinista + montagem, não
+  combate real.** Todo caminho até uma quebra de companheiro na mesa passa por
+  `enviar` (o Narrador): uma dezena de turnos de IA, e **"qualquer coisa que custe
+  dinheiro" está na coluna pesado** da tabela da casa. A bancada (27 asserções, d20
+  travado) prova os números e a frase; a montagem em aba nova prova que o arquivo
+  não caiu (sem `LimiteErro`). A queda ao vivo na mesa fica para um "sim" da pessoa.
+- **UMA ASSERÇÃO DE C1 FOI MOVIDA, COM O MOTIVO ESCRITO** (lei da casa). A linha
+  que exigia `efeitoDeBuff(magiaPorNome("Voo"))` **mudo** era C1 travando o estado
+  de então — e virou a suíte **proibindo o conserto** desta etapa. A intenção
+  mudou de endereço e ficou mais forte: a seção 18 confere **as 85 magias** contra
+  `exigeConcentracao` nas duas direções, em vez de uma.
+
+- **A CORREÇÃO DE PROCESSO DESTE CICLO: o save de uma pessoa não é material de
+  teste.** Em C2 a conferência viva **sobrescreveu um save real** da pessoa
+  (`taverna_rapida_v1`) — a memória da casa já avisa que *autosave sobrescreve
+  injeção*, mas o aviso só falava do lado que perde o boneco de teste, não do lado
+  que perde a partida de alguém. Virou seção obrigatória em
+  `.claude/agents/frontend.md`: guardar o valor de toda chave que for tocar **em
+  arquivo no scratchpad** (a aba recarrega), injetar com o jogo desmontado,
+  restaurar idem, **confirmar por leitura** e dizer no relato quais chaves tocou.
+  Funcionou no mesmo dia: o `frontend` gravou comprimento + SHA-256 de tudo antes
+  e depois, e **não escreveu em chave nenhuma** — `taverna_rapida_v1` saiu com o
+  mesmo hash com que entrou, e `taverna_save_v1`/`taverna_duelo_v1` continuam
+  ausentes como estavam.
+
+- **o que ficou:**
+  - **Não esbarramos no relógio quebrado das condições do grupo** — nenhuma mão
+    escreveu em `pers.grupo[].condicoes`. O caminho desta etapa é
+    `pers.grupo[].efeitos`, cujo tique existe e roda (`App.jsx:8204`). O item
+    segue em **"Para a pessoa decidir"**, intocado.
+  - **C2c (o inimigo conjurador) não foi tocado, nem parcialmente** — é `pesado` e
+    está com a pessoa.
+  - **Achado novo, e é de equilíbrio, não de instrumento:** o aperto da sabotagem
+    `sombra +3` **vem encolhendo sozinho a cada ciclo** — 3 vermelhos em A4, 1 na
+    árvore de antes de C2b (amplitude 20,8), **0** depois (amplitude **19,6, a
+    0,4 pt do teto**). Nenhum limiar mudou e nenhum pronto foi reajustado: é a
+    amplitude sendo resorteada a cada mexida na arena, que é o que
+    `tetoDeAmplitude` já avisava. Mexer no teto é afrouxar/apertar limiar, e
+    rebalancear pronto não estava autorizado — **vai para a pauta**.
+  - **Um fio solto que é de C3, não desta etapa:** o herói agora pode ter buff *e*
+    magia de duração concentrando ao mesmo tempo, e `efeitoEmConcentracao` devolve
+    o **primeiro** — pode cair a errada. É exatamente o "uma de cada vez" que C3 já
+    tem escrito, e agora com um caso a mais.
+  - **A nota ao Narrador na quebra do companheiro** vai para a pauta com a conta
+    (margem de 65 chars) já feita.
+
 ## 14/09 02:10 · v9.235 · C2 · a quebra acontece na mesa · commit `086d035`
 - **estado inicial:** árvore limpa, HEAD `0b04b30`, VERSÃO v9.234, `npm test`
   181/181 suítes + 8/8 varredores verde. Sem trava de ciclo. A vez era **C2**,
