@@ -152,26 +152,73 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   "delatou")` do `App.jsx:9958` dizem quem é quem; seguir a pauta teria posto
   o refém como delator na Fúria. `vezesQueUsouInformante` ganhou o leitor de
   produção que R1 devia. 90 asserções novas (41→131). Ver o diário.
-- [ ] **R3 · a maior enfim acontece** · de: pessoa+conselheiro · 13/09
-  `mexerNaReviravolta` lê só `.menor`; as três maiores (patrono, cidade do
-  dízimo, mestre de ofício) são acervo escrito e nunca vivido. Ligar, com a
-  regra de convivência: as duas não estouram na mesma cena, e a maior
-  respeita o Livro de Promessas (nada dispara sem semear).
-  **Corrigido pelo orquestrador em 13/09, depois de R2:** a etapa ficou
-  **menor** do que estava escrita. Os detectores das três maiores já existem
-  e já se provam (`contratante_servia`, `cidade_dizimo`, `mestre_treinou` têm
-  `achaAlvo` e linha em `MUNDOS_DE_PROVA`), então R3 **não é mais detectar** —
-  é só **consumir**: `mexerNaReviravolta` passa a ler `.maior` junto com
-  `.menor`, com a regra de convivência. Herdado: `cidade_dizimo` devolve nome
-  de **cidade**, não de pessoa — o `TRAICAO` e o `registrarGesto` do
-  `App.jsx:9956-9958` assumem que `rev.alvo` é gente, e a maior vai precisar
-  desse cuidado.
+- [x] **R3 · a maior enfim acontece** · feito em v9.229 (`e50eb43`), 13/09
+  As três maiores saíram do acervo e passam a acontecer. O trabalho não foi o
+  consumo — foi a **convivência**, em módulo puro: `quemPodeRevelar` devolve
+  **um nome só** (a cena única vira estrutura, não disciplina de quem chama),
+  a catraca do Livro separa por alvo (as sementes da menor não pagam a
+  colheita da maior), a menor vem primeiro e a maior não cai sobre uma menor
+  em curso nem sobre episódio aberto — **a menor não mudou em nada**.
+  **O ritmo:** menor rega a cada 3 e amadurece em 9 (o compasso do episódio);
+  maior rega a cada 6 e amadurece em **18**, contra os 12 do episódio mais
+  longo — para que adiar por episódio aberto nunca vire cancelar. Folga de 3
+  dias entre uma queda e a outra.
+  **Fora do escrito, e dentro da lei da etapa:** a tranca do **alvo dividido**
+  nas duas pontas (`maiorPodeNascer` + `menorPodeNascer`). Quem cede é a
+  menor, por física e não por culpa — a maior já plantou quando nasce e não
+  consegue devolver o alvo. Sem isso, uma pagaria a catraca da outra e a
+  outra ficava trancada para sempre. `teste-reviravolta.mjs` 131 → **290**
+  asserções. Ver o diário.
 - [ ] **R4 · a suíte da fase** · de: pessoa+conselheiro · 13/09
   `teste-reviravolta.mjs`: eleição determinística por semente, cada forma
   com seu detector, a ordem menor→maior, e o Narrador só sabendo no turno
   da revelação.
+  **Corrigido pelo orquestrador em 13/09, depois de R3:** a etapa nasce
+  **credora** — R3 já provou as quatro coisas desta lista (seções 9 a 9l:
+  determinismo sobre 300 mundos com as três maiores e as quatro menores
+  alcançáveis, detector por forma desde R2, a ordem menor→maior num
+  exaustivo de 560 combinações, e o Narrador por regex sobre o `App.jsx` mais
+  as duas catracas de teto conferidas). R4 é **conferir o que sobrou**, não
+  repetir: o que ainda não tem prova é o **ciclo inteiro contra o App de
+  verdade** (eleger → semear → regar → revelar, com o Livro real), e as
+  bordas que R3 anotou e não pôde fechar (as duas logo abaixo, em "Aberto").
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **o `teste-ligacao` conta menção em comentário como leitor** · leve · de: backend+testes+frontend (achado de R3) · 13/09
+  Os três agentes esbarraram nisto de forma independente na mesma etapa, o que
+  já diz o tamanho: a catraca de "export morto mente" conta **qualquer
+  ocorrência do nome no texto**, inclusive dentro de um comentário do próprio
+  módulo que o exporta. Em R3, `maiorPodeNascer` e `menorPodeNascer` passaram
+  verdes **antes de existir uma única chamada** — o comentário grande de
+  `quemPodeRevelar` cita os dois nomes. `check-mortas` dizia "0 nunca usadas"
+  no mesmo instante. Ou seja: a catraca que existe para impedir regra sem
+  leitor pode ser calada sem querer por quem documenta bem. A suíte de R3 se
+  defendeu sozinha (exige `if (menorPodeNascer(` e até o ref certo dentro da
+  chamada), mas isso é disciplina de uma suíte, não catraca da casa. O
+  trabalho é fazer o varredor **ignorar comentários** (`//` e `/* */`) antes de
+  contar, e ver quantos exports da casa hoje vivem de menção — o número é a
+  medida do buraco. Linha "varredor novo para erro já visto" / "bug com teste
+  que prova": a prova escreve um export novo citado só em comentário, exige
+  vermelho, e passa depois. Cuidado: a lista de perdão do `teste-ligacao` tem
+  motivos escritos e não pode ser atropelada — e se o conserto revelar exports
+  que hoje passam só por menção, cada um é achado seu, não item deste.
+
+- [ ] **`fecharAto` pode trancar a maior para sempre no dia em que for ligado** · leve · de: testes (achado de R3) · 13/09
+  `fecharAto` (`promessas.js:260`) murcha as sementes não pagas de um ato, e
+  **não tem chamador em lugar nenhum do `App.jsx`** — por isso é inofensivo
+  hoje. No dia em que ganhar um: as sementes da reviravolta nascem com `ato` =
+  etapa da história, o App semeia **uma vez só** (`semeada: true`), e uma menor
+  com as sementes murchas **nunca mais amadurece**. O ramo ② de
+  `quemPodeRevelar` ("a menor vem primeiro") não tem escape temporal — só o
+  nascimento tem —, então a maior ficaria trancada sem prazo, que é exatamente
+  o defeito que R3 veio desfazer. Duas saídas, e a escolha é de quem mexer:
+  **dar escape ao ramo ②** (a maior passa a poder cair se a menor está parada
+  há tantos dias) ou **fazer a reviravolta ressemear** o que murchou. Enquanto
+  `fecharAto` não for ligado, o mais honesto talvez seja só a prova que trava o
+  vínculo: uma asserção que falha no dia em que `fecharAto` ganhar chamador sem
+  que este item tenha sido resolvido. Linha "teste faltante para regra que
+  existe".
 
 - [ ] **a suíte da sala ficou vermelha uma vez e não repetiu** · leve · de: orquestrador (achado de R2) · 13/09
   No `npm test` de fechamento de R2, `teste-sala.mjs` deu `122 passaram, 1

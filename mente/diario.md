@@ -16,6 +16,128 @@ Formato:
 
 ---
 
+## 13/09 22:05 · v9.229 · R3 · a maior enfim acontece · commit `e50eb43`
+- **estado inicial:** árvore limpa, HEAD `c0f026b`, VERSÃO v9.228, `npm test`
+  181/181 verde. A etapa aprovada da vez era a **R3**, já encolhida por R2 para
+  só consumo: as três formas **maiores** (`contratante_servia`, `cidade_dizimo`,
+  `mestre_treinou`) tinham detector desde R2 e seguiam inertes porque
+  `mexerNaReviravolta` lia só `.menor`. Metade da prateleira era acervo escrito
+  e nunca vivido.
+- **conselheiro:** não chamado (a etapa já estava escrita, e a pauta cheia).
+- **backend:** `reviravoltas.js` ganhou a tabela `RITMO_DAS_VIRADAS`,
+  `diasEntreRegasDe(forma)`, `quemPodeRevelar({menor, maior, livro,
+  episodioAberto, dia})`, `maiorPodeNascer` + `menorPodeNascer` e o campo
+  `reveladaEm` em `garantirReviravolta`. `DIAS_ENTRE_REGAS` deixou de ser um `3`
+  cravado e passou a **ler a tabela**.
+- **frontend:** `App.jsx` — `reviravoltaMaiorRef` (declaração, save `:7346`,
+  load `:10975`, reset `:9744`), e `mexerNaReviravolta` quebrado em
+  `cuidarDasSementes` + `revelarAVirada` + o árbitro. O "um gesto por turno"
+  saiu de três `return` no meio do corpo e virou valor de retorno, visível em
+  quem chama. `TRAICAO` intocado, zero na tela, nada somado ao prompt.
+- **testes:** `teste-reviravolta.mjs` de **131 para 290 asserções** (+159), em
+  nove seções novas — incluindo um exaustivo de **560 combinações** de estado
+  para a lei da cena única, e o cenário de ponta a ponta do alvo dividido nos
+  dois mundos (com e sem a tranca).
+
+- **como a maior se distingue da menor, e por quê** (a decisão de ritmo que a
+  pessoa pediu que fosse escrita):
+  - **rega a cada 6 dias, contra os 3 da menor.** O número não é "o dobro
+    porque soa maior": 3 sementes × 6 = **18 dias** de amadurecimento, e o
+    episódio mais longo do catálogo (4 marcos × `DIAS_ENTRE_MARCOS`) vive
+    **12**. Como a lei 4 **adia** a maior enquanto houver episódio aberto, um
+    adiamento que durasse mais que a espera seria cancelamento disfarçado. A
+    menor fica nos 3 porque 3 é o compasso do episódio: ela amadurece em 9
+    dias, a vida de um episódio.
+  - **folga de 3 dias entre uma queda e a outra** — um marco de episódio de
+    digestão. O mundo vive uma batida inteira do `oDiaSeguinte` da primeira
+    antes de a segunda poder cair.
+  - **a ordem é menor → maior**, e ela é a virada da campanha, não um evento a
+    mais: não cai por cima de uma menor em curso nem de um episódio aberto.
+
+- **decisões médias tomadas:**
+  - **`quemPodeRevelar` devolve UM nome, e não dois booleanos.** "As duas não
+    estouram na mesma cena" vira **estrutural**: não existe resposta em que as
+    duas caibam, e o App não pode errar mesmo querendo. O `livro` entra dentro
+    da função pelo mesmo motivo — se a maturidade viesse de fora, o App podia
+    ouvir `"maior"` e só depois descobrir que ela não estava madura, e a menor,
+    que estava, perderia o turno em silêncio.
+  - **a maior tem escape de prazo; a menor não.** Sem escape, a maior ficaria
+    trancada **para sempre** em toda campanha cujo detector da menor nunca acha
+    alvo (o herói que anda sem grupo, a bolsa sem item de origem vaga) — seria
+    reescrever, um andar acima, o bug que R3 veio desfazer. Então: enquanto a
+    menor não nasceu, o campo é dela por `diasDeEsperaPelaMenor` = **9** (o
+    amadurecimento inteiro dela: se em todo esse tempo o mundo não deu alvo
+    vivo, não vai dar); depois disso a maior nasce sozinha.
+  - **episódio aberto adia só a maior; a menor continua caindo com episódio
+    aberto.** Blocar a menor seria regressão em campanha viva — dias de jogo
+    tirados de quem já estava jogando, e ninguém veria, porque a virada
+    simplesmente demoraria mais. Está guardado por asserção, com o motivo
+    escrito no comentário.
+  - **fora do que a etapa pedia: a tranca do alvo dividido, nas duas pontas.**
+    `elegerReviravoltas` garante formas diferentes, **não alvos diferentes** — e
+    o companheiro traidor (`aliado_agente`) pode ser também quem encomendou a
+    primeira missão (`contratante_servia`). O filtro do Livro é `dona`+`alvo`:
+    as sementes das duas se somariam, uma pagaria a catraca da outra ("pesado"
+    pago com dinheiro alheio, dois dias antes do devido) e a outra ficaria
+    **trancada para sempre** — o defeito de R2 com roupa nova. Entrou no
+    escopo porque *é* a lei de convivência da etapa, não um órgão novo.
+    **Quem cede é a menor, e o motivo é físico, não de culpa:** ceder é
+    devolver o alvo, e a maior não consegue — no turno em que nasce ela já
+    plantou, e as três sementes estão no Livro com aquele nome; uma maior que
+    "cedesse" sairia deixando exatamente a herança que causou o problema.
+    A menor, que ainda não plantou nada, cede de graça — e não fica refém,
+    porque não há prazo: o detector dela roda de novo no turno seguinte, e o
+    alvo vem do mundo, não do contrato. A assimetria está na assinatura
+    (`maiorPodeNascer` tem `dia`, `menorPodeNascer` não), e há asserção que
+    acusa o dia em que alguém acrescentar um prazo ali.
+  - **a tranca vale com a maior já revelada.** Ao revelar, o App paga só as
+    sementes **maduras**; as imaturas ficam no Livro com aquele alvo, e a rega
+    da menor (`dona`+`alvo`+imatura) regaria as sobras da maior como se fossem
+    dela. O alvo da maior é dela antes e depois de a máscara cair.
+
+- **o que muda num save antigo** (o cuidado que a pessoa pediu): ele não tem o
+  campo `reviravoltaMaior` — lê `null`, e a maior **passa a poder nascer** dali
+  em diante. Simulado em seis cenários, 60 dias cada, contra o módulo de
+  verdade: com a **menor em curso e não revelada**, ela cai no dia 11 exatamente
+  como cairia sem a maior existir, e a maior só se apresenta depois; com
+  **episódio aberto até o dia 30**, a menor cai no 11 igual e a maior adia para
+  o 31; com a **menor já revelada e `reveladaEm: 0`** (o campo não existia), a
+  folga já está vencida e ninguém é punido por ter revelado antes de o campo
+  nascer. Nenhum caminho em que a maior atropele. E o caso que era morto — a
+  menor que nunca acha alvo — agora tem história: a maior nasce no dia 9.
+- **o Narrador:** nada de bloco novo no prompt. As duas catracas de teto
+  continuam de pé e conferidas: `teste-prompt.mjs` mede a pior cena real em
+  **81 935** chars (limite 82 000) e `teste-geografo.mjs` corta a pauta em
+  **1 265** (`TETO_DA_PAUTA` 1 400). R3 não moveu nenhum dos dois. A verdade
+  eleita só sai por `revelarAVirada`, num bloco só, e o `motivo` do árbitro
+  nunca chega à tela — provado por regex sobre o `App.jsx`.
+- **uma âncora de teste movida, com motivo:** `/podeRevelar\(rev\.forma/`
+  deixou de existir — o App agora faz **uma** pergunta em vez de uma por
+  virada. Exigir a âncora antiga de volta seria exigir de volta o turno em que
+  as duas podem estourar juntas. Ficaram duas asserções no lugar (o ciclo segue
+  genérico por forma; a revelação sai de uma pergunta só) e uma negativa para a
+  antiga não voltar sorrateiramente.
+- **o que ficou:**
+  - **o `teste-ligacao` conta menção em comentário como leitor.** Os três
+    agentes esbarraram nisso de forma independente nesta etapa
+    (`maiorPodeNascer` e `menorPodeNascer` passavam por falso positivo). A suíte
+    de R3 se defendeu sozinha exigindo **chamada de verdade** (`if
+    (menorPodeNascer(` e até o ref certo dentro dela — trocar os refs passaria
+    em qualquer teste de comportamento e desligaria as duas trancas em
+    silêncio), mas o varredor da casa continua com o buraco. **Vai para a
+    pauta.**
+  - **`fecharAto` de `promessas.js` não tem chamador em lugar nenhum** — e se
+    ganhar um, ele murcha as sementes não pagas de um ato: uma menor com as
+    sementes murchas nunca mais amadurece, e trancaria a maior sem prazo (o
+    ramo ② de `quemPodeRevelar` não tem escape temporal). Não é alcançável
+    hoje; fica escrito para o dia em que for ligado. **Vai para a pauta.**
+  - **R4** (a suíte da fase) é a próxima etapa aprovada — e nasce credora: R3
+    já provou eleição determinística, detector por forma, a ordem menor→maior e
+    o Narrador só sabendo no turno da revelação. R4 deve conferir o que sobrou,
+    não repetir.
+
+---
+
 ## 13/09 20:10 · v9.228 · R2 · toda forma eleita tem detector · commit `b0b561b`
 - **estado inicial:** árvore limpa, HEAD `5a7731d`, VERSÃO v9.227. A etapa
   aprovada da vez era a **R2**, e ela nasceu credora: R1 cavou três sinais e
