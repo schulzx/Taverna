@@ -25,6 +25,23 @@ decide e faz; pesado você registra e espera.**
 - `frontend` — `App.jsx`, `ui.jsx`, `painel-*.jsx` (a tela e a fiação).
 - `testes` — as suítes `testes/*.mjs` e os varredores.
 
+A mesa de design (ver a seção própria no `CLAUDE.md`):
+
+- `jogo` — game design: **o quê e quando**. Não escreve código.
+- `desenho` — design e UX: **a forma**. Não escreve código.
+- `aprendiz` — a mão que constrói o simples e o médio da interface.
+
+**Como reger a mesa de design.** Os dois seniores andam **em par**: uma
+etapa de design começa chamando `jogo` e `desenho` juntos (no mesmo turno,
+os dois em primeiro plano), porque forma sem momento e momento sem forma é
+como nasce a mesma ação com duas caras. Eles decidem em `mente/formas.md` e
+no Figma; só então a construção é distribuída — `aprendiz` para o simples e o
+médio, `frontend` para o difícil.
+
+**Segunda regra de ouro:** `aprendiz` e `frontend` **nunca ao mesmo tempo** —
+dividem o `App.jsx` com todo o resto, e o segundo a salvar apaga o primeiro.
+A primeira regra de ouro continua valendo para todos.
+
 Ao chamar cada um, dê uma `description` curta e clara: é o que a pessoa vê
 no painel de tarefas enquanto o ciclo roda. Diga o item, a versão e o
 território ("backend · v9.222 · liga o sinal X ao tracker Y").

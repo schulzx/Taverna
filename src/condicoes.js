@@ -13,6 +13,45 @@
    que o sistema já aplicou.
    ============================================================ */
 
+/* ---------------- OS CANAIS DE SAÍDA (v9.239 — T2) ----------------
+   A LEI, tirada de D&D 5e: CURA NORMAL SÓ DEVOLVE PV. A poção, o dado
+   de vida, a Palavra Curativa, o Segundo Fôlego, o santuário da
+   masmorra — todos somam no PV e NENHUM escreve em `condicoes`. Quem
+   tira uma condição é o RELÓGIO (`tickCondicoes`), o DESCANSO
+   (`limparPorDescanso`) ou uma porta DECLARADA.
+
+   O QUE ESTA TABELA CONSERTA. Até a v9.238 quatro condições diziam
+   `saiCom: ["cura"]` — envenenado, sangrando, cego e enfeitiçado — e
+   NINGUÉM lia esse canal: `limparPorDescanso` é o único leitor de
+   `saiCom` e só recebe "curto" e "longo". Era promessa morta na tabela;
+   pior, era promessa que CONTRADIZIA a lei, porque anunciava a quem
+   lesse o catálogo que beber uma poção corta o veneno.
+
+   O canal não foi apagado — foi RENOMEADO para o que sempre quis dizer.
+   "Restauração" é a PORTA DECLARADA: a magia que se declara como tal
+   (Restauração Menor e Maior, `funcao: "curar_condicao"` no grimório), o
+   antídoto (`tipo: "limpa"`, com o `remove` escrito), a relíquia (com o
+   `limpa` escrito). Nunca a cura que fecha ferida.
+
+   Apagar o canal teria mudado o jogo em silêncio: `enfeiticado` só
+   declarava "cura", e `saiCom` VAZIO cai na regra implícita de que o
+   descanso longo limpa toda condição ruim — a noite passaria a quebrar
+   encantamento, que hoje ela não quebra. Renomear guarda o
+   comportamento exatamente onde está.
+
+   `porDescanso` é o que separa os dois mundos, e é lido de verdade:
+   `limparPorDescanso` RECUSA qualquer canal que não seja de descanso,
+   para que uma cura futura não entre por essa porta. O canal
+   "restauracao" nasce sem leitor de propósito — quem o liga é T4. */
+export const CANAIS_DE_SAIDA = [
+  { id: "curto", porDescanso: true, diz: "uma hora de parada" },
+  { id: "longo", porDescanso: true, diz: "a noite inteira" },
+  {
+    id: "restauracao", porDescanso: false,
+    diz: "a porta declarada — magia de restauração, habilidade ou antídoto; NUNCA cura normal",
+  },
+];
+
 /* ---------------- O CATÁLOGO ----------------
    Campos mecânicos (o que o CÓDIGO faz com a condição):
      vantagem/desvantagem → nas rolagens de quem a carrega
@@ -21,7 +60,7 @@
      danoExtra/danoReduzido → no dano causado
      defesa               → soma na CA
      turnos               → duração padrão (null = até algo tirá-la)
-     saiCom               → ["curto","longo","cura"] o que a remove
+     saiCom               → um ou mais ids de CANAIS_DE_SAIDA
      resistir             → teste que o SISTEMA rola quando ELE aplica
      aliases              → como a ficção costuma chamar isso
 */
@@ -29,14 +68,14 @@ export const CONDICOES = {
   /* ---- ruins ---- */
   envenenado: {
     id: "envenenado", rotulo: "Envenenado", icone: "🧪", tipo: "ruim",
-    turnos: 4, desvantagem: true, danoTurno: 2, saiCom: ["longo", "cura"],
+    turnos: 4, desvantagem: true, danoTurno: 2, saiCom: ["longo", "restauracao"],
     resistir: { attr: "vigor", dif: 12 }, subst: "veneno|peçonha",
     desc: "Desvantagem nas rolagens e 2 de dano por turno.",
     aliases: [/envenenad/, /intoxicad/, /veneno (corre|se espalha|toma|sobe|queima)/, /peçonha/],
   },
   sangrando: {
     id: "sangrando", rotulo: "Sangrando", icone: "🩸", tipo: "ruim",
-    turnos: 3, danoTurno: 3, saiCom: ["curto", "longo", "cura"], subst: "sangramento|hemorragia|sangria",
+    turnos: 3, danoTurno: 3, saiCom: ["curto", "longo", "restauracao"], subst: "sangramento|hemorragia|sangria",
     desc: "3 de dano por turno até estancar.",
     aliases: [/sangrand/, /sangra (muito|sem parar|de|pelo|pela)/, /hemorragia/, /sangue (jorra|escorre|não para|encharca)/, /ferida aberta/],
   },
@@ -76,7 +115,7 @@ export const CONDICOES = {
   },
   cego: {
     id: "cego", rotulo: "Cego", icone: "🌑", tipo: "ruim",
-    turnos: 2, desvantagem: true, saiCom: ["curto", "longo", "cura"],
+    turnos: 2, desvantagem: true, saiCom: ["curto", "longo", "restauracao"],
     desc: "Sem enxergar: desvantagem, e quem te ataca tem vantagem.",
     aliases: [/cegad/, /sem enxergar/, /vista (some|apaga|turva)/, /escuridão total/],
   },
@@ -89,7 +128,7 @@ export const CONDICOES = {
   },
   enfeiticado: {
     id: "enfeiticado", rotulo: "Enfeitiçado", icone: "💜", tipo: "ruim",
-    turnos: 3, desvantagem: true, saiCom: ["cura"],
+    turnos: 3, desvantagem: true, saiCom: ["restauracao"],
     resistir: { attr: "vontade", dif: 13 },
     desc: "Vontade capturada: desvantagem e obediência ao encantador.",
     aliases: [/enfeitiçad/, /encantad[oa] pel/, /hipnotizad/, /dominad[oa] pel/],
@@ -253,8 +292,26 @@ export function tickCondicoes(condicoes = []) {
   return { condicoes: vivas, expiradas, dano, fontes };
 }
 
-/* O que um descanso limpa (o catálogo manda, não a ficção). */
+/* O que um descanso limpa (o catálogo manda, não a ficção).
+
+   v9.239 (T2) · A PORTA SÓ ABRE PARA CANAL DE DESCANSO. Antes, esta
+   função aceitava QUALQUER string: `limparPorDescanso(c, "cura")` limpava
+   as quatro condições que declaravam aquele canal, e teria sido a
+   maneira mais fácil de uma cura futura apagar condição sem parecer que
+   apagava — o nome da função diria "descanso" e o argumento diria outra
+   coisa. Canal desconhecido, ou canal que existe mas não é de descanso,
+   devolve a lista INTEIRA: nada some por engano.
+
+   O descanso é o único que continua limpando porque ele não é cura — é
+   PASSAGEM DE TEMPO. Ele faz duas coisas ao mesmo tempo (devolve PV e
+   gasta horas); a metade de PV obedece à lei (está em `descanso.js`, e
+   lá não há uma linha que toque em `condicoes`), e a limpeza é a metade
+   do tempo cobrando o prazo. É também a única saída que `exausto` tem
+   (`turnos: null`, `saiCom: ["longo"]`): sem ela, a exaustão seria
+   perpétua. */
 export function limparPorDescanso(condicoes = [], tipo = "curto") {
+  const canal = CANAIS_DE_SAIDA.find((c) => c.id === tipo);
+  if (!canal || !canal.porDescanso) return { condicoes: [...(condicoes || [])], removidas: [] };
   const ficam = [], saem = [];
   for (const inst of condicoes || []) {
     const c = condicaoPorId(inst.id) || normalizarCondicao(inst.nome || "");
@@ -305,4 +362,4 @@ export const CONDICOES_PROMPT = `CONDIÇÕES E EFEITOS (v9.49 — o sistema apli
 - VOCÊ NÃO APLICA NEM REMOVE CONDIÇÃO — não existe campo para isso e não existe frase que faça isso. Só três coisas põem uma condição em alguém: o combate (o sistema rola a aflição da arma, da magia ou do bicho), o tempo (o turno que vence, o descanso que limpa) e a FALHA CRÍTICA num teste. Nenhuma delas passa por você.
 - Quando a cena pedir uma consequência mecânica — a teia que prende, o veneno da taça, o degrau que cede —, NARRE o perigo acontecendo e repita-o em UMA frase no campo "perigo". Você não pede rolagem nenhuma: o sistema lê a frase, escolhe a salvaguarda, rola, cobra e aplica. Descrever a teia caindo é seu; dizer que ela prendeu, não.
 - Também não descreva alguém "envenenado", "atordoado", "sangrando", "cego" ou "paralisado" como estado de ficha se o envelope não disser que ele está: isso é afirmar mecânica que não existe. Descreva a cena, não o estado.
-- O caminho inverso vale igual: as condições ATIVAS chegam a você no rodapé de cada turno, e são fato. Enquanto o herói estiver ATORDOADO ou PARALISADO ele NÃO age — narre o corpo que não obedece, jamais uma ação normal. Enquanto estiver ENVENENADO ou SANGRANDO, mostre o preço disso na cena. E nunca anuncie que uma condição passou: quem a tira é o relógio, o descanso ou a cura.`;
+- O caminho inverso vale igual: as condições ATIVAS chegam a você no rodapé de cada turno, e são fato. Enquanto o herói estiver ATORDOADO ou PARALISADO ele NÃO age — narre o corpo que não obedece, jamais uma ação normal. Enquanto estiver ENVENENADO ou SANGRANDO, mostre o preço disso na cena. E nunca anuncie que uma condição passou: quem a tira é o relógio ou o descanso.`;

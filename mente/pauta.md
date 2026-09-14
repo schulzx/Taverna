@@ -123,6 +123,48 @@ T é bug vivo que atinge quem joga hoje; B é pequena e fecha a simetria que P3
 deixou pela metade; F é a maior e precisa de desenho; I é órgão novo e o mais
 caro. Nenhuma começa antes de a anterior fechar verde.
 
+### Fase D — a casa ganha um desenho (a mesa de design nasce)
+Decisão da pessoa (14/09): três agentes novos — `jogo`, `desenho`, `aprendiz`
+— trabalhando pelo Figma, com liberdade para mudar o que for preciso **desde
+que comprovado**. Meta declarada: *"o melhor jogo de RPG com a melhor
+experiência e qualidade de um AAA."*
+
+Esta fase **não faz nada bonito ainda**, e é de propósito: ela constrói o
+chão que impede o defeito que a pessoa nomeou (a mesma ação com duas caras).
+Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
+
+- [ ] **D1 · o inventário honesto** · de: pessoa · 14/09
+  Levantar o que existe, sem mudar nada: as 15 cores de `T` e onde cada uma
+  é usada; as **30 cores literais no `App.jsx`** que passam por fora da
+  tabela (e as dos `painel-*.jsx`); as 3 famílias e 7 animações de
+  `FONT_CSS`; as primitivas de `ui.jsx`; e — o mais importante — **as ações
+  que hoje aparecem com mais de uma forma**. Entregue como medição, no
+  diário, com número. Dono: `desenho` com o `jogo`.
+- [ ] **D2 · a biblioteca no Figma** · de: pessoa · 14/09
+  Criar o arquivo do Taverna no Figma e nele a biblioteca: **variáveis
+  primeiro** (espelhando `T` e as medidas), **componentes depois** (as
+  primitivas de `ui.jsx`, com estados e variantes de verdade — repouso,
+  foco, pressionado, desabilitado). Carregar `figma-generate-library` junto
+  de `figma-use`; `figma-create-new-file` é pré-requisito obrigatório do
+  `create_new_file`. Ao fim, **Code Connect** amarrando componente do Figma
+  a componente de código, para que não possam divergir em silêncio.
+- [ ] **D3 · as formas escritas** · de: pessoa · 14/09
+  `mente/formas.md` deixa de estar vazio: toda ação que o jogador toca hoje
+  ganha sua forma declarada (quando, forma, movimento, onde vive, por quê,
+  peso), a partir de D1 e D2. Onde D1 achou duas caras para a mesma ação, a
+  dupla decide **uma** e escreve a discordância resolvida.
+- [ ] **D4 · a catraca do desenho** · de: pessoa · 14/09
+  `check-formas.mjs` (entra no `rodar-tudo.mjs`): nenhuma cor literal fora
+  de `T` nos arquivos de tela; nenhum controle sem forma declarada em
+  `mente/formas.md`; toda animação com saída (`prefers-reduced-motion`).
+  Lista de perdão com motivo escrito, no molde de `teste-ligacao`. É o que
+  faz a Fase D valer para sempre em vez de valer hoje.
+
+  **Depois de D4**, a mesa de design passa a propor livremente pela pauta —
+  a animação do dado, a batalha que toma a tela (essa é `pesado`, da
+  pessoa), a paleta, o que for. Antes de D4, cada melhoria custaria o dobro
+  e apodreceria na metade do tempo.
+
 ### Fase T — o relógio das condições, no sistema de D&D
 Decisão da pessoa (14/09), com a lei ditada por ela: *"vamos usar o sistema de
 D&D: cura normal apenas recupera PV mas não remove a condição; daí vêm magias,

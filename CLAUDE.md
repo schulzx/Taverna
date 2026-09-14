@@ -125,8 +125,44 @@ Na dúvida entre médio e pesado, é pesado. Os arquivos da mente:
   com o motivo. É por aqui que a pessoa vê o processo.
 
 Os agentes: `conselheiro` (pensa, escreve a pauta), `orquestrador` (rege o
-ciclo), `backend` / `frontend` / `testes` (as mãos). O roteiro do ciclo está
-em `.claude/agents/orquestrador.md`; `/ciclo` roda um.
+ciclo), `backend` / `frontend` / `testes` (as mãos), e a mesa de design —
+`jogo` (game design: o quê e quando), `desenho` (design e UX: a forma) e
+`aprendiz` (a mão que constrói o simples e o médio da interface). O roteiro
+do ciclo está em `.claude/agents/orquestrador.md`; `/ciclo` roda um.
+
+---
+
+## A mesa de design
+
+**Uma ação, uma forma.** `mente/formas.md` é a fonte da verdade sobre a cara
+de cada coisa que o jogador toca; a biblioteca no **Figma** é a verdade
+visual, e `T`/`FONT_CSS` (`constantes.js`) + `ui.jsx` são o espelho dela em
+código. **Nenhuma decisão de design sai sem passar pelo Figma.** A mesma ação
+com duas caras é defeito, não preferência.
+
+**Cor é número, logo é tabela** — a primeira lei da casa vale para o visual.
+
+**A fronteira que evita a briga:** o `jogo` decide **o quê e quando**; o
+`desenho` decide **a forma**. Discordância se resolve escrita em
+`mente/formas.md`, com os dois lados — nunca em dois códigos diferentes.
+
+**Liberdade (decisão da pessoa, 14/09/2026):** *"podem criar livremente e
+mudar o design quando preciso, seja paleta de cores ou o que for, desde que
+seja a melhor opção comprovada, tanto para experiência visual quanto para
+experiência jogável."* Nada é sagrado por ser antigo; *comprovada* é que é
+caro — número e não adjetivo, o par antes/depois no Figma, a assinatura dos
+dois, e a mudança saindo de tabela (logo, desfeita num commit).
+
+**Os pesos do design:**
+
+| peso | o que é |
+|---|---|
+| **leve** | espaçamento, alinhamento, contraste que corrige acessibilidade, cor literal virando token, microanimação de feedback com saída |
+| **médio** | componente novo com par no Figma e forma declarada · tela existente reorganizada sem mudar o fluxo · animação nova · **troca de paleta ou tipografia comprovada pela régua acima** |
+| **pesado** | **mudar o fluxo do jogo** (a batalha tomando a tela) · **remover ou mover o que o jogador já usa** — ali o custo é a memória de quem joga, e nenhum número resolve |
+
+**`aprendiz` e `frontend` nunca trabalham ao mesmo tempo** — dividem o mesmo
+`App.jsx`, e o segundo a salvar apaga o primeiro.
 
 ---
 

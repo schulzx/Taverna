@@ -1,6 +1,6 @@
 import {
   normalizarCondicao, criarCondicao, mecanicaDe, estadoDeRolagem, tickCondicoes,
-  limparPorDescanso, resumoCondicoesPrompt, listaCondicoes, condicaoPorId,
+  limparPorDescanso, resumoCondicoesPrompt, listaCondicoes, condicaoPorId, CANAIS_DE_SAIDA,
 } from "../src/condicoes.js";
 
 let falhas = 0;
@@ -165,6 +165,74 @@ ok(dCurto.removidas.length === 1 && dCurto.removidas[0].id === "sangrando", "cur
 const dLongo = limparPorDescanso([criarCondicao("sangrando"), criarCondicao("envenenado"), criarCondicao("exausto"), criarCondicao("abencoado")], "longo");
 ok(dLongo.removidas.length === 3, "longo cura veneno, sangramento e exaustão");
 ok(dLongo.condicoes.length === 1 && dLongo.condicoes[0].id === "abencoado", "…e a bênção fica");
+
+/* ============================================================
+   T2 · A CURA NÃO LIMPA — os canais de saída (v9.239)
+
+   A lei desta etapa, tirada de D&D 5e: cura normal apenas recupera PV,
+   não remove a condição. Quem tira é o RELÓGIO, o DESCANSO, ou uma porta
+   DECLARADA (T4).
+
+   O DESCANSO FICOU COMO ESTAVA, e o motivo está no módulo: ele não é
+   cura, é PASSAGEM DE TEMPO — faz duas coisas ao mesmo tempo, e a
+   limpeza vem da metade do tempo, não da metade de PV (a de PV mora em
+   `descanso.js`, que não tem uma linha tocando `condicoes`). É também a
+   única saída de `exausto`, que tem `turnos: null`.
+
+   O QUE MUDOU: quatro condições diziam `saiCom: ["cura"]` e ninguém lia
+   esse canal — `limparPorDescanso` é o único leitor de `saiCom` e só
+   recebe "curto" e "longo". Promessa morta, e que contradizia a lei. O
+   canal foi RENOMEADO para "restauracao" (a porta declarada de T4), não
+   apagado: apagá-lo deixaria `enfeiticado` com `saiCom` VAZIO, e a regra
+   implícita de que o longo limpa toda condição ruim sem canal passaria a
+   quebrar encantamento — o jogador veria a diferença.
+
+   As asserções abaixo são NOVAS; nenhuma asserção antiga foi movida. As
+   duas do descanso, logo acima, continuam exatamente como estavam — e
+   continuarem verdes é metade da prova de que T2 não mexeu no que o
+   jogador vive.
+   ============================================================ */
+console.log("\n[T2 · os canais de saída]:");
+{
+  const ids = CANAIS_DE_SAIDA.map((c) => c.id);
+  ok(ids.includes("curto") && ids.includes("longo"), "a tabela declara os dois canais de descanso");
+  ok(CANAIS_DE_SAIDA.filter((c) => c.porDescanso).length === 2, "…e só esses dois são de descanso");
+  ok(CANAIS_DE_SAIDA.every((c) => c.id && c.diz), "toda linha da tabela diz o que é");
+  ok(!ids.includes("cura"), "e nenhum canal se chama `cura` — a lei da etapa");
+
+  /* NENHUMA CONDIÇÃO PROMETE O QUE A LEI PROÍBE */
+  const prometem = listaCondicoes().filter((c) => (c.saiCom || []).some((s) => /^cura/i.test(s)));
+  ok(prometem.length === 0, "nenhuma condição declara sair com `cura`: " + (prometem.map((c) => c.id).join(", ") || "nenhuma"));
+  const fora = listaCondicoes().flatMap((c) => (c.saiCom || []).filter((s) => !ids.includes(s)).map((s) => `${c.id}:${s}`));
+  ok(fora.length === 0, "todo canal declarado pelo catálogo existe na tabela: " + (fora.join(", ") || "todos"));
+
+  /* AS QUATRO QUE PERDERAM O CANAL continuam com saída pelo relógio —
+     nenhuma ficou presa para sempre por causa desta etapa */
+  for (const id of ["envenenado", "sangrando", "cego", "enfeiticado"]) {
+    ok(Number(condicaoPorId(id).turnos) > 0, `${id} perdeu o canal "cura" mas ainda vence no relógio (${condicaoPorId(id).turnos}t)`);
+  }
+
+  /* A PORTA DO DESCANSO SÓ ABRE PARA CANAL DE DESCANSO. Sem isto,
+     `limparPorDescanso(c, "cura")` seria a maneira mais fácil de uma cura
+     futura apagar condição sem parecer que apagava. */
+  const tres = [criarCondicao("sangrando"), criarCondicao("envenenado"), criarCondicao("exausto")];
+  for (const canal of ["cura", "restauracao", "poção", "", null]) {
+    const r = limparPorDescanso(tres, canal);
+    ok(r.removidas.length === 0 && r.condicoes.length === 3, `canal ${JSON.stringify(canal)} não tira nada do descanso`);
+  }
+  /* `undefined` é o único que não cai na recusa, e de propósito: dispara o
+     parâmetro-padrão `tipo = "curto"`, de que todo chamador de um argumento
+     só depende. `null` NÃO dispara o padrão (lei da casa) e é recusado. */
+  ok(limparPorDescanso(tres, undefined).removidas.length === limparPorDescanso(tres, "curto").removidas.length,
+    "…mas `undefined` cai no padrão `curto`, como sempre caiu");
+
+  /* E O COMPORTAMENTO NÃO MUDOU: a noite inteira continua sem quebrar
+     encantamento. É a prova de que renomear guardou o jogo onde estava. */
+  ok(limparPorDescanso([criarCondicao("enfeiticado")], "longo").removidas.length === 0,
+    "a noite inteira continua NÃO quebrando encantamento");
+  ok(limparPorDescanso([criarCondicao("envenenado")], "longo").removidas.length === 1,
+    "…e continua levando o veneno, que sempre declarou o canal `longo`");
+}
 
 /* v9.49: aqui testava-se o cao de guarda que lia a narracao atras de
    condicoes. Ele saiu — ver teste-consequencias.mjs. A lista de casos que

@@ -38,8 +38,17 @@ const heroi = { nome: "Vera", vida: 30, vidaMax: 90, mana: 5, manaMax: 20, condi
 const cura = usarConsumivel(heroi, "cura_m");
 console.log("  " + cura.texto);
 ok(cura.ent.vida > heroi.vida && cura.ent.vida <= heroi.vidaMax, "cura soma PV sem passar do máximo");
+/* T2 (v9.239) — A CURA NORMAL NÃO LIMPA, que é a lei de 5e: a poção fecha a
+   ferida e devolve PV, e o veneno continua correndo. Quem o corta é o
+   antídoto (três linhas abaixo), o relógio ou o descanso — e é justamente
+   por isso que antídoto, magia de restauração e teste de resistência têm
+   razão de existir. Este herói já bebia ENVENENADO desde que a suíte
+   existe; só faltava alguém conferir que ele continua envenenado depois. */
+ok(cura.ent.condicoes.length === 1 && cura.ent.condicoes[0].id === "envenenado",
+  "…e a poção de CURA não corta o veneno — quem faz isso é o antídoto");
 const mana = usarConsumivel(heroi, "mana_p");
 ok(mana.ent.mana > heroi.mana, "poção de mana devolve PM: " + mana.texto);
+ok(mana.ent.condicoes.length === 1, "a de mana também deixa a condição onde estava");
 const anti = usarConsumivel(heroi, "antidoto");
 ok(anti.ent.condicoes.length === 0, "antídoto tira o veneno: " + anti.texto);
 const elixir = usarConsumivel(heroi, "elixir_forca");

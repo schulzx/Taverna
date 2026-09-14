@@ -19,7 +19,7 @@ import {
 import { TIER, DEGRAUS, degrauDe, LEITOR_DO_EFEITO } from "../src/afixos.js";
 import { RARIDADES, RARIDADE_ROTULO, essenciaDe } from "../src/loot.js";
 import { magiaPorNome } from "../src/grimorio.js";
-import { CONDICOES } from "../src/condicoes.js";
+import { CONDICOES, criarCondicao } from "../src/condicoes.js";
 import { danoExtraDeDadiva, imuneA, vantagemDeItem, iniciativaDeItem, descontoDePM } from "../src/dadivas.js";
 import { pedeSintonia } from "../src/sintonia.js";
 import { temOPoder } from "../src/poderes.js";
@@ -150,6 +150,38 @@ sec("4. O GESTO — uma vez por dia, e a pimenta é medida");
   const campos = new Set(RELIQUIAS.flatMap((r2) => Object.keys(r2.ativo.efeito || {})));
   t("o vocabulário do ativo é pequeno e fechado", [...campos].every((c) => ["curaFracao", "manaFracao", "limpa", "buff", "revive"].includes(c)));
   t("nenhum ativo cura o corpo inteiro de uma vez", RELIQUIAS.every((r2) => (r2.ativo.efeito.curaFracao || 0) <= 0.6));
+
+  /* T2 (v9.239) — `curaFracao` E `limpa` SÃO DUAS PORTAS, e a relíquia é o
+     lugar onde elas moram lado a lado no mesmo efeito. É por isso que a
+     prova vive aqui: em qualquer outro módulo seria fácil separá-las por
+     engano, e aqui a separação tem de ser explícita.
+
+     A lei da casa (5e): cura normal só devolve PV. `curaFracao` é cura
+     normal e NÃO pode tirar condição; `limpa` é antídoto DECLARADO — a
+     tabela diz por escrito o que ela remove — e é a porta de saída, que
+     T4 vai formalizar. Uma relíquia que só cura não pode limpar de
+     carona, e uma que só limpa não pode virar cura. */
+  const soCura = RELIQUIAS.find((r2) => r2.ativo.efeito.curaFracao && !r2.ativo.efeito.limpa);
+  t("existe relíquia que só devolve PV, sem `limpa`", !!soCura, "nenhuma no acervo");
+  if (soCura) {
+    const doente = comRelica(soCura, { vida: 1, condicoes: [criarCondicao("envenenado"), criarCondicao("cego")] });
+    const r2 = usarAtivo(doente, soCura, { dia: 4 });
+    t(`${soCura.nome} devolve PV…`, r2.pers.vida > 1);
+    t("…e deixa as DUAS condições exatamente onde estavam",
+      r2.pers.condicoes.length === 2 && r2.pers.condicoes.every((c) => ["envenenado", "cego"].includes(c.id)),
+      `sobraram ${r2.pers.condicoes.length}`);
+  }
+  /* o dente inverso — a porta declarada continua abrindo, e só para o que
+     ela declarou: apagar `limpa` de carona nesta etapa seria tão errado
+     quanto deixar a cura limpar */
+  const comLimpa = RELIQUIAS.find((r2) => (r2.ativo.efeito.limpa || []).length);
+  const alvo = comLimpa.ativo.efeito.limpa[0];
+  const sujo = comRelica(comLimpa, { vida: 1, condicoes: [criarCondicao(alvo), criarCondicao("atordoado")] });
+  const r3 = usarAtivo(sujo, comLimpa, { dia: 4 });
+  t(`${comLimpa.nome} ainda tira "${alvo}", que é o que ela declara`,
+    !r3.pers.condicoes.some((c) => c.id === alvo));
+  t("…e não leva junto o que ela NÃO declarou",
+    r3.pers.condicoes.some((c) => c.id === "atordoado"));
 }
 
 sec("5. O QUE O JOGADOR ESCREVE");
