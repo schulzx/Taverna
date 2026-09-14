@@ -376,7 +376,7 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
   de verdade, quais foram só de ida, e quanto da biblioteca ficou sem nó.
   Uma troca de mão única declarada vale mais que uma troca de mão dupla
   suposta.
-- [x] **D4 · as formas escritas** · de: pessoa · 14/09 · **feito v9.249 · `<hash>`**
+- [x] **D4 · as formas escritas** · de: pessoa · 14/09 · **feito v9.249 · `e8b4c32`**
   `mente/formas.md` deixou de estar vazio: **30 formas declaradas**, cada uma
   com `quando` (do `jogo`, palavra por palavra) / `forma` / `movimento` /
   `onde vive` / `por quê` / `peso`, nomeadas **pelo verbo do jogador**.

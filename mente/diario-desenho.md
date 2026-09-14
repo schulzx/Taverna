@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 14/09 23:40 · v9.249 · D4 · as formas escritas · commit `<hash>`
+## 14/09 23:40 · v9.249 · D4 · as formas escritas · commit `e8b4c32`
 
 **`mente/formas.md` deixou de estar vazio, e este é o primeiro ciclo sob a
 liberdade nova.** A pessoa disse hoje que *"a timidez é o defeito, não a
