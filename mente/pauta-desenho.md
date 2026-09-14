@@ -85,22 +85,31 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
   existe para achar: **10 famílias de ação com mais de uma forma, 4 delas de
   significado.** Medição inteira no diário. Correções de D2–D5 abaixo saíram
   daí.
-- [ ] **D2 · o estilo ganha casa própria** · de: regente · 14/09
-  *(reescrita por D1: `FONT_CSS` não é tabela, é 156 linhas de CSS com 21
-  cores literais próprias — mover inteiro só muda o arquivo onde o problema
-  mora.)*
-  `T` vai para `src/estilo.js` com reexport compatível — 15 importadores,
-  todos por `import { T } from "./constantes.js"`. `FONT_CSS` vai junto mas
-  **parte em três no destino**: `FONT_CSS` (as três famílias),
-  `MOVIMENTO_CSS` (as 13 animações + o bloco `prefers-reduced-motion`) e
-  `SUPERFICIES_CSS` (cortiça, cartaz, percevejo, vinheta — e as 21 cores
-  delas viram entradas nomeadas da tabela, não literais dentro de uma
-  string). Sem essa divisão, D5 não consegue varrer as cores de `FONT_CSS`
-  sem varrer a si mesmo. Linha: **zero diferença na tela**, provada por
-  build limpo e pelas suítes.
-  **Armadilha medida:** `src/App.jsx:10205` e `:10222` têm uma variável
-  local chamada `T` que é **o torneio**, não o tema. Patch por regex sobre
-  `\bT\b` no App vai atingi-las.
+- [x] **D2 · o estilo ganha casa própria** · de: regente · 14/09 · **feito v9.244**
+  `T` foi para `src/estilo.js` (que **não importa nada**), com reexport
+  compatível em `constantes.js` — os 15 importadores não mudaram uma letra.
+  A folha partiu em três: `FONT_CSS` (4 regras: o `@import` e as três
+  famílias), `MOVIMENTO_CSS` (30: os 13 `@keyframes`, 16 classes e o
+  `prefers-reduced-motion`) e `SUPERFICIES_CSS` (11: a barra de rolagem, o
+  trilho de abas e o mural). Quem soma é `FOLHA`, **no `estilo.js`** —
+  ordem de folha é regra de cascata, e regra não mora no `App.jsx`, que
+  mudou exatamente duas linhas.
+  **A contagem de D1 estava certa mas media outra coisa:** são **35**
+  literais de cor na folha, não 21 — 21 próprios (os que D1 contou, dentro
+  do bloco das superfícies) **mais 14 que já são cores de `T`**, que D1 não
+  contou e são justamente as que interessam a D5b. Saíram 13 para a tabela
+  nova `MATERIAIS` (a paleta **física**, irmã de `T` que é a **semântica**),
+  8 pretos/brancos para os moldes internos `sombra()`/`brilho()`, e 1 hex
+  (`#2E2745`, o polegar da barra) virou `${T.line}`. As 13 `rgba()` que já
+  são `T` com alfa ficaram — esperam o helper `alfa()` de outro ciclo.
+  **A prova de "zero diferença na tela"**, que é a única linha desta etapa:
+  o *próprio parser do navegador* leu a folha de antes e a de agora e
+  devolveu **as mesmas 45 regras, multiconjunto idêntico, zero divergência
+  nos dois sentidos** — só a barra de rolagem mudou de posição (índice 11 →
+  35), de propósito e sem colidir com nada.
+  A armadilha do `T` do torneio (`App.jsx:10205` e `:10222`) **não chegou a
+  existir**: nenhum ponto de uso de `T` no App foi tocado, porque o
+  reexport tornou o regex desnecessário.
 - [ ] **D3 · a biblioteca no Figma** · de: pessoa · 14/09
   Criar o arquivo do Taverna no Figma e nele a biblioteca: **variáveis
   primeiro** (espelhando a tabela de estilo e as medidas), **componentes
@@ -142,7 +151,13 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
     de `varredura-*` que a casa já usa.
   - **D5b · a catraca do fácil.** Falha se aparecer literal que **já é uma
     cor de `T`** (hex idêntico, ou `rgba` com o RGB de `T`). Zero perdões
-    assim que "os 67 literais que já são `T`" rodar.
+    assim que "os 80 literais que já são `T`" rodar.
+    *(corrigido por D2: eram 67 quando a folha não era varrida; agora que
+    ela mora em `src/estilo.js`, entram as **13 `rgba()` de dentro da
+    folha** que já são `T` com alfa — 7 no `MOVIMENTO_CSS`, 6 no
+    `SUPERFICIES_CSS`. **D5b depende do helper `alfa(cor, a)`**: sem ele o
+    único jeito de calar a catraca é perdoar `estilo.js` inteiro, e uma
+    catraca que perdoa a própria tabela não protege nada.)*
   - **D5c · a catraca do movimento.** Toda classe de animação em
     `MOVIMENTO_CSS` tem de aparecer no bloco `prefers-reduced-motion`.
     Zero perdões desde o primeiro dia, depois do item do movimento.
@@ -181,13 +196,19 @@ _Os quinze abaixo saíram da medição de D1 (14/09). A ordem é por retorno:
 o barato e mecânico primeiro, o que precisa de decisão depois. Vários só
 fecham de verdade **depois de D2 e D5** — o item diz quando._
 
-- [ ] **os 67 literais que já são `T`** · leve · de: desenho · 14/09
+- [ ] **os 80 literais que já são `T`** · leve · de: desenho · 14/09
   Dos 242 literais de cor nos arquivos de tela, **67 (28%) já são cores da
   tabela**: 24 hex idênticos a um valor de `T`, e 43 `rgba()` cujo RGB é
   exatamente uma cor de `T` com alfa — **44 deles só no `App.jsx`**. Um
   helper `alfa(cor, a)` e uma substituição mecânica apagam mais de um quarto
   da dívida. **O retorno mais barato da fase inteira**, e é ele que torna
   D5b zero-perdão.
+  *(corrigido por D2: são **80**, não 67. D2 mudou a folha de casa e com
+  isso ela passou a ser território varrido — dentro dela há mais **13**
+  `rgba()` que já são `T` com alfa, 7 no `MOVIMENTO_CSS` e 6 no
+  `SUPERFICIES_CSS`. D2 não as tocou de propósito: trocá-las à mão seria
+  escrever a fórmula do `alfa()` treze vezes antes de ela existir. **Este
+  item é agora pré-requisito de D5b**, não um vizinho dele.)*
 - [ ] **uma forma para o destrutivo — e o contraste que reprova sai** · leve · de: desenho · 14/09
   O botão que **remove um companheiro do grupo** (`App.jsx:2540`) usa `#fff`
   sobre `T.danger`: **3,42:1, reprova em WCAG AA**. Os outros destrutivos
@@ -235,6 +256,27 @@ fecham de verdade **depois de D2 e D5** — o item diz quando._
 - [ ] **as moedas existem no HUD** · leve · de: jogo · 14/09
   225 moedas ganhas em dois turnos, e o número só vive **dentro do painel
   Bolsa**. O jogador não vê o que tem sem ir procurar.
+- [ ] **`.tv-margem-abas` é o padding-right da v9.197 outra vez, em
+  `margin`** · leve · de: jogo · 14/09 (achado em D2)
+  O comentário da própria classe conta, em vinte linhas, como uma
+  declaração que vale 0 continuou mandando na cascata e colou o conteúdo na
+  borda direita no telefone — e a correção da v9.197 matou o
+  `padding-right` e **deixou o `margin-right: 0` vivo do lado**. A classe é
+  usada em seis cartões (`App.jsx:3081, 3331, 20628, 20675, 20757, 21064`),
+  todos com `mx-4 md:mx-8`; especificidade idêntica, e a nossa folha vem
+  depois do Tailwind (CDN no `<head>`, ver `index.html:7`), então **ela
+  ganha: 16px à esquerda e ZERO à direita**, nos seis. A declaração dentro
+  do `@media (min-width: 768px)` é idêntica à base — ruído puro.
+  É meia linha para apagar, e **não** foi apagada em D2 de propósito: a
+  linha daquela etapa era *zero diferença na tela*, e esta muda pixel. É a
+  mesma queixa de quem jogou no telefone, pela terceira vez no mesmo sítio.
+- [ ] **o regex de `teste-celular.mjs:56` não afirma o que parece** · leve ·
+  de: aprendiz · 14/09 (achado em D2)
+  `!/padding-rights*:/` — o `s*` é "zero ou mais letras s" grudado em
+  `right`, não um `\s*`. Passa hoje só porque não existe `padding-right`
+  nenhum na folha; no dia em que voltar um `padding-right : 68px` com
+  espaço, a catraca que existe para pegá-lo **não pega**. Uma barra
+  invertida. (Território de teste de forma, logo desta fila.)
 - [ ] **`T` ganha `dangerFundo` e `okFundo`** · leve · de: desenho · 14/09
   `#33201F` e `#1F3320` já existem, com **7 usos**, e são a única gramática
   de "estado com fundo" que o jogo tem. Estão fora da tabela por descuido,

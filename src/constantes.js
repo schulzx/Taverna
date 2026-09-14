@@ -1,7 +1,12 @@
 /* ============================================================
-   CONSTANTES E TEMA (v8.6) — Taverna
-   Paleta, fontes, gêneros, atributos e limites do jogo.
+   CONSTANTES DO JOGO (v9.244) — Taverna
+   Gêneros, atributos, limites e o prompt do Mestre.
    Extraído do App.jsx na modularização.
+
+   A PALETA E A FOLHA SAÍRAM DAQUI na v9.244: eram 156 linhas de CSS
+   embaixo do arquivo que guarda XP por nível e teto de companheiro.
+   Agora moram em `estilo.js`, que não importa nada — veja o cabeçalho
+   de lá para o porquê.
    ============================================================ */
 import { xpDoProximoNivel, XP_POR_DADIVA } from "./regras.js";
 
@@ -13,7 +18,7 @@ export const SLOGAN = "toda lenda começa aqui";
    do App — que é exatamente onde um número vai para ser esquecido.
    Aqui ela fica ao lado do resto do que a casa sabe sobre si mesma, e um
    varredor confere que o App não voltou a escrevê-la à mão. */
-export const VERSAO = "v9.243";
+export const VERSAO = "v9.244";
 export const LEVA = "o que o companheiro segura";
 
 export const XP_POR_NIVEL = (nivel) => xpDoProximoNivel(nivel) ?? XP_POR_DADIVA;
@@ -23,171 +28,22 @@ export const ATRIBUTO_MAX_CRIACAO = 3;
 export const ATRIBUTO_MAX = 5;
 export const MAX_COMPANHEIROS = 4;
 
-export const T = {
-  bg: "#0E0C15", panel: "#171322", panelSoft: "#1E1930", line: "#2E2745",
-  ink: "#EAE4D6", inkDim: "#9B93AC",
-  amber: "#E8A33D", amberSoft: "#F5C878", onAccent: "#1A1408",
-  violet: "#8B7BD8", violetSoft: "#B0A5EC", onSecond: "#14101F",
-  danger: "#D86A5B", ok: "#7BC98F",
-};
+/* A PALETA E A FOLHA MUDARAM DE CASA (v9.244).
 
-export const FONT_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Spectral:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@400;600&display=swap');
-.tv-display { font-family: 'Cormorant Garamond', Georgia, serif; }
-.tv-body { font-family: 'Spectral', Georgia, serif; }
-.tv-mono { font-family: 'JetBrains Mono', monospace; }
-.tv-fade { animation: tvFade .5s ease both; }
-@keyframes tvFade { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: none;} }
-@keyframes tvGlow { 0%,100%{box-shadow:0 0 24px rgba(232,163,61,.25);} 50%{box-shadow:0 0 48px rgba(232,163,61,.55);} }
-@keyframes tvShake { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-8deg)} 40%{transform:rotate(7deg)} 60%{transform:rotate(-5deg)} 80%{transform:rotate(4deg)} }
-.tv-dice { animation: tvShake .35s linear infinite, tvGlow 1s ease infinite; }
-.tv-pulse { animation: tvGlow 1.6s ease infinite; }
-.tv-scroll::-webkit-scrollbar { width: 8px; }
-.tv-scroll::-webkit-scrollbar-thumb { background: #2E2745; border-radius: 4px; }
-@keyframes tvSlide { from { transform: translateX(24px); opacity: 0;} to { transform: none; opacity: 1;} }
-.tv-slide { animation: tvSlide .25s ease both; }
+   `T` e todo o CSS foram para `estilo.js` — a mesa de design ganhou
+   arquivo proprio, e `estilo.js` nao importa nada (este aqui importa
+   `regras.js`, e o estilo nao tem por que arrastar regra junto).
 
-/* ---------------- O CORPO SENTE (v9.160) ----------------
-   O clarao de dano e o pulso de agonia do bloco do heroi. Um golpe que
-   so muda um numero e um golpe que o jogador nao sente: o clarao dura
-   menos de um segundo e morre sozinho; a agonia (um terco da vida)
-   pulsa ate alguem fazer alguma coisa a respeito. */
-@keyframes tvDano { 0% { box-shadow: 0 0 0 rgba(216,106,91,0); } 20% { box-shadow: 0 0 22px rgba(216,106,91,.85); } 100% { box-shadow: 0 0 0 rgba(216,106,91,0); } }
-.tv-dano { animation: tvDano .7s ease both; }
-@keyframes tvAgonia { 0%, 100% { box-shadow: 0 0 6px rgba(216,106,91,.25); } 50% { box-shadow: 0 0 16px rgba(216,106,91,.6); } }
-.tv-agonia { animation: tvAgonia 1.6s ease infinite; }
+   `T` CONTINUA SAINDO DAQUI, por reexport: quinze arquivos escrevem
+   `import { T } from "./constantes.js"` e nenhum deles precisou mudar
+   uma letra. O reexport e a ponte, e tem leitor de sobra.
 
-/* ---------------- O PALCO DO COMBATE (v9.161) ----------------
-   O numero de dano sobe do quadrado de quem apanhou e some (as unidades
-   sao as do SVG do tabuleiro: 1 = um quadrado de 1,5 m). A faixa do
-   chefe abre, respira e fecha sozinha — 3,2 s, o tempo de ler uma
-   frase curta duas vezes. */
-@keyframes tvFlutua { 0% { opacity: 0; transform: translateY(0.3px); } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-0.9px); } }
-.tv-flutua { animation: tvFlutua 1.35s ease-out both; }
-@keyframes tvFaixa { 0% { opacity: 0; transform: scaleY(0.3); } 10% { opacity: 1; transform: none; } 85% { opacity: 1; } 100% { opacity: 0; } }
-.tv-faixa { animation: tvFaixa 3.2s ease both; }
-
-/* ---------------- A VIRADA DA CARTA (v9.163) ----------------
-   A subida de nivel abre com a carta de COSTAS e a revela. O palco da
-   perspectiva fica no pai; a carta gira uma vez, com um respiro antes
-   (o jogador precisa VER o verso para a virada valer alguma coisa).
-   As duas faces escondem o proprio dorso; o verso ja nasce virado. */
-.tv-vira-palco { perspective: 1200px; }
-.tv-vira { position: relative; transform-style: preserve-3d; animation: tvVira 1.1s cubic-bezier(.2,.7,.3,1) .45s both; }
-@keyframes tvVira { from { transform: rotateY(180deg); } to { transform: rotateY(0deg); } }
-.tv-vira-face { backface-visibility: hidden; }
-.tv-vira-verso { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; }
-/* o brilho do espolio raro: pulsa devagar, na cor que a raridade mandar
-   (a cor entra por box-shadow inline; aqui mora so o ritmo) */
-@keyframes tvReliquia { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.25); } }
-.tv-reliquia { animation: tvReliquia 2.4s ease infinite; }
-/* o sigilo da recalibragem (v9.182): dois anéis em sentidos opostos, e um
-   ponto que pisca no passo em curso. Devagar de propósito — a espera é de
-   verdade (o arquivista relê a campanha inteira), e um giro rápido faria
-   parecer travado. */
-@keyframes tvGira { to { transform: rotate(360deg); } }
-@keyframes tvGiraAoContrario { to { transform: rotate(-360deg); } }
-@keyframes tvPisca { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
-.tv-anel-fora { animation: tvGiraAoContrario 24s linear infinite; }
-.tv-anel-dentro { animation: tvGira 3.2s linear infinite; }
-.tv-pisca { animation: tvPisca 1.2s ease infinite; }
-@media (prefers-reduced-motion: reduce) {
-  .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
-}
-
-/* ---------------- O ESPAÇO DO TRILHO (v9.156) ----------------
-   O trilho de abas é lateral no monitor e barra inferior no telefone, e
-   cada forma cobra o seu espaço num lado diferente. Isto estava escrito
-   catorze vezes como um padding-right de 68px em linha — o que num
-   telefone reservava dezoito por cento da largura para uma barra que
-   nem está ali.
-
-   (Sem crase neste comentário de propósito: ele mora DENTRO da template
-   literal do CSS, e uma crase aqui fecha a literal e derruba o build —
-   foi exatamente o que aconteceu na primeira tentativa.)
-
-   tv-espaco-abas é a reserva: nada embaixo, no telefone; 68px à direita
-   a partir do monitor. Uma decisão num lugar só, e a próxima tela nasce
-   certa sem ninguém lembrar dela.
-
-   ---------------- E O PADDING-RIGHT FOI EMBORA (v9.197) ----------------
-   A reserva da direita morreu na v9.170, quando o trilho saiu de fixed e
-   virou coluna em fluxo: de la para ca o valor era 0 nos dois lados da
-   media query. Mas a DECLARACAO ficou — e uma declaracao de padding-right
-   ganha de px-4 na cascata, entao todo elemento que usava as duas classes
-   juntas (eram dez) tinha 16px a esquerda e ZERO a direita.
-
-   Foi a queixa de quem jogou no telefone: o meio da tela parecia pregado na
-   borda direita. Nao era o rolamento — era esta linha, apagando metade do
-   respiro de cada bloco. Reserva que nao reserva nada nao fica "por via das
-   duvidas": ela sai, porque continua mandando na cascata mesmo valendo 0.
-
-   (De novo sem crase: o aviso acima nesta mesma caixa e literal, e eu
-   tropecei nele ao escrever este paragrafo.)
-
-   O que sobra é o que ainda é verdade: no telefone a barra de abas é fixa
-   embaixo e come 64px, então quem encosta nela reserva esse espaço. UMA
-   VEZ — e não em dez elementos aninhados, que era o buraco vertical. */
-.tv-espaco-abas { padding-bottom: 4.75rem; }
-.tv-margem-abas { margin-right: 0; }
-@media (min-width: 768px) {
-  .tv-espaco-abas { padding-bottom: 0; }
-  .tv-margem-abas { margin-right: 0; }
-}
-
-/* ---------------- A CORTIÇA E O PAPEL (v9.127) ----------------
-   O mural era uma lista de retângulos iguais dentro de um painel igual a
-   todos os outros. Ele é a única tela do jogo que representa um OBJETO do
-   mundo — uma tábua com papéis pregados — e não custa nada dizer isso.
-
-   Tudo aqui é gradiente e sombra: nem um arquivo de imagem entra no
-   repositório, e a cortiça continua sendo cortiça no telefone e no monitor.
-   E nada de cortiça bege com papel creme: o jogo é âmbar sobre violeta
-   escuro, e uma tábua clara no meio disso não seria charme, seria mancha. */
-.tv-cortica {
-  background-color: #1A1424;
-  background-image:
-    radial-gradient(rgba(232,163,61,.13) 1.1px, transparent 1.6px),
-    radial-gradient(rgba(139,123,216,.11) 1px, transparent 1.5px),
-    radial-gradient(rgba(234,228,214,.07) 1.2px, transparent 1.7px),
-    radial-gradient(ellipse at 22% 18%, rgba(232,163,61,.05), transparent 55%),
-    radial-gradient(ellipse at 78% 72%, rgba(139,123,216,.05), transparent 55%);
-  background-size: 17px 17px, 29px 25px, 11px 21px, 100% 100%, 100% 100%;
-  background-position: 0 0, 7px 11px, 3px 5px, 0 0, 0 0;
-  box-shadow: inset 0 0 46px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.04);
-  border: 7px solid #3B2A1B;
-  border-radius: 14px;
-  outline: 1px solid rgba(150,112,66,.4);
-  outline-offset: -8px;
-}
-.tv-cartaz {
-  background-image: linear-gradient(155deg, #241D33 0%, #1C1729 62%, #191426 100%);
-  border: 1px solid rgba(232,163,61,.16);
-  box-shadow: 0 7px 16px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.04);
-  transition: transform .18s ease, box-shadow .18s ease;
-}
-/* o giro fica no embrulho e o levantar no papel: assim o passar do dedo
-   endireita o cartaz sem brigar com o ângulo que ele tem parado */
-.tv-pregado:hover .tv-cartaz { transform: translateY(-3px); box-shadow: 0 13px 26px rgba(0,0,0,.62); }
-/* o percevejo atravessa o papel, e não paira acima dele: em cima da borda
-   ele vira uma continha solta no ar. Fica DENTRO do cartaz, com a sombra
-   curta que uma cabeça de alfinete faz no papel. */
-.tv-percevejo {
-  position: absolute; top: 6px; left: 50%; margin-left: -6px;
-  width: 12px; height: 12px; border-radius: 50%;
-  background: radial-gradient(circle at 34% 28%, #FFE2AC, #D98F22 58%, #6E4207);
-  box-shadow: 0 1px 2px rgba(0,0,0,.75), 0 0 0 1px rgba(0,0,0,.45), 0 3px 5px rgba(0,0,0,.35);
-}
-.tv-percevejo.tv-roxo { background: radial-gradient(circle at 34% 28%, #E4DEFF, #8A78D8 58%, #3B3072); }
-
-/* A VINHETA: o canto da tela escurece de leve, e o meio — onde a narração
-   acontece — parece iluminado. É a coisa mais barata que existe para dar
-   profundidade, e some sozinha em quem tiver o brilho baixo. */
-.tv-vinheta {
-  position: fixed; inset: 0; pointer-events: none; z-index: 1;
-  background: radial-gradient(120% 85% at 50% 42%, transparent 52%, rgba(4,3,8,.45) 100%);
-}
-`;
+   `FONT_CSS` NAO ganha ponte. Ele tinha exatamente dois leitores — o
+   `App.jsx` e o `teste-arte.mjs` —, os dois repontados nesta mesma
+   etapa. Um reexport sem leitor seria export morto no dia em que
+   nascesse, e a catraca do `teste-ligacao` existe justamente para isso
+   nao acontecer. Quem quer a folha pede `FOLHA` a `estilo.js`. */
+export { T } from "./estilo.js";
 
 export const GENEROS = [
   { id: "fantasia", label: "Fantasia medieval", dica: "Reinos, magia antiga, criaturas lendárias" },

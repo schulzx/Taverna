@@ -20,7 +20,11 @@
 
 const { readFileSync } = await import("node:fs");
 const APP = readFileSync("../src/App.jsx", "utf8");
-const CSS = readFileSync("../src/constantes.js", "utf8");
+/* v9.244: a folha mudou de casa. O CSS saiu de `constantes.js` (onde
+   eram 156 linhas de estilo embaixo das regras de jogo) e foi para
+   `estilo.js`. As assercoes abaixo nao mudaram de exigencia — mudou so
+   ONDE elas vao procurar. */
+const CSS = readFileSync("../src/estilo.js", "utf8");
 
 let bons = 0, maus = 0;
 const t = (n, c) => { if (c) { bons++; console.log("  ok  " + n); } else { maus++; console.log("  XX  " + n); } };

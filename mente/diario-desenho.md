@@ -19,6 +19,149 @@ Formato:
 
 ---
 
+## 14/09 18:40 · v9.244 · D2 · o estilo ganha casa própria · commit `<hash>`
+
+O primeiro ciclo em que o **bastão do `App.jsx` valeu de verdade** — e o
+resultado mais útil da etapa não é o arquivo novo, é o que o bastão ensinou
+sobre si mesmo (no fim deste bloco).
+
+- **estado inicial:** `.claude/app-jsx` **não existia** — bastão livre,
+  tomei-o antes de tocar o arquivo e **apaguei-o assim que as duas linhas do
+  `App.jsx` ficaram prontas**, muito antes do fim do ciclo, como manda a
+  regra. A outra mente rodava B2 na mesma árvore o tempo todo. Pauta de
+  desenho: Fase D, 1 de 6 feita.
+- **jogo / desenho:** chamados **juntos, no mesmo turno, os dois em primeiro
+  plano**. D2 não decide forma nenhuma — é refatoração —, então dei a cada um
+  a metade que ainda era decisão de verdade: ao `desenho`, **nomear** as
+  cores que iam sair da string; ao `jogo`, **o que pode dar errado para quem
+  está jogando** quando 156 linhas de CSS mudam de ordem. Os dois voltaram
+  com o mesmo achado que eu não tinha pedido a nenhum (ver "a caixa errada"),
+  o que é a melhor prova de que o par vale mesmo quando a etapa parece
+  mecânica. O que decidiram está em `mente/formas.md`, seção "As superfícies".
+- **aprendiz:** construiu `src/estilo.js` inteiro, partiu a folha, repontou
+  as cinco suítes que liam `constantes.js` como texto, e escreveu a seção
+  nova da `teste-arte`. Patch do `App.jsx` pelo padrão `.cjs` com âncora que
+  falha — duas linhas, e nenhuma delas encosta num ponto de uso de `T`.
+- **testes:** não chamado. A suíte que esta etapa precisava é de forma
+  (`teste-arte`), e mora nesta fila.
+- **o Figma:** nada entrou. A biblioteca é D3.
+
+### A prova
+
+**`npm run build` limpo · 182/182 suítes verdes · 9/9 varredores limpos.**
+
+A árvore viva mostrava **181/182**, com `teste-regua.mjs` vermelho — e ele
+**não é meu**: a outra mente está reescrevendo `testes/regua-combate.mjs` em
+B2 neste momento, e as medições dela mudaram (a 1ª queda foi de 4,41 para
+4,72). Território do sistema, não consertei e não commitei. Para não subir no
+escuro, provei o que realmente importa: extraí `HEAD` para uma cópia isolada,
+copiei **só os meus oito arquivos** por cima e rodei a suíte lá — **182/182**.
+É a pergunta certa quando duas mentes dividem uma árvore: não "a minha árvore
+está verde", e sim **"o commit que eu vou empurrar deixa o `main` verde"**.
+
+**E a prova de "zero diferença na tela"**, que era a única linha da etapa.
+Não confiei em contagem minha nem em script meu: pus o **próprio parser do
+navegador** a ler as duas folhas. Extraí a folha de `HEAD` para um ficheiro
+temporário, servi-a ao lado da nova, e comparei `cssRules` contra `cssRules`
+como multiconjunto:
+
+```
+regras antes: 45   regras depois: 45
+só no antes:  []   só no depois:  []
+VEREDITO: IDENTICO
+```
+
+O `@import` é a regra `[0]` (se caísse do topo, as três fontes do jogo
+morriam **em silêncio**); `document.fonts.check` dá verdadeiro para
+Cormorant, Spectral e JetBrains, e o computado na tela é
+`"Cormorant Garamond", Georgia, serif` — a fonte certa, não o fallback. Sonda
+viva nas quatro superfícies: cortiça `rgb(26,20,36)` com moldura
+`rgb(59,42,27)` e **5** gradientes de grão, cartaz nas três paradas exatas,
+percevejo de latão e o roxo, vinheta `fixed` com `pointer-events: none`.
+**Aba nova**, porque houve rename e o HMR mente. A campanha em curso (*O Fio
+de Prata*) nunca foi aberta: as sondas renderizaram fora da tela, no menu.
+
+**A contagem de D1 estava certa e media outra coisa.** São **35** literais de
+cor na folha, não 21: os 21 de D1 são os **próprios** do bloco das
+superfícies, e faltavam **14 que já são cores de `T`** — exatamente as que
+interessam a D5b. Corrigido na pauta.
+
+### Decisões médias, com o motivo
+
+1. **`MATERIAIS`, e não mais entradas em `T`.** `T` é a paleta *semântica* (o
+   que a cor **significa**); `MATERIAIS` é a *física* (de que o objeto é
+   **feito**). A cortiça não é "o fundo do painel": é madeira, e continua
+   madeira no dia em que o tema mudar de humor. Misturá-las faria a tabela
+   mentir sobre que tipo de decisão cada linha é. Em **português**, porque a
+   lei da casa é essa — o inglês de `T` é herança da extração do `App.jsx`,
+   não uma escolha, e o prefixo já desambigua no ponto de uso.
+2. **Sombra e brilho viram molde interno, não entrada de tabela.** Oito
+   `rgba(0,0,0,x)`/`rgba(255,255,255,x)` que diferem **só no alfa**: seis
+   entradas nomeadas esconderiam o único número que importa. `sombra(a)` e
+   `brilho(a)` são privados, recebem o alfa como **string** (`sombra(".55")`)
+   para render byte idêntico — num arquivo cujo contrato é "zero diferença",
+   `0.55` e `.55` são a mesma cor com outro texto, e o texto conta.
+3. **O `alfa(cor, a)` NÃO entrou.** Ele converte hex→rgb, que é lógica de
+   verdade e merece suíte própria; e cobriria só metade do problema hoje.
+   Cada transformação a mais é uma chance a mais de quebrar a única promessa
+   da etapa. Fica como pré-requisito escrito de D5b.
+4. **`FOLHA` mora no `estilo.js`, não no `App.jsx`.** A ordem da folha é
+   regra de cascata — `FONT_CSS` primeiro porque o `@import` tem de ser o
+   primeiro —, e regra não mora em quem monta a tela. O `App.jsx` pede
+   `FOLHA` e pronto.
+5. **A caixa errada, achada pelos dois independentemente.** `.tv-vira-palco`,
+   `.tv-vira-face` e `.tv-vira-verso` **não declaram `animation`** e, pela
+   letra do enunciado, cairiam nas superfícies. Foram para `MOVIMENTO_CSS`:
+   sem o `perspective` e o `backface-visibility`, a carta gira e **não se vê
+   nada**. Ficou comentado no arquivo, para o próximo não as "limpar".
+6. **`FONT_CSS` não ganhou ponte de compatibilidade.** Tinha exatamente dois
+   leitores, ambos repontados aqui. Um reexport sem leitor seria export morto
+   no dia em que nascesse — que é a lei que a `teste-ligacao` existe para
+   defender. Só `T` ganhou ponte, e essa tem 15 leitores.
+7. **A catraca virou defesa da cascata.** `MOVIMENTO_CSS` nasceria com um
+   leitor só e quebraria a `teste-ligacao`. Em vez de um perdão, ganhou uma
+   seção na `teste-arte` que congela **as duas ordens que mudam pixel**:
+   `.tv-fade` antes de `.tv-reliquia` (é isso que faz a carta rara pulsar em
+   vez de só aparecer) e o `prefers-reduced-motion` depois dos anéis (uma
+   media query não soma especificidade — subi-la dá um acessível que não
+   funciona, calado). O segundo leitor deixou de ser pedágio e virou proteção.
+
+### O bastão — o que funcionou e o que falta nele
+
+Funcionou: tomei, usei, **apaguei na hora** (o `App.jsx` estava pronto na
+metade do ciclo), e a outra mente trabalhou o tempo todo ao lado sem um
+encontrão. Três defeitos do protocolo, que este ciclo expôs:
+
+- **O bastão protege um arquivo; o perigo é a suíte.** Nunca disputei o
+  `App.jsx`, e ainda assim a outra mente me deixou vermelho — por
+  `regua-combate.mjs`, que não é do meu território nem do bastão. A condição
+  de subida "`npm test` inteiramente verde" **é refém de quem não tem bastão
+  nenhum**. O que a salvou foi a cópia isolada de `HEAD` + os meus arquivos;
+  **isso devia estar escrito no roteiro**, e não ser invenção de ocasião.
+- **`git stash` é uma arma apontada para o vizinho.** O `aprendiz` usou-o
+  para provar de quem era o vermelho, e por um instante **tirou da árvore o
+  ficheiro que a outra mente estava a editar**. Funcionou por sorte. A regra
+  devia ser explícita: com duas mentes vivas, **nada de `stash`, nada de
+  `checkout --`** — diagnostica-se com `git show HEAD:<ficheiro>` e uma cópia.
+- **O bastão não tem como ser devolvido cedo de forma visível.** Apaguei-o a
+  meio, o que é o certo, mas nada no repositório regista que ele existiu e
+  foi entregue — a outra mente não tem como saber que o `App.jsx` esteve
+  ocupado das 15:02 às 15:20. Um registo de entrega (linha no diário ou no
+  painel) fecharia isso.
+
+### O que ficou
+
+Duas coisas achadas e **não** consertadas, ambas na pauta: o
+`.tv-margem-abas`, que é o `padding-right` da v9.197 outra vez (agora em
+`margin`, a ganhar de `mx-4` em seis cartões, e é a queixa do telefone pela
+terceira vez); e um `\s` sem barra invertida no regex de
+`teste-celular.mjs:56`, que faz a asserção valer menos do que parece.
+Nenhuma das duas entrou aqui porque **as duas mudam pixel ou mudam o que a
+catraca afirma**, e a linha desta etapa era zero diferença. Registar é mais
+honesto do que consertar de carona.
+
+---
+
 ## 14/09 16:20 · v9.242 · D1 · o inventário honesto · commit `06e1fa9`
 
 O primeiro ciclo da segunda mente, e ele não muda uma linha de tela de
