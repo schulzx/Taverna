@@ -8289,6 +8289,47 @@ export default function Taverna() {
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONDIÇÃO — DANO JÁ APLICADO PELO SISTEMA] ${t.fontes.join(" e ")} me custou ${t.dano} PV neste turno (estou com ${pv}/${pers.vidaMax}). Mostre isso na ficção — o corpo cobrando o preço — mas NÃO envie dano nenhum por isso: já está cobrado.`;
       }
     }
+    /* ---------------- O RELÓGIO ALCANÇA O GRUPO (T1) ----------------
+       `tickCondicoes` tinha dois sítios — eu, logo acima, e os inimigos,
+       logo abaixo — e o grupo não tinha nenhum. Cinco sítios vivos
+       escreviam condição em `pers.grupo` e zero a decrementavam: desde a
+       v9.2, condição de companheiro nascia e não vencia nunca.
+
+       O DENTE QUE IMPORTA AQUI É O BOM, e é o conserto, não o efeito
+       colateral. Das condições que chegam ao grupo hoje NENHUMA é ruim:
+       são as sete de apoio de `PORTADORES` (aflicoes.js), todas
+       `tipo: "bom"`. O relógio TIRA vantagem do grupo — medido em Uma
+       Vida (1000 combates, `umavida|0..999`): 727 condições que hoje não
+       venceriam passam a vencer, em 4,1 turnos cada, e a exposição do
+       grupo cai 42% no cenário duro.
+
+       O DANO POR TURNO FICA DE FORA, DE PROPÓSITO. `tickCondicoes` também
+       devolve `dano`/`fontes`, e eu e os inimigos os cobramos. O grupo
+       não: companheiro morrendo de veneno é um jeito novo de o jogador
+       perder um companheiro, e isso é decisão da pessoa. E não esconde
+       nada — as três condições que doem por turno (envenenado, sangrando,
+       queimando) têm portador único e sempre `alvo: "alvo"`, que escreve
+       em mim ou no inimigo e nunca no grupo. Medido: 0 em 2000 combates,
+       com asserção na suíte guardando o zero.
+
+       NÃO FILTRA POR VIDA, e a diferença para o irmão dos inimigos é de
+       propósito: o inimigo derrotado sai de cena, o companheiro caído
+       continua nela e pode ser erguido. O tempo passa para ele também. */
+    try {
+      const linhasDoGrupo = [];
+      let mexeu = false;
+      const grupoComPrazo = (pers.grupo || []).map((g) => {
+        if (!g || !((g.condicoes || []).length)) return g;
+        const t = tickCondicoes(g.condicoes);
+        mexeu = true;
+        for (const c of t.expiradas) linhasDoGrupo.push(`✓ ${g.nome}: ${c.nome} passou`);
+        return { ...g, condicoes: t.condicoes };
+      });
+      if (mexeu) {
+        pers = { ...pers, grupo: grupoComPrazo };
+        msgs.push(...linhasDoGrupo);
+      }
+    } catch (e) { calou("prazo-da-condicao-do-grupo", e); }
     /* o mesmo vale para quem está do outro lado: veneno num inimigo precisa
        matar o inimigo, não decorar a ficha dele */
     if (combateRef.current && (combateRef.current.inimigos || []).some((e) => (e.condicoes || []).length && !e.derrotado)) {

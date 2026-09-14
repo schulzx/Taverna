@@ -1,4 +1,5 @@
 import { aflicaoDe, rolarAflicao, golpesDeCriatura, golpeDaVez, PORTADORES } from "../src/aflicoes.js";
+import { CONDICOES } from "../src/condicoes.js";
 import { perfilDeCriatura } from "../src/danos.js";
 import { CRIATURAS_FANTASIA } from "../src/bestiario.js";
 
@@ -72,6 +73,55 @@ const buff = rolarAflicao({ fonte: "Grito de Guerra Aliados ganham vantagem", no
 ok(buff && buff.aplicou && buff.escopo === "aliados" && buff.cond.id === "inspirado", `Grito de Guerra → ${buff && buff.cond.nome} em ${buff && buff.escopo}`);
 const furia = rolarAflicao({ fonte: "Fúria Ancestral", nomeFonte: "Fúria", atacante: "Doran", sempre: true });
 ok(furia && furia.escopo === "proprio" && furia.cond.id === "enfurecido", `Fúria → ${furia && furia.cond.nome} em quem usou`);
+
+/* ============================================================
+   T1 · A FRONTEIRA DO GRUPO — o que os portadores deixam chegar lá
+
+   POR QUE ESTA SEÇÃO MORA AQUI e não em `teste-cond.mjs`: o que ela mede
+   é a tabela `PORTADORES`, e território é de quem edita. No dia em que
+   alguém acrescentar um portador novo, é ESTE arquivo que ele abre — e é
+   esta suíte que tem de acender. (O relógio em si — o prazo que vence, e
+   vence também para a condição boa — está em `teste-cond.mjs`, que é o
+   dono de `tickCondicoes`.)
+
+   O QUE T1 DECIDIU, E ESTA SEÇÃO GUARDA: o relógio do grupo decrementa e
+   expira, mas NÃO cobra `danoTurno`. Essa decisão só é segura enquanto
+   nenhuma condição que dói por turno conseguir chegar ao companheiro — e
+   hoje nenhuma chega, por ESTRUTURA, não por sorte: as três que doem
+   (Envenenado, Sangrando, Queimando) têm portador único e sempre
+   `alvo: "alvo"`, que escreve no herói ou no inimigo, nunca no grupo.
+
+   É FRONTEIRA, não curiosidade de tabela. No dia em que T3/T4 ou um
+   portador novo mudar isso, a suíte acende aqui — em vez de o companheiro
+   começar a morrer de veneno em silêncio, sem uma linha na tela, porque o
+   sítio do App que roda o relógio dele não tem onde cobrar o dano. */
+console.log("\n[T1 · a fronteira do grupo] o que os portadores deixam chegar ao companheiro:");
+const doGrupo = PORTADORES.filter((p) => p.alvo !== "alvo");
+for (const p of doGrupo) {
+  const c = CONDICOES[p.cond];
+  console.log(`  ${p.id.padEnd(12)} alvo:${String(p.alvo).padEnd(9)} → ${c ? `${c.rotulo} (${c.tipo}${c.danoTurno ? `, ${c.danoTurno} PV/turno` : ""})` : "?? fora do catálogo"}`);
+}
+ok(doGrupo.length === 7, `sete portadores escrevem fora do alvo — em quem usou ou nos aliados (${doGrupo.length})`);
+ok(doGrupo.every((p) => CONDICOES[p.cond]), "e todos apontam para condição que existe no catálogo");
+/* LIDO DE VOLTA DO CATÁLOGO, não copiado numa lista à mão aqui: se amanhã
+   um portador de grupo apontar para uma condição RUIM, isso é mudança de
+   jogo — o sistema passa a poder afligir o companheiro pela mão de quem o
+   ajuda — e tem de acender, não passar como detalhe de tabela. */
+ok(doGrupo.every((p) => CONDICOES[p.cond].tipo === "bom"),
+  `as ${doGrupo.length} que chegam ao grupo são todas boas: ${doGrupo.map((p) => CONDICOES[p.cond].rotulo).join(", ")}`);
+ok(doGrupo.every((p) => !CONDICOES[p.cond].danoTurno),
+  "NENHUMA delas dói por turno — é esta a fronteira que deixa o relógio do grupo (T1) não cobrar dano");
+
+/* A MESMA FRONTEIRA PELO OUTRO LADO. A de cima pergunta "o que sai do
+   grupo?"; esta pergunta "quem dói sabe escrever fora do alvo?". As duas
+   juntas fecham o cerco: um portador novo entra por uma ou por outra. */
+const doem = Object.values(CONDICOES).filter((c) => c.danoTurno);
+ok(doem.length === 3, `três condições doem por turno: ${doem.map((c) => `${c.rotulo} (${c.danoTurno})`).join(", ")}`);
+for (const c of doem) {
+  const port = PORTADORES.filter((p) => p.cond === c.id);
+  ok(port.length === 1 && port[0].alvo === "alvo",
+    `${c.rotulo}: portador único (${port.map((p) => p.id).join(", ") || "nenhum"}) e sempre em "alvo"`);
+}
 
 console.log("\n[texto que o Mestre recebe]:");
 const r = rolarAflicao({ fonte: "Mordida peçonhenta Aranha", nomeFonte: "Mordida peçonhenta (Aranha Gigante)", atacante: "Aranha Gigante", alvo: { nome: "Vera", nivel: 5, condicoes: [], atributos: { vigor: 2 } }, alvoNome: "você", sempre: true });
