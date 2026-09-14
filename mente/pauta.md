@@ -17,6 +17,22 @@ Formato de um item:
 
 ## Para a pessoa decidir (pesado)
 
+- [ ] **C2c · o inimigo conjurador é órgão novo, não etapa** · pesado · de: medição de C2 · 14/09
+  A Fase C previa que a quebra valesse também para o inimigo. **Medido em C2, e
+  não cabe em etapa nenhuma da fase** — é o oposto exato do companheiro. A ficha
+  de inimigo (**27** entradas em `bestiario.js`; `completarInimigo` entrega nome,
+  ameaça, nível, vida, defesa e perfil) **não tem habilidade nem magia**;
+  **0 sítios** escrevem `efeitos` em inimigo em todo o `src/` (dois apenas *leem*,
+  e a lista está sempre vazia); `tickEfeitos` **não roda** sobre inimigos —  eles
+  só recebem `tickCondicoes`; `turnoDosInimigos` (`combate.js:242`) não é piloto
+  com planos, é um laço de mira com **um verbo só, bater**; e o inimigo apanha em
+  **dez sítios** espalhados, sem porta única.
+  O pré-requisito honesto é essa **porta única do dano no inimigo** — a irmã de
+  `sofrerNaPele` (`App.jsx:8069`), que foi a **v9.66 inteira, sozinha**. Depois
+  dela vêm tabela de magia na ficha das 27 (mais o default para o nome que o
+  Narrador inventa), verbo novo no turno inimigo, nascimento de efeito e relógio.
+  A pessoa decide se o inimigo deve conjurar — e, se sim, que isso é uma fase.
+
 - [ ] **o companheiro fica envenenado para sempre** · pesado · de: frontend+backend (achado de P3) · 14/09
   **Seis** sítios escrevem condição em `pers.grupo` (`App.jsx` 5353, 7455, 7764,
   7849, 7851, 8643) e **zero** a decrementam: `tickCondicoes` tem exatamente dois
@@ -131,21 +147,47 @@ que falta é o campo chegar até ela.
   rodadas apanhando** antes de cair. 87 asserções novas (`teste-grimorio.mjs`
   89 → **142**, `teste-efeitos.mjs` 387 → **421**), seis sabotagens medidas.
   Ver o diário.
-- [ ] **C2 · a quebra acontece na mesa** · de: pessoa · 13/09
-  **Corrigido pelo orquestrador em 14/09, depois de C1 — a etapa mudou de
-  forma, e para os dois lados.** A metade do **herói já está feita**: o caminho
-  inteiro do App (`:13377` acha quem concentra · `:13379` roda o teste ·
-  `:13383` escreve a linha · `:13434` tira o efeito) já existia e passou a
-  disparar com C1. O que sobra dela é só o que o jogador **lê**: hoje a linha
-  com CD e rolagem só aparece se `mostrarRolagens` estiver ligado, e a quebra é
-  gameplay — ele precisa saber que perdeu a magia **e por quê**, ligado ou não.
-  A metade que **cresceu** é a de companheiro e inimigo conjurador: medido em
-  C1, nenhum dos dois faz **nascer** efeito de magia em lugar nenhum, então
-  para eles não há o que quebrar — não é ligar um teste, é dar-lhes primeiro
-  uma magia de duração que exista na ficha. Se a medição mostrar que isso é
-  órgão novo, a metade sobe de peso e volta para a pessoa.
-  Cuidado: o Narrador não ganha bloco novo — `ECONOMIA_ACAO_PROMPT` já
-  descreve a regra; o que muda por turno vai pela `pauta` dinâmica.
+- [x] **C2 · a quebra acontece na mesa** · feito em v9.235 (`086d035`), 14/09
+  **A etapa foi medida antes de ser prometida, e a medição a desfez em três.**
+  Fechou com a **leitura do herói**, que era o coração dela.
+  **A pauta dizia meia verdade e o corte a endireitou:** a linha
+  `💢 Concentração quebrada` (`:13383`) sempre foi **incondicional** — o jogador
+  já lia *que* perdeu e *qual* magia. Atrás de `mostrarRolagens` estava só o
+  **🎲 com a CD e o dado**. O buraco era o **porquê**, e é o que se fechou.
+  **A frase é conta, então nasceu no módulo:** `testeConcentracao`
+  (`combate.js`) ganhou o campo `linha` — irmã da de `absorverDano` —, e o
+  `App.jsx` não monta uma sílaba. A CD saiu do meio do `Math.max` e virou
+  tabela (`RESISTENCIA_DA_CONCENTRACAO`): agora que o **texto** carrega a
+  dificuldade, número à mão é número que a suíte só prova copiando.
+  **Decidido e travado: a linha nova nasce SÓ NA QUEDA.** Falar a cada golpe
+  aguentado seria ruído por rodada; quem quer o teste mantido tem a 🎲 intacta.
+  **O que o jogador lê, ao vivo e com as rolagens desligadas:**
+  `💢 Voo escapa dos dedos — o corpo aguentou 6, e era preciso 10.`
+  **O Mestre enfim recebe o sinal, e sem um byte de prompt:** a promessa de
+  `ECONOMIA_ACAO_PROMPT` (*"quando quebrar, narre o efeito se desfazendo"*)
+  nunca tinha quem a avisasse. Vai pela nota dinâmica, só no turno da queda —
+  **pior cena real 81935 → 81935 chars**, crescimento estático zero.
+  Conferido vivo com a queda de verdade (rodadas 2 e 4 aguentaram em silêncio,
+  a 5 derrubou Voo). `teste-efeitos.mjs` 421 → **463**. Ver o diário.
+- [ ] **C2b · o companheiro segura o que já conjura** · de: medição de C2 · 14/09
+  **Medido em C2, e é o contrário do que a pauta supunha:** o companheiro **já
+  conjura magia de concentração** — ela é que não sabe. **8 das 148 habilidades
+  de classe são magias do catálogo pelo nome, e 5 concentram**: um Clérigo
+  companheiro de nível 3 sai da ficha com **Bênção** e **Escudo da Fé**, e o
+  piloto já as escolhe (`ehBuff`/`ehAbrigo`). Nos oito prontos da arena são
+  **28 magias de concentração** na ficha, **13** escolhíveis.
+  O que falta não é dar-lhe magia: é o efeito **nascer sabendo** —
+  `efeitoDeBuff` perguntando ao catálogo pelo nome (`magiaPorNome` +
+  `exigeConcentracao`). **0 tabela nova, 0 sítio novo de nascimento, 1 import
+  novo** (`efeitos.js` → `grimorio.js`). O relógio já existe nos dois
+  (`App.jsx:8155`, `arena.js:303`).
+  **O cuidado que manda, e ele vem medido:** essa porta é a **mesma do herói**
+  (`aplicarBuffDeHabilidade`), então o raio é **herói + companheiro**, não
+  companheiro — meça antes, não depois, ou cinco habilidades do herói passam a
+  concentrar sem ninguém ter contado. O que nasce depois: as chamadas de
+  `testeConcentracao` onde o companheiro apanha (`App.jsx:13353`, `:11702`,
+  `:17167`, `arena.js:230`) e a linha que o jogador lê quando ele perde a magia.
+  Catraca: a seção 17 de `teste-efeitos.mjs` + a catraca de equilíbrio da arena.
 - [ ] **C3 · uma de cada vez** · de: pessoa · 13/09
   5e, e o próprio `ECONOMIA_ACAO_PROMPT` já promete: *"um conjurador mantém
   no máximo UMA magia de duração por vez"*. Conferir se o jogo cumpre — se
@@ -158,6 +200,10 @@ que falta é o campo chegar até ela.
   não conferência. A forma natural já tem endereço: `CONCENTRACAO_DA_MAGIA`
   ganha o teto (`quantasAoMesmoTempo: 1`) e o nascimento derruba a anterior —
   a regra passa a morar onde a tabela já está, e o jogador lê a troca.
+  **Acrescentado por C2 (14/09):** a frase da troca tem endereço pronto e molde
+  provado — `testeConcentracao.linha` acabou de mostrar que texto com número
+  nasce no módulo, em voz de mundo, e o App só empurra. A linha da magia que cede
+  lugar é irmã dela, não invenção nova.
 
 ### Fase P — a proteção vale para quem não é o jogador
 Decisão da pessoa (13/09): **consertar os dois**, sabendo que atinge Uma Vida
@@ -426,6 +472,37 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   **Não há mais fase aprovada na fila** — o próximo ciclo pega de "Aberto".
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **o herói apanha em seis sítios e a concentração só é testada em um** · médio · de: medição de C2 · 14/09
+  `testeConcentracao` tem **1 chamador de produção**: `App.jsx:13379`, o turno dos
+  inimigos. O herói sofre dano em **cinco outros lugares** onde a magia que ele
+  segura **não corre risco nenhum**: `App.jsx:8173` (dano de condição — veneno,
+  sangramento; no 5e isso quebra concentração, e é o mais gritante da lista),
+  `:8069` (`sofrerNaPele`, a porta única, e com ela salvaguarda/ambiente `:16057`,
+  queda `:16094`, armadilha `:17199` e o preço do esforço `:14711`), `:12970` e
+  `:13907` (os dois ataques de oportunidade) e `regras-jogo.js aplicarMudancas`
+  (dano do Narrador fora de combate). C2 **não ligou nenhum, de propósito**: C1
+  mediu o raio da quebra com cuidado para não estourá-lo, e ampliar o raio não
+  estava na etapa. Mas enquanto não forem ligados, a regra é meia regra — e o
+  jogador aprende o hábito errado (só apanhar de inimigo ameaça a magia).
+  Médio porque muda o que ele vive em campanha viva: **meça o raio novo antes**
+  (quantas magias, quantos turnos a mais de exposição) como C1 fez, e se a conta
+  mostrar que a magia deixa de durar, sobe de peso. A leitura já está pronta e é
+  a mesma — `tc.linha` serve os seis. Catraca: a seção 17 de `teste-efeitos.mjs`,
+  que já conta os chamadores.
+
+- [ ] **`RX_CURA` acha cura dentro de "proCURA" e "obsCURA"** · leve · de: backend (achado de passagem em C2) · 14/09
+  `companheiros.js:91`: o regex não tem fronteira de palavra, então **"o que
+  ele *procura*"** e **"resposta curta e *obscura*"** casam. Medido: `ehCuraDeGrupo`
+  diz que **`Localizar Objeto`** e **`Adivinhação`** são curas, e nos prontos isso
+  é real — **chama, remendo, voz e voto** todos carregam `Localizar Objeto`, que
+  vira candidata a `{tipo:"cura"}` e passa por `valorDaCura`. É a mesma família
+  dos dois falsos positivos do vocabulário de apoio, um item abaixo, e a mesma
+  lição de P2: **o piloto deve perguntar à tabela, não adivinhar por regex de
+  nome**. Conserto mínimo é a fronteira de palavra; o conserto que vale é o da
+  linhagem de P2. Linha "bug com teste que prova". Catraca: `teste-guardas.mjs`
+  seção 6 e `teste-companheiros.mjs` — os dois nomes deixam de ser cura, e os
+  curadores honestos continuam sendo.
 
 - [ ] **as duas portas da concentração discordam sobre lixo não-booleano** · leve · de: testes (achado de C1) · 14/09
   `exigeConcentracao({concentracao: "sim"})` **ignora** o campo (só

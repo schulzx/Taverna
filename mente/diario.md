@@ -16,6 +16,126 @@ Formato:
 
 ---
 
+## 14/09 02:10 · v9.235 · C2 · a quebra acontece na mesa · commit `086d035`
+- **estado inicial:** árvore limpa, HEAD `0b04b30`, VERSÃO v9.234, `npm test`
+  181/181 suítes + 8/8 varredores verde. Sem trava de ciclo. A vez era **C2**,
+  a segunda etapa da Fase C, aprovada pela pessoa.
+- **conselheiro:** não chamado (a etapa já estava escrita e aprovada).
+- **backend (duas chamadas):** a primeira foi **medição pura**, sem escrever uma
+  linha — o tamanho real de companheiro e inimigo conjurador. A segunda fez a
+  frase da quebra nascer no módulo: `testeConcentracao` (`combate.js`) ganhou o
+  campo `linha` e a tabela `RESISTENCIA_DA_CONCENTRACAO`.
+- **frontend:** trocou a fiação em `App.jsx:13376-13408` (o nome desce, `tc.linha`
+  sobe, o bloco entrou em `try/catch` com `calou`), escreveu a nota dinâmica ao
+  Narrador e conferiu vivo — com a queda de verdade na mesa.
+- **testes:** não chamado como mão própria; as provas vieram dentro das duas
+  entregas. `teste-efeitos.mjs` 421 → **463** (seção 17 nova): 29 asserções de
+  regra + 13 âncoras de fiação, com quatro sabotagens medidas.
+
+- **O CORTE FOI A DECISÃO DO CICLO, E ELE VEIO DE NÚMERO, NÃO DE PALPITE.** A
+  etapa C2, como estava escrita, tinha duas metades de tamanhos incomparáveis.
+  Mandei o `backend` medir **antes** de prometer qualquer coisa, e a medição
+  desfez a etapa em três. **A metade do herói encolheu:** a pauta dizia que a
+  linha da quebra inteira dependia de `mostrarRolagens`, e é meia verdade — a
+  linha `💢 Concentração quebrada` (`:13383`) sempre foi **incondicional**; o que
+  estava atrás do portão era só o **🎲 com a CD e o dado** (`:13381`). Ou seja: o
+  jogador já lia *que* perdeu e *qual* magia, e não lia **o porquê**. Isso é
+  bem menor do que a pauta supunha — e continua sendo o coração da etapa, porque
+  perder a magia que se pagou sem entender o que a derrubou é perder duas vezes.
+
+- **DECISÃO MÉDIA: a linha nova nasce SÓ NA QUEDA.** Considerei mostrar também o
+  teste que a magia aguenta — o argumento a favor é que o jogador saberia que a
+  magia está sob risco. Recusei: seria uma linha de sistema **a cada golpe**
+  sofrido, por rodada, e o que se ganha em aviso se perde em ruído na cena. Quem
+  quer ver o teste mantido continua tendo a 🎲 de `mostrarRolagens`, intacta. A
+  frase da queda explica o porquê no instante exato em que ele importa. Travado
+  na suíte dos dois lados (`linha` vazia na mantida, com controle negativo).
+
+- **DECISÃO MÉDIA: a frase é conta, então mora no módulo.** A lei "conta se
+  prova, tela se olha" mandou: o texto que carrega número nasce em `src/` e é
+  provado em Node, no molde exato que `absorverDano` já usa (`efeitos.js:353`).
+  O `App.jsx` não monta uma sílaba — só empurra `tc.linha`. Consequência boa e
+  não planejada: a CD teve de sair do meio do `Math.max` e virar tabela
+  (`RESISTENCIA_DA_CONCENTRACAO`), porque agora o **texto** carrega a
+  dificuldade, e número escrito à mão é número que a suíte só prova copiando —
+  duas cópias divergem em silêncio, e aí a frase mente sobre a própria regra.
+
+- **A LEI IRMÃ FOI RESPEITADA NAS DUAS DIREÇÕES.** "O sistema não fala de si
+  mesmo": o jogador lê **a magia se desfazendo e o número que decidiu**, nunca o
+  rótulo do mecanismo. O que ele lê agora, capturado ao vivo com `mostrarRolagens`
+  **desligado**: `💢 Voo escapa dos dedos — o corpo aguentou 6, e era preciso 10.`
+  A voz de ficha (`Concentração: d20+2=9 vs CD 11 → QUEBRADA`) ficou **palavra
+  por palavra** onde estava, atrás do portão, e a suíte trava isso por regex
+  exata — a lista de palavras de bastidor tem controle negativo (reprova o
+  `texto` de depuração), senão não estaria medindo nada.
+
+- **O NARRADOR ENFIM RECEBE O SINAL, E SEM GANHAR UM BYTE DE PROMPT.**
+  `ECONOMIA_ACAO_PROMPT` promete há versões *"quando quebrar, narre o efeito se
+  desfazendo na hora"* — e o Mestre nunca ficava sabendo que a magia tinha caído:
+  promessa sem sinal. A nota vai por `notaRef`, o canal **dinâmico**, e só no
+  turno da queda. **Pior cena real medida: 81935 chars antes, 81935 depois** (teto
+  82.000, margem 65). Crescimento estático: **zero**. `ECONOMIA_ACAO_PROMPT` não
+  foi tocado, e há asserção de controle cravando que ele não cresceu.
+
+- **O QUE A MEDIÇÃO ACHOU, E É O ACHADO DO CICLO: o companheiro JÁ CONJURA magia
+  de concentração — ela é que não sabe.** A pauta supunha que dar magia a ele
+  seria órgão novo. Não é: **8 das 148 habilidades de classe são magias do
+  catálogo pelo nome, e 5 concentram** — um Clérigo companheiro de nível 3 sai da
+  ficha com **Bênção** e **Escudo da Fé**, e o piloto já as escolhe. Nos oito
+  prontos da arena são **28 magias de concentração** na ficha, 13 delas
+  escolhíveis. O que falta não é a magia: é o efeito **nascer sabendo**
+  (`efeitoDeBuff` perguntando ao catálogo pelo nome). 0 tabela nova, 0 sítio novo
+  de nascimento, 1 import novo. Virou **C2b** na pauta, com o cuidado que a
+  medição também deu: a porta é a **mesma do herói**, então o raio é herói+
+  companheiro e precisa ser medido antes, não depois.
+
+- **E o inimigo é o oposto exato: órgão novo, e volta para a pessoa.** A ficha de
+  inimigo (27 entradas em `bestiario.js`) não tem habilidade nem magia; **0 sítios**
+  escrevem `efeitos` em inimigo em todo o `src/`; `tickEfeitos` **não roda** sobre
+  eles; `turnoDosInimigos` tem **um verbo só** (bater), sem estrutura de plano; e
+  o inimigo apanha em **dez sítios** espalhados, sem porta única. O pré-requisito
+  honesto é essa porta — e a irmã dela no herói (`sofrerNaPele`) foi a v9.66
+  inteira, sozinha. Virou **C2c**, marcado `pesado`, na seção da pessoa.
+
+- **O CHEQUE BARATO QUE RENDEU MAIS QUE A ETAPA: o herói apanha em seis sítios e
+  o teste roda em um.** Pedi de passagem que a medição olhasse se há outro lugar
+  onde ele sofre dano sem que a concentração seja testada. Há **cinco**, e um
+  deles é regra explícita do 5e: `App.jsx:8173` (dano de condição — veneno,
+  sangramento), `:8069` (`sofrerNaPele`, a porta única, e com ela salvaguarda,
+  queda, armadilha e o preço do esforço), `:12970` e `:13907` (os dois ataques de
+  oportunidade) e `regras-jogo.js aplicarMudancas` (dano do Narrador fora de
+  combate). **Não liguei nenhum**, de propósito: C1 mediu o raio da quebra com
+  cuidado justamente para não estourá-lo, e ampliar o raio hoje não estava
+  autorizado pela etapa. Está na pauta com os endereços.
+
+- **Conferido vivo, e com a queda de verdade — não só "monta sem erro".** Aba
+  nova, árvore de acessibilidade em vez de foto. Uma Noite → Torneio → A Chama,
+  luta contra O Voto: rodadas 2 e 4 apanharam 14 e 4 e o teste **aguentou em
+  silêncio** (a decisão de não falar quando aguenta está certa na prática);
+  rodada 5, 23 de dano, o teste **caiu** e as duas frases saíram — a do jogador
+  na tela, a do Mestre no envelope. `efeitos: []` depois, ou seja
+  `quebrarConcentracao` continua no caminho.
+
+- **Duas coisas honestas.** (1) Para chegar ao combate, o `frontend` entrou numa
+  Noite nova e **sobrescreveu o save de "Uma Noite" do ciclo M6**
+  (`taverna_rapida_v1`, a sessão "A Muralha"). Era save de teste e a campanha
+  (`taverna_save_v1`) nem existia, mas é perda real e fica registrada. O resto do
+  `localStorage` foi restaurado — as mesmas três chaves do início,
+  `taverna_cfg_rolagens` de volta em `"1"`. (2) Os comentários novos nasceram
+  marcados `v9.222` (versão de outra fase, que existe de verdade em
+  `App.jsx:19365`); corrigidos para `v9.235` por script `.cjs` via `node`, âncora
+  inteira e única, com **0** caracteres de substituição nos três arquivos depois.
+
+- **o que ficou:** **C2b** (o companheiro segura o que já conjura) e **C2c** (o
+  inimigo conjurador, `pesado`, para a pessoa) escritos na pauta; **C3** intocado
+  e ainda válido como conserto (C1 já provou que o jogo não cumpre o "uma de cada
+  vez"); item novo em Aberto para os **cinco sítios** onde o herói apanha sem
+  teste; e um achado de passagem do `backend`, também em Aberto: `RX_CURA`
+  (`companheiros.js:91`) não tem fronteira de palavra, então **"proCURA"** e
+  **"obsCURA"** casam — `Localizar Objeto` e `Adivinhação` são classificadas como
+  cura, e os quatro prontos que carregam `Localizar Objeto` sentem isso de fato.
+
+---
 ## 14/09 01:35 · v9.234 · C1 · o campo nasce e viaja · commit `a57b1b2`
 - **estado inicial:** árvore limpa, HEAD `436afb9`, VERSÃO v9.233, `npm test`
   181/181 suítes + 8/8 varredores verde. A Fase P estava fechada; a vez era
