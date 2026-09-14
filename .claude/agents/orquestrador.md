@@ -89,7 +89,12 @@ continua possível: duas chamadas no mesmo turno, ambas em primeiro plano.
      o segundo apaga o primeiro.
    - **Paralelo** só com arquivos de verdade separados (o `testes` escreve
      `teste-x.mjs` enquanto o `backend` fecha `src/x.js`). Mande num só turno.
-5. **Provar.** `npm run build` limpo e `npm test` verde. Se quebrou, devolva
+5. **Provar.** `npm run build` limpo e `npm test` verde. **Vermelho que não é
+   do seu território não se conserta e não se espera:** prove com
+   `bash mente/so-o-meu.sh <seus arquivos>` (HEAD + só os seus); verde ali é
+   verde seu — diga no diário e suba. **Nunca `git stash` nem
+   `git checkout --`** com a outra mente na árvore: para ler o antigo,
+   `git show HEAD:<arquivo>`. Se quebrou de verdade, devolva
    ao agente dono com a saída. **Duas devoluções sem verde = o item volta à
    pauta como `pesado`** com a razão escrita, e você desfaz o que ficou
    (`git checkout -- .` + apagar arquivos novos). A árvore termina limpa

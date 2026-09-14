@@ -159,6 +159,26 @@ e registre. Apague ao terminar o arquivo, mesmo que o ciclo siga.
 que sai do `App.jsx` para um painel próprio compra independência permanente
 para as duas mentes. Mover vale mais que remendar.
 
+**O bastão protege um arquivo, e o perigo é a suíte.** Duas mentes podem ficar
+vermelhas uma por causa da outra sem nunca terem tocado no mesmo arquivo: basta
+que uma esteja escrevendo um teste. Antes de julgar um vermelho que não é seu,
+prove com **HEAD + só os seus arquivos**:
+
+```bash
+bash mente/so-o-meu.sh src/seu-modulo.js testes/teste-seu.mjs
+```
+
+Verde ali e vermelho na árvore = o vermelho é da outra mente. **Diga no
+diário e siga** — não conserte, não espere.
+
+**`git stash` e `git checkout --` são armas apontadas para o vizinho:**
+tiram da árvore arquivos que a outra mente pode estar editando naquele
+segundo. Para ler uma versão antiga, **`git show HEAD:<arquivo>`**, que não
+toca em nada. Stash só com a árvore comprovadamente sua.
+
+**Todo bastão deixa rastro.** Ao devolvê-lo, escreva no diário do ciclo que
+o tomou, para quê e quando o devolveu — inclusive quando devolveu cedo.
+
 **Subir com duas mentes.** Some os caminhos um a um (**nunca `git add -A`**:
 a outra pode ter trabalho não commitado na árvore). Bump de `VERSAO` como a
 **última** edição antes do commit. Push recusado por não estar à frente:

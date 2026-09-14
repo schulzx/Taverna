@@ -83,10 +83,13 @@ mentes precisam dele, e duas mãos nele ao mesmo tempo se apagam. Então:
    quatro dentes.
 4. **Executar.** Seniores em par → construção (`aprendiz` no simples e no
    médio, e o difícil vem à pessoa ou espera o `frontend` da outra mente).
-5. **Provar.** `npm run build` limpo e `npm test` verde — **a suíte inteira,
-   incluindo a do sistema**: a árvore é uma só, e você não sobe com o verde
-   pela metade. Confira vivo no navegador (**HMR mente depois de rename**;
-   **salve e restaure os espaços de save**).
+5. **Provar.** `npm run build` limpo e `npm test` verde. Se houver vermelho
+   que **não é do seu território**, não conserte e não espere: prove com
+   `bash mente/so-o-meu.sh <seus arquivos>` (HEAD + só os seus). Verde ali
+   é verde seu — **diga no diário e suba**. E lembre: **nunca `git stash`
+   nem `git checkout --`** com a outra mente na árvore; para ler o antigo,
+   `git show HEAD:<arquivo>`. Confira vivo no navegador (**HMR mente depois
+   de rename**; **salve e restaure os espaços de save**).
 6. **Commitar e subir.** Narrativo, em português, assinatura do `CLAUDE.md`.
    **Some os caminhos um a um — nunca `git add -A`**, porque a outra mente
    pode ter trabalho não commitado na árvore. Bump de `VERSAO` como a
