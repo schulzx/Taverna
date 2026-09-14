@@ -16,6 +16,128 @@ Formato:
 
 ---
 
+## 14/09 11:35 · v9.238 · T1 · o relógio alcança o grupo · commit `9ca2eb7`
+- **estado inicial:** árvore limpa, HEAD `2faf58f`, VERSÃO v9.237, `npm test`
+  181/181 suítes + 8/8 varredores verde. Sem trava de ciclo. A Fase C fechada e
+  a pauta com quatro fases novas aprovadas (**T → B → F → I**). A vez era **T1**,
+  a primeira etapa da Fase T, com a lei de desenho ditada pela pessoa: *sistema
+  de D&D — cura normal só devolve PV e não remove condição; quem limpa é magia,
+  habilidade de classe, item, ou a salvaguarda no fim do turno.*
+- **conselheiro:** não chamado (etapa já escrita e aprovada; a pauta tem mais de
+  5 itens em "Aberto").
+- **backend:** mediu e **não escreveu uma linha em `src/*.js`** — a medição
+  provou que `tickCondicoes` já servia como está. Entregou o raio contado, a
+  medição nos dois sentidos em Uma Vida, a decisão do save antigo com o motivo, e
+  o bloco desenhado para o `frontend` fiar.
+- **frontend:** as 41 linhas em `App.jsx:8292–8332`, entre o tique do herói e o
+  dos inimigos, em `try/catch` com `calou("prazo-da-condicao-do-grupo", e)`.
+  Script `.cjs` com o helper `t(de, para)`, âncora única. Build limpo.
+- **testes:** `teste-cond.mjs` 31 → **84** asserções (a catraca do prazo, o dente
+  inverso, o save antigo, a âncora no App no molde da seção 15 de
+  `teste-efeitos.mjs`) e `teste-afl.mjs` 24 → **32** (a fronteira do zero, onde
+  mora `PORTADORES`). **15 sabotagens, 15 morderam.**
+
+### A medição desmentiu metade da pauta, e a etapa ficou mais honesta
+
+**O veneno eterno do companheiro NÃO EXISTE, e nunca existiu.**
+`aplicarCondicoesDosGolpes` (`:7606`) só processa `alvoRef === "jogador"` — golpe
+de inimigo **nunca** afligiu companheiro. Das condições que chegam ao grupo,
+**as sete são `tipo: "bom"`** (inspirado, protegido, abençoado, enfurecido,
+apressado, furtivo, fortalecido); a única ruim é `amedrontado` da presença, e ela
+já tinha saída em `:13226`. Logo **o dente inverso não é o efeito colateral desta
+etapa — é a etapa inteira**: o relógio tira do grupo uma vantagem de trinta
+versões, e era isso o conserto.
+
+**São 5 sítios vivos, não 6.** O sexto (`:7543`, o ramo do grupo de
+`aplicarCondicaoEm`) é **código morto**: os dois chamadores passam `"você"`
+cravado, `ehEu` é sempre verdadeiro e o ramo nunca roda.
+
+**Uma Vida, 1000 combates (`umavida|0..999`), nos dois sentidos.** O instrumento
+é o de P3, e o controle o valida: sem condição nenhuma ele reproduz os
+563 quedas · 754 PV · 918 absorvido · 153 abrigos de P3, byte a byte.
+
+| | hoje | T1 |
+|---|---|---|
+| condições que vencem (duro / brando) | **0 / 0** | **727 / 305** |
+| turnos até vencer | — | **4,11 / 4,09** |
+| companheiro-rodadas com condição (duro) | 4040 | **2335** (−42%) |
+| companheiro-rodadas com condição (brando) | 5988 | **5601** (−6,5%) |
+| quedas (duro, 200 combates) | 560 | **563** |
+| PV restante do grupo (duro) | 798 | **754** (−2,7%) |
+
+**E a leitura honesta, que é a que vale: em mesa isso quase não dói, e o motivo
+tem nome.** 94% do que estava de pé no duro era `protegido` — e `protegido` não
+compra nada para ninguém: `defesaDe` (`combate.js:39`) não lê `condicoes`, e
+`mecanicaDe().defesa` só chega ao HUD. Provado direto: defesa **11 com e 11 sem**.
+A única condição do grupo que morde em Uma Vida é `abencoado`, e o Clérigo a
+relança tanto que o relógio mal a alcança (−0,4% no brando, −16% no duro). **A
+vantagem de trinta versões era real em contagem e quase inerte em efeito** — o
+jogador vai ler a linha muito mais do que vai sentir o número.
+
+### Decisões médias tomadas (com o motivo)
+
+- **O dano por turno fica FORA de T1.** `tickCondicoes` devolve `dano`/`fontes`,
+  e o herói e os inimigos os cobram; o grupo não. Motivo: companheiro morrendo de
+  veneno é um **jeito novo de o jogador perder um companheiro** — consequência
+  que muda o que ele vive, e isso é da pessoa, não de etapa aprovada. E a
+  fronteira **não esconde nada**: as três que doem (`envenenado`, `sangrando`,
+  `queimando`) têm portador único e sempre `alvo: "alvo"`, que escreve no herói
+  ou no inimigo e nunca no grupo — **0 em 2000 combates**, por simulação e por
+  estrutura. A suíte guarda o zero: portador novo que aponte para condição com
+  `danoTurno` acende em `teste-afl.mjs`, em vez de o companheiro começar a morrer
+  em silêncio.
+- **Save antigo: vence pelo prazo, sem migração.** A instância carrega
+  `turnos: N` cheio (nunca decrementou, então N é o valor de catálogo, idêntico ao
+  de uma condição recém-lançada); basta o relógio alcançá-la. Motivo escrito:
+  **migrar seria inventar um estado que o save não tem** — distinguir "condição
+  antiga" de "condição de agora" exigiria uma marca que não existe em ficha
+  nenhuma, nascida só para ser lida uma vez e apagada. Conferido dos dois lados:
+  nenhum dos 5 sítios escreve `turnos: null`, e `git log -S` mostra que as
+  condições alcançáveis nunca tiveram `null` em versão nenhuma; se mesmo assim
+  carregar lixo (`null`/`NaN`), `tickCondicoes:248` a mantém viva — que é o
+  comportamento de hoje, sem regressão.
+- **A condição boa também anuncia.** `✓ ${g.nome}: ${c.nome} passou`, irmã exata
+  da linha do inimigo (`:8304`), com o nome na frente porque não sou eu. Motivo:
+  a irmã do herói já anuncia, e calar só para o grupo seria uma terceira regra
+  para o mesmo evento — além de tornar invisível justamente a mudança que o
+  jogador vai sentir, que é ele **perdendo** algo que tinha. Some-se que
+  `resumoCondicoesPrompt` manda as condições do grupo ao Narrador: sem a linha,
+  ele seguiria descrevendo uma bênção que acabou. Volume: **0,73 linha por
+  combate no duro, 0,31 no brando**. Voz de mundo, sem nomear o mecanismo.
+- **Não filtra por vida**, diferente do irmão dos inimigos: o inimigo derrotado
+  sai de cena, o companheiro caído continua nela e pode ser erguido — o tempo
+  passa para ele também.
+- **`src/*.js` intocado.** Dar a `tickCondicoes` um `{ semDano: true }` só para o
+  grupo seria API nova com um leitor só e um segundo caminho para o mesmo número.
+  **T1 é fiação + suíte, como C1** — nenhum export novo, nada para o `teste-ligacao`.
+
+### O achado da suíte, e é a lição de C3 outra vez
+
+A sabotagem que derruba o `try/catch` **mordeu pelo motivo errado**: sem a linha
+do `calou`, o `iFim` da âncora vinha `−1` e o `slice(iTry, -1)` entregava quase o
+**App inteiro** como se fosse o bloco — as provas de ausência acendiam por acharem
+`t.dano` em qualquer outro lugar do arquivo. **Vermelho pelo motivo errado hoje é
+verde pelo motivo errado amanhã**: com o bloco ausente e o recorte vazio, elas
+passariam vazias. Endurecido com um `achou` que toda asserção do recorte — presença
+e ausência — agora exige, com o porquê no comentário. As 15 re-rodadas contra a
+versão endurecida: **15/15**.
+
+### O que ficou (foi para a pauta, não foi feito)
+
+- **`protegido` não defende ninguém, nem o herói** — 15 habilidades do acervo
+  prometem abrigo, entram como `protegido` e compram **+0 de defesa**. É a forma
+  exata das quatro famílias da Fase F, e pertence a ela ou a B. Achado da medição.
+- **O sonho dá vantagem eterna ao herói** (`App.jsx:18759`): `"Inspirado"` escrito
+  **sem `id` e sem `turnos`** casa com o catálogo, concede vantagem em toda rolagem
+  e `tickCondicoes` a preserva com `turnos: null` **para sempre**. É a única
+  condição genuinamente eterna do jogo hoje — e é do herói, não do grupo.
+- **`aplicarCondicaoEm`, ramo do grupo (`:7543`), é código morto.**
+- **Os seis `varredura-*.mjs` não entram no `npm test`.** O `CLAUDE.md` diz que
+  entram; `rodar-tudo.mjs` só varre `^teste-` e `^check-`. Rodados à mão, os seis
+  passam — nada vermelho escondido, mas não estão guardando ninguém.
+
+---
+
 ## 14/09 03:55 · v9.237 · C3 · uma de cada vez · commit `aec84fe`
 - **estado inicial:** árvore limpa, HEAD `243d0de`, VERSÃO v9.236, `npm test`
   181/181 suítes + 8/8 varredores verde. Sem trava de ciclo. A vez era **C3**,

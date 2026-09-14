@@ -136,15 +136,51 @@ O buraco que a fase fecha: **seis** sítios escrevem condição em `pers.grupo`
 Desde a **v9.2**: o veneno do companheiro é eterno, e a condição boa que
 `buffDeCompanheiro` aplica é vantagem permanente. Nos dois sentidos.
 
-- [ ] **T1 · o relógio alcança o grupo** · de: pessoa · 14/09
-  `tickCondicoes` passa a valer para `pers.grupo`, no molde que P3 escreveu
-  para os efeitos. Catraca: nenhuma condição de companheiro sobrevive ao
-  próprio prazo; e o **dente inverso**, que é o que importa aqui — a condição
-  boa também vence (a vantagem de trinta versões acaba, e isso é o conserto,
-  não um efeito colateral). Medir o que muda em Uma Vida nos dois sentidos e
-  dizer no diário. Save antigo carrega condições eternas: decidir com o
-  `backend` se elas vencem ao carregar ou seguem até o prazo, e escrever o
-  porquê.
+> **CORRIGIDO POR T1 (14/09), e vale para T2 · T3 · T4:** a medição desmentiu
+> metade desse parágrafo. **O veneno do companheiro não existe e nunca existiu** —
+> `aplicarCondicoesDosGolpes` (`:7606`) só processa `alvoRef === "jogador"`, então
+> golpe de inimigo **nunca** afligiu companheiro. As condições que chegam ao grupo
+> são **sete, todas `tipo: "bom"`**; a única ruim é `amedrontado` da presença, que
+> já tinha saída. E os sítios vivos são **5, não 6**: o de `:7543` é código morto
+> (os dois chamadores de `aplicarCondicaoEm` passam `"você"` cravado).
+> As etapas seguintes herdam esta verdade: **hoje o companheiro não tem de que ser
+> curado** — o que T2/T3/T4 desenharem para ele nasce junto com a condição ruim que
+> ainda não chega lá, não em cima de um buraco existente. Para o **herói** e para o
+> **inimigo** o desenho da fase segue inteiro, sem uma vírgula a menos.
+
+- [x] **T1 · o relógio alcança o grupo** · feito em v9.238 (`9ca2eb7`), 14/09
+  **A etapa era pequena e fechou pequena, como C1: `src/*.js` intocado**, 41
+  linhas de fiação em `App.jsx:8292–8332` (entre o tique do herói e o dos
+  inimigos, em `try/catch` com `calou`) e a prova. `tickCondicoes` já servia
+  como está — dar-lhe um `{ semDano: true }` só para o grupo seria API nova com
+  um leitor só.
+  **A pauta errava, e o erro virou o coração da etapa:** sem veneno eterno, **o
+  dente inverso não é o efeito colateral — é a etapa inteira**. O relógio tira do
+  grupo uma vantagem de trinta versões, e era isso o conserto.
+  **Uma Vida, 1000 combates (`umavida|0..999`), instrumento de P3 validado por
+  controle** (reproduz 563 quedas · 754 PV · 918 absorvido · 153 abrigos, byte a
+  byte): **condições que vencem 0 → 727** no duro e **0 → 305** no brando, cada
+  uma em **4,1 turnos**; companheiro-rodadas com condição **4040 → 2335 (−42%)**
+  no duro e **5988 → 5601 (−6,5%)** no brando. Em mesa: quedas 560 → 563, PV
+  restante 798 → 754 (−2,7%) no duro, **zero** no brando.
+  **E a leitura honesta: quase não dói, e o motivo tem nome.** 94% do que estava
+  de pé era `protegido`, que **não compra defesa para ninguém** (`defesaDe` não lê
+  `condicoes`; defesa 11 com e 11 sem). A vantagem de trinta versões era real em
+  contagem e quase inerte em efeito — virou achado em "Aberto", não conserto de
+  carona.
+  **O dano por turno ficou FORA, de propósito** (companheiro morrendo de veneno é
+  jeito novo de perder um companheiro, e é da pessoa) **e não esconde nada**: as
+  três que doem têm portador único e sempre `alvo: "alvo"` — **0 em 2000
+  combates**, por simulação e por estrutura, com o zero guardado em `teste-afl.mjs`.
+  **Save antigo não migra:** a instância carrega `turnos: N` cheio e nunca
+  decrementou, então basta o relógio alcançá-la. Migrar seria **inventar um estado
+  que o save não tem** — a marca de "condição antiga" nasceria só para ser lida uma
+  vez. Lixo em `turnos` segue vivo, que é o comportamento de hoje.
+  **O que o jogador lê:** `✓ Irmã Vela: Abençoado passou` — irmã exata da linha do
+  inimigo, 0,73 por combate no duro. `teste-cond.mjs` 31 → **84**, `teste-afl.mjs`
+  24 → **32**; **15 sabotagens, 15 mordendo** — e uma delas mordia pelo motivo
+  errado (o recorte da âncora virava o App inteiro), endurecida antes de fechar.
+  Ver o diário.
 - [ ] **T2 · a cura não limpa** · de: pessoa · 14/09
   Lei da pessoa: **cura normal só devolve PV**. Conferir todo caminho de cura
   (poção, descanso, magia de cura, habilidade) e provar que nenhum apaga
@@ -390,7 +426,9 @@ que falta é o campo chegar até ela.
   32,9% — falso positivo — a 38,9% e a **40,2%**), e o próprio instrumento foi
   consertado no caminho (famílias de 30 → **120** sementes, em C2b).
 
-  **Não há mais fase aprovada na fila** — o próximo ciclo pega de "Aberto".
+  **Corrigido em 14/09 (T1):** havia, sim — a pessoa respondeu as quatro pesadas
+  no mesmo dia e a fila aprovada virou **T → B → F → I**, escrita acima. A próxima
+  etapa é a **T2 · a cura não limpa**; T1 fechou em v9.238 (`9ca2eb7`).
 
 <details>
 <summary>o texto original da etapa C3 (antes de ser executada)</summary>
@@ -686,9 +724,56 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   **41 → 131 → 290 → 332**. E o sítio de produção que podia sumir sem a casa
   notar: **1 → 0**.
 
-  **Não há mais fase aprovada na fila** — o próximo ciclo pega de "Aberto".
+  **Corrigido em 14/09 (T1):** havia, sim — a pessoa respondeu as quatro pesadas
+  no mesmo dia e a fila aprovada virou **T → B → F → I**, escrita acima. A próxima
+  etapa é a **T2 · a cura não limpa**; T1 fechou em v9.238 (`9ca2eb7`).
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **o sonho dá vantagem eterna ao herói** · médio · de: backend (achado de T1) · 14/09
+  **É a única condição genuinamente eterna do jogo hoje — e é do herói, não do
+  grupo.** `App.jsx:18759` escreve `{ nome: "Inspirado", tipo: "bom", nota: … }`
+  **sem `id` e sem `turnos`**. `normalizarCondicao("Inspirado")` casa com o
+  catálogo, `mecanicaDe` concede **vantagem em toda rolagem**, e `tickCondicoes`
+  a preserva com `turnos: null` **para sempre** (provado: três tiques seguidos e
+  ela continua lá). A irmã da linha seguinte, `"Perturbado"`, não casa com nada —
+  rótulo puro que ninguém lê e nada remove. Ou seja: T1 pôs o relógio no grupo e
+  este caso passa **por baixo dele**, porque não é prazo que falta, é prazo que
+  nunca foi escrito. Médio: o conserto é dar `id` e `turnos` do catálogo ao
+  nascimento, sem mecânica nova. Catraca: nenhum sítio do App escreve condição
+  sem `id`, e nenhuma condição nasce com `turnos` ausente onde o catálogo tem
+  número. **Se a decisão for que o sonho deve mesmo durar até o descanso, isso é
+  regra nova e sobe para a pessoa.**
+
+- [ ] **`protegido` não defende ninguém, nem o herói** · médio · de: backend (achado de T1) · 14/09
+  Medido ao contar o que T1 tirava do grupo, e é o motivo de a etapa quase não
+  doer: **94% das condições de pé no grupo eram `protegido`, e ele compra +0 de
+  defesa**. `defesaDe` (`combate.js:39`) não lê `condicoes`, e
+  `modificadoresDeCondicao` (`:75`) não devolve `defesa` — `mecanicaDe().defesa`
+  só é lido pelo **HUD** (`App.jsx:20830`). Provado direto: `defesaDe` com e sem
+  `protegido` = **11 e 11**. São **15 habilidades do acervo** que prometem abrigo,
+  entram como `protegido` e não cumprem — **a forma exata das quatro famílias da
+  Fase F** (promessa na ficha, força zero na mesa), e a tela ainda por cima mostra
+  o número que a mesa não usa. Provavelmente pertence a **F** ou a **B**, não a T:
+  levar para lá quando a fase chegar, em vez de abrir etapa solta.
+
+- [ ] **os seis `varredura-*.mjs` não entram no `npm test`** · leve · de: testes (achado de T1) · 14/09
+  O `CLAUDE.md` diz que o `npm test` roda "todas as `teste-*.mjs` mais os
+  varredores (`check-*.mjs`, `varredura-*.mjs`)". `rodar-tudo.mjs` só varre
+  `^teste-` e `^check-`: **os seis `varredura-*.mjs` não rodam**. Rodados à mão
+  agora, os seis passam (exit 0) — não há vermelho escondido, mas **eles não estão
+  guardando ninguém**, e um varredor que não roda é pior que varredor nenhum
+  (promete vigilância que não existe). Leve: é o corredor, não uma regra. Cuidado
+  ao ligar — se algum ficar vermelho ao entrar, o vermelho é legítimo e vira o
+  item do ciclo, **não se afrouxa o varredor para ele caber**.
+
+- [ ] **`aplicarCondicaoEm`, ramo do grupo, é código morto** · leve · de: backend (achado de T1) · 14/09
+  `App.jsx:7543` trata o caso "a condição é de um companheiro", e **nunca roda**:
+  os dois chamadores (`:8193`, `:14831`) passam a string literal `"você"`, então
+  `ehEu` é sempre verdadeiro. Era o sexto dos "seis sítios" que a pauta da Fase T
+  contava — são cinco. Ou ganha um chamador de verdade, ou sai. Barato, sem
+  pressa, e o dente é o de sempre: ramo que ninguém pisa mente sobre o que o
+  sistema faz.
 
 - [ ] **o piloto não sabe do teto e joga fora o abrigo que acabou de erguer** · médio · de: backend+testes (achado de C3) · 14/09
   C3 fez valer "uma magia de duração por vez", e o preço apareceu no mesmo
