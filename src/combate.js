@@ -391,7 +391,18 @@ export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido =
       acoes.push({ companheiro: comp.nome, tipo: "buff", habilidade: plano.habilidade, custo: Number(plano.habilidade.custo) || 0 });
       continue;
     }
-    if (plano.tipo === "guarda") { acoes.push({ companheiro: comp.nome, tipo: "guarda" }); continue; }
+    /* v9.232: a guarda deixou de ser só "não há o que fazer". Quando o plano
+       traz uma habilidade, ela VIAJA — quem aplica (arena.js) precisa dela
+       para chamar `erguerGuarda`, e jogá-la fora aqui era o que fazia a
+       família defensiva morrer no caminho entre a decisão e a mesa. A ação
+       SECA continua existindo exatamente como era: sem inimigo de pé não há
+       plano, e `{tipo:"guarda"}` sem habilidade é a meia-rodada legítima que
+       `arena.js` já sabe narrar. */
+    if (plano.tipo === "guarda") {
+      const h = plano.habilidade;
+      acoes.push(h ? { companheiro: comp.nome, tipo: "guarda", habilidade: h, custo: Number(h.custo) || 0 } : { companheiro: comp.nome, tipo: "guarda" });
+      continue;
+    }
 
     const alvo = (inimigos || []).find((e) => e.nome === plano.alvoNome) || (inimigos || []).find((e) => !e.derrotado && e.vida > 0);
     if (!alvo) { acoes.push({ companheiro: comp.nome, tipo: "guarda" }); continue; }

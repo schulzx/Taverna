@@ -1,6 +1,7 @@
-import { classeDeCompanheiro, garantirFichaCompanheiro, decidirAcaoCompanheiro, resumoGrupoPrompt } from "../src/companheiros.js";
+import { classeDeCompanheiro, garantirFichaCompanheiro, decidirAcaoCompanheiro, resumoGrupoPrompt, ehGuarda } from "../src/companheiros.js";
 import { turnoDosCompanheiros } from "../src/combate.js";
 import { itemConsumivel } from "../src/pocoes.js";
+import { guardaDe } from "../src/habilidades.js";
 
 let falhas = 0;
 const ok = (c, t) => { if (!c) { falhas++; console.log("  FALHA:", t); } else console.log("  ok:", t); };
@@ -71,5 +72,86 @@ console.log("\n[o PM do companheiro chega ao painel]");
   ok(/O grupo de aventura · \{1 \+ \(personagem\.grupo \|\| \[\]\)\.filter\(\(g\) => !g\.invocada\)\.length\} de \{1 \+ MAX_COMPANHEIROS\}/.test(APP),
     "o cabeçalho conta quantos cabem ainda");
 }
+/* ---------------- A GUARDA DO COMPANHEIRO NA MESA (v9.232 · P2) ----------
+   `decidirAcaoCompanheiro` já escolhe a guarda (a catraca que prova isso
+   para as NOVE entradas da tabela mora em `teste-guardas`, seção 6). O que
+   se prova AQUI é o turno completo: que a habilidade escolhida SOBREVIVE à
+   travessia por `turnoDosCompanheiros` até a ação que a tela e a arena
+   recebem. Era exatamente aí que ela morria — a ação saía `{tipo:"guarda"}`
+   pelada, e quem fosse aplicá-la não tinha o que erguer.
+
+   DUAS AÇÕES CHEGAM PELO MESMO NOME, e é a PRESENÇA DO CAMPO que as separa:
+     · COM `habilidade` (e `custo`) é a guarda escolhida — há o que erguer;
+     · SEM habilidade é a meia-rodada seca de quando não sobrou inimigo de
+       pé, que existe desde sempre e não pode ter sido levada junto.
+   As duas entram na mesma seção porque a lei é uma só.
+
+   A SORTE É TRAVADA (o molde é `comSorteTravada`, de arena.js): o passo de
+   apoio abre com `Math.random() < 0.7`, e asserção que passa 7 vezes em 10
+   não é prova. */
+console.log("\n[a guarda do companheiro atravessa o turno]");
+{
+  const comSorteTravada = (valor, fn) => {
+    const original = Math.random;
+    Math.random = () => valor;
+    try { return fn(); } finally { Math.random = original; }
+  };
+  const SORTE_QUE_ABRE_O_APOIO = 0;   /* < 0.7: o portão do passo 3 passa */
+  const heroiDePe = { nome: "Vera", vida: 90, vidaMax: 90, condicoes: [] };
+  const goblins = [{ nome: "Goblin", vida: 20, vidaMax: 20, condicoes: [] }];
+
+  /* fichas de VERDADE, pelo mesmo caminho do jogo: o Druida de nível 8 leva
+     Casca de Carvalho e o Engenheiro leva Elixir de Combate porque o
+     catálogo as dá a eles, não porque o teste as enfiou na mão. */
+  for (const [nome, conceito] of [["Vera", "druida das matas"], ["Kork", "engenheiro inventor"]]) {
+    const c = garantirFichaCompanheiro({ nome, conceito, nivel: 8, vida: 50, vidaMax: 50 });
+    const daTabela = (c.habilidades || []).filter((h) => ehGuarda(h));
+    ok(daTabela.length > 0, `${nome} (${c.classe}) nasce com guarda na ficha: ${daTabela.map((h) => h.nome).join(", ") || "NENHUMA"}`);
+
+    const acoes = comSorteTravada(SORTE_QUE_ABRE_O_APOIO, () =>
+      turnoDosCompanheiros({ grupo: [c], inimigos: goblins, jogador: heroiDePe, jogadorNome: "Vera", rodada: 1 }));
+    const g = acoes.find((a) => a.tipo === "guarda");
+    ok(!!g && !!g.habilidade && !!guardaDe(g.habilidade),
+      `${nome}: a ação chega com a habilidade da tabela — ${g && g.habilidade ? g.habilidade.nome : "SEM HABILIDADE"}`);
+    /* o custo viaja junto porque quem aplica desconta PM por ele; sem o
+       campo a guarda sairia de graça */
+    ok(!!g && Number(g.custo) === Number(g.habilidade && g.habilidade.custo) && Number(g.custo) > 0,
+      `${nome}: e com o custo em PM (${g ? g.custo : "—"})`);
+  }
+
+  /* A AÇÃO SECA, inteira como sempre foi: sem inimigo de pé não há plano de
+     apoio, e `{tipo:"guarda"}` sem habilidade é a meia-rodada legítima que
+     a arena já sabe narrar. Se ela passasse a carregar habilidade, a arena
+     ergueria guarda depois da luta acabada. */
+  {
+    const c = garantirFichaCompanheiro({ nome: "Vera", conceito: "druida das matas", nivel: 8, vida: 50, vidaMax: 50 });
+    const secas = comSorteTravada(SORTE_QUE_ABRE_O_APOIO, () =>
+      turnoDosCompanheiros({ grupo: [c], inimigos: [], jogador: heroiDePe, jogadorNome: "Vera", rodada: 1 }));
+    const s = secas.find((a) => a.tipo === "guarda");
+    ok(!!s && s.habilidade === undefined && s.custo === undefined,
+      `sem inimigo de pé a guarda continua SECA (sem habilidade e sem custo): ${JSON.stringify(s)}`);
+  }
+}
+
+/* ---------------- E A FIAÇÃO NO APP (v9.232 · P2) ----------------
+   A lição de R4: a âncora mede a DEFINIÇÃO, nunca o sítio de chamada — e um
+   ramo do `App.jsx` é invisível ao `teste-ligacao`, que só conta leitores de
+   export. Estas três regexes são o que impede o ramo de sumir num refator
+   sem ninguém ficar vermelho: sem elas, `App.jsx` volta a receber
+   `ac.tipo === "guarda"` e a não ter o que fazer com ele — o turno do
+   companheiro queimando em silêncio, que é a doença que P2 veio fechar. */
+console.log("\n[a guarda do grupo está ligada no App]");
+{
+  const { readFileSync } = await import("node:fs");
+  const APP = readFileSync("../src/App.jsx", "utf8");
+  ok(/ac\.tipo === "guarda"/.test(APP) && /erguerGuarda\(comp, ac\.habilidade/.test(APP),
+    "o turno do grupo tem ramo de guarda, e quem ergue é erguerGuarda");
+  /* o prazo: sem ele Casca de Carvalho seria +4 de defesa PERMANENTE no
+     companheiro, porque `defesaDe` já soma `defesaDeGuarda` na ficha dele */
+  ok(/expirarGuardas\(g, proxima\)/.test(APP), "e o prazo das guardas do grupo corre no mesmo relógio do herói");
+  /* e a porta: guarda de combate não atravessa o fim da luta */
+  ok(/baixarGuardas\(g\)/.test(APP), "e no fim da luta a guarda do grupo baixa junto com a do herói");
+}
+
 console.log(falhas ? `\n${falhas} FALHA(S)` : "\nTudo passou");
 process.exit(falhas ? 1 : 0);

@@ -612,5 +612,105 @@ sec("8. a frase da queda — a defensiva não promete dano (P1)");
     emudecidas.length === 0, `${emudecidas.length} linhas, ex.: ${emudecidas.slice(0, 3).join(" | ")}`);
 }
 
+/* ============================================================
+   9. O DUELISTA ERGUE GUARDA DE VERDADE (P2 · v9.232)
+
+   O QUE A SEÇÃO 7 JÁ DIZIA, e é a origem desta. O bloco A SONDA
+   SINTÉTICA registra, por escrito, que "a frente da GUARDA quase nunca
+   dispara no round-robin: para o piloto escolher o plano, ele exige um
+   regex de nome — e nenhum dos nove nomes da tabela `GUARDAS` casa com
+   ele". Por isso a sonda de A3 teve de INVENTAR "Postura de Casca de
+   Carvalho": um nome de mentira, montado para casar com as duas réguas
+   ao mesmo tempo. A arena consumia a guarda; o piloto é que não a
+   escolhia. P2 tirou o regex do caminho: `ehGuarda` pergunta à tabela.
+
+   O QUE ESTA SEÇÃO PROVA, e por que com ficha sintética. Que a
+   habilidade REAL do catálogo — "Casca de Carvalho", o nome que o
+   Druida tem na ficha, sem uma palavra do vocabulário de apoio — hoje
+   atravessa o caminho inteiro: o piloto a escolhe, `turnoDosCompanheiros`
+   a carrega, e a arena ERGUE a guarda e vence o prazo dela.
+
+   O CUIDADO QUE A ETAPA MEDIU, e que esta seção declara em vez de
+   esconder: NENHUM dos oito prontos carrega qualquer uma das nove
+   guardas. A amostra normal do round-robin dá ZERO guarda erguida, e
+   isso é um fato do acervo, não um defeito — uma asserção que exigisse
+   guarda na amostra dos prontos seria uma mentira sobre o roster. Por
+   isso o fato entra como MEDIDA (com teto zero), e a prova do caminho
+   corre sobre ficha própria.
+   ============================================================ */
+sec("9. o duelista ergue guarda de verdade (P2)");
+{
+  const H = await import(RAIZ + "habilidades.js");
+  const CL = await import(RAIZ + "classes.js");
+
+  const MEDIDA_DA_GUARDA = {
+    /* O FATO DO ACERVO: quantas das nove a mesa dos oito carrega. Hoje
+       zero, e o teto é zero — o dia em que um pronto ganhar uma guarda
+       esta linha fica vermelha e alguém decide de propósito se a amostra
+       do round-robin passa a ter guarda dentro (e o equilíbrio junto). */
+    tetoDeGuardasNosProntos: 0,
+    quedasDaSonda: 20,
+    /* OS PISOS DA AMOSTRA. Medidos hoje: 19 quedas em 20 abrem com a
+       guarda erguida e 16 a veem vencer o prazo. Os pisos guardam a ordem
+       de grandeza — o portão do apoio é sorteado (0,7) e a queda pode
+       acabar antes dos 3 turnos —, e o que eles impedem é a prova vazia:
+       uma arena que voltasse a não erguer guarda nenhuma mediria zero e
+       passaria verde sem ter erguido nada. */
+    pisoDeErguidas: 10,
+    pisoDeDesfeitas: 5,
+  };
+
+  const CASCA = CL.fichaDaHabilidade("Casca de Carvalho");
+  t('"Casca de Carvalho" está no catálogo, com custo e descrição', !!CASCA && Number(CASCA.custo) > 0);
+  /* A PROVA DE QUE QUEM A ENXERGA É A TABELA, e só ela: o nome não tem uma
+     palavra do vocabulário de apoio (bênção, grito, canção, hino, postura,
+     fúria) nem de abrigo (escudo, barreira, proteção), e a descrição
+     também não. `ehBuff` a nega; `ehGuarda` a reconhece — e é por
+     `ehGuarda` que o piloto passa a vê-la. */
+  t("o piloto a enxerga pela tabela (ehGuarda), não por palpite de nome (ehBuff)",
+    C.ehGuarda(CASCA) === true && C.ehBuff(CASCA) === false,
+    `ehGuarda=${C.ehGuarda(CASCA)} ehBuff=${C.ehBuff(CASCA)}`);
+
+  /* O FATO DO ACERVO, medido e impresso */
+  const guardasNosProntos = [];
+  for (const p of P.PRONTOS) for (const h of P.montarPronto(p.id).habilidades) if (H.guardaDe(h)) guardasNosProntos.push(`${p.id}:${h.nome}`);
+  console.log(`  ··  guardas da tabela no repertório dos oito prontos: ${guardasNosProntos.length}${guardasNosProntos.length ? ` (${guardasNosProntos.join(", ")})` : " — a amostra do round-robin não tem guarda dentro"}`);
+  t(`nenhum dos oito prontos carrega uma das ${H.GUARDAS.length} guardas (teto ${MEDIDA_DA_GUARDA.tetoDeGuardasNosProntos})`,
+    guardasNosProntos.length <= MEDIDA_DA_GUARDA.tetoDeGuardasNosProntos, guardasNosProntos.join(", "));
+
+  /* A DUPLA SINTÉTICA, no molde da seção 7: um guardião com UMA habilidade
+     (a real, do catálogo) contra um agressor sem habilidade e sem bolsa —
+     nenhuma cura e nenhuma poção no meio da medida. Sementes fixas: a
+     arena trava a sorte por semente, e duas rodadas dão a mesma saída. */
+  const fichaDaSonda = (id, nome, habs) => ({ ...P.montarPronto(id), nome, habilidades: habs, inventario: [] });
+  const guardiao = fichaDaSonda("muralha", "O Guardião", [CASCA]);
+  const agressor = fichaDaSonda("punho", "O Agressor", []);
+  const ERGUE = /^O Guardião ergue Casca de Carvalho(?: \(defesa \+(\d+)\))?$/;
+  const DESFEZ = /Casca de Carvalho se desfaz/;
+
+  let ergueu = 0, desfez = 0, ganhos = new Set();
+  for (let s = 0; s < MEDIDA_DA_GUARDA.quedasDaSonda; s++) {
+    for (const l of A.simularQueda(guardiao, agressor, { semente: `p2|${s}` }).linhas) {
+      const m = l.match(ERGUE);
+      if (m) { ergueu++; ganhos.add(Number(m[1] || 0)); continue; }
+      if (DESFEZ.test(l)) desfez++;
+    }
+  }
+  console.log(`  ··  em ${MEDIDA_DA_GUARDA.quedasDaSonda} quedas: ${ergueu} guardas erguidas e ${desfez} vencendo o prazo · ganho de defesa medido: ${[...ganhos].join("/")}`);
+
+  t(`a arena ergue a guarda REAL do catálogo (piso ${MEDIDA_DA_GUARDA.pisoDeErguidas} em ${MEDIDA_DA_GUARDA.quedasDaSonda} quedas)`,
+    ergueu >= MEDIDA_DA_GUARDA.pisoDeErguidas, `${ergueu} erguidas`);
+  /* o número não sai do teste nem da prosa: é `defesaDe` de antes contra
+     `defesaDe` de depois, e a tabela GUARDAS diz +4 para esta linha */
+  t("e o ganho que a linha anuncia é o da tabela (+4), medido pela defesa",
+    ganhos.size === 1 && ganhos.has(H.GUARDAS.find((g) => g.id === "casca_carvalho").valor),
+    `ganhos vistos: ${[...ganhos].join(", ")}`);
+  t(`e o prazo dela vence dentro da queda (piso ${MEDIDA_DA_GUARDA.pisoDeDesfeitas})`,
+    desfez >= MEDIDA_DA_GUARDA.pisoDeDesfeitas, `${desfez} desfeitas`);
+  /* determinismo por semente, nesta amostra e não só na do topo da suíte */
+  t("mesma semente = a mesma queda da sonda, linha a linha",
+    JSON.stringify(A.simularQueda(guardiao, agressor, { semente: "p2|0" })) === JSON.stringify(A.simularQueda(guardiao, agressor, { semente: "p2|0" })));
+}
+
 console.log(`\n${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

@@ -16,6 +16,8 @@
 import { CLASSES, classePorNome, habilidadesDisponiveis } from "./classes.js";
 import { comoConsumivel, melhorCuraPara, usarConsumivel } from "./pocoes.js";
 import { aflicaoDe } from "./aflicoes.js";
+import { guardaDe, guardasAtivas } from "./habilidades.js";
+import { aplicacaoDoBuff } from "./combos.js";
 
 /* ---------------- QUE CLASSE É ESSE COMPANHEIRO? ----------------
    Lido do conceito/descrição que a ficção já deu a ele. Determinístico:
@@ -86,11 +88,67 @@ export function garantirFichaCompanheiro(comp) {
 
 /* ---------------- QUE HABILIDADE É O QUÊ ---------------- */
 const RX_CURA = /cura|restaur|regenera|sarar|bálsamo|balsamo|canção curativa|cancao curativa|luz da vida|toque restaurador/i;
-const RX_BUFF = /bênção|bencao|inspir|grito|canção|cancao|hino|postura|escudo|barreira|proteç|protec|fúria|furia|abenç|abenc/i;
+/* O `RX_BUFF` ERA UM REGEX COM DOIS VOCABULÁRIOS DENTRO, e em v9.232 ele
+   fica escrito como os dois que sempre foi. O conjunto que ele reconhece
+   NÃO muda: `RX_APOIO` e `RX_ABRIGO` somados são, palavra por palavra, o
+   `RX_BUFF` de antes. O que muda é que agora dá para perguntar POR QUAL
+   METADE uma habilidade entrou — e é essa pergunta que o piloto precisava
+   fazer e não sabia.
+   ABRIGO é a metade que já tem tabela: quem casa por "escudo", "barreira"
+   ou "proteção" passa por `APLICACAO_DO_BUFF` (combos.js) antes de contar.
+   APOIO é a metade que nenhuma tabela descreve — e é a única que continua
+   sendo palpite. */
+const RX_APOIO = /bênção|bencao|inspir|grito|canção|cancao|hino|postura|fúria|furia|abenç|abenc/i;
+const RX_ABRIGO = /escudo|barreira|proteç|protec/i;
 const RX_OFENSIVA = /dano|golpe|ataca|projétil|projetil|chama|fogo|gelo|raio|lâmina|lamina|flecha|tiro|explos|perfur|corte|drena|maldi|invest/i;
 
 export const ehCuraDeGrupo = (h) => RX_CURA.test(`${h.nome || ""} ${h.descricao || ""}`);
-export const ehBuff = (h) => !ehCuraDeGrupo(h) && RX_BUFF.test(`${h.nome || ""} ${h.descricao || ""}`);
+
+/* QUEM TEM TABELA NÃO ADIVINHA (v9.232).
+   `GUARDAS` (habilidades.js) tem 9 entradas e `guardaDe` decide por ela.
+   O piloto adivinhava por nome — e nenhum dos 9 nomes casava com `RX_BUFF`,
+   de modo que companheiro e duelista NUNCA erguiam guarda: a família
+   defensiva inteira era promessa que só o herói de carne cumpria. Agora ele
+   PERGUNTA. E a pergunta tem nome próprio porque quem decide guarda é a
+   tabela, em um lugar só: uma guarda nova amanhã nasce visível ao piloto,
+   sem ninguém lembrar de acrescentar palavra a regex nenhum. */
+export const ehGuarda = (h) => !!guardaDe(h);
+
+/* TRÊS COISAS, NESTA ORDEM — é a lição da etapa inteira.
+
+   (1) A GUARDA SAI DA TABELA, SEMPRE. `GUARDAS` descreve nove habilidades
+   com mecânica própria: prazo por rodada, soma à defesa (ou desvantagem, ou
+   o golpe errando). Guarda não é buff, e quem a tratar como buff inventa o
+   que ela faz. Por isso `ehGuarda` vem antes de qualquer regex.
+
+   (2) "ESCUDO/BARREIRA/PROTEÇÃO" APARECE DOS DOIS LADOS DA BRIGA, e quem
+   desempata é a tabela de P1 (`APLICACAO_DO_BUFF`, com o veto do golpe
+   disfarçado dentro), nunca o regex. É ela que separa "Escudo Arcano" de
+   "Tiro Perfurante" (que ATRAVESSA escudo), "Punho de Pedra" e "Linha da
+   Lâmina" (que RACHAM escudo) e "Dissipar Magia" (que DESFAZ a barreira do
+   outro) — quatro habilidades que o piloto chamava de apoio e são golpe.
+
+   (3) O VOCABULÁRIO DE APOIO — bênção, inspiração, grito, canção, hino,
+   postura, fúria — é o único pedaço que nenhuma tabela descreve: buff de
+   número puro, sem mecânica própria em lugar nenhum da casa. Por isso é o
+   único que continua sendo palpite, e por isso o regex sobrevive encolhido
+   em vez de morrer.
+
+   E POR QUE `aplicacaoDoBuff` FILTRA EM VEZ DE AMPLIAR. A tentação era usá-la
+   para o piloto ENXERGAR a família defensiva inteira (42 habilidades que o
+   regex nunca viu). Medido, e a catraca disse não: a defensiva de P1 nasce
+   com força ZERO e sem leitor — ela ainda não protege ninguém, por desenho —,
+   então mandar o piloto gastar o turno nela é comprar nada. `sombra`, o topo
+   do roster, caiu de 60,2% para 32,9% (piso 35) e a amplitude foi de 15,8
+   para 25,7 pts (teto 20). O dia em que `absorve` virar guarda de uma batida
+   é o dia em que o piloto deve procurá-la — e aí esta linha muda de sinal. */
+export const ehBuff = (h) => {
+  const t = `${h.nome || ""} ${h.descricao || ""}`;
+  if (ehCuraDeGrupo(h) || ehGuarda(h)) return false;
+  if (RX_ABRIGO.test(t)) return !!aplicacaoDoBuff(h);
+  return RX_APOIO.test(t);
+};
+
 export const ehOfensiva = (h) => !ehCuraDeGrupo(h) && (h.tipo === "ataque" || RX_OFENSIVA.test(`${h.nome || ""} ${h.descricao || ""}`));
 
 /* Quanto uma cura de companheiro devolve: escala com nível e custo, com dado. */
@@ -103,7 +161,7 @@ export function valorDaCura(comp, hab) {
    Ordem de prioridade — a mesma que qualquer jogador seguiria:
      1. alguém caindo → cura (habilidade, ou poção da bolsa dele)
      2. ele mesmo muito ferido → poção
-     3. tem buff e a luta está começando → buff
+     3. a luta está começando → apoio: a guarda primeiro, senão o buff
      4. tem habilidade ofensiva e mana → usa
      5. bate com a arma
    Devolve a INTENÇÃO; quem aplica é o motor de combate. */
@@ -136,10 +194,21 @@ export function decidirAcaoCompanheiro(comp, { aliados = [], inimigos = [], joga
   const inimigosVivos = (inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
   if (!inimigosVivos.length) return { tipo: "guarda" };
 
-  /* 3. buff logo no começo da luta (uma vez, não todo turno) */
+  /* 3. apoio logo no começo da luta (uma vez, não todo turno).
+     A GUARDA VEM PRIMEIRO: ela é a que muda se o companheiro sobrevive, e
+     é a que ninguém erguia. Mas só a que ainda NÃO está de pé — `erguerGuarda`
+     recusa a repetida, e o piloto que escolhesse uma dessas pagaria o turno
+     por uma linha de "essa guarda já está de pé". Quem sabe o que está de pé
+     é `guardasAtivas`, o mesmo leitor que a defesa usa.
+     UM PORTÃO SÓ, e isso é de propósito: o sorteio decide se há turno de
+     apoio, não QUAL apoio. Um segundo `Math.random()` para a guarda mudaria
+     o fluxo de sorte de toda a arena e o número de turnos de apoio junto —
+     aqui só muda a escolha, nunca a quantidade. */
   if (rodada <= 2) {
-    const buff = habs.find((h) => ehBuff(h) && podePagar(h));
-    if (buff && Math.random() < 0.7) return { tipo: "buff", habilidade: buff };
+    const dePe = new Set(guardasAtivas(comp).map((g) => g.id));
+    const guarda = habs.find((h) => ehGuarda(h) && podePagar(h) && !dePe.has(guardaDe(h).id));
+    const apoio = guarda || habs.find((h) => ehBuff(h) && podePagar(h));
+    if (apoio && Math.random() < 0.7) return { tipo: guarda ? "guarda" : "buff", habilidade: apoio };
   }
 
   /* 4. habilidade ofensiva — a mais cara que ele pode pagar */

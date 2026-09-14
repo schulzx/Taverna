@@ -16,6 +16,139 @@ Formato:
 
 ---
 
+## 14/09 00:05 · v9.232 · P2 · o piloto reconhece as nove guardas · commit `HASH`
+- **estado inicial:** árvore limpa, HEAD `9bafcd4`, VERSÃO v9.231, `npm test`
+  181/181 suítes + 8/8 varredores verde. A vez era **P2**, segunda etapa da
+  Fase P — aprovada pela pessoa sabendo que muda Uma Vida **e** o Duelo.
+- **conselheiro:** não chamado (a etapa já estava escrita e aprovada).
+- **backend:** `ehGuarda` em `companheiros.js` (a pergunta à tabela, com nome);
+  o passo 3 do piloto ergue guarda antes de buff; `RX_BUFF` partido em
+  `RX_APOIO` + `RX_ABRIGO`; `turnoDosCompanheiros` (`combate.js`) passou a
+  carregar `habilidade` e `custo` na ação `guarda`. `arena.js`: zero linhas.
+- **frontend:** o ramo `ac.tipo === "guarda"` no turno do grupo (`App.jsx`),
+  mais o prazo das guardas do grupo no relógio do herói e o `baixarGuardas`
+  do grupo no fim da luta. Os três em `try/catch` com `calou(...)`.
+- **testes:** 51 asserções novas — seção 6 de `teste-guardas.mjs` (a catraca
+  permanente, tabela `MEDIDA_DO_PILOTO`, sorte travada), 10 em
+  `teste-comp.mjs` e a seção 9 de `teste-arena.mjs`. Nenhuma asserção
+  existente foi movida.
+
+- **O QUE MUDOU EM UMA FRASE.** `guardaDe(hab)` decidia pela tabela `GUARDAS`
+  desde a v9.53 e ninguém perguntava a ela: `decidirAcaoCompanheiro` adivinhava
+  por `RX_BUFF`, um regex de nome. **Nenhuma das 9 guardas casava** — companheiro
+  e duelista nunca erguiam guarda, e a família defensiva era promessa que só o
+  herói de carne cumpria. Hoje o piloto **pergunta**, e enxerga **9 de 9**.
+
+- **A MEDIÇÃO, nos dois sentidos.** Sobre o acervo inteiro de **593**
+  habilidades (12 classes + subclasses + especializações + grimório):
+  - **9 de 9** entradas de `GUARDAS` são escolhidas pelo piloto quando ele as
+    tem na ficha (antes: 0). **0 falsas guardas** — nada que `guardaDe` não
+    reconhece vira guarda, e esse zero é lei na suíte.
+  - **Deixou de enxergar 4 por engano:** `Dissipar Magia` (o achado de P1 — um
+    dispel que narrava "+2 de dano mágico" por conter "barreira"),
+    `Tiro Perfurante`, `Punho de Pedra` e `Linha da Lâmina`. `ehBuff` no acervo:
+    **37 → 33**.
+  - **Onde a mudança pisa de verdade é Uma Vida:** de 60 fichas de companheiro
+    (12 classes × 5 níveis), **6 passam a erguer guarda** onde nenhuma erguia —
+    Druida nv5/8/12 (Casca de Carvalho) e Engenheiro nv5/8/12 (Elixir de
+    Combate). Na arena são **0**: nenhum dos 8 prontos carrega qualquer das 9,
+    e isso entrou na suíte como fato declarado com teto 0, não como exigência.
+
+- **decisões médias tomadas (com o motivo):**
+  - **`RX_BUFF` sobrevive, encolhido — e é a resposta à pergunta da etapa.**
+    Ele tinha dois vocabulários dentro. A metade de ABRIGO (escudo, barreira,
+    proteção) **já tem tabela**: quem responde por ela é `aplicacaoDoBuff`
+    (`combos.js`), a tabela de P1 com o veto `RX_NAO_E_PROTECAO` dentro — é ele
+    que separa "Escudo Arcano" de "Tiro Perfurante". A metade de APOIO (bênção,
+    inspiração, grito, canção, hino, postura, fúria) é a única que **nenhuma
+    tabela descreve**, e por isso a única que continua sendo palpite. Duas
+    tabelas primeiro, regex só para o resto.
+  - **A guarda vem antes do buff, com UM sorteio só.** O passo 3 tinha um
+    `Math.random() < 0.7`; manter dois portões faria o companheiro gastar mais
+    turnos em apoio do que gastava — mudança de ritmo que a etapa não pediu.
+    Assim o **número** de turnos de apoio não muda, só **o que** é escolhido.
+  - **O piloto pula a guarda que já está de pé** (`guardasAtivas`, leitor que já
+    existe). Sem isso, a fiação nova criaria um turno queimado novo:
+    `erguerGuarda` recusa a repetida. Isto resolve a METADE da guarda do item
+    aberto "o companheiro re-firma o buff que já está de pé" — o item fica na
+    pauta com a metade do buff, que continua valendo.
+  - **A ação `guarda` passou a carregar a habilidade.** `turnoDosCompanheiros`
+    empurrava `{tipo:"guarda"}` e **jogava a habilidade fora**. A ação seca (sem
+    inimigo de pé) continua chegando sem ela — é a presença do campo que separa
+    as duas, e `arena.js` já dependia disso.
+  - **O prazo do grupo mora junto do prazo do herói.** `defesaDe` já soma
+    `defesaDeGuarda` em qualquer ficha, então a guarda do companheiro passou a
+    valer sozinha contra os inimigos. Sem o irmão no relógio, Casca de Carvalho
+    viraria **+4 de defesa permanente** — bug pior que o silêncio que a etapa
+    veio fechar. Fim da luta idem.
+
+- **A VOLTA QUE A ETAPA DEU, e o número que ela comprou.** O primeiro desenho
+  (meu, não do backend) usava o veto de P1 como **portão solto** sobre `ehBuff`.
+  A medição mostrou que ele derrubava **5 buffs honestos** junto — Fúria de
+  Batalha, Hino de Guerra, Fúria Sangrenta, Hino da Vitória, Sangue dos
+  Antigos —, porque o veto é desambiguador de linguagem de abrigo e só faz
+  sentido **dentro** de `aplicacaoDoBuff`. O segundo desenho errou para o outro
+  lado: deixar `aplicacaoDoBuff` **ampliar** a lista do piloto, e aí a catraca
+  de equilíbrio **estourou** — está medido abaixo. O terceiro é o que ficou:
+  `aplicacaoDoBuff` **filtra** o que o regex já via, nunca amplia.
+
+- **A CATRACA DE EQUILÍBRIO: byte-a-byte com a linha de base de P1.** Família
+  `rr`: muralha 49,0 · sombra 54,8 · chama 41,4 · remendo 48,6 · voz 51,4 ·
+  flecha 61,9 · punho 49,0 · voto 43,8. Retrato de 120: **amplitude 15,8** pts
+  (teto 20), todos dentro de 35–65. Mesa real idêntica em cada dígito: 416
+  quedas · 5562 linhas · 772 buffs firmados · 108 golpes com bônus · 403 prazos
+  vencidos. **Nenhum número de pronto foi reajustado** — a medição de P3 fica
+  intacta. O único número que se move na suíte inteira é a sonda sintética da
+  guarda: razão **0,699 → 0,739** (teto 0,9), e move pelo motivo certo — a sonda
+  usa "Postura de Casca de Carvalho", que agora vira plano `guarda` e deixa de
+  ser re-erguida enquanto está de pé.
+
+- **O ACHADO QUE VALE UMA ETAPA: a ponte medida e descartada.** Ligar
+  `aplicacaoDoBuff` como AMPLIAÇÃO de `ehBuff` (o piloto passando a reconhecer
+  a família defensiva inteira de P1) foi medido e **reprovado pela catraca**:
+  - `ehBuff` 37 → **75** (+42 defensivas: Esquiva Ágil, Corpo de Ferro, Pele de
+    Pedra, Intervenção, Indomável, Armadura Sombria, Elo Vital…)
+  - `sombra` — o topo do retrato, e um dos dois prontos que nunca gastavam turno
+    em apoio — ganha "Esquiva Ágil" e despenca de **60,2 para 32,9** (piso 35);
+    `[aa]` 34,8; `[cc]` 31,9. Amplitude **15,8 → 25,7** (teto 20). `flecha`, que
+    segue sem buff, sobe a 58,6 — o espelho do mesmo fenômeno.
+  - buffs firmados 772 → **943**; linhas de abrigo 394 → **544** (+150, **todas
+    inertes**); `npm test` 180/181, `teste-arena.mjs` com 4 falhas.
+  A causa em uma frase: **a defensiva de P1 nasce com força zero e sem leitor**,
+  então o turno gasto nela compra nada — e a catraca mede exatamente isso. Esta
+  é a prova, em número, de que o desenho que P1 deixou escrito (a família
+  `absorve` virando **guarda de uma batida**, campo `absorve: N` em
+  `pers.guardas`, consumido ao ser gasto, reusando `expirarGuardas`) **tem de
+  vir ANTES** de o piloto procurar a defensiva. **Não foi feito aqui de
+  propósito:** P2 é o reconhecimento, e a proteção de verdade é obra de outra
+  etapa. Quem recebe é **P3**, e a pauta foi corrigida para dizer isso.
+
+- **o que ficou (e por quê):**
+  - **Dois falsos positivos do `RX_APOIO` sobrevivem, sem regra nova:** `Fúria de
+    Gaia` ("Terremoto que atinge todos os inimigos" — casa por "fúria") e
+    `Comando: Atacar` ("Sua invocação ataca com fúria redobrada"). Nenhuma tabela
+    os descreve e inventar regra para dois casos seria trocar um palpite por
+    outro. Foram para a pauta como item leve.
+  - **A guarda de pé não aparece em tela nenhuma** — nem a do herói. `guardas` só
+    é lido no instante em que sobe e no instante em que cai; no meio o jogador
+    não tem onde conferir. Para o companheiro pesa mais, porque ele não tem
+    painel de ficha aberto. Foi para a pauta.
+  - **O Narrador não sabe da guarda depois do turno em que ela sobe:**
+    `resumoGrupoPrompt` não carrega `guardas`. O herói tem o mesmo furo — é
+    decisão de família, não bug do grupo. Foi para a pauta.
+  - **Três dos nove `conceito` de `GUARDAS` falam em segunda pessoa** ("o que vem
+    em **sua** direção"). O frontend ajustou os pronomes da cláusula de efeito na
+    linha do companheiro; o conceito vem pronto da tabela e sai meio torto sob o
+    nome de outro. Foi para a pauta.
+  - **Aviso registrado, sem conserto:** `evoluirCompanheiro` (`App.jsx:8613`)
+    preserva `guardas` por spread hoje, mas é um sítio que remonta a ficha do
+    companheiro sem saber que ela passou a ter prazo em rodadas.
+  - **Margem fina herdada de P1, medida e não tocada:** `m.comPeso` na seção 7 da
+    arena está em **108** contra o piso 100, e o comentário inline ainda cita os
+    329 da v9.225. A queda é de P1 (a defensiva parou de somar no golpe), não de
+    P2 — conferido que a amostra de buffs dos oito prontos é idêntica sob o
+    `ehBuff` antigo e o novo. Fica como está até P3 medir.
+
 ## 13/09 22:55 · v9.231 · P1 · o Escudo Arcano deixa de dar dano · commit `3dcf61f`
 - **estado inicial:** árvore limpa, HEAD `8e536ee`, VERSÃO v9.230, `npm test`
   181/181 suítes + 7/7 varredores verde. A Fase R fechou no ciclo anterior; a

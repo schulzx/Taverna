@@ -7622,6 +7622,25 @@ export default function Taverna() {
        que alguém esquece de ligar. */
     const bg = baixarGuardas(p);
     if (bg.linha) { p = bg.pers; mudou = true; pushMsgs([{ autor: "sistema", texto: bg.linha }]); }
+    /* v9.232: e a do GRUPO junto, no mesmo sítio e pelo mesmo motivo — desde
+       que o companheiro ergue guarda de verdade, deixá-la de pé depois da
+       porta daria defesa de combate na cidade, e o prazo em rodadas não corre
+       fora da luta para desfazê-la. Mora aqui para não virar o quinto lugar
+       que alguém esquece de ligar. */
+    try {
+      const linhasBaixa = [];
+      const grupoSemGuarda = (p.grupo || []).map((g) => {
+        if (!g || !((g.guardas || []).length)) return g;
+        const bgc = baixarGuardas(g);
+        if (!bgc.linha) return g;
+        linhasBaixa.push(`🛡 ${g.nome} · ${bgc.linha.replace(/^🛡\s*/, "")}`);
+        return bgc.pers;
+      });
+      if (linhasBaixa.length) {
+        p = { ...p, grupo: grupoSemGuarda }; mudou = true;
+        pushMsgs(linhasBaixa.map((texto) => ({ autor: "sistema", texto })));
+      }
+    } catch (e) { calou("guarda-do-grupo-fim-da-luta", e); }
     /* v9.54: a pressa também não atravessa a porta — duas ações por rodada
        fora da luta seriam duas ações num turno que não tem rodada nenhuma. */
     const bp = baixarPressa(p);
@@ -13323,6 +13342,46 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         persAtual = gastarManaComp(r4.pers, ac.companheiro, ac.custo);
         if (r4.texto) pushMsgs([{ autor: "sistema", texto: r4.texto }]);
         partesComp.push(r4.paraMestre);
+      } else if (ac.tipo === "guarda") {
+        /* ---------------- A GUARDA DO COMPANHEIRO (v9.232) ----------------
+           Este `tipo` chegava aqui e não encontrava ramo nenhum: o Druida
+           escolhia Casca de Carvalho, o Engenheiro escolhia Elixir de
+           Combate, e o turno queimava em silêncio — sem mana gasta, sem
+           defesa erguida, sem uma linha na tela.
+
+           DUAS AÇÕES chegam pelo mesmo nome, e quem as separa é a presença
+           de `ac.habilidade`:
+             · SEM habilidade é a meia-rodada seca (não sobrou inimigo de
+               pé). Não há o que aplicar nem o que dizer — fica exatamente
+               como sempre foi, e por isso este ramo não a toca.
+             · COM habilidade quem ergue é `erguerGuarda`, no dono legítimo
+               dentro de `persAtual.grupo`. Nenhum número mora aqui: valor,
+               prazo e conceito saem da tabela GUARDAS. */
+        if (ac.habilidade) {
+          try {
+            const comp = (persAtual.grupo || []).find((g) => g && g.nome === ac.companheiro);
+            const r5 = comp ? erguerGuarda(comp, ac.habilidade, (combPos.rodada || 1)) : null;
+            if (r5 && r5.ok) {
+              /* lista nova, ficha nova: `persAtual.grupo` nunca é mutado. */
+              persAtual = { ...persAtual, grupo: (persAtual.grupo || []).map((g) => (g && g.nome === ac.companheiro ? r5.pers : g)) };
+              persAtual = gastarManaComp(persAtual, ac.companheiro, ac.custo);
+              /* a frase é a do módulo — conceito, efeito e prazo vêm de
+                 GUARDAS. Só a PESSOA muda: a linha nasceu na segunda pessoa
+                 (o herói erguendo a própria guarda) e aqui o corpo que muda
+                 é o do companheiro. */
+              const dito = r5.linha.replace(/^🛡\s*/, "").replace(/\bte acerta\b/, "o acerta").replace(/\bte ataca\b/, "o ataca").replace(/\bte conjura\b/, "o conjura");
+              pushMsgs([{ autor: "sistema", texto: `🛡 ${ac.companheiro} · ${dito}` }]);
+              partesComp.push(`${ac.companheiro} ergueu ${dito} Já aplicado na ficha dele: narre o gesto e o corpo que muda, e não invente número nem prazo.`);
+            } else if (r5) {
+              /* `erguerGuarda` recusa a repetida. O piloto já evita escolher
+                 uma que esteja de pé, mas se escolher o turno foi gasto na
+                 mesma — e turno gasto sem uma linha é o silêncio que esta
+                 etapa veio fechar. Sem mana, porque nada foi erguido. */
+              pushMsgs([{ autor: "sistema", texto: `🛡 ${ac.companheiro} firma de novo a guarda que já sustenta — nada muda.` }]);
+              partesComp.push(`${ac.companheiro} reforçou uma guarda que já estava de pé — nada mudou na ficha; narre o gesto e não invente efeito novo`);
+            }
+          } catch (e) { calou("guarda-do-companheiro", e); }
+        }
       }
     }
     combateRef.current = combPos; setCombate({ ...combPos });
@@ -13368,6 +13427,26 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         persAtual = gua.pers;
         pushMsgs(gua.linhas.map((texto) => ({ autor: "sistema", texto })));
       }
+      /* v9.232: e a GUARDA DO GRUPO no mesmo relógio, pela mesma razão de os
+         quatro prazos morarem juntos. Desde que o companheiro ergue guarda de
+         verdade (o ramo novo do turno deles), `defesaDe` já soma
+         `defesaDeGuarda` na ficha dele — sem este irmão aqui, Casca de
+         Carvalho viraria +4 de defesa PERMANENTE, que é um bug bem pior que
+         o silêncio que a etapa veio fechar. */
+      try {
+        const linhasDoGrupo = [];
+        const grupoComPrazo = (persAtual.grupo || []).map((g) => {
+          if (!g || !((g.guardas || []).length)) return g;
+          const eg = expirarGuardas(g, proxima);
+          if (!eg.linhas.length) return g;
+          for (const l of eg.linhas) linhasDoGrupo.push(`🛡 ${g.nome} · ${l.replace(/^🛡\s*/, "")}`);
+          return eg.pers;
+        });
+        if (linhasDoGrupo.length) {
+          persAtual = { ...persAtual, grupo: grupoComPrazo };
+          pushMsgs(linhasDoGrupo.map((texto) => ({ autor: "sistema", texto })));
+        }
+      } catch (e) { calou("prazo-da-guarda-do-grupo", e); }
       /* v9.54: e a PRESSA no mesmo relógio — quarto prazo em rodadas, quarta
          linha aqui. É por isso que os quatro moram juntos: quem escrever o
          quinto vai ver os outros antes de esquecer o dele. */

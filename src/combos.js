@@ -161,6 +161,17 @@ const textoDaHabilidade = (hab) =>
    que a própria ficha promete. */
 const RX_NAO_E_PROTECAO = /ignora (a |o )?(armadura|escudo|defesa|cobertura|penumbra|resistencia)|atravessa (a )?(armadura|escudo)|racha |perfura|dano (extra|aumentado|a mais|massivo|devastador)|dano dobra|dobra o dano|bate(m)? mais forte|desfaz|dissipa|arranca|acerta qualquer/;
 
+/* E ELE CONTINUA PRIVADO, por medida (P2, v9.232). A tentação era exportá-lo
+   para o piloto dos companheiros reusar o veredito. Medido: como portão
+   SOLTO ele derruba cinco buffs honestos — Fúria de Batalha, Hino de Guerra,
+   Fúria Sangrenta, Hino da Vitória e Sangue dos Antigos —, porque as
+   descrições deles dizem "dano aumentado", "dano extra" e "batem mais
+   forte", e o veto lê isso como golpe. Não é defeito do veto: ele é
+   desambiguador de linguagem de ABRIGO e só tem sentido DEPOIS de o texto
+   ter casado com uma linha de `APLICACAO_DO_BUFF`. Quem precisa do
+   julgamento chama `aplicacaoDoBuff` — a tabela inteira, com o veto dentro,
+   na ordem em que ele funciona. */
+
 export const APLICACAO_DO_BUFF = [
   {
     id: "absorve", aplica: "protecao",
