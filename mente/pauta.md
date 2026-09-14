@@ -200,6 +200,70 @@ que falta é o campo chegar até ela.
   pronto reajustado.** Margem mais fina honesta: `punho`/"cc" **38,9%**, 3,9 pt do
   piso. `teste-efeitos.mjs` 463 → **482**; `teste-arena.mjs` ganhou a seção 10.
   Ver o diário.
+- [x] **C3 · uma de cada vez** · feito em v9.237 (`aec84fe`), 14/09
+  **A pauta chamava de conserto e estava certa — mas errava no tamanho: não era
+  canto raro.** Em 2094 quedas medidas, 1352 efeitos de concentração foram
+  firmados e **316 deles eram uma segunda por cima de outra — 23,4%**, um caso em
+  cada quatro. O raio, contado e não suposto: das 34 magias marcadas só **3**
+  chegam à porta de `efeitoDeMagia`, e das 148 habilidades **3** viram efeito no
+  herói; **5 das 12 classes** podem colidir por nome distinto, o companheiro só
+  pelo Clérigo (Bênção + Escudo da Fé), e a arena em **2 dos 8 prontos**.
+  **O teto mora na tabela e a função o conta**, em vez de cravar "derruba a
+  anterior": `CONCENTRACAO_DA_MAGIA.quantasAoMesmoTempo: 1` e `firmarEfeito`
+  (`efeitos.js`), irmã de `absorverDano`, que derruba as **mais antigas até
+  caber** — um teto 2 amanhã funciona sem uma linha nova, e a suíte sabota o teto
+  para provar que ele é lido de volta. `empilhar` ficou **genérico e intocado**:
+  frasco, relíquia, canal do Mestre e milagre não sabem o que é concentração.
+  **`efeitoEmConcentracao` deixou de sortear.** Era `.find(...)` — ordem de
+  chegada. Fica a **última a entrar**, com o motivo no código: é exatamente a que
+  `firmarEfeito` teria mantido, e escolher a primeira faria um save velho quebrar
+  a magia recém-erguida **e** guardar o fantasma da anterior. Travado nos dois
+  sentidos; nenhuma das 7 asserções existentes virou de lado.
+  **No App, uma porta só** — `firmarOuCeder` (`:6634`), terceira irmã de
+  `passarPeloAbrigo` e `segurarOuPerder`, nos três sítios (`:7878`, `:7993`,
+  `:12598`), com recuo de propósito: se o motor estourar, o buff pago em PM não
+  some. **O que o jogador lê:** `💢 Bênção escapa dos dedos — Invisibilidade toma o
+  lugar dela.` e, no grupo, `💢 Irmã Vela — Bênção escapa dos dedos — Escudo da Fé
+  toma o lugar dela.` **Teto de prompt 81935 → 81935 chars**, crescimento
+  estático zero; a nota do Mestre **não coube e não foi forçada** (289 chars
+  contra margem de 65) — está em "Aberto", junto com a de C2b.
+  **O preço, declarado como fato:** o piloto não sabe do teto e joga fora o Escudo
+  da Fé por Bênção — mordidas do abrigo **245 → 202** (−17,6%). A regra está certa
+  (o 5e concorda); quem está errado é o piloto, e ensiná-lo é **outra etapa**, em
+  "Aberto". Catraca de equilíbrio na faixa, margem mais fina **abrindo**:
+  `punho`/"cc" 38,9% → **40,2%**; amplitude **11,9**. Nenhum pronto reajustado.
+  **O achado do ciclo:** de 23 sabotagens, **S21 estava verde** — uma arena que
+  chamasse a porta nova, empurrasse a frase e remendasse a ficha à mão passava em
+  tudo *e enganava a própria contagem*, porque a contagem lê as linhas e a linha
+  mentia. O fio que ela não corta é o **prazo**, e daí saiu o dente do fantasma.
+  E a ponte que ninguém pediu: a suíte extrai a palavra "UMA" de
+  `ECONOMIA_ACAO_PROMPT` e exige que a tabela a cumpra — **discordar é vermelho**.
+  `teste-efeitos.mjs` 482 → **543**; `teste-arena.mjs` 86 → **99**. Ver o diário.
+
+  **A FASE C ESTÁ FECHADA.** A regra estava escrita dos dois lados e inerte no
+  meio: `testeConcentracao` (a regra ditada pela pessoa) existia **desde sempre**
+  e **nunca rodava**, porque nenhum nascimento copiava `concentracao` — o herói
+  segurava Invisibilidade, apanhava, e não havia o que perder. Hoje: **34 das 85
+  magias marcadas** e trancadas por tabela com 10 exceções motivadas (**0**
+  marcadas instantâneas); **dois** nascimentos alimentando a regra, os dois
+  perguntando ao **catálogo** e nunca à ficha (o milagre continua mudo **por
+  prova**); **quebras por queda 0 → 10 em 168**; **trocas por teto 0 → 60 em 420
+  quedas**, com **0 momentos com duas de pé** onde antes 23,4% eram segunda por
+  cima de outra; e o jogador, que antes lia apenas **que** perdeu, hoje lê **por
+  quê** nas duas — em voz de mundo, sem `mostrarRolagens`, com as frases nascendo
+  no módulo ao lado do número. **Teto de prompt 81935 chars nas quatro versões**:
+  a fase inteira entregou quebra, leitura, companheiro e teto com crescimento
+  estático **zero**. `teste-efeitos.mjs` 387 → 421 → 463 → 482 → **543**;
+  `teste-grimorio.mjs` 89 → **142**. A catraca de equilíbrio **nunca saiu da faixa
+  nas quatro etapas, com nenhum pronto reajustado** (a margem mais fina foi de
+  32,9% — falso positivo — a 38,9% e a **40,2%**), e o próprio instrumento foi
+  consertado no caminho (famílias de 30 → **120** sementes, em C2b).
+
+  **Não há mais fase aprovada na fila** — o próximo ciclo pega de "Aberto".
+
+<details>
+<summary>o texto original da etapa C3 (antes de ser executada)</summary>
+
 - [ ] **C3 · uma de cada vez** · de: pessoa · 13/09
   5e, e o próprio `ECONOMIA_ACAO_PROMPT` já promete: *"um conjurador mantém
   no máximo UMA magia de duração por vez"*. Conferir se o jogo cumpre — se
@@ -224,6 +288,8 @@ que falta é o campo chegar até ela.
   substitui por nome igual), agora com dois nascimentos alimentando-a em vez de
   um. O teto `quantasAoMesmoTempo: 1` em `CONCENTRACAO_DA_MAGIA` cobre os dois.
   **E o companheiro entra junto:** ele também passa a poder segurar duas.
+
+</details>
 
 ### Fase P — a proteção vale para quem não é o jogador
 Decisão da pessoa (13/09): **consertar os dois**, sabendo que atinge Uma Vida
@@ -493,6 +559,39 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
 
+- [ ] **o piloto não sabe do teto e joga fora o abrigo que acabou de erguer** · médio · de: backend+testes (achado de C3) · 14/09
+  C3 fez valer "uma magia de duração por vez", e o preço apareceu no mesmo
+  instante, medido: **as 60 cessões de 420 quedas são TODAS "Escudo da Fé →
+  Bênção"** — Remendo e Voto firmam o escudo e na rodada seguinte o jogam fora.
+  Mordidas do abrigo **245 → 202**, pontos comidos **980 → 808** (−17,6%).
+  **A regra está certa e não se afrouxa** (o 5e concorda: Bless e Shield of Faith
+  não coexistem); quem está errado é `decidirAcaoCompanheiro`, que escolhe apoio
+  sem perguntar o que o dono já segura. É a lição de P2 outra vez — **o piloto
+  deve perguntar à tabela**, e desta vez a tabela já existe e já é lida
+  (`exigeConcentracao` + `efeitoEmConcentracao`): antes de firmar, saber se vai
+  derrubar algo melhor. Médio porque não inventa mecânica nem número novo — liga
+  sinal que já existe a quem já decide. **Se o conserto pedir critério de valor
+  ("qual das duas vale mais"), isso é regra nova e sobe de peso.** Catraca: o
+  número de mordidas está cravado como **fato datado** na seção 11 de
+  `teste-arena.mjs`, com o piso das metades em 40 **de propósito** — um piso
+  colado no dígito de hoje reprovaria justamente este conserto.
+
+- [ ] **o Narrador acha que a magia trocada ainda está de pé** · médio · de: frontend (achado de C3) · 14/09
+  **É o mesmo furo do item "o Narrador não sabe que a magia do companheiro caiu",
+  agora com um terceiro dono — e provavelmente a mesma solução, num item só.** O
+  Mestre recebe `[... — ATIVO, CONTADO PELO SISTEMA]` da magia nova e continua
+  com a antiga na cabeça: pode narrar o herói ainda voando depois de ele ter
+  trocado Voo por Invisibilidade. C3 **mediu e não forçou**: a nota de C2 mede
+  **289 chars**, uma irmã da troca mediria **279**, e mesmo comprimida a uma
+  cláusula colada na que já existe mede **48** — 74% da margem inteira (pior cena
+  real **81935**, teto 82.000, margem **65**), com **três** sítios podendo
+  dispará-la e `notaRef` acumulando da rodada dos inimigos até o `enviar`
+  seguinte, de modo que queda e troca podem viajar **no mesmo envelope**.
+  O trabalho é **uma nota só que cubra os três donos** (herói que quebra,
+  companheiro que quebra, quem troca) ou a de C2 comprimida até caber a segunda.
+  **Se a conta de caracteres não fechar, o item sobe de peso** — o teto é sagrado.
+  Catraca: o varredor do teto + a seção 17 de `teste-efeitos.mjs`, que já conta a
+  nota do herói.
 - [ ] **o dente da amplitude está encolhendo sozinho, e ninguém mandou** · médio · de: testes+orquestrador (achado de C2b) · 14/09
   Conferido de passagem ao refazer a escada de sabotagem de C2b, e é o achado mais
   incômodo do ciclo: **o aperto da sabotagem `sombra +3` vem diminuindo a cada
@@ -587,7 +686,7 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   medir. Linha "refatorar módulo puro sem mudar comportamento". Catraca: as
   âncoras atuais continuam verdes durante a extração, e a suíte ganha o caso vivo.
 
-- [ ] **os comentários novos do `App.jsx` estão sem acento** · leve · de: orquestrador (achado de P3) · 14/09
+- [ ] **os comentários novos do `App.jsx` estão sem acento** · leve · de: orquestrador (achado de P3, crescido em C2b e C3) · 14/09
   A fiação de P3 (a porta `passarPeloAbrigo`, o nascimento, o irmão no relógio)
   trouxe comentários bons e longos escritos **sem acento** — "proposito",
   "heroi", "e" no lugar de "é". A mão escolheu a segurança contra o vício de
@@ -598,6 +697,12 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   com a mesma contagem de `\uFFFD` que o achou. Linha "comentário, nome,
   cabeçalho". Catraca: um varredor que conte caracteres de substituição em `src/`
   já valeria por si — erro já visto, e caro.
+  **Cresceu de novo em C3 (14/09):** a porta `firmarOuCeder` e os três sítios
+  trouxeram mais comentários longos sem acento ("A PORTA E `firmarOuCeder`, E NAO
+  `empilhar`", "heroi", "propósito" sem o ó). O arquivo segue íntegro — **0**
+  caracteres de substituição, conferido neste ciclo em `App.jsx`, `efeitos.js`,
+  `grimorio.js`, `arena.js` e nas duas suítes. A cada etapa que toca o App a
+  dívida cresce, e o conserto é sempre o mesmo script `.cjs` via `node`.
 
 - [ ] **a guarda de pé não aparece em tela nenhuma** · médio · de: frontend+orquestrador (achado de P2) · 14/09
   `pers.guardas` só é lido no instante em que a guarda sobe e no instante em que

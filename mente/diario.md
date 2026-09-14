@@ -16,6 +16,202 @@ Formato:
 
 ---
 
+## 14/09 03:55 · v9.237 · C3 · uma de cada vez · commit `aec84fe`
+- **estado inicial:** árvore limpa, HEAD `243d0de`, VERSÃO v9.236, `npm test`
+  181/181 suítes + 8/8 varredores verde. Sem trava de ciclo. A vez era **C3**,
+  a última etapa da Fase C — que a pauta já dizia ser **conserto, não
+  conferência**: C1 mediu o herói segurando duas concentrações, C2b acrescentou
+  o companheiro e o risco de `efeitoEmConcentracao` derrubar a errada.
+- **conselheiro:** não chamado (a etapa já estava escrita e aprovada, e a pauta
+  tem mais de 5 itens em "Aberto").
+- **backend:** mediu antes de escrever. `CONCENTRACAO_DA_MAGIA` ganhou o teto
+  (`quantasAoMesmoTempo: 1`) e `efeitos.js` ganhou **`firmarEfeito`**, irmã de
+  `absorverDano` — `{ pers, linha, cedeu }`. `arena.js` passou por ela e largou
+  o import de `empilhar`.
+- **frontend:** os três sítios do `App.jsx` por **uma porta só**,
+  `firmarOuCeder` (`:6634`), terceira irmã de `passarPeloAbrigo` e
+  `segurarOuPerder`; os sítios ficaram em `:7878` (herói), `:7993` (companheiro)
+  e `:12598` (magia de duração). Teto de prompt medido nas duas pontas.
+- **testes:** seção 19 de `teste-efeitos.mjs` e seção 11 de `teste-arena.mjs`,
+  com escada de **23 sabotagens** — e uma delas estava verde na entrega.
+
+### A medição que fez a etapa (e desmentiu "canto raro")
+
+**Não era exceção, era um caso em cada quatro.** Em 2094 quedas: 3864 efeitos
+firmados, **1352 de concentração**, e **316 deles eram uma segunda por cima de
+outra — 23,4%**. O raio real, contado e não suposto: das 85 magias do catálogo
+**34 concentram**, mas só **3** chegam à porta de `efeitoDeMagia` (Invisibilidade,
+Voo, Invisibilidade Maior); das 148 habilidades **8 são magia e 5 concentram**,
+**3** viram efeito no herói. **5 das 12 classes** podem colidir por nome distinto
+(Mago 3, Feiticeiro 3, Clérigo 2, Bardo 2, Bruxo 2) — sete nunca colidem. No
+companheiro é **1 classe de 12** (o Clérigo, Bênção + Escudo da Fé); na arena,
+**2 dos 8 prontos** (remendo e voto).
+
+### Decisões médias tomadas, com o motivo
+
+- **O teto mora na tabela, e a função o conta.** `firmarEfeito` derruba as **mais
+  antigas até caber** (`antigas.slice(0, antigas.length - (teto-1))`) em vez de
+  cravar "derruba a anterior". Motivo: é a lei "se é número, é tabela" levada até
+  o fim — um teto 2 amanhã funciona sem uma linha nova, e a suíte sabota o teto
+  para provar que ele é lido de volta, não decorado.
+- **`empilhar` ficou genérico e intocado.** Quatro chamadores (frasco, relíquia,
+  canal do Mestre, milagre) nunca produzem concentração — conferido, não suposto.
+  Ensinar concentração à pilha genérica poria a regra num lugar onde ninguém a
+  procuraria.
+- **`efeitoEmConcentracao` deixou de ser sorte: fica a ÚLTIMA a entrar.** Era
+  `.find(...)` — ordem de chegada. O motivo da escolha está escrito no código: a
+  última é exatamente a que `firmarEfeito` teria mantido se o save tivesse
+  passado por ela; escolher a primeira faria um save velho **quebrar a magia
+  recém-erguida e ainda guardar o fantasma da anterior** — perder duas vezes pelo
+  mesmo defeito. Nenhuma das 7 asserções existentes virou de lado (em todas a
+  marcada já era a última), e o dente novo trava **os dois sentidos**.
+- **Uma porta só no App, com recuo de propósito.** `firmarOuCeder` tem um
+  `try/catch` que, se o motor estourar, cai em `empilhar` puro — o comportamento
+  de antes desta versão. Motivo: "nunca pode custar o turno" tem um irmão aqui —
+  devolver a ficha intocada tiraria do jogador o PM que ele acabou de pagar. O
+  recuo está declarado como proposital na suíte, para ninguém o "consertar".
+- **A frase nasce no módulo e o App não monta uma sílaba.** Molde de
+  `testeConcentracao.linha` (C2). O único direito da tela é o dono na frente no
+  companheiro, pelo molde exato de C2b.
+
+### O que o jogador lê (sem `mostrarRolagens`, sem nome de mecanismo)
+
+- herói, buff: `💢 Bênção escapa dos dedos — Invisibilidade toma o lugar dela.`
+- companheiro: `💢 Irmã Vela — Bênção escapa dos dedos — Escudo da Fé toma o lugar dela.`
+- magia de duração: `💢 Voo escapa dos dedos — Invisibilidade toma o lugar dela.`
+- o fio solto que C2b deixou, fechado: magia de duração **+** buff de habilidade
+  → `💢 Voo escapa dos dedos — Bênção toma o lugar dela.`
+- controle de regressão: **Luz do Dia** não concentra → linha vazia, e ela
+  empilha ao lado sem derrubar nada.
+
+### O teto de prompt: intocado, e a nota que não coube
+
+**Pior cena real 81935 → 81935 chars** (teto 82.000, margem 65). Crescimento
+estático **zero**. A nota do Mestre **não coube e não foi forçada**: a nota de C2
+mede 289 chars, uma irmã mediria 279, e mesmo comprimida a uma cláusula colada na
+que já existe mede 48 — 74% da margem inteira, com **três** sítios podendo
+dispará-la e `notaRef` acumulando até o `enviar` seguinte. Mesma decisão de C2b,
+pelo mesmo motivo. **Consequência escrita na pauta:** o Narrador recebe a magia
+nova e continua achando que a antiga está de pé.
+
+### O preço, declarado como fato: o piloto ficou burro
+
+**Mordidas do abrigo 245 → 202, pontos comidos 980 → 808 (−17,6%)** na amostra da
+suíte, e a causa está nomeada: as **60 cessões de 420 quedas são todas "Escudo da
+Fé → Bênção"** — Remendo e Voto firmam o escudo e na rodada seguinte o jogam
+fora. **A regra está certa** (o 5e concorda: Bless e Shield of Faith não
+coexistem); quem está errado é o **piloto**, que não sabe que o teto existe.
+Ensiná-lo mexe no que o jogador vive e por isso **é outra etapa** — vai para
+"Aberto". O número entrou no molde de P3, como fato datado e não como limiar, e o
+piso das metades ficou em 40 de propósito: um piso colado no dígito de hoje
+**reprovaria justamente esse próximo conserto**.
+
+**A catraca de equilíbrio não saiu da faixa e a margem mais fina abriu:**
+`punho`/"cc" 38,9% → **40,2%** (5,2 pt do piso). Amplitude **11,9 pts** (sombra
+55,1 · voz 43,2), 8,1 pt sob o teto de 20 — encolheu pelo resorteio do fluxo, não
+por equilíbrio. **Nenhum limiar tocado, nenhum pronto reajustado.**
+
+### O achado do ciclo: uma sabotagem que passava verde
+
+A escada tem **23 degraus e nenhum ficou verde** — mas **S21 estava verde na
+entrega**. Uma arena que chamasse `firmarEfeito`, empurrasse `fe.linha` e depois
+**remendasse `eu.efeitos` à mão** passava em todas as âncoras *e enganava a
+própria contagem de duplas* — porque a contagem lê as linhas, e a linha mentia.
+É a lição de R4 uma camada abaixo: âncora prova que a linha existe, e nem a
+medição salva quando o que se mede é o texto. O fio que a sabotagem não corta é o
+**prazo** — um efeito que fica na ficha acaba vencendo —, e daí saiu o dente do
+**fantasma**: nenhuma magia cedida pode depois vencer prazo ou cair pela queda de
+C2. **S17** (a porta do App que imprime a troca e devolve a ficha de entrada)
+também estava verde até a forma dos dois `return` ser travada.
+Os degraus mais fundos: S22 (teto afrouxado para 2) acende **16**, S8 (a frase
+dizendo o mecanismo) **10**, S2 (arena de volta ao `empilhar`) **6**, S1 (App de
+volta) **5**.
+E uma **ponte que ninguém tinha pedido**: a suíte extrai a palavra "UMA" de
+`ECONOMIA_ACAO_PROMPT` e exige que a tabela cumpra esse número. C3 nasceu porque
+promessa e código discordavam — **agora discordar é vermelho**.
+
+### As três âncoras que o frontend teve de mover (e o motivo conferido)
+
+`teste-efeitos.mjs` exigia **literalmente** `empilhar(p.efeitos, buff.efeito)` e
+`empilhar(g.efeitos, buff.efeito)` no App: a letra antiga passou a **proibir o
+conserto desta etapa**, e não havia como o código cumpri-la sem desfazer C3. O
+`testes` conferiu as três e **concordou**: as duas primeiras ficaram mais fortes
+(dois controles negativos novos proíbem a pilha genérica nesses sítios, e S1/S18
+provam que mordem); a terceira perdeu o `{ ...g }` que provava não-mutação, e essa
+intenção migrou para asserções **por chamada** em vez de regex. Aperto, não folga.
+Observação anotada e não consertada: o controle negativo do sítio do herói lê o
+arquivo **cru**, então um comentário futuro que cite a linha antiga o acende por
+engano — os testes novos usam um `soCodigo(...)` que tira comentários antes de
+toda prova de ausência.
+
+### A FASE C ESTÁ FECHADA — o antes e o depois inteiro
+
+**Antes (v9.233):** a regra de concentração existia por escrito nos dois lados e
+não acontecia em lugar nenhum. `testeConcentracao` (`combate.js:797`) — a regra
+ditada pela pessoa, `Math.max(10, dano/2)` — estava pronta **desde sempre** e
+**nunca rodava**, porque nenhum dos três nascimentos de efeito copiava
+`concentracao`. O campo existia em `condicoes.js` e no catálogo, e o meio
+faltava: o herói segurava Invisibilidade, apanhava, e **não havia o que perder**.
+Zero magias marcadas em tabela nenhuma; zero quebras; o `ECONOMIA_ACAO_PROMPT`
+prometia duas coisas ao Narrador — que a magia quebra e que só se segura uma — e
+**nenhuma das duas acontecia**.
+
+**Hoje (v9.237):**
+- **34 das 85 magias marcadas** e trancadas por `CONCENTRACAO_DA_MAGIA` — a regra
+  mais **10 exceções, cada uma com o motivo escrito**, conferidas uma a uma
+  contra o 5e. Lista de exceção, nunca de permissão: magia de duração nova amanhã
+  não nasce sem marca em silêncio. **0** marcadas que sejam instantâneas.
+- **Dois nascimentos alimentam a regra**, e ambos perguntam ao **catálogo**, nunca
+  à ficha: `efeitoDeMagia` (C1) e `efeitoDeBuff` (C2b). `efeitoDeMilagre`
+  continua mudo **por prova** — não existe tabela de milagre que declare
+  concentração.
+- **Quebras por queda, medidas:** de **0** para **10 em 168 quedas** na arena
+  (todas de Bênção — Remendo 6, Voto 4), com Escudo da Fé nunca quebrando porque
+  `absorverDano` já o consumiu antes de o dano restante chegar ao teste. Sobre o
+  golpe de mediana 13 de P3, a magia aguenta **2,2 a 2,9 rodadas apanhando** antes
+  de cair.
+- **Trocas por teto:** de **0** para **60 em 420 quedas**, e **0 momentos com duas
+  de pé** — onde antes 23,4% dos efeitos de concentração firmados eram uma
+  segunda por cima de outra.
+- **O jogador lê os dois acontecimentos**, em voz de mundo e **sem
+  `mostrarRolagens`**, com o dono na frente quando é do grupo:
+  `💢 Voo escapa dos dedos — o corpo aguentou 6, e era preciso 10.` e
+  `💢 Irmã Vela — Bênção escapa dos dedos — Escudo da Fé toma o lugar dela.`
+  Antes ele lia **que** perdeu; agora lê **por quê**. As duas frases nascem no
+  módulo, ao lado do número — o App não monta uma sílaba de texto de regra.
+- **A escolha deixou de ser sorte.** `efeitoEmConcentracao` era `.find(...)`;
+  hoje é regra escrita, travada nos dois sentidos.
+- **Duas portas únicas novas no App** — `segurarOuPerder` (C2b) e `firmarOuCeder`
+  (C3) —, irmãs de `passarPeloAbrigo`, ambas com recuo que não custa o turno.
+- **Teto de prompt: 81935 chars nas quatro versões.** A fase inteira entregou
+  quebra, leitura, companheiro e teto com **crescimento estático zero** — o sinal
+  do Mestre passou pela nota dinâmica, só no turno em que há o que dizer.
+- **A suíte da fase:** `teste-efeitos.mjs` **387 → 421 → 463 → 482 → 543**;
+  `teste-grimorio.mjs` 89 → **142**; `teste-arena.mjs` ganhou as seções 10 e 11.
+  E a catraca de equilíbrio **nunca saiu da faixa em nenhuma das quatro etapas**,
+  com **nenhum pronto reajustado** — a margem mais fina, `punho`/"cc", foi de
+  32,9% (falso positivo) → 38,9% → **40,2%**.
+
+**O instrumento também foi consertado no caminho** (C2b): famílias de 30 sementes
+davam ~10% de vermelho falso a cada mexida no código; hoje são **120**, com piso,
+teto e teto de amplitude intocados.
+
+### O que ficou
+
+- **Não há mais fase aprovada na fila.** A Fase C fecha a última; o próximo ciclo
+  pega de "Aberto".
+- **Três itens novos em "Aberto"** (ver a pauta): o piloto que não sabe do teto e
+  joga fora o abrigo; o Narrador que continua achando que a magia trocada está de
+  pé (é o mesmo furo de C2b, agora com um terceiro dono); e os comentários novos
+  do `App.jsx` **sem acento**, que cresceram de novo nesta versão.
+- **C2c (o inimigo conjurador) intocado**, como mandado — segue em "Para a pessoa
+  decidir".
+- **O relógio quebrado das condições do grupo: não consertado, e o endereço está
+  dito.** O `frontend` esbarrou nele em **`App.jsx:7897-7901`**, dentro do mesmo
+  `buffDeCompanheiro` que ele mexeu — é ali que `g.condicoes` é escrito. A mão
+  entrou só em `g.efeitos`. O item segue em "Para a pessoa decidir".
+- Nenhuma dívida entrou como `pendente` — não houve nenhuma.
+
 ## 14/09 03:09 · v9.236 · C2b · o companheiro segura o que já conjura · commit `0f96fd6`
 - **estado inicial:** árvore limpa, HEAD `3791b26`, VERSÃO v9.235, `npm test`
   181/181 suítes + 8/8 varredores verde. Sem trava de ciclo. A vez era **C2b**,
