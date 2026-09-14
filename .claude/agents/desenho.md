@@ -65,12 +65,16 @@ dívida no dia seguinte.
 
 ## O terreno de hoje (para você não descobrir tarde)
 
-Tailwind pela CDN no `index.html` + estilo inline. `T` tem 15 cores;
-`FONT_CSS` tem três famílias (Cormorant Garamond no display, Spectral no
-corpo, JetBrains Mono no que é máquina) e sete animações (`tv-fade`,
-`tv-glow`, `tv-shake`, `tv-dice`, `tv-pulse`, `tv-slide`, `tv-dano`).
-`ui.jsx` guarda as primitivas (`Botao`, ícones, barra, `Retrato`), e há
-quatorze `painel-*.jsx`.
+Tailwind pela CDN no `index.html` + estilo inline. Números conferidos em
+D1 (14/09/2026) — os antigos estavam errados, não confie de memória:
+`T` tem **14** cores; `FONT_CSS` tem três famílias (Cormorant Garamond no
+display, Spectral no corpo, JetBrains Mono no que é máquina) e **13** classes
+de animação (`tv-fade`, `tv-vira`, `tv-dice`, `tv-faixa`, `tv-slide`,
+`tv-pulse`, `tv-dano`, `tv-agonia`, `tv-flutua`, `tv-reliquia`,
+`tv-anel-fora`, `tv-anel-dentro`, `tv-pisca`) — `tv-glow` e `tv-shake` são
+`@keyframes`, não classes. `ui.jsx` guarda 49 exports (33 deles ícones), e
+há **dez** `painel-*.jsx`. Só **6,8%** dos controles passam por `ui.jsx`:
+são 218 `<button>` crus contra 16 `<Botao>`.
 
 ## Liberdade, e o preço dela (decisão da pessoa, 14/09/2026)
 
