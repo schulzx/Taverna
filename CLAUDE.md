@@ -132,6 +132,44 @@ do ciclo está em `.claude/agents/orquestrador.md`; `/ciclo` roda um.
 
 ---
 
+## As duas mentes
+
+Desde 14/09/2026 há **duas filas, correndo ao mesmo tempo na mesma árvore**:
+
+| | conduz | fila | diário | trava |
+|---|---|---|---|---|
+| **sistema** | `orquestrador` | `mente/pauta.md` | `mente/diario.md` | `.claude/ciclo-em-curso` |
+| **desenho** | `regente` | `mente/pauta-desenho.md` | `mente/diario-desenho.md` | `.claude/ciclo-desenho-em-curso` |
+
+**Territórios, para não se pisarem:**
+
+- **Sistema:** `src/*.js` (os motores), `testes/teste-*.mjs` de regra.
+- **Desenho:** `ui.jsx`, `painel-*.jsx`, `rosto.jsx`, `carta-taro.jsx`,
+  `grade-de-batalha.jsx`, `planta-cidade.jsx`, a tabela de estilo,
+  `mente/formas.md`, o Figma, os varredores de forma.
+- **`App.jsx` é de ninguém e dos dois** — veja o bastão.
+
+**O bastão do `App.jsx`.** São 21 mil linhas e **63% da interface**; duas
+mãos nele se apagam. Quem for tocá-lo cria `.claude/app-jsx` com data/hora e
+nome. Existe e tem menos de 90 minutos: é do outro — **faça outra coisa da
+sua fila**, nunca edite assim mesmo. Mais de 90 minutos: o dono morreu, tome
+e registre. Apague ao terminar o arquivo, mesmo que o ciclo siga.
+
+**O melhor uso do bastão é gastá-lo para não precisar mais dele:** cada tela
+que sai do `App.jsx` para um painel próprio compra independência permanente
+para as duas mentes. Mover vale mais que remendar.
+
+**Subir com duas mentes.** Some os caminhos um a um (**nunca `git add -A`**:
+a outra pode ter trabalho não commitado na árvore). Bump de `VERSAO` como a
+**última** edição antes do commit. Push recusado por não estar à frente:
+`git pull --rebase` e suba de novo; em conflito de `VERSAO`, fica o **número
+maior**.
+
+**Vermelho do outro território não se conserta** — avisa-se no diário e
+escolhe-se outro item.
+
+---
+
 ## A mesa de design
 
 **Uma ação, uma forma.** `mente/formas.md` é a fonte da verdade sobre a cara

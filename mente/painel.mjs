@@ -14,7 +14,12 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), "..");
-const ler = (p) => { try { return readFileSync(join(RAIZ, p), "utf8"); } catch { return ""; } };
+/* Windows guarda estes arquivos com CRLF, e em regex de JS o `\r` é um
+   terminador de linha para `^` e `$` — o que faz âncora casar entre o
+   `\r` e o `\n`, num lugar que não existe para quem lê o texto. Uma
+   seção inteira sumia por isso. Normalizar na porta de entrada mata a
+   classe toda de uma vez. */
+const ler = (p) => { try { return readFileSync(join(RAIZ, p), "utf8").replace(/\r\n?/g, "\n"); } catch { return ""; } };
 
 /* O que cada mão está fazendo AGORA. Isso nenhum arquivo do repositório
    sabe sozinho: quem chama os agentes escreve aqui ao começar e limpa ao
@@ -73,9 +78,10 @@ function agentes() {
 
 /* A trava é o único sinal honesto de "agora": existe = alguém está
    escrevendo na árvore. Mais de 90 minutos e o ciclo morreu (a regra
-   está no roteiro do orquestrador). */
-function cicloEmCurso() {
-  const p = join(RAIZ, ".claude", "ciclo-em-curso");
+   está nos roteiros). Há três: a do sistema, a do desenho, e o bastão
+   do App.jsx, que é o único lugar onde as duas mentes se encontram. */
+function trava(nome) {
+  const p = join(RAIZ, ".claude", nome);
   if (!existsSync(p)) return null;
   const desde = statSync(p).mtime;
   const min = Math.round((Date.now() - desde.getTime()) / 60000);
@@ -165,8 +171,30 @@ function commits() {
   } catch { return []; }
 }
 
-const pauta = semCerca(ler("mente/pauta.md"));
-const blocos = diario(semCerca(ler("mente/diario.md")));
+/* Uma fila é a pauta + o diário + a trava de quem a conduz. Duas mentes,
+   duas filas, a mesma forma — o painel não sabe qual é "a principal", e é
+   assim que deve ser. */
+function fila({ id, nome, pauta, diarioArq, travaArq, conduz }) {
+  const p = semCerca(ler(pauta));
+  const blocos = diario(semCerca(ler(diarioArq)));
+  return {
+    id, nome, conduz,
+    ciclo: trava(travaArq),
+    pendentes: itens(seccao(p, "Para a pessoa decidir")).filter((i) => !i.feito),
+    fases: fases(seccao(p, "Aprovado pela pessoa")),
+    aberto: itens(seccao(p, "Aberto")).filter((i) => !i.feito),
+    recusado: seccao(p, "Recusado").split("\n").filter((l) => l.startsWith("- **")).map((l) => l.replace(/^- /, "").trim()),
+    diario: blocos.slice(0, 25),
+    blocos,
+  };
+}
+
+const filas = [
+  { id: "sistema", nome: "O sistema", conduz: "orquestrador", pauta: "mente/pauta.md", diarioArq: "mente/diario.md", travaArq: "ciclo-em-curso" },
+  { id: "desenho", nome: "O desenho", conduz: "regente", pauta: "mente/pauta-desenho.md", diarioArq: "mente/diario-desenho.md", travaArq: "ciclo-desenho-em-curso" },
+].map(fila);
+
+const blocos = filas.flatMap((f) => f.blocos);
 const emAcao = agora();
 const visto = ultimaVez(blocos);
 
@@ -190,16 +218,13 @@ const maos = agentes().map((a) => {
 const painel = {
   gerado: new Date().toISOString(),
   versao: (ler("src/constantes.js").match(/VERSAO\s*=\s*"([^"]+)"/) || [, "—"])[1],
-  ciclo: cicloEmCurso(),
+  bastao: trava("app-jsx"),
   agentes: maos,
-  pendentes: itens(seccao(pauta, "Para a pessoa decidir")).filter((i) => !i.feito),
-  fases: fases(seccao(pauta, "Aprovado pela pessoa")),
-  aberto: itens(seccao(pauta, "Aberto")).filter((i) => !i.feito),
-  recusado: seccao(pauta, "Recusado").split("\n").filter((l) => l.startsWith("- **")).map((l) => l.replace(/^- /, "").trim()),
-  diario: blocos.slice(0, 25),
   commits: commits(),
+  filas: filas.map(({ blocos, ...f }) => f),
 };
 
 writeFileSync(join(RAIZ, "mente", "painel.json"), JSON.stringify(painel, null, 2) + "\n");
 const emAcaoN = painel.agentes.filter((a) => a.estado === "em acao").length;
-console.log(`painel: ${painel.versao} · ${emAcaoN} em ação · ${painel.pendentes.length} pendentes · ${painel.fases.length} fases · ${painel.aberto.length} abertos · ${painel.diario.length} ciclos`);
+const somar = (c) => painel.filas.reduce((n, f) => n + f[c].length, 0);
+console.log(`painel: ${painel.versao} · ${emAcaoN} em ação · ${painel.filas.length} filas · ${somar("pendentes")} pendentes · ${somar("fases")} fases · ${somar("aberto")} abertos · ${somar("diario")} ciclos`);

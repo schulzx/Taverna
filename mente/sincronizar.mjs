@@ -1,9 +1,10 @@
 /* ============================================================
    SINCRONIZAR O PAINEL — Taverna
    Parte o painel.json nos dois documentos que a página lê:
-   `painel/estado` (o que muda a cada ciclo, pequeno) e
-   `painel/registro` (o histórico, grande). Quem os envia ao
-   armazém do artefato é a sessão principal — este script só
+   `painel/estado` (o que muda a cada ciclo — as duas filas em
+   resumo, as mãos, as decisões) e `painel/registro` (os dois
+   diários, as duas filas abertas, os commits). Quem os envia ao
+   armazém do artefato é a sessão principal; este script só
    prepara, para que o ciclo nunca dependa de rede.
 
    Roda depois de painel.mjs:  node mente/sincronizar.mjs
@@ -17,13 +18,20 @@ const p = JSON.parse(readFileSync(join(RAIZ, "mente", "painel.json"), "utf8"));
 const fora = join(RAIZ, "mente", "painel");
 mkdirSync(fora, { recursive: true });
 
-/* `atividade` é o que só a sessão principal sabe: qual mão está na mesa
-   agora. O ciclo não a apaga — preserva o que já estava escrito. */
-let atividade = [];
-try { atividade = JSON.parse(readFileSync(join(fora, "estado.json"), "utf8")).atividade || []; } catch {}
-
-const estado = { gerado: p.gerado, versao: p.versao, ciclo: p.ciclo, agentes: p.agentes, pendentes: p.pendentes, fases: p.fases, atividade };
-const registro = { gerado: p.gerado, diario: p.diario, aberto: p.aberto, recusado: p.recusado, commits: p.commits };
+/* O estado é o que a pessoa olha de relance; o registro é o que ela abre
+   quando quer detalhe. A divisão não é de tamanho, é de pressa. */
+const estado = {
+  gerado: p.gerado, versao: p.versao, bastao: p.bastao, agentes: p.agentes,
+  filas: p.filas.map((f) => ({
+    id: f.id, nome: f.nome, conduz: f.conduz, ciclo: f.ciclo,
+    pendentes: f.pendentes, fases: f.fases,
+    nAberto: f.aberto.length,
+  })),
+};
+const registro = {
+  gerado: p.gerado, commits: p.commits,
+  filas: p.filas.map((f) => ({ id: f.id, nome: f.nome, diario: f.diario, aberto: f.aberto, recusado: f.recusado })),
+};
 
 writeFileSync(join(fora, "estado.json"), JSON.stringify(estado));
 writeFileSync(join(fora, "registro.json"), JSON.stringify(registro));
