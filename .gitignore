@@ -6,3 +6,7 @@ dist/
 !.claude/skills/
 package-lock.json
 images/
+
+# o painel e gerado a cada ciclo; o JSON grande nao precisa de historia
+mente/painel.json
+mente/painel/
