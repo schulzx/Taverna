@@ -14,7 +14,7 @@ import { perfilDeCriatura, perfilDe, multiplicadorDano, iconeDano, resistenciasE
 import { mecanicaDe } from "./condicoes.js";
 import { golpeDaVez } from "./aflicoes.js";
 import { decidirAcaoCompanheiro, valorDaCura, danoDaHabilidadeComp } from "./companheiros.js";
-import { tipoDeDanoDaHabilidade } from "./combos.js";
+import { tipoDeDanoDaHabilidade, bonusDeDano, bonusDeArma } from "./combos.js";
 import { proficienciaDe, fichaDoItem, danoDaArma, modDoGolpe } from "./itens.js";
 import { estaSintonizado } from "./sintonia.js";
 import { estaInvisivel } from "./gatilhos.js";
@@ -409,25 +409,53 @@ export function turnoDosCompanheiros({ grupo = [], inimigos = [], jogadorCaido =
     const bonusArmaComp = (comp.equipados && comp.equipados.arma && comp.equipados.arma.atributos && comp.equipados.arma.atributos.dano) || 0;
 
     if (plano.tipo === "habilidade") {
+      /* ---------------- O BUFF DO COMPANHEIRO PESA NO GOLPE (v9.247 · B2) ----
+         Até a v9.245 este turno não continha a palavra `efeitos` em linha
+         nenhuma, e a simetria que P3 abriu ficava pela metade: o companheiro
+         firmava um buff com `bonus: N`, a metade DEFENSIVA valia
+         (`absorverDano` a lê) e a OFENSIVA não valia em canto nenhum da mesa
+         da campanha. Turno pago, metade comprada.
+
+         A CONVENÇÃO É A DO HERÓI, palavra por palavra: o bônus entra em
+         `danoBase`, ANTES do dado — e portanto dobra no crítico e é escalado
+         pela resistência do alvo, exatamente como em `App.jsx` (o herói faz
+         `danoBase += bonusDeDano(pers, h).bonus` e só então chama
+         `resolverAtaque`). Duas fórmulas para o mesmo bônus seriam as duas
+         metades divergindo em três versões.
+
+         E O LEITOR É O DA CASA (`combos.js`), não um novo: `bonusDeDano`
+         respeita o escopo (fúria física não levanta feitiço) e já veta
+         `aplica: "protecao"` por `efeitoNoGolpe` — o abrigo não vira espada.
+
+         `bonus`/`fontes` VIAJAM NA AÇÃO porque quem narra precisa do número
+         sem recalculá-lo: a arena escrevia a frase do "peso no golpe" somando
+         por fora, e somar dos dois lados contaria duas vezes. */
+      const bh = bonusDeDano(comp, plano.habilidade);
       const r = resolverAtaque({
         atacante: comp.nome, alvo, ehAtacanteInimigo: false,
-        bonusAtaque: 2 + (comp.nivel || 1), danoBase: danoDaHabilidadeComp(comp, plano.habilidade),
+        bonusAtaque: 2 + (comp.nivel || 1), danoBase: danoDaHabilidadeComp(comp, plano.habilidade) + bh.bonus,
         condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [], vantagem: furioso(comp.nome),
         /* v9.21: mesmo conserto do lado do jogador — "magico" nao e um tipo
            de dano, e mandar isso fazia a habilidade do companheiro sair
            rotulada como fisica e passar por cima de toda resistencia. */
         tipoDano: tipoDeDanoDaHabilidade(plano.habilidade, comp), perfilAlvo: perfilDe(alvo),
       });
-      acoes.push({ companheiro: comp.nome, tipo: "habilidade", habilidade: plano.habilidade, custo: Number(plano.habilidade.custo) || 0, alvoNome: alvo.nome, r });
+      acoes.push({ companheiro: comp.nome, tipo: "habilidade", habilidade: plano.habilidade, custo: Number(plano.habilidade.custo) || 0, alvoNome: alvo.nome, bonus: bh.bonus, fontes: bh.fontes, r });
       continue;
     }
+    /* O MESMO no golpe de arma, com o leitor irmão: `bonusDeArma` é FÍSICO por
+       definição (o cajado do mago ainda é um pedaço de pau), e por isso não
+       passa pela escola da habilidade. O bônus é lido ANTES de `d(4)` de
+       propósito — nenhum dado é consumido aqui, e a ordem da sorte semeada
+       fica idêntica à de antes desta versão. */
+    const ba = bonusDeArma(comp);
     const r = resolverAtaque({
       atacante: comp.nome, alvo, ehAtacanteInimigo: false,
-      bonusAtaque: 2 + (comp.nivel || 1), danoBase: 4 + (comp.nivel || 1) + bonusArmaComp + d(4),
+      bonusAtaque: 2 + (comp.nivel || 1), danoBase: 4 + (comp.nivel || 1) + bonusArmaComp + ba.bonus + d(4),
       condAtacante: comp.condicoes || [], condAlvo: alvo.condicoes || [], vantagem: furioso(comp.nome),
       tipoDano: elementoDaArma(comp), perfilAlvo: perfilDe(alvo),
     });
-    acoes.push({ companheiro: comp.nome, tipo: "ataque", alvoNome: alvo.nome, r });
+    acoes.push({ companheiro: comp.nome, tipo: "ataque", alvoNome: alvo.nome, bonus: ba.bonus, fontes: ba.fontes, r });
   }
   return acoes;
 }

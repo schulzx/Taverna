@@ -489,10 +489,28 @@ sec("7. o veredito da Fase A — o buraco de A1, fechado em A3");
        Medidos hoje: 185 dentro / 224 fora (guarda), 65 com / 89 sem (buff). */
     golpesMinimosDaSonda: 40,
     /* A força do buff sintético é `round(custo/2)` = 2 (efeitos.js,
-       `BUFF_DA_HABILIDADE`). O crítico NÃO dobra o bônus — a arena o soma
-       depois do golpe pronto, e diz isso por escrito —, então a média sobe
-       um pouco menos que 2: medido 1,95. O piso é 1, porque menos de um
-       ponto inteiro é o buff não mexer em número nenhum. */
+       `BUFF_DA_HABILIDADE`).
+
+       O NÚMERO DESTE COMENTÁRIO MUDOU EM v9.247 (B2), E O PISO NÃO — e o
+       motivo fica escrito porque a frase antiga dizia o CONTRÁRIO da lei de
+       hoje. Ela dizia: "o crítico NÃO dobra o bônus — a arena o soma depois
+       do golpe pronto, e diz isso por escrito —, então a média sobe um pouco
+       menos que 2: medido 1,95". Era verdade enquanto a soma era da arena,
+       por fora do golpe. B2 mudou o dono da soma: quem lê
+       `bonusDeDano`/`bonusDeArma` agora é `turnoDosCompanheiros`, que põe o
+       bônus em `danoBase` ANTES do dado — como o herói sempre fez —, e a
+       arena parou de somar (senão contaria duas vezes).
+
+       Consequência medida nesta mesma sonda, com as mesmas sementes: o ganho
+       do buff no golpe vai de 1,95 (árvore em `eadef55`) para 2,10, porque os
+       críticos passaram a levar 2×2 em vez de 2. Os 0,15 são exatamente a
+       fatia de crítico da amostra — a mesma conta que `teste-comp` prova
+       golpe a golpe na seção do bônus do companheiro.
+
+       O PISO CONTINUA 1 pelo motivo com que nasceu: menos de um ponto inteiro
+       é o buff não mexer em número nenhum. Subi-lo para perto de 2,10 seria
+       trocar um dente que pega o desabamento por um que grita a cada brisa do
+       RNG. */
     ganhoMinimoDoBuffNoGolpe: 1,
     /* A mesa real: ordem de grandeza, não número mágico. Medidos em A3
        (v9.225) 791 buffs firmados, 329 golpes com o bônus dentro e 409
@@ -1408,6 +1426,123 @@ sec("11. uma de cada vez, também na arena (C3)");
   /* O SISTEMA NÃO FALA DE SI MESMO — a mesma régua da seção 10, agora com a
      linha nova no meio da cena. */
   t("e a cena continua sem dizer o nome do mecanismo", c.mecanismoNaCena === 0, `${c.mecanismoNaCena} linhas`);
+}
+
+/* ============================================================
+   12. A ARENA NÃO CONTA O BÔNUS DUAS VEZES (v9.247 · B2)
+
+   O QUE MUDOU, E POR QUE ISTO PRECISA DE DENTE. Até a v9.245 `aplicarAcoes`
+   somava o bônus do buff POR FORA do golpe (`r.dano + bonusDeDano(eu, hab)`),
+   e somava porque `turnoDosCompanheiros` não conhecia os efeitos de quem
+   bate. O preço estava escrito em voz alta na caixa de comentário: o bônus
+   não dobrava no crítico, e a arena cobrava dele mais barato que a mesa da
+   campanha. B2 fechou a simetria na origem — quem lê `bonusDeDano`/
+   `bonusDeArma` agora é o próprio turno, que os põe em `danoBase` antes do
+   dado — e por isso a soma da arena teve de SAIR JUNTO: mantê-la passaria a
+   contar duas vezes o mesmo bônus.
+
+   Esta é a asserção que morde no dia em que alguém reintroduzir a
+   compensação externa, e ela é fácil de escrever errado. Conferir a FRASE
+   ("… pesa no golpe") não prova nada: a frase continuaria idêntica com o
+   bônus somado duas vezes. O que se confere é o NÚMERO, e pela porta —
+   `simularQueda`, que é a única que a arena abre.
+
+   COMO O NÚMERO FICA PREVISÍVEL. `aplicarAcoes` não é exportada, então a
+   prova não pode comparar "o que a ação trazia" com "o que a arena aplicou".
+   Em vez disso, o duelo é montado para que o dano de cada golpe só possa
+   cair num CONJUNTO FECHADO de valores, e o conjunto é calculado da ficha:
+
+     · o Cantor luta SEM ARMA, então `danoBase` = 4 + nível + bônus + d(4) —
+       tudo inteiro, e o d(4) dá os quatro degraus;
+     · golpe de arma é FÍSICO, e `multiplicadorDano` devolve 1 para físico:
+       nenhum perfil de criatura mexe no número;
+     · o Poste não tem habilidade nenhuma, então nunca firma abrigo e
+       `absorverDano` nunca tira um ponto do que chegou;
+     · a única habilidade do Cantor é um buff de apoio puro (não é guarda,
+       não é abrigo, não é ofensiva — `ehOfensiva` é falso, então o passo 4
+       do piloto nunca a escolhe como golpe), e a força dela sai de
+       `BUFF_DA_HABILIDADE` por `efeitoDeBuff`.
+
+   Com nível 5 e força 3 o conjunto é {13,14,15,16} nos acertos e
+   {26,28,30,32} nos críticos. Somar o bônus uma segunda vez desloca tudo em
+   +3 — {16,17,18,19} e {29,31,33,35} —, e só um valor dos oito sobrevive ao
+   deslocamento. Medido: 682 golpes com bônus em 400 quedas, TODOS os oito
+   valores visitados, nenhum fora.
+
+   E O CONJUNTO PROVA AS DUAS METADES DE UMA VEZ. Que o crítico valha o
+   DOBRO do acerto com o bônus dentro (26 = 2×13, e não 2×10+3 = 23) é a
+   mesma convenção do herói que `teste-comp` prova golpe a golpe; aqui ela
+   reaparece de graça, do outro lado da mesa. Se o bônus voltasse a ser
+   somado depois do golpe pronto, os críticos cairiam em {23,25,27,29} e
+   nenhum deles está no conjunto.
+   ============================================================ */
+sec("12. a arena não conta o bônus duas vezes (B2)");
+{
+  const EF = await import(RAIZ + "efeitos.js");
+  /* A RÉGUA DA MEDIÇÃO, com os números que a ficha e a tabela decidem — nada
+     de constante de regra escrita à mão. */
+  const NIVEL = 5, CUSTO_DO_HINO = 6, QUEDAS = 400;
+  const FORCA = Math.max(
+    EF.BUFF_DA_HABILIDADE.forcaMinima,
+    Math.round(CUSTO_DO_HINO / EF.BUFF_DA_HABILIDADE.divisorDoCusto),
+  );
+  /* o piso da amostra, pelo mesmo argumento de `golpesMinimosDaSonda` na
+     seção 7: uma arena que parasse de firmar buff mediria zero golpe com
+     bônus e passaria VERDE sem provar coisa nenhuma */
+  const GOLPES_MINIMOS = 200;
+
+  /* o buff: apoio puro, nome fora do catálogo (para a escola cair na classe
+     de quem firma, que é Guerreiro = física) e texto que não casa com linha
+     nenhuma de `APLICACAO_DO_BUFF` — senão nasceria abrigo, com bônus zero */
+  const HINO = { nome: "Hino do Fosso", descricao: "o canto sobe pelas costas de quem luta", custo: CUSTO_DO_HINO, tipo: "suporte" };
+  t("o buff da sonda é apoio puro: o piloto o firma e nunca o usa como golpe",
+    C.ehBuff(HINO) && !C.ehOfensiva(HINO) && !C.ehGuarda(HINO) && !C.ehAbrigo(HINO));
+
+  const semArma = (nome, nivel, mana, habilidades) => ({
+    nome, classe: "Guerreiro", nivel,
+    vida: 400, vidaMax: 400, mana, manaMax: mana,
+    atributos: { destreza: 0, vigor: 0, forca: 0, percepcao: 0 },
+    habilidades, equipados: {}, inventario: [],
+  });
+  const CANTOR = semArma("Cantor", NIVEL, CUSTO_DO_HINO, [HINO]);
+  const POSTE = semArma("Poste", 1, 0, []);
+  t(`e ele nasce da tabela com +${FORCA} de dano físico`,
+    (() => { const e = EF.efeitoDeBuff(HINO, CANTOR, undefined).efeito; return e.bonus === FORCA && e.aplica === "dano" && e.escopo === "fisico"; })());
+
+  const passo = (k) => 4 + NIVEL + FORCA + k;
+  const noAcerto = new Set([1, 2, 3, 4].map(passo));
+  const noCritico = new Set([1, 2, 3, 4].map((k) => 2 * passo(k)));
+  const seContasseDuasVezes = new Set([...noAcerto, ...noCritico].map((n) => n + FORCA));
+
+  let comBonus = 0, fora = 0, primeiroFora = "", naoCasou = 0;
+  const vistos = new Set();
+  for (let s = 0; s < QUEDAS; s++) {
+    for (const l of A.simularQueda(CANTOR, POSTE, { semente: `b2|uma vez so|${s}` }).linhas) {
+      if (!/^Cantor acerta/.test(l)) continue;
+      const m = /^Cantor acerta(?: em cheio)? Poste( — .+? pesa(?:m)? no golpe)? \(−(\d+)\)$/.exec(l);
+      if (!m) { naoCasou++; continue; }
+      if (!m[1]) continue;                 /* golpe sem buff de pé: outro conjunto */
+      comBonus++;
+      const n = Number(m[2]);
+      vistos.add(n);
+      if (!noAcerto.has(n) && !noCritico.has(n)) { fora++; if (!primeiroFora) primeiroFora = l; }
+    }
+  }
+  console.log(`  ··  ${comBonus} golpes com o bônus dentro em ${QUEDAS} quedas · valores vistos ${[...vistos].sort((a, b) => a - b).join(", ")}`);
+  t("a linha do golpe da arena continua no molde que esta sonda lê", naoCasou === 0, `${naoCasou} linhas fora do molde`);
+  t(`a amostra tem golpe com bônus de sobra (piso ${GOLPES_MINIMOS})`, comBonus >= GOLPES_MINIMOS, `${comBonus} golpes`);
+  t(`o bônus entra UMA vez: todo golpe cai em {${[...noAcerto].join(",")}} ou {${[...noCritico].join(",")}}`,
+    fora === 0, `${fora} fora do previsto${primeiroFora ? "; " + primeiroFora : ""}`);
+  /* O DENTE DO DESLOCAMENTO, escrito em voz alta: se a arena voltasse a somar
+     por fora, os valores seriam estes — e quase nenhum deles é legal hoje. */
+  t("e nenhum golpe cai no conjunto deslocado, que é o retrato da soma dobrada",
+    [...vistos].filter((n) => seContasseDuasVezes.has(n) && !noAcerto.has(n) && !noCritico.has(n)).length === 0);
+  /* A OUTRA METADE, de graça: o crítico é o DOBRO do acerto com o bônus já
+     dentro. Se o bônus fosse somado depois do golpe pronto, o maior crítico
+     seria 2×(4+NIVEL+4) + FORCA e não 2×(4+NIVEL+FORCA+4). */
+  const maiorCritico = Math.max(...[...vistos].filter((n) => noCritico.has(n)));
+  t(`o crítico dobra o bônus junto com o golpe (${maiorCritico} = 2×${passo(4)}, não ${2 * (4 + NIVEL + 4) + FORCA})`,
+    maiorCritico === 2 * passo(4) && maiorCritico !== 2 * (4 + NIVEL + 4) + FORCA);
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

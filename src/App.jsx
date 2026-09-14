@@ -7971,13 +7971,21 @@ export default function Taverna() {
        Somar um abrigo por companheiro no grupo inteiro seria tres escudos na
        mesma pele, que e o numero crescendo sem teto que a familia evita.
 
-       A CLAUSULA DITA E SO A QUE A MESA GASTA. `efeitoDeBuff` tambem devolve
-       bonus de dano, e em Uma Vida ninguem o le no companheiro:
-       `turnoDosCompanheiros` (combate.js) nao toca em `efeitos`, e
-       `bonusDeDano`/`bonusDeArma`/`atributoEfetivo` so sao chamados com a
-       ficha do heroi. Anunciar "+N de dano" ali seria o "+N de um numero que
-       nao existe" que P1 recusou. So `absorve` tem leitor (`absorverDano`),
-       entao so a frase dele vai a tela. */
+       A CLAUSULA DITA E SO A DO ABRIGO — E HOJE ISSO E ESCOLHA DE TELA.
+       `efeitoDeBuff` tambem devolve bonus de dano, e ate a v9.246 esse bonus
+       era o "+N de um numero que nao existe" que P1 recusou. Nao e mais:
+       desde a v9.247 (B2) `turnoDosCompanheiros` (combate.js) LE `efeitos` do
+       companheiro pelos leitores da casa (`bonusDeDano` / `bonusDeArma`, de
+       `combos.js`) e soma o bonus em `danoBase`, antes do dado — a mesma
+       convencao do heroi. O numero existe, e `absorve` (lido por
+       `absorverDano`) nao e mais a unica clausula com leitor.
+
+       Continuar so com a frase do abrigo virou DECISAO, nao heranca. O
+       abrigo e mudo ate o golpe que ele come, entao precisa ser dito aqui; o
+       bonus ofensivo o jogador sente pelo dano maior no turno do companheiro,
+       e nomear o mecanismo nesta linha seria o sistema falando de si mesmo.
+       Anunciar "+N de dano" na tela do buff e mudanca de gameplay visivel —
+       e da pessoa, nao deste comentario. */
     let extraAbrigo = "";
     /* v9.237 (C3): o companheiro tambem so segura uma. Mesma linha do heroi,
        com o dono na frente — e vazia quando nada cedeu. */

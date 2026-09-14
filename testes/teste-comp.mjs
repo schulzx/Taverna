@@ -2,6 +2,8 @@ import { classeDeCompanheiro, garantirFichaCompanheiro, decidirAcaoCompanheiro, 
 import { turnoDosCompanheiros } from "../src/combate.js";
 import { itemConsumivel } from "../src/pocoes.js";
 import { guardaDe } from "../src/habilidades.js";
+import { efeitoDeBuff } from "../src/efeitos.js";
+import { rng, hashSemente } from "../src/semente.js";
 
 let falhas = 0;
 const ok = (c, t) => { if (!c) { falhas++; console.log("  FALHA:", t); } else console.log("  ok:", t); };
@@ -151,6 +153,195 @@ console.log("\n[a guarda do grupo está ligada no App]");
   ok(/expirarGuardas\(g, proxima\)/.test(APP), "e o prazo das guardas do grupo corre no mesmo relógio do herói");
   /* e a porta: guarda de combate não atravessa o fim da luta */
   ok(/baixarGuardas\(g\)/.test(APP), "e no fim da luta a guarda do grupo baixa junto com a do herói");
+}
+
+/* ============================================================
+   O BÔNUS DO COMPANHEIRO PESA NO GOLPE (v9.247 · B2)
+
+   POR QUE AQUI. O órgão que mudou é `turnoDosCompanheiros` — esta suíte é a
+   dele, é a única que já o exercitava como TURNO COMPLETO (a seção da guarda,
+   logo acima, prova que a decisão sobrevive à travessia), e a lei nova é da
+   mesma família: o que o piloto decide tem de chegar inteiro à mesa. A metade
+   que acontece DEPOIS da ação — a arena não somar o bônus uma segunda vez —
+   fica em `teste-arena`, seção 12, porque lá é que mora a porta que soma.
+
+   O QUE B2 FECHOU. Até a v9.245 este turno não continha a palavra `efeitos`:
+   o companheiro firmava um buff com `bonus: N`, a metade DEFENSIVA valia
+   (`absorverDano` a lê) e a OFENSIVA não valia em canto nenhum da mesa da
+   campanha. Medido nesta mesma sonda contra a árvore em `eadef55` (HEAD antes
+   de B2): com o efeito de +3 firmado, o dano médio por golpe era 11,566 — o
+   MESMO de sem efeito nenhum, delta 0,000. Turno pago, metade comprada.
+
+   A CONVENÇÃO QUE SE PROVA AQUI é a do herói: o bônus entra em `danoBase`,
+   ANTES do dado, e portanto DOBRA no crítico. É essa a diferença que estas
+   asserções mordem, e ela é pequena de propósito — a distância entre o certo
+   e o quase-certo é de 0,16 de dano médio, e um teste que só olhasse "o dano
+   subiu" passaria nos dois. Por isso a prova é dupla:
+
+     (a) A LEI EXATA, golpe a golpe. Como o bônus é lido ANTES de `d(4)`,
+         nenhum dado a mais é consumido: com a mesma semente, a série de d20 e
+         a série de resultados são IDÊNTICAS com e sem efeito. Então cada
+         golpe pode ser conferido isolado — crítico soma 2×bônus, acerto soma
+         1×bônus, erro e desastre somam zero — e 20 mil golpes conferem sem
+         uma única exceção. Esta é a asserção que morde mais fino: mover o
+         bônus para depois do dado deixa os críticos errados e nada mais.
+
+     (b) O RETRATO MEDIDO, que é o que se enxerga na mesa. Médias desta sonda:
+         11,566 sem efeito · 14,582 com o mesmo efeito de +3 · delta 3,015.
+         O delta tem explicação fechada e ela vem da amostra, não de um número
+         escrito à mão: 1054 críticos e 17993 acertos em 20 mil golpes dão
+         (1054×2 + 17993)×3/20000 = 3,015 se o bônus dobra, e 2,857 se não
+         dobra. O medido é 3,015 — e a asserção exige que ele esteja mais
+         perto do primeiro que do segundo, que é a forma honesta de cobrar
+         "a convenção do herói foi respeitada" sem cravar um dígito de RNG.
+
+   A FORÇA DO BÔNUS SAI DA TABELA, e por isso nasce de `efeitoDeBuff`
+   (efeitos.js) — `BUFF_DA_HABILIDADE` decide quanto um buff de 6 PM vale, e
+   este teste não tem opinião sobre isso. As duas variantes (o abrigo e o
+   mágico) são o MESMO efeito com um campo trocado, de propósito: é a única
+   forma de provar que quem veta é o rótulo, e não o número.
+   ============================================================ */
+console.log("\n[o bônus do companheiro pesa no golpe (B2)]");
+{
+  const NIVEL = 5, N = 20000;
+  const SEMENTE = "b2|o peso do companheiro";
+  const comSemente = (semente, fn) => {
+    const original = Math.random;
+    Math.random = rng(hashSemente(semente));
+    try { return fn(); } finally { Math.random = original; }
+  };
+
+  /* Guerreiro sem arma: `danoBase` é 4 + nível + d(4), tudo inteiro, sem
+     multiplicador de perfil (golpe de arma é FÍSICO e `multiplicadorDano`
+     devolve 1 para físico) e sem resistência — o bônus é a ÚNICA diferença
+     entre as duas séries. */
+  const doran = (efeitos) => ({
+    nome: "Doran", classe: "Guerreiro", nivel: NIVEL,
+    vida: 100, vidaMax: 100, mana: 0, manaMax: 0,
+    habilidades: [], condicoes: [], efeitos: efeitos || [], equipados: {},
+  });
+  /* o saco de pancada: defesa 5 contra +7 de ataque, para que só o 1 natural
+     erre — assim a amostra tem a forma limpa (5% desastre · 5% crítico · 90%
+     acerto) de que a conta do delta precisa */
+  const poste = () => [{ nome: "Poste", vida: 1e6, vidaMax: 1e6, ameaca: "comum", nivel: 1, defesa: 5, condicoes: [] }];
+  const vera = () => ({ nome: "Vera", vida: 90, vidaMax: 90, condicoes: [] });
+
+  const serie = (efeitos) => comSemente(SEMENTE, () => {
+    const danos = [], res = [], d20 = [], bonus = [];
+    const inim = poste();
+    for (let i = 0; i < N; i++) {
+      for (const a of turnoDosCompanheiros({ grupo: [doran(efeitos)], inimigos: inim, jogador: vera(), jogadorNome: "Vera", rodada: 3 })) {
+        if (!a.r) continue;
+        danos.push(a.r.dano); res.push(a.r.resultado); d20.push(a.r.d20); bonus.push(a.bonus);
+      }
+    }
+    return { danos, res, d20, bonus };
+  });
+  const media = (xs) => xs.reduce((s, x) => s + x, 0) / xs.length;
+
+  /* O EFEITO VEM DA PORTA DA CASA: força e prazo saem de `BUFF_DA_HABILIDADE`
+     por `efeitoDeBuff`, e o escopo sai da natureza da classe de quem firma. */
+  const HINO = { nome: "Hino do Fosso", descricao: "o canto sobe pelas costas de quem luta", custo: 6 };
+  const EFEITO = efeitoDeBuff(HINO, doran([]), undefined).efeito;
+  const B = EFEITO.bonus;
+  const ABRIGO = { ...EFEITO, aplica: "protecao" };   /* só o rótulo muda */
+  const MAGICO = { ...EFEITO, escopo: "magico" };     /* só o escopo muda */
+
+  ok(B > 0 && EFEITO.aplica === "dano" && EFEITO.escopo === "fisico",
+    `o buff de 6 PM nasce da tabela: +${B} de dano físico`);
+
+  const SEM = serie([]);
+  const COM = serie([EFEITO]);
+  const PRO = serie([ABRIGO]);
+
+  const crits = SEM.res.filter((r) => r === "critico").length;
+  const acertos = SEM.res.filter((r) => r === "acerta").length;
+  console.log(`  amostra: ${SEM.danos.length} golpes · ${crits} críticos · ${acertos} acertos`);
+  console.log(`  médias: sem efeito ${media(SEM.danos).toFixed(3)} · com +${B} ${media(COM.danos).toFixed(3)} · abrigo ${media(PRO.danos).toFixed(3)}`);
+
+  /* ---- a sorte semeada não se moveu ----
+     O RETRATO CONGELADO, medido na árvore em `eadef55` (antes de B2) e
+     reproduzido idêntico depois dela: mesma semente, companheiro SEM efeito
+     nenhum, mesma soma e mesmos doze primeiros golpes. É a prova de que o
+     bônus é lido ANTES de `d(4)` e não consome um dado a mais — se alguém o
+     mover para depois do dado, a série inteira anda e estes dois números
+     mudam no mesmo instante. */
+  const SOMA_EM_eadef55 = 231327;
+  const PRIMEIROS_EM_eadef55 = "20,10,0,12,10,12,12,10,12,0,12,13";
+  ok(SEM.danos.reduce((s, x) => s + x, 0) === SOMA_EM_eadef55,
+    `sem efeito, a mesma semente dá a mesma soma de antes de B2 (${SEM.danos.reduce((s, x) => s + x, 0)} vs ${SOMA_EM_eadef55})`);
+  ok(SEM.danos.slice(0, 12).join(",") === PRIMEIROS_EM_eadef55,
+    `e os doze primeiros golpes, na ordem (${SEM.danos.slice(0, 12).join(",")})`);
+  ok(SEM.d20.join() === COM.d20.join() && SEM.d20.join() === PRO.d20.join(),
+    "e o efeito não consome dado nenhum: a série de d20 é idêntica nas três");
+
+  /* ---- (a) a lei exata, golpe a golpe ---- */
+  let fugiram = 0, exemplo = "";
+  for (let i = 0; i < SEM.danos.length; i++) {
+    const esperado = SEM.res[i] === "critico" ? SEM.danos[i] + 2 * B
+      : SEM.res[i] === "acerta" ? SEM.danos[i] + B
+      : SEM.danos[i];
+    if (COM.danos[i] !== esperado) { fugiram++; if (!exemplo) exemplo = `golpe ${i} (${SEM.res[i]}): ${SEM.danos[i]} → ${COM.danos[i]}, esperado ${esperado}`; }
+  }
+  /* o piso de críticos existe para a asserção acima não passar VAZIA: sem
+     crítico na amostra, "dobra no crítico" não é medido por ninguém */
+  ok(crits >= 500, `a amostra tem crítico de sobra para a lei do dobro morder (${crits})`);
+  ok(fugiram === 0, `todo golpe soma o bônus antes do dado — crítico 2×${B}, acerto ${B}, erro 0 (${fugiram} fora da lei${exemplo ? "; " + exemplo : ""})`);
+
+  /* ---- (b) o retrato medido, e a conta que separa dobrar de não dobrar ---- */
+  const delta = media(COM.danos) - media(SEM.danos);
+  const seDobra = (crits * 2 + acertos) * B / SEM.danos.length;
+  const seNaoDobra = (crits + acertos) * B / SEM.danos.length;
+  console.log(`  delta medido ${delta.toFixed(3)} · previsto dobrando ${seDobra.toFixed(3)} · previsto sem dobrar ${seNaoDobra.toFixed(3)}`);
+  ok(Math.abs(delta - seDobra) < Math.abs(delta - seNaoDobra) && Math.abs(delta - seDobra) < 0.01,
+    `o bônus DOBRA no crítico: delta ${delta.toFixed(3)} cola em ${seDobra.toFixed(3)} e não em ${seNaoDobra.toFixed(3)}`);
+  ok(COM.bonus.every((b) => b === B) && SEM.bonus.every((b) => b === 0),
+    "e o número viaja na ação, para quem narra não ter de recalculá-lo");
+
+  /* ---- o abrigo não vira espada ----
+     Mesmo efeito, mesma força, só o rótulo `aplica` trocado. Quem veta é
+     `efeitoNoGolpe` (combos.js); sem dente ali, o escudo passaria a somar no
+     golpe e a série do abrigo seria a série de COM. */
+  ok(PRO.danos.join() === SEM.danos.join(),
+    `o mesmo +${B} com aplica:"protecao" não move um ponto de dano (média ${media(PRO.danos).toFixed(3)})`);
+  ok(PRO.bonus.every((b) => b === 0) && PRO.danos.join() !== COM.danos.join(),
+    "e a ação sai sem bônus — o abrigo não é lido como espada");
+
+  /* ---- o escopo é respeitado: o buff físico não levanta feitiço ----
+     Um Mago com efeito MÁGICO: a habilidade dele é arcana e recebe o bônus, o
+     golpe de arma não — `bonusDeArma` é físico por definição e pula o escopo
+     mágico. Com o efeito FÍSICO a divergência se inverte. A sorte é travada
+     num valor fixo porque o que se mede aqui é o CAMPO `bonus`, não o dano:
+     `Math.random` em 0 escolhe a ofensiva no passo 4 e torna o turno inteiro
+     previsível. */
+  const comSorteTravada = (valor, fn) => {
+    const original = Math.random;
+    Math.random = () => valor;
+    try { return fn(); } finally { Math.random = original; }
+  };
+  const DARDO = { nome: "Dardo do Fosso", descricao: "uma agulha de luz fria", custo: 4, tipo: "ataque" };
+  const mago = (efeitos, mana) => ({
+    nome: "Sable", classe: "Mago", nivel: NIVEL,
+    vida: 100, vidaMax: 100, mana, manaMax: 10,
+    habilidades: [DARDO], condicoes: [], efeitos, equipados: {},
+  });
+  const agir = (efeitos, mana) => comSorteTravada(0, () =>
+    turnoDosCompanheiros({ grupo: [mago(efeitos, mana)], inimigos: poste(), jogador: vera(), jogadorNome: "Vera", rodada: 3 })[0]);
+
+  for (const [rotulo, ef, noFeitico, naArma] of [
+    ["mágico", MAGICO, B, 0],
+    ["físico", EFEITO, 0, B],
+  ]) {
+    const porFeitico = agir([ef], 10);
+    const porArma = agir([ef], 0);
+    ok(porFeitico.tipo === "habilidade" && porArma.tipo === "ataque",
+      `o Mago com efeito ${rotulo} dá os dois golpes (${porFeitico.tipo} e ${porArma.tipo})`);
+    ok(porFeitico.bonus === noFeitico && porArma.bonus === naArma,
+      `e o efeito ${rotulo} vale ${noFeitico} no feitiço e ${naArma} na arma (medido ${porFeitico.bonus} e ${porArma.bonus})`);
+    ok((noFeitico > 0) === (porFeitico.fontes || []).includes(EFEITO.nome)
+      && (naArma > 0) === (porArma.fontes || []).includes(EFEITO.nome),
+      `e as fontes contam a mesma história do número (${rotulo})`);
+  }
 }
 
 console.log(falhas ? `\n${falhas} FALHA(S)` : "\nTudo passou");

@@ -16,6 +16,114 @@ Formato:
 
 ---
 
+## 14/09 21:05 · v9.247 · B2 · a simetria fechada, e a Fase B com ela · commit `HASH`
+
+- **estado inicial:** árvore limpa, HEAD `5a170c3`, VERSÃO v9.246, `npm test`
+  **182/182 suítes + 9/9 varredores** verde. Trava posta por mim. **Duas mentes:**
+  o `regente` fechou D3 durante este ciclo e **tomou a v9.246 em voo** — B2 sai em
+  **v9.247**, e as sete citações de versão que as mãos tinham escrito foram
+  corrigidas antes do commit (comentário que cita versão errada é comentário que
+  mente). **O bastão do `App.jsx`** foi tomado duas vezes e devolvido nas duas:
+  pelo `frontend`, para um parágrafo de comentário, e por mim, para a citação de
+  versão dentro dele. Nenhuma linha de comportamento do `App.jsx` mudou.
+- **conselheiro:** não chamado (etapa aprovada já escrita; a pauta tem mais de 5
+  itens em "Aberto").
+
+### O item: a simetria fechada, e o veredito da régua
+
+A condicional da pessoa era a etapa — *"se o bônus for lícito e justo, vamos
+fazer; buffs e tudo mais devem funcionar de verdade"*. **É lícito, é justo, e o
+preço medido é zero** — mas não pelo motivo que a pauta esperava.
+
+- **backend:** `turnoDosCompanheiros` (`combate.js`) passou a ler `efeitos` pelos
+  leitores que já existiam (`bonusDeDano` / `bonusDeArma`, de `combos.js`) e a
+  somar em `danoBase` **antes do dado** — a convenção do herói (`App.jsx:11827`),
+  que faz o bônus dobrar no crítico e escalar pela resistência. O bônus é lido
+  **antes** de `d(4)`, então nenhum dado a mais é consumido e a ordem da semente é
+  idêntica à de HEAD.
+- **A armadilha que o desenho tinha de resolver:** `arena.js` **já somava o bônus
+  por fora**, depois do golpe pronto, exatamente porque `turnoDosCompanheiros` não
+  conhecia os efeitos de quem bate. Somar dentro sem tirar de fora faria a arena
+  contar **duas vezes**. A compensação externa saiu junto, o número passou a
+  viajar na ação (`bonus`/`fontes`), e os dois comentários que passariam a mentir
+  foram reescritos.
+- **frontend:** o parágrafo de `buffDeCompanheiro` (`App.jsx:7974`) dizia que
+  `turnoDosCompanheiros` "nao toca em `efeitos`" e que "so `absorve` tem leitor".
+  As duas metades caíram no mesmo minuto. Reescrito preservando a decisão que
+  **continua viva** (só a frase do abrigo vai à tela) e dizendo o porquê novo:
+  hoje é **escolha de tela**, não consequência de um número inexistente.
+- **testes:** `teste-comp.mjs` **28 → 43** asserções (a suíte do órgão que mudou)
+  e `teste-arena.mjs` **99 → 106** (a metade que acontece depois da ação mora onde
+  estava a porta que somava). **12 sabotagens, 12 mordendo, nenhuma nascida
+  verde** — inclusive a asserção-chave da etapa: *a arena volta a somar por fora*
+  → 3 vermelhas.
+
+### Os números — antes e depois, na mesma versão e com a régua consertada
+
+| cenário `justo` (n=1000) | antes | depois | catraca B1 |
+|---|---|---|---|
+| vitória | **52,10%** | **52,10%** | 35–65% |
+| quedas | **1,790** | **1,790** | ≥ 1,2 |
+| PV do grupo | **25,88** | **25,88** | ≤ 35 |
+| 1ª queda | **4,300** | **4,300** | — |
+
+**Idênticas ao dígito, e nas quatro famílias independentes** (`aa` 51,10% · `bb`
+52,70% · `cc` 54,20%). A única coisa que se moveu no retrato inteiro foi
+`danoDesferido`: **261,53 → 261,54**. Folga mínima **3,45 margens** antes e
+depois — nada comprado, nada gasto. **A tabela não foi ajustada**, porque não
+houve o que corrigir: `BUFF_DA_HABILIDADE` e `ABSORCAO_DO_BUFF` estão como
+estavam, e o comentário que cita "o dobro da força ofensiva" continua verdadeiro.
+
+**A arena reagiu do tamanho que se esperava**, e para cima: o bônus agora dobra
+no crítico também lá (antes era somado depois do golpe pronto). Amplitude do
+retrato **11,9 → 11,8** pontos (teto 20), margem mais fina punho/`cc` **40,2% →
+40,1%** (5,1 pontos da parede), `teste-arena.mjs` **99 ok · 0 falhas** antes e
+depois. O ganho mínimo do buff no golpe, medido, subiu de **1,95 para 2,10** — a
+fatia de crítico da amostra — e **o piso continua 1**, nem afrouxado nem apertado.
+
+### A descoberta da etapa, e é ela que importa mais que o zero
+
+**O órgão morde, e está provado isolado e determinístico:** companheiro com
+efeito `+3` de `aplica: "dano"` sobe o dano médio por golpe de **11,566 para
+14,582** (+3,015). O número tem explicação fechada, e é ela que prova a convenção
+do herói: com 1054 críticos e 17993 acertos na amostra, dobrar no crítico prevê
+**3,015** e não dobrar preveria **2,857**. O mesmo efeito com o rótulo trocado
+para `"protecao"` deixa o dano em **11,566**, byte a byte — **o abrigo não vira
+espada**.
+
+**Então por que a régua não se moveu?** Porque o gargalo não era
+`turnoDosCompanheiros` — **é o nascimento do buff**. Em 300 combates `justo`:
+**3.571 golpes de companheiro e 2 com bônus ofensivo (0,06%)**. As 119 ações de
+`buff` que o piloto escolheu produziram, no instante do golpe, **2 presenças de
+`Bênção` contra 10 de `Escudo da Fé`** — que é `protecao`, bônus 0, e que
+`efeitoNoGolpe` veta com razão. No `duro`, **zero**. No `brando`, 66 de 1.828.
+**A metade ofensiva quase nunca chega a existir na mesa dura.**
+
+- **decisões médias tomadas:**
+  - **Somar em `danoBase`, antes do dado, e não depois** — motivo: é a convenção
+    do herói (`App.jsx:11827`), e a lei da simetria é "como o defensivo já soma",
+    não "de um jeito novo". O preço é o bônus dobrar no crítico também na arena;
+    medido, é um décimo de ponto de amplitude, e está no diário para ninguém
+    precisar descobrir sozinho.
+  - **Tirar a compensação externa de `arena.js` no mesmo commit** — motivo: sem
+    isso a arena contaria duas vezes, e a etapa nasceria com um defeito que a
+    catraca de equilíbrio pegaria só de lado. A asserção que impede a volta dela
+    é a mais importante da etapa (sabotagem 6, 3 vermelhas).
+  - **Não ajustar `BUFF_DA_HABILIDADE`** — motivo: a régua não pediu. Mexer numa
+    tabela que a medição aprovou seria rebalancear às cegas.
+  - **Corrigir sete citações de versão antes do commit** — motivo: o `regente`
+    tomou a v9.246 com B2 em voo, e as mãos tinham escrito v9.246 nos cabeçalhos.
+- **o que ficou:** **a Fase B fecha aqui** (B1 · B1b · B2). E ela fecha deixando
+  um item novo e honesto na pauta: **o mecanismo está armado e hoje custa zero,
+  mas no dia em que o companheiro firmar ofensiva com regularidade ele vale até
+  +2 por golpe** — e a escada de B1b diz que +2 leva a vitória a 58,4% e que o
+  dente do PV sai da margem já em +1. Quem fizer a ofensiva nascer de verdade
+  **terá de reabrir `BUFF_DA_HABILIDADE`**. Fica também uma pergunta de tela para
+  a pessoa: em Uma Vida ninguém narra o `bonus`/`fontes` (só a arena o faz, no
+  Duelo) — o jogador sente pelo dano maior, e anunciar "+N" seria gameplay
+  visível, logo dela.
+
+---
 ## 14/09 19:25 · v9.245 · B1b · a régua se corrige antes de medir · commit `2a818f9`
 
 - **estado inicial:** árvore limpa, HEAD `41f0faa`, VERSÃO v9.243, `npm test`

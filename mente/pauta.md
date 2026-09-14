@@ -504,7 +504,7 @@ equilíbrio só existe para a arena.
   lido. **Sabotagem 1 subiu de nv7 para nv8** (a de nv7 parou de morder — 36,4%
   contra o piso de 35%); o piso não se moveu, e a resolução perdida (dois níveis,
   não um) está escrita. Folga mínima **3,45 margens**, não comprada de volta.
-- [ ] **B2 · a simetria fechada, se a régua deixar** · de: pessoa · 14/09
+- [x] **B2 · a simetria fechada** · feito em v9.247 (`HASH`), 14/09 — **e a Fase B fecha aqui**
   `turnoDosCompanheiros` aprende a ler `efeitos`, e o bônus ofensivo passa a
   somar como o defensivo já soma. **A régua decide**: se o grupo ficar forte
   demais, o trabalho da etapa é ajustar a tabela até ficar justo — e o diário
@@ -518,6 +518,19 @@ equilíbrio só existe para a arena.
   dente mais sensível (+1 já sai da margem) enquanto a vitória é o mais estável.
   (c) **A divergência da absorção foi resolvida e não atrapalha mais**: a absorção
   inteira vale 3,6 pontos de vitória, e dobrá-la custa 1,2 — menos de uma margem.
+
+  **O VEREDITO (v9.247):** é lícito, é justo, e **o preço medido é zero** — as
+  quatro métricas do `justo` saíram idênticas ao dígito (52,10% · 1,790 · 25,88 ·
+  4,300), nas quatro famílias, com a folga de 3,45 margens intacta.
+  `BUFF_DA_HABILIDADE` **não precisou de ajuste**. `turnoDosCompanheiros` soma em
+  `danoBase` antes do dado (a convenção do herói: dobra no crítico), e a
+  compensação externa de `arena.js` saiu no mesmo commit — sem isso a arena
+  contaria **duas vezes**. Arena: amplitude 11,9 → 11,8, margem mais fina 40,2 →
+  40,1%, `teste-arena.mjs` 99 → 106 ok. **12 sabotagens, 12 mordendo.** O órgão
+  morde isolado (+3,015 de dano médio por golpe, contra 2,857 se não dobrasse no
+  crítico), e o abrigo não vira espada (11,566, byte a byte).
+  **Por que o zero:** o gargalo não era este — é o nascimento do buff, e ele virou
+  item novo em "Aberto".
 
 ### Fase F — as quatro famílias que ainda prometem
 Decisão da pessoa (14/09): *"todas devem cumprir o que prometem."*
@@ -1017,6 +1030,29 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   etapa é a **T3 · a salvaguarda no fim do turno**; T2 fechou em v9.239.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **a ofensiva do companheiro quase nunca nasce** · pesado · de: medição de B2 · 14/09
+  B2 fechou a simetria e o preço medido foi **zero** — e o motivo é este, medido em
+  300 combates `justo`: **3.571 golpes de companheiro, 2 com bônus ofensivo
+  (0,06%)**. As 119 ações de `buff` do piloto produziram 2 presenças de `Bênção`
+  (`dano`) contra 10 de `Escudo da Fé` (`protecao`, bônus 0, vetado com razão por
+  `efeitoNoGolpe`). No `duro`, **zero**; no `brando`, 66 de 1.828. O caminho
+  `buffDeCompanheiro` exige `aflicaoDe(...)` achar portador com `alvo !== "alvo"`
+  **e** `res.cond.tipo === "bom"`, e quando algo nasce `firmarEfeito` costuma dar
+  o lugar à defensiva.
+  **É pesado, e por número:** fazer a ofensiva nascer com regularidade vale até
+  **+2 por golpe**, e a escada de B1b diz que +2 leva a vitória a **58,4%** e que o
+  dente do PV sai da margem **já em +1**. Ou seja: mexer aqui **obriga a reabrir
+  `BUFF_DA_HABILIDADE`**, e muda o que o jogador vive em campanha viva. A régua de
+  B1/B1b mede o antes e o depois sem trabalho novo.
+
+- [ ] **o buff do companheiro é mudo em Uma Vida** · pesado · de: achado de B2 · 14/09
+  Desde a v9.247 a ação do companheiro carrega `bonus`/`fontes`, e **só a arena os
+  narra** (a frase "pesa no golpe", no Duelo). Em Uma Vida ninguém os lê: o jogador
+  sente o buff só pelo dano maior. O comentário de `buffDeCompanheiro`
+  (`App.jsx:7974`) foi reescrito em B2 para dizer que isso hoje é **escolha de
+  tela**, não herança — mas a escolha continua sendo da pessoa: anunciar "+N de
+  dano" ali é gameplay visível, e esbarra em "o sistema não fala de si mesmo".
 
 - [ ] **três condições que o grimório promete e o catálogo não tem** · leve · de: backend (achado de T4) · 14/09
   Restauração Menor diz *"Tira uma doença, uma cegueira, um veneno, uma surdez"* e

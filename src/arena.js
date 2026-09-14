@@ -47,8 +47,11 @@
      duelista segurava duas concentrações ao mesmo tempo). O prazo sai de
      `BUFF_DA_HABILIDADE` e o teto de `CONCENTRACAO_DA_MAGIA`; nenhum número
      de regra mora aqui.
-   - o BÔNUS NO GOLPE por `bonusDeDano` / `bonusDeArma` (combos.js), que
-     são os leitores que respeitam o escopo físico/mágico.
+   - o BÔNUS NO GOLPE por `bonusDeDano` / `bonusDeArma` (combos.js), os
+     leitores que respeitam o escopo físico/mágico. Desde a v9.247 (B2)
+     quem os chama é `turnoDosCompanheiros`, e não mais a arena: o bônus
+     nasce dentro de `danoBase` e chega aqui já no golpe, junto de
+     `bonus`/`fontes` para a frase. A arena narra, não soma.
    - o PRAZO por `tickEfeitos` (regras-jogo.js) e `expirarGuardas`
      (habilidades.js), uma vez por rodada — buff que não vence é buff
      eterno, e buff eterno é regra nova pela porta dos fundos.
@@ -70,7 +73,6 @@
 import { turnoDosCompanheiros, defesaDe, testeConcentracao } from "./combate.js";
 import { firmarEfeito, efeitoDeBuff, absorverDano, efeitoEmConcentracao, quebrarConcentracao } from "./efeitos.js";
 import { guardaDe, erguerGuarda, expirarGuardas } from "./habilidades.js";
-import { bonusDeDano, bonusDeArma } from "./combos.js";
 import { tickEfeitos, atributoEfetivo } from "./regras-jogo.js";
 import { usarConsumivel } from "./pocoes.js";
 import { montarPronto, PRONTOS } from "./prontos.js";
@@ -219,20 +221,24 @@ function aplicarAcoes(acoes, eu, outro, rodada) {
     if (!r) continue;
     if (a.custo) eu.mana = Math.max(0, (eu.mana || 0) - a.custo);
     if (r.dano > 0) {
-      /* O BUFF ENTRA NO NÚMERO — e entra DEPOIS do crítico. Quem rolou o
-         golpe foi `turnoDosCompanheiros`, que não conhece os efeitos de
-         quem bate; a arena só vê o resultado pronto. Somar antes exigiria
-         duplicar `resolverAtaque` aqui dentro, que é exatamente a regra
-         copiada que a lei-mãe proíbe. Então o bônus não é dobrado pelo
-         crítico: sai mais barato que na mesa da campanha, e está escrito
-         para ninguém precisar descobrir isso sozinho.
-         Quem soma são os leitores da casa (combos.js): `bonusDeDano`
-         respeita o escopo (fúria física não levanta feitiço) e
-         `bonusDeArma` é físico por definição — o cajado do mago ainda é um
-         pedaço de pau. */
-      const b = a.tipo === "habilidade" ? bonusDeDano(eu, a.habilidade) : bonusDeArma(eu);
-      const dano = r.dano + b.bonus;
-      const peso = b.bonus > 0 ? ` — ${b.fontes.join(", ")} pesa${b.fontes.length > 1 ? "m" : ""} no golpe` : "";
+      /* O BUFF JÁ VEIO DENTRO DO NÚMERO (v9.247 · B2), e a arena não soma
+         mais nada. Até a v9.245 ela somava AQUI, por fora, porque
+         `turnoDosCompanheiros` não conhecia os efeitos de quem bate — e o
+         preço estava escrito nesta mesma caixa: o bônus não dobrava no
+         crítico, e a arena cobrava dele mais barato que a mesa da campanha.
+
+         B2 fechou a simetria na origem: quem lê `bonusDeDano`/`bonusDeArma`
+         agora é o próprio `turnoDosCompanheiros`, que os põe em `danoBase`
+         antes do dado — como o herói sempre fez. Manter a soma daqui passaria
+         a contar DUAS VEZES o mesmo bônus, e é por isso que ela saiu junto.
+
+         O QUE FICOU É A FRASE, e ela custa zero: o número viaja na ação
+         (`a.bonus`/`a.fontes`, postos lá por quem rolou o golpe), em vez de
+         ser recalculado por um segundo leitor. Quem joga continua vendo de
+         onde veio o peso; a arena só não decide mais quanto ele vale. */
+      const dano = r.dano;
+      const fontes = a.fontes || [];
+      const peso = (a.bonus || 0) > 0 && fontes.length ? ` — ${fontes.join(", ")} pesa${fontes.length > 1 ? "m" : ""} no golpe` : "";
       /* A ABSORÇÃO MORDE AQUI (v9.233), e morde no ALVO — este é o único
          ponto da arena em que dano vira PV, e o abrigo é de quem apanha, não
          de quem bate. Vem DEPOIS do bônus do golpe de propósito: o escudo
