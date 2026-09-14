@@ -51,3 +51,25 @@ Leia o `CLAUDE.md` primeiro. As leis que mais pesam para você:
 preview — e lembre: **HMR mente depois de rename** (build limpo, mas a aba cai
 no `LimiteErro`); abra aba nova para confirmar. Confie na árvore de
 acessibilidade, não na foto.
+
+## O save de uma pessoa não é material de teste
+
+O `localStorage` deste navegador tem partidas **de verdade** — cada modo no seu
+espaço (`taverna_v1`, `taverna_rapida_v1`, `taverna_duelo_v1`). Numa conferência
+viva você injeta ficha sintética nesses mesmos espaços, e a memória da casa já
+avisa que **autosave sobrescreve injeção**: injete só com o jogo desmontado, e
+restaure idem. Isso corta nos dois sentidos — o autosave também sobrescreve o
+save da pessoa com o seu boneco de teste. Já aconteceu (C2, `taverna_rapida_v1`).
+
+Então, **antes de tocar em qualquer espaço de save**:
+
+1. **Leia e guarde** o valor de cada chave que vai tocar (para um arquivo no
+   scratchpad, não só numa variável da página — a aba pode recarregar).
+2. Injete, confira, meça.
+3. **Restaure** o valor guardado — com o jogo desmontado, como na injeção — e
+   **confirme por leitura** que voltou (ou que a chave voltou a não existir,
+   se antes não existia).
+4. Diga no relato quais chaves você tocou e que restaurou.
+
+Se não der para restaurar, **pare e diga** — perder a partida de alguém é pior
+que deixar a conferência viva por fazer.

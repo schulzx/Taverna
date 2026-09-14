@@ -161,10 +161,11 @@ sec("5. os pilotos da casa lutam como gente da casa (lei x)");
 
    - DENTE 1, estabilidade entre famílias. Quatro famílias de sementes
      INDEPENDENTES (o parâmetro `prefixo` que A4 abriu em `roundRobin`),
-     cada uma do mesmo tamanho da amostra antiga, e os oito dentro da
-     faixa em TODAS. "rr" continua sendo uma delas, de propósito: assim o
-     retrato histórico do diário (flecha 61,9 etc.) segue comparável ao
-     dígito. As outras três foram escolhidas ANTES de medir.
+     e os oito dentro da faixa em TODAS. "rr" continua sendo uma delas,
+     de propósito: assim o retrato histórico do diário (flecha 61,9 etc.)
+     segue comparável ao dígito. As outras três foram escolhidas ANTES de
+     medir. O TAMANHO de cada família mudou em v9.236 — ver O INSTRUMENTO
+     ERA CEGO DEMAIS, na tabela, logo abaixo de `sementesPorFamilia`.
    - DENTE 2, o retrato de baixa variância. Uma amostra grande (120
      sementes/par), os oito na faixa E um teto de AMPLITUDE. Este é o
      dente que morde o caso que a faixa sozinha não pega: um pronto que
@@ -183,6 +184,43 @@ sec("5. os pilotos da casa lutam como gente da casa (lei x)");
    fica vermelha três vezes: 67,6% em "aa", 66,2% em "bb" e amplitude
    22,1 pts no retrato. Com +14 de vida e +4/+3 de atributo, `sombra` vai
    a 94–97% e as quatro famílias mordem de uma vez.
+
+   ---------------- A SABOTAGEM, REFEITA (v9.236 · C2b) ----------------
+
+   POR QUE REFAZER. A família passou de 30 para 120 sementes (ver O
+   INSTRUMENTO ERA CEGO DEMAIS, na tabela). Um instrumento mais preciso que
+   deixasse passar o que o antigo pegava seria afrouxamento disfarçado, e a
+   única forma de saber é rodar a sabotagem contra os dois.
+
+   A ESCADA INTEIRA, sobre a árvore de C2b, `sombra` ganhando vida em
+   `prepararDuelista`. Vermelhos da suíte, instrumento de 30 → de 120:
+
+     +2   1 → 0      +3   1 → 0
+     +5   3 → 2      +8   7 → 6
+
+   O VERMELHO QUE SOME é sempre o MESMO: `[cc] punho`, o falso positivo que
+   esta etapa veio consertar — ele aparece na árvore SÃ, com a mesma
+   intensidade, e aparece igual em toda árvore sabotada. Um vermelho que
+   acende com e sem a sabotagem não é detecção: é o ruído da página. Descontado
+   ele, os dois instrumentos pegam exatamente as mesmas sabotagens, e os
+   vermelhos do de 120 são todos ATRIBUÍVEIS — em +5, `[aa]` sombra 66,0% e
+   amplitude 23,1; em +8, sombra fora da faixa nas quatro famílias e no
+   retrato, mais amplitude 28,3.
+
+   E A SABOTAGEM DO DIÁRIO, na árvore em que ela foi registrada (a de antes
+   de C2b): +3 de vida fica VERMELHA nos dois instrumentos, pelo mesmo dente e
+   com o mesmo dígito — amplitude 20,8 no retrato. O retrato não mudou de
+   tamanho, então o dente 2 dá o mesmo veredito nos dois. Subir a família não
+   tirou nem pôs nada aqui.
+
+   O QUE A CONFERÊNCIA DESCOBRIU DE PASSAGEM, e NÃO é conserto de instrumento
+   — é assunto de quem decide equilíbrio. O aperto da sabotagem +3 vem
+   encolhendo sozinho a cada ciclo. Em A4 (v9.225) ela dava três vermelhos; na
+   árvore de hoje antes de C2b, um (amplitude 20,8); depois de C2b, nenhum — a
+   amplitude caiu para 19,6, a 0,4 pt do teto. Nenhum limiar mudou e nenhum
+   pronto foi reajustado: é a amplitude do retrato sendo RESORTEADA a cada
+   mexida na arena, exatamente o que `tetoDeAmplitude` já avisava que acontece.
+   Fica escrito para não se descobrir de novo daqui a três fases.
    ============================================================ */
 sec("6. A CATRACA DO EQUILÍBRIO — teste, não intenção");
 {
@@ -196,8 +234,62 @@ sec("6. A CATRACA DO EQUILÍBRIO — teste, não intenção");
     /* "rr" é o padrão de `roundRobin` e o retrato do diário; as outras
        três são famílias independentes, escolhidas antes da medição. */
     familias: ["rr", "aa", "bb", "cc"],
-    sementesPorFamilia: 30,
+    /* ---------- O INSTRUMENTO ERA CEGO DEMAIS (v9.236 · C2b) ----------
+       ERA 30. É 120. NADA MAIS MUDOU nesta tabela: piso 35, teto 65, as
+       mesmas quatro famílias, o mesmo retrato, o mesmo teto de amplitude.
+       O que subiu foi a PRECISÃO do estimador, nunca a severidade do dente.
+
+       O QUE ACONTECEU. C2b pôs um d20 de concentração no meio do golpe
+       (`testeConcentracao`, em `arena.js`). `punho` — que não tem uma magia
+       na ficha nem um efeito de concentração para segurar, e portanto não
+       pode ser afetado pela regra nova — caiu de 36,2% para 32,9% na família
+       "cc", e a catraca ficou vermelha.
+
+       A PROVA DE QUE É RUÍDO, E NÃO DESEQUILÍBRIO. Uma cópia da arena de C2b
+       fora da árvore, com o SAQUE mantido e toda a consequência de jogo
+       apagada (nenhum efeito quebra, nenhuma linha nasce), mede `punho` em
+       "cc" nos MESMOS 32,9%. A sorte da arena é um fluxo global travado por
+       semente: um saque a mais reembaralha tudo o que vem depois dele. O
+       retrato de baixa variância, que não sente isso, não se move — `punho`
+       45,4 → 45,6.
+
+       A CEGUEIRA, MEDIDA. 40 famílias independentes de 30 sementes/par sobre
+       a arena sã: σ por pronto entre 3,3 e 4,3 pts, e 1 família em 40 já traz
+       um pronto fora da faixa sem nada ter quebrado — com quatro famílias por
+       rodada, ~10% de chance de um vermelho falso a cada mexida no código. As
+       mesmas 20 famílias a 120 sementes/par: σ entre 1,5 e 2,2, e 0 em 20 com
+       qualquer pronto fora. O pronto mais perto da parede é `punho`, com
+       valor estrutural ~43: a 30 sementes o piso está a 2,0σ dele, a 120 está
+       a 3,3σ. Era o instrumento que não enxergava, e a régua que ele lê não
+       mudou uma casa decimal.
+
+       POR QUE 120, E NÃO UM NÚMERO NOVO. É o número que esta mesma tabela já
+       escolheu duas linhas abaixo, com o motivo já escrito lá: é o tamanho em
+       que a casa decidiu que uma amostra desta arena é "de baixa variância".
+       As famílias herdam essa fronteira em vez de inventar uma segunda.
+
+       POR QUE NÃO TROCAR A FAMÍLIA "cc". É o outro caminho, e ele é o
+       afrouxamento disfarçado que esta catraca existe para impedir. As três
+       famílias irmãs foram escolhidas ANTES de medir, e está escrito acima
+       de propósito; trocar justamente a que saiu vermelha é escolher a
+       semente DEPOIS de ver o resultado — a família nova ficaria verde
+       porque foi catada para ficar. O dente mediria a sorte do escolhedor.
+
+       O QUE ISTO NÃO CONSERTA, e é honesto dizer: o dente 1 não pega
+       sabotagem que deixe todo mundo DENTRO de 35–65 — nunca pegou, e a
+       própria A4 escreveu isso ao registrar que `sombra` com +2 de vida
+       passa. Quem pega esse caso é o dente 2, a amplitude, e ele não foi
+       tocado aqui. */
+    sementesPorFamilia: 120,
     familiaDoRetrato: "retrato",
+    /* O RETRATO NÃO CRESCEU JUNTO, e o motivo é o oposto do de cima: aqui
+       mais precisão AFROUXARIA. A amplitude é um máximo menos um mínimo, e
+       ruído infla essa distância — o teto de 20 foi calibrado contra a
+       distribuição de amplitudes A 120 SEMENTES/PAR (13,0 ± 2,3, ver
+       `tetoDeAmplitude`). Uma amostra maior mediria uma amplitude menor pelo
+       mero sumiço do ruído, e daria folga nova debaixo do mesmo teto sem
+       ninguém ter equilibrado nada. O tamanho do retrato é parte da
+       calibração do dente 2 e fica onde está. */
     sementesDoRetrato: 120,
     /* O TETO DE AMPLITUDE, em pontos percentuais (topo − fundo do
        retrato). A FOLGA, declarada: o retrato mede hoje 15,7 pts, então
@@ -243,7 +335,11 @@ sec("6. A CATRACA DO EQUILÍBRIO — teste, não intenção");
      quem está mais perto da parede para a próxima etapa saber o que arrisca
      antes de medir. Não há asserção aqui de propósito: transformar a folga
      em limiar seria um segundo teto por cima do 35–65, e o 35–65 é a lei.
-     Medido em v9.233: `punho` na família "cc" com 36,2% — 1,2 pt do piso. */
+     Medido em v9.233 (famílias de 30): `punho` em "cc" com 36,2% — 1,2 pt do
+     piso. Medido em v9.236 (famílias de 120): o MESMO `punho` na MESMA "cc",
+     agora com 38,9% — 3,9 pt do piso. O pronto não mudou e nenhuma regra o
+     tocou; os 2,7 pts que apareceram são o ruído do estimador antigo indo
+     embora. É o retrato desta linha ficando honesto, não a parede andando. */
   if (maisFina) {
     console.log(`  ··  margem mais fina das 4 famílias: ${maisFina.id} em "${maisFina.fam}" com ${maisFina.pct.toFixed(1)}% — ${maisFina.folga.toFixed(1)} pt da parede mais próxima (faixa ${faixaEmPct})`);
   }
@@ -874,6 +970,176 @@ sec("9. o duelista ergue guarda de verdade (P2)");
   /* determinismo por semente, nesta amostra e não só na do topo da suíte */
   t("mesma semente = a mesma queda da sonda, linha a linha",
     JSON.stringify(A.simularQueda(guardiao, agressor, { semente: "p2|0" })) === JSON.stringify(A.simularQueda(guardiao, agressor, { semente: "p2|0" })));
+}
+
+/* ============================================================
+   10. A CONCENTRAÇÃO CAI NA ARENA (C2b · v9.236)
+
+   O BURACO QUE ESTA SEÇÃO FECHA. A seção 18 de `teste-efeitos.mjs` prova
+   que o efeito NASCE segurando: `efeitoDeBuff` pergunta ao grimório, e
+   Bênção e Escudo da Fé entram na ficha com `concentracao`. Ninguém
+   provava a outra ponta — que a ARENA cobra isso, que o golpe derruba o
+   que o duelista segurava. A regra estava escrita nas duas pontas e vazia
+   no meio, que é exatamente a doença que a Fase A veio matar e a Fase C
+   veio fechar para a concentração.
+
+   POR QUE SOBRE QUEDAS DE VERDADE, e não sobre ficha sintética. A frente
+   dispara sozinha na mesa dos oito — Remendo e Voto firmam Bênção e
+   apanham — e medir o motor pela amostra que o jogo percorre é mais
+   honesto que montar um caso que só existe no teste. A sonda sintética é
+   o recurso de quando a amostra real não chega lá (é o que as seções 7 e
+   9 declaram, por escrito, sobre a guarda); aqui ela chega.
+
+   O PREFIXO DE SEMENTE É PRÓPRIO ("c2b|"), como nas seções 7 e 8: nenhuma
+   delas sorteia, e as três medem o mesmo motor por amostras independentes.
+
+   O QUE ELA COBRA, e por que cada dente existe:
+
+   - QUE ACONTECE (piso de amostra). Sem ele, uma arena que parasse de
+     testar concentração mediria zero escape e passaria verde por ausência
+     — o mesmo buraco que `golpesMinimosDaSonda` tapou na seção 7.
+   - QUE O NÚMERO SAI DA TABELA. O CD da linha é conferido contra
+     `RESISTENCIA_DA_CONCENTRACAO` (combate.js) E contra o dano da linha
+     ANTERIOR: `max(cdMinima, floor(dano / divisorDoDano))`. É isto que
+     prova a ordem escrita em `arena.js` — o teste vem DEPOIS do golpe e
+     com o dano que CHEGOU, o que sobrou da absorção. Uma arena que
+     testasse pelo golpe cheio erraria o CD aqui.
+   - QUE A QUEBRA QUEBRA. Nenhum escape acontece sem o dono ter firmado
+     AQUELA magia antes, e nenhum acontece duas vezes sem refirmar. Se
+     `quebrarConcentracao` narrasse sem tirar o efeito da ficha, o golpe
+     seguinte derrubaria a mesma magia outra vez e esta linha ficaria
+     vermelha.
+   - QUE SÓ QUEM ESTÁ DE PÉ PERDE. Escape nunca é a última linha da queda:
+     o golpe que mata encerra a cena, e magia escapando por cima do morto
+     seria a arena narrando contabilidade depois do fim.
+   - QUE A FRASE É A DE C2. O molde vem de `testeConcentracao` e não de
+     uma string copiada para cá — a asserção pega a `linha` que o módulo
+     devolve, passa pela mesma secagem da arena e cobra que ela case com o
+     mesmo regex. Prosa nova de um lado só fica vermelha.
+   - QUE O SISTEMA NÃO FALA DE SI MESMO. `texto` ("Concentração: d20+..."),
+     a voz de depuração, nunca vaza para a linha da queda. Nenhuma linha da
+     arena diz o nome do mecanismo.
+
+   PROVADO POR SABOTAGEM, não prometido. Cinco cópias de `arena.js` fora da
+   árvore, uma por dente, e cada uma acende o dente que lhe cabe e nenhum
+   outro — nenhuma asserção desta seção passa de qualquer jeito:
+
+   - a chamada de `testeConcentracao` removida: 0 escapes em 423 quedas,
+     vermelho no PISO;
+   - a linha narrada sem `quebrarConcentracao` tirar o efeito: 21 escapes, e
+     um deles é a MESMA Bênção caindo duas vezes sem refirmar — vermelho em
+     "a quebra TIRA o efeito";
+   - a guarda `outro.vida > 0` derrubada: 24 escapes, 4 deles encerrando a
+     queda — vermelho em "só quem está de pé perde";
+   - o dano solto da tabela (`ab.dano * 4` no teste): 39 escapes, 36 com a CD
+     fora de `max(cdMinima, dano/divisorDoDano)` — vermelho na CD;
+   - a prosa reescrita à mão em vez de `tc.linha`: vermelho DUAS vezes, no
+     piso (a frase de C2 sumiu, 0 escapes reconhecidos) e na voz de
+     depuração (20 linhas da cena passaram a dizer o nome do mecanismo).
+   ============================================================ */
+sec("10. a concentração cai na arena (C2b)");
+{
+  const CM = await import(RAIZ + "combate.js");
+
+  const MEDIDA_DA_QUEBRA = {
+    sementesPorPar: 6,
+    semente: (a, b, s) => `c2b|${a}|${b}|${s}`,
+    /* O PISO DA AMOSTRA. Medido em v9.236: 20 escapes em 427 quedas — a
+       quebra é rara de propósito (a CD mínima é 10 e o vigor entra no
+       rolo), e o piso guarda a ordem de grandeza, não o dígito. 5 é
+       "acontece mais de uma vez por acaso" sem ficar colado nos 20 de
+       hoje: o fluxo de sorte é reembaralhado por qualquer mexida na arena,
+       e um piso colado no dígito ficaria vermelho na primeira brisa. */
+    pisoDeEscapes: 5,
+  };
+
+  /* O molde da linha, com os dois números que o jogador pagou para ler */
+  const ESCAPA = /^(.+?) — (.+?) escapa dos dedos — o corpo aguentou (-?\d+), e era preciso (\d+)$/;
+  const SO_A_FRASE = /^(.+?) escapa dos dedos — o corpo aguentou (-?\d+), e era preciso (\d+)$/;
+  const DANO = / \(−(\d+)\)$/;
+  const FIRMA = /^(.+?) firma (.+?) · /;
+  const MECANISMO = /[Cc]oncentra/;
+  /* a mesma secagem que `arena.js` aplica antes de empurrar a linha: come o
+     enfeite da frente e o ponto final */
+  const secar = (l) => String(l == null ? "" : l).replace(/^[^\p{L}\p{N}]+/u, "").replace(/\.$/, "");
+
+  const q = {
+    quedas: 0, escapes: 0, cdForaDaTabela: 0, semGolpeAntes: 0,
+    semFirmaAntes: 0, ultimaLinha: 0, mecanismoNaCena: 0, manteveEFalou: 0,
+  };
+  const t0 = Date.now();
+  for (let i = 0; i < P.PRONTOS.length; i++) {
+    for (let j = i + 1; j < P.PRONTOS.length; j++) {
+      const a = P.PRONTOS[i].id, b = P.PRONTOS[j].id;
+      for (let s = 0; s < MEDIDA_DA_QUEBRA.sementesPorPar; s++) {
+        for (const queda of A.duelarProntos(a, b, { semente: MEDIDA_DA_QUEBRA.semente(a, b, s) }).quedas) {
+          q.quedas++;
+          const ls = queda.linhas.slice(1);
+          /* quem está segurando o quê, lido SÓ pelas linhas — é o que o
+             jogador vê, e é a única prova de que a ficha mudou junto */
+          const segurando = new Map();
+          for (let k = 0; k < ls.length; k++) {
+            const l = ls[k];
+            if (MECANISMO.test(l)) q.mecanismoNaCena++;
+            const f = l.match(FIRMA);
+            if (f) segurando.set(f[1], f[2]);
+            const m = l.match(ESCAPA);
+            if (!m) continue;
+            const [, dono, magia, rolo, cd] = m;
+            q.escapes++;
+            /* a linha só nasce quando o teste FALHOU: rolo que alcança a CD
+               e ainda assim narra seria a arena derrubando quem aguentou */
+            if (Number(rolo) >= Number(cd)) q.manteveEFalou++;
+            const antes = (ls[k - 1] || "").match(DANO);
+            if (!antes) q.semGolpeAntes++;
+            else if (Number(cd) !== Math.max(CM.RESISTENCIA_DA_CONCENTRACAO.cdMinima,
+              Math.floor(Number(antes[1]) / CM.RESISTENCIA_DA_CONCENTRACAO.divisorDoDano))) q.cdForaDaTabela++;
+            if (segurando.get(dono) !== magia) q.semFirmaAntes++;
+            segurando.delete(dono);
+            if (k === ls.length - 1) q.ultimaLinha++;
+          }
+        }
+      }
+    }
+  }
+
+  console.log(`  ··  ${q.escapes} magias escaparam dos dedos em ${q.quedas} quedas (os 28 pares dos oito, ${MEDIDA_DA_QUEBRA.sementesPorPar} sementes cada) — ${Date.now() - t0}ms`);
+
+  t(`a arena derruba concentração de verdade na mesa dos oito (piso ${MEDIDA_DA_QUEBRA.pisoDeEscapes})`,
+    q.escapes >= MEDIDA_DA_QUEBRA.pisoDeEscapes, `${q.escapes} escapes em ${q.quedas} quedas`);
+
+  t("toda quebra vem DEPOIS de um golpe que tirou PV, e a CD é a da tabela",
+    q.semGolpeAntes === 0 && q.cdForaDaTabela === 0,
+    `${q.semGolpeAntes} sem golpe antes · ${q.cdForaDaTabela} com CD fora de max(${CM.RESISTENCIA_DA_CONCENTRACAO.cdMinima}, dano/${CM.RESISTENCIA_DA_CONCENTRACAO.divisorDoDano})`);
+
+  t("a quebra TIRA o efeito — ninguém perde o que não firmou, nem perde duas vezes sem refirmar",
+    q.semFirmaAntes === 0, `${q.semFirmaAntes} escapes sem firma correspondente`);
+
+  t("só quem está de pé perde o que segurava (escape nunca encerra a queda)",
+    q.ultimaLinha === 0, `${q.ultimaLinha} escapes na última linha`);
+
+  t("a linha só nasce quando o corpo NÃO aguentou", q.manteveEFalou === 0, `${q.manteveEFalou} com rolo ≥ CD`);
+
+  /* A FRASE VEM DO MÓDULO, e esta é a amarra. Se a arena reescrever a prosa
+     por conta própria, ou se C2 mudar a dela, os dois regexes deixam de casar.
+     `testeConcentracao` rola um d20, então a sorte é TRAVADA para a chamada —
+     o mesmo recurso da arena (`comSorteTravada`), e pelo mesmo motivo: a lei
+     da casa é determinismo, e um laço "role até falhar" seria a suíte
+     dependendo de sorte para provar prosa. Com `Math.random` em 0 o d20 dá 1,
+     o rolo fica −4 contra CD 15, e a quebra é certa em toda máquina. */
+  const doModulo = (() => {
+    const original = Math.random;
+    Math.random = () => 0;
+    try { return CM.testeConcentracao(30, -5, "Bênção"); } finally { Math.random = original; }
+  })();
+  t("a frase da arena é a de C2, saída de testeConcentracao e não copiada",
+    !doModulo.manteve && SO_A_FRASE.test(secar(doModulo.linha)),
+    `o módulo diz: ${secar(doModulo.linha)}`);
+
+  /* O SISTEMA NÃO FALA DE SI MESMO: `texto` é voz de depuração e fica na 🎲 */
+  t("a voz de depuração não vaza — nenhuma linha da arena diz o nome do mecanismo",
+    q.mecanismoNaCena === 0 && MECANISMO.test(doModulo.texto),
+    `${q.mecanismoNaCena} linhas na cena (e o \`texto\` do módulo, que fica fora dela, continua dizendo)`);
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

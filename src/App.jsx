@@ -6556,6 +6556,55 @@ export default function Taverna() {
     } catch (e) { calou("abrigo", e); return { pers: quem, dano, linha: "" }; }
   };
 
+  /* ------------- O QUE ELE SEGURAVA CAI AQUI (v9.236 · C2b) -------------
+     A irma de `passarPeloAbrigo`, e nasce pelo mesmo motivo: sao TRES sitios
+     onde o companheiro apanha, e tres try/catch soltos sao tres chances de um
+     deles nascer diferente — a forma de bug que esta casa ja pagou. Daqui sai
+     so FIACAO: quem decide e `testeConcentracao` (combate.js) e quem escreve a
+     frase e ele. O App nao monta uma silaba — a linha e a MESMA da v9.235, a
+     que o heroi ja le, voz de mundo e com os dois numeros dentro.
+
+     POR QUE ISTO SO EXISTE A PARTIR DE C2b. Ate a v9.235 o efeito do
+     companheiro nascia mudo: `efeitoDeBuff` nao perguntava ao grimorio, entao
+     `efeitoEmConcentracao` nunca achava nada num companheiro e chamar o teste
+     aqui seria fiacao para um caso impossivel. Desde que o buff pergunta ao
+     catalogo, o Clerigo do grupo firma Bencao e Escudo da Fe de verdade — e
+     sem esta porta as duas durariam o prazo inteiro sem ninguem poder derruba-
+     las, que e a promessa escrita nas duas pontas e vazia no meio.
+
+     DEPOIS DO ABRIGO, E COM O DANO QUE CHEGOU. Quem chama passa o que SOBROU
+     da absorcao: o escudo que comeu a batida ja pagou por ela, e testar pelo
+     golpe cheio faria o abrigo derrubar a si mesmo. E a ordem de `arena.js` e
+     a mesma da mesa do heroi, onde o teste vem depois de o dano virar PV.
+
+     SO DE PE, E SO COM DANO — e isso e de quem CHAMA, nao daqui: cada sitio
+     sabe onde mora a vida do seu alvo (a mesma lista de grupo tem tres
+     autoridades diferentes ao longo do arquivo), e centralizar essa leitura
+     aqui obrigaria a porta a conhecer os tres caminhos. O que a porta garante
+     e o resto: dano zero nao testa, e quem nao segura nada volta sem linha.
+
+     O NOME DO DONO E COISA DE TELA, como no abrigo: o modulo nao sabe de quem
+     e a mesa. Entra pelo mesmo molde (o icone, o nome, o travessao) para as
+     duas linhas do companheiro sairem irmas na cena.
+
+     `linha` VAZIA E O UNICO SINAL de que nada aconteceu — sem magia segurada,
+     sem dano ou com o teste aguentado, o sitio nem toca na ficha. E assim que
+     a regressao de quem nao conjura fica em zero sem ninguem precisar lembrar. */
+  const segurarOuPerder = (quem, dano, nome = "") => {
+    try {
+      if (!quem || !(dano > 0)) return { pers: quem, linha: "" };
+      const segurada = efeitoEmConcentracao(quem);
+      if (!segurada) return { pers: quem, linha: "" };
+      const tc = testeConcentracao(dano, atributoEfetivo(quem, "vigor"), segurada.nome);
+      if (tc.manteve) return { pers: quem, linha: "" };
+      return {
+        pers: quebrarConcentracao(quem, segurada.nome),
+        magia: segurada.nome,
+        linha: nome ? String(tc.linha).replace("💢 ", "💢 " + nome + " — ") : tc.linha,
+      };
+    } catch (e) { calou("concentracaoDoCompanheiro", e); return { pers: quem, linha: "" }; }
+  };
+
   const pessoasDaCena = () => {
     try {
       const p0 = fichaViva() || personagem || {};
@@ -11687,18 +11736,37 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
              fala na tela e atualizador que fala duas vezes. Do resultado so o
              `efeitos` entra na ficha — a vida vem do `old`, que e a viva. */
           const abrigos = new Map();
+          /* v9.236 (C2b): a quebra do companheiro sai na MESMA passagem, e pelo
+             mesmo motivo que o abrigo — conta antes do `mudarFicha`, porque
+             atualizador de estado que fala na tela e atualizador que fala duas
+             vezes. `abrA.dano` e `abrA.pers` valem com e sem abrigo (a porta
+             devolve o que entrou quando nao ha protecao), entao o teste ve o que
+             chegou ao corpo e a ficha ja vem com o escudo gasto: quebrar a
+             concentracao sobre a ficha velha devolveria o abrigo consumido.
+             E o heroi nao entra aqui: quem apanha da propria area e o grupo. */
+          const quebras = new Map();
           for (const al of pegosAli) {
             const dono = (pers.grupo || [])[al.i];
             if (!dono) continue;
             const abrA = passarPeloAbrigo(dono, meio, dono.nome || al.nome);
             if (abrA.linha) abrigos.set(al.i, abrA);
+            /* so quem fica de pe: a metade da area pode derrubar, e quem caiu
+               nao tem o que segurar */
+            if ((dono.vida || 0) - abrA.dano > 0) {
+              const qbA = segurarOuPerder(abrA.pers, abrA.dano, dono.nome || al.nome);
+              if (qbA.linha) quebras.set(al.i, qbA);
+            }
           }
           mudarFicha((old) => ({
             ...old,
             grupo: (old.grupo || []).map((g, i) => {
               if (!indices.has(i)) return g;
               const abrA = abrigos.get(i);
-              const base = abrA ? { ...g, efeitos: abrA.pers.efeitos } : g;
+              /* a quebra manda sobre o abrigo na escrita de `efeitos` porque ela
+                 ja NASCEU da ficha pos-abrigo: escrever as duas seria escolher
+                 uma das duas verdades, e a mais nova contem a mais velha */
+              const qbA = quebras.get(i);
+              const base = qbA ? { ...g, efeitos: qbA.pers.efeitos } : abrA ? { ...g, efeitos: abrA.pers.efeitos } : g;
               return { ...base, vida: Math.max(0, (base.vida || 0) - (abrA ? abrA.dano : meio)) };
             }),
           }));
@@ -11707,6 +11775,10 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
           /* logo depois da linha da area, e nao antes: a area morde ${meio} em
              todos, e o abrigo conta, nome por nome, quanto disso chegou */
           for (const abrA of abrigos.values()) linhasSis.push({ autor: "sistema", texto: abrA.linha });
+          /* e a magia que escapou vem por ultimo, depois de o corpo ter contado
+             o que pagou: primeiro o golpe, depois o abrigo, so entao o que caiu
+             das maos — a ordem em que a cena acontece */
+          for (const qbA of quebras.values()) linhasSis.push({ autor: "sistema", texto: qbA.linha });
           partes.push(`${lista} apanhou ${meio} da minha própria ${h.nome}`);
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FOGO AMIGO — APLICADO PELO SISTEMA] A área de "${h.nome}" pegou ${lista}, do meu próprio grupo, e o sistema já cobrou ${meio} de dano de cada. Narre isso: eles não são figurantes, e levar um golpe meu tem reação. Não desfaça, não conserte e não finja que eles se esquivaram.`;
         }
@@ -13351,6 +13423,21 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
             linhasSis.push({ autor: "sistema", texto: abrC.linha });
           }
           grupoAtual = grupoAtual.map((g) => g.nome === a.alvoNome ? { ...g, vida: Math.max(0, (g.vida || 0) - a.r.dano) } : g);
+          /* v9.236 (C2b): E A MAGIA DELE CAI AQUI. Este e o unico ponto em que
+             o golpe do inimigo vira PV de companheiro; sem esta chamada a Bencao
+             do Clerigo do grupo atravessaria a luta inteira sem ninguem poder
+             derruba-la, enquanto a do heroi cai a duas duzias de linhas daqui.
+             DEPOIS do abrigo de proposito — `a.r.dano` ja e o que sobrou dele —
+             e lendo a vida DEPOIS do golpe, de `grupoAtual`, que e a autoridade
+             sobre o grupo dentro deste laco: quem caiu nao tem o que segurar, e
+             uma magia escapando por cima do golpe que matou seria o sistema
+             narrando contabilidade depois do fim da cena. */
+          const doGolpe = grupoAtual.find((g) => g.nome === a.alvoNome);
+          const qbC = doGolpe && (doGolpe.vida || 0) > 0 ? segurarOuPerder(doGolpe, a.r.dano, a.alvoNome) : { linha: "" };
+          if (qbC.linha) {
+            grupoAtual = grupoAtual.map((g) => (g.nome === a.alvoNome ? { ...g, efeitos: qbC.pers.efeitos } : g));
+            linhasSis.push({ autor: "sistema", texto: qbC.linha });
+          }
         }
       }
       const doCampo = (nome) => (combPos.inimigos || []).find((e) => e.nome === nome) || {};
@@ -17185,10 +17272,21 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
            tinha protecao de pe pagou menos, e o Narrador nao pode ler outro. */
         const abrT = passarPeloAbrigo(alvo, sala.dano, alvo.nome);
         const sofridoAli = abrT.linha ? abrT.dano : sala.dano;
-        setPersonagem((p) => ({ ...p, grupo: (p.grupo || []).map((g) => g.nome === alvo.nome ? { ...g, ...(abrT.linha ? { efeitos: abrT.pers.efeitos } : null), vida: Math.max(0, g.vida - sofridoAli) } : g) }));
-        pushMsgs(abrT.linha
+        /* v9.236 (C2b): o dardo tambem derruba o que ele segurava. Fora do
+           combate a magia de duracao do companheiro e a mesma coisa — a
+           concentracao nao pergunta se a cena tem iniciativa. A conta sai antes
+           do atualizador (quem fala na tela nao mora dentro de um
+           `setPersonagem`), sobre a ficha POS-ABRIGO e com o dano que de fato
+           chegou, e so em quem fica de pe.
+           O HEROI DESTA MESMA PORTA FICOU DE FORA DE PROPOSITO: o outro ramo
+           deste `if` e um dos seis sitios onde ele apanha sem teste, e esse item
+           e outro da pauta — liga-lo aqui ampliaria o raio que C2 mediu. */
+        const qbT = (alvo.vida || 0) - sofridoAli > 0 ? segurarOuPerder(abrT.pers, sofridoAli, alvo.nome) : { linha: "" };
+        setPersonagem((p) => ({ ...p, grupo: (p.grupo || []).map((g) => g.nome === alvo.nome ? { ...g, ...(qbT.linha ? { efeitos: qbT.pers.efeitos } : abrT.linha ? { efeitos: abrT.pers.efeitos } : null), vida: Math.max(0, g.vida - sofridoAli) } : g) }));
+        pushMsgs([...(abrT.linha
           ? [{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha}` }, { autor: "sistema", texto: abrT.linha }]
-          : [{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha} — ${alvo.nome} sofre ${sala.dano} de dano` }]);
+          : [{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha} — ${alvo.nome} sofre ${sala.dano} de dano` }]),
+          ...(qbT.linha ? [{ autor: "sistema", texto: qbT.linha }] : [])]);
         enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nomeArmadilha}). ${alvo.nome} já sofreu ${sofridoAli} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e como o grupo reage.${avisoSegredo}${extraTempo}`, personagem);
       } else {
         /* ---------------- A ARMADILHA PEDE SALVAGUARDA (v9.60) ----------------

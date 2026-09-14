@@ -65,11 +65,11 @@
    cor declarada é melhor que regra pela metade.
    ============================================================ */
 
-import { turnoDosCompanheiros, defesaDe } from "./combate.js";
-import { empilhar, efeitoDeBuff, absorverDano } from "./efeitos.js";
+import { turnoDosCompanheiros, defesaDe, testeConcentracao } from "./combate.js";
+import { empilhar, efeitoDeBuff, absorverDano, efeitoEmConcentracao, quebrarConcentracao } from "./efeitos.js";
 import { guardaDe, erguerGuarda, expirarGuardas } from "./habilidades.js";
 import { bonusDeDano, bonusDeArma } from "./combos.js";
-import { tickEfeitos } from "./regras-jogo.js";
+import { tickEfeitos, atributoEfetivo } from "./regras-jogo.js";
 import { usarConsumivel } from "./pocoes.js";
 import { montarPronto, PRONTOS } from "./prontos.js";
 
@@ -232,6 +232,39 @@ function aplicarAcoes(acoes, eu, outro, rodada) {
       /* sem "(−0)": quando o abrigo comeu a batida inteira não houve dano, e
          escrever zero entre parênteses seria a arena narrando contabilidade */
       linhas.push(ab.dano > 0 ? `${golpe} (−${ab.dano})` : golpe);
+      /* A CONCENTRAÇÃO CAI AQUI (v9.236 · C2b). Desde C2b o duelista nasce
+         segurando o que conjura: `efeitoDeBuff` pergunta ao grimório, e Bênção
+         e Escudo da Fé — as duas que o piloto firma de verdade na mesa dos
+         oito — entram na ficha com `concentracao`. Sem esta chamada o abrigo e
+         a bênção durariam o prazo inteiro sem ninguém poder derrubá-los, que é
+         exatamente a promessa escrita nas duas pontas e vazia no meio que a
+         Fase C veio fechar.
+
+         DEPOIS DO GOLPE, E COM O DANO QUE CHEGOU. `ab.dano` é o que sobrou da
+         absorção, e é ele que manda: o escudo que comeu a batida já pagou por
+         ela, e testar pelo golpe cheio faria o abrigo derrubar a si mesmo. É a
+         mesma ordem da mesa da campanha (`App.jsx`), onde o teste vem depois
+         de o dano virar PV.
+
+         SÓ DE PÉ, E SÓ COM DANO. Quem caiu não tem o que segurar, e a queda já
+         é o fim da cena — uma linha de magia escapando por cima do golpe que
+         matou seria a arena narrando contabilidade depois do fim. Golpe que
+         não tirou PV nenhum (o abrigo comeu tudo) também não testa: ninguém
+         apanhou.
+
+         A FRASE É A DE C2, PALAVRA POR PALAVRA — `tc.linha`, voz de mundo, com
+         os dois números. O que a arena põe é só o dono, pelo mesmo molde de
+         `absorverDano` duas linhas acima: `nome — frase seca`. */
+      if (ab.dano > 0 && outro.vida > 0) {
+        const segurada = efeitoEmConcentracao(outro);
+        if (segurada) {
+          const tc = testeConcentracao(ab.dano, atributoEfetivo(outro, "vigor"), segurada.nome);
+          if (!tc.manteve) {
+            outro.efeitos = quebrarConcentracao(outro, segurada.nome).efeitos;
+            linhas.push(`${outro.nome} — ${secar(tc.linha)}`);
+          }
+        }
+      }
     } else {
       linhas.push(`${eu.nome} ${r.desastre ? "erra feio" : "erra"} ${outro.nome}`);
     }

@@ -1045,10 +1045,15 @@ sec("16. a concentração nasce e viaja — o campo que faltava no meio (C1)");
     funcoesDaPorta: ["invisibilidade", "voo", "luz"],
     magiasQueChegam: 4,
     dasQuaisConcentram: 3,
-    /* ZERO É A LEI: nenhum efeito nascido de habilidade ou de milagre pode
-       trazer a chave, nem como `false`. Não há tabela nesta casa que declare
-       concentração para eles — inventá-la no nascimento seria pôr no efeito
-       um número que nenhuma régua sustenta. */
+    /* ZERO CONTINUA SENDO A LEI, mas de UM nascimento só (v9.236 · C2b).
+       C1 escreveu aqui "habilidade ou milagre", e a medição de C2 desmentiu a
+       primeira metade: 8 das 148 habilidades de classe SÃO magia do catálogo
+       pelo nome, e 5 concentram — havia tabela de onde perguntar, e era o
+       grimório. `efeitoDeBuff` pergunta desde C2b (a prova está na seção 18);
+       `efeitoDeMilagre` continua mudo, e continua por prova, porque para ele a
+       frase de C1 segue inteira: não há tabela de milagre nesta casa que
+       declare concentração, e inventá-la no nascimento seria pôr no efeito um
+       número que nenhuma régua sustenta. */
     tetoDeNascimentosMudosComChave: 0,
   };
 
@@ -1103,19 +1108,29 @@ sec("16. a concentração nasce e viaja — o campo que faltava no meio (C1)");
   /* ---------------- OS OUTROS DOIS NASCIMENTOS CONTINUAM MUDOS --------- */
   const mudos = [];
   const conferirMudo = (rotulo, efeito) => { if (temChave(efeito)) mudos.push(rotulo); };
+  /* AS TRÊS PRIMEIRAS CONTINUAM EXATAMENTE ONDE C1 AS PÔS, e continuam certas
+     depois de C2b: "Fúria" não é magia de catálogo nenhuma, "Escudo Arcano" é
+     magia mas é uma das dez exceções de `CONCENTRACAO_DA_MAGIA` (dura uma
+     rodada), e lixo não tem nome para perguntar. */
   conferirMudo("buff simples", efeitoDeBuff({ nome: "Fúria", custo: 4 }, heroi()).efeito);
   conferirMudo("buff defensivo", efeitoDeBuff({ nome: "Escudo Arcano", custo: 2 }, heroi()).efeito);
   conferirMudo("buff de lixo", efeitoDeBuff(null, null).efeito);
-  /* o dente que importa: a MAGIA DE CONCENTRAÇÃO entrando pela porta errada.
-     `efeitoDeBuff` recebe habilidade, e uma magia do grimório é um objeto com
-     `concentracao: true` dentro. Se um dia ele passar a copiar campos do que
-     recebe, é aqui que se descobre — e não num save com dois efeitos
-     concentrados ao mesmo tempo. */
-  conferirMudo("buff nascido da própria magia de concentração", efeitoDeBuff(magiaPorNome("Voo"), heroi()).efeito);
+  /* A QUARTA SAIU DAQUI (v9.236 · C2b), E O MOTIVO É QUE ELA VIROU O AVESSO DO
+     QUE A CASA QUER. C1 escreveu, com "Voo", um dente contra `efeitoDeBuff`
+     copiar campos do que recebe — e o dente estava certo para o mundo de C1,
+     em que habilidade não tinha de onde tirar concentração. A medição de C2
+     mostrou que tinha: Voo É magia do catálogo e É habilidade de Mago, e o
+     efeito nascer mudo era justamente o buraco. Exigir o silêncio aqui seria
+     a suíte proibindo o conserto. A intenção do dente não se perdeu, ela
+     MUDOU DE ENDEREÇO e ficou mais forte: a seção 18 confere o acervo inteiro
+     contra `exigeConcentracao`, nome por nome, nas duas direções — o que
+     concentra ganha a chave, o que não concentra continua sem ela. Copiar
+     campo de quem chega continua proibido, e agora por 85 asserções em vez de
+     uma. */
   conferirMudo("milagre simples", efeitoDeMilagre({ nome: "Graça" }, "a fé responde"));
   conferirMudo("milagre de lixo", efeitoDeMilagre(null));
   conferirMudo("milagre que tenta trazer o campo de fora", efeitoDeMilagre({ nome: "Graça", concentracao: true }));
-  t("nem `efeitoDeBuff` nem `efeitoDeMilagre` produzem concentração — nem true, nem false",
+  t("`efeitoDeMilagre` não produz concentração — nem true, nem false, e o buff só a produz pelo catálogo",
     mudos.length <= MEDIDA_DA_PORTA.tetoDeNascimentosMudosComChave, mudos.join(" | "));
   /* e o consumidor confirma pelo outro lado: efeito de buff na ficha não é
      achado como magia segurada */
@@ -1406,6 +1421,148 @@ sec("17. a quebra na mesa — a frase que o jogador lê quando a magia cai (C2)"
      a ela — o canal desta etapa é a nota, não o bloco */
   t("e a promessa do prompt estático segue intacta, sem uma letra a mais",
     /quando quebrar, narre o efeito se desfazendo na hora\.`;$/m.test(readFileSync("../src/combate.js", "utf8")));
+}
+
+/* ============================================================
+   18. O COMPANHEIRO SEGURA O QUE JÁ CONJURA (C2b · v9.236)
+
+   O MÍNIMO QUE PROVA, e nada além: a suíte dedicada vem depois. O que esta
+   seção trava é a regra nova — `efeitoDeBuff` pergunta ao CATÁLOGO, pelo nome,
+   e nasce segurando o que o catálogo diz que se segura — e o raio dela, que é
+   a parte que a etapa mandou medir antes de escrever.
+
+   O RAIO É HERÓI + COMPANHEIRO, e está medido: a porta é a MESMA
+   (`aplicarBuffDeHabilidade` no App, o piloto na arena e na mesa), então
+   qualquer número aqui vale para os dois. Do acervo de 148 habilidades de
+   classe, 8 são magia do catálogo pelo nome e 5 concentram — Bênção, Escudo
+   da Fé, Invisibilidade, Voo e Marca do Caçador. Do lado do HERÓI, só 3
+   chegam a virar efeito hoje (Bênção, Escudo da Fé, Invisibilidade): Voo e
+   Marca do Caçador não abrem condição boa em `aflicaoDe`, e sem condição boa
+   `efeitoDeBuff` nem é chamado. Os números moram em tabela, e a suíte os lê
+   de volta contra o acervo: acervo que cresça amanhã com uma sexta magia de
+   concentração não passa por aqui em silêncio.
+   ============================================================ */
+sec("18. o companheiro segura o que já conjura — o buff pergunta ao catálogo (C2b)");
+{
+  const CL = await import(RAIZ + "classes.js");
+  const { magiaPorNome, exigeConcentracao, MAGIAS } = G;
+  const temChave = (ef) => Object.prototype.hasOwnProperty.call(ef || {}, "concentracao");
+  const heroiC = { nome: "H", classe: "Mago", nivel: 3, atributos: { vigor: 1 } };
+
+  /* A MEDIDA DO RAIO, em tabela — os números que a etapa mediu antes de
+     escrever uma linha de comportamento. Não são enfeite: são o que separa
+     "o companheiro passou a segurar magia" de "cinco habilidades do herói
+     passaram a concentrar sem ninguém ter contado". */
+  const RAIO_DO_BUFF = {
+    habilidadesDeClasse: 148,
+    saoMagiaDoCatalogo: 8,
+    dasQuaisConcentram: 5,
+    /* nominal, porque contar sem nomear deixa a lista trocar de conteúdo sem
+       trocar de tamanho */
+    asQueConcentram: ["Bênção", "Escudo da Fé", "Invisibilidade", "Voo", "Marca do Caçador"],
+    /* a que é magia do catálogo e NÃO concentra é o controle vivo da exceção */
+    controleDaExcecao: "Escudo Arcano",
+  };
+
+  const doAcervo = [];
+  for (const c of CL.CLASSES) for (const h of (c.habilidades || [])) doAcervo.push(h);
+  const saoMagia = doAcervo.filter((h) => !!magiaPorNome(h.nome));
+  const concentram = saoMagia.filter((h) => exigeConcentracao(magiaPorNome(h.nome)));
+  t(`o acervo de classe tem ${RAIO_DO_BUFF.habilidadesDeClasse} habilidades`,
+    doAcervo.length === RAIO_DO_BUFF.habilidadesDeClasse, `medido: ${doAcervo.length}`);
+  t(`e ${RAIO_DO_BUFF.saoMagiaDoCatalogo} delas são magia do catálogo pelo nome`,
+    saoMagia.length === RAIO_DO_BUFF.saoMagiaDoCatalogo, `medido: ${saoMagia.length}`);
+  t(`das quais ${RAIO_DO_BUFF.dasQuaisConcentram} concentram, e são estas`,
+    concentram.length === RAIO_DO_BUFF.dasQuaisConcentram
+    && RAIO_DO_BUFF.asQueConcentram.every((n) => concentram.some((h) => h.nome === n)),
+    concentram.map((h) => h.nome).join(", "));
+
+  /* A REGRA NOVA: o que concentra nasce com a chave, o que não concentra não */
+  const erradas = concentram.filter((h) => efeitoDeBuff(h, heroiC).efeito.concentracao !== true);
+  t("toda habilidade-magia de concentração sai de `efeitoDeBuff` COM o campo",
+    erradas.length === 0, erradas.map((h) => h.nome).join(", "));
+  const mudas = saoMagia.filter((h) => !exigeConcentracao(magiaPorNome(h.nome)));
+  const vazadas = mudas.filter((h) => temChave(efeitoDeBuff(h, heroiC).efeito));
+  t("e a que é magia mas NÃO concentra continua sem a chave — nem `false`",
+    vazadas.length === 0, vazadas.map((h) => h.nome).join(", "));
+  /* o controle vivo da exceção: Escudo Arcano é magia, é habilidade de Mago,
+     dura uma rodada e por isso é uma das dez de `CONCENTRACAO_DA_MAGIA`. Se um
+     dia ele sair daqui com a chave, foi a exceção que se soltou */
+  t(`"${RAIO_DO_BUFF.controleDaExcecao}" é magia do catálogo, é habilidade, e mesmo assim sai mudo`,
+    !!magiaPorNome(RAIO_DO_BUFF.controleDaExcecao)
+    && saoMagia.some((h) => h.nome === RAIO_DO_BUFF.controleDaExcecao)
+    && !temChave(efeitoDeBuff({ nome: RAIO_DO_BUFF.controleDaExcecao, custo: 2 }, heroiC).efeito));
+
+  /* A PERGUNTA É AO CATÁLOGO E SÓ A ELE — nas duas direções, com o catálogo
+     inteiro passando pela porta do buff. É o dente que herdou a intenção da
+     asserção que C1 escreveu com "Voo" na seção 16: `efeitoDeBuff` não pode
+     divergir de `exigeConcentracao` em NENHUMA das 85. */
+  const divergem = MAGIAS.filter((m) => temChave(efeitoDeBuff(m, heroiC).efeito) !== exigeConcentracao(m));
+  t(`nenhuma das ${MAGIAS.length} magias divergem entre \`efeitoDeBuff\` e \`exigeConcentracao\``,
+    divergem.length === 0, divergem.map((m) => m.nome).join(", "));
+  /* e o que o grimório não conhece não segura nada: habilidade inventada pelo
+     Mestre, nome de save antigo, lixo */
+  const forasteiras = [
+    { nome: "Fúria", custo: 4 }, { nome: "Grito de Guerra", custo: 2 },
+    { nome: "Magia Que Não Existe", custo: 9, duracao: "1 hora", concentracao: true },
+    null, undefined, {}, { nome: null }, { nome: 123 },
+  ];
+  const intrusas = forasteiras.filter((h) => temChave(efeitoDeBuff(h, heroiC).efeito));
+  t("o que o grimório não conhece sai mudo — inclusive quem traz `concentracao` de fora",
+    intrusas.length === 0, intrusas.map((h) => (h || {}).nome).join(", "));
+
+  /* O RAIO DO HERÓI, NOMINAL. A porta é a mesma, então o herói ganha junto —
+     e quais são as dele tem de estar escrito, não descoberto por alguém que
+     perdeu a Bênção no meio de uma luta sem entender por quê. */
+  const AF = await import(RAIZ + "aflicoes.js");
+  const doHeroi = saoMagia.filter((h) => {
+    const port = AF.aflicaoDe(`${h.nome || ""} ${h.descricao || ""}`);
+    if (!port || port.alvo === "alvo") return false;
+    const res = AF.rolarAflicao({ fonte: port, nomeFonte: h.nome, atacante: "H", sempre: true });
+    return !!(res && res.aplicou && res.cond.tipo === "bom");
+  });
+  const HEROI_QUE_CONCENTRA = ["Bênção", "Escudo da Fé", "Invisibilidade"];
+  const heroiConcentra = doHeroi.filter((h) => exigeConcentracao(magiaPorNome(h.nome))).map((h) => h.nome);
+  t("no herói, as que passam a concentrar são exatamente três, e são estas",
+    heroiConcentra.length === HEROI_QUE_CONCENTRA.length
+    && HEROI_QUE_CONCENTRA.every((n) => heroiConcentra.includes(n)), heroiConcentra.join(", "));
+  /* Voo e Marca do Caçador são magia de concentração e são habilidade, mas no
+     herói não viram efeito nenhum: `aflicaoDe` não acha condição para elas, e
+     `efeitoDeBuff` nem chega a ser chamado. Fica escrito para ninguém procurar
+     no lugar errado no dia em que alguém perguntar por que o Voo não cai. */
+  t("e Voo e Marca do Caçador ficam de fora porque não abrem condição boa",
+    !heroiConcentra.includes("Voo") && !heroiConcentra.includes("Marca do Caçador"));
+
+  /* O COMPANHEIRO: a ficha de verdade, montada pelo montador de verdade. Um
+     Clérigo de nível 3 sai com as duas, e o piloto escolhe as duas. */
+  const CO = await import(RAIZ + "companheiros.js");
+  const clerigo = CO.garantirFichaCompanheiro({ nome: "Irmã", classe: "Clérigo", nivel: 3 });
+  const dele = (clerigo.habilidades || []).filter((h) => exigeConcentracao(magiaPorNome(h.nome)));
+  t("um Clérigo companheiro de nível 3 sai da ficha segurando Bênção e Escudo da Fé",
+    dele.length === 2 && dele.some((h) => h.nome === "Bênção") && dele.some((h) => h.nome === "Escudo da Fé"),
+    dele.map((h) => h.nome).join(", "));
+  t("e o piloto escolhe as duas — uma pelo abrigo, outra pelo apoio",
+    CO.ehAbrigo(dele.find((h) => h.nome === "Escudo da Fé")) && CO.ehBuff(dele.find((h) => h.nome === "Bênção")));
+  const buffDele = efeitoDeBuff(dele.find((h) => h.nome === "Bênção"), clerigo).efeito;
+  t("o efeito que ele firma nasce segurado, e o consumidor o acha",
+    buffDele.concentracao === true
+    && (efeitoEmConcentracao({ nome: "Irmã", efeitos: [buffDele] }) || {}).nome === "Bênção");
+
+  /* A ARENA CHAMA O TESTE — a outra metade da etapa. O sítio existe, usa o
+     dano que SOBROU da absorção (o escudo que comeu a batida já pagou por ela)
+     e imprime a linha de C2, não uma frase nova. */
+  const ARENA = readFileSync("../src/arena.js", "utf8");
+  t("a arena importa o teste de concentração de combate.js", /import \{[^}]*testeConcentracao[^}]*\} from "\.\/combate\.js"/.test(ARENA));
+  t("e o chama com o dano que sobrou da absorção, não com o golpe cheio",
+    /testeConcentracao\(ab\.dano, atributoEfetivo\(outro, "vigor"\), segurada\.nome\)/.test(ARENA));
+  t("só em quem ficou de pé e só quando o golpe tirou PV",
+    /if \(ab\.dano > 0 && outro\.vida > 0\) \{[\s\S]{0,80}efeitoEmConcentracao\(outro\)/.test(ARENA));
+  t("a queda tira o efeito da ficha pela porta da casa", /quebrarConcentracao\(outro, segurada\.nome\)\.efeitos/.test(ARENA));
+  /* A FRASE É A DE C2, palavra por palavra: a arena não escreve uma sílaba,
+     só põe o dono na frente, como já faz com a mordida do abrigo. */
+  t("e a linha que o jogador lê é `tc.linha`, seca, com o nome de quem perdeu",
+    /linhas\.push\(`\$\{outro\.nome\} — \$\{secar\(tc\.linha\)\}`\)/.test(ARENA));
+  t("a arena não inventa frase de concentração nenhuma", !/escapa dos dedos/.test(ARENA));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

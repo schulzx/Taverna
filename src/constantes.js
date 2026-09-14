@@ -13,8 +13,8 @@ export const SLOGAN = "toda lenda começa aqui";
    do App — que é exatamente onde um número vai para ser esquecido.
    Aqui ela fica ao lado do resto do que a casa sabe sobre si mesma, e um
    varredor confere que o App não voltou a escrevê-la à mão. */
-export const VERSAO = "v9.235";
-export const LEVA = "o foco e a explicação";
+export const VERSAO = "v9.236";
+export const LEVA = "o que o companheiro segura";
 
 export const XP_POR_NIVEL = (nivel) => xpDoProximoNivel(nivel) ?? XP_POR_DADIVA;
 export const MOEDAS_INICIAIS = 15;

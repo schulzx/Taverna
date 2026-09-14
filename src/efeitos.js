@@ -46,6 +46,7 @@
    ============================================================ */
 
 import { naturezaDaHabilidade, aplicacaoDoBuff } from "./combos.js";
+import { magiaPorNome, exigeConcentracao } from "./grimorio.js";
 
 /* ---------------- OS TETOS DO QUE VEM DE FORA ----------------
    O Mestre pede efeito por `efeitos_adicionar`, e o que ele pede passa
@@ -203,9 +204,38 @@ export function retirar(efeitos, nome, opcoes) {
    que não existia seria trocar uma mentira por outra mais quieta. Agora o
    número existe e é gameplay: o jogador paga PM e tem de poder saber o que
    comprou. As outras quatro famílias continuam sem número, e continuam
-   porque continuam sem número. */
+   porque continuam sem número.
+
+   E AGORA ELE NASCE SABENDO O QUE ESTÁ SEGURANDO (v9.236 · C2b). C1 escreveu
+   aqui, com todas as letras, que este nascimento não copiava `concentracao`
+   "porque não há de onde: habilidade e milagre não declaram concentração em
+   tabela nenhuma desta casa". A primeira metade era verdade e continua sendo;
+   a segunda estava errada, e a medição de C2 a desmentiu: **8 das 148
+   habilidades de classe SÃO magia do catálogo pelo nome, e 5 delas
+   concentram**. Bênção, Escudo da Fé, Invisibilidade, Voo e Marca do Caçador
+   estão nas duas listas ao mesmo tempo — a tabela existia, só ninguém tinha
+   perguntado a ela.
+
+   E A PERGUNTA É AO CATÁLOGO, NUNCA À HABILIDADE. `exigeConcentracao` aceita
+   objeto solto, e passar `h` direto responderia pelo que a FICHA diz de si —
+   uma habilidade não tem `duracao` nem `concentracao`, então a resposta seria
+   sempre `false`, em silêncio. Pior: no dia em que alguém escrevesse
+   `concentracao: true` à mão numa entrada de `habilidades.js`, a regra
+   passaria a morar em dois lugares. Aqui o nome vai ao grimório, e só o que
+   o grimório reconhece segura: habilidade que não é magia sai daqui exatamente
+   como saía (`magiaPorNome` devolve `null` e a chave não nasce).
+
+   A CHAVE SÓ NASCE QUANDO EXISTE, pela mesma régua de `efeitoDeMagia` e de
+   `absorve`: ausente, nunca `false`. E `Escudo Arcano` é o controle vivo desta
+   linha — é magia do catálogo, é habilidade de Mago, e NÃO concentra (é uma
+   das dez exceções de `CONCENTRACAO_DA_MAGIA`, porque dura uma rodada). Se um
+   dia ele começar a sair daqui com a chave, foi a exceção que se soltou. */
 export function efeitoDeBuff(hab, pers, turnos) {
   const h = hab || {};
+  /* a magia do catálogo com este nome, se houver — e é ela, não a habilidade,
+     quem responde se há o que segurar */
+  const doCatalogo = magiaPorNome(h.nome);
+  const segura = !!doCatalogo && exigeConcentracao(doCatalogo);
   const forca = Math.max(
     BUFF_DA_HABILIDADE.forcaMinima,
     Math.round((Number(h.custo) || BUFF_DA_HABILIDADE.custoPadrao) / BUFF_DA_HABILIDADE.divisorDoCusto),
@@ -215,6 +245,7 @@ export function efeitoDeBuff(hab, pers, turnos) {
   const protecao = aplicacaoDoBuff(h);
   if (protecao) {
     const base = { nome: h.nome, bonus: 0, turnos: prazo, aplica: protecao.aplica, escopo };
+    if (segura) base.concentracao = true;
     if (protecao.id !== ABSORCAO_DO_BUFF.familia) {
       return { efeito: base, extraEscopo: ` · ${protecao.conceito}` };
     }
@@ -224,11 +255,13 @@ export function efeitoDeBuff(hab, pers, turnos) {
       extraEscopo: ` · ${protecao.conceito} — aguenta ${absorve} do próximo golpe`,
     };
   }
+  const efeito = {
+    nome: h.nome, bonus: forca, turnos: prazo,
+    aplica: BUFF_DA_HABILIDADE.aplica, escopo,
+  };
+  if (segura) efeito.concentracao = true;
   return {
-    efeito: {
-      nome: h.nome, bonus: forca, turnos: prazo,
-      aplica: BUFF_DA_HABILIDADE.aplica, escopo,
-    },
+    efeito,
     extraEscopo: ` · +${forca} de dano ${escopo === "fisico" ? "físico" : "mágico"}`,
   };
 }
@@ -263,10 +296,14 @@ export function turnosDaMagia(duracao) {
    Invisibilidade, apanhava, e não havia o que perder. Agora o que nasce de
    uma magia de concentração nasce sabendo disso.
 
-   DOS TRÊS NASCIMENTOS, SÓ ESTE. `efeitoDeBuff` e `efeitoDeMilagre` não
-   copiam o campo porque não há de onde: habilidade e milagre não declaram
-   concentração em tabela nenhuma desta casa, e inventá-la aqui seria pôr no
-   efeito um número que nenhuma régua sustenta.
+   DOS TRÊS NASCIMENTOS, ESTE E O BUFF (v9.236 · C2b corrige o que C1 escreveu
+   aqui). C1 disse "só este", e o motivo dado era que habilidade e milagre não
+   têm de onde copiar. Metade certa: `efeitoDeMilagre` continua mudo, e por
+   esse motivo exato — não existe tabela de milagre que declare concentração.
+   A outra metade era engano, e foi a medição de C2 que o apanhou: 8 das 148
+   habilidades de classe são magia do catálogo pelo NOME, e 5 concentram, então
+   `efeitoDeBuff` sempre teve de onde perguntar — o grimório. Ele pergunta
+   desde C2b; o milagre continua onde estava, e continua por prova.
 
    A CHAVE SÓ NASCE QUANDO EXISTE — é o mesmo cuidado que `absorve` teve na
    v9.233. Quem não concentra fica SEM a chave, e não com `false`: o consumidor
