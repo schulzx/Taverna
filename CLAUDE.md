@@ -139,7 +139,14 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ```
 
 **Commit local** fecha toda fase verde — automático, dentro do ciclo.
-**`git push` é sempre da pessoa**: faz deploy no Vercel para jogadores reais.
+
+**`git push`** era da pessoa. Em 14/09/2026 ela disse *"pode ir fazendo e
+subindo"*, e a lei mudou: **o ciclo sobe o que fechou**, com três condições
+que não se negociam — `npm run build` limpo, `npm test` inteiramente verde, e
+a árvore limpa. Vermelho não sobe, dúvida não sobe, e nada que esteja marcado
+`pesado` sobe sem resposta. Push é deploy no Vercel para jogadores reais: se
+alguma vez o ciclo hesitar, ele **não** sobe e diz por quê. A pessoa revoga
+isto com uma frase, e esta linha volta ao que era.
 
 ---
 

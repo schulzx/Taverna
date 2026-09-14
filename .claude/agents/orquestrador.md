@@ -79,7 +79,11 @@ continua possível: duas chamadas no mesmo turno, ambas em primeiro plano.
    sempre: ou commit, ou nada.
 6. **Commitar** localmente, narrativo, em português, o *porquê* antes do
    *o quê*, com a assinatura do `CLAUDE.md`. Bump de `VERSAO` no mesmo
-   commit. **Nunca `git push`** — é da pessoa.
+   commit. **Depois, `git push`** — a pessoa autorizou em 14/09/2026 (*"pode
+   ir fazendo e subindo"*), e a seção "Commits" do `CLAUDE.md` guarda as três
+   condições: build limpo, `npm test` inteiramente verde, árvore limpa. Se
+   qualquer uma falhar, **não suba** e diga por quê no relato. Push é deploy
+   para jogadores reais: na dúvida, o certo é não subir.
 7. **Registrar.** Um bloco novo no topo de `mente/diario.md` no formato de lá,
    e o item sai de "Aberto" na pauta. Toda decisão média vai no diário **com
    o motivo** — é o que a pessoa audita depois. Se o `conselheiro` pôs algo
