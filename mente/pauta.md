@@ -106,20 +106,44 @@ dano sofrido, o maior dos dois, daí se falhar a magia quebra."*
 e devolve `manteve`. Ela não é decisão desta fase — é achado confirmado. O
 que falta é o campo chegar até ela.
 
-- [ ] **C1 · o campo nasce e viaja** · de: pessoa · 13/09
-  `e.concentracao` existe em `condicoes.js:161` e no catálogo do
-  `grimorio.js`, mas **nenhum dos três nascimentos de efeito o copia** para
-  `pers.efeitos`. Fazer o campo atravessar (`efeitoDeMagia` e os irmãos, hoje
-  em `src/efeitos.js`), e conferir no catálogo que as magias de duração que
-  **devem** exigir concentração estão marcadas — a marcação é tabela, não
-  julgamento no meio do código. Prova: uma magia marcada nasce com o campo;
-  uma não marcada nasce sem; lixo (`null`, `{}`) não inventa concentração.
+- [x] **C1 · o campo nasce e viaja** · feito em v9.234 (`a57b1b2`), 14/09
+  **A etapa era pequena de verdade e foi fechada pequena** — uma linha de
+  comportamento, uma tabela de conferência, **nenhuma fiação nova** e o
+  `App.jsx` intocado (o `frontend` não foi chamado, de propósito).
+  **A pauta errava num ponto:** são três nascimentos, mas só **um** tem fonte —
+  `concentracao` não existe em tabela de habilidade nem de milagre, então
+  `efeitoDeBuff` e `efeitoDeMilagre` continuam mudos **por prova**, e o campo
+  atravessa `efeitoDeMagia` e só ele.
+  **A conferência do catálogo passou sem mexer em nada:** 85 magias · 44 de
+  duração · 34 marcadas · **10** de duração sem marca, conferidas uma a uma
+  contra o 5e e **todas certas** · **0** marcadas que sejam instantâneas. A
+  catraca nova é `CONCENTRACAO_DA_MAGIA` (a regra + as 10 exceções, cada uma
+  com o motivo escrito) e a fachada `exigeConcentracao` — lista de exceção,
+  nunca de permissão, no molde de `APLICACAO_DO_BUFF`: magia de duração nova
+  amanhã não nasce sem marca em silêncio.
+  **A quebra COMEÇOU a acontecer neste ciclo, de propósito e medida.** Decidido
+  com o `backend`: segurar não seria "não ligar ainda", seria **desligar um
+  caminho que já está ligado**, o que é pesado e não está aprovado. O raio é
+  minúsculo — **1** chamador de produção, **4** magias na porta, **3** delas
+  concentrando, **só o herói**. O efeito, por conta fechada: o teste roda **uma
+  vez por rodada** sobre o dano total, a CD só passa de 10 a partir de dano
+  **22**, e sobre o golpe de mediana 13 de P3 a magia aguenta **2,2 a 2,9
+  rodadas apanhando** antes de cair. 87 asserções novas (`teste-grimorio.mjs`
+  89 → **142**, `teste-efeitos.mjs` 387 → **421**), seis sabotagens medidas.
+  Ver o diário.
 - [ ] **C2 · a quebra acontece na mesa** · de: pessoa · 13/09
-  O `App.jsx:13082` já testa quem concentra quando o jogador apanha — com C1
-  ele passa a achar alguém. Conferir o caminho inteiro: o teste roda, a magia
-  cai, o efeito some da ficha, e o jogador **lê o que aconteceu** (a quebra é
-  gameplay: ele precisa saber que perdeu a magia, e por quê — CD, rolagem).
-  Vale para companheiro e inimigo conjurador também, não só para o herói.
+  **Corrigido pelo orquestrador em 14/09, depois de C1 — a etapa mudou de
+  forma, e para os dois lados.** A metade do **herói já está feita**: o caminho
+  inteiro do App (`:13377` acha quem concentra · `:13379` roda o teste ·
+  `:13383` escreve a linha · `:13434` tira o efeito) já existia e passou a
+  disparar com C1. O que sobra dela é só o que o jogador **lê**: hoje a linha
+  com CD e rolagem só aparece se `mostrarRolagens` estiver ligado, e a quebra é
+  gameplay — ele precisa saber que perdeu a magia **e por quê**, ligado ou não.
+  A metade que **cresceu** é a de companheiro e inimigo conjurador: medido em
+  C1, nenhum dos dois faz **nascer** efeito de magia em lugar nenhum, então
+  para eles não há o que quebrar — não é ligar um teste, é dar-lhes primeiro
+  uma magia de duração que exista na ficha. Se a medição mostrar que isso é
+  órgão novo, a metade sobe de peso e volta para a pessoa.
   Cuidado: o Narrador não ganha bloco novo — `ECONOMIA_ACAO_PROMPT` já
   descreve a regra; o que muda por turno vai pela `pauta` dinâmica.
 - [ ] **C3 · uma de cada vez** · de: pessoa · 13/09
@@ -127,6 +151,13 @@ que falta é o campo chegar até ela.
   no máximo UMA magia de duração por vez"*. Conferir se o jogo cumpre — se
   conjurar a segunda derruba a primeira. Se já cumpre, é conferência
   registrada e a fase fecha aqui; se não, é o conserto da etapa.
+  **Conferido em C1 (14/09), e o jogo NÃO cumpre:** o herói pode segurar duas
+  concentrações ao mesmo tempo (Voo e depois Invisibilidade — `empilhar` só
+  substitui por nome igual), e `efeitoEmConcentracao` devolve a **primeira**
+  que encontra, então uma batida derruba uma só. Ou seja, a etapa é conserto,
+  não conferência. A forma natural já tem endereço: `CONCENTRACAO_DA_MAGIA`
+  ganha o teto (`quantasAoMesmoTempo: 1`) e o nascimento derruba a anterior —
+  a regra passa a morar onde a tabela já está, e o jogador lê a troca.
 
 ### Fase P — a proteção vale para quem não é o jogador
 Decisão da pessoa (13/09): **consertar os dois**, sabendo que atinge Uma Vida
@@ -395,6 +426,21 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   **Não há mais fase aprovada na fila** — o próximo ciclo pega de "Aberto".
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **as duas portas da concentração discordam sobre lixo não-booleano** · leve · de: testes (achado de C1) · 14/09
+  `exigeConcentracao({concentracao: "sim"})` **ignora** o campo (só
+  `typeof === "boolean"` manda) e cai na regra da tabela; `efeitoDeMagia`
+  **aceita** o mesmo valor por verdade e nasce com `concentracao: true`. Para as
+  85 do catálogo nunca diverge — todas têm booleano, e há asserção nova cravando
+  isso —, mas magia digitada pelo Mestre e save antigo passam pelas duas portas,
+  e aí a mesma magia concentra por um caminho e não pelo outro. Os `testes`
+  travaram o comportamento atual dos **dois** lados de propósito, em vez de
+  julgar qual está certo: C1 prometeu não decidir regra. O trabalho é escolher a
+  régua única (a de `exigeConcentracao` é a mais severa e a mais honesta) e
+  aplicá-la nas duas, com o motivo em comentário nas asserções que mudarem de
+  lado. Linha "bug com teste que prova". Catraca: as asserções de lixo que já
+  existem nas duas suítes — elas dizem hoje que as portas discordam, e passarão
+  a dizer que concordam.
 
 - [ ] **o nascimento do abrigo só tem prova de texto** · médio · de: testes (achado de P3) · 14/09
   A seção 15 de `teste-efeitos.mjs` crava o nascimento do abrigo no companheiro

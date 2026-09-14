@@ -16,6 +16,112 @@ Formato:
 
 ---
 
+## 14/09 01:35 · v9.234 · C1 · o campo nasce e viaja · commit `a57b1b2`
+- **estado inicial:** árvore limpa, HEAD `436afb9`, VERSÃO v9.233, `npm test`
+  181/181 suítes + 8/8 varredores verde. A Fase P estava fechada; a vez era
+  **C1**, a primeira etapa da Fase C, aprovada pela pessoa com a regra ditada
+  por ela.
+- **conselheiro:** não chamado (a etapa já estava escrita e aprovada).
+- **backend:** `CONCENTRACAO_DA_MAGIA` + `exigeConcentracao` em `grimorio.js`
+  (a tabela e a fachada), `fichaDaMagiaTexto` passando a ler a fachada, e a
+  linha que faltava em `efeitoDeMagia` (`efeitos.js`).
+- **frontend:** **não chamado, de propósito** — ver abaixo.
+- **testes:** `teste-grimorio.mjs` 89 → **142** (seção 12) e `teste-efeitos.mjs`
+  387 → **421** (seção 16). 87 asserções novas, seis sabotagens medidas.
+
+- **A ETAPA ERA PEQUENA DE VERDADE, E FOI FECHADA PEQUENA.** Venho de três
+  fases seguidas (A3, P1, P3) em que a etapa era maior do que a pauta dizia, e
+  por isso a primeira coisa que fiz foi medir o tamanho antes de distribuir
+  trabalho. O resultado: **um arquivo de motor com uma linha de comportamento,
+  uma tabela de conferência, e nenhuma fiação nova**. O `App.jsx` **não foi
+  tocado** e não havia o que tocar nele — o caminho da quebra já estava inteiro
+  lá desde antes (`:13377` acha quem concentra, `:13379` roda o teste, `:13383`
+  escreve a linha que o jogador lê, `:13434` tira o efeito da ficha). Faltava
+  só o campo. Inflar a etapa para justificar o ciclo seria o oposto da lei da
+  casa, então o `frontend` não foi chamado.
+
+- **A PAUTA ERRAVA NUM PONTO, E A ETAPA O CORRIGIU: são três nascimentos, mas
+  só UM tem fonte.** A pauta dizia "nenhum dos três nascimentos o copia", o que
+  sugeria três consertos. Medido: `efeitoDeBuff` (habilidade) e
+  `efeitoDeMilagre` (milagre) **não têm de onde copiar** — `concentracao` não
+  existe em tabela de habilidade nem de milagre em lugar nenhum da casa. O
+  campo atravessa **um** nascimento, `efeitoDeMagia`, e os outros dois
+  continuam mudos **por prova**, não por esquecimento: há asserção exigindo que
+  nem `true` nem `false` saiam deles.
+
+- **A MARCAÇÃO É TABELA, E A CONFERÊNCIA PASSOU SEM MEXER EM NADA.** O catálogo
+  já carregava a verdade por entrada (`concentracao:` na fábrica `M(...)`); o
+  que faltava era a **catraca**. `CONCENTRACAO_DA_MAGIA` declara a regra
+  ("magia de duração exige concentração") e nomeia as **10** exceções **cada uma
+  com o motivo escrito** — lista de exceção, nunca de permissão, no molde de
+  `APLICACAO_DO_BUFF` (P1) e com o dente de `GUARDAS` (P2): magia de duração
+  nova amanhã **não nasce sem marca em silêncio**. Os números: **85** magias ·
+  **44** de duração · **34** marcadas · **10** de duração sem marca · **0**
+  marcadas que sejam instantâneas (não há a mentira do outro lado) · e o fecho
+  `marcadas + exceções === deDuração`. **Nenhuma entrada de catálogo mudou de
+  valor**: conferidas uma a uma contra o 5e, as dez estão certas. Foi
+  conferência registrada, como A4 — e teste verde também é resposta.
+
+- **DECISÃO MÉDIA: A QUEBRA COMEÇA A ACONTECER NESTE CICLO, E FOI DE PROPÓSITO.**
+  C1 não fazia a quebra acontecer — isso é C2 —, mas com o caminho do App já
+  inteiro, o campo chegando **dispara a quebra sozinho**. Decidido com o
+  `backend`, que concordou, e a razão principal é de lei: segurar não seria
+  "não ligar ainda", seria **desligar um caminho que já está ligado** — e
+  "remover ou desligar o que existe" é pesado, não está aprovado, e o que está
+  aprovado é exatamente o contrário. Toda forma de segurar custaria um portão
+  novo sem tabela, cujo único propósito seria desligar o que a pessoa pediu, e
+  que alguém teria de lembrar de remover em C2: dívida escondida.
+  **O raio está medido e é minúsculo.** `efeitoDeMagia` tem **um** chamador de
+  produção em todo o projeto (`App.jsx:12453`), restrito a
+  `funcao ∈ {invisibilidade, voo, luz}` = **4** magias: Invisibilidade, Voo,
+  Invisibilidade Maior (as três concentram) e Luz do Dia (não concentra, e está
+  certo). **Só o herói** — nenhum NPC, nenhum companheiro, nenhum piloto de
+  arena faz nascer esses efeitos. Nenhuma das três soma dano.
+
+- **O EFEITO MEDIDO, EM NÚMERO.** A conta é fechada (d20 uniforme), então não há
+  simulação: há probabilidade exata. O teste roda **uma vez por rodada**, sobre
+  o dano **total** da rodada (`danoNoJogador`), e não uma vez por golpe.
+  CD = `max(10, dano/2)` → **a metade do dano só começa a morder a partir de 22**
+  (com 21 a CD ainda é 10). Sobre o golpe de mediana **13** que P3 mediu em Uma
+  Vida, a CD é 10, e a chance de **quebrar** numa rodada em que se apanha é
+  **45% com modVigor +0 · 40% com +1 · 35% com +2**. Em outras palavras: a magia
+  de duração aguenta em média **2,2 a 2,9 rodadas apanhando** antes de cair. Com
+  dano de rodada 30 a quebra vai a 65% (+1), e com 40, a 90%. É uma forma nova
+  de o jogador perder a magia que pagou, ela é sensível e o número diz isso — foi
+  o que a pessoa autorizou ao ditar a regra, e é o que C2 vai fazer o jogador
+  **ler direito**.
+
+- **AS SABOTAGENS, EM NÚMERO** (feitas em cópia, nunca na árvore). Apagar a linha
+  nova de `efeitoDeMagia` derruba **11** asserções; trocá-la por um
+  `concentracao = true` incondicional derruba **14**; tirar uma exceção da tabela,
+  **4**; marcar uma magia hoje não marcada, **5**; ampliar a lista de `funcao` da
+  porta do App, **4**; tirar de `exigeConcentracao` a linha em que o campo manda,
+  **2**. Duas lições vieram daí: a primeira sabotagem fazia a suíte **estourar**
+  em vez de contar (o vício que a pauta já nomeia num item aberto), consertada
+  nas duas linhas com o motivo em comentário; e a lista da porta do App estava
+  **redigitada** na suíte, medindo a própria cópia — passou a ser **lida do
+  `App.jsx`**, e a sabotagem foi de 1 para 4 asserções derrubadas.
+
+- **O QUE C2 HERDA, JÁ MEDIDO.** (a) A quebra do **herói** já acontece — C2 não
+  a liga, C2 confere o caminho inteiro e faz o jogador **ler** o que houve (hoje
+  a linha da rolagem só aparece com `mostrarRolagens` ligado, e a CD/rolagem é
+  metade do que ele precisa saber). (b) **Companheiro e inimigo conjurador
+  continuam fora**: nenhum deles faz nascer efeito de magia, então para eles não
+  há o que quebrar — é trabalho de C2 e é maior do que parecia. (c) **O herói
+  pode segurar DUAS concentrações ao mesmo tempo** (Voo e depois Invisibilidade:
+  `empilhar` só substitui por nome igual) e `efeitoEmConcentracao` devolve a
+  **primeira**, então uma batida derruba uma só — achado do `backend`, é
+  exatamente o assunto de **C3**, e a forma natural é `CONCENTRACAO_DA_MAGIA`
+  ganhar o teto, que é onde a regra já mora.
+
+- **O QUE FICOU** (e virou item novo na pauta, `leve`): as duas portas discordam
+  sobre valor não-booleano — `exigeConcentracao({concentracao: "sim"})` ignora o
+  campo e cai na regra, `efeitoDeMagia` o aceita por verdade. Para as 85 do
+  catálogo nunca diverge (todas têm booleano, e há asserção cravando isso), mas
+  magia digitada pelo Mestre passa pelas duas. Os `testes` travaram o
+  comportamento atual dos **dois** lados em vez de julgar qual está certo — que
+  é o certo a fazer numa etapa que prometeu não decidir regra.
+
 ## 14/09 01:05 · v9.233 · P3 · a proteção enfim protege (A FASE P FECHA) · commit `99500c7`
 - **estado inicial:** árvore limpa, HEAD `a2bfe6e`, VERSÃO v9.232, `npm test`
   181/181 suítes + 8/8 varredores verde. A vez era **P3**, a última etapa da
