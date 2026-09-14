@@ -85,7 +85,7 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
   existe para achar: **10 famílias de ação com mais de uma forma, 4 delas de
   significado.** Medição inteira no diário. Correções de D2–D5 abaixo saíram
   daí.
-- [x] **D2 · o estilo ganha casa própria** · de: regente · 14/09 · **feito v9.244**
+- [x] **D2 · o estilo ganha casa própria** · de: regente · 14/09 · **feito v9.244 · `5cf555c`**
   `T` foi para `src/estilo.js` (que **não importa nada**), com reexport
   compatível em `constantes.js` — os 15 importadores não mudaram uma letra.
   A folha partiu em três: `FONT_CSS` (4 regras: o `@import` e as três

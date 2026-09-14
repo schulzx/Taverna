@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 14/09 18:40 · v9.244 · D2 · o estilo ganha casa própria · commit `<hash>`
+## 14/09 18:40 · v9.244 · D2 · o estilo ganha casa própria · commit `5cf555c`
 
 O primeiro ciclo em que o **bastão do `App.jsx` valeu de verdade** — e o
 resultado mais útil da etapa não é o arquivo novo, é o que o bastão ensinou
