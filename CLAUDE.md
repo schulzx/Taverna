@@ -174,6 +174,13 @@ Português, narrativo, o *porquê* antes do *o quê*. Terminar com:
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ```
 
+**Nunca `git add -A` com um ciclo em curso.** Se `.claude/ciclo-em-curso`
+existe, outra mão está escrevendo na mesma árvore: `add -A` varre o trabalho
+dela para dentro do seu commit, e a história passa a mentir sobre o porquê de
+cada mudança. Some os caminhos que são seus, um a um. Isto vale para **todo
+mundo**, inclusive para quem rege o ciclo — foi assim que se errou em
+14/09/2026, e o commit `a6a6473` carrega trabalho da etapa T2 sem dizer.
+
 **Commit local** fecha toda fase verde — automático, dentro do ciclo.
 
 **`git push`** era da pessoa. Em 14/09/2026 ela disse *"pode ir fazendo e
