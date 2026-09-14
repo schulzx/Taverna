@@ -16,6 +16,136 @@ Formato:
 
 ---
 
+## 13/09 21:30 · v9.230 · R4 · a suíte da fase, e a Fase R fechada · commit `a1e5ba6`
+- **estado inicial:** árvore limpa, HEAD `dde2c45`, VERSÃO v9.229, `npm test`
+  181/181 suítes + 7/7 varredores verde. A vez era **R4**, a última etapa da
+  Fase R — e ela nascia **credora**: o orquestrador já tinha corrigido a pauta
+  depois de R3 dizendo que as quatro provas pedidas provavelmente já existiam.
+  Por isso o ciclo **começou por uma conferência**, não por escrever.
+- **conselheiro:** não chamado (pauta cheia, e a etapa já estava escrita).
+- **testes (a conferência, primeiro):** leu a suíte inteira contra o que R2 e
+  R3 alegam, e o veredito confirmou a suspeita — **as quatro provas da pauta
+  já estavam feitas e nenhuma foi reescrita**: eleição determinística por
+  semente (seções 2 e 9i, 300 mundos, as 7 formas alcançáveis), forma→detector
+  (seção 8 e 8b–8g), a ordem menor→maior (seção 9d, exaustivo de 560
+  combinações), e o Narrador só na revelação (seção 9k). **R4 não repetiu
+  nada disso.** A catraca forma→detector de R2 também foi conferida por
+  sabotagem e **morde**: forma sem `achaAlvo` → 6 falhas; sem linha em
+  `MUNDOS_DE_PROVA` → 5; detector quebrado → 10.
+- **testes (a escrita):** cinco dentes novos, **290 → 332 asserções**, tudo em
+  `teste-reviravolta.mjs`. **Nada em `src/` mudou** — nenhum dente ficou
+  vermelho por culpa do código.
+
+- **O ACHADO DA ETAPA, e a razão de ela existir.** A conferência sabotou o
+  `App.jsx` em cópia e encontrou o defeito que esta casa inteira existe para
+  caçar, um andar acima do normal — **na própria prova**:
+  - **apagar a ÚNICA chamada de `mexerNaReviravolta()` (`App.jsx:10251`)
+    deixava `npm test` inteiro VERDE** — 181/181 suítes, 7/7 varredores. R1,
+    R2 e R3 podiam sair do jogo em silêncio, e três etapas de trabalho viravam
+    acervo sem que nada mordesse.
+  - `if (maiorPodeNascer(...) && false)` — idem, **verde**.
+  - O motivo é estrutural, e vale para além das reviravoltas: **toda âncora de
+    "ligado ao jogo" media a DEFINIÇÃO** (`/mexerNaReviravolta/`), nunca o
+    sítio de chamada; e `mexerNaReviravolta` é const local do App, não export,
+    logo **invisível ao `teste-ligacao`**. "Escrito e nunca acontece" é
+    exatamente o defeito que a Fase R gastou três etapas curando.
+
+- **os cinco dentes, na ordem do estrago que deixavam passar:**
+  1. **a chamada, e não a definição.** Exige `mexerNaReviravolta()` como
+     *instrução*, **uma vez por turno**, na ordem entre `dispararPropositos` e
+     `colherAsFalas`. Lê a **condição inteira do `if`** fechando parênteses por
+     contagem — é isso que mata o `&& false`, que uma regex perdoaria por pegar
+     só o prefixo.
+  2. **o ciclo com dias que passam.** A fase vista de fora, que a pauta pediu e
+     nunca teve prova: a condição de `cuidarDasSementes`
+     (`dia - regadaEm >= diasEntreRegasDe`) **roda pela primeira vez em teste**,
+     contra o `promessas.js` real — menor madura em 9, maior em 18, folga de 3
+     no meio, nenhuma caindo duas vezes.
+  3. **as duas pontas se encontram.** `elegerReviravoltas` nunca recebia um
+     mundo e `MUNDOS_DE_PROVA` nunca entrava num ciclo.
+  4. **o bilhete do `fecharAto`** — a asserção que falha no dia em que ele
+     ganhar chamador em `src/`, com o vínculo e as duas saídas no comentário.
+  5. **todo `porte` ∈ `PORTES`** — uma oitava forma com `porte: "medio"`
+     passava pela catraca de 4 menores / 3 maiores e virava acervo inerte.
+
+- **decisões médias tomadas:**
+  - **a ordem do turno é medida por ÍNDICE no texto normalizado, não por
+    vizinhança de linha.** Motivo: âncora que exige as três chamadas coladas
+    fica vermelha no dia em que um órgão novo nascer entre elas — seria uma
+    catraca que pune crescimento legítimo. Por índice, ela guarda só o que
+    importa (a virada depois dos propósitos, antes das bocas).
+  - **exigir UMA chamada, e não `>= 1`.** Motivo: duas chamadas por turno
+    dobrariam o ritmo de `RITMO_DAS_VIRADAS` — as sementes regariam duas vezes
+    por dia — e **nenhuma asserção de ritmo acusaria**, porque todas medem a
+    tabela, não a frequência de uso.
+  - **o laço de dias é declarado como RÉPLICA da condição do App**, com a lista
+    do que copia e o aviso escrito. Motivo: é a honestidade do dente — ele não
+    roda o `App.jsx`, roda uma cópia da regra, e no dia em que
+    `cuidarDasSementes` mudar a réplica tem de ser revista junto. Fingir que é
+    o App seria a mentira que a etapa veio caçar.
+  - **os números de R4 saem todos de `RITMO_DAS_VIRADAS` e de
+    `sementes.length`**, nenhum cravado na suíte — lei "se é número, é tabela",
+    e é o que impede a prova de concordar consigo mesma em vez de com o código.
+
+- **a catraca morde (conferido pelo orquestrador em cópia, não prometido pelo
+  agente):** o mesmo rascunho de sabotagem rodado de novo contra o arquivo
+  final, com o projeto intocado —
+
+  | sabotagem | antes (290) | depois (332) |
+  |---|---|---|
+  | apagar `mexerNaReviravolta();` | **VERDE 290·0** | **VERMELHA 328·4** |
+  | `maiorPodeNascer(...) && false` | **VERDE 290·0** | **VERMELHA 331·1** |
+  | oitava forma sem linha em `MUNDOS_DE_PROVA` | 6 falhas | **16 falhas** |
+  | oitava forma com `porte: "medio"` | passava na catraca do porte | **13 falhas** |
+
+- **A FASE R, FECHADA — o antes e o depois inteiro** (conferido contra o
+  código de `9d2902f`, não contra o diário):
+  - **antes de R1, 5 das 7 formas eram inertes.** O detector morava no
+    `App.jsx` e cobria **2 formas** (`aliado_agente`, `heranca_roubada`); o
+    resto era `return null`, e o comentário de lá dizia isso com todas as
+    letras. As **3 maiores** somavam dois motivos — sem detector *e* sem
+    ninguém lendo `.maior`. Como a eleição distribui uniforme entre as 4
+    menores, **metade das campanhas nascia com a menor muda, e 100% delas sem
+    maior nenhuma.**
+  - **depois de R3:** `achaAlvo` nas **7/7**, e a catraca de R2 impede a oitava
+    nascer sem um. As três maiores acontecem, com ritmo próprio (rega a cada 6,
+    amadurece em 18, contra os 12 do episódio mais longo) e a ordem
+    menor→maior garantida por estrutura (`quemPodeRevelar` devolve **um** nome).
+  - **depois de R4:** o número que sobrava — **1 sítio de produção podia sumir
+    sem que a casa notasse** — virou **0**. Apagar a chamada agora derruba a
+    suíte da casa (`180/181 · FALHARAM: teste-reviravolta.mjs`).
+  - **a suíte da fase: 41 → 131 (R2) → 290 (R3) → 332 (R4).** Quatro etapas,
+    quatro versões, zero regressão na menor.
+  - e o que nasceu no caminho: o sexto tipo de laço e as três pontes de R1
+    (`familia`, `oficioDoAntecedente`, o razão do informante), `achaAlvo` +
+    `garantirMundo` + `alvoDaForma` e as tabelas `LIMIARES_DA_VIRADA` /
+    `PAPEIS_DO_MESTRE` (R2), `RITMO_DAS_VIRADAS` + `quemPodeRevelar` + a tranca
+    do alvo dividido (R3), e `teste-antecedentes.mjs` inteiro (R1).
+
+- **o que ficou:**
+  - **um achado novo para a pauta, visto durante a sabotagem:** uma forma com
+    semente que não existe no Livro faz a **seção 1b estourar** (exceção, não
+    falha) — e suíte que morre de exceção **esconde os outros 300 dentes
+    justamente no dia em que eles têm o que dizer. É herdado do G7**, não de
+    R4, e vale para qualquer suíte da casa. Entra em "Aberto" como `leve`.
+  - **o item mais valioso de "Aberto" NÃO foi feito e continua lá:** a
+    **varredura de `Math.random` nas provas**. O orquestrador mediu de
+    passagem: **14 suítes citam `Math.random` diretamente**, e o vício pior nem
+    aparece nesse grep — `teste-sala.mjs` cai no `Math.random` **por omissão**,
+    deixando o parâmetro `rnd` no padrão. Numa casa cuja lei é "determinismo
+    por semente", é o defeito mais grave que pode haver numa prova.
+  - **um tropeço de processo, dito porque custou tempo:** o orquestrador
+    encerrou um turno esperando a notificação de uma mão, e a mão morreu ali —
+    **o mesmo erro do primeiro ciclo**, e o roteiro já avisa. Pior: a mão
+    ressuscitou depois e escreveu a etapa **em paralelo** com a segunda, e por
+    um momento o arquivo teve dois blocos R4. O segundo agente mesclou os dois
+    ficando com a metade mais forte de cada, e **o arquivo commitado tem uma
+    série só** (conferido: as seções `10`–`10e` aparecem uma vez na saída).
+  - os **dois itens pesados** da Fase A continuam esperando a pessoa (a
+    concentração inerte e a família defensiva), e **nenhuma fase aprovada
+    sobrou**: com a R fechada, a lista "Aprovado pela pessoa" está vazia. O
+    próximo ciclo pega de "Aberto".
+
 ## 13/09 22:05 · v9.229 · R3 · a maior enfim acontece · commit `e50eb43`
 - **estado inicial:** árvore limpa, HEAD `c0f026b`, VERSÃO v9.228, `npm test`
   181/181 verde. A etapa aprovada da vez era a **R3**, já encolhida por R2 para

@@ -169,21 +169,75 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   consegue devolver o alvo. Sem isso, uma pagaria a catraca da outra e a
   outra ficava trancada para sempre. `teste-reviravolta.mjs` 131 → **290**
   asserções. Ver o diário.
-- [ ] **R4 · a suíte da fase** · de: pessoa+conselheiro · 13/09
-  `teste-reviravolta.mjs`: eleição determinística por semente, cada forma
-  com seu detector, a ordem menor→maior, e o Narrador só sabendo no turno
-  da revelação.
-  **Corrigido pelo orquestrador em 13/09, depois de R3:** a etapa nasce
-  **credora** — R3 já provou as quatro coisas desta lista (seções 9 a 9l:
-  determinismo sobre 300 mundos com as três maiores e as quatro menores
-  alcançáveis, detector por forma desde R2, a ordem menor→maior num
-  exaustivo de 560 combinações, e o Narrador por regex sobre o `App.jsx` mais
-  as duas catracas de teto conferidas). R4 é **conferir o que sobrou**, não
-  repetir: o que ainda não tem prova é o **ciclo inteiro contra o App de
-  verdade** (eleger → semear → regar → revelar, com o Livro real), e as
-  bordas que R3 anotou e não pôde fechar (as duas logo abaixo, em "Aberto").
+- [x] **R4 · a suíte da fase** · feito em v9.230 (`a1e5ba6`), 13/09
+  **A etapa começou por conferência, e a conferência valeu o ciclo.** As
+  quatro provas que esta lista pedia **já estavam feitas** em R2/R3 e
+  **nenhuma foi reescrita** — o trabalho foi sabotar a suíte de propósito
+  para ver o que ela deixava passar. Passava o pior que existe nesta casa:
+  **apagar a única chamada de `mexerNaReviravolta()` deixava `npm test`
+  inteiro verde** (181/181 + 7/7), ou seja R1+R2+R3 podiam sair do jogo em
+  silêncio; e `if (maiorPodeNascer(...) && false)` também. Motivo estrutural,
+  e vale além daqui: **toda âncora media a DEFINIÇÃO, nunca o sítio de
+  chamada**, e `mexerNaReviravolta` é const local do App, invisível ao
+  `teste-ligacao`. Cinco dentes novos (a chamada e não a definição · o ciclo
+  com dias que passam contra o Livro real · as duas pontas se encontrando ·
+  o bilhete do `fecharAto` · todo `porte` ∈ `PORTES`), 290 → **332**
+  asserções, **nada em `src/` mudou**. Conferido em cópia pelo orquestrador:
+  as duas sabotagens verdes viraram 4 e 1 falhas. Ver o diário.
+
+  **A FASE R ESTÁ FECHADA.** Formas inertes **5 de 7 → 0**: o detector cobria
+  2 formas e morava no App, as 3 maiores não tinham quem lesse `.maior`, e
+  metade das campanhas nascia com a menor muda e nenhuma maior. Hoje as 7 têm
+  `achaAlvo`, as maiores acontecem com ritmo próprio (rega 6, amadurece 18) e
+  a ordem menor→maior é estrutura, não disciplina. A suíte da fase foi de
+  **41 → 131 → 290 → 332**. E o sítio de produção que podia sumir sem a casa
+  notar: **1 → 0**.
+
+  **Não há mais fase aprovada na fila** — o próximo ciclo pega de "Aberto".
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **uma suíte que estoura esconde todos os outros dentes** · leve · de: orquestrador (achado de R4) · 13/09
+  Visto durante a sabotagem de R4: uma forma cuja semente não existe no Livro
+  faz `teste-reviravolta.mjs` **estourar** (`TypeError: Cannot read properties
+  of null`, na seção 1b, linha 54 — `P.semear` devolve `null` e o `.id` vai
+  junto). Exceção **não é falha**: o processo morre ali e as ~300 asserções
+  seguintes **não são nem tentadas**, justamente no dia em que teriam algo a
+  dizer. O placar `N ok · M falhas` nunca é impresso, e o `rodar-tudo.mjs`
+  reporta a suíte como vermelha sem dizer o que mais estava quebrado. A seção
+  1b é **herdada do G7**, não de R4 — e o vício é da casa inteira, não desta
+  suíte: qualquer `t(...)` que desreferencie o retorno de uma função que pode
+  devolver `null` tem a mesma borda. Duas frentes, e a escolha é de quem
+  mexer: **embrulhar cada `t(...)` num `try/catch` no helper** (a exceção vira
+  uma falha nomeada e a suíte continua — é a versão da lei "nunca pode custar
+  o turno" aplicada à prova), ou só endurecer os sítios que desreferenciam.
+  A primeira é a que vale, e é uma mudança no helper `t`, não nas asserções.
+  Cuidado: o `try/catch` não pode transformar em verde nada que hoje é
+  vermelho — a asserção que estourar tem de **falhar**, com a mensagem da
+  exceção no lugar do valor. Linha "varredor novo para erro já visto" /
+  "bug com teste que prova": a prova faz uma asserção estourar de propósito e
+  exige que o placar final ainda saia, com ela contada como falha.
+
+- [ ] **quantos outros órgãos podem sumir do turno em silêncio?** · médio · de: orquestrador (achado de R4) · 13/09
+  R4 descobriu que apagar a única chamada de `mexerNaReviravolta()` deixava a
+  casa inteira verde, e consertou **para as reviravoltas**. Mas o motivo é
+  estrutural e não tem nada de específico: as âncoras de "ligado ao jogo"
+  medem a **definição** do órgão, e um órgão fiado como `const` local do
+  `App.jsx` é **invisível ao `teste-ligacao`** (que só enxerga `export`). Ou
+  seja: **não se sabe quantos outros órgãos do turno estão nessa situação** —
+  escritos, provados em módulo, e removíveis da cena sem que nada morda. O
+  trabalho é levantar o número antes de consertar: listar os `mexerNo*` /
+  `cuidarDe*` / `dispararPropositos` / `colherAsFalas` e companhia que o turno
+  chama, e para cada um perguntar "se eu apagar esta linha, alguma suíte fica
+  vermelha?" — a resposta medida, uma sabotagem por órgão, em cópia. O número
+  é a medida do buraco, e cada órgão sem dente é um achado. Só depois decidir
+  a forma do conserto: um `check-turno.mjs` que exige sítio de chamada para
+  uma lista nomeada é o candidato óbvio (linha "varredor novo para erro já
+  visto"), mas a lista tem de sair da medição, não do palpite. Médio porque a
+  medição pode revelar muitos, e aí o conserto vira fase — nesse caso ele
+  sobe, e só a medição fica neste item. O molde do dente já existe e funciona:
+  seção 10 de `teste-reviravolta.mjs` (ordem por índice, chamada única,
+  condição do `if` lida fechando parênteses por contagem).
 
 - [ ] **o `teste-ligacao` conta menção em comentário como leitor** · leve · de: backend+testes+frontend (achado de R3) · 13/09
   Os três agentes esbarraram nisto de forma independente na mesma etapa, o que
