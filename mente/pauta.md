@@ -21,6 +21,42 @@ _As quatro de 14/09 foram respondidas e viraram as fases T, B, F e I. Estas duas
 nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
 `Palavra de Coragem` faz na ficha e o jogo não cumpre._
 
+- [ ] **o alvo tático já está ligado no jogo, e a régua nunca o viu** · pesado · de: orquestrador (achado de N1) · 14/09
+  **O maior achado de N1, e ele não é sobre a Fase N: é sobre o que o jogo
+  já é hoje.** A régua de combate passa **`prioridade: ""`**
+  (`regua-combate.mjs:612`), sem comentário, e `combate.js:279` só consulta
+  `escolherAlvo` quando a prioridade existe. Logo **toda a linha de base de
+  B1, B1b, B2 e T1 para Uma Vida foi medida com o Adversário fora do
+  circuito** — o que essas etapas mediram foi o sorteio de 35% e mais nada.
+  No jogo de verdade, `App.jsx:13606` passa a prioridade da intenção a todo
+  turno de combate.
+  **A conta, por reconstrução no scratchpad** (é reconstrução, não a régua —
+  N1b existe para refazê-la com o instrumento certo): no `justo`, vitória
+  **52,10% → 1,80%**, PV do grupo **25,88 → 0,63**, quedas **1,790 →
+  2,978**; no `duro`, **8,40% → 0,00%**. Robusto: 8 variantes do lugar ficam
+  entre 1,6% e 13,6%, e com a eleição atrasada uma rodada, 3,2%.
+  **A causa é estrutural e está medida prioridade a prioridade:** o herói é
+  o único combatente que **não morre ao cair** e de quem os inimigos
+  **desistem** ao vê-lo no chão (`combate.js:267`). Bater nele é dano
+  desperdiçado — e por isso **toda prioridade que aprende a evitá-lo vira
+  TPK**: `o_conjurador` 0,6% de vitória, `quem_nao_e_o_heroi` 0,4%,
+  `o_mais_forte` 0,4%, `o_curandeiro` 1,2%, contra 51,2% do sorteio cego.
+  **O que isto significa para a Fase N:** *"o brilhante corta a cura
+  primeiro"* é, na mesa de hoje, a definição de combate invencível. A fase
+  não vai deixar o combate *"um pouco mais difícil"* — ela vai ter de
+  **segurar** uma dificuldade que já existe e que nenhuma medição via.
+  **A pergunta, então, não é a que N7 escrevia.** Não é *"aceita o combate
+  mais duro?"*. É: **o alvo tático já está ligado no jogo há trinta versões
+  e a régua nunca o mediu — quanto dele você quer manter?** Três saídas, e
+  nenhuma é ajuste silencioso: (a) manter como está e a Fase N calibrar os
+  degraus para dentro da faixa de 35–65%; (b) declarar que o combate deve
+  doer assim e mudar a faixa da catraca; (c) mexer no que torna o herói
+  desperdício — que é o mesmo assunto da pendente *"o herói é um passageiro
+  no próprio combate difícil"*, hoje absorvida por esta fase.
+  **N1b é pré-requisito de qualquer resposta** — é ele que troca a
+  reconstrução por número de régua. Ele é instrumento e o ciclo o executa;
+  esta decisão espera a pessoa.
+
 - [ ] **a habilidade de classe não tem resolvedor — contar antes de decidir** · pesado · de: pessoa · 14/09
   **A pessoa devolveu a pergunta (14/09):** *"quero sua opinião e a da mente
   para qual a melhor forma de resolver isso; se os dois concordarem na
@@ -202,20 +238,202 @@ vezes e o que nasce é quase sempre `Escudo da Fé`, proteção com bônus zero.
 **A saída não é reabrir a tabela de bônus: é fazer quem escolhe ter cabeça.**
 Só depois disso se pergunta se os números precisam mudar.
 
-- [ ] **N1 · o que os dois lados já sabem** · de: pessoa · 14/09
-  Medir antes de mexer, **nos dois lados**: o que `escolherAlvo`
-  (`adversario.js`) decide hoje e com que entrada; o que
-  `decidirAcaoCompanheiro` (`companheiros.js`) decide; o que `INTENCOES` já
-  cobre; como `intelecto` se distribui nas fichas e nos oito prontos; e que
-  grau de inteligência o bestiário tem (hoje: nenhum). Linha de base pela
-  régua de B1: quem apanha, quanto, e o que o grupo escolhe fazer. **Sem
-  mudar nada.**
+- [x] **N1 · o que os dois lados já sabem** · feito em v9.248, 14/09
+  **A etapa não mudou uma linha de `src/`, de `App.jsx` ou das suítes — mediu.**
+  E, como em A1, P1 e D1, a medição desmentiu boa parte do que esta fase
+  escrevia. As correções estão em cada etapa abaixo, com o número que as
+  obriga. O que segue é a linha de base; salvo dito, cenário `justo`,
+  família `umavida|0..999`, **n = 1000 combates por cenário**, e as quatro
+  famílias (`umavida`, `aa`, `bb`, `cc`) concordando dentro do IC95 por
+  combate. O instrumento é cópia instrumentada da régua de B1, validada
+  combate a combate (**0 divergências** em 600 combates comparados por id) e
+  contra o diário (vitória 52,10% · quedas 1,790 · PV 25,88 · 119 ações de
+  buff em 300 combates, o número exato que B2 registrou).
+
+  **O lado do inimigo.** `escolherAlvo(prioridadeId, alvos)`
+  (`adversario.js:155`) é **puro e sem sorte nenhuma** — não há uma
+  ocorrência de `Math.random` em `adversario.js`, e 1000 chamadas idênticas
+  devolvem o mesmo alvo. Ele enxerga **13 bandeiras** e nada mais (nem
+  condição, nem efeito, nem defesa, nem dano tomado); desempata pelo
+  **primeiro da lista**, e a lista que `turnoDosInimigos` monta
+  (`combate.js:245`) **começa sempre pelo jogador** — empate exato entrega o
+  herói em `o_ferido`, `o_mais_forte` e `o_mais_fraco`, medido. O único
+  sítio mecânico que o chama é `combate.js:281`; a prioridade chega de
+  `App.jsx:13606`, da intenção da vez. `INTENCOES` tem **46 entradas** para
+  13 prioridades — e **14 delas nunca vencem** em 200 000 situações
+  sorteadas dentro do domínio que o App consegue produzir, porque oito
+  campos são lidos e **nunca escritos** em `src/` inteiro (`refem`,
+  `doVilao`, `emboscada`, `surpresaDoJogador`, `temChave`, `chefe`,
+  `carregaAChave`, `feriu`). Na mesa é pior: em 1000 combates, **8 das 46**
+  são eleitas alguma vez — `sair_vivo` sozinha ocupa **48,6%** das rodadas.
+
+  **O lado do grupo.** `decidirAcaoCompanheiro(comp, {aliados, inimigos,
+  jogador, rodada})` (`companheiros.js:183`) lê **sete coisas** e **não lê
+  inimigo nenhum além de "está vivo?"** — nem ameaça, nem nível, nem quem
+  bate em quem, nem classe de aliado. São cinco planos em ordem fixa, e o
+  apoio (plano 3) só existe em **`rodada <= 2`** com portão `0,7`. O
+  retrato, em 1000 combates `justo` (17 276 decisões, 17,28 por combate):
+  habilidade 35,52% · ataque 33,30% · cura 23,88% · guarda 5,23% ·
+  **buff 2,07% (358)**. **Ataque: 11 889 de 11 889 (100,00%) no inimigo de
+  menor PV absoluto** — `sort` ascendente, sem ler mais nada.
+  **Cura: 4 125, das quais 89,07% no herói e 0 (zero) na própria
+  Clériga** — os candidatos são `[jogador, ...aliados]` e `aliados` exclui
+  quem decide (`combate.js:379`); ela é, medido, a companheira que menos
+  dura. E **59,68% das curas (67,27% no `duro`) chegam em alguém já a 0 PV**:
+  o gatilho `frac <= 0,35` não previne, ressuscita.
+
+  **Por que o buff é `Escudo da Fé`: 347 de 358 (96,93%), e a causa é
+  tripla.** (1) **O acervo**, que é a maior: das **148** habilidades de
+  classe, `ehBuff` casa **14**, e só **7 (4,7%)** podem produzir bônus
+  ofensivo — do **nível 8 em diante, 1 classe em 12** carrega uma na ficha
+  que `garantirFichaCompanheiro` monta, porque o corte de 6 slots por nível
+  mais alto (`companheiros.js:72`) tira justamente as baratas. (2) **A
+  precedência** `guarda || abrigo || buff` (`companheiros.js:262-264`), que
+  é **decisão medida de P3/v9.233 com o motivo no comentário**, não
+  descuido: `Escudo da Fé` é abrigo e ganha antes de a busca por buff
+  acontecer. (3) **A primeira-que-casa dentro do balde**, que faz o Bardo
+  pegar `Contra-Canção` (bônus **0**) em vez de `Hino de Guerra` (+2), por
+  ordem de catálogo. E há prova de que a precedência não é cega: no
+  `brando`, onde o escudo sobrevive à rodada 1, a `Bênção` salta de 3,07%
+  para **28,84%**. Golpes de companheiro com bônus ofensivo: **5 em 11 889
+  (0,042%)** — B2 mediu 0,06% em 300 combates, reproduzido.
+  **E a janela é tão culpada quanto a escolha:** no `justo` as rodadas 1–2
+  da Clériga são comidas pela cura (**1 457 curas contra 358 buffs**); no
+  `brando`, mesma ficha, **1 380 buffs contra 20 curas**. Dar cabeça a quem
+  escolhe, sem mexer na janela, tem **teto medido de 358 ações por 1000
+  combates**.
+
+  **O `intelecto`.** Escala real **0–3 na criação** (`PONTOS_TOTAIS = 6`,
+  `ATRIBUTO_MAX_CRIACAO = 3`), até 5 com raça; **`ATRIBUTO_MAX = 5` é
+  importado em `App.jsx:43` e nunca lido** — não tem um leitor sequer. Nos
+  **oito prontos**: Muralha 0 · Sombra 1 · Chama 3 · Remendo 3 · Voz 0 ·
+  Flecha 1 · Punho 0 · Voto 1 — faixa 0–3, mediana **1**, média **1,13**,
+  **três em zero e o valor 2 vazio**. No herói, a criação **não impõe
+  atributo por classe** (os 6 pontos são livres); 4 das 12 classes têm
+  `intelecto` como `atributoChave`, e isso só vira proficiência. **E nas
+  fichas de companheiro o `intelecto` não existe:** `fichaDeCompanheiro`
+  (`App.jsx:19188`) e `garantirFichaCompanheiro` (`companheiros.js:53`)
+  montam dez campos e **nenhum é `atributos`** — o único companheiro com
+  atributos é o que vem da sala PvP, porque é ficha de jogador. Os três da
+  régua têm `intelecto` escrito à mão em `CENARIOS_DA_REGUA`; o jogo não dá
+  nenhum. **E a pauta subestimava o que `intelecto` já faz:** além de teste
+  e magia, ele decide o **PM máximo** (`manaBase + intelecto*2`, `App.jsx:3734`
+  e `prontos.js:173`) — que é o recurso que o piloto gasta em toda decisão —,
+  pesa 18 em `poder.js:109` e é recuo de resistência em `aflicoes.js:80`.
+  Ele não ganha "um segundo leitor": ganha o quinto.
+
+  **O inimigo não tem grau de inteligência — confirmado dos dois lados.**
+  `bestiario.js` tem **27 entradas** (18 criaturas + 9 arquétipos) com
+  exatamente os campos `nome, ameaca, nivelRef, des, agil, desc, perfil`, e
+  `completarInimigo` devolve `{nome, ameaca, nivel, vidaMax, vida, defesa,
+  des, agil}` (+`perfil`). Nenhum casa com inteligência. **A âncora que
+  serve é `ameaca`**: 5 valores fechados (comum 7 · fraco 6 · elite 5 ·
+  lendario 5 · competente 4), já ordinal (`bonusDeAmeaca`,
+  `pvEsperadoInimigo`, `ataquesDoInimigo` a leem como escada), sobrevive a
+  `completarInimigo` e **tem recuo explícito (`"comum"`) para o nome que o
+  Narrador inventa** — é o único campo com as quatro propriedades.
+  `nivelRef` tem 13 valores para 27 criaturas (granularidade demais, e não é
+  ordinal de cabeça); `des`/`agil` medem corpo; `perfil` só existe em 7.
+  **E `ameaca` sozinha não basta:** Comandante (*"perigoso e tático"*) e
+  Sentinela Blindada (*"muralha ambulante"*) são as duas `elite`.
+  **Já existe uma classificação de cabeça, e não mora no bestiário:**
+  `menteDaCriatura` (`adversario.js:187`), 3 valores por regex sobre o
+  **nome**, que põe **18 das 27 em `pensa`** (o Capanga e o Dragão Ancião no
+  mesmo balde) e classifica o **Colosso** como `besta` porque `RX_BICHO`
+  casa a palavra "besta". E **`completarInimigo` não copia o `desc` da
+  base** (`bestiario.js:69-86`): o único texto que hoje insinua cabeça
+  (*"força bruta e pouco cérebro"*, *"perigoso e tático"*) nunca chega à
+  mesa, então `menteDaCriatura` roda só sobre o nome.
+
+  **Quem apanha, e quanto — a distribuição real.** De todos os golpes que os
+  inimigos desferem: **herói 60,06% (`justo`) · 57,27% (`duro`) · 64,48%
+  (`brando`)** — **não 65%**. Por companheiro no `justo`: Engenheiro 14,52% ·
+  Mago 13,54% · Clériga 11,88% (ela apanha menos porque dura menos, não
+  porque o sorteio a poupe: o ramo de 35% sorteia uniformemente entre os
+  vivos). **A divergência tem causa exata e fecha inteira:** o sorteio só
+  roda quando há mais de um alvo vivo, e **quando roda ele mede 64,85% ·
+  64,69% · 64,48%** — o número de projeto, cru. Ele deixa de rodar em
+  **7,88% (`justo`) e 12,43% (`duro`)** dos golpes porque
+  **`vivosAlvo = alvosDele.filter(vida > 0)` (`combate.js:267`) tira o herói
+  caído da lista de alvos** — e no `brando`, onde o herói nunca cai, a medida
+  é exatamente 64,48%.
+  **E o achado que a fase não tinha:** a lista de alvos é uma **foto tirada
+  uma vez** por turno (`combate.js:245`) e não se atualiza entre os golpes,
+  então **13,40% (`justo`) e 18,03% (`duro`) do dano que os inimigos rolam
+  cai em quem já está no chão** — 38,15 ± 1,80 e 62,19 ± 2,16 PV por
+  combate. Um inimigo com cabeça que apenas **pare de desperdiçar** endurece
+  o combate por essa margem antes de mirar papel nenhum.
+
+  **O achado que obriga uma etapa nova (N1b): a régua de B1 mede o combate
+  com o Adversário fora do circuito.** `regua-combate.mjs:612` passa
+  **`prioridade: ""`**, sem uma linha de comentário dizendo por quê, e
+  `combate.js:279` só consulta `escolherAlvo` quando a prioridade existe.
+  Ou seja: toda a linha de base de B1/B1b/B2/T1 para Uma Vida foi medida com
+  o órgão desligado. Uma reconstrução de `lutaDaMesa` no scratchpad, ligando
+  a prioridade ao mesmo laço, dá **vitória 52,10% → 1,80%** no `justo` e
+  **8,40% → 0,00%** no `duro`, e é robusta (8 variantes do lugar entre 1,6%
+  e 13,6%; com a eleição atrasada uma rodada, 3,2%). **É reconstrução, não a
+  régua** — o número exato tem de sair da régua consertada, e é isso que
+  N1b faz. A causa está medida prioridade a prioridade: **toda prioridade
+  que aprende a evitar o herói vira TPK** (`o_conjurador` 0,6% ·
+  `quem_nao_e_o_heroi` 0,4% · `o_mais_forte` 0,4% · `o_curandeiro` 1,2%),
+  porque o herói é o único combatente que **não morre ao cair** e de quem os
+  inimigos **desistem** ao vê-lo no chão. Bater nele é dano desperdiçado —
+  e *"o brilhante corta a cura primeiro"* é, na mesa de hoje, a definição de
+  combate invencível. **A consequência é da pessoa, e está em "Para a pessoa
+  decidir".**
+
+- [ ] **N1b · a régua mede o combate que existe** · de: N1 · 14/09
+  **Instrumento, não gameplay — o molde é B1b, que fez o mesmo pela mesma
+  razão.** A régua passa `prioridade: ""` (`regua-combate.mjs:612`) e por
+  isso mede Uma Vida com `escolherAlvo` fora do circuito. Esta etapa liga a
+  intenção à régua pelo caminho que o App usa (`lutaDaMesa` → `intencaoDaVez`
+  → `turnoDosInimigos`), mantém a régua determinística por semente, e
+  **republica a linha de base**: vitória, quedas, PV, % de golpes no herói e
+  o desperdício em corpos caídos, nos três cenários e nas quatro famílias.
+  Nenhuma linha de `src/` muda. **Vem antes de N4 e de N5**, senão o antes e
+  o depois da Fase N inteira são medidos com o órgão desligado — e o
+  veredito de N7 seria a soma de duas coisas que a pessoa precisa ver
+  separadas. Catraca: os números velhos continuam reproduzíveis com a
+  prioridade vazia, para que a história de B1/B2/T1 não passe a mentir.
+
 - [ ] **N2 · a escada, e de onde cada um tira o seu degrau** · de: pessoa · 14/09
   Tabela nomeada: os degraus (animal, bruto, astuto, treinado, brilhante…),
   **o que cada degrau enxerga** e **o que decide**. Duas fontes, uma escada:
   o companheiro e o herói tiram o degrau do **`intelecto` da ficha**; a
   criatura tira de um campo novo no bestiário, e quem não declarar herda um
   padrão explícito. Nenhum número solto.
+
+  > **CORRIGIDO POR N1 (14/09), e é buraco de desenho, não de redação:**
+  > **o companheiro não tem `intelecto` — não tem `atributos` nenhum.**
+  > `garantirFichaCompanheiro` (`companheiros.js:53`) nunca os sintetiza, e
+  > nenhum dos dois caminhos de criação os passa (`App.jsx:5763`,
+  > `regras-jogo.js:193`). Ou N2 faz o `intelecto` do companheiro **nascer**
+  > — e aí é campo novo em ficha viva e em todo save —, ou ele tira o degrau
+  > de outro lugar (o `atributoChave` da classe já separa Mago de Guerreiro,
+  > sem campo novo). Sem resolver isto, todo companheiro de Uma Vida nasce
+  > com degrau `undefined`, e N5 e N6 ficam sem a metade que decide.
+  > **A escada de cinco não cabe na distribuição que existe:** os oito
+  > prontos ocupam **0, 1 e 3** (mediana 1, média 1,13, três em zero, o
+  > valor **2 vazio**) — uma escada de cinco degraus nasce com dois mortos.
+  > Ou são **três** degraus, ou N2 redistribui `intelecto` nos prontos, e
+  > isso é mexer em ficha que a catraca de equilíbrio da arena vigia.
+  > **A escala é 0–3 + raça, não 0–5:** `ATRIBUTO_MAX = 5` existe e **não
+  > tem leitor** (`App.jsx:43` importa e nunca usa); quem o usar como teto
+  > da escada lhe dá o primeiro.
+  > **O campo novo do bestiário tem âncora nomeada: `ameaca`** — 5 valores
+  > fechados, já ordinal, sobrevive a `completarInimigo` e já tem recuo
+  > (`"comum"`) para o nome que o Narrador inventa. É o padrão herdado, e
+  > **sozinha não basta**: Comandante e Sentinela Blindada são as duas
+  > `elite`.
+  > **E a escada não nasce em terreno vazio:** `menteDaCriatura`
+  > (`adversario.js:187`) já classifica cabeça — 3 valores, fora do
+  > bestiário, por regex sobre o nome, com **18 das 27 em `pensa`** e o
+  > Colosso em `besta` por acidente de palavra. N2 **substitui** esse
+  > classificador ou declara como os dois convivem; duas classificações de
+  > cabeça em dois lugares é a doença que esta casa já conhece. Se a âncora
+  > for textual, note que **`completarInimigo` não copia o `desc` da base**.
+
 - [ ] **N3 · ler a mesa: o papel de cada um** · de: pessoa · 14/09
   Para mirar o curandeiro é preciso **saber que ele é curandeiro** — e saber
   por observação, não por onisciência: quem curou na frente de você é
@@ -224,12 +442,71 @@ Só depois disso se pergunta se os números precisam mudar.
   **Serve aos dois lados**: é o mesmo olhar que faz o inimigo achar o alvo e
   o curandeiro achar quem salvar. Memória de combate por combatente,
   determinística.
+
+  > **CORRIGIDO POR N1 (14/09) — o princípio está certo, o ponto de partida
+  > não.** A leitura de papel **já existe e é onisciente**:
+  > `bandeirasDosAlvos` (`combate.js:214-225`) preenche `cura` de
+  > `CURAM.includes(classe)` e `conjurador` de `perfilCombate(classe)`, da
+  > **ficha**, na rodada 1, sem ninguém ter curado nada — e `calar_a_magia` é
+  > eleita em **17,3%** das rodadas, `matar_o_remendo` em **13,9%**. N3 não
+  > acrescenta a leitura: **troca a fonte dela**, de ficha para observação, e
+  > o inimigo passa a saber **menos** do que sabe hoje. Escreva isso assim,
+  > senão o alvo errado do inimigo parecerá regressão.
+  > **O handicap é pequeno onde importa e grande onde não se esperava:** no
+  > `justo`/`duro` a Clériga se denuncia cedo (1 457 curas nas rodadas 1–2),
+  > então a memória enche na primeira ou segunda rodada; no `brando` é o
+  > inverso (20 curas contra 1 380 buffs), e ali ela fica anônima quase o
+  > combate inteiro.
+  > **Duas das bandeiras de N3 já existem e nunca são verdadeiras:**
+  > `carrega` (`ent.carregaAChave`) e `meFeriu` (`ent.feriu`)
+  > (`combate.js:223,225`) **não têm produtor em `src/` inteiro** — medido,
+  > `quem_carrega` e `quem_me_feriu` devolvem o retrato do sorteio cego byte
+  > a byte (51,2% · 1,82 quedas · 24,19 PV). A memória desta etapa preenche
+  > as duas, ou elas seguem sendo a definição de promessa vazia.
+  > **"O tanque (quem absorveu)" vai ficar quase sempre vazio:** o abrigo
+  > morde **0,292 vez por combate** no `justo` — em ~71% dos combates não há
+  > um único evento de absorção para ler.
+  > **E o desempate entrega o herói:** `maisPor` (`adversario.js:120`) usa
+  > `>` estrito e a lista começa sempre pelo jogador (`combate.js:245`),
+  > então empate exato vai para ele nas três prioridades que comparam número.
+
 - [ ] **N4 · a decisão, degrau por degrau** · de: pessoa · 14/09
   O motor: papel lido (N3) × degrau (N2) × intenção existente. O bruto vai
   no que está perto e no que bate mais; o brilhante corta a cura primeiro.
   **Determinístico por semente, provável em Node, e chamado pelos dois
   lados** — `escolherAlvo` e `decidirAcaoCompanheiro` passam a consumi-lo em
   vez de cada um adivinhar do seu jeito.
+
+  > **CORRIGIDO POR N1 (14/09), e é a correção mais pesada da fase.**
+  > **(a) Não são 65%: são 60,06% (`justo`), 57,27% (`duro`) e 64,48%
+  > (`brando`).** Os 65% são a taxa do sorteio **quando ele roda**, e ele
+  > deixa de rodar em 7,88% a 12,43% dos golpes porque
+  > `vivosAlvo` (`combate.js:267`) tira o herói caído da lista.
+  > **(b) O sorteio cego não é o motor que roda no jogo — é o recuo.**
+  > `App.jsx:13606` passa a prioridade da intenção a todo turno, e ela ganha
+  > de `Math.random()` (`combate.js:279-286`). Quem mede 60% é a **régua**,
+  > que passa `prioridade: ""` — por isso N1b vem antes desta etapa. **N4
+  > não mata um sorteio: substitui um motor que já está ligado.**
+  > **(c) `escolherAlvo` não adivinha** — é puro, determinístico, sem
+  > `Math.random`, e recebe a prioridade pronta. Quem escolhe é
+  > `intencaoDaVez`; quem decide o que o inimigo enxerga é
+  > `bandeirasDosAlvos`. E **o companheiro tem duas perguntas de alvo, não
+  > uma**: quem salvar entre os aliados (por fração) e em quem bater entre
+  > os inimigos (menor PV absoluto, `companheiros.js:271,276`). Os dois
+  > consumidores não consomem a mesma pergunta — escreva os dois pontos de
+  > consumo.
+  > **(d) Duas decisões que N4 tem de tomar explicitamente pelo degrau, e
+  > que a redação não previa:** se o inimigo **remata quem está no chão**
+  > (hoje nunca remata — e rematar é o que um degrau alto faria contra os
+  > testes de morte) e se **a lista de alvos se atualiza dentro do turno**
+  > (hoje é foto de `combate.js:245`, e **13,40%/18,03%** do dano cai em
+  > quem já caiu). Trocar só o critério de mira deixa as duas de pé.
+  > **(e) "O bruto vai no que está perto" só é decidível com grade:** sem
+  > ela `perto` é `true` para todo mundo, e na régua de Uma Vida
+  > `grade: null` — o critério do degrau baixo colapsa num empate.
+  > **(f) O motor novo herda 14 intenções inertes** e oito campos lidos sem
+  > produtor; na mesa só **8 das 46** são eleitas alguma vez.
+
 - [ ] **N5 · o grupo com cabeça** · de: pessoa · 14/09
   O companheiro aplica o motor às **suas** escolhas: o curandeiro cura quem
   está prestes a cair (e não quem tem menos PV em absoluto); quem dá buff dá
@@ -238,6 +515,49 @@ Só depois disso se pergunta se os números precisam mudar.
   companheiro passa a nascer de verdade** — e só depois de medir isso se
   pergunta se `BUFF_DA_HABILIDADE` precisa mudar. Medir com a régua de B1, e
   a catraca da arena vigiando o outro lado.
+
+  > **CORRIGIDO POR N1 (14/09) — três das quatro afirmações mudam.**
+  > **"Cura quem está prestes a cair, e não quem tem menos PV em absoluto"
+  > já é o que o código faz**, e a diferença vale **0,56%**:
+  > `decidirAcaoCompanheiro` já ordena por **fração** (`companheiros.js:191`),
+  > e fração e absoluto apontam a mesma pessoa em **99,44%** das 4 125 curas.
+  > O absoluto está no **outro** alvo (o inimigo). Gastar a etapa nisto é
+  > mover vinte e três curas em mil combates. **O que a medição acusa no
+  > lugar, e é bem maior:** (i) **a curandeira não é candidata à própria
+  > cura** (`combate.js:379` exclui quem decide) — **0 de 4 125** — e é a
+  > companheira que menos dura; (ii) **59,68% das curas (67,27% no `duro`)
+  > chegam em alguém já a 0 PV** — o gatilho `frac <= 0,35` é tarde, não é
+  > mal ordenado, porque o herói vai de cheio a zero dentro de um turno;
+  > (iii) **89,07% de todas as curas vão no herói**.
+  > **"Dar o ofensivo ao carry" é fiação que não existe:** o buff de
+  > companheiro **não tem alvo** — a ação volta sem `alvo`
+  > (`companheiros.js:265`) e `aplicarBuffDeCompanheiro` firma o efeito em
+  > quem conjurou ou no grupo inteiro, conforme a aflição. E **não há "quem"
+  > a escolher**: dos três da régua, só a Clériga tem apoio na ficha, o
+  > Engenheiro só tem guarda e o Mago não tem nada.
+  > **"É aqui que a ofensiva passa a nascer" pressupõe que dar cabeça
+  > basta — e não basta.** A causa é, por ordem de peso: **(1) o acervo** —
+  > 7 habilidades ofensivas de apoio em **148**, e do nível 8 em diante **1
+  > classe em 12** carrega uma na ficha que `garantirFichaCompanheiro` monta
+  > (o corte de 6 slots, `companheiros.js:72`, tira as baratas). Isto **não
+  > se resolve com cabeça: é tabela.** **(2) A janela** `rodada <= 2` com
+  > portão 0,7, comida pela cura no combate duro (**1 457 curas contra 358
+  > buffs** no `justo`; **1 380 buffs contra 20 curas** no `brando`, mesma
+  > ficha) — teto medido de **358 ações por 1000 combates**. **(3) A
+  > precedência** `guarda || abrigo || buff` e a primeira-que-casa dentro do
+  > balde (o Bardo pega `Contra-Canção`, bônus **0**, em vez de `Hino de
+  > Guerra`, +2). Só a (3) é cegueira de escolha.
+  > **E uma advertência: a escada abrigo-antes-de-buff é decisão medida de
+  > P3 (v9.233), com o motivo escrito no comentário.** Reordená-la para a
+  > `Bênção` nascer é **reabrir P3**, não consertar descuido — e o `brando`
+  > prova que ela não é cega (a `Bênção` salta para **28,84%** quando o
+  > escudo sobrevive).
+  > **"Quem tem pouco `intelecto` continua fazendo o óbvio" está CERTO** — o
+  > óbvio já existe e está medido (100% dos ataques no mais fraco): o degrau
+  > baixo não precisa de código, precisa de nome. Mas depende de N2 resolver
+  > o `intelecto` que o companheiro não tem.
+  > **E medir com a régua de B1 só vale depois de N1b.**
+
 - [ ] **N6 · o companheiro fala, e o que ele diz é decisão** · de: pessoa · 14/09
   *"Um personagem inteligente pode sugerir uma formação ou conduzir o
   combate."* O que ele diz **sai do motor**, não da IA: o sistema decide a
@@ -253,6 +573,18 @@ Só depois disso se pergunta se os números precisam mudar.
   ele — o buff que pesou no golpe, a cura que chegou a tempo, a formação
   sugerida — tem de ser visível na hora em que acontece, não deduzido do
   número no fim.
+
+  > **CONFIRMADO POR N1 (14/09), com a escala que faltava.** Nada na
+  > medição contradiz esta etapa, e o teto de prompt está certo. O número
+  > para calibrar a frequência: o grupo produz **17,28 decisões por
+  > combate** no `justo` (16,58 no `duro`, 8,49 no `brando`) contra **7,70
+  > rodadas** — a tabela de frequência tem de ser construída contra as
+  > **decisões**, não contra as rodadas, senão "um comentário a cada N
+  > turnos" sai **2,2 vezes** mais falante do que o desenho previu.
+  > **A metade que depende de N2:** a índole existe e é lida
+  > (`aliado.js`, `indole.js`); o **degrau** do companheiro não existe
+  > enquanto o `intelecto` dele não nascer.
+
 - [ ] **N7 · todos os modos, e a conta do que mudou** · de: pessoa · 14/09
   Vale em Uma Vida, no Torneio e no Duelo — é o mesmo motor, e os prontos da
   arena passam a lutar com cabeça. Medir com a régua de B1 e com a catraca
@@ -260,6 +592,28 @@ Só depois disso se pergunta se os números precisam mudar.
   combate ficou mais difícil, se a faixa de 35–65% se sustenta. **Se o
   combate tático deixar o jogo mais duro do que a pessoa quer, isso é
   decisão dela, não ajuste silencioso.**
+
+  > **CORRIGIDO POR N1 (14/09).**
+  > **O motor tem dois destinos diferentes por modo, não um.** No Torneio e
+  > no Duelo **não há alvo para escolher**: os dois entram por `arena.js`,
+  > que é **1×1** (`arena.js:321-325`), e `turnoDosInimigos` **não é chamado
+  > uma única vez** fora de `App.jsx:13600`. **N4 é inerte na arena por
+  > construção**; o que faz os prontos lutarem com cabeça é **N5**, que é o
+  > piloto que a arena de fato usa nos dois lados.
+  > **A linha de base contra a qual N7 vai medir não é 65%:** é **60,06% ·
+  > 57,27% · 64,48%**, com as quatro famílias concordando.
+  > **E falta o eixo que provavelmente domina o veredito:** hoje **13,40%
+  > (`justo`) e 18,03% (`duro`) do dano que os inimigos rolam cai em quem já
+  > está no chão** (38,15 ± 1,80 e 62,19 ± 2,16 PV por combate). Um inimigo
+  > com cabeça que apenas pare de desperdiçar endurece o combate por essa
+  > margem **antes** de mirar papel nenhum. N7 deve medir **esse eixo
+  > separado** do eixo "quem é mirado" — senão os dois somam-se num número
+  > só e a pessoa não consegue decidir sobre a dureza, que a própria etapa
+  > diz ser decisão dela.
+  > **E a pergunta muda de forma**, pelo que N1 mediu na reconstrução: não é
+  > *"aceita o combate mais duro?"*, é *"o alvo tático já está ligado no
+  > jogo e a régua não o via — quanto dele você quer manter?"*. A resposta
+  > está em "Para a pessoa decidir".
 
 ### Fase V — o PV temporário
 Decisão da pessoa (14/09), com as regras ditadas por ela: *"da mesma forma
@@ -1074,6 +1428,50 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   etapa é a **T3 · a salvaguarda no fim do turno**; T2 fechou em v9.239.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **oito campos de combate são lidos e nunca escritos — e custam 14 intenções** · médio · de: backend (achado de N1) · 14/09
+  `bandeirasDosAlvos` e `lutaDaMesa` leem `ent.carregaAChave`, `ent.feriu`,
+  `c.refem`, `c.doVilao`, `c.emboscada`, `c.surpresaDoJogador`, `mm.temChave`
+  e `inimigo.chefe`. **Nenhum deles é escrito em `src/` inteiro** — grep com
+  zero produtores. Consequência medida: **14 das 46 `INTENCOES` nunca vencem**
+  em 200 000 situações sorteadas dentro do domínio que o App produz, e na mesa
+  **8 das 46** são eleitas alguma vez (`sair_vivo` ocupa 48,6% das rodadas).
+  As prioridades `quem_carrega` e `quem_me_feriu` devolvem, medido, o retrato
+  do sorteio cego byte a byte. Não é conserto de N1 (medir não muda nada) e
+  parte dele é pré-requisito de N3, que promete a memória que preencheria
+  `feriu`. Catraca: varredor que exige produtor para todo campo que
+  `garantirLuta`/`garantirAlvo` declara.
+- [ ] **`ehOfensiva("Escudo da Fé")` é `true` — a Clériga dispara o escudo como golpe** · médio · de: backend (achado de N1) · 14/09
+  `RX_OFENSIVA` (`companheiros.js:104`) casa a palavra **"dano"**, e a
+  descrição do `Escudo da Fé` é *"Protege um aliado de dano por 2 turnos"*.
+  Medido: no plano 4 de `decidirAcaoCompanheiro` a Clériga gasta 3 PM e rola
+  `danoDaHabilidadeComp` com o escudo **16 vezes em 1000 combates** no
+  `justo`. É pequeno, é real, e é da família "promete na ficha e faz outra
+  coisa na mesa" que a Fase P fechou. Catraca: teste que exija
+  `ehOfensiva(h) === false` para toda habilidade que `ehBuff` ou `ehAbrigo`
+  reconheça.
+- [ ] **`alvoDoAdversario` não tem leitor de produção, e o cabeçalho dele afirma o contrário** · leve · de: backend (achado de N1) · 14/09
+  O comentário de `adversario.js:663` diz *"O que `turnoDosInimigos`
+  chama"* — e `turnoDosInimigos` chama `escolherAlvo` direto
+  (`combate.js:281`), com a string que vem de `App.jsx:13606`. O único leitor
+  de `alvoDoAdversario` é `teste-adversario.mjs`: passa na catraca do
+  `teste-ligacao` pelos dois leitores e **não decide nada na mesa**. Ou ganha
+  o leitor que o cabeçalho promete, ou o cabeçalho passa a dizer a verdade.
+- [ ] **`ATRIBUTO_MAX = 5` é importado e nunca lido** · leve · de: backend (achado de N1) · 14/09
+  `constantes.js:28` exporta, `App.jsx:43` importa, e **nenhum sítio do
+  projeto o consulta** — a suíte só confere `ATRIBUTO_MAX_CRIACAO`. É export
+  vivo pela letra da catraca e morto no efeito. Importa agora porque N2 vai
+  querer um teto de escala e este é o número que parece ser ele: quem o usar
+  lhe dá o primeiro leitor, e quem não usar devia tirá-lo do import.
+- [ ] **`completarInimigo` não copia o `desc` da base, e `menteDaCriatura` decide sobre o nome** · médio · de: backend (achado de N1) · 14/09
+  `bestiario.js:69-86` monta a ficha que chega ao combate e **deixa o `desc`
+  para trás** — o mesmo erro que a v9.152 consertou para `perfil` e `des`, com
+  o motivo escrito ali no comentário. Consequência: `menteDaCriatura`
+  (`adversario.js:187`) recebe `desc === undefined` para toda criatura da
+  tabela e classifica **só pelo nome**, pondo **18 das 27** em `pensa` (o
+  Capanga e o Dragão Ancião no mesmo balde) e o **Colosso** (*máquina de
+  cerco*) em `besta`, porque `RX_BICHO` casa a palavra "besta". Hoje decide
+  pouco; no dia em que N2 nascer, decide muito.
 
 - [ ] **a ofensiva do companheiro quase nunca nasce** · pesado · de: medição de B2 · 14/09
   B2 fechou a simetria e o preço medido foi **zero** — e o motivo é este, medido em

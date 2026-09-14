@@ -16,6 +16,142 @@ Formato:
 
 ---
 
+## 14/09 22:30 · v9.248 · N1 · o que os dois lados já sabem · commit `HASH`
+
+- **estado inicial:** árvore limpa (só `mente/agora.json` modificado), HEAD
+  `107440f`, VERSÃO v9.247, `npm test` **182/182 suítes + 9/9 varredores**
+  verde. Trava posta por mim; não havia trava morta. **Duas mentes:** o
+  `regente` roda D4 ao mesmo tempo, em `mente/formas.md` e no território de
+  desenho — **o bastão do `App.jsx` não foi tomado por mim, e nem precisou
+  ser**: N1 não editou uma linha de código.
+- **conselheiro:** não chamado (etapa aprovada já escrita, e a pauta tem mais
+  de 5 itens em "Aberto").
+- **backend:** mediu os dois pilotos, o `intelecto` e o bestiário — quatro
+  frentes, instrumento só no scratchpad.
+- **testes:** instrumentou uma **cópia** da régua de B1 (`instrumentar.cjs`
+  por âncora, no molde da casa) e produziu a linha de base — **0 divergências**
+  contra a régua original em 600 combates comparados por id, e os números de
+  B1b/B2 reproduzidos ao dígito.
+- **decisões médias tomadas:** nenhuma no código. **N1 não muda nada: mede.**
+  A única coisa que este ciclo escreveu foram os três arquivos da mente e o
+  bump.
+
+### O item: a medição, e o que ela desmentiu
+
+**A Fase A ensinou que o inventário honesto é o que impede a fase seguinte de
+nascer errada, e N1 repetiu a lição de D1: quase todo número que a pauta
+escrevia estava errado.** Sete das oito afirmações mensuráveis das etapas
+N2–N7 foram corrigidas na pauta, cada uma com o número que a obriga.
+
+**Os dois lados, e com que entrada decidem.** `escolherAlvo`
+(`adversario.js:155`) é **puro e sem sorte nenhuma** — nenhum `Math.random`
+no arquivo — e enxerga **13 bandeiras**; desempata pelo primeiro da lista, e a
+lista começa sempre pelo jogador (`combate.js:245`), de modo que empate exato
+entrega o herói. `INTENCOES` tem **46 entradas** e **14 nunca vencem** em
+200 000 situações, porque oito campos são lidos e nunca escritos; na mesa,
+**8 das 46** são eleitas alguma vez, e `sair_vivo` ocupa 48,6% das rodadas.
+Do outro lado, `decidirAcaoCompanheiro` (`companheiros.js:183`) lê **sete
+coisas** e **não lê inimigo nenhum além de "está vivo?"**: 100,00% dos 11 889
+ataques vão no inimigo de menor PV absoluto.
+
+**Por que o buff é `Escudo da Fé` — 347 de 358 (96,93%) —, e a causa é tripla,
+não simples.** Por ordem de peso: **(1) o acervo** — 7 habilidades ofensivas
+de apoio em **148**, e do nível 8 em diante **1 classe em 12** carrega uma na
+ficha; **(2) a janela** `rodada <= 2`, comida pela cura no combate duro (1 457
+curas contra 358 buffs no `justo`; **1 380 buffs contra 20 curas** no
+`brando`, mesma ficha — teto medido de 358 ações por 1000 combates); **(3) a
+precedência** `guarda || abrigo || buff`, que é **decisão medida de P3/v9.233
+com o motivo no comentário**, e a primeira-que-casa dentro do balde. **Só a
+(3) é cegueira de escolha** — e o `brando` prova que nem ela é cega, com a
+`Bênção` saltando para 28,84% quando o escudo sobrevive. **A frase de N5,
+"dar cabeça ao piloto faz a ofensiva nascer", estava errada na causa:** (1)
+não se resolve com cabeça, é tabela.
+
+**O `intelecto`, e o buraco que ninguém tinha visto.** Escala real **0–3 na
+criação** (`ATRIBUTO_MAX = 5` é importado em `App.jsx:43` e **nunca lido**).
+Nos oito prontos: **0, 1 e 3** — mediana 1, média 1,13, três em zero e o
+**valor 2 vazio**; uma escada de cinco degraus nasceria com dois mortos. E
+**a ficha de companheiro não tem `atributos`** — `garantirFichaCompanheiro`
+nunca os sintetiza, e os três da régua os têm escritos à mão em
+`CENARIOS_DA_REGUA`. A pauta dizia *"o companheiro e o herói tiram o degrau
+do `intelecto` da ficha"*: metade dessa frase não tem onde pousar, e é o
+buraco de desenho mais caro que N1 achou. **E `intelecto` já faz mais do que
+a pauta supunha:** decide o **PM máximo** (`manaBase + intelecto*2`) — o
+recurso que o piloto gasta em toda decisão —, pesa 18 em `poder.js` e é recuo
+em `aflicoes.js`. Ele não ganha o segundo leitor: ganha o quinto.
+
+**O inimigo não tem grau de inteligência — confirmado dos dois lados**, nas
+**27** entradas do bestiário e em `completarInimigo`. A âncora que serve é
+**`ameaca`** (5 valores fechados, já ordinal, sobrevive a `completarInimigo`,
+e com recuo `"comum"` para o nome que o Narrador inventa) — e **sozinha não
+basta**: Comandante (*"perigoso e tático"*) e Sentinela Blindada (*"muralha
+ambulante"*) são as duas `elite`. **Já há uma classificação de cabeça, e não
+mora no bestiário:** `menteDaCriatura` põe **18 das 27** em `pensa` e o
+**Colosso** em `besta` porque `RX_BICHO` casa a palavra "besta". Duas
+classificações em dois lugares é a doença que esta casa conhece — N2 herda o
+problema, e a pauta não o mencionava.
+
+**Quem apanha: 60,06% · 57,27% · 64,48% — não 65%.** Os 65% são a taxa do
+sorteio **quando ele roda**, e ele mede exatamente isso quando roda (64,85% ·
+64,69% · 64,48%). Deixa de rodar em **7,88% (`justo`) e 12,43% (`duro`)** dos
+golpes porque `vivosAlvo` (`combate.js:267`) **tira o herói caído da lista de
+alvos** — e no `brando`, onde ele nunca cai, a medida é 64,48% cravado. As
+quatro famílias concordam dentro do IC95 por combate. **E o achado que a fase
+não tinha:** a lista de alvos é uma **foto tirada uma vez** por turno
+(`combate.js:245`), então **13,40% (`justo`) e 18,03% (`duro`) do dano dos
+inimigos cai em quem já está no chão** — 38,15 ± 1,80 e 62,19 ± 2,16 PV por
+combate. Um inimigo com cabeça que apenas pare de desperdiçar endurece o
+combate por essa margem **antes** de mirar papel nenhum, e N7 tem de medir
+esse eixo **separado** do eixo "quem é mirado", senão a pessoa não consegue
+decidir sobre a dureza.
+
+### O achado grande: a régua mede o combate com o Adversário desligado
+
+**`regua-combate.mjs:612` passa `prioridade: ""`**, sem uma linha de
+comentário dizendo por quê, e `combate.js:279` só consulta `escolherAlvo`
+quando a prioridade existe. Logo **toda a linha de base de B1, B1b, B2 e T1
+para Uma Vida foi medida com o órgão fora do circuito** — o que essas etapas
+mediram foi o sorteio de 35% e mais nada. No jogo, `App.jsx:13606` passa a
+prioridade da intenção a todo turno.
+
+Uma **reconstrução** de `lutaDaMesa` no scratchpad, ligando a prioridade ao
+mesmo laço, dá **vitória 52,10% → 1,80%** no `justo` e **8,40% → 0,00%** no
+`duro`, robusta em 8 variantes do lugar (1,6% a 13,6%) e com a eleição
+atrasada uma rodada (3,2%). **É reconstrução, não a régua, e está dito assim
+na pauta** — o número exato tem de sair do instrumento certo. A causa está
+medida prioridade a prioridade: o herói é o único combatente que **não morre
+ao cair** e de quem os inimigos **desistem** ao vê-lo no chão, então bater
+nele é dano desperdiçado, e **toda prioridade que aprende a evitá-lo vira
+TPK** (`o_conjurador` 0,6% · `quem_nao_e_o_heroi` 0,4% · `o_mais_forte` 0,4%
+· `o_curandeiro` 1,2%, contra 51,2% do sorteio cego).
+
+**Duas consequências, e as duas foram registradas em vez de resolvidas.**
+Nasceu **N1b · a régua mede o combate que existe** — instrumento, no molde
+exato de B1b, que a autorização da fase cobre e que **vem antes de N4 e N5**,
+senão o antes e o depois da Fase N inteira são medidos com o órgão desligado.
+E foi para **"Para a pessoa decidir"** a pergunta que N7 escrevia errada: não
+é *"aceita o combate mais duro?"* — é **"o alvo tático já está ligado no jogo
+e a régua nunca o mediu; quanto dele você quer manter?"**, com as três saídas
+escritas.
+
+### O que ficou
+
+- **Nenhum conserto de carona.** Nem um alvo, nem um buff, nem um comentário.
+  Foi pedido assim e é a disciplina da etapa: N1 mede, N2 em diante mexe.
+- **Cinco achados foram para "Aberto"** em vez de virarem trabalho deste
+  ciclo: os oito campos lidos e nunca escritos (que custam 14 intenções);
+  `ehOfensiva("Escudo da Fé") === true`, que faz a Clériga disparar o escudo
+  como golpe 16 vezes em 1000 combates; `alvoDoAdversario` sem leitor de
+  produção com um cabeçalho que afirma o contrário; `ATRIBUTO_MAX` importado
+  e nunca lido; e `completarInimigo` não copiando o `desc` da base — o mesmo
+  erro que a v9.152 consertou para `perfil` e `des`.
+- **O que N1 não conseguiu medir:** o número da reconstrução. Ele é robusto na
+  direção e não na casa decimal, e por isso a decisão da pessoa foi escrita
+  **com** essa ressalva, não sem ela.
+- **Vermelho da outra mente:** nenhum. `npm test` fechou verde antes e depois.
+
+---
+
 ## 14/09 21:05 · v9.247 · B2 · a simetria fechada, e a Fase B com ela · commit `c14532b`
 
 - **estado inicial:** árvore limpa, HEAD `5a170c3`, VERSÃO v9.246, `npm test`
