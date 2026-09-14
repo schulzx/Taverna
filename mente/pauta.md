@@ -379,7 +379,7 @@ a metade defensiva vale (`absorverDano` a lê) e a ofensiva não, porque
 faz o dano do grupo crescer em Uma Vida **sem teto medido**: a catraca de
 equilíbrio só existe para a arena.
 
-- [x] **B1 · a régua que falta** · feito em v9.243, 14/09
+- [x] **B1 · a régua que falta** · feito em v9.243 (`322dee7`), 14/09
   A régua existe e é permanente: `testes/regua-combate.mjs` (o instrumento) e
   `testes/teste-regua.mjs` (a catraca, 115 asserções). **Zero linha de `src/`
   mudou** — B1 não somou um ponto de dano. O molde de P3/T1 foi reconstruído a

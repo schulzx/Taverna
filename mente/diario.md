@@ -16,7 +16,7 @@ Formato:
 
 ---
 
-## 14/09 18:05 · v9.243 · B1 · a régua que falta · commit `HASH_B1`
+## 14/09 18:05 · v9.243 · B1 · a régua que falta · commit `322dee7`
 
 - **estado inicial:** árvore limpa, HEAD `85c23e8`, VERSÃO v9.241, `npm test`
   181/181 suítes + 9/9 varredores verde. Sem trava de ciclo (posta por mim).
