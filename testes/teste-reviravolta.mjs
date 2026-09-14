@@ -9,7 +9,11 @@
 const RAIZ = "../src/";
 const R = await import(RAIZ + "reviravoltas.js");
 const P = await import(RAIZ + "promessas.js");
-const { readFileSync } = await import("node:fs");
+/* `readdirSync` entrou em v9.230 (R4): a prova-âncora de `fecharAto`
+   (seção 10d) varre a pasta `src/` inteira atrás de um chamador, e varrer
+   por lista escrita à mão é a mesma doença de "export morto mente" — o
+   arquivo novo entraria sem ser olhado. */
+const { readFileSync, readdirSync } = await import("node:fs");
 const semComentarios = (s) => s.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
 const APP = semComentarios(readFileSync("../src/App.jsx", "utf8"));
 
@@ -1191,6 +1195,500 @@ sec("9l. ligado ao jogo (R3)");
   /* o que JÁ estava ligado continua ligado: a menor não pode ter perdido
      fiação nesta etapa (regressão zero, do lado do App) */
   t("a fiação da menor continua de pé", /elegerReviravoltas\(sementeMundo\(\)\)/.test(APP) && /reviravolta: reviravoltaRef\.current/.test(APP) && /sementesDaReviravolta\(rev\.forma/.test(APP));
+}
+
+/* ============================================================
+   10. R4 (v9.230) — A SUÍTE DA FASE: A FASE VISTA DE FORA
+
+   R1, R2 e R3 provaram cada peça: os sinais, os detectores, a
+   convivência. Esta etapa nasceu CREDORA — as quatro provas que a pauta
+   pedia para R4 (eleição determinística por semente, cada forma com seu
+   detector, a ordem menor→maior, e o Narrador só sabendo no turno da
+   revelação) já estavam feitas nas seções 2 e 9i, 8 e 8b-8g, 9d/9f/9g, e
+   9k. Nenhuma delas foi reescrita. O trabalho de R4 foi achar o que
+   NENHUMA delas cobria — sabotando a suíte de propósito para ver o que
+   ela deixava passar. Cinco buracos apareceram; os cinco estão fechados
+   abaixo, na ordem do estrago que cada um deixava passar.
+
+   O PIOR DELES, e a razão de esta seção existir: apagar a ÚNICA chamada
+   de `mexerNaReviravolta()` no turno deixava `npm test` inteiro verde —
+   181/181 suítes e 7/7 varredores. A Fase R inteira podia sair do jogo
+   em silêncio, e a casa toda diria que estava tudo bem. Todas as
+   âncoras de "ligado ao jogo" das seções 7 e 9l mediam a DEFINIÇÃO do
+   órgão (`/mexerNaReviravolta/` casa com `const mexerNaReviravolta = () =>`),
+   nunca o sítio que o chama; e `mexerNaReviravolta` é const local do App,
+   não export, então o `teste-ligacao` não o enxerga.
+
+   É o bug que esta casa mais repete, com a roupa mais cara que ele já
+   vestiu: escrito, provado, e nunca acontecendo.
+   ============================================================ */
+
+sec("10. R4 — A CHAMADA, NÃO A DEFINIÇÃO: o órgão roda mesmo no turno");
+{
+  /* espaço em branco normalizado antes de casar, como as âncoras da 9l:
+     uma quebra de linha inocente não pode derrubar a suíte, e sem isto
+     qualquer reformatação viraria vermelho que não é achado */
+  const APP_N = APP.replace(/\s+/g, " ");
+
+  /* ① O SÍTIO DE CHAMADA. A definição é `const mexerNaReviravolta = () =>`
+     e NÃO casa com `mexerNaReviravolta();`; o resgate
+     (`calou("mexerNaReviravolta", e)`) também não. É essa a diferença que
+     esta linha mede, e é a diferença entre um órgão ligado e um órgão
+     escrito. */
+  t("a definição existe (sem ela, as âncoras abaixo mediriam o nada)", /const mexerNaReviravolta = \(\) =>/.test(APP_N));
+  const chamadas = (APP_N.match(/(?:^|[^.\w])mexerNaReviravolta\(\)\s*;/g) || []).length;
+  t("o App CHAMA mexerNaReviravolta no turno (não basta defini-la)", chamadas >= 1, `${chamadas} sítios de chamada`);
+  /* UMA SÓ, e é regra e não capricho: o órgão faz UM GESTO POR TURNO
+     (semear, ou regar, ou revelar — é o que dizem os `return` dele).
+     Chamado duas vezes no mesmo turno, o turno compra dois gestos e a
+     virada anda no dobro do ritmo que `RITMO_DAS_VIRADAS` promete, sem
+     que nenhuma asserção de ritmo acusasse. */
+  t("e o chama UMA vez por turno (dois gestos no mesmo turno dobrariam o ritmo da tabela)", chamadas === 1, String(chamadas));
+
+  /* ② A ORDEM, e ela é regra herdada: o órgão lê quem tem propósito de
+     trair, então precisa dos propósitos já disparados; e vem ANTES das
+     bocas, porque a nota da revelação tem de estar escrita quando o
+     prompt é montado. Medido por índice e não por regex de vizinhança —
+     a distância entre as três linhas pode crescer sem que a ordem mude,
+     e entre elas cabe qualquer órgão novo. O que não cabe é a virada
+     sair da janela. */
+  const iProp = APP_N.indexOf("propositosDoTurnoRef.current = dispararPropositos(");
+  const iVira = APP_N.search(/(?:^|[^.\w])mexerNaReviravolta\(\)\s*;/);
+  const iFala = APP_N.indexOf("falasDoTurnoRef.current = await colherAsFalas(");
+  t("as três âncoras do turno existem no texto", iProp > 0 && iVira > 0 && iFala > 0, `propositos=${iProp} · virada=${iVira} · falas=${iFala}`);
+  t("a virada roda DEPOIS dos propósitos e ANTES das bocas",
+    iProp > 0 && iVira > iProp && iFala > iVira, `propositos=${iProp} · virada=${iVira} · falas=${iFala}`);
+
+  /* ③ A GUARDA VIVA. `if (maiorPodeNascer(...))` mordia a guarda apagada
+     e a guarda negada (`if (false && ...)`), mas NÃO mordia a guarda
+     morta pelo outro lado do `&&`: com `if (maiorPodeNascer(...) && false)`
+     a maior nunca mais nascia e a suíte inteira passava verde. A âncora
+     exigia que a licença fosse CHAMADA; faltava exigir que ela DECIDA.
+
+     A régua é: a condição do `if` é a licença do módulo, e nada mais. Os
+     parênteses fecham por CONTAGEM, e não por regex — medir com regex
+     pega o prefixo e perdoa o resto, e "o resto" é exatamente onde mora
+     o `&& false`. Com a contagem o que volta é a condição inteira, do
+     começo ao fim, e ela aguenta argumento com parêntese dentro (hoje
+     não tem; no dia em que tiver, a âncora não vira falso vermelho).
+
+     Se um dia a fiação precisar legitimamente de uma conjunção ali, esta
+     asserção muda — com o motivo escrito ao lado, como manda a casa:
+     cada `&&` a mais é um caminho a mais em que a virada não acontece, e
+     ele precisa de prova própria. O que ela não pode é ceder em silêncio. */
+  const condicoesDoIf = (texto, guarda) => {
+    const achadas = [];
+    const marca = "if (" + guarda + "(";
+    for (let i = texto.indexOf(marca); i >= 0; i = texto.indexOf(marca, i + 1)) {
+      const abre = i + 3;                       /* o "(" do próprio if */
+      let prof = 0, fim = -1;
+      for (let j = abre; j < texto.length; j++) {
+        if (texto[j] === "(") prof++;
+        else if (texto[j] === ")") { prof--; if (prof === 0) { fim = j; break; } }
+      }
+      if (fim > 0) achadas.push(texto.slice(abre + 1, fim).trim());
+    }
+    return achadas;
+  };
+  /* a condição é SÓ a chamada quando o parêntese que fecha a chamada é o
+     último caractere dela — nada de `&& false`, `&& 0`, `|| outraCoisa` */
+  const soAChamada = (cond, guarda) => {
+    if (!cond.startsWith(guarda + "(")) return false;
+    let prof = 0;
+    for (let j = guarda.length; j < cond.length; j++) {
+      if (cond[j] === "(") prof++;
+      else if (cond[j] === ")") { prof--; if (prof === 0) return j === cond.length - 1; }
+    }
+    return false;
+  };
+  for (const guarda of ["maiorPodeNascer", "menorPodeNascer"]) {
+    const conds = condicoesDoIf(APP_N, guarda);
+    t(`${guarda}: a licença existe como if (leitor de verdade, não menção)`, conds.length >= 1, String(conds.length));
+    const adulteradas = conds.filter((c) => !soAChamada(c, guarda));
+    t(`${guarda}: a licença DECIDE o nascimento — a condição é ela, e nada mais (o "&& false" morre aqui)`,
+      conds.length >= 1 && adulteradas.length === 0, adulteradas.join(" · "));
+  }
+}
+
+/* ---------------- O MUNDO INTEIRO ----------------
+   Um snapshot só que serve às SETE formas de uma vez, para que qualquer
+   dupla eleita ache alvo nele. Não é um mundo novo inventado para a
+   prova: é a união dos sete mundos de `MUNDOS_DE_PROVA`, e a primeira
+   asserção da seção 10b confere que cada detector acha nele EXATAMENTE
+   o alvo que a tabela promete. Assim a tabela continua sendo a régua —
+   se um detector mudar, os dois lugares se movem juntos ou a suíte
+   acusa. */
+const MUNDO_INTEIRO = {
+  semente: "a campanha inteira|fantasia",
+  vilao: { nome: "Sarna" },
+  grupo: [{ nome: "Ume", indole: { proposito: "trair" } }],
+  inventario: ["Caderno de anotações cifradas"],
+  npcs: elenco(
+    [{ nome: "Ume" }, { nome: "Brida" },
+      { nome: "Fina", consultas: R.LIMIARES_DA_VIRADA.consultasDoInformante },
+      { nome: "Halvard", papel: "ferreiro da aldeia" }],
+    [["Ume", "Brida", "familia"]]),
+  personagem: { antecedente: "ferreiro" },
+  missoes: [{ id: "q1", dador: "Halvard", criadaEm: 2 }],
+  cidades: [{ nome: "Vado", populacao: R.LIMIARES_DA_VIRADA.populacaoDaCidadeProspera, relacao: "neutra", descoberta: true }],
+  cidadeAtual: "",
+};
+
+/* ---------------- A RÉPLICA DO CICLO DO APP ----------------
+   ATENÇÃO, QUEM MEXER EM `cuidarDasSementes` OU EM `mexerNaReviravolta`:
+   isto é uma RÉPLICA, e ela tem de ser revista junto. Os dois vivem
+   dentro do `App.jsx` e fecham sobre `promessasRef`, `diaRef` e
+   `notaRef` — não há como importá-los daqui, e a lei "conta se prova,
+   tela se olha" cobra isso do App. O que se pode fazer é reproduzir o
+   corpo deles passo a passo, com o MÓDULO e o LIVRO de verdade no meio,
+   e deixar escrito de onde cada passo veio.
+
+   A fidelidade é linha a linha, e é conferível:
+     · passos 1 e 2 (os nascimentos) — na mesma ordem do App, e a ordem
+       importa: o passo 1 escreve o ref que o passo 2 lê no mesmo turno;
+     · passo 3 (`cuidar`) — réplica de `cuidarDasSementes`: a mesma guarda
+       de entrada (`!rev || rev.revelada`), a mesma semeadura única
+       (`!rev.semeada` → planta e grava `regadaEm`), a MESMA condição de
+       rega (`dia - (rev.regadaEm || 0) >= diasEntreRegasDe(rev.forma)`,
+       copiada caractere a caractere) e o mesmo `find` por
+       dona+alvo+imatura, que é o que separa as duas viradas no Livro;
+     · passo 4 (a arbitragem) — uma pergunta só, `quemPodeRevelar`;
+     · passo 5 — e só então a maior cuida das dela;
+     · `revelar` — réplica de `revelarAVirada`: paga só as sementes
+       MADURAS daquele alvo e grava `reveladaEm`;
+     · o `continue` do laço é o `return` do App: um gesto por turno.
+
+   O que fica de fora é o que não é ciclo — a nota do turno, a Fúria, o
+   registro do gesto. Esses são tela e estado de mundo, e têm prova em
+   9k. O `ato` entra como 0 porque ele não muda gesto nenhum do ciclo; o
+   que o `ato` muda é o vínculo com `fecharAto`, e esse é o assunto da
+   seção 10d.
+
+   A ÂNCORA QUE AVISA quando a réplica envelhecer é a da seção 9l
+   (`diasEntreRegasDe(rev.forma)`), que nomeia a condição no texto do
+   App, mais a seção 10 acima, que exige o sítio de chamada. */
+const rodarACampanha = (semente, { dias, episodioAteODia = -1, mundo = MUNDO_INTEIRO } = {}) => {
+  const { menor: idMenor, maior: idMaior } = R.elegerReviravoltas(semente);
+  let livro = P.garantirLivro(null);
+  let menor = null, maior = null;
+  const linha = [];
+
+  const cuidar = (rev, dia) => {
+    if (!rev || rev.revelada) return null;
+    if (!rev.semeada) {
+      for (const spec of R.sementesDaReviravolta(rev.forma, { alvo: rev.alvo, ato: 0, dia })) livro = P.semear(livro, spec).livro;
+      return { ...rev, semeada: true, regadaEm: dia };
+    }
+    if (dia - (rev.regadaEm || 0) >= R.diasEntreRegasDe(rev.forma)) {
+      const imatura = livro.sementes.find((x) => x.dona === "reviravolta" && x.alvo === rev.alvo && (x.estado === "semeada" || x.estado === "regada"));
+      if (imatura) { livro = P.regar(livro, imatura.id, { dia, cena: "a virada" }).livro; return { ...rev, regadaEm: dia }; }
+    }
+    return null;
+  };
+  const revelar = (rev, dia) => {
+    for (const x of livro.sementes.filter((s) => s.dona === "reviravolta" && s.alvo === rev.alvo && s.estado === "madura")) {
+      livro = P.pagar(livro, x.id, { dia, colheita: R.revelacaoDe(rev.forma) }).livro;
+    }
+    return { ...rev, revelada: true, reveladaEm: dia };
+  };
+
+  for (let dia = 0; dia <= dias; dia++) {
+    const episodioAberto = dia <= episodioAteODia;
+    if (idMenor && !menor) {
+      const alvo = R.alvoDaForma(idMenor, mundo);
+      if (R.menorPodeNascer(maior, alvo)) { menor = R.garantirReviravolta({ forma: idMenor, alvo, eleitaEm: dia }); linha.push({ dia, o: "nasce a menor" }); }
+    }
+    if (idMaior && !maior) {
+      const alvoM = R.alvoDaForma(idMaior, mundo);
+      if (R.maiorPodeNascer(menor, alvoM, { dia })) { maior = R.garantirReviravolta({ forma: idMaior, alvo: alvoM, eleitaEm: dia }); linha.push({ dia, o: "nasce a maior" }); }
+    }
+    const pm = cuidar(menor, dia);
+    if (pm) { linha.push({ dia, o: menor.semeada ? "a menor rega" : "a menor semeia" }); menor = pm; continue; }
+    const vez = R.quemPodeRevelar({ menor, maior, livro, episodioAberto, dia });
+    if (vez.quem === "menor" && menor) { menor = revelar(menor, dia); linha.push({ dia, o: "CAI A MENOR" }); continue; }
+    if (vez.quem === "maior" && maior) { maior = revelar(maior, dia); linha.push({ dia, o: "CAI A MAIOR" }); continue; }
+    const pM = cuidar(maior, dia);
+    if (pM) { linha.push({ dia, o: maior.semeada ? "a maior rega" : "a maior semeia" }); maior = pM; }
+  }
+  return { idMenor, idMaior, menor, maior, livro, linha };
+};
+
+const diaDe = (linha, o) => { const x = linha.filter((e) => e.o === o); return x.length ? x[x.length - 1].dia : -1; };
+const quantasVezes = (linha, o) => linha.filter((e) => e.o === o).length;
+
+/* os números desta prova, numa tabela que ela lê de volta — nenhum deles
+   é escolha de gosto, e o horizonte não pode ser "um número grande" */
+const CAMPANHAS_DE_PROVA = {
+  /* quantas sementes de mundo: o bastante para as três maiores e as
+     quatro menores saírem eleitas em combinações diferentes (a seção 10b
+     confere que saem mesmo) */
+  quantas: 40,
+  /* o horizonte de cada campanha, em amadurecimentos INTEIROS da maior:
+     seis deles. É folga sobre o pior caso e não um teto adivinhado — se
+     uma campanha não fechar dentro disso, alguma coisa travou, e travar
+     é exatamente o defeito que a fase inteira veio desfazer. */
+  amadurecimentosDeFolga: 6,
+};
+
+sec("10b. R4 — o ciclo com dias que passam, contra o Livro de verdade");
+{
+  /* A FASE VISTA DE FORA, que a pauta pediu e nunca foi provada. Até
+     aqui os helpers `semearNo` e `livroDe` plantam e regam NUM DIA SÓ:
+     eles provam a catraca do Livro, não o relógio. A condição de rega do
+     App — `dia - (rev.regadaEm || 0) >= diasEntreRegasDe(rev.forma)` —
+     nunca tinha rodado em teste nenhum, e é dela que sai o ritmo inteiro
+     que R3 escreveu na tabela. Aqui ela roda quarenta campanhas, dia a
+     dia, com o `promessas.js` de verdade no meio. */
+  const T = R.RITMO_DAS_VIRADAS;
+  const sementesDe = (id) => R.formaPorId(id).sementes.length;
+  const amadurecimentoMaximoDaMaior = Math.max(...MAIORES.map((id) => sementesDe(id) * T.diasEntreRegas.maior));
+  const HORIZONTE = CAMPANHAS_DE_PROVA.amadurecimentosDeFolga * amadurecimentoMaximoDaMaior;
+
+  /* O MUNDO SERVE ÀS SETE, e serve o alvo que a TABELA promete — sem
+     esta linha a varredura abaixo poderia passar por vacuidade.
+     Forma sem linha na tabela NÃO pode estourar aqui: quem a acusa é o
+     dente da seção 8, e uma suíte que morre de exceção esconde todos os
+     outros dentes justamente no dia em que eles têm algo a dizer. */
+  const divergentes = R.FORMAS.filter((f) => R.alvoDaForma(f.id, MUNDO_INTEIRO) !== (MUNDOS_DE_PROVA[f.id] || {}).alvo).map((f) => f.id);
+  t("o mundo inteiro entrega às sete formas o alvo de MUNDOS_DE_PROVA", divergentes.length === 0, divergentes.join(", "));
+
+  const sementes = [];
+  for (let i = 0; i < CAMPANHAS_DE_PROVA.quantas; i++) sementes.push("campanha-" + i + "|fantasia");
+  const corridas = sementes.map((s) => ({ s, r: rodarACampanha(s, { dias: HORIZONTE }) }));
+
+  /* a prova não pode ser de uma dupla só: as três maiores e as quatro
+     menores têm de aparecer em alguma campanha deste lote */
+  const duplas = new Set(corridas.map(({ r }) => r.idMenor + "→" + r.idMaior));
+  const menoresVistas = new Set(corridas.map(({ r }) => r.idMenor));
+  const maioresVistas = new Set(corridas.map(({ r }) => r.idMaior));
+  console.log(`      ${corridas.length} campanhas de ${HORIZONTE} dias · ${duplas.size} duplas distintas`);
+  t("as quatro menores e as três maiores vivem o ciclo inteiro neste lote",
+    menoresVistas.size === MENORES.length && maioresVistas.size === MAIORES.length,
+    `${menoresVistas.size} menores · ${maioresVistas.size} maiores`);
+
+  const naoCairam = [], foraDeOrdem = [], semFolga = [], cairamDuasVezes = [], noMesmoDia = [], alvoDividido = [];
+  const cedoDemaisMenor = [], cedoDemaisMaior = [], regaForaDoRitmo = [], livroSujo = [], semeouDuasVezes = [];
+  for (const { s, r } of corridas) {
+    const marca = `${s} (${r.idMenor}→${r.idMaior})`;
+    if (!r.menor || !r.menor.revelada || !r.maior || !r.maior.revelada) { naoCairam.push(marca); continue; }
+    if (!(r.menor.reveladaEm < r.maior.reveladaEm)) foraDeOrdem.push(marca + ` menor@${r.menor.reveladaEm} maior@${r.maior.reveladaEm}`);
+    if (r.maior.reveladaEm - r.menor.reveladaEm < T.folgaEntreViradas) semFolga.push(marca);
+    if (quantasVezes(r.linha, "CAI A MENOR") !== 1 || quantasVezes(r.linha, "CAI A MAIOR") !== 1) cairamDuasVezes.push(marca);
+    if (r.menor.reveladaEm === r.maior.reveladaEm) noMesmoDia.push(marca);
+    if (r.menor.alvo === r.maior.alvo) alvoDividido.push(marca + " → " + r.menor.alvo);
+    /* uma semeadura por virada: é o `semeada: true` do App, e é ele que
+       torna a murcha de `fecharAto` irreversível (seção 10d) */
+    if (quantasVezes(r.linha, "a menor semeia") !== 1 || quantasVezes(r.linha, "a maior semeia") !== 1) semeouDuasVezes.push(marca);
+
+    /* O RITMO, LIDO DA TABELA E NUNCA CRAVADO. A menor tem prioridade e
+       por isso o passo 3 dela nunca é bloqueado: ela semeia no dia 0 e
+       rega em p, 2p, ... n·p — exato. E cai no dia seguinte à última
+       rega, porque no dia da rega o gesto do turno já foi gasto. */
+    const nM = sementesDe(r.idMenor), pM = T.diasEntreRegas.menor;
+    const ultimaRega = diaDe(r.linha, "a menor rega");
+    if (quantasVezes(r.linha, "a menor rega") !== nM) regaForaDoRitmo.push(marca + ` ${quantasVezes(r.linha, "a menor rega")} regas, esperava ${nM}`);
+    else if (ultimaRega !== nM * pM) regaForaDoRitmo.push(marca + ` última rega da menor no dia ${ultimaRega}, esperava ${nM * pM}`);
+    if (r.menor.reveladaEm !== nM * pM + 1) cedoDemaisMenor.push(marca + ` caiu no dia ${r.menor.reveladaEm}, esperava ${nM * pM + 1}`);
+
+    /* Para a MAIOR o piso é `>=` e não `===`, e o motivo é de mecanismo:
+       o passo 5 dela só roda nos dias em que a menor não gastou o turno,
+       então uma rega pode ser empurrada um dia adiante. O que a tabela
+       garante é o PISO — nunca menos que o amadurecimento inteiro dela
+       contado da semeadura. Um `===` aqui estaria medindo o intercalar,
+       que não é lei nenhuma. */
+    const nMa = sementesDe(r.idMaior), pMa = T.diasEntreRegas.maior;
+    const semeouEm = diaDe(r.linha, "a maior semeia");
+    if (quantasVezes(r.linha, "a maior rega") !== nMa) cedoDemaisMaior.push(marca + ` ${quantasVezes(r.linha, "a maior rega")} regas da maior, esperava ${nMa}`);
+    else if (r.maior.reveladaEm - semeouEm < nMa * pMa) cedoDemaisMaior.push(marca + ` ${r.maior.reveladaEm - semeouEm}d desde a semeadura, mínimo ${nMa * pMa}`);
+
+    /* O LIVRO DE VERDADE FECHOU A CONTA: cada virada plantou as sementes
+       DELA e colheu as DELA, e nenhuma sobra imatura ficou para trás. É
+       o que separa "a revelação aconteceu" de "a revelação pagou". */
+    const pagasMenor = r.livro.sementes.filter((x) => x.dona === "reviravolta" && x.alvo === r.menor.alvo && x.estado === "paga").length;
+    const pagasMaior = r.livro.sementes.filter((x) => x.dona === "reviravolta" && x.alvo === r.maior.alvo && x.estado === "paga").length;
+    const sobrando = r.livro.sementes.filter((x) => x.dona === "reviravolta" && x.estado !== "paga").length;
+    if (pagasMenor !== nM || pagasMaior !== nMa || sobrando !== 0) livroSujo.push(marca + ` menor ${pagasMenor}/${nM} · maior ${pagasMaior}/${nMa} · sobrando ${sobrando}`);
+  }
+  t("toda campanha vive as DUAS viradas dentro do horizonte", naoCairam.length === 0, naoCairam.slice(0, 3).join(" · "));
+  t("cada virada semeia UMA vez só (é o `semeada: true` do App)", semeouDuasVezes.length === 0, semeouDuasVezes.slice(0, 3).join(" · "));
+  t("a menor cai antes da maior, em toda campanha", foraDeOrdem.length === 0, foraDeOrdem.slice(0, 3).join(" · "));
+  t(`e nunca a menos de ${T.folgaEntreViradas} dias dela (a folga da tabela)`, semFolga.length === 0, semFolga.slice(0, 3).join(" · "));
+  t("nenhuma das duas cai duas vezes", cairamDuasVezes.length === 0, cairamDuasVezes.slice(0, 3).join(" · "));
+  t("e nunca as duas no mesmo dia", noMesmoDia.length === 0, noMesmoDia.slice(0, 3).join(" · "));
+  t("as duas nunca dividem alvo num ciclo inteiro", alvoDividido.length === 0, alvoDividido.slice(0, 3).join(" · "));
+  t("a menor rega uma vez por semente, no ritmo exato da tabela (semeia no 0, rega em p, 2p, … n·p)", regaForaDoRitmo.length === 0, regaForaDoRitmo.slice(0, 3).join(" · "));
+  t("e cai no dia seguinte à última rega — nem um dia antes", cedoDemaisMenor.length === 0, cedoDemaisMenor.slice(0, 3).join(" · "));
+  t("a maior rega uma vez por semente e nunca cai antes do amadurecimento inteiro dela", cedoDemaisMaior.length === 0, cedoDemaisMaior.slice(0, 3).join(" · "));
+  t("o Livro real fecha a conta das duas: tudo plantado, tudo pago, nada imaturo sobrando", livroSujo.length === 0, livroSujo.slice(0, 3).join(" · "));
+
+  /* DETERMINISMO DO CICLO INTEIRO, e não só da eleição: a mesma semente
+     vive a mesma campanha, dia a dia. É o único árbitro de um sistema sem
+     servidor, e aqui ele se mede sobre a linha do tempo toda. */
+  const instaveis = sementes.filter((s) => JSON.stringify(rodarACampanha(s, { dias: HORIZONTE }).linha) !== JSON.stringify(rodarACampanha(s, { dias: HORIZONTE }).linha));
+  t("a mesma semente vive a mesma campanha, dia a dia", instaveis.length === 0, instaveis.slice(0, 3).join(", "));
+
+  /* ADIAR NÃO É CANCELAR, agora com dias de verdade passando. A seção 9g
+     provou a lei sobre um estado montado à mão; aqui o episódio fica
+     aberto além do amadurecimento inteiro da maior, e ela ainda assim
+     cai depois — e a menor cai no MESMO dia que cairia sem episódio
+     nenhum, que é a regressão zero em campanha viva. */
+  const EP_ATE = amadurecimentoMaximoDaMaior + T.folgaEntreViradas;
+  const menorAtrasada = [], maiorCancelada = [], maiorAtropelou = [];
+  for (const { s, r } of corridas) {
+    const c = rodarACampanha(s, { dias: HORIZONTE + EP_ATE, episodioAteODia: EP_ATE });
+    if (!c.menor || !c.menor.revelada || c.menor.reveladaEm !== r.menor.reveladaEm) menorAtrasada.push(s);
+    if (!c.maior || !c.maior.revelada) maiorCancelada.push(s);
+    else if (c.maior.reveladaEm <= EP_ATE) maiorAtropelou.push(s + ` caiu no dia ${c.maior.reveladaEm}, com episódio aberto até ${EP_ATE}`);
+  }
+  t(`com episódio aberto até o dia ${EP_ATE}, a menor cai no mesmo dia de sempre (regressão zero)`, menorAtrasada.length === 0, menorAtrasada.slice(0, 3).join(", "));
+  t("e a maior ainda cai — o episódio adia, nunca cancela", maiorCancelada.length === 0, maiorCancelada.slice(0, 3).join(", "));
+  t("mas nunca durante ele", maiorAtropelou.length === 0, maiorAtropelou.slice(0, 3).join(" · "));
+}
+
+sec("10c. R4 — elegerReviravoltas COMPOSTA com alvoDaForma (as duas pontas se juntam)");
+{
+  /* As duas metades eram provadas SEPARADAS: a 9i prova que toda semente
+     elege uma dupla válida, e a 8 prova que todo detector acha alguém no
+     mundo dele. Faltava a junta — `MUNDOS_DE_PROVA` nunca entrava num
+     ciclo e `elegerReviravoltas` nunca recebia um mundo, e entre uma
+     coisa e outra cabe o bug de sempre: a semente elege uma forma que o
+     acervo de prova não conhece, ou conhece e não acha ninguém. Aqui não
+     se reescreve nenhuma das duas pontas — prova-se a junta. */
+  const sementes = [];
+  for (let i = 0; i < 300; i++) sementes.push("mundo-" + i + "|fantasia");
+
+  /* ① a dupla eleita, no mundo que serve às sete: as duas acham alguém, e
+     alvos DIFERENTES — senão a tranca do alvo dividido barraria uma das
+     duas antes de o arco começar */
+  const semAlvo = [], mesmoAlvo = [];
+  const eleitas = new Set();
+  for (const s of sementes) {
+    const { menor, maior } = R.elegerReviravoltas(s);
+    eleitas.add(menor); eleitas.add(maior);
+    const aMenor = R.alvoDaForma(menor, MUNDO_INTEIRO), aMaior = R.alvoDaForma(maior, MUNDO_INTEIRO);
+    if (!aMenor || !aMaior) semAlvo.push(`${s}: ${menor}=${JSON.stringify(aMenor)} · ${maior}=${JSON.stringify(aMaior)}`);
+    else if (aMenor === aMaior) mesmoAlvo.push(`${s}: ${menor} e ${maior} → ${aMenor}`);
+  }
+  t("toda dupla eleita acha alvo num mundo que a serve (300 sementes)", semAlvo.length === 0, semAlvo.slice(0, 3).join(" · "));
+  t("e os dois alvos são gente (ou lugar) diferente — as duas cabem no mesmo mundo", mesmoAlvo.length === 0, mesmoAlvo.slice(0, 3).join(" · "));
+  /* a prova não pode ser vazia: se a eleição travasse numa dupla só, a
+     varredura acima estaria provando duas formas e dizendo "sete" */
+  t("as SETE formas saem eleitas nessas sementes (a composição cobre a prateleira inteira)", eleitas.size === R.FORMAS.length, [...eleitas].join(", "));
+
+  /* ② e no mundo MÍNIMO de cada uma, o da tabela: é onde a linha de
+     `MUNDOS_DE_PROVA` encontra a eleição pela primeira vez */
+  const semMundo = [...eleitas].filter((id) => !MUNDOS_DE_PROVA[id]);
+  t("toda forma que 300 sementes elegem tem linha em MUNDOS_DE_PROVA", semMundo.length === 0, "sem mundo: " + semMundo.join(", "));
+  const divergiu = [...eleitas].filter((id) => MUNDOS_DE_PROVA[id] && R.alvoDaForma(id, MUNDOS_DE_PROVA[id].mundo) !== MUNDOS_DE_PROVA[id].alvo);
+  t("e nele acha o alvo que a tabela promete (eleição → detector, a junta fechada)", divergiu.length === 0, "não acharam: " + divergiu.join(", "));
+
+  /* ③ A JUNTA INTEIRA, até o Livro: o alvo que o detector devolve é o que
+     planta, rega e abre a catraca da própria forma. É a cadeia
+     eleição → alvo → sementes → revelação, para cada forma alcançável —
+     e é o que garante que nenhuma eleita seja acervo mudo. */
+  const mudas = [];
+  for (const id of eleitas) {
+    const alvo = R.alvoDaForma(id, MUNDO_INTEIRO);
+    if (typeof alvo !== "string" || !alvo.trim()) { mudas.push(id + ":sem alvo"); continue; }
+    let L = P.garantirLivro(null);
+    for (const spec of R.sementesDaReviravolta(id, { alvo, ato: 1, dia: 1 })) { const r = P.semear(L, spec); L = P.regar(r.livro, r.semente.id, { dia: 1 }).livro; }
+    if (!R.podeRevelar(id, L, { alvo })) mudas.push(id + ":catraca fechada");
+  }
+  t("toda forma eleita planta no alvo do próprio detector e abre a própria catraca", mudas.length === 0, mudas.join(" · "));
+}
+
+/* ============================================================
+   10d. R4 — `fecharAto`: UM BILHETE PARA O FUTURO
+
+   ISTO É UM BILHETE, e não uma regra sobre hoje. `fecharAto`
+   (promessas.js) murcha toda semente não paga de um ato, e HOJE não tem
+   chamador nenhum em `src/` — por isso é inofensivo. No dia em que
+   ganhar um, ele encosta na reviravolta assim, e o vínculo inteiro está
+   escrito aqui porque quem chegar com a asserção vermelha na mão precisa
+   dele:
+
+     · o App semeia as sementes da virada UMA VEZ SÓ — `cuidarDasSementes`
+       grava `semeada: true` e nunca mais entra naquele ramo;
+     · as sementes nascem com `ato` = etapa da história (`historiaRef`);
+     · `fecharAto` põe as não pagas daquele ato em `estado: "murcha"`;
+     · o passo de rega procura imatura em `semeada|regada` — murcha não
+       está na lista, então NUNCA MAIS há o que regar;
+     · logo a menor nunca mais amadurece, e nunca revela;
+     · e o ramo ② de `quemPodeRevelar` ("a menor vem primeiro") NÃO TEM
+       ESCAPE TEMPORAL — só o nascimento da maior tem
+       (`diasDeEsperaPelaMenor`). A maior ficaria trancada SEM PRAZO:
+       acervo escrito que não pode mais acontecer, que é exatamente o
+       defeito que a Fase R veio desfazer, com roupa nova.
+
+   Quando esta seção ficar vermelha, ela NÃO é o erro: é o aviso de que a
+   decisão chegou. As duas saídas, e a escolha é de quem mexer:
+     · DAR ESCAPE AO RAMO ② — a maior passa a poder cair quando a menor
+       está parada há tantos dias (o molde já existe em
+       `diasDeEsperaPelaMenor`); ou
+     · FAZER A REVIRAVOLTA RESSEMEAR o que murchou — `cuidarDasSementes`
+       deixa de olhar só `semeada` e passa a olhar se ainda há semente
+       viva daquele alvo no Livro.
+   Resolvida a escolha, esta asserção muda de forma — com o motivo
+   escrito, como manda a casa. O que ela não pode é ser apagada em
+   silêncio.
+   ============================================================ */
+sec("10d. R4 — o bilhete do `fecharAto`: a prova que trava o vínculo");
+{
+  /* A VARREDURA É DA PASTA INTEIRA, e não de uma lista escrita à mão: com
+     lista, o arquivo novo entraria sem ser olhado — a mesma doença de
+     "export morto mente". Fora de `src/` ele é inofensivo: quem murcha
+     semente de campanha é o jogo, não a API; `teste-promessas.mjs` chama,
+     e é teste, não produção. Conta-se o NOME e não a chamada, porque uma
+     referência solta (`const f = fecharAto;`) liga a função do mesmo
+     jeito. */
+  const arqs = readdirSync("../src").filter((f) => /\.(jsx?|mjs)$/.test(f));
+  const chamadores = [];
+  for (const f of arqs) {
+    const n = (semComentarios(readFileSync("../src/" + f, "utf8")).replace(/^\s*\/\/.*$/gm, "").match(/\bfecharAto\b/g) || []).length;
+    /* em promessas.js a própria declaração conta uma vez, e só ela */
+    const esperado = f === "promessas.js" ? 1 : 0;
+    if (n > esperado) chamadores.push(`${f} (${n})`);
+  }
+  t("a varredura olhou a pasta src inteira (lista curta mentiria)", arqs.length > 100, String(arqs.length));
+  t("fecharAto segue sem chamador em src/ — o dia em que ganhar um, decida o item da pauta antes",
+    chamadores.length === 0, "ganhou chamador em: " + chamadores.join(", "));
+  t("e ele continua existindo (o bilhete é sobre uma função viva, não sobre um fantasma)", typeof P.fecharAto === "function");
+
+  /* E O MECANISMO, MONTADO DE VERDADE — para que o bilhete não seja um
+     grep com uma história pendurada. Isto é o que acontece, passo a
+     passo, no dia em que alguém ligar `fecharAto` sem resolver o item: */
+  let L = P.garantirLivro(null);
+  for (const spec of R.sementesDaReviravolta(MENOR, { alvo: "Ume", ato: 1, dia: 1 })) L = P.semear(L, spec).livro;
+  const fecho = P.fecharAto(L, 1, { dia: 5 });
+  t("virar o ato murcha as sementes não pagas da menor", fecho.murchou.length === R.formaPorId(MENOR).sementes.length, String(fecho.murchou.length));
+  t("e a rega do App não acha mais nada para regar (murcha não é `semeada` nem `regada`)",
+    !fecho.livro.sementes.some((s) => s.dona === "reviravolta" && s.alvo === "Ume" && (s.estado === "semeada" || s.estado === "regada")));
+  t("logo a menor nunca mais amadurece — e o App semeia uma vez só (`semeada: true`)",
+    R.podeRevelar(MENOR, fecho.livro, { alvo: "Ume" }) === false);
+  /* e a maior, madura e dona do alvo dela, fica trancada sem prazo */
+  let comMaior = fecho.livro;
+  for (const spec of R.sementesDaReviravolta(MAIOR, { alvo: "Halvard", ato: 1, dia: 6 })) { const r = P.semear(comMaior, spec); comMaior = P.regar(r.livro, r.semente.id, { dia: 6 }).livro; }
+  t("a maior está madura e é dona do alvo dela", R.podeRevelar(MAIOR, comMaior, { alvo: "Halvard" }) === true);
+  const abriu = [30, 60, 200, 9999].filter((dia) => R.quemPodeRevelar({
+    menor: { forma: MENOR, alvo: "Ume" }, maior: { forma: MAIOR, alvo: "Halvard" }, livro: comMaior, episodioAberto: false, dia,
+  }).quem === "maior");
+  t("e mesmo assim a maior fica trancada para sempre pelo ramo ② (é a conta do bilhete)", abriu.length === 0, "abriu nos dias: " + abriu.join(","));
+}
+
+sec("10e. R4 — todo porte é um porte da tabela");
+{
+  /* A catraca "4 menores e 3 maiores" (seção 1b) conta os dois portes
+     conhecidos e NÃO vê um terceiro: uma forma com `porte: "medio"`
+     deixa os dois contadores intactos, `diasEntreRegasDe` a trata como
+     menor pelo caminho conservador, e `elegerReviravoltas` — que filtra
+     por "menor" e por "maior" — nunca a elege. Acervo escrito que não
+     pode acontecer, que é o bug da fase inteira. Uma linha fecha. */
+  const fora = R.FORMAS.filter((f) => !R.PORTES.includes(f.porte)).map((f) => `${f.id}=${JSON.stringify(f.porte)}`);
+  t("toda forma tem um porte que PORTES conhece", fora.length === 0, "porte estranho: " + fora.join(", "));
+  /* e o avesso: nenhum porte da tabela fica sem forma nenhuma, senão a
+     eleição sortearia de uma lista vazia */
+  const vazios = R.PORTES.filter((p) => !R.FORMAS.some((f) => f.porte === p));
+  t("e todo porte da tabela tem pelo menos uma forma", vazios.length === 0, "porte sem forma: " + vazios.join(", "));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);
