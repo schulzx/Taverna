@@ -223,12 +223,46 @@ Desde a **v9.2**: o veneno do companheiro é eterno, e a condição boa que
   24 → **32**; **15 sabotagens, 15 mordendo** — e uma delas mordia pelo motivo
   errado (o recorte da âncora virava o App inteiro), endurecida antes de fechar.
   Ver o diário.
-- [ ] **T2 · a cura não limpa** · de: pessoa · 14/09
-  Lei da pessoa: **cura normal só devolve PV**. Conferir todo caminho de cura
-  (poção, descanso, magia de cura, habilidade) e provar que nenhum apaga
-  condição de carona. Se algum apaga hoje, é o conserto da etapa — e o
-  jogador precisa entender que curar não cura o veneno. Catraca permanente:
-  nenhuma porta de cura escreve em `condicoes`.
+- [x] **T2 · a cura não limpa** · feito em v9.239 (`a6a6473` + `d4c…`), 14/09
+  **A etapa foi conferência que passou — e o conserto estava na tabela, não no
+  código.** Varridas **45 portas de cura** em 16 arquivos (poção, dado de vida,
+  descanso curto e longo, profissão, magia de cura, milagre, Segundo Fôlego,
+  relíquia `curaFracao`, companheiro que cura, Reerguer, arena/noite/duelo,
+  santuário, volta da morte, vínculo, drenagem, chefe): **nenhuma porta de
+  gameplay escreve em `condicoes`**. A única que limpa é o **`/curar` do console
+  criativo** (`App.jsx:5449`, declarado em `godmode.js:31`) — chave do mundo,
+  não cura normal; ficou de pé e **declarada** na tabela do varredor, com o
+  motivo escrito.
+  **O descanso ficou como está, e o código deu o motivo:** `descanso.js` — o
+  módulo que calcula **toda** a metade de PV — **não tem uma linha tocando
+  `condicoes`**. As duas metades já são separadas: a de PV obedece à lei
+  sozinha, e a limpeza vem inteiramente da metade do **tempo**
+  (`limparPorDescanso`, chamada de `regras-jogo.js:84–94`). Descanso é
+  passagem de tempo, não cura — e é a única escolha que não deixa `exausto`
+  (`turnos: null`, só sai com `"longo"`) sem saída nenhuma. Zero mudança no
+  que o jogador vive.
+  **A mentira estava no catálogo:** quatro condições declaravam
+  `saiCom: ["cura"]` (`envenenado`, `sangrando`, `cego`, `enfeiticado`) e
+  **ninguém lia o canal `"cura"`** — promessa morta que contradizia a lei.
+  Virou **`"restauracao"`**, na tabela nova `CANAIS_DE_SAIDA`. **Renomear, não
+  apagar, foi obrigatório:** `enfeiticado` só declarava esse canal, e apagá-lo
+  o deixaria com `saiCom: []` — a regra implícita faria **a noite inteira
+  passar a quebrar encantamento**. As quatro têm `turnos` (4/3/2/3) e seguem
+  vencendo no relógio de T1: nenhuma ficou sem saída.
+  **A porta do descanso foi trancada:** `limparPorDescanso` **recusa** canal
+  que não seja de descanso — antes aceitava qualquer string, e
+  `limparPorDescanso(c, "cura")` era o jeito mais fácil de uma cura futura
+  apagar condição sem parecer que apagava. E `CONDICOES_PROMPT` dizia ao
+  Narrador *"quem a tira é o relógio, o descanso **ou a cura**"* — ensinava o
+  oposto da lei; hoje diz *"o relógio ou o descanso"* (**−10 chars**, teto
+  intacto em 56.334).
+  **Catraca permanente: `testes/check-cura-nao-limpa.mjs`** (33 asserções, no
+  `npm test`): percorre o `src/` atrás de **toda** linha que sobe `vida` e
+  falha se houver escrita em `condicoes` na vizinhança, com piso de alcance
+  (35 portas / 8 arquivos, para não passar verde medindo lista vazia) e dente
+  inverso. **7 sabotagens, 7 mordendo** — inclusive a sutil, o canal sumindo.
+  `teste-cond.mjs` 84 → **102**, `teste-relicas.mjs` 98 → **103**,
+  `teste-mercado.mjs` 27 → **29**; nenhuma asserção antiga movida. Ver o diário.
 - [ ] **T3 · a salvaguarda no fim do turno** · de: pessoa · 14/09
   5e: algumas condições dão nova chance ao fim do turno de quem as sofre —
   veneno pedindo Vigor é o exemplo que a pessoa deu. **Tabela, não julgamento
@@ -247,6 +281,25 @@ Desde a **v9.2**: o veneno do companheiro é eterno, e a condição boa que
   saída** — prazo, salvaguarda ou porta. Uma condição nova amanhã sem saída
   quebra a suíte no dia em que nascer. O que faltar de acervo vira item; o
   que exigir mecânica nova sobe para a pessoa.
+  **Deixado por T2 (14/09), medido e não consertado de carona:**
+  (a) **`concentrado` não tem saída nenhuma** — `turnos: null`, `tipo: "bom"`,
+  `saiCom: []`: não vence no relógio e o descanso longo não o pega (a regra
+  implícita só vale para `ruim`). **T2 não criou isto** (ele nunca declarou
+  `"cura"`); hoje é armadilha latente porque **nada aplica essa condição** — a
+  maquinaria de concentração vive em `efeitos.js`, sobre `pers.efeitos`. Se
+  alguma porta um dia a aplicar, ela é permanente. É o caso que a catraca
+  "toda condição tem ao menos uma saída" vai acender primeiro.
+  (b) **O canal `"restauracao"` nasce sem leitor, de propósito** — quatro
+  condições já o declaram (`envenenado`, `sangrando`, `cego`, `enfeiticado`) e
+  é T4 quem liga as três portas: magia (`funcao: "curar_condicao"` —
+  Restauração Menor/Maior já estão no grimório), habilidade de classe e
+  antídoto declarado (o consumível `tipo: "limpa"` de `pocoes.js:151` e a
+  relíquia `e.limpa` de `relicas.js:282`, que **já existem e já dizem por
+  escrito o que removem**).
+  (c) **O `/curar` do console criativo** (`App.jsx:5449`, `godmode.js:31`)
+  limpa condição e exaustão por ser chave do mundo, não cura. Fica a decidir
+  se deve deixar de se chamar "curar" — é frontend + `godmode.js`, e é
+  cosmética de bastidor, não gameplay.
 
 ### Fase B — o bônus do companheiro, se for lícito e justo
 Decisão da pessoa (14/09): *"se o bônus for lícito e justo não tem porque
@@ -470,7 +523,7 @@ que falta é o campo chegar até ela.
 
   **Corrigido em 14/09 (T1):** havia, sim — a pessoa respondeu as quatro pesadas
   no mesmo dia e a fila aprovada virou **T → B → F → I**, escrita acima. A próxima
-  etapa é a **T2 · a cura não limpa**; T1 fechou em v9.238 (`9ca2eb7`).
+  etapa é a **T3 · a salvaguarda no fim do turno**; T2 fechou em v9.239.
 
 <details>
 <summary>o texto original da etapa C3 (antes de ser executada)</summary>
@@ -768,10 +821,22 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
 
   **Corrigido em 14/09 (T1):** havia, sim — a pessoa respondeu as quatro pesadas
   no mesmo dia e a fila aprovada virou **T → B → F → I**, escrita acima. A próxima
-  etapa é a **T2 · a cura não limpa**; T1 fechou em v9.238 (`9ca2eb7`).
+  etapa é a **T3 · a salvaguarda no fim do turno**; T2 fechou em v9.239.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
 
+- [ ] **a suíte da sala aposta no acaso, e às vezes perde** · leve · de: orquestrador (achado de T2) · 14/09
+  Pegado ao vivo: no meio do ciclo de T2 o `npm test` deu **180/181 · FALHARAM:
+  teste-sala.mjs** (`122 passaram, 1 falharam`) e, **na corrida seguinte, verde**
+  — com a árvore byte a byte igual. O sítio é `teste-sala.mjs:32`:
+  `t("e eles não se repetem à toa", vistos.size > 480)` sobre **500 chamadas de
+  `novoCodigo()` sem semente** — colisão de aniversário, que passa quase sempre e
+  falha de vez em quando. **É a lei do determinismo por semente quebrada dentro
+  da própria suíte**, e o preço é caro: um vermelho que não reproduz ensina a
+  mente a ignorar vermelho, e a árvore "limpa e verde" vira dúvida na hora de
+  subir. Conserto leve: semear o gerador na suíte (ou medir a taxa de colisão
+  contra um limiar deduzido do alfabeto e do comprimento, que é tabela). **Não
+  afrouxar o 480** — o número está certo; quem está errado é a aposta.
 - [ ] **o sonho dá vantagem eterna ao herói** · médio · de: backend (achado de T1) · 14/09
   **É a única condição genuinamente eterna do jogo hoje — e é do herói, não do
   grupo.** `App.jsx:18759` escreve `{ nome: "Inspirado", tipo: "bom", nota: … }`

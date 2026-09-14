@@ -16,6 +16,145 @@ Formato:
 
 ---
 
+## 14/09 12:10 · v9.239 · T2 · a cura não limpa · commit `a6a6473` + este
+- **estado inicial:** árvore limpa, HEAD `7ae4ba1`, VERSÃO v9.238, `npm test`
+  181/181 suítes + 8/8 varredores verde. Sem trava de ciclo (posta por mim). A vez
+  era **T2**, a segunda etapa da Fase T, com a lei da pessoa: *cura normal só
+  devolve PV; quem limpa é magia, habilidade de classe, item ou salvaguarda.*
+- **conselheiro:** não chamado (etapa já escrita e aprovada; a pauta tem mais de
+  5 itens em "Aberto").
+- **backend:** varreu as **45 portas de cura** em 16 arquivos, decidiu o descanso
+  com o número que o sustenta, renomeou o canal morto `"cura"` → `"restauracao"`
+  em `CANAIS_DE_SAIDA`, trancou `limparPorDescanso` contra canal que não seja de
+  descanso, e escreveu a catraca `check-cura-nao-limpa.mjs` (7 sabotagens, 7
+  mordendo). Não tocou no `App.jsx`.
+- **frontend:** **não chamado, de propósito** — a medição não achou fiação para
+  consertar no App, e chamar a mão só para ela olhar seria trabalho inventado.
+- **testes:** feitos pelo backend junto com o módulo (as asserções são da mesma
+  medição): `teste-cond.mjs` 84 → **102**, `teste-relicas.mjs` 98 → **103**,
+  `teste-mercado.mjs` 27 → **29**, mais o varredor novo com **33**. Nenhuma
+  asserção antiga movida nem reescrita.
+
+### A etapa era conferência, e a conferência passou — 45 portas, zero vazando
+
+Não foi suposição: cada porta foi lida e contada. Poção (`pocoes.js:124`), dado
+de vida e descanso curto/longo (`descanso.js` 72, 109, 156, 169), profissão no
+descanso (`regras-jogo.js` 102, 107), magia de cura (`App.jsx:12614`), milagre
+(`App.jsx:9664` + `divindades.js:259`), Segundo Fôlego (`App.jsx` 8067 e 13632 +
+`dadivas.js:174`), relíquia `curaFracao` (`relicas.js:268`), companheiro que cura
+(`App.jsx:7900`, `combate.js:382`), Reerguer e Reescrever o Instante
+(`habilidades.js` 156–196), arena/noite/duelo (`arena.js:150`,
+`uma-noite.js:117`), santuário (`App.jsx:17458`), volta da morte, vínculo,
+drenagem e chefe. **Todas sobem `vida` e nenhuma escreve `condicoes`.**
+
+A **única** que limpa é o **`/curar` do console criativo** (`App.jsx:5449`,
+declarado em `godmode.js:31` como "PV e PM cheios, condições e exaustão
+limpas"). Não é cura normal: é a chave do mundo, interceptada antes do Mestre.
+Ficou de pé e **declarada** na tabela do varredor, com o motivo escrito — exceção
+que se lê é exceção que se audita.
+
+### O descanso: decidido, e o próprio código deu o argumento
+
+Era o caso difícil, e o cuidado do briefing estava certo: em 5e o descanso longo
+cura muita coisa por regra. A decisão é **o descanso fica como está — ele é
+passagem de tempo, não cura normal**, e o motivo é estrutural, não de gosto:
+
+**`descanso.js`, o módulo que calcula TODA a metade de PV do descanso, não tem
+uma única linha tocando `condicoes`** (provado na seção 3 do varredor). As duas
+metades já moram separadas no código: a de PV obedece à lei sozinha, e a limpeza
+vem inteiramente da metade do **tempo**, em `limparPorDescanso` chamada de
+`regras-jogo.js:84–94`. Não há uma cura que limpa — há horas que passam, e o
+relógio de T1 já é o irmão menor disso.
+
+E a conta do que morreria: **`exausto` (`turnos: null`, `saiCom: ["longo"]`) é a
+única condição do catálogo cuja única porta é o descanso.** Tirá-la deixaria
+exaustão perpétua — T2 abriria o buraco que T4 existe para fechar. A escolha
+conservadora é também a única coerente: **zero mudança no que o jogador vive**, e
+as duas asserções antigas do descanso em `teste-cond.mjs` continuam literalmente
+como estavam — continuarem verdes é metade da prova.
+
+### A mentira estava na tabela, e ela contradizia a lei da pessoa
+
+Quatro condições declaravam `saiCom: ["cura"]` (`envenenado`, `sangrando`,
+`cego`, `enfeiticado`) e **ninguém lia o canal `"cura"`**: `limparPorDescanso` é o
+único leitor de `saiCom` e só recebe `"curto"`/`"longo"`. Promessa morta — e
+promessa que dizia o oposto da lei recém-ditada. Virou **`"restauracao"`**, na
+tabela nova `CANAIS_DE_SAIDA`, com o porquê escrito no módulo.
+
+**E renomear, não apagar, foi obrigatório — é o achado do ciclo.** `enfeiticado`
+declarava **só** esse canal. Apagá-lo o deixaria com `saiCom: []`, e a regra
+implícita de `limparPorDescanso` (*longo limpa toda condição ruim sem canal*)
+faria **a noite inteira passar a quebrar encantamento**: mudança silenciosa no
+que o jogador vive, nascida de uma limpeza de tabela. As quatro têm `turnos`
+(4/3/2/3) e seguem vencendo no relógio: **nenhuma ficou sem saída**.
+
+Duas trancas a mais, ambas contra o erro de amanhã:
+- **`limparPorDescanso` recusa canal que não seja de descanso.** Antes aceitava
+  qualquer string — `limparPorDescanso(c, "cura")` era o jeito mais fácil de uma
+  cura futura apagar condição sem parecer que apagava.
+- **`CONDICOES_PROMPT` ensinava o oposto da lei ao Narrador:** *"quem a tira é o
+  relógio, o descanso ou a cura"*. Hoje diz *"o relógio ou o descanso"* — **10
+  chars a menos**, teto de prompt intacto (56.334).
+
+### A catraca, e as sete sabotagens
+
+`testes/check-cura-nao-limpa.mjs` percorre o `src/` atrás de **toda** linha que
+sobe `vida` e falha se houver escrita em `condicoes` na vizinhança. Dois dentes
+que a impedem de passar verde à toa: **piso de alcance** (35 portas / 8 arquivos —
+lista vazia é vermelho) e **dente inverso** (exceção declarada que para de casar
+fica vermelha). Nenhum export novo inventado para a suíte ler.
+
+Sete sabotagens em cópia, sete mordendo: descanso longo zerando condições; poção
+de cura cortando veneno de carona; catálogo voltando a dizer `"cura"`; a porta do
+descanso reaceitando qualquer canal; o antídoto declarado apagado de carona;
+relíquia nova limpando de carona; e a sutil — **o canal sumindo**, que é a que
+pegou a mudança silenciosa do encantamento.
+
+### Decisões médias tomadas (com o motivo)
+
+- **O descanso fica como está.** Motivo acima: as duas metades já são separadas no
+  código, e é a única escolha que não deixa `exausto` sem saída. Zero mudança no
+  que o jogador vive — por isso não subiu para a pessoa.
+- **O canal foi renomeado, não apagado.** Apagar mudaria o jogo em silêncio
+  (encantamento quebrando na noite). Renomear mantém o comportamento idêntico e
+  deixa a porta pronta para T4 ligar.
+- **O `/curar` do console ficou de pé e declarado.** É bastidor de criador, não
+  gameplay; apagá-lo seria tirar a chave do mundo por causa do nome dela.
+- **O frontend não foi chamado.** Nada a fiar no App.
+- **Não consertei `protegido`/`defesaDe`** (o Aberto de T1) nem antecipei T3/T4.
+
+### O que ficou
+
+- **Para T4, três coisas, escritas na pauta:** `concentrado` é a única condição
+  **sem saída nenhuma** hoje (`turnos: null`, `tipo: "bom"`, `saiCom: []`) —
+  armadilha latente, porque nada a aplica, e T2 **não** a criou; o canal
+  `"restauracao"` nasce **sem leitor de propósito**, esperando as três portas; e o
+  nome do `/curar` a decidir.
+- **Um vermelho intermitente, pego ao vivo e registrado em "Aberto":** no meio do
+  ciclo o `npm test` deu **180/181 · teste-sala.mjs (122 passaram, 1 falharam)** e
+  na corrida seguinte deu verde, com a árvore byte a byte igual. O sítio é
+  `teste-sala.mjs:32` — 500 chamadas de `novoCodigo()` **sem semente** e a
+  asserção `vistos.size > 480`: colisão de aniversário. **É a lei do determinismo
+  por semente quebrada dentro da própria suíte**, e o preço é caro — vermelho que
+  não reproduz ensina a mente a ignorar vermelho. **Não afrouxei o 480**, virou
+  item leve na pauta. O `npm test` da subida foi conferido verde duas vezes.
+
+### E a nota que o `git log` precisa para não mentir
+
+**Parte do trabalho de T2 viajou no commit anterior, e o erro não foi da mão que
+o escreveu.** Enquanto o `backend` ainda media, a pessoa rodou `git add -A` para
+commitar arquivos dela (os agentes da mesa de design), e a varredura levou junto
+`src/condicoes.js`, `testes/teste-cond.mjs`, `testes/teste-mercado.mjs`,
+`testes/teste-relicas.mjs` e `testes/check-cura-nao-limpa.mjs`. Eles estão em
+**`a6a6473` — "A mesa de design"**, que é um título que não os descreve. Nada
+quebrado subiu (build limpo, 181/181 + 9/9 conferidos depois), e **não se
+reescreveu história**: está publicado, e reescrever seria pior que a confusão.
+Este commit carrega o resto — o bump de `VERSAO`, o diário e a pauta — e esta
+nota. A lição é da casa e já está no `CLAUDE.md` (`73e438b`): **nunca `git add -A`
+com uma trava de ciclo posta**, nem duas mãos na mesma árvore sem olhar.
+
+---
+
 ## 14/09 11:35 · v9.238 · T1 · o relógio alcança o grupo · commit `9ca2eb7`
 - **estado inicial:** árvore limpa, HEAD `2faf58f`, VERSÃO v9.237, `npm test`
   181/181 suítes + 8/8 varredores verde. Sem trava de ciclo. A Fase C fechada e
