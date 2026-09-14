@@ -223,7 +223,8 @@ Desde a **v9.2**: o veneno do companheiro é eterno, e a condição boa que
   24 → **32**; **15 sabotagens, 15 mordendo** — e uma delas mordia pelo motivo
   errado (o recorte da âncora virava o App inteiro), endurecida antes de fechar.
   Ver o diário.
-- [x] **T2 · a cura não limpa** · feito em v9.239 (`a6a6473` + `d4c…`), 14/09
+- [x] **T2 · a cura não limpa** · feito em v9.239 (o código em `a6a6473` por
+  engano de varredura, o resto em `d064baa`), 14/09
   **A etapa foi conferência que passou — e o conserto estava na tabela, não no
   código.** Varridas **45 portas de cura** em 16 arquivos (poção, dado de vida,
   descanso curto e longo, profissão, magia de cura, milagre, Segundo Fôlego,
