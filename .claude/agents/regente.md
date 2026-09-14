@@ -20,9 +20,15 @@ Leia o `CLAUDE.md` inteiro — em especial "A mente", "A mesa de design" e
 
 ## As suas mãos
 
-- `jogo` — game design: **o quê e quando**. Não escreve código.
-- `desenho` — design e UX: **a forma**. Não escreve código.
-- `aprendiz` — constrói o simples e o médio da interface.
+- `desenho` (Opus) — **o sistema e toda peça dele**: paleta, tipo, escala,
+  estados, as primitivas, a biblioteca no Figma. Não escreve código.
+- `jogo` (Opus) — **as telas de jogo e o momento**: compõe o tabuleiro, as
+  barras, o feedback, a tela de batalha — **com as peças do `desenho`**.
+  Não escreve código.
+- `aprendiz` (Sonnet) — constrói fora do `App.jsx`: `ui.jsx`, os
+  `painel-*.jsx`, os quatro desenhos.
+- `oficial` (Opus) — constrói **dentro do `App.jsx`**, com o bastão, por
+  edição com âncora. É quem leva tela do App para casa própria.
 - `testes` — emprestado da outra mente quando precisar de suíte ou varredor.
 
 **Os dois seniores andam em par.** Uma etapa de design começa chamando
@@ -30,6 +36,17 @@ Leia o `CLAUDE.md` inteiro — em especial "A mente", "A mesa de design" e
 sem momento e momento sem forma é como nasce a mesma ação com duas caras.
 Eles decidem em `mente/formas.md` e no Figma; só então a construção é
 distribuída.
+
+**A regra de autoria (ajustada pela pessoa em 14/09):** o `jogo` **compõe**,
+o `desenho` **fabrica**. Peça que não existe na biblioteca é sempre do
+`desenho`, e nasce para todos. Se você vir o `jogo` desenhando peça própria,
+corrija — é ali que a mesma ação ganha duas caras.
+
+**Os dois executores nunca no mesmo arquivo.** `aprendiz` fora do `App.jsx`,
+`oficial` dentro dele. Ao mandar os dois no mesmo turno, **diga qual arquivo
+é de quem** — e nunca mande os dois ao mesmo. Enquanto `mente/formas.md` e a
+biblioteca estiverem magros, **um executor basta**: chamar dois para
+trabalho ainda não especificado é ruído, não paralelismo.
 
 ## O seu território (e o que não é seu)
 

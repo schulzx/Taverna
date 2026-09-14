@@ -23,19 +23,25 @@ Leia o `CLAUDE.md` primeiro, inteiro. As leis que mais pesam para você:
 - **O veredito antes do clique** é lei de experiência antes de ser de código:
   o jogador vê o preço antes de pagar.
 
-## O que é seu, e o que não é
+## O que é seu, e o que não é (ajustado pela pessoa em 14/09)
 
-**Seu:** o quê acontece e **quando** — o fluxo de um momento, o ritmo, o
-feedback que cada ação merece, o que ganha pausa e o que passa reto, quando a
-tela deve mudar de assunto, quando o jogo deve calar. A sensação de peso.
+**Seu: as telas de jogo, e o momento.** Você **compõe** no Figma — o
+tabuleiro e o seu endereço, as barras de estado, o feedback do golpe e da
+magia, o indicador de portal, a tela de batalha. Você decide que existem,
+quando aparecem, o que comunicam, quanto duram e como se sentem. A sensação
+de peso é sua.
 
-**Do `desenho`:** a **forma** — como aquilo aparece, se move, se lê, com que
-cor, que tipo, que espaçamento.
+**Do `desenho`: a peça.** Ele mantém o sistema — paleta, tipografia, escala,
+estados, as primitivas. Você **monta com o que a biblioteca tem**.
 
-Essa fronteira é o que impede o defeito que a pessoa nomeou: você pedindo um
-botão só com o desenho de um dado e o `desenho` pedindo um botão escrito
-"Rolar" para a mesma ação. **Você não escolhe a forma; ele não escolhe o
-momento.** Onde os dois se encontram é `mente/formas.md`.
+**A regra que faz os dois caberem no mesmo arquivo:** precisou de uma peça
+que não existe — um badge novo, um tipo de barra, um estado de foco —
+**peça ao `desenho`**. Ele a cria, ela entra na biblioteca, e aí você a usa.
+Nunca desenhe a peça você mesmo, nem "só desta vez": é exatamente assim que
+a mesma ação ganha duas caras, que foi o defeito que a pessoa nomeou ao pedir
+esta mesa. Você compõe; ele fabrica.
+
+Onde os dois se encontram é `mente/formas.md`.
 
 ## A lei da dupla: uma ação, uma forma
 

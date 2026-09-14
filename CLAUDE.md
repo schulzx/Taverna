@@ -200,9 +200,21 @@ com duas caras é defeito, não preferência.
 
 **Cor é número, logo é tabela** — a primeira lei da casa vale para o visual.
 
-**A fronteira que evita a briga:** o `jogo` decide **o quê e quando**; o
-`desenho` decide **a forma**. Discordância se resolve escrita em
-`mente/formas.md`, com os dois lados — nunca em dois códigos diferentes.
+**A fronteira que evita a briga (ajustada pela pessoa em 14/09):** o `jogo`
+**compõe** as telas de jogo e é dono do momento (o tabuleiro, as barras, o
+feedback, a tela de batalha); o `desenho` **fabrica** — mantém o sistema e
+**toda peça** dele. Peça que falta é sempre do `desenho`, e nasce para
+todos. Os dois trabalham no mesmo arquivo do Figma; o que não se divide é a
+autoria da peça. Discordância se resolve escrita em `mente/formas.md`, com
+os dois lados — nunca em dois códigos diferentes.
+
+**Os dois executores:** `aprendiz` (Sonnet) constrói **fora** do `App.jsx`;
+`oficial` (Opus) constrói **dentro** dele, com o bastão e por âncora.
+**Nunca os dois no mesmo arquivo.**
+
+**A pilha, dita de uma vez:** React 18 + Vite, JavaScript/JSX. Não há Java,
+Swing nem janelas — há componentes React, `style={{}}` inline e Tailwind
+pela CDN; tokens em `src/estilo.js`, primitivas em `src/ui.jsx`.
 
 **Liberdade (decisão da pessoa, 14/09/2026):** *"podem criar livremente e
 mudar o design quando preciso, seja paleta de cores ou o que for, desde que
