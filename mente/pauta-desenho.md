@@ -216,21 +216,42 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
   A armadilha do `T` do torneio (`App.jsx:10205` e `:10222`) **não chegou a
   existir**: nenhum ponto de uso de `T` no App foi tocado, porque o
   reexport tornou o regex desnecessário.
-- [ ] **D3 · a biblioteca no Figma** · de: pessoa · 14/09
-  Criar o arquivo do Taverna no Figma e nele a biblioteca: **variáveis
-  primeiro** (espelhando a tabela de estilo e as medidas), **componentes
-  depois**. Carregar `figma-generate-library` junto de `figma-use`;
-  `figma-create-new-file` é pré-requisito obrigatório do `create_new_file`.
-  Ao fim, **Code Connect** amarrando componente do Figma a componente de
-  código, para que não possam divergir em silêncio.
-  *(corrigido por D1: espelhar `ui.jsx` cru faria uma biblioteca de 49
-  componentes, 33 deles ícones e 4 mortos, e **sem** os cinco controles onde
-  a divergência de verdade mora.)* Entram: **as primitivas de `ui.jsx` com
-  ≥2 leitores reais**, mais os cinco que D1 provou existirem sem primitiva
-  — **destrutivo, fechar, sobreposição, badge de estado, barra**. Não entram
-  `IconeBandeira`, `IconeGota`, `IconeCirculoX`, `IconeFrasco`. E fique dito:
-  **`:focus-visible` tem zero ocorrências no projeto** — desenhar o estado de
-  foco no Figma é inventar, não espelhar. Legítimo, mas é desenho novo.
+- [ ] **D3 · a biblioteca no Figma, e a estrada de volta** · de: pessoa · 14/09
+  *(reescrita em 14/09, depois da pergunta da pessoa: "a interação com o
+  Figma está sendo uma troca dos dois lados ou apenas estamos usando as
+  ferramentas do Figma?" — a pergunta certa, e a resposta até aqui era
+  ZERO: D1 e D2 não puseram um pixel lá.)*
+
+  **O teste de que a troca existe é um só: uma mudança feita NO Figma
+  chega ao código sem ninguém reescrevê-la à mão.** Se a etapa terminar
+  sem isso provado, ela terminou como arquivo bonito, não como terceira
+  mente. Então D3 entrega três coisas, nesta ordem:
+
+  1. **As variáveis, e a volta delas.** Criar o arquivo do Taverna e nele
+     as variáveis espelhando `T` e `MATERIAIS` (`figma-create-new-file` é
+     pré-requisito obrigatório do `create_new_file`; `figma-generate-library`
+     junto de `figma-use`). Depois **puxar de volta com `get_variable_defs`
+     e comparar com `src/estilo.js`** — ida e volta, mesmo valor. É o par
+     mais barato de provar e o que torna a paleta editável no Figma.
+  2. **Os componentes que têm a que se amarrar.** *(medido em D1: `ui.jsx`
+     cobre **6,8%** dos controles — 218 `<button>` crus contra 16 `<Botao>`.
+     Uma biblioteca espelhando `ui.jsx` cru amarraria quase nada.)* Entram
+     as primitivas com **≥2 leitores reais**, mais os cinco controles que
+     D1 provou existirem sem primitiva — **destrutivo, fechar,
+     sobreposição, badge de estado, barra**. Ficam de fora os quatro ícones
+     mortos. E fique dito: **`:focus-visible` tem zero ocorrências no
+     projeto** — desenhar o estado de foco é inventar, não espelhar;
+     legítimo, mas é desenho novo e vai para `formas.md` como tal.
+  3. **O Code Connect, que é o nó.** Amarrar cada componente do Figma ao
+     componente de código, para que não possam divergir em silêncio. Onde
+     não houver componente de código a que amarrar, **diga** — é dívida a
+     pagar extraindo primitiva, e é o que justifica o hábito de tirar tela
+     do `App.jsx`.
+
+  **O que a etapa deve relatar, sem enfeite:** quais direções funcionaram
+  de verdade, quais foram só de ida, e quanto da biblioteca ficou sem nó.
+  Uma troca de mão única declarada vale mais que uma troca de mão dupla
+  suposta.
 - [ ] **D4 · as formas escritas** · de: pessoa · 14/09
   `mente/formas.md` deixa de estar vazio: toda ação que o jogador toca hoje
   ganha sua forma declarada (quando, forma, movimento, onde vive, por quê,
