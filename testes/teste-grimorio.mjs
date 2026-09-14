@@ -3,6 +3,7 @@ import {
   nivelDoCirculo, custoDoCirculo, zonasCobertas, geometriaDe, ehArea, zonasAtingidas, alvosDaArea,
   fichaDaMagiaTexto, resumoGrimorioPrompt, METROS_POR_ZONA, resolverPortal, envelopeDoPortal,
   PERGUNTAS_AOS_MORTOS, abrirInterrogatorio, perguntarAoMorto, envelopeDoMorto, textoDeIdentificacao, localizarNoMapa, resolvidaPeloSistema,
+  CONCENTRACAO_DA_MAGIA, exigeConcentracao,
 } from "../src/grimorio.js";
 
 let falhas = 0;
@@ -172,6 +173,177 @@ console.log(`  ${loc.alvo}: ${loc.direcao}, ~${loc.km} km · dentro do alcance: 
 ok(loc.achou && loc.km > 0 && loc.direcao, "direção e distância saem do mapa, não do palpite");
 ok(!loc.dentroDoAlcance, "e o alcance da magia é lei — o que está longe demais fica fora");
 ok(!localizarNoMapa("Nárnia", { cidades: mapaLoc.cidades, cidadeAtual: "Pedravale" }).achou, "não localiza o que não existe no mundo");
+
+/* ============================================================
+   12. A CONCENTRAÇÃO — a catraca do catálogo e a porta única (C1, v9.234)
+
+   Entra DEPOIS da 11 e não no meio das onze de propósito: renumerar as
+   seções antigas para encaixar esta moveria dezenas de asserções que
+   ninguém pediu para mover, e a lei da casa cobra um motivo escrito por
+   asserção movida. Nenhuma foi — as seções 1–11 leem exatamente o que liam.
+
+   O QUE ESTA SEÇÃO EXISTE PARA IMPEDIR. A marca `concentracao` estava certa
+   nas 85 desde a v9.30, e continua. O que não existia era a régua que a
+   suíte consegue ler de volta: no dia em que alguém escrevesse a 86ª magia,
+   de duração, sem a marca, ela nasceria sem concentração EM SILÊNCIO — e o
+   sintoma apareceria meses depois, num jogador segurando três magias ao
+   mesmo tempo sem nunca perder nenhuma. É o mesmo molde da seção 6 de
+   `teste-guardas.mjs`: percorrer o acervo INTEIRO e cobrar de cada entrada,
+   em vez de confiar na memória de quem escreveu a tabela.
+
+   E A CATRACA MORDE NOS DOIS SENTIDOS, como a de `teste-ligacao`: uma
+   exceção que nomeia magia inexistente, ou que nomeia magia que na verdade
+   ESTÁ marcada, é perdão sobrando — e exceção morta mente tanto quanto
+   export morto. Bastaria acrescentar um nome à lista para calar a catraca,
+   e aí ela não protegeria mais nada.
+   ============================================================ */
+console.log("\n[12. A CONCENTRAÇÃO — a regra, as dez que fogem dela, e a porta]");
+
+/* A RÉGUA, em tabela — os números medidos no catálogo de hoje. Eles não são
+   decoração: cada um é um fato que, ao mudar, obriga quem mudou a dizer por
+   quê. Trocar `marcadas` de 34 para 33 é desmarcar uma magia, e desmarcar
+   uma magia é decisão de regra, não de digitação. */
+const MEDIDA_DA_CONCENTRACAO = {
+  totalDoCatalogo: 85,
+  deDuracao: 44,
+  marcadas: 34,
+  /* as que DURAM e não concentram — tem de ser exatamente o tamanho da
+     lista de exceções, e é essa igualdade que fecha a conta */
+  deDuracaoSemMarca: 10,
+  /* ZERO É A LEI, nos dois sentidos, como os tetos da seção 6 de
+     `teste-guardas.mjs`: magia instantânea marcada é promessa sem prazo
+     para segurar; exceção morta é perdão sem doente. */
+  tetoDeMarcadasInstantaneas: 0,
+  tetoDeExcecoesFantasma: 0,
+  tetoDeExcecoesMortas: 0,
+  tetoDeDivergenciasDaPorta: 0,
+  /* o texto que o JOGADOR lê na ficha — a regressão zero desta etapa */
+  marcaNaFicha: " · concentração",
+};
+
+const CM = CONCENTRACAO_DA_MAGIA;
+const dura = (m) => m.duracao !== CM.semDuracao;
+const excecaoDe = (nome) => CM.excecoes.find((e) => e.nome === nome) || null;
+
+console.log("  · a tabela");
+ok(typeof CM.regra === "string" && CM.regra.length > 10, "a regra está escrita em português, não só no comentário");
+ok(CM.semDuracao === "instantânea", "e o valor que dispensa a marca é o mesmo que `M(...)` escreve por padrão");
+ok(Array.isArray(CM.excecoes) && CM.excecoes.length === MEDIDA_DA_CONCENTRACAO.deDuracaoSemMarca,
+   `são ${MEDIDA_DA_CONCENTRACAO.deDuracaoSemMarca} exceções, nem uma a mais`);
+ok(CM.excecoes.every((e) => e && typeof e.nome === "string" && e.nome.trim()), "toda exceção tem nome");
+/* MOTIVO NÃO VAZIO é o dente que impede a lista de virar gaveta: sem ele,
+   calar a catraca custaria uma linha de nome e ninguém saberia por quê. */
+ok(CM.excecoes.every((e) => typeof e.porque === "string" && e.porque.trim().length >= 40),
+   "e o MOTIVO escrito — exceção sem motivo é onde os bugs vão morar");
+ok(new Set(CM.excecoes.map((e) => e.nome)).size === CM.excecoes.length, "nenhum nome repetido na lista de exceção");
+
+console.log("  · a medida do catálogo");
+const deDuracao = MAGIAS.filter(dura);
+const marcadas = MAGIAS.filter((m) => m.concentracao);
+const duracaoSemMarca = deDuracao.filter((m) => !m.concentracao);
+const marcadasInstantaneas = MAGIAS.filter((m) => m.concentracao && !dura(m));
+console.log(`  ${MAGIAS.length} magias · ${deDuracao.length} de duração · ${marcadas.length} marcadas · ${duracaoSemMarca.length} de duração sem marca`);
+ok(MAGIAS.length === MEDIDA_DA_CONCENTRACAO.totalDoCatalogo, `o catálogo tem ${MEDIDA_DA_CONCENTRACAO.totalDoCatalogo} magias`);
+ok(deDuracao.length === MEDIDA_DA_CONCENTRACAO.deDuracao, `${MEDIDA_DA_CONCENTRACAO.deDuracao} delas duram — o resto acontece e acaba`);
+ok(marcadas.length === MEDIDA_DA_CONCENTRACAO.marcadas, `${MEDIDA_DA_CONCENTRACAO.marcadas} pedem concentração`);
+ok(duracaoSemMarca.length === MEDIDA_DA_CONCENTRACAO.deDuracaoSemMarca,
+   `e ${MEDIDA_DA_CONCENTRACAO.deDuracaoSemMarca} duram sem pedir — exatamente as da lista de exceção`);
+ok(marcadas.length + duracaoSemMarca.length === deDuracao.length, "a conta fecha: marcada + exceção = tudo que dura");
+ok(marcadasInstantaneas.length <= MEDIDA_DA_CONCENTRACAO.tetoDeMarcadasInstantaneas,
+   `nenhuma instantânea é marcada (achadas: ${marcadasInstantaneas.map((m) => m.nome).join(", ") || "nenhuma"})`);
+ok(MAGIAS.every((m) => typeof m.concentracao === "boolean"), "e as 85 têm o campo como BOOLEANO — é ele que manda na porta");
+
+/* ---------------- DENTE 1: toda magia de duração presta contas ---------- */
+console.log("  · dente 1 — magia de duração: ou marcada, ou nomeada com motivo");
+const semRegua = [];
+for (const m of MAGIAS) {
+  if (!dura(m)) continue;
+  const e = excecaoDe(m.nome);
+  const presta = m.concentracao || !!(e && String(e.porque || "").trim());
+  if (!presta) semRegua.push(`${m.nome} (${m.duracao}${e ? ", exceção SEM motivo" : ", fora da lista"})`);
+}
+ok(semRegua.length === 0,
+   `as ${deDuracao.length} de duração prestam contas à régua${semRegua.length ? " — FALTAM: " + semRegua.join(" | ") : ""}`);
+/* a asserção acima é a que morde quando a 86ª magia nascer: é ela, e não a
+   contagem, que aponta O NOME de quem ficou sem régua */
+
+/* ---------------- DENTE 2: nenhuma exceção nomeia fantasma -------------- */
+console.log("  · dente 2 — nenhum perdão sobra");
+const fantasmas = CM.excecoes.filter((e) => !magiaPorNome(e.nome)).map((e) => e.nome);
+ok(fantasmas.length <= MEDIDA_DA_CONCENTRACAO.tetoDeExcecoesFantasma,
+   `toda exceção nomeia magia que existe no catálogo${fantasmas.length ? " — fantasmas: " + fantasmas.join(", ") : ""}`);
+const mortas = CM.excecoes.filter((e) => { const m = magiaPorNome(e.nome); return m && m.concentracao; }).map((e) => e.nome);
+ok(mortas.length <= MEDIDA_DA_CONCENTRACAO.tetoDeExcecoesMortas,
+   `nenhuma exceção perdoa magia que já está marcada${mortas.length ? " — mortas: " + mortas.join(", ") : ""}`);
+const semDuracaoNaLista = CM.excecoes.filter((e) => { const m = magiaPorNome(e.nome); return m && !dura(m); }).map((e) => e.nome);
+ok(semDuracaoNaLista.length === 0,
+   `nem magia instantânea, que nunca precisou de perdão${semDuracaoNaLista.length ? " — " + semDuracaoNaLista.join(", ") : ""}`);
+/* e o fecho: as dez que duram sem marca são AS DEZ da lista, uma a uma */
+ok(duracaoSemMarca.every((m) => !!excecaoDe(m.nome)),
+   "toda magia de duração sem marca está nomeada na lista — nenhuma passa por fora");
+
+console.log("  · as dez, com o motivo de cada uma");
+for (const e of CM.excecoes) {
+  const m = magiaPorNome(e.nome);
+  ok(!!m && dura(m) && !m.concentracao && String(e.porque || "").trim().length >= 40,
+     `"${e.nome}" (${m ? m.duracao : "?"}) — ${String(e.porque || "").slice(0, 58)}…`);
+}
+
+/* ---------------- A PORTA ÚNICA ---------------- */
+console.log("  · exigeConcentracao — a fachada nunca diverge da entrada");
+const divergem = MAGIAS.filter((m) => exigeConcentracao(m) !== m.concentracao).map((m) => m.nome);
+ok(divergem.length <= MEDIDA_DA_CONCENTRACAO.tetoDeDivergenciasDaPorta,
+   `a porta concorda com o campo nas ${MAGIAS.length}${divergem.length ? " — divergem: " + divergem.join(", ") : ""}`);
+ok(MAGIAS.every((m) => exigeConcentracao(m.nome) === m.concentracao), "e responde igual quando a pergunta chega pelo NOME");
+ok(exigeConcentracao("invisibilidade") === true && exigeConcentracao("INVISIBILIDADE") === true,
+   "o nome entra sem caixa e sem acento, como em todo o resto deste arquivo");
+
+/* A REGRA só entra onde o campo NÃO existe — magia digitada pelo Mestre,
+   entrada de save antigo, objeto de teste. É aqui que ela é provada. */
+console.log("  · a regra, onde o campo não existe");
+ok(exigeConcentracao({ nome: "Ventania Inventada", duracao: "1 hora" }) === true,
+   "objeto solto que DURA e não é uma das dez: concentra");
+ok(exigeConcentracao({ nome: "Estouro Inventado", duracao: CM.semDuracao }) === false,
+   "objeto solto instantâneo: não concentra — não há o que segurar");
+ok(exigeConcentracao({ nome: "Sem Prazo" }) === false, "objeto solto sem duração nenhuma: não concentra");
+ok(exigeConcentracao({ nome: "Espiritual Arma", duracao: "1 minuto" }) === false,
+   "e uma das dez, pelo nome, continua fora — mesmo sem o campo");
+ok(exigeConcentracao({ nome: "espiritual arma", duracao: "1 minuto" }) === false,
+   "a lista de exceção também casa sem caixa e sem acento");
+/* O CAMPO MANDA quando existe: um catálogo que discorde da sua própria
+   régua é problema para o dente 1 apontar, não para a porta corrigir. */
+ok(exigeConcentracao({ nome: "Ventania Inventada", duracao: "1 hora", concentracao: false }) === false,
+   "o campo MANDA sobre a regra: `false` explícito vence a duração");
+ok(exigeConcentracao({ nome: "Estouro Inventado", duracao: CM.semDuracao, concentracao: true }) === true,
+   "e `true` explícito vence a instantaneidade — a entrada é a verdade");
+
+console.log("  · lixo — nada inventa concentração");
+ok(exigeConcentracao(null) === false, "null não concentra");
+ok(exigeConcentracao(undefined) === false, "undefined não concentra");
+ok(exigeConcentracao({}) === false, "{} não concentra");
+ok(exigeConcentracao("") === false, "string vazia não concentra");
+ok(exigeConcentracao("Magia Que Nunca Existiu") === false, "nome que não está no catálogo não concentra");
+ok(exigeConcentracao(0) === false && exigeConcentracao(7) === false, "número não estoura nem concentra");
+ok(exigeConcentracao([]) === false, "lista não estoura nem concentra");
+ok(exigeConcentracao({ concentracao: "sim" }) === false,
+   "`concentracao` que não é booleano cai na regra, e sem duração a regra diz não");
+
+/* ---------------- REGRESSÃO ZERO NO TEXTO DO JOGADOR ---------------- */
+/* `fichaDaMagiaTexto` passou a ler pela PORTA no lugar do campo (v9.234).
+   Para as 85 do catálogo a resposta é idêntica — e "idêntica" aqui é um
+   número, não uma impressão: 34 fichas trazem a marca, as mesmas 34. */
+console.log("  · a ficha do Mestre — nenhuma palavra mudou");
+const comMarcaNaFicha = MAGIAS.filter((m) => fichaDaMagiaTexto(m).includes(MEDIDA_DA_CONCENTRACAO.marcaNaFicha));
+ok(comMarcaNaFicha.length === MEDIDA_DA_CONCENTRACAO.marcadas,
+   `${MEDIDA_DA_CONCENTRACAO.marcadas} fichas imprimem "${MEDIDA_DA_CONCENTRACAO.marcaNaFicha.trim()}" (imprimiram ${comMarcaNaFicha.length})`);
+ok(comMarcaNaFicha.every((m) => m.concentracao), "e são exatamente as marcadas, não outras 34");
+ok(deDuracao.filter((m) => !m.concentracao).every((m) => !fichaDaMagiaTexto(m).includes(MEDIDA_DA_CONCENTRACAO.marcaNaFicha)),
+   "nenhuma das dez exceções ganha a marca no texto que o Mestre lê");
+ok(/ · concentração/.test(fichaDaMagiaTexto(magiaPorNome("Voo"))), "Voo sai com a marca");
+ok(!/concentração/.test(fichaDaMagiaTexto(magiaPorNome("Luz do Dia"))),
+   "Luz do Dia, não — a luz fica onde foi acesa e o conjurador pode ir embora");
+ok(!/concentração/.test(fichaDaMagiaTexto(magiaPorNome("Bola de Fogo"))), "e instantânea nunca traz a marca");
+ok(fichaDaMagiaTexto(null) === "", "sem magia, nenhum texto — a porta não estoura a ficha");
 
 console.log(falhas ? `\n${falhas} FALHA(S)` : "\nTudo passou");
 process.exit(falhas ? 1 : 0);

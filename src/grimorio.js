@@ -93,6 +93,9 @@ const M = (nome, circulo, classes, tipo, forma, raio, alcance, extra = {}) => ({
   nivel: nivelDoCirculo(circulo),
   custo: extra.custo != null ? extra.custo : custoDoCirculo(circulo),
   duracao: extra.duracao || "instantânea",
+  /* A entrada é a verdade; a REGRA de quando este campo deve estar aqui — e
+     as dez entradas que duram sem ele, com o motivo de cada uma — está em
+     `CONCENTRACAO_DA_MAGIA`, logo abaixo do catálogo. */
   concentracao: !!extra.concentracao,
   ritual: !!extra.ritual,
   funcao: extra.funcao || "",
@@ -221,6 +224,81 @@ export function magiasDisponiveis(classeNome, nivel, jaTem = []) {
   return MAGIAS.filter((m) => m.classes.includes(classeNome) && m.nivel <= (nivel || 1) && !nomes.has(norm(m.nome)));
 }
 export function classesDaMagia(nome) { const m = magiaPorNome(nome); return m ? m.classes : []; }
+
+/* ---------------- A CONCENTRAÇÃO: A REGRA, E AS DEZ QUE FOGEM DELA (v9.234) ----
+   O campo `concentracao` existe em cada entrada desde a v9.30, e a marcação
+   estava CERTA nas 85 — o que não existia era a catraca. Uma marca por
+   entrada é verdade que só se prova entrada por entrada: no dia em que
+   alguém escrevesse a 86ª magia, de duração, sem a marca, ela nasceria sem
+   concentração EM SILÊNCIO, e o sintoma seria um jogador que segura três
+   magias ao mesmo tempo e nunca perde nenhuma. É a mesma lição que a seção
+   6 de `teste-guardas.mjs` escreveu para as guardas: o acervo precisa de uma
+   régua que a suíte consiga ler de volta, não de boa memória.
+
+   A REGRA É CURTA: magia de DURAÇÃO exige concentração. Magia instantânea
+   acontece e acaba — não há o que segurar. Tudo o que dura está sendo
+   sustentado por alguém, e quem sustenta pode ser interrompido: é isso que
+   impede o mago de ir acumulando promessas sem preço.
+
+   O QUE ESTÁ AQUI É SÓ O DESVIO, pelo mesmo argumento de `APLICACAO_DO_BUFF`
+   (combos.js): uma lista de EXCEÇÃO faz a regra valer para tudo o que nascer
+   amanhã, enquanto uma lista de permissão viraria regressão silenciosa no
+   dia seguinte. São dez, e cada uma tem o motivo escrito — exceção sem
+   motivo é o lugar onde os bugs vão morar: bastaria acrescentar um nome
+   para calar a catraca, e aí ela não protege mais nada.
+
+   NENHUM VALOR MUDA NESTA VERSÃO. As dez foram conferidas uma a uma contra a
+   mesa e as dez estão certas; esta tabela não corrige o catálogo, ela o
+   explica e o tranca. */
+export const CONCENTRACAO_DA_MAGIA = {
+  regra: "magia de duração exige concentração",
+  /* o valor que `M(...)` põe quando a magia não dura — e o único que dispensa
+     a marca sem precisar de uma linha de exceção */
+  semDuracao: "instantânea",
+  excecoes: [
+    { nome: "Escudo Arcano",
+      porque: "dura UMA rodada e é anteparo de reação: acaba antes do próximo turno do conjurador, e não há prazo nenhum para um golpe interromper." },
+    { nome: "Sono",
+      porque: "o sono passa a ser do ALVO, não do conjurador — a magia se solta no instante em que cai, e quem dorme dorme por conta própria." },
+    { nome: "Compreender Idiomas",
+      porque: "ritual que abre a língua e vai embora; a compreensão fica no conjurador, e não há efeito no mundo para alguém derrubar." },
+    { nome: "Salto Longo",
+      porque: "muda o corpo do alvo e larga: a perna triplicada não precisa de vigia, e o alvo pode se afastar do conjurador sem perder nada." },
+    { nome: "Ver o Invisível",
+      porque: "abre os olhos do conjurador e os deixa abertos — é sentido, não é obra mantida; não há nada apontado para fora que possa cair." },
+    { nome: "Espiritual Arma",
+      porque: "a arma golpeia com a ação BÔNUS do conjurador, não com a atenção dele. É a exceção clássica da mesa, e é ela que deixa o clérigo sustentar uma magia de concentração por cima enquanto a lâmina continua batendo." },
+    { nome: "Falar com os Mortos",
+      porque: "o cadáver responde cinco perguntas e cala; quem conta o fim é `PERGUNTAS_AOS_MORTOS`, não o fôlego de quem perguntou." },
+    { nome: "Luz do Dia",
+      porque: "a luz fica no ponto (ou no objeto) onde foi acesa e brilha sozinha — o conjurador pode ir embora, e é justamente isso que a torna útil como tocha que não se carrega." },
+    { nome: "Círculo de Teleporte",
+      porque: "o portal se abre, o grupo atravessa e ele fecha: a duração é a rodada da travessia, e o destino existe antes e depois dela." },
+    { nome: "Esfera Prismática",
+      porque: "as sete camadas ficam de pé onde foram erguidas; é a única defesa do catálogo que o conjurador pode abandonar e ainda ter atrás de si." },
+  ],
+};
+
+/* A PORTA ÚNICA para a pergunta "esta magia é segurada?".
+   Aceita o nome, a entrada do catálogo, ou um objeto solto — porque a
+   pergunta chega dos três jeitos nesta casa (o mesmo que `geometriaDe` faz
+   com a forma, logo abaixo).
+
+   A ENTRADA MANDA. Quando o campo existe como booleano, ele é a resposta e
+   ponto: `M(...)` o escreve em todas as 85, e um catálogo que discorde da
+   sua própria régua é problema para a suíte apontar, não para uma função
+   corrigir por baixo. A REGRA só entra onde o campo não existe — magia
+   digitada pelo Mestre, entrada de save antigo, objeto de teste —, e aí ela
+   responde pelo que a magia diz de si: dura e não é uma das dez, concentra. */
+export function exigeConcentracao(magia) {
+  const bruto = typeof magia === "string" ? magiaPorNome(magia) : magia;
+  const m = bruto && typeof bruto === "object" ? bruto : {};
+  if (typeof m.concentracao === "boolean") return m.concentracao;
+  const dur = norm(m.duracao);
+  if (!dur || dur === norm(CONCENTRACAO_DA_MAGIA.semDuracao)) return false;
+  const n = norm(m.nome);
+  return !CONCENTRACAO_DA_MAGIA.excecoes.some((e) => norm(e.nome) === n);
+}
 
 /* ---------------- A GEOMETRIA DE QUALQUER HABILIDADE ----------------
    Magia catalogada devolve a forma declarada. Para as 148 habilidades
@@ -441,7 +519,10 @@ export function fichaDaMagiaTexto(m) {
   const f = formaDef(m.forma);
   const tam = m.raio ? ` ${m.raio} m` : "";
   const alc = m.alcance ? `alcance ${m.alcance >= 1000 ? `${(m.alcance / 1000).toFixed(1)} km` : `${m.alcance} m`}` : "em você ou ao toque";
-  return `${m.nome} (${m.circulo}º círculo · ${m.custo} PM) — ${f.nome}${tam}, ${alc}${m.concentracao ? " · concentração" : ""}${m.ritual ? " · ritual" : ""}. ${m.descricao}`;
+  /* pela PORTA, não pelo campo: a ficha que o Mestre lê e o efeito que o
+     jogador carrega têm de responder à mesma régua. Para as 85 do catálogo a
+     resposta é idêntica à do campo — nenhuma palavra deste texto muda. */
+  return `${m.nome} (${m.circulo}º círculo · ${m.custo} PM) — ${f.nome}${tam}, ${alc}${exigeConcentracao(m) ? " · concentração" : ""}${m.ritual ? " · ritual" : ""}. ${m.descricao}`;
 }
 
 export function resumoGrimorioPrompt(pers) {

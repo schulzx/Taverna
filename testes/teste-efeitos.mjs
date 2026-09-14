@@ -20,6 +20,12 @@ const RAIZ = "../src/";
 const E = await import(RAIZ + "efeitos.js");
 const R = await import(RAIZ + "regras-jogo.js");
 const C = await import(RAIZ + "combos.js");
+/* v9.234 (C1): o grimório entra porque o NASCIMENTO da magia de duração é
+   provado com as magias de verdade, não com objetos inventados — quem decide
+   se o campo nasce é a marca do catálogo, e a seção 16 a lê de lá. A catraca
+   do CATÁLOGO (a regra, as dez exceções, a porta) mora em `teste-grimorio`,
+   que é o território dela; aqui mora só o que o campo faz depois de nascer. */
+const G = await import(RAIZ + "grimorio.js");
 const { readFileSync } = await import("node:fs");
 
 let bons = 0, maus = 0;
@@ -997,6 +1003,184 @@ sec("15. o abrigo NASCE no companheiro, e o relógio do grupo conta (P3)");
   t("os três relógios existem no mesmo passo do turno", iHeroi > 0 && iGrupo > 0 && iCond > 0);
   t("e a ordem é herói → grupo → condições, no mesmo bloco",
     iHeroi < iGrupo && iGrupo < iCond, `${iHeroi} / ${iGrupo} / ${iCond}`);
+}
+
+/* ============================================================
+   16. A CONCENTRAÇÃO NASCE E VIAJA — o campo que faltava no meio (C1, v9.234)
+
+   Entra DEPOIS da 15 pelo mesmo motivo escrito no cabeçalho de 13/14:
+   renumerar as quinze seções para encaixar esta moveria dezenas de asserções
+   que ninguém pediu para mover, e a lei da casa cobra um motivo escrito por
+   asserção movida. Nenhuma foi — a seção 11 ("a concentração — o que o corpo
+   segura") continua inteira e continua certa, e esta não inverte nada dela.
+
+   O QUE A 11 NUNCA MEDIU. Ela prova o CONSUMIDOR: dado um efeito que já traz
+   `concentracao: true`, `efeitoEmConcentracao` o acha e `quebrarConcentracao`
+   o tira. Os efeitos daquela seção são escritos à mão dentro do teste. O que
+   nenhuma prova desta casa media era o MEIO: nada, em lugar nenhum, PUNHA o
+   campo num efeito de verdade. A promessa estava escrita dos dois lados —
+   `testeConcentracao` em combate.js, a fiação no App — e o herói segurava
+   Invisibilidade, apanhava, e não havia o que perder.
+
+   Por isso esta seção prova o CIRCUITO, e não o campo: a magia marcada vira
+   efeito, o efeito é achado pelo consumidor, e a quebra o tira da ficha. Um
+   campo que existe e não viaja não é mecânica — é decoração de save.
+   ============================================================ */
+sec("16. a concentração nasce e viaja — o campo que faltava no meio (C1)");
+{
+  const { MAGIAS, magiaPorNome, exigeConcentracao } = G;
+
+  /* A RÉGUA, em tabela. `funcoesDaPorta` é a lista que o App usa para decidir
+     que uma magia vira EFEITO com prazo; os dois números são o alcance REAL
+     da etapa, medido. Ampliar a lista no App sem passar por aqui muda quantas
+     magias ganham (ou não) o campo, e é isso que estes números travam. */
+  const MEDIDA_DA_PORTA = {
+    funcoesDaPorta: ["invisibilidade", "voo", "luz"],
+    magiasQueChegam: 4,
+    dasQuaisConcentram: 3,
+    /* ZERO É A LEI: nenhum efeito nascido de habilidade ou de milagre pode
+       trazer a chave, nem como `false`. Não há tabela nesta casa que declare
+       concentração para eles — inventá-la no nascimento seria pôr no efeito
+       um número que nenhuma régua sustenta. */
+    tetoDeNascimentosMudosComChave: 0,
+  };
+
+  const temChave = (ef) => Object.prototype.hasOwnProperty.call(ef || {}, "concentracao");
+
+  /* ---------------- NASCIMENTO 3: a magia marcada nasce com o campo ------ */
+  const inv = efeitoDeMagia(magiaPorNome("Invisibilidade"));
+  t("magia MARCADA nasce com o campo", inv.efeito.concentracao === true);
+  t("e o resto do efeito é o de sempre (regressão zero)",
+    inv.efeito.nome === "Invisibilidade" && inv.efeito.bonus === EFEITO_DA_MAGIA.bonus
+    && inv.efeito.aplica === EFEITO_DA_MAGIA.aplica && inv.turnos === inv.efeito.turnos);
+
+  const luz = efeitoDeMagia(magiaPorNome("Luz do Dia"));
+  t("magia NÃO marcada nasce sem a chave", !temChave(luz.efeito));
+  /* a chave ausente e a chave `false` são coisas diferentes no save e em toda
+     comparação de igualdade — é o mesmo cuidado que `absorve` teve na v9.233 */
+  t("e ausente de verdade, não `false` escrito", luz.efeito.concentracao === undefined);
+  t("mas ela continua sendo magia de duração, com o prazo de sempre",
+    luz.turnos === EFEITO_DA_MAGIA.turnosLongos);
+
+  /* ---------------- A VARREDURA: as 85, uma a uma ---------------------- */
+  const marcadaSemCampo = [], naoMarcadaComChave = [];
+  for (const m of MAGIAS) {
+    const { efeito } = efeitoDeMagia(m);
+    if (m.concentracao && efeito.concentracao !== true) marcadaSemCampo.push(m.nome);
+    if (!m.concentracao && temChave(efeito)) naoMarcadaComChave.push(m.nome);
+  }
+  t(`as ${MAGIAS.length} do catálogo nascem de acordo com a própria marca`,
+    marcadaSemCampo.length === 0 && naoMarcadaComChave.length === 0,
+    [...marcadaSemCampo.map((n) => `${n} perdeu o campo`), ...naoMarcadaComChave.map((n) => `${n} ganhou de graça`)].join(" | "));
+  /* e o nascimento responde à MESMA régua que a ficha do Mestre imprime: se
+     `efeitoDeMagia` e `exigeConcentracao` divergirem, o jogador lê uma coisa
+     na ficha e carrega outra na ficha de efeitos */
+  t("e concordam com a porta única do grimório",
+    MAGIAS.every((m) => (efeitoDeMagia(m).efeito.concentracao === true) === exigeConcentracao(m)));
+
+  /* ---------------- LIXO: nada inventa concentração -------------------- */
+  t("efeitoDeMagia(null) nasce sem a chave", !temChave(efeitoDeMagia(null).efeito));
+  t("efeitoDeMagia(undefined) idem", !temChave(efeitoDeMagia(undefined).efeito));
+  t("efeitoDeMagia({}) idem", !temChave(efeitoDeMagia({}).efeito));
+  t("efeitoDeMagia(\"\") idem", !temChave(efeitoDeMagia("").efeito));
+  t("magia com `concentracao: false` explícito não ganha a chave",
+    !temChave(efeitoDeMagia({ nome: "Tocha", duracao: "1 hora", concentracao: false }).efeito));
+  t("nem com `concentracao: 0`", !temChave(efeitoDeMagia({ nome: "Tocha", concentracao: 0 }).efeito));
+  t("nem com `concentracao: \"\"`", !temChave(efeitoDeMagia({ nome: "Tocha", concentracao: "" }).efeito));
+  /* o inverso: o que é verdadeiro nasce como `true` limpo, e não como o que
+     veio — um "sim" guardado no save vira comparação estranha três versões
+     adiante */
+  t("e valor verdadeiro que não é booleano nasce como `true` limpo",
+    efeitoDeMagia({ nome: "X", concentracao: "sim" }).efeito.concentracao === true);
+
+  /* ---------------- OS OUTROS DOIS NASCIMENTOS CONTINUAM MUDOS --------- */
+  const mudos = [];
+  const conferirMudo = (rotulo, efeito) => { if (temChave(efeito)) mudos.push(rotulo); };
+  conferirMudo("buff simples", efeitoDeBuff({ nome: "Fúria", custo: 4 }, heroi()).efeito);
+  conferirMudo("buff defensivo", efeitoDeBuff({ nome: "Escudo Arcano", custo: 2 }, heroi()).efeito);
+  conferirMudo("buff de lixo", efeitoDeBuff(null, null).efeito);
+  /* o dente que importa: a MAGIA DE CONCENTRAÇÃO entrando pela porta errada.
+     `efeitoDeBuff` recebe habilidade, e uma magia do grimório é um objeto com
+     `concentracao: true` dentro. Se um dia ele passar a copiar campos do que
+     recebe, é aqui que se descobre — e não num save com dois efeitos
+     concentrados ao mesmo tempo. */
+  conferirMudo("buff nascido da própria magia de concentração", efeitoDeBuff(magiaPorNome("Voo"), heroi()).efeito);
+  conferirMudo("milagre simples", efeitoDeMilagre({ nome: "Graça" }, "a fé responde"));
+  conferirMudo("milagre de lixo", efeitoDeMilagre(null));
+  conferirMudo("milagre que tenta trazer o campo de fora", efeitoDeMilagre({ nome: "Graça", concentracao: true }));
+  t("nem `efeitoDeBuff` nem `efeitoDeMilagre` produzem concentração — nem true, nem false",
+    mudos.length <= MEDIDA_DA_PORTA.tetoDeNascimentosMudosComChave, mudos.join(" | "));
+  /* e o consumidor confirma pelo outro lado: efeito de buff na ficha não é
+     achado como magia segurada */
+  t("e um efeito de buff na ficha não é confundido com magia segurada",
+    efeitoEmConcentracao(heroi({ efeitos: [efeitoDeBuff({ nome: "Fúria", custo: 4 }, heroi()).efeito] })) === null);
+
+  /* ---------------- O CIRCUITO: o campo VIAJA -------------------------- */
+  /* é esta parte que separa "o campo existe" de "o campo funciona": ele nasce
+     no módulo, entra na ficha pela pilha, é encontrado pelo consumidor e sai
+     pela quebra. Qualquer elo que se solte deixa a promessa escrita nas duas
+     pontas e o meio vazio de novo — que é exatamente o estado que C1 veio
+     consertar. */
+  const comInvisibilidade = heroi({
+    efeitos: empilhar([{ nome: "Bênção", bonus: 2, turnos: 5 }], efeitoDeMagia(magiaPorNome("Invisibilidade")).efeito),
+  });
+  const segurada = efeitoEmConcentracao(comInvisibilidade);
+  t("o efeito nascido de magia marcada É ENCONTRADO pelo consumidor", !!segurada && segurada.nome === "Invisibilidade");
+  /* `segurada` pode voltar NULA — é justamente o que acontece quando o campo
+     para de nascer, e foi o que a sabotagem (a) mostrou: sem esta guarda a
+     suíte ESTOURA em vez de contar, e uma prova que explode diz menos que uma
+     prova que aponta. As duas linhas abaixo passam a acusar, não a quebrar. */
+  t("e o efeito que não concentra, na mesma ficha, não é o achado", !!segurada && segurada.nome !== "Bênção");
+
+  const comLuz = heroi({
+    efeitos: empilhar([{ nome: "Bênção", bonus: 2, turnos: 5 }], efeitoDeMagia(magiaPorNome("Luz do Dia")).efeito),
+  });
+  t("o efeito nascido de magia NÃO marcada não é encontrado (Luz do Dia)", efeitoEmConcentracao(comLuz) === null);
+
+  const quebrado = quebrarConcentracao(comInvisibilidade, (segurada || {}).nome);
+  t("a quebra tira a magia da ficha", !quebrado.efeitos.some((e) => e.nome === "Invisibilidade"));
+  t("e o resto dos efeitos fica", nomes(quebrado.efeitos) === "Bênção");
+  t("e não sobra nada em concentração", efeitoEmConcentracao(quebrado) === null);
+  t("a ficha de entrada não foi mutada", comInvisibilidade.efeitos.length === 2);
+
+  /* O CAMPO SOBREVIVE AO RELÓGIO: `tickEfeitos` reconstrói cada efeito a cada
+     resposta. Se ele parar de copiar o campo, a magia deixa de ser segurada no
+     segundo turno — e nenhuma prova desta casa veria isso antes. */
+  const depoisDoTique = R.tickEfeitos(comInvisibilidade);
+  t("o campo atravessa o relógio do turno", efeitoEmConcentracao({ efeitos: depoisDoTique.efeitos }) !== null);
+  t("e o prazo desceu um, como todo efeito", depoisDoTique.efeitos.find((e) => e.nome === "Invisibilidade").turnos === EFEITO_DA_MAGIA.turnosLongos - 1);
+
+  /* ---------------- O ALCANCE REAL, DECLARADO COMO FATO ---------------- */
+  /* a porta de nascimento do App é uma lista de `funcao`, e é ela que decide
+     QUAIS magias viram efeito. Hoje são quatro, três delas de concentração.
+     Ampliar a lista (ou marcar/desmarcar uma das quatro) muda o alcance desta
+     etapa inteira, e a suíte tem de dizer isso em voz alta. */
+  const APP16 = readFileSync("../src/App.jsx", "utf8");
+  /* a lista é LIDA DO APP, não redigitada aqui: assim as contagens abaixo
+     medem o alcance de verdade. Redigitá-la faria a suíte medir a própria
+     cópia e dizer "4 magias" mesmo depois de o App passar a aceitar seis. */
+  const casouAPorta = APP16.match(/\[((?:"[a-z_]+",?\s*)+)\]\.includes\(m\.funcao\)/);
+  const funcoesDoApp = casouAPorta ? casouAPorta[1].match(/"([a-z_]+)"/g).map((s) => s.slice(1, -1)) : [];
+  t("a porta de nascimento do App é uma lista de `funcao` legível", funcoesDoApp.length > 0, "não achei a lista no App.jsx");
+  t("e é a lista que esta seção declara", JSON.stringify(funcoesDoApp) === JSON.stringify(MEDIDA_DA_PORTA.funcoesDaPorta),
+    `o App diz [${funcoesDoApp.join(", ")}], a tabela diz [${MEDIDA_DA_PORTA.funcoesDaPorta.join(", ")}]`);
+  t("e é ela que chama o nascimento da magia", /\befeitoDeMagia\(m\)/.test(APP16));
+
+  const naPorta = MAGIAS.filter((m) => funcoesDoApp.includes(m.funcao));
+  const naPortaComCampo = naPorta.filter((m) => efeitoDeMagia(m).efeito.concentracao === true);
+  console.log(`  ··  na porta: ${naPorta.map((m) => `${m.nome}${m.concentracao ? " (segura)" : ""}`).join(", ")}`);
+  t(`${MEDIDA_DA_PORTA.magiasQueChegam} magias chegam à porta de nascimento`,
+    naPorta.length === MEDIDA_DA_PORTA.magiasQueChegam, `chegaram ${naPorta.length}`);
+  t(`e ${MEDIDA_DA_PORTA.dasQuaisConcentram} delas nascem segurando`,
+    naPortaComCampo.length === MEDIDA_DA_PORTA.dasQuaisConcentram,
+    `nasceram ${naPortaComCampo.length}: ${naPortaComCampo.map((m) => m.nome).join(", ")}`);
+  t("a que não segura é a Luz do Dia — a luz fica onde foi acesa",
+    naPorta.length === naPortaComCampo.length + 1 && !naPortaComCampo.some((m) => m.nome === "Luz do Dia"));
+
+  /* PONTE — o teste que cobra o preço mora em combate.js, e o App o chama.
+     Sem esse elo, o campo viaja e nunca é perguntado. */
+  t("o App pergunta pelo efeito segurado quando o herói apanha", /efeitoEmConcentracao\(/.test(APP16));
+  t("e existe um teste de concentração para ele chamar", /testeConcentracao/.test(readFileSync("../src/combate.js", "utf8")));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

@@ -253,17 +253,37 @@ export function turnosDaMagia(duracao) {
 }
 
 /* Devolve os turnos junto do efeito porque quem chama precisa dos dois:
-   o número entra na linha que o jogador lê e na nota que o Mestre recebe. */
+   o número entra na linha que o jogador lê e na nota que o Mestre recebe.
+
+   E O CAMPO ATRAVESSA (v9.234). `efeitoEmConcentracao` e `quebrarConcentracao`
+   moram no fim deste arquivo desde que ele existe, o teste está em
+   `testeConcentracao` (combate.js) e o caminho inteiro já está fiado no App —
+   só que nada, em lugar nenhum, PUNHA `concentracao` num efeito. A promessa
+   estava escrita dos dois lados e o meio faltava: o herói segurava
+   Invisibilidade, apanhava, e não havia o que perder. Agora o que nasce de
+   uma magia de concentração nasce sabendo disso.
+
+   DOS TRÊS NASCIMENTOS, SÓ ESTE. `efeitoDeBuff` e `efeitoDeMilagre` não
+   copiam o campo porque não há de onde: habilidade e milagre não declaram
+   concentração em tabela nenhuma desta casa, e inventá-la aqui seria pôr no
+   efeito um número que nenhuma régua sustenta.
+
+   A CHAVE SÓ NASCE QUANDO EXISTE — é o mesmo cuidado que `absorve` teve na
+   v9.233. Quem não concentra fica SEM a chave, e não com `false`: o consumidor
+   (`efeitoEmConcentracao`) procura por verdade, e um `false` escrito em todo
+   efeito de duração só engordaria o save e toda comparação de igualdade.
+   `null`, `{}` e a magia sem o campo passam por aqui sem ganhar nada — a
+   condição é a MESMA que o consumidor usa, para não sobrar fresta entre
+   nascer e ser encontrado. */
 export function efeitoDeMagia(magia) {
   const m = magia || {};
   const turnos = turnosDaMagia(m.duracao);
-  return {
-    turnos,
-    efeito: {
-      nome: m.nome, bonus: EFEITO_DA_MAGIA.bonus, turnos,
-      aplica: EFEITO_DA_MAGIA.aplica, descricao: m.descricao,
-    },
+  const efeito = {
+    nome: m.nome, bonus: EFEITO_DA_MAGIA.bonus, turnos,
+    aplica: EFEITO_DA_MAGIA.aplica, descricao: m.descricao,
   };
+  if (m.concentracao) efeito.concentracao = true;
+  return { turnos, efeito };
 }
 
 /* ---------------- O GOLPE QUE CHEGA: A ABSORÇÃO SE GASTA (v9.233) ----------
