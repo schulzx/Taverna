@@ -101,10 +101,15 @@ continua possível: duas chamadas no mesmo turno, ambas em primeiro plano.
    condições: build limpo, `npm test` inteiramente verde, árvore limpa. Se
    qualquer uma falhar, **não suba** e diga por quê no relato. Push é deploy
    para jogadores reais: na dúvida, o certo é não subir.
-7. **O painel.** Depois de commitar, rode `node mente/painel.mjs` e
-   `node mente/sincronizar.mjs` e inclua o resultado no commit (ou num
-   commit seguinte). É a janela que a pessoa usa para acompanhar sem ler
-   o repositório; um ciclo que não a atualiza deixa-a mentindo.
+7. **O painel.** A pessoa acompanha por uma página, e ela precisa saber
+   **o que cada mão está fazendo agora**:
+   - **Ao chamar uma mão**, escreva em `mente/agora.json` um item
+     `{"agente": "<nome>", "o_que": "<a etapa e o que ele faz>", "desde":
+     "<ISO>"}` — inclusive você mesmo (`orquestrador`). **Ao terminar,
+     apague o item.** Quem não está lá aparece como parado, e uma mão
+     trabalhando marcada como parada é pior que nenhuma informação.
+   - **Ao fechar**, deixe `mente/agora.json` como `[]` e rode
+     `node mente/painel.mjs` e `node mente/sincronizar.mjs`.
 8. **Registrar.** Um bloco novo no topo de `mente/diario.md` no formato de lá,
    e o item sai de "Aberto" na pauta. Toda decisão média vai no diário **com
    o motivo** — é o que a pessoa audita depois. Se o `conselheiro` pôs algo

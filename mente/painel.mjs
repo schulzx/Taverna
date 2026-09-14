@@ -16,6 +16,44 @@ import { fileURLToPath } from "node:url";
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), "..");
 const ler = (p) => { try { return readFileSync(join(RAIZ, p), "utf8"); } catch { return ""; } };
 
+/* O que cada mão está fazendo AGORA. Isso nenhum arquivo do repositório
+   sabe sozinho: quem chama os agentes escreve aqui ao começar e limpa ao
+   terminar (`mente/agora.json`). Sem ele, o painel diria "parado" para
+   uma mão que está no meio do trabalho — pior que não dizer nada. */
+function agora() {
+  try {
+    const j = JSON.parse(readFileSync(join(RAIZ, "mente", "agora.json"), "utf8"));
+    return Array.isArray(j) ? j : (j.atividade || []);
+  } catch { return []; }
+}
+
+/* A última vez que cada mão apareceu no diário. O diário nomeia quem fez
+   o quê em cada ciclo ("**backend:** ..."), e é daí que sai o "parado
+   desde" de cada uma — sem inventar um registro paralelo. */
+function ultimaVez(blocos) {
+  const fora = {};
+  for (const b of blocos) {
+    for (const l of b.linhas) {
+      const m = l.match(/^\*\*([a-zçãé/ ]+?)[:*]/i);
+      if (!m) continue;
+      /* uma linha pode nomear várias mãos: "backend / frontend / testes:" */
+      /* "backend: não chamado" é registro de ausência, não de trabalho —
+         tomá-lo por atividade faria o painel dizer que uma mão trabalhou
+         justamente no ciclo em que ela não foi chamada. */
+      if (/n[ãa]o (foi )?chamad/i.test(l)) continue;
+      for (const nome of m[1].split("/").map((s) => s.trim().toLowerCase())) {
+        if (!nome || fora[nome]) continue;
+        fora[nome] = {
+          versao: b.versao,
+          quando: b.quando,
+          o_que: l.replace(/^\*\*[^*]+\*\*:?\s*/, "").replace(/\*\*/g, "").trim().slice(0, 180),
+        };
+      }
+    }
+  }
+  return fora;
+}
+
 /* Quem são as mãos. O papel sai da própria descrição do agente — o
    arquivo é a verdade, para o painel não envelhecer quando um agente
    mudar de ofício. */
@@ -128,18 +166,40 @@ function commits() {
 }
 
 const pauta = semCerca(ler("mente/pauta.md"));
+const blocos = diario(semCerca(ler("mente/diario.md")));
+const emAcao = agora();
+const visto = ultimaVez(blocos);
+
+/* Cada mão ganha um dos três estados, e o painel nunca fica mudo sobre
+   nenhuma: em ação (alguém escreveu em agora.json), parada (o diário a
+   nomeia em algum ciclo) ou nunca chamada (nasceu e ainda não trabalhou).
+   O terceiro estado é o que faltava: sem ele, um agente recém-criado
+   parecia igual a um agente esquecido. */
+const maos = agentes().map((a) => {
+  const fazendo = emAcao.find((x) => (x.agente || "").toLowerCase() === a.nome.toLowerCase());
+  const ultima = visto[a.nome.toLowerCase()];
+  return {
+    ...a,
+    estado: fazendo ? "em acao" : (ultima ? "parado" : "nunca chamado"),
+    fazendo: fazendo ? fazendo.o_que : "",
+    desde: fazendo ? fazendo.desde || "" : "",
+    ultima: ultima || null,
+  };
+});
+
 const painel = {
   gerado: new Date().toISOString(),
   versao: (ler("src/constantes.js").match(/VERSAO\s*=\s*"([^"]+)"/) || [, "—"])[1],
   ciclo: cicloEmCurso(),
-  agentes: agentes(),
+  agentes: maos,
   pendentes: itens(seccao(pauta, "Para a pessoa decidir")).filter((i) => !i.feito),
   fases: fases(seccao(pauta, "Aprovado pela pessoa")),
   aberto: itens(seccao(pauta, "Aberto")).filter((i) => !i.feito),
   recusado: seccao(pauta, "Recusado").split("\n").filter((l) => l.startsWith("- **")).map((l) => l.replace(/^- /, "").trim()),
-  diario: diario(semCerca(ler("mente/diario.md"))).slice(0, 25),
+  diario: blocos.slice(0, 25),
   commits: commits(),
 };
 
 writeFileSync(join(RAIZ, "mente", "painel.json"), JSON.stringify(painel, null, 2) + "\n");
-console.log(`painel: ${painel.versao} · ${painel.pendentes.length} pendentes · ${painel.fases.length} fases · ${painel.aberto.length} abertos · ${painel.diario.length} ciclos`);
+const emAcaoN = painel.agentes.filter((a) => a.estado === "em acao").length;
+console.log(`painel: ${painel.versao} · ${emAcaoN} em ação · ${painel.pendentes.length} pendentes · ${painel.fases.length} fases · ${painel.aberto.length} abertos · ${painel.diario.length} ciclos`);
