@@ -238,7 +238,7 @@ vezes e o que nasce é quase sempre `Escudo da Fé`, proteção com bônus zero.
 **A saída não é reabrir a tabela de bônus: é fazer quem escolhe ter cabeça.**
 Só depois disso se pergunta se os números precisam mudar.
 
-- [x] **N1 · o que os dois lados já sabem** · feito em v9.248, 14/09
+- [x] **N1 · o que os dois lados já sabem** · feito em v9.248 (`9f04a18`), 14/09
   **A etapa não mudou uma linha de `src/`, de `App.jsx` ou das suítes — mediu.**
   E, como em A1, P1 e D1, a medição desmentiu boa parte do que esta fase
   escrevia. As correções estão em cada etapa abaixo, com o número que as

@@ -16,7 +16,7 @@ Formato:
 
 ---
 
-## 14/09 22:30 · v9.248 · N1 · o que os dois lados já sabem · commit `HASH`
+## 14/09 22:30 · v9.248 · N1 · o que os dois lados já sabem · commit `9f04a18`
 
 - **estado inicial:** árvore limpa (só `mente/agora.json` modificado), HEAD
   `107440f`, VERSÃO v9.247, `npm test` **182/182 suítes + 9/9 varredores**
