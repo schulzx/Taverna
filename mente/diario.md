@@ -16,6 +16,110 @@ Formato:
 
 ---
 
+## 13/09 22:55 · v9.231 · P1 · o Escudo Arcano deixa de dar dano · commit `3dcf61f`
+- **estado inicial:** árvore limpa, HEAD `8e536ee`, VERSÃO v9.230, `npm test`
+  181/181 suítes + 7/7 varredores verde. A Fase R fechou no ciclo anterior; a
+  vez era **P1**, a primeira etapa da Fase P — aprovada pela pessoa sabendo que
+  muda o combate de Uma Vida **e** do Duelo.
+- **conselheiro:** não chamado (a etapa já estava escrita e aprovada).
+- **backend:** a tabela `APLICACAO_DO_BUFF` (5 famílias: absorve, amortece,
+  não cai, intocado, protege) + `aplicacaoDoBuff`, `APLICA_FORA_DO_GOLPE` e
+  `efeitoNoGolpe`, em `combos.js`. `efeitoDeBuff` consulta a tabela; os
+  leitores do dano passam a respeitar o rótulo.
+- **frontend:** um sítio só (`App.jsx:7740`): a nota do Narrador para de
+  farejar a palavra "físico" dentro da frase e pergunta a `efeitoNoGolpe`.
+- **testes:** varredor novo `check-protecao.mjs` (38 asserções, 7→8
+  varredores), seção 8 nova em `teste-arena.mjs` (64→69) e seção 9 nova em
+  `teste-efeitos.mjs` (168→201). **Nenhuma asserção existente foi invertida.**
+
+- **O ACHADO QUE MUDOU O TAMANHO DA ETAPA.** A pauta descrevia P1 como
+  correção de rótulo e de frase. Não era: **`bonusDeDano` e `bonusDeArma`
+  (`combos.js`) nunca leram `aplica`** — filtram só por escopo. Trocar o
+  rótulo sozinho não mudaria número nenhum: a frase ficaria honesta e o golpe
+  continuaria somando, e a casa acharia que tinha consertado. Por isso a
+  correção tem duas metades, e a segunda (ensinar os leitores do dano a
+  respeitar o que o efeito declara) é a que faz o número mudar.
+
+- **O SEGUNDO ACHADO, na própria prova.** O diff do backend **não deixou
+  nenhuma asserção vermelha** — e isso era o diagnóstico, não o alívio: a
+  suíte nunca cravou o que uma defensiva faz. `teste-efeitos.mjs:297` e
+  `:301-307` usavam só habilidades ofensivas, e a sonda da arena usava uma
+  defensiva inventada ("Postura de Ferro") que não promete proteção nenhuma.
+  O comportamento errado sobreviveu porque **nenhuma prova o media**. Daí a
+  suíte ter *acrescentado* catraca em vez de inverter asserção.
+
+- **decisões médias tomadas (com o motivo):**
+  - **A tabela mora em `combos.js`, não em `efeitos.js`.** `efeitos.js` já
+    importa `combos.js` (`naturezaDaHabilidade`); a volta criaria o ciclo que
+    a casa evita. A seta continua num sentido só: efeitos → combos → classes.
+  - **O campo `tipo` do catálogo não é a espinha da classificação.** Ele erra
+    nos dois sentidos ("Segundo Fôlego" é `defesa` e é cura; "Postura de
+    Vigília" é `defesa` e dá um golpe de graça) e **falta** em relíquia,
+    poção, grimório e no que o piloto da arena escolhe. Classifica-se pelo
+    TEXTO, que é o que o jogador lê.
+  - **Lista de exceção, não de permissão.** Só o que está em
+    `APLICA_FORA_DO_GOLPE` deixa de somar. Uma lista de permissão emudeceria
+    save antigo (sem `aplica`), milagre (`todos`) e canal do Mestre — provado
+    que os três continuam somando os mesmos números.
+  - **Um veto antes da tabela (`RX_NAO_E_PROTECAO`).** "Escudo" aparece dos
+    dois lados da briga: sem o veto, "Tiro Perfurante", "Punho de Pedra",
+    "Linha da Lâmina" e "Marcha Sem Recuo" perderiam o golpe que a ficha
+    promete. Varredura final: **0 habilidades de `tipo: "ataque"` viraram
+    proteção** — e esse 0 virou dente.
+  - **A defensiva nasce com força zero, e a frase perde o número junto.**
+    Gravar uma força que ninguém lê seria trocar uma mentira por outra mais
+    quieta; anunciar "+N" de um número que não existe, idem. Mesmo motivo
+    pelo qual `EFEITO_DA_MAGIA` nasce com `bonus: 0`: vale pelo estado.
+
+- **A REGRESSÃO, MEDIDA E NÃO PROMETIDA.** O "antes" não saiu da memória: a
+  catraca foi rodada contra uma árvore mutante que **reproduziu o retrato de
+  A4 exato**, então a diferença é toda de P1.
+  - **O que deixou de somar:** 391 buffs defensivos firmados na amostra da
+    arena (262 Postura Defensiva + 129 Escudo Arcano). Golpes com o bônus
+    dentro **329 → 108 (−67%)**; buffs firmados 791 → 772.
+  - **A catraca de equilíbrio ficou dentro da faixa em tudo.** Família `rr`:
+    muralha 50,5→49,0 · sombra 54,3→54,8 · chama 42,4→41,4 · remendo
+    48,1→48,6 · voz 51,0→51,4 · flecha 61,9→61,9 · punho 50,0→49,0 · voto
+    41,9→43,8. Retrato de 120: **amplitude 15,7 → 15,8 pts**, contra teto 20.
+    Nada saiu de 35–65%. **Nenhum número de pronto foi reajustado** — isso é
+    P3, e a medição dele fica intacta. O que se mexeu é interno ao retrato:
+    muralha −3,1, punho −2,8, remendo +3,2, e a ordem do topo trocou.
+
+- **o que ficou (e por quê):**
+  - **A defensiva ainda não protege ninguém.** P1 parou na classificação e na
+    narração honesta, de propósito. O desenho investigado, para P2/P3:
+    `reacoes.js:40` (`escudo_arcano`, gatilho `sofre_dano`) **já é o dono
+    legítimo** de "absorve o próximo dano", mas é permanente por ter a
+    habilidade, não armado por usá-la. Rotear para ele exigiria
+    `escolherReacao` passar a ler `pers.efeitos` (muda combate em campanha
+    viva); a alternativa, ensinar `defesaDe` a somar efeito, colide com
+    `defesaDeGuarda`, que já faz isso com prazo por rodada. **O desenho que o
+    backend faria:** a família `absorve` vira guarda de UMA batida — campo
+    `absorve: N` na lista `pers.guardas`, consumido e apagado ao ser gasto,
+    reusando `expirarGuardas`. Não foi escrito; é achado para P2/P3.
+  - **O acervo real é 593 habilidades, não 508.** A varredura do teste
+    alcançou 85 magias do grimório que ninguém tinha contado, e nelas duas
+    proteções que **só existem lá**: `Proteção contra Energia` e `Globo de
+    Invulnerabilidade`. As cinco do grimório classificam certo.
+  - **As ambíguas (classificadas pelo texto, não por palpite):** *Postura de
+    Vigília* ficou **dano** (o texto promete "um golpe de graça", embora seja
+    `tipo: defesa`) · *Muralha de Gelo* e *Muralha de Espinhos* ficaram
+    **proteção**, mas as duas também ferem · *Muralha Erguida* e *Muralha de
+    Pedra* ficaram **dano** (terreno puro; "muralha" ficou FORA da tabela de
+    propósito, senão "Muralha de Fogo" virava defensiva) · *Escudo do Aliado
+    Caído* ficou **proteção** (é resgate, não barreira) · *Bênção do Bosque*
+    ficou **proteção** por "resiste a", embora "Bênção" seja universal por
+    direito em `UNIVERSAIS` · *Manto Flamejante* e *Esfera Prismática* ficaram
+    **dano** (auras ofensivas com nome de abrigo) · *Contramágica* ficou
+    **dano** (não é absorção, e a reação `contramagia` já é a dona).
+  - **Bug vizinho, não consertado porque é P2:** `Dissipar Magia` casa com
+    `RX_BUFF` (`companheiros.js:89`) por conter "barreira" e chega a
+    `efeitoDeBuff` — um dispel narrando "+2 de dano mágico". O veto o mantém
+    em `dano`; o conserto é no vocabulário do piloto, que é exatamente P2.
+  - **Aspereza herdada, registrada e não tocada:** `res.cond.efeito` já vem
+    com ponto final de `aflicoes.js`, então a linha sai "+2 de defesa. · o
+    próximo golpe encontra…". Era assim antes também.
+
 ## 13/09 21:30 · v9.230 · R4 · a suíte da fase, e a Fase R fechada · commit `a1e5ba6`
 - **estado inicial:** árvore limpa, HEAD `dde2c45`, VERSÃO v9.229, `npm test`
   181/181 suítes + 7/7 varredores verde. A vez era **R4**, a última etapa da

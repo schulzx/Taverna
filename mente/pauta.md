@@ -95,14 +95,23 @@ campanha, e a mesma função pilota a arena).
 
 A ordem é a da mentira primeiro, porque é a que o jogador lê.
 
-- [ ] **P1 · o Escudo Arcano deixa de dar dano** · de: pessoa · 13/09
-  `BUFF_DA_HABILIDADE.aplica` (`efeitos.js:70`) é `"dano"` para tudo, então
-  "Escudo Arcano" — *absorve o próximo dano* — vira `+1 de dano mágico` na
-  narração. Foi portado assim em A2 de propósito (regressão zero), e A3 fez
-  isso aparecer na tela da arena. Classificar por **tabela**, não por regex
-  no meio do código: cada habilidade de buff declara o que ela aplica.
-  Catraca: nenhuma habilidade cujo texto promete absorver/proteger aplica
-  `dano`; e a narração da arena nunca diz "+N de dano" para uma defensiva.
+- [x] **P1 · o Escudo Arcano deixa de dar dano** · feito em v9.231 (`3dcf61f`), 13/09
+  A tabela nasceu em `combos.js` (`APLICACAO_DO_BUFF`, 5 famílias) e classifica
+  pelo **texto** — o campo `tipo` do catálogo erra nos dois sentidos e falta em
+  relíquia, poção e grimório. **A etapa era maior do que esta lista dizia:**
+  `bonusDeDano` e `bonusDeArma` **nunca leram `aplica`**, então trocar o rótulo
+  sozinho não mudaria número nenhum; a segunda metade (os leitores do dano
+  respeitando o rótulo, por lista de exceção) é a que fez o número mudar.
+  A defensiva nasce com força **zero** e frase sem número, em voz de mundo.
+  **Medido contra árvore mutante que reproduziu o retrato de A4 exato:** 391
+  buffs defensivos deixaram de somar (golpes com bônus dentro 329 → **108**),
+  e a catraca de equilíbrio **não saiu da faixa** em nenhuma família nem no
+  retrato (amplitude 15,7 → 15,8, teto 20). **Nenhum pronto reajustado** — a
+  medição de P3 fica intacta. Catraca nova: `check-protecao.mjs` sobre **593**
+  habilidades (85 do grimório que ninguém contava), a frase da arena sobre 787
+  quedas reais, e o dente inverso — **0 habilidade de `ataque` virou proteção**.
+  **A defensiva ainda não protege ninguém**, de propósito: o desenho está no
+  diário, é achado para P2/P3. Ver o diário.
 - [ ] **P2 · o piloto reconhece as nove guardas** · de: pessoa · 13/09
   Nenhum dos 9 nomes de `GUARDAS` (`habilidades.js:312` — casca de carvalho,
   pele arcana, forma dracônica, enxerto mecânico, elixir de combate, vazio
@@ -113,12 +122,25 @@ A ordem é a da mentira primeiro, porque é a que o jogador lê.
   tabela — o piloto deve **perguntar à tabela**, não adivinhar por regex de
   nome. Catraca permanente: toda entrada de `GUARDAS` é reconhecível pelo
   piloto; uma guarda nova amanhã não nasce invisível.
+  **Acrescentado por P1 (13/09):** o `RX_BUFF` erra nos DOIS sentidos, e agora
+  há caso concreto do outro lado — **`Dissipar Magia`** casa com ele por conter
+  "barreira" e chega a `efeitoDeBuff`: um dispel que narra "+2 de dano mágico".
+  P1 o manteve em `dano` pelo veto, porque consertar o vocabulário do piloto é
+  esta etapa. E o desenho que P1 investigou e não escreveu mora aqui ou em P3:
+  a família `absorve` virando **guarda de uma batida** (campo `absorve: N` em
+  `pers.guardas`, consumido e apagado ao ser gasto, reusando `expirarGuardas`)
+  — a alternativa, ensinar `defesaDe` a somar efeito, colide com
+  `defesaDeGuarda`, que já faz isso com prazo por rodada.
 - [ ] **P3 · medir o que mudou nos dois lados** · de: pessoa · 13/09
   Com companheiro e duelista se defendendo, o combate muda em Uma Vida **e**
   na arena. Medir antes de julgar, como a Fase A ensinou: a catraca de
   equilíbrio (35–65% + o teto de amplitude de A4) vai reagir — se estourar,
   o reajuste é o trabalho da etapa. E dizer no diário o efeito na campanha
   (quanto mais o grupo sobrevive), porque isso o jogador vai sentir.
+  **A linha de base já existe, medida em P1 (13/09):** retrato de 120 com
+  amplitude **15,8** (teto 20), tudo dentro de 35–65; família `rr` muralha 49,0
+  · sombra 54,8 · chama 41,4 · remendo 48,6 · voz 51,4 · flecha 61,9 · punho
+  49,0 · voto 43,8. É contra estes números que P3 mede, não contra os de A4.
 
 A ordem é esta: a Arena primeiro (menor, e o Duelo está no ar hoje), as
 Reviravoltas depois. Dentro de cada fase, a etapa seguinte só começa com a
