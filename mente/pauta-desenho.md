@@ -56,6 +56,19 @@ que o sustenta, e cada um mexe **no fluxo do jogo ou no que o jogador já usa**
   (`inkDim` sobre `panel` = 6,21:1), e é por isso que nenhum alarme
   automático dispara: a WCAG não tem piso de tamanho. 18 degraus → 6 ou 7, e
   o piso sobe. Encosta em identidade visual e em toda tela.
+- [ ] **O nó entre o Figma e o código custa um plano** · de: regente · 14/09 (achado em D3)
+  D3 entregou as variáveis e as peças, mas **não o nó**, e não por perícia:
+  `list_file_components_for_code_connect` responde, literalmente, *"You need
+  a Dev or Full seat on an Organization or Enterprise plan to use Code
+  Connect"*. O `whoami` explica — a equipe é **`tier: pro`** com assento
+  Full; o assento existe, **o plano não**. Sem Code Connect, a biblioteca e
+  o `ui.jsx` **podem divergir em silêncio**: nada liga um componente do
+  Figma ao componente de código, e a única amarra é um script de comparação
+  que alguém tem de lembrar de rodar. É **pesado** por duas razões da tabela
+  do `CLAUDE.md`: custa dinheiro, e muda como esta mesa trabalha. A mesa não
+  decide isto sozinha — e enquanto não for decidido, **toda etapa de design
+  carrega o risco de as duas verdades se separarem sem ninguém notar**.
+
 - [ ] **A ação principal tem a mesma cara nos três modos** · de: desenho · 14/09
   "aja agora" é `<Botao primario pequeno>Agir →</Botao>` (mono 12px) em
   `historia`, faixa `tv-display` de 18px no torneio, e outra faixa
@@ -115,6 +128,13 @@ scroller de 301px, e o painel `Ações` abre abaixo da dobra.
   veredito antes do clique), e o log dizendo o que **você** fez — não só o
   que o inimigo fez. Medir: quantas rodadas o jogador consegue se mover de
   fato, contra as zero de hoje.
+  *(**corrigido em D3**, e a correção muda o pedido: "a grelha não é
+  clicável" está **errado**. Cada casa alcançável já é `role="button"
+  tabIndex=0` com `onMover` — `grade-de-batalha.jsx:512-517`. **O clique
+  funciona; o que não existe é FORMA**: o alvo é um
+  `<rect fill="transparent">`. O pedido deixa de ser "torne clicável" e
+  passa a ser "dê forma ao que já clica" — que é mais barato e é outra
+  etapa.)*
 
 ### Fase S — o Duelo e a sala ganham momento
 Decisão da pessoa (14/09) sobre as duas: *"vamos corrigir."*
@@ -140,12 +160,18 @@ Decisão da pessoa (14/09): *"vamos corrigir também."*
   Uma regra só, em todas: `Esc` fecha, clique no fundo fecha, e o `✕` tem
   uma forma só (hoje são 8 visuais e 4 tamanhos). Catraca: nenhuma
   sobreposição nova nasce sem as duas saídas.
-- [ ] **G2 · "não pode agora" recusa de verdade** · de: pessoa · 14/09
+- [ ] **G2 · "não pode agora" recusa, e DIZ POR QUÊ** · de: pessoa · 14/09
   Achado de D1, da mesma família: **8 opacidades diferentes**, mas
-  `cursor: not-allowed` aparece **4 vezes no projeto inteiro**. A maioria
-  dos controles bloqueados fica translúcida e **continua clicável com
-  cursor de mão** — o clique não é recusado, apenas não acontece. Uma forma
-  só, e ela recusa.
+  `cursor: not-allowed` aparece **4 vezes no projeto inteiro**.
+  *(**corrigido em D3**: "a maioria continua clicável" está **errado**. Dos
+  36 botões com opacidade condicional, **33 têm `disabled`** — o navegador
+  recusa de verdade. **O defeito não é o clique fantasma, é o SILÊNCIO.**
+  E o `jogo` mediu o que dói: `bloqueado = carregando || !!rolagem` governa
+  **15** controles, e "o Mestre está escrevendo", "há um dado esperando" e
+  "proibido para sempre" saem hoje **no mesmo cinza**. O `Agir →` carrega
+  três razões na mesma cara. Então a etapa deixa de ser sobre o cursor e
+  passa a ser sobre **a peça ter onde escrever a razão** — o que a
+  biblioteca de D3 agora tem.)*
 
 ### Fase L — a letra, medida por plataforma
 Decisão da pessoa (14/09): *"nosso texto precisa ter padrões e tem que ser
@@ -216,7 +242,22 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
   A armadilha do `T` do torneio (`App.jsx:10205` e `:10222`) **não chegou a
   existir**: nenhum ponto de uso de `T` no App foi tocado, porque o
   reexport tornou o regex desnecessário.
-- [ ] **D3 · a biblioteca no Figma, e a estrada de volta** · de: pessoa · 14/09
+- [x] **D3 · a biblioteca no Figma, e a estrada de volta** · de: pessoa · 14/09 · **feito v9.246 · `0e3ee81`**
+  **A resposta à pergunta da pessoa: a troca é de mão dupla nas VARIÁVEIS, e
+  não existe nos COMPONENTES.** Arquivo `Taverna — biblioteca`, `fileKey`
+  `e5wJUzInAssoebx5npssKc` — **um só; amplie este, não crie o segundo**.
+  27 variáveis (14 de `T`, 13 de `MATERIAIS`) e 5 peças (Botão com 18
+  variantes, Fechar, Selo, Barra, Sobreposição), todas ligadas a variável.
+  O ida-e-volta bateu **26/27**, e a prova não é a contagem: é que trocar
+  `amber` **dentro do Figma** para um valor impossível fez a comparação
+  acusar sozinha, e restaurar devolveu o verde. A única divergência é de
+  formato — **o Figma guarda alfa num byte**, então `rgba(4,3,8,.45)` volta
+  `#04030873` (0,45098). Regra: **alfa que não for múltiplo exato de 1/255
+  não sobrevive à volta; compare com tolerância de 1/255, nunca por texto**.
+  **O Code Connect não foi feito porque NÃO É EXECUTÁVEL NESTA CONTA** — ver
+  o item novo em "Para a pessoa decidir" logo abaixo. Sem ele, o que segura
+  o Figma e o código juntos é a comparação por máquina, que **prova hoje e
+  não protege amanhã**.
   *(reescrita em 14/09, depois da pergunta da pessoa: "a interação com o
   Figma está sendo uma troca dos dois lados ou apenas estamos usando as
   ferramentas do Figma?" — a pergunta certa, e a resposta até aqui era

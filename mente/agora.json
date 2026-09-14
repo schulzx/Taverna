@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "agente": "orquestrador",
+    "o_que": "rege o ciclo B2 — a simetria do bônus, agora com régua confiável",
+    "desde": "2026-09-14T20:10:00Z"
+  },
+  {
+    "agente": "testes",
+    "o_que": "B2 · v9.246 · a suite que prova a simetria do bonus do companheiro",
+    "desde": "2026-09-14T20:32:39.599Z"
+  },
+  {
+    "agente": "frontend",
+    "o_que": "B2 · v9.246 · o comentario de buffDeCompanheiro que passou a mentir (App.jsx, com o bastao)",
+    "desde": "2026-09-14T20:32:39.752Z"
+  }
+]

@@ -19,6 +19,195 @@ Formato:
 
 ---
 
+## 14/09 20:58 · v9.246 · D3 · a biblioteca no Figma, e a estrada de volta · commit `0e3ee81`
+
+O primeiro ciclo em que o **Figma entrou de verdade**. A pessoa tinha feito a
+pergunta certa — *"a interação com o Figma está sendo uma troca dos dois lados
+ou apenas estamos usando as ferramentas do Figma?"* — e a resposta honesta até
+ontem era **zero**: D1 e D2 não puseram um pixel lá. Hoje há um arquivo, 27
+variáveis, cinco peças, e **duas respostas que valem mais que as peças**: uma
+direção que funciona nos dois sentidos e provou-se, e um nó que **não existe
+nesta conta** e que nenhuma perícia resolveria.
+
+- **estado inicial:** `.claude/ciclo-desenho-em-curso` não existia — fila livre.
+  `.claude/app-jsx` também não, e **não precisei do bastão**: D3 não toca o
+  `App.jsx`. Árvore com `src/arena.js` e `src/combate.js` modificados (a outra
+  mente, em B2) e mesmo assim **182/182 suítes verdes, 9/9 varredores limpos**
+  antes de eu começar. Pauta de desenho: Fase D, 2 de 6 feitas.
+- **jogo / desenho:** chamados **juntos, no mesmo turno, os dois em primeiro
+  plano**, e pela primeira vez com a **autoria que a pessoa ajustou hoje**: o
+  `desenho` fabrica toda peça, o `jogo` diz de que peças as telas precisam e
+  compõe com elas. Na prática isso deu ao `jogo` um produto que ele nunca
+  tinha tido — **a lista de demanda**, 538 linhas de lugar-e-linha contados —
+  e impediu o defeito que a fronteira existe para impedir: nenhuma peça nasceu
+  duas vezes. O que decidiram está em `mente/formas.md`, seção "A biblioteca
+  no Figma"; a medição do `jogo` ficou em `mente/demanda-jogo-d3.md`.
+- **aprendiz / testes:** **nenhum dos dois foi chamado, de propósito.** D3 não
+  escreve código de produção — ela constrói a biblioteca e mede a estrada. Um
+  executor num ciclo sem código para escrever é ruído, não paralelismo.
+- **o Figma:** o arquivo `Taverna — biblioteca`, `fileKey`
+  **`e5wJUzInAssoebx5npssKc`**
+  (`https://www.figma.com/design/e5wJUzInAssoebx5npssKc`). **Um só** — o
+  endereço está em `formas.md` para que o próximo ciclo amplie este e não crie
+  o segundo. Entraram **27 variáveis** (14 de `T`, 13 de `MATERIAIS`) e
+  **oito peças** em sete páginas — Botão, Fechar, Selo de estado, Barra de
+  medida, Véu, A Consequência, O gesto que custa, e os 11 glifos com dois ou
+  mais usos. Todas ligadas a variáveis, **zero hex solto**.
+
+### A prova
+
+**`npm run build` limpo · 182/182 suítes verdes · 9/9 varredores limpos.**
+
+**O ida-e-volta: 26 de 27, e a divergência é de formato.** As 27 cores foram
+puxadas de volta por `get_variable_defs` e comparadas com `src/estilo.js` por
+máquina, num script que importa o módulo de verdade. A única que não bate é
+`vinhetaCanto`: o código diz `rgba(4,3,8,.45)` e a volta traz `#04030873` —
+o Figma guarda alfa **num byte**, e `0x73/255 = 0,45098`. `corticaFilete`
+(`.4`) volta exata porque `0,4 × 255 = 102` é inteiro. **A regra que sai
+daí, e que é o achado mais reaproveitável do dia:** alfa que não for múltiplo
+exato de 1/255 não sobrevive à volta, e quem comparar isto por máquina um dia
+tem de usar **tolerância de 1/255 no alfa, nunca igualdade de texto**.
+
+**E a mão dupla foi provada, não suposta:** o valor de `amber` foi trocado
+*dentro do Figma* para um verde impossível, a volta trouxe o verde, e a
+comparação acusou a divergência sozinha (13/14). Restaurado, voltou a 14/14.
+É o teste que a etapa existia para passar, e ele passou.
+
+**Conferi os números eu mesmo, em vez de repetir os da mão** — é a parte do
+ofício que não se delega: rodei o comparador (26/27 confirmado) e recalculei
+os contrastes pela fórmula da WCAG. Batem todos: `#fff` sobre `danger`
+**3,42:1** (reprova AA — e é o único botão que apaga um companheiro),
+`#1A0F0D` **5,48:1**, e o `onAccent` que a biblioteca adota **5,34:1**. O anel
+de foco novo dá **15,31:1**.
+
+### Decisões médias tomadas
+
+- **O `Botão` foi REFEITO, não ampliado — e quem o derrubou foi o `jogo`.**
+  A peça da primeira rodada tinha *Tom × Estado × Tamanho* com um estado
+  `Desativado` que era, no fundo, um valor de opacidade. A lista de demanda
+  provou que **"não pode agora" são duas coisas diferentes**: `bloqueado =
+  carregando || !!rolagem` governa **15** controles, e *"o Mestre está a
+  escrever"* (isto volta) sai hoje **no mesmo cinza** de *"proibido"* (isto
+  não volta). A peça virou 24 variantes, *Papel × Estado × Tamanho*, com
+  **Esperando** e **Impedido** separados e uma **fenda para a razão** — que
+  **nasce acesa**, de modo que os 31 controles mudos de hoje só podem ficar
+  mudos por gesto deliberado de alguém. Esta é a fronteira nova funcionando
+  exatamente como a pessoa a desenhou: o `jogo` não desenhou nada, e mesmo
+  assim a peça mudou de forma por causa dele.
+- **O destrutivo saiu do Botão e virou peça própria — *o gesto que custa*.**
+  Ele faz o que nenhum botão faz: **pergunta no próprio lugar**, sem modal.
+  A razão é medida: **11 das 14 ações irreversíveis não têm proteção nenhuma**
+  hoje, e não é por descuido — é porque a única forma de perguntar que a casa
+  tem é o modal, que é caro demais para "remover Brann". Uma pergunta barata
+  é o que faz as onze passarem a existir. O Confirmar repete **o verbo**,
+  nunca "Sim".
+
+- **O anel de foco entra declarado como DESENHO NOVO**, não como espelho.
+  `:focus-visible` tem **zero** ocorrências no projeto e `outline-none` tem
+  **17**: desenhar foco aqui é inventar, e inventar contrabandeado como se já
+  existisse é exatamente o que `formas.md` existe para impedir. A forma
+  escolhida — `box-shadow: 0 0 0 2px T.bg, 0 0 0 4px T.ink` — foi escolhida
+  para que o Figma e o CSS futuro sejam **a mesma construção**, não duas
+  aproximações. Um anel só para todos os tons, porque `ink` sobre `bg` assenta
+  no fundo da página e funciona igual no âmbar, no contorno e no vermelho.
+- **A demanda do `jogo` virou arquivo versionado** (`mente/demanda-jogo-d3.md`),
+  com um cabeçalho que diz **em letra grande que ele não é fonte de verdade**.
+  Nasceu no scratchpad, que morre com a sessão, e 538 linhas de lugar-e-linha
+  contados à mão são caras demais para remedir — mas uma segunda lista de peças
+  com estados e variantes é, palavra por palavra, a segunda verdade que esta
+  mesa existe para impedir. O cabeçalho é o que separa insumo de decisão.
+- **Os 20 exports de um uso só ficaram FORA da biblioteca.** Biblioteca não é
+  lugar de registrar furo: eles passam no `teste-ligacao` porque a linha de
+  `import` conta como segundo leitor, e pô-los no Figma seria carimbar o furo
+  como se fosse acervo.
+
+### O que ficou
+
+- **O NÓ NÃO EXISTE NESTA CONTA, e é o resultado mais importante do dia.**
+  O Code Connect — a parte 3 de D3, *"o nó"* — responde, pelos **três**
+  caminhos (`list_file_components_for_code_connect`,
+  `get_code_connect_suggestions` e `add_code_connect_map`, ou seja **também
+  o de escrita**), a mesma frase: *"You need a Dev or Full seat on an
+  Organization or Enterprise plan to use Code Connect."* O `whoami` explica:
+  a equipe é **`tier: pro`** com assento Full — **o assento existe, o plano
+  não**. Logo **8 de 8 peças ficaram sem nó**, e não por falta de componente
+  de código a que amarrar, que era o que a pauta previa. Enquanto não houver
+  plano, o que impede a biblioteca e o `ui.jsx` de divergirem em silêncio é
+  **um script que alguém tem de lembrar de rodar**. Subir de plano custa
+  dinheiro: é **`pesado`**, foi para "Para a pessoa decidir", e a mesa não
+  decide sozinha.
+- **Um alarme meu que era falso, e a armadilha de verdade que ele revelou.**
+  Eu quis conferir a volta sem depender da palavra da mão, chamei
+  `get_variable_defs` no nó `0:1` e recebi *"You currently have nothing
+  selected"* — o que me fez escrever, por uma hora, que a volta talvez
+  exigisse um humano selecionando algo no desktop. **Não exige.** `0:1` é a
+  `Page 1` original, vazia; a ferramenta não sabe dizer "este nó não tem
+  variável" e **cai no caminho da seleção**, devolvendo uma frase que
+  descreve outro problema. Apontada a um nó que **usa** variáveis, ela
+  responde a frio: puxei eu mesmo `2:3` e `2:62` e recebi as 27, idênticas
+  às de `estilo.js`. **A armadilha que fica escrita:** `get_metadata` **sem
+  `nodeId` mente neste arquivo** — lista só `Page 1`, enquanto o arquivo tem
+  **oito** páginas (o `use_figma` as vê todas). Confira sempre **por nó**;
+  a lista de páginas por chave não serve.
+- **O que continua POR PROVAR, e não vou escrever como provado.** O teste do
+  `amber` prova que o valor **persiste no arquivo e é lido a frio** por
+  chave + nó, por uma ferramenta diferente da que escreveu. Ele **não**
+  prova que uma pessoa editando na interface do Figma chega ao código — a
+  escrita foi pela Plugin API, não por mão humana na tela. É a diferença
+  entre *"o código lê o Figma"* (provado hoje) e *"o designer edita e o
+  código recebe"* (não provado). Fica para quem tiver a tela aberta.
+- **Os quatro ícones mortos confirmados** — `IconeBandeira`, `IconeGota`,
+  `IconeCirculoX`, `IconeFrasco`: zero usos fora da linha de import, exatamente
+  como a pauta dizia. Ficaram de fora e continuam na fila do sistema.
+- **`MATERIAIS` tem 13 entradas, não 11** — a pauta de D3 dizia 11 e estava
+  errada; D2 já tinha escrito 13. A comparação por máquina corrigiu sozinha,
+  que é a razão de ela existir.
+- **`JetBrains Mono` não tem peso 600 no Figma** (há Regular, Medium 500 e
+  Bold 700). `FONT_CSS` pede `wght@400;600`. É uma diferença real entre o que
+  o navegador desenha e o que o Figma desenha — quem comparar tela contra tela
+  vai tropeçar nela, e agora sabe por quê.
+- **O véu da sobreposição não tem token.** O preto mora em `sombra()`, privado
+  de `estilo.js`. A biblioteca resolveu com `bg` a 75% — melhor design *e* sai
+  de tabela — mas **o código ainda escreve preto literal nesses 15 lugares**.
+- **Duas afirmações de D1 caíram, e as duas eram minhas de dois ciclos atrás.**
+  O `jogo` mediu e derrubou: *"a grelha não é clicável"* está **errado** (cada
+  casa alcançável é `role="button" tabIndex=0` com `onMover`,
+  `grade-de-batalha.jsx:512-517` — o clique funciona, o que falta é **forma**,
+  o alvo é um `<rect fill="transparent">`); e *"a maioria dos bloqueados
+  continua clicável"* também (dos 36 botões com opacidade condicional, **33
+  têm `disabled`** e o navegador recusa de verdade — **o defeito é o silêncio,
+  não o clique fantasma**). As duas mudam o pedido das etapas futuras, e por
+  isso estão no topo de `demanda-jogo-d3.md` e na pauta.
+- **A régua "≥2 leitores" tem duas leituras, e elas dão números bem
+  diferentes.** Por *usos*, 25 dos 49 exports de `ui.jsx` qualificam; por
+  *arquivos que os usam*, qualificam **6**. A biblioteca entrou pela primeira,
+  mas a segunda é a que sustenta o diagnóstico de D1: quase tudo em `ui.jsx`
+  saiu do `App.jsx` e continuou a servir só ao `App.jsx`.
+- **A comparação é um script, não uma catraca.** Ela prova hoje e não protege
+  amanhã. Virá-la `teste-*` exige ter o payload do Figma disponível offline, e
+  isso é decisão de arquitetura que não se toma de passagem.
+- **Duas peças da lista do `jogo` não entraram:** *a casa do tabuleiro* e *a
+  escolha* — e a segunda é grande (**~40 lugares em 6 gramáticas**, quatro
+  delas dentro da mesma criação de personagem). Ficam para o próximo ciclo,
+  com a medição já feita.
+- **O `Selo` ainda não tem o tom "mudou agora"**, e isso trava outra coisa: é
+  pré-requisito do degrau *realce* da escala de cerimônia. **Os dois nascem
+  juntos ou nenhum funciona.**
+- **Um defeito cosmético que fica dito para não virar folclore:** a propriedade
+  de texto da razão tem **um** valor padrão para o conjunto inteiro, então na
+  folha do Figma a variante *Esperando* exibe a frase do *Impedido*. É feio e
+  não é semântico — quem abrir a biblioteca vai estranhar, e agora sabe por quê.
+- **A escala de cerimônia ficou ABERTA de propósito**, e é a primeira entrada
+  real das "Discordâncias" de `formas.md`. O `jogo` pediu para desenhar junto
+  em vez de receber pronto; o `desenho` entregou o Véu incompleto e escreveu
+  os dois lados, com uma proposta de **quatro degraus em que só os dois de
+  cima são véu**. O risco está registrado por escrito e é o tipo de coisa que
+  só se vê antes: **sem o degrau do meio, o `jogo` vai usar o véu leve para
+  conquistas — porque é o que a biblioteca lhe dá — e a taverna passa a
+  interromper o jogador para lhe dar os parabéns.**
+
+---
+
 ## 14/09 18:40 · v9.244 · D2 · o estilo ganha casa própria · commit `5cf555c`
 
 O primeiro ciclo em que o **bastão do `App.jsx` valeu de verdade** — e o
