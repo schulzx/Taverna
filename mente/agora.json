@@ -1,5 +1,1 @@
-[
-  { "agente": "orquestrador", "o_que": "rege o ciclo T3 — a salvaguarda no fim do turno", "desde": "2026-09-14T13:05:00Z" },
-  { "agente": "backend", "o_que": "T3 · a tabela de salvaguarda por condição", "desde": "2026-09-14T13:05:00Z" },
-  { "agente": "testes", "o_que": "T3 · a suíte da salvaguarda", "desde": "2026-09-14T13:05:00Z" }
-]
+[]

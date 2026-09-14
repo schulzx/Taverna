@@ -17,7 +17,32 @@ Formato de um item:
 
 ## Para a pessoa decidir (pesado)
 
-_(vazio — as quatro de 14/09 foram respondidas; viraram as fases T, B, F e I)_
+_As quatro de 14/09 foram respondidas e viraram as fases T, B, F e I. Estas duas
+nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
+`Palavra de Coragem` faz na ficha e o jogo não cumpre._
+
+- [ ] **a habilidade de classe não tem resolvedor** · pesado · de: backend+testes (achado de T4) · 14/09
+  Medido em T4 e escrito na própria tabela, por linha: `Purificar` (Clérigo nv3,
+  *"Remove condições ruins de um aliado"*) e `Palavra de Coragem` (nv4, *"Remove
+  medo e concede PV temporário"*) são as **duas únicas** das 148 `HAB(...)` de
+  `classes.js` que prometem remoção — e **nenhuma resolve**. O motivo não é
+  descuido: o único caminho que o sistema executa por conta própria é
+  `magiaPorNome` + `resolvidaPeloSistema` + `usarFuncaoMagica`, e **habilidade de
+  classe não passa por lá** (as duas aparecem **0 vezes** no `App.jsx`). Construir
+  esse resolvedor é **órgão novo**, não etapa — é a irmã da porta única de dano do
+  inimigo que C2c mediu. T4 deixou as duas na tabela com `resolve: false` e um
+  `aguarda` escrito, e a cobertura **não as conta como saída**: contá-las seria a
+  catraca passando verde numa promessa vazia, que é a doença que a Fase T curou.
+  A pessoa decide se a habilidade de classe deve poder resolver sozinha.
+  Catraca já pronta e mordendo: a sabotagem `Purificar` com `resolve: true`.
+
+- [ ] **não existe PV temporário em lugar nenhum** · pesado · de: backend (achado de T4) · 14/09
+  A outra metade de `Palavra de Coragem` — *"concede PV temporário"* — não tem
+  mecânica em nenhum arquivo do projeto. Não é ligar sinal dormente: é campo novo
+  na ficha, ordem nova de consumo no dano (o temporário some antes do PV real),
+  prazo próprio e leitura na tela. Toca `absorverDano`, a barra de vida e o save.
+  É órgão, e é da pessoa. O 5e o usa em dezenas de lugares, então nasceria com
+  leitores de sobra — mas muda o que o jogador vive em campanha viva.
 
 <details>
 <summary>as quatro perguntas como foram feitas (e as respostas)</summary>
@@ -264,43 +289,71 @@ Desde a **v9.2**: o veneno do companheiro é eterno, e a condição boa que
   `restauracao` pulava `condicoes.js` inteiro (onde o canal é declarado, e onde
   ele tem mais chance de ganhar leitor), e a peneira do `concentrado` aceitava
   qualquer `id:` na frente — ou seja, o **aplicador** passava verde. Ver o diário.
-- [ ] **T4 · as portas de saída declaradas** · de: pessoa · 14/09
-  Se a cura não limpa, a limpeza vem de **magia, habilidade de classe e
-  item** — e isso tem de existir de verdade, não virar condição sem saída.
-  Levantar o que o acervo já oferece (Restauração e irmãs no grimório,
-  habilidades, poções/relíquias), declarar por tabela o que cada uma remove,
-  e provar a catraca que fecha a fase: **toda condição tem ao menos uma
-  saída** — prazo, salvaguarda ou porta. Uma condição nova amanhã sem saída
-  quebra a suíte no dia em que nascer. O que faltar de acervo vira item; o
-  que exigir mecânica nova sobe para a pessoa.
-  **Deixado por T2 (14/09), medido e não consertado de carona:**
-  (a) **`concentrado` não tem saída nenhuma** — `turnos: null`, `tipo: "bom"`,
-  `saiCom: []`: não vence no relógio e o descanso longo não o pega (a regra
-  implícita só vale para `ruim`). **T2 não criou isto** (ele nunca declarou
-  `"cura"`); hoje é armadilha latente porque **nada aplica essa condição** — a
-  maquinaria de concentração vive em `efeitos.js`, sobre `pers.efeitos`. Se
-  alguma porta um dia a aplicar, ela é permanente. É o caso que a catraca
-  "toda condição tem ao menos uma saída" vai acender primeiro.
-  (b) **O canal `"restauracao"` nasce sem leitor, de propósito** — quatro
-  condições já o declaram (`envenenado`, `sangrando`, `cego`, `enfeiticado`) e
-  é T4 quem liga as três portas: magia (`funcao: "curar_condicao"` —
-  Restauração Menor/Maior já estão no grimório), habilidade de classe e
-  antídoto declarado (o consumível `tipo: "limpa"` de `pocoes.js:151` e a
-  relíquia `e.limpa` de `relicas.js:282`, que **já existem e já dizem por
-  escrito o que removem**).
-  (c) **O `/curar` do console criativo** (`App.jsx:5449`, `godmode.js:31`)
-  limpa condição e exaustão por ser chave do mundo, não cura. Fica a decidir
-  se deve deixar de se chamar "curar" — é frontend + `godmode.js`, e é
-  cosmética de bastidor, não gameplay.
-  **Confirmado por T3 (14/09), e os dois zeros estão GUARDADOS na suíte:**
-  `concentrado` **não** ganhou salvaguarda (cai no teste 3 do critério — é
-  `tipo: "bom"`, e ninguém rola para se livrar da própria bênção), e o canal
-  `restauracao` **segue sem leitor**. `teste-cond.mjs` varre os 154 arquivos do
-  `src/` com peneira por contexto e **acende se qualquer um dos dois ganhar
-  leitor** — é o que impede T4 de nascer de carona, em pedaço, sem a catraca
-  "toda condição tem ao menos uma saída". T3 também deixa o alcance medido: das
-  13 ruins, **7 saem por salvaguarda**, e as **6** que não saem são o território
-  que T4 tem de cobrir por porta declarada.
+- [x] **T4 · as portas de saída declaradas** · feito em v9.241 (`79567ce`), 14/09
+  **A promessa mais antiga do catálogo era a magia, e ninguém tinha ido cobrá-la.**
+  Restauração Menor e Maior estão no grimório desde sempre, declaram
+  `funcao: "curar_condicao"`, passam por `resolvidaPeloSistema` — e caíam no
+  `return false` do fim de `usarFuncaoMagica`. Conjurá-las gastava a vez e **não
+  tirava condição nenhuma**. O item e a relíquia, ao contrário, já funcionavam
+  desde sempre, com o `remove`/`limpa` escrito.
+  **A decisão que mais pesou foi NÃO deixar o canal mandar em tudo.** O desenho
+  óbvio — quem declara `restauracao` sai por porta, quem não declara não sai —
+  **apagaria seis comportamentos vivos em silêncio**: poção e relíquia removem hoje
+  `atordoado`, `amedrontado`, `queimando`, `agarrado`, `lento` e `caido`, que o canal
+  não declara. `PORTAS_DE_SAIDA` nasceu então com **três famílias de autoridade
+  separada**: o canal é a autoridade da **magia e só dela**; a lista do frasco
+  continua sendo a palavra final do frasco. `pocoes.js` e `relicas.js` intocados.
+  **O alcance da magia sai de três testes, não de gosto** — declara o canal; é
+  aflição e não ferimento (**o teste 2 de T3 reaproveitado**, e corta `sangrando`
+  pelo mesmo motivo escrito lá); e o degrau, a Menor tira o que foi **posto** em
+  você e a Maior também o que foi **tirado**. Menor: `envenenado`, `cego`,
+  `paralisado`. Maior: `enfeiticado`, `exausto`, `enfraquecido` + tudo da Menor por
+  `herdaDe` (divergência do 5e **declarada**: um 5º círculo que não faz o que o 2º
+  faz é armadilha de ficha).
+  **`paralisado` ganhou `["longo", "restauracao"]`, e o `"longo"` junto era
+  obrigatório** — `saiCom` não-vazio **desliga** a regra implícita, e o canal
+  sozinho lhe tiraria a noite que já tinha. É a armadilha exata que T2 mediu em
+  `enfeiticado`, hoje travada por asserção. `enfraquecido` e `exausto` ganharam
+  `+ "restauracao"`. A remoção é **função nova e própria**: passar a magia por
+  `limparPorDescanso` seria arrombar a fechadura que T2 pôs de propósito.
+  **`concentrado` foi RESOLVIDO, não perdoado:** `saiCom: ["curto", "longo"]` — no
+  5e a concentração não sobrevive a um descanso, e uma hora de parada já é mais que
+  o teto de uma concentração inteira. **Efeito em mesa zero, confirmado** (nada no
+  `src/` nem no `App.jsx` a aplica). **A lista de perdão da catraca nasce vazia.**
+  **A catraca que fecha a fase:** *toda condição tem ao menos uma saída*. **21
+  condições · prazo 19 · descanso 13 · salvaguarda 7 · porta que resolve 13 · com
+  mais de uma 13 · SEM SAÍDA 0.** Piso de alcance no molde do
+  `check-cura-nao-limpa.mjs`, mais dois dentes que não são número (a cobertura lê o
+  mesmo catálogo que o resto da suíte; a contagem de salvaguarda tem de bater com
+  uma leitura independente).
+  **O que o jogador lê**, sem `mostrarRolagens` e com a frase nascendo no módulo:
+  `🧪 Vera: o veneno afrouxa e sai do sangue; a vista volta, embaçada primeiro.` E
+  quando não há o que tirar, o sistema **recusa antes de cobrar** — molde da poção
+  cheia: `✋ Restauração Menor: a mão se abre e não acha o que desfazer — os 3 PM
+  ficam com você.` **Teto de prompt 56366 → 56366 chars**; `CONDICOES_PROMPT`
+  **encolheu 2 chars** (dizia *"quem a tira é o relógio ou o descanso"*, já falso
+  desde T3; hoje diz *"quem a tira é o sistema, nunca você"*).
+  `teste-cond.mjs` 245 → **394**, `teste-ligacao.mjs` 20 → **21**; **13 sabotagens,
+  13 mordendo, nenhuma nasceu verde**. Ver o diário.
+
+  **A FASE T ESTÁ FECHADA.** A pessoa ditou a lei do 5e numa frase e o jogo hoje a
+  cumpre dos quatro lados. Antes: o relógio das condições tinha **2 sítios** e não
+  alcançava o grupo; quatro condições anunciavam no catálogo que a cura as tirava e
+  **ninguém lia esse canal**; **nenhuma** condição tinha segunda chance no fim do
+  turno; e **uma** não tinha saída nenhuma. Hoje: **3 sítios** no relógio (grupo
+  incluído, e condições do grupo que vencem **0 → 727** em 1000 combates duros);
+  **45 portas de cura varridas** e nenhuma de gameplay escrevendo em `condicoes`,
+  com catraca permanente (`check-cura-nao-limpa.mjs`, 33 asserções); **7 das 13
+  ruins** com salvaguarda deduzida por critério de três testes (as sete somavam 19
+  turnos de prazo puro e passam a somar **12,33 a 9,12 — corte de 35% a 52%**);
+  **4 portas declaradas por tabela** (2 vivas · 2 com `aguarda` escrito), **13 de
+  21** condições saindo por porta que resolve, **13** com mais de uma saída e
+  **ZERO sem nenhuma**. `teste-cond.mjs` **31 → 394**. **62 sabotagens na fase,
+  todas mordendo** — e as duas que nasceram verdes estavam no teste, não na
+  produção. **Teto de prompt: crescimento estático zero nas quatro versões**, e
+  `CONDICOES_PROMPT` na verdade encolheu (−10 em T2, −2 em T4), porque as duas
+  vezes em que ele mentia foram consertadas trocando palavra por palavra.
+  **A próxima da fila aprovada é a Fase B, começando por B1 · a régua que falta.**
 
 ### Fase B — o bônus do companheiro, se for lícito e justo
 Decisão da pessoa (14/09): *"se o bônus for lícito e justo não tem porque
@@ -825,6 +878,18 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   etapa é a **T3 · a salvaguarda no fim do turno**; T2 fechou em v9.239.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **três condições que o grimório promete e o catálogo não tem** · leve · de: backend (achado de T4) · 14/09
+  Restauração Menor diz *"Tira uma doença, uma cegueira, um veneno, uma surdez"* e
+  Maior diz *"Levanta uma maldição, um nível de exaustão, uma petrificação"*. Das
+  sete, **`doença`, `surdez` e `maldição` não existem em `CONDICOES`** — a
+  petrificação está coberta como alias de `paralisado`, e as outras três a tabela
+  de T4 alcança. Hoje isso não mente na mesa (a porta só remove o que existe), mas
+  mente na **ficha da magia**, que é onde o jogador lê antes de gastar PM. Nascer
+  as três é barato e a catraca de T4 já as cobriria no dia em que nascerem: cada
+  uma precisa de prazo, canal ou porta, ou a suíte acende. Cuidado medido: o alias
+  novo tem de passar por `normalizarCondicao`, e `surdez` não colide com nada mas
+  `doença` pode casar com a ficção que o Mestre escreve o tempo todo.
 
 - [x] **a suíte da sala aposta no acaso, e às vezes perde** · **RESOLVIDO em
   v9.240 (T3)**, 14/09 — semeada com `rng(hashSemente("taverna|sala|codigo"))`
