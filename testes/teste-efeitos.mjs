@@ -26,6 +26,13 @@ const C = await import(RAIZ + "combos.js");
    do CATÁLOGO (a regra, as dez exceções, a porta) mora em `teste-grimorio`,
    que é o território dela; aqui mora só o que o campo faz depois de nascer. */
 const G = await import(RAIZ + "grimorio.js");
+/* v9.235 (C2): o motor de combate entra de verdade, e não mais só como texto
+   lido por regex. A seção 16 fechou o circuito do CAMPO (a magia marcada nasce
+   segurada, é achada, é tirada) e terminou numa PONTE de fonte: "existe um
+   teste de concentração para ele chamar". A seção 17 é o outro lado da ponte —
+   o que esse teste DIZ ao jogador quando a magia cai. Isso é conta, e conta se
+   prova chamando a função, não procurando o nome dela num arquivo. */
+const CB = await import(RAIZ + "combate.js");
 const { readFileSync } = await import("node:fs");
 
 let bons = 0, maus = 0;
@@ -1181,6 +1188,224 @@ sec("16. a concentração nasce e viaja — o campo que faltava no meio (C1)");
      Sem esse elo, o campo viaja e nunca é perguntado. */
   t("o App pergunta pelo efeito segurado quando o herói apanha", /efeitoEmConcentracao\(/.test(APP16));
   t("e existe um teste de concentração para ele chamar", /testeConcentracao/.test(readFileSync("../src/combate.js", "utf8")));
+}
+
+/* ============================================================
+   17. A QUEBRA NA MESA — o que o jogador LÊ quando a magia cai (C2)
+
+   Entra DEPOIS da 16 pelo mesmo motivo que a 16 entrou depois da 15, e
+   NENHUMA asserção das dezesseis anteriores foi movida: a 16 prova que o
+   campo VIAJA (a magia marcada nasce segurada, é achada, é tirada da ficha)
+   e termina numa ponte de fonte — "existe um teste de concentração para ele
+   chamar". Esta prova o outro lado da ponte: o que esse teste DIZ.
+
+   O ESTADO QUE ELA VEIO CONSERTAR, medido antes de mexer. Quando o herói
+   apanhava segurando uma magia, o App imprimia até duas linhas. A de baixo
+   era incondicional e dizia QUE ele perdeu e QUAL magia. A de cima — a única
+   que carregava a dificuldade e a rolagem — estava atrás de `mostrarRolagens`,
+   que é bastidor e vem desligado. Resultado: o jogador pagava PM e um turno
+   por uma magia, via a magia cair, e não lia o número que a derrubou.
+   "O veredito antes do clique" tem irmã, e é esta: o veredito DEPOIS do golpe.
+
+   A frase é CONTA, então nasce no módulo — o molde é a `linha` de
+   `absorverDano` (seções 13/14), que já devolve voz de mundo com o número
+   dentro e o comentário que explica por que o número entra.
+
+   E `texto` NÃO muda: é voz de depuração, tem leitor (a linha 🎲 de
+   `mostrarRolagens`) e esta seção o prova intacto, palavra por palavra. Duas
+   vozes, dois destinos — misturá-las é o jeito de perder as duas.
+   ============================================================ */
+sec("17. a quebra na mesa — a frase que o jogador lê quando a magia cai (C2)");
+{
+  const { testeConcentracao, RESISTENCIA_DA_CONCENTRACAO: RC } = CB;
+
+  /* A RÉGUA, lida de volta da tabela e nunca redigitada — é a lei desta suíte
+     desde o cabeçalho. Se alguém trocar o piso de 10 por 12, é a RELAÇÃO que
+     tem de continuar de pé, não uma cópia do número escondida aqui. */
+  const cdDe = (dano) => Math.max(RC.cdMinima, Math.floor(dano / RC.divisorDoDano));
+
+  t("a dificuldade da concentração é tabela, não número solto na conta",
+    !!RC && inteiroPositivo(RC.cdMinima) && inteiroPositivo(RC.divisorDoDano));
+
+  /* A VARREDURA DA CD: o motor tem de concordar com a própria tabela em toda
+     a faixa de dano que um golpe de verdade produz. */
+  const divergiu = [];
+  for (let dano = 0; dano <= 200; dano++) {
+    if (testeConcentracao(dano, 0).cd !== cdDe(dano)) divergiu.push(dano);
+  }
+  t("a CD segue a tabela em toda a faixa de dano (0–200)", divergiu.length === 0, `divergiu em ${divergiu.slice(0, 5).join(", ")}`);
+  t("e nunca desce do piso, nem com dano zero ou negativo",
+    testeConcentracao(0, 0).cd === RC.cdMinima && testeConcentracao(-50, 0).cd === RC.cdMinima
+    && testeConcentracao(null, 0).cd === RC.cdMinima && testeConcentracao(undefined, 0).cd === RC.cdMinima);
+  /* acima do piso quem manda é a fração, e é ela que a frase vai carregar */
+  t("e acima do piso ela é a fração do dano que a tabela declara",
+    testeConcentracao(60, 0).cd === Math.floor(60 / RC.divisorDoDano));
+
+  /* AS DUAS FORÇAS, e por que estes números. `testeConcentracao` rola `d(20)`
+     cru — não há semente, e esta etapa não mandou pôr uma. Então a prova não
+     adivinha o dado: escolhe faixas em que o dado NÃO decide.
+       · cai sempre:    dano 60 → CD 30, e d20+2 chega no máximo a 22.
+       · aguenta sempre: dano 4 → CD 10 (o piso), e d20+9 começa em 10.
+     Os dois lados ficam determinísticos sem tocar no motor. */
+  const CAI = { dano: 60, vigor: 2 };
+  const AGUENTA = { dano: 4, vigor: 9 };
+  const VOLTAS = 200;
+
+  t("a forçagem é válida: com estes números o dado não decide nada",
+    cdDe(CAI.dano) > 20 + CAI.vigor && cdDe(AGUENTA.dano) <= 1 + AGUENTA.vigor);
+
+  /* ---------------- A FRASE NASCE SÓ NA QUEDA ------------------------- */
+  /* decisão travada pelo orquestrador: uma linha por rodada aguentada seria
+     ruído a cada golpe. Quem quer ver o teste mantido já tem a 🎲. */
+  const aguentadas = [], caidas = [];
+  for (let i = 0; i < VOLTAS; i++) {
+    aguentadas.push(testeConcentracao(AGUENTA.dano, AGUENTA.vigor, "Invisibilidade"));
+    caidas.push(testeConcentracao(CAI.dano, CAI.vigor, "Invisibilidade"));
+  }
+  t(`nas ${VOLTAS} aguentadas a magia fica de pé`, aguentadas.every((r) => r.manteve === true));
+  t("e NENHUMA delas fala com o jogador", aguentadas.every((r) => r.linha === ""));
+  /* vazia de verdade, e string: `undefined` num `if (linha)` passa igual, mas
+     vaza para a tela na hora em que alguém interpolar sem pensar */
+  t("e o silêncio é string vazia, não `undefined`", aguentadas.every((r) => typeof r.linha === "string"));
+  t(`nas ${VOLTAS} quedas a magia cai`, caidas.every((r) => r.manteve === false));
+  t("e TODAS falam com o jogador", caidas.every((r) => r.linha.length > 0));
+
+  /* ---------------- O QUE A FRASE DIZ --------------------------------- */
+  const q = caidas[0];
+  t("a frase é a que o jogador vai ler, montada com os números reais do teste",
+    q.linha === `💢 Invisibilidade escapa dos dedos — o corpo aguentou ${q.rolo}, e era preciso ${q.cd}.`);
+  t("ela nomeia a magia perdida", caidas.every((r) => r.linha.includes("Invisibilidade")));
+  /* os DOIS números, e os números DAQUELE teste — não um par plausível */
+  t("ela traz a rolagem que saiu", caidas.every((r) => r.linha.includes(String(r.rolo))));
+  t("e a dificuldade que ela não alcançou", caidas.every((r) => r.linha.includes(String(r.cd))));
+  t("e a dificuldade impressa é a da tabela, não outra",
+    caidas.every((r) => r.linha.includes(`era preciso ${cdDe(CAI.dano)}.`)));
+
+  /* a CD dentro da FRASE acompanha o dano, em toda a faixa: é o número que
+     explica a perda, e imprimir um fixo seria mentir em 199 casos de 200 */
+  const erradas = [], semQueda = [];
+  for (const dano of [0, 1, 9, 19, 20, 21, 46, 61, 99, 200]) {
+    /* insiste com Vigor de ficha de verdade até a queda acontecer, em vez de
+       forçar com um modificador impossível: a frase tem de ficar legível com
+       os números que a mesa produz. Com CD no piso a queda é provável o
+       bastante para 500 voltas serem certeza prática, e o `semQueda` acusa
+       em voz alta se um dia deixar de ser. */
+    let caiu = null;
+    for (let i = 0; i < 500 && !caiu; i++) {
+      const r = testeConcentracao(dano, 2, "Voo");
+      if (!r.manteve) caiu = r;
+    }
+    if (!caiu) { semQueda.push(dano); continue; }
+    if (!caiu.linha.includes(`era preciso ${cdDe(dano)}.`) || !caiu.linha.includes(`aguentou ${caiu.rolo},`)) erradas.push(dano);
+  }
+  t("a prova achou uma queda em cada dano da varredura", semQueda.length === 0, `sem queda em ${semQueda.join(", ")}`);
+  t("e a frase carrega os dois números certos em todos eles", erradas.length === 0, `errou em ${erradas.join(", ")}`);
+
+  /* ---------------- A VOZ: o sistema não fala de si mesmo -------------- */
+  /* a lista é tabela porque é ela que define o que "voz de mundo" quer dizer
+     nesta casa — e vem com CONTROLE NEGATIVO logo abaixo, senão uma lista que
+     não morde passa verde para sempre */
+  const PALAVRAS_DE_BASTIDOR = ["concentracao", "cd", "d20", "dado", "dados", "rolagem", "rolou", "teste", "vigor", "quebrada", "modificador", "bonus", "sistema", "undefined", "null", "nan"];
+  const cru = (s) => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const bastidorEm = (s) => PALAVRAS_DE_BASTIDOR.filter((p) => new RegExp(`\\b${p}\\b`).test(cru(s)));
+
+  t("a frase da cena não diz uma única palavra de mecanismo",
+    bastidorEm(q.linha).length === 0, bastidorEm(q.linha).join(", "));
+  t("nem em nenhuma das outras quedas", caidas.every((r) => bastidorEm(r.linha).length === 0));
+  /* CONTROLE NEGATIVO: a mesma lista aplicada à voz de depuração TEM de
+     reprovar. Se não reprovar, a lista virou decoração e a prova acima não
+     está medindo nada. */
+  t("e a lista morde de verdade — a voz de depuração é reprovada por ela",
+    bastidorEm(q.texto).length >= 3, `só pegou ${bastidorEm(q.texto).join(", ")}`);
+
+  /* ---------------- LIXO NO NOME: a cena não pode estourar ------------- */
+  /* save velho guarda efeito sem nome, e `efeitoEmConcentracao` devolve o
+     objeto como ele está — o que chega aqui é o que estava salvo */
+  const RECUO = "o que ele segurava";
+  const estourou = [], vazou = [];
+  for (const lixo of [null, undefined, "", "   ", 0, 7, NaN, {}, [], true, false, { nome: "Voo" }]) {
+    let r = null;
+    try { r = testeConcentracao(CAI.dano, CAI.vigor, lixo); } catch { estourou.push(String(lixo)); continue; }
+    if (!r.linha.includes(RECUO) || bastidorEm(r.linha).length) vazou.push(JSON.stringify(lixo) + " → " + r.linha);
+  }
+  t("nome de lixo não estoura o turno", estourou.length === 0, estourou.join(", "));
+  t("e cai na voz de recuo, sem `undefined` nem `[object Object]` na cena",
+    vazou.length === 0, vazou.slice(0, 2).join(" | "));
+  t("um nome de verdade com espaço em volta é aparado, não perdido",
+    testeConcentracao(CAI.dano, CAI.vigor, "  Voo  ").linha.includes("💢 Voo escapa"));
+
+  /* ---------------- REGRESSÃO ZERO: a 🎲 continua a mesma -------------- */
+  /* `texto` tem leitor hoje (a linha de `mostrarRolagens`), e a etapa mandou
+     não mexer nele. Aqui ele é medido palavra por palavra, com o terceiro
+     argumento presente — porque o risco real é o nome da magia vazar para a
+     linha de depuração e mudar um texto que alguém já lê. */
+  t("a voz de depuração da queda é exatamente a de sempre",
+    new RegExp(`^Concentração: d20\\+${CAI.vigor}=\\d+ vs CD ${cdDe(CAI.dano)} → QUEBRADA$`).test(q.texto), q.texto);
+  t("e a da mantida também",
+    new RegExp(`^Concentração: d20\\+${AGUENTA.vigor}=\\d+ vs CD ${cdDe(AGUENTA.dano)} → mantida$`).test(aguentadas[0].texto), aguentadas[0].texto);
+  t("o nome da magia NÃO vaza para a linha de depuração", caidas.every((r) => !r.texto.includes("Invisibilidade")));
+  t("e os números das duas vozes são o mesmo par",
+    caidas.every((r) => r.texto.includes(`=${r.rolo} `) && r.texto.includes(`CD ${r.cd} `)));
+
+  /* ---------------- O CHAMADOR DE DOIS ARGUMENTOS CONTINUA CERTO ------- */
+  /* NENHUMA asserção daqui foi movida — só o COMENTÁRIO mudou, e o motivo é
+     este: ele dizia "o App ainda chama com dois; o `frontend` é que vai passar
+     o terceiro", e o `frontend` passou (as âncoras estão logo abaixo). A razão
+     de o argumento seguir OPCIONAL não era essa espera: é que um save velho
+     guarda efeito sem nome, e tornar o terceiro obrigatório derrubaria a mesa
+     do jogador que carregasse esse save. A prova continua valendo por esse
+     motivo, que é maior que o da etapa. */
+  const velho = testeConcentracao(CAI.dano, CAI.vigor);
+  t("chamado com dois argumentos, devolve tudo o que devolvia",
+    velho.cd === cdDe(CAI.dano) && Number.isInteger(velho.rolo) && velho.manteve === false && typeof velho.texto === "string");
+  t("e sem nome a frase tem recuo próprio em vez de buraco", velho.linha.includes(RECUO));
+
+  /* ---------------- A FIAÇÃO: o que o App faz com tudo isto ------------- */
+  /* A seção 16 termina numa ponte de fonte — "existe um teste de concentração
+     para ele chamar". Esta fecha o outro lado dela, no mesmo molde de âncora
+     de texto (`/efeitoEmConcentracao\(/`), e por necessidade: a fiação mora
+     dentro de um componente React de vinte mil linhas, não há como chamá-la em
+     Node, e uma frase que nasce certa no módulo e é ignorada na tela é
+     exatamente o defeito que esta etapa veio consertar. */
+  const APP17 = readFileSync("../src/App.jsx", "utf8");
+  const i0 = APP17.indexOf("const concentrando = efeitoEmConcentracao(persBase);");
+  const i1 = APP17.indexOf(`calou("quebraDaConcentracao"`);
+  t("a fiação da quebra existe no App e é um bloco só, achável", i0 > 0 && i1 > i0);
+  /* tudo abaixo é medido DENTRO do bloco, não no arquivo inteiro: um `tc.linha`
+     solto em qualquer outro canto do App não provaria nada sobre este golpe */
+  const FIO = APP17.slice(i0, i1);
+
+  t("o App passa o NOME da magia para o teste",
+    /testeConcentracao\(danoNoJogador, atributoEfetivo\(persBase, "vigor"\), concentrando\.nome\)/.test(FIO));
+  t("e mostra ao jogador a frase que o módulo montou, sem prefixo nenhum",
+    /extra\.push\(\{ autor: "sistema", texto: tc\.linha \}\)/.test(FIO));
+  /* o defeito que esta etapa veio consertar não pode voltar por descuido: a
+     frase montada à mão dizia QUE caiu e escondia POR QUÊ */
+  t("a frase montada à mão não voltou ao App", !/Concentração quebrada — /.test(APP17));
+  t("e a voz de ficha continua atrás de quem pediu para ver as rolagens",
+    /if \(mostrarRolagensRef\.current\) extra\.push\(\{ autor: "sistema", texto: `🎲 \$\{tc\.texto\}` \}\)/.test(FIO));
+  t("a quebra continua sendo anotada onde sempre foi", /persConcQuebrada = concentrando\.nome;/.test(FIO));
+  t("e o bloco inteiro está sob a lei do turno que não pode cair",
+    APP17.slice(Math.max(0, i0 - 60), i0).includes("try {")
+    && /\} catch \(e\) \{ calou\("quebraDaConcentracao", e\); \}/.test(APP17));
+
+  /* A NOTA AO NARRADOR, e o que importa nela é ONDE mora.
+     `ECONOMIA_ACAO_PROMPT` promete há versões "quando quebrar, narre o efeito
+     se desfazendo na hora" — e não havia sinal nenhum atrás da promessa. A
+     nota tem de ser DINÂMICA e nascer só no turno da queda: bloco estático é
+     proibido pelo teto do prompt, e uma nota que sobe toda rodada é ruído no
+     lugar de aviso. */
+  const soNaQueda = FIO.slice(FIO.indexOf("if (!tc.manteve)"), FIO.indexOf("if (extra.length)"));
+  t("a nota ao Narrador existe", /\[CONCENTRAÇÃO — QUEBRADA PELO SISTEMA\]/.test(FIO));
+  t("e nasce SÓ no turno em que a magia cai", soNaQueda.includes("[CONCENTRAÇÃO — QUEBRADA PELO SISTEMA]"));
+  t("ela viaja pela nota por turno, empilhada nas vizinhas",
+    /notaRef\.current = `\$\{notaRef\.current \? notaRef\.current \+ "\\n" : ""\}\[CONCENTRAÇÃO/.test(soNaQueda));
+  t("ela diz QUAL magia se desfez", /\$\{concentrando\.nome\}/.test(soNaQueda));
+  t("e manda narrar o desfazimento", /Narre o efeito se desmanchando/.test(soNaQueda));
+  /* CONTROLE: a promessa continua no prompt estático, e nada novo foi somado
+     a ela — o canal desta etapa é a nota, não o bloco */
+  t("e a promessa do prompt estático segue intacta, sem uma letra a mais",
+    /quando quebrar, narre o efeito se desfazendo na hora\.`;$/m.test(readFileSync("../src/combate.js", "utf8")));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

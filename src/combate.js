@@ -804,11 +804,41 @@ export function querFugir(inimigo, { sorte = Math.random } = {}) {
 }
 
 /* CONCENTRAÇÃO: uma magia por vez; apanhar exige resistência de Vigor
-   com CD 10 ou metade do dano, o que for maior. */
-export function testeConcentracao(dano, modVigor) {
-  const cd = Math.max(10, Math.floor((dano || 0) / 2));
+   com CD 10 ou metade do dano, o que for maior.
+
+   v9.235 (C2): os dois números da CD saíram do meio da conta e viraram
+   tabela. Não é cosmética: a frase que o jogador lê agora CARREGA a CD, e
+   uma dificuldade escrita à mão dentro de um `Math.max` é uma dificuldade
+   que a suíte só consegue provar copiando o número — quando as duas cópias
+   divergirem, o texto mente sobre a própria regra e nada acusa. */
+export const RESISTENCIA_DA_CONCENTRACAO = { cdMinima: 10, divisorDoDano: 2 };
+
+/* O terceiro argumento é o NOME DA MAGIA e é opcional de propósito: quem já
+   chamava com dois continua certo, e sem ele a voz de mundo diz "o que ele
+   segurava" — save velho guarda efeito sem nome, e a cena não pode imprimir
+   `undefined` nem estourar por causa disso. */
+export function testeConcentracao(dano, modVigor, nomeDaMagia) {
+  const T = RESISTENCIA_DA_CONCENTRACAO;
+  const cd = Math.max(T.cdMinima, Math.floor((dano || 0) / T.divisorDoDano));
   const rolo = d(20) + (modVigor || 0);
-  return { cd, rolo, manteve: rolo >= cd, texto: `Concentração: d20+${modVigor || 0}=${rolo} vs CD ${cd} → ${rolo >= cd ? "mantida" : "QUEBRADA"}` };
+  const manteve = rolo >= cd;
+  /* só STRING vira nome. `String(x)` aceitaria o lixo e imprimiria
+     "[object Object]" no meio da cena — o mesmo recuo que `absorverDano` faz
+     com `|| "o abrigo"`, mas fechado também contra o que não é texto. */
+  const magia = (typeof nomeDaMagia === "string" ? nomeDaMagia.trim() : "") || "o que ele segurava";
+  return {
+    cd, rolo, manteve,
+    /* `texto` é VOZ DE DEPURAÇÃO e continua exatamente como nasceu: é o que a
+       linha 🎲 imprime para quem pediu para ver as rolagens. Não é a frase da
+       cena, e não deve virar uma. */
+    texto: `Concentração: d20+${modVigor || 0}=${rolo} vs CD ${cd} → ${manteve ? "mantida" : "QUEBRADA"}`,
+    /* `linha` é a irmã da de `absorverDano` (efeitos.js): voz de mundo, sem o
+       nome do mecanismo, e nasce SÓ NA QUEDA — uma linha a cada golpe aguentado
+       seria ruído, e quem quer ver o teste mantido já tem a 🎲. Os dois números
+       entram porque o jogador pagou PM e um turno pela magia: perder sem ler o
+       que a derrubou é perder duas vezes. */
+    linha: manteve ? "" : `💢 ${magia} escapa dos dedos — o corpo aguentou ${rolo}, e era preciso ${cd}.`,
+  };
 }
 
 export const ECONOMIA_ACAO_PROMPT = `ECONOMIA DE AÇÃO (5e — o sistema controla, você narra): cada combatente tem por rodada UMA ação, UMA ação bônus (só se a classe conceder), UMA reação e seu movimento. A ordem dos turnos vem da INICIATIVA rolada no início do combate — respeite-a na narração (não faça um inimigo agir fora da vez dele). Ataque de oportunidade é REAÇÃO: só acontece quando alguém sai do alcance, e só uma vez por rodada. CONCENTRAÇÃO: um conjurador mantém no máximo UMA magia de duração por vez; se ele apanhar, o sistema testa e pode quebrar — quando quebrar, narre o efeito se desfazendo na hora.`;

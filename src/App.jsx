@@ -13374,17 +13374,38 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (danoNoJogador > 0) {
       danoJaAplicadoRef.current = true;
       /* CONCENTRAÇÃO (5e): apanhou, testa para manter a magia de duração */
-      const concentrando = efeitoEmConcentracao(persBase);
-      if (concentrando) {
-        const tc = testeConcentracao(danoNoJogador, atributoEfetivo(persBase, "vigor"));
-        const extra = [];
-        if (mostrarRolagensRef.current) extra.push({ autor: "sistema", texto: `🎲 ${tc.texto}` });
-        if (!tc.manteve) {
-          extra.push({ autor: "sistema", texto: `💢 Concentração quebrada — ${concentrando.nome} se desfaz.` });
-          persConcQuebrada = concentrando.nome;
+      /* v9.235 (C2): A QUEBRA ACONTECE NA MESA. A linha que o jogador lê vem
+         PRONTA de `testeConcentracao` — voz de mundo, com a rolagem e a
+         dificuldade dentro —, e daqui não sai número nenhum: a frase é conta,
+         e conta mora no módulo. Antes havia uma frase montada à mão que só
+         dizia QUE a magia caiu; os dois números que explicam a queda viviam
+         atrás de `mostrarRolagens`, que é bastidor e vem desligado. Quem pagou
+         PM e um turno por uma magia tem de ler o que a derrubou.
+         O try/catch é a lei "nunca pode custar o turno": se o teste estourar,
+         a rodada segue e a magia fica de pé — o recuo que não inventa perda. */
+      try {
+        const concentrando = efeitoEmConcentracao(persBase);
+        if (concentrando) {
+          const tc = testeConcentracao(danoNoJogador, atributoEfetivo(persBase, "vigor"), concentrando.nome);
+          const extra = [];
+          if (mostrarRolagensRef.current) extra.push({ autor: "sistema", texto: `🎲 ${tc.texto}` });
+          if (!tc.manteve) {
+            /* `tc.linha` já chega com emoji e pontuação, no molde do 🛡 do
+               abrigo: prefixar qualquer coisa aqui seria escrever a cena duas
+               vezes. E ela é vazia quando a magia aguenta — por isso só entra
+               deste lado do `if`. */
+            extra.push({ autor: "sistema", texto: tc.linha });
+            persConcQuebrada = concentrando.nome;
+            /* A NOTA AO NARRADOR, e só no turno da queda. `ECONOMIA_ACAO_PROMPT`
+               promete há versões "quando quebrar, narre o efeito se desfazendo
+               na hora" — promessa sem sinal: o Mestre nunca ficava sabendo que
+               a magia tinha caído. Vai pela nota dinâmica, que é o canal por
+               turno; somar isto ao prompt estático é o que o teto proíbe. */
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONCENTRAÇÃO — QUEBRADA PELO SISTEMA] O golpe me fez perder "${concentrando.nome}": a magia se desfez agora e o sistema já a tirou da minha ficha. Narre o efeito se desmanchando no instante do impacto e trate a cena sem ele daqui em diante — não a devolva, não a recalcule e não cobre outro preço por ela.`;
+          }
+          if (extra.length) pushMsgs(extra);
         }
-        if (extra.length) pushMsgs(extra);
-      }
+      } catch (e) { calou("quebraDaConcentracao", e); }
     }
     let persAtual = { ...persTracos, vida: Math.max(0, persTracos.vida - danoNoJogador), mana: Math.max(0, (persTracos.mana || 0) - pmReacaoRef.current), grupo: grupoAtual };
     pmReacaoRef.current = 0;
