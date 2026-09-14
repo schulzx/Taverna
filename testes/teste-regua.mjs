@@ -87,11 +87,17 @@ sec("1. A TABELA LIDA DE VOLTA — nenhum número da catraca repetido à mão");
   t("a amostra declara a escada, o N e as famílias", Array.isArray(AMOSTRA_DA_REGUA.degraus) && AMOSTRA_DA_REGUA.degraus.length >= 3 && AMOSTRA_DA_REGUA.n > 0);
   t("a escada é crescente (é escada, não lista)", AMOSTRA_DA_REGUA.degraus.every((d, i) => i === 0 || d > AMOSTRA_DA_REGUA.degraus[i - 1]));
   t("o N escolhido é um degrau da escada — foi medido, não chutado", AMOSTRA_DA_REGUA.degraus.includes(AMOSTRA_DA_REGUA.n));
-  /* POR QUE NÃO O MAIOR DEGRAU. A régua mediu que a 2000 as famílias passam a
-     DISCORDAR em `danoSofrido`: a precisão fica mais fina do que a distância
-     entre famílias, e o instrumento passa a medir o próprio resorteio. 1000 é
-     o maior N em que a régua ainda concorda consigo mesma. */
-  t("e não é o maior degrau — a 2000 as famílias discordam em danoSofrido", AMOSTRA_DA_REGUA.n < Math.max(...AMOSTRA_DA_REGUA.degraus));
+  /* POR QUE NÃO O MAIOR DEGRAU — e o motivo mudou, então a linha muda junto.
+     Ela dizia que a 2000 as famílias passavam a DISCORDAR em `danoSofrido`;
+     depois do conserto da ordem do teste de morte na régua isso deixou de ser
+     verdade (a 2000 as quatro concordam nas treze métricas). O que sobrou é o
+     motivo verdadeiro, e ele nunca dependeu daquela discordância: subir o N
+     compra PRECISÃO, e precisão mais fina do que a distância entre famílias
+     mede o resorteio. O sinal está medido no módulo — `absorvido`/`abrigos`
+     já estão a 0,94 da soma das próprias margens a 1000. A asserção é a
+     mesma, e continua sendo sobre a ESCOLHA, não sobre o número: o N do
+     retrato não é o maior degrau rodado. */
+  t("e não é o maior degrau — o degrau maior foi rodado, não escolhido", AMOSTRA_DA_REGUA.n < Math.max(...AMOSTRA_DA_REGUA.degraus));
   t("são quatro famílias independentes e distintas", AMOSTRA_DA_REGUA.familias.length === 4 && new Set(AMOSTRA_DA_REGUA.familias).size === 4);
   t("a família do retrato é uma delas", AMOSTRA_DA_REGUA.familias.includes(AMOSTRA_DA_REGUA.familiaDoRetrato));
 
@@ -284,23 +290,26 @@ const CUSTO_DA_MEDIDA = Date.now() - T0;
    DE ONDE VEM CADA NÚMERO, e quanta folga ele tem. O retrato de hoje (4
    famílias × 1000 sementes, cenário `justo`) é:
 
-     vitória      0,498 · 0,517 · 0,528 · 0,526   ± 0,031
-     PV do grupo  24,98 · 25,35 · 27,24 · 27,70   ± 1,9    (de 132)
-     quedas        1,82 ·  1,80 ·  1,75 ·  1,73   ± 0,08   (de 3)
+     vitória      0,521 · 0,511 · 0,527 · 0,542   ± 0,031
+     PV do grupo  25,88 · 26,35 · 26,52 · 28,06   ± 1,9 a 2,0  (de 132)
+     quedas       1,790 · 1,773 · 1,768 · 1,740   ± 0,08   (de 3)
 
    · A FAIXA 35%–65% não é um número novo: é exatamente a que
      `teste-arena.mjs` trava para todo pronto desde que a arena existe (a
      seção 1 prova isso lendo a suíte dela). Um segundo limiar para a mesma
      pergunta — "a mesa está no meio?" — seria a casa discordando de si
-     mesma. Folga medida: 4,78 a 5,75 margens acima do piso, 3,94 a 4,90
+     mesma. Folga medida: 5,20 a 6,22 margens acima do piso, 3,50 a 4,49
      abaixo do teto.
    · O TETO DE 35 PV (de 132) é a FOLGA no fim. Ele é o dente mais sensível
      a bônus ofensivo, porque matar mais cedo é apanhar menos — a régua
      mediu que +1 de dano por golpe já tira o PV da margem antes de tirar a
-     vitória. Folga: 3,70 a 5,28 margens abaixo do teto.
+     vitória. Folga: 3,45 a 4,80 margens abaixo do teto — a menor da catraca,
+     e ela NÃO foi comprada de volta: subir o teto de 35 para 36 devolveria os
+     dois décimos que o conserto da ordem custou, e seria afrouxar um dente por
+     cosmética. A lei é "mais de 2 margens", e 3,45 passa longe.
    · O PISO DE 1,2 QUEDA (de 3) é o PREÇO. Um grupo forte demais atravessa
      a luta sem derrubar ninguém, e isso acontece antes de a vitória
-     estourar o teto. Folga: 6,41 a 7,79 margens acima do piso.
+     estourar o teto. Folga: 6,69 a 7,41 margens acima do piso.
 
    POR QUE TANTA FOLGA, e por que isso não é frouxidão. É a lição de A4 e de
    C2b, e ela custou caro duas vezes: limiar encostado no retrato fica
@@ -410,22 +419,31 @@ sec("6. OS GUARDAS — o teto de rodadas e o extremo brando");
    quem vier depois não precisar rodar de novo:
 
      sabotagem                         vitória   PV grupo   quedas
-     (retrato — nada sabotado)          49,8%     24,98      1,822
-     4 elites de nível 7                34,2%     16,64      2,190   ← piso
-     3 elites de nível 9                76,2%     45,48      1,052   ← os três
-     grupo de nível 7                   90,2%     81,75      0,488   ← os três
+     (controle — nada sabotado)         51,2%     24,19      1,820
+     4 elites de nível 8                21,0%      8,12      2,556   ← piso
+     3 elites de nível 9                76,2%     45,16      1,058   ← os três
+     grupo de nível 7                   89,4%     78,11      0,578   ← os três
 
-   A PRIMEIRA É A MAIS IMPORTANTE das três, porque é a mais PERTO: 34,2%
-   contra um piso de 35% é oito décimos de ponto de folga. A faixa não é
-   larga o bastante para tudo passar — foi medida, e uma mudança de dureza
-   de um nível inteiro já não cabe nela.
+   A PRIMEIRA MUDOU DE NÍVEL, E O MOTIVO É O ACHADO DO CICLO. Ela era "4
+   elites de nível 7" e media 34,2% contra um piso de 35% — oito décimos de
+   folga, o dente mais fino da suíte. Depois do conserto da ordem do teste de
+   morte na régua, a MESMA sabotagem mede 36,4%: ela PAROU DE MORDER, e um
+   dente que não morde não é dente. A saída não foi mexer no piso (35% é lei
+   da casa, herdada da arena) e sim tornar a sabotagem uma sabotagem de novo:
+   nível 8, que mede 21,0%.
+
+   O QUE SE PERDEU ESTÁ ESCRITO, porque perder resolução em silêncio é pior
+   do que perdê-la: a menor mudança de dureza que a faixa pega hoje é de DOIS
+   níveis, não de um. Um nível inteiro (nv7, 36,3% a 1000 sementes) cabe na
+   faixa por 1,3 ponto. A faixa continua não sendo larga o bastante para tudo
+   passar — só não é mais fina a ponto de pegar um degrau.
 
    A TERCEIRA É A QUE B2 VAI ENCOSTAR: "grupo forte demais" é literalmente o
    risco da fase, e ela derruba os três dentes de uma vez. A régua também já
    mediu a escada do bônus ofensivo direto (ver `CATRACA_DE_UMA_VIDA`, no
-   módulo): cada ponto de dano por golpe vale ~3,5 pontos de vitória, +1 já
-   sai da margem no PV do grupo, e a catraca fica vermelha por volta de +4
-   ou +5. Essa escada não é reproduzida AQUI porque somar dano por golpe
+   módulo): cada ponto de dano por golpe vale ~2,9 pontos de vitória, +1 já
+   sai da margem no PV do grupo, e a catraca fica vermelha em +5 (nos dois
+   tetos ao mesmo tempo). Essa escada não é reproduzida AQUI porque somar dano por golpe
    exige mexer no motor, e B1 não mexe — a sabotagem por cenário é a forma
    de provar o mesmo sem tocar em `src/`.
 
@@ -439,10 +457,13 @@ sec("7. A CATRACA MORDE — sabotagem, o dente não é cego");
   const N_SABOTAGEM = 500;
   const sabotar = (id, mods) => medir({ ...J, id, ...mods }, { n: N_SABOTAGEM, prefixo: AMOSTRA_DA_REGUA.familiaDoRetrato });
 
-  /* SABOTAGEM 1 — o outro lado da mesa um nível mais duro. Derruba SÓ o piso
-     de vitória, e por pouco: é a prova de que a faixa tem resolução fina. */
-  const s1 = sabotar("sabotagem:elites-nv7", { inimigos: { ...J.inimigos, nivel: 7 } });
-  t(`sabotagem 1 (4 elites nv7): a vitória cai ABAIXO do piso — ${(s1.vitoria.media * 100).toFixed(1)}% < ${K.pisoDeVitoria * 100}%`,
+  /* SABOTAGEM 1 — o outro lado da mesa DOIS níveis mais duro. Derruba SÓ o
+     piso de vitória: é a prova de que a faixa tem resolução, e o comentário
+     da seção diz exatamente quanta (um nível cabe, dois não). Era nível 7 e
+     passou a 8 porque o nível 7 parou de morder depois do conserto da ordem
+     do teste de morte — o piso não se moveu um dígito. */
+  const s1 = sabotar("sabotagem:elites-nv8", { inimigos: { ...J.inimigos, nivel: 8 } });
+  t(`sabotagem 1 (4 elites nv8): a vitória cai ABAIXO do piso — ${(s1.vitoria.media * 100).toFixed(1)}% < ${K.pisoDeVitoria * 100}%`,
     s1.vitoria.media < K.pisoDeVitoria, linhaDaMetrica(s1.vitoria, 3));
   /* e o dente do PV NÃO morde aqui — de propósito: os três dentes medem
      coisas diferentes, e um cenário mais duro deixa MENOS PV, não mais. Se
@@ -490,19 +511,25 @@ sec("8. O QUE NÃO VIRA LIMIAR — medido, impresso, não travado");
 {
   const r = MED.justo[0], d = MED.duro[0], b = MED.brando[0];
 
-  /* ABSORVIDO e ABRIGOS: os números mais ralos da régua (0,29 abrigo por
-     combate) e os que mais oscilam entre famílias — 1,74 · 1,61 · 1,44 ·
-     1,46 de PV parado. Concordam a 1000, mas com pouca folga; um limiar ali
-     mede o NASCIMENTO do escudo, não o equilíbrio. É justamente a peça que
-     B2 encosta, então ela fica visível. */
+  /* ABSORVIDO e ABRIGOS: os números mais ralos da régua (0,24 a 0,29 abrigo
+     por combate) e os que mais oscilam entre famílias — 1,75 · 1,57 · 1,55 ·
+     1,43 de PV parado. Concordam a 1000, mas são o par MAIS APERTADO da régua
+     inteira (a 0,94 da soma das próprias margens); um limiar ali mede o
+     NASCIMENTO do escudo, não o equilíbrio. E a contagem ainda por cima não é
+     portável entre reconstruções — o módulo mede quanto o kit do herói e a
+     ordem da rodada a movem. É justamente a peça que B2 encosta, então ela
+     fica visível. */
   t("`absorvido` e `abrigos` existem e são finitos (forma, não limiar)", Number.isFinite(r.absorvido.media) && Number.isFinite(r.abrigos.media) && r.absorvido.media >= 0 && r.abrigos.media >= 0);
   pendente("[justo] PV parado pelo abrigo", linhaDaMetrica(r.absorvido, 2) + " · abrigos " + linhaDaMetrica(r.abrigos, 3) + "  [ralo e oscilante entre famílias]");
 
-  /* DANOSOFRIDO: a única métrica em que as famílias DISCORDAM quando a
-     amostra cresce para 2000 (5,23 de distância contra margens que somam
-     5,18). Um limiar em cima dela mede o resorteio, por construção. */
+  /* DANOSOFRIDO: a terceira métrica mais apertada da régua (0,79 da soma das
+     margens a 1000), e a única do par ofensivo/defensivo que chega perto de
+     discordar entre famílias. Um limiar em cima dela mede o resorteio antes
+     de medir o jogo. (Ela JÁ discordou a 2000, e não discorda mais desde o
+     conserto da ordem do teste de morte — o motivo de não travá-la é a folga
+     curta, não a discordância que passou.) */
   t("`danoSofrido` existe e é finito, e o par ofensivo/defensivo continua completo", Number.isFinite(r.danoSofrido.media) && Number.isFinite(r.danoDesferido.media) && r.danoDesferido.media > 0);
-  pendente("[justo] dano sofrido", linhaDaMetrica(r.danoSofrido, 2) + "  [a única que discorda entre famílias a N=2000]");
+  pendente("[justo] dano sofrido", linhaDaMetrica(r.danoSofrido, 2) + "  [a terceira mais apertada entre famílias]");
   pendente("[justo] dano desferido", linhaDaMetrica(r.danoDesferido, 2));
 
   /* PVHEROI e QUEDADOHEROI no duro e no justo: o herói cai em 98% a 100%

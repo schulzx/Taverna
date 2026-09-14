@@ -51,18 +51,53 @@
    ATÉ ONDE A RECONSTRUÇÃO CHEGOU, em número, contra o retrato de T1 (200
    combates, `umavida|0..199`, cenário duro):
 
-     rodada da 1ª queda   4,41  ·  T1 mediu 4,41 (antes) e 4,64 (depois)
-     quedas               545   ·  T1 mediu 566 (antes) e 563 (depois)
-     PV restante do grupo 969   ·  T1 mediu 675 (antes) e 754 (depois)
+     rodada da 1ª queda   4,72  ·  T1 mediu 4,41 (antes) e 4,64 (depois)
+     quedas               556   ·  T1 mediu 566 (antes) e 563 (depois)
+     PV restante do grupo 835   ·  T1 mediu 675 (antes) e 754 (depois)
      brando, quedas         0   ·  T1 mediu 0 nos dois
      brando, PV restante 94,5%  ·  T1 mediu 91,7% e 93,3%
 
-   Os dois primeiros caem em cima; os dois últimos ficam por volta de 25%
-   acima. O que ainda diverge com clareza é a ABSORÇÃO (378 parados em 63
-   abrigos, contra 918 em 153): o molde perdido nascia mais abrigos do
-   que este, e sem o script não há como dizer de onde vinham os outros
-   noventa. Fica escrito porque é a única peça em que esta régua sabe que
-   não é o instrumento de P3, e é justamente a peça que B2 encosta.
+   Os três primeiros caem em cima — e caíram DEPOIS do conserto da ordem do
+   teste de morte (ver o passo 4 do laço): antes dele a régua media 4,41 ·
+   545 · 969, e o que parecia acordo na 1ª queda era acordo por engano.
+
+   ---------------- A ABSORÇÃO NÃO DIVERGE: NÃO É COMPARÁVEL ----------------
+
+   ESTE PARÁGRAFO ACUSAVA UMA DIVERGÊNCIA QUE NÃO EXISTE, e a acusação
+   custou um ciclo inteiro caçando um fantasma. Ele dizia que a régua
+   "ainda diverge com clareza" na absorção — 396 parados em 66 abrigos,
+   contra os 918 em 153 de P3 — e mandava procurar de onde vinham os outros
+   noventa abrigos. Não vêm de lugar nenhum: a CONTAGEM do abrigo depende de
+   dois parâmetros de fiação que o diário de P3/T1 nunca registrou, e cada um
+   deles sozinho move mais do que a diferença toda. Medido, nesta régua:
+
+     · O KIT DO HERÓI é escolha DESTA régua (o porquê está em
+       `CENARIOS_DA_REGUA.duro`, logo abaixo), não herança de P3. Tirando o
+       kit e não mexendo em mais nada, o duro vai de 66 para 33 abrigos —
+       metade, só por isso.
+     · A ORDEM DO GRUPO NA RODADA. Com o grupo agindo ANTES dos inimigos, a
+       mesma régua mede 159 abrigos e 954 PV parados — que é exatamente o
+       "954/159" que P3 registrou como sua PRIMEIRA medição
+       (`mente/diario.md`, no bloco de P3). Ou seja: o número perdido é
+       alcançável, e o molde que o alcança é o que o App CONTRADIZ
+       (`resolverRevide` roda `turnoDosInimigos` em App.jsx:13591 e só então
+       `turnoDosCompanheiros` em :13830). O molde errado é o de lá.
+
+   E ESTA RÉGUA É MAIS NOVA QUE P3, o que fecha a conta pelo outro lado: ela
+   compõe o `efeitos.js` de HOJE, com C2b (`segurarOuPerder` no companheiro)
+   e C3 (o teto de concentração) — duas regras que não existiam em v9.233,
+   quando 918/153 foi medido, e que derrubam abrigo. Custo medido das duas
+   juntas: no brando, 40 abrigos viram 30.
+
+   E O NÚMERO QUE TIRA ISSO DO CAMINHO DE B2, que é o que importa: a absorção
+   INTEIRA, de zero a cheia, vale 3,6 pontos de vitória e 2,10 PV no `justo`
+   (sem abrigo nenhum: 48,5% e 23,78, contra 52,1% e 25,88). DOBRÁ-LA — que é
+   o tamanho exato da disputa 378 contra 918 — custa 1,2 ponto de vitória e
+   1,02 PV: menos de uma margem em cada um dos dois dentes (± 0,031 e ± 1,9).
+   Para que lado caísse a dúvida, a linha de base de B2 não se moveria o
+   bastante para mudar um veredito. A peça fica visível na suíte como
+   `pendente`, e continua sem virar limiar — pelo motivo de sempre: ela mede
+   o nascimento do escudo, não o equilíbrio.
 
    O que a régua garante — e é o que importa a partir de agora — é que a
    MESMA régua meça o antes e o depois de cada mudança.
@@ -74,10 +109,13 @@
                                   abrigo antes do PV, App.jsx:13653/13684,
                                   e a concentração do companheiro cai
                                   depois, App.jsx:13701)
-     3. o herói caído rola morte (`testeDeMorte`/`aplicarTesteMorte`)
-     4. o grupo age              (`turnoDosCompanheiros`, e o buff nasce
+     3. o grupo age              (`turnoDosCompanheiros`, e o buff nasce
                                   pelo molde de `buffDeCompanheiro`,
                                   App.jsx:7942)
+     4. o herói caído rola morte (`testeDeMorte`/`aplicarTesteMorte`; é
+                                  `resolverQueda`, App.jsx:13940, e ela roda
+                                  DEPOIS do turno dos companheiros —
+                                  App.jsx:13830 —, não antes)
      5. os relógios andam        (`tickEfeitos` no herói e no grupo,
                                   App.jsx:8246-8277; `tickCondicoes` —
                                   com dano no herói e nos inimigos, SEM
@@ -105,7 +143,7 @@
 
    O QUE JÁ AGUENTA VIRAR CATRACA (medido em 4 famílias × 1000):
      · a faixa de vitória no cenário `justo` — 35% a 65%, a mesma lei da
-       arena. Retrato 49,8 a 52,8%, ~4,5 margens de cada borda.
+       arena. Retrato 51,1 a 54,2%, 3,5 margens do teto e 5,2 do piso.
      · o teto de PV do grupo e o piso de quedas no `justo`
        (`CATRACA_DE_UMA_VIDA`), pelo mesmo raciocínio de folga.
      · `estourouTeto === 0` nos três cenários. É o guarda da própria
@@ -120,12 +158,17 @@
 
    O QUE NÃO AGUENTA, e é honesto não fingir:
      · qualquer limiar sobre `absorvido` ou `abrigos`. São os números
-       mais ralos da régua (0,29 abrigo por combate) e os que mais
-       oscilam entre famílias — 1,74 · 1,61 · 1,44 · 1,46 de PV parado.
-       Concordam a 1000, mas com pouca folga; um limiar ali mede o
-       nascimento do escudo, não o equilíbrio.
-     · qualquer limiar sobre `danoSofrido`. É a única métrica em que as
-       famílias DISCORDAM quando a amostra cresce (ver `AMOSTRA_DA_REGUA`).
+       mais ralos da régua (0,24 a 0,29 abrigo por combate) e os que mais
+       oscilam entre famílias — 1,75 · 1,57 · 1,55 · 1,43 de PV parado —, e
+       são os DOIS MAIS APERTADOS da régua inteira: a 1000, as duas famílias
+       mais distantes ficam a 0,94 da soma das próprias margens, a um décimo
+       de discordar. Um limiar ali mede o nascimento do escudo, não o
+       equilíbrio — e a CONTAGEM ainda por cima não é portável entre
+       reconstruções (ver o bloco da absorção, acima).
+     · qualquer limiar sobre `danoSofrido`. A terceira mais apertada (0,79
+       da soma das margens a 1000), e a única do par ofensivo/defensivo que
+       chega perto de discordar: um limiar ali mede o resorteio antes de
+       medir o jogo.
      · qualquer limiar sobre `pvHeroi` ou `quedaDoHeroi` no `duro` e no
        `justo`. O herói cai em 98% a 100% dos combates: são métricas
        saturadas, e um limiar em cima de um teto não mede nada.
@@ -175,14 +218,14 @@ export const CENARIOS_DA_REGUA = {
      P3 mediu em DURO e BRANDO, e o próprio diário escreveu a leitura honesta
      do que isso custou: "o '+11,7% de PV restante' do cenário duro é real mas
      mede uma base de 2,6% do máximo — o grupo é quase varrido nos dois casos".
-     É a definição de uma régua saturada. No duro de hoje o grupo perde 91% dos
-     combates, 2,81 dos 3 companheiros caem e sobram 3 PV de 132: não há para
-     onde a métrica descer. No brando ninguém cai NUNCA e sobra 94% do PV: não
+     É a definição de uma régua saturada. No duro de hoje o grupo perde 91,2%
+     dos combates, 2,82 dos 3 companheiros caem e sobram 3,11 PV de 132: não há
+     para onde a métrica descer. No brando ninguém cai NUNCA e sobra 94% do PV: não
      há para onde subir. Uma mudança de combate que passe nos dois extremos não
      provou nada — provou que os dois extremos não a enxergam.
 
      `justo` é o cenário onde a régua tem resolução nos dois sentidos: o grupo
-     ganha metade das vezes, cai 1,8 dos 3, e sobra 19% do PV. Todo número tem
+     ganha 52,1% das vezes, cai 1,79 dos 3, e sobra 19,6% do PV. Todo número tem
      folga para subir e para descer, e é nele que uma mudança de combate deve
      ser julgada. Os outros dois ficam: o duro porque é o retrato com que o
      diário já fala (é ele que carrega a continuidade com P3/T1), e o brando
@@ -190,8 +233,8 @@ export const CENARIOS_DA_REGUA = {
      quebrou em silêncio.
 
      A calibragem foi feita pela mesma régua, variando SÓ o outro lado da mesa
-     (o grupo e o herói são os mesmos nos três): 4 elites nv9 dão 9% de
-     vitória, nv7 dão 34%, nv6 dão 50%, 3 elites nv9 dão 78%. Nível 6 é o que
+     (o grupo e o herói são os mesmos nos três): 4 elites nv9 dão 8,8% de
+     vitória, nv7 dão 36,3%, nv6 dão 52,1%, 3 elites nv9 dão 77,9%. Nível 6 é o que
      põe a mesa no meio, e é o mesmo alvo que a catraca da arena persegue
      desde que existe — a faixa de 35% a 65%. */
   justo: {
@@ -226,19 +269,25 @@ for (const id of ["justo", "brando"]) {
 
    POR QUE 1000, E POR QUE NÃO 2000. A escada foi rodada (100, 200, 500,
    1000, 2000) e as médias param de andar cedo: no cenário `justo`,
-   `quedas` mexe 0,04 entre 500 e 2000 e `vitoria` mexe 0,01. O que ainda
+   `quedas` mexe 0,06 entre 500 e 2000 e `vitoria` mexe 0,015. O que ainda
    anda muito é a MARGEM, e é ela que decide o N.
 
-   E é aqui que mora a lição de A4 e de C2b, agora medida: a 1000
-   sementes as quatro famílias CONCORDAM em todas as treze métricas; a
-   2000 elas passam a DISCORDAR em `danoSofrido` (as famílias estão a
-   5,23 de distância e as margens somam 5,18). A amostra maior não achou
-   uma diferença de jogo — achou o próprio resorteio, porque a precisão
-   passou a ser mais fina do que a distância entre famílias. Medir mais
-   fino do que o instrumento consegue repetir é medir o RNG.
+   E É AQUI QUE A LIÇÃO DE A4 E DE C2b MUDOU DE FORMA, e a nota é honesta
+   porque o número mudou. Esta linha dizia que a 2000 as famílias passavam a
+   DISCORDAR em `danoSofrido`; depois do conserto da ordem do teste de morte
+   isso deixou de ser verdade — a 2000 as quatro CONCORDAM em todas as treze
+   métricas, e a mais apertada passou a ser `absorvido`/`abrigos` (as duas
+   famílias mais distantes a 0,75 da soma das próprias margens; `danoSofrido`
+   caiu para 0,59). A 1000 a mais apertada é a mesma dupla, a 0,94 — a um
+   décimo de discordar.
 
-   1000 é, portanto, o maior N em que a régua ainda concorda consigo
-   mesma — e é onde ela fica. */
+   1000 FICA MESMO ASSIM, e agora pelo motivo que sempre foi o verdadeiro: o
+   que a amostra maior compra é precisão, e precisão mais fina do que a
+   distância entre famílias mede o RNG, não o jogo. O sinal disso é a dupla
+   `absorvido`/`abrigos`, que a 1000 já está a 0,94 de discordar consigo
+   mesma: subir o N estreitaria a margem de todo mundo e poria a régua a
+   afirmar diferenças do tamanho do próprio embaralhamento. O degrau maior
+   fica na escada como prova de que ele foi rodado, não como o N escolhido. */
 export const AMOSTRA_DA_REGUA = {
   degraus: [100, 200, 500, 1000, 2000],
   n: 1000,
@@ -262,33 +311,49 @@ export const INTERVALO_DE_CONFIANCA = { nivel: 0.95, z: 1.959964 };
    casa discordando de si mesma.
 
    A FOLGA, MEDIDA E NÃO CHUTADA. Hoje (4 famílias × 1000 sementes):
-     vitória      0,498 · 0,517 · 0,528 · 0,526   ± 0,031
-     PV do grupo  24,98 · 25,35 · 27,24 · 27,70   ± 1,9   (de 132)
-     quedas        1,82 ·  1,80 ·  1,75 ·  1,73   ± 0,08  (de 3)
-   Cada limiar está a muitas margens do retrato: a vitória a ~4,5
-   margens de cada borda, o teto de PV a ~4, o piso de quedas a ~7. É de
-   propósito, e a lição é de A4 e C2b: limiar encostado no retrato fica
-   vermelho por RESORTEIO — mede o embaralhamento do RNG, não o jogo.
-   O teto tem de nomear uma MUDANÇA, não uma flutuação.
+     vitória      0,521 · 0,511 · 0,527 · 0,542   ± 0,031
+     PV do grupo  25,88 · 26,35 · 26,52 · 28,06   ± 1,9 a 2,0  (de 132)
+     quedas        1,790 · 1,773 · 1,768 · 1,740  ± 0,08  (de 3)
+   A folga de cada limiar, em margens: a vitória a 5,20–6,22 do piso e a
+   3,50–4,49 do teto, o teto de PV a 3,45–4,80, o piso de quedas a
+   6,69–7,41. É de propósito, e a lição é de A4 e C2b: limiar encostado no
+   retrato fica vermelho por RESORTEIO — mede o embaralhamento do RNG, não
+   o jogo. O teto tem de nomear uma MUDANÇA, não uma flutuação.
+
+   E NENHUM DOS TRÊS LIMIARES FOI MEXIDO quando o conserto da ordem do teste
+   de morte subiu o retrato (a vitória de 49,8% para 52,1%, o PV de 24,98
+   para 25,88). A folga menor encolheu de 3,70 para 3,45 margens, e a
+   tentação era comprar de volta os dois décimos subindo o teto de PV de 35
+   para 36 — e isso é AFROUXAR UM DENTE por cosmética. O que a suíte cobra é
+   folga maior que 2 margens, e 3,45 passa longe; a faixa 35%–65% é lei da
+   casa e não se move por conveniência de nenhuma etapa. Fica o número
+   medido, não o número confortável.
 
    AS DUAS SONDAS FORA DA FAIXA, para o limiar não ser cego: 4 elites de
-   nível 7 dão 34,2% de vitória (abaixo do piso) e 3 elites de nível 9
-   dão 77,6% (acima do teto). A faixa não é larga o bastante para tudo
-   passar — foi medida.
+   nível 8 dão 21,3% de vitória (abaixo do piso) e 3 elites de nível 9 dão
+   77,9% (acima do teto). E o que MUDOU aqui é informação, não conserto: 4
+   elites de nível 7 davam 34,2% e agora dão 36,3% — um nível inteiro de
+   dureza passou a CABER na faixa, por 1,3 ponto. A faixa continua não sendo
+   larga o bastante para tudo passar, mas a menor mudança que ela pega hoje
+   é de dois níveis, e isso está escrito para ninguém redescobrir.
 
    E QUANTO ELA AGUENTA, que é o número que B2 vai querer. Somando dano
    fixo a cada golpe do grupo no cenário `justo` (1000 sementes):
 
-     +0   vitória 49,8%   quedas 1,822   PV do grupo 24,98
-     +1   vitória 52,5%   quedas 1,746   PV do grupo 27,13
-     +2   vitória 56,5%   quedas 1,659   PV do grupo 29,27
-     +3   vitória 60,3%   quedas 1,563   PV do grupo 31,73
+     +0   vitória 52,1%   quedas 1,790   PV do grupo 25,88
+     +1   vitória 55,1%   quedas 1,703   PV do grupo 28,21
+     +2   vitória 58,4%   quedas 1,610   PV do grupo 30,41
+     +3   vitória 61,3%   quedas 1,530   PV do grupo 32,47
+     +4   vitória 64,0%   quedas 1,471   PV do grupo 34,24
+     +5   vitória 66,6%   quedas 1,380   PV do grupo 36,84
 
-   Ou seja: cada ponto de dano por golpe vale ~3,5 pontos de vitória, e a
-   catraca fica vermelha por volta de +4 ou +5. O bônus do companheiro de
-   B2 tem esse teto para respeitar, e ele é número, não opinião. Note
-   também que +1 já sai da margem no PV do grupo antes de sair na
-   vitória — o PV é o dente mais SENSÍVEL, a vitória é o mais ESTÁVEL. */
+   Ou seja: cada ponto de dano por golpe vale ~2,9 pontos de vitória, e a
+   catraca fica vermelha em +5 — nos DOIS dentes ao mesmo tempo (66,6% passa
+   do teto de 65% e 36,84 passa do teto de 35 PV). +4 ainda é verde, e por
+   pouco. O bônus do companheiro de B2 tem esse teto para respeitar, e ele é
+   número, não opinião. Note também que +1 já sai da margem no PV do grupo
+   antes de sair na vitória — o PV é o dente mais SENSÍVEL, a vitória é o
+   mais ESTÁVEL. */
 export const CATRACA_DE_UMA_VIDA = {
   cenario: "justo",
   pisoDeVitoria: 0.35,
@@ -414,9 +479,9 @@ function fichasDosInimigos(cen) {
          de nível 9 e um de nível 5 sairiam com os mesmos 59 PV, e o cenário
          duro seria duro só no nome.
          É também o que reconstrói o molde de P3/T1: com 99 PV por elite a
-         régua mede 545 quedas e a primeira queda na rodada 4,41 (P3: 566 e
-         4,41 antes do abrigo); com 59 PV mediria 289 e 3,73, e nenhum dos
-         dois números de lá ficaria de pé. */
+         régua mede 556 quedas e a primeira queda na rodada 4,72 (P3: 566 e
+         4,41 antes do abrigo, 563 e 4,64 depois); com 59 PV mediria 270 e
+         3,80, e nenhum dos dois números de lá ficaria de pé. */
       ...completarInimigo({ nome: `${base} ${i + 1}`, ameaca, nivel }, nivel),
       derrotado: false, condicoes: [],
     });
@@ -566,18 +631,7 @@ export function simularCombate(cenario, semente) {
       }
       anotarQuedas();
 
-      /* ---- 3. O HERÓI CAÍDO ROLA A MORTE ---- */
-      if ((heroi.vida || 0) <= 0 && !heroi.morto) {
-        const ap = aplicarTesteMorte(heroi.morte, testeDeMorte());
-        heroi = {
-          ...heroi, morte: { sucessos: ap.sucessos, falhas: ap.falhas },
-          morrendo: ap.desfecho === "morrendo",
-          morto: ap.desfecho === "morto",
-          vida: ap.desfecho === "revive" ? 1 : heroi.vida,
-        };
-      }
-
-      /* ---- 4. O GRUPO ---- */
+      /* ---- 3. O GRUPO ---- */
       const acoesComp = turnoDosCompanheiros({
         grupo: grupoDePe(), inimigos: vivosInimigos(),
         jogadorCaido: (heroi.vida || 0) <= 0, jogadorNome: heroi.nome,
@@ -619,6 +673,30 @@ export function simularCombate(cenario, semente) {
             gastar(ac.custo);
           }
         }
+      }
+
+      /* ---- 4. O HERÓI CAÍDO ROLA A MORTE ----
+         DEPOIS DO GRUPO, E NÃO ANTES (conserto de B1b). Este passo rolava
+         entre os inimigos e o grupo, e o App faz o contrário: `resolverQueda`
+         é chamada em `App.jsx:13940`, DEPOIS do turno dos companheiros
+         (`App.jsx:13830`) — e o cabeçalho de `resolverRevide` diz a ordem com
+         todas as letras (`App.jsx:13497`: "os companheiros agem, o teste de
+         morte roda").
+
+         E A DIFERENÇA NÃO É COSMÉTICA, porque o teste de morte MEXE NA FICHA
+         que o grupo lê: um `revive` põe o herói em 1 PV, e `decidirAcaoCompanheiro`
+         decide pela fração de vida do pior ferido — com a morte antes, a Clériga
+         vê um herói de pé onde o App lhe mostra um herói no chão, e cura outra
+         pessoa. Medido no `justo` (1000 sementes): a vitória vai de 49,8% para
+         52,1% e o PV do grupo de 24,98 para 25,88 só por causa desta ordem. */
+      if ((heroi.vida || 0) <= 0 && !heroi.morto) {
+        const ap = aplicarTesteMorte(heroi.morte, testeDeMorte());
+        heroi = {
+          ...heroi, morte: { sucessos: ap.sucessos, falhas: ap.falhas },
+          morrendo: ap.desfecho === "morrendo",
+          morto: ap.desfecho === "morto",
+          vida: ap.desfecho === "revive" ? 1 : heroi.vida,
+        };
       }
 
       /* ---- 5. OS RELÓGIOS (App.jsx:8246-8332) ---- */
