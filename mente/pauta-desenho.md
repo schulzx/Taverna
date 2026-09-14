@@ -75,7 +75,7 @@ Esta fase **não faz nada bonito ainda**, e é de propósito: ela constrói o
 chão que impede o defeito que a pessoa nomeou (a mesma ação com duas caras).
 Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
 
-- [x] **D1 · o inventário honesto** · de: pessoa · 14/09 · **feito v9.242**
+- [x] **D1 · o inventário honesto** · de: pessoa · 14/09 · **feito v9.242 · `06e1fa9`**
   O retrato saiu, e quase todo número escrito aqui estava errado: `T` tem
   **14** cores (não 15); o `App.jsx` tem **93** literais de cor (não 30) e o
   projeto de tela tem **242**, dos quais **67 já são cores de `T`**

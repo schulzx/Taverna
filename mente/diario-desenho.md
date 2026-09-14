@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 14/09 16:20 · v9.242 · D1 · o inventário honesto · commit `HASH`
+## 14/09 16:20 · v9.242 · D1 · o inventário honesto · commit `06e1fa9`
 
 O primeiro ciclo da segunda mente, e ele não muda uma linha de tela de
 propósito: **mede**. A Fase A ensinou que medir antes de mexer é o que faz a
