@@ -44,6 +44,19 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
   É órgão, e é da pessoa. O 5e o usa em dezenas de lugares, então nasceria com
   leitores de sobra — mas muda o que o jogador vive em campanha viva.
 
+- [ ] **o herói é um passageiro no próprio combate difícil** · pesado · de: backend (achado de B1) · 14/09
+  O primeiro número que a régua nova produziu, e não era o que ela foi buscar:
+  o herói cai em **98,1%** dos combates do cenário `justo` e em **100,0%** dos do
+  `duro` — quase sempre na rodada 1 ou 2. A partir dali a cena é *"três
+  companheiros lutando sozinhos"*, e o jogador assiste. A causa está medida e é
+  estrutural, não azar: `turnoDosInimigos` manda **65%** dos golpes no herói
+  (o sorteio de 35% para companheiro), e oito golpes de elite por rodada contra
+  42 PV e defesa 16 não têm resposta possível.
+  **Isto pode ser exatamente a tensão desejada** — o combate duro *deve* doer, e
+  cair não é perder — **ou pode ser o protagonista sendo apagado da própria luta**.
+  Nenhum número resolve a diferença: é a pessoa que sabe qual dos dois quis.
+  Se ela quiser mexer, a régua de B1 já mede o antes e o depois sem trabalho novo.
+
 <details>
 <summary>as quatro perguntas como foram feitas (e as respostas)</summary>
 
@@ -353,7 +366,7 @@ Desde a **v9.2**: o veneno do companheiro é eterno, e a condição boa que
   produção. **Teto de prompt: crescimento estático zero nas quatro versões**, e
   `CONDICOES_PROMPT` na verdade encolheu (−10 em T2, −2 em T4), porque as duas
   vezes em que ele mentia foram consertadas trocando palavra por palavra.
-  **A próxima da fila aprovada é a Fase B, começando por B1 · a régua que falta.**
+  **A próxima da fila aprovada é a Fase B; B1 fechou em v9.243 e a vez é de B2.**
 
 ### Fase B — o bônus do companheiro, se for lícito e justo
 Decisão da pessoa (14/09): *"se o bônus for lícito e justo não tem porque
@@ -366,19 +379,41 @@ a metade defensiva vale (`absorverDano` a lê) e a ofensiva não, porque
 faz o dano do grupo crescer em Uma Vida **sem teto medido**: a catraca de
 equilíbrio só existe para a arena.
 
-- [ ] **B1 · a régua que falta** · de: pessoa · 14/09
-  Não há instrumento que meça equilíbrio em **Uma Vida** — só na arena. Antes
-  de somar um ponto de dano, criar a medida: combates simulados em cenário
-  duro e brando (o molde que P3 já usou para medir 918 de dano parado), com
-  os números que importam — quedas, primeira queda, PV restante, duração. É a
-  régua que vai dizer se o bônus é justo, e serve a toda mudança futura de
-  combate. Sem ela, B2 não tem como ser aprovada por prova.
+- [x] **B1 · a régua que falta** · feito em v9.243, 14/09
+  A régua existe e é permanente: `testes/regua-combate.mjs` (o instrumento) e
+  `testes/teste-regua.mjs` (a catraca, 115 asserções). **Zero linha de `src/`
+  mudou** — B1 não somou um ponto de dano. O molde de P3/T1 foi reconstruído a
+  partir do `App.jsx` de hoje e bate nos dois números que T1 deixou escritos
+  (1ª queda **4,41** contra 4,41; quedas **545** contra 566→563).
+  **Nasceu um terceiro cenário, e é o que importa:** `duro` e `brando` estão
+  saturados nas pontas (no duro caem 2,81 dos 3 e sobram 3 PV de 132; no brando
+  ninguém cai nunca e sobram 94%) — mudança que passa nos dois extremos não
+  prova nada. **`justo`** (4 elites nv6) põe a mesa em **49,8% de vitória, 1,82
+  quedas e 19% de PV**, com folga nos dois sentidos.
+  **Estável, não sortuda:** N = 1000 × 4 famílias independentes, que concordam
+  nas treze métricas; a N = 2000 `danoSofrido` passa a discordar — a precisão
+  ficou mais fina que a distância entre famílias, e 1000 é o maior N em que a
+  régua ainda concorda consigo mesma.
+  **Virou catraca**, com três dentes no `justo`: faixa de vitória **35–65%** (a
+  mesma lei da arena, lida de `teste-arena.mjs` como texto), teto de PV do grupo
+  **≤ 35** e piso de quedas **≥ 1,2** — folga mínima **3,70 margens**, e a folga
+  ela mesma é asserção (`> 2 margens`), para a régua avisar que ficou não-confiável
+  *antes* de ficar vermelha. **Quatro sabotagens, três mordendo e um controle
+  verde** (4 elites nv7 → 34,2%; 3 elites nv9 → 76,2%; grupo nv7 → 90,2%).
+  **O que B2 vai querer:** cada ponto de dano por golpe do grupo vale **~3,5
+  pontos de vitória**, e a catraca fica vermelha por volta de **+4/+5**.
 - [ ] **B2 · a simetria fechada, se a régua deixar** · de: pessoa · 14/09
   `turnoDosCompanheiros` aprende a ler `efeitos`, e o bônus ofensivo passa a
   somar como o defensivo já soma. **A régua de B1 decide**: se o grupo ficar
   forte demais, o trabalho da etapa é ajustar a tabela até ficar justo — e o
   diário registra o número antes e depois. Se não der para ficar justo sem
   mexer em lei, a etapa devolve à pessoa em vez de forçar.
+  **B1 deixou duas coisas na mesa para esta etapa.** (a) A escada já está medida:
+  +1 → 52,5% · +2 → 56,5% · +3 → 60,3%, e o teto de PV do grupo é o dente mais
+  sensível (+1 já sai da margem) enquanto a vitória é o mais estável. (b) **A
+  absorção divergiu de P3 pela metade** — esta régua mede 378 PV parados em 63
+  abrigos, T1 mediu 918 em 153. O escudo nasce menos da metade das vezes. É a
+  mesma porta que B2 encosta: **olhar antes, não depois**.
 
 ### Fase F — as quatro famílias que ainda prometem
 Decisão da pessoa (14/09): *"todas devem cumprir o que prometem."*

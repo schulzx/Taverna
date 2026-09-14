@@ -16,6 +16,149 @@ Formato:
 
 ---
 
+## 14/09 18:05 · v9.243 · B1 · a régua que falta · commit `HASH_B1`
+
+- **estado inicial:** árvore limpa, HEAD `85c23e8`, VERSÃO v9.241, `npm test`
+  181/181 suítes + 9/9 varredores verde. Sem trava de ciclo (posta por mim).
+  **Duas mentes na mesma árvore:** o `regente` rodava D1 ao lado; durante o
+  ciclo ele commitou e bumpou para v9.242, então esta etapa saiu em **v9.243**
+  (a lei do número maior, e nenhum conflito — B1 não tocou território nenhum
+  do desenho). **O bastão do `App.jsx` não foi tomado porque não foi preciso:**
+  B1 é motor e medida, e fecha sem uma linha de tela.
+- **conselheiro:** não chamado (etapa já escrita e aprovada; a pauta tem mais de
+  5 itens em "Aberto").
+- **o item:** **B1 · a régua que falta**, primeira etapa da Fase B, aprovada pela
+  pessoa com uma condicional que é a fase inteira — *"se o bônus for lícito e
+  justo"*. **Provar que é justo faz parte do trabalho**, e até hoje não havia com
+  o que provar: a catraca de 35–65% só existia para a arena, e **toda mudança de
+  combate em Uma Vida foi julgada por argumento, não por número.**
+- **backend:** `testes/regua-combate.mjs` (756 linhas) — o simulador determinístico
+  de combates de Uma Vida, compondo os motores reais (`turnoDosInimigos`,
+  `turnoDosCompanheiros`, `resolverAtaque`, `absorverDano`, `tickCondicoes`,
+  `erguerGuarda`, `testeConcentracao`…). 13 exports, cenários e amostra em tabela
+  nomeada, média e margem de erro saindo do módulo e não de conta à mão.
+- **testes:** `testes/teste-regua.mjs` (578 linhas, **115 asserções**, 9 seções) —
+  a catraca. **Quatro sabotagens: três mordendo e um controle verde.** A suíte
+  custa 12,3 s dos 122 s de `npm test`.
+- **B1 não somou um ponto de dano.** `src/` inteiro intocado, `App.jsx` intocado;
+  os dois únicos arquivos do commit são a régua e a sua suíte (mais VERSÃO, pauta
+  e diário). Era a promessa da etapa e está cumprida byte a byte.
+
+### A linha de base de hoje — o retrato contra o qual B2 será julgada
+
+N = 1000, família `umavida`. Valor ± meia-largura do IC de 95%.
+
+| métrica | duro | **justo** | brando |
+|---|---|---|---|
+| quedas (de 3) | 2,81 ± 0,04 | **1,82 ± 0,08** | 0,00 ± 0,00 |
+| primeira queda (rodada) | 4,65 ± 0,13 | **4,30 ± 0,13** | — (ninguém cai) |
+| PV do grupo (de 132) | 3,34 ± 0,77 | **24,98 ± 1,90** | 124,34 ± 0,43 |
+| PV do herói (de 42) | 0,48 ± 0,18 | **5,58 ± 0,55** | 31,93 ± 0,45 |
+| rodadas | 8,05 ± 0,15 | **7,73 ± 0,10** | 2,94 ± 0,02 |
+| dano desferido | 249,22 ± 6,33 | **260,62 ± 4,94** | 142,60 ± 1,67 |
+| dano sofrido | 319,69 ± 3,65 | **274,74 ± 3,69** | 18,51 ± 0,60 |
+| PV parados no abrigo | 1,74 ± 0,18 | **1,75 ± 0,18** | 0,79 ± 0,13 |
+| vitória | 8,70% ± 1,75 | **49,80% ± 3,10** | 100,00% ± 0,30 |
+| queda do herói | 100,0% ± 0,30 | **98,10% ± 0,85** | 0,00% ± 0,30 |
+| TPK | 91,30% ± 1,75 | **50,20% ± 3,10** | 0,00% ± 0,30 |
+| estourou o teto | 0,00% | **0,00%** | 0,00% |
+
+**O molde de P3/T1, reconstruído.** O script original morreu com o scratchpad —
+sobreviveu a descrição no diário, e foi dela que a fiação voltou. Contra o retrato
+de T1 (200 combates, `umavida|0..199`, duro): 1ª queda **4,41** contra 4,41, e
+quedas **545** contra 566→563. Uma peça foi **recuperada por medição**: o PV do
+inimigo sai do nível **do próprio inimigo**, não do nível do herói — com 59 PV a
+régua mediria 289 quedas e 1ª queda 3,73, e nenhum número de T1 ficaria de pé.
+Está escrito no cabeçalho do módulo com o motivo de desenho (senão `nivel: 9` não
+decidiria nada).
+
+### Decisões médias tomadas (com o motivo)
+
+- **Nasceu um terceiro cenário, `justo`, e é o que importa.** `duro` e `brando`
+  estão **saturados nas duas pontas**: no duro caem 2,81 dos 3 e sobram 3 PV de
+  132 (não há para onde descer); no brando ninguém cai nunca e sobram 94% (não há
+  para onde subir). É a mesma leitura honesta que P3 já tinha escrito ("mede uma
+  base de 2,6% do máximo"). Motivo: **uma mudança que passa nos dois extremos não
+  provou nada** — uma régua que não se mexe não é régua. `justo` (4 elites nv6) põe
+  a mesa em 49,8% de vitória, 1,82 quedas e 19% de PV, com folga nos dois sentidos,
+  e foi calibrado **pela própria régua** (4 elites nv9 = 9% · nv7 = 34% · nv6 = 50%;
+  3 elites nv9 = 78%) em vez de por palpite. É item de tabela, no formato dos dois
+  que já existiam — nenhuma regra de jogo mudou.
+- **A amostra é 1000, e o teto tem motivo, não é número redondo.** As médias param
+  cedo (entre 500 e 2000 as quedas mexem 0,04). Quem decide o N é a **margem**: a
+  N=1000 as quatro famílias independentes **concordam nas treze métricas**; a
+  N=2000 `danoSofrido` passa a **discordar** (5,23 de distância contra margens que
+  somam 5,18). A amostra maior não achou diferença de jogo — achou o próprio
+  resorteio, porque a precisão ficou mais fina que a distância entre famílias.
+  **1000 é o maior N em que a régua ainda concorda consigo mesma**, e é a lição de
+  A4 e C2b aplicada antes de doer, não depois.
+- **A régua mora em `testes/`, não em `src/`.** Foi pedida em `src/regua-combate.js`
+  e o `backend` recusou com razão: `teste-ligacao` exige que todo módulo de `src/`
+  seja importado por outro módulo de `src/`, e **nada no jogo importa (nem deve
+  importar) um simulador de balanceamento** — ali ela nasceria vermelha no dia em
+  que nascesse. `testes/` tem precedente farto (`medir-*`, `sonda-*`, `p1..p4`,
+  `calibra-poder`). Como `teste-ligacao` só varre `src/`, a suíte carrega a catraca
+  que faltava: a **seção 9** prova que os 13 exports têm leitor, e que nada de
+  produção a importa. Preferir `src/` custaria um perdão escrito, e perdão em lei é
+  preço alto para mudar uma pasta.
+- **A faixa 35–65 não é número novo: é a lei da arena, lida como texto.** A suíte
+  abre `teste-arena.mjs` e confere que `piso: 0.35` / `teto: 0.65` continuam lá.
+  Motivo: se o mesmo limiar existisse escrito em dois lugares, um dia divergiriam em
+  silêncio — assim, o dia em que alguém mexer num dos dois, este dente morde.
+- **O que NÃO virou limiar, e por quê.** `absorvido`/`abrigos` (ralos e oscilantes),
+  `danoSofrido` (a única que discorda quando N cresce), `pvHeroi`/`quedaDoHeroi` no
+  duro e no justo (saturados em 98–100% — limiar em cima de um teto não mede nada) e
+  `primeiraQueda` no brando (conjunto vazio). Ficaram como `pendente(...)`, que
+  imprime e não falha. Motivo: **afirmar o instável é pior que não afirmar** — uma
+  catraca que pisca sozinha ensina a gente a ignorá-la. No brando a honestidade
+  virou asserção: `n === 0 && margem === Infinity`, para a régua nunca inventar
+  número onde não houve queda.
+
+### Virou catraca — três dentes e um aviso
+
+Cenário `justo`, 4 famílias × 1000 sementes, tudo lido de `CATRACA_DE_UMA_VIDA`:
+
+| dente | limiar | retrato (4 famílias) | folga |
+|---|---|---|---|
+| faixa de vitória | **35% – 65%** (a lei da arena) | 49,8 · 51,7 · 52,8 · 52,6% | 3,94–5,75 margens |
+| teto de PV do grupo | **≤ 35** (de 132) | 24,98 · 25,35 · 27,24 · 27,70 | 3,70–5,28 margens |
+| piso de quedas | **≥ 1,2** (de 3) | 1,822 · 1,798 · 1,749 · 1,725 | 6,41–7,79 margens |
+| guarda | `estourouTeto === 0` nos três cenários | 0 em todas | — |
+
+**A folga mínima (3,70 margens) é ela mesma uma asserção** (`> 2 margens`): se a
+folga encolher, a régua deixou de ser confiável **antes** de ficar vermelha, e
+descobrir isso quando já está piscando é tarde demais.
+
+**Ela morde** — quatro sabotagens, todas por cenário (nunca por `src/`): controle
+50,0% **verde** · 4 elites nv7 → **34,2%** (derruba *só* o piso de vitória, por oito
+décimos de ponto) · 3 elites nv9 → **76,2%** (derruba os três) · grupo nv7 → **90,2%**
+(derruba os três). O controle existe para que as outras não possam estar vermelhas
+por o caminho ter quebrado algo, e bate com a medida por id até 1e-12.
+
+### O que ficou
+
+- **Para B2, o número que ela vai querer:** cada ponto de dano por golpe do grupo
+  vale **~3,5 pontos de vitória** (+1 → 52,5% · +2 → 56,5% · +3 → 60,3%), e a catraca
+  fica vermelha por volta de **+4/+5**. O **PV do grupo é o dente mais sensível**
+  (+1 já sai da margem); a **vitória é o mais estável**. A escada foi medida no
+  `regua-combate.mjs` e **não** foi reproduzida na suíte — somar dano fixo por golpe
+  exigiria mexer no motor (`bonusArmaComp` vem de `equipados.arma.atributos.dano`, e
+  `fichaDoGrupo` monta `equipados: {}` cravado), e B1 prometeu não mexer.
+- **A absorção divergiu de P3 pela metade, e é a mesma porta que B2 encosta.**
+  Esta régua mede **378 PV parados em 63 abrigos**; T1 mediu **918 em 153**. O escudo
+  nasce menos da metade das vezes. Ou o molde perdido tinha mais nascimentos, ou algo
+  mudou entre P3 e hoje — **olhar antes de B2, não depois**. Escrito na pauta, em B2.
+- **Para a pessoa decidir (pesado), um achado que a régua não foi buscar:** o herói
+  cai em **98,1%** dos combates do `justo` e **100,0%** dos do `duro`, quase sempre na
+  rodada 1 ou 2, porque `turnoDosInimigos` manda 65% dos golpes nele e oito golpes de
+  elite por rodada contra 42 PV e defesa 16 não têm resposta. Depois disso a cena é
+  "três companheiros lutando sozinhos". **Pode ser exatamente a tensão desejada, ou o
+  protagonista sendo apagado da própria luta** — e nenhum número resolve a diferença.
+  Está na pauta, em "Para a pessoa decidir".
+- **Não avançou para B2**, como pedido. A vez seguinte da fila aprovada é B2.
+
+---
+
 ## 14/09 17:05 · v9.241 · T4 · as portas de saída declaradas · commit `79567ce`
 - **estado inicial:** árvore limpa, HEAD `acc62ff`, VERSÃO v9.240, `npm test`
   181/181 suítes + 9/9 varredores verde. Sem trava de ciclo (posta por mim). A vez
