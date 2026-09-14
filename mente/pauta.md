@@ -504,7 +504,7 @@ equilíbrio só existe para a arena.
   lido. **Sabotagem 1 subiu de nv7 para nv8** (a de nv7 parou de morder — 36,4%
   contra o piso de 35%); o piso não se moveu, e a resolução perdida (dois níveis,
   não um) está escrita. Folga mínima **3,45 margens**, não comprada de volta.
-- [x] **B2 · a simetria fechada** · feito em v9.247 (`HASH`), 14/09 — **e a Fase B fecha aqui**
+- [x] **B2 · a simetria fechada** · feito em v9.247 (`c14532b`), 14/09 — **e a Fase B fecha aqui**
   `turnoDosCompanheiros` aprende a ler `efeitos`, e o bônus ofensivo passa a
   somar como o defensivo já soma. **A régua decide**: se o grupo ficar forte
   demais, o trabalho da etapa é ajustar a tabela até ficar justo — e o diário

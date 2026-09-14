@@ -16,7 +16,7 @@ Formato:
 
 ---
 
-## 14/09 21:05 · v9.247 · B2 · a simetria fechada, e a Fase B com ela · commit `HASH`
+## 14/09 21:05 · v9.247 · B2 · a simetria fechada, e a Fase B com ela · commit `c14532b`
 
 - **estado inicial:** árvore limpa, HEAD `5a170c3`, VERSÃO v9.246, `npm test`
   **182/182 suítes + 9/9 varredores** verde. Trava posta por mim. **Duas mentes:**
