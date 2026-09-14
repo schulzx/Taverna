@@ -26,11 +26,15 @@ let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
 const sec = (s) => console.log("\n" + s);
 
+/* v9.233 (P3): `ABSORCAO_DO_BUFF` e `absorverDano` entraram nesta lista — é a
+   segunda metade da família defensiva, e as seções 13/14 a provam. A lista
+   cresceu, nenhum nome saiu dela: as seções 1–12 leem exatamente o que liam. */
 const {
   LIMITES_DO_EFEITO, BUFF_DA_HABILIDADE, EFEITO_DO_MILAGRE, EFEITO_DA_MAGIA,
-  APLICA_UNIVERSAL, APLICA_NA_NOTA,
+  APLICA_UNIVERSAL, APLICA_NA_NOTA, ABSORCAO_DO_BUFF,
   efeitosDe, empilhar, retirar, efeitoDeBuff, efeitoDeMilagre, turnosDaMagia,
   efeitoDeMagia, efeitoEmConcentracao, quebrarConcentracao, buffsNaRolagem, notaDosBuffs,
+  absorverDano,
 } = E;
 
 /* um herói mínimo: só o que o órgão dos efeitos olha */
@@ -494,6 +498,505 @@ sec("12. ligado ao jogo — os quatro leitores do órgão");
   /* quem soma o golpe na arena também respeita a peneira — a metade que
      `check-protecao.mjs` não vê, porque ele não abre a arena. */
   t("a arena firma o buff pelo mesmo nascimento", /efeitoDeBuff\(hab, eu, undefined\)/.test(src("arena.js")));
+}
+
+/* ============================================================
+   13 e 14 vêm DEPOIS da 12 ("ligado ao jogo") de propósito, e não por
+   desleixo de ordem: renumerar as doze seções para encaixar a absorção no
+   meio moveria dezenas de asserções que ninguém pediu para mover, e a lei da
+   casa cobra um motivo escrito por asserção movida. Nenhuma foi. A 13 prova a
+   REGRA (o módulo puro) e a 14 prova a FIAÇÃO, que é o mesmo par que a 9 e a
+   12 formam para P1.
+   ============================================================ */
+
+sec("13. a absorção — o abrigo come o golpe e se desfaz (P3)");
+{
+  const A = ABSORCAO_DO_BUFF;
+
+  /* ---- A TABELA, lida de volta ----
+     Nenhum número abaixo é copiado à mão: a prova pergunta à tabela e
+     confere a RELAÇÃO entre os campos. É a lei "se é número, é tabela" com
+     a catraca que ela pede — mexer em `porPM` sem mexer no resto fica
+     vermelho aqui, em vez de passar verde contra uma constante decorada. */
+  t("a absorção tem família declarada, e é uma das cinco da tabela de P1",
+    typeof A.familia === "string" && C.APLICACAO_DO_BUFF.some((l) => l.id === A.familia));
+  t("a régua sai do custo em PM, e é positiva", inteiroPositivo(A.porPM));
+  /* A DEFENSIVA COMPRA MAIS POR PM QUE A OFENSIVA, e isso tem motivo: um
+     bônus de dano cobra em TODO golpe dos três turnos, o abrigo cobra uma
+     vez só. Se as duas réguas se igualarem, a defensiva virou o troco.
+
+     O NÚMERO EXATO, para a catraca poder morder: a ofensiva dá
+     `1/divisorDoCusto` = 0,5 de força por PM; a defensiva dá `porPM` = 2.
+     São QUATRO vezes, não duas — o comentário de `ABSORCAO_DO_BUFF` diz "o
+     dobro da força ofensiva", e a frase está imprecisa quanto ao fator (ver
+     o relato desta etapa). A prova crava a RELAÇÃO medida, não a palavra:
+     se alguém corrigir a régua para o dobro de verdade, é aqui que a
+     mudança de desenho aparece, em vez de passar despercebida. */
+  const ofensivaPorPM = 1 / BUFF_DA_HABILIDADE.divisorDoCusto;
+  t("a defensiva compra mais golpe aparado por PM do que a ofensiva soma", A.porPM > ofensivaPorPM);
+  t("e a relação medida hoje é de 4 para 1 (ofensiva 0,5/PM · defensiva 2/PM)",
+    A.porPM / ofensivaPorPM === 4, `mediu ${A.porPM / ofensivaPorPM}`);
+  t("o piso e o teto são uma faixa utilizável", inteiroPositivo(A.minimo) && inteiroPositivo(A.teto) && A.minimo < A.teto);
+  /* o custo padrão é o MESMO do buff ofensivo, e por um motivo que não é
+     estético: relíquia, poção, grimório e o piloto chegam sem custo, e duas
+     tabelas com padrões diferentes fariam a mesma habilidade valer números
+     distintos conforme a porta por onde entrou. */
+  t("e o custo padrão é o mesmo das duas metades", A.custoPadrao === BUFF_DA_HABILIDADE.custoPadrao);
+
+  /* ---- O TETO 12: o dente que importa ----
+     O número foi MEDIDO, não escolhido, e a medida está no comentário da
+     tabela. Repito-a aqui como tabela local porque a suíte tem de poder
+     dizer POR QUE 12 — sem isto, o dia em que alguém subir o teto para 20
+     passa verde, e um abrigo que come a batida inteira apaga o combate:
+     ninguém apanha, ninguém decide nada, a luta vira contabilidade. É a
+     mesma lei que o comentário de `GUARDAS` escreveu para a defesa. */
+  const GOLPE_MEDIDO = {
+    /* arena, v9.233: mediana 13 e média 13,76 de dano por golpe que acerta,
+       sobre duelistas de 24 a 36 PV; uma queda dura 4,85 golpes acertados. */
+    medianaDoGolpe: 13, pvMinimoDoDuelista: 24,
+  };
+  t(`o teto (${A.teto}) fica ABAIXO de um golpe mediano (${GOLPE_MEDIDO.medianaDoGolpe}) — nenhum abrigo apaga uma batida`,
+    A.teto < GOLPE_MEDIDO.medianaDoGolpe);
+  t("e é o MAIOR número que ainda cabe nessa regra (12 é o teto, não 11)",
+    A.teto === GOLPE_MEDIDO.medianaDoGolpe - 1);
+  /* O OUTRO LADO DA MESMA MEDIDA, e ele está NA BORDA — vale escrito porque
+     a margem é zero: 12 é EXATAMENTE metade do duelista mais frágil (24 PV).
+     A prova crava a igualdade em vez de uma desigualdade folgada porque é
+     isso que está medido: subir o teto um único ponto põe um abrigo de 2 PM
+     valendo mais da metade da barra de quem é mais frágil na arena, e aí a
+     defensiva deixa de ser um respiro e vira a decisão da luta inteira. */
+  t(`o teto (${A.teto}) é no MÁXIMO metade do duelista mais frágil (${GOLPE_MEDIDO.pvMinimoDoDuelista} PV) — e hoje está na borda`,
+    A.teto <= GOLPE_MEDIDO.pvMinimoDoDuelista / 2);
+  t("e a borda é exata: hoje o teto é metade certa, sem folga nenhuma",
+    A.teto === GOLPE_MEDIDO.pvMinimoDoDuelista / 2);
+
+  /* ---- A FORÇA SAI DO CUSTO, e o teto morde de verdade ----
+     `forcaDaAbsorcao` é privada de propósito (um segundo caminho para o
+     mesmo número é a forma exata de as duas metades divergirem), então a
+     prova entra pela única porta pública: `efeitoDeBuff`. */
+  const abrigoDe = (custo) => efeitoDeBuff(
+    { nome: "Véu de Bronze", custo, descricao: "Barreira que absorve o próximo dano." },
+    heroi(), undefined,
+  );
+  t("2 PM compram o dobro em golpe aparado", abrigoDe(2).efeito.absorve === 2 * A.porPM);
+  t("5 PM idem, a régua é linear", abrigoDe(5).efeito.absorve === 5 * A.porPM);
+  /* o custo em que a régua encosta no teto, perguntado à tabela */
+  const custoDoTeto = Math.ceil(A.teto / A.porPM);
+  t(`a régua encosta no teto em ${custoDoTeto} PM`, abrigoDe(custoDoTeto).efeito.absorve === A.teto);
+  t("e o teto MORDE: custo maior não compra mais nada", abrigoDe(custoDoTeto + 6).efeito.absorve === A.teto);
+  t("nem um custo absurdo", abrigoDe(999).efeito.absorve === A.teto);
+  /* o PISO: só é alcançável por custo fracionário, porque custo 1 já dá 2 e
+     custo ausente cai no padrão (que dá 4). Ele guarda a porta de fora —
+     relíquia e poção, que chegam com número escrito por outra mão. */
+  t("o piso segura o custo fracionário", abrigoDe(0.1).efeito.absorve === A.minimo);
+  t("custo ausente cai no padrão da tabela, não no piso",
+    abrigoDe(undefined).efeito.absorve === A.custoPadrao * A.porPM);
+  t("custo zero também", abrigoDe(0).efeito.absorve === A.custoPadrao * A.porPM);
+  t("e custo negativo não vira abrigo negativo", abrigoDe(-5).efeito.absorve >= A.minimo);
+  /* toda força possível fica dentro da faixa — a varredura do acervo inteiro
+     mora em `check-protecao.mjs`; aqui é a régua, lá é a amostra real */
+  t("nenhum custo de 0 a 60 sai da faixa da tabela",
+    Array.from({ length: 61 }, (_, c) => abrigoDe(c).efeito.absorve)
+      .every((n) => Number.isInteger(n) && n >= A.minimo && n <= A.teto));
+
+  /* ---- O CONSUMO: tira dano de verdade, e o resto passa ---- */
+  const comAbrigo = (n, nome = "Véu de Bronze") => heroi({ efeitos: [{ nome, absorve: n, turnos: 3 }] });
+
+  {
+    /* golpe MAIOR que o abrigo: sobra o resto, e o abrigo some */
+    const r = absorverDano(comAbrigo(4), 10);
+    t("golpe maior que o abrigo: o resto chega", r.dano === 6);
+    t("e o abrigo levou exatamente o que tinha", r.absorvido === 4);
+    t("e ele some da ficha — é de UMA batida", r.pers.efeitos.length === 0);
+    t("a soma fecha: o que parou mais o que chegou é o golpe inteiro", r.absorvido + r.dano === 10);
+  }
+  {
+    /* golpe MENOR: o abrigo come tudo e some DO MESMO JEITO. É o dente que
+       separa um escudo de uma poupança — guardar o resto para o golpe
+       seguinte é o que a ficha NÃO promete ("absorve o PRÓXIMO dano"). */
+    const r = absorverDano(comAbrigo(9), 3);
+    t("golpe menor que o abrigo: nada chega", r.dano === 0);
+    t("o abrigo levou só o que havia (não inventa dano)", r.absorvido === 3);
+    t("e some do mesmo jeito — escudo não é poupança", r.pers.efeitos.length === 0);
+  }
+  {
+    const r = absorverDano(comAbrigo(5), 5);
+    t("golpe do tamanho exato do abrigo: nada chega e o abrigo some",
+      r.dano === 0 && r.absorvido === 5 && r.pers.efeitos.length === 0);
+  }
+  {
+    /* UM por golpe, o MAIOR: dois escudos não estilhaçam na mesma batida, e
+       deixá-los somar é o caminho curto para a absorção apagar um golpe
+       inteiro — que é justamente o que o teto existe para impedir. */
+    const dois = heroi({ efeitos: [{ nome: "Casca", absorve: 3 }, { nome: "Véu de Bronze", absorve: 7 }] });
+    const r = absorverDano(dois, 20);
+    t("com dois abrigos, só o MAIOR se gasta", r.absorvido === 7 && r.dano === 13);
+    t("e o menor continua de pé para a próxima batida", nomes(r.pers.efeitos) === "Casca");
+    t("e é o maior que assina a linha", /Véu de Bronze/.test(r.linha) && !/Casca/.test(r.linha));
+  }
+  {
+    /* o efeito SEM `absorve` — a regressão zero fora da família, no módulo */
+    const p = heroi({ efeitos: [{ nome: "Vigor", bonus: 2, turnos: 3 }] });
+    const r = absorverDano(p, 7);
+    t("efeito sem `absorve`: o dano sai intacto", r.dano === 7);
+    t("nada foi absorvido", r.absorvido === 0);
+    t("a linha é vazia — o sítio nem toca na ficha", r.linha === "");
+    t("e a ficha volta a MESMA (identidade, não cópia)", r.pers === p);
+    t("com a lista de efeitos intacta", p.efeitos.length === 1);
+  }
+  {
+    /* `absorve: 0` e `absorve` não-numérico não são abrigo nenhum */
+    t("`absorve: 0` não é abrigo", absorverDano(comAbrigo(0), 9).dano === 9);
+    t("`absorve` negativo não é abrigo", absorverDano(comAbrigo(-4), 9).dano === 9);
+    t("`absorve` em texto não vira número", absorverDano(heroi({ efeitos: [{ nome: "X", absorve: "muito" }] }), 9).dano === 9);
+    /* mas `absorve` em texto NUMÉRICO conta: é por onde um save antigo ou o
+       canal do Mestre entregaria o campo, e recusá-lo seria perder o abrigo
+       de quem já o tinha */
+    t("mas `absorve` em texto numérico conta", absorverDano(heroi({ efeitos: [{ nome: "X", absorve: "4" }] }), 9).dano === 5);
+  }
+  {
+    /* DANO 0, NEGATIVO e NaN: nada é consumido. O abrigo tem de sobreviver
+       a um golpe que não aconteceu — gastá-lo ali seria o jogador perder o
+       que pagou por uma rolagem que errou. */
+    const p = comAbrigo(4);
+    for (const [rotulo, d] of [["zero", 0], ["negativo", -8], ["NaN", NaN], ["undefined", undefined], ["null", null], ["texto", "abc"]]) {
+      const r = absorverDano(p, d);
+      t(`dano ${rotulo}: nada é consumido`, r.absorvido === 0 && r.linha === "");
+      t(`dano ${rotulo}: o abrigo continua de pé`, r.pers === p && p.efeitos.length === 1);
+      t(`dano ${rotulo}: o dano devolvido é 0, nunca negativo`, r.dano === 0);
+    }
+  }
+  {
+    /* o dano chega arredondado e nunca negativo — quem soma PV do outro lado
+       conta com inteiro (é o que `arena.js` e os sete sítios do App fazem) */
+    const r = absorverDano(comAbrigo(4), 10.6);
+    t("dano fracionário é arredondado antes de encontrar o abrigo", Number.isInteger(r.dano) && r.dano === 7);
+  }
+
+  /* ---- IMUTABILIDADE: é onde funções assim costumam mentir ---- */
+  {
+    const ef = { nome: "Véu de Bronze", absorve: 4, turnos: 3 };
+    const p = heroi({ efeitos: [ef, { nome: "Vigor", bonus: 2 }] });
+    const antes = JSON.stringify(p);
+    const listaAntes = p.efeitos;
+    const r = absorverDano(p, 10);
+    t("a ficha de entrada sai da chamada idêntica", JSON.stringify(p) === antes);
+    t("a lista de efeitos de entrada é a MESMA referência, com o mesmo tamanho",
+      p.efeitos === listaAntes && p.efeitos.length === 2);
+    t("o abrigo consumido continua na ficha de entrada", p.efeitos.includes(ef));
+    t("e o efeito em si não foi marcado nem zerado", ef.absorve === 4);
+    t("a ficha devolvida é outra", r.pers !== p);
+    t("e a lista devolvida é outra", r.pers.efeitos !== listaAntes);
+    t("o resto dos efeitos sobrevive na ficha nova", nomes(r.pers.efeitos) === "Vigor");
+    /* o que NÃO é `efeitos` viaja inteiro: a função troca uma chave só */
+    t("e o que não é `efeitos` atravessa sem toque", r.pers.nome === p.nome && r.pers.classe === p.classe);
+  }
+  {
+    /* a lista sai LIMPA de buracos, como `empilhar` faz há uma versão */
+    const p = heroi({ efeitos: [null, { nome: "Véu de Bronze", absorve: 4 }, undefined, { nome: "Vigor" }] });
+    const r = absorverDano(p, 10);
+    t("a lista devolvida sai sem os buracos da original", nomes(r.pers.efeitos) === "Vigor");
+    t("e a original continua com os buracos dela", p.efeitos.length === 4);
+  }
+
+  /* ---- `null` E LIXO NÃO INVENTAM ABSORÇÃO ----
+     `= {}` no destructuring NÃO cobre `null` explícito — é lei da casa e é
+     o erro que esta família pagaria caro, porque ela mora no caminho de
+     TODO dano que chega a um corpo. */
+  for (const [rotulo, entrada] of [
+    ["null", null], ["undefined", undefined], ["{}", {}],
+    ["{efeitos: null}", { efeitos: null }],
+    ["{efeitos: 7}", { efeitos: 7 }],
+    ["{efeitos: \"x\"}", { efeitos: "x" }],
+    ["{efeitos: [null, {}, 3]}", { efeitos: [null, {}, 3] }],
+    ["{efeitos: []}", { efeitos: [] }],
+    ["string solta", "nada"],
+    ["número solto", 42],
+  ]) {
+    let r, estourou = false;
+    try { r = absorverDano(entrada, 9); } catch { estourou = true; }
+    t(`${rotulo} não estoura`, !estourou);
+    t(`${rotulo} não absorve nada`, !estourou && r.absorvido === 0 && r.linha === "");
+    t(`${rotulo} devolve o dano inteiro`, !estourou && r.dano === 9);
+  }
+  t("e sem argumento nenhum também não estoura",
+    (() => { try { const r = absorverDano(); return r.dano === 0 && r.absorvido === 0; } catch { return false; } })());
+
+  /* ---- A FRASE É GAMEPLAY, E É VOZ DE MUNDO ----
+     Lei iv: o sistema não fala de si mesmo. A linha traz o NÚMERO (o
+     jogador pagou PM por ele e tem de poder ver o que comprou) e NENHUM
+     nome de mecanismo. O nome do abrigo é o da habilidade, que é ficção,
+     não bastidor — por isso a prova usa "Véu de Bronze", que não carrega
+     nenhuma das palavras proibidas dentro de si e não falseia o dente. */
+  const PALAVRAS_DE_BASTIDOR = [
+    "absor", "buff", "efeito", "guarda", "bônus", "bonus", "modificador",
+    "aplica", "rótulo", "rotulo", "postura", "preset", "PM", "atributo",
+  ];
+  {
+    const r = absorverDano(comAbrigo(4), 10);
+    t("a linha existe quando algo foi aparado", r.linha.length > 0);
+    t("e traz o número que parou", r.linha.includes("4"));
+    t("e o número que chegou", r.linha.includes("6"));
+    t("e chama o abrigo pelo nome da ficção", r.linha.includes("Véu de Bronze"));
+    for (const p of PALAVRAS_DE_BASTIDOR) {
+      t(`a linha não diz "${p}"`, !r.linha.toLowerCase().includes(p.toLowerCase()), r.linha);
+    }
+    /* e não narra contabilidade: nada de "(-0)", nada de fração */
+    t("a linha não mostra número negativo", !/-\d/.test(r.linha));
+  }
+  {
+    /* o caso em que nada chega: a linha NÃO escreve "0", porque zero entre
+       parênteses é a mesa narrando contabilidade em vez de ficção */
+    const r = absorverDano(comAbrigo(9), 3);
+    t("quando nada chega, a linha diz isso por palavra e não por zero",
+      r.linha.length > 0 && !/\b0\b/.test(r.linha));
+    for (const p of PALAVRAS_DE_BASTIDOR) {
+      t(`a linha do golpe inteiro aparado não diz "${p}"`, !r.linha.toLowerCase().includes(p.toLowerCase()), r.linha);
+    }
+  }
+  {
+    /* abrigo sem nome (save estranho, canal do Mestre) ainda produz uma
+       frase de mundo — não um `undefined` na tela do jogador */
+    const r = absorverDano(heroi({ efeitos: [{ absorve: 3 }] }), 10);
+    t("abrigo sem nome não escreve `undefined` na linha", !/undefined/.test(r.linha));
+    t("e ainda assim fala como mundo", r.linha.length > 0);
+  }
+
+  /* ---- A PORTA DO NASCIMENTO: só a família `absorve` ganha número ----
+     As outras quatro linhas de `APLICACAO_DO_BUFF` prometem outra coisa
+     (meio golpe, um chão de PV, um golpe que erra) e cada uma é a sua
+     própria etapa. Enquanto não forem, elas saem daqui SEM o campo. */
+  {
+    const d = abrigoDe(4);
+    t("a defensiva da família `absorve` nasce com o campo", inteiroPositivo(d.efeito.absorve));
+    t("e continua sem força de golpe (P1 não foi desfeito)", d.efeito.bonus === 0);
+    t("e continua fora do golpe", C.efeitoNoGolpe(d.efeito) === false);
+    /* a frase do nascimento também é gameplay: diz o número comprado */
+    t("a frase do nascimento anuncia o número comprado", d.extraEscopo.includes(String(d.efeito.absorve)));
+    t("e não promete dano", !/de dano/.test(d.extraEscopo));
+    /* e o efeito recém-nascido, posto numa ficha, absorve o que prometeu */
+    t("e o que ela promete é o que ela apara",
+      absorverDano(heroi({ efeitos: [d.efeito] }), 30).absorvido === d.efeito.absorve);
+  }
+  {
+    /* a OFENSIVA não ganhou campo nenhum — regressão zero fora da família */
+    const of = efeitoDeBuff({ nome: "Golpe Poderoso", custo: 4 }, heroi(), undefined);
+    t("a ofensiva não nasce com `absorve`", of.efeito.absorve === undefined);
+    t("e não apara nada", absorverDano(heroi({ efeitos: [of.efeito] }), 10).dano === 10);
+    /* o milagre e a magia de duração idem: nenhum passa pela tabela nova */
+    t("o milagre não nasce com `absorve`", efeitoDeMilagre({ nome: "Graça" }, "d").absorve === undefined);
+    t("a magia de duração não nasce com `absorve`", efeitoDeMagia({ nome: "Voo" }).efeito.absorve === undefined);
+    t("e nenhum dos dois apara golpe",
+      absorverDano(heroi({ efeitos: [efeitoDeMilagre({ nome: "Graça" }, "d"), efeitoDeMagia({ nome: "Voo" }).efeito] }), 10).dano === 10);
+  }
+  {
+    /* as OUTRAS QUATRO famílias defensivas continuam sem número — o dia em
+       que uma delas ganhar o campo, é aqui que a etapa aparece */
+    const outras = C.APLICACAO_DO_BUFF.filter((l) => l.id !== A.familia);
+    t("a tabela de P1 tem mais de uma família (a prova não é vazia)", outras.length > 0);
+    for (const l of outras) {
+      const ef = { nome: "Promessa", bonus: 0, turnos: 3, aplica: l.aplica };
+      t(`a família "${l.id}" continua sem aparar golpe`, absorverDano(heroi({ efeitos: [ef] }), 10).dano === 10);
+    }
+  }
+
+  /* ---- A PILHA CONTINUA VALENDO PARA O ABRIGO ----
+     Relançar o escudo não acumula dois: o novo vence, como todo efeito. */
+  {
+    const velho = { nome: "Véu de Bronze", absorve: 4, turnos: 3 };
+    const novo = { nome: "Véu de Bronze", absorve: 8, turnos: 3 };
+    const lista = empilhar([velho], novo);
+    t("relançar o abrigo não acumula dois", lista.length === 1);
+    t("e quem fica é o novo", lista[0].absorve === 8);
+    t("e é o número do novo que apara", absorverDano(heroi({ efeitos: lista }), 30).absorvido === 8);
+  }
+}
+
+sec("14. o abrigo está ligado ao jogo — a porta única e os sete sítios (P3)");
+{
+  /* A LIÇÃO DE R4: a âncora mede a DEFINIÇÃO *e* o sítio de chamada. Um
+     helper do `App.jsx` é invisível ao `teste-ligacao`, que só conta
+     leitores de export — sem estas âncoras, os sete sítios podem sumir num
+     refator e a suíte inteira fica verde com a proteção morta outra vez,
+     que é exatamente a doença que a Fase P veio fechar. */
+  const { readFileSync } = await import("node:fs");
+  const APP = readFileSync("../src/App.jsx", "utf8");
+  const ARENA = readFileSync("../src/arena.js", "utf8");
+
+  t("o App importa `absorverDano` do órgão",
+    /import \{[^}]*\babsorverDano\b[^}]*\} from "\.\/efeitos\.js"/.test(APP));
+  t("e existe UMA porta só, com o nome do dono como terceiro argumento",
+    /const passarPeloAbrigo = \(quem, dano, nome = ""\) => \{/.test(APP));
+  t("e quem decide lá dentro é o módulo, não o App",
+    /const ab = absorverDano\(quem, dano\);/.test(APP));
+  /* A LEI DO TURNO: um órgão que estoura não pode derrubar a cena, e o
+     `catch` tem de devolver o que ENTROU, byte a byte — um `catch` que
+     devolvesse `{}` ou zerasse o dano seria pior que o estouro. */
+  t("a porta única cala em vez de custar o turno, e devolve o que entrou",
+    /catch \(e\) \{ calou\("abrigo", e\); return \{ pers: quem, dano, linha: "" \}; \}/.test(APP));
+
+  /* A CONTAGEM. Sete sítios, e o número é a lei: herói na rodada,
+     companheiro na rodada, `sofrerNaPele`, as duas oportunidades, o fogo
+     amigo e a armadilha. Se um sumir, fica vermelho; se nascer um oitavo
+     sem passar por aqui, também — e é esse o ponto, porque um sítio novo
+     que chame `absorverDano` direto perde o try/catch e o nome do dono. */
+  const SITIOS_DO_ABRIGO = 7;
+  const quantos = (APP.match(/passarPeloAbrigo\(/g) || []).length;
+  t(`a porta única é usada em exatamente ${SITIOS_DO_ABRIGO} sítios`, quantos === SITIOS_DO_ABRIGO, `achou ${quantos}`);
+  t("e nenhum sítio do App chama o módulo por fora da porta",
+    (APP.match(/absorverDano\(/g) || []).length === 1);
+
+  /* A ORDEM NA RODADA: o abrigo é o ÚLTIMO da fila (amortecer → repartir →
+     abrigo), porque ele se gasta contra o que de fato chega ao corpo. Se
+     ele subir na fila, passa a comer dano que a invocação teria repartido,
+     e o jogador paga o escudo duas vezes. */
+  const iRepartir = APP.indexOf("repartirDano({ ...persTracos");
+  const iAbrigo = APP.indexOf("passarPeloAbrigo(persTracos");
+  t("na rodada do herói, repartir e abrigo existem os dois", iRepartir > 0 && iAbrigo > 0);
+  t("e o abrigo vem DEPOIS de repartir — ele apara o que chega ao corpo", iRepartir < iAbrigo);
+
+  /* O PREÇO DO ESFORÇO: dano auto-infligido não gasta o abrigo, porque não
+     há nada chegando para um escudo encontrar. A queda NÃO entra na
+     exceção — cair é o chão batendo em você. */
+  t("o sítio do esforço desliga o abrigo por parâmetro com nome", /abriga: false,/.test(APP));
+  t("e o parâmetro nasce LIGADO, para que o padrão seja proteger",
+    /abriga = true \} = \{\}\) => \{/.test(APP));
+  t("e ele é consultado antes de gastar o abrigo", /if \(abriga && perdeu > 0\) \{/.test(APP));
+  /* UMA VEZ SÓ: a exceção é do esforço, não de um sítio qualquer que ache
+     conveniente não gastar a proteção do jogador. A âncora leva a VÍRGULA
+     de propósito — `abriga: false` sem ela também casa com o comentário que
+     explica o sítio, logo acima, e a prova contaria 2 medindo texto morto. */
+  t("e a exceção é usada UMA vez só no App inteiro",
+    (APP.match(/abriga: false,/g) || []).length === 1);
+
+  /* A ARENA consome pelo mesmo módulo — é o leitor de produção que faz
+     `absorverDano` não nascer órfã. */
+  t("a arena importa o mesmo órgão", /import \{[^}]*\babsorverDano\b[^}]*\} from "\.\/efeitos\.js"/.test(ARENA));
+  t("e o abrigo morde no ALVO, não em quem bate", /const ab = absorverDano\(outro, dano\);/.test(ARENA));
+  /* escrever a lista de volta é o que GASTA o abrigo — sem esta linha ele
+     absorveria uma vez por golpe, para sempre. É a mesma falha que a Fase A
+     encontrou no buff da arena, e ela não pode renascer aqui. */
+  t("e a arena escreve a ficha de volta — é isso que gasta o abrigo",
+    /outro\.efeitos = ab\.pers\.efeitos;/.test(ARENA));
+  t("e o PV cai pelo dano JÁ aparado, não pelo original",
+    /outro\.vida = Math\.max\(0, outro\.vida - ab\.dano\);/.test(ARENA));
+}
+
+/* ============================================================
+   15. A OUTRA METADE DA PORTA: O ABRIGO NASCE, E O RELÓGIO CONTA (P3)
+
+   A SEÇÃO 14 PROVA O CONSUMO; esta prova o NASCIMENTO. Enquanto as duas não
+   andam juntas o órgão é meia coisa, e foi assim que P3 achou o furo em Uma
+   Vida: `buffDeCompanheiro` (`App.jsx`) aplicava CONDIÇÃO e só condição —
+   `efeitoDeBuff` nunca era chamado e `comp.efeitos` nunca era escrito. O
+   piloto ESCOLHIA o abrigo (P2 lhe deu olhos), a mesa CONSUMIA abrigo (os
+   sete sítios da seção 14) e o abrigo NUNCA NASCIA no grupo. A classificação
+   inteira de P1 passava ao largo do companheiro, e o efeito medido em Uma
+   Vida era ZERO.
+
+   POR QUE ESTAS ÂNCORAS, E POR QUE AQUI. Tudo o que esta seção mede é `const`
+   local do `App.jsx` — INVISÍVEL ao `teste-ligacao`, que só conta leitores de
+   export. Apagar hoje a linha do `efeitoDeBuff` deixa a casa inteira verde: é
+   o `mexerNaReviravolta()` de R4 outra vez, e a lição de R4 é a que esta
+   seção aplica — a âncora mede a DEFINIÇÃO *e* o sítio de chamada, e conta
+   ocorrências em vez de perguntar "existe?", para o comentário que explica o
+   sítio não passar por sítio.
+
+   AS TRÊS COISAS QUE PODEM SUMIR EM SILÊNCIO:
+   1. o nascimento (`efeitoDeBuff` + `empilhar` em `comp.efeitos`);
+   2. o irmão no relógio — `tickEfeitos` tinha UM chamador e só sobre o
+      herói; sem o laço do grupo o abrigo do companheiro atravessa a porta da
+      luta e come o primeiro golpe da luta seguinte, inclusive depois de
+      carregar o save (é o irmão exato do que P2 fiou para a guarda);
+   3. a recusa de P1 — só a absorção fala na tela, porque "+N de dano" no
+      companheiro seria anunciar número que ninguém lê (`turnoDosCompanheiros`
+      não toca em `efeitos`).
+   ============================================================ */
+sec("15. o abrigo NASCE no companheiro, e o relógio do grupo conta (P3)");
+{
+  const { readFileSync } = await import("node:fs");
+  const APP = readFileSync("../src/App.jsx", "utf8");
+  const quantas = (rx) => (APP.match(rx) || []).length;
+
+  /* ---------------- A LIÇÃO DE R4: DEFINIÇÃO *E* SÍTIO ----------------
+     Uma âncora só na definição fica verde com o helper órfão; uma só no
+     sítio fica verde com o helper vazio. As duas juntas é que fecham. */
+  t("`buffDeCompanheiro` existe — a definição",
+    quantas(/const buffDeCompanheiro = \(pers, ac\) => \{/g) === 1);
+  t("e é CHAMADA no turno do grupo — o sítio",
+    quantas(/buffDeCompanheiro\(persAtual, ac\)/g) === 1);
+
+  /* ---------------- 1. O NASCIMENTO ----------------
+     A âncora leva os três argumentos de propósito. `efeitoDeBuff` aparece no
+     comentário que explica este sítio e também no caminho do herói
+     (`aplicarBuffDeHabilidade`); só a FORMA COMPLETA da chamada separa o
+     código do texto que fala sobre ele, e é por isso que a conta é `=== 1` e
+     não `> 0`. */
+  t("o abrigo do companheiro NASCE pela porta única (`efeitoDeBuff`)",
+    quantas(/efeitoDeBuff\(ac\.habilidade,\s*comp,\s*res\.cond\.turnos\)/g) === 1);
+  t("e entra em `comp.efeitos` pela pilha, não por atribuição solta",
+    quantas(/empilhar\(g\.efeitos,\s*buff\.efeito\)/g) === 1);
+  /* O EFEITO FICA EM QUEM CONJUROU, mesmo quando a condição se espalha —
+     o mesmo que o herói já faz. Sem esta guarda, um abrigo por companheiro
+     no grupo inteiro seria três escudos na mesma pele: o número crescendo
+     sem teto que `ABSORCAO_DO_BUFF` existe para impedir. */
+  t("e vai para QUEM conjurou, não para o grupo inteiro",
+    /g\.nome === ac\.companheiro \? \{ \.\.\.g, efeitos: empilhar\(g\.efeitos, buff\.efeito\) \}/.test(APP));
+  /* LEI "nunca pode custar o turno": fiação nova no App entra em try/catch
+     com `calou`. Um abrigo que estoura não pode derrubar a cena. */
+  t("e a fiação nova cala em vez de custar o turno",
+    quantas(/calou\("abrigo-do-companheiro",\s*e\)/g) === 1);
+
+  /* ---------------- 3. A RECUSA DE P1, NA TELA ----------------
+     `efeitoDeBuff` devolve bônus de dano também, e em Uma Vida ninguém o lê
+     no companheiro. A cláusula que vai à tela é a do `absorve` e só ela —
+     a mesma recusa de P1, que tirou o "+2 de dano mágico" do Escudo Arcano.
+     A âncora prende o NÚMERO ao TEXTO: é o `> 0` que decide a frase. */
+  t("só a absorção fala na tela — o bônus de dano do companheiro fica mudo",
+    quantas(/absorve\)\s*\|\|\s*0\)\s*>\s*0\)\s*extraAbrigo\s*=\s*buff\.extraEscopo/g) === 1);
+
+  /* O RAMO "aliados" ESPALHA CONDIÇÃO E NÃO ESPALHA EFEITO — e a prova é
+     recortada DENTRO de `buffDeCompanheiro`, porque `aplicarBuffDeHabilidade`
+     (o caminho do herói) tem um ramo de mesmo nome algumas centenas de linhas
+     acima, e medir o arquivo inteiro leria o ramo errado.
+     A prova é de AUSÊNCIA, e ausência mente quando o bloco some junto: por
+     isso ela exige primeiro que o ramo EXISTA e espalhe condição. */
+  const DEF = "const buffDeCompanheiro = (pers, ac) => {";
+  const corpo = APP.slice(APP.indexOf(DEF), APP.indexOf("\n  };", APP.indexOf(DEF)));
+  const ramoAliados = corpo.match(/if \(port\.alvo === "aliados"\) \{[\s\S]*?\n    \} else \{/);
+  t("o ramo \"aliados\" do companheiro existe e espalha CONDIÇÃO",
+    !!ramoAliados && /condicoes\s*:/.test(ramoAliados[0]));
+  t("e NÃO espalha efeito — o abrigo não se multiplica pelo grupo",
+    !!ramoAliados && !/efeitos\s*:/.test(ramoAliados[0]));
+
+  /* ---------------- 2. O IRMÃO NO RELÓGIO ----------------
+     `tickEfeitos` é export de `regras-jogo.js` e tinha UM chamador no App.
+     As duas âncoras são o par: some o do herói e o órgão morre; some o do
+     grupo e o abrigo do companheiro vira permanente — e é a segunda que
+     nenhuma outra prova pega. */
+  t("o relógio do HERÓI continua onde estava",
+    quantas(/const \{ efeitos, msgs: msgsTick \} = tickEfeitos\(pers\)/g) === 1);
+  t("e nasceu o IRMÃO: o relógio corre sobre o grupo também",
+    quantas(/const tg = tickEfeitos\(g\)/g) === 1);
+  /* tique que não escreve de volta é tique que não conta: a lista nova tem
+     de voltar para a ficha do companheiro, senão o prazo roda em cópia. */
+  t("e o prazo do grupo é ESCRITO de volta na ficha",
+    /return \{ \.\.\.g, efeitos: tg\.efeitos \};/.test(APP)
+    && /pers = \{ \.\.\.pers, grupo: grupoComPrazo \};/.test(APP));
+  t("e o relógio do grupo também cala em vez de custar o turno",
+    quantas(/calou\("prazo-do-efeito-do-grupo",\s*e\)/g) === 1);
+
+  /* MORAM NO MESMO RELÓGIO, e a ordem prova isso: herói, grupo e só então as
+     condições. Se o laço do grupo migrar para o relógio de RODADAS do revide,
+     o efeito do companheiro passa a vencer só em combate — e fora da luta o
+     abrigo fica de pé para sempre. A âncora é a POSIÇÃO, que é o que o
+     comentário do App promete por escrito. */
+  const iHeroi = APP.indexOf("const { efeitos, msgs: msgsTick } = tickEfeitos(pers)");
+  const iGrupo = APP.indexOf("const tg = tickEfeitos(g)");
+  const iCond = APP.indexOf("const t = tickCondicoes(pers.condicoes)");
+  t("os três relógios existem no mesmo passo do turno", iHeroi > 0 && iGrupo > 0 && iCond > 0);
+  t("e a ordem é herói → grupo → condições, no mesmo bloco",
+    iHeroi < iGrupo && iGrupo < iCond, `${iHeroi} / ${iGrupo} / ${iCond}`);
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

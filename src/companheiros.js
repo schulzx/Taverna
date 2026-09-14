@@ -18,6 +18,7 @@ import { comoConsumivel, melhorCuraPara, usarConsumivel } from "./pocoes.js";
 import { aflicaoDe } from "./aflicoes.js";
 import { guardaDe, guardasAtivas } from "./habilidades.js";
 import { aplicacaoDoBuff } from "./combos.js";
+import { ABSORCAO_DO_BUFF, efeitosDe } from "./efeitos.js";
 
 /* ---------------- QUE CLASSE É ESSE COMPANHEIRO? ----------------
    Lido do conceito/descrição que a ficção já deu a ele. Determinístico:
@@ -134,18 +135,32 @@ export const ehGuarda = (h) => !!guardaDe(h);
    único que continua sendo palpite, e por isso o regex sobrevive encolhido
    em vez de morrer.
 
-   E POR QUE `aplicacaoDoBuff` FILTRA EM VEZ DE AMPLIAR. A tentação era usá-la
-   para o piloto ENXERGAR a família defensiva inteira (42 habilidades que o
-   regex nunca viu). Medido, e a catraca disse não: a defensiva de P1 nasce
-   com força ZERO e sem leitor — ela ainda não protege ninguém, por desenho —,
-   então mandar o piloto gastar o turno nela é comprar nada. `sombra`, o topo
-   do roster, caiu de 60,2% para 32,9% (piso 35) e a amplitude foi de 15,8
-   para 25,7 pts (teto 20). O dia em que `absorve` virar guarda de uma batida
-   é o dia em que o piloto deve procurá-la — e aí esta linha muda de sinal. */
+   E POR QUE `aplicacaoDoBuff` AMPLIA UMA FAMÍLIA SÓ (v9.233). P2 mediu a
+   ampliação INTEIRA — o piloto enxergando as 64 defensivas de P1 — e a catraca
+   reprovou: `ehBuff` 33 → 75, `sombra` de 60,2% para 32,9% (piso 35), amplitude
+   15,8 → 25,7 pts (teto 20), com +150 linhas de abrigo TODAS inertes. A causa
+   não era o tamanho da ampliação: era a FORÇA ZERO. Turno pago, nada comprado
+   — e a catraca mede exatamente isso.
+
+   O que mudou entre P2 e agora foi uma família, e só uma: `absorve` ganhou
+   número (`ABSORCAO_DO_BUFF`, efeitos.js) e um leitor que o gasta
+   (`absorverDano`). As outras quatro — amortece 8 · nao_cai 5 · intocado 18 ·
+   protege 8, 39 habilidades — continuam com força zero, e ampliar para elas
+   hoje seria repetir o fracasso de P2 em escala menor. Por isso o recorte é o
+   número: das 42 que o regex nunca viu, entram as **12** da família que compra
+   alguma coisa, e as 30 restantes ficam de fora até terem o que comprar.
+   Cada uma delas é a sua própria etapa, e no dia dela esta linha cresce.
+
+   `sombra` é a prova de que o recorte está no lugar certo: quem o derrubou em
+   P2 foi "Esquiva Ágil", e Esquiva Ágil é `intocado` — fora daqui. */
+export const ehAbrigo = (h) =>
+  !ehGuarda(h) && (aplicacaoDoBuff(h) || {}).id === ABSORCAO_DO_BUFF.familia;
+
 export const ehBuff = (h) => {
   const t = `${h.nome || ""} ${h.descricao || ""}`;
   if (ehCuraDeGrupo(h) || ehGuarda(h)) return false;
-  if (RX_ABRIGO.test(t)) return !!aplicacaoDoBuff(h);
+  if (ehAbrigo(h)) return true;                      /* amplia: a que compra */
+  if (RX_ABRIGO.test(t)) return !!aplicacaoDoBuff(h); /* filtra: o resto do abrigo */
   return RX_APOIO.test(t);
 };
 
@@ -161,7 +176,7 @@ export function valorDaCura(comp, hab) {
    Ordem de prioridade — a mesma que qualquer jogador seguiria:
      1. alguém caindo → cura (habilidade, ou poção da bolsa dele)
      2. ele mesmo muito ferido → poção
-     3. a luta está começando → apoio: a guarda primeiro, senão o buff
+     3. a luta está começando → apoio: a guarda, senão o abrigo, senão o buff
      4. tem habilidade ofensiva e mana → usa
      5. bate com a arma
    Devolve a INTENÇÃO; quem aplica é o motor de combate. */
@@ -195,19 +210,58 @@ export function decidirAcaoCompanheiro(comp, { aliados = [], inimigos = [], joga
   if (!inimigosVivos.length) return { tipo: "guarda" };
 
   /* 3. apoio logo no começo da luta (uma vez, não todo turno).
-     A GUARDA VEM PRIMEIRO: ela é a que muda se o companheiro sobrevive, e
-     é a que ninguém erguia. Mas só a que ainda NÃO está de pé — `erguerGuarda`
-     recusa a repetida, e o piloto que escolhesse uma dessas pagaria o turno
-     por uma linha de "essa guarda já está de pé". Quem sabe o que está de pé
-     é `guardasAtivas`, o mesmo leitor que a defesa usa.
-     UM PORTÃO SÓ, e isso é de propósito: o sorteio decide se há turno de
-     apoio, não QUAL apoio. Um segundo `Math.random()` para a guarda mudaria
-     o fluxo de sorte de toda a arena e o número de turnos de apoio junto —
-     aqui só muda a escolha, nunca a quantidade. */
+     TRÊS DEGRAUS, E A ORDEM É UMA REGRA SÓ: o que o protege vem antes do que
+     o levanta. P2 escreveu a primeira metade disso (a guarda antes do buff);
+     a segunda metade só pôde ser escrita quando o abrigo passou a valer algo.
+
+     (a) A GUARDA. Ela é a que muda se o companheiro sobrevive, e é a que
+     ninguém erguia. Mas só a que ainda NÃO está de pé — `erguerGuarda` recusa
+     a repetida, e o piloto que escolhesse uma dessas pagaria o turno por uma
+     linha de "essa guarda já está de pé". Quem sabe o que está de pé é
+     `guardasAtivas`, o mesmo leitor que a defesa usa.
+
+     (b) O ABRIGO (v9.233). `ehBuff` passou a enxergar a família `absorve`, e
+     enxergar não basta: quem tem as duas coisas na ficha escolhia a PRIMEIRA
+     da lista, e a ordem da lista é acidente de catálogo. Na arena isso decidia
+     de verdade — o Remendo e o Voto carregam Bênção e Escudo da Fé, sempre
+     pegavam a Bênção, e nunca erguiam o escudo que a ficha promete. Note que
+     o abrigo sai daqui como `tipo: "buff"`: ele É um buff, do jeito que
+     `efeitoDeBuff` já o cria, com `absorve` dentro. Nenhuma fiação nova.
+
+     (c) O BUFF de número puro, que é o que sobra.
+
+     E O ABRIGO DE PÉ NÃO SE RE-FIRMA, pelo mesmo motivo que a guarda de pé
+     não se re-ergue no degrau (a): o abrigo é de UMA batida e `empilhar` casa
+     pelo nome, então re-firmá-lo enquanto ele está inteiro o substitui por um
+     idêntico — mesmo número, mesma frase. (O efeito gasto não fica na ficha:
+     `absorverDano` o retira ao quebrar, e aí ele volta a ser escolhível — é
+     assim que o companheiro ergue o segundo escudo depois de perder o
+     primeiro.) Isto vale só para a família que tem número; o buff comum
+     re-firmado é a metade que continua sendo item aberto da pauta.
+
+     O QUE SE PERDE E O QUE SE GANHA, os dois medidos — porque re-firmar não
+     compra ZERO, e dizer que compra seria escrever uma lei mais forte do que
+     ela é. O que ele compra é SÓ A RENOVAÇÃO DO PRAZO, e isso tem valor onde
+     o escudo consegue sobreviver à rodada: em Uma Vida, 82 dos 278 turnos de
+     apoio de uma amostra de 200 combates deixam de renovar o escudo, e a
+     conta fecha em 6 PV de grupo — 0,02%, ruído. Do outro lado, o que o
+     degrau devolve à mesa: na arena o turno da rodada 2 volta a comprar
+     golpe (os golpes com bônus de dano na mesa dos 28 pares vão de 42 para
+     75) e `punho` ganha 1 pt de folga contra o piso da catraca na família
+     `cc`. Renovação pequena e medida contra turno que volta a render: é essa
+     a troca, e ela está escrita para ninguém precisar redescobri-la.
+
+     UM PORTÃO SÓ, e isso continua de propósito: o sorteio decide se há turno
+     de apoio, não QUAL apoio. Um segundo `Math.random()` mudaria o fluxo de
+     sorte de toda a arena e o número de turnos de apoio junto — aqui só muda
+     a escolha, nunca a quantidade. */
   if (rodada <= 2) {
     const dePe = new Set(guardasAtivas(comp).map((g) => g.id));
+    const abrigada = new Set(efeitosDe(comp).filter((e) => (Number(e.absorve) || 0) > 0).map((e) => e.nome));
+    const naoRepete = (h) => !(ehAbrigo(h) && abrigada.has(h.nome));
     const guarda = habs.find((h) => ehGuarda(h) && podePagar(h) && !dePe.has(guardaDe(h).id));
-    const apoio = guarda || habs.find((h) => ehBuff(h) && podePagar(h));
+    const abrigo = guarda ? null : habs.find((h) => ehAbrigo(h) && podePagar(h) && naoRepete(h));
+    const apoio = guarda || abrigo || habs.find((h) => ehBuff(h) && podePagar(h) && naoRepete(h));
     if (apoio && Math.random() < 0.7) return { tipo: guarda ? "guarda" : "buff", habilidade: apoio };
   }
 

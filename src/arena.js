@@ -50,6 +50,11 @@
    - o PRAZO por `tickEfeitos` (regras-jogo.js) e `expirarGuardas`
      (habilidades.js), uma vez por rodada — buff que não vence é buff
      eterno, e buff eterno é regra nova pela porta dos fundos.
+   - a ABSORÇÃO por `absorverDano` (efeitos.js, v9.233), no instante em que
+     o dano vira PV. Até a v9.232 a família defensiva era a única que a
+     arena firmava e não cumpria: o abrigo entrava na ficha com força zero,
+     e três dos oito prontos gastavam a rodada 1 comprando nada. Aqui ele
+     come do golpe e se gasta.
 
    ---------------- O QUE ELA NÃO FAZ ----------------
 
@@ -61,7 +66,7 @@
    ============================================================ */
 
 import { turnoDosCompanheiros, defesaDe } from "./combate.js";
-import { empilhar, efeitoDeBuff } from "./efeitos.js";
+import { empilhar, efeitoDeBuff, absorverDano } from "./efeitos.js";
 import { guardaDe, erguerGuarda, expirarGuardas } from "./habilidades.js";
 import { bonusDeDano, bonusDeArma } from "./combos.js";
 import { tickEfeitos } from "./regras-jogo.js";
@@ -210,8 +215,23 @@ function aplicarAcoes(acoes, eu, outro, rodada) {
       const b = a.tipo === "habilidade" ? bonusDeDano(eu, a.habilidade) : bonusDeArma(eu);
       const dano = r.dano + b.bonus;
       const peso = b.bonus > 0 ? ` — ${b.fontes.join(", ")} pesa${b.fontes.length > 1 ? "m" : ""} no golpe` : "";
-      outro.vida = Math.max(0, outro.vida - dano);
-      linhas.push(`${eu.nome} ${r.critico ? "acerta em cheio" : "acerta"} ${outro.nome}${peso} (−${dano})`);
+      /* A ABSORÇÃO MORDE AQUI (v9.233), e morde no ALVO — este é o único
+         ponto da arena em que dano vira PV, e o abrigo é de quem apanha, não
+         de quem bate. Vem DEPOIS do bônus do golpe de propósito: o escudo
+         encontra o golpe do jeito que ele chega, já engordado, que é a mesma
+         ordem de `amortecerDano` na mesa da campanha. Escrever `outro.efeitos`
+         de volta é o que gasta o abrigo — sem esta linha ele absorveria uma
+         vez por golpe, para sempre. */
+      const ab = absorverDano(outro, dano);
+      if (ab.absorvido > 0) {
+        outro.efeitos = ab.pers.efeitos;
+        linhas.push(`${outro.nome} — ${secar(ab.linha)}`);
+      }
+      outro.vida = Math.max(0, outro.vida - ab.dano);
+      const golpe = `${eu.nome} ${r.critico ? "acerta em cheio" : "acerta"} ${outro.nome}${peso}`;
+      /* sem "(−0)": quando o abrigo comeu a batida inteira não houve dano, e
+         escrever zero entre parênteses seria a arena narrando contabilidade */
+      linhas.push(ab.dano > 0 ? `${golpe} (−${ab.dano})` : golpe);
     } else {
       linhas.push(`${eu.nome} ${r.desastre ? "erra feio" : "erra"} ${outro.nome}`);
     }

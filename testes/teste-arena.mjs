@@ -226,13 +226,26 @@ sec("6. A CATRACA DO EQUILÍBRIO — teste, não intenção");
   const faixaEmPct = `${(CATRACA_DO_EQUILIBRIO.piso * 100).toFixed(0)}% e ${(CATRACA_DO_EQUILIBRIO.teto * 100).toFixed(0)}%`;
 
   /* DENTE 1 — a faixa vale em toda família, não na que deu sorte */
+  let maisFina = null;   /* ver A MARGEM MAIS FINA, logo abaixo do laço */
   for (const fam of CATRACA_DO_EQUILIBRIO.familias) {
     const rr = A.roundRobin({ sementes: CATRACA_DO_EQUILIBRIO.sementesPorFamilia, prefixo: fam });
     const taxas = Object.entries(rr);
     t(`[${fam}] os oito jogam o round-robin completo`, taxas.length === 8);
     for (const [id, tx] of taxas) {
       t(`[${fam}] ${id} vence entre ${faixaEmPct} (${(tx * 100).toFixed(1)}%)`, naFaixa(tx));
+      const folga = Math.min(tx - CATRACA_DO_EQUILIBRIO.piso, CATRACA_DO_EQUILIBRIO.teto - tx) * 100;
+      if (!maisFina || folga < maisFina.folga) maisFina = { fam, id, pct: tx * 100, folga };
     }
+  }
+  /* A MARGEM MAIS FINA — FATO DECLARADO, não exigência. A catraca passa nas
+     quatro famílias, mas passar por 1,2 pt e passar por 10 são coisas
+     diferentes, e só uma delas aparece na lista de "ok". Esta linha imprime
+     quem está mais perto da parede para a próxima etapa saber o que arrisca
+     antes de medir. Não há asserção aqui de propósito: transformar a folga
+     em limiar seria um segundo teto por cima do 35–65, e o 35–65 é a lei.
+     Medido em v9.233: `punho` na família "cc" com 36,2% — 1,2 pt do piso. */
+  if (maisFina) {
+    console.log(`  ··  margem mais fina das 4 famílias: ${maisFina.id} em "${maisFina.fam}" com ${maisFina.pct.toFixed(1)}% — ${maisFina.folga.toFixed(1)} pt da parede mais próxima (faixa ${faixaEmPct})`);
   }
 
   /* DENTE 2 — o retrato de baixa variância, e a distância entre topo e fundo */
@@ -278,6 +291,41 @@ sec("6. A CATRACA DO EQUILÍBRIO — teste, não intenção");
    (combos.js) e `tickEfeitos` (regras-jogo.js). O filtro perdeu o motivo
    e caiu inteiro. As duas provas que A1 deixou PENDENTES são hoje
    asserções: esta seção deixou de medir dívida e virou o veredito.
+
+   ---------------- A MOEDA MIGROU (v9.233 · P3) ----------------
+
+   O QUE ACONTECEU COM `comPeso`. A asserção "na mesa real a arena firma
+   buff, engorda golpe e vence prazo" cobrava piso 100 de três contagens, e
+   a do meio era `comPeso` — golpes cuja linha diz "... pesa no golpe". Ela
+   media 329 em A3. Hoje mede 75, e NÃO por regressão:
+
+   - P1 (v9.231) ensinou `bonusDeDano`/`bonusDeArma` a respeitar o rótulo
+     `aplica`. "Escudo Arcano" parou de narrar "+2 de dano mágico" e parou
+     de somar. `comPeso` 329 → 108, de propósito e medido no ciclo.
+   - P3 (v9.233) fez a absorção TIRAR dano de verdade (`absorverDano`, em
+     efeitos.js, mordendo em `aplicarAcoes`) e o piloto passar a escolhê-la.
+     Remendo e Voto trocaram bônus de dano por abrigo. Na mesma amostra:
+     `comPeso` 108 → 75, abrigos que morderam 0 → 241, dano parado 0 → 964.
+
+   POR QUE ISTO NÃO É AFROUXAR O PISO. `comPeso` era um PROXY: a intenção
+   escrita em A3 é "o turno de apoio pago compra alguma coisa", e em A3
+   havia uma moeda só para comprá-la — o golpe maior. P1 e P3 criaram a
+   SEGUNDA moeda (o golpe que não chega) e moveram metade do gasto para
+   ela. O proxy não mede mais o que foi escrito para medir; baixar o piso de
+   100 para 40 para ele caber seria afrouxar, e trocá-lo pela medida da
+   intenção original não é. A prova disso é o número: a SOMA das duas moedas
+   é 316 contra os 329 de A3 — o turno de apoio compra hoje praticamente o
+   mesmo que comprava, em outra moeda.
+
+   O DENTE ANDA NOS DOIS SENTIDOS, e é aqui que o conserto é honesto ou não
+   é. Se a soma fosse cobrada sozinha, a metade ofensiva poderia ir a ZERO
+   com a defensiva segurando o verde — exatamente o buraco que a moeda velha
+   tinha ao contrário. Por isso são três dentes e não um: a soma contra 100,
+   e CADA metade contra `minimoDeCadaMetade`. Sabotagens verificadas em
+   cópia fora da árvore: (a) `aplicarAcoes` voltando a não consumir efeito
+   nenhum derruba as três de uma vez; (b) `bonusDeDano`/`bonusDeArma`
+   devolvendo bônus zero (ofensiva a 0, defensiva intacta em 241) deixa a
+   SOMA verde em 241 e fica VERMELHA no dente da metade ofensiva.
    ============================================================ */
 sec("7. o veredito da Fase A — o buraco de A1, fechado em A3");
 {
@@ -304,11 +352,53 @@ sec("7. o veredito da Fase A — o buraco de A1, fechado em A3");
        um pouco menos que 2: medido 1,95. O piso é 1, porque menos de um
        ponto inteiro é o buff não mexer em número nenhum. */
     ganhoMinimoDoBuffNoGolpe: 1,
-    /* A mesa real: ordem de grandeza, não número mágico. Medidos hoje 791
-       buffs firmados, 329 golpes com o bônus dentro e 409 efeitos vencendo
-       o prazo, em 424 quedas. O piso é conservador de propósito — ele
-       guarda o "acontece", e o quanto é assunto de A4 (o equilíbrio). */
+    /* A mesa real: ordem de grandeza, não número mágico. Medidos em A3
+       (v9.225) 791 buffs firmados, 329 golpes com o bônus dentro e 409
+       efeitos vencendo o prazo, em 424 quedas. O piso é conservador de
+       propósito — ele guarda o "acontece", e o quanto é assunto de A4 (o
+       equilíbrio).
+
+       O PISO NÃO MUDOU — O QUE ELE CONTA É QUE MUDOU (v9.233 · P3). Ver o
+       bloco "A MOEDA MIGROU" no cabeçalho desta seção. Em resumo: a
+       terceira parcela desta asserção era `comPeso` sozinho, e `comPeso`
+       conta só a metade OFENSIVA do turno de apoio ("o golpe saiu com o
+       bônus dentro"). P1 tirou a família defensiva de dentro do golpe e P3
+       fez o piloto preferi-la; a metade defensiva passou a ser paga em
+       ABRIGO, que a régua `PESO` não enxerga. Medição na mesma amostra:
+       comPeso 329 (v9.225) → 108 (P1) → 75 (P3); abrigos que morderam
+       0 → 0 → 241. A SOMA das duas: 329 → 316. O piso continua 100 e
+       continua sendo cobrado — de `firmados`, de `dissipados` e agora da
+       SOMA, que é o que a asserção sempre quis medir: "turno de apoio pago
+       compra alguma coisa". */
     minimoDaMesaReal: 100,
+    /* O PISO DE CADA METADE — o dente que impede o conserto acima de ser um
+       afrouxamento. Com a soma sozinha, a ofensiva poderia desabar para 0 e
+       a defensiva segurar o verde; cada metade tem de morder por si.
+
+       POR QUE 40, e não um número novo. É o mesmo limiar que esta tabela já
+       escolheu duas linhas acima (`golpesMinimosDaSonda`), com o motivo já
+       escrito ali: abaixo disso a prova "passa VAZIA". A casa já decidiu,
+       sobre esta mesma arena e estas mesmas quedas, onde fica a fronteira
+       entre "aconteceu" e "não há o que medir"; as metades herdam essa
+       fronteira em vez de inventar uma segunda. Em escala: a amostra tem
+       414 quedas, então 40 é uma mordida a cada dez quedas.
+
+       POR QUE NÃO 100 EM CADA METADE. A ofensiva mede 75 hoje, e mede 75
+       porque P1 e P3 tiraram metade dos buffs do golpe DE PROPÓSITO.
+       Cobrar 100 de cada metade seria cobrar que a migração não tivesse
+       acontecido — reprovar o conserto em nome do proxy velho.
+
+       POR QUE NÃO COLADO NOS 75 DE HOJE. A ofensiva é justamente a metade
+       que as fases estão encolhendo de propósito (329 → 108 → 75). Um piso
+       colado no dígito de hoje fica vermelho na próxima etapa legítima, sem
+       nada ter quebrado — e um dente que grita por engano é um dente que a
+       casa aprende a ignorar. 40 sobrevive a mais um encolhimento honesto e
+       ainda pega o caso que este dente existe para pegar: uma metade que
+       desaba a zero, ou que cai pela metade outra vez.
+
+       MARGEM DECLARADA (não é exigência, é o que se sabe hoje): ofensiva
+       75, 1,9× o piso; defensiva 241, 6,0× o piso. */
+    minimoDeCadaMetade: 40,
   };
   /* O RETRATO DE v9.222 — o "antes" do antes-e-depois, para a fase ter
      régua: 420 quedas · 4584 linhas de queda · 382 meias-rodadas mortas
@@ -328,6 +418,14 @@ sec("7. o veredito da Fase A — o buraco de A1, fechado em A3");
   const FIRMA = / firma .+? · /;  /* "A Chama firma Escudo Arcano · +1 de dano mágico" */
   const PESO = / pesa(?:m)? no golpe /;  /* o bônus dentro do número do golpe */
   const DISSIPOU = / se dissipou$/;      /* o prazo vencendo, uma vez por rodada */
+  /* A SEGUNDA MOEDA (P3). O molde é a linha que `absorverDano` devolve
+     (efeitos.js) depois de `secar` (arena.js) comer o emoji e o ponto final:
+     "O Remendo — Escudo da Fé encontra o golpe primeiro e se desfaz: 4 param
+     ali, 12 chegam". A arena só empurra a linha quando `ab.absorvido > 0`,
+     então toda linha lida aqui é um abrigo que MORDEU — não uma promessa. */
+  const ABRIGO = / encontra o golpe primeiro e se desfaz: /;
+  const PAROU = / encontra o golpe primeiro e se desfaz: (\d+) param ali, \d+ chegam$/;
+  const COMEU = / encontra o golpe primeiro e se desfaz: nada chega$/;  /* a batida inteira */
   const t0 = Date.now();
 
   /* ---------------- A MESA REAL: OS 28 PARES DOS OITO ----------------
@@ -337,7 +435,12 @@ sec("7. o veredito da Fase A — o buraco de A1, fechado em A3");
      tinha outra coisa para narrar. A3 fez nascer linha de guarda, de buff
      e de prazo vencendo — a conta deixou de ser de meias-rodadas e o nome
      tinha de deixar de mentir. Nenhum número da tabela mudou com isso. */
-  const m = { quedas: 0, linhas: 0, mortas: 0, aberturas: 0, firmados: 0, comPeso: 0, dissipados: 0 };
+  const m = {
+    quedas: 0, linhas: 0, mortas: 0, aberturas: 0, firmados: 0, comPeso: 0, dissipados: 0,
+    /* a segunda moeda: `abrigos` são as mordidas, `parou`/`comeu` as duas
+       formas da linha, `danoParado` o que elas tiraram do golpe */
+    abrigos: 0, parou: 0, comeu: 0, danoParado: 0,
+  };
   for (let i = 0; i < P.PRONTOS.length; i++) {
     for (let j = i + 1; j < P.PRONTOS.length; j++) {
       const a = P.PRONTOS[i].id, b = P.PRONTOS[j].id;
@@ -351,6 +454,12 @@ sec("7. o veredito da Fase A — o buraco de A1, fechado em A3");
             if (FIRMA.test(l)) m.firmados++;
             if (PESO.test(l) && DANO.test(l)) m.comPeso++;
             if (DISSIPOU.test(l)) m.dissipados++;
+            if (ABRIGO.test(l)) m.abrigos++;
+            const parou = l.match(PAROU);
+            /* o número vem da LINHA e não do módulo: é o que o jogador lê,
+               e é a única prova de que o abrigo tirou dano e não só narrou */
+            if (parou) { m.parou++; m.danoParado += Number(parou[1]); }
+            if (COMEU.test(l)) m.comeu++;
           }
           if (GUARDA.test(ls[0] || "") && GUARDA.test(ls[1] || "")) m.aberturas++;
         }
@@ -358,6 +467,10 @@ sec("7. o veredito da Fase A — o buraco de A1, fechado em A3");
     }
   }
   const pctAberturas = (100 * m.aberturas / m.quedas).toFixed(1);
+  /* AS DUAS MOEDAS DO TURNO DE APOIO, somadas. Ver "A MOEDA MIGROU", acima:
+     a ofensiva é o golpe que sai maior, a defensiva é o golpe que não chega
+     inteiro. É a soma que responde à pergunta que a asserção sempre fez. */
+  const rendeu = m.comPeso + m.abrigos;
 
   /* ---------------- A SONDA SINTÉTICA ----------------
      POR QUE ELA EXISTE. A frente da GUARDA quase nunca dispara no
@@ -448,7 +561,16 @@ sec("7. o veredito da Fase A — o buraco de A1, fechado em A3");
   console.log(`  ··  ${m.quedas} quedas e ${m.linhas} linhas de queda medidas (os 28 pares dos oito, ${MEDIDA_DO_BURACO.sementesPorPar} sementes cada)`);
   console.log(`  ··  meias-rodadas mortas ("se guarda"): ${m.mortas} — ${(100 * m.mortas / m.linhas).toFixed(1)}% do total, ${(m.mortas / m.quedas).toFixed(2)} por queda`);
   console.log(`  ··  quedas que ABREM com duas meias-rodadas mortas: ${m.aberturas} de ${m.quedas} (${pctAberturas}%)`);
-  console.log(`  ··  a arena cumpre o que o piloto escolhe: ${m.firmados} buffs firmados, ${m.comPeso} golpes com o bônus dentro, ${m.dissipados} efeitos vencendo o prazo`);
+  console.log(`  ··  a arena cumpre o que o piloto escolhe: ${m.firmados} buffs firmados, ${m.dissipados} efeitos vencendo o prazo`);
+  console.log(`  ··  e o turno de apoio rende ${rendeu} vezes: ${m.comPeso} golpes com o bônus dentro (ofensiva) + ${m.abrigos} abrigos que morderam (defensiva)`);
+  /* FATO DECLARADO, não exigência: quanto a metade defensiva tirou do golpe.
+     A linha só carrega o número quando sobra dano ("N param ali"); quando o
+     abrigo come a batida inteira ela diz "nada chega" e o número fica de
+     fora — por isso `danoParado` é um PISO do que foi parado, nunca o total.
+     Medido hoje: 241 mordidas, 0 delas comendo a batida inteira, 964 pontos
+     parados, média 4,00 por mordida (a força de Escudo Arcano e Escudo da Fé
+     é 4, por `ABSORCAO_DO_BUFF`: custo 2 × porPM 2). */
+  console.log(`  ··  a defensiva tirou ao menos ${m.danoParado} pontos do golpe em ${m.abrigos} mordidas (média ${(m.danoParado / (m.abrigos || 1)).toFixed(2)}; ${m.comeu} comeram a batida inteira e não dizem o número)`);
   console.log(`  ··  buffs no repertório dos oito: ${BUFFS_DOS_OITO.length}, e ${BARRADAS_PELO_FILTRO_MORTO.length} deles o filtro morto barrava (${BARRADAS_PELO_FILTRO_MORTO.join(", ")})`);
   console.log(`  ··  sonda da guarda: ${mediaComGuarda.toFixed(2)} de dano por golpe tentado com a guarda de pé contra ${mediaSemGuarda.toFixed(2)} com ela caída — razão ${razao.toFixed(3)} (${g.nDentro} e ${g.nFora} golpes)`);
   console.log(`  ··  sonda do buff: ${mediaComBuff.toFixed(2)} de dano por acerto com o buff firmado contra ${mediaSemBuff.toFixed(2)} sem ele — ganho ${ganhoDoBuff.toFixed(2)} (${bf.nCom} e ${bf.nSem} acertos)`);
@@ -473,10 +595,41 @@ sec("7. o veredito da Fase A — o buraco de A1, fechado em A3");
   t("nenhuma meia-rodada morta em queda nenhuma", m.mortas <= MEDIDA_DO_BURACO.tetoDeAberturasMortas, `${m.mortas} em ${m.quedas} quedas`);
 
   /* A MESA REAL ACONTECE — o piso que impede as provas de cima de passarem
-     por ausência: zero buff firmado também daria zero meia-rodada morta. */
-  t("na mesa real a arena firma buff, engorda golpe e vence prazo",
-    m.firmados >= MEDIDA_DO_BURACO.minimoDaMesaReal && m.comPeso >= MEDIDA_DO_BURACO.minimoDaMesaReal && m.dissipados >= MEDIDA_DO_BURACO.minimoDaMesaReal,
-    `${m.firmados} firmados, ${m.comPeso} com bônus, ${m.dissipados} dissipados`);
+     por ausência: zero buff firmado também daria zero meia-rodada morta.
+
+     A ASSERÇÃO FOI MOVIDA em v9.233, e este é o motivo (o bloco longo está
+     em "A MOEDA MIGROU", no cabeçalho da seção). A parcela do meio era
+     `m.comPeso` sozinho contra o piso 100 — um PROXY de "o turno de apoio
+     comprou alguma coisa", escrito em A3 num dia em que só havia uma moeda
+     para comprá-la. P1 e P3 criaram a segunda (o abrigo que morde) e
+     moveram metade do gasto para lá, DE PROPÓSITO: comPeso 329 → 108 → 75,
+     abrigos 0 → 0 → 241. A parcela passa a ser a SOMA, que é o que a frase
+     sempre quis dizer, e o piso 100 fica onde estava — medida hoje 316,
+     contra os 329 de A3. Nenhum limiar desta seção desceu. */
+  t("na mesa real o turno de apoio compra alguma coisa — e o prazo vence",
+    m.firmados >= MEDIDA_DO_BURACO.minimoDaMesaReal && rendeu >= MEDIDA_DO_BURACO.minimoDaMesaReal && m.dissipados >= MEDIDA_DO_BURACO.minimoDaMesaReal,
+    `${m.firmados} firmados, ${rendeu} rendeu (${m.comPeso} com bônus + ${m.abrigos} abrigos), ${m.dissipados} dissipados`);
+
+  /* E AS DUAS METADES, CADA UMA POR SI — os dois dentes que fazem da troca
+     acima um conserto e não um afrouxamento. Sem eles a soma toparia que uma
+     das moedas fosse a ZERO em silêncio, contanto que a outra segurasse o
+     total; com eles, a arena que parasse de engordar o golpe fica vermelha
+     AQUI mesmo que os 241 abrigos continuem mordendo. O piso e o porquê de
+     ele ser 40 estão em `minimoDeCadaMetade`, na tabela. */
+  t("a metade OFENSIVA não sumiu — o golpe ainda sai maior por causa do apoio",
+    m.comPeso >= MEDIDA_DO_BURACO.minimoDeCadaMetade,
+    `${m.comPeso} golpes com o bônus dentro, piso ${MEDIDA_DO_BURACO.minimoDeCadaMetade}`);
+  t("a metade DEFENSIVA não sumiu — o abrigo ainda tira dano do golpe",
+    m.abrigos >= MEDIDA_DO_BURACO.minimoDeCadaMetade,
+    `${m.abrigos} abrigos morderam, piso ${MEDIDA_DO_BURACO.minimoDeCadaMetade}`);
+
+  /* E A MOEDA DEFENSIVA É CONTÁVEL: toda mordida cai numa das duas formas da
+     linha, e a que sobra dano diz quanto parou. Uma terceira forma — ou uma
+     mordida que não dissesse nada — apagaria `danoParado` sem apagar
+     `abrigos`, e o fato declarado acima viraria mentira em silêncio. */
+  t("toda mordida de abrigo diz o que parou (ou que nada chegou)",
+    m.parou + m.comeu === m.abrigos && m.danoParado >= m.parou,
+    `${m.abrigos} mordidas = ${m.parou} com número + ${m.comeu} inteiras · ${m.danoParado} pontos parados`);
 
   /* A SONDA TEM AMOSTRA — e esta linha é a que impede a promovida (2) de
      virar prova vazia. Uma arena que parasse de erguer a guarda mediria
@@ -543,10 +696,21 @@ sec("8. a frase da queda — a defensiva não promete dano (P1)");
     /* OS PISOS DA AMOSTRA, e é deles que depende a prova não ser vazia.
        Uma arena que parasse de firmar buff mediria 0 linha e passaria
        verde sem ter lido uma frase — o mesmo buraco que a seção 7
-       tapou com `golpesMinimosDaSonda`. Medidos hoje: 772 linhas de
-       buff firmado, 391 delas defensivas (Postura Defensiva e Escudo
+       tapou com `golpesMinimosDaSonda`. Medidos em P1 (v9.231): 772 linhas
+       de buff firmado, 391 delas defensivas (Postura Defensiva e Escudo
        Arcano) e 381 ofensivas (Bênção e Inspiração). Os pisos guardam a
-       ordem de grandeza, não o número. */
+       ordem de grandeza, não o número.
+
+       A MESMA MIGRAÇÃO DA SEÇÃO 7, vista daqui (v9.233 · P3). NENHUM piso
+       mudou — o que mudou foi a REPARTIÇÃO, e o número medido tinha de
+       parar de mentir no comentário: 783 firmados · 578 defensivas · 205
+       ofensivas. O piloto passou a preferir o abrigo depois que ele começou
+       a tirar dano de verdade (`absorverDano`), então a mesma quantidade de
+       turnos de apoio mudou de lado: defensivas 391 → 578, ofensivas
+       381 → 205. As duas continuam MUITO acima dos pisos de 50 (a ofensiva,
+       a que encolhe, em 4,1× o piso), e é por isso que este dente não foi
+       mexido: aqui ele mede a FRASE de cada família, não quanto cada uma
+       pesa — e as duas famílias continuam chegando à mesa. */
     minimoDeFirmados: 200,
     minimoDeDefensivas: 50,
     minimoDeOfensivas: 50,

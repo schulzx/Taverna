@@ -31,7 +31,7 @@ import { SUBCLASSES } from "../src/subclasses.js";
 import { ESPECIALIZACOES } from "../src/especializacoes.js";
 import { MAGIAS } from "../src/grimorio.js";
 import { APLICACAO_DO_BUFF, APLICA_FORA_DO_GOLPE, aplicacaoDoBuff, efeitoNoGolpe } from "../src/combos.js";
-import { BUFF_DA_HABILIDADE, efeitoDeBuff } from "../src/efeitos.js";
+import { BUFF_DA_HABILIDADE, ABSORCAO_DO_BUFF, efeitoDeBuff } from "../src/efeitos.js";
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -57,6 +57,11 @@ const MEDIDA_DO_ACERVO = {
      como ATAQUE pode ter virado proteção. Hoje são 0, e 0 é a lei — um
      ataque que nasça mudo é o regex tendo pegado longe demais. */
   tetoDeAtaquesVirados: 0,
+  /* v9.233 (P3) · O PISO DA FAMÍLIA QUE GANHOU NÚMERO. Medidas hoje 25 das
+     64 defensivas — a maior das cinco linhas, e a única com `absorve`. Piso
+     conservador pelo mesmo motivo dos outros: se a tabela parar de casar, a
+     varredura passaria verde medindo lista vazia. */
+  pisoDeAbrigos: 15,
 };
 
 /* ---------------- O ACERVO ---------------- */
@@ -82,14 +87,37 @@ const defensivas = [], ofensivas = [];
 const mentemNoRotulo = [], mentemNaFrase = [], mentemNoNumero = [];
 const ataquesVirados = [], nasceramMudas = [];
 const porLinha = Object.fromEntries(APLICACAO_DO_BUFF.map((a) => [a.id, 0]));
+/* v9.233 (P3): a segunda metade da família defensiva. Recolhida no MESMO
+   passe — o acervo já está aberto e `efeitoDeBuff` já foi chamado; uma
+   segunda varredura só criaria a chance de as duas discordarem. */
+const abrigos = [], abrigosForaDaFaixa = [], absorveForaDaFamilia = [], abrigosSemNumero = [];
 
 for (const { hab, fonte } of acervo) {
   const linha = aplicacaoDoBuff(hab);
   const { efeito, extraEscopo } = efeitoDeBuff(hab, HEROI, undefined);
   const onde = `${hab.nome} (${fonte})`;
+  /* O CAMPO `absorve` É EXCLUSIVO DA FAMÍLIA. Fora dela ninguém pode tê-lo:
+     nem ofensiva, nem as outras quatro promessas defensivas — cada uma
+     delas é a sua própria etapa, e o dia em que uma ganhar número é o dia
+     em que esta linha fica vermelha e alguém tem de escrever o porquê. */
+  if ((!linha || linha.id !== ABSORCAO_DO_BUFF.familia) && efeito.absorve !== undefined) {
+    absorveForaDaFamilia.push(`${onde} → absorve ${efeito.absorve} (família "${linha ? linha.id : "nenhuma"}")`);
+  }
   if (linha) {
     defensivas.push(onde);
     porLinha[linha.id] = (porLinha[linha.id] || 0) + 1;
+    if (linha.id === ABSORCAO_DO_BUFF.familia) {
+      const n = efeito.absorve;
+      abrigos.push({ onde, n, custo: Number(hab.custo) });
+      if (!(Number.isInteger(n) && n > 0)) abrigosSemNumero.push(`${onde} → ${n}`);
+      else if (n < ABSORCAO_DO_BUFF.minimo || n > ABSORCAO_DO_BUFF.teto) abrigosForaDaFaixa.push(`${onde} → ${n}`);
+      /* a frase tem de anunciar o número comprado: o jogador pagou PM por
+         ele. É a metade de gameplay da lei iv — o mecanismo fica calado, o
+         efeito que o jogador sente, não. */
+      if (Number.isInteger(n) && !extraEscopo.includes(String(n))) {
+        abrigosSemNumero.push(`${onde} → frase muda: "${extraEscopo.trim()}"`);
+      }
+    }
     if (hab.tipo === "ataque") ataquesVirados.push(`${onde} → ${linha.id}`);
     /* O RÓTULO: quem soma no golpe é quem passa por `efeitoNoGolpe`. */
     if (efeitoNoGolpe(efeito)) mentemNoRotulo.push(`${onde} aplica "${efeito.aplica}"`);
@@ -190,6 +218,57 @@ t("aplicacaoDoBuff de string solta também classifica", aplicacaoDoBuff("Barreir
 t("efeitoNoGolpe(null) não estoura e deixa passar", efeitoNoGolpe(null) === true);
 t("efeitoNoGolpe de efeito sem `aplica` deixa passar (save antigo)", efeitoNoGolpe({ nome: "A", bonus: 2 }) === true);
 t("e a caixa do rótulo não engana a peneira", efeitoNoGolpe({ aplica: "PROTECAO" }) === false);
+
+/* ============================================================
+   6. A PROTEÇÃO PROTEGE — o acervo inteiro, não um exemplo bom (v9.233 · P3)
+
+   P1 pôs o rótulo e a frase honesta; a defensiva nascia com força ZERO. P2
+   mediu o preço disso: ligar o piloto a uma família inerte derrubava a
+   catraca de equilíbrio — turno pago, nada comprado. P3 deu número à maior
+   das cinco linhas, e é o acervo que tem de provar que o número chegou.
+
+   O MOTIVO DE ESTAR AQUI e não só na suíte: é a mesma lição que fez este
+   varredor nascer. `teste-efeitos` prova a RÉGUA com custos escolhidos à
+   mão; um exemplo bom não prova acervo. Se alguém escrever amanhã uma
+   defensiva de 40 PM, é esta passada — e não a suíte — que percebe.
+   ============================================================ */
+sec("6. a proteção protege — a família que ganhou número, no acervo inteiro");
+{
+  const ns = abrigos.map((a) => a.n);
+  console.log(`  ··  ${abrigos.length} habilidades da família "${ABSORCAO_DO_BUFF.familia}" nascem com abrigo`);
+  console.log(`  ··  faixa medida: ${Math.min(...ns)}–${Math.max(...ns)} (tabela: ${ABSORCAO_DO_BUFF.minimo}–${ABSORCAO_DO_BUFF.teto}) · ${ns.filter((n) => n === ABSORCAO_DO_BUFF.teto).length} no teto · ${ns.filter((n) => n === ABSORCAO_DO_BUFF.minimo).length} no piso`);
+
+  t(`a amostra da família não é vazia (pelo menos ${MEDIDA_DO_ACERVO.pisoDeAbrigos})`,
+    abrigos.length >= MEDIDA_DO_ACERVO.pisoDeAbrigos, `achou ${abrigos.length}`);
+  /* O DENTE CENTRAL DA ETAPA: quem promete absorver, absorve. Um abrigo de
+     zero é a doença de P1 de volta — a ficha promete e o sistema não paga. */
+  t("toda habilidade da família nasce com abrigo de verdade (nenhuma com zero)",
+    abrigosSemNumero.length === 0, abrigosSemNumero.slice(0, 6).join(" | "));
+  t("e nenhuma escapa da faixa da tabela — o teto morde o acervo inteiro",
+    abrigosForaDaFaixa.length === 0, abrigosForaDaFaixa.slice(0, 6).join(" | "));
+  /* O DENTE INVERSO, o que impede o exagero: só UMA das cinco linhas ganhou
+     número. As outras quatro prometem outra coisa (meio golpe, um chão de
+     PV, um golpe que erra) e continuam sem campo — e a ofensiva também. */
+  t("e ninguém fora da família carrega o campo (nem ofensiva, nem as outras quatro)",
+    absorveForaDaFamilia.length === 0, absorveForaDaFamilia.slice(0, 6).join(" | "));
+
+  /* O TETO PEGA QUEM ELE FOI ESCRITO PARA PEGAR. Sem ele, a defensiva mais
+     cara do acervo comeria mais que um golpe mediano e apagaria a batida —
+     é o caso que a tabela cita pelo nome (Globo de Invulnerabilidade, 11 PM,
+     22 sem teto). A prova não cita o nome: pergunta ao acervo quem é o mais
+     caro da família e confere que ele está preso no teto. */
+  const maisCaro = abrigos.reduce((a, b) => ((b.custo || 0) > (a.custo || 0) ? b : a), abrigos[0]);
+  const semTeto = Math.round((maisCaro.custo || ABSORCAO_DO_BUFF.custoPadrao) * ABSORCAO_DO_BUFF.porPM);
+  console.log(`  ··  a mais cara da família é ${maisCaro.onde}, ${maisCaro.custo} PM — comeria ${semTeto} sem teto, come ${maisCaro.n}`);
+  t("a defensiva mais cara do acervo estoura a régua e é presa pelo teto",
+    semTeto > ABSORCAO_DO_BUFF.teto && maisCaro.n === ABSORCAO_DO_BUFF.teto,
+    `sem teto ${semTeto}, com teto ${maisCaro.n}`);
+  t("e mesmo presa ela não apaga um golpe mediano da arena", maisCaro.n < 13);
+  /* e o teto não é decorativo do outro lado: alguém tem de ficar ABAIXO
+     dele, senão a régua toda virou uma constante disfarçada */
+  t("mas o teto não achatou a família inteira — a régua ainda separa barato de caro",
+    new Set(ns).size > 1, `todos iguais a ${ns[0]}`);
+}
 
 console.log(`\n${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

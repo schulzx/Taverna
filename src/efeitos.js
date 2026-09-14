@@ -77,6 +77,53 @@ export const BUFF_DA_HABILIDADE = {
   turnosPadrao: 3, aplica: "dano",
 };
 
+/* ---------------- A ABSORÇÃO: QUANTO UM ABRIGO COME DE UM GOLPE (v9.233) ----
+   A tabela irmã da de cima, e existe pelo motivo oposto: `BUFF_DA_HABILIDADE`
+   diz quanto um buff SOMA ao golpe que sai, esta diz quanto ele TIRA do golpe
+   que chega. Até a v9.232 a segunda metade não existia — P1 pôs o rótulo
+   `protecao` e a frase honesta, mas a defensiva nascia com força ZERO e
+   nenhum leitor, e P2 mediu o preço disso na catraca: ligar o piloto à
+   família defensiva derrubava `sombra` de 60,2 para 32,9 e abria a amplitude
+   de 15,8 para 25,7, com +150 linhas de abrigo todas inertes. Turno pago,
+   nada comprado. A proteção tem de proteger ANTES de alguém procurá-la.
+
+   A RÉGUA SAI DO CUSTO, pelo mesmo argumento de `BUFF_DA_HABILIDADE`: é o
+   custo em PM que separa um truque de uma promessa. Dois pontos de golpe por
+   PM — o dobro da força ofensiva (metade do custo), e o dobro é de propósito:
+   um bônus de dano cobra em TODO golpe que o herói der nos três turnos, e
+   este cobra uma vez só. O que sai disso: Escudo Arcano (2 PM) come 4,
+   Muralha de Gelo (5 PM) come 10, Pele de Pedra (7 PM) come 12.
+
+   O TETO É A PARTE QUE IMPORTA, e o número dele foi medido, não escolhido: um
+   golpe na arena tem mediana 13 e média 13,76 de dano, sobre duelistas de 24
+   a 36 PV, e uma queda dura 4,85 golpes acertados. Teto 12 é o maior número
+   que ainda fica ABAIXO de um golpe mediano — ou seja, nem a absorção mais
+   cara do acervo (Globo de Invulnerabilidade, 11 PM, que sem teto comeria 22)
+   consegue apagar uma batida inteira. É a mesma lei que o comentário de
+   `GUARDAS` escreveu para a defesa: nada que zere o golpe, porque defesa alta
+   é a estatística que mais rápido quebra um combate.
+
+   `custoPadrao` é o mesmo de `BUFF_DA_HABILIDADE`, e pelo mesmo motivo:
+   relíquia, poção, grimório e o que o piloto escolhe chegam aqui sem custo
+   nenhum, e sem ele a família inteira nasceria no piso. */
+export const ABSORCAO_DO_BUFF = {
+  /* só esta linha de `APLICACAO_DO_BUFF` ganha número. As outras quatro
+     (amortece, nao_cai, intocado, protege) prometem outra coisa — meio golpe,
+     um chão de PV, um golpe que erra — e cada uma é a sua própria etapa.
+     Enquanto não forem, elas saem daqui exatamente como saíam. */
+  familia: "absorve",
+  porPM: 2, custoPadrao: 2, minimo: 2, teto: 12,
+};
+
+/* Privada de propósito: quem precisa do número recebe o efeito já com ele
+   dentro, por `efeitoDeBuff`. Um segundo caminho para o mesmo número é a
+   forma exata de as duas metades divergirem daqui a três versões. */
+function forcaDaAbsorcao(hab) {
+  const custo = Number((hab || {}).custo);
+  const pm = Number.isFinite(custo) && custo > 0 ? custo : ABSORCAO_DO_BUFF.custoPadrao;
+  return Math.min(ABSORCAO_DO_BUFF.teto, Math.max(ABSORCAO_DO_BUFF.minimo, Math.round(pm * ABSORCAO_DO_BUFF.porPM)));
+}
+
 /* ---------------- O EFEITO DE UM MILAGRE ----------------
    O milagre traz os próprios números quando os tem; quando não traz,
    cai nestes. Prazo maior que o do buff de habilidade porque milagre é
@@ -151,8 +198,12 @@ export function retirar(efeitos, nome, opcoes) {
    nesta casa é a REAÇÃO (reacoes.js), fora do turno, e o dia em que a
    defensiva somar número é o dia em que alguém ler este rótulo.
 
-   Por isso a frase da defensiva NÃO traz número: ela diz o que o corpo
-   faz, e nada mais, porque nada mais é verdade hoje. */
+   E A FRASE DA DEFENSIVA GANHOU NÚMERO (v9.233), só na família que passou
+   a ter um. O silêncio de P1 era honestidade — anunciar "+N" de um número
+   que não existia seria trocar uma mentira por outra mais quieta. Agora o
+   número existe e é gameplay: o jogador paga PM e tem de poder saber o que
+   comprou. As outras quatro famílias continuam sem número, e continuam
+   porque continuam sem número. */
 export function efeitoDeBuff(hab, pers, turnos) {
   const h = hab || {};
   const forca = Math.max(
@@ -163,9 +214,14 @@ export function efeitoDeBuff(hab, pers, turnos) {
   const prazo = turnos || BUFF_DA_HABILIDADE.turnosPadrao;
   const protecao = aplicacaoDoBuff(h);
   if (protecao) {
+    const base = { nome: h.nome, bonus: 0, turnos: prazo, aplica: protecao.aplica, escopo };
+    if (protecao.id !== ABSORCAO_DO_BUFF.familia) {
+      return { efeito: base, extraEscopo: ` · ${protecao.conceito}` };
+    }
+    const absorve = forcaDaAbsorcao(h);
     return {
-      efeito: { nome: h.nome, bonus: 0, turnos: prazo, aplica: protecao.aplica, escopo },
-      extraEscopo: ` · ${protecao.conceito}`,
+      efeito: { ...base, absorve },
+      extraEscopo: ` · ${protecao.conceito} — aguenta ${absorve} do próximo golpe`,
     };
   }
   return {
@@ -207,6 +263,77 @@ export function efeitoDeMagia(magia) {
       nome: m.nome, bonus: EFEITO_DA_MAGIA.bonus, turnos,
       aplica: EFEITO_DA_MAGIA.aplica, descricao: m.descricao,
     },
+  };
+}
+
+/* ---------------- O GOLPE QUE CHEGA: A ABSORÇÃO SE GASTA (v9.233) ----------
+   O outro lado de `ABSORCAO_DO_BUFF`. Lá o abrigo nasce com um número; aqui
+   ele o paga e morre. É a mesma forma de `amortecerDano` (tracos.js) e
+   `repartirDano` (invocacoes.js), e é de propósito: já existem duas funções
+   nesta casa que recebem `(pers, dano)` e devolvem `{ pers, dano, linhas }`,
+   porque quem rola o golpe (`resolverAtaque`) não muta ninguém — ele devolve
+   `{ dano }` e quem aplica é o sítio. Uma terceira irmã custa zero de
+   conceito novo e entra na fila que o App já tem montada.
+
+   POR QUE AQUI E NÃO EM `pers.guardas`. O desenho que P1 esboçou punha a
+   absorção numa entrada de `pers.guardas`, com `absorve: N`. Medido, ele
+   chega a menos gente por mais fiação:
+     · a família `absorve` é 25 das 64 defensivas do acervo de 593 — a maior
+       das cinco — e `efeitoDeBuff` JÁ é chamado nas DUAS portas que ligam
+       abrigo a ficha: a habilidade do herói (`aplicarBuffDeHabilidade`, no
+       App, com dois chamadores) e o piloto da arena. Pela porta do efeito a
+       proteção passa a existir nas duas no dia em que este comentário é
+       escrito, com zero sítio novo de NASCIMENTO. Pela porta da guarda, as
+       duas precisariam aprender a rotear, e uma delas mora no App.
+     · na arena, `GUARDAS` não pega NINGUÉM: P2 mediu 0 dos 8 prontos com
+       qualquer das 9. A família `absorve` pega 3 (a Chama, o Remendo e o
+       Voto, todos com Escudo Arcano ou Escudo da Fé) — e os três estão
+       ABAIXO de 50% na catraca de equilíbrio, que é onde a proteção deve
+       pesar.
+     · a pergunta "como as duas portas convivem" se dissolve: há exatamente 1
+       colisão no acervo inteiro (Forma Dracônica casa com `GUARDAS` e com
+       `absorve`), e a precedência que a resolve já está escrita e testada —
+       `guardaDe` primeiro, em `arena.js` e no App. Nada muda para ela.
+     · e a seta de dependência não se mexe: `habilidades.js` continua sendo a
+       única folha do motor, sem um único import. `efeitos.js → combos.js` já
+       existia.
+
+   UMA BATIDA, UM ABRIGO. Gasta-se o abrigo INTEIRO na primeira coisa que ele
+   encontrar, mesmo que ela seja menor que ele — é o que a ficha promete com
+   todas as letras ("absorve o PRÓXIMO dano"), e o contrário (guardar o resto
+   para o golpe seguinte) transformaria um escudo numa poupança. E só UM por
+   golpe, o maior: dois escudos não estilhaçam na mesma batida, e deixá-los
+   somar é o caminho curto para a absorção apagar um golpe inteiro, que é
+   justamente o que o teto da tabela existe para impedir.
+
+   REGRESSÃO ZERO FORA DA FAMÍLIA. O único gatilho é um `absorve` numérico e
+   positivo no efeito. Save antigo, efeito do canal do Mestre, milagre, magia
+   de duração e as outras quatro famílias defensivas não o têm — para todos
+   eles esta função é um `return` do que entrou. `null` e `{}` idem. */
+export function absorverDano(pers, dano) {
+  const d = Math.max(0, Math.round(Number(dano) || 0));
+  if (!d || !pers) return { pers, dano: d, absorvido: 0, linha: "" };
+  const lista = efeitosDe(pers);
+  let abrigo = null, forca = 0;
+  for (const ef of lista) {
+    const n = Math.max(0, Math.round(Number(ef.absorve) || 0));
+    if (n > forca) { abrigo = ef; forca = n; }
+  }
+  if (!abrigo) return { pers, dano: d, absorvido: 0, linha: "" };
+
+  const absorvido = Math.min(forca, d);
+  const resto = d - absorvido;
+  const nome = abrigo.nome || "o abrigo";
+  return {
+    /* estado NOVO, e a lista sai limpa de buracos porque `efeitosDe` já a
+       entregou assim — o mesmo que `empilhar` faz há uma versão */
+    pers: { ...pers, efeitos: lista.filter((e) => e !== abrigo) },
+    dano: resto, absorvido,
+    /* a voz é de mundo e não nomeia mecanismo nenhum; o número entra porque
+       o jogador pagou PM por ele e precisa ver o que comprou */
+    linha: resto > 0
+      ? `🛡 ${nome} encontra o golpe primeiro e se desfaz: ${absorvido} param ali, ${resto} chegam.`
+      : `🛡 ${nome} encontra o golpe primeiro e se desfaz: nada chega.`,
   };
 }
 
