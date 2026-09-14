@@ -16,7 +16,7 @@ Formato:
 
 ---
 
-## 14/09 00:05 · v9.232 · P2 · o piloto reconhece as nove guardas · commit `HASH`
+## 14/09 00:05 · v9.232 · P2 · o piloto reconhece as nove guardas · commit `bdf94f4`
 - **estado inicial:** árvore limpa, HEAD `9bafcd4`, VERSÃO v9.231, `npm test`
   181/181 suítes + 8/8 varredores verde. A vez era **P2**, segunda etapa da
   Fase P — aprovada pela pessoa sabendo que muda Uma Vida **e** o Duelo.

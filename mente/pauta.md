@@ -112,7 +112,7 @@ A ordem é a da mentira primeiro, porque é a que o jogador lê.
   quedas reais, e o dente inverso — **0 habilidade de `ataque` virou proteção**.
   **A defensiva ainda não protege ninguém**, de propósito: o desenho está no
   diário, é achado para P2/P3. Ver o diário.
-- [x] **P2 · o piloto reconhece as nove guardas** · feito em v9.232 (`HASH`), 14/09
+- [x] **P2 · o piloto reconhece as nove guardas** · feito em v9.232 (`bdf94f4`), 14/09
   O piloto **pergunta à tabela**: `ehGuarda` (`companheiros.js`) chama `guardaDe`,
   e o passo 3 ergue guarda antes de buff, com **um sorteio só** (o número de
   turnos de apoio não muda, só o que é escolhido). **9 de 9** entradas de
