@@ -45,7 +45,11 @@ Uma etapa por versão, nesta ordem:
 2. **Fiação defensiva** no `App.jsx` — snapshot dos refs em `try/catch`,
    ref no save e no load.
 3. **Suíte dedicada** em `testes/teste-nome.mjs`.
-4. **Bump** de `VERSAO` em `src/constantes.js` (hoje `v9.221`).
+4. **Bump** de `VERSAO` em `src/constantes.js` — **leia o valor no arquivo,
+   nunca daqui.** Esta linha já trouxe um número (`v9.221`) que envelheceu em
+   trinta versões, e as mãos o copiaram para onze comentários de código como
+   se fosse o de hoje. **Lei não guarda valor que apodrece:** onde a casa
+   precisa de um número atual, ela aponta para onde ele vive.
 5. `npm run build` limpo → `npm test` (todas as suítes + os varredores).
 6. **Commit local narrativo** (explica o *porquê*, em português).
 
