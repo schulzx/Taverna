@@ -294,6 +294,56 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
 
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
 
+### Fase X — o botão age (o jogador dispara o próprio combate)
+Decisão da pessoa (15/09): começar por aqui, antes de balancear e antes da
+Fase N. **E a premissa que a levou a decidir foi corrigida no código:** o
+modo rápido **já é 1×1** (`arena.js` luta com `grupo: [eu]`, o pronto nasce
+com `grupo: []`) e é o único combate do projeto com equilíbrio provado
+(35–65%, amplitude 12,7). O desequilíbrio de 1,4% é de **Uma Vida**. A
+pessoa decidiu também que **o grupo fica** na campanha: a causa medida não
+é ele.
+
+**O achado que põe esta fase na frente de tudo** (`jogo`, jogando, em D5):
+dos 20 botões do painel de Ações, os 8 que entram direto no motor são
+Vasculhar, Escutar, Lembrar… e **nenhum é de combate**. `Atacar` não ataca:
+ele **digita `"Ataco "` na caixa de texto**. Três ataques declarados sem
+ambiguidade num combate aberto deram **zero rolagens**, e 7 turnos fecharam
+com os mesmos PV 20/20, PM 6/6, XP 89/300.
+
+> A lei da casa está invertida no pior lugar: *o Mestre é código, e a IA só
+> narra* — mas **quem decide se o golpe aconteceu é a IA**.
+
+Por isso balancear antes seria afinar um instrumento que o jogador não
+consegue tocar: a régua mede o motor, e o jogador não chega nele.
+
+- [ ] **X1 · o que chega ao motor, e o que vira frase** · de: pessoa · 15/09
+  Medir sem mexer: cada ação do jogador em combate — atacar, habilidade,
+  magia, item, mover, recuar, defender — e para onde ela vai hoje (motor,
+  texto, ou nada). O inverso também: **o que o motor já expõe e nenhum
+  botão chama**. N1 mediu que 14 das 46 intenções nunca vencem; aqui a
+  pergunta é quantas ações do *jogador* nunca acontecem.
+- [ ] **X2 · o golpe sai do botão** · de: pessoa · 15/09
+  As ações de combate passam a **chamar o motor**, e o dado rola porque o
+  jogador clicou. **Precisa do bastão do `App.jsx`.** A forma dos controles
+  vem de `mente/formas.md` e da mesa — não se inventa botão aqui; o que
+  falta de forma, pede-se. E a lei da casa vale inteira: **o veredito antes
+  do clique** (o jogador vê o preço e o alcance antes de gastar), e o texto
+  livre continua existindo para tudo que não é golpe.
+- [ ] **X3 · o turno acontece com o Mestre calado** · de: pessoa · 15/09
+  A pendente que a mesa levantou duas vezes deixa de ser hipótese: com X2
+  de pé, **o turno resolve mecanicamente mesmo sem o Narrador** — dado
+  rolado, dano aplicado, log escrito —, e a prosa chega depois, ou não
+  chega. A chave reserva (decisão da pessoa, já tomada) reduz a chance de o
+  Mestre calar; **isto trata o que acontece quando ele cala assim mesmo** —
+  rede caindo, tempo esgotado, limite por minuto, o jogador no metrô.
+  Regressão zero para quem joga com o Narrador vivo.
+- [ ] **X4 · a conta do que mudou** · de: pessoa · 15/09
+  Quantas rolagens por turno antes e depois; quantos turnos terminam sem um
+  número mudar (hoje: 7 em 7). E a régua de B1 refeita **com o jogador
+  agindo** — porque a linha de base de 1,4% mediu o motor sozinho, e o
+  jogador que enfim dispara o próprio golpe é uma variável que nunca esteve
+  na conta.
+
 ### Fase H — a porta das habilidades de classe
 Decisão da pessoa (15/09): *"vamos fazer como recomendado, apenas uma porta,
 mas precisamos de uma solução para as 12 restantes."*
