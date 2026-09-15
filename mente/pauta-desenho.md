@@ -132,7 +132,7 @@ e nos dois a resposta é sim, com o que ele reaprende dito por escrito.
   Catraca: *mesma semente, mesmo alvo, mesmo resultado que a frase escrita
   produz hoje*.
 
-- [ ] **O Pergaminho — a prosa ganha material próprio** · pesado · de: desenho · 15/09 (D5)
+- [x] **O Pergaminho — a prosa ganha material próprio** · pesado · de: desenho · 15/09 (D5) · **APROVADA 15/09** — vira fase própria; depende de D5, que já está de pé
   **O que a medição de D5 mostra, e que ninguém foi procurar:** o Taverna tem
   **três paletas**, não uma. A semântica (`T`, 14 cores, 2.565 usos), a do
   **pergaminho** (71 literais em `painel-mapa` + `planta-cidade`, **zero** cores
@@ -276,6 +276,23 @@ aconteceu e uma forma que **deixa o jogador fazer**, a segunda ganha — e o
 que não puder ser feito deve ao menos ser **visto acontecendo**, não
 recebido pronto em prosa. A prosa continua sendo a protagonista; o que se
 recusa é que ela seja a **única** coisa que o jogador toca.
+
+## A terceira lei da mesa (15/09)
+
+A pessoa, ao aprovar O Pergaminho: *"gostei muito de que essa sugestão já veio
+com uma proposta e inclusive muito bem fundamentada. Gostaria que todas
+viessem assim se possível — não precisa ter uma explicação gigante nem nada
+do tipo, mas vir com uma proposta e dizendo o porquê é muito bacana."*
+
+Então **toda proposta traz as duas coisas, e em poucas linhas**: o que fazer,
+e por quê. Nunca só o diagnóstico — *"a escala de texto está errada"* não é
+proposta; *"18 degraus viram 6, o piso sobe para 13px, porque metade do texto
+hoje é 9–10px e a prosa é a protagonista"* é. E nunca uma parede de texto: o
+porquê cabe numa frase se a proposta for boa. Quem não sabe dizer por que,
+ainda não terminou de pensar.
+
+Vale para as duas mentes: o `conselheiro` e o `regente` cobram isto de quem
+propõe.
 
 ## A segunda lei da mesa (14/09)
 

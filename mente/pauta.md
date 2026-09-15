@@ -316,33 +316,109 @@ com os mesmos PV 20/20, PM 6/6, XP 89/300.
 Por isso balancear antes seria afinar um instrumento que o jogador não
 consegue tocar: a régua mede o motor, e o jogador não chega nele.
 
-- [ ] **X1 · o que chega ao motor, e o que vira frase** · de: pessoa · 15/09
-  Medir sem mexer: cada ação do jogador em combate — atacar, habilidade,
-  magia, item, mover, recuar, defender — e para onde ela vai hoje (motor,
-  texto, ou nada). O inverso também: **o que o motor já expõe e nenhum
-  botão chama**. N1 mediu que 14 das 46 intenções nunca vencem; aqui a
-  pergunta é quantas ações do *jogador* nunca acontecem.
-- [ ] **X2 · o golpe sai do botão** · de: pessoa · 15/09
-  As ações de combate passam a **chamar o motor**, e o dado rola porque o
-  jogador clicou. **Precisa do bastão do `App.jsx`.** A forma dos controles
-  vem de `mente/formas.md` e da mesa — não se inventa botão aqui; o que
-  falta de forma, pede-se. E a lei da casa vale inteira: **o veredito antes
-  do clique** (o jogador vê o preço e o alcance antes de gastar), e o texto
-  livre continua existindo para tudo que não é golpe.
-- [ ] **X3 · o turno acontece com o Mestre calado** · de: pessoa · 15/09
-  A pendente que a mesa levantou duas vezes deixa de ser hipótese: com X2
-  de pé, **o turno resolve mecanicamente mesmo sem o Narrador** — dado
-  rolado, dano aplicado, log escrito —, e a prosa chega depois, ou não
-  chega. A chave reserva (decisão da pessoa, já tomada) reduz a chance de o
-  Mestre calar; **isto trata o que acontece quando ele cala assim mesmo** —
-  rede caindo, tempo esgotado, limite por minuto, o jogador no metrô.
-  Regressão zero para quem joga com o Narrador vivo.
+- [x] **X1 · o que chega ao motor, e o que vira frase** · de: pessoa · 15/09
+  · **feito 15/09** — medido sem mexer em nenhuma regra, e a régua ficou:
+  `testes/acoes-do-jogador.mjs` (a tabela), `teste-` e `check-` do mesmo
+  nome (a catraca) e `testes/sonda-turno-esteril.mjs` (a régua que X4
+  repete). **O 7 em 7 se reproduz, e a causa não era a que a fase supunha.**
+
+  **A conta:** 20 botões no painel — 12 `ACOES_PRONTAS` que só fazem
+  `setEntrada` (`App.jsx:20564`) e 8 `ACOES_RAPIDAS` que entram no motor
+  (`:20593` → `declararAcaoRapida` → `adjudicarAcao`), **nenhuma das 20 de
+  combate**. Fora do painel, só **mover no grid** e **beber da bolsa**
+  chegam ao motor por clique. Dos 6 literais mortos das 12, **4 são ações
+  de combate** (Esquivar, Empurrar, Derrubar, Correr). `habilidades.js`
+  expõe 37 funções e **zero** têm chamador por clique; 21 exports de
+  combate não têm chamador nenhum no `App.jsx`.
+
+  **O achado central, que a fase não tinha:** o botão não é a única trava,
+  nem a principal. `resolverAtaqueJogador` **existe e é bom**; o golpe morre
+  antes, na geometria — `posicionar` (`src/grid.js:551-576`) abre a luta a
+  **12,0 m (taverna) a 25,5 m (masmorra)**, o corpo a corpo alcança **1,5
+  m**, e **10/10 plantas recusam no turno 1**. Pior: `semAlcance` recusa
+  **de graça** (`App.jsx:11613-11617` → `:13218-13225`), sem gastar a ação —
+  logo `resolverRevide` (`:14034-14038`) nunca roda e **a rodada nunca
+  vira**. O jogador ataca sete vezes, o sistema recusa sete vezes, e nada
+  se move: PV 20/20, PM 6/6, XP 89/300. São **2–3 turnos só andando** antes
+  que qualquer golpe corpo a corpo possa rolar.
+
+  **Duas honestidades que a medição obriga:** (a) a recusa **não é muda** —
+  o jogador recebe a linha 📏 com a distância de cada inimigo e um *"Aproxime-se
+  primeiro"* (`App.jsx:11616`); o turno é estéril, não silencioso, e a diferença
+  importa para X2. (b) **A armadilha é sobretudo do corpo a corpo:** arma de
+  longe alcança 36 m (`App.jsx:11609`), acima de todas as aberturas. A taxa
+  medida é de um herói corpo a corpo nível 3, e X4 tem de repetir a mesma
+  política para comparar.
+
+  **Conferido pelo orquestrador, direto no motor** (`montarGrade` + `posicionar`
+  + `alcanca`, as 10 plantas, 1 inimigo não-ágil): abertura de **12,0 m
+  (taverna) a 25,5 m (masmorra)**, e **10/10 fora do alcance de 1,5 m no turno
+  1** — o achado se sustenta, número a número. E um detalhe que refina (b): a
+  **36 m, 3 das 10 plantas continuam recusando** — **taverna, caverna e
+  navio**, por parede no caminho. Então nem o arco resolve sozinho, e X2 **não
+  pode tratar "tem alcance" como sinônimo de "pode acertar"**: quem decide é
+  `alcanca`, que também olha a parede.
+
+  **Uma armadilha de medição, para X4 não cair nela:** `montarGrade({ planta })`
+  **não** monta a planta pedida — `cenarioDe(ctx)` (`src/grid.js:286`) lê outras
+  chaves e cai em `estrada` em silêncio. Na primeira conferência isto trocou a
+  masmorra pela estrada e encurtou a abertura de 25,5 para 16,5 m sem um aviso
+  sequer. Quem medir grade tem de **conferir a largura×altura que recebeu**.
+- [ ] **X2 · o golpe sai do botão** · de: pessoa · 15/09 · **reescrita por X1**
+  A redação anterior dizia "as ações de combate passam a chamar o motor,
+  e o dado rola porque o jogador clicou". **A medição corrigiu o alvo:** o
+  caminho até `resolverAtaque` já existe e não precisa ser inventado — o
+  que falta é **garantir o pré-requisito antes do clique**. Então X2 é:
+  um controle de combate que só oferece o que é alcançável, que **mostra a
+  distância e o alcance** (o veredito antes do clique, a lei inteira) e que
+  chama o motor pelo molde dos 8 — id vira frase canônica, porta única com
+  direito de recusar, módulo puro decide antes do efeito, o par de `pushMsgs`
+  no fim, e a cobrança do turno explícita. Dois precedentes prontos dentro
+  de casa, além dos 8: **mover no grid** e **a bolsa**.
+  **Precisa do bastão do `App.jsx`.** A forma vem de `mente/formas.md` e da
+  mesa — não se inventa botão aqui; o que falta de forma, pede-se (a Fase E
+  do desenho está desenhando a tela de batalha agora). O texto livre continua
+  existindo para tudo que não é golpe.
+  **Duas bifurcações que X1 abriu e que são da pessoa, não do ciclo:**
+  (a) **`semAlcance` é de graça** — se X2 passar a cobrar a ação de um golpe
+  fora de alcance, o jogador que erra o alvo perde o turno, e isso muda o que
+  ele vive; se continuar de graça, o botão tem de impedir o clique em vez de
+  recusá-lo. (b) **Defender/Esquivar não existe no motor** — o botão escreve
+  uma frase que ninguém lê; dar-lhe mecânica é mecânica nova, logo `pesado`.
+- [ ] **X3 · o silêncio do Mestre é honesto** · de: pessoa · 15/09
+  **Decisão da pessoa (15/09), contra a recomendação de Claude e com a razão
+  dela:** *"por enquanto, até acharmos uma alternativa melhor, vamos travar o
+  game caso o narrador caia. Sem narrador = sem turno. Mais pra frente,
+  quando tivermos alguma ideia melhor, podemos pensar nisso novamente."*
+  Fica assim, e fica **declarado como provisório** — não como lei.
+  **Mas travar bem não é travar de qualquer jeito**, e é isso que a etapa
+  faz. Hoje o jogo simplesmente para, e o jogador não sabe se perdeu o turno,
+  se pode repetir, nem o que aconteceu:
+  - **a ação escrita não se perde** — o que o jogador digitou continua lá
+    quando o Mestre voltar; nada de recomeçar a frase;
+  - **o jogo diz o que houve, em voz de mundo**, e oferece tentar de novo —
+    o motivo técnico vai ao `console`, íntegro (foi o vazamento que permitiu
+    diagnosticar as duas quedas desta sessão; quem apaga o motivo fica cego);
+  - **nada fica pela metade**: se o motor chegou a rolar, ou o turno se
+    completa, ou não começou. Meio-turno é pior que turno nenhum.
+  A chave reserva (decisão já tomada, ativa no beta) reduz a frequência
+  disto; esta etapa trata do que sobra.
+
 - [ ] **X4 · a conta do que mudou** · de: pessoa · 15/09
   Quantas rolagens por turno antes e depois; quantos turnos terminam sem um
-  número mudar (hoje: 7 em 7). E a régua de B1 refeita **com o jogador
-  agindo** — porque a linha de base de 1,4% mediu o motor sozinho, e o
-  jogador que enfim dispara o próprio golpe é uma variável que nunca esteve
-  na conta.
+  número mudar. E a régua de B1 refeita **com o jogador agindo** — porque a
+  linha de base de 1,4% mediu o motor sozinho, e o jogador que enfim dispara
+  o próprio golpe é uma variável que nunca esteve na conta.
+  **X1 deixou a régua pronta e a linha de base cravada**, para os dois
+  números serem comparáveis: `node testes/sonda-turno-esteril.mjs`, política
+  fixa (combate aberto, planta "estrada", 1 inimigo não-ágil, herói corpo a
+  corpo nível 3, 7 turnos declarando "Ataco &lt;nome&gt;", nada mais),
+  `taxa_esteril = turnos_sem_delta / turnos_totais`. **Hoje: 7/7 estéreis,
+  0 rolagens, 0 revides.** No espaço fechado das ações: 12/42 pares estéreis
+  (28,6%), 6/22 dentro do combate (27,3%). "Número que muda" está definido em
+  `TURNO_ESTERIL`, e o relógio de 45 min (`App.jsx:12959`) fica de fora de
+  propósito — um número que muda sempre não distingue turno que fez de turno
+  que não fez.
 
 ### Fase H — a porta das habilidades de classe
 Decisão da pessoa (15/09): *"vamos fazer como recomendado, apenas uma porta,
@@ -917,6 +993,28 @@ que esta fase torna uma regra em vez de um acidente.
   poupado é semente), a memória do gesto (`gesto.js` cobra na virada da
   postura), os propósitos de `indole.js`. **Poupar tem de ter consequência**,
   senão é só um botão a mais. O que exigir órgão novo sobe para a pessoa.
+
+- [ ] **Q5 · o golpe final é seu** · de: pessoa · 15/09
+  **Ideia da pessoa (15/09), e ela é barata porque Q3 já fez o caro:** quando
+  o inimigo chega a 0 e o jogador escolhe a letalidade, o sistema pergunta
+  ***"como você faz isso?"*** — e o que ele escrever é o que o Narrador narra.
+  A cena que ela deu como exemplo: *"vou correndo em direção a ele, deslizo
+  no chão e passo no meio das pernas dele cortando as duas, e enquanto ele
+  cai eu me levanto e corto a cabeça dele dizendo 'mexeu com a pessoa
+  errada'"*.
+  **Por que isto é maior do que parece:** é o único momento do jogo em que o
+  jogador **dirige** em vez de agir — e cai exatamente onde a emoção já está
+  no pico. O sistema já decidiu tudo que importa (o golpe acerta, o dano
+  mata, a escolha foi feita); a prosa é livre porque **não há regra em
+  disputa**. É o oposto de deixar a IA decidir o combate: aqui ela narra o
+  que o código já resolveu, que é a lei da casa na sua melhor forma.
+  Cuidados: **pular é um clique** (quem não quer escrever não é punido nem
+  atrasado); o texto é do turno, viaja pela `pauta` dinâmica e **não soma
+  bloco estático** ao prompt; e o Narrador recebe junto o que de fato
+  aconteceu, para narrar a cena do jogador **sem contradizer o número** —
+  se ele descreve cortar a cabeça de algo que ficou desacordado, quem manda
+  é a escolha, não a frase.
+
 
 ### Fase V — o PV temporário
 Decisão da pessoa (14/09), com as regras ditadas por ela: *"da mesma forma
@@ -1732,6 +1830,38 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
 
+- [ ] **a catraca do export morto conta ocorrências, não leitores** · médio · de: backend (X1) · 15/09
+  `testes/teste-ligacao.mjs:103-107` soma as ocorrências textuais do nome em
+  todos os arquivos, **incluindo a própria declaração e a linha de import**, e
+  aprova com `c > 1`. Logo **uma linha de `import` não lida conta como
+  leitor** — e `App.jsx:7` carrega **9 nomes de `combate.js` importados e nunca
+  usados**, nove leitores fantasmas comprados de uma vez. `gastarRecurso`
+  (`src/combate.js:745`) marca 2 (declaração + import morto) e passa a catraca
+  **sem ter um único chamador no repositório inteiro**. É a fresta exata que a
+  lei *"export morto mente"* queria fechar. O conserto é contar **usos**, não
+  ocorrências — descontar a declaração e a linha de import —, e ele **nasce
+  vermelho** nos 9: por isso é médio e vem com a limpeza junto, não sozinho.
+- [ ] **a reação escolhe por `Math.random()`, e o jogador nunca escolhe** · médio · de: testes (X1) · 15/09
+  `escolherReacao` (`src/reacoes.js:85`, o sorteio em `:96`) decide sozinha qual
+  reação acontece, com `Math.random()` — **fora da semente**. A lei
+  *"determinismo por semente"* diz que mesma semente = mesmo resultado, e aqui
+  não é: a mesma luta rejogada dá reações diferentes, e nenhuma régua consegue
+  medir combate com isso dentro. Some-se que `REACOES`, `reacaoPorId` e
+  `reacoesDe` **não têm chamador na tela** — as 6 reações existem e o jogador
+  nunca escolhe nenhuma. Consertar a semente é leve e mede-se; **dar a escolha
+  ao jogador é mecânica nova, logo da pessoa** (e tem cara de X2/X3).
+- [ ] **seis dos doze botões prontos escrevem frases que ninguém lê** · leve · de: backend (X1) · 15/09
+  Dos 12 literais de `ACOES_PRONTAS` (`App.jsx:1071-1084`), seis não casam
+  leitor nenhum: **Esquivar, Empurrar, Derrubar, Correr, Ajudar, Enganar** —
+  e quatro deles são ações de combate. Dois são conserto de uma linha:
+  **Enganar** falha porque a regex de `src/desafios.js:392` tem `engano` e não
+  `enganar` — **é o mesmo bug já documentado em `desafios.js:629-631`,
+  consertado para a fileira de baixo e nunca para esta**; **Correr** falha
+  porque `RETIRADA` (`src/combate.js:804`) exige `corro para (fora|longe)` e o
+  botão escreve *"Corro em disparada para "*. Os outros quatro pedem motor e
+  são de X2. **Não conserte os dois fáceis sem a catraca junto**, ou a terceira
+  frase morta nasce no próximo ciclo: o varredor `check-acoes-do-jogador.mjs`
+  já tem onde morar.
 - [ ] **dez habilidades fazem coisa diferente do que prometem — três fazem o inverso** · médio · de: backend (achado da contagem das 148, v9.250) · 15/09
   Não é promessa vazia: é promessa **trocada**, e o jogador vê o efeito errado
   acontecer. `Palavra de Coragem` (*"remove medo"*) **aflige amedrontado**;
