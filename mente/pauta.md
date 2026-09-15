@@ -317,7 +317,8 @@ Por isso balancear antes seria afinar um instrumento que o jogador não
 consegue tocar: a régua mede o motor, e o jogador não chega nele.
 
 - [x] **X1 · o que chega ao motor, e o que vira frase** · de: pessoa · 15/09
-  · **feito 15/09** — medido sem mexer em nenhuma regra, e a régua ficou:
+  · **feito 15/09 · v9.253 · commit `bf9dd49`** — medido sem mexer em nenhuma
+  regra, e a régua ficou:
   `testes/acoes-do-jogador.mjs` (a tabela), `teste-` e `check-` do mesmo
   nome (a catraca) e `testes/sonda-turno-esteril.mjs` (a régua que X4
   repete). **O 7 em 7 se reproduz, e a causa não era a que a fase supunha.**
@@ -328,8 +329,14 @@ consegue tocar: a régua mede o motor, e o jogador não chega nele.
   combate**. Fora do painel, só **mover no grid** e **beber da bolsa**
   chegam ao motor por clique. Dos 6 literais mortos das 12, **4 são ações
   de combate** (Esquivar, Empurrar, Derrubar, Correr). `habilidades.js`
-  expõe 37 funções e **zero** têm chamador por clique; 21 exports de
-  combate não têm chamador nenhum no `App.jsx`.
+  expõe 37 funções e **zero** têm chamador por clique; **21 funções dos três
+  módulos não têm um único uso no corpo do `App.jsx`** (mais 16 tabelas na
+  mesma situação). Dessas 21, a tabela separa o que é dívida do que não é:
+  **3** o App importa e nunca chama (`semClique`, todas de `combate.js`), 12 só
+  o próprio módulo chama (`soInterno`, que é encapsulamento e não dívida) e
+  **1 é morta de verdade** — `gastarRecurso` (`src/combate.js:745`), **sem
+  chamador em lugar nenhum do repositório**, e ainda assim aprovada pela
+  catraca, porque a linha de `import` contou como leitor.
 
   **O achado central, que a fase não tinha:** o botão não é a única trava,
   nem a principal. `resolverAtaqueJogador` **existe e é bom**; o golpe morre
@@ -385,24 +392,38 @@ consegue tocar: a régua mede o motor, e o jogador não chega nele.
   ele vive; se continuar de graça, o botão tem de impedir o clique em vez de
   recusá-lo. (b) **Defender/Esquivar não existe no motor** — o botão escreve
   uma frase que ninguém lê; dar-lhe mecânica é mecânica nova, logo `pesado`.
-- [ ] **X3 · o silêncio do Mestre é honesto** · de: pessoa · 15/09
-  **Decisão da pessoa (15/09), contra a recomendação de Claude e com a razão
-  dela:** *"por enquanto, até acharmos uma alternativa melhor, vamos travar o
-  game caso o narrador caia. Sem narrador = sem turno. Mais pra frente,
-  quando tivermos alguma ideia melhor, podemos pensar nisso novamente."*
-  Fica assim, e fica **declarado como provisório** — não como lei.
-  **Mas travar bem não é travar de qualquer jeito**, e é isso que a etapa
-  faz. Hoje o jogo simplesmente para, e o jogador não sabe se perdeu o turno,
-  se pode repetir, nem o que aconteceu:
-  - **a ação escrita não se perde** — o que o jogador digitou continua lá
-    quando o Mestre voltar; nada de recomeçar a frase;
-  - **o jogo diz o que houve, em voz de mundo**, e oferece tentar de novo —
-    o motivo técnico vai ao `console`, íntegro (foi o vazamento que permitiu
-    diagnosticar as duas quedas desta sessão; quem apaga o motivo fica cego);
-  - **nada fica pela metade**: se o motor chegou a rolar, ou o turno se
-    completa, ou não começou. Meio-turno é pior que turno nenhum.
-  A chave reserva (decisão já tomada, ativa no beta) reduz a frequência
-  disto; esta etapa trata do que sobra.
+- [ ] **X3 · o turno guardado** · de: pessoa · 15/09
+  **O coração da decisão, e vale sozinho mesmo que o resto não venha.** Se o
+  motor chegou a rolar, o resultado **não se descarta**: fica guardado, e o
+  Mestre narra quando voltar. O jogador não redigita, não re-rola, não perde
+  o momento.
+  **Por quê:** o defeito de hoje não é ficar sem prosa — é **a ação ser
+  jogada fora**. E há uma razão mais dura: se o turno re-rola na tentativa
+  seguinte, uma queda do Narrador vira **re-rolagem de um resultado ruim**.
+  Guardar fecha essa porta. Determinismo por semente manda aqui: o guardado é
+  o que aconteceu, não uma promessa de repetir.
+  Junto vem o travar-bem que a pessoa já aprovou: a ação escrita não se
+  perde, o jogo diz o que houve em voz de mundo e oferece tentar de novo, o
+  motivo técnico vai **íntegro ao `console`** (foi o vazamento que permitiu
+  diagnosticar as duas quedas desta sessão), e **nada fica pela metade**.
+- [ ] **X3b · o que a voz da casa cobre** · de: pessoa · 15/09
+  **Medir antes de estender, e a proposta pode encolher aqui — o que é bom
+  sinal.** O **Duelo é jogado com zero IA** e `arena.js` escreve linhas de
+  verdade (*"Vex firma Escudo Arcano · o próximo golpe encontra alguma coisa
+  antes de encontrar carne"*). A pergunta: **quanto de um turno de combate de
+  campanha essa voz cobre hoje?** Ela narra golpe, guarda e efeito — falta
+  saber se cobre condição, queda, morte, reviravolta e a chegada de um
+  inimigo com a mesma densidade. Entregue a cobertura em número, por tipo de
+  evento. **Se for rala, X3c não acontece** e a fase fecha em X3.
+- [ ] **X3c · em combate, o turno se completa** · de: pessoa · 15/09
+  Só se X3b disser que vale. Um turno de combate passa a **se completar com
+  a voz da casa** quando o Mestre cala — reusando o que o Torneio e o Duelo
+  já usam todo dia, **sem inventar uma linha de prosa nova**.
+  **E o limite, que é lei desta etapa:** isto vale **só em combate**. Fora
+  dele — exploração, conversa, cena — a prosa **é** o conteúdo, não o
+  acompanhamento, e ali **trava**, como a pessoa decidiu. Não existe voz da
+  casa fora do combate, e fabricar uma seria quebrar a lei pelo avesso: hoje
+  a IA decide o que devia ser código; ali seria o código fingindo ser a IA.
 
 - [ ] **X4 · a conta do que mudou** · de: pessoa · 15/09
   Quantas rolagens por turno antes e depois; quantos turnos terminam sem um
