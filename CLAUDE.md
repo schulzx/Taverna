@@ -274,12 +274,21 @@ Português, narrativo, o *porquê* antes do *o quê*. Terminar com:
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ```
 
-**Nunca `git add -A` com um ciclo em curso.** Se `.claude/ciclo-em-curso`
-existe, outra mão está escrevendo na mesma árvore: `add -A` varre o trabalho
-dela para dentro do seu commit, e a história passa a mentir sobre o porquê de
-cada mudança. Some os caminhos que são seus, um a um. Isto vale para **todo
-mundo**, inclusive para quem rege o ciclo — foi assim que se errou em
-14/09/2026, e o commit `a6a6473` carrega trabalho da etapa T2 sem dizer.
+**`git commit -- <caminhos>`, sempre. Nunca `git add` seguido de `git commit`
+solto, e nunca `git add -A`.** Duas mentes trabalham na mesma árvore e
+**dividem um índice só**: entre o seu `add` e o seu `commit` cabe o `add` da
+outra, e o seu `commit` leva o trabalho dela junto. Passar os caminhos no
+próprio `commit` fecha a janela — é a única forma que não depende de tempo.
+
+A lei antiga dizia só "não use `add -A`", e não bastou: errou-se **duas
+vezes**, e as duas foram de quem rege. Em 14/09 o commit `a6a6473` levou a
+etapa T2 dentro de um commit sobre a mesa de design; em 15/09 o `e430a12`,
+que fala de um relógio de 15 segundos, levou `src/guardado.js`, duas suítes e
+166 linhas de `App.jsx` — a etapa X3 inteira, **sem commit próprio**.
+
+Quando acontecer: **não reescreva história publicada.** `push --force` num
+ramo que faz deploy para jogadores reais é arma apontada para o vizinho.
+Reponha a verdade no diário e num commit seguinte, e siga.
 
 **Commit local** fecha toda fase verde — automático, dentro do ciclo.
 

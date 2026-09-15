@@ -108,7 +108,7 @@ mentes precisam dele, e duas mãos nele ao mesmo tempo se apagam. Então:
    `git show HEAD:<arquivo>`. Confira vivo no navegador (**HMR mente depois
    de rename**; **salve e restaure os espaços de save**).
 6. **Commitar e subir.** Narrativo, em português, assinatura do `CLAUDE.md`.
-   **Some os caminhos um a um — nunca `git add -A`**, porque a outra mente
+   **Use `git commit -- <caminhos>`; nunca `git add` seguido de `git commit` solto, e nunca `git add -A`** (o índice é um só para as duas mentes: entre o seu `add` e o seu `commit` cabe o da outra), porque a outra mente
    pode ter trabalho não commitado na árvore. Bump de `VERSAO` como a
    **última** edição antes do commit. Se o `git push` for recusado por não
    estar à frente, `git pull --rebase` e suba de novo; num conflito de

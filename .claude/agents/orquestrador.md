@@ -104,7 +104,11 @@ continua possível: duas chamadas no mesmo turno, ambas em primeiro plano.
    sempre: ou commit, ou nada.
 6. **Commitar** localmente, narrativo, em português, o *porquê* antes do
    *o quê*, com a assinatura do `CLAUDE.md`. Bump de `VERSAO` no mesmo
-   commit. **Depois, `git push`** — a pessoa autorizou em 14/09/2026 (*"pode
+   commit. **Use `git commit -- <caminhos>`; nunca `git add` seguido de
+   `git commit` solto, e nunca `git add -A`** — o índice é **um só** para as
+   duas mentes, e entre o seu `add` e o seu `commit` cabe o `add` da outra:
+   já aconteceu duas vezes, e nas duas um commit levou dentro a etapa
+   inteira de quem não o escreveu. **Depois, `git push`** — a pessoa autorizou em 14/09/2026 (*"pode
    ir fazendo e subindo"*), e a seção "Commits" do `CLAUDE.md` guarda as três
    condições: build limpo, `npm test` inteiramente verde, árvore limpa. Se
    qualquer uma falhar, **não suba** e diga por quê no relato. Push é deploy
