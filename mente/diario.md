@@ -16,6 +16,87 @@ Formato:
 
 ---
 
+## 15/09 01:30 · v9.250 · a contagem das 148 habilidades · commit `PENDENTE`
+
+- **estado inicial:** HEAD `8dd1579`, VERSÃO v9.249, `npm test`
+  **182/182 suítes + 9/9 varredores** verde, build limpo. **Havia um ciclo
+  morto:** `mente/agora.json` estava sujo com os itens deste mesmo item e
+  **sem trava** — alguém começou esta contagem e morreu antes do primeiro
+  passo. Nada de `src/` ficou pela metade (a árvore só tinha o `agora.json`),
+  então não desfiz nada: pus a trava e assumi o item.
+- **conselheiro:** **não chamado** — a pessoa pediu esta medição diretamente
+  e está esperando o número.
+- **backend:** classificou as **148** `HAB()` uma a uma contra a cadeia real
+  de resolução, com script que roda os detectores de verdade ao lado do
+  julgamento; depois re-triou o balde 3 em três degraus.
+- **testes:** inventariou o caminho existente — `FUNCOES_DO_SISTEMA` (11
+  verbos, saturada), os 11 ramos de `usarFuncaoMagica`, e quais famílias de
+  `habilidades.js` são tabela aberta.
+- **decisões médias tomadas:** **nenhuma no código. O ciclo é um retrato e
+  não consertou uma linha** — nem as duas que T4 já conhecia. O único código
+  que mudou foi o bump.
+
+### O item: o número que a pessoa pediu
+
+Ela devolveu a pergunta em 14/09 — *"não vejo utilidade pra um órgão cuidar
+de somente duas habilidades"* — e pediu o número antes de decidir. Ele é:
+
+**Balde 1 (cumpre na mesa) 56 · Balde 2 (é só prosa) 26 · Balde 3 (promete e
+não cumpre) 66.** Soma 148.
+
+O critério está escrito e é reproduzível, e o de fronteira que mais move o
+número é este: **dano sozinho é prosa**. "Extra", "massivo", "devastador" são
+adjetivos sem tabela — nenhuma das 148 tem `danoBase`. Contá-los no balde 1
+inflaria; no balde 3 encheria de vinte e cinco quase-iguais que não pedem
+motor nenhum.
+
+### A divisão que decide, e ela desmente a pergunta
+
+O balde 3 em três degraus: **(a) LINHA 21 · (b) LIGAÇÃO 33 · (c) NOVO 12**.
+**54 das 66 não precisam de mecânica nova.**
+
+O achado que reorganiza tudo não estava na pergunta: **os motores já existem,
+eles apenas leem outra fonte.** `amortecerDano` (`tracos.js:161`) já corta o
+dano recebido e roda vivo em `App.jsx:13635` — lendo o **traço racial**. O
+piso de 1 PV existe com número. `removerPelaPorta` tem **um** chamador (a
+magia do grimório); `curarAliado`, **um** (a poção). Raça tem despachante,
+dádiva tem, magia tem, poção tem, relíquia tem. **A habilidade de classe é a
+única fonte de poder do jogo que não tem despachante.** Não é um buraco de
+mecânica: é um buraco de **fiação**.
+
+Por isso a recomendação da mente não é órgão **nem** "duas ligações avulsas":
+é **uma porta só** — `porHabilidadeDeClasse` no laço que já existe
+(`App.jsx:13067` e `:13187`) + o nome em `temRegraPropria`. Ela não inventa
+mecânica; faz a habilidade de classe alcançar o que todos os outros já
+alcançam. Os 12 restantes são **sete assuntos** (marca, zona persistente,
+cura-por-turno, clima, aura reativa, contra-conjuração, PM de volta) — cada um
+uma fase pequena, nenhum urgente.
+
+### A divergência entre as duas mãos, e como a resolvi
+
+As duas mãos discordaram exatamente onde a decisão mora. O `backend` marcou
+`Postura Defensiva` e `Corpo de Ferro` como **(c) NOVO**, argumentando que
+"mitigação do dano recebido não tem motor — absorção come valor fixo e guarda
+faz errar". **Overruled, e a razão está medida:** nenhuma das duas mãos tinha
+olhado `tracos.js`. `amortecerDano` corta o golpe ao meio, é porta única do
+dano que chega ao herói, e roda em produção. Pela nossa própria regra escrita
+("o motor existe e lê outra fonte" = LIGAÇÃO), as duas são **(b)**. É a
+diferença entre dizer à pessoa "precisa de mecânica nova" e "precisa de uma
+linha de fiação" — e ela está decidindo com base nisso.
+O `backend` me corrigiu de volta em `Mente Serena` (é `imuneA`, não `GUARDAS`,
+e é (b)) e eu aceitei. As duas correções estão no `degraus.cjs`.
+
+- **o que ficou:** duas descobertas que **não são** esta decisão e viraram
+  item próprio em "Aberto": os **10 falsos positivos ativos** (três fazem o
+  inverso do que prometem; cinco nascem de substring dentro de palavra —
+  `aranha` em *Emaranhar*, `maça` em *Fumaça*) e as **7 habilidades de ataque
+  que nem chegam ao motor** (`HAB_OFENSIVA_RX` tem `ataca`, não `ataque`).
+  Nenhuma foi consertada: o ciclo era o retrato, e consertar durante a
+  medição é a maneira mais rápida de o número deixar de ser verdade.
+  A decisão do órgão **continua com a pessoa** — agora com o número na mão.
+
+---
+
 ## 14/09 22:30 · v9.248 · N1 · o que os dois lados já sabem · commit `9f04a18`
 
 - **estado inicial:** árvore limpa (só `mente/agora.json` modificado), HEAD

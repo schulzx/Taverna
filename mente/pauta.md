@@ -73,6 +73,71 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
   + `usarFuncaoMagica`), sem órgão nenhum. Se forem dezenas, é órgão e vale
   a pena. **A pessoa decide depois de ver o número** — e a Fase V já resolve
   a metade de `Palavra de Coragem` pelo caminho do PV temporário.
+
+  ### O NÚMERO ESTÁ NA MÃO (medido em v9.250, 15/09) — o ciclo não consertou nada
+
+  **As 148, uma a uma, contra a cadeia real de resolução do App:**
+
+  | balde | n | o que é |
+  |---|---|---|
+  | **1 · cumpre na mesa** | **56** | o sistema executa o que a descrição promete |
+  | **2 · é só prosa** | **26** | não promete mecânica — cor, ficção, gancho. **Não é defeito** |
+  | **3 · promete e não cumpre** | **66** | diz que algo acontece e nada executa |
+
+  O balde 1 por onde cumpre: condição/aflição **18** · regra própria
+  (`habilidades.js`) **15** · invocação **15** · dano por tabela **3** ·
+  absorção numerada **3** · grimório resolvido pelo sistema **2**.
+  **Critério do balde 2:** dano sozinho é prosa — "extra", "massivo",
+  "devastador" são adjetivos sem tabela, e nenhuma das 148 tem `danoBase`.
+
+  **A divisão que responde "órgão ou ligações" — e ela é o contrário do que
+  a pergunta supunha:**
+
+  | degrau | n | o que basta |
+  |---|---|---|
+  | **(a) LINHA** | **21** | uma linha numa tabela **já aberta**. Zero código no `App.jsx` |
+  | **(b) LIGAÇÃO** | **33** | **o motor existe e é genérico** — só não é chamado por habilidade de classe |
+  | **(c) NOVO** | **12** | não há motor em lugar nenhum |
+
+  **54 das 66 não precisam de mecânica nova.** Só **12** precisam, e elas se
+  agrupam em sete assuntos, não em sessenta: sistema de marca (3), zona/terreno
+  persistente (3), cura-por-turno (2), clima, aura reativa, contra-conjuração,
+  PM de volta.
+
+  **O achado que decide, e não estava na pergunta.** Os motores quase todos já
+  existem — **eles apenas leem outra fonte**. `amortecerDano` (`tracos.js:161`,
+  vivo em `App.jsx:13635`) já corta o dano recebido, mas lê o **traço racial**;
+  o piso de 1 PV (`App.jsx:13790-13812`) idem; `segundoFolegoDisponivel` lê
+  **afixo/dádiva**; `dobraMovimento`/`ignoraTerrenoDificil` leem **dádiva**;
+  `removerPelaPorta` tem **um** chamador, a magia do grimório; `curarAliado`
+  (`App.jsx:7901`) tem **um**, a poção. Raça tem despachante (`tracos.js`),
+  dádiva tem, magia tem (`usarFuncaoMagica`), poção tem, relíquia tem.
+  **A habilidade de classe é a única fonte de poder do jogo sem despachante** —
+  e as tabelas de `habilidades.js` são abertas: nenhum `id` de linha aparece no
+  `App.jsx`, o laço lê campos genéricos.
+
+  **A recomendação da mente: não é órgão, e também não são "duas ligações".
+  É UMA porta — `porHabilidadeDeClasse` — no laço que já existe** (`App.jsx:13067`
+  e `:13187`, os dois sítios) **+ o nome em `temRegraPropria`.** Ela não inventa
+  mecânica: só faz a habilidade de classe alcançar os motores que raça, dádiva,
+  magia e poção já alcançam. Com ela e mais linhas de tabela, **54 de 66 caem**.
+  Órgão só se justificaria para os 12 — e esses são sete assuntos separados,
+  cada um uma fase pequena, nenhum urgente. **A Fase V já cobre o PV temporário**
+  de `Palavra de Coragem`.
+
+  **Duas descobertas que valem item próprio e não são esta decisão** (estão em
+  "Aberto"): **10 falsos positivos ativos** — habilidades que fazem coisa
+  diferente do que prometem, três delas o **inverso** (`Palavra de Coragem`,
+  *"remove medo"*, **aflige amedrontado**; `Mente Serena`, *"imune a medo"*,
+  idem; `Chamado da Chuva`, *"cura contínua"*, põe o alvo **queimando**), cinco
+  nascidas de substring dentro de palavra (`aranha` em *Emar**anha**r*, `maça`
+  em *Fu**maça***, `escudo` em *"atravessa escudo"*); e **7 habilidades de
+  ataque que nem chegam ao motor**, porque `HAB_OFENSIVA_RX` (`App.jsx:11677`)
+  tem `ataca` e não `ataque` — o PM sai e nenhum tiro é disparado.
+
+  Reprodutível: `scratchpad/classificacao-148.md` (as 148, linha a linha, com a
+  coluna de máquina dos detectores ao lado do veredito) e `scratchpad/degraus.cjs`
+  (o degrau de cada uma das 66, com a razão, e os totais que ele imprime).
   _(o texto original da pendente segue abaixo)_
 - [x] **a habilidade de classe não tem resolvedor** · **DEVOLVIDA pela pessoa 14/09** — substituída pelo item acima, que conta antes de decidir
   Medido em T4 e escrito na própria tabela, por linha: `Purificar` (Clérigo nv3,
@@ -1472,6 +1537,34 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   etapa é a **T3 · a salvaguarda no fim do turno**; T2 fechou em v9.239.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **dez habilidades fazem coisa diferente do que prometem — três fazem o inverso** · médio · de: backend (achado da contagem das 148, v9.250) · 15/09
+  Não é promessa vazia: é promessa **trocada**, e o jogador vê o efeito errado
+  acontecer. `Palavra de Coragem` (*"remove medo"*) **aflige amedrontado**;
+  `Mente Serena` (*"imune a medo"*) idem; `Chamado da Chuva` (*"cura leve
+  contínua"*) põe o alvo **queimando**. Os outros sete: `Passos Silenciosos` e
+  `Bomba de Fumaça` **atordoam**, `Emaranhar` **envenena um só** em vez de
+  prender todos, `Tiro Perfurante` **protege o próprio atirador**, `Passo
+  Feérico` entrega `furtivo` em vez de teleporte, `Coração Tempestuoso`
+  **abençoa o grupo**, `Disparo Calibrado` **inspira o grupo de graça**.
+  **A causa é uma só e é medível:** `aflicoes.js PORTADORES` casa por substring
+  **dentro de palavra** — `aranha` em *Emar**anha**r*, `maça` em *Fu**maça***,
+  `silenc` em *silenciosos*, `escudo` em *"atravessa escudo"*, `fúria` em
+  *Fúria de Gaia* — e vale "a primeira que casa vence". O comentário do próprio
+  arquivo avisou do risco na v9.45. O conserto é **fronteira de palavra nos
+  regex** mais uma catraca que rode `aflicaoDe` sobre as 148 e falhe se alguma
+  entregar condição que a descrição não promete. Reproduz em três linhas de Node.
+
+- [ ] **sete habilidades de ataque cobram o PM e não disparam** · leve · de: backend (achado da contagem das 148, v9.250) · 15/09
+  `HAB_OFENSIVA_RX` (`App.jsx:11677`) tem `ataca` e **não** `ataque`, e
+  `resolverHabilidadeOfensiva` (`:11720`) devolve `null` a quem não casa. Ficam
+  de fora, com o PM saindo da ficha e nenhum tiro disparado: `Tiro Preciso`,
+  `Tiro do Fim`, `Cem Punhos`, `Sopro Herdado`, `Tempestade Viva`, `Barragem`,
+  `Disparo Calibrado` — este ainda por cima inspira o grupo inteiro de graça.
+  (13 habilidades de `tipo: "ataque"` falham o portão; as outras 6 entregam por
+  outro caminho.) O conserto é **uma alternativa no regex**; a catraca é uma
+  suíte que exija que toda `HAB` de `tipo: "ataque"` chegue ao motor.
+
 - [ ] **o Narrador cala, e o pulo para o segundo provedor nunca foi provado** · médio · de: pessoa+Claude · 14/09
   A pessoa explicou o desenho (14/09): *"temos duas chamadas de API; caso
   uma não funcione, ele pula pra próxima. Como ainda estamos em
