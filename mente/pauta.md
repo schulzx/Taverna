@@ -418,7 +418,7 @@ consegue tocar: a régua mede o motor, e o jogador não chega nele.
   masmorra pela estrada e encurtou a abertura de 25,5 para 16,5 m sem um aviso
   sequer. Quem medir grade tem de **conferir a largura×altura que recebeu**.
 - [x] **X2 · o golpe sai do botão** · de: pessoa · 15/09 · **reescrita por X1**
-  · **feito 15/09 · v9.255 · commit `<hash>`** — o pré-requisito garantido e
+  · **feito 15/09 · v9.255 · commit `fc86e53`** — o pré-requisito garantido e
   mostrado, e a porta única do motor. **`Atacar`, com a luta aberta, ataca**:
   monta a frase canônica por `fraseDoGolpe`, passa pela porta única
   `declararGolpe` (`App.jsx:11851`), o módulo puro `src/golpe.js` decide antes de

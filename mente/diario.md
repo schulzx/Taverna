@@ -16,7 +16,7 @@ Formato:
 
 ---
 
-## 15/09 17:05 · v9.255 · X2 · o golpe sai do botão · commit `<hash>`
+## 15/09 17:05 · v9.255 · X2 · o golpe sai do botão · commit `fc86e53`
 
 - **estado inicial:** HEAD `628e70f`, VERSÃO **v9.254** (o ciclo E1 do `regente`
   já a tinha bumpado — o meu é o v9.255), `npm test` **183/183 suítes + 11/11
