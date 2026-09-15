@@ -444,6 +444,46 @@ construída.** Dois motores de decisão divergiriam no primeiro ajuste, e
 teríamos a mesma doença que a mesa de design existe para impedir, agora no
 combate. Um motor lê a mesa e decide; quem o chama é que muda.
 
+**A DECISÃO DA PESSOA (15/09) — a tabela de intenções passa a ser por nível.**
+Ela leu a medição e desenhou a saída: *"poderíamos fazer a tabela de intenções
+por nível de inteligência. Um inimigo com o maior nível tem a capacidade de
+pensar em focar no conjurador desde o primeiro turno, enquanto o de menor
+inteligência não teria essa capacidade e provavelmente focaria no que parece
+mais forte. Cada inimigo em seu nível teria seu próprio pensamento, em vez de
+todos pensarem o mesmo."*
+
+**E o diagnóstico dela corrige o meu:** o problema não é o inimigo ser
+inteligente demais — é **serem todos igualmente inteligentes, e no máximo**.
+A fechadura já existe e é binária: cada intenção tem um portão
+`quando: (s) => s.pensa && …`, `pensa` é sim/não, `menteDaCriatura` diz sim
+para **18 das 27** criaturas, e o `peso` é um ranking **global**
+(`adversario.js:603`: ganha a de maior peso entre as que servem).
+`calar_a_magia` pesa 17, quase todo grupo tem conjurador, quase toda criatura
+pensa — logo **vence sempre, na rodada 1, em toda luta**. Não é esperteza: é
+ausência de escala.
+
+O que isso muda nas etapas abaixo:
+
+- **`pensa` (sim/não) vira degrau.** Cada intenção declara o **nível mínimo**
+  que consegue tê-la. `calar_a_magia` e `matar_o_remendo` moram no topo; ir
+  no que parece mais forte, ou no que está mais perto, mora embaixo. Uma
+  criatura **não enxerga** o que está acima do degrau dela — não é que
+  escolha não usar: não lhe ocorre.
+- **O peso deixa de ser global e passa a desempatar dentro do degrau.** Senão
+  uma intenção pesada de nível baixo volta a dominar tudo, e trocamos um
+  tirano por outro.
+- **Mesmo nível não é mesma ação** — e isto é ganho, não contradição ao que a
+  pessoa pediu. O portão `quando` lê a **situação** (quem está perto, quem
+  feriu, quem está no chão, a rodada), e dois brutos em posições diferentes
+  decidem diferente. Dois inimigos de níveis diferentes pensam **de tipos
+  diferentes**; dois do mesmo nível pensam do mesmo tipo sobre mesas
+  diferentes. É daí que sai a cena tática.
+- **A fase deixa de ser "dar cabeça ao inimigo" e passa a ser "tirar a cabeça
+  de quem não devia tê-la".** Nenhuma intenção nova é necessária para
+  consertar o 1,4%: as 46 já existem, e 14 nunca vencem justamente porque a
+  do topo sempre ganha. Distribuí-las por degrau acorda o acervo morto e
+  derruba o tirano no mesmo gesto.
+
 **O número já existe:** `intelecto` é um dos seis atributos
 (`constantes.js:62` — *"Conhecimento, raciocínio, poder místico"*) e hoje só
 rola teste e magia. Ele não nasce nesta fase: **ganha um segundo leitor**.
