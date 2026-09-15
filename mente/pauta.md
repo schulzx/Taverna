@@ -21,7 +21,7 @@ _As quatro de 14/09 foram respondidas e viraram as fases T, B, F e I. Estas duas
 nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
 `Palavra de Coragem` faz na ficha e o jogo não cumpre._
 
-- [ ] **o alvo tático já está ligado no jogo, e a régua nunca o viu** · pesado · de: orquestrador (achado de N1) · 14/09
+- [x] **o alvo tático já está ligado no jogo, e a régua nunca o viu** · **RESPONDIDA 15/09 e JÁ FEITA** — N1b consertou a régua e refez a linha de base (v9.251) · pesado · de: orquestrador (achado de N1) · 14/09
   **O maior achado de N1, e ele não é sobre a Fase N: é sobre o que o jogo
   já é hoje.** A régua de combate passa **`prioridade: ""`**
   (`regua-combate.mjs:612`), sem comentário, e `combate.js:279` só consulta

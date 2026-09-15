@@ -74,7 +74,7 @@ e nos dois a resposta é sim, com o que ele reaprende dito por escrito.
   aprovou em S1 — *o motor não muda; o que muda é quando o jogador fica
   sabendo* — aplicado à rodada em vez de à queda.
 
-- [ ] **`Atacar` ataca — os verbos de combate saem do autocompletar** · pesado · de: jogo · 15/09 (D5)
+- [x] **`Atacar` ataca — os verbos de combate saem do autocompletar** · **RESPONDIDA 15/09 — virou a Fase X**, e X1 já mediu (v9.253) · pesado · de: jogo · 15/09 (D5)
   **O achado está dentro de um painel só, e ele tem duas metades.** O painel
   `Ações` (`App.jsx:20548`) tem duas fileiras separadas por uma linha
   tracejada. Em cima, `ACOES_PRONTAS` — **12 botões**, com `Atacar` em âmbar
@@ -179,7 +179,7 @@ e nos dois a resposta é sim, com o que ele reaprende dito por escrito.
   commit que se desfaz se a pessoa não gostar. É esse o argumento inteiro de D5,
   e é por isso que o item mais ambicioso desta fase é o que mais depende dela.
 
-- [ ] **o turno acontece mesmo quando o Narrador cala** · pesado · de: jogo · 14/09
+- [x] **o turno acontece mesmo quando o Narrador cala** · **RESPONDIDA 15/09 — virou X3 · X3b · X3c**, com a proposta do turno guardado aprovada pela pessoa · pesado · de: jogo · 14/09
   **Experiência jogada, duas vezes na mesma fase** (D1 e D4): a quota do
   Narrador acabou e **o jogo parou de ser jogável** — nem um turno de Uma
   Vida, nem um do Capítulo. Mas o achado que importa é o contrário: **o

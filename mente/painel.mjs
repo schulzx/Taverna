@@ -182,13 +182,29 @@ function commits() {
 /* Uma fila é a pauta + o diário + a trava de quem a conduz. Duas mentes,
    duas filas, a mesma forma — o painel não sabe qual é "a principal", e é
    assim que deve ser. */
+/* As decisoes que a pessoa ja tomou, por titulo exato. Uma pendencia que
+   esteja aqui nao e pendencia: e fantasma -- alguem esqueceu o [x]. Tres
+   vezes a pessoa abriu a pagina e viu decisoes suas listadas como se
+   esperassem por ela; das tres, nenhuma foi memoria perdida, todas foram
+   edicao esquecida. Disciplina esquece; estrutura nao. */
+const JA_RESPONDIDAS = new Set(
+  ler("mente/respondidas.md").split(/\n/)
+    .filter((l) => l.startsWith("- "))
+    .map((l) => (l.split("·")[2] || "").trim().toLowerCase())
+    .filter(Boolean)
+);
+
 function fila({ id, nome, pauta, diarioArq, travaArq, conduz }) {
   const p = semArquivo(semCerca(ler(pauta)));
   const blocos = diario(semArquivo(semCerca(ler(diarioArq))));
   return {
     id, nome, conduz,
     ciclo: trava(travaArq),
-    pendentes: itens(seccao(p, "Para a pessoa decidir")).filter((i) => !i.feito),
+    pendentes: itens(seccao(p, "Para a pessoa decidir"))
+      .filter((i) => !i.feito && !JA_RESPONDIDAS.has(i.titulo.toLowerCase())),
+    fantasmas: itens(seccao(p, "Para a pessoa decidir"))
+      .filter((i) => !i.feito && JA_RESPONDIDAS.has(i.titulo.toLowerCase()))
+      .map((i) => i.titulo),
     fases: fases(seccao(p, "Aprovado pela pessoa")),
     aberto: itens(seccao(p, "Aberto")).filter((i) => !i.feito),
     recusado: seccao(p, "Recusado").split("\n").filter((l) => l.startsWith("- **")).map((l) => l.replace(/^- /, "").trim()),
