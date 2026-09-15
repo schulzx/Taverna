@@ -87,7 +87,13 @@ sec("1. NENHUM MÓDULO MUDO");
      Com importador de verdade, o modulo nao pode ficar na lista de
      espera: a secao 1 passa a mede-lo como mede todos os outros.
      A lista volta a ficar VAZIA, como a regra acima pede. */
-  const AGUARDANDO = {};
+  const AGUARDANDO = {
+    /* v9.258 (Fase K, K1b): o módulo do ritmo nasce antes do seu importador.
+       K1b mede e prova o teto da espera; K3 é que liga a janela ao App.jsx, e
+       o bastão do App.jsx estava com a outra mente. Credor nomeado: o
+       `oficial`, em K3 — e a lista volta a ficar VAZIA nesse dia. */
+    "ritmo-da-reacao.js": "o oficial, em K3",
+  };
   const mudos = [];
   for (const f of arqs) {
     if (FOLHAS.test(f)) continue;

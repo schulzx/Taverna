@@ -23,7 +23,9 @@ export function Botao({ children, onClick, primario, desativado, pequeno, classN
       style={{
         background: primario ? T.amber : "transparent",
         color: primario ? T.onAccent : T.inkDim,
-        border: primario ? "none" : `1px solid ${T.line}`,
+        /* borda do não-primário: lineStrong, não line — é borda de controlo,
+           e 1.4.11 pede piso de 3:1 para elemento de interface. */
+        border: primario ? "none" : `1px solid ${T.lineStrong}`,
         opacity: desativado ? 0.4 : 1, cursor: desativado ? "not-allowed" : "pointer",
         fontWeight: 600, letterSpacing: "0.04em",
       }}>
@@ -391,7 +393,9 @@ export function CartaoDeEscolha({ ativo, aoClicar, compacto, children }) {
     <button onClick={aoClicar} className={`text-left w-full rounded-xl flex flex-col gap-2 transition-all ${compacto ? "p-4" : "p-5"}`}
       style={{
         background: T.panel,
-        border: `${ativo ? 1.5 : 1}px solid ${ativo ? T.amber : T.line}`,
+        /* borda do inativo: lineStrong, não line — delimita alvo de toque,
+           e 1.4.11 pede piso de 3:1 para elemento de interface. */
+        border: `${ativo ? 1.5 : 1}px solid ${ativo ? T.amber : T.lineStrong}`,
         boxShadow: ativo ? "0 4px 8px rgba(232,163,61,0.12)" : "none",
       }}>
       {children}

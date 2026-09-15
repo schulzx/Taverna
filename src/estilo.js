@@ -30,9 +30,21 @@
 /* A PALETA SEMÂNTICA: o que a cor SIGNIFICA (o fundo, a linha, o
    acento, o perigo). É o que o resto do projeto importa — quinze
    arquivos pedem `T`, e nenhum deles precisa saber de que tom de roxo
-   `panel` é feito hoje. */
+   `panel` é feito hoje.
+
+   `lineStrong`: as quatro superfícies da casa cabem dentro de 1,3:1 umas
+   das outras (`line`/`panel` = 1,295:1, `panelSoft`/`panel` = 1,073:1) —
+   para a WCAG 1.4.11 são uma superfície só, e por isso um controlo desta
+   casa ou se enche de `amber` (8,45:1) e grita, ou desaparece. `lineStrong`
+   é o degrau que faltava: `panel` 3,512:1 · `bg` 3,741:1 · `panelSoft`
+   3,272:1 — os três acima do piso de 3:1 para não-texto. E não é "o degrau
+   mais baixo que passa" (`#6B6387` passa a 3,040) — é o mais baixo que
+   passa com folga: 9,1% acima do piso contra 1,3%. Escopo é só borda de
+   controlo (`STROKE_COLOR`): sobre `ink` dá 4,09:1, que reprova texto — não
+   é cor de letra. */
 export const T = {
   bg: "#0E0C15", panel: "#171322", panelSoft: "#1E1930", line: "#2E2745",
+  lineStrong: "#70688C",
   ink: "#EAE4D6", inkDim: "#9B93AC",
   amber: "#E8A33D", amberSoft: "#F5C878", onAccent: "#1A1408",
   violet: "#8B7BD8", violetSoft: "#B0A5EC", onSecond: "#14101F",

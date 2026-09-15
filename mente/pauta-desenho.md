@@ -34,6 +34,31 @@ o jogo se joga**, e cada uma pede uma coisa ao motor que ele hoje não faz.
 opostas — uma porque **dá ao jogador informação que este jogo nunca lhe deu**, a
 outra porque **paleta é identidade**.
 
+- [ ] **a resposta dele sobre como quer ser perguntado morre no fim da luta** ·
+  *(K1b)* · **pesado** · de: jogo + regente · 15/09
+  **O número, e foi achado a medir outra coisa.** A escada do silêncio é a
+  generosidade automática da Fase K: duas janelas expiradas e o jogo **cala-se
+  pelo resto daquela luta**, sem menu e sem aviso. Funciona — e **reinicia na
+  luta seguinte**. Quem nunca quis a janela paga **33 200 ms por luta** para a
+  desligar outra vez, e **22,1 minutos ao longo de uma campanha de 40 lutas**,
+  em silêncios que ele já pediu quarenta vezes. *O jogo esquece, todas as noites,
+  uma coisa que ele já respondeu.*
+  **Há saída barata e ela não serve:** fazer a escada atravessar a campanha em
+  memória resolve a aritmética e perde-se no primeiro `F5`. A resposta honesta é
+  **a preferência viver no save**, e é aí que isto sai das nossas mãos: **formato
+  de save é pesado, e é da pessoa.**
+  **O que ela decide, em uma pergunta:** *a ficha guarda como o herói se defende,
+  ou isso recomeça a cada luta?* Se guardar, a fila de quatro pílulas de K1
+  (*eu decido · sem pressa · aparar sempre · deixar passar*) deixa de ser uma
+  preferência de sessão e passa a ser **parte da personagem** — que é, aliás, o
+  que a ficção sempre disse que ela era.
+  **O risco, dito:** um save que guarda preferência é um save que pode guardar
+  mal, e a campanha é intocável. Mexer no formato pede a mesma cerimónia de
+  qualquer mudança de save — migração, e um jogo antigo que abre sem a chave tem
+  de cair no padrão `normal`, nunca em silêncio.
+  **E o custo de não decidir é zero hoje:** K3 constrói com a escada por luta,
+  como está, e o dia em que a pessoa disser sim é uma chave a mais no save.
+
 - [x] **o dano aparece antes de doer** · **RECUSADA 15/09, e o relógio subiu junto.** A pessoa: *"acho que ficaria melhor o dano vir surpresa e aumentar o relógio — daria mais emoção e realmente se compararia a uma reação; talvez 15s, pra que fique tranquilo até pra pessoas com dificuldade."* **O que isso decide:** a reação é **instinto, não cálculo** — o jogador escolhe sem saber o tamanho do golpe, e é isso que a torna uma reação de verdade. O número medido que sustentava a proposta continua verdadeiro (o sistema TEM o dano na mão antes de doer) e deixa de ser usado, de propósito. *(K1)* · pesado · de: jogo · 15/09
   **A janela da reação é o único instante do jogo inteiro em que o sistema tem na
   mão um número que ainda não aconteceu.** `a.r.dano` existe em `App.jsx:7572` e
@@ -571,7 +596,20 @@ não reagir, caso não queira gastar PM."*
   para cima, ancorada em baixo — o topo do campo e a câmara nunca se mexem.
   **O que continua a faltar a K1 é o número do tempo**, que depende do ritmo da
   rodada e é do `jogo`.)*
-- [ ] **K1b · o relógio de 15 s, e o que ele cobra** · de: pessoa · 15/09
+- [x] **K1b · o relógio de 15 s, e o que ele cobra** · **FEITO 15/09 · v9.258** —
+  **a barra não corre 15 s, corre 4.** K1 tinha o número certo no papel errado: os
+  4 s que ele mediu são *o prazo*, não *a janela*. Onze segundos **sem relógio
+  nenhum**, depois o trilho pelos 4 s medidos, depois o último segundo apertado —
+  e quando a barra aparece o jogador tem ainda o orçamento inteiro de K1.
+  **Zero peça nova.** A rodada de quatro inimigos passou de **60 000 ms para
+  15 000** (−75,0 %); doze golpes, de 180 000 para 15 000 (−91,7 %); a luta de
+  cinco rodadas de quem ignora tudo, de 300 000 para **33 200** (−88,9 %). Dois
+  tetos em `TETO_DA_ESPERA`, porque um teto por rodada × rodadas sem limite não é
+  teto. **O dano fica em segredo**, e não vaza: 12 portas visuais + 15 de sistema
+  fechadas por escrito, **três delas viradas asserção**. `folgado` morreu com o
+  motivo escrito. `src/ritmo-da-reacao.js` + **85 asserções**; `lineStrong` nasceu
+  em `T` com dois leitores. O escrito dos dois seniores fica em
+  `mente/k1b-jogo.md` e `mente/k1b-desenho.md`. · de: pessoa · 15/09
   **Decisão da pessoa (15/09):** a janela sobe de 4 s para **15 s** — *"pra
   que fique tranquilo até pra pessoas com dificuldade"* — e **o dano fica
   em segredo**. K1 tinha decomposto os 4 s (1,5 s de reconhecimento + 0,5 s
@@ -594,6 +632,23 @@ não reagir, caso não queira gastar PM."*
   Construir. **Precisa do bastão do `App.jsx`** — e é a ocasião de levar o
   que der para arquivo próprio. O PM só sai da ficha quando o jogador
   escolheu, ou quando a preferência dele disse que sim.
+  **Três dívidas que K1b deixou nomeadas, e K3 é quem as paga:**
+  1. **`ritmo-da-reacao.js` está na lista de espera de `teste-ligacao.mjs`**,
+     com o credor escrito: *o `oficial`, em K3*. A lista volta a ficar **vazia**
+     nesse dia — é a regra da casa, e o módulo nasceu antes do importador porque
+     o bastão do `App.jsx` era da outra mente.
+  2. **`PISO_DO_GOLPE` (0,08) vive em dois sítios.** Está nomeado em
+     `ritmo-da-reacao.js` e escrito à mão dentro de `escolherReacao`
+     (`reacoes.js`). Hoje a suíte prova que os dois **concordam** (164 casos, zero
+     divergências) — mas dois donos para um número é a primeira lei por um fio.
+     **O conserto é do `backend`:** extrair `reacoesQueSeAplicam(...)` de
+     `escolherReacao` — os mesmos filtros **sem** o `Math.random()` da `chance` —
+     e os dois módulos passam a ler um só. É regressão zero byte a byte (mesmo
+     número e mesma ordem de rolos).
+  3. **O trilho precisa de `tv-trilho-entra`** — 90 ms, só `opacity`, e nasce
+     **já na proporção** (73 %), nunca a 100 %: aos 11 000 ms o relógio aparece a
+     meio, e uma barra que nasce cheia mentiria sobre o tempo que sobra. Espelho
+     de `tv-trilho-sai`, que já existe. Não é peça nova.
 - [ ] **K4 · medir a batida** · de: pessoa · 14/09
   Quantas reações o jogador de fato escolhe, quantas expiram, quanto tempo
   ele leva, e se o combate ficou mais longo. **Se a batida nova cansar em
@@ -972,6 +1027,30 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
   metade do tempo.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **D5d · a catraca não vigia a própria paleta** · leve · de: desenho · 15/09
+  **Achado a construir o `lineStrong`, e é um buraco na catraca que ele mesmo
+  atravessou:** um token novo em `T` passa por **todos** os portões da casa com
+  **zero** leitores. `teste-ligacao` §2 varre `^export` e um token é **propriedade
+  de `T`**, não export; `check-formas` isenta a zona `T` de propósito (uma paleta
+  que não pode crescer é sagrada, que é o oposto da lei). Resultado: a lei do
+  export morto vale para toda regra da casa **menos** para a cor.
+  **O dente:** toda chave de `T` tem **≥2 leitores** em `src/`. **Medido: `T` fica
+  verde no dia em que nasce** — o mínimo é **8**, em `T.onSecond`. `MATERIAIS`
+  fica **fora**, por escopo e com o motivo escrito: as 13 chaves têm 1 leitor
+  cada, e está certo — há **uma** cortiça.
+  **E aperta primeiro o token de quem o propôs:** `lineStrong` entrou com
+  exactamente **2**, no piso, contra os 8 do segundo pior. *Uma catraca que estreia
+  perdoando o seu autor não é catraca.*
+
+- [ ] **a mira reprova o piso, e agora tem número exacto** · leve · de: desenho ·
+  15/09 · **espera o bastão do `App.jsx`**
+  O contorno da mira é violeta a 60 % sobre `bg` = **2,689:1** e reprova a
+  WCAG 1.4.11. **O defeito é a opacidade, não o tom** — trocar a cor piora
+  (`lineStrong` a 60 % = 2,071), e a mira tem de continuar violeta porque há três
+  coleções na mesma tela. O conserto que E1 propôs (**70 % = 3,254**) fica
+  **0,018 abaixo** do piso de 3,272 que o `lineStrong` instalou: *passa a norma e
+  falha a casa.* **O número é 74 % (3,484).** Uma linha, em `App.jsx`.
 
 _Os quinze abaixo saíram da medição de D1 (14/09). A ordem é por retorno:
 o barato e mecânico primeiro, o que precisa de decisão depois. Vários só

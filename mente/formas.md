@@ -791,6 +791,70 @@ fiação** (*a ação extra*, *não agir*, *recusar o teste*). **Uma só pede pe
 uma decisão por tomar; hoje a peça existe e a decisão foi tomada. O que ficou de
 D4 e continua verdade está mantido palavra por palavra.)*
 
+> **EMENDA DE K1b (15/09) — leia isto antes do resto da entrada.** Duas decisões
+> da pessoa e uma medida do ofício mudaram três números desta entrada. **O texto
+> de K1 fica**, porque a intenção tem de sobreviver à mudança; onde ele já não é
+> verdade, está marcado `[K1b]` no sítio.
+>
+> **1 · O dano fica em segredo, e é decisão da pessoa.** Ela recusou *"o dano
+> aparece antes de doer"*: *"acho que ficaria melhor o dano vir surpresa e
+> aumentar o relógio — daria mais emoção e realmente se compararia a uma
+> reação."* **A reação é instinto, não cálculo.** O número medido que sustentava
+> a proposta continua verdadeiro — o sistema **tem** `a.r.dano` na mão antes de
+> doer — e **deixa de ser usado, de propósito**. Não se reintroduz por outra
+> porta: **doze portas visuais e quinze portas de sistema estão fechadas por
+> escrito** em `mente/k1b-desenho.md` e `mente/k1b-jogo.md`, e **três delas são
+> asserção** em `testes/teste-ritmo-da-reacao.mjs`. A mais subtil, e a que quase
+> passou: **a duração da janela** — um golpe grande com menos tempo faria o
+> relógio *ser* o dano. E a que estava aberta sem ninguém ver: **o conteúdo da
+> lista** — os `minDano` diferem por reação, logo uma oferta filtrada por dano
+> mudaria de tamanho com a faixa do golpe. A regra que a fecha: **o limiar decide
+> SE a janela abre, nunca O QUE ela oferece** — e paga duas vezes, porque a lista
+> passa a ser a mesma em toda a luta.
+>
+> **2 · A janela é de 15 000 ms** (*"pra que fique tranquilo até pra pessoas com
+> dificuldade"*), não de 4 000. `[K1b]`
+>
+> **3 · E a barra NÃO corre 15 s — corre 4.** É a resposta de ofício ao problema
+> que os 15 s criam: **quinze segundos de barra a descer não leem como folga,
+> leem como pressão prolongada**, que é o oposto exato do que ela pediu.
+> **K1 tinha o número certo no papel errado:** os 4 s que ele mediu e provou
+> (1,5 s de reconhecer + 0,513 s de Fitts, dobrados = 4,03 s) não são *a janela*
+> — são *o prazo*. Então: **onze segundos sem relógio nenhum**, depois o trilho
+> pelos 4 s medidos, depois o último segundo em `danger`. Quando a barra
+> finalmente aparece, o jogador tem ainda **o orçamento inteiro de K1** para
+> reagir, e a maioria das janelas resolve-se **sem relógio nenhum**.
+> *Estudo citado:* movimento periférico captura atenção involuntariamente
+> (Yantis & Jonides 1984; Franconeri & Simons 2003) — 15 s de barra são 15 s de
+> imposto sobre a prosa **e** menos eficazes ao segundo 14, por habituação. Uma
+> barra de 15 s é mais cara *e* pior no seu único trabalho.
+> **Peça nova: nenhuma.** `Tempo=Parado` já era a janela sem relógio, construída
+> em K1 para outra coisa.
+>
+> ```js
+> /* src/ritmo-da-reacao.js — o relógio que se vê.
+>    INVARIANTES, e a suíte confere os três em toda linha com janela > 0:
+>      folga + trilho === janela  ·  trilho <= 9000  ·  aperto < trilho
+>    O teto do trilho é o que garante que a contagem regressiva do
+>    `prefers-reduced-motion` NUNCA tem dois dígitos: 4,3,2,1 — e não 15
+>    numerais, que é um temporizador de bomba. */
+> { id: "normal", janela: 15000, folga: 11000, trilho: 4000, aperto: 1000, bonusContagem: 1000, bonusToque: 600 }
+> { id: "parado", janela:     0, folga:     0, trilho:    0, aperto:    0, bonusContagem:    0, bonusToque:   0 }
+> ```
+>
+> **Os bónus somam-se ao TRILHO, não à janela**, e isso é medida: `+1 000` sobre
+> `4 000` são os mesmos **+25 %** que K1 mediu para a contagem; sobre `15 000`
+> seriam **+6,7 %**, que é não pagar.
+>
+> **4 · `folgado` morreu, e o motivo fica.** `[K1b]` K1 propôs `folgado: 8000`
+> quando `normal` eram 4 000. Com `normal` a 15 000, um `folgado` mais curto é
+> castigo e um mais longo **não tem estrada que o alcance** — e regra sem leitor
+> é export morto no dia em que nasce. A hipótese *"ele é só lento"* desapareceu:
+> **15 000 / 4 030 = 3,72×** o tempo medido. **A escada do silêncio perdeu o
+> degrau do meio** e passou a duas linhas. Quem quer o jogo à sua espera tem
+> `parado` (*sem pressa*, na ficha) — que continua a ser a conformidade
+> **WCAG 2.2.1** da fase inteira.
+
 - **quando** — *"`reacoes.js` tem seis reações com gatilho, custo em PM e
   resolução — Contramágica, Escudo Arcano, Aparar, Esquiva Ágil, Contra-ataque e
   Ataque de Oportunidade. O golpe chega, `escolherReacao` (`reacoes.js:85`)
@@ -855,10 +919,54 @@ D4 e continua verdade está mantido palavra por palavra.)*
   elemento nenhum.
 
 - **quem lê devagar — generoso *e* configurável, e a generosidade vem primeiro**
-  — se uma janela expira, **a seguinte corre folgada (8 s), em silêncio**, sem
-  aviso e sem menu; o contador zera à primeira resposta. **Ninguém tem de
-  procurar uma definição para deixar de ser castigado por ser lento.** É a
+  — ~~se uma janela expira, **a seguinte corre folgada (8 s), em silêncio**~~
+  `[K1b: o degrau do meio morreu — com a janela a 15 s, 8 s seria castigo e nada
+  o alcançava. A escada tem duas linhas: 1 → nada, 2 → silêncio pelo resto DESTA
+  luta.]* Sem aviso e sem menu; o contador zera à primeira resposta. **Ninguém
+  tem de procurar uma definição para deixar de ser castigado por ser lento.** É a
   `ESCADA_DO_SILENCIO`, e **não é um controlo, porque ninguém lhe toca.**
+
+- **o que a rodada cobra — e é o item inteiro de K1b** — o relógio dispara **por
+  golpe recebido**, e numa rodada com quatro inimigos 15 s viram **até um minuto
+  de espera**. **A folga é para quem precisa dela, não um pedágio para todos.**
+  A saída é **uma janela por RODADA**, e ela não é remendo: `turnoDosInimigos`
+  (`combate.js:242`) já devolve a rodada inteira **numa lista só** antes de
+  qualquer golpe ser mostrado, e `reacaoUsadaRef` (`App.jsx:7657`) já é um
+  recurso **por rodada**. *Agrupar é a forma em que os dados já chegam.*
+
+  | | antes | depois | |
+  |---|---|---|---|
+  | quatro inimigos comuns (4 golpes) | 60 000 ms | **15 000** | **−75,0 %** |
+  | quatro lendários nível ≥12 (12 golpes) | 180 000 | **15 000** | **−91,7 %** |
+  | luta de 5 rodadas, quem ignora tudo | 300 000 | **33 200** | **−88,9 %** |
+
+  **Dois tetos, e o segundo é que é o teto de verdade:** um teto por rodada
+  multiplicado por rodadas sem limite não é teto nenhum. `msPorRodada` =
+  **16 600** (15 000 + 1 000 de contagem + 600 de toque); `msEntreRespostas` =
+  **33 200** (duas janelas até a escada calar a luta). **`parado` conta zero** —
+  quem escolheu que o jogo o espere não está a ser feito esperar.
+
+  **A janela só corre quando há de facto reação possível**, e as razões de não
+  abrir são **tabela nomeada** (`PORTAS_DA_JANELA`), não `if` espalhado: em
+  precedência — `preferencia` · `silencio` · `reacao_gasta` · `ja_respondeu` ·
+  `sem_reacao` · `sem_pm` · `so_magia` · `arranhao`. Quem já respondeu não é
+  perguntado de novo na mesma rodada; os outros golpes ficam **cobertos**, não
+  enfileirados.
+
+  **`so_magia` é a oitava e hoje é inalcançável — e isso está escrito, não
+  escondido.** A mão que construiu foi verificar em vez de fingir o caso:
+  `reacoesDe` dá **sempre** ao herói a reação de `sofre_dano` do seu perfil
+  (`perfilCombate` devolve `marcial` até para classe desconhecida), e essas
+  custam 0, 0 e 2 PM — menos que os 3 PM da Contramágica, a única com `soMagia`.
+  Quem paga a Contramágica paga também a sua, e a sua não morde só magia: a
+  lista **nunca** fica "só magia". A suíte **assere que a porta não aparece**,
+  com o porquê acima da asserção — *o dia em que nascer uma reação mágica barata,
+  a linha fica vermelha e quem a vir escreve o caso real.* **Uma porta sem caso é
+  dívida; sem caso e sem aviso é armadilha.**
+
+  *Onde vive:* `src/ritmo-da-reacao.js` (puro, sem React, sem `Math.random`) e
+  `testes/teste-ritmo-da-reacao.mjs` — **85 asserções**, incluindo as **três que
+  provam que o dano não vaza** e a **paridade com `escolherReacao`** em 164 casos.
 
 - **movimento** — a janela **não pisca e não empurra**. O trilho desce
   **linear** (*uma curva de aceleração numa barra de tempo mente sobre o tempo*),
@@ -1131,6 +1239,47 @@ cor *significa* (tinta, perigo, acerto, acento). `MATERIAIS` é a paleta
 São dois tipos de decisão e não podem morar na mesma tabela fingindo ser o
 mesmo tipo: uma muda quando o jogo muda de humor, a outra quando a tábua
 deixa de ser tábua.
+
+### O degrau que faltava — `lineStrong` (aprovado pela pessoa, feito em K1b · 15/09)
+
+**A medida que o apanhou, e nasceu de o `desenho` se desmentir:** ele escreveu
+que o piso de contraste estava *"cumprido com folga em todos"*, foi medir, e não
+estava. `line`/`panel` = **1,295:1** e `panelSoft`/`panel` = **1,073:1** — **as
+quatro superfícies da casa cabem dentro de 1,3:1 umas das outras, e para a
+WCAG 1.4.11 são uma superfície só.** Consequência prática, e é o defeito inteiro:
+um controlo desta casa **ou se enche de `amber` (8,45:1) e grita, ou
+desaparece.** Não havia meio-termo.
+
+**`lineStrong` = `#70688C`** — `panel` **3,512:1** · `bg` **3,741:1** ·
+`panelSoft` **3,272:1**, os três acima do piso de 3:1 para não-texto.
+
+**E a razão que K1 deu para o valor era falsa, o que fica dito.** K1 escreveu
+*"o degrau mais baixo que passa"*; `#6B6387` passa a **3,040**. O valor fica, com
+a frase corrigida: **é o mais baixo que passa com folga** — **9,1 %** acima do
+piso, contra **1,3 %**. *Um número certo com uma razão errada é uma armadilha
+para quem vier depois afinar o token.*
+
+- **Dois leitores reais, hoje, sem esperar K3** — a lei do export morto vale para
+  a paleta: `Botao` (`ui.jsx:26`) e `CartaoDeEscolha` (`ui.jsx:396`), as duas
+  ternárias com o mesmo `else` a 1,295:1. Só a borda do estado **não-acentuado**
+  muda; o ramo âmbar e toda a espessura ficam byte a byte.
+- **Paga um remendo:** os **7 overrides** de `ink` no verbo do recuo em *A
+  pergunta que expira* (`;64:2426`) foram apagados, de volta a `inkDim`. Era pior
+  do que K1 pensava — o `ink` dava ao recuo **a mesma voz do gesto** e achatava a
+  hierarquia entre *reagir* e *deixar passar*.
+- **A catraca de D5 foi lida, não suposta:** a zona `T` é isenta de D5a e D5b, os
+  tetos de `estilo.js` não mexem, e `#70688C` **não aparece escrito à mão em
+  parte nenhuma do projeto** (medido: zero ocorrências) — que é o que faria D5b
+  morder. No Figma entrou como variável com `codeSyntax` WEB `T.lineStrong`, e
+  aplicado a **31 nós em 3 peças**.
+- **A mira NÃO se resolve com ele, e digo-o em vez de forçar.** O contorno da
+  mira é violeta a 60 % sobre `bg` = **2,689:1** e reprova. Trocar a cor **piora**
+  (`lineStrong` a 60 % = **2,071**): o defeito é a **opacidade**, não o tom, e a
+  mira tem de continuar violeta porque há três coleções na mesma tela. O que
+  `lineStrong` lhe dá é **régua**: o conserto que E1 propôs (70 % = **3,254**)
+  fica **0,018 abaixo** do piso de 3,272 que o token instala — *passa a norma e
+  falha a casa*. **O número honesto é 74 % (3,484)**, e fica como dívida para a
+  Fase E: a mira vive no `App.jsx`, cujo bastão era da outra mente.
 
 - **a cortiça** (`corticaFundo`, `corticaMoldura`, `corticaFilete`) — a
   tábua é o fundo escuro, a moldura é a madeira de sete pixels, o filete é

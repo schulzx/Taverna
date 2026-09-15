@@ -19,6 +19,131 @@ Formato:
 
 ---
 
+## 15/09 21:10 · v9.258 · K1b · o relógio de 15 s, e o que ele cobra · commit `PENDENTE`
+
+*O escrito inteiro dos dois seniores fica em `mente/k1b-jogo.md` e
+`mente/k1b-desenho.md`, como K1 e E1 fizeram com os seus.*
+
+**A primeira etapa da mesa que escreve `.js` de regra** — e isso foi decisão
+minha, não descuido. K1 foi só desenho porque nada o obrigava a mais; K1b veio da
+pessoa **com uma catraca dentro** (*"o tempo total de espera por rodada tem teto
+medido, e a suíte o prova com quatro inimigos na mesa"*). Um teto sem suíte é um
+adjetivo, e ela pediu um número.
+
+- **estado inicial:** criei `.claude/ciclo-desenho-em-curso`. **O bastão do
+  `App.jsx` era da outra mente** (`orquestrador` X3, o turno guardado) e **não
+  foi tomado nem uma vez** — K1b lê o `App.jsx` e não escreve nele. Árvore limpa
+  à entrada, 186/186 suítes verdes, 12/12 varredores.
+- **jogo / desenho:** chamados **juntos, no mesmo turno, os dois em primeiro
+  plano**. Voltaram com o mesmo diagnóstico por duas estradas — e com **duas
+  colisões** que tive de arbitrar (abaixo).
+- **aprendiz:** `lineStrong` em `src/estilo.js` e os dois leitores em
+  `src/ui.jsx`. **testes:** `src/ritmo-da-reacao.js`, a suíte de **85
+  asserções**, e a linha da lista de espera em `teste-ligacao.mjs`.
+- **o Figma:** página `A batalha` — `98:2394` (ANTES), `99:2996` (DEPOIS),
+  `100:2436`, `101:3096`, as duas réguas **na mesma escala** de propósito
+  (1 160 px = 60 000 ms). A variável `lineStrong` entrou com `codeSyntax` WEB
+  `T.lineStrong` — era a única das 28 sem ponte — e foi aplicada a **31 nós em 3
+  peças**. `A pergunta que expira` (`31:518`) foi **usada, nunca alterada**.
+- **a prova:** `npm run build` limpo; `npm test` **186/186 · 12/12**.
+  Rodada de quatro inimigos **60 000 → 15 000 ms (−75,0 %)**; doze golpes
+  **180 000 → 15 000 (−91,7 %)**; luta de cinco rodadas **300 000 → 33 200
+  (−88,9 %)**. `lineStrong` `#70688C`: panel **3,512** · bg **3,741** ·
+  panelSoft **3,272**.
+
+### A arbitragem que decidiu a etapa: a barra corre 4 s, não 15
+
+Os dois chegaram à mesma ideia — *o relógio só aparece para quem hesita* — e
+**desenharam-na ao contrário um do outro.** O `jogo` pôs o silêncio primeiro
+(4 s) e depois uma barra de **10 970 ms**; o `desenho` pôs **11 000 ms de
+silêncio** e depois a barra pelos **4 000** medidos.
+
+**Decidi pelo `desenho`, e o argumento é o próprio motivo do `jogo`.** A forma
+dele ainda deixa uma barra a correr 11 s — que é, mal reduzido, o problema que a
+etapa existia para resolver. A do `desenho` faz duas coisas ao mesmo tempo: a
+maioria das janelas resolve-se **sem relógio nenhum**, e quando a barra aparece o
+jogador tem ainda **o orçamento inteiro que K1 mediu** (4,03 s). E dá o corolário
+de graça: **a contagem do `prefers-reduced-motion` nunca tem dois dígitos** —
+4,3,2,1 em vez de 15 numerais, que é um temporizador de bomba. Daí o invariante
+`trilho <= 9000`, que a suíte confere.
+
+*A frase que resume o ciclo, e é do `desenho`: **K1 tinha o número certo no papel
+errado** — os 4 s não são a janela, são o prazo.*
+
+### A segunda arbitragem: uma tabela, não duas — e `folgado` morre
+
+Os dois voltaram com **duas tabelas para o mesmo instante** (`RITMOS_DA_REACAO`
+do `jogo`, `RELOGIO_DA_REACAO` + `BONUS_DO_TRILHO` do `desenho`). Duas tabelas
+para uma coisa é a mesma doença que esta mesa existe para impedir. **Ficou uma:**
+`RITMO_DA_REACAO`, com as colunas dos dois — `janela` é da pessoa, `folga`/
+`trilho`/`aperto` são do `desenho`, e os bónus são **colunas**, com a semântica
+dele: **somam-se ao trilho, não à janela** (+1 000 sobre 4 000 são os +25 % que
+K1 mediu; sobre 15 000 seriam +6,7 %, que é não pagar).
+
+E **`folgado` morreu** — o `jogo` matou-o, o `desenho` ressuscitou-o a 19 000, e
+**decidi pelo `jogo`**: o `desenho` não nomeou **estrada nenhuma** que lá
+chegasse, e uma linha que nada alcança é export morto no dia em que nasce.
+
+### Decisões médias, cada uma com o motivo
+
+1. **A janela muda é a etapa, não proposta à pessoa.** Ela devolveu a forma à
+   mesa (*"decida como designer UX e designer de games experientes"*) e pediu
+   explicitamente que o cartão aguentasse os 15 s. Nada há a reaprender: o
+   momento não existe hoje.
+2. **`src/reacoes.js` NÃO foi tocado**, embora o `jogo` tenha pedido uma
+   exportação nova lá dentro. É motor, é da outra mente, e ela estava na árvore.
+   O módulo novo importa `reacoesDe` (já exportada) e faz os filtros
+   determinísticos por sua conta — **com a duplicação declarada e guardada**: o
+   `PISO_DO_GOLPE` (0,08) tem dois donos, e a suíte prova que concordam em **164
+   casos**. **Está escrito em K3 quem paga a dívida e como.**
+3. **O módulo entrou na lista de espera de `teste-ligacao.mjs`**, com o credor
+   nomeado (*o `oficial`, em K3*). É exactamente para isto que a lista existe, e
+   a regra dela diz que a leva termina com a lista vazia.
+4. **`Botao` e `CartaoDeEscolha` trocaram `line` por `lineStrong`** — contraste
+   que corrige acessibilidade é **leve**, e sem dois leitores o token nascia
+   morto.
+
+### O que o ciclo achou e não foi procurar
+
+- **A porta que estava aberta e ninguém via.** Os `minDano` diferem por reação,
+  logo uma oferta filtrada por dano **mudaria de tamanho com a faixa do golpe** —
+  e o tamanho da lista seria o dano com outro rosto. A regra que a fecha —
+  *o limiar decide **se** a janela abre, nunca **o que** ela oferece* — paga duas
+  vezes, porque a lista passa a ser a mesma em toda a luta. **Era o segredo do
+  dano a vazar pela porta dos fundos, e a decisão da pessoa tinha 24 horas.**
+- **`so_magia` é uma porta sem caso.** A mão que construiu foi verificar em vez
+  de fingir: nenhuma ficha a alcança hoje (a Contramágica custa 3 PM e toda ficha
+  tem uma reação física mais barata). **A suíte assere que ela não aparece**, com
+  o porquê por cima — *uma porta sem caso é dívida; sem caso e sem aviso é
+  armadilha.*
+- **A razão do `#70688C` era falsa.** K1 escreveu *"o degrau mais baixo que
+  passa"*; `#6B6387` passa a 3,040. O valor fica, a frase muda: **o mais baixo
+  que passa com folga** (9,1 % contra 1,3 %). O `desenho` desmentiu-se sozinho
+  pela segunda etapa seguida, e é o hábito mais valioso que esta mesa tem.
+- **A mira não se resolve com o token, e está dito em vez de forçado.** O defeito
+  é a opacidade, não o tom. O conserto de E1 (70 % = 3,254) fica **0,018 abaixo**
+  do piso que o próprio `lineStrong` instalou — *passa a norma e falha a casa.*
+  O número é **74 %**, e foi para "Aberto" à espera do bastão.
+- **Um erro de método, confessado pelo `desenho`:** um script de medição por
+  heredoc de bash devolveu **zero leitores para as 27 chaves** sem dar erro —
+  a armadilha que o `CLAUDE.md` já regista. *Salvou-o o absurdo do número, não a
+  disciplina.*
+
+### O que ficou
+
+- **A proposta ambiciosa está em "Para a pessoa decidir":** *a resposta dele
+  sobre como quer ser perguntado morre no fim da luta* — **22,1 minutos por
+  campanha de 40 lutas** a desligar quarenta vezes uma coisa já respondida. A
+  saída honesta mexe no **save**, e save é dela. Custo de não decidir: **zero** —
+  K3 constrói com a escada por luta.
+- **D5d** foi para "Aberto": um token novo em `T` passa por **todos** os portões
+  da casa com zero leitores. Medido verde hoje (mínimo 8, em `T.onSecond`), e
+  aperta primeiro o `lineStrong`, que entrou com exactamente 2.
+- **O bastão do `App.jsx` não foi tomado**, e por isso três coisas ficaram à
+  espera dele: a fiação (K3), a mira a 74 %, e o `tv-trilho-entra`.
+
+---
+
 ## 15/09 19:40 · v9.256 · K1 · o momento desenhado · **a Fase K abre** · commit `2fe462a`
 
 *O escrito inteiro dos dois seniores — a conta dos 4 s, as medidas do telefone, o
