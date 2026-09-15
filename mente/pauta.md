@@ -16,7 +16,7 @@ Formato de um item:
 ---
 
 ## Para a pessoa decidir (pesado)
-- [ ] **o indice do git e compartilhado pelas duas mentes, e a lei nao cobre isso** · pesado · de: orquestrador (X3) · 15/09
+- [x] **o indice do git e compartilhado pelas duas mentes, e a lei nao cobre isso** · **RESOLVIDA 15/09, e já no ar** (`39a8c65`): a lei passou a exigir `git commit -- <caminhos>` nos três arquivos. Claude tratou como ofício e não como mudança de lei de jogo — não muda nada do que o jogador vive, e a regra anterior falhava de forma demonstrável (duas ocorrências em dois dias, as duas dele). A pessoa pode devolver a decisão a si mesma com uma frase. · pesado · de: orquestrador (X3) · 15/09
   **Aconteceu hoje, e custou a honestidade de um commit.** O `CLAUDE.md` manda
   somar os caminhos **um a um** e proibe `git add -A` justamente para que o
   trabalho de uma mente nao entre no commit da outra. Segui a lei a risca — e

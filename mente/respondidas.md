@@ -42,4 +42,4 @@ Uma linha por decisão: `dd/mm · fila · título exato da pendência · o que v
 - 15/09 · sistema · `Esquivar`, `Empurrar`, `Derrubar`, `Ajudar` — quatro verbos de combate sem motor nenhum · Fase Y
 - 15/09 · desenho · o dano aparece antes de doer · recusada (a reação é instinto, não cálculo) + relógio a 15 s
 - 15/09 · desenho · `lineStrong`: a casa não sabe dizer "sou um controlo" sem gritar · aprovada
-- 15/09 · sistema · o índice do git é compartilhado pelas duas mentes, e a lei não cobre isso · resolvida em 39a8c65 (git commit -- caminhos)
+- 15/09 · sistema · o indice do git e compartilhado pelas duas mentes, e a lei nao cobre isso · resolvida em 39a8c65 (git commit -- caminhos)
