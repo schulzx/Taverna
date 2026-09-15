@@ -274,6 +274,48 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
 
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
 
+### Fase Z — a recalibração morre, e o recálculo nasce calado
+Decisão da pessoa (15/09): *"agora que nosso sistema não é mais tocado por IA
+e sim todo por código, não precisamos mais do botão e da função recalibrar
+lenda e das outras formas de recalibração."* Está certo, e é a lei da casa
+invertida: `recalibrarLenda` chama `chamarModelo(...)` — **pede à IA que
+proponha os números do jogador**. São **três portas** (recalibrar save,
+recalibrar mundo, recalibrar ascensão) e **3 das 11 chamadas de modelo** do
+App; o painel de ascensão diz, com todas as letras, *"⚖ Recalibrar com a IA"*.
+
+**A ressalva da pessoa é a lei desta fase, e ela vale mais que a remoção:**
+*"desde que não mude os dados do player sem que ele saiba e principalmente
+sem que seja necessário — exemplo: cada vez que o player abrir o game o
+sistema recalcula e ele fica com status diferente em cada gameplay, seria
+inaceitável."*
+
+Disso saem três propriedades, e as três são prováveis:
+
+1. **Idempotente.** Recalcular duas vezes dá o mesmo resultado. Abrir o jogo
+   dez vezes não move um ponto.
+2. **Silencioso quando não é preciso.** Se o save já bate com as tabelas,
+   **não se escreve nada** — nem no save, nem na tela. O caso comum é o
+   caso mudo.
+3. **Declarado quando age.** Quando um número muda de verdade, o jogador
+   **lê o que mudou e por quê**, na voz da casa. Mudança calada em ficha é
+   exatamente o que a ressalva proíbe.
+
+- [ ] **Z1 · o recálculo, e a prova de que ele não se mexe** · de: pessoa · 15/09
+  Módulo puro que deriva das tabelas o que hoje se pede à IA — PV, PM,
+  proficiência, nível pelo XP. **A suíte prova a idempotência antes de
+  qualquer fiação**: recalcular n vezes = recalcular uma; save já correto
+  sai byte a byte igual. Sem React, sem chamada.
+- [ ] **Z2 · as três portas fecham** · de: pessoa · 15/09
+  Os três botões e as três chamadas de modelo saem. **Precisa do bastão do
+  `App.jsx`.** O recálculo entra no `garantir...` do load, com a regra 2
+  valendo: o load comum não escreve nada. Medir: quantas chamadas de IA o
+  App passa a ter (11 → 8) e o que isso poupa por sessão.
+- [ ] **Z3 · o save antigo é avisado** · de: pessoa · 15/09
+  Quando o recálculo de fato corrigir um save de versão antiga, o jogador vê
+  o quê e o porquê — uma vez, não a cada abertura (o save guarda que já foi
+  avisado). A forma é da mesa de design; a regra é daqui. Catraca
+  permanente: **nenhum caminho muda número de ficha sem passar por aqui**.
+
 ### Fase N — a mente do combate (dos dois lados, sem IA generativa)
 Decisão da pessoa (14/09), em duas levas. Primeiro o inimigo: *"uma
 inteligência (não IA generativa) de combate, onde o inimigo decide por nível
