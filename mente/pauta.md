@@ -195,7 +195,7 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
   Nenhum número resolve a diferença: é a pessoa que sabe qual dos dois quis.
   Se ela quiser mexer, a régua de B1 já mede o antes e o depois sem trabalho novo.
 
-- [ ] **o golpe fora de alcance continua de graça — ou passa a custar o turno?** · pesado · de: orquestrador (bifurcação aberta por X1, executada em X2) · 15/09
+- [x] **o golpe fora de alcance continua de graça — ou passa a custar o turno?** · **RESPONDIDA 15/09 — continua de graça**, como o orquestrador recomendou. A pessoa aprovou a proposta dele. **E fica escrito o que fecha a decisão:** só vale de verdade quando o **teclado** ganhar o mesmo aviso que o botão tem — hoje o botão avisa antes do clique e a frase digitada não avisa, e uma recusa de graça que só um dos dois caminhos anuncia é armadilha para quem digita. Isso é **W2**, já aprovada. · pesado · de: orquestrador (bifurcação aberta por X1, executada em X2) · 15/09
   **X2 manteve o status quo de propósito, e é você que decide se ele fica.** Desde
   a v9.20 um golpe sem alcance **não gasta a ação** (`App.jsx`, a nota diz:
   *"cobrar o turno por uma regra que o jogador acabou de descobrir seria punir a
@@ -218,7 +218,7 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
   Mas (a) só fecha de verdade **se o teclado ganhar o mesmo aviso que o botão tem**
   — e isso é a Fase W2, que já está aprovada.
 
-- [ ] **`Esquivar`, `Empurrar`, `Derrubar`, `Ajudar` — quatro verbos de combate sem motor nenhum** · pesado · de: orquestrador (bifurcação aberta por X1) · 15/09
+- [x] **`Esquivar`, `Empurrar`, `Derrubar`, `Ajudar` — quatro verbos de combate sem motor nenhum** · **RESPONDIDA 15/09 — virou a Fase Y**, na ordem que o orquestrador recomendou e a pessoa aprovou: `Empurrar`/`Derrubar` primeiro (têm alvo, distância e resultado óbvios), `Esquivar` depois, `Ajudar` por último. · pesado · de: orquestrador (bifurcação aberta por X1) · 15/09
   **X1 mediu e X2 confirmou: não é fiação que falta, é mecânica.** `Esquivar`
   escreve *"Fico em postura defensiva…"*, `Empurrar` escreve *"Empurro com força "*,
   `Derrubar` e `Ajudar` idem — e **nenhuma das quatro casa leitor nenhum**: nem
@@ -556,6 +556,33 @@ dano lendo o traço racial, `removerPelaPorta` tem um chamador (a magia),
   medição mostrar que sobra pouco, a fase fecha em H2 e o resto entra como
   itens da fila automática — **fase que termina menor do que começou é bom
   sinal**, não é fracasso.
+
+### Fase Y — os quatro verbos que faltam
+Decisão da pessoa (15/09): aprovada a proposta do orquestrador, na ordem dele.
+X1 mediu que dos 12 botões de `ACOES_PRONTAS` **quatro são de combate e
+nenhum tem motor**; X2 os deixou de fora **de propósito**, porque ali *não
+falta fiação, falta mecânica* — e enfiá-los na porta de `Atacar` seria fingir
+que existem.
+
+Ordem, e ela é do mais concreto ao mais difuso:
+
+- [ ] **Y1 · `Empurrar` e `Derrubar`** · de: pessoa · 15/09
+  Os dois mais fáceis de fazer certo: têm alvo, distância e resultado
+  óbvios, e o tabuleiro já modela posição, tamanho e terreno — **empurrar é
+  mover alguém que não quer**, e o campo já sabe o que é uma casa ocupada e
+  uma parede. Teste oposto (Força/Atletismo contra a resistência do alvo),
+  determinístico, provável em Node.
+- [ ] **Y2 · `Esquivar`** · de: pessoa · 15/09
+  Gastar o turno para ser mais difícil de acertar. Mecânica nova de verdade,
+  e **encosta na família defensiva da Fase F** (`intocado` colide com
+  `estaIntocavel`): confira antes se o que falta já não existe com outro
+  nome — é o terceiro caso desta sessão em que a resposta estava na casa.
+- [ ] **Y3 · `Ajudar`** · de: pessoa · 15/09
+  O mais difuso: ajudar *a quê*, e o que isso concede. Desenho antes de
+  código, e **se a resposta for "depende do que o outro vai fazer", isto é
+  reação e mora na Fase K**, não aqui. Aposentar o botão continua sendo
+  saída legítima se a mecânica não se justificar — o que não pode é
+  continuar prometendo.
 
 ### Fase Z — a recalibração morre, e o recálculo nasce calado
 Decisão da pessoa (15/09): *"agora que nosso sistema não é mais tocado por IA
@@ -1924,6 +1951,30 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   etapa é a **T3 · a salvaguarda no fim do turno**; T2 fechou em v9.239.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **três achados do motor da reação, vindos da mesa de design (K1)** · médio ·
+  de: regente/jogo/desenho · 15/09
+  *Pedidos pela pauta do sistema em vez de escritos por mim: regra de jogo não é
+  do desenho.* Os três apareceram ao desenhar a janela da reação (Fase K), e o
+  **primeiro é pré-requisito** — sem ele K2 não tem catraca possível.
+  1. **`reacoes.js:96` sorteia com `Math.random()`, e sorteia no sítio errado.** A
+     lei da casa é **determinismo por semente**, e a escolha da reação não a cumpre
+     — isto já estava registado em `formas.md` desde D4. **O que K1 acrescenta é
+     que a Fase K torna o defeito visível:** com a janela, o mesmo golpe com a
+     mesma semente pode oferecer **listas diferentes**. E há um segundo problema
+     por baixo: hoje a `chance` decide se a reação é **sequer oferecida**, não se
+     ela **dá certo** — escolhida, `corta` aplica-se sem rolar nada. Sob escolha
+     manual, ou a chance passa a rolar **na resolução**, ou as palavras do risco
+     que a peça mostra (`PALAVRAS_DA_CHANCE`) não descrevem coisa nenhuma.
+  2. **O `oportunidade` automático consome a reação da rodada?** Ninguém sabe, e a
+     resposta muda o desenho: se consome, há uma forma melhor à espera — *o
+     silêncio numa rodada guarda a reação para o golpe livre* —, e **recusar uma
+     pergunta passa a comprar alguma coisa** em vez de só não custar.
+  3. **`resolverReacao` (`reacoes.js:115`) mete `reacao.icone` — um emoji — dentro
+     da frase.** Ele não sai na mono da casa e **não herda a variável de cor**, que
+     é a primeira lei da casa aplicada ao visual. Os três glifos que faltavam já
+     foram fabricados em K1 (`61:2`, `61:4`, `61:6`); falta o texto deixar de os
+     duplicar em emoji.
 
 - [ ] **a economia do turno não é do motor: o App conta à mão** · médio · de: backend/testes (X1) · 15/09
   Estava escrito em X3 e **perdeu a casa** quando a pessoa reescreveu a etapa

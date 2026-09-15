@@ -38,3 +38,5 @@ Uma linha por decisão: `dd/mm · fila · título exato da pendência · o que v
 - 15/09 · desenho · (E1) O turno monta-se antes de acontecer · Fase W
 - 15/09 · desenho · (E1) Em combate, o texto deixa de ser o caminho da AÇÃO e passa a ser o caminho da FALA · Fase W
 - 15/09 · desenho · (E1) O tabuleiro conta o que o inimigo VAI fazer · E5
+- 15/09 · sistema · o golpe fora de alcance continua de graça — ou passa a custar o turno? · continua de graça (fecha com W2)
+- 15/09 · sistema · `Esquivar`, `Empurrar`, `Derrubar`, `Ajudar` — quatro verbos de combate sem motor nenhum · Fase Y

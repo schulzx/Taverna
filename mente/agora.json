@@ -1,5 +1,4 @@
 [
-  { "agente": "regente", "o_que": "rege o ciclo K1 — a reação com tempo, desenhada no Figma", "desde": "2026-09-15T06:00:00Z" },
-  { "agente": "jogo", "o_que": "K1 · o momento da reação: quando chama, quanto dura, o que se perde", "desde": "2026-09-15T06:00:00Z" },
-  { "agente": "desenho", "o_que": "K1 · a forma do chamado, da barra e do leque", "desde": "2026-09-15T06:00:00Z" }
+  { "agente": "orquestrador", "o_que": "rege o ciclo X3 — o turno guardado: o golpe que já aconteceu não se desfaz", "desde": "2026-09-15T08:30:00Z" },
+  { "agente": "backend", "o_que": "X3 · guardar o turno resolvido, e provar que não se re-rola", "desde": "2026-09-15T08:30:00Z" }
 ]
