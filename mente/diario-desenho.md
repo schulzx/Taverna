@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 15/09 12:10 · v9.252 · D5 · a catraca do desenho · **a Fase D fecha** · commit `PENDENTE`
+## 15/09 12:10 · v9.252 · D5 · a catraca do desenho · **a Fase D fecha** · commit `73813da`
 
 D1 mediu, D2 deu casa ao estilo, D3 fez a biblioteca e provou a leitura de
 volta, D4 escreveu 30 formas. **Nada disso obriga ninguém a nada.** D5 é a

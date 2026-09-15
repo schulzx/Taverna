@@ -603,7 +603,7 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
   **Cinco afirmações de D1 caíram** (o `🎲` tem estado, o `✕` tem 6 tamanhos,
   são 10 assinaturas de âmbar, os véus têm 4 desfoques, e o `⤢ ampliar` não é
   mudo — **é mentiroso**: corta 33% do campo). Medição inteira no diário.
-- [x] **D5 · a catraca do desenho** · de: pessoa · 14/09 · **feito v9.252**
+- [x] **D5 · a catraca do desenho** · de: pessoa · 14/09 · **feito v9.252 · `73813da`**
   *(reescrita por D1: como estava, era impossível. "Nenhuma cor literal fora
   da tabela" são **242 violações** hoje — e 71 delas são o pergaminho, um
   sistema legítimo à espera de nome; a regra ainda bate em `constantes.js`,
