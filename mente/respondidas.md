@@ -40,3 +40,5 @@ Uma linha por decisão: `dd/mm · fila · título exato da pendência · o que v
 - 15/09 · desenho · (E1) O tabuleiro conta o que o inimigo VAI fazer · E5
 - 15/09 · sistema · o golpe fora de alcance continua de graça — ou passa a custar o turno? · continua de graça (fecha com W2)
 - 15/09 · sistema · `Esquivar`, `Empurrar`, `Derrubar`, `Ajudar` — quatro verbos de combate sem motor nenhum · Fase Y
+- 15/09 · desenho · o dano aparece antes de doer · recusada (a reação é instinto, não cálculo) + relógio a 15 s
+- 15/09 · desenho · `lineStrong`: a casa não sabe dizer "sou um controlo" sem gritar · aprovada

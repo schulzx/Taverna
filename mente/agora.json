@@ -1,4 +1,7 @@
 [
   { "agente": "orquestrador", "o_que": "rege o ciclo X3 — o turno guardado: o golpe que já aconteceu não se desfaz", "desde": "2026-09-15T08:30:00Z" },
-  { "agente": "backend", "o_que": "X3 · guardar o turno resolvido, e provar que não se re-rola", "desde": "2026-09-15T08:30:00Z" }
+  { "agente": "backend", "o_que": "X3 · guardar o turno resolvido, e provar que não se re-rola", "desde": "2026-09-15T08:30:00Z" },
+  { "agente": "regente", "o_que": "rege o ciclo K1b — o relógio de 15s, e o que ele cobra por rodada", "desde": "2026-09-15T10:00:00Z" },
+  { "agente": "jogo", "o_que": "K1b · a espera por rodada com quatro inimigos na mesa", "desde": "2026-09-15T10:00:00Z" },
+  { "agente": "desenho", "o_que": "K1b · a janela sem o número, e o degrau lineStrong", "desde": "2026-09-15T10:00:00Z" }
 ]

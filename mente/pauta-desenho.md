@@ -34,7 +34,7 @@ o jogo se joga**, e cada uma pede uma coisa ao motor que ele hoje não faz.
 opostas — uma porque **dá ao jogador informação que este jogo nunca lhe deu**, a
 outra porque **paleta é identidade**.
 
-- [ ] **o dano aparece antes de doer** *(K1)* · pesado · de: jogo · 15/09
+- [x] **o dano aparece antes de doer** · **RECUSADA 15/09, e o relógio subiu junto.** A pessoa: *"acho que ficaria melhor o dano vir surpresa e aumentar o relógio — daria mais emoção e realmente se compararia a uma reação; talvez 15s, pra que fique tranquilo até pra pessoas com dificuldade."* **O que isso decide:** a reação é **instinto, não cálculo** — o jogador escolhe sem saber o tamanho do golpe, e é isso que a torna uma reação de verdade. O número medido que sustentava a proposta continua verdadeiro (o sistema TEM o dano na mão antes de doer) e deixa de ser usado, de propósito. *(K1)* · pesado · de: jogo · 15/09
   **A janela da reação é o único instante do jogo inteiro em que o sistema tem na
   mão um número que ainda não aconteceu.** `a.r.dano` existe em `App.jsx:7572` e
   só vira PV mais à frente. A proposta é usá-lo: a primeira linha do cartão deixa
@@ -70,7 +70,7 @@ outra porque **paleta é identidade**.
   que não, a Fase K continua a fazer sentido — mas então o relógio tem de ser mais
   generoso, porque a conta passa a ser dele.**
 
-- [ ] **`lineStrong`: a casa não sabe dizer "sou um controlo" sem gritar** *(K1)*
+- [x] **`lineStrong`: a casa não sabe dizer "sou um controlo" sem gritar** · **APROVADA 15/09** — vira etapa da mesa: a paleta ganha o degrau que falta entre desaparecer e gritar. *(K1)*
   · pesado · de: desenho · 15/09
   **A medida que o apanhou:** `line`/`panel` = **1,29:1** e `panelSoft`/`panel` =
   **1,07:1**. As quatro superfícies da casa cabem dentro de 1,3:1 umas das outras
@@ -571,6 +571,20 @@ não reagir, caso não queira gastar PM."*
   para cima, ancorada em baixo — o topo do campo e a câmara nunca se mexem.
   **O que continua a faltar a K1 é o número do tempo**, que depende do ritmo da
   rodada e é do `jogo`.)*
+- [ ] **K1b · o relógio de 15 s, e o que ele cobra** · de: pessoa · 15/09
+  **Decisão da pessoa (15/09):** a janela sobe de 4 s para **15 s** — *"pra
+  que fique tranquilo até pra pessoas com dificuldade"* — e **o dano fica
+  em segredo**. K1 tinha decomposto os 4 s (1,5 s de reconhecimento + 0,5 s
+  de Fitts, dobrados); os 15 s são folga deliberada, e a folga é o ponto.
+  **O que a etapa tem de resolver, e não é a pessoa que decide — é ofício:**
+  o relógio dispara **por golpe recebido**, e numa rodada com quatro
+  inimigos 15 s viram **até um minuto de espera** por rodada. Medir isso e
+  desenhar a saída: a janela só corre quando há **de fato** reação possível
+  (PM disponível, reação ainda não gasta na rodada), golpes do mesmo turno
+  se agrupam em vez de enfileirar, e quem já respondeu não é perguntado de
+  novo. **A folga é para quem precisa dela, não um pedágio para todos.**
+  Catraca: o tempo total de espera por rodada tem teto medido, e a suíte o
+  prova com quatro inimigos na mesa.
 - [ ] **K2 · a trava, antes de tudo** · de: pessoa · 14/09
   **Quem não responde, o sistema responde como hoje.** Regressão zero é
   condição de entrada, não consequência feliz: o jogo tem de continuar

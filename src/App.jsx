@@ -185,6 +185,12 @@ import { potenciasDoMundo, garantirDiplomacia, aprecoDe, fichaDe, mexerNoApreco,
 import { PainelMapa } from "./painel-mapa.jsx";
 import { GridDeBatalha } from "./grade-de-batalha.jsx";
 import { criarSala, garantirSala, sentarNaSala, sairDaSala, sentarFicha, assentoDe, ocupados as ocupadosDaSala, todosProntos, porAcao, acaoDe, turnoCompleto, textoDoTurno, limparTurno, normalizarCodigo, codigoValido, RECADOS, recadoValido, envelopeDaSala, LUGARES } from "./sala.js";
+/* O TURNO GUARDADO (v9.256, Fase X - X3). O motor resolve ANTES de falar
+   com o Narrador; quando a fala cai, o mundo ja mudou. Daqui sai a
+   classificacao do silencio (voz de mundo para a tela, motivo integro para
+   o console), o registro do turno resolvido que espera narracao e a trava
+   que impede a re-rolagem. Nenhuma decisao mora aqui - so fiacao. */
+import { guardarTurno, maisUmaTentativa, oQueNarrar, travaODeclarar, lerOSilencio, SEM_GUARDADO } from "./guardado.js";
 import { abrirCanal, novoIdDeParticipante, cabeNoFio } from "./transporte.js";
 import { aplicarNivel, PV_POR_NIVEL, PM_POR_NIVEL, evoluirCompanheiro, aplicarDescanso, recargaPadrao, aplicarMudancas, bonusEquip, bonusEfeito, atributoEfetivo, tickEfeitos, processarCombate, migrarPersonagem } from "./regras-jogo.js";
 import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, consumirDia, RITMOS_VIAGEM, ritmoViagem, marchaForcada, testarNavegacao, forragear, efeitoExaustao, recuperarExaustao, resumoErmos } from "./ermos.js";
@@ -240,7 +246,15 @@ async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto
     body: JSON.stringify({ system, messages, maxTokens, formato, tarefa }),
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.erro || `HTTP ${response.status}`);
+  if (!response.ok) {
+    /* v9.256 (Fase X - X3): `motivo` e `origem` chegam do portao
+       (api/_portao.js) e MORRIAM aqui - e sao exatamente a pista que falta
+       quando o 403 vem mudo. Vao coladas ao fim da mensagem, que e o que o
+       `catch` de `enviar` manda INTEGRO ao console. A tela nunca le isto:
+       o que ela le e a voz de mundo de `lerOSilencio`. */
+    const pistas = [data.motivo, data.origem].filter(Boolean).join(" · ");
+    throw new Error((data.erro || `HTTP ${response.status}`) + (pistas ? ` (${pistas})` : ""));
+  }
   if (data.provedor) {
     const trocou = ultimoProvedorRef.atual && ultimoProvedorRef.atual !== data.provedor;
     ultimoProvedorRef.atual = data.provedor;
@@ -4906,6 +4920,11 @@ export default function Taverna() {
   const [milagreSel, setMilagreSel] = useState(null);
   const [dadoRolando, setDadoRolando] = useState(false);
   const [falha, setFalha] = useState(null);
+  /* O TURNO RESOLVIDO A ESPERA DE NARRACAO (v9.256, Fase X - X3). Ref, e
+     nao estado: quem o le sao o `catch` de `enviar`, as duas portas do
+     declarar e o `salvar` - todos fora do ciclo de render, e todos
+     precisam do valor de AGORA, nao do valor da ultima pintura. */
+  const guardadoRef = useRef(SEM_GUARDADO);
   const [statusSave, setStatusSave] = useState(null);
   const [cronica, setCronica] = useState(null);
   const [verCena, setVerCena] = useState(false);
@@ -7483,6 +7502,25 @@ export default function Taverna() {
     setMensagens(mensagensRef.current);
   }, []);
 
+  /* ---------------- A MESA ESPERA (v9.256, Fase X - X3) ----------------
+     A voz da trava, num lugar so: as duas portas do declarar - o botao do
+     golpe e a frase digitada - dizem a MESMA coisa, e duas frases parecidas
+     em dois pontos deste arquivo e como esta casa ja viu nascer a segunda
+     regua.
+
+     Nenhum nome de mecanismo. O jogador nao le "guardado", "trava", "turno
+     resolvido" nem "chamada": ele le que o que acabou de fazer ainda nao foi
+     contado, e que a mesa nao anda sem isso. Quando insistir nao resolve
+     (credito, chave, recusa) a segunda frase nao vem - convidar para um
+     botao que a tela nem desenhou e mentir duas vezes. */
+  const aMesaEspera = () => {
+    try {
+      const g = guardadoRef.current;
+      const insistir = !(g && g.silencio && g.silencio.podeTentar === false);
+      pushMsgs([{ autor: "sistema", texto: "⏳ O que você acabou de fazer ainda não foi contado, e a mesa não anda sem a palavra do Mestre." + (insistir ? " Peça a ele que conte, e então siga." : "") }]);
+    } catch (e) { calou("a mesa espera", e); }
+  };
+
   const salvar = useCallback((extra = {}) => {
     /* v9.148: ANTES de montar `dados`, e a ordem é o conserto. `dados`
        carrega `abasAbertas: abasAbertasRef.current`; conferir depois
@@ -7507,6 +7545,10 @@ export default function Taverna() {
       custo: custoRef.atual,
       abasAbertas: abasAbertasRef.current,
       sessao: sessaoRef.current,
+      /* v9.256 (Fase X - X3): o turno que o motor resolveu e o Mestre nao
+         contou viaja no save. Sem isto, cair a rede e recarregar apagava um
+         golpe ja aplicado - ou o turno se completa, ou nao comecou. */
+      guardado: guardadoRef.current,
       backupEm: backupEmRef.current,
       rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
     };
@@ -10849,6 +10891,14 @@ export default function Taverna() {
     );
     try {
       const resp = await chamarMestre(systemRef.current, novoHist);
+      /* O MESTRE FALOU: o turno guardado morre AQUI (v9.256, Fase X - X3),
+         antes do `salvar` la embaixo - que le a ref e grava o vazio junto,
+         sem um salvamento a mais no caminho feliz. Sem try/catch de
+         proposito: atribuir o vazio a uma ref nao estoura, e um guardado que
+         sobrevivesse ao sucesso trancaria o declarar para sempre, em
+         silencio. E o pior modo de falhar desta etapa, e ele nao pode
+         depender de mais nada dar certo. */
+      guardadoRef.current = SEM_GUARDADO;
       /* MEMÓRIA ENXUTA: no histórico vai SÓ a narrativa (dentro do molde JSON,
          para o modelo manter o formato). Antes ia o JSON completo com mudancas,
          sugestões e campos de combate — ~3× mais tokens por mensagem antiga,
@@ -10967,7 +11017,44 @@ export default function Taverna() {
       setTimeout(() => checarDespertar(pers), 600);
     } catch (e) {
       notaRef.current = nota;
-      setFalha({ conteudo, persAtual, histBase: base, motivo: (e && e.message) ? String(e.message) : "erro desconhecido" });
+      /* ------------- O SILENCIO DO MESTRE (v9.256, Fase X - X3) -------------
+         Tres coisas acontecem aqui, e nenhuma delas e regra: quem decide
+         tudo e `guardado.js`.
+
+         1. O TURNO FICA GUARDADO. O motor ja rolou e ja aplicou antes desta
+            chamada; o que faltou foi contar. `guardarTurno` congela o
+            envelope EXATO, e e ele - byte por byte - que o "tentar de novo"
+            manda de volta, em vez de recompor o turno por outro caminho.
+         2. O MOTIVO DESCE INTEGRO AO CONSOLE. Foi este vazamento que
+            permitiu diagnosticar duas quedas; quem apaga o motivo fica cego.
+            Ao lado dele vao o id do silencio, a conta de tentativas e a
+            marca do envelope - e e a marca que prova, depois, que o texto
+            narrado e o mesmo que o motor produziu.
+         3. O SAVE GRAVA A FICHA E O GUARDADO - e NAO o historico: o Mestre
+            nao respondeu, entao nao ha narracao para fingir que houve.
+
+         Tudo em `calou`: um orgao que estoura durante a falha apaga
+         exatamente o turno que ele existe para salvar. */
+      const motivo = (e && e.message) ? String(e.message) : "erro desconhecido";
+      let g = SEM_GUARDADO;
+      try {
+        /* `anterior` e o turno que JA estava preso quando esta queda
+           aconteceu. Se for a mesma queda insistindo - mesma marca -, o
+           MODULO continua a conta de tentativas em vez de voltar a zero.
+           A regra inteira mora em `guardado.js`, onde a suite a le de volta;
+           aqui so se entrega o que o App tem na mao. */
+        g = guardarTurno({ conteudo, histBase: base, persAtual, motivo, quando: Date.now(), anterior: guardadoRef.current });
+        guardadoRef.current = g;
+      } catch (err) { calou("guardar o turno", err); }
+      const silencio = (g && g.silencio) || lerOSilencio(motivo);
+      try {
+        if (typeof console !== "undefined" && console.warn) {
+          console.warn(`[taverna] o Mestre calou (${silencio.id}) · tentativa ${g ? (Number(g.tentativas) || 0) + 1 : 1} · turno ${g ? g.marca : "(nada guardado)"} · ${g && g.rolou ? "o motor ja rolou" : "nada rolou"}`, silencio.tecnico);
+        }
+      } catch (err) { calou("o motivo do silencio", err); }
+      try { salvar({ personagem: personagemRef.current || persAtual || personagem, guardado: g }); } catch (err) { calou("salvar o turno guardado", err); }
+      /* a tela le a VOZ DE MUNDO e nada mais - o tecnico nao sobe daqui */
+      setFalha({ conteudo, persAtual, histBase: base, casa: silencio.casa, podeTentar: silencio.podeTentar !== false });
     } finally {
       /* o portão jamais pode engolir um turno: se a tela ficou retida por
          qualquer motivo, tudo o que estava preso sai aqui */
@@ -10976,7 +11063,23 @@ export default function Taverna() {
     }
   }, [historico, mensagens, aplicarResposta, salvar, nomeCampanha, mundo]);
 
-  const retentar = () => { if (!falha) return; const f = falha; setFalha(null); enviar(f.conteudo, f.persAtual, f.histBase); };
+  /* ---------------- TENTAR DE NOVO (v9.256, Fase X - X3) ----------------
+     O que volta ao Mestre e o ENVELOPE GUARDADO, byte por byte. Remontar o
+     texto aqui seria recomputar o turno por um caminho lateral - que e
+     exatamente o que a trava do declarar impede do outro lado. Sem guardado
+     (save antigo, envelope vazio), o `falha.conteudo` de sempre continua
+     valendo como rede. */
+  const retentar = () => {
+    if (!falha) return;
+    const f = falha;
+    setFalha(null);
+    let conteudo = f.conteudo;
+    try {
+      const preso = oQueNarrar(guardadoRef.current);
+      if (preso) { conteudo = preso; guardadoRef.current = maisUmaTentativa(guardadoRef.current); }
+    } catch (e) { calou("tentar de novo", e); }
+    enviar(conteudo, f.persAtual, f.histBase);
+  };
 
   // ── Voz do Mestre (Fish Audio via /api/voz) ──
   const [voz, setVoz] = useState(null); // { i, status: "gerando" | "tocando" }
@@ -11428,6 +11531,18 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       noiteRef.current = sv.noite && typeof sv.noite === "object" ? sv.noite : null;
       torneioRef.current = garantirTorneio(sv.torneio);
       confidenciasRef.current = garantirConfidencias(sv.confidencias);
+      /* v9.256 (Fase X - X3): o turno que o Mestre nao contou volta com o
+         save, e a tela volta com ele - o jogador reencontra o "tentar de
+         novo" onde parou. Save antigo nao tem o campo, e ai nao ha turno
+         preso: o vazio, sem migracao e sem estouro. */
+      try {
+        guardadoRef.current = sv.guardado && typeof sv.guardado === "object" ? sv.guardado : SEM_GUARDADO;
+        const gsv = guardadoRef.current;
+        if (gsv) {
+          const sil = gsv.silencio && gsv.silencio.casa ? gsv.silencio : lerOSilencio(null);
+          setFalha({ conteudo: gsv.conteudo, persAtual: gsv.persAtual, histBase: gsv.histBase, casa: sil.casa, podeTentar: sil.podeTentar !== false });
+        } else setFalha(null);
+      } catch (e) { calou("o turno guardado do save", e); guardadoRef.current = SEM_GUARDADO; }
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
         ? { comprados: sv.mercado.comprados || {}, ambulante: sv.mercado.ambulante || null, pressoes: sv.mercado.pressoes || {}, gastos: sv.mercado.gastos || {}, pechinchas: sv.mercado.pechinchas || {} }
         : { comprados: {}, ambulante: null, pressoes: {}, gastos: {}, pechinchas: {} };
@@ -11850,6 +11965,12 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
      módulo que a suíte prova casar o mesmo detector que o teclado casa. */
   const declararGolpe = (alvoPedido) => {
     try {
+      /* A TRAVA (v9.256, Fase X - X3). Enquanto houver turno que o motor JA
+         ROLOU esperando narracao, o botao nao rola outro: uma queda de rede
+         nao pode virar segunda chance de um resultado ruim. Turno guardado
+         que NAO rolou nao trava - quem decide e `travaODeclarar`, e nao a
+         presenca de uma falha na tela. */
+      if (travaODeclarar(guardadoRef.current)) { aMesaEspera(); return; }
       const pers = fichaViva() || personagem;
       const vd = vereditoDoGolpeAgora(pers);
       /* cinto e suspensórios: o botão já impede o clique quando não há
@@ -13057,6 +13178,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const agirInterno = (texto) => {
     const acao = texto.trim();
     if (!acao || carregando || rolagem) return;
+    /* A TRAVA (v9.256, Fase X - X3), no TOPO: antes do despachante, antes de
+       qualquer porta, antes de qualquer resolucao. E por aqui que a frase
+       digitada entraria no motor e rolaria de novo o que ja foi rolado.
+       E o texto do jogador NAO se perde: os dois `setEntrada("")` desta
+       funcao ficam abaixo desta linha, entao a caixa continua com o que ele
+       escreveu - e os chamadores internos, que mandam envelope montado, nao
+       tem o que devolver a caixa nenhuma. */
+    if (travaODeclarar(guardadoRef.current)) { aMesaEspera(); return; }
     /* ---------------- O DESPACHANTE (v9.61) ----------------
        A ordem do turno deixou de ser o layout deste arquivo e virou uma
        tabela em `turno.js`. Isto aqui não decide mais nada: pergunta qual
@@ -16023,6 +16152,21 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      jogador escreveria e manda pela mesma porta. Se a ação não pede dado, ou
      se já foi tentada aqui, o botão ouve a mesma resposta que o teclado. */
   const declararAcaoRapida = (id, motivo) => {
+    /* A TRAVA (v9.256, Fase X - X3) - a TERCEIRA porta, e ela precisa da
+       mesma guarda que as irmas: daqui `adjudicarAcao` rola o dado, e com um
+       turno preso esperando narracao isso seria a segunda chance que a queda
+       de rede nao pode dar. No TOPO, antes de montar a frase e antes de
+       qualquer resolucao.
+
+       E o texto do jogador VOLTA A CAIXA de proposito: ao contrario das
+       outras duas portas, o painel de Acoes ja fez `setEntrada("")` antes de
+       chamar, entao nao limpar nao basta - aqui o alvo escrito precisa ser
+       devolvido a mao, ou ele se perde. */
+    if (travaODeclarar(guardadoRef.current)) {
+      try { if (motivo) setEntrada(motivo); } catch (e) { calou("devolver o alvo a caixa", e); }
+      aMesaEspera();
+      return;
+    }
     const frase = fraseDaAcaoRapida(id, motivo);
     if (!frase) return;
     if (adjudicarAcao(frase)) return;
@@ -20494,7 +20638,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     }
   };
 
-  const irMenu = () => { setAba(null); setHabAbertas(false); setHabsSel([]); setEntrada(""); setDadoRolando(false); setFase("menu"); };
+  /* v9.256 (Fase X - X3): sair para o menu solta o turno preso. Quem carrega
+     um save o recebe de volta na restauracao; quem comeca outra campanha nao
+     herda a trava de uma mesa que nao e a dele. */
+  const irMenu = () => { setAba(null); setHabAbertas(false); setHabsSel([]); setEntrada(""); setDadoRolando(false); guardadoRef.current = SEM_GUARDADO; setFalha(null); setFase("menu"); };
 
   /* ---------------- O CORPO SENTE (v9.160) ----------------
      O clarão de dano do bloco do herói. Compara a vida de agora com a
@@ -20640,10 +20787,15 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               {falha && !carregando && (
                 <div className="tv-fade flex flex-col items-center gap-1.5">
                   <div className="flex items-center gap-3 rounded-full pl-4 pr-2 py-2" style={{ background: T.panel, border: `1px solid ${T.danger}` }}>
-                    <span className="tv-mono text-xs" style={{ color: T.danger }}>O Mestre não respondeu.</span>
-                    <Botao primario pequeno onClick={retentar}>Tentar de novo</Botao>
+                    <span className="tv-mono text-xs" style={{ color: T.danger }}>{falha.casa || lerOSilencio(null).casa}</span>
+                    {falha.podeTentar !== false && <Botao primario pequeno onClick={retentar}>Tentar de novo</Botao>}
                   </div>
-                  {falha.motivo && <span className="tv-mono text-[10px] px-4 text-center" style={{ color: T.inkDim }}>{falha.motivo}</span>}
+                  {/* v9.256 (Fase X - X3): o motivo tecnico SAIU daqui. Ele nao some -
+                      desce integro ao console, que e onde quem investiga o
+                      le. O jogador ouve o Mestre calar, nao a maquina
+                      tossir; e o botao acima so aparece quando insistir
+                      resolve, porque oferece-lo contra credito, chave ou
+                      recusa e mentir para quem vai clicar. */}
                 </div>
               )}
             {combate && <PainelCombate combate={combate} bolsa={bolsaDeCombate}
