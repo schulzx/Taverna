@@ -30,6 +30,67 @@ a seguir aos de D4, marcadas *(E1)*. As três são da mesma família e é honest
 dizê-lo: as três tratam do que acontece quando **o tabuleiro passa a ser onde
 o jogo se joga**, e cada uma pede uma coisa ao motor que ele hoje não faz.
 
+**E duas nasceram em K1 (15/09)**, marcadas *(K1)*. Vêm à pessoa por razões
+opostas — uma porque **dá ao jogador informação que este jogo nunca lhe deu**, a
+outra porque **paleta é identidade**.
+
+- [ ] **o dano aparece antes de doer** *(K1)* · pesado · de: jogo · 15/09
+  **A janela da reação é o único instante do jogo inteiro em que o sistema tem na
+  mão um número que ainda não aconteceu.** `a.r.dano` existe em `App.jsx:7572` e
+  só vira PV mais à frente. A proposta é usá-lo: a primeira linha do cartão deixa
+  de ser *"o ogro do beco golpeia você"* e passa a **"o ogro do beco — 9 de dano a
+  caminho"**, e cada verbo traz a conta **já feita** contra o PV que está na tira:
+  > **aparar** · 0 PM — **9 vira 4**, você fica em 13
+  > *deixar passar* · não gasta PM — **9 inteiros**, você fica em 8
+
+  **Porque não é enfeite, e é o argumento todo.** Sem o número, as reações ficam
+  na **mesma ordem em todas as lutas**: o jogador escolhe sempre a melhor que tem
+  — que é **exactamente o que `escolherReacao` já faz por ele, e faz bem**. Nesse
+  mundo a janela acrescenta toques e **muda nada**: é uma reimplementação manual
+  de uma decisão automática correcta, que é a definição de um mecanismo que
+  cansa. Com o número, a ordem **muda a cada golpe**: a 17/20 poupa-se o PM, a
+  6/20 gasta-se tudo. **É a diferença entre um menu e uma decisão** — e é a única
+  decisão que o sistema **não pode** tomar por ele, porque só ele sabe se está a
+  guardar PM para o chefe. **E o argumento ficou mais forte em K1:** como o caso
+  comum é **uma reação só**, sem o número a janela é literalmente uma lista de um
+  item com ordem fixa.
+  **E o relógio força a mão.** Ninguém faz `9 × 0,5` e compara com `17 PV` em
+  quatro segundos enquanto lê prosa. Se a janela mostra proporções e lhe deixa a
+  aritmética, o relógio **garante** que ele responde por hábito e não por leitura.
+  ***Uma decisão de quatro segundos só se pode tomar sobre informação já
+  calculada. Ou se mostra a conta, ou não se devia pôr relógio.***
+  **Custo: zero mecânica nova, zero tabela nova** — é `Math.round(dano * corta)`
+  corrido em pré-visualização, e cabe na fenda de preço que já existe (26 e 27
+  caracteres, dentro dos 40 medidos): **mesma peça, mesma altura, zero píxeis a
+  mais**.
+  **O risco, dito pelo próprio `jogo`:** mostra o dado do inimigo antes de o
+  jogador reagir, o que este jogo nunca fez. É uma facilitação — pequena, e **só
+  para quem responde**: quem ignora tem o jogo de hoje, byte a byte. *"Ver o
+  tamanho do machado que vem é o que a personagem veria."* **E se a pessoa disser
+  que não, a Fase K continua a fazer sentido — mas então o relógio tem de ser mais
+  generoso, porque a conta passa a ser dele.**
+
+- [ ] **`lineStrong`: a casa não sabe dizer "sou um controlo" sem gritar** *(K1)*
+  · pesado · de: desenho · 15/09
+  **A medida que o apanhou:** `line`/`panel` = **1,29:1** e `panelSoft`/`panel` =
+  **1,07:1**. As quatro superfícies da casa cabem dentro de 1,3:1 umas das outras
+  — **para a WCAG 1.4.11 são uma superfície só**. Consequência prática: um
+  controlo desta casa **ou se enche de `amber` (8,45:1) e grita, ou desaparece**.
+  Não há meio-termo, e foi por isso que o recuo *deixar passar* — o botão de quem
+  **não quer gastar PM** — teve de ser remendado com um override em vez de
+  resolvido.
+  **A proposta é um token só:** `lineStrong` = `#70688C`, **o degrau mais baixo**
+  que passa 3:1 contra as três superfícies (panel 3,51 · bg 3,74 · panelSoft
+  3,27). Foram testados cinco; `#645D7D` falha a 2,95.
+  **Paga um remendo removido** (o override deixa de ser preciso), é **reversível
+  por uma linha em `T`**, e tem **par comparável montado** na folha `74:64`.
+  **O risco, dito:** cinco linhas contornadas podem ler-se como grelha — e isso
+  está desenhado, não jogado. E só rende nos **6,8 %** de controlos que passam por
+  `ui.jsx`. **Vai à pessoa porque paleta é identidade**, e identidade não é peso
+  médio por mais pequena que seja a mudança.
+  *(Nasceu de o `desenho` se desmentir: escreveu na primeira rodada que o piso de
+  contraste estava "cumprido com folga em todos", foi medir, e não estava.)*
+
 - [x] **a rodada tem três batidas, e o jogador toca as três** · **APROVADA 15/09 — e a pessoa devolveu a forma à mesa:** *"decida como designer UX e designer de games experientes, de forma que seja a melhor experiência jogável e visual"*. Vira a **Fase K**, e a mesa decide sem perguntar · pesado · de: jogo · 14/09
   **O que ele vive hoje.** Uma rodada de combate é: escrever uma frase, o
   sistema resolver tudo, e ler vinte linhas. As regras já modelam **três**
@@ -471,7 +532,20 @@ reação ou se não irá reagir. Caso o tempo passe e o player não tenha clicad
 o turno de reação acaba. Ele deve poder escolher também uma reação padrão ou
 não reagir, caso não queira gastar PM."*
 
-- [ ] **K1 · o momento desenhado** · de: pessoa · 14/09
+- [x] **K1 · o momento desenhado** · **FEITO 15/09 · v9.256** — o momento inteiro
+  está desenhado no Figma e escrito em `formas.md`. **A chamada dura 4 000 ms** (1,5 s
+  de reconhecer + 0,5 s de Fitts, dobrados para quem não estava a olhar), **o leque
+  não expira** e por isso **não tem trilho**; sob `prefers-reduced-motion` a janela
+  dura **mais** 1 000 ms, porque *uma barra lê-se de canto de olho e um numeral exige
+  fixar* — a lei vira número em vez de promessa. **O caso comum resolve-se num
+  toque:** 12 classes em 12 têm exactamente uma reação de `sofre_dano`, e o toque
+  que revelava uma lista de um item morreu. O **recuo está no primeiro degrau**
+  (hoje ignorar a janela **gasta PM**), a **preferência é uma fila de quatro pílulas
+  na ficha** (e é a conformidade WCAG 2.2.1 da fase), e a janela **resolve-se no
+  sítio** antes de ir ao log, que fica byte a byte o de hoje. No telefone o caso
+  comum tapa **zero** do campo. Peças: `O chamado` (`62:2453`), `O verbo com preço`
+  (`64:2446`), três glifos, e *A pergunta que expira* de 4 para 8 variantes.
+  · de: pessoa · 14/09
   `jogo` e `desenho` em par, no Figma: o botão que chama, a barra que corre,
   o leque de opções, o estado de "não vou reagir", e a preferência
   (reação padrão / nunca me pergunte). **Duas decisões de desenhista

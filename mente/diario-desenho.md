@@ -19,6 +19,173 @@ Formato:
 
 ---
 
+## 15/09 19:40 · v9.256 · K1 · o momento desenhado · **a Fase K abre** · commit `PENDENTE`
+
+**A segunda etapa seguida que é só desenho**, e a segunda em que nenhum `.js`,
+`.jsx` ou `.mjs` foi tocado. K1 desenha, **K2 trava, K3 constrói** — essa fronteira
+foi outra vez a única regra que não se negociou.
+
+- **estado inicial:** criei `.claude/ciclo-desenho-em-curso`. `.claude/app-jsx`
+  **não existia e não foi criado**: K1 lê o `App.jsx` (a fiação da reação, `:7563`)
+  e não escreve nele — **o bastão ficou livre para a outra mente o ciclo inteiro**,
+  que estava na Fase X a fazer o golpe sair do botão. A pauta tinha K1 no topo,
+  aprovado pela pessoa em 15/09 com a forma **ditada por ela** em 14/09 e depois
+  **devolvida à mesa**: *"decida como designer UX e designer de games
+  experientes"*. Suítes verdes à entrada.
+- **jogo / desenho:** chamados **juntos, no mesmo turno, os dois em primeiro
+  plano** — e depois **uma segunda rodada**, pela mesma razão que em E1: voltaram
+  com **duas respostas para a mesma lei**. Mais um terceiro toque cirúrgico, por
+  mensagem, para dois defeitos de peça.
+
+### O facto que decidiu a etapa, e os dois acharam-no sozinhos
+
+**Doze classes em doze têm exactamente UMA reação de `sofre_dano`.**
+`reacoesDe` filtra por perfil de combate, os quatro perfis têm uma reação cada
+(marcial e misto *Aparar*, furtivo *Esquiva Ágil*, conjurador *Escudo Arcano*), e
+a segunda só existe com **Contramágica escrita na ficha** — que tem
+`exigeTipo: []` e nunca entra por classe.
+
+Ou seja: **a forma ditada** (*botão → aperta → aparecem as opções*) **faria todo o
+jogador gastar um toque, sob relógio, para revelar uma lista de um item.** Os dois
+seniores chegaram lá por caminhos diferentes — o `jogo` pela tabela de graus, o
+`desenho` pela contagem dos perfis — e é o tipo de convergência que se acredita.
+
+### A decisão que tomei como regente, e que não foi à pessoa
+
+O `jogo` tratou-a como desenho feito; o `desenho` quis mandá-la à pessoa por
+**mudar o fluxo que ela ditou**. **Decidi que não vai**, e escrevo o porquê:
+
+1. A pessoa **devolveu a forma à mesa** em 15/09, com essas palavras.
+2. **Nada fica escondido:** reagir e recusar estão os dois no primeiro degrau —
+   que é literalmente o que ela pediu (*"as opções para escolher qual será a
+   reação ou se não irá reagir"*).
+3. **Não há nada a reaprender:** o momento não existe hoje.
+4. Entregar o toque a mais **sabendo** que ele revela uma lista de um item para
+   12 classes em 12 seria a timidez que ela proibiu.
+
+**Então: 1 reação → um toque para reagir, um para recusar. 2 ou mais → chamado →
+leque.** A peça carrega as duas formas, e trocar o padrão é mudar um eixo.
+
+### A segunda arbitragem: duas respostas para a mesma lei
+
+`prefers-reduced-motion` e o tempo. O `jogo` pediu um interruptor *"perguntar com
+calma"* **dentro da janela**; o `desenho` pôs a preferência **na ficha** e recusou
+o interruptor. **Cada um tinha metade da razão**, e a metade do outro era a que
+lhe faltava:
+
+- o **lugar** é do `desenho` — a ficha é ficção (*"como o meu herói se defende"*),
+  o painel é mecanismo, e *o sistema não fala de si mesmo*;
+- mas o ritmo `parado` do `jogo` ficaria **inalcançável** sem controlo nenhum, e
+  **regra sem leitor é export morto um andar acima da suíte**.
+
+**A resolução: a fila da ficha passa a ter quatro pílulas**, e a terceira é a que
+faltava — `[✓ eu decido]` `[eu decido, sem pressa]` `[aparar sempre]` `[deixar
+passar]`. Cada uma acende uma estrada de `RITMOS_DA_REACAO`, **e nenhuma linha fica
+sem leitor**. É também a **conformidade WCAG 2.2.1** (*Timing Adjustable*, nível A)
+cumprida duas vezes: *sem pressa* **desliga** o limite, e a escada automática
+**estende-o** sozinha. **A preferência não é um mimo — é a saída de conformidade da
+Fase K inteira.**
+
+### A terceira: a peça mentia sobre a tabela
+
+O `jogo` apanhou dois preços errados; mandei o `desenho` conferir **as seis
+reações, campo a campo**. Eram **cinco factos errados em 18 nós de texto**, e
+**quatro dos nós estavam ocultos** — `Aparar 2 PM` contra `pm: 0`, `Escudo Arcano
+3 PM` contra `pm: 2`, *"absorve quase todo o golpe"* contra `corta: 0.6`, e uma
+palavra de risco que **não existia na tabela que a própria folha declarava duas
+linhas acima**. **K3 copia a peça.** Uma peça que mente sobre a tabela é a primeira
+lei da casa — *se é número, é tabela* — invertida dentro da biblioteca.
+
+- **o Figma:** arquivo `Taverna — biblioteca` (`e5wJUzInAssoebx5npssKc`),
+  **ampliado, nunca duplicado**. Nasceram **`O chamado`** (`62:2453`, 8 variantes)
+  e **`O verbo com preço`** (`64:2446`), mais três glifos (`61:2`, `61:4`, `61:6`)
+  que existem porque **emoji não herda a variável de cor**. *A pergunta que
+  expira* (`31:518`) foi de 4 para **8 variantes** — e **media 320 quando três
+  documentos diziam 344**, incluindo o nome do próprio quadro; hoje mede 344. `A
+  escolha` teve a Pílula corrigida de 35 para 47 px (estava abaixo do piso de
+  toque). O `jogo` recompôs nove quadros de momento mais o da ficha, **sem um
+  único `visible=false` em instância nenhuma**.
+- **a prova:** 12/12 classes com uma reação (contagem em `reacoes.js`) ·
+  4 000 ms decompostos em 1,5 s de reconhecer + 0,5 s de Fitts, dobrados ·
+  `Chamando` 193 → 118 px (−39 %) e `Escolhendo` 332 → 217 (−35 %) ·
+  no telefone o caso comum tapa **zero** do campo e o leque tapa **uma fila de
+  onze** · cinco factos corrigidos contra `reacoes.js` · contrastes de 5,34:1 a
+  14,37:1, todos acima do piso de 3:1 da WCAG 1.4.11.
+
+### decisões médias tomadas, cada uma com o motivo
+
+- **O leque não expira** — quem tocou já respondeu; um segundo relógio por cima do
+  preço torna o preço decorativo e obriga a **decorar o menu** para jogar bem.
+  Por isso **o leque não tem trilho**: uma barra parada mentiria, e o
+  desaparecimento dela é o sinal de que o relógio parou.
+- **`inimigo_cai` não abre janela** — é ganhar, não defender-se: *uma pergunta cuja
+  resposta é sempre sim não é pergunta, é um diálogo de confirmação com relógio.*
+- **Sob `prefers-reduced-motion` a janela dura MAIS** (+1 000 ms) — uma barra lê-se
+  de canto de olho, um numeral exige fixar. **Mesmo tempo seria menos tempo**, e a
+  lei *«não pode virar desvantagem de jogo»* vira um número em vez de uma promessa.
+- **A `chance` nunca aparece em percentagem** (`PALAVRAS_DA_CHANCE`), e **a direcção
+  da frase é sempre a mesma** — misturar *"costuma dar certo"* com *"às vezes
+  falha"* é enquadramento invertido, que muda a decisão sem mudar o facto
+  (Tversky & Kahneman, 1981).
+- **O recuo está no primeiro degrau** — hoje **ignorar a janela gasta PM**, e sem
+  isso quem quer poupar PM seria o mais castigado pela fase que existe para o
+  servir.
+- **A janela resolve-se no sítio** (`Etapa=Resolvida`), e só depois vai ao log —
+  **o log fica byte a byte o de hoje**, que é a trava K2. Das quatro saídas só uma
+  frase é nova, `recusou`, e é nova porque **hoje não pode acontecer**.
+- **O silêncio avisa uma vez, em linguagem de jogo** — *"você deixou passar três
+  vezes; o instinto assume o resto da luta"*, na primeira linha do último cartão.
+  O `jogo` queria silêncio total e mudou de ideias: *o jogador não distinguiria "o
+  jogo parou de perguntar" de "não houve golpe"*. **Mudança de comportamento sem
+  aviso é o defeito que a lei da casa caça, mesmo quando a mudança é simpática.**
+- **Recusou-se o movimento do dado, e herdou-se o sentido** — `.tv-dice` é duas
+  animações `infinite` que D5 mediu como *estritamente pior* sob `animation: none`.
+  **Herdar engano é o erro.**
+
+### A terceira volta, de duas linhas, e valeu-lhe a viagem
+
+Mandei ao `desenho` **dois defeitos de peça e mais nada** — os que o `jogo` viu ao
+recompor. O primeiro era pior do que qualquer um dos dois tinha visto: o cheio do
+trilho eram **213 px fixos**, logo o **mesmo estado nominal** desenhava-se a
+**62 % numa largura e 60,7 % noutra**. *Um relógio medido em píxeis não é um
+relógio, é o desenho de um relógio.* Hoje o cheio é **proporção**, provado a
+296 · 344 · 351 · 420 px com verbo curto e verbo longo — **62 % nos oito casos**.
+O segundo deu uma regra em vez de um remendo: **o glifo aparece quando houve
+gesto**; `recusou` é a única saída sem gesto e a única sem glifo, e **não se
+inventou um glifo neutro porque a regra já existia** (`Papel=Recuo` também não tem
+— nenhum glifo desta casa diz *deixar passar* sem mentir).
+
+### Um aviso que não é meu, mas que fica escrito
+
+A outra mente estava a correr na mesma árvore e **commitou `0a5972f` enquanto eu
+escrevia** — levando dentro o item que eu tinha acabado de pôr em `mente/pauta.md`
+(os três achados do motor). **O conteúdo está certo e no lugar certo; o commit é
+que não o diz.** É a mesma falha de 14/09 que o `CLAUDE.md` já regista, vista do
+outro lado: **quem usa `git add -A` não varre só o seu — varre o que o vizinho
+escreveu no minuto anterior.** Não desfiz nada; deixo-o dito para a história não
+mentir sobre o porquê.
+
+### o que ficou, dito pelos próprios
+
+- **O `jogo` não sabe quantas janelas abrem por luta** — estimou 2 a 4, e **todo o
+  argumento dos 4 s assenta nisso**. É a primeira coisa que K4 mede.
+- Os **+600 ms do telefone** são soma de dois valores de manual, não medida.
+- **`Forma=Verbo` e `Papel=Armado` ficaram quase a mesma peça** (só o trilho as
+  separa) — a condição de as fundir está escrita para K3.
+- **Três achados de motor**, que **não são meus e vão à pauta do sistema**: o
+  `oportunidade` automático consome a reação da rodada? · `reacoes.js:96` rola
+  `Math.random()` **antes** de oferecer, o que já viola o determinismo por semente
+  e na Fase K fica **visível** (listas diferentes com a mesma semente) · e
+  `resolverReacao:115` mete um **emoji** dentro da frase, que não sai na mono da
+  casa nem herda a variável de cor.
+- **Dois vermelhos de honestidade que o `desenho` levantou contra si mesmo:**
+  escreveu na primeira rodada que o piso de contraste estava *"cumprido com folga
+  em todos"* e **era falso** — bastava medir `line`/`panel` = **1,29:1**; e propôs
+  `Forma=Verbo` como padrão **sem nunca a ter enchido com o pior caso**, que a
+  partiu. As duas apanhadas por ele, escritas por ele.
+
+---
+
 ## 15/09 13:55 · v9.254 · E1 · a tela desenhada antes de existir · **a Fase E abre** · commit `0a08522`
 
 A Fase D fechou a casa; **E1 é a primeira tela que esta mesa desenha inteira**,

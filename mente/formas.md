@@ -787,24 +787,141 @@ fiação** (*a ação extra*, *não agir*, *recusar o teste*). **Uma só pede pe
 
 ### reagir ao golpe que chega
 
+*(Reescrita em **K1**, 15/09. A entrada de D4 descrevia uma peça por fabricar e
+uma decisão por tomar; hoje a peça existe e a decisão foi tomada. O que ficou de
+D4 e continua verdade está mantido palavra por palavra.)*
+
 - **quando** — *"`reacoes.js` tem seis reações com gatilho, custo em PM e
   resolução — Contramágica, Escudo Arcano, Aparar, Esquiva Ágil, Contra-ataque e
-  as seguintes. O golpe chega, `escolherReacao` (`reacoes.js:85`) escolhe a
-  primeira da lista que se aplica, `resolverReacao` rola, e o PM sai da ficha do
-  jogador (`App.jsx:7572`, `pmReacaoRef`). **O jogador nunca toca.**"*
-- **forma** — **A pergunta que expira** (peça pedida por nome pelo `jogo` em D4
-  e **ainda não fabricada**). Um bloco preso à linha do golpe, **não um véu**:
-  nasce com o verbo e o preço na mesma linha — *"Aparar — 2 PM, corta metade"* —,
-  tem um `Botao` *Papel=Gesto* por reação disponível e um *Papel=Recuo* que diz
-  **"deixar passar"**. O tempo que resta é uma **Barra de medida**, não uma
-  animação: informação dentro de movimento é informação perdida sob
-  `prefers-reduced-motion`. **Quem não responde não é punido** — o sistema
-  responde exatamente como hoje.
-- **movimento** — a janela **não pisca e não empurra** o que está em volta. A
-  barra do tempo desce linear; sob `prefers-reduced-motion` vira um número que
-  conta.
-- **onde vive** — Figma: **[ainda não existe]** — é a única peça pedida em D4
-  que não foi fabricada. · Código: **[ainda não existe]**.
+  Ataque de Oportunidade. O golpe chega, `escolherReacao` (`reacoes.js:85`)
+  escolhe a primeira da lista que se aplica, `resolverReacao` rola, e o PM sai da
+  ficha do jogador (`App.jsx:7572`, débito em `:7577`). **O jogador nunca
+  toca.**"* A janela é esse mesmo instante — `a.r.dano` já existe e ainda não
+  virou PV.
+
+- **forma** — **A pergunta que expira** (`31:518`, **8 variantes**), ancorada na
+  linha do veredito. **Três degraus, e quem escolhe um é a contagem das reações
+  que se aplicam ao gatilho** — porque `reacoesDe` filtra por perfil de combate:
+
+  | reações aplicáveis | o que aparece | toques p/ reagir | toques p/ não reagir |
+  |---|---|---|---|
+  | **1** (o caso comum) | **`Etapa=Direta`** — o verbo com o preço + o recuo | **1** | **1** |
+  | **2 ou mais** | `Chamando` (o chamado) → `Escolhendo` (o leque) | 2 | **1** |
+  | **0** | nada abre | — | — |
+
+  **O caso comum é o de uma reação, e isso é contagem, não impressão:** as
+  **doze** classes do jogo repartem-se por quatro perfis, e **os quatro têm
+  exactamente uma** reação de `sofre_dano` — marcial e misto *Aparar*, furtivo
+  *Esquiva Ágil*, conjurador *Escudo Arcano*. A segunda só existe com
+  **Contramágica escrita na ficha**, e `contramagia` tem `exigeTipo: []`, logo
+  nunca entra por classe. **12 em 12.** Desenhar o comum como se fosse o raro
+  custava um toque em cada rodada a todo o jogador, para revelar uma lista de um
+  item.
+
+  **O recuo está nos dois degraus, e é o conserto do defeito que a fase existe
+  para corrigir.** *Não reagir* é sempre **um** toque. Hoje **ignorar a janela
+  gasta PM** — quem quer poupar PM é o mais castigado por ela —, e sem o recuo no
+  primeiro degrau poupar PM custaria dois toques sob relógio.
+
+  **A reação padrão não é uma preferência, é um botão cheio.** O primeiro verbo
+  vem **armado** (`O verbo com preço` *Papel=Armado*) e é exactamente a escolha
+  que `escolherReacao` faria hoje. Tocar, ou `Enter`, = *aceito o que o sistema
+  faria*. Nada para configurar, nada para lembrar.
+
+  **O preço vem na linha do verbo, sempre, e sai de `reacoes.js:22-69`** —
+  `aparar · 0 PM — corta metade`. **A `chance` não é percentagem: é a forma da
+  frase**, de `PALAVRAS_DA_CHANCE` (abaixo). O `3 em 5` vive **na ficha**, que se
+  lê devagar, nunca na janela, que se lê em quatro segundos: *a janela é
+  gameplay, a ficha é consulta*.
+
+- **o relógio, e corre uma vez só** — **a chamada dura 4 000 ms; o leque não
+  expira.** Os 4 s não saem do limite de 1 s da NN/g (esse é de *resposta do
+  sistema*; aqui quem responde é a pessoa, e o limite aplicável é o dos ~10 s da
+  atenção). Saem de uma soma: **reconhecer** um elemento que nasceu na periferia
+  enquanto se lê prosa (~1,5 s) + **o gesto** (~0,5 s por Fitts, com o `W`
+  honesto, que é a **altura** do chamado — 56 px —, porque o gesto é vertical) =
+  2,01 s, **dobrado**, porque o caso que importa é o de quem **não** estava a
+  olhar. A conta é pouco sensível à peça: para o total chegar a 5 s só por `W`,
+  `W` teria de cair para ~7 px. **Quem manda nos 4 s é o 1,5 s de reconhecer**, e
+  esse só K4 corrige. *(E o relógio só corre com a aba visível: mudar de separador
+  não custa janelas.)*
+  **Porque o leque não expira:** quem tocou **já respondeu**, e o que expira é a
+  chamada **por responder** — que é literalmente o que a pessoa ditou. Um segundo
+  relógio por cima do preço escrito tornaria o preço decorativo e obrigaria a
+  **decorar o menu** para jogar bem, que é o sistema a falar de si mesmo pela
+  porta dos fundos. *O relógio compra a tensão; o leque paga com a decisão.*
+  Por isso **o leque não tem trilho**: uma barra parada mentiria sobre a forma, e
+  **o desaparecimento do trilho é o sinal de que o relógio parou** — sem custar
+  elemento nenhum.
+
+- **quem lê devagar — generoso *e* configurável, e a generosidade vem primeiro**
+  — se uma janela expira, **a seguinte corre folgada (8 s), em silêncio**, sem
+  aviso e sem menu; o contador zera à primeira resposta. **Ninguém tem de
+  procurar uma definição para deixar de ser castigado por ser lento.** É a
+  `ESCADA_DO_SILENCIO`, e **não é um controlo, porque ninguém lhe toca.**
+
+- **movimento** — a janela **não pisca e não empurra**. O trilho desce
+  **linear** (*uma curva de aceleração numa barra de tempo mente sobre o tempo*),
+  **é a aresta de baixo do próprio botão** — o botão esvazia-se de si mesmo, em
+  vez de o olho ter de encontrar um segundo objecto no segundo em que decide — e
+  **mede sempre a largura da janela, nunca o comprimento do verbo**: senão
+  `APARAR` e `ESCUDO ARCANO` dariam dois relógios diferentes para o mesmo tempo.
+  **E o cheio é uma proporção, nunca um número de píxeis** — a regra custou a
+  descoberta: o cheio era de **213 px fixos**, logo o *mesmo estado nominal* dava
+  **62 % a 344, 60,7 % a 351** e outra coisa qualquer numa fenda estreita. *Um
+  relógio medido em píxeis não é um relógio, é um desenho de um relógio.* Para K3:
+  **o trilho `width: 100%` da janela, o cheio `width: N%` do trilho.** Provado a
+  296 · 344 · 351 · 420 px, com verbo curto e verbo longo: **62 % nos oito casos.**
+  Ao primeiro toque o trilho **desaparece**. Sob `prefers-reduced-motion` nasce já
+  como `Tempo=Contagem` (*a saída pousa no estado final*), e **a janela dura mais
+  1 000 ms**: *uma barra lê-se de canto de olho, um numeral exige fixar* — mesmo
+  tempo seria menos tempo. Do dado herda-se o **sentido** (`IconeD20` = *o acaso
+  decide agora*) e **recusa-se o movimento**: `.tv-dice` é duas animações
+  `infinite` que D5 mediu como *"deixa a pisca e tira o sentido"* sob
+  `animation: none`. **Aqui o glifo está parado e quem se move é o tempo**, uma
+  vez só, até ao fim.
+
+- **o gatilho — dois abrem, um não.** `sofre_dano` abre (o momento ditado).
+  `inimigo_erra` abre (*revidar · 0 PM — na mesma batida, ou não*). **`inimigo_cai`
+  não abre:** é ganhar, não defender-se — 0 PM, sem lado mau, e *uma pergunta cuja
+  resposta é sempre sim não é pergunta, é um diálogo de confirmação com relógio*;
+  e o instante em que um inimigo tomba é o pior sítio do combate para pôr um menu.
+  A forma que `formas.md` já lhe deu — *ser visto* — continua certa.
+
+- **a trava K2, desenhada** — **a janela abre exactamente quando
+  `escolherReacao` devolveria não-nulo hoje**, nem um instante a mais: em
+  particular **não abre em arranhão** (`reacoes.js:93-94`), porque deixar reagir a
+  um arranhão seria mecânica nova e triplicaria a contagem de janelas por luta.
+  Como o **conjunto de momentos é idêntico**, a catraca fica trivial de escrever:
+  *mesma semente, ninguém responde, mesmo resultado de hoje.*
+  **E o cartão não desaparece: resolve-se no sítio** (`Etapa=Resolvida`) — o verbo
+  é substituído pela linha que o sistema produziu, que fica ~1,2 s e sai a 140 ms.
+  Três coisas de graça: a resposta chega **onde a pergunta foi feita** (hoje chega
+  num log de que ele pode ter rolado para longe); **o contrato ensina-se sozinho**,
+  uma vez por expiração — *ignorei, aconteceu algo, e correu bem*; e **o PM aparece
+  onde a escolha foi oferecida**. Depois a linha fica no log, e **o log fica byte a
+  byte o de hoje** — só o cartão carrega o preâmbulo dos quatro segundos. Das
+  quatro saídas **só uma frase é nova, `recusou`, e é nova porque hoje não pode
+  acontecer.**
+  **E a regra do glifo na resolução: o glifo aparece quando houve gesto.**
+  `respondeu` e `expirou` diferem em **quem** agiu, não em **se** agiu — nos dois
+  casos uma reação aconteceu, o glifo dela é verdadeiro nos dois, e o que os separa
+  são as palavras (*"você aparou o golpe"* contra *"o instinto aparou por você"*).
+  **`recusou` é a única sem gesto e a única sem glifo** — e não se inventou um
+  glifo neutro porque **a regra já existia**: `Papel=Recuo` não tem glifo, porque
+  nenhum glifo desta casa diz *deixar passar* sem mentir. *A resolução de um recuo
+  herda a regra do recuo*, e um sinal novo para "nada aconteceu" seria o mecanismo
+  a falar de si mesmo. *(Mecanicamente: o glifo vive numa **coluna fixa de 22 px**,
+  porque esconder um filho de auto-layout colapsa o espaço e **arrasta as
+  palavras** — com glifo e sem, o texto começa no mesmo x.)*
+
+- **onde vive** — Figma: **`A pergunta que expira`** (`31:518`, 8 variantes,
+  *Etapa* Direta·Chamando·Escolhendo·Resolvida × *Tempo* Barra·Contagem·Parado,
+  **não preenchida de propósito** — as células vazias são a regra do trilho
+  desenhada), **`O chamado`** (`62:2453`) e **`O verbo com preço`** (`64:2446`);
+  o momento composto em `A batalha` → `o momento da reação · 1` a `· 9`, a ficha,
+  e o quadro de decisões `63:2119`. · Código: **[ainda não existe]** — é K3.
+
 - **por quê** — estudo citado, e a origem é esta casa: o cabeçalho de
   `src/reacoes.js` escreve *"No 5e e no BG3 metade da tensão do combate mora
   aqui: o golpe vem, e você tem uma janela para aparar…"* — e a linha seguinte
@@ -812,20 +929,59 @@ fiação** (*a ação extra*, *não agir*, *recusar o teste*). **Uma só pede pe
   problema e depois causa-o.** E experiência jogada: numa luta inteira o `jogo`
   tocou **três** controles — duas casas e o `⛺` que a encerrou por engano —,
   com seis reações disponíveis e nada onde tocar.
-- **dívida nomeada, e de propósito não paga em D4.** *A pergunta que expira*
-  **não foi fabricada**, e isso é decisão: ela é o coração de uma proposta
-  `pesado` que **espera a pessoa**, e **fabricar peça para decisão que não foi
-  tomada é inventar trabalho**. Fica escrito o que ela teria de fazer, para que
-  no dia do "sim" ninguém comece do zero: *aparece, oferece uma escolha com o
-  preço escrito, e **some sozinha se ninguém responder, sem punir quem não
-  respondeu**.* Quatro defesas já decididas pelo `jogo`, e três delas já são
-  regra: o sistema **já** recusa gastar reação em arranhão (`reacoes.js:93-94`),
-  **uma por rodada** já é regra, **quem não responde tem o de hoje byte a byte**
-  — e se o jogador deixar a janela expirar algumas vezes seguidas, **o jogo para
-  de perguntar** pelo resto da luta, sem lhe dizer que existe um mecanismo e sem
-  lhe pedir preferência nenhuma.
-- **peso** — **médio** a peça; **pesado** a janela, porque é momento novo no
-  meio do turno e quem decide isso é a pessoa.
+
+- **peso** — **médio** a peça e o momento; a janela era `pesado` e **a pessoa
+  aprovou-a em 15/09**, devolvendo a forma à mesa: *"decida como designer UX e
+  designer de games experientes"*.
+
+### dizer de antemão como o herói se defende (a preferência, K1)
+
+- **quando** — na ficha, fora do combate. É onde a pessoa pediu *"escolher também
+  uma reação padrão ou não reagir, caso não queira gastar PM"*.
+- **forma** — **uma fila só, de `A escolha` *Forma=Pílula*** (47 px), e **nenhuma
+  peça nova**. *"Reação padrão"* e *"nunca me pergunte"* pareciam duas coisas — um
+  interruptor mais uma lista. **São uma só: escolher um verbo É dizer "nunca me
+  pergunte"**, e *"eu decido"* é apenas a opção que vem marcada.
+
+  > **Quando um golpe chega** · `[✓ EU DECIDO]` · `[EU DECIDO, SEM PRESSA]` ·
+  > `[APARAR SEMPRE]` · `[DEIXAR PASSAR]`
+
+  Cada uma acende uma estrada de `RITMOS_DA_REACAO`, e **nenhuma linha fica sem
+  leitor**: `eu decido` → `normal`; `eu decido, sem pressa` → **`parado`** (a
+  janela abre e **espera**); `aparar sempre` → `normal` com o verbo travado;
+  `deixar passar` → `normal` com o recuo travado. A terceira pílula traz **o verbo
+  do herói**, nunca uma lista. `folgado` fica de fora de propósito: é o que a
+  escada dá a quem **não pediu**.
+- **onde vive** — Figma: a fila na ficha, com instâncias de `A escolha` (`20:77`).
+  · Código: **[ainda não existe]** — é K3.
+- **por quê** — **é a conformidade, não um mimo.** A **WCAG 2.2.1 (*Timing
+  Adjustable*, nível A)** exige que um limite de tempo se possa ajustar, estender
+  ou desligar. Uma janela de reação não se alonga sem deixar de ser o que é —
+  mas **escolher um verbo fixo desliga o limite de tempo** sem tocar na mecânica de
+  quem não o desligou, e *sem pressa* **estende-o sem fim**. Cumprida duas vezes.
+  E mora **na ficha** porque ali o jogador lê *"como o meu herói se defende"*, que
+  é ficção — e não *"configurar reações"*, que é mecanismo.
+- **peso** — **médio**.
+
+### as palavras do risco (`PALAVRAS_DA_CHANCE`, K1)
+
+Três das seis reações têm `chance` (0,4 a 0,6), e oferecer *"corta tudo"* calando
+que falha 2 em 5 seria **mentir o preço**. A percentagem não entra: *um duelista
+não sabe "60 %", sabe que costuma dar.* A tabela é lida de `reacoes.js`:
+
+| `chance` | na janela (≤40 car.) | na ficha |
+|---|---|---|
+| ≥ 0,70 | `quase sempre` | `quase sempre dá certo` |
+| 0,50 – 0,69 | `mais vezes que não` | `dá certo mais vezes que não` |
+| 0,30 – 0,49 | `de vez em quando` | `dá certo de vez em quando` |
+| < 0,30 | `raramente` | `raramente dá certo` |
+
+**A direcção da frase é sempre a mesma** — o que acontece quando **dá certo**.
+Misturar *"costuma dar certo"* com *"às vezes falha"* na mesma lista é
+enquadramento invertido, e enquadramento invertido **muda a decisão sem mudar o
+facto** (Tversky & Kahneman, *Science*, 1981). *(A segunda coluna existe porque
+o orçamento da fenda do preço é de 40 caracteres: mudou-se o lugar, nunca o
+facto.)*
 
 ### dar o golpe livre (o ataque de oportunidade)
 
@@ -1688,6 +1844,10 @@ correção do *Impedido* de D3 passou sem uma vírgula de reserva.
   fabricar peça para decisão que não foi tomada é inventar trabalho. O que ela
   teria de fazer está escrito na forma *reagir ao golpe que chega*, para que no
   dia do "sim" ninguém comece do zero. É do `desenho`.
+  *(**Paga em E1 e terminada em K1.** O "sim" veio a 15/09; a peça existe em
+  `31:518` com 8 variantes, e a especificação que D4 deixou escrita foi lida de
+  volta linha a linha em vez de se começar do zero — que era exactamente para isto
+  que ela tinha sido escrita.)*
 - **O Code Connect** — **15 peças sem nó**, e o que impede a biblioteca de
   divergir do código em silêncio continua a ser um script que alguém tem de
   lembrar de rodar. É plano de conta: **item da pessoa**.
@@ -2207,6 +2367,35 @@ janela do campo é território emprestado — nenhum elemento desta tela pode
 depender de estar visível ali.* Com esta frase escrita hoje, a terceira batida
 não nasce enfiada num canto daqui a duas fases.
 
+**K1 ocupou a reserva, e sobrou quase tudo** (medido com o campo por baixo, no
+quadro de 375×812). O campo vive de y 48 a 598 — 550 px, **onze filas**; o cartão
+ancora em baixo, em y 764, no topo da tira do herói:
+
+| o que abre | altura | abre em | tapa do campo |
+|---|---|---|---|
+| `Etapa=Direta` (o caso comum) | 118 | y 646 | **zero** — morre dentro da barra dos verbos |
+| `Etapa=Escolhendo`, duas reações | 215 | y 549 | **49 px — uma fila de onze** |
+| o tecto de cinco linhas | 323 | y 441 | 157 px / três filas — **e é inalcançável** |
+
+**O tecto não acontece:** em `sofre_dano` os `exigeTipo` são disjuntos, logo o
+máximo por classe é **1 + Contramágica da ficha = 2**.
+
+**E o cartão cobre a barra dos verbos de propósito, por duas razões, e a segunda é
+de segurança:** no turno do inimigo os seis verbos são **alvos mortos**, logo
+cobri-los não custa nada; e cobri-los **tira seis alvos errados do alcance do
+polegar** no segundo exacto em que errar custa caro.
+
+**A âncora é uma só, e é isso que faz as duas regras baterem:** o chamado ocupa
+646–764 com o recuo nos 48 px de baixo, e o leque põe *deixar passar* exactamente
+nos mesmos 716–764. **A escolha segura não se mexe um pixel** — fica sempre
+debaixo do polegar, e as que comprometem exigem um alcance deliberado. A trava de
+150 ms é o que impede que isto vire armadilha.
+
+**No telefone o tempo paga +600 ms** (4 600 ms), e **não é a viagem** — essa é
+nula por desenho (~60 px). É que **não há `hover`**: o jogador de telefone não
+pode ler o preço antes de a janela existir, como o de rato pode. *É um número de
+partida, e K4 é quem o corrige.*
+
 ### O movimento da tela, com saída
 
 **Uma curva só para o que se move** — `cubic-bezier(.2,.7,.3,1)`, que a folha
@@ -2221,7 +2410,11 @@ aceleração numa barra de tempo mente sobre o tempo*.
 | o veredito aparece | **120 ms** | `ease` | idêntico |
 | a vez passa de uma linha para outra | **200 ms** | `cubic-bezier(.2,.7,.3,1)` | troca a seco |
 | o halo do Selo *Mudou=Agora* | 3 × 1,2 s **e para** | `ease` | não pulsa |
+| o chamado entra (K1) | **120 ms**, `opacity` + `translateY(6px)` | `cubic-bezier(.2,.7,.3,1)` | aparece a seco, já no lugar |
 | a barra da pergunta que expira | o tempo da janela | **linear** | vira **número que conta** |
+| o leque abre (K1) | **160 ms**, `opacity` + `transform` | `cubic-bezier(.2,.7,.3,1)` | troca a seco |
+| `Pressa=Sobra` → `Pouco` (K1) | **90 ms**, só a tinta | `ease` | troca a seco |
+| a janela sai — respondida **ou** expirada (K1) | **140 ms**, só `opacity` | `ease` | some a seco |
 
 **As três leis que governam a tabela:**
 
@@ -2247,6 +2440,29 @@ escrita, e **a saída pousa no estado final** — `tv-batalha-entra`,
 acesas. **`tv-janela-tempo` é a exceção, e a exceção é lei:** ali *a informação
 mora dentro do movimento*, e `none` apagá-la-ia — a saída dela é **virar
 contagem**, que é a variante *Tempo=Contagem* da peça.
+
+**As classes de K1, com a saída escrita à nascença:** `tv-chamado-entra`,
+`tv-leque-abre`, **`tv-janela-tempo`** e `tv-janela-sai`. Nenhuma `infinite`.
+
+### O teclado numa janela com relógio (K1)
+
+Uma janela que expira **tem** de se responder sem rato, ou o relógio é uma
+barreira em vez de uma tensão.
+
+- Ao nascer, **o foco vai para o chamado** (gestão de foco na revelação, ARIA APG).
+- Aberto o leque, as respostas são **`role="menu"` com UM ponto de tabulação** —
+  setas andam linha a linha, `Enter`/`Espaço` respondem, `Escape` é *deixar
+  passar*. É o mesmo *tabindex* rotativo que E1 deu às 256 casas, pela mesma razão.
+- **O foco entra na primeira reação, nunca no recuo:** quem carrega em `Enter` por
+  reflexo não pode acabar a recusar sem querer.
+- **`1`..`4` escolhem, `0` deixa passar**, e os números **só acendem quando o
+  último dispositivo foi o teclado** — como um acelerador de menu só aparece com
+  `Alt`. Sob relógio, o teclado deixa de ter viagem nenhuma.
+- **Trava de 150 ms** nas linhas recém-reveladas, para o toque que abriu o leque
+  não atravessar para a linha que nasceu debaixo do dedo.
+- **O anel não muda** e **não é eixo de variante** em `O chamado`: *o chamado está
+  focado desde o instante em que existe*, logo uma variante *Foco* seria a única
+  alguma vez usada. É forma transversal, em `:focus-visible`.
 
 ### O anel de foco, aplicado a um tabuleiro
 
@@ -2469,3 +2685,78 @@ Somam-se às quatro de D3/D4, que continuam de pé.
    do arranjo novo, e `35:175` / `35:372` / `35:569` **deixaram de existir**.
    Quem citar nó de Figma em documento tem de o reconferir depois de qualquer
    recomposição — um id morto é uma referência que mente em silêncio.
+
+---
+
+## K1 · as peças do momento da reação (15/09)
+
+**Uma etapa só de desenho, a segunda seguida.** Nenhum `.js`, `.jsx` ou `.mjs` foi
+tocado; o bastão do `App.jsx` ficou livre para a outra mente o ciclo inteiro.
+Arquivo `Taverna — biblioteca` (`e5wJUzInAssoebx5npssKc`), **ampliado, nunca
+duplicado**. Zero hex solto.
+
+| peça | página · nó | variantes | por que não existia |
+|---|---|---|---|
+| **O chamado** | `O chamado` · `62:2453` | **8** (*Forma* Chamada·Verbo × *Tempo* Barra·Contagem·Parado × *Pressa* Sobra·Pouco) | a pessoa pediu **um botão**, e E1 entregou um painel de 193 px com um botão lá dentro. **O botão nunca foi peça** — era uma região de outra peça, e por isso não podia aparecer sozinho nem ser o verbo directo quando só há uma reação |
+| **O verbo com preço** | `O verbo com preco` · `64:2446` | **6+** (*Papel* Gesto·Recuo·Armado × *Estado* Repouso·Foco·Impedido) | porque **o `Botao` só tem fenda de razão nas 12 variantes em que ele RECUSA**. *Um botão que funciona não tem onde escrever o preço* — e a lei da casa é **o veredito antes do clique** |
+| **IconeEscudo · IconeEsquiva · IconeContramagia** | `Glifos` · `61:2` `61:4` `61:6` | — | `reacoes.js` tem seis reações com `icone` e a biblioteca tinha glifo vectorial para três. As outras três usavam **emoji, e emoji não herda a variável de cor** — a primeira lei da casa aplicada ao visual |
+
+**Ampliada:** ***A pergunta que expira*** — de 4 para **8 variantes**, *Etapa*
+(Direta · Chamando · Escolhendo · Resolvida) × *Tempo* (Barra · Contagem ·
+Parado), **com quatro células deixadas vazias de propósito**: são a regra *o leque
+não tem trilho* desenhada em vez de anotada.
+**Corrigida:** ***A escolha*** — a Pílula subiu de **35 para 47 px**. Nasceu em D4
+com o piso de 44 escrito por extenso e ficou **abaixo dele** (WCAG 2.5.5 AAA; HIG
+44 pt; Material 48 dp), e é a forma que vai para a ficha, logo para o polegar. O
+piso saiu do **enchimento**, não do texto. *Conferido antes de mexer: zero
+instâncias de `Forma=Pilula` no arquivo inteiro.*
+
+### As cinco medidas que valeram a etapa
+
+1. **A peça media 320, e três documentos diziam 344** — o diário de E1, esta
+   folha, e **o próprio nome do quadro**. Hoje mede 344, conferido variante a
+   variante. *O encaixe na lateral funcionava por elasticidade, o que é a forma
+   mais silenciosa de um número errado sobreviver.*
+2. **O cordão umbilical existia só na descrição.** E1 escreveu *"o filete de 3 px
+   em `danger` na aresta esquerda"* e **não o construiu**. Existe.
+3. **`Chamando`: 193 → 118 px (−39 %)** e **`Escolhendo`: 332 → 217 (−35 %)**, com
+   o mesmo número de opções; no tecto (duas reações + recuo) mede **321** — *o
+   tecto novo é mais baixo que o chão velho.*
+4. **Cinco factos errados, em 18 nós, e quatro deles ocultos.** A peça dizia
+   `Aparar 2 PM` (`pm: 0`), `Escudo Arcano 3 PM` (`pm: 2`), *"absorve quase todo o
+   golpe"* (`corta: 0.6`, e o catálogo diz *"a maior parte"*), e uma palavra de
+   risco **que não existia na tabela**. Foram lidos **todos os nós de texto das
+   três páginas**, campo a campo contra `reacoes.js:22-69`, em vez de se olhar
+   imagens — e *invisível é o que sobrevive a uma revisão a olho*. **Uma peça que
+   mente sobre a tabela é pior que peça nenhuma:** é a primeira lei da casa
+   invertida dentro da biblioteca.
+5. **O pior caso partiu a peça, e só apareceu porque alguém o encheu.**
+   `Forma=Verbo` fora proposta como padrão sem nunca ter levado a frase mais
+   longa: *"ESCUDO ARCANO"* esmagou-se a 34 px, três linhas de três letras — e
+   **5 das 12 classes são conjuradoras**. O botão foi refeito (o preço desceu para
+   baixo do verbo, fenda 126 → 277 px) e a tipografia passou a separar **reação**
+   (Spectral) de **ordem** (mono caps). *Propor como padrão uma variante que nunca
+   se encheu com o pior caso é a forma educada de não ter medido.*
+
+### A armadilha nova do Figma, e ela explica um mistério antigo
+
+**O `COMPONENT_SET` não cresce quando se lhe acrescenta variante** — o que fica
+fora dos limites **renderiza como uma tira de 8 px, sem aviso**. Foi isto que
+serviu de "`get_screenshot` mentiu" a três mãos diferentes desde E1: **a árvore
+tinha razão todas as vezes.** A regra de E1 fica e ganha causa: *confira pelo dado
+lido de volta, nunca pela foto* — e, ao acrescentar variante, **redimensione o
+conjunto**.
+*(E uma segunda, que quase pôs "anula · mais vezes que não" debaixo de Escudo
+Arcano em quatro folhas: **reler `characters` dentro do laço lê nós já mutados**
+por instâncias aninhadas que herdaram a correção a meio. Confira depois, nunca
+durante.)*
+
+**Mais duas, das que desfazem o próprio conserto sem dar erro:**
+
+5. **`primaryAxisSizingMode = "FIXED"` num frame horizontal É a largura** — escrito
+   **depois** de um `FILL`, sobrepõe-se-lhe **em silêncio**. Foi assim que o
+   `desenho` desfez a própria correção do trilho uma vez.
+6. **O Figma recusa `FILL` num nó fora do leiaute e continua a reportar `FIXED`**,
+   sem erro. Ali não renderiza, logo não pode medir mal — mas quem ler a
+   propriedade de volta vai encontrar uma mentira que não é uma.
+
