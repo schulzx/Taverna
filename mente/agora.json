@@ -1,17 +1,1 @@
-[
-  {
-    "agente": "regente",
-    "o_que": "rege o ciclo E1 — a tela de batalha desenhada antes de existir",
-    "desde": "2026-09-15T03:00:00Z"
-  },
-  {
-    "agente": "jogo",
-    "o_que": "E1 · o momento da troca de tela e o que a batalha precisa mostrar",
-    "desde": "2026-09-15T03:00:00Z"
-  },
-  {
-    "agente": "desenho",
-    "o_que": "E1 · a forma da tela de batalha, no Figma",
-    "desde": "2026-09-15T03:00:00Z"
-  }
-]
+[]

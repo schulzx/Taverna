@@ -19,6 +19,249 @@ Formato:
 
 ---
 
+## 15/09 13:55 · v9.254 · E1 · a tela desenhada antes de existir · **a Fase E abre** · commit `PENDENTE`
+
+A Fase D fechou a casa; **E1 é a primeira tela que esta mesa desenha inteira**,
+e a primeira do projeto a nascer no Figma antes de existir em código. Nenhum
+`.jsx`, `.js` ou `.mjs` foi tocado o ciclo inteiro — **E1 é desenho, E3 é que
+constrói**, e essa fronteira foi a única regra que não se negociou.
+
+- **estado inicial:** `.claude/ciclo-desenho-em-curso` não existia — criei-a.
+  `.claude/ciclo-em-curso` era do `orquestrador` na **Fase X** (o motor de
+  combate), na mesma árvore, e **não a toquei**. `.claude/app-jsx` **não
+  existia e não foi criado**: E1 lê o `App.jsx` e não escreve nele, e o bastão
+  ficou livre para a outra mente o ciclo inteiro. Suítes verdes à entrada:
+  **183/183 · 11/11 varredores**.
+- **jogo / desenho:** chamados **juntos, no mesmo turno, os dois em primeiro
+  plano**, e depois **uma segunda rodada** — porque a primeira voltou com duas
+  geometrias diferentes para a mesma tela, e duas geometrias é exatamente o
+  defeito que esta mesa existe para impedir.
+
+### O fato de hoje que mudou o conteúdo da tela
+
+A mente do sistema descobriu, jogando (D5), que **`Atacar` não ataca**: ele faz
+`setEntrada("Ataco ")`. Dos 20 botões de `Ações`, os 12 de cima só digitam, e
+**nenhum dos 8 que entram no motor é de combate**. A Fase X já está a corrigi-lo
+(`c3f4fd3`: X1 mede, **X2 faz o botão chamar o motor**). Então E1 **não desenhou
+a tela do jogo de hoje — desenhou a do jogo que X2 vai entregar**: seis verbos
+que disparam a ação, cada um com o preço escrito antes do clique. O texto livre
+fica, e muda de emprego: *a frase deixa de ser a sintaxe obrigatória e vira o
+tempero*.
+
+### O que se soube ao medir, e que valeu o ciclo
+
+- **O campo não é 16×16 — são dez plantas** (`grid.js:168-261`), de 7×18 a
+  18×12, com a proporção a variar de **0,39** a **1,50**. Todo o briefing desta
+  fase falava de "o 16×16". **Qualquer desenho que resolvesse uma planta
+  quebraria em duas outras**, e a conta inteira foi refeita contra as dez.
+- **Os 429 px não são altura — são arquitetura.** `PainelCombate`
+  (`App.jsx:20510`) é montado **dentro** do rolador do log (`:20459`), depois de
+  todas as mensagens: o tabuleiro é **filho do log** e por construção abre no
+  fim dele. Nenhum ajuste de altura resolve isto. **É a condição de entrada de
+  E3**, e estava a ser tratado como um número de CSS.
+- **A gramática do endereço já existe** — `coordenadas.js:151`,
+  `LETRAS_DA_GRADE` + `gradeDe()`, A1 no canto superior esquerdo. **Nenhuma
+  tabela nova nasce em E2**: duas tabelas de letras no mesmo jogo seria a doença
+  da casa um andar abaixo.
+- **`⤢ ampliar` já não mente** (D5 derrubou o fato em 15/09), e o briefing desta
+  etapa repetia-o. O `desenho` recusou-se a herdá-lo e foi conferir na fonte —
+  **herdar engano é o erro**. O que continua quebrado no ampliar é outra coisa:
+  o **veredito**, que chega depois, no log.
+
+- **o Figma:** arquivo `Taverna — biblioteca` (`e5wJUzInAssoebx5npssKc`),
+  **ampliado, nunca duplicado**. O `jogo` criou a página **`A batalha`**
+  (`30:12`) com cinco quadros: `1280×860 · a luta` (`31:2`), `375×812 · a luta
+  no telefone` (`40:447`), `a entrada` (`51:1141`), `a saída` (`51:1315`) e `o
+  veredito antes do clique — Atacar armado` (`51:1489`). O `desenho` fabricou
+  **quatro peças**, uma página cada: **A régua** (`30:11`, 4 variantes), **A
+  vez** (`30:163`, 12), **A ficha curta** (`31:137`, 6) e **A pergunta que
+  expira** (`31:518`, 4). Zero hex solto, tudo ligado a variável. *(Conferido
+  por mim, por nó e não pela lista — `get_metadata` sem `nodeId` continua a
+  mentir; e conferi também a olho, porque `get_screenshot` já serviu cache a
+  esta mesa.)*
+
+### A segunda rodada, e é por ela que este ciclo vale
+
+A primeira rodada voltou com **duas geometrias para a mesma tela** — o `jogo`
+compôs uma pilha de largura inteira; o `desenho` mediu os três arranjos
+possíveis contra as dez plantas e recomendou duas colunas. **Duas geometrias é
+exatamente o defeito que esta mesa existe para impedir**, e por isso devolvi a
+etapa aos dois em vez de a fechar. Também não a fechei com o bloqueador que o
+`jogo` tinha nomeado: **`A casa` era 148×48 e não ladrilhava** — os quadros
+montavam-na dentro de um recorte de 48, deslocada −50 px. *Remendo numa peça
+vira remendo no código de E3.*
+
+| arranjo | altura útil do campo | plantas inteiras |
+|---|---|---|
+| pilha de largura inteira | 574 px | **1 de 10** — e a 18×12 falhava **por 2 px** |
+| verbos e tira à direita | 710 px | 6 de 10 |
+| **duas colunas** | campo **888 × 828** | **9 de 10** |
+
+**O `jogo` cedeu, e escreveu porquê em vez de inventar um argumento:** *"não
+tenho razão de momento que valha nove plantas"*. O arranjo novo fecha em
+1280×860 exatos, **1248 dos 1280 px são conteúdo**, e o campo mostra a floresta
+16×16 **inteira, as 256 casas**. De brinde, o `jogo` tirou o **cabeçalho** — a
+sua própria lei a cobrar-lhe: *nada nesta tela diz que ela é uma tela*, e a
+marca mais o `✓ salvo` custavam 48 px de altura ao campo. No telefone os mesmos
+44 px compraram **uma linha inteira**: de 70 para **77 casas**.
+
+E o arranjo pagou **duas dívidas de lado**, que é o sinal de que era o certo: a
+lateral mede **344** e *A pergunta que expira* mede **344** — encaixa exato, e
+em 1280 a reação cresce na lateral **sem tocar no campo**; e a linha de *A vez*,
+que não cabia numa faixa de 375, cabe com folga na lateral — **a lista vertical
+carrega nome, iniciativa e estado, que o selo compacto não carregava**.
+
+**O bloqueador tinha causa pior do que o `jogo` viu, e a ironia ficou escrita.**
+`A casa` media 148×48 porque *o custo* e *o preço* eram **duas linhas de legenda
+de largura inteira por baixo do quadrado** — 73 px de conteúdo numa caixa de 48.
+Hoje as sete variantes são **48×48 exatos**, com `a prova do ladrilho` na
+página: 24 instâncias reais a passo de 48, sem um pixel de folga. E a ironia:
+***`formas.md` sempre mandou "o custo escrito DENTRO da casa", e a peça de D4
+escreveu-o fora*** — a discordância não era entre as duas mesas, era entre o
+`desenho` e o que ele próprio tinha escrito. *(O 148 **não** virou variante, e é
+recusa com motivo: *"custa um golpe livre"* são ~108 px em mono 9 e não cabem em
+48 de lado nenhum; uma variante larga só devolveria o ladrilho que não ladrilha.
+O preço é `A Consequência`, que já existia.)*
+
+O `desenho` pagou junto os outros pedidos: **`Botao` passou a ter uma altura por
+`Papel`×`Tamanho`** (a linha da razão reservada nos quatro estados — e não é
+espaço morto: é onde a Consequência do preço se senta); **`Barra de medida`
+estica e encolhe** (o trilho vai de 285 px a 48 entre 359 e 120 de caixa, porque
+*quem absorve é o trilho, o único elemento cuja largura não carrega
+informação*); **`A vez` ganhou o eixo `Forma`** — e o número é brutal: **oito
+combatentes pedem 2.560 px em Linha e 472 px em Selo**; e **`A marca de borda`
+nasceu** (`53:43`, 8 variantes), carregando **o endereço**, de modo que o jogador
+lê `K14`, sabe para onde rolar, e pode dizer *"vou até K14"* **sem nunca ter
+visto a casa**. Círculo é aliado e losango é inimigo — **as mesmas duas formas
+do Selo de `A vez`**, de propósito.
+
+### A discordância: os dois cederam ao mesmo tempo, e quem desempatou fui eu
+
+**É a coisa mais rara que esta mesa produziu até hoje.** O `jogo` abriu que a
+borda por casa e o contorno da união diziam a mesma coisa duas vezes; o `desenho`
+respondeu com a régua. E na segunda rodada **cada um adotou o argumento do outro
+e abandonou o seu**: o `jogo` passou a defender que **a borda fica** (o 1.4.11
+exige que o indicador identifique **o componente**, e o componente é a casa, não
+o conjunto); o `desenho`, que **a borda sai** (com o custo escrito dentro, a casa
+já está marcada **por texto**, que não é cor e não depende de 1.4.11 de todo).
+Dois lados trocados continuam a ser **duas formas para a mesma ação**, e por isso
+**desempatei**, com um motivo que nenhum dos dois usou:
+
+> ***Um canal que desaparece por regra não pode ser o único canal.*** O custo
+> escrito **sai sozinho** quando a casa encolhe — a regra do próprio `desenho`
+> manda o número descer para a linha do veredito abaixo de 26 px de lado, e some
+> de vez no nível de leitura. Sem a borda, essas casas ficam **sem marca
+> individual nenhuma**. E o texto que carregaria o peso mede **4,47:1**, que
+> reprova o AA por 0,03. **A borda fica.**
+
+**E as três condições do `desenho` entram na mesma, porque são verdadeiras
+independentemente da decisão — e uma delas achou um defeito vivo:** o contorno da
+mira usa `opacidade 0.6`, e **violeta a 60% sobre `bg` dá 2,68:1 e REPROVA o
+WCAG 1.4.11** (`grade-de-batalha.jsx:433`); o âmbar a 60% dá 3,85:1 e passa. **A
+borda por casa era o que vinha salvando a situação sem ninguém saber** — o que é,
+por si só, o argumento mais forte para a manter. E a terceira condição amarra a
+fase inteira: o traço mede `0.045` em unidades de casa, o que dá **2,16 px a 48
+px de casa e 1,07 px a 23,8** — um fio. ***A união só pode dizer alguma coisa
+porque a casa passou a ser 48: a régua do contorno e o piso de 48 px são a mesma
+decisão.***
+
+Sobrevive do primeiro lado do `jogo` uma regra para durar: contorno e borda **não
+podem ter o mesmo ritmo**, ou as casas da beirada ganham linha dupla —
+**tracejado a 60% contra cheia a 55%**. E fica a inversão escrita: **quem passa a
+régua do WCAG é a borda, não o contorno** — se alguém um dia a apagar para
+"limpar o tabuleiro", apaga o que passa.
+
+### A dívida de D4 foi paga, e o motivo é que a razão dela expirou
+
+**A pergunta que expira** não foi fabricada em D4 de propósito: *"é o coração de
+uma proposta `pesado` que espera a pessoa, e peça feita para decisão não tomada é
+trabalho inventado"*. A pessoa **aprovou a Fase K em 15/09** e devolveu a forma à
+mesa. **A condição da dívida caiu; manter a dívida passou a ser o erro** — e a
+peça nasce com a trava K2 escrita dentro dela: *não responder é uma resposta, e o
+de sempre acontece*.
+
+- **a prova:**
+  - **1232 de 1280 px são jogo (96,3%)**, contra os **560 px à esquerda com mais
+    de metade da tela preta** de hoje.
+  - **A casa passa de 23,8–36,6 px para 48 px** — e **nenhum dos quatro tamanhos
+    de hoje chega aos 44** que a WCAG 2.5.5 (AAA), a HIG da Apple e o Material
+    pedem. 48 é o menor número que passa nas três.
+  - **No telefone, 70 casas sempre na tela**, sempre as certas — porque a câmara
+    enquadra o herói na **área livre**, acima do que o polegar tapa. E **76 px
+    voltam de graça** por a tela de batalha não ter trilho de abas: uma casa e
+    meia.
+  - Contrastes: `ink`/`bg` **15,31** · `inkDim`/`bg` **6,62** · `amberSoft`/`bg`
+    **12,40** · `amber`/`bg` **9,00** · `onAccent`/`danger` **5,34**.
+  - **Três buracos declarados com número, porque buraco calado é mentira:**
+    `inkDim` sobre casa acesa dá **4,47:1** e reprova o AA **por 0,03** (a regra
+    escrita é usar `amberSoft` ou `ink` dentro da casa); a moldura apagada
+    `line`/`bg` dá **1,38:1** (a palavra é que carrega o estado); e o fundo do
+    tabuleiro `#141020` está a **1,04:1** de `T.bg` — **literal solto que a
+    catraca conta e que quebra o vão do anel de foco**. Trocá-lo por `T.bg` paga
+    os dois de uma vez, e é item barato para E3.
+
+### decisões médias tomadas (a segunda lei da mesa: decidir, e escrever o porquê)
+
+- **A entrada é automática; a saída é confirmada.** Automática porque **um gesto
+  pode ser recusado**, e quem recusa fica no estado medido (tabuleiro 429 px
+  abaixo da borda, `scrollTop = 0` de 1129). Confirmada porque **o `⛺` já
+  encerrou uma luta por engano**: durante a luta **não há porta nenhuma**; no fim
+  há **uma**, larga, onde antes não havia nada.
+- **Quem cede é a janela, não o alvo.** 48 px não dobra; o tabuleiro passa a ser
+  uma **janela sobre um campo** que rola e arrasta. É a inversão exata do que lá
+  está, onde o campo encolhe até caber e a casa fica com 27 px.
+- **A câmara não persegue o inimigo longe** — a borda ganha a marca com o nome e
+  a distância. *Arrancar o campo debaixo de quem está a planear é a coisa mais
+  desorientadora que uma tela tática faz.* Uma exceção, e só uma: **se o golpe
+  alcança o herói**, porque aí o que aconteceu é sobre ele.
+- **A narração fica na tela.** A leitura literal do pedido — *"uma tela só com o
+  grid"* — matava a prosa, que é a protagonista declarada da casa. Fica
+  encolhida ao mínimo honesto: duas linhas no monitor, uma no telefone.
+- **Nada nesta tela diz que ela é uma tela.** Sem título de modo, sem selo "em
+  combate". *O jogador sabe que está numa luta porque a luta é o que está na
+  tela* — é a lei de que o sistema não fala de si mesmo, aplicada a uma tela
+  inteira.
+- **O rótulo da iniciativa é `agora: Halvard`, não `ORDEM DE INICIATIVA`.** Se o
+  trabalho da faixa é responder àquela pergunta, ela pode dizer a resposta.
+- **A grelha é UM ponto de tabulação, não 256** (roving tabindex, padrão `grid`
+  do WAI-ARIA), com o foco a entrar na casa do herói. E **a régua é
+  `aria-hidden`**: o endereço vive no nome da casa, para quem ouve a tela ouvir
+  `H20` e não duas listas de rótulos soltos.
+- **A razão do `Botao` é a razão da RECUSA; o preço de uma ação que funciona é
+  sempre `A Consequência`.** Foi uma discordância do `desenho` com o `desenho`,
+  resolvida por escrito: as duas verdades coexistem na mesma tela (*"custa 2
+  PM"* **e** *"o Mestre está a escrever"*), e dobrá-las numa fenda só obrigaria
+  quem monta a escolher qual mostrar.
+
+### O que ficou
+
+- **Feio, e dito sem eufemismo:** um tabuleiro de 48 px num telefone de 375
+  mostra **33% de um campo 16×16, e não há desenho que conserte isso** — a
+  alternativa era encolher o alvo abaixo do piso de acessibilidade, e essa não é
+  uma alternativa. O segundo nível de leitura ("ver o campo todo", onde **a casa
+  não é alvo**) é um remendo honesto, e é um remendo.
+- **Não coube:** a escala da Fase L (a régua saiu com fonte citada — HIG 11 pt,
+  Material 11 sp —, mas a escala não foi construída); o eixo *Largura* do
+  `Botao`, que leva o conjunto de 24 para 48 variantes e por isso ficou
+  declarado e não pago; e o branco invisível que as peças de D3/D4 carregam na
+  raiz (amostra de 3 em 3), que não pinta hoje e pinta no dia em que alguém ligar
+  a visibilidade.
+- **Não se soube:** se 48 px é o alvo **bom** ou só o mínimo — os três estudos
+  dão o piso e nenhum diz qual é o bom num tabuleiro que se toca dezenas de vezes
+  por luta; e **quanto deve durar a janela da pergunta que expira**, que é número
+  de K1. E **a tela não foi jogada, porque ela não existe**: o par comparável só
+  nasce em E3, e isso está escrito em vez de enfeitado.
+- **Para a pessoa, três propostas ambiciosas** (a ambição é dever, e este ciclo
+  entregou três): *o turno monta-se antes de acontecer* (encadear andar→atacar
+  com o total a correr antes de pagar); *o tabuleiro conta o que o inimigo vai
+  fazer* (telegrafia, ao modo do **Into the Breach**, Subset Games 2018); e *em
+  combate, o texto deixa de ser o caminho da ação e passa a ser o caminho da
+  fala* — **a única proposta desta fase que devolve quota ao Narrador em vez de
+  lha cobrar**, e a quota acabou duas vezes nesta fase. As três estão em
+  `mente/pauta-desenho.md`, com o risco de cada uma escrito pelo próprio autor.
+
+---
+
 ## 15/09 12:10 · v9.252 · D5 · a catraca do desenho · **a Fase D fecha** · commit `73813da`
 
 D1 mediu, D2 deu casa ao estilo, D3 fez a biblioteca e provou a leitura de

@@ -1865,3 +1865,607 @@ Um buraco escrito é dívida; um buraco calado é mentira. A catraca **não** pe
   e casas clicáveis — o `jogo` **andou, de 20 m para 12 m, clicando**. O que
   continua quebrado é o **veredito**: o orçamento de movimento não aparece
   dentro da sobreposição, e o preço chega depois, no log.
+
+---
+
+## A tela da batalha (decidido em E1 · 15/09)
+
+**A primeira tela que esta mesa desenha inteira**, e a primeira que nasce no
+Figma antes de existir em código. O `jogo` compôs (página `A batalha`, nó
+`30:12`); o `desenho` fabricou as peças, uma página cada. Nenhum `.jsx` foi
+tocado: **E1 é desenho, E3 é que constrói.**
+
+O pedido da pessoa, palavra por palavra (14/09): *"uma tela para a batalha,
+pois é um momento importante e a maioria das outras funções ficariam
+inúteis — quando entrar em batalha, uma tela só com o grid e as funções de
+batalha e utilitários"*; e *"nosso grid pode ter letras e números, tipo um
+tabuleiro de xadrez, então se um player disser 'vou até H20' não teria a
+confusão que 'me aproximo do…' causa"*.
+
+O detalhe de cada decisão, com a conta inteira, vive em `mente/e1-jogo.md`
+(o momento) e `mente/e1-desenho.md` (a forma). Aqui fica o que é **lei**.
+
+### Três coisas que se souberam ao medir, e que mudam a pergunta
+
+1. **O campo não é 16×16 — são dez plantas.** `grid.js:168-261`: 12×9, 7×18,
+   16×16, 18×12, 14×14, 14×14, 16×14, 10×16, 16×16, 18×14. Máximo 18 de
+   largura e 18 de altura; a proporção vai de **0,39** (masmorra) a **1,50**
+   (estrada). **Todo desenho desta tela mede contra as dez, nunca contra uma.**
+2. **Os 429 px não são altura, são arquitetura.** `PainelCombate`
+   (`App.jsx:20510`) é montado **dentro** do rolador do log (`:20459`), depois
+   de todas as mensagens. O tabuleiro é **filho do log**, e por construção fica
+   sempre no fim dele. Nenhum ajuste de altura resolve; só a inversão resolve.
+   **É a condição de entrada de E3.**
+3. **A gramática do endereço já existe, e não pode nascer uma segunda.**
+   `src/coordenadas.js:151`: `LETRAS_DA_GRADE = "ABCDEFGHIJKLMNOPQRST"` e
+   `gradeDe()` devolve letra + (linha+1) — **A1 no canto superior esquerdo**,
+   sem letra saltada. É a grade do ermo, mas é a mesma pergunta e já tem
+   resposta escrita. **O tabuleiro lê desta tabela**, e é o cuidado que E2 já
+   trazia: a conversão é regra, sai de tabela, é provável em Node.
+
+### A geometria: duas colunas, e quem cede é a janela — nunca o alvo
+
+**O piso não se negocia: a casa mede 48 px.** É a decisão de D4, e o número tem
+três origens que concordam — WCAG 2.5.5 (AAA) 44×44, Apple HIG 44 pt, Material
+48 dp. **48 é o menor que passa nas três**, e **nenhum dos quatro tamanhos de
+hoje lá chega**: 23,8 px no embutido 16×16, 27,1 no embutido 14×14, 36,6 no
+ampliado. *Quem encolhe é o campo visível, nunca o alvo* — o tabuleiro passa a
+ser uma **janela sobre um campo**, que rola e arrasta. É a inversão exata do que
+está lá hoje.
+
+**O arranjo saiu de uma conta, não de um gosto.** Os três possíveis, medidos
+contra as dez plantas:
+
+| arranjo | altura útil do campo | plantas inteiras |
+|---|---|---|
+| pilha de largura inteira | 574 px → 11,95 casas | **1 de 10** (e a 18×12 falha **por 2 px**) |
+| verbos e tira à direita | 710 px → 14,8 casas | 6 de 10 |
+| **duas colunas** | campo **888 × 828** | **9 de 10** |
+
+**Duas colunas, e a razão é de ofício:** em 1280×860 *"mais de metade da tela
+fica preta"* à direita — **o eixo que sobra é o horizontal e o que falta é o
+vertical**, e empilhar gasta o escasso para poupar o abundante. *1 de 10 contra
+9 de 10 não é preferência, é uma ordem de grandeza.*
+
+```
+respiro 16 │ a coluna do campo 888 │ goteira 16 │ a lateral 344 │ respiro 16
+           └ régua 22 + janela 866×806 = 18 colunas × 16 linhas
+```
+
+- **1248 dos 1280 px são conteúdo**, contra os **560 px à esquerda com mais de
+  metade da tela preta** de hoje. E o que mudou não foi só a percentagem: foi
+  **para onde a largura vai** — antes para uma coluna estreita ao lado de um
+  campo espremido, agora para um campo que não rola.
+- **Nove das dez plantas aparecem inteiras, sem rolar nada.** Só a masmorra
+  7×18 transborda, e transborda **58 px — uma casa e um quinto**.
+- **O cabeçalho saiu**, e foi a própria lei da tela a cobrá-lo: *nada nesta tela
+  diz que ela é uma tela*. A marca e o `✓ salvo` são moldura, não jogo, e
+  custavam 48 px de altura ao campo.
+- **No telefone: janela 337×528 → 7 colunas × 11 linhas = 77 casas**, sempre as
+  certas, porque a câmara enquadra o herói na **área livre**. Escrito sem
+  eufemismo: **nunca o campo inteiro** — 16 × 48 = 768 e o telefone tem 375, e
+  **nenhum desenho faz caber**. A alternativa era encolher o alvo abaixo do piso
+  de acessibilidade, e essa não é uma alternativa.
+- **Existe um "ver tudo", e ele é para OLHAR, nunca para TOCAR.** As casas caem
+  para 20–28 px e **deixam de ser alvo**. Como o jogador sabe, sem ninguém lhe
+  dizer: *no nível de leitura nada está aceso* — some o contorno do alcance,
+  some o custo dentro da casa, some o realce da régua. **A regra vale nos dois
+  níveis: o que é alvo tem o custo escrito dentro; o que não tem nada escrito
+  dentro não é alvo.**
+
+**As regras de enquadramento, que são o que impede a janela de virar armadilha:**
+
+1. **Quando a luta abre, a casa do herói está no centro da área livre** — a
+   janela menos a tira dos verbos, para o herói ficar fora da faixa que o
+   próprio polegar tapa. *Um tabuleiro que rola e abre no lugar errado é pior do
+   que um que não rola.*
+2. **A câmara só se move quando é obrigada** — reenquadra quando quem age
+   chegaria a **menos de uma casa da borda**, nunca a cada passo. *Uma câmara
+   que corrige todo passo faz o campo parecer escorregar debaixo do jogador.*
+3. **Na vez de um inimigo do outro lado do campo, a câmara NÃO vai atrás** — a
+   borda ganha a marca com o nome e a distância. *Arrancar o campo debaixo de
+   quem está a planear é a coisa mais desorientadora que uma tela tática faz.*
+   **Uma exceção, e só uma: se a ação do inimigo alcança o herói**, porque aí o
+   que aconteceu é sobre ele.
+4. ***Confirmando* não é para todo passo.** O segundo toque só existe quando o
+   ato custa alguma coisa além de si mesmo. **Passo limpo é um toque; golpe
+   limpo também.**
+
+### As seis regiões, nomeadas pelo que o jogador faz nelas
+
+| região | o que o jogador faz ali | o que NÃO entra |
+|---|---|---|
+| **de quem é a vez** | sabe se pode agir agora | o nome do sistema de iniciativa |
+| **o campo** | olha, escolhe a casa, anda, mira | tudo o que não é a luta |
+| **o veredito** | lê o preço do que está prestes a fazer | histórico, contabilidade |
+| **o que você faz** | dispara a ação | Persuadir, Enganar, Procurar, Ajudar, Intimidar |
+| **quem está de pé** | sabe quem aguenta e quem cai | fichas completas, bolsa inteira |
+| **o que acabou de acontecer** | lê a cena | o log inteiro |
+
+**A ordem de leitura é a ordem do turno:** *de quem é a vez* → *o campo* → *o
+veredito* → *o que você faz*. É a frase que o jogador pensa: «é a minha vez;
+onde estou; o que isto custa; eu faço». As outras duas são consulta, e por
+isso ficam **fora** dessa linha, não no meio dela.
+
+**A regra da recomposição, de 1280×860 para 375×812: cada região mantém o
+mesmo vizinho.** Região que troca de vizinho obriga a reaprender, e reaprender
+é da pessoa — não da mesa.
+
+### A região que quase não entrou, e é lei da casa que entre
+
+A leitura literal de *"uma tela só com o grid"* **mata a narração**. A decisão
+do `desenho`, registada como decisão e não como pedido: **a narração fica.** A
+prosa é a protagonista — é a primeira frase do `CLAUDE.md` traduzida em
+interface. Fica **encolhida ao mínimo honesto**: no monitor as duas últimas
+linhas do Mestre, sempre visíveis; no telefone **uma**, que abre por cima ao
+toque. O número que a sustenta: Spectral 15 px com entrelinha 1,625 dá
+**24,4 px de linha** — duas linhas mais respiro são 84 px, uma linha são 28.
+
+### O que some durante a luta, e o critério é duro
+
+Inventário, mapa, diário, códex, guilda, domínios, gestão, ascensão, **o
+trilho de abas inteiro**, `Examinar`, `Tempo`, `⛺ acampar`, `📜 crônica`.
+
+**O critério: um controle que, tocado no meio de uma luta, ou não faz nada ou
+termina a luta, não pode estar na tela da luta.** `Tempo` passa horas, `⛺`
+acampa, o mapa viaja. *Um controle que não pode ser usado ensina o jogador a
+desconfiar da barra inteira, e desconfiar da barra custa o turno seguinte.*
+
+O ganho de graça no telefone: sem trilho de abas, voltam os **76 px** que
+`.tv-espaco-abas` reserva (`estilo.js:245`) — **uma casa e meia**.
+
+**E a lei da casa aplicada à letra: nada nesta tela diz que ela é uma tela.**
+Sem título "modo batalha", sem selo "em combate", sem botão "sair do combate".
+*O jogador sabe que está numa luta porque a luta é o que está na tela.*
+
+### A entrada é automática; a saída é confirmada — e as duas têm número
+
+- **Entrada automática**, porque um gesto pode ser **recusado**, e quem recusa
+  fica exatamente no estado medido: tabuleiro 429 px abaixo da borda,
+  `scrollTop = 0` de 1129 possíveis. *Um convite que se pode declinar é um
+  convite que devolve o jogador ao defeito.*
+- **Saída confirmada, e durante a luta não há porta nenhuma.** O motivo é
+  medido: o `⛺` **encerrou uma luta por engano** numa partida do `jogo`. No fim
+  há **uma** porta, larga, onde antes não havia nenhuma. Uma porta a menos
+  durante, uma porta a mais depois.
+
+### O endereço de xadrez
+
+- **Colunas por letra (A…R — 18 é o máximo que existe), linhas por número
+  (1…18).** Letra primeiro, número depois, porque foi assim que a pessoa
+  escreveu: *"H20"*.
+- **A régua é permanente, em duas bordas — topo e esquerda.** Não nas quatro:
+  duas bastam para ler um par, e as outras duas custariam 40 px de campo em
+  375 px, que é quase uma coluna de casas.
+- **A régua é presa à JANELA, não ao campo.** Quando o campo rola, os rótulos
+  mudam e a régua fica colada à borda. *Uma régua que rola para fora é uma
+  régua que desaparece no momento exato em que serve.*
+- **Mono Bold 12 px (toque) / 11 px (ponteiro)** — HIG 11 pt, Material 11 sp; e
+  **mono porque `I`/`O` contra `1`/`0` só se desempatam em mono**. É escolha com
+  fonte citada, e **não constrói a escala da Fase L nem a contraria**.
+- **A régua é `aria-hidden`; o endereço vive no nome da casa** — quem ouve a
+  tela ouve `H20`, e não duas listas de rótulos soltos.
+- **Cada quarta linha da malha é um grau mais clara.** É a coisa mais barata
+  que troca *"contar da borda"* por *"contar da linha grossa mais perto"* — o
+  que o xadrez ganha das casas alternadas e este tabuleiro não pode ter, porque
+  o chão já carrega o terreno.
+- **O endereço escrito dentro da casa só nos dois estados que já carregam
+  texto** — *Sob o dedo* e *Confirmando*. *86 endereços acesos ao mesmo tempo é
+  a planilha.* No telefone, onde *Sob o dedo* não existe antes do toque, o
+  endereço tem segunda casa: **a linha do veredito lê sempre o endereço do alvo
+  armado.**
+- **Ele serve aos dois caminhos, e a régua é o que os liga:** o jogador **lê
+  `H20` na borda e escreve `H20` na caixa**. Não precisa de mais nada da tela.
+- **Ao `backend`, em E2: o log tem de escrever o endereço de volta** —
+  `você avança até H20`, e não `você avança`. *Um endereço que o jogo nunca usa
+  é um endereço que o jogador nunca aprende*, e isto custa uma string: é o
+  ensino mais barato que existe.
+- **Condição do `desenho`:** os endereços do **mundo** e do **tabuleiro** nunca
+  aparecem na mesma tela. Mesma gramática, duas grades — vê-las juntas é
+  aprender que `H20` tem dois significados.
+
+### Os verbos que disparam a ação (a tela é desenhada para depois de X2)
+
+**O fato que muda o conteúdo desta tela:** `Atacar` não ataca — ele faz
+`setEntrada("Ataco ")`. Dos 20 botões de `Ações`, os 12 de cima só digitam, e
+**nenhum dos 8 que entram no motor é de combate**. X2 corrige isso no motor;
+**E1 desenha para o jogo que vai existir.**
+
+- **Seis verbos, posições fixas, sempre os mesmos seis.** Fixo porque *uma
+  fileira que muda é uma fileira que se lê todo turno, e uma que nunca muda
+  aprende-se em duas lutas e usa-se sem olhar*. **A lista é do `jogo`** (é
+  composição e momento): `Atacar`, `Mover`, `Esquivar`, `Empurrar`, `Derrubar`,
+  `Saltar` — e **`esperar`** separado por uma goteira, `Papel=Recuo`, que é a
+  posição do Recuo em toda a casa. *(O `desenho` chegou a nomear `Correr` e
+  `Esconder` ao contar a altura da fileira; a contagem é dele, a lista é do
+  `jogo`, e fica esta — para não haver duas listas.)*
+- **`Atacar` é o único `Papel=Chamada` da tela.** Hoje a distinção dele é *uma
+  cor de borda entre doze botões iguais*; aqui é **tamanho e preenchimento**.
+  No telefone a diferença deixa de ser "maior" e passa a ser **outra escala**:
+  235 px contra os 110–127 dos outros.
+- **`Habilidades (✦)` é uma gaveta, não um verbo** — é uma **lista** que varia
+  por classe, por nível e por PM, e *lista nunca entra em fileira fixa*: no dia
+  em que o mago aprende a sétima magia, a fileira deixa de ser fixa.
+- **Três fileiras de 44 px no telefone, e todas com a palavra inteira.** A
+  fileira única não fecha: seis rótulos em 359 px pedem ~52 px cada, e
+  `Empurrar` em 52 px **não é um rótulo, é um glifo mudo** — um verbo de combate
+  que só se lê pelo símbolo é o sistema a falar por sinais.
+
+### O veredito antes do clique, sobre o tabuleiro
+
+**Uma `Consequencia` *fixação=Linha*, colada sob a fileira, sempre presente,
+24 px. Nunca balão** — já estava fechado que sobre o tabuleiro a Consequência é
+sempre *Linha*, porque **quatro segundos de balão tapam exatamente as casas
+para onde o jogador ia andar**.
+
+A sequência, e é a mesma nas duas plataformas:
+
+1. **tocar sem largar / pairar o verbo** → a linha enche com o preço geral, e o
+   campo pinta o conjunto que aquele verbo alcança;
+2. **largar / clicar** → o tabuleiro entra na mira daquele verbo;
+3. **tocar uma casa** → a linha lê o alvo: **`H20 · 4,5 m · custa um golpe
+   livre`**;
+4. **resolver** — e a lei do passo limpo estende-se ao golpe: **um golpe limpo
+   num alvo já ao alcance é UM toque.** O segundo toque só existe quando o ato
+   custa algo além de si mesmo. *Dois toques por ato transformam o tabuleiro
+   num formulário* — é a mesma frase que já governa o passo.
+
+**Cancelar uma mira tem três saídas, as três vivas ao mesmo tempo:** `Esc` (e o
+gesto de voltar, no telefone), tocar o verbo outra vez, ou tocar o campo fora
+do conjunto armado. E **o estado armado nunca é mudo**: enquanto há mira, a
+linha termina com **"toque fora para desistir"**. *Um véu sem saída que não diz
+que tem saída é a armadilha que a peça `Véu sem retorno` existe para impedir —
+e aqui ela estaria montada por acidente.*
+
+**O `Botao` não escreve preço, e isso ficou decidido por escrito** — uma
+discordância do `desenho` com o `desenho`: o nó *"a razão"* do `Botao` existe só
+em `Esperando` e `Impedido`, as 12 variantes em que ele **recusa**, e está certo
+onde está. **A razão do Botão é a razão da RECUSA; o preço de uma ação que
+funciona é sempre `A Consequência`, instância própria, presa ao botão.** As duas
+verdades coexistem na mesma tela (*"custa 2 PM"* **e** *"o Mestre está a
+escrever"*), e dobrá-las numa fenda só obrigaria quem monta a escolher qual
+delas mostrar.
+
+### Onde vive a ordem da vez
+
+**Uma faixa horizontal no topo da área do campo, largura inteira, 56 px (48 no
+telefone).** As três alternativas caíram com motivo: **coluna lateral** rouba
+largura, e a largura é o eixo escasso (em 375 px, 96 px de coluna tiram duas
+colunas de casas de sete); **por cima das casas** não, porque *o tabuleiro é a
+única superfície que nunca pode carregar moldura — ali o pixel é informação de
+jogo*; **dentro de um painel que se abre** não, porque *"de quem é a vez?"* se
+pergunta várias vezes por turno, e **uma resposta atrás de um gesto é uma
+resposta que se deixa de procurar**.
+
+- Um `Selo de estado` por combatente, na ordem, com o **nome escrito** — nunca
+  cor sozinha (WCAG 1.4.1). Quem age leva ***Mudou=Agora***, três pulsos, e para.
+- **Seis cabem em 375, catorze em 1280.** Com dez ou mais a faixa rola na
+  horizontal — e **o selo do herói fica fixado na ponta esquerda e nunca sai**.
+  *A única coisa que ninguém pode ter de procurar rolando é a sua própria vez.*
+- **Quem cai sai da faixa**, e não fica riscado: *uma luta de dez inimigos com
+  sete caídos seria uma faixa de cadáveres a empurrar os vivos para fora do
+  olhar.*
+- **O rótulo não é `ORDEM DE INICIATIVA`: é `agora: Halvard`.** Se o trabalho da
+  faixa é responder àquela pergunta, ela pode dizer a resposta — e é a lei de
+  que o sistema não fala de si mesmo, aplicada a um rótulo.
+- **O jogador sabe que é a vez dele por três canais, e nenhum é a palavra:** o
+  selo dele acende; **o tabuleiro acende** (o contorno do alcance só existe no
+  turno dele, e o código já o produz); e os verbos ficam vivos — na vez de outro
+  cada verbo é `Botao` *Esperando* com a razão escrita **"é a vez de Halvard"**,
+  o nome dele e não o nome do mecanismo.
+
+### O celular, onde a mão tapa o tabuleiro
+
+É **critério de entrada**, não apêndice — a pessoa citou a plataforma como
+régua (Fase L).
+
+- **Os controles em baixo, o campo por cima:** a mão tapa a tira, que é o que
+  ela está a tocar, e não o campo.
+- **O arco do polegar** numa pega de uma mão em 375×812 chega aos ~520–560 px
+  de baixo. As tiras vivem nos 144 px de baixo, fundo no arco. **O terço de
+  baixo do campo também está dentro do arco** — e é por isso que o
+  enquadramento põe o herói no centro da **área livre** e não no centro
+  geométrico: empurra-o para fora da zona que o próprio polegar tapa ao tocá-lo.
+- ***Sob o dedo* não existe antes do toque**, logo **zero informação de combate
+  depende de `hover`**. Hoje a rota prevista só existe em `onMouseEnter`
+  (`grade-de-batalha.jsx:543`) e a única descrição da casa é um `<title>` de
+  SVG: **dois canais de rato, num jogo que se joga com o dedo.**
+- **O texto livre no telefone é um botão (`❝`), não um campo** — aberto, o
+  teclado tapa metade do campo de qualquer maneira.
+- **A tela roda, e nunca é forçada.**
+
+### O texto livre continua, e muda de papel
+
+Deixa de ser uma barra a competir com os verbos e passa a ser uma linha única
+por baixo deles, 44 px — e o convite muda de `"O que você faz?"` para
+**`como? (opcional)`**. O que ele escreve já não decide **se** o golpe
+acontece; diz **como**, e viaja como `motivo`, exatamente como
+`declararAcaoRapida(id, motivo)` já faz hoje com os oito de baixo. *A frase
+deixa de ser a sintaxe obrigatória e vira o tempero.*
+
+**Duas regras vêm com isso:** o campo **nunca é `disabled` enquanto há um verbo
+armado** — escrever e mirar são compatíveis, e é esse o ponto inteiro —, e no
+telefone ele fica colapsado em 44 px que só crescem no foco.
+
+### O lugar da reação (Fase K) fica reservado hoje, e a reserva é um número
+
+**A reação mora na linha do veredito**, a faixa entre o campo e os verbos. Três
+razões: ela **já existe em todo estado da tela** (uma peça que aparece do nada
+tem de arranjar lugar; uma que cresce de uma linha que já estava lá não empurra
+nada); está **dentro do arco do polegar**, e a reação é a única coisa desta tela
+com relógio a correr; e é o **sítio certo por significado** — entre o que acabou
+de acontecer e o que se pode fazer.
+
+**A regra, e ela é dura: a pergunta SOBREPÕE, nunca EMPURRA.** *Empurrar move as
+casas que o jogador estava a ler no exato segundo em que ele tem de decidir
+depressa — é a pior coisa que se pode fazer a uma janela com relógio.* Ela nasce
+colada à linha do veredito e cresce **para cima**, ancorada em baixo: o topo do
+campo nunca se mexe, e **a câmara nunca se mexe**.
+
+**A reserva, dita como restrição para quem construir:** *o terço de baixo da
+janela do campo é território emprestado — nenhum elemento desta tela pode
+depender de estar visível ali.* Com esta frase escrita hoje, a terceira batida
+não nasce enfiada num canto daqui a duas fases.
+
+### O movimento da tela, com saída
+
+**Uma curva só para o que se move** — `cubic-bezier(.2,.7,.3,1)`, que a folha
+já usa em `.tv-vira`. **Linear só para o que mede tempo**, porque *uma curva de
+aceleração numa barra de tempo mente sobre o tempo*.
+
+| o que | quanto | curva | sob `prefers-reduced-motion` |
+|---|---|---|---|
+| entrar / sair da batalha | **140 ms**, só opacidade | `ease` | a seco — termina em `opacity: 1` |
+| a casa entra em *Sob o dedo* | **90 ms** | `ease` | troca a seco |
+| a régua acende (coluna + linha) | **90 ms** | `ease` | troca a seco |
+| o veredito aparece | **120 ms** | `ease` | idêntico |
+| a vez passa de uma linha para outra | **200 ms** | `cubic-bezier(.2,.7,.3,1)` | troca a seco |
+| o halo do Selo *Mudou=Agora* | 3 × 1,2 s **e para** | `ease` | não pulsa |
+| a barra da pergunta que expira | o tempo da janela | **linear** | vira **número que conta** |
+
+**As três leis que governam a tabela:**
+
+1. **A régua acende nos mesmos 90 ms da casa, e não é coincidência: é o mesmo
+   evento.** Um evento tem uma duração; dois números para a mesma coisa seriam
+   duas verdades.
+2. **A tela não anima leiaute — só `opacity` e `transform`.** Animar leiaute
+   durante um turno é, literalmente, *custar o turno*, e o que empurra a página
+   faz o dedo errar o alvo.
+3. **Nada de `infinite` nesta tela.** Das 13 classes da casa, 5 são infinitas e
+   só 3 têm saída (medida de D5c).
+
+**A tela de batalha NÃO usa `.tv-fade`:** `tvFade` dura 500 ms **e move**
+(`translateY(8px)`, `estilo.js:129`) — três vezes acima do limite de 0,1 s em
+que um gesto ainda parece instantâneo (NN/g, *Response Times: The 3 Important
+Limits*, Nielsen 1993, a partir de Miller 1968), e o deslocamento faz o campo
+**nascer** em vez de **já estar lá**. *O que entra é a moldura; o tabuleiro já
+está lá.*
+
+**E a regra que D5c cobra antes de doer:** cada classe nova nasce com a saída
+escrita, e **a saída pousa no estado final** — `tv-batalha-entra`,
+`tv-regua-acende` e `tv-vez-passa` saem com `animation: none` porque terminam
+acesas. **`tv-janela-tempo` é a exceção, e a exceção é lei:** ali *a informação
+mora dentro do movimento*, e `none` apagá-la-ia — a saída dela é **virar
+contagem**, que é a variante *Tempo=Contagem* da peça.
+
+### O anel de foco, aplicado a um tabuleiro
+
+A forma não muda — `box-shadow: 0 0 0 2px T.bg, 0 0 0 4px T.ink`, `ink` sobre
+`bg` = **15,31:1**. O que E1 acrescenta é **como ele se comporta sobre 256
+casas**, e hoje cada casa alcançável é `role="button" tabIndex=0` com
+`outline: none` (`grade-de-batalha.jsx:515-519`) — **86 alvos focáveis por
+luta, com o anel apagado de propósito**.
+
+- **A grelha é UM ponto de tabulação, não 256.** É o padrão `grid` do WAI-ARIA
+  com *roving tabindex*: uma casa tem `tabIndex=0` e todas as outras `-1`; as
+  setas andam casa a casa, `Enter`/`Espaço` agem, `Esc` sai e devolve o foco aos
+  verbos. **Tab entra no campo uma vez e sai uma vez.**
+- **O foco entra na casa do herói**, sempre — a mesma regra que manda o campo
+  abrir centrado nele. *Um tabuleiro que rola e abre no lugar errado é pior que
+  um que não rola, e um foco que entra no lugar errado é a mesma armadilha com
+  teclado.*
+- **A ordem de tabulação é a ordem do DOM, e por isso a ordem do DOM é
+  desenho** — reordenar com `tabindex` positivo é o remendo que a WCAG 2.4.3
+  existe para recusar. A ordem é: *de quem é a vez* (não focável, é leitura) →
+  **o campo** → *o veredito* (não focável) → **os verbos** → **quem está de pé**
+  → a última fala → **sair**. O primeiro Tab cai no campo, que é o assunto da
+  tela; **`sair` é o último**, de propósito: é a porta, e ninguém deve tropeçar
+  nela na primeira tecla.
+- **A única exceção, e é boa UX e não remendo:** quando um verbo com alcance
+  entra em *Mira*, **o foco salta sozinho para o campo**, na casa do alvo mais
+  provável. Sem isso o teclado paga dois Tabs por ataque; com isso paga zero. É
+  a regra de convivência do `jogo` — *nunca as duas línguas ao mesmo tempo* — a
+  produzir de graça o atalho de teclado certo.
+- **O vão do anel, com número:** sobre o fundo de tabuleiro de hoje (`#141020`)
+  o vão de 2 px em `bg` dá **1,04:1** e não se separa; o anel de `ink` dá
+  14,73:1 e carrega o trabalho sozinho. **Com o fundo do tabuleiro em `T.bg` o
+  vão volta a funcionar como desenhado** — a forma do anel não muda; muda o
+  fundo, que é onde o defeito estava.
+
+### Discordância resolvida: a borda por casa × o contorno da união (`jogo` × `desenho`)
+
+**O `jogo` abriu:** *"as duas dizem a mesma coisa duas vezes"*. `A casa`
+*Alcançável* tem **borda âmbar a 55% por casa**, e o código já desenha **o
+contorno da UNIÃO** do alcance (`grade-de-batalha.jsx:40`), com o comentário da
+própria casa a explicar porquê: *"desenhar isso em vez de uma borda por célula é
+o que faz 'até onde eu chego' virar uma FORMA — uma mancha com beirada — em vez
+de um mosaico de quadradinhos"*. Com 86 casas alcançáveis, **86 bordas são 86
+caixinhas**, e o tabuleiro volta a parecer a planilha que a v9.125 matou.
+
+**O `desenho` respondeu com a régua:** a borda âmbar a 55% sobre `bg` dá
+**3,41:1** e é o que passa o **WCAG 1.4.11** (não-texto); a 45% dá 2,65:1 e
+reprova. O preenchimento, entre 10% e 28%, fica entre **1,15:1 e 1,71:1** — é
+profundidade, **nunca informação**. E se o contorno passasse a carregar o
+alcance sozinho, teria de passar na mesma régua.
+
+**E então aconteceu a coisa mais rara desta mesa: os dois cederam ao mesmo
+tempo, um para o outro, em direções opostas** — cada um adotou o argumento do
+outro e abandonou o seu. O `jogo` passou a defender que **a borda fica**; o
+`desenho`, que **a borda sai**. Como isso continua a ser *duas formas para a
+mesma ação*, **quem desempatou foi o `regente`**, e o motivo fica escrito.
+
+**O lado a que o `jogo` chegou (a borda fica):** o contorno é âmbar a 60% e
+**passaria** a régua. Mas o 1.4.11 exige que o indicador identifique **o
+componente**, e o componente é **a casa** (`role="button"`, uma por casa), não o
+conjunto. Uma casa no meio da mancha não tem beirada âmbar nenhuma: tem a malha,
+que é `line` e não diz "alvo". **O contorno identifica a região; a borda
+identifica o alvo.** E o mosaico que ele temia já estava curado por outra via:
+com o custo escrito dentro, a casa deixa de ser caixa vazia e vira **etiqueta de
+preço** — *nove casas com número dentro não leem como planilha, leem como campo*.
+
+**O lado a que o `desenho` chegou (a borda sai):** com o custo escrito dentro de
+toda casa *Alcançável*, **a casa já está marcada individualmente, e por texto** —
+que não é cor, e por isso não depende de 1.4.11 de todo. A borda passaria a ser
+o terceiro canal a dizer o mesmo, contra a sua própria regra: *o que é alvo tem o
+custo escrito dentro*.
+
+**O desempate: a borda FICA — e fica por uma razão que nenhum dos dois usou.**
+*Um canal que desaparece por regra não pode ser o único canal.* O custo escrito
+**sai sozinho** quando a casa encolhe: a regra do próprio `desenho` manda o
+número descer para a linha do veredito abaixo de **26 px de lado**, e some de
+vez no nível de leitura. Se a borda tiver saído, essas casas ficam **sem marca
+individual nenhuma**. E o texto que carregaria o peso mede hoje **4,47:1** —
+reprova o AA por 0,03. **Uma marca condicional não substitui uma marca
+permanente**, e a redundância deixa de ser desperdício no instante em que um dos
+dois canais tem data para sumir.
+
+**Mas as três condições que o `desenho` pôs entram na mesma, porque são
+verdadeiras independentemente da decisão — e uma delas achou um defeito vivo:**
+
+| a união, hoje | medido | WCAG 1.4.11 (3:1) |
+|---|---|---|
+| âmbar a 60% sobre `bg` | **3,85:1** | passa |
+| **violeta a 60% sobre `bg`** | **2,68:1** | **REPROVA** |
+| violeta a 70% sobre `bg` | **3,24:1** | passa |
+
+**O contorno da mira reprova o piso de não-texto hoje, a 2,68:1**
+(`grade-de-batalha.jsx:433`, `opacidade={0.6}`) — e a borda por casa é o que
+tem estado a salvar a situação sem ninguém saber. **É achado, não detalhe**, e é
+o argumento mais forte a favor de manter a borda: ela já era carregadora.
+Condições: união âmbar **≥ 60%**, união violeta **≥ 70%** (número, e é de E3),
+traço **≥ 2 px** — e a terceira amarra tudo, porque o contorno mede `0.045` em
+unidades de casa, o que dá **2,16 px a 48 px de casa e 1,07 px a 23,8** — um
+fio. **O contorno só pode dizer alguma coisa porque a casa passou a ser 48:** a
+régua do contorno e o piso de 48 px são a mesma decisão.
+
+**E uma exceção que fica, do `desenho`: *Mira* mantém o tracejado por casa.** Em
+mira há **duas** coleções violetas na tela ao mesmo tempo — o alcance e a área
+que a magia varre (`:445`, em `danger`) —, e uma união sozinha não separa *"onde
+posso fazer cair"* de *"o que isto pega"*.
+
+**O que sobrevive do primeiro lado do `jogo`, e é regra para durar:** o contorno
+da união e a borda por casa **não podem ter o mesmo ritmo**, ou as casas da
+beirada ganham linha dupla. **O contorno é tracejado a 60%; a borda é cheia a
+55%** — mesma família, cadências diferentes.
+
+**E a inversão, escrita para quem construir:** *quem passa a régua do WCAG é a
+borda por casa, não o contorno.* Se um dia alguém apagar a borda para "limpar o
+tabuleiro", **apaga o que passa** — e o contorno, que parece o mais visível dos
+dois, não o salva.
+
+### O que E1 acrescentou à biblioteca
+
+Mesmo arquivo, `e5wJUzInAssoebx5npssKc`. **Nenhum segundo arquivo.** Uma página
+por peça; a página `A batalha` é do `jogo` e nenhuma peça foi redesenhada por
+dentro de outra. Zero hex solto, tudo ligado a variável.
+
+| peça | página · nó | variantes | por que não existia |
+|---|---|---|---|
+| **A régua** | `A regua` · `30:11` | 4 (*Eixo × Estado*) | o campo nunca teve endereço, e a gramática que o resolve já existia em `coordenadas.js` sem nunca ter chegado ao tabuleiro |
+| **A vez** | `A vez` · `30:163` | **24** (*Lado × Vez × Forma*) | era remontada à mão em `App.jsx:3206-3220`, com `rgba()` e `boxShadow` literais no meio do JSX, 4 a 8 vezes por luta em **dois** lugares |
+| **A ficha curta** | `A ficha curta` · `31:137` | 6 (*Lado × Estado*) | o que se sabe de um inimigo mora num `<title>` de SVG — **canal de rato, que no telefone não existe**; os aliados têm cartões, os inimigos não tinham nada |
+| **A pergunta que expira** | `A pergunta que expira` · `31:518` | 4 (*Etapa × Tempo*) | dívida declarada de D4, paga porque a razão de a adiar expirou |
+| **A marca de borda** | `A marca de borda` · `53:43` | 8 (*Quem × Aresta*) | num telefone de 375 o campo mostra 7 de 16 colunas: **mais de metade dos combatentes pode estar fora da tela a qualquer momento** |
+
+E **três peças que existiam foram corrigidas** — `A casa`, `Botao` e `Barra de
+medida`. *(Detalhe abaixo.)*
+
+**Duas decisões de peça que valem como lei, e não como nota:**
+
+- **`A marca de borda` carrega o endereço, e é por isso que funciona.** `K14` é a
+  mesma casa da régua e da ficha curta: **o jogador lê a marca, sabe para onde
+  rolar, e pode dizer *"vou até K14"* sem nunca ter visto a casa.** A marca, a
+  régua e a casa são **três formas do mesmo endereço** — e *procurar é o custo
+  que o endereço existe para não cobrar*. Três canais: a **forma** diz quem, a
+  **seta** diz para onde, o **texto** diz onde exatamente; a cor é o quarto e o
+  único dispensável. Ela mede **44 px e não 48**, e isso é decisão: *a marca vive
+  na moldura, não na malha — não ladrilha nada e não tem de bater com passo
+  nenhum.* E **a posição ao longo da aresta muda a seco**: uma marca que persegue
+  o inimigo pela borda é movimento periférico durante o turno inteiro, *e
+  movimento periférico é a coisa que mais rouba a leitura da cena*.
+- **O vocabulário de forma é um só em toda a tela: círculo é aliado, losango é
+  inimigo** — as mesmas duas formas no Selo de `A vez` e na marca de borda, de
+  propósito. Foi o que permitiu dizer *quem* sem palavra numa faixa onde **oito
+  nomes seriam oito truncagens, e um nome truncado não é um nome**. E *Caiu*
+  ganhou **um risco atravessado**: sem ele, caído e espera eram o mesmo selo com
+  o número mais apagado — um canal a menos.
+
+### A dívida paga, a corrigida, e as que ficam abertas com número
+
+- **Paga:** ***A pergunta que expira*** existe (`31:518`, 4 variantes). D4
+  deixou-a por fabricar de propósito — *"peça feita para decisão não tomada é
+  trabalho inventado"* —, **a pessoa aprovou a Fase K em 15/09, e a condição da
+  dívida caiu: manter a dívida passou a ser o erro.** Ela nasce com a trava K2
+  escrita dentro: *quem não responde tem o de hoje, byte a byte*. E o arranjo de
+  duas colunas pagou de lado outra dívida: ela mede **344** de largura e a
+  lateral mede **344** — **encaixa exatamente**, e em 1280 a reação cresce na
+  lateral **sem tocar no campo**.
+- **Corrigida a meio da etapa, e a causa era pior do que parecia:** ***A casa***
+  media 148×48 e **não ladrilhava** — porque *o custo* e *o preço* eram **duas
+  linhas de legenda de largura inteira por baixo do quadrado**, 73 px de conteúdo
+  numa caixa de 48. Passou a **48×48** nas sete variantes, com o custo e o
+  endereço **dentro** do quadrado e **o custo visível já em *Alcançável***. **E a
+  ironia fica escrita, porque vale mais que a correção:** *este arquivo sempre
+  mandou "o custo escrito DENTRO da casa", e a peça de D4 escreveu-o fora* — a
+  discordância não era entre as duas mesas, era **entre o `desenho` e o que ele
+  próprio tinha escrito**. *(O 148 não virou variante, e é recusa com motivo:
+  "custa um golpe livre" são ~108 px em mono 9 e não cabem em 48 de lado nenhum;
+  uma variante larga só devolveria o ladrilho que não ladrilha. O preço é `A
+  Consequência`, que já existia.)*
+- **Pagas na mesma rodada:** **`Botao`** passou a ter **uma altura por
+  `Papel`×`Tamanho`** — antes *Impedido* era 19 px mais alto que *Repouso*, e
+  numa barra encostada ao campo **um botão que cresce ao ficar indisponível
+  empurra o tabuleiro**. A linha da razão fica reservada nos quatro estados, e
+  **não é espaço morto: é onde `A Consequência` do preço se senta.** **`Barra de
+  medida`** estica e encolhe (trilho de 285 px a **48** entre 359 e 120 de
+  caixa) — *quem absorve é o trilho, o único elemento cuja largura não carrega
+  informação*. E **`A vez`** ganhou o eixo ***Forma*** (Linha · Selo), 12 → **24
+  variantes**, com o número que o justifica: **oito combatentes pedem 2.560 px
+  em Linha e 472 px em Selo**.
+- **Abertas, e cada uma com o motivo de o estar:** **a razão sai do `Botao` e
+  passa a ser sempre `A Consequência`** — é o fim de linha certo (os tons
+  *Impedimento* e *Espera* foram construídos duas vezes por acidente), e o
+  `desenho` **recusou fazê-lo agora com motivo**, porque `A linha` compõe quatro
+  instâncias que dependem de `a razao`, e ***peça mudada em silêncio por baixo de
+  uma composição é pior do que peça com espaço reservado***. E **o eixo
+  *Largura* do `Botao`**, que este arquivo declara e o Figma não tem: leva o
+  conjunto de 24 para **48** variantes, acima do teto de 30 da disciplina de
+  biblioteca — **declarado e não pago**.
+
+### As armadilhas do Figma que E1 pagou (e uma que morreu)
+
+Somam-se às quatro de D3/D4, que continuam de pé.
+
+1. **`createInstance()` nasce com o alfa da TINTA em 1** — o componente diz 0,1
+   e a instância renderiza 100%; acontece também ao trocar variante com
+   `setProperties`. **Mas a cura não é repor o alfa: é mudar de gramática.**
+   Quando `A casa` passou a guardar o alfa **na opacidade do nó** em vez de na
+   da tinta, a reposição corrida na página inteira corrigiu **zero** nós. A
+   regra, e é a que fica: ***o alfa no nó sobrevive ao `createInstance`; o alfa
+   na tinta não.*** Custou cinco tentativas antes de ser entendida — e **a cura
+   de D4 estava errada**: reaplicar o alfa no paint faz a leitura devolver
+   `0,22` e **o render sair chapado**, que é o pior tipo de defeito, o que mente
+   ao verificador. *(Pelo caminho apanhou-se outra: o `anel de foco` de D4
+   continha uma **terceira cópia do ladrilho** lá dentro — era ela que pintava
+   sólido.)*
+2. **`resize()` é ignorado dentro de auto-layout enquanto o nó estiver em
+   `HUG`** — fixe primeiro, redimensione depois. É a irmã (e o contrário) da
+   armadilha de D4 para nós soltos: lá era `resize()` **primeiro** e os modos
+   depois.
+3. **`get_screenshot` e `node.screenshot()` discordam** — o primeiro serviu
+   render em cache várias vezes, a duas mãos diferentes e ao `regente`.
+   **Confira pelo dado lido de volta, nunca pela foto.**
+4. **Recompor mata os ids.** Os três quadros de momento foram refeitos a partir
+   do arranjo novo, e `35:175` / `35:372` / `35:569` **deixaram de existir**.
+   Quem citar nó de Figma em documento tem de o reconferir depois de qualquer
+   recomposição — um id morto é uma referência que mente em silêncio.

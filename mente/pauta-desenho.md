@@ -25,6 +25,11 @@ que o sustenta, e cada um mexe **no fluxo do jogo ou no que o jogador já usa**
 régua nova, `pesado` é uma pergunta só — **o jogador teria de reaprender?** —
 e nos dois a resposta é sim, com o que ele reaprende dito por escrito.
 
+**E três nasceram em E1 (15/09), ao desenhar a tela de batalha** — estão logo
+a seguir aos de D4, marcadas *(E1)*. As três são da mesma família e é honesto
+dizê-lo: as três tratam do que acontece quando **o tabuleiro passa a ser onde
+o jogo se joga**, e cada uma pede uma coisa ao motor que ele hoje não faz.
+
 - [x] **a rodada tem três batidas, e o jogador toca as três** · **APROVADA 15/09 — e a pessoa devolveu a forma à mesa:** *"decida como designer UX e designer de games experientes, de forma que seja a melhor experiência jogável e visual"*. Vira a **Fase K**, e a mesa decide sem perguntar · pesado · de: jogo · 14/09
   **O que ele vive hoje.** Uma rodada de combate é: escrever uma frase, o
   sistema resolver tudo, e ler vinte linhas. As regras já modelam **três**
@@ -131,6 +136,77 @@ e nos dois a resposta é sim, com o que ele reaprende dito por escrito.
   a cobri-los). A regra não muda: alcance, dano e reação são os de hoje.
   Catraca: *mesma semente, mesmo alvo, mesmo resultado que a frase escrita
   produz hoje*.
+
+- [ ] **(E1) O turno monta-se antes de acontecer** · pesado · de: jogo · 15/09 (E1)
+  **O que ele vive hoje, contado toque a toque.** Uma rodada de combate é: abrir
+  `Ações` (1), tocar `Atacar` (1, **que escreve `"Ataco "` na caixa**), escrever
+  o alvo (~15 toques de teclado), tocar `Agir →` (1) — **e o golpe ainda pode
+  não acontecer**. Medido a jogar em 15/09, campanha *O Fio de Prata*, 7 turnos
+  com o Narrador vivo: três ataques declarados em português sem ambiguidade,
+  dentro de um combate aberto, com iniciativa rolada e tabuleiro montado —
+  **zero rolagens**. No fim, os mesmos quatro números do primeiro turno.
+  **A proposta.** O turno deixa de ser uma declaração e passa a ser **uma frase
+  que se monta no tabuleiro e se paga de uma vez**: o jogador encadeia *andar
+  até H14 → atacar Halvard*, e a linha do veredito mostra **o total a correr** —
+  os metros gastos, a ação gasta, os golpes livres que aquilo provoca — **antes
+  de qualquer coisa acontecer**. Só então confirma. É o turno do 5e e do BG3, e
+  é o que faz um turno tático parecer uma **decisão** em vez de uma submissão.
+  **Por que é dela.** A regra de hoje é `App.jsx:3079` — *"Agir É encerrar"* — e
+  isto pede ao motor que **segure um turno por confirmar**: é `backend`, é regra
+  nova. E o jogador reaprende uma coisa só: **que agir deixou de encerrar, e que
+  existe um momento entre escolher e pagar.**
+  **O risco, dito pelo `jogo`:** um turno que se confirma é um turno com mais um
+  toque. A defesa é que **o passo limpo continua a ser um toque** e o golpe
+  limpo também — a montagem só existe quando o jogador **encadeia**, e encadear
+  já é dizer que ele quer decidir antes de pagar. Quem não encadeia nunca vê a
+  diferença.
+
+- [ ] **(E1) O tabuleiro conta o que o inimigo VAI fazer** · pesado · de: jogo · 15/09 (E1)
+  **Experiência jogada:** numa luta inteira o `jogo` fez **zero decisões
+  espaciais**, porque nada no campo pagava por estar num sítio em vez de noutro.
+  Um tabuleiro onde a posição não muda nada é um tabuleiro decorativo — e este
+  tem paredes com cobertura, terreno que cobra, alcance por tamanho e golpe
+  livre por dar as costas. **A regra está toda lá; falta o jogador poder usá-la.**
+  **A proposta.** Antes do turno do inimigo, **o campo mostra o que ele vai
+  fazer**: as casas que ele ameaça acendem em contorno `danger`, com o alvo
+  escrito. O jogador vê e decide — sair, cobrir-se, aceitar. **Estudo citado:**
+  é o desenho do *Into the Breach* (Subset Games, 2018), o caso canônico — a
+  dificuldade deixa de estar em adivinhar e passa a estar em **resolver**.
+  **Por que é dela.** Exige que o motor **decida a ação do inimigo uma batida
+  antes e a honre** — regra nova. E o jogador reaprende que **o tabuleiro diz o
+  futuro**, que é a coisa mais forte que se lhe pode ensinar sobre esta tela.
+  *(Tem um parente já aprovado: é a mesma ideia de S1 — o motor não muda, muda
+  quando o jogador fica sabendo.)*
+  **O risco.** Um campo que anuncia tudo tira o susto. A defesa é de tabela e
+  não de desenho: **nem toda ação se anuncia** — o anúncio é atributo da
+  criatura (o troll telegrafa, o assassino não), e aí **a ausência do anúncio
+  passa a ser informação também**.
+
+- [ ] **(E1) Em combate, o texto deixa de ser o caminho da AÇÃO e passa a ser o caminho da FALA** · pesado · de: desenho · 15/09 (E1)
+  **A medida.** Dos 20 botões do painel `Ações`, **12 só digitam**
+  (`ACOES_PRONTAS`, `App.jsx:1071-1084`, `setEntrada(a.texto)`); os 8 que entram
+  no motor não são de combate. Para atacar, gasta-se **uma chamada ao Mestre**
+  para que uma IA leia *"Ataco o ogro"* e descubra o que o motor já sabia.
+  **A proposta.** Na tela de batalha, **toda ação mecânica acontece por toque** —
+  verbo + casa, com o preço antes do clique — e **o Mestre narra o resultado uma
+  vez por rodada**. O campo de texto fica e muda de emprego: já não é *"O que
+  você faz?"*, é **"diga alguma coisa"** — a provocação, a parlamentação, a
+  frase que o jogador quer que fique na crônica. Uma rodada passa de *N chamadas
+  ao Mestre* para **uma**.
+  **É a única proposta desta fase que DEVOLVE quota ao Narrador em vez de lha
+  cobrar** — e a quota acabou duas vezes nesta fase (D1 e D4), deixando o jogo
+  injogável. O combate é justamente o momento em que o motor é mais competente e
+  a IA menos necessária.
+  **O que ele reaprende, e é uma coisa só:** *em combate, não se escreve para
+  agir — escreve-se para falar.* Nada sai do sítio fora da batalha.
+  **A versão moderada, se a radical for longe demais:** o campo continua a
+  aceitar ação escrita (inclusive *"vou até H20"*, que a régua torna possível),
+  **mas deixa de ser o único caminho**. O ganho de chamadas é menor; o de
+  ergonomia é o mesmo.
+  **A ressalva honesta, e ela é grande, e é do próprio `desenho`:** este é um RPG
+  de texto, e há risco real de que uma luta muda deixe de ser uma luta
+  *narrada*. É por isso que é dela e não da mesa: **o que muda é o que o produto
+  é**, não como ele se parece.
 
 - [x] **O Pergaminho — a prosa ganha material próprio** · pesado · de: desenho · 15/09 (D5) · **APROVADA 15/09** — vira fase própria; depende de D5, que já está de pé
   **O que a medição de D5 mostra, e que ninguém foi procurar:** o Taverna tem
@@ -380,6 +456,23 @@ não reagir, caso não queira gastar PM."*
   configurável ou generoso, e `prefers-reduced-motion` não pode virar
   desvantagem de jogo), e como isto se comporta no celular, onde o polegar
   não está sobre o botão.
+  *(**Meio caminho andado em E1: a peça existe.** *A pergunta que expira* foi
+  fabricada — Figma `31:518`, 4 variantes (*Etapa* Chamando · Escolhendo ×
+  *Tempo* Barra · Contagem). Era dívida declarada de D4, deixada por fazer
+  porque *"peça feita para decisão não tomada é trabalho inventado"* — **a
+  pessoa aprovou a Fase K em 15/09, a condição da dívida caiu, e manter a
+  dívida passou a ser o erro**. Três decisões já vêm dentro dela: **o eixo
+  *Tempo* É a saída por `prefers-reduced-motion`**, feito variante em vez de
+  nota de rodapé justamente para não ser esquecido no dia de construir; **o
+  tempo nunca aparece em segundos na variante *Barra*** (contagem regressiva no
+  meio de uma narrativa é o sistema a falar de si mesmo); e **a trava K2 está
+  escrita na própria peça** — *quem não responde tem o de hoje, byte a byte*.
+  E E1 reservou-lhe o lugar na tela de batalha com um número: ela mora na
+  **linha do veredito**, **sobrepõe e nunca empurra** (empurrar move as casas
+  que o jogador está a ler no segundo em que tem de decidir depressa), e cresce
+  para cima, ancorada em baixo — o topo do campo e a câmara nunca se mexem.
+  **O que continua a faltar a K1 é o número do tempo**, que depende do ritmo da
+  rodada e é do `jogo`.)*
 - [ ] **K2 · a trava, antes de tudo** · de: pessoa · 14/09
   **Quem não responde, o sistema responde como hoje.** Regressão zero é
   condição de entrada, não consequência feliz: o jogo tem de continuar
@@ -407,13 +500,36 @@ Duas decisões que se resolvem juntas, porque a segunda só faz sentido na
 primeira: hoje **o campo de 16×16 nunca foi visto inteiro**, vive num
 scroller de 301px, e o painel `Ações` abre abaixo da dobra.
 
-- [ ] **E1 · a tela desenhada antes de existir** · de: pessoa · 14/09
+- [x] **E1 · a tela desenhada antes de existir** · de: pessoa · 14/09 · **feito v9.254**
   `jogo` e `desenho` **em par**, no Figma: o que a tela de batalha mostra e
   o que ela esconde, onde fica o tabuleiro, onde ficam as ações, o que
   acontece ao entrar e ao sair dela. O `jogo` decide o momento da troca (a
   batalha começa e a tela vira); o `desenho`, a forma. Nada de código.
   **Prova de entrada:** a proposta tem de caber em 1280×860 **e** num
   celular — a pessoa citou a plataforma como critério (ver a Fase L).
+
+  **FEITO (15/09).** Página `A batalha` no Figma (`30:12`, **475 nós**) com
+  cinco quadros, mais **quatro peças novas** do `desenho` (A régua, A vez, A
+  ficha curta, A pergunta que expira). A forma decidida está em
+  `mente/formas.md` — *A tela da batalha*; a conta inteira, em `mente/e1-jogo.md`
+  (o momento) e `mente/e1-desenho.md` (a forma). **Nenhum `.jsx` foi tocado.**
+  **Três coisas que se souberam ao medir e mudam as etapas seguintes:**
+  (1) **o campo não é 16×16 — são dez plantas**, de 7×18 a 18×12, e qualquer
+  desenho que resolvesse uma quebraria noutra; (2) **os 429 px não são altura,
+  são arquitetura** — `PainelCombate` (`App.jsx:20510`) é montado **dentro** do
+  rolador do log (`:20459`) e por construção abre no fim dele, o que torna a
+  inversão **condição de entrada de E3**; (3) **a gramática do endereço já
+  existe** (`coordenadas.js:151`), e por isso **E2 não fabrica tabela nova** —
+  lê desta.
+  **Números:** **1232 de 1280 px viram jogo (96,3%)** contra os 560 de hoje; a
+  casa passa de 23,8–36,6 px para **48** (nenhum tamanho de hoje chega aos 44 de
+  WCAG 2.5.5 / HIG / Material); no telefone, **70 casas sempre na tela**, e
+  **76 px voltam de graça** por não haver trilho de abas.
+  **Três buracos declarados:** `inkDim` sobre casa acesa reprova o AA por
+  **0,03**; a moldura apagada dá **1,38:1** (a palavra carrega o estado); e o
+  fundo do tabuleiro `#141020` está a **1,04:1** de `T.bg` — literal solto que
+  a catraca conta **e** que quebra o vão do anel de foco. Trocá-lo por `T.bg`
+  paga os dois, e é item barato de E3.
 - [ ] **E2 · o endereço do tabuleiro** · de: pessoa · 14/09
   Colunas por letra, linhas por número. É o que torna *"vou até H20"*
   possível — e resolve, de quebra, a pendente de que **o jogador não
@@ -422,11 +538,31 @@ scroller de 301px, e o painel `Ações` abre abaixo da dobra.
   clique na casa e a frase escrita. Cuidado do `backend`: a conversão
   endereço↔coordenada é **regra**, sai de tabela e é provável em Node —
   não nasce dentro da tela.
+  *(**E1 achou a tabela, e ela já existe**: `src/coordenadas.js:151` define
+  `LETRAS_DA_GRADE = "ABCDEFGHIJKLMNOPQRST"` e `gradeDe()` devolve letra +
+  (linha+1) — **A1 no canto superior esquerdo, sem letra saltada**, e as 20
+  letras cobrem as dez plantas de `grid.js`, cuja maior largura é 18. É a grade
+  do **ermo**, mas é a mesma pergunta e já tem resposta escrita. **E2 lê desta
+  tabela e não fabrica a segunda** — duas tabelas de letras no mesmo jogo é a
+  doença da casa um andar abaixo. Duas condições de E1: o log tem de **escrever
+  o endereço de volta** (`você avança até H20`), senão o jogador nunca o
+  aprende; e os endereços do **mundo** e do **tabuleiro** nunca aparecem na
+  mesma tela.)*
 - [ ] **E3 · a tela existe** · de: pessoa · 14/09
   Construir o que E1 desenhou. **Precisa do bastão do `App.jsx`**, e é a
   oportunidade da fila: cada pedaço da batalha que sair do App para um
   arquivo próprio compra independência permanente. Mover vale mais que
   remendar.
+  *(**A condição de entrada, achada em E1, e sem ela nenhuma medida do desenho
+  se cumpre:** o tabuleiro tem de **sair de dentro do rolador do log**.
+  `PainelCombate` (`App.jsx:20510`) é montado dentro do `<div ref={areaRef}>`
+  aberto em `:20459`, **depois de todas as mensagens** — o tabuleiro é filho do
+  log e por construção abre no fim dele. Os **429 px abaixo da borda** não são
+  um número de CSS a afinar: são essa árvore. **Nenhum ajuste de altura
+  resolve; só a inversão resolve** — e é exatamente o caso em que mover vale
+  mais que remendar. Item barato que vem de brinde: o fundo do tabuleiro
+  `#141020` vira `T.bg`, o que tira um literal da catraca **e** devolve o vão
+  do anel de foco.)*
 - [ ] **E4 · mover é fazer** · de: pessoa · 14/09
   A casa clicável, o endereço escrito, o alcance visível antes do passo (o
   veredito antes do clique), e o log dizendo o que **você** fez — não só o
@@ -439,6 +575,16 @@ scroller de 301px, e o painel `Ações` abre abaixo da dobra.
   `<rect fill="transparent">`. O pedido deixa de ser "torne clicável" e
   passa a ser "dê forma ao que já clica" — que é mais barato e é outra
   etapa.)*
+  *(**E1 deu-lhe a forma, e deixou-lhe uma condição.** O canal que E4 tem de
+  abrir é o do **telefone**: hoje a rota prevista só existe em `onMouseEnter`
+  (`grade-de-batalha.jsx:543`) e a única descrição da casa é um `<title>` de
+  SVG (`:520`) — **dois canais de rato, num jogo que se joga com o dedo**. A
+  decisão de E1, e ela é regra: **o custo nasce escrito dentro da casa já em
+  *Alcançável***, em mono 10 px, e o endereço só aparece nos dois estados que já
+  carregam texto (*Sob o dedo* e *Confirmando*) — **86 endereços acesos ao
+  mesmo tempo é a planilha**. E o veredito completo vive na **linha** sob o
+  campo, nunca num balão: quatro segundos de balão tapam exatamente as casas
+  para onde o jogador ia andar.)*
 
 ### Fase S — o Duelo e a sala ganham momento
 Decisão da pessoa (14/09) sobre as duas: *"vamos corrigir."*
@@ -705,6 +851,71 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
 _Os quinze abaixo saíram da medição de D1 (14/09). A ordem é por retorno:
 o barato e mecânico primeiro, o que precisa de decisão depois. Vários só
 fecham de verdade **depois de D2 e D5** — o item diz quando._
+
+**Os quatro primeiros nasceram em E1 (15/09)** e são defeitos de **peça**, não
+de tela: E3 vai montar com estas peças, e cada um deles vira um defeito no
+código no dia em que for montado.
+
+*(Três pedidos de E1 **não** estão nesta lista porque foram **pagos dentro da
+própria etapa**, e vale dizer o que eram: `Botao` *Impedido* era **19 px mais
+alto** que *Repouso* e **empurrava o tabuleiro** ao ficar indisponível — passou
+a ter **uma altura por `Papel`×`Tamanho`**, com a linha da razão reservada nos
+quatro estados, e ela não é espaço morto: é onde `A Consequência` do preço se
+senta; `Barra de medida` tinha o trilho fixo em 90 px e truncava `17/20` em
+`17/` no telefone — agora estica e encolhe, com o trilho a ir de 285 px a
+**48** entre 359 e 120 de caixa, porque **quem absorve é o trilho, o único
+elemento cuja largura não carrega informação**; e `A marca de borda` foi
+**fabricada** — `53:43`, 8 variantes.)*
+
+- [ ] **a razão sai do `Botao` e passa a ser sempre `A Consequência`** · médio · de: desenho · 15/09 (E1)
+  É o fim de linha do achado de E1: o nó *"a razão"* do `Botao` existe só nas 12
+  variantes em que ele **recusa**, e os tons *Impedimento* e *Espera* de
+  `A Consequência` existem exatamente para isso — **foram construídos duas vezes
+  por acidente**. O `desenho` **recusou fazê-lo nesta rodada, com motivo, e a
+  recusa está certa:** `A linha` (`22:46`) compõe **quatro** instâncias de
+  `Botao` que dependem de `a razao` e `mostrar a razao`, e apagá-las mudaria
+  calada uma peça que o `jogo` não reviu. ***Peça mudada em silêncio por baixo
+  de uma composição é pior do que peça com espaço reservado.*** Fecha quando o
+  `jogo` rever `A linha`.
+- [ ] **o eixo *Largura* do `Botao`** · médio · de: desenho · 15/09 (E1)
+  `formas.md` diz que *Largura* é variante (*"cabe no conteúdo"* / *"ocupa a
+  linha"*); no Figma o conjunto tem `Papel × Estado × Tamanho` **e nada mais**.
+  Em *A pergunta que expira* os botões ocupam a linha **por sobreposição na
+  instância**, que é a definição de um eixo em falta. **Não foi pago em E1 de
+  propósito, e o motivo é um número:** o eixo leva o conjunto de 24 para **48**
+  variantes, acima do teto de 30 que a disciplina de biblioteca recomenda; e a
+  alternativa — mexer na estrutura interna das 24 — **mudaria calado toda
+  composição que já as usa**, incluindo *A linha*. Pesa porque a condição 2 de
+  *A linha* (*"no telefone a chamada ocupa a largura"*) depende dele.
+- [ ] **a masmorra 7×18, o caso que nenhum quadro mostra** · leve · de: jogo · 15/09 (E1)
+  Das dez plantas, **nove aparecem inteiras** no arranjo de duas colunas; a
+  masmorra 7×18 transborda **58 px — uma casa e um quinto**, e é **a única que
+  rola num monitor**. Portanto é o único caso em que as regras de enquadramento
+  (o herói no centro da área livre; a câmara só se move quando é obrigada) e a
+  marca de borda fazem trabalho de verdade no desktop — **e não tem quadro**. É
+  o que o `jogo` comporia a seguir, e ele disse-o em vez de o esconder.
+- [ ] **o branco invisível na raiz das peças de D3/D4** · leve · de: desenho · 15/09 (E1)
+  Os componentes de D3/D4 carregam na raiz um preenchimento **branco invisível**
+  (`visible: false`, sem variável) — o branco que `figma.createAutoLayout()` dá
+  de nascença, **desligado em vez de removido**. Amostrados 3 de 3 (`Barra de
+  medida`, `Botao`, `Consequencia`): todos o têm. **Não pinta nada hoje; pinta
+  branco no dia em que alguém ligar a visibilidade**, e qualquer varredura de
+  *zero hex solto* vai encontrá-lo. A regra de D4 continua certa e é só aplicá-la:
+  **quadro que só organiza leva `fills = []`**, não `fills = [branco desligado]`.
+  As quatro peças de E1 nascem sem ele. *(Contado por amostra, não por varredura
+  do arquivo — e é por isso que é item e não nota.)*
+- [ ] **dois números que E3 leva de graça, e um deles é uma reprovação viva** · leve · de: desenho · 15/09 (E1)
+  Os dois são de **E3**, e ficam aqui para não se perderem se E3 demorar.
+  (1) **O contorno da mira REPROVA o piso de não-texto hoje.**
+  `grade-de-batalha.jsx:433` desenha a união com `opacidade={0.6}`, e **violeta a
+  60% sobre `bg` dá 2,68:1** contra os 3:1 do WCAG 1.4.11 — o âmbar a 60% dá
+  3,85:1 e passa, o violeta não. **0,6 → 0,7** dá 3,24:1 e passa. É um número, e
+  só se viu porque a discordância da borda obrigou a medir o contorno sozinho.
+  (2) **`#141020` → `T.bg`** no fundo do tabuleiro (`grade-de-batalha.jsx:367`):
+  é **literal solto** que a catraca D5a conta **e** está a **1,04:1** de `T.bg`,
+  o que faz o vão de 2 px do anel de foco não se separar. A troca é invisível a
+  olho nu — 1,04:1 é menos que a diferença entre `panel` e `bg`, que é 1,07:1 —
+  e **conserta os dois de uma vez**.
 
 - [ ] **nenhum número muda em silêncio** · médio · de: desenho · 14/09 (D4)
   *A proposta ambiciosa do `desenho`, e ela é `médio` pela régua nova: a
