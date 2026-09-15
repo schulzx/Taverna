@@ -35,3 +35,6 @@ Uma linha por decisão: `dd/mm · fila · título exato da pendência · o que v
 - 15/09 · desenho · O Pergaminho · aprovada, fase própria
 - 15/09 · desenho · `Atacar` ataca — os verbos de combate saem do autocompletar · Fase X
 - 15/09 · desenho · o turno acontece mesmo quando o Narrador cala · X3 · X3b · X3c
+- 15/09 · desenho · (E1) O turno monta-se antes de acontecer · Fase W
+- 15/09 · desenho · (E1) Em combate, o texto deixa de ser o caminho da AÇÃO e passa a ser o caminho da FALA · Fase W
+- 15/09 · desenho · (E1) O tabuleiro conta o que o inimigo VAI fazer · E5

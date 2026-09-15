@@ -137,7 +137,7 @@ o jogo se joga**, e cada uma pede uma coisa ao motor que ele hoje não faz.
   Catraca: *mesma semente, mesmo alvo, mesmo resultado que a frase escrita
   produz hoje*.
 
-- [ ] **(E1) O turno monta-se antes de acontecer** · pesado · de: jogo · 15/09 (E1)
+- [x] **(E1) O turno monta-se antes de acontecer** · **APROVADA 15/09 — virou a Fase W** · pesado · de: jogo · 15/09 (E1)
   **O que ele vive hoje, contado toque a toque.** Uma rodada de combate é: abrir
   `Ações` (1), tocar `Atacar` (1, **que escreve `"Ataco "` na caixa**), escrever
   o alvo (~15 toques de teclado), tocar `Agir →` (1) — **e o golpe ainda pode
@@ -161,7 +161,7 @@ o jogo se joga**, e cada uma pede uma coisa ao motor que ele hoje não faz.
   já é dizer que ele quer decidir antes de pagar. Quem não encadeia nunca vê a
   diferença.
 
-- [ ] **(E1) O tabuleiro conta o que o inimigo VAI fazer** · pesado · de: jogo · 15/09 (E1)
+- [x] **(E1) O tabuleiro conta o que o inimigo VAI fazer** · **APROVADA 15/09 — virou E5** · pesado · de: jogo · 15/09 (E1)
   **Experiência jogada:** numa luta inteira o `jogo` fez **zero decisões
   espaciais**, porque nada no campo pagava por estar num sítio em vez de noutro.
   Um tabuleiro onde a posição não muda nada é um tabuleiro decorativo — e este
@@ -182,7 +182,7 @@ o jogo se joga**, e cada uma pede uma coisa ao motor que ele hoje não faz.
   criatura (o troll telegrafa, o assassino não), e aí **a ausência do anúncio
   passa a ser informação também**.
 
-- [ ] **(E1) Em combate, o texto deixa de ser o caminho da AÇÃO e passa a ser o caminho da FALA** · pesado · de: desenho · 15/09 (E1)
+- [x] **(E1) Em combate, o texto deixa de ser o caminho da AÇÃO e passa a ser o caminho da FALA** · **APROVADA 15/09 — virou a Fase W** · pesado · de: desenho · 15/09 (E1)
   **A medida.** Dos 20 botões do painel `Ações`, **12 só digitam**
   (`ACOES_PRONTAS`, `App.jsx:1071-1084`, `setEntrada(a.texto)`); os 8 que entram
   no motor não são de combate. Para atacar, gasta-se **uma chamada ao Mestre**
@@ -433,6 +433,30 @@ tolerância de 1/255). **Code Connect é outra coisa** — ele amarra
   isso:** prova hoje, não impede amanhã. Se a pessoa um dia subir de plano,
   esta etapa é substituída, não remendada.
 
+### Fase W — o turno por toque (a ação deixa a caixa de texto)
+Duas propostas do `jogo` e do `desenho` em E1, **aprovadas pela pessoa em
+15/09**. São a metade de desenho da Fase X do sistema, e andam junto com ela.
+
+**O que se mede hoje:** uma rodada é abrir `Ações` (1 toque), tocar `Atacar`
+(que **escreve `"Ataco "` na caixa**), digitar o alvo (~15 toques), tocar
+`Agir →` — **e o golpe ainda pode não acontecer**. Sete turnos jogados, três
+ataques declarados sem ambiguidade, **zero rolagens**. E gasta-se **uma
+chamada ao Mestre** para uma IA descobrir que *"Ataco o ogro"* significa
+atacar o ogro, que o motor já sabia.
+
+- [ ] **W1 · a frase que se monta** · de: pessoa · 15/09
+  O turno deixa de ser declaração digitada e passa a ser **verbo + alvo/casa,
+  por toque**, com **o preço e o alcance antes do clique** — a lei do
+  veredito antes do clique, e o conserto da recusa por distância que X1
+  mediu (10/10 plantas recusam no turno 1, de graça).
+- [ ] **W2 · o texto muda de emprego** · de: pessoa · 15/09
+  O campo continua, e deixa de perguntar *"o que você faz?"* para ser
+  **"diga alguma coisa"** — a provocação, a parlamentação, a fala. **A única
+  proposta da fase que DEVOLVE quota ao Narrador** em vez de gastá-la: o
+  Mestre narra o resultado uma vez por rodada, em vez de interpretar cada
+  golpe. Conversa direto com a decisão da pessoa de travar o jogo quando ele
+  cai — quanto menos o combate depende dele, menos dói o silêncio.
+
 ### Fase K — as três batidas da rodada (a reação ganha controle)
 **Proposta do `jogo` em D4, aprovada pela pessoa em 14/09 — com o desenho
 dela junto.** Hoje o jogador toca uma batida e meia: **seis reações gastam o
@@ -585,6 +609,19 @@ scroller de 301px, e o painel `Ações` abre abaixo da dobra.
   mesmo tempo é a planilha**. E o veredito completo vive na **linha** sob o
   campo, nunca num balão: quatro segundos de balão tapam exatamente as casas
   para onde o jogador ia andar.)*
+
+- [ ] **E5 · o tabuleiro conta o que o inimigo VAI fazer** · de: pessoa · 15/09
+  **Aprovada em 15/09.** Experiência jogada: numa luta inteira o `jogo` fez
+  **zero decisões espaciais**, porque nada no campo pagava por estar num
+  sítio em vez de noutro. Antes do turno do inimigo, **as casas que ele
+  ameaça acendem**, com o alvo escrito — o jogador vê e decide: sair,
+  cobrir-se, aceitar. **O porquê que a torna barata:** a regra já está toda
+  lá (paredes com cobertura, terreno que cobra, alcance por tamanho, golpe
+  livre por dar as costas) — falta o jogador poder usá-la. Um tabuleiro onde
+  a posição não muda nada é um tabuleiro decorativo.
+  Cuidado herdado da Fase N: o que o campo mostra é **a intenção do degrau
+  daquele inimigo**, não onisciência — um bruto não telegrafa um plano que
+  não tem.
 
 ### Fase S — o Duelo e a sala ganham momento
 Decisão da pessoa (14/09) sobre as duas: *"vamos corrigir."*
