@@ -552,7 +552,7 @@ Só depois disso se pergunta se os números precisam mudar.
   combate invencível. **A consequência é da pessoa, e está em "Para a pessoa
   decidir".**
 
-- [x] **N1b · a régua mede o combate que existe** · feito em v9.251, 15/09 — **a estimativa de N1 se confirmou: vitória 52,1% → 1,8% no `justo`, 8,8% → 0,0% no `duro`.** A catraca ficou **vermelha no dente 1** e **nenhum limiar foi afrouxado**; a dívida entrou como `pendente`. O `justo` **deixou de ter resolução nos dois sentidos**, e recalibrar é da pessoa · de: N1 · 14/09
+- [x] **N1b · a régua mede o combate que existe** · feito em v9.251 (`061c5bf`), 15/09 — **a estimativa de N1 se confirmou: vitória 52,1% → 1,8% no `justo`, 8,8% → 0,0% no `duro`.** A catraca ficou **vermelha no dente 1** e **nenhum limiar foi afrouxado**; a dívida entrou como `pendente`. O `justo` **deixou de ter resolução nos dois sentidos**, e recalibrar é da pessoa · de: N1 · 14/09
   **Instrumento, não gameplay — o molde é B1b, que fez o mesmo pela mesma
   razão.** A régua passa `prioridade: ""` (`regua-combate.mjs:612`) e por
   isso mede Uma Vida com `escolherAlvo` fora do circuito. Esta etapa liga a

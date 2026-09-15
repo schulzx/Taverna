@@ -16,7 +16,7 @@ Formato:
 
 ---
 
-## 15/09 13:45 · v9.251 · N1b · a régua enxerga o Adversário · commit `HASH`
+## 15/09 13:45 · v9.251 · N1b · a régua enxerga o Adversário · commit `061c5bf`
 
 - **estado inicial:** HEAD `c8da685`, VERSÃO v9.250, `npm test` **182/182
   suítes + 9/9 varredores** verde, build limpo. Sem trava — pus a minha. O
