@@ -57,6 +57,26 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
   reconstrução por número de régua. Ele é instrumento e o ciclo o executa;
   esta decisão espera a pessoa.
 
+  > **PRÉ-REQUISITO CUMPRIDO (N1b, 15/09, v9.251) — a pergunta agora tem
+  > número de régua, e a reconstrução acertou.** Medido em 4 famílias ×
+  > 1000, com o Adversário ligado pelo caminho do App: `justo` **1,4–1,8%**
+  > de vitória (era 51,1–54,2%), PV do grupo **0,41–0,64** de 132, quedas
+  > **2,978–2,986** de 3, TPK **98,2–98,6%**, primeira queda na **rodada
+  > 1,05**; `duro` **0,0%**; `brando` ganha sempre, mas já derruba **12 em
+  > 4000** onde antes derrubava zero. A causa está no rastro: **em 100% dos
+  > combates a rodada 1 elege `calar_a_magia`**, e a memória por combate
+  > mantém o fogo lá.
+  > **A catraca ficou vermelha no dente 1 (folga −46,1 margens) e nenhum
+  > limiar foi tocado** — a dívida entrou como `pendente`, que imprime e não
+  > derruba, porque balanceamento é decisão sua.
+  > **E há um quarto fato que a pergunta ainda não tinha:** o cenário
+  > `justo` **deixou de ter resolução nos dois sentidos** — os três cenários
+  > da régua estão saturados hoje (duro 0,0% · justo 1,6% · brando 100%).
+  > Enquanto isso não se resolver, **nenhuma mudança de combate pode ser
+  > julgada por número** nesta régua. Para informar e nada mais: **4 elites
+  > de nível 3 põem a mesa de volta em 41,8–50,0%** (os três dentes verdes),
+  > e 3 elites de nível 6 dão 36,4–42,0%. **Nada disso foi aplicado.**
+
 - [x] **a habilidade de classe não tem resolvedor — contar antes de decidir** · **RESPONDIDA 15/09 com o número na mão (66 de 148) — virou a Fase H**: uma porta só para as 54, e H2 mede de quem já são os 12 antes de construir qualquer coisa · pesado · de: pessoa · 14/09
   **A pessoa devolveu a pergunta (14/09):** *"quero sua opinião e a da mente
   para qual a melhor forma de resolver isso; se os dois concordarem na
@@ -532,7 +552,7 @@ Só depois disso se pergunta se os números precisam mudar.
   combate invencível. **A consequência é da pessoa, e está em "Para a pessoa
   decidir".**
 
-- [ ] **N1b · a régua mede o combate que existe** · de: N1 · 14/09
+- [x] **N1b · a régua mede o combate que existe** · feito em v9.251, 15/09 — **a estimativa de N1 se confirmou: vitória 52,1% → 1,8% no `justo`, 8,8% → 0,0% no `duro`.** A catraca ficou **vermelha no dente 1** e **nenhum limiar foi afrouxado**; a dívida entrou como `pendente`. O `justo` **deixou de ter resolução nos dois sentidos**, e recalibrar é da pessoa · de: N1 · 14/09
   **Instrumento, não gameplay — o molde é B1b, que fez o mesmo pela mesma
   razão.** A régua passa `prioridade: ""` (`regua-combate.mjs:612`) e por
   isso mede Uma Vida com `escolherAlvo` fora do circuito. Esta etapa liga a

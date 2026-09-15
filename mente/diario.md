@@ -16,6 +16,120 @@ Formato:
 
 ---
 
+## 15/09 13:45 · v9.251 · N1b · a régua enxerga o Adversário · commit `HASH`
+
+- **estado inicial:** HEAD `c8da685`, VERSÃO v9.250, `npm test` **182/182
+  suítes + 9/9 varredores** verde, build limpo. Sem trava — pus a minha. O
+  `regente` roda **D5** ao lado; a árvore tinha `mente/pauta-desenho.md` e
+  `mente/agora.json` dele. **Nenhum arquivo dividido:** meu território foram
+  duas suítes, e o **bastão do `App.jsx` não foi tomado** — nenhuma linha de
+  `src/` mudou nesta etapa, fora o bump.
+- **conselheiro:** **não chamado** — fase aprovada, e a pessoa pediu hoje
+  *"consertar e re-medir tudo"*.
+- **testes:** ligou a intenção à régua pelo caminho que o App usa
+  (`lutaDaMesa` → `intencaoDaVez` com memória por combate → `prioridade` no
+  `turnoDosInimigos`), pôs o porquê inteiro em `ADVERSARIO_NA_REGUA`
+  (tabela nomeada, com os campos de mundo que a régua não tem e as 34
+  intenções que por isso ficam inalcançáveis), e re-mediu os três cenários
+  em 4 famílias × 1000.
+
+### O defeito, e o que ele custou
+
+A régua passava `prioridade: ""` (`regua-combate.mjs:612`) e `combate.js:279`
+só consulta `escolherAlvo` quando a prioridade existe. O jogo passa a intenção
+(`App.jsx:13606`). **B1, B1b, B2 e T1 mediram Uma Vida com o Adversário fora do
+circuito** — mediram o sorteio de 35% e mais nada. Nenhuma suíte ficou vermelha
+por isso, porque a suíte provava o instrumento contra ele mesmo. **Um
+instrumento que difere do jogo em silêncio é pior que nenhum instrumento**, e
+agora isso está escrito nos dois arquivos, no sítio onde a prioridade nasce.
+
+### A linha de base nova (4 famílias × 1000, os três cenários)
+
+| cenário | métrica | desligado (B1/B2/T1) | **ligado (o jogo)** |
+|---|---|---|---|
+| justo | vitória | 51,1–54,2% | **1,4–1,8%** |
+| justo | PV do grupo (de 132) | 25,88–28,05 | **0,41–0,64** |
+| justo | quedas (de 3) | 1,740–1,790 | **2,978–2,986** |
+| justo | TPK | 45,8–48,9% | **98,2–98,6%** |
+| justo | 1ª queda | rodada 4,30 | **rodada 1,05** |
+| justo | duração | 7,70–7,75 rodadas | **6,01–6,12** |
+| duro | vitória | 8,8–9,9% | **0,0%** |
+| duro | PV / quedas | 3,11–3,53 / 2,80–2,82 | **0,00 / 3,000** |
+| brando | vitória | 100% | **100%** |
+| brando | quedas | **0** em 4000 | **12** em 4000 (2 · 6 · 0 · 4) |
+| brando | PV do grupo | 124,34–125,01 | **115,56–115,91** |
+
+`estourouTeto` continua **0** nos três. O molde antigo é reproduzível byte a
+byte com `comAdversario: false`, e a suíte **afirma** que ele reproduz 52,1% ·
+25,88 · 1,790 — para a história de B1/B2/T1 não passar a mentir.
+
+### A estimativa de N1: **confirmada, e cravada**
+
+A reconstrução no scratchpad previu **52,1% → 1,8%** no `justo`. A régua
+consertada mede **1,8%** na família do retrato. No `duro`, o destino confere
+(0,0%); só o ponto de partida estava um pouco abaixo na reconstrução (8,4%
+contra os 8,8% de régua).
+
+### Por que, em uma linha, e o número que explica
+
+**Em 100% dos combates a rodada 1 elege `calar_a_magia`**, e a aderência por
+combate (a memória `antes`) mantém o fogo no conjurador; depois vem
+`matar_o_remendo` (782 dos 1000 combates). A oposição concentrada desperdiça
+**cinco vezes mais** golpe em corpo caído (0,94 → 4,99 por combate) e ainda
+assim varre a mesa: o desperdício é barato perto do que a concentração compra.
+
+### A catraca: **vermelha no primeiro dente, e não afrouxada**
+
+Vitória 1,4–1,8% contra o piso de 35% — folga **−46,1 margens**.
+`pisoDeVitoria`, `tetoDeVitoria`, `tetoDePvDoGrupo` e `pisoDeQuedas` estão
+**intactos**. O dente 1 virou `pendente(...)` — imprime em todo `npm test` e
+não derruba a suíte — pelo roteiro desta casa: **dívida conhecida entra como
+pendente, não como vermelho**, e esta dívida é de BALANCEAMENTO, que é decisão
+da pessoa. Os dentes 2 e 3 continuam asserção e ficaram verdes **por
+saturação**, não por equilíbrio (0,5 PV de 132 contra teto 35; 2,98 de 3
+contra piso 1,2) — e está escrito ao lado deles que é assim que se lê o verde.
+
+### O achado que a Fase N tem de ler antes de seguir
+
+**O `justo` deixou de ser o cenário com resolução nos dois sentidos** — era a
+razão inteira de ele existir. Os três estão saturados hoje (duro 0,0% · justo
+1,6% · brando 100%), e uma mudança de combate julgada neles não prova nada em
+direção nenhuma. **Não recalibrei**, e isso é a trava que a pessoa pediu: a
+régua mede, ela não escolhe o jogo.
+
+- **decisões médias tomadas:**
+  - **converter o dente 1 em `pendente` em vez de deixar a suíte vermelha.**
+    Motivo: o roteiro do ciclo diz que dívida conhecida entra como
+    `pendente(nome, motivo)`; e vermelho na árvore bloqueia toda etapa
+    seguinte por uma dívida que **só a pessoa** pode quitar. O limiar não se
+    moveu um dígito, e a razão da conversão está escrita no lugar da asserção.
+  - **o guarda do `brando` ("ninguém cai") também virou `pendente`.** 12 em
+    4000, com uma família ainda medindo zero: um limiar aí mediria resorteio
+    (lição de A4 e C2b). Ficou no lugar a asserção de que **sem** Adversário
+    continua sendo zero — a prova de que a queda nova vem da intenção e não de
+    regra mexida.
+  - **as três sabotagens da seção 7 foram remedidas e trocadas de cenário**
+    (nv8 → o próprio `justo`; 3 elites nv9 → 1 elite nv6; grupo nv7 → nv12), e
+    o **controle inverteu de papel**: passou a ser 4 elites nv3, o único que a
+    régua mede verde nos três dentes hoje. Motivo: dente que não morde não é
+    dente, e um controle vermelho não controla nada. **Nenhum limiar mudou.**
+  - **`primeiraQueda` no `brando` foi generalizada, não apagada:** vale agora
+    para os dois casos (n = 0 com margem infinita, ou uma rodada de verdade).
+    O que ela sempre quis provar — a régua não inventa média sem amostra —
+    ficou mais forte, e deixou de depender de qual família cai no índice 0.
+- **o que ficou, e é da pessoa:** **o número catastrófico, e eu parei nele.**
+  Não toquei em dificuldade, bestiário nem prontos. A pergunta pesada que já
+  estava em *Para a pessoa decidir* continua lá, agora com número de régua no
+  lugar da reconstrução. Para informar a decisão e nada mais, a régua mediu
+  que **4 elites de nível 3 põem a mesa de volta em 41,8–50,0%** de vitória
+  (PV 17,8–21,3, quedas 2,42–2,49: os três dentes verdes), e **3 elites de
+  nível 6 dão 36,4–42,0%**.
+- **e um aviso para B2, se ela voltar:** a escada do bônus ofensivo escrita em
+  `CATRACA_DE_UMA_VIDA` (~2,9 pontos de vitória por ponto de dano, vermelho em
+  +5) foi medida sem Adversário e **não vale mais**. Remedi-la é fase, não
+  conserto de instrumento — não foi feita aqui.
+
+---
 ## 15/09 01:30 · v9.250 · a contagem das 148 habilidades · commit `bc74f1e`
 
 - **estado inicial:** HEAD `8dd1579`, VERSÃO v9.249, `npm test`
@@ -235,6 +349,16 @@ escritas.
 
 ## 14/09 21:05 · v9.247 · B2 · a simetria fechada, e a Fase B com ela · commit `c14532b`
 
+> **NOTA DE N1b (15/09, v9.251) — os números de Uma Vida deste bloco foram
+> medidos com o Adversário FORA DO CIRCUITO.** A régua passava
+> `prioridade: ""` ao `turnoDosInimigos` (`regua-combate.mjs:612`), e
+> `combate.js:279` só consulta `escolherAlvo` quando ela existe — o jogo
+> passa a intenção da luta (`App.jsx:13606`). A MESMA régua, com o
+> Adversário ligado, mede no `justo` **1,4–1,8% de vitória (era 51,1–54,2%), 0,41–0,64 PV de grupo de 132 (era 25,88–28,05) e 2,978–2,986 quedas de 3 (era 1,740–1,790)** e no `duro` **0,0% de vitória (era 8,8–9,9%), 0,00 PV e 3,000 quedas**.
+> **Este bloco não foi reescrito de propósito.** Os números dele continuam
+> reproduzíveis byte a byte com `medir(..., { comAdversario: false })`, e a
+> suíte afirma isso em toda rodada de `npm test`.
+
 - **estado inicial:** árvore limpa, HEAD `5a170c3`, VERSÃO v9.246, `npm test`
   **182/182 suítes + 9/9 varredores** verde. Trava posta por mim. **Duas mentes:**
   o `regente` fechou D3 durante este ciclo e **tomou a v9.246 em voo** — B2 sai em
@@ -342,6 +466,16 @@ espada**.
 
 ---
 ## 14/09 19:25 · v9.245 · B1b · a régua se corrige antes de medir · commit `2a818f9`
+
+> **NOTA DE N1b (15/09, v9.251) — os números de Uma Vida deste bloco foram
+> medidos com o Adversário FORA DO CIRCUITO.** A régua passava
+> `prioridade: ""` ao `turnoDosInimigos` (`regua-combate.mjs:612`), e
+> `combate.js:279` só consulta `escolherAlvo` quando ela existe — o jogo
+> passa a intenção da luta (`App.jsx:13606`). A MESMA régua, com o
+> Adversário ligado, mede no `justo` **1,4–1,8% de vitória (era 51,1–54,2%), 0,41–0,64 PV de grupo de 132 (era 25,88–28,05) e 2,978–2,986 quedas de 3 (era 1,740–1,790)** e no `duro` **0,0% de vitória (era 8,8–9,9%), 0,00 PV e 3,000 quedas**.
+> **Este bloco não foi reescrito de propósito.** Os números dele continuam
+> reproduzíveis byte a byte com `medir(..., { comAdversario: false })`, e a
+> suíte afirma isso em toda rodada de `npm test`.
 
 - **estado inicial:** árvore limpa, HEAD `41f0faa`, VERSÃO v9.243, `npm test`
   **182/182 suítes + 9/9 varredores** verde. Trava posta por mim. **Duas mentes:**
@@ -455,6 +589,16 @@ exibia era acordo por engano.
 ---
 
 ## 14/09 18:05 · v9.243 · B1 · a régua que falta · commit `322dee7`
+
+> **NOTA DE N1b (15/09, v9.251) — os números de Uma Vida deste bloco foram
+> medidos com o Adversário FORA DO CIRCUITO.** A régua passava
+> `prioridade: ""` ao `turnoDosInimigos` (`regua-combate.mjs:612`), e
+> `combate.js:279` só consulta `escolherAlvo` quando ela existe — o jogo
+> passa a intenção da luta (`App.jsx:13606`). A MESMA régua, com o
+> Adversário ligado, mede no `justo` **1,4–1,8% de vitória (era 51,1–54,2%), 0,41–0,64 PV de grupo de 132 (era 25,88–28,05) e 2,978–2,986 quedas de 3 (era 1,740–1,790)** e no `duro` **0,0% de vitória (era 8,8–9,9%), 0,00 PV e 3,000 quedas**.
+> **Este bloco não foi reescrito de propósito.** Os números dele continuam
+> reproduzíveis byte a byte com `medir(..., { comAdversario: false })`, e a
+> suíte afirma isso em toda rodada de `npm test`.
 
 - **estado inicial:** árvore limpa, HEAD `85c23e8`, VERSÃO v9.241, `npm test`
   181/181 suítes + 9/9 varredores verde. Sem trava de ciclo (posta por mim).
@@ -1152,6 +1296,16 @@ com uma trava de ciclo posta**, nem duas mãos na mesma árvore sem olhar.
 ---
 
 ## 14/09 11:35 · v9.238 · T1 · o relógio alcança o grupo · commit `9ca2eb7`
+
+> **NOTA DE N1b (15/09, v9.251) — os números de Uma Vida deste bloco foram
+> medidos com o Adversário FORA DO CIRCUITO.** A régua passava
+> `prioridade: ""` ao `turnoDosInimigos` (`regua-combate.mjs:612`), e
+> `combate.js:279` só consulta `escolherAlvo` quando ela existe — o jogo
+> passa a intenção da luta (`App.jsx:13606`). A MESMA régua, com o
+> Adversário ligado, mede no `justo` **1,4–1,8% de vitória (era 51,1–54,2%), 0,41–0,64 PV de grupo de 132 (era 25,88–28,05) e 2,978–2,986 quedas de 3 (era 1,740–1,790)** e no `duro` **0,0% de vitória (era 8,8–9,9%), 0,00 PV e 3,000 quedas**.
+> **Este bloco não foi reescrito de propósito.** Os números dele continuam
+> reproduzíveis byte a byte com `medir(..., { comAdversario: false })`, e a
+> suíte afirma isso em toda rodada de `npm test`.
 - **estado inicial:** árvore limpa, HEAD `2faf58f`, VERSÃO v9.237, `npm test`
   181/181 suítes + 8/8 varredores verde. Sem trava de ciclo. A Fase C fechada e
   a pauta com quatro fases novas aprovadas (**T → B → F → I**). A vez era **T1**,

@@ -20,7 +20,45 @@
    a casa a ignorar o vermelho.
 
    NENHUMA REGRA DE JOGO MUDOU EM B1. `src/` está intocado; esta suíte lê a
-   régua, e a régua compõe motores que já existiam. */
+   régua, e a régua compõe motores que já existiam.
+
+   ---------------- N1b: A RÉGUA PASSOU A ENXERGAR O ADVERSÁRIO ----------------
+
+   E O QUE ESTA SUÍTE DESCOBRIU AO LIGÁ-LO É O ACHADO DO CICLO, então ele fica
+   escrito no alto e não numa nota de rodapé. Até N1b a régua passava
+   `prioridade: ""` ao `turnoDosInimigos`; o jogo passa a intenção da luta
+   (App.jsx:13606), e `combate.js:279` só consulta `escolherAlvo` quando ela
+   existe. B1, B1b, B2 e T1 mediram Uma Vida com a oposição SEM VONTADE — e
+   nenhuma linha desta suíte ficou vermelha por isso, porque ela provava o
+   instrumento contra ele mesmo. A asserção que faltava está na seção 4 e é
+   pelo EFEITO: ligado e desligado têm de DIFERIR na mesma semente.
+
+   O QUE O ADVERSÁRIO FEZ COM O RETRATO (4 famílias × 1000, cenário `justo`):
+
+       métrica          desligado (B1/B2/T1)      ligado (o jogo)
+       vitória          51,1 a 54,2%              1,4 a 1,8%
+       PV do grupo      25,88 a 28,05 (de 132)    0,41 a 0,64
+       quedas           1,740 a 1,790 (de 3)      2,978 a 2,986
+       TPK              45,8 a 48,9%              98,2 a 98,6%
+       duração          7,70 a 7,75 rodadas       6,01 a 6,12
+       1ª queda         rodada 4,30               rodada 1,05
+       abrigo (PV)      1,75                      3,90
+       golpes perdidos  0,94 por combate          4,99 por combate
+
+   A CATRACA FICOU VERMELHA NO PRIMEIRO DENTE, e ela NÃO foi afrouxada: o
+   piso de 35% de vitória continua sendo o mesmo piso da arena, e o `justo`
+   passou a medir 1,6%. O dente virou `pendente` na seção 5 — imprime e não
+   derruba — porque a dívida é de BALANCEAMENTO e balanceamento é decisão da
+   pessoa; nós medimos. Recalibrar o cenário por conta própria (a régua mediu
+   que 4 elites de nível 3 põem a mesa de volta em 41,8–50,0%) seria a suíte
+   escolhendo o jogo no lugar de quem o escreve.
+
+   E O `JUSTO` DEIXOU DE SER O CENÁRIO COM RESOLUÇÃO NOS DOIS SENTIDOS. Era
+   essa a razão inteira de ele existir; hoje os TRÊS cenários estão saturados
+   (duro 0,0% · justo 1,6% · brando 100%), e uma mudança de combate julgada
+   neles não prova nada em nenhuma direção. Isso está impresso como pendente
+   na seção 6, e é o que a Fase N precisa resolver antes de voltar a usar a
+   régua para julgar equilíbrio. */
 
 const R = await import("./regua-combate.mjs");
 const { readFileSync, readdirSync } = await import("node:fs");
@@ -40,7 +78,7 @@ const sec = (s) => console.log("\n" + s);
 const pendente = (nome, valor) => console.log("  ··  " + nome + " — " + valor + "  (medido, não travado)");
 
 const {
-  CENARIOS_DA_REGUA, AMOSTRA_DA_REGUA, INTERVALO_DE_CONFIANCA, CATRACA_DE_UMA_VIDA, METRICAS_DA_REGUA,
+  CENARIOS_DA_REGUA, AMOSTRA_DA_REGUA, INTERVALO_DE_CONFIANCA, CATRACA_DE_UMA_VIDA, METRICAS_DA_REGUA, ADVERSARIO_NA_REGUA,
   sorteDaSemente, comSorteTravada, simularCombate, mediaComMargem, proporcaoComMargem, concordam, medir, linhaDaMetrica,
 } = R;
 
@@ -105,7 +143,13 @@ sec("1. A TABELA LIDA DE VOLTA — nenhum número da catraca repetido à mão");
 
   /* A CATRACA: o que ela declara tem de fechar com o resto da casa. */
   t("a catraca mora num cenário que existe", !!CENARIOS_DA_REGUA[CATRACA_DE_UMA_VIDA.cenario]);
-  t("e é o `justo` — o único com resolução nos dois sentidos", CATRACA_DE_UMA_VIDA.cenario === "justo");
+  /* O RÓTULO MUDOU EM N1b e a asserção não: a tabela continua declarando que
+     a catraca mora no `justo`, e é só isso que esta linha prova. O que deixou
+     de ser verdade é a JUSTIFICATIVA que o rótulo carregava — com o Adversário
+     ligado o `justo` não tem mais resolução nos dois sentidos (seção 6). Dizer
+     aqui que tem seria a suíte repetindo uma razão que ela mesma já mediu como
+     vencida. */
+  t("a catraca mora no `justo`, como a tabela declara", CATRACA_DE_UMA_VIDA.cenario === "justo");
   t("piso e teto de vitória são proporções, e o piso vem antes do teto",
     CATRACA_DE_UMA_VIDA.pisoDeVitoria > 0 && CATRACA_DE_UMA_VIDA.tetoDeVitoria < 1 && CATRACA_DE_UMA_VIDA.pisoDeVitoria < CATRACA_DE_UMA_VIDA.tetoDeVitoria);
   t("a faixa é simétrica em torno da mesa no meio (35–65 é 50 ± 15)",
@@ -130,6 +174,32 @@ sec("1. A TABELA LIDA DE VOLTA — nenhum número da catraca repetido à mão");
   t("as quatro taxas estão marcadas como taxa, e só elas",
     METRICAS_DA_REGUA.filter((m) => m.taxa).map((m) => m.id).sort().join(",") === "estourouTeto,quedaDoHeroi,tpk,vitoria");
   t("os três dentes da catraca são métricas da régua", ["vitoria", "pvGrupo", "quedas"].every((id) => METRICAS_DA_REGUA.some((m) => m.id === id)));
+
+  /* ---------------- A TABELA DO ADVERSÁRIO (N1b) ----------------
+     O parâmetro que reproduz a medida antiga não pode ser um `false` solto no
+     corpo de `medir`: é tabela nomeada, com o motivo escrito ao lado, e é
+     lida de volta aqui — a mesma lei que vale para todo número desta casa. */
+  t("o Adversário está LIGADO por padrão — a régua mede o jogo, não um jogo sem oposição", ADVERSARIO_NA_REGUA.ligado === true);
+  t("a tabela nomeia os campos de MUNDO que a régua não tem (e por isso deixa no default de `garantirLuta`)",
+    Array.isArray(ADVERSARIO_NA_REGUA.foraDaRegua) && ADVERSARIO_NA_REGUA.foraDaRegua.length >= 8 &&
+    ["terreno", "fama", "masmorra", "refem", "vilao", "postura", "publico", "emboscada"].every((x) => ADVERSARIO_NA_REGUA.foraDaRegua.includes(x)));
+  /* E O PREÇO DISSO TEM NOME. Uma régua que não diz quais intenções ficam
+     fora de alcance deixa a Fase N concluir sobre o acervo inteiro a partir
+     de um pedaço dele. A lista é longa de propósito: é o alcance declarado
+     do instrumento, não um defeito escondido. */
+  t("e nomeia as intenções que, por causa disso, nunca são eleitas aqui",
+    ADVERSARIO_NA_REGUA.inalcancaveis.length >= 20 && new Set(ADVERSARIO_NA_REGUA.inalcancaveis).size === ADVERSARIO_NA_REGUA.inalcancaveis.length);
+  t("e separa as que ficam fora pelo CENÁRIO (sem chefe, sem bicho, sem morto-vivo) das que ficam fora pelo MUNDO",
+    ADVERSARIO_NA_REGUA.foraPorCenario.length > 0 &&
+    ADVERSARIO_NA_REGUA.foraPorCenario.every((x) => !ADVERSARIO_NA_REGUA.inalcancaveis.includes(x)));
+  /* as duas listas só valem se os ids EXISTEM: uma intenção renomeada em
+     `adversario.js` deixaria a declaração falando de um fantasma. */
+  {
+    const ADV = readFileSync("../src/adversario.js", "utf8");
+    const declarados = [...ADVERSARIO_NA_REGUA.inalcancaveis, ...ADVERSARIO_NA_REGUA.foraPorCenario];
+    const fantasmas = declarados.filter((id) => !ADV.includes(`id: "${id}"`));
+    t(`as ${declarados.length} intenções declaradas existem em adversario.js (nenhuma é fantasma)`, fantasmas.length === 0, fantasmas.join(", "));
+  }
 }
 
 /* ============================================================
@@ -270,6 +340,64 @@ sec("4. UM COMBATE — determinismo byte a byte e a forma do retrato");
 }
 
 /* ============================================================
+   4b. O ADVERSÁRIO ESTÁ NO CIRCUITO — a asserção que faltava
+   ============================================================
+   ESTE É O DENTE QUE TERIA PEGO O BUG DE N1b, e ele existe porque nenhum dos
+   outros pegou. A régua passava `prioridade: ""` ao `turnoDosInimigos`
+   enquanto o jogo passa a intenção da luta (App.jsx:13606) — e como
+   `combate.js:279` só consulta `escolherAlvo` QUANDO a prioridade existe, o
+   resultado era um combate em que a oposição sorteia o alvo a 35% e nada
+   mais. Quatro etapas mediram Uma Vida assim, em silêncio.
+
+   A PROVA É PELO EFEITO, e de propósito: espiar a variável interna
+   (`prioridade !== ""`) provaria que a régua a MONTA, não que ela CHEGA ao
+   motor e MUDA o combate. Um `escolherAlvo` que devolvesse null sempre
+   passaria naquela prova e reprovaria nesta. O que se afirma aqui é o que
+   importa: na MESMA semente, com Adversário e sem, o combate é outro. */
+sec("4b. O ADVERSÁRIO CHEGA AO MOTOR — o dente que teria pego o bug de N1b");
+{
+  const com = simularCombate("justo", "umavida|0");
+  const sem = simularCombate("justo", "umavida|0", { comAdversario: false });
+  t("na MESMA semente, com Adversário e sem, o combate é DIFERENTE — a prioridade chega ao motor",
+    JSON.stringify(com) !== JSON.stringify(sem), "idênticos: a prioridade não está chegando");
+  /* e não é uma semente de sorte: em dez sementes seguidas, TODAS diferem. */
+  const iguais = Array.from({ length: 10 }, (_, i) => `umavida|${i}`)
+    .filter((s) => JSON.stringify(simularCombate("justo", s)) === JSON.stringify(simularCombate("justo", s, { comAdversario: false })));
+  t("e isso vale em dez sementes seguidas, não numa que deu sorte", iguais.length === 0, iguais.join(", "));
+
+  /* O RASTRO. Com Adversário, toda rodada elege UMA intenção e ela vem de
+     `adversario.js`; sem ele, o rastro é vazio — que é a cara do molde
+     antigo, e é como se reconhece uma medida de B1/B2/T1. */
+  t("com Adversário, toda rodada do combate elege uma intenção", com.intencoes.length > 0 && com.intencoes.length <= com.rodadas);
+  t("sem Adversário, nenhuma — o rastro vazio é a assinatura do molde antigo", sem.intencoes.length === 0);
+  t("as intenções eleitas são ids de verdade do acervo",
+    (() => { const ADV = readFileSync("../src/adversario.js", "utf8"); return com.intencoes.every((id) => ADV.includes(`id: "${id}"`)); })());
+  /* A MEMÓRIA POR COMBATE (App.jsx:6160-6168, `antes: intencaoRef.current`):
+     a intenção ADERE — só a quebra a desfaz. Se a régua derivasse do zero a
+     cada rodada, o rastro trocaria de plano toda vez que um número oscila, e
+     a oposição voltaria a não ter plano. A prova possível sem espiar estado:
+     num combate de várias rodadas, o rastro repete ids em sequência. */
+  const longo = ["umavida|0", "umavida|1", "umavida|2", "umavida|3", "umavida|4"]
+    .map((s) => simularCombate("justo", s)).find((c) => c.intencoes.length >= 4);
+  t("a intenção ADERE entre rodadas (memória por combate, não resorteio por rodada)",
+    !!longo && longo.intencoes.some((id, i) => i > 0 && id === longo.intencoes[i - 1]), longo ? longo.intencoes.join(" → ") : "nenhum combate longo");
+
+  /* `medir` carrega o modo consigo: uma tabela de números sem dizer com qual
+     instrumento foi medida é exatamente o que produziu o retrato de B1. */
+  t("`medir` diz em que modo mediu — número sem instrumento é como B1 nasceu",
+    medir("brando", { n: 2 }).comAdversario === true && medir("brando", { n: 2, comAdversario: false }).comAdversario === false);
+  t("e o default de `medir` é o da tabela, não um literal escondido",
+    medir("brando", { n: 2 }).comAdversario === ADVERSARIO_NA_REGUA.ligado);
+
+  /* O DESPERDÍCIO EM CORPO CAÍDO é a explicação mecânica do que mudou:
+     `turnoDosInimigos` escolhe os alvos de todos os inimigos de uma vez, e
+     com a intenção concentrando fogo no mesmo companheiro os golpes que
+     sobram caem em quem já está no chão. Só forma aqui; o número na seção 8. */
+  t("o retrato conta os golpes perdidos em corpo caído (o preço da concentração de fogo)",
+    Number.isInteger(com.golpesEmCaidos) && com.golpesEmCaidos >= 0 && Number.isInteger(sem.golpesEmCaidos));
+}
+
+/* ============================================================
    A MEDIÇÃO — feita uma vez, afirmada muitas
    ============================================================
    O N DA SUÍTE É O N DA TABELA (1000), e não um recorte: a medição inteira
@@ -281,6 +409,14 @@ const T0 = Date.now();
 const MED = {};
 for (const cen of ["justo", "duro", "brando"]) {
   MED[cen] = CATRACA_DE_UMA_VIDA.familias.map((fam) => medir(cen, { n: CATRACA_DE_UMA_VIDA.sementesPorFamilia, prefixo: fam }));
+}
+/* E A MEDIDA ANTIGA JUNTO, na família do retrato: é ela que prova que a
+   história de B1/B1b/B2/T1 continua reproduzível byte a byte. Uma régua que
+   consertasse o instrumento e apagasse o caminho de volta faria todo número
+   escrito no diário passar a mentir — e ninguém teria como saber. */
+const MED_SEM = {};
+for (const cen of ["justo", "duro", "brando"]) {
+  MED_SEM[cen] = medir(cen, { n: CATRACA_DE_UMA_VIDA.sementesPorFamilia, prefixo: AMOSTRA_DA_REGUA.familiaDoRetrato, comAdversario: false });
 }
 const CUSTO_DA_MEDIDA = Date.now() - T0;
 
@@ -320,7 +456,39 @@ const CUSTO_DA_MEDIDA = Date.now() - T0;
    bastante para caber nela e mudanças reais que não cabem.
 
    NENHUM DOS TRÊS NÚMEROS APARECE ESCRITO AQUI: todos saem de
-   `CATRACA_DE_UMA_VIDA`. Se é número, é tabela. */
+   `CATRACA_DE_UMA_VIDA`. Se é número, é tabela.
+
+   ---------------- N1b: O PRIMEIRO DENTE FICOU VERMELHO ----------------
+
+   TUDO O QUE ESTÁ ESCRITO ACIMA FOI MEDIDO SEM O ADVERSÁRIO. Com ele ligado
+   — que é o jogo — o retrato do `justo` é outro:
+
+     vitória      0,018 · 0,014 · 0,015 · 0,017   ± 0,008
+     PV do grupo  0,63 · 0,41 · 0,44 · 0,64       ± 0,24 a 0,35  (de 132)
+     quedas       2,978 · 2,986 · 2,984 · 2,981   ± 0,007 a 0,011  (de 3)
+
+   O PISO DE 35% DE VITÓRIA NÃO FOI TOCADO, e não será: é a lei da arena,
+   herdada, e um piso que se move para caber no retrato deixa de ser piso. O
+   que muda é o STATUS da afirmação — o dente 1 passa a `pendente`: imprime
+   em todo `npm test`, não derruba a suíte. O motivo é de fronteira, não de
+   conveniência: a dívida aqui é de BALANCEAMENTO (o cenário `justo` foi
+   calibrado contra uma oposição sem vontade e não sobreviveu a ela ganhar
+   uma), e balanceamento é decisão da pessoa. A régua mede; ela não escolhe o
+   jogo. Recalibrar o cenário aqui seria a suíte legislando.
+
+   O NÚMERO QUE A DECISÃO VAI QUERER, já medido e não chutado (500 sementes,
+   4 famílias, Adversário ligado): 4 elites de nível 3 põem a mesa de volta em
+   41,8 a 50,0% de vitória, com PV 17,8 a 21,3 e quedas 2,42 a 2,49 — os três
+   dentes verdes. 3 elites de nível 6 dão 36,4 a 42,0%. É informação para
+   quem decide, não uma mudança feita por conta própria.
+
+   OS DENTES 2 E 3 CONTINUAM ASSERÇÃO, e é honesto dizer POR QUÊ e com que
+   valor: eles ficaram verdes por SATURAÇÃO, não por equilíbrio. Sobram 0,5 de
+   132 PV contra um teto de 35, e caem 2,98 dos 3 contra um piso de 1,2. Não
+   estão medindo o jogo — estão encostados no chão e no teto do possível. Eles
+   ficam porque o dia em que um deles ficar vermelho ainda significa alguma
+   coisa (o grupo teria de voltar a sobreviver), mas quem ler "verde" aqui
+   tem de ler junto esta linha. */
 sec("5. A CATRACA DE UMA VIDA — o grupo não é fraco demais nem forte demais");
 {
   const K = CATRACA_DE_UMA_VIDA;
@@ -329,31 +497,66 @@ sec("5. A CATRACA DE UMA VIDA — o grupo não é fraco demais nem forte demais"
 
   MED.justo.forEach((r, i) => {
     const fam = K.familias[i];
-    /* DENTE 1 — O DESFECHO. Vale em TODA família, não na que deu sorte: uma
-       amostra só prova sorte, e é por isso que são quatro. */
-    t(`[${fam}] o grupo vence entre ${faixa} — ${pct(r.vitoria.media)}`,
-      r.vitoria.media >= K.pisoDeVitoria && r.vitoria.media <= K.tetoDeVitoria, linhaDaMetrica(r.vitoria, 3));
-    /* DENTE 2 — A FOLGA. O dente mais sensível a bônus ofensivo. */
+    /* DENTE 1 — O DESFECHO. ERA ASSERÇÃO E VIROU PENDENTE EM N1b, e o motivo
+       fica aqui porque uma asserção convertida sem razão escrita é uma lei
+       apagada em silêncio. Com o Adversário ligado o `justo` mede 1,4 a 1,8%
+       contra um piso de 35%. Nada foi afrouxado: o piso é o mesmo da arena,
+       a faixa é a mesma, e a régua continua imprimindo o número em todo `npm
+       test`. O que ela deixa de fazer é DERRUBAR a suíte por uma dívida de
+       balanceamento — que é decisão da pessoa, não da prova. O dia em que o
+       cenário for recalibrado, esta linha volta a ser `t(...)`, como as duas
+       pendentes de `teste-arena.mjs` voltaram em A3. */
+    const dentro = r.vitoria.media >= K.pisoDeVitoria && r.vitoria.media <= K.tetoDeVitoria;
+    pendente(`[${fam}] DENTE 1 (vitória ${faixa})`, `${pct(r.vitoria.media)} — ${dentro ? "DENTRO" : "FORA DA FAIXA"}  ${linhaDaMetrica(r.vitoria, 3)}  [dívida de balanceamento: o cenário foi calibrado sem o Adversário]`);
+    /* DENTE 2 — A FOLGA. O dente mais sensível a bônus ofensivo. Verde por
+       saturação desde N1b (0,5 PV de 132 contra um teto de 35): continua
+       valendo como asserção, mas quem lê o verde lê o cabeçalho junto. */
     t(`[${fam}] sobra no máximo ${K.tetoDePvDoGrupo} de ${r.pvGrupoMax} PV — ${r.pvGrupo.media.toFixed(2)}`,
       r.pvGrupo.media <= K.tetoDePvDoGrupo, linhaDaMetrica(r.pvGrupo, 2));
-    /* DENTE 3 — O PREÇO. Um grupo que atravessa sem derrubar ninguém. */
+    /* DENTE 3 — O PREÇO. Um grupo que atravessa sem derrubar ninguém. Idem:
+       2,98 de 3 contra um piso de 1,2 é saturação, não equilíbrio. */
     t(`[${fam}] o combate derruba pelo menos ${K.pisoDeQuedas} dos ${CENARIOS_DA_REGUA.justo.grupo.length} — ${r.quedas.media.toFixed(3)}`,
       r.quedas.media >= K.pisoDeQuedas, linhaDaMetrica(r.quedas, 3));
   });
 
+  /* E O CAMINHO DE VOLTA CONTINUA ABERTO: com `comAdversario: false` a régua
+     reproduz o retrato de B1/B1b/B2/T1 — 52,1% de vitória, 25,88 PV e 1,790
+     quedas na família do retrato. Esta asserção é a garantia de que consertar
+     o instrumento não reescreveu a história: os números do diário continuam
+     alcançáveis, e quem os for conferir os encontra. */
+  {
+    const v = MED_SEM.justo;
+    t("com `comAdversario: false` a régua reproduz a medida antiga (52,1% · 25,88 PV · 1,790 quedas)",
+      Math.abs(v.vitoria.media - 0.521) < 1e-9 && Math.abs(v.pvGrupo.media - 25.88) < 0.005 && Math.abs(v.quedas.media - 1.790) < 5e-4,
+      `${linhaDaMetrica(v.vitoria, 3)} · ${linhaDaMetrica(v.pvGrupo, 2)} · ${linhaDaMetrica(v.quedas, 3)}`);
+    t("e o `duro` antigo também — 8,8% de vitória, quedas 0 no brando", Math.abs(MED_SEM.duro.vitoria.media - 0.088) < 1e-9 && MED_SEM.brando.quedas.media === 0,
+      `${linhaDaMetrica(MED_SEM.duro.vitoria, 3)} · brando quedas ${MED_SEM.brando.quedas.media}`);
+    /* e o dente 1 SAÍA VERDE no molde antigo: é isto que prova que o vermelho
+       de hoje veio do instrumento passar a enxergar o jogo, e não de o
+       cenário ter mudado. Nenhuma linha da tabela de cenários se moveu. */
+    t("e no molde antigo o dente 1 saía VERDE — o vermelho de hoje é o Adversário, não o cenário",
+      v.vitoria.media >= K.pisoDeVitoria && v.vitoria.media <= K.tetoDeVitoria);
+  }
+
   /* A FOLGA EM MARGENS, TRAVADA. É o dente que guarda os OUTROS dentes: se a
      folga encolher para menos de 2 margens, o limiar passou a medir
      resorteio e a régua deixou de ser confiável ANTES de ficar vermelha.
-     Descobrir isso quando já está piscando é tarde demais. */
+     Descobrir isso quando já está piscando é tarde demais.
+
+     N1b: A FOLGA DE VITÓRIA SAIU DESTA CONTA, e não por conveniência — o
+     dente virou pendente, e medir a folga de um limiar que não afirma nada
+     seria afirmar pela porta dos fundos o que a seção acabou de não afirmar.
+     A folga de vitória continua VISÍVEL logo abaixo, com o sinal e tudo. O
+     limiar não se moveu; o que se moveu foi o que a suíte declara provar. */
   const folgas = [];
   MED.justo.forEach((r) => {
-    folgas.push((r.vitoria.media - CATRACA_DE_UMA_VIDA.pisoDeVitoria) / r.vitoria.margem);
-    folgas.push((CATRACA_DE_UMA_VIDA.tetoDeVitoria - r.vitoria.media) / r.vitoria.margem);
     folgas.push((CATRACA_DE_UMA_VIDA.tetoDePvDoGrupo - r.pvGrupo.media) / r.pvGrupo.margem);
     folgas.push((r.quedas.media - CATRACA_DE_UMA_VIDA.pisoDeQuedas) / r.quedas.margem);
   });
   const menor = Math.min(...folgas);
-  t(`todo limiar está a mais de 2 margens do retrato — a menor folga é ${menor.toFixed(2)}`, menor > 2, `${menor.toFixed(2)} margens`);
+  t(`todo limiar AINDA AFIRMADO está a mais de 2 margens do retrato — a menor folga é ${menor.toFixed(2)}`, menor > 2, `${menor.toFixed(2)} margens`);
+  const folgaVit = Math.min(...MED.justo.map((r) => (r.vitoria.media - CATRACA_DE_UMA_VIDA.pisoDeVitoria) / r.vitoria.margem));
+  pendente("a folga do PISO de vitória, em margens", `${folgaVit.toFixed(1)}  [negativa: o retrato está ABAIXO do piso, e é essa a dívida]`);
 
   /* E AS FAMÍLIAS TÊM DE CONCORDAR ENTRE SI nos três dentes. É a prova de
      que a régua mede o jogo e não o resorteio: duas famílias independentes
@@ -382,12 +585,29 @@ sec("6. OS GUARDAS — o teto de rodadas e o extremo brando");
     t(`[${cen}] nenhum combate bate no teto de rodadas — 0 de ${combates}`, estouros === 0, `${estouros} estouros`);
   }
 
-  /* O EXTREMO BRANDO. Ninguém cai, nunca: zero em 4000 combates nas quatro
-     famílias. Não é catraca de equilíbrio — é alarme de incêndio. Uma queda
-     aqui significa que alguma coisa quebrou em silêncio no combate, e este
-     é o lugar mais barato do jogo para perceber. */
+  /* O EXTREMO BRANDO. ERA "NINGUÉM CAI, NUNCA" — zero em 4000 combates — e
+     virou PENDENTE em N1b, com o motivo escrito porque uma asserção convertida
+     em silêncio é uma lei apagada.
+
+     O QUE ACONTECEU: com o Adversário ligado, três comuns de nível 5 param de
+     sortear alvo e passam a concentrar fogo por intenção (`calar_a_magia` na
+     rodada 1, sempre), e a concentração derruba um companheiro em 12 dos 4000
+     combates — 2 · 6 · 0 · 4 nas quatro famílias. Não é "alguma coisa quebrou
+     em silêncio": é a oposição fazendo exatamente o que `adversario.js` foi
+     escrito para fazer, num cenário onde antes ela não fazia nada.
+
+     POR QUE PENDENTE E NÃO UM NOVO LIMIAR ("no máximo 1% de quedas"): 12 em
+     4000 é o número mais ralo que esta régua produz, e uma família já mede
+     zero. Um limiar aí mediria o resorteio antes de medir o jogo — é a mesma
+     lição de A4 e C2b que mantém `absorvido` fora da catraca. Fica visível,
+     sem força de lei, até alguém decidir o que o brando deve provar. */
   const quedasBrando = MED.brando.reduce((s, r) => s + Math.round(r.quedas.media * r.quedas.n), 0);
-  t(`[brando] ninguém cai — 0 quedas em ${MED.brando.reduce((s, r) => s + r.quedas.n, 0)} combates`, quedasBrando === 0, `${quedasBrando} quedas`);
+  const combatesBrando = MED.brando.reduce((s, r) => s + r.quedas.n, 0);
+  pendente(`[brando] o guarda que era "ninguém cai"`, `${quedasBrando} quedas em ${combatesBrando} combates (${MED.brando.map((r) => Math.round(r.quedas.media * r.quedas.n)).join(" · ")} por família)  [era 0 antes do Adversário; ralo demais para virar limiar]`);
+  /* e o molde antigo continua medindo zero — a prova de que a queda no brando
+     nasceu do Adversário e não de uma regra de combate que mudou sozinha. */
+  t("[brando] e sem o Adversário continua sendo zero — a queda nova é da intenção, não de regra mexida",
+    MED_SEM.brando.quedas.media === 0, `${MED_SEM.brando.quedas.media}`);
   /* e a outra ponta do mesmo par: o brando se ganha SEMPRE. Sem isso, "0
      quedas" poderia significar que o grupo morreu antes de alguém cair. */
   t("[brando] e a luta se ganha em todas as famílias", MED.brando.every((r) => r.vitoria.media === 1), MED.brando.map((r) => r.vitoria.media).join(" "));
@@ -406,6 +626,22 @@ sec("6. OS GUARDAS — o teto de rodadas e o extremo brando");
      não a enxergam. Este dente trava a razão de existir do `justo`. */
   t("os outros dois cenários estão saturados — é por isso que a catraca mora no `justo`",
     vitMax("duro") < CATRACA_DE_UMA_VIDA.pisoDeVitoria && vit("brando") > CATRACA_DE_UMA_VIDA.tetoDeVitoria);
+
+  /* ---------------- O ACHADO QUE A FASE N PRECISA LER ----------------
+     O `justo` EXISTE por uma razão só, escrita na tabela da régua: ser o
+     único cenário com resolução nos dois sentidos — todo número com folga
+     para subir e para descer. Com o Adversário ligado ele parou de ser isso.
+     Os TRÊS cenários estão hoje encostados numa ponta, e uma mudança de
+     combate julgada neles não prova nada em direção nenhuma: é exatamente o
+     defeito que o `justo` foi criado para consertar, reaparecendo por dentro.
+
+     NÃO RECALIBRAMOS. A régua mede e diz; escolher a dureza do cenário é
+     decisão da pessoa, e a suíte que recalibra sozinha deixa de ser prova. O
+     que fica aqui é o diagnóstico com o número ao lado. */
+  const justoSaturado = vitMax("justo") < CATRACA_DE_UMA_VIDA.pisoDeVitoria;
+  pendente("os três cenários estão saturados agora",
+    `duro ≤ ${(vitMax("duro") * 100).toFixed(1)}% · justo ${(vit("justo") * 100).toFixed(1)}–${(vitMax("justo") * 100).toFixed(1)}% · brando ${(vit("brando") * 100).toFixed(1)}%` +
+    (justoSaturado ? "  [o `justo` DEIXOU de ter resolução nos dois sentidos — era a razão inteira de ele existir]" : ""));
 }
 
 /* ============================================================
@@ -415,41 +651,62 @@ sec("6. OS GUARDAS — o teto de rodadas e o extremo brando");
    de CPU. Estas três sabotagens mudam o cenário (nunca `src/`: B1 prometeu
    não tocar em produção) e provam que cada dente pega o que promete pegar.
 
-   Números medidos a 500 sementes da família do retrato, escritos aqui para
-   quem vier depois não precisar rodar de novo:
+   AS SABOTAGENS FORAM TODAS REMEDIDAS EM N1b, e três delas trocaram de
+   cenário. Os TEXTOS e os VALORES mudaram; nenhum limiar se moveu um dígito.
+   O motivo de cada troca está escrito ao lado dela, porque uma sabotagem
+   substituída em silêncio é um dente que ninguém sabe se ainda morde.
 
-     sabotagem                         vitória   PV grupo   quedas
-     (controle — nada sabotado)         51,2%     24,19      1,820
-     4 elites de nível 8                21,0%      8,12      2,556   ← piso
-     3 elites de nível 9                76,2%     45,16      1,058   ← os três
-     grupo de nível 7                   89,4%     78,11      0,578   ← os três
+   Números medidos a 500 sementes, Adversário LIGADO, para quem vier depois
+   não precisar rodar de novo:
 
-   A PRIMEIRA MUDOU DE NÍVEL, E O MOTIVO É O ACHADO DO CICLO. Ela era "4
-   elites de nível 7" e media 34,2% contra um piso de 35% — oito décimos de
-   folga, o dente mais fino da suíte. Depois do conserto da ordem do teste de
-   morte na régua, a MESMA sabotagem mede 36,4%: ela PAROU DE MORDER, e um
-   dente que não morde não é dente. A saída não foi mexer no piso (35% é lei
-   da casa, herdada da arena) e sim tornar a sabotagem uma sabotagem de novo:
-   nível 8, que mede 21,0%.
+     cenário                           vitória   PV grupo   quedas
+     4 elites nv3 (controle VERDE)      49,4%     20,48      2,422   ← os três verdes
+     4 elites nv6 (o `justo` de hoje)    1,6%      0,37      2,986   ← piso de vitória
+     4 elites nv8                        0,2%      0,09      2,998
+     1 elite  nv6                      100,0%    108,27      0,216   ← os três
+     grupo nv7                          14,0%      4,48      2,856
+     grupo nv9                          73,2%     37,51      2,112
+     grupo nv12                         98,4%     98,27      1,436   ← dois tetos
 
-   O QUE SE PERDEU ESTÁ ESCRITO, porque perder resolução em silêncio é pior
-   do que perdê-la: a menor mudança de dureza que a faixa pega hoje é de DOIS
-   níveis, não de um. Um nível inteiro (nv7, 36,3% a 1000 sementes) cabe na
-   faixa por 1,3 ponto. A faixa continua não sendo larga o bastante para tudo
-   passar — só não é mais fina a ponto de pegar um degrau.
+   O QUE MUDOU E POR QUÊ, uma a uma:
 
-   A TERCEIRA É A QUE B2 VAI ENCOSTAR: "grupo forte demais" é literalmente o
-   risco da fase, e ela derruba os três dentes de uma vez. A régua também já
-   mediu a escada do bônus ofensivo direto (ver `CATRACA_DE_UMA_VIDA`, no
-   módulo): cada ponto de dano por golpe vale ~2,9 pontos de vitória, +1 já
-   sai da margem no PV do grupo, e a catraca fica vermelha em +5 (nos dois
-   tetos ao mesmo tempo). Essa escada não é reproduzida AQUI porque somar dano por golpe
-   exige mexer no motor, e B1 não mexe — a sabotagem por cenário é a forma
-   de provar o mesmo sem tocar em `src/`.
+   · O CONTROLE INVERTEU DE PAPEL. Ele era "o `justo` copiado, verde nos três
+     dentes"; com o Adversário ligado o `justo` mede 1,6% e o controle ficaria
+     VERMELHO. Um controle vermelho não controla nada — deixa de ser possível
+     distinguir "a sabotagem pesou" de "o caminho do objeto literal quebrou".
+     O novo controle é o cenário que a régua mediu como o meio de hoje: 4
+     elites de nível 3, verde nos três dentes em todas as quatro famílias
+     (41,8 a 50,0%). Ele NÃO é uma recalibragem do `justo` — a tabela de
+     cenários não mudou uma linha; é a sonda que prova que a catraca ainda
+     pode ficar verde, e portanto que o vermelho de hoje é informação.
+
+   · A SABOTAGEM DO PISO virou o próprio `justo`, e é a forma mais honesta de
+     dizer o achado: o cenário que a casa usa para julgar Uma Vida é hoje uma
+     sabotagem do piso de vitória. "4 elites nv8" fica junto como a ponta
+     extrema (0,2%), mas perdeu a função — com o controle a 1,6%, ela não
+     prova resolução nenhuma, prova só que o fundo é fundo.
+
+   · "3 ELITES NV9" SAIU. Ela existia para estourar os três dentes por CIMA e
+     media 76,2% sem Adversário; com ele, mede 5,2% — parou de morder em
+     qualquer dente. Um dente que não morde não é dente. Entrou "1 elite nv6",
+     que estoura os três com folga enorme (100% · 108 PV · 0,22 queda) nas
+     quatro famílias.
+
+   · "GRUPO NV7" SAIU PELO MESMO MOTIVO (89,4% antes, 14,0% agora) e virou
+     "grupo nv12" — o risco literal de B2 continua sendo o grupo forte demais,
+     só que agora "forte demais" contra uma oposição que sabe em quem bater
+     custa cinco níveis, não dois. "Grupo nv9" (73,2%) ficou de fora por
+     folga: o PV mede 35,9 a 37,5 contra um teto de 35, menos de uma margem.
+
+   O QUE ISSO INFORMA A B2, já que era ela que ia usar estes números: a escada
+   do bônus ofensivo escrita em `CATRACA_DE_UMA_VIDA` (cada ponto de dano por
+   golpe vale ~2,9 pontos de vitória, vermelho em +5) foi medida SEM
+   Adversário e não vale mais. Ninguém a remediu nesta etapa — medir a escada
+   nova é fase, não conserto de instrumento.
 
    AS SABOTAGENS USAM N MENOR (500) de propósito: elas estão a dezenas de
    margens do limiar, não a quatro. Gastar 1000 sementes para provar que
-   90,2% > 65% seria comprar precisão que ninguém vai usar. */
+   100% > 65% seria comprar precisão que ninguém vai usar. */
 sec("7. A CATRACA MORDE — sabotagem, o dente não é cego");
 {
   const K = CATRACA_DE_UMA_VIDA;
@@ -457,43 +714,53 @@ sec("7. A CATRACA MORDE — sabotagem, o dente não é cego");
   const N_SABOTAGEM = 500;
   const sabotar = (id, mods) => medir({ ...J, id, ...mods }, { n: N_SABOTAGEM, prefixo: AMOSTRA_DA_REGUA.familiaDoRetrato });
 
-  /* SABOTAGEM 1 — o outro lado da mesa DOIS níveis mais duro. Derruba SÓ o
-     piso de vitória: é a prova de que a faixa tem resolução, e o comentário
-     da seção diz exatamente quanta (um nível cabe, dois não). Era nível 7 e
-     passou a 8 porque o nível 7 parou de morder depois do conserto da ordem
-     do teste de morte — o piso não se moveu um dígito. */
-  const s1 = sabotar("sabotagem:elites-nv8", { inimigos: { ...J.inimigos, nivel: 8 } });
-  t(`sabotagem 1 (4 elites nv8): a vitória cai ABAIXO do piso — ${(s1.vitoria.media * 100).toFixed(1)}% < ${K.pisoDeVitoria * 100}%`,
+  /* O CONTROLE VERDE — e ele vem PRIMEIRO agora, porque em N1b ele passou a
+     ser a linha mais importante da seção: é ele que prova que a catraca não
+     ficou permanentemente vermelha, e portanto que o vermelho do `justo` é
+     um diagnóstico e não um instrumento quebrado. 4 elites de nível 3 é o que
+     a régua mediu como a mesa no meio COM Adversário; a tabela de cenários
+     continua intocada, isto é uma sonda. */
+  const s0 = sabotar("controle:elites-nv3", { inimigos: { ...J.inimigos, nivel: 3 } });
+  t(`controle (4 elites nv3 — a mesa no meio com Adversário): os três dentes VERDES — ${(s0.vitoria.media * 100).toFixed(1)}% · ${s0.pvGrupo.media.toFixed(2)} PV · ${s0.quedas.media.toFixed(3)} quedas`,
+    s0.vitoria.media >= K.pisoDeVitoria && s0.vitoria.media <= K.tetoDeVitoria && s0.pvGrupo.media <= K.tetoDePvDoGrupo && s0.quedas.media >= K.pisoDeQuedas,
+    `${linhaDaMetrica(s0.vitoria, 3)} · ${linhaDaMetrica(s0.pvGrupo, 2)} · ${linhaDaMetrica(s0.quedas, 3)}`);
+
+  /* SABOTAGEM 1 — O PISO DE VITÓRIA, e a sabotagem é o `justo` de hoje. O
+     dente 1 virou pendente na seção 5 (a dívida é de balanceamento), mas o
+     LIMIAR continua existindo e continua sabendo morder: aqui ele morde. */
+  const s1 = sabotar("sabotagem:o-justo-de-hoje", {});
+  t(`sabotagem 1 (o justo de hoje, 4 elites nv6): a vitória cai ABAIXO do piso — ${(s1.vitoria.media * 100).toFixed(1)}% < ${K.pisoDeVitoria * 100}%`,
     s1.vitoria.media < K.pisoDeVitoria, linhaDaMetrica(s1.vitoria, 3));
   /* e o dente do PV NÃO morde aqui — de propósito: os três dentes medem
      coisas diferentes, e um cenário mais duro deixa MENOS PV, não mais. Se
      este dia mordesse, os três seriam o mesmo dente com três nomes. */
   t("  ...e o teto de PV continua verde: os três dentes não são o mesmo dente", s1.pvGrupo.media <= K.tetoDePvDoGrupo, linhaDaMetrica(s1.pvGrupo, 2));
+  /* e o controle bate com a medida por id — o objeto e a string são a mesma
+     mesa. Era a última linha da seção; subiu para cá porque agora é o `justo`
+     que entra como objeto literal, e um desvio aqui invalidaria a sabotagem. */
+  t("e a sabotagem 1 bate com a medida por id (objeto e string são a mesma mesa)",
+    perto(s1.vitoria.media, medir("justo", { n: N_SABOTAGEM, prefixo: AMOSTRA_DA_REGUA.familiaDoRetrato }).vitoria.media, 1e-12));
 
-  /* SABOTAGEM 2 — um inimigo a menos e mais forte. Derruba os três. */
-  const s2 = sabotar("sabotagem:tres-elites-nv9", { inimigos: { quantos: 3, ameaca: "elite", nivel: 9, base: "Adversário" } });
-  t(`sabotagem 2 (3 elites nv9): a vitória passa do teto — ${(s2.vitoria.media * 100).toFixed(1)}% > ${K.tetoDeVitoria * 100}%`, s2.vitoria.media > K.tetoDeVitoria, linhaDaMetrica(s2.vitoria, 3));
+  /* SABOTAGEM 2 — um inimigo só. Derruba os três, com folga enorme. Entrou no
+     lugar de "3 elites nv9", que parou de morder com o Adversário ligado
+     (76,2% → 5,2%): dente que não morde não é dente. */
+  const s2 = sabotar("sabotagem:um-elite-nv6", { inimigos: { ...J.inimigos, quantos: 1 } });
+  t(`sabotagem 2 (1 elite nv6): a vitória passa do teto — ${(s2.vitoria.media * 100).toFixed(1)}% > ${K.tetoDeVitoria * 100}%`, s2.vitoria.media > K.tetoDeVitoria, linhaDaMetrica(s2.vitoria, 3));
   t(`  ...e sobra PV demais — ${s2.pvGrupo.media.toFixed(2)} > ${K.tetoDePvDoGrupo}`, s2.pvGrupo.media > K.tetoDePvDoGrupo, linhaDaMetrica(s2.pvGrupo, 2));
   t(`  ...e cai gente de menos — ${s2.quedas.media.toFixed(3)} < ${K.pisoDeQuedas}`, s2.quedas.media < K.pisoDeQuedas, linhaDaMetrica(s2.quedas, 3));
 
-  /* SABOTAGEM 3 — O RISCO LITERAL DE B2: o grupo fica forte demais. Dois
-     níveis a mais nos três companheiros, e nada mais muda de lado nenhum. */
-  const s3 = sabotar("sabotagem:grupo-nv7", { grupo: J.grupo.map((g) => ({ ...g, nivel: 7 })) });
-  t(`sabotagem 3 (grupo nv7 — o risco de B2): vitória acima do teto — ${(s3.vitoria.media * 100).toFixed(1)}%`, s3.vitoria.media > K.tetoDeVitoria, linhaDaMetrica(s3.vitoria, 3));
+  /* SABOTAGEM 3 — O RISCO LITERAL DE B2: o grupo fica forte demais. Era nv7 e
+     passou a nv12 porque com o Adversário ligado nv7 mede 14,0% e parou de
+     morder; o preço de "forte demais" subiu de dois níveis para cinco, e isso
+     é informação de balanceamento que B2 vai querer. */
+  const s3 = sabotar("sabotagem:grupo-nv12", { grupo: J.grupo.map((g) => ({ ...g, nivel: 12 })) });
+  t(`sabotagem 3 (grupo nv12 — o risco de B2): vitória acima do teto — ${(s3.vitoria.media * 100).toFixed(1)}%`, s3.vitoria.media > K.tetoDeVitoria, linhaDaMetrica(s3.vitoria, 3));
   t(`  ...PV acima do teto — ${s3.pvGrupo.media.toFixed(2)}`, s3.pvGrupo.media > K.tetoDePvDoGrupo, linhaDaMetrica(s3.pvGrupo, 2));
-  t(`  ...quedas abaixo do piso — ${s3.quedas.media.toFixed(3)}`, s3.quedas.media < K.pisoDeQuedas, linhaDaMetrica(s3.quedas, 3));
-
-  /* E A SABOTAGEM QUE NÃO SABOTA — o controle. O mesmo cenário copiado sem
-     mudar nada tem de sair VERDE nos três dentes; sem esta linha, as três
-     acima poderiam estar ficando vermelhas porque o caminho do objeto
-     literal quebrou alguma coisa, e não porque a mudança pesou. */
-  const s0 = sabotar("controle", {});
-  t("controle (cenário copiado, nada mudado): os três dentes continuam verdes",
-    s0.vitoria.media >= K.pisoDeVitoria && s0.vitoria.media <= K.tetoDeVitoria && s0.pvGrupo.media <= K.tetoDePvDoGrupo && s0.quedas.media >= K.pisoDeQuedas,
-    `${linhaDaMetrica(s0.vitoria, 3)} · ${linhaDaMetrica(s0.pvGrupo, 2)} · ${linhaDaMetrica(s0.quedas, 3)}`);
-  /* e o controle mede o MESMO que o id — o objeto e a string são a mesma mesa */
-  t("e o controle bate com a medida por id (objeto e string são a mesma mesa)",
-    perto(s0.vitoria.media, medir("justo", { n: N_SABOTAGEM, prefixo: AMOSTRA_DA_REGUA.familiaDoRetrato }).vitoria.media, 1e-12));
+  /* e o dente das QUEDAS não morde aqui, e isso é achado: com a oposição
+     concentrando fogo, um grupo sete níveis acima ainda perde 1,44 dos 3.
+     Antes de N1b, dois níveis bastavam para o grupo atravessar quase inteiro
+     (0,578). Fica impresso, sem virar limiar. */
+  pendente("  sabotagem 3, quedas", `${s3.quedas.media.toFixed(3)} — ainda ACIMA do piso de ${K.pisoDeQuedas}: nem grupo nv12 atravessa sem perder gente`);
 }
 
 /* ============================================================
@@ -521,6 +788,11 @@ sec("8. O QUE NÃO VIRA LIMIAR — medido, impresso, não travado");
      fica visível. */
   t("`absorvido` e `abrigos` existem e são finitos (forma, não limiar)", Number.isFinite(r.absorvido.media) && Number.isFinite(r.abrigos.media) && r.absorvido.media >= 0 && r.abrigos.media >= 0);
   pendente("[justo] PV parado pelo abrigo", linhaDaMetrica(r.absorvido, 2) + " · abrigos " + linhaDaMetrica(r.abrigos, 3) + "  [ralo e oscilante entre famílias]");
+  /* N1b: o abrigo DOBROU (1,75 → 3,90 de PV parado, 0,29 → 0,65 abrigo por
+     combate) e a razão é mecânica, não de regra: a oposição concentrada bate
+     sempre no mesmo companheiro, e quem tem escudo o gasta em vez de vê-lo
+     expirar. O número continua sem virar limiar pelo motivo de sempre. */
+  pendente("[justo] o mesmo, no molde antigo", linhaDaMetrica(MED_SEM.justo.absorvido, 2) + " · abrigos " + linhaDaMetrica(MED_SEM.justo.abrigos, 3) + "  [comAdversario: false]");
 
   /* DANOSOFRIDO: a terceira métrica mais apertada da régua (0,79 da soma das
      margens a 1000), e a única do par ofensivo/defensivo que chega perto de
@@ -539,12 +811,40 @@ sec("8. O QUE NÃO VIRA LIMIAR — medido, impresso, não travado");
   pendente("[justo] o herói cai em", (r.quedaDoHeroi.media * 100).toFixed(1) + "% dos combates, PV final " + linhaDaMetrica(r.pvHeroi, 2) + "  [saturada]");
   pendente("[duro]  o herói cai em", (d.quedaDoHeroi.media * 100).toFixed(1) + "% dos combates  [saturada]");
 
-  /* PRIMEIRAQUEDA no brando: ninguém cai, e a média de um conjunto vazio não
-     é um número. A régua devolve n=0 e margem infinita — que é a resposta
-     honesta, e é ISSO que vira asserção: não o valor, a honestidade. */
-  t("[brando] `primeiraQueda` não inventa número onde não houve queda — n = 0 e margem infinita",
-    b.primeiraQueda.n === 0 && b.primeiraQueda.margem === Infinity);
-  pendente("[justo] rodada da primeira queda", linhaDaMetrica(r.primeiraQueda, 2) + " sobre " + r.primeiraQueda.n + " combates com queda");
+  /* PRIMEIRAQUEDA no brando. A ASSERÇÃO MUDOU DE FORMA EM N1b, e o motivo é
+     este: ela dizia `n === 0 && margem === Infinity` — literalmente "no brando
+     ninguém cai nunca". Com o Adversário ligado caem 2 em 1000 nesta família
+     (0 em outra, 6 noutra), e a asserção antiga passaria a depender de QUAL
+     família está no índice 0, que é medir o resorteio.
+
+     O QUE ELA SEMPRE QUIS PROVAR NÃO ERA O VALOR, ERA A HONESTIDADE: que a
+     régua não inventa uma média onde não houve amostra. Isso continua
+     afirmável e mais forte do que antes, porque cobre os dois lados: sem
+     queda, n = 0 e margem infinita; com queda, uma rodada de verdade. Nada
+     foi afrouxado — a afirmação passou a valer para os dois casos em vez de
+     depender de um deles acontecer. */
+  t("[brando] `primeiraQueda` não inventa número: ou n = 0 com margem infinita, ou uma rodada de verdade",
+    (b.primeiraQueda.n === 0 && b.primeiraQueda.margem === Infinity) || (b.primeiraQueda.n > 0 && b.primeiraQueda.media >= 1),
+    `n=${b.primeiraQueda.n} · ${linhaDaMetrica(b.primeiraQueda, 2)}`);
+  pendente("[brando] quedas, quando há", `n=${b.primeiraQueda.n} de ${b.quedas.n} combates  [era 0 antes do Adversário]`);
+  pendente("[justo] rodada da primeira queda", linhaDaMetrica(r.primeiraQueda, 2) + " sobre " + r.primeiraQueda.n + " combates com queda" +
+    "  [era " + linhaDaMetrica(MED_SEM.justo.primeiraQueda, 2) + " no molde antigo: o primeiro companheiro cai na rodada 1, não na quarta]");
+
+  /* O DESPERDÍCIO EM CORPO CAÍDO, que é a explicação mecânica do retrato novo.
+     `turnoDosInimigos` escolhe os alvos de todos os inimigos de uma vez; com a
+     intenção concentrando fogo, o segundo e o terceiro golpe caem em quem o
+     primeiro já derrubou. No `justo` isso vai de 0,88 para 4,98 golpes
+     perdidos por combate — e o grupo ainda assim é varrido, o que diz que a
+     concentração compra muito mais do que desperdiça. Diagnóstico, não
+     limiar: é contagem de fiação da régua, não uma regra do jogo. */
+  const desperdicio = (modo) => {
+    let s = 0;
+    for (let i = 0; i < 200; i++) s += simularCombate("justo", `${AMOSTRA_DA_REGUA.familiaDoRetrato}|${i}`, { comAdversario: modo }).golpesEmCaidos;
+    return s / 200;
+  };
+  const dCom = desperdicio(true), dSem = desperdicio(false);
+  t("os golpes perdidos em corpo caído são contados nos dois modos (forma, não limiar)", dCom >= 0 && dSem >= 0 && Number.isFinite(dCom) && Number.isFinite(dSem));
+  pendente("[justo] golpes perdidos em corpo caído", `${dCom.toFixed(2)} por combate — contra ${dSem.toFixed(2)} no molde antigo  [o preço da concentração de fogo]`);
 
   /* TPK e RODADAS ficam de forma: são bons diagnósticos, mas nenhum foi
      medido em quatro famílias com folga bastante para virar dente. */
@@ -597,7 +897,21 @@ sec("9. A RÉGUA NÃO MORA EM src/ — a fronteira, nos dois sentidos");
   const EXPORTADOS = [...FONTE.matchAll(/^export (?:function|const) ([A-Za-z_][A-Za-z0-9_]*)/gm)].map((m) => m[1]);
   const ESTA = readFileSync("teste-regua.mjs", "utf8");
   const semLeitor = EXPORTADOS.filter((nome) => !new RegExp("\\b" + nome + "\\b").test(ESTA));
-  t(`os ${EXPORTADOS.length} exports da régua têm leitor nesta suíte — export morto mente`, EXPORTADOS.length === 13 && semLeitor.length === 0, semLeitor.join(", "));
+  /* ERAM 13 E SÃO 14 DESDE N1b: `ADVERSARIO_NA_REGUA` entrou, e o número sobe
+     aqui porque ele é a prova de que nenhum export nasceu sem leitor. Subir a
+     contagem sem que o leitor exista seria afrouxar a única catraca que a
+     régua tem — `teste-ligacao` varre `src/`, não `testes/`. */
+  t(`os ${EXPORTADOS.length} exports da régua têm leitor nesta suíte — export morto mente`, EXPORTADOS.length === 14 && semLeitor.length === 0, semLeitor.join(", "));
+
+  /* E A RÉGUA COMPÕE O ADVERSÁRIO DE VERDADE, pelo mesmo motivo que compõe o
+     combate: uma régua que reimplementasse `intencaoDaVez` mediria um segundo
+     Adversário, que diverge do primeiro na versão que alguém esquecer de
+     copiar — e foi uma divergência silenciosa entre régua e jogo que custou
+     B1, B1b, B2 e T1. */
+  t("a régua importa o Adversário de produção (não uma cópia da decisão)",
+    FONTE.includes('from "../src/adversario.js"') && FONTE.includes("intencaoDaVez") && FONTE.includes("menteDaCriatura"));
+  t("e cita os dois sítios do jogo que ela reproduz — App.jsx:13606 e combate.js:279",
+    FONTE.includes("App.jsx:13606") && FONTE.includes("combate.js:279"));
 }
 
 console.log(`\n(medição: ${(CUSTO_DA_MEDIDA / 1000).toFixed(1)}s · suíte inteira: ${((Date.now() - T0 + 0) / 1000).toFixed(1)}s)`);

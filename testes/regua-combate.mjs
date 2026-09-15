@@ -102,10 +102,24 @@
    O que a régua garante — e é o que importa a partir de agora — é que a
    MESMA régua meça o antes e o depois de cada mudança.
 
+   ---------------- AVISO DE N1b: OS NÚMEROS ACIMA SÃO DE UMA RÉGUA SEM
+   ADVERSÁRIO ----------------
+
+   TUDO O QUE ESTE CABEÇALHO CITA COMO RETRATO — 52,1% de vitória, 25,88 PV,
+   1,790 quedas, a escada do bônus ofensivo, as duas sondas fora da faixa, o
+   custo da absorção — foi medido com `prioridade: ""` no `turnoDosInimigos`,
+   isto é, com a oposição SEM VONTADE. O jogo passa a intenção
+   (App.jsx:13606), e `combate.js:279` só consulta `escolherAlvo` quando ela
+   existe. O porquê inteiro, e o parâmetro que reproduz a medida antiga, estão
+   em `ADVERSARIO_NA_REGUA`, mais abaixo. Leia aqueles números como a HISTÓRIA
+   de B1/B1b/B2/T1 (`comAdversario: false`), nunca como o retrato de hoje.
+
    A ordem da rodada, e de onde cada passo veio:
      1. o herói ataca            (App.jsx:11566-11645 — `ataquesPorTurno`
                                   golpes de `danoDaClasse`)
-     2. os inimigos atacam       (`turnoDosInimigos`; o dano passa pelo
+     2. os inimigos atacam       (a intenção da vez decide em quem — v. o
+                                  bloco N1b dentro de `simularCombate`;
+                                  `turnoDosInimigos`; o dano passa pelo
                                   abrigo antes do PV, App.jsx:13653/13684,
                                   e a concentração do companheiro cai
                                   depois, App.jsx:13701)
@@ -187,7 +201,9 @@ import { erguerGuarda, expirarGuardas } from "../src/habilidades.js";
 import { elementoDaArma, perfilDe } from "../src/danos.js";
 import { modDoGolpe } from "../src/itens.js";
 import { DEFESA_DA_ARMADURA } from "../src/prontos.js";
-import { testeConcentracao } from "../src/combate.js";
+import { testeConcentracao, perfilCombate } from "../src/combate.js";
+import { intencaoDaVez, menteDaCriatura } from "../src/adversario.js";
+import { PESO_AMEACA } from "../src/orcamento.js";
 
 /* ============================================================
    1. AS TABELAS — se é número, é tabela
@@ -363,6 +379,84 @@ export const CATRACA_DE_UMA_VIDA = {
   familias: ["umavida", "aa", "bb", "cc"],
   sementesPorFamilia: 1000,
 };
+
+/* ---------------- O ADVERSÁRIO, E O QUE CUSTOU NÃO TÊ-LO (N1b) ----------------
+
+   O DEFEITO, ESCRITO INTEIRO PORQUE ELE É A LIÇÃO. Até N1b esta régua
+   passava `prioridade: ""` ao `turnoDosInimigos`. O jogo real NÃO passa: em
+   `App.jsx:13606` a chamada carrega
+   `prioridade: (intencaoPorId(intencaoRef.current) || {}).alvo || ""`, e do
+   outro lado `combate.js:279` só consulta `escolherAlvo` QUANDO a prioridade
+   existe — sem ela, o alvo cai no sorteio de sempre (35% de chance de bater
+   num companheiro qualquer, `combate.js:286`). Ou seja: a régua media um
+   combate em que a oposição não tem vontade, e o jogo tem. B1, B1b, B2 e T1
+   mediram Uma Vida com o Adversário FORA DO CIRCUITO — quatro etapas de
+   número contra um motor que o jogador nunca jogou.
+
+   UM INSTRUMENTO QUE DIFERE DO JOGO EM SILÊNCIO É PIOR QUE NENHUM
+   INSTRUMENTO. Nenhum teste ficou vermelho, nenhuma suíte reclamou, e o
+   retrato inteiro (52,1% de vitória, 25,88 PV, 1,790 quedas) descreveu com
+   três casas decimais uma coisa que não existe. A régua não mentiu por erro
+   de conta: mentiu por uma porta que ela simplesmente não ligou. É por isso
+   que a asserção que faltava — e que agora existe na suíte — é pelo EFEITO:
+   ligado e desligado têm de dar resultados DIFERENTES na mesma semente.
+
+   O CAMINHO, IGUAL AO DO APP: `lutaDaMesa()` (o bloco termina em
+   `App.jsx:6155`) monta a situação a partir do combate de verdade, e
+   `intencaoDaLuta()` (`App.jsx:6160-6168`) chama
+   `intencaoDaVez(s, { antes: intencaoRef.current })` — com MEMÓRIA POR
+   COMBATE: `antes` é o id da intenção da rodada anterior, e sem ela a
+   oposição troca de plano toda vez que um número oscila, que é exatamente o
+   defeito que `adversario.js` existe para consertar.
+
+   `comAdversario: false` REPRODUZ A MEDIDA ANTIGA, byte a byte, e isso não é
+   nostalgia: B1, B1b, B2 e T1 estão escritos no diário com os números de
+   então, e uma régua que apagasse o caminho para eles faria a história da
+   casa passar a mentir junto. É parâmetro nomeado e com leitor (a suíte usa
+   os dois lados), nunca um literal solto no corpo do simulador.
+
+   O QUE A RÉGUA NÃO TEM, E POR QUE FICA NO DEFAULT DE `garantirLuta`. A
+   situação da luta tem duas metades: o COMBATE (quantos estão de pé, quanto
+   de vida sobrou, quem conjura, quem cura, quem caiu) e o MUNDO (o terreno, a
+   fama, a masmorra, o refém, o vilão, a postura, o público, a emboscada).
+   Esta régua mede o combate — não há mesa, não há mundo, não há campanha
+   por trás dela. Inventar aqui um "está escuro" ou um "há um refém" seria
+   pôr um NÚMERO DE REGRA SOLTO no instrumento: um valor que decide o
+   resultado, que ninguém escolheu e que nenhuma tabela do jogo declara. O
+   default explícito de `garantirLuta` é a única resposta honesta — e ele é
+   explícito, o que é diferente de esquecido.
+
+   O PREÇO DISSO, EM NOME PRÓPRIO: as intenções abaixo NÃO PODEM ser eleitas
+   nesta régua, e a Fase N precisa saber disso antes de concluir qualquer
+   coisa sobre o acervo. Não é bug — é o alcance declarado do instrumento. */
+export const ADVERSARIO_NA_REGUA = {
+  /* o default de `medir`/`simularCombate`: o jogo tem Adversário, logo a
+     régua tem. `false` volta ao `prioridade: ""` das medidas de B1/B2/T1. */
+  ligado: true,
+  /* os campos de MUNDO que ficam no default de `garantirLuta` */
+  foraDaRegua: ["terreno", "fama", "masmorra", "refem", "vilao", "postura", "publico", "emboscada", "faixaDoEncontro"],
+  /* as intenções que, por causa disso, nunca são eleitas aqui */
+  inalcancaveis: [
+    "capturar", "capturar_um", "arrancar",           /* fama e vilão */
+    "empurrar", "afogar", "separar", "prender_no_corredor", "fechar_a_saida", "apagar_a_luz", "encurralado",  /* terreno */
+    "tirar_a_coisa", "humilhar",                     /* a coisa carregada e a plateia */
+    "atrasar", "atrasar_na_porta", "cumprir_a_ordem", /* o vilão */
+    "proteger", "ninhada", "territorio", "vinganca", /* o que se protege, e a masmorra */
+    "usar_o_refem", "matar_todos", "escudo_humano",  /* refém e civil */
+    "cair_em_cima", "recuperar_o_pe",                /* emboscada dos dois lados */
+    "receoso", "aproveitador",                       /* o viés da postura */
+    "brincar",                                       /* a faixa do encontro */
+  ],
+  /* e as que dependem do CENÁRIO, não do mundo: o bestiário desta régua não
+     tem chefe nem bicho nem morto-vivo, e "Adversário" cai em `pensa`. */
+  foraPorCenario: ["comer", "fugir_ferido", "nao_para", "guardar_o_fundo", "confirmar", "debandar", "vender_caro"],
+};
+
+/* AS CLASSES QUE CURAM, do jeito que `lutaDaMesa` as lê (App.jsx:6134). A
+   lista existe em `combate.js:202` (`CURAM`) e não é exportada de lá; copiá-la
+   aqui é o mesmo que o App faz, e ela fica nomeada em vez de literal no meio
+   da conta — se é número, é tabela. */
+const CLASSES_QUE_CURAM = ["Clérigo", "Druida", "Bardo"];
 
 /* AS MÉTRICAS, e o que cada uma responde. `taxa: true` diz que o valor é
    uma proporção por combate (0..1) e a margem sai da fórmula de
@@ -544,7 +638,7 @@ function aplicarBuffDeCompanheiro(heroi, grupo, ac) {
 
 /* Devolve o retrato de UM combate. `semente` é o único árbitro: a mesma
    semente dá o mesmo combate em qualquer máquina. */
-export function simularCombate(cenario, semente) {
+export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA_REGUA.ligado } = {}) {
   const cen = typeof cenario === "string" ? CENARIOS_DA_REGUA[cenario] : cenario;
   if (!cen) throw new Error("cenário desconhecido: " + cenario);
   return comSorteTravada(semente, () => {
@@ -555,7 +649,7 @@ export function simularCombate(cenario, semente) {
     const pvGrupoMax = grupo.reduce((s, g) => s + g.vidaMax, 0);
     const caidos = new Set();
     let primeiraQueda = null, quedaDoHeroi = null;
-    let danoDesferido = 0, danoSofrido = 0, absorvido = 0, abrigos = 0;
+    let danoDesferido = 0, danoSofrido = 0, absorvido = 0, abrigos = 0, golpesEmCaidos = 0;
     let rodada = 1;
 
     const vivosInimigos = () => inimigos.filter((e) => !e.derrotado && (e.vida || 0) > 0);
@@ -579,6 +673,72 @@ export function simularCombate(cenario, semente) {
         const pv = Math.max(0, (e.vida || 0) - dano);
         return { ...e, vida: pv, derrotado: pv <= 0 };
       });
+    };
+
+    /* ---------------- A INTENÇÃO DO ADVERSÁRIO (N1b) ----------------
+       AQUI NASCE A PRIORIDADE, e é o sítio que não existia. O App monta a
+       situação em `lutaDaMesa()` (o bloco fecha em App.jsx:6155), chama
+       `intencaoDaVez(s, { antes })` em `intencaoDaLuta()` (App.jsx:6160-6168)
+       e entrega o alvo da intenção ao motor em App.jsx:13606. Do outro lado,
+       `combate.js:279` SÓ consulta `escolherAlvo` quando a prioridade existe:
+       com `prioridade: ""` o inimigo cai no sorteio de 35% e a oposição perde
+       a vontade inteira. Era isso que a régua media antes desta etapa, em
+       silêncio, e é por isso que este bloco vem com o porquê escrito e não só
+       com o código.
+
+       `antes` é a MEMÓRIA POR COMBATE — o id da intenção da rodada anterior.
+       Sem ela não existe "virou", existe "agora é outra": `intencaoDaVez`
+       mantém a intenção que já valia enquanto ela não QUEBRAR, e é essa
+       aderência que separa um plano de um resorteio por rodada.
+
+       Só os campos de COMBATE são preenchidos. Os de MUNDO ficam no default
+       explícito de `garantirLuta`, pelo motivo (e com o preço em intenções
+       inalcançáveis) escrito em `ADVERSARIO_NA_REGUA`. */
+    let antesDaIntencao = "";
+    const intencoesEleitas = [];
+    const situacaoDaLuta = () => {
+      const vivos = vivosInimigos();
+      if (!vivos.length) return null;
+      const dePe = grupoDePe();
+      const somaVida = vivos.reduce((s, x) => s + (x.vida || 0), 0);
+      const somaMax = vivos.reduce((s, x) => s + (x.vidaMax || x.vida || 1), 0) || 1;
+      /* quem fala pela oposição é o mais forte de pé — App.jsx:6115, com o
+         mesmo PESO_AMEACA de `orcamento.js` que o App importa. */
+      const voz = vivos.reduce((a, b) => ((b.nivel || 0) + PESO_AMEACA[b.ameaca] * 10 > (a.nivel || 0) + PESO_AMEACA[a.ameaca] * 10 ? b : a), vivos[0]);
+      /* ehBicho/ehMorto/pensa saem de `menteDaCriatura` sobre o NOME, como
+         App.jsx:6116-6122 faz. Sem léxico: a régua não tem mundo. */
+      const mente = menteDaCriatura(voz.nome, voz.desc || "", null);
+      const todos = [heroi, ...dePe];
+      return {
+        nome: voz.nome, ameaca: voz.ameaca || "comum",
+        ehBicho: mente === "besta", ehMorto: mente === "morto",
+        ehTropa: vivos.length >= 4 && new Set(vivos.map((x) => x.nome)).size <= 2,
+        ehChefe: !!voz.chefe || voz.ameaca === "lendario",
+        pensa: mente !== "besta" && mente !== "morto",
+        rodada,
+        quantos: vivos.length, quantosEram: inimigos.length,
+        minhaVida: (voz.vida || 0) / (voz.vidaMax || voz.vida || 1),
+        vidaDosMeus: somaVida / somaMax,
+        heroiVida: (heroi.vida || 0) / (heroi.vidaMax || 1),
+        heroiCaido: (heroi.vida || 0) <= 0,
+        heroiSozinho: dePe.length === 0,
+        quantosDoOutroLado: 1 + dePe.length,
+        temConjurador: todos.some((x) => perfilCombate(x.classe || "").tipo === "conjurador"),
+        temCurandeiro: dePe.some((x) => CLASSES_QUE_CURAM.includes(x.classe || "")),
+        alguemFerido: todos.some((x) => (x.vida || 0) > 0 && (x.vida || 0) < (x.vidaMax || 1) * 0.5),
+        temLider: vivos.length > 1,
+        liderCaiu: inimigos.some((x) => x.chefe && (x.derrotado || (x.vida || 0) <= 0)),
+      };
+    };
+    const prioridadeDaRodada = () => {
+      if (!comAdversario) return "";
+      const s = situacaoDaLuta();
+      if (!s) return "";
+      const v = intencaoDaVez(s, { antes: antesDaIntencao });
+      if (!v || !v.intencao) return "";
+      antesDaIntencao = v.intencao.id;
+      intencoesEleitas.push(v.intencao.id);
+      return v.intencao.alvo || "";
     };
 
     for (; rodada <= cen.tetoDeRodadas; rodada++) {
@@ -606,10 +766,14 @@ export function simularCombate(cenario, semente) {
       if (!vivosInimigos().length) break;
 
       /* ---- 2. OS INIMIGOS ---- */
+      /* a intenção é lida ANTES do turno, com o estado da mesa como ele
+         chegou até aqui — é a ordem do App: `intencaoDaLuta` já rodou e
+         `intencaoRef` já vale quando `turnoDosInimigos` é chamado. */
+      const prioridade = prioridadeDaRodada();
       const acoes = turnoDosInimigos({
         inimigos: vivosInimigos(), jogador: heroi, grupo: grupoDePe(),
         gdJogador: 0, grade: null, heroi: null, aliados: [],
-        rodada, provocado: false, prioridade: "",
+        rodada, provocado: false, prioridade,
       });
       for (const a of acoes) {
         if (!(a.r && a.r.dano > 0)) continue;
@@ -620,7 +784,14 @@ export function simularCombate(cenario, semente) {
           danoSofrido += ab.dano;
         } else if (a.alvoRef === "grupo") {
           const dono = grupo.find((g) => g.nome === a.alvoNome);
-          if (!dono || (dono.vida || 0) <= 0) continue;
+          /* O DESPERDÍCIO EM CORPO CAÍDO. `turnoDosInimigos` decide os alvos
+             de TODOS os inimigos de uma vez, sobre a mesa como ela estava no
+             início do passo; se dois escolhem o mesmo companheiro e o
+             primeiro o derruba, o segundo bate em quem já está no chão e o
+             golpe se perde. É diagnóstico, não métrica — mas com o Adversário
+             ligado a oposição concentra fogo por intenção, e é ele que diz
+             quanto dessa concentração vira sobra. */
+          if (!dono || (dono.vida || 0) <= 0) { golpesEmCaidos++; continue; }
           const ab = passarPeloAbrigo(dono, a.r.dano);
           if (ab.absorvido > 0) { absorvido += ab.absorvido; abrigos++; }
           const pv = Math.max(0, (dono.vida || 0) - ab.dano);
@@ -752,6 +923,11 @@ export function simularCombate(cenario, semente) {
       rodadaDaQuedaDoHeroi: quedaDoHeroi,
       tpk: tpk ? 1 : 0,
       estourouTeto: !venceu && !tpk ? 1 : 0,
+      /* as intenções eleitas, rodada a rodada. Não é métrica (não entra em
+         `METRICAS_DA_REGUA`, não vira média): é o RASTRO que explica o
+         número — sem ele, "a vitória caiu" não diz de quem foi a decisão. */
+      intencoes: intencoesEleitas,
+      golpesEmCaidos,
     };
   });
 }
@@ -806,10 +982,10 @@ export function concordam(a, b) {
 /* Roda `n` combates do cenário e devolve, por métrica, {media, margem, n}.
    `prefixo` escolhe a FAMÍLIA de sementes; uma família só é uma amostra, e
    o que prova estabilidade é o acordo entre famílias independentes. */
-export function medir(cenarioId, { n = AMOSTRA_DA_REGUA.n, prefixo = AMOSTRA_DA_REGUA.familiaDoRetrato } = {}) {
+export function medir(cenarioId, { n = AMOSTRA_DA_REGUA.n, prefixo = AMOSTRA_DA_REGUA.familiaDoRetrato, comAdversario = ADVERSARIO_NA_REGUA.ligado } = {}) {
   const combates = [];
-  for (let i = 0; i < n; i++) combates.push(simularCombate(cenarioId, `${prefixo}|${i}`));
-  const out = { cenario: cenarioId, prefixo, combates: n };
+  for (let i = 0; i < n; i++) combates.push(simularCombate(cenarioId, `${prefixo}|${i}`, { comAdversario }));
+  const out = { cenario: cenarioId, prefixo, combates: n, comAdversario: !!comAdversario };
   for (const m of METRICAS_DA_REGUA) {
     if (m.taxa) {
       out[m.id] = proporcaoComMargem(combates.reduce((s, c) => s + (c[m.id] || 0), 0), n);
