@@ -16,7 +16,7 @@ Formato:
 
 ---
 
-## 15/09 15:20 · v9.253 · X1 · o que chega ao motor, e o que vira frase · commit `PENDENTE`
+## 15/09 15:20 · v9.253 · X1 · o que chega ao motor, e o que vira frase · commit `bf9dd49`
 
 - **estado inicial:** HEAD `c3f4fd3`, VERSÃO v9.252, `npm test` **182/182 suítes
   + 10/10 varredores** verde, build limpo. **Sem trava — pus a minha.** O
@@ -49,6 +49,14 @@ golpe. Das 12 prontas, **6 escrevem frases que leitor nenhum lê**, e **4 dessas
 um único uso no corpo do `App.jsx`** — 10 de `combate.js`, 8 de `habilidades.js`,
 3 de `efeitos.js`. **Conferi por conta própria e o número bate exatamente**; e
 achei mais **16 tabelas/consts** na mesma situação, que não estavam na conta.
+**E o `testes` refinou a conta, que é melhor do que eu a tinha pedido:** "sem
+chamador" misturava três coisas diferentes, e agora são três listas separadas —
+`semClique` (o App importa e nunca chama: **3** em `combate.js`, e **0** em
+`habilidades.js` e `efeitos.js`), `soInterno` (só o próprio módulo chama: 5 + 4 +
+3) e `morto` (ninguém chama, em lugar nenhum). A distinção importa: `soInterno`
+não é dívida, é encapsulamento. Um nome saiu das listas por mérito —
+`maiorVaoSemGanho` tem leitor em `teste-onda3.mjs:33` —, com o motivo escrito e
+uma asserção guardando a exceção.
 `habilidades.js` expõe 37 funções e **zero** têm chamador por clique. O caso
 extremo: **`gastarRecurso` (`combate.js:745`) não tem chamador nenhum no
 repositório** — o App faz a conta da economia à mão (`eco.acao -= 1`, `:13234`),
