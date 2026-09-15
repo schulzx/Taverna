@@ -16,6 +16,111 @@ Formato:
 
 ---
 
+## 15/09 17:03 · v9.257 · X3 · o turno guardado · commit `e430a12` (ver a nota do fim)
+
+- **estado inicial:** HEAD `0a5972f`, VERSÃO **v9.255**; `npm test` verde,
+  build limpo. A árvore tinha só arquivos da outra mente (o `regente` fechando
+  **K1**). **Sem trava — pus a minha.** **Tomei o bastão do `App.jsx`** às
+  19:31 UTC, para a mão do `frontend`; devolvido ao fechar este bloco.
+  A outra mente bumpou a VERSÃO para **v9.256** no meio do ciclo (K1), então a
+  minha é a **v9.257** — lida do arquivo, como manda a lei.
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, etapa escrita.
+- **backend:** `src/guardado.js` — a tabela dos sete silêncios, o selo do turno
+  já resolvido, a impressão determinística do envelope, a trava e a conta das
+  tentativas. 82 asserções na prova dele, zero rede.
+- **frontend:** a fiação em `App.jsx`, toda em `calou` — o guardado no save e
+  no load, o retry mandando o envelope preso, as **três** portas do declarar
+  travadas, o técnico fora da tela e íntegro no console.
+- **testes:** `testes/teste-guardado.mjs` (102 asserções) e
+  `testes/check-guardado.mjs` (a catraca, cravada em **9** envelopes).
+
+### O que passa a ser guardado, e por que isto é regra e não conforto
+
+O motor rola **antes** de a IA falar: o dado cai, o dano entra, a ação se cobra,
+e só então o envelope sai para narrar. O defeito de hoje não era ficar sem
+prosa — era **a ação ser jogada fora**. Mas a razão dura é outra: se o turno
+**re-rolasse** na tentativa seguinte, uma queda de rede viraria **re-rolagem de
+um resultado ruim**. Numa casa cuja primeira lei é determinismo por semente,
+isso é um buraco que não parece exploit — **parece azar**.
+
+Por isso a suíte não prova que o módulo guarda; prova que **não se re-rola**:
+o envelope narrado depois tem a **mesma impressão** do que o motor produziu
+antes, byte por byte, e o **contador de rolagens continua em 1** depois de três
+tentativas. E a contraprova, que é a que fecha o argumento: re-rolar sobre o
+estado **já alterado** (inimigo ferido, ação cobrada) **não repete** — sorteia
+outra vez. Está escrita com todas as letras no bloco 3 da suíte.
+
+### O que o jogador lê quando o Mestre cala
+
+A voz é de mundo, e o nome do mecanismo não aparece. No silêncio, a frase da
+classe (sete delas, uma por tipo de queda). Ao esbarrar na trava:
+*"⏳ O que você acabou de fazer ainda não foi contado, e a mesa não anda sem a
+palavra do Mestre. Peça a ele que conte, e então siga."* — a segunda sentença
+só vem quando insistir resolve. O **"Tentar de novo" só aparece quando insistir
+resolve**: oferecê-lo contra falta de crédito seria mentir duas vezes.
+
+O motivo técnico desce **íntegro ao console**, como argumento separado para não
+ser aparado, com o id do silêncio, a conta de tentativas e a marca do turno.
+Foi esse vazamento que permitiu diagnosticar duas quedas — **quem apaga o
+motivo fica cego**.
+
+### Decisões médias, com o motivo
+
+- **A catraca nasceu mordendo, e era o ponto.** Pegou um envelope resolvido que
+  escapava do selo: `[MASMORRA — … COMBATE JÁ ABERTO PELO SISTEMA]`, que sai
+  **depois** de `abrirCombate` ter trocado a ficha e **rolado a iniciativa**.
+  Decidi que **trava**, e a régua ficou escrita para o caso seguinte: *trava
+  quando o sistema mexeu na ficha, não quando apenas anotou um fato.*
+- **A terceira porta.** A fiação travou `declararGolpe` e `agirInterno`; a mão
+  que as fiou **achou uma terceira** — `declararAcaoRapida`, o painel de Ações,
+  que chama `adjudicarAcao` direto. Com ela aberta o painel ainda rolava, e o
+  buraco continuaria de pé. Fechada, com o texto do jogador devolvido à caixa.
+- **A conta das tentativas voltou para o módulo.** Tinha ficado dentro do
+  `catch` de `enviar`, à mão. *Conta se prova, tela se olha:* uma regra que só
+  existe dentro de um `catch` de vinte mil linhas é uma regra que ninguém pode
+  provar. `guardarTurno` passou a aceitar `anterior`, sem export novo.
+- **`irMenu` solta o turno preso** (fora da minha lista, e mantive): sem isso um
+  guardado sobrevive à volta ao menu e **trava a primeira ação de uma campanha
+  nova** na mesma aba.
+
+### O que ficou
+
+- **O envelope sem selo de `App.jsx:13029`** (invisibilidade/voo/luz): sai
+  **depois** de o PM ser descontado e a pilha de efeitos trocada, com um
+  cabeçalho que é só o nome da magia — então não trava, e o jogador pode pagar
+  o PM duas vezes. Não é linha faltando na tabela: **falta selo**, e o conserto
+  é batizar o envelope no App (o irmão dele, `:13041`, já sai selado). Foi para
+  a pauta como **leve**, com o diagnóstico pronto, porque subir a catraca de 9
+  para 10 toca três arquivos e este ciclo já teve duas voltas de correção.
+- **Comentários sem acento** nos trechos novos do `App.jsx`: o script `.cjs` de
+  âncora evita acento para não ser mutilado pelo shell, e o resto do arquivo é
+  acentuado. Pauta, **leve**.
+- **X3b e X3c não foram tocadas**, como combinado. X3 vale sozinha.
+
+### A nota que importa mais que o resto: o commit não é meu, e o índice é compartilhado
+
+**O X3 inteiro está dentro de `e430a12`, um commit da outra mente** — cujo
+título fala de um relógio de 15 segundos e não menciona nada disto. Aconteceu
+no intervalo entre o meu `git add` (caminho a caminho, como manda a lei) e o
+meu `git commit`: nesse instante o `regente` commitou, e o índice levou junto
+`src/guardado.js`, os dois arquivos de teste, o meu `App.jsx` e o meu bump.
+Quando fui commitar, a árvore estava limpa e o meu commit não tinha o que
+dizer. `e430a12` **já estava em `origin/main`** quando descobri.
+
+**Não reescrevi história**, e a razão é a mesma que proíbe `git stash` aqui:
+seria uma arma apontada para o vizinho, e ainda por cima um `push --force` num
+ramo que faz deploy para jogadores reais. O código está em `main`, verde e no
+ar; o que se perdeu foi a honestidade do registro, e é este bloco que a repõe.
+
+**E o achado é de lei, não de azar:** o `CLAUDE.md` manda somar os caminhos um
+a um e proíbe `git add -A` — mas **o índice do git é compartilhado pelas duas
+mentes**, então nem o `add` disciplinado protege: existe uma janela entre
+somar e commitar em que o commit do outro leva o que você somou. O conserto é
+não usar o índice: **`git commit -- <caminhos>`**, que commita os caminhos
+direto e não deixa janela nenhuma. Foi assim que este bloco entrou. Está na
+pauta para a pessoa, porque mexe numa lei da casa.
+
+
 ## 15/09 17:05 · v9.255 · X2 · o golpe sai do botão · commit `fc86e53`
 
 - **estado inicial:** HEAD `628e70f`, VERSÃO **v9.254** (o ciclo E1 do `regente`

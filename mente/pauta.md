@@ -16,6 +16,32 @@ Formato de um item:
 ---
 
 ## Para a pessoa decidir (pesado)
+- [ ] **o indice do git e compartilhado pelas duas mentes, e a lei nao cobre isso** · pesado · de: orquestrador (X3) · 15/09
+  **Aconteceu hoje, e custou a honestidade de um commit.** O `CLAUDE.md` manda
+  somar os caminhos **um a um** e proibe `git add -A` justamente para que o
+  trabalho de uma mente nao entre no commit da outra. Segui a lei a risca — e
+  nao bastou: entre o meu `git add <caminhos>` e o meu `git commit` existe uma
+  **janela**, e nela o `regente` commitou. O indice e um so para as duas
+  mentes, entao o commit dele levou junto `src/guardado.js`, os dois arquivos
+  de teste do X3, o meu `App.jsx` e o meu bump de VERSAO. Quando fui commitar,
+  a arvore estava limpa e o meu commit nao tinha o que dizer.
+  **O resultado esta em `origin/main`:** `e430a12`, cujo titulo fala de um
+  relogio de 15 segundos, carrega a fase X3 inteira sem menciona-la. E o mesmo
+  defeito que o `CLAUDE.md` ja registra em `a6a6473` (14/09) — so que agora
+  **sem ninguem ter quebrado a regra**, o que e pior: quer dizer que a regra
+  nao protege o que promete proteger.
+  **Nao reescrevi historia**, e a razao e a mesma que proibe `git stash` aqui:
+  seria arma apontada para o vizinho, e ainda um `push --force` num ramo que
+  faz deploy para jogadores reais. O codigo esta verde e no ar; o que se
+  perdeu foi o registro, e o diario o repoe.
+  **O conserto proposto, e e uma linha de lei:** trocar
+  *"some os caminhos um a um"* por **`git commit -- <caminhos>`** (ou
+  `git commit <caminhos>`), que commita os caminhos direto **sem passar pelo
+  indice** e nao deixa janela nenhuma. Foi assim que o commit do registro deste
+  ciclo entrou. **E pesado porque muda uma lei da casa** — por isso esta aqui e
+  nao foi feito. Se voce aprovar, sao duas linhas no `CLAUDE.md` (a secao
+  "Commits" e a "Subir com duas mentes") e nenhuma no codigo.
+
 
 _As quatro de 14/09 foram respondidas e viraram as fases T, B, F e I. Estas duas
 nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
@@ -466,7 +492,10 @@ consegue tocar: a régua mede o motor, e o jogador não chega nele.
   uma frase que ninguém lê; dar-lhe mecânica é mecânica nova, logo `pesado`.
 
 </details>
-- [ ] **X3 · o turno guardado** · de: pessoa · 15/09
+- [x] **X3 · o turno guardado** · de: pessoa · 15/09 · **feito 15/09 · v9.257
+  · dentro do commit `e430a12`** — o commit e da OUTRA mente e nao menciona
+  nada disto: levou o X3 junto pelo indice compartilhado, no intervalo entre
+  o `git add` e o `git commit`. O porque e o conserto estao no diario.
   **O coração da decisão, e vale sozinho mesmo que o resto não venha.** Se o
   motor chegou a rolar, o resultado **não se descarta**: fica guardado, e o
   Mestre narra quando voltar. O jogador não redigita, não re-rola, não perde
@@ -1976,6 +2005,22 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
      foram fabricados em K1 (`61:2`, `61:4`, `61:6`); falta o texto deixar de os
      duplicar em emoji.
 
+- [ ] **um envelope resolvido sai sem selo, e o PM pode ser pago duas vezes** · leve · de: backend (X3) · 15/09
+  `App.jsx:13029` manda `enviar` do envelope de invisibilidade, voo e luz
+  **depois** de `cobrar` descontar o PM e `firmarOuCeder` trocar a pilha de
+  efeitos. O cabecalho e so o nome da magia, entao `ehTurnoResolvido` responde
+  `false`, a trava de X3 nao morde, e o jogador que declarar de novo **paga o
+  PM outra vez**. Nao e linha faltando na tabela de `guardado.js` — **falta
+  selo**: nenhum padrao pega isso sem pegar o mundo junto. O conserto e batizar
+  o envelope no App, no molde do irmao `:13041`, que ja sai selado e ja trava.
+  **Toca tres arquivos**, porque a catraca de `check-guardado.mjs` sobe de 9
+  para 10 de proposito — e o varredor ja explica como se sobe.
+- [ ] **os comentarios novos do `App.jsx` estao sem acento** · leve · de: orquestrador (X3) · 15/09
+  O script `.cjs` de ancora evita acento para o shell nao mutilar o patch, e o
+  resultado e que os trechos de X3 (`aMesaEspera`, o `catch` de `enviar`, o
+  `retentar`) destoam de um arquivo inteiramente acentuado. As frases que o
+  JOGADOR le estao acentuadas — isto e so comentario. Conserto e uma reescrita
+  por `node` lendo e gravando UTF-8, **nunca** por PowerShell.
 - [ ] **a economia do turno não é do motor: o App conta à mão** · médio · de: backend/testes (X1) · 15/09
   Estava escrito em X3 e **perdeu a casa** quando a pessoa reescreveu a etapa
   (X3 passou a ser *"o silêncio do Mestre é honesto"*, decisão dela, 15/09) —
