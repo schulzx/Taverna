@@ -615,6 +615,50 @@ Só depois disso se pergunta se os números precisam mudar.
   > jogo e a régua não o via — quanto dele você quer manter?"*. A resposta
   > está em "Para a pessoa decidir".
 
+### Fase Q — a queda vale para todos, e o golpe pode não matar
+Decisão da pessoa (14/09): *"o sistema de quedas deve valer também para
+todos os personagens do grupo e inclusive inimigos — inimigos importantes
+podem fazer testes de resistência contra morte enquanto os normais morrem
+direto. E podemos ter um sistema de escolha: quando o player rola o dano, o
+sistema identifica se aquele ataque reduz a vida do inimigo a 0; se sim,
+pergunta se o golpe é letal ou não letal. Se letal, mata; se não letal, o
+inimigo fica desacordado podendo acordar em 1d4 horas."*
+
+E a razão que ela deu, que é a do desenho da fase: *"nem sempre precisa
+matar uma criatura — assim podendo desmaiá-la, depois prender e interrogar,
+ou tomar o controle. Abre muitas possibilidades."*
+
+**O que já existe:** `testeDeMorte` e `aplicarTesteMorte` (`combate.js`)
+valem hoje **só para o herói**. N1 mediu que a lista de alvos é foto por
+turno e que **13,4%–18% do dano inimigo cai em quem já está no chão** — o
+que esta fase torna uma regra em vez de um acidente.
+
+- [ ] **Q1 · quem cai, e quem só morre** · de: pessoa · 14/09
+  Tabela: quem faz teste de morte ao chegar a 0 (herói, companheiro,
+  inimigo **importante**) e quem morre direto (o comum). O critério de
+  "importante" sai de campo declarado no bestiário — nunca de adivinhação
+  por nome. Provado em Node, com o lixo e os limites.
+- [ ] **Q2 · o companheiro cai como gente** · de: pessoa · 14/09
+  O grupo passa a ter queda de verdade: estabilizar, ser estabilizado,
+  morrer. Aqui encosta o achado de N1 — **59,7% da cura do companheiro
+  chega em quem já está a 0 PV** — e a regra de bater em quem caiu deixa de
+  ser foto velha e passa a ser decisão. Medir com a régua de B1 (depois de
+  N1b consertá-la) e dizer o que muda para quem joga.
+- [ ] **Q3 · letal ou não letal** · de: pessoa · 14/09
+  Quando o golpe **levaria** o alvo a 0, o jogador escolhe antes de aplicar
+  — é a lei *o veredito antes do clique* na sua forma mais pura. Não letal
+  derruba desacordado, e ele acorda em **1d4 horas**. A pergunta só aparece
+  quando há escolha (não em dano de área, não em morte instantânea), e
+  existe uma preferência padrão para quem não quer ser perguntado toda vez.
+  A forma do controle é da mesa de design; a regra é daqui.
+- [ ] **Q4 · o desacordado é um fato do mundo** · de: pessoa · 14/09
+  O que a escolha abre, e que é a razão da fase: um corpo desacordado pode
+  ser **preso, interrogado, carregado, roubado, deixado, ou acordar sozinho
+  e voltar**. Liga ao que já existe — o Livro de Promessas (um inimigo
+  poupado é semente), a memória do gesto (`gesto.js` cobra na virada da
+  postura), os propósitos de `indole.js`. **Poupar tem de ter consequência**,
+  senão é só um botão a mais. O que exigir órgão novo sobe para a pessoa.
+
 ### Fase V — o PV temporário
 Decisão da pessoa (14/09), com as regras ditadas por ela: *"da mesma forma
 da mesa: absorve o dano antes do PV real, não cura e não acumula; se você
@@ -1428,6 +1472,29 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   etapa é a **T3 · a salvaguarda no fim do turno**; T2 fechou em v9.239.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+- [ ] **o Narrador cala, e o pulo para o segundo provedor nunca foi provado** · médio · de: pessoa+Claude · 14/09
+  A pessoa explicou o desenho (14/09): *"temos duas chamadas de API; caso
+  uma não funcione, ele pula pra próxima. Como ainda estamos em
+  desenvolvimento, não coloquei saldo na backup, mas isso será corrigido no
+  beta."* Ou seja: o pulo existe de propósito e o segundo provedor está
+  vazio **por escolha**, não por bug.
+  **O que é item, então:** o pulo **nunca foi exercitado com o primeiro
+  provedor funcionando e o segundo não** — as duas vezes que caiu nesta
+  sessão, os dois estavam sem saldo, e o jogador viu o erro cru dos dois.
+  Provar o pulo sem gastar dinheiro: uma prova que simule o primeiro
+  falhando (402, 429, 500, tempo esgotado) e confira que o segundo é
+  chamado, que a ordem da fila é a declarada, e que **o que chega ao
+  jogador é frase de mundo**, não o corpo do erro.
+  **E o cuidado que a pessoa iluminou sem querer:** o item *"o erro do
+  provedor vaza para o jogador"* quer esconder o motivo técnico — mas foi
+  exatamente esse vazamento que permitiu diagnosticar as duas quedas. Logo o
+  conserto é **mover, não apagar**: frase de mundo na tela, motivo técnico
+  íntegro no `console`. Quem apaga o motivo fica cego na próxima.
+  **Fora do escopo desta casa:** pôr saldo é da pessoa, e ela já disse que
+  o beta resolve. Os modelos chamados hoje são `deepseek-v4-pro` e
+  `deepseek-v4-flash` (`api/narrador.js:42`) — se com saldo o erro voltar,
+  **o texto do erro dirá se é modelo ou crédito**, e são coisas diferentes.
+
 
 - [ ] **oito campos de combate são lidos e nunca escritos — e custam 14 intenções** · médio · de: backend (achado de N1) · 14/09
   `bandeirasDosAlvos` e `lutaDaMesa` leem `ent.carregaAChave`, `ent.feriu`,

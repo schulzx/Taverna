@@ -128,7 +128,7 @@ e nos dois a resposta é sim, com o que ele reaprende dito por escrito.
   (`inkDim` sobre `panel` = 6,21:1), e é por isso que nenhum alarme
   automático dispara: a WCAG não tem piso de tamanho. 18 degraus → 6 ou 7, e
   o piso sobe. Encosta em identidade visual e em toda tela.
-- [ ] **O nó entre o Figma e o código custa um plano** · de: regente · 14/09 (achado em D3)
+- [x] **O nó entre o Figma e o código custa um plano** · **RESPONDIDA 14/09 — virou a Fase M**: o caminho dos tokens não precisa de Code Connect (D3 provou a leitura no plano atual); os componentes ficam com convenção + varredor, que é pior e é declarado. Subir de plano deixa de ser bloqueio e vira melhoria · de: regente · 14/09 (achado em D3)
   D3 entregou as variáveis e as peças, mas **não o nó**, e não por perícia:
   `list_file_components_for_code_connect` responde, literalmente, *"You need
   a Dev or Full seat on an Organization or Enterprise plan to use Code
@@ -172,7 +172,106 @@ que não puder ser feito deve ao menos ser **visto acontecendo**, não
 recebido pronto em prosa. A prosa continua sendo a protagonista; o que se
 recusa é que ela seja a **única** coisa que o jogador toca.
 
+## A segunda lei da mesa (14/09)
+
+> *"Faça da forma que um experiente designer de UI e game designer fariam."*
+
+Quer dizer: **decida.** Onde um profissional experiente decidiria sozinho —
+o tempo de uma barra, o tamanho de um alvo de toque, a ordem de um leque, o
+que não perguntar ao jogador — **decida e escreva o porquê**, em vez de
+devolver a escolha. A pessoa não quer ser consultada sobre ofício; quer ser
+consultada sobre o que muda o jogo dela. Perguntar demais é uma forma de
+timidez, e a timidez já é o defeito.
+
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
+
+### Fase M — o caminho dos tokens (o Figma manda, o código obedece)
+Proposta da pessoa (14/09): *"os agentes de design ganham liberdade total
+para criar e alterar layouts no Figma, desde que usem estritamente as
+Variáveis e Estilos nativos. Antes de codificar, o Claude Code lê esses dados
+brutos direto do arquivo pelo MCP e atualiza automaticamente um único arquivo
+de estilos globais no repositório. Os agentes de programação usam apenas as
+classes desse arquivo centralizado, garantindo que qualquer alteração visual
+feita pelos designers seja replicada de forma idêntica, eliminando a chance
+de o código ficar diferente ou baseado em achismos."*
+
+**É viável, e — o que importa — não depende do plano.** D3 já provou a
+leitura: `get_variable_defs` puxou as 27 variáveis a frio e bateu **26/27**
+contra `src/estilo.js`, com a única divergência sendo formato de alfa (o
+Figma guarda num byte: `.45` volta `0,45098`; a regra é comparar com
+tolerância de 1/255). **Code Connect é outra coisa** — ele amarra
+*componentes*, exige Organization/Enterprise, e **este caminho não o usa**.
+
+**Duas correções de rumo, ditas antes de custar tempo:**
+1. **Não há `tailwind.config.js`.** O Tailwind entra pela CDN no
+   `index.html`, então o "arquivo único de estilos globais" já existe e é
+   **`src/estilo.js`** (criado em D2). Não se cria um segundo.
+2. **A direção se inverte, e isso tem preço.** Hoje `estilo.js` é a fonte e
+   o Figma é o espelho. Aqui o Figma passa a mandar, e o arquivo vira
+   **gerado** — logo não pode ser editado à mão nunca mais, e o erro de um
+   designer chega à produção sozinho. Por isso a catraca não é opcional.
+
+- [ ] **M1 · o gerador** · de: pessoa · 14/09
+  Um script que lê as variáveis do arquivo do Figma e escreve `src/estilo.js`
+  inteiro — cabeçalho dizendo que é gerado, a origem, e a data. Roda por
+  comando, não por mágica. Determinístico: rodar duas vezes sem mexer no
+  Figma não muda um byte.
+- [ ] **M2 · a catraca que impede o desastre** · de: pessoa · 14/09
+  Com o Figma mandando, um engano lá vira produção aqui. Então o gerado
+  **passa por prova antes de valer**: contraste de cada par texto/fundo
+  dentro da norma, nenhum token sumido que alguém ainda importe, nenhum
+  valor fora de faixa. `npm test` vermelho se regredir — e a regra do teto
+  de alfa (1/255) escrita onde se compara, não na memória de ninguém.
+- [ ] **M3 · a deriva denunciada** · de: pessoa · 14/09
+  Um varredor que compara o `estilo.js` do repositório com o Figma **e
+  reclama quando divergem** — é o que substitui o Code Connect na metade dos
+  tokens: não impede a deriva, mas não a deixa acontecer calada. Entra no
+  `rodar-tudo.mjs`.
+- [ ] **M4 · os componentes, sem Code Connect** · de: pessoa · 14/09
+  A metade que o plano cobraria: amarrar componente do Figma a componente de
+  código. Sem a ferramenta, a amarra é **convenção + varredor** — nome igual
+  dos dois lados, declarado em `mente/formas.md`, e um `check-` que falha
+  quando um existe sem o outro. **É pior que Code Connect e é honesto sobre
+  isso:** prova hoje, não impede amanhã. Se a pessoa um dia subir de plano,
+  esta etapa é substituída, não remendada.
+
+### Fase K — as três batidas da rodada (a reação ganha controle)
+**Proposta do `jogo` em D4, aprovada pela pessoa em 14/09 — com o desenho
+dela junto.** Hoje o jogador toca uma batida e meia: **seis reações gastam o
+PM dele sem lhe perguntar** (`App.jsx:7572`). O argumento é estudo citado de
+dentro de casa: `reacoes.js` escreve que no 5e e no BG3 metade da tensão do
+combate mora na reação — e sete linhas depois entrega a decisão ao sistema.
+
+**A forma, ditada pela pessoa:** *"um botão aparecendo (tipo um de rolagem de
+dados) com uma barra de tempo ou timer, e ele tem alguns segundos para sumir.
+Se o player apertar no botão, aparecem as opções para escolher qual será a
+reação ou se não irá reagir. Caso o tempo passe e o player não tenha clicado,
+o turno de reação acaba. Ele deve poder escolher também uma reação padrão ou
+não reagir, caso não queira gastar PM."*
+
+- [ ] **K1 · o momento desenhado** · de: pessoa · 14/09
+  `jogo` e `desenho` em par, no Figma: o botão que chama, a barra que corre,
+  o leque de opções, o estado de "não vou reagir", e a preferência
+  (reação padrão / nunca me pergunte). **Duas decisões de desenhista
+  experiente que a etapa tem de tomar, não perguntar:** quanto tempo a barra
+  dura (e o que acontece com quem lê devagar — o tempo tem de ser
+  configurável ou generoso, e `prefers-reduced-motion` não pode virar
+  desvantagem de jogo), e como isto se comporta no celular, onde o polegar
+  não está sobre o botão.
+- [ ] **K2 · a trava, antes de tudo** · de: pessoa · 14/09
+  **Quem não responde, o sistema responde como hoje.** Regressão zero é
+  condição de entrada, não consequência feliz: o jogo tem de continuar
+  jogável exatamente como é para quem ignora o botão, para quem joga sem
+  mouse, e para quem está numa aba lenta. Prova antes de a peça existir.
+- [ ] **K3 · a reação acontece** · de: pessoa · 14/09
+  Construir. **Precisa do bastão do `App.jsx`** — e é a ocasião de levar o
+  que der para arquivo próprio. O PM só sai da ficha quando o jogador
+  escolheu, ou quando a preferência dele disse que sim.
+- [ ] **K4 · medir a batida** · de: pessoa · 14/09
+  Quantas reações o jogador de fato escolhe, quantas expiram, quanto tempo
+  ele leva, e se o combate ficou mais longo. **Se a batida nova cansar em
+  vez de tensionar, isso aparece no número** — e a etapa diz, em vez de
+  defender o que construiu.
 
 ### Fase E — a batalha tem tela, e o tabuleiro tem endereço
 Decisão da pessoa (14/09): *"seria interessante uma tela para a batalha,
