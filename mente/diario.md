@@ -16,7 +16,7 @@ Formato:
 
 ---
 
-## 15/09 01:30 · v9.250 · a contagem das 148 habilidades · commit `PENDENTE`
+## 15/09 01:30 · v9.250 · a contagem das 148 habilidades · commit `bc74f1e`
 
 - **estado inicial:** HEAD `8dd1579`, VERSÃO v9.249, `npm test`
   **182/182 suítes + 9/9 varredores** verde, build limpo. **Havia um ciclo
