@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 15/09 13:55 · v9.254 · E1 · a tela desenhada antes de existir · **a Fase E abre** · commit `PENDENTE`
+## 15/09 13:55 · v9.254 · E1 · a tela desenhada antes de existir · **a Fase E abre** · commit `0a08522`
 
 A Fase D fechou a casa; **E1 é a primeira tela que esta mesa desenha inteira**,
 e a primeira do projeto a nascer no Figma antes de existir em código. Nenhum
