@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 15/09 21:10 · v9.258 · K1b · o relógio de 15 s, e o que ele cobra · commit `PENDENTE`
+## 15/09 21:10 · v9.258 · K1b · o relógio de 15 s, e o que ele cobra · commit `cd59431`
 
 *O escrito inteiro dos dois seniores fica em `mente/k1b-jogo.md` e
 `mente/k1b-desenho.md`, como K1 e E1 fizeram com os seus.*
