@@ -1830,6 +1830,19 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
 
+- [ ] **a economia do turno não é do motor: o App conta à mão** · médio · de: backend/testes (X1) · 15/09
+  Estava escrito em X3 e **perdeu a casa** quando a pessoa reescreveu a etapa
+  (X3 passou a ser *"o silêncio do Mestre é honesto"*, decisão dela, 15/09) —
+  o achado continua de pé e fica aqui para não se perder. `gastarRecurso`
+  (`src/combate.js:745`) é a única função do motor que gasta a economia de
+  ação e **não tem chamador nenhum no repositório**; quem cobra é uma linha
+  solta no App (`eco.acao -= 1`, `src/App.jsx:13234`). `combate.recursos` é
+  escrito uma vez ao abrir a luta (`:5230`, com `novosRecursos()`) e **nunca
+  lido em lugar nenhum**; e a reação passa `temReacao: true` **cravado**
+  (`:7572`), logo a regra "uma reação por rodada" não é contada por ninguém.
+  É a lei *"conta se prova, tela se olha"* invertida: a conta está na tela.
+  **Tem dono natural em X2** — quem faz o botão gastar a ação é quem descobre
+  que o gasto não passa pelo motor —, mas não depende dela para ser medido.
 - [ ] **a catraca do export morto conta ocorrências, não leitores** · médio · de: backend (X1) · 15/09
   `testes/teste-ligacao.mjs:103-107` soma as ocorrências textuais do nome em
   todos os arquivos, **incluindo a própria declaração e a linha de import**, e

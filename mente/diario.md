@@ -16,6 +16,151 @@ Formato:
 
 ---
 
+## 15/09 15:20 · v9.253 · X1 · o que chega ao motor, e o que vira frase · commit `PENDENTE`
+
+- **estado inicial:** HEAD `c3f4fd3`, VERSÃO v9.252, `npm test` **182/182 suítes
+  + 10/10 varredores** verde, build limpo. **Sem trava — pus a minha.** O
+  `regente` roda **E1** ao lado (a tela de batalha no Figma); a árvore tinha
+  `mente/e1-jogo.md` e `mente/e1-desenho.md` dele, que não toquei. **O bastão do
+  `App.jsx` não foi tomado: X1 mede, e leitura não precisa de bastão.** Nenhuma
+  linha de `src/` mudou nesta etapa, nem o bump — que é de `constantes.js`.
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, e a etapa estava
+  escrita.
+- **backend:** mapeou o caminho de cada ação do jogador e o inverso — o que o
+  motor expõe e nenhum clique chama —, tudo com arquivo e linha, sem editar nada.
+- **testes:** mediu a taxa de turnos estéreis com sondas determinísticas sobre
+  os módulos puros, **achou a causa verdadeira do 7-em-7**, e depois transformou
+  a medição em régua permanente: a tabela, a suíte, o varredor e a sonda.
+
+### A conta que a etapa pediu
+
+**1. Cada ação do jogador, e para onde ela vai.** São **20 botões** no painel de
+Ações: **12 `ACOES_PRONTAS`** (`App.jsx:1071-1084`) com **um handler único que
+só faz `setEntrada`** (`:20564`) — o botão não dispara nada, só enche a caixa —
+e **8 `ACOES_RAPIDAS`** (`desafios.js:621-633`) que entram no motor pelo
+despachante (`:20593` → `declararAcaoRapida` → `adjudicarAcao`). **Nenhuma das
+20 é de combate.** Fora do painel, só **mover no grid** (`moverPara`,
+`App.jsx:14229`), **beber da bolsa** (`usarConsumivelUI`, `:19265`) e o
+**heroísmo** (`:14902`) chegam ao motor por clique — e nenhum dos três é um
+golpe. Das 12 prontas, **6 escrevem frases que leitor nenhum lê**, e **4 dessas
+6 são ações de combate** (Esquivar, Empurrar, Derrubar, Correr).
+
+**2. O motor sem chamador.** Dos três módulos de combate, **21 funções não têm
+um único uso no corpo do `App.jsx`** — 10 de `combate.js`, 8 de `habilidades.js`,
+3 de `efeitos.js`. **Conferi por conta própria e o número bate exatamente**; e
+achei mais **16 tabelas/consts** na mesma situação, que não estavam na conta.
+`habilidades.js` expõe 37 funções e **zero** têm chamador por clique. O caso
+extremo: **`gastarRecurso` (`combate.js:745`) não tem chamador nenhum no
+repositório** — o App faz a conta da economia à mão (`eco.acao -= 1`, `:13234`),
+e `combate.recursos`, escrito ao abrir a luta (`:5230`), **nunca é lido**.
+
+**3. Turnos sem um número mudar: o 7 em 7 se reproduz** — deterministicamente,
+sem IA. Mas **a causa não era a que a fase supunha**, e este é o achado da etapa.
+
+### O achado: a trava é geométrica, e ninguém a tinha nomeado
+
+O botão não é o obstáculo principal. `resolverAtaqueJogador` **existe e é bom**.
+O golpe morre antes: `posicionar` (`grid.js:551-576`) abre a luta com o herói em
+`y = altura-1` e o inimigo em `y = 0`. **Medi as 10 plantas: abertura de 12,0 m
+(taverna) a 25,5 m (masmorra), e 10/10 recusam o alcance de 1,5 m no turno 1.**
+Pior: `semAlcance` recusa **de graça** (`App.jsx:13219-13225`, deliberado desde
+a v9.20), sem gastar a ação — logo `resolverRevide` (`:14034-14038`) nunca roda
+e **a rodada nunca vira**. O jogador ataca sete vezes, o sistema recusa sete
+vezes sem cobrar nada, e o inimigo também não age. PV 20/20, PM 6/6, XP 89/300 —
+exatamente o que o `jogo` viu. São **2–3 turnos só andando** antes que um golpe
+corpo a corpo possa rolar.
+
+**Duas honestidades que a medição obriga:** a recusa **não é muda** (o jogador
+recebe a linha 📏 com a distância e um *"Aproxime-se primeiro"*); e a armadilha
+é sobretudo do corpo a corpo — mas **nem o arco escapa**: a 36 m, **3 das 10
+plantas continuam recusando** (taverna, caverna, navio), por parede no caminho.
+X2 **não pode tratar "tem alcance" como "pode acertar"**.
+
+**E o par que nunca foi composto.** Duas suítes verdes provavam isto juntas:
+`teste-grid.mjs:198` garante que o herói começa a mais de 6 m — **como feature**
+—, e `teste-alcance-e-achado.mjs:45` garante que longe é recusado. Ninguém nunca
+afirmou que existe caminho do começo da luta até um dado rolado. Conferi as duas
+citações: estão exatas. **Não as toquei** — X1 mede, não conserta.
+
+**4. O padrão dos 8 que funcionam** (o molde que X2 copia): o botão lê a caixa
+como *alvo*, limpa e chama um despachante; o `id` vira **a frase canônica que um
+jogador escreveria** (`fraseDaAcaoRapida`); **porta única com direito de
+recusar** (`if (adjudicarAcao(frase)) return;` — `false` devolve o turno à IA);
+o **módulo puro decide antes de qualquer efeito** (`veredictoDaAcao`, e o App não
+calcula dificuldade); a frase só entra no log **depois** de a porta aceitar, no
+par `pushMsgs([jogador, sistema])`; e **o turno se cobra explicitamente**.
+
+### Decisões médias tomadas (com o motivo)
+
+- **A régua de X1 mora em `testes/`, não em `src/`.** Precedente de N1
+  (`ADVERSARIO_NA_REGUA`): instrumentação não é regra de jogo, e um módulo de
+  `src/` que a aplicação nunca importa é export morto esperando para acontecer.
+- **X1 deixa catraca, e não só relatório.** `testes/acoes-do-jogador.mjs` (a
+  tabela), `teste-` e `check-` do mesmo nome, e `testes/sonda-turno-esteril.mjs`
+  — porque **o scratchpad não sobrevive à sessão e X4 tem de repetir esta conta
+  com o mesmo procedimento**. A asserção que importa é um teto que **só
+  desce**: `TETO_SEM_MOTOR = 7`, a lista nomeada das ações de combate sem
+  caminho ao motor. X2 baixa o número no mesmo commit em que faz o botão
+  chamar o motor; subir é regressão.
+- **Separei dois eixos que estavam colapsados num só** na primeira versão da
+  tabela: *o clique chega ao motor* e *a frase enviada chega ao motor*. São
+  coisas diferentes — `Saltar` alcança o motor pelo texto, mas o clique só
+  enche a caixa —, e a manchete de X1 depende de qual dos dois se conta.
+
+### O que corrigi na pauta (a medição manda na pauta, não o contrário)
+
+- **X2 reescrita.** O alvo mudou: o caminho até `resolverAtaque` já existe e não
+  precisa ser inventado; o que falta é **garantir o pré-requisito antes do
+  clique** e mostrar distância e alcance (o veredito antes do clique). Registrei
+  os dois precedentes de dentro de casa (mover e bolsa) além do molde dos 8. E
+  deixei **duas bifurcações que são da pessoa, não do ciclo**: (a) se `semAlcance`
+  passar a cobrar a ação, o jogador que erra o alvo perde o turno — muda o que
+  ele vive; (b) **Defender/Esquivar não existe no motor**, e dar-lhe mecânica é
+  mecânica nova, logo `pesado`.
+- **X3 eu corrigi e a correção caducou no mesmo ciclo** — e isso merece ficar
+  escrito. Eu tinha posto debaixo dela o achado de que **a economia do turno não
+  é do motor**; enquanto o ciclo rodava, **a pessoa reescreveu X3 noutra sessão**
+  (passou a ser *"o silêncio do Mestre é honesto"*: sem narrador, sem turno,
+  declarado provisório) e a minha redação foi por cima. A decisão dela manda —
+  **eu não a desfiz**; mudei o achado de lugar, para "Aberto", com a nota de que
+  o dono natural dele é X2. Um achado medido não pode morrer porque a etapa que
+  o hospedava trocou de assunto.
+- **X4 ganhou a régua e a linha de base cravadas**, com a política fixa escrita,
+  para os dois números serem comparáveis.
+- **Três itens novos em "Aberto"**, todos achados desta medição: a catraca do
+  export morto **conta ocorrências, não leitores** (uma linha de `import` não
+  lida vale como leitor — `App.jsx:7` tem 9 imports mortos de `combate.js`, e é
+  por essa fresta que `gastarRecurso` passou); a reação escolhe por
+  **`Math.random()`** (`reacoes.js:96`), **fora da semente**, contra a lei do
+  determinismo, e o jogador nunca escolhe nenhuma das 6; e os **seis literais
+  mortos** do painel, dois deles conserto de uma linha (`enganar` não casa
+  porque a regex tem `engano` — **o mesmo bug já consertado para a fileira de
+  baixo em `desafios.js:629-631` e nunca para esta**; `Correr` não casa porque
+  `RETIRADA` exige `corro para (fora|longe)`).
+
+### O que ficou
+
+- **X1 não consertou nada, de propósito** — nem os dois literais de uma linha.
+  Consertar sem a catraca junto é como a terceira frase morta nasce no ciclo
+  seguinte, e o varredor novo já tem onde morar.
+- **Uma armadilha de medição, escrita para X4 não cair nela:**
+  `montarGrade({ planta })` **não** monta a planta pedida — `cenarioDe`
+  (`grid.js:286`) lê outras chaves e cai em `estrada` **em silêncio**. Na minha
+  primeira conferência isso trocou a masmorra pela estrada e encurtou a abertura
+  de 25,5 para 16,5 m sem um aviso. Quem medir grade tem de conferir a
+  largura×altura que recebeu.
+- **Nada foi para "pesado"** além das duas bifurcações de X2, que ficaram
+  escritas na própria etapa para a pessoa responder quando ela chegar.
+- **Um aviso de convivência, sem culpa e sem conserto:** enquanto este ciclo
+  rodava, **outra sessão commitou `mente/pauta.md` com as minhas edições de X1
+  dentro** — `184bf1c` e `9b7aa61`, cujas mensagens falam de outro assunto. É
+  exatamente o que a lei *"nunca `git add -A` com um ciclo em curso"* previne: a
+  história passa a não dizer o porquê de parte do que carrega. **Não desfiz
+  nada** — o conteúdo está certo, só está guardado sob o título errado —, e
+  registro aqui para quem for ler o `git log` depois não procurar X1 num commit
+  que não fala dele. Por isso este commit leva `diario.md`, as quatro peças da
+  régua e o bump, e a pauta só com o que escrevi depois daqueles dois.
+
 ## 15/09 13:45 · v9.251 · N1b · a régua enxerga o Adversário · commit `061c5bf`
 
 - **estado inicial:** HEAD `c8da685`, VERSÃO v9.250, `npm test` **182/182
