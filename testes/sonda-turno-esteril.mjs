@@ -29,10 +29,15 @@
 import {
   ACOES_DO_JOGADOR, TURNO_ESTERIL, ABERTURA_FORA_DE_ALCANCE, MOTOR_SEM_CHAMADOR,
   NUMERO_QUE_MUDA, NAO_CONTA_COMO_NUMERO,
-  acoesDeCombateSemMotor, contarPorClique, contarPorTexto, contarCombate,
+  acoesDeCombateSemMotor, acoesComCliqueCondicional,
+  contarPorClique, contarPorTexto, contarCombate,
 } from "./acoes-do-jogador.mjs";
 const G = await import("../src/grid.js");
 const D = await import("../src/desafios.js");
+/* X2: o módulo do veredito entra na sonda para a seção A′ — ele é puro e
+   roda em Node como os outros três. A sessão A de X1 NÃO o usa: ela
+   continua perguntando direto a `alcanca`, como perguntava. */
+const GOLPE = await import("../src/golpe.js");
 
 const L = (...a) => console.log(...a);
 const barra = (n = 72) => L("=".repeat(n));
@@ -72,11 +77,54 @@ let estereis = 0, rolagens = 0;
 for (let turno = 1; turno <= P.turnos; turno++) {
   const r = G.alcanca(grade, eu, inim, { alcanceM: G.alcanceNatural(eu) });
   if (r.ok) { rolagens++; L(`  turno ${turno}  FÉRTIL   rola o d20, aplica dano, revide`); }
-  else { estereis++; L(`  turno ${turno}  estéril  ${r.motivo} → recusa sem custo (App.jsx:13223)`); }
+  else { estereis++; L(`  turno ${turno}  estéril  ${r.motivo} → recusa sem custo (App.jsx:11754)`); }
 }
 L(`\n  ${TURNO_ESTERIL.formula}`);
 L(`  taxa_esteril = ${estereis} / ${P.turnos} = ${pct(estereis, P.turnos)}`);
 L(`  rolagens: ${rolagens} · revides: 0 (a recusa não gasta a ação, logo a rodada não vira)`);
+
+/* ============================================================
+   SESSÃO A′ — O QUE X2 TORNOU MEDÍVEL, AO LADO E NUNCA POR CIMA
+
+   A CONTA DE CIMA NÃO FOI TOCADA. Mesma política, mesmos sete turnos,
+   mesma planta, mesmo inimigo, mesma fórmula: a linha de base de X1
+   (7/7 estéreis, 0 rolagens, 0 revides) continua intacta e continua
+   sendo o que X4 compara. Mudar a política mudaria os dois lados da
+   comparação, e X4 perderia o instrumento.
+
+   O QUE ESTA SEÇÃO ACRESCENTA, e por que ela não podia existir em X1:
+   até X1 não havia como perguntar "o golpe alcança?" sem gastar o turno
+   — a única resposta vinha DEPOIS do clique, como recusa. X2 criou
+   `vereditoDoGolpe` (golpe.js), e com ele o botão passa a nascer
+   IMPEDIDO em vez de aceitar o clique e responder que não dá.
+
+   Então a sessão A′ mede a MESMA sessão A por um segundo ângulo: dos
+   sete turnos, em quantos o jogador sequer consegue clicar. É a
+   diferença entre sete turnos perdidos e sete turnos que o jogo avisou
+   que seriam perdidos — e o número é o mesmo 7, o que é exatamente a
+   medida honesta: X2 não encurtou a caminhada, tornou-a visível.
+   ============================================================ */
+barra();
+L("SESSÃO A′ — a mesma sessão A, pelo ângulo que X2 abriu");
+barra();
+L("  (a conta da sessão A acima permanece intacta — esta é medida NOVA, ao lado)\n");
+let impedidos = 0;
+for (let turno = 1; turno <= P.turnos; turno++) {
+  const vd = GOLPE.vereditoDoGolpe({ grade, meuLugar: eu, inimigos: [inim], alcanceM: G.alcanceNatural(eu) });
+  const impedido = !vd.algumAoAlcance;
+  if (impedido) impedidos++;
+  const mp = vd.maisProximo;
+  L(`  turno ${turno}  ${impedido ? "IMPEDIDO" : "liberado"}  ${mp ? `${mp.nome} a ${mp.distanciaM} m · razão: ${mp.razao || "—"} · faltam ${vd.faltaM} m` : "sem alvo"}`);
+}
+L(`\n  taxa_impedida = ${impedidos} / ${P.turnos} = ${pct(impedidos, P.turnos)}`);
+L("  o clique não é gasto: o botão fica apagado e a linha diz quantos metros faltam.");
+L(`  e a razão é "longe", não "parede" — nesta planta, ANDAR resolve (${ABERTURA_FORA_DE_ALCANCE.turnosAndandoAteOGolpe.minimo} a ${ABERTURA_FORA_DE_ALCANCE.turnosAndandoAteOGolpe.maximo} turnos, ver sessão B).`);
+
+/* E a exceção do eixo do clique, impressa para não virar folclore: qual
+   botão se comporta de dois jeitos, e qual é o jeito de cada mundo. */
+const cond = acoesComCliqueCondicional();
+L(`\n  ações com CLIQUE CONDICIONAL (X2): ${cond.length}`);
+for (const a of cond) L(`    · ${a.rotulo.padEnd(10)} na luta → ${a.cliqueChega} · fora → ${a.cliqueChegaFora}`);
 
 /* ============================================================
    SESSÃO B — o mesmo jogador, andando antes
@@ -186,4 +234,8 @@ L(`  importado pelo App e nunca chamado: ${MOTOR_SEM_CHAMADOR.semClique["combate
 barra();
 L("PARA X4: repita a SESSÃO A com a mesma política e compare a taxa.");
 L(`HOJE: ${estereis}/${P.turnos} estéreis, ${rolagens} rolagens.`);
+/* a linha de base de X1 é a de cima e só ela; A′ é acréscimo de X2 e
+   compara-se consigo mesma, nunca com o número da sessão A */
+L(`E, AO LADO (X2): ${impedidos}/${P.turnos} turnos com o clique IMPEDIDO — a sessão A′,`);
+L("que mede o mesmo combate pelo ângulo do veredito antes do clique.");
 barra();

@@ -1,6 +1,4 @@
 [
-  { "agente": "orquestrador", "o_que": "rege o ciclo X2 — o golpe sai do botão (com o bastão do App.jsx)", "desde": "2026-09-15T06:00:00Z" },
-  { "agente": "backend", "o_que": "X2 · a porta única que o motor expõe ao clique, e o alcance antes do golpe", "desde": "2026-09-15T06:00:00Z" },
   { "agente": "regente", "o_que": "rege o ciclo K1 — a reação com tempo, desenhada no Figma", "desde": "2026-09-15T06:00:00Z" },
   { "agente": "jogo", "o_que": "K1 · o momento da reação: quando chama, quanto dura, o que se perde", "desde": "2026-09-15T06:00:00Z" },
   { "agente": "desenho", "o_que": "K1 · a forma do chamado, da barra e do leque", "desde": "2026-09-15T06:00:00Z" }

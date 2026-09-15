@@ -14,7 +14,10 @@
    varredor nenhum. */
 
 import { readFileSync } from "node:fs";
-import { ACOES_DO_JOGADOR, ABERTURA_FORA_DE_ALCANCE, TURNO_ESTERIL, MOTOR_SEM_CHAMADOR } from "./acoes-do-jogador.mjs";
+import {
+  ACOES_DO_JOGADOR, ABERTURA_FORA_DE_ALCANCE, TURNO_ESTERIL, MOTOR_SEM_CHAMADOR,
+  acoesComCliqueCondicional,
+} from "./acoes-do-jogador.mjs";
 const G = await import("../src/grid.js");
 const APP = readFileSync("../src/App.jsx", "utf8");
 const DESAFIOS = readFileSync("../src/desafios.js", "utf8");
@@ -54,12 +57,48 @@ console.log("\n1. as 12 ACOES_PRONTAS e o handler único");
     }
   }
 
-  /* o handler único: se ele deixar de ser só `setEntrada`, X2 começou */
-  const soEnche = /onClick=\{\(\) => \{ setEntrada\(a\.texto\); setAcoesAbertas\(false\); \}\}/.test(APP);
-  if (!soEnche) {
-    falha("o handler das ACOES_PRONTAS não é mais `setEntrada(a.texto)` puro",
-      "se X2 ligou o botão ao motor, ATUALIZE testes/acoes-do-jogador.mjs (campo `handler` e `emCombate`) e BAIXE o TETO_SEM_MOTOR em teste-acoes-do-jogador.mjs — a catraca só desce com a conquista registrada");
-  } else ok("o handler segue só enchendo a caixa de texto");
+  /* ---------------- O DENTE QUE DISPAROU, REAPONTADO (X2) ----------------
+     X1 escreveu aqui um dente que só podia morder no dia em que X2
+     chegasse: "o handler das ACOES_PRONTAS não é mais `setEntrada(a.texto)`
+     puro". Ele mordeu, e a mordida era a prova de que a fase funcionou.
+
+     Ele NÃO foi apagado — foi VIRADO DE FRENTE. Antes vigiava a partida
+     (o handler ainda ser só a caixa); agora vigia a chegada (o handler
+     ainda chamar o motor). É a mesma cerca no mesmo lugar, olhando para
+     o outro lado: se alguém devolver o botão `Atacar` para dentro da
+     caixa de texto, este dente morde de novo — e é essa regressão que a
+     Fase X existe para impedir.
+
+     São TRÊS metades e as três precisam estar de pé, porque o desenho de
+     X2 é condicional: o desvio para o motor, o `setEntrada` que sobrou
+     para as outras onze e para o fora-de-combate, e o impedimento que
+     apaga o botão quando ninguém está ao alcance. */
+  const desvioAoMotor = /if \(golpeVivo\) \{ declararGolpe\(alvoDoGolpe && alvoDoGolpe\.nome\); return; \}/.test(APP);
+  if (!desvioAoMotor) {
+    falha("o botão `Atacar` não chama mais `declararGolpe` no onClick das ACOES_PRONTAS",
+      "isto é REGRESSÃO de X2: o clique voltou para dentro da caixa de texto. Se foi de propósito, DEVOLVA `pronta_atacar` a SEM_MOTOR_HOJE e SUBA o TETO_SEM_MOTOR em teste-acoes-do-jogador.mjs, com o motivo escrito — e ponha `cliqueChega: \"caixa\"` de volta em testes/acoes-do-jogador.mjs. A catraca não sobe em silêncio");
+  } else ok("o botão `Atacar` segue chamando `declararGolpe`");
+
+  const aindaEnche = /setEntrada\(a\.texto\);/.test(APP);
+  if (!aindaEnche) {
+    falha("o handler das ACOES_PRONTAS perdeu o `setEntrada(a.texto)`",
+      "as outras onze ações e o `Atacar` FORA de combate dependem dele — é pela frase que a briga começa (a porta `agressao` só abre fora da luta). Se o painel mudou de desenho, re-meça `cliqueChegaFora` das 12 prontas em testes/acoes-do-jogador.mjs");
+  } else ok("e as outras onze seguem caindo no `setEntrada`");
+
+  const impede = /const impedido = golpeVivo && !vdGolpe\.algumAoAlcance;/.test(APP) && /disabled=\{impedido\}/.test(APP);
+  if (!impede) {
+    falha("o clique de `Atacar` deixou de ser IMPEDIDO quando ninguém está ao alcance",
+      "sem isso o jogador volta a gastar cliques para ouvir \"ninguém está ao alcance\" — a abertura recusa em 10 de 10 plantas. Se a trava mudou de forma, atualize o campo `alcanca` de pronta_atacar em testes/acoes-do-jogador.mjs e o elo 6 do bloco 1-B de teste-acoes-do-jogador.mjs");
+  } else ok("e o clique segue impedido quando o veredito recusa");
+
+  /* a exceção do eixo condicional tem de ficar ESCRITA: a tabela declara
+     quem se comporta de dois jeitos, e aqui se confere que ela declara
+     exatamente quem o código trata de dois jeitos */
+  const condicionais = acoesComCliqueCondicional().map((a) => a.rotulo);
+  if (condicionais.join() !== "Atacar") {
+    falha(`a tabela declara clique condicional em: ${condicionais.join(", ") || "ninguém"}`,
+      "o código trata de dois jeitos UM botão só — `Atacar`, por `golpeVivo` (src/App.jsx:20718). Se nasceu um segundo, escreva `cliqueChegaFora` na entrada dele em testes/acoes-do-jogador.mjs; se `Atacar` deixou de ser condicional, tire o campo e diga por quê");
+  } else ok("o eixo condicional tem exatamente um membro, e é `Atacar`");
 }
 
 console.log("\n2. as 8 ACOES_RAPIDAS e o despachante");

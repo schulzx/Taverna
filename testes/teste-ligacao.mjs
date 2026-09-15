@@ -79,6 +79,14 @@ sec("1. NENHUM MÓDULO MUDO");
      ligou torneio.js e uma-noite.js no M6; nenhum credor ficou esperando.
      A lista fica VAZIA de proposito: se uma leva futura precisar dela, a
      regra esta escrita acima e o precedente aqui. */
+  /* v9.255 (Fase X, X2): A DIVIDA DE `golpe.js` FOI PAGA, e antes do
+     prazo. A entrada dizia "o frontend, em X3" porque se supunha que a
+     fiacao viria so depois; ela veio em X2 — `resolverAtaqueJogador` le
+     `alcanceDoGolpe`/`vereditoDoGolpe` no lugar dos literais 36 e
+     `+ METROS_POR_QUADRADO`, e o botao `Atacar` entra pela mesma porta.
+     Com importador de verdade, o modulo nao pode ficar na lista de
+     espera: a secao 1 passa a mede-lo como mede todos os outros.
+     A lista volta a ficar VAZIA, como a regra acima pede. */
   const AGUARDANDO = {};
   const mudos = [];
   for (const f of arqs) {

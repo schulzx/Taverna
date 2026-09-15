@@ -24,8 +24,13 @@ const APP = readFileSync("../src/App.jsx", "utf8");
 import {
   ACOES_DO_JOGADOR, MOTOR_SEM_CHAMADOR, TURNO_ESTERIL, ABERTURA_FORA_DE_ALCANCE,
   NUMERO_QUE_MUDA, NAO_CONTA_COMO_NUMERO,
-  acoesDeCombateSemMotor, contarPorClique, contarPorTexto, contarCombate,
+  acoesDeCombateSemMotor, acoesComCliqueCondicional,
+  contarPorClique, contarPorTexto, contarCombate,
 } from "./acoes-do-jogador.mjs";
+/* X2: o módulo puro do golpe entra na suíte porque a asserção nova roda
+   ele DE VERDADE — não é leitura de texto, é a frase do botão passando
+   pelo mesmo detector que a frase digitada passa. */
+const GOLPE = await import(RAIZ + "golpe.js");
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -35,24 +40,42 @@ const sec = (s) => console.log("\n" + s);
    A CATRACA DE X2 — o teto que só pode descer
 
    Este número é a dívida medida em X1: das ações que o jogador tem em
-   combate, quantas NÃO chegam ao motor. Hoje são 7, e entre elas está
-   `Atacar` — o botão que não ataca.
+   combate, quantas NÃO chegam ao motor.
+
+   ---------------- O TETO DESCEU EM X2: 7 → 6 ----------------
+
+   X1 escreveu este bloco com 7 e com `pronta_atacar` dentro, e escreveu
+   também a regra para mexer nele: "baixar exige tirar o `id` da lista no
+   MESMO COMMIT que fez o botão chamar o motor". É o que esta etapa faz.
+   `pronta_atacar` sai porque o clique de `Atacar`, com a luta aberta,
+   passou a entrar por `declararGolpe` → `aplicarGolpeDoJogador` →
+   `resolverAtaqueJogador` — o bloco 1-B abaixo prova a cadeia, e o
+   varredor confere o handler contra o código.
+
+   O `<=` continua sendo `<=` e não `===`: descer de novo é vitória e não
+   pode exigir editar este arquivo. O que a segunda asserção guarda é a
+   IDENTIDADE da lista — descer trocando um id por outro seria regressão
+   disfarçada de conquista.
 
    COMO MEXER NESTE NÚMERO (leia antes de editar):
-   baixar é a vitória de X2, e baixar exige tirar o `id` da lista abaixo
-   no mesmo commit que fez o botão chamar o motor. SUBIR é regressão:
-   quer dizer que uma ação de combate perdeu o caminho ao motor, ou que
-   nasceu um botão de combate que só escreve texto.
+   baixar exige tirar o `id` da lista abaixo no mesmo commit que fez o
+   botão chamar o motor. SUBIR é regressão: quer dizer que uma ação de
+   combate perdeu o caminho ao motor, ou que nasceu um botão de combate
+   que só escreve texto.
    ============================================================ */
-const TETO_SEM_MOTOR = 7;
+const TETO_SEM_MOTOR = 6;   // era 7 até X1; `pronta_atacar` saiu em X2
 const SEM_MOTOR_HOJE = [
-  "pronta_atacar",     // o botão que não ataca — o alvo número 1 de X2
   "pronta_esquivar",   // não casa leitor nenhum
   "pronta_empurrar",   // não casa leitor nenhum
   "pronta_derrubar",   // não casa leitor nenhum
   "pronta_correr",     // não casa leitor nenhum (e o grid tem deslocamento)
   "pronta_ajudar",     // a Ajuda do 5e não existe em código
   "texto_ataque",      // chega ao motor e morre no alcance
+  /* os cinco de cima seguem sem motor DE PROPÓSITO: dar mecânica a
+     Esquivar, Empurrar, Derrubar, Correr e Ajudar muda o que o jogador
+     vive, é decisão pesada, e está reservada à pessoa. `golpe.js`
+     (VERBOS_DE_COMBATE) escreve o motivo de cada um, um por um, para que
+     a próxima pessoa não descubra o buraco jogando. */
 ];
 
 sec("1. a catraca — as ações de combate cujo CLIQUE não chega ao motor");
@@ -64,22 +87,187 @@ sec("1. a catraca — as ações de combate cujo CLIQUE não chega ao motor");
   t("e são exatamente as declaradas (nenhuma troca em silêncio)",
     ids.join() === [...SEM_MOTOR_HOJE].sort().join(),
     `medido: ${ids.join()}`);
-  /* a que dá nome à fase: o clique de `Atacar` não dispara golpe nenhum */
+
+  /* ---------------- AS TRÊS QUE VIRARAM (X2) ----------------
+     Até X1 estas três linhas afirmavam o contrário, e afirmavam a
+     manchete da fase: `cliqueChega !== "motor"`, `=== "caixa"` e um
+     handler que casava /só setEntrada/. Elas NÃO foram afrouxadas nem
+     apagadas — foram invertidas, porque o jogo virou nesta etapa: o
+     botão `Atacar` da mesa de combate chama o motor.
+
+     Invertidas na ETAPA X2, e é este o motivo. Se elas voltarem a
+     falhar, alguém devolveu o botão para dentro da caixa de texto — que
+     é exatamente a regressão que a Fase X existe para impedir. */
   const atacar = ACOES_DO_JOGADOR.find((a) => a.id === "pronta_atacar");
-  t("o clique de `Atacar` não chega ao motor", atacar.cliqueChega !== "motor");
-  t("ele só enche a caixa de texto", atacar.cliqueChega === "caixa");
-  t("e o handler confirma", /só setEntrada/.test(atacar.handler));
+  t("o clique de `Atacar` CHEGA ao motor (invertida em X2)", atacar.cliqueChega === "motor");
+  t("e não está mais na lista dos sem motor", !SEM_MOTOR_HOJE.includes("pronta_atacar") && !ids.includes("pronta_atacar"));
+  t("e o handler confirma: passa por declararGolpe", /declararGolpe/.test(atacar.handler));
+
+  /* A METADE QUE NÃO VIROU, e que a régua tem de continuar dizendo: fora
+     da luta o mesmo botão segue enchendo a caixa. Não é conserto pela
+     metade — é pela FRASE que a briga começa (a porta `agressao` só abre
+     fora do combate), e trocar isso tiraria do jogador o começo da
+     briga. Esta linha guarda que a exceção fica ESCRITA. */
+  t("fora da luta ele continua enchendo a caixa", atacar.cliqueChegaFora === "caixa");
+  const condicionais = acoesComCliqueCondicional();
+  t("e é a única ação com clique condicional", condicionais.length === 1 && condicionais[0].id === "pronta_atacar",
+    condicionais.map((a) => a.id).join());
+}
+
+/* ============================================================
+   1-B. EXISTE CAMINHO DO CLIQUE ATÉ UM NÚMERO MUDAR (X2)
+
+   A ASSERÇÃO QUE X2 DEIXA, e que vale mais que o teto. Um teto que desce
+   diz que a tabela mudou; este bloco diz que o JOGO mudou. X1 fechou a
+   medição apontando o que faltava, palavra por palavra: "falta a
+   terceira [prova], e é a que X2 vai ter de fazer passar: existe um
+   caminho, em quantos turnos, do começo da luta até um dado rolado".
+   É esta.
+
+   ---------------- O QUE É SONDA E O QUE É LEITURA ----------------
+
+   Está separado em dois grupos porque as duas coisas NÃO valem o mesmo,
+   e misturá-las é como uma régua mente sem querer:
+
+   SONDA — roda módulo de verdade em Node, sem React. `golpe.js`,
+   `agressao.js` e `grid.js` são executados; o que sai são os valores
+   deles. Se o módulo mudar, esta metade quebra sozinha.
+
+   LEITURA DE CÓDIGO — `App.jsx` é React e não roda aqui. Esta metade lê
+   o arquivo como TEXTO e conta call-sites. Ela prova que a cadeia está
+   escrita e que a aplicação do golpe tem UM caminho só; ela NÃO prova
+   que o clique executou. É a mesma limitação honesta que X1 declarou, e
+   é `check-acoes-do-jogador.mjs` quem guarda que o texto lido ainda
+   descreve o código.
+   ============================================================ */
+sec("1-B. do clique ao número — o que roda (sonda) e o que se lê (texto)");
+{
+  /* ---------------- SONDA: a frase do botão é a frase do teclado ----------------
+     O detector de ataque mora dentro do App e não pode ser importado.
+     Então ele é EXTRAÍDO como texto e EXECUTADO aqui: a expressão é a do
+     código, a execução é de verdade. Se o botão escrevesse uma frase que
+     este detector não casa, o painel teria aberto um caminho paralelo —
+     que é o defeito que a Fase X existe para matar. */
+  const N = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const mRx = APP.match(/const verboAtaque = \/(.+?)\/\.test\(acaoN\);/);
+  t("o detector de ataque do App foi encontrado para ser executado aqui", !!mRx);
+  const rxApp = mRx ? new RegExp(mRx[1]) : null;
+  const frase = GOLPE.fraseDoGolpe({ nome: "Bandido" });
+  t("a frase canônica do botão é a que um jogador escreveria", frase === "Ataco Bandido", frase);
+  t("e ela casa o MESMO detector que a frase digitada casa", !!rxApp && rxApp.test(N(frase)));
+  /* e do outro lado da porta: fora da luta, a mesma frase abre o combate
+     pelo leitor de agressão — módulo real, rodando */
+  const elenco = [{ nome: "Bandido", papel: "salteador", relacao: "hostil" }];
+  t("a mesma frase é declaração de ataque para agressao.js", A.ehDeclaracaoDeAtaque(frase) === true);
+  const abre = A.lerAgressao(frase, { presentes: elenco, grupo: [], emCombate: false });
+  t("e fora da luta ela abre o combate", !!abre && abre.tipo === "agressao");
+
+  /* ---------------- SONDA: o estado em que o clique é permitido EXISTE ----------------
+     Sem isto, "o botão chama o motor" seria promessa: na abertura de
+     todas as dez plantas o veredito recusa, e o botão fica impedido. A
+     sonda anda o herói com `alcancaveisDe` — caminho real, orçamento
+     real — e mostra que a recusa VIRA permissão, e em quantos turnos.
+     Mesma política da sonda: planta "estrada", 1 inimigo não-ágil. */
+  const grade = G.montarGrade({ local: TURNO_ESTERIL.politicaDaSessaoA.planta });
+  const p0 = G.posicionar(grade, { heroi: { nome: "Bram" }, grupo: [], inimigos: [{ nome: "Bandido", vida: 11 }] });
+  const inim = p0.inimigos[0];
+  const vdDe = (eu) => GOLPE.vereditoDoGolpe({ grade, meuLugar: eu, inimigos: [inim], alcanceM: G.alcanceNatural(eu) });
+  t("na abertura o veredito recusa — o botão nasce impedido", vdDe(p0.heroi).algumAoAlcance === false);
+  t("e a recusa é por DISTÂNCIA, não por parede (nesta planta)", vdDe(p0.heroi).maisProximo.razao === "longe");
+  let eu = { ...p0.heroi }, passos = 0;
+  const ocup = new Set([`${inim.x},${inim.y}`]);
+  while (!vdDe(eu).algumAoAlcance && passos < TURNO_ESTERIL.politicaDaSessaoA.turnos) {
+    const cands = [...G.alcancaveisDe(grade, eu, { ocupados: ocup, deslocamentoM: G.DESLOCAMENTO_PADRAO })]
+      .map((k) => { const [x, y] = k.split(",").map(Number); return { x, y }; })
+      .sort((a, b) => G.distanciaM(a, inim) - G.distanciaM(b, inim));
+    if (!cands.length || G.distanciaM(cands[0], inim) >= G.distanciaM(eu, inim)) break;
+    eu = { ...eu, x: cands[0].x, y: cands[0].y }; passos++;
+  }
+  const vdPerto = vdDe(eu);
+  t("andando, o veredito VIRA: o clique passa a ser permitido", vdPerto.algumAoAlcance === true, `passos=${passos}`);
+  t("e o preço está dentro do que X1 mediu (2 a 3 turnos andando)",
+    passos >= ABERTURA_FORA_DE_ALCANCE.turnosAndandoAteOGolpe.minimo
+    && passos <= ABERTURA_FORA_DE_ALCANCE.turnosAndandoAteOGolpe.maximo, `passos=${passos}`);
+  /* e o alvo que o botão escolheria é um alvo de verdade, cuja frase
+     ainda casa o detector — a ponta da sonda encosta na ponta da cadeia */
+  const escolhido = vdPerto.aoAlcance[0];
+  t("o veredito nomeia o alvo que o botão miraria", !!escolhido && escolhido.nome === "Bandido");
+  t("e a frase montada para ESSE alvo ainda casa o detector",
+    !!rxApp && rxApp.test(N(GOLPE.fraseDoGolpe(escolhido))));
+
+  /* ---------------- LEITURA DE CÓDIGO: uma cadeia, uma aplicação ----------------
+     Daqui para baixo nada roda: é `App.jsx` lido como texto. O que se
+     conta é call-site, e o que se prova é que a aplicação do golpe tem
+     UM caminho — dois chamadores entrando na mesma porta, e nenhum
+     terceiro. Duas metades do mesmo golpe divergem na primeira vez que
+     alguém mexer numa só, e é esse bug que a contagem impede. */
+  const corpoDe = (nome, ate) => {
+    const i = APP.indexOf(`const ${nome} = `);
+    const j = APP.indexOf(ate, i);
+    return i >= 0 && j > i ? APP.slice(i, j) : "";
+  };
+  const contar = (rx) => (APP.match(rx) || []).length;
+
+  const corpoDeclarar = corpoDe("declararGolpe", "const resolverHabilidadeOfensiva");
+  const corpoAplicar = corpoDe("aplicarGolpeDoJogador", "const vereditoDoGolpeAgora");
+  t("o despachante `declararGolpe` existe no App", corpoDeclarar.length > 0);
+  t("e a porta única `aplicarGolpeDoJogador` também", corpoAplicar.length > 0);
+
+  /* elo 1: o botão é o único que declara o golpe */
+  t("`declararGolpe` tem UM chamador", contar(/\bdeclararGolpe\s*\(/g) === 1, String(contar(/\bdeclararGolpe\s*\(/g)));
+  t("e o chamador é o onClick das ACOES_PRONTAS",
+    /if \(golpeVivo\) \{ declararGolpe\(alvoDoGolpe && alvoDoGolpe\.nome\); return; \}/.test(APP));
+  /* elo 2: a frase vem do módulo, não de uma string montada na tela */
+  t("`fraseDoGolpe` é chamada UMA vez, e é dentro de `declararGolpe`",
+    contar(/\bfraseDoGolpe\s*\(/g) === 1 && /fraseDoGolpe\(/.test(corpoDeclarar));
+  t("e é ela que alimenta a porta única",
+    /aplicarGolpeDoJogador\(fraseDoGolpe\(/.test(corpoDeclarar));
+  /* elo 3: DOIS chamadores, e nenhum terceiro — a prova do caminho único */
+  t("`aplicarGolpeDoJogador` tem exatamente DOIS chamadores",
+    contar(/\baplicarGolpeDoJogador\s*\(/g) === 2, String(contar(/\baplicarGolpeDoJogador\s*\(/g)));
+  t("um é o texto digitado (agirInterno)",
+    /if \(aplicarGolpeDoJogador\(acao, fichaViva\(\) \|\| personagem\)\) return;/.test(APP));
+  t("e o outro é o botão, via `declararGolpe`", /aplicarGolpeDoJogador\(/.test(corpoDeclarar));
+  /* elo 4: e a resolução do golpe acontece num lugar só */
+  t("`resolverAtaqueJogador` é chamado UMA vez em todo o App",
+    contar(/\bresolverAtaqueJogador\s*\(/g) === 1);
+  t("e essa única chamada está dentro da porta única",
+    /resolverAtaqueJogador\(acao, pers\)/.test(corpoAplicar));
+
+  /* elo 5: o NÚMERO. De nada adianta a cadeia existir se a ponta dela
+     não mexe em nada — é o que X1 mediu e chamou de turno estéril. */
+  t("a ponta da cadeia gasta a ação", /eco\.acao -= 1/.test(corpoAplicar));
+  t("e escreve PV no inimigo", /vida: pvDepois/.test(corpoAplicar));
+  t("e registra o dado rolado", /logDadoCombate\(resumoDoAtaque\(r\)\)/.test(corpoAplicar));
+
+  /* elo 6: o veredito antes do clique — a lei da casa manda mostrar o
+     preço ANTES da ação irreversível, e aqui ele vira estado do botão */
+  t("o clique é IMPEDIDO quando ninguém está ao alcance",
+    /const impedido = golpeVivo && !vdGolpe\.algumAoAlcance;/.test(APP) && /disabled=\{impedido\}/.test(APP));
+  t("e o veredito é medido pelo mesmo módulo que resolve o golpe",
+    /vereditoDoGolpe\(\{/.test(APP) && /import \{ alcanceDoGolpe, vereditoDoGolpe, fraseDoGolpe \} from "\.\/golpe\.js";/.test(APP));
 }
 
 sec("2. os dois eixos — o clique e a frase contam histórias diferentes");
 {
-  /* EIXO DO CLIQUE — é daqui que sai a manchete de X1 */
+  /* EIXO DO CLIQUE — era daqui que saía a manchete de X1, e é aqui que
+     ela mudou. As três asserções abaixo estavam em 11 / 12 / zero; viram
+     12 / 11 / uma NA ETAPA X2, e por um motivo só: `Atacar`, na mesa de
+     combate, entrou no motor. Os 30 registros são os mesmos e nenhum
+     outro mudou de coluna — foi UMA ação que atravessou, e é isso que os
+     três números, lidos juntos, afirmam. */
   const clique = contarPorClique();
-  t("11 cliques chegam ao motor (8 rápidas + mover + bolsa + heroísmo)",
-    clique.motor === 11, JSON.stringify(clique));
-  t("e as 12 prontas só enchem a caixa", clique.caixa === 12, JSON.stringify(clique));
+  t("12 cliques chegam ao motor (8 rápidas + mover + bolsa + heroísmo + Atacar na luta)",
+    clique.motor === 12, JSON.stringify(clique));
+  t("e 11 das prontas seguem só enchendo a caixa", clique.caixa === 11, JSON.stringify(clique));
   const prontasNoMotor = ACOES_DO_JOGADOR.filter((a) => a.fonte === "ACOES_PRONTAS" && a.cliqueChega === "motor");
-  t("nenhuma das 12 prontas dispara o motor pelo clique", prontasNoMotor.length === 0);
+  t("UMA das 12 prontas dispara o motor pelo clique, e é Atacar (invertida em X2)",
+    prontasNoMotor.length === 1 && prontasNoMotor[0].id === "pronta_atacar",
+    prontasNoMotor.map((a) => a.id).join());
+  /* e a conta do MUNDO DE FORA continua a de X1 — a régua não perdeu o
+     número velho, ela ganhou o recorte que faltava */
+  const foraMotor = ACOES_DO_JOGADOR.filter((a) => (a.cliqueChegaFora || a.cliqueChega) === "motor").length;
+  t("fora da luta seguem 11 cliques no motor, como em X1", foraMotor === 11, String(foraMotor));
 
   /* EIXO DO TEXTO — a frase vai mais longe que o clique, e isso é
      verdade ao mesmo tempo: 5 das prontas casam desafio quando enviadas */
@@ -93,12 +281,17 @@ sec("2. os dois eixos — o clique e a frase contam histórias diferentes");
   /* O RECORTE QUE IMPORTA: o combate, nos dois eixos */
   const c = contarCombate();
   t("são 10 ações de combate", c.total === 10, JSON.stringify(c));
-  t("e só 3 delas têm clique que chega ao motor", c.clique.motor === 3, JSON.stringify(c.clique));
-  /* as 3 são mover, beber e heroísmo — NENHUMA é um golpe.
-     É esta linha que resume a Fase X inteira. */
+  t("e 4 delas têm clique que chega ao motor", c.clique.motor === 4, JSON.stringify(c.clique));
+  /* ---------------- A LINHA QUE RESUMIA A FASE X, E QUE VIROU ----------------
+     Até X1 esta asserção dizia "e NENHUMA das 3 é um golpe" — mover,
+     beber e heroísmo, e nenhum jeito de bater. Era o resumo da fase
+     inteira numa linha. Ela vira aqui, na ETAPA X2, e o que ela passa a
+     afirmar é o oposto exato, sem afrouxar nada: a lista continua sendo
+     conferida id a id (trocar um pelo outro em silêncio continua
+     vermelho), e ganhou `pronta_atacar`. */
   const motorNaLuta = ACOES_DO_JOGADOR.filter((a) => a.combate && a.cliqueChega === "motor").map((a) => a.id).sort();
-  t("e nenhuma das 3 é um golpe",
-    motorNaLuta.join() === ["bolsa_consumivel", "grid_mover", "heroismo_gasto"].join(),
+  t("e uma das 4 é um golpe (invertida em X2)",
+    motorNaLuta.join() === ["bolsa_consumivel", "grid_mover", "heroismo_gasto", "pronta_atacar"].join(),
     motorNaLuta.join());
   t("nenhuma frase de combate chega ao motor dentro da luta",
     c.texto.motor === 0, JSON.stringify(c.texto));
@@ -146,7 +339,13 @@ sec("4. a definição operacional de 'número que muda'");
   const relogio = NAO_CONTA_COMO_NUMERO.find((x) => /relógio/.test(x.o));
   t("o relógio de 45 min está excluído", !!relogio);
   t("e o porquê da exclusão está escrito", !!relogio && /por construção/.test(relogio.porque));
-  t("e aponta a linha que avança o relógio", !!relogio && /12959/.test(relogio.porque));
+  /* O NÚMERO DA LINHA MUDOU, A EXCLUSÃO NÃO. Era `12959`; a extração da
+     porta única do golpe (X2) empurrou o `avancarMinutos(MINUTOS_POR_TURNO)`
+     para `13161`. Trocado aqui porque uma régua que aponta a linha errada
+     ensina a desconfiar dela — e o que esta asserção guarda nunca foi o
+     número, e sim que a exclusão venha com ENDEREÇO, para X4 poder
+     conferir que o relógio ainda avança sozinho antes de repetir a conta. */
+  t("e aponta a linha que avança o relógio", !!relogio && /13161/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -244,10 +443,17 @@ sec("7. os seis literais do painel que não casam leitor nenhum");
   t("e são Esquivar, Empurrar, Derrubar, Correr, Ajudar e Enganar",
     semLeitor.sort().join() === ["Ajudar", "Correr", "Derrubar", "Empurrar", "Enganar", "Esquivar"].join(),
     semLeitor.join());
-  /* Das 12 prontas, SEIS são de combate e todas as seis viram frase:
-     as cinco sem leitor nenhum (Esquivar, Empurrar, Derrubar, Correr,
-     Ajudar) mais `Atacar`, que tem leitor e morre no alcance. É o
-     coração do achado — o painel de combate inteiro é prosa. */
+  /* Das 12 prontas, SEIS são de combate e todas as seis viram frase
+     QUANDO DIGITADAS: as cinco sem leitor nenhum (Esquivar, Empurrar,
+     Derrubar, Correr, Ajudar) mais `Atacar`, que tem leitor e morre no
+     alcance. Era o coração do achado de X1 — o painel de combate inteiro
+     era prosa.
+
+     A ASSERÇÃO NÃO MUDA, e é de propósito: ela mede o eixo do TEXTO, e o
+     caminho do teclado não foi tocado em X2. O que mudou é o eixo do
+     CLIQUE, e quem o mede é o bloco 1. Ler esta linha como "o painel
+     ainda é todo prosa" seria ler a régua errada: o clique de `Atacar`
+     deixou de ser prosa, a frase digitada dele não. */
   const deCombate = ACOES_DO_JOGADOR.filter((x) => x.fonte === "ACOES_PRONTAS" && x.combate && x.textoLuta === "cena");
   t("as seis prontas de combate viram frase, sem exceção", deCombate.length === 6, String(deCombate.length));
 }

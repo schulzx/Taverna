@@ -53,6 +53,12 @@ import { menteDaCriatura, intencaoDaVez, intencaoPorId, linhaDaLuta, envelopeDaV
 import { consultarCobrador, linhaDoMundo, envelopeDoMundo } from "./cobrador.js";
 import { avaliarEncontro, PESO_AMEACA, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
 import { montarGrade, garantirGrade, posicionar, posicionarPerto, alcanca, caminhar, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, mapaEmTexto, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, distanciaM, tamanhoDe, ladoDe, alcanceNatural, ehParede, m2q, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO } from "./grid.js";
+/* v9.255 (Fase X, X2): a conta do alcance do golpe saiu daqui de dentro e
+   virou tabela provável em Node. O App não decide mais quem dá para
+   acertar — ele PERGUNTA, e pergunta duas vezes: uma quando o golpe sai,
+   outra antes do clique, para a tela poder dizer o veredito sem gastar o
+   turno de ninguém. */
+import { alcanceDoGolpe, vereditoDoGolpe, fraseDoGolpe } from "./golpe.js";
 import { deslocamentoDe, passoEfetivo, passoComSelecao, passoDeHabilidade, deslocamentoDeCriatura, resumoDeslocamento, resumoDeslocamentoPrompt, MOVIMENTO_PROMPT } from "./movimento.js";
 import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPreparada, ehPreparavel, preparadasIniciais, alternarPreparada, podeLancar, ehRitual, motivoDoCaderno, MINUTOS_RITUAL, resumoMagiasPrompt, MAGIAS_PROMPT } from "./magias.js";
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
@@ -1082,6 +1088,40 @@ const ACOES_PRONTAS = [
   { icone: "🗣", rotulo: "Persuadir", texto: "Tento persuadir " },
   { icone: "🎭", rotulo: "Enganar", texto: "Tento enganar " },
 ];
+
+/* ---------------- O VEREDITO DO GOLPE, EM VOZ DE MUNDO (v9.255, Fase X) ----------------
+   `golpe.js` mede e devolve números; estas três funções os VESTEM, e é a
+   única coisa que fazem. Nenhuma conta acontece aqui — e nenhuma acontece
+   no JSX: o que a tela escreve já veio medido de lá.
+
+   Elas moram fora do corpo que renderiza, com os outros ajudantes de
+   módulo, porque quem nasce dentro do render nasce de novo a cada letra
+   digitada — e nesta casa isso já custou o foco de um campo inteiro. */
+const maisPertoAoAlcance = (vd) => {
+  const lista = (vd && vd.aoAlcance) || [];
+  let perto = null;
+  for (const a of lista) if (!perto || a.distanciaM < perto.distanciaM) perto = a;
+  return perto;
+};
+
+/* A razão da RECUSA, e ela separa as duas — porque andar resolve uma e não
+   resolve a outra. Quem está longe demais ouve quantos metros faltam; quem
+   está atrás de parede ouve que precisa contornar, e nenhum passo à frente
+   vai adiantar. Dizer só "não dá" seria mandar o jogador adivinhar qual das
+   duas o mordeu. */
+const recusaDoGolpe = (vd) => {
+  const perto = vd && vd.maisProximo;
+  if (!vd || vd.semLuta || !perto) return "Ninguém de pé ao seu alcance.";
+  if (perto.razao === "parede") return `Há parede no caminho até ${perto.nome} — contorne.`;
+  return `Longe demais — ${perto.nome} a ${metrosTxt(perto.distanciaM)} m, faltam ${metrosTxt(vd.faltaM)} m. Aproxime-se primeiro.`;
+};
+
+/* E quando o golpe SAI, a mesma linha diz onde ele vai cair. */
+const linhaDoGolpe = (vd) => {
+  const perto = maisPertoAoAlcance(vd);
+  if (!perto) return "";
+  return `${perto.nome} a ${metrosTxt(perto.distanciaM)} m — dentro dos seus ${metrosTxt(vd.alcanceM)} m de alcance.`;
+};
 
 /* v9.31: MODOS_MUNDO e instrucaoMundo saíram junto com a vez do mundo.
    Eram a rotação de cenas que a IA encenava quando o jogador pedia "faça o
@@ -3069,7 +3109,7 @@ function PainelExame({ itens = [], raio = 0, aoPegar, aoFechar }) {
   );
 }
 
-function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover, grupo = [], heroiFicha = null, passoM = 9, passoTotal = 9, ignoraDificil = false, previsao = null, mira = null, onMirar, alcanceMira = null, acaoBonus = false }) {
+function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover, grupo = [], heroiFicha = null, passoM = 9, passoTotal = 9, ignoraDificil = false, previsao = null, mira = null, onMirar, alcanceMira = null, acaoBonus = false, veredito = null }) {
   const [bolsaAberta, setBolsaAberta] = useState(false);
   if (!combate || !combate.inimigos || combate.inimigos.length === 0) return null;
   const eco = combate.economia || { acao: 1, extra: 1 };
@@ -3247,7 +3287,7 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
         <div className="rounded-xl p-2.5 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
           <div className="flex items-center justify-between mb-1.5">
             <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.amberSoft }}>
-              {nGolpes > 1 ? `Declare seus ${nGolpes} golpes` : "Escolha o alvo"}{acaoTexto ? ` · ${acaoTexto}` : ""}
+              {nGolpes > 1 ? `Declare seus ${nGolpes} golpes` : "Escolha o alvo"}{acaoTexto ? ` · ${acaoTexto}` : ""}{veredito ? ` · seu alcance ${metrosTxt(veredito.alcanceM)} m` : ""}
             </span>
             {alvosGolpe.length > 0 && (
               <button onClick={onLimparAlvos} className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>limpar</button>
@@ -3259,11 +3299,19 @@ function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, 
                 <span className="tv-mono text-[9px] shrink-0 w-12" style={{ color: T.inkDim }}>{nGolpes > 1 ? `golpe ${gi + 1}` : "alvo"}</span>
                 {combate.inimigos.filter((e) => !e.derrotado).map((e) => {
                   const escolhido = alvosGolpe[gi] === e.nome;
+                  /* v9.255 (Fase X, X2): o que é alvo tem o custo escrito
+                     DENTRO. A distância e o estado de alcance vêm medidos de
+                     `golpe.js` — aqui não se calcula nada —, e as duas recusas
+                     ficam separadas na própria pílula, porque andar resolve
+                     uma e não resolve a outra. O bloco continua DECLARANDO
+                     alvo: ele não dispara nada, e não passou a disparar. */
+                  const vz = ((veredito && veredito.alvos) || []).find((x) => x.nome === e.nome);
+                  const fora = !!vz && !vz.ok;
                   return (
                     <button key={e.nome} onClick={() => onDeclararAlvo && onDeclararAlvo(gi, escolhido ? null : e.nome)}
                       className="tv-mono text-[9px] px-2 py-1 rounded-full"
-                      style={{ background: escolhido ? T.danger : "transparent", color: escolhido ? "#fff" : T.inkDim, border: `1px solid ${escolhido ? T.danger : T.line}` }}>
-                      {e.nome}
+                      style={{ background: escolhido ? T.danger : "transparent", color: escolhido ? "#fff" : fora ? T.inkDim : T.ink, border: `1px ${fora ? "dashed" : "solid"} ${escolhido ? T.danger : T.line}` }}>
+                      {e.nome}{vz ? ` · ${metrosTxt(vz.distanciaM)} m` : ""}{fora ? (vz.razao === "parede" ? " · parede" : " · longe") : ""}
                     </button>
                   );
                 })}
@@ -11605,20 +11653,33 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
          quem tem de encostar. */
       const armaEq = pers.equipados && pers.equipados.arma;
       const temAlcance = !!(armaEq && (fichaDoItem(armaEq).props || []).includes("alcance"));
-      const alcanceArma = armaLonge
-        ? 36
-        : alcanceNatural({ nome: pers.nome, tamanho: pers.tamanho }) + (temAlcance ? METROS_POR_QUADRADO : 0);
-      const podeBater = (e) => alcanca(gradeDaLuta, meuLugar, e, { alcanceM: alcanceArma }).ok;
-      const aoAlcance = vivosAgora.filter(podeBater);
-      if (!aoAlcance.length) {
-        return { semAlcance: true, motivo: armaLonge
+      /* v9.255 (Fase X, X2): o `36` e o "+ um quadrado" saíram desta linha
+         para a tabela `ALCANCES` (golpe.js), e a conta de quem dá para
+         acertar virou `vereditoDoGolpe`. NADA foi rebalanceado: o módulo
+         mede pelo MESMO `alcanca`, sobre os MESMOS vivos, na MESMA ordem —
+         se algum número mudar aqui, é defeito, e `teste-golpe.mjs` crava os
+         casos contra a linha de antes, um a um.
+
+         O que muda é o LUGAR onde a regra mora, e com ele uma coisa que não
+         existia: a mesma conta que recusa o golpe passa a poder ser
+         perguntada sem gastar o turno — que é o que faz o jogador ver se
+         alcança ANTES de clicar, em vez de descobrir depois. */
+      const alcanceArma = alcanceDoGolpe({ armaLonge, temPropAlcance: temAlcance, nome: pers.nome, tamanho: pers.tamanho });
+      const vd = vereditoDoGolpe({ grade: gradeDaLuta, meuLugar, inimigos: vivosAgora, alcanceM: alcanceArma });
+      if (!vd.algumAoAlcance) {
+        return { semAlcance: true, veredito: vd, motivo: armaLonge
           ? "não há ninguém à vista para acertar — ou há parede no caminho"
-          : `ninguém está ao alcance do seu golpe — ${vivosAgora.map((e) => `${e.nome} está em ${nomeDoLugar(gradeDaLuta, e.x, e.y)}, a uns ${Math.round(distanciaM(meuLugar, e))} m`).join("; ")}. Aproxime-se primeiro.` };
+          : `ninguém está ao alcance do seu golpe — ${vd.alvos.map((a) => `${a.nome} está em ${a.lugar}, a uns ${a.metrosRedondos} m`).join("; ")}. Aproxime-se primeiro.` };
       }
-      const alvo = (declarado && aoAlcance.find((e) => e.nome === declarado))
-        || (alvoCitado && aoAlcance.find((e) => e.nome === alvoCitado.nome))
-        || aoAlcance[0];
-      const penal = alcanca(gradeDaLuta, meuLugar, alvo, { alcanceM: alcanceArma }).penalidade || 0;
+      /* a mesma preferência de sempre: declarado > citado > o primeiro ao
+         alcance. O `indice` do veredito aponta de volta para a lista que
+         entrou, e é por ele que o alvo continua sendo o OBJETO vivo da luta
+         — nunca uma cópia do veredito, que não tem PV para perder. */
+      const mirado = (declarado && vd.aoAlcance.find((a) => a.nome === declarado))
+        || (alvoCitado && vd.aoAlcance.find((a) => a.nome === alvoCitado.nome))
+        || vd.aoAlcance[0];
+      const alvo = vivosAgora[mirado.indice];
+      const penal = mirado.penalidade;
       /* ---- A REGRA DO DEGRAU, DO LADO DE CÁ (v9.32) ----
          `bonusDivino` e `imunePorEscopo` estavam importados neste arquivo
          desde a v7.4 e nunca eram chamados: o inimigo divino ganhava +2 por
@@ -11668,6 +11729,147 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       }
     }
     return { resultados, nAtaques, bonusArma: bArma };
+  };
+
+  /* ---------------- A PORTA ÚNICA DO GOLPE (v9.255, Fase X, X2) ----------------
+     Este bloco morava DENTRO de `agirInterno`, colado no despachante do
+     texto livre, e por isso só existia para quem digitava. O botão
+     `Atacar` do painel de Ações não chegava até aqui: ele escrevia
+     "Ataco " na caixa e devolvia o turno ao jogador.
+
+     Dar motor ao botão sem mover isto daqui abriria um SEGUNDO caminho
+     para o mesmo golpe — a economia da ação de um lado, o revide do outro,
+     e as duas metades divergindo na primeira vez que alguém mexesse numa
+     só. Então a extração vem antes da ligação: é o mesmo bloco, na mesma
+     ordem, e agora os dois chamadores (o texto e o botão) passam por ele.
+
+     Devolve `true` quando ELE resolveu o turno — inclusive a recusa por
+     alcance, que de propósito não cobra a ação — e `false` quando a frase
+     não era golpe nenhum, e o turno segue para as outras portas. */
+  const aplicarGolpeDoJogador = (acao, pers) => {
+    const ataque = resolverAtaqueJogador(acao, pers);
+    /* ZONAS (v9.20): golpe sem alcance não gasta a ação. Cobrar o turno por
+       uma regra que o jogador acabou de descobrir seria punir a curiosidade;
+       o custo dele é o passo que ele vai ter que dar. */
+    if (ataque && ataque.semAlcance) {
+      pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `📏 ${ataque.motivo}` }]);
+      return true;
+    }
+    if (!ataque) return false;
+    /* ECONOMIA DE TURNO (v7.4): atacar gasta a AÇÃO. Sem ação, sem golpe —
+       o turno só vira quando os movimentos acabam ou o jogador encerra. */
+    const eco = combateRef.current && combateRef.current.economia;
+    if (eco && eco.acao <= 0) {
+      pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: "⏳ Você já usou sua ação nesta rodada — o golpe fica para a próxima." }]);
+      return true;
+    }
+    if (eco) { eco.acao -= 1; combateRef.current = { ...combateRef.current, economia: { ...eco } }; setCombate(combateRef.current); }
+    const { resultados } = ataque;
+    ataqueResolvidoRef.current = true;
+    /* aplica cada golpe por código (fonte da verdade) e monta as linhas de dano */
+    const gdJ = grauDe(divindadeRef.current);
+    const linhas = [{ autor: "jogador", texto: acao }];
+    const partesMeu = [];
+    for (const { r, alvo } of resultados) {
+      let pvDepois = alvo.vida;
+      if (r.dano > 0) {
+        const atualAlvo = (combateRef.current?.inimigos || []).find((e) => e.nome === alvo.nome);
+        pvDepois = Math.max(0, (atualAlvo ? atualAlvo.vida : alvo.vida) - r.dano);
+        const novo = { ...combateRef.current, inimigos: combateRef.current.inimigos.map((e) => e.nome === alvo.nome ? { ...e, vida: pvDepois, derrotado: pvDepois <= 0, ultimoDano: r.dano } : e) };
+        combateRef.current = novo; setCombate(novo);
+        /* AFLIÇÃO DA ARMA (v9.1): a adaga envenenada envenena — o sistema lê
+           a arma equipada, rola o teste do inimigo e aplica. Sem pedir nada
+           ao Mestre e sem depender de o jogador descrever bonito. */
+        if (pvDepois > 0) {
+          const f = fonteDaArma(personagem);
+          const ap = aplicarAflicaoEmInimigo(combateRef.current.inimigos, alvo.nome, { fonte: f.texto, nomeFonte: f.nome, atacante: personagem.nome, critico: r.critico });
+          if (ap.res) {
+            combateRef.current = { ...combateRef.current, inimigos: ap.lista }; setCombate(combateRef.current);
+            linhas.push({ autor: "sistema", texto: ap.res.texto });
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${ap.res.nota}`;
+            partesMeu.push(ap.res.aplicou ? `${alvo.nome} ficou ${ap.res.cond.nome.toLowerCase()}` : `${alvo.nome} resistiu à ${ap.res.cond.nome.toLowerCase()}`);
+          }
+        }
+      }
+      logDadoCombate(resumoDoAtaque(r));
+      if (mostrarRolagensRef.current) linhas.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(r) });
+      linhas.push({ autor: "sistema", texto: r.escopoImune
+        ? `⚔ ${personagem.nome} → ${alvo.nome}: o golpe atravessa sem encontrar carne — ${alvo.nome} é GD ${alvo.gd} (${tituloDe(alvo.gd)}), IMUNE ao seu dano comum`
+        : r.dano > 0
+        ? `⚔ ${personagem.nome} → ${alvo.nome}: ${r.critico ? "CRÍTICO! " : ""}${r.dano} de dano · ${alvo.nome} ${pvDepois}/${alvo.vidaMax || alvo.vida}${pvDepois <= 0 ? " ☠" : ""}`
+        : `⚔ ${personagem.nome} → ${alvo.nome}: ${r.desastre ? "erro desastroso" : "errou"}` });
+      partesMeu.push(r.escopoImune
+        ? `${alvo.nome} — IMUNE (GD ${alvo.gd} vs meu GD ${gdJ}; dano comum não fere divindades — preciso de artefato lendário, bênção ou enfraquecê-lo)`
+        : linhaParaMestre(personagem.nome, alvo.nome, r, alvo.vidaMax || alvo.vida, r.dano > 0 ? pvDepois : undefined));
+    }
+    pushMsgs(linhas);
+    alvosGolpeRef.current = []; setAlvosGolpe([]);
+    const desfecho = `${resultados.length} ${resultados.length > 1 ? "ataques" : "ataque"}: ${partesMeu.join("; ")}`;
+
+    /* AGIR ENCERRA O TURNO (v9.13): meu golpe sai, o inimigo responde, e a
+       rodada seguinte já abre renovada. Antes isto só acontecia quando os
+       movimentos se esgotavam OU quando o jogador apertava "encerrar turno" —
+       e por isso quem lutava só com habilidades nunca era revidado. */
+    const fechouNoMeuGolpe = fecharSeTodosCairam(fichaViva() || personagem);
+    const rv = fechouNoMeuGolpe ? { pers: fichaViva() || personagem, texto: "" } : fecharMeuTurno(fichaViva() || personagem);
+    const persAtual = rv.pers;
+    const resumoInimigos = rv.texto;
+    enviar(`[COMBATE — RESOLVIDO PELO SISTEMA] Minha sequência de ${desfecho}. O dano já foi aplicado.${resumoInimigos} NÃO recalcule nem mude números — NARRE de forma vívida (2-4 frases) a sequência dos meus golpes e as decisões e reações dos inimigos: quem recuou, quem avançou, quem mudou de alvo. Ação declarada: ${acao}`, persAtual);
+    return true;
+  };
+
+  /* ---------------- O ALCANCE ANTES DO CLIQUE (v9.255, Fase X, X2) ----------------
+     O MESMO veredito que resolve o golpe, medido com o que está na mesa
+     agora — para a tela poder dizer se alcança sem que o turno seja gasto.
+     Nada aqui decide: `golpe.js` decide, e isto só pergunta. Devolve `null`
+     fora de combate, que é o que apaga a linha e devolve o botão à caixa
+     de texto. */
+  const vereditoDoGolpeAgora = (persDado) => {
+    try {
+      const comb = combateRef.current;
+      if (!comb) return null;
+      const pers = persDado || fichaViva() || personagem || {};
+      const armaEq = pers.equipados && pers.equipados.arma;
+      const armaLonge = !!(armaEq && armaEq.distancia);
+      const temPropAlcance = !!(armaEq && (fichaDoItem(armaEq).props || []).includes("alcance"));
+      return vereditoDoGolpe({
+        grade: comb.grade || null,
+        meuLugar: comb.heroi || { nome: pers.nome, x: null, y: null },
+        /* os mesmos vivos que `resolverAtaqueJogador` olha — nem os caídos
+           nem os de PV zerado entram num veredito que fala de alvo */
+        inimigos: (comb.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0),
+        alcanceM: alcanceDoGolpe({ armaLonge, temPropAlcance, nome: pers.nome, tamanho: pers.tamanho }),
+      });
+    } catch (e) { calou("veredito do golpe", e); return null; }
+  };
+
+  /* O botão do painel não é um caminho paralelo: ele escreve a frase que o
+     jogador escreveria e manda pela mesma porta — o molde de
+     `declararAcaoRapida`, palavra por palavra. A frase sai de
+     `fraseDoGolpe` e nunca de uma string montada aqui, porque é a frase do
+     módulo que a suíte prova casar o mesmo detector que o teclado casa. */
+  const declararGolpe = (alvoPedido) => {
+    try {
+      const pers = fichaViva() || personagem;
+      const vd = vereditoDoGolpeAgora(pers);
+      /* cinto e suspensórios: o botão já impede o clique quando não há
+         ninguém ao alcance, mas a porta tem direito de recusar — e a recusa
+         não cobra a ação, como não cobra pelo teclado desde a v9.20. Sem
+         linha de jogador no log: o golpe não chegou a ser declarado. */
+      if (!vd || !vd.algumAoAlcance) {
+        pushMsgs([{ autor: "sistema", texto: `📏 ${recusaDoGolpe(vd)}` }]);
+        return;
+      }
+      /* quem o jogador já declarou na ficha do inimigo manda, se der para
+         acertar; senão vai no mais perto de quem dá — nunca num alvo que
+         vira erro por uma regra que ele não podia ver */
+      const declarado = (alvosGolpeRef.current || []).find(Boolean);
+      const escolhido = (alvoPedido && vd.aoAlcance.find((a) => a.nome === alvoPedido))
+        || (declarado && vd.aoAlcance.find((a) => a.nome === declarado))
+        || maisPertoAoAlcance(vd);
+      if (!escolhido) return;
+      aplicarGolpeDoJogador(fraseDoGolpe(escolhido), pers);
+    } catch (e) { calou("declarar golpe", e); }
   };
 
   /* HABILIDADE OFENSIVA RESOLVIDA PELO SISTEMA (v7.4.4): antes, o dano de
@@ -13215,76 +13417,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         : `[HABILIDADE] Uso "${habCitada.nome}" (custo ${custo} PM, já descontado; tenho ${rvC.pers.mana} PM). ${habCitada.descricao || ""} Ação: ${acao}.${rvC.texto} LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte; se o inimigo ainda tiver PV, ele segue de pé.${extraTempo}`, rvC.pers);
       return;
     }
-    const ataque = resolverAtaqueJogador(acao, fichaViva() || personagem);
-    /* ZONAS (v9.20): golpe sem alcance não gasta a ação. Cobrar o turno por
-       uma regra que o jogador acabou de descobrir seria punir a curiosidade;
-       o custo dele é o passo que ele vai ter que dar. */
-    if (ataque && ataque.semAlcance) {
-      pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `📏 ${ataque.motivo}` }]);
-      return;
-    }
-    if (ataque) {
-      /* ECONOMIA DE TURNO (v7.4): atacar gasta a AÇÃO. Sem ação, sem golpe —
-         o turno só vira quando os movimentos acabam ou o jogador encerra. */
-      const eco = combateRef.current && combateRef.current.economia;
-      if (eco && eco.acao <= 0) {
-        pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: "⏳ Você já usou sua ação nesta rodada — o golpe fica para a próxima." }]);
-        return;
-      }
-      if (eco) { eco.acao -= 1; combateRef.current = { ...combateRef.current, economia: { ...eco } }; setCombate(combateRef.current); }
-      const { resultados } = ataque;
-      ataqueResolvidoRef.current = true;
-      /* aplica cada golpe por código (fonte da verdade) e monta as linhas de dano */
-      const gdJ = grauDe(divindadeRef.current);
-      const linhas = [{ autor: "jogador", texto: acao }];
-      const partesMeu = [];
-      for (const { r, alvo } of resultados) {
-        let pvDepois = alvo.vida;
-        if (r.dano > 0) {
-          const atualAlvo = (combateRef.current?.inimigos || []).find((e) => e.nome === alvo.nome);
-          pvDepois = Math.max(0, (atualAlvo ? atualAlvo.vida : alvo.vida) - r.dano);
-          const novo = { ...combateRef.current, inimigos: combateRef.current.inimigos.map((e) => e.nome === alvo.nome ? { ...e, vida: pvDepois, derrotado: pvDepois <= 0, ultimoDano: r.dano } : e) };
-          combateRef.current = novo; setCombate(novo);
-          /* AFLIÇÃO DA ARMA (v9.1): a adaga envenenada envenena — o sistema lê
-             a arma equipada, rola o teste do inimigo e aplica. Sem pedir nada
-             ao Mestre e sem depender de o jogador descrever bonito. */
-          if (pvDepois > 0) {
-            const f = fonteDaArma(personagem);
-            const ap = aplicarAflicaoEmInimigo(combateRef.current.inimigos, alvo.nome, { fonte: f.texto, nomeFonte: f.nome, atacante: personagem.nome, critico: r.critico });
-            if (ap.res) {
-              combateRef.current = { ...combateRef.current, inimigos: ap.lista }; setCombate(combateRef.current);
-              linhas.push({ autor: "sistema", texto: ap.res.texto });
-              notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${ap.res.nota}`;
-              partesMeu.push(ap.res.aplicou ? `${alvo.nome} ficou ${ap.res.cond.nome.toLowerCase()}` : `${alvo.nome} resistiu à ${ap.res.cond.nome.toLowerCase()}`);
-            }
-          }
-        }
-        logDadoCombate(resumoDoAtaque(r));
-        if (mostrarRolagensRef.current) linhas.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(r) });
-        linhas.push({ autor: "sistema", texto: r.escopoImune
-          ? `⚔ ${personagem.nome} → ${alvo.nome}: o golpe atravessa sem encontrar carne — ${alvo.nome} é GD ${alvo.gd} (${tituloDe(alvo.gd)}), IMUNE ao seu dano comum`
-          : r.dano > 0
-          ? `⚔ ${personagem.nome} → ${alvo.nome}: ${r.critico ? "CRÍTICO! " : ""}${r.dano} de dano · ${alvo.nome} ${pvDepois}/${alvo.vidaMax || alvo.vida}${pvDepois <= 0 ? " ☠" : ""}`
-          : `⚔ ${personagem.nome} → ${alvo.nome}: ${r.desastre ? "erro desastroso" : "errou"}` });
-        partesMeu.push(r.escopoImune
-          ? `${alvo.nome} — IMUNE (GD ${alvo.gd} vs meu GD ${gdJ}; dano comum não fere divindades — preciso de artefato lendário, bênção ou enfraquecê-lo)`
-          : linhaParaMestre(personagem.nome, alvo.nome, r, alvo.vidaMax || alvo.vida, r.dano > 0 ? pvDepois : undefined));
-      }
-      pushMsgs(linhas);
-      alvosGolpeRef.current = []; setAlvosGolpe([]);
-      const desfecho = `${resultados.length} ${resultados.length > 1 ? "ataques" : "ataque"}: ${partesMeu.join("; ")}`;
-
-      /* AGIR ENCERRA O TURNO (v9.13): meu golpe sai, o inimigo responde, e a
-         rodada seguinte já abre renovada. Antes isto só acontecia quando os
-         movimentos se esgotavam OU quando o jogador apertava "encerrar turno" —
-         e por isso quem lutava só com habilidades nunca era revidado. */
-      const fechouNoMeuGolpe = fecharSeTodosCairam(fichaViva() || personagem);
-      const rv = fechouNoMeuGolpe ? { pers: fichaViva() || personagem, texto: "" } : fecharMeuTurno(fichaViva() || personagem);
-      const persAtual = rv.pers;
-      const resumoInimigos = rv.texto;
-      enviar(`[COMBATE — RESOLVIDO PELO SISTEMA] Minha sequência de ${desfecho}. O dano já foi aplicado.${resumoInimigos} NÃO recalcule nem mude números — NARRE de forma vívida (2-4 frases) a sequência dos meus golpes e as decisões e reações dos inimigos: quem recuou, quem avançou, quem mudou de alvo. Ação declarada: ${acao}`, persAtual);
-      return;
-    }
+    /* v9.255 (Fase X, X2): o golpe DIGITADO e o golpe do BOTÃO passam pela
+       mesma porta. Tudo o que morava aqui — a recusa de graça, a economia da
+       ação, as linhas de dano, o fechamento da luta e o revide — está em
+       `aplicarGolpeDoJogador`, byte por byte, e é de lá que os dois
+       chamadores resolvem. `false` quer dizer "não era golpe": o turno segue
+       para as portas de baixo, como sempre seguiu. */
+    if (aplicarGolpeDoJogador(acao, fichaViva() || personagem)) return;
     pushMsgs([{ autor: "jogador", texto: acao }]);
     /* ---- SAIR DE PERTO CUSTA (v9.14) ----
        Recuar era de graça, então recuar não era decisão. Agora cada inimigo
@@ -20510,6 +20649,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             {combate && <PainelCombate combate={combate} bolsa={bolsaDeCombate}
               nGolpes={ataquesPorTurno(personagem.classe, personagem.nivel || 1)}
               alvosGolpe={alvosGolpe}
+              veredito={vereditoDoGolpeAgora()}
               acaoTexto={resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1).texto}
               onDeclararAlvo={(i, nome) => { const a = [...alvosGolpeRef.current]; a[i] = nome; alvosGolpeRef.current = a; setAlvosGolpe([...a]); }}
               onLimparAlvos={() => { alvosGolpeRef.current = []; setAlvosGolpe([]); }}
@@ -20545,7 +20685,15 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   fechar={() => setHabAbertas(false)} />
               );
             })()}
-            {acoesAbertas && (
+            {acoesAbertas && (() => {
+              /* v9.255 (Fase X, X2): o veredito do golpe é medido UMA vez
+                 por renderização deste painel e serve aos dois — o estado do
+                 botão `Atacar` e a linha que diz se o golpe alcança. Medir
+                 duas vezes seria abrir espaço para duas verdades, e o número
+                 que o botão usa tem de ser o número que o jogador leu. */
+              const vdGolpe = vereditoDoGolpeAgora();
+              const alvoDoGolpe = maisPertoAoAlcance(vdGolpe);
+              return (
               <div className="px-4 md:px-8 pb-2 shrink-0" >
                 <div className="rounded-2xl p-3" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
                   <div className="flex items-center justify-between mb-2">
@@ -20560,20 +20708,56 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                          é a ação que o jogador procura primeiro. */
                       const primeira = a.rotulo === "Atacar";
                       const Glifo = a.glifo;
+                      /* v9.255 (Fase X, X2): com a luta aberta, `Atacar` ATACA
+                         — declara o golpe pela frase canônica e entra pela
+                         porta única. FORA de combate ele continua enchendo a
+                         caixa, e isso não é descuido: é pela frase que a briga
+                         COMEÇA (a porta `agressao` de turno.js só abre fora da
+                         luta), e trocá-la seria tirar do jogador o começo da
+                         briga. */
+                      const golpeVivo = primeira && !!vdGolpe;
+                      /* "não pode agora": o clique é IMPEDIDO em vez de
+                         acontecer e ser recusado — é esta metade que evita o
+                         "longe demais" dez vezes seguidas na abertura de toda
+                         luta. Sai o preenchimento, fica a borda, a tinta
+                         continua cheia, e a razão vive na linha logo abaixo:
+                         o botão não escreve preço nem motivo. */
+                      const impedido = golpeVivo && !vdGolpe.algumAoAlcance;
+                      const aceso = primeira && !impedido;
                       return (
-                        <button key={a.rotulo} onClick={() => { setEntrada(a.texto); setAcoesAbertas(false); }}
+                        <button key={a.rotulo} disabled={impedido}
+                          onClick={() => {
+                            if (impedido) return;
+                            setAcoesAbertas(false);
+                            if (golpeVivo) { declararGolpe(alvoDoGolpe && alvoDoGolpe.nome); return; }
+                            setEntrada(a.texto);
+                          }}
                           className="tv-mono text-[11px] px-4 py-2.5 rounded-lg flex items-center gap-2"
                           style={{
-                            background: primeira ? T.line : T.panel,
-                            color: primeira ? T.amberSoft : T.ink,
-                            border: `1px solid ${primeira ? T.amberSoft : T.line}`,
+                            minHeight: 44,
+                            background: aceso ? T.line : T.panel,
+                            color: aceso ? T.amberSoft : T.ink,
+                            border: `1px solid ${aceso ? T.amberSoft : T.line}`,
                           }}>
-                          {Glifo ? <Glifo tamanho={14} cor={primeira ? T.amberSoft : T.ink} /> : <span>{a.icone}</span>}
+                          {Glifo ? <Glifo tamanho={14} cor={aceso ? T.amberSoft : T.ink} /> : <span>{a.icone}</span>}
                           {a.rotulo}
                         </button>
                       );
                     })}
                   </div>
+                  {/* ---------------- O VEREDITO ANTES DO CLIQUE (v9.222) ----------------
+                      A Consequência do golpe é sempre LINHA, nunca balão:
+                      sobre o tabuleiro, quatro segundos de balão tapam
+                      exatamente as casas para onde o jogador ia andar. Ela
+                      vive sempre na árvore enquanto há luta — quem alcança lê
+                      ONDE o golpe cai, quem não alcança lê POR QUÊ, e as duas
+                      recusas são coisas diferentes: andar resolve a distância
+                      e não resolve a parede. */}
+                  {vdGolpe && (
+                    <div className="tv-mono text-[10px] mt-2 flex items-center" style={{ minHeight: 24, color: alvoDoGolpe ? T.amberSoft : T.inkDim }}>
+                      {alvoDoGolpe ? linhaDoGolpe(vdGolpe) : recusaDoGolpe(vdGolpe)}
+                    </div>
+                  )}
                   {/* ---------------- A PORTA DOS FUNDOS (v9.59.1) ----------------
                       Estes botões diziam "Pedir um teste" e chamavam a rolagem
                       DIRETO — dificuldade velha, sem livro de tentativas. Toda a
@@ -20602,7 +20786,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   </div>
                 </div>
               </div>
-            )}
+              );
+            })()}
 
             {milagreSel && !rolagem && (
               <div className="tv-fade px-4 md:px-8 pb-1.5" >

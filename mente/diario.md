@@ -16,6 +16,103 @@ Formato:
 
 ---
 
+## 15/09 17:05 · v9.255 · X2 · o golpe sai do botão · commit `<hash>`
+
+- **estado inicial:** HEAD `628e70f`, VERSÃO **v9.254** (o ciclo E1 do `regente`
+  já a tinha bumpado — o meu é o v9.255), `npm test` **183/183 suítes + 11/11
+  varredores** verde, build limpo, árvore limpa. **Sem trava — pus a minha.** A
+  outra mente roda **K1** ao lado, só no Figma. **Tomei o bastão do `App.jsx`**
+  às 15:19 e o devolvi ao fechar este bloco; foi usado pelo `frontend` e por
+  mim (a correção dos comentários de versão).
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, e a etapa estava
+  escrita. Pauta com itens de sobra.
+- **backend:** `src/golpe.js` — o veredito do golpe, puro: `ALCANCES`,
+  `alcanceDoGolpe`, `vereditoDoGolpe`, `fraseDoGolpe`, `VERBOS_DE_COMBATE`; mais
+  `testes/teste-golpe.mjs`, 64 asserções.
+- **frontend:** a fiação — `resolverAtaqueJogador` passou a ler `golpe.js`, a
+  extração `aplicarGolpeDoJogador` nasceu com **dois chamadores**, e o botão
+  `Atacar` virou chamada com o alcance mostrado antes do clique.
+- **testes:** a catraca desceu de **7 para 6**, as asserções que inverteram
+  ganharam o motivo escrito, e o varredor foi **reapontado, não apagado**.
+
+### O que a etapa era, e por que não era o botão
+
+A redação original de X2 dizia *"o botão passa a chamar o motor"*. **X1 provou
+que isso sozinho teria produzido um jogo pior:** a luta abre a **12,0–25,5 m**,
+o corpo a corpo alcança **1,5 m**, e **10 de 10 plantas recusam no turno 1**.
+Clicar `Atacar` daria *"longe demais"* dez vezes seguidas, e pareceria que o
+conserto falhou. Então X2 foi **o pré-requisito garantido e mostrado**, e a
+porta única do motor — nessa ordem.
+
+**O molde, seguido e não reinventado** (é o dos 8 que já funcionavam): o id vira
+a frase canônica (`fraseDoGolpe`, nunca string à mão) → porta única com direito
+de recusar (`declararGolpe`, `App.jsx:11851`) → o módulo puro decide antes de
+qualquer efeito → a frase entra no log **depois** de aceita → o turno se cobra
+explicitamente. A extração `aplicarGolpeDoJogador` (`:11749`) tem **dois
+chamadores e nenhum terceiro**: o teclado e o botão resolvem pelo mesmo código.
+Um golpe que resolvesse por dois códigos seria o defeito que a fase existe para
+matar.
+
+### A conferência viva, na campanha de verdade (e sem gastar o Narrador)
+
+Não foi preciso injetar nada: **os dois espaços de save já tinham luta aberta
+com grade**. Com Halvard a 3 m e alcance de 1,5 m, o botão veio `disabled` e a
+linha leu **"Longe demais — Halvard a 3 m, faltam 1,5 m. Aproxime-se primeiro."**
+— exatamente o que `vereditoDoGolpe` prevê em Node. Aba nova, porque **HMR mente
+depois de rename** e houve extração; console limpo, sem `LimiteErro`.
+
+**O que eu NÃO consegui conferir vivo, e é honesto dizer:** o ramo aceso. A
+campanha estava na **vez do mundo**, e virar o turno custaria uma chamada ao
+Narrador. O ramo aceso está provado em suíte (o veredito vira para permitido
+depois de 2 passos, medido com `alcancaveisDe`), não na tela. **X4 fecha isso.**
+
+E o save da campanha voltou **byte a byte**: só `sessao` e `salvoEm` tinham
+mudado (contadores de sessão e o carimbo do autosave), e os dois foram
+restaurados — hash conferido contra a cópia feita antes de tudo.
+
+### Decisões médias tomadas (com o motivo)
+
+- **O `36` e o "+ um quadrado" saíram do meio do `App.jsx` para `ALCANCES`.**
+  Eram constantes de regra soltas dentro de `resolverAtaqueJogador` — a primeira
+  lei da casa. **Os valores são idênticos:** mover número para tabela sem mudar o
+  número era o objetivo, e **nada foi rebalanceado** nesta etapa.
+- **O status quo da recusa de graça foi mantido, e por isso o botão impede o
+  clique em vez de recusá-lo depois.** Passar a cobrar mudaria o que o jogador
+  vive, e isso é da pessoa — está na pauta, com proposta e porquê.
+- **Os comentários novos diziam `v9.222`, e eu os corrigi para `v9.255`.** As
+  mãos leram o *"hoje v9.221"* do `CLAUDE.md` e inferiram o número seguinte — mas
+  **v9.222 já existiu**, e é de outra coisa (a conta sazonal de `encontros.js`).
+  Um comentário que mente sobre quando um órgão nasceu é pior que comentário
+  nenhum. Corrigido por `node`, com catraca no próprio script, e só onde o texto
+  dizia Fase X — o `v9.222` legítimo continua onde estava.
+- **A asserção de `teste-golpe.mjs` que o `backend` escreveu "para mudar de lado
+  em X3" mudou de lado agora**, porque a fiação veio em X2 e não em X3; e a
+  dívida `AGUARDANDO` de `teste-ligacao.mjs` foi paga no mesmo dia em que nasceu,
+  pelo mesmo motivo. As duas com o motivo escrito ao lado.
+
+### O que ficou
+
+- **Duas bifurcações foram para "Para a pessoa decidir"**, com recomendação e
+  porquê, e **não foram decididas aqui**: (a) a recusa fora de alcance continua
+  de graça ou passa a custar o turno — a mente recomenda **continuar de graça**,
+  e observa que isso só fecha quando o **teclado** ganhar o mesmo aviso que o
+  botão tem (é a W2, já aprovada); (b) **`Esquivar`, `Empurrar`, `Derrubar` e
+  `Ajudar` não têm motor nenhum** — não é fiação que falta, é mecânica, e a
+  ordem recomendada é `Empurrar`/`Derrubar` primeiro, `Esquivar` depois,
+  `Ajudar` por último.
+- **X2 não encurtou a caminhada.** Continuam 2 a 3 turnos andando antes do
+  primeiro golpe corpo a corpo; o que mudou é que agora ela é **visível antes do
+  clique**. Quem quiser encurtá-la mexe em `posicionar`, e isso é outra conversa.
+- **A tela de batalha por toque é a Fase W**, do desenho, e **não foi
+  antecipada**. X2 usou as formas que a mesa já tinha decidido em E1 — a
+  Consequência *Linha* (nunca balão), o estado *Impedido* com a razão, o botão
+  que não escreve preço. O que faltava de forma não foi inventado aqui.
+- **A régua de X1 ficou intacta para X4:** a política da sonda não mudou (mesma
+  planta, mesmos 7 turnos, mesma fórmula), para os dois números continuarem
+  comparáveis. O `testes` acrescentou uma medição **ao lado**, sem tocar na velha.
+
+---
+
 ## 15/09 15:20 · v9.253 · X1 · o que chega ao motor, e o que vira frase · commit `bf9dd49`
 
 - **estado inicial:** HEAD `c3f4fd3`, VERSÃO v9.252, `npm test` **182/182 suítes

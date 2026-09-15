@@ -195,6 +195,52 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
   Nenhum número resolve a diferença: é a pessoa que sabe qual dos dois quis.
   Se ela quiser mexer, a régua de B1 já mede o antes e o depois sem trabalho novo.
 
+- [ ] **o golpe fora de alcance continua de graça — ou passa a custar o turno?** · pesado · de: orquestrador (bifurcação aberta por X1, executada em X2) · 15/09
+  **X2 manteve o status quo de propósito, e é você que decide se ele fica.** Desde
+  a v9.20 um golpe sem alcance **não gasta a ação** (`App.jsx`, a nota diz:
+  *"cobrar o turno por uma regra que o jogador acabou de descobrir seria punir a
+  curiosidade"*). A consequência que ninguém tinha somado é a que X1 mediu: como
+  a recusa é de graça, **`resolverRevide` nunca roda e a rodada nunca vira** — o
+  jogador ataca sete vezes, o sistema recusa sete vezes, e nada se move.
+  **O que X2 fez, e por que não é a resposta:** o botão agora **impede o clique**
+  em vez de recusá-lo depois, e diz *"Longe demais — Halvard a 3 m, faltam 1,5 m"*
+  antes do turno ser gasto. Isso apaga o sintoma **pelo botão**; pelo teclado a
+  recusa de graça continua exatamente como era. Hoje há duas portas para a mesma
+  ação com duas regras — e *"toda regra que mora num só dos dois caminhos vira
+  bug"* é frase desta casa.
+  **As duas saídas, e o que cada uma custa:** (a) **continua de graça** — a
+  curiosidade não se pune, e o preço é que o teclado segue podendo moer turnos
+  estéreis sem a rodada virar; (b) **passa a cobrar** — a rodada passa a virar
+  sempre, o inimigo responde, e o preço é que **errar o alcance custa o turno**,
+  que é exatamente o que a v9.20 recusou. **A recomendação da mente é (a)**: agora
+  que o veredito aparece antes do clique, quem erra o alcance está a escolher
+  errar, e punir isso seria cobrar por uma informação que o jogo passou a dar.
+  Mas (a) só fecha de verdade **se o teclado ganhar o mesmo aviso que o botão tem**
+  — e isso é a Fase W2, que já está aprovada.
+
+- [ ] **`Esquivar`, `Empurrar`, `Derrubar`, `Ajudar` — quatro verbos de combate sem motor nenhum** · pesado · de: orquestrador (bifurcação aberta por X1) · 15/09
+  **X1 mediu e X2 confirmou: não é fiação que falta, é mecânica.** `Esquivar`
+  escreve *"Fico em postura defensiva…"*, `Empurrar` escreve *"Empurro com força "*,
+  `Derrubar` e `Ajudar` idem — e **nenhuma das quatro casa leitor nenhum**: nem
+  desafio, nem agressão. Elas caem em `cena`, e quem decide se aconteceram é a IA.
+  Provado em `testes/teste-golpe.mjs` contra o catálogo real, não contra regex
+  copiada: `VERBOS_DE_COMBATE` diz, linha a linha, qual motor resolve cada verbo —
+  e para estas quatro o campo é `null`, com o motivo escrito.
+  **Por que X2 não as consertou:** dar mecânica a elas **não é ligar um fio, é
+  inventar regra** — o que *Esquivar* faz ao seu número de defesa, quanto empurra
+  um *Empurrar*, contra o que se rola um *Derrubar*, o que a *Ajuda* do 5e
+  concede. Isso muda o que o jogador vive, logo é pesado, logo é seu. O ciclo não
+  inventa mecânica de combate sozinho — é a lei que separa esta casa de um jogo
+  onde a IA decide as regras.
+  **A recomendação da mente, e ela tem ordem:** **`Empurrar` e `Derrubar` primeiro**
+  — são os dois mais baratos, porque o grid já tem posição, distância e queda, e
+  os dois viram um teste oposto com um efeito que o motor já sabe aplicar.
+  **`Esquivar` depois**, porque mexe na defesa e toca o balanceamento que a Fase N
+  ainda não fechou. **`Ajudar` por último**, porque a vantagem a um aliado pede um
+  canal que não existe. E uma alternativa honesta que também é sua: **aposentar o
+  botão que não cumpre** é melhor do que mantê-lo prometendo — mas remover o que
+  existe também é pesado, e por isso está aqui e não foi feito.
+
 <details>
 <summary>as quatro perguntas como foram feitas (e as respostas)</summary>
 
@@ -371,7 +417,33 @@ consegue tocar: a régua mede o motor, e o jogador não chega nele.
   chaves e cai em `estrada` em silêncio. Na primeira conferência isto trocou a
   masmorra pela estrada e encurtou a abertura de 25,5 para 16,5 m sem um aviso
   sequer. Quem medir grade tem de **conferir a largura×altura que recebeu**.
-- [ ] **X2 · o golpe sai do botão** · de: pessoa · 15/09 · **reescrita por X1**
+- [x] **X2 · o golpe sai do botão** · de: pessoa · 15/09 · **reescrita por X1**
+  · **feito 15/09 · v9.255 · commit `<hash>`** — o pré-requisito garantido e
+  mostrado, e a porta única do motor. **`Atacar`, com a luta aberta, ataca**:
+  monta a frase canônica por `fraseDoGolpe`, passa pela porta única
+  `declararGolpe` (`App.jsx:11851`), o módulo puro `src/golpe.js` decide antes de
+  qualquer efeito, a frase entra no log depois de aceita e o turno se cobra —
+  o molde dos 8, sem um segundo molde. A extração `aplicarGolpeDoJogador`
+  (`:11749`) tem **dois chamadores e nenhum terceiro**: o teclado e o botão
+  resolvem pelo **mesmo** código.
+  **O alcance antes do clique, conferido vivo na campanha real:** com Halvard a
+  3 m e alcance de 1,5 m, o botão vem `disabled` e a linha lê **"Longe demais —
+  Halvard a 3 m, faltam 1,5 m. Aproxime-se primeiro."** — o número bate com o que
+  `vereditoDoGolpe` prevê em Node, casa a casa. As duas recusas são distintas:
+  *longe demais* e *há parede no caminho* (andar resolve uma e não resolve a outra).
+  **A catraca desceu: `TETO_SEM_MOTOR` 7 → 6**, com `pronta_atacar` fora da lista
+  e as três asserções do bloco 1 invertidas, cada uma com o motivo escrito ao lado.
+  **O `36` e o "+ um quadrado" saíram do meio do `App.jsx` para `ALCANCES`** — os
+  mesmos números, agora em tabela que a suíte lê de volta. **Nada foi rebalanceado.**
+  **As duas bifurcações foram para "Para a pessoa decidir"**, com proposta e
+  porquê, e não foram decididas aqui.
+  **O que X2 NÃO fez, e é honesto dizer:** não encurtou a caminhada — continuam
+  **2 a 3 turnos andando** antes do primeiro golpe corpo a corpo. Ela tornou a
+  caminhada **visível antes do clique**, que é outra coisa.
+
+<details>
+<summary>a redação de X2 como X1 a deixou</summary>
+
   A redação anterior dizia "as ações de combate passam a chamar o motor,
   e o dado rola porque o jogador clicou". **A medição corrigiu o alvo:** o
   caminho até `resolverAtaque` já existe e não precisa ser inventado — o
@@ -392,6 +464,8 @@ consegue tocar: a régua mede o motor, e o jogador não chega nele.
   ele vive; se continuar de graça, o botão tem de impedir o clique em vez de
   recusá-lo. (b) **Defender/Esquivar não existe no motor** — o botão escreve
   uma frase que ninguém lê; dar-lhe mecânica é mecânica nova, logo `pesado`.
+
+</details>
 - [ ] **X3 · o turno guardado** · de: pessoa · 15/09
   **O coração da decisão, e vale sozinho mesmo que o resto não venha.** Se o
   motor chegou a rolar, o resultado **não se descarta**: fica guardado, e o
