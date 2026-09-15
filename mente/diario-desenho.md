@@ -19,7 +19,11 @@ Formato:
 
 ---
 
-## 15/09 19:40 · v9.256 · K1 · o momento desenhado · **a Fase K abre** · commit `PENDENTE`
+## 15/09 19:40 · v9.256 · K1 · o momento desenhado · **a Fase K abre** · commit `2fe462a`
+
+*O escrito inteiro dos dois seniores — a conta dos 4 s, as medidas do telefone, o
+inventário de nós, e as marcas `[A2]`/`[A3]` das duas voltas — fica em
+`mente/k1-jogo.md` e `mente/k1-desenho.md`, como E1 fez com os seus.*
 
 **A segunda etapa seguida que é só desenho**, e a segunda em que nenhum `.js`,
 `.jsx` ou `.mjs` foi tocado. K1 desenha, **K2 trava, K3 constrói** — essa fronteira
