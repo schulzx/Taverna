@@ -44,7 +44,10 @@ A primeira regra de ouro continua valendo para todos.
 
 Ao chamar cada um, dê uma `description` curta e clara: é o que a pessoa vê
 no painel de tarefas enquanto o ciclo roda. Diga o item, a versão e o
-território ("backend · v9.222 · liga o sinal X ao tracker Y").
+território ("backend · a versão da vez · liga o sinal X ao tracker Y")
+   — **a versão sai de `src/constantes.js`, nunca de um exemplo escrito**: um
+   número de exemplo já foi copiado para onze comentários como se fosse o
+   de hoje.
 
 **Chame as mãos com `run_in_background: false`** — o resultado volta a você
 no mesmo turno. Se você encerra o turno "esperando a notificação", o ciclo
