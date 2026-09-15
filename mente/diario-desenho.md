@@ -19,6 +19,385 @@ Formato:
 
 ---
 
+## 15/09 12:10 · v9.252 · D5 · a catraca do desenho · **a Fase D fecha** · commit `PENDENTE`
+
+D1 mediu, D2 deu casa ao estilo, D3 fez a biblioteca e provou a leitura de
+volta, D4 escreveu 30 formas. **Nada disso obriga ninguém a nada.** D5 é a
+etapa que faz a Fase D valer **para sempre** em vez de valer hoje — e é a única
+da fase que não melhora um pixel: ela impede que os outros quatro apodreçam no
+primeiro ciclo distraído.
+
+`testes/check-formas.mjs`, 585 linhas, **0,27 s**, **10 ok · 0 falhas no dia em
+que nasceu**. Entra sozinho no `rodar-tudo.mjs`, que descobre `check-*.mjs` por
+si — nenhuma linha a somar lá.
+
+- **estado inicial:** `.claude/ciclo-desenho-em-curso` não existia — fila
+  livre; criei-a. `.claude/ciclo-em-curso` era do `orquestrador` em **N1b**, na
+  mesma árvore, e **não a toquei**. `.claude/app-jsx` **não existia e não foi
+  criado**: D5 lê o `App.jsx` e não escreve nele — o bastão ficou livre para a
+  outra mente o ciclo inteiro, e uma sabotagem que pedia o App foi trocada por
+  `carta-taro.jsx` de propósito. Pauta de desenho: Fase D, 4 de 6.
+- **jogo / desenho:** chamados **juntos, no mesmo turno, os dois em primeiro
+  plano.** O `desenho` contou por script próprio e entregou a especificação
+  executável — os regexes escritos, as tabelas de perdão prontas com motivo e
+  data, e doze sabotagens. O `jogo` **jogou**: campanha `O Fio de Prata`, Brann
+  nv 1, 7 turnos com o Narrador vivo, combate aberto, um dado rolado, um passo
+  no tabuleiro — e, para D5c, **injetou `animation: none` nas 13 classes e
+  jogou com elas ligadas**. Divergiram numa coisa, e ela está fechada por
+  escrito em `mente/formas.md` com os dois lados (abaixo).
+- **aprendiz / testes:** o `aprendiz` não foi chamado — D5 não constrói
+  interface, e chamar uma mão para não a usar é ruído. O `testes` foi
+  **emprestado da outra mente** e construiu o varredor a partir da
+  especificação, rodou as sabotagens e voltou com duas discordâncias, as duas
+  aceitas.
+- **o Figma:** nada entrou, e é de propósito — D5 não desenha peça. A
+  biblioteca continua nas 13 páginas de D4.
+
+### A medição, e ela reproduz D1 byte a byte
+
+O `desenho` mediu com script próprio antes de olhar o número de D1; o `testes`
+mediu de novo, com código independente, antes de comparar com a especificação.
+**Os três bateram.**
+
+| o que D1 disse (14/09) | o que D5 mede (15/09) |
+|---|---|
+| 93 no `App.jsx` (40 hex + 53 rgba) | **93** — 40 e 53, os mesmos dois números |
+| 242 nos arquivos de tela | **242**, na soma dos 11 arquivos |
+| 67 "já são `T`" | **67** no recorte de D1 (24 hex + 43 rgba) |
+| ~80 com a folha (corrigido por D2) | **80** exatos |
+| 13 classes de animação, 3 com saída | **13 e 3** |
+| 78 em módulos de dado | **77** — a única divergência |
+
+**A divergência fica escrita em vez de explicada.** Falta um literal nos
+módulos de dado contra a contagem de D1, e não se achou o fantasma; pode ser
+arredondamento de D1 ou um literal que saiu num commit entre 14/09 e hoje.
+Inventar a explicação seria pior que registrar o buraco.
+
+O total do escopo inteiro (`src/**` + `index.html` + `api/*.js`) é **332**
+literais em **17 arquivos**. `api/*.js` mede **0** — e não recebe entrada na
+tabela, de propósito: **arquivo sem entrada tem teto zero**, e é assim que a
+primeira cor solta de lá fica vermelha no dia em que nasce.
+
+### Os três dentes, e o que cada um pega que os outros não pegam
+
+- **D5a — quantidade.** A cor **nova**, de qualquer forma e qualquer valor,
+  inclusive uma que não existe em lugar nenhum do projeto. É o único dente que
+  segura o **pergaminho** e o **dado de jogo**, que não têm uma única cor de
+  `T`. Teto por arquivo: **332**.
+- **D5b — qualidade.** A cor **duplicada**, mesmo quando a contagem não mexe: é
+  o único que morde a troca 1-por-1 de um hex de pergaminho por `#E8A33D`, onde
+  D5a fica cego porque o total continua 41. **80**.
+- **D5c — outro eixo por completo.** Movimento sem saída no
+  `prefers-reduced-motion`. Não partilha uma linha de código com os outros dois.
+  **13 classes, 3 com saída, 10 perdoadas e datadas.**
+
+A sobreposição é declarada: colar `#E8A33D` novo no `App.jsx` dispara **os
+dois** primeiros. Não é decoração — cada um é o único a disparar num caso que
+o outro não vê, e as duas mensagens dizem coisas diferentes ("apareceu cor" e
+"apareceu cópia"), que é o que diz a quem lê o vermelho qual conserto fazer.
+
+### A decisão que faz desta uma catraca e não um cemitério
+
+**Folga zero, nos dois sentidos.** A asserção não é `medido <= teto`, é
+**`medido === teto`**; em D5c, igualdade de **conjuntos**.
+
+O argumento do `desenho`, e é o que sustenta a etapa inteira: *um teto é um
+retrato datado da dívida, não um alvo.* Com `<=` ele vira orçamento — a dívida
+cai para 40, a tabela continua a dizer 93, e o dia em que alguém volta a pôr 50
+literais **a catraca aplaude**. Com igualdade, o número na tabela é sempre
+verdade e pode ser citado sem ninguém ir medir de novo. É o que faz o
+`teste-ligacao` valer: a lista de perdão só vale enquanto é exata.
+
+Daí as três falhas que são a regra anti-cemitério:
+
+- `PERDÃO MORTO: .tv-fade já está no prefers-reduced-motion. Tire-a da lista.`
+- `ENTRADA MORTA: <arquivo> tem teto 0. A dívida foi paga — tire a linha.`
+- `DESCEU: src/rosto.jsx tem 11, o teto é 12. A dívida encolheu; desça o teto:`
+  — e **imprime a linha pronta para colar**, com a data. É a única falha do
+  projeto que é uma **boa notícia**, e o texto diz isso.
+
+**Folga de N foi recusada, com o motivo:** uma folga de 2 é licença permanente
+para dois literais novos por ciclo — a dívida a crescer em passo invisível. A
+única coisa que a folga compra é não ter de editar um número.
+
+**E a válvula é escrita, não secreta:** um teto pode **subir**, com motivo e
+data na própria entrada. Não é licença, é custo — a linha aparece no diff e a
+pessoa pergunta. O que a catraca proíbe é subir **calado**.
+
+### A catraca foi provada contra o erro: 20 sabotagens, 14 morderam
+
+Uma catraca que não foi testada contra o erro que ela deveria pegar é
+decoração. Cada sabotagem foi aplicada num arquivo de cada vez e **restaurada
+imediatamente** — nunca `git stash`, nunca `git checkout --`, com a outra mente
+na mesma árvore.
+
+**As 14 que morderam:**
+
+| o que se fez | quem mordeu |
+|---|---|
+| `#C0504D` novo em `painel-ficha.jsx` | D5a 1→2 (cor inédita) |
+| duplicar uma `<line stroke="#c8b98f">` no pergaminho | D5a 30→31 — o teto **segura o pergaminho** |
+| `rgba(90,70,40,.3)` solto em `SUPERFICIES_CSS` | D5a 13→14 — prova que `estilo.js` é varrido fora das zonas |
+| `"#B33"` em `api/_portao.js` | D5a 0→1 — `api/*.js` está mesmo no escopo |
+| arquivo novo `painel-novo.jsx` com um hex | D5a 0→1 — arquivo desconhecido não passa por omissão |
+| `#8C7A4A` → `#7BC98F` em `carta-taro.jsx` | **só D5b** 11→12, D5a mudo — o caso central do dente |
+| `#eadfc1` → `rgba(234,228,214,0.9)` no mapa | **só D5b** — pega `rgba` com RGB de `T`, não só hex |
+| `TINTA` de `rosto.jsx` → `#0E0C15` | só D5b 2→3 |
+| `cartazTopo` → `#171322`, **dentro de `MATERIAIS`** | D5b **duas vezes** — e D5a calado, porque é zona |
+| tirar `.tv-pisca` do `@media` | D5c `NOVA ANIMAÇÃO SEM SAÍDA` |
+| `.tv-tremor` nova, sem entrada no `@media` | D5c — vermelha no dia em que nasce |
+| pôr `.tv-fade` no `@media` **sem** a tirar do perdão | D5c `PERDÃO MORTO` |
+| tirar um literal de `rosto.jsx` | `DESCEU`, com a linha pronta para colar |
+| quebrar o formato de `export const T = {` | `A ZONA "T" DESAPARECEU` — sem o piso, a mensagem teria sido "SUBIU 14", que mente |
+
+**As 6 que ela TEM de deixar passar, e passaram** — falso positivo é tão grave
+quanto buraco, porque é assim que uma mesa aprende a desligar a catraca:
+afinar o pergaminho trocando `#c8b98f` ↔ `#a08a5e`; uma cor de cabelo nova em
+`semente.js`; **a 15.ª cor de `T`** (`warn: "#D8A85B"`); uma cor escrita dentro
+de um comentário; e mexer nas `rgba(${r},${g},${b})` compostas por variável do
+`ui.jsx`. Uma delas era **pegadinha deliberada** na lista dada ao `testes` — um
+`#7BC98F` em `palco.js`, que parece o caso central de D5b e tem de ficar verde
+porque os módulos de dado saíram do dente por escopo. Ficou verde.
+
+### A discordância, fechada com os dois lados
+
+**`desenho` × `jogo`, sobre a cor de dado de jogo.** Dos 99 literais que são
+byte a byte uma cor de `T`, **19 vivem nos módulos de dado**.
+
+- **O `desenho`:** `npcs.js: rival` = `#E8A33D` não é dado, é `T.amber` com
+  outro nome. Trocar a paleta amanhã deixaria os rivais âmbares num jogo que já
+  não é âmbar.
+- **O `jogo`:** os seis patamares de devoção são uma **rampa** que o jogador lê
+  de uma vez. Se `Devota` virar `T.amber`, no dia em que a Fase L esquentar o
+  âmbar por contraste **o patamar muda de cor sozinho** e a rampa deixa de ser
+  rampa. *Coincidir hoje não é depender.* E a alternativa — 20 perdões escritos
+  no dia do nascimento — é *"inventário com outro nome"*, que foi exatamente o
+  diagnóstico que reescreveu D5.
+
+**Decisão do `regente`: ganhou o `jogo`, e o `desenho` ganhou a outra metade.**
+Os módulos de dado saem de D5b **por escopo, não por perdão**, e continuam em
+D5a, que segura o tamanho.
+
+**E foi o número que confirmou o recorte:** 99 − 19 = **80** — exatamente o
+item da pauta que paga D5b (*"os 80 literais que já são `T`"*). O dente e o
+item que o paga passaram a medir a mesma coisa, o que não acontecia com 99.
+
+### O achado do ciclo: **a saída não é o nome**
+
+O `jogo` não leu a lista das 13 animações — ele **injetou `animation: none` nas
+13 e jogou**. Três coisas caíram:
+
+1. **`.tv-agonia` é inocente**, e era a suspeita nomeada na pauta desde D1.
+   Quando `grave`, `App.jsx:20971-20972` já põe `border: 1px solid T.danger`
+   estático, o anel do retrato, o rosto e a barra de PV rotulada com o número:
+   **quatro afirmações paradas de "você está morrendo"**. O pulso é a quinta.
+2. **`.tv-dice` é a culpada, e foi pega na tela.** A troca de número é
+   **JavaScript** — `setInterval` de 70 ms por 1200 ms (`App.jsx:486`) — e
+   `prefers-reduced-motion` **não a toca**. O tremor era a única coisa que dizia
+   "ainda rolando", e numa falha com `dc != null` o fundo do resultado é
+   idêntico ao do rolando. O `jogo` fotografou um hexágono **imóvel com 19**
+   (que passaria no teste) que um segundo depois era **6** e "Falha". Ou seja:
+   para quem pediu menos movimento, `animation: none` **deixa a pisca e tira o
+   sentido** — é **estritamente pior**, e uma catraca que declarasse isso como
+   sucesso estaria certificando uma regressão.
+3. **`.tv-faixa` e `.tv-flutua` terminam em `opacity: 0`** e só não ficam
+   grudadas na tela porque um `setTimeout` as remove. E `.tv-vira`: o verso
+   nasce em `rotateY(180deg)`, e `none` deixaria a carta de subida de nível **de
+   costas, para sempre**.
+
+**A regra que saiu daí, e é condição escrita nas quatro entradas do perdão:**
+*a saída por movimento reduzido pousa no estado **final** da animação, nunca no
+inicial — e onde é a própria animação que faz a coisa sumir, a saída não pode
+ser `none`.* Sem isto, a próxima faixa escrita neste molde fica para sempre por
+cima do tabuleiro, com a suíte verde.
+
+### Zona não é perdão
+
+`src/estilo.js` **é varrido** — a pauta escreveu que *"uma catraca que perdoa a
+própria tabela não protege nada"*. Mas varrê-lo inteiro faria **acrescentar uma
+cor nova a `T` ficar vermelho**, e uma paleta que não pode crescer é sagrada,
+que é o oposto da liberdade que a pessoa deu à mesa. O recorte é por **zona**:
+`T` isenta dos dois dentes; **`MATERIAIS` isenta de D5a e VARRIDA por D5b** —
+porque sem essa metade a zona seria uma **lavandaria**, e bastaria mover a
+duplicata para dentro dela para ficar perdoada.
+
+A consequência que fecha o argumento: com este recorte, `estilo.js` carrega
+**13 dos 80** de D5b — **a folha da casa é a segunda maior devedora do próprio
+dente que a protege**. Isso é a catraca a não perdoar a própria tabela, medido.
+
+**Perdão é dívida — tem data e o item que a paga. Zona é lei — não tem
+nenhuma das duas.**
+
+### Os quatro buracos, declarados com número
+
+Buraco escrito é dívida; buraco calado é mentira. A catraca **não** pega:
+
+- **nome CSS**: **1** ocorrência no escopo inteiro (`ui.jsx`, `stroke="black"`).
+  Um dente para uma ocorrência é decoração, e o regex morderia prosa.
+- **`transition` fora da folha: 18** — a barra de vida 500 ms, PV/PM 300 ms, a
+  cor do dado 400 ms. Atributo inline; o `@media` da folha não o alcança.
+- **o contraste** — e este é o mais caro dos quatro, e entrou porque o `testes`
+  discordou e tinha razão: o `#fff` sobre `T.danger` de `App.jsx:2541` dá
+  **3,42:1 e reprova o AA**, e **nenhum dos três dentes o vê** — `#fff` não é
+  cor de `T`, logo D5b é cego, e trocá-lo por outro branco qualquer passa por
+  D5a. Contraste é conta de **cor**, não contagem de **texto**: mede um par
+  (tinta, fundo) que teria de ser inferido do JSX sete níveis acima, e isso é
+  **outro varredor**, não um quarto dente deste.
+- **animadores em JS: 2** — o d20 e a ficha a andar. E a casa **já tem o padrão
+  e usa-o uma vez só**: `ui.jsx:589`, `CampoDeBrasas`, com `window.matchMedia`
+  — aplicado à **atmosfera**, e não às duas coisas que carregam informação de
+  jogo.
+
+### Decisões médias tomadas (e o motivo de cada uma)
+
+1. **Folga zero em vez de `<=`** — porque um teto com folga vira orçamento, e
+   um orçamento aplaude o retorno da dívida.
+2. **Os módulos de dado fora de D5b por escopo** — porque 20 perdões no dia do
+   nascimento é inventário, e porque a rampa de devoção tem de poder ficar
+   parada quando o âmbar da interface se mover.
+3. **`MATERIAIS` varrida por D5b** — porque uma zona que não é varrida vira
+   lavandaria de duplicatas.
+4. **O dente `ENTRADA MORTA`, proposto pelo `testes` e aceito** — a
+   especificação escrevia *"a entrada sai da tabela, não fica a dizer 0"*, mas
+   com `medido === teto` uma entrada `0` que mede `0` passaria verde para
+   sempre. É a mesma lógica do `PERDÃO MORTO` virada para as tabelas de teto.
+5. **O contraste declarado como quarto buraco, proposto pelo `testes` e
+   aceito** — ele construiu o que estava escrito e disse a discordância em vez
+   de a resolver sozinho, que é exatamente o combinado.
+6. **O piso do alcance** (`pisoDeArquivosComCor`, `pisoDeLiterais`,
+   `pisoDeClassesDeAnimacao`, `pisoDeZona`) — porque um bug na máscara de
+   comentário que apagasse um arquivo inteiro passaria **verde medindo nada**,
+   e catraca verde por vazio é pior que catraca nenhuma. Provado por sonda: sem
+   o `pisoDeZona`, quebrar o formato de `export const T = {` dava "SUBIU 14";
+   com ele, dá `A ZONA "T" DESAPARECEU`.
+
+### Correções medidas à pauta
+
+- **O pergaminho não tem irmãs.** `rosto.jsx` e `carta-taro.jsx` são **escuros**
+  e são dívida comum — `carta-taro.jsx` carrega **8 cores de `T` exatas** e é o
+  depósito mais rico de D5b fora do `App.jsx`; `rosto.jsx` tem `#7A1F1F`, que é
+  `CABELO[8]` exato — cor de **dado** copiada para dentro da interface, a
+  direção contrária e a única que é mesmo defeito.
+- **E o pergaminho é sistema, provado por um acaso impossível:** **10 hexes
+  aparecem nos DOIS arquivos, escritos separadamente, e cobrem 52 dos 71 usos**.
+  Dívida acidental não concorda byte a byte em dois arquivos. Virou item
+  próprio, e a casa dele é `MATERIAIS`, não `T`.
+- **`⤢ ampliar` já não é mentiroso.** D1 e D4 escreveram que ele *"corta 33% do
+  campo"*. Hoje abre uma sobreposição de tela inteira com o campo 14×14 inteiro
+  e casas clicáveis — o `jogo` **andou, de 20 m para 12 m, clicando**. O que
+  continua quebrado é o **veredito**: o orçamento de movimento não aparece
+  dentro da sobreposição, e o preço chega depois, no log.
+
+---
+
+## A Fase D fecha — o antes e o depois
+
+**O que a casa não sabia sobre o próprio visual em 14/09, antes de D1:**
+
+Não sabia quantas cores tinha (a pauta dizia 15; são 14). Não sabia quantos
+literais soltos tinha (a pauta dizia 30 no `App.jsx`; são 93, e 242 nos
+arquivos de tela). Não sabia que havia uma **segunda paleta inteira escondida
+dentro da string de `FONT_CSS`**, nem uma **terceira** dentro dos mapas. Não
+sabia quantas animações tinha (a definição do `desenho` listava 7; são 13, e
+duas das sete nem eram classes). Não sabia que **só 3 delas param** para quem
+pede menos movimento. Não sabia que **6,8% dos controles** passam pela
+biblioteca — 218 `<button>` crus contra 16 `<Botao>`. Não sabia que
+`:focus-visible` **não aparece uma única vez** no projeto. E não sabia o que a
+fase existia para achar: **10 famílias de ação com mais de uma forma, 4 delas
+de significado** — entre elas o botão que apaga um companheiro, escrito em
+`#fff` sobre vermelho, **3,42:1, reprovando o AA no único controle que apaga
+alguém**.
+
+Nada disso dava alarme. O contraste da paleta passa AA com folga, a WCAG não
+tem piso de tamanho, e um literal de cor é sintaxe válida. **A casa estava
+cega por construção, não por descuido.**
+
+**O que ela passa a não poder mais esquecer:**
+
+| a partir de hoje | o que a impede |
+|---|---|
+| uma cor nova escrita à mão | `check-formas` D5a — **332** é teto, não orçamento |
+| uma cor que já tem nome em `T`, copiada | D5a **e** D5b, com mensagens diferentes |
+| uma cor de `T` mudada para dentro de `MATERIAIS` para escapar | D5b varre a zona física |
+| uma animação nova sem saída | D5c, vermelha **no dia em que nasce** |
+| uma dívida paga que ficou no livro | `PERDÃO MORTO` / `ENTRADA MORTA` |
+| uma dívida que encolheu e não foi registrada | `DESCEU`, com a linha pronta |
+| a própria tabela de cor a violar a regra | `estilo.js` é varrido, e deve **13 dos 80** |
+| a varredura a passar verde por ter medido nada | os quatro pisos de alcance |
+
+E o que a fase deixa escrito, além do código: `src/estilo.js` (a folha com casa
+própria, D2), **27 variáveis e 13 páginas no Figma** com a leitura de volta
+provada (D3), **30 formas declaradas** com o verbo do jogador (D4), e uma
+`mente/formas.md` de **1.868 linhas** onde toda divergência entre os dois
+seniores está fechada **com os dois lados e quem cedeu em quê**.
+
+**O preço, dito sem enfeite:** a Fase D **não melhorou um pixel do jogo**. Cinco
+ciclos, e o jogador não vê diferença nenhuma. O que ela comprou é que, a partir
+do sexto, cada melhoria custa uma vez em vez de duas — e não apodrece.
+
+### Para a pessoa decidir — as duas propostas ambiciosas deste ciclo
+
+Nenhuma é seguro, e nenhuma é gosto.
+
+1. **`Atacar` ataca — os verbos de combate saem do autocompletar** (do `jogo`,
+   `pesado`). O painel `Ações` tem duas fileiras: em cima **12 botões** que só
+   fazem `setEntrada(a.texto)` — **`Atacar` não ataca, ele digita `"Ataco "` na
+   caixa** — e embaixo **8 botões** que entram direto no motor por
+   `declararAcaoRapida`. **Nenhum dos 8 é de combate.** Vasculhar, Escutar e
+   Lembrar atravessam o motor; Atacar, Esquivar, Empurrar e Derrubar ficam do
+   lado que escreve. **Experiência jogada, 15/09:** três ataques declarados em
+   português sem ambiguidade, dentro de um combate aberto com iniciativa rolada
+   — **zero rolagens de ataque**; o único dado da sessão foi de Intimidação, e
+   o terceiro golpe virou uma cena em que todos conversam. Ao fim de 7 turnos:
+   **PV 20/20, PM 6/6, XP 89/300** — os mesmos quatro números do primeiro
+   turno. A lei da casa está invertida no pior lugar possível: *o Mestre é
+   código, e a IA só narra* — mas **quem decide se o golpe aconteceu é a IA**.
+2. **O Pergaminho — a prosa ganha material próprio** (do `desenho`, `pesado`).
+   A medição achou **três paletas**, e a casa gastou a mais bonita delas
+   inteira em mapas, que o jogador abre uma vez por sessão. Num RPG cuja
+   primeira lei é *"a prosa é a protagonista"*, a narração é servida no mesmo
+   `<div>`, com a mesma borda, que o inventário — e `tv-mono` tem **682 usos
+   contra 315 do corpo**. A proposta é que a narração deixe de ser um painel e
+   passe a ser **uma superfície**, com WCAG 2.2 SC 1.4.8, a HIG, o Material 3 e
+   Bringhurst citados, e a prova jogada **com a mesma semente** — o mesmo
+   texto, palavra por palavra, nos dois materiais.
+
+**E a segunda depende da primeira lei desta etapa:** sem a catraca, um material
+novo nasceria como mais 40 literais soltos e viraria a quarta paleta anônima do
+projeto no ciclo seguinte. É esse o argumento inteiro de D5, e é por isso que o
+item mais ambicioso da fase é o que mais depende dela.
+
+### O que ficou, e o que eu não soube
+
+- **Os 242 literais não se consertaram, de propósito.** A catraca nasce com a
+  dívida **perdoada e datada**; a dívida se paga depois, em itens próprios —
+  três deles abertos hoje (*o pergaminho ganha nome*, *os pigmentos do dado de
+  jogo*, *a cor do primeiro pixel*). Confundir as duas coisas faria o ciclo
+  inchar e a catraca nascer frouxa.
+- **A cláusula "nenhum controle sem forma declarada" não entrou**, e não foi
+  esquecimento: D1 já a tinha tirado de D5 por escrito. São **218 `<button>`**
+  sem nenhum mecanismo de marcação que ligue um ao outro — só se pode exigir
+  que todo controle tenha forma quando existir a primitiva que a carrega, e
+  isso é *"`ui.jsx` ganha o que falta"*.
+- **A máscara de comentário é textual, não um parser**, e é o ponto frágil do
+  arquivo: uma string que contenha `/*` apagaria texto a mais **em silêncio**.
+  O que dá confiança é que as contagens saíram idênticas às do `desenho` nos 17
+  arquivos — se a máscara estivesse a comer um pedaço, algum número teria ficado
+  abaixo. É para isso que os quatro pisos existem.
+- **`hsl()` entra em D5a e não em D5b.** Uma `hsl()` que *seja* `T.amber`
+  escapa ao segundo dente, porque não se escreveu conversor HSL→RGB. Medido:
+  **zero `hsl` em todo o escopo** — um conversor seria código sem caso. Está em
+  comentário, para ser deliberado e não acidental. É uma meia-fuga conhecida.
+- **O que ficou feio:** `conferirTetos` recebe quatro argumentos só para que as
+  mensagens de D5a e D5b digam coisas diferentes. Funciona, lê-se mal, e está
+  dito aqui em vez de escondido.
+- **O bastão do `App.jsx` não foi tomado** — nem uma vez, no ciclo inteiro.
+- **O vermelho da outra mente:** não houve. O `orquestrador` fechou **N1b**
+  (`061c5bf`, `08e1796`) antes da minha prova, e o `npm test` saiu
+  **182/182 suítes verdes e 10/10 varredores limpos** — o décimo é o novo.
+
+---
+
 ## 14/09 23:40 · v9.249 · D4 · as formas escritas · commit `e8b4c32`
 
 **`mente/formas.md` deixou de estar vazio, e este é o primeiro ciclo sob a

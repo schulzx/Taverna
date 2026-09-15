@@ -1705,3 +1705,163 @@ correção do *Impedido* de D3 passou sem uma vírgula de reserva.
 - **`JetBrains Mono` continua sem peso 600 no Figma** (Regular/Medium/Bold). As
   peças usam Bold — é uma diferença real entre o que o navegador desenha e o que
   o Figma desenha.
+
+---
+
+## A catraca do desenho (decidido em D5 · 15/09)
+
+D4 escreveu 30 formas e D3 fez a biblioteca; nada disso obriga ninguém a nada.
+`testes/check-formas.mjs` é o que faz a Fase D valer **para sempre** em vez de
+valer hoje: três dentes, cada um o único a pegar o seu caso, e cada um verde no
+dia em que nasceu.
+
+- **D5a — quantidade.** A cor **nova**, de qualquer forma e qualquer valor. É o
+  único dente que segura o pergaminho e o dado de jogo, que não têm uma única
+  cor de `T`. Teto por arquivo, **332 hoje**.
+- **D5b — qualidade.** A cor **duplicada**, mesmo quando a contagem não mexe: é
+  o único que morde a troca 1-por-1 de um hex de pergaminho por `#E8A33D`.
+  **80 hoje** — e 80 é, exatamente, o item da pauta que o zera.
+- **D5c — o movimento.** Toda classe de `MOVIMENTO_CSS` que declara `animation`
+  tem de aparecer no `prefers-reduced-motion`. **13 classes, 3 com saída.**
+
+### A lei que a catraca carrega: folga zero, nos dois sentidos
+
+A asserção não é `medido <= teto`, é **`medido === teto`**; em D5c, igualdade
+de **conjuntos**. Um teto é um retrato datado da dívida, não um alvo — com `<=`
+ele vira orçamento, e o dia em que alguém volta a pôr cinquenta literais a
+catraca aplaude. Com igualdade, o número na tabela é **sempre verdade** e pode
+ser citado sem ninguém ir medir de novo.
+
+Daí a regra **anti-cemitério**, que é o que separa uma lista de perdão de um
+cemitério: **um perdão que já não é preciso FALHA a catraca.**
+
+- `PERDÃO MORTO: .tv-fade já está no prefers-reduced-motion. Tire-a da lista.`
+- `ENTRADA MORTA: <arquivo> tem teto 0. A dívida foi paga — tire a linha.`
+- `DESCEU: <arquivo> tem 90, o teto é 93. A dívida encolheu; desça o teto:` — e
+  **imprime a linha pronta para colar**. É a única falha do projeto que é uma
+  boa notícia, e o texto diz isso.
+
+A válvula é escrita, não secreta: um teto pode **subir** com motivo e data na
+própria entrada. Não é licença, é custo — a linha aparece no diff, e a pessoa
+pergunta. O que a catraca proíbe é subir **calado**.
+
+### Zona não é perdão
+
+`src/estilo.js` **é varrido** — *"uma catraca que perdoa a própria tabela não
+protege nada"*. Mas varrê-lo inteiro faria **acrescentar uma cor nova a `T`
+ficar vermelho**, e uma paleta que não pode crescer é sagrada, que é o oposto
+da lei da casa. O recorte é por **zona**, não por arquivo:
+
+| zona | D5a | D5b |
+|---|---|---|
+| `T` | isenta | isenta |
+| `MATERIAIS` | isenta | **VARRE** |
+
+D5b varre `MATERIAIS` porque **sem isso a zona seria uma lavandaria**: bastava
+mover a duplicata para dentro dela e ela ficava perdoada. O dia em que
+`cartazTopo` for `#171322` é o dia em que a paleta física virou um alias da
+semântica com outro nome. Medido: `MATERIAIS` duplica **zero** cores de `T`.
+
+**Perdão é dívida — tem data e o item que a paga. Zona é lei — não tem nenhuma
+das duas.**
+
+### Discordância resolvida: a cor de dado de jogo (`desenho` × `jogo`)
+
+**O lado do `desenho`.** Dos 99 literais que são byte a byte uma cor de `T`,
+**19 vivem nos módulos de dado** (`semente.js`, `mapa.js`, `npcs.js`,
+`palco.js`, `devocao.js`). `npcs.js: rival` = `#E8A33D` não é dado, é `T.amber`
+com outro nome — a cor de acento da interface copiada à mão para dentro de uma
+tabela de jogo. Trocar a paleta amanhã deixaria os rivais âmbares num jogo que
+já não é âmbar. D5a pode ignorar a diferença; D5b não pode.
+
+**O lado do `jogo`.** Os seis patamares de devoção são uma **rampa** que o
+jogador lê de uma vez — Santa, Devota, Simpática, Indiferente, Herege, Hostil.
+Se `Devota` virar `T.amber`, no dia em que a Fase L esquentar o âmbar por
+contraste **o patamar muda de cor sozinho** e a rampa deixa de ser rampa.
+**Coincidir hoje não é depender.** E a alternativa — 20 perdões escritos no dia
+do nascimento — é *"inventário com outro nome"*, que foi exatamente o
+diagnóstico que reescreveu D5.
+
+**A decisão do `regente`: ganhou o `jogo`, e o `desenho` ganhou a outra
+metade.** Os módulos de dado ficam **fora de D5b por escopo, não por perdão** —
+e continuam **dentro de D5a**, que segura o tamanho: uma cor nova solta lá
+dentro faz o número subir, e sobe com motivo escrito.
+
+**A confirmação de que o recorte é o certo veio do número:** 99 − 19 = **80**,
+exatamente o item da pauta que paga D5b. O dente e o item que o paga passaram a
+medir a mesma coisa — o que não acontecia com 99.
+
+### A saída não é o nome (a condição que D5c carrega)
+
+O `jogo` injetou `animation: none` nas 13 classes e **jogou com elas**. O
+achado muda o que a lista de perdão significa, e por isso quatro entradas
+nascem com "a saída não é `none`" escrito:
+
+- **`.tv-agonia` é inocente** — era a suspeita da pauta, e não é. Quando
+  `grave`, `App.jsx:20971-20972` já põe `border: 1px solid T.danger` estático,
+  o anel do retrato, o rosto e a barra de PV rotulada com o número: quatro
+  afirmações **paradas** de "você está morrendo". O pulso é a quinta. Parado, o
+  jogador ainda sabe.
+- **`.tv-dice` é a culpada, e foi pega na tela.** A troca de número é
+  **JavaScript** — `setInterval` de 70 ms por 1200 ms (`App.jsx:486`) — e
+  `prefers-reduced-motion` não a toca. O tremor era a **única** coisa que dizia
+  "ainda rolando", e numa falha com `dc != null` o fundo do resultado é idêntico
+  ao do rolando. O `jogo` fotografou um hexágono imóvel com **19** (que
+  passaria) que um segundo depois era **6** e "Falha". Para quem pediu menos
+  movimento, `animation: none` **deixa a pisca e tira o sentido** — é
+  estritamente pior. Condição: sob movimento reduzido o dado **não pisca**;
+  mostra um "rolando" parado e revela o valor de uma vez.
+- **`.tv-faixa` e `.tv-flutua`** terminam em `opacity: 0` e só não ficam
+  grudadas porque um `setTimeout` as remove (3200 ms e 1400 ms). E **`.tv-vira`**:
+  o verso nasce em `rotateY(180deg)`, e `none` deixa a carta de subida de nível
+  **de costas, para sempre**.
+
+**A regra, e é condição escrita, não nota de rodapé:** *a saída por movimento
+reduzido pousa no estado **final** da animação, nunca no inicial — e onde é a
+própria animação que faz a coisa sumir, a saída não pode ser `none`.*
+
+### Os buracos, declarados com número
+
+Um buraco escrito é dívida; um buraco calado é mentira. A catraca **não** pega:
+
+- **nome CSS** (`white`, `black`): **1** ocorrência no escopo inteiro
+  (`ui.jsx`, `stroke="black"`). Um dente para uma ocorrência é decoração, e o
+  regex morderia prosa.
+- **`transition` fora do `estilo.js`: 18** — a barra de vida 500 ms
+  (`App.jsx:21003`), PV/PM 300 ms, a cor do dado 400 ms. Atributo inline; o
+  `@media` da folha **não o alcança**.
+- **o contraste** — `#fff` sobre `T.danger` dá 3,42:1 e reprova o AA
+  (`App.jsx:2541`), e **nenhum dos três dentes o vê**: `#fff` não é cor de `T`,
+  logo D5b é cego, e trocá-lo por outro branco qualquer passa por D5a. É o mais
+  caro dos quatro buracos. Contraste é conta de **cor**, não contagem de
+  **texto** — mede um par (tinta, fundo) que teria de ser inferido do JSX, sete
+  níveis acima, e isso é outro varredor, não um quarto dente deste.
+- **animadores em JS: 2** — o d20 cuspindo 17 números por segundo
+  (`App.jsx:486`) e a ficha andando 55–110 ms por passo
+  (`grade-de-batalha.jsx:265`). E a casa **já tem o padrão e usa-o uma vez só**:
+  `ui.jsx:589`, `CampoDeBrasas`, com `window.matchMedia` — aplicado à
+  **atmosfera**, e não às duas coisas que carregam informação de jogo.
+
+### Correções medidas à pauta
+
+- **O pergaminho não tem irmãs.** A pauta dizia que `rosto.jsx` e
+  `carta-taro.jsx` eram parentes da paleta de mapa. **São escuros**, e são
+  dívida comum: `rosto.jsx` tem `#EAE4D6` (= `T.ink`) e `#7A1F1F`
+  (= `CABELO[8]`, cor de **dado** copiada para dentro da interface);
+  `carta-taro.jsx` carrega **8 cores de `T` exatas** e é o depósito mais rico de
+  D5b fora do `App.jsx`.
+- **E o pergaminho é sistema, provado por um acaso impossível:** **10 hexes
+  aparecem nos DOIS arquivos, escritos separadamente, e cobrem 52 dos 71 usos**
+  (`#5C4A30` a tinta ×11, `#F0E6CC` o papel ×10, `#EADFC1`, `#6D5C40`,
+  `#B4322E`, `#3A2E1C`, `#C9A45A`, `#A08A5E`, `#8D7A56`, e a família do mar).
+  Dívida acidental não concorda byte a byte em dois arquivos. A casa dele não é
+  `T` (que é semântica, e não deve crescer para `papel`, `tinta`, `estrada`,
+  `mar`, `selo`) — é **`MATERIAIS`**, a paleta física, onde a cortiça já mora.
+  São **2 arquivos, 71 literais, ~11 tokens**: mais barato de declarar do que a
+  pauta supunha.
+- **`⤢ ampliar` já não é mentiroso.** D1 e D4 escreveram que ele *"abre outro
+  bloco dentro do mesmo scroller clipado"* e *"corta 33% do campo"*. Hoje abre
+  uma sobreposição de tela inteira com o campo 14×14 inteiro, legenda explícita
+  e casas clicáveis — o `jogo` **andou, de 20 m para 12 m, clicando**. O que
+  continua quebrado é o **veredito**: o orçamento de movimento não aparece
+  dentro da sobreposição, e o preço chega depois, no log.

@@ -74,6 +74,111 @@ e nos dois a resposta é sim, com o que ele reaprende dito por escrito.
   aprovou em S1 — *o motor não muda; o que muda é quando o jogador fica
   sabendo* — aplicado à rodada em vez de à queda.
 
+- [ ] **`Atacar` ataca — os verbos de combate saem do autocompletar** · pesado · de: jogo · 15/09 (D5)
+  **O achado está dentro de um painel só, e ele tem duas metades.** O painel
+  `Ações` (`App.jsx:20548`) tem duas fileiras separadas por uma linha
+  tracejada. Em cima, `ACOES_PRONTAS` — **12 botões**, com `Atacar` em âmbar
+  porque, diz o comentário da própria casa, *"é a ação que o jogador procura
+  primeiro"* (`:20559`). Todos os 12 fazem a mesma coisa:
+  `setEntrada(a.texto)`. **`Atacar` não ataca: ele digita `"Ataco "` na caixa
+  de texto.** Embaixo, `ACOES_RAPIDAS` (`desafios.js:621`) — **8 botões** que
+  chamam `declararAcaoRapida(id, motivo)` e entram **direto no sistema**, que
+  decide se pede dado e já sabe responder *"você já tentou isso aqui"*.
+  **Nenhum dos 8 é de combate.** Vasculhar, Investigar, Escutar, Lembrar,
+  Convencer, Intimidar, Esgueirar, Arrombar — as coisas mais passivas do jogo
+  atravessam o motor; **Atacar, Esquivar, Empurrar, Derrubar e Saltar** ficam
+  do lado que escreve. A porta do motor existe, está provada, tem teste que
+  confere botão contra desafio (`desafios.js:629-631`), e **nunca foi aberta
+  para a violência**.
+  **Experiência jogada (15/09, campanha `O Fio de Prata`, Brann nv 1, 7
+  turnos com o Narrador vivo).** Declarei ataque **três vezes**, em português
+  sem ambiguidade (*"puxo a espada e ataco Halvard na cara"*, *"avanço e
+  golpeio Halvard com a espada"*, *"corro os últimos metros e enfio a espada
+  em Halvard"*), dentro de um combate aberto, com iniciativa rolada e o
+  tabuleiro montado. **Zero rolagens de ataque.** O único dado da sessão foi
+  de **Intimidação** — uma prova social. O terceiro golpe virou uma cena em
+  que todos conversam e *"Brann recua para sob a arcada"*: o combate
+  simplesmente acabou, escrito. No fim dos 7 turnos: **PV 20/20, PM 6/6, XP
+  89/300, relógio 08:45** — os mesmos quatro números do primeiro turno.
+  **A régua da mesa aplicada ao pé da letra:** *"o jogo realmente está fazendo
+  coisas — não só lendo e escrevendo"*. Hoje o verbo mais importante do jogo é
+  literalmente autocompletar. E a lei da casa está invertida no pior lugar
+  possível: *o Mestre é código, e a IA só narra* — mas **quem decide se o
+  golpe aconteceu é a IA**. O motor de combate (a grade, o alcance, os metros,
+  as 6 reações com custo em PM, o dano que flutua) fica esperando ser
+  convidado por uma frase.
+  **A forma, decidida e não perguntada:** `Atacar` deixa de preencher a caixa
+  e passa a fazer o que a grade **já** faz para o movimento — acende o
+  conjunto de alvos ao alcance e espera um toque. O jogador escolhe quem, vê
+  o preço antes (alcance, o que sobra do turno), e o motor resolve. O que ele
+  tiver escrito na caixa viaja junto como `motivo`, exatamente como
+  `declararAcaoRapida(id, motivo)` já faz hoje com os 8 de baixo: **a frase
+  deixa de ser a sintaxe obrigatória e vira o tempero**. Os mesmos 5 verbos,
+  no mesmo lugar, com o mesmo rótulo.
+  **O que ele teria de reaprender, e é uma frase:** que `Atacar` já não
+  escreve a frase por ele — ele escolhe o alvo, e o que digitar passa a
+  dizer *como*, não *se*.
+  **O preço, dito por escrito:** o Narrador perde o veto sobre a violência, e
+  algumas lutas vão ficar mais secas — às vezes o veto dele é boa escrita
+  (foi o que me aconteceu, e a cena era boa). Três defesas: (1) a porta é a
+  **mesma** dos outros 8, com o livro de tentativas inteiro atrás dela — nada
+  de atalho novo; (2) o Narrador continua narrando o resultado, só deixa de
+  decidir se a rodada existiu; (3) quem quiser a frase inteira continua
+  podendo escrevê-la e apertar `Agir →` — nada é retirado, só deixa de ser
+  obrigatório.
+  **Ao `backend`:** os 5 verbos de combate precisam de linha no catálogo de
+  `desafios.js` (é tabela, e o teste que já confere botão contra desafio passa
+  a cobri-los). A regra não muda: alcance, dano e reação são os de hoje.
+  Catraca: *mesma semente, mesmo alvo, mesmo resultado que a frase escrita
+  produz hoje*.
+
+- [ ] **O Pergaminho — a prosa ganha material próprio** · pesado · de: desenho · 15/09 (D5)
+  **O que a medição de D5 mostra, e que ninguém foi procurar:** o Taverna tem
+  **três paletas**, não uma. A semântica (`T`, 14 cores, 2.565 usos), a do
+  **pergaminho** (71 literais em `painel-mapa` + `planta-cidade`, **zero** cores
+  de `T` — uma paleta inteira, coerente e anônima, com 10 hexes escritos igual
+  nos dois arquivos) e a do dado de jogo (77). A casa fabricou, sem decidir, um
+  segundo material — papel velho sob luz quente — e **gastou-o inteiro em
+  mapas**, que o jogador abre uma vez por sessão.
+  **Cruzado com D1:** `tv-mono` tem **682 usos contra 315 do corpo e 108 do
+  display**, e **542 dos 1.107 textos dimensionados (49%) são 9px ou 10px**. Num
+  RPG cuja primeira lei escrita é *"a prosa é a protagonista"*, a prosa é
+  servida no mesmo `<div>`, do mesmo material, com a mesma borda e o mesmo raio
+  que o inventário — e metade do jogo está escrita na fonte que existe para
+  dizer "isto é um número de máquina".
+  **A proposta:** a narração deixa de ser um painel e passa a ser **uma
+  superfície**. Um único lugar no jogo inteiro onde a interface se cala: sem
+  mono, sem 9px, sem borda de painel, sem `T.line` — corpo Spectral no tamanho
+  de leitura, medida travada entre 45 e 75 caracteres por linha, entrelinha de
+  leitura, e a luz do pergaminho (que já existe, já é coerente e já está paga) a
+  distinguir *"isto é a história a acontecer"* de *"isto é o sistema a
+  informar"*. Toda a restante interface continua como está. Não é uma tela nova:
+  é dar à coisa que o jogador lê durante noventa por cento da sessão um
+  **material que nenhuma outra coisa do jogo tem**.
+  **A prova, pelos três caminhos, e todos já estão ao alcance:**
+  *Medida* — caracteres por linha, corpo em px, entrelinha e o par de contraste
+  prosa/fundo, no telemóvel e no monitor, antes e depois. **Se qualquer par de
+  contraste piorar, a proposta está errada por definição** — a lei é do
+  `desenho` e vale contra ele. *Estudo citado* — WCAG 2.2 SC 1.4.8 *Visual
+  Presentation* (largura máxima de 80 caracteres, entrelinha mínima de 1,5) e SC
+  1.4.4 *Resize Text*; Apple HIG (corpo 17pt); Material 3 (*body-large* 16sp);
+  Bringhurst, *The Elements of Typographic Style*, sobre a medida de 45–75
+  caracteres. *Experiência jogada* — o `jogo` lê uma sessão de 6 turnos de Uma
+  Vida no antes e no depois **com a mesma semente**: o mesmo texto, palavra por
+  palavra, nos dois materiais. É o par comparável que a régua exige, e este
+  projeto é dos poucos onde ele é exatamente reproduzível.
+  **Por que é `pesado` e está aqui:** a pergunta é *"o jogador teria de
+  reaprender?"*, e a resposta é **talvez sim** — a coluna de narração pode mudar
+  de largura e de lugar na tela, e é o sítio para onde ele olha por omissão.
+  Nada muda de nome, nada muda de fluxo, nenhum controle sai do lugar. Mas o
+  sítio onde ele lê, sim. Isso é dela.
+  **A dependência honesta:** esta proposta **precisa** de D5 fechado. Sem a
+  catraca, um material novo nasce como mais 40 literais soltos num arquivo de 20
+  mil linhas, e no ciclo seguinte é a quarta paleta anônima do projeto. Com a
+  catraca, o Pergaminho **tem de** nascer como tabela — e portanto como um
+  commit que se desfaz se a pessoa não gostar. É esse o argumento inteiro de D5,
+  e é por isso que o item mais ambicioso desta fase é o que mais depende dela.
+
 - [ ] **o turno acontece mesmo quando o Narrador cala** · pesado · de: jogo · 14/09
   **Experiência jogada, duas vezes na mesma fase** (D1 e D4): a quota do
   Narrador acabou e **o jogo parou de ser jogável** — nem um turno de Uma
@@ -498,7 +603,7 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
   **Cinco afirmações de D1 caíram** (o `🎲` tem estado, o `✕` tem 6 tamanhos,
   são 10 assinaturas de âmbar, os véus têm 4 desfoques, e o `⤢ ampliar` não é
   mudo — **é mentiroso**: corta 33% do campo). Medição inteira no diário.
-- [ ] **D5 · a catraca do desenho** · de: pessoa · 14/09
+- [x] **D5 · a catraca do desenho** · de: pessoa · 14/09 · **feito v9.252**
   *(reescrita por D1: como estava, era impossível. "Nenhuma cor literal fora
   da tabela" são **242 violações** hoje — e 71 delas são o pergaminho, um
   sistema legítimo à espera de nome; a regra ainda bate em `constantes.js`,
@@ -530,6 +635,32 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
   etapa própria depois de D4 e de "`ui.jsx` ganha o que falta": só se pode
   exigir que todo controle tenha forma quando existir a primitiva que a
   carrega.
+
+  **FEITO (15/09).** `testes/check-formas.mjs`, 585 linhas, 0,27 s, **10 ok ·
+  0 falhas** no dia em que nasceu — e entra sozinho no `rodar-tudo.mjs`, que
+  descobre `check-*.mjs` por si. D5a **332** literais em 17 arquivos; D5b **80**
+  (e 80 é, exatamente, o item da pauta que o zera); D5c **13 classes, 3 com
+  saída**. A medição **reproduz D1 byte a byte** — 93 no `App.jsx` (40 hex + 53
+  rgba), 242 nos arquivos de tela, 67 no recorte de D1. Única divergência,
+  escrita em vez de explicada: D1 anotou 78 nos módulos de dado e medem-se 77;
+  não se achou o fantasma.
+  **A lei que a catraca carrega é folga ZERO nos dois sentidos** —
+  `medido === teto`, e em D5c igualdade de conjuntos. Com `<=` o teto vira
+  orçamento; com igualdade o número é sempre verdade. Daí a regra
+  **anti-cemitério**: um perdão que já não é preciso **falha** a catraca
+  (`PERDÃO MORTO`, `ENTRADA MORTA`), e a falha de `DESCEU` **imprime a linha
+  pronta para colar** — a única falha do projeto que é uma boa notícia.
+  **E ela foi provada contra o erro: 20 sabotagens, 14 morderam e 6 passaram,
+  todas como previsto** — incluindo as que ela **tem** de deixar passar (afinar
+  o pergaminho, uma cor de cabelo nova, a 15.ª cor de `T`, cor em comentário,
+  `rgba()` composta por variável). Detalhe inteiro no diário.
+  **A discordância `desenho` × `jogo` sobre a cor de dado de jogo fechou por
+  escrito em `mente/formas.md`**, com os dois lados: os módulos de dado ficam
+  fora de D5b **por escopo, não por perdão**, e dentro de D5a. E foi o número
+  que confirmou o recorte — 99 menos os 19 de dado dá **80**.
+  **Quatro buracos declarados com número**, porque buraco calado é mentira: 1
+  nome CSS, 18 `transition` fora da folha, **o contraste** (o `#fff` 3,42:1 de
+  `App.jsx:2541` que nenhum dos três dentes vê) e 2 animadores em JS.
 - [ ] **D6 · o sistema para de falar de si mesmo** · de: jogo · 14/09
   *(etapa nova, nascida de D1 — o `jogo` jogando achou a lei mais partida do
   dia, e ela não cabia em D5 como estava escrita.)*
@@ -605,6 +736,49 @@ fecham de verdade **depois de D2 e D5** — o item diz quando._
   `SUPERFICIES_CSS`. D2 não as tocou de propósito: trocá-las à mão seria
   escrever a fórmula do `alfa()` treze vezes antes de ela existir. **Este
   item é agora pré-requisito de D5b**, não um vizinho dele.)*
+  *(confirmado por D5, 15/09: são **80** exatos, e o dente D5b mede exatamente
+  este número. Quando este item rodar, o teto de D5b vai a zero e as entradas
+  **saem** da tabela — a catraca falha com `ENTRADA MORTA` se ficarem lá a
+  dizer `0`.)*
+
+- [ ] **o pergaminho ganha nome** · médio · de: desenho e jogo · 15/09 (D5)
+  **71 literais em `painel-mapa.jsx` (41) + `planta-cidade.jsx` (30), e a prova
+  de que é sistema é um acaso impossível: 10 hexes aparecem nos DOIS arquivos,
+  escritos separadamente, e cobrem 52 dos 71 usos** — `#5C4A30` a tinta (×11),
+  `#F0E6CC` o papel (×10), `#EADFC1`, `#6D5C40`, `#B4322E`, `#3A2E1C`,
+  `#C9A45A`, `#A08A5E`, `#8D7A56`, e a família do mar. Dívida acidental não
+  concorda byte a byte em dois arquivos.
+  A casa dele **não é `T`** — `T` é semântica (`panel`, `line`, `danger`) e não
+  deve crescer para `papel`, `tinta`, `estrada`, `mar`, `selo`. É
+  **`MATERIAIS`**, a paleta física criada em D2, onde a cortiça já mora.
+  **~11 tokens.**
+  *(correção medida: as "irmãs em `rosto.jsx` e `carta-taro.jsx`" **não
+  existem** — as duas são escuras e são dívida comum. `carta-taro.jsx` carrega
+  8 cores de `T` exatas e é o depósito mais rico de D5b fora do `App.jsx`.)*
+  Paga o perdão de D5a nos dois arquivos. E o `jogo` olhou e disse o que o
+  torna barato: **é o único lugar do jogo onde a tela é clara**, e a fronteira
+  entre as duas paletas é exatamente a borda do objeto desenhado — o título, as
+  abas, a tira do lugar, o `✕` e a legenda são **100% `T`**. Não é vazamento, é
+  moldura.
+
+- [ ] **os pigmentos do dado de jogo** · leve · de: desenho · 15/09 (D5)
+  77 literais em `semente.js` (38), `mapa.js` (13), `npcs.js` (10), `palco.js`
+  (10) e `devocao.js` (6) — cabelo, pele, olhos, bioma, facção, relação,
+  devoção. **Já obedecem à lei da casa** (estão dentro de tabelas nomeadas, ao
+  lado de `rotulo` e `icone`), e por isso estão **fora de D5b por escopo**: uma
+  cor de patamar que vira `T.amber` muda sozinha no dia em que a Fase L
+  esquentar o âmbar, e a rampa de devoção deixa de ser rampa.
+  O que sobra para este item é menor e é real: **`rosto.jsx` tem `#7A1F1F`, que
+  é `CABELO[8]` exato** — cor de dado copiada para dentro da interface, a
+  direção contrária e a única que é mesmo defeito.
+
+- [ ] **a cor do primeiro pixel sai de uma fonte só** · leve · de: desenho · 15/09 (D5)
+  `index.html` tem `<body style="background:#0E0C15">`, que é `T.bg` copiado à
+  mão. **Possivelmente o único perdão eterno do projeto:** o `index.html` é
+  servido **antes** do bundle e não tem como importar `T`. O item não é faxina,
+  é uma decisão de duas linhas: o build **gera** essa linha a partir de `T`, ou
+  a casa **aceita** a cópia e escreve isso no lugar onde ela vive. Hoje ela
+  aparece nas duas tabelas da catraca com teto 1, sem data de validade.
 - [ ] **uma forma para o destrutivo — e o contraste que reprova sai** · leve · de: desenho · 14/09
   O botão que **remove um companheiro do grupo** (`App.jsx:2540`) usa `#fff`
   sobre `T.danger`: **3,42:1, reprova em WCAG AA**. Os outros destrutivos
