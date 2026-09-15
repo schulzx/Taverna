@@ -57,7 +57,7 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
   reconstrução por número de régua. Ele é instrumento e o ciclo o executa;
   esta decisão espera a pessoa.
 
-- [ ] **a habilidade de classe não tem resolvedor — contar antes de decidir** · pesado · de: pessoa · 14/09
+- [x] **a habilidade de classe não tem resolvedor — contar antes de decidir** · **RESPONDIDA 15/09 com o número na mão (66 de 148) — virou a Fase H**: uma porta só para as 54, e H2 mede de quem já são os 12 antes de construir qualquer coisa · pesado · de: pessoa · 14/09
   **A pessoa devolveu a pergunta (14/09):** *"quero sua opinião e a da mente
   para qual a melhor forma de resolver isso; se os dois concordarem na
   criação do novo órgão então assim seja, mas não vejo utilidade pra um
@@ -273,6 +273,48 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
 </details>
 
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
+
+### Fase H — a porta das habilidades de classe
+Decisão da pessoa (15/09): *"vamos fazer como recomendado, apenas uma porta,
+mas precisamos de uma solução para as 12 restantes."*
+
+A conta das 148 (v9.250): cumprem **56** · são só prosa **26** · **prometem e
+não cumprem 66**. Dessas 66: **21** são uma linha numa tabela já aberta,
+**33** são só fiação com o motor pronto, e **12** pedem mecânica nova.
+
+O achado que reorganizou tudo: raça, dádiva, magia, poção e relíquia têm
+despachante; **a habilidade de classe é a única fonte de poder do jogo sem
+um**. Os motores já existem e apenas leem outra fonte — `amortecerDano` corta
+dano lendo o traço racial, `removerPelaPorta` tem um chamador (a magia),
+`curarAliado` tem um (a poção).
+
+- [ ] **H1 · a porta** · de: pessoa · 15/09
+  `porHabilidadeDeClasse` no laço que já existe. Derruba as **54** que não
+  precisam de motor — 21 de tabela + 33 de fiação. Catraca herdada de P1,
+  agora com dente próprio: **nenhuma habilidade promete na ficha e falha na
+  mesa**, e a lista das que ainda não cumprem é declarada e encolhe a cada
+  etapa, nunca cresce.
+- [ ] **H2 · de quem já são os 12** · de: pessoa · 15/09
+  **Medir antes de construir — é o mesmo erro que a pergunta das 66 quase
+  cometeu.** Os 12 são sete assuntos (marca, zona persistente, cura por
+  turno, clima, aura reativa, contra-conjuração, PM de volta), e a suspeita
+  é que quase nenhum precisa de órgão:
+  - **clima já existe** — `rolarClima`/`pesosDoClima` em `encontros.js`
+    (módulo desde o primeiro ciclo da mente);
+  - **cura por turno, marca e aura reativa** têm a cara do que `efeitos.js`
+    já faz desde A2 — nascimento, prazo, pilha, `tickEfeitos`; marca é
+    efeito preso a um alvo, aura é efeito com gatilho;
+  - **PM de volta** é recurso, e recurso tem dono (`novosRecursos`,
+    `gastarRecurso`).
+  Sobram como candidatos a mecânica de verdade **zona persistente** (efeito
+  preso ao lugar, não à pessoa) e **contra-conjuração** (reagir ao ato de
+  conjurar — que encosta na Fase K, a reação com controle). Confirme ou
+  derrube com leitura, diga o número final, e **não construa nada aqui**.
+- [ ] **H3+ · o que sobrar vira etapa** · de: pessoa · 15/09
+  Escritas ao fim de H2, uma por assunto que de fato não tiver dono. Se a
+  medição mostrar que sobra pouco, a fase fecha em H2 e o resto entra como
+  itens da fila automática — **fase que termina menor do que começou é bom
+  sinal**, não é fracasso.
 
 ### Fase Z — a recalibração morre, e o recálculo nasce calado
 Decisão da pessoa (15/09): *"agora que nosso sistema não é mais tocado por IA

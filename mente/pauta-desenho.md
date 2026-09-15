@@ -25,7 +25,7 @@ que o sustenta, e cada um mexe **no fluxo do jogo ou no que o jogador já usa**
 régua nova, `pesado` é uma pergunta só — **o jogador teria de reaprender?** —
 e nos dois a resposta é sim, com o que ele reaprende dito por escrito.
 
-- [ ] **a rodada tem três batidas, e o jogador toca as três** · pesado · de: jogo · 14/09
+- [x] **a rodada tem três batidas, e o jogador toca as três** · **APROVADA 15/09 — e a pessoa devolveu a forma à mesa:** *"decida como designer UX e designer de games experientes, de forma que seja a melhor experiência jogável e visual"*. Vira a **Fase K**, e a mesa decide sem perguntar · pesado · de: jogo · 14/09
   **O que ele vive hoje.** Uma rodada de combate é: escrever uma frase, o
   sistema resolver tudo, e ler vinte linhas. As regras já modelam **três**
   coisas que são do jogador — mover, agir e reagir — e ele toca uma e meia.
@@ -141,7 +141,7 @@ e nos dois a resposta é sim, com o que ele reaprende dito por escrito.
   decide isto sozinha — e enquanto não for decidido, **toda etapa de design
   carrega o risco de as duas verdades se separarem sem ninguém notar**.
 
-- [ ] **A ação principal tem a mesma cara nos três modos** · de: desenho · 14/09
+- [x] **A ação principal tem a mesma cara nos três modos** · **APROVADA 15/09 — a mesa decide** (*"decida como designer UX e designer de games experientes"*). D4 já mediu: 720 px² contra 1144×48. Uma forma só, nos três modos · de: desenho · 14/09
   "aja agora" é `<Botao primario pequeno>Agir →</Botao>` (mono 12px) em
   `historia`, faixa `tv-display` de 18px no torneio, e outra faixa
   `tv-display` de 18px com padding diferente em `rapida`/`duelo`. O
