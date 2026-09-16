@@ -780,6 +780,31 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
     const caidos = new Set();
     let primeiraQueda = null, quedaDoHeroi = null;
     let danoDesferido = 0, danoSofrido = 0, absorvido = 0, abrigos = 0, golpesEmCaidos = 0;
+    /* v9.268 (Fase Q · Q1): OS CONTADORES DE DIAGNÓSTICO DO CORPO CAÍDO.
+       `golpesEmCaidos` já contava QUANTOS golpes se perdem; ele não diz
+       QUANTO dano se perde, e sem o dano não há como dizer a FRAÇÃO — que é
+       o número que a fase inteira cita (13,40% no `justo`, 18,03% no `duro`).
+       Estes quatro só SOMAM campo ao retorno: nenhum deles é lido pela
+       simulação, nenhum entra em `METRICAS_DA_REGUA`, nenhum vira limiar.
+       A régua continua byte a byte a de antes em todo veredito.
+       `criticosEmCaidos` existe porque `GOLPE_NO_CAIDO` cobra o dobro do
+       crítico — sem ele, a projeção de Q1 teria de supor que nenhum golpe
+       no chão é crítico, e supor é o que esta casa não faz com número. */
+    let danoEmCaidos = 0, criticosEmCaidos = 0, danoDosInimigos = 0, golpesDosInimigos = 0;
+    /* o herói caído é o CONTROLE da medida: N1 diz que ele escapa do
+       desperdício (o filtro do golpe re-lê a entidade que o laço atualiza),
+       e um controle que ninguém conta é uma afirmação sem prova. */
+    let golpesNoHeroiCaido = 0, danoNoHeroiCaido = 0, criticosNoHeroiCaido = 0;
+    /* E POR CABEÇA, porque a projeção de Q1 precisa da DISTRIBUIÇÃO e não do
+       total: três golpes espalhados por três companheiros caídos não matam
+       ninguém, e três no mesmo matam um. Somar e dividir daria um número
+       plausível e errado — este mapa é o que permite contar em vez de supor. */
+    const porCaido = {};
+    const anotarNoCaido = (nome, r) => {
+      const x = porCaido[nome] || (porCaido[nome] = { golpes: 0, criticos: 0, dano: 0 });
+      x.golpes++; x.dano += r.dano;
+      if (r.critico === true) x.criticos++;
+    };
     let rodada = 1;
 
     const vivosInimigos = () => inimigos.filter((e) => !e.derrotado && (e.vida || 0) > 0);
@@ -912,7 +937,18 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
       });
       for (const a of acoes) {
         if (!(a.r && a.r.dano > 0)) continue;
+        /* v9.268 (Q1): o DENOMINADOR da fração — todo dano que a oposição
+           rolou e acertou, antes do abrigo e antes de se saber se o alvo
+           ainda está de pé. Contar aqui, e não nos dois ramos, é o que
+           garante que numerador e denominador saem da mesma fonte. */
+        danoDosInimigos += a.r.dano; golpesDosInimigos++;
         if (a.alvoRef === "jogador") {
+          if ((heroi.vida || 0) <= 0) {
+            golpesNoHeroiCaido++;
+            danoNoHeroiCaido += a.r.dano;
+            if (a.r.critico === true) criticosNoHeroiCaido++;
+            anotarNoCaido(heroi.nome, a.r);
+          }
           const ab = passarPeloAbrigo(heroi, a.r.dano);
           if (ab.absorvido > 0) { absorvido += ab.absorvido; abrigos++; heroi = ab.pers; }
           heroi = { ...heroi, vida: Math.max(0, (heroi.vida || 0) - ab.dano) };
@@ -926,7 +962,13 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
              golpe se perde. É diagnóstico, não métrica — mas com o Adversário
              ligado a oposição concentra fogo por intenção, e é ele que diz
              quanto dessa concentração vira sobra. */
-          if (!dono || (dono.vida || 0) <= 0) { golpesEmCaidos++; continue; }
+          if (!dono || (dono.vida || 0) <= 0) {
+            golpesEmCaidos++;
+            danoEmCaidos += a.r.dano;
+            if (a.r.critico === true) criticosEmCaidos++;
+            anotarNoCaido(a.alvoNome, a.r);
+            continue;
+          }
           const ab = passarPeloAbrigo(dono, a.r.dano);
           if (ab.absorvido > 0) { absorvido += ab.absorvido; abrigos++; }
           const pv = Math.max(0, (dono.vida || 0) - ab.dano);
@@ -1063,6 +1105,13 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
          número — sem ele, "a vitória caiu" não diz de quem foi a decisão. */
       intencoes: intencoesEleitas,
       golpesEmCaidos,
+      /* v9.268 (Q1): diagnóstico, pelo mesmo estatuto de `golpesEmCaidos` —
+         não são métricas, não têm limiar, e existem para que a projeção da
+         fase saia de contagem em vez de suposição. */
+      danoEmCaidos, criticosEmCaidos, danoDosInimigos, golpesDosInimigos,
+      golpesNoHeroiCaido, danoNoHeroiCaido, criticosNoHeroiCaido,
+      golpesEmCaidosPorNome: porCaido,
+      nomeDoHeroi: heroi.nome,
     };
   });
 }

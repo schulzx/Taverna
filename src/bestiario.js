@@ -7,6 +7,7 @@
 import { pvEsperadoInimigo, bonusDeAmeaca } from "./combate.js";
 import { pvNaJanela } from "./juiz.js";
 import { degrauDaCriatura } from "./degraus.js";
+import { ehImportante } from "./queda.js";
 
 /* ---------------- CRIATURAS (fantasia) ---------------- */
 /* v9.152: `des` é a destreza de verdade, e `agil` passa a ser o que ele
@@ -19,7 +20,19 @@ import { degrauDaCriatura } from "./degraus.js";
    bloco. A regra que obriga o campo a existir: **`brilhante` não se herda,
    declara-se** — herdar o topo é como todo nome inventado pelo Narrador
    nascia com a mente mais afiada da mesa. */
-const C = (nome, ameaca, nivelRef, des, desc, perfil = null, degrau = "") => ({ nome, ameaca, nivelRef, des: Number(des) || 0, agil: (Number(des) || 0) >= 2, desc, ...(perfil ? { perfil } : {}), ...(degrau ? { degrau } : {}) });
+/* v9.268 (Fase Q · Q1): `importante` é o OITAVO campo e é OPCIONAL — quem não
+   declara não é importante, e esse é o padrão seguro. Ele responde a uma
+   pergunta só: **esta criatura, a 0 PV, cai e rola teste de morte, ou morre
+   direto?** (a decisão da pessoa, 14/09: "inimigos importantes podem fazer
+   testes de resistência contra morte enquanto os normais morrem direto").
+   O critério desta etapa, e ele é de desenho, não de número: declara-se a
+   criatura que **aparece sozinha e nomeada na cena**, e cujo fim o jogo perde
+   se acontecer sem cena. Um bando não declara; um Lich declara. Cada uma das
+   cinco tem o motivo escrito em cima — e nenhuma sai de `ameaca`, que é
+   perigo e não papel (`queda.js` explica por que essa derivação é proibida).
+   Guardado só quando é `true`: o campo ausente e o campo `false` querem dizer
+   a mesma coisa, e guardar os dois seria convidar o save a discordar de si. */
+const C = (nome, ameaca, nivelRef, des, desc, perfil = null, degrau = "", importante = false) => ({ nome, ameaca, nivelRef, des: Number(des) || 0, agil: (Number(des) || 0) >= 2, desc, ...(perfil ? { perfil } : {}), ...(degrau ? { degrau } : {}), ...(importante === true ? { importante: true } : {}) });
 export const CRIATURAS_FANTASIA = [
   C("Slime", "fraco", 1, -2, "gosma lenta e previsível"),
   C("Rato Gigante", "fraco", 1, 3, "praga de esgoto"),
@@ -43,11 +56,19 @@ export const CRIATURAS_FANTASIA = [
      de animal herdariam o degrau de um oficial. */
   C("Quimera", "elite", 8, 2, "três cabeças, três mortes", { ataque: "fogo", resist: ["fogo"], fraqueza: [] }, "bruto"),
   C("Gigante", "elite", 9, -1, "cada golpe derruba muralhas", { ataque: "fisico", resist: ["fisico"], fraqueza: [] }, "bruto"),
-  C("Dragão Jovem", "lendario", 10, 2, "sopro devastador, orgulho maior ainda"),
+  /* IMPORTANTE: um dragão nunca é um bando. Ele chega sozinho, com nome, e a
+     mesa negocia com ele antes de o enfrentar — a morte dele é o fim de um
+     episódio, não o fim de uma rodada. */
+  C("Dragão Jovem", "lendario", 10, 2, "sopro devastador, orgulho maior ainda", null, "", true),
   /* O TOPO SE DECLARA. O Lich é morto-vivo e o teto do morto é `bruto` —
      seria o arquimago do jogo com a cabeça de um esqueleto de guarda. */
-  C("Lich", "lendario", 12, 1, "arquimago morto-vivo com filactério", null, "brilhante"),
-  C("Dragão Ancião", "lendario", 16, 3, "uma calamidade com asas", null, "brilhante"),
+  /* IMPORTANTE: o filactério é uma trama inteira. Um Lich que cai a 0 PV sem
+     cena leva a trama com ele — e é exatamente a criatura que tem algo a
+     dizer no chão antes de acabar. */
+  C("Lich", "lendario", 12, 1, "arquimago morto-vivo com filactério", null, "brilhante", true),
+  /* IMPORTANTE: uma calamidade com asas é o fim da campanha ou o começo dela.
+     Nada nesse tamanho pode morrer num número. */
+  C("Dragão Ancião", "lendario", 16, 3, "uma calamidade com asas", null, "brilhante", true),
 ];
 
 /* Arquétipos genéricos — servem a qualquer gênero (sci-fi, cyberpunk, etc.) */
@@ -64,7 +85,12 @@ export const ARQUETIPOS = [
      `elite` e herdariam o MESMO degrau. A muralha declara; o oficial
      herda `treinado`, que é o que ele é. */
   C("Sentinela Blindada", "elite", 7, -2, "muralha ambulante", { ataque: "fisico", resist: ["fisico"], fraqueza: ["raio"] }, "bruto"),
-  C("Comandante", "elite", 8, 2, "perigoso e tático"),
+  /* IMPORTANTE, E É A ÚNICA QUE NÃO É `lendario` — de propósito, porque o
+     critério não é perigo. O Comandante é o oficial: aparece nomeado, é com
+     ele que se fala, e é ele que se pode render, prender ou interrogar. Ele é
+     a criatura por quem Q4 existe; deixá-lo morrer direto seria fechar a porta
+     antes de ela ser aberta. */
+  C("Comandante", "elite", 8, 2, "perigoso e tático", null, "", true),
   /* O COLOSSO É DUAS CRIATURAS DIFERENTES, DEPENDENDO DE QUEM O LÊ — e o
      motivo da declaração é o caminho real, não o acidente de palavra.
      COM o `desc`, `RX_BICHO` casa "besta" dentro de "máquina/besta de
@@ -79,7 +105,11 @@ export const ARQUETIPOS = [
      A declaração fixa o que ele é nos dois caminhos, e não mexe no regex
      (que é comportamento vivo, e conserto de outra etapa). */
   C("Colosso", "lendario", 11, -2, "máquina/besta de cerco", { ataque: "fisico", resist: ["fisico", "veneno"], fraqueza: ["raio"] }, "bruto"),
-  C("Horror", "lendario", 13, 3, "o que não deveria existir", { ataque: "sombrio", resist: ["sombrio", "veneno"], fraqueza: ["sagrado"] }),
+  /* IMPORTANTE: "o que não deveria existir" é, por definição, um só. O
+     Colosso, que é o outro `lendario` daqui, NÃO declara — uma máquina de
+     cerco quebra, não morre, e não há cena a perder quando ela para. É a
+     prova de que este campo não sai de `ameaca`. */
+  C("Horror", "lendario", 13, 3, "o que não deveria existir", { ataque: "sombrio", resist: ["sombrio", "veneno"], fraqueza: ["sagrado"] }, "", true),
 ];
 
 export function criaturasDoGenero(genero) {
@@ -130,6 +160,22 @@ export function completarInimigo(e, nivelJogador) {
        base continua não sendo copiado (dívida conhecida, de outro dono),
        então o degrau nasce do mesmo que o resto da luta enxerga. */
     degrau: degrauDaCriatura({ nome, ameaca, degrau: e.degrau || (base ? base.degrau : "") }),
+    /* v9.268 (Fase Q · Q1): O `importante` VIAJA JUNTO, pela terceira vez que
+       esta casa aprende a mesma lição — o `perfil` na v9.152, o `degrau` na
+       v9.259. Uma tabela certa que a mesa não vê é uma tabela que não existe:
+       o Troll ganhou fraqueza a fogo no bestiário e continuou imune na luta,
+       porque a ficha que chega ao combate é a que sai daqui.
+       A FONTE É A BASE, E SÓ ELA — ao contrário do `degrau`, que aceita o que
+       a IA manda. Aqui não: "o critério sai de campo declarado no bestiário"
+       (a pauta), e o Narrador declarar que o goblin dele é importante é o
+       Narrador inventando mecânica, que é a lei que esta casa mais protege.
+       Quem não bate com nenhuma base não é importante — o padrão seguro.
+       É idempotente de propósito: completar duas vezes o mesmo inimigo dá o
+       mesmo campo, porque ele é sempre recalculado do nome, nunca herdado do
+       objeto que chegou.
+       NÃO MUDA COMPORTAMENTO: é campo a mais no objeto, e ninguém o lê ainda
+       — quem passa a decidir por ele é Q2, por `quedaAoChegarAZero`. */
+    importante: ehImportante({ importante: base ? base.importante : false }),
   };
 }
 
