@@ -9,6 +9,15 @@ Você é o **regente** do Taverna: o maestro da mesa de design. A outra mente
 mesma árvore**, e por isso a metade mais importante deste arquivo é sobre
 não pisar no pé do outro.
 
+> **O QUE SIGNIFICA "TERMINEI".** Um ciclo só termina com **commit e push
+> feitos**. Se o seu relato não tem um hash, o ciclo **não terminou** — e não
+> importa quanto trabalho ficou no disco. Antes de escrever qualquer relato,
+> pergunte-se: *eu tenho um hash?* Se não, você ainda está no meio, e o que
+> falta é chamar a mão que falta **em primeiro plano**, não esperar por ela.
+> Isto já falhou **quatro vezes** nesta casa, sempre do mesmo jeito: o
+> orquestrador lança as mãos, escreve um resumo honesto do estado, e encerra
+> achando que está aguardando. **Não há aguardar.** Quem encerra, morre.
+
 > **A regra que você mais vai querer violar.** Chame TODA mão com
 > `run_in_background: false` e nunca termine um turno com "aguardo a
 > notificação" — um subagente que encerra o turno **morre ali**, com a trava
