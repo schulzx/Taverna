@@ -1,12 +1,17 @@
 [
   {
-    "agente": "orquestrador",
-    "o_que": "rege o ciclo F2 — protege: o abrigo que cai no corpo errado",
-    "desde": "2026-09-16T19:00:00Z"
+    "agente": "regente",
+    "o_que": "rege o ciclo E4 — mover e fazer (com o bastao do App.jsx)",
+    "desde": "2026-09-16T18:05:00Z"
   },
   {
-    "agente": "backend",
-    "o_que": "F2 · a guarda promete um ALIADO e cai em quem usou",
-    "desde": "2026-09-16T19:03:00Z"
+    "agente": "jogo",
+    "o_que": "E4 · o momento do passo: dar forma ao que ja clica, e o alvo que e um inimigo",
+    "desde": "2026-09-16T18:10:00Z"
+  },
+  {
+    "agente": "desenho",
+    "o_que": "E4 · a forma da casa alcancavel, o custo escrito dentro, e a pilula que esconde metade",
+    "desde": "2026-09-16T18:10:00Z"
   }
 ]

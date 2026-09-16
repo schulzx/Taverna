@@ -16,6 +16,29 @@ Formato de um item:
 ---
 
 ## Para a pessoa decidir (pesado)
+
+- [ ] **a defesa que a ficha promete nunca foi lida por ninguém — ligá-la é reequilibrar o jogo** · de: F2 · 16/09
+  `protegido` é a **única** condição do catálogo com o campo `defesa`, a
+  descrição que o jogador lê diz **"+2 de defesa"**, e o campo **nunca teve um
+  leitor**: `mecanicaDe` soma-o desde a v9.0, `modificadoresDeCondicao` não o
+  devolve e `resolverAtaque` nunca o viu. **34 defensivas do acervo** prometem
+  esse +2 na ficha e entregam zero na mesa.
+  **São duas linhas** em `src/combate.js` (`defesa: m.defesa` em
+  `modificadoresDeCondicao`, `+ modAlvo.defesa` no `ca` de `resolverAtaque`).
+  F2 ligou-as, mediu e **desligou-as**, porque o preço é balanceamento e na
+  dúvida entre médio e pesado é pesado:
+  vitória **52,1 % → 54,7 %** · PV do grupo **25,88 → 27,57** · quedas
+  **1,790 → 1,720** · dano sofrido **240,61 → 235,48** · desferido
+  **120,74 → 131,90** · `duro` **8,8 % → 10,8 %**. **Caem três asserções de
+  `teste-regua.mjs`**, uma delas a que garante que o retrato de B1/B1b/B2/T1
+  continua alcançável.
+  **Sem isto, a família `protege` continua a pagar zero** — F2 corrigiu o
+  *corpo* em que o abrigo cai, e o corpo certo com moeda morta continua a ser
+  moeda morta. Fica trancado numa asserção (`teste-protege.mjs` §5) que
+  **acende** se alguém ligar as duas linhas sem passar por aqui.
+  **A pergunta é uma só:** o +2 que a ficha promete entra, e o retrato se
+  recalibra à volta dele; ou a ficha deixa de o prometer?
+
 - [x] **o indice do git e compartilhado pelas duas mentes, e a lei nao cobre isso** · feita · texto em `mente/arquivo/pauta-feitas.md`
 - [x] **o alvo tático já está ligado no jogo, e a régua nunca o viu** · feita em v9.251 · texto em `mente/arquivo/pauta-feitas.md`
 - [x] **a habilidade de classe não tem resolvedor — contar antes de decidir** · feita em v9.250 · texto em `mente/arquivo/pauta-feitas.md`
@@ -590,8 +613,37 @@ por último:
   3. **O teto em 25% recusa a letra da ficção** ("metade"), porque metade
      durante turnos seria a Pele de Pedra ligada a toda a cena por 3 PM. Está
      em tabela, logo desfeito num commit se a pessoa quiser a metade literal.
-- [ ] **F2 · `protege` (8)** · de: pessoa · 14/09
+- [x] **F2 · `protege` (8)** · **FEITA 16/09 · v9.278 · commit `3bac9b6`** · de: pessoa · 14/09
+  **O que distingue `protege` das irmãs não é quanto, é EM QUEM** — `absorve`
+  compra pontos, `amortece` proporção, e esta promete **um corpo que não é o de
+  quem usou**. Quatro entradas de `AGUARDAM` já o diziam: *"a guarda sobe em
+  QUEM USA"*, *"o abrigo no corpo errado"*.
+  **E a máquina já existia:** `PORTADORES` tem a coluna `alvo` com
+  `"aliados"` vivo e **três leitores**. Nasce o portador `amparo`, e **6 das 8**
+  passam a cair no corpo certo — Muralha, Círculo Sagrado, Espírito Guardião,
+  Muralha Viva, Espírito Vigia, Totem de Guarda. **Zero linhas de `App.jsx`.**
+  (Armadura Sombria fica em `proprio`: promete o próprio corpo, e está certa.)
+  **Quatro das seis não tinham portador nenhum por UMA LETRA:** `prote[çc]`
+  casa "proteção" e **não casa "protege"**, que é o verbo que a ficha usa — a
+  armadilha exata que H1 apanhou em "protetoras", de pé há versões.
+  **O recorte exige duas coisas na frase** (o verbo *proteger* **e** um corpo
+  declarado), e **não** as palavras de abrigo: trocar uma pela outra leva o
+  recorte de 9 para 12, e as três que entrariam não protegem ninguém. As três
+  estão **nomeadas em asserção**, mais um teto no varredor — é o cuidado que
+  H4 comprou: a frase tem de prometer o que a família paga.
+  **Mas a moeda vale zero, e isso é o achado maior da etapa** — subiu para
+  "Para a pessoa decidir", no topo desta pauta, com o preço inteiro medido.
+  **`AGUARDAM` fica em 38:** nada pago, **quatro dívidas trocadas e escritas**
+  — uma delas estava **factualmente errada** (Elixir de Combate dizia *"é
+  guarda desde a v9.53"*, e não é: `aflicaoDe` devolve `null`).
+  **Herda-se:** o alvo único (`Espírito Guardião`, `Muralha` prometem **um**
+  aliado adjacente; `"aliados"` é *eu + o grupo*) pede um quarto valor de
+  `alvo` com leitor novo em `App.jsx:7725` e `:7825` — **bastão**.
 - [ ] **F3 · `intocado` (18)** · de: pessoa · 14/09
+  **Cuidado herdado de F2, e vale também para F4:** `arena.js:128`
+  (`prepararDuelista`) **zera `condicoes`** e nada volta a escrevê-las — a
+  arena é **estruturalmente cega** a toda família que passe por condição. A
+  catraca de equilíbrio não mede estas etapas; quem mede é a régua de Uma Vida.
   **Colide com `estaIntocavel`** (a guarda de um turno da v9.53, que erra
   antes do dado). Desenho antes de código: o que é intocável por um turno e o
   que é "intocado" continuado não podem ser a mesma coisa, ou o combate acaba.

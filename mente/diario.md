@@ -16,6 +16,100 @@ Formato:
 
 ---
 
+## 16/09 19:50 · v9.278 · F2 · o abrigo cai no corpo certo · commit `3bac9b6`
+
+- **estado inicial:** trava posta às 19:00 (não existia). Árvore com o E3 a
+  trabalhar ao lado; ele **fechou durante o ciclo** (commits `512b944` e
+  `b7b9812`, v9.277) — por isso os comentários da mão, que datavam v9.277,
+  foram **redatados para v9.278** antes do commit: a versão mudou debaixo dela.
+  `npm test` verde de entrada e de saída.
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, etapa escrita.
+- **backend:** o portador `amparo` (`aflicoes.js`) com `alvo: "aliados"`, os
+  dois comentários de `combate.js` que trancam a moeda desligada, e `AGUARDAM`
+  reescrito.
+- **testes:** `testes/teste-protege.mjs` — **47 asserções**, 7 seções, nova;
+  mais a §9 de `check-protecao` (57 → 65 ok) e `teste-afl`.
+- **prova:** `npm run build` limpo, `npm test` **200/200 suítes · 14/14
+  varredores** na árvore inteira; `so-o-meu.sh` com os 7 arquivos, o mesmo.
+  **Zero linhas de `App.jsx`** — o bastão nunca esteve comigo, e o dono estava
+  vivo o ciclo inteiro (a regra dos 90 minutos é para dono morto).
+
+### O que a família paga não é quanto, é EM QUEM
+
+`absorve` compra pontos, `amortece` compra proporção — e `protege` promete
+**um corpo que não é o de quem usou**. Quatro entradas de `AGUARDAM` já o
+diziam com todas as letras: *"a guarda sobe em QUEM USA"*, *"a condição
+`protegido` cai em quem usou, não no aliado"*, *"o mesmo abrigo no corpo
+errado"*.
+
+**E a máquina já existia** — é a terceira etapa seguida em que procurar paga
+mais que escrever. `PORTADORES` tem a coluna `alvo` com `"aliados"` **vivo e
+com três leitores** (App `:7725` e `:7825`, `regua-combate.mjs:747`). Nasce o
+portador `amparo`, e **6 das 8** passam a cair no corpo certo: Muralha, Círculo
+Sagrado, Espírito Guardião, Muralha Viva, Espírito Vigia, Totem de Guarda.
+Armadura Sombria fica em `proprio` porque promete o **próprio** corpo — está
+certa onde está; Bênção do Bosque não tem verbo de proteger e é apanhada antes
+pela linha 0 (`veneno`).
+
+**Quatro das seis não tinham portador NENHUM por uma letra:** `prote[çc]` casa
+"proteção" e **não casa "protege"**, que é o verbo que a ficha usa. É a
+armadilha exata que H1 apanhou em "protetoras", e estava de pé há versões.
+
+### O achado que reenquadra a etapa: a moeda vale zero
+
+`protegido` é a **única** condição do catálogo com o campo `defesa`, a
+descrição que o jogador lê diz **"+2 de defesa"**, e o campo **nunca foi lido
+por ninguém**: `mecanicaDe` soma-o desde a v9.0, `modificadoresDeCondicao` não
+o devolve e `resolverAtaque` nunca o viu. **34 defensivas do acervo** prometem
+esse +2 e entregam zero.
+
+**Provado, não afirmado:** com o corpo corrigido e a moeda morta, a régua de
+Uma Vida sai **idêntica ao byte**. As duas metades são **um pagamento só**.
+
+**A mão ligou-a, mediu e desligou-a** — e essa é a decisão que eu confirmo:
+são duas linhas em `combate.js`, mas o preço é **balanceamento**, e na dúvida
+entre médio e pesado é pesado. Vitória **52,1 → 54,7 %** · PV do grupo
+**25,88 → 27,57** · quedas **1,790 → 1,720** · sofrido **240,61 → 235,48** ·
+desferido **120,74 → 131,90** · `duro` **8,8 → 10,8 %**, e **caem três
+asserções de `teste-regua.mjs`**, uma delas a que garante que o retrato de
+B1/B1b/B2/T1 continua alcançável. **Subiu para "Para a pessoa decidir"** com o
+preço inteiro escrito, e ficou trancado numa asserção que **acende** se alguém
+ligar as duas linhas sem passar por lá.
+
+### Decisões médias, com o motivo
+
+1. **O recorte exige DUAS coisas na frase** — o verbo *proteger* **e** um corpo
+   declarado (`aliad` / "o grupo" / "quem estiver perto") — e **não** as
+   palavras de abrigo. Medido: trocar uma pela outra leva o recorte de **9 para
+   12**, e as três que entrariam não protegem ninguém (uma arrasta um caído,
+   outra transfere PV, outra cresce entre o grupo e o perigo). **As três estão
+   nomeadas em asserção**, mais o teto `tetoDeAmparos` no varredor. É o cuidado
+   que H4 comprou, aplicado antes de custar.
+2. **"Aliados" (eu + o grupo) em vez de alvo único**, e o argumento não foi o
+   esperado: das 9 frases que mudam de lado, **seis** dizem "um aliado"
+   (sobre-entrega) mas **três** dizem "o grupo" e são entregues **exatamente**.
+   O estado anterior era pior que sobre-entregar: era **disjunto** da promessa
+   — o abrigo caía só no corpo que a ficha **exclui**. Alvo único é mecânica
+   nova e pede o bastão; ficou escrito com endereço.
+3. **`AGUARDAM` fica em 38, nada pago, quatro dívidas trocadas** — e uma delas
+   estava **factualmente errada**: *Elixir de Combate* dizia *"é guarda desde a
+   v9.53"*, e não é (`aflicaoDe` devolve `null`, portador nenhum, a condição
+   nem nasce). `SEM_DONO_HOJE` **subiu** 2 → 3 pela primeira vez, e a subida é
+   uma linha a sair do **silêncio** — expôs de passagem um buraco do contador
+   (`comDono` filtrava `a.dono !== null`, e entrada **sem a chave** passava).
+
+- **o que ficou:** o alvo único (bastão); *Bênção do Bosque*, que só passaria
+  se `amparo` subisse acima dos debuffs de arma; e um cuidado que vale para
+  **F3 e F4** e ficou escrito na pauta — **`prepararDuelista` (`arena.js:128`)
+  zera `condicoes` e nada volta a escrevê-las**, logo a arena é
+  **estruturalmente cega** a toda família que passe por condição. A identidade
+  da catraca **não** é prova de inocuidade; quem mede estas etapas é a régua.
+- **para a pessoa decidir:** o item novo no topo da pauta — o +2 que 34 fichas
+  prometem entra, e o retrato se recalibra à volta dele; ou a ficha deixa de o
+  prometer?
+
+---
+
 ## 16/09 18:20 · v9.276 · H4 · a marca pesa no golpe · commit `408a841`
 
 - **estado inicial:** trava posta às 13:55 (não existia). Árvore suja só do
