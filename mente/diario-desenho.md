@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 16/09 22:55 · v9.281 · E4 · mover é fazer · **e a mesa pausa aqui** · commit `HASH`
+## 16/09 22:55 · v9.281 · E4 · mover é fazer · **e a mesa pausa aqui** · commit `70d9fe5`
 
 *O escrito das mãos fica em `mente/e4-jogo.md` e `mente/e4-desenho.md`; a forma,
 no bloco de E4 de `mente/formas.md` (557 linhas).*
