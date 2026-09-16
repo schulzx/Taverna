@@ -142,6 +142,40 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
   dia da extracção é ela que diz se foi de graça. *Não é um veto: é a catraca que
   torna a extracção segura de fazer.*
 
+- [ ] **`resolverReacao` não tem ramo de falha — e é o buraco maior da Fase K** · de: K3 · 16/09
+  `esquiva_agil` (0,6) e `contra_ataque` (0,55) têm `chance`, `PALAVRAS_DA_CHANCE`
+  escreve o risco na fenda do preço (*«mais vezes que não»*), e **`resolverReacao`
+  corta sempre**. K3 contornou-o sem inventar regra: **quem responde resolve-se
+  pelo mesmo caminho de quem não responde** (`reacaoDoSilencio` a partir de
+  `abre.ordem`), logo a `chance` continua a viver dentro de `escolherReacao` e o
+  laço continua a tentar o golpe seguinte — **é isto que preserva os 97,6 % de
+  esquiva do ladino em vez de lhe dar 100 % de graça**. O contorno custa uma
+  assimetria declarada: **num leque de 2+ verbos** (0 de 12 classes por classe;
+  só com Contramágica escrita na ficha) o App rola a `chance` do verbo escolhido
+  **ele mesmo**, porque não há por onde pedi-la ao motor. **O pedido é o ramo:**
+  `resolverReacao` que devolva `{ falhou: true }` em vez de cortar sempre, e
+  `escolherReacao` a receber o rolador por parâmetro — as seis linhas do cinto de
+  `reacaoDoSilencio` saem inteiras no mesmo dia. **As palavras já existem** e
+  estão escritas em `src/palavras-da-reacao.js` (`PALAVRAS_SEM_GESTO`), à espera
+  da mecânica.
+
+- [ ] **o que `recusou` recusa: a pergunta, ou o recurso?** · de: K3 · 16/09
+  Não está escrito em lado nenhum, e K3 teve de decidir para construir. **A
+  decisão de desenho é *os dois*** (`reacaoUsadaRef` fica marcada), e a razão é
+  dura: se o recuo só recusasse a pergunta, os golpes cobertos continuariam a ir
+  ao motor de hoje e o log escreveria `⚔ REAÇÃO — Aparar` **na linha a seguir a o
+  jogador ter dito que não**. *O sistema a desmentir o jogador na linha seguinte é
+  pior do que não lhe ter perguntado.* **Mas é regra, e quem faz regras confirma
+  ou corrige** — hoje ela vive numa linha de fiação do `App.jsx`, que é o pior
+  sítio para uma regra morar.
+
+- [ ] **o `oportunidade` automático consome a reação da rodada?** · de: K1 §6b · três etapas por responder
+  Pergunta aberta desde K1, e dela depende **o preço que o recuo pode escrever**:
+  se o golpe livre gasta a reação, recusar no `inimigo_erra` compra alguma coisa
+  de verdade; se não gasta, não compra nada e a frase do cartão promete a mais.
+  K3 construiu sem a resposta porque `inimigo_cai` não abre janela — mas a
+  pergunta não fica mais barata por ser adiada a quarta vez.
+
 ## Atendidos
 
 _(vazio)_

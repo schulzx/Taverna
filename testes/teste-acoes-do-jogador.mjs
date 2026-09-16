@@ -366,7 +366,7 @@ sec("4. a definição operacional de 'número que muda'");
      O que esta asserção guarda nunca foi o número, e sim que a exclusão
      venha com ENDEREÇO — é por ele que X4 confere que o relógio ainda
      avança sozinho antes de repetir a conta. */
-  t("e aponta a linha que avança o relógio", !!relogio && /13330/.test(relogio.porque));
+  t("e aponta a linha que avança o relógio", !!relogio && /13502/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -542,7 +542,10 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
     f.voz.frase > 0 && f.voz.telegrama > 0, JSON.stringify(f.voz));
   t("o telegrama do golpe do jogador está declarado como telegrama",
     FUNIL_DO_COMBATE.find((x) => x.fn === "aplicarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:11960").voz === "telegrama");
+      /* v9.270 (K3): 11960 -> 12125, pelo mesmo deslocamento que re-mediu a
+       tabela inteira. A assercao e a mesma; o que mudou foi onde a linha
+       mora depois de a janela da reacao entrar no arquivo. */
+      .linhas.find((l) => l.onde === "src/App.jsx:12125").voz === "telegrama");
   t("a maior boca do funil é `resolverRevide`, com 29 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 29);
   t("toda função do funil declara anel, endereço e ao menos uma linha",
@@ -623,7 +626,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
     S.semNumero / S.turnos === 1 && S.semLinha / S.turnos === 0);
   t("e a recusa da sessão A é da família `alcance`", S.familiaDaRecusa === "alcance");
   t("a família `alcance` tem literal declarado em aplicarGolpeDoJogador",
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:11910" && x.familia === "alcance"));
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12075" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -633,7 +636,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      abriu a porta das habilidades de classe e somou linhas acima dele. O que
      esta asserção guarda nunca foi o número — é que o porquê do silêncio
      venha com ENDEREÇO, para que a próxima medição possa conferi-lo. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /11972/.test(S.ondeSai));
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12141/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

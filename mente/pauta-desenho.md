@@ -58,6 +58,58 @@ número de acessibilidade que ele próprio citou num parágrafo em vez de o pôr
 tabela. *Se é número, é tabela* — e as duas são a mesma lei a cobrar-se de quem a
 escreveu.
 
+**E duas nasceram em K3 (16/09)**, marcadas *(K3)*, e estão **no topo** porque
+as duas são a mesma acusação vista de dois lados: **a Fase K construiu uma peça
+excelente e mediu, no mesmo dia, que ela pergunta a coisa errada metade das
+vezes.** A do `jogo` tem o número que dói; a do `desenho` é a única da pauta que
+ficou **mais barata** por a etapa ter passado — a peça que ela precisava nasceu
+hoje, e o que falta é alcance.
+
+- [ ] **(K3) a janela pergunta sobre o golpe que menos importa — e há número** ·
+  pesado · de: jogo · 16/09
+  **O diagnóstico, corrido em 20 000 sementes sobre o motor real** (ladino nv 3 +
+  2 companheiros contra 4 comuns, a mesa mais parecida com a campanha):
+  a janela abre **no maior golpe da rodada em 36,09 %** das vezes; o golpe sobre
+  o qual ele **é perguntado** faz **3,56** de dano, e o que chega **coberto, sem
+  pergunta**, faz **5,86**. **63 % do dano da rodada chega sem ninguém lhe
+  perguntar** (75 % para o ladino solo). E **metade das perguntas é sobre um
+  golpe que errou** (50,09 %): *revidar · 0 PM* não é uma decisão, é um sim com
+  relógio — e K1 matou `inimigo_cai` com exactamente esta frase (*«uma pergunta
+  cuja resposta é sempre sim não é pergunta, é um diálogo de confirmação com
+  relógio»*). **A janela abre em 98,6–100 % das rodadas** para sete das doze
+  classes: **não existe rodada de descanso.**
+  **As duas propostas, e a segunda é a forte:** (a) a janela **não abre num erro
+  do inimigo** — corta 45–50 % das perguntas e põe as restantes no momento que
+  dói; (b) a janela abre **no MAIOR golpe da rodada**, não no primeiro que
+  qualifica — sobe de **36,09 % para 100 %** a fracção de perguntas feitas sobre
+  o golpe que mais dói.
+  **E o obstáculo, dito antes de a pessoa o descobrir:** **a trava de K2 proíbe as
+  duas.** A asserção 05 exige `abre.ordem <= ordemDaReacaoDeHoje`; saltar um golpe
+  faz a replicação de [R1] começar mais à frente e **o contra-ataque do golpe 0
+  deixa de acontecer** — isso é regressão medida, não estilo. *A ordem da pergunta
+  está soldada à ordem dos golpes, e foi a trava que a soldou.* **Vem à pessoa
+  porque muda mecânica e porque contradiz uma asserção que ela já aprovou.**
+  **O que se perde, dito por mim:** o jogador deixa de poder **recusar** o
+  contra-ataque — e recusar compra alguma coisa de verdade.
+  *(K4 mede a batida e é onde isto se decide com o jogador dentro.)*
+
+- [ ] **(K3) no modo de alto contraste o Taverna não tem foco nenhum** ·
+  pesado · de: desenho · 16/09
+  **Não é «fraco»: é zero.** `forced-colors: active` — o alto contraste do
+  Windows, que muita gente com baixa visão usa o dia inteiro — **remove
+  `box-shadow` por especificação**, e o anel de foco da casa inteira é
+  `box-shadow`. Logo, para esse jogador, **o indicador de foco de um RPG de texto
+  jogado com teclado é nenhum**, que é exactamente o público que mais depende
+  dele. **Medida, não adjectivo:** indicadores de foco visíveis sob
+  `forced-colors` hoje = **0**; depois = todos.
+  **E hoje ficou mais barata:** K3 fabricou `.tv-anel-foco` com as duas linhas de
+  `outline` do `forced-colors` já dentro, e aplicou-a ao cartão e às quatro
+  pílulas da ficha. **A peça existe e está provada.** O que falta é **alcance**, e
+  é por isso que é pesado: passá-la pelos **215 `<button>`** que K2 contou e pelos
+  **86 alvos do tabuleiro** com `outline: none` à mão
+  (`grade-de-batalha.jsx:515-519`) é trabalho de etapa e muda o que um jogador
+  vive. **Paga também a dívida de E1**, que está aberta desde 15/09.
+
 - [ ] **(K2) o combate ganha uma semente, e o Duelo já provou que dá** ·
   pesado · de: jogo · 16/09
   **O diagnóstico, com o número.** A primeira lei desta casa diz *mesma semente,
@@ -1108,40 +1160,45 @@ não reagir, caso não queira gastar PM."*
   condição de entrada, não consequência feliz: o jogo tem de continuar
   jogável exatamente como é para quem ignora o botão, para quem joga sem
   mouse, e para quem está numa aba lenta. Prova antes de a peça existir.
-- [ ] **K3 · a reação acontece** · de: pessoa · 14/09
-  Construir. **Precisa do bastão do `App.jsx`** — e é a ocasião de levar o
-  que der para arquivo próprio. O PM só sai da ficha quando o jogador
-  escolheu, ou quando a preferência dele disse que sim.
-  **Três dívidas que K1b deixou nomeadas, e K3 é quem as paga:**
-  1. **`ritmo-da-reacao.js` está na lista de espera de `teste-ligacao.mjs`**,
-     com o credor escrito: *o `oficial`, em K3*. A lista volta a ficar **vazia**
-     nesse dia — é a regra da casa, e o módulo nasceu antes do importador porque
-     o bastão do `App.jsx` era da outra mente.
-  2. **`PISO_DO_GOLPE` (0,08) vive em dois sítios.** Está nomeado em
-     `ritmo-da-reacao.js` e escrito à mão dentro de `escolherReacao`
-     (`reacoes.js`). Hoje a suíte prova que os dois **concordam** (164 casos, zero
-     divergências) — mas dois donos para um número é a primeira lei por um fio.
-     **O conserto é do `backend`:** extrair `reacoesQueSeAplicam(...)` de
-     `escolherReacao` — os mesmos filtros **sem** o `Math.random()` da `chance` —
-     e os dois módulos passam a ler um só. É regressão zero byte a byte (mesmo
-     número e mesma ordem de rolos).
-  3. **O trilho precisa de `tv-trilho-entra`** — 90 ms, só `opacity`, e nasce
-     **já na proporção** (73 %), nunca a 100 %: aos 11 000 ms o relógio aparece a
-     meio, e uma barra que nasce cheia mentiria sobre o tempo que sobra. Espelho
-     de `tv-trilho-sai`, que já existe. Não é peça nova.
-  **E K2 acrescenta o que K3 tem de obedecer, não de decidir — são quatro, e
-  estão provadas:** (1) **a expiração devolve os cobertos ao laço de hoje**;
-  tratá-los como *não reagem* quebra 37,44 % das sementes, e a asserção 03
-  **reconhece esse erro pelo nome e pelo número**. (2) **Nenhuma resolução fora
-  do ramo `valeu === true`** de `fecharAJanela`, e o rolo vive **dentro** desse
-  ramo. (3) **Guardar o elemento focado antes de mover o foco** — e **na
-  expiração o foco não se mexe**. (4) **`escolherReacao` recebe `persBase`**, a
-  ficha do início da rodada, nunca `persTracos`.
-  **E duas que K2 não conseguiu provar em Node, e é honesto dizê-lo:** o foco
-  de teclado (a asserção 10 conta gestos de tabela — se K3 puser o cartão fora
-  da ordem de tabulação, as 17 ficam verdes na mesma) e **`O chamado` não tem
-  `Estado=Foco` desenhado**, porque K1 supôs que ele estava focado desde que
-  existe, e `Etapa=Direta` tem **duas** paradas.
+- [x] **K3 · a reação acontece** · **FEITA 16/09 · v9.270** — a janela existe, e
+  o jogador faz alguma coisa no turno do inimigo pela primeira vez.
+  **O que nasceu:** `src/painel-reacao.jsx` (o cartão), `src/palavras-da-reacao.js`
+  (nove tabelas e três funções puras — zero frase montada dentro de um JSX), sete
+  classes e o anel `.tv-anel-foco` em `src/estilo.js`, `TEMPOS_DO_CARTAO` +
+  `temRelogio`/`janelaExpirouEm` em `ritmo-da-reacao.js`, e no `App.jsx` a cisão
+  de `resolverRevide` numa continuação (`correrORestoDaRodada`) mais a fila de
+  quatro pílulas na ficha. **97 → 102 asserções** na suíte nova.
+  **As quatro obrigações de K2, cumpridas e conferidas:** os cobertos voltam ao
+  laço por `reacaoDoSilencio(desde: abre.ordem)`; nenhuma resolução fora de
+  `valeu === true`; o foco é guardado antes de mover e **não se mexe na
+  expiração**; `escolherReacao` recebe sempre `persBase`.
+  **E a decisão que salvou a fase:** *quem responde resolve-se pelo MESMO caminho
+  de quem não responde.* A `chance` continua dentro de `escolherReacao` e o laço
+  continua a tentar o golpe seguinte — o ladino esquiva **97,6 %**, como hoje, em
+  vez de **100 %** de graça. Resolver directamente teria dado ao jogador que
+  responde um mundo melhor que o de hoje, em silêncio.
+  **As três dívidas de K1b, pagas:** a lista de espera de `teste-ligacao.mjs`
+  voltou a ficar **vazia** (o credor era este ciclo); `tv-trilho-entra` existe; e
+  **o `73 %` morreu** — o trilho nasce na proporção por `animation-delay` negativo
+  calculado de `agora − t0`, não por número escrito à mão. *(`PISO_DO_GOLPE` em
+  dois sítios continua de pé: é do `backend`, e está no pedido.)*
+  **Conferido vivo**, no navegador, em aba nova: o anel acende sob `Tab` de
+  verdade (`T.bg` 2 px + `T.ink` 4 px, e `:focus-visible` a `true` — o que K2 disse
+  que não se prova em Node); o cartão mede **560 px** com o teto, **chamado 56 px
+  e recuo 48 px**; o trilho é `tvJanelaTempo` 4 s linear, origem à esquerda, em
+  `T.amber`, nascido já na proporção; as quatro pílulas trazem **o verbo do
+  próprio herói** (*Esquiva Ágil sempre*); e a vez do mundo corre inteira pela
+  continuação nova quando nenhuma porta abre.
+  **O que o vivo apanhou e a suíte não:** o preço saía comprimido
+  (`0PM—anula`); voltou à forma de `formas.md` (`0 PM — anula`) e o estouro de
+  `escudo arcano` resolveu-se **na palavra** (`corta o grosso`), não no espaço em
+  branco — com catraca a exigir a forma canónica.
+  **E as duas que K2 não conseguiu provar em Node têm resposta, medida na tela:**
+  o **foco de teclado** acende — `:focus-visible` a `true` e `box-shadow` de
+  `T.bg` 2 px + `T.ink` 4 px, sob um `Tab` de verdade —, e **`O chamado` não
+  ganhou eixo `Estado`**: nasceu `.tv-anel-foco`, transversal, que serve o
+  chamado, o recuo, o leque e as quatro pílulas da ficha. *K1 tinha a conclusão
+  certa pela razão errada.*
 - [ ] **K4 · medir a batida** · de: pessoa · 14/09
   Quantas reações o jogador de fato escolhe, quantas expiram, quanto tempo
   ele leva, e se o combate ficou mais longo. **Se a batida nova cansar em
@@ -1542,9 +1599,55 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
 
+- [ ] **o preço cala o risco nas duas reações que podem falhar** · médio · de:
+  regente · 16/09 (K3) · **achado na conferência viva, não na suíte**
+  Na tela, hoje, o cartão do ladino diz literalmente **`💨 esquiva ágil · 0 PM —
+  anula`**. `esquiva_agil` tem `chance: 0.6`. **O preço promete uma certeza sobre
+  uma aposta que falha 2 em 5** — e `formas.md:1076` já tinha escrito a proibição
+  pelo nome: *«oferecer "corta tudo" calando que falha 2 em 5 seria mentir o
+  preço»*. `contra_ataque` (0,55) tem o mesmo problema.
+  **Porque acontece, com a conta:** `PALAVRAS_DA_CHANCE` existe e está certa, mas
+  a fenda do preço tem **40 caracteres** (K1, medido a 375 px) e
+  `esquiva ágil · 0 PM — anula · mais vezes que não` mede **48**. A regra de hoje
+  — *a chance sai, o preço nunca se corta* — está certa na prioridade e errada no
+  resultado: **as únicas duas reações cuja chance importa são exactamente as duas
+  que nunca a mostram.**
+  **Três saídas, e nenhuma é para decidir de fim de ciclo:** (a) a chance ganha
+  **segunda linha** no cartão — K1b já deixou `Etapa=Chamando` esticar para duas,
+  e o chamado tem 56 px; (b) o orçamento sobe, porque **K3 deu ao cartão um teto
+  de 560 px** e os 40 caracteres foram medidos para 375 — *o número é de outra
+  peça*; (c) a chance vira **glifo ou peso de traço**, sem custo de largura.
+  **Precisa dos dois seniores**, e é a primeira coisa que K4 vai encontrar
+  quando perguntar por que o jogador aceita a esquiva sem ler.
+
+- [ ] **`#FF9A85` literal no número flutuante do tabuleiro** · leve · de:
+  desenho · 16/09 (K3)
+  `grade-de-batalha.jsx:282` pinta o número de dano que sobe do quadrado com um
+  vermelho escrito à mão, **fora de `T`**, ao lado do `T.danger` que devia ser. É
+  um tom que nunca passou por tabela nenhuma. **Uma linha**, e o `desenho`
+  encontrou-o a ler a 13.ª porta do segredo do dano — não é de K3 e por isso não
+  foi consertado de carona.
+
+- [ ] **o dente `D5e.2` ficou com folga zero, e o conserto é melhorá-lo** ·
+  leve · de: desenho · 16/09 (K3)
+  `check-formas.mjs:765` compara `duracoesVistas.length >= queAnimam.size`. Antes
+  de K3 eram **14 durações para 13 classes** (folga 1: `.tv-dice` declara duas);
+  com as sete novas ficou **20 para 20** — verde, e **a próxima classe de duração
+  variável fica vermelha sem nada de errado ter acontecido**. **O conserto é uma
+  linha e torna o dente melhor, não mais frouxo:** contar à parte as classes cuja
+  duração é `var(--…)` e **asserir que são exactamente uma** — `.tv-janela-tempo`
+  é a única classe da casa cuja duração, por lei, não mora na folha. O dente passa
+  a **provar a lei** em vez de apenas não tropeçar nela.
+
 - [ ] **os 133 endereços de linha são uma catraca que qualquer edição do
   `App.jsx` desloca — e ela já cobrou uma lápide** · médio · de: regente ·
   16/09 (K2)
+  **[K3, 16/09] Cobrou outra vez, no ciclo seguinte, e mais caro:** a janela da
+  reação acrescentou **424 linhas** ao `App.jsx` e `check-acoes-do-jogador.mjs`
+  passou a acusar **90 divergências — todas de endereço, nenhuma de
+  comportamento**. Foram re-medidas à mão por um mapa de linhas antigo→novo. **É
+  a segunda vez em dois ciclos**, e o segundo pagamento foi 2,7× o primeiro; a
+  catraca não mede o jogo, mede o quanto o arquivo não se mexeu.
   **O achado, e ele saiu de pagar a dívida de W2:** ao levar três funções do
   `App.jsx` para `golpe.js`, apagar as 33 linhas empurrava **133 endereços
   `src/App.jsx:<linha>`** cravados em nove arquivos de `testes/` — o funil e as

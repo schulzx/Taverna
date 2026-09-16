@@ -190,6 +190,60 @@ export const MOVIMENTO_CSS = `
 .tv-anel-fora { animation: tvGiraAoContrario 24s linear infinite; }
 .tv-anel-dentro { animation: tvGira 3.2s linear infinite; }
 .tv-pisca { animation: tvPisca 1.2s ease infinite; }
+
+/* ---------------- A JANELA DA REAÇÃO (K3) ----------------
+   Sete classes, e nenhuma infinite. A saída de cada uma pousa no
+   ESTADO FINAL da animação, nunca no inicial — e onde e a propria
+   animacao que faz a coisa sumir, none sozinho e um bug: deixaria o
+   cartao colado na tela para quem pediu menos movimento.
+
+   Um so desenho de entrada (tvSobeSeis) para o chamado e para o
+   leque: e o MESMO gesto — a peca nasce 6px abaixo e assenta — em duas
+   velocidades. Dois keyframes iguais com nomes diferentes seriam duas
+   verdades sobre um movimento so.
+
+   E A DURACAO DO TRILHO NAO MORA AQUI, de proposito: ela sai de
+   ritmoDaRodada().abre.trilhoMs, que a le da tabela. Um numero de
+   relogio copiado para a folha nao muda no dia em que a janela mudar —
+   e ai a barra mente. E tambem o que mantem D5e.1 verde. */
+@keyframes tvSobeSeis { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.tv-chamado-entra { animation: tvSobeSeis 120ms cubic-bezier(.2,.7,.3,1) both; }
+.tv-leque-abre    { animation: tvSobeSeis 160ms cubic-bezier(.2,.7,.3,1) both; }
+
+@keyframes tvApareceSo { from { opacity: 0; } to { opacity: 1; } }
+.tv-trilho-entra { animation: tvApareceSo  90ms ease both; }
+.tv-resolve      { animation: tvApareceSo 120ms ease both; }
+
+@keyframes tvSomeSo { from { opacity: 1; } to { opacity: 0; } }
+.tv-trilho-sai { animation: tvSomeSo  90ms ease both; }
+.tv-janela-sai { animation: tvSomeSo 140ms ease both; }
+
+/* O TRILHO. scaleX e nao width: a tela nao anima leiaute (so
+   opacity e transform), e a proporcao fica impossivel de escrever em
+   pixeis — nao ha pixel nenhum nesta caixa para alguem copiar. O trilho
+   e width: 100% da janela; o cheio e este scaleX do trilho.
+   transform-origin: left e o que faz a barra esvaziar-se da direita
+   para a esquerda em vez de encolher pelo meio.
+
+   As duas variaveis sao carimbadas em linha pelo componente e trazem o
+   relogio inteiro: --tv-trilho-ms e a duracao (da tabela), e
+   --tv-trilho-desde e um atraso NEGATIVO — quanto do trilho ja passou
+   no instante da primeira pintura. E por causa dele que a barra NASCE JA
+   NA PROPORCAO que o relogio diz, e nunca num 100% escrito a mao.
+
+   Os valores de reserva sao 0ms de proposito: se o carimbo falhar, a
+   abreviada continua valida e a barra pousa VAZIA (invisivel). Falhar
+   para o lado de nao mostrar relogio nenhum e o unico lado honesto —
+   uma barra parada e um relogio a mentir. */
+@keyframes tvJanelaTempo { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.tv-janela-tempo {
+  --tv-trilho-ms: 0ms;
+  --tv-trilho-desde: 0ms;
+  transform-origin: left center;
+  animation: tvJanelaTempo var(--tv-trilho-ms) linear var(--tv-trilho-desde) both;
+  transition: background-color 90ms ease;   /* Pressa=Sobra -> Pouco: so a tinta */
+}
+
 /* A ORDEM É A REGRA (2/2): este @media tem de vir DEPOIS das tres
    classes acima. Uma media query nao soma especificidade nenhuma — ela
    so envolve. Quem decide o empate e a ordem, e so por estar embaixo
@@ -198,6 +252,18 @@ export const MOVIMENTO_CSS = `
    funciona, calado. */
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
+  .tv-chamado-entra, .tv-leque-abre, .tv-trilho-entra, .tv-resolve { animation: none; }
+  /* estas duas terminam em opacity: 0, e e a animacao que as faz
+     sumir: none sozinho deixaria o cartao aceso na tela. A saida pousa
+     no estado FINAL. */
+  .tv-janela-sai, .tv-trilho-sai { animation: none; opacity: 0; }
+  /* E A EXCECAO QUE E LEI, agora com o mecanismo escrito. K1: a saida de
+     tv-janela-tempo nao e none, e VIRAR CONTAGEM. none sozinho
+     congelaria o cheio em scaleX(1) — uma barra CHEIA e parada, que e
+     a pior mentira possivel sobre o tempo. Pousando em scaleX(0) ela
+     fica invisivel, e quem conta o tempo passa a ser o numeral, que e
+     literalmente o que Tempo=Contagem e. */
+  .tv-janela-tempo { animation: none; transform: scaleX(0); transition: none; }
 }
 `;
 
@@ -312,6 +378,34 @@ export const SUPERFICIES_CSS = `
 .tv-vinheta {
   position: fixed; inset: 0; pointer-events: none; z-index: 1;
   background: radial-gradient(120% 85% at 50% 42%, transparent 52%, ${MATERIAIS.vinhetaCanto} 100%);
+}
+
+/* ---------------- O ANEL DE FOCO (K3) ----------------
+   A forma e a de K1 e nao muda: dois degraus, o vao de bg e o traco de
+   ink. Medido em K2: ink/panel = 14,37:1, ink/bg = 15,31:1, e a
+   area do indicador da 2,0x o minimo do SC 2.4.13 nas tres pecas.
+
+   E box-shadow, E NUNCA border: um border de 2px OCUPA LEIAUTE e
+   empurra os irmaos: a fila de quatro pilulas da ficha mexia-se quando o
+   foco entrasse — um alvo em movimento, para o jogador de teclado, que e
+   exatamente quem aquela fila existe para servir. box-shadow nao ocupa
+   leiaute nenhum. (No Figma o anel e geometria porque o Figma nao tem
+   box-shadow de espalhamento com dois degraus — e o defeito que K2
+   §1.6 encontrou e nomeou.)
+
+   Nada de outline: none fora desta caixa. Hoje o campo de batalha tem
+   86 alvos focaveis por luta com o anel apagado a mao
+   (grade-de-batalha.jsx:515-519), e foi assim que ele desapareceu. */
+.tv-anel-foco:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px ${T.bg}, 0 0 0 4px ${T.ink};
+}
+/* O MODO DE ALTO CONTRASTE APAGA box-shadow. Nao e opiniao: e o que
+   forced-colors faz por especificacao — e sem estas duas linhas o anel
+   simplesmente NAO EXISTE para quem joga assim. outline sobrevive, nao
+   ocupa leiaute (ao contrario de border) e aceita a cor do sistema. */
+@media (forced-colors: active) {
+  .tv-anel-foco:focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
 }
 `;
 

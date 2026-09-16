@@ -62,6 +62,22 @@ export const RITMO_DA_REACAO = [
   { id: "parado", janela:     0, folga:     0, trilho:    0, aperto:    0, bonusContagem:    0, bonusToque:   0 },
 ];
 
+/* NEM TODA OFERTA TEM RELÓGIO — e um defeito real nasceu de esquecer
+   isto: `parado` (WCAG 2.2.1, Timing Adjustable) devolve `janelaMs: 0`,
+   e um cartão que lê "`Date.now() - t0 >= janelaMs`" sem checar isto
+   primeiro acha a condição verdadeira no PRIMEIRO frame — a pílula que
+   existe para tirar o relógio do caminho de quem pediu "sem pressa"
+   passava a resolver a pergunta sozinha, na hora, e ainda a contar como
+   uma expiração para a escada do silêncio. É o oposto exato da
+   conformidade que ela promete.
+
+   `temRelogio`/`janelaExpirouEm` são a MESMA decisão lida uma vez só —
+   pelo cartão (`painel-reacao.jsx`) e pela suíte — para que a próxima
+   oferta sem relógio (se um dia houver outra) não reabra o mesmo buraco
+   por reimplementação solta. */
+export const temRelogio = (oferta) => !!(oferta && oferta.janelaMs > 0);
+export const janelaExpirouEm = (oferta, passouMs) => temRelogio(oferta) && passouMs >= oferta.janelaMs;
+
 /* A primeira expiração é de graça, e isso carrega decisão: podia calar-se
    logo. À segunda seguida a luta não pergunta mais. O contador zera na
    primeira resposta, e a escada recomeça na luta seguinte sem pedir nada
@@ -82,6 +98,25 @@ export const TETO_DA_ESPERA = {
   janelasPorRodada: 1, janelasAteOSilencio: 2,
   msPorRodada: 16600,      // 15000 + 1000 (contagem) + 600 (toque)
   msEntreRespostas: 33200, // 2 janelas: um teto por rodada × rodadas sem limite não é teto
+};
+
+/* AS TRÊS DURAÇÕES QUE O JS PRECISA DE SABER (as outras vivem só na
+   folha). DOIS DONOS, UMA TABELA: é o mesmo arranjo que já existe para
+   folga/trilho/aperto — números do `desenho` guardados na tabela do
+   `jogo`, porque o que eles medem é tempo, e tempo é jogo. Duas
+   leituras: o componente (`painel-reacao.jsx`) e a suíte.
+
+   A duplicação dos 140 é declarada, não escondida: `saiMs` ESPELHA
+   `.tv-janela-sai` em `estilo.js` (140ms), e `teste-painel-reacao.mjs`
+   assere que os dois concordam — é o mesmo padrão que `PISO_DO_GOLPE`
+   já usa contra `reacoes.js`. Por que não ler de `animationend` em vez
+   de duplicar: o cartão já tem um relógio em JS (os 1200ms da
+   resolução), e sob `prefers-reduced-motion` a saída não anima — o
+   evento nunca viria, e o cartão ficaria preso na tela para sempre. */
+export const TEMPOS_DO_CARTAO = {
+  resolucaoMs: 1200,  // Etapa=Resolvida fica na tela antes de sair
+  saiMs: 140,         // espelho de .tv-janela-sai na folha
+  travaMs: 150,       // a trava das linhas recém-reveladas do leque
 };
 
 /* O piso do golpe: aparar um arranhão desperdiça o recurso que salvaria a

@@ -28,7 +28,15 @@ import { gerarVilao, gerarHerdeiro, linhaDaHeranca, garantirVilao, avancarPlano,
 import { gerarCronica } from "./cronica.js";
 import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { rolarAflicao, aflicaoDe } from "./aflicoes.js";
-import { escolherReacao, resolverReacao, resumoReacoesPrompt } from "./reacoes.js";
+import { escolherReacao, resolverReacao, resumoReacoesPrompt, reacoesDe } from "./reacoes.js";
+/* ---------------- A JANELA DA REACAO (v9.259, Fase K - K3) ----------------
+   Tres modulos e um componente, e nenhum deles decide nada aqui dentro: o
+   ritmo diz SE a janela abre e por quanto tempo, as palavras dizem o que o
+   cartao escreve, e o painel pergunta e devolve o gesto. O App so monta a
+   tela e a fiacao — conta se prova, tela se olha. */
+import { ritmoDaRodada, reacaoDoSilencio, fecharAJanela, TEMPOS_DO_CARTAO } from "./ritmo-da-reacao.js";
+import { falaDaResolucao, numeroDaResolucao, AVISO_DO_SILENCIO, LINHAS_DO_CARTAO, PALAVRAS_DO_NADA } from "./palavras-da-reacao.js";
+import { PainelReacao } from "./painel-reacao.jsx";
 import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara, CONSUMIVEIS } from "./pocoes.js";
 import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, resumoMercadoPrompt, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir } from "./mercado.js";
 import { envelopeDoComercio, generoDoItem, generoPorId, apertarProcura, podePagar, pechinchar, dificuldadeDaPechincha, linhaDoPreco, vocacaoDe } from "./comercio.js";
@@ -1868,7 +1876,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null }) {
+function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -1960,6 +1968,43 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
                   </span>
                 )}
               </div>
+              {/* ---------------- QUANDO UM GOLPE CHEGA (v9.259, K3) ----------------
+                  A ficha e onde o jogador le "como o meu heroi se defende", que e
+                  ficcao — e nao "configurar reacoes", que e mecanismo. Uma fila
+                  so, quatro pilulas, e nenhuma peca nova: escolher um verbo E
+                  dizer "nunca me pergunte", e "eu decido" e apenas a que vem
+                  marcada. A terceira traz o verbo do PROPRIO heroi.
+
+                  Goteira de 8 px de proposito: o anel de foco cresce 4 px para
+                  fora de um lado so, logo cabe com metade de folga e a fila nao
+                  se mexe quando o foco entra — um alvo em movimento seria
+                  exactamente o contrario do que esta fila existe para servir. */}
+              {(() => {
+                const verbo = verboDaReacao;
+                const fila = [
+                  { id: "normal", rotulo: "Eu decido" },
+                  { id: "parado", rotulo: "Eu decido, sem pressa" },
+                  ...(verbo ? [{ id: verbo.id, rotulo: `${verbo.nome} sempre` }] : []),
+                  { id: "deixar_passar", rotulo: "Deixar passar" },
+                ];
+                return (
+                  <div className="rounded-lg px-2.5 py-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                    <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>Quando um golpe chega</div>
+                    <div className="flex gap-2 flex-wrap">
+                      {fila.map((p) => {
+                        const ativo = (preferenciaReacao || "normal") === p.id;
+                        return (
+                          <button key={p.id} onClick={() => aoEscolherPreferenciaReacao && aoEscolherPreferenciaReacao(p.id)}
+                            className="tv-anel-foco tv-mono text-[9px] px-2.5 py-1.5 rounded-full"
+                            style={{ background: ativo ? T.amber : T.panel, color: ativo ? T.onAccent : T.inkDim, border: `1px solid ${ativo ? T.amber : T.line}`, fontWeight: ativo ? 700 : 400 }}>
+                            {ativo ? "✓ " : ""}{p.rotulo}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
               {(() => {
                 const sup = garantirSuprimentos(personagem.suprimentos);
                 const bocas = 1 + (personagem.grupo || []).length;
@@ -5346,6 +5391,10 @@ export default function Taverna() {
     combateRef.current = eq.combate;
     combateOciosoRef.current = 0;
     reacaoUsadaRef.current = false;
+    /* K3: a escada do silencio e POR LUTA, e zera no mesmo sitio em que a
+       reacao da rodada zera. Sem isto, quem calou uma luta ficava calado
+       para sempre — e a escada promete o resto DESTA luta, nao mais. */
+    expiracoesSeguidasRef.current = 0;
     msgs.push(...eq.msgs);
     /* ORÇAMENTO: a luta é pesada AGORA, com a mesa cheia — depois que os
        primeiros caem, a conta já não descreve o que o jogador enfrentou. */
@@ -7549,6 +7598,9 @@ export default function Taverna() {
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
       custo: custoRef.atual,
       abasAbertas: abasAbertasRef.current,
+      /* K3: a preferencia de reacao e da PESSOA, nao da luta — e por isso
+         viaja no save. Sem ela a janela nao tem desligador (WCAG 2.2.1). */
+      preferenciaDaReacao: preferenciaDaReacaoRef.current,
       sessao: sessaoRef.current,
       /* v9.256 (Fase X - X3): o turno que o motor resolveu e o Mestre nao
          contou viaja no save. Sem isto, cair a rede e recarregar apagava um
@@ -7661,15 +7713,121 @@ export default function Taverna() {
      o envelope pronto para o Mestre narrar o gesto. */
   const reacaoUsadaRef = useRef(false);
   const pmReacaoRef = useRef(0);        // PM gasto em reações nesta rodada
-  const tentarReacaoNoGolpe = (a, pers) => {
+  /* ---------------- O QUE A JANELA PRECISA SABER (v9.259, K3) ----------------
+     Nenhuma destas e regra. A preferencia e da pessoa (e viaja no save), a
+     escada e por luta, e as duas ultimas sao o corpo de quem joga — o bonus
+     de quem pediu menos movimento e o bonus do dedo. `ritmoDaRodada` le as
+     quatro e devolve o relogio; aqui nao se decide nada. */
+  const preferenciaDaReacaoRef = useRef("normal");
+  const [preferenciaReacao, setPreferenciaReacao] = useState("normal");
+  const expiracoesSeguidasRef = useRef(0);
+  const reduzidoRef = useRef(false);
+  const ultimoDispositivoRef = useRef("ponteiro");
+  /* O CARTAO, num estado so — e e isso que garante a lei "nunca dois cartoes
+     na tela, nunca": nao ha lista onde um segundo caiba. */
+  const [janelaReacao, setJanelaReacao] = useState(null);
+  /* O que a reacao DE FACTO fez, para o cartao poder dizer o numero sem o
+     inventar. E leitura: `resolverReacao` continua a ser a unica fonte, e
+     nada muda de caminho por causa desta anotacao. */
+  const ultimaReacaoRef = useRef(null);
+  useEffect(() => {
+    /* Os dois sinais do corpo, lidos uma vez e guardados em ref porque quem
+       os le e uma funcao de rodada, nao o render. O try/catch e a lei do
+       turno: sem eles a janela abre na mesma, so sem os bonus. */
+    let limpar = () => {};
+    try {
+      const porPonteiro = () => { ultimoDispositivoRef.current = "ponteiro"; };
+      const porTecla = () => { ultimoDispositivoRef.current = "teclado"; };
+      window.addEventListener("pointerdown", porPonteiro, true);
+      window.addEventListener("keydown", porTecla, true);
+      const mq = (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)")) || null;
+      const ouve = () => { reduzidoRef.current = !!(mq && mq.matches); };
+      if (mq) { reduzidoRef.current = !!mq.matches; if (mq.addEventListener) mq.addEventListener("change", ouve); }
+      limpar = () => {
+        try {
+          window.removeEventListener("pointerdown", porPonteiro, true);
+          window.removeEventListener("keydown", porTecla, true);
+          if (mq && mq.removeEventListener) mq.removeEventListener("change", ouve);
+        } catch (e2) { calou("sinais-do-corpo/limpar", e2); }
+      };
+    } catch (e) { calou("sinais-do-corpo", e); }
+    return () => limpar();
+  }, []);
+  /* A PREFERENCIA, e ela e a conformidade e nao um mimo: a WCAG 2.2.1
+     (Timing Adjustable, nivel A) exige que um limite de tempo se possa
+     estender ou desligar. "Sem pressa" estende-o sem fim; um verbo travado
+     desliga-o. Quatro estradas, todas de `ritmo-da-reacao.js`. */
+  const escolherPreferenciaDaReacao = (id) => {
+    const v = id || "normal";
+    preferenciaDaReacaoRef.current = v;
+    setPreferenciaReacao(v);
+    try { salvar(); } catch (e) { calou("preferencia-da-reacao", e); }
+  };
+  /* O verbo do PROPRIO heroi para a terceira pilula — nunca uma lista. Sai
+     de `reacoesDe`, na mesma ordem de prioridade que `escolherReacao` le. */
+  const verboDaReacaoDoHeroi = (pers) => {
+    try { return (reacoesDe(pers) || [])[0] || null; } catch (e) { calou("verboDaReacao", e); return null; }
+  };
+  /* A linha do golpe no cartao vem da tabela, sempre — e SEM numero e SEM
+     adverbio de intensidade (as portas 9 e 10 do segredo do dano).
+     `linhaDoAtaque` (combate.js:180) devolve "· CRITICO! 9 de dano" e
+     `severidadeDano` (:562) fabrica adverbio a partir do numero: nenhuma das
+     duas entra aqui, e e por isso que esta frase nao e montada no JSX. */
+  const linhaDoCartao = (gatilho, inimigo) => {
+    try {
+      const l = (LINHAS_DO_CARTAO || []).find((x) => x && x.gatilho === gatilho) || {};
+      return String(l.frase || l.linha || l.texto || "").replace("{inimigo}", inimigo || "o inimigo");
+    } catch (e) { calou("linhaDoCartao", e); return ""; }
+  };
+  /* `recusou` nao escreve NADA no log. A frase do nada vive no cartao, e so
+     la — a ausencia da linha ja diz tudo, e uma linha a dizer "nada
+     aconteceu" seria o sistema a falar de si mesmo. */
+  const palavrasDoNada = (gatilho) => {
+    try {
+      const p = (PALAVRAS_DO_NADA || []).find((x) => x && x.gatilho === gatilho) || {};
+      return String(p.frase || "");
+    } catch (e) { calou("palavrasDoNada", e); return ""; }
+  };
+  /* A SEGUNDA LINHA DO CARTAO mora em `palavras-da-reacao.js`, no molde do
+     quadro de `mente/k3-jogo.md` §1.4. Daqui so sai a TRADUCAO do que
+     aconteceu para o que a tabela pede — e o gatilho e sempre o do golpe em
+     que a reacao DE FACTO caiu, nunca o do cartao.
+
+     Nenhuma string de `combate.js` entra aqui: `linhaDoAtaque` (:180)
+     devolve "· CRITICO! 9 de dano" e `severidadeDano` (:562) fabrica
+     adverbio a partir do numero — as portas 9 e 10, fechadas por nao haver
+     por onde as abrir. */
+  const numeroDoCartao = (saida, gatilhoDoCartao, feito, danoDoCartao) => {
+    try {
+      const g = (feito && feito.gatilho) || gatilhoDoCartao;
+      /* recusou, ou expirou e nem o instinto alcancou: o golpe chega inteiro
+         (ou a guarda fechou), e e a propria tabela que diz qual das duas. */
+      if (saida === "recusou" || !feito || !feito.reacao) return numeroDaResolucao({ gatilho: g, cortou: 0, dano: danoDoCartao });
+      if (feito.revide) {
+        const rv = feito.revide;
+        return numeroDaResolucao({ gatilho: "inimigo_erra", alvoContra: rv.alvo, acertou: rv.dano > 0, dano: rv.dano, danoFinal: rv.dano });
+      }
+      return numeroDaResolucao({ gatilho: g, cortou: feito.cortou || 0, dano: feito.dano || 0, danoFinal: feito.danoFinal, pm: feito.pm || 0 });
+    } catch (e) { calou("numeroDoCartao", e); return ""; }
+  };
+  const tentarReacaoNoGolpe = (a, pers, jaEscolhida) => {
     if (reacaoUsadaRef.current || !a || !a.r) return null;
     const gatilho = a.r.dano > 0 ? "sofre_dano" : "inimigo_erra";
-    const esc = escolherReacao({ pers, gatilho, dano: a.r.dano || 0, temReacao: true, tipoDano: a.r.tipoDano || "fisico" });
+    /* K3: o terceiro argumento e a reacao que a JANELA ja escolheu — e o rolo
+       da `chance` ja aconteceu la, dentro do ramo `valeu === true` do portao
+       de uma via. Rolar de novo aqui seriam duas verdades sobre o mesmo
+       instante, e um dado a mais desalinha a semente para sempre. Sem ele,
+       este caminho e byte a byte o de hoje. */
+    const esc = jaEscolhida || escolherReacao({ pers, gatilho, dano: a.r.dano || 0, temReacao: true, tipoDano: a.r.tipoDano || "fisico" });
     if (!esc) return null;
     const res = resolverReacao(esc, { pers, dano: a.r.dano || 0, atacante: a.inimigo });
     if (!res) return null;
     reacaoUsadaRef.current = true;
     pmReacaoRef.current += res.pm || 0;
+    /* K3: o cartao le o RESULTADO, nunca a pergunta (K2 §3.1). Guardar aqui e
+       o que permite ao numero sair de `resolverReacao` em vez de ser remontado
+       — e ao nome do inimigo sair do golpe em que a reacao de facto caiu. */
+    ultimaReacaoRef.current = { reacao: esc, gatilho, inimigo: a.inimigo, dano: a.r.dano || 0, cortou: res.cortou || 0, danoFinal: res.danoFinal, pm: res.pm || 0, revide: null };
     pushMsgs([{ autor: "sistema", texto: res.texto }]);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${res.nota}`;
     /* CONTRA-ATAQUE DE VERDADE: o revide rola e machuca, senão a reação seria
@@ -7687,6 +7845,9 @@ export default function Taverna() {
           tipoDano: elementoDaArma(pers), perfilAlvo: perfilDe(alvo),
         });
         let pv = alvo.vida;
+        /* K3: e o numero do revide no cartao sai daqui — "revide em Ogro · 6 de
+           dano". Leitura, nao regra: nada muda de caminho por causa dela. */
+        ultimaReacaoRef.current = { ...(ultimaReacaoRef.current || {}), revide: { alvo: alvo.nome, dano: rr.dano || 0 } };
         if (rr.dano > 0) {
           pv = Math.max(0, alvo.vida - rr.dano);
           combateRef.current = { ...comb, inimigos: comb.inimigos.map((e) => (e.nome !== alvo.nome ? e : { ...e, vida: pv, derrotado: pv <= 0, ultimoDano: rr.dano })) };
@@ -11530,6 +11691,10 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       eventosRef.current = garantirEventos(sv.eventos); setEventos(eventosRef.current);
       relogiosRef.current = garantirRelogios(sv.relogios); setRelogios(relogiosRef.current);
       chaoRef.current = garantirChao(sv.chao); setChao(chaoRef.current);
+      /* K3: save antigo nao tem preferencia — e o vazio quer dizer `normal`,
+         que e a pilula que ja vem marcada. */
+      preferenciaDaReacaoRef.current = (typeof sv.preferenciaDaReacao === "string" && sv.preferenciaDaReacao) ? sv.preferenciaDaReacao : "normal";
+      setPreferenciaReacao(preferenciaDaReacaoRef.current);
       diaLutaRef.current = garantirDia(sv.diaLuta);
       /* MIGRAÇÃO (v7.4): saves antigos ganham a ascensão zerada — nada quebra */
       divindadeRef.current = garantirDivindade(sv.divindade); setDivindade(divindadeRef.current);
@@ -11966,10 +12131,17 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
        movimentos se esgotavam OU quando o jogador apertava "encerrar turno" —
        e por isso quem lutava só com habilidades nunca era revidado. */
     const fechouNoMeuGolpe = fecharSeTodosCairam(fichaViva() || personagem);
-    const rv = fechouNoMeuGolpe ? { pers: fichaViva() || personagem, texto: "" } : fecharMeuTurno(fichaViva() || personagem);
-    const persAtual = rv.pers;
-    const resumoInimigos = rv.texto;
-    enviar(`[COMBATE — RESOLVIDO PELO SISTEMA] Minha sequência de ${desfecho}. O dano já foi aplicado.${resumoInimigos} NÃO recalcule nem mude números — NARRE de forma vívida (2-4 frases) a sequência dos meus golpes e as decisões e reações dos inimigos: quem recuou, quem avançou, quem mudou de alvo. Ação declarada: ${acao}`, persAtual);
+    /* K3: o que vinha DEPOIS do revide virou continuacao — a janela da reacao
+       suspende a rodada, e o envelope so sai quando ela fecha. Quando a luta
+       acabou no meu golpe nao ha revide nenhum, e a continuacao corre na hora
+       com o mesmo objecto de sempre. */
+    const depoisDoRevide = (rv) => {
+      const persAtual = rv.pers;
+      const resumoInimigos = rv.texto;
+      enviar(`[COMBATE — RESOLVIDO PELO SISTEMA] Minha sequência de ${desfecho}. O dano já foi aplicado.${resumoInimigos} NÃO recalcule nem mude números — NARRE de forma vívida (2-4 frases) a sequência dos meus golpes e as decisões e reações dos inimigos: quem recuou, quem avançou, quem mudou de alvo. Ação declarada: ${acao}`, persAtual);
+    };
+    if (fechouNoMeuGolpe) depoisDoRevide({ pers: fichaViva() || personagem, texto: "" });
+    else fecharMeuTurno(fichaViva() || personagem, depoisDoRevide);
     return true;
   };
 
@@ -13521,10 +13693,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          a luta pode ter fechado e creditado espólios, e mandar `pers` — a cópia
          de antes do golpe — apagaria o crédito no mesmo turno em que ele apareceu */
       const fechouHab = fecharSeTodosCairam(fichaViva() || pers);
-      const rvH = fechouHab ? { pers: fichaViva() || pers, texto: "" } : fecharMeuTurno(fichaViva() || pers);
+      /* K3: idem — o envelope da sequencia de habilidades e continuacao. */
+      const depoisDaHab = (rvH) => {
       enviar(desfechos.length
         ? `[HABILIDADES — RESOLVIDAS PELO SISTEMA] No MESMO turno usei ${listaTxt}. O SISTEMA já rolou o acerto, calculou e APLICOU tudo: ${desfechos.join(" · ")}.${rvH.texto} Narre a sequência inteira como UM só turno meu — não recalcule, não mude quem acertou, NÃO declare a morte de quem ainda tem PV. Minha intenção: ${acao}`
         : `[HABILIDADES] No MESMO turno uso ${listaTxt} (PM já descontados; tenho ${rvH.pers.mana}). COMO eu as uso: ${acao}.${rvH.texto} Narre a sequência conforme minha intenção. Se ficar incerto sobre o efeito, narre até onde a certeza vai e devolva a vez — você NÃO pede rolagem, e o que faltar o sistema resolve no meu próximo lance. LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte.${extraTempo}`, rvH.pers);
+      };
+      if (fechouHab) depoisDaHab({ pers: fichaViva() || pers, texto: "" });
+      else fecharMeuTurno(fichaViva() || pers, depoisDaHab);
       return;
     }
     /* Detecta habilidade citada por texto (ex.: "uso Projétil Arcano") e desconta o PM
@@ -13627,10 +13803,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       }
       pers = fichaViva() || pers;
       const fechouCit = fecharSeTodosCairam(pers);
-      const rvC = fechouCit ? { pers: fichaViva() || pers, texto: "" } : fecharMeuTurno(fichaViva() || pers);
+      /* K3: idem — a habilidade citada por texto passa pela mesma porta. */
+      const depoisDaCitada = (rvC) => {
       enviar(desfechoC
         ? `[HABILIDADE — RESOLVIDA PELO SISTEMA] Usei "${habCitada.nome}" (custo ${custo} PM, já descontado). O SISTEMA já rolou o acerto, calculou e APLICOU o resultado: ${desfechoC}.${rvC.texto} Sua função é APENAS narrar esse resultado exato — não recalcule, NÃO declare a morte de quem ainda tem PV. Minha intenção: ${acao}`
         : `[HABILIDADE] Uso "${habCitada.nome}" (custo ${custo} PM, já descontado; tenho ${rvC.pers.mana} PM). ${habCitada.descricao || ""} Ação: ${acao}.${rvC.texto} LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte; se o inimigo ainda tiver PV, ele segue de pé.${extraTempo}`, rvC.pers);
+      };
+      if (fechouCit) depoisDaCitada({ pers: fichaViva() || pers, texto: "" });
+      else fecharMeuTurno(fichaViva() || pers, depoisDaCitada);
       return;
     }
     /* v9.255 (Fase X, X2): o golpe DIGITADO e o golpe do BOTÃO passam pela
@@ -13678,8 +13858,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* v9.13: em combate, até "recuo dois passos e observo" é um turno. É o que
        substitui o botão que sumiu — quem quer só ficar em guarda escreve isso,
        e o inimigo responde igual. */
-    const rvG = fecharMeuTurno(persG);
-    enviar(`${acao}${notaOp}${rvG.texto}${extraTempo}`, rvG.pers);
+    /* K3: e o turno escrito a mao tambem espera a janela fechar. */
+    fecharMeuTurno(persG, (rvG) => {
+      enviar(`${acao}${notaOp}${rvG.texto}${extraTempo}`, rvG.pers);
+    });
   };
 
   /* VEZ DO MUNDO: o mundo vive o instante presente (curto no TEMPO, mas cheio
@@ -13860,11 +14042,15 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      herói acontece antes de o dano virar PV, concentração é testada, os
      companheiros agem, o teste de morte roda, e a rodada seguinte abre com os
      movimentos renovados. Devolve o resumo pronto para colar no envelope. */
-  const resolverRevide = (persBase) => {
+  const resolverRevide = (persBase, aoTerminar) => {
+    /* K3: a rodada passou a ter uma CONTINUACAO, e a razao e uma so — a janela
+       da reacao suspende o meio dela, e uma funcao sincrona nao sabe suspender.
+       TODO caminho de saida chama `aoTerminar` com o mesmo objecto de sempre;
+       o que mudou e QUANDO ele chega, nunca o que ele traz. */
     const combPos = combateRef.current;
-    if (!combPos) return { pers: persBase, resumo: "" };
+    if (!combPos) return aoTerminar({ pers: persBase, resumo: "" });
     const vivos = (combPos.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
-    if (!vivos.length) { const p = fecharSeTodosCairam(persBase); return { pers: (p && p !== true) ? p : persBase, resumo: "" }; }
+    if (!vivos.length) { const p = fecharSeTodosCairam(persBase); return aoTerminar({ pers: (p && p !== true) ? p : persBase, resumo: "" }); }
     /* ---------------- A VEZ DO MUNDO (v9.31) ----------------
        Ela sempre existiu aqui dentro, escondida: o revide dos inimigos e o
        turno dos companheiros já rodavam colados na ação do jogador, sem nome
@@ -13902,11 +14088,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       combateRef.current = combPos; setCombate({ ...combPos });
       const pFuga = fecharSeTodosCairam(persBase);
       if (pFuga) {
-        return { pers: (pFuga !== true) ? pFuga : persBase, resumo: ` ${fugas.join("; ")}. Com isso a luta ACABOU — narre a debandada e o silêncio depois.` };
+        return aoTerminar({ pers: (pFuga !== true) ? pFuga : persBase, resumo: ` ${fugas.join("; ")}. Com isso a luta ACABOU — narre a debandada e o silêncio depois.` });
       }
     }
     const aindaVivos = (combPos.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
-    if (!aindaVivos.length) return { pers: persBase, resumo: fugas.length ? ` ${fugas.join("; ")}.` : "" };
+    if (!aindaVivos.length) return aoTerminar({ pers: persBase, resumo: fugas.length ? ` ${fugas.join("; ")}.` : "" });
     const notaFuga = fugas.length ? ` ${fugas.join("; ")} (rolado pelo sistema — narre a fuga, não a impeça).` : "";
 
     /* ZONAS (v9.20): antes de bater, quem não alcança ANDA — e, tendo
@@ -13960,6 +14146,17 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          intenção que o Narrador leu escolhe em quem o golpe cai. */
       prioridade: (intencaoPorId(intencaoRef.current) || {}).alvo || "",
     });
+    /* ---------------- A CISAO (v9.259, K3) ----------------
+       Daqui ate ao `return` do fim e o corpo de hoje, INTACTO e sem uma linha
+       reindentada: virou funcao interna para poder ser chamado DEPOIS da
+       janela. `combPos`, `persBase`, `notaFuga`, `partesComp` e os refs
+       continuam no escopo de fora — nada mudou de dono.
+
+       `escolha` e o que a janela decidiu: `null` quer dizer "nao houve janela"
+       e o laco corre como sempre correu; um objecto quer dizer que a reacao ja
+       foi escolhida (ou recusada), e entao so o golpe em que ela caiu a
+       resolve. */
+    const correrORestoDaRodada = (acoes, escolha) => {
     const linhasSis = [];
     let danoNoJogador = 0;
     let grupoAtual = [...(persBase.grupo || [])];
@@ -13978,7 +14175,31 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       linhasSis.push({ autor: "sistema", texto: a.r.dano > 0 ? `${marcaGolpe} ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: ${a.r.critico ? "CRÍTICO! " : ""}${a.r.dano} de dano` : `${marcaGolpe} ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: errou` });
       /* REAÇÃO (v9.5): a janela acontece AQUI, antes de o dano virar PV */
       if (a.alvoRef === "jogador") {
-        const rc = tentarReacaoNoGolpe(a, persBase);
+        /* K3: com janela, a resolucao acontece no MESMO sitio de hoje — so que
+           no golpe em que a reacao de facto caiu (`escolha.ordem`), que pode
+           nao ser o golpe do cartao: a linha le o resultado, nao a pergunta.
+           Sem janela (`escolha == null`) isto e o motor de hoje, byte a byte.
+           O recuo chega aqui com `escolha.reacao === null` e nao resolve em
+           golpe nenhum — ele recusou a pergunta E o recurso. */
+        /* DEIXAR PASSAR: `ritmoDaRodada` faz a coisa certa ao fechar a rodada
+           por `preferencia` — ela responde "nao perguntes", e nao perguntar
+           esta certo nos dois casos. Quem sabe a diferenca entre "apara
+           sempre" e "nunca reajas" e ESTE sitio, porque e ele que tem a
+           preferencia na mao e e ele que chama o motor. Aqui ela disse que
+           NAO: o laco nao tenta a reacao em golpe nenhum — sem reacao, sem PM
+           gasto, sem uma linha no log. E o que a pilula promete, e e a unica
+           leitura honesta da lei do PM: ele so sai da ficha quando o jogador
+           escolheu, ou quando a preferencia dele disse que sim. */
+        let nuncaReage = false;
+        try { nuncaReage = (preferenciaDaReacaoRef.current || "normal") === "deixar_passar"; }
+        catch (e) { calou("deixar-passar", e); nuncaReage = false; }
+        const comJanela = escolha != null;
+        const noGolpeDaReacao = comJanela && !!escolha.reacao && ((golpesNoHeroi[escolha.ordem] || {}).acao === a);
+        const rc = nuncaReage
+          ? null
+          : comJanela
+          ? (noGolpeDaReacao ? tentarReacaoNoGolpe(a, persBase, escolha.reacao) : null)
+          : tentarReacaoNoGolpe(a, persBase);
         if (rc && rc.danoFinal != null) a.r.dano = rc.danoFinal;
       }
       if (a.r.dano > 0) {
@@ -14380,16 +14601,199 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const compTxt = partesComp.length ? ` Meus companheiros agiram: ${partesComp.join("; ")}.` : "";
     const morteTxt = persAtual.vida <= 0 ? ` ATENÇÃO: eu caí a 0 PV e estou ${persAtual.morto ? "à beira da morte" : "inconsciente, lutando pela vida (testes de morte). Um aliado pode me estabilizar ou curar para eu voltar"}.` : "";
     return { pers: persAtual, resumo: `${notaFuga} Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ${partes.join("; ")}.${compTxt}${morteTxt}` };
+    };
+
+    /* ---------------- A JANELA ABRE, OU NAO (v9.259, K3) ----------------
+       Nove portas decidem, e nenhuma delas e nossa: `ritmoDaRodada` le a rodada
+       inteira e diz em que golpe (se algum) a pergunta cabe. Fechada por
+       qualquer uma delas, a rodada corre inteira e sincrona, byte a byte o jogo
+       de hoje — que e literalmente o contrato da trava.
+
+       O try/catch e a lei do turno, e aqui ela morde mais fundo do que em
+       qualquer outro sitio: um orgao que estoure a meio suspende a rodada com o
+       dano por aplicar. Se a PERGUNTA estourar, nao se pergunta. */
+    const golpesNoHeroi = acoes.filter((a) => a.alvoRef === "jogador" && a.r)
+      .map((a, k) => ({ ordem: k, dano: a.r.dano || 0,
+                        gatilho: (a.r.dano || 0) > 0 ? "sofre_dano" : "inimigo_erra",
+                        tipoDano: a.r.tipoDano || "fisico", inimigo: a.inimigo, acao: a }));
+    let ritmo = null;
+    try {
+      ritmo = ritmoDaRodada({
+        golpes: golpesNoHeroi, heroi: persBase,
+        preferencia: preferenciaDaReacaoRef.current || "normal",
+        reacaoGasta: reacaoUsadaRef.current, jaRespondeu: false,
+        expiracoesSeguidas: expiracoesSeguidasRef.current,
+        contagem: reduzidoRef.current, toque: ultimoDispositivoRef.current === "ponteiro",
+        escondida: typeof document !== "undefined" && !!document.hidden,
+      });
+    } catch (e) { calou("ritmoDaRodada", e); ritmo = null; }
+    if (!ritmo || !ritmo.abre) return aoTerminar(correrORestoDaRodada(acoes, null));
+
+    /* A JANELA ABRE — E A RODADA SUSPENDE AQUI. Nada mais acontece ate o portao
+       de uma via deixar alguem entrar: nem uma linha no chat, nem um ponto de
+       PV, nem um PM. E a porta 12 e a 13.a fechadas pela via mais barata que
+       existe: o codigo que as abriria ainda nao correu. */
+    const abre = ritmo.abre;
+    const t0 = Date.now();
+    let porteira = { fechada: false, por: null };
+    let socorro = null;
+
+    const pelaAusencia = () => {
+      try { return reacaoDoSilencio({ golpes: golpesNoHeroi, heroi: persBase, desde: abre.ordem }); }
+      catch (e) { calou("reacaoDoSilencio", e); return { reacao: null, ordem: null }; }
+    };
+    const aoEsconder = () => {
+      try { if (typeof document !== "undefined" && document.hidden) fecharOCartao("escondida", null); }
+      catch (e) { calou("aba-escondeu", e); }
+    };
+
+    const fecharOCartao = (quem, reacaoDoJogador) => {
+      let g = { valeu: false };
+      try { g = fecharAJanela(porteira, quem); } catch (e) { calou("fecharAJanela", e); g = { valeu: false }; }
+      /* O SEGUNDO A CHEGAR NAO ENTRA, e por isso nao rola: um resultado deitado
+         fora que rolou um dado e pior do que um resultado errado — o erro
+         aparece, e o desalinhamento nao. NENHUMA resolucao fora deste ramo. */
+      if (!g.valeu) return;
+      porteira = g.janela;
+      if (socorro) { clearTimeout(socorro); socorro = null; }
+      try { if (typeof document !== "undefined") document.removeEventListener("visibilitychange", aoEsconder); } catch (e) { calou("aba-escondeu/limpar", e); }
+
+      const saida = quem === "recuo" ? "recusou" : quem === "jogador" ? "respondeu" : "expirou";
+      let escolha = { reacao: null, ordem: null };
+      try {
+        if (quem === "recuo") {
+          /* O recuo recusa a pergunta E o recurso. Se recusasse so a pergunta,
+             o motor de hoje resolveria na linha seguinte e o log escreveria a
+             reacao que o jogador acabou de dispensar — o sistema a desmentir o
+             jogador na linha a seguir. `pmReacaoRef` NAO sobe. */
+          reacaoUsadaRef.current = true;
+          expiracoesSeguidasRef.current = 0;
+        } else if (quem === "jogador") {
+          expiracoesSeguidasRef.current = 0;
+          const primeira = (abre.reacoes || [])[0] || null;
+          if (reacaoDoJogador && primeira && reacaoDoJogador.id === primeira.id) {
+            /* A MESMA ESTRADA DA EXPIRACAO, e e o que evita o buraco maior da
+               fase: a `chance` continua dentro de `escolherReacao` e o laco
+               continua a tentar o golpe seguinte quando ela falha. E isto que
+               preserva os 97,6 % de esquiva do ladino em vez de lhe dar 100 %
+               de graca — e nao inventa ramo de falha nenhum em `resolverReacao`,
+               que e regra, e regra nao e nossa. */
+            escolha = pelaAusencia();
+          } else if (reacaoDoJogador) {
+            /* Um leque de 2+ e 0 de 12 classes hoje. Se um dia existir, a
+               segunda escolha resolve-se no golpe do cartao e a `chance` rola
+               UMA vez — nunca duas. */
+            const passou = reacaoDoJogador.chance == null || Math.random() <= reacaoDoJogador.chance;
+            escolha = passou ? { reacao: reacaoDoJogador, ordem: abre.ordem } : { reacao: null, ordem: null };
+          }
+        } else {
+          /* A EXPIRACAO DEVOLVE OS COBERTOS AO LACO DE HOJE, a partir de
+             `abre.ordem` e por TODOS os golpes. Trata-los como "nao reagem"
+             quebra 37,44 % das sementes e custa +12,4 % de dano ao furtivo,
+             em silencio. `persBase`, nunca `persTracos`. */
+          escolha = pelaAusencia();
+          /* `escondida` resolve como `expirou` e A ESCADA NAO CONTA ESTE DEGRAU:
+             uma expiracao que o jogador nunca viu nao e uma expiracao dele. */
+          if (quem === "expirou") expiracoesSeguidasRef.current += 1;
+        }
+      } catch (e) { calou("desfecho-da-janela", e); escolha = { reacao: null, ordem: null }; }
+
+      ultimaReacaoRef.current = null;
+      let rv = null;
+      try { rv = correrORestoDaRodada(acoes, escolha); }
+      catch (e) {
+        /* NUNCA PODE CUSTAR O TURNO — e aqui ele custaria a rodada A MEIO, com o
+           dano por aplicar. Se o resto da rodada estourar, o envelope sai com o
+           que havia e a luta segue. */
+        calou("correrORestoDaRodada", e);
+        rv = { pers: persBase, resumo: "" };
+      }
+      /* O ENVELOPE NAO ESPERA O CARTAO. A resolucao fica 1 200 ms na tela; a
+         espera pelo Mestre e ~13,4 s. Mandar agora poe um dentro do outro e
+         poupa 1,2 s por rodada — e nao custa nada, porque `a.r` ja esta cortado
+         quando `correrORestoDaRodada` devolve, que era a unica razao pela qual
+         o envelope nao podia sair antes. */
+      try { aoTerminar(rv); } catch (e) { calou("aoTerminar-da-janela", e); }
+
+      try {
+        const u = ultimaReacaoRef.current || {};
+        const doCartao = golpesNoHeroi[abre.ordem] || {};
+        /* A QUINTA SAIDA, e ela acontece de verdade por este caminho: o jogador
+           gesticulou e a `chance` falhou em todos os golpes cobertos. Houve
+           gesto, o que falhou foi o resultado — e essa e exactamente a
+           distincao que a regra do glifo faz, logo o glifo FICA. */
+        const gesticulou = saida === "respondeu" && !!reacaoDoJogador;
+        const falhou = gesticulou && !u.reacao;
+        const saidaDita = falhou ? "sem_gesto" : saida;
+        /* o `id` do que DE FACTO aconteceu — a linha le o resultado, nao a
+           pergunta; so na quinta saida ele e o verbo que o jogador pediu. */
+        const idDito = falhou ? (reacaoDoJogador || {}).id : ((u.reacao || {}).id || null);
+        let prosa = "";
+        try { prosa = falaDaResolucao({ saida: saidaDita, reacaoId: idDito, gatilho: abre.gatilho }) || ""; }
+        catch (e) { calou("falaDaResolucao", e); prosa = ""; }
+        /* Expirou e nem o instinto alcancou: nada aconteceu e nao ha gesto
+           nenhum para nomear — a frase do nada e a unica que diz isso sem
+           mentir, e e para isto que a tabela dela existe. */
+        if (!prosa && saidaDita !== "recusou") prosa = palavrasDoNada(abre.gatilho);
+        /* O GLIFO APARECE QUANDO HOUVE GESTO — `respondeu` e `expirou` diferem em
+           QUEM agiu, nao em SE agiu. `recusou` e a unica sem gesto e a unica sem
+           glifo, e a coluna continua a ocupar os mesmos 22 px. */
+        const glifo = saida === "recusou" ? "" : (((u.reacao || {}).icone) || (falhou ? ((reacaoDoJogador || {}).icone || "") : "") || "");
+        setJanelaReacao((j) => (!j || j.t0 !== t0 ? j : { ...j, resolucao: {
+          texto: prosa,
+          numero: numeroDoCartao(saida, abre.gatilho, u, doCartao.dano || 0),
+          glifo,
+          /* O aviso do silencio sai UMA vez, na ultima Etapa=Resolvida da luta —
+             quando esta expiracao fez o contador chegar a dois. Em mais lado
+             nenhum, e NUNCA no log. */
+          aviso: (saida === "expirou" && expiracoesSeguidasRef.current >= 2) ? AVISO_DO_SILENCIO : "",
+        } }));
+        /* A rede que tira o cartao se `aoSair` nunca vier. Nao e um segundo
+           relogio de nada que se meca: e desmonte, e dispara depois do horario
+           do proprio cartao. Um cartao preso na tela taparia a linha do
+           veredito para sempre, que e o unico sitio onde se escreve. */
+        const vive = (TEMPOS_DO_CARTAO.resolucaoMs || 1200) + (TEMPOS_DO_CARTAO.saiMs || 140) + 500;
+        setTimeout(() => setJanelaReacao((j) => (j && j.t0 === t0 ? null : j)), vive);
+      } catch (e) { calou("cartao-da-resolucao", e); setJanelaReacao(null); }
+    };
+
+    try {
+      if (typeof document !== "undefined") document.addEventListener("visibilitychange", aoEsconder);
+      /* O SOCORRO, e ele nao e um segundo relogio do jogo: o relogio da janela e
+         do componente e e um so, lido de `agora - t0` (K2 §2.2). Isto e rede
+         para a RODADA — se o cartao nao montar, ninguem chamaria de volta e a
+         rodada ficava suspensa com o dano por aplicar. Dispara bem depois do
+         prazo, passa pelo mesmo portao de uma via (logo nunca resolve duas
+         vezes) e, por [T2], o resultado nao depende do instante em que o
+         temporizador dispara. Com `parado` nao ha socorro: ali esperar sem fim
+         e exactamente o que o jogador pediu na ficha. */
+      if (abre.janelaMs > 0) socorro = setTimeout(() => fecharOCartao("expirou", null), abre.janelaMs + 3000);
+      setJanelaReacao({
+        abre, t0, resolucao: null,
+        linha: linhaDoCartao(abre.gatilho, abre.inimigo),
+        saldoPM: persBase.mana || 0,
+        aoResponder: (r) => (r ? fecharOCartao("jogador", r) : fecharOCartao("expirou", null)),
+        aoRecusar: () => fecharOCartao("recuo", null),
+        aoSair: () => setJanelaReacao((j) => (j && j.t0 === t0 ? null : j)),
+      });
+    } catch (e) {
+      calou("abrir-a-janela", e);
+      if (socorro) { clearTimeout(socorro); socorro = null; }
+      try { if (typeof document !== "undefined") document.removeEventListener("visibilitychange", aoEsconder); } catch (e2) { calou("abrir-a-janela/limpar", e2); }
+      porteira = { fechada: true, por: "aba_fechou" };
+      return aoTerminar(correrORestoDaRodada(acoes, null));
+    }
+    /* A rodada fica aqui. Quem a acorda e o portao. */
+    return undefined;
   };
 
   /* AGIR ENCERRA O TURNO (v9.13). Era isto que o botão "encerrar turno"
      resolvia à mão: em combate, TODA declaração minha é o turno inteiro, e o
      oponente responde na sequência. Fora de combate não faz nada. A única
      exceção é a bolsa — beber uma poção é gesto, não turno. */
-  const fecharMeuTurno = (pers) => {
-    if (!combateRef.current) return { pers, texto: "" };
-    const r = resolverRevide(pers);
-    return { pers: r.pers, texto: r.resumo };
+  const fecharMeuTurno = (pers, aoTerminar) => {
+    if (!combateRef.current) return aoTerminar({ pers, texto: "" });
+    return resolverRevide(pers, (r) => aoTerminar({ pers: r.pers, texto: r.resumo }));
   };
 
 
@@ -21635,12 +22039,40 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   o balão à esquerda diz, sem palavra nenhuma, que ali se
                   escreve. A borda continua mudando de cor com o que está
                   armado (milagre em âmbar, habilidade em violeta). */}
+              {/* ---------------- O CARTAO DA REACAO (v9.259, K3) ----------------
+                  Nasce na LINHA DO VEREDITO, ancorado no topo dela e a crescer
+                  PARA CIMA, por cima da barra dos verbos — a camara nao se mexe
+                  um pixel em nenhum dos dezassete instantes. E vem ANTES do campo
+                  no DOM porque a ordem do DOM e a ordem de tabulacao: nada de
+                  `tabindex` positivo, e o cartao herda o lugar que lhe cabe.
+
+                  `LimiteErro` porque nunca pode custar o turno: se o cartao
+                  estourar a pintar, o socorro de `resolverRevide` fecha a janela
+                  e a rodada corre como hoje. */}
+              <div style={{ position: "relative" }}>
+                {janelaReacao && (
+                  <div style={{ position: "absolute", left: 0, right: 0, bottom: "100%", zIndex: 40 }}>
+                    <LimiteErro>
+                      <PainelReacao
+                        oferta={janelaReacao.abre} t0={janelaReacao.t0}
+                        linhaDoGolpe={janelaReacao.linha}
+                        saldoPM={janelaReacao.saldoPM}
+                        resolucao={janelaReacao.resolucao}
+                        reduzido={reduzidoRef.current} ultimoDispositivo={ultimoDispositivoRef.current}
+                        aoResponder={janelaReacao.aoResponder}
+                        aoRecusar={janelaReacao.aoRecusar}
+                        aoSair={janelaReacao.aoSair}
+                      />
+                    </LimiteErro>
+                  </div>
+                )}
               <div className="flex items-center gap-3 rounded-lg p-2 min-w-0" style={{ background: T.bg, border: `1.5px solid ${milagreSel ? T.amber : habsSel.length ? T.violet : T.line}` }}>
                 <span className="shrink-0 pl-2"><IconeBalao tamanho={16} /></span>
                 <input value={entrada} onChange={(e) => setEntrada(e.target.value)} onKeyDown={(e) => e.key === "Enter" && agir(entrada)}
                   placeholder={rolagem ? "Role o dado abaixo…" : milagreSel ? `Como você manifesta ${milagreSel.nome}?` : habsSel.length ? `Como você usa ${habsSel.map((h) => h.nome).join(" e ")}?` : "O que você faz? Fale, aja, explore…"}
                   disabled={bloqueado} className="flex-1 bg-transparent outline-none tv-body text-[15px] px-3 py-1.5 min-w-0" style={{ color: T.ink }} />
                 <Botao primario pequeno desativado={bloqueado || !entrada.trim()} onClick={() => agir(entrada)}>Agir →</Botao>
+              </div>
               </div>
             </div>
             )}
@@ -21666,7 +22098,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
 
           <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />
-          <LimiteErro><PainelLateral abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} /></LimiteErro>
+          <LimiteErro><PainelLateral abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal === "pedindo" && (
           <CerimoniaDaRecalibragem passos={PASSOS_DO_SAVE} atual={0} lendo="O arquivista relê o livro da campanha e os seus feitos…" />

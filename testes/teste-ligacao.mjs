@@ -87,13 +87,16 @@ sec("1. NENHUM MÓDULO MUDO");
      Com importador de verdade, o modulo nao pode ficar na lista de
      espera: a secao 1 passa a mede-lo como mede todos os outros.
      A lista volta a ficar VAZIA, como a regra acima pede. */
-  const AGUARDANDO = {
-    /* v9.258 (Fase K, K1b): o módulo do ritmo nasce antes do seu importador.
-       K1b mede e prova o teto da espera; K3 é que liga a janela ao App.jsx, e
-       o bastão do App.jsx estava com a outra mente. Credor nomeado: o
-       `oficial`, em K3 — e a lista volta a ficar VAZIA nesse dia. */
-    "ritmo-da-reacao.js": "o oficial, em K3",
-  };
+  /* v9.269 (Fase K, K3): A DIVIDA DE `ritmo-da-reacao.js` FOI PAGA, pelo
+     credor que a entrada nomeava. O `oficial` ligou a janela ao `App.jsx`
+     — `ritmoDaRodada` decide se ela abre, `reacaoDoSilencio` resolve quem
+     nao respondeu e `fecharAJanela` e o portao de uma via —, e com
+     importador de verdade o modulo nao pode continuar dispensado: a secao
+     1 passa a mede-lo como mede todos os outros.
+     A lista volta a ficar VAZIA, como a regra acima pede. Ela nasceu em
+     v9.214, esvaziou-se em v9.218, encheu-se de novo em v9.258 e esta
+     vazia outra vez — tres levas, tres credores, zero perdao sobrando. */
+  const AGUARDANDO = {};
   const mudos = [];
   for (const f of arqs) {
     if (FOLHAS.test(f)) continue;

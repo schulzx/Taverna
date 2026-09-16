@@ -2602,6 +2602,33 @@ contagem**, que é a variante *Tempo=Contagem* da peça.
 **As classes de K1, com a saída escrita à nascença:** `tv-chamado-entra`,
 `tv-leque-abre`, **`tv-janela-tempo`** e `tv-janela-sai`. Nenhuma `infinite`.
 
+**[K3] E as três que faltavam à tabela, com a saída escrita igual:**
+
+| o que | quanto | curva | sob `prefers-reduced-motion` |
+|---|---|---|---|
+| **o trilho nasce** (`tv-trilho-entra`) | **90 ms**, só `opacity` | `ease` | aparece a seco |
+| **o trilho some ao primeiro toque** (`tv-trilho-sai`) | **90 ms**, só `opacity` | `ease` | some a seco |
+| **o verbo vira a linha resolvida** (`tv-resolve`) | **120 ms**, só `opacity` | `ease` | troca a seco |
+
+**[K3] E duas correções de propriedade, que são de ofício e não de tempo.** *(A
+conta inteira, com os números e o que cada uma custa, em `mente/k3-desenho.md`.)*
+
+1. **O cheio do trilho é `transform: scaleX()`, nunca `width`.** A lei 2 desta
+   mesma tabela proíbe animar leiaute — e `scaleX` não tem unidade, logo **não há
+   píxel nenhum na declaração para alguém copiar**. O defeito dos 213 px fixos
+   deixa de ser regra a lembrar e passa a ser coisa que não há por onde escrever.
+2. **O trilho nasce na proporção pelo `animation-delay` negativo**, calculado de
+   `agora − t0` — e não por um número escrito à mão. Não há `100 %` na folha, e
+   também não há `73 %`: os dois seriam um número que o relógio não produziu. É a
+   lei de K2 (*o trilho não tem relógio próprio*) cumprida com um relógio só.
+   **A escala do trilho é `trilhoMs`, não `janelaMs`** — a barra promete o
+   **prazo**, e a folga é não-medida por decisão de K1b.
+
+**[K3] E a saída de `tv-janela-tempo`, agora com o mecanismo:** `animation: none`
+sozinho congelaria o cheio em `scaleX(1)` — **uma barra cheia e parada, a pior
+mentira possível sobre o tempo.** A saída pousa em `scaleX(0)`: invisível, e quem
+conta o tempo passa a ser o numeral, que é o que *Tempo=Contagem* é.
+
 ### O teclado numa janela com relógio (K1)
 
 Uma janela que expira **tem** de se responder sem rato, ou o relógio é uma
@@ -2629,6 +2656,20 @@ A forma não muda — `box-shadow: 0 0 0 2px T.bg, 0 0 0 4px T.ink`, `ink` sobre
 casas**, e hoje cada casa alcançável é `role="button" tabIndex=0` com
 `outline: none` (`grade-de-batalha.jsx:515-519`) — **86 alvos focáveis por
 luta, com o anel apagado de propósito**.
+
+**[K3] A forma em código é `.tv-anel-foco`, em `SUPERFICIES_CSS`** (o anel não
+anda), e vem com cinco regras: **`box-shadow`, nunca `border`** — `border` ocupa
+leiaute e faria a fila de quatro pílulas da ficha **mexer-se quando o foco entra**,
+que é um alvo em movimento para o jogador de teclado, que é exatamente quem aquela
+fila existe para servir (é o defeito que K2 §1.6 encontrou: no Figma o anel é
+geometria porque o Figma não tem `box-shadow` de dois degraus); **nada de
+`outline: none` fora do bloco `:focus-visible` que instala o anel**; **a goteira de
+8 px da fila absorve os 4 px do anel com metade de folga — deslocamento zero,
+medido**; **`overflow: hidden` de um antepassado corta-o**; e **`box-shadow` não
+soma entre regras** — sombra e anel escrevem-se na mesma declaração ou o foco apaga
+a sombra. **E `forced-colors: active` remove `box-shadow` por especificação**, logo
+o anel precisa de duas linhas de `outline` ali, ou não existe para quem joga em alto
+contraste. *(A classe inteira, pronta para colar, em `mente/k3-desenho.md` §2.)*
 
 - **A grelha é UM ponto de tabulação, não 256.** É o padrão `grid` do WAI-ARIA
   com *roving tabindex*: uma casa tem `tabIndex=0` e todas as outras `-1`; as
@@ -3802,3 +3843,84 @@ endereço que o teto guarda.
 > teste que dita a duração de uma animação viva é o rabo a abanar o cão. Fica em
 > `COLISAO_DE_RELOGIO_ESCRITA`, com data e razão, sob a regra anti-cemitério —
 > **uma entrada declarada é uma declaração; 242 eram um inventário.**
+
+---
+
+# A reação acontece — o cartão, o relógio e as quatro saídas (K3 · 16/09)
+
+**K3 é a etapa que constrói, e por isso ela não redesenha nada.** K1 decidiu a
+forma, K1b o tempo, K2 a trava; aqui a peça nasce em código. O escrito dos dois
+seniores vive em `mente/k3-jogo.md` e `mente/k3-desenho.md` — e este bloco é só
+o que ficou de pé depois de construído e conferido vivo.
+
+> ## O que o jogador vê, numa frase
+> **O golpe chega, um cartão nasce em cima da linha do veredito com o facto, o
+> verbo já armado e o preço; quinze segundos depois ele resolve-se sozinho — e
+> o jogador nunca lê o nome de nenhum mecanismo.**
+
+## As quatro saídas, e o que as separa é a gramática
+
+`respondeu` e `expirou` diferem em **quem** agiu, não em **se** agiu. A regra que
+gera a tabela cabe numa linha e é catraca em `testes/teste-painel-reacao.mjs`:
+
+> **Toda linha da coluna «você» começa por `você `. Toda linha da coluna «não foi
+> você» termina em ` por você`.** Uma frase que não obedeça às duas é defeito de
+> tabela, não de gosto — *a diferença entre as duas saídas tem de caber na
+> gramática, senão ela tem de ser explicada, e explicar é o sistema a falar de si
+> mesmo.*
+
+`recusou` é a única sem gesto e a única sem glifo, e **não escreve nada no log** —
+o golpe inteiro já aparece na linha `🛡` de sempre, e uma linha a dizer *"nada
+aconteceu"* seria o mecanismo a falar de si. O que ela escreve é **a nota ao
+Narrador**, que é por turno e não toca no teto do prompt.
+
+As palavras moram em `src/palavras-da-reacao.js` — nove tabelas e duas funções
+puras, **zero frase montada dentro de um JSX**.
+
+## O relógio: um só, e o trilho é uma leitura dele
+
+Onze segundos **sem relógio nenhum**, depois quatro de trilho, e o último em
+`danger`. O cheio é `transform: scaleX()` com `animation-delay` **negativo**
+calculado de `agora − t0`: a barra nasce na proporção que lhe cabe e **não há
+número de píxeis nem percentagem escrita em lado nenhum**. A expiração é do
+relógio de parede; `animationend` não decide nada.
+
+## Quatro decisões deste `regente`, e cada uma tem o seu motivo
+
+1. **Quem responde resolve-se pelo MESMO caminho de quem não responde**
+   (`reacaoDoSilencio` a partir de `abre.ordem`). Parece um detalhe de fiação e é
+   a decisão que salva a fase: a `chance` continua a viver dentro de
+   `escolherReacao` e o laço continua a tentar o golpe seguinte quando ela falha
+   — **o ladino esquiva 97,6 %, como hoje, em vez de 100 % de graça.** Resolver a
+   reação directamente teria dado ao jogador que responde um mundo melhor que o
+   de hoje, em silêncio, e sem ninguém ter decidido isso.
+2. **O envelope não espera o cartão.** A resolução vai ao Mestre assim que a
+   rodada resolve; o cartão vive os seus 1 200 ms **por cima** da espera de
+   ~13,4 s que já existia. Poupa 1,2 s por rodada e não custa nada a ninguém.
+3. **O cartão diz o saldo de PM, não só o preço** — e é conserto de uma colisão
+   medida: no telefone (375 px) o cartão tapa **57 % da tira do herói**, e o que
+   fica por baixo é **a barra de PM inteira**, no segundo exacto em que ele pede
+   ao jogador que decida gastar PM. *Mostrar o preço e esconder a bolsa é meio
+   veredito.* A etiqueta só aparece quando alguma reação oferecida custa PM.
+4. **O cartão tem teto de 560 px.** A região do veredito varia **288 → 1 400 px**
+   (4,86×): sem teto, a regra do trilho (*mede a largura da janela*) daria um
+   relógio de 1 400 px de percurso no monitor. K1 compôs num quadro de 375 e
+   ninguém tinha fechado a outra ponta.
+
+## `deixar passar` é fiação, não regra — e a distinção custou um defeito
+
+`ritmoDaRodada` faz o certo ao fechar a rodada por `preferencia`: ela responde
+*«não perguntes»*, e não perguntar está correcto para `aparar sempre` **e** para
+`deixar passar`. Quem sabe a diferença é **o App**, que tem a preferência na mão.
+Sem essa linha, a pílula que promete *nunca reajas* deixava o motor de hoje reagir
+e **gastar o PM na mesma** — o oposto exacto do que o jogador escolheu.
+
+## A fila da ficha é a conformidade, não um mimo
+
+> **Quando um golpe chega** · `[✓ EU DECIDO]` · `[EU DECIDO, SEM PRESSA]` ·
+> `[APARAR SEMPRE]` · `[DEIXAR PASSAR]`
+
+**WCAG 2.2.1 (*Timing Adjustable*, nível A)** cumprida duas vezes: escolher um
+verbo **desliga** o limite de tempo, e *sem pressa* **estende-o sem fim**. E mora
+na ficha porque ali o jogador lê *"como o meu herói se defende"*, que é ficção —
+e não *"configurar reações"*, que é mecanismo.

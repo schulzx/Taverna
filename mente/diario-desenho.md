@@ -19,6 +19,125 @@ Formato:
 
 ---
 
+## 16/09 11:05 · v9.270 · K3 · a reação acontece · commit `HASH`
+
+*O escrito dos dois seniores ficou de um ciclo anterior, em `mente/k3-jogo.md` e
+`mente/k3-desenho.md`; a forma, no bloco final de `mente/formas.md`.*
+
+**A etapa em que a peça finalmente nasceu — e em que a conferência viva apanhou
+dois defeitos que 102 asserções não apanharam.**
+
+- **HOUVE UM CICLO MORTO, e é a primeira coisa a registar.** Um ciclo K3 correu
+  hoje às 05:05 e **morreu no limite de uso da API, não por falha**. Ele deixou
+  para trás a trava (`.claude/ciclo-desenho-em-curso`) e **o bastão do
+  `App.jsx`**, os dois com **2 h 33 min** quando reabri — muito acima dos 90
+  minutos, logo assumi os dois e registo-o aqui, que é o que a lei pede.
+  **O que ele deixou de bom, e foi tudo aproveitado:** os dois seniores já
+  tinham entregue — `k3-jogo.md` (as palavras, a ordem dos dezassete instantes,
+  as varreduras de 20 000 sementes) e `k3-desenho.md` (as sete classes, o anel,
+  o contrato do componente, as treze portas do segredo do dano), mais 41 linhas
+  de `[K3]` já fundidas em `formas.md`. **Ele morreu exactamente quando ia
+  despachar os construtores** — e foi daí que este ciclo partiu, sem refazer uma
+  linha do que os seniores escreveram.
+
+- **E MORREU OUTRA VEZ, por minha culpa, a meio deste ciclo.** Encerrei um turno
+  a dizer *"enquanto as duas mãos terminam os consertos"* — que é literalmente o
+  aviso do topo do meu próprio roteiro (*um subagente que encerra o turno morre
+  ali*). Desta vez as duas mãos tinham acabado antes e **o trabalho estava
+  inteiro no disco**; foi sorte, não método. É a quinta vez nesta casa.
+
+- **estado inicial:** árvore verde ao abrir (`npm test` exit 0). `VERSAO`
+  `v9.268`, subida para `v9.269` pela outra mente (V1) durante o ciclo, e daí
+  para **`v9.270`**. A outra mente correu V1 e depois Y1, e no fim tinha
+  `disputa.js`, `golpe.js` e `grid.js` em voo na árvore.
+
+- **o bastão do `App.jsx`:** **tomado às 07:42** (assumido de um dono morto de
+  05:05), em nome do `oficial`, **e devolvido às 11:05**, com o arquivo
+  terminado. **Para quê:** a janela precisa de suspender a rodada, e
+  `resolverRevide` era síncrona — não havia como fazê-lo de fora. **O que se
+  levou para casa própria:** o cartão inteiro (`painel-reacao.jsx`) e todas as
+  palavras (`palavras-da-reacao.js`), que é o melhor uso que a lei descreve.
+
+- **aprendiz / oficial:** os dois no mesmo turno, **em arquivos separados e
+  nunca no mesmo** — `aprendiz` fora do `App.jsx` (o componente, as palavras, a
+  folha, a suíte), `oficial` dentro dele (a cisão, a fiação, a fila da ficha).
+  Correram em paralelo contra uma assinatura que eu fixei por escrito nos dois
+  prompts, e não divergiram.
+
+- **a prova:** **192/192 suítes verdes e 13/13 varredores limpos** por
+  `mente/so-o-meu.sh` (HEAD + 11 arquivos meus), porque a árvore tinha Y1 em
+  voo. `npm run build` limpo. A suíte nova tem **102 asserções**.
+
+### decisões médias tomadas, cada uma com o motivo
+
+1. **Quem responde resolve-se pelo MESMO caminho de quem não responde.** É a
+   decisão que salvou a fase. `resolverReacao` não tem ramo de falha; resolver
+   a reação escolhida directamente daria ao ladino **100 %** de esquiva onde hoje
+   ele tem **97,6 %** — um buff invisível, sem ninguém o ter decidido. Passando
+   por `reacaoDoSilencio(desde: abre.ordem)`, a `chance` fica dentro de
+   `escolherReacao` e o laço continua a tentar o golpe seguinte, byte a byte.
+2. **O envelope não espera o cartão.** `aoTerminar` dispara assim que a rodada
+   resolve; o cartão vive os seus 1 200 ms por cima da espera de ~13,4 s do
+   Mestre. Poupa 1,2 s por rodada e não custa nada a ninguém.
+3. **`deixar passar` é fiação, não regra** — e o `oficial` tinha-a classificado
+   como regra. `ritmoDaRodada` faz o certo ao fechar por `preferencia`; quem
+   sabe a diferença entre *aparar sempre* e *nunca reajas* é o App. Sem essa
+   linha, a pílula deixava o motor reagir e **gastar o PM na mesma**.
+4. **O cartão tem teto de 560 px e diz o saldo de PM.** A região do veredito
+   varia **288 → 1 400 px** (4,86×): sem teto, um relógio de 1 400 px de
+   percurso. E no telefone o cartão tapa **57 % da tira do herói**, incluindo a
+   barra de PM inteira, no segundo em que pede PM — *mostrar o preço e esconder
+   a bolsa é meio veredito*.
+5. **O orçamento paga-se na palavra, não no espaço em branco.** `corta a maior
+   parte` (19) virou `corta o grosso` (14), e a forma canónica de `formas.md`
+   voltou inteira. *Um orçamento que se paga comendo espaço é um que ninguém vê
+   estourar* — agora há catraca a exigir `/ \d+ PM — /`.
+
+### o que a conferência viva apanhou, e a suíte não
+
+- **`💨 esquiva ágil · 0PM—anula`** na tela, comprimido. Consertado.
+- **A pílula «eu decido, sem pressa» expirava no primeiro frame** — `janelaMs: 0`
+  do ritmo `parado` fazia `0 >= 0` e o cartão resolvia-se sozinho, **somando
+  ainda um degrau à escada do silêncio de quem a escolheu**. A pílula que existe
+  para cumprir a **WCAG 2.2.1** fazia o oposto exacto do que promete.
+- **O anel de foco acende**, e é o que K2 disse que não se provava em Node:
+  `:focus-visible` a `true` e `box-shadow` de `T.bg` 2 px + `T.ink` 4 px, sob
+  um `Tab` de verdade. **A fila não se mexe** — os x das quatro pílulas são
+  idênticos com e sem foco.
+- **As medidas batem:** cartão **560 px**, chamado **56 px**, recuo **48 px**,
+  trilho `tvJanelaTempo` **4 s linear**, `transform-origin` à esquerda, `T.amber`,
+  **atraso negativo** e nascido já na proporção (scaleX 0,852 medido).
+
+### o que ficou feio, e o que eu não soube
+
+- **Nunca vi o cartão nascer de um golpe de verdade.** O inimigo que o torneio
+  sorteou era de distância e passou as rodadas a reposicionar-se — a *caminhada*
+  que a própria pauta mede. O que provei vivo foi: (a) a rodada inteira a correr
+  pela continuação nova quando nenhuma porta abre (`🌍 VEZ DO MUNDO`), e (b) o
+  cartão montado com uma oferta real de `ritmoDaRodada`, num banco de prova que
+  apaguei no fim. **A integração completa — golpe real, cartão, resolução — é a
+  primeira coisa que K4 tem de ver.**
+- **As pílulas da ficha medem 27 px de altura**, e `formas.md` desenhou
+  `A escolha` *Forma=Pílula* a **47**. Passam a WCAG 2.5.8 (24 px) e falham a
+  régua da casa. Não consertei: é peça, e peça é do `desenho`.
+- **O preço cala o risco** nas duas reações que podem falhar. Foi para a pauta
+  com a conta e três saídas, porque merece desenho e não remendo.
+- **Os endereços de linha cobraram outra vez:** +425 linhas no `App.jsx` e
+  `check-acoes-do-jogador` acusou **90 divergências, todas de endereço**.
+  Re-medidas por um mapa antigo→novo tirado do diff, com cinto que exige a linha
+  nova ser **byte a byte** a antiga; duas não tinham retrato fiel (as duas
+  assinaturas que mudaram) e foram à mão. **Segunda cobrança em dois ciclos, e
+  2,7× a primeira** — está escrito no item da pauta que propõe a âncora de texto.
+- **Vermelho do outro território, não consertado, como manda a lei:**
+  `teste-disputa.mjs` (14 falhas, `{dx,dy}` contra `{x,y}`) é Y1 da outra mente,
+  em voo. Provei o meu por `so-o-meu.sh`.
+- **O save de Uma Noite foi salvo e devolvido** — 39 498 bytes, conferido byte a
+  byte, com o jogo **desmontado** na restauração. O meu jogo tinha-o reescrito
+  para 24 956. A campanha (139 481) nunca se mexeu. *É exactamente o que o ciclo
+  morto perdeu, e o que o `CLAUDE.md` nomeia por extenso.*
+
+---
+
 ## 16/09 08:40 · v9.267 · K2 · a trava, antes de tudo (e a dívida de W2 paga) · commit `ae1be0b`
 
 *O escrito dos dois seniores fica em `mente/k2-jogo.md` e `mente/k2-desenho.md`;

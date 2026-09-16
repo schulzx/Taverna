@@ -262,10 +262,17 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
   if (iPush < 0) {
     falha("não achei a declaração de `pushMsgs` em src/App.jsx",
       "o funil das linhas mudou de forma ou de nome. Reveja o cabeçalho do bloco 6 de testes/acoes-do-jogador.mjs e re-meça FUNIL_DO_COMBATE — sem o funil, o eixo da frase não tem o que contar");
-  } else if (iPush + 1 !== 7504) {
-    falha(`pushMsgs saiu de src/App.jsx:7504 e agora está em :${iPush + 1}`,
+  /* v9.270 (K3): 7504 -> 7553. A janela da reacao acrescentou 49 linhas ACIMA
+     deste ponto — o importe dos tres modulos novos e o bloco de refs de
+     `tentarReacaoNoGolpe`. O `pushMsgs` nao andou por vontade propria, e o
+     que ele guarda continua a ser o mesmo: endereco re-medido, assercao
+     intacta. (E a segunda vez em dois ciclos que esta catraca cobra o
+     deslocamento; o item da pauta que propoe trocar numero por ancora de
+     texto ja leva as duas cobrancas escritas.) */
+  } else if (iPush + 1 !== 7553) {
+    falha(`pushMsgs saiu de src/App.jsx:7553 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:7504, como o mapa de X3b diz");
+  } else ok("pushMsgs segue em src/App.jsx:7553, como o mapa de X3b diz");
 
   let divergiu = 0;
   for (const f of FUNIL_DO_COMBATE) {
@@ -305,7 +312,15 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      núcleo. Se uma delas cair, o anel inteiro tem de ser remedido. */
   const guardas = [
     ["resolverAtaqueJogador", /const resolverAtaqueJogador = \(acao, pers\) => \{\s*\n\s*const comb = combateRef\.current;\s*\n\s*if \(!comb/],
-    ["resolverRevide", /const resolverRevide = \(persBase\) => \{\s*\n\s*const combPos = combateRef\.current;\s*\n\s*if \(!combPos\)/],
+    /* v9.270 (K3): `resolverRevide` ganhou um segundo parametro, `aoTerminar` —
+       a continuacao que a janela da reacao exige, porque uma funcao sincrona
+       nao sabe suspender-se no meio da rodada. A GUARDA NAO MUDOU: o
+       `combateRef.current` e o `if (!combPos)` continuam nas mesmas duas
+       linhas, e e isso que esta asercao mede. O regex e afrouxado no que a
+       assinatura passou a aceitar (parametros) e em nada mais — em especial,
+       ele continua a falhar se a guarda desaparecer, que e o unico emprego
+       que ele tem. */
+    ["resolverRevide", /const resolverRevide = \(persBase[^)]*\) => \{\s*\n(?:\s*\/\*[\s\S]*?\*\/\s*\n)?\s*const combPos = combateRef\.current;\s*\n\s*if \(!combPos\)/],
     ["moverPara", /const moverPara = \(destino\) => \{\s*\n\s*const comb = combateRef\.current;\s*\n\s*if \(!comb\)/],
   ];
   for (const [nome, rx] of guardas) {

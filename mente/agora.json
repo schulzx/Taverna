@@ -1,17 +1,17 @@
 [
   {
-    "agente": "regente",
-    "o_que": "rege o ciclo K3 — a reação acontece (com o bastão e as quatro obrigações de K2)",
-    "desde": "2026-09-16T10:00:00Z"
+    "agente": "orquestrador",
+    "o_que": "rege o ciclo Y1 — Empurrar e Derrubar ganham motor",
+    "desde": "2026-09-16T11:08:27.635Z"
   },
   {
-    "agente": "jogo",
-    "o_que": "K3 · o momento vivo: o chamado, o toque, o que o jogador sente",
-    "desde": "2026-09-16T10:00:00Z"
+    "agente": "backend",
+    "o_que": "Y1 · src/disputa.js: o teste oposto, o empurrão no tabuleiro e o `caido` por declaração",
+    "desde": "2026-09-16T11:08:27.635Z"
   },
   {
-    "agente": "oficial",
-    "o_que": "K3 · a janela no App.jsx, por âncora, com o bastão",
-    "desde": "2026-09-16T10:00:00Z"
+    "agente": "testes",
+    "o_que": "Y1 · teste-disputa.mjs, a sonda da distância e a asserção de golpe que se move",
+    "desde": "2026-09-16T11:08:27.635Z"
   }
 ]
