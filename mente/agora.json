@@ -1,12 +1,17 @@
 [
   {
-    "agente": "orquestrador",
-    "o_que": "rege o ciclo Q1 — quem cai e quem só morre",
-    "desde": "2026-09-16T08:00:00Z"
+    "agente": "regente",
+    "o_que": "rege o ciclo K3 — a reação acontece (com o bastão e as quatro obrigações de K2)",
+    "desde": "2026-09-16T10:00:00Z"
   },
   {
-    "agente": "testes",
-    "o_que": "Q1 · teste-queda.mjs e a medição do golpe em quem já caiu",
-    "desde": "2026-09-16T07:38:43.555Z"
+    "agente": "jogo",
+    "o_que": "K3 · o momento vivo: o chamado, o toque, o que o jogador sente",
+    "desde": "2026-09-16T10:00:00Z"
+  },
+  {
+    "agente": "oficial",
+    "o_que": "K3 · a janela no App.jsx, por âncora, com o bastão",
+    "desde": "2026-09-16T10:00:00Z"
   }
 ]

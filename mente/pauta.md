@@ -1471,17 +1471,49 @@ valem hoje **só para o herói**. N1 mediu que a lista de alvos é foto por
 turno e que **13,4%–18% do dano inimigo cai em quem já está no chão** — o
 que esta fase torna uma regra em vez de um acidente.
 
-- [ ] **Q1 · quem cai, e quem só morre** · de: pessoa · 14/09
+- [x] **Q1 · quem cai, e quem só morre** · de: pessoa · 14/09 ·
+  **FEITO em v9.268** (`7a519be`)
   Tabela: quem faz teste de morte ao chegar a 0 (herói, companheiro,
   inimigo **importante**) e quem morre direto (o comum). O critério de
   "importante" sai de campo declarado no bestiário — nunca de adivinhação
   por nome. Provado em Node, com o lixo e os limites.
+  **O que ficou escrito:** `src/queda.js` — `DONOS_DA_QUEDA` (herói e
+  companheiro caem **sempre**, inimigo **só se importante**, e o padrão de
+  quem não se declarou é morrer direto), `quedaAoChegarAZero` como porta
+  única, `ehImportante` que lê **só** o campo declarado, e
+  `GOLPE_NO_CAIDO` — o golpe em quem já caiu custa **1 falha, 2 no
+  crítico, 0 em quem não testa**. **5 das 27** criaturas declaram
+  (Dragão Jovem, Lich, Dragão Ancião, Comandante, Horror); o Comandante é
+  `elite` e declara e o Colosso é `lendario` e não, que são as duas provas
+  de que o campo não sai da `ameaca`. 81 asserções em `teste-queda.mjs`.
+  **Q1 NÃO LIGA NADA** — a tabela existe e ninguém a lê na mesa; a fiação
+  é de Q2, com as notas no cabeçalho do módulo.
+  **E a medição mudou o desenho de Q2** (`testes/sonda-queda.mjs`, 1000
+  sementes, IC 95%): o desperdício em corpo caído é **20,02% (`justo`) e
+  22,68% (`duro`)** do dano inimigo, **não** os 13,40%/18,03% que N1
+  escreveu — N1 mediu antes do conserto da ordem da rodada e com parte da
+  conta vinda de uma reconstrução de scratchpad. Projeção da tabela:
+  **0,868 ± 0,047** (justo) e **0,990 ± 0,050** (duro) quedas de companheiro
+  por combate passariam a virar morte. **Registado e NÃO reequilibrado** —
+  balancear é da pessoa, e a régua corre com `grade: null`, logo é limite
+  otimista e não o jogo.
+  **O que Q1 NÃO tocou, e continua na fila:** a queda de companheiro é
+  silêncio absoluto (`App.jsx:13967`, item de X3b abaixo) e o reforço entra
+  sem `x`/`y` nem iniciativa — os dois são fiação, logo de Q2 ou de quem
+  pegar o bastão.
 - [ ] **Q2 · o companheiro cai como gente** · de: pessoa · 14/09
   O grupo passa a ter queda de verdade: estabilizar, ser estabilizado,
   morrer. Aqui encosta o achado de N1 — **59,7% da cura do companheiro
   chega em quem já está a 0 PV** — e a regra de bater em quem caiu deixa de
   ser foto velha e passa a ser decisão. Medir com a régua de B1 (depois de
   N1b consertá-la) e dizer o que muda para quem joga.
+  **Q1 mediu e corrigiu o alcance desta etapa (16/09):** a foto de alvos
+  (`combate.js:245-249`) não falha só com o companheiro — o **herói também
+  apanha já caído**, 2,03 (`justo`) e 1,86 (`duro`) golpes por combate. A
+  linha que dizia que ele escapava por acidente de referência foi medida e
+  desmentida; o conserto é dos **três lados**. As tabelas de Q1 já existem
+  e esperam leitor: `quedaAoChegarAZero` é a porta única, e se aparecer um
+  segundo `vida <= 0 ? …` no App a doença voltou.
 - [ ] **Q3 · letal ou não letal** · de: pessoa · 14/09
   Quando o golpe **levaria** o alvo a 0, o jogador escolhe antes de aplicar
   — é a lei *o veredito antes do clique* na sua forma mais pura. Não letal

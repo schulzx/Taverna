@@ -16,6 +16,114 @@ Formato:
 
 ---
 
+## 16/09 08:20 · v9.268 · Q1 · quem cai, e quem só morre · commit `7a519be`
+
+- **estado inicial:** trava `.claude/ciclo-em-curso` **ausente** — pus a
+  minha. Árvore só com `mente/agora.json` e dois documentos da outra mente
+  (K2), que ela commitou durante o ciclo. `npm test` **verde de saída**.
+  `VERSAO` relida em `src/constantes.js` antes de datar: `v9.266` no início,
+  e a outra mente subiu `v9.267` (`ae1be0b`, `d5b9569`) **no meio do ciclo**
+  — **releio antes de fechar e redatei 7 comentários** de `v9.266` para
+  `v9.268`. É exatamente a armadilha que custou 32 redatações em H1, e desta
+  vez a segunda leitura apanhou-a.
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, etapa escrita.
+- **o bastão do `App.jsx`: NÃO TOMADO.** `.claude/app-jsx` era da outra
+  mente (W2/K2, 06:40). A etapa foi desenhada para caber **só no motor**: o
+  App foi lido e não tocado, e a fiação ficou **escrita** no cabeçalho de
+  `src/queda.js` para Q2 a aplicar de uma vez.
+- **backend:** `src/queda.js` (novo) — `DONOS_DA_QUEDA` (herói **sempre**,
+  companheiro **sempre**, inimigo **se importante**), `quedaAoChegarAZero`
+  como porta única que nunca lança e nunca devolve `null`,
+  `APELIDOS_DO_LADO` (cobre o `ref` de `combate.js` sem tradução à mão),
+  `ehImportante` que só aceita `importante === true`, e `GOLPE_NO_CAIDO`.
+  Em `src/bestiario.js`, o campo declarado `importante` no molde do
+  `degrau` de N2, e `completarInimigo` a carregá-lo até à ficha que chega à
+  luta — pela terceira vez que esta casa paga por uma tabela que a mesa não
+  vê (`perfil` v9.152, `degrau` v9.259).
+- **testes:** `testes/teste-queda.mjs` (novo, 81 asserções em 8 seções) e
+  `testes/sonda-queda.mjs` (novo, medição). A suíte deriva a expectativa da
+  **coluna `testa` da própria tabela** em vez de repetir 1/2/3 à mão, varre
+  22 entradas tortas e 16 valores falsos de `importante`, e prova o contrato
+  com `aplicarTesteMorte` empurrando falhas pelo motor real até `morto`.
+  `teste-ligacao` **20/1 → 21/0** e `check-mortas` **1 → 0 exports sem
+  leitor**: `falhasDoGolpeNoCaido` nasceu sem leitor e a suíte fechou-o no
+  mesmo dia, que é o que a catraca existe para forçar.
+
+- **decisões médias tomadas** (cada uma com o motivo, que é o que se audita):
+  1. **O módulo chama-se `queda.js` e não reescreve `testeDeMorte`.** A
+     decisão ("cai ou morre?") e a sorte ("resiste ou enfraquece?") são duas
+     perguntas; misturá-las tornaria Q1 improvável sem semente. `combate.js`
+     ficou **intocado**.
+  2. **O padrão de quem não se declarou é MORRER DIRETO.** Um lado
+     desconhecido que caísse ganharia imortalidade por acidente, e o nome
+     inventado pelo Narrador é o caso comum, não o raro.
+  3. **5 das 27 criaturas declaram `importante`** — Dragão Jovem, Lich,
+     Dragão Ancião, Comandante, Horror. Critério escrito: aparece sozinha e
+     nomeada, e o jogo perde o fim dela se acontecer sem cena. Deixei duas
+     exceções de propósito — o **Comandante** é `elite` e declara, o
+     **Colosso** é `lendario` e não — porque são a prova viva de que o campo
+     **não** sai da `ameaca`, que é a adivinhação que a pauta proíbe.
+  4. **`e.importante` vindo da IA é ignorado.** O Narrador nomeia; quem
+     declara mecânica é a tabela. Torna `completarInimigo` idempotente.
+  5. **O golpe em quem já caiu custa 1 falha (2 no crítico) e 0 em quem não
+     testa.** O ciclo exigia que a tabela dissesse o que faz com os 13,4%-18%
+     de N1; a alternativa — deixá-lo evaporar — premia o azar de quem já
+     perdeu alguém. `falhasAteMorrer: 3` espelha o literal de
+     `aplicarTesteMorte`, com a suíte a provar que os dois concordam.
+  6. **Contadores de diagnóstico no retorno de `simularCombate`**
+     (`danoEmCaidos`, `golpesEmCaidosPorNome` e mais cinco). Somar campo ao
+     retorno não muda veredito: **`CATRACA_DE_UMA_VIDA` intacta**, nenhum
+     limiar tocado, nenhum cenário alterado.
+  7. **Corrigi o cabeçalho de `queda.js` eu mesmo** depois da medição, em
+     dois pontos: os números de N1 e a frase "o herói escapa por acidente".
+     Comentário que mente é pior que comentário ausente, e este ia para Q2
+     como instrução.
+
+- **a medição, e ela diverge de N1 — não se forçou o número antigo.**
+  1000 sementes, família `umavida`, IC 95%, Adversário ligado:
+
+  | | justo | duro |
+  |---|---|---|
+  | golpes em corpo caído | 4,97 ± 0,13 | 5,43 ± 0,14 |
+  | dano em corpo caído | 61,20 ± 1,65 PV | 67,18 ± 1,83 PV |
+  | fração do dano inimigo | **20,02%** | **22,68%** |
+  | *projeção Q1:* quedas que virariam morte | **0,868 ± 0,047** | **0,990 ± 0,050** |
+
+  N1 escreveu 13,40%/18,03%; mediu-se **20,02%/22,68%**. A causa está no
+  próprio diário: N1 mediu **antes de N1b** (o conserto da ordem da rodada) e
+  com parte da conta vinda de uma reconstrução de scratchpad que o diário já
+  marcava como reconstrução. Com o Adversário **desligado** os mesmos
+  contadores dão 3,78%/6,59% — nenhuma das duas pontas reproduz 13,40%, e
+  quem gera a sobra é quem concentra fogo.
+  **Duas ressalvas que viajam com todo número acima:** (a) a régua corre com
+  `grade: null` (X4) — **não tem tabuleiro**, todo golpe alcança, logo isto é
+  o **limite otimista** do desperdício e nunca "o jogo"; (b) tudo na metade de
+  baixo é **projeção**, porque Q1 não liga nada e a mesa de verdade reagiria
+  (quem morre deixa de ser alvo).
+  **Registado e NÃO reequilibrado**, como o ciclo mandou: balancear é da
+  pessoa, e a régua está saturada até ela responder sobre o alvo tático.
+
+- **o que Q1 achou e muda o alcance de Q2:** a frase do cabeçalho que dizia
+  que **o herói escapa** do desperdício por acidente de referência foi medida
+  e **desmentida** — são **2,03 (`justo`) e 1,86 (`duro`)** golpes por combate
+  em herói **já** no chão. O filtro de `combate.js:267` tira quem estava
+  caído no **início** do passo; quem cai **durante** o passo apanha, herói
+  incluído. O conserto da foto é dos **três lados**, e está escrito na pauta
+  em Q2.
+
+- **o que ficou:** **Q2 não foi tocada** (o ciclo mandou um item). Continuam
+  na fila, e Q1 **não** os tocou porque são fiação: a **queda e a morte de
+  companheiro são silêncio absoluto** (`App.jsx:13967`, achado de X3b) e o
+  **reforço entra sem `x`/`y` nem iniciativa** (X4). `mente/pedidos-ao-sistema.md`
+  foi lido: **nada atendido neste ciclo** — os nove abertos são de `turno.js`,
+  `falas.js`, `desafios.js` e do `App.jsx`, e nenhum cabia numa etapa que se
+  proibiu o App para não tomar o bastão da outra mente.
+- **fechamento:** `npm run build` limpo, `npm test` **190/190 suítes · 13/13
+  varredores**. Não houve vermelho da outra mente para separar — K2 e W2
+  estavam verdes. `bash mente/so-o-meu.sh` (HEAD + só os nossos) deu
+  **189/189 · 13/13**, 189 porque `teste-trava-da-reacao.mjs` da outra mente
+  ainda não estava em HEAD quando se provou.
+
 ## 16/09 07:10 · v9.266 · H2 · de quem já são os 12 · commit `59dab1e`
 
 - **estado inicial limpo, pela primeira vez em três ciclos.** Trava ausente —
