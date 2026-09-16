@@ -30,7 +30,7 @@ const ok = (o) => console.log("  ok  " + o);
 
 console.log("\n1. as 12 ACOES_PRONTAS e o handler único");
 {
-  /* o bloco literal, como ele está hoje em src/App.jsx:1071-1084 */
+  /* o bloco literal, como ele está hoje em src/App.jsx:1073-1084 */
   const bloco = APP.match(/const ACOES_PRONTAS = \[([\s\S]*?)\n\];/);
   if (!bloco) {
     falha("não achei `const ACOES_PRONTAS = [...]` em src/App.jsx",
@@ -98,7 +98,7 @@ console.log("\n1. as 12 ACOES_PRONTAS e o handler único");
   const condicionais = acoesComCliqueCondicional().map((a) => a.rotulo);
   if (condicionais.join() !== "Atacar") {
     falha(`a tabela declara clique condicional em: ${condicionais.join(", ") || "ninguém"}`,
-      "o código trata de dois jeitos UM botão só — `Atacar`, por `golpeVivo` (src/App.jsx:20715). Se nasceu um segundo, escreva `cliqueChegaFora` na entrada dele em testes/acoes-do-jogador.mjs; se `Atacar` deixou de ser condicional, tire o campo e diga por quê");
+      "o código trata de dois jeitos UM botão só — `Atacar`, por `golpeVivo` (src/App.jsx:20300). Se nasceu um segundo, escreva `cliqueChegaFora` na entrada dele em testes/acoes-do-jogador.mjs; se `Atacar` deixou de ser condicional, tire o campo e diga por quê");
   } else ok("o eixo condicional tem exatamente um membro, e é `Atacar`");
 }
 
@@ -274,10 +274,14 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      intacta. (E a segunda vez em dois ciclos que esta catraca cobra o
      deslocamento; o item da pauta que propoe trocar numero por ancora de
      texto ja leva as duas cobrancas escritas.) */
-  } else if (iPush + 1 !== 7550) {
-    falha(`pushMsgs saiu de src/App.jsx:7550 e agora está em :${iPush + 1}`,
+  /* E3: 7550 -> 7135. A tela da batalha e as duas gavetas saíram do
+     App.jsx (-450 linhas) e o funil andou junto, sem mudar de forma. É a
+     QUARTA vez em quatro ciclos que esta catraca cobra um deslocamento que
+     não é defeito nenhum. */
+  } else if (iPush + 1 !== 7135) {
+    falha(`pushMsgs saiu de src/App.jsx:7135 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:7550, como o mapa de X3b diz");
+  } else ok("pushMsgs segue em src/App.jsx:7135, como o mapa de X3b diz");
 
   let divergiu = 0;
   for (const f of FUNIL_DO_COMBATE) {
@@ -415,7 +419,10 @@ console.log("\n11. a sessão A pelo eixo da frase — a fiação que ela modela"
   }
   /* o endereço do `enviar` que a tabela cita: se ele andou, a explicação
      escrita aponta para o lugar errado */
-  const iEnviar = LINHAS_APP.findIndex((l, i) => i > 11864 && /^\s*enviar\(`\[COMBATE — RESOLVIDO PELO SISTEMA\]/.test(l));
+  /* E3: 11864 -> 11500. Piso da busca, não endereço: a tela da batalha e as
+     duas gavetas saíram do App.jsx e o `enviar` desceu para :11723. Um piso
+     que não desce junto procura o alvo DEPOIS de ele já ter passado. */
+  const iEnviar = LINHAS_APP.findIndex((l, i) => i > 11500 && /^\s*enviar\(`\[COMBATE — RESOLVIDO PELO SISTEMA\]/.test(l));
   if (iEnviar < 0) {
     falha("não achei o `enviar([COMBATE — RESOLVIDO PELO SISTEMA]…)` da porta única",
       "SESSAO_A_PELA_FRASE.ondeSai cita esse envio para explicar por que o Narrador não é chamado na recusa. Re-meça e atualize o campo em testes/acoes-do-jogador.mjs");

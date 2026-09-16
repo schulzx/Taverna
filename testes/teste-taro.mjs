@@ -118,7 +118,15 @@ sec("6. TODO RETRATO ABRE A CARTA, E NENHUM PAINEL PRECISOU SABER DISSO");
   /* o espaço antes de `ente=` não é preciosismo: sem ele o `semente=` de
      todo retrato conta como se fosse a pessoa, e a prova jura que estão
      todos ligados quando nenhum está */
-  const entes = (APP.match(/<Retrato [^>]*\sente=\{/g) || []).length;
+  /* E3: a conta passa a somar o `App.jsx` E a `painel-batalha.jsx`, e o
+     total NÃO muda — porque a lei que esta asserção guarda é "todo retrato
+     entrega a pessoa", que é sobre a INTERFACE e nunca sobre um arquivo. A
+     tela da batalha levou consigo dois retratos (o do inimigo na tira de
+     quem está de pé e o do herói na ficha curta); medir só no App faria a
+     prova dizer que eles deixaram de entregar a pessoa, quando o que
+     mudou foi o endereço. */
+  const BATALHA = semComentarios(CRU("painel-batalha.jsx"));
+  const entes = ((APP + BATALHA).match(/<Retrato [^>]*\sente=\{/g) || []).length;
   /* v9.177: passaram a SETE. A sala redesenhada (`sala-multiplayer-v2`)
      mostra o retrato de quem já sentou, e ele veste o traje da classe como
      todos os outros — com `semCarta`, porque a cadeira inteira já é área de
@@ -126,9 +134,16 @@ sec("6. TODO RETRATO ABRE A CARTA, E NENHUM PAINEL PRECISOU SABER DISSO");
   /* v9.180: e OITO. A tela do fim (`momento-morte-legado-v2`) põe o retrato
      do herói no anel do memorial, com `estado="grave"` — quem tombou tem a
      mesma cara que teve a campanha inteira. */
-  t(`o App entrega a pessoa em ${entes} retratos`, entes === 8);
+  /* E3: e NOVE. A tela da batalha levou o retrato do inimigo (que já
+     existia no painel de combate) e ganhou um que não existia: a ficha
+     curta do herói, na tira lateral. É retrato novo a entregar a pessoa, e
+     por isso a conta sobe de verdade — não é a mudança de arquivo, que
+     seria neutra. */
+  t(`a interface entrega a pessoa em ${entes} retratos`, entes === 9);
   t("a ficha também", /<Retrato semente=\{sementeDe\(p\)\} ente=\{p\}/.test(semComentarios(CRU("painel-ficha.jsx"))));
-  t("o inimigo abre carta de inimigo", (APP.match(/ente=\{e\} inimigo/g) || []).length === 2);
+  /* E3: pelo mesmo motivo — um dos dois é o da tela da batalha, e ele
+     mudou de arquivo, não de comportamento. */
+  t("o inimigo abre carta de inimigo", ((APP + BATALHA).match(/ente=\{e\} inimigo/g) || []).length === 2);
   /* e o retrato do cabeçalho NÃO: ele já é o botão que abre a ficha, e
      botão dentro de botão passa no teste e falha no dedo */
   /* v9.158: o atalho aponta para a GESTÃO (a ficha é sub-aba dela desde a

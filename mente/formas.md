@@ -352,12 +352,19 @@ Três avisos de leitura:
   de entrada** (à esquerda no cartão e na pílula, embaixo na aba) **+ o visto**.
   O *Contador* tem o piso de 44px — *"preciso de uma peça de escolha que saiba
   ser contador sem encolher para caber"*.
+  **[E3] O piso desta família é `ALVOS.piso` = 48, e não 44.** O 44 escrito acima
+  é o mínimo do WCAG 2.5.5 (AAA), não o número desta casa — e a casa fechou o dela
+  em K4. No Figma, *Pílula* e *Aba* medem **48** nos quatro estados; o *Cartão*
+  mede 88 e passa por folga. Quando o *Contador* nascer, nasce a 48.
 - **movimento** — 120ms na troca de borda; o filete cresce de 0 a 3px no mesmo
   tempo. Sob `prefers-reduced-motion`, aparece pronto.
 - **onde vive** — Figma: página `A escolha`, conjunto `A escolha` (12 variantes:
   Cartão · Pílula · Aba × 4 estados). ***Contador* e *Lista* estão declarados e
   ainda não fabricados**, também no Figma — **[ainda não existe]**, e é melhor
-  dizê-lo que deixar a contagem sugerir o contrário. · Código:
+  dizê-lo que deixar a contagem sugerir o contrário.
+  **[E3] As alturas, lidas de volta do arquivo:** Cartão 88 (107 em *Impedida* —
+  ver a dívida no bloco de E3), Pílula **48**, Aba **48**, e **o *Foco* mede
+  exactamente o que o *Repouso* mede nas três formas**. · Código:
   `CartaoDeEscolha`, `ui.jsx:389` — **11 usos, todos na criação**. Pílula, aba,
   contador e lista: **[ainda não existe]**.
 - **por quê** — medida: **`background: T.amber` tem 37 usos** em `src/**` e é a
@@ -1070,9 +1077,12 @@ D4 e continua verdade está mantido palavra por palavra.)*
   do herói**, nunca uma lista. `folgado` fica de fora de propósito: é o que a
   escada dá a quem **não pediu**.
 - **onde vive** — Figma: a fila na ficha, com instâncias de `A escolha` (`20:77`)
-  — **[K4] e o Figma diz 47 onde o código diz 48: a divergência está aberta e
-  escrita, não descoberta.** · Código: **`PilulaDeEscolha`, `src/ui.jsx`**, com a
-  fila na ficha do `App.jsx`.
+  — **[E3] a divergência 47 × 48 está FECHADA, e fechou no Figma.** Os quatro
+  `corpo` da *Forma=Pílula* (`20:34`, `20:39`, `20:44`, `20:51`) medem **48**,
+  com o enchimento vertical a **zero**: a altura deixou de ser a soma do texto
+  com o enchimento e passou a ser **o número da tabela**, que é o que `minHeight:
+  ALVOS.piso` já dizia em código. *Não há divergência para declarar.* · Código:
+  **`PilulaDeEscolha`, `src/ui.jsx`**, com a fila na ficha do `App.jsx`.
 - **por quê** — **é a conformidade, não um mimo.** A **WCAG 2.2.1 (*Timing
   Adjustable*, nível A)** exige que um limite de tempo se possa ajustar, estender
   ou desligar. Uma janela de reação não se alonga sem deixar de ser o que é —
@@ -2399,10 +2409,14 @@ Sem título "modo batalha", sem selo "em combate", sem botão "sair do combate".
   posição do Recuo em toda a casa. *(O `desenho` chegou a nomear `Correr` e
   `Esconder` ao contar a altura da fileira; a contagem é dele, a lista é do
   `jogo`, e fica esta — para não haver duas listas.)*
-- **`Atacar` é o único `Papel=Chamada` da tela.** Hoje a distinção dele é *uma
-  cor de borda entre doze botões iguais*; aqui é **tamanho e preenchimento**.
-  No telefone a diferença deixa de ser "maior" e passa a ser **outra escala**:
-  235 px contra os 110–127 dos outros.
+- ~~**`Atacar` é o único `Papel=Chamada` da tela.**~~ **[E3] REVOGADO em W1, e
+  esta linha ficou de pé a contradizer a decisão.** `Atacar` é **`Papel=Gesto`
+  com `Estado=Armado`** — a razão está escrita em *"`Atacar` perde o
+  `Papel=Chamada`"* (decisão do `regente`, W1): *o âmbar cheio pertence ao que VAI
+  acontecer, não ao que é popular*, e **só se pode armar o que tem fundo para
+  inverter**. Fica a consequência, que é o que esta linha tinha de útil: a
+  distinção de `Atacar` **não é cor de borda entre botões iguais** — é o bico e a
+  inversão do armado. *Na tela da batalha não há `Papel=Chamada` nenhum.*
 - **`Habilidades (✦)` é uma gaveta, não um verbo** — é uma **lista** que varia
   por classe, por nível e por PM, e *lista nunca entra em fileira fixa*: no dia
   em que o mago aprende a sétima magia, a fileira deixa de ser fixa.
@@ -2426,6 +2440,17 @@ desempate nem precisou de ser por maioria: o lugar certo é acima dos verbos
 porque é onde a mão NÃO está quando o polegar os prime — Apple HIG, `Adjusting
 for the finger`. **Uma fonte da verdade a dizer duas coisas é o defeito que ela
 existe para não ter.**)*
+
+*(**[E3] Os 24 px são da REGIÃO, não da peça, e o Figma dizia 22.** A peça
+`Consequencia` *Forma=Linha* mede **15 px** — uma linha de 10 px a 150 % —, e
+**assim tem de ser**: a região é a calha reservada onde ela se senta. Na tela
+composta do telefone (`40:447`) a faixa *a linha do veredito* media **22**, dois
+a menos que esta folha promete: **corrigida para 24 em E3**, com os 2 px pagos
+pelo campo (550 → 548). E fica a regra que o número sozinho não carrega: **a
+faixa é um piso, nunca uma altura fixa** — a 115 % de texto do sistema a frase
+quebra em duas linhas e pede **30**, e uma faixa fixa em 24 corta a razão em vez
+de a deixar crescer, que é exactamente o que o eixo `Largura` existe para
+impedir.)*
 
 A sequência, e é a mesma nas duas plataformas:
 
@@ -2672,8 +2697,11 @@ luta, com o anel apagado de propósito**.
 anda), e vem com cinco regras: **`box-shadow`, nunca `border`** — `border` ocupa
 leiaute e faria a fila de quatro pílulas da ficha **mexer-se quando o foco entra**,
 que é um alvo em movimento para o jogador de teclado, que é exatamente quem aquela
-fila existe para servir (é o defeito que K2 §1.6 encontrou: no Figma o anel é
-geometria porque o Figma não tem `box-shadow` de dois degraus); **nada de
+fila existe para servir (é o defeito que K2 §1.6 encontrou: no Figma o anel era
+geometria — **e a razão escrita para isso, *"o Figma não tem `box-shadow` de dois
+degraus"*, é FALSA, corrigida em E3**: tem, e o `Botao` desta mesma biblioteca já
+o usava desde D3. Ver *"O anel no Figma tem duas construções"*, no bloco de E3);
+**nada de
 `outline: none` fora do bloco `:focus-visible` que instala o anel**; **a goteira de
 8 px da fila absorve os 4 px do anel com metade de folga — deslocamento zero,
 medido**; **`overflow: hidden` de um antepassado corta-o**; e **`box-shadow` não
@@ -3378,8 +3406,13 @@ veredito custava 24.
 | **E1 com a peça REAL** (3 filas de 63) | **201** | 24 | 537 | **11** | **77** | **−1 fila, −7 casas** |
 | **W1 · uma fila de quatro** | **63** | 24 | 675 | **14** | **98** | **+2 filas, +14 casas** |
 | W1 · + a segunda linha | 63 | 30 | 669 | 13 | 91 | +1 fila |
-| **W1 · + a fila de pílulas (47)** | 63 | **71** | 628 | **13** | **91** | **+1 fila, +7 casas** |
-| W1 · pílulas **e** segunda linha | 63 | 77 | 622 | **12** | 84 | **+0 — o ganho inteiro come-se** |
+| **W1 · + a fila de pílulas (48)** | 63 | **72** | 627 | **13** | **91** | **+1 fila, +7 casas** |
+| W1 · pílulas **e** segunda linha | 63 | 78 | 621 | **12** | 84 | **+0 — o ganho inteiro come-se** |
+
+*(**[E3] Estas duas linhas diziam 47 e 71/77.** A pílula fechou em **48** — é a
+divergência 47 × 48, e ela morreu no Figma em E3. **Nenhuma conclusão da tabela
+muda:** 48 + 24 = 72 continua abaixo do degrau de 76, e a folga passa de 4 px a
+**3**. O número mudou; o veredito não.)*
 
 **A devolução verdadeira é 81 px, não 138.** Os 138 comparam contra um leiaute
 que nunca foi construído e cujos 201 px **já custavam uma fila** — citá-los seria
@@ -3401,11 +3434,14 @@ Duas coisas queriam crescer no mesmo sítio: a **segunda linha** do `desenho`
 (+6 px) e a **fila de pílulas de alvo** do `jogo` (47 px, dentro do arco do
 polegar). **O degrau está medido: a 75 px de região há 13 filas; a 76 px há 12.**
 
-> ### No telefone a região entre o campo e os verbos reserva 71 px, sempre, e nunca se mexe.
+> ### No telefone a região entre o campo e os verbos reserva 72 px, sempre, e nunca se mexe.
 >
-> **47** (a fila de pílulas) + **24** (a linha do veredito, uma linha) = 71, com
-> **4 px** de folga antes do degrau. **A segunda linha da desistência não cabe:
-> custa 6 px e exactamente 7 casas.**
+> **48** (a fila de pílulas — `ALVOS.piso`) + **24** (a linha do veredito, uma
+> linha) = 72, com **3 px** de folga antes do degrau. **A segunda linha da
+> desistência não cabe: custa 6 px e exactamente 7 casas.**
+>
+> *(**[E3] Dizia 47 e 71.** A pílula fechou em 48 e a folga desceu de 4 px a 3 —
+> **continua a haver folga, e continuam a ser 13 filas.**)*
 
 **E não é só orçamento — as duas dizem o mesmo por dois canais.** A frase diz
 *"toque fora para desistir"*; **a fila de pílulas torna-o visível**: há alvos
@@ -4040,3 +4076,340 @@ dentro dela é conteúdo, não comentário de JavaScript**. Escreve-se *formas.m
 sem crase, ou não se escreve. *A conferência viva é o único lugar onde isto
 aparece — foi o terceiro defeito em dois ciclos que a suíte deixou passar e o
 navegador apanhou em trinta segundos.*
+
+---
+
+# A mesa volta ao Figma — o alvo, o anel e a calha que não existia (E3 · 16/09)
+
+**Arquivo `Taverna — biblioteca` (`e5wJUzInAssoebx5npssKc`), ampliado e corrigido,
+nunca duplicado.** Nenhum `.js`, `.jsx` ou `.mjs` foi tocado: o bastão do
+`App.jsx` ficou inteiro com o `oficial` o ciclo todo. **Zero hex solto** — cada
+cor nova entrou ligada a variável (`bg` · `VariableID:1:3`, `ink` ·
+`VariableID:1:7`).
+
+## 1 · A divergência 47 × 48 está fechada, e fechou no Figma
+
+`A escolha` · `20:77` · *Forma=Pílula*, os quatro `corpo`: **`20:34`, `20:39`,
+`20:44`, `20:51` — 47 → 48.**
+
+**E o modo como fechou importa mais que o número.** Não se acrescentaram 0,5 px
+de enchimento em cima e em baixo: **o enchimento vertical foi a zero e a altura
+passou a ser fixa.** Antes o 47 era `15 + 15 de texto + 15 + 2 de traço`; agora é
+**48, escrito**. É a lição de K4 feita estrutura:
+
+> ### A régua e o texto não podem ser o mesmo número — e no Figma isso escreve-se pondo o enchimento a zero.
+> Enquanto a altura for `enchimento + texto`, trocar `text-[9px]` por
+> `text-[10px]` — uma decisão de legibilidade — move um alvo de toque sem ninguém
+> ter tocado numa medida de alvo. **Com a altura fixa, a legibilidade e o polegar
+> deixam de partilhar um número.**
+
+**Os três estudos que sustentam o 48, e eles concordam:** WCAG 2.5.5 (AAA) pede
+**44×44**; a Apple HIG pede **44 pt**; o Material pede **48 dp**. **48 é o menor
+número que passa nos três** — e é o número que o código já tinha em
+`ALVOS.piso`. *A divergência não existe mais e não volta a ser declarada.*
+
+## 2 · O foco não muda o tamanho de alvo nenhum — e agora é verdade nas três formas
+
+| `A escolha` | Repouso | Foco **antes** | Foco **agora** |
+|---|---|---|---|
+| **Pílula** | 48 | **75** (+28) | **48** |
+| **Aba** | 48 | 55 (+16) | **48** |
+| **Cartão** | 88 | 104 (+16) | **88** |
+
+**O defeito era geometria:** o *Foco* embrulhava o corpo em dois quadros — *anel
+de foco* e *o vão* — que **somavam ao leiaute**. Na Pílula o quadro de fora tinha
+**8 px de enchimento em cima e em baixo em vez de 2**, e é daí que vinham os 28.
+
+> ### Um anel de foco que empurra o vizinho não é um indicador: é um alvo em movimento.
+> E ele move-se **na direcção de quem menos o pode perder** — o jogador de
+> teclado, que é exactamente quem a fila da ficha existe para servir. No telefone
+> é pior: é o defeito que faz o dedo errar.
+
+**A fila de quatro pílulas com goteira de 8 px absorve os 4 px do anel com metade
+de folga — deslocamento zero**, e esse número (já escrito em *"O anel de foco,
+aplicado a um tabuleiro"*) só é verdade porque o anel deixou de ocupar leiaute.
+
+## 3 · O anel no Figma tem DUAS construções, e a razão é dura de descobrir
+
+**A frase que esta folha escrevia — *"no Figma o anel é geometria porque o Figma
+não tem `box-shadow` de dois degraus"* — é falsa.** Tem: duas `DROP_SHADOW` de
+raio **0**, deslocamento **0**, alastramento **2** (em `bg`) e **4** (em `ink`),
+pela ordem do CSS, e a de dentro tapa a de fora exactamente como o `box-shadow`
+faz. **O `Botao` desta mesma biblioteca já a usava desde D3** — a folha declarava
+uma limitação que o próprio arquivo desmentia, e **ninguém abriu o arquivo para
+ver**. *É a lição de K4 outra vez, do outro lado: o documento mentiu sobre a
+ferramenta em vez de mentir sobre o código.*
+
+**Mas a sombra do Figma não é o `box-shadow` do CSS, e a diferença apaga anéis
+em silêncio:**
+
+> ### O `box-shadow` do CSS nasce da CAIXA. A sombra do Figma nasce da SILHUETA PINTADA.
+> Um corpo sem tinta tem silhueta vazia — e a sombra **não desenha nada, sem erro
+> e sem aviso.**
+
+**Medido, e é o achado mais caro do ciclo:**
+
+| `Botao` · `Estado=Foco` | o corpo tem | o anel de sombra |
+|---|---|---|
+| `Papel=Chamada` | tinta sólida (`amber`) | **renderiza** |
+| `Papel=Gesto` | só traço de 1 px | **NÃO renderiza** |
+| `Papel=Recuo` | nem tinta nem traço | **NÃO renderiza** |
+
+**`Papel=Gesto` são os seis verbos da tela da batalha e `Papel=Recuo` é o
+`esperar`.** A biblioteca declarava um anel de foco para eles e **não o mostrava
+em nenhum** — indicador de foco visível, na peça que E3 está a montar: **zero**.
+Quatro variantes (`9:73`, `9:80`, `9:129`, `9:136`) passaram a **anel absoluto**:
+dois quadros `layoutPositioning = "ABSOLUTE"` com recuo de −2 (traço `bg`) e −4
+(traço `ink`), 2 px cada, `INSIDE`. **Absoluto não entra no auto-layout**, logo é
+a mesma promessa do `box-shadow`: *o anel não ocupa leiaute*.
+
+**A lei que fica, e ela responde ao dente que K4 comprou com número:**
+
+> ### Toda peça que promete um anel ou uma sombra tem de dizer COMO não ser apagada — e a lista é de três, não de uma.
+> 1. **No código, estilo inline vence a folha sempre.** O anel que vive em
+>    `.tv-anel-foco` morre debaixo de um `boxShadow` escrito no `style={{…}}`
+>    — foi assim que a fila que existe para cumprir a WCAG 2.2.1 passou a falhar
+>    a 2.4.7 (K4 §5.2). **Sombra e anel escrevem-se na mesma declaração, ou não
+>    se escrevem.**
+> 2. **No CSS, `none` não é item de lista.** `box-shadow: <sombra>, <sombra>,
+>    none` é inválido e o navegador **descarta a declaração inteira, em
+>    silêncio**. O repouso é **uma sombra nula** (`inset 0 0 0 0 transparent`),
+>    nunca a ausência de sombra — e de lambuja a transição volta a interpolar.
+> 3. **[E3] No Figma, a sombra precisa de tinta.** Corpo sem tinta, anel
+>    inexistente. Onde o corpo não pinta, **o anel é geometria absoluta** — e
+>    isso escreve-se na peça, não se descobre na foto.
+>
+> **Os três apagam o mesmo anel, nos três lugares onde ele vive, e nenhum dá
+> erro.** Uma peça que promete foco promete os três.
+
+## 4 · O `Botao` saltava 2 px, e a calha da razão não existia
+
+**A folha dizia, desde E1, *"uma altura por `Papel`×`Tamanho`"*, e isso nunca foi
+verdade.** Lido de volta, variante a variante:
+
+| corpo · Normal | Repouso / Foco | Esperando / Impedido |
+|---|---|---|
+| `Chamada` | 53 | **55** |
+| `Gesto` | 44 | 44 |
+| `Recuo` | **42** | **44** |
+
+**A causa é uma propriedade:** `strokesIncludedInLayout = true`. O traço de 1 px
+só existe nos estados em que o botão **recusa**, e **conta para o HUG** — logo o
+botão **cresce ao ficar indisponível**, que é exactamente o defeito de 19 px que
+E1 julgou ter curado. *E1 curou 19 dos 21; os 2 que ficaram sobreviveram porque
+se cancelavam com um segundo erro (ver a seguir).*
+
+**E o segundo erro era pior: a reserva da razão não era uma calha — era a altura
+fixa do quadro da variante.** Em *Repouso* e *Foco* **não existe nó `razao`
+nenhum**: havia só um quadro alto de 74 e um conteúdo de 53, com 21 px de vazio
+por baixo. Em *Impedido* a razão real mede `6 de goteira + 13` = **19**.
+**A reserva estava 2 px errada desde o dia em que nasceu**, e ninguém viu porque
+os 2 px do traço a compensavam ao contrário.
+
+> ### Uma reserva que não é um nó não é uma reserva: é uma coincidência de dois números que ninguém ligou.
+
+**O conserto é estrutural, e é o mesmo da pílula:** o quadro `Botao` passou a
+**altura fixa = corpo + 6 + 13**, com os filhos alinhados ao topo, e a variante
+passa a **abraçá-lo**. A calha existe agora mesmo quando está vazia, e nenhum
+estado a pode mexer.
+
+## 5 · Os alvos de toque do `Botao` sobem ao piso — e é conformidade, não gosto
+
+| corpo · Normal | antes | agora | o que era |
+|---|---|---|---|
+| `Papel=Chamada` | 53 | **53** | já passava |
+| `Papel=Gesto` | 44 | **48** | no mínimo do WCAG, 4 abaixo da casa |
+| `Papel=Recuo` | **42** | **48** | **abaixo do mínimo do WCAG 2.5.5 (AAA)** |
+
+**`Papel=Recuo` em repouso media 42 px — dois abaixo dos 44 que a norma pede** —,
+e `Papel=Recuo` é o `esperar` da barra de batalha. *A peça que a tela usa para
+"não fazer nada" era a única que reprovava a norma.*
+
+**As alturas por `Papel`×`Tamanho`, e agora saem de uma tabela só:**
+
+| | corpo (o alvo) | + goteira 6 + calha 13 = a peça |
+|---|---|---|
+| `Chamada` · Normal / Pequeno | **53** / 38 | 72 / 57 |
+| `Gesto` · Normal / Pequeno | **48** / 30 | 67 / 49 |
+| `Recuo` · Normal / Pequeno | **48** / 30 | 67 / 49 |
+
+**`Tamanho=Pequeno` fica abaixo do piso, e isso passa a ser uma regra escrita e
+não um descuido:** 30 px não é alvo de polegar. ***`Pequeno` é proibido no
+telefone e proibido como alvo primário em qualquer largura*** — existe para
+densidade de ponteiro, onde a norma permite o alvo pequeno com um equivalente
+acessível ao lado. **Quem o usar fora disso está a escrever um defeito de
+acessibilidade com uma variante da biblioteca**, e agora não pode dizer que não
+sabia.
+
+## 6 · As peças de E3, conferidas uma a uma contra o que esta folha promete
+
+| peça · nó | **promete** | **estava** | **ficou** |
+|---|---|---|---|
+| **A régua** · `30:11` | calha de 22, casa de 48, 3 graus | 48×22 · 22×48, 6 variantes | **bate — nada a fazer** |
+| **A vez** · `30:163` | faixa de 56 (48 no telefone); Linha 2 560 px / Selo 472 px por oito | Linha 320×48 (8 × 320 = 2 560 ✓), Selo 48×48, 24 variantes | **bate** |
+| **A ficha curta** · `31:137` | o que se sabe do inimigo sai do `<title>` | 288×150 (152 em *Caído*), 6 variantes | **bate** |
+| **A pergunta que expira** · `31:518` | 344 de largura, encaixa na lateral de 344 | 344 nas oito variantes; 118 · 215 · 56 de altura | **bate** |
+| **`Consequencia` *Linha*** · `11:35` | a linha do veredito, **24 px** | peça de **15**, faixa composta de **22** | **faixa 22 → 24** (`40:451`), e fica escrito que **24 é piso da região, não altura da peça** |
+| **`Botao` *Papel=Chamada*** · `9:170` | *"o único da tela"* | 53 px, sem salto de estado | **a peça bate; a FRASE é que estava revogada** — W1 tirou o `Chamada` do `Atacar`, e a linha ficou de pé a contradizê-lo |
+| **`Botao` *Papel=Recuo*** · `9:170` | o `esperar`, piso de 48 | **42**, e sem anel de foco visível | **48, e o anel existe** |
+| **`Botao` *Papel=Gesto*** (os seis verbos) | piso de 48, anel de foco | 44, e **sem anel de foco visível** | **48, e o anel existe** |
+| **`A escolha` *Pílula*** · `20:77` | 48, foco sem crescer | 47, foco a 75 | **48 / 48** |
+
+## 7 · O que E3 deixa por pagar, com número e com o motivo
+
+1. **A tela da batalha composta no Figma é a de E1, e W1 nunca lá chegou.** Em
+   `40:447` (telefone) a barra dos verbos são **três fileiras de 44 = 144 px**;
+   W1 decidiu **uma fila de quatro, 63**. *A composição é do `jogo` e a página `A
+   batalha` é dele* — por isso **declaro em vez de recompor**, mas fica com o
+   número: **quem olhar aquela tela vê 81 px de verbos a mais e uma decisão a
+   menos.** Só a faixa do veredito foi corrigida (22 → 24), porque essa era um
+   número meu.
+2. **`A escolha` *Forma=Cartão*, `Estado=Impedida`, mede 107 contra 88 — +19 px.**
+   É a mesma doença que o `Botao` acabou de curar: a razão aparece em vez de estar
+   reservada. **Numa lista de escolhas, uma opção que fica indisponível empurra as
+   de baixo.** Não paguei porque o Cartão tem **11 usos em produção**
+   (`CartaoDeEscolha`, criação de personagem) e crescer 19 px em todas é mudança
+   de composição, não de peça.
+3. **`rotulo`, `a marca` e `a razao` continuam camadas e não propriedades** em `A
+   escolha` — a quarta peça com a doença que E2 curou em três. Aberta desde K4.
+4. **`Contador` e `Lista` continuam por fabricar**, e quando nascerem nascem a 48.
+5. **Nenhuma destas correcções foi vista num navegador**, porque neste ciclo não
+   houve código meu para ver. **O dente de K4 continua por cravar do meu lado:**
+   *o anel que o Figma agora mostra ainda pode ser apagado por um `style` inline
+   no dia em que alguém instanciar estas peças*, e a única coisa que o impede é a
+   lei escrita em §3 — que é papel, não catraca.
+
+## 8 · As armadilhas do Figma que E3 pagou
+
+Somam-se às de D3/D4/E1/K1, que continuam de pé.
+
+1. **A sombra precisa de tinta** (§3). É a armadilha do ciclo, e não dá erro.
+2. **`strokesIncludedInLayout = true` faz o traço mexer na altura de um quadro em
+   HUG.** Um estado que acrescenta traço acrescenta tamanho — em silêncio.
+3. **`strokesIncludedInLayout` só existe em quadro com `layoutMode`.** Escrevê-lo
+   num quadro absoluto acabado de criar **estoura** com
+   *"Can only set strokesIncludedInLayout on nodes with layoutMode !== NONE"*, e o
+   script morre a meio do laço. *Um script que cria nós tem de poder correr duas
+   vezes:* o daqui apaga `o anel` e `o vao` antes de os criar.
+4. **`cornerRadius` devolve um símbolo quando os cantos diferem**, e
+   `JSON.stringify` de um símbolo **estoura com `cannot convert symbol to
+   string`** — não devolve `null`, não avisa. Todo leitor de propriedades desta
+   casa passa por um `typeof v === "symbol"`.
+
+---
+
+## A tela da batalha existe (construída em E3 · 16/09)
+
+**E1 desenhou, E3 construiu** — e a lei desta secção é o que a construção
+provou, corrigiu ou desmentiu do que E1 tinha escrito. O relato do momento fica
+em `mente/e3-jogo.md` (duas lutas inteiras, jogadas); o da forma, em
+`mente/e3-desenho.md`.
+
+### A QUARTA maneira de apagar um anel de foco, e é a pior das quatro
+
+O `desenho` escreveu neste mesmo ciclo que há **três** maneiras de apagar um
+anel — estilo inline por cima, `none` dentro de uma lista de sombras (invalida
+a lista inteira, em silêncio), e tinta em falta na peça. **A construção achou a
+quarta, e ela não estava em lado nenhum:**
+
+> **`box-shadow` não pinta em elemento SVG.** Um `<rect>` não é caixa CSS: a
+> regra é **aceite**, a folha fica válida, o `getComputedStyle` devolve o valor
+> pedido — **e nada é desenhado.**
+
+É a pior das quatro porque é a única em que **a propriedade continua a dizer que
+o anel existe**. As outras três deixam rasto: o inline vê-se no elemento, o
+`none` mata a lista toda, a tinta em falta vê-se na peça. Esta não deixa nenhum —
+e `.tv-anel-foco`, que é a peça certa em toda a casa, **seria a mentira** se
+fosse aplicada a uma casa do tabuleiro.
+
+**A forma decidida:** `.tv-anel-foco-no-campo`, em `estilo.js`, com
+`outline: 3px solid ink` e `outline-offset: -3px`. Desenha **dentro** da casa,
+logo não rouba pixel à vizinha — e `outline` é preservado por `forced-colors`
+sem precisar da exceção que o `box-shadow` obriga a escrever. **Medido vivo, com
+o teclado: 15,31:1 sobre o tabuleiro.**
+
+**E a armadilha de medição que quase enganou quem media:** `.focus()` por script
+**não acende `:focus-visible`**. Quem confere um anel tem de chegar ao elemento
+**pela tecla `Tab`**, ou mede um estado que o jogador nunca vê.
+
+**O número que justifica a secção inteira:** a tela nasceu com
+**`outline: "none"` inline em 67 dos 80 elementos focáveis** — a primeira das
+quatro doenças, aplicada casa a casa. *A suíte estava verde: 198 asserções e 14
+varredores.* **Só o navegador a viu.**
+
+### As duas medidas de E1 que a construção desmentiu, com a conta
+
+1. **O campo não mede 828 px de altura, mede 583 — e 828 nunca coube na própria
+   mobília de E1.** A soma: campo 828 + narração 84 + faixa da vez 56 + veredito
+   24 + verbos 48 + texto livre 44 + respiros 32 = **1 116 px contra os 860 da
+   tela**. A consequência é dura e fica escrita: **cabem 2 das 10 plantas
+   inteiras, não as nove que E1 prometeu.** A masmorra 7×18 fica com onze colunas
+   de vazio (528 px) **e seis filas sempre escondidas** — desperdício na largura e
+   cegueira na altura ao mesmo tempo, num mapa cuja pergunta é *o que está entre
+   você e a saída*.
+2. **No telefone são 6 filas, não as 12 de E2** — e a diferença tem nome: **a
+   tira de consulta come 144 px do topo**, e o orçamento de E2 não tinha tira
+   nenhuma. Medido: campo 343 × 296, **24 de 160 casas = 15 % do tabuleiro**.
+
+**As duas contas estavam certas quando foram feitas.** O que faltou foi somá-las
+com o resto da mobília — e é por isso que a soma de `TELA_DE_BATALHA`
+(`respiro + campo + goteira + lateral + respiro = 1280`) é lida de volta pela
+suíte: *um número que se soma com os outros não pode ser afinado sozinho.*
+
+### O enquadramento de entrada, que é regra e não afinação
+
+A **regra 1 de E1** está construída e sai de tabela: `reservaDaReacao: 1/3` e
+`folgaDaBorda: 1` em `TELA_DE_BATALHA`. A área livre é o que sobra **por cima da
+reserva**, e o herói fica no meio dela — nunca no centro geométrico, para ficar
+fora da faixa que o próprio polegar tapa. A **regra 2** também (só reenquadra
+quando o herói chegaria a menos de uma casa da borda). A **regra 3** sai de graça
+e **por construção**: o efeito só escuta a casa do herói, logo a câmara nunca vai
+atrás do inimigo do outro lado do campo. *Falta-lhe a outra metade* — a marca na
+borda com o nome e a distância —, e essa é de E4.
+
+**E nasceu morto à primeira, do jeito que esta casa já conhece:** suíte verde,
+varredor verde, e **o herói a 603 px numa janela de 592**. A causa é de tempo, não
+de conta: o efeito corria **antes de a janela ter tamanho**, e um `scrollTo` sobre
+altura zero **não faz nada, em silêncio**. Duas batidas de `requestAnimationFrame`
+resolveram — e as duas estão declaradas no teto de `check-formas` com a razão na
+própria linha, porque **não contam tempo**: correm uma vez e cancelam ao sair.
+
+**A ressalva, medida e deixada à mesa:** com o herói na última fila da planta, o
+rolador bate no fim e ele fica a **90 % da janela — dentro do terço emprestado à
+reação**. Curá-lo exige **folga de rolagem por baixo do campo**, e *um campo que
+rola para o nada* é decisão de desenho, não de construção. Fica na fila.
+
+### O que a luta viva provou que está certo
+
+Dito porque elogio sem número não vale, e estes têm: **zero sobreviventes** dos
+treze controlos proibidos; **nada na tela diz que ela é uma tela**; **passo limpo
+= 1 toque, golpe limpo = 1 toque**; a casa mede **48 × 48**; a linha do veredito
+mede **888 × 24 e nunca esteve vazia, em estado nenhum**; a porta do fim é **uma,
+888 × 48**, e **durante a luta não há porta nenhuma**. E a frase do `jogo` sobre o
+que a tela faz de melhor: *a linha do veredito acende o `Atacar` no instante em
+que diz **ao alcance***.
+
+### Três leis pequenas que a construção fixou
+
+- **A terceira saída do gesto vive na JANELA do campo, não na casa.** A casa fora
+  do alcance não tem ouvinte, e transformar as 84 em botões de cancelar seria dar
+  significado a 84 alvos para uma ação que já tem dois.
+- **`aria-disabled` em vez de `disabled`** no verbo principal: `Atacar` nasce
+  indisponível e **continua a existir** para quem navega por teclado ou ouve a
+  tela. *Um controlo apagado da ordem de tabulação é um controlo que não existe.*
+- **O alvo não se negocia, nem no canto.** `⤢ ampliar` media **68 × 19**; passou a
+  **76 × 48** com anel de foco, e custou 29 px à fileira do cabeçalho — menos de
+  uma casa. Era o controlo que abre a única vista onde a luta inteira se vê, e era
+  o mais pequeno da tela.
+
+### A vez dizia o nome errado, e a honestidade custou uma linha
+
+`combate.ordem` é rolada **uma vez** na abertura e **nunca roda**: não há cursor
+de vez em `combate.js`. A tela dizia *"quem age é o primeiro da ordem"* e por isso
+anunciava o goblin **enquanto o jogador jogava**, rodada após rodada. A construção
+**não inventou o cursor** — passou a dizer o que este motor de facto faz (*agir
+encerra o turno; o mundo responde na mesma batida; a vez volta ao herói*) e deixou
+`combate.vez` lido à frente, para o dia em que o motor der um cursor. Medido vivo:
+**`agora: A Flecha`** — o nome do herói. *O pedido está em
+`mente/pedidos-ao-sistema.md`; o **Mudou=Agora** de três pulsos que E1 desenhou
+não pode existir antes dele.*

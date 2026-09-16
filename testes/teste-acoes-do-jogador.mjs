@@ -216,9 +216,18 @@ sec("1-B. do clique ao número — o que roda (sonda) e o que se lê (texto)");
   t("o despachante `declararGolpe` existe no App", corpoDeclarar.length > 0);
   t("e a porta única `aplicarGolpeDoJogador` também", corpoAplicar.length > 0);
 
-  /* elo 1: o botão é o único que declara o golpe */
-  t("`declararGolpe` tem UM chamador", contar(/\bdeclararGolpe\s*\(/g) === 1, String(contar(/\bdeclararGolpe\s*\(/g)));
-  t("e o chamador é o onClick das ACOES_PRONTAS",
+  /* elo 1: quem toca em `declararGolpe` são BOTÕES, e nunca um caminho
+     paralelo. E3 deu-lhe o segundo — o verbo `Atacar` da tela da batalha —
+     e ele é a MESMA porta: chama `declararGolpe`, que chama `fraseDoGolpe`,
+     que alimenta `aplicarGolpeDoJogador`. O que esta asserção guarda nunca
+     foi o número de botões: é que nenhum deles monte a frase por conta
+     própria nem salte a porta única — e o elo 3, logo abaixo, é quem prova
+     isso, com os seus DOIS chamadores intactos. */
+  t("`declararGolpe` tem DOIS chamadores, e os dois são botões da mesma porta",
+    contar(/\bdeclararGolpe\s*\(/g) === 2, String(contar(/\bdeclararGolpe\s*\(/g)));
+  t("e o segundo é o verbo `Atacar` da tela da batalha",
+    /aoAtacar=\{\(\) => \{ try \{ declararGolpe\(null\); \}/.test(APP));
+  t("o primeiro é o onClick das ACOES_PRONTAS",
     /if \(golpeVivo\) \{ declararGolpe\(alvoDoGolpe && alvoDoGolpe\.nome\); return; \}/.test(APP));
   /* elo 2: a frase vem do módulo, não de uma string montada na tela */
   t("`fraseDoGolpe` é chamada UMA vez, e é dentro de `declararGolpe`",
@@ -370,7 +379,9 @@ sec("4. a definição operacional de 'número que muda'");
      O relogio nao andou por vontade propria: o que ele guarda — que o turno
      fora de combate avanca MINUTOS_POR_TURNO faca o jogador o que fizer —
      continua palavra por palavra o mesmo. Endereco re-medido, assercao intacta. */
-  t("e aponta a linha que avança o relógio", !!relogio && /13499/.test(relogio.porque));
+  /* E3: 13499 -> 13084. O turno fora de combate continua a avançar
+     MINUTOS_POR_TURNO faça o jogador o que fizer; só o endereço andou. */
+  t("e aponta a linha que avança o relógio", !!relogio && /13084/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -552,7 +563,9 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
          v9.270 (K3): 11960 -> 12125, pelo mesmo deslocamento que re-mediu a
        tabela inteira. A assercao e a mesma; o que mudou foi onde a linha
        mora depois de a janela da reacao entrar no arquivo. */
-      .linhas.find((l) => l.onde === "src/App.jsx:12122").voz === "telegrama");
+      /* E3: 12122 -> 11707. A voz da linha (`telegrama`) é o que esta
+         asserção guarda, e ela não mudou. */
+      .linhas.find((l) => l.onde === "src/App.jsx:11707").voz === "telegrama");
   t("a maior boca do funil é `resolverRevide`, com 29 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 29);
   t("toda função do funil declara anel, endereço e ao menos uma linha",
@@ -635,7 +648,9 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
   t("a família `alcance` tem literal declarado em aplicarGolpeDoJogador",
     /* v9.273 (K4): 12075 -> 12072, pelo mesmo -3 da fila da ficha. A familia
        da recusa (`alcance`) e o que se guarda aqui, e ela e a mesma. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12072" && x.familia === "alcance"));
+    /* E3: 12072 -> 11657, pelo mesmo deslocamento. A família da recusa
+       (`alcance`) é o que se guarda aqui, e ela é a mesma. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:11657" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -648,7 +663,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      `aplicarGolpeDoJogador`. O que esta asserção guarda nunca foi o número —
      é que o porquê do silêncio venha com ENDEREÇO, para que a próxima medição
      possa conferi-lo; o número mudou, a intenção não. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12138/.test(S.ondeSai));
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /11723/.test(S.ondeSai));   /* E3: 12138 -> 11723, o mesmo enviar com o endereço re-medido */
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

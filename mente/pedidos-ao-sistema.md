@@ -25,6 +25,43 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
 
 ## Abertos
 
+- [ ] **o passo não é cobrado: 21 m numa rodada com o contador imóvel** · de: E3 · 16/09
+  **Reproduzido em duas lutas e nos dois tamanhos**, na conferência viva de E3:
+  `F16 → F12 → F8 → F4 → E2` = **21 m numa só rodada**, com a marca
+  `👣 9 de 9 m nesta rodada` **parada o tempo todo**. O jogador atravessa o navio
+  no primeiro turno. **E o pedido é urgente por uma razão de calendário, não de
+  gosto:** E4 (*mover é fazer*) vai ser construído exatamente em cima disto — a
+  casa clicável, o alcance visível antes do passo, o veredito antes do clique. Se o
+  passo não custa nada, **E4 desenha o preço de uma coisa que é de graça**, e a
+  lei da casa (*o veredito antes do clique*) passa a mentir na tela onde ela mais
+  importa. A tela já escreve o número; **o que falta é o motor descontar**.
+
+- [ ] **os dados do inimigo são invisíveis, com as rolagens ligadas** · de: E3 · 16/09
+  Medido na mesma luta: **25 de dano recebido, zero linhas de rolagem**, com a
+  preferência de rolagens em *visíveis*. O jogador vê a vida descer e não vê por
+  quê. **É o contrário exato da lei desta casa** — *o Mestre é código, e a IA só
+  narra*: o número existe, foi rolado por tabela, e é o único que o jogador não
+  pode ver. O modal do dado é, por escrito na pauta, *"o único momento da sessão
+  inteira em que senti que estava a jogar"* — e ele só acontece de um lado.
+
+- [ ] **não há cursor de vez em `combate.js`, e sem ele a iniciativa não anda** · de: E3 · 16/09
+  **Achado ao construir a faixa da vez, e a tela já foi corrigida para não mentir.**
+  `combate.ordem` é rolada **uma vez** na abertura e **nunca roda**: `rolarIniciativa`
+  devolve a ordem e ninguém a avança, e `resumoIniciativa` numera-a para o prompt e
+  mais nada. A tela dizia *"quem age é o primeiro da ordem"* e por isso **anunciava
+  o goblin enquanto o jogador jogava**, rodada após rodada — quatro rodadas, o mesmo
+  nome. O `oficial` **não inventou o cursor**: passou a dizer o que este motor de
+  facto faz (*agir encerra o turno; o mundo responde na mesma batida; a vez volta ao
+  herói*), e deixou `combate.vez` lido à frente — **no dia em que existir, manda ele
+  e nada muda de forma na tela.**
+  **Para quê, e o custo de adiar:** E1 desenhou a faixa com *`Mudou=Agora`, três
+  pulsos*, que é o canal por onde o jogador sabe de quem é a vez **sem ler uma
+  palavra**. Esse pulso **não pode existir antes do cursor**. E a queixa é a segunda
+  medição do mesmo silêncio: a pauta já tem a de 14/09, medida a jogar — o painel
+  marcou o inimigo como `● AGINDO` **por mais de 10 segundos enquanto o jogo
+  esperava pelo jogador**, e ele *"esperou, não soube se tinha travado, e descobriu
+  escrevendo à sorte"*. **Dois ciclos, duas medições, a mesma porta em falta.**
+
 - [ ] **`PISO_DO_GOLPE` continua declarado em dois sítios** · de: K4 · 16/09
   Herdado de K3, que o deixou escrito como dívida do `backend`. É a primeira lei
   desta casa (*se é número, é tabela*) a valer em duplicado — e duas cópias de um

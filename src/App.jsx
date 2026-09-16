@@ -192,6 +192,8 @@ import { PainelDiplomacia } from "./painel-diplomacia.jsx";
 import { potenciasDoMundo, garantirDiplomacia, aprecoDe, fichaDe, mexerNoApreco, pesarProposta, custoDoPresente, presentear, envelopeDaResposta, envelopeDoPresente, envelopeDasPotencias, golpeDaGuerra, apetitePorId, medoPorId } from "./diplomacia.js";
 import { PainelMapa } from "./painel-mapa.jsx";
 import { GridDeBatalha } from "./grade-de-batalha.jsx";
+import { TelaDeBatalha } from "./painel-batalha.jsx";
+import { PainelHabilidades, PainelCaderno } from "./painel-habilidades.jsx";
 import { criarSala, garantirSala, sentarNaSala, sairDaSala, sentarFicha, assentoDe, ocupados as ocupadosDaSala, todosProntos, porAcao, acaoDe, turnoCompleto, textoDoTurno, limparTurno, normalizarCodigo, codigoValido, RECADOS, recadoValido, envelopeDaSala, LUGARES } from "./sala.js";
 /* O TURNO GUARDADO (v9.256, Fase X - X3). O motor resolve ANTES de falar
    com o Narrador; quando a fala cai, o mundo ja mudou. Daqui sai a
@@ -3170,439 +3172,22 @@ function PainelExame({ itens = [], raio = 0, aoPegar, aoFechar }) {
   );
 }
 
-function PainelCombate({ combate, nGolpes = 1, alvosGolpe = [], onDeclararAlvo, onLimparAlvos, acaoTexto = "", pocoes = [], bolsa = [], onUsarConsumivel, onMover, grupo = [], heroiFicha = null, passoM = 9, passoTotal = 9, ignoraDificil = false, previsao = null, mira = null, onMirar, alcanceMira = null, acaoBonus = false, veredito = null }) {
-  const [bolsaAberta, setBolsaAberta] = useState(false);
-  if (!combate || !combate.inimigos || combate.inimigos.length === 0) return null;
-  const eco = combate.economia || { acao: 1, extra: 1 };
-  const chipMov = (ativo, rotulo) => (
-    <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${ativo ? T.amber : T.line}`, color: ativo ? T.amberSoft : T.inkDim, opacity: ativo ? 1 : 0.45, textDecoration: ativo ? "none" : "line-through" }}>{rotulo}</span>
-  );
-  /* v9.13: o botão "encerrar turno" saiu. Agir É encerrar — o que está aqui
-     agora é só o lembrete de quantos movimentos cabem NESTA declaração. */
-  return (
-    <div className="tv-fade tv-margem-abas mx-4 md:mx-8 mt-1 mb-3 rounded-2xl p-3" style={{ background: T.panel, border: `1px solid ${T.danger}` }}>
-      <div className="tv-mono text-[10px] uppercase tracking-widest mb-2 flex items-center gap-1.5 flex-wrap" style={{ color: T.danger }}>
-        <span>⚔ Em combate</span>
-        <span style={{ color: T.inkDim }}>· {combate.inimigos.filter((e) => !e.derrotado).length} de pé</span>
-        {combate.rodada > 1 && <span style={{ color: T.inkDim }}>· rodada {combate.rodada}</span>}
-        <span className="flex items-center gap-1 ml-auto normal-case tracking-normal">
-          {/* v9.54: com a pressa ativa a rodada tem duas ações, e o contador
-              precisa dizer quantas sobraram — uma pílula acesa sem número
-              faria a segunda ação existir só para quem leu o código. */}
-          {chipMov(eco.acao > 0, eco.acao > 1 ? `⚔ ação ×${eco.acao}` : "⚔ ação")}
-          {/* v9.43: quem não tem ação bônus não vê a pílula dela. Mostrar um
-              recurso permanentemente riscado ensina a regra errada — o jogador
-              passa a achar que perdeu alguma coisa que nunca teve. */}
-          {eco.extra != null && (eco.extra > 0 || acaoBonus) && chipMov(eco.extra > 0, "✦ extra")}
-          <span className="tv-mono text-[9px]" style={{ color: T.inkDim }} title="Ao agir, o turno é encerrado sozinho e os inimigos respondem">· agir encerra o turno</span>
-        </span>
-      </div>
-      {/* ---------------- O CAMPO DE BATALHA (v9.32) ----------------
-          Aqui havia uma fileira de três pílulas com o NOME do lugar e um
-          contador de inimigos. Bastava enquanto a única decisão espacial era
-          "ando ou fico". Deixou de bastar quando a magia de área passou a
-          pegar aliado de verdade: o jogador escreveu que o fogo amigo é "uma
-          bênção que vira maldição se ele não conseguir saber quando usar a
-          habilidade", e ele tem razão — uma decisão que se toma no escuro não
-          é uma decisão, é um sorteio.
+/* ---------------- O PAINEL DO COMBATE MUDOU DE CASA (E3) ----------------
+   Ele vivia aqui, e o lugar era o defeito: montado DENTRO do rolador do
+   log, depois de todas as mensagens, abria 429 px abaixo da borda. E1
+   mediu-o e escreveu a frase da etapa — *os 429 px nao sao altura, sao
+   arquitetura; nenhum ajuste de altura resolve, so a inversao resolve*.
 
-          Então o terreno virou mapa: cada lugar mostra QUEM está lá, de que
-          lado, com quanta vida. E quando há uma habilidade selecionada, as
-          zonas que ela vai varrer acendem antes do clique, com a conta de
-          quantos companheiros estão dentro. O preço aparece antes de ser
-          pago; a escolha continua inteiramente do jogador. */}
-      <GridDeBatalha combate={combate} grupo={grupo} heroiFicha={heroiFicha} previsao={previsao}
-        passoM={passoM} passoTotal={passoTotal} ignoraDificil={ignoraDificil} podeMover={passoM >= 1.5} onMover={onMover}
-        mira={mira} onMirar={onMirar} alcanceMira={alcanceMira} />
-      {/* POÇÕES À MÃO (v9.2): as três mais úteis, a um toque.
-          v9.13: usar item da bolsa NÃO gasta mais o turno — o sistema aplica
-          na hora e o Mestre narra junto da ação que vier depois. */}
-      {((pocoes || []).length > 0 || (bolsa || []).length > 0) && (
-        <div className="flex items-center gap-1.5 flex-wrap mb-2">
-          <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>à mão</span>
-          {pocoes.map((p) => (
-            <button key={p.nome} onClick={() => onUsarConsumivel && onUsarConsumivel(p.nome)} title={p.detalhe}
-              className="tv-mono text-[10px] px-2 py-1 rounded-full" style={{ background: T.panelSoft, border: `1px solid ${T.violet}`, color: T.violetSoft }}>
-              {p.icone} {p.curto}{p.qtd > 1 ? ` ×${p.qtd}` : ""}
-            </button>
-          ))}
-          {(bolsa || []).length > 0 && (
-            <button onClick={() => setBolsaAberta((v) => !v)} title="Abre a bolsa inteira sem gastar o turno"
-              className="tv-mono text-[10px] px-2 py-1 rounded-full" style={{ background: bolsaAberta ? T.violet : T.panelSoft, border: `1px solid ${T.violet}`, color: bolsaAberta ? T.panel : T.violetSoft }}>
-              ◆ bolsa ({bolsa.length})
-            </button>
-          )}
-          <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>· não gasta o turno</span>
-        </div>
-      )}
-      {bolsaAberta && (bolsa || []).length > 0 && (
-        <div className="rounded-xl p-2 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
-          <div className="tv-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: T.violetSoft }}>Bolsa — use e continue agindo</div>
-          <div className="flex flex-col gap-1">
-            {bolsa.map((it) => (
-              <button key={it.nome} onClick={() => { onUsarConsumivel && onUsarConsumivel(it.nome); }}
-                className="flex items-center gap-2 text-left rounded-lg px-2 py-1.5" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
-                <span className="tv-mono text-sm shrink-0">{it.icone}</span>
-                <span className="flex-1 min-w-0">
-                  <span className="tv-mono text-[11px] block truncate" style={{ color: T.ink }}>{it.nome}{it.qtd > 1 ? ` ×${it.qtd}` : ""}</span>
-                  <span className="tv-mono text-[9px] block truncate" style={{ color: T.inkDim }}>{it.detalhe}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-      {/* O GRUPO (v9.22): PV e PM de quem luta ao seu lado, na tela da luta.
-          Estavam só na ficha, atrás de dois cliques — e é durante a batalha
-          que a informação decide alguma coisa: curar agora, recuar, gastar a
-          poção boa. Lutar sem saber se o companheiro está a um golpe de cair
-          é lutar às cegas. Barra vermelha quando abaixo de um terço, para o
-          alarme ser lido de relance, sem contas. */}
-      {(grupo || []).length > 0 && (
-        <div className="rounded-xl p-2 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-          <div className="tv-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Ao seu lado</div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* a chave leva o índice: um grupo pode ter dois companheiros com
-                o mesmo nome, e nome sozinho não é identidade estável (v9.33) */}
-            {grupo.map((g, gi) => {
-              const pv = Math.max(0, g.vida || 0), pvMax = Math.max(1, g.vidaMax || 1);
-              const pm = g.mana != null ? g.mana : (g.manaMax || 0), pmMax = g.manaMax || 0;
-              const frac = pv / pvMax;
-              const caido = pv <= 0;
-              const critico = !caido && frac <= 1 / 3;
-              const cor = caido ? T.inkDim : critico ? T.danger : T.ok;
-              return (
-                <div key={`${g.nome}-${gi}`} className="rounded-lg px-2 py-1" title={`${g.nome}${g.classe ? ` · ${g.classe}` : ""} — ${pv}/${pvMax} PV${pmMax ? ` · ${pm}/${pmMax} PM` : ""}${caido ? " · caído" : critico ? " · à beira de cair" : ""}`}
-                  style={{ background: T.panel, border: `1px solid ${caido ? T.line : critico ? T.danger : T.line}`, opacity: caido ? 0.5 : 1, minWidth: 104 }}>
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="tv-body text-[11px] truncate" style={{ color: caido ? T.inkDim : T.ink, maxWidth: 88, textDecoration: caido ? "line-through" : "none" }}>{g.nome}</span>
-                    {critico && <span className="tv-mono text-[9px]" style={{ color: T.danger }}>⚠</span>}
-                  </div>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <div className="h-1 rounded-full overflow-hidden" style={{ background: T.line, width: 44 }}>
-                      <div className="h-full rounded-full" style={{ width: `${Math.round(frac * 100)}%`, background: cor, transition: "width .3s" }} />
-                    </div>
-                    <span className="tv-mono text-[9px]" style={{ color: cor }}>{pv}/{pvMax}</span>
-                  </div>
-                  {pmMax > 0 && (
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <div className="h-1 rounded-full overflow-hidden" style={{ background: T.line, width: 44 }}>
-                        <div className="h-full rounded-full" style={{ width: `${Math.round((pm / pmMax) * 100)}%`, background: T.violet, transition: "width .3s" }} />
-                      </div>
-                      <span className="tv-mono text-[9px]" style={{ color: T.violetSoft }}>{pm}/{pmMax}</span>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-      {/* ---------------- A ORDEM DE INICIATIVA (v9.172) ----------------
-          De `mesa-combate-v2`: as fichinhas em linha viraram LINHAS, uma por
-          combatente, com o número num selo à esquerda e o nome legível ao
-          lado. A da vez ganha borda âmbar, fundo aceso e a palavra AGINDO —
-          antes, quem estava agindo era indistinguível de quem esperava, e
-          era essa a única pergunta que a lista existia para responder. */}
-      {Array.isArray(combate.ordem) && combate.ordem.length > 0 && (
-        <div className="rounded-xl p-2.5 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-          <div className="tv-mono text-[10px] uppercase tracking-[1px] mb-2" style={{ color: T.violetSoft }}>Ordem de iniciativa</div>
-          <div className="flex flex-col gap-1.5">
-            {combate.ordem.map((c, i) => {
-              const caiu = (combate.inimigos || []).some((e) => e.nome === c.nome && (e.derrotado || e.vida <= 0));
-              const daVez = !caiu && i === 0;
-              return (
-                <div key={c.nome + i} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2"
-                  style={{
-                    background: daVez ? "rgba(232,163,61,0.10)" : "transparent",
-                    border: `${daVez ? 1.5 : 1}px solid ${daVez ? T.amber : T.line}`,
-                    boxShadow: daVez ? "0 0 8px rgba(232,163,61,0.13)" : "none",
-                    opacity: caiu ? 0.35 : 1,
-                  }}>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="tv-mono text-[11px] rounded px-2 py-0.5 shrink-0" style={{ background: daVez ? T.amber : T.line, color: daVez ? T.bg : T.inkDim, fontWeight: 700 }}>
-                      {c.iniciativa}
-                    </span>
-                    <span className="tv-display text-base truncate" style={{ color: daVez ? T.amberSoft : T.ink, textDecoration: caiu ? "line-through" : "none" }}>
-                      {c.nome}
-                    </span>
-                  </div>
-                  {daVez && (
-                    <span className="flex items-center gap-1 shrink-0">
-                      <PontoAtivo tamanho={8} cor={T.amber} />
-                      <span className="tv-mono text-[9px] tracking-[0.54px]" style={{ color: T.amberSoft }}>AGINDO</span>
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-      {/* v9.21: esta linha só aparecia com MAIS DE UM golpe por turno — então um
-          conjurador, que tem um ataque só, nunca conseguia declarar alvo nenhum.
-          Não importava, porque a habilidade ignorava a declaração de qualquer
-          jeito; agora que ela obedece, a linha precisa existir para todo mundo.
-          Com um golpe só, o rótulo vira "alvo", que é o que ele é. */}
-      {combate.inimigos.filter((e) => !e.derrotado).length > 1 && (
-        <div className="rounded-xl p-2.5 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.amberSoft }}>
-              {nGolpes > 1 ? `Declare seus ${nGolpes} golpes` : "Escolha o alvo"}{acaoTexto ? ` · ${acaoTexto}` : ""}{veredito ? ` · seu alcance ${metrosTxt(veredito.alcanceM)} m` : ""}
-            </span>
-            {alvosGolpe.length > 0 && (
-              <button onClick={onLimparAlvos} className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>limpar</button>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            {Array.from({ length: nGolpes }).map((_, gi) => (
-              <div key={gi} className="flex items-center gap-1.5 flex-wrap">
-                <span className="tv-mono text-[9px] shrink-0 w-12" style={{ color: T.inkDim }}>{nGolpes > 1 ? `golpe ${gi + 1}` : "alvo"}</span>
-                {combate.inimigos.filter((e) => !e.derrotado).map((e) => {
-                  const escolhido = alvosGolpe[gi] === e.nome;
-                  /* v9.255 (Fase X, X2): o que é alvo tem o custo escrito
-                     DENTRO. A distância e o estado de alcance vêm medidos de
-                     `golpe.js` — aqui não se calcula nada —, e as duas recusas
-                     ficam separadas na própria pílula, porque andar resolve
-                     uma e não resolve a outra. O bloco continua DECLARANDO
-                     alvo: ele não dispara nada, e não passou a disparar. */
-                  const vz = ((veredito && veredito.alvos) || []).find((x) => x.nome === e.nome);
-                  const fora = !!vz && !vz.ok;
-                  return (
-                    <button key={e.nome} onClick={() => onDeclararAlvo && onDeclararAlvo(gi, escolhido ? null : e.nome)}
-                      className="tv-mono text-[9px] px-2 py-1 rounded-full"
-                      style={{ background: escolhido ? T.danger : "transparent", color: escolhido ? "#fff" : fora ? T.inkDim : T.ink, border: `1px ${fora ? "dashed" : "solid"} ${escolhido ? T.danger : T.line}` }}>
-                      {e.nome}{vz ? ` · ${metrosTxt(vz.distanciaM)} m` : ""}{fora ? (vz.razao === "parede" ? " · parede" : " · longe") : ""}
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-          <div className="tv-body text-[10px] mt-1.5" style={{ color: T.inkDim }}>Sem escolha, os golpes vão no alvo que você citar na ação. Se o alvo cair no meio da sequência, o golpe seguinte migra sozinho.</div>
-        </div>
-      )}
-      <div className="grid sm:grid-cols-2 gap-2">
-        {combate.inimigos.map((e, i) => (
-          <div key={i} className="rounded-xl p-2.5" style={{ background: T.panelSoft, border: `1px solid ${e.derrotado ? T.line : T.danger}`, opacity: e.derrotado ? 0.5 : 1 }}>
-            <div className="flex items-center gap-2.5">
-              <div style={{ filter: e.derrotado ? "grayscale(1)" : "none" }}><Retrato semente={sementeDe(e)} ente={e} inimigo tamanho={40} anel={e.derrotado ? T.line : T.danger} estado={estadoDe(e.vida, e.vidaMax, true)} /></div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="tv-display text-lg leading-tight truncate" style={{ color: e.derrotado ? T.inkDim : T.ink, textDecoration: e.derrotado ? "line-through" : "none" }}>{e.nome}</span>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {(e.nivel != null) && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>nv {e.nivel}</span>}
-                    {(e.gd || 0) > 0 && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" title={`${tituloDe(e.gd)}`} style={{ border: `1px solid ${T.amber}`, color: T.amber }}>GD {e.gd}</span>}
-                    {e.derrotado && <span className="tv-mono text-[9px] uppercase" style={{ color: T.inkDim }}>☠</span>}
-                  </div>
-                </div>
-                {!e.derrotado && <div className="mt-1"><BarraMini rotulo="PV" atual={e.vida} max={e.vidaMax} cor={T.danger} corBaixa={T.danger} /></div>}
-              </div>
-            </div>
-            {!e.derrotado && e.ameaca && <div className="tv-body text-xs mt-1.5 italic" style={{ color: T.inkDim }}>{e.ameaca}</div>}
-          </div>
-        ))}
-      </div>
-      {(combate.log || []).length > 0 && (
-        <div className="mt-2 pt-2 space-y-0.5" style={{ borderTop: `1px solid ${T.line}` }}>
-          {combate.log.map((l, i) => (
-            <div key={i} className="tv-mono text-[10px]" style={{ color: T.inkDim, opacity: 0.5 + (0.5 * (i + 1)) / combate.log.length }}>🎲 {l}</div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PainelHabilidades({ personagem, selecionar, fechar, escolhidas = [], limite = 1 }) {
-  const [busca, setBusca] = React.useState("");
-  /* ---- SÓ O QUE DÁ PARA USAR (v9.33) ----
-     As guardadas apareciam aqui, apagadas, com o motivo. A intenção era boa —
-     esconder faria o jogador procurar a magia, não achar e concluir que
-     perdeu a habilidade. Mas com o grimório de 85 magias a lista ficou
-     comprida o bastante para o remédio virar o problema: uma dúzia de linhas
-     mortas empurrando para baixo justamente as que ele veio usar, no meio de
-     uma luta.
-
-     A saída é a mesma do resto da tela: não esconder, DOBRAR. O que sai na
-     luta fica em cima; o que está guardado vira uma linha que se abre, e ela
-     diz onde preparar. Ninguém acha que perdeu nada, e a lista de combate
-     volta a ser a lista de combate. */
-  const [verGuardadas, setVerGuardadas] = React.useState(false);
-  const tudo = (personagem.habilidades || []).filter((h) => h && h.nome);
-  const guardadas = tudo.filter((h) => ehPreparavel(h, personagem) && !estaPreparada(personagem, h));
-  const todas = tudo.filter((h) => !guardadas.includes(h));
-  const normal = (x) => (x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const filtrar = (l) => busca ? l.filter((h) => normal(h.nome).includes(normal(busca)) || normal(h.descricao).includes(normal(busca))) : l;
-  const lista = filtrar(todas);
-  const listaGuardadas = filtrar(guardadas);
-  const muitas = tudo.length > 6;
-  return (
-    <div className="tv-fade tv-margem-abas mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.violet}` }}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.violetSoft }}>
-          Habilidades · {personagem.mana}/{personagem.manaMax} PM
-          {limite > 1 ? ` · até ${limite} neste turno (${escolhidas.length} marcada${escolhidas.length === 1 ? "" : "s"})` : ` · ${todas.length}`}
-        </div>
-        <button onClick={fechar} className="tv-mono text-sm px-1.5" style={{ color: T.inkDim }}>✕</button>
-      </div>
-      {muitas && (
-        <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar habilidade…"
-          className="w-full rounded-lg px-3 py-2 mb-3 tv-body text-sm outline-none" style={{ background: T.panelSoft, border: `1px solid ${T.line}`, color: T.ink }} />
-      )}
-      {tudo.length === 0 ? (
-        <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você ainda não despertou nenhuma habilidade. Elas virão com a história.</div>
-      ) : todas.length === 0 ? (
-        <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Nenhuma magia preparada — todas as {guardadas.length} que você sabe estão guardadas. Abra a ficha e escolha o que levar na cabeça.</div>
-      ) : (
-        <div className="grid md:grid-cols-2 gap-2 tv-scroll" style={{ maxHeight: "38vh", overflowY: "auto" }}>
-          {lista.map((h, i) => {
-            const custo = Math.max(0, Number(h.custo) || 0);
-            const semMana = personagem.mana < custo;
-            const rec = (personagem.habRecarga || {})[(h.nome || "").toLowerCase()] || 0;
-            const marcada = escolhidas.some((x) => x.nome === h.nome);
-            /* com dois movimentos dá para marcar duas magias e descrever as
-               duas de uma vez — o turno inteiro numa tacada só (v9.5) */
-            const cheio = !marcada && escolhidas.length >= limite;
-            /* nesta lista já não há guardada nenhuma: elas saíram para a
-               dobra lá embaixo. O selo 📖 fica, para o jogador reconhecer o
-               que veio do caderno e o que está sempre à mão. */
-            const doCaderno = ehPreparavel(h, personagem);
-            const guardada = false;
-            const travada = semMana || rec > 0 || cheio;
-            return (
-              <button key={i} onClick={() => !travada && selecionar(h)} disabled={travada} className="text-left rounded-xl p-3 transition-all"
-                style={{ background: marcada ? T.violet : T.panelSoft, border: `1px solid ${marcada ? T.violet : travada ? T.line : T.violet}`, opacity: travada ? 0.45 : 1, cursor: travada ? "not-allowed" : "pointer" }}>
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="tv-display text-lg leading-none" style={{ color: marcada ? "#14101F" : T.ink }}>{marcada ? "✓ " : ""}{h.nome}</span>
-                  <span className="flex items-center gap-1.5 shrink-0">
-                    {rec > 0 && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>⏳ {rec}t</span>}
-                    {guardada && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title={ehRitual(h) ? "Não preparada hoje — fora de combate você ainda pode conduzi-la como ritual" : "Não preparada hoje. Prepare-a no próximo descanso longo."}>📕 guardada</span>}
-                    {doCaderno && !guardada && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" style={{ border: `1px solid ${T.violet}`, color: T.violetSoft }} title="Preparada hoje">📖</span>}
-                    <span className="tv-mono text-[10px]" style={{ color: semMana ? T.danger : T.violetSoft }}>{custo} PM</span>
-                  </span>
-                </div>
-                <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{h.descricao}</div>
-                {(() => { const r = h.recarga != null ? Math.max(0, Number(h.recarga) || 0) : recargaPadrao(custo); return r > 0 && rec === 0 ? <div className="tv-mono text-[9px] mt-1" style={{ color: T.inkDim }}>recarga: {r}t após o uso</div> : null; })()}
-              </button>
-            );
-          })}
-        </div>
-      )}
-      {guardadas.length > 0 && (
-        <div className="mt-2 pt-2" style={{ borderTop: `1px solid ${T.line}` }}>
-          <button onClick={() => setVerGuardadas((v) => !v)}
-            title="Magias que você sabe mas não preparou hoje. Elas não saem na luta."
-            className="tv-mono text-[10px] flex items-center gap-2" style={{ color: T.inkDim }}>
-            📕 {guardadas.length} guardada{guardadas.length === 1 ? "" : "s"} — não saem na luta
-            <span style={{ opacity: 0.7 }}>{verGuardadas ? "▴ esconder" : "▾ ver quais"}</span>
-          </button>
-          {verGuardadas && (
-            <div className="flex flex-wrap gap-1.5 mt-1.5">
-              {listaGuardadas.map((h) => (
-                <span key={h.nome} className="tv-mono text-[10px] px-2 py-1 rounded-full"
-                  title={ehRitual(h) ? "Fora de combate você ainda pode conduzi-la como ritual, pagando tempo." : "Prepare-a na ficha ou no acampamento."}
-                  style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>
-                  📕 {h.nome}{ehRitual(h) ? " ⏳" : ""}
-                </span>
-              ))}
-              <span className="tv-body text-[10px] w-full mt-1" style={{ color: T.inkDim }}>
-                Para trocar o que você leva, abra a ficha (Gestão › Ficha) ou acampe — o painel “📖 Magias na cabeça” está nos dois.
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ---------------- O CADERNO DE MAGIAS (v9.33) ----------------
-   Ele já existia, e morava num lugar só: dentro do painel de acampamento.
-   O jogador procurou na ficha — que é onde se "arruma as habilidades" —,
-   não achou, acampou para ver se aparecia, e não achou de novo. Duas
-   coisas estavam erradas ao mesmo tempo: o painel só existia numa tela
-   passageira, e quando não havia o que preparar ele simplesmente não era
-   desenhado, então o vazio não distinguia "procurei no lugar errado" de
-   "isto não existe para mim".
-
-   Agora é um componente só, desenhado nos DOIS lugares, e ele aparece
-   mesmo quando está vazio — dizendo por quê. */
-function PainelCaderno({ personagem, onPreparar, compacto = false, travado = "" }) {
-  const prep = garantirPreparadas(personagem);
-  const teto = limitePreparadas(personagem);
-  const lista = preparaveisDe(personagem);
-  const motivo = motivoDoCaderno(personagem);
-  return (
-    <div className="rounded-xl px-3 py-2 mb-3" style={{ background: T.panelSoft, border: `1px solid ${lista.length ? T.violet : T.line}` }}>
-      <div className="flex items-baseline justify-between gap-2 mb-1.5">
-        <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>📖 Magias na cabeça</div>
-        {lista.length > 0 && <div className="tv-mono text-[10px]" style={{ color: prep.length >= teto ? T.violet : T.inkDim }}>{prep.length}/{teto}</div>}
-      </div>
-      {motivo ? (
-        <div className="tv-body text-[11px]" style={{ color: T.inkDim }}>{motivo}</div>
-      ) : (
-        <>
-          <div className="flex flex-wrap gap-1.5">
-            {lista.map((h) => {
-              const on = prep.includes(h.nome);
-              return (
-                <button key={h.nome} onClick={() => onPreparar(h.nome)} disabled={!!travado}
-                  title={`${h.descricao || ""}${ehRitual(h) ? "\n\nRitual: fora de combate dá para conduzi-la mesmo sem preparar, pagando tempo." : ""}${travado ? `\n\n${travado}` : ""}`}
-                  className="tv-mono text-[10px] px-2 py-1 rounded-full"
-                  style={{ background: on ? T.violet : "transparent", color: on ? T.onSecond : T.inkDim, border: `1px solid ${on ? T.violet : T.line}`, opacity: travado ? 0.5 : 1, cursor: travado ? "not-allowed" : "pointer" }}>
-                  {on ? "📖" : "📕"} {h.nome} <span style={{ opacity: 0.7 }}>{Math.max(0, Number(h.custo) || 0)}PM</span>{ehRitual(h) ? " ⏳" : ""}
-                </button>
-              );
-            })}
-          </div>
-          {/* v9.99: o painel FICA na ficha — achar onde se arruma continua
-              valendo, e foi por isso que a v9.33 o trouxe para cá. O que
-              muda é que fora do acampamento ele MOSTRA e não deixa mexer,
-              dizendo por quê: um caderno em branco ensinaria de novo que o
-              jogador procurou no lugar errado. */}
-          {travado ? (
-            <div className="tv-body text-[10px] mt-1.5" style={{ color: T.amberSoft }}>
-              🔒 {travado}.
-            </div>
-          ) : !compacto && (
-            <div className="tv-body text-[10px] mt-1.5" style={{ color: T.inkDim }}>
-              Toque para preparar ou guardar. Só as preparadas aparecem no botão ✦ Habilidades — as guardadas voltam a caber no próximo descanso longo, e as marcadas com ⏳ ainda podem ser conduzidas como ritual fora da luta.
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
-/* ---------------- Telas de criação ---------------- */
-
-/* ---------------- A CRIAÇÃO DO MUNDO (v9.173) ----------------
-   Redesenhada em `criacao-mundo-v2`. A tela mais decisiva do jogo era a
-   mais apertada: 672px de coluna para sete gêneros, quatro moldes, oito
-   arcos, oito vozes e dois textos longos — tudo empilhado numa fita
-   vertical sem respiro.
-
-   Agora a coluna tem 1040, as escolhas vêm em DUAS COLUNAS de cartões
-   com ícone e descrição, e as seções são separadas por divisória rúnica.
-   Cada seção ganhou cabeçalho de três linhas — sobrelinha, título e o
-   que aquilo decide no jogo —, que é o que faz a pessoa entender que
-   está escolhendo o motor da campanha, e não preenchendo um cadastro.
-
-   DUAS COISAS DO DESENHO NÃO ENTRARAM, E É DE PROPÓSITO:
-
-   Os selos "PREFERIDO" (na Torre) e "REQUISITADO" (no Taverneiro). O
-   jogo não mede preferência de ninguém — inventar popularidade para
-   empurrar uma escolha é mentir para quem senta à mesa, e a primeira
-   campanha da pessoa não deveria ser decidida por um selo falso.
-
-   E o texto da APRESENTAÇÃO. O desenho descreve "Clássica" como
-   concordância medieval e "Plural" como linguagem neutra de gênero — e
-   não é isso que o botão faz. Ele decide se o RETRATO das pessoas do
-   mundo cumpre o gênero da ficha sempre, ou se cerca de uma em sete se
-   apresenta diferente. Descrever errado uma mecânica é pior do que não
-   descrevê-la: a pessoa escolhe uma coisa achando que escolheu outra. */
+   Foi inteiro para `src/painel-batalha.jsx`, onde a tela da batalha e
+   IRMA do log e nunca filha dele; a decisao (quem entra na faixa da vez,
+   que verbos existem, o que a linha do veredito escreve) foi para
+   `src/tela-de-batalha.js`, que roda em Node e tem suite. O que ficou
+   aqui e so a fiacao, que e o que pertence a este arquivo. */
+/* ---------------- AS DUAS GAVETAS MUDARAM DE CASA (E3) ----------------
+   `PainelHabilidades` (o `✦` da barra de batalha) e `PainelCaderno` (o que
+   ele abre por dentro) foram inteiros para `src/painel-habilidades.jsx`.
+   Nada as prendia aqui: são tela pura, não tocam em estado do jogo e
+   todas as regras que leem vêm de `magias.js` e `regras-jogo.js`. */
 function TelaMundo({ concluir }) {
   const [nome, setNome] = useState("");
   const [genero, setGenero] = useState(null);
@@ -21163,6 +20748,153 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      componentes é como uma regra deixa de valer num dos caminhos. */
   const ajusteRetrato = { apresentacao: (mundo || {}).apresentacao || "estrita" };
 
+  /* ================================================================
+     A INVERSÃO (E3) — a tela da batalha é IRMÃ do log, nunca filha
+
+     O que E1 mediu e que nenhuma afinação de altura resolvia: até aqui
+     `PainelCombate` era montado DENTRO do `<div ref={areaRef}>`, depois
+     de todas as mensagens. O tabuleiro era filho do rolador do log e por
+     construção abria 429 px abaixo da borda, com `scrollTop = 0` de 1129
+     possíveis. *Os 429 px não eram altura, eram arquitetura.*
+
+     A partir daqui a luta troca a tela inteira: o convés, o trilho de
+     abas e o cabeçalho saem, e entra `TelaDeBatalha`. A ENTRADA É
+     AUTOMÁTICA, e o motivo é medido — um convite pode ser RECUSADO, e
+     quem recusa fica exactamente no estado que E1 mediu.
+
+     E A SAÍDA É CONFIRMADA, SÓ NO FIM. Durante a luta não há porta
+     nenhuma: o `⛺` já encerrou uma luta por engano numa partida de
+     verdade. Quando o combate acaba, a tela FICA mais um instante — é
+     para isso que serve `fimDaLuta` — e oferece UMA porta, larga, onde
+     antes não havia nenhuma. Sem esse instante, o fim da luta arrancaria
+     a tela debaixo de quem ainda está a ler o último golpe.
+     ================================================================ */
+  const ultimoCombateRef = useRef(null);
+  const [fimDaLuta, setFimDaLuta] = useState(null);
+  useEffect(() => {
+    try {
+      if (combate) { ultimoCombateRef.current = combate; if (fimDaLuta) setFimDaLuta(null); return; }
+      if (ultimoCombateRef.current) { setFimDaLuta(ultimoCombateRef.current); ultimoCombateRef.current = null; }
+    } catch (e) { calou("o fim da luta", e); }
+  }, [combate]);
+
+  const combateNaTela = combate || fimDaLuta;
+  const emBatalha = fase === "jogo" && !!personagem && !!combateNaTela;
+
+  /* Ao sair da tela da batalha o `main` remonta com `scrollTop = 0`, e
+     cair no topo de uma cena de vinte mensagens é perder exactamente o
+     que acabou de acontecer. */
+  useEffect(() => {
+    if (fase !== "jogo" || emBatalha) return undefined;
+    const tid = setTimeout(() => {
+      try { if (fimRef.current) fimRef.current.scrollIntoView({ behavior: "auto", block: "end" }); } catch (e) { calou("voltar ao fim da prosa", e); }
+    }, 80);
+    return () => clearTimeout(tid);
+  }, [fase, emBatalha]);
+
+  /* O passo que o campo acende é o que SOBROU da rodada, já corrigido
+     pelo que estiver selecionado (Voo alcança mais). */
+  const passoDaBatalha = (() => {
+    try {
+      if (!emBatalha) return { passoM: 0, passoTotal: 0, ignoraDificil: false };
+      const pp = passoComSelecao(personagem, habsSel, {
+        dobrar: dobraMovimento(personagem),
+        ignoraDificil: ignoraTerrenoDificil(personagem) || ignoraDificilPorTraco(personagem),
+      });
+      const resta = combateNaTela.economia && combateNaTela.economia.movM != null ? combateNaTela.economia.movM : pp.metros;
+      return { passoM: resta, passoTotal: pp.metros, ignoraDificil: pp.ignoraDificil };
+    } catch (e) { calou("o passo da batalha", e); return { passoM: 0, passoTotal: 0, ignoraDificil: false }; }
+  })();
+
+  /* O veredito é medido UMA vez e serve aos dois — o estado do verbo
+     `Atacar` e a linha que diz se o golpe alcança. Medir duas vezes seria
+     abrir espaço para duas verdades. */
+  const vdDaBatalha = (() => {
+    try { return emBatalha && combate ? vereditoDoGolpeAgora() : null; } catch (e) { calou("o veredito da batalha", e); return null; }
+  })();
+
+  /* As três peças que a tela recebe montadas: a gaveta das habilidades, a
+     janela da reação (que nasce na linha do veredito, K3) e o d20. Vêm
+     como nós e não como props soltas porque a FIAÇÃO é do App e a FORMA é
+     da tela — e assim nenhuma das três muda de dono. */
+  const gavetaDaBatalha = emBatalha && habAbertas ? (() => {
+    const eco = combate && combate.economia;
+    const limite = eco ? Math.max(1, (eco.acao || 0) + (eco.extra || 0)) : 1;
+    return (
+      <PainelHabilidades personagem={personagem} escolhidas={habsSel} limite={limite}
+        selecionar={(h) => {
+          const ja = habsSel.some((x) => x.nome === h.nome);
+          const nova = ja ? habsSel.filter((x) => x.nome !== h.nome) : [...habsSel, h];
+          setHabsSel(nova);
+          if (!ja && nova.length >= limite) setHabAbertas(false);
+        }}
+        fechar={() => setHabAbertas(false)} />
+    );
+  })() : null;
+
+  const reacaoDaBatalha = emBatalha && janelaReacao ? (
+    <LimiteErro>
+      <PainelReacao
+        oferta={janelaReacao.abre} t0={janelaReacao.t0}
+        linhaDoGolpe={janelaReacao.linha}
+        saldoPM={janelaReacao.saldoPM}
+        resolucao={janelaReacao.resolucao}
+        reduzido={reduzidoRef.current} ultimoDispositivo={ultimoDispositivoRef.current}
+        aoResponder={janelaReacao.aoResponder}
+        aoRecusar={janelaReacao.aoRecusar}
+        aoSair={janelaReacao.aoSair}
+      />
+    </LimiteErro>
+  ) : null;
+
+  const dadoDaBatalha = emBatalha && rolagem && !carregando ? (
+    <div className="flex justify-center shrink-0">
+      <div className="tv-pulse flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl px-4 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
+        <span className="tv-mono text-xs text-center" style={{ color: T.ink }}>🎲 Teste de {rolagem.rotulo || rolagem.atributo || "sorte"}{rolagem.dificuldade != null ? ` · dif. ${rolagem.dificuldade}` : ""} — <em className="tv-body" style={{ color: T.inkDim }}>{rolagem.motivo}</em></span>
+        <Botao primario pequeno desativado={dadoRolando} onClick={() => { if (!dadoRolando) setDadoRolando(true); }}>Rolar d20{modPend !== 0 ? ` (+${modPend})` : ""}</Botao>
+      </div>
+    </div>
+  ) : null;
+
+  const telaDaBatalha = emBatalha ? (
+    <TelaDeBatalha
+      combate={combateNaTela}
+      fim={!combate}
+      aoSair={() => setFimDaLuta(null)}
+      personagem={personagem}
+      grupo={personagem.grupo || []}
+      mensagens={mensagens}
+      carregando={carregando}
+      bloqueado={bloqueado}
+      entrada={entrada}
+      aoEscrever={setEntrada}
+      aoAgir={(txt) => { try { agir(txt); } catch (e) { calou("agir na batalha", e); } }}
+      aoAtacar={() => { try { declararGolpe(null); } catch (e) { calou("atacar na batalha", e); } }}
+      aoMover={moverPara}
+      nGolpes={ataquesPorTurno(personagem.classe, personagem.nivel || 1)}
+      alvosGolpe={alvosGolpe}
+      aoDeclararAlvo={(i, nome) => { const a = [...alvosGolpeRef.current]; a[i] = nome; alvosGolpeRef.current = a; setAlvosGolpe([...a]); }}
+      aoLimparAlvos={() => { alvosGolpeRef.current = []; setAlvosGolpe([]); }}
+      acaoTexto={resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1).texto}
+      veredito={vdDaBatalha}
+      linhaDoGolpe={vdDaBatalha ? linhaDoGolpe(vdDaBatalha) : ""}
+      recusaDoGolpe={vdDaBatalha ? recusaDoGolpe(vdDaBatalha) : ""}
+      previsao={previsaoDeArea}
+      mira={mira} aoMirar={definirMira} alcanceMira={alcanceDaHabilidade}
+      acaoBonus={temAcaoBonus(personagem)}
+      pocoes={pocoesNaBolsa} bolsa={bolsaDeCombate} aoUsarConsumivel={usarConsumivelUI}
+      gavetaAberta={habAbertas}
+      aoAbrirGaveta={() => { setHabAbertas((v) => !v); setAcoesAbertas(false); }}
+      gaveta={gavetaDaBatalha}
+      reacao={reacaoDaBatalha}
+      dado={dadoDaBatalha}
+      passoM={passoDaBatalha.passoM}
+      passoTotal={passoDaBatalha.passoTotal}
+      ignoraDificil={passoDaBatalha.ignoraDificil}
+    />
+  ) : null;
+
+
   return (
     <AjusteDoRetrato.Provider value={ajusteRetrato}>
     <div className="flex flex-col" style={{ background: T.bg, height: "100dvh", maxHeight: "100dvh", overflow: "hidden" }}>
@@ -21172,6 +20904,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           iluminado */}
       <div className="tv-vinheta" aria-hidden="true" />
 
+      {/* E3: nada nesta tela diz que ela e uma tela — e o cabecalho e a
+          unica coisa que dizia. Sai inteiro durante a luta, e com ele saem
+          o acampar e a cronica, que sao as duas portas que a TERMINAM. */}
+      {!emBatalha && (
       <header className="flex items-center justify-between px-4 md:px-5 py-3 shrink-0 sticky top-0 z-30" style={{ borderBottom: `1px solid ${T.line}`, background: T.panel }}>
         <div className="flex items-center gap-2 min-w-0">
           {fase !== "menu" && (
@@ -21188,11 +20924,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               herói na mesma tela eram duas verdades visuais, e a de baixo é
               a que reage a dano. */}
           {fase === "jogo" && statusSave && <span className="tv-mono text-[10px] uppercase tracking-wider" style={{ color: statusSave === "erro" ? T.danger : T.inkDim }}>{statusSave === "salvando" ? "salvando…" : statusSave === "erro" ? "⚠ FALHA AO SALVAR" : "✓ salvo"}</span>}
-          {fase === "jogo" && !acampado && <button onClick={acampar} disabled={bloqueado} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Montar acampamento"><span style={{ color: T.amberSoft, fontSize: 15 }}>⛺</span></button>}
+          {fase === "jogo" && !acampado && !emBatalha && <button onClick={acampar} disabled={bloqueado} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Montar acampamento"><span style={{ color: T.amberSoft, fontSize: 15 }}>⛺</span></button>}
           {fase === "jogo" && <button onClick={() => setMostrarRolagens((v) => !v)} className="rounded-lg p-1.5" style={{ border: `1px solid ${mostrarRolagens ? T.amber : T.line}` }} title={mostrarRolagens ? "Rolagens de combate: visíveis" : "Rolagens de combate: ocultas"}><span style={{ color: mostrarRolagens ? T.amberSoft : T.inkDim, fontSize: 13 }}>🎲</span></button>}
-          {fase === "jogo" && <button onClick={gerarCronica} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Gerar crônica"><span style={{ color: T.amberSoft, fontSize: 15 }}>📜</span></button>}
+          {fase === "jogo" && !emBatalha && <button onClick={gerarCronica} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Gerar crônica"><span style={{ color: T.amberSoft, fontSize: 15 }}>📜</span></button>}
         </div>
       </header>
+      )}
 
       {fase === "menu" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaMenu irNovo={() => { largarASala(); modoRef.current = MODO_PADRAO; setFase("mundo"); }} irNoite={() => { largarASala(); setFase("noite"); }} irDuelo={() => { largarASala(); setFase("duelo"); }} continuar={(r) => { largarASala(); continuar(r); }} temSave={temSave} aoLerArquivo={lerArquivoDeSave} aoConfirmarImportacao={confirmarImportacao} aoDesfazerImportacao={desfazerImportacao} aoExportar={exportarSave} criarSala={criarSalaDeDois} entrarSala={() => { souAnfitriaoRef.current = false; setSala(null); setCodigoDigitado(""); setErroDaSala(""); setFase("sala"); }} /></div>}
       {fase === "noite" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaNoite concluir={(esc) => iniciarNoite(esc)} voltar={() => setFase("menu")} /></div>}
@@ -21214,6 +20951,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
       {fase === "jogo" && personagem && (
         <div className="flex flex-1 min-h-0 relative">
+          {emBatalha ? (
+            <LimiteErro>{telaDaBatalha}</LimiteErro>
+          ) : (
           <main className="flex-1 flex flex-col min-w-0">
             {/* ---------------- O PAINEL DA NARRATIVA (v9.170) ----------------
                 Vem de `mesa-jogo-v2`: o log deixa de flutuar no fundo da tela
@@ -21286,27 +21026,6 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                       recusa e mentir para quem vai clicar. */}
                 </div>
               )}
-            {combate && <PainelCombate combate={combate} bolsa={bolsaDeCombate}
-              nGolpes={ataquesPorTurno(personagem.classe, personagem.nivel || 1)}
-              alvosGolpe={alvosGolpe}
-              veredito={vereditoDoGolpeAgora()}
-              acaoTexto={resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1).texto}
-              onDeclararAlvo={(i, nome) => { const a = [...alvosGolpeRef.current]; a[i] = nome; alvosGolpeRef.current = a; setAlvosGolpe([...a]); }}
-              onLimparAlvos={() => { alvosGolpeRef.current = []; setAlvosGolpe([]); }}
-              onMover={moverPara} grupo={personagem.grupo || []} heroiFicha={personagem}
-              {...(() => {
-                /* o passo que o grid acende é o que SOBROU da rodada, já
-                   corrigido pelo que estiver selecionado (Voo alcança mais) */
-                const p = passoComSelecao(personagem, habsSel, {
-                  dobrar: dobraMovimento(personagem),
-                  ignoraDificil: ignoraTerrenoDificil(personagem) || ignoraDificilPorTraco(personagem),
-                });
-                const resta = combate.economia && combate.economia.movM != null ? combate.economia.movM : p.metros;
-                return { passoM: resta, passoTotal: p.metros, ignoraDificil: p.ignoraDificil };
-              })()}
-              previsao={previsaoDeArea} acaoBonus={temAcaoBonus(personagem)}
-              mira={mira} onMirar={definirMira} alcanceMira={alcanceDaHabilidade}
-              pocoes={pocoesNaBolsa} onUsarConsumivel={usarConsumivelUI} />}
 
             {/* v9.4: as sugestões de ação saíram. Numa mesa de verdade o Mestre
                 não entrega três opções prontas — ele descreve a cena e espera. */}
@@ -22093,8 +21812,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             )}
 
           </main>
+          )}
 
-          <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />
+          {!emBatalha && <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />}
           <LimiteErro><PainelLateral abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal === "pedindo" && (

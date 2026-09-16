@@ -19,6 +19,187 @@ Formato:
 
 ---
 
+## 16/09 14:45 · v9.277 · E3 · a tela da batalha existe · commit `HASH`
+
+*O escrito das mãos fica em `mente/e3-jogo.md` (duas lutas inteiras, jogadas) e
+`mente/e3-desenho.md` (o Figma); a forma, no bloco final de `mente/formas.md`.*
+
+**A etapa em que a mesa construiu a primeira tela que desenhou inteira — e a
+primeira em que a conferência viva achou um defeito de acessibilidade aplicado
+67 vezes com a suíte verde.**
+
+- **estado inicial:** trava e bastão livres ao abrir. **O ciclo caiu a meio, por
+  limite de uso**, com as duas mãos em voo: o `oficial` tinha acabado de escrever a
+  tabela `TELA_DE_BATALHA` e o `desenho` ia fazer a primeira escrita. **Foi retomado
+  em vez de renascido** — as duas mãos foram continuadas por `SendMessage`, com a
+  folha e as etapas ainda na cabeça. *Nenhuma releu nada.* Fica dito porque é a
+  primeira vez que esta mesa o faz, e poupou dois terços do ciclo.
+
+- **o bastão do `App.jsx`:** **tomado às 12:58Z** em nome do `oficial`, renovado às
+  **15:55Z** na retoma, **devolvido no fecho**. **Para quê:** a inversão — tirar
+  `PainelCombate` de dentro do rolador do log — e depois **esvaziar o App**: a tela
+  da batalha, a decisão pura e as duas gavetas saíram para arquivo próprio.
+
+### O número que era o objetivo desta etapa, e não é a tela
+
+**`App.jsx`: 22 219 → 21 939 linhas. −280.** Saíram **453 linhas de tela**;
+entraram 173 de fiação. Para onde foram:
+
+| destino | linhas |
+|---|---|
+| `src/painel-batalha.jsx` (a tela) | **677** |
+| `src/tela-de-batalha.js` (a decisão, provável em Node) | **311** |
+| `src/painel-habilidades.jsx` (as duas gavetas, byte a byte) | **214** |
+
+*O melhor uso do bastão é gastá-lo para não precisar mais dele* — e esta é a
+primeira vez que o ciclo o cumpriu com número em vez de intenção.
+
+### A conferência viva, que é o que este ciclo existia para provar
+
+K4 tinha comprado a lição com número: três defeitos que 141 asserções e 20
+varredores deixaram passar. **E3 repetiu o resultado, com a suíte ainda mais
+gorda.** Com **198 suítes e 14 varredores verdes**, duas lutas inteiras acharam:
+
+1. **`outline: "none"` inline em 67 dos 80 elementos focáveis.** A primeira das
+   doenças de K4, aplicada **casa a casa**. O substituto que lá estava só realçava
+   a letra e o número na régua — **e a régua sai do ecrã quando o tabuleiro rola**
+   (medida em `y = −104`): o único sinal de foco desaparecia no segundo em que
+   servia.
+2. **A luta abria e o jogador não se via.** `scrollTop = 0`, herói em `y = 874`,
+   **abaixo da janela e do ecrã**; 11 de 16 filas visíveis, e nada a dizer que ele
+   existia. A regra 1 de enquadramento de E1 não tinha sido construída.
+3. **O passo de 9 m nunca é cobrado** — `F16 → F12 → F8 → F4 → E2` = **21 m numa
+   só rodada** com o contador imóvel. *Regra, não tela:* foi para
+   `mente/pedidos-ao-sistema.md`, e é a condição de E4.
+
+**E ao corrigir o primeiro nasceu o achado do ciclo: a QUARTA maneira de apagar
+um anel de foco.** O `desenho` tinha escrito três neste mesmo ciclo (inline,
+`none` na lista, tinta em falta). A quarta não estava em lado nenhum:
+
+> **`box-shadow` não pinta em elemento SVG.** Um `<rect>` não é caixa CSS: a regra
+> é aceite, a folha fica válida, o `getComputedStyle` devolve o valor pedido — **e
+> nada é desenhado.**
+
+É a pior das quatro porque é **a única em que a propriedade continua a dizer que o
+anel existe**. `.tv-anel-foco`, que é a peça certa em toda a casa, **seria a
+mentira** numa casa do tabuleiro. Nasceu `.tv-anel-foco-no-campo` — `outline`, não
+sombra —, que desenha dentro da casa, não rouba pixel à vizinha e sobrevive a
+`forced-colors` sem exceção. **15,31:1, medido com o `Tab`** — e fica escrita a
+armadilha de medição: **`.focus()` por script não acende `:focus-visible`**, logo
+quem confere um anel por script mede um estado que o jogador nunca vê.
+
+### As duas medidas de E1 que a construção desmentiu — e a lição é da mesa, não de quem construiu
+
+1. **O campo mede 583 px, não 828.** E os 828 **nunca couberam na própria mobília
+   de E1**: 828 + 84 + 56 + 24 + 48 + 44 + 32 = **1 116 contra 860 de tela**. Logo
+   cabem **2 das 10 plantas**, não as nove prometidas.
+2. **No telefone são 6 filas, não 12.** A tira de consulta come **144 px ao pixel**,
+   e o orçamento de E2 não tinha tira nenhuma. **24 de 160 casas = 15 %.**
+
+**As duas contas estavam certas quando foram feitas.** O que faltou foi **somá-las
+com o resto da mobília** — e é exatamente a razão de a suíte ler de volta a soma de
+`TELA_DE_BATALHA` (`respiro + campo + goteira + lateral + respiro = 1280`):
+*um número que se soma com os outros não pode ser afinado sozinho.* A lição que
+esta mesa leva é de método: **uma medida de região só vale com o inventário da
+tela ao lado dela.**
+
+### decisões médias tomadas (e o motivo de cada uma)
+
+1. **A correção do `Atacar`, a meio do ciclo, contra o meu próprio brief.** Eu
+   mandei construir *"`Atacar` é o único `Papel=Chamada` da tela"*, citando E1 — e
+   **essa linha tinha sido revogada em W1 por decisão minha**, ficando de pé em
+   `formas.md` a contradizê-la. O `desenho` riscou-a no ficheiro e eu corrigi a mão
+   em voo. *Uma fonte da verdade a dizer duas coisas é o defeito que ela existe para
+   não ter* — e desta vez quem a leu foi um construtor, não um leitor.
+2. **Uma segunda mão do `oficial` em vez de quatro itens de pauta.** Os seis achados
+   baratos da luta viva voltaram para o mesmo ciclo. *Defeito achado na tela que
+   nasceu hoje conserta-se hoje;* mandá-los para a fila seria mobiliar a dívida.
+3. **A vez passa a dizer a verdade deste motor, e não a de E1.** Não havendo cursor
+   em `combate.js`, a tela **não inventou um**: diz o que o motor faz, e lê
+   `combate.vez` à frente para o dia em que exista. *Preferir a verdade pequena à
+   promessa grande é o que impede a tela de mentir com boa intenção.*
+4. **A ressalva do rolador ficou na fila, não foi remendada.** Com o herói na última
+   fila, ele acaba dentro do terço emprestado à reação. A cura é **folga de rolagem
+   por baixo do campo** — *um campo que rola para o nada* é decisão de desenho, e a
+   construção mediu sem decidir. **Foi a decisão certa.**
+
+### o Figma — a dívida que K4 confessou ficou fechada
+
+**A divergência 47 × 48 está resolvida no Figma**, não declarada: `A escolha`
+`20:77`, os quatro `corpo` a **48**, com **enchimento vertical a zero e altura
+fixa** — para o número ser o da tabela e não a soma `15 + 15 + 15 + 2`. E o
+`Estado=Foco` **deixou de crescer**: era Pílula 75 (+28), Aba 55 (+16), Cartão 104
+(+16); ficou **48 / 48 / 88, crescimento zero nas três formas**. *Um anel que
+empurra o vizinho é, no telefone, o defeito que faz o dedo errar.*
+
+Mais três divergências que o `desenho` achou **e resolveu no mesmo ciclo**, em vez
+de as declarar: `Papel=Recuo` media **42 px** e `Papel=Gesto` **44** (os dois a
+48); o `Botao` **saltava 2 px** entre *Repouso* e *Impedido*, com **a calha da
+razão a não existir** — dois erros que se cancelavam desde que a peça nasceu; e **o
+anel de foco não renderizava em `Gesto` nem em `Recuo`**, o que daria **sete dos
+sete controlos da barra de batalha sem foco visível**, com a propriedade a dizer
+que existia. *É a mesma doença que a construção viria a achar no código, do outro
+lado da mesma tela, no mesmo dia.*
+
+### a prova
+
+`npm run build` limpo. **`bash mente/so-o-meu.sh` com os 16 arquivos:
+199/199 suítes verdes, 14/14 varredores limpos.** Na árvore havia vermelho que
+**não era meu** — `teste-cond.mjs` primeiro, depois `teste-afl.mjs` e
+`teste-regua.mjs`, com `src/condicoes.js`, `src/aflicoes.js` e `src/combate.js` em
+voo pela outra mente. **Não consertei nenhum e não esperei por eles.**
+
+Catracas novas: `testes/teste-tela-de-batalha.mjs` (54 asserções) e
+`testes/check-tela-de-batalha.mjs`, cujo dente mais importante **proíbe
+`outline: "none"` inline em quatro arquivos de controlo** — não só nesta tela,
+porque o próximo `<rect>` focável nasce noutro sítio. *Esse dente teria apanhado o
+defeito principal deste ciclo sozinho.*
+
+### o que ficou
+
+**Quatro itens novos na fila**, todos com número e todos nascidos da luta: a tela
+**entra a seco** (E1 pede 140 ms e a construção não criou classe nova para não
+mexer nas catracas de animação); o **campo que rola até ao fim** e deixa o herói no
+terço emprestado; **`Atacar` a 294 px contra 59** — *W1 tirou-lhe o privilégio na
+cor e a construção devolveu-lho na largura*, e o buraco é meu, não de quem
+construiu; e **a marca na borda**, que é a metade por montar da regra 3.
+
+**Três pedidos ao motor**, em `mente/pedidos-ao-sistema.md`: o passo que não é
+cobrado, os dados do inimigo invisíveis (**25 de dano, zero linhas de rolagem**,
+com as rolagens ligadas), e **o cursor de vez que `combate.js` não tem** — sem ele
+o *`Mudou=Agora`* de três pulsos que E1 desenhou **não pode existir**.
+
+### para a pessoa decidir — as duas propostas ambiciosas, e elas discordam
+
+**É a primeira vez que a dupla traz duas propostas que atacam a mesma lei por
+lados opostos, e nenhuma viu a do outro.**
+
+- O **`desenho`** diz que **o piso da letra não existe e devia**: `text-[8px]` 12,
+  `[9px]` **223**, `[10px]` **313**, `[11px]` 104 — **652 lugares abaixo de 12 px**
+  contra 205 a 12, em 14 ficheiros, sem tabela nenhuma. Nasce `TIPOS`, irmã de
+  `ALVOS`.
+- O **`jogo`** diz que **o piso do alvo existe, está certo, e está a ser aplicado a
+  uma coisa que não é alvo**: sobram ~561 px e 18 filas a 48 px pedem 864 — *nenhuma
+  arrumação de mobília resolve*; a 31 px cabem as dez plantas. E a prova não é a
+  conta, é a experiência jogada: **a única vista onde ele viu a luta toda foi o
+  `⤢ ampliar`, que já desenha a 32 px** — *a casa já tinha a resposta e escondeu-a
+  atrás de um botão de 19 px que saía do ecrã*. Nasce `ESCALA_DA_CASA`, com piso
+  **por tipo de ponteiro**: o dedo mantém os 48 onde toca, o campo deixa de os pagar
+  onde só se olha.
+
+*As duas são `pesado` e esperam a pessoa, e é honesto dizer por quê: as duas mudam
+o que o jogador vê ao entrar na luta — que é a coisa que ele acabou de aprender.*
+
+### o que eu não soube
+
+**Não soube ver, ao ler E1 e ao escrever o brief, que os 828 px não cabiam.** A
+soma é de sete parcelas e está toda escrita na mesma folha; eu li a folha inteira e
+mandei construir. **Quem a somou foi quem a construiu, no navegador, no fim.** Se a
+mesa tivesse somado as regiões na etapa de desenho, E3 teria nascido com dois de
+dez plantas **por decisão**, e não por descoberta — e a proposta do `jogo` seria a
+pergunta de E1, não o achado de E3.
+
+---
 ## 16/09 12:40 · v9.273 · K4 · medir a batida — e a Fase K fecha · commit `4def786`
 
 *O escrito dos dois seniores fica em `mente/k4-jogo.md` e `mente/k4-desenho.md`;

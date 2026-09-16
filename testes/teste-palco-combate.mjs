@@ -47,8 +47,13 @@ sec("1. A FICHA DO TABULEIRO TEM O ROSTO DA CASA");
   t("e o rosto mora dentro dele", /clipPath=\{`url\(#\$\{uid\}\)`\}/.test(G));
   /* o herói na grade só tem nome e lugar; a classe e a vida entram pela
      ficha, e a posição da grade ganha por cima */
-  t("a ficha do herói desce do App", /heroiFicha=\{personagem\}/.test(APP));
-  t("e chega ao tabuleiro", /<GridDeBatalha combate=\{combate\} grupo=\{grupo\} heroiFicha=\{heroiFicha\}/.test(APP));
+  /* E3: a ficha continua a descer do App e a chegar ao tabuleiro — o que
+     mudou é que agora ela desce POR DENTRO da tela da batalha, que saiu do
+     `App.jsx` para `painel-batalha.jsx`. A lei medida é a mesma: o herói
+     da grade só tem nome e lugar, e é a ficha que lhe dá classe e vida. */
+  const BATALHA = readFileSync(S + "painel-batalha.jsx", "utf8");
+  t("a ficha do herói desce do App", /personagem=\{personagem\}/.test(APP) && /const personagem = p\.personagem/.test(BATALHA));
+  t("e chega ao tabuleiro", /<GridDeBatalha combate=\{combate\} grupo=\{grupo\} heroiFicha=\{personagem\}/.test(BATALHA));
 }
 
 sec("2. O DANO FLUTUA — e escuta a mudança, não um evento");

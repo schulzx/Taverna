@@ -167,7 +167,13 @@ const TETO_DE_LITERAIS = {
      a paleta de sobreposição: nove fundos de véu, todos parentes de
      `T.bg` e nenhum igual a ele.
      · paga: "os 80 literais que já são T" + o helper `alfa()` */
-  "src/App.jsx": 93,
+  /* 90 desde E3: a tela da batalha saiu do `App.jsx` para
+     `painel-batalha.jsx` e NÃO levou os literais consigo — as três cores
+     soltas que viviam no painel de combate (o âmbar a 10% do fundo da vez,
+     o halo âmbar a 13%, o `#fff` do alvo escolhido) renasceram em `T` do
+     outro lado. Por isso `painel-batalha.jsx` não tem entrada nesta tabela,
+     e é assim que ela fica: arquivo novo nasce com teto zero. */
+  "src/App.jsx": 89, /* 15/09 → 16/09 · E3, a tela da batalha e as duas gavetas mudam de casa */
 
   /* O PERGAMINHO (71 = 41 + 30) — não é sujeira, é um SISTEMA: 10 hexes
      aparecem nos DOIS arquivos, escritos separadamente, e cobrem 52 dos
@@ -235,7 +241,7 @@ const TETO_DE_LITERAIS = {
    A soma tem de dar 80 — e 80 é exatamente o item da pauta que a zera.
    Se der 99, os cinco módulos de dado vazaram para dentro do dente. */
 const TETO_DE_COR_DE_T = {
-  "src/App.jsx": 44,
+  "src/App.jsx": 41, /* 15/09 → 16/09 · E3: três cópias de `T` saíram com a tela da batalha e com as gavetas, e as três voltaram como `T` */
   "src/estilo.js": 13,
   "src/carta-taro.jsx": 11,
   "src/grade-de-batalha.jsx": 5,
@@ -336,6 +342,14 @@ const SEM_SAIDA_DE_MOVIMENTO = {
    quantidade, não a qualidade — tal como D5a. A qualidade fica no
    comentário de cada entrada, e na revisão de quem subir o número. */
 const TETO_DE_CONTADOR_DE_QUADRO = {
+  /* 16/09 · E3, e estes dois NÃO contam tempo — é a distinção que o buraco
+     declarado deste dente não sabe fazer, e por isso a razão fica escrita.
+     São duas batidas de espera, uma vez só, para o enquadramento de
+     abertura correr DEPOIS de a janela do campo ter tamanho: medido, na
+     primeira passagem o campo ainda mede zero e um `scrollTo` sobre altura
+     zero não faz nada, em silêncio. Nada aqui é relógio, nada aqui se
+     repete, e o efeito cancela o pedido ao sair. */
+  "src/painel-batalha.jsx": 2,   /* o enquadramento de abertura espera o leiaute, não conta tempo */
   "src/ui.jsx": 2,               /* as brasas, e elas estão certas: `performance.now()` */
   "src/App.jsx": 2,              /* o d20, e ele está certo: `Date.now() - inicio > 1200` */
   "src/grade-de-batalha.jsx": 1, /* DÍVIDA: `grade-de-batalha.jsx:385` conta TIQUES
@@ -417,7 +431,18 @@ const COLISAO_DE_RELOGIO_ESCRITA = {
    por fazer. */
 const ARQUIVOS_DE_PECA = ["src/ui.jsx", "src/painel-reacao.jsx"];
 const TETO_DE_PILULA_A_MAO = {
-  "src/App.jsx": 13,              /* 16/09 → 16/09 · K4, a fila da ficha vira PilulaDeEscolha (era 14) */
+  /* 12 desde E3: a pílula da bolsa de combate (`rounded-full` com o fundo em
+     ternário para `T.violet`) foi com a tela da batalha, e do outro lado
+     nasceu `rounded-lg` — a fileira dos verbos e as duas gavetas são
+     retângulos de canto macio, não pílulas, e o alvo sai de
+     `TELA_DE_BATALHA.verbos` em vez de aritmética de padding. */
+  "src/App.jsx": 11,              /* 16/09 → 16/09 · E3, a bolsa de combate e a gaveta das habilidades mudam de casa (era 13) */
+  /* A DÍVIDA MUDOU DE ARQUIVO, NÃO NASCEU: a pílula da gaveta das
+     habilidades veio inteira do `App.jsx` na etapa E3, byte a byte, e o
+     teto do App desce 1 no mesmo commit em que este sobe 1 — a soma do
+     projeto não se mexe. Trocá-la por `PilulaDeEscolha` é conserto de
+     forma, e forma é da outra mesa. */
+  "src/painel-habilidades.jsx": 1, /* 16/09 · E3, veio do App.jsx sem uma linha mudar */
   "src/grade-de-batalha.jsx": 1,
   "src/painel-codex.jsx": 1,
   "src/painel-mapa.jsx": 2,

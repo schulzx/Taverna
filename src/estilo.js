@@ -128,6 +128,68 @@ export const ALVOS = {
 };
 
 /* ============================================================
+   A GEOMETRIA DA TELA DA BATALHA (E3) — os números de E1, numa tabela.
+
+   POR QUE ELA EXISTE. E1 mediu a tela inteira contra as dez plantas de
+   `grid.js` e escolheu DUAS COLUNAS por uma ordem de grandeza (9 de 10
+   plantas inteiras contra 1 de 10 na pilha). Esses números — 888 de
+   campo, 344 de lateral, 56 de faixa da vez, 24 de linha do veredito —
+   são decisão, não gosto: cada um tem a conta escrita em
+   `mente/e1-desenho.md`. Escrito solto no meio de um `style={{}}`, um
+   deles mudaria no dia em que alguém quisesse "ganhar um pouco de
+   espaço", e a conta que o justifica não estaria lá para recusar.
+
+   A PROVA QUE A SUÍTE FAZ DE VOLTA, e é a razão de a tabela ser tabela:
+   `respiro + campo + goteira + lateral + respiro = 1280`, exatamente a
+   largura do monitor que a pessoa citou como régua. Um número que se
+   soma com os outros não pode ser afinado sozinho — e uma tabela é o
+   único sítio onde a soma se pode conferir.
+
+   O QUE NÃO ESTÁ AQUI, de propósito: a CASA (`ALVOS.piso`, 48) e a
+   CALHA DA RÉGUA (22, `grade-de-batalha.jsx`). As duas já têm dono, e
+   uma cópia delas aqui seria a segunda tabela — a doença que E2 passou
+   a etapa inteira a impedir.
+   ============================================================ */
+export const TELA_DE_BATALHA = {
+  /* O MONITOR, 1280 × 860 — duas colunas, e 1248 dos 1280 viram jogo */
+  respiro: 16,
+  campo: 888,
+  goteira: 16,
+  lateral: 344,   /* = a largura de `A pergunta que expira`, e o encaixe é exato */
+
+  /* AS FAIXAS, na ordem de leitura, que é a ordem do turno */
+  vez: 56,                 /* a ordem da vez, largura inteira (E1; 48 no telefone) */
+  vezNoTelefone: 48,
+  veredito: 24,            /* PISO da região, nunca altura da peça: a `Consequencia` Linha mede 15, e a 115% de texto a frase pede 30. Reserva-se 24 e deixa-se crescer */
+  verbos: 48,              /* a fileira: `Papel=Gesto` e `Papel=Recuo` subiram ao piso do alvo neste ciclo (mediam 44 e 42). NÃO é 63 — 63 é a peça com a calha da razão, que a barra de batalha nunca usa */
+  fileirasNoTelefone: 3,
+  textoLivre: 44,          /* `como? (opcional)`, por baixo dos verbos */
+
+  /* A NARRAÇÃO — a prosa é a protagonista, e por isso ela não sai.
+     Spectral 15 px com entrelinha 1,625 dá 24,4 px de linha: duas linhas
+     mais respiro são 84 px no monitor; uma linha são 28 no telefone. */
+  narracao: 84,
+  narracaoNoTelefone: 28,
+
+  /* O TERÇO DE BAIXO DA JANELA DO CAMPO É TERRITÓRIO EMPRESTADO (E1/K1):
+     é onde a pergunta da reação cresce, e nada desta tela pode depender
+     de estar visível ali. Escrito como número porque é ele que decide
+     ONDE a câmara põe o herói: a área livre é o que sobra por cima da
+     reserva, e o herói fica no CENTRO DELA — nunca no centro geométrico,
+     que o cairia dentro da faixa que o próprio polegar tapa. */
+  reservaDaReacao: 1 / 3,
+  /* e quem age reenquadra só quando chegaria a MENOS DE UMA CASA da
+     borda — uma câmara que corrige todo passo faz o campo parecer
+     escorregar debaixo do jogador */
+  folgaDaBorda: 1,
+
+  /* O TELEFONE, 375 × 812 — os controles no arco do polegar */
+  arcoDoPolegar: 144,      /* as tiras vivem nos 144 px de baixo */
+  colunas: 7,              /* 7 × 12 = 84 casas, medido em E2 com a peça na mão */
+  linhas: 12,
+};
+
+/* ============================================================
    AS FONTES — e o `@import` que tem de vir primeiro.
 
    O `@import` é a PRIMEIRÍSSIMA coisa da string, e por isso `FONT_CSS`
@@ -454,6 +516,27 @@ export const SUPERFICIES_CSS = `
    ocupa leiaute (ao contrario de border) e aceita a cor do sistema. */
 @media (forced-colors: active) {
   .tv-anel-foco:focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
+}
+
+/* O ANEL DENTRO DO SVG — e a QUARTA maneira de apagar um anel, que esta
+   casa ainda nao tinha escrito: BOX-SHADOW NAO PINTA EM ELEMENTO SVG.
+   Um rect nao e uma caixa CSS; a sombra e declarada, o navegador aceita
+   a regra e nao desenha nada. Quem puser a classe de cima numa casa do
+   tabuleiro fica com a propriedade a dizer que o anel existe e a tela
+   sem anel nenhum — a mentira que este arquivo existe para nao ter.
+
+   A cura e outline, que o SVG entende. Com outline-offset negativo ele
+   desenha DENTRO da casa e nao rouba pixel a vizinha: 3 px de ink sobre
+   o tabuleiro em bg dao 15,31:1, e carregam o trabalho sozinhos sem
+   precisar do vao de dois degraus. E forced-colors nao precisa de
+   excecao aqui, porque outline ja e o que ele preserva.
+
+   ESTA CLASSE E SO PARA O QUE VIVE DENTRO DE UM SVG. Fora dele o anel e
+   o de cima, e a diferenca nao e gosto: e o que cada superficie sabe
+   pintar. */
+.tv-anel-foco-no-campo:focus-visible {
+  outline: 3px solid ${T.ink};
+  outline-offset: -3px;
 }
 
 /* A PÍLULA DE ESCOLHA, E O ANEL QUE ELA TINHA APAGADO (K4). O filete de

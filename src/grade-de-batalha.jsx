@@ -21,7 +21,7 @@
    ser teletransporte.
    ============================================================ */
 import React from "react";
-import { T } from "./constantes.js";
+import { T, ALVOS } from "./constantes.js";
 import { garantirGrade, alcancaveisDe, ocupacaoDe, adjacentes, caminhar, quadradosDe, ladoDe, tamanhoDe, ehParede, ehEstorvo, terrenoDificil, temCobertura, nomeDoLugar, distanciaM, alcanceNatural, metrosTxt } from "./grid.js";
 /* v9.161: a ficha do tabuleiro ganha ROSTO — o mesmo da bolinha do grupo e
    da carta de tarô, porque uma pessoa com três caras conforme o painel é o
@@ -248,7 +248,15 @@ function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null }) {
   );
 }
 
-export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null }) {
+/* `ladoFixo` (E3): o lado da casa em píxeis, imposto por quem monta. Com
+   ele o tabuleiro deixa de ser "o campo inteiro espremido no espaço que
+   houver" e passa a ser uma JANELA SOBRE UM CAMPO — *quem encolhe é o
+   campo visível, nunca o alvo*. A tela da batalha passa `ALVOS.piso`
+   (48), que é o menor lado que passa em WCAG 2.5.5, HIG e Material ao
+   mesmo tempo, e nenhum dos quatro tamanhos de antes lá chegava (23,8 no
+   embutido 16×16, 36,6 no ampliado). Zero (o defeito) mantém, byte a
+   byte, a conta antiga — quem não pede janela continua com o relance. */
+export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null, ladoFixo = 0 }) {
   const [aberto, setAberto] = React.useState(false);
 
   /* ---------------- O DANO FLUTUA (v9.161) ----------------
@@ -465,7 +473,7 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      aparecem até ao render seguinte — nunca o endereço de casa nenhuma. */
   const ladoEmPx = (grande) => {
     try {
-      if (!grande) return Math.min(40, 380 / g.altura);
+      if (!grande) return ladoFixo > 0 ? ladoFixo : Math.min(40, 380 / g.altura);
       const vw = (typeof window !== "undefined" && window.innerWidth) || 1280;
       const vh = (typeof window !== "undefined" && window.innerHeight) || 860;
       return Math.min(0.94 * vw, (Math.round((68 * g.largura) / g.altura) * vh) / 100) / g.largura;
@@ -482,7 +490,7 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     /* v9.161: o campo compacto cresceu de 320 para 380 px de teto — o
        combate é o momento mais tenso da mesa e era o painel mais espremido
        dela. `position: relative` é o chão da faixa do chefe. */
-    const larguraDoCampo = grande ? `min(94vw, ${Math.round((68 * g.largura) / g.altura)}vh)` : g.largura * Math.min(40, 380 / g.altura);
+    const larguraDoCampo = grande ? `min(94vw, ${Math.round((68 * g.largura) / g.altura)}vh)` : g.largura * ladoEmPx(false);
     /* rotula uma a cada N; as outras levam só um traço. Na mesa (48 px)
        N = 1; no aperto máximo que existe — 18 colunas em 375 px, 18,8 px
        de lado — N = 2. A letra nunca precisa de sair. */
@@ -494,7 +502,13 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     /* A CALHA: o canto, as letras em cima, os números à esquerda, e o campo
        no quadrante que sobra. O `maxWidth` cresce os 22 px da calha para
        que o tabuleiro fique do mesmo tamanho que tinha antes dela. */
-    <div style={{ display: "grid", gridTemplateColumns: `${CALHA_DA_REGUA}px 1fr`, gridTemplateRows: `${CALHA_DA_REGUA}px auto`, width: "100%", maxWidth: grande ? `calc(${larguraDoCampo} + ${CALHA_DA_REGUA}px)` : larguraDoCampo + CALHA_DA_REGUA, margin: "0 auto", background: T.bg }}>
+    <div style={{ display: "grid", gridTemplateColumns: `${CALHA_DA_REGUA}px 1fr`, gridTemplateRows: `${CALHA_DA_REGUA}px auto`,
+      /* com lado imposto a caixa NÃO encolhe: é a janela que corta o campo,
+         e é o rolador do pai que mostra o resto. Sem ele, `width: 100%`
+         devolveria a casa ao tamanho do buraco — o defeito que E1 mediu. */
+      width: !grande && ladoFixo > 0 ? larguraDoCampo + CALHA_DA_REGUA : "100%",
+      flexShrink: 0,
+      maxWidth: grande ? `calc(${larguraDoCampo} + ${CALHA_DA_REGUA}px)` : larguraDoCampo + CALHA_DA_REGUA, margin: "0 auto", background: T.bg }}>
       {/* o canto é `bg` e não leva rótulo: `A1` não se escreve duas vezes */}
       <div aria-hidden="true" />
       <div aria-hidden="true" style={{ display: "flex", alignItems: "stretch" }}>
@@ -777,9 +791,10 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
                     role="gridcell" aria-label={nomeDaCasa} tabIndex={clicavel ? 0 : undefined}
                     onClick={agir}
                     onKeyDown={(ev) => { if (clicavel && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); agir(); } }}
+                    className="tv-anel-foco-no-campo"
                     onFocus={() => setFocada({ x, y })} onBlur={() => setFocada(null)}
                     onMouseEnter={() => setSobre({ x, y })} onMouseLeave={() => setSobre(null)}
-                    style={{ cursor: clicavel ? "pointer" : "default", outline: "none" }} />
+                    style={{ cursor: clicavel ? "pointer" : "default" }} />
                 );
               })}
             </g>
@@ -832,7 +847,8 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
         </span>
       )}
       <button onClick={() => setAberto(true)} title="Abrir o campo em tela cheia"
-        className="tv-mono text-[9px] ml-auto px-2 py-0.5 rounded-full" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>
+        className="tv-anel-foco tv-mono text-[9px] ml-auto px-3 rounded-lg flex items-center justify-center"
+        style={{ minHeight: ALVOS.piso, minWidth: ALVOS.piso, border: `1px solid ${T.line}`, color: T.inkDim }}>
         ⤢ ampliar
       </button>
     </div>

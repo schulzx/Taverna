@@ -72,10 +72,48 @@ que muda tudo. A segunda é a que devolve ao jogador o relógio que a escada lhe
 cobra. A terceira é do `desenho`, e é a única em toda a pauta que acusa **o painel**
 em vez da peça.
 
-**E uma nasceu em E3 (16/09)**, marcada *(E3)*, e está **no topo** porque é a
+**E duas nasceram em E3 (16/09)**, marcadas *(E3)*, e estão **no topo** por uma
+razão que não é de importância: **as duas atacam o mesmo piso, por lados opostos, e
+cada senior trouxe a sua sem ver a do outro.** A do `desenho` diz que o piso da
+letra **não existe** e devia; a do `jogo` diz que o piso do alvo **existe, está
+certo, e está a ser aplicado a uma coisa que não é alvo.** *O primeiro pesado desta
+mesa em que a dupla discorda sobre a mesma lei — e as duas discordâncias são
+medidas.*
+
+A do `desenho` está **no topo** porque é a
 irmã por nascer de `ALVOS`: **o alvo de toque já saiu para tabela em K4, e o
 tamanho da letra — que é o outro número que o corpo humano impõe — continua
 escrito 652 vezes à mão.** É a mesma lei da casa a cobrar-se no outro eixo.
+
+- [ ] **(E3) a casa deixa de ser alvo de toque e passa a ser escala —
+  `ESCALA_DA_CASA`, e o jogo já tem a resposta escondida atrás de um botão de
+  19 px** · pesado · de: jogo · 16/09
+
+  **A medida, corrida ao vivo em duas lutas:** sobram **~561 px** de altura para o
+  tabuleiro depois de toda a mobília de E1, e **18 filas a 48 px pedem 864**.
+  **Nenhuma arrumação de mobília resolve** — não é um problema de layout, é uma
+  desigualdade. A 48 px cabem **2 das 10 plantas**; **a 31 px cabem as dez**. No
+  telefone o número é ainda mais duro: **24 de 160 casas = 15 % do tabuleiro**.
+
+  **A experiência jogada, e é ela que faz a proposta e não a conta:** *a única
+  vista onde eu vi a luta toda foi o `⤢ ampliar` — **que já desenha a 32 px***. A
+  casa **já resolveu isto** e escondeu a resposta atrás de um botão que media
+  **68 × 19 px** e saía do ecrã quando o tabuleiro rolava. E na entrada da luta o
+  herói estava **abaixo da janela e do ecrã**, a 16 filas do inimigo numa janela de
+  11: **ver um era deixar de ver o outro** durante toda a aproximação.
+
+  **O estudo, e é o que desarma a objeção óbvia:** WCAG 2.5.5, Apple HIG e Material
+  fixam **44/44/48 para ALVO DE PONTEIRO** — nenhum dos três fala de **escala de
+  mapa**. E1 já escreveu a distinção sem lhe dar nome, ao desenhar o *"ver tudo"*:
+  *o que é alvo tem o custo escrito dentro; o que não tem nada escrito dentro não é
+  alvo.* **A proposta é dar-lhe nome e tabela:** `ESCALA_DA_CASA`, irmã de `ALVOS`,
+  com **piso por tipo de ponteiro** — o dedo continua a ter os seus 48 onde toca, e
+  o campo deixa de os pagar onde só se olha.
+
+  **Por que é `pesado` e espera a pessoa:** muda **o que o jogador vê ao entrar na
+  luta**, que é a coisa que ele acabou de aprender neste ciclo — e mexe num piso
+  que esta mesa passou duas fases a impor. *É o tipo de mudança que a régua da casa
+  manda trazer à pessoa mesmo quando o número está do nosso lado.*
 
 - [ ] **(E3) a letra tem um piso, e hoje 652 lugares estão abaixo dele —
   `TIPOS`, a irmã de `ALVOS`** · pesado · de: desenho · 16/09
@@ -699,22 +737,90 @@ scroller de 301px, e o painel `Ações` abre abaixo da dobra.
 
 - [x] **E1 · a tela desenhada antes de existir** · feita em v9.254 · texto em `mente/arquivo/pauta-desenho-feitas.md`
 - [x] **E2 · o endereço do tabuleiro** · feita em v9.260 · texto em `mente/arquivo/pauta-desenho-feitas.md`
-- [ ] **E3 · a tela existe** · de: pessoa · 14/09
-  Construir o que E1 desenhou. **Precisa do bastão do `App.jsx`**, e é a
-  oportunidade da fila: cada pedaço da batalha que sair do App para um
-  arquivo próprio compra independência permanente. Mover vale mais que
-  remendar.
-  *(**A condição de entrada, achada em E1, e sem ela nenhuma medida do desenho
-  se cumpre:** o tabuleiro tem de **sair de dentro do rolador do log**.
-  `PainelCombate` (`App.jsx:20510`) é montado dentro do `<div ref={areaRef}>`
-  aberto em `:20459`, **depois de todas as mensagens** — o tabuleiro é filho do
-  log e por construção abre no fim dele. Os **429 px abaixo da borda** não são
-  um número de CSS a afinar: são essa árvore. **Nenhum ajuste de altura
-  resolve; só a inversão resolve** — e é exatamente o caso em que mover vale
-  mais que remendar. Item barato que vem de brinde: o fundo do tabuleiro
-  `#141020` vira `T.bg`, o que tira um literal da catraca **e** devolve o vão
-  do anel de foco.)*
+- [x] **E3 · a tela existe** · de: pessoa · 14/09 · **feito v9.277**
+  **A tela da batalha existe, e a condição de entrada foi paga primeiro:** o
+  tabuleiro **saiu de dentro do rolador do log** — a batalha é agora irmã do log,
+  não filha dele, e a catraca morde se voltar a ser. Os **429 px abaixo da borda**
+  eram essa árvore, e só a inversão os resolvia.
+  **O ganho que a fila queria não é a tela, é o que saiu com ela:**
+  `App.jsx` **22 219 → 21 939 linhas (−280)** — saíram **453 de tela** e entraram
+  173 de fiação. Nasceram `src/painel-batalha.jsx` (a tela), `src/tela-de-batalha.js`
+  (a decisão, provável em Node) e `src/painel-habilidades.jsx` (as duas gavetas,
+  levadas byte a byte). Os números de E1 viraram a tabela **`TELA_DE_BATALHA`**
+  (`src/estilo.js`, ao lado de `ALVOS`), e a suíte lê de volta a soma que a
+  justifica: `respiro + campo + goteira + lateral + respiro = 1280`.
+  **O que o jogador vê:** duas colunas, casa de **48 px medida no navegador**, a
+  narração encolhida às duas últimas linhas do Mestre, a faixa `agora: <nome>`, a
+  linha do veredito **nunca vazia**, os sete verbos, a ficha curta a 344 px. A luta
+  começa e **a tela vira sozinha**; durante ela **não há porta nenhuma**; no fim há
+  **uma**. **Zero sobreviventes** dos treze controlos proibidos, e **nada na tela
+  diz que ela é uma tela**.
+  **E a conferência viva pagou o ciclo inteiro:** com **198 suítes e 14 varredores
+  verdes**, a luta real achou **`outline: "none"` inline em 67 dos 80 elementos
+  focáveis** — a doença de K4 aplicada casa a casa. Corrigida, e com ela nasceu a
+  **quarta maneira de apagar um anel**, que não estava escrita em lado nenhum:
+  **`box-shadow` não pinta em elemento SVG** — a regra é aceite, a propriedade diz
+  que o anel existe, e nada é desenhado. Nasceu `.tv-anel-foco-no-campo`
+  (`outline`, não sombra): **15,31:1, medido com o `Tab` e não com `.focus()`**.
+  O escrito fica em `mente/formas.md` (*A tela da batalha existe*),
+  `mente/e3-jogo.md` e `mente/e3-desenho.md`.
+
+  **As duas medidas de E1 que a construção desmentiu, e viraram os dois itens
+  abaixo:** o campo mede **583 px e não 828** (828 nunca coube na própria mobília
+  de E1: a soma dá 1 116 contra 860 de tela), logo cabem **2 das 10 plantas** e não
+  nove; e no telefone são **6 filas e não 12**, porque a tira de consulta come
+  **144 px** que o orçamento de E2 não tinha.
+- [ ] **(E3) a tela entra a seco** · leve · de: oficial · 16/09
+  E1 pede `tv-batalha-entra`, **140 ms de opacidade**, e a tela entra sem nada. Não
+  foi construída **por prudência declarada**: criar classe de animação nova mexia
+  nas catracas de animação de `check-formas`, e a construção preferiu não o fazer no
+  ciclo em que a tela nascia. **É feio e está por pagar**, e a etapa que o pagar tem
+  de o fazer com a saída sob `prefers-reduced-motion`, como toda a casa.
+
+- [ ] **(E3) o campo rola até ao fim e o herói fica dentro do terço emprestado**
+  · médio · de: oficial · 16/09
+  Medido depois do enquadramento estar construído e a funcionar: com o herói na
+  **última fila da planta**, o rolador bate no fim e ele fica a **90 % da janela** —
+  ou seja, **dentro do terço que a reserva da reação (K3) pode tapar a qualquer
+  segundo**. É o único caso em que a regra 1 de E1 (*o herói no meio da área livre*)
+  não se pode cumprir, e **a cura não é de conta:** exige **folga de rolagem por
+  baixo do campo** — e *um campo que rola para o nada* é decisão de desenho. A
+  construção mediu, não decidiu, e mandou-a para cá. **É a decisão certa.**
+
+- [ ] **(E3) `Atacar` perdeu o privilégio na cor e recebeu-o na largura**
+  · médio · de: regente · 16/09
+  Medido vivo: **294 px contra 59 px do `Mover`** — `flex: 1 1 0` sobre um rótulo
+  mais largo. **W1 decidiu, por minha mão, que na tela da batalha não há
+  `Papel=Chamada` nenhum**, porque *o âmbar cheio pertence ao que VAI acontecer, não
+  ao que é popular*. A construção obedeceu à letra e **o privilégio voltou pelo
+  outro eixo**: cinco vezes a largura do vizinho é uma hierarquia tão clara como a
+  cor. *Uma lei que se cumpre num eixo e se viola no outro é meia lei* — e a minha
+  decisão precisa de dizer qual dos dois queria. Fica com o meu nome porque o
+  buraco é meu, não de quem construiu.
+
+- [ ] **(E3) a marca na borda: a regra 3 de E1 está meia** · leve · de: jogo · 16/09
+  A metade construída é a que importa e saiu de graça: **a câmara não vai atrás do
+  inimigo do outro lado do campo** (o efeito só escuta a casa do herói). Falta a
+  outra: *a borda ganha a marca com **o nome e a distância***. Sem ela, quem age
+  fora da janela age **em silêncio absoluto** — e o `jogo` mediu o caso agudo: herói
+  e inimigo a **16 filas numa janela de 11**, onde *ver um é deixar de ver o outro*
+  durante toda a aproximação. A peça existe (`A marca de borda`, `53:43`, 8
+  variantes, fabricada em E1); falta montá-la.
 - [ ] **E4 · mover é fazer** · de: pessoa · 14/09
+  *(**O que E3 lhe deixou pronto, e é bastante:** a árvore invertida — a batalha é
+  irmã do log, e a catraca morde se voltar a ser filha; a casa de 48 px imposta por
+  `ladoFixo`; a linha do veredito permanente, com a reação de K3 a nascer nela e a
+  crescer para cima; as **três** saídas do armado, vivas ao mesmo tempo; o texto
+  livre que nunca é `disabled` com um verbo armado; a porta única do fim;
+  `aria-pressed` e anel de foco **conferido vivo** nos sete controlos e nas 84
+  casas. **E o que ela tem de abrir:** *"vou até K14"* escrito continua sem porta em
+  `turno.js`; **tocar num inimigo continua impossível** (as fichas são
+  `pointerEvents: none`); o *roving tabindex* das casas — o `jogo` contou **69
+  toques de `Tab`** do topo da tela até ao `Atacar`; e a decisão do telefone: **6
+  filas** contra as 12 de E2, *ou a tira de consulta vira gaveta, ou o número muda*.
+  **E uma condição que não é de tela:** o passo **não é cobrado** — 21 m numa só
+  rodada com o contador imóvel, pedido aberto em `mente/pedidos-ao-sistema.md`. Se
+  ele não fechar antes, **E4 desenha o preço de uma coisa que é de graça**.)*
   A casa clicável, o endereço escrito, o alcance visível antes do passo (o
   veredito antes do clique), e o log dizendo o que **você** fez — não só o
   que o inimigo fez. Medir: quantas rodadas o jogador consegue se mover de
@@ -1109,7 +1215,21 @@ elemento cuja largura não carrega informação**; e `A marca de borda` foi
   **quadro que só organiza leva `fills = []`**, não `fills = [branco desligado]`.
   As quatro peças de E1 nascem sem ele. *(Contado por amostra, não por varredura
   do arquivo — e é por isso que é item e não nota.)*
-- [ ] **dois números que E3 leva de graça, e um deles é uma reprovação viva** · leve · de: desenho · 15/09 (E1)
+- [x] **dois números que E3 leva de graça, e um deles é uma reprovação viva**
+  · leve · de: desenho · 15/09 (E1) · **fechado em E3 — e nenhum dos dois foi pago
+  por E3**
+  **O primeiro tinha-se corrigido sozinho, de lado, e ninguém deu por isso.** A
+  conta estava certa: `T.violet` a 60 % sobre `bg` dá **2,689:1** e reprova o WCAG
+  1.4.11. Mas **W2 trocou o token para `T.violetSoft`** por outro motivo, e o
+  contorno mede hoje **3,786:1 — passa com folga**. O `oficial` mediu antes de
+  aplicar e **não tocou na linha**. *É o melhor argumento que esta mesa tem para a
+  regra de medir de novo antes de corrigir um número escrito noutro ciclo.*
+  **O segundo já tinha sido pago por E2**, e a catraca
+  `check-endereco-do-tabuleiro.mjs` §6 morde se `#141020` voltar.
+  **De brinde, um terceiro que ninguém tinha contado:** um `#14101F` escrito à mão
+  dentro de `PainelHabilidades` — `T.onSecond` byte a byte —, achado e morto ao
+  levar a gaveta para casa própria.
+  *(o texto original:)*
   Os dois são de **E3**, e ficam aqui para não se perderem se E3 demorar.
   (1) **O contorno da mira REPROVA o piso de não-texto hoje.**
   `grade-de-batalha.jsx:433` desenha a união com `opacidade={0.6}`, e **violeta a

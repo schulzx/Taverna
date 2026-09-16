@@ -32,7 +32,15 @@ sec("1. a grade saiu do App e virou módulo");
 {
   t("o App não define mais o componente", !/function GridDeBatalha\(/.test(APP));
   t("ele importa do módulo novo", /import \{ GridDeBatalha \} from "\.\/grade-de-batalha\.jsx"/.test(APP));
-  t("e continua entregando o mesmo onMover", /onMover=\{moverPara\}/.test(APP));
+  /* E3: `moverPara` continua sendo a ÚNICA porta do passo, mas agora chega
+     ao tabuleiro por dois saltos em vez de um — o App entrega-o à tela da
+     batalha (`aoMover`), e é ela que o entrega à grade (`onMover`). O que
+     esta asserção guarda é que ninguém fabricou um segundo caminho para
+     andar; por isso ela passa a medir os DOIS elos, e não um nome. */
+  const BATALHA = readFileSync(RAIZ + "painel-batalha.jsx", "utf8");
+  t("e continua entregando o mesmo moverPara, agora pela tela da batalha",
+    /aoMover=\{moverPara\}/.test(APP) && /onMover=\{mover\}/.test(BATALHA)
+    && /if \(p\.aoMover\) p\.aoMover\(destino\)/.test(BATALHA));
   /* o que o painel de combate passa para cá tem de continuar existindo do
      outro lado, senão a troca de arquivo vira troca de contrato */
   for (const p of ["combate", "grupo", "previsao", "passoM", "passoTotal", "ignoraDificil", "podeMover", "onMover", "mira", "onMirar", "alcanceMira"]) {

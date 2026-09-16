@@ -1,12 +1,12 @@
 [
   {
-    "agente": "regente",
-    "o_que": "rege o ciclo E3 — a tela da batalha existe (com o bastao do App.jsx)",
-    "desde": "2026-09-16T15:55:00Z"
+    "agente": "orquestrador",
+    "o_que": "rege o ciclo F2 — protege: o abrigo que cai no corpo errado",
+    "desde": "2026-09-16T19:00:00Z"
   },
   {
-    "agente": "jogo",
-    "o_que": "E3 · confere a tela viva com uma luta real (aba nova, saves salvos)",
-    "desde": "2026-09-16T18:05:00Z"
+    "agente": "backend",
+    "o_que": "F2 · a guarda promete um ALIADO e cai em quem usou",
+    "desde": "2026-09-16T19:03:00Z"
   }
 ]

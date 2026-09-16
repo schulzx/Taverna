@@ -577,9 +577,16 @@ sec("7. AS QUATRO FRASES — o teto de 54 caracteres, e o aparo que mora na tabe
   t("as três funções saíram do App.jsx e chegam por import de golpe.js",
     !/const (recusaDoGolpe|linhaDoGolpe|maisPertoAoAlcance) =/.test(APP)
     && /import \{[^}]*recusaDoGolpe[^}]*linhaDoGolpe[^}]*maisPertoAoAlcance[^}]*\} from "\.\/golpe\.js"/.test(APP));
-  t("e o App continua com os seus dois leitores da recusa, e um da linha",
-    (APP.match(/recusaDoGolpe\(/g) || []).length === 2
-    && (APP.match(/linhaDoGolpe\(/g) || []).length === 1);
+  /* E3: nasceu um terceiro leitor da recusa e um segundo da linha, e os
+     dois são a TELA DA BATALHA — que passou a ter uma linha do veredito
+     permanente, entre o campo e os verbos, onde antes só havia a linha
+     dentro do painel `Ações`. Os números sobem porque a lei "quem alcança
+     lê onde o golpe cai, quem não alcança lê por quê" passou a valer
+     também fora daquele painel; o que a asserção continua a guardar é que
+     NINGUÉM reescreveu as frases — todos os leitores chamam `golpe.js`. */
+  t("e o App continua com os seus três leitores da recusa, e dois da linha",
+    (APP.match(/recusaDoGolpe\(/g) || []).length === 3
+    && (APP.match(/linhaDoGolpe\(/g) || []).length === 2);
   t("e `maisPertoAoAlcance` continua com as suas duas fiações no App",
     (APP.match(/maisPertoAoAlcance\(/g) || []).length === 2);
 
