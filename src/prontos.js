@@ -32,7 +32,7 @@ import { antecedentePorId } from "./antecedentes.js";
 import { periciasIniciais } from "./pericias.js";
 import { comDom } from "./tracos.js";
 import { MOEDAS_INICIAIS } from "./constantes.js";
-import { PV_POR_NIVEL, PM_POR_NIVEL } from "./regras-jogo.js";
+import { corpoDaFicha } from "./recalculo.js";
 
 /* o bolso de todo pronto — o mesmo para os oito, por desenho */
 export const MOEDAS_DO_PRONTO = MOEDAS_INICIAIS + 10;
@@ -167,10 +167,17 @@ export function montarPronto(id, { nome = "" } = {}) {
      (vidaBase + vigor*2) mais PV_POR_NIVEL/PM_POR_NIVEL por degrau — o
      mesmo que o botao de nivel soma na campanha. Preserva a identidade da
      classe (o tanque de vidaBase 14 chega mais alto que o mago de 8), e o
-     duelo deixa de ser loteria de um golpe. */
-  const cresce = NIVEL_DO_PRONTO - 1;
-  const vidaMax = (cObj.vidaBase || 10) + attrFinais.vigor * 2 + (antObj.pv || 0) + cresce * PV_POR_NIVEL;
-  const manaMax = (cObj.manaBase || 8) + attrFinais.intelecto * 2 + (antObj.pm || 0) + cresce * PM_POR_NIVEL;
+     duelo deixa de ser loteria de um golpe.
+
+     v9.272: a conta em si nao mora mais aqui. Ela era escrita inline
+     nestas duas linhas E dentro da tela de criacao E, torta, na
+     recalibracao por IA — tres donos para uma formula so, e a
+     recalibracao ja tinha divergido dos outros dois. Agora o dono e
+     `corpoDaFicha` (recalculo.js): os numeros sao os MESMOS, byte a byte,
+     para os oito prontos; o que mudou foi haver um lugar onde consertar. */
+  const { vidaMax, manaMax } = corpoDaFicha({
+    classe: cObj, antecedente: antObj, atributos: attrFinais, nivel: NIVEL_DO_PRONTO,
+  });
   const nomeInteiro = String(nome || "").trim() || p.nome;
   const arma = { nome: p.arma, tipo: "arma" };
   const armadura = { nome: p.armadura, tipo: "armadura", atributos: { defesa: DEFESA_DA_ARMADURA[p.armadura] || 1 } };
