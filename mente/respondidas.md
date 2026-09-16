@@ -44,3 +44,9 @@ Uma linha por decisão: `dd/mm · fila · título exato da pendência · o que v
 - 15/09 · desenho · `lineStrong`: a casa não sabe dizer "sou um controlo" sem gritar · aprovada
 - 15/09 · sistema · o indice do git e compartilhado pelas duas mentes, e a lei nao cobre isso · resolvida em 39a8c65 (git commit -- caminhos)
 - 15/09 · desenho · a resposta dele sobre como quer ser perguntado morre no fim da luta · aprovada, mas fora do save (espaço de preferências do jogador)
+- 17/09 · desenho · (K3) a janela pergunta sobre o golpe que menos importa — e há número · Fase J
+- 17/09 · desenho · (K3) no modo de alto contraste o Taverna não tem foco nenhum · Fase A11
+- 17/09 · desenho · (K2) o combate ganha uma semente, e o Duelo já provou que dá · Fase SE
+- 17/09 · desenho · (W1) a luta abre onde a sala é comprida, e ninguém decidiu isso · E6
+- 17/09 · desenho · (W1) os três verbos de teatro: dar-lhes motor, ou tirá-los da tela · já era a Fase Y
+- 17/09 · desenho · (E2) a régua mostra a planta INTEIRA, e a janela é uma marca dentro dela · E7

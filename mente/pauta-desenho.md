@@ -72,6 +72,65 @@ que muda tudo. A segunda é a que devolve ao jogador o relógio que a escada lhe
 cobra. A terceira é do `desenho`, e é a única em toda a pauta que acusa **o painel**
 em vez da peça.
 
+**E uma nasceu em E3 (16/09)**, marcada *(E3)*, e está **no topo** porque é a
+irmã por nascer de `ALVOS`: **o alvo de toque já saiu para tabela em K4, e o
+tamanho da letra — que é o outro número que o corpo humano impõe — continua
+escrito 652 vezes à mão.** É a mesma lei da casa a cobrar-se no outro eixo.
+
+- [ ] **(E3) a letra tem um piso, e hoje 652 lugares estão abaixo dele —
+  `TIPOS`, a irmã de `ALVOS`** · pesado · de: desenho · 16/09
+
+  **A medida, corrida hoje sobre o `src/` de hoje:**
+
+  | tamanho | ocorrências |
+  |---|---|
+  | `text-[8px]` | **12** |
+  | `text-[9px]` | **223** |
+  | `text-[10px]` | **313** |
+  | `text-[11px]` | **104** |
+  | **abaixo de 12 px** | **652** |
+  | `text-xs` (12 px) | 205 |
+
+  **Três em cada quatro letras pequenas deste jogo estão abaixo do piso que esta
+  casa já citou por escrito** — 652 contra 205. E não há tabela: `ALVOS` não tem
+  irmã tipográfica em `estilo.js`, logo **o tamanho da letra é um literal de
+  Tailwind espalhado por 14 ficheiros**, que é exactamente a doença que a
+  primeira lei do `CLAUDE.md` existe para caçar.
+
+  > ### O piso do polegar virou tabela em K4. O piso do olho continua a ser um literal — e é o mesmo tipo de número: um que o corpo do jogador impõe e o código não pode inventar.
+
+  **A prova, pelos três caminhos que a casa aceita:**
+  - **Medida** — os 652 acima, contados por varredura, reproduzíveis.
+  - **Estudo citado, e a fonte é esta própria casa** — E2 fixou **12 px** para a
+    letra da régua no telefone e escreveu porquê: *"um degrau acima do piso
+    citado (HIG 11 pt, Material 11 sp) é o que sobrevive ao jogador que já
+    aumentou o texto do sistema"*. **A casa decidiu 12 em E2 e entrega 9 em 223
+    lugares.** Junta-se a WCAG 1.4.4 (*Resize text*): a 200 % de texto do sistema,
+    o que parte primeiro é sempre o que já nasceu no chão.
+  - **Experiência jogada** — falta, e é o que peço ao `jogo` no ciclo em que isto
+    entrar: a mesma ficha lida a 9 e a 12, no telefone, com o texto do sistema a
+    100 % e a 130 %.
+
+  **A proposta, numa linha:** nasce `TIPOS` em `src/estilo.js`, irmã de `ALVOS`,
+  com **`piso: 12`** e os degraus nomeados; a conversão é **um painel por
+  etapa**, com um dente em `check-formas.mjs` que congela a contagem no dia em
+  que nasce e **só a deixa descer** — a mesma catraca com que D5f congelou as 18
+  pílulas à mão. **Reversibilidade: é uma tabela trocada, logo um commit
+  desfeito.**
+
+  **E é `pesado` por uma razão só, dita sem a esconder: isto muda quanto cabe no
+  ecrã, em toda a parte.** Não é um painel mais bonito — é a ficha, a bolsa, o
+  códex e o tabuleiro a caberem menos por rolagem. *O jogador não reaprende nada;
+  vê menos de cada vez e lê o que vê.* **A troca é densidade por legibilidade, e
+  a prosa é a protagonista** — mas quem decide quanto do jogo cabe num ecrã é a
+  pessoa, não a mesa.
+
+  *(E há um caso dentro do caso que mede o custo exacto: a fila «quando um golpe
+  chega» da ficha vive a **9 px** e, para ir a 12, a mesa precisa de 3 a 4 filas
+  onde hoje tem 2 — porque o painel mede 320 px. **É a proposta (K4) do painel de
+  28rem a aparecer outra vez, por outra porta.** As duas pagam-se melhor juntas
+  do que separadas.)*
+
 - [ ] **(K4) a janela pergunta sobre a RODADA, não sobre o golpe — e a trava
   de K2 NÃO proíbe** · pesado · de: jogo · 16/09
   **É a saída do beco de K3.** A proposta de K3 tentava mover **a pergunta** e
@@ -148,7 +207,7 @@ em vez da peça.
   (4 filas fixas, +149 px, iguais nas duas larguras, zero dependência do
   comprimento do nome do verbo).
 
-- [ ] **(K3) a janela pergunta sobre o golpe que menos importa — e há número** ·
+- [x] **(K3) a janela pergunta sobre o golpe que menos importa — e há número** · **APROVADA 17/09 — virou a Fase J** (a pergunta muda de golpe). Move-se a resposta, não a pergunta: a saída que o `jogo` e o `desenho` acharam melhor **não bate na trava de K2**, e derruba o dano sem pergunta de 62,4% para 33,4%. ·
   pesado · de: jogo · 16/09
   **O diagnóstico, corrido em 20 000 sementes sobre o motor real** (ladino nv 3 +
   2 companheiros contra 4 comuns, a mesa mais parecida com a campanha):
@@ -187,7 +246,7 @@ em vez da peça.
   chega ao mesmo lugar **sem bater na trava de K2** — mova-se a resposta, não a
   pergunta.
 
-- [ ] **(K3) no modo de alto contraste o Taverna não tem foco nenhum** ·
+- [x] **(K3) no modo de alto contraste o Taverna não tem foco nenhum** · **APROVADA 17/09 — virou a Fase A11** (acessibilidade do foco). `forced-colors` remove `box-shadow` por especificação, e o anel da casa inteira é `box-shadow`: para quem usa alto contraste, **o foco não é fraco, é zero**. ·
   pesado · de: desenho · 16/09
   **Não é «fraco»: é zero.** `forced-colors: active` — o alto contraste do
   Windows, que muita gente com baixa visão usa o dia inteiro — **remove
@@ -204,7 +263,7 @@ em vez da peça.
   (`grade-de-batalha.jsx:515-519`) é trabalho de etapa e muda o que um jogador
   vive. **Paga também a dívida de E1**, que está aberta desde 15/09.
 
-- [ ] **(K2) o combate ganha uma semente, e o Duelo já provou que dá** ·
+- [x] **(K2) o combate ganha uma semente, e o Duelo já provou que dá** · **APROVADA 17/09 — virou a Fase SE** (a semente do combate). São **205 chamadas a `Math.random`** na campanha contra **zero** em `duelo.js`: a primeira lei da casa — *mesma semente, mesmo resultado* — vale hoje metade do jogo, e o Duelo já provou que a outra metade é possível. ·
   pesado · de: jogo · 16/09
   **O diagnóstico, com o número.** A primeira lei desta casa diz *mesma semente,
   mesmo resultado, em qualquer máquina — é o único árbitro que um sistema sem
@@ -353,7 +412,7 @@ em vez da peça.
   para um mapa que também mostra o impossível —, e o jogador tem de reaprender
   a ler uma linha que não chega.
 
-- [ ] **(W1) a luta abre onde a sala é comprida, e ninguém decidiu isso** ·
+- [x] **(W1) a luta abre onde a sala é comprida, e ninguém decidiu isso** · **APROVADA 17/09 — vai para a Fase E** (E6). A distância de abertura é a **altura da planta e mais nada** (`grid.js:569-575`): a masmorra abre a 25,5 m por ser estreita, não por ser longe. Passa a sair de tabela, como todo número desta casa. ·
   pesado · de: jogo · 16/09
   **O acidente, e é de uma linha.** A abertura de toda luta sai de `posicionar`
   (`grid.js:569-575`): o herói em `y = altura − 1`, os inimigos em `y = 0`. Logo
@@ -421,7 +480,7 @@ em vez da peça.
   arma: com quatro, a inversão responde por um. Ela só volta ao tamanho cheio se
   a pessoa responder "dar-lhes motor" ao item seguinte.)*
 
-- [ ] **(W1) os três verbos de teatro: dar-lhes motor, ou tirá-los da tela** ·
+- [x] **(W1) os três verbos de teatro: dar-lhes motor, ou tirá-los da tela** · **APROVADA 17/09 — já é a Fase Y**, que a pessoa aprovou em 15/09 e está em 1 de 3 (Y1 deu motor a Empurrar e Derrubar em v9.271). `Esquivar` é Y2; a barra fixa só os mostra quando cumprirem. ·
   pesado · de: jogo · 16/09
   `golpe.js:222-254` escreve, com o motivo, que **`Esquivar`, `Empurrar` e
   `Derrubar` não chegam a motor nenhum** — X2 preferiu **escrever o buraco a
@@ -441,7 +500,7 @@ em vez da peça.
   medidos, **um teclado de atalhos**, e um teclado de atalhos é o oposto do que
   esta fase entrega. *Mas tira ao jogador coisa de que ele depende, logo é dela.*
 
-- [ ] **(E2) a régua mostra a planta INTEIRA, e a janela é uma marca dentro dela** ·
+- [x] **(E2) a régua mostra a planta INTEIRA, e a janela é uma marca dentro dela** · **APROVADA 17/09 — vai para a Fase E** (E7). A régua deixa de responder *"como se chama isto que vejo"* e passa a responder **"o que existe que eu não vejo"** — a pergunta que um campo de 33% faz o tempo inteiro. ·
   pesado · de: desenho · 15/09
   **A proposta.** A régua deixa de rotular só as casas que estão na tela e passa
   a rotular **a planta toda** — as 18 colunas cabem nos 337 px do telefone a
@@ -525,6 +584,56 @@ consultada sobre o que muda o jogo dela. Perguntar demais é uma forma de
 timidez, e a timidez já é o defeito.
 
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
+
+### Fase J — a pergunta muda de golpe
+**Aprovada em 17/09**, com a saída que o `jogo` e o `desenho` acharam melhor.
+K4 mediu e não defendeu a fase que a construiu: **62,42% do dano da rodada
+chega sem pergunta** e **50,66% das perguntas são sobre um golpe que errou**;
+a janela abre no maior golpe da rodada em apenas **36,09%** das vezes.
+
+**A saída não bate na trava de K2, e é por isso que é esta:** *move-se a
+resposta, não a pergunta.* Dano sem pergunta cai de 62,4% para **33,4%**.
+
+- [ ] **J1 · a pergunta encontra o golpe que importa** · de: pessoa · 17/09
+  Sem tocar na regressão zero que K2 provou (o desenho óbvio quebra-a em
+  37,44% das sementes, +12,4% de dano ao furtivo em silêncio). Medir antes e
+  depois com a mesma sonda de K4.
+- [ ] **J2 · o que a batida passa a custar** · de: pessoa · 17/09
+  Refazer a conta de K4: perguntas por luta, expirações, relógio de quem
+  responde contra o de quem cala (hoje **quem cala paga 2,4× mais**). E os
+  dois defeitos que a Fase K fechou torta: **expirar ainda gasta PM** (2 PM
+  em 100% das janelas das cinco conjuradoras) e **`recusar` é a única tecla
+  que muda o mundo** (+65% de dano, morte 13,7% → 49,3%) **e a única sem
+  glifo nem número**.
+
+### Fase A11 — o foco existe para quem usa alto contraste
+**Aprovada em 17/09.** `forced-colors: active` — o alto contraste do Windows,
+que muita gente com baixa visão usa o dia inteiro — **remove `box-shadow` por
+especificação**, e o anel de foco da casa inteira é `box-shadow`. Para esse
+jogador **o foco não é fraco: é zero**, e o teclado deixa de ter onde pousar.
+
+- [ ] **A11 · o anel sobrevive ao alto contraste** · de: pessoa · 17/09
+  Um indicador que não dependa de `box-shadow` (contorno real, que o modo
+  respeita), provado no modo forçado e **sem mudar nada para quem não o
+  usa**. K3 acabou de construir o anel: a peça existe, falta a segunda
+  língua. Catraca junto, senão volta na próxima peça.
+
+### Fase SE — o combate ganha uma semente
+**Aprovada em 17/09.** A primeira lei desta casa diz *mesma semente, mesmo
+resultado, em qualquer máquina — é o único árbitro que um sistema sem
+servidor tem*. **E a campanha não tem semente nenhuma:** são **205 chamadas a
+`Math.random`** em ~50 módulos, contra **zero** em `duelo.js`. A lei vale
+metade do jogo, e a outra metade já provou que dá.
+
+- [ ] **SE1 · o inventário do acaso** · de: pessoa · 17/09
+  Onde estão as 205, quais decidem regra e quais só escolhem prosa, e o que
+  `duelo.js`/`arena.js` fizeram para não precisar de nenhuma (`comSorteTravada`
+  existe e funciona). **Sem mudar nada** — é o retrato, e a fase vive ou morre
+  nele.
+- [ ] **SE2+ · as etapas que o inventário pedir** · de: pessoa · 17/09
+  Escritas ao fim de SE1. **Se a conta mostrar que o caminho é caro demais
+  para o que devolve, a fase encolhe ou morre** — e isso é resultado, não
+  fracasso: foi o que aconteceu com X3c e com a Fase H.
 
 ### Fase M — o caminho dos tokens (o Figma manda, o código obedece)
 Proposta da pessoa (14/09): *"os agentes de design ganham liberdade total
@@ -640,6 +749,23 @@ scroller de 301px, e o painel `Ações` abre abaixo da dobra.
   Cuidado herdado da Fase N: o que o campo mostra é **a intenção do degrau
   daquele inimigo**, não onisciência — um bruto não telegrafa um plano que
   não tem.
+
+- [ ] **E6 · a luta abre onde a tabela mandar** · de: pessoa · 17/09
+  **Aprovada em 17/09.** A abertura sai de `grid.js:569-575` — herói em
+  `y = altura−1`, inimigos em `y = 0` —, logo **a distância do combate é a
+  altura da planta e mais nada**: a masmorra abre a 25,5 m por ser
+  **estreita**, a taverna a 12 m por ser **baixa**. Ninguém decidiu isso.
+  Passa a sair de **tabela**, como todo número desta casa. Medido: abertura
+  média **19,95 m**, **10/10 plantas recusam corpo a corpo no turno 1**, e
+  **1,4 rodadas por luta de pura caminhada** — que X4 pôs preço: **~9,7
+  pontos de vitória por rodada andada**.
+- [ ] **E7 · a régua mostra a planta inteira** · de: pessoa · 17/09
+  **Aprovada em 17/09.** A régua deixa de rotular só o que está na tela e
+  passa a rotular **a planta toda** — 18 colunas cabem nos 337 px do telefone
+  a 18,7 px, **a letra nunca sai e custa zero casas** —, com a janela do
+  campo virando um trecho realçado dentro dela. **O porquê, numa frase:** hoje
+  ela responde *"como se chama isto que vejo"*, e a pergunta que um campo de
+  33% faz o tempo inteiro é **"o que existe que eu não vejo"**.
 
 ### Fase S — o Duelo e a sala ganham momento
 Decisão da pessoa (14/09) sobre as duas: *"vamos corrigir."*
