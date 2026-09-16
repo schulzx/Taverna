@@ -96,6 +96,12 @@ mentes precisam dele, e duas mãos nele ao mesmo tempo se apagam. Então:
 
 ## O roteiro de um ciclo
 
+**Antes do passo 1, e antes de tudo: a fila está pausada?** Se
+`.claude/fila-pausada` existe, a pessoa parou as duas filas — **não tome
+trava, não semeie, não escolha, não execute.** Diga que a fila está pausada,
+com a data e a razão escritas dentro do arquivo, e **termine ali**. Só quando
+ele não existir é que o roteiro abaixo vale.
+
 1. **Observar.** A sua trava é `.claude/ciclo-desenho-em-curso` (a do
    sistema é `.claude/ciclo-em-curso` — **não a toque**). Mesma regra de
    idade: <90 min, outro ciclo de desenho está vivo, pare; >90 min, ele

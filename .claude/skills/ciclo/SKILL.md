@@ -5,6 +5,10 @@ description: Roda um ciclo da mente do Taverna — observar, semear a pauta, esc
 
 Rode **um** ciclo da mente do Taverna.
 
+**Antes de tudo: se `.claude/fila-pausada` existe, a fila está parada por
+ordem da pessoa.** Não chame agente nenhum — diga que a fila está pausada,
+com a data e a razão escritas dentro do arquivo, e termine ali.
+
 1. Leia `CLAUDE.md` (a seção "A mente" é a sua licença e o seu limite) e
    `.claude/agents/orquestrador.md` — o roteiro do ciclo está lá.
 2. Chame o agente `orquestrador` com a instrução: "Rode um ciclo completo

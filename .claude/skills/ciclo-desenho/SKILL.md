@@ -5,6 +5,10 @@ description: Roda um ciclo da segunda mente do Taverna — a do visual. Observar
 
 Rode **um** ciclo da mente do desenho.
 
+**Antes de tudo: se `.claude/fila-pausada` existe, a fila está parada por
+ordem da pessoa.** Não chame agente nenhum — diga que a fila está pausada,
+com a data e a razão escritas dentro do arquivo, e termine ali.
+
 1. Leia `CLAUDE.md` (as seções "A mente", "As duas mentes" e "A mesa de
    design") e `.claude/agents/regente.md` — o roteiro está lá.
 2. Chame o agente `regente` com a instrução: "Rode um ciclo completo pelo seu

@@ -150,6 +150,27 @@ do ciclo está em `.claude/agents/orquestrador.md`; `/ciclo` roda um.
 
 ---
 
+## A fila pode ser pausada
+
+A pessoa para as duas filas com uma frase, e parou em **16/09/2026** para
+avaliar o que havia: *"suba e pause a fila, não comece outras até segunda
+ordem"*. O mecanismo é um arquivo — **`.claude/fila-pausada`** —, e ele
+guarda a data, a frase e o que falta religar.
+
+**Enquanto ele existir, nenhum ciclo novo começa** — nem o agendado, nem o
+chamado à mão. É a **primeira** coisa que se olha, antes da trava: se existe,
+o ciclo diz que a fila está pausada, mostra a data e a razão escritas lá
+dentro, e **termina sem tocar em nada**.
+
+Um ciclo **já no ar** quando a pausa chega **termina**: fecha, prova, commita
+e **sobe**. O que fica no disco não conta, e uma avaliação precisa do que está
+no ar, não do que ficou pela metade.
+
+Pausar também **desliga a tarefa agendada** (`taverna-ciclo`) — senão ela
+acorda um ciclo a cada duas horas contra a ordem. Por isso retomar são
+**duas** coisas: apagar o arquivo **e** religar a tarefa. Uma só, e a fila
+anda pela metade.
+
 ## As duas mentes
 
 Desde 14/09/2026 há **duas filas, correndo ao mesmo tempo na mesma árvore**:

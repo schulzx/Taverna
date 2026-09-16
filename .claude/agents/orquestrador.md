@@ -65,6 +65,12 @@ continua possível: duas chamadas no mesmo turno, ambas em primeiro plano.
 
 ## O roteiro de um ciclo
 
+**Antes do passo 1, e antes de tudo: a fila está pausada?** Se
+`.claude/fila-pausada` existe, a pessoa parou as duas filas — **não tome
+trava, não semeie, não escolha, não execute.** Diga que a fila está pausada,
+com a data e a razão escritas dentro do arquivo, e **termine ali**. Só quando
+ele não existir é que o roteiro abaixo vale.
+
 1. **Observar.** Primeiro a **trava** `.claude/ciclo-em-curso`:
    - não existe → escreva nele a data/hora e seja o ciclo da vez;
    - existe, com menos de 90 minutos → outro ciclo está vivo: **pare sem
