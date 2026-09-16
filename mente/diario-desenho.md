@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 16/09 08:40 · v9.267 · K2 · a trava, antes de tudo (e a dívida de W2 paga) · commit `PENDENTE`
+## 16/09 08:40 · v9.267 · K2 · a trava, antes de tudo (e a dívida de W2 paga) · commit `ae1be0b`
 
 *O escrito dos dois seniores fica em `mente/k2-jogo.md` e `mente/k2-desenho.md`;
 a forma, no bloco final de `mente/formas.md`.*
