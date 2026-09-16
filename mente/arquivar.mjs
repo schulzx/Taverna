@@ -97,9 +97,54 @@ function arquivarDiario(arq, saida) {
   return { arq, movidos: vao.length, antes: kb(txt), depois: kb(novo) };
 }
 
+/* ---------------- o passado dentro do que está aberto ----------------
+   Uma fase aberta carrega as etapas que já fechou, e a seção de decisões
+   carrega as que a pessoa já respondeu. São ensaios inteiros — 52 KB de
+   etapas feitas e 27 KB de decisões respondidas só na pauta do sistema —
+   e nenhum ciclo os lê para decidir nada. O que decide é o que está por
+   fazer; o resto é prova, e prova mora na estante.
+
+   Cada um vira uma linha de índice no lugar, com o título e a versão em
+   que fechou, para quem ler saber que existiu e onde está. */
+function arquivarFeitos(arq, saida) {
+  const txt = ler(arq);
+  if (!txt) return null;
+  const linhas = txt.split("\n");
+  const fora = [], guardados = [];
+  let i = 0;
+  while (i < linhas.length) {
+    const l = linhas[i];
+    if (/^- \[x\] /.test(l)) {
+      /* o item e o corpo indentado que vem com ele */
+      const bloco = [l]; i++;
+      while (i < linhas.length && !/^- \[[ x]\] /.test(linhas[i]) && !/^#{2,3} /.test(linhas[i])) { bloco.push(linhas[i]); i++; }
+      const corpo = bloco.join("\n");
+      /* um item feito sem corpo já é índice: deixa-se onde está */
+      if (bloco.length <= 2) { fora.push(corpo); continue; }
+      const titulo = (l.match(/\*\*(.+?)\*\*/) || [, l.slice(6, 70)])[1];
+      const versao = (corpo.match(/v\d+\.\d+/) || [, ""])[0] || "";
+      guardados.push(corpo);
+      fora.push(`- [x] **${titulo}** · feita${versao ? " em " + versao : ""} · texto em \`mente/arquivo/${saida}\``);
+      continue;
+    }
+    fora.push(l); i++;
+  }
+  if (!guardados.length) return { arq, feitos: 0, antes: kb(txt), depois: kb(txt) };
+  const novo = fora.join("\n");
+  if (!SO_MEDIR) {
+    const jaTem = existsSync(join(ARQUIVO, saida)) ? readFileSync(join(ARQUIVO, saida), "utf8")
+      : `# ${arq} — as etapas e decisões que fecharam\n\nO texto inteiro do que já foi feito ou respondido. Saiu da pauta porque a\nmente a lê ao começar todo ciclo, e o que decide é o que está por fazer.\nAqui fica a prova.\n`;
+    writeFileSync(join(ARQUIVO, saida), jaTem + "\n" + guardados.join("\n\n"));
+    writeFileSync(join(RAIZ, arq), novo);
+  }
+  return { arq, feitos: guardados.length, antes: kb(txt), depois: kb(novo) };
+}
+
 const r = [
   arquivarPauta("mente/pauta.md", "pauta-fechadas.md"),
   arquivarPauta("mente/pauta-desenho.md", "pauta-desenho-fechadas.md"),
+  arquivarFeitos("mente/pauta.md", "pauta-feitas.md"),
+  arquivarFeitos("mente/pauta-desenho.md", "pauta-desenho-feitas.md"),
   arquivarDiario("mente/diario.md", "diario-antigo.md"),
   arquivarDiario("mente/diario-desenho.md", "diario-desenho-antigo.md"),
 ].filter(Boolean);
@@ -107,7 +152,9 @@ const r = [
 let antes = 0, depois = 0;
 for (const x of r) {
   antes += Number(x.antes); depois += Number(x.depois);
-  const o = x.fechadas !== undefined ? `${x.fechadas} fases fechadas` : `${x.movidos} ciclos antigos`;
+  const o = x.fechadas !== undefined ? `${x.fechadas} fases fechadas`
+    : x.feitos !== undefined ? `${x.feitos} etapas/decisões fechadas`
+    : `${x.movidos} ciclos antigos`;
   console.log(`${x.arq.padEnd(28)} ${String(x.antes).padStart(4)} KB → ${String(x.depois).padStart(4)} KB   (${o})`);
 }
 console.log(`\n${SO_MEDIR ? "MEDIDO (nada movido)" : "arquivado"}: ${antes} KB → ${depois} KB  ·  ${antes ? Math.round((1 - depois / antes) * 100) : 0}% a menos que a mente lê por ciclo`);

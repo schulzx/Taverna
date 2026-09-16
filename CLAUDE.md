@@ -133,6 +133,12 @@ Na dúvida entre médio e pesado, é pesado. Os arquivos da mente:
   aponta para lá. **Nada se apaga** — o valor de uma fase fechada é de
   consulta, e consulta não precisa estar no bolso. Rode quando a mesa pesar;
   `--medir` mostra o ganho sem mover nada.
+- **Continuar um agente é mais barato que criar outro.** Um agente retomado
+  ainda tem na cabeça o `CLAUDE.md`, o roteiro e a pauta que já leu; um agente
+  novo relê tudo. Quando a etapa seguinte é da **mesma fase**, ou quando um
+  ciclo morreu no meio, **retome o mesmo agente** em vez de nascer um. É o que
+  mais se aproxima de "manter o agente vivo" — não há processo que segure
+  estado entre chamadas, mas há conversa que continua.
 - `mente/diario.md` — um bloco por ciclo: quem fez o quê, cada decisão média
   com o motivo. É por aqui que a pessoa vê o processo.
 
