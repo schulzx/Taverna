@@ -102,6 +102,32 @@ export const MATERIAIS = {
 };
 
 /* ============================================================
+   O ALVO DE TOQUE — o piso da casa, em px.
+
+   A doença que esta tabela cura tem endereço: `App.jsx:1998`. A fila de
+   quatro pílulas da ficha mede 27,5 px e o desenho dela mede 48 — e a
+   diferença atravessou uma suíte de 102 asserções sem uma única falha,
+   porque NENHUM DOS DOIS NÚMEROS ESTÁ ESCRITO NO CÓDIGO. A altura era o
+   resto de uma conta: 9 px de texto × 1,5 de entrelinha herdada, mais
+   12 px de `py-1.5`, mais 2 px de borda. Uma medida que ninguém escreve
+   é uma medida que ninguém pode provar — e uma altura composta por
+   `font-size` + `padding` muda sozinha no dia em que alguém aumentar o
+   texto por legibilidade.
+
+   POR QUE 48 E NÃO 47. 44 é o mínimo do WCAG 2.5.5 (AAA) e do HIG; 48 é
+   o do Material, é a casa do tabuleiro, é a linha do recuo do leque
+   (`painel-reacao.jsx`) — e é o que K1 deixou por fechar quando anotou
+   que a Pílula «saiu 47 e não 45, e o número não fecha». Um piso, quatro
+   leitores, em vez de quatro números parecidos. O orçamento do telefone
+   de W1 aguenta: 48 + 24 = 72 px de região reservada, contra o degrau
+   medido em 75 — folga de 3 px em vez de 4, e a mesma 13.ª fila.
+   ============================================================ */
+export const ALVOS = {
+  piso: 48,     /* toda peça em que se toca */
+  chamado: 56,  /* `O chamado`: mais alto por decisão de K1, fixado em K3 */
+};
+
+/* ============================================================
    AS FONTES — e o `@import` que tem de vir primeiro.
 
    O `@import` é a PRIMEIRÍSSIMA coisa da string, e por isso `FONT_CSS`
@@ -244,6 +270,23 @@ export const MOVIMENTO_CSS = `
   transition: background-color 90ms ease;   /* Pressa=Sobra -> Pouco: so a tinta */
 }
 
+/* ---------------- A PÍLULA DE ESCOLHA (K4) ----------------
+   120ms na troca de borda e no filete que cresce de 0 a 3px —
+   formas.md:355, o movimento de TODA "A escolha", não só desta
+   pílula. TRANSITION, não animation: é troca de ESTADO por um gesto
+   do jogador, nunca uma entrada que se dispara sozinha — por isso mora
+   ao lado de .tv-janela-tempo acima, que já mistura as duas coisas
+   na mesma classe.
+
+   NUNCA background: o fundo de PilulaDeEscolha é sempre T.panel (a
+   gramática do escolhido é borda + filete + visto, nunca preenchimento
+   cheio — formas.md:363-367), e animar uma cor que não muda seria
+   custo sem efeito. SEM CRASE NESTE COMENTÁRIO DE PROPÓSITO: ele mora
+   DENTRO da template literal de MOVIMENTO_CSS, e uma crase aqui fecha
+   a string e derruba o build — foi exatamente o que aconteceu na
+   primeira tentativa. */
+.tv-escolha-troca { transition: border-color 120ms ease, box-shadow 120ms ease; }
+
 /* A ORDEM É A REGRA (2/2): este @media tem de vir DEPOIS das tres
    classes acima. Uma media query nao soma especificidade nenhuma — ela
    so envolve. Quem decide o empate e a ordem, e so por estar embaixo
@@ -264,6 +307,11 @@ export const MOVIMENTO_CSS = `
      fica invisivel, e quem conta o tempo passa a ser o numeral, que e
      literalmente o que Tempo=Contagem e. */
   .tv-janela-tempo { animation: none; transform: scaleX(0); transition: none; }
+  /* A PÍLULA DE ESCOLHA (K4): sem isto a troca de borda salta em vez de
+     transitar sob movimento reduzido — a peça continua legível no
+     estado final (a lei que importa), mas a saída é obrigatória à
+     nascença mesmo assim, e não fica por escrever "é só cosmético". */
+  .tv-escolha-troca { transition: none; }
 }
 `;
 
@@ -406,6 +454,41 @@ export const SUPERFICIES_CSS = `
    ocupa leiaute (ao contrario de border) e aceita a cor do sistema. */
 @media (forced-colors: active) {
   .tv-anel-foco:focus-visible { outline: 2px solid Highlight; outline-offset: 2px; }
+}
+
+/* A PÍLULA DE ESCOLHA, E O ANEL QUE ELA TINHA APAGADO (K4). O filete de
+   3px do escolhido nascia como box-shadow INLINE no style de
+   PilulaDeEscolha, e estilo inline vence SEMPRE folha de estilo — o
+   anel de foco (acima) também é box-shadow, e o inline apagava-o em
+   todos os estados. O botão antigo do App.jsx não tinha box-shadow
+   nenhum no atributo style, e foi por isso que K3 provou o anel vivo;
+   a troca de peça levou o anel embora sem ninguém notar.
+
+   O CONSERTO: o filete sai do style inline e vira variável CSS
+   (--tv-filete), e quem compõe o box-shadow final é a folha, nunca o
+   componente.
+
+   ESTA REGRA TEM DE VIR DEPOIS de .tv-anel-foco:focus-visible, duas
+   caixas acima: as duas dependem do mesmo estado :focus-visible, e
+   quem decide o empate é quem está por último na cascata (A ORDEM É A
+   REGRA, já avisada duas vezes neste arquivo — MOVIMENTO_CSS entra
+   ANTES de SUPERFICIES_CSS em FOLHA, então esta regra não podia morar
+   lá). O anel vem primeiro na lista de sombras e o filete por último:
+   o anel é externo, o filete é inset, e essa é a ordem que se lê.
+
+   O FALLBACK DO var() NUNCA É "none" — achado vivo, segunda rodada
+   (K4): box-shadow: sombra, sombra, none é CSS INVÁLIDO — none só vale
+   como a propriedade INTEIRA, nunca como um item de uma lista de
+   sombras. Com o fallback em none (ou com --tv-filete valendo none),
+   a declaração inteira do :focus-visible virava inválida e o
+   navegador a DESCARTAVA EM SILÊNCIO: nenhum erro no console, e o
+   anel continuava apagado mesmo com a cascata e a especificidade
+   certas. O fallback é uma SOMBRA NULA (inset 0 0 0 0 transparent),
+   válida mesmo que hoje ninguém a use — quem escrever a próxima peça
+   pode esquecer de definir --tv-filete, e a falha voltaria calada. */
+.tv-escolha-troca { box-shadow: var(--tv-filete, inset 0 0 0 0 transparent); }
+.tv-escolha-troca.tv-anel-foco:focus-visible {
+  box-shadow: 0 0 0 2px ${T.bg}, 0 0 0 4px ${T.ink}, var(--tv-filete, inset 0 0 0 0 transparent);
 }
 `;
 

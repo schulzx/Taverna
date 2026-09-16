@@ -175,7 +175,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, LinhaDoCartao, duasColunas } from "./ui.jsx";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, PilulaDeEscolha, LinhaDoCartao, duasColunas } from "./ui.jsx";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -1990,17 +1990,14 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
                 return (
                   <div className="rounded-lg px-2.5 py-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
                     <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>Quando um golpe chega</div>
-                    <div className="flex gap-2 flex-wrap">
-                      {fila.map((p) => {
-                        const ativo = (preferenciaReacao || "normal") === p.id;
-                        return (
-                          <button key={p.id} onClick={() => aoEscolherPreferenciaReacao && aoEscolherPreferenciaReacao(p.id)}
-                            className="tv-anel-foco tv-mono text-[9px] px-2.5 py-1.5 rounded-full"
-                            style={{ background: ativo ? T.amber : T.panel, color: ativo ? T.onAccent : T.inkDim, border: `1px solid ${ativo ? T.amber : T.line}`, fontWeight: ativo ? 700 : 400 }}>
-                            {ativo ? "✓ " : ""}{p.rotulo}
-                          </button>
-                        );
-                      })}
+                    <div className="flex gap-2 flex-wrap" role="group" aria-label="Quando um golpe chega">
+                      {fila.map((p) => (
+                        <PilulaDeEscolha key={p.id}
+                          rotulo={p.rotulo}
+                          escolhida={(preferenciaReacao || "normal") === p.id}
+                          aoClicar={() => aoEscolherPreferenciaReacao && aoEscolherPreferenciaReacao(p.id)}
+                        />
+                      ))}
                     </div>
                   </div>
                 );

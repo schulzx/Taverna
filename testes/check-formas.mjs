@@ -6,9 +6,14 @@
    `src/` — 93 só no `App.jsx`, dos quais 44 são, byte a byte, uma cor que
    já tem nome em `T`. Um `#E8A33D` colado no meio de um `style={{}}` não
    é uma cor: é uma cópia que ninguém sabe que existe, e que não muda no
-   dia em que o âmbar mudar. Pior: o `#fff` de `App.jsx:2541`, sobre
+   dia em que o âmbar mudar. Pior: o `#fff` de `App.jsx:2642`, sobre
    `T.danger`, dá 3,42:1 e reprova o AA — uma cor que nunca passou por
    decisão nenhuma, porque nunca passou por tabela nenhuma.
+   (Endereço conferido em 16/09/K4: a citação original dizia `:2541`,
+   e já estava ~100 linhas errada ANTES desta etapa — não foi o corte
+   de 3 linhas da fila da ficha que a moveu. Achado pelo texto que
+   descreve — `background: T.danger, color: "#fff"` — e não por conta
+   de linha.)
 
    POR QUE UM VARREDOR E NÃO UMA SUÍTE. Não há módulo para medir. A
    doença não está no comportamento de nenhuma função — está no TEXTO do
@@ -50,12 +55,15 @@
      nomes de variável e palavras de português/inglês. Fica aberto, com
      o número escrito para quem quiser fechá-lo.
    - `transition` fora do `estilo.js`: 18 (a barra de vida 500 ms em
-     `App.jsx:21003`, PV/PM 300 ms em `:3182`/`:3189`, a cor do dado
+     `App.jsx:21828`, PV/PM 300 ms em `:3182`/`:3189`, a cor do dado
      400 ms em `:540`/`:553`). D5c vigia `animation`, e `transition`
      NÃO é alcançável pelo `@media` da folha — é atributo inline.
+     (`:21828` conferido em 16/09/K4 — a citação original dizia
+     `:21003`; o achado é `className="… transition-all duration-500"`
+     na barra de PV/PM do cabeçalho da ficha, não texto "500ms" literal.)
    - CONTRASTE: 3 tintas de texto-sobre-vermelho no projeto, e nenhum
      dos três dentes vê uma delas. `#fff` sobre `T.danger` dá 3,42:1 e
-     reprova o AA (`App.jsx:2541`); `#1A0F0D` sobre o mesmo fundo dá
+     reprova o AA (`App.jsx:2642`); `#1A0F0D` sobre o mesmo fundo dá
      5,48:1 (`painel-talentos.jsx:112` e `:417`, `painel-ascensao.jsx:72`).
      `T.onAccent` sobre `danger` daria 5,34:1 e resolvia as três.
      POR QUE NÃO É DENTE HOJE, e não é timidez: contraste é conta de COR,
@@ -89,7 +97,7 @@
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { T, MATERIAIS, MOVIMENTO_CSS } from "../src/estilo.js";
+import { T, MATERIAIS, MOVIMENTO_CSS, ALVOS } from "../src/estilo.js";
 /* D5e lê a tabela do relógio DE VOLTA, que é a lei da casa: os números
    não são transcritos aqui, são importados. No dia em que a janela deixar
    de ser 15 000 ms, o dente muda de alvo sozinho — e é isso que separa
@@ -271,10 +279,17 @@ const ZONAS_DE_TABELA = [
    estritamente PIOR que a animação.
 
    (`.tv-agonia` é INOCENTE, ao contrário do que a pauta suspeitava:
-   quando `grave`, `App.jsx:20971-20972` já põe borda estática de
+   quando `grave`, `App.jsx:21797`/`:21799` já põe borda estática de
    `T.danger`, o anel do retrato, o rosto e a barra de PV rotulada com o
-   número. Quatro afirmações paradas de "você está morrendo"; o pulso é a
-   quinta. Parado, o jogador ainda sabe.) */
+   número (esta última em `:21812`). Quatro afirmações paradas de "você
+   está morrendo"; o pulso é a quinta. Parado, o jogador ainda sabe.
+
+   Endereços conferidos em 16/09/K4 — a citação original dizia
+   `:20971-20972`, um bloco que hoje fala de recalibragem de save e não
+   de `grave` nenhum. Achados pelo texto que descrevem, não por conta de
+   linha: a borda em `style={{ background: T.panel, border: "1px solid "
+   + (feridaRecente || grave ? T.danger : T.line) }}` e o anel em
+   `<Retrato ... anel={grave ? T.danger : T.amber} .../>`.) */
 const SEM_SAIDA_DE_MOVIMENTO = {
   ".tv-fade":     "a aparição de todo painel · .5s",
   ".tv-slide":    "a entrada lateral · .25s",
@@ -356,6 +371,57 @@ const TETO_DE_CONTADOR_DE_QUADRO = {
      é dela, e não minha. */
 const COLISAO_DE_RELOGIO_ESCRITA = {
   ".tv-dice": 1000,  /* 16/09 · `tvGlow 1s`, o brilho do d20 — coincide com `aperto` e `bonusContagem` */
+};
+
+/* D5f · O ALVO DE TOQUE SAI DE TABELA, NUNCA DE ARITMÉTICA DE PADDING.
+
+   A DOENÇA, com endereço e data: `App.jsx:1998` (16/09) media 27,5 px de
+   alvo onde o desenho dizia 48, e NENHUM DOS DOIS NÚMEROS EXISTIA NO
+   TEXTO. D5a apanha cor nova, D5b apanha cor copiada, D5c e D5e apanham
+   o relógio — e os quatro ficaram cegos a uma medida de alvo, porque uma
+   medida ausente não é um literal.
+
+   D5f.1 · ALTURA LITERAL EM PEÇA DE CONTROLO. Não é tabela de teto — é
+     LISTA FIXA (`ARQUIVOS_DE_PECA`) mais a regra anti-cemitério aplicada
+     à nascença: o número certo aqui é sempre zero, e uma tabela que só
+     soubesse dizer "0" seria a mesma dívida escrita com outro nome
+     (`conferirTetos` já recusa teto 0 por isso — "ENTRADA MORTA"). Padrão
+     /\bminHeight\s*:\s*\d/ nos arquivos de peça (`src/ui.jsx`,
+     `src/painel-reacao.jsx`). SÓ `minHeight`, e não `height` sozinho —
+     medido: os dois arquivos têm `height` literal LEGÍTIMO que não é
+     alvo de toque nenhum (um losango de 8 px, um ponto de estado de
+     10 px, a espessura de 4 px do trilho do relógio em
+     `painel-reacao.jsx:236`), e um regex que os contasse mentiria
+     dizendo que falta tabela onde já não falta — o oposto do que D5f
+     existe para provar. Depois da correção K4: 0 nos dois.
+   D5f.2 · A PÍLULA CHEIA À MÃO. Teto por arquivo de `rounded-full` num
+     `<button>` cujo `background` é ternário para `T.amber`/`T.violet`,
+     numa janela de 3 linhas ao redor (a mesma largura de busca da
+     medição original do `desenho`, `mente/k4-desenho.md` §1.3). Medido
+     HOJE, DEPOIS de a fila da ficha virar `PilulaDeEscolha` — é por
+     isso que o teto do App desce em 1 no mesmo commit em que a fila
+     nasceu, com a data na própria linha, em vez de copiar o número de
+     antes da correção. QUEM SUBIR ESTE TETO MEDE OUTRA VEZ COM O SEU
+     PRÓPRIO REGEX e escreve o número que ele der — um teto copiado de
+     outra medição é a mentira que a tabela existe para impedir.
+   D5f.3 · O PISO DO ALCANCE. `ALVOS` tem de ter >= 2 entradas e
+     `ALVOS.piso >= 44`. Sem isto, renomear a tabela deixa D5f.1 a medir
+     o vazio e a ficar verde — e catraca verde por vazio é pior que
+     catraca nenhuma (o argumento é o de `ALCANCE_MINIMO`).
+
+   O BURACO, declarado com número porque um buraco calado é mentira: D5f
+   conta TEXTO e não sabe renderizar. Um `<button>` com `minHeight:
+   ALVOS.piso` e `overflow: hidden` a cortar o rótulo passa verde. O que
+   este dente prende é a ORIGEM do número, nunca a caixa desenhada; a caixa
+   só se confere viva, e é por isso que a conferência no navegador continua
+   por fazer. */
+const ARQUIVOS_DE_PECA = ["src/ui.jsx", "src/painel-reacao.jsx"];
+const TETO_DE_PILULA_A_MAO = {
+  "src/App.jsx": 13,              /* 16/09 → 16/09 · K4, a fila da ficha vira PilulaDeEscolha (era 14) */
+  "src/grade-de-batalha.jsx": 1,
+  "src/painel-codex.jsx": 1,
+  "src/painel-mapa.jsx": 2,
+  "src/painel-talentos.jsx": 1,
 };
 
 /* O PISO DO ALCANCE, transplantado do `pisoDoAcervo` de
@@ -797,6 +863,61 @@ const falhasE = conferirTetos(contadores, TETO_DE_CONTADOR_DE_QUADRO,
   "leia o relógio em vez de contar tiques, ou suba o teto com a razão escrita na própria linha.");
 t("D5e.3 · nenhum arquivo ganhou um contador de quadro — e nenhum perdeu um sem descer o teto (folga zero)",
   falhasE.length === 0, falhasE.join("\n      "));
+
+/* ============================================================
+   6. D5f — O ALVO DE TOQUE SAI DE TABELA, NUNCA DE ARITMÉTICA DE PADDING
+   ============================================================ */
+sec("6. D5f — o alvo de toque sai de tabela, nunca de aritmética de padding");
+
+/* D5f.3 primeiro — o piso, porque um dente que mede o vazio de uma
+   tabela renomeada fica verde por vazio e parece que cumpriu. */
+t("D5f.3 · ALVOS tem pelo menos 2 entradas", Object.keys(ALVOS).length >= 2,
+  Object.keys(ALVOS).length === 0 ? "A TABELA DESAPARECEU — renomearam ALVOS, e os dentes abaixo medem o vazio." : `tem ${Object.keys(ALVOS).length}`);
+t("D5f.3 · ALVOS.piso >= 44 — o piso do WCAG 2.5.5 (AAA)", (ALVOS.piso || 0) >= 44, `piso é ${ALVOS.piso}`);
+
+/* D5f.1 · ALTURA LITERAL EM PEÇA DE CONTROLO — só `minHeight`, nunca
+   `height` sozinho (ver o motivo, escrito com a tabela acima). Não é
+   `conferirTetos`: o número certo aqui é sempre zero, e um teto que só
+   soubesse dizer "0" seria "ENTRADA MORTA" pela própria regra
+   anti-cemitério que os outros dentes já aplicam. */
+const falhasF1 = [];
+for (const arq of ARQUIVOS_DE_PECA) {
+  const abs = join(RAIZ, arq);
+  if (!existsSync(abs)) { falhasF1.push(`${arq} desapareceu — ARQUIVOS_DE_PECA mede um arquivo que não existe mais.`); continue; }
+  const ext = "." + arq.split(".").pop();
+  const texto = mascararComentarios(readFileSync(abs, "utf8"), ext);
+  const n = (texto.match(/\bminHeight\s*:\s*\d/g) || []).length;
+  if (n > 0) falhasF1.push(`${arq} tem ${n} altura literal (minHeight: <dígito>) — a altura de uma peça de controlo sai de ALVOS, nunca de um número escrito à mão.`);
+}
+console.log(`  ··  altura literal (minHeight: <dígito>) em ${ARQUIVOS_DE_PECA.length} arquivos de peça: ${falhasF1.length === 0 ? "nenhuma" : falhasF1.length + " achados"}`);
+t("D5f.1 · nenhum arquivo de peça tem altura literal de controlo",
+  falhasF1.length === 0, falhasF1.join("\n      "));
+
+/* D5f.2 · A PÍLULA CHEIA À MÃO — <button> com `rounded-full` cujo
+   `background` é um ternário para `T.amber`/`T.violet`, numa janela de
+   3 linhas ao redor. A mesma assinatura da medição original do
+   `desenho` (`mente/k4-desenho.md` §1.3), reproduzida aqui com regex
+   próprio, como a lei da casa exige. */
+const pilulaAMao = {};
+for (const arq of arquivos) {
+  const ext = "." + arq.split(".").pop();
+  const texto = mascararComentarios(readFileSync(join(RAIZ, arq), "utf8"), ext);
+  const linhas = texto.split("\n");
+  let n = 0;
+  for (let i = 0; i < linhas.length; i++) {
+    if (!/rounded-full/.test(linhas[i])) continue;
+    const janela = linhas.slice(Math.max(0, i - 3), Math.min(linhas.length, i + 4)).join("\n");
+    if (/<button/.test(janela) && /background:\s*[^,{}]*\?\s*T\.(amber|violet)/.test(janela)) n++;
+  }
+  if (n) pilulaAMao[arq] = n;
+}
+const totalPilulaAMao = Object.values(pilulaAMao).reduce((a, b) => a + b, 0);
+console.log(`  ··  ${totalPilulaAMao} pílulas cheias à mão: ${Object.entries(pilulaAMao).map(([a, n]) => `${a} ${n}`).join(" · ")}`);
+const falhasF2 = conferirTetos(pilulaAMao, TETO_DE_PILULA_A_MAO,
+  { singular: "pílula cheia à mão nova", plural: "pílulas cheias à mão novas" },
+  "use PilulaDeEscolha (src/ui.jsx), ou escreva por que a peça não serve.");
+t("D5f.2 · nenhum arquivo ganhou uma pílula cheia à mão — e nenhum perdeu uma sem descer o teto (folga zero)",
+  falhasF2.length === 0, falhasF2.join("\n      "));
 
 console.log(`\n${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

@@ -5,7 +5,7 @@
    Extraído do App.jsx na modularização.
    ============================================================ */
 import React from "react";
-import { T } from "./constantes.js";
+import { T, ALVOS } from "./constantes.js";
 /* A semente é conta (`semente.js`) e o rosto é desenho (`rosto.jsx`). O
    `Retrato` daqui é uma das duas molduras que usam esse rosto — a outra é a
    carta de tarô. É por isso que o rosto saiu deste arquivo: sem um dono só,
@@ -399,6 +399,68 @@ export function CartaoDeEscolha({ ativo, aoClicar, compacto, children }) {
         boxShadow: ativo ? "0 4px 8px rgba(232,163,61,0.12)" : "none",
       }}>
       {children}
+    </button>
+  );
+}
+
+/* A PÍLULA DE ESCOLHA — `A escolha` *Forma=Pílula* (Figma `20:77`), a
+   segunda forma da mesma peça de que `CartaoDeEscolha` é a primeira.
+
+   A ALTURA SAI DE `ALVOS.piso` E NUNCA DE `padding` + `font-size`. É a
+   lição de K3 com endereço: a fila da ficha media 27,5 px porque a sua
+   altura era o resto de uma conta que ninguém tinha escrito.
+
+   A GRAMÁTICA DO ESCOLHIDO É UMA SÓ (`formas.md`): borda `amber` de 1 px
+   + filete de 3 px do lado de entrada + o visto. NUNCA preenchimento
+   âmbar cheio — `background: T.amber` tem 37 usos e é a assinatura da
+   AÇÃO da tela; usá-lo para dizer «selecionado» faz uma opção parecer o
+   botão principal.
+
+   A COLUNA DO VISTO É FIXA (`1ch`) E EXISTE NOS QUATRO ESTADOS. Esconder
+   um filho colapsa o espaço e arrasta as palavras: com visto e sem, o
+   texto começa no mesmo x, e a largura da pílula não depende de ela
+   estar escolhida. O `padding-left` é 15 e não 12 porque os 3 px do
+   filete não podem comer a goteira do texto.
+
+   O FILETE VAI POR VARIÁVEL CSS (`--tv-filete`), NUNCA POR `boxShadow`
+   INLINE — achado vivo no navegador (K4): estilo inline vence folha de
+   estilo sempre, e o anel de foco (`.tv-anel-foco:focus-visible`) é
+   `box-shadow`. Um `boxShadow` escrito aqui, no `style`, apagava o anel
+   nos quatro estados — o `<button>` antigo do `App.jsx` não tinha
+   `boxShadow` inline nenhum, e foi só por isso que K3 provou o anel
+   vivo. A folha (`estilo.js`) é quem compõe o filete com o anel.
+
+   O REPOUSO NUNCA É `"none"` — é uma SOMBRA NULA (`inset 0 0 0 0
+   transparent`). Achado vivo, segunda rodada (K4): `box-shadow: <sombra>,
+   <sombra>, none` é CSS INVÁLIDO — `none` só vale como a propriedade
+   INTEIRA, nunca como um item de uma lista de sombras. Com `--tv-filete`
+   valendo `"none"`, a regra composta do `:focus-visible`
+   (`estilo.js`) virava uma declaração inválida e o navegador a
+   DESCARTAVA EM SILÊNCIO: nenhum erro no console, e o anel continuava
+   apagado mesmo com a cascata e a especificidade certas. E de brinde:
+   uma sombra nula TRANSITA para `inset 3px …` (as duas são a mesma
+   "forma" de sombra, só o tamanho muda); `"none"` não transita — a
+   troca de 120ms saltava em vez de animar. */
+export function PilulaDeEscolha({ rotulo, escolhida, impedida, razao, aoClicar }) {
+  return (
+    <button type="button" disabled={impedida} aria-pressed={!!escolhida}
+      onClick={impedida ? undefined : aoClicar} title={razao || undefined}
+      className="tv-anel-foco tv-mono text-[9px] rounded-full tv-escolha-troca"
+      style={{
+        display: "inline-flex", alignItems: "center",
+        minHeight: ALVOS.piso, padding: "0 12px 0 15px",
+        background: T.panel,
+        color: escolhida ? T.amberSoft : T.inkDim,
+        border: `1px solid ${escolhida ? T.amber : T.lineStrong}`,
+        "--tv-filete": escolhida ? `inset 3px 0 0 0 ${T.amber}` : "inset 0 0 0 0 transparent",
+        fontWeight: escolhida ? 600 : 400,
+        opacity: impedida ? 0.45 : 1,
+        cursor: impedida ? "not-allowed" : "pointer",
+      }}>
+      <span aria-hidden="true" style={{ display: "inline-block", width: "1ch", marginRight: 4, textAlign: "center" }}>
+        {escolhida ? "✓" : ""}
+      </span>
+      {rotulo}
     </button>
   );
 }

@@ -65,6 +65,89 @@ vezes.** A do `jogo` tem o número que dói; a do `desenho` é a única da pauta
 ficou **mais barata** por a etapa ter passado — a peça que ela precisava nasceu
 hoje, e o que falta é alcance.
 
+**E três nasceram em K4 (16/09)**, marcadas *(K4)*, e estão **no topo** porque a
+etapa que as gerou é a que **mediu a fase inteira e não a defendeu**. A primeira é
+a saída para o beco em que K3 ficou preso — e ela **não bate na trava de K2**, o
+que muda tudo. A segunda é a que devolve ao jogador o relógio que a escada lhe
+cobra. A terceira é do `desenho`, e é a única em toda a pauta que acusa **o painel**
+em vez da peça.
+
+- [ ] **(K4) a janela pergunta sobre a RODADA, não sobre o golpe — e a trava
+  de K2 NÃO proíbe** · pesado · de: jogo · 16/09
+  **É a saída do beco de K3.** A proposta de K3 tentava mover **a pergunta** e
+  batia na asserção 05 (`abre.ordem <= ordemDaReacaoDeHoje`). Esta move **a
+  resposta**: o cartão diz de quem vêm os golpes da rodada e o jogador escolhe
+  **onde** a reação cai. **`abre.ordem` não muda** — a janela continua a abrir
+  exactamente onde abre hoje, e quem não responde continua a resolver por
+  `reacaoDoSilencio({ desde: abre.ordem })`, byte a byte.
+  > *A trava soldou a ordem da PERGUNTA à ordem dos golpes. Ela nunca soldou a
+  > ordem da RESPOSTA.*
+
+  **O número, em 20 000 sementes sobre o motor de hoje:**
+
+  | | hoje | com a escolha |
+  |---|---|---|
+  | dano do golpe perguntado (mesa A) | 3,52 | **6,15** — ×1,75 |
+  | dano do golpe perguntado (solo) | 3,53 | **7,72** — ×2,19 |
+  | **dano que chega sem pergunta (mesa A)** | **62,42 %** | **33,37 %** |
+  | **dano que chega sem pergunta (solo)** | **75,24 %** | **45,87 %** |
+
+  **Nenhuma outra mudança desta fase move esse número.** E cai de lambuja o
+  defeito do `inimigo_erra`: se a rodada tem um erro e um acerto, o jogador
+  escolhe o acerto — sem precisar de uma regra que proíba perguntar no erro.
+  **E `Etapa=Escolhendo` passa a abrir**: a peça que custou um ciclo, foi
+  desenhada, fabricada, montada e **nunca abre** (12 classes em 12 oferecem
+  exactamente um verbo) ganha o trabalho para que foi feita, e `ATALHOS_DA_JANELA`
+  deixa de ter uma linha de letra morta.
+  **O segredo do dano fica inteiro:** mostram-se **nomes, não números** — *o Ogro ·
+  o arqueiro · o Ogro de novo*. O jogador escolhe o inimigo, não a aritmética, e
+  aprende em duas lutas quem bate mais forte. Isso é jogo, e é o contrário de
+  contabilidade.
+  **O que se perde, dito antes de a pessoa o descobrir:** quebra a lei de K3
+  *«quem responde resolve-se pelo MESMO caminho de quem não responde»*, de
+  propósito — o jogador que responde passa a ter um mundo **melhor** que o de hoje.
+  Quanto melhor está medido e é pequeno: a reação já é uma por rodada, e o que muda
+  é **em que golpe** ela cai, não quantas há. **É isso que precisa da aprovação
+  dela**, e é a única coisa desta proposta que é opinião.
+
+- [ ] **(K4) a escada tem de CORTAR antes de calar — quem ignora a batida paga
+  2,4× mais relógio do que quem a joga** · pesado · de: jogo · 16/09
+  **Medido, em 4 000 lutas pareadas:** quem **cala** paga **30,9 s** de espera por
+  luta; quem **responde** paga **13,0 s**. A primeira expiração custa os **15 000
+  ms inteiros** e compra **exactamente zero** — o sistema resolve o que já
+  resolveria, e isso foi provado duas vezes na tela. **A escada protege do número
+  de perguntas (3,22 → 1,98) e não protege do preço de cada uma.** É o contrário
+  do que uma saída de conforto devia fazer.
+  **Proposta:** depois de **uma** expiração, a janela seguinte nasce **sem folga** —
+  só o trilho (4 600 ms). Um degrau novo em `ESCADA_DO_SILENCIO`, lido da tabela
+  como os outros dois. **A conta:** 15 600 + 4 600 = **20,2 s** contra os 30,9 s
+  medidos — **−35 %** de relógio para exactamente a pessoa que a escada existe para
+  proteger. **E quem responde não sente nada**, porque o contador zera na primeira
+  resposta.
+  > *A folga de onze segundos é para quem está a decidir; quem já demonstrou que
+  > não decide não precisa dela para não decidir outra vez.*
+
+  Vem à pessoa porque **muda o tempo que o jogador vive**, e a decisão dos 15 s foi
+  dela (*"pra que fique tranquilo até pra pessoas com dificuldade"*) — encurtar o
+  segundo prazo não contradiz o motivo dela, mas **só ela pode dizer isso.**
+
+- [ ] **(K4) a ficha do jogador de monitor é 24 % mais estreita que a do
+  telefone** · pesado · de: desenho · 16/09
+  **E é a única proposta desta pauta que acusa o painel, não a peça.** O painel da
+  ficha é `w-80` — **320 px**, dos quais **258 úteis na mesa** contra **321 no
+  telefone**. O jogador de ecrã grande lê a ficha numa coluna **mais estreita** que
+  a de quem joga no bolso. É isso, e não a peça, que prende o texto da fila de
+  pílulas aos **9 px**: a 12 px (o `text-xs` que toda a Fase K usa) a mesa
+  precisaria de 3–4 filas e o telefone continuaria em 2.
+  **Proposta:** `md:w-80` → `md:w-[28rem]` (**448 px**; bloco da fila 386; duas
+  filas nos quatro heróis; 20,8 % → 29,2 % de um ecrã de 1536; cabe no
+  `max-w-[88vw]`). **Reversível num token.**
+  **Por que é pesado, dito sem rodeios:** não há nada a reaprender — o que muda é
+  **quanto da cena o painel tapa quando está aberto**, e isso é território do
+  jogador. **Alternativa mais barata, registada:** `A escolha` *Forma=Lista*
+  (4 filas fixas, +149 px, iguais nas duas larguras, zero dependência do
+  comprimento do nome do verbo).
+
 - [ ] **(K3) a janela pergunta sobre o golpe que menos importa — e há número** ·
   pesado · de: jogo · 16/09
   **O diagnóstico, corrido em 20 000 sementes sobre o motor real** (ladino nv 3 +
@@ -91,7 +174,18 @@ hoje, e o que falta é alcance.
   porque muda mecânica e porque contradiz uma asserção que ela já aprovou.**
   **O que se perde, dito por mim:** o jogador deixa de poder **recusar** o
   contra-ataque — e recusar compra alguma coisa de verdade.
-  *(K4 mede a batida e é onde isto se decide com o jogador dentro.)*
+  **[K4, 16/09] MEDIDO OUTRA VEZ, e ele não exagerou em nada.** Corrido de novo
+  sobre o código de hoje: 63 % → **62,42 %**; 50,09 % → **50,66 %**; 36,09 % →
+  **35,54 %**; 98,60 % → **98,51 %**; 75 % → **75,24 %**. **A única divergência
+  fora do ruído sai contra ele**, e o golpe real confirmou-o na tela: três das
+  cinco janelas abriram num erro, e em três rodadas seguidas o dano grande chegou
+  coberto. **A proposta (a) — *a janela não abre num erro do inimigo* — leva
+  agora também a assinatura do `desenho`**, por razão de forma e independente da
+  razão de dano: abrir só em golpe que acerta multiplica por **50** a informação
+  da aparição da peça (0,020 → 1,023 bits) pagando com **metade** das
+  interrupções. **A proposta (b) foi superada:** a de K4, no topo desta lista,
+  chega ao mesmo lugar **sem bater na trava de K2** — mova-se a resposta, não a
+  pergunta.
 
 - [ ] **(K3) no modo de alto contraste o Taverna não tem foco nenhum** ·
   pesado · de: desenho · 16/09
@@ -1057,7 +1151,7 @@ zero chamadas.* É o maior número desta fase e o mais barato de pagar.
   e `mente/w2-desenho.md`; a forma, no bloco final de `mente/formas.md`. ·
   de: pessoa · 15/09
 
-### Fase K — as três batidas da rodada (a reação ganha controle)
+### Fase K — as três batidas da rodada (a reação ganha controle) · **FECHADA 16/09**
 **Proposta do `jogo` em D4, aprovada pela pessoa em 14/09 — com o desenho
 dela junto.** Hoje o jogador toca uma batida e meia: **seis reações gastam o
 PM dele sem lhe perguntar** (`App.jsx:7572`). O argumento é estudo citado de
@@ -1199,11 +1293,59 @@ não reagir, caso não queira gastar PM."*
   ganhou eixo `Estado`**: nasceu `.tv-anel-foco`, transversal, que serve o
   chamado, o recuo, o leque e as quatro pílulas da ficha. *K1 tinha a conclusão
   certa pela razão errada.*
-- [ ] **K4 · medir a batida** · de: pessoa · 14/09
-  Quantas reações o jogador de fato escolhe, quantas expiram, quanto tempo
-  ele leva, e se o combate ficou mais longo. **Se a batida nova cansar em
-  vez de tensionar, isso aparece no número** — e a etapa diz, em vez de
-  defender o que construiu.
+- [x] **K4 · medir a batida** · **FEITA 16/09 · v9.273 — e ela não defendeu a
+  fase.** · de: pessoa · 14/09
+  **O veredito, dito inteiro: a peça está certa e a pergunta está errada.**
+
+  **O que defende a fase, e é medido:** em **4 000 lutas pareadas por semente**,
+  nas duas mesas, a luta com cartão é **idêntica à de v9.266 em 100,00 % das
+  sementes** — mesmas rodadas, mesmo dano, mesmos golpes, mesmas reações, **mesmo
+  número de rolos de dado**, mesmo desfecho, tanto para quem responde como para
+  quem cala. **O combate não ficou mais longo em rodada nenhuma.** Só em relógio
+  de parede: **+24,9 %** para quem responde depressa, **+59,4 %** para quem deixa
+  expirar sempre, e **+0,0 %** para quem trava a pílula na ficha — a saída é
+  grátis e devolve o mundo idêntico. O tecto `msEntreRespostas: 33 200` aguenta
+  (30,9 s medidos). **A tabela não mentiu.**
+
+  **O que a condena, e também é medido:** **84 % das rodadas** de uma luta trazem
+  pergunta (**98 %** no solo) — não há rodada de descanso; **metade das perguntas
+  é sobre um golpe que passou longe** (50,66 %); **62,4 % do dano chega em
+  silêncio** (75,2 % no solo); **12 classes em 12 oferecem exactamente um verbo**,
+  e em 7 delas ele custa **0 PM** — *um diálogo de confirmação com relógio*, que é
+  a frase com que K1 matou `inimigo_cai`; e **quem cala paga 2,4× mais relógio do
+  que quem responde**. Do lado da forma, a mesma conclusão com outra régua: a
+  aparição do cartão carrega **0,020 bits** (`−log₂ 0,986`), **cinco vezes abaixo
+  do chão da moldura** — e moldura com relógio é pedágio.
+
+  **E o achado que ninguém tinha visto:** *responder* e *deixar expirar* produzem
+  mundos **idênticos** em 100 % das sementes. **`recusar` é a única tecla do
+  cartão que muda o mundo** — leva o dano da luta de 13,13 para 21,67 (+65 %) e a
+  morte de 13,7 % para **49,3 %** — **e é a única sem glifo, sem log e sem
+  número.** K3 decidiu bem ao não lhe dar linha de log; a ausência de marca foi
+  justificada com *«não houve gesto»*, e o número diz que **o gesto mais
+  consequente do jogo é exactamente esse.**
+
+  **Não desligar. Corrigir.** Desligar devolve o jogo em que o jogador não faz
+  nada no turno do inimigo, e isso é pior. As três propostas que saem daqui estão
+  no topo de *Para a pessoa decidir*.
+
+  **A dívida de K3, paga: o golpe real foi visto.** Cinco janelas, dois torneios,
+  seis rodadas de vez do mundo — e **a tela e a tabela concordam ao
+  milissegundo**: expiração a **15 013 / 15 014 ms** (`janela: 15 000`), trilho a
+  nascer aos **10 967 ms** (`folga: 11 000`), `tvJanelaTempo` 4,6 s linear, 527 px
+  num pai de 528. As **cinco saídas** saíram palavra por palavra das tabelas, e o
+  log ficou byte a byte o de hoje. **O que o vivo desmentiu não foi a peça:** três
+  das cinco janelas abriram num erro, e **a escada calou exactamente a rodada que
+  levou o herói de 30 PV a 1 PV** — 25 de dano, quatro golpes, zero perguntas.
+
+  **E a peça torta de K3 fechou:** a fila de pílulas da ficha media **27,5 px**
+  onde `formas.md` desenha 47 — e **nem 27 nem 48 estavam escritos em lado
+  nenhum**, o que é por que 102 asserções passaram verdes. Nasceu `ALVOS`
+  (`piso: 48`, `chamado: 56`) e a primitiva `PilulaDeEscolha`, que a fila montava
+  à mão havia dois ciclos. **Confirmado vivo: 48,00 px**, `role="group"`,
+  `aria-pressed`, fundo `T.panel` (nunca âmbar cheio), borda `lineStrong`, filete
+  `inset 3px`, transição de 120 ms com saída sob `prefers-reduced-motion`, e no
+  telefone **duas filas, 139,1 px** — os 139,5 previstos, zero filas a mais.
 
 ### Fase E — a batalha tem tela, e o tabuleiro tem endereço
 Decisão da pessoa (14/09): *"seria interessante uma tela para a batalha,
@@ -1598,6 +1740,57 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
   metade do tempo.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **`recusar` é o único gesto do cartão que muda o mundo, e é o único sem
+  marca** · médio · de: jogo · 16/09 (K4) · **o achado que o número deu e a
+  intuição não daria**
+  **A conta:** *responder* e *deixar expirar* produzem mundos **idênticos** em
+  100 % de 4 000 sementes. `recusar` leva o dano da luta de **13,13 para 21,67**
+  (+65 %) e a morte de **13,7 % para 49,3 %** (mesa A); de 27,21 para 31,00 e de
+  85,2 % para **99,6 %** (mesa B). **É a única das três teclas que o jogador pode
+  tocar para que alguma coisa aconteça de diferente — e o cartão trata-a como se
+  não tivesse acontecido.**
+  **A decisão de K3 de não lhe dar linha de log continua certa** (porta 10 de K2:
+  o log fica byte a byte o de hoje). O que caiu foi a justificação da ausência de
+  **glifo e de número** — *«não houve gesto»* —, porque o gesto mais consequente
+  do jogo é exactamente esse. **Precisa dos dois seniores**, e não é peça nova: é
+  decidir o que o recuo mostra **dentro** do cartão, sem sair para o log.
+
+- [ ] **o cartão mente por omissão sobre o preço do «sim»** · médio · de: jogo ·
+  16/09 (K4)
+  `revidar · 0 PM — na mesma batida` diz que não custa nada, **e custa a reação da
+  rodada**. Medido: quando a janela abre num erro, a rodada ainda traz **5,85** de
+  dano que vai chegar **coberto porque a reação já foi gasta no revide**. E
+  `contra_ataque` tem `chance: 0.55` que o cartão também cala.
+  **A palavra, dentro do orçamento de 40 caracteres de K1 (mede 38):**
+  `revidar · 0 PM — e a guarda fica aberta`. Não diz reação, não diz rodada, não
+  diz recurso: diz o **efeito**.
+  **E a segunda metade é fiação, não peça:** `PALAVRAS_DA_CHANCE` já existe, já
+  está certa e já sabe escrever o risco na fenda do preço — **só não é lida por
+  este caminho**. Casa com o item do preço que cala o risco, logo abaixo; são a
+  mesma dívida vista de dois lados.
+
+- [ ] **`Etapa=Escolhendo` foi desenhada, fabricada, montada e nunca abre** ·
+  leve (o registo) · de: jogo · 16/09 (K4)
+  **12 classes em 12** têm exactamente **um** verbo de `sofre_dano`, logo o leque
+  **nunca** se abre — e `ATALHOS_DA_JANELA` tem uma linha (`escolher`:
+  `ArrowDown/ArrowUp + Enter`) que é **letra morta**. É a peça mais cara da fase a
+  não fazer nada. **Não se conserta sozinha, e é por isso que está aqui em vez de
+  ser feita:** ou o acervo de reações cresce (fila do sistema), ou a proposta de
+  K4 no topo passa e o leque ganha o trabalho para que foi fabricado. **Fica
+  registado para que ninguém a "limpe" por parecer morta** — e para que o dia em
+  que ela abrir não seja recebido como peça nova.
+
+- [ ] **a família das pílulas à mão tem 18 membros, e a primitiva agora existe** ·
+  médio · de: desenho · 16/09 (K4)
+  K4 mediu **19** e converteu **1** (a fila da ficha). Ficam **18**: `App.jsx` 13,
+  `painel-mapa` 2, `grade-de-batalha` 1, `painel-codex` 1, `painel-talentos` 1 —
+  cada uma com a mesma quinta gramática que a fila tinha (preenchimento âmbar
+  cheio, borda `T.line` a **1,295:1**, sem filete, sem `aria-pressed`). **O dente
+  D5f congela o número no dia em que nasceu: a dívida só desce.** Converter é
+  mecânico agora que `PilulaDeEscolha` existe — **uma etapa, não um ciclo**, e
+  vale mais por `aria-pressed` (que mede **0 ocorrências em 221 `<button>`** de
+  todo o `src/`) do que pelos pixels.
 
 - [ ] **o preço cala o risco nas duas reações que podem falhar** · médio · de:
   regente · 16/09 (K3) · **achado na conferência viva, não na suíte**

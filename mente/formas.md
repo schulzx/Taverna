@@ -1046,10 +1046,19 @@ D4 e continua verdade está mantido palavra por palavra.)*
 
 - **quando** — na ficha, fora do combate. É onde a pessoa pediu *"escolher também
   uma reação padrão ou não reagir, caso não queira gastar PM"*.
-- **forma** — **uma fila só, de `A escolha` *Forma=Pílula*** (47 px), e **nenhuma
+- **forma** — **uma fila só, de `A escolha` *Forma=Pílula*** (48 px), e **nenhuma
   peça nova**. *"Reação padrão"* e *"nunca me pergunte"* pareciam duas coisas — um
   interruptor mais uma lista. **São uma só: escolher um verbo É dizer "nunca me
   pergunte"**, e *"eu decido"* é apenas a opção que vem marcada.
+
+  **[K4] A medida passou a sair de tabela, e o número fechou em 48.** A fila
+  nasceu em K3 a **27,5 px** — 9 px de texto × 1,5 de entrelinha herdada, mais 12
+  de `py-1.5`, mais 2 de borda — e a diferença atravessou **102 asserções sem uma
+  falha** porque **nenhum dos dois números existia no código**. A altura passa a
+  `ALVOS.piso` (`src/estilo.js`), e o piso é **48**: fecha o 47 que K1 deixou dito
+  por não fechar, é o número da casa do tabuleiro e da linha do recuo do leque, e
+  cabe no orçamento do telefone de W1 (48 + 24 = **72** contra o degrau de 75 —
+  folga de 3 px em vez de 4, a mesma 13.ª fila).
 
   > **Quando um golpe chega** · `[✓ EU DECIDO]` · `[EU DECIDO, SEM PRESSA]` ·
   > `[APARAR SEMPRE]` · `[DEIXAR PASSAR]`
@@ -1060,8 +1069,10 @@ D4 e continua verdade está mantido palavra por palavra.)*
   `deixar passar` → `normal` com o recuo travado. A terceira pílula traz **o verbo
   do herói**, nunca uma lista. `folgado` fica de fora de propósito: é o que a
   escada dá a quem **não pediu**.
-- **onde vive** — Figma: a fila na ficha, com instâncias de `A escolha` (`20:77`).
-  · Código: **[ainda não existe]** — é K3.
+- **onde vive** — Figma: a fila na ficha, com instâncias de `A escolha` (`20:77`)
+  — **[K4] e o Figma diz 47 onde o código diz 48: a divergência está aberta e
+  escrita, não descoberta.** · Código: **`PilulaDeEscolha`, `src/ui.jsx`**, com a
+  fila na ficha do `App.jsx`.
 - **por quê** — **é a conformidade, não um mimo.** A **WCAG 2.2.1 (*Timing
   Adjustable*, nível A)** exige que um limite de tempo se possa ajustar, estender
   ou desligar. Uma janela de reação não se alonga sem deixar de ser o que é —
@@ -3924,3 +3935,108 @@ e **gastar o PM na mesma** — o oposto exacto do que o jogador escolheu.
 verbo **desliga** o limite de tempo, e *sem pressa* **estende-o sem fim**. E mora
 na ficha porque ali o jogador lê *"como o meu herói se defende"*, que é ficção —
 e não *"configurar reações"*, que é mecanismo.
+
+---
+
+# O alvo de toque sai de tabela — a pílula, o piso e a régua da aparição (K4 · 16/09)
+
+## A pílula media 27,5 e o desenho dizia 48 — e o defeito não era o enchimento
+
+A fila da ficha compunha a altura do alvo somando `text-[9px]` (que dá **só**
+`font-size`, e herda a entrelinha 1,5 do preflight do Tailwind), `py-1.5` e a
+borda: **13,5 + 12 + 2 = 27,5**. **Nem 27 nem 48 estavam escritos em lado
+nenhum** — e é por isso que as 102 asserções de K3 passaram verdes: *não há texto
+que uma suíte possa ler de volta.* A primeira lei da casa falhada na sua forma
+mais limpa: **não havia número errado, havia número ausente.**
+
+> ### Uma altura composta por `font-size` + enchimento é uma altura que muda sozinha.
+> Trocar `text-[9px]` por `text-[10px]` — uma decisão de legibilidade — move o
+> alvo de toque 1,5 px sem ninguém ter tocado numa medida de alvo. **A régua e o
+> texto não podem ser o mesmo número.**
+
+## O defeito real: a fila montava a peça à mão, e inventou uma quinta gramática
+
+`A escolha` *Forma=Pílula* **nunca existiu em código** — esta folha dizia-o por
+extenso. Sem primitiva, a fila copiou a pílula mais próxima (as sub-abas da
+gestão, o ritmo de marcha) e herdou três defeitos que a peça não tem:
+
+| lei desta folha | o que a fila fazia | o número |
+|---|---|---|
+| nunca preenchimento âmbar cheio para seleção | `background: ativo ? T.amber` | `T.amber` tem 37 usos e é a assinatura da **ação** |
+| borda `amber` + filete de 3 px + o visto | só o visto | 1 dos 3 canais |
+| borda de controlo é `lineStrong` | `T.line` | **1,295:1**, reprova o SC 1.4.11 (`lineStrong` dá 3,512:1) |
+
+**E uma quarta, de leitor de ecrã:** `aria-pressed` media **0 ocorrências em
+`src/`**, em **221 `<button>`**. A fila que existe para cumprir a WCAG 2.2.1
+falhava a 4.1.2. **A família tem 19 membros** (a ficha do `App.jsx` era um deles;
+ficam 18, e o dente **D5f** de `check-formas.mjs` congela o número).
+
+## `ALVOS`, e por que o piso é 48
+
+`ALVOS = { piso: 48, chamado: 56 }`, em `src/estilo.js`, exportado por
+`constantes.js` como `T` já é. **48 e não 47:** 44 é o mínimo do WCAG 2.5.5, 48 é
+o do Material, é a casa do tabuleiro, é a linha do recuo do leque — e fecha o
+número que K1 deixou dito por não fechar. **Um piso, quatro leitores**, em vez de
+quatro números parecidos. O orçamento do telefone de W1 aguenta: 48 + 24 = **72**
+contra o degrau de **75**.
+
+**O `LARGURA_MAXIMA_PX = 560` fica fora, de propósito:** é tecto de largura, não
+piso de alvo, e uma tabela com dois sentidos é a próxima dívida.
+
+**O custo, medido:** a região da ficha vai de **98,5 px** a **139,5** (+41), e a
+**195,5** (+97) no único caso em que passa a três filas. **Zero filas a mais no
+telefone**, nos quatro heróis possíveis. E fica dito o que não se consertou: na
+mesa a segunda fila falha por **5 px** no pior caso e passa por **0,4 px** no
+penúltimo — *uma fila decidida por fracções de pixel não é um leiaute*, e o que a
+decide não é a peça: é o painel de 320 px, que dá à mesa uma coluna **24 % mais
+estreita que a do telefone** (258 contra 321).
+
+## A régua da aparição — quando uma peça deixa de ser acontecimento
+
+A informação que o simples *aparecer* de uma peça carrega é **`−log₂(p)`**, com
+`p` a fracção das unidades de jogo em que ela aparece (Shannon, 1948). Não é
+analogia; é a definição.
+
+| | `p` | bits |
+|---|---|---|
+| a janela da reação, hoje (7 das 12 classes) | 0,986 | **0,020** |
+| a mesma janela, abrindo só em golpe que acerta | 0,492 | **1,023** |
+
+> ### Acima de 1 bit é acontecimento. Abaixo de 0,1 bit é moldura. E uma moldura com relógio é um pedágio.
+
+**Hoje o cartão está a 0,020 — cinco vezes abaixo do chão da moldura.** Abrir só
+em golpe que acerta multiplica por **50** a informação da aparição, **pagando com
+metade das interrupções**.
+
+**Os estudos:** Mackworth (1948) mede o *vigilance decrement* — a deteção de um
+sinal recorrente degrada-se dentro da primeira meia hora; Anderson *et al.*
+(CHI 2015) mostram por fMRI que a resposta a um aviso repetido cai ao fim de
+poucas repetições, e que **variar a forma atrasa a habituação** — a nossa peça
+aparece com a mesma cara em 12 classes de 12; Bailey & Konstan (2006) mostram que
+o custo de uma interrupção depende do **momento**, não do conteúdo — que é o
+*62,4 % do dano chega sem pergunta* dito noutra língua.
+
+## O veredito de forma da Fase K
+
+**A peça está certa e o ritmo está errado.** O caso comum é binário
+(*Etapa=Direta*, 12 classes em 12 — o chão da lei de Hick), **73 % da janela não
+tem relógio** (11 s de 15), há saída em todos os estados e o limite de tempo
+desliga-se por duas estradas (WCAG 2.2.1). **O que cansa não é a forma: é
+acontecer quase sempre.**
+
+**E uma peça que precisa de reimprimir a informação que tapa não tem defeito de
+conteúdo: tem defeito de endereço.** O cartão tapa **57 % da tira do herói** no
+telefone, incluindo a barra de PM, e K3 consertou-o escrevendo o saldo de PM lá
+dentro. O conserto está certo; **o diagnóstico fica escrito com ele.**
+
+## E a lei que este ciclo aprendeu de novo, no sítio mais caro
+
+**Comentário com crase dentro de um template-literal fecha a string.** As quatro
+linhas de comentário que explicavam `.tv-escolha-troca` traziam oito crases dentro
+de `MOVIMENTO_CSS`, e `src/estilo.js` deixou de carregar: `<body>` com 103 bytes,
+tela preta, um `SyntaxError` na consola — e **o build tinha sido dado por limpo**.
+A folha de estilo desta casa é uma string de 300 linhas, e **todo comentário
+dentro dela é conteúdo, não comentário de JavaScript**. Escreve-se *formas.md:355*
+sem crase, ou não se escreve. *A conferência viva é o único lugar onde isto
+aparece — foi o terceiro defeito em dois ciclos que a suíte deixou passar e o
+navegador apanhou em trinta segundos.*

@@ -25,6 +25,28 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
 
 ## Abertos
 
+- [ ] **`PISO_DO_GOLPE` continua declarado em dois sítios** · de: K4 · 16/09
+  Herdado de K3, que o deixou escrito como dívida do `backend`. É a primeira lei
+  desta casa (*se é número, é tabela*) a valer em duplicado — e duas cópias de um
+  número são duas leis que um dia divergem sem ninguém ver. **Uma linha para o
+  motor, e fecha a última pendência aberta da Fase K.**
+
+- [ ] **a expiração da janela continua a gastar PM — e agora sabe-se em quantas
+  classes** · de: K4 · 16/09
+  K3 escreveu-o e a trava de K2 obriga-o (*quem não responde tem o de hoje, byte a
+  byte*). **O número que faltava, medido em K4:** nas **cinco classes
+  conjuradoras, 100 % das janelas oferecem um verbo de 2 PM**, e a expiração
+  paga-o. Nas outras sete o verbo é grátis e a dívida é invisível. **Não é um
+  pedido para mudar já** — é para que o motor saiba que o custo existe e onde
+  mora, porque desligá-lo é mexer na trava e isso é da pessoa.
+
+- [ ] **`PALAVRAS_DA_CHANCE` não é lida pelo caminho do cartão** · de: K4 · 16/09
+  A tabela existe, está certa e sabe escrever o risco na fenda do preço — **só que
+  o cartão da reação nunca a chama.** Resultado medido na tela: `esquiva ágil ·
+  0 PM — anula` para uma reação com `chance: 0.6`, e `revidar · 0 PM` para uma com
+  `chance: 0.55`. **É fiação, não peça nova**, e o orçamento de 40 caracteres é o
+  obstáculo real (a mesa tem três saídas escritas na pauta do desenho).
+
 - [ ] **a porta do tabuleiro em `turno.js`** · de: E2 · 15/09
   São 17 portas e **nenhuma é do campo**. Hoje *"vou até K14"* cai na porta
   `destino`, que não tem guarda de combate, vai ao resolvedor de cidades do

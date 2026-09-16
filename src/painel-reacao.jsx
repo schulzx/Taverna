@@ -14,7 +14,7 @@
    a prosa. Este arquivo só monta a tela e devolve gestos.
    ============================================================ */
 import React from "react";
-import { T } from "./constantes.js";
+import { T, ALVOS } from "./constantes.js";
 import { TEMPOS_DO_CARTAO, temRelogio, janelaExpirouEm } from "./ritmo-da-reacao.js";
 import { precoDoVerbo } from "./palavras-da-reacao.js";
 
@@ -40,7 +40,7 @@ function LinhaDoRecuo({ refExterno, onClick, disabled, comoMenuItem, focado }) {
       className="tv-anel-foco tv-body text-xs"
       style={{
         display: "block", width: "100%", textAlign: "left",
-        padding: "10px 12px", minHeight: 48, marginTop: 6,
+        padding: "10px 12px", minHeight: ALVOS.piso, marginTop: 6,
         background: "transparent", border: `1px solid ${T.line}`, borderRadius: 8,
         color: T.inkDim, cursor: disabled ? "default" : "pointer",
       }}
@@ -64,7 +64,7 @@ function LinhaDoVerbo({ innerRef, reacao, onClick, disabled, comoMenuItem, focad
       className="tv-anel-foco tv-mono text-xs"
       style={{
         display: "block", width: "100%", textAlign: "left",
-        padding: "12px 12px", minHeight: 56, borderRadius: 8,
+        padding: "12px 12px", minHeight: ALVOS.chamado, borderRadius: 8,
         background: T.panelSoft, border: `1px solid ${T.amber}`,
         color: T.ink, fontWeight: 600, cursor: disabled ? "default" : "pointer",
       }}

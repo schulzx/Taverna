@@ -98,7 +98,7 @@ console.log("\n1. as 12 ACOES_PRONTAS e o handler único");
   const condicionais = acoesComCliqueCondicional().map((a) => a.rotulo);
   if (condicionais.join() !== "Atacar") {
     falha(`a tabela declara clique condicional em: ${condicionais.join(", ") || "ninguém"}`,
-      "o código trata de dois jeitos UM botão só — `Atacar`, por `golpeVivo` (src/App.jsx:20718). Se nasceu um segundo, escreva `cliqueChegaFora` na entrada dele em testes/acoes-do-jogador.mjs; se `Atacar` deixou de ser condicional, tire o campo e diga por quê");
+      "o código trata de dois jeitos UM botão só — `Atacar`, por `golpeVivo` (src/App.jsx:20715). Se nasceu um segundo, escreva `cliqueChegaFora` na entrada dele em testes/acoes-do-jogador.mjs; se `Atacar` deixou de ser condicional, tire o campo e diga por quê");
   } else ok("o eixo condicional tem exatamente um membro, e é `Atacar`");
 }
 
@@ -262,17 +262,22 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
   if (iPush < 0) {
     falha("não achei a declaração de `pushMsgs` em src/App.jsx",
       "o funil das linhas mudou de forma ou de nome. Reveja o cabeçalho do bloco 6 de testes/acoes-do-jogador.mjs e re-meça FUNIL_DO_COMBATE — sem o funil, o eixo da frase não tem o que contar");
-  /* v9.270 (K3): 7504 -> 7553. A janela da reacao acrescentou 49 linhas ACIMA
+  /* v9.273 (K4): 7553 -> 7550. v9.273 (K4): -3 linhas. A fila de pilulas da ficha (1993-2003) passou a consumir a peca `PilulaDeEscolha` e encolheu 3 linhas; o codigo abaixo dela andou junto e nada mais mudou. E a TERCEIRA vez em tres
+     ciclos que esta catraca cobra um deslocamento que nao e defeito nenhum
+     — o item da pauta que propoe trocar numero por ancora de texto leva
+     agora as tres cobrancas escritas.
+
+     v9.270 (K3): 7504 -> 7553. A janela da reacao acrescentou 49 linhas ACIMA
      deste ponto — o importe dos tres modulos novos e o bloco de refs de
      `tentarReacaoNoGolpe`. O `pushMsgs` nao andou por vontade propria, e o
      que ele guarda continua a ser o mesmo: endereco re-medido, assercao
      intacta. (E a segunda vez em dois ciclos que esta catraca cobra o
      deslocamento; o item da pauta que propoe trocar numero por ancora de
      texto ja leva as duas cobrancas escritas.) */
-  } else if (iPush + 1 !== 7553) {
-    falha(`pushMsgs saiu de src/App.jsx:7553 e agora está em :${iPush + 1}`,
+  } else if (iPush + 1 !== 7550) {
+    falha(`pushMsgs saiu de src/App.jsx:7550 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:7553, como o mapa de X3b diz");
+  } else ok("pushMsgs segue em src/App.jsx:7550, como o mapa de X3b diz");
 
   let divergiu = 0;
   for (const f of FUNIL_DO_COMBATE) {

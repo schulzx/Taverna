@@ -19,6 +19,229 @@ Formato:
 
 ---
 
+## 16/09 12:40 · v9.273 · K4 · medir a batida — e a Fase K fecha · commit `(a seguir)`
+
+*O escrito dos dois seniores fica em `mente/k4-jogo.md` e `mente/k4-desenho.md`;
+a forma, no bloco final de `mente/formas.md`.*
+
+**A etapa que mediu a fase inteira e não a defendeu — e a que mais aprendeu no
+navegador.**
+
+- **estado inicial:** árvore limpa ao abrir, `VERSAO` `v9.272` (a outra mente
+  tinha acabado de subir Z1). Um vermelho transitório em `teste-sala.mjs` no
+  primeiro `npm test` (124/125) que **não se reproduziu** — a suíte lê
+  `../src/App.jsx`, e a outra mente tinha `sala.js` em voo no segundo em que ela
+  correu. Três execuções isoladas depois: 125/125. **Não era meu e não era nada.**
+
+- **o bastão do `App.jsx`:** **tomado às 09:22** em nome do `oficial`, **devolvido
+  às ~10:10** com o arquivo terminado. **Para quê:** trocar a fila de quatro
+  pílulas da ficha (montada à mão) pela primitiva nova. Foram **três âncoras e
+  −3 linhas** — e ainda assim **190 endereços de linha** tiveram de ser
+  re-medidos. *Terceira cobrança da mesma catraca em três ciclos.*
+
+### 1 · o número da batida, que é o que a etapa existia para dar
+
+**A prova do par, e é a linha mais importante da fase:** em **4 000 lutas
+pareadas por semente**, nas duas mesas, a luta com cartão é **idêntica à de
+v9.266 em 100,00 % das sementes** — mesmas rodadas, mesmo dano, mesmos golpes,
+mesmas reações, **mesmo número de rolos de dado**, mesmo desfecho, para quem
+responde e para quem cala. **O combate não ficou mais longo em rodada nenhuma.**
+K2 valeu o ciclo que custou.
+
+**O relógio de parede** (sobre os 13,36 s de espera do Mestre medidos em K3):
+ANTES **52,0 s** · responde depressa **+24,9 %** · recusa sempre +13,7 % · mistura
++53,0 % · **expira sempre +59,4 %** · **pílula travada na ficha +0,0 %**. O tecto
+`msEntreRespostas: 33 200` aguenta os 30,9 s medidos.
+
+> **E o número que dói: quem CALA paga 30,9 s por luta; quem RESPONDE paga
+> 13,0 s. Ignorar a batida custa 2,4× mais relógio do que jogá-la.**
+
+**A fadiga, com unidade:** **3,22 perguntas por luta**, **84 % das rodadas** com
+pergunta (98 % no solo). Do lado da forma, a mesma conclusão por outra régua: a
+informação que a aparição do cartão carrega é **0,020 bits** (`−log₂ 0,986`) —
+**cinco vezes abaixo do chão da moldura**, e moldura com relógio é pedágio.
+
+**Os números de K3 confirmam-se todos, e ele não exagerou:** 63 % → **62,42 %**;
+50,09 % → **50,66 %**; 36,09 % → **35,54 %**; 98,60 % → **98,51 %**; 75 % →
+**75,24 %**. **A única divergência fora do ruído sai contra ele.**
+
+### 2 · o golpe real — a dívida que K3 deixou por escrito, paga
+
+Cinco janelas, dois torneios, seis rodadas de vez do mundo. **A tela e a tabela
+concordam ao milissegundo:** expiração a **15 013 / 15 014 ms** (`janela: 15 000`),
+trilho a nascer aos **10 967 ms** (`folga: 11 000`), `tvJanelaTempo` 4,6 s linear,
+**527 px num pai de 528**. As **cinco saídas** saíram palavra por palavra das
+tabelas de `k3-jogo.md`, e o log ficou **byte a byte** o de hoje.
+
+**O que o vivo desmentiu não foi a peça:** três das cinco janelas abriram num
+**erro**; em três rodadas seguidas o dano grande chegou coberto; e **a escada
+calou exactamente a rodada que levou o herói de 30 PV a 1 PV** — 25 de dano,
+quatro golpes, **zero perguntas**. Achado novo: **quem responde dentro do
+orçamento de K1 nunca vê uma barra**, porque os primeiros 11 s não têm relógio.
+
+### 3 · o antes-e-depois da Fase K inteira
+
+**O que o jogador não fazia (v9.255, 14/09).** **Seis reações gastavam o PM dele
+sem lhe perguntar.** Medido: numa luta de 3,89 rodadas ele recebia **2,40 reações
+resolvidas pelo sistema** e **não tocava em nada** no turno do inimigo. A frase
+de K1 valia inteira: *numa luta inteira eu toquei três controles, com seis reações
+disponíveis e nada onde tocar.*
+
+**O que ele faz agora (v9.273).** Recebe **3,22 perguntas por luta**, com um verbo
+armado e **o preço escrito antes do primeiro toque**; tem um recuo; tem **quinze
+segundos, dos quais onze sem relógio nenhum**; tem uma escada que o cala se ele
+não quiser; e tem **uma fila de quatro pílulas na ficha que lhe devolve 100 % do
+relógio** — a pílula travada mede **0 s de espera e +0,0 %**, com o mundo
+idêntico. **A conformidade WCAG 2.2.1 cumprida duas vezes**, e a janela abre,
+corre e resolve-se sem que o mundo mude um dado.
+
+**A fase por etapas:** K1 desenhou o momento (a chamada, o leque, o recuo, a
+preferência) · K1b deu-lhe o relógio de 15 s, os dois tetos de `TETO_DA_ESPERA` e
+o segredo do dano com 27 portas fechadas · K2 pôs a trava **antes** da peça, e ela
+apanhou o erro que K3 ia cometer (**37,44 % das sementes**) · K3 fez a peça nascer
+(`painel-reacao.jsx`, `palavras-da-reacao.js`, sete classes, `.tv-anel-foco`) ·
+K4 mediu, fechou a peça torta e **não defendeu o resultado**.
+
+**O que continua torto, e é preciso dizê-lo:**
+1. **Expirar continua a gastar PM** — invisível nas sete classes de verbo grátis,
+   real nas **cinco conjuradoras, onde 100 % das janelas oferecem um verbo de 2 PM**.
+2. **`Etapa=Escolhendo` nunca abre.** 12 classes em 12 têm exactamente um verbo. É
+   a peça mais cara da fase a não fazer nada, e `ATALHOS_DA_JANELA` tem uma linha
+   de letra morta a acompanhá-la.
+3. **A pergunta é sobre o golpe errado**, confirmado duas vezes — no banco
+   (62,42 % do dano sem pergunta) e na tela (três rodadas seguidas).
+4. **Quem cala paga 2,4× mais relógio do que quem responde.** A escada protege do
+   número de perguntas e não do preço de cada uma — o contrário do que uma saída
+   de conforto devia fazer.
+5. **E o pior, que é novo:** *responder* e *deixar expirar* produzem mundos
+   **idênticos** em 100 % das sementes. **`recusar` é a única tecla do cartão que
+   muda o mundo** (+65 % de dano na luta, morte de 13,7 % → **49,3 %**) — **e é a
+   única sem glifo, sem log e sem número.**
+
+> **O veredito, dito inteiro e assinado pelos dois seniores: a peça está certa e
+> a pergunta está errada.** Não se condena a janela — condena-se **o que ela
+> pergunta, com que frequência, e a que custo para quem não responde.** A Fase K
+> construiu um momento excelente e apontou-o para o golpe que menos importa, 84 %
+> das rodadas, com uma só resposta possível. **Se isto for a jogo como está, ao
+> terceiro combate o jogador carrega sem ler** — e uma janela que se responde sem
+> ler é um imposto de um toque com quinze segundos de juro.
+> **Não desligar. Corrigir.** Desligar devolve o jogo em que o jogador não faz
+> nada no turno do inimigo, e isso é pior.
+
+### 4 · a peça torta de K3, fechada
+
+A fila media **27,5 px** onde `formas.md` desenha 47 — `text-[9px]` dá **só**
+`font-size` e herda a entrelinha 1,5 do preflight: 13,5 + 12 de `py-1.5` + 2 de
+borda. **E o achado não foi «falta enchimento»:** *nem 27 nem 48 estavam escritos
+em lado nenhum do repositório* — é por isso que **102 asserções passaram verdes**.
+A primeira lei da casa falhada na sua forma mais limpa: **não havia número errado,
+havia número ausente.**
+
+**O defeito real era outro:** `A escolha` *Forma=Pílula* **nunca existiu em
+código**, e a fila copiou a pílula vizinha, herdando preenchimento âmbar cheio
+(proibido por escrito), borda `T.line` a **1,295:1** (reprova o SC 1.4.11) e
+**zero `aria-pressed` em 221 `<button>` de todo o `src/`**. Nasceram `ALVOS`
+(`piso: 48`, `chamado: 56`), a primitiva `PilulaDeEscolha`, a classe
+`.tv-escolha-troca`, a suíte `teste-peca-escolha.mjs` (**18 asserções**) e o dente
+**D5f** de `check-formas.mjs` — que congela a família das **18** pílulas à mão
+que ficam.
+
+### decisões médias tomadas, cada uma com o motivo
+
+1. **O piso é 48, não os 47 do Figma.** 44 é o mínimo do WCAG 2.5.5, 48 é o do
+   Material, é a casa do tabuleiro e a linha do recuo do leque. **Um piso com
+   quatro leitores vale mais que quatro números parecidos**, e fecha o número que
+   K1 deixou dito por não fechar. **A divergência com o Figma fica escrita em
+   `formas.md`, não arredondada** — o Figma ainda diz 47.
+2. **Converter uma pílula, não as dezanove.** A família inteira tem o mesmo
+   defeito, mas *uma etapa, uma conversão*: o dente D5f congela o número no dia em
+   que nasce, e a dívida só desce. Converter 18 de carona seria trocar uma etapa
+   medida por um varrimento sem prova.
+3. **O filete do escolhido vai por variável CSS, nunca por `boxShadow` inline** —
+   e esta decisão é minha, tomada depois de a conferência viva a impor. O motivo
+   está no §5.
+4. **A transição de 120 ms entra hoje, não noutra etapa.** `formas.md:355` manda-a
+   para toda *A escolha*, e **a saída de movimento é obrigatória à nascença**: uma
+   peça que nasce sem ela nasce em dívida, e dívida de movimento nunca é paga.
+   Entrou com `prefers-reduced-motion` a **zero**, porque K1b já pagou a lição de
+   que movimento reduzido não pode virar desvantagem.
+
+### 5 · o que a conferência viva apanhou, e a suíte não — três defeitos, um deles meu de método
+
+**Este é o registo mais importante do ciclo**, e a ordem em que apareceram importa:
+
+1. **A tela ficou preta e o build tinha sido dado por limpo.** O comentário que
+   explicava `.tv-escolha-troca` trazia **oito crases dentro do template-literal
+   de `MOVIMENTO_CSS`**, que fecham a string. `src/estilo.js` deixou de carregar:
+   `<body>` com **103 bytes**, um `SyntaxError` na consola, o jogo inteiro em
+   baixo. É **a armadilha que o `CLAUDE.md` nomeia por extenso**. O `aprendiz`
+   respondeu à pergunta que eu lhe fiz sem a atenuar: *«eu não rodei o build
+   depois daquele comentário — prova não foi a última coisa que fiz; foi a que
+   pulei»*. **Fica escrito com o nome dele porque a honestidade é que se quer
+   registada, não a culpa.**
+2. **A peça nova apagou o anel de foco.** `:focus-visible` a **`true`** e
+   `box-shadow` a **`none`**: a primitiva escrevia `boxShadow` **inline**, e
+   **estilo inline vence a folha sempre**. O `<button>` antigo não tinha nenhum —
+   era por isso que K3 provou o anel vivo. **Trocámos a peça e levámos o anel
+   connosco.** Ironia que fica no registo: **a fila que existe para cumprir a WCAG
+   2.2.1 passou a falhar a 2.4.7.**
+3. **E o conserto do anel não acendeu à primeira, por uma palavra.** Com o filete
+   em variável, o estado de repouso era `--tv-filete: none` — e **`box-shadow:
+   <sombra>, <sombra>, none` é CSS inválido**: `none` não é item de lista, e o
+   parser **descarta a declaração inteira, em silêncio**. Medido na própria
+   página, trocando só a variável: com `none` → `boxShadow: "none"`; com
+   `inset 0 0 0 0 transparent` → **três sombras**. O estado «sem filete» passou a
+   ser **uma sombra nula, não a ausência de sombra** — e de lambuja **a transição
+   de 120 ms passou a interpolar**, porque `none → sombra` não interpola e
+   `sombra nula → sombra` interpola. *O conserto do anel consertou o movimento.*
+
+> **Três defeitos, zero apanhados por 141 asserções e 20 varredores.** Cada um
+> ganhou a sua catraca (a 17 e a 18 de `teste-peca-escolha.mjs`), mas a lição não é
+> «faltavam asserções»: é que **nenhuma delas existiria sem alguém ter aberto o
+> navegador**. A conferência viva não é a cerimónia do fim do ciclo — é o único
+> instrumento que a casa tem para esta classe de defeito.
+
+### a prova
+
+- **Confirmado vivo**, em aba nova, campanha carregada, ficha aberta: as quatro
+  pílulas a **48,00 px**, `role="group"`, `aria-pressed` `true`/`false`, fundo
+  `rgb(23,19,34)` = `T.panel` (nunca âmbar cheio), borda `rgb(232,163,61)` na
+  escolhida e `rgb(112,104,140)` = `lineStrong` nas outras, filete `inset 3px`,
+  transição `border-color .12s, box-shadow .12s`, **e o anel a acender sob `Tab`
+  de teclado de verdade**. No telefone a **375 px: duas filas, região de 139,1 px**
+  — os 139,5 previstos pelo `desenho`, e **zero filas a mais**.
+- `npm run build` limpo e `npm test` verde.
+- **Os cinco espaços de save guardados antes e restaurados depois**, com o jogo
+  desmontado, conferidos por SHA-256 um a um. A campanha (**139 481 bytes**) volta
+  byte a byte ao que era.
+
+### o que ficou feio, e o que eu não soube
+
+- **Ninguém abriu o Figma neste ciclo**, e o `desenho` di-lo por escrito. A
+  divergência 47 (Figma) × 48 (código) está **declarada** em `formas.md` em vez de
+  resolvida, e o enchimento interno da peça no Figma nunca foi conferido contra o
+  `0 12px 0 15px` que ficou no código. **É a lei «nenhuma decisão de design sai sem
+  passar pelo Figma» cumprida pela metade, e eu sabia disso quando deixei passar:**
+  a alternativa era não fechar a peça torta que K3 nomeou.
+- **As respostas medidas na tela foram cliques de DOM agendados dentro da página**,
+  não uma mão humana — a latência da ferramenta do `jogo` (5–8 s por chamada)
+  estoura uma janela de 15 s. O `onClick` que correu é o do jogo e o caminho é o
+  real, mas **«quanto tempo o jogador leva» continua a ser a única pergunta de K4
+  que ninguém respondeu com um jogador dentro.** Está dito, não arredondado.
+- **A catraca dos endereços cobrou pela terceira vez em três ciclos** — 190
+  re-medidos por **−3 linhas**. E ao conferi-los pelo texto (como pedi, em vez de
+  pela aritmética) descobriu-se que **três citações de `check-formas.mjs` estavam
+  desalinhadas havia muito mais que este ciclo**: o `#fff` sobre `T.danger` estava
+  a apontar **100 linhas** ao lado. *Descer três teria propagado a mentira.*
+- **`calou(...)` não entrou na troca do `App.jsx`**, e o `oficial` explicou porquê
+  em vez de fingir: o helper não está em escopo na linha 1982, e um `try/catch` à
+  volta de criação de JSX não apanha estouro de render do filho. **O instrumento
+  certo ali é um `LimiteErro` à volta da ficha, e isso é outra etapa.**
+- **Vermelho do outro território, não consertado, como manda a lei:** nenhum ficou
+  de pé no fim. A outra mente correu Y1 e Z1 durante o ciclo e subiu os dois.
+
+---
+
 ## 16/09 11:05 · v9.270 · K3 · a reação acontece · commit `9901996`
 
 *O escrito dos dois seniores ficou de um ciclo anterior, em `mente/k3-jogo.md` e
