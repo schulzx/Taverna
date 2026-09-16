@@ -45,6 +45,37 @@ export const PORTADORES = [
      "protec"). Um nível 1 de Bruxo prometia abrigo e entregava a linha. */
   { id: "guarda",     re: /postura defensiv|defensiv|escudo|barreira|prote[çc]|trevas protetoras|muralha|couraça|couraca|égide|egide|aparar|bloquei|reduz o dano/i, cond: "protegido", alvo: "proprio", chance: 1, dif: 0 },
 
+  /* v9.276 (H4) · A MARCA, E ELA ENTRA POR FRASE INTEIRA — nunca pela
+     palavra "marca". É a lição de H1 cobrada na família mais perigosa
+     para a soltar: o acervo tem ONZE habilidades que começam por "Marca
+     um alvo" e prometem coisas que não têm nada a ver umas com as
+     outras — quem não foge (Perseguição Sagrada), quem é sempre
+     localizado (Contrato Aberto), quem não é errado (Mira Assistida),
+     quem cura ao cair (Marca do Fim). Um `/marca/` cru transformaria as
+     onze em dano extra, e todas de uma vez.
+
+     A PALAVRA QUE RECORTA É **TODOS**. Esta linha casa só com a promessa
+     de que o alvo apanha mais DE QUALQUER UM — "sofre dano extra de
+     todos" (Julgamento, Clérigo nv7) e "todo dano contra ele aumenta"
+     (Marca Mortal, subclasses.js). A outra metade da família — Marca do
+     Caçador e Maldição do Patrono, que prometem dano extra **SEU** —
+     fica DE FORA de propósito: ela pede saber de quem é a marca, e nem
+     o efeito nem a instância de condição carregam dono hoje. Dar-lhes
+     esta linha seria entregar-lhes mais do que prometem e chamar isso
+     de paga.
+
+     `chance: 1` porque a marca não é o efeito colateral de um golpe — é
+     o golpe inteiro. Onde o veneno da lâmina pergunta "pegou desta
+     vez?", uma habilidade cujo texto é a marca não tem essa pergunta.
+     É a mesma razão de `inspiracao` e `guarda`, e é o que as separa das
+     aflições de arma. O alvo continua com a salvaguarda de entrada que
+     `rolarAflicao` rola para todo `alvo: "alvo"`.
+
+     Vem ANTES de `concussao` e das restantes porque a ordem é do mais
+     específico para o mais genérico, e uma frase inteira é o mais
+     específico que esta tabela tem. */
+  { id: "marca",      re: /sofre dano extra de todos|todo dano contra ele aumenta/i,                                          cond: "marcado",    alvo: "alvo", chance: 1,    dif: 0 },
+
   { id: "concussao",  re: /atordo|concuss|maça|maca de|martelo|marreta|clava|pancada|trov[aã]o|estrondo|cabeçada/i,          cond: "atordoado",  alvo: "alvo", chance: 0.35, dif: 1 },
   { id: "paralisia",  re: /paralis|petrific|basilisco|medusa|estase|entorpec/i,                                             cond: "paralisado", alvo: "alvo", chance: 0.35, dif: 1 },
   { id: "gelo",       re: /gélid|gelid|gelo|congel|glacial|nevasca|frio mordaz/i,                                           cond: "lento",      alvo: "alvo", chance: 0.5,  dif: 0 },

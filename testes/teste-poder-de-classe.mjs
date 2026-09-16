@@ -509,7 +509,24 @@ sec("6. a catraca de AGUARDAM");
      existe e o que falta é a porta — `aflicaoDe` não a reconhece, e sem
      condição boa o efeito nunca nasce. O teto desce UM, não dois, e é essa
      a diferença entre pagar dívida e declarar que se pagou. */
-  const TETO_DE_AGUARDAM = 39;
+  /* 39 → 38 em 16/09/2026 (v9.276 · H4), E O MOTIVO FICA AQUI PELA MESMA
+     LEI: "Julgamento" SAIU da lista. A promessa dela — "marca um inimigo:
+     sofre dano extra de todos" — corre inteira, e pelas três peças que a
+     casa exige: TABELA (a condição `marcado`, com `danoRecebidoExtra: 2`
+     no catálogo de `condicoes.js`), PORTA (o portador `marca` de
+     aflicoes.js, que casa a frase inteira e nada mais — 903 frases do
+     acervo varridas, 2 casam, e a outra é "Marca Mortal", que promete o
+     mesmo) e LEITOR no lado certo da conta (`resolverAtaque`, que passou
+     a ler o campo do ALVO no dano que o alvo RECEBE). A palavra "todos" é
+     literal e é o que a fez caber nesta etapa: ninguém precisa de saber
+     de quem é a marca.
+     AS OUTRAS DUAS DA FAMÍLIA FICARAM, com a dívida TROCADA e escrita —
+     "Marca do Caçador" e "Maldição do Patrono" prometem dano extra SEU, e
+     isso pede um campo de DONO que nem o efeito nem a instância de
+     condição têm. O teto desce UM, não três. É o precedente de "Corpo de
+     Ferro" (F1) e o das três de H3: meia promessa paga encolhe a dívida,
+     não a quita. */
+  const TETO_DE_AGUARDAM = 38;
   console.log(`  ··  AGUARDAM hoje: ${AGUARDAM.length} · teto ${TETO_DE_AGUARDAM} (16/09/2026)`);
   t(`a dívida declarada não passou do teto (${AGUARDAM.length} ≤ ${TETO_DE_AGUARDAM})`,
     AGUARDAM.length <= TETO_DE_AGUARDAM,
@@ -691,7 +708,7 @@ sec("8. temRegraPropria enxerga o poder de classe, e só ele");
    dívida procurar onde não há nada — e é exatamente o que um
    rename silencioso produz, sem ninguém ficar vermelho.
    ============================================================ */
-sec("9. o dono medido das 13 (v9.266 H2 · v9.274 F1)");
+sec("9. o dono medido das 12 (v9.266 H2 · v9.274 F1 · v9.276 H4)");
 {
   /* ============================================================
      O BLOCO MEDIDO — 13, e o número é EXATO, não teto.
@@ -711,8 +728,19 @@ sec("9. o dono medido das 13 (v9.266 H2 · v9.274 F1)");
      casa com o texto da habilidade, então `aplicarBuffDeHabilidade`
      sai antes de `efeitoDeBuff` e o efeito nunca chega à ficha. Dívida
      menor, e medida — que é exatamente o que este campo existe para
-     registar. */
-  const ENTRADAS_MEDIDAS = 13;
+     registar.
+
+     13 → 12 EM 16/09/2026 (v9.276 · H4), E DESCE PORQUE A LISTA
+     ENCOLHEU, não porque alguém deixou de medir: "Julgamento" saiu de
+     `AGUARDAM` inteira (a promessa passou a correr), e com ela saiu o
+     `dono: null` que ela declarava. As outras 12 continuam medidas, e
+     uma delas mudou de resposta: "Marca do Caçador" era `dono: null` e
+     passou a `src/condicoes.js · CONDICOES.marcado`, porque a marca
+     agora existe — o que lhe falta é a palavra SEU, que pede um campo
+     de dono na instância. Dono parcial conta como dono, e o `motivo`
+     diz qual metade fica de fora: é a mesma regra que "Muralha de
+     Gelo" e "Contra-Canção" já cumpriam. */
+  const ENTRADAS_MEDIDAS = 12;
   const temDono = (a) => Object.prototype.hasOwnProperty.call(a, "dono");
   /* `hasOwnProperty` e não `a.dono !== undefined`: metade do bloco é
      `dono: null` de propósito, e "declarou null" e "não declarou nada"
@@ -730,15 +758,18 @@ sec("9. o dono medido das 13 (v9.266 H2 · v9.274 F1)");
      famílias (a régua do golpe, força zero, número que nenhuma tabela
      cobra) e ninguém as mediu; declarar dono numa delas seria alegar
      mais do que se derrubou. As 12 primeiras são o bloco de H2; a
-     última entrou em F1, com a medição descrita acima. */
+     última entrou em F1, com a medição descrita acima.
+     "Julgamento" SAIU desta lista em H4 (v9.276) porque saiu de
+     `AGUARDAM`: a promessa dela corre, e o nome de uma dívida paga não
+     fica pendurado num bloco de medição. */
   const O_BLOCO_MEDIDO = [
-    "Julgamento", "Marca do Caçador", "Maldição do Patrono", "Círculo Sagrado",
+    "Marca do Caçador", "Maldição do Patrono", "Círculo Sagrado",
     "Renovação", "Chamado da Chuva", "Coração Tempestuoso", "Contramágica",
     "Contra-Canção", "Foco Interior", "Mina Oculta", "Muralha de Gelo",
     "Corpo de Ferro",
   ];
   const faltam = O_BLOCO_MEDIDO.filter((n) => !medidas.some((a) => a.nome === n));
-  t("…e são exatamente as 13 do bloco medido (12 de H2 + 1 de F1)", faltam.length === 0, `sem dono declarado: ${faltam.join(", ")}`);
+  t("…e são exatamente as 12 do bloco medido (11 de H2 + 1 de F1)", faltam.length === 0, `sem dono declarado: ${faltam.join(", ")}`);
   const intrusas = medidas.filter((a) => !O_BLOCO_MEDIDO.includes(a.nome)).map((a) => a.nome);
   t(`nenhuma das outras ${AGUARDAM.length - ENTRADAS_MEDIDAS} entradas de AGUARDAM declara dono`,
     intrusas.length === 0, `declararam sem etapa que medisse: ${intrusas.join(", ")}`);
@@ -805,7 +836,17 @@ sec("9. o dono medido das 13 (v9.266 H2 · v9.274 F1)");
      `TETO_DE_AGUARDAM` não se mexeu: ter dono não quita dívida.
      O número desce porque a conta desceu, e é este o commit que a paga —
      que é exactamente o movimento para o qual o `<=` foi escrito. */
-  const SEM_DONO_HOJE = 4;
+  /* 4 → 2 EM 16/09/2026 (v9.276 · H4), E O MOTIVO FICA AQUI, como a lei
+     manda para toda asserção movida. As duas que saíram da conta são as
+     duas da MARCA: "Julgamento" saiu de `AGUARDAM` inteira, e "Marca do
+     Caçador" ganhou endereço medido (`src/condicoes.js ·
+     CONDICOES.marcado`) porque a mecânica que ela pedia passou a
+     existir — o que lhe falta agora é o campo de DONO, e isso está
+     escrito no `motivo` dela. Sobram "Coração Tempestuoso" (aura
+     reativa, H5) e "Mina Oculta" (zona presa ao lugar, H6): os dois
+     assuntos que a Fase H ainda não tocou. O `<=` continua a aplaudir a
+     descida e a morder a subida. */
+  const SEM_DONO_HOJE = 2;
   console.log(`  ··  sem dono nenhum hoje: ${semDono.length} — ${semDono.join(", ")}`);
   t(`a conta dos sem-dono não subiu (${semDono.length} ≤ ${SEM_DONO_HOJE})`,
     semDono.length <= SEM_DONO_HOJE,

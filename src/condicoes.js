@@ -84,7 +84,25 @@ export const CANAIS_DE_SAIDA = [
         fora do App — a arena —, e por ele a cura pousa em PV de verdade.
         O dia em que o App pagar `curaTurno` do lado da condição também, é
         este ponteiro que evita a régua nascer duas vezes.)
-     danoExtra/danoReduzido → no dano causado
+     danoExtra/danoReduzido → no dano que quem a carrega CAUSA
+     danoRecebidoExtra      → no dano que quem a carrega RECEBE
+       (AS DUAS LÍNGUAS, SEPARADAS EM v9.276/H4 — e antes disso elas não
+        eram duas: o catálogo dizia "no dano causado" e `combate.js:127`
+        lia `modAlvo.danoReduzido` como "o alvo apanha menos". Um campo
+        só respondendo a duas perguntas opostas dá o defeito que a
+        Maldição do Patrono vivia: ela aplica `enfraquecido`
+        (`danoReduzido: 2`) e DEIXAVA O INIMIGO MAIS DURO — o avesso da
+        promessa. Agora o prefixo diz de que lado da conta o campo é
+        lido, e `resolverAtaque` lê cada um no seu: o do atacante no
+        golpe que ele dá, o do alvo no golpe que ele leva.
+        O ESPELHO `danoRecebidoReduzido` NÃO EXISTE, e é escolha medida:
+        "apanhar menos" já tem dono nesta casa e tem dois — `amortecerDano`
+        (tracos.js, a família `amortece` de F1) e `absorverDano`
+        (efeitos.js, o abrigo de P3) —, os dois na fila do dano, com
+        régua própria e prazo próprio. Um terceiro campo aqui seria a
+        mesma regra em três cabeças com uma paga só. O dia em que uma
+        condição precisar de reduzir o que se recebe, é este ponteiro que
+        diz onde a régua já mora.)
      defesa               → soma na CA
      turnos               → duração padrão (null = até algo tirá-la)
      saiCom               → um ou mais ids de CANAIS_DE_SAIDA
@@ -177,6 +195,43 @@ export const CONDICOES = {
     turnos: null, desvantagem: true, saiCom: ["longo", "restauracao"],
     desc: "Desvantagem até um descanso longo.",
     aliases: [/exaust/, /esgotad/, /não aguenta mais de cansaço/],
+  },
+  /* v9.276 (H4) · A MARCA, e ela é a primeira condição do catálogo que
+     fala do lado de QUEM APANHA. Todas as outras dizem o que o corpo
+     dela faz — rola pior, perde a ação, bate mais fraco; esta diz o que
+     acontece COM ele quando qualquer um o acerta.
+
+     É a que o acervo pedia por escrito em DOIS sítios e não tinha onde
+     cair: "Julgamento" (`classes.js:159`, Clérigo nv7) — *"marca um
+     inimigo: sofre dano extra de todos"* — e "Marca Mortal"
+     (`subclasses.js:67`) — *"marca um alvo: todo dano contra ele
+     aumenta"*. As duas prometem a MESMA coisa, e é essa palavra, TODOS,
+     que separa esta condição da outra metade da família (Marca do
+     Caçador, Maldição do Patrono), que promete dano extra SEU e precisa
+     de saber de quem é a marca — campo que o efeito não tem e que esta
+     etapa mediu sem construir.
+
+     OS DOIS NÚMEROS, e nenhum é gosto:
+     · `danoRecebidoExtra: 2` é o degrau que o catálogo inteiro já usa
+       para mexer no dano — `fortalecido` e `enfurecido` somam 2,
+       `enfraquecido` tira 2. Uma marca que valesse mais que a fúria de
+       um bárbaro seria a habilidade de nível 7 a decidir a luta sozinha;
+       valer o mesmo põe-na na escada que já existe.
+     · `turnos: 3` é o prazo das ruins de efeito sustentado
+       (`amedrontado`, `enfeitiçado`, `enfraquecido`, `lento`), e não o
+       de ferimento (2) nem o de perda de ação (1): a marca não fere e
+       não tira o turno, ela abre o alvo enquanto durar.
+
+     SEM `resistir`: a marca não entra no corpo, entra SOBRE ele — não há
+     o que o vigor expulse na entrada. Quem a aplica ainda rola contra a
+     dificuldade-piso de `rolarAflicao` (12), que é a mesma de toda
+     condição sem entrada declarada; o que ela não ganha é uma força
+     própria inventada para este caso. */
+  marcado: {
+    id: "marcado", rotulo: "Marcado", icone: "🔻", tipo: "ruim",
+    turnos: 3, danoRecebidoExtra: 2, saiCom: ["curto", "longo"],
+    desc: "Aberto: todo golpe contra ele dói 2 a mais.",
+    aliases: [/marcad/, /marca (arde|brilha|queima|pesa)/, /alvo assinalad/],
   },
 
   /* ---- boas ---- */
@@ -295,7 +350,7 @@ export function criarCondicao(idOuNome, { turnos, origem } = {}) {
    Combate, rolagens e HUD leem daqui — ninguém mais adivinha por
    substring o que "Congelado" faz. */
 export function mecanicaDe(condicoes = []) {
-  const m = { vantagem: false, desvantagem: false, perdeAcao: false, danoTurno: 0, danoExtra: 0, danoReduzido: 0, defesa: 0, motivos: [] };
+  const m = { vantagem: false, desvantagem: false, perdeAcao: false, danoTurno: 0, danoExtra: 0, danoReduzido: 0, danoRecebidoExtra: 0, defesa: 0, motivos: [] };
   for (const inst of condicoes || []) {
     const c = condicaoPorId(inst.id) || normalizarCondicao(inst.nome || inst.id || "");
     if (!c) continue;
@@ -305,6 +360,7 @@ export function mecanicaDe(condicoes = []) {
     if (c.danoTurno) { m.danoTurno += c.danoTurno; }
     if (c.danoExtra) { m.danoExtra += c.danoExtra; }
     if (c.danoReduzido) { m.danoReduzido += c.danoReduzido; }
+    if (c.danoRecebidoExtra) { m.danoRecebidoExtra += c.danoRecebidoExtra; }
     if (c.defesa) { m.defesa += c.defesa; }
   }
   return m;
@@ -498,6 +554,10 @@ export const SALVAGUARDA_DO_FIM_DO_TURNO = {
     {
       id: "enfeiticado",
       porque: "o encanto não se sacode sozinho no 5e: Enfeitiçar Pessoa não repete nada, e Dominar só dá nova chance quando o alvo LEVA DANO — que é gatilho, não fim de turno. E é a única condição do catálogo cuja única saída é `restauracao` (T2 mediu e decidiu isso de propósito): dar-lhe salvaguarda aqui apagaria aquela decisão em silêncio.",
+    },
+    {
+      id: "marcado",
+      porque: "teste 2 do critério, pelo lado que ele ainda não tinha tido: a marca não é efeito sustentado SOBRE o corpo nem ferimento NELE — é um acordo entre quem marcou e quem vai bater, e não há nada dentro do marcado para o vigor dele expulsar. No 5e a Marca do Caçador não dá salvaguarda nenhuma ao alvo, nem na entrada nem no fim do turno: ela acaba quando a concentração cai ou o prazo vence. Aqui o prazo é a saída (`turnos: 3`), e o descanso é a outra.",
     },
     {
       id: "exausto",

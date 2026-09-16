@@ -74,7 +74,7 @@ export function defesaDe(ent, ehInimigo = false) {
    leem. Antes, cada lugar adivinhava por substring e discordava do resto. */
 export function modificadoresDeCondicao(condicoes = []) {
   const m = mecanicaDe(condicoes);
-  return { vantagem: m.vantagem, desvantagem: m.desvantagem, danoExtra: m.danoExtra, danoReduzido: m.danoReduzido, perdeAcao: m.perdeAcao };
+  return { vantagem: m.vantagem, desvantagem: m.desvantagem, danoExtra: m.danoExtra, danoReduzido: m.danoReduzido, danoRecebidoExtra: m.danoRecebidoExtra, perdeAcao: m.perdeAcao };
 }
 
 /* Resolve UM ataque. Devolve um objeto de resultado detalhado (sem narrar). */
@@ -121,10 +121,43 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
   const critico = rolagem.valor >= Math.max(2, Math.min(20, criticoEm || 20));
   const desastre = rolagem.valor === 1;
 
+  /* ---------------- OS DOIS LADOS DA CONTA (v9.276 · H4) ----------------
+     Até aqui esta conta tinha DUAS LÍNGUAS e só percebia uma. O catálogo
+     de condições declara, desde a v9.0, que `danoExtra`/`danoReduzido`
+     falam do dano que quem carrega a condição CAUSA — e as descrições
+     dizem-no por extenso ("+2 no dano causado", "−2 no dano causado").
+     A linha lia `modAtk.danoExtra` do lado certo e `modAlvo.danoReduzido`
+     do lado errado, descontando do dano RECEBIDO um número que fala do
+     dano causado. `modAtk.danoReduzido` e `modAlvo.danoExtra` não eram
+     lidos em lugar nenhum.
+
+     O preço estava vivo em mesa e tinha nome: a **Maldição do Patrono**
+     aplica `enfraquecido` (`condicoes.js`, `danoReduzido: 2`) e, por
+     esta linha, deixava o inimigo amaldiçoado **2 mais duro por golpe**
+     — o avesso exato da promessa dela. E a promessa do próprio
+     `enfraquecido` ("−2 no dano causado") nunca saía, porque ninguém
+     descontava do lado de quem bate.
+
+     AGORA CADA CAMPO É LIDO DO SEU LADO:
+       do ATACANTE  `+ danoExtra` e `− danoReduzido` — o que ele causa;
+       do ALVO      `+ danoRecebidoExtra`            — o que ele apanha.
+
+     E O QUE DOBRA NO CRÍTICO É SÓ O GOLPE. A convenção não é nova, é a
+     que este arquivo já praticava e que fica escrita em vez de
+     implícita: o que é do ATACANTE entra em `danoBase` e dobra com ele
+     (é a mesma regra que `App.jsx` e `turnoDosCompanheiros` seguem ao
+     pôr o bônus do buff dentro de `danoBase` antes do dado); o que é do
+     ALVO é plano e entra depois da multiplicação — `modAlvo.danoReduzido`
+     já ficava fora do parêntese antes desta versão. Uma marca que
+     dobrasse no crítico valeria 4 num golpe e 2 no seguinte pela sorte
+     do dado, e não pela decisão de quem marcou.
+
+     O PISO É ZERO e continua onde estava: `Math.max(0, …)` logo abaixo.
+     Nenhuma condição sabe fazer um golpe curar ninguém. */
   let resultado, dano = 0;
   if (desastre) { resultado = "desastre"; dano = 0; }
-  else if (critico) { resultado = "critico"; dano = (danoBase + modAtk.danoExtra) * 2 - modAlvo.danoReduzido; }
-  else if (total >= ca) { resultado = "acerta"; dano = danoBase + modAtk.danoExtra - modAlvo.danoReduzido; }
+  else if (critico) { resultado = "critico"; dano = (danoBase + modAtk.danoExtra - modAtk.danoReduzido) * 2 + modAlvo.danoRecebidoExtra; }
+  else if (total >= ca) { resultado = "acerta"; dano = danoBase + modAtk.danoExtra - modAtk.danoReduzido + modAlvo.danoRecebidoExtra; }
   else { resultado = "erra"; dano = 0; }
   dano = Math.max(0, Math.round(dano));
 

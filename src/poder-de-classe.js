@@ -349,6 +349,17 @@ export function aplicarPoder(pers, hab, ctx) {
      a citavam — Círculo Sagrado, Renovação e Chamado da Chuva —
      FICARAM em AGUARDAM, cada uma com a dívida TROCADA e escrita: a
      zona, o grupo e o clima sem leitor. Ficam três assuntos.
+     **H4 (v9.276) partiu a MARCA ao meio e pagou a primeira metade**:
+     "dano extra de TODOS" tem condição (`marcado`, com
+     `danoRecebidoExtra` no catálogo), porta (o portador `marca` de
+     aflicoes.js, por frase inteira) e leitor no lado certo da conta
+     (`resolverAtaque`). "Julgamento" SAIU da lista — a única saída
+     desta leva, e o teto desceu com ela. Ficam "Marca do Caçador" e
+     "Maldição do Patrono" com a dívida TROCADA e medida: dano extra
+     **SEU** pede um campo de DONO que nem o efeito nem a instância de
+     condição têm. A Maldição levou junto o conserto da INVERSÃO — ela
+     endurecia o inimigo que amaldiçoava —, que é `leve` e entrou por
+     baixo desta linha. Ficam dois assuntos e meio.
      O que a fase comprou com isto:
      medir antes de construir encolheu a dívida de sete assuntos para
      quatro, e nenhuma linha de mecânica foi escrita para descobrir
@@ -369,9 +380,17 @@ export function aplicarPoder(pers, hab, ctx) {
    ============================================================ */
 export const AGUARDAM = [
   /* ---- pedem mecânica que não existe (H2 mediu: `dono` é o endereço, v9.266) ---- */
-  { nome: "Julgamento", classe: "Clérigo", promete: "marca um inimigo: sofre dano extra de todos", dono: null, motivo: "marca sem dono: `resolverAtaque` já recebe `condAlvo`, mas combate.js:126-127 só lê `modAlvo.danoReduzido` — uma condição no alvo só sabe fazê-lo apanhar MENOS, nunca mais — H2", desde: "16/09" },
-  { nome: "Marca do Caçador", classe: "Caçador", promete: "alvo marcado sofre dano extra seu", dono: null, motivo: "a mesma marca do Julgamento: existe a magia homónima em grimorio.js:528, mas sem `funcao` — `resolvidaPeloSistema` devolve false — H2", desde: "16/09" },
-  { nome: "Maldição do Patrono", classe: "Bruxo", promete: "marca um alvo: você causa dano extra a ele", dono: "src/aflicoes.js · aflicaoDe (portador `drenagem`)", motivo: "dono vivo a fazer o AVESSO: aplica `enfraquecido`, que carrega `danoReduzido: 2` (condicoes.js:155), e combate.js:127 desconta isso do dano que o alvo RECEBE — amaldiçoar um inimigo hoje deixa-o mais duro. O dano extra continua sem sair — H2", desde: "16/09" },
+  /* "Julgamento" SAIU DESTA LISTA em v9.276 (H4), e é a primeira saída da
+     família da MARCA. A promessa dela — "marca um inimigo: sofre dano extra
+     de todos" — passou a correr inteira e sem uma linha de `App.jsx`: o
+     portador `marca` (aflicoes.js) casa a frase, `rolarAflicao` põe a
+     condição `marcado` no inimigo pela porta que o App já usa para toda
+     aflição de habilidade ofensiva, e `resolverAtaque` lê
+     `modAlvo.danoRecebidoExtra` no lado do alvo. De TODOS é literal: quem
+     bate é lido do lado de quem bate, então herói, companheiro e invocação
+     somam o mesmo +2 sem saber uns dos outros. */
+  { nome: "Marca do Caçador", classe: "Caçador", promete: "alvo marcado sofre dano extra seu", dono: "src/condicoes.js · CONDICOES.marcado", motivo: "MUDOU DE DÍVIDA em H4 (v9.276), e a que ficou é UMA palavra: SEU. A marca existe — condição `marcado` com `danoRecebidoExtra`, portador `marca` em aflicoes.js, lida por `resolverAtaque` — mas ela vale para todos, e esta promete só para quem marcou. Falta o DONO: `criarCondicao` grava `origem` (que é o nome da habilidade, não de quem a usou), nenhuma instância de condição sabe de quem é, e `mecanicaDe` decide pelo catálogo sem saber quem está a bater. Medido em H4: o dono atravessaria `criarCondicao` → `rolarAflicao` → `mecanicaDe` → `modificadoresDeCondicao` → `resolverAtaque` (que já tem o nome do atacante em mãos) — 5 assinaturas, 2 chamadores de `mecanicaDe` e 2 de `modificadoresDeCondicao`. Continua de pé a nota de H2: a magia homónima de grimorio.js existe sem `funcao`, e `resolvidaPeloSistema` devolve false — H4", desde: "16/09" },
+  { nome: "Maldição do Patrono", classe: "Bruxo", promete: "marca um alvo: você causa dano extra a ele", dono: "src/aflicoes.js · aflicaoDe (portador `drenagem`)", motivo: "A INVERSÃO FOI PAGA em H4 (v9.276) e a dívida encolheu: até a v9.275 esta habilidade aplicava `enfraquecido` e, por `combate.js:127` ler `modAlvo.danoReduzido` como \"o alvo apanha menos\", deixava o inimigo amaldiçoado 2 MAIS DURO por golpe — o avesso da promessa. Agora cada campo é lido do seu lado da conta: o amaldiçoado bate 2 mais fraco, que é o que o próprio `enfraquecido` promete por escrito. Fica a metade que ainda não sai — o dano extra SEU —, e é exactamente a de \"Marca do Caçador\": a marca vale para todos, e esta quer só para quem a pôs; falta o campo de dono, medido na linha acima — H4", desde: "16/09" },
   { nome: "Círculo Sagrado", classe: "Clérigo", promete: "área protegida onde aliados curam por turno", dono: "src/regras-jogo.js · tickEfeitos", motivo: "MUDOU DE DÍVIDA em H3 (v9.275), e ficou uma metade só: a cura por turno tem régua (`REGENERACAO_DO_BUFF`, efeitos.js), nasce em `efeitoDeBuff` como `curaTurno`, é cobrada por `tickEfeitos` e pousa em PV por `pousarCura` — a arena já a paga. O que falta desta linha é a ZONA presa ao lugar (a mesma da Mina Oculta, que é H6) e a fiação do App, onde o efeito ainda não chega à ficha: `aplicarBuffDeHabilidade` sai antes de `efeitoDeBuff`, o mesmo portão que F1 mediu — H3", desde: "16/09" },
   { nome: "Renovação", classe: "Druida", promete: "cura o grupo por 3 turnos seguidos", dono: "src/regras-jogo.js · tickEfeitos", motivo: "MUDOU DE DÍVIDA em H3 (v9.275): o espelho de `danoTurno` existe — `curaTurno` no efeito, cobrado pelo relógio e pousado por `pousarCura` —, e na arena a habilidade já deixa prazo em vez de uma parcela só. O que falta é o GRUPO: o efeito cai em quem a usou, e curar os outros pede o ramo alvo \"grupo\" (o mesmo que falta à Contra-Canção), mais a fiação do App — H3", desde: "16/09" },
   { nome: "Chamado da Chuva", classe: "Druida", promete: "altera o clima; cura leve contínua", dono: "src/encontros.js · rolarClima", motivo: "meia dívida paga em H3 (v9.275): a CURA CONTÍNUA ganhou dono — `curaTurno` no efeito (régua em `REGENERACAO_DO_BUFF`), cobrado por `tickEfeitos` e pousado por `pousarCura`, vivo na arena. Fica a outra metade, que é a de H2 e continua inteira: `rolarClima`/`pesosDoClima` (encontros.js) são puros e chamados de verdade, mas quem lê o clima só o narra (palco.js:138, geografo.js:132) — nenhuma rolagem decide número por ele — H3", desde: "16/09" },

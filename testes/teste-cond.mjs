@@ -385,7 +385,20 @@ console.log("\n[T3 · o critério lido de volta] os três testes batem com quem 
   ok(/ferimento|fogo/i.test(String(crit[1])), "o teste 2 nomeia no próprio texto o que ele corta: ferimento e fogo");
   const doem = listaCondicoes().filter((c) => c.danoTurno > 0).map((c) => c.id).sort();
   ok(doem.join(",") === "envenenado,queimando,sangrando", `as que cobram dano por turno são três: ${doem.join(", ")}`);
-  const porTeste2 = T3.naoPermitem.filter((x) => /teste 2/i.test(x.porque)).map((x) => x.id).sort();
+  /* O FILTRO GANHOU `doem.includes` EM 16/09/2026 (v9.276 · H4), E O MOTIVO
+     FICA AQUI, porque asserção que se move sem explicação perde a intenção.
+     A pergunta desta linha sempre foi sobre AS TRÊS QUE COBRAM DANO POR
+     TURNO — está escrito no comentário acima, "as três condições que cobram
+     dano por turno são exatamente as que o teste 2 discute". O que ela lia
+     era outra coisa: todo mundo que cita "teste 2" no motivo. As duas
+     coincidiam enquanto o teste 2 só tinha sido invocado para ferimento e
+     fogo; H4 invocou-o pelo outro lado (a marca não é efeito sustentado nem
+     ferimento — é um acordo entre quem marcou e quem bate) e as duas
+     leituras separaram-se. Cruzar com `doem` é voltar a medir o que a
+     asserção diz medir — e ela continua a acender se alguém tirar
+     `queimando` ou `sangrando` do teste 2, que é o que ela existe para
+     impedir. */
+  const porTeste2 = T3.naoPermitem.filter((x) => /teste 2/i.test(x.porque) && doem.includes(x.id)).map((x) => x.id).sort();
   ok(porTeste2.join(",") === "queimando,sangrando", `duas delas saem pelo teste 2 (ferimento em curso): ${porTeste2.join(", ")}`);
   ok(salvaguardaDeSaida("envenenado").permite === true && /pessoa/i.test(salvaguardaDeSaida("envenenado").porque),
     "e a terceira é o veneno, que ENTRA — é o exemplo que a pessoa deu, e o motivo diz isso");
@@ -1218,15 +1231,28 @@ console.log("\n[T4 · REGRESSÃO ZERO] o que o descanso limpa é IDÊNTICO ao de
      `saiCom` que mude o que a noite ou a parada levam acende aqui, mesmo que
      toda outra prova da suíte continue verde.
 
-     `concentrado` é a ÚNICA diferença, e é a etapa inteira: ele era a
+     `concentrado` é a ÚNICA diferença de T4, e é a etapa inteira: ele era a
      condição sem saída nenhuma. O efeito em mesa é ZERO e está medido na
-     seção [T3→T4] acima — nada no `src/` o aplica. */
+     seção [T3→T4] acima — nada no `src/` o aplica.
+
+     AS ADIÇÕES PASSARAM A SER UMA LISTA EM 16/09/2026 (v9.276 · H4), e o
+     motivo fica escrito porque a asserção mudou de forma: uma condição NOVA
+     no catálogo entra legitimamente nestas contas, e somar o nome dela ao
+     lado de `concentrado` no meio da linha tornaria a intenção ilegível na
+     terceira vez. A LEI QUE A ASSERÇÃO GUARDA NÃO MUDOU e é a de baixo —
+     nenhuma condição PARA de sair por descanso. O que esta lista declara é
+     quem ENTROU, e cada nome tem de vir com a etapa que o trouxe.
+     `marcado` (H4) sai pelos dois canais pela mesma razão que o prazo a
+     vence: a marca é um acordo sobre o corpo, e quem para para respirar
+     desfá-lo — a régua é a de `concentrado`, e uma hora de parada já é mais
+     que a duração inteira dela. */
   const ANTES_CURTO = ["cego", "queimando", "sangrando"];
   const ANTES_LONGO = ["agarrado", "amedrontado", "atordoado", "caido", "cego", "enfraquecido", "envenenado", "exausto", "lento", "paralisado", "queimando", "sangrando"];
+  const ENTRARAM = ["concentrado" /* T4 */, "marcado" /* H4 */];
   const limpaNo = (canal) => listaCondicoes().filter((c) => limparPorDescanso([criarCondicao(c.id)], canal).removidas.length > 0).map((c) => c.id).sort();
   const curto = limpaNo("curto"), longo = limpaNo("longo");
-  ok(curto.join(",") === [...ANTES_CURTO, "concentrado"].sort().join(","), `a parada de uma hora limpa as MESMAS de antes, mais concentrado: ${curto.join(", ")}`);
-  ok(longo.join(",") === [...ANTES_LONGO, "concentrado"].sort().join(","), `e a noite inteira idem: ${longo.join(", ")}`);
+  ok(curto.join(",") === [...ANTES_CURTO, ...ENTRARAM].sort().join(","), `a parada de uma hora limpa as MESMAS de antes, mais ${ENTRARAM.join(" e ")}: ${curto.join(", ")}`);
+  ok(longo.join(",") === [...ANTES_LONGO, ...ENTRARAM].sort().join(","), `e a noite inteira idem: ${longo.join(", ")}`);
   ok(ANTES_CURTO.every((id) => curto.includes(id)) && ANTES_LONGO.every((id) => longo.includes(id)), "nenhuma condição PAROU de sair por descanso — é a metade que mais custaria em mesa");
   ok(curto.every((id) => longo.includes(id)), "…e tudo que a parada limpa a noite também limpa: a noite nunca faz menos que a hora");
   ok(!longo.includes("enfeiticado"), "a noite continua NÃO quebrando encantamento — a decisão de T2, intacta");
