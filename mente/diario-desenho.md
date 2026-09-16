@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 15/09 22:50 · v9.260 · E2 · o endereço do tabuleiro · commit `<hash>`
+## 15/09 22:50 · v9.260 · E2 · o endereço do tabuleiro · commit `e192188`
 
 *O escrito dos dois seniores fica em `mente/e2-jogo.md` e `mente/e2-desenho.md`;
 a forma, no bloco final de `mente/formas.md`.*
