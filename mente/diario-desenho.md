@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 16/09 12:40 · v9.273 · K4 · medir a batida — e a Fase K fecha · commit `(a seguir)`
+## 16/09 12:40 · v9.273 · K4 · medir a batida — e a Fase K fecha · commit `4def786`
 
 *O escrito dos dois seniores fica em `mente/k4-jogo.md` e `mente/k4-desenho.md`;
 a forma, no bloco final de `mente/formas.md`.*
