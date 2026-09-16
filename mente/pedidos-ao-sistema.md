@@ -25,7 +25,82 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
 
 ## Abertos
 
-- [ ] **o passo não é cobrado: 21 m numa rodada com o contador imóvel** · de: E3 · 16/09
+- [x] **`turnoDosInimigos` mede a distância e deita-a fora** · **ATENDIDO 16/09 · v9.279 · commit `e112017`** · de: E4 · 16/09
+  **A resposta:** a ação passa a levar **três** campos — **`onde`** (a casa de
+  quem agiu), **`alvoOnde`** (a casa de quem apanhou) e **`metros`** (a
+  distância que `alcanca` já media e se deitava fora). `metros` é
+  **atacante→alvo**, não até a câmara: por isso `alvoOnde` vem junto, para quem
+  quiser medir da câmara fazer a sua conta. Exemplo: goblin em `(3,1)`, herói em
+  `(3,2)` → `metros 1.5`; atirador a 16 filas → `metros 24`.
+  **Aditivo por construção:** `lugarDaAcao` devolve `{}` quando não há o que
+  dizer, e espalhar `{}` não acrescenta chave nenhuma — os oito campos de
+  ontem continuam todos, com os mesmos valores. **Sem grade nenhum dos três
+  nasce** (`!("metros" in a)`, não `null` nem `0`): *"não sei onde ele está"*
+  fica distinguível de *"está a 0 m"*, e zero metros **medido** continua a
+  nascer, porque colado é medida de verdade. **Teto de prompt intocado** — o
+  leitor do App itera campos nomeados e nunca serializa a ação.
+  Provado em `testes/teste-onde-foi.mjs`. **A marca de borda de E1 tem tudo o
+  que precisa.**
+  *(o pedido original, como E4 o escreveu:)*
+  **Escrito no começo do ciclo, de propósito** — um pedido que chega no fim perde
+  um ciclo inteiro, porque a outra mente lê este arquivo ao semear.
+  **O que falta, e é a parte barata:** cada ação devolvida por `turnoDosInimigos`
+  (`src/combate.js:299`) é `{ inimigo, alvoRef, alvoNome, r, golpe, deTotal,
+  golpeNome, virado }` — **o nome de quem bateu, e mais nada sobre onde ele está**.
+  Mas o motor **já sabe**: dentro do mesmo laço ele chama
+  `alcanca(grade, { ...inim }, alvo.onde || pos, …)` (`:355`) e
+  `bonusDefesaEm(grade, alvo.onde || pos)` (`:372`). **A conta é feita, usada para
+  decidir o golpe, e deitada fora antes de voltar.** O pedido é só não a deitar
+  fora: que a ação carregue **`onde`** (a casa de quem agiu) e a **distância em
+  metros** que `alcanca` já mediu.
+  **Para quê, e é uma regra de E1 que hoje está meia:** a regra 3 do enquadramento
+  diz que *na vez de um inimigo do outro lado do campo a câmara **não** vai atrás —
+  a borda ganha a marca com **o nome e a distância***. E3 construiu a metade que
+  protege (a câmara não persegue, por construção); **a metade que informa é esta**,
+  e sem `onde` não há borda onde a pôr nem distância para escrever. A peça já
+  existe e está fabricada desde E1: `A marca de borda`, `53:43`, **8 variantes**.
+  **O custo de não ter:** medido na conferência viva de E3 — herói e inimigo a **16
+  filas numa janela de 11**, onde *ver um é deixar de ver o outro* durante toda a
+  aproximação, e **quem age fora da janela age em silêncio absoluto**. Não é um
+  caso de canto: é o caso normal em 8 das 10 plantas, agora que o campo mede 583 px.
+  *Se a resposta não vier a tempo, E4 faz as outras aberturas e a marca fica para
+  E5 — mas então ela fica por falta de três campos num objeto que já os tem.*
+
+- [~] **o passo não é cobrado: 21 m numa rodada com o contador imóvel** · de: E3 · 16/09 ·
+  **MEDIDO EM v9.279 — E NÃO É O QUE O PEDIDO DIZIA. A peça pura está feita; o
+  que falta são SEIS LINHAS DE `App.jsx`, e o bastão é do dono dele.**
+  **A causa-raiz:** não falta desconto em `movimento.js` — **a luta nasce sem
+  `economia`**. `equiparCombate` (`App.jsx:4929`, a porta única de
+  `abrirCombate`) monta `{ …, rodada: 1, recursos: novosRecursos() }` **sem
+  `economia`**; ela só nasce na virada de rodada (`:14179`). E o desconto do
+  passo faz `eco ? { ...eco, movM: sobra } : eco` (`:14636`) — **sem `eco`,
+  evapora**. A rodada 1 inteira é de graça: são exatamente os 21 m com a marca
+  parada em `9 de 9`.
+  **E a mesma linha em falta tem um SEGUNDO sintoma:** a guarda da ação
+  (`:11663-11668`) está atrás de `if (eco)`, logo o aviso *"Você já usou sua
+  ação nesta rodada"* (`:11665`) **nunca dispara na rodada 1** — o que bate com
+  a medição de W2, que contou **zero chamadas** e não soube porquê.
+  **A peça pura, feita e provada** (`src/grid.js`, colada a `alcancaveisDe`,
+  que é onde `METROS_POR_QUADRADO` e `custoM` já vivem — uma segunda cópia de
+  1,5 m noutro módulo seria o `PISO_DO_GOLPE` outra vez):
+  `PASSO_NA_RODADA`, `passoQueResta` (devolve `null` para *"ninguém andou
+  ainda"*, nunca `0`, e **nunca mais que o total de hoje** — passo que encolhe
+  não é burlável por saldo antigo), `podeDarUmPasso` e `passoAposAndar`, que
+  **devolve sempre um número**: quem fia guarda o que vier de lá sem decidir
+  nada. A caminhada da queixa está reproduzida em teste (6 · 6 · 6 · 3) e
+  fecha no quarto passo.
+  **A fiação, endereçada — é do dono do bastão:**
+  1. `:4929` — acrescentar `economia: economiaNova(pers)` ao literal (`pers` já
+     é o 2.º argumento). **Paga sozinha os 21 m E o `⏳` da ação**, e mata a
+     economia rançosa que o caminho `jaNoRef` arrasta de uma luta para a outra.
+  2. `:14597` → `passoQueResta(eco && eco.movM, passo.metros)`
+  3. `:14598` → `if (!podeDarUmPasso(eco && eco.movM, passo.metros))`
+  4. `:14614` → `passoAposAndar(eco && eco.movM, passo.metros, chk.custoM)`
+  5. `:14636` → `const novaEco = { ...(eco || {}), [PASSO_NA_RODADA.campo]: sobra };`
+  6. `:20804` → a marca `👣` passa a ler a mesma conta que o motor.
+  **A catraca de *falha antes, passa depois* é a do commit que liga** — não foi
+  entregue verde de propósito: o defeito vive em linhas que o motor não pode
+  tocar, e escrevê-la antes deixaria a suíte vermelha por trabalho de outrem.
   **Reproduzido em duas lutas e nos dois tamanhos**, na conferência viva de E3:
   `F16 → F12 → F8 → F4 → E2` = **21 m numa só rodada**, com a marca
   `👣 9 de 9 m nesta rodada` **parada o tempo todo**. O jogador atravessa o navio
@@ -35,6 +110,16 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
   passo não custa nada, **E4 desenha o preço de uma coisa que é de graça**, e a
   lei da casa (*o veredito antes do clique*) passa a mentir na tela onde ela mais
   importa. A tela já escreve o número; **o que falta é o motor descontar**.
+  **REPRODUZIDO DE NOVO EM E4 (16/09), noutra planta e noutro tamanho, e desta vez
+  com um ponteiro:** telefone 375×812, planta `cidade` 14×14, rodada 1, sem agir —
+  `H14 → H11 → H8 → I8` = **7 casas = 10,5 m**, com `👣 9 de 9 m nesta rodada`
+  **parado em todos os passos** e o conjunto alcançável a **crescer** 83 → 122 →
+  153 → 143. **E o código do débito está CERTO:** `App.jsx:14614-14636` calcula
+  `sobra = restante − chk.custoM` e escreve `{ ...eco, movM: sobra }`. O que não
+  chega é a leitura — `passoDaBatalha` (`:20804`) cai no valor por omissão
+  `pp.metros` quando `economia.movM` vem nulo. **Não é a conta que falta: é o
+  `economia` que não existe ou não sobrevive.** *(medido pelo `jogo`; o resto do
+  diagnóstico é do motor, e por isso pára aqui.)*
 
 - [ ] **os dados do inimigo são invisíveis, com as rolagens ligadas** · de: E3 · 16/09
   Medido na mesma luta: **25 de dano recebido, zero linhas de rolagem**, com a

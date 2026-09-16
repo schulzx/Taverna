@@ -16,6 +16,91 @@ Formato:
 
 ---
 
+## 16/09 20:45 · v9.279 · os dois pedidos da mesa · commit `e112017`
+
+- **estado inicial:** trava posta às 20:10 (não existia). Árvore limpa fora de
+  `mente/pedidos-ao-sistema.md`, que o **E4 estava a escrever naquele minuto**.
+  `npm test` **200/200 · 14/14** de entrada.
+- **o item não foi uma fase, e é o passo 2 do roteiro a valer literalmente.**
+  F3 estava disponível, mas `mente/pedidos-ao-sistema.md` tinha um pedido **com
+  relógio**: o E4 escreveu-o no **começo** do ciclo dele, de propósito, e
+  avisou por escrito que sem resposta a marca de borda cairia para E5 *"por
+  falta de três campos num objeto que já os tem"*. **Um pedido parado trava uma
+  fase inteira do outro lado.**
+- **conselheiro:** **não chamado** — a fila dos pedidos estava cheia.
+- **backend:** `lugarDaAcao`/`LUGAR_NA_ACAO` (`combate.js`) e a peça pura do
+  passo (`PASSO_NA_RODADA`, `passoQueResta`, `podeDarUmPasso`, `passoAposAndar`
+  em `grid.js`).
+- **testes:** `testes/teste-onde-foi.mjs` — nova; `teste-grid` 160 → **182 ok**.
+- **prova:** build limpo, `npm test` **201/201 suítes · 14/14 varredores** na
+  árvore inteira. **Não precisei de `so-o-meu.sh`: não havia vermelho de
+  ninguém.** **Zero linhas de `App.jsx`** — o bastão é do E4 desde as 18:05Z e
+  o dono esteve vivo o ciclo inteiro.
+
+### A primeira pergunta era se são a mesma ferida — e não são
+
+| | pedido 1 | pedido 2 |
+|---|---|---|
+| laço | `turnoDosInimigos` (`combate.js:299`) | `moverPara` (`App.jsx:14570`) |
+| função do grid | `alcanca` — **mede**, não move | `caminhar` — **move**, devolve `custoM` |
+| quem age | o inimigo | o herói |
+| onde a ferida mora | **no motor**: a medida existe e é deitada fora | **só no `App.jsx`** |
+
+Partilham `grid.js` como módulo e **nada mais** — nenhum estado, nenhuma
+chamada em comum. **Um conserto cada**, e perguntar primeiro custou dez minutos
+e evitou um conserto que não existia.
+
+### Pedido 1 — pago
+
+A ação passa a levar **`onde`**, **`alvoOnde`** e **`metros`**: a conta que o
+laço já fazia em `alcanca`, usava para decidir o golpe e **deitava fora antes
+de voltar**. Nenhum nome é novo — `onde` é o vocabulário que o próprio laço usa
+nos alvos, `metros` é o que `alcanca`, `moverInimigos` e
+`detectarAlcanceImpossivel` já devolvem.
+
+**Aditivo por construção**, que era a condição imposta pelo leitor no `App.jsx`
+que eu não podia editar: `lugarDaAcao` devolve `{}` quando não há o que dizer, e
+espalhar `{}` não acrescenta chave. **Sem grade nenhum dos três nasce** — e a
+distinção importa: *"não sei onde ele está"* não pode parecer *"está a 0 m"*.
+Zero metros **medido** continua a nascer, porque colado é medida de verdade.
+**Teto de prompt intocado.**
+
+### Pedido 2 — não era o que o pedido dizia, e essa é a parte que vale
+
+**Não falta desconto em `movimento.js`: a luta nasce sem `economia`.**
+`equiparCombate` (`App.jsx:4929`, a porta única de `abrirCombate`) monta a mesa
+com `rodada: 1` e `recursos`, **e sem `economia`** — ela só nasce na virada de
+rodada. E o desconto do passo faz `eco ? { ...eco, movM: sobra } : eco`: **sem
+`eco`, evapora**. A rodada 1 inteira é de graça, que é exatamente os 21 m com a
+marca parada em `9 de 9`.
+
+**E a mesma linha em falta tem um segundo sintoma:** a guarda da ação está
+atrás de `if (eco)`, logo o aviso *"você já usou sua ação nesta rodada"*
+**nunca dispara na rodada 1** — e isso **bate com a medição de W2**, que contou
+**zero chamadas** àquele literal e não soube dizer porquê. Uma linha em falta,
+dois sintomas, e um deles estava medido há duas fases sem diagnóstico.
+
+**A peça pura ficou feita e provada**, em `grid.js` colada a `alcancaveisDe` —
+que é onde `METROS_POR_QUADRADO` e `custoM` já vivem; uma segunda cópia de 1,5 m
+noutro módulo seria o `PISO_DO_GOLPE` outra vez. `passoQueResta` devolve `null`
+para *"ninguém andou ainda"* (nunca `0`) e **nunca mais que o total de hoje**:
+passo que encolhe não é burlável por saldo antigo.
+
+**A asserção que falha antes e passa depois NÃO foi entregue verde, e é
+honesto dizer porquê:** o defeito vive em **seis linhas do `App.jsx`**, e
+escrever a catraca agora deixaria a suíte **vermelha por trabalho que não é
+meu**. As seis substituições ficaram endereçadas uma a uma no pedido, e **a
+primeira delas paga sozinha os 21 m e o aviso da ação**.
+
+- **o que ficou:** as seis linhas de fiação (bastão), e o pedido marcado `[~]`
+  com o diagnóstico inteiro em vez de `[ ]` com a queixa.
+- **decisão média:** responder a fila dos pedidos **antes** de F3. A razão é de
+  relógio, não de valor: F3 espera sem custo, o pedido de E4 tinha prazo escrito
+  e uma fase do outro lado dependia dele.
+- **para a pessoa decidir:** nada novo. O +2 de defesa (F2) continua onde está.
+
+---
+
 ## 16/09 19:50 · v9.278 · F2 · o abrigo cai no corpo certo · commit `3bac9b6`
 
 - **estado inicial:** trava posta às 19:00 (não existia). Árvore com o E3 a
