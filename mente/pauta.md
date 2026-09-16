@@ -897,16 +897,34 @@ Disso saem três propriedades, e as três são prováveis:
    **lê o que mudou e por quê**, na voz da casa. Mudança calada em ficha é
    exatamente o que a ressalva proíbe.
 
-- [ ] **Z1 · o recálculo, e a prova de que ele não se mexe** · de: pessoa · 15/09
-  Módulo puro que deriva das tabelas o que hoje se pede à IA — PV, PM,
-  proficiência, nível pelo XP. **A suíte prova a idempotência antes de
-  qualquer fiação**: recalcular n vezes = recalcular uma; save já correto
-  sai byte a byte igual. Sem React, sem chamada.
+- [x] **Z1 · o recálculo, e a prova de que ele não se mexe** · feito em v9.272
+  (`400748a`), 16/09 — `src/recalculo.js` + `testes/teste-recalculo.mjs` (54
+  asserções). **As três propriedades ficaram provadas antes de qualquer
+  fiação:** idempotência com n = 1..10 sobre 1 008 fichas; o silêncio por
+  **identidade referencial** (`r.ficha === pers`), não só por `JSON.stringify`
+  igual — um clone passaria no teste de JSON e continuaria a ser escrita; e as
+  quatro derivações remontadas das tabelas, sem um número escrito à mão.
+  **O recálculo NÃO sobe de nível pelo XP**, e isso é desenho, não falta:
+  subir exige gastar o XP, `xp` não é campo governado, e o desenho errado dava
+  **1 → 12 → 16 → 18 → 20 em quatro aberturas** — está escrito no teste (§5b)
+  pelo nome e pelo número. **Nenhum número de jogo mudou:** 0 de 8 prontos e
+  0 de 504 fichas certas divergem. **O achado que justifica Z2:** a
+  recalibração de hoje mexeria no PV de 120 de 144 fichas e no PM de 138 de
+  144 (pior caso −44 PM), porque usa o `pvEsperadoJogador` de `combate.js`,
+  que é a régua do balanceamento e nunca foi a ficha de ninguém · de: pessoa · 15/09
 - [ ] **Z2 · as três portas fecham** · de: pessoa · 15/09
   Os três botões e as três chamadas de modelo saem. **Precisa do bastão do
   `App.jsx`.** O recálculo entra no `garantir...` do load, com a regra 2
   valendo: o load comum não escreve nada. Medir: quantas chamadas de IA o
   App passa a ter (11 → 8) e o que isso poupa por sessão.
+  **O que Z1 deixou explicitamente para aqui:** (a) o aparo de `vida`/`mana`
+  correntes quando um teto cai — `recalculo.js` governa só os quatro campos e
+  não toca no corrente, por lei da etapa; quem apara é quem aplica na tela,
+  **com o veredito antes do clique**; (b) o botão que diz, em voz alta,
+  *"⚖ Recalibrar com a IA"* vive em `painel-ascensao.jsx:35` e `:229`, não só
+  no `App.jsx`; (c) a medição de divergência de Z1 é sobre corpus
+  **construído** (não há fixture de save no projeto) — **quantas fichas de
+  jogador de verdade divergem só se sabe aqui**, num load a sério.
 - [ ] **Z3 · o save antigo é avisado** · de: pessoa · 15/09
   Quando o recálculo de fato corrigir um save de versão antiga, o jogador vê
   o quê e o porquê — uma vez, não a cada abertura (o save guarda que já foi

@@ -16,6 +16,133 @@ Formato:
 
 ---
 
+## 16/09 09:25 · v9.272 · Z1 · o recálculo, e a prova de que ele não se mexe · commit `400748a`
+
+- **estado inicial:** trava `.claude/ciclo-em-curso` **não existia** — mas
+  `mente/agora.json` tinha, por commitar, duas linhas de um Z1 **que morreu
+  antes de escrever uma linha de código** (`orquestrador` e `backend`, com
+  `desde` marcado às 22:00Z, hora que ainda não aconteceu). **Registo de ciclo
+  morto**, como manda o roteiro: nada no disco além daquelas duas linhas, que
+  reaproveitei com a hora certa. Árvore de resto limpa, `npm test` verde de
+  entrada. A outra mente estava viva ao lado no K4 (trava
+  `.claude/ciclo-desenho-em-curso` das 08:47, `mente/k4-desenho.md` por
+  commitar) — **nada disso entrou no meu commit**, e o bastão do `App.jsx`
+  nunca esteve comigo.
+- **A versão não mudou debaixo de mim desta vez** — reli `src/constantes.js`
+  imediatamente antes de bumpar, como Y1 ensinou, e ainda dizia `v9.271`.
+  Fui para `v9.272`. A releitura continua a ser barata e a suposição continua
+  a ser cara.
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, etapa escrita.
+- **backend:** `src/recalculo.js` (4 exports) e a extração da fórmula de PV/PM
+  de `src/prontos.js:171-173` para `corpoDaFicha`.
+- **testes:** `testes/teste-recalculo.mjs` — **54 asserções**, 0 falhas, e a
+  medição de divergência impressa em vez de travada.
+- **prova:** `npm run build` limpo, `npm test` **194/194 suítes verdes**.
+  Não precisei de `mente/so-o-meu.sh`: não havia vermelho de ninguém.
+
+### As três propriedades, e como cada uma ficou provada
+
+1. **Idempotente** — n = 1..10 sobre **1 008 fichas** (12 classes × 7 níveis,
+   escolhidos nos degraus onde `bonusProficiencia` vira, × 2 configurações de
+   atributos × 3 antecedentes × {certa, torta}). A asserção é tripla: `mudou`
+   falso na 2.ª passagem, igualdade profunda 2.ª↔10.ª, e `recalc^n ===
+   recalc^1` ficha a ficha. *"Abrir o jogo dez vezes não move um ponto"* é
+   literalmente esta asserção, e está escrito assim no comentário.
+2. **Mudo quando não é preciso** — a asserção é **identidade referencial**
+   (`r.ficha === pers`), não só `JSON.stringify` igual. **É a diferença que
+   importa:** um clone com as mesmas chaves passa num teste de JSON e continua
+   a ser uma escrita. Só a identidade prova que nem sequer houve cópia.
+3. **Deriva das tabelas** — a suíte **remonta** a fórmula de `vidaBase`/
+   `manaBase`, `pv`/`pm` do antecedente e `PV_POR_NIVEL`/`PM_POR_NIVEL`, e o
+   teto de nível sai de `XP_ACUMULADO.length` em vez de um `20` escrito à mão.
+   Nenhum número na asserção; é o que a faz sobreviver a uma mudança de tabela.
+
+### As decisões médias, com o motivo
+
+- **O recálculo NÃO sobe de nível pelo XP — e esta é a decisão pesada da
+  etapa.** Subir exige **gastar** o XP; `xp` não é campo governado; logo um
+  nível movido sem o XP gasto sobe outra vez na leitura seguinte. Medido com a
+  própria tabela: nível 1 com 100 000 XP daria **1 → 12 → 16 → 18 → 20 em
+  quatro aberturas** — literalmente o *"status diferente em cada gameplay"*
+  que a pessoa proibiu. O dono da subida continua a ser `aplicarNivel`
+  (`regras-jogo.js:37`), que roda a cada ganho de XP e por isso garante
+  `xp < custo(nivel)` em toda ficha bem formada. Aqui o nível é **saneado**
+  (`floor`, nunca `round` — arredondar para cima daria meio degrau de graça) e
+  serve de entrada para os outros três. **O desenho errado ficou escrito no
+  teste pelo nome e pelo número** (§5b), no molde do "desenho A" de
+  `teste-trava-da-reacao`, com uma asserção a provar que ele move mesmo a
+  ficha: senão a catraca não saberia reconhecer o erro no dia em que voltasse.
+- **Ausência não é divergência.** Campo `null`/`undefined` não discorda.
+  Nenhuma ficha de hoje guarda `proficiencia` — deriva-a na leitura — e
+  escrevê-la em todo save seria mudar dado do jogador **sem necessidade**, que
+  é metade da ressalva. Quem guarda o campo e o guarda errado é corrigido. E
+  **`0` não é ausência**: `vidaMax: 0` é ficha partida e é consertada.
+- **`vida`/`mana` correntes ficaram de fora.** A lei da etapa é *nada fora de
+  `CAMPOS_DO_RECALCULO` é tocado, nunca*. Se um teto cair, uma ficha pode
+  ficar com `vida > vidaMax` — **quem apara o corrente é quem aplica na tela,
+  com o veredito antes do clique.** É hand-off explícito para Z2.
+- **Não passa por `antecedentePorId`.** Aquele leitor cai no primeiro da lista
+  quando não acha — serve à criação, que precisa sempre de um antecedente, e
+  aqui daria o corpo do Órfão a qualquer nome escrito errado. Quem pergunta
+  pelo corpo quer a verdade ou o silêncio, nunca um palpite.
+- **Duas asserções do `testes` ficaram vermelhas contra o módulo e foram
+  reescritas — nenhuma afrouxada, e o motivo está em comentário nas duas.** A
+  mão de testes tinha presumido que o recálculo derivaria o nível do XP; o
+  contrato nunca o disse e o `backend` decidiu o contrário com razão medida.
+  A segunda exigia que o recálculo escrevesse por cima de campo ausente, e
+  virou a §7b — a asserção da lei que ela estava a contrariar.
+
+### O achado: quantas fichas divergem, e quanto
+
+**Do recálculo novo: nenhuma.** 0 de 8 prontos e 0 de 504 fichas certas; nem
+um PV nem um PM se move. Os oito prontos saíram **idênticos byte a byte** à
+extração — medido por snapshot `JSON.stringify` da ficha inteira antes e
+depois, não só dos dois campos.
+
+**Da recalibração de hoje, sobre o mesmo corpus de 144 fichas: quase todas.**
+O PV mexeria em **120 de 144** (erro médio 4,5 PV; pior caso um Mago nível 20,
+128 → 145, **+17**) e o PM em **138 de 144** (erro médio **19,7 PM**; pior
+caso o mesmo Mago, 90 → 46, **−44**). A razão está nomeada: ela usava
+`pvEsperadoJogador` (`combate.js:465`), que é a **régua do balanceamento** —
+estimativa de classe média — e nunca foi a ficha de ninguém; e inventava o PM
+numa linha solta (`App.jsx:20853`) que não batia nem com `prontos.js` nem com
+a tela de criação. **Nada foi ajustado para caber:** é achado, e é ele que
+justifica Z2.
+
+**A honestidade da medição:** o corpus é *construído*, não é um save real de
+uma partida real — não há fixture de save no projeto. Os 0/8 dos prontos são
+fichas de verdade; os 0/504 são fichas montadas como o jogo as monta (criação
+no nível 1 + `aplicarNivel` pagando o XP exato de cada degrau). **Quantas
+fichas de jogador de verdade divergem, só Z2 saberá**, ao correr o recálculo
+num load a sério.
+
+### O que já existia e foi reusado em vez de reescrito
+
+A lição de H2 (6 dos 12 assuntos já tinham dono) e de Y1 (3 das 4 peças já
+existiam) pagou-se a terceira vez: **os quatro números já tinham dono.**
+`bonusProficiencia` (`regras.js:12`), `XP_ACUMULADO` (`regras.js:38`),
+`PV_POR_NIVEL`/`PM_POR_NIVEL` (`regras-jogo.js:34-35`), `vidaBase`/`manaBase`
+(`classes.js`), `pv`/`pm` (`antecedentes.js`). **Não nasceu tabela nova** — o
+que nasceu foi o **lugar único** onde se lê todas elas. E a extração pagou-se
+já: a fórmula tinha **três donos** (prontos, criação, recalibração) e o
+terceiro já tinha divergido dos outros dois sem ninguém dar por isso.
+
+### O que ficou
+
+- **Z2 herda três coisas:** as três portas por fechar (save, mundo, ascensão,
+  incluindo o botão que diz *"⚖ Recalibrar com a IA"* em
+  `painel-ascensao.jsx:35` e `:229`), **o aparo de `vida`/`mana` correntes**
+  quando um teto cai, e a medição real contra saves de jogador. Precisa do
+  bastão do `App.jsx`.
+- **Uma armadilha latente, já com catraca.** `corpoDaFicha` usa
+  `(cObj && cObj.vidaBase) || 10` — um `||`, não um `??`. Hoje as 12 classes
+  têm `vidaBase`/`manaBase` verdadeiros; uma classe futura com `vidaBase: 0`
+  cairia no default de 10 em silêncio. A §6 fica vermelha nesse dia. Não é bug
+  hoje, e não foi mexido para não mudar número.
+- **Nada para a pessoa decidir** neste ciclo.
+
+---
+
 ## 16/09 08:00 · v9.271 · Y1 · `Empurrar` e `Derrubar` ganham motor · commit `384c3d5`
 
 - **A VERSÃO MUDOU DEBAIXO DE MIM, e é registo de processo.** Abri o ciclo com
