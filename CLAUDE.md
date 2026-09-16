@@ -125,6 +125,14 @@ Na dúvida entre médio e pesado, é pesado. Os arquivos da mente:
 
 - `mente/pauta.md` — o que foi pensado e não feito, com peso. "Para a pessoa
   decidir" no topo. "Recusado" no fim, com motivo — não se propõe de novo.
+- **A mesa se arruma sozinha.** Em 17/09 a memória da mente virou o custo do
+  trabalho: pauta 243 KB, diário 310 KB, formas 239 KB — **~140 mil tokens
+  lidos por ciclo antes de escrever uma linha**, mais do que o código que ia
+  tocar. `node mente/arquivar.mjs` move o que fechou para `mente/arquivo/`
+  (fase fechada, ciclo com mais de oito de idade), deixando um índice que
+  aponta para lá. **Nada se apaga** — o valor de uma fase fechada é de
+  consulta, e consulta não precisa estar no bolso. Rode quando a mesa pesar;
+  `--medir` mostra o ganho sem mover nada.
 - `mente/diario.md` — um bloco por ciclo: quem fez o quê, cada decisão média
   com o motivo. É por aqui que a pessoa vê o processo.
 
