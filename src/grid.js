@@ -544,6 +544,82 @@ export function alcancaveisDe(grade, ent, { ocupados = new Set(), deslocamentoM 
 }
 
 /* ============================================================
+   O ORÇAMENTO DO PASSO NA RODADA (v9.279) — o passo tem preço
+
+   MEDIDO A JOGAR, e reproduzido em duas lutas e nos dois tamanhos:
+   `F16 → F12 → F8 → F4 → E2` são vinte e um metros numa só rodada, com
+   a marca do passo parada em "9 de 9 m" o tempo todo. O jogador
+   atravessava o navio inteiro no primeiro turno.
+
+   A CONTA NUNCA ESTEVE ERRADA — ela é que não existia. `caminhar`
+   devolve `custoM` desde a v9.34 e quem fia é que tinha de guardar o
+   que sobrava; guardava, mas só quando já havia onde guardar, e na
+   primeira rodada não havia. Uma linha de fiação escrita como
+   `sobrou ? guarda : deixa passar` transforma "ainda não gastei nada"
+   em "nunca vou gastar", e a diferença entre as duas leituras é um
+   turno inteiro de graça.
+
+   ESTE É O SÍTIO porque quem cobra o chão é este arquivo: `caminhar`
+   mede o custo, `METROS_POR_QUADRADO` diz qual é o menor passo que
+   existe aqui, e uma segunda cópia desse número noutro módulo seria a
+   mesma regra com dois donos — o defeito que esta casa já paga noutro
+   sítio e não vai comprar de novo.
+
+   NÚMEROS E NOMES SAEM DA TABELA. `campo` está nela porque o que resta
+   mora dentro da economia da rodada de quem fia, e o nome do campo é
+   contrato entre dois lados: escrito num só sítio, uma tela e um motor
+   não podem discordar sobre onde o passo foi parar.
+
+   E "NINGUÉM ANDOU AINDA" NÃO É ZERO. `restante == null` quer dizer que
+   a rodada está inteira; um zero de enchimento diria que o passo
+   acabou. É a mesma regra da chave que só nasce quando existe.
+   ============================================================ */
+export const PASSO_NA_RODADA = {
+  /* onde o que RESTA andar mora, dentro da economia da rodada */
+  campo: "movM",
+  /* o menor passo que este tabuleiro sabe mostrar é uma casa: abaixo
+     disto não há para onde ir, e a rodada acabou para as pernas */
+  minimo: METROS_POR_QUADRADO,
+  /* uma casa decimal, a mesma que `metrosTxt` escreve — senão a conta
+     do jogador ("gastei 2, restam 7,5") não fecha com a que ele lê */
+  casas: 1,
+};
+
+const aoDecimo = (n) => {
+  const f = Math.pow(10, PASSO_NA_RODADA.casas);
+  return Math.round((Number(n) || 0) * f) / f;
+};
+
+/* Quanto ainda dá para andar nesta rodada. `restante` é o que a
+   economia guardou — `null`/`undefined` é "ninguém andou ainda", e aí
+   vale o passo inteiro. Nunca devolve mais do que o total: um passo que
+   encolheu no meio da rodada (exaustão, lentidão) não pode ser burlado
+   por um saldo antigo maior. */
+export function passoQueResta(restante, passoTotalM) {
+  const total = Math.max(0, aoDecimo(passoTotalM));
+  if (restante == null) return total;
+  const guardado = Number(restante);
+  if (!Number.isFinite(guardado)) return total;
+  return Math.max(0, Math.min(total, aoDecimo(guardado)));
+}
+
+/* Ainda cabe um passo? A pergunta que a tela faz antes de acender o
+   chão e que o motor faz antes de deixar andar — uma só, para as duas
+   não poderem responder coisas diferentes. */
+export function podeDarUmPasso(restante, passoTotalM) {
+  return passoQueResta(restante, passoTotalM) >= PASSO_NA_RODADA.minimo;
+}
+
+/* O que sobra DEPOIS de andar `custoM`. Devolve sempre um número — é
+   esta a peça que faltava: quem fia guarda o que vier daqui sem ter de
+   decidir nada, e não há caminho em que o desconto se perca. */
+export function passoAposAndar(restante, passoTotalM, custoM) {
+  const resta = passoQueResta(restante, passoTotalM);
+  const custo = Math.max(0, aoDecimo(custoM));
+  return Math.max(0, aoDecimo(resta - custo));
+}
+
+/* ============================================================
    O DESLOCAMENTO FORÇADO (Fase Y · Y1) — andar sem ter escolhido
 
    O QUE FALTAVA AQUI NÃO ERA REGRA: ERA VERBO. `caminhar` é o passo de

@@ -7,6 +7,7 @@ import {
   quadradosDaArea, pegosPelaArea, mapaEmTexto, resumoGridPrompt,
   detectarAlcanceImpossivel, notaAlcanceImpossivel, METROS_PARA_MORDER, DESLOCAMENTO_PADRAO,
   ESPECIES, QUALIFICADORES, ESCADA, degrauDeTamanho,
+  PASSO_NA_RODADA, passoQueResta, podeDarUmPasso, passoAposAndar,
 } from "../src/grid.js";
 import {
   deslocamentoDe, passoEfetivo, velocidadeDaRaca, deslocamentoDeCriatura,
@@ -357,6 +358,63 @@ sec("O TAMANHO SAI DO NOME (v9.74) — a espécie manda, o adjetivo empurra");
   t("descer além do fundo para no fundo", degrauDeTamanho("miudo", -3).id === "miudo");
   t("toda espécie aponta para um degrau da escada", ESPECIES.every((e) => ESCADA.includes(e.tamanho)));
   t("todo qualificador empurra alguma coisa", QUALIFICADORES.every((q) => q.quanto !== 0));
+}
+
+sec("O ORÇAMENTO DO PASSO NA RODADA — o passo tem preço (v9.279)");
+{
+  /* A QUEIXA, palavra por palavra: `F16 → F12 → F8 → F4 → E2` = 21 m numa
+     só rodada, com a marca parada em "9 de 9 m" o tempo todo. Aqui ela é
+     refeita com a conta que faltava, e a rodada fecha onde tem de fechar. */
+  const TOTAL = 9;
+
+  t("a tabela diz onde o que resta mora", PASSO_NA_RODADA.campo === "movM");
+  t("e qual é o menor passo que existe", PASSO_NA_RODADA.minimo === METROS_POR_QUADRADO);
+  t("o mínimo é uma casa do tabuleiro", PASSO_NA_RODADA.minimo === q2m(1));
+
+  /* "NINGUÉM ANDOU AINDA" NÃO É ZERO — é a rodada inteira. Foi
+     exactamente esta leitura que faltou: a primeira rodada não tinha onde
+     guardar o gasto, e ausência virou "de graça" em vez de "inteira". */
+  t("sem nada guardado, vale o passo inteiro", passoQueResta(null, TOTAL) === 9);
+  t("undefined também é a rodada inteira", passoQueResta(undefined, TOTAL) === 9);
+  t("mas zero guardado é zero, e não o passo inteiro", passoQueResta(0, TOTAL) === 0);
+  t("lixo guardado não vale como saldo", passoQueResta("nada", TOTAL) === 9 && passoQueResta(NaN, TOTAL) === 9);
+
+  /* a caminhada da queixa, casa a casa, com o custo que `caminhar` cobraria:
+     quatro passos de 1,5 m entre F16 e F4 e o quinto até E2 */
+  let resta = null;
+  const andou = [];
+  for (const custo of [6, 6, 6, 3]) {
+    andou.push(podeDarUmPasso(resta, TOTAL));
+    resta = passoAposAndar(resta, TOTAL, custo);
+  }
+  t("o primeiro passo é permitido", andou[0] === true);
+  t("o segundo ainda cabe", andou[1] === true && resta !== 9);
+  t("o quarto já não cabia", andou[3] === false);
+  t("e o saldo nunca desce abaixo de zero", resta === 0);
+  /* O NÚMERO DA QUEIXA: 21 m eram possíveis, 9 é o que a rodada paga. */
+  t("21 m numa rodada deixam de ser possíveis", passoAposAndar(null, TOTAL, 21) === 0);
+  t("com o passo acabado, não se dá mais um", podeDarUmPasso(0, TOTAL) === false);
+  t("com uma casa de sobra, ainda se dá", podeDarUmPasso(1.5, TOTAL) === true);
+  t("com menos de uma casa, não", podeDarUmPasso(1.4, TOTAL) === false);
+
+  /* A PEÇA QUE FALTAVA É DEVOLVER SEMPRE UM NÚMERO. A fiação escrevia
+     `sobrou ? guarda : deixa passar`, e sem saldo anterior o desconto
+     evaporava — era este o buraco, e é aqui que ele fecha. */
+  t("andar sem saldo anterior ainda desconta", passoAposAndar(null, TOTAL, 6) === 3);
+  t("e devolve número, nunca vazio", typeof passoAposAndar(null, TOTAL, 6) === "number");
+  t("custo maior que o saldo não vira dívida", passoAposAndar(3, TOTAL, 7.5) === 0);
+  t("custo de lixo não gasta nada", passoAposAndar(6, TOTAL, null) === 6 && passoAposAndar(6, TOTAL, "x") === 6);
+
+  /* o meio quadrado aparece o tempo todo (1,5 m por casa): a conta do
+     jogador tem de fechar com o número que ele lê na tela */
+  t("meia casa não some na conta", passoAposAndar(null, TOTAL, 1.5) === 7.5);
+  t("o passo élfico de 10,5 também fecha", passoAposAndar(null, 10.5, 7.5) === 3);
+
+  /* um passo que ENCOLHE no meio da rodada (exaustão, lentidão) não pode
+     ser burlado por um saldo antigo maior do que o novo total */
+  t("saldo antigo não passa o total de hoje", passoQueResta(9, 4.5) === 4.5);
+  t("nem o do anão de 7,5", passoQueResta(9, DESLOCAMENTO_PEQUENO) === 7.5);
+  t("total de lixo não abre crédito", passoQueResta(null, null) === 0 && passoQueResta(9, "x") === 0);
 }
 
 console.log(`\n${ok} ok, ${mau} falhas`);

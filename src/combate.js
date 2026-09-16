@@ -296,6 +296,61 @@ function bandeirasDosAlvos(alvos, inim, grade, pos) {
   return comAlcance;
 }
 
+/* ============================================================
+   ONDE FOI — a conta que já se fazia e se deitava fora (v9.279)
+
+   Cada ação que este laço devolvia dizia o NOME de quem bateu e nada
+   sobre onde ele estava. Só que o laço JÁ MEDE: `alcanca` devolve a
+   distância em metros entre o bicho e o alvo, e é ela que decide se o
+   golpe sai. Media-se, usava-se para escolher o golpe, e perdia-se
+   antes do `return`.
+
+   O custo de a perder não é teórico: sem a casa de quem agiu não há
+   borda em que pôr a marca de quem está fora do enquadramento, e sem a
+   distância não há o que escrever nela. Medido a jogar: herói e inimigo
+   a dezasseis filas numa janela de onze, onde ver um é deixar de ver o
+   outro — e quem age fora da janela age em silêncio absoluto.
+
+   ADITIVO POR CONSTRUÇÃO, e isto não é zelo: há leitor desta lista que
+   não muda uma linha. Os campos entram por spread de um objeto que é
+   VAZIO quando não há o que dizer — sem grade, sem posição ou sem
+   medida, a ação volta byte a byte a de antes.
+
+   E A CHAVE SÓ NASCE QUANDO EXISTE. Ausente quer dizer "não sei onde
+   ele está"; um `0` de enchimento diria "está colado em mim", que é a
+   mentira mais cara que este tabuleiro sabe contar. Zero metros MEDIDO
+   continua a nascer, porque colado é uma medida de verdade.
+
+   `metros` É A DISTÂNCIA ATÉ O ALVO, não até o herói — é a que
+   `alcanca` mediu, e inventar outra seria medir duas vezes a mesma
+   coisa. Quando o golpe não é no herói, quem quiser a distância até a
+   câmara tem `onde` e `alvoOnde` e faz a sua.
+   ============================================================ */
+export const LUGAR_NA_ACAO = ["onde", "alvoOnde", "metros"];
+
+/* A casa de uma entidade, ou nada. `= {}` não cobre `null`, e um
+   reforço que chega à luta sem posição acontece de verdade. */
+const casaDe = (ent) => {
+  const e = ent == null ? null : ent;
+  if (!e || e.x == null || e.y == null) return null;
+  const x = Number(e.x), y = Number(e.y);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+  return { x, y };
+};
+
+export function lugarDaAcao(atacante, alvoOnde, alcance) {
+  const alc = alcance == null ? {} : alcance;
+  const medida = Number(alc.metros);
+  const bruto = {
+    onde: casaDe(atacante),
+    alvoOnde: casaDe(alvoOnde),
+    metros: alc.metros == null || !Number.isFinite(medida) ? null : medida,
+  };
+  const out = {};
+  for (const campo of LUGAR_NA_ACAO) if (bruto[campo] != null) out[campo] = bruto[campo];
+  return out;
+}
+
 export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0, grade = null, heroi = null, aliados = [], rodada = 1, provocado = false, prioridade = "" }) {
   const vivos = (inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
   const pos = heroi || jogador;
@@ -380,7 +435,10 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
          um golpe com nome, do repertório fixo dele. É esse nome que o Mestre
          narra e é dele que o sistema tira a aflição que o golpe carrega. */
       const golpeNome = golpeDaVez(inim.nome, perfilInim.ataque, inim.ameaca, g);
-      acoes.push({ inimigo: inim.nome, alvoRef: alvo.ref, alvoNome: alvo.nome, r, golpe: g + 1, deTotal: nGolpes, golpeNome, virado });
+      /* os três campos de lugar entram POR ÚLTIMO e por spread: quem já
+         lia os oito de cima continua a lê-los na mesma ordem, e numa
+         luta sem grade o spread não acrescenta chave nenhuma. */
+      acoes.push({ inimigo: inim.nome, alvoRef: alvo.ref, alvoNome: alvo.nome, r, golpe: g + 1, deTotal: nGolpes, golpeNome, virado, ...lugarDaAcao(inim, alvo.onde || pos, alc) });
     }
   }
   return acoes;
