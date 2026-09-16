@@ -623,6 +623,15 @@ export function efeitoDeMagia(magia) {
        colisão no acervo inteiro (Forma Dracônica casa com `GUARDAS` e com
        `absorve`), e a precedência que a resolve já está escrita e testada —
        `guardaDe` primeiro, em `arena.js` e no App. Nada muda para ela.
+       ESTA LINHA FALAVA DE `absorve` E FOI LIDA COMO SE FALASSE DO ACERVO
+       (medido em F3, v9.280). Contra `absorve` ela continua exata: 1,
+       Forma Dracônica, hoje como na v9.233. Contra a tabela INTEIRA de
+       `APLICACAO_DO_BUFF` eram 4 já na v9.233 — as outras três eram Vazio
+       Perfeito, Dança Sem Vulto e Nada Me Alcança, que casam com `GUARDAS` e
+       com a família `intocado`, e ninguém as contou porque `intocado` não
+       comprava nada. Depois de F3 são 9, e as cinco novas são todas da mesma
+       família, resolvidas pela mesma precedência de uma linha. A precedência
+       não mudou; o que mudou foi quantas frases passam por ela.
      · e a seta de dependência não se mexe: `habilidades.js` continua sendo a
        única folha do motor, sem um único import. `efeitos.js → combos.js` já
        existia.

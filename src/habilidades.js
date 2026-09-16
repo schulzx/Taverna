@@ -311,6 +311,37 @@ export function colherPorLimiar(inimigos, regra, { podeCair } = {}) {
    "intocavel" faz o golpe errar. A escada é de propósito — quanto mais
    absoluta a promessa, mais curto o prazo, porque "nada te atinge" por três
    turnos é um combate inteiro sem combate. */
+
+/* ---------------- A RÉGUA DA ESCADA, QUE JÁ ESTAVA ESCRITA E NINGUÉM TINHA
+   LIDO (v9.280 · F3) ----------------
+
+   Os prazos desta tabela nasceram um por linha, à mão, e por isso pareciam
+   arbitrários. Não são. MEDIDO contra o custo em PM da própria ficha, as TRÊS
+   linhas de `tipo: "esquiva"` do acervo obedecem à mesma conta, e às três sem
+   uma exceção:
+
+     Dança Sem Vulto  7 PM → 3 turnos      Improvável  7 PM → 3 turnos
+     Nada Me Alcança  8 PM → 4 turnos
+
+   ou seja `floor(PM / pmPorTurno)`, com piso 1. As cinco linhas de
+   `tipo: "defesa"` NÃO obedecem — e isso confirma a régua em vez de a negar:
+   lá o preço é pago em `valor` (pontos de CA) e o prazo é o troco; aqui o
+   preço É o prazo. Cada família paga na sua moeda, do mesmo jeito que
+   `absorve` paga em pontos e `amortece` em proporção (efeitos.js).
+
+   `turnosDoAbsoluto` é a outra metade da lei, e a que mais importa: pela
+   conta, Vazio Perfeito (8 PM) compraria 4 turnos — e compra UM, porque é
+   `intocavel`. O absoluto paga o prazo em 1, custe o que custar. É a frase do
+   comentário logo acima, agora em número que a prova lê de volta.
+
+   ESTA TABELA NÃO É UM SEGUNDO CAMINHO PARA O NÚMERO, e a distinção é a mesma
+   que `forcaDaAbsorcao` defende em efeitos.js: o prazo continua escrito uma
+   vez só, na linha de cada guarda. Quem lê a régua são as PROVAS
+   (`teste-guardas.mjs` e `check-protecao.mjs`), e o que elas fazem é cobrar a
+   igualdade. No dia em que alguém escrever uma esquiva de três turnos por 2
+   PM, o vermelho acende antes de o combate acabar. */
+export const ESCADA_DA_GUARDA = { pmPorTurno: 2, pisoDeTurnos: 1, turnosDoAbsoluto: 1 };
+
 export const GUARDAS = [
   { id: "casca_carvalho", rx: /casca de carvalho/, valor: 4, turnos: 3, conceito: "a pele vira casca: o golpe encontra madeira antes de encontrar carne" },
   { id: "pele_arcana",    rx: /pele arcana/,       valor: 3, turnos: 2, conceito: "a magia endurece a pele num verniz que a lâmina não gosta" },
@@ -325,6 +356,56 @@ export const GUARDAS = [
   { id: "danca_sem_vulto", rx: /danca sem vulto|tudo que vier em sua direcao erra/, tipo: "esquiva", turnos: 3, conceito: "o corpo vira dança: o que vem em sua direção passa por onde você não está mais" },
   { id: "nada_me_alcanca", rx: /nada me alcanca|nenhum efeito mental ou magico funciona/, tipo: "esquiva", soMagia: true, turnos: 4, conceito: "a mente fecha como punho: o que é feitiço escorrega e não encontra onde entrar" },
   { id: "improvavel", rx: /improvavel|tudo que puder dar certo/, tipo: "esquiva", turnos: 3, conceito: "a sorte entorta a favor: o que podia dar certo, dá" },
+  /* ---------------- F3 · A FAMÍLIA `intocado` CHEGA À ESCADA v9.280 ----
+     O VEREDITO, e ele desfaz a colisão que a pauta declarava. `intocado`
+     (`APLICACAO_DO_BUFF`, combos.js) não é uma família: são TRÊS promessas
+     debaixo de um rótulo só, e apenas uma delas fala do golpe errar.
+
+       1. O GOLPE QUE ERRA — "anula o dano de um ataque", "desvia do próximo
+          ataque", "o próximo golpe inimigo erra", "quase todo golpe erra o
+          original". É esta, e é a única que esta escada paga.
+       2. A IMUNIDADE A CONDIÇÃO — "imune a medo e confusão", "imune a veneno,
+          doença e desgaste", "nem medo nem escuridão te tocam". Não é defesa
+          contra golpe nenhum: é o catálogo de condições, e a dívida já tem
+          endereço escrito em `AGUARDAM` ("imunidade TEMPORÁRIA não existe").
+       3. A ZONA E A FUGA — "nenhum inimigo alcança quem está atrás", "sai de
+          qualquer cerco ou agarrão sem sofrer nada". É lugar e movimento, e o
+          lugar é a mesma zona persistente da Mina Oculta.
+
+     E A COLISÃO COM `estaIntocavel` NÃO EXISTE, porque as duas respondem a
+     perguntas diferentes. `estaIntocavel` é a promessa DE PRAZO — "por N
+     turnos nada te atinge" —, e esta casa já a respondeu na v9.53: absoluta
+     por um turno, entortada por três ou quatro. O que a família traz de novo
+     é o degrau de BAIXO, que a escada nunca teve: 2 e 4 PM, um e dois turnos,
+     que é exatamente onde a régua acima já mandava que eles caíssem.
+
+     NENHUMA DAS CINCO É ABSOLUTA, e a recusa é a lei da v9.53 aplicada ao pé
+     da letra: o absoluto custa 8 PM nesta casa e dura um turno; entregá-lo a
+     2 PM seria desfazer a escada pelo degrau mais barato. A ficção continua a
+     dizer "anula"; o sistema paga desvantagem — a mesma distância que
+     `AMORTECIMENTO_DO_BUFF` mantém entre a "metade" da ficha e o quarto que a
+     tabela cobra. O par fica escrito na linha de `AGUARDAM` de cada uma.
+
+     TRÊS DAS 18 JÁ CUMPRIAM, e ninguém sabia: Vazio Perfeito, Dança Sem Vulto
+     e Nada Me Alcança são desta família E já estavam nesta tabela desde a
+     v9.53. O rótulo `intocado` de P1 nasceu por cima de mecânica viva.
+
+     O QUE FICA DE FORA, E POR QUÊ — porque "força zero" não se troca por
+     "número errado". Manto de Luz promete o absoluto num corpo ALHEIO, e
+     guarda não viaja (o corpo alheio é o portador `amparo`, de F2). Ciclone
+     Pessoal desvia SÓ projéteis, e a coluna que restringiria a esquiva à
+     distância não tem leitor: `resolverAtaque` não sabe se o golpe veio de
+     longe, do mesmo jeito que `soMagia` só existe porque ele sabe o tipo de
+     dano. Nenhuma das duas está em `AGUARDAM` — aquela lista é de habilidades
+     de CLASSE, e estas são de especialização —, então a dívida das dez que
+     ficam de fora é nomeada uma a uma em `teste-intocado.mjs` §2, com o motivo
+     ao lado. É de lá que sai a próxima: uma habilidade só muda de lista
+     escrevendo a linha nesta tabela e o porquê neste comentário. */
+  { id: "esquiva_agil", rx: /esquiva agil|anula o dano de um ataque/, tipo: "esquiva", turnos: 1, conceito: "o corpo lê o golpe um instante antes de ele chegar, e já não está ali" },
+  { id: "defesa_fluida", rx: /defesa fluida|desvia do proximo ataque/, tipo: "esquiva", turnos: 1, conceito: "a guarda não bloqueia: escorre em volta do que vem" },
+  { id: "danca_das_sombras", rx: /danca das sombras|esquiva do proximo ataque/, tipo: "esquiva", turnos: 2, conceito: "a sombra vai para onde o golpe não foi, e o corpo vai com ela" },
+  { id: "antevisao", rx: /antevisao|proximo golpe inimigo erra/, tipo: "esquiva", turnos: 2, conceito: "o golpe chega atrasado à sua própria surpresa" },
+  { id: "corte_de_espelhos", rx: /corte de espelhos|erra o original/, tipo: "esquiva", turnos: 3, conceito: "seis de você na cena, e cinco são mentira" },
 ];
 
 export function guardaDe(hab) {
@@ -340,7 +421,14 @@ export const defesaDeGuarda = (pers) => guardasAtivas(pers).reduce((s, g) => s +
 export const estaIntocavel = (pers) => guardasAtivas(pers).some((g) => g.tipo === "intocavel");
 /* Quem ataca este herói rola com desvantagem. `magico` distingue a guarda que
    só morde feitiço (Nada Me Alcança) da que morde tudo. */
-export function esquivaDeGuarda(pers, { magico = false } = {}) {
+/* `= {}` NÃO COBRE `null`, e esta linha caiu nessa exata armadilha até F3
+   v9.280: `esquivaDeGuarda(pers, null)` estourava no destructuring. O
+   único chamador de produção (`combate.js`) sempre passou um objeto, então
+   ninguém tinha topado com ela — e "ninguém chama assim hoje" é a frase que
+   antecede todo bug desta casa. O recuo explícito custa uma linha e está
+   trancado em `teste-intocado.mjs` §7. */
+export function esquivaDeGuarda(pers, opcoes) {
+  const { magico = false } = opcoes || {};
   return guardasAtivas(pers).some((g) => g.tipo === "esquiva" && (!g.soMagia || magico));
 }
 

@@ -32,6 +32,7 @@ import { ESPECIALIZACOES } from "../src/especializacoes.js";
 import { MAGIAS } from "../src/grimorio.js";
 import { APLICACAO_DO_BUFF, APLICA_FORA_DO_GOLPE, aplicacaoDoBuff, efeitoNoGolpe } from "../src/combos.js";
 import { aflicaoDe } from "../src/aflicoes.js";
+import { guardaDe, ESCADA_DA_GUARDA } from "../src/habilidades.js";
 import { BUFF_DA_HABILIDADE, ABSORCAO_DO_BUFF, AMORTECIMENTO_DO_BUFF, REGENERACAO_DO_BUFF, regeneracaoDaHabilidade, efeitoDeBuff } from "../src/efeitos.js";
 
 let bons = 0, maus = 0;
@@ -99,6 +100,27 @@ const MEDIDA_DO_ACERVO = {
      alguma, e não cabe esse alargamento. */
   pisoDeAmparos: 6,
   tetoDeAmparos: 14,
+  /* ---------------- F3 v9.280 · A FAMÍLIA QUE NÃO PAGA AQUI --------
+     A maior das cinco: 18 medidas no acervo. O piso guarda o alcance, como
+     em todas as linhas de cima; não há teto porque esta é a única família
+     cujo tamanho a etapa NÃO quis conter — ela é grande porque o rótulo
+     `intocado` de P1 junta três promessas, e o que F3 conteve foi quantas
+     delas chegam à escada, não quantas levam o rótulo. */
+  pisoDaFamiliaDoGolpe: 16,
+  /* QUANTAS DA FAMÍLIA CHEGAM À ESCADA DE `GUARDAS`: 8 hoje — as três da
+     v9.53 (Vazio Perfeito, Dança Sem Vulto, Nada Me Alcança) mais as cinco
+     de F3. O piso guarda o alcance; o TETO é o que impede a próxima mão de
+     alargar o recorte até as 18 caberem, e o número dele é medido: das 10
+     que ficaram de fora, 5 prometem imunidade a CONDIÇÃO (outra mecânica,
+     outra etapa), 2 prometem zona ou fuga, 1 remove condição no grupo, 1
+     promete o corpo alheio e 1 restringe a esquiva a projéteis. 10 cabe uma
+     habilidade nova em cada uma das classes que já têm alguma; não cabe o
+     alargamento. As dez estão NOMEADAS em `teste-intocado.mjs` §2. */
+  pisoDaEscadaNaFamilia: 8,
+  tetoDaEscadaNaFamilia: 10,
+  /* A COLISÃO CONTRA `absorve`, que o comentário de `efeitos.js` mediu na
+     v9.233 e continua exata depois de F3: 1, a Forma Dracônica. */
+  colisoesComAbsorve: 1,
 };
 
 /* ---------------- O ACERVO ---------------- */
@@ -509,6 +531,92 @@ sec("9. o abrigo cai no corpo certo — a família que compra CORPO (F2)");
   t("e a família `protege` continua a existir na classificação, com o rótulo de proteção",
     porLinha.protege > 0 && (APLICACAO_DO_BUFF.find((a) => a.id === "protege") || {}).aplica === "protecao",
     `porLinha.protege = ${porLinha.protege}`);
+}
+
+/* ============================================================
+   10. O GOLPE ERRA — A FAMÍLIA QUE NÃO PAGA POR AQUI (F3 · v9.280)
+
+   ESTA SEÇÃO É DIFERENTE DAS QUATRO DE CIMA, e a diferença é o achado da
+   etapa. `absorve`, `amortece`, a cura e `amparo` pagam por `efeitoDeBuff`,
+   e as seções delas medem o NÚMERO que sai daqui. `intocado` não paga por
+   aqui e não vai passar a pagar: a promessa dela é sobre o ACERTO, e o
+   lugar do acerto é `resolverAtaque`, que lê `GUARDAS` (habilidades.js) e
+   não o efeito. F3 pôs cinco linhas nessa escada.
+
+   ENTÃO O QUE ESTA SEÇÃO GUARDA É O CONTRÁRIO: que a família continue SEM
+   número por esta porta. O dia em que alguém der `absorve`, `amortece` ou
+   `curaTurno` a uma habilidade que já entorta o dado, a mesma proteção
+   passa a ser paga DUAS vezes por caminhos diferentes — é a bomba que H4
+   desarmou ao recusar o espelho de `danoRecebidoExtra`, e a que `absorve`
+   desarmou ao recusar `pers.guardas` como casa do abrigo.
+
+   E A PRECEDÊNCIA É MEDIDA AQUI, no acervo inteiro e não num exemplo:
+   `guardaDe` vem antes de `aplicacaoDoBuff` em `arena.js` e no App, e é por
+   isso que as colisões não custam nada. Quem quiser mudar essa ordem
+   encontra o número dela nesta seção.
+   ============================================================ */
+sec("10. o golpe erra — a família que não paga por esta porta (F3)");
+{
+  const daFamilia = [];
+  const comNumeroIndevido = [];
+  const naEscada = [];
+  const HEROI_F3 = { nome: "Régua", classe: "Guerreiro", nivel: 5, efeitos: [] };
+  for (const { hab, fonte } of acervo) {
+    const linha = aplicacaoDoBuff(hab);
+    if (!linha || linha.id !== "intocado") continue;
+    const onde = `${hab.nome} (${fonte})`;
+    daFamilia.push(onde);
+    const { efeito } = efeitoDeBuff(hab, HEROI_F3, undefined);
+    if (efeito.absorve !== undefined || efeito.amortece !== undefined || efeito.curaTurno !== undefined) {
+      comNumeroIndevido.push(`${onde} → ${JSON.stringify({ absorve: efeito.absorve, amortece: efeito.amortece, curaTurno: efeito.curaTurno })}`);
+    }
+    const g = guardaDe(hab);
+    if (g) naEscada.push(`${onde} → ${g.id} (${g.tipo}, ${g.turnos}t)`);
+  }
+  console.log(`  ··  ${daFamilia.length} habilidades na família \`intocado\`; ${naEscada.length} delas na escada de GUARDAS`);
+  t(`a família \`intocado\` não é vazia (piso ${MEDIDA_DO_ACERVO.pisoDaFamiliaDoGolpe})`,
+    daFamilia.length >= MEDIDA_DO_ACERVO.pisoDaFamiliaDoGolpe, `achou ${daFamilia.length}`);
+  t("e NENHUMA delas recebe número de abrigo, abafo ou cura por `efeitoDeBuff` — a promessa dela é o acerto, e o acerto mora em GUARDAS",
+    comNumeroIndevido.length === 0, comNumeroIndevido.slice(0, 6).join(" | "));
+  t(`e ${MEDIDA_DO_ACERVO.pisoDaEscadaNaFamilia} ou mais da família chegam à escada (F3 pôs cinco ao lado das três da v9.53)`,
+    naEscada.length >= MEDIDA_DO_ACERVO.pisoDaEscadaNaFamilia, naEscada.join(" | "));
+  t(`…e no máximo ${MEDIDA_DO_ACERVO.tetoDaEscadaNaFamilia}: o resto da família promete OUTRA coisa (imunidade a condição, zona, fuga), e alargar o recorte até todas caberem é o erro que F2 pagou`,
+    naEscada.length <= MEDIDA_DO_ACERVO.tetoDaEscadaNaFamilia, naEscada.join(" | "));
+
+  /* ---------------- A ESCADA OBEDECE À PRÓPRIA RÉGUA ----------------
+     `ESCADA_DA_GUARDA` mora em `src/` e é lida de duas provas; aqui ela é
+     cobrada contra o CUSTO das habilidades do acervo, que é o outro lado da
+     conta e o único sítio onde o custo real está. */
+  const foraDaRegua = [];
+  const vistas = new Set();
+  for (const { hab, fonte } of acervo) {
+    const g = guardaDe(hab);
+    if (!g || vistas.has(g.id)) continue;
+    vistas.add(g.id);
+    const pm = Number(hab.custo) || 0;
+    if (g.tipo === "intocavel" && g.turnos !== ESCADA_DA_GUARDA.turnosDoAbsoluto) {
+      foraDaRegua.push(`${g.id} (${fonte}): absoluta com ${g.turnos} turnos`);
+    }
+    if (g.tipo !== "esquiva") continue;
+    const esperado = Math.max(ESCADA_DA_GUARDA.pisoDeTurnos, Math.floor(pm / ESCADA_DA_GUARDA.pmPorTurno));
+    if (g.turnos !== esperado) foraDaRegua.push(`${g.id} (${fonte}): ${pm} PM → ${g.turnos} turnos, a régua manda ${esperado}`);
+  }
+  t("toda guarda de esquiva do acervo paga o prazo pela régua, e a absoluta continua em 1 turno",
+    foraDaRegua.length === 0, foraDaRegua.join(" | "));
+
+  /* ---------------- A PRECEDÊNCIA, MEDIDA ----------------
+     Contra `absorve` a conta é a que o comentário de `efeitos.js` escreveu
+     na v9.233 e continua exata: 1, a Forma Dracônica. O resto das colisões é
+     da família desta etapa, e a ordem `guardaDe` primeiro resolve as duas. */
+  const colisoes = acervo.filter(({ hab }) => guardaDe(hab) && aplicacaoDoBuff(hab));
+  const contraAbsorve = colisoes.filter(({ hab }) => aplicacaoDoBuff(hab).id === ABSORCAO_DO_BUFF.familia);
+  console.log(`  ··  ${colisoes.length} frases casam com GUARDAS e com uma família da tabela — ${contraAbsorve.length} contra \`absorve\``);
+  t(`contra \`absorve\` continua havendo ${MEDIDA_DO_ACERVO.colisoesComAbsorve} colisão, e é a que a v9.233 nomeou`,
+    contraAbsorve.length === MEDIDA_DO_ACERVO.colisoesComAbsorve && contraAbsorve[0].hab.nome === "Forma Dracônica",
+    contraAbsorve.map((x) => x.hab.nome).join(", "));
+  t("e toda colisão que não é essa é da família `intocado` — uma família, uma precedência",
+    colisoes.filter(({ hab }) => aplicacaoDoBuff(hab).id !== ABSORCAO_DO_BUFF.familia).every(({ hab }) => aplicacaoDoBuff(hab).id === "intocado"),
+    colisoes.map((x) => `${x.hab.nome}→${aplicacaoDoBuff(x.hab).id}`).join(" | "));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

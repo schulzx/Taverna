@@ -994,7 +994,34 @@ sec("9. o duelista ergue guarda de verdade (P2)");
        zero, e o teto é zero — o dia em que um pronto ganhar uma guarda
        esta linha fica vermelha e alguém decide de propósito se a amostra
        do round-robin passa a ter guarda dentro (e o equilíbrio junto). */
-    tetoDeGuardasNosProntos: 0,
+    /* ---------------- O DIA CHEGOU (F3 · v9.280) ----------------
+       E A ASSERÇÃO MUDOU DE FORMA, NÃO DE SEVERIDADE — o motivo fica aqui
+       porque intenção que não sobrevive à mudança se perde.
+
+       O QUE ESTA LINHA MEDIA: P2 (v9.232) mediu que `GUARDAS` não pegava
+       NINGUÉM entre os oito prontos, e o teto 0 guardava a descoberta —
+       "o dia em que um pronto ganhar uma guarda, alguém decide de
+       propósito". F3 é esse dia, e a decisão foi tomada de propósito:
+       "Esquiva Ágil" entrou na escada como `esquiva` de 1 turno, e ela
+       está na ficha de `sombra`.
+
+       POR QUE UMA LISTA NOMEADA E NÃO UM TETO 1. Um teto que sobe é a
+       doença que o comentário de `AGUARDAM` descreve: no dia seguinte
+       sobe para 2 e ninguém percebe. Uma lista de nomes obriga quem
+       acrescentar a segunda a escrevê-la aqui, e a escrever ao lado o que
+       ela fez ao equilíbrio — que é exatamente a decisão que o teto 0
+       queria forçar.
+
+       O QUE ELA CUSTOU, MEDIDO, porque é a outra metade da decisão: a
+       catraca continua inteiramente verde (as quatro famílias, os oito no
+       retrato, amplitude 12,5 contra o teto de 20), e `sombra` desce de
+       55,1% para 46,5% no retrato. A causa está isolada: com esta única
+       linha da escada desligada e as outras quatro de F3 de pé, a catraca
+       sai IDÊNTICA à de antes, número a número. O piloto troca um turno
+       de rodada 1–2 por uma compra de 2 PM, e para um pronto que vive de
+       bater isso é mau negócio — a política é `companheiros.js:273`
+       (`guarda` vence de tudo, sem perguntar quanto vale), não a tabela. */
+    guardasNosProntosEsperadas: ["sombra:Esquiva Ágil"],
     quedasDaSonda: 20,
     /* OS PISOS DA AMOSTRA. Medidos hoje: 19 quedas em 20 abrem com a
        guarda erguida e 16 a veem vencer o prazo. Os pisos guardam a ordem
@@ -1021,8 +1048,10 @@ sec("9. o duelista ergue guarda de verdade (P2)");
   const guardasNosProntos = [];
   for (const p of P.PRONTOS) for (const h of P.montarPronto(p.id).habilidades) if (H.guardaDe(h)) guardasNosProntos.push(`${p.id}:${h.nome}`);
   console.log(`  ··  guardas da tabela no repertório dos oito prontos: ${guardasNosProntos.length}${guardasNosProntos.length ? ` (${guardasNosProntos.join(", ")})` : " — a amostra do round-robin não tem guarda dentro"}`);
-  t(`nenhum dos oito prontos carrega uma das ${H.GUARDAS.length} guardas (teto ${MEDIDA_DA_GUARDA.tetoDeGuardasNosProntos})`,
-    guardasNosProntos.length <= MEDIDA_DA_GUARDA.tetoDeGuardasNosProntos, guardasNosProntos.join(", "));
+  t(`das ${H.GUARDAS.length} guardas, a mesa dos oito carrega exatamente as que estão nomeadas aqui`,
+    guardasNosProntos.length === MEDIDA_DA_GUARDA.guardasNosProntosEsperadas.length
+    && MEDIDA_DA_GUARDA.guardasNosProntosEsperadas.every((n) => guardasNosProntos.includes(n)),
+    `esperadas [${MEDIDA_DA_GUARDA.guardasNosProntosEsperadas.join(", ")}] · achadas [${guardasNosProntos.join(", ")}]`);
 
   /* A DUPLA SINTÉTICA, no molde da seção 7: um guardião com UMA habilidade
      (a real, do catálogo) contra um agressor sem habilidade e sem bolsa —
