@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 16/09 01:30 · v9.262 · W1 · a frase que se monta · commit `PENDENTE`
+## 16/09 01:30 · v9.262 · W1 · a frase que se monta · commit `63e0667`
 
 *O escrito dos dois seniores fica em `mente/w1-jogo.md` e `mente/w1-desenho.md`;
 a forma, no bloco final de `mente/formas.md`.*

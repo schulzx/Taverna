@@ -1,17 +1,17 @@
 [
   {
-    "agente": "regente",
-    "o_que": "rege o ciclo W1 — a frase que se monta: verbo + alvo por toque",
-    "desde": "2026-09-15T16:00:00Z"
+    "agente": "orquestrador",
+    "o_que": "rege o ciclo X4 — a conta do que mudou, e a Fase X fecha",
+    "desde": "2026-09-16T02:44:07Z"
   },
   {
-    "agente": "jogo",
-    "o_que": "W1 · o turno como gesto, e o que o jogador toca em cada batida",
-    "desde": "2026-09-15T16:00:00Z"
+    "agente": "testes",
+    "o_que": "X4 · o eixo da frase: quantas linhas por turno, com as recusas contadas a parte",
+    "desde": "2026-09-16T02:44:07Z"
   },
   {
-    "agente": "desenho",
-    "o_que": "W1 · a forma do verbo, do alvo e do preço antes do clique",
-    "desde": "2026-09-15T16:00:00Z"
+    "agente": "testes (regua)",
+    "o_que": "X4 · a regua de B1 com o jogador agindo: o que ela pode e o que nao pode medir",
+    "desde": "2026-09-16T02:44:07Z"
   }
 ]
