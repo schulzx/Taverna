@@ -48,15 +48,29 @@ dano lendo o traço racial, `removerPelaPorta` tem um chamador (a magia),
 
 - [x] **H1 · a porta** · feita em v9.265 · texto em `mente/arquivo/pauta-feitas.md`
 - [x] **H2 · de quem já são os 12** · feita em v9.266 · texto em `mente/arquivo/pauta-feitas.md`
-- [ ] **H3 · a cura tem relógio** (cura por turno) · de: pessoa · 16/09
-  **A mais barata das quatro, e ela tem irmão gêmeo vivo.** `tickCondicoes`
-  (`condicoes.js:314-328`) já cobra `danoTurno` a cada turno — `envenenado` 2,
-  `sangrando` 3, `queimando` 4 — e **não há espelho de cura em relógio
-  nenhum**: `tickEfeitos` (`regras-jogo.js:369-378`) só desconta prazo e
-  dissipa. O campo espelho numa tabela, o ramo no relógio que já existe, e a
-  suíte que prova os dois sentidos. Paga **Renovação** e metade do **Círculo
-  Sagrado** (a outra metade é H6), e é o que falta à cura contínua do
-  **Chamado da Chuva**.
+- [x] **H3 · a cura tem relógio** (cura por turno) · **FEITA 16/09 · v9.275 · commit `7bd9291`** · de: pessoa · 16/09
+  **O espelho ficou no EFEITO, e quem decidiu foi a contagem de chamadores
+  vivos:** `tickCondicoes` tem 3 e **os três estão no `App.jsx`**;
+  `tickEfeitos` tem 4, e um é **`arena.js:360`**, módulo puro. Um `curaTurno`
+  na condição nasceria **inerte** — o pecado que a Fase F existe para pagar.
+  Um sítio contra zero: a cura pousa em PV **hoje**, com **zero linhas de
+  `App.jsx`**. Ficou um **ponteiro** ao lado da documentação de `danoTurno`
+  para ninguém refazer a pergunta nem criar a régua duas vezes.
+  **Onde a cura entra na fila: fora dela.** A fila do dano (abafo → invocação
+  → abrigo → PV temporário → PV real → a queda) corre no **meio** do turno; o
+  relógio corre no **fim**, junto com o irmão que cobra o veneno. Provado:
+  vida 9, veneno 2, regeneração 3, golpe 6 → 9→3, 3→1, 1→**4**; e com 3 de
+  vida contra um golpe de 4, **curar antes apagaria a queda**. **O relógio
+  não levanta os caídos** (guarda espelhada de `App.jsx:8350`).
+  **Medido e não reequilibrado:** catraca da arena idêntica número a número, e
+  a causa trancada na suíte — nenhum dos 8 prontos regenera. Viva: um duelista
+  com Chamado da Chuva dá 8 prazos, 14 pousos, 27 PV devolvidos.
+  **Herda-se daqui:** a fiação dos três tiques do `App.jsx` (uma linha de
+  `pousarCura` em cada, dentro de `calou`), a porta `aflicaoDe` (o mesmo
+  portão que F1 mediu), a cura de **grupo**, e a zona do Círculo Sagrado (H6).
+  `AGUARDAM` continua **39** — as três dívidas foram **trocadas, não
+  apagadas** —, e `SEM_DONO_HOJE` desceu de 6 para 4.
+  **Para a pessoa:** o relógio deve levantar quem caiu? Hoje não levanta.
 - [ ] **H4 · a marca** (efeito preso a um alvo que soma dano) · de: pessoa · 16/09
   **O canal já chega lá.** `resolverAtaque` recebe `condAlvo` nos três sítios
   de ataque (`App.jsx:7686`, `:11855`, `:12211`), mas `combate.js:126-127` faz

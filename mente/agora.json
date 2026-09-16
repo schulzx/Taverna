@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "agente": "regente",
+    "o_que": "rege o ciclo E3 — a tela da batalha existe (com o bastao do App.jsx)",
+    "desde": "2026-09-16T15:55:00Z"
+  },
+  {
+    "agente": "oficial",
+    "o_que": "E3 · monta a tela no App.jsx e leva a batalha para casa propria",
+    "desde": "2026-09-16T15:55:00Z"
+  }
+]

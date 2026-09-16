@@ -16,6 +16,93 @@ Formato:
 
 ---
 
+## 16/09 17:05 · v9.275 · H3 · a cura tem relógio · commit `7bd9291`
+
+- **estado inicial:** trava posta às 16:05 (não existia). Árvore suja só do
+  lado da outra mente (E3, a tela da batalha, com o bastão do `App.jsx` desde
+  as 12:58Z). `npm test` com um vermelho que não era meu.
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, etapa escrita.
+- **backend:** `REGENERACAO_DO_BUFF` + `regeneracaoDaHabilidade` (`efeitos.js`),
+  o ramo `cura`/`fontes` em `tickEfeitos` e `pousarCura` (`regras-jogo.js`), o
+  pouso e a porta única `firmarNaArena` (`arena.js`), `textoDaHabilidade`
+  público (`combos.js`), o ponteiro em `condicoes.js` e `AGUARDAM` reescrito.
+- **testes:** `testes/teste-cura-turno.mjs` — **92 asserções**, nova; mais a
+  §8 de `check-protecao` e a §7 de `check-cura-nao-limpa`.
+- **prova:** `npm run build` limpo. `bash mente/so-o-meu.sh` com os meus 10
+  arquivos: **197/197 suítes · 13/13 varredores**. Na árvore, `check-formas`
+  acusa uma pílula em `src/painel-habilidades.jsx` — arquivo que a outra mente
+  **criou no E3 naquele minuto**. Não consertei e não esperei.
+
+### A pergunta que decidiu a etapa, e quem a respondeu foi a contagem
+
+**Onde mora o espelho de `danoTurno`: na condição ou no efeito?** As duas eram
+defensáveis, e o que decidiu foi um número:
+
+| relógio | chamadores vivos | alcançáveis sem o bastão |
+|---|---|---|
+| `tickCondicoes` | 3 (`App.jsx:8347`, `:8418`, `:8471`) | **0** |
+| `tickEfeitos` | 4 (3 no App + **`arena.js:360`**) | **1** |
+
+Um `curaTurno` em `CONDICOES` nasceria **inerte neste ciclo** — e inerte é
+exatamente o pecado que a Fase F existe para pagar. **Um sítio contra zero:**
+o campo mora no efeito, e a cura pousa em PV **hoje**, com **zero linhas de
+`App.jsx`**. É a mesma jogada de F1, e pela mesma razão: procurar quem já
+roda antes de escrever quem ainda não. Ficou um **ponteiro** ao lado da
+documentação de `danoTurno` para ninguém refazer a pergunta nem criar a régua
+duas vezes. **O campo não foi posto nos dois** — seria a mesma regra em duas
+cabeças com só uma paga.
+
+### Onde a cura entra na fila — a pergunta que o ciclo tinha de responder
+
+**Fora dela.** A fila do dano (o abafo de F1 → a invocação → **abrigo → PV
+temporário → PV real → a porta da queda**) corre no **meio** do turno; o
+relógio corre no **fim**, no mesmo instante em que o irmão cobra o veneno.
+
+Provado, um turno inteiro: teto 20, vida 9, veneno 2, regeneração 3, golpe de
+6 → o golpe morde 9→3, o veneno 3→1, o relógio devolve 1→**4**. E o
+contrafactual é o que a ordem compra: com **3 de vida e um golpe de 4**, curar
+antes **apagaria a queda**. Curar no meio da rodada e curar no fim dela são
+jogos diferentes, e este escolheu o fim.
+
+**O relógio não levanta os caídos** — guarda espelhada de `App.jsx:8350`.
+Invertê-la toca a porta da queda (Fase Q), e isso é da pessoa: declarado, não
+feito.
+
+### Decisões médias, com o motivo
+
+1. **O espelho no efeito e não na condição** — pela tabela de chamadores acima.
+2. **`textoDaHabilidade` passou a público** em `combos.js`: os dois
+   classificadores passam a ler **a mesma régua**. Duas leituras do mesmo texto
+   é a forma de divergirem daqui a três versões.
+3. **`firmarNaArena`** extraído das 5 linhas duplicadas de `arena.js` — mesma
+   lei de porta única que `passarPeloAbrigo` cumpre no App.
+4. **`AGUARDAM` continua 39, e devia mesmo.** As três dívidas foram
+   **trocadas, não apagadas**: Círculo Sagrado fica com a zona (H6), Renovação
+   com o ramo do grupo, Chamado da Chuva com o clima sem leitor. Duas ganharam
+   `dono` medido, e **`SEM_DONO_HOJE` desceu de 6 para 4** com o motivo na
+   asserção, como F1 fez. Meia promessa paga não sai da lista — encolhe nela.
+
+### Medido e não reequilibrado
+
+Catraca da arena **idêntica número a número** contra HEAD puro (sombra 55,1 ·
+remendo 54,4 · chama 53,6 · voto 51,5 · flecha 49,6 · muralha 46,8 · punho
+45,6 · voz 43,3 · amplitude 11,8), 420 quedas e 5 848 linhas iguais — e a
+**causa está trancada na suíte**: nenhum dos 8 prontos regenera. A régua idem.
+
+Que é viva, é: um duelista com **Chamado da Chuva** dá **8 prazos firmados, 14
+pousos e 27 PV devolvidos** em 6 quedas; sem a habilidade, zero de tudo.
+
+- **o que ficou:** a fiação dos três tiques do `App.jsx` (uma linha de
+  `pousarCura` em cada, dentro de `calou(...)`) e a porta `aflicaoDe`, que
+  continua a sair **antes** de `efeitoDeBuff` — o mesmo portão que F1 mediu.
+  A suíte imprime a medição em vez de a travar: *"App.jsx: 3 chamadas ao
+  relógio dos efeitos, 0 pousos de cura"*. Mais a cura de **grupo** e a zona
+  do Círculo Sagrado (H6).
+- **para a pessoa decidir:** se o relógio deve levantar quem caiu. Hoje não
+  levanta, por espelho fiel do irmão que cobra o dano.
+
+---
+
 ## 16/09 13:40 · v9.274 · F1 · a família `amortece` passa a cobrar · commit `c1038e5`
 
 - **estado inicial:** trava posta às 09:25 (não existia). Árvore limpa fora de
