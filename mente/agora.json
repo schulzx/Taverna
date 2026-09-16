@@ -1,17 +1,17 @@
 [
   {
-    "agente": "orquestrador",
-    "o_que": "rege o ciclo Y1 — Empurrar e Derrubar ganham motor",
-    "desde": "2026-09-16T11:08:27.635Z"
+    "agente": "regente",
+    "o_que": "rege o ciclo K4 — medir a batida, e fechar a Fase K",
+    "desde": "2026-09-16T08:47:00Z"
   },
   {
-    "agente": "backend",
-    "o_que": "Y1 · src/disputa.js: o teste oposto, o empurrão no tabuleiro e o `caido` por declaração",
-    "desde": "2026-09-16T11:08:27.635Z"
+    "agente": "jogo",
+    "o_que": "K4 · o número da batida, e a integração vista com um golpe real",
+    "desde": "2026-09-16T08:55:00Z"
   },
   {
-    "agente": "testes",
-    "o_que": "Y1 · teste-disputa.mjs, a sonda da distância e a asserção de golpe que se move",
-    "desde": "2026-09-16T11:08:27.635Z"
+    "agente": "desenho",
+    "o_que": "K4 · a pílula a 27 px onde formas.md pede 47, e a forma do cansaço",
+    "desde": "2026-09-16T08:55:00Z"
   }
 ]

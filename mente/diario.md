@@ -16,6 +16,131 @@ Formato:
 
 ---
 
+## 16/09 08:00 · v9.271 · Y1 · `Empurrar` e `Derrubar` ganham motor · commit `384c3d5`
+
+- **A VERSÃO MUDOU DEBAIXO DE MIM, e é registo de processo.** Abri o ciclo com
+  `v9.269` lido em `src/constantes.js` e planeei `v9.270`. Quando fui bumpar,
+  ao fim do ciclo, o `constantes.js` **já dizia `v9.270`**: a outra mente
+  fechou K3 (`9901996`) enquanto eu trabalhava e levou o número. Reli o
+  arquivo em vez de aplicar o que tinha planeado, e fui para **`v9.271`** — a
+  lei diz que em conflito de `VERSAO` fica o número maior. **É exatamente o
+  motivo por que o `CLAUDE.md` manda ler a versão no arquivo e nunca de um
+  exemplo escrito**, e desta vez o exemplo que envelheceu era o meu, com meia
+  hora de idade. Três textos meus já diziam `v9.270` e foram corrigidos.
+- **estado inicial:** árvore com a outra mente (K3) viva ao lado — `App.jsx`,
+  `estilo.js`, `ritmo-da-reacao.js`, `formas.md` e dois `k3-*.md` modificados,
+  mais `painel-reacao.jsx` e `palavras-da-reacao.js` por commitar. **Nada
+  disso era meu e nada disso entrou no meu commit.** A trava
+  `.claude/ciclo-em-curso` **não existia** (o ciclo de V1 fechou-a); pus a
+  minha. O bastão do `App.jsx` estava com o `regente`/`oficial` desde as
+  07:42 — **menos de 90 minutos, logo vivo: não lhe toquei**.
+- **o vermelho que me foi anunciado e que já não existia:** o briefing avisava
+  de um `teste-ligacao` sobre `ritmo-da-reacao.js`, arquivo da outra mente.
+  No meu `npm test` de fecho ele estava **verde** — a outra mente fechou-o e
+  commitou K3 durante o meu ciclo. Não precisei de `so-o-meu.sh`.
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, etapa escrita.
+- **backend:** `src/disputa.js` (7 exports), três nomes novos em `src/grid.js`
+  e o buraco de X2 fechado em `src/golpe.js`.
+- **testes:** `testes/teste-disputa.mjs` (163 asserções), a asserção movida em
+  `testes/teste-golpe.mjs` e a sonda `testes/sonda-empurrao.mjs`.
+
+### As decisões médias, com o motivo
+
+- **UM módulo para os dois verbos, não dois.** `Empurrar` e `Derrubar` são o
+  **mesmo teste oposto com dois desfechos**; dois módulos seriam dois motores
+  da mesma regra, e o dia em que um mudasse o outro mentiria. O nome
+  `disputa.js` é o que o próprio código já usava para a ausência:
+  `golpe.js:245` dizia *"o motor não tem disputa entre duas fichas"*.
+- **O deslocamento forçado ficou em `grid.js`, não em `disputa.js`.** A lei da
+  etapa era *não criar um segundo motor de movimento*, e quem é dono da
+  posição, da parede e da casa ocupada é o tabuleiro. `disputa.js` decide
+  **quem ganha**; `grid.js` decide **para onde o corpo vai**.
+- **Empate ganha quem resiste.** O empurrão é de graça em consequência — não
+  custa vida, não erra crítico. Uma ação barata que ganhasse empates seria
+  clicada todo turno.
+- **A resistência tem duas portas (Força/Atletismo ou Destreza/Acrobacia, a
+  melhor).** Sem a segunda, uma ficha de Destreza alta e Força zero não teria
+  defesa nenhuma contra um botão.
+- **Vitória com destino bloqueado NÃO causa dano.** Dano de parede seria
+  mecânica nova, e mecânica nova é da pessoa. O resultado diz `bloqueio` e o
+  alvo fica onde estava — está escrito no cabeçalho que foi deliberado.
+- **A força de quem não tem ficha saiu da linha para a tabela.** O inimigo do
+  bestiário não tem `atributos`; o precedente de produção (`aflicoes.js:99`)
+  resolve-o pelo nível. A **forma e o número são dele** — só a régua mudou de
+  casa, e agora a suíte lê-a de volta.
+
+### O que já existia e foi reusado em vez de reescrito
+
+A lição de H2 (dos 12 assuntos, 6 já tinham dono) pagou-se outra vez: **três
+das quatro peças já existiam.** A condição prono é o `caido` de
+`condicoes.js:120` — **não nasceu condição nova**; o portão de tamanho é a
+`ESCADA` de `grid.js:95`, cujo comentário já dizia, literalmente, que é ela
+que dá sentido a *"empurrar um degrau"*; e a perícia estava escolhida desde
+sempre, porque a descrição de `atletismo` em `pericias.js:40` já continha a
+palavra **"empurrar"**. O que faltava mesmo era só o **teste oposto** e o
+**passo forçado numa direção**.
+
+**E uma armadilha de nome que quase custou caro:** `src/queda.js` (Q1) tem
+`GOLPE_NO_CAIDO`, mas ali "caído" quer dizer **inconsciente a 0 PV**, não
+prono — mecânicas opostas com o mesmo nome. Há agora uma asserção que prova
+que `disputa.js` **não importa `queda.js`**, para que a próxima pessoa não as
+funda.
+
+### A asserção que se moveu, e por que não foi afrouxamento
+
+`teste-golpe.mjs` dizia `"esquivar,empurrar,derrubar"` continuam sem motor.
+Ficou mentira no dia em que Y1 nasceu. Foi movida para `"esquivar"` com ~25
+linhas de motivo escrito por cima — e **ganhou um segundo dente**: a tabela
+nomeia `disputa.js`, e uma asserção nova importa-o e prova que as funções
+nomeadas **existem mesmo**. Sem isso, fechar o buraco seria escrever uma
+string no campo `motor`.
+
+### O efeito na distância, medido — e a régua que não servia
+
+**A régua de B1 não pode medir isto, e está provado no próprio arquivo:** ela
+roda com `grade: null` (`regua-combate.mjs:935`, declarado em `:484-486`), e
+`TABULEIRO_NA_REGUA` lista `"distancia"`, `"posicao"` e `"deslocamento"` em
+**`naoMede`** — além de os três cenários estarem **saturados** (duro 0,0% ·
+justo 1,6% · brando 100%). Foi a ressalva de Q1 confirmada por leitura, e não
+por suposição. Então a medida foi feita por **sonda** sobre as `PLANTAS`
+reais: 10 plantas × 2000 empurrões, com sorte semeada.
+
+- **1,50 m por empurrão bem-sucedido, sem dispersão nenhuma.** A hipótese
+  escrita **antes** de medir era que a diagonal desse menos (Chebyshev);
+  **estava errada**, e a sonda di-lo — que é toda a razão de se medir.
+- **Bloqueio: 22,1% das vitórias** em bruto; **5,6%** contando só alvos que não
+  começavam encostados à moldura (a colocação uniforme infla a `borda`; os
+  dois números estão declarados).
+- **E o terreno importa de forma diferente em cada planta:** masmorra 10,5% ·
+  taverna 10,4% · cidade 8,0% · ruína 7,5%, contra floresta 1,2% · deserto
+  1,7% · estrada 2,0%. É o que um verbo de posição devia fazer.
+- **Contra a caminhada de W1** (1,4 rodadas = 12,6 m por luta): um empurrão
+  vale **0,167 rodada (11,9%)**, e um turno de empurrão devolve **16,7%** do
+  que um turno de corrida devolve. **Empurrar não é uma forma barata de fazer
+  distância — e não devia ser:** gasta o turno inteiro para mover uma casa
+  alguém que resiste. O que ele compra é posição.
+- **Nada foi reequilibrado**, como a etapa mandava.
+
+### O que ficou
+
+- **A fiação é Y2, e não foi por escolha:** o bastão do `App.jsx` esteve com a
+  outra mente o ciclo inteiro. Os dois botões continuam a só escrever uma
+  frase na caixa. Entrou na pauta como **Y1b**, médio.
+- **O reforço entra na luta sem `x`/`y`** (X3b/X4) — **esbarrei e não
+  consertei**, como mandado. `deslocarForcado` e `destinoDoEmpurrao` tratam-no
+  defensivamente (não estouram, devolvem motivo), e o achado **continua
+  aberto**.
+- **Para a pessoa, se quiser:** dar ao bicho a destreza real (`des`, que o
+  bestiário já traz) na resistência ao empurrão, em vez de só o `nível/4`. A
+  linha está pronta na tabela, com o motivo — mas é mecânica nova, logo dela.
+- **Nota de processo:** as duas mãos correram em paralelo contra um contrato
+  que eu pinei, e mesmo assim ele derivou quatro vezes (`{dx,dy}`↔`{x,y}`, o
+  campo `total`, `destinoDoEmpurrao` a sair e voltar). O paralelo poupou
+  tempo, mas **o contrato pinado não bastou**: com módulo novo e suíte nova ao
+  mesmo tempo, vale sequenciar ou pinar até o formato de retorno.
+
+---
+
 ## 16/09 07:55 · v9.269 · V1 · o poço que apanha por você · commit `056dcd2`
 
 - **HOUVE UM CICLO MORTO, e é a primeira coisa que este bloco regista.** A

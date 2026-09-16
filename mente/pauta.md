@@ -839,12 +839,26 @@ que existem.
 
 Ordem, e ela é do mais concreto ao mais difuso:
 
-- [ ] **Y1 · `Empurrar` e `Derrubar`** · de: pessoa · 15/09
+- [x] **Y1 · `Empurrar` e `Derrubar`** · de: pessoa · 15/09 · **FEITO v9.271**
   Os dois mais fáceis de fazer certo: têm alvo, distância e resultado
   óbvios, e o tabuleiro já modela posição, tamanho e terreno — **empurrar é
   mover alguém que não quer**, e o campo já sabe o que é uma casa ocupada e
   uma parede. Teste oposto (Força/Atletismo contra a resistência do alvo),
   determinístico, provável em Node.
+  **Entregue:** `src/disputa.js` (o teste oposto, **um** motor para os dois
+  verbos, porque são o mesmo teste com dois desfechos), três nomes novos em
+  `grid.js` (`direcaoDe`, `deslocarForcado`, `EMPURRAO_NO_TABULEIRO` — o
+  deslocamento forçado ficou no dono da posição, para não haver um segundo
+  motor de movimento) e `vereditoDoEmpurrao` em `golpe.js`, que é quem passa
+  a **importar** o módulo novo e a preencher o `motor` que X2 deixou `null`.
+  163 asserções em `testes/teste-disputa.mjs`. **Falta a fiação: é Y2.**
+
+- [ ] **Y1b · a fiação de `Empurrar` e `Derrubar` no `App.jsx`** · de: Y1 · 16/09
+  O motor existe, está provado e **não está ligado a botão nenhum**: os dois
+  botões de `ACOES_PRONTAS` continuam a só escrever uma frase na caixa. Esta
+  etapa não coube em Y1 porque **o bastão do `App.jsx` esteve com a outra
+  mente (K3) o ciclo inteiro**. É fiação, não mecânica — o veredito antes do
+  clique já vem pronto de `vereditoDoEmpurrao`. **médio**
 - [ ] **Y2 · `Esquivar`** · de: pessoa · 15/09
   Gastar o turno para ser mais difícil de acertar. Mecânica nova de verdade,
   e **encosta na família defensiva da Fase F** (`intocado` colide com
