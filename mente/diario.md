@@ -16,6 +16,104 @@ Formato:
 
 ---
 
+## 16/09 18:20 · v9.276 · H4 · a marca pesa no golpe · commit `408a841`
+
+- **estado inicial:** trava posta às 13:55 (não existia). Árvore suja só do
+  lado do E3 (a tela da batalha, com o bastão do `App.jsx`). O vermelho de
+  `check-formas` que o ciclo anterior deixou declarado **já tinha saído**
+  quando fui provar: `npm test` fechou **199/199 suítes · 14/14 varredores**.
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, etapa escrita.
+- **backend:** o campo `danoRecebidoExtra` e a condição `marcado`
+  (`condicoes.js`), os dois lados da conta em `combate.js`, o portador `marca`
+  (`aflicoes.js`) e `AGUARDAM` reescrito.
+- **testes:** `testes/teste-marca.mjs` — **64 asserções**, 8 seções, nova;
+  mais `teste-cond` e `teste-poder-de-classe`.
+- **prova:** `npm run build` limpo, `npm test` **199/199 · 14/14** na árvore, e
+  `bash mente/so-o-meu.sh` com os meus 7 arquivos: **198/198 · 13/13**.
+  **Zero linhas de `App.jsx`** — o bastão nunca esteve comigo.
+
+### O buraco era maior e mais antigo do que a pauta dizia
+
+A pauta pedia *"ler o espelho que falta"* do lado do alvo. Medindo, o defeito
+não era uma falta, era uma **confusão de línguas**: `danoExtra` e
+`danoReduzido` falam do dano que o portador **causa** — e a prova não é o
+comentário de `condicoes.js:87`, que mente por omissão, mas **a descrição que
+o jogador lê**: *"fortalecido: +2 no dano causado"*, *"enfraquecido: −2 no dano
+causado"*. `combate.js:127` lia `modAtk.danoExtra` do lado certo e
+`modAlvo.danoReduzido` do lado errado; `modAtk.danoReduzido` e
+`modAlvo.danoExtra` **não eram lidos em lugar nenhum**.
+
+**O número que decidiu:** golpe de 10 pela fórmula velha — **10** sem a
+Maldição do Patrono, **8** com ela. Amaldiçoar o inimigo **endurecia-o**.
+
+**Ler o espelho de `danoExtra` do lado do alvo teria empilhado a segunda
+confusão sobre a primeira.** O que entrou foi a separação das duas perguntas:
+quanto o portador **causa** e quanto o portador **recebe**, em campos que não
+se confundem, cada um lido no lado certo.
+
+### Decisões médias, com o motivo
+
+1. **Nasceu UM campo, não dois.** `danoRecebidoExtra` entra; o espelho
+   `danoRecebidoReduzido` **não** — *"apanhar menos"* já tem **dois donos
+   vivos** (o abafo de F1 e o abrigo de P3), os dois na fila do dano com régua
+   e prazo próprios. Um terceiro campo seria a mesma regra em três cabeças com
+   uma só paga. Ficou **ponteiro** no catálogo e uma asserção que **acende** se
+   alguém o criar.
+2. **A marca entra PLANA**, e essa era a convenção que o arquivo já praticava
+   sem a dizer (`modAlvo.danoReduzido` já ficava fora do parêntese): o do
+   atacante soma em `danoBase` e **dobra** no crítico, o do alvo não. Base 10,
+   quem bate `fortalecido`, alvo `marcado` → **14**; em crítico **26**, não 28.
+3. **O regex é frase inteira.** Doze frases do acervo contêm "marca" e **onze**
+   começam por *"Marca um alvo"* prometendo coisas sem relação entre si. Há
+   asserção a impedir que a próxima mão alargue a linha para "resolver" a
+   segunda metade por atalho.
+4. **O conserto da inversão** (leve, bug com teste que prova) entrou junto, e a
+   suíte corre os dois lados **com a mesma semente** — a primeira versão dela
+   "provou" o contrário porque comparava dados diferentes, e isso ficou escrito
+   no cabeçalho do helper.
+
+### Onde a marca entra na fila do dano
+
+**A montante de tudo.** `resolverAtaque` produz o número **antes** de
+`amortece → invocação → abrigo → PV temporário → PV real → a queda`: a marca
+não é uma estação da fila, é **o golpe que chega mais pesado à primeira**.
+
+### O veredito de tamanho da segunda metade: ficou escrita, com medida
+
+*"Dano extra SEU"* pede um campo de **dono** que não existe: `criarCondicao`
+grava `origem`, e origem é o nome da **habilidade**, não de quem a usou. O dono
+atravessaria **5 assinaturas**, e as **duas do meio** (`mecanicaDe`,
+`modificadoresDeCondicao`) decidem **só pelo catálogo** — não têm por onde
+receber quem ataca. A ponta boa: `resolverAtaque` **já tem `atacante` em
+mãos**. A medição está trancada em asserções (§8) que acendem no dia em que
+alguém puser dono na instância. É a mesma jogada de H3 com a porta `aflicaoDe`.
+
+### Medido e não reequilibrado
+
+Arena **idêntica número a número** (sombra 55,1 · remendo 54,4 · chama 53,6 ·
+voto 51,5 · flecha 49,6 · muralha 46,8 · punho 45,6 · voz 43,3) e régua de Uma
+Vida idem (240,61 ± 3,65 sofrido, 120,74 ± 3,44 desferido) — **as duas causas
+trancadas na suíte**: `prepararDuelista` zera `condicoes`, e a régua só aplica
+aflição que não cai no alvo. Viva onde morde: 600 golpes de 12 contra o mesmo
+alvo dão **7 416 sem a marca e 8 568 com ela (+15,5 %)**.
+
+**E o que as réguas NÃO veem, dito aqui em vez de escondido:** `enfraquecido`
+chega ao jogo por **6 frases do acervo** mais o bestiário, e o conserto **vira
+o sinal** — quem o carrega apanhava −2 e passa a bater −2, **4 pontos de troca
+por golpe**, e nenhuma das duas réguas o enxerga. Não toquei em número de
+tabela nenhum.
+
+- **o que ficou:** o **dono** da marca (a segunda metade), a pílula do HUD —
+  `App.jsx:21603` mostra `mec.danoExtra` e não tem irmã para `danoReduzido` nem
+  para `danoRecebidoExtra`, logo quem está enfraquecido ou marcado **não lê o
+  número na barra**; é da mesa de desenho e do bastão, e fica dito.
+- **`AGUARDAM` 39 → 38:** saiu **Julgamento**, a única que paga inteiro. Marca
+  do Caçador e Maldição do Patrono ficam com a dívida **trocada e escrita**;
+  `SEM_DONO_HOJE` 4 → 2 (sobram Coração Tempestuoso/H5 e Mina Oculta/H6).
+- **para a pessoa decidir:** nada novo foi para "pesado" neste ciclo.
+
+---
+
 ## 16/09 17:05 · v9.275 · H3 · a cura tem relógio · commit `7bd9291`
 
 - **estado inicial:** trava posta às 16:05 (não existia). Árvore suja só do

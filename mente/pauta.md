@@ -71,19 +71,40 @@ dano lendo o traço racial, `removerPelaPorta` tem um chamador (a magia),
   `AGUARDAM` continua **39** — as três dívidas foram **trocadas, não
   apagadas** —, e `SEM_DONO_HOJE` desceu de 6 para 4.
   **Para a pessoa:** o relógio deve levantar quem caiu? Hoje não levanta.
-- [ ] **H4 · a marca** (efeito preso a um alvo que soma dano) · de: pessoa · 16/09
-  **O canal já chega lá.** `resolverAtaque` recebe `condAlvo` nos três sítios
-  de ataque (`App.jsx:7686`, `:11855`, `:12211`), mas `combate.js:126-127` faz
-  `danoBase + modAtk.danoExtra − modAlvo.danoReduzido`: **do lado do alvo só se
-  lê `danoReduzido`**, logo uma condição no alvo só sabe fazê-lo apanhar menos.
-  **Parta em duas:** *"dano extra de todos"* (**Julgamento**) é ler o espelho
-  que falta; *"dano extra SEU"* (**Marca do Caçador**, **Maldição do
-  Patrono**) precisa de saber **de quem é a marca**, e o efeito de `efeitos.js`
-  não tem campo de dono. A primeira metade é pequena; a segunda abre campo
-  novo, e o veredito de tamanho é da etapa.
-  **Entra junto o defeito que esta etapa desnuda:** hoje a Maldição do Patrono
-  aplica `enfraquecido` (`danoReduzido: 2`, `condicoes.js:155`) e **deixa o
-  inimigo mais duro** — o avesso exato da promessa.
+- [x] **H4 · a marca** (efeito preso a um alvo que soma dano) · **PRIMEIRA METADE FEITA 16/09 · v9.276 · commit `408a841`** · de: pessoa · 16/09
+  **O buraco era maior do que este item dizia, e a medição o desnudou:** não
+  era uma falta, era **confusão de línguas**. `danoExtra`/`danoReduzido` falam
+  do dano que o portador **causa** — a prova é a descrição que o jogador lê
+  (*"enfraquecido: −2 no dano causado"*), não o comentário, que mentia por
+  omissão. `combate.js:127` lia `modAtk.danoExtra` do lado certo e
+  `modAlvo.danoReduzido` **do lado errado**. Golpe de 10: **10** sem a Maldição
+  do Patrono, **8** com ela — amaldiçoar **endurecia** o inimigo.
+  **Nasceu UM campo, `danoRecebidoExtra`, e o espelho não nasceu:** *"apanhar
+  menos"* já tem dois donos vivos (o abafo de F1, o abrigo de P3) na fila do
+  dano; um terceiro seria a mesma regra em três cabeças com uma paga. Ponteiro
+  no catálogo e asserção que **acende** se alguém o criar.
+  **A marca entra PLANA e a montante de tudo:** `resolverAtaque` produz o
+  número **antes** da fila (abafo → invocação → abrigo → PV temporário → PV
+  real → a queda) — não é estação, é o golpe que chega mais pesado à primeira.
+  Base 10 + `fortalecido` + alvo `marcado` = **14**; em crítico **26**, não 28.
+  **Medido e não reequilibrado:** arena e régua idênticas número a número, as
+  duas causas trancadas na suíte. Viva onde morde: +15,5 % em 600 golpes. E o
+  que as réguas **não** veem, dito: `enfraquecido` chega por 6 frases do
+  acervo, e o conserto **vira o sinal** — 4 pontos de troca por golpe.
+  `AGUARDAM` **39 → 38** (saiu Julgamento), `SEM_DONO_HOJE` 4 → 2.
+- [ ] **H4b · o dono da marca** (*"dano extra SEU"*) · de: pessoa · 16/09
+  A segunda metade de H4, **medida em v9.276 e deixada escrita**. Paga **Marca
+  do Caçador** e **Maldição do Patrono**, que hoje ficam em `AGUARDAM` com a
+  dívida trocada: falta saber **de quem** é a marca. `criarCondicao` grava
+  `origem`, e origem é o nome da **habilidade**, não de quem a usou. O dono
+  atravessaria **5 assinaturas**, e as **duas do meio** (`mecanicaDe`,
+  `modificadoresDeCondicao`) decidem **só pelo catálogo** — não têm por onde
+  receber quem ataca. **A ponta boa:** `resolverAtaque` **já tem `atacante` em
+  mãos**. A medição está trancada em asserções (§8 de `teste-marca.mjs`) que
+  **acendem** no dia em que alguém puser dono na instância.
+  **E há asserção a impedir o atalho:** alargar o regex de `marca` para
+  "resolver" isto é proibido por teste — 11 das 12 frases do acervo começam por
+  *"Marca um alvo"* e prometem coisas sem relação entre si.
 - [ ] **H5 · a aura que reage** · de: pessoa · 16/09
   Sozinha na família: só **Coração Tempestuoso**. Pede o campo que
   `efeitos.js` **não tem** — um gatilho que *dispara*. `GATILHOS`
