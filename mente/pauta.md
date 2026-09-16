@@ -17,6 +17,30 @@ Formato de um item:
 
 ## Para a pessoa decidir (pesado)
 
+- [ ] **A FILA PAROU AQUI — o que fica por pagar, com endereço** · 16/09 · **v9.280, commit `f706cf2`**
+  A pessoa pediu pausa depois de F3 para avaliar. **Nada foi encadeado, a pauta
+  não foi semeada, e nada ficou no disco por commitar.** O que espera:
+  1. **O +2 de defesa das 34 fichas** — o item logo abaixo, com o preço inteiro
+     medido. É o maior, e é o único que muda o retrato do jogo.
+  2. **As seis linhas da `economia` em falta no `App.jsx`** — a rodada 1 nasce
+     sem ela, logo **o passo é de graça** (21 m numa rodada) **e** o aviso da
+     ação nunca dispara. A peça pura está feita e provada; os seis endereços
+     estão em `mente/pedidos-ao-sistema.md`, e **a primeira linha paga as duas
+     feridas sozinha**. Espera só o bastão do `App.jsx`.
+  3. **F4 · `nao_cai`** — a última família com força zero, endereçada abaixo.
+  4. **F5 (a porta única da aflição) e F6 (o degrau da carga)** — os dois que F3
+     revelou, escritos abaixo. **F5 é pesado**: ligar a porta acende seis
+     imunidades de uma vez.
+  5. **Um dígito para os olhos dela, e só um:** F3 deixou `sombra` a descer de
+     **55,1 % para 46,5 %** no retrato da arena. **A catraca continua
+     inteiramente verde** (amplitude 12,5 contra teto 20, margem mais fina a
+     melhorar), a causa está isolada com prova — é **uma** habilidade num
+     pronto, e a política do piloto (`companheiros.js:273`), não a tabela — e a
+     alavanca é de **uma linha**: desligar `esquiva_agil` devolve a catraca a
+     HEAD byte a byte, ao preço de perder a única das cinco que a arena vê.
+     **Não o desliguei**, porque a lei é *meça e não reequilibre* e a catraca
+     passou — mas é o dígito que eu levaria à avaliação primeiro.
+
 - [ ] **a defesa que a ficha promete nunca foi lida por ninguém — ligá-la é reequilibrar o jogo** · de: F2 · 16/09
   `protegido` é a **única** condição do catálogo com o campo `defesa`, a
   descrição que o jogador lê diz **"+2 de defesa"**, e o campo **nunca teve um
@@ -578,9 +602,12 @@ caro. Nenhuma começa antes de a anterior fechar verde.
 Decisão da pessoa (14/09): *"todas devem cumprir o que prometem."*
 
 P1 criou cinco famílias em `APLICACAO_DO_BUFF`; P3 deu número e leitor a uma
-(`absorve`), e **F1 deu à segunda** (`amortece`, v9.274). Seguem com força
-zero: `intocado` (18 habilidades), `protege` (8) e `nao_cai` (5) — **31 que
-prometem na ficha e não cumprem na mesa**, das 39 que eram.
+(`absorve`). **F1 deu à segunda** (`amortece`, v9.274), **F2 à terceira**
+(`protege`, v9.278 — o corpo certo, com a moeda ainda por ligar) e **F3 à
+quarta** (`intocado`, v9.280). Segue com força zero **uma só**: `nao_cai` (5).
+**E F3 mostrou que a conta de P1 media rótulos, não mecânicas:** das 18 de
+`intocado`, 3 **já cumpriam desde a v9.53** e as outras 15 eram três promessas
+diferentes debaixo do mesmo nome. **Antes de pagar uma família, parta-a.**
 E está medido em P2 que o piloto **não pode** procurá-las enquanto
 forem inertes (mandá-lo gastar turno em promessa vazia derrubou a catraca:
 `sombra` 60,2 → 32,9).
@@ -639,18 +666,64 @@ por último:
   **Herda-se:** o alvo único (`Espírito Guardião`, `Muralha` prometem **um**
   aliado adjacente; `"aliados"` é *eu + o grupo*) pede um quarto valor de
   `alvo` com leitor novo em `App.jsx:7725` e `:7825` — **bastão**.
-- [ ] **F3 · `intocado` (18)** · de: pessoa · 14/09
-  **Cuidado herdado de F2, e vale também para F4:** `arena.js:128`
-  (`prepararDuelista`) **zera `condicoes`** e nada volta a escrevê-las — a
-  arena é **estruturalmente cega** a toda família que passe por condição. A
-  catraca de equilíbrio não mede estas etapas; quem mede é a régua de Uma Vida.
-  **Colide com `estaIntocavel`** (a guarda de um turno da v9.53, que erra
-  antes do dado). Desenho antes de código: o que é intocável por um turno e o
-  que é "intocado" continuado não podem ser a mesma coisa, ou o combate acaba.
+- [x] **F3 · `intocado` (18)** · **FEITA 16/09 · v9.280 · commit `f706cf2`** · de: pessoa · 14/09
+  **A colisão declarada não existia, e o veredito é este: `intocado` não é uma
+  família — são TRÊS promessas debaixo de um rótulo.** 8 prometem *o golpe que
+  erra* (a escada de `GUARDAS`, e é o que F3 paga), 5 prometem *imunidade a
+  condição* (o catálogo de condições), 5 prometem *zona e fuga* (o lugar e o
+  movimento). `estaIntocavel` responde à promessa **de prazo**, e a v9.53 já a
+  respondeu — absoluta por 1 turno (8 PM), entortada por 3–4. **O que a família
+  traz é o degrau de BAIXO, que a escada nunca teve: 2 e 4 PM.**
+  **E a régua já estava escrita sem ninguém a ter lido:** as três esquivas da
+  v9.53 obedecem, sem exceção, a `floor(PM / 2)`; as cinco de `tipo: "defesa"`
+  **não** obedecem, o que a confirma (lá o preço é a CA, aqui é o prazo). Virou
+  `ESCADA_DA_GUARDA`, lida de volta por duas provas. **F3 não inventou regra.**
+  **5 passam a cumprir** (Esquiva Ágil, Defesa Fluida, Dança das Sombras,
+  Antevisão, Corte de Espelhos); **3 já cumpriam e ninguém sabia** — o rótulo de
+  P1 nasceu **por cima de mecânica viva**; **10 não passam**, com o motivo
+  nomeado em asserção. **O recorte morde 5 frases e só 5** nas 593, e os quatro
+  alargamentos tentadores estão medidos com as intrusas nomeadas.
+  **Onde morde:** 600 golpes → **68,5 % de acerto nu contra 47,2 %** com esquiva
+  de pé (−35,8 % de dano); o absoluto, **0/600**. Paridade: ~4 de dano evitado
+  por 2 PM, o que `absorve` compra a 2 PM.
+  **`AGUARDAM` fica em 38** — nada pago, **três dívidas trocadas**: a escada paga
+  *desvantagem* e as fichas dizem *"anula"*, a mesma distância que
+  `AMORTECIMENTO_DO_BUFF` mantém. O absoluto barato foi **recusado**: entregá-lo
+  a 2 PM desfaria a escada pelo degrau mais barato.
 - [ ] **F4 · `nao_cai` (5)** · de: pessoa · 14/09
   **Colide com o teste de morte.** Desenho antes de código, e o cuidado é o
   mesmo: uma promessa de não cair, cumprida errado, tira a morte do jogo.
-
+  **O que F3 deixa preparado para ela, e muda o tamanho do trabalho:**
+  1. **O veredito de F3 é o molde:** antes de construir, **parta o rótulo**. Das
+     5, pergunte quantas prometem *um chão de PV*, quantas prometem *um golpe
+     fatal anulado* e quantas prometem *estabilizar quem já caiu* — são
+     mecânicas diferentes e só uma delas toca o teste de morte.
+  2. **A arena VÊ guarda e é cega a condição** (`prepararDuelista` zera
+     `condicoes`). Qual das duas portas `nao_cai` usa decide qual régua a mede —
+     e a régua de Uma Vida é **cega por ROSTER**, não por mecanismo: o grupo dela
+     é Guerreiro, Mago, Clérigo e Engenheiro.
+  3. **Já existe piso de 1 PV no jogo** (`App.jsx:13790-13812`, medido na v9.250),
+     e ele lê **outra fonte**. Procure-o antes de escrever um segundo.
+- [ ] **F5 · a imunidade temporária — e a porta única da aflição vem ANTES** · de: F3 · 16/09
+  As 5 da segunda promessa de `intocado`. **A dívida é maior do que `AGUARDAM`
+  dizia, e F3 mediu-a:** continua verdade que `imuneA`/`imuneDeTraco` são para
+  sempre — e a metade que faltava é que **`imuneA` só é consultada em DOIS
+  sítios, e os dois são autoinfligidos** (`App.jsx:8085`, o preço do esforço, e
+  `:15393`, a falha crítica). **A aflição que um INIMIGO impõe entra por
+  `rolarAflicao` (`src/aflicoes.js:196`), que não pergunta a `imuneA` coisa
+  nenhuma** — nem a imunidade **permanente** do elmo Sem Medo ou da Coroa Lúcida
+  protege hoje de um medo lançado contra você. **Não é etapa de prazo: é a porta
+  única da aflição, e ela vem antes.** Ligá-la acende `sem_medo`, `cabeca_fria`,
+  `coroa_lucida`, `sempre_de_pe`, `sangue_limpo` e `estanca` **de uma vez** — é
+  balanceamento, logo **pesado**, e a decisão é da pessoa.
+- [ ] **F6 · o degrau da CARGA — o único absoluto que não acaba o combate** · de: F3 · 16/09
+  *"O próximo golpe erra"*, **gasto na primeira batida** — o molde exato de
+  `absorverDano`. É o degrau que a escada de `GUARDAS` ainda não tem, e é o
+  único que pode ser absoluto sem acabar o combate, porque é o prazo mais curto
+  que existe. **Não foi feito em F3 porque o gastador precisa de um escritor em
+  CADA mesa:** `App.jsx` ao lado de `absorverDano` (**bastão**) e `arena.js`.
+  Pôr só na arena faria as duas mesas divergirem — é o bug que esta casa já
+  pagou três vezes.
 Em todas: catraca herdada pronta (`check-protecao.mjs` + a catraca de
 equilíbrio), e o piloto só passa a procurar a família **depois** de ela
 cumprir — a ordem que P2 provou em número.

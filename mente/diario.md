@@ -15,6 +15,125 @@ Formato:
 ```
 
 ---
+## 16/09 22:55 · v9.280 · F3 · a família `intocado` chega à escada · commit `f706cf2`
+
+- **estado inicial:** este ciclo **morreu uma vez** — o `backend` foi cortado a
+  meio do veredito por um limite de sessão, sem escrever nada no disco — e foi
+  **retomado** em vez de renascido, que é a lei nova da casa. A trava foi tomada
+  às 22:28Z por um ciclo agendado (que herdou uma trava morta de 18:36Z) e ficou
+  comigo; limpei a linha morta do `backend` em `mente/agora.json`.
+- **a árvore estava suja, e a sujeira não era minha:** 743 linhas do **E4**,
+  vivo, com o bastão do `App.jsx` renovado às 22:32Z — incluindo **`src/grid.js`**,
+  que ele estava a mudar naquele minuto. Não lhe toquei, não usei `stash` nem
+  `checkout --`, e o meu veredito saiu de `bash mente/so-o-meu.sh`.
+- **conselheiro:** **não chamado** — fase aprovada, etapa escrita. *(E não semeei
+  a pauta: a pessoa pediu pausa depois deste ciclo.)*
+- **backend:** `ESCADA_DA_GUARDA` e as 5 linhas novas de `GUARDAS`
+  (`habilidades.js`), o veredito em comentário, as 3 trocas de dívida
+  (`poder-de-classe.js`) e a correção da conta de colisões (`efeitos.js`).
+- **testes:** `testes/teste-intocado.mjs` — **106 asserções**, nova; a §10 de
+  `check-protecao`; e **uma asserção movida com o motivo escrito** em
+  `teste-arena.mjs`.
+- **prova:** build limpo. `so-o-meu.sh` com os meus 7: **202/202 suítes · 14/14
+  varredores**. Árvore inteira, com o E4 dentro: **203/203 · 15/15**.
+  **Zero linhas de `App.jsx`.**
+
+### O VEREDITO — desenho antes de código, e a colisão não existia
+
+**`intocado` não é uma família: são três promessas debaixo de um rótulo.**
+
+| | o que promete | quantas | onde mora |
+|---|---|---|---|
+| 1 | **o golpe que erra** | 8 | a escada de `GUARDAS` — é a que F3 paga |
+| 2 | **imunidade a condição** | 5 | o catálogo de condições — endereço abaixo |
+| 3 | **zona e fuga** | 5 | o lugar e o movimento |
+
+`estaIntocavel` responde à promessa **de prazo**, e a v9.53 já a respondeu:
+absoluta por 1 turno (8 PM), entortada por 3–4. **O que a família traz não é uma
+segunda resposta à mesma pergunta — é o degrau de baixo, que a escada nunca
+teve: 2 e 4 PM.** Sustentam-no o comentário de `GUARDAS` (*"quanto mais absoluta
+a promessa, mais curto o prazo"*), a precedência `guardaDe` antes de
+`aplicacaoDoBuff` já escrita em `arena.js:220` e `App.jsx:7622`, e os dois
+leitores vivos de `combate.js`. **Nada esbarrou em lei; nada subiu como pesado.**
+
+**E a régua já estava escrita, sem ninguém a ter lido.** As três esquivas da
+v9.53 obedecem, sem exceção, a `floor(PM / 2)` — 7→3, 7→3, 8→4 — e as cinco de
+`tipo: "defesa"` **não** obedecem, o que confirma a régua: lá o preço é a CA,
+aqui é o prazo. Virou `ESCADA_DA_GUARDA`, lida de volta por duas provas.
+`turnosDoAbsoluto: 1` é a outra metade: Vazio Perfeito compraria 4 turnos pela
+conta e leva 1, **porque é absoluto**. O absoluto barato foi **recusado de
+propósito**: entregar *"anula o golpe"* a 2 PM desfaria a escada pelo degrau
+mais barato.
+
+### As 18
+
+**Passam a cumprir — 5:** Esquiva Ágil, Defesa Fluida, Dança das Sombras,
+Antevisão, Corte de Espelhos. **Já cumpriam e ninguém sabia — 3:** Vazio
+Perfeito, Dança Sem Vulto, Nada Me Alcança — **o rótulo `intocado` de P1 nasceu
+por cima de mecânica viva.** **Não passam — 10**, cada uma com o motivo nomeado
+em asserção.
+
+### Decisões médias, com o motivo
+
+1. **Subir as cinco, e não quatro.** A catraca fica **inteiramente verde** (32
+   células, amplitude 12,5 contra teto 20, margem mais fina a melhorar de 5,1
+   para 6,1 pt) — e a lei é *meça e não reequilibre*. **Mas `sombra` desce 55,1 →
+   46,5 % no retrato**, e o dígito fica escrito na pauta para a avaliação da
+   pessoa, com a alavanca nomeada: desligar **uma** linha (`esquiva_agil`)
+   devolve a catraca a HEAD byte a byte e deixa 4 de 18 — ao preço de perder a
+   única que a arena vê.
+2. **A causa não é a tabela, é a política do piloto** (`companheiros.js:273`):
+   `guarda` vence de tudo **sem perguntar quanto vale**, e `sombra` troca um
+   turno de rodada 1–2 por uma compra de 2 PM. A sensibilidade **confirma** a
+   régua em vez de a acusar: com 3 turnos — o que a régua **proíbe** a 2 PM —
+   `sombra` sobe a 58,6 % e a amplitude a 15,8.
+3. **A asserção do teto de guardas mudou de FORMA, não de severidade**, com o
+   motivo ao lado: `tetoDeGuardasNosProntos: 0` virou **lista nomeada**
+   (`["sombra:Esquiva Ágil"]`). Um teto que sobe é a doença — no dia seguinte
+   sobe para 2 e ninguém vê; uma lista obriga quem acrescentar a segunda a
+   escrever o que ela fez ao equilíbrio.
+4. **A conta de colisões estava a falar de duas coisas** e foi corrigida em
+   `efeitos.js`: contra `absorve` eram 1 e **continuam 1**; contra a tabela
+   inteira já eram **4** na v9.233, e depois de F3 são **9** — todas da mesma
+   família e resolvidas pela mesma precedência de uma linha.
+5. **Um bug achado de passagem, com teste que o prova** (leve):
+   `esquivaDeGuarda(pers, null)` estourava no destructuring — a armadilha que a
+   própria lei nomeia (`= {}` não cobre `null`).
+
+### Onde morde, e o que as réguas não veem
+
+**600 golpes contra o mesmo alvo:** 68,5 % de acerto nu → **47,2 %** com
+qualquer esquiva de pé (−21,3 pontos de acerto, −35,8 % de dano). O absoluto, no
+mesmo banco: **0/600**. É a escada inteira em dois números, e a paridade fecha
+em ~4 de dano evitado por 2 PM — o que `absorve` compra a 2 PM.
+
+**Esta é a primeira etapa da Fase F que a arena realmente vê:** guarda **não**
+passa por condição, logo a cegueira que F2 mediu (`prepararDuelista` zera
+`condicoes`) **não se aplica aqui**. Em compensação, **a régua de Uma Vida é
+cega por ROSTER, não por mecanismo** — o grupo dela é Guerreiro, Mago, Clérigo e
+Engenheiro, e as cinco são de Ladino, Monge, Andarilho e duas subclasses que ela
+nem alcança. **Nenhuma das duas mede a mesa de campanha com um herói Ladino ou
+Monge**, que é exatamente onde o jogador vai sentir isto.
+
+- **o que ficou, com endereço:** (1) **a imunidade temporária** — e a dívida é
+  **maior** do que se pensava: `imuneA` só é consultada em **dois** sítios, e os
+  dois são **autoinfligidos**; a aflição que um **inimigo** impõe entra por
+  `rolarAflicao`, que **não pergunta a `imuneA` coisa nenhuma** — nem a
+  imunidade **permanente** do elmo Sem Medo protege hoje de um medo lançado
+  contra você. Não é etapa de prazo: é a porta única da aflição, e vem antes.
+  (2) **o degrau da CARGA** — *"o próximo golpe erra"*, gasto na primeira
+  batida, molde de `absorverDano`; é o único absoluto que não acaba o combate, e
+  precisa de um escritor **em cada mesa** (o `App.jsx`, com bastão, e
+  `arena.js`) — meia ligação faria as duas mesas divergirem. (3) **a política do
+  piloto**.
+- **`AGUARDAM` fica em 38:** nada pago, **três dívidas trocadas e escritas**.
+  Dizer que desceria seria a contabilidade a mentir — a escada paga
+  *desvantagem*, e as fichas dizem *"anula"*: a mesma distância que
+  `AMORTECIMENTO_DO_BUFF` mantém entre a "metade" da ficha e o quarto que cobra.
+- **para a pessoa decidir:** o **−8,6 de `sombra`** é o único dígito desta etapa
+  que pode querer os olhos dela, e está na pauta com a alavanca de uma linha.
+
+---
 
 ## 16/09 20:45 · v9.279 · os dois pedidos da mesa · commit `e112017`
 
