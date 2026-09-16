@@ -50,6 +50,84 @@ outro**: o `jogo` deu à fala uma **consequência**, o `desenho` deu-lhe uma
 traço bonito sobre uma fala que não muda nada. **Juntas, são a rodada da
 caminhada a virar uma pergunta.**
 
+**E duas nasceram em K2 (16/09)**, marcadas *(K2)*, e estão **no topo** por uma
+razão que não é de gosto: **as duas acusam a própria casa de ter escrito uma lei
+e não a ter posto em tabela.** A do `jogo` é a primeira lei do `CLAUDE.md`
+(*determinismo por semente*) a valer só metade do jogo; a do `desenho` é um
+número de acessibilidade que ele próprio citou num parágrafo em vez de o pôr numa
+tabela. *Se é número, é tabela* — e as duas são a mesma lei a cobrar-se de quem a
+escreveu.
+
+- [ ] **(K2) o combate ganha uma semente, e o Duelo já provou que dá** ·
+  pesado · de: jogo · 16/09
+  **O diagnóstico, com o número.** A primeira lei desta casa diz *mesma semente,
+  mesmo resultado, em qualquer máquina — é o único árbitro que um sistema sem
+  servidor tem*. **Mas a campanha não tem semente nenhuma:** são **205 chamadas a
+  `Math.random`** por ~50 módulos, sem um fio que as ligue. **E `src/duelo.js`
+  tem zero** — `duelar(A, B, { semente })` e `sementeDaSala(...)` fazem o Duelo
+  reprodutível de ponta a ponta desde D2/D3, e `src/semente.js` já exporta o
+  gerador. ***A peça existe; falta ligá-la ao combate.***
+  **A proposta, e a ordem é o que a torna barata:** `src/dado.js` com
+  `fioDaLuta({ save, luta, rodada })`; o combate passa a receber **o rolador por
+  parâmetro**, com `rolar = Math.random` por omissão — **exactamente a assinatura
+  que `reacaoDoSilencio` já leva desde hoje**. Nada quebra no dia 1: quem não
+  passa o rolador tem o jogo de hoje. **A reação é a primeira, porque K2 já a
+  pagou**; depois `combate.js`, uma função por versão, cada uma com a varredura
+  de sementes a provar que a extracção foi de graça.
+  **Por que muda o que o jogador vive, e não é higiene:** hoje, quando ele perde
+  e quer perceber porquê, a resposta é *"azar"*; com semente é *"a mesma luta,
+  outra vez, igual"* — **e a diferença entre as duas frases é a diferença entre um
+  jogo que se pode entender e um que se tem de aceitar.** O *"eu juro que apareceu
+  diferente"* deixa de ser indecidível. **E toda etapa futura passa a poder PROVAR
+  «o depois é igual ao antes» em vez de o declarar:** K2 gastou um ciclo inteiro a
+  construir à mão, para **uma** função, a prova que uma semente daria de graça
+  para o motor inteiro.
+  **O risco, dito pelo próprio `jogo`:** são 205 chamadas, e tocá-las todas de uma
+  vez é o tipo de mudança que parte o jogo em silêncio. **A defesa é não as
+  tocar** — é o rolador por parâmetro, função a função, com `Math.random` a
+  continuar a ser o valor por omissão até ao último dia. **Reversível em qualquer
+  ponto.** O que ele não sabe dizer é quantas versões leva.
+  **Por que é dela:** mexe no motor inteiro, não numa tela. *E a alternativa
+  honesta seria apagar a linha do `CLAUDE.md`, que a mesa não tem autoridade para
+  propor.*
+
+- [ ] **(K2) a casa não tem régua para o alvo de toque — e tem duas populações
+  de controlo sem nunca ter sabido** · pesado · de: desenho · 16/09
+  **A medida, e são 215 `<button>` varridos** (194 calculáveis):
+
+  | | mediana | abaixo de 24 px | abaixo de 44 px |
+  |---|---|---|---|
+  | **a casa, hoje** | **30 px** | **14 (7,2 %)** | **169 (87,1 %)** |
+  | **as peças da Fase K** | **48 px** | 0 | 0 |
+
+  **A proposta:** nasce `ALVO { minimo: 24, conforto: 44, denso: 32 }` ao lado de
+  `T`, **com a fonte escrita em cada linha** (WCAG 2.2 SC 2.5.8 nível AA · Apple
+  HIG e WCAG 2.5.5 AAA · e o alvo denso de uma fila de contadores, onde 44
+  partiria a linha), o `Botao` de `ui.jsx` passa a lê-la, e um quarto teto em
+  `check-formas.mjs` — **`TETO_DE_ALVO_MIUDO`, congelado em 14, que só pode
+  descer**. *A tinta e o alvo são duas medidas diferentes:* a tinta pode medir
+  30 px e o alvo 44, e a diferença sai de enchimento ou de um `::after`
+  transparente — **que não custa um pixel de leiaute**.
+  **Por que existem duas populações: porque ninguém escreveu o número.** O
+  próprio `desenho` subiu a Pílula de 35 para 47 em K1 citando as três réguas —
+  **e escreveu-as num parágrafo de um documento em vez de as pôr numa tabela**,
+  que é a primeira lei desta casa aplicada ao avesso. *Um número de
+  acessibilidade que vive numa prosa é um número que o próximo controlo não lê.*
+  **O que o jogador vive, e é jogo e não higiene:** num telefone, **87 % dos
+  controlos estão abaixo do confortável para um polegar**, e um toque falhado no
+  meio de um combate por turnos não custa um toque — custa a hesitação de
+  perceber por que não aconteceu nada, **com um relógio a correr**. A Fase K
+  acabou de pôr na tela o controlo mais sensível a tempo que este jogo já teve:
+  ***ele entra correto por acidente de alguém ter medido; o próximo entra correto
+  por sorte.***
+  **O risco, dito por ele:** crescer o alvo sem crescer a tinta **aproxima alvos
+  vizinhos**, e o SC 2.5.8 tem uma excepção de espaçamento exactamente por isso —
+  **e ele não mediu espaçamento**. Logo a tabela entra, e a aplicação entra **um
+  arquivo de cada vez, medindo**. *E o terceiro caminho falta: nenhum pixel de
+  tinta muda, mas quem assina que não piorou é o `jogo` jogando, e isso é K4.*
+  **Por que é dela:** uma régua de alvo muda **o que o jogador toca em toda a
+  interface**. Isso é fluxo.
+
 - [ ] **(W2) o adversário ganha ouvido — a rodada em que o golpe é recusado
   passa a ser a rodada da voz** · do `jogo` · 16/09
   **O diagnóstico é a soma de três medições que já estavam na casa e que
@@ -904,7 +982,22 @@ zero chamadas.* É o maior número desta fase e o mais barato de pagar.
   **Dos três defeitos vivos de W1, um foi CONSTRUÍDO e dois ficaram, com o
   motivo:** o **violeta da mira** está pago (§4 abaixo); as **quatro frases**
   estão **fechadas e medidas** mas a troca é atómica e o **bastão do `App.jsx`
-  esteve com a outra mente o ciclo inteiro** — W3 aplica; **tocar num inimigo**
+  esteve com a outra mente o ciclo inteiro** — **PAGAS EM 16/09, no ciclo de
+  K2 · v9.267**, e a dívida durou exactamente um ciclo. As quatro saem de
+  `LINHAS_DO_GOLPE` em `src/golpe.js`, com `TETO_DA_LINHA` ao lado e **18
+  asserções novas** em `teste-golpe.mjs` (64 → 82) a ler a tabela de volta.
+  Medido **depois**: fixos **29 · 26 · 29 · 23**, pior caso com o nome de 18
+  **29 · 44 · 47 · 41**, e o pior dos 108 pares (27 nomes × 4 frases) é **47
+  contra um teto de 54** — sete de folga. **Antes eram 29 · 80 · 55 · 64.**
+  `recusaDoGolpe`, `linhaDoGolpe` e `maisPertoAoAlcance` mudaram de casa
+  inteiras — *um varredor não lê JSX; lê isto*, e foi por isso que a linha que
+  mais aparece no combate mediu 64 a 86 caracteres durante um ciclo sem
+  ninguém a ver. **A conta que a mudança de casa deixou por pagar, e ela é
+  nova:** apagar 33 linhas do `App.jsx` empurrava **133 endereços
+  `src/App.jsx:<linha>`** cravados em nove arquivos de `testes/` — e alguns são
+  verificados por varredor —, logo ficou no lugar **uma lápide de exactamente
+  33 linhas**, com o próprio tamanho explicado dentro e a data de validade
+  escrita. *Está em "Aberto".* · **tocar num inimigo**
   é de W3 **e era meia-verdade**: com a mira armada `noAlcance` **não exclui
   ocupados**, logo a casa por baixo da ficha **já responde hoje**. W3 não
   inventa mecanismo — acrescenta um segundo valor a um que já roda.
@@ -992,7 +1085,25 @@ não reagir, caso não queira gastar PM."*
   novo. **A folga é para quem precisa dela, não um pedágio para todos.**
   Catraca: o tempo total de espera por rodada tem teto medido, e a suíte o
   prova com quatro inimigos na mesa.
-- [ ] **K2 · a trava, antes de tudo** · de: pessoa · 14/09
+- [x] **K2 · a trava, antes de tudo** · **FEITA 16/09 · v9.267** — e ela apanhou
+  o erro que K3 ia cometer. **O desenho óbvio (*a expiração resolve só o golpe
+  da janela*) quebra a trava em 37,44 % das sementes**, medido em 120 000 pares:
+  hoje o laço **repete** `escolherReacao` golpe a golpe quando a `chance` falha,
+  e por isso o ladino esquiva **97,6 %** das rodadas e não 60,2 %. Custo
+  silencioso do erro: **+12,4 % de dano ao furtivo.** A regra que fica:
+  ***«coberto» quer dizer não gera segunda pergunta, nunca não gera reação***.
+  `reacaoDoSilencio` (chama `escolherReacao`, não a copia; **sem parâmetro de
+  tempo nenhum**, e é essa a prova de T2), `fecharAJanela` (portão de uma via —
+  o segundo a chegar **não rola um dado**), `ATALHOS_DA_JANELA`, e a **nona
+  porta `escondida`**, primeira da precedência: as outras oito dizem *«não
+  perguntes»*, esta diz *«não esperes»*. `testes/teste-trava-da-reacao.mjs` com
+  **107 asserções em 0,6 s** — e a **03 constrói o desenho errado e assere que
+  ele diverge, pelo número**. Do lado da forma: a tabela do foco (**na
+  expiração o foco não se mexe** — quem não respondeu não pediu nada), a lei
+  *o trilho não tem relógio próprio*, e o dente **`D5e`**. **85 asserções de
+  K1b estavam verdes com uma ficha que nunca rola um dado** — é a lição da
+  etapa. Escrito em `mente/k2-jogo.md` e `mente/k2-desenho.md`.
+  · de: pessoa · 14/09
   **Quem não responde, o sistema responde como hoje.** Regressão zero é
   condição de entrada, não consequência feliz: o jogo tem de continuar
   jogável exatamente como é para quem ignora o botão, para quem joga sem
@@ -1018,6 +1129,19 @@ não reagir, caso não queira gastar PM."*
      **já na proporção** (73 %), nunca a 100 %: aos 11 000 ms o relógio aparece a
      meio, e uma barra que nasce cheia mentiria sobre o tempo que sobra. Espelho
      de `tv-trilho-sai`, que já existe. Não é peça nova.
+  **E K2 acrescenta o que K3 tem de obedecer, não de decidir — são quatro, e
+  estão provadas:** (1) **a expiração devolve os cobertos ao laço de hoje**;
+  tratá-los como *não reagem* quebra 37,44 % das sementes, e a asserção 03
+  **reconhece esse erro pelo nome e pelo número**. (2) **Nenhuma resolução fora
+  do ramo `valeu === true`** de `fecharAJanela`, e o rolo vive **dentro** desse
+  ramo. (3) **Guardar o elemento focado antes de mover o foco** — e **na
+  expiração o foco não se mexe**. (4) **`escolherReacao` recebe `persBase`**, a
+  ficha do início da rodada, nunca `persTracos`.
+  **E duas que K2 não conseguiu provar em Node, e é honesto dizê-lo:** o foco
+  de teclado (a asserção 10 conta gestos de tabela — se K3 puser o cartão fora
+  da ordem de tabulação, as 17 ficam verdes na mesma) e **`O chamado` não tem
+  `Estado=Foco` desenhado**, porque K1 supôs que ele estava focado desde que
+  existe, e `Etapa=Direta` tem **duas** paradas.
 - [ ] **K4 · medir a batida** · de: pessoa · 14/09
   Quantas reações o jogador de fato escolhe, quantas expiram, quanto tempo
   ele leva, e se o combate ficou mais longo. **Se a batida nova cansar em
@@ -1417,6 +1541,27 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
   metade do tempo.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **os 133 endereços de linha são uma catraca que qualquer edição do
+  `App.jsx` desloca — e ela já cobrou uma lápide** · médio · de: regente ·
+  16/09 (K2)
+  **O achado, e ele saiu de pagar a dívida de W2:** ao levar três funções do
+  `App.jsx` para `golpe.js`, apagar as 33 linhas empurrava **133 endereços
+  `src/App.jsx:<linha>`** cravados em nove arquivos de `testes/` — o funil e as
+  recusas de `acoes-do-jogador.mjs`, o `pushMsgs` de `check-acoes-do-jogador`,
+  `check-formas`, a régua de combate, `teste-regua`, `teste-guardado`. **Alguns
+  são verificados por varredor** (`pushMsgs segue em src/App.jsx:7504`), logo o
+  deslocamento não é cosmético: é a medição a mentir com a suíte verde. Ficou no
+  lugar **uma lápide de exactamente 33 linhas de comentário**, com o motivo do
+  próprio tamanho escrito dentro.
+  **A proposta:** o endereço deixa de ser um número e passa a ser **uma âncora
+  de texto** — um trecho curto e único do código, que um varredor resolve em
+  linha na hora de falhar. *É o mesmo movimento que a âncora de recusa fez nesta
+  etapa quando a frase mudou de arquivo: `check-acoes-do-jogador` deixou de
+  procurar num arquivo fixo e passou a dizer ONDE procura.* **Porquê:** um
+  endereço de linha num arquivo de 21 mil linhas é uma catraca que só está certa
+  até à próxima edição — e a casa acabou de pagar 33 linhas de comentário para
+  não a partir. *É trabalho de uma tarde, e paga a lápide no mesmo dia.*
 
 - [ ] **`A escolha` tem os dois defeitos que esta casa já conhece, e vai ser a
   peça que carrega o nome do inimigo** · médio · de: desenho · 16/09 (W1)

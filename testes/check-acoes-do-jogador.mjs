@@ -326,12 +326,25 @@ console.log("\n10. as recusas do combate — o literal e o endereço");
         `a recusa mudou de lugar ou sumiu. Re-meça a entrada em RECUSAS_DO_COMBATE (testes/acoes-do-jogador.mjs): se sumiu, tire-a e BAIXE o total do bloco 10 de teste-acoes-do-jogador.mjs com o motivo; se mudou de linha, troque o endereço`);
     }
   }
-  /* as âncoras que não se movem: os literais que nascem no próprio App.
-     São escolhidos um por família, para a falha dizer QUAL voz de recusa
-     se perdeu — e não só que a contagem mudou. */
+  /* as âncoras que não se movem: um literal por família, para a falha dizer
+     QUAL voz de recusa se perdeu — e não só que a contagem mudou.
+
+     A TERCEIRA COLUNA NASCEU EM K2 (16/09), e o motivo fica escrito porque a
+     asserção mudou de forma: até aqui toda âncora era procurada no `App.jsx`,
+     e isso era verdade por acidente — os literais viviam todos lá. W2 §3 levou
+     as frases do golpe para `src/golpe.js` (é a única casa onde um varredor as
+     consegue ler), e a âncora que só sabia olhar para um arquivo passou a
+     acusar como "sumiu" uma frase que apenas tinha mudado de sítio. Uma âncora
+     que não diz ONDE procura mente no dia em que a frase se muda. Omitir a
+     coluna continua a significar `App.jsx`, que é o caso das outras oito. */
+  const GOLPE = readFileSync("../src/golpe.js", "utf8");
+  const fontes = { app: APP, golpe: GOLPE };
   const ancoras = [
     ["alcance", "ninguém está ao alcance do seu golpe"],
-    ["alcance", "Longe demais —"],
+    /* redigida em W2 §3: a antiga ("Longe demais — …") media 62 com o nome
+       vazio contra um teto de 54. A âncora é a cauda da frase nova, que é a
+       única parte que nenhuma das outras três partilha. */
+    ["alcance", "m — faltam ", "golpe"],
     ["economia", "Você já usou sua ação nesta rodada"],
     ["economia", "Você já cobriu os"],
     ["teto", "fora de combate uso uma habilidade por vez"],
@@ -340,10 +353,11 @@ console.log("\n10. as recusas do combate — o literal e o endereço");
     ["conjuracao", "você não consegue conjurar vestindo"],
     ["condicao", "Você não consegue se mover"],
   ];
-  for (const [familia, txt] of ancoras) {
-    if (!APP.includes(txt)) {
+  for (const [familia, txt, fonte] of ancoras) {
+    const onde = fontes[fonte || "app"];
+    if (!onde.includes(txt)) {
       divergiu++;
-      falha(`sumiu do App a recusa da família \`${familia}\`: "${txt}"`,
+      falha(`sumiu de ${fonte === "golpe" ? "golpe.js" : "App"} a recusa da família \`${familia}\`: "${txt}"`,
         `ou a frase foi reescrita, ou a recusa deixou de existir. Se foi reescrita, atualize o \`literal\` da entrada em RECUSAS_DO_COMBATE; se deixou de existir, tire a entrada, baixe o total do bloco 10 de teste-acoes-do-jogador.mjs e escreva o motivo — uma recusa a menos é mudança de JOGO, não de medida`);
     }
   }

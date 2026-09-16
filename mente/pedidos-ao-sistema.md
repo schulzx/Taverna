@@ -119,6 +119,29 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
   acima do máximo das tabelas: com ele, o aparo passa a ser cinto contra o
   inesperado em vez de comportamento normal. *Não bloqueia `LINHAS_DO_GOLPE`.*
 
+- [ ] **`escolherReacao` rola `Math.random` por dentro, e isso agora tem preço
+  medido** · de: K2 · jogo · 16/09
+  `reacoes.js:96` chama `Math.random()` para a `chance`, e a lei da casa é
+  *determinismo por semente*. A dívida já estava nomeada; **K2 é a primeira etapa
+  que mediu o que ela custa**: para provar a trava foi preciso **trocar o
+  `Math.random` global em `try/finally`** à volta da chamada — um cinto, e um
+  cinto é sempre menos honesto que um rolador por parâmetro. **O pedido é uma
+  assinatura, não uma regra nova:** `escolherReacao({ …, rolar = Math.random })`,
+  com o valor por omissão intacto. Quem não passa o rolador tem o jogo de hoje,
+  byte a byte — e a suíte passa a semear em vez de trocar um global.
+- [ ] **a extracção de `reacoesQueSeAplicam` é regressão zero SÓ enquanto o rolo
+  ficar na mesma posição da sequência** · de: K2 · jogo · 16/09
+  A pauta de K3 manda extrair de `escolherReacao` os mesmos filtros **sem** o
+  `Math.random()`, para que `PISO_DO_GOLPE` deixe de ter dois donos. **Está
+  certo, e é de graça no número de rolos — com uma condição que ninguém tinha
+  escrito:** `escolherReacao` tem de continuar a rolar **um dado por candidata
+  testada, na ordem de `REACOES`, e a devolver a primeira que sobrevive ao seu
+  rolo**. Mover o rolo da oferta para a resolução **muda o mundo de quem
+  responde**, e esse mundo não está travado por nada. **A asserção 12 de
+  `testes/teste-trava-da-reacao.mjs` já fixa a contagem de rolos de hoje** — no
+  dia da extracção é ela que diz se foi de graça. *Não é um veto: é a catraca que
+  torna a extracção segura de fazer.*
+
 ## Atendidos
 
 _(vazio)_

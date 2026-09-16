@@ -19,6 +19,135 @@ Formato:
 
 ---
 
+## 16/09 08:40 · v9.267 · K2 · a trava, antes de tudo (e a dívida de W2 paga) · commit `PENDENTE`
+
+*O escrito dos dois seniores fica em `mente/k2-jogo.md` e `mente/k2-desenho.md`;
+a forma, no bloco final de `mente/formas.md`.*
+
+**A etapa em que provar antes de construir apanhou o erro que a construção ia
+cometer — e ele tem número.** A pessoa pediu a trava *antes de a peça existir*,
+e a razão que ela deu (*"é o que impede a peça de nascer com o defeito que ela
+deveria evitar"*) deixou de ser uma frase de método nesta etapa: **o desenho
+óbvio de K3 quebra a regressão zero em 37,44 % das sementes**, e nada em K1, em
+K1b ou nas 85 asserções que já existiam o teria apanhado.
+
+- **estado inicial:** `.claude/ciclo-desenho-em-curso` **não existia** — nenhum
+  ciclo de desenho vivo; criei-o às 06:05. Árvore verde ao abrir: **188/188
+  suítes, 13/13 varredores**. `.claude/app-jsx` **livre** (a outra mente tinha-o
+  devolvido no fim de W2). A pauta tinha K2 aberta, e a dívida de W2 por aplicar
+  com o motivo escrito no próprio item.
+
+- **o bastão do `App.jsx`:** **tomado às 06:40, em nome do `oficial`, e devolvido
+  às 08:15**, uma hora e meia, com o arquivo terminado. **Para quê:** a troca
+  atómica das quatro frases — levar `recusaDoGolpe`, `linhaDoGolpe` e
+  `maisPertoAoAlcance` do `App.jsx` para `src/golpe.js`. *Foi o melhor uso que a
+  lei descreve — gastá-lo para não precisar mais dele:* as três funções saíram do
+  arquivo de ninguém e passaram a viver num módulo puro que a suíte lê. A outra
+  mente rodava H2 e depois Q1, e não precisou dele em momento nenhum.
+
+- **jogo / desenho:** chamados **juntos, no mesmo turno, os dois em primeiro
+  plano, sem se verem** — e desta vez não convergiram: **dividiram o problema em
+  duas metades que não se sobrepõem**, o que para uma trava é o resultado certo.
+  - **O `jogo` foi medir a coisa que ninguém tinha medido, e achou o defeito.**
+    Hoje o laço da reação **repete** `escolherReacao` golpe a golpe quando a
+    `chance` falha. Consequência: o ladino esquiva **97,6 %** das rodadas, não os
+    60,2 % que a tabela sugere; o contra-atacante **96,4 %**, não 55,6 %. Logo
+    *"a expiração resolve só o golpe da janela"* — o desenho que qualquer um
+    escreveria — tira ao furtivo **+12,4 % de dano por rodada**, em silêncio. A
+    regra que ele deixa é uma frase: ***«coberto» quer dizer não gera segunda
+    pergunta, nunca não gera reação. A janela agrupa a PERGUNTA; ela não agrupa a
+    MECÂNICA.***
+  - **O `desenho` foi ao Figma desmentir K1, e desmentiu-o.** `O chamado` **não
+    tem `Estado=Foco`**, e a razão que K1 escreveu (*"está focado desde que
+    existe"*) é falsa: `Etapa=Direta` tem **duas** paradas de tabulação, não uma.
+    E deixou a tabela que faltava — *para onde vai o foco, e de onde volta* —
+    cuja última linha **é** a trava: **na expiração o foco não se mexe.** *Quem
+    não respondeu não pediu nada.*
+  - **Os dois chegaram, por caminhos diferentes, à mesma forma de argumento:** o
+    resultado não pode depender de uma grandeza que a semente não reproduz. O
+    `jogo` di-lo do relógio (`reacaoDoSilencio` **não recebe tempo nenhum**, e é
+    essa a prova); o `desenho` di-lo da aba (**a janela expira ao relógio de
+    parede, olhasse alguém ou não** — senão mudar de aba congelaria o combate).
+
+- **testes / oficial:** os dois no mesmo turno, **com os arquivos divididos por
+  escrito** e sem um único cruzamento.
+  - **`testes`** — `reacaoDoSilencio`, `fecharAJanela`, `ATALHOS_DA_JANELA` e a
+    **nona porta `escondida`** em `src/ritmo-da-reacao.js`; a suíte
+    `testes/teste-trava-da-reacao.mjs` com **107 asserções em 0,6 s** sobre
+    120 000 pares; e o dente `D5e` em `check-formas.mjs`.
+  - **`oficial`** — `LINHAS_DO_GOLPE` e `TETO_DA_LINHA` em `src/golpe.js`, as
+    três funções mudadas de casa, o App a importá-las, e **18 asserções novas**
+    em `teste-golpe.mjs` (64 → 82).
+
+- **o Figma:** folha **`K2 · a trava`** (`140:429`, 1500×2339) com a ordem de
+  tabulação parada a parada, a tabela do foco (`143:488`), a faixa de 40 s da aba
+  lenta (`140:434`) e os números do alvo; as descrições de `O chamado` e `A
+  escolha` ganharam o bloco `[K2]`. **Zero peças, zero variantes, zero variáveis
+  novas** — a etapa inteira coube no que já existia, e é essa a notícia.
+
+- **a prova, e são quatro números:**
+  - **37,44 % dos resultados e 39,84 % dos rolos** divergem no desenho errado —
+    e o `testes` re-mediu independentemente e bateu na segunda casa.
+  - **+12,4 % de dano ao furtivo** (o `jogo` mediu +12,28 com 20 000 sementes, o
+    `testes` +12,38 com 10 000).
+  - **As quatro frases, medidas depois:** pior caso **29 · 44 · 47 · 41** contra
+    um teto de **54** — **antes eram 29 · 80 · 55 · 64**. O pior dos 108 pares
+    (27 nomes × 4 frases) é **47**, com sete de folga.
+  - **O alvo de toque, varrido:** 215 `<button>`, mediana **30 px**, **7,2 %
+    abaixo dos 24 px da WCAG 2.2 SC 2.5.8** — e as peças da Fase K a 48/56/47.
+
+- **decisões médias tomadas, cada uma com o motivo:**
+  1. **A colisão de `D5e` fica ESCRITA, e `tvGlow` não se afina.** O dente não
+     nasceu verde: `.tv-dice` declara `tvGlow 1s`, e 1 000 ms é exactamente
+     `aperto` e `bonusContagem`. **É coincidência, não cópia** — o brilho do d20
+     existe desde antes de haver relógio de reação. **Decidi não mexer na
+     animação:** um teste que dita a duração de uma animação viva é o rabo a
+     abanar o cão, e **uma entrada declarada com data e razão é uma declaração;
+     as 242 que D5 recusou eram um inventário.** A regra anti-cemitério fica por
+     cima, e uma colisão nova em qualquer outra classe fica vermelha no dia em
+     que nascer.
+  2. **A âncora de recusa passa a dizer ONDE procura.** `check-acoes-do-jogador`
+     acusou *"sumiu do App"* uma frase que apenas tinha mudado de arquivo. Até
+     aqui toda âncora era procurada no `App.jsx` — e isso era verdade **por
+     acidente**, porque os literais viviam todos lá. **Uma âncora que não diz
+     onde procura mente no dia em que a frase se muda.**
+  3. **A asserção do import afrouxou, e o motivo está no comentário.** Ela fixava
+     a linha inteira letra por letra e portanto **proibia que o App importasse
+     uma quarta coisa de `golpe.js`** — o contrário do que queria dizer. Passa a
+     conferir que os três nomes do veredito chegam de lá, e de mais lado nenhum.
+     *Uma asserção que quebra quando o módulo ganha um leitor mede a pontuação,
+     não a lei.*
+  4. **A lápide de 33 linhas fica, e vai para "Aberto" no mesmo dia.** Ver abaixo.
+
+- **o que ficou:**
+  - **A lápide, e ela é o preço feio desta etapa.** Apagar as 33 linhas do
+    `App.jsx` empurrava **133 endereços `src/App.jsx:<linha>`** cravados em nove
+    arquivos de `testes/`, **e alguns são verificados por varredor** — logo o
+    deslocamento não é cosmético: é a medição a mentir com a suíte verde. Ficou
+    um bloco de comentário de exactamente 33 linhas, com o próprio tamanho
+    explicado dentro. **Aceitei-o por um ciclo e abri o item que o mata** (*o
+    endereço deixa de ser um número e passa a ser uma âncora de texto*) — é o
+    mesmo movimento que a decisão 2 acabou de fazer, e é trabalho de uma tarde.
+  - **Duas coisas que a trava não prova, e ficaram escritas em K3:** o foco de
+    teclado não se prova em Node (a asserção 10 conta gestos de tabela; se K3
+    puser o cartão fora da ordem de tabulação, as 17 ficam verdes na mesma), e a
+    troca do `Math.random` global dentro de `reacaoDoSilencio` **é um cinto** —
+    menos honesta que o rolador por parâmetro, e vive até K3 ou até a proposta da
+    semente.
+  - **A lição que vale mais do que a etapa: 85 asserções de K1b estavam verdes
+    escritas com uma ficha que nunca rola um dado.** A suíte nova **falha se a
+    contagem de rolos for zero em todos os casos** — e a asserção 03 **constrói o
+    desenho errado e assere que ele diverge, pelo número**. *Uma catraca que só
+    sabe dizer «o certo está certo» não protege de nada.*
+  - **Duas foram para "pesado", e as duas acusam a própria casa de ter escrito
+    uma lei sem a pôr em tabela:** *o combate ganha uma semente* (205
+    `Math.random` na campanha contra **zero** em `duelo.js` — a primeira lei do
+    `CLAUDE.md` a valer metade do jogo) e *a régua do alvo de toque* (`ALVO`,
+    com o `desenho` a acusar-se de ter citado as três normas num parágrafo em vez
+    de as pôr numa tabela).
+
+---
+
 ## 16/09 06:20 · v9.264 · W2 · o texto ganha um segundo emprego · commit `cf91c7a`
 
 *O escrito dos dois seniores fica em `mente/w2-jogo.md` (com a `§8 · adenda`) e

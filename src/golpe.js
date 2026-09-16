@@ -47,6 +47,7 @@ import {
   distanciaM,
   alcanceNatural,
   nomeDoLugar,
+  metrosTxt,
   METROS_POR_QUADRADO,
   TAMANHOS,
 } from "./grid.js";
@@ -274,3 +275,110 @@ export function fraseDoGolpe(alvo) {
   const nome = String((alvo && (typeof alvo === "string" ? alvo : alvo.nome)) || "").trim();
   return nome ? `${base} ${nome}` : base;
 }
+
+/* ============================================================
+   AS QUATRO FRASES DO VEREDITO (W2 §3) — e por que elas mudaram de casa
+
+   `maisPertoAoAlcance`, `recusaDoGolpe` e `linhaDoGolpe` viviam no
+   `App.jsx` (:1111-1143). Vieram inteiras, e o argumento a favor da
+   mudança estava escrito no próprio App, ao lado delas:
+
+     "`golpe.js` mede e devolve números; estas três funções os VESTEM, e é
+      a única coisa que fazem."
+
+   A razão escrita para elas viverem lá era SÓ *"moram fora do corpo que
+   renderiza"* — não *"vestir não pertence ao módulo"*. Vestir pertence:
+   este arquivo é puro, roda em Node, já tem suíte, e já é o dono do `vd`
+   que as três leem. **E UM VARREDOR NÃO CONSEGUE LER JSX; CONSEGUE LER
+   ISTO** — foi por isso que a linha que mais aparece no combate mediu 64 a
+   86 caracteres contra um teto de 54 durante um ciclo inteiro sem ninguém
+   a apanhar.
+
+   `maisPertoAoAlcance` veio junto por necessidade, não por arrumação: é
+   lida por `linhaDoGolpe` aqui dentro e por duas fiações do App. Deixá-la
+   para trás partiria a função em dois arquivos.
+
+   E O QUE MUDOU NÃO FOI O APARO: FOI A REDACÇÃO. A pior das frases de
+   ontem media 62 caracteres com o nome VAZIO — aparar o nome nunca a
+   salvaria, porque ela estourava antes de o nome existir. Aparar é cortar
+   um facto que a frase já decidiu dizer; redigir é a frase decidir dizer
+   menos factos. Três das quatro passaram a partilhar uma gramática só —
+   `{nome} a {distância} m — {veredito}.` — e o jogador aprende a forma uma
+   vez e passa a ler só a cauda.
+   ============================================================ */
+
+/* O TETO É DE E2 e o que o acompanha não é decoração: a suíte precisa de
+   saber com que nome e com que número medir o pior caso, ou mede o caso
+   bonito. `numeroMaisLargo` é o que `metrosTxt` (grid.js:50) escreve na
+   pior hipótese; `nomeMaisLongoDasTabelas` saiu de varrer o bestiário. */
+export const TETO_DA_LINHA = {
+  chars: 54,
+  numeroMaisLargo: "10,5",          /* 4 caracteres */
+  nomeMaisLongoDasTabelas: 18,      /* "Sentinela Blindada" */
+};
+
+/* O `fixo` é o custo da frase com o nome VAZIO. Ele está escrito à mão e a
+   suíte reconfere-o contra a própria frase — um número que mente sobre a
+   linha que está ao lado dele é pior do que número nenhum. */
+export const LINHAS_DO_GOLPE = {
+  semAlvo:   { fixo: 29, monta: ()        => `Ninguém de pé ao seu alcance.` },
+  distancia: { fixo: 26, monta: (n, d, f) => `${n} a ${d} m — faltam ${f} m.` },
+  parede:    { fixo: 29, monta: (n, d)    => `${n} a ${d} m — parede, contorne.` },
+  aoAlcance: { fixo: 23, monta: (n, d)    => `${n} a ${d} m — ao alcance.` },
+};
+
+/* O APARO MORA AQUI, NUNCA NA TELA (lei de W1 §3.2 e de E2): uma frase já
+   aparada é uma frase; uma frase aparada por CSS é uma frase partida.
+   E ele é cinto contra o inesperado, não comportamento normal — a entrada
+   mais apertada só morde acima de 25 caracteres, e o nome mais longo das
+   tabelas tem 18. Quem o faz morder é um nome que o Narrador inventou. */
+const aparado = (nome, sobra) => {
+  const s = String(nome || "");
+  return s.length <= sobra ? s : s.slice(0, Math.max(1, sobra - 1)).trimEnd() + "…";
+};
+
+/* a sobra que cada frase deixa para o nome: o teto menos o custo fixo dela.
+   Sai da tabela, e é por isso que mudar uma frase não obriga a mexer aqui. */
+const sobraDe = (linha) => TETO_DA_LINHA.chars - linha.fixo;
+
+/* Quem, dos que estão ao alcance, está mais perto. É o alvo que o golpe
+   acerta por omissão — e o App mostra o nome dele, para o jogador nunca
+   descobrir tarde demais quem o sistema escolheu por ele. */
+export const maisPertoAoAlcance = (vd) => {
+  const lista = (vd && vd.aoAlcance) || [];
+  let perto = null;
+  for (const a of lista) if (!perto || a.distanciaM < perto.distanciaM) perto = a;
+  return perto;
+};
+
+/* A razão da RECUSA, e ela separa as duas — porque andar resolve uma e não
+   resolve a outra. Quem está longe demais ouve quantos metros faltam; quem
+   está atrás de parede ouve que precisa contornar, e nenhum passo à frente
+   vai adiantar. Dizer só "não dá" seria mandar o jogador adivinhar qual das
+   duas o mordeu.
+
+   `contorne` é a única ORDEM que sobreviveu à redacção, e a razão é a que
+   já estava escrita no App: andar resolve a distância e não resolve a
+   parede. Sem ela, o reflexo de quem lê um número em metros é andar a
+   direito — contra a pedra. Custa 10 caracteres e a frase ainda sobra 7. */
+export const recusaDoGolpe = (vd) => {
+  const perto = vd && vd.maisProximo;
+  if (!vd || vd.semLuta || !perto) return LINHAS_DO_GOLPE.semAlvo.monta();
+  if (perto.razao === "parede") {
+    const L = LINHAS_DO_GOLPE.parede;
+    return L.monta(aparado(perto.nome, sobraDe(L)), metrosTxt(perto.distanciaM));
+  }
+  const L = LINHAS_DO_GOLPE.distancia;
+  return L.monta(aparado(perto.nome, sobraDe(L)), metrosTxt(perto.distanciaM), metrosTxt(vd.faltaM));
+};
+
+/* E quando o golpe SAI, a mesma linha diz onde ele vai cair. O "dentro dos
+   seus {a} m de alcance" caiu na redacção: o alcance do herói já está na
+   tira acima ("seu alcance 9 m"), e repeti-lo custava 18 caracteres para
+   dizer duas vezes o mesmo número. */
+export const linhaDoGolpe = (vd) => {
+  const perto = maisPertoAoAlcance(vd);
+  if (!perto) return "";
+  const L = LINHAS_DO_GOLPE.aoAlcance;
+  return L.monta(aparado(perto.nome, sobraDe(L)), metrosTxt(perto.distanciaM));
+};

@@ -210,12 +210,29 @@ sec("4. AS OITO PORTAS — provar POR QUE não abriu");
   const todas = [semPm, gasta, respondeu, semReacao, arranhao, passar, travado, calou];
   t(`toda porta devolvida existe em PORTAS_DA_JANELA (${PORTAS_DA_JANELA.length} razões)`,
     todas.every((r) => r.fechados.every((f) => portasConhecidas.has(f.porta))));
-  /* SETE das oito têm caso nesta seção; a oitava (`so_magia`) é a que não
-     tem dono hoje, e a varredura acima é a catraca dela. */
-  t("e sete das oito têm caso escrito aqui", (() => {
+  /* SETE das nove têm caso nesta seção. As duas que faltam:
+
+     · `so_magia` — a que não tem dono hoje, e a varredura acima é a
+       catraca dela (ver o comentário longo mais acima).
+     · `escondida` — A NONA, NASCIDA EM K2 (v9.266). O MOTIVO DE ELA NÃO
+       TER CASO AQUI, e é para ficar escrito: esta seção prova as portas
+       DO JOGO — a preferência, o silêncio, o recurso gasto, o arranhão.
+       `escondida` não é uma porta do jogo, é uma condição da MÁQUINA (a
+       aba de fundo não garante temporizador nenhum, logo a janela nasce
+       já fechada e a rodada resolve-se como hoje, na hora). Ela é provada
+       inteira — precedência, espera zero, e o facto de NÃO alimentar a
+       escada — na asserção 15 de `teste-trava-da-reacao.mjs`, que é a
+       suíte da trava. Duplicá-la aqui seria provar a mesma coisa em dois
+       sítios e deixar as duas divergirem em silêncio.
+
+     A ASSERÇÃO MUDOU DE `faltam.length === 1` PARA A LISTA NOMEADA, e é
+     de propósito: uma contagem diria só "faltam duas" no dia em que
+     nascesse uma décima porta sem caso. A lista diz QUAIS, e uma porta
+     nova sem caso continua a ficar vermelha aqui. */
+  t("e sete das nove têm caso escrito aqui (`so_magia` e `escondida` têm o seu, escrito acima)", (() => {
     const vistas = new Set(todas.flatMap((r) => r.fechados.map((f) => f.porta)));
-    const faltam = PORTAS_DA_JANELA.filter((p) => !vistas.has(p.id)).map((p) => p.id);
-    return faltam.length === 1 && faltam[0] === "so_magia";
+    const faltam = PORTAS_DA_JANELA.filter((p) => !vistas.has(p.id)).map((p) => p.id).sort();
+    return faltam.join(",") === "escondida,so_magia";
   })());
   t("toda porta tem o porquê escrito", PORTAS_DA_JANELA.every((p) => typeof p.porque === "string" && p.porque.length > 10));
 }

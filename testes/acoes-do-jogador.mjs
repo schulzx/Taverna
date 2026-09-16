@@ -840,9 +840,18 @@ export const RECUSAS_DO_COMBATE = [
   { familia: "alcance", onde: "src/App.jsx:11910", fn: "aplicarGolpeDoJogador", anel: "nucleo", formas: 2,
     literal: "📏 ninguém está ao alcance do seu golpe — <alvo> está em <lugar>, a uns <n> m. Aproxime-se primeiro. / 📏 não há ninguém à vista para acertar — ou há parede no caminho (arma de longe)",
     nasce: "src/App.jsx:11825-11827" },
+  /* RE-MEDIDA EM K2 (16/09), e o motivo tem de sobreviver à mudança: as três
+     formas continuam três — a voz de recusa NÃO mudou, mudou a redacção dela.
+     W2 §3 provou que a frase antiga media 62 caracteres com o nome VAZIO
+     contra um teto de 54, logo nenhum aparo de nome a salvaria; foi REDIGIDA,
+     não aparada. E mudou de casa junto: `recusaDoGolpe` saiu do `App.jsx` para
+     `src/golpe.js`, onde as frases saem de `LINHAS_DO_GOLPE` e um varredor as
+     consegue ler — o que no App, dentro de JSX, nunca foi possível. O `onde`
+     continua a ser o `pushMsgs` do App, porque é lá que a recusa é DITA; o
+     `nasce` passa a apontar a tabela, porque é lá que ela é ESCRITA. */
   { familia: "alcance", onde: "src/App.jsx:12021", fn: "declararGolpe", anel: "nucleo", formas: 3,
-    literal: "📏 Longe demais — <alvo> a <n> m, faltam <n> m. Aproxime-se primeiro. / 📏 Há parede no caminho até <alvo> — contorne. / 📏 Ninguém de pé ao seu alcance.",
-    nasce: "src/App.jsx:1131 (recusaDoGolpe)" },
+    literal: "📏 <alvo> a <n> m — faltam <n> m. / 📏 <alvo> a <n> m — parede, contorne. / 📏 Ninguém de pé ao seu alcance.",
+    nasce: "src/golpe.js (recusaDoGolpe, LINHAS_DO_GOLPE)" },
   { familia: "alcance", onde: "src/App.jsx:13496", fn: "agirInterno", anel: "despachante", formas: 1,
     literal: "📏 <habilidade> não alcança ninguém daqui — <alvo> está em <lugar>, a uns <n> m[ e sem linha de visão]. O alcance de <habilidade> é <n> m.",
     nasce: "src/App.jsx:12142" },

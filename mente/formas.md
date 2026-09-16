@@ -3700,3 +3700,105 @@ faz o mesmo.
 frases contra o teto de 54*, com a régua de 324 px) e `137:16` (*o violeta da
 mira — 2,575 → 3,615*, seis células sobre os três chãos reais). `Campo`
 `133:90` foi **lido e não tocado**.
+
+---
+
+# A trava — quem não responde tem o jogo de hoje (K2 · 16/09)
+
+**K2 não redesenha nada de K1 nem de K1b.** Ela prova a trava, e a prova
+acontece **antes de a peça existir** — que é a ordem que a pessoa pediu, e é o
+que impede a peça de nascer com o defeito que ela deveria evitar. O escrito dos
+dois seniores vive em `mente/k2-jogo.md` e `mente/k2-desenho.md`.
+
+> ## O contrato, numa frase
+> **Quando o jogador não responde, K3 tem de chamar `escolherReacao` as mesmas
+> vezes, com os mesmos argumentos, na mesma ordem, e deixar os mesmos dezasseis
+> efeitos nos mesmos sítios — incluindo o número de rolos de `Math.random`.**
+
+## O erro que quase nasceu, e ele tem número
+
+O desenho óbvio de K3 — *a expiração resolve só o golpe da janela* — **quebra a
+trava em 37,44 % das sementes**, medido em 120 000 pares. Hoje o laço **repete**
+`escolherReacao` golpe a golpe quando a `chance` falha: o ladino esquiva
+**97,6 %** das rodadas, não 60,2 %; o contra-atacante **96,4 %**, não 55,6 %.
+Custo silencioso do erro: **+12,4 % de dano sofrido por rodada** ao furtivo.
+
+> ### «Coberto» quer dizer *não gera segunda pergunta*, nunca *não gera reação*. A janela agrupa a PERGUNTA; ela não agrupa a MECÂNICA.
+
+*As 85 asserções de K1b estavam verdes com uma ficha que nunca rola um dado. Uma
+catraca que só sabe dizer «o certo está certo» não protege de nada* — por isso a
+suíte **constrói o desenho errado e assere que ele diverge**, pelo número.
+
+## Sem mouse — e a trava é a última linha da tabela
+
+| o instante | o foco | por quê |
+|---|---|---|
+| a janela abre | vai para a parada 1 do cartão | a única viagem que o sistema faz por ele, e poupa-lhe Tab dentro de uma janela com relógio |
+| ele responde | **volta ao elemento anterior** | o foco não pode cair no `<body>`: guardar o elemento antes de mover é obrigação de K3 |
+| ele recusa | idem | recusar é uma resposta |
+| **a janela EXPIRA** | **não se mexe** | **quem não respondeu não pediu nada** |
+| o cartão resolvido sai | não se mexe | `Etapa=Resolvida` não contém alvo nenhum — é leitura, não controlo |
+
+**O foco só se move para quem agiu; nunca para quem não agiu.** E **a janela
+nunca rouba o foco do campo de texto**: com o campo focado ela existe, mostra-se
+e expira — *roubar o foco resolveria a ergonomia de um jogador e partiria a de
+outro, e a expiração não é castigo, é a trava a funcionar.*
+
+**Paridade de gestos, virada tabela** (`ATALHOS_DA_JANELA`): aceitar e recusar
+custam **1 toque e 1 tecla**; escolher um segundo verbo custa uma tecla a mais —
+**e o leque não expira, logo a tecla a mais não é paga em tempo.** *A paridade
+que interessa não é de gestos: é de resultado sob relógio.*
+
+**Dívida de peça declarada:** `O chamado` **não tem `Estado=Foco`**, e a razão
+que K1 deu (*"está focado desde que existe"*) é falsa — `Etapa=Direta` tem
+**duas** paradas, não uma.
+
+**O alvo de toque, medido no código** (215 `<button>`, 194 calculáveis): menor
+**20**, mediana **30**; **7,2 %** abaixo dos 24 px da WCAG 2.2 SC 2.5.8, 87,1 %
+abaixo dos 44 da Apple HIG, 91,2 % abaixo dos 48 do Material. **A peça da Fase K
+entra a 48 / 56 / 47 — acima de tudo.**
+
+## A aba lenta
+
+> ## O trilho não tem relógio próprio. Ele é uma leitura do relógio da janela.
+>
+> Tudo o que se vê deriva de `agora − t0`, lido do relógio de parede. **Dois
+> relógios são um a mais.** Anima-se a **entrada e a saída** do objeto (`tv-trilho-nasce`, `tv-trilho-sai`); **nunca o valor que ele mede.**
+
+**A aba escondida não abre janela nenhuma** — porta `escondida`, a nona, e ela é
+a **primeira** da precedência: as outras oito dizem *«não perguntes»*, esta diz
+*«não esperes»*. Resolve como hoje **na hora**, e **não alimenta a escada do
+silêncio**: uma expiração que o jogador nunca viu não é uma expiração dele.
+
+**A janela expira ao relógio de parede, olhasse alguém ou não** — senão mudar de
+aba congelaria o combate, e o resultado passaria a depender da visibilidade, que
+nenhuma semente reproduz. **Aos 40 s ele vê nada de novo: o log, byte a byte o
+jogo de hoje.** *Isso é a trava, não um buraco.*
+
+**A corrida que mata resolve-se com um portão de uma via**, e o segundo a chegar
+**não rola um dado sequer** — *um resultado deitado fora que rolou um dado é pior
+do que um resultado errado: o erro aparece, e o desalinhamento não.*
+
+**O `+1 s` de `prefers-reduced-motion` não é vantagem de jogo:** vive inteiro nos
+últimos 27 % da janela e vale ~4 fixações (Rayner 1998), sobre uma decisão
+binária. **Mas a lei dos bónus era só de direcção e não tinha teto** — a outra
+metade fica escrita.
+
+## O dente `D5e` — o relógio da tela conta tempo, nunca quadros
+
+Três asserções em `check-formas.mjs`: nenhuma classe de `MOVIMENTO_CSS` anima uma
+duração do relógio da reação · um piso de alcance (≥10 classes, ≥8 números lidos
+da tabela), *porque catraca verde por vazio é pior que catraca nenhuma* ·
+`TETO_DE_CONTADOR_DE_QUADRO` congelado (ui 2 · App 2 · grade 1).
+
+**O anti-padrão já vivia na casa:** `grade-de-batalha.jsx:385` conta **tiques**
+(`i += 1`), não tempo. Cosmético ali; **fatal se copiado para o trilho.** É o
+endereço que o teto guarda.
+
+> **Uma colisão fica ESCRITA, e é decisão do `regente`:** `.tv-dice` declara
+> `tvGlow 1s`, e 1 000 ms é exactamente `aperto` e `bonusContagem`. É
+> **coincidência, não cópia** — o brilho do d20 existe desde antes de haver
+> relógio de reação. **Não se afina `tvGlow` para a catraca ficar verde:** um
+> teste que dita a duração de uma animação viva é o rabo a abanar o cão. Fica em
+> `COLISAO_DE_RELOGIO_ESCRITA`, com data e razão, sob a regra anti-cemitério —
+> **uma entrada declarada é uma declaração; 242 eram um inventário.**

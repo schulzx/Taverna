@@ -29,6 +29,9 @@ const G = await import(RAIZ + "grid.js");
 const GOLPE = await import(RAIZ + "golpe.js");
 const AGR = await import(RAIZ + "agressao.js");
 const DES = await import(RAIZ + "desafios.js");
+/* o bestiário de VERDADE: a asserção nº 3 do bloco 7 mede os nomes que a
+   casa escreveu, não uma lista copiada que envelheceria sozinha */
+const BES = await import(RAIZ + "bestiario.js");
 const APP = readFileSync("../src/App.jsx", "utf8");
 
 let bons = 0, maus = 0;
@@ -322,6 +325,121 @@ sec("6. LIXO, IMUTABILIDADE E DETERMINISMO");
   const CRU = readFileSync("../src/golpe.js", "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
   t("golpe.js não importa React nem o App", !/from "react|from ".*App/.test(CRU));
   t("e não reimplementa geometria: compõe grid.js", /from "\.\/grid\.js"/.test(CRU) && !/Math\.hypot|linhaDeVisao\s*\(/.test(CRU));
+}
+
+sec("7. AS QUATRO FRASES — o teto de 54 caracteres, e o aparo que mora na tabela");
+{
+  /* W2 §3. A linha que mais aparece no combate media 64 a 86 caracteres
+     contra um teto de 54, e a recusa media 60 COM O NOME VAZIO — logo
+     aparar o nome nunca a salvaria. O que mudou foi a REDACÇÃO; o aparo
+     ficou como cinto contra o nome que o Narrador inventa.
+
+     As cinco asserções abaixo LEEM A TABELA DE VOLTA, e é essa a diferença
+     entre uma medida e uma afirmação: se alguém reescrever uma frase e
+     esquecer o `fixo` ao lado dela, a nº 1 fica vermelha na mesma hora. */
+  const TETO = GOLPE.TETO_DA_LINHA;
+  const L = GOLPE.LINHAS_DO_GOLPE;
+  const IDS4 = ["semAlvo", "distancia", "parede", "aoAlcance"];
+  const NUM = TETO.numeroMaisLargo;
+
+  t("a tabela traz as quatro frases, e só elas", Object.keys(L).join(",") === IDS4.join(","));
+  t(`o teto é ${TETO.chars}, e o pior nome e o pior número vêm com ele`,
+    TETO.chars === 54 && TETO.nomeMaisLongoDasTabelas === 18 && NUM.length === 4
+    && NUM === G.metrosTxt(10.5));
+
+  /* 1 — O NÚMERO DECLARADO TEM DE BATER COM A FRASE QUE ESTÁ AO LADO DELE.
+     Um `fixo` que mente sobre a própria linha é pior do que número nenhum:
+     todas as outras quatro asserções o usam como base. */
+  const mentem = IDS4.filter((id) => L[id].monta("", NUM, NUM).length !== L[id].fixo);
+  t(`o \`fixo\` de cada entrada bate com a própria frase, de nome vazio${mentem.length ? " — " + mentem.join(", ") : ""}`,
+    mentem.length === 0);
+  console.log("      fixos medidos: " + IDS4.map((id) => `${id} ${L[id].monta("", NUM, NUM).length}`).join(" · "));
+
+  /* 2 — as quatro cabem com o pior nome DAS TABELAS, sem o aparo entrar */
+  const estouram = IDS4.filter((id) => L[id].fixo + TETO.nomeMaisLongoDasTabelas > TETO.chars);
+  t(`as quatro cabem com o pior nome das tabelas (${TETO.nomeMaisLongoDasTabelas}) sem aparo${estouram.length ? " — " + estouram.join(", ") : ""}`,
+    estouram.length === 0);
+
+  /* as três funções que mudaram de casa, exercidas pelo veredito que elas
+     leem — é por aqui que os 27 nomes passam, e não pela `monta` crua */
+  const vdLonge = (nome) => ({ semLuta: false, maisProximo: { nome, distanciaM: 10.5, razao: "longe" }, faltaM: 10.5, aoAlcance: [] });
+  const vdParede = (nome) => ({ semLuta: false, maisProximo: { nome, distanciaM: 10.5, razao: "parede" }, faltaM: 0, aoAlcance: [] });
+  const vdPerto = (nome) => ({ semLuta: false, alcanceM: 10.5, aoAlcance: [{ nome, distanciaM: 10.5 }] });
+  const asQuatro = (nome) => [
+    GOLPE.recusaDoGolpe({ semLuta: true }),
+    GOLPE.recusaDoGolpe(vdLonge(nome)),
+    GOLPE.recusaDoGolpe(vdParede(nome)),
+    GOLPE.linhaDoGolpe(vdPerto(nome)),
+  ];
+
+  /* 3 — OS 27 NOMES DO BESTIÁRIO × O PIOR NÚMERO. A distância 10,5 é o pior
+     que `metrosTxt` escreve numa medida que o tabuleiro alcança (a diagonal
+     máxima é 33,9 m e o maior alcance é 37,5 m — os dois com 4 caracteres). */
+  const NOMES = [...BES.CRIATURAS_FANTASIA, ...BES.ARQUETIPOS].map((c) => c.nome);
+  t(`o bestiário deu os 27 nomes que W2 varreu (${NOMES.length})`, NOMES.length === 27);
+  const maiorNome = NOMES.reduce((a, b) => (b.length > a.length ? b : a), "");
+  t(`e o mais longo é "${maiorNome}" (${maiorNome.length}), como a tabela declara`,
+    maiorNome.length === TETO.nomeMaisLongoDasTabelas);
+
+  let pior = { n: 0, frase: "" };
+  const passaram = [];
+  for (const nome of NOMES) {
+    for (const f of asQuatro(nome)) {
+      if (f.length > TETO.chars) passaram.push(`${nome}: ${f.length} — "${f}"`);
+      if (f.length > pior.n) pior = { n: f.length, frase: f };
+    }
+  }
+  t(`27 nomes × 4 frases cabem no teto${passaram.length ? " — " + passaram.slice(0, 3).join("; ") : ""}`, passaram.length === 0);
+  console.log(`      o pior dos 108: ${pior.n} — "${pior.frase}"`);
+
+  /* 4 — O NOME QUE O NARRADOR INVENTA. 200 caracteres é absurdo de
+     propósito: se o aparo morasse na tela, esta asserção não existiria. */
+  const monstro = "M".repeat(200);
+  const gigantes = asQuatro(monstro);
+  t("com um nome de 200 caracteres, nenhuma das quatro passa do teto",
+    gigantes.every((f) => f.length <= TETO.chars));
+  t("e as três que carregam nome terminam em reticência, não cortadas a meio",
+    gigantes.filter((f) => f.includes(monstro.slice(0, 10))).length === 3
+    && gigantes.filter((f) => f.includes(monstro.slice(0, 10))).every((f) => /…$|…\s/.test(f)));
+
+  /* 5 — A QUE MAIS PROTEGE: NENHUM NOME DE ≤25 CARACTERES É APARADO. O
+     aparo é cinto contra o inesperado, não comportamento normal — a frase
+     nunca é mutilada por uma criatura que existe nas tabelas (máximo 18). */
+  const mutilados = [];
+  for (let n = 1; n <= 25; n++) {
+    const nome = "N".repeat(n);
+    for (const f of asQuatro(nome)) {
+      if (f.includes("…")) mutilados.push(`${n} caracteres: "${f}"`);
+      if (n <= 18 && !f.includes(nome) && f !== L.semAlvo.monta()) mutilados.push(`${n} perdeu o nome: "${f}"`);
+    }
+  }
+  t(`nenhum nome de até 25 caracteres é aparado${mutilados.length ? " — " + mutilados.slice(0, 3).join("; ") : ""}`,
+    mutilados.length === 0);
+  const apertada = IDS4.filter((id) => id !== "semAlvo").reduce((a, id) => (L[id].fixo > L[a].fixo ? id : a), "distancia");
+  t(`e a entrada mais apertada é \`${apertada}\`, que só morde acima de ${TETO.chars - L[apertada].fixo}`,
+    apertada === "parede" && TETO.chars - L.parede.fixo === 25);
+
+  /* e as três mudaram mesmo de casa: a definição saiu do App, o import
+     entrou, e os leitores continuam os mesmos dois que W2 nomeou */
+  t("as três funções saíram do App.jsx e chegam por import de golpe.js",
+    !/const (recusaDoGolpe|linhaDoGolpe|maisPertoAoAlcance) =/.test(APP)
+    && /import \{[^}]*recusaDoGolpe[^}]*linhaDoGolpe[^}]*maisPertoAoAlcance[^}]*\} from "\.\/golpe\.js"/.test(APP));
+  t("e o App continua com os seus dois leitores da recusa, e um da linha",
+    (APP.match(/recusaDoGolpe\(/g) || []).length === 2
+    && (APP.match(/linhaDoGolpe\(/g) || []).length === 1);
+  t("e `maisPertoAoAlcance` continua com as suas duas fiações no App",
+    (APP.match(/maisPertoAoAlcance\(/g) || []).length === 2);
+
+  /* o veredito real, de ponta a ponta: a abertura da taverna recusa por
+     distância, e a frase que o jogador lê cabe */
+  const tav = abertura("taverna");
+  const vt = GOLPE.vereditoDoGolpe({ grade: tav.g, meuLugar: tav.heroi, inimigos: tav.inimigos, alcanceM: GOLPE.ALCANCES.corpoACorpoPadrao });
+  const recusa = GOLPE.recusaDoGolpe(vt);
+  t(`a recusa real da taverna cabe: "${recusa}" (${recusa.length})`, recusa.length <= TETO.chars);
+  t("e é a frase da distância, não a da parede", /faltam/.test(recusa) && !/parede/.test(recusa));
+  t("sem luta, é a frase sem alvo", GOLPE.recusaDoGolpe(null) === L.semAlvo.monta());
+  t("e a linha do golpe é vazia quando ninguém está ao alcance",
+    GOLPE.linhaDoGolpe(vt) === "" && GOLPE.maisPertoAoAlcance(vt) === null);
 }
 
 console.log(`\ngolpe (X2): ${bons} passaram, ${maus} falharam`);

@@ -58,7 +58,7 @@ import { montarGrade, garantirGrade, posicionar, posicionarPerto, alcanca, camin
    acertar — ele PERGUNTA, e pergunta duas vezes: uma quando o golpe sai,
    outra antes do clique, para a tela poder dizer o veredito sem gastar o
    turno de ninguém. */
-import { alcanceDoGolpe, vereditoDoGolpe, fraseDoGolpe } from "./golpe.js";
+import { alcanceDoGolpe, vereditoDoGolpe, fraseDoGolpe, recusaDoGolpe, linhaDoGolpe, maisPertoAoAlcance } from "./golpe.js";
 import { deslocamentoDe, passoEfetivo, passoComSelecao, passoDeHabilidade, deslocamentoDeCriatura, resumoDeslocamento, resumoDeslocamentoPrompt, MOVIMENTO_PROMPT } from "./movimento.js";
 import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPreparada, ehPreparavel, preparadasIniciais, alternarPreparada, podeLancar, ehRitual, motivoDoCaderno, MINUTOS_RITUAL, resumoMagiasPrompt, MAGIAS_PROMPT } from "./magias.js";
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
@@ -1108,39 +1108,39 @@ const ACOES_PRONTAS = [
   { icone: "🎭", rotulo: "Enganar", texto: "Tento enganar " },
 ];
 
-/* ---------------- O VEREDITO DO GOLPE, EM VOZ DE MUNDO (v9.255, Fase X) ----------------
-   `golpe.js` mede e devolve números; estas três funções os VESTEM, e é a
-   única coisa que fazem. Nenhuma conta acontece aqui — e nenhuma acontece
-   no JSX: o que a tela escreve já veio medido de lá.
+/* ---------------- O VEREDITO DO GOLPE MUDOU DE CASA (v9.266, W2 §3) ----------------
+   As três funções que viviam aqui — `maisPertoAoAlcance`, `recusaDoGolpe` e
+   `linhaDoGolpe` — foram inteiras para `src/golpe.js`, e chegam por import na
+   mesma linha de `alcanceDoGolpe`, lá no topo do arquivo.
 
-   Elas moram fora do corpo que renderiza, com os outros ajudantes de
-   módulo, porque quem nasce dentro do render nasce de novo a cada letra
-   digitada — e nesta casa isso já custou o foco de um campo inteiro. */
-const maisPertoAoAlcance = (vd) => {
-  const lista = (vd && vd.aoAlcance) || [];
-  let perto = null;
-  for (const a of lista) if (!perto || a.distanciaM < perto.distanciaM) perto = a;
-  return perto;
-};
+   POR QUE SAÍRAM. O comentário que estava aqui dizia a verdade sobre elas:
+   *"`golpe.js` mede e devolve números; estas três funções os VESTEM, e é a
+   única coisa que fazem."* A razão escrita para viverem no App era SÓ *"moram
+   fora do corpo que renderiza"* — não *"vestir não pertence ao módulo"*.
+   Vestir pertence: `golpe.js` é puro, roda em Node, já tem suíte e já é o dono
+   do veredito que as três leem. E UM VARREDOR NÃO CONSEGUE LER JSX; CONSEGUE
+   LER ISTO — foi por isso que a linha que mais aparece no combate mediu 64 a 86
+   caracteres contra um teto de 54 durante um ciclo inteiro, sem ninguém a ver.
 
-/* A razão da RECUSA, e ela separa as duas — porque andar resolve uma e não
-   resolve a outra. Quem está longe demais ouve quantos metros faltam; quem
-   está atrás de parede ouve que precisa contornar, e nenhum passo à frente
-   vai adiantar. Dizer só "não dá" seria mandar o jogador adivinhar qual das
-   duas o mordeu. */
-const recusaDoGolpe = (vd) => {
-  const perto = vd && vd.maisProximo;
-  if (!vd || vd.semLuta || !perto) return "Ninguém de pé ao seu alcance.";
-  if (perto.razao === "parede") return `Há parede no caminho até ${perto.nome} — contorne.`;
-  return `Longe demais — ${perto.nome} a ${metrosTxt(perto.distanciaM)} m, faltam ${metrosTxt(vd.faltaM)} m. Aproxime-se primeiro.`;
-};
+   O QUE MUDOU JUNTO: as quatro frases foram REDIGIDAS, não aparadas. A pior
+   delas media 62 caracteres com o nome VAZIO, logo nenhum aparo de nome a
+   salvaria. Agora saem de `LINHAS_DO_GOLPE`, com `TETO_DA_LINHA` ao lado e a
+   suíte de `testes/teste-golpe.mjs` a medir as duas coisas de volta.
 
-/* E quando o golpe SAI, a mesma linha diz onde ele vai cair. */
-const linhaDoGolpe = (vd) => {
-  const perto = maisPertoAoAlcance(vd);
-  if (!perto) return "";
-  return `${perto.nome} a ${metrosTxt(perto.distanciaM)} m — dentro dos seus ${metrosTxt(vd.alcanceM)} m de alcance.`;
-};
+   E POR QUE ESTE BLOCO TEM O TAMANHO EXATO DO QUE SAIU — é feio de propósito,
+   e o motivo fica escrito para ninguém o "limpar" sem saber o preço: há 133
+   endereços `src/App.jsx:<linha>` cravados em nove arquivos de `testes/` — o
+   funil e as recusas de `acoes-do-jogador.mjs`, o `pushMsgs` de
+   `check-acoes-do-jogador.mjs`, `check-formas.mjs`, a régua de combate,
+   `teste-regua.mjs`, `teste-guardado.mjs` — e TODOS eles apontam para baixo
+   desta linha. Apagar 33 linhas aqui empurrava os 133 para cima de uma vez e
+   punha a medição inteira a mentir em silêncio, que é o defeito que esta casa
+   mais teme. As três funções ocupavam 33 linhas; este bloco ocupa as mesmas 33.
+
+   NÃO É PARA FICAR. No dia em que alguém re-medir aqueles endereços de uma vez
+   — e é trabalho de uma tarde, não de um ciclo — este bloco perde a razão e
+   deve encolher para as quatro linhas que ele merece. Até lá, cortá-lo custa
+   uma medição inteira. */
 
 /* v9.31: MODOS_MUNDO e instrucaoMundo saíram junto com a vez do mundo.
    Eram a rotação de cenas que a IA encenava quando o jogador pedia "faça o

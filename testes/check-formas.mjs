@@ -28,6 +28,13 @@
      `#E8A33D`, onde D5a fica cego porque o total continua 41.
    - D5c — OUTRO EIXO. Movimento sem saída no `prefers-reduced-motion`;
      não partilha uma linha de código com os outros dois.
+   - D5e — O RELÓGIO DA TELA CONTA TEMPO, NUNCA QUADROS. Nenhuma classe
+     de `MOVIMENTO_CSS` anima uma duração do relógio da reação, e nenhum
+     arquivo de `src/` ganha um contador de quadros sem subir o teto à
+     mão. Mesmo argumento dos outros: não há módulo para medir —
+     `ritmoDaRodada` devolve `trilhoMs` corretamente e continuará a
+     devolvê-lo no dia em que a tela o desenhar com um contador de
+     quadros. O que se prova aqui é o TEXTO do repositório.
 
    A sobreposição é declarada e de propósito: colar `#E8A33D` novo no
    `App.jsx` dispara os DOIS primeiros. A redundância custa zero, e as
@@ -83,6 +90,11 @@ import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { T, MATERIAIS, MOVIMENTO_CSS } from "../src/estilo.js";
+/* D5e lê a tabela do relógio DE VOLTA, que é a lei da casa: os números
+   não são transcritos aqui, são importados. No dia em que a janela deixar
+   de ser 15 000 ms, o dente muda de alvo sozinho — e é isso que separa
+   uma catraca de uma cópia. */
+import { RITMO_DA_REACAO, TETO_DA_ESPERA } from "../src/ritmo-da-reacao.js";
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? "\n      " + extra : "")); } };
@@ -293,6 +305,59 @@ const SEM_SAIDA_DE_MOVIMENTO = {
 };
 /* 15/09/2026 · todas pagas por: "prefers-reduced-motion cobre as 13 animações" */
 
+/* D5e · O TETO DO CONTADOR DE QUADRO, por arquivo. Medido em 16/09/2026.
+
+   A DOENÇA que ele guarda: uma aba de fundo é limitada a ~1 Hz, e depois
+   de alguns minutos a ~1/min. Um relógio de tela que conta TIQUES em vez
+   de ler tempo mente nessa aba — mostra "7 segundos" quando passaram
+   quarenta. No trilho da reação isso seria fatal: o número na tela deixa
+   de ser o número do sistema, e o jogador vê uma contagem que não é a
+   dele. Mesmo formato de `TETO_DE_LITERAIS`: arquivo sem entrada tem teto
+   ZERO, e subir um teto é escrever a razão na própria linha.
+
+   O BURACO, declarado com número porque um buraco calado é mentira: ele
+   conta OCORRÊNCIAS DE TEXTO, e por isso não sabe distinguir um
+   `setInterval` que lê o relógio de um que conta tiques. Prende a
+   quantidade, não a qualidade — tal como D5a. A qualidade fica no
+   comentário de cada entrada, e na revisão de quem subir o número. */
+const TETO_DE_CONTADOR_DE_QUADRO = {
+  "src/ui.jsx": 2,               /* as brasas, e elas estão certas: `performance.now()` */
+  "src/App.jsx": 2,              /* o d20, e ele está certo: `Date.now() - inicio > 1200` */
+  "src/grade-de-batalha.jsx": 1, /* DÍVIDA: `grade-de-batalha.jsx:385` conta TIQUES
+                                    (`i += 1`), não tempo. Cosmético ali — a peça anda
+                                    devagar numa aba de fundo e não mente sobre nada.
+                                    FATAL se copiado para o trilho da reação. É este
+                                    endereço que o teto guarda. */
+};
+
+/* D5e · A COLISÃO DE COINCIDÊNCIA, e ela nasceu com o dente.
+
+   O `desenho` ensaiou D5e.1 e mediu ZERO colisões — «13 classes × 10
+   números». O ensaio colheu UMA duração por classe, e `.tv-dice` declara
+   DUAS: `animation: tvShake .35s …, tvGlow 1s …`. A segunda vale 1 000 ms,
+   que é exactamente `aperto` E `bonusContagem` da tabela do relógio. Com a
+   leitura honesta — toda duração de toda animação declarada — o dente
+   nasce com uma colisão, não com zero.
+
+   E ELA É COINCIDÊNCIA, NÃO CÓPIA: `tvGlow 1s` é o brilho do d20 a rolar
+   (`App.jsx:486`), existe desde muito antes de haver relógio de reação, e
+   não desenha nada que o trilho meça. Mas o dente não distingue
+   coincidência de cópia — é a sua natureza declarada, a mesma de D5a — e
+   por isso a coincidência fica ESCRITA, com data e razão, em vez de
+   calada por um regex mais frouxo.
+
+   A REGRA ANTI-CEMITÉRIO VALE AQUI TAL E QUAL: no dia em que `.tv-dice`
+   deixar de animar 1 000 ms, a entrada SAI — não fica a dizer que houve
+   colisão num sítio onde já não há. E uma colisão NOVA, em qualquer outra
+   classe, fica vermelha no dia em que nasce.
+
+   · vai à pessoa: o `desenho` mediu zero e eu meço uma; a decisão de
+     afinar `tvGlow` para 1,1 s (e apagar a entrada) ou de a manter escrita
+     é dela, e não minha. */
+const COLISAO_DE_RELOGIO_ESCRITA = {
+  ".tv-dice": 1000,  /* 16/09 · `tvGlow 1s`, o brilho do d20 — coincide com `aperto` e `bonusContagem` */
+};
+
 /* O PISO DO ALCANCE, transplantado do `pisoDoAcervo` de
    `check-protecao`. Sem ele, um bug na máscara de comentário que
    apagasse um arquivo inteiro passaria VERDE medindo nada — e catraca
@@ -307,6 +372,13 @@ const ALCANCE_MINIMO = {
      `estilo.js` salta de 13 para 40 e a mensagem seria "SUBIU 27", que
      mente. Com o piso a falha diz a verdade: A ZONA DESAPARECEU. */
   pisoDeZona: 10,              /* T tem 14, MATERIAIS 13 */
+  /* D5e.2 · O MESMO ARGUMENTO, no outro eixo: sem o piso, um regex
+     partido ou uma tabela renomeada passariam VERDES a medir zero — e
+     catraca verde por vazio é pior que catraca nenhuma. O piso dos
+     números é 8 e hoje são 10; o das classes é o `pisoDeClassesDeAnimacao`
+     que D5c já exige, e D5e.1 reusa-o de propósito (as duas medem o mesmo
+     acervo, e dois pisos para um acervo divergiriam em silêncio). */
+  pisoDeNumerosDoRelogio: 8,   /* 10 hoje: 600 · 1000 · 4000 · 4600 · 5000 · 5600 · 11000 · 15000 · 16600 · 33200 */
 };
 
 /* ============================================================
@@ -599,6 +671,132 @@ const perdoesMortos = Object.keys(SEM_SAIDA_DE_MOVIMENTO).filter((c) => !semSaid
 t("e nenhum perdão sobrou no livro depois de a dívida ter sido paga",
   perdoesMortos.length === 0,
   perdoesMortos.map((c) => `PERDÃO MORTO: ${c} já está no prefers-reduced-motion. Tire-a de SEM_SAIDA_DE_MOVIMENTO.`).join("\n      "));
+
+/* ============================================================
+   5. D5e — O RELÓGIO DA TELA CONTA TEMPO, NUNCA QUADROS
+
+   Vem a seguir a D5c porque partilha com ele o `RX_REGRA` e o
+   `MOVIMENTO_CSS` já importado — e porque é o mesmo acervo visto por
+   outro eixo: D5c pergunta se a animação sabe PARAR, D5e pergunta se ela
+   sabe que horas são.
+   ============================================================ */
+sec("5. D5e — o relógio da tela conta tempo, nunca quadros");
+
+/* OS NÚMEROS DO RELÓGIO, lidos da tabela e não transcritos: as seis
+   grandezas de tempo de cada linha de `RITMO_DA_REACAO`, as somas
+   `trilho + bónus` (que é o que a tela de facto desenha quando os bónus
+   entram — os bónus engordam o TRILHO, nunca a folga), e os dois tetos.
+   O `parado` contribui zero, e zero não é duração de nada. */
+const numerosDoRelogio = new Set();
+for (const linha of RITMO_DA_REACAO) {
+  for (const k of ["janela", "folga", "trilho", "aperto", "bonusContagem", "bonusToque"]) if (linha[k] > 0) numerosDoRelogio.add(linha[k]);
+  if (linha.trilho > 0) {
+    if (linha.bonusContagem) numerosDoRelogio.add(linha.trilho + linha.bonusContagem);
+    if (linha.bonusToque) numerosDoRelogio.add(linha.trilho + linha.bonusToque);
+    if (linha.bonusContagem || linha.bonusToque) numerosDoRelogio.add(linha.trilho + (linha.bonusContagem || 0) + (linha.bonusToque || 0));
+  }
+}
+for (const k of ["msPorRodada", "msEntreRespostas"]) if (TETO_DA_ESPERA[k] > 0) numerosDoRelogio.add(TETO_DA_ESPERA[k]);
+
+/* AS DURAÇÕES DAS ANIMAÇÕES. Duas armadilhas, e as duas mordem em
+   silêncio:
+
+   (1) FATIAR POR VÍRGULA DE TOPO. `.tv-vira` declara
+       `cubic-bezier(.2,.7,.3,1)`, e um `split(",")` ingénuo parte a
+       função ao meio — o pedaço `1) .45s both` passaria a parecer uma
+       segunda animação de 450 ms que não existe.
+   (2) A PRIMEIRA GRANDEZA DE TEMPO É A DURAÇÃO; A SEGUNDA É O ATRASO.
+       Só a duração interessa: um atraso não desenha nada, e `.tv-vira`
+       tem um de 450 ms que não é relógio de coisa nenhuma.
+
+   E colhe-se TODA animação da abreviada, não só a primeira: `.tv-dice`
+   declara duas (`tvShake .35s` e `tvGlow 1s`), e é exactamente a segunda
+   que colide — ver `COLISAO_DE_RELOGIO_ESCRITA`. */
+const fatiarNoTopo = (s) => {
+  const partes = []; let nivel = 0, atual = "";
+  for (const ch of s) {
+    if (ch === "(") nivel++;
+    else if (ch === ")") nivel--;
+    if (ch === "," && nivel === 0) { partes.push(atual); atual = ""; } else atual += ch;
+  }
+  partes.push(atual);
+  return partes;
+};
+const duracoesDaRegra = (corpo) => {
+  const out = [];
+  for (const decl of corpo.matchAll(/animation\s*:\s*([^;]+)/g)) {
+    for (const parte of fatiarNoTopo(decl[1])) {
+      const tempos = [...parte.matchAll(/(-?\d*\.?\d+)\s*(ms|s)\b/g)];
+      if (!tempos.length) continue;
+      const [, n, u] = tempos[0];
+      out.push(u === "s" ? Math.round(parseFloat(n) * 1000) : Math.round(parseFloat(n)));
+    }
+  }
+  return out;
+};
+
+const colisoes = [];
+const duracoesVistas = [];
+const duracoesPorClasse = {};   /* por classe, para que o dente anti-cemitério meça a CLASSE e não o acervo */
+RX_REGRA.lastIndex = 0;
+{
+  let m;
+  while ((m = RX_REGRA.exec(antes)) !== null) {
+    if (!/animation\s*:/.test(m[2])) continue;
+    const classes = m[1].split(",").map((s) => s.trim());
+    for (const ms of duracoesDaRegra(m[2])) {
+      duracoesVistas.push(ms);
+      for (const c of classes) (duracoesPorClasse[c] = duracoesPorClasse[c] || []).push(ms);
+      if (!numerosDoRelogio.has(ms)) continue;
+      for (const c of classes) if (COLISAO_DE_RELOGIO_ESCRITA[c] !== ms) colisoes.push(`${c} anima ${ms} ms, que é um número do relógio da reação (RITMO_DA_REACAO / TETO_DA_ESPERA).`);
+    }
+  }
+}
+
+console.log(`  ··  ${queAnimam.size} classes com animation · ${new Set(duracoesVistas).size} durações distintas · ${numerosDoRelogio.size} números do relógio: ${[...numerosDoRelogio].sort((a, b) => a - b).join(" · ")}`);
+
+/* D5e.2 — O PISO PRIMEIRO, porque um dente que mede zero fica verde por
+   vazio e parece que cumpriu. */
+t(`D5e.2 · a varredura lê pelo menos ${ALCANCE_MINIMO.pisoDeNumerosDoRelogio} números da tabela do relógio`,
+  numerosDoRelogio.size >= ALCANCE_MINIMO.pisoDeNumerosDoRelogio,
+  numerosDoRelogio.size === 0 ? "A TABELA DESAPARECEU — renomearam `RITMO_DA_REACAO` ou as chaves de tempo, e o dente mede o vazio." : `leu ${numerosDoRelogio.size}`);
+t(`D5e.2 · e alcança pelo menos ${ALCANCE_MINIMO.pisoDeClassesDeAnimacao} classes com animation (o mesmo acervo de D5c)`,
+  queAnimam.size >= ALCANCE_MINIMO.pisoDeClassesDeAnimacao, `achou ${queAnimam.size}`);
+t("D5e.2 · e colhe pelo menos uma duração por classe que anima",
+  duracoesVistas.length >= queAnimam.size, `colheu ${duracoesVistas.length} durações para ${queAnimam.size} classes — o regex da abreviada partiu?`);
+
+/* D5e.1 — A COLISÃO. A tela não pode desenhar o relógio do sistema com um
+   número copiado: a duração da janela sai de `ritmoDaRodada`, que a lê da
+   tabela, e não de um `.tv-alguma-coisa` que a repete em CSS. Um número
+   copiado não muda no dia em que a janela mudar — e aí a barra mente. */
+t("D5e.1 · nenhuma classe de MOVIMENTO_CSS anima uma duração do relógio da reação",
+  colisoes.length === 0, colisoes.join("\n      "));
+
+/* O DENTE ANTI-CEMITÉRIO, o mesmo de D5c: uma colisão escrita que já não
+   existe é um livro falso. */
+const colisoesMortas = Object.entries(COLISAO_DE_RELOGIO_ESCRITA)
+  .filter(([c, ms]) => !((duracoesPorClasse[c] || []).includes(ms)))
+  .map(([c, ms]) => `COLISÃO MORTA: ${c} já não anima ${ms} ms. Tire a linha de COLISAO_DE_RELOGIO_ESCRITA.`);
+t("e nenhuma colisão sobrou no livro depois de ter sido desfeita",
+  colisoesMortas.length === 0, colisoesMortas.join("\n      "));
+
+/* D5e.3 — O CONTADOR DE QUADRO. Um teto por arquivo, congelado no retrato
+   de hoje: K3 não pode acrescentar um contador sem subir o teto à mão, e
+   subir o teto é escrever a razão. */
+const contadores = {};
+for (const arq of arquivos) {
+  if (!arq.startsWith("src/")) continue;
+  const ext = "." + arq.split(".").pop();
+  const texto = mascararComentarios(readFileSync(join(RAIZ, arq), "utf8"), ext);
+  const n = (texto.match(/\b(?:setInterval|requestAnimationFrame)\s*\(/g) || []).length;
+  if (n) contadores[arq] = n;
+}
+console.log(`  ··  ${Object.values(contadores).reduce((a, b) => a + b, 0)} contadores de quadro em ${Object.keys(contadores).length} arquivos: ${Object.entries(contadores).map(([a, n]) => `${a} ${n}`).join(" · ")}`);
+const falhasE = conferirTetos(contadores, TETO_DE_CONTADOR_DE_QUADRO,
+  { singular: "contador de quadro novo", plural: "contadores de quadro novos" },
+  "leia o relógio em vez de contar tiques, ou suba o teto com a razão escrita na própria linha.");
+t("D5e.3 · nenhum arquivo ganhou um contador de quadro — e nenhum perdeu um sem descer o teto (folga zero)",
+  falhasE.length === 0, falhasE.join("\n      "));
 
 console.log(`\n${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

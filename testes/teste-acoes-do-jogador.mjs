@@ -247,8 +247,20 @@ sec("1-B. do clique ao número — o que roda (sonda) e o que se lê (texto)");
      preço ANTES da ação irreversível, e aqui ele vira estado do botão */
   t("o clique é IMPEDIDO quando ninguém está ao alcance",
     /const impedido = golpeVivo && !vdGolpe\.algumAoAlcance;/.test(APP) && /disabled=\{impedido\}/.test(APP));
-  t("e o veredito é medido pelo mesmo módulo que resolve o golpe",
-    /vereditoDoGolpe\(\{/.test(APP) && /import \{ alcanceDoGolpe, vereditoDoGolpe, fraseDoGolpe \} from "\.\/golpe\.js";/.test(APP));
+  /* A ASSERÇÃO AFROUXOU EM K2 (16/09) E O MOTIVO FICA: ela fixava a linha de
+     import inteira, letra por letra, e portanto proibia que o App importasse
+     UMA QUARTA COISA de `golpe.js` — o que é o contrário do que ela quer
+     dizer. W2 §3 levou `recusaDoGolpe`, `linhaDoGolpe` e `maisPertoAoAlcance`
+     para lá, e a linha cresceu de três nomes para seis. O que a asserção
+     afirma continua a ser exactamente o mesmo: que os três nomes do veredito
+     chegam de `golpe.js` e de mais lado nenhum. Uma asserção que quebra quando
+     o módulo GANHA um leitor estava a medir a pontuação, não a lei. */
+  t("e o veredito é medido pelo mesmo módulo que resolve o golpe", (() => {
+    const imp = APP.match(/import \{([^}]*)\} from "\.\/golpe\.js";/);
+    const nomes = imp ? imp[1].split(",").map((s) => s.trim()) : [];
+    return /vereditoDoGolpe\(\{/.test(APP)
+      && ["alcanceDoGolpe", "vereditoDoGolpe", "fraseDoGolpe"].every((n) => nomes.includes(n));
+  })());
 }
 
 sec("2. os dois eixos — o clique e a frase contam histórias diferentes");
