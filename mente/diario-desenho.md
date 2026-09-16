@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 16/09 11:05 · v9.270 · K3 · a reação acontece · commit `HASH`
+## 16/09 11:05 · v9.270 · K3 · a reação acontece · commit `9901996`
 
 *O escrito dos dois seniores ficou de um ciclo anterior, em `mente/k3-jogo.md` e
 `mente/k3-desenho.md`; a forma, no bloco final de `mente/formas.md`.*
