@@ -755,27 +755,80 @@ dano lendo o traço racial, `removerPelaPorta` tem um chamador (a magia),
   declarada, e a lista só encolhe.** Das 40: 12 são H2, 7 caem pela régua do
   golpe (`HAB_OFENSIVA_RX`, item próprio nesta pauta), 5 são famílias de força
   zero, 16 pedem número que nenhuma tabela cobra.
-- [ ] **H2 · de quem já são os 12** · de: pessoa · 15/09
-  **Medir antes de construir — é o mesmo erro que a pergunta das 66 quase
-  cometeu.** Os 12 são sete assuntos (marca, zona persistente, cura por
-  turno, clima, aura reativa, contra-conjuração, PM de volta), e a suspeita
-  é que quase nenhum precisa de órgão:
-  - **clima já existe** — `rolarClima`/`pesosDoClima` em `encontros.js`
-    (módulo desde o primeiro ciclo da mente);
-  - **cura por turno, marca e aura reativa** têm a cara do que `efeitos.js`
-    já faz desde A2 — nascimento, prazo, pilha, `tickEfeitos`; marca é
-    efeito preso a um alvo, aura é efeito com gatilho;
-  - **PM de volta** é recurso, e recurso tem dono (`novosRecursos`,
-    `gastarRecurso`).
-  Sobram como candidatos a mecânica de verdade **zona persistente** (efeito
-  preso ao lugar, não à pessoa) e **contra-conjuração** (reagir ao ato de
-  conjurar — que encosta na Fase K, a reação com controle). Confirme ou
-  derrube com leitura, diga o número final, e **não construa nada aqui**.
-- [ ] **H3+ · o que sobrar vira etapa** · de: pessoa · 15/09
-  Escritas ao fim de H2, uma por assunto que de fato não tiver dono. Se a
-  medição mostrar que sobra pouco, a fase fecha em H2 e o resto entra como
-  itens da fila automática — **fase que termina menor do que começou é bom
-  sinal**, não é fracasso.
+- [x] **H2 · de quem já são os 12** · **FEITA 16/09 · v9.266 · commit `59dab1e`** · de: pessoa · 15/09
+  **A suspeita estava certa, e a medição encolheu a dívida sem escrever uma
+  linha de mecânica.** Dos 12: **6 já têm dono** (2 vivo, 4 parcial) e **6
+  não têm**. Dos **sete** assuntos, **quatro caíram**:
+  - **contra-conjuração já acontece** — a reação `contramagia` (`reacoes.js:35`,
+    `corta: 1`, `soMagia: true`) é concedida por nome na ficha e a fiação está
+    viva (`App.jsx:7664`→`:13981`). **Contramágica cumpre hoje**; o que não
+    existe é o inimigo *conjurar*, e isso é decisão escrita em `controle.js:26`,
+    não buraco;
+  - **PM de volta tem dono vivo — mas não o que a linha dizia.**
+    `gastarRecurso` (`combate.js:745`) é **export morto**, importada no App e
+    nunca chamada (a suíte trava isso em `teste-acoes-do-jogador.mjs:475`). O
+    dono é `sacrificarInvocacao` (`invocacoes.js:197`), que é o molde exato do
+    que Foco Interior pede;
+  - **clima tem motor vivo e semeável** (`rolarClima`/`pesosDoClima`,
+    `encontros.js:44`), chamado de verdade — **mas nenhuma rolagem o lê para
+    decidir número**: `palco.js:138` e `geografo.js:132` só o narram. Falta
+    leitor, não mecânica;
+  - **a metade mental da Contra-Canção sai pela porta** — `portaDeSaida` +
+    `removerPelaPorta` (`condicoes.js:756`/`:810`) já tiram `enfeiticado`,
+    `amedrontado` e `atordoado`.
+  **Ficam de pé quatro assuntos e seis habilidades** — marca, cura por turno,
+  zona persistente, e aura reativa sozinha na família. São as etapas H3–H6.
+  O registro está na tabela: as 12 entradas de `AGUARDAM` ganharam o campo
+  **`dono`** (`null`, ou `"src/arquivo.js · função"`), e a catraca em
+  `teste-poder-de-classe.mjs` §9 prova que são exatamente 12, que o arquivo
+  nomeado existe no disco, e que os sem-dono **só encolhem** (`<= 6`, e o `<=`
+  está justificado por escrito: um `===` ficaria vermelho no commit que PAGA a
+  dívida). **`dono` não autoriza ligar nada** — é endereço medido, e a saída de
+  `AGUARDAM` exige a ligação feita e provada, que é etapa própria.
+  **A fase não fecha em H2 — encolhe.** Sete assuntos viraram quatro, e o que
+  caiu virou item da fila automática (abaixo, em "Aberto"), não etapa de fase.
+- [ ] **H3 · a cura tem relógio** (cura por turno) · de: pessoa · 16/09
+  **A mais barata das quatro, e ela tem irmão gêmeo vivo.** `tickCondicoes`
+  (`condicoes.js:314-328`) já cobra `danoTurno` a cada turno — `envenenado` 2,
+  `sangrando` 3, `queimando` 4 — e **não há espelho de cura em relógio
+  nenhum**: `tickEfeitos` (`regras-jogo.js:369-378`) só desconta prazo e
+  dissipa. O campo espelho numa tabela, o ramo no relógio que já existe, e a
+  suíte que prova os dois sentidos. Paga **Renovação** e metade do **Círculo
+  Sagrado** (a outra metade é H6), e é o que falta à cura contínua do
+  **Chamado da Chuva**.
+- [ ] **H4 · a marca** (efeito preso a um alvo que soma dano) · de: pessoa · 16/09
+  **O canal já chega lá.** `resolverAtaque` recebe `condAlvo` nos três sítios
+  de ataque (`App.jsx:7686`, `:11855`, `:12211`), mas `combate.js:126-127` faz
+  `danoBase + modAtk.danoExtra − modAlvo.danoReduzido`: **do lado do alvo só se
+  lê `danoReduzido`**, logo uma condição no alvo só sabe fazê-lo apanhar menos.
+  **Parta em duas:** *"dano extra de todos"* (**Julgamento**) é ler o espelho
+  que falta; *"dano extra SEU"* (**Marca do Caçador**, **Maldição do
+  Patrono**) precisa de saber **de quem é a marca**, e o efeito de `efeitos.js`
+  não tem campo de dono. A primeira metade é pequena; a segunda abre campo
+  novo, e o veredito de tamanho é da etapa.
+  **Entra junto o defeito que esta etapa desnuda:** hoje a Maldição do Patrono
+  aplica `enfraquecido` (`danoReduzido: 2`, `condicoes.js:155`) e **deixa o
+  inimigo mais duro** — o avesso exato da promessa.
+- [ ] **H5 · a aura que reage** · de: pessoa · 16/09
+  Sozinha na família: só **Coração Tempestuoso**. Pede o campo que
+  `efeitos.js` **não tem** — um gatilho que *dispara*. `GATILHOS`
+  (`gatilhos.js:36`) existe e só sabe **encerrar** um efeito
+  (`romperPorGatilho`, `:113`), nunca acionar; e `moverInimigos`
+  (`grid.js:614`) move e devolve, sem perguntar a ninguém quem chegou perto.
+  Uma habilidade só é pouco para um órgão: **medir se o gatilho que dispara
+  paga sozinho, ou se espera companhia**, é a primeira pergunta da etapa.
+- [ ] **H6 · a zona presa ao lugar** · de: pessoa · 16/09 ·
+  **NÃO COMEÇA SEM A PALAVRA DA PESSOA — toca o formato do save (lei da casa).**
+  A mais cara, e a única com meio-dono no tabuleiro: `grid.js` **já guarda
+  estado por casa** (`paredes`, `estorvos`, chaves `"x,y"`, `:301`/`:311`),
+  lido por `ehParede`, `temCobertura`, `linhaDeVisao` e `caminhar`, e **a grade
+  já viaja no save** (`App.jsx:9275`). O que falta: **nada escreve nesses
+  conjuntos depois de `montarGrade`** (varrido: todos os usos são leitura), e
+  nenhuma casa sabe **de quem é**, **quanto dura**, nem **o que dispara ao ser
+  pisada**. `quadradosDaArea`/`pegosPelaArea` resolvem área no *instante* do
+  lançamento, não ao longo dos turnos. Paga **Mina Oculta**, a outra metade do
+  **Círculo Sagrado**, e o *"bloqueia a passagem"* da **Muralha de Gelo** (cuja
+  metade defensiva já é viva: `absorve: 10` por `efeitoDeBuff`).
 
 ### Fase Y — os quatro verbos que faltam
 Decisão da pessoa (15/09): aprovada a proposta do orquestrador, na ordem dele.
@@ -2279,6 +2332,51 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   etapa é a **T3 · a salvaguarda no fim do turno**; T2 fechou em v9.239.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **quatro regras que apanham a habilidade errada — e uma delas inverte o
+  que promete** · leve · de: sistema/H2 · 16/09
+  Apanhados a medir H2, não consertados ali de propósito (a etapa era medição).
+  **Nenhum tem teste hoje, e todos os quatro são "bug com teste que prova".**
+  1. **`combate.js:126-127` contradiz o próprio catálogo.** `condicoes.js:77`
+     declara *"danoExtra/danoReduzido → no dano CAUSADO"*, e a conta subtrai o
+     `danoReduzido` **do alvo** do dano que ele **recebe**. `modAtk.danoReduzido`
+     e `modAlvo.danoExtra` **não são lidos em lugar nenhum**. Consequência viva:
+     a **Maldição do Patrono** aplica `enfraquecido` e deixa o inimigo **2 mais
+     duro** por golpe — o avesso da promessa. *(Ler `modAlvo.danoExtra` é H4;
+     acertar o sentido do campo e escrever o teste é daqui.)*
+  2. **`aflicoes.js:29` — `chama` casa "**Chama**do da Chuva"**: a habilidade da
+     chuva põe o alvo `queimando`.
+  3. **`aflicoes.js` (portador `bencao`) — `oração` casa "C**oração**
+     Tempestuoso"**: a aura de raios **abençoa o grupo** e dá `+2` de dano.
+  4. **`aflicoes.js:32` — `prote[çc]` não casa "prote**gi**da"**, e o **Círculo
+     Sagrado** não tira nem a condição `protegido`. É a **mesma família** do
+     defeito "protetoras" que a v9.265/H1 corrigiu — logo a regra a acertar é a
+     raiz, não o caso.
+- [ ] **três ligações de uma linha que H2 mediu e não fez** · médio · de: sistema/H2 · 16/09
+  O dono existe e está vivo; falta o chamador. **Cada uma tira um nome de
+  `AGUARDAM` — e só sai de lá com a ligação provada.**
+  1. **Foco Interior** (Monge) → `sacrificarInvocacao` (`invocacoes.js:197-205`,
+     `mana: Math.min(manaMax, mana + pm)`) é o molde exato de "PM de volta", e
+     `aplicarCurto` (`descanso.js:100-112`) é o segundo. *A linha de `AGUARDAM`
+     apontava `gastarRecurso` — **export morto**, nunca chamado.*
+  2. **Contra-Canção** (Bardo), metade mental → o motor `porta` de
+     `aplicarPoder` (`poder-de-classe.js:283-306`) só trata **um** alvo; falta o
+     ramo `alvo: "grupo"`, e **o motor `cura` já tem o dele pronto para copiar**
+     (`:237-258`). Mais uma porta em `PORTAS_DE_SAIDA` e uma linha em
+     `PODERES_DE_CLASSE`. *A metade "sonoros" é contra-conjuração e fica.*
+  3. **Chamado da Chuva** (Druida), metade clima → chamar `rolarClima` com o id
+     forçado é uma linha. **Mas meça o que ela compra antes de a escrever:**
+     hoje ninguém decide número por clima, só o narra — pode ser que o item
+     honesto seja *dar um leitor ao clima*, e não *dar clima à habilidade*.
+- [ ] **Contramágica já cumpre, e `AGUARDAM` diz que não** · leve · de: sistema/H2 · 16/09
+  Medido em H2: a reação `contramagia` (`reacoes.js:35`) existe com `corta: 1`,
+  `reacoesDe` (`:79`) concede-a **por nome na ficha**, e a fiação está viva
+  (`tentarReacaoNoGolpe`, `App.jsx:7664`, chamado em `:13981`). **Ligação de
+  zero linhas.** Falta a **prova** — a suíte que a corre ponta a ponta — e só
+  então a linha sai de `AGUARDAM` e `TETO_DE_AGUARDAM` desce para 39.
+  *De quebra, um campo morto a enterrar: `funcao: "contramagia"` em
+  `grimorio.js:142` não está em `FUNCOES_DO_SISTEMA` (`:524-526`), logo
+  `usarFuncaoMagica` cai no `return false`.*
 
 - [ ] **o que o gesto de W1 pede ao motor — e o primeiro é o maior número da
   fase inteira** · médio · de: regente/jogo/desenho · 16/09 (W1)

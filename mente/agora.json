@@ -1,1 +1,5 @@
-[]
+[
+  { "agente": "regente", "o_que": "rege o ciclo K2 — a trava: quem não responde tem o jogo de hoje", "desde": "2026-09-16T06:00:00Z" },
+  { "agente": "testes", "o_que": "K2 · a trava em ritmo-da-reacao.js + teste-trava-da-reacao.mjs + o dente D5e", "desde": "2026-09-16T06:45:00Z" },
+  { "agente": "oficial", "o_que": "W2 · as quatro frases: LINHAS_DO_GOLPE em golpe.js, com o bastão do App.jsx", "desde": "2026-09-16T06:45:00Z" }
+]

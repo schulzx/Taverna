@@ -16,6 +16,101 @@ Formato:
 
 ---
 
+## 16/09 07:10 · v9.266 · H2 · de quem já são os 12 · commit `59dab1e`
+
+- **estado inicial limpo, pela primeira vez em três ciclos.** Trava ausente —
+  pus a minha. `git status` só com `mente/agora.json` (o painel), a outra mente
+  com o `App.jsx` já commitado (`eadef55`, D3). `npm test` **verde de saída:
+  188/188 suítes, 13/13 varredores.** `VERSAO` relida em `src/constantes.js`
+  **antes** de datar qualquer comentário — `v9.265` em HEAD e na árvore, logo
+  esta etapa sai **v9.266**. (H1 teve de redatar 32 comentários por não fazer
+  isto; desta vez a outra mente não subiu no meio, mas a releitura custou nada.)
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, etapa escrita.
+- **o bastão do `App.jsx`: NÃO TOMADO.** A etapa era medição e registro em
+  `src/poder-de-classe.js`; o App só foi **lido**. A outra mente (K2) precisava
+  dele para aplicar as quatro frases que W2 deixou prontas e transbordando —
+  deixá-lo livre custou zero a esta etapa e destrava a dívida do outro lado.
+- **backend (medição):** mediu os 12 contra o projeto inteiro, com um script
+  descartável no scratchpad que corre os despachantes reais sobre as `HAB(...)`
+  de `classes.js`. Cita arquivo e linha em cada veredito.
+- **backend (registro):** as 12 entradas de `AGUARDAM` ganharam o campo `dono`
+  e o `motivo` reescrito; o cabeçalho perdeu a lista dos sete assuntos e ganhou
+  o resultado. **40 12 6** confere. Não tocou no App, nem em `constantes.js`,
+  nem nos testes.
+- **testes:** seção 9 de `teste-poder-de-classe.mjs` — exatamente 12 com `dono`,
+  nenhuma das outras 28, forma `src/<arquivo>.js · <algo>`, **o arquivo nomeado
+  existe no disco** (`existsSync`, resolvido por `import.meta.url` e não pelo
+  cwd), e `semDono <= SEM_DONO_HOJE` (6), local ao teste. 196 asserções, 0
+  falhas. Nenhuma asserção de H1 movida nem afrouxada.
+
+### O número, e por que ele é menor
+
+Dos 12: **6 já têm dono** (2 vivo, 4 parcial), **6 não têm**. Dos **sete**
+assuntos, **quatro caíram**, e nenhuma linha de mecânica foi escrita para
+descobrir isso:
+
+- **contra-conjuração já acontece** — a reação `contramagia` (`reacoes.js:35`)
+  é concedida por nome na ficha e a fiação está viva. **Contramágica cumpre
+  hoje.** O que não existe é o inimigo *conjurar* — e isso é **decisão
+  escrita** em `controle.js:26`, não buraco;
+- **PM de volta tem dono vivo, mas não o que a linha dizia:**
+  `sacrificarInvocacao` (`invocacoes.js:197`), não `gastarRecurso`
+  (`combate.js:745`) — que é **export morto**, e a suíte já o travava;
+- **clima tem motor vivo e semeável** (`rolarClima`), **sem leitor de número**:
+  `palco.js` e `geografo.js` só o narram. Falta leitor, não mecânica;
+- **a metade mental da Contra-Canção sai pela porta** que já existe
+  (`removerPelaPorta`).
+
+**Ficam quatro assuntos e seis habilidades:** marca, cura por turno, zona
+persistente, e aura reativa sozinha na família.
+
+### Decisões médias, com o motivo
+
+1. **`dono` é campo, não prosa** — *"se é número, é tabela"* vale para endereço
+   também. Motivo: um veredito escrito só no `motivo` não é legível pela suíte,
+   e o que a suíte não lê apodrece. Com o campo, a catraca prova que o arquivo
+   citado **existe no disco** — que é o que um rename silencioso quebra.
+2. **A catraca dos sem-dono é `<=`, não `===`.** Motivo escrito no teste: um
+   `===` ficaria **vermelho no commit que PAGA a dívida**. A suíte tem de
+   aplaudir a descida e morder só a subida.
+3. **As 40 continuam 40 — nenhuma saiu.** Contramágica cumpre e Foco Interior
+   tem molde, mas **`dono` não autoriza ligar nada**: é endereço medido. Sair
+   de `AGUARDAM` exige a ligação feita **e provada**, e isso é etapa própria.
+   Afrouxar aqui seria usar o campo novo como porta dos fundos para esvaziar a
+   lista sem pagar.
+4. **A Fase H não fecha em H2 — encolhe.** A pauta autorizava fechar "se sobrar
+   pouco". **Sobrou pouco, mas não sobrou nada:** quatro assuntos de mecânica
+   real não cabem na fila automática, porque mecânica que muda o que o jogador
+   vive é `pesado` pela tabela do `CLAUDE.md`. Escrevi **H3–H6**, uma por
+   assunto, na ordem do mais barato ao mais caro — e o que de fato tinha dono
+   virou item de "Aberto", não etapa de fase. Sete assuntos viraram quatro
+   etapas: **a fase termina menor do que começou, que era o bom sinal.**
+5. **H6 (zona persistente) leva trava escrita: não começa sem a palavra da
+   pessoa.** Motivo: ela precisa de escrever em `grade.paredes`, e a grade
+   **viaja no save** — formato de save é `pesado` explícito na lei da casa. A
+   autorização da fase não cobre o que a etapa revelou de novo e grande.
+
+### O que ficou (e virou item da fila, não etapa)
+
+- **Quatro regras que apanham a habilidade errada**, apanhadas na medição e
+  **não consertadas de propósito** — a etapa era medir. Uma delas **inverte a
+  promessa**: a Maldição do Patrono aplica `enfraquecido`, e `combate.js:127`
+  desconta o `danoReduzido` do dano que o alvo **recebe** — amaldiçoar um
+  inimigo hoje deixa-o **2 mais duro**. As outras três são regex a apanhar
+  palavra dentro de palavra: `chama` em "**Chama**do da Chuva" (põe
+  `queimando`), `oração` em "C**oração** Tempestuoso" (abençoa o grupo), e
+  `prote[çc]` que **não** casa "prote**gi**da" — esta última é a **mesma
+  família** do defeito "protetoras" que a v9.265/H1 corrigiu, o que diz que a
+  correção de lá tratou o caso e não a raiz.
+- **Três ligações de uma linha**, medidas e não feitas (Foco Interior,
+  Contra-Canção mental, Chamado da Chuva) — com o aviso de medir o que a
+  terceira compra antes de a escrever: clima que ninguém lê é cenário.
+- **Contramágica sai de `AGUARDAM` quando tiver prova**, e aí
+  `TETO_DE_AGUARDAM` desce para 39. De quebra, um campo morto a enterrar:
+  `funcao: "contramagia"` (`grimorio.js:142`) não está em `FUNCOES_DO_SISTEMA`.
+- **Para a pessoa:** a única pergunta que é dela é a trava de H6 — se a zona
+  persistente pode escrever na grade que viaja no save.
+
 ## 16/09 06:20 · v9.265 · H1 · a porta das habilidades de classe · commit `d99bab3`
 
 - **estado inicial — e ele começa com um ciclo morto.** A trava
