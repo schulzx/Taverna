@@ -16,7 +16,7 @@ Formato:
 
 ---
 
-## 16/09 07:55 · v9.269 · V1 · o poço que apanha por você · commit `HASH`
+## 16/09 07:55 · v9.269 · V1 · o poço que apanha por você · commit `056dcd2`
 
 - **HOUVE UM CICLO MORTO, e é a primeira coisa que este bloco regista.** A
   trava `.claude/ciclo-em-curso` estava posta às **05:09** com o meu nome e

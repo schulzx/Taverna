@@ -1557,7 +1557,7 @@ da mesa: absorve o dano antes do PV real, não cura e não acumula; se você
 tem +4 e usa +10, deve escolher qual vai ser, ou o sistema escolhe
 automaticamente o maior."*
 
-- [x] **V1 · o campo e a ordem do dano** · **FEITO v9.269** (16/09, commit `HASH`) · de: pessoa · 14/09
+- [x] **V1 · o campo e a ordem do dano** · **FEITO v9.269** (16/09, commit `056dcd2`) · de: pessoa · 14/09
   Campo novo na ficha; `absorverDano` consome o temporário **antes** do PV
   real. **Não cura** (ganhar temporário não muda o PV atual) e **não
   acumula**: ao receber um novo, fica **o maior dos dois** — e quando a
