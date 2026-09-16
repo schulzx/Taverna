@@ -16,6 +16,103 @@ Formato:
 
 ---
 
+## 16/09 13:40 · v9.274 · F1 · a família `amortece` passa a cobrar · commit `c1038e5`
+
+- **estado inicial:** trava posta às 09:25 (não existia). Árvore limpa fora de
+  `mente/agora.json` e dos rascunhos de K4 da outra mente. `npm test` **194/194
+  suítes** mas **12/13 varredores**: `check-imports` acusava
+  `constantes.js: usa "ALVOS" sem importar`. Nunca se constrói sobre vermelho,
+  então foi o primeiro item — e era **falso positivo do próprio varredor**.
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, etapa escrita.
+- **backend:** `AMORTECIMENTO_DO_BUFF` (`src/efeitos.js`, colada à irmã
+  `ABSORCAO_DO_BUFF`), a chave `amortece` a nascer em `efeitoDeBuff`, e a
+  **estação nova** dentro de `amortecerDano` (`src/tracos.js`). Mediu a arena e
+  **não** a ligou. Comentários de `companheiros.js` e `poder-de-classe.js`
+  corrigidos; `AGUARDAM` de 40 para 39.
+- **testes:** `testes/teste-amortece.mjs` — **193 asserções**, 9 seções,
+  0 falhas; e `check-protecao.mjs` ganhou a seção 7 e o dente
+  `amorteceForaDaFamilia`.
+- **prova:** `npm run build` limpo. Na árvore, `npm test` dá **195/196** com
+  `teste-ligacao` vermelha por `estilo.js:TELA_DE_BATALHA` — **export da outra
+  mente, do E3, em edição naquele minuto**. Provado com
+  `bash mente/so-o-meu.sh` (HEAD + só os meus 8 arquivos): **196/196 suítes e
+  13/13 varredores**. Não consertei e não esperei, como manda a lei.
+
+### Onde a família entra na ordem do dano — o coração da etapa
+
+A fila do herói é `amortecerDano` (origem) → `repartirDano` (invocação) →
+`passarPeloAbrigo`, e este último é **abrigo → PV temporário → PV real → a
+porta da queda**. O abafo entra na **primeira estação, sobre o golpe cheio**,
+antes do abrigo e do poço: quem reduz por **proporção** tem de morder o número
+cheio, senão o mesmo buff vale metade contra quem tem escudo e o dobro contra
+quem não tem; quem come um valor **fixo** morde o que sobrou, porque para ele a
+ordem não muda o total.
+
+Dentro de `amortecerDano`, **depois das duas metades de origem e antes da
+redução fixa**, por três razões que são regressão se invertidas: (i) a redução
+fixa continua a última, regra que o cabeçalho já escrevia antes de F1 existir;
+(ii) a porta `d >= 4` da Pele de Pedra passa a ver **o mesmo número que vê
+hoje** — se o abafo cortasse antes, um Goliath com o buff deixaria de gastar a
+Pele em golpes que hoje a gastam, mudança de traço racial por causa de uma
+habilidade, e silenciosa; (iii) a Pele é um **gasto** e rende mais sobre o
+número cheio, enquanto o abafo não se gasta e pode esperar a vez.
+
+Provado com a fila inteira: Goliath com abafo de 25% e escudo de 6 contra um
+golpe de 20 → Pele 20→10 → abafo 10→8 → invocação 8 → abrigo 8→**2**.
+
+### Decisões médias, com o motivo
+
+1. **A moeda é porcentagem, não pontos.** `absorve` compra pontos porque o
+   abrigo morre na primeira batida; `amortece` vale em **todo** golpe do prazo,
+   então a régua é medida no total. A paridade está escrita degrau a degrau no
+   cabeçalho e cobrada pela suíte: 2 PM → 10% → ~3 no total contra os 4 que a
+   irmã come; 4 PM → 20% → ~9 contra 8. Quem paga 4 PM por proteção recebe
+   proteção de 4 PM, venha ela de uma vez ou repartida.
+2. **O teto é 25%, e é onde a tabela recusa a letra da ficção.** As fichas
+   dizem "metade". Metade **durante turnos** seria a Pele de Pedra — um gasto
+   de uma vez por luta — ligada a toda a cena por 3 PM. A lei que `GUARDAS` e
+   `ABSORCAO_DO_BUFF` já escreveram é *nada que zere o golpe*, e ela vale aqui.
+   **A ficção diz metade; o sistema paga um quarto, e paga em todo golpe.**
+   É a decisão mais discutível do ciclo e está declarada de propósito — se a
+   pessoa quiser a metade literal, é mudar um número de tabela.
+3. **A arena foi medida e NÃO foi ligada.** Ligar `amortecerDano` em
+   `arena.js` faria a família cumprir nas duas mesas, mas acenderia junto os
+   **traços raciais** que a catraca nunca mediu: **3 dos 8 prontos** têm origem
+   que ele lê (A Muralha/Goliath, A Chama/Tiefling, O Punho/Anão). Numa cópia
+   descartável a catraca **quebra**: muralha 46,8 → 62,5 no retrato, 66,9 em
+   "bb", três famílias fora da faixa, amplitude 21,8 contra teto 20. Não é
+   zero, então não liguei — o número fica escrito para F2.
+4. **`AGUARDAM` 40 → 39.** `Postura Defensiva` saiu (atravessa a porta
+   inteira). `Corpo de Ferro` ficou, com a dívida **trocada** de "a mecânica
+   não existe" para "a porta não abre", e com `dono` escrito. O motivo da
+   mudança do teto está no comentário da asserção, como a lei pede.
+5. **O varredor deixou de acusar quem reexporta** (commit `2b99c79`, antes do
+   item). `check-imports` não conhecia `export { X } from`, e quem levava a
+   acusação era decidido pela **ordem alfabética**: há dois reexports no
+   projeto, e `portao.js` escapava só porque vem depois de `cena` no alfabeto.
+   Um varredor que grita por engano perde o único valor que tem.
+
+### O achado honesto, e é o que F2 herda
+
+**As 8 da família nascem com número; só 2 atravessam a porta de produção de
+hoje** (`Postura Defensiva` e `Proteção contra Energia`). As outras 6 não casam
+com `aflicaoDe`, e `aplicarBuffDeHabilidade` (`App.jsx:8136`) sai **antes** de
+`efeitoDeBuff` — o efeito nunca chega à ficha. Isso é `App.jsx`, cujo **bastão
+esteve com a outra mente o ciclo inteiro** (E3, a tela da batalha), e fica
+declarado em vez de meio-feito. É a mesma lição de W2: meia troca é a mesma
+regra em dois caminhos.
+
+- **o que ficou:** a porta `aflicaoDe`; a arena, com o número que a proíbe
+  hoje; o piloto dos companheiros **intocado de propósito** (P2 provou que
+  procurar vem depois de cumprir); e `protege`, `intocado` e `nao_cai` ainda
+  com força zero — **mas o molde está estabelecido**, que era o que F1
+  prometia: tabela irmã + chave que só nasce quando existe + estação na fila
+  do dano + seção no varredor.
+- **para a pessoa decidir:** nada novo foi para "pesado" neste ciclo. A única
+  coisa que pede o olho dela é a decisão 2 — o quarto em vez da metade.
+
+---
+
 ## 16/09 09:25 · v9.272 · Z1 · o recálculo, e a prova de que ele não se mexe · commit `400748a`
 
 - **estado inicial:** trava `.claude/ciclo-em-curso` **não existia** — mas

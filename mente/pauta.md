@@ -520,18 +520,41 @@ caro. Nenhuma começa antes de a anterior fechar verde.
 Decisão da pessoa (14/09): *"todas devem cumprir o que prometem."*
 
 P1 criou cinco famílias em `APLICACAO_DO_BUFF`; P3 deu número e leitor a uma
-(`absorve`). Seguem com força zero: `intocado` (18 habilidades), `amortece`
-(8), `protege` (8) e `nao_cai` (5) — **39 que prometem na ficha e não cumprem
-na mesa**. E está medido em P2 que o piloto **não pode** procurá-las enquanto
+(`absorve`), e **F1 deu à segunda** (`amortece`, v9.274). Seguem com força
+zero: `intocado` (18 habilidades), `protege` (8) e `nao_cai` (5) — **31 que
+prometem na ficha e não cumprem na mesa**, das 39 que eram.
+E está medido em P2 que o piloto **não pode** procurá-las enquanto
 forem inertes (mandá-lo gastar turno em promessa vazia derrubou a catraca:
 `sombra` 60,2 → 32,9).
 
 Uma família por etapa, nesta ordem — o caminho pronto primeiro, o que colide
 por último:
 
-- [ ] **F1 · `amortece` (8)** · de: pessoa · 14/09
-  Tem o caminho pronto: `amortecerDano` já corta pela metade. É a etapa que
-  estabelece o molde das outras três.
+- [x] **F1 · `amortece` (8)** · **FEITA 16/09 · v9.274 · commit `c1038e5`** · de: pessoa · 14/09
+  **O molde está posto, e é este:** tabela irmã (`AMORTECIMENTO_DO_BUFF`,
+  colada a `ABSORCAO_DO_BUFF`) + chave que **só nasce quando existe** +
+  **estação na fila do dano** + seção no varredor. Zero linhas de `App.jsx`:
+  `amortecerDano` já rodava em produção e já escrevia ficha e dano de volta.
+  **Onde entra:** primeira estação da fila do herói (`amortecerDano` →
+  `repartirDano` → abrigo → PV temporário → PV real → a queda), **sobre o golpe
+  cheio** — proporção morde o número cheio, valor fixo morde o que sobrou; e
+  dentro de `amortecerDano`, depois das duas metades de origem e antes da
+  redução fixa, para a porta `d >= 4` da Pele de Pedra continuar a ver o número
+  que vê hoje. **Medido e não reequilibrado:** régua e catraca da arena
+  idênticas ao byte.
+  **Três coisas que F2 herda por escrito:**
+  1. **A porta, e é o maior achado:** as 8 nascem com número, mas **só 2
+     atravessam a produção de hoje** (`Postura Defensiva`, `Proteção contra
+     Energia`). As outras 6 não casam com `aflicaoDe`, e
+     `aplicarBuffDeHabilidade` (`App.jsx:8136`) sai **antes** de `efeitoDeBuff`.
+     **É `App.jsx` e pede o bastão.**
+  2. **A arena, medida e não ligada:** ligar `amortecerDano` em `arena.js`
+     acenderia junto os traços raciais de **3 dos 8 prontos** (Goliath,
+     Tiefling, Anão) e **quebra a catraca** (muralha 46,8 → 62,5; 66,9 em "bb";
+     amplitude 21,8 contra teto 20). Ligar exige tratar a Pele de Pedra antes.
+  3. **O teto em 25% recusa a letra da ficção** ("metade"), porque metade
+     durante turnos seria a Pele de Pedra ligada a toda a cena por 3 PM. Está
+     em tabela, logo desfeito num commit se a pessoa quiser a metade literal.
 - [ ] **F2 · `protege` (8)** · de: pessoa · 14/09
 - [ ] **F3 · `intocado` (18)** · de: pessoa · 14/09
   **Colide com `estaIntocavel`** (a guarda de um turno da v9.53, que erra
