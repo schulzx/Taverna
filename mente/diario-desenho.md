@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 16/09 14:45 · v9.277 · E3 · a tela da batalha existe · commit `HASH`
+## 16/09 14:45 · v9.277 · E3 · a tela da batalha existe · commit `512b944`
 
 *O escrito das mãos fica em `mente/e3-jogo.md` (duas lutas inteiras, jogadas) e
 `mente/e3-desenho.md` (o Figma); a forma, no bloco final de `mente/formas.md`.*
