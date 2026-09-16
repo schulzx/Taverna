@@ -46,11 +46,13 @@ import { T, ALVOS, TELA_DE_BATALHA as G } from "./estilo.js";
 import { GridDeBatalha } from "./grade-de-batalha.jsx";
 import { Retrato, BarraMini, PontoAtivo } from "./ui.jsx";
 import { sementeDe, estadoDe } from "./semente.js";
-import { metrosTxt } from "./grid.js";
+import { metrosTxt, podeDarUmPasso } from "./grid.js";
+import { mecanicaDe } from "./condicoes.js";
+import { selosDaMecanica } from "./selo-de-estado.js";
 import { tituloDe } from "./divindades.js";
 import {
   faixaDaVez, rotuloDaVez, fileiraDeVerbos, vereditoDaTela,
-  ultimasLinhasDoMestre, NARRACAO, PEDIDO_DO_VERBO,
+  ultimasLinhasDoMestre, NARRACAO, PEDIDO_DO_VERBO, impedimentosDaFileira,
 } from "./tela-de-batalha.js";
 
 /* ---------------- ONDE A MÃO TAPA O TABULEIRO ----------------
@@ -188,7 +190,19 @@ function Verbo({ v, armado, impedido, aoTocar }) {
   const recuo = v.papel === "recuo";
   return (
     <button
-      onClick={() => { if (!impedido) aoTocar(); }}
+      /* O BOTÃO NÃO DECIDE, E ISTO CUSTOU UMA LUTA PARA SE VER. Ele
+         fazia `if (!impedido) aoTocar()` — e com isso ENGOLIA o toque
+         no verbo impedido: a regra que recusa e escreve a razão nunca
+         chegava a correr, e a linha do veredito continuava a falar de
+         outra coisa. A suíte provava a regra (ela está certa) e a tela
+         nunca a chamava.
+
+         Agora o toque passa SEMPRE, e quem decide é `tocarVerbo`, que
+         é onde a tabela das recusas mora. O verbo continua impedido —
+         nada acontece a não ser a razão aparecer —, e é essa a
+         diferença entre um controle mudo e um que diz por que não.
+         *Silêncio lê-se como «nada a dizer», nunca como «não dá».* */
+      onClick={() => aoTocar()}
       /* `aria-disabled` E NAO `disabled`: um botao desativado sai da ordem
          de tabulacao, e quem navega por teclado ou ouve a tela deixa de
          saber que o verbo principal existe. Impedido ele continua a ser —
@@ -284,12 +298,53 @@ function AUltimaFala({ texto, carregando, noTelefone }) {
   );
 }
 
+/* ---------------- O SELO DO MODIFICADOR (E4) ----------------
+   O texto e o tom saem de `selo-de-estado.js`; aqui só se escolhe a tinta,
+   que é a única coisa que um módulo puro não pode escolher.
+
+   E A PALAVRA VEM SEMPRE JUNTA, nunca só a cor: é `DANO` contra `DANO
+   SOFRIDO` que separa os dois vermelhos (WCAG 1.4.1, *Use of Color*).
+   Um selo que dependesse da cor para dizer de que lado a conta pende
+   seria ilegível exactamente para quem a cor não separa. */
+function SeloDoModificador({ selo }) {
+  const cor = selo.tom === "bom" ? T.ok : selo.tom === "perigo" ? T.danger : T.inkDim;
+  return (
+    <span className="tv-mono text-[10px] px-1.5 py-0.5 rounded shrink-0"
+      style={{ border: `1px solid ${cor}`, color: cor, fontWeight: 600 }}>{selo.texto}</span>
+  );
+}
+
 /* ---------------- A TIRA DO HERÓI — a ficha curta ----------------
    Informação, e não porta: durante a luta ela NÃO abre a ficha. Um
    controle que, tocado no meio de uma luta, ou não faz nada ou termina a
    luta, não pode estar na tela da luta — e abrir a bolsa inteira para
-   arrumar é o exemplo do meio do critério. */
-function TiraDoHeroi({ personagem, economia, acaoBonus }) {
+   arrumar é o exemplo do meio do critério.
+
+   ============================================================
+   E4 · NO TELEFONE ELA É UMA LINHA, E ISSO É REPOSIÇÃO, NÃO INVENÇÃO
+
+   O quadro do telefone de E1 (40:447, no Figma desde 15/09) sempre teve
+   o herói resolvido numa tira de 44 px. A construção de E3 empilhou duas
+   `A ficha curta` — que é peça de MESA, 288×150 — e ficou com 144,
+   deixando 296 px de campo: 30 casas inteiras de 196, 15 % do tabuleiro.
+
+   E a decisão não é "esconder numa gaveta", é ESVAZIAR — porque o `jogo`
+   contou a carga item a item e TRÊS DE SETE campos já estavam no ecrã no
+   mesmo instante: o meu nome (na minha ficha do campo, rotulada
+   "você"), o nome dele (na ficha dele) e a distância (na linha do
+   veredito, que a escreve com o "faltam"). *Uma tira 43 % duplicada não
+   se esconde numa gaveta: esvazia-se.*
+
+   O que fica é o que não tem outra casa: PV, PM, a economia da rodada,
+   os modificadores do motor (E4 §6) e a vida do adversário em NÚMERO —
+   porque à volta da ficha, a 48 px, ela é um arco e lê-se como fracção,
+   nunca como quanto falta.
+
+   Medido: campo 296 → 436 px = 9,08 filas; casas inteiras 30 → 48, de
+   15 % para 24 % do tabuleiro. E o tecto fica escrito, porque buraco
+   calado é mentira: 24 % ainda não é um tabuleiro, e os outros 76 %
+   pedem a escala da casa, que está com a pessoa e não se toca. */
+function TiraDoHeroi({ personagem, economia, acaoBonus, selos = [], adversario = null, umaLinha = false }) {
   const grave = personagem.vidaMax > 0 && personagem.vida / personagem.vidaMax <= 1 / 3;
   const eco = economia || { acao: 1, extra: 1 };
   /* o que sobra da rodada. Uma pílula acesa sem número faria a segunda
@@ -300,6 +355,35 @@ function TiraDoHeroi({ personagem, economia, acaoBonus }) {
     <span key={rotulo} className="tv-mono text-[9px] px-1.5 py-0.5 rounded"
       style={{ border: `1px solid ${ativo ? T.amber : T.line}`, color: ativo ? T.amberSoft : T.inkDim, opacity: ativo ? 1 : 0.45, textDecoration: ativo ? "none" : "line-through" }}>{rotulo}</span>
   );
+  /* A LINHA DO TELEFONE. O nome NÃO entra: ele está na ficha do campo,
+     rotulada "você", no mesmo instante. E ela ROLA na horizontal em vez
+     de quebrar — uma tira que quebra deixa de ter 44 px e volta a comer
+     o campo, que é o defeito inteiro que ela veio pagar. */
+  if (umaLinha) {
+    return (
+      <div className="flex items-center gap-2 shrink-0 overflow-x-auto tv-scroll px-1"
+        style={{ height: G.tiraDoHeroi, minHeight: G.tiraDoHeroi }}>
+        <span className="tv-mono text-[11px] shrink-0" style={{ color: grave ? T.danger : T.amberSoft, fontWeight: 700 }}>
+          PV {Math.max(0, personagem.vida || 0)}/{personagem.vidaMax || 0}
+        </span>
+        {personagem.manaMax > 0 && (
+          <span className="tv-mono text-[11px] shrink-0" style={{ color: T.violetSoft }}>
+            PM {Math.max(0, personagem.mana || 0)}/{personagem.manaMax}
+          </span>
+        )}
+        {chip(eco.acao > 0, eco.acao > 1 ? `⚔ ×${eco.acao}` : "⚔")}
+        {eco.extra != null && (eco.extra > 0 || acaoBonus) && chip(eco.extra > 0, "✦")}
+        {selos.map((x) => <SeloDoModificador key={x.id} selo={x} />)}
+        {adversario && (
+          /* a vida dele em NÚMERO: à volta da ficha, a 48 px, ela é um
+             arco e lê-se como fracção, nunca como quanto falta */
+          <span className="tv-mono text-[11px] shrink-0 pl-2" style={{ color: T.danger, borderLeft: `1px solid ${T.line}` }}>
+            {adversario.nome} {Math.max(0, adversario.vida || 0)}/{adversario.vidaMax || 0}
+          </span>
+        )}
+      </div>
+    );
+  }
   return (
     <div className="flex items-center gap-3 rounded-xl px-2.5 py-2 shrink-0"
       style={{ background: T.panel, border: `1px solid ${grave ? T.danger : T.line}` }}>
@@ -313,6 +397,16 @@ function TiraDoHeroi({ personagem, economia, acaoBonus }) {
         </div>
         <BarraMini rotulo="PV" atual={personagem.vida} max={personagem.vidaMax} cor={grave ? T.danger : T.amber} corBaixa={T.danger} />
         {personagem.manaMax > 0 && <BarraMini rotulo="PM" atual={personagem.mana} max={personagem.manaMax} cor={T.violetSoft} />}
+        {/* OS MODIFICADORES DO MOTOR (E4). `mecanicaDe` devolve sete
+            campos que mexem num número e a tela desenhava quatro — e os
+            quatro estavam FORA da luta, porque a tela da batalha esconde
+            o HUD inteiro. `Enfraquecido` bate −2 e `Marcado` apanha +2, e
+            nenhum dos dois tinha canal nenhum aqui dentro. */}
+        {selos.length > 0 && (
+          <div className="flex items-center gap-1 flex-wrap">
+            {selos.map((x) => <SeloDoModificador key={x.id} selo={x} />)}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -462,6 +556,14 @@ export function TelaDeBatalha(props) {
   const noTelefone = usarTelefone();
   const [armado, setArmado] = React.useState("");
   const [bolsaAberta, setBolsaAberta] = React.useState(false);
+  /* quantas casas o passo acende — `null` é "ainda não medido", e nesse
+     estado nada se impede: um verbo impedido por falta de medida é a
+     tela a mentir ao contrário */
+  const [casasDoPasso, setCasasDoPasso] = React.useState(null);
+  /* a razão do verbo que recusou armar, a caminho da linha do veredito.
+     É estado de TELA e não de jogo: ela responde ao último toque, e o
+     último toque não se guarda em save nenhum. */
+  const [recusado, setRecusado] = React.useState("");
 
   /* `Esc` desarma: é uma das TRÊS saídas de W1. As outras duas são tocar
      o verbo outra vez e tocar o campo — esta última é a única que existe
@@ -469,6 +571,12 @@ export function TelaDeBatalha(props) {
      do campo. E andar desarma como CONSEQUÊNCIA, não como efeito
      colateral: andar muda o alcance, logo a mira anterior deixou de
      valer de qualquer maneira. */
+  /* A RAZÃO MORRE COM A RODADA. "o seu passo acabou nesta rodada" é
+     verdade sobre UMA rodada; deixá-la na linha depois da virada seria a
+     linha do veredito a falar do passado, que é exactamente o que ela
+     não é. */
+  React.useEffect(() => { setRecusado(""); }, [combate.rodada]);
+
   React.useEffect(() => {
     if (!armado) return undefined;
     const ouve = (e) => { if (e.key === "Escape") setArmado(""); };
@@ -541,12 +649,55 @@ export function TelaDeBatalha(props) {
   const selos = faixaDaVez(combate, personagem.nome);
   const dePe = inimigos.filter((e) => !e.derrotado).length;
 
-  /* o `Atacar` é IMPEDIDO quando ninguém está ao alcance — a metade que
-     evita o "longe demais" dez vezes seguidas na abertura de toda luta */
-  const impedidos = { atacar: !!(vd && !vd.algumAoAlcance) || !!p.bloqueado };
+  /* OS MODIFICADORES QUE O MOTOR CALCULA E A TELA ESCONDIA (E4).
+     `mecanicaDe` devolve sete campos que mexem num número; a fila de
+     pílulas do HUD desenhava quatro, e os quatro estavam FORA da luta,
+     porque a tela da batalha esconde o HUD inteiro. `Enfraquecido` bate
+     −2 (e H4 acabou de pagar para esse número contar certo) e `Marcado`
+     apanha +2 — e o único canal dele era o `title=` da condição, que é
+     balão de rato e no telefone não existe. */
+  const modificadores = (() => {
+    try { return selosDaMecanica(mecanicaDe(personagem.condicoes || [])); }
+    catch { return []; }
+  })();
+
+  /* O ADVERSÁRIO DA TIRA DO TELEFONE: o mais perto que ainda está de pé,
+     que é aquele sobre quem a linha do veredito está a falar. Um só —
+     uma linha de 44 px com quatro nomes é a planilha outra vez, e quem
+     precisa da lista inteira tem as fichas no campo e os alvos
+     declarados. A distância sai do veredito, que já a mediu. */
+  const adversario = (() => {
+    try {
+      const vivos = inimigos.filter((e) => !e.derrotado && Number(e.vida || 0) > 0);
+      if (!vivos.length) return null;
+      const alvos = (vd && vd.alvos) || [];
+      const perto = [...vivos].sort((a, b) => {
+        const da = (alvos.find((x) => x.nome === a.nome) || {}).distanciaM;
+        const db = (alvos.find((x) => x.nome === b.nome) || {}).distanciaM;
+        return (da == null ? Infinity : da) - (db == null ? Infinity : db);
+      })[0];
+      return perto || null;
+    } catch { return null; }
+  })();
+
+  /* QUEM ESTÁ IMPEDIDO, E POR QUÊ — e a razão vem em vez do booleano,
+     porque a tela tem de poder DIZÊ-LA sem a inventar. O `Atacar` é
+     impedido quando ninguém está ao alcance (a metade que evita o "longe
+     demais" dez vezes seguidas na abertura de toda luta); o `Mover`
+     quando o conjunto que ele armaria é vazio — o defeito que o `jogo`
+     apanhou a jogar, e que passa a ser COMUM no dia em que o passo
+     debita, porque toda rodada acaba com ele a zero. */
+  const impedidos = impedimentosDaFileira({
+    algumAoAlcance: vd ? !!vd.algumAoAlcance : true,
+    bloqueado: !!p.bloqueado,
+    podeAndar: podeDarUmPasso(p.passoM, p.passoTotal),
+    casasDoPasso,
+    fim: !!p.fim,
+  });
 
   const linha = vereditoDaTela({
     armado,
+    recusaDoVerbo: recusado,
     linha: !armado && vd && vd.algumAoAlcance ? p.linhaDoGolpe : "",
     recusa: !armado && vd && !vd.algumAoAlcance ? p.recusaDoGolpe : "",
     rodada: combate.rodada || 1,
@@ -559,6 +710,14 @@ export function TelaDeBatalha(props) {
   });
 
   const tocarVerbo = (v) => {
+    /* O VERBO QUE NÃO PODE ARMAR RECUSA, E A LINHA DIZ PORQUÊ. Antes ele
+       aceitava o toque, ficava `aria-pressed=true` e a linha mandava
+       "toque a casa onde quer parar" sem casa nenhuma para tocar — a
+       linha que E3 elogiou como o melhor da tela era, neste estado, a
+       que mentia. */
+    const razao = impedidos[v.id];
+    if (razao) { setArmado(""); setRecusado(razao); return; }
+    setRecusado("");
     if (v.id === "atacar") { setArmado(""); if (p.aoAtacar) p.aoAtacar(); return; }
     if (armado === v.id) { setArmado(""); if (p.aoEscrever) p.aoEscrever(""); return; }
     setArmado(v.id);
@@ -570,7 +729,7 @@ export function TelaDeBatalha(props) {
   };
 
   /* andar desarma, e é a terceira saída */
-  const mover = (destino) => { setArmado(""); if (p.aoMover) p.aoMover(destino); };
+  const mover = (destino) => { setArmado(""); setRecusado(""); if (p.aoMover) p.aoMover(destino); };
 
   const campo = (
     <section className="flex flex-col min-h-0 min-w-0 w-full"
@@ -588,8 +747,12 @@ export function TelaDeBatalha(props) {
         onPointerDown={() => setArmado("")}>
         <GridDeBatalha combate={combate} grupo={grupo} heroiFicha={personagem}
           previsao={p.previsao} passoM={p.passoM} passoTotal={p.passoTotal}
-          ignoraDificil={p.ignoraDificil} podeMover={p.passoM >= 1.5 && !p.fim} onMover={mover}
+          /* o 1,5 escrito à mão saiu: o menor passo que este tabuleiro
+             sabe mostrar mora em `PASSO_NA_RODADA.minimo`, e quem o lê
+             é `podeDarUmPasso` */
+          ignoraDificil={p.ignoraDificil} podeMover={podeDarUmPasso(p.passoM, p.passoTotal) && !p.fim} onMover={mover}
           mira={p.mira} onMirar={p.aoMirar} alcanceMira={p.alcanceMira}
+          aoMedirOPasso={setCasasDoPasso}
           ladoFixo={ALVOS.piso} />
       </div>
       <LinhaDoVeredito texto={linha} armado={!!armado} reacao={p.reacao} />
@@ -635,7 +798,24 @@ export function TelaDeBatalha(props) {
   const lateral = (
     <aside className="flex flex-col gap-2 min-h-0 min-w-0 shrink-0 overflow-y-auto tv-scroll"
       style={{ flex: "0 0 auto", width: "100%", maxWidth: noTelefone ? "100%" : G.lateral,
-        /* NO TELEFONE A CONSULTA CABE NUM ARCO DE POLEGAR, e rola dentro de
+        /* E4 · O TECTO DO TELEFONE DEIXA DE SER O ARCO E PASSA A SER A
+           TIRA. Era `arcoDoPolegar` (144) — o número certo para «o que uma
+           tira de tela pode ocupar sem comer a decisão», e errado para
+           esta tira, que passou a ser UMA LINHA. Com 44 px o campo sobe de
+           296 para 436, que são 9,08 filas contra 6,17: de 30 casas
+           inteiras para 48, de 15 % do tabuleiro para 24 %.
+
+           A NOTA DE E3 ABAIXO FICA, e o que ela previa aconteceu — só que
+           pela outra porta: «ou a consulta vira gaveta no telefone, ou as
+           doze filas eram de um orçamento sem tira de consulta nenhuma».
+           Não virou gaveta: esvaziou-se. Uma gaveta teria guardado o que
+           já estava no ecrã.
+
+           E O TECTO FICA ESCRITO: 24 % ainda não é um tabuleiro. Os
+           outros 76 % pedem a escala da casa, que está com a pessoa.
+
+           (o texto de E3, como ele estava:)
+           NO TELEFONE A CONSULTA CABE NUM ARCO DE POLEGAR, e rola dentro de
            si — o campo é que não pode encolher. O número é o do arco (144)
            porque é a única medida da tabela que já significa "o que uma
            tira de tela pode ocupar sem comer a decisão"; qualquer outro
@@ -650,13 +830,23 @@ export function TelaDeBatalha(props) {
            são 7 filas, e a tira de consulta come a sétima. É a etapa E4 que
            herda isto: ou a consulta vira gaveta no telefone, ou as doze
            filas eram de um orçamento sem tira de consulta nenhuma. */
-        maxHeight: noTelefone ? G.arcoDoPolegar : "100%" }}>
-      <TiraDoHeroi personagem={personagem} economia={combate.economia} acaoBonus={p.acaoBonus} />
+        maxHeight: noTelefone ? G.tiraDoHeroi : "100%" }}>
+      <TiraDoHeroi personagem={personagem} economia={combate.economia} acaoBonus={p.acaoBonus}
+        selos={modificadores} adversario={noTelefone ? adversario : null} umaLinha={noTelefone} />
+      {/* OS ALVOS DECLARADOS E A BOLSA FICAM NOS DOIS TAMANHOS: são
+          CONTROLES, e um controle que desaparece no telefone é função
+          que o telefone não tem. Os dois já só nascem quando há o que
+          declarar (mais de um inimigo) e quando a bolsa está aberta. */}
       <AlvosDeclarados inimigos={inimigos} nGolpes={p.nGolpes || 1} alvosGolpe={p.alvosGolpe || []}
         aoDeclarar={p.aoDeclararAlvo} aoLimpar={p.aoLimparAlvos} acaoTexto={p.acaoTexto} veredito={vd} />
-      <QuemEstaDePe grupo={grupo} inimigos={inimigos} veredito={vd} />
+      {/* E ESTAS DUAS SÃO CONSULTA, e é delas que o telefone se desfaz:
+          `QuemEstaDePe` repete o nome e a vida que já estão nas fichas do
+          campo e, agora, na tira; o rastro dos dados é contabilidade. No
+          monitor não custam nada — há 344 px de coluna à espera. No
+          telefone custavam 144 px de campo, que são 18 casas. */}
+      {!noTelefone && <QuemEstaDePe grupo={grupo} inimigos={inimigos} veredito={vd} />}
       {bolsaAberta && <BolsaDeCombate pocoes={p.pocoes || []} bolsa={p.bolsa || []} aoUsar={p.aoUsarConsumivel} />}
-      <ORastroDosDados linhas={Array.isArray(combate.log) ? combate.log : []} />
+      {!noTelefone && <ORastroDosDados linhas={Array.isArray(combate.log) ? combate.log : []} />}
     </aside>
   );
 

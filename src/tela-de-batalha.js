@@ -238,9 +238,80 @@ export const PEDIDO_DO_VERBO = {
 };
 export const SAIDA_DO_ARMADO = "toque o verbo outra vez para desistir";
 
+/* ============================================================
+   O VERBO QUE NÃO PODE ARMAR (E4) — e a linha que E3 elogiou era a
+   que mentia
+
+   APANHADO A JOGAR: com 0 m de passo, `Mover` aceitava o toque, ficava
+   `aria-pressed="true"` e a linha do veredito escrevia *"toque a casa
+   onde quer parar · toque o verbo outra vez para desistir"* — **e não
+   havia casa nenhuma para tocar** (medido: clicáveis 0).
+
+   > ### Um verbo cujo conjunto armado é VAZIO não arma, e a linha diz porquê.
+
+   E o caso vai passar a ser COMUM, não raro: com o passo a debitar de
+   verdade (a chave `economia` que nascia em falta), toda rodada acaba
+   com o passo a zero. O que era um canto passa a ser o fim de cada
+   turno.
+
+   POR QUE A RAZÃO É TABELA E NÃO STRING NO BOTÃO. É a mesma lei da casa
+   de `RECUSAS_DO_PASSO`: a frase que o olho lê e a que o ouvido ouve têm
+   de ser a MESMA, e o tecto de 54 caracteres tem de proteger as duas. O
+   dia em que uma delas for escrita dentro de um JSX, são duas.
+
+   E O CANAL NÃO É O BALÃO DE RATO. `title=` não existe no telefone, e é
+   exactamente lá que a fileira dos verbos vive no arco do polegar. A
+   razão vai para a linha do veredito — que é a região que já responde
+   "o que acontece se eu agir agora", e cuja resposta aqui é "nada, e
+   por isto". */
+export const RECUSAS_DO_VERBO = {
+  semPasso:   "o seu passo acabou nesta rodada",
+  semSaida:   "não há casa livre à sua volta",
+  semAlcance: "ninguém ao seu alcance",
+  fimDaLuta:  "a luta acabou",
+};
+
+/* O TECTO DOS 54 CARACTERES vale para estas também: elas entram na linha
+   do veredito, que é a mesma linha e a mesma largura. */
+export const TETO_DA_RECUSA = 54;
+
+/* Quem está impedido, e por quê — um mapa de `id do verbo` para a RAZÃO
+   (string vazia quer dizer "pode"). Devolver a razão em vez de um
+   booleano é o que faz a tela poder dizê-la sem a inventar.
+
+   `casasDoPasso` é o tamanho do conjunto que o campo acenderia: `null`
+   quer dizer "ainda não foi medido", e nesse caso NÃO se impede nada —
+   *um verbo impedido por falta de medida seria a tela a mentir ao
+   contrário*, que é tão mau como a mentira de hoje. */
+export function impedimentosDaFileira(estado) {
+  const e = estado == null ? {} : estado;
+  const casas = e.casasDoPasso == null ? null : Math.max(0, Math.round(Number(e.casasDoPasso) || 0));
+  const fim = !!e.fim;
+  const razaoDoPasso = fim ? RECUSAS_DO_VERBO.fimDaLuta
+    /* as duas metades do vazio, e elas NÃO são a mesma frase: sem passo
+       é o tempo que acabou, sem saída é o espaço que fechou. Dizer
+       "acabou o passo" a quem está cercado com 9 m na mão seria mandá-lo
+       esperar por uma rodada que não resolve nada. */
+    : !e.podeAndar ? RECUSAS_DO_VERBO.semPasso
+    : casas === 0 ? RECUSAS_DO_VERBO.semSaida
+    : "";
+  return {
+    atacar: fim ? RECUSAS_DO_VERBO.fimDaLuta
+      : e.bloqueado ? RECUSAS_DO_VERBO.fimDaLuta
+      : e.algumAoAlcance === false ? RECUSAS_DO_VERBO.semAlcance : "",
+    mover: razaoDoPasso,
+  };
+}
+
 export function vereditoDaTela(estado) {
   const e = estado == null ? {} : estado;
   const armado = e.armado ? String(e.armado) : "";
+  /* A RECUSA VEM PRIMEIRO, e é o veredito antes do clique aplicado ao
+     caso em que o clique não vai acontecer: o jogador acabou de tocar
+     um verbo que não arma, e a única coisa que a tela lhe deve é o
+     motivo. Um verbo recusado nunca arma, logo os dois nunca disputam —
+     a ordem está aqui pela leitura, não pelo empate. */
+  if (e.recusaDoVerbo) return String(e.recusaDoVerbo);
   if (armado) {
     const pedido = PEDIDO_DO_VERBO[armado] || "";
     return pedido ? `${pedido} · ${SAIDA_DO_ARMADO}` : SAIDA_DO_ARMADO;

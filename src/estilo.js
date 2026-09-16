@@ -49,6 +49,14 @@ export const T = {
   amber: "#E8A33D", amberSoft: "#F5C878", onAccent: "#1A1408",
   violet: "#8B7BD8", violetSoft: "#B0A5EC", onSecond: "#14101F",
   danger: "#D86A5B", ok: "#7BC98F",
+  /* O CHÃO DE UM SELO DE ESTADO — o verde e o vermelho muito escuros
+     por baixo de `ok` e de `danger`. Estavam escritos à mão CINCO vezes no
+     mesmo bloco do HUD (as condições, os efeitos, a rolagem, a ação
+     perdida, o dano por turno) e em lado nenhum mais — cinco cópias de
+     dois números que ninguém podia mudar num sítio só. A primeira lei
+     desta casa vale para o visual: cor é número, logo é tabela. */
+  okFundo:             "#1f3320",
+  perigoFundo:         "#33201f",
 };
 
 /* O PRETO E O BRANCO DE SEMPRE. Sombra e brilho não são cor do tema:
@@ -187,6 +195,48 @@ export const TELA_DE_BATALHA = {
   arcoDoPolegar: 144,      /* as tiras vivem nos 144 px de baixo */
   colunas: 7,              /* 7 × 12 = 84 casas, medido em E2 com a peça na mão */
   linhas: 12,
+
+  /* A TIRA DO HERÓI — uma LINHA, e ela é reposição, não invenção (E4).
+     O quadro do telefone de E1 (`40:447`, no Figma desde 15/09) sempre
+     teve: faixa da vez 48 + campo 548 + veredito 24 + verbos 144 +
+     **tira do herói 44** + folga 4 = 812. A construção de E3 empilhou
+     duas `A ficha curta` — peça de MESA, 288×150 — e ficou com 144 px
+     de tira e 296 de campo.
+
+     O `jogo` contou a carga item a item e TRÊS DE SETE campos da tira
+     estavam no ecrã no mesmo instante: o meu nome (na minha ficha do
+     campo, rotulada «você»), o nome dele (na ficha dele) e a distância
+     (na linha do veredito, que a escreve com o «faltam»). *Uma tira
+     43 % duplicada não se esconde numa gaveta: esvazia-se.*
+
+     O que isso devolve, contado: campo 296 → 436 px = 9,08 filas; casas
+     inteiramente visíveis 30 → 48, de 15 % para 24 % do tabuleiro.
+     E O TECTO FICA ESCRITO, porque buraco calado é mentira: 24 % ainda
+     não é um tabuleiro, e os outros 76 % pedem a escala da casa, que
+     está com a pessoa e não se toca. */
+  tiraDoHeroi: 44,
+
+  /* A CASA DO TABULEIRO — o que se escreve DENTRO dela.
+
+     POR QUE O CUSTO NASCE ESCRITO, e o número é do `jogo`: nas dez
+     plantas de `grid.js`, quatro dão 0 % de divergência entre o custo
+     real e o que o olho conta, e SEIS dão 100 % — não há meio-termo, e
+     como o jogador não sabe em que planta está antes de a ver, *a regra
+     só serve se for a mesma nas duas*. Nas seis, o herói ABRE dentro da
+     lama: o passo cai de ~83 casas para 27 no primeiro fotograma, e o
+     único sinal disso na tela era o véu ser mais pequeno. O erro de quem
+     conta quadrados é sempre 1,5 m — a diferença exacta entre «ao
+     alcance» e «faltam 1,5 m».
+
+     A CASA DE REFERÊNCIA É `ALVOS.piso`, e não um 48 escrito de novo: o
+     corpo do número é dado em píxeis sobre a casa de 48, e o desenho em
+     SVG divide um pelo outro. Quem mudar o piso do alvo muda os dois. */
+  casa: {
+    corpoDoCusto: 10,     /* mono 10 px na casa de 48 — E1, confirmado por medida em E4 */
+    linhaDoCusto: 0.72,   /* onde a linha de base cai, em fracção da casa: o centro da fenda `o custo` da peça (28+13/2 sobre 48) */
+    anelDoFoco: 3,        /* px de `ink`, POR DENTRO: uma casa tem oito vizinhas coladas, e um anel por fora pinta por cima da borda de alcance das oito */
+    anelDaParagem: 2,     /* px de `inkDim`, por dentro: onde o teclado VOLTA, contra os 3 px de onde ele ESTÁ */
+  },
 };
 
 /* ============================================================
@@ -506,9 +556,36 @@ export const SUPERFICIES_CSS = `
    Nada de outline: none fora desta caixa. Hoje o campo de batalha tem
    86 alvos focaveis por luta com o anel apagado a mao
    (grade-de-batalha.jsx:515-519), e foi assim que ele desapareceu. */
+/* E4 — A LEI DA PEÇA DO ANEL, e ela inverte quem carrega o quê:
+   **o que carrega o anel é sempre outline; box-shadow só pinta o
+   VÃO, como decoração que pode morrer sem levar o anel com ela.**
+
+   A razão tem cinco nomes, e são as cinco maneiras de apagar um anel
+   achadas nesta casa — três delas neste par de ciclos:
+     1. estilo inline por cima (E3: 67 de 80 focáveis);
+     2. none dentro de uma LISTA de sombras invalida a lista inteira,
+        em silêncio (K4);
+     3. tinta em falta na peça (E3, no Figma);
+     4. box-shadow NÃO PINTA em elemento SVG (E3);
+     5. clipsContent / overflow: hidden num ancestral corta o anel
+        (E4 — os anéis do Botao *Foco* estavam cortados desde que
+        nasceram).
+
+   E A 4 É IRMÃ EXACTA DA DÍVIDA A11: em forced-colors: active — o
+   alto contraste do Windows, que muita gente com baixa visão usa o dia
+   inteiro — **box-shadow é removido POR ESPECIFICAÇÃO**. Com o anel
+   dependente dele, o anel some para exactamente quem mais precisa dele.
+   outline sobrevive ao alto contraste, pinta em SVG, não ocupa
+   leiaute (a border ocupa) e não tem sintaxe de lista onde um none
+   possa invalidar tudo.
+
+   O bloco forced-colors abaixo deixa de ser o CONSERTO e passa a ser
+   só a troca de tinta pela cor do sistema — que é o que ele devia ter
+   sido sempre. */
 .tv-anel-foco:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px ${T.bg}, 0 0 0 4px ${T.ink};
+  outline: 2px solid ${T.ink};
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px ${T.bg};
 }
 /* O MODO DE ALTO CONTRASTE APAGA box-shadow. Nao e opiniao: e o que
    forced-colors faz por especificacao — e sem estas duas linhas o anel
@@ -535,8 +612,8 @@ export const SUPERFICIES_CSS = `
    o de cima, e a diferenca nao e gosto: e o que cada superficie sabe
    pintar. */
 .tv-anel-foco-no-campo:focus-visible {
-  outline: 3px solid ${T.ink};
-  outline-offset: -3px;
+  outline: ${TELA_DE_BATALHA.casa.anelDoFoco}px solid ${T.ink};
+  outline-offset: -${TELA_DE_BATALHA.casa.anelDoFoco}px;
 }
 
 /* A PÍLULA DE ESCOLHA, E O ANEL QUE ELA TINHA APAGADO (K4). O filete de
@@ -570,8 +647,14 @@ export const SUPERFICIES_CSS = `
    válida mesmo que hoje ninguém a use — quem escrever a próxima peça
    pode esquecer de definir --tv-filete, e a falha voltaria calada. */
 .tv-escolha-troca { box-shadow: var(--tv-filete, inset 0 0 0 0 transparent); }
+/* E4: o anel saiu desta lista e foi para outline (a lei da peça, na
+   caixa acima). Sobra aqui o VÃO e o filete — e a mudança PAGA esta
+   armadilha em vez de a remendar: com o anel fora da lista de sombras,
+   um --tv-filete que um dia valha none já não pode levar o anel
+   junto. A sombra nula continua como fallback porque a lista continua a
+   existir. */
 .tv-escolha-troca.tv-anel-foco:focus-visible {
-  box-shadow: 0 0 0 2px ${T.bg}, 0 0 0 4px ${T.ink}, var(--tv-filete, inset 0 0 0 0 transparent);
+  box-shadow: 0 0 0 2px ${T.bg}, var(--tv-filete, inset 0 0 0 0 transparent);
 }
 `;
 

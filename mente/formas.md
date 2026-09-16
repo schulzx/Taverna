@@ -4413,3 +4413,560 @@ encerra o turno; o mundo responde na mesma batida; a vez volta ao herói*) e dei
 **`agora: A Flecha`** — o nome do herói. *O pedido está em
 `mente/pedidos-ao-sistema.md`; o **Mudou=Agora** de três pulsos que E1 desenhou
 não pode existir antes dele.*
+
+---
+
+# O anel que cumpre, o custo dentro da casa e o número que pode ser negativo (E4, `desenho` · 16/09)
+
+Etapa só de biblioteca: nenhum `.js`, `.jsx` ou `.mjs` foi tocado — o bastão do
+`App.jsx` ficou inteiro com o `oficial`. Arquivo `Taverna — biblioteca`
+(`e5wJUzInAssoebx5npssKc`), ampliado e corrigido, nunca duplicado.
+
+## 1 · A LEI DA PEÇA DO ANEL: o anel nunca depende de `box-shadow` sozinho
+
+`O anel de foco` · página e conjunto novos · **`166:4018`** · eixo `Superficie`
+(*Caixa* `166:4005` · *Dentro do SVG* `166:4009` · *Alto contraste* `166:4014`).
+
+> ### O que carrega o anel é sempre `outline`. `box-shadow` só pode pintar o vão, e só como decoração que pode morrer sem levar o anel com ela.
+
+**Porque há CINCO maneiras de apagar um anel de foco, e nenhuma delas dá erro.**
+E3 tinha quatro; E4 achou a quinta, no Figma e no CSS ao mesmo tempo:
+
+| # | onde | o que faz | deixa rasto? |
+|---|---|---|---|
+| 1 | código | **estilo inline vence a folha** — um `boxShadow` no `style={{}}` apaga o da folha | vê-se no elemento |
+| 2 | CSS | **`none` não é item de lista** — `box-shadow: a, b, none` é inválido e o parser **descarta a declaração inteira, em silêncio** | mata a lista toda |
+| 3 | SVG | **`box-shadow` não pinta em elemento SVG** — um `<rect>` não é caixa CSS; a regra é aceite e nada é desenhado | **nenhum** |
+| 4 | alto contraste | **`forced-colors: active` REMOVE `box-shadow` por especificação** — o anel não fica fraco, fica **zero** | **nenhum** |
+| 5 | **ancestral** | **`clipsContent` / `overflow: hidden` num pai CORTA o anel** — que é desenhado fora da caixa | **nenhum**; à escala da miniatura lê-se como presente |
+
+**3 e 4 são a mesma ausência, e é por isso que a escolha é `outline`:** ele
+sobrevive às cinco — pinta em SVG, é preservado por `forced-colors`, não se
+escreve na mesma declaração que uma sombra, não tem sintaxe de lista, e o corte
+do §5 é o único que ainda o atinge (e atinge-o em CSS **e** no Figma, com a
+mesma causa: um pai que recorta).
+
+**As três construções, e a superfície é que decide — não quem compõe:**
+
+| `Superficie` | o CSS | porquê |
+|---|---|---|
+| **Caixa** | `outline: 2px solid ink; outline-offset: 2px` **+** `box-shadow: 0 0 0 2px bg` | botão, pílula, cartão. A sombra é só o vão: pode morrer sem levar o anel. Não ocupa leiaute — nenhum vizinho se mexe |
+| **Dentro do SVG** | `outline: 3px solid ink; outline-offset: -3px` | a casa, a marca de borda, o glifo. **Por dentro** porque a casa tem **oito vizinhas coladas** e um anel externo pinta por cima delas. Sem vão: 3 px de `ink` sobre `bg` dão **15,31:1** e carregam sozinhos. **O raio do anel é ZERO** — `outline-offset: -3` reduz o raio 3 do corpo a 3−3 |
+| **Alto contraste** | `outline: 2px solid Highlight; outline-offset: 2px` | `forced-colors: active`. **Nenhum `box-shadow`.** As cores são do SISTEMA (`Canvas`, `ButtonText`, `Highlight`) e por isso são **literais**: é a única peça desta biblioteca onde um literal está certo, porque a cor é do jogador e não nossa |
+
+### Como a peça GARANTE, em vez de prometer
+
+Uma lei escrita numa folha é papel. O que a peça faz é **tirar a escolha de quem
+compõe**: não há como instanciar um anel sem escolher uma `Superficie`, e cada
+variante traz a sua construção escrita na `description` do conjunto. Quem copiar
+o anel da Caixa para dentro de um `<svg>` vê que copiou a variante errada.
+
+**E a biblioteca deixou de ensinar o contrário.** Varridas as peças com foco,
+sobravam **cinco** anéis feitos só de sombra — e os cinco foram convertidos a
+geometria absoluta, com o tamanho medido antes e depois:
+
+| peça · nó | estava | ficou | tamanho |
+|---|---|---|---|
+| `Botao` *Chamada, Foco, Normal* · `9:22` | duas `DROP_SHADOW` | `o anel` + `o vao` absolutos | 97×72 → **97×72** |
+| `Botao` *Chamada, Foco, Pequeno* · `9:29` | duas `DROP_SHADOW` | idem | 76×57 → **76×57** |
+| `A escolha` *Cartao, Foco* | duas `DROP_SHADOW` | idem | 260×88 → **260×88** |
+| `A escolha` *Pilula, Foco* | duas `DROP_SHADOW` | idem | 260×48 → **260×48** |
+| `A escolha` *Aba, Foco* | duas `DROP_SHADOW` | idem | 260×48 → **260×48** |
+
+**Zero crescimento nas cinco** — `layoutPositioning = "ABSOLUTE"` não entra em
+auto-layout, que é exactamente a promessa do `outline`.
+
+> ### A sombra do `Botao` *Papel=Chamada* RENDERIZAVA, e foi por isso que E3 não a apanhou.
+> E3 converteu `Gesto` e `Recuo` porque **não se viam** (corpo sem tinta, a
+> armadilha daquele ciclo) e deixou `Chamada` de pé porque **se via**. *Ver no
+> Figma não é o teste.* O teste é sobreviver ao alto contraste — e ali aquele
+> anel era zero. Era a última promessa de anel feita só com sombra nesta casa, e
+> é literalmente a dívida **A11**.
+
+### A quinta maneira, medida
+
+`Botao`: o nó `Botao` de **todas as seis** variantes de `Estado=Foco` tinha
+`clipsContent = true`, e o anel é desenhado a `−4`. **Os seis anéis que E3
+construiu estavam a ser cortados desde o dia em que nasceram.** A foto de E3
+diz *"o anel aparece"* e aparecia — a parte de baixo. Destravado nos seis.
+
+> **Um anel que se desenha fora da caixa tem de ser conferido no pai, não no
+> nó.** No Figma chama-se `clipsContent`; em CSS chama-se `overflow: hidden`;
+> nos dois a propriedade do anel continua perfeita.
+
+**E a armadilha de medição continua de pé:** `.focus()` por script **não acende
+`:focus-visible`**. Confere-se com `Tab`, ou mede-se um estado que o jogador
+nunca vê.
+
+---
+
+## 2 · A casa alcançável tem forma — e a forma estava a pintar PRETO
+
+A peça `A casa` (`18:31`) já tinha tudo o que E1 mandou: `o banho` (âmbar 10 %),
+`a borda` (âmbar 1 px a 0,55 de nó, **3,406:1**) e **`o custo` aceso já em
+*Alcançável*, em JetBrains Mono Bold 10 px**. *A forma não faltava; faltava
+chegar ao pixel.*
+
+> ### Uma tinta guarda DOIS valores — o literal e a variável ligada — e quando eles discordam, o que vai ao pixel pode não ser o que a variável diz.
+
+`o custo` de *Alcançável* estava ligado a `amberSoft` **e** guardava o literal
+`#000000`. A propriedade lida de volta dizia `VariableID:1:10`. O pixel saía
+preto.
+
+| | sobre a casa alcançável (`bg` + banho âmbar 10 % = `#241B19`) |
+|---|---|
+| o que estava (`#000000`) | **1,24:1** |
+| o que ficou (`amberSoft`) | **10,78:1** |
+
+**WCAG 1.4.3 pede 4,5:1.** O número que a lei desta casa manda escrever dentro
+da casa — *o que é alvo tem o custo escrito dentro* — era **invisível**.
+
+**E não era só o custo.** Varridas doze páginas da biblioteca, a doença apareceu
+**dez vezes, e só nas duas peças que são o tabuleiro:**
+
+| peça | nó | dizia | pintava |
+|---|---|---|---|
+| `A casa` *Alcancavel* | `o custo` | `amberSoft` | preto |
+| `A casa` *Sob o dedo* | `o custo` · `quadrado` (traço) | `amberSoft` · `amber` | preto · preto |
+| `A casa` *Confirmando* | `quadrado` (traço) | `amber` | preto |
+| `A casa` *Mira* | `quadrado` (traço) | `violet` | preto |
+| `A casa` *Foco* | `o custo` · `quadrado` (traço) | `amberSoft` · `amber` | preto · preto |
+| `A casa` *Alvo* | `o custo` | `amberSoft` | preto |
+| `A casa` (o topo) | `fills` | `bg` | preto |
+| **`A regua` *Eixo=Linha, Estado=Procurada*** | `o rotulo` | `ink` | **preto** |
+
+> ### As bordas de quatro estados da casa eram pretas sobre um tabuleiro preto, e o *grau do meio* da régua não existia em metade dos eixos.
+> E2 fixou **três graus** para a régua e mediu *Procurada* em `ink`, **15,31:1**.
+> No eixo `Linha` ela pintava **1,0:1**. *Metade do grau que E2 inventou nunca
+> chegou a ser visto.*
+
+As dez curadas, escrevendo o valor da variável no literal. **Zero achados** em
+`Botao`, `Fechar + Selo`, `Barra + Veu`, `Consequencia`, `A escolha`, `A vez`,
+`A ficha curta`, `A marca de borda`, `O verbo com preco`, `A pergunta que
+expira` e `W1 · o verbo armado` — a doença é das peças de E1/E2, e são as duas
+que E4 ia pintar.
+
+> **A lei da tinta:** *um `paint` cujo literal discorda da variável ligada é um
+> defeito, mesmo quando a variável está certa.* Sempre que se liga uma variável
+> a uma tinta, **escreve-se o valor dela no literal também** — porque o literal é
+> o que sobra quando alguma coisa corre mal, e um literal preto é a pior
+> herança possível.
+
+---
+
+## 3 · O foco é uma MARCA, não um estado — e é o *roving tabindex* que o obriga
+
+`A casa` ganha a propriedade booleana **`com foco`** (`com foco#164:0`, por
+omissão **false**), ligada ao `visible` de um nó `anel de foco` presente nas
+**oito** variantes.
+
+**A razão é aritmética, não gosto.** Com um ponto de paragem só e as setas por
+dentro, **a casa focada e a casa sob o dedo passam a ser casas DIFERENTES ao
+mesmo tempo** — o teclado numa, o rato noutra. Uma peça cujo foco é um valor de
+`Estado` só sabe desenhar uma das duas.
+
+> ### Foco não é uma espécie de casa: é uma marca sobre uma casa. `Estado` diz o que a casa É; `com foco` diz onde o teclado está.
+
+`Estado=Foco` fica **aposentada** e escrita como tal na `description`: equivale a
+`Estado=Sob o dedo` + `com foco`. **Não a apaguei** — tem **12 instâncias vivas**
+na página `A batalha`, que é do `jogo`, e *peça mudada em silêncio por baixo de
+uma composição é pior do que peça com espaço reservado*. O anel dela continua
+aceso e sem ligação à booleana; a migração é do `jogo`, quando recompuser a
+página.
+
+**O anel da casa mudou de lado**, e isto é conserto, não preferência: estava um
+quadro de **56×56 a `−4`** — por **fora** —, e uma casa tem oito vizinhas
+coladas. Passou a **48×48, traço `ink` de 3 px `INSIDE`, raio 0**, que é
+carácter a carácter o `outline: 3px solid ink; outline-offset: -3px` que
+`estilo.js` já escreve. *O Figma e o código deixaram de discordar sobre onde o
+anel vive.*
+
+### O endereço: a lei de E1 dita pelo motivo dela
+
+E1 escreveu *"o endereço só nos dois estados que já carregam texto — Sob o dedo
+e Confirmando"*, e deu a razão: **86 endereços acesos ao mesmo tempo é a
+planilha.** A peça mostrava-o em **cinco** estados. O motivo, aplicado, dá uma
+lei melhor:
+
+> ### O endereço aparece na casa que o jogador está a APONTAR — com o dedo, o cursor ou o teclado — e em mais nenhuma. É sempre no máximo UMA.
+
+E isto não é invenção: `grade-de-batalha.jsx:463` já escreve
+`const apontada = focada || sobre`, com o comentário *"pelo foco do teclado antes
+do rato"*. **O código já vive a lei; era a peça que não.**
+
+| estado | é singular? | o endereço |
+|---|---|---|
+| *Sob o dedo* · *Confirmando* · `com foco` | sim, no máximo uma | **aceso** |
+| *Mira* | **não** — acende o alcance inteiro da habilidade, dezenas de casas | **apagado** *(corrigido em E4)* |
+| *Alvo* | não — e a casa tem uma ficha por cima | **apagado** *(corrigido em E4)* |
+
+*(Dívida de nome declarada: `Estado=Sob o dedo` chama-se mal — é *a casa
+apontada*, e o código já lhe chama isso. Não renomeei a opção de variante porque
+renomear parte as instâncias.)*
+
+---
+
+## 4 · O alvo que é gente: a marca é a SILHUETA, e a cor é a mesma de propósito
+
+A pergunta era: *se o inimigo mirado e a casa realçada forem a mesma cor, o
+jogador aprende que a cor não quer dizer nada.* **Medido na peça, a resposta é
+que a cor é a mesma por decisão de W1 e o canal que separa não é a cor:**
+
+| estado | tinta | contraste sobre `bg` | a silhueta |
+|---|---|---|---|
+| *Alcancavel* | banho âmbar 10 % + borda 1 px a 0,55 | **3,406:1** | moldura contínua, fina |
+| *Sob o dedo* | banho âmbar 22 % + borda 1 px cheia | **8,999:1** | moldura contínua, grossa |
+| *Mira* | banho violeta 16 % + traço 1,5 px **tracejado** | **5,47:1** | tracejado — e é a segunda língua |
+| *Alvo* | banho âmbar 10 % + **quatro cantos** 2 px cheios | **8,999:1** | **cantos, não moldura** |
+
+**O âmbar é «o que você pode fazer agora» e não muda com o verbo** (W1). O que
+muda é o conjunto e a palavra na linha do veredito. *Seis cores para seis verbos
+é o que esta regra existe para impedir.*
+
+### E a lei do «escrito dentro» ganha a metade que lhe faltava
+
+E1: *o que é alvo tem o custo escrito dentro; o que não tem nada escrito dentro
+não é alvo.* Aplicada literalmente a `Estado=Alvo`, ela parte-se — e a razão é
+geométrica, medida na peça:
+
+- a ficha da criatura tem `r = 0,40` da casa e o arco da vida corre em **0,47**;
+- `o custo` vive em `(15, 28)` com 18×13 — **no centro exacto da ficha**;
+- `o endereco` vive em `(4, 4)` com 17×12 — **debaixo do arco da vida**.
+
+> ### As duas fendas de texto da casa caem debaixo do corpo que a ocupa. Uma casa que é gente não pode levar o número.
+
+**A lei reescrita, e é esta que fica:**
+
+> ### O que é alvo carrega uma marca desenhada POR DENTRO da casa — o custo escrito, quando a casa é chão; os quatro cantos, quando a casa é gente. O que não tem nada por dentro não é alvo.
+
+Continua a servir o «ver tudo» (a 20–28 px nada se escreve e nada é alvo) e
+passa a servir a casa ocupada, que era o caso que a partia.
+
+---
+
+## 5 · O número que pode ser negativo
+
+**O que já existia,** e são duas coisas:
+
+1. **`Barra de medida` · `o delta`** (`6:15`) — mono 11 px, `+3` no *Ganho* e
+   `-3` no *Golpe*. É a única peça da casa que já escrevia um número com sinal.
+2. **`Consequencia` *Tom=Preco*** (`11:35`) — o preço ao lado do gesto, como
+   fenda da peça e não como `<span>` escrito à mão.
+
+**O que faltava** é o que o motor passou a poder dizer depois de H4 (v9.276):
+`mecanicaDe` devolve `danoReduzido` (**enfraquecido** — você bate menos),
+`danoRecebidoExtra` (**marcado** — você apanha mais) e `defesa`, e a fila de
+pílulas do HUD mostra **só `mec.danoExtra > 0`**. *Três números que o motor
+calcula e ninguém lê.*
+
+> ### A casa só tinha gramática para bónus: o `+` era verde e o `−` era vermelho, e isso funcionou enquanto os dois únicos números visíveis calhavam de ter o sinal do lado do tom.
+
+**A forma que nasce:** `Selo de estado` (`5:29`) ganha três fendas —
+`o numero#166:9`, `a palavra#166:0` e a booleana `com numero#166:18` (por
+omissão **false**: nenhuma instância existente muda; tamanhos conferidos, 67×22
+e 68×23 antes e depois).
+
+> ### O SINAL diz a aritmética. O TOM diz a favor de quem a conta pende. Os dois PODEM discordar — e escolher o tom pelo sinal é o defeito.
+
+| `Tom` | escreve | lê-se |
+|---|---|---|
+| Bom | `+2 DANO` | um mais a seu favor |
+| Bom | `−2 DANO SOFRIDO` | um **menos** a seu favor |
+| **Perigo** | **`−2 DANO`** | **enfraquecido — um menos contra si** |
+| **Perigo** | **`+2 DANO SOFRIDO`** | **marcado — um mais contra si** |
+
+**As duas de baixo são as que a casa não sabia dizer.** Provadas no Figma, em
+instâncias reais: `a prova do sinal contra o tom` · `166:4783`, página
+`Fechar + Selo`.
+
+E a cor continua a não carregar sozinha (WCAG 1.4.1): **ponto + número +
+palavra**, e é a palavra que separa `DANO` de `DANO SOFRIDO`.
+
+### O sinal de menos é `U+2212`, nunca o hífen ASCII
+
+`Barra de medida` escrevia `-3` (ponto de código **45**) enquanto o `App.jsx`
+escreve `−3` (**8722**). Corrigido nas quatro variantes, e `o delta` passou a
+propriedade (`o delta#166:27`).
+
+> Em JetBrains Mono o **avanço** é o mesmo — medido: `+2` e `−2` medem ambos
+> **11 px** a 9 px de corpo. O que difere é o **glifo**: o hífen é curto e alto,
+> o menos tem a largura e a altura da barra do `+`. Numa fila de selos, `-3` ao
+> lado de `+3` tem o traço a outra altura; `−3` ao lado de `+3` não tem.
+
+---
+
+## 6 · O que E4 deixa declarado, com número
+
+1. **As 12 instâncias de `Estado=Foco` em `A batalha`** continuam no estado
+   aposentado. A migração para `Sob o dedo + com foco` é do `jogo`.
+2. **`Selo de estado` escreve a 9 px e o `App.jsx` escreve a 10 px** nas quatro
+   pílulas do HUD (`text-[10px]`). É divergência real e **não a toquei**: mexer
+   no corpo da letra é `TIPOS`, que está com a pessoa. Quem construir, construa
+   a **10** e a peça segue depois.
+3. **`A escolha` *Forma=Aba*** tem cantos mistos (`cornerRadius` devolve
+   símbolo) e o anel novo tem cantos uniformes. Em CSS o `outline` seguiria os
+   mistos. Aproximação declarada, de 1 px em dois cantos.
+4. **`O interruptor`** constrói o anel ao contrário das outras (`o vao` **dentro**
+   de `anel de foco`, em vez de irmãos absolutos). Não cortava nada, por isso não
+   lhe toquei — mas é a sexta construção de anel da biblioteca e devia ser a
+   primeira.
+5. **`Estado=Alvo` não tem custo escrito e isso agora é lei** (§4) — mas *que*
+   número um verbo de criatura mostraria, se mostrasse, é do `jogo`. A fenda
+   existe e está apagada.
+6. **Nada disto foi visto num navegador**, porque neste ciclo não houve código
+   meu. O que impede o anel de morrer no dia em que alguém instanciar estas peças
+   continua a ser papel — **a catraca certa é um dente que proíba `boxShadow`
+   inline em qualquer controlo que carregue `.tv-anel-foco`**, e isso é código,
+   logo é de outro.
+
+
+## 6b · As duas peças que o `jogo` pediu ao compor, e nasceram no mesmo turno
+
+`mente/e4-jogo.md` §6 pede cinco peças. Duas caem dentro do mandato de E4 e
+foram fabricadas antes de o ciclo fechar.
+
+### `A mira` — a retícula é da CRIATURA, não da casa
+
+`A mira` · conjunto **`172:5328`** · eixo `Tamanho` (*Uma casa* `172:5301` ·
+*Duas casas* `172:5310` · *Três casas* `172:5319`).
+
+**O defeito que o `jogo` viu ao compor** (quadro `166:3752`): a retícula vivia
+dentro de `A casa · Estado=Alvo`, logo desenhava-se **por casa** — numa criatura
+de 2×2 saíam **quatro** retículas onde devia sair **uma**.
+
+> ### Uma marca que diz «este verbo age sobre ISTO» tem de ter o tamanho do isto.
+
+- **Cantos e não anel, e é geometria:** a ficha mede `r = 0,40` da casa e o arco
+  da vida corre em **0,47** contra os 0,5 da meia-largura — **sobram 1,4 px numa
+  casa de 48**, e não há onde pôr um anel. Mas a casa não é um círculo: a
+  meia-diagonal mede **0,707** e o canto tem **0,237 de casa livre, 11,4 px**. *O
+  canto é o único pedaço de uma casa ocupada que sobra vazio.*
+- **O braço é 9 px e o traço 2 px, e NÃO crescem com o tamanho.** Numa casa de 48
+  a ponta mais interior fica a **28,3 px** do centro contra os **22,6** do arco:
+  **5,7 px de folga**, medidos (W1). Numa criatura maior o arco cresce e o braço
+  não, logo **a folga só aumenta** — e os cantos continuam a ler-se como cantos
+  em vez de virarem uma moldura.
+- **`amber` cheio, 8,999:1 sobre `bg`.** A cor é a mesma de *Alcançável* **de
+  propósito**; quem separa é a silhueta.
+
+*(`A casa · Estado=Alvo` mantém a sua retícula interna para o caso 1×1, que é a
+esmagadora maioria. Dívida declarada: são duas cópias da mesma geometria, e a da
+casa devia passar a ser uma instância desta. Não o fiz porque `Estado=Alvo` tem
+instâncias vivas e trocar geometria por instância dentro de uma variante é
+mudança que se vê.)*
+
+### `a paragem` — a posição lembrada do cursor de teclado
+
+`A casa` ganha a segunda booleana, **`a paragem#172:0`** (por omissão **false**),
+nas oito variantes. *Roving tabindex* guarda o `tabindex="0"` numa célula; sem
+forma, **o jogador não sabe onde vai cair quando voltar com o `Tab`**.
+
+> ### `com foco` diz onde o teclado ESTÁ. `a paragem` diz onde ele VOLTA. Nunca acendem na mesma casa, e há no máximo uma de cada no tabuleiro inteiro.
+
+| | o traço | sobre `bg` |
+|---|---|---|
+| **`com foco`** | `ink`, **3 px**, por dentro, raio 0 | **15,31:1** |
+| **`a paragem`** | `inkDim`, **2 px**, por dentro, raio 0 | **6,63:1** |
+
+**Dois canais, e nenhum deles é só a cor:** a **luminância** (um degrau de 2,3×,
+que é a gramática que E2 escolheu para a régua — *"a diferença fica em
+luminância, não em saturação, e saturação é o que morre primeiro num telefone ao
+sol"*) e a **espessura**. E um terceiro que veio de graça: **o anel tem cantos
+rectos e a borda de *Alcançável* tem raio 3** — o anel lê-se como outro objecto,
+não como uma borda mais grossa.
+
+**E a defesa de por que a luminância chega aqui, onde noutros sítios não
+chegaria:** a distinção que importa **não é entre duas casas — é entre dois
+momentos**. O jogador vê o anel forte enquanto o teclado está na grelha e o
+fraco quando não está; nunca tem os dois lado a lado para comparar. Provado em
+instâncias reais: `a prova dos dois graus do cursor`, página `A casa`.
+
+*(Das cinco peças pedidas, ficam três por fabricar — a tira do herói, o contorno
+de dentro e a marca do terreno que cobra. As três são de composição de tela e
+nascem no ciclo em que a tela for recomposta.)*
+
+## 7 · As armadilhas do Figma que E4 pagou
+
+Somam-se às de D3, D4, E1, E2, K1 e E3.
+
+1. **`clipsContent` num ancestral corta um anel absoluto** (§1). Não dá erro, e à
+   escala da miniatura lê-se como presente. *Confira o pai, não o nó.*
+2. **O literal e a variável são dois valores** (§2). Ligar a variável não
+   reescreve o literal, e o literal pode ganhar. **Escreva os dois.**
+3. **`addComponentProperty` com `visible` é atropelado por um `node.visible`
+   escrito depois** — o valor por omissão da propriedade passa a ser o do nó.
+   Confira `componentPropertyDefinitions` **numa chamada nova** e reponha com
+   `editComponentProperty`.
+4. **Uma propriedade de texto tem UM valor por omissão por CONJUNTO**, não por
+   variante: ligar `o delta` às quatro variantes da `Barra` escreveu `−3` por
+   cima do `+3` do *Ganho*. *O sinal é conteúdo, e quem compõe escreve-o.*
+
+
+---
+
+# O passo ganha preço, e o alvo ganha casa (E4 · `jogo` · 16/09)
+
+Escrito depois de duas lutas jogadas (mesa e telefone) e de uma leitura das dez
+plantas de `grid.js` em Node. O documento longo é `mente/e4-jogo.md`; a
+composição vive na página **`A batalha`** do Figma, quadros `166:3750`,
+`166:3752`, `166:3754`, `166:3756`, `167:4916`, `168:4594` e `169:4040`.
+
+## A lei do custo dentro da casa deixa de ser gosto e passa a ter número
+
+E1 mandou que **o custo nascesse escrito dentro da casa já em *Alcançável***, em
+mono 10 px, com o endereço só nos dois estados que já carregam texto. Vinha
+confirmá-la por obediência; confirmo-a por medida, e a medida diz mais do que a
+lei dizia.
+
+O motor cobra o passo em quadrados — **1 por casa, 2 em terreno difícil**
+(`grid.js:496`). Em chão liso, portanto, **o custo de uma casa É o anel em que
+ela está**: o número escrito repete o que o olho conta de graça. Nas dez plantas,
+com o herói na casa de abertura:
+
+| | |
+|---|---|
+| plantas de chão liso (`taverna`, `masmorra`, `cidade`, `navio`) | **0 %** das casas alcançáveis custam algo diferente do que o olho lê |
+| plantas de chão que cobra (as outras seis) | **100 %** |
+| somadas | 173 de 463 = **37 %** |
+
+**Não há meio-termo, e é isso que salva a lei da acusação de planilha.** Ou o
+número confirma, ou ele é o único canal que existe — e o jogador não sabe em que
+planta está antes de a ver, logo **a regra só serve se for a mesma nas duas**.
+
+E o que estava escondido por baixo: **nas seis, o herói ABRE dentro da lama.** O
+passo cai de ~83 casas para **27** no primeiro fotograma, e o único sinal é o véu
+ser menor. *O véu diz quanto sobrou; nunca diz que foi cobrado.* Quando o erro
+existe ele é **sempre um anel** — 1,5 m, que é a diferença exacta entre «ao
+alcance» e «faltam 1,5 m».
+
+> **LEI, e ela liga as duas metades da tela:** o que é alvo tem o custo escrito
+> dentro; o que não tem nada escrito dentro não é alvo.
+
+E a razão de o número nascer em *Alcançável* e não sob o dedo, dita para não se
+perder: **quem pousa o dedo já escolheu.** Quem precisa do número é quem ainda
+está a escolher, e esse está a olhar para o conjunto inteiro. Um custo que só
+aparece sob o dedo obriga a visitar 83 casas para comparar duas.
+
+## O alvo é a CASA, e a ficha continua sem toque — por aritmética
+
+W1 perguntou se mirar um inimigo é tocar a ficha, a casa, ou os dois. **É a
+casa**, e os `pointerEvents: none` da ficha ficam:
+
+| | mede | contra o piso de 48 de K4 |
+|---|---|---|
+| a ficha (`r = lado × 0,40`) | **38,4 px** | **abaixo** |
+| a casa | **48 px** | é o piso |
+| a criatura grande, 4 casas | **96 × 96 px** | o dobro |
+
+Dar toque à ficha seria **dois donos no mesmo pixel** e uma costura morta de
+~5 px entre o círculo e a borda — e fabricar, para a mesma acção, um alvo que
+esta casa acabou de declarar pequeno demais. *Uma acção, uma forma.* A retícula
+de quatro cantos que W1 fabricou já se desenha **na casa** (`125:177`, nos
+11,4 px de canto que o arco da vida deixa); a peça e a decisão chegaram ao mesmo
+sítio por caminhos diferentes.
+
+**E a criatura grande é UM alvo, não quatro** — o `aria-label` já nomeia o mesmo
+inimigo em quatro casas.
+
+> **E armar um verbo de criatura APAGA o véu do passo.** O campo passa de «onde
+> posso parar» para «em quem posso bater», e **essa troca é o feedback do
+> armado**. 83 casas âmbar e 1 alvo âmbar ao mesmo tempo seriam uma cor a dizer
+> duas coisas. É de graça: os dois conjuntos já vivem separados no código
+> (`podeIr` × `noAlcance`).
+
+## A tira do telefone não vira gaveta: é desfeita — e a razão é a carga
+
+Medido no primeiro fotograma, 375×812: tira de consulta **144 px**, janela do
+campo **343 × 296** = 6,17 filas, **30 de 196 casas inteiras = 15 %**, e a régua
+— com o `👣` e o `⤢ ampliar` — em **y = −198, fora do ecrã**.
+
+**Os 144 px não existem em desenho nenhum.** O quadro do telefone de E1
+(`40:447`) põe **548 px de campo** e resolve o herói numa tira de **44 px**
+(`você · PV · PM · 9 m`), no arco do polegar. A construção empilhou duas `A ficha
+curta` — **peça de 288×150, peça de mesa** — no topo.
+
+E a tira é **43 % duplicada**: o meu nome está na minha ficha do campo, o nome
+dele está na ficha dele **e** na linha do veredito, e a distância está na linha
+do veredito com mais informação (`a 18 m — faltam 16,5 m`). O que **não** tem
+outra casa é PV, PM, os selos de acção, e a vida dele — que só existe como arco
+a 48 px, legível como fracção e nunca como número.
+
+*Uma tira 43 % duplicada não se esconde numa gaveta: esvazia-se.* Contado:
+144 → 24 px, campo 296 → 436 = 9,08 filas, casas inteiras **30 → 48**, de 15 %
+para **24 %: +60 %**, sem tocar na escala da casa. **E o tecto, dito antes que
+alguém mo descubra: 24 % ainda não é um tabuleiro.** Os outros 76 % pedem
+`ESCALA_DA_CASA`, que é de E3 e está com a pessoa.
+
+## Onde vive o número que a pílula esconde
+
+`mecanicaDe` devolve **sete** campos que mexem num número; a fila de pílulas
+desenha **quatro**, e os quatro estão **fora da luta**. `Enfraquecido` mostra a
+desvantagem e cala o `−2`; **`Marcado` não tem pílula mecânica nenhuma** — o
+único canal é o `title=`, que é balão de rato, que no telefone não existe.
+
+**Vive na tira do herói** — a linha de 44 px que a decisão do telefone acaba de
+comprar de volta. Não na **linha do veredito**, que responde «o que acontece se
+eu agir AGORA» e tem tecto de 54 caracteres: um modificador permanente não é um
+acontecimento. Não no **selo**, que é identidade e que E3 mediu imóvel por quatro
+rodadas — *número que muda não mora em região que não muda*.
+
+> **Catraca:** o conjunto de campos desenhados = o conjunto que `mecanicaDe`
+> devolve, menos `motivos`. *Um número que o motor calcula e a tela esconde é a
+> lei desta casa a valer só de um lado.*
+
+## As cinco peças que o `jogo` pede ao `desenho`
+
+1. **`A casa · Estado=Alvo` · variante «alvo composto»** — hoje a retícula
+   desenha-se por casa, e numa criatura de 2×2 saem quatro retículas onde devia
+   sair uma, nos cantos da criatura. Vi-o ao compor, no meu próprio quadro.
+2. **A tira do herói, uma linha de 44 px** — E1 desenhou-a dentro do quadro do
+   telefone e **ela nunca virou peça da biblioteca**; e precisa de dois campos
+   novos: os modificadores do motor, e a vida do adversário em número.
+3. **O contorno de dentro** (a proposta ambiciosa) — segundo traço por cima do
+   que já existe, e **nunca da mesma cor do de fora**.
+4. **`A casa · Alcançável` em terreno que cobra** — o número é o mesmo; o que
+   muda é que ali ele é o único canal. Se a lama precisar de marca própria por
+   cima da hachura, a marca é do `desenho`: eu só trago a medida de que ela hoje
+   é invisível.
+5. **O estado do cursor de teclado na grelha** — `Foco` existe; falta a casa que
+   é a **posição lembrada** do cursor quando o foco está noutro sítio. Sem ela o
+   roving tabindex não tem forma.
+
+## A proposta ambiciosa: o campo deixa de ter um contorno e passa a ter dois
+
+Medido nas dez plantas, no meio da luta (herói a 9 m de um inimigo grande):
+**605 casas alcançáveis somadas, 60 de onde o golpe ainda alcança = 10 %.**
+Nenhuma planta passa de 15 %.
+
+> **Noventa por cento do campo âmbar são casas onde eu chego e o turno acaba. A
+> tela desenha 545 decisões que são a mesma decisão.**
+
+O contorno de fora é o de hoje — *onde posso terminar o passo*, o **legal**. O de
+dentro é novo — *de onde, depois de chegar, o golpe ainda alcança*, o **útil**.
+Entre os dois: chego, e acabou. **Peso: pesado**, porque muda o que o jogador lê
+no campo. Não depende do motor: `alcanca()` já responde casa a casa — foi assim
+que o número foi medido.
+
+## Dois defeitos que só se vêem jogando
+
+- **`Mover` arma com o conjunto vazio.** Com 0 m de passo o verbo aceita o toque,
+  fica `aria-pressed="true"` e a linha do veredito escreve *«toque a casa onde
+  quer parar»* — **e não há casa nenhuma**. A linha que E3 elogiou como o melhor
+  da tela é, neste estado, a que mente. **Regra: verbo cujo conjunto armado é
+  vazio não arma, e a linha diz porquê.**
+- **A distância de teclado até `Atacar` respira com o passo** — 84 paragens de
+  `Tab` com o passo cheio e **1** com o passo gasto, na mesma luta; 28 a 91 nas
+  dez plantas. *Não é longa: é impossível de aprender.* Com a grelha a ser uma
+  paragem e as setas por dentro, a catraca é **2, com variância 0**.
+
+## E o que a tela faz se o passo continuar de graça (continua — medido hoje)
+
+`H14 → H11 → H8 → I8` = 7 casas = **10,5 m numa só rodada**, com o contador
+parado em `9 de 9` e o conjunto a crescer 83 → 122 → 153 → 143.
+
+**O custo dentro da casa continua** — ele é verdade sobre *um* passo. **O que não
+pode nascer é o denominador:** nada na tela deve escrever «4,5 dos seus 9»,
+«sobra 4,5», nem forma nenhuma de total, porque o total é que é a mentira.
+
+> **Um preço unitário verdadeiro pode viver sem orçamento. Um orçamento falso não
+> pode viver de todo.**

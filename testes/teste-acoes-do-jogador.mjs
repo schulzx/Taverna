@@ -381,7 +381,9 @@ sec("4. a definição operacional de 'número que muda'");
      continua palavra por palavra o mesmo. Endereco re-medido, assercao intacta. */
   /* E3: 13499 -> 13084. O turno fora de combate continua a avançar
      MINUTOS_POR_TURNO faça o jogador o que fizer; só o endereço andou. */
-  t("e aponta a linha que avança o relógio", !!relogio && /13084/.test(relogio.porque));
+  /* E4: 13084 -> 13098, pelas treze linhas da chave `economia` em
+     :4929. Mesma asserção, mesmo relógio, endereço re-medido. */
+  t("e aponta a linha que avança o relógio", !!relogio && /13098/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -465,7 +467,7 @@ sec("6. as duas travas do ataque por texto");
 sec("7. os seis literais do painel que não casam leitor nenhum");
 {
   /* medido contra o catálogo real: `lerAcao` é o mesmo leitor que o
-     adjudicador usa (src/App.jsx:15661 → veredictoDaAcao) */
+     adjudicador usa (src/App.jsx:15687 → veredictoDaAcao) */
   const ctx = { personagem: { nivel: 3, atributos: {}, pericias: {} }, semente: "x1", lugar: "taverna",
     emCombate: false, tentativas: {}, dia: 1, pessoaDe: () => null, fama: 0,
     ehPessoaConhecida: () => false, achadoDe: () => null };
@@ -565,7 +567,7 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        mora depois de a janela da reacao entrar no arquivo. */
       /* E3: 12122 -> 11707. A voz da linha (`telegrama`) é o que esta
          asserção guarda, e ela não mudou. */
-      .linhas.find((l) => l.onde === "src/App.jsx:11707").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:11721").voz === "telegrama");
   t("a maior boca do funil é `resolverRevide`, com 29 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 29);
   t("toda função do funil declara anel, endereço e ao menos uma linha",
@@ -650,7 +652,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        da recusa (`alcance`) e o que se guarda aqui, e ela e a mesma. */
     /* E3: 12072 -> 11657, pelo mesmo deslocamento. A família da recusa
        (`alcance`) é o que se guarda aqui, e ela é a mesma. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:11657" && x.familia === "alcance"));
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:11671" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -663,7 +665,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      `aplicarGolpeDoJogador`. O que esta asserção guarda nunca foi o número —
      é que o porquê do silêncio venha com ENDEREÇO, para que a próxima medição
      possa conferi-lo; o número mudou, a intenção não. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /11723/.test(S.ondeSai));   /* E3: 12138 -> 11723, o mesmo enviar com o endereço re-medido */
+  /* E4: 11723 -> 11737, pelas treze linhas da chave `economia` em :4929.
+     O que esta asserção guarda nunca foi o número — é que o porquê do
+     silêncio venha com ENDEREÇO, para que a próxima medição o possa
+     conferir. O número mudou; a intenção, não. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /11737/.test(S.ondeSai));   /* E3: 12138 -> 11723 */
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

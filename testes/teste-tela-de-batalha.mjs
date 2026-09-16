@@ -17,6 +17,7 @@ import {
   REGIOES_DA_BATALHA, FORA_DA_TELA_DA_LUTA, faixaDaVez, rotuloDaVez,
   fileiraDeVerbos, VERBO_DE_ESPERA, vereditoDaTela, PEDIDO_DO_VERBO,
   SAIDA_DO_ARMADO, NARRACAO, ultimasLinhasDoMestre,
+  RECUSAS_DO_VERBO, TETO_DA_RECUSA, impedimentosDaFileira,
 } from "../src/tela-de-batalha.js";
 import { TELA_DE_BATALHA, ALVOS } from "../src/estilo.js";
 import { VERBOS_DE_COMBATE } from "../src/golpe.js";
@@ -267,6 +268,64 @@ sec("7. as duas últimas linhas do Mestre, e a prosa não sai");
   /* determinismo */
   t("duas leituras dão o mesmo corte",
     ultimasLinhasDoMestre([msg("mestre", longa)], { linhas: 1, chars: 60 }) === corte);
+}
+
+
+sec("E4. o verbo cujo conjunto é vazio não arma, e a linha diz porquê");
+{
+  /* APANHADO A JOGAR: com 0 m de passo, `Mover` aceitava o toque, ficava
+     `aria-pressed="true"` e a linha escrevia "toque a casa onde quer
+     parar" — sem casa nenhuma para tocar (medido: clicáveis 0). A linha
+     que E3 elogiou como o melhor da tela era, neste estado, a que
+     mentia. E o caso passa a ser COMUM, não raro: com o passo a debitar
+     de verdade, toda rodada acaba com ele a zero. */
+  const podeTudo = { algumAoAlcance: true, podeAndar: true, casasDoPasso: 83, fim: false };
+  t("com passo e alvo, ninguém está impedido",
+    !impedimentosDaFileira(podeTudo).mover && !impedimentosDaFileira(podeTudo).atacar);
+
+  /* AS DUAS METADES DO VAZIO NÃO SÃO A MESMA FRASE, e é a distinção que
+     esta secção existe para prender: sem passo é o TEMPO que acabou;
+     sem saída é o ESPAÇO que fechou. Dizer «acabou o passo» a quem está
+     cercado com 9 m na mão seria mandá-lo esperar por uma rodada que
+     não resolve nada. */
+  t("sem passo, `Mover` recusa — e a razão é o tempo",
+    impedimentosDaFileira({ ...podeTudo, podeAndar: false, casasDoPasso: 0 }).mover === RECUSAS_DO_VERBO.semPasso);
+  t("cercado mas com passo, `Mover` recusa — e a razão é o espaço",
+    impedimentosDaFileira({ ...podeTudo, casasDoPasso: 0 }).mover === RECUSAS_DO_VERBO.semSaida);
+  t("e as duas razões são frases DIFERENTES",
+    RECUSAS_DO_VERBO.semPasso !== RECUSAS_DO_VERBO.semSaida);
+
+  /* AINDA NÃO MEDIDO NÃO É VAZIO. Um verbo impedido por falta de medida
+     seria a tela a mentir ao contrário — tão mau como a mentira de
+     hoje, e mais difícil de ver. */
+  t("conjunto não medido não impede nada",
+    !impedimentosDaFileira({ ...podeTudo, casasDoPasso: null }).mover);
+
+  t("sem ninguém ao alcance, `Atacar` recusa com a razão dele",
+    impedimentosDaFileira({ ...podeTudo, algumAoAlcance: false }).atacar === RECUSAS_DO_VERBO.semAlcance);
+  t("com a luta acabada, os dois recusam",
+    impedimentosDaFileira({ ...podeTudo, fim: true }).atacar === RECUSAS_DO_VERBO.fimDaLuta
+    && impedimentosDaFileira({ ...podeTudo, fim: true }).mover === RECUSAS_DO_VERBO.fimDaLuta);
+  /* `= {}` não cobre `null`, e é lei desta casa */
+  t("e a regra aguenta `null` inteiro sem estourar",
+    typeof impedimentosDaFileira(null).mover === "string");
+
+  /* A RAZÃO VAI PARA A LINHA DO VEREDITO, e não para um balão de rato:
+     `title=` não existe no telefone, e é lá que a fileira dos verbos
+     vive no arco do polegar. */
+  t("a linha do veredito escreve a recusa, e ela ganha de tudo",
+    vereditoDaTela({ recusaDoVerbo: RECUSAS_DO_VERBO.semPasso, armado: "mover", linha: "x" })
+      === RECUSAS_DO_VERBO.semPasso);
+  t("e sem recusa nada muda — a cadeia de antes continua inteira",
+    vereditoDaTela({ armado: "mover" }).startsWith(PEDIDO_DO_VERBO.mover));
+
+  /* O TECTO DOS 54 CARACTERES vale para estas também: entram na MESMA
+     linha e na mesma largura que as quatro frases do veredito. */
+  const longas = Object.entries(RECUSAS_DO_VERBO).filter(([, f]) => f.length > TETO_DA_RECUSA);
+  t(`as ${Object.keys(RECUSAS_DO_VERBO).length} recusas cabem nos ${TETO_DA_RECUSA} caracteres da linha`,
+    longas.length === 0, longas.map(([k, f]) => `${k} (${f.length})`).join(" · "));
+  t("e nenhuma delas fala do mecanismo — só do que aconteceu",
+    Object.values(RECUSAS_DO_VERBO).every((f) => !/verbo|armar|conjunto|bot/i.test(f)));
 }
 
 console.log(`\ntela da batalha E3: ${bons} passaram, ${maus} falharam`);

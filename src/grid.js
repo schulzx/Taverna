@@ -513,11 +513,23 @@ export function caminhar(grade, ent, destino, { ocupados = new Set(), deslocamen
   return { ok: true, caminho, custoM: q2m(custo.get(alvoK)), destino: { x: dx, y: dy } };
 }
 
-/* Todos os quadrados que cabem num deslocamento — uma busca só, para a tela
-   poder acender o alcance inteiro sem rodar `caminhar` setecentas vezes. */
-export function alcancaveisDe(grade, ent, { ocupados = new Set(), deslocamentoM = DESLOCAMENTO_PADRAO, ignoraDificil = false } = {}) {
+/* ============================================================
+   O CUSTO DE CADA QUADRADO (E4) — a mesma busca, sem deitar fora a conta
+
+   `alcancaveisDe` sempre teve o custo de cada casa na mão e devolvia só
+   as CHAVES: a última linha era `new Set(custo.keys())`, e o número
+   morria ali. A tela de E4 precisa dele para escrever o preço DENTRO da
+   casa — a lei de E1, que o `jogo` mediu e confirmou: em seis das dez
+   plantas o custo é DIFERENTE do que o olho conta (o herói abre dentro
+   da lama), e ali o número escrito é o único canal que existe.
+
+   ISTO NÃO MUDA REGRA NENHUMA. É a mesma busca, os mesmos oito vizinhos,
+   o mesmo teto, a mesma remoção da casa de origem. `alcancaveisDe` passa
+   a ser a leitura das chaves desta — uma verdade só, e não duas buscas
+   que podem divergir no dia em que alguém mexer numa delas. */
+export function custosDe(grade, ent, { ocupados = new Set(), deslocamentoM = DESLOCAMENTO_PADRAO, ignoraDificil = false } = {}) {
   const g = garantirGrade(grade);
-  if (!g || !ent || ent.x == null) return new Set();
+  if (!g || !ent || ent.x == null) return new Map();
   const lado = ladoDe(ent);
   const tetoQ = Math.max(1, m2q(deslocamentoM));
   const custo = new Map([[chave(ent.x, ent.y), 0]]);
@@ -539,8 +551,20 @@ export function alcancaveisDe(grade, ent, { ocupados = new Set(), deslocamentoM 
     }
     fila = prox;
   }
+  /* a casa de origem sai: ela não é destino de passo nenhum, e um "0"
+     escrito debaixo da própria ficha seria um preço para não andar */
   custo.delete(chave(ent.x, ent.y));
-  return new Set(custo.keys());
+  /* em METROS, que é a língua que a tela fala — quem escreve `4,5` dentro
+     da casa não pode ter de saber que por dentro o motor conta quadrados */
+  const emMetros = new Map();
+  for (const [k, q] of custo) emMetros.set(k, q2m(q));
+  return emMetros;
+}
+
+/* Todos os quadrados que cabem num deslocamento — uma busca só, para a tela
+   poder acender o alcance inteiro sem rodar `caminhar` setecentas vezes. */
+export function alcancaveisDe(grade, ent, opcoes = {}) {
+  return new Set(custosDe(grade, ent, opcoes).keys());
 }
 
 /* ============================================================

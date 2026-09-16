@@ -173,7 +173,7 @@ const TETO_DE_LITERAIS = {
      o halo âmbar a 13%, o `#fff` do alvo escolhido) renasceram em `T` do
      outro lado. Por isso `painel-batalha.jsx` não tem entrada nesta tabela,
      e é assim que ela fica: arquivo novo nasce com teto zero. */
-  "src/App.jsx": 89, /* 15/09 → 16/09 · E3, a tela da batalha e as duas gavetas mudam de casa */
+  "src/App.jsx": 82, /* 16/09 · E4: os dois fundos de selo (#1f3320 e #33201f) viravam token okFundo/perigoFundo — eram CINCO copias no mesmo bloco do HUD, e a fila de quatro pilulas escritas a mao virou um map sobre a tabela dos campos da mecanica. 89 → 82 */
 
   /* O PERGAMINHO (71 = 41 + 30) — não é sujeira, é um SISTEMA: 10 hexes
      aparecem nos DOIS arquivos, escritos separadamente, e cobrem 52 dos

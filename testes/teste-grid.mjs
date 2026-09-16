@@ -1,4 +1,5 @@
 import {
+  PLANTAS, custosDe, alcancaveisDe,
   METROS_POR_QUADRADO, m2q, q2m, TAMANHOS, tamanhoDe, ladoDe, alcanceNatural,
   cenarioDe, montarGrade, garantirGrade, dentro, ehParede, regiaoDe, nomeDoLugar,
   terrenoDificil, temCobertura, bonusDefesaEm, BONUS_COBERTURA,
@@ -417,5 +418,150 @@ sec("O ORÇAMENTO DO PASSO NA RODADA — o passo tem preço (v9.279)");
   t("total de lixo não abre crédito", passoQueResta(null, null) === 0 && passoQueResta(9, "x") === 0);
 }
 
+
+/* ============================================================
+   E4 · O CUSTO DE CADA QUADRADO — e a prova de que o refactor não
+   mudou uma casa
+
+   `custosDe` nasceu porque `alcancaveisDe` SEMPRE teve o custo de cada
+   casa na mão e o deitava fora na última linha (`new Set(custo.keys())`).
+   A tela de E4 escreve esse preço DENTRO da casa, e o número do `jogo`
+   diz por quê: em SEIS das dez plantas o custo real diverge 100 % do que
+   o olho conta — o herói abre dentro da lama, o passo cai de ~83 casas
+   para 27 no primeiro fotograma, e o único sinal era o véu ser menor.
+
+   ISTO AQUI NÃO MEDE A TELA. Mede a única coisa que um refactor pode
+   prometer e não provar: **que o conjunto devolvido é byte a byte o de
+   antes.** Por isso a busca ANTIGA está escrita aqui, íntegra, e é ela
+   o árbitro — uma cópia no teste é a forma honesta de guardar o
+   comportamento anterior de uma função que já não existe.
+
+   Corre nas DEZ plantas, na casa de abertura de cada uma, com o passo
+   cheio e com o passo gasto. Nada sorteia: duas rodadas dão a mesma
+   saída em qualquer máquina. */
+sec("E4. custosDe — o mesmo conjunto de sempre, agora com o preço");
+{
+  /* A BUSCA ANTIGA, copiada de `alcancaveisDe` como ela era antes de E4.
+     Não importa nada de `grid.js` a não ser o que era importado lá. */
+  const K = (x, y) => `${x},${y}`;
+  const livre = (g, x, y, lado, ocupados) => {
+    for (let dx = 0; dx < lado; dx++) for (let dy = 0; dy < lado; dy++) {
+      const cx = x + dx, cy = y + dy;
+      if (cx < 0 || cy < 0 || cx >= g.largura || cy >= g.altura) return false;
+      if (g.paredes.has(K(cx, cy))) return false;
+      if (ocupados && ocupados.has(K(cx, cy))) return false;
+    }
+    return true;
+  };
+  const antiga = (grade, ent, { ocupados = new Set(), deslocamentoM = 9, ignoraDificil = false } = {}) => {
+    const g = garantirGrade(grade);
+    if (!g || !ent || ent.x == null) return new Set();
+    const lado = ladoDe(ent);
+    const tetoQ = Math.max(1, m2q(deslocamentoM));
+    const custo = new Map([[K(ent.x, ent.y), 0]]);
+    let fila = [{ x: ent.x, y: ent.y }];
+    while (fila.length) {
+      const prox = [];
+      for (const at of fila) {
+        const cAt = custo.get(K(at.x, at.y));
+        for (let ax = -1; ax <= 1; ax++) for (let ay = -1; ay <= 1; ay++) {
+          if (!ax && !ay) continue;
+          const nx = at.x + ax, ny = at.y + ay, k = K(nx, ny);
+          if (custo.has(k)) continue;
+          if (!livre(g, nx, ny, lado, ocupados)) continue;
+          const c = cAt + ((!ignoraDificil && terrenoDificil(grade, nx, ny)) ? 2 : 1);
+          if (c > tetoQ) continue;
+          custo.set(k, c);
+          prox.push({ x: nx, y: ny });
+        }
+      }
+      fila = prox;
+    }
+    custo.delete(K(ent.x, ent.y));
+    return new Set(custo.keys());
+  };
+
+  /* a grade de uma planta pelo nome, com os muros compostos — e sem
+     passar por `cenarioDe`, que decide o cenario pelo contexto da cena
+     e nao serve para varrer as dez. A composicao e a mesma de
+     `montarGrade`, uma linha, e mora aqui porque e do teste. */
+  const daPlanta = (nome) => {
+    const pl = PLANTAS[nome];
+    const paredes = [];
+    for (const [x0, y0, x1, y1] of pl.muros || []) {
+      for (let x = x0; x <= (x1 ?? x0); x++) for (let y = y0; y <= (y1 ?? y0); y++) paredes.push(K(x, y));
+    }
+    return { cenario: nome, largura: pl.largura, altura: pl.altura, paredes, estorvos: (pl.estorvos || []).map(([x, y]) => K(x, y)) };
+  };
+
+  const nomes = Object.keys(PLANTAS);
+  t("as dez plantas continuam dez", nomes.length === 10);
+
+  let divergiram = [], vazias = [], somaDeCasas = 0;
+  for (const nome of nomes) {
+    const real = daPlanta(nome);
+    const heroi = { nome: "Vera", x: Math.floor(real.largura / 2), y: real.altura - 1 };
+    for (const passo of [9, 4.5, 1.5]) {
+      for (const semDificil of [false, true]) {
+        const opc = { deslocamentoM: passo, ignoraDificil: semDificil };
+        const nova = alcancaveisDe(real, heroi, opc);
+        const velha = antiga(real, heroi, opc);
+        const custos = custosDe(real, heroi, opc);
+        somaDeCasas += nova.size;
+        if (nova.size !== velha.size || [...velha].some((k) => !nova.has(k))) {
+          divergiram.push(`${nome}/${passo}${semDificil ? "/voa" : ""}`);
+        }
+        /* o mapa e o conjunto são a MESMA coisa vista de dois lados */
+        if (custos.size !== nova.size || [...nova].some((k) => !custos.has(k))) {
+          divergiram.push(`${nome}/${passo} mapa≠conjunto`);
+        }
+        if (!nova.size) vazias.push(`${nome}/${passo}`);
+      }
+    }
+  }
+  t("`alcancaveisDe` devolve o MESMO conjunto da busca de antes, nas dez plantas",
+    divergiram.length === 0, divergiram.join(" · "));
+  t("e o mapa de custos tem exactamente as mesmas chaves que o conjunto",
+    divergiram.length === 0);
+  /* catraca verde por vazio é pior que catraca nenhuma: se todas as
+     buscas devolvessem zero casas, a igualdade acima seria trivial */
+  /* O PISO DESCEU DE 2000 PARA 1500, E O MOTIVO FICA ESCRITO: 2000 era
+     um palpite meu antes de correr; a medida são 1739 casas somadas nas
+     60 buscas. Um piso acima do medido não protege de nada — falha
+     sempre — e um piso colado ao medido quebra no dia em que alguém
+     acrescentar uma planta. 1500 é o medido com folga para baixo, que é
+     o único lado de onde o perigo vem: o que esta linha existe para
+     apanhar é a igualdade TRIVIAL, o dia em que as buscas devolverem
+     zero casas e as duas asserções acima passarem por vazio. */
+  t(`e a comparação mediu casas de verdade (${somaDeCasas} somadas nas 60 buscas)`,
+    somaDeCasas > 1500);
+
+  /* O PREÇO É O QUE O MOTOR COBRA, e não o que o olho conta: 1 quadrado
+     por casa, 2 em terreno difícil. Numa planta de chão liso o custo de
+     uma casa É o anel de Chebyshev em que ela está — e é isso que faz o
+     número parecer decoração nas quatro plantas lisas e ser o ÚNICO
+     canal nas seis que cobram. */
+  const liso = daPlanta("cidade");   /* 14×14, zero difíceis */
+  const h = { nome: "Vera", x: 7, y: 13 };
+  const cLiso = custosDe(liso, h, { deslocamentoM: 9 });
+  t("em chão liso, a casa ao lado custa 1,5 m", cLiso.get("6,13") === 1.5 && cLiso.get("8,13") === 1.5);
+  t("e a diagonal custa o mesmo que a recta — é distância de mesa", cLiso.get("6,12") === 1.5);
+  t("o segundo anel custa 3 m", cLiso.get("7,11") === 3);
+  t("a casa de quem anda não tem preço: ela não é destino", !cLiso.has("7,13"));
+
+  /* e numa planta que COBRA, a mesma casa custa o dobro */
+  const lama = daPlanta("gelo");     /* a última fila é `dificil` */
+  const hG = { nome: "Vera", x: 8, y: 15 };
+  const cLama = custosDe(lama, hG, { deslocamentoM: 9 });
+  t("no chão que cobra, a casa ao lado custa 3 m e não 1,5",
+    cLama.get("7,15") === 3, `deu ${cLama.get("7,15")}`);
+  t("e quem ignora o terreno difícil paga 1,5 pela mesma casa",
+    custosDe(lama, hG, { deslocamentoM: 9, ignoraDificil: true }).get("7,15") === 1.5);
+  /* O ERRO DE QUEM CONTA QUADRADOS É SEMPRE UM ANEL — 1,5 m, que é
+     exactamente a diferença entre «ao alcance» e «faltam 1,5 m». É por
+     isso que o número tem de estar escrito, e não deduzido. */
+  t("o passo dentro da lama alcança MENOS casas que em chão liso, com o mesmo passo",
+    cLama.size < cLiso.size, `${cLama.size} contra ${cLiso.size}`);
+}
 console.log(`\n${ok} ok, ${mau} falhas`);
 process.exit(mau ? 1 : 0);

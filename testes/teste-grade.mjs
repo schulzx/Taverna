@@ -66,7 +66,16 @@ sec("3. O VÉU — o que não se alcança escurece, em vez de o alcance acender"
   /* A primeira versão pintava de dourado o alcançável. Como o alcance quase
      sempre é a maior parte do campo, o tabuleiro inteiro virava uma mancha
      e o chão sumia. O véu diz a mesma coisa pelo avesso. */
-  t("o alcance sai do grid, não de uma conta local", /alcancaveisDe\(grade, heroi, \{ ocupados, deslocamentoM: passoM/.test(G));
+  /* A ASSERÇÃO MUDOU DE FUNÇÃO EM E4, E O MOTIVO É QUE ELA CONTINUA A
+     PROVAR A MESMA COISA: que o alcance sai do MOTOR e não de uma busca
+     escrita aqui dentro. `alcancaveisDe` passou a ser a leitura das
+     chaves de `custosDe` — a mesma busca, sem deitar fora o preço de
+     cada casa, que é o que a tela de E4 escreve dentro dela. A igualdade
+     dos dois conjuntos nas dez plantas está provada em `teste-grid.mjs`,
+     secção E4; aqui prova-se só a ORIGEM. */
+  t("o alcance sai do grid, não de uma conta local", /custosDe\(grade, heroi, \{ ocupados, deslocamentoM: passoM/.test(G));
+  t("e o conjunto é a leitura das chaves do preço — uma busca só, nunca duas",
+    /const podeIr = new Set\(custoDoPasso\.keys\(\)\);/.test(G));
   t("mirando, quem manda é o alcance da habilidade", /new Set\(mirando \? noAlcance : podeIr\)/.test(G));
   t("o véu é o complemento do alcance", /if \(!alcanceCheio\.has\(K\(x, y\)\)\) veu\.push/.test(G));
   t("e não sobrou pintura de fundo no alcançável", !/rgba\(232,163,61,0\.09\)/.test(G));

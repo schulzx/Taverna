@@ -42,7 +42,7 @@ import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecem
 import { envelopeDoComercio, generoDoItem, generoPorId, apertarProcura, podePagar, pechinchar, dificuldadeDaPechincha, linhaDoPreco, vocacaoDe } from "./comercio.js";
 import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
-import { criarCondicao, tickCondicoes, tentarSaidaNoFimDoTurno, limparPorDescanso, resumoCondicoesPrompt, estadoDeRolagem, mecanicaDe, portaDeSaida, removerPelaPorta } from "./condicoes.js";
+import { criarCondicao, tickCondicoes, tentarSaidaNoFimDoTurno, limparPorDescanso, resumoCondicoesPrompt, mecanicaDe, portaDeSaida, removerPelaPorta } from "./condicoes.js";
 import { custoDaFalhaCritica, linhaDoCusto, notaDoCusto } from "./consequencias.js";
 import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, perderFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
@@ -60,7 +60,7 @@ import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, 
 import { menteDaCriatura, intencaoDaVez, intencaoPorId, linhaDaLuta, envelopeDaVirada, ADVERSARIO_PROMPT } from "./adversario.js";
 import { consultarCobrador, linhaDoMundo, envelopeDoMundo } from "./cobrador.js";
 import { avaliarEncontro, PESO_AMEACA, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
-import { montarGrade, garantirGrade, posicionar, posicionarPerto, alcanca, caminhar, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, mapaEmTexto, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, distanciaM, tamanhoDe, ladoDe, alcanceNatural, ehParede, m2q, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO } from "./grid.js";
+import { montarGrade, garantirGrade, posicionar, posicionarPerto, alcanca, caminhar, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, mapaEmTexto, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, distanciaM, tamanhoDe, ladoDe, alcanceNatural, ehParede, m2q, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO, PASSO_NA_RODADA, passoQueResta, podeDarUmPasso, passoAposAndar } from "./grid.js";
 /* v9.255 (Fase X, X2): a conta do alcance do golpe saiu daqui de dentro e
    virou tabela provável em Node. O App não decide mais quem dá para
    acertar — ele PERGUNTA, e pergunta duas vezes: uma quando o golpe sai,
@@ -193,6 +193,7 @@ import { potenciasDoMundo, garantirDiplomacia, aprecoDe, fichaDe, mexerNoApreco,
 import { PainelMapa } from "./painel-mapa.jsx";
 import { GridDeBatalha } from "./grade-de-batalha.jsx";
 import { TelaDeBatalha } from "./painel-batalha.jsx";
+import { selosDaMecanica } from "./selo-de-estado.js";
 import { PainelHabilidades, PainelCaderno } from "./painel-habilidades.jsx";
 import { criarSala, garantirSala, sentarNaSala, sairDaSala, sentarFicha, assentoDe, ocupados as ocupadosDaSala, todosProntos, porAcao, acaoDe, turnoCompleto, textoDoTurno, limparTurno, normalizarCodigo, codigoValido, RECADOS, recadoValido, envelopeDaSala, LUGARES } from "./sala.js";
 /* O TURNO GUARDADO (v9.256, Fase X - X3). O motor resolve ANTES de falar
@@ -4926,7 +4927,20 @@ export default function Taverna() {
       ...g.inimigos.map((e) => ({ nome: e.nome, lado: "inimigo", modDestreza: Number(e.des) || 0 })),
     ]);
     reacaoUsadaRef.current = false;
-    const novo = { ...comb, inimigos: g.inimigos, grade: g.grade, heroi: g.heroi, aliados: g.aliados, ordem, rodada: 1, recursos: novosRecursos() };
+    /* A ECONOMIA NASCE AQUI, E A CHAVE QUE FALTAVA APAGAVA DUAS REGRAS
+       (E4). A luta montava-se com `rodada: 1` e `recursos`, e a economia
+       só nascia na VIRADA de rodada — logo a rodada 1 corria com
+       `economia` indefinida. O desconto do passo fazia
+       `eco ? {...} : eco` e evaporava: são os 21 m medidos numa só
+       rodada com a marca parada em "9 de 9". E a guarda da ação está
+       atrás do mesmo `if (eco)`, logo o aviso de "já usou sua ação"
+       nunca disparava na rodada 1 — as zero chamadas que W2 contou sem
+       saber porquê.
+
+       E ELA NASCE AQUI TAMBÉM PARA MATAR A ECONOMIA RANÇOSA: o caminho
+       de retomar uma luta arrastava a economia da anterior, e quem
+       abrisse a segunda briga já a abria com a ação gasta na primeira. */
+    const novo = { ...comb, inimigos: g.inimigos, grade: g.grade, heroi: g.heroi, aliados: g.aliados, ordem, rodada: 1, recursos: novosRecursos(), economia: economiaNova(pers) };
     msgs.push(`🗺 Terreno: ${mapaEmTexto(g.grade, { heroi: g.heroi, grupo: g.aliados, inimigos: g.inimigos })}`);
     const grandes = g.inimigos.filter((e) => ladoDe(e) > 1);
     if (grandes.length) msgs.push(`📏 ${grandes.map((e) => `${e.nome} é ${tamanhoDe(e).nome.toLowerCase()} (${ladoDe(e)}×${ladoDe(e)} quadrados, alcança ${alcanceNatural(e)} m)`).join(" · ")}`);
@@ -14594,8 +14608,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        gastar nove metros para andar um e meio. Agora o que sobra continua
        sobrando, e dá para andar, contornar e andar de novo enquanto houver
        chão; o que fecha o turno é AGIR, como sempre foi. */
-    const restante = eco && eco.movM != null ? eco.movM : passo.metros;
-    if (restante < METROS_POR_QUADRADO) {
+    /* A DISTINÇÃO QUE ESTA LINHA NÃO PODE REFAZER À MÃO: `null` é
+       "ninguém andou ainda" e vale o passo inteiro; `0` é "acabou". As
+       duas leituras moram em `passoQueResta`, que também recusa saldo
+       antigo maior que o total de hoje — passo que encolhe não é
+       burlável por saldo de quando ele era maior. */
+    const restante = passoQueResta(eco && eco.movM, passo.metros);
+    if (!podeDarUmPasso(eco && eco.movM, passo.metros)) {
       pushMsgs([{ autor: "sistema", texto: `⏳ Você já cobriu os ${metrosTxt(passo.metros)} m desta rodada — o próximo passo é no turno que vem.` }]);
       return;
     }
@@ -14611,7 +14630,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     let pers = personagemRef.current || personagem;
     const nomeDe = nomeDoLugar(grade, de.x, de.y);
     const nomePara = nomeDoLugar(grade, chk.destino.x, chk.destino.y);
-    const sobra = Math.max(0, Math.round((restante - chk.custoM) * 10) / 10);
+    /* devolve SEMPRE um número, e é por isso que quem fia não decide
+       nada: custo de lixo não gasta, custo maior que o saldo não vira
+       dívida, meia casa não some na conta. */
+    const sobra = passoAposAndar(eco && eco.movM, passo.metros, chk.custoM);
     const linhas = [{ autor: "sistema", texto: `👣 Você vai ${nomeDe === nomePara ? `${metrosTxt(chk.custoM)} m dentro de ${nomePara}` : `de ${nomeDe} para ${nomePara}`}${passo.voando ? " (voando)" : ""} — ${metrosTxt(chk.custoM)} m gastos, ${sobra > 0 ? `restam ${metrosTxt(sobra)} m` : "acabou o passo desta rodada"}.` }];
     if (colados.length) {
       const ops = oportunidadesContraOJogador(colados, pers, grauDe(divindadeRef.current));
@@ -14633,7 +14655,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         setPersonagem(pers); personagemRef.current = pers;
       }
     }
-    const novaEco = eco ? { ...eco, movM: sobra } : eco;
+    /* `eco ? {...eco, movM: sobra} : eco` devolvia `undefined` quando
+       não havia economia — o desconto evaporava no exacto caso em que
+       mais importava. E o nome do campo sai da tabela: um nome de campo
+       é um número com letras. */
+    const novaEco = { ...(eco || {}), [PASSO_NA_RODADA.campo]: sobra };
     combateRef.current = { ...comb, heroi: { ...de, x: chk.destino.x, y: chk.destino.y }, economia: novaEco };
     setCombate(combateRef.current);
     pushMsgs(linhas);
@@ -20801,8 +20827,13 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         dobrar: dobraMovimento(personagem),
         ignoraDificil: ignoraTerrenoDificil(personagem) || ignoraDificilPorTraco(personagem),
       });
-      const resta = combateNaTela.economia && combateNaTela.economia.movM != null ? combateNaTela.economia.movM : pp.metros;
-      return { passoM: resta, passoTotal: pp.metros, ignoraDificil: pp.ignoraDificil };
+      /* A RÉGUA E O DÉBITO LÊEM A MESMA FUNÇÃO. Esta linha refazia a
+         conta à mão e caía no valor por omissão `pp.metros`: o motor
+         cobrava (quando havia economia) e a marca dizia "9 de 9". Duas
+         leituras do mesmo saldo são duas verdades, e a que o jogador vê
+         era a errada. */
+      const eco = combateNaTela.economia;
+      return { passoM: passoQueResta(eco && eco.movM, pp.metros), passoTotal: pp.metros, ignoraDificil: pp.ignoraDificil };
     } catch (e) { calou("o passo da batalha", e); return { passoM: 0, passoTotal: 0, ignoraDificil: false }; }
   })();
 
@@ -21571,12 +21602,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 mesmo que o Mestre lê e o mesmo que o dado vai usar. */}
             {((personagem.condicoes || []).length > 0 || (personagem.efeitos || []).length > 0) && (() => {
               const mec = mecanicaDe(personagem.condicoes || []);
-              const rol = estadoDeRolagem(personagem.condicoes || []);
               return (
                 <div className="px-4 md:px-8 flex items-center gap-1.5 pb-1.5 flex-wrap" >
                   {(personagem.condicoes || []).map((c, i) => (
                     <span key={`c${i}`} className="tv-mono text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1" title={c.efeito || ""}
-                      style={{ background: c.tipo === "bom" ? "#1f3320" : "#33201f", border: `1px solid ${c.tipo === "bom" ? T.ok : T.danger}`, color: c.tipo === "bom" ? T.ok : T.danger }}>
+                      style={{ background: c.tipo === "bom" ? T.okFundo : T.perigoFundo, border: `1px solid ${c.tipo === "bom" ? T.ok : T.danger}`, color: c.tipo === "bom" ? T.ok : T.danger }}>
                       {c.icone || (c.tipo === "bom" ? "✦" : "☠")} {c.nome}{c.turnos ? <span style={{ opacity: 0.7 }}> {c.turnos}t</span> : null}
                     </span>
                   ))}
@@ -21586,23 +21616,41 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                       ✧ {e.nome}{e.bonus ? ` +${e.bonus}` : ""}{e.turnos ? <span style={{ opacity: 0.7 }}> {e.turnos}t</span> : null}
                     </span>
                   ))}
-                  {rol.rotulo !== "neutro" && (
-                    <span className="tv-mono text-[10px] px-2 py-0.5 rounded-full" title={mec.motivos.join(" · ")}
-                      style={{ background: rol.vantagem ? "#1f3320" : "#33201f", border: `1px solid ${rol.vantagem ? T.ok : T.danger}`, color: rol.vantagem ? T.ok : T.danger, fontWeight: 600 }}>
-                      {rol.vantagem ? "🎲 vantagem" : "🎲 desvantagem"}
-                    </span>
-                  )}
-                  {mec.perdeAcao && (
-                    <span className="tv-mono text-[10px] px-2 py-0.5 rounded-full" title="Você não age neste turno"
-                      style={{ background: "#33201f", border: `1px solid ${T.danger}`, color: T.danger, fontWeight: 600 }}>⛔ sem ação</span>
-                  )}
-                  {mec.danoTurno > 0 && (
-                    <span className="tv-mono text-[10px] px-2 py-0.5 rounded-full" title="Dano cobrado a cada turno enquanto durar"
-                      style={{ background: "#33201f", border: `1px solid ${T.danger}`, color: T.danger }}>−{mec.danoTurno} PV/turno</span>
-                  )}
-                  {mec.danoExtra > 0 && (
-                    <span className="tv-mono text-[10px] px-2 py-0.5 rounded-full" style={{ background: "#1f3320", border: `1px solid ${T.ok}`, color: T.ok }}>+{mec.danoExtra} dano</span>
-                  )}
+                  {/* ============================================================
+                      E4 · A FILA DESENHA O QUE O MOTOR CALCULA — TODO ELE
+
+                      `mecanicaDe` devolve SETE campos que mexem num número, e
+                      esta fila desenhava QUATRO, cada um com o seu `if` e a sua
+                      cor escrita à mão. Os três que faltavam:
+
+                        · `danoReduzido` (ENFRAQUECIDO, bate −2) — e H4 (v9.276)
+                          acabara de pagar para que esse número contasse
+                          certo: `combate.js` lia-o do lado errado, e amaldiçoar
+                          deixava o inimigo mais DURO;
+                        · `danoRecebidoExtra` (MARCADO, apanha +2) — cujo único
+                          canal era o `title=` da condição, que é balão de rato e
+                          no telefone não existe;
+                        · `defesa`.
+
+                      A CATRACA, e é exacta: *o conjunto de campos
+                      desenhados = o conjunto que `mecanicaDe` devolve, menos
+                      `motivos`.* Com a fila escrita à mão, um campo novo no
+                      motor nascia invisível e ninguém ficava vermelho.
+
+                      E A GRAMÁTICA SAI DO MÓDULO: o sinal diz a aritmética
+                      e o tom diz a favor de quem a conta pende, e os dois
+                      PODEM discordar — `−2 DANO` em perigo (enfraquecido) e
+                      `+2 DANO SOFRIDO` em perigo (marcado) são as duas que
+                      esta casa não sabia dizer. */}
+                  {selosDaMecanica(mec).map((x) => (
+                    <span key={x.id} className="tv-mono text-[10px] px-2 py-0.5 rounded-full"
+                      title={x.id === "vantagem" || x.id === "desvantagem" ? mec.motivos.join(" · ") : undefined}
+                      style={{
+                        background: x.tom === "bom" ? T.okFundo : T.perigoFundo,
+                        border: `1px solid ${x.tom === "bom" ? T.ok : T.danger}`,
+                        color: x.tom === "bom" ? T.ok : T.danger, fontWeight: 600,
+                      }}>{x.texto}</span>
+                  ))}
                 </div>
               );
             })()}

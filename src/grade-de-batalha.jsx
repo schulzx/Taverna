@@ -22,7 +22,11 @@
    ============================================================ */
 import React from "react";
 import { T, ALVOS } from "./constantes.js";
-import { garantirGrade, alcancaveisDe, ocupacaoDe, adjacentes, caminhar, quadradosDe, ladoDe, tamanhoDe, ehParede, ehEstorvo, terrenoDificil, temCobertura, nomeDoLugar, distanciaM, alcanceNatural, metrosTxt } from "./grid.js";
+import { garantirGrade, custosDe, ocupacaoDe, adjacentes, caminhar, quadradosDe, ladoDe, tamanhoDe, ehParede, ehEstorvo, terrenoDificil, temCobertura, nomeDoLugar, distanciaM, alcanceNatural, metrosTxt } from "./grid.js";
+/* E4: a geometria do que se escreve DENTRO da casa sai da tabela. `T` e
+   `ALVOS` continuam a vir por `constantes.js`, que os reexporta deste
+   mesmo arquivo — é o mesmo objeto, e não uma segunda paleta. */
+import { TELA_DE_BATALHA } from "./estilo.js";
 /* v9.161: a ficha do tabuleiro ganha ROSTO — o mesmo da bolinha do grupo e
    da carta de tarô, porque uma pessoa com três caras conforme o painel é o
    defeito que o rosto único veio matar. E a faixa do chefe lê a MESMA
@@ -43,6 +47,57 @@ import { IconeEscudoAlerta } from "./ui.jsx";
 import { LETRAS_DA_GRADE } from "./coordenadas.js";
 
 const K = (x, y) => `${x},${y}`;
+
+/* ============================================================
+   E4 · AS TECLAS DA GRELHA — o padrão `grid` da WAI-ARIA, numa tabela
+
+   O NÚMERO QUE OBRIGA A ISTO, medido pelo `jogo` em duas lutas: da
+   borda de cima da tela da luta até `Atacar` iam **84 paragens de
+   `Tab`** com o passo cheio e **1** com o passo gasto — *na mesma luta,
+   na mesma tela*. Nas dez plantas, de 28 a 91.
+
+   > ### A distância até ao verbo não é longa: é IMPOSSÍVEL DE APRENDER.
+
+   Ela era o tamanho do conjunto alcançável, e esse muda a cada passo, a
+   cada planta e a cada rodada. Ninguém forma o hábito *"Atacar fica a N
+   tabulações"* quando N nunca é o mesmo duas vezes.
+
+   E O QUE ISTO COMPRA NÃO É CONFORMIDADE, É JOGO. Antes, o `Tab` andava
+   pelo conjunto em ordem de DOM — linha a linha sobre o tabuleiro
+   inteiro —, e da casa onde estava o seguinte podia cair cinco casas ao
+   lado: **quem joga de teclado não tinha como dizer "a casa à minha
+   esquerda". Tinha uma lista, não um mapa.** Com as setas por dentro
+   ganha o que o rato sempre teve: um cursor que anda uma casa de cada
+   vez sobre um mapa.
+
+   `role="grid"` e `role="gridcell"` já estavam postos desde E2; faltava
+   só o cursor. Escrito como TABELA e não como `switch` porque é a lista
+   das teclas que a norma nomeia, e uma lista que a suíte pode ler de
+   volta é a única forma de provar que nenhuma ficou de fora. */
+const TECLAS_DA_GRELHA = {
+  ArrowRight: { dx: 1, dy: 0 },
+  ArrowLeft:  { dx: -1, dy: 0 },
+  ArrowDown:  { dx: 0, dy: 1 },
+  ArrowUp:    { dx: 0, dy: -1 },
+  Home:       { aoInicioDaLinha: true },
+  End:        { aoFimDaLinha: true },
+  PageUp:     { aoTopo: true },
+  PageDown:   { aoFundo: true },
+};
+
+/* O MEDIDOR DO CONJUNTO — quantas casas o passo acende, dito a quem
+   monta. O número nasce aqui porque é aqui que a busca acontece; medi-lo
+   outra vez na tela seria a segunda busca, e duas buscas divergem no dia
+   em que alguém mexer numa delas.
+
+   É COMPONENTE, e não um efeito no corpo desta grade, porque a grade tem
+   um `return null` cedo (a luta sem terreno) e um hook depois de um
+   return condicional é ilegal. E é de MÓDULO, nunca do render: a lei que
+   já custou o foco de um campo de texto a esta casa. */
+function MedidorDoConjunto({ casas, aoMedir }) {
+  React.useEffect(() => { if (aoMedir) aoMedir(casas); }, [casas, aoMedir]);
+  return null;
+}
 
 /* ============================================================
    E2 · O ENDEREÇO DA CASA — UM SÓ SÍTIO NESTE ARQUIVO
@@ -256,7 +311,7 @@ function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null }) {
    mesmo tempo, e nenhum dos quatro tamanhos de antes lá chegava (23,8 no
    embutido 16×16, 36,6 no ampliado). Zero (o defeito) mantém, byte a
    byte, a conta antiga — quem não pede janela continua com o relance. */
-export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null, ladoFixo = 0 }) {
+export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null, ladoFixo = 0, aoMedirOPasso = null }) {
   const [aberto, setAberto] = React.useState(false);
 
   /* ---------------- O DANO FLUTUA (v9.161) ----------------
@@ -359,6 +414,16 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      dele. O foco ganha do rato quando os dois apontam: quem está a tabular
      não tirou a mão de onde estava. */
   const [focada, setFocada] = React.useState(null);
+  /* A POSIÇÃO LEMBRADA DO CURSOR (E4). `com foco` diz onde o teclado
+     ESTÁ; `a paragem` diz onde ele VOLTA. Nunca acendem na mesma casa, e
+     há no máximo uma de cada no tabuleiro inteiro — sem ela, o jogador
+     não sabe onde vai cair quando voltar com o `Tab`. */
+  const [paragem, setParagem] = React.useState(null);
+  /* os `<rect>` por chave, para que a seta possa dar o foco à vizinha.
+     A chave leva o tamanho junto porque os DOIS tabuleiros — o compacto e
+     o de tela cheia — podem estar montados ao mesmo tempo, e sem isso o
+     segundo apagaria as casas do primeiro do mapa. */
+  const casasRef = React.useRef(new Map());
   const [andando, setAndando] = React.useState(null);
 
   const grade = combate && combate.grade ? combate.grade : null;
@@ -406,7 +471,14 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
   const inimigos = ((combate.inimigos) || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
   const colados = heroi ? adjacentes(heroi, inimigos) : [];
   const ocupados = ocupacaoDe([...inimigos, ...aliados], heroi);
-  const podeIr = (heroi && podeMover && !mirando) ? alcancaveisDe(grade, heroi, { ocupados, deslocamentoM: passoM, ignoraDificil }) : new Set();
+  /* O CONJUNTO E O PREÇO SÃO A MESMA BUSCA (E4). `alcancaveisDe` sempre
+     teve o custo de cada casa na mão e deitava-o fora na última linha;
+     `custosDe` é ela sem esse desperdício. O número do `jogo`: em SEIS
+     das dez plantas o custo real diverge 100 % do que o olho conta,
+     porque o herói ABRE dentro da lama — o passo cai de ~83 casas para
+     27 no primeiro fotograma, e o único sinal era o véu ser menor. */
+  const custoDoPasso = (heroi && podeMover && !mirando) ? custosDe(grade, heroi, { ocupados, deslocamentoM: passoM, ignoraDificil }) : new Map();
+  const podeIr = new Set(custoDoPasso.keys());
   const naArea = new Set(((previsao && previsao.quadrados) || []).map((q) => K(q.x, q.y)));
   const noAlcance = (alcanceMira && alcanceMira.quadrados) || new Set();
 
@@ -462,6 +534,21 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      linha da régua, e é o único gatilho de `realcada` que existe hoje. */
   const apontada = focada || sobre;
 
+  /* ONDE O CURSOR DE TECLADO VOLTA (E4). A casa lembrada, presa dentro do
+     campo — uma planta menor que a anterior deixaria o cursor fora do
+     tabuleiro, e um `tabIndex=0` numa casa que não existe é a grelha sem
+     porta de entrada nenhuma.
+
+     O PADRÃO É O HERÓI, e não a casa A1: quem entra na grelha pela
+     primeira vez entra por onde está, que é de onde ele ia querer andar.
+     É a mesma decisão do enquadramento de entrada, um andar abaixo. */
+  const casaDaParagem = (() => {
+    const cabe = (c) => !!c && c.x >= 0 && c.y >= 0 && c.x < g.largura && c.y < g.altura;
+    if (cabe(paragem)) return paragem;
+    if (heroi && heroi.x != null && cabe({ x: heroi.x, y: heroi.y })) return { x: heroi.x, y: heroi.y };
+    return { x: 0, y: 0 };
+  })();
+
   /* O LADO DA CASA, EM PIXELS — a mesma conta que o `maxWidth` abaixo faz
      em CSS, refeita aqui em número porque `N = ceil(30 / lado)` precisa
      dela. No compacto o teto é a altura (380 px de campo) com um chão de
@@ -496,6 +583,33 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
        de lado — N = 2. A letra nunca precisa de sair. */
     const passoDoRotulo = Math.max(1, Math.ceil(LADO_QUE_CABE_UM_ROTULO / Math.max(1, ladoEmPx(grande))));
     const parado = movimentoParado();
+    /* O NÚMERO SÓ SE ESCREVE ONDE ELE SE LÊ. O corpo é dado em píxeis
+       sobre a casa de `ALVOS.piso`, e dentro do SVG ele escala com a
+       casa: numa casa de 24 px o 10 vira 5, e cinco píxeis de mono não
+       são um número, são sujidade. Abaixo do piso do alvo, nada. */
+    const escreveOCusto = !mirando && custoDoPasso.size > 0 && ladoEmPx(grande) >= ALVOS.piso;
+    /* a chave do mapa de casas leva o tamanho: os dois tabuleiros podem
+       estar montados ao mesmo tempo, e sem isto o de tela cheia apagaria
+       as casas do compacto do mapa — e a seta daria o foco ao invisível */
+    const chaveDoFoco = (x, y) => `${grande ? "g" : "c"}:${K(x, y)}`;
+    /* AS SETAS ANDAM POR DENTRO. Presas ao campo de propósito: um cursor
+       que dá a volta pelo outro lado faz o jogador perder a noção de onde
+       está num tabuleiro que ele não vê inteiro. */
+    const andarComTecla = (ev, x, y) => {
+      const d = TECLAS_DA_GRELHA[ev.key];
+      if (!d) return false;
+      ev.preventDefault();
+      const nx = d.aoInicioDaLinha ? 0 : d.aoFimDaLinha ? g.largura - 1 : x + (d.dx || 0);
+      const ny = d.aoTopo ? 0 : d.aoFundo ? g.altura - 1 : y + (d.dy || 0);
+      const px = Math.max(0, Math.min(g.largura - 1, nx));
+      const py = Math.max(0, Math.min(g.altura - 1, ny));
+      const el = casasRef.current.get(chaveDoFoco(px, py));
+      /* o foco chega pela TECLA, e por isso `:focus-visible` acende — um
+         `.focus()` disparado fora de um evento de teclado não acende, e
+         foi assim que a medição de E3 se enganou a si própria */
+      if (el && el.focus) el.focus();
+      return true;
+    };
     const grauDaColuna = (x) => (apontada && apontada.x === x ? "realcada" : "repouso");
     const grauDaLinha = (y) => (apontada && apontada.y === y ? "realcada" : "repouso");
     return (
@@ -680,6 +794,47 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           </g>
         )}
 
+        {/* ============================================================
+            E4 · O CUSTO ESCRITO DENTRO DA CASA
+
+            A lei de E1, agora com a medida que a salva da acusação de
+            planilha: das dez plantas, QUATRO dão 0 % de divergência entre
+            o custo real e o que o olho conta, e SEIS dão 100 %. Não há
+            meio-termo — ou o número confirma o que o olho já sabe, ou é o
+            ÚNICO canal que existe. E como o jogador não sabe em que
+            planta está antes de a ver, a regra só serve se for a mesma
+            nas duas.
+
+            NASCE EM ALCANÇÁVEL, NÃO SOB O DEDO: quem pousa o dedo numa
+            casa já escolheu; quem precisa do número é quem ainda está a
+            escolher, e esse está a olhar para o conjunto inteiro. Um
+            custo que só aparece sob o dedo obriga a visitar 83 casas para
+            comparar duas.
+
+            E O QUE NÃO SE ESCREVE É O DENOMINADOR. O preço unitário é
+            verdade sobre UM passo; o total é o que a rodada de graça
+            tornava mentira. *Um preço unitário verdadeiro pode viver sem
+            orçamento; um orçamento falso não pode viver de todo.*
+
+            A CASA MUDA FICA MUDA, e a mudez é a informação: o que é alvo
+            tem o custo escrito dentro; o que não tem nada escrito dentro
+            não é alvo. Abaixo do piso do alvo nada se escreve — a 20–28
+            px o número não se lê, e o relance compacto não é para agir. */}
+        {escreveOCusto && (
+          <g className="tv-mono" style={{ pointerEvents: "none" }}>
+            {[...custoDoPasso].map(([k, metros]) => {
+              const [cx, cy] = k.split(",").map(Number);
+              return (
+                <text key={`custo${k}`} x={cx + 0.5} y={cy + TELA_DE_BATALHA.casa.linhaDoCusto}
+                  textAnchor="middle" dominantBaseline="central" fill={T.amberSoft}
+                  style={{ fontSize: TELA_DE_BATALHA.casa.corpoDoCusto / ALVOS.piso, fontWeight: 700 }}>
+                  {metrosTxt(metros)}
+                </text>
+              );
+            })}
+          </g>
+        )}
+
         {/* AS FICHAS */}
         <g style={{ pointerEvents: "none" }}>
           {aliados.map((a, i) => (a.vida || 0) > 0 && a.x != null ? (
@@ -708,6 +863,33 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
                 style={{ fontSize: 0.55, fontWeight: 700 }}>{f.texto}</text>
             ))}
           </g>
+        )}
+
+        {/* A PARAGEM DO CURSOR DE TECLADO (E4) — onde o `Tab` volta.
+
+            SÓ APARECE QUANDO O TECLADO NÃO ESTÁ NA GRELHA: com o foco
+            dentro, quem manda é o anel de `:focus-visible`, e os dois ao
+            mesmo tempo seriam duas marcas a dizer a mesma coisa em sítios
+            diferentes.
+
+            DOIS CANAIS E NENHUM DELES É SÓ A COR: a luminância (um degrau
+            de 2,3× — `ink` a 15,31:1 contra `inkDim` a 6,63:1) e a
+            ESPESSURA (3 px contra 2). E um terceiro que veio de graça: o
+            anel tem cantos rectos e a borda de alcançável tem raio, logo
+            lê-se como outro objeto e não como uma borda mais grossa.
+
+            E a defesa de por que a luminância chega AQUI, onde noutros
+            sítios não chegaria: a distinção não é entre duas casas, é
+            entre dois MOMENTOS — o jogador vê o forte enquanto o teclado
+            está na grelha e o fraco quando não está, e nunca tem os dois
+            lado a lado para comparar. */}
+        {!focada && podeIr.size > 0 && (
+          <rect aria-hidden="true" pointerEvents="none" fill="none" stroke={T.inkDim}
+            strokeWidth={TELA_DE_BATALHA.casa.anelDaParagem / ALVOS.piso}
+            x={casaDaParagem.x + TELA_DE_BATALHA.casa.anelDaParagem / ALVOS.piso / 2}
+            y={casaDaParagem.y + TELA_DE_BATALHA.casa.anelDaParagem / ALVOS.piso / 2}
+            width={1 - TELA_DE_BATALHA.casa.anelDaParagem / ALVOS.piso}
+            height={1 - TELA_DE_BATALHA.casa.anelDaParagem / ALVOS.piso} />
         )}
 
         {/* A CAMADA DO TOQUE, por último e por cima — e em E2 ela vira o
@@ -786,13 +968,48 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
                   : `não dá para andar até ${end} agora`;
                 const nomeDaCasa = [end, quem, lugar, veredito].filter(Boolean).join(" · ");
                 const agir = () => { if (!clicavel) return; if (mirando) onMirar({ x, y }); else onMover && onMover({ x, y }); };
+                /* ============================================================
+                   E4 · UM PONTO DE PARAGEM, E AS SETAS POR DENTRO
+
+                   Antes: `tabIndex={clicavel ? 0 : undefined}`. Duas
+                   doenças numa linha só.
+
+                   A PRIMEIRA, medida: 84 paragens de `Tab` até `Atacar`
+                   com o passo cheio e 1 com o passo gasto, NA MESMA LUTA.
+
+                   A SEGUNDA, pior e mais calada: quando o passo acabava, a
+                   grelha inteira deixava de responder ao teclado — 196
+                   casas sem um único ponto de foco. E o veredito de cada
+                   casa (o campo que E2 pôs no nome acessível justamente
+                   para que a casa impedida EXPLIQUE por que não dá)
+                   deixava de ser alcançável no exacto momento em que ele
+                   era a única coisa que havia para dizer. *Silêncio lê-se
+                   como "nada a dizer", nunca como "não dá".*
+
+                   Agora TODA casa é focável (`-1`) e UMA é a paragem
+                   (`0`): o `Tab` entra e sai da grelha numa batida, e
+                   dentro dela as setas andam casa a casa. O veredito de
+                   qualquer casa — parede, lama, fora do passo — está
+                   sempre a uma seta de distância. */
+                const ehAParagem = casaDaParagem.x === x && casaDaParagem.y === y;
                 return (
                   <rect key={k} x={x} y={y} width="1" height="1" fill="transparent"
-                    role="gridcell" aria-label={nomeDaCasa} tabIndex={clicavel ? 0 : undefined}
+                    ref={(el) => { const m = casasRef.current; const ck = chaveDoFoco(x, y); if (el) m.set(ck, el); else m.delete(ck); }}
+                    role="gridcell" aria-label={nomeDaCasa} tabIndex={ehAParagem ? 0 : -1}
                     onClick={agir}
-                    onKeyDown={(ev) => { if (clicavel && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); agir(); } }}
+                    onKeyDown={(ev) => {
+                      if (ev.key === "Enter" || ev.key === " ") {
+                        /* a casa que não dá NÃO engole a tecla: quem a
+                           preme numa casa impedida já ouviu o veredito no
+                           nome dela, e roubar-lhe a barra de espaço seria
+                           cobrar-lhe o gesto duas vezes */
+                        if (!clicavel) return;
+                        ev.preventDefault(); agir(); return;
+                      }
+                      andarComTecla(ev, x, y);
+                    }}
                     className="tv-anel-foco-no-campo"
-                    onFocus={() => setFocada({ x, y })} onBlur={() => setFocada(null)}
+                    onFocus={() => { setFocada({ x, y }); setParagem({ x, y }); }} onBlur={() => setFocada(null)}
                     onMouseEnter={() => setSobre({ x, y })} onMouseLeave={() => setSobre(null)}
                     style={{ cursor: clicavel ? "pointer" : "default" }} />
                 );
@@ -856,6 +1073,11 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
 
   return (
     <div className="mb-2">
+      {/* quantas casas o passo acende, dito a quem monta a tela: é o
+          número que decide se o verbo do passo pode armar. Uma vez só,
+          fora dos dois tabuleiros — a medida é do conjunto, não do
+          desenho dele. */}
+      <MedidorDoConjunto casas={podeIr.size} aoMedir={aoMedirOPasso} />
       {cabecalho}
       {tabuleiro(false)}
       {aberto && (

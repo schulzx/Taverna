@@ -274,14 +274,20 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      intacta. (E a segunda vez em dois ciclos que esta catraca cobra o
      deslocamento; o item da pauta que propoe trocar numero por ancora de
      texto ja leva as duas cobrancas escritas.) */
-  /* E3: 7550 -> 7135. A tela da batalha e as duas gavetas saíram do
+  /* E4: 7135 -> 7149. As treze linhas são o comentário da chave
+     `economia` que passou a nascer em `equiparCombate` (:4929) — a luta
+     nascia sem orçamento e a rodada 1 inteira era de graça. Nada se
+     moveu por vontade própria: tudo o que está abaixo de :4929 andou
+     treze linhas, e este endereço é um deles.
+
+     E3: 7550 -> 7135. A tela da batalha e as duas gavetas saíram do
      App.jsx (-450 linhas) e o funil andou junto, sem mudar de forma. É a
      QUARTA vez em quatro ciclos que esta catraca cobra um deslocamento que
      não é defeito nenhum. */
-  } else if (iPush + 1 !== 7135) {
-    falha(`pushMsgs saiu de src/App.jsx:7135 e agora está em :${iPush + 1}`,
+  } else if (iPush + 1 !== 7149) {
+    falha(`pushMsgs saiu de src/App.jsx:7149 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:7135, como o mapa de X3b diz");
+  } else ok("pushMsgs segue em src/App.jsx:7149, como o mapa de X3b diz");
 
   let divergiu = 0;
   for (const f of FUNIL_DO_COMBATE) {

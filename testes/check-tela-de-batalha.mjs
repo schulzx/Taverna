@@ -255,6 +255,32 @@ sec("7. os verbos: a lista é do `jogo`, e o armado tem três saídas");
   /* O VERBO IMPEDIDO CONTINUA NA ORDEM DE TABULAÇÃO. `disabled` tira-o
      dela, e quem navega por teclado ou ouve a tela deixa de saber que o
      verbo principal da luta existe. */
+  /* ============================================================
+     E4 · O BOTÃO NÃO DECIDE, E A LUTA VIVA FOI QUEM MOSTROU
+
+     `Verbo` fazia `onClick={() => { if (!impedido) aoTocar(); }}`, e
+     com isso ENGOLIA o toque no verbo impedido. A regra que recusa e
+     escreve a razão (`impedimentosDaFileira`) estava certa e provada
+     em Node — e nunca chegava a correr, porque a tela nunca a
+     chamava. Medido a jogar: passo a zero, `Mover` com
+     `aria-disabled=true`, e a linha do veredito a falar da distância
+     do inimigo em vez de dizer por que o verbo não arma.
+
+     *Uma suíte verde sobre uma regra que a tela não invoca é a pior
+     espécie de verde.* O dente prende a FORMA: o toque passa sempre,
+     e quem decide é quem tem a tabela na mão.
+
+     E ELE NÃO SUBSTITUI a asserção de baixo, substitui a sua metade
+     silenciosa: `aria-disabled` continua a ser obrigatório (é o que
+     anuncia o estado a quem ouve a tela), mas deixa de poder ser o
+     único canal. */
+  t("o toque no verbo impedido CHEGA à regra — o botão não o engole",
+    /onClick=\{\(\) => aoTocar\(\)\}/.test(TEL)
+    && !/if \(!impedido\) aoTocar/.test(TEL),
+    "`if (!impedido) aoTocar()` engole o toque e a razão da recusa nunca chega à linha do veredito — apanhado a jogar, com a suíte verde.");
+  t("e a razão da recusa sai da tabela do módulo, nunca de uma string no JSX",
+    /impedimentosDaFileira\(/.test(TEL) && /recusaDoVerbo: recusado/.test(TEL));
+
   t("o verbo impedido é `aria-disabled`, nunca `disabled`",
     /aria-disabled=\{impedido \|\| undefined\}/.test(TEL) && !/\bdisabled=\{impedido\}/.test(TEL));
 

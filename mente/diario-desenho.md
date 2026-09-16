@@ -19,6 +19,188 @@ Formato:
 
 ---
 
+## 16/09 22:55 · v9.281 · E4 · mover é fazer · **e a mesa pausa aqui** · commit `HASH`
+
+*O escrito das mãos fica em `mente/e4-jogo.md` e `mente/e4-desenho.md`; a forma,
+no bloco de E4 de `mente/formas.md` (557 linhas).*
+
+**A etapa que respondeu à pergunta da fase — e a resposta não estava onde a fase
+procurava.** *"Quantas rodadas o jogador consegue se mover de facto, contra as
+zero de hoje"* era o pedido desde 14/09. O passo não era descontado, e durante
+dois ciclos a mesa escreveu que faltava o motor cobrar.
+
+- **estado inicial:** trava e bastão livres ao abrir; VERSAO `v9.277`. **O ciclo
+  morreu uma vez, no limite de sessão**, com 743 linhas no disco e **zero linhas
+  de `App.jsx`. Foi retomado, não renascido** — o `oficial` voltou com o alicerce
+  ainda na cabeça. É a segunda vez em dois ciclos que retomar poupou a releitura
+  inteira, e já é lei da casa.
+
+- **o bastão do `App.jsx`:** **tomado às 18:05Z**, renovado às 22:32Z na retoma,
+  **devolvido no fecho**. **Para quê:** as seis linhas do passo cobrado, e a fila
+  de pílulas da mecânica. **E desta vez ele não esvaziou o App — porque não havia
+  o que esvaziar:** a tela da batalha saiu toda em E3, e cinco dos seis itens
+  viveram em `painel-batalha.jsx` e `grade-de-batalha.jsx`, **sem bastão nenhum**.
+  *É o juro de E3 a ser pago no ciclo seguinte, e é exatamente o que a lei do
+  bastão promete.*
+
+### O conserto que a fase inteira esperava, e o diagnóstico que estava errado
+
+**Não faltava desconto em `movimento.js`. A luta nascia sem `economia`.**
+`equiparCombate` (`App.jsx:4929`, a porta única de `abrirCombate`) montava
+`{ …, rodada: 1, recursos: novosRecursos() }` **sem ela**; a `economia` só nascia
+na virada de rodada, e o desconto fazia `eco ? { ...eco, movM: sobra } : eco`.
+**Sem `eco`, evaporava** — a rodada 1 inteira era de graça. **O código do débito
+estava certo o tempo todo**, e foi medido três vezes (E3, W2, E4) sem que
+ninguém olhasse para a abertura.
+
+**Medido vivo: `👣 9 de 9` → `0 de 9` depois de um passo de 9 m** — a primeira vez
+que a rodada 1 debita. A catraca `check-passo-na-rodada.mjs` **falha com 7
+asserções antes e passa com 10 depois**: *falha antes, passa depois*, no caso mais
+limpo que esta fase teve.
+
+**E a mesma chave em falta tinha um segundo sintoma que ninguém tinha ligado:** a
+guarda da ação estava atrás de `if (eco)`, logo *"Você já usou sua ação nesta
+rodada"* **nunca disparava na rodada 1** — e é a explicação das **zero chamadas**
+que W2 contou sem saber porquê. **O segundo golpe na primeira rodada passa a ser
+recusado, e nunca tinha sido.** *Um defeito medido três vezes em três ciclos era
+um só, e estava numa linha que nenhum dos três tinha lido.*
+
+### O pedido que chegou a tempo, e por que isso é método e não sorte
+
+**Escrevi o pedido ao motor no COMEÇO do ciclo, não no fim** — e a outra mente
+respondeu **no mesmo dia**, com dois commits (`e112017`, `2b82f75`), antes de
+abrir a fase dela. O commit dela di-lo melhor do que eu: *"um pedido parado trava
+uma fase inteira do outro lado, e hoje foi literal"*. Ela entregou **a peça pura**
+(`PASSO_NA_RODADA`, `passoQueResta`, `podeDarUmPasso`, `passoAposAndar`) **e as
+seis linhas endereçadas**, deixando a catraca por escrever de propósito — *o
+defeito vivia em linhas que ela não podia tocar, e escrevê-la antes deixaria a
+suíte vermelha por trabalho de outrem*.
+
+**A regra que fica:** o pedido ao motor entra na fila do outro **no primeiro
+quarto do ciclo**. Escrito no fim, ele perde um ciclo inteiro; escrito no começo,
+volta a tempo de mudar o que se constrói — e mudou: **o denominador podia nascer**
+e a **marca na borda deixou de estar bloqueada** a meio da construção.
+
+### Os números do que o jogador ganhou
+
+| o que | antes | depois |
+|---|---|---|
+| o passo na rodada 1 | **de graça** (21 m, marca imóvel) | **cobrado** (`9 de 9` → `0 de 9`) |
+| paragens de `Tab` até ao `Atacar` | **84** com o passo cheio, **1** com ele gasto, *na mesma luta* | **3**, variância **0** |
+| o custo de cada casa | não existia | **83 números** em `cidade`, **38** em `estrada`, a **12,40:1** |
+| o telefone: casas inteiras | **12** | **36** (tira 149 → 44 px, campo 296 → 396) |
+| casas focáveis com o passo gasto | **0**, em silêncio | **216 de 216**, com o veredito |
+
+**O achado que só o número dentro da casa revela, e que o `jogo` previu em Node:**
+em **6 das 10 plantas o herói abre dentro da lama** — as oito vizinhas custam
+**3 m, não 1,5**, e o segundo anel custa 6, não 3. *O erro de quem contava
+quadrados era exatamente um anel, e o único sinal era o véu ser menor.* Agora
+está escrito dentro da casa.
+
+### O defeito que a luta viva apanhou com a suíte verde — o de E3 outra vez
+
+`impedimentosDaFileira` estava **certa e provada em Node**, e **a tela nunca a
+chamava**: o `Verbo` fazia `onClick={() => { if (!impedido) aoTocar(); }}` e
+**engolia o toque**, deixando a linha a falar da distância do inimigo.
+
+> ***Uma suíte verde sobre uma regra que a tela não invoca é a pior espécie de
+> verde.***
+
+É a terceira vez em três ciclos que a conferência viva paga sozinha o ciclo: K4
+achou três defeitos sob 141 asserções, E3 achou o anel apagado 67 vezes sob 198,
+e E4 achou **uma regra provada que ninguém chamava** sob 203. **O padrão já não é
+anedota: a suíte prova o módulo, e só o navegador prova a ligação.** Corrigido —
+o botão deixou de decidir, decide quem tem a tabela — e com dente novo em
+`check-tela-de-batalha.mjs`.
+
+### decisões médias tomadas (e o motivo de cada uma)
+
+1. **O denominador não nasceu dentro da casa, mesmo depois de o passo passar a
+   custar.** A régua `👣 X de 9` já é o orçamento e passou a ser verdadeira;
+   escrever o mesmo número dentro de 83 casas seria dizê-lo duas vezes. **Preço
+   unitário dentro, orçamento na régua.**
+2. **A tira de consulta do telefone foi desfeita, não virou gaveta** — e a decisão
+   é menos ousada do que parece: **era repor o que E1 desenhou** (`40:447`, campo
+   de 548 px e o herói numa tira de 44), que a construção de E3 empilhara em duas
+   `A ficha curta` de 150. A tira estava **43 % duplicada**: o meu nome, o dele e a
+   distância já estavam no ecrã no mesmo instante.
+3. **O alvo de uma criatura é a casa, nunca a ficha** — decidido pelo `jogo` por
+   aritmética (a ficha mede **38,4 px**, abaixo do piso de 48) e **não construído**,
+   por ordem de paragem. Fica endereçado, não esquecido.
+4. **Três paragens de `Tab` e não duas.** A primeira é o `⤢ ampliar`, posto na
+   ordem de propósito por K4/E3. **A variância é 0, que era o que a catraca
+   queria** — e reduzir a 2 exigiria tirar o `⤢`, que é decisão de desenho e não
+   de construção.
+5. **`custosDe` nasceu em `src/grid.js`, que é território do sistema.** Assumi a
+   entrada e paguei-a com a asserção que a justifica: a suíte carrega a busca
+   **antiga** íntegra e prova conjunto idêntico em **dez plantas × três passos ×
+   dois modos = 60 buscas, 1.739 casas**. *Peça que nasce no território do outro
+   precisa de prova de que não mudou nada — senão é invasão, não refactor.*
+
+### o Figma
+
+O `desenho` fabricou **`O anel de foco`** (conjunto `166:4018`, eixo `Superficie`:
+*Caixa* · *Dentro do SVG* · *Alto contraste*) e **`A mira`** (`172:5328`, eixo
+`Tamanho` 48 · 96 · 144, **da criatura e não da casa**), mais `A casa · com foco`,
+`A casa · a paragem`, a fenda do número no `Selo de estado` e o menos U+2212.
+
+**E achou a QUINTA maneira de apagar um anel de foco:** `clipsContent` /
+`overflow: hidden` **num ancestral corta-o** — os anéis do `Botao` *Foco* estavam
+cortados **desde que nasceram**, e a foto de E3 mostrava só a parte de baixo.
+Converteu **cinco** anéis que eram só sombra e destravou os seis nós.
+
+**O achado de tinta, e é o mais caro:** **dez tintas guardavam dois valores em
+desacordo e pintavam o literal.** `o custo` de *Alcançável* **dizia `amberSoft` e
+pintava `#000000`: 1,24:1 contra os 4,5:1 da WCAG 1.4.3.** Curado para 10,78:1
+**antes de ser construído** — e a construção mediu **12,40:1 no pixel**. *É a
+primeira vez que a mesa apanha um defeito no Figma antes de ele chegar ao código,
+e é exatamente para isso que ela existe.*
+
+### a prova
+
+`npm run build` limpo. **`npm test`: 203/203 suítes verdes, 15/15 varredores
+limpos** — a árvore estava inteiramente minha no fecho (a outra mente tinha
+commitado F3), logo **não foi preciso `so-o-meu.sh`**: é a suíte inteira, sem
+ressalva.
+
+### o que ficou — seis itens, todos com endereço
+
+**A mesa para aqui por ordem da pessoa, que vai avaliar o que já existe.** Nada
+do que ficou ficou por não haver caminho; **está tudo endereçado no item E4 da
+pauta**, com ficheiro, linha e nó do Figma: a **mira** (item 3), o **varredor do
+anel** (item 7, que paga **A11** de brinde), a **marca na borda** (item 8,
+**desbloqueada** pelo `lugarDaAcao` do motor e não montada por tempo), a marca
+`a paragem` que não se vê com o passo gasto, o porquê das 3 paragens, e
+`usarTelefone()` que não reage a mudança de viewport — **esta última com a
+ressalva honesta do `oficial` de que pode ser a emulação e ele não sabe
+distinguir sem um telefone de verdade.**
+
+### para a pessoa decidir — as três que esperam, e nenhuma foi tocada
+
+1. **`TIPOS`, o piso da letra** (do `desenho`, E3) — **652 lugares abaixo de 12 px**.
+2. **`ESCALA_DA_CASA`** (do `jogo`, E3) — *o piso do alvo existe, está certo, e está
+   a ser aplicado a uma coisa que não é alvo*; a 31 px cabem as dez plantas, e **a
+   única vista onde ele viu a luta toda já desenha a 32**.
+3. **O foco por omissão** (do `desenho`, E4) — *cinco maneiras silenciosas de apagar
+   um anel contra 218 `<button>` crus*; a classe deixa de servir para **ligar** e
+   passa a servir só para **desligar**. *O que se repete não é o erro: é o ónus
+   estar do lado errado.*
+
+*(O `jogo` trouxe uma quarta em E4 — **os dois contornos, o legal e o útil**:
+**605 casas alcançáveis contra 60 de onde o golpe ainda alcança, 10 %**; noventa
+por cento do campo âmbar são casas onde se chega e o turno acaba.)*
+
+### o que eu não soube
+
+**Reordenei a lista a meio e a reordenação chegou tarde de mais para servir.** Pus
+a mira (3) antes do roving (4) quando o `oficial` já tinha construído o 4 — porque
+**1b, 2 e 4 são a mesma construção no mesmo ficheiro**, e parti-los seria
+reescrever a camada do toque três vezes. Ele seguiu certo e disse-o; **o erro foi
+meu, por ordenar por importância sem perguntar o que era a mesma passagem.** É o
+custo de reger sem ler o ficheiro — e a lição é que a ordem de um brief tem de
+sair de onde o código está, não só de onde a tela mente.
+
+---
 ## 16/09 14:45 · v9.277 · E3 · a tela da batalha existe · commit `512b944`
 
 *O escrito das mãos fica em `mente/e3-jogo.md` (duas lutas inteiras, jogadas) e

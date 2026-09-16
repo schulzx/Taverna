@@ -85,6 +85,59 @@ irmã por nascer de `ALVOS`: **o alvo de toque já saiu para tabela em K4, e o
 tamanho da letra — que é o outro número que o corpo humano impõe — continua
 escrito 652 vezes à mão.** É a mesma lei da casa a cobrar-se no outro eixo.
 
+**E uma nasceu em E4 (16/09)**, marcada *(E4)*, e está **no topo** por uma razão
+que se pode contar: **cinco maneiras silenciosas de apagar um anel de foco, e
+218 sítios onde cada uma delas pode acontecer.** Não é uma peça a corrigir —
+é a pergunta de quem tem o ónus, o controlo ou a casa.
+
+- [ ] **(E4) o foco deixa de ser opção e passa a ser o padrão da casa — e a
+  classe passa a existir só para DESLIGAR** · pesado · de: desenho · 16/09
+
+  **O que é.** Hoje um controlo só tem anel de foco se quem o escreveu se
+  lembrar de lhe pôr `.tv-anel-foco` (ou `.tv-anel-foco-no-campo`, se for SVG, e
+  ninguém avisa qual). A proposta inverte o ónus: **a folha dá o anel a
+  `:focus-visible` de tudo o que é focável**, com a superfície decidida por
+  selector (o que vive dentro de `<svg>`, o que corre em `forced-colors`, e o
+  resto), e a classe deixa de servir para *ligar* — passa a servir só para
+  **desligar**, em casos nomeados e por escrito. *Um controlo novo nasce
+  acessível, e um defeito passa a exigir um acto explícito.*
+
+  **A prova, pelos três caminhos:**
+
+  1. **Medida.** São **cinco** maneiras de apagar um anel e **nenhuma dá erro**:
+     estilo inline por cima; `none` dentro de uma lista de sombras (invalida a
+     declaração inteira em silêncio); `box-shadow` não pinta em SVG;
+     `forced-colors` remove `box-shadow` por especificação; e `overflow: hidden`
+     /`clipsContent` num ancestral corta o anel. Contra isso, a casa tem **218
+     `<button>` crus contra 16 `<Botao>` — 6,8 % dos controlos passam por
+     `ui.jsx`**. A tela da batalha nasceu com **`outline: none` inline em 67 dos
+     80 elementos focáveis** (E3), a barra de batalha tinha **0 de 7** controlos
+     com anel visível (E3), e E4 achou os seis anéis do `Botao` **cortados pelo
+     pai desde o dia em que nasceram** e cinco anéis ainda feitos só de sombra.
+     *Cinco ciclos seguidos encontraram a mesma classe de defeito em sítios
+     diferentes. O que se repete não é o erro: é o ónus estar do lado errado.*
+  2. **Estudo citado.** WCAG 2.4.7 *Focus Visible* (AA) e 2.4.11 *Focus
+     Appearance* (AAA, WCAG 2.2); a especificação de `forced-colors` (CSS Color
+     Adjust 1), que **manda remover `box-shadow`**; e `:focus-visible` (CSS
+     Selectors 4), que é o que permite dar o anel a toda a gente **sem** o mostrar
+     a quem clica com o rato — que é a razão pela qual a regra antiga
+     («`outline: none` em tudo, e ponho de volta onde precisar») existia e deixou
+     de ser necessária.
+  3. **Experiência jogada — FALTA**, e é o que peço ao `jogo` no ciclo em que
+     isto entrar: jogar uma luta inteira só com o teclado, antes e depois.
+
+  **Por que é pesado, e não rebaixo.** Muda o anel de **todos** os controlos do
+  jogo no mesmo commit, incluindo telas que ninguém olhou; é uma lei da casa a
+  mudar de sentido; e há sítios onde o anel vai aparecer onde nunca apareceu e
+  alguém vai achar que é defeito. **Sai de tabela** (as três construções em
+  `estilo.js`, uma por superfície), logo é um commit desfeito se der errado.
+
+  **E ela encontra-se com A11 pela porta certa:** A11 pede *"um indicador que não
+  dependa de `box-shadow`, provado no modo forçado, com catraca junto"*. E4 pagou
+  a metade da biblioteca — **a biblioteca já não tem um único anel feito só de
+  sombra**. A metade que falta é exactamente esta: *não basta a peça certa existir
+  se pô-la continua a ser opcional.*
+
 - [ ] **(E3) a casa deixa de ser alvo de toque e passa a ser escala —
   `ESCALA_DA_CASA`, e o jogo já tem a resposta escondida atrás de um botão de
   19 px** · pesado · de: jogo · 16/09
@@ -656,6 +709,19 @@ jogador **o foco não é fraco: é zero**, e o teclado deixa de ter onde pousar.
   usa**. K3 acabou de construir o anel: a peça existe, falta a segunda
   língua. Catraca junto, senão volta na próxima peça.
 
+  **[E4 · 16/09] A metade da BIBLIOTECA está paga.** `O anel de foco`
+  (`166:4018`) nasceu com o eixo `Superficie` — *Caixa* · *Dentro do SVG* ·
+  *Alto contraste* —, e os **cinco** anéis que ainda eram só `DROP_SHADOW`
+  foram convertidos a geometria absoluta, sem crescer um pixel: `Botao`
+  *Papel=Chamada* nas duas medidas e `A escolha` nas três formas. **A
+  biblioteca já não tem um único anel feito só de sombra.** Apareceu de
+  lambuja a **quinta** maneira de o apagar (`clipsContent` / `overflow:
+  hidden` num ancestral), e com ela seis anéis do `Botao` que estavam
+  cortados desde a nascença.
+  **O que falta é a catraca** — e ela está agora escrita como a proposta
+  ambiciosa de E4, no topo desta pauta: *não basta a peça certa existir se
+  pô-la continua a ser opcional.*
+
 ### Fase SE — o combate ganha uma semente
 **Aprovada em 17/09.** A primeira lei desta casa diz *mesma semente, mesmo
 resultado, em qualquer máquina — é o único árbitro que um sistema sem
@@ -806,44 +872,88 @@ scroller de 301px, e o painel `Ações` abre abaixo da dobra.
   e inimigo a **16 filas numa janela de 11**, onde *ver um é deixar de ver o outro*
   durante toda a aproximação. A peça existe (`A marca de borda`, `53:43`, 8
   variantes, fabricada em E1); falta montá-la.
-- [ ] **E4 · mover é fazer** · de: pessoa · 14/09
-  *(**O que E3 lhe deixou pronto, e é bastante:** a árvore invertida — a batalha é
-  irmã do log, e a catraca morde se voltar a ser filha; a casa de 48 px imposta por
-  `ladoFixo`; a linha do veredito permanente, com a reação de K3 a nascer nela e a
-  crescer para cima; as **três** saídas do armado, vivas ao mesmo tempo; o texto
-  livre que nunca é `disabled` com um verbo armado; a porta única do fim;
-  `aria-pressed` e anel de foco **conferido vivo** nos sete controlos e nas 84
-  casas. **E o que ela tem de abrir:** *"vou até K14"* escrito continua sem porta em
-  `turno.js`; **tocar num inimigo continua impossível** (as fichas são
-  `pointerEvents: none`); o *roving tabindex* das casas — o `jogo` contou **69
-  toques de `Tab`** do topo da tela até ao `Atacar`; e a decisão do telefone: **6
-  filas** contra as 12 de E2, *ou a tira de consulta vira gaveta, ou o número muda*.
-  **E uma condição que não é de tela:** o passo **não é cobrado** — 21 m numa só
-  rodada com o contador imóvel, pedido aberto em `mente/pedidos-ao-sistema.md`. Se
-  ele não fechar antes, **E4 desenha o preço de uma coisa que é de graça**.)*
-  A casa clicável, o endereço escrito, o alcance visível antes do passo (o
-  veredito antes do clique), e o log dizendo o que **você** fez — não só o
-  que o inimigo fez. Medir: quantas rodadas o jogador consegue se mover de
-  fato, contra as zero de hoje.
-  *(**corrigido em D3**, e a correção muda o pedido: "a grelha não é
-  clicável" está **errado**. Cada casa alcançável já é `role="button"
-  tabIndex=0` com `onMover` — `grade-de-batalha.jsx:512-517`. **O clique
-  funciona; o que não existe é FORMA**: o alvo é um
-  `<rect fill="transparent">`. O pedido deixa de ser "torne clicável" e
-  passa a ser "dê forma ao que já clica" — que é mais barato e é outra
-  etapa.)*
-  *(**E1 deu-lhe a forma, e deixou-lhe uma condição.** O canal que E4 tem de
-  abrir é o do **telefone**: hoje a rota prevista só existe em `onMouseEnter`
-  (`grade-de-batalha.jsx:543`) e a única descrição da casa é um `<title>` de
-  SVG (`:520`) — **dois canais de rato, num jogo que se joga com o dedo**. A
-  decisão de E1, e ela é regra: **o custo nasce escrito dentro da casa já em
-  *Alcançável***, em mono 10 px, e o endereço só aparece nos dois estados que já
-  carregam texto (*Sob o dedo* e *Confirmando*) — **86 endereços acesos ao
-  mesmo tempo é a planilha**. E o veredito completo vive na **linha** sob o
-  campo, nunca num balão: quatro segundos de balão tapam exatamente as casas
-  para onde o jogador ia andar.)*
+- [x] **E4 · mover é fazer** · de: pessoa · 14/09 · **feito v9.281**
+  **A pergunta da etapa era "quantas rodadas o jogador consegue se mover de facto,
+  contra as zero de hoje" — e a resposta veio de onde ninguém procurava.** O passo
+  não era descontado porque **a luta nascia sem `economia`**: `equiparCombate`
+  (`App.jsx:4929`, a porta única de `abrirCombate`) montava a luta sem ela, e o
+  desconto fazia `eco ? … : eco` — **sem `eco`, evaporava**. A rodada 1 inteira era
+  de graça. O motor entregou a peça pura (`PASSO_NA_RODADA`, `passoQueResta`,
+  `podeDarUmPasso`, `passoAposAndar`) e **as seis linhas endereçadas**; o bastão era
+  nosso e nós ligámo-las. **Medido vivo: `👣 9 de 9` → `0 de 9` depois de um passo**
+  — a primeira vez que a rodada 1 debita. A catraca `check-passo-na-rodada.mjs`
+  **falha com 7 asserções antes e passa com 10 depois**: *falha antes, passa depois*,
+  no caso mais limpo que a fase teve.
+  **E a mesma chave em falta tinha um segundo sintoma que ninguém tinha ligado:** a
+  guarda da ação estava atrás de `if (eco)`, logo *"Você já usou sua ação nesta
+  rodada"* **nunca disparava na rodada 1** — o que explica as **zero chamadas** que
+  W2 contou sem saber porquê. **O segundo golpe na primeira rodada passa a ser
+  recusado, e nunca tinha sido.**
+  **O que o jogador ganha, com número medido em duas lutas:**
+  o **custo nasce escrito dentro da casa** em *Alcançável* (83 números em `cidade`,
+  38 em `estrada`), em `amberSoft` a **12,40:1** — a peça pintava `#000000`, que
+  daria **1,08:1**, e o `desenho` curou-a antes de ser construída; o **roving
+  tabindex** levou as paragens de `Tab` até ao `Atacar` de **84 (ou 1, na mesma
+  luta) para 3, com variância 0** — *não era longo, era impossível de aprender,
+  porque mudava*; e no telefone a **tira de consulta foi desfeita** (149 → 44 px,
+  campo 296 → 396, **12 → 36 casas inteiras**), o que era **repor o que E1 desenhara**
+  e a construção de E3 empilhara.
+  **O achado que só o número dentro da casa revela:** em **6 das 10 plantas o herói
+  abre dentro da lama**, e as oito vizinhas custam **3 m, não 1,5** — o erro de quem
+  contava quadrados era exatamente um anel, e o único sinal era o véu ser menor.
+  **Duas mentiras da tela, corrigidas:** `Mover` **armava com o conjunto vazio**
+  (`aria-pressed=true` e a linha a mandar tocar uma casa que não existia); e o campo
+  **perdia as 216 casas focáveis** quando o passo acabava, em silêncio.
+  **E o defeito que só a luta viva apanhou, com a suíte verde — o de E3 outra vez:**
+  `impedimentosDaFileira` estava certa e provada em Node, e **a tela nunca a
+  chamava** — o botão engolia o toque e a linha continuava a falar da distância do
+  inimigo. *Uma suíte verde sobre uma regra que a tela não invoca é a pior espécie
+  de verde.* Corrigido com dente novo em `check-tela-de-batalha.mjs`.
+  **A dívida de entrada paga:** `custosDe` nasceu em `src/grid.js`, que é território
+  do sistema, e `alcancaveisDe` passou a ser a leitura das chaves dele. A asserção
+  que o justifica carrega a busca **antiga** íntegra e prova conjunto idêntico em
+  **dez plantas × três passos × dois modos = 60 buscas, 1.739 casas**.
+  O escrito fica em `mente/e4-jogo.md`, `mente/e4-desenho.md` e no bloco de E4 de
+  `mente/formas.md`.
 
+  **O que NÃO coube, e fica endereçado para não se perder** *(a mesa parou aqui por
+  ordem da pessoa, para ela avaliar — não por falta de caminho)*:
+  1. **A mira na criatura** — `src/grade-de-batalha.jsx`, a linha
+     `const clicavel = mirando ? tiro : indo;` na camada do toque; `podeIr` ×
+     `noAlcance` já vivem separados ali ao lado. Peça `A mira`, conjunto `172:5328`.
+     **Decidido e não construído:** o alvo é a **casa**, nunca a ficha (a ficha mede
+     **38,4 px**, abaixo do piso de 48), e **armar um verbo de criatura apaga o véu
+     do passo** — 83 casas âmbar e 1 alvo âmbar seriam uma cor a dizer duas coisas.
+  2. **O varredor do anel** — as cinco maneiras de o apagar já estão em prosa na
+     caixa de `.tv-anel-foco` (`src/estilo.js`), e **a lei já está no código**
+     (`outline` a carregar, `box-shadow` só no vão). Falta **o dente que a prenda** —
+     e ele paga **A11** de brinde, que é a irmã exata da quarta maneira.
+  3. **A marca na borda** — **desbloqueada e não montada, por tempo e não por falta
+     de dados**: `combate.js:441`, `lugarDaAcao` devolve `onde`, `alvoOnde` e
+     `metros`. Peça `A marca de borda`, `53:43`, 8 variantes.
+  4. **Buraco declarado pelo `oficial`:** a marca `a paragem` só desenha com
+     `podeIr.size > 0` — **com o passo gasto a paragem existe e não se vê**.
+     `src/grade-de-batalha.jsx`, a linha `{!focada && podeIr.size > 0 && (`.
+  5. **Por que 3 paragens de `Tab` e não 2:** a primeira é o `⤢ ampliar`, que K4/E3
+     puseram na ordem de propósito. **A variância é 0, que era o que a catraca
+     queria.** Para chegar a 2, o que sai é o `⤢` — e isso é decisão de desenho.
+  6. **`usarTelefone()` não reage a mudança de viewport depois de montado**
+     (`src/painel-batalha.jsx:66-78`). *Ressalva honesta do `oficial`:* pode ser a
+     emulação a não disparar o `change`, e uma rotação real dispararia — **não se
+     sabe distinguir sem um telefone de verdade**. O custo de estar errado é o
+     telefone abrir em arranjo de mesa.
 - [ ] **E5 · o tabuleiro conta o que o inimigo VAI fazer** · de: pessoa · 15/09
+  *(**E4 deixou-lhe o chão pronto, e um dado novo que ela não tinha:** o passo
+  **custa** (a `economia` nasce com a luta), o custo está **escrito dentro de cada
+  casa alcançável**, a grelha é **um** ponto de paragem com as setas por dentro, e
+  `custosDe` devolve **metros por casa** — que é exatamente a moeda em que uma
+  ameaça se escreve. E o motor passou a dizer **onde**: `lugarDaAcao`
+  (`combate.js:441`) devolve `onde`, `alvoOnde` e `metros` por ação do inimigo. **A
+  experiência jogada que a aprovou continua a valer, e agora tem contraprova:** o
+  `jogo` fez **zero decisões espaciais** numa luta inteira porque nada pagava por
+  estar num sítio — e E4 acabou de fazer o sítio pagar. **Leve os seis itens
+  endereçados de E4 acima**, em especial a **mira** e a **marca na borda**: as duas
+  são meias-peças desta, não dívidas separadas.)*
   **Aprovada em 15/09.** Experiência jogada: numa luta inteira o `jogo` fez
   **zero decisões espaciais**, porque nada no campo pagava por estar num
   sítio em vez de noutro. Antes do turno do inimigo, **as casas que ele

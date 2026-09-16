@@ -214,8 +214,16 @@ t("o veredito nunca fica vazio — a cadeia acaba num ramo sem condição",
 t("a casa impedida diz por que não dá", /fica fora do seu passo nesta rodada/.test(CODIGO));
 t("a parede diz que é pedra, e não `ocupado`", /é pedra/.test(CODIGO));
 t("a casa ocupada diz QUEM, não `ocupado`", /\$\{oc\.ent\.nome\} está em \$\{end\}/.test(CODIGO));
+/* A ASSERÇÃO SEGUIU O CÓDIGO EM E4, E CRESCEU EM VEZ DE ENCOLHER. O
+   `onFocus` passou a fazer DUAS coisas, e a segunda é o que o roving
+   tabindex exige: além de acender a régua (`focada`), ele guarda a casa
+   como PARAGEM do cursor — onde o `Tab` volta a entrar. As duas moram no
+   mesmo gesto porque SÃO o mesmo gesto: o teclado chegou àquela casa. O
+   que esta linha continua a prender é que o foco do teclado e o dedo
+   acendem a MESMA régua, e isso não mudou. */
 t("e o foco do teclado acende a régua como o dedo acende",
-  /onFocus=\{\(\) => setFocada\(\{ x, y \}\)\}/.test(CODIGO) && /const apontada = focada \|\| sobre;/.test(CODIGO));
+  /onFocus=\{\(\) => \{ setFocada\(\{ x, y \}\); setParagem\(\{ x, y \}\); \}\}/.test(CODIGO)
+  && /const apontada = focada \|\| sobre;/.test(CODIGO));
 
 /* ============================================================
    6. O FUNDO DO CAMPO — o literal que E1 deixou pago de antemão
