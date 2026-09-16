@@ -16,6 +16,130 @@ Formato:
 
 ---
 
+## 16/09 06:20 · v9.265 · H1 · a porta das habilidades de classe · commit `d99bab3`
+
+- **estado inicial — e ele começa com um ciclo morto.** A trava
+  `.claude/ciclo-em-curso` estava posta desde `00:25` (mais de cinco horas), e a
+  árvore não estava limpa: **um ciclo H1 anterior morreu no meio, por limite de
+  uso da API — não por falha.** `npm test` **vermelho em duas suítes**
+  (`teste-arena.mjs`, `teste-guardas.mjs`, 4 asserções). Apaguei a trava velha,
+  pus a minha, e tomei o bastão do `App.jsx` (ninguém o tinha). A outra mente
+  fechou **W2** enquanto este ciclo corria (`cf91c7a`, `b92ffc0`) e subiu a
+  `VERSAO` para **v9.264** — por isso H1 sai como **v9.265**, e não v9.264 como
+  as três mãos dataram os comentários. Redatei os 32 comentários antes do
+  commit: é exatamente a armadilha que o `CLAUDE.md` nomeia, e ela mordeu de novo.
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, etapa escrita.
+
+### O que o ciclo morto deixou, e por que foi DESFEITO
+
+Ele deixara **+43 linhas em `src/habilidades.js`**: uma forma nova (`abissal`) e
+sete entradas em `GUARDAS`, com comentários bem escritos defendendo três coisas
+novas — `valor` negativo como **preço**, `tipo: "amortece"` para dano recebido, e
+`escopo` para guarda que cai no aliado. Terminar era uma saída legítima. **Não
+era a certa, e as suítes vermelhas é que estavam com a razão:**
+
+1. **`guardaDe` é classificador EXCLUSIVO.** `ehBuff` (`companheiros.js:161`)
+   devolve `false` para quem é guarda, e o piloto escolhe guarda **antes** de
+   buff. Pôr *Fúria de Batalha* em `GUARDAS` com `valor: -2` **apagaria o +2 de
+   dano** que ela já entregava por `aplicarBuffDeHabilidade` e deixaria só a
+   penalidade de defesa: a habilidade ficaria **estritamente pior**. A premissa
+   escrita no comentário — *"um número com sinal trocado é o preço que faltava,
+   sem uma linha de código nova"* — era justamente o erro. O DENTE 4 de
+   `teste-guardas.mjs` diz isso em voz alta **desde a v9.232, com o motivo**.
+2. **Quatro das sete linhas prometiam motor que ninguém escreveu.** O comentário
+   afirmava que `amortecerDano` "passou a ler esta lista por `corteDeGuarda`" e
+   que `erguerGuarda` "RECUSA quem tem escopo" — **`corteDeGuarda` não existe em
+   lugar nenhum do projeto**, e nenhuma das duas fiações foi escrita. `muralha`,
+   `contra_cancao`, `postura_defensiva` e `corpo_de_ferro` seriam erguidas e não
+   fariam nada. Isto é *promete na ficha e falha na mesa* — **a própria doença
+   que H1 existe para curar**, instalada dentro do remédio.
+3. **`amortece` e `escopo` são mecânica nova** — dano recebido, alvo que não é o
+   herói. Território de **H2**, que mede antes de construir. Terminar ali seria
+   fazer H2 por dentro de H1, sem medição.
+
+`git checkout -- src/habilidades.js`, suíte verde de novo (187/187), e H1
+recomeçou limpo. **A forma `abissal` era a única parte sadia do lote e foi
+embora junto** — ela volta barata como item de acervo quando alguém quiser.
+
+### A etapa, em três mãos e na ordem certa
+
+- **backend:** `src/poder-de-classe.js` (novo, 392 linhas) — `PODERES_DE_CLASSE`
+  (8 entradas), `poderDe`, `temPassivoDeClasse`, `aplicarPoder(pers, hab, ctx)`
+  e **`AGUARDAM`**. Mais as linhas de tabela nas casas que já existiam:
+  `PRESSAS` (habilidades.js), `CONTROLES` (controle.js), `PORTADORES`
+  (aflicoes.js), `resolve: true` nas duas portas de `condicoes.js`, e
+  `dobraMovimento`/`ignoraTerrenoDificil` lendo **duas** fontes (dadivas.js).
+  `temRegraPropria` ganhou a sétima família.
+- **frontend:** `porHabilidadeDeClasse(h, pers, frase)` (`App.jsx:7941`), em
+  `try/catch` com `calou`, e nos **DOIS** sítios do laço (`:13448` painel,
+  `:13592` citada). Consertou de quebra os 90 endereços que as 87 linhas novas
+  envelheceram em `check-acoes-do-jogador.mjs` e nas três suítes vizinhas.
+- **testes:** `testes/teste-poder-de-classe.mjs` (novo, **177 asserções**), com
+  a régua em tabela (`MEDIDA_DA_PORTA`) e os dentes dos dois lados — nenhuma
+  linha órfã, nada fora da tabela vira poder (varrendo 593 habilidades), recusa
+  por identidade de objeto, imutabilidade byte a byte, determinismo do alvo.
+
+### O número honesto, e ele é menor do que a pauta previa
+
+A pauta prometia **54 de 66**. A porta derruba **17 agora e provadas** (+3 de
+subclasse de brinde, pelas mesmas linhas), e **`AGUARDAM` declara 40**. A conta
+fecha porque a medição de v9.250 errou para mais: **9 das 66 já cumpriam** por
+leitores que ela não enxergava (`seguraEmPe`, `temVozDeComando`,
+`limiteDeInvocacoes`, `RX_SACRIFICIO`). 9 + 17 + 40 = 66.
+
+**Uma porta que derruba 20 e declara 40 vale mais que uma que alega 54 sem
+prova** — é a lição da Fase T, e é por isso que a etapa fecha assim em vez de
+esticar o número. Das 40: **12 são os de H2** (mecânica nova, intocados de
+propósito), **7 caem pela régua do golpe do App** (`HAB_OFENSIVA_RX` procura
+palavras de violência e "sopro elemental em cone" não tem nenhuma — já é item
+próprio na pauta), **5 são famílias de força zero**, e **16 pedem número que
+nenhuma tabela cobra ainda**.
+
+### A catraca — é o que sobra quando a etapa envelhecer
+
+`TETO_DE_AGUARDAM = 40`, com folga **zero**: hoje `AGUARDAM.length === 40`.
+Quem escrever amanhã uma habilidade que promete e não cumpre **fica vermelho no
+dia em que a escreve**; quem pagar uma dívida **abaixa o número no mesmo
+commit**. A suíte também exige que toda entrada tenha motivo (≥25 chars) e
+data, que nenhum nome seja fantasma (todos existem no acervo) e que a classe
+declarada seja a real. **A lista só encolhe.**
+
+### Decisões médias, com o motivo
+
+- **Desfazer em vez de terminar** o lote do ciclo morto — os três motivos acima.
+  A parte sadia (`abissal`) foi junto porque separá-la custaria mais que
+  reescrevê-la, e ela não é da fase.
+- **Fechar H1 em 17 em vez de esticar para 54.** O resto exige ou mecânica (H2),
+  ou consertar `HAB_OFENSIVA_RX` (item próprio), ou números que nenhuma tabela
+  cobra — cada um é outra etapa, e enfiá-los aqui produziria exatamente a
+  promessa vazia que a catraca existe para impedir.
+- **Cinco asserções viradas do avesso, não afrouxadas.** Diziam que *Purificar*
+  e *Palavra de Coragem* aguardavam resolvedor; o resolvedor chegou. Cada uma
+  passou a exigir o **cumprimento** com o motivo e a data escritos, a sabotagem
+  de T4 ganhou **dois** substitutos (uma que prova que `coberturaDasCondicoes`
+  lê o campo, outra que prova que `removerPelaPorta` o lê também), e o controle
+  negativo de `temRegraPropria` **trocou de habilidade** (Passo do Vento →
+  *Palma dos Sete Ventos*, dano puro) em vez de sumir.
+- **`Palavra de Coragem` fica nas duas listas, de propósito** — o medo sai por
+  esta porta, o PV temporário não existe. Meia promessa cumprida é meia dívida.
+  Em vez de afrouxar a não-sobreposição, a suíte trancou a exceção por
+  **igualdade** (`MEIA_DIVIDA`): qualquer outra sobreposição fica vermelha, e no
+  dia em que o PV temporário nascer esta linha cobra a saída da entrada.
+- **Sem bloco de prompt novo.** `PODER_DE_CLASSE_PROMPT` não existe de
+  propósito: `HABILIDADES_PROMPT` já diz "o sistema resolve, você narra" e cada
+  resolução devolve a `nota` por turno. **O teto de prompt é sagrado** e somar
+  bloco estático é proibido.
+
+### O que ficou
+
+- **H2 espera**, com os 12 já nomeados e datados dentro de `AGUARDAM` — a
+  medição da próxima etapa começa com a lista na mão, não do zero.
+- **As 7 da régua do golpe** (`HAB_OFENSIVA_RX` com `ataca` e sem `ataque`) já
+  eram item da pauta e continuam lá; agora com os nomes ao lado.
+- **Bastão do `App.jsx` devolvido** ao fim da etapa 2. A outra mente não foi
+  tocada: nenhum vermelho dela, nenhum arquivo dela no commit.
+
+---
 ## 16/09 03:10 · v9.263 · X4 · a conta do que mudou · **a Fase X fecha** · commit `8d402ed`
 
 - **estado inicial:** HEAD `4619533`, VERSÃO **v9.261** lida do arquivo.

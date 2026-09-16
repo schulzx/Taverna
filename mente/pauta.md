@@ -743,12 +743,18 @@ um**. Os motores já existem e apenas leem outra fonte — `amortecerDano` corta
 dano lendo o traço racial, `removerPelaPorta` tem um chamador (a magia),
 `curarAliado` tem um (a poção).
 
-- [ ] **H1 · a porta** · de: pessoa · 15/09
-  `porHabilidadeDeClasse` no laço que já existe. Derruba as **54** que não
-  precisam de motor — 21 de tabela + 33 de fiação. Catraca herdada de P1,
-  agora com dente próprio: **nenhuma habilidade promete na ficha e falha na
-  mesa**, e a lista das que ainda não cumprem é declarada e encolhe a cada
-  etapa, nunca cresce.
+- [x] **H1 · a porta** · **FEITA 16/09 · v9.265 · commit `d99bab3`** · de: pessoa · 15/09
+  `porHabilidadeDeClasse` entrou nos **dois** sítios do laço, e o motor puro é
+  `src/poder-de-classe.js`. **O número saiu menor que o previsto, e é o honesto:**
+  a porta derruba **17 provadas** (+3 de subclasse de brinde), **9 das 66 já
+  cumpriam** por leitores que a medição de v9.250 não enxergava, e **`AGUARDAM`
+  declara as 40 restantes** — cada uma com nome, promessa, motivo e data.
+  A catraca está de pé em `testes/teste-poder-de-classe.mjs`: `TETO_DE_AGUARDAM
+  = 40` com folga **zero**, toda entrada com motivo e data, nenhum nome
+  fantasma. **Nenhuma habilidade promete na ficha e falha na mesa sem estar
+  declarada, e a lista só encolhe.** Das 40: 12 são H2, 7 caem pela régua do
+  golpe (`HAB_OFENSIVA_RX`, item próprio nesta pauta), 5 são famílias de força
+  zero, 16 pedem número que nenhuma tabela cobra.
 - [ ] **H2 · de quem já são os 12** · de: pessoa · 15/09
   **Medir antes de construir — é o mesmo erro que a pergunta das 66 quase
   cometeu.** Os 12 são sete assuntos (marca, zona persistente, cura por
