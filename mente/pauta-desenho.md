@@ -37,6 +37,99 @@ outra porque **paleta é identidade**.
 **E uma nasceu em E2 (15/09)**, marcada *(E2)*, e está em primeiro porque é a
 única aberta: as outras já foram respondidas.
 
+**E três nasceram em W1 (16/09)**, marcadas *(W1)*, e vêm à frente da de E2 por
+uma razão que não é de importância: **as três têm número corrido hoje, em Node,
+sobre o código de hoje** — e duas delas foram medidas pelos dois seniores em
+separado, com resultados que batem.
+
+- [ ] **(W1) a luta abre onde a sala é comprida, e ninguém decidiu isso** ·
+  pesado · de: jogo · 16/09
+  **O acidente, e é de uma linha.** A abertura de toda luta sai de `posicionar`
+  (`grid.js:569-575`): o herói em `y = altura − 1`, os inimigos em `y = 0`. Logo
+  **a distância de abertura é a altura da planta, e mais nada.**
+  > **A masmorra abre a 25,5 m porque é ESTREITA (7×18), não porque é longe.
+  > A taverna abre a 12 m porque é BAIXA (12×9), não porque é apertada.
+  > A razão de aspecto do desenho da planta decide a distância do combate.**
+
+  **A conta, corrida em Node sobre `PLANTAS` × `posicionar`:** abertura média
+  **19,95 m**; **10 de 10 plantas** recusam o corpo a corpo no turno 1; **1,4
+  rodadas por luta são só caminhada** (2 na masmorra, no navio, no gelo e na
+  floresta). **E o arqueiro não paga nada disto** — alcança em 10/10 no turno 1.
+  *O jogo cobra um imposto de caminhada a quem luta de perto, e cobra-o por
+  engano.*
+  **A proposta.** A distância de abertura **sai de uma tabela** — por cenário e
+  por como a luta começou — e **nunca dos cantos da planta**. A emboscada abre
+  colada; a perseguição abre longe; a rixa de taverna abre a 3 m porque uma
+  taverna é pequena. A regra: **pelo menos um inimigo dentro do primeiro passo
+  de alguém.** *(O embrião já existe e ninguém reparou: `posicionar:573` já abre
+  o inimigo `agil` a meio campo. Falta ser tabela em vez de booleano.)*
+  **Porque muda o que o jogador vive:** hoje a primeira coisa que toda luta lhe
+  ensina é *"ande em frente"*; com isto é *"onde é que eu me ponho"* — e o campo
+  já tem tudo para essa pergunta valer (cobertura, terreno que cobra, golpe
+  livre, alcance por tamanho). **A regra está toda lá; falta a luta começar perto
+  o bastante para alguém a usar.**
+  **Porque é dela:** é tabela nova e é `backend`; e o jogador reaprende uma coisa
+  só, mas grande — **que a luta começa em contacto**. Isso é fluxo.
+  **O risco, dito pelo próprio `jogo`:** a aproximação é onde a posição vale
+  alguma coisa, e abrir tudo colado achataria o combate no sentido oposto. **A
+  defesa é a própria tabela:** ela não diz "colado", diz *"dentro do primeiro
+  passo de alguém"* — e "alguém" pode ser o arqueiro, o que deixa o corpo a corpo
+  com uma rodada de aproximação que passa a ser **uma escolha** (avançar sob fogo
+  ou cobrir-se) em vez de uma caminhada.
+
+- [ ] **(W1) o tabuleiro deixa de esperar o verbo: toca-se o ALVO primeiro, e a
+  fileira responde com o preço de cada verbo** · pesado · de: desenho · 16/09
+  **O diagnóstico acusa o desenho que a própria etapa acabou de fazer, e é por
+  isso que ele vale.** A lei da casa é *o veredito antes do clique*. No fluxo
+  **verbo → alvo**, o jogador escolhe **o que quer fazer antes de saber o que
+  aquilo custa**: o primeiro toque é um compromisso às cegas, e o veredito só
+  chega depois dele. ***W1 melhora muito o segundo toque e não melhora nada o
+  primeiro.***
+  **A proposta: inverter.** Tocar `Halvard`, e a fileira inteira responde de uma
+  vez — `ATACAR` *armado* `3 m, ao alcance`; `SALTAR` *impedido* `4,5 m — o seu
+  passo chega a 3`. **Vários vereditos ao mesmo tempo, antes de qualquer
+  compromisso. São os mesmos dois toques** — muda **quando** ele sabe o preço.
+  **A medida que a torna barata, e ela é o achado:** a fenda da razão **já está
+  reservada nos botões e já custa 57 px no telefone**, e hoje **não mostra
+  nada**. A proposta **não pede um pixel novo nem uma peça nova** — `Botao`
+  *Impedido* com `a razao` e `Botao` *Armado* já existem os dois. **É a primeira
+  composição em que aquela fenda tem um trabalho que mais nada faz**, e fecha por
+  cima o achado de E1 de que a fenda e os tons de `A Consequência` *foram
+  construídos duas vezes por acidente*.
+  **Porque é dela:** o jogador reaprende **a ordem dos dois toques**. É fluxo.
+  **O risco, dito pelo `desenho`, e não é pequeno:** várias razões em mono 10 px
+  por baixo de vários verbos **podem ser uma parede de texto no momento mais
+  tenso da mesa** — lê-se bem numa folha e mal com o coração acelerado. *"Não
+  resolvo isto com desenho: resolve-se jogando."* A defesa que ele deixa escrita:
+  **só os verbos armados escrevem; os impedidos ficam calados até serem
+  tocados** — corta a parede a metade e mantém o ganho inteiro, **e é suposição,
+  não medida**.
+  *(Escrita com a fileira de seis de E1. Com a fileira de quatro que W1 decidiu,
+  o ganho é menor e o risco também — e o `regente` diz por escrito que isso
+  **enfraquece a proposta**, porque `Atacar` é o único verbo da fileira que se
+  arma: com quatro, a inversão responde por um. Ela só volta ao tamanho cheio se
+  a pessoa responder "dar-lhes motor" ao item seguinte.)*
+
+- [ ] **(W1) os três verbos de teatro: dar-lhes motor, ou tirá-los da tela** ·
+  pesado · de: jogo · 16/09
+  `golpe.js:222-254` escreve, com o motivo, que **`Esquivar`, `Empurrar` e
+  `Derrubar` não chegam a motor nenhum** — X2 preferiu **escrever o buraco a
+  remendá-lo**, e teve razão. **Está na mesa há uma fase, e W1 obriga-o a sair de
+  lá:** uma barra fixa não pode carregar teatro, e foi por isso que a fileira de
+  seis de E1 virou uma de quatro. *Uma barra fixa em que metade dos alvos não faz
+  nada mecânico ensina, em duas lutas, a não confiar na barra.*
+  **Duas saídas, e as duas são dela.**
+  **Dar-lhes motor.** `Empurrar` e `Derrubar` são disputa de força, e o motor não
+  tem disputa entre duas fichas — é a peça que falta. **`Esquivar` é a mais
+  barata e a que mais muda o combate:** a condição `protegido` **já existe em
+  `condicoes.js`** e nada a concede a partir de uma declaração do jogador; é a
+  única decisão defensiva que o jogador hoje não tem.
+  **Tirá-los.** Com W2 a transformar a caixa em fala, *"empurro com força"* passa
+  a ser **uma fala**, e uma fala num sítio onde a fala mora não é uma perda. **O
+  `jogo` defende esta, se só houver uma** — os doze botões de `Ações` são,
+  medidos, **um teclado de atalhos**, e um teclado de atalhos é o oposto do que
+  esta fase entrega. *Mas tira ao jogador coisa de que ele depende, logo é dela.*
+
 - [ ] **(E2) a régua mostra a planta INTEIRA, e a janela é uma marca dentro dela** ·
   pesado · de: desenho · 15/09
   **A proposta.** A régua deixa de rotular só as casas que estão na tela e passa
@@ -550,18 +643,91 @@ tolerância de 1/255). **Code Connect é outra coisa** — ele amarra
 Duas propostas do `jogo` e do `desenho` em E1, **aprovadas pela pessoa em
 15/09**. São a metade de desenho da Fase X do sistema, e andam junto com ela.
 
-**O que se mede hoje:** uma rodada é abrir `Ações` (1 toque), tocar `Atacar`
-(que **escreve `"Ataco "` na caixa**), digitar o alvo (~15 toques), tocar
-`Agir →` — **e o golpe ainda pode não acontecer**. Sete turnos jogados, três
-ataques declarados sem ambiguidade, **zero rolagens**. E gasta-se **uma
+**O que se media em E1:** uma rodada era abrir `Ações` (1 toque), tocar `Atacar`
+(que **escrevia `"Ataco "` na caixa**), digitar o alvo (~15 toques), tocar
+`Agir →` — **e o golpe ainda podia não acontecer**. Sete turnos jogados, três
+ataques declarados sem ambiguidade, **zero rolagens**. E gastava-se **uma
 chamada ao Mestre** para uma IA descobrir que *"Ataco o ogro"* significa
 atacar o ogro, que o motor já sabia.
 
-- [ ] **W1 · a frase que se monta** · de: pessoa · 15/09
-  O turno deixa de ser declaração digitada e passa a ser **verbo + alvo/casa,
-  por toque**, com **o preço e o alcance antes do clique** — a lei do
-  veredito antes do clique, e o conserto da recusa por distância que X1
-  mediu (10/10 plantas recusam no turno 1, de graça).
+**CORRIGIDO em W1 (16/09), e a correção é do `jogo`: os ~18 toques já não são o
+caso comum, e ninguém tinha contado.** X2 matou-os em combate — `Atacar` entra
+por `declararGolpe` e **escolhe o alvo mais perto ao alcance sozinho**. Medido no
+código de hoje: o caso comum são **2 toques** (abrir `Ações`, tocar `Atacar`), o
+alvo escolhido **3** — e nesses 3 há um defeito, porque `declararGolpe`
+(`App.jsx:11988`) **troca de alvo em silêncio** quando o escolhido não alcança.
+**Os ~18 continuam verdadeiros fora de combate**, onde `Atacar` ainda enche a
+caixa, e isso é deliberado: é pela frase que a briga **começa**.
+
+**E o número grande da fase é outro, e ninguém o tinha** *(corrido em Node sobre
+`PLANTAS` × `posicionar` pelo `jogo`, e **reconferido pelo `regente`** com uma
+segunda passagem independente que bateu casa a casa)*: a abertura é de **19,95 m
+em média**, **10 de 10 plantas** recusam o corpo a corpo no turno 1, e **1,4
+rodadas por luta são pura caminhada**. **Não há botão de passar a vez**
+(`App.jsx:3133`, desde a v9.13) — logo cada uma dessas rodadas custa **~20 toques
+de teclado e uma chamada ao Mestre para não fazer nada**. *A abertura de toda
+luta corpo a corpo custa hoje ~22 toques e 1 chamada; com `esperar`, 2 toques e
+zero chamadas.* É o maior número desta fase e o mais barato de pagar.
+
+- [x] **W1 · a frase que se monta** · **FEITO 16/09 · v9.262** — o gesto inteiro
+  está decidido e escrito; **W3 constrói**. O turno passa a ser **verbo +
+  alvo/casa por toque**, com o preço e o alcance antes do clique. **O caso comum
+  cai de 2 toques para 1** (e a etapa corrigiu o enunciado: **X2 já tinha matado
+  os ~18**, e ninguém contara); **a abertura de toda luta corpo a corpo cai de
+  ~22 toques e 1 chamada para 2 toques e zero chamadas**, o que vale **−1,4
+  chamadas ao Mestre por luta** — quota devolvida ao Narrador **uma etapa antes
+  de W2**. A fileira é de **quatro e uma goteira** numa fila só (a lista é do
+  `jogo`, e `golpe.js:222-254` prova que três dos seis de E1 não têm motor), o
+  que **devolve 81 px ao campo: 91 casas em vez de 84**. **`Atacar` perde o
+  `Papel=Chamada`** — o âmbar cheio passa a ser exclusivo do armado, e a
+  distinção dele vira largura (163 contra 72/44/44, 359 exactos). **Só `Atacar`
+  arma.** No telefone o gesto é **pressionar · arrastar · largar**, um contacto =
+  um toque — *o arrasto é o `hover` que o dedo nunca teve* —, e a região do
+  veredito reserva **71 px, sempre**, com o degrau medido (75 px = 13 filas,
+  76 px = 12). **Zero peças novas:** `Botao` 24 → 26, `A casa` 7 → 8, e o
+  conserto de *Alcançável*, que reprovava a 1.4.11 a **1,151:1** na peça que W1
+  ia usar de base. **Três defeitos vivos achados e reconferidos à mão:** as
+  frases de X2 transbordam hoje (**64–86 caracteres contra 54**), **é impossível
+  tocar num inimigo** (`pointerEvents:"none"` + a casa ocupada fora de `podeIr`),
+  e a mira reprova a 1.4.11. O escrito dos dois seniores fica em
+  `mente/w1-jogo.md` e `mente/w1-desenho.md`; a forma, no bloco final de
+  `mente/formas.md`. · de: pessoa · 15/09
+- [ ] **W3 · o gesto construído** · de: regente · 16/09
+  **O que W1 desenhou, montado.** A lista é fechada e cada linha tem sítio, e
+  **três delas são defeitos vivos de hoje, não features** — conferidos à mão pelo
+  `regente` no fecho de W1:
+  - **as fichas têm de virar alvo.** `<g style={{ pointerEvents: "none" }}>`
+    (`grade-de-batalha.jsx:648`) e a casa ocupada fora de `podeIr` (`:401`,
+    `alcancaveisDe` com `ocupados`) são, **juntos, a razão de hoje ser impossível
+    tocar num inimigo**. Com um verbo de criatura armado, a casa ocupada entra em
+    `clicavel`. *Sem isto, W1 inteiro não tem primeiro toque.*
+  - **`onMouseEnter` → `onPointerMove`** (`:759`): é correção, não port. Hoje a
+    rota prevista e a casa sob o dedo são **dois canais de rato num jogo que se
+    joga com o dedo**.
+  - **o violeta da mira a 74 %** (`:611`, hoje `opacidade={0.6}`): 2,689 → 3,484.
+    Herdado de E1, ainda por pagar, e **mais urgente agora** que a mira passa a
+    ser o canal principal.
+  - a fileira de **quatro e uma goteira** numa fila (`Atacar` · `✦` · `◆` ·
+    goteira · `esperar`), `Botao` *Papel=Gesto*, **`Atacar` distinguido por
+    largura (163 contra 72/44/44, 359 exactos) e tinta, nunca por preenchimento
+    cheio** — o âmbar cheio é do armado e de mais ninguém;
+  - `Estado=Armado` no `Botao` (inversão figura/fundo + o bico de 12×6 px +
+    `aria-pressed`), e **só `Atacar` arma**;
+  - `Estado=Alvo` em `A casa` — **os quatro cantos sobre a criatura**, nunca tinta
+    no chão: *o golpe escolhe gente, e o passo escolhe chão*;
+  - a segunda linha da desistência e a fila de pílulas do polegar, **exclusivas
+    por estado** (ver o bloco de `formas.md`);
+  - no telefone, **pressionar · arrastar · largar**, um contacto = um toque — *o
+    arrasto é o `hover` que o dedo nunca teve*; largar sobre o herói ou fora do
+    campo = **nada aconteceu**.
+  **Depende de:** o pedido de W1 na `mente/pauta.md` (`esperar`,
+  `declararGolpe(alvo, motivo)`, `LINHAS_DO_GOLPE`, `alvosDoVerbo`,
+  `vereditoDoVerbo`) e, por baixo dele, a porta do tabuleiro que E2 pediu.
+  **O que NÃO espera:** os três defeitos acima são de `grade-de-batalha.jsx`, são
+  nossos, e podem ser pagos antes de qualquer porta nascer.
+  **O bastão:** a fileira e a linha do veredito vivem no `App.jsx` (`:20840-20940`)
+  — é trabalho do `oficial`, não do `aprendiz`.
+
 - [ ] **W2 · o texto muda de emprego** · de: pessoa · 15/09
   O campo continua, e deixa de perguntar *"o que você faz?"* para ser
   **"diga alguma coisa"** — a provocação, a parlamentação, a fala. **A única
@@ -1075,6 +1241,50 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
   metade do tempo.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **`A escolha` tem os dois defeitos que esta casa já conhece, e vai ser a
+  peça que carrega o nome do inimigo** · médio · de: desenho · 16/09 (W1)
+  Lidos em `20:77` ao confirmar que *Forma=Pílula* serve de alvo na fila do
+  polegar. **Ela serve** — e `Estado=Escolhida` cobre também *"o que o toque único
+  usaria"*, sem estado novo. **Mas faltam duas correções, e nenhuma é peça nova:**
+  1. **`Pilula × Foco` mede 75 px contra os 47 das outras três — cresce 28 px.**
+     Numa fila de alvos, **tabular empurraria o tabuleiro em mais de meia casa** —
+     é o defeito do *Impedido* de E1 outra vez, na peça seguinte. E tem preço
+     medido: **com o foco, a região do veredito vai a 105 px e a devolução de W1
+     ao campo é ZERO.** *O anel tem de ser desenhado sem mudar a caixa.*
+  2. **`rotulo`, `a marca` e `a razao` são CAMADAS, não propriedades**
+     (`componentPropertyReferences` vazio nos três). É a doença que E2
+     diagnosticou e curou em três peças — ***num componente cujo texto muda por
+     instância, texto que não é propriedade é um override à espera de se
+     apagar*** — e **esta é a quarta**, numa peça cujo rótulo vai ser **o nome de
+     um inimigo**: muda em toda instância e em toda luta. `a razao` é a fenda que
+     leva o `· 3 m`; existe, está escondida por omissão, e serve.
+  **Por que o `desenho` não as pagou em W1:** é peça viva sob composição que o
+  `jogo` ainda não reviu — a mesma condição que E1 pôs e E2 respeitou.
+
+- [ ] **a reserva da razão sobe do botão para a fileira** · médio · de: desenho ·
+  16/09 (W1)
+  **Medido na peça, e é o terceiro round do mesmo achado.** O `Botao` *Gesto ·
+  Normal* mede **63 px**, não 44, porque **reserva 19 px para a linha da razão
+  nos quatro estados** — foi a correção que E1 fez para o *Impedido* não empurrar
+  o tabuleiro, e estava certa. **Mas na fileira de batalha essa reserva não serve
+  para nada:** os verbos partilham **uma** linha do veredito, e a razão nunca
+  renderiza por botão (`mostrar a razao = false` em todos). E1 escreveu *"três
+  fileiras de 44 px = 144"*; a peça mede **3×63 + 12 = 201**. **São 57 px a mais,
+  e uma casa pede 48: a reserva da razão custa mais do que uma fila inteira de
+  casas no telefone.**
+  **O caminho, e não é mexer na peça:** *a reserva sobe de nível — do botão para
+  a fileira*. Quem compõe uma fileira onde o *Impedido* pode aparecer reserva a
+  altura **uma vez, na fileira**; quem compõe uma onde ele não pode não paga
+  nada. **Mesmos pixels quando a razão pode acontecer, 57 px mais barato quando
+  não pode.**
+  **Por que o `desenho` NÃO o pagou em W1, e a recusa está certa pela terceira
+  vez:** `A linha` (`22:46`) compõe quatro instâncias que dependem de `a razao`,
+  e ***peça mudada em silêncio por baixo de uma composição é pior do que peça com
+  espaço reservado***. É a mesma condição que E1 pôs e E2 respeitou — e agora tem
+  o número que faltava para a fechar. *(Parente do item "a razão sai do `Botao` e
+  passa a ser sempre `A Consequência`", mais abaixo: são o mesmo achado visto de
+  dois lados, e fecham juntos quando o `jogo` rever `A linha`.)*
 
 - [ ] **D5d · a catraca não vigia a própria paleta** · leve · de: desenho · 15/09
   **Achado a construir o `lineStrong`, e é um buraco na catraca que ele mesmo

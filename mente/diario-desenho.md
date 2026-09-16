@@ -19,6 +19,143 @@ Formato:
 
 ---
 
+## 16/09 01:30 · v9.262 · W1 · a frase que se monta · commit `PENDENTE`
+
+*O escrito dos dois seniores fica em `mente/w1-jogo.md` e `mente/w1-desenho.md`;
+a forma, no bloco final de `mente/formas.md`.*
+
+**A etapa em que o par funcionou, e dá para provar.** Em E2 eu chamei os dois em
+série e escrevi no diário que tinha falhado a letra do meu roteiro. **Desta vez
+foram no mesmo turno, os dois em primeiro plano, sem se verem** — e o resultado é
+uma medida do método, não uma opinião sobre ele:
+
+- **Convergiram.** O `jogo` pediu ao `desenho` *"uma marca de alvo sobre a ficha —
+  o golpe escolhe gente, não chão"*. O `desenho`, sem ler uma linha dele, decidiu
+  que *"alcançável é propriedade de CASA; alvo é propriedade de CRIATURA"* e
+  fabricou `A casa` *Estado=Alvo*. **A mesma decisão, dos dois lados, com as
+  mesmas palavras.** Em série, isto teria sido o segundo a obedecer ao primeiro.
+- **Mediram o mesmo defeito em separado, e os números bateram.** As frases do
+  veredito de X2 **transbordam hoje, em produção**: o `jogo` mediu 67 caracteres
+  com `Halvard` e 77 com um nome de mundo; o `desenho`, 65 e 77. *Duas medições
+  independentes que batem valem mais do que qualquer das duas sozinha.*
+- **E discordaram onde tinham de discordar** — o `Papel` do `Atacar` —, que é
+  exatamente o que o par existe para produzir.
+
+- **estado inicial:** criei `.claude/ciclo-desenho-em-curso`. **O bastão do
+  `App.jsx` não foi tomado nem uma vez** — W1 é desenho, W3 é que constrói, e
+  ninguém desta fila escreveu uma linha de produção. Entrei com 187/187 suítes e
+  13/13 varredores verdes. A outra mente corria **X4** e mexia em cinco arquivos
+  de `testes/` durante todo o ciclo; **não toquei em nenhum**, e o commit sai por
+  `git commit -- <caminhos>` justamente por isso.
+
+- **jogo / desenho:** o `jogo` compôs o gesto, o ritmo, a lista e os toques; o
+  `desenho` fabricou o verbo armado, o alvo, o preço e a desistência. Onde a
+  decisão de um tocou o território do outro, **cada um escreveu pedido em vez de
+  decreto** — e eu reconciliei num segundo turno, com os dois de novo em paralelo.
+
+- **as três decisões que eu tomei, e o motivo de cada uma:**
+  1. **A fileira é de quatro e uma goteira**, não de seis: `Atacar` · `✦` · `◆` ·
+     goteira · `esperar`. **A lista é do `jogo` por lei**, e a prova dele é de
+     motor e não de gosto — `golpe.js:222-254` escreve que `Esquivar`, `Empurrar`
+     e `Derrubar` não chegam a motor nenhum. *Uma barra fixa em que metade dos
+     alvos não faz nada mecânico ensina, em duas lutas, a não confiar na barra.*
+     Eles não desaparecem: ficam na gaveta, a escrever na caixa, que é onde a
+     ficção é honesta.
+  2. **`Atacar` perde o `Papel=Chamada` — decidi contra o `jogo`, pela foto.** O
+     `desenho` fotografou o par comparável: `Chamada` **já é âmbar cheio em
+     repouso**, logo o `Atacar` armado não teria para onde ir. **O âmbar cheio
+     passa a ser exclusivo do armado**, e a distinção do `Atacar` não diminui —
+     **muda de canal**, para a largura (163 px contra 72/44/44, e a fila fecha em
+     359 exactos). O `jogo` aceitou e disse porquê: *"a conclusão dele é melhor
+     que a minha premissa."*
+  3. **Só `Atacar` arma.** `✦` e `◆` abrem gaveta, `esperar` resolve num toque, e
+     os três sem alvo saíram da fileira. **Na barra de batalha há exactamente um
+     verbo que arma** — e isso respondeu sozinho a uma pergunta que o `desenho`
+     tinha feito ao `jogo`, sem lhe custar um turno.
+
+- **a prova:**
+  - **A abertura de toda luta, e é o maior número da fase.** Corrida em Node sobre
+    `PLANTAS` × `posicionar` pelo `jogo`, **e reconferida por mim numa segunda
+    passagem independente que bateu casa a casa**: abertura média **19,95 m**,
+    **10 de 10 plantas** recusam o corpo a corpo no turno 1, **1,4 rodadas por
+    luta são pura caminhada**. *A masmorra abre a 25,5 m porque é **estreita**
+    (7×18); a taverna a 12,0 m porque é **baixa** (12×9).* **A razão de aspecto da
+    planta decide a distância do combate, por acidente.**
+  - **E não há botão de passar a vez** (`App.jsx:3133`, desde a v9.13): cada uma
+    dessas rodadas custa **~20 toques de teclado e uma chamada ao Mestre para não
+    fazer nada**. A abertura de toda luta corpo a corpo custa hoje **~22 toques e
+    1 chamada**; com `esperar`, **2 toques e zero chamadas**.
+  - **A correção que mudou o enunciado da própria etapa:** os **~18 toques** que a
+    pauta dava como o hoje **já não são o caso comum, e ninguém tinha contado**.
+    X2 matou-os em combate — `Atacar` entra por `declararGolpe` e escolhe sozinho
+    o alvo mais perto ao alcance. Hoje o caso comum são **2 toques**; W1 leva a
+    **1 / 2 / 3** (comum / escolhendo / andar+golpear), pior caso **5**.
+  - **O defeito vivo que os dois acharam, e que eu reconferi à mão:**
+    `recusaDoGolpe` (`App.jsx:1126-1131`) mede **64 caracteres com o nome mais
+    curto da mesa, 67 com `Halvard` e 86 com um nome de mundo**, contra os **54**
+    que E2 instalou. **É a frase que mais aparece no jogo inteiro** — 10/10
+    plantas recusam no turno 1 — e hoje quebra a linha e empurra o painel.
+  - **E um que eu confirmei linha a linha:** `<g style={{ pointerEvents: "none" }}>`
+    (`grade-de-batalha.jsx:648`) mais a casa ocupada fora de `podeIr` (`:401`)
+    são, **juntos, a razão de hoje ser impossível tocar num inimigo**. *W1 inteiro
+    não tem primeiro toque sem isto*, e é nosso — não espera porta nenhuma.
+  - **A fileira devolve 81 px ao campo, e o `desenho` corrigiu o número para
+    baixo — contra si próprio.** O `jogo` escrevera 88 px (contra os 132 de E1) e
+    eu levei-lhe a medida da peça, que dava 138. **A resposta foi 81, e a razão é
+    melhor do que os dois números:** os 138 comparam contra um leiaute *que nunca
+    foi construído* e cujos 201 px **já custavam uma fila** — *citá-los seria
+    contar o mesmo pixel duas vezes*. Contra a única linha de base publicada (a de
+    E2: 337×594, 84 casas), a fila única devolve **81 px, que são 2 filas**.
+  - **A colisão da região do veredito tinha um degrau, e ele foi medido: a 75 px
+    há 13 filas, a 76 px há 12.** No telefone a região reserva **71 px, sempre**
+    (47 da fila de pílulas + 24 da linha), com **4 px de folga** — e **a segunda
+    linha da desistência não cabe: custa 6 px e exactamente 7 casas**. Fica no
+    saldo **+1 fila, +7 casas: 91 em vez de 84**. *Na mesa, onde não há fila de
+    pílulas nem escassez de campo, a segunda linha fica.*
+  - **E os dois chegaram lá por caminhos diferentes e à mesma porta.** O `jogo`
+    dissolveu a colisão por estado (*"todo armado tem ≥2 pílulas, porque com um
+    alvo só não se arma"*); o `desenho`, por orçamento e por lei (*"as duas dizem
+    o mesmo por dois canais, e quando o segundo é uma fila de 47 px que o polegar
+    alcança, o que se dispensa é a frase"*). **Mesma conclusão, duas provas.**
+
+- **o Figma** (`e5wJUzInAssoebx5npssKc`, ampliado e nunca duplicado, zero hex
+  solto): `Botao` `9:170` de 24 para **26** variantes — `Estado=Armado` em
+  `Papel=Gesto` (`124:7` normal, `124:3333` pequeno) —, e **`Chamada × Armado`
+  fabricado e apagado na mesma etapa** (`124:2`, `124:3328`), que é a decisão 2
+  a acontecer à vista. `A casa` `18:31` de 7 para **8** (`125:177`, os quatro
+  cantos) e o conserto de *Alcançável* (`18:7`), que **não tinha a borda de 55 %
+  que esta folha manda** e ficava marcada só por um banho a **1,151:1** —
+  reprovando a 1.4.11 na peça que W1 ia usar como base. Página nova
+  `W1 · o verbo armado` (`125:3486`), com os quadros `126:2` (o par comparável) e
+  `128:3489` (alcançável **não** é alvo). **Nenhuma peça nova nasceu.**
+
+- **decisões médias tomadas:** nenhuma que mude código. W1 é etapa de decisão:
+  **zero linhas de produção, zero peças novas.** Duas peças cresceram um estado
+  cada (`Botao` *Armado*, `A casa` *Alvo*) e uma foi consertada no Figma.
+  **E uma dívida foi paga de graça, por composição:** com uma fila e um só verbo
+  que arma, **não há `Botao` *Impedido* a crescer 19 px por baixo do tabuleiro** —
+  era o pedido 10 de E1 ao `desenho`, ainda em aberto, e a fileira de quatro
+  fecha-o sem custar uma peça.
+
+- **o que eu não soube, e fica dito:** o `desenho` declarou quatro buracos seus —
+  se **90 ms** chega para o campo **inteiro** acender (o número é da casa e vale
+  para *uma* casa), se o conjunto armado de `Mover` continua a não ser um mosaico,
+  quantos caracteres tem **de facto** o nome de um inimigo (orçamentou 24 sobre
+  dois exemplos que ele próprio inventou, em vez de varrer os bestiários), e se
+  `aria-pressed` é o papel certo para um verbo que muda o significado de 84 alvos.
+  O `jogo` declarou dois: **não sabe o que o gesto faz quando o herói tem dois
+  golpes por turno** (`ataquesPorTurno`) — *"é o primeiro sítio onde este gesto
+  não fecha"* — nem numa sala com dois jogadores. **Nada disto foi jogado, porque
+  não existe: o par antes/depois é da etapa que construir.**
+
+- **o que ficou:** três itens novos em *"Para a pessoa decidir"*, todos com número
+  corrido hoje — **a abertura por tabela em vez de por canto de planta**, **a
+  inversão da ordem dos dois toques**, e **os três verbos de teatro**. Um item
+  novo em *Aberto* (**a reserva da razão sobe do botão para a fileira**, 57 px no
+  telefone, e é o terceiro round do mesmo achado). O pedido ao sistema foi para
+  `mente/pauta.md`, encabeçado por `esperar`. **E W3 ficou definido**, com os três
+  defeitos de `grade-de-batalha.jsx` marcados como *não esperam porta nenhuma*.
+
 ## 15/09 22:50 · v9.260 · E2 · o endereço do tabuleiro · commit `e192188`
 
 *O escrito dos dois seniores fica em `mente/e2-jogo.md` e `mente/e2-desenho.md`;

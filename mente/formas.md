@@ -2402,10 +2402,19 @@ Sem título "modo batalha", sem selo "em combate", sem botão "sair do combate".
 
 ### O veredito antes do clique, sobre o tabuleiro
 
-**Uma `Consequencia` *fixação=Linha*, colada sob a fileira, sempre presente,
-24 px. Nunca balão** — já estava fechado que sobre o tabuleiro a Consequência é
-sempre *Linha*, porque **quatro segundos de balão tapam exatamente as casas
-para onde o jogador ia andar**.
+**Uma `Consequencia` *fixação=Linha*, **entre o campo e os verbos**, sempre
+presente, 24 px. Nunca balão** — já estava fechado que sobre o tabuleiro a
+Consequência é sempre *Linha*, porque **quatro segundos de balão tapam
+exatamente as casas para onde o jogador ia andar**.
+
+*(Corrigido em W1. Esta linha dizia "colada sob a fileira" e contradizia as
+outras duas passagens desta folha — a reserva da reação, que a põe "entre o
+campo e os verbos", e a ordem de tabulação de E1, que é `campo → veredito →
+verbos` e que, sendo ordem do DOM, **é** a ordem visual. Duas contra uma, e o
+desempate nem precisou de ser por maioria: o lugar certo é acima dos verbos
+porque é onde a mão NÃO está quando o polegar os prime — Apple HIG, `Adjusting
+for the finger`. **Uma fonte da verdade a dizer duas coisas é o defeito que ela
+existe para não ter.**)*
 
 A sequência, e é a mesma nas duas plataformas:
 
@@ -3075,3 +3084,417 @@ cada troca devolvia `H12`.
 2. **A leitura imediata a seguir a `setProperties` devolve o estado anterior.**
    A mesma prova deu 15 px de altura na chamada em que foi escrita e 30 px na
    seguinte. **Confira numa chamada nova, nunca na mesma.**
+
+---
+
+# A frase que se monta — o verbo, o alvo e o preço (W1 · 16/09)
+
+**O turno deixa de ser declaração digitada e passa a ser verbo + alvo, por
+toque, com o preço e o alcance antes do clique.** O `jogo` compôs o momento em
+`mente/w1-jogo.md`; o `desenho` fabricou a forma em `mente/w1-desenho.md`; **as
+três decisões de desempate são do `regente`** e estão marcadas como tais.
+
+**Regra da fase: nenhuma peça nova nasceu.** Duas cresceram um estado cada, uma
+foi consertada, e o eixo `Largura` que E2 fabricou fez todo o trabalho da
+segunda linha sem precisar de mais nada.
+
+## A fileira é de QUATRO, numa fila só — decisão do `regente`
+
+`Atacar` · `✦` · `◆` · goteira · `esperar`. **A lista é do `jogo`**, e ele
+prova-a em motor, não em gosto: `golpe.js:222-254` declara que `Esquivar`,
+`Empurrar` e `Derrubar` **não chegam a motor nenhum** (a frase que escrevem não
+casa detector de ataque nem desafio do catálogo), `Saltar` espera a porta do
+tabuleiro, e `Mover` seria a segunda forma do passo, que já se dá tocando a
+casa. **Eles não desaparecem: ficam na gaveta `Ações`, a escrever na caixa.**
+
+> ***Uma fileira fixa de seis em que três não fazem nada ensina, em duas lutas,
+> que a fileira não é de confiança.***
+
+**E `Atacar` continua a ser o primeiro entre iguais — mas paga-se na LARGURA,
+não no preenchimento:** 163 px contra 72 · 44 · 44, que fecham os 359 úteis do
+telefone exactos. É a fórmula do `jogo` (*"paga-se no preenchimento e na tinta,
+não no tamanho"*) com o preenchimento trocado por largura, porque o
+preenchimento cheio passou a significar outra coisa — ver a decisão seguinte.
+
+## O verbo armado
+
+`Botao` · `9:170` · 24 → **26 variantes** — `Estado` ganha **`Armado`**, só em
+`Papel=Gesto`, nos dois tamanhos (`124:7`, `124:3333`).
+
+- **`Armado` é ESTADO, não `Papel` e não eixo.** Como `Papel`, o `Atacar`
+  encolheria **9 px de altura e 19 px de largura** ao armar-se, que é o defeito
+  que E1 já pagou uma vez (o *Impedido* 19 px mais alto a empurrar o tabuleiro):
+  ***`Estado` preserva a geometria do `Papel`; `Papel` não preserva nada.*** Como
+  eixo, levaria o conjunto a **48** e fabricaria `Armado × Impedido` e
+  `Armado × Esperando`, que não podem existir — *variante que não pode acontecer
+  é export morto com outra roupa* (lei de K1).
+- **`Recuo × Armado` não nasce:** `esperar` não tem alvo.
+- **Dois canais o distinguem, e nenhum é matiz** (WCAG 1.4.1): a **inversão
+  figura/fundo** (contorno `lineStrong` + `ink` → corpo `amber` + `onAccent`) e
+  **o bico**, um triângulo de 12×6 px em `onAccent` encostado à aresta de cima,
+  a apontar para a linha do veredito. **É a única silhueta desta forma na
+  biblioteca**, e não diz só *"estou armado"*: diz ***"aquela linha é minha"***,
+  que é o que faltava numa tela onde uma linha serve a fileira toda.
+- **`aria-pressed="true"`** — é o estado que a norma já tem para *"ligado"*, e é
+  o que faz o bico e a inversão chegarem a quem não vê nem um nem outro.
+
+| par | medido | piso | veredito |
+|---|---|---|---|
+| o rótulo armado — `onAccent`/`amber` | **8,486:1** | 4,5 | passa |
+| o corpo armado sobre o painel — `amber`/`panel` | **8,448:1** | 3 | passa |
+| o corpo armado sobre o tabuleiro — `amber`/`bg` | **8,999:1** | 3 | passa |
+| **`ink` sobre `amber` — a armadilha de quem clonar** | **1,701:1** | 4,5 | **REPROVA** |
+
+**A armadilha é escrita porque vai acontecer:** quem montar isto clona o botão
+de repouso e troca o fundo para `T.amber`. Se o rótulo ficar em `T.ink`, cai a
+**1,701:1**. *O rótulo do verbo armado é `onAccent`, e só `onAccent`.*
+
+### O salto de leiaute é ZERO, e o contorno é que o segura
+
+O contorno de 1 px do corpo é **INSIDE e conta para o HUG**. Tirá-lo — um corpo
+cheio não precisa de traço — encolheu `Gesto` de **78 para 76 px**.
+
+> **O armado HERDA o contorno do repouso do mesmo `Papel`, nunca o inventa.**
+> O contorno do corpo armado não é enfeite: **é o que segura a largura.**
+
+Conferido por leitura de volta: `Gesto · Normal` 78×63 nos dois estados;
+`Gesto · Pequeno` 57×49 nos dois. **0 × 0.**
+
+### `Atacar` perde o `Papel=Chamada` — decisão do `regente`, e a prova é uma foto
+
+`Papel=Chamada` **em repouso já é âmbar cheio**. No par comparável (`126:2`), a
+caixa `ATACAR` em repouso e a armada eram **a mesma caixa amarela**, separadas
+por um triângulo de 6 px. E1 deu-lhe o `Chamada` com a razão certa para a tela
+dela — numa tela em que `Atacar` só enchia uma caixa de texto.
+
+> **O âmbar cheio é a voz mais forte desta tela, e pertence ao que VAI
+> ACONTECER, não ao que é popular.** Gasto em repouso, não sobra nada para o
+> momento em que importa.
+>
+> **A regra que fica: só se pode armar o que tem fundo para inverter.**
+
+`Chamada × Armado` foi **fabricada e apagada na mesma etapa** — *uma variante
+que não se distingue da vizinha é pior do que variante nenhuma*. E vale dizer
+qual canal a apanhou: **foi a foto**. A lei da casa (*confira pelo dado, nunca
+pela foto*) protege contra a foto que **mente**; não proíbe a foto de mostrar o
+que o dado não tem como mostrar, que é *duas coisas parecerem-se*.
+
+### Só `Atacar` se arma — decisão do `regente`
+
+`✦` e `◆` são gavetas (abrem painel), `esperar` resolve num toque, e os três
+verbos sem alvo saíram da fileira. **Na barra de batalha há exactamente um verbo
+que arma** — e isso responde, sem discussão, à regra do `desenho`: *armar um
+verbo que não tem para onde apontar é o formulário que a lei do passo limpo
+proíbe*.
+
+## O alvo — e ele não é uma casa
+
+`A casa` · `18:31` · 7 → **8 variantes** — `Estado` ganha **`Alvo`**
+(`125:177`).
+
+- **alcançável** é propriedade de **casa** (*"posso terminar o meu passo aqui"*);
+  **alvo** é propriedade de **criatura** (*"este verbo age sobre isto"*). *O
+  golpe escolhe gente, não chão* — foi o pedido do `jogo`, e os dois chegaram-lhe
+  em paralelo sem se verem.
+- **HOJE É IMPOSSÍVEL TOCAR NUM INIMIGO.** As fichas são desenhadas dentro de
+  `<g style={{ pointerEvents: "none" }}>` (`grade-de-batalha.jsx:648`) e a casa
+  por baixo delas **também não é clicável**, porque `podeIr` exclui os quadrados
+  ocupados (`:401`). **O tabuleiro tem 84 alvos de toque e nenhum deles é um
+  inimigo.** Não é preferência do jogador escrever `Ataco Halvard`: *é que não há
+  onde tocar.*
+
+### Os quatro cantos, e não um anel — e a razão é geometria
+
+A ficha mede `r = lado × 0,40` e o arco da vida corre em `rArco = r + 0,07`
+(`grade-de-batalha.jsx:215-220`) = **0,47 da casa**, contra os 0,5 da
+meia-largura: **sobram 1,4 px numa casa de 48.** Não há onde pôr um segundo anel.
+
+**Mas a casa não é um círculo.** A meia-diagonal mede **0,707**: o canto tem
+**0,237 de casa livre — 11,4 px.** *O canto é o único pedaço de uma casa ocupada
+que sobra vazio.* Com braço de **9 px** e traço de **2 px**, o ponto mais
+interior da mira fica a **28,3 px** do centro contra os **22,6** do arco:
+**5,7 px de folga, medidos.** E os cantos são a silhueta universal da retícula,
+o que poupa ensino.
+
+| grau | a marca | sobre `bg` | o canal que não é cor |
+|---|---|---|---|
+| **alcançável** | borda 1 px, `amber` 55 % | **3,406:1** | moldura contínua, fina |
+| **alvo** | quatro cantos, 2 px, `amber` cheio | **8,999:1** | **silhueta** — cantos, não moldura |
+| **sob o dedo** | borda cheia + banho 22 % | **8,999:1** | o banho, que os outros não têm |
+
+### CONSERTO: *Alcançável* não tinha a borda que esta folha manda
+
+O desempate da borda × contorno fechou *"banho 10 % **mais** borda `amber` a
+55 %"* e encerrou com *"quem passa a régua do WCAG é a borda por casa, não o
+contorno"*. **A peça `18:7` não tinha borda nenhuma.** Só o banho — **1,151:1**,
+contra o piso de 3:1 da 1.4.11.
+
+> **A peça que a mesa inteira citou como "a que passa a régua" era a única marca
+> da tela que não passava régua nenhuma.** Sobreviveu a E1 e a E2 porque toda a
+> gente leu a decisão em vez de abrir a peça.
+
+Reposta, e reposta como **nó a 0,55** — nunca alfa na tinta, que é a lei desta
+peça paga em cinco tentativas (alfa na tinta faz o render sair chapado **e** a
+leitura devolver o número certo, que é o pior tipo de defeito).
+
+### O conjunto armado não é um mosaico, e é aritmética
+
+> **O conjunto do passo é de CASAS e é grande (84 no telefone). O conjunto de um
+> verbo de criatura é de CRIATURAS e é minúsculo.** Armar `Atacar` não acende 84
+> casas: acende duas.
+
+- **O conjunto armado é sempre `amber`**, seja qual for o verbo — *âmbar é "o que
+  você pode fazer agora"* —, e o que muda entre verbos **não é a cor: é o
+  conjunto e a palavra na linha do veredito.** É o que impede seis cores para
+  seis verbos.
+- **O violeta continua reservado ao alcance de habilidade** e o `danger` à área
+  que a magia varre: são um segundo sistema, e a regra de convivência do `jogo`
+  (*nunca as duas línguas ao mesmo tempo*) mantém-nas em duas no máximo.
+
+## O preço e o alcance antes do clique
+
+> **`{verbo} {nome} — {distância} m, ao alcance`**
+
+**Custo fixo, com o pior verbo (`Empurrar`, 8) e a pior distância (`12,5 m`, 6):
+30 caracteres. Sobram 24 para o nome.**
+
+### As frases de X2 JÁ transbordam hoje, em produção — medido pelos dois
+
+| a frase de hoje | caracteres | contra o teto de 54 |
+|---|---|---|
+| `Halvard a 3 m — dentro dos seus 9 m de alcance.` | 47 | cabe, com 7 de margem |
+| `Capitão dos Bandidos a 3 m — dentro dos seus 9 m de alcance.` | **60** | **+6** |
+| **`Longe demais — Halvard a 3 m, faltam 1,5 m. Aproxime-se primeiro.`** | **65** | **+11** |
+| **`… Capitão dos Bandidos a 12 m, faltam 3 m. Aproxime-se primeiro.`** | **77** | **+23** |
+
+**`recusaDoGolpe` (`App.jsx:1126-1131`) transborda com o nome mais curto da
+mesa** — e é a frase que mais aparece no jogo, porque **10 de 10 plantas recusam
+o ataque no turno 1** (medição de X1, no cabeçalho de `golpe.js`).
+
+> ### LEI: o nome é o único campo que se apara. O número nunca. A saída nunca.
+>
+> Quem estoura o teto não é a redacção — **é o nome**, que é conteúdo do mundo e
+> não se reescreve. Quando a frase passa de 54, **o nome trunca com reticência**
+> (`Capitão dos Band…`) e nada mais, **porque o nome é o único dos campos que o
+> jogador já sabe**: ele está a olhar para a ficha. O número e a saída são
+> exactamente as duas coisas que ele não sabe.
+>
+> **E apara-se do lado da tabela, nunca por CSS.** Uma frase já aparada é uma
+> frase; uma frase aparada por CSS é uma frase partida.
+
+### A segunda linha custa 6 px — e 6 px são 7 casas
+
+`Consequencia` *Largura=Ocupa a linha* (`116:12`) **quebra em vez de crescer** —
+sem o eixo que E2 fabricou, isto não seria possível; com ele, é uma troca de
+variante. A linha de hoje tem `minHeight: 24` (`App.jsx:20909`); duas linhas de
+mono 10 px medem **30 px** (E2, a prova dos 101 caracteres).
+
+Os tons não mudam: `Estado` sem verbo armado, **`Preço`** com alvo,
+**`Impedimento`** sem alvo, `Espera` para o Mestre. Os quatro de D4 chegam.
+
+## A desistência
+
+**Três saídas vivas ao mesmo tempo:** `Esc` (e o gesto de voltar), **tocar o
+verbo outra vez**, **tocar o campo fora do conjunto armado**.
+
+`toque fora para desistir` mede **24** caracteres; `Esc ou clique fora para
+desistir` mede **32**. **Nenhum dos dois é o problema** — o problema é que não
+cabem na mesma linha do preço (`Atacar Halvard — 3 m, ao alcance · toque fora
+para desistir` mede 57, e com um nome de mundo estoura por vinte).
+
+- **Na mesa: a desistência é a SEGUNDA LINHA, fixa.** E ser fixa é a decisão:
+  *uma segunda linha que nunca muda aprende-se numa luta e deixa de ser lida na
+  seguinte — é o ensino mais barato que existe.* Uma frase condicional ensinaria
+  o jogador a não confiar nela.
+- **No telefone ela NÃO existe, e o preço dela está escrito abaixo.**
+
+**O estado armado nunca é mudo, e agora por quatro canais:** a segunda linha (ou,
+no telefone, a fila de pílulas), **o bico**, **a inversão figura/fundo** — *o que
+se acende com um toque apaga-se com o mesmo toque* é a gramática de interruptor
+que não precisa de ser escrita — e **`aria-pressed`**.
+
+## A aritmética da fileira, contra a única linha de base comparável
+
+**A linha de base é a de E2**, e só ela: telefone, com a régua, útil 337×594,
+**7 colunas × 12 filas de 48 = 84 casas**, folga 1 px e 18 px. Nela os verbos
+custavam os **144 px** que E1 escreveu (3×44 + 2 goteiras de 6) e a linha do
+veredito custava 24.
+
+| | verbos | região do veredito | campo | filas | casas | contra E2 |
+|---|---|---|---|---|---|---|
+| **E2 · publicado (E1 no papel)** | 144 | 24 | 594 | 12 | 84 | — |
+| **E1 com a peça REAL** (3 filas de 63) | **201** | 24 | 537 | **11** | **77** | **−1 fila, −7 casas** |
+| **W1 · uma fila de quatro** | **63** | 24 | 675 | **14** | **98** | **+2 filas, +14 casas** |
+| W1 · + a segunda linha | 63 | 30 | 669 | 13 | 91 | +1 fila |
+| **W1 · + a fila de pílulas (47)** | 63 | **71** | 628 | **13** | **91** | **+1 fila, +7 casas** |
+| W1 · pílulas **e** segunda linha | 63 | 77 | 622 | **12** | 84 | **+0 — o ganho inteiro come-se** |
+
+**A devolução verdadeira é 81 px, não 138.** Os 138 comparam contra um leiaute
+que nunca foi construído e cujos 201 px **já custavam uma fila** — citá-los seria
+contar o mesmo pixel duas vezes. *Contra o único número publicado, a fila única
+devolve 81 px, e 81 px são 2 filas de casas.*
+
+**E o buraco de 19 px é o que explica a segunda linha da tabela:** o `Botao`
+*Gesto · Normal* mede **63 px**, não 44, porque **reserva 19 px para a linha da
+razão nos quatro estados** — a correcção que E1 fez para o *Impedido* não
+empurrar o campo. Na fileira de batalha essa reserva **nunca é usada**, porque a
+fileira partilha uma linha do veredito. *A reserva sobe de nível — do botão para
+a fileira* — e fica na pauta com o número: **não se paga aqui**, porque `A linha`
+(`22:46`) compõe quatro instâncias que dependem dela, e ***peça mudada em
+silêncio por baixo de uma composição é pior do que peça com espaço reservado.***
+
+## A colisão da região do veredito, resolvida com o degrau exacto
+
+Duas coisas queriam crescer no mesmo sítio: a **segunda linha** do `desenho`
+(+6 px) e a **fila de pílulas de alvo** do `jogo` (47 px, dentro do arco do
+polegar). **O degrau está medido: a 75 px de região há 13 filas; a 76 px há 12.**
+
+> ### No telefone a região entre o campo e os verbos reserva 71 px, sempre, e nunca se mexe.
+>
+> **47** (a fila de pílulas) + **24** (a linha do veredito, uma linha) = 71, com
+> **4 px** de folga antes do degrau. **A segunda linha da desistência não cabe:
+> custa 6 px e exactamente 7 casas.**
+
+**E não é só orçamento — as duas dizem o mesmo por dois canais.** A frase diz
+*"toque fora para desistir"*; **a fila de pílulas torna-o visível**: há alvos
+acesos, um está escolhido, tocar o escolhido outra vez apaga-o e tocar fora da
+fila desarma. É a mesma lei que tirou o `<title>` em E2 — *duas verdades sobre a
+mesma coisa* —, e quando o segundo canal é uma fila de 47 px que o polegar
+alcança, **o que se dispensa é a frase.**
+
+- **Na mesa (ponteiro) não há fila de pílulas nem escassez de campo: a segunda
+  linha fica.**
+- **A reserva é única e pelo pior caso**, como E1 fez com a linha da razão: a
+  região não encolhe quando não há pílulas. *Reservar uma vez é o que impede o
+  tabuleiro de saltar quando o verbo arma.*
+- **O risco, dito:** no telefone o recado da saída passa de **frase** a **forma**,
+  e nada ensina a forma a quem joga pela primeira vez. **Se o `jogo` quiser a
+  frase lá, ela cabe — e custa 7 casas.** O número está escrito; a escolha é de
+  composição.
+
+## `A escolha` *Forma=Pílula* serve de alvo — com duas correcções, e sem estado novo
+
+`A escolha` · `20:77` · *Forma* (Cartão · Pílula · Aba) × *Estado* (Repouso ·
+Escolhida · Impedida · Foco).
+
+**Chega, e `Estado=Escolhida` cobre também *"este é o que o toque único
+usaria"*** — porque não são dois estados: **o alvo pré-escolhido É uma escolha,
+só não foi ainda o jogador que a fez**, e o código já a faz hoje
+(`maisPertoAoAlcance`, `App.jsx:20847`). *O sistema não esconde quem escolheu:
+escreve o nome na linha do veredito.* Uma marca diferente para "escolhi eu" e
+"escolheu o sistema" seria distinção que só o sistema entende — e o sistema não
+fala de si mesmo.
+
+**Mas a peça não serve tal e qual, e faltam duas coisas — nenhuma delas é peça
+nova:**
+
+1. **`Estado=Foco` mede 75 px contra os 47 dos outros três — cresce 28 px.** Numa
+   fila de alvos, tabular **empurra o tabuleiro em mais de meia casa**, que é
+   precisamente o defeito do *Impedido* de E1. **O anel tem de ser desenhado sem
+   mudar a caixa.** *(E é o que faz a última linha da tabela acima: com o foco, a
+   região vai a 105 px e a devolução é zero.)*
+2. **`rotulo`, `a marca` e `a razao` são CAMADAS, não propriedades**
+   (`componentPropertyReferences` vazio nos três). É a doença que E2 diagnosticou
+   e curou em três peças — ***num componente cujo texto muda por instância, texto
+   que não é propriedade é um override à espera de se apagar*** — e **esta é a
+   quarta**, numa peça cujo rótulo vai ser o nome de um inimigo, isto é, muda em
+   toda instância e em toda luta. `a razao` é a fenda que leva o `· 3 m`.
+
+## O celular, e o que substitui o `hover`
+
+- **`onMouseEnter` → `onPointerMove` não é um port: é uma correcção.** Os eventos
+  de ponteiro cobrem rato **e** dedo no mesmo caminho de código. O desktop não
+  perde nada, o telefone ganha tudo, e some a razão de existirem dois canais para
+  a mesma informação. Hoje a rota prevista só vive em `onMouseEnter`
+  (`grade-de-batalha.jsx:759`), `rotaPrevista` depende de `sobre` (`:421-426`), e
+  o `↳ 4,5 m até ali` idem (`:786`). **É a coisa mais barata desta fase.**
+- **O dedo tapa sempre a casa.** A casa mede 48 px; a polpa do indicador adulto
+  mede 16–20 mm (MIT Touch Lab, *Human Fingertip to 3D Object Contact*, Dandekar
+  et al. 2003), que a ~160 ppi dá ~100–125 px. **O número escrito dentro da casa
+  não é legível DURANTE o toque — só antes dele.** Qualquer desenho que ponha a
+  informação de combate debaixo do dedo está a desenhar para uma mão que não
+  existe.
+
+> ### O `hover` não é substituído por um gesto. É substituído por a tela deixar de precisar de um.
+>
+> **Armar o verbo acende o conjunto inteiro, com o preço escrito dentro de cada
+> casa, ANTES de qualquer dedo tocar no campo.** O jogador lê primeiro e toca
+> depois. **O toque é o compromisso, não a pergunta.**
+
+- **O rato pergunta antes; o dedo confirma depois.** No rato a rota desenha-se ao
+  passar; **no dedo desenha-se na LARGADA**, como confirmação de 90 ms antes de a
+  ficha andar — porque durante o arrasto ela está debaixo da mão. *As duas leem a
+  mesma frase.*
+- **O arrasto corrige, não consulta.** Com o dedo em baixo, arrastar muda o alvo
+  e a linha acompanha; levantar compromete; **largar fora do conjunto desiste** —
+  que é a terceira saída, ganha de graça.
+
+## O movimento, com a saída escrita à nascença
+
+| o que | quanto | curva | sob `prefers-reduced-motion` |
+|---|---|---|---|
+| o verbo enche ao armar-se | **90 ms**, `background` + `color` | `ease` | troca a seco, pousa cheio |
+| o conjunto acende no campo | **90 ms**, só `opacity`, **a camada inteira de uma vez** | `ease` | aparece a seco |
+| o verbo esvazia ao desarmar | **90 ms** | `ease` | troca a seco |
+
+1. **90 ms não é escolha: é o mesmo evento.** A casa entra em *Sob o dedo* em
+   90 ms e a régua acende em 90 ms — **o verbo a encher e o campo a acender são o
+   mesmo acontecimento visto em dois sítios.** Dois números seriam duas verdades.
+   (E 90 ms fica abaixo dos 100 ms em que um gesto ainda parece instantâneo —
+   NN/g, *Response Times*, Nielsen 1993, a partir de Miller 1968.)
+2. **O conjunto acende como UMA camada, nunca casa a casa.** Oitenta e quatro
+   animações escalonadas são um efeito bonito que custa o turno.
+3. **Classes novas: `tv-verbo-arma` e `tv-verbo-desarma`, as duas com saída
+   `animation: none`** — pousam no estado final, que é onde a informação está.
+   **Nenhuma `infinite`.**
+4. **O bico não anima.** É parte do corpo e aparece com ele: um triângulo a
+   crescer sozinho seria um segundo acontecimento onde só há um.
+
+## O que W1 deixa para quem constrói
+
+**Para o `backend` — a porta do tabuleiro, e o que a forma exige dela:**
+
+1. **`alvosDoVerbo(verbo, estado)` → `{ casas, criaturas }`.** Sem ela não há
+   conjunto para acender — e **o conjunto é a coisa inteira**, porque é ele que
+   substitui o `hover`.
+2. **`vereditoDoVerbo(verbo, alvo)` → `{ curta, custoM, penalidade, razao }`, com
+   `curta ≤ 54` e catraca que falhe acima disso.** A `curta` é lida **duas
+   vezes** — a linha do veredito e o `aria-label` da casa (lei de E2) —, e o
+   truncamento do nome vive **aqui**, não no CSS.
+3. **As fichas têm de virar alvo:** `pointerEvents: "none"` (`:648`) e a casa
+   ocupada fora de `podeIr` (`:401`).
+4. **`onMouseEnter` → `onPointerMove`** (`:759`).
+5. **`recusaDoGolpe` tem de encolher** (`App.jsx:1126-1131`): 65 caracteres com o
+   nome mais curto da mesa.
+6. **O violeta da mira a 74 %** (`grade-de-batalha.jsx:611`, `opacidade={0.6}`):
+   **2,689 → 3,484**. Herdado de E1/E2, ainda por pagar, e **mais urgente agora**,
+   porque o âmbar e o violeta passam a partilhar a tela mais vezes. *(O número de
+   linha nos documentos anteriores era `:433` e está velho.)*
+
+**Para o `desenho`, na pauta:**
+
+- **a reserva de 19 px sobe do botão para a fileira** — 57 px no telefone, e uma
+  fila de casas.
+- **`A escolha` *Forma=Pílula*: o foco que cresce 28 px, e os três textos que são
+  camada e deviam ser propriedade.**
+- **o eixo `Largura` do `Botao`** continua bloqueado, e **pior**: com `Armado`,
+  levaria o conjunto de 26 a **52**.
+
+## As armadilhas do Figma, reconfirmadas — e uma delas apagou trabalho
+
+1. **`clone()` não copia `componentPropertyReferences`** (K1b). Apanhou duas
+   vezes na mesma etapa — o `o endereco` de `A casa` e o `rotulo` do `Botao` — e
+   **a segunda só apareceu numa foto**: `setProperties` correu sem erro nenhum e
+   o botão continuou a dizer `AGIR`. *Ela não falha: ignora.*
+2. **Um script que estoura desfaz a transação INTEIRA.** Um conserto que correu
+   dez linhas antes do erro **voltou atrás sem aviso**. *Depois de um erro, nada
+   do que correu antes dele aconteceu* — releia numa chamada nova.
+3. **`node.query()` não aceita espaço no atributo.** `query("TEXT[name=o
+   custo]")` devolve `null` em silêncio. Use `findOne`.
+4. **Em `A casa`, o alfa mora na opacidade do NÓ, nunca na tinta** — a lei de D4,
+   paga em cinco tentativas, e ela apanhou o conserto da borda de 55 %.
+
+**No Figma (`e5wJUzInAssoebx5npssKc`):** `Botao` `9:170` (novos `124:7`,
+`124:3333`; apagados `124:2`, `124:3328`) · `A casa` `18:31` (novo `125:177`;
+consertado `18:7`) · página `W1 · o verbo armado` `125:3486`, com os quadros
+`126:2` (*o par comparável*) e `128:3489` (*alcançável não é alvo*).

@@ -602,7 +602,98 @@ consegue tocar: a régua mede o motor, e o jogador não chega nele.
   isto valia **só em combate**; fora dele a prosa **é** o conteúdo e ali
   trava, como a pessoa decidiu.
 
-- [ ] **X4 · a conta do que mudou** · de: pessoa · 15/09
+- [x] **X4 · a conta do que mudou** · de: pessoa · 15/09 · **feito 16/09 ·
+  v9.262** — medição, nenhuma linha de produção. **A FASE X FECHA AQUI.**
+
+  **A resposta, e ela é um "não mudou" honesto.** Mesma política fixa de X1
+  (estrada, 1 inimigo, herói corpo a corpo nível 3, 7 turnos declarando
+  "Ataco &lt;nome&gt;", nada mais): **7/7 estéreis, 0 rolagens, 0 revides —
+  idêntico a 15/09.** E tinha de ser: X2 escreveu que **não** encurtou a
+  caminhada, e a régua confirma a palavra dela. O que mudou é a sessão A′:
+  os mesmos 7 turnos com o clique **impedido antes de ser gasto**, a
+  distância e os metros que faltam ditos na tela. **Sete turnos perdidos
+  viraram sete turnos que o jogo avisou que seriam perdidos.**
+
+  **E a honestidade que fecha o eixo do número:** a sessão B (o jogador que
+  anda) dá **2 turnos andando + 5 golpes, 0% estéril, 5 rolagens** — e já dava
+  em X1. Andar sempre funcionou; é geometria, não botão. **Nenhum dos dois
+  números é um ganho de X2, e dizer que é seria a conta mentindo a favor.**
+
+  **O eixo novo de X3b, medido (sessão A″):** `taxa_esteril` **7/7 = 100%** ·
+  `taxa_muda` **0/7 = 0%** · `taxa_sem_narracao` **7/7 = 100%**. As duas
+  primeiras são taxas **opostas na mesma sessão**, e a distância entre elas é
+  **inteira de recusa**: das 14 linhas dos 7 turnos, 7 são eco do jogador, 7
+  são recusa e **0 são narração de evento** — com **0 chamadas ao Narrador**
+  (o `return true` de `:11871` antecede o `enviar` de `:11932`). O alerta de
+  X3b estava certo e agora tem número: sem separar a recusa, a medida daria
+  0% de turnos mudos onde a resposta honesta é 100% sem narração.
+
+  **O funil, e X3b errou os dois números para menos.** `pushMsgs` é
+  `App.jsx:7499` (o endereço confere). No caminho de combate são **14 funções
+  e 57 chamadas** — 11 de núcleo (mudas fora da luta, por ponto fixo sobre o
+  grafo de chamadas) e 3 de borda —, não 13. **Frase de mesa 36 (63,2%) ·
+  telegrama 12 (21,1%) · recusa 9 (15,8%)**, e **22 das 57 nascem fora do
+  React**. As recusas à parte: **18 chamadas, 25 formas, 7 famílias**, não 15
+  formas — e duas famílias que a pauta não nomeava (*conjuração travada*,
+  *condição que prende*). A maior é `alcance`, com 6 chamadas e 13 formas.
+  Pelo precedente de X1, **a medição mandou na pauta**.
+
+  **A régua de B1: o que ela não pode, dito em vez de inventado.** Ela **não
+  tem tabuleiro** — não importa `grid.js` nem `golpe.js`, passa `grade: null`
+  ao motor (`regua-combate.mjs:887`), e `grid.js:422` abre com
+  `if (!g) return { ok: true }`. O herói dela golpeia toda rodada sem
+  perguntar se alcança. **Logo a linha de 1,4% nunca mediu "o motor sozinho":
+  ela sempre pressupôs um jogador que age todo turno.** A régua é o **limite
+  otimista, e o jogo real é pior que ela, não melhor.** Medir o preço real
+  exige grade dentro da régua — simulador de tabuleiro, **órgão novo, logo
+  pesado, logo da pessoa**: escrito como proposta em
+  `TABULEIRO_NA_REGUA.paraMedir`, **não construído**.
+
+  **O que a régua conseguiu medir, e liga X1 a B1 pela primeira vez:** o
+  **preço da caminhada**. `rodadasDeCaminhada = k` cala o herói nas primeiras
+  k rodadas; `k = 0` é o default e é byte a byte. No `justo` com
+  `comAdversario: false` (4 famílias × 500 = 2000 sementes por degrau):
+
+  | k | vitória | PV do grupo | quedas |
+  |---|---|---|---|
+  | 0 | 51,8% ± 2,2 | 25,90 | 1,785 |
+  | 1 | 39,6% ± 2,1 | 18,78 | 2,087 |
+  | 2 | 29,8% ± 2,0 | 12,86 | 2,332 |
+  | 3 | 22,7% ± 1,8 | 8,85 | 2,503 |
+
+  **Uma rodada de caminhada custa ~9,7 pontos de vitória**, −5,68 PV de grupo
+  e +0,24 queda. Na moeda de B2 (a escada de `CATRACA_DE_UMA_VIDA`, medida no
+  mesmo molde, ~2,9 pontos por ponto de dano): **um turno andando ≈ 3,3 pontos
+  de dano por golpe — quase todo o teto de +4 que aquela escada aponta.** Os
+  degraus não foram escolhidos: a suíte importa `DESLOCAMENTO_PADRAO` e
+  `ALCANCES` e **refaz** o "2 a 3 turnos" de X1, e fica vermelha se o passo ou
+  o alcance mudarem em `src/`.
+
+  **Não medi no jogo de hoje (Adversário ligado), e medi a razão em vez de a
+  afirmar:** o `justo` está em 1,4–1,8%, **saturado no piso**, e com k ≥ 1 a
+  vitória cabe dentro da própria margem (0,4 ± 0,6 · 0,0 ± 0,6 · 0,0 ± 0,6) —
+  indistinguível de zero. Um limiar em cima de um piso não mede nada.
+
+  **O contrapeso que baixa o preço, e é achado novo:** `moverPara`
+  (`App.jsx:14500-14568`) **nunca chama `fecharMeuTurno`** — o próprio sítio
+  escreve *"o que fecha o turno é AGIR"*, e os 4 chamadores de `fecharMeuTurno`
+  (`:11929`, `:13453`, `:13543`, `:13594`) não incluem o movimento. Somado ao
+  `semAlcance` de graça que X1 mediu: **enquanto o herói anda, a oposição
+  também não age.** Então o preço real da caminhada está **entre zero e os 9,7
+  pontos**, e 9,7 é a ponta cara. Fica `pendente`, não vira limiar.
+
+  **Os dois achados de mecânica quebrada de X3b: X4 não os tocou**, e diz o
+  que descobriu sobre cada um. O **reforço sem `x`/`y` nem iniciativa** é
+  invisível para a régua **por construção** — sem grade, `alcanca` devolve
+  sempre `ok`, e um combatente sem posição não tem como doer ali. A **queda de
+  companheiro em silêncio** X4 **confirma por ausência**: o funil tem linha
+  para a queda do herói (`:14218`) e para treze eventos de companheiro
+  (`:14061`–`:14260`), e **nenhuma** para o companheiro que chega a zero. Os
+  dois continuam em "Aberto", `médio`, intactos.
+
+<details>
+<summary>a redação de X4 como a pessoa a escreveu</summary>
+
   Quantas rolagens por turno antes e depois; quantos turnos terminam sem um
   número mudar. E a régua de B1 refeita **com o jogador agindo** — porque a
   linha de base de 1,4% mediu o motor sozinho, e o jogador que enfim dispara
@@ -2174,6 +2265,70 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   etapa é a **T3 · a salvaguarda no fim do turno**; T2 fechou em v9.239.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **o que o gesto de W1 pede ao motor — e o primeiro é o maior número da
+  fase inteira** · médio · de: regente/jogo/desenho · 16/09 (W1)
+  *Pedido pela pauta do sistema em vez de escrito por nós: são portas, tabelas e
+  frases de regra, e regra não é do desenho.* **Não repete o pedido de E2 logo
+  abaixo** (`casaDoEndereco`, `vereditoDoPasso`, `passo-no-campo`): aquele
+  continua de pé e W1 desenhou **supondo que ele existe**. O que segue é o que o
+  **gesto** precisa e que aquele não cobre. A conta inteira está em
+  `mente/w1-jogo.md` §5 e `mente/w1-desenho.md` §8.
+
+  1. **`esperar` — passar a vez sem chamar o Mestre. É o item mais barato desta
+     lista e o que mais paga.** Não há botão de passar a vez (`App.jsx:3133`,
+     desde a v9.13), e `fecharMeuTurno` (`:14302`) já faz tudo o que é preciso:
+     `resolverRevide` empurra as linhas de sistema e devolve um `resumo`. **Falta
+     um chamador que não faça `enviar` e acumule o `resumo` em `notaRef`**, para
+     viajar colado à próxima ação de verdade — **o padrão já existe neste
+     arquivo, palavra por palavra: é o que `moverPara` faz (`:14568`)**.
+     **O número, corrido em Node sobre `PLANTAS` × `posicionar`:** a abertura é
+     de **19,95 m em média**, **10 de 10 plantas** recusam o corpo a corpo no
+     turno 1, e **1,4 rodadas por luta são só caminhada**. Hoje cada uma delas
+     custa **~20 toques de teclado e uma chamada ao Mestre para não fazer nada**.
+     Com `esperar`, a abertura de toda luta corpo a corpo passa de **~22 toques
+     e 1 chamada para 2 toques e 0 chamadas**. São **−1,4 chamadas por luta** —
+     quota devolvida ao Narrador **uma etapa antes de W2**, que é a etapa que a
+     promete.
+  2. **`declararGolpe(alvo, motivo)`** — hoje ele ignora `entrada` e o painel
+     limpa-a (`:20929`): ou o jogador escreve tudo (e o motor pode não pegar) ou
+     toca o botão (e **a frase é deitada fora**). O que ele escreveu tem de
+     viajar como `motivo`, exatamente como `declararAcaoRapida(id, motivo)` já
+     faz com os oito de baixo e como `fraseDaAcaoRapida` (`desafios.js:638`) já
+     sabe colar. **É o que faz W1 e W2 caberem na mesma tela sem se pisarem, e
+     custa zero caracteres novos no prompt** — a ação declarada já viaja em
+     `enviar(...)` (`:11932`).
+  3. **`LINHAS_DO_GOLPE`, com as colunas `larga` e `curta` e a catraca dos 54
+     caracteres** — irmã de `RECUSAS_DO_PASSO`, pedida por E2, e pela mesma
+     razão. **E ela abre com um defeito vivo, medido hoje, em produção, pelos
+     dois seniores em separado e com números que batem:** `recusaDoGolpe`
+     (`App.jsx:1126-1131`) mede **65 caracteres com o nome mais curto da mesa e
+     77 com um nome de mundo**, contra os **53–54 úteis** que E2 instalou. **É a
+     frase que mais aparece no jogo inteiro** — 10 de 10 plantas recusam no turno
+     1 —, e hoje ela quebra a linha e empurra o painel **12 px**. *Duas medições
+     independentes que batem valem mais do que qualquer das duas sozinha.*
+     **O truncamento é do lado da tabela, nunca da tela, e apara só o nome:** uma
+     frase já aparada é uma frase; uma frase aparada por CSS é uma frase partida.
+  4. **`alvosDoVerbo(verbo, estado)` → `{ casas, criaturas }`** e
+     **`vereditoDoVerbo(verbo, alvo)` → `{ curta ≤ 54, custoM, penalidade, razao }`.**
+     Sem o primeiro não há conjunto armado para acender, e **o conjunto armado é
+     o que substitui o `hover` no telefone** — é a peça central do desenho, não
+     um enfeite. A `curta` é lida **duas vezes**, pela linha do veredito e pelo
+     `aria-label` da casa: é a lei de E2, e é o que faz o ouvido e o olho
+     receberem a mesma frase.
+  5. **`ondeOGolpeAlcanca(caminho, alvo, alcanceM)`** — a saída da recusa, uma
+     varredura sobre o caminho de ≤12 quadrados. Hoje a recusa diz *por quê* e
+     não diz *daqui a quanto*: a distância resolve-se andando e a parede não, e
+     só uma delas tem resposta que caiba numa linha.
+  6. **`perdeM` no veredito** (o que a rodada perde ao gastar a ação) e **a
+     memória do alvo a sobreviver à rodada** (`ultimoAlvoRef`), que é o que faz
+     o arqueiro pagar 1 toque onde a regra do alvo único não chega.
+
+  **E três coisas que parecem deste pedido e NÃO são — são nossas, e W3 paga-as
+  em `grade-de-batalha.jsx`**, ditas aqui para ninguém as fazer duas vezes:
+  `pointerEvents: "none"` nas fichas (`:648`) e a casa ocupada fora de `podeIr`
+  (`:401`) — que juntos são a razão de **hoje ser impossível tocar num inimigo** —,
+  `onMouseEnter` → `onPointerMove` (`:759`), e o violeta da mira a 74 % (`:611`).
 
 - [ ] **a segunda porta do tabuleiro: "vou até K14" não chega ao motor (E2)** · médio ·
   de: regente/jogo · 15/09
