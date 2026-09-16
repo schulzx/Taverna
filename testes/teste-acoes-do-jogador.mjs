@@ -24,8 +24,11 @@ const APP = readFileSync("../src/App.jsx", "utf8");
 import {
   ACOES_DO_JOGADOR, MOTOR_SEM_CHAMADOR, TURNO_ESTERIL, ABERTURA_FORA_DE_ALCANCE,
   NUMERO_QUE_MUDA, NAO_CONTA_COMO_NUMERO,
+  FUNIL_DO_COMBATE, RECUSAS_DO_COMBATE, NAO_CONTA_COMO_FRASE,
+  SESSAO_A_PELA_FRASE, O_QUE_NAO_DEU_PARA_MEDIR,
   acoesDeCombateSemMotor, acoesComCliqueCondicional,
   contarPorClique, contarPorTexto, contarCombate,
+  contarFunil, contarRecusas, recusasPorFamilia, vozQueNasceNoModulo,
 } from "./acoes-do-jogador.mjs";
 /* X2: o módulo puro do golpe entra na suíte porque a asserção nova roda
    ele DE VERDADE — não é leitura de texto, é a frase do botão passando
@@ -339,13 +342,17 @@ sec("4. a definição operacional de 'número que muda'");
   const relogio = NAO_CONTA_COMO_NUMERO.find((x) => /relógio/.test(x.o));
   t("o relógio de 45 min está excluído", !!relogio);
   t("e o porquê da exclusão está escrito", !!relogio && /por construção/.test(relogio.porque));
-  /* O NÚMERO DA LINHA MUDOU, A EXCLUSÃO NÃO. Era `12959`; a extração da
-     porta única do golpe (X2) empurrou o `avancarMinutos(MINUTOS_POR_TURNO)`
-     para `13161`. Trocado aqui porque uma régua que aponta a linha errada
-     ensina a desconfiar dela — e o que esta asserção guarda nunca foi o
-     número, e sim que a exclusão venha com ENDEREÇO, para X4 poder
-     conferir que o relógio ainda avança sozinho antes de repetir a conta. */
-  t("e aponta a linha que avança o relógio", !!relogio && /13161/.test(relogio.porque));
+  /* O NÚMERO DA LINHA MUDOU DE NOVO, A EXCLUSÃO NÃO. Era `12959` em X1 e
+     `13161` em X2; hoje o `avancarMinutos(MINUTOS_POR_TURNO)` está em
+     `13290` — o App cresceu por baixo dele outra vez. Trocado aqui pela
+     mesma razão de sempre (uma régua que aponta a linha errada ensina a
+     desconfiar dela) e, DESTA VEZ, com catraca: o dente 8 de
+     `check-acoes-do-jogador.mjs` passou a re-derivar a linha do código,
+     então a próxima mudança de endereço morde em vez de apodrecer calada.
+     O que esta asserção guarda nunca foi o número, e sim que a exclusão
+     venha com ENDEREÇO — é por ele que X4 confere que o relógio ainda
+     avança sozinho antes de repetir a conta. */
+  t("e aponta a linha que avança o relógio", !!relogio && /13290/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -486,6 +493,141 @@ sec("8. o motor que nenhum clique chama");
   const todas = [...M.semClique["combate.js"], ...M.soInterno["combate.js"], ...M.morto.map((x) => x.nome)];
   t("maiorVaoSemGanho não é declarado sem chamador (tem leitor em teste-onda3)",
     !todas.includes("maiorVaoSemGanho"));
+}
+
+/* ============================================================
+   9. O EIXO DA FRASE (X4) — o funil, e quem nele diz não
+
+   O QUE ESTE BLOCO GUARDA. X3b escreveu em prosa "treze funções chamam
+   `pushMsgs` dentro do combate" e "15 formas de recusa". Nenhum dos dois
+   se reproduz: são 14 funções (11 provadamente mudas fora da luta) e 18
+   chamadas de recusa em 25 formas. A tabela guarda os números medidos,
+   este bloco os afirma, e `check-acoes-do-jogador.mjs` re-deriva do
+   `App.jsx` os endereços — é o mesmo tripé de X1.
+
+   NENHUMA ASSERÇÃO ANTERIOR FOI MOVIDA AQUI. O eixo do número (blocos 3
+   e 4) fica onde estava e continua dando 7/7: X4 é medição, e a política
+   da sessão A não foi tocada.
+   ============================================================ */
+sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
+{
+  const f = contarFunil();
+  t("o funil tem 14 funções", f.funcoes === 14, String(f.funcoes));
+  t("e 11 delas são provadamente mudas fora da luta", f.porAnel.nucleo === 11, String(f.porAnel.nucleo));
+  t("as outras 3 são de borda — falam dentro e fora", f.porAnel.borda === 3, String(f.porAnel.borda));
+  t("são 57 chamadas de pushMsgs no funil", f.linhas === 57, String(f.linhas));
+  /* a soma tem de fechar: uma linha sem voz declarada some da conta em
+     silêncio, e é exatamente assim que uma régua passa a mentir */
+  t("e toda chamada tem uma voz declarada",
+    f.voz.frase + f.voz.telegrama + f.voz.recusa === f.linhas,
+    JSON.stringify(f.voz));
+
+  /* O CORAÇÃO DE X3b: frase de mesa e telegrama não são a mesma coisa, e
+     contá-los juntos apagaria a única distinção que a etapa deixou. */
+  t("frase de mesa e telegrama estão separados e ambos existem",
+    f.voz.frase > 0 && f.voz.telegrama > 0, JSON.stringify(f.voz));
+  t("o telegrama do golpe do jogador está declarado como telegrama",
+    FUNIL_DO_COMBATE.find((x) => x.fn === "aplicarGolpeDoJogador")
+      .linhas.find((l) => l.onde === "src/App.jsx:11920").voz === "telegrama");
+  t("a maior boca do funil é `resolverRevide`, com 29 chamadas",
+    FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 29);
+  t("toda função do funil declara anel, endereço e ao menos uma linha",
+    FUNIL_DO_COMBATE.every((x) => /^src\/App\.jsx:\d+$/.test(x.onde)
+      && (x.anel === "nucleo" || x.anel === "borda") && x.linhas.length > 0));
+  t("e toda linha declara onde sai, o evento e onde a frase nasce",
+    FUNIL_DO_COMBATE.every((x) => x.linhas.every((l) =>
+      /^src\/App\.jsx:\d+$/.test(l.onde) && l.evento && l.nasce)));
+
+  /* a coluna `nasce` é a que diz quanto da voz já é testável em Node */
+  const n = vozQueNasceNoModulo();
+  t("parte da voz do combate já nasce fora do React", n.doModulo === 22, String(n.doModulo));
+  t("e a maior parte ainda só existe no App.jsx", n.doApp === 35 && n.doApp > n.doModulo, String(n.doApp));
+}
+
+sec("10. as recusas, contadas à parte — a correção de escopo de X3b");
+{
+  const r = contarRecusas();
+  t("são 18 chamadas de recusa no caminho de combate", r.chamadas === 18, String(r.chamadas));
+  t("e 25 formas distintas (uma chamada pode imprimir várias)", r.formas === 25, String(r.formas));
+  t("em sete famílias, não cinco", r.familias === 7, String(r.familias));
+  const fam = recusasPorFamilia();
+  for (const nome of ["alcance", "economia", "teto", "repeticao", "turno-guardado"]) {
+    t(`  a família \`${nome}\` que a pauta nomeia está medida`, !!fam[nome] && fam[nome].chamadas > 0);
+  }
+  t("  e as duas que a pauta NÃO nomeia também", !!fam.conjuracao && !!fam.condicao);
+  t("alcance é a maior família, como a Fase X toda previa",
+    fam.alcance.formas === Math.max(...Object.values(fam).map((x) => x.formas)), JSON.stringify(fam.alcance));
+  t("toda recusa declara família, endereço, literal, formas e anel",
+    RECUSAS_DO_COMBATE.every((x) => x.familia && /^src\/App\.jsx:\d+$/.test(x.onde)
+      && x.literal && x.formas >= 1 && x.anel && x.fn && x.nasce));
+
+  /* A LIGAÇÃO ENTRE AS DUAS TABELAS: as recusas que o funil conta e as que
+     a tabela de recusas atribui ao funil têm de ser o MESMO número. Se
+     divergirem, uma das duas ganhou uma linha que a outra não viu — e é
+     esse o jeito silencioso de uma medição começar a mentir. */
+  const noFunil = contarFunil().voz.recusa;
+  t("as recusas do funil batem com as atribuídas ao funil",
+    noFunil === r.porAnel.nucleo + r.porAnel.borda, `funil=${noFunil} tabela=${r.porAnel.nucleo + r.porAnel.borda}`);
+  t("e as outras nove moram no despachante `agirInterno`, fora do funil",
+    r.porAnel.despachante === 9, String(r.porAnel.despachante));
+
+  /* O ESPELHO: sem ele a taxa da frase mente a favor de quem mede, que é
+     literalmente o alerta que X3b deixou escrito. A recusa em primeiro. */
+  t("NAO_CONTA_COMO_FRASE existe e tem o porquê de cada exclusão",
+    NAO_CONTA_COMO_FRASE.length >= 5 && NAO_CONTA_COMO_FRASE.every((x) => x.o && x.porque));
+  t("e a recusa é a PRIMEIRA exclusão, como o relógio é a que mais pesa no número",
+    /recusa/.test(NAO_CONTA_COMO_FRASE[0].o));
+  t("o eco do jogador está excluído", NAO_CONTA_COMO_FRASE.some((x) => /eco do jogador/.test(x.o)));
+  t("e o telegrama tem tratamento escrito", NAO_CONTA_COMO_FRASE.some((x) => /telegrama/.test(x.o)));
+}
+
+sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
+{
+  /* A conta refeita aqui com o motor puro, como o bloco 3 faz com o eixo
+     do número: os sete turnos rodam `alcanca` de verdade, e a fiação
+     (duas linhas por recusa) é a que a tabela declara e o varredor confere. */
+  const S = SESSAO_A_PELA_FRASE;
+  const grade = G.montarGrade({ local: TURNO_ESTERIL.politicaDaSessaoA.planta });
+  const pos = G.posicionar(grade, { heroi: { nome: "Bram" }, grupo: [], inimigos: [{ nome: "Bandido", vida: 11 }] });
+  let semNumero = 0, semLinha = 0, semNarracao = 0, linhas = 0, recusas = 0;
+  for (let i = 0; i < TURNO_ESTERIL.politicaDaSessaoA.turnos; i++) {
+    const ok = G.alcanca(grade, pos.heroi, pos.inimigos[0], { alcanceM: G.alcanceNatural(pos.heroi) }).ok;
+    const nLinhas = ok ? 2 : 2;            // eco + (narração | recusa)
+    linhas += nLinhas;
+    if (!ok) { semNumero++; semNarracao++; recusas++; }
+    if (nLinhas === 0) semLinha++;
+  }
+  t("a mesma política, o mesmo 7/7 estéril", semNumero === S.semNumero && semNumero === 7);
+  t("nenhum dos sete turnos termina sem UMA linha", semLinha === S.semLinha && semLinha === 0, String(semLinha));
+  t("mas os sete terminam sem uma frase de EVENTO", semNarracao === S.semNarracaoDeEvento && semNarracao === 7);
+  t("as catorze linhas são sete ecos e sete recusas",
+    linhas === S.linhas && recusas === S.recusas && S.ecos === 7 && S.narracoesDeEvento === 0,
+    `linhas=${linhas} recusas=${recusas}`);
+  /* A FRASE QUE JUSTIFICA O BLOCO INTEIRO: as duas taxas são opostas na
+     mesma sessão, e toda a distância entre elas é recusa. */
+  t("as duas taxas não são a mesma — 100% estéril contra 0% mudo",
+    S.semNumero / S.turnos === 1 && S.semLinha / S.turnos === 0);
+  t("e a recusa da sessão A é da família `alcance`", S.familiaDaRecusa === "alcance");
+  t("a família `alcance` tem literal declarado em aplicarGolpeDoJogador",
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:11870" && x.familia === "alcance"));
+
+  /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
+     antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
+     que a IA teve chance de narrar e não narrou. */
+  t("o Narrador não é chamado nos sete turnos", S.chamadasAoNarrador === 0);
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /11932/.test(S.ondeSai));
+
+  t("a fórmula do eixo novo está escrita para ser repetida",
+    /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));
+  t("e o procedimento aponta a sessão A″ da sonda", /sonda-turno-esteril/.test(S.procedimento) && /A″/.test(S.procedimento));
+
+  /* A HONESTIDADE ACIMA DO NÚMERO BONITO: o que não deu para medir é
+     declarado, como a Fase X inteira fez. X3c morreu por não ter feito
+     isto a tempo. */
+  t("o que X4 não conseguiu medir está escrito, com o porquê",
+    O_QUE_NAO_DEU_PARA_MEDIR.length >= 3 && O_QUE_NAO_DEU_PARA_MEDIR.every((x) => x.o && x.porque));
+  t("e a primeira limitação é a de sempre: a sonda não roda o App.jsx",
+    /não roda o `App\.jsx`/.test(O_QUE_NAO_DEU_PARA_MEDIR[0].porque));
 }
 
 console.log(`\n${bons} ok, ${maus} falhas`);

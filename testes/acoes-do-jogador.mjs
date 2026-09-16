@@ -317,8 +317,15 @@ export const NUMERO_QUE_MUDA = [
 export const NAO_CONTA_COMO_NUMERO = [
   { o: "linhas de log", porque: "o Mestre narrando não é o sistema decidindo" },
   { o: "o livro de tentativas", porque: "é escrituração da medida, não estado de jogo" },
+  /* O ENDEREÇO MUDOU DE NOVO (X4), E DESTA VEZ COM CATRACA. Era `12959` em
+     X1 e `13161` em X2; hoje o `avancarMinutos(MINUTOS_POR_TURNO)` está em
+     `src/App.jsx:13290` — o arquivo cresceu por baixo dele duas vezes e
+     ninguém foi avisado, porque nada re-derivava este número. A troca vem
+     acompanhada do dente 8 de `check-acoes-do-jogador.mjs`, que passa a ler
+     a linha do código e falhar quando ela e esta discordarem: uma régua que
+     aponta a linha errada ensina a desconfiar dela. */
   { o: "o relógio do mundo (45 min)", porque:
-    "src/App.jsx:13161 avança MINUTOS_POR_TURNO em todo turno fora de combate, faça o jogador o que fizer. Um número que muda sempre não distingue turno que fez de turno que não fez: incluí-lo daria 0% de esterilidade por construção e a medida perderia o sentido" },
+    "src/App.jsx:13290 avança MINUTOS_POR_TURNO em todo turno fora de combate, faça o jogador o que fizer. Um número que muda sempre não distingue turno que fez de turno que não fez: incluí-lo daria 0% de esterilidade por construção e a medida perderia o sentido" },
 ];
 
 export const TURNO_ESTERIL = {
@@ -553,6 +560,414 @@ export function contarPorTexto(contexto) {
   return c;
 }
 
+/* ============================================================
+   6. O EIXO DA FRASE (X4) — quem fala no turno de combate
+
+   POR QUE ESTE BLOCO EXISTE. X3b deixou por escrito um eixo que a régua
+   não tinha: além de "quantos turnos terminam sem um número mudar", dá
+   para contar "quantos terminam sem uma FRASE", e as duas taxas não são
+   a mesma. Deixou também um alerta que muda a conta antes de ela ser
+   feita: a voz do combate que o código já tem é, em boa parte, a voz de
+   DIZER NÃO. Recusa não é narração de evento. Contá-las juntas infla o
+   número a favor de quem mede, que é o pior jeito de errar.
+
+   ---------------- O QUE É "CAMINHO DE COMBATE", E COMO FOI MEDIDO ----
+
+   X3b escreveu em prosa: "`pushMsgs` é `App.jsx:7499` e treze funções o
+   chamam dentro do combate". O endereço do funil CONFERE — `pushMsgs` é
+   `src/App.jsx:7499`, e há 453 call-sites dele em 174 funções no arquivo
+   inteiro. O "treze", não: X3b não escreveu uma linha de código, e o
+   número não se reproduz sob nenhum critério que eu consiga declarar.
+   Recontei, e o que muda o resultado não é a contagem — é a DEFINIÇÃO,
+   que faltava. Com ela escrita, o número é 14, em dois anéis:
+
+     `nucleo` (11) — a função é PROVADAMENTE muda fora da luta: ou ela
+       guarda em `combateRef.current` e sai cedo, ou todo chamador dela
+       está dentro do ciclo do turno. Medido por ponto fixo sobre o grafo
+       de chamadas de `src/App.jsx`, partindo das cinco guardas explícitas
+       (`presencaNaLuta`, `resolverAtaqueJogador`, `resolverHabilidade-
+       Ofensiva`, `resolverRevide`, `moverPara`).
+     `borda` (3) — fala no turno de combate E fora dele. `aMesaEspera`
+       (a trava do turno guardado serve o turno inteiro),
+       `fecharSeTodosCairam` (tem chamador em `executarComando`) e
+       `limparConjuracoesDaLuta` (também roda em `passarTempo` e
+       `acampar`). Ficam declaradas à parte para que o "11" continue
+       sendo um número duro e o "14" continue sendo comparável.
+
+   O que NÃO entrou no funil, e por quê: `agirInterno` (`:13178`), o
+   despachante do turno. Ele fala nos dois mundos, e mais da metade das
+   linhas dele não é de combate. As recusas do ramo de habilidade que
+   moram lá ENTRAM na conta das recusas, com o anel escrito — porque uma
+   recusa que o jogador ouve com a luta aberta é recusa de combate, ainda
+   que a função que a diz também sirva fora.
+
+   ---------------- FRASE DE MESA vs TELEGRAMA ----------------
+
+   É a distinção que X3b chamou de coração da medida, e sem ela o eixo
+   novo não vale nada: a linha existir não quer dizer que a mesa falou.
+
+     `frase`     — voz de mundo. Uma pessoa poderia ter dito isso.
+     `telegrama` — contabilidade com emoji:
+                   `⚔ Halvard → Bandido: 9 de dano · Bandido 11/20`.
+                   O número está certo e ninguém narrou nada.
+     `recusa`    — o sistema diz que a ação NÃO aconteceu. Não é
+                   narração de evento e não entra na conta dela.
+     `eco`       — a linha `{ autor: "jogador" }`, que devolve à tela o
+                   que o próprio jogador escreveu. Não é voz da casa.
+
+   `nasce` aponta ONDE a frase é escrita, e não de onde ela é empurrada:
+   quando o `App.jsx` só repassa `res.texto` de um módulo puro, o crédito
+   é do módulo. É essa coluna que diz quanto da voz do combate já está
+   fora do React — e portanto quanto dela é testável em Node.
+
+   UMA CHAMADA NÃO É UMA LINHA. `pushMsgs` recebe uma lista: `:11920`
+   empurra de uma vez o eco, o 🎲 opcional, a aflição e o telegrama do
+   golpe. Onde isso acontece, `misto: true` está escrito, e `voz` é a da
+   linha que o jogador sempre vê.
+   ============================================================ */
+export const FUNIL_DO_COMBATE = [
+  { fn: "presencaNaLuta", onde: "src/App.jsx:5406", anel: "nucleo",
+    linhas: [
+      { onde: "src/App.jsx:5443", evento: "presença divina na abertura da luta — condição imposta ao herói, ao grupo ou aos inimigos",
+        voz: "frase", nasce: "src/presenca-divina.js (resolverPresenca, presencaDoHeroiEmCombate)" },
+    ] },
+  { fn: "aMesaEspera", onde: "src/App.jsx:7516", anel: "borda",
+    linhas: [
+      { onde: "src/App.jsx:7520", evento: "a trava do turno guardado: o motor já rolou e a narração não chegou",
+        voz: "recusa", nasce: "src/App.jsx" },
+    ] },
+  { fn: "tentarReacaoNoGolpe", onde: "src/App.jsx:7659", anel: "nucleo",
+    linhas: [
+      { onde: "src/App.jsx:7668", evento: "a reação dispara (aparar, esquivar, retribuir)",
+        voz: "frase", nasce: "src/reacoes.js (resolverReacao)" },
+      { onde: "src/App.jsx:7690", evento: "o contra-ataque da reação acerta ou erra",
+        voz: "telegrama", nasce: "src/App.jsx" },
+    ] },
+  { fn: "aplicarCondicoesDosGolpes", onde: "src/App.jsx:7697", anel: "nucleo",
+    linhas: [
+      { onde: "src/App.jsx:7721", evento: "o golpe do inimigo impõe (ou não) uma aflição ao herói",
+        voz: "frase", nasce: "src/aflicoes.js (rolarAflicao)" },
+    ] },
+  { fn: "limparConjuracoesDaLuta", onde: "src/App.jsx:7809", anel: "borda",
+    linhas: [
+      { onde: "src/App.jsx:7816", evento: "a forma animal se desfaz ao fim da luta",
+        voz: "frase", nasce: "src/habilidades.js (desfazerForma)" },
+      { onde: "src/App.jsx:7823", evento: "a guarda do herói baixa ao fim da luta",
+        voz: "frase", nasce: "src/habilidades.js (baixarGuardas)" },
+      { onde: "src/App.jsx:7840", evento: "a guarda de cada companheiro baixa ao fim da luta",
+        voz: "frase", nasce: "src/habilidades.js (baixarGuardas)" },
+      { onde: "src/App.jsx:7846", evento: "a pressa acaba ao fim da luta",
+        voz: "frase", nasce: "src/habilidades.js (baixarPressa)" },
+    ] },
+  { fn: "aflicaoDeCompanheiro", onde: "src/App.jsx:8109", anel: "nucleo",
+    linhas: [
+      { onde: "src/App.jsx:8116", evento: "a arma do companheiro envenena/queima o inimigo",
+        voz: "frase", nasce: "src/aflicoes.js (rolarAflicao)" },
+    ] },
+  { fn: "resolverAtaqueJogador", onde: "src/App.jsx:11718", anel: "nucleo",
+    linhas: [
+      { onde: "src/App.jsx:11842", evento: "atacou, apareceu — a invisibilidade se rompe pelo golpe",
+        voz: "frase", nasce: "src/gatilhos.js (romperPorGatilho)" },
+    ] },
+  { fn: "aplicarGolpeDoJogador", onde: "src/App.jsx:11864", anel: "nucleo",
+    /* núcleo por COMPORTAMENTO e não por guarda própria: sem luta,
+       `resolverAtaqueJogador` devolve `null` na primeira linha e ela sai em
+       `:11873` com `false`, sem falar. É a função que a sessão A percorre
+       sete vezes. */
+    linhas: [
+      { onde: "src/App.jsx:11870", evento: "recusa por alcance — o golpe digitado não alcança ninguém",
+        voz: "recusa", nasce: "src/App.jsx:11785 (o literal do motivo)" },
+      { onde: "src/App.jsx:11878", evento: "recusa por economia — a ação da rodada já saiu",
+        voz: "recusa", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:11920", evento: "o golpe do jogador: dano, PV do alvo e a aflição da arma",
+        voz: "telegrama", misto: true, nasce: "src/App.jsx (o ⚔) + src/aflicoes.js (a aflição)" },
+    ] },
+  { fn: "declararGolpe", onde: "src/App.jsx:11966", anel: "nucleo",
+    /* núcleo pela FIAÇÃO: o único chamador é o `onClick` das ACOES_PRONTAS
+       sob `golpeVivo`, que exige `vdGolpe` — e `vereditoDoGolpeAgora`
+       devolve `null` fora da luta. O botão não existe fora dela. */
+    linhas: [
+      { onde: "src/App.jsx:11981", evento: "recusa por alcance — o clique chegou e o veredito diz não",
+        voz: "recusa", nasce: "src/App.jsx:1126 (recusaDoGolpe)" },
+    ] },
+  { fn: "resolverHabilidadeOfensiva", onde: "src/App.jsx:12001", anel: "nucleo",
+    linhas: [
+      { onde: "src/App.jsx:12027", evento: "a ceifa leva de uma vez quem estava abaixo do limiar",
+        voz: "frase", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:12029", evento: "a ceifa varre o campo e não acha ninguém abaixo do limiar",
+        voz: "frase", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:12128", evento: "o alvo está abaixo do limiar e a execução vale",
+        voz: "telegrama", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:12356", evento: "a habilidade ofensiva resolvida: acerto, dano, dreno, imunidade por degrau",
+        voz: "telegrama", misto: true, nasce: "src/App.jsx" },
+    ] },
+  { fn: "fecharSeTodosCairam", onde: "src/App.jsx:13618", anel: "borda",
+    linhas: [
+      { onde: "src/App.jsx:13635", evento: "a forma animal se desfaz quando a luta acaba",
+        voz: "frase", nasce: "src/habilidades.js (desfazerForma)" },
+      { onde: "src/App.jsx:13649", evento: "a luta termina sem ninguém derrotado — sem espólios",
+        voz: "frase", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:13743", evento: "vitória: todos caíram, e os espólios",
+        voz: "telegrama", misto: true, nasce: "src/App.jsx" },
+    ] },
+  { fn: "resolverRevide", onde: "src/App.jsx:13776", anel: "nucleo",
+    /* a maior boca do funil, e de longe: 29 das 57 chamadas do caminho de
+       combate saem daqui. É a vez do mundo inteira — inimigos, grupo,
+       prazos e quedas — num corpo só. */
+    linhas: [
+      { onde: "src/App.jsx:13791", evento: "abre a vez do mundo e diz a rodada",
+        voz: "telegrama", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:13809", evento: "o inimigo dá as costas e leva o golpe de oportunidade",
+        voz: "frase", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:13840", evento: "o passo do inimigo no tabuleiro",
+        voz: "frase", nasce: "src/App.jsx:5399 (linhaDePasso)" },
+      { onde: "src/App.jsx:13859", evento: "o passo do aliado no tabuleiro",
+        voz: "frase", nasce: "src/App.jsx:5399 (linhaDePasso)" },
+      { onde: "src/App.jsx:13996", evento: "o golpe de cada inimigo: acerto, dano, amortecimento, abrigo",
+        voz: "telegrama", misto: true, nasce: "src/App.jsx (o ⚔) + src/tracos.js (amortecerDano)" },
+      { onde: "src/App.jsx:14035", evento: "a concentração cai com o dano sofrido",
+        voz: "frase", nasce: "src/combate.js (testeConcentracao)" },
+      { onde: "src/App.jsx:14047", evento: "o dano rompe a invisibilidade",
+        voz: "frase", nasce: "src/gatilhos.js (romperPorGatilho)" },
+      { onde: "src/App.jsx:14061", evento: "a Dádiva da Recuperação segura a queda",
+        voz: "frase", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:14069", evento: "a guarda segura a queda em 1 PV",
+        voz: "frase", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:14081", evento: "a fúria persistente segura a queda em 1 PV",
+        voz: "frase", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:14113", evento: "Voz de Comando: as invocadas agem de novo",
+        voz: "frase", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:14120", evento: "a rolagem do golpe do companheiro (só com `mostrarRolagens`)",
+        voz: "telegrama", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:14126", evento: "o golpe do companheiro: dano ou erro",
+        voz: "telegrama", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:14130", evento: "a rolagem da habilidade do companheiro (só com `mostrarRolagens`)",
+        voz: "telegrama", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:14136", evento: "a arma do companheiro impõe aflição",
+        voz: "frase", nasce: "src/aflicoes.js (rolarAflicao)" },
+      { onde: "src/App.jsx:14139", evento: "a habilidade ofensiva do companheiro",
+        voz: "telegrama", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:14144", evento: "a cura do companheiro num aliado",
+        voz: "telegrama", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:14149", evento: "o companheiro bebe uma poção",
+        voz: "frase", nasce: "src/App.jsx:8008 (pocaoDeCompanheiro)" },
+      { onde: "src/App.jsx:14154", evento: "o companheiro ergue um buff",
+        voz: "frase", nasce: "src/App.jsx:8033 (buffDeCompanheiro)" },
+      { onde: "src/App.jsx:14156", evento: "e o que ele largou para erguê-lo",
+        voz: "frase", nasce: "src/App.jsx:8033 (buffDeCompanheiro)" },
+      { onde: "src/App.jsx:14186", evento: "o companheiro ergue uma guarda",
+        voz: "frase", nasce: "src/habilidades.js (GUARDAS, erguerGuarda)" },
+      { onde: "src/App.jsx:14193", evento: "recusa por repetição — a guarda que já está de pé não sobe duas vezes",
+        voz: "recusa", nasce: "src/App.jsx (a recusa nasce em src/habilidades.js, erguerGuarda; a frase é do App)" },
+      { onde: "src/App.jsx:14218", evento: "o herói chega a zero e rola a queda",
+        voz: "frase", nasce: "src/App.jsx:8150 (resolverQueda)" },
+      { onde: "src/App.jsx:14233", evento: "a forma animal vence o prazo",
+        voz: "frase", nasce: "src/habilidades.js (expirarForma)" },
+      { onde: "src/App.jsx:14241", evento: "a guarda do herói vence o prazo",
+        voz: "frase", nasce: "src/habilidades.js (expirarGuardas)" },
+      { onde: "src/App.jsx:14260", evento: "a guarda de cada companheiro vence o prazo",
+        voz: "frase", nasce: "src/habilidades.js (expirarGuardas)" },
+      { onde: "src/App.jsx:14267", evento: "a pressa vence o prazo",
+        voz: "frase", nasce: "src/habilidades.js (expirarPressa)" },
+      { onde: "src/App.jsx:14274", evento: "o controle sobre o inimigo arrebenta",
+        voz: "frase", nasce: "src/controle.js (expirarControles)" },
+      { onde: "src/App.jsx:14282", evento: "a invocação se desfaz no fim do prazo",
+        voz: "frase", nasce: "src/invocacoes.js (expirarInvocacoes)" },
+    ] },
+  { fn: "moverPara", onde: "src/App.jsx:14497", anel: "nucleo",
+    linhas: [
+      { onde: "src/App.jsx:14502", evento: "recusa — esta luta não tem terreno",
+        voz: "recusa", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:14515", evento: "recusa — uma condição prende o herói no lugar",
+        voz: "recusa", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:14526", evento: "recusa por economia — o movimento da rodada acabou",
+        voz: "recusa", nasce: "src/App.jsx" },
+      { onde: "src/App.jsx:14532", evento: "recusa do passo — fora do campo, ocupado, longe demais, já está aí",
+        voz: "recusa", nasce: "src/grid.js:473-508 (caminhar)" },
+      { onde: "src/App.jsx:14566", evento: "o passo sai: golpes de oportunidade de quem te alcança e o abrigo",
+        voz: "frase", misto: true, nasce: "src/App.jsx" },
+    ] },
+  { fn: "virarChefeSePreciso", onde: "src/App.jsx:17932", anel: "nucleo",
+    linhas: [
+      { onde: "src/App.jsx:17946", evento: "o chefe da masmorra vira de fase",
+        voz: "frase", nasce: "src/masmorras.js:722 (falaDaViradaDoChefe)" },
+    ] },
+];
+
+/* ============================================================
+   AS RECUSAS, À PARTE — a correção de escopo que X3b obriga
+
+   POR QUE À PARTE. "Quantos turnos terminam com uma frase" responde
+   coisa nenhuma se a frase for `📏 Longe demais`. A sessão A é a prova
+   viva: ela fecha SETE turnos com quatorze linhas na tela e ZERO
+   narração de evento. Somar recusa a narração daria 0% de silêncio onde
+   há 100%, e a medida diria o contrário do que se vê jogando.
+
+   O NÚMERO, E OS DOIS JEITOS DE CONTÁ-LO. X3b escreveu "15 formas de
+   recusa com frase em português no caminho de combate". Recontei uma a
+   uma, e o 15 não sai de nenhum dos dois cortes possíveis:
+
+     **18 chamadas de recusa** — uma linha desta tabela por call-site.
+       Nove no funil, nove no despachante `agirInterno`.
+     **25 formas distintas** — cada literal que o jogador pode ler.
+       Uma só chamada imprime cinco frases diferentes (`:14532`, que
+       repassa os cinco motivos de `caminhar`), e outra imprime três
+       (`:11981`, via `recusaDoGolpe`). O campo `formas` diz quantas.
+
+   E são SETE famílias, não cinco: as cinco que a pauta nomeia (alcance,
+   economia do turno, teto, repetição, a trava do turno guardado) mais
+   duas que ela não nomeia — a CONJURAÇÃO TRAVADA (armadura, forma
+   animal, grimório) e a CONDIÇÃO que prende o herói no lugar.
+
+   Onde X3b acertou: o veredito, que é o que importa — recusa é mesmo
+   volume comparável ao da narração, e no recorte que mais dói ela é a
+   voz ÚNICA (ver `SESSAO_A_PELA_FRASE`). Onde errou: o número, e errou
+   para MENOS nos dois cortes, o que só reforça o alerta dele.
+
+   A conta não inclui as recusas do painel de heroísmo
+   (`usarHeroismo`, `src/App.jsx:15170-15213`, seis literais `⛔`): elas
+   vivem com e sem luta aberta, não pertencem ao ciclo do turno, e
+   entrariam só para engordar o número. Ficam escritas aqui, no escopo,
+   porque o que se deixa de fora tem de ser dito.
+
+   `anel` diz onde a função que fala mora: `nucleo`/`borda` são do
+   funil; `despachante` é `agirInterno` (`src/App.jsx:13178`), que fala
+   dentro e fora da luta e por isso não entra no funil — mas a recusa
+   que ele diz com a luta aberta é recusa de combate.
+   ============================================================ */
+export const RECUSAS_DO_COMBATE = [
+  /* ---- alcance: a família que a Fase X inteira mede ---- */
+  { familia: "alcance", onde: "src/App.jsx:11870", fn: "aplicarGolpeDoJogador", anel: "nucleo", formas: 2,
+    literal: "📏 ninguém está ao alcance do seu golpe — <alvo> está em <lugar>, a uns <n> m. Aproxime-se primeiro. / 📏 não há ninguém à vista para acertar — ou há parede no caminho (arma de longe)",
+    nasce: "src/App.jsx:11785-11787" },
+  { familia: "alcance", onde: "src/App.jsx:11981", fn: "declararGolpe", anel: "nucleo", formas: 3,
+    literal: "📏 Longe demais — <alvo> a <n> m, faltam <n> m. Aproxime-se primeiro. / 📏 Há parede no caminho até <alvo> — contorne. / 📏 Ninguém de pé ao seu alcance.",
+    nasce: "src/App.jsx:1126 (recusaDoGolpe)" },
+  { familia: "alcance", onde: "src/App.jsx:13425", fn: "agirInterno", anel: "despachante", formas: 1,
+    literal: "📏 <habilidade> não alcança ninguém daqui — <alvo> está em <lugar>, a uns <n> m[ e sem linha de visão]. O alcance de <habilidade> é <n> m.",
+    nasce: "src/App.jsx:12102" },
+  { familia: "alcance", onde: "src/App.jsx:13538", fn: "agirInterno", anel: "despachante", formas: 1,
+    literal: "📏 <o mesmo motivo de :12102> — os <n> PM voltaram.",
+    nasce: "src/App.jsx:12102" },
+  { familia: "alcance", onde: "src/App.jsx:14502", fn: "moverPara", anel: "nucleo", formas: 1,
+    literal: "📏 Esta luta não tem terreno definido.", nasce: "src/App.jsx" },
+  { familia: "alcance", onde: "src/App.jsx:14532", fn: "moverPara", anel: "nucleo", formas: 5,
+    literal: "📏 de onde você está, <lugar> fica longe demais para um deslocamento só. / esse lugar fica fora do campo. / esse lugar está ocupado. / você é <tamanho> demais para caber ali. / você já está aí.",
+    nasce: "src/grid.js:473-508 (caminhar)" },
+
+  /* ---- economia do turno: o que já foi gasto não volta ---- */
+  { familia: "economia", onde: "src/App.jsx:11878", fn: "aplicarGolpeDoJogador", anel: "nucleo", formas: 1,
+    literal: "⏳ Você já usou sua ação nesta rodada — o golpe fica para a próxima.",
+    nasce: "src/App.jsx" },
+  { familia: "economia", onde: "src/App.jsx:13364", fn: "agirInterno", anel: "despachante", formas: 1,
+    literal: "Mana insuficiente para <habilidade> — parei antes dela.", nasce: "src/App.jsx" },
+  { familia: "economia", onde: "src/App.jsx:13366", fn: "agirInterno", anel: "despachante", formas: 1,
+    literal: "⏳ <habilidade> está em recarga (<n>t) — pulei.", nasce: "src/App.jsx" },
+  { familia: "economia", onde: "src/App.jsx:13370", fn: "agirInterno", anel: "despachante", formas: 1,
+    literal: "⏳ Sua ação deste turno já saiu — <habilidade> fica para a próxima rodada.",
+    nasce: "src/App.jsx" },
+  { familia: "economia", onde: "src/App.jsx:14526", fn: "moverPara", anel: "nucleo", formas: 1,
+    literal: "⏳ Você já cobriu os <n> m desta rodada — o próximo passo é no turno que vem.",
+    nasce: "src/App.jsx" },
+
+  /* ---- teto: uma por vez ---- */
+  { familia: "teto", onde: "src/App.jsx:13375", fn: "agirInterno", anel: "despachante", formas: 1,
+    literal: "✦ <habilidade> fica para depois — fora de combate uso uma habilidade por vez.",
+    nasce: "src/App.jsx" },
+
+  /* ---- repetição: o que já está de pé não sobe duas vezes ---- */
+  { familia: "repeticao", onde: "src/App.jsx:14193", fn: "resolverRevide", anel: "nucleo", formas: 1,
+    literal: "🛡 <companheiro> firma de novo a guarda que já sustenta — nada muda.",
+    nasce: "src/habilidades.js (erguerGuarda recusa a repetida); a frase é do App" },
+
+  /* ---- a trava do turno guardado ---- */
+  { familia: "turno-guardado", onde: "src/App.jsx:7520", fn: "aMesaEspera", anel: "borda", formas: 1,
+    literal: "⏳ O que você acabou de fazer ainda não foi contado, e a mesa não anda sem a palavra do Mestre.",
+    nasce: "src/App.jsx (a decisão é de src/guardado.js, travaODeclarar)" },
+
+  /* ---- conjuração travada: a primeira família que X3b não nomeou ---- */
+  { familia: "conjuracao", onde: "src/App.jsx:13345", fn: "agirInterno", anel: "despachante", formas: 1,
+    literal: "⛓ <habilidade> não sai: você não consegue conjurar vestindo <peça>. Tire a peça e tente de novo.",
+    nasce: "src/App.jsx" },
+  { familia: "conjuracao", onde: "src/App.jsx:13352", fn: "agirInterno", anel: "despachante", formas: 1,
+    literal: "🐾 <habilidade> não sai: em <forma> você não tem mão nem voz para conjurar.",
+    nasce: "src/App.jsx" },
+  { familia: "conjuracao", onde: "src/App.jsx:13356", fn: "agirInterno", anel: "despachante", formas: 1,
+    literal: "📕 <motivo de podeLancar>", nasce: "src/magias.js (podeLancar)" },
+
+  /* ---- a condição que prende: a segunda que X3b não nomeou ---- */
+  { familia: "condicao", onde: "src/App.jsx:14515", fn: "moverPara", anel: "nucleo", formas: 1,
+    literal: "📏 Você não consegue se mover (<as fontes que prendem>).",
+    nasce: "src/condicoes.js (as fontes) — a frase é do App" },
+];
+
+/* O ESPELHO DE `NAO_CONTA_COMO_NUMERO`, e pelo mesmo motivo: sem ele a
+   taxa da frase vira opinião, e vira opinião A FAVOR de quem mede. A
+   recusa vem primeiro de propósito — é a exclusão que mais muda o
+   resultado, exatamente como o relógio de 45 min é a que mais muda o do
+   número. */
+export const NAO_CONTA_COMO_FRASE = [
+  { o: "a recusa", porque:
+    "o sistema dizendo que a ação NÃO aconteceu não é o mundo acontecendo. São 18 chamadas (25 formas) no caminho de combate, e na sessão A ela é a voz ÚNICA — incluí-la daria 0% de turnos mudos onde a medida honesta é 100% de turnos sem narração de evento" },
+  { o: "o eco do jogador (`autor: \"jogador\"`)", porque:
+    "é a frase que o próprio jogador escreveu, devolvida à tela. Contá-la como voz da casa faria todo turno parecer narrado, inclusive os sete da sessão A" },
+  { o: "o telegrama", porque:
+    "conta na narração de EVENTO (o evento aconteceu e foi dito), mas nunca na de frase de mesa — `⚔ Halvard → Bandido: 9 de dano · Bandido 11/20` é contabilidade com emoji. O campo `voz` separa os dois, e é por isso que ele existe" },
+  { o: "a rolagem `🎲`", porque:
+    "sai atrás de `mostrarRolagens`, que é bastidor e vem desligado. Uma linha que a maioria das mesas nunca vê não pode entrar numa taxa de cobertura" },
+  { o: "a nota ao Narrador (`notaRef`)", porque:
+    "não é linha de tela: é o canal por turno do prompt. Ela alimenta a IA, não o jogador — e a Fase X mede o que o código diz sozinho" },
+];
+
+/* ============================================================
+   A SESSÃO A PELO EIXO DA FRASE (X4)
+
+   A MESMA sessão A de X1 — planta `estrada`, 1 inimigo não-ágil, herói
+   corpo a corpo nível 3, sete turnos digitando "Ataco <nome>" e nada
+   mais. A política NÃO muda: mudá-la mudaria os dois lados da comparação
+   e X4 perderia o instrumento.
+
+   O CAMINHO, lido no código: a frase entra por `agirInterno`, que em
+   `:13290` não avança o relógio (há luta aberta) e em `:13555` cai na
+   porta única. `resolverAtaqueJogador` devolve `semAlcance` em
+   `:11783-11787`, e `aplicarGolpeDoJogador` sai em `:11869-11872`
+   empurrando DUAS linhas — o eco do jogador e a recusa — e devolvendo
+   `true` ANTES do `enviar(...)` de `:11932`. Logo o Narrador não é
+   chamado: o turno é mudo também do lado da IA.
+
+   AS DUAS TAXAS, E A DIFERENÇA ENTRE ELAS. A taxa estéril é 100%; a
+   taxa de turnos MUDOS é 0% — toda a diferença cabe numa palavra, e a
+   palavra é "recusa". A taxa que responde à pergunta de X3b não é
+   nenhuma das duas: é a de turnos SEM NARRAÇÃO DE EVENTO, e ela volta
+   a 100%. É por isso que as recusas tinham de ser contadas à parte. */
+export const SESSAO_A_PELA_FRASE = {
+  turnos: 7,
+  semNumero: 7,            // o eixo de X1 — 100%
+  semLinha: 0,             // nenhum turno termina calado
+  semNarracaoDeEvento: 7,  // o eixo de X4 — 100%
+  linhas: 14,              // 7 ecos + 7 recusas
+  ecos: 7,
+  recusas: 7,
+  narracoesDeEvento: 0,
+  chamadasAoNarrador: 0,
+  familiaDaRecusa: "alcance",
+  ondeSai: "src/App.jsx:11870 (a recusa) — o `return true` de :11871 antecede o enviar de :11932",
+  formula: "taxa_sem_narracao = turnos_sem_frase_de_evento / turnos_totais",
+  procedimento: "node testes/sonda-turno-esteril.mjs — comparar a linha da sessão A″",
+};
+
+/* ---------------- O QUE X4 NÃO CONSEGUIU MEDIR ----------------
+   Escrito porque a Fase X inteira foi feita assim, e porque X3c foi
+   cancelada justamente por não ter escrito isto a tempo. */
+export const O_QUE_NAO_DEU_PARA_MEDIR = [
+  { o: "quantas linhas saem num turno de combate REAL",
+    porque: "a sonda não roda o `App.jsx` (é React). Ela conta o que o caminho de código PODE empurrar, não o que uma partida empurrou. Só a sessão A é contável linha a linha, e é porque ela percorre um caminho de duas linhas fixas — qualquer turno em que o golpe SAI depende de quantos alvos, quantos ataques e quantos prazos vencem" },
+  { o: "se a linha misturada é frase ou telegrama, quando a chamada empurra as duas",
+    porque: "`:11920`, `:13996`, `:12356`, `:13743` e `:14566` empurram listas montadas em tempo de execução. O campo `misto: true` marca as cinco; a `voz` declarada é a da linha que o jogador sempre vê, e a outra fica no `nasce`. Contar as duas exigiria executar o App" },
+  { o: "quanto da voz do combate a IA de fato narra",
+    porque: "o `enviar(...)` manda o envelope e o que volta é da rede. Medir isso seria medir a IA, e a Fase X mede o que o CÓDIGO diz sozinho" },
+];
+
 /* O recorte do combate, nos dois eixos de uma vez. */
 export function contarCombate() {
   const deCombate = ACOES_DO_JOGADOR.filter((x) => x.combate);
@@ -563,4 +978,50 @@ export function contarCombate() {
     if (a.textoLuta == null) texto.semTexto += 1; else texto[a.textoLuta] += 1;
   }
   return { total: deCombate.length, clique, texto };
+}
+
+/* ---------------- AS CONTAS DO EIXO DA FRASE (X4) ----------------
+   Funções e não números, pela mesma razão do bloco 5: quem mexer no
+   funil mexe na conta junto. As três são lidas de volta pelas três
+   pontas — a sonda imprime, a suíte afirma, o varredor re-deriva. */
+
+/* O tamanho da boca do funil, por anel e por voz. */
+export function contarFunil() {
+  const porAnel = { nucleo: 0, borda: 0 };
+  const voz = { frase: 0, telegrama: 0, recusa: 0 };
+  let linhas = 0, mistas = 0;
+  for (const f of FUNIL_DO_COMBATE) {
+    porAnel[f.anel] += 1;
+    for (const l of f.linhas) { linhas += 1; voz[l.voz] += 1; if (l.misto) mistas += 1; }
+  }
+  return { funcoes: FUNIL_DO_COMBATE.length, porAnel, linhas, voz, mistas };
+}
+
+/* Quanto da voz do combate nasce FORA do React — a coluna que diz o que
+   já é testável em Node e o que ainda só existe dentro do `App.jsx`. */
+export function vozQueNasceNoModulo() {
+  let doModulo = 0, doApp = 0;
+  for (const f of FUNIL_DO_COMBATE) for (const l of f.linhas) {
+    if (/^src\/App\.jsx/.test(l.nasce)) doApp += 1; else doModulo += 1;
+  }
+  return { doModulo, doApp };
+}
+
+/* As recusas por família, com os dois cortes: chamadas e formas. */
+export function recusasPorFamilia() {
+  const fam = {};
+  for (const r of RECUSAS_DO_COMBATE) {
+    const f = (fam[r.familia] = fam[r.familia] || { chamadas: 0, formas: 0 });
+    f.chamadas += 1; f.formas += r.formas;
+  }
+  return fam;
+}
+
+/* O total nos dois cortes, mais a divisão por anel — é o número que se
+   compara ao "15" que X3b escreveu em prosa. */
+export function contarRecusas() {
+  let formas = 0; const porAnel = { nucleo: 0, borda: 0, despachante: 0 };
+  for (const r of RECUSAS_DO_COMBATE) { formas += r.formas; porAnel[r.anel] += 1; }
+  return { chamadas: RECUSAS_DO_COMBATE.length, formas, porAnel,
+    familias: Object.keys(recusasPorFamilia()).length };
 }

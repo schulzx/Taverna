@@ -16,6 +16,7 @@
 import { readFileSync } from "node:fs";
 import {
   ACOES_DO_JOGADOR, ABERTURA_FORA_DE_ALCANCE, TURNO_ESTERIL, MOTOR_SEM_CHAMADOR,
+  NAO_CONTA_COMO_NUMERO, FUNIL_DO_COMBATE, RECUSAS_DO_COMBATE, SESSAO_A_PELA_FRASE,
   acoesComCliqueCondicional,
 } from "./acoes-do-jogador.mjs";
 const G = await import("../src/grid.js");
@@ -202,6 +203,192 @@ console.log("\n7. a fórmula que X4 repete");
     falha("a fórmula da taxa estéril foi reescrita",
       "X4 precisa executar a MESMA conta de X1 para os números serem comparáveis. Se a fórmula mudou, os dois lados da comparação têm de ser refeitos — escreva o motivo em testes/acoes-do-jogador.mjs");
   } else ok("a fórmula segue a de X1");
+}
+
+/* ============================================================
+   OS DENTES DO EIXO DA FRASE (X4)
+
+   POR QUE ELES EXISTEM, e por que agora. O bloco 8 é dívida velha: a
+   exclusão do relógio de 45 min carrega um ENDEREÇO desde X1, e o
+   endereço mudou DUAS vezes (12959 → 13161 → 13290) sem nada avisar,
+   porque nada o re-derivava. Uma régua que aponta a linha errada ensina
+   a desconfiar dela.
+
+   Os blocos 9 e 10 são a mesma catraca para a medição nova: o funil e as
+   recusas são leitura de TEXTO — a parte da medida que apodrece sozinha.
+   Ancoram no que não se move sozinho (o NOME da função, o LITERAL da
+   frase) e, onde o número da linha é frágil, contam ocorrências em vez
+   de fixá-lo.
+   ============================================================ */
+const LINHAS_APP = APP.split("\n");
+const naLinha = (endereco) => {
+  const n = Number(String(endereco).split(":")[1]);
+  return Number.isFinite(n) ? (LINHAS_APP[n - 1] || "") : "";
+};
+/* as declarações de topo do componente, para poder ler o corpo de uma
+   função inteira sem regex frágil */
+const DECLS = [];
+LINHAS_APP.forEach((l, i) => {
+  const m = l.match(/^  (?:const|async function|function) ([A-Za-z0-9_$]+)\s*=?\s*(?:async\s*)?(?:\(|function|useCallback|=>)/);
+  if (m) DECLS.push({ nome: m[1], ini: i });
+});
+DECLS.forEach((d, k) => { d.fim = k + 1 < DECLS.length ? DECLS[k + 1].ini : LINHAS_APP.length; });
+const declDe = (nome) => DECLS.find((d) => d.nome === nome) || null;
+const corpoDe2 = (d) => LINHAS_APP.slice(d.ini, d.fim).join("\n");
+
+console.log("\n8. o relógio de 45 min — o endereço que a exclusão carrega");
+{
+  const relogio = NAO_CONTA_COMO_NUMERO.find((x) => /relógio/.test(x.o));
+  const i = LINHAS_APP.findIndex((l) => /avancarMinutos\(MINUTOS_POR_TURNO\)/.test(l));
+  if (i < 0) {
+    falha("não achei `avancarMinutos(MINUTOS_POR_TURNO)` em src/App.jsx",
+      "o relógio do turno mudou de forma. Reveja a exclusão do relógio em NAO_CONTA_COMO_NUMERO (testes/acoes-do-jogador.mjs): se ele deixou de avançar sozinho, a exclusão perde o motivo e a taxa estéril tem de ser remedida");
+  } else if (!relogio || !new RegExp(`:${i + 1}\\b`).test(relogio.porque)) {
+    falha(`a exclusão do relógio aponta outra linha; o código tem o avanço em src/App.jsx:${i + 1}`,
+      `troque o número no campo \`porque\` do relógio em NAO_CONTA_COMO_NUMERO (testes/acoes-do-jogador.mjs) para ${i + 1}, e a asserção do bloco 4 de teste-acoes-do-jogador.mjs junto — com o motivo escrito ao lado, que é a lei da casa`);
+  } else ok(`o endereço do relógio confere (src/App.jsx:${i + 1})`);
+  /* e a condição que o mantém FORA do combate — se ela cair, o relógio
+     passa a andar em luta e a sessão A deixa de ser estéril por definição */
+  if (!/if \(!combateRef\.current && !acampadoRef\.current && !masmorraRef\.current\) \{/.test(APP)) {
+    falha("a guarda que impede o relógio de andar em combate mudou",
+      "a sessão A supõe que nenhum número muda no turno de combate. Se o relógio passou a andar em luta, re-rode `node testes/sonda-turno-esteril.mjs` e refaça TURNO_ESTERIL.sessaoA_hoje e SESSAO_A_PELA_FRASE, com o motivo escrito");
+  } else ok("e o relógio segue parado dentro da luta");
+}
+
+console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
+{
+  /* o endereço do funil, que X3b deixou por escrito e X4 herdou */
+  const iPush = LINHAS_APP.findIndex((l) => /^  const pushMsgs = useCallback\(/.test(l));
+  if (iPush < 0) {
+    falha("não achei a declaração de `pushMsgs` em src/App.jsx",
+      "o funil das linhas mudou de forma ou de nome. Reveja o cabeçalho do bloco 6 de testes/acoes-do-jogador.mjs e re-meça FUNIL_DO_COMBATE — sem o funil, o eixo da frase não tem o que contar");
+  } else if (iPush + 1 !== 7499) {
+    falha(`pushMsgs saiu de src/App.jsx:7499 e agora está em :${iPush + 1}`,
+      `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
+  } else ok("pushMsgs segue em src/App.jsx:7499, como o mapa de X3b diz");
+
+  let divergiu = 0;
+  for (const f of FUNIL_DO_COMBATE) {
+    const d = declDe(f.fn);
+    if (!d) {
+      divergiu++;
+      falha(`a função \`${f.fn}\` do funil não existe mais em src/App.jsx`,
+        `ela foi renomeada ou removida. Tire a entrada de FUNIL_DO_COMBATE em testes/acoes-do-jogador.mjs (ou troque o nome) e re-meça as linhas dela — e ajuste o total do bloco 9 de teste-acoes-do-jogador.mjs, com o motivo escrito`);
+      continue;
+    }
+    if (d.ini + 1 !== Number(f.onde.split(":")[1])) {
+      divergiu++;
+      falha(`\`${f.fn}\` mudou de endereço: a tabela diz ${f.onde} e o código dá src/App.jsx:${d.ini + 1}`,
+        `troque o campo \`onde\` dessa entrada em FUNIL_DO_COMBATE (testes/acoes-do-jogador.mjs) — e confira os endereços das linhas dela, que andaram junto`);
+    }
+    /* o número de chamadas tem de bater: uma linha nova que ninguém
+       classificou é exatamente como a régua começa a mentir a favor */
+    const n = (corpoDe2(d).match(/pushMsgs\(/g) || []).length;
+    if (n !== f.linhas.length) {
+      divergiu++;
+      falha(`\`${f.fn}\` tem ${n} chamadas de pushMsgs e a tabela declara ${f.linhas.length}`,
+        `acrescente (ou tire) a linha em FUNIL_DO_COMBATE, com \`evento\`, \`voz\` (frase/telegrama/recusa) e \`nasce\` — e ajuste as contas do bloco 9 de teste-acoes-do-jogador.mjs. Se a linha nova for RECUSA, ela vai também para RECUSAS_DO_COMBATE, com a família`);
+    }
+    /* e cada endereço declarado tem de cair mesmo numa chamada */
+    for (const l of f.linhas) {
+      if (!/pushMsgs\(/.test(naLinha(l.onde))) {
+        divergiu++;
+        falha(`${l.onde} não é mais uma chamada de pushMsgs ("${l.evento}")`,
+          `o corpo de \`${f.fn}\` andou. Re-meça os endereços das linhas dessa entrada em FUNIL_DO_COMBATE (testes/acoes-do-jogador.mjs) — e se a linha sumiu, diga por quê no lugar dela`);
+      }
+    }
+  }
+  if (!divergiu) ok(`as ${FUNIL_DO_COMBATE.length} funções do funil e as suas chamadas conferem com o código`);
+
+  /* O ANEL NÚCLEO É UMA AFIRMAÇÃO SOBRE O CÓDIGO, não um rótulo: as cinco
+     guardas explícitas de combate são a semente do ponto fixo que mediu o
+     núcleo. Se uma delas cair, o anel inteiro tem de ser remedido. */
+  const guardas = [
+    ["resolverAtaqueJogador", /const resolverAtaqueJogador = \(acao, pers\) => \{\s*\n\s*const comb = combateRef\.current;\s*\n\s*if \(!comb/],
+    ["resolverRevide", /const resolverRevide = \(persBase\) => \{\s*\n\s*const combPos = combateRef\.current;\s*\n\s*if \(!combPos\)/],
+    ["moverPara", /const moverPara = \(destino\) => \{\s*\n\s*const comb = combateRef\.current;\s*\n\s*if \(!comb\)/],
+  ];
+  for (const [nome, rx] of guardas) {
+    if (!rx.test(APP)) {
+      falha(`\`${nome}\` perdeu a guarda de combate que o põe no anel \`nucleo\``,
+        `o anel \`nucleo\` de FUNIL_DO_COMBATE afirma que essas funções são MUDAS fora da luta. Se a guarda mudou, re-meça o anel dessa entrada em testes/acoes-do-jogador.mjs (e o total de 11 no bloco 9 de teste-acoes-do-jogador.mjs), com o motivo escrito`);
+    }
+  }
+}
+
+console.log("\n10. as recusas do combate — o literal e o endereço");
+{
+  let divergiu = 0;
+  for (const r of RECUSAS_DO_COMBATE) {
+    if (!/pushMsgs\(/.test(naLinha(r.onde))) {
+      divergiu++;
+      falha(`${r.onde} (recusa \`${r.familia}\`, ${r.fn}) não é mais uma chamada de pushMsgs`,
+        `a recusa mudou de lugar ou sumiu. Re-meça a entrada em RECUSAS_DO_COMBATE (testes/acoes-do-jogador.mjs): se sumiu, tire-a e BAIXE o total do bloco 10 de teste-acoes-do-jogador.mjs com o motivo; se mudou de linha, troque o endereço`);
+    }
+  }
+  /* as âncoras que não se movem: os literais que nascem no próprio App.
+     São escolhidos um por família, para a falha dizer QUAL voz de recusa
+     se perdeu — e não só que a contagem mudou. */
+  const ancoras = [
+    ["alcance", "ninguém está ao alcance do seu golpe"],
+    ["alcance", "Longe demais —"],
+    ["economia", "Você já usou sua ação nesta rodada"],
+    ["economia", "Você já cobriu os"],
+    ["teto", "fora de combate uso uma habilidade por vez"],
+    ["repeticao", "firma de novo a guarda que já sustenta"],
+    ["turno-guardado", "ainda não foi contado, e a mesa não anda sem a palavra do Mestre"],
+    ["conjuracao", "você não consegue conjurar vestindo"],
+    ["condicao", "Você não consegue se mover"],
+  ];
+  for (const [familia, txt] of ancoras) {
+    if (!APP.includes(txt)) {
+      divergiu++;
+      falha(`sumiu do App a recusa da família \`${familia}\`: "${txt}"`,
+        `ou a frase foi reescrita, ou a recusa deixou de existir. Se foi reescrita, atualize o \`literal\` da entrada em RECUSAS_DO_COMBATE; se deixou de existir, tire a entrada, baixe o total do bloco 10 de teste-acoes-do-jogador.mjs e escreva o motivo — uma recusa a menos é mudança de JOGO, não de medida`);
+    }
+  }
+  /* e as cinco famílias que a pauta nomeia continuam nomeadas */
+  const familias = new Set(RECUSAS_DO_COMBATE.map((x) => x.familia));
+  for (const f of ["alcance", "economia", "teto", "repeticao", "turno-guardado"]) {
+    if (!familias.has(f)) {
+      divergiu++;
+      falha(`a família de recusa \`${f}\` sumiu da tabela`,
+        "as cinco famílias vêm da pauta de X4 e são o recorte acordado. Se uma delas deixou de existir no código, tire-a com o motivo escrito em testes/acoes-do-jogador.mjs — nunca em silêncio");
+    }
+  }
+  if (!divergiu) ok(`as ${RECUSAS_DO_COMBATE.length} recusas conferem com o código, em ${familias.size} famílias`);
+}
+
+console.log("\n11. a sessão A pelo eixo da frase — a fiação que ela modela");
+{
+  /* A sessão A″ afirma DUAS coisas sobre o código, e nenhuma delas roda em
+     Node: que a recusa empurra o eco do jogador junto, e que ela devolve
+     antes do `enviar`. Se qualquer uma cair, o 7/7 sem narração vira outro
+     número — e é aqui que isso morde. */
+  const bloco = APP.match(/if \(ataque && ataque\.semAlcance\) \{[\s\S]{0,400}?\n    \}/);
+  if (!bloco) {
+    falha("não consegui ler o bloco da recusa por alcance em aplicarGolpeDoJogador",
+      "a forma mudou. Re-meça SESSAO_A_PELA_FRASE em testes/acoes-do-jogador.mjs e re-rode `node testes/sonda-turno-esteril.mjs`");
+  } else {
+    if (!/autor: "jogador", texto: acao/.test(bloco[0])) {
+      falha("a recusa por alcance não empurra mais o eco do jogador",
+        "SESSAO_A_PELA_FRASE conta 14 linhas nos 7 turnos (7 ecos + 7 recusas). Se o eco saiu, o número é 7 — atualize `linhas` e `ecos` em testes/acoes-do-jogador.mjs e o bloco 11 de teste-acoes-do-jogador.mjs, com o motivo escrito");
+    } else ok("a recusa por alcance segue empurrando o eco do jogador junto");
+    if (!/return true;/.test(bloco[0])) {
+      falha("a recusa por alcance não devolve mais antes de seguir o turno",
+        "é esse `return true` que impede o `enviar(...)` — sem ele o Narrador passa a ser chamado e `chamadasAoNarrador: 0` deixa de ser verdade. Re-meça SESSAO_A_PELA_FRASE em testes/acoes-do-jogador.mjs");
+    } else ok("e devolve antes do enviar — o Narrador segue sem ser chamado");
+  }
+  /* o endereço do `enviar` que a tabela cita: se ele andou, a explicação
+     escrita aponta para o lugar errado */
+  const iEnviar = LINHAS_APP.findIndex((l, i) => i > 11864 && /^\s*enviar\(`\[COMBATE — RESOLVIDO PELO SISTEMA\]/.test(l));
+  if (iEnviar < 0) {
+    falha("não achei o `enviar([COMBATE — RESOLVIDO PELO SISTEMA]…)` da porta única",
+      "SESSAO_A_PELA_FRASE.ondeSai cita esse envio para explicar por que o Narrador não é chamado na recusa. Re-meça e atualize o campo em testes/acoes-do-jogador.mjs");
+  } else if (!new RegExp(`:${iEnviar + 1}\\b`).test(SESSAO_A_PELA_FRASE.ondeSai)) {
+    falha(`o envio ao Narrador está em src/App.jsx:${iEnviar + 1} e a tabela cita outro número`,
+      `troque o endereço em SESSAO_A_PELA_FRASE.ondeSai (testes/acoes-do-jogador.mjs) para ${iEnviar + 1} e a asserção do bloco 11 de teste-acoes-do-jogador.mjs junto`);
+  } else ok(`o envio ao Narrador segue em src/App.jsx:${iEnviar + 1}, como a tabela cita`);
 }
 
 console.log(maus ? `\n${maus} divergência(s) entre a tabela e o código` : "\ntabela e código de acordo");

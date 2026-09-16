@@ -603,7 +603,9 @@ consegue tocar: a régua mede o motor, e o jogador não chega nele.
   trava, como a pessoa decidiu.
 
 - [x] **X4 · a conta do que mudou** · de: pessoa · 15/09 · **feito 16/09 ·
-  v9.262** — medição, nenhuma linha de produção. **A FASE X FECHA AQUI.**
+  v9.263** — medição, nenhuma linha de produção. **A FASE X FECHA AQUI.**
+  *(Este bloco foi escrito por X4 e publicado dentro do commit `63e0667`, que é
+  de W1 e da outra mente, pelo índice compartilhado — ver a nota no diário.)*
 
   **A resposta, e ela é um "não mudou" honesto.** Mesma política fixa de X1
   (estrada, 1 inimigo, herói corpo a corpo nível 3, 7 turnos declarando
@@ -720,6 +722,12 @@ consegue tocar: a régua mede o motor, e o jogador não chega nele.
   repetição, a trava do turno guardado), volume comparável ao de todas as
   frases de evento juntas. Recusa **não é** narração de evento, e X4 tem de
   contá-las à parte para não inflar o próprio número.
+
+</details>
+
+**A FASE X ESTÁ FECHADA** (X1 · X2 · X3 · X3b · X4; X3c cancelada por X3b).
+O antes-e-depois inteiro — inclusive o que o jogador **continua** não
+conseguindo fazer — está no `mente/diario.md`, no bloco de X4.
 
 ### Fase H — a porta das habilidades de classe
 Decisão da pessoa (15/09): *"vamos fazer como recomendado, apenas uma porta,
@@ -2454,6 +2462,21 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   tem `aflicoes.js:145`, que é meio rótulo e meio contabilidade de dado
   (*"Vex está Sangrando (3t) — Garra flamejante (9 vs 14)"*). Simetria barata:
   um campo irmão de `sai`, na mesma tabela.
+- [ ] **a frase mais vista do jogo diz "em na vala"** · leve · de: backend (X4) · 16/09
+  `grid.js:428` compõe a recusa de alcance como
+  `` `está a ${d} m, em ${nomeDoLugar(...)} — longe demais` ``, e
+  `nomeDoLugar` (`:340`) devolve o `nome` da região **com a preposição já
+  dentro** (*"na vala"*, *"no barril"*). O resultado é **"está a 17 m, em na
+  vala — longe demais"**, e saiu impresso na sonda de X4 sete vezes seguidas.
+  Quando a região não tem nome, `nomeDoLugar` devolve `""` e a linha fica
+  *"em  — longe demais"*, com dois espaços.
+  **Por que não é cosmético:** X1 mediu que **10 de 10 plantas recusam o corpo
+  a corpo no turno 1**, e W1 mediu que esta é **a frase que mais aparece no
+  jogo inteiro**. O conserto é de um lado só — ou `nomeDoLugar` devolve o nome
+  pelado e quem compõe põe a preposição, ou a composição larga o `em`. **Tem
+  de casar com `LINHAS_DO_GOLPE` e a catraca dos 54 caracteres**, pedida por
+  W1 no item do gesto: são a mesma frase, e consertá-las em separado é criar
+  a segunda cara da mesma linha.
 - [ ] **um envelope resolvido sai sem selo, e o PM pode ser pago duas vezes** · leve · de: backend (X3) · 15/09
   `App.jsx:13029` manda `enviar` do envelope de invisibilidade, voo e luz
   **depois** de `cobrar` descontar o PM e `firmarOuCeder` trocar a pilha de

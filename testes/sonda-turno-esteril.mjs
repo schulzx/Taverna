@@ -29,8 +29,10 @@
 import {
   ACOES_DO_JOGADOR, TURNO_ESTERIL, ABERTURA_FORA_DE_ALCANCE, MOTOR_SEM_CHAMADOR,
   NUMERO_QUE_MUDA, NAO_CONTA_COMO_NUMERO,
+  NAO_CONTA_COMO_FRASE, SESSAO_A_PELA_FRASE, O_QUE_NAO_DEU_PARA_MEDIR,
   acoesDeCombateSemMotor, acoesComCliqueCondicional,
   contarPorClique, contarPorTexto, contarCombate,
+  contarFunil, contarRecusas, recusasPorFamilia, vozQueNasceNoModulo,
 } from "./acoes-do-jogador.mjs";
 const G = await import("../src/grid.js");
 const D = await import("../src/desafios.js");
@@ -125,6 +127,102 @@ L(`  e a razão é "longe", não "parede" — nesta planta, ANDAR resolve (${ABE
 const cond = acoesComCliqueCondicional();
 L(`\n  ações com CLIQUE CONDICIONAL (X2): ${cond.length}`);
 for (const a of cond) L(`    · ${a.rotulo.padEnd(10)} na luta → ${a.cliqueChega} · fora → ${a.cliqueChegaFora}`);
+
+/* ============================================================
+   SESSÃO A″ — A MESMA SESSÃO A, PELO EIXO DA FRASE (X4)
+
+   AO LADO E NUNCA POR CIMA, como a A′ de X2. A sessão A acima não foi
+   tocada: mesma planta, mesmo inimigo, mesmos sete turnos, mesma
+   fórmula. Ela é a linha de base que X4 compara, e mudar a política
+   mudaria os dois lados da comparação.
+
+   O QUE ESTA SEÇÃO ACRESCENTA. X3b deixou por escrito um eixo que a
+   régua não tinha: além de "quantos turnos terminam sem um número
+   mudar", dá para contar "quantos terminam sem uma FRASE" — e as duas
+   taxas não são a mesma. Deixou junto a correção que impede o número de
+   mentir a favor: a voz do combate que o código já tem é, em boa parte,
+   a voz de DIZER NÃO, e recusa não é narração de evento.
+
+   O QUE ESTA SESSÃO NÃO SABE, e é a mesma confissão do topo do arquivo.
+   Ela NÃO roda o `App.jsx` — é React, e não sobe em Node. O que roda de
+   verdade aqui é `grid.js` (o `alcanca` que decide cada turno); a
+   fiação que transforma esse veredito em LINHA foi lida como TEXTO e
+   está modelada na tabela `FUNIL_DO_COMBATE`. Logo: a sonda conta o que
+   o caminho de código PODE empurrar, nunca o que uma partida empurrou.
+   É `check-acoes-do-jogador.mjs` quem guarda que o modelo ainda
+   descreve o código — e, por isso, a linha de baixo é uma AFIRMAÇÃO
+   sobre o código, não uma observação de tela.
+
+   A sessão A é o pior caso de propósito: é o único caminho de combate
+   curto o bastante para ser contado linha a linha sem executar o App.
+   Todo turno em que o golpe SAI depende de quantos alvos, quantos
+   ataques e quantos prazos vencem — e isso está em
+   `O_QUE_NAO_DEU_PARA_MEDIR`.
+   ============================================================ */
+barra();
+L("SESSÃO A″ — os mesmos sete turnos, pelo eixo da frase");
+barra();
+L("  (a conta da sessão A acima permanece intacta — esta é medida NOVA, ao lado)");
+L("  (a sonda não roda o App.jsx: ela conta o caminho de código lido como texto)\n");
+L("  O QUE NÃO CONTA COMO FRASE, E POR QUÊ:");
+for (const n of NAO_CONTA_COMO_FRASE) L(`  · ${n.o}\n      ${n.porque}`);
+L("");
+
+let semNumero = 0, semLinha = 0, semNarracao = 0;
+let linhasTotais = 0, ecos = 0, recusasDaSessao = 0, narracoes = 0;
+for (let turno = 1; turno <= P.turnos; turno++) {
+  const r = G.alcanca(grade, eu, inim, { alcanceM: G.alcanceNatural(eu) });
+  /* A FIAÇÃO MODELADA, e ela é uma só: sem alcance, `resolverAtaqueJogador`
+     devolve `semAlcance` (App.jsx:11783-11787) e `aplicarGolpeDoJogador`
+     sai em :11869-11872 empurrando DUAS linhas — o eco do jogador e a
+     recusa — e devolvendo `true` ANTES do `enviar(...)` de :11932. Com
+     alcance, a mesma função desce até :11920 e empurra o telegrama do
+     golpe, que é narração de evento. */
+  const eco = 1;
+  const recusa = r.ok ? 0 : 1;
+  const narracao = r.ok ? 1 : 0;
+  const nLinhas = eco + recusa + narracao;
+  linhasTotais += nLinhas; ecos += eco; recusasDaSessao += recusa; narracoes += narracao;
+  if (!r.ok) semNumero++;
+  if (nLinhas === 0) semLinha++;
+  if (narracao === 0) semNarracao++;
+  L(`  turno ${turno}  sem número: ${r.ok ? "não" : "sim "}  ·  linhas: ${nLinhas} (${eco} eco + ${recusa} recusa + ${narracao} narração)  ·  ${r.ok ? "o golpe sai" : "recusa por alcance (App.jsx:11870)"}`);
+}
+L(`\n  ${TURNO_ESTERIL.formula}`);
+L(`  taxa_esteril      = ${semNumero} / ${P.turnos} = ${pct(semNumero, P.turnos)}   (o eixo de X1)`);
+L(`  ${SESSAO_A_PELA_FRASE.formula}`);
+L(`  taxa_muda         = ${semLinha} / ${P.turnos} = ${pct(semLinha, P.turnos)}   (turnos que terminam sem UMA linha)`);
+L(`  taxa_sem_narracao = ${semNarracao} / ${P.turnos} = ${pct(semNarracao, P.turnos)}   (turnos sem uma frase de EVENTO)`);
+L(`\n  as linhas dos ${P.turnos} turnos: ${linhasTotais} — ${recusasDaSessao} recusa, ${narracoes} narração de evento, ${ecos} eco do jogador (fora da conta)`);
+L("  A DIFERENÇA, numa linha: o turno estéril e o turno mudo são taxas OPOSTAS na");
+L("  mesma sessão (100% contra 0%) — e a distância entre elas é inteira de recusa;");
+L("  separada a recusa, a taxa que responde à pergunta volta a bater com a de X1.");
+L(`  e o Mestre também se cala: ${SESSAO_A_PELA_FRASE.chamadasAoNarrador} chamada ao Narrador — ${SESSAO_A_PELA_FRASE.ondeSai}`);
+
+/* ============================================================
+   O FUNIL DO COMBATE — quem tem voz, e de que tipo
+   ============================================================ */
+barra();
+L("O FUNIL DO COMBATE — os chamadores de pushMsgs (App.jsx:7499)");
+barra();
+const fun = contarFunil(), rec = contarRecusas(), nasce = vozQueNasceNoModulo();
+L(`\n  funções que falam no turno de combate: ${fun.funcoes}`);
+L(`    núcleo (mudas fora da luta) : ${fun.porAnel.nucleo}`);
+L(`    borda  (falam nos dois)     : ${fun.porAnel.borda}`);
+L(`  chamadas de pushMsgs no funil: ${fun.linhas}   (${fun.mistas} empurram lista misturada)`);
+L(`    frase de mesa : ${fun.voz.frase}  (${pct(fun.voz.frase, fun.linhas)})`);
+L(`    telegrama     : ${fun.voz.telegrama}  (${pct(fun.voz.telegrama, fun.linhas)})`);
+L(`    recusa        : ${fun.voz.recusa}  (${pct(fun.voz.recusa, fun.linhas)})`);
+L(`  e a voz nasce FORA do React em ${nasce.doModulo} das ${fun.linhas} — ${nasce.doApp} ainda só existem no App.jsx`);
+
+L("\n  AS RECUSAS, À PARTE (a correção de escopo que X3b obriga):");
+L(`    chamadas: ${rec.chamadas} · formas distintas: ${rec.formas} · famílias: ${rec.familias}`);
+L(`    por anel: núcleo ${rec.porAnel.nucleo} · borda ${rec.porAnel.borda} · despachante ${rec.porAnel.despachante}`);
+for (const [f, n] of Object.entries(recusasPorFamilia())) {
+  L(`    ${f.padEnd(15)} ${String(n.chamadas).padStart(2)} chamada(s) · ${n.formas} forma(s)`);
+}
+L("\n  O QUE X4 NÃO CONSEGUIU MEDIR:");
+for (const n of O_QUE_NAO_DEU_PARA_MEDIR) L(`  · ${n.o}\n      ${n.porque}`);
 
 /* ============================================================
    SESSÃO B — o mesmo jogador, andando antes
@@ -238,4 +336,9 @@ L(`HOJE: ${estereis}/${P.turnos} estéreis, ${rolagens} rolagens.`);
    compara-se consigo mesma, nunca com o número da sessão A */
 L(`E, AO LADO (X2): ${impedidos}/${P.turnos} turnos com o clique IMPEDIDO — a sessão A′,`);
 L("que mede o mesmo combate pelo ângulo do veredito antes do clique.");
+/* e o terceiro ângulo, de X4: a mesma sessão pelo eixo da frase. Fica por
+   último de propósito — é o acréscimo mais novo, e compara-se consigo
+   mesmo, nunca com o número da sessão A. */
+L(`E, AO LADO (X4): ${semNarracao}/${P.turnos} turnos sem uma frase de EVENTO, contra ${semLinha}/${P.turnos} sem uma linha`);
+L("qualquer — a sessão A″, que mostra por que a recusa tem de ser contada à parte.");
 barra();

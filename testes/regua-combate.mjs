@@ -114,6 +114,18 @@
    em `ADVERSARIO_NA_REGUA`, mais abaixo. Leia aqueles números como a HISTÓRIA
    de B1/B1b/B2/T1 (`comAdversario: false`), nunca como o retrato de hoje.
 
+   ---------------- AVISO DE X4: NÃO HÁ TABULEIRO AQUI ----------------
+
+   E ANTES DE LER QUALQUER NÚMERO ACIMA, leia `TABULEIRO_NA_REGUA`. Esta régua
+   NÃO TEM GRADE: o passo 1 da rodada pergunta se o herói está de pé e nunca se
+   ele ALCANÇA alguém, e `turnoDosInimigos` recebe `grade: null`, com o que
+   `alcanca` libera os dois lados. Ela é, portanto, o LIMITE OTIMISTA — no
+   tabuleiro de verdade a luta abre a 12,0 m a 25,5 m e o corpo a corpo alcança
+   1,5 m (X1), e são 2 a 3 rodadas só andando antes do primeiro golpe. O
+   parâmetro `rodadasDeCaminhada` mede o preço dessa caminhada (o default é 0 e
+   não move um byte); o que ele mede, e o que ele NÃO mede, está em
+   `CAMINHADA_NA_REGUA` e na seção 10 da suíte.
+
    A ordem da rodada, e de onde cada passo veio:
      1. o herói ataca            (App.jsx:11566-11645 — `ataquesPorTurno`
                                   golpes de `danoDaClasse`)
@@ -188,6 +200,12 @@
        saturadas, e um limiar em cima de um teto não mede nada.
      · qualquer limiar sobre `primeiraQueda` no `brando` — ninguém cai,
        e a média de um conjunto vazio não é um número.
+     · qualquer limiar sobre o CUSTO DA CAMINHADA (X4). O que vira lei ali é
+       o SINAL (a caminhada só piora, nas quatro famílias) e a SEPARAÇÃO
+       (k=0 e k=1 não concordam); o valor em pontos é uma taxa média sobre
+       degraus de rendimento decrescente, medida num molde
+       (`comAdversario: false`) que não é o jogo de hoje — e no jogo de hoje
+       a escada não tem resolução nenhuma, porque o `justo` já está no piso.
    ============================================================ */
 
 import { turnoDosInimigos, turnoDosCompanheiros, resolverAtaque, danoDe, danoDaClasse, ataquesPorTurno, pvEsperadoJogador, testeDeMorte, aplicarTesteMorte } from "../src/combate.js";
@@ -452,6 +470,117 @@ export const ADVERSARIO_NA_REGUA = {
   foraPorCenario: ["comer", "fugir_ferido", "nao_para", "guardar_o_fundo", "confirmar", "debandar", "vender_caro"],
 };
 
+/* ---------------- O TABULEIRO NÃO ESTÁ AQUI (X4) ----------------
+
+   O QUE X4 FOI VERIFICAR, E O QUE ACHOU. A pauta pedia "a régua de B1 refeita
+   com o jogador agindo — porque a linha de base de 1,4% mediu o motor
+   sozinho". A verificação derrubou a premissa, e a derrubada é o achado:
+
+   ESTA RÉGUA NUNCA MEDIU O MOTOR SOZINHO. Ela sempre pressupôs um jogador que
+   age TODA rodada. O passo 1 do laço (`simularCombate`, o bloco "1. O HERÓI")
+   é incondicional: a única pergunta que ele faz é se o herói está de pé —
+   `(heroi.vida || 0) > 0` —, e nunca se ele ALCANÇA alguém. Não há grade: a
+   régua não importa `src/grid.js`, não importa `src/golpe.js` (o
+   `vereditoDoGolpe` que X2 pôs na frente do botão), e passa `grade: null` ao
+   `turnoDosInimigos` — e `grid.js:422` (`alcanca`) com grade nula devolve
+   `{ ok: true, penalidade: 0 }` de saída, para os dois lados da mesa.
+
+   LOGO A RÉGUA É O LIMITE OTIMISTA, E O JOGO REAL É PIOR QUE ELA. No tabuleiro
+   de verdade, o que X1 mediu é o contrário do que a pauta supunha: `posicionar`
+   (`grid.js:551-576`) abre a luta a 12,0 m (taverna) a 25,5 m (masmorra), o
+   corpo a corpo alcança 1,5 m, e 10 de 10 plantas RECUSAM o golpe no turno 1 —
+   são 2 a 3 turnos só andando antes que o primeiro golpe corpo a corpo possa
+   rolar. Todo número que esta régua já produziu — os de B1, B1b, B2, T1 e os
+   de N1b — descreve um combate em que essa caminhada não existe.
+
+   E HÁ UMA SEGUNDA CAMADA, que é por que o custo da caminhada NÃO é medível
+   por subtração. No App de hoje a caminhada não gasta rodada nenhuma: `moverPara`
+   (App.jsx:14500-14568) nunca chama `fecharMeuTurno`, e o comentário do sítio
+   diz a regra com todas as letras — "o que fecha o turno é AGIR". Quem anda
+   não cede o turno; quem tenta golpear fora de alcance é recusado DE GRAÇA
+   (X1), e a rodada também não vira. Ou seja: enquanto o herói se aproxima, a
+   oposição não age. O preço real da caminhada está entre ZERO (ninguém age, que
+   é o jogo de hoje) e o que `rodadasDeCaminhada` mede (só o herói cala). A
+   régua mede a ponta CARA do intervalo, e diz que é ponta.
+
+   O QUE SERIA PRECISO PARA MEDIR DE VERDADE: grade dentro da régua — montar a
+   planta, posicionar os dois lados, mover por `caminhar` com orçamento em
+   metros, e perguntar a `alcanca` antes de cada golpe, dos DOIS lados. Isso
+   não é esticar um instrumento, é um órgão novo (um simulador de tabuleiro), e
+   órgão novo é decisão da pessoa. Fica escrito aqui, com o tamanho que tem.
+
+   UM INSTRUMENTO QUE NÃO CONFESSA O PRÓPRIO PONTO CEGO MENTE COM AUTORIDADE —
+   foi assim que `prioridade: ""` custou quatro etapas (v. `ADVERSARIO_NA_REGUA`).
+   Esta tabela existe para que o próximo não precise redescobrir. */
+export const TABULEIRO_NA_REGUA = {
+  /* os dois fatos estruturais, e a suíte os prova lendo esta fonte */
+  temGrade: false,
+  heroiGolpeiaTodaRodada: true,
+  /* o que a régua NÃO mede, por não ter tabuleiro */
+  naoMede: [
+    "distancia", "posicao", "parede", "linha_de_visao", "alcance_do_golpe",
+    "deslocamento", "terreno_dificil", "cobertura", "penalidade_por_faixa",
+    "ataque_de_oportunidade", "recusa_por_alcance",
+  ],
+  /* e o que seria preciso para medir: os sítios de produção que faltam */
+  paraMedir: ["grid.js:montarGrade", "grid.js:posicionar", "grid.js:caminhar", "grid.js:alcanca", "golpe.js:vereditoDoGolpe"],
+  /* MEDIDO POR X1 NO TABULEIRO, NÃO POR ESTA RÉGUA — o rótulo é a metade
+     importante do campo. São números de outro instrumento, citados para dizer
+     de quanto é o desvio; a suíte confere os que dependem de produção contra
+     produção, para eles não envelhecerem em silêncio. */
+  medidoPorX1: {
+    aberturaMinM: 12.0,          /* taverna */
+    aberturaMaxM: 25.5,          /* masmorra */
+    alcanceCorpoACorpoM: 1.5,    /* = ALCANCES.corpoACorpoPadrao, golpe.js */
+    plantasMedidas: 10,
+    plantasQueRecusamNoTurno1: 10,
+  },
+  /* e o sítio que faz a caminhada não custar rodada no jogo de hoje */
+  aCaminhadaNaoFechaOTurno: "App.jsx:14500-14568 (moverPara nunca chama fecharMeuTurno)",
+};
+
+/* ---------------- A CAMINHADA, COMO PARÂMETRO (X4) ----------------
+
+   O ÚNICO NÚMERO HONESTO AO ALCANCE DESTA RÉGUA, e ele liga X1 a B1 pela
+   primeira vez: se o herói não pode golpear nas primeiras `k` rodadas — porque
+   está andando —, o que acontece com o combate?
+
+   `rodadasDeCaminhada` é isso e só isso: durante `k` rodadas o passo 1 do laço
+   não roda, e TUDO O MAIS acontece como sempre (os inimigos batem, o grupo age,
+   os relógios andam). É a ponta CARA do intervalo descrito em
+   `TABULEIRO_NA_REGUA` — a outra ponta é zero por construção, porque no
+   tabuleiro os dois lados abrem longe e nenhum alcança o outro.
+
+   `padrao: 0` É LEI, e a suíte prova byte a byte: com k = 0 a condição vira
+   `rodada > 0`, verdadeira em toda rodada, e a régua é exatamente a de ontem —
+   os números de B1/B1b/B2/T1/N1b continuam alcançáveis sem um asterisco.
+
+   OS DEGRAUS NÃO FORAM ESCOLHIDOS, FORAM DERIVADOS. X1 mediu 2 a 3 turnos só
+   andando, e a conta sai de produção: fechar de 12,0 m a 1,5 m são 10,5 m, e a
+   9 m por rodada (`DESLOCAMENTO_PADRAO`, grid.js:442) isso são 2 rodadas; de
+   25,5 m são 24,0 m, isto é 3. A suíte refaz essa divisão contra as constantes
+   de produção — se o deslocamento ou o alcance mudarem, o degrau muda junto ou
+   o dente fica vermelho.
+
+   ONDE SE MEDE, E POR QUE NÃO NO JOGO DE HOJE. O cenário `justo` com o
+   Adversário LIGADO mede 1,4 a 1,8% de vitória: está saturado no PISO, e o
+   cabeçalho desta régua já diz por que isso não serve — "um limiar em cima de
+   um teto não mede nada", e uma escada em cima de um chão mede menos ainda: a
+   caminhada só pode PIORAR o combate, e não há para onde piorar. O `duro` está
+   a 0,0% e o `brando` a 100%. Sobra uma janela só, e é a do molde histórico:
+   `justo` com `comAdversario: false`, que mede 52,1% e tem espaço para cair
+   nos dois sentidos. É onde a escada é medida, e o número que sai vale para
+   AQUELE molde — dizê-lo é a diferença entre medir e inventar. O `justo` de
+   hoje é medido junto, e o que ele mostra é a própria saturação. */
+export const CAMINHADA_NA_REGUA = {
+  padrao: 0,
+  degraus: [0, 1, 2, 3],
+  cenario: "justo",
+  comAdversario: false,   /* a única janela com resolução; o porquê está acima */
+  n: 500,
+  familias: ["umavida", "aa", "bb", "cc"],
+};
+
 /* AS CLASSES QUE CURAM, do jeito que `lutaDaMesa` as lê (App.jsx:6134). A
    lista existe em `combate.js:202` (`CURAM`) e não é exportada de lá; copiá-la
    aqui é o mesmo que o App faz, e ela fica nomeada em vez de literal no meio
@@ -638,7 +767,8 @@ function aplicarBuffDeCompanheiro(heroi, grupo, ac) {
 
 /* Devolve o retrato de UM combate. `semente` é o único árbitro: a mesma
    semente dá o mesmo combate em qualquer máquina. */
-export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA_REGUA.ligado } = {}) {
+export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA_REGUA.ligado, rodadasDeCaminhada = CAMINHADA_NA_REGUA.padrao } = {}) {
+  const caminhada = Math.max(0, Math.floor(Number(rodadasDeCaminhada) || 0));
   const cen = typeof cenario === "string" ? CENARIOS_DA_REGUA[cenario] : cenario;
   if (!cen) throw new Error("cenário desconhecido: " + cenario);
   return comSorteTravada(semente, () => {
@@ -744,8 +874,13 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
     for (; rodada <= cen.tetoDeRodadas; rodada++) {
       if (!vivosInimigos().length) break;
 
-      /* ---- 1. O HERÓI (App.jsx:11566-11645) ---- */
-      if ((heroi.vida || 0) > 0) {
+      /* ---- 1. O HERÓI (App.jsx:11566-11645) ----
+         E AQUI ESTAVA O PONTO CEGO QUE X4 ACHOU (v. `TABULEIRO_NA_REGUA`):
+         esta condição pergunta se o herói está DE PÉ e nunca se ele ALCANÇA.
+         `caminhada` é a única porta que o faz calar, e ela é 0 por padrão —
+         com k = 0 o teste vira `rodada > 0`, verdadeiro em toda rodada, e a
+         régua é byte a byte a de sempre. */
+      if ((heroi.vida || 0) > 0 && rodada > caminhada) {
         const nAtaques = ataquesPorTurno(heroi.classe, heroi.nivel);
         const arma = heroi.equipados && heroi.equipados.arma;
         const bonusAtk = modDoGolpe(heroi, arma) + 2 + Math.floor((heroi.nivel - 1) / 4);
@@ -982,10 +1117,13 @@ export function concordam(a, b) {
 /* Roda `n` combates do cenário e devolve, por métrica, {media, margem, n}.
    `prefixo` escolhe a FAMÍLIA de sementes; uma família só é uma amostra, e
    o que prova estabilidade é o acordo entre famílias independentes. */
-export function medir(cenarioId, { n = AMOSTRA_DA_REGUA.n, prefixo = AMOSTRA_DA_REGUA.familiaDoRetrato, comAdversario = ADVERSARIO_NA_REGUA.ligado } = {}) {
+export function medir(cenarioId, { n = AMOSTRA_DA_REGUA.n, prefixo = AMOSTRA_DA_REGUA.familiaDoRetrato, comAdversario = ADVERSARIO_NA_REGUA.ligado, rodadasDeCaminhada = CAMINHADA_NA_REGUA.padrao } = {}) {
   const combates = [];
-  for (let i = 0; i < n; i++) combates.push(simularCombate(cenarioId, `${prefixo}|${i}`, { comAdversario }));
-  const out = { cenario: cenarioId, prefixo, combates: n, comAdversario: !!comAdversario };
+  for (let i = 0; i < n; i++) combates.push(simularCombate(cenarioId, `${prefixo}|${i}`, { comAdversario, rodadasDeCaminhada }));
+  /* o cabeçalho carrega os DOIS parâmetros de instrumento, pelo motivo de
+     N1b: uma tabela de números que não diz com qual instrumento foi medida é
+     exatamente o que produziu o retrato de B1. */
+  const out = { cenario: cenarioId, prefixo, combates: n, comAdversario: !!comAdversario, rodadasDeCaminhada: Math.max(0, Math.floor(Number(rodadasDeCaminhada) || 0)) };
   for (const m of METRICAS_DA_REGUA) {
     if (m.taxa) {
       out[m.id] = proporcaoComMargem(combates.reduce((s, c) => s + (c[m.id] || 0), 0), n);

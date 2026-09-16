@@ -16,6 +16,301 @@ Formato:
 
 ---
 
+## 16/09 03:10 · v9.263 · X4 · a conta do que mudou · **a Fase X fecha** · commit `<a preencher>`
+
+- **estado inicial:** HEAD `4619533`, VERSÃO **v9.261** lida do arquivo.
+  **Sem trava do sistema — pus a minha.** `npm test` **187/187 suítes verdes ·
+  13/13 varredores limpos**, build limpo. A outra mente está rodando **W1** (a
+  frase que se monta) com a trava dela posta; **não tomei o bastão do
+  `App.jsx`** — X4 é medição, e leitura não pede bastão.
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, etapa escrita.
+- **testes (duas mãos, em arquivos separados, no mesmo turno):** a primeira, o
+  **eixo da frase** — `acoes-do-jogador.mjs`, `sonda-turno-esteril.mjs` e o par
+  `teste-`/`check-`; a segunda, a **régua de B1** — `regua-combate.mjs` e
+  `teste-regua.mjs`. Nenhuma tocou no arquivo da outra.
+- **nenhuma linha de produção escrita.** O único arquivo de `src/` tocado foi
+  o bump de `VERSAO`.
+
+### A resposta, e ela é um "não mudou" honesto
+
+Mesma política fixa de X1 — estrada, 1 inimigo não-ágil, herói corpo a corpo
+nível 3, 7 turnos declarando "Ataco &lt;nome&gt;" e nada mais:
+
+| | 15/09 (X1) | 16/09 (depois de X2) |
+|---|---|---|
+| turnos estéreis | **7/7** | **7/7** |
+| rolagens | **0** | **0** |
+| revides | **0** | **0** |
+
+**E tinha de dar isso.** X2 escreveu, com todas as letras, que **não encurtou
+a caminhada** — *"ela tornou a caminhada visível antes do clique, que é outra
+coisa"*. A régua confirma a palavra dela em vez de a contradizer, e uma régua
+que confirma o que a etapa prometeu vale mais do que uma que encontra um ganho.
+
+**O que mudou está na sessão A′, e é medível:** os mesmos 7 turnos agora com o
+clique **impedido antes de ser gasto**, com a distância, o alcance e os metros
+que faltam ditos na tela. **Sete turnos perdidos viraram sete turnos que o
+jogo avisou que seriam perdidos.**
+
+**E a honestidade que fecha este eixo:** a sessão B — o jogador que anda em vez
+de insistir — dá **2 turnos andando + 5 golpes, 0% estéril, 5 rolagens**. Só
+que **já dava isso em X1**. Andar sempre funcionou: é geometria, não botão.
+**Nenhum dos dois números é ganho de X2**, e vendê-lo como ganho seria a conta
+mentindo a favor — que é exatamente o que X3b mandou X4 não fazer.
+
+### O eixo novo de X3b: estéril e mudo são taxas OPOSTAS
+
+A sessão A″ mede os mesmos sete turnos pelo eixo da frase:
+
+- `taxa_esteril` = **7/7 = 100%** (turnos sem um número mudar) — o eixo de X1
+- `taxa_muda` = **0/7 = 0%** (turnos sem **uma linha** sequer)
+- `taxa_sem_narracao` = **7/7 = 100%** (turnos sem uma frase de **evento**)
+
+As duas primeiras são **opostas na mesma sessão**, e **a distância entre elas é
+inteira de recusa**. Das 14 linhas dos 7 turnos: **7 eco do jogador, 7 recusa,
+0 narração de evento** — e **0 chamadas ao Narrador** (o `return true` de
+`:11871` antecede o `enviar` de `:11932`). O jogador lê o tempo todo e nada
+lhe é narrado.
+
+**O alerta de X3b estava certo, e agora tem número:** sem separar a recusa, a
+medida daria **0% de turnos mudos** onde a resposta honesta é **100% sem
+narração**. Por isso nasceu `NAO_CONTA_COMO_FRASE`, irmão do
+`NAO_CONTA_COMO_NUMERO` de X1, com cinco exclusões e o motivo de cada uma — a
+recusa, o eco do jogador, o telegrama, a rolagem `🎲` (que sai atrás de
+`mostrarRolagens`, desligado por omissão) e a nota ao Narrador.
+
+### O funil — e X3b errou os dois números, para menos
+
+`pushMsgs` é `App.jsx:7499`: **o endereço confere**. O resto não:
+
+| | X3b disse | X4 mediu |
+|---|---|---|
+| funções que falam no combate | 13 | **14** (11 de núcleo + 3 de borda) |
+| formas de recusa | 15 | **18 chamadas · 25 formas · 7 famílias** |
+
+As 57 chamadas do funil: **frase de mesa 36 (63,2%) · telegrama 12 (21,1%) ·
+recusa 9 (15,8%)**, e **22 das 57 nascem fora do React** (35 ainda só existem
+dentro do `App.jsx`). A maior boca é `resolverRevide` sozinha, com 29 das 57.
+A maior família de recusa é `alcance`, com 6 chamadas e 13 formas — e apareceram
+**duas famílias que a pauta não nomeava**: *conjuração travada* (armadura, forma
+animal, grimório) e *condição que prende*.
+
+O núcleo dos 11 não foi contado no olho: saiu de **ponto fixo sobre o grafo de
+chamadas**, a partir das guardas explícitas de `combateRef.current`. Pelo
+precedente de X1, **a medição mandou na pauta**.
+
+### A régua de B1: o que ela NÃO pode medir, dito em vez de inventado
+
+A pessoa pediu *"a régua de B1 refeita com o jogador agindo"* e acrescentou a
+única instrução que importava mais que o número: **se não der para simular
+honestamente, diga em vez de inventar.**
+
+Não dá, e a razão é estrutural. **A régua não tem tabuleiro:**
+
+- não importa `src/grid.js` nem `src/golpe.js` (imports em
+  `regua-combate.mjs:193-206`);
+- passa **`grade: null`** ao motor (`:887`), e `grid.js:422` abre com
+  `if (!g) return { ok: true, penalidade: 0 }` — **sem grade, os dois lados
+  alcançam sempre**;
+- o passo 1 do laço era `if ((heroi.vida || 0) > 0)`: a única pergunta era
+  *"está de pé"*, nunca *"alcança"*.
+
+**Logo a linha de 1,4% nunca mediu "o motor sozinho": ela sempre pressupôs um
+jogador que age todo turno.** A régua é o **limite otimista**, e o jogo real é
+**pior** que ela — não melhor, que era a suposição embutida na pergunta.
+Está escrito como bloco exportado `TABULEIRO_NA_REGUA`, no molde do
+`ADVERSARIO_NA_REGUA` que N1b deixou para o mesmo tipo de buraco.
+
+**Medir o preço real exige a grade dentro da régua** — montar planta,
+posicionar, caminhar com orçamento em metros, `alcanca` antes de cada golpe
+**dos dois lados**. Isso é um **simulador de tabuleiro: órgão novo, logo
+`pesado`, logo da pessoa.** Ficou como proposta em
+`TABULEIRO_NA_REGUA.paraMedir`, **não construída**.
+
+### O preço da caminhada — a primeira ponte entre X1 e B1
+
+O que **deu** para medir honestamente foi o custo de o herói não poder golpear.
+`rodadasDeCaminhada = k` cala o herói nas primeiras k rodadas; **`k = 0` é o
+default e é byte a byte** (dente próprio em 4 famílias, e a asserção existente
+de 52,1% · 25,88 · 1,790 continua verde). No `justo` com
+`comAdversario: false`, 4 famílias × 500 = **2000 sementes por degrau**:
+
+| k | vitória | PV do grupo | quedas |
+|---|---|---|---|
+| 0 | 51,8% ± 2,2 | 25,90 | 1,785 |
+| 1 | 39,6% ± 2,1 | 18,78 | 2,087 |
+| 2 | 29,8% ± 2,0 | 12,86 | 2,332 |
+| 3 | 22,7% ± 1,8 | 8,85 | 2,503 |
+
+**Uma rodada de caminhada custa ~9,7 pontos de vitória**, −5,68 PV de grupo e
++0,24 queda (degraus −12,3 · −9,8 · −7,0, com rendimento decrescente). Na moeda
+de B2 — a escada de `CATRACA_DE_UMA_VIDA`, medida no mesmo molde, ~2,9 pontos
+por ponto de dano — **um turno andando ≈ 3,3 pontos de dano por golpe, quase
+todo o teto de +4 que aquela escada aponta.** É a primeira vez que a geometria
+que X1 achou aparece na moeda do balanceamento.
+
+**Os degraus não foram escolhidos, foram derivados:** a suíte importa
+`DESLOCAMENTO_PADRAO` (`grid.js`) e `ALCANCES` (`golpe.js`) e **refaz** o "2 a
+3 turnos" de X1 — (12,0−1,5)/9 → 2 e (25,5−1,5)/9 → 3. Se o passo ou o alcance
+mudarem em `src/`, o dente fica vermelho sozinho.
+
+**Não medi no jogo de hoje (Adversário ligado), e medi a razão em vez de a
+afirmar:** o `justo` está em 1,4–1,8%, **saturado no piso**. Com k ≥ 1 a
+vitória cabe dentro da própria margem (0,4 ± 0,6 · 0,0 ± 0,6 · 0,0 ± 0,6) —
+**indistinguível de zero**. Isso virou dente; a escada de lá é `pendente`.
+
+**E o contrapeso, que é achado novo e baixa o preço:** `moverPara`
+(`App.jsx:14500-14568`) **nunca chama `fecharMeuTurno`** — o próprio sítio
+escreve *"o que fecha o turno é AGIR"*, e os quatro chamadores de
+`fecharMeuTurno` (`:11929`, `:13453`, `:13543`, `:13594`) não incluem o
+movimento. Somado ao `semAlcance` de graça que X1 mediu: **enquanto o herói
+anda, a oposição também não age.** Então o preço real está **entre zero e os
+9,7 pontos**, e 9,7 é a **ponta cara**. Está dito na tabela, no cabeçalho, e
+ficou `pendente` — não virou limiar.
+
+---
+
+## A FASE X DE PONTA A PONTA — o que o jogador não conseguia, e o que consegue
+
+**Em 15/09, quando a fase abriu**, o `jogo` jogou e contou: dos 20 botões do
+painel de Ações, **nenhum era de combate**. `Atacar` não atacava — **digitava
+`"Ataco "` na caixa de texto**. Três ataques declarados sem ambiguidade num
+combate aberto deram **zero rolagens**, e sete turnos fecharam com os mesmos
+PV 20/20, PM 6/6, XP 89/300. A lei da casa estava invertida no pior lugar:
+*o Mestre é código, e a IA só narra* — **mas quem decidia se o golpe
+acontecera era a IA.**
+
+**O que ele NÃO conseguia fazer, e hoje consegue:**
+
+1. **Disparar o próprio golpe.** `Atacar`, com a luta aberta, **ataca**: monta a
+   frase canônica, passa pela porta única `declararGolpe` (`:11851`), e
+   `src/golpe.js` — módulo puro, provado em Node — **decide antes de qualquer
+   efeito**. A catraca desceu com o fato: `TETO_SEM_MOTOR` **7 → 6**. *(X2)*
+2. **Saber o preço antes de pagar.** O botão nasce **impedido** e a linha lê
+   *"Longe demais — Halvard a 3 m, faltam 1,5 m. Aproxime-se primeiro."* — o
+   número conferido vivo na campanha e casa a casa contra `vereditoDoGolpe` em
+   Node. Antes, a recusa só chegava **depois** do clique. É a lei do veredito
+   antes do clique, aplicada ao combate. *(X2)*
+3. **Não perder o turno quando o Mestre cai.** Se o motor rolou, **o resultado
+   não se descarta**: fica guardado e é narrado quando o Narrador voltar. Antes,
+   uma queda da IA jogava a ação fora — e, pior, uma retentativa **re-rolava um
+   resultado ruim**. *(X3)*
+4. **Ter uma régua que não evapora.** Antes, cada medição de combate morria no
+   scratchpad. Hoje a fase deixa quatro instrumentos permanentes:
+   `acoes-do-jogador.mjs` (a tabela), `sonda-turno-esteril.mjs` (a régua),
+   `check-acoes-do-jogador.mjs` (o varredor que impede a tabela de apodrecer,
+   agora com 11 dentes) e `teste-acoes-do-jogador.mjs` (**155 asserções**,
+   eram 108). *(X1, X4)*
+
+**E o que a fase descobriu que ninguém tinha nomeado** — o achado que vale mais
+que qualquer das quatro linhas acima: **a trava não era o botão, era a
+geometria.** `posicionar` abre a luta a **12,0 m (taverna) a 25,5 m
+(masmorra)**, o corpo a corpo alcança **1,5 m**, e **10 de 10 plantas recusam
+no turno 1**. `resolverAtaqueJogador` sempre existiu e sempre foi bom; o golpe
+morria antes dele. Consertar só o botão teria dado ao jogador um *"longe
+demais"* dez vezes seguidas — e **pareceria que o conserto falhou**.
+
+### O que ele CONTINUA não conseguindo fazer
+
+1. **Chegar perto sem gastar 2 a 3 turnos andando.** X2 tornou a caminhada
+   visível; não a encurtou, e disse isso. **Agora ela tem preço medido:
+   ~9,7 pontos de vitória por rodada** — e é o número que falta a esta casa
+   decidir se aceita.
+2. **Andar pelo tabuleiro escrevendo.** Não há **porta do campo em `turno.js`
+   — 17 portas, nenhuma delas do tabuleiro**. Hoje `vou até K14` numa luta cai
+   na porta `destino` (`:238`), que **não tem guarda `!emCombate`**, vai ao
+   resolvedor de cidades do mapa-múndi, escreve `[DESTINO NÃO RECONHECIDO]` e
+   entrega à IA: **ninguém anda, e gasta-se uma chamada ao Mestre para não
+   andar.** Pedido por E2 e de novo por W1; continua em "Aberto".
+3. **`Esquivar`, `Empurrar`, `Derrubar`, `Ajudar`.** Quatro botões de combate,
+   **zero motor**. X2 deixou-os de fora **de propósito**: ali não falta fiação,
+   **falta mecânica**, e enfiá-los na porta de `Atacar` seria fingir que
+   existem. São a **Fase Y**, já aprovada, na ordem Empurrar/Derrubar →
+   Esquivar → Ajudar.
+4. **Passar a vez sem chamar o Mestre.** Não há botão de esperar desde a v9.13
+   (`App.jsx:3133`) — e é o que W1 mediu como o item mais barato e que mais
+   paga. Continua em "Aberto".
+5. **Ouvir a luta.** Nos sete turnos da sessão A o jogador lê **catorze linhas
+   e zero narração de evento**. X3b já tinha mostrado por que: **se o Mestre
+   calasse hoje, a cena sobreviveria como extrato bancário; a luta, não.**
+
+### Os dois achados de mecânica quebrada de X3b — X4 não os tocou
+
+Confirmado que **não são desta etapa**, e os dois continuam em "Aberto" como
+`médio`, intactos. Mas X4 tem algo a dizer sobre cada um:
+
+- **o reforço entra na luta sem `x`/`y` nem iniciativa** — é **invisível para a
+  régua por construção**: sem grade, `alcanca` devolve sempre `ok`, e um
+  combatente sem posição não tem como doer ali. Só o jogo o sente.
+- **a queda de companheiro é silêncio absoluto** — X4 o **confirma por
+  ausência**: o funil tem linha para a queda do herói (`:14218`) e para **treze**
+  eventos de companheiro (`:14061` a `:14260`), e **nenhuma** para o
+  companheiro que chega a zero.
+
+### Decisões médias tomadas (com o motivo)
+
+- **Corrigi dois números da pauta para cima** (13 → 14 chamadores, 15 → 18/25
+  recusas). **Motivo:** os de X3b eram prosa de diário, não número provado — e o
+  precedente de X1 é explícito, *"a medição manda na pauta, não o contrário"*.
+- **`k = 0` como default da caminhada na régua, e byte a byte provado.**
+  **Motivo:** mudar a régua muda **os dois lados** de toda comparação passada;
+  a história de B1/B2/T1 não pode passar a mentir por causa de X4.
+- **Medi a saturação do piso em vez de a afirmar.** **Motivo:** *"um limiar em
+  cima de um teto não mede nada"* já é lei do cabeçalho da régua — mas dizer que
+  algo está saturado sem medir é a mesma opinião com confiança que a casa proíbe.
+- **O custo da caminhada ficou `pendente`, não virou limiar.** **Motivo:** o
+  achado de `moverPara` mostra que 9,7 é a ponta cara de uma faixa, e faixa não
+  vira catraca.
+- **Não tomei o bastão do `App.jsx`.** **Motivo:** X4 é leitura; a outra mente
+  está em W1 e o bastão livre vale mais que a comodidade.
+
+### O que ficou
+
+- **Um achado novo, `leve`, para "Aberto":** a recusa de alcance imprime **"está
+  a 17 m, em na vala — longe demais"** (`grid.js:428` põe `em ` antes de um
+  `nomeDoLugar` que já traz a preposição; sem nome, ficam dois espaços). Saiu
+  sete vezes seguidas na sonda. **Não a consertei de carona** — ela é a mesma
+  frase de `LINHAS_DO_GOLPE` e da catraca dos 54 caracteres que W1 pediu, e
+  consertá-las em separado criaria a segunda cara da mesma linha.
+- **Uma proposta `pesada` para a pessoa:** a grade dentro da régua — o
+  simulador de tabuleiro que mediria o preço real da caminhada. Escrita em
+  `TABULEIRO_NA_REGUA.paraMedir`, **não construída**.
+- **Três coisas que X4 não conseguiu medir**, declaradas na tabela e impressas
+  pela sonda: quantas linhas saem num turno **real** (a sonda não roda React);
+  a voz das **5 chamadas mistas** (listas montadas em tempo de execução); e
+  **quanto a IA de fato narra** — isso seria medir a rede, e a Fase X mede o que
+  o código diz sozinho.
+- **Nada foi rebalanceado, nada foi ligado, nenhuma catraca foi afrouxada.** O
+  dente 1 de `CATRACA_DE_UMA_VIDA` continua `pendente`, como N1b o deixou.
+### A nota que a casa exige: o meu bloco de pauta saiu no commit da outra mente
+
+**Aconteceu a terceira vez, e desta vez do outro lado.** Enquanto eu media, a
+outra mente fechou **W1** e commitou `mente/pauta.md` — onde ela tinha escrito,
+legitimamente, o pedido de W1 ao motor (a pauta do sistema **é** o canal por
+onde o desenho pede regra). Só que o meu bloco de X4 já estava no arquivo, e
+**`63e0667` — um commit que fala do turno como gesto — levou dentro o veredito
+inteiro da Fase X**, sem o mencionar.
+
+**Não reescrevi a história:** `origin/main` já estava em `2afce4c` quando
+descobri, e `push --force` num ramo que faz deploy para jogadores reais é arma
+apontada para o vizinho. A lei da casa diz o que fazer nesse caso e foi o que
+fiz — **repor a verdade no diário e num commit seguinte, e seguir**. O bloco de
+X4 na pauta agora traz uma linha dizendo onde ele foi publicado.
+
+**E a lição, porque as três vezes têm a mesma forma e nenhuma foi por `add -A`:**
+`git commit -- <caminhos>` fecha a janela entre o *seu* `add` e o *seu* `commit`,
+mas **não** protege um arquivo que as duas mentes editam ao mesmo tempo — ali o
+caminho nomeado leva tudo o que estiver dentro dele. `mente/pauta.md` é o único
+arquivo da casa nessa situação por desenho: é meu, e é onde o desenho me pede
+coisas. **O bastão resolveu o `App.jsx`; a pauta não tem bastão.** Fica como
+achado para a pessoa decidir — talvez um `mente/pedidos-ao-sistema.md`, que o
+desenho escreve e o ciclo consome, custe menos que uma trava nova.
+
+- **O que ficou meu neste commit, e é o que sobrou de `pauta.md`:** o fecho da
+  Fase X, a correção da versão e o item novo do *"em na vala"*.
+
+---
+
 ## 16/09 02:25 · v9.261 · X3b · o que a voz da casa cobre · commit `30a6b3d`
 
 - **estado inicial:** HEAD `4221f16`, VERSÃO **v9.260** lida do arquivo (a

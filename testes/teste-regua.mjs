@@ -897,11 +897,13 @@ sec("9. A RÉGUA NÃO MORA EM src/ — a fronteira, nos dois sentidos");
   const EXPORTADOS = [...FONTE.matchAll(/^export (?:function|const) ([A-Za-z_][A-Za-z0-9_]*)/gm)].map((m) => m[1]);
   const ESTA = readFileSync("teste-regua.mjs", "utf8");
   const semLeitor = EXPORTADOS.filter((nome) => !new RegExp("\\b" + nome + "\\b").test(ESTA));
-  /* ERAM 13 E SÃO 14 DESDE N1b: `ADVERSARIO_NA_REGUA` entrou, e o número sobe
-     aqui porque ele é a prova de que nenhum export nasceu sem leitor. Subir a
-     contagem sem que o leitor exista seria afrouxar a única catraca que a
-     régua tem — `teste-ligacao` varre `src/`, não `testes/`. */
-  t(`os ${EXPORTADOS.length} exports da régua têm leitor nesta suíte — export morto mente`, EXPORTADOS.length === 14 && semLeitor.length === 0, semLeitor.join(", "));
+  /* ERAM 13, VIRARAM 14 EM N1b (`ADVERSARIO_NA_REGUA`) E SÃO 16 DESDE X4:
+     `TABULEIRO_NA_REGUA` (a confissão do ponto cego) e `CAMINHADA_NA_REGUA` (o
+     parâmetro da caminhada) entraram, e os dois têm leitor na seção 10. O
+     número sobe aqui porque ele é a prova de que nenhum export nasceu sem
+     leitor. Subir a contagem sem que o leitor exista seria afrouxar a única
+     catraca que a régua tem — `teste-ligacao` varre `src/`, não `testes/`. */
+  t(`os ${EXPORTADOS.length} exports da régua têm leitor nesta suíte — export morto mente`, EXPORTADOS.length === 16 && semLeitor.length === 0, semLeitor.join(", "));
 
   /* E A RÉGUA COMPÕE O ADVERSÁRIO DE VERDADE, pelo mesmo motivo que compõe o
      combate: uma régua que reimplementasse `intencaoDaVez` mediria um segundo
@@ -912,6 +914,248 @@ sec("9. A RÉGUA NÃO MORA EM src/ — a fronteira, nos dois sentidos");
     FONTE.includes('from "../src/adversario.js"') && FONTE.includes("intencaoDaVez") && FONTE.includes("menteDaCriatura"));
   t("e cita os dois sítios do jogo que ela reproduz — App.jsx:13606 e combate.js:279",
     FONTE.includes("App.jsx:13606") && FONTE.includes("combate.js:279"));
+}
+
+/* ============================================================
+   10. X4 — O TABULEIRO QUE A RÉGUA NÃO TEM, E O PREÇO DA CAMINHADA
+   ============================================================
+
+   A PERGUNTA DE X4 E A RESPOSTA QUE ELA RECEBEU. A pauta pediu "a régua de B1
+   refeita COM O JOGADOR AGINDO — porque a linha de base de 1,4% mediu o motor
+   sozinho". Fomos verificar o que a régua modela, e a premissa caiu: ela nunca
+   mediu o motor sozinho. O passo 1 do laço é incondicional — pergunta se o
+   herói está DE PÉ e nunca se ele ALCANÇA alguém —, não há grade, `grid.js` e
+   `golpe.js` não são importados, e `turnoDosInimigos` recebe `grade: null`,
+   com o que `alcanca` (grid.js:422) devolve "alcança, sem penalidade" para os
+   dois lados da mesa.
+
+   LOGO A RÉGUA É O LIMITE OTIMISTA, E O JOGO REAL É PIOR QUE ELA. X1 mediu o
+   contrário do que a pauta supunha: a luta abre a 12,0 m (taverna) a 25,5 m
+   (masmorra), o corpo a corpo alcança 1,5 m, e 10 de 10 plantas recusam o
+   golpe no turno 1 — 2 a 3 turnos só andando antes do primeiro golpe. Tudo o
+   que esta régua já produziu (B1, B1b, B2, T1, N1b) descreve um combate em que
+   essa caminhada não existe. A confissão inteira está em `TABULEIRO_NA_REGUA`,
+   no módulo, e esta seção a prova pela FONTE e pelo EFEITO.
+
+   O NÚMERO QUE DEU PARA MEDIR, e em qual molde. `rodadasDeCaminhada = k` cala
+   o herói nas primeiras k rodadas e deixa todo o resto acontecer. A escada
+   (4 famílias × 500 sementes, `justo`, `comAdversario: false` — o molde
+   histórico, o único cenário com resolução nos dois sentidos):
+
+     k = 0   vitória 51,8% ± 2,2   PV do grupo 25,90   quedas 1,785
+     k = 1   vitória 39,6% ± 2,1   PV do grupo 18,78   quedas 2,087
+     k = 2   vitória 29,8% ± 2,0   PV do grupo 12,86   quedas 2,332
+     k = 3   vitória 22,7% ± 1,8   PV do grupo  8,85   quedas 2,503
+
+   UMA RODADA DE CAMINHADA CUSTA ~9,7 PONTOS DE VITÓRIA, 5,7 PV de grupo e
+   +0,24 queda — média dos três degraus; o primeiro degrau é o mais caro
+   (−12,3) e o terceiro o mais barato (−7,0), que é o rendimento decrescente
+   de quem já perdeu a luta. E o tamanho disso tem régua própria nesta casa: a
+   escada do bônus ofensivo de `CATRACA_DE_UMA_VIDA` (medida no MESMO molde)
+   diz que cada ponto de dano por golpe vale ~2,9 pontos de vitória. Ou seja,
+   UM turno andando custa ao grupo o equivalente a ~3,3 pontos de dano por
+   golpe — quase todo o teto de +4 que aquela escada aponta como o limite do
+   que B2 teria para gastar. A caminhada come de uma vez o orçamento inteiro
+   de uma fase de balanceamento.
+
+   POR QUE NÃO NO JOGO DE HOJE, e isto é o que separa medir de inventar. No
+   `justo` com o Adversário ligado a vitória é 1,4 a 1,8%: está saturada no
+   PISO, e a caminhada só pode PIORAR — não há para onde descer. Medimos lá
+   assim mesmo, para o leitor ver a saturação em vez de acreditar nela: com
+   k ≥ 1 a vitória fica indistinguível de zero (a média cabe dentro da própria
+   margem), e a escada inteira vira uma linha reta no chão. É por isso que o
+   número acima é do molde histórico, e é por isso que ele vem com o molde
+   escrito ao lado — a lição de N1b é que número sem instrumento mente.
+
+   O QUE ESTA SEÇÃO NÃO AFIRMA. Não afirma "a caminhada custa 9,7 pontos no
+   jogo". No App de hoje a caminhada não gasta rodada nenhuma — `moverPara`
+   (App.jsx:14500-14568) nunca chama `fecharMeuTurno`, e o próprio sítio diz
+   "o que fecha o turno é AGIR"; e a recusa por alcance é de graça (X1), então
+   a rodada não vira por ali tampouco. Enquanto o herói se aproxima, a oposição
+   também não age. O preço real está ENTRE zero e o que esta escada mede, e a
+   escada é a ponta cara. Medir o meio exige grade dentro da régua — órgão
+   novo, decisão da pessoa —, e está escrito como proposta em
+   `TABULEIRO_NA_REGUA.paraMedir`, não construído aqui. */
+sec("10. X4 — O TABULEIRO QUE FALTA, E O PREÇO DA CAMINHADA");
+{
+  const { TABULEIRO_NA_REGUA, CAMINHADA_NA_REGUA } = R;
+  const FONTE = readFileSync("regua-combate.mjs", "utf8");
+  const { DESLOCAMENTO_PADRAO } = await import("../src/grid.js");
+  const { ALCANCES } = await import("../src/golpe.js");
+
+  /* ---------------- 10a. O PONTO CEGO, PROVADO PELA FONTE ----------------
+     A confissão não pode ser só prosa: se um dia alguém puser grade na régua
+     e esquecer de apagar a confissão, o instrumento passa a mentir na direção
+     oposta — a descrever um ponto cego que já não tem. Este dente morde nos
+     DOIS sentidos, como o da seção 9. */
+  t("a régua declara que NÃO tem tabuleiro, e a fonte confirma: não importa grid.js nem golpe.js",
+    TABULEIRO_NA_REGUA.temGrade === false && !FONTE.includes('from "../src/grid.js"') && !FONTE.includes('from "../src/golpe.js"'),
+    "a confissão e a fonte discordam");
+  t("e entrega `grade: null` ao motor — é por isso que `alcanca` libera os dois lados (grid.js:422)",
+    FONTE.includes("grade: null"));
+  t("nenhum golpe desta régua passa por `alcanca` ou por `vereditoDoGolpe`",
+    !/\balcanca\s*\(/.test(FONTE) && !/\bvereditoDoGolpe\s*\(/.test(FONTE));
+  /* a tabela nomeia o que falta, e o que seria preciso. Uma confissão sem a
+     lista é uma desculpa; com a lista é um pedido de obra com tamanho. */
+  t("a tabela nomeia o que a régua não mede (distância, parede, alcance, deslocamento...)",
+    TABULEIRO_NA_REGUA.naoMede.length >= 8 && ["distancia", "parede", "alcance_do_golpe", "deslocamento", "recusa_por_alcance"].every((x) => TABULEIRO_NA_REGUA.naoMede.includes(x)));
+  t("e nomeia os sítios de produção que seriam precisos para medir de verdade",
+    TABULEIRO_NA_REGUA.paraMedir.length >= 4 && TABULEIRO_NA_REGUA.paraMedir.every((x) => /^(grid|golpe)\.js:/.test(x)));
+
+  /* ---------------- 10b. O HERÓI GOLPEIA TODA RODADA, PROVADO PELO EFEITO ---
+     Espiar a condição no texto prova que ela ESTÁ escrita; o que importa é que
+     ela VALHA — é o mesmo raciocínio da seção 4b. Se o herói golpeia na rodada
+     1 de todo combate, então calá-lo na rodada 1 tem de mudar o combate, na
+     mesma semente, SEMPRE. Uma semente em que não mudasse seria uma semente em
+     que ele não golpeou. */
+  const mudaram = Array.from({ length: 10 }, (_, i) => `umavida|${i}`)
+    .filter((s) => JSON.stringify(simularCombate("justo", s, { comAdversario: false, rodadasDeCaminhada: 1 })) !== JSON.stringify(simularCombate("justo", s, { comAdversario: false })));
+  t("o herói golpeia na rodada 1 de TODO combate — calá-lo por uma rodada muda as dez sementes",
+    TABULEIRO_NA_REGUA.heroiGolpeiaTodaRodada === true && mudaram.length === 10, `${mudaram.length} de 10`);
+
+  /* ---------------- 10c. O DEFAULT NÃO MOVEU UM BYTE ----------------
+     A promessa de X4: `k = 0` é a régua de ontem, sem exceção. Sem isto, todo
+     número escrito no diário (B1, B1b, B2, T1, N1b) passaria a precisar de um
+     asterisco — e a seção 5 já prova o outro lado disso, reproduzindo 52,1% ·
+     25,88 PV · 1,790 quedas com o default deste parâmetro valendo. */
+  t("`CAMINHADA_NA_REGUA.padrao` é 0 — o default é a régua de sempre", CAMINHADA_NA_REGUA.padrao === 0);
+  const semOpcao = ["umavida|0", "aa|5", "bb|42", "cc|101"].map((s) => JSON.stringify(simularCombate("justo", s)));
+  const comZero = ["umavida|0", "aa|5", "bb|42", "cc|101"].map((s) => JSON.stringify(simularCombate("justo", s, { rodadasDeCaminhada: 0 })));
+  t("passar k = 0 é idêntico a não passar nada, byte a byte, em quatro famílias", semOpcao.join("|") === comZero.join("|"));
+  /* e lixo no lugar do número não inventa caminhada nenhuma: `= {}` no
+     destructuring não cobre `null`, e é lei da casa tratá-lo explícito. */
+  t("lixo no parâmetro cai no default em vez de estourar (null, '', NaN, negativo)",
+    [null, "", NaN, -3, undefined].every((v) => JSON.stringify(simularCombate("justo", "umavida|0", { rodadasDeCaminhada: v })) === semOpcao[0]));
+  t("`medir` carrega a caminhada no cabeçalho — número sem instrumento é como B1 nasceu",
+    medir("brando", { n: 2 }).rodadasDeCaminhada === 0 && medir("brando", { n: 2, rodadasDeCaminhada: 2 }).rodadasDeCaminhada === 2);
+
+  /* ---------------- 10d. OS DEGRAUS SÃO DERIVADOS, NÃO ESCOLHIDOS ----------
+     "2 a 3 turnos só andando" é medida de X1, e uma medida de outro
+     instrumento envelhece em silêncio. Aqui ela é REFEITA a partir das
+     constantes de produção: fechar de 12,0 m até o alcance do corpo a corpo, a
+     `DESLOCAMENTO_PADRAO` metros por rodada, são 2 rodadas; de 25,5 m são 3.
+     Se o passo ou o alcance mudarem em `src/`, este dente fica vermelho e a
+     escada da seção tem de ser remedida — que é exatamente o que se quer. */
+  const X1 = TABULEIRO_NA_REGUA.medidoPorX1;
+  t("o alcance do corpo a corpo que X1 usou é o de produção (golpe.js), não um número copiado",
+    X1.alcanceCorpoACorpoM === ALCANCES.corpoACorpoPadrao, `${X1.alcanceCorpoACorpoM} vs ${ALCANCES.corpoACorpoPadrao}`);
+  const rodadasPara = (abertura) => Math.ceil((abertura - ALCANCES.corpoACorpoPadrao) / DESLOCAMENTO_PADRAO);
+  t("as 'de 2 a 3 rodadas só andando' de X1 se refazem das constantes de produção",
+    rodadasPara(X1.aberturaMinM) === 2 && rodadasPara(X1.aberturaMaxM) === 3,
+    `${rodadasPara(X1.aberturaMinM)} a ${rodadasPara(X1.aberturaMaxM)} rodadas (passo ${DESLOCAMENTO_PADRAO} m)`);
+  t("e a escada da régua cobre exatamente essa faixa, com o zero na frente",
+    CAMINHADA_NA_REGUA.degraus[0] === 0 &&
+    Math.max(...CAMINHADA_NA_REGUA.degraus) === rodadasPara(X1.aberturaMaxM) &&
+    CAMINHADA_NA_REGUA.degraus.every((d, i) => i === 0 || d === CAMINHADA_NA_REGUA.degraus[i - 1] + 1),
+    CAMINHADA_NA_REGUA.degraus.join(","));
+  t("X1 mediu as dez plantas e as dez recusaram no turno 1 — a premissa da escada",
+    X1.plantasMedidas === 10 && X1.plantasQueRecusamNoTurno1 === X1.plantasMedidas);
+
+  /* ---------------- 10e. A ESCADA, NO MOLDE ONDE HÁ RESOLUÇÃO ----------------
+     4 famílias × 500 sementes por degrau. O N é o da tabela: a 500 a margem de
+     vitória é ~4,4 pontos por família e ~2,2 no agrupado, e o degrau mais
+     barato da escada (−7,0) ainda é quase o dobro da soma das duas margens
+     agrupadas que ele separa (3,8). Subir para 1000
+     compraria precisão que nenhuma afirmação daqui usa, e dobraria o custo da
+     suíte — o mesmo raciocínio que mantém as sabotagens da seção 7 em 500. */
+  const MED_K = CAMINHADA_NA_REGUA.degraus.map((k) =>
+    CAMINHADA_NA_REGUA.familias.map((fam) => medir(CAMINHADA_NA_REGUA.cenario, {
+      n: CAMINHADA_NA_REGUA.n, prefixo: fam,
+      comAdversario: CAMINHADA_NA_REGUA.comAdversario, rodadasDeCaminhada: k,
+    })));
+  /* o AGRUPADO das quatro famílias: 2000 sementes por degrau. É a mesma conta
+     que a seção 6 faz para os estouros — soma os acertos, soma os n, e a
+     margem sai da fórmula de proporção. Uma família só mediria o resorteio. */
+  const juntas = (linha, id) => proporcaoComMargem(
+    linha.reduce((s, r) => s + Math.round(r[id].media * r[id].n), 0),
+    linha.reduce((s, r) => s + r[id].n, 0));
+  const mediaSimples = (linha, id) => linha.reduce((s, r) => s + r[id].media, 0) / linha.length;
+  const VIT = MED_K.map((linha) => juntas(linha, "vitoria"));
+
+  CAMINHADA_NA_REGUA.degraus.forEach((k, i) => {
+    pendente(`[${CAMINHADA_NA_REGUA.cenario} · molde histórico] k = ${k} rodada(s) andando`,
+      `vitória ${(VIT[i].media * 100).toFixed(1)}% ± ${(VIT[i].margem * 100).toFixed(1)}  ·  PV ${mediaSimples(MED_K[i], "pvGrupo").toFixed(2)}  ·  quedas ${mediaSimples(MED_K[i], "quedas").toFixed(3)}  (${MED_K[i].reduce((s, r) => s + r.combates, 0)} sementes)`);
+  });
+
+  /* A CAMINHADA SÓ PIORA, E EM TODA FAMÍLIA. É a afirmação mais robusta da
+     seção porque não depende de margem nenhuma: 16 medidas, e cada degrau
+     abaixo do anterior nas quatro famílias. Se um dia a caminhada passar a
+     AJUDAR o grupo, alguma coisa muito estranha entrou no combate. */
+  const foraDeOrdem = [];
+  for (let i = 1; i < MED_K.length; i++) {
+    for (let f = 0; f < CAMINHADA_NA_REGUA.familias.length; f++) {
+      if (!(MED_K[i][f].vitoria.media < MED_K[i - 1][f].vitoria.media)) foraDeOrdem.push(`${CAMINHADA_NA_REGUA.familias[f]}:k${i}`);
+    }
+  }
+  t("a caminhada só PIORA o combate — a vitória desce a cada degrau, nas quatro famílias",
+    foraDeOrdem.length === 0, foraDeOrdem.join(", "));
+
+  /* E O PREÇO DA PRIMEIRA RODADA É MAIOR QUE O RUÍDO — é esta a afirmação que
+     responde à pergunta de X4, então é ela que vira dente. `concordam` é a
+     mesma função que decide, no resto da suíte, se a régua está medindo o jogo
+     ou o resorteio: aqui ela tem de dizer NÃO. Folga medida: a distância entre
+     k=0 e k=1 é ~2,8 vezes a soma das margens agrupadas. */
+  t("uma rodada de caminhada custa mais do que o resorteio (k=0 e k=1 NÃO concordam)",
+    !concordam(VIT[0], VIT[1]),
+    `${(VIT[0].media * 100).toFixed(1)}% vs ${(VIT[1].media * 100).toFixed(1)}% · margens somam ${((VIT[0].margem + VIT[1].margem) * 100).toFixed(1)}`);
+  /* e a descida inteira, que é a faixa que X1 mediu no tabuleiro: 2 a 3
+     rodadas andando. É a folga maior (29,1 pontos contra 4,0 de margem somada,
+     ≈7,3 vezes) e a afirmação de que a faixa de X1 move o combate de verdade. */
+  t("e a faixa inteira de X1 (2 a 3 rodadas) move o combate muito além da margem",
+    !concordam(VIT[0], VIT[VIT.length - 1]),
+    `${(VIT[0].media * 100).toFixed(1)}% vs ${(VIT[VIT.length - 1].media * 100).toFixed(1)}%`);
+
+  /* O CUSTO POR RODADA, impresso e não travado: é uma taxa média sobre três
+     degraus com rendimento decrescente, e uma taxa média não é um limiar. O
+     que vira lei é o SINAL (desce sempre) e a SEPARAÇÃO (k=0 ≠ k=1); o valor
+     fica visível para quem for decidir balanceamento. */
+  const passos = VIT.slice(1).map((v, i) => (VIT[i].media - v.media) * 100);
+  const porRodada = passos.reduce((s, x) => s + x, 0) / passos.length;
+  const pvPorRodada = (mediaSimples(MED_K[0], "pvGrupo") - mediaSimples(MED_K[MED_K.length - 1], "pvGrupo")) / (MED_K.length - 1);
+  const qdPorRodada = (mediaSimples(MED_K[MED_K.length - 1], "quedas") - mediaSimples(MED_K[0], "quedas")) / (MED_K.length - 1);
+  pendente("o CUSTO DE UMA RODADA DE CAMINHADA (molde histórico)",
+    `−${porRodada.toFixed(1)} pontos de vitória · −${pvPorRodada.toFixed(2)} PV de grupo · +${qdPorRodada.toFixed(2)} queda  [degraus: ${passos.map((x) => "−" + x.toFixed(1)).join(" · ")} — rendimento decrescente]`);
+  /* E A TRADUÇÃO QUE DÁ TAMANHO AO NÚMERO, no mesmo molde em que as duas
+     medidas foram feitas: a escada do bônus ofensivo de `CATRACA_DE_UMA_VIDA`
+     vale ~2,9 pontos de vitória por ponto de dano por golpe, e o teto que ela
+     aponta é +4. Uma rodada andando custa mais do que esse teto inteiro. */
+  pendente("o mesmo custo, na moeda de B2",
+    `equivale a ~${(porRodada / 2.9).toFixed(1)} pontos de dano por golpe do grupo (a escada do cabeçalho dá ~2,9 pontos de vitória por ponto, e aponta +4 como teto)`);
+
+  /* ---------------- 10f. POR QUE NÃO NO JOGO DE HOJE ----------------
+     A armadilha que X4 mandou não pisar: o `justo` COM Adversário está no piso
+     (1,4 a 1,8%), e sobre um piso saturado nenhuma mudança mostra nada. Em vez
+     de afirmar isso, medimos — na família do retrato, que basta porque a
+     saturação de k = 0 já está medida em 4 famílias × 1000 na seção 5 e a
+     DIREÇÃO do efeito já está provada acima. O que vira dente é a saturação:
+     com k ≥ 1 a média cabe dentro da própria margem, isto é, é indistinguível
+     de zero, e uma escada indistinguível de zero não mede degrau nenhum. */
+  const HOJE = CAMINHADA_NA_REGUA.degraus.map((k) => medir(CAMINHADA_NA_REGUA.cenario, {
+    n: CAMINHADA_NA_REGUA.n, prefixo: AMOSTRA_DA_REGUA.familiaDoRetrato, rodadasDeCaminhada: k,
+  }));
+  CAMINHADA_NA_REGUA.degraus.forEach((k, i) => {
+    pendente(`[${CAMINHADA_NA_REGUA.cenario} · o jogo de hoje] k = ${k}`,
+      `vitória ${(HOJE[i].vitoria.media * 100).toFixed(1)}% ± ${(HOJE[i].vitoria.margem * 100).toFixed(1)}  ·  PV ${HOJE[i].pvGrupo.media.toFixed(2)}  ·  quedas ${HOJE[i].quedas.media.toFixed(3)}`);
+  });
+  const saturados = HOJE.slice(1).filter((r) => r.vitoria.media <= r.vitoria.margem).length;
+  t("com o Adversário ligado a escada não tem resolução: de k = 1 em diante a vitória cabe na própria margem",
+    saturados === HOJE.length - 1,
+    HOJE.slice(1).map((r) => `${(r.vitoria.media * 100).toFixed(1)}±${(r.vitoria.margem * 100).toFixed(1)}`).join(" · "));
+  /* e é por isso que a escada do 10e foi medida no molde histórico: a régua
+     escolheu a janela onde há sinal, e DIZ qual foi. */
+  t("por isso a tabela declara em qual molde a escada foi medida — e é o histórico",
+    CAMINHADA_NA_REGUA.comAdversario === false && CAMINHADA_NA_REGUA.cenario === "justo");
+
+  /* ---------------- 10g. O QUE A RÉGUA NÃO MEDIU, E ESTÁ ESCRITO ----------
+     No App de hoje a caminhada NÃO gasta rodada: `moverPara` nunca chama
+     `fecharMeuTurno`. Logo a escada acima é a ponta CARA de um intervalo cuja
+     outra ponta é zero, e afirmar o número como "o preço no jogo" seria
+     inventar. O dente guarda a confissão: se ela sumir da tabela, a seção
+     inteira volta a mentir com autoridade. */
+  t("a régua declara que a caminhada não fecha o turno no App de hoje — a escada é a ponta CARA",
+    /App\.jsx:\d+/.test(TABULEIRO_NA_REGUA.aCaminhadaNaoFechaOTurno) && /moverPara/.test(TABULEIRO_NA_REGUA.aCaminhadaNaoFechaOTurno));
+  pendente("o intervalo honesto do preço da caminhada",
+    `entre ZERO (o App de hoje: quem anda não cede o turno, e a recusa por alcance é de graça) e −${porRodada.toFixed(1)} pontos por rodada (esta escada)  [medir o meio exige grade dentro da régua — órgão novo, não etapa de medição]`);
 }
 
 console.log(`\n(medição: ${(CUSTO_DA_MEDIDA / 1000).toFixed(1)}s · suíte inteira: ${((Date.now() - T0 + 0) / 1000).toFixed(1)}s)`);
