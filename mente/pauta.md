@@ -533,24 +533,74 @@ consegue tocar: a régua mede o motor, e o jogador não chega nele.
   perde, o jogo diz o que houve em voz de mundo e oferece tentar de novo, o
   motivo técnico vai **íntegro ao `console`** (foi o vazamento que permitiu
   diagnosticar as duas quedas desta sessão), e **nada fica pela metade**.
-- [ ] **X3b · o que a voz da casa cobre** · de: pessoa · 15/09
-  **Medir antes de estender, e a proposta pode encolher aqui — o que é bom
-  sinal.** O **Duelo é jogado com zero IA** e `arena.js` escreve linhas de
-  verdade (*"Vex firma Escudo Arcano · o próximo golpe encontra alguma coisa
-  antes de encontrar carne"*). A pergunta: **quanto de um turno de combate de
-  campanha essa voz cobre hoje?** Ela narra golpe, guarda e efeito — falta
-  saber se cobre condição, queda, morte, reviravolta e a chegada de um
-  inimigo com a mesma densidade. Entregue a cobertura em número, por tipo de
-  evento. **Se for rala, X3c não acontece** e a fase fecha em X3.
-- [ ] **X3c · em combate, o turno se completa** · de: pessoa · 15/09
-  Só se X3b disser que vale. Um turno de combate passa a **se completar com
-  a voz da casa** quando o Mestre cala — reusando o que o Torneio e o Duelo
-  já usam todo dia, **sem inventar uma linha de prosa nova**.
-  **E o limite, que é lei desta etapa:** isto vale **só em combate**. Fora
-  dele — exploração, conversa, cena — a prosa **é** o conteúdo, não o
-  acompanhamento, e ali **trava**, como a pessoa decidiu. Não existe voz da
-  casa fora do combate, e fabricar uma seria quebrar a lei pelo avesso: hoje
-  a IA decide o que devia ser código; ali seria o código fingindo ser a IA.
+- [x] **X3b · o que a voz da casa cobre** · de: pessoa · 15/09 · **feito 16/09
+  · v9.260** — retrato, nenhuma linha de produção escrita. **A medição encolheu
+  a proposta, que era o resultado bom: X3c está CANCELADA (a razão abaixo).**
+
+  **A cobertura, por tipo de evento.** Duas varreduras cruzadas: a oferta
+  (`arena.js` e todo módulo puro com prosa de combate) e a demanda (o caminho
+  de combate do `App.jsx`, de `declararGolpe` a `fecharSeTodosCairam`).
+
+  | evento | a arena tem linha? | serve à campanha? | a campanha já tem? |
+  |---|---|---|---|
+  | 1 golpe que acerta | sim (`arena.js:255`) | **sim** | telegrama (`App.jsx:11914`) |
+  | 2 golpe que erra | sim (`:293`) | **sim** | uma palavra ("errou") |
+  | 3 crítico | sim (troca de palavra) | **sim** | prefixo "CRÍTICO!" |
+  | 4 guarda erguida | sim (`:191`) | sim, mas **empresta** | **já usa a boa** (`habilidades.js:356`) |
+  | 5 efeito que nasce | sim (`:216`) | **rala** — molde reflexivo | telegrama (`App.jsx:7978`) |
+  | 6 efeito que vence | **emprestada** (`:362`) | sim, mas empresta | **já usa a mesma** (`regras-jogo.js:374`) |
+  | 7 condição aplicada | **não** (zera `condicoes`, `:123`) | — | frase (`aflicoes.js:145`) |
+  | 8 salvaguarda | **não** | — | parcial: a que passa fala, **a que falha é muda** |
+  | 9 queda | **não** (sai do laço, `:345`) | — | herói sim, **companheiro em silêncio** |
+  | 10 morte | **não** (devolve uma letra) | — | herói sim, inimigo é um `☠` |
+  | 11 cura | sim (`:153`) | **rala** — reflexiva | telegrama (`App.jsx:14144`) |
+  | 12 chegada de inimigo | **não** (1×1 não tem) | — | frase (`regras-jogo.js:393`) |
+  | 13 reviravolta | **não** | — | virada de chefe (`masmorras.js:724`) |
+  | 14 fim de luta | **não** (sem frase) | — | frase (`App.jsx:13744`) |
+
+  **O número, e ele é o veredito.** A arena tem linha escrita em **10 dos 14**.
+  Mas **molde reusável em campanha que a campanha ainda não tem: 3 de 14
+  (21%)** — golpe que acerta, que erra e o crítico, que na verdade são **um
+  molde só**, o do golpe. E **dos 5 que esta etapa perguntou por nome**
+  (condição, queda, morte, reviravolta, chegada): **0 de 5.**
+
+  **A razão é estrutural, e é o achado que fecha a fase.** A voz da arena não
+  é uma fonte independente: dos 8 moldes que ela escreve, 2 são reflexivos
+  (`se recompõe`, `firma`) e não sabem nomear um terceiro — e o caso normal da
+  campanha é **grupo**; os outros 5 ela **empresta** de módulos da campanha
+  (`tickEfeitos`, `expirarGuardas`, `absorverDano`, `testeConcentracao`,
+  `firmarEfeito`) — e o `App.jsx` **já empurra exatamente os mesmos**. O
+  empréstimo só existe onde a campanha já tinha escrito. **A cobertura da
+  arena não é um retrato do que o duelo sabe: é o retrato da campanha,
+  devolvido.**
+
+  **A honestidade contrária, dita de propósito:** o golpe é o evento mais
+  frequente do combate (3 a 6 por rodada), então em **volume de linhas** a
+  cobertura não é 21%. Só que o golpe **já tem string no `App.jsx`** — trocar
+  telegrama por frase é reescrever uma linha que existe, não é "o turno se
+  completa quando o Mestre cala". É outra etapa, menor, e de forma.
+
+  **Se o Mestre calasse hoje**, o jogador leria a contabilidade inteira e
+  correta da luta, e leria frase de mesa só quando algo **muda de estado**
+  (uma guarda que sobe, uma condição que pega, um efeito que se dissipa, ele
+  mesmo caindo). A cena sobreviveria como extrato bancário; a luta, não.
+
+- [x] **X3c · em combate, o turno se completa** · **CANCELADA 16/09 por X3b** ·
+  de: pessoa · 15/09
+  **A razão, em uma linha: a etapa se proibia de inventar prosa nova, e a
+  medição diz que ela teria de inventar 11 das 14.** X3c prometia completar o
+  turno *"reusando o que o Torneio e o Duelo já usam todo dia, **sem inventar
+  uma linha de prosa nova**"*. O reuso disponível é de **um molde** (o do
+  golpe), e ele já tem string. Nos 5 eventos que a pessoa nomeou a arena
+  cobre **zero**. Cumprir a promessa seria escrever prosa nova sob o nome de
+  reuso — e isso é o código fingindo ser a IA, que é o próprio limite que
+  esta etapa escreveu para si.
+  **A Fase X fecha em X4.** O que X3c queria de verdade não morre: virou
+  itens próprios em "Aberto" (o telegrama do golpe e os quatro silêncios),
+  cada um do tamanho que tem, e nenhum vestido de reuso.
+  **O limite que era lei desta etapa continua valendo e não foi tocado:**
+  isto valia **só em combate**; fora dele a prosa **é** o conteúdo e ali
+  trava, como a pessoa decidiu.
 
 - [ ] **X4 · a conta do que mudou** · de: pessoa · 15/09
   Quantas rolagens por turno antes e depois; quantos turnos terminam sem um
@@ -567,6 +617,18 @@ consegue tocar: a régua mede o motor, e o jogador não chega nele.
   `TURNO_ESTERIL`, e o relógio de 45 min (`App.jsx:12959`) fica de fora de
   propósito — um número que muda sempre não distingue turno que fez de turno
   que não fez.
+  **X4 é agora o fecho da fase (X3c foi cancelada por X3b, 16/09), e X3b lhe
+  deixou duas coisas:** (a) **o mapa do funil** — `pushMsgs` é `App.jsx:7499`
+  e treze funções o chamam dentro do combate; é por elas que se conta linha
+  por turno sem adivinhar; (b) **um segundo eixo que a régua não tinha** —
+  além de *"quantos turnos terminam sem um número mudar"*, dá para contar
+  **quantos terminam sem uma frase**, e as duas taxas não são a mesma. E uma
+  correção de escopo que X3b obriga: **a voz do combate que o código já tem é,
+  em boa parte, a voz de dizer não** — X3b contou **15 formas de recusa** com
+  frase em português no caminho de combate (alcance, economia, teto,
+  repetição, a trava do turno guardado), volume comparável ao de todas as
+  frases de evento juntas. Recusa **não é** narração de evento, e X4 tem de
+  contá-las à parte para não inflar o próprio número.
 
 ### Fase H — a porta das habilidades de classe
 Decisão da pessoa (15/09): *"vamos fazer como recomendado, apenas uma porta,
@@ -2182,6 +2244,61 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
      foram fabricados em K1 (`61:2`, `61:4`, `61:6`); falta o texto deixar de os
      duplicar em emoji.
 
+- [ ] **o reforço entra na luta sem lugar no tabuleiro** · médio · de: frontend (X3b) · 16/09
+  **Achado de medição, e é mecânica quebrada, não prosa.** Quando o Mestre
+  manda `combate_iniciar` com a luta **já aberta** (`regras-jogo.js:386-393`),
+  ou quando a virada de chefe solta capangas (`App.jsx:17950`), o inimigo novo
+  é acrescentado à lista e ganha a frase *"⚔ Ogro entra no combate! (34 PV)"*
+  — mas **nasce sem `x`/`y`, sem iniciativa e fora do selo do encontro**. A
+  causa: a conferência de orçamento só roda com `!combateRef.current`
+  (`:8928`) e `abrirCombate` só com `houveIniciar && !combateRef.current.ordem`
+  (`:9007`) — com a luta aberta já há `ordem`, então `montarGrid` não roda de
+  novo. Depois disso `alcanca(grade, …)` e `moverInimigos` recebem um
+  combatente sem posição. Serve a lei do determinismo e a da grade.
+- [ ] **a queda e a morte de companheiro são silêncio absoluto** · médio · de: frontend (X3b) · 16/09
+  O companheiro que chega a 0 PV: `App.jsx:13967` baixa o PV com
+  `Math.max(0, …)` e **não empurra uma linha, nem uma nota ao Narrador**. O
+  herói que cai tem quatro frases boas (`:8203`, `:8204`, `:8206`, `:8213`) e
+  três recusas de cair; o aliado ao lado dele cai sem ninguém dizer. É o
+  bolsão mudo mais visível que X3b encontrou, e o único dos quatro que a
+  arena 1×1 **não teria como ter aprendido** — num duelo não há terceiro.
+- [ ] **a salvaguarda de fim de turno que FALHA é muda, e a linha já está calculada** · leve · de: frontend (X3b) · 16/09
+  `tentarSaidaNoFimDoTurno` roda todo turno em três portadores (herói `:8414`,
+  grupo `:8488`, inimigo `:8528`). Quando **passa**, fala bonito
+  (`condicoes.js:541` — *"— deu 15, e bastavam 12."*). Quando **falha**, nada.
+  E o desperdício é literal: `condicoes.js:576` já **calcula** `linhasTecnicas`
+  com a rolagem inteira e **ninguém as consome** — o App empurra só
+  `saida.linhas`. Um evento por turno, por portador, que não existe em lugar
+  nenhum da cena.
+- [ ] **a virada de chefe nunca dispara para um herói de arma** · leve · de: frontend (X3b) · 16/09
+  `virarChefeSePreciso` (`App.jsx:17932`) é chamada **apenas** de
+  `resolverHabilidadeOfensiva` (`:12023`, `:12354`). `aplicarGolpeDoJogador`,
+  o turno dos companheiros e o dos inimigos não a chamam — então quem luta de
+  espada pode levar o chefe de 100% a 0% sem **nunca** ver a frase de virada
+  (`masmorras.js:724`). A reviravolta de combate melhor escrita da casa, e
+  metade das fichas não a alcança.
+- [ ] **`ultimoDano` é escrito em nove sítios e não tem um único leitor** · leve · de: frontend (X3b) · 16/09
+  `App.jsx:11893`, `:12125`, `:12201`, `:12216`, `:12252`, `:13950`, `:14123`,
+  `:14133` e `habilidades.js:285` gravam; **nada lê**. Não existe "−9"
+  flutuante na tela. É a lei *"export morto mente"* aplicada a campo de
+  estado: ou nasce o leitor, ou saem as nove escritas.
+- [ ] **a arena descarta a linha boa da guarda e escreve outra por cima** · leve · de: backend (X3b) · 16/09
+  `erguerGuarda` (`habilidades.js:356`) já devolve a frase completa, com
+  conceito, efeito e prazo — e o `App.jsx` a usa (`:7861`). `arena.js:184-191`
+  chama a mesma função, **joga `g.linha` fora** e compõe outra medindo
+  `defesaDe` antes e depois. São duas frases para o mesmo evento, e elas vão
+  divergir no dia em que uma das duas for mexida. A razão original era
+  honesta (as guardas de esquiva e de intocável somam zero, e escrever `+0`
+  mentiria um número) — mas isso se resolve na frase do módulo, não com um
+  segundo molde.
+- [ ] **a condição tem prosa de saída e não tem prosa de entrada** · leve · de: backend (X3b) · 16/09
+  A casa escreveu melhor o alívio do que a mordida: `condicoes.js:430-466`
+  tem um campo `sai` por condição, em voz de mundo (*"o veneno afrouxa e sai
+  do sangue"*, *"os músculos voltam a obedecer"*, *"o medo solta a
+  garganta"*), lido por `linhaDaSaidaDeCondicao` (`:535`). A **entrada** só
+  tem `aflicoes.js:145`, que é meio rótulo e meio contabilidade de dado
+  (*"Vex está Sangrando (3t) — Garra flamejante (9 vs 14)"*). Simetria barata:
+  um campo irmão de `sai`, na mesma tabela.
 - [ ] **um envelope resolvido sai sem selo, e o PM pode ser pago duas vezes** · leve · de: backend (X3) · 15/09
   `App.jsx:13029` manda `enviar` do envelope de invisibilidade, voo e luz
   **depois** de `cobrar` descontar o PM e `firmarOuCeder` trocar a pilha de

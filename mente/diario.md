@@ -16,6 +16,92 @@ Formato:
 
 ---
 
+## 16/09 02:25 · v9.261 · X3b · o que a voz da casa cobre · commit `PENDENTE`
+
+- **estado inicial:** HEAD `4221f16`, VERSÃO **v9.260** lida do arquivo (a
+  outra mente a bumpou em E2 durante este ciclo; bumpei para **v9.261** em
+  cima do que estava no disco, não do que a pauta dizia). **Sem trava — pus a
+  minha.** `npm test` **187/187 suítes verdes · 13/13 varredores limpos**,
+  build limpo. A outra mente rodou **E2** (o endereço do tabuleiro) e fechou
+  no meio do ciclo (`e192188`, `e791646`); a árvore voltou limpa antes do meu
+  commit e **não precisei de `so-o-meu.sh`** — nenhum vermelho de lado nenhum.
+  **Não tomei o bastão do `App.jsx`:** X3b é retrato, e leitura não pede bastão.
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, etapa escrita.
+- **backend:** o retrato da **oferta** — `arena.js` inteiro mais 22 módulos
+  puros com prosa de combate, os 14 eventos com arquivo:linha e a frase
+  literal. Achou três que não estavam na lista (`masmorras.js`,
+  `adversario.js`, `grid.js`).
+- **frontend:** o retrato da **demanda** — o funil de `pushMsgs`
+  (`App.jsx:7499`) e as treze funções que o chamam dentro do combate, os 14
+  eventos classificados em **código-frase / código-telegrama / IA**, mais a
+  contagem à parte das **15 formas de recusa**.
+- **nenhuma linha de produção escrita.** X3b é medição; o único arquivo de
+  `src/` tocado foi o bump de `VERSAO`.
+
+### O número, e ele decidiu a fase
+
+A arena tem linha escrita em **10 dos 14** eventos. Mas **molde reusável em
+campanha que a campanha ainda não tem: 3 de 14 (21%)** — e os três (acerta,
+erra, crítico) são **um molde só**, o do golpe. **Dos 5 que a pessoa perguntou
+por nome** — condição, queda, morte, reviravolta, chegada de inimigo —
+a arena cobre **0 de 5**.
+
+A razão é estrutural, e é o achado do ciclo: **a voz da arena não é uma fonte
+independente.** Dos 8 moldes que ela escreve, 2 são reflexivos (`se recompõe`,
+`firma`) e não sabem nomear um terceiro — e o caso normal da campanha é
+**grupo**. Os outros 5 ela **empresta** de módulos da campanha (`tickEfeitos`,
+`expirarGuardas`, `absorverDano`, `testeConcentracao`, `firmarEfeito`), e o
+`App.jsx` **já empurra exatamente os mesmos**. O empréstimo só existe onde a
+campanha já tinha escrito. A cobertura do duelo é o retrato da campanha,
+devolvido.
+
+- **decisão tomada, e ela encolhe a proposta: X3c está CANCELADA.** A razão
+  não é o número sozinho, é a contradição que o número revela: **X3c se
+  proibia de inventar prosa nova** (*"sem inventar uma linha de prosa nova"*),
+  e o reuso disponível cobre **um** dos 14. Cumprir a promessa seria escrever
+  prosa nova sob o nome de reuso — o código fingindo ser a IA, que é o
+  próprio limite que a etapa escreveu para si. **A Fase X fecha em X4.**
+- **a honestidade contrária, registrada de propósito:** o golpe é o evento
+  mais frequente (3 a 6 por rodada), então em **volume de linhas** a cobertura
+  não é 21%. Só que o golpe **já tem string** no `App.jsx`
+  (`⚔ Halvard → Bandido: 9 de dano · Bandido 11/20`) — trocar telegrama por
+  frase é reescrever uma linha que existe, não é *"o turno se completa quando
+  o Mestre cala"*. É outra etapa, menor, e de forma. Não estiquei X3c para
+  caber nisso.
+- **o limite que era lei de X3c continua valendo e não foi tocado:** valia
+  **só em combate**; fora dele a prosa **é** o conteúdo e ali trava, como a
+  pessoa decidiu.
+
+### O que ficou
+
+**Sete achados novos foram para "Aberto"**, cada um do tamanho que tem e
+nenhum vestido de reuso — dois deles são mecânica quebrada, não prosa:
+
+- **médio ·** o **reforço entra na luta sem lugar no tabuleiro**: `montarGrid`
+  não roda de novo com a luta aberta (`App.jsx:8928`, `:9007`), e `alcanca` /
+  `moverInimigos` passam a receber um combatente sem `x`/`y` nem iniciativa.
+- **médio ·** a **queda e a morte de companheiro são silêncio absoluto**
+  (`App.jsx:13967`) — o herói que cai tem quatro frases; o aliado ao lado
+  dele, nenhuma, nem nota ao Narrador.
+- **leve ·** a **salvaguarda de fim de turno que falha é muda**, e
+  `condicoes.js:576` **já calcula** a linha que ninguém consome.
+- **leve ·** a **virada de chefe nunca dispara para um herói de arma** —
+  `virarChefeSePreciso` só é chamada de `resolverHabilidadeOfensiva`.
+- **leve ·** **`ultimoDano` escrito em nove sítios sem um leitor**.
+- **leve ·** a **arena descarta a linha boa da guarda** (`habilidades.js:356`,
+  que o App usa) e escreve outra por cima — duas frases para o mesmo evento.
+- **leve ·** a **condição tem prosa de saída e não tem prosa de entrada**.
+
+**Para X4**, deixei o mapa do funil (`pushMsgs` e os treze chamadores), um
+eixo novo (*turnos sem uma frase*, que não é a mesma taxa de *turnos sem um
+número*) e uma correção de escopo: **15 formas de recusa** têm frase no
+caminho de combate, e recusa **não é** narração — X4 tem de contá-las à parte
+para não inflar o próprio número.
+
+**Nada foi rebalanceado, nada foi ligado, nenhuma lei foi afrouxada.**
+
+---
+
 ## 15/09 22:16 · v9.259 · N2 · a escada da inteligência · commit `dab5caa`
 
 - **estado inicial:** HEAD `25cd20f`, VERSÃO **v9.258** lida do arquivo;

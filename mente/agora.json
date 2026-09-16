@@ -1,17 +1,17 @@
 [
   {
-    "agente": "orquestrador",
-    "o_que": "rege o ciclo X3b — quanto de um turno de combate a voz da casa cobre (v9.259)",
-    "desde": "2026-09-16T02:24:01.600Z"
+    "agente": "regente",
+    "o_que": "rege o ciclo W1 — a frase que se monta: verbo + alvo por toque",
+    "desde": "2026-09-15T16:00:00Z"
   },
   {
-    "agente": "backend",
-    "o_que": "X3b · inventario da voz da casa: que evento tem linha escrita em modulo puro",
-    "desde": "2026-09-16T02:24:01.600Z"
+    "agente": "jogo",
+    "o_que": "W1 · o turno como gesto, e o que o jogador toca em cada batida",
+    "desde": "2026-09-15T16:00:00Z"
   },
   {
-    "agente": "frontend",
-    "o_que": "X3b · inventario dos eventos de um turno de combate de campanha no App.jsx (leitura)",
-    "desde": "2026-09-16T02:24:01.600Z"
+    "agente": "desenho",
+    "o_que": "W1 · a forma do verbo, do alvo e do preço antes do clique",
+    "desde": "2026-09-15T16:00:00Z"
   }
 ]
