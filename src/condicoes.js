@@ -680,7 +680,7 @@ export const PORTAS_DE_SAIDA = {
     },
     {
       id: "habilidade", autoridade: "a promessa escrita na própria habilidade, recortada pelo mesmo canal",
-      porque: "a habilidade de classe diz em português o que tira, e o canal impede que 'remove condições ruins' vire 'remove tudo'. Ela ainda NÃO resolve — ver `aguarda` nas linhas.",
+      porque: "a habilidade de classe diz em português o que tira, e o canal impede que 'remove condições ruins' vire 'remove tudo'. Desde a v9.265 (H1) ela RESOLVE: quem a executa é `aplicarPoder` (poder-de-classe.js), motor `porta`, o segundo chamador que `removerPelaPorta` esperava desde que nasceu com um só.",
     },
     {
       id: "item", autoridade: "a lista `remove` do consumível e a `limpa` da relíquia",
@@ -707,14 +707,24 @@ export const PORTAS_DE_SAIDA = {
     },
     {
       familia: "habilidade", nome: "Purificar", fonte: "classes.js · Clérigo nv3",
-      herdaDe: "Restauração Menor", remove: [], resolve: false,
-      aguarda: "um resolvedor de habilidade de classe — ele NÃO existe: o único caminho que o sistema executa por conta própria é `magiaPorNome` + `resolvidaPeloSistema`, e habilidade de classe não passa por lá. Construí-lo é mecânica nova, e mecânica nova sobe para a pessoa.",
+      herdaDe: "Restauração Menor", remove: [], resolve: true,
+      /* v9.265 (H1): O RESOLVEDOR NASCEU, e o `aguarda` desta linha o nomeava
+         palavra por palavra — "um resolvedor de habilidade de classe — ele NÃO
+         existe". Ele existe: `aplicarPoder` (poder-de-classe.js), motor
+         `porta`, que lê ESTA linha e chama `removerPelaPorta`. O alcance não
+         mudou um item: continua sendo o da Restauração Menor por `herdaDe`.
+         O campo `aguarda` sai porque dívida paga não fica pendurada. */
       porque: "a descrição diz 'remove condições ruins de um aliado', e sem recorte isso seria a Maior de graça num nível 3. O alcance dela é o da Menor: a mão do clérigo fazendo por disciplina o que o 2º círculo faz por magia.",
     },
     {
       familia: "habilidade", nome: "Palavra de Coragem", fonte: "classes.js · Clérigo nv4",
-      remove: ["amedrontado"], resolve: false,
-      aguarda: "o mesmo resolvedor de habilidade de classe. E a outra metade da promessa — 'concede PV temporário' — não tem mecânica nenhuma nesta casa: não existe PV temporário em lugar algum do código. É item de acervo, não de T4.",
+      remove: ["amedrontado"], resolve: true,
+      /* v9.265 (H1): o resolvedor chegou (ver Purificar, acima) e "remove
+         medo" passa a valer de verdade. A OUTRA METADE CONTINUA DEVENDO —
+         "concede PV temporário" não tem mecânica nenhuma nesta casa —, e por
+         isso a habilidade continua declarada em `AGUARDAM` (poder-de-classe.js)
+         com esse motivo escrito. Meia promessa cumprida é meia dívida, não
+         dívida quitada. */
       porque: "'remove medo' é uma condição só, e ela tem nome no catálogo. `amedrontado` não declara o canal `restauracao` e não precisa: o canal é a autoridade da MAGIA, e esta é a palavra de quem está do lado, não um círculo conjurado.",
     },
   ],

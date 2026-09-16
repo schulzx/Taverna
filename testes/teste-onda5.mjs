@@ -238,7 +238,36 @@ sec("7. a porta das habilidades de regra própria");
   t("ficha vazia também", !temRegraPropria({}) && !temRegraPropria(null));
   const druida = CLASSES.find((c) => c.nome === "Druida");
   t("quem tem Forma Animal abre", temRegraPropria({ habilidades: [druida.habilidades.find((h) => /Forma Animal/.test(h.nome))] }));
-  t("quem tem Passo do Vento não abre por isso", !temRegraPropria({ habilidades: [monge.habilidades.find((h) => h.nome === "Passo do Vento")] }));
+  /* ============================================================
+     O CONTROLE NEGATIVO TROCOU DE HABILIDADE EM 16/09 (v9.265 · H1),
+     E CONTINUA SENDO CONTROLE NEGATIVO.
+
+     A INTENÇÃO ORIGINAL (v9.54): esta porta manda um bloco inteiro de
+     regra para o prompt, e o prompt tem teto sagrado. A asserção
+     existia para provar que ela NÃO abre para qualquer habilidade do
+     Monge — que a resposta sai da fileira de leitores e não de um
+     palpite por nome. Passo do Vento foi escolhida por ser vizinha das
+     famílias sem pertencer a nenhuma.
+
+     O QUE MUDOU NO MUNDO: Passo do Vento PASSOU a ter regra própria.
+     A sétima família nasceu na v9.265 (`poderDe`, poder-de-classe.js)
+     e ela é a primeira linha do motor `passivo` — `dobraMovimento` e
+     `ignoraTerrenoDificil` (dadivas.js) agora a leem. A asserção
+     envelheceu por SUCESSO: o que ela declarava inexistente existe.
+
+     POR QUE A HABILIDADE NOVA É "PALMA DOS SETE VENTOS", e não a
+     primeira que passasse verde. Afrouxar o controle — apagá-lo, ou
+     trocá-lo por algo que sempre passa — seria a doença, não o
+     remédio. "Golpe lendário de dano extremo" é DANO PURO, que é o
+     caminho PADRÃO do golpe e o oposto estrutural de regra própria:
+     enquanto a régua do golpe existir, ela não pode entrar na fileira
+     sem que a fileira tenha se soltado. As outras candidatas do Monge
+     eram todas vizinhas perigosas — "Rajada de Golpes" é PRESSA à
+     espera de uma linha, "Palma Trovejante" e "Toque da Quietude" são
+     controle à espera de outra.
+     ============================================================ */
+  t("quem tem Passo do Vento AGORA abre — ela é a primeira do motor passivo", temRegraPropria({ habilidades: [monge.habilidades.find((h) => h.nome === "Passo do Vento")] }));
+  t("quem tem só dano puro na ficha não abre por isso", !temRegraPropria({ habilidades: [monge.habilidades.find((h) => h.nome === "Palma dos Sete Ventos")] }));
 }
 
 console.log(`\nonda 5 v9.54: ${ok} passaram, ${mal} falharam`);

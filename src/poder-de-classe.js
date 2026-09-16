@@ -1,0 +1,392 @@
+/* ============================================================
+   O PODER DE CLASSE (v9.265) — a porta que faltava
+
+   O ACHADO QUE ORIGINOU ESTE ARQUIVO, medido nas 148 `HAB(...)` de
+   `classes.js`: raça tem despachante (`tracos.js`), dádiva tem
+   (`dadivas.js`), magia tem (`usarFuncaoMagica`), poção tem
+   (`pocoes.js`), relíquia tem. A HABILIDADE DE CLASSE É A ÚNICA
+   FONTE DE PODER DO JOGO SEM UM. Ela só chega a acontecer quando
+   cai por acidente numa das famílias que já existem — guarda,
+   forma, limiar, pressa, aflição, invocação, controle. O que não
+   cai em nenhuma delas é lido na ficha, cobrado em PM e não
+   acontece.
+
+   E o mais instrutivo: os motores JÁ EXISTEM e apenas leem outra
+   fonte. `removerPelaPorta` (condicoes.js) tinha UM chamador, a
+   magia do grimório, enquanto "Purificar" — que diz com todas as
+   letras "remove condições ruins de um aliado" — estava declarada
+   ali mesmo com `resolve: false` e um `aguarda` que nomeava
+   exatamente este arquivo. `dobraMovimento` (dadivas.js) lia só a
+   dádiva, enquanto "Passo do Vento" prometia a mesma frase.
+
+   POR QUE UMA TABELA NOVA EM VEZ DE SETE LINHAS NAS ANTIGAS. Onde
+   a tabela irmã já descreve a mecânica, a linha vai LÁ e não aqui
+   — foi assim que "Ataque Duplo" e "Tiro Duplo" viraram `PRESSAS`,
+   e "Provocação" e "Melodia Confusa" viraram `CONTROLES`. Aqui
+   moram só os motores que nenhuma família existente cobria: a CURA
+   que acontece agora, a PORTA que tira o que está posto no corpo, e
+   o PASSIVO que outro módulo lê. Duplicar seria abrir o segundo
+   caminho para o mesmo número, que é a doença que esta casa já
+   pagou caro para curar.
+
+   O QUE ESTE ARQUIVO NÃO FAZ. Não sorteia (determinismo por
+   semente: aqui não há semente porque não há sorte), não muta o que
+   recebe (ficha nova, sempre), não importa React e não importa
+   `habilidades.js` — a seta aponta no outro sentido, porque é
+   `temRegraPropria` que precisa perguntar por aqui.
+
+   E NÃO NASCE COM BLOCO DE PROMPT. O teto de prompt é sagrado, e
+   somar bloco estático é proibido: tudo o que o Narrador precisa
+   saber sobre estes poderes já está dito em `HABILIDADES_PROMPT`
+   ("o sistema resolve, você narra") e, por turno, na `nota` que
+   cada resolução devolve. Um bloco a mais diria a mesma coisa em
+   82 mil caracteres mais caros.
+
+   CUIDADO COM O HOMÔNIMO: `poder.js` também exporta `poderDe`, e
+   ele é outra coisa (o ÍNDICE de poder de uma ficha). Quem importar
+   os dois no mesmo arquivo — o `App.jsx` importa o de `poder.js`
+   desde a v9.x — tem de apelidar um deles. O App só precisa de
+   `aplicarPoder`.
+   ============================================================ */
+
+import { portaDeSaida, removerPelaPorta } from "./condicoes.js";
+
+const NORM = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const txtDe = (h) => NORM(`${(h && h.nome) || ""} ${(h && h.descricao) || ""}`);
+
+/* ---------------- A TABELA ----------------
+   Uma linha por poder, no formato das irmãs (`GUARDAS`, `FORMAS`,
+   `PRESSAS`): `id`, `rx` que casa com o TEXTO REAL do catálogo,
+   `motor`, os parâmetros do motor, e o `conceito` — a frase de
+   mundo de onde nasce a linha que o jogador lê.
+
+   AS REGEX SÃO ANCORADAS DE PROPÓSITO. "Chamado da Chuva" diz
+   "altera o clima; cura leve contínua", e um `/cura leve/` solto
+   transformaria uma magia de clima na cura do Clérigo. Aqui cada
+   linha casa pelo começo do nome ou por um pedaço de descrição que
+   só existe uma vez no acervo inteiro — um falso positivo aqui é
+   PV saindo do lugar errado, e esse é o erro que não se percebe.
+
+   OS NÚMEROS DA CURA. `base` é o que a habilidade devolve no nível
+   1 e `porNivel` é o que ela acompanha a escada; `minimo` é o piso,
+   porque cura que devolve zero é turno perdido com aparência de
+   milagre. A régua: cura de UM alvo é o dobro da cura de GRUPO por
+   cabeça — quem escolhe um escolhe fundo, quem rega todos rega
+   raso. Nada aqui passa de um terço do PV típico do nível, porque
+   cura grande é a estatística que mais rápido apaga o combate. */
+export const PODERES_DE_CLASSE = [
+  /* ---- CURA: PV agora, sem prazo e sem estado novo na ficha ---- */
+  {
+    id: "cura_leve", rx: /^cura leve\b|restaura pv de um aliado/,
+    motor: "cura", alvo: "aliado", base: 6, porNivel: 1.2, minimo: 4,
+    conceito: "a mão sobre a ferida, e a ferida obedece",
+  },
+  {
+    id: "toque_curativo", rx: /^toque curativo\b|cura um aliado com energia natural/,
+    motor: "cura", alvo: "aliado", base: 6, porNivel: 1.2, minimo: 4,
+    conceito: "seiva em vez de sangue: o corte fecha como casca que volta a crescer",
+  },
+  {
+    id: "cancao_curativa", rx: /^cancao curativa\b|cura o grupo inteiro um pouco/,
+    motor: "cura", alvo: "grupo", base: 3, porNivel: 0.6, minimo: 3,
+    conceito: "a melodia passa por todos, e cada um respira um pouco melhor",
+  },
+  {
+    id: "balada_heroi", rx: /^balada do heroi\b|o grupo cura e ganha vantagem/,
+    motor: "cura", alvo: "grupo", base: 5, porNivel: 0.8, minimo: 4,
+    conceito: "a canção conta o fim antes de ele chegar, e o grupo acredita",
+  },
+  /* O ÚNICO QUE SE GASTA, e o prazo dele é o DIA — não um contador que
+     alguém precise zerar. `dadivas.js` já escolheu esta forma para o
+     segundo fôlego épico pelo mesmo motivo escrito lá: "é por DIA e se
+     devolve sozinho quando o dia vira". Um gasto por dia não precisa de
+     descanso que o limpe, e por isso não precisa de fiação num segundo
+     sítio do App. */
+  {
+    id: "segundo_folego", rx: /^segundo folego\b|1x por descanso: recupera parte do pv/,
+    motor: "cura", alvo: "proprio", base: 7, porNivel: 1.5, minimo: 5, porDia: true,
+    conceito: "o ar volta de onde já não havia ar",
+  },
+
+  /* ---- PORTA: tira do corpo o que foi posto nele ----
+     `porta` é o NOME declarado em `PORTAS_DE_SAIDA` (condicoes.js).
+     O alcance (quais condições saem) mora lá, não aqui: duas listas
+     para a mesma pergunta divergiriam no primeiro ajuste. */
+  {
+    id: "purificar", rx: /^purificar\b|remove condicoes ruins de um aliado/,
+    motor: "porta", porta: "Purificar", alvo: "aliado",
+    conceito: "a mão aberta sobre o outro, e o que estava posto sai",
+  },
+  {
+    id: "palavra_coragem", rx: /^palavra de coragem\b|remove medo e concede pv temporario/,
+    motor: "porta", porta: "Palavra de Coragem", alvo: "aliado",
+    conceito: "uma frase dita na altura certa, e o medo perde o lugar onde morava",
+  },
+
+  /* ---- PASSIVO: não muda a ficha; outro módulo é que o lê ----
+     `chave` é o vocabulário que o leitor consulta. Hoje há um leitor
+     só — `dobraMovimento`/`ignoraTerrenoDificil`, em dadivas.js, que
+     liam apenas a dádiva e agora leem as duas fontes. */
+  {
+    id: "passo_do_vento", rx: /^passo do vento\b|move-?se o dobro e ignora terreno dificil/,
+    motor: "passivo", chave: "movimento",
+    conceito: "o passo não encontra chão difícil: onde os outros tropeçam, ele já passou",
+  },
+];
+
+/* ---------------- O LEITOR ----------------
+   Molde exato de `guardaDe(hab)`: normaliza nome+descrição e devolve a
+   entrada ou `null`. Quem resolve é `aplicarPoder`; quem só quer saber
+   se existe regra própria é `temRegraPropria` (habilidades.js). */
+export function poderDe(hab) {
+  const t = txtDe(hab);
+  if (!t.trim()) return null;
+  return PODERES_DE_CLASSE.find((p) => p.rx.test(t)) || null;
+}
+
+/* O passivo, pela chave. Público porque quem o lê mora em outro módulo:
+   é a mesma pergunta que `ignoraDificilPorTraco` responde para a raça. */
+export function temPassivoDeClasse(pers, chave) {
+  const habs = (pers && pers.habilidades) || [];
+  if (!chave || !habs.length) return false;
+  return habs.some((h) => {
+    const p = poderDe(typeof h === "string" ? { nome: h } : h);
+    return !!p && p.motor === "passivo" && p.chave === chave;
+  });
+}
+
+/* ---------------- QUEM RECEBE ----------------
+   Herói e companheiro guardam PV e condição do mesmo jeito, então as
+   duas escolhas abaixo tratam os dois como uma lista só. A ordem é
+   sempre [herói, ...grupo] e o desempate é a posição — nada sorteia. */
+const vivo = (a) => !!a && Number(a.vida || 0) > 0;
+const naMesa = (pers) => [{ ...(pers || {}), __heroi: true }, ...(((pers || {}).grupo) || [])].filter(Boolean);
+
+function alvoCitado(pers, nome) {
+  const alvo = NORM(nome);
+  if (!alvo) return null;
+  if (NORM((pers || {}).nome) === alvo) return { heroi: true, quem: pers };
+  const g = (((pers || {}).grupo) || []).find((x) => x && NORM(x.nome) === alvo);
+  return g ? { heroi: false, quem: g } : null;
+}
+
+/* O mais ferido de pé. Caído é assunto de `reerguer`, não de cura: uma
+   cura que levanta o chão faria da Ressurreição Menor uma habilidade
+   sem razão de existir. */
+function maisFerido(pers) {
+  const lista = naMesa(pers).filter(vivo);
+  if (!lista.length) return null;
+  let melhor = null, pior = Infinity;
+  for (const a of lista) {
+    const frac = Number(a.vida || 0) / Math.max(1, Number(a.vidaMax || 0) || 1);
+    if (frac < pior) { pior = frac; melhor = a; }
+  }
+  if (!melhor || pior >= 1) return null;
+  return { heroi: !!melhor.__heroi, quem: melhor };
+}
+
+/* Quem carrega alguma das condições que a porta alcança. */
+function maisAfligido(pers, alcance) {
+  const lista = naMesa(pers).filter(vivo);
+  for (const a of lista) {
+    const tem = ((a.condicoes) || []).some((c) => c && alcance.includes(NORM(c.id || c.nome)));
+    if (tem) return { heroi: !!a.__heroi, quem: a };
+  }
+  return null;
+}
+
+const curaDe = (regra, nivel) =>
+  Math.max(Number(regra.minimo) || 1, Math.round((Number(regra.base) || 0) + (Number(regra.porNivel) || 0) * Math.max(1, Number(nivel) || 1)));
+
+const gastos = (pers) => (pers && pers.poderGastos) || {};
+
+/* ---------------- O RESOLVEDOR ----------------
+   `aplicarPoder(pers, hab, ctx)` devolve `null` quando a habilidade não
+   é desta família (a esmagadora maioria dos turnos), ou
+   `{ ok, pers, linha, nota }` — a ficha NOVA, a frase que o jogador lê
+   e a nota que proíbe o Mestre de inventar número.
+
+   O `ctx` carrega o que o módulo não pode saber sozinho, e são campos
+   SIMPLES — nunca um ref do React:
+     `dia`  (número) o dia do calendário; só o poder `porDia` o usa
+     `alvo` (texto)  o nome do aliado declarado no painel ou citado na
+                     frase; vazio quer dizer "o sistema escolhe", e a
+                     escolha é determinística (o mais ferido, depois a
+                     ordem da mesa).
+   Não pede `rodada`: nenhum poder desta tabela tem prazo. O dia em que
+   um tiver, o campo entra aqui e o App já o tem na mão. */
+export function aplicarPoder(pers, hab, ctx) {
+  /* `= {}` no destructuring NÃO cobre `null` explícito — lei da casa */
+  const { dia = 0, alvo = "" } = ctx || {};
+  const regra = poderDe(hab);
+  if (!regra || !pers) return null;
+  const nome = (hab && hab.nome) || "A habilidade";
+
+  if (regra.motor === "passivo") {
+    return {
+      ok: true, pers,
+      linha: `🌀 ${nome} — ${regra.conceito}.`,
+      nota: `[PODER DE CLASSE — JÁ VALENDO PELO SISTEMA] "${nome}": ${regra.conceito}. O sistema já conta isso no meu deslocamento — narre o corpo que atravessa o que atrasaria os outros, e não me peça teste nem invente distância.`,
+    };
+  }
+
+  if (regra.motor === "cura") {
+    if (regra.porDia && Number(gastos(pers)[regra.id]) === Number(dia)) {
+      return { ok: false, pers, linha: `⛔ ${nome}: você já recorreu a isso hoje — volta no descanso do dia.`, nota: "" };
+    }
+    const valor = curaDe(regra, pers.nivel);
+
+    if (regra.alvo === "grupo") {
+      const curados = [];
+      const curar = (a) => {
+        const antes = Number(a.vida || 0);
+        const teto = Number(a.vidaMax || 0) || antes;
+        const depois = Math.min(teto, antes + valor);
+        if (depois === antes) return a;
+        curados.push(`${a.nome} (${depois}/${teto})`);
+        return { ...a, vida: depois };
+      };
+      const heroiCurado = curar(pers);
+      const grupo = (pers.grupo || []).map((g) => (vivo(g) ? curar(g) : g));
+      if (!curados.length) return { ok: false, pers, linha: `⛔ ${nome}: ninguém aqui tem ferida para fechar.`, nota: "" };
+      const p = { ...heroiCurado, grupo };
+      return {
+        ok: true, pers: regra.porDia ? { ...p, poderGastos: { ...gastos(pers), [regra.id]: Number(dia) || 0 } } : p,
+        linha: `✚ ${nome} — ${regra.conceito}. +${valor} PV em ${curados.join(", ")}.`,
+        nota: `[CURA — APLICADA PELO SISTEMA] "${nome}" devolveu ${valor} PV a ${curados.join(", ")}. Os números já estão na ficha: narre o alívio de cada um (a respiração que volta, o corte que para de sangrar) e NÃO recalcule, não cure mais ninguém e não levante quem está caído — cura fecha ferida, não ergue do chão.`,
+      };
+    }
+
+    const escolhido = (regra.alvo === "proprio")
+      ? { heroi: true, quem: pers }
+      : (alvoCitado(pers, alvo) || maisFerido(pers) || { heroi: true, quem: pers });
+    const quem = escolhido.quem;
+    if (!vivo(quem)) {
+      return { ok: false, pers, linha: `⛔ ${nome}: ${escolhido.heroi ? "você está" : `${quem.nome} está`} no chão — isso é trabalho de quem reergue, não de quem cura.`, nota: "" };
+    }
+    const antes = Number(quem.vida || 0);
+    const teto = Number(quem.vidaMax || 0) || antes;
+    const depois = Math.min(teto, antes + valor);
+    if (depois === antes) {
+      return { ok: false, pers, linha: `⛔ ${nome}: ${escolhido.heroi ? "você está" : `${quem.nome} está`} inteiro — não há ferida para fechar.`, nota: "" };
+    }
+    const ganho = depois - antes;
+    let p = escolhido.heroi
+      ? { ...pers, vida: depois, morrendo: false }
+      : { ...pers, grupo: (pers.grupo || []).map((g) => (g === quem ? { ...g, vida: depois, morrendo: false } : g)) };
+    if (regra.porDia) p = { ...p, poderGastos: { ...gastos(pers), [regra.id]: Number(dia) || 0 } };
+    const rotulo = escolhido.heroi ? "você" : quem.nome;
+    return {
+      ok: true, pers: p,
+      linha: `✚ ${nome} — ${regra.conceito}. +${ganho} PV em ${rotulo} (${depois}/${teto}).`,
+      nota: `[CURA — APLICADA PELO SISTEMA] "${nome}" devolveu ${ganho} PV a ${rotulo}, que está com ${depois}/${teto}. O número já está na ficha: narre o corpo aceitando a cura e não o recalcule, não o estenda a mais ninguém e não invente ferida que não existia.`,
+    };
+  }
+
+  if (regra.motor === "porta") {
+    const porta = portaDeSaida(regra.porta);
+    if (!porta || !porta.resolve || !porta.remove.length) {
+      return { ok: false, pers, linha: `⛔ ${nome}: não há nada que esta mão saiba tirar.`, nota: "" };
+    }
+    const escolhido = alvoCitado(pers, alvo) || maisAfligido(pers, porta.remove.map(NORM)) || { heroi: true, quem: pers };
+    const quem = escolhido.quem;
+    const r = removerPelaPorta(quem, porta, { quem: escolhido.heroi ? "" : quem.nome });
+    if (!r.mudou) {
+      return { ok: false, pers, linha: `⛔ ${nome}: ${escolhido.heroi ? "você não carrega" : `${quem.nome} não carrega`} nada que isto alcance.`, nota: "" };
+    }
+    const saiu = r.removidas.map((c) => c.nome || c.id).join(", ");
+    const p = escolhido.heroi
+      ? { ...pers, condicoes: r.condicoes }
+      : { ...pers, grupo: (pers.grupo || []).map((g) => (g === quem ? { ...g, condicoes: r.condicoes } : g)) };
+    const rotulo = escolhido.heroi ? "você" : quem.nome;
+    return {
+      ok: true, pers: p,
+      linha: r.linha || `✚ ${nome} — ${regra.conceito}.`,
+      nota: `[CONDIÇÃO REMOVIDA PELO SISTEMA] "${nome}" tirou de ${rotulo}: ${saiu}. Já saiu da ficha — narre o corpo largando aquilo (o veneno que para de correr, a vista que volta, o medo que perde o chão) e trate ${rotulo === "você" ? "-me" : `${rotulo}`} como livre disso daqui em diante. Não devolva a condição e não role nada por ela.`,
+    };
+  }
+
+  return null;
+}
+
+/* ============================================================
+   AGUARDAM — a lista declarada, e ela SÓ ENCOLHE
+
+   A catraca desta fase, e o motivo de este arquivo não alegar mais do
+   que derruba. Cada linha é uma habilidade de classe que PROMETE na
+   ficha e FALHA na mesa, com o motivo por que ainda não cumpre e a
+   data em que entrou. Uma etapa futura tira linhas daqui; nenhuma
+   etapa pode acrescentar sem que alguém explique por escrito o que
+   quebrou.
+
+   O QUE NÃO ESTÁ AQUI, de propósito: as habilidades que são só PROSA
+   (Rastrear, Lábia, Conhecimento Vasto, Mãos Leves, Ler Auras, Falar
+   com Animais). Elas não prometem número nenhum — a ficção as resolve
+   inteiras, e contá-las como dívida inflaria a lista com trabalho que
+   não existe.
+
+   `motivo` diz por que ainda não cumpre; `desde` é o dia em que a
+   linha nasceu. Três famílias se repetem, e vale dizê-las em voz alta:
+   — "H2": o assunto tem dono provável e a medição vem antes da
+     construção (marca, zona persistente, cura por turno, clima, aura
+     reativa, contra-conjuração, PM de volta);
+   — "a régua do golpe não a vê": `HAB_OFENSIVA_RX` mora no App e
+     procura palavras de violência; "sopro elemental em cone" e
+     "sequência devastadora" não têm nenhuma, então a habilidade é
+     descartada ANTES de qualquer conta — o mesmo poço da Colheita
+     Final na v9.48, agora medido e não consertado;
+   — "força zero": a família existe e está classificada (`amortece`,
+     `nao_cai`, `intocado`), e nenhuma delas compra coisa alguma
+     ainda — é o recorte que P2 mediu e deixou escrito.
+   ============================================================ */
+export const AGUARDAM = [
+  /* ---- pedem mecânica que não existe (H2 mede antes de construir) ---- */
+  { nome: "Julgamento", classe: "Clérigo", promete: "marca um inimigo: sofre dano extra de todos", motivo: "marca é efeito preso a um ALVO, e `efeitos.js` só sabe prender efeito a quem o recebeu — H2", desde: "16/09" },
+  { nome: "Marca do Caçador", classe: "Caçador", promete: "alvo marcado sofre dano extra seu", motivo: "a mesma marca do Julgamento — H2", desde: "16/09" },
+  { nome: "Maldição do Patrono", classe: "Bruxo", promete: "marca um alvo: você causa dano extra a ele", motivo: "a mesma marca; hoje só aplica `enfraquecido` e o dano extra não sai — H2", desde: "16/09" },
+  { nome: "Círculo Sagrado", classe: "Clérigo", promete: "área protegida onde aliados curam por turno", motivo: "cura por turno E zona presa ao lugar: dois assuntos de H2 na mesma linha", desde: "16/09" },
+  { nome: "Renovação", classe: "Druida", promete: "cura o grupo por 3 turnos seguidos", motivo: "cura por turno — a cura desta porta acontece AGORA, e fingir que ela se repete seria mentir três vezes — H2", desde: "16/09" },
+  { nome: "Chamado da Chuva", classe: "Druida", promete: "altera o clima; cura leve contínua", motivo: "clima tem motor (`rolarClima`, encontros.js) e ninguém o chama por habilidade; a cura contínua é cura por turno — H2", desde: "16/09" },
+  { nome: "Coração Tempestuoso", classe: "Feiticeiro", promete: "raios orbitam você e punem quem se aproxima", motivo: "aura reativa: efeito com gatilho em quem chega perto — H2", desde: "16/09" },
+  { nome: "Contramágica", classe: "Mago", promete: "cancela a magia de um inimigo", motivo: "contra-conjuração: reagir ao ATO de conjurar, que encosta na Fase K — H2", desde: "16/09" },
+  { nome: "Contra-Canção", classe: "Bardo", promete: "anula efeitos mentais e sonoros no grupo", motivo: "metade é porta de saída (e caberia aqui), metade é contra-conjuração — a etapa que a partir em duas é H2", desde: "16/09" },
+  { nome: "Foco Interior", classe: "Monge", promete: "recupera PM meditando 1 turno", motivo: "PM de volta é recurso, e recurso tem dono (`novosRecursos`, `gastarRecurso`) — H2", desde: "16/09" },
+  { nome: "Mina Oculta", classe: "Engenheiro", promete: "arma uma armadilha explosiva no terreno", motivo: "zona persistente: efeito preso ao LUGAR, não à pessoa — H2", desde: "16/09" },
+  { nome: "Muralha de Gelo", classe: "Mago", promete: "ergue uma barreira gélida que bloqueia a passagem", motivo: "a mesma zona persistente, do lado do terreno — H2", desde: "16/09" },
+
+  /* ---- a régua do golpe não as vê (o poço da Colheita Final) ---- */
+  { nome: "Tiro Preciso", classe: "Caçador", promete: "ataque à distância com bônus de acerto", motivo: "`HAB_OFENSIVA_RX` (App.jsx) não acha palavra de violência em 'ataque à distância', e o disparo não chega a acontecer; o bônus de acerto também não tem onde entrar", desde: "16/09" },
+  { nome: "Tiro do Fim", classe: "Caçador", promete: "um único disparo devastador de longe", motivo: "a régua do golpe não a vê: 'disparo devastador' não tem palavra de dano", desde: "16/09" },
+  { nome: "Cem Punhos", classe: "Monge", promete: "sequência devastadora em um alvo", motivo: "a régua do golpe não a vê", desde: "16/09" },
+  { nome: "Sopro Herdado", classe: "Feiticeiro", promete: "sopro elemental da sua linhagem em cone", motivo: "a régua do golpe não a vê, e o cone é geometria que ninguém pede por ela", desde: "16/09" },
+  { nome: "Tempestade Viva", classe: "Feiticeiro", promete: "invoca uma tempestade que castiga a área", motivo: "a régua do golpe não a vê; 'invoca' aqui é figura, não invocação", desde: "16/09" },
+  { nome: "Barragem", classe: "Engenheiro", promete: "todas as engenhocas disparam de uma vez", motivo: "a régua do golpe não a vê, e 'todas as engenhocas' pede contar o que o herói construiu", desde: "16/09" },
+
+  /* ---- a família existe e não compra nada (força zero, medido em P2) ---- */
+  { nome: "Esquiva Ágil", classe: "Ladino", promete: "anula o dano de um ataque por turno", motivo: "família `intocado`: 18 habilidades classificadas e nenhuma com número atrás", desde: "16/09" },
+  { nome: "Defesa Fluida", classe: "Monge", promete: "desvia do próximo ataque automaticamente", motivo: "família `intocado` — força zero", desde: "16/09" },
+  { nome: "Intervenção", classe: "Clérigo", promete: "anula completamente um golpe fatal", motivo: "família `nao_cai` — força zero", desde: "16/09" },
+  { nome: "Escudo do Pacto", classe: "Bruxo", promete: "o patrono intervém e anula um golpe fatal", motivo: "família `nao_cai`; hoje só vira a condição `protegido`, que não anula golpe nenhum", desde: "16/09" },
+  { nome: "Corpo de Ferro", classe: "Monge", promete: "reduz todo dano pela metade por 2 turnos", motivo: "família `amortece`: `amortecerDano` existe e lê o traço RACIAL; abri-lo à habilidade é mudar dano recebido, que é mecânica nova", desde: "16/09" },
+  { nome: "Postura Defensiva", classe: "Guerreiro", promete: "reduz o dano recebido no próximo turno", motivo: "a mesma família `amortece` — hoje vira só a condição `protegido`", desde: "16/09" },
+  { nome: "Elixir de Combate", classe: "Engenheiro", promete: "ALIADO ganha força e vigor por 3 turnos", motivo: "é guarda desde a v9.53, mas a guarda sobe em QUEM USA: guarda em outro corpo não existe", desde: "16/09" },
+  { nome: "Muralha", classe: "Guerreiro", promete: "protege um ALIADO adjacente por 2 turnos", motivo: "o mesmo: a condição `protegido` cai em quem usou, não no aliado", desde: "16/09" },
+  { nome: "Escudo da Fé", classe: "Clérigo", promete: "protege um ALIADO de dano por 2 turnos", motivo: "o mesmo abrigo no corpo errado", desde: "16/09" },
+  { nome: "Espírito Guardião", classe: "Invocador", promete: "um espírito protege um ALIADO por 2 turnos", motivo: "o espírito nasce (é invocação), mas ele não protege ninguém em particular", desde: "16/09" },
+
+  /* ---- prometem número que nenhuma tabela sabe cobrar ---- */
+  { nome: "Punhal Certeiro", classe: "Ladino", promete: "crítico automático em alvo distraído", motivo: "crítico forçado não existe: `criticoMinimo` abaixa a régua do d20, não a dispensa", desde: "16/09" },
+  { nome: "Emboscada", classe: "Caçador", promete: "ataque surpresa com dano triplo", motivo: "não há multiplicador de dano por habilidade — só o crítico dobra", desde: "16/09" },
+  { nome: "Sangue Ardente", classe: "Feiticeiro", promete: "sacrifica PV para dobrar o dano mágico", motivo: "o mesmo multiplicador, e mais o preço em PV que ninguém cobra", desde: "16/09" },
+  { nome: "Golpe nas Juntas", classe: "Ladino", promete: "reduz a defesa do alvo permanentemente na luta", motivo: "não há como baixar a defesa de um inimigo: `defesaDe` soma, nunca subtrai", desde: "16/09" },
+  { nome: "Frasco de Ácido", classe: "Engenheiro", promete: "corrói a armadura do alvo permanentemente", motivo: "a mesma defesa que não desce; hoje só aplica `envenenado`", desde: "16/09" },
+  { nome: "Luz Sagrada", classe: "Clérigo", promete: "dano radiante, extra contra mortos-vivos", motivo: "o dano sai, o 'extra contra mortos-vivos' não: ninguém pergunta o TIPO da criatura na hora do dano", desde: "16/09" },
+  { nome: "Corrente de Raios", classe: "Mago", promete: "atinge um alvo e salta para outro", motivo: "o salto entre alvos não existe — a área acerta todos de uma vez ou um só", desde: "16/09" },
+  { nome: "Mente Serena", classe: "Monge", promete: "imune a medo e confusão por 3 turnos", motivo: "imunidade TEMPORÁRIA não existe: `imuneDeTraco` e `imuneA` são para sempre; e hoje a habilidade ainda tenta amedrontar um inimigo", desde: "16/09" },
+  { nome: "Passo Étereo", classe: "Mago", promete: "teleporte curto, escapa de cercos", motivo: "o grid sabe distância e parede, e nada move o herói por habilidade", desde: "16/09" },
+  { nome: "Passo Feérico", classe: "Bruxo", promete: "teleporte curto entre sombras ou flores", motivo: "o mesmo teleporte que não existe; hoje só vira `furtivo`", desde: "16/09" },
+  { nome: "Voo", classe: "Mago", promete: "voa livremente por vários turnos", motivo: "`funcao: voo` existe no grimório e só `usarFuncaoMagica` a chama — a habilidade de classe de mesmo nome não passa por lá", desde: "16/09" },
+
+  /* ---- meia promessa cumprida é meia dívida ---- */
+  { nome: "Palavra de Coragem", classe: "Clérigo", promete: "remove medo E concede PV temporário", motivo: "o medo sai por esta porta desde a v9.265; PV TEMPORÁRIO não existe em lugar nenhum do código — é acervo, e sai daqui no dia em que alguém o construir", desde: "16/09" },
+];

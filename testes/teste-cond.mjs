@@ -1035,38 +1035,81 @@ console.log("\n[T4 · a porta, por nome] `portaDeSaida` acha, herda e achata:");
   ok(herancasQuebradas.length === 0, `e todo \`herdaDe\` aponta para porta que existe: ${herancasQuebradas.join(", ") || "todos"}`);
 }
 
-console.log("\n[T4 · a promessa não conta como saída] Purificar e Palavra de Coragem aguardam:");
+console.log("\n[T4 · a promessa VIROU porta] Purificar e Palavra de Coragem CUMPREM:");
 {
-  /* O PONTO HONESTO DA CONTA. As duas estão DECLARADAS e não RESOLVEM: não
-     existe resolvedor de habilidade de classe nesta casa. Contá-las seria a
-     cobertura passando VERDE numa promessa — que é a doença exata que T2
-     curou no catálogo (`saiCom: ["cura"]` sem leitor). */
-  const naoResolvem = T4.portas.filter((p) => !p.resolve);
-  ok(naoResolvem.length === 2 && naoResolvem.every((p) => p.familia === "habilidade"), `as duas que não resolvem são de habilidade: ${naoResolvem.map((p) => p.nome).join(", ")}`);
-  const semAguarda = naoResolvem.filter((p) => !String(p.aguarda || "").trim()).map((p) => p.nome);
-  ok(semAguarda.length === 0, `e cada uma diz O QUE espera, por escrito: ${semAguarda.join(", ") || "as duas"}`);
+  /* ============================================================
+     ESTA SEÇÃO FOI VIRADA DO AVESSO EM 16/09 (v9.265 · H1), E A
+     PERGUNTA CONTINUA SENDO A MESMA.
+
+     A INTENÇÃO ORIGINAL (T4, v9.2xx): as duas habilidades do Clérigo
+     estavam DECLARADAS em `PORTAS_DE_SAIDA` e não RESOLVIAM, porque
+     não existia resolvedor de habilidade de classe nesta casa. A
+     seção existia para impedir a cobertura de passar VERDE numa
+     promessa — a doença exata que T2 curou no catálogo (`saiCom:
+     ["cura"]` sem leitor). O `aguarda` de Purificar nomeava, palavra
+     por palavra, o que faltava: "um resolvedor de habilidade de
+     classe — ele NÃO existe".
+
+     O QUE MUDOU NO MUNDO: ele existe. `aplicarPoder`
+     (poder-de-classe.js, v9.265 · H1), motor `porta`, lê ESTAS
+     linhas e chama `removerPelaPorta`. A dívida que estas asserções
+     marcavam foi PAGA, e por isso elas envelheceram por SUCESSO.
+
+     POR QUE NÃO FORAM APAGADAS. A pergunta que a seção faz é "a
+     conta e a remoção leem o campo `resolve` DE VERDADE, ou fingem?".
+     Essa pergunta não envelheceu — só trocou de lado. Onde se lia
+     "aguarda e não tira nada" lê-se agora "resolve, e aqui está o que
+     ela tira"; a mesma pergunta, agora exigindo o CUMPRIMENTO. E a
+     sabotagem, que era "Purificar posta a RESOLVER", virou "Purificar
+     posta a NÃO resolver" — se a cobertura não mudar quando o campo
+     muda, é porque ela nunca leu o campo, que era exatamente o que a
+     versão antiga guardava. Apagar a sabotagem teria matado a catraca
+     de T4 junto com a dívida.
+     ============================================================ */
+  const deHabilidade = T4.portas.filter((p) => p.familia === "habilidade");
+  ok(deHabilidade.length === 2 && deHabilidade.every((p) => p.resolve === true),
+    `as duas de habilidade AGORA resolvem: ${deHabilidade.map((p) => p.nome).join(", ")}`);
+  /* dívida paga não fica pendurada: o `aguarda` sai da linha no mesmo dia em
+     que o resolvedor chega. Um `aguarda` sobrando numa porta que resolve é o
+     mesmo defeito que a lista de perdão do `teste-ligacao` vigia. */
+  const aguardaSobrando = T4.portas.filter((p) => p.resolve && String(p.aguarda || "").trim()).map((p) => p.nome);
+  ok(aguardaSobrando.length === 0, `e nenhuma porta que resolve ficou com \`aguarda\` pendurado: ${aguardaSobrando.join(", ") || "nenhuma"}`);
   const cob = coberturaDasCondicoes({ porItem: REMOVIDAS_POR_ITEM });
-  ok(cob.aguardando.join(", ") === naoResolvem.map((p) => p.nome).join(", "), `a conta as devolve em \`aguardando\`, nunca em \`porta\`: ${cob.aguardando.join(", ")}`);
-  ok(cob.porHabilidade.length > 0, `…e o alcance delas fica registrado como informação (${cob.porHabilidade.join(", ")})`);
-  /* A SABOTAGEM: Purificar passando a contar como saída. A cobertura TEM de
+  ok(cob.aguardando.length === 0, `a conta não tem mais ninguém em \`aguardando\`: [${cob.aguardando.join(", ")}]`);
+  ok(cob.porHabilidade.length > 0, `…e o alcance delas está registrado na família certa (${cob.porHabilidade.join(", ")})`);
+  /* A SABOTAGEM, VIRADA: as duas postas a NÃO resolver. A cobertura TEM de
      mudar — se não mudar, é porque a conta nunca separou promessa de porta. */
   {
-    const linha = T4.portas.find((p) => p.nome === "Purificar");
-    const antes = linha.resolve;
-    linha.resolve = true;
-    let com = null;
-    try { com = coberturaDasCondicoes({ porItem: REMOVIDAS_POR_ITEM }); } finally { linha.resolve = antes; }
-    ok(com.aguardando.length === cob.aguardando.length - 1 && !com.aguardando.includes("Purificar"),
-      `posta a resolver, Purificar sai de \`aguardando\` (${cob.aguardando.length} → ${com.aguardando.length}) — a conta lê o campo de verdade`);
+    const linhas = T4.portas.filter((p) => p.familia === "habilidade");
+    const antes = linhas.map((p) => p.resolve);
+    linhas.forEach((p) => { p.resolve = false; });
+    let sem = null;
+    try { sem = coberturaDasCondicoes({ porItem: REMOVIDAS_POR_ITEM }); } finally { linhas.forEach((p, i) => { p.resolve = antes[i]; }); }
+    ok(sem.aguardando.length === cob.aguardando.length + 2 && sem.aguardando.includes("Purificar") && sem.aguardando.includes("Palavra de Coragem"),
+      `postas a NÃO resolver, as duas voltam para \`aguardando\` (${cob.aguardando.length} → ${sem.aguardando.length}) — a conta lê o campo de verdade`);
     ok(coberturaDasCondicoes({ porItem: REMOVIDAS_POR_ITEM }).aguardando.length === cob.aguardando.length, "…e a tabela volta inteira depois da sabotagem");
   }
-  /* E A PORTA QUE NÃO RESOLVE NÃO TIRA NADA. Declarada não é ligada, e a
-     função não finge que é — é a metade de comportamento da asserção acima. */
+  /* E A PORTA QUE RESOLVE TIRA DE VERDADE. É a metade de comportamento da
+     asserção acima — a que era "declarada não é ligada" e agora é "ligada
+     tira o que declarou". */
   const p = portaDeSaida("Purificar");
-  ok(p.resolve === false && p.remove.length > 0, `Purificar declara alcance (${p.remove.join(", ")}) e ainda assim não resolve`);
+  ok(p.resolve === true && p.remove.length > 0, `Purificar declara alcance (${p.remove.join(", ")}) por \`herdaDe\`, e RESOLVE`);
   const r = removerPelaPorta({ condicoes: [criarCondicao("envenenado"), criarCondicao("cego")] }, p);
-  ok(r.mudou === false && r.removidas.length === 0 && r.condicoes.length === 2,
-    "…e chamada sobre quem carrega o que ela alcança, não tira uma única condição");
+  ok(r.mudou === true && r.removidas.map((i) => i.id).sort().join(",") === "cego,envenenado" && r.condicoes.length === 0,
+    `…e chamada sobre quem carrega o que ela alcança, tira as duas: ${r.removidas.map((i) => i.id).join(", ")}`);
+  /* A SABOTAGEM DA REMOÇÃO, pelo mesmo motivo: `removerPelaPorta` também tem
+     de LER o campo, e não decorar que Purificar resolve. Chamada pelo NOME
+     de propósito — passar o objeto já resolvido driblaria a tabela. */
+  {
+    const linha = T4.portas.find((p2) => p2.nome === "Purificar");
+    const antes = linha.resolve;
+    linha.resolve = false;
+    let inerte = null;
+    try { inerte = removerPelaPorta({ condicoes: [criarCondicao("envenenado"), criarCondicao("cego")] }, "Purificar"); } finally { linha.resolve = antes; }
+    ok(inerte.mudou === false && inerte.removidas.length === 0 && inerte.condicoes.length === 2,
+      "posta a NÃO resolver, a mesma porta sobre a mesma ficha não tira uma única condição — a remoção lê o campo, não o nome");
+    ok(removerPelaPorta({ condicoes: [criarCondicao("envenenado")] }, "Purificar").mudou === true, "…e a tabela volta inteira depois da sabotagem");
+  }
 }
 
 console.log("\n[T4 · a remoção] `removerPelaPorta` tira o que a porta alcança, e nada mais:");

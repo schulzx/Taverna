@@ -204,6 +204,11 @@ import { gatilhosDe, romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, 
 import { controleDe, aplicarControle, expirarControles, estaProvocando, CONTROLE_PROMPT } from "./controle.js";
 import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, expirarPorMinuto, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, temComandoAtacar, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
 import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, temRegraPropria, erguerGuarda, expirarGuardas, baixarGuardas, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, ignoraDoGolpe, linhaDoIgnorar, notaDoIgnorar, apressar, expirarPressa, baixarPressa, acoesPorRodada, HABILIDADES_PROMPT } from "./habilidades.js";
+/* v9.265 (H1): SO `aplicarPoder`. `poder-de-classe.js` tambem exporta um
+   `poderDe`, e o nome ja esta ocupado aqui desde a v9.x pelo de `poder.js`,
+   que e outra coisa (o INDICE de poder de uma ficha). Importar os dois
+   trocaria um pelo outro calado. */
+import { aplicarPoder } from "./poder-de-classe.js";
 import { empilhar, firmarEfeito, efeitoDeBuff, efeitoDeMilagre, efeitoDeMagia, efeitoEmConcentracao, quebrarConcentracao, notaDosBuffs, absorverDano } from "./efeitos.js";
 import { agruparMensagens } from "./resumo.js";
 
@@ -7933,6 +7938,41 @@ export default function Taverna() {
     return { pers: r.pers, linha: r.linha, nota: r.nota };
   };
 
+  /* ---------------- A PORTA DA HABILIDADE DE CLASSE (v9.265 - H1) --------
+     A decima da fileira, e a que faltava. Raca tem despachante, dadiva tem,
+     magia tem, pocao tem, reliquia tem - a habilidade de classe era a unica
+     fonte de poder do jogo sem um: lida na ficha, cobrada em PM e sem
+     acontecer. Daqui so sai FIACAO. Quem decide e `aplicarPoder`
+     (poder-de-classe.js); o que o modulo nao pode saber sozinho sao dois
+     campos simples, nunca um ref do React:
+       `dia`  o dia do calendario. O unico poder desta tabela que se gasta
+              se devolve na virada do dia, e nao num contador que alguem
+              precise zerar - por isso ele nao pede segundo sitio no App;
+       `alvo` o nome de quem recebe. O painel de combate declara INIMIGO e
+              so inimigo (as pilulas saem de `combate.inimigos`), entao o
+              unico nome de ALIADO que o App tem e o que o jogador escreveu
+              na frase - e e por isso que os dois lacos passam a frase
+              adiante. Vazio quer dizer o sistema escolhe, e a escolha de la
+              e deterministica (o mais ferido, depois a ordem da mesa).
+     Nenhum numero, nenhuma frase de mundo e nenhum id de poder mora aqui. */
+  const quemFoiCitado = (pers, frase) => {
+    const sa = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const t = sa(frase);
+    if (!t) return "";
+    /* o grupo antes do heroi: quem escreve um nome na frase esta apontando
+       para outro corpo; o proprio e o que o modulo assume sem nome nenhum */
+    const naMesa = [...(((pers || {}).grupo) || []).map((g) => g && g.nome), (pers || {}).nome].filter(Boolean);
+    return naMesa.find((n) => String(n).length >= 3 && t.includes(sa(n))) || "";
+  };
+  const porHabilidadeDeClasse = (h, pers, frase) => {
+    /* nunca pode custar o turno: se esta porta estourar, o turno segue para
+       o Mestre pelo caminho normal, como se a familia nao existisse */
+    try {
+      const r = aplicarPoder(pers, h, { dia: Number(diaRef.current) || 0, alvo: quemFoiCitado(pers, frase) });
+      return r ? { pers: r.pers, linha: r.linha, nota: r.nota, ok: r.ok } : null;
+    } catch (e) { calou("poder-de-classe", e); return null; }
+  };
+
   const aplicarBuffDeHabilidade = (h, pers) => {
     const port = aflicaoDe(`${h.nome || ""} ${h.descricao || ""}`);
     if (!port || port.alvo === "alvo") return { pers, texto: "", nota: "" };
@@ -13395,12 +13435,43 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
            completa de companheiro (é o motor que já sabe agir sozinho),
            lugar no tabuleiro ao lado de quem a chamou, e prazo. O teto é
            cobrado ANTES do resto para que a recusa não custe o PM. */
-        for (const fn of [porInvocacaoEmCampo, porSacrificio, porForma, porGuarda, porPressa, porControle, porReerguer, porMetamagia, porReescrever]) {
-          const r = fn(h, pers);
+        /* v9.265 (H1) - ONDE A DECIMA ENTRA NA FILA. A invocacao e o
+           sacrificio seguem na frente: sao os dois que cobram TETO, e o teto
+           tem de ser cobrado antes de qualquer coisa acontecer. O poder de
+           classe entra logo atras deles e ANTES das familias que escrevem no
+           `combateRef` (forma, guarda, pressa, controle), porque e o unico
+           desta fileira que ainda pode RECUSAR depois de o preco ja estar
+           descontado: uma recusa que chegasse depois da pressa deixaria a
+           rodada com uma acao a mais por um turno que nao aconteceu. O buff
+           continua depois do laco inteiro, onde sempre esteve. */
+        let recusaDePoder = null;
+        for (const fn of [porInvocacaoEmCampo, porSacrificio, porHabilidadeDeClasse, porForma, porGuarda, porPressa, porControle, porReerguer, porMetamagia, porReescrever]) {
+          const r = fn(h, pers, acao);
           if (!r) continue;
+          /* A RECUSA QUE NAO COBRA (v9.265 - H1): voce ja recorreu a isso
+             hoje, ninguem aqui tem ferida para fechar. E a regua da pocao
+             cheia e a do antidoto - gastar para nada e desperdicio, nao
+             decisao, e o sistema segura antes de cobrar. So a porta nova
+             entra por aqui: a recusa da invocacao e a do sacrificio sao de
+             outra fase e seguem exatamente como sempre seguiram. */
+          if (r.ok === false && fn === porHabilidadeDeClasse) { recusaDePoder = r; break; }
           pers = r.pers;
           if (r.linha) linhas.push(r.linha);
           if (r.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${r.nota}`;
+        }
+        if (recusaDePoder) {
+          /* NESTE SITIO O PM AINDA NAO SAIU DO BOLSO - e a mesma hora em que
+             a recusa por alcance, vinte linhas abaixo, so faz `continue`: a
+             ficha viva so e gravada no fim (`mudarFicha`, depois do laco das
+             habilidades), e a recusada nao entra em `usadas`, entao se ela
+             era a unica do turno o `return` acontece antes de qualquer
+             gravacao. O que volta aqui e o bolso LOCAL, e so por causa do
+             turno com duas habilidades: sem isto, a que acontece de verdade
+             levaria junto o preco da que foi recusada. A recarga volta a
+             zero pelo mesmo motivo - habilidade que nao saiu nao esfria. */
+          pushMsgs([{ autor: "sistema", texto: recusaDePoder.linha }]);
+          pers = { ...pers, mana: Math.min(pers.manaMax || 0, (pers.mana || 0) + custo), habRecarga: { ...(pers.habRecarga || {}), [(h.nome || "").toLowerCase()]: 0 } };
+          continue;
         }
         const buffH = aplicarBuffDeHabilidade(h, pers);
         pers = buffH.pers;
@@ -13515,12 +13586,28 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       /* v9.46: o caminho da habilidade CITADA passa pelas mesmas portas que
          o do painel. Quem digita "conjuro Invocar Fera Menor" recebe a fera. */
       const linhasCit = [];
-      for (const fn of [porInvocacaoEmCampo, porSacrificio, porForma, porGuarda, porPressa, porControle, porReerguer, porMetamagia, porReescrever]) {
-        const r = fn(habCitada, pers);
+      /* v9.265 (H1): a decima entra aqui na MESMA posicao. Um sitio so e
+         meio orgao - e a pedra em que esta casa tropecou quatro vezes. */
+      let recusaCit = null;
+      for (const fn of [porInvocacaoEmCampo, porSacrificio, porHabilidadeDeClasse, porForma, porGuarda, porPressa, porControle, porReerguer, porMetamagia, porReescrever]) {
+        const r = fn(habCitada, pers, acao);
         if (!r) continue;
+        if (r.ok === false && fn === porHabilidadeDeClasse) { recusaCit = r; break; }
         pers = r.pers;
         if (r.linha) linhasCit.push(r.linha);
         if (r.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${r.nota}`;
+      }
+      if (recusaCit) {
+        /* E AQUI A DEVOLUCAO E NAO GRAVAR (v9.265 - H1). Vinte linhas abaixo
+           a recusa por alcance DEVOLVE o PM com `mudarFicha`, e devolve
+           porque naquele ponto o desconto ja foi gravado e anunciado. Aqui
+           nao: `pers` ainda e a copia local, o `mudarFicha` deste caminho so
+           vem depois do laco, e chamar a devolucao agora daria PM que
+           ninguem chegou a tirar. Sair antes e o que este sitio ja faz com a
+           mana insuficiente e com a recarga - a habilidade nao sai, o turno
+           nao vai ao Mestre, e o bolso fica como estava. */
+        pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: recusaCit.linha }]);
+        return;
       }
       const buffC = aplicarBuffDeHabilidade(habCitada, pers);
       pers = mudarFicha(() => buffC.pers);

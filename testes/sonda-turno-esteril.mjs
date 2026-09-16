@@ -203,7 +203,7 @@ L(`  e o Mestre também se cala: ${SESSAO_A_PELA_FRASE.chamadasAoNarrador} chama
    O FUNIL DO COMBATE — quem tem voz, e de que tipo
    ============================================================ */
 barra();
-L("O FUNIL DO COMBATE — os chamadores de pushMsgs (App.jsx:7499)");
+L("O FUNIL DO COMBATE — os chamadores de pushMsgs (App.jsx:7504)");
 barra();
 const fun = contarFunil(), rec = contarRecusas(), nasce = vozQueNasceNoModulo();
 L(`\n  funções que falam no turno de combate: ${fun.funcoes}`);

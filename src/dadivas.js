@@ -30,6 +30,7 @@
 
 import { DADIVAS_EPICAS } from "./regras.js";
 import { estaSintonizado } from "./sintonia.js";
+import { temPassivoDeClasse } from "./poder-de-classe.js";
 
 export function dadivaPorId(id) { return DADIVAS_EPICAS.find((d) => d.id === id) || null; }
 
@@ -105,8 +106,13 @@ export function temVantagemMental(pers) { return algum(pers, "vantagemMental"); 
    o deslocamento é orçamento em metros. O que a Dádiva dos Passos Longos faz
    é DOBRAR esse orçamento e ignorar terreno difícil, que é o que ela sempre
    disse ("move-se o dobro e ignora terreno difícil"). */
-export function dobraMovimento(pers) { return somar(pers, "movimento") >= 2; }
-export function ignoraTerrenoDificil(pers) { return somar(pers, "movimento") >= 2; }
+/* v9.265 (H1): AS DUAS PASSAM A LER DUAS FONTES. O motor estava pronto e
+   genérico desde a v9.34, e lia só a dádiva — enquanto "Passo do Vento"
+   (Monge nv2) prometia, na descrição, exatamente a mesma frase: "move-se o
+   dobro e ignora terreno difícil". Não é mecânica nova: é o mesmo número,
+   com uma segunda origem, como `ignoraDificilPorTraco` já é para a raça. */
+export function dobraMovimento(pers) { return somar(pers, "movimento") >= 2 || temPassivoDeClasse(pers, "movimento"); }
+export function ignoraTerrenoDificil(pers) { return somar(pers, "movimento") >= 2 || temPassivoDeClasse(pers, "movimento"); }
 
 /* Crítico: 20 é o padrão do d20; a Sorte Impossível abaixa a régua para 19.
    Devolve o MENOR entre os concedidos — se um dia houver duas fontes, a

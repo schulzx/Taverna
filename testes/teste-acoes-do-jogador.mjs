@@ -342,9 +342,11 @@ sec("4. a definição operacional de 'número que muda'");
   const relogio = NAO_CONTA_COMO_NUMERO.find((x) => /relógio/.test(x.o));
   t("o relógio de 45 min está excluído", !!relogio);
   t("e o porquê da exclusão está escrito", !!relogio && /por construção/.test(relogio.porque));
-  /* O NÚMERO DA LINHA MUDOU DE NOVO, A EXCLUSÃO NÃO. Era `12959` em X1 e
-     `13161` em X2; hoje o `avancarMinutos(MINUTOS_POR_TURNO)` está em
-     `13290` — o App cresceu por baixo dele outra vez. Trocado aqui pela
+  /* O NÚMERO DA LINHA MUDOU DE NOVO, A EXCLUSÃO NÃO. Era `12959` em X1,
+     `13161` em X2 e `13290` até a v9.262; hoje o
+     `avancarMinutos(MINUTOS_POR_TURNO)` está em `13330`, porque H1 abriu a
+     porta das habilidades de classe e somou linhas acima dele — o App
+     cresceu por baixo dele outra vez. Trocado aqui pela
      mesma razão de sempre (uma régua que aponta a linha errada ensina a
      desconfiar dela) e, DESTA VEZ, com catraca: o dente 8 de
      `check-acoes-do-jogador.mjs` passou a re-derivar a linha do código,
@@ -352,7 +354,7 @@ sec("4. a definição operacional de 'número que muda'");
      O que esta asserção guarda nunca foi o número, e sim que a exclusão
      venha com ENDEREÇO — é por ele que X4 confere que o relógio ainda
      avança sozinho antes de repetir a conta. */
-  t("e aponta a linha que avança o relógio", !!relogio && /13290/.test(relogio.porque));
+  t("e aponta a linha que avança o relógio", !!relogio && /13330/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -436,7 +438,7 @@ sec("6. as duas travas do ataque por texto");
 sec("7. os seis literais do painel que não casam leitor nenhum");
 {
   /* medido contra o catálogo real: `lerAcao` é o mesmo leitor que o
-     adjudicador usa (src/App.jsx:15624 → veredictoDaAcao) */
+     adjudicador usa (src/App.jsx:15664 → veredictoDaAcao) */
   const ctx = { personagem: { nivel: 3, atributos: {}, pericias: {} }, semente: "x1", lugar: "taverna",
     emCombate: false, tentativas: {}, dia: 1, pessoaDe: () => null, fama: 0,
     ehPessoaConhecida: () => false, achadoDe: () => null };
@@ -528,7 +530,7 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
     f.voz.frase > 0 && f.voz.telegrama > 0, JSON.stringify(f.voz));
   t("o telegrama do golpe do jogador está declarado como telegrama",
     FUNIL_DO_COMBATE.find((x) => x.fn === "aplicarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:11920").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:11960").voz === "telegrama");
   t("a maior boca do funil é `resolverRevide`, com 29 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 29);
   t("toda função do funil declara anel, endereço e ao menos uma linha",
@@ -609,13 +611,17 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
     S.semNumero / S.turnos === 1 && S.semLinha / S.turnos === 0);
   t("e a recusa da sessão A é da família `alcance`", S.familiaDaRecusa === "alcance");
   t("a família `alcance` tem literal declarado em aplicarGolpeDoJogador",
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:11870" && x.familia === "alcance"));
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:11910" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
      que a IA teve chance de narrar e não narrou. */
   t("o Narrador não é chamado nos sete turnos", S.chamadasAoNarrador === 0);
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /11932/.test(S.ondeSai));
+  /* o endereço do `enviar` era `11932` até a v9.262 e hoje é `11972`: H1
+     abriu a porta das habilidades de classe e somou linhas acima dele. O que
+     esta asserção guarda nunca foi o número — é que o porquê do silêncio
+     venha com ENDEREÇO, para que a próxima medição possa conferi-lo. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /11972/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

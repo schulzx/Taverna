@@ -85,6 +85,26 @@ export const CONTROLES = [
     modo: "provocar", turnos: 2,
     conceito: "a cena inteira vira sua, e ninguém consegue olhar para outro lugar",
   },
+  /* v9.265 (H1): as duas de CLASSE que já eram controle e não tinham linha.
+     "Provocação — força o inimigo a atacar você" é a definição de `provocar`,
+     escrita em `classes.js` desde sempre e resolvida em lugar nenhum: o
+     Guerreiro pagava 2 PM e o inimigo continuava batendo em quem quisesse.
+     "Melodia Confusa — inimigo ataca aliado dele por 1 turno" é `virar` com
+     outro nome.
+
+     O PREÇO DOS PRAZOS. A Provocação é de nível 2 e custa 2 PM, então dura
+     UM turno — Palco Aberto dura dois e é de outra árvore, mais cara e mais
+     alta. A Melodia dura o que a própria descrição diz: um turno. */
+  {
+    id: "provocacao", rx: /^provocacao\b|forca o inimigo a atacar voce/,
+    modo: "provocar", turnos: 1,
+    conceito: "um insulto na medida certa, e a raiva dele escolhe o alvo sozinha",
+  },
+  {
+    id: "melodia_confusa", rx: /melodia confusa|inimigo ataca aliado dele/,
+    modo: "virar", quantos: 1, turnos: 1,
+    conceito: "a nota errada entra no ouvido, e por um instante ele não sabe mais de que lado está",
+  },
 ];
 
 export function controleDe(hab) {

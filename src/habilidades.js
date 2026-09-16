@@ -29,6 +29,8 @@
    o código não sustenta.
    ============================================================ */
 
+import { poderDe } from "./poder-de-classe.js";
+
 const NORM = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 const txtDe = (h) => NORM(`${(h && h.nome) || ""} ${(h && h.descricao) || ""}`);
 
@@ -457,6 +459,17 @@ export const PRESSAS = [
   { id: "mais_rapido_olho", rx: /mais rapido que o olho|age duas vezes por rodada/, acoes: 2, turnos: 4, conceito: "o corpo termina o gesto antes de o olho começar a ver" },
   { id: "forma_conjunta",   rx: /forma conjunta|ataques dobrados por quatro turnos/, acoes: 2, turnos: 4, conceito: "você e a fera viram uma criatura só, com dois pares de garras" },
   { id: "instante_roubado", rx: /instante roubado|age duas vezes neste turno/,       acoes: 2, turnos: 1, conceito: "um instante subtraído do mundo, e só você o gasta" },
+  /* v9.265 (H1): as duas de CLASSE que prometiam a mesma coisa e não tinham
+     linha. "Ataca duas vezes no mesmo turno" e "dispara duas flechas no mesmo
+     turno" são a promessa desta tabela escrita com outras palavras — e o
+     degrau delas é uma linha aqui, não um motor novo em outro arquivo.
+
+     O PRAZO É UM TURNO, e a diferença com as três de cima é o que as separa:
+     Mais Rápido que o Olho e Forma Conjunta dizem "por quatro turnos" com
+     todas as letras; estas duas dizem "no mesmo turno", e dar-lhes quatro
+     seria dar de graça o que custa nível 6 e nível 9 nas outras árvores. */
+  { id: "ataque_duplo", rx: /^ataque duplo\b|ataca duas vezes no mesmo turno/,        acoes: 2, turnos: 1, conceito: "o segundo golpe sai antes de o primeiro terminar de cair" },
+  { id: "tiro_duplo",   rx: /^tiro duplo\b|dispara duas flechas no mesmo turno/,      acoes: 2, turnos: 1, conceito: "duas flechas na corda, e a segunda parte antes de a primeira chegar" },
 ];
 
 export function pressaDe(hab) {
@@ -505,10 +518,14 @@ export function baixarPressa(pers) {
    arquivo, e a pergunta certa é "este herói tem alguma habilidade que
    passa por aqui?". A função mora AO LADO dos leitores de propósito:
    quem acrescentar uma sétima família amanhã acrescenta uma linha aqui
-   sem sair do arquivo, e a porta não fica devendo. */
+   sem sair do arquivo, e a porta não fica devendo.
+
+   v9.265 (H1): a sétima família chegou, e é o PODER DE CLASSE. A seta
+   aponta daqui para `poder-de-classe.js` e nunca ao contrário — é por
+   isso que aquele arquivo não importa este. */
 export function temRegraPropria(pers) {
   const habs = (pers && pers.habilidades) || [];
-  return habs.some((h) => !!(guardaDe(h) || formaDe(h) || limiarDe(h) || pressaDe(h) || ignoraDoGolpe(h) || reerguerDe(h) || metamagiaDe(h) || ehReescrever(h)));
+  return habs.some((h) => !!(guardaDe(h) || formaDe(h) || limiarDe(h) || pressaDe(h) || ignoraDoGolpe(h) || reerguerDe(h) || metamagiaDe(h) || ehReescrever(h) || poderDe(h)));
 }
 
 export const HABILIDADES_PROMPT = `HABILIDADES DE REGRA PRÓPRIA (v9.54 — o sistema resolve, você narra):

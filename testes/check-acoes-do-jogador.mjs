@@ -262,10 +262,10 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
   if (iPush < 0) {
     falha("não achei a declaração de `pushMsgs` em src/App.jsx",
       "o funil das linhas mudou de forma ou de nome. Reveja o cabeçalho do bloco 6 de testes/acoes-do-jogador.mjs e re-meça FUNIL_DO_COMBATE — sem o funil, o eixo da frase não tem o que contar");
-  } else if (iPush + 1 !== 7499) {
-    falha(`pushMsgs saiu de src/App.jsx:7499 e agora está em :${iPush + 1}`,
+  } else if (iPush + 1 !== 7504) {
+    falha(`pushMsgs saiu de src/App.jsx:7504 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:7499, como o mapa de X3b diz");
+  } else ok("pushMsgs segue em src/App.jsx:7504, como o mapa de X3b diz");
 
   let divergiu = 0;
   for (const f of FUNIL_DO_COMBATE) {

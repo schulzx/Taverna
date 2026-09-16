@@ -31,8 +31,19 @@ export const PORTADORES = [
   /* Estes dois vêm ANTES dos debuffs de propósito: "Grito de Guerra" e
      "Postura Defensiva" são buffs, mas casariam com "grito" (terror) e
      "guarda" se a ordem fosse outra. A primeira linha que casa vence. */
-  { id: "inspiracao", re: /grito de guerra|inspir|canção|cancao|hino|balada|arenga|estandarte|brado/i,          cond: "inspirado",  alvo: "aliados", chance: 1, dif: 0 },
-  { id: "guarda",     re: /postura defensiv|defensiv|escudo|barreira|prote[çc]|muralha|couraça|couraca|égide|egide|aparar|bloquei|reduz o dano/i, cond: "protegido", alvo: "proprio", chance: 1, dif: 0 },
+  /* v9.265 (H1): três frases de habilidade de CLASSE que prometiam vantagem
+     ao grupo e não abriam condição nenhuma — "Cria abertura: aliado ganha
+     vantagem" (Distração), "aliados próximos ganham eco do seu poder"
+     (Ressonância) e "empresta poder do pacto a um aliado" (Dádiva Sombria).
+     As três entram como FRASE INTEIRA, não como palavra solta: "abertura",
+     "eco" e "empresta" sozinhos casariam com meia dúzia de golpes e com a
+     descrição de criatura, e um falso positivo aqui inspira o grupo inteiro
+     porque um zumbi arrombou uma porta. */
+  { id: "inspiracao", re: /grito de guerra|inspir|canção|cancao|hino|balada|arenga|estandarte|brado|cria abertura|eco do seu poder|empresta poder/i,          cond: "inspirado",  alvo: "aliados", chance: 1, dif: 0 },
+  /* v9.265 (H1): "Armadura Sombria — trevas protetoras envolvem o corpo" tem
+     a palavra "protetoras", que NÃO casa com `prote[çc]` (é "protet", não
+     "protec"). Um nível 1 de Bruxo prometia abrigo e entregava a linha. */
+  { id: "guarda",     re: /postura defensiv|defensiv|escudo|barreira|prote[çc]|trevas protetoras|muralha|couraça|couraca|égide|egide|aparar|bloquei|reduz o dano/i, cond: "protegido", alvo: "proprio", chance: 1, dif: 0 },
 
   { id: "concussao",  re: /atordo|concuss|maça|maca de|martelo|marreta|clava|pancada|trov[aã]o|estrondo|cabeçada/i,          cond: "atordoado",  alvo: "alvo", chance: 0.35, dif: 1 },
   { id: "paralisia",  re: /paralis|petrific|basilisco|medusa|estase|entorpec/i,                                             cond: "paralisado", alvo: "alvo", chance: 0.35, dif: 1 },
@@ -60,7 +71,17 @@ export const PORTADORES = [
   { id: "bencao",     re: /bênção|bencao|abençoa|abencoa|consagra|graça divina|milagre menor|oração|oracao/i, cond: "abencoado",  alvo: "aliados", chance: 1, dif: 0 },
   { id: "furia",      re: /fúria|furia|frenesi|enfurec|berserk|sanha/i,                                       cond: "enfurecido", alvo: "proprio", chance: 1, dif: 0 },
   { id: "pressa",     re: /pressa|acelera|velocidade|ligeireza|ímpeto|impeto|passo rápido|passo rapido/i,      cond: "apressado",  alvo: "proprio", chance: 1, dif: 0 },
-  { id: "sombra",     re: /furtiv|sombra|invisib|silencios|camufla|espreita/i,                                cond: "furtivo",    alvo: "proprio", chance: 1, dif: 0 },
+  /* v9.265 (H1): `invisib` não casa com "invisível" — é "invisív". "Desaparecer
+     — sai de combate e fica invisível por 1 turno" passava batido pelos dois
+     lados da alternância, e o Ladino de nível 6 sumia só na frase.
+
+     E A ALTERNATIVA É "FICA INVISÍVEL", NÃO "INVISÍVEL". A varredura do acervo
+     mostrou o preço da palavra solta: um `invisiv` cru transformava em
+     esconderijo do próprio conjurador seis coisas que não escondem ninguém —
+     "Cortes INVISÍVEIS atingem todos em linha" (um ataque), "Ver o Invisível",
+     "Detectar Magia", "Porta Dimensional", "Olho Arcano" e "Não Pisco" (que
+     ENXERGA invisíveis). Quem fica invisível diz que FICA. */
+  { id: "sombra",     re: /furtiv|sombra|invisib|fica invis[ií]vel|silencios|camufla|espreita/i,              cond: "furtivo",    alvo: "proprio", chance: 1, dif: 0 },
   { id: "vigor",      re: /fortalec|força bruta|forca bruta|potenciali/i,                                     cond: "fortalecido", alvo: "proprio", chance: 1, dif: 0 },
 ];
 
