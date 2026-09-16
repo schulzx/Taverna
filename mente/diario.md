@@ -16,7 +16,7 @@ Formato:
 
 ---
 
-## 16/09 02:25 · v9.261 · X3b · o que a voz da casa cobre · commit `PENDENTE`
+## 16/09 02:25 · v9.261 · X3b · o que a voz da casa cobre · commit `30a6b3d`
 
 - **estado inicial:** HEAD `4221f16`, VERSÃO **v9.260** lida do arquivo (a
   outra mente a bumpou em E2 durante este ciclo; bumpei para **v9.261** em
