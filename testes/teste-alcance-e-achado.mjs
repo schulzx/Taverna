@@ -51,7 +51,12 @@ sec("2. SÓ A ÁREA SE MIRA");
   /* mas o ALCANCE continua à vista: é ele que responde "daqui eu acerto?",
      e tirar a mira sem mostrar o alcance trocaria um engano por um escuro */
   t("o alcance da habilidade aparece mesmo sem mira", /!mirando && alcanceMira && alcanceMira\.quadrados/.test(GRADE));
-  t("com contorno próprio, sem disputar com o véu do passo", /<Contorno linhas=\{contorno\(alcanceMira\.quadrados\)\} cor=\{T\.violet\}/.test(GRADE));
+  /* o token mudou de violet para violetSoft, e a asserção segue o token: o
+     tracejado dava 2,575:1 contra o pior chão do tabuleiro e reprovava a WCAG
+     2.1 SC 1.4.11 (3:1, AA); com violetSoft dá 4,432:1 aqui. O que esta linha
+     prova continua intacto — que o alcance sai como CONTORNO próprio, e não
+     pintando o chão em disputa com o véu do passo. Só a tinta trocou. */
+  t("com contorno próprio, sem disputar com o véu do passo", /<Contorno linhas=\{contorno\(alcanceMira\.quadrados\)\} cor=\{T\.violetSoft\}/.test(GRADE));
   t("e a tarja diz o alcance em metros", /alcanceMira\.nome\} alcança \{metrosTxt\(alcanceMira\.alcanceM\)\} m/.test(GRADE));
 }
 

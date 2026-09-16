@@ -3498,3 +3498,205 @@ nova:**
 `124:3333`; apagados `124:2`, `124:3328`) · `A casa` `18:31` (novo `125:177`;
 consertado `18:7`) · página `W1 · o verbo armado` `125:3486`, com os quadros
 `126:2` (*o par comparável*) e `128:3489` (*alcançável não é alvo*).
+
+---
+
+# O segundo emprego — a fala, as quatro frases e o violeta (W2 · 16/09)
+
+**O campo não muda de emprego: ganha um.** O `jogo` compôs o momento em
+`mente/w2-jogo.md`; o `desenho` mediu a forma em `mente/w2-desenho.md`.
+
+**Regra da fase, e ela é a notícia: nenhuma peça nova, nenhuma variante nova,
+nenhum token novo.** `Campo` fica em 12, `Consequencia` fica como está, `T` fica
+com as suas 14 cores. A etapa inteira coube no que já existia.
+
+## O campo fica exactamente como está — e o convite é o momento
+
+`Campo` · `133:90` · **12 variantes, intocadas.** `a dica` já é propriedade TEXT
+(padrão `Fale, aja, explore…`), `Tom` é *o que está armado*
+(Neutro · Âmbar=milagre · Violeta=habilidade · Erro), `Estado` é
+Repouso · Foco · Desativado.
+
+**O quinto estado do `placeholder` foi redigido, medido — `O que você faz? A voz
+alcança.`, 30 caracteres contra os 35 da dica mais longa que embarca — e
+RECUSADO.** Quatro razões, e a segunda é a que manda:
+
+1. o `jogo` já pôs `A voz alcança.` na linha do veredito, e a mesma frase em dois
+   sítios são **duas verdades sobre a mesma coisa** (a lei que tirou o `<title>`
+   em E2);
+2. > **o `placeholder` apaga-se no primeiro caractere digitado.** Um convite a
+   > falar que morre quando a fala começa é um convite que não se pode reler — e
+   > o momento em que se precisa de o reler é a meio da frase.
+3. **o eixo `Tom` já significa uma coisa.** Convidar pela borda pedia um quinto
+   `Tom`, e o eixo passaria a dizer *o que está armado* **e** *em que rodada
+   estamos*. E quem reaproveitasse `Tom=Erro` pagava **19 px** de empurrão
+   (72 px contra os 53 das outras nove) no instante em que o jogador olha para o
+   tabuleiro — o defeito do *Impedido* de E1, pela terceira vez;
+4. **o convite já lá está, e está sempre:** a dica de repouso começa por
+   **"Fale"**.
+
+**O que torna o momento legível não é uma palavra — é o que está apagado à volta
+dela.** Na rodada da recusa, `Atacar` vem `disabled` (`:20877`, `:20880`), o véu
+está no máximo, e **o campo é o único controlo da tela que não foi recusado nem
+gasto.** *O convite é a ausência de alternativa, não um anúncio* — é a forma mais
+dura de "o sistema não fala de si mesmo".
+
+**Dívida de peça, declarada:** o padrão de `a dica` na peça é `Fale, aja,
+explore…` e o código diz `O que você faz? Fale, aja, explore…`. **A peça perdeu a
+pergunta.** Não foi corrigida: `Campo` está por baixo de composições que o `jogo`
+não reviu.
+
+## A linha do veredito e o chat são DUAS regiões, e andavam a ser uma
+
+| | **a linha do veredito** | **o chat** |
+|---|---|---|
+| quando | **antes** do clique | **depois** do facto |
+| onde | `App.jsx:20909` | `pushMsgs` |
+| tipografia | `tv-mono` 10 px, `minHeight: 24` | prosa, largura da conversa |
+| teto | **54** | **nenhum**, quebra |
+
+> **O golpe, o passo e a reação não partilham a linha do veredito: partilham o
+> CHAT.** O molde da poção escreve em `pushMsgs` (`:19575`). A fala tem uma linha
+> em cada região: *"a voz alcança"* é veredito, *"o bandido hesita"* é desfecho.
+
+**E a linha do veredito NÃO vive sempre na árvore.** Ela está dentro de
+`{acoesAbertas && …}` (`:20840`), e `acoesAbertas` nasce `false` (`:4896`) sem
+nada que a abra sozinha — **contra o comentário de `:20900`, que diz o
+contrário.** *Um veredito que depende de o jogador abrir uma gaveta não é um
+veredito antes do clique.* É de W3, e fica com endereço.
+
+### O glifo do chat nomeia o ASSUNTO, nunca o veredito
+
+É a gramática não escrita de 97 glifos em uso: `⚔` golpe · `📏` distância ·
+`👣` passo · `🎲` dado · `☠` morte · `⏳` o relógio do turno.
+
+> **A fala é `💬`** — livre no chat (a única ocorrência no `src/` é
+> `missoes.js:109`, ícone de tipo de missão), e **irmão do `IconeBalao` que a
+> caixa já usa** (`:21552`). *A linha que o campo produziu usa a marca do campo.*
+> Vale também para a recusa da segunda fala da rodada (`💬`, não `⏳`: o assunto
+> é a fala, não o relógio).
+
+### A segunda linha do veredito custa 6 px e ZERO casas
+
+Uma linha de mono 10 px ocupa 24 px; duas ocupam 30 (E2). **W1 já tinha reservado
+esses 6 px para a linha da desistência e recusou-lha no telefone** (71 → 77 px,
+e o degrau está em 75/76: 7 casas).
+
+> **Não colidem, por construção: a desistência só existe com um verbo ARMADO; a
+> voz só existe com o golpe RECUSADO — e um verbo recusado não se arma.**
+
+E na rodada da recusa **não há fila de pílulas** (nada está armado, não há alvos):
+a região pede **30 px** dentro dos **71 que W1 reserva pelo pior caso**, com
+41 px de folga. *A reserva única pelo pior caso paga esta etapa sem negociação.*
+A segunda linha é `Consequencia` *Forma=Linha*, **`Tom=Estado`** — a de cima já é
+o `Impedimento`, e a de baixo é o que **não** está impedido.
+
+## As quatro frases do golpe — `LINHAS_DO_GOLPE`, e ela mora em `golpe.js`
+
+**Três das quatro transbordam hoje, e a pior transborda com um nome de ZERO
+caracteres, por 8** (62 de custo fixo contra 54). **Aparar o nome não a salva.**
+
+> ### A lei de W1 (*"o nome é o único campo que se apara"*) é sobre TRUNCAR. O que esta frase precisa é de ser REDIGIDA — e são coisas diferentes: *aparar* é cortar um facto que a frase decidiu dizer; *redigir* é a frase decidir dizer menos factos.
+
+**A gramática, e ela é a decisão — não as frases:**
+
+> ### `{nome} a {distância} m — {veredito}.`
+>
+> Três das quatro partilham-na, e **só muda o que vem depois do travessão**: o
+> jogador aprende uma forma e passa a ler só a cauda. A quarta é excepção porque
+> não há alvo de que dizer distância.
+
+Teto **54** (E2) · pior nome das tabelas **18** (`Sentinela Blindada`, conferido
+pelos dois em varreduras independentes) · pior número de `metrosTxt` **4**
+(`10,5`, `grid.js:50`).
+
+| id | a frase | fixo | sobra p/ nome | pior caso |
+|---|---|---|---|---|
+| `semAlvo` | `Ninguém de pé ao seu alcance.` | **29** | — | 29 |
+| `distancia` | `{n} a {d} m — faltam {f} m.` | **26** | 28 | **44** |
+| `parede` | `{n} a {d} m — parede, contorne.` | **29** | 25 | **47** |
+| `aoAlcance` | `{n} a {d} m — ao alcance.` | **23** | 31 | **41** |
+
+**Cai a ordem, nunca o número e nunca o nome** (contrato do `jogo`) — com uma
+excepção medida: **`contorne` fica.** `App.jsx:1121` escreve porquê — *"andar
+resolve a distância e não resolve a parede"* —, e sem ela o reflexo depois de ler
+metros é andar a direito contra a pedra. **E a parede GANHA um número que hoje
+não tem:** contornar 3 m e contornar 20 m são decisões diferentes.
+
+**A casa é `src/golpe.js`, não `estilo.js`.** O cabeçalho de `estilo.js` recusa-a
+sozinho: a folha saiu de `constantes.js` para não ter *"duas mesas diferentes no
+mesmo balcão"*, e **não importa nada, de propósito** — a tabela precisa de
+`metrosTxt`. E `App.jsx:1106` já diz que quem mede é `golpe.js`; a única razão
+escrita para as funções viverem no App é *"fora do corpo que renderiza"*.
+**Um varredor não lê JSX; lê isto.** `recusaDoGolpe`, `linhaDoGolpe` e
+`maisPertoAoAlcance` mudam de casa inteiras, e **o aparo mora na tabela, nunca na
+tela.**
+
+**A catraca, cinco asserções, e as cinco lêem a tabela de volta:** o `fixo`
+declarado bate com a própria frase · `fixo + 18 ≤ 54` · os 27 nomes do bestiário
+cabem · um nome sintético de 200 cabe e acaba em `…` · **nenhum nome de ≤ 25 é
+aparado**.
+
+> **O teto de nome na fonte não é condição** — a entrada mais apertada só apara
+> acima de **25**, e o máximo das tabelas é 18. Subscreve-se na mesma, com
+> número: **`limpar(nome, 24)`**, que é o maior que nunca faz o aparo morder.
+
+## O violeta da mira — e 74 % não chega
+
+**O número herdado (2,689 a 60 %) foi medido contra `T.bg` NU.** O contorno corre
+na fronteira da união, e por baixo dele há chão mais claro: a faixa de região
+(`:559`), a **cobertura** (`:573`) e o traço da lama (`:572`).
+
+| a linha | chão nu | **cobertura + faixa** | a lama |
+|---|---|---|---|
+| hoje — `T.violet` @ 60 % | 2,679 | **2,575** | 1,892 |
+| **@ 74 %** — o número da pauta | 3,485 | **3,235** | 2,187 |
+| **`T.violetSoft` @ 60 %** | 3,781 | **3,615** | 2,623 |
+| `T.amber` @ 60 % (o passo) | 3,847 | 3,662 | 2,682 |
+
+> ### 74 % dá **3,235** contra o pior chão inteiro: passa a norma (**WCAG 2.1 SC 1.4.11**, 3:1) e **falha o piso da casa (3,272)** por 0,037. E 75 % passaria por 1,5 % — exactamente o *"degrau mais baixo que passa"* que o `lineStrong` recusou por escrito.
+>
+> ### A correcção não é opacidade. É o token: `T.violet` → **`T.violetSoft`** em `grade-de-batalha.jsx:611` e `:619`. Uma palavra em cada linha. **2,575 → 3,615** (+40 %), e `:619` de 3,034 → 4,432.
+
+**A opacidade não se toca e o âmbar não se toca** (3,662, já passa os dois pisos).
+Três ganhos que não são acessibilidade:
+
+- **`T.violetSoft` já é a cor da mira** (`:641-643`, e a legenda em `:837`).
+  Hoje o anel da mira e o contorno do alcance dela falam em **dois roxos
+  diferentes**;
+- **as duas línguas do tabuleiro ficam iguais em força**: hoje a mira é **42 %
+  mais fraca** que o passo (2,575 contra 3,662); depois, 1,3 % de diferença.
+  *Um tabuleiro que fala duas línguas não pode dizer uma delas mais baixo;*
+- **a regra que fica:** `violet` é tinta de **superfície** (corpo, borda, sobre
+  `panel`); **`violetSoft` é tinta de traço sobre o tabuleiro.**
+
+### A lama, e ela NÃO é do violeta — dívida com número
+
+Falha para os dois quase igual (**2,623** violetSoft · **2,682** âmbar), em
+**14,0 %** do comprimento da fronteira (largura 0,07 / passo 0,5), e só onde ela
+faz aresta com terreno difícil. **Nenhuma alfa a cura:** a 0,12 o contorno ainda
+mede 3,265 e a lama já desapareceu (**1,171:1** contra o chão). Escurecer a cor
+faz o mesmo.
+
+> **A correcção completa é uma ORLA:** uma segunda linha sob o `Contorno`
+> (`:201`), em `T.bg`, a 1,6× a largura — a solução de cartografia para uma linha
+> que atravessa terrenos. A cor adjacente passa a ser sempre `T.bg` e o rácio é
+> **3,781 em todo o tabuleiro**, para os dois contornos e para o `danger`.
+> **Não é deste ciclo** (toca o `Contorno`, logo toca tudo de uma vez), e fica
+> escrita para ninguém a redescobrir.
+
+## O que W2 deixa para quem constrói
+
+1. **`LINHAS_DO_GOLPE` + `TETO_DA_LINHA` + o aparo em `src/golpe.js`**, e as três
+   funções mudadas de casa. Catraca em `testes/teste-golpe.mjs`.
+2. **`T.violet` → `T.violetSoft`** em `grade-de-batalha.jsx:611` e `:619`.
+3. **`💬`** para a linha da fala e para a recusa da segunda fala da rodada.
+4. **A segunda linha do veredito**, `Consequencia` *Forma=Linha* · *Tom=Estado*,
+   dentro dos 71 px já reservados.
+5. **O campo não se toca.**
+
+**No Figma (`e5wJUzInAssoebx5npssKc`):** página `W2 · o segundo emprego`
+`136:2`, com `136:3` (*a quinta dica — e é só uma dica*), `136:28` (*as quatro
+frases contra o teto de 54*, com a régua de 324 px) e `137:16` (*o violeta da
+mira — 2,575 → 3,615*, seis células sobre os três chãos reais). `Campo`
+`133:90` foi **lido e não tocado**.

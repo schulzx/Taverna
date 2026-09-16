@@ -42,6 +42,93 @@ uma razão que não é de importância: **as três têm número corrido hoje, em
 sobre o código de hoje** — e duas delas foram medidas pelos dois seniores em
 separado, com resultados que batem.
 
+**E duas nasceram em W2 (16/09)**, marcadas *(W2)*, e estão **no topo** porque
+são as duas metades da mesma coisa e **cada senior trouxe uma sem ver a do
+outro**: o `jogo` deu à fala uma **consequência**, o `desenho` deu-lhe uma
+**forma**. Separadas, cada uma é meia proposta — a do `jogo` sem a do `desenho`
+é um efeito que o jogador não vê chegar; a do `desenho` sem a do `jogo` é um
+traço bonito sobre uma fala que não muda nada. **Juntas, são a rodada da
+caminhada a virar uma pergunta.**
+
+- [ ] **(W2) o adversário ganha ouvido — a rodada em que o golpe é recusado
+  passa a ser a rodada da voz** · do `jogo` · 16/09
+  **O diagnóstico é a soma de três medições que já estavam na casa e que
+  ninguém tinha somado:** toda luta corpo a corpo abre com **1,4 rodadas em que
+  o jogador não tem nada para fazer, nada para ler e nada a perder** — **10 de
+  10 plantas** recusam o corpo a corpo no turno 1, abertura média **19,95 m**
+  (W1 §1); **7/7 turnos estéreis, 0 rolagens, 0 chamadas, 100 % sem narração**
+  (X4); e a rodada **é de graça**, porque `App.jsx:11871` devolve `true` antes
+  do `enviar`. **É o maior espaço vazio do combate e o único que não custa
+  quota nenhuma para ser preenchido.**
+  **A proposta liga quatro peças que já existem e nunca se viram** — o teste
+  (`desafios.js:385` `intimidar`, perícia `intimidacao`, `social`), a condição
+  (`condicoes.js:139` `amedrontado`, salva `presenca`, cd 12, **7 leitores**),
+  a aplicação (`presenca-divina.js:154` **já a aplica a inimigos, com a linha
+  escrita**) e o envelope da poção. **Zero mecânica nova, zero prosa nova,
+  zero chamadas.**
+  **A peça que falta é uma só, e é o coração:** `garantirLuta`
+  (`adversario.js:211-260`) tem **trinta e tal campos — `rodada`, `minhaVida`,
+  `heroiFamoso`, `saidas`, `escuro`, `temRefem` — e nenhum deles é "o que o
+  herói disse"**. As quebras de intenção lêem `minhaVida < 0.4`,
+  `protegidoQuebrou`, `rodada > 3`. **O adversário deste jogo não tem como
+  ouvir.** Com um campo `foiAmeacado`, o `receoso` (`:628`) e o
+  `fugir_ferido` (`:515`) ganham um segundo gatilho, e **o bando que recua
+  porque alguém gritou é coisa que este jogo nunca viu.**
+  **Estudo citado, e é de dentro de casa:** `adversario.js:784` escreve a lei
+  *"NUNCA invente uma intenção que a Pauta não deu"* — e a Pauta tem trinta
+  entradas de mundo e **zero de herói**. É o mesmo defeito que `reacoes.js` já
+  tem e que a Fase K nasceu para corrigir.
+  **O risco, dito pelo próprio `jogo`:** uma fala de graça numa rodada de graça
+  é uma fala que **todo jogador fará em toda abertura de toda luta** — e aí o
+  imposto de caminhada troca de roupa e continua imposto. **A defesa já está no
+  código** (`chaveDaTentativa`, `desafios.js:710`: a segunda tentativa no mesmo
+  lugar ouve *"você já tentou isso aqui"*, de graça) **mas é mais fraca do que
+  ele escreveu**, e a adenda §8.1 diz porquê: a chave social é
+  `lugar|alvo|<pessoa>|<tamanho>` e **o `tamanho` sai do texto do jogador —
+  são seis chaves, não uma**. Há pedido ao `backend` para a chavear por
+  `lugar|intimidacao|<inimigo>`.
+  **Por que é pesado:** é campo novo e tabela nova em módulo puro, e **o
+  jogador reaprende uma coisa grande — que a luta se pode ganhar sem um
+  golpe.** Isso é fluxo.
+
+- [ ] **(W2) o tabuleiro passa a desenhar o NÃO — a linha que sai do herói e
+  não chega** · do `desenho` · 16/09
+  **O diagnóstico saiu de contar o que o tabuleiro desenha hoje:** o passo
+  previsto, o passo a acontecer, a mira, o alcance (duas vezes) e a área. **São
+  seis desenhos, e os seis desenham coisas que VÃO acontecer.**
+  > **O tabuleiro deste jogo nunca desenhou uma recusa. Tem seis formas para o
+  > sim e zero para o não — e o não é o que acontece em 10 de 10 plantas, no
+  > turno 1 de toda luta corpo a corpo.**
+  **A proposta:** na rodada da recusa, uma linha reta sai da ficha do herói na
+  direcção do alvo mais próximo **e pára onde o alcance acaba**. Um traço, e
+  depois nada. **A distância que falta fica desenhada como o que é: um vão.**
+  E tem **três estados, e é o terceiro que a torna a forma de W2** — na recusa
+  por **distância** pára ao fim do alcance (*a espada chega até aqui*); na
+  recusa por **parede** pára **na pedra**, antes do vão (*não é distância, é
+  aquilo* — e as duas recusas que `App.jsx:1121` diz serem *"coisas
+  diferentes"* passam a **parecer** diferentes em vez de se lerem diferentes);
+  e **na fala a mesma linha chega, inteira, até à ficha** — ***a voz não tem
+  alcance***. *A frase do `jogo` — "a 19,95 m a tua voz chega e a tua espada
+  não" — deixa de precisar de ser escrita, porque está desenhada.*
+  **Medida:** zero contas novas e zero peças novas. `vd.maisProximo.distanciaM`,
+  `vd.alcanceM` e `vd.faltaM` já saem de `golpe.js:190-198`; as cores são o
+  `T.amber` do passo e o `T.violetSoft` já corrigido; e a geometria da folga já
+  foi medida em W1 §2.2 (o arco da vida pára a 0,47 da casa, logo a linha tem
+  onde acabar sem tocar em ninguém).
+  **Estudo citado, e é a lei desta casa:** ***o veredito antes do clique***.
+  Hoje ela cumpre-se em texto e **não se cumpre em forma** — e o `desenho`
+  provou que esse texto **vive dentro de uma gaveta que nasce fechada**. *Um
+  veredito que depende de o jogador abrir uma gaveta não é um veredito antes do
+  clique.* **A linha está sempre lá.**
+  **O risco, dito por ele:** é **mais um traço** num tabuleiro que ele próprio
+  já acusou de poder virar mosaico, e chega no momento mais carregado. **A
+  defesa que ele propõe e não consegue provar:** a linha só existe **enquanto
+  não há verbo armado** — arma-se um verbo e ela apaga-se, porque aí o
+  tabuleiro voltou a falar de sins. *Está dita como suposição.*
+  **Por que é pesado:** muda o que o tabuleiro **é** — de um mapa do possível
+  para um mapa que também mostra o impossível —, e o jogador tem de reaprender
+  a ler uma linha que não chega.
+
 - [ ] **(W1) a luta abre onde a sala é comprida, e ninguém decidiu isso** ·
   pesado · de: jogo · 16/09
   **O acidente, e é de uma linha.** A abertura de toda luta sai de `posicionar`
@@ -639,9 +726,27 @@ tolerância de 1/255). **Code Connect é outra coisa** — ele amarra
   isso:** prova hoje, não impede amanhã. Se a pessoa um dia subir de plano,
   esta etapa é substituída, não remendada.
 
-### Fase W — o turno por toque (a ação deixa a caixa de texto)
+### Fase W — o turno por toque (a ação deixa a caixa de texto) · **FECHADA 16/09**
 Duas propostas do `jogo` e do `desenho` em E1, **aprovadas pela pessoa em
 15/09**. São a metade de desenho da Fase X do sistema, e andam junto com ela.
+
+> **A fase está fechada: W1 e W2 estão feitos, e os dois eram etapas de
+> DECISÃO — `W3 · o gesto construído` é a mão que as constrói, e fica aberta.**
+>
+> **O que a fase descobriu, e é mais interessante do que o que ela propunha:**
+> **os dois enunciados estavam errados, e os dois erros eram o mesmo erro** —
+> descreviam um jogo que o código já tinha mudado e que ninguém reconferira.
+> W1 prometia matar ~18 toques que **X2 já matara** (o caso comum eram 2). W2
+> prometia devolver quota narrando *"uma vez por rodada"*, e **isso é o jogo
+> desde a v9.13** (Δ = 0 no caso comum). *Em ambas, a etapa valeu mais pela
+> medição do que pela proposta — e a lição é de método: **uma pauta que
+> envelhece mente com a confiança de um documento.***
+>
+> **E a quota foi devolvida — só que por W1, uma etapa antes, e por outro
+> caminho:** a abertura de toda luta corpo a corpo cai de ~22 toques e 1
+> chamada para **2 toques e zero chamadas**, o que vale **−1,4 chamadas ao
+> Mestre por luta**. **W2 acrescenta −1 por fala**, sobre uma base que hoje é
+> zero porque o preço a proíbe.
 
 **O que se media em E1:** uma rodada era abrir `Ações` (1 toque), tocar `Atacar`
 (que **escrevia `"Ataco "` na caixa**), digitar o alvo (~15 toques), tocar
@@ -704,9 +809,46 @@ zero chamadas.* É o maior número desta fase e o mais barato de pagar.
   - **`onMouseEnter` → `onPointerMove`** (`:759`): é correção, não port. Hoje a
     rota prevista e a casa sob o dedo são **dois canais de rato num jogo que se
     joga com o dedo**.
-  - **o violeta da mira a 74 %** (`:611`, hoje `opacidade={0.6}`): 2,689 → 3,484.
-    Herdado de E1, ainda por pagar, e **mais urgente agora** que a mira passa a
-    ser o canal principal.
+  - ~~**o violeta da mira a 74 %**~~ — **PAGO EM W2 (16/09, v9.264)**, e a cura
+    não foi a que esta linha dizia. O 2,689 herdado de E1 fora medido contra
+    `T.bg` **nu**, e o contorno corre por cima de cobertura e faixa de região:
+    contra o pior chão real dava **2,575**, e **74 % de opacidade dava 3,235 —
+    passava a norma e falhava o piso da casa (3,272)**. A decisão é **o token,
+    não a opacidade**: `T.violet` → `T.violetSoft` em `grade-de-batalha.jsx`
+    (`:633` e `:641`) → **3,615** (+40 %) e **4,432**. Opacidade e âmbar
+    intocados. **Três ganhos de graça:** `violetSoft` **já era** a cor da
+    retícula da mira e da legenda no mesmo arquivo (hoje o anel e o contorno
+    falavam dois roxos diferentes); as duas línguas do tabuleiro passam de
+    **42 % de diferença de força para 1,3 %**; e fica a regra — **`violet` é
+    tinta de superfície, `violetSoft` é tinta de traço sobre o tabuleiro.**
+  - **as quatro frases do golpe, e elas estão PRONTAS — só falta aplicar.**
+    `LINHAS_DO_GOLPE` saiu da fila do motor em W2: a peça é de `src/golpe.js`,
+    **nascido em X2, desta mesa**. A redacção está fechada e medida contra o
+    teto de 54 de E2, **com o pior nome (18) e o pior número (`10,5`)**, numa
+    gramática única — `{nome} a {distância} m — {veredito}.` — em que **o
+    jogador aprende uma forma e passa a ler só a cauda**: `Ninguém de pé ao seu
+    alcance.` (29) · `{n} a {d} m — faltam {f} m.` (fixo 26, pior 44) · `{n} a
+    {d} m — parede, contorne.` (fixo 29, pior 47) · `{n} a {d} m — ao alcance.`
+    (fixo 23, pior 41). **A recusa por distância mede hoje 60 com o nome VAZIO
+    contra um teto de 54** — aparar o nome nunca a podia salvar, e por isso a
+    cura é redacção. **`contorne` é a única ordem que sobrevive**, porque sem
+    ela o reflexo depois de ler metros é andar a direito contra a pedra; e a
+    parede **ganha um número que hoje não tem** (contornar 3 m e contornar 20 m
+    são decisões diferentes). O aparo mora na tabela, **nunca no CSS**. Tudo em
+    `mente/w2-desenho.md` §3.3-3.5, com as **cinco asserções** que lêem a
+    tabela de volta. **É atómico:** `recusaDoGolpe` tem **dois** leitores
+    (`App.jsx:11981` no chat, `:20910` na linha do veredito) e meia troca é a
+    mesma regra em dois caminhos. **Precisa do bastão.**
+  - **a linha do veredito não vive sempre na árvore — vive numa gaveta que
+    nasce fechada.** Achado do `desenho` em W2, e **contraria um comentário do
+    próprio arquivo**: `App.jsx:20900` diz *"ela vive sempre na árvore enquanto
+    há luta"*, e **não vive** — está dentro de `{acoesAbertas && …}`, com
+    `acoesAbertas` a nascer `false` (`:4896`) e **nada que a abra sozinha**,
+    nem quando a luta começa, nem quando o golpe é recusado. `grep` devolve
+    **três linhas e mais nenhuma**. **O `Atacar` apagado e a linha por baixo
+    dele estão os dois lá dentro** — logo o veredito antes do clique só existe
+    **depois de um toque**. *A reserva de 71 px de W1 não muda; muda a razão
+    dela: reserva-se para o tabuleiro não saltar quando a gaveta abre.*
   - a fileira de **quatro e uma goteira** numa fila (`Atacar` · `✦` · `◆` ·
     goteira · `esperar`), `Botao` *Papel=Gesto*, **`Atacar` distinguido por
     largura (163 contra 72/44/44, 359 exactos) e tinta, nunca por preenchimento
@@ -728,13 +870,47 @@ zero chamadas.* É o maior número desta fase e o mais barato de pagar.
   **O bastão:** a fileira e a linha do veredito vivem no `App.jsx` (`:20840-20940`)
   — é trabalho do `oficial`, não do `aprendiz`.
 
-- [ ] **W2 · o texto muda de emprego** · de: pessoa · 15/09
-  O campo continua, e deixa de perguntar *"o que você faz?"* para ser
-  **"diga alguma coisa"** — a provocação, a parlamentação, a fala. **A única
-  proposta da fase que DEVOLVE quota ao Narrador** em vez de gastá-la: o
-  Mestre narra o resultado uma vez por rodada, em vez de interpretar cada
-  golpe. Conversa direto com a decisão da pessoa de travar o jogo quando ele
-  cai — quanto menos o combate depende dele, menos dói o silêncio.
+- [x] **W2 · o texto ganha um SEGUNDO emprego** · **FEITO 16/09 · v9.264** — e
+  a etapa **corrigiu o próprio enunciado em dois sítios**, com número.
+  **1 · O nome estava errado, e a correcção é lei:** o campo **não pode**
+  deixar de perguntar *"o que você faz?"*. Fora de combate é a única pergunta
+  que existe; dentro dele é a porta de **onze verbos sem botão**. `"Ataco o
+  ogro"` escrito na caixa continua a atacar o ogro, **pela mesma porta do
+  botão** (`aplicarGolpeDoJogador`, chamada de `:11992` e `:13555`, e o
+  comentário de `:13549` diz *"byte por byte"*). Recusar seria parede;
+  traduzir em silêncio seria o defeito que W1 §0.1 já nomeou. **O texto não
+  muda de emprego: ganha um segundo.**
+  **2 · A promessa de quota era falsa, e o `jogo` provou-o:** *"o Mestre narra
+  uma vez por rodada"* **descreve o jogo que existe desde a v9.13**, quando
+  `agir` passou a encerrar o turno. `fecharMeuTurno` tem **quatro chamadores,
+  mutuamente exclusivos, um `enviar` cada** — **a rodada comum custa 1 chamada
+  hoje e custará 1 depois: Δ = 0.** O ganho verdadeiro é outro, é menor e é
+  real: **−1 chamada e −1 rodada perdida por fala**, sobre uma base que hoje é
+  **zero** — porque falar custa a rodada inteira (`:13595` fecha o turno e o
+  inimigo revida). **W2 não poupa uma chamada: destrava um comportamento que
+  hoje o preço proíbe.**
+  **A fala é gesto:** **zero ações, uma por rodada, zero chamadas**, e viaja
+  colada ao envelope por `notaRef` — **o molde é a poção** (`:19580`, em
+  produção desde a v9.13: *"abrir a bolsa não é o turno"*). Teto de **240**
+  caracteres (o `slice` que `falas.js:82` já usa), **e estourar recusa, não
+  corta** — truncar em silêncio é `declararGolpe:11988` outra vez.
+  **O que fica sem frase nenhuma: ZERO.** Os 14 eventos de X3b foram cruzados
+  linha a linha com o que o código escreve sozinho — **11 sobrevivem inteiros
+  ao silêncio, 2 pela metade, 1 não dispara para quem luta de arma** — e os
+  três são **herança, já em `mente/pauta.md`**, não preço de W2. **A IA nunca
+  foi a voz única de nenhum dos 14: foi a segunda voz de 11.** Um só evento
+  muda de lugar (o desfecho do teste social, de parágrafo para frase) **e
+  sobrevive**, porque `falaDoVeredicto` já é empurrada por código em `:15989`.
+  **Dos três defeitos vivos de W1, um foi CONSTRUÍDO e dois ficaram, com o
+  motivo:** o **violeta da mira** está pago (§4 abaixo); as **quatro frases**
+  estão **fechadas e medidas** mas a troca é atómica e o **bastão do `App.jsx`
+  esteve com a outra mente o ciclo inteiro** — W3 aplica; **tocar num inimigo**
+  é de W3 **e era meia-verdade**: com a mira armada `noAlcance` **não exclui
+  ocupados**, logo a casa por baixo da ficha **já responde hoje**. W3 não
+  inventa mecanismo — acrescenta um segundo valor a um que já roda.
+  O escrito dos dois seniores fica em `mente/w2-jogo.md` (com a `§8 · adenda`)
+  e `mente/w2-desenho.md`; a forma, no bloco final de `mente/formas.md`. ·
+  de: pessoa · 15/09
 
 ### Fase K — as três batidas da rodada (a reação ganha controle)
 **Proposta do `jogo` em D4, aprovada pela pessoa em 14/09 — com o desenho

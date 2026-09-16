@@ -19,6 +19,168 @@ Formato:
 
 ---
 
+## 16/09 06:20 · v9.264 · W2 · o texto ganha um segundo emprego · commit `<hash>`
+
+*O escrito dos dois seniores fica em `mente/w2-jogo.md` (com a `§8 · adenda`) e
+`mente/w2-desenho.md`; a forma, no bloco final de `mente/formas.md`.*
+
+**A etapa em que o enunciado estava errado e a mesa o disse — e é a segunda
+seguida.** W1 já tinha descoberto que os ~18 toques que ela ia matar estavam
+mortos desde X2. W2 descobriu o irmão disso: **a promessa de quota da pauta
+descrevia o jogo que já existe desde a v9.13.** *Duas etapas, o mesmo erro: uma
+pauta que envelhece mente com a confiança de um documento.* **A lição de método
+fica escrita no cabeçalho da fase, porque vale mais do que qualquer das duas
+etapas.**
+
+- **estado inicial:** trava `.claude/ciclo-desenho-em-curso` de **00:14, morta
+  há 5h23** (o ciclo anterior morreu por limite de uso da API, não por falha) —
+  **assumida e registada**, como manda o roteiro. `mente/w2-jogo.md` já estava
+  escrito pelo ciclo morto e **foi lido antes de refazer trabalho: estava tudo
+  lá**, e o `jogo` só foi chamado para os buracos que travavam a construção.
+  **Árvore vermelha em `teste-arena.mjs` e `teste-guardas.mjs`**, por trabalho
+  não commitado da outra mente em `src/habilidades.js`. **Não é do meu
+  território: não consertei, não esperei, e provei o meu com
+  `bash mente/so-o-meu.sh` — HEAD + só os meus arquivos deu 187/187 suítes e
+  13/13 varredores.** *A árvore inteira continua vermelha, e continua sendo
+  dela.*
+
+- **o bastão do `App.jsx`:** **não foi meu este ciclo, e isso custou metade da
+  etapa.** Fui buscá-lo às 06:20 e encontrei-o tomado pelo `orquestrador` às
+  06:05 — **15 minutos, muito dentro dos 90**. Pela lei, **fiz outra coisa da
+  minha fila** (o violeta, que é território puro meu) e **não o editei assim
+  mesmo**. Reconferi às 06:18 e continuava dela, com a outra mente a escrever
+  lá dentro. **Não o tomei em momento nenhum, e não há rastro a devolver.**
+
+- **jogo / desenho:** chamados **juntos, no mesmo turno, os dois em primeiro
+  plano, sem se verem** — e o resultado repete a medida de W1: **convergiram
+  onde importava e discordaram com número onde discordaram.**
+  - **O `jogo` demoliu a promessa da própria etapa, com a linha citada.**
+    `fecharMeuTurno` tem **quatro chamadores mutuamente exclusivos, um `enviar`
+    cada** — logo **uma rodada = uma chamada, hoje e depois: Δ = 0 no caso
+    comum.** O ganho real é **−1 chamada e −1 rodada perdida por fala**, sobre
+    uma base que hoje é **zero porque falar custa a rodada inteira**. *Escreveu
+    por extenso que dizer "−17 %" seria a conta a mentir a favor.* **Aceitei o
+    número pequeno e honesto em vez do número grande da pauta.**
+  - **E recusou o nome da etapa.** *"O texto muda de emprego"* → **ganha um
+    segundo**. A caixa não pode perder o primeiro: fora de combate é a única
+    pergunta que existe, dentro dele é a porta de onze verbos sem botão.
+    `"Ataco o ogro"` continua a atacar o ogro **pela mesma porta do botão**, e
+    o comentário de `App.jsx:13549` já dizia *"byte por byte"*. **Ratifiquei
+    como lei desta mesa: nenhuma etapa que tire o primeiro emprego à caixa
+    passa aqui.**
+  - **Contou o que fica sem frase, que era a pergunta com número do enunciado:
+    ZERO.** Dos 14 eventos de X3b, **11 sobrevivem inteiros ao silêncio, 2 pela
+    metade, 1 não dispara para quem luta de arma** — e os três são herança já
+    em `mente/pauta.md`, não preço de W2. **A IA nunca foi a voz única de
+    nenhum dos 14: foi a segunda voz de 11.**
+  - **O `desenho` decidiu não tocar no campo — e é a decisão de que mais
+    gosto.** Redigiu e mediu um quinto `placeholder` (`O que você faz? A voz
+    alcança.`, 30 caracteres) **e deitou-o fora**: o `placeholder` apaga-se no
+    primeiro caractere digitado, logo é *"um convite a falar que morre quando a
+    fala começa"*. **O convite é o momento, não a palavra** — na rodada da
+    recusa o campo é o único controlo da tela que não está recusado nem gasto.
+    *Isto é a lei "o sistema não fala de si mesmo" a ser cumprida no sítio onde
+    ela é mais dura.*
+  - **Os dois chegaram à mesma conclusão sobre a peça, sem se verem:** o `jogo`
+    pediu **zero peças novas** (a fala escreve na mesma linha do veredito que o
+    golpe, o passo e a reação já partilham); o `desenho` foi ao Figma **antes**
+    de propor estado novo e achou que `Campo` já tinha `a dica` como
+    propriedade. **Nenhuma peça nova nasceu nesta etapa, e foi por medição dos
+    dois lados, não por timidez.**
+
+- **aprendiz:** `src/grade-de-batalha.jsx` — **o violeta da mira**, duas
+  palavras em duas linhas, com o porquê e a norma no comentário. Mexeu também
+  numa asserção de `testes/teste-alcance-e-achado.mjs` que fixava o token
+  literal, **com o motivo escrito num comentário**, como manda a lei: *o que
+  ela prova — que o alcance sai como contorno e não pintando o chão — continua
+  intacto; só a tinta trocou.*
+
+- **o Figma:** página **`W2 · o segundo emprego`** (`136:2`), no arquivo
+  `Taverna — biblioteca`: o par comparável do campo, as quatro frases contra a
+  régua de 324 px, e as seis células do violeta. **Zero peças e zero variantes
+  novas** — `Campo` já tinha o convite como propriedade de texto.
+
+- **a prova:**
+  - **O violeta: 2,575 → 3,615** (+40 %) na mira e **3,034 → 4,432** no alcance
+    da habilidade. WCAG 2.1 SC **1.4.11 Non-text Contrast** (AA, 3:1) — passa,
+    e passa o piso da casa (3,272) com **10,5 % de folga**.
+  - **As duas línguas do tabuleiro: de 42 % de diferença de força para 1,3 %.**
+    *Um tabuleiro que fala duas línguas não pode dizer uma delas mais baixo.*
+  - **As quatro frases, medidas com o pior nome (18) e o pior número (`10,5`)
+    contra o teto de 54:** 29 · 44 · 47 · 41. **27 de 27 nomes do bestiário
+    cabem nas quatro.**
+  - **O teto da fala: 240** — o `slice` que `falas.js:82` já usa. Notas irmãs
+    medidas: aflição **356**, poção **355**, ritual **238**, queda **217**.
+    Envelope no pior caso **467 = +0,57 % do teto de prompt**, uma vez por
+    rodada.
+
+- **decisões médias tomadas:**
+  1. **O violeta corrige-se pelo TOKEN, não pela opacidade** (`T.violet` →
+     `T.violetSoft`). *Motivo:* 74 % de opacidade dava 3,235 — passava a norma
+     e **falhava o piso da casa**. O token dá 3,615 **e** conserta de graça uma
+     inconsistência que já lá estava: `violetSoft` **já era** a cor da retícula
+     da mira e da legenda no mesmo arquivo, logo o anel e o contorno falavam
+     **dois roxos diferentes**. Fica a regra: **`violet` é tinta de superfície,
+     `violetSoft` é tinta de traço sobre o tabuleiro.**
+  2. **O número herdado de E1 (2,689) estava errado e foi substituído.**
+     *Motivo:* fora medido contra `T.bg` **nu**, e o contorno corre por cima de
+     cobertura e faixa de região. Contra o pior chão real são **2,575**. *A
+     correcção é para pior, e é por isso que tinha de ser dita.*
+  3. **`LINHAS_DO_GOLPE` sai da fila do motor e passa a ser desta mesa.**
+     *Motivo:* a peça é de `src/golpe.js`, **nascido em X2, desta mesa**, e o
+     próprio `App.jsx:1106` escreve que *"`golpe.js` mede e devolve números;
+     estas três funções os VESTEM"*. **Vestir número é forma.** O pedido ficou
+     marcado como retirado em `mente/pedidos-ao-sistema.md`, com o motivo — não
+     apagado, para a outra mente não o refazer.
+  4. **A parede gasta seis caracteres a mais do que o `jogo` propôs, e ganha um
+     número.** *Motivo:* `parede até Halvard — contorne.` diz que a parede vai
+     até ele, que não é o que acontece; e **contornar 3 m e contornar 20 m são
+     decisões diferentes**. `contorne` é a única ordem que sobrevive ao corte,
+     porque sem ela o reflexo depois de ler metros é **andar a direito contra a
+     pedra** (`App.jsx:1121` já o dizia).
+  5. **A fala que estoura o teto recusa, não corta.** *Motivo:* truncar em
+     silêncio é `declararGolpe:11988` outra vez — o defeito de veredito que W1
+     §0.1 nomeou.
+
+- **o que ficou, e é a metade da etapa:**
+  - **As quatro frases NÃO foram aplicadas, e o motivo é o bastão.** Estão
+    fechadas, medidas e com as cinco asserções escritas — **não falta decidir
+    nada, só aplicar**. Mas `recusaDoGolpe` tem **dois** leitores e os dois
+    vivem no `App.jsx` (`:11981` no chat, `:20910` na linha do veredito), a
+    troca é **atómica**, e **meia troca é a mesma regra em dois caminhos — o
+    bug que esta casa já pagou três vezes** (`App.jsx:16070` e `:13493`
+    escrevem-no por extenso). *Preferi entregar metade da etapa a entregar o
+    bug que a casa mais conhece.* **W3 aplica, numa passagem só.**
+  - **Tocar num inimigo continua por pagar, e é de W3 — mas era meia-verdade.**
+    Com a mira armada, `noAlcance` **não exclui ocupados**: a casa por baixo da
+    ficha **já responde hoje**, e `pointerEvents:"none"` só impede o toque na
+    ficha. **W3 não inventa mecanismo — acrescenta um segundo valor a um que já
+    roda em produção.** *Isso torna W3 mais pequeno, e por isso está escrito.*
+  - **Dois achados que não são desta etapa e ficaram com endereço:** a linha do
+    veredito **vive numa gaveta que nasce fechada** (`acoesAbertas` nasce
+    `false` e **nada a abre** — logo *o veredito antes do clique só existe
+    depois de um toque*, e o comentário de `App.jsx:20900` afirma o contrário);
+    e **a lama reprova para o violeta e para o âmbar quase igual** (2,623 e
+    2,682), **logo o defeito é do fundo, não do traço** — foi para a pauta como
+    dívida com número, não remendada no contorno.
+  - **A ambição foi cumprida e é dupla**, e as duas estão em "Para a pessoa
+    decidir": **o adversário ganha ouvido** (do `jogo`) e **o tabuleiro passa a
+    desenhar o NÃO** (do `desenho`). **Nenhum dos dois viu a do outro, e são as
+    duas metades da mesma coisa** — uma dá à fala consequência, a outra dá-lhe
+    forma. *Separadas, cada uma é meia proposta.*
+  - **A Fase W fecha aqui.** W1 e W2 eram etapas de decisão; **`W3 · o gesto
+    construído` é a mão que as constrói, e fica aberta** com tudo escrito.
+
+- **o que eu não soube:** se a fala funciona na sala de dois e no duelo (buraco
+  que E2 e W1 já declararam e continua aberto); se a banda de 0,5-1,2 falas por
+  luta é a certa (é leitura de mesa, não medida); e **se `violetSoft` a 60 %
+  ainda lê como roxo e não como cinzento-lilás ao sol** — o rácio subiu e a
+  saturação desceu, e é a única coisa que separa as duas línguas do tabuleiro.
+  *O `desenho` disse-o dele próprio, e eu não o mando adivinhar: sai de olhar,
+  e vai com quem construir W3.*
+
+---
+
 ## 16/09 01:30 · v9.262 · W1 · a frase que se monta · commit `63e0667`
 
 *O escrito dos dois seniores fica em `mente/w1-jogo.md` e `mente/w1-desenho.md`;

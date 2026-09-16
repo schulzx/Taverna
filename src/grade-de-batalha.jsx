@@ -608,7 +608,29 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
         {alcance.size > 0 && (
           <g>
             {veu.map(([x, y]) => <rect key={`v${x},${y}`} x={x} y={y} width="1" height="1" fill="rgba(7,5,12,0.46)" />)}
-            <Contorno linhas={contorno(alcanceCheio)} cor={mirando ? T.violet : T.amber} largura={0.045} tracejado="0.22 0.18" opacidade={0.6} />
+            {/* O ROXO DO TRAÇO É O violetSoft: o tracejado da mira
+                dava 2,575:1 contra o pior chão real do tabuleiro, e a WCAG 2.1
+                SC 1.4.11 (Non-text Contrast, AA) pede 3:1 para o que não é
+                texto. Com violetSoft dá 3,615:1 — passa a norma e o piso da
+                casa (3,272) com 10,5% de folga. O âmbar (3,662) e a opacidade
+                não se tocam.
+
+                É token e não opacidade por três motivos que valem por si:
+                (1) violetSoft JÁ é a cor da mira neste arquivo — a retícula da
+                casa mirada e o cabeçalho "tracejado roxo" da legenda; hoje o
+                anel da mira e o contorno do alcance dela falam dois roxos
+                diferentes, e o conserto de acessibilidade é, por acaso, o
+                conserto dessa inconsistência;
+                (2) as duas línguas do tabuleiro passam a ser igualmente
+                legíveis — a mesma linha era 42% mais fraca em violeta (2,575
+                contra 3,662 do âmbar), e passa a 1,3% de diferença: um
+                tabuleiro que fala duas línguas não pode dizer uma delas mais
+                baixo;
+                (3) a regra que fica: violet é tinta de SUPERFÍCIE (corpo e
+                borda, lida contra o panel — o selo e o botão lá embaixo) e
+                violetSoft é tinta de TRAÇO sobre o tabuleiro. violet não
+                perde emprego. */}
+            <Contorno linhas={contorno(alcanceCheio)} cor={mirando ? T.violetSoft : T.amber} largura={0.045} tracejado="0.22 0.18" opacidade={0.6} />
           </g>
         )}
         {/* v9.128: a habilidade de alvo único não se mira, mas ALCANÇA — e é
@@ -616,7 +638,7 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
             quando olha o tabuleiro com uma magia na mão. Sai como contorno,
             por cima do véu do passo, sem disputar com ele. */}
         {!mirando && alcanceMira && alcanceMira.quadrados && alcanceMira.quadrados.size > 0 && (
-          <Contorno linhas={contorno(alcanceMira.quadrados)} cor={T.violet} largura={0.05} tracejado="0.12 0.2" opacidade={0.7} />
+          <Contorno linhas={contorno(alcanceMira.quadrados)} cor={T.violetSoft} largura={0.05} tracejado="0.12 0.2" opacidade={0.7} />
         )}
         {naArea.size > 0 && (
           <g>
