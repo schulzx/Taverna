@@ -52,6 +52,11 @@
 
 import { naturezaDaHabilidade, aplicacaoDoBuff } from "./combos.js";
 import { magiaPorNome, exigeConcentracao, CONCENTRACAO_DA_MAGIA } from "./grimorio.js";
+/* v9.269 (Fase V · V1): o poço que apanha DEPOIS do abrigo. A seta aponta num
+   sentido só — `temporario.js` não importa nada de `src/`, e é por isso que o
+   teto do abrigo aparece lá só em comentário. O porquê da ordem inteira está
+   no cabeçalho dele. */
+import { gastarTemporario } from "./temporario.js";
 
 /* ---------------- OS TETOS DO QUE VEM DE FORA ----------------
    O Mestre pede efeito por `efeitos_adicionar`, e o que ele pede passa
@@ -440,31 +445,75 @@ export function efeitoDeMagia(magia) {
    REGRESSÃO ZERO FORA DA FAMÍLIA. O único gatilho é um `absorve` numérico e
    positivo no efeito. Save antigo, efeito do canal do Mestre, milagre, magia
    de duração e as outras quatro famílias defensivas não o têm — para todos
-   eles esta função é um `return` do que entrou. `null` e `{}` idem. */
+   eles esta função é um `return` do que entrou. `null` e `{}` idem.
+
+   ---------------- E DEPOIS DO ABRIGO, O POÇO (v9.269 · V1) ----------------
+
+   Esta é a ÚNICA porta por onde o dano passa antes de virar PV, e é por isso
+   que o PV temporário entra aqui e não num quinto sítio: a ordem inteira
+   (abrigo → temporário → PV real → a queda) sai de graça, por composição.
+   O argumento completo — por que o abrigo primeiro, por que ele se gasta
+   inteiro e o poço parcialmente, e por que Q1 não precisou de uma linha —
+   está no cabeçalho de `temporario.js` e não se repete aqui.
+
+   A MUDANÇA É ADITIVA, e as três coisas que a mantêm assim:
+
+   · `absorvido` PASSA A SER O TOTAL (abrigo + poço), e é de propósito. Ele é
+     o sinal que faz o chamador escrever a ficha de volta — `arena.js:249` e
+     `App.jsx:6627` só tocam na ficha quando `absorvido > 0`. Sem o poço
+     dentro da soma, ele seria gasto e esquecido a cada golpe: o bug exato que
+     o comentário de `arena.js:246` já avisa para o abrigo.
+   · `linha` CONTINUA A SER SÓ A DO ABRIGO, byte a byte. O App faz
+     `String(ab.linha).replace("🛡 ", ...)` para pôr o nome do dono; juntar
+     duas frases ali quebraria a substituição. A frase do poço sai por
+     `linhaDoTemporario`, chave nova, para V2 a pôr onde quiser. O "N chegam"
+     do abrigo passa a querer dizer "N saem do escudo" — e quem apanha esses N
+     é a frase seguinte, que V2 escreve logo abaixo. As duas lidas em ordem
+     contam a verdade; a do abrigo sozinha continua a contar o que sempre
+     contou, que é o que a regressão exige.
+   · `doTemporario` é o número do poço sozinho, pela mesma razão: quem quiser
+     separar as duas metades não tem de as subtrair.
+
+   E A PORTA DOS FUNDOS DEIXOU DE SAIR DO PRÉDIO. O `if (!abrigo)` continua a
+   existir, mas agora passa pelo poço antes de devolver: quem não tem abrigo e
+   TEM temporário é o caso mais comum dos dois, e sair por ali seria o poço
+   nunca morder. Ficha sem abrigo E sem poço devolve exatamente o que devolvia
+   antes — `absorvido: 0`, `linha: ""`, e o MESMO objeto `pers` que entrou. */
 export function absorverDano(pers, dano) {
   const d = Math.max(0, Math.round(Number(dano) || 0));
-  if (!d || !pers) return { pers, dano: d, absorvido: 0, linha: "" };
+  if (!d || !pers) return { pers, dano: d, absorvido: 0, linha: "", doTemporario: 0, linhaDoTemporario: "" };
   const lista = efeitosDe(pers);
   let abrigo = null, forca = 0;
   for (const ef of lista) {
     const n = Math.max(0, Math.round(Number(ef.absorve) || 0));
     if (n > forca) { abrigo = ef; forca = n; }
   }
-  if (!abrigo) return { pers, dano: d, absorvido: 0, linha: "" };
+  if (!abrigo) {
+    /* sem abrigo o golpe encontra o poço diretamente — e sem poço `gastarTemporario`
+       devolve o que entrou, com o mesmo objeto `pers`: a regressão fica em zero */
+    const so = gastarTemporario(pers, d);
+    return { pers: so.pers, dano: so.dano, absorvido: so.absorvido, linha: "", doTemporario: so.absorvido, linhaDoTemporario: so.linha };
+  }
 
   const absorvido = Math.min(forca, d);
   const resto = d - absorvido;
   const nome = abrigo.nome || "o abrigo";
+  /* estado NOVO, e a lista sai limpa de buracos porque `efeitosDe` já a
+     entregou assim — o mesmo que `empilhar` faz há uma versão */
+  const semAbrigo = { ...pers, efeitos: lista.filter((e) => e !== abrigo) };
+  /* o que o escudo não comeu segue para o poço, e é só este resto que chega lá */
+  const t = gastarTemporario(semAbrigo, resto);
   return {
-    /* estado NOVO, e a lista sai limpa de buracos porque `efeitosDe` já a
-       entregou assim — o mesmo que `empilhar` faz há uma versão */
-    pers: { ...pers, efeitos: lista.filter((e) => e !== abrigo) },
-    dano: resto, absorvido,
+    pers: t.pers,
+    dano: t.dano,
+    absorvido: absorvido + t.absorvido,
     /* a voz é de mundo e não nomeia mecanismo nenhum; o número entra porque
        o jogador pagou PM por ele e precisa ver o que comprou */
     linha: resto > 0
       ? `🛡 ${nome} encontra o golpe primeiro e se desfaz: ${absorvido} param ali, ${resto} chegam.`
       : `🛡 ${nome} encontra o golpe primeiro e se desfaz: nada chega.`,
+    doTemporario: t.absorvido,
+    linhaDoTemporario: t.linha,
   };
 }
 

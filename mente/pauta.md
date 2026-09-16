@@ -1557,7 +1557,7 @@ da mesa: absorve o dano antes do PV real, não cura e não acumula; se você
 tem +4 e usa +10, deve escolher qual vai ser, ou o sistema escolhe
 automaticamente o maior."*
 
-- [ ] **V1 · o campo e a ordem do dano** · de: pessoa · 14/09
+- [x] **V1 · o campo e a ordem do dano** · **FEITO v9.269** (16/09, commit `HASH`) · de: pessoa · 14/09
   Campo novo na ficha; `absorverDano` consome o temporário **antes** do PV
   real. **Não cura** (ganhar temporário não muda o PV atual) e **não
   acumula**: ao receber um novo, fica **o maior dos dois** — e quando a
@@ -1569,6 +1569,13 @@ automaticamente o maior."*
   Vale para herói, companheiro e inimigo. A frase segue a linha de C2/T3:
   voz de mundo, sem nomear o mecanismo. Catraca: o temporário nunca soma ao
   PV real, nunca sobrevive ao prazo, e nunca é curado por cura.
+  **V1 deixou-lhe cinco coisas escritas** (v9.269, ver o diário): `tickTemporario`
+  ainda sem quem o chame — **o poço dura para sempre até V2 o ligar ao relógio da
+  rodada**, ao lado de `tickEfeitos` (`regras-jogo.js:369`); `ganharTemporario` sem
+  torneira; `vereditoDoTemporario.haEscolha` como o sinal do veredito antes do
+  clique; o furo de `arena.js:249` (escreve `efeitos` de volta, não `temporario`
+  — inofensivo hoje, mentira no dia em que um duelista tiver poço); e
+  `linhaDoTemporario`, a frase que a arena vai precisar de pôr no log.
 - [ ] **V3 · quem dá temporário passa a dar** · de: pessoa · 14/09
   Com a mecânica de pé, as habilidades e magias que prometem PV temporário
   na ficha passam a cumprir — `Palavra de Coragem` entre elas. Catraca

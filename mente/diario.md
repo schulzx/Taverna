@@ -16,6 +16,145 @@ Formato:
 
 ---
 
+## 16/09 07:55 · v9.269 · V1 · o poço que apanha por você · commit `HASH`
+
+- **HOUVE UM CICLO MORTO, e é a primeira coisa que este bloco regista.** A
+  trava `.claude/ciclo-em-curso` estava posta às **05:09** com o meu nome e
+  este item (`orquestrador · V1 · o PV temporario`), e o ciclo **morreu no
+  limite de uso da API — não por falha**. Às 07:38 ela tinha 2h29, muito
+  acima dos 90 minutos do roteiro: assumi-a em vez de esperar por ela, e
+  reescrevi-a com a hora nova e a nota `(assumido de um ciclo morto)`. **Não
+  desfiz nada do que ele deixou**, e a razão é que o que ele deixou estava
+  quase todo de pé: `src/temporario.js` (414 linhas), `testes/teste-temporario.mjs`
+  (967 linhas, 212 asserções) e `src/efeitos.js` ligado. Desfazer teria
+  queimado uma etapa inteira por causa de uma linha de comentário.
+- **estado inicial:** `npm test` **190/191**, e a única vermelha era
+  `teste-regua.mjs` — a catraca da seção 9, *"e nada do jogo importa a régua
+  — nem sequer a menciona"*, com `temporario.js` a nomeá-la. Árvore com a
+  outra mente viva ao lado (K3): `mente/formas.md`, `mente/k3-jogo.md`,
+  `mente/k3-desenho.md` e `mente/agora.json` são dela e **não entraram no meu
+  commit** — `git commit -- <caminhos>`, como a lei manda.
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, etapa escrita.
+- **UM VERMELHO QUE NÃO É MEU, e a prova de que não é.** No fecho, `npm test`
+  acendeu `teste-ligacao.mjs` em `ritmo-da-reacao.js:TEMPOS_DO_CARTAO` — um
+  export sem leitor num arquivo **da outra mente**, que apareceu na árvore no
+  meio do meu ciclo (K3, com `src/estilo.js`). Não o consertei e não esperei
+  por ele: `bash mente/so-o-meu.sh src/temporario.js src/efeitos.js
+  src/constantes.js testes/teste-temporario.mjs` dá **HEAD + só os meus =
+  191/191 suítes verdes · 13/13 varredores limpos**. Verde ali é verde meu, e
+  foi com isso que subi. A catraca de K3 morde quem a pôs, e é assim que ela
+  tem de funcionar.
+- **o bastão do `App.jsx`: NÃO TOMADO.** É da outra mente (K3). V1 é só
+  motor; V2 (a tela) fica para quem tiver o bastão, e o que ela vai precisar
+  está **escrito** no cabeçalho de `src/temporario.js`, não por descobrir.
+- **backend:** uma coisa só, e a certa — tirou o nome do instrumento de
+  medida do comentário de `src/temporario.js`. Três frases reescritas: *"a
+  régua tem de ser a de cima um degrau acima"* → *"a **medida** tem de ser"*;
+  a abertura que citava o arquivo e o caminho virou *"**MEDIDO, e não
+  estimado** — a medição inteira (N, cenários, intervalos) está escrita no
+  diário desta versão; aqui fica só o que justifica o número"*; e a ressalva
+  de Q1 virou *"**a medição correu com `grade: null`**"*. Os números da
+  tabela **não foram tocados**.
+- **testes:** nenhuma suíte escrita neste ciclo — as do ciclo morto já
+  cobriam tudo (212 asserções em 10 seções). `grep -rn "regua-combate" src/`
+  sai **vazio**; `teste-regua.mjs` fechou **150 ok · 0 falhas**.
+
+- **decisões médias tomadas** (cada uma com o motivo, que é o que se audita):
+  1. **A catraca não foi afrouxada — o código é que passou a cumpri-la.** A
+     saída fácil era pôr `temporario.js` numa lista de exceções de
+     `teste-regua.mjs`. Seria a casa a escrever que *às vezes* o jogo pode
+     falar do instrumento que o mede, e a próxima exceção viria de graça. O
+     dente da seção 9 fica com os dentes todos.
+  2. **O número medido fica, o nome de quem mediu sai.** O comentário de um
+     número de tabela é o que torna a lei *"se é número, é tabela"*
+     auditável — apagar o **porquê** de `teto: 9` para calar a catraca teria
+     trocado um vermelho por uma regra sem razão escrita. Então ficou o fato
+     (9,69 de dano por corpo por rodada; **9 é o maior inteiro abaixo**) e
+     saiu a proveniência, que passou a morar aqui, no diário — que é o lugar
+     do registo de medição.
+  3. **Não desfiz o ciclo morto, assumi-o.** O roteiro manda desfazer *"se a
+     árvore estiver pela metade"*; esta não estava — estava a uma linha de
+     comentário do verde, com build limpo e 212 asserções de pé.
+
+- **A MEDIÇÃO, POR EXTENSO** (é aqui que ela mora agora, e é o que
+  `src/temporario.js` quer dizer com *"o diário desta versão"*):
+  instrumento `testes/regua-combate.mjs`, **300 combates por cenário**,
+  herói equipado (arma, armadura, escudo) e o trio de nível 5.
+  · `justo` — **6,30 ± 0,25 rodadas**, **243,91 ± 6,82** de dano no grupo
+    inteiro (quatro corpos) → ~38,7 por rodada → **9,69 por corpo por rodada**.
+  · `duro` — 5,09 rodadas, 223,92 de dano → **11,00** por corpo por rodada.
+  · `brando` — 2,95 rodadas.
+  Daí os dois números da tabela: **`teto: 9`** é o maior inteiro abaixo de
+  **9,69** (manda o menor dos dois, porque é na luta mais branda que uma
+  rodada de graça é mais barata de comprar) — o poço mais caro que o sistema
+  pode dar **nunca compra uma rodada inteira de impunidade**, que é a mesma
+  lei que o teto 12 escreveu para o golpe. E **`turnosPadrao: 7`** é o
+  primeiro inteiro acima da margem de cima de 6,30 ± 0,25, porque um poço que
+  expira no meio da luta é o mesmo que não existir.
+  **MEDIDO, E NÃO REEQUILIBRADO:** nenhum número do jogo mudou neste ciclo.
+  **E COM A RESSALVA QUE Q1 IMPRIMIU:** a medição corre com **`grade: null`**
+  — sem tabuleiro, todo golpe alcança toda gente e ninguém gasta rodada a
+  andar. É **limite otimista, não o jogo**. Com grade a luta é mais longa (X1
+  mediu 2 a 3 rodadas só de caminhada), logo **7 é piso da duração real e não
+  o retrato dela** — o poço cobre a luta medida, e na luta de verdade pode
+  acabar antes. Se um dia a régua ganhar grade, é este 7 que se remede.
+
+- **A ORDEM DO DANO, COM A QUEDA NO MEIO** (o cuidado que Q1 tornou
+  necessário, e a pergunta que a pessoa fez):
+  `abrigo (família absorve) → TEMPORÁRIO → PV real → a porta da queda`
+  · **O temporário é consumido ANTES de `quedaAoChegarAZero` ser perguntada
+    — e não por uma regra nova.** Sai por **composição**: `absorverDano`
+    (efeitos.js) é a **única** porta por onde o dano passa antes de virar PV,
+    e a porta de Q1 só é perguntada quando o **PV real** chega a zero. Q1
+    ficou **intocada — nem uma linha**.
+  · **O abrigo vem primeiro por regressão**, não por gosto: ele gasta-se
+    inteiro assim que toca num golpe, e pôr o poço à frente mudaria *quando*
+    ele se gasta — o escudo passaria a render mais do que rende hoje. Com o
+    abrigo primeiro, a fase é **puramente aditiva**: ficha sem temporário
+    devolve byte a byte o que devolvia antes.
+  · **Provado, e não afirmado** (`teste-temporario.mjs` §7): um herói com 3 de
+    vida apanha um golpe que **sem** o poço o levaria a 0 — e a 0 a porta de
+    Q1 decide se ele cai. **Com** o poço consumido antes, o PV real fica
+    acima de zero e *"a porta da queda NUNCA chega a ser perguntada"*; sem
+    ele, a porta responde que o herói cai — e o desfecho é **lido de volta**
+    de `quedaAoChegarAZero`, não escrito à mão, para acompanhar sozinho o dia
+    em que "cai" mudar de palavra. **Ninguém cai com escudo de pé.**
+
+- **"FICA O MAIOR", PROVADO NOS DOIS SENTIDOS** (§3, §4 e §9):
+  `POUCO depois MUITO` e `MUITO depois POUCO` dão **MUITO** nos dois casos, e
+  a asserção **nega a soma explicitamente** (`!== POUCO + MUITO`) para dizer o
+  que impede, não só o que espera. Três lançamentos seguidos do mesmo poço
+  continuam a dar **um** poço. A oferta menor **não é aceite, não escreve
+  linha nenhuma** e devolve a **mesma** ficha que entrou (o empate idem — um
+  objeto novo faria a fiação de cima piscar por uma mudança que não existe),
+  mas ainda diz **porquê** para o log. E **não cura**: `vida` e `vidaMax` saem
+  intocados nos dez caminhos, inclusive com o maior poço possível sobre um
+  corpo moído. O "fica o maior" tem **um dono só** (`vereditoDoTemporario`), e
+  §9 compara as duas pontas (`absorverDano` e `gastarTemporario`) nos mesmos
+  seis pares e cobra o mesmo número, o mesmo resto e a mesma frase — sem
+  espiar o código.
+
+- **o que ficou (o que V2 herda, escrito e não por descobrir):**
+  1. **`tickTemporario` não é chamado por ninguém** — o relógio da rodada é
+     de V2, ao lado de `tickEfeitos` (`regras-jogo.js:369`). **Enquanto não
+     andar, o poço dura para sempre.** É a dívida declarada desta etapa.
+  2. **`ganharTemporario` também não tem quem o chame** — a torneira (poção,
+     milagre, habilidade) é de V2/V3. O módulo nasce com a regra pronta e a
+     torneira fechada, de propósito.
+  3. **`vereditoDoTemporario` é a tela de V2**: `haEscolha: true` é o sinal de
+     que o jogador tem uma decisão de verdade (4 contra 10) e de que ela deve
+     aparecer **antes do clique**.
+  4. **O furo de `arena.js:249`**: ela escreve de volta só `outro.efeitos`
+     quando `absorvido > 0`, e o poço vive em `pers.temporario`, que essa
+     linha não copia — num duelo, o temporário seria gasto e esquecido a cada
+     golpe. **Hoje não morde ninguém** (nada põe temporário num duelista); no
+     dia em que puser, é essa linha que mente. `App.jsx` (`passarPeloAbrigo`)
+     já devolve `ab.pers` inteiro e não tem o problema.
+  5. E o par disso: `ab.linha` é `""` quando o `absorvido` vem só do poço, e a
+     arena empurraria `"Nome — "` para o log. **`linhaDoTemporario` existe
+     para V2 ter o que pôr ali.**
+
+---
 ## 16/09 08:20 · v9.268 · Q1 · quem cai, e quem só morre · commit `7a519be`
 
 - **estado inicial:** trava `.claude/ciclo-em-curso` **ausente** — pus a
