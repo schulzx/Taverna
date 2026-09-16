@@ -74,6 +74,16 @@ export const CANAIS_DE_SAIDA = [
      vantagem/desvantagem → nas rolagens de quem a carrega
      perdeAcao            → não age no turno (o combate já respeita)
      danoTurno            → dano por turno enquanto durar
+       (O ESPELHO DA CURA NÃO MORA AQUI, e a v9.275/H3 mediu antes de
+        escolher: ele é `curaTurno`, no EFEITO — a régua em
+        `REGENERACAO_DO_BUFF` (efeitos.js), cobrada por `tickEfeitos` e
+        pousada em PV por `pousarCura` (regras-jogo.js). O motivo é de
+        fiação, não de gosto: os três chamadores vivos de `tickCondicoes`
+        moram TODOS no App.jsx, e um campo de cura nesta tabela nasceria
+        inerte até alguém lá o ligar; `tickEfeitos` já tinha um chamador
+        fora do App — a arena —, e por ele a cura pousa em PV de verdade.
+        O dia em que o App pagar `curaTurno` do lado da condição também, é
+        este ponteiro que evita a régua nascer duas vezes.)
      danoExtra/danoReduzido → no dano causado
      defesa               → soma na CA
      turnos               → duração padrão (null = até algo tirá-la)

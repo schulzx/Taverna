@@ -262,5 +262,59 @@ sec("6. a porta do descanso recusa canal que não é de descanso");
     limparPorDescanso(tres, "cura").condicoes !== tres);
 }
 
+/* ============================================================
+   7. A PORTA NOVA — a cura que tem RELÓGIO (v9.275 · H3)
+
+   O varredor existe para morder AMANHÃ, e amanhã chegou: H3 abriu a
+   primeira porta de cura que não é de uma vez — um efeito com
+   `curaTurno` que o relógio do fim do turno cobra e `pousarCura`
+   (regras-jogo.js) soma ao PV. Uma porta que devolve vida TODO TURNO é
+   exactamente onde a tentação de "e já agora tira o veneno também"
+   aparece: é a porta que mais se pareceria com um antídoto sem nunca se
+   declarar um.
+
+   E ELA NÃO É VISTA PELA VARREDURA DE CIMA, o que é a segunda razão
+   para esta seção existir. `sobePV` exige `vidaMax` na MESMA linha (é o
+   molde das 45 portas medidas em T2), e o pouso calcula o teto uma
+   linha acima do lugar onde escreve. Não se mexe no regex por causa de
+   um caso — alargá-lo passaria a apanhar toda subtração de dano do
+   projeto —; escreve-se o caso à mão, como a seção 3 já faz com os seis
+   módulos que lê pelo nome.
+   ============================================================ */
+sec("7. a cura do relógio devolve PV, e só (H3)");
+{
+  const { pousarCura, tickEfeitos } = await import("../src/regras-jogo.js");
+  const comCondicao = {
+    nome: "Orin", vida: 9, vidaMax: 20,
+    condicoes: [criarCondicao("envenenado"), criarCondicao("sangrando")],
+    efeitos: [{ nome: "A chuva", turnos: 3, curaTurno: 2 }],
+  };
+  const r = pousarCura(comCondicao, 3);
+  t("o pouso sobe o PV", r.pers.vida === 12 && r.curou === 3);
+  /* IDENTIDADE REFERENCIAL, e não `length`: uma lista NOVA com o mesmo
+     conteúdo passaria num teste de tamanho e já seria escrita — é o
+     mesmo argumento que `teste-recalculo` usou para provar silêncio. */
+  t("…e a lista de condições é a MESMA, byte por byte e por referência",
+    r.pers.condicoes === comCondicao.condicoes && r.pers.condicoes.length === 2);
+  t("nem o veneno nem o sangramento saem por aqui",
+    r.pers.condicoes.map((c) => c.id).join(",") === "envenenado,sangrando");
+  t("e o relógio dos efeitos não devolve `condicoes` nenhuma",
+    !Object.prototype.hasOwnProperty.call(tickEfeitos(comCondicao), "condicoes"));
+
+  /* O DENTE INVERSO: a porta tem de continuar a existir. Uma seção que
+     prova que um caminho morto não limpa condição não prova nada. */
+  const regras = (fonte["regras-jogo.js"] || []).join("\n");
+  const arena = (fonte["arena.js"] || []).join("\n");
+  t("a porta existe e é exportada", /export function pousarCura\(/.test(regras));
+  t("…e tem chamador vivo fora do App", /pousarCura\(quem, tk\.cura\)/.test(arena));
+
+  /* E O SÍTIO ONDE ELA POUSA NA ARENA obedece à mesma janela da seção 2:
+     nada escreve em `condicoes` à volta da linha que sobe a vida. */
+  const linhasArena = fonte["arena.js"] || [];
+  const iPouso = linhasArena.findIndex((L) => /quem\.vida = pc\.pers\.vida;/.test(L));
+  const bloco = linhasArena.slice(Math.max(0, iPouso - MEDIDA.janela), iPouso + MEDIDA.janela + 1).join("\n");
+  t("o pouso na arena não escreve em condicoes na vizinhança", iPouso > 0 && !RX_ESCREVE_COND.test(bloco));
+}
+
 console.log(`\n${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

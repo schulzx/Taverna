@@ -150,7 +150,12 @@ export function efeitoVale(ef, hab, pers) {
    e não passa por aqui. */
 
 const SEM_ACENTO = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-const textoDaHabilidade = (hab) =>
+/* v9.275 (H3): passou a ser PÚBLICA porque nasceu a segunda pergunta sobre
+   o mesmo texto — `regeneracaoDaHabilidade` (efeitos.js) — e as duas têm de
+   ler a habilidade com a MESMA régua. Um segundo normalizador em efeitos.js
+   divergiria no primeiro acento: "contínua" sem acento casa, com acento não,
+   e a diferença seria invisível até alguém perder uma cura na mesa. */
+export const textoDaHabilidade = (hab) =>
   SEM_ACENTO(typeof hab === "string" ? hab : `${(hab && hab.nome) || ""} ${(hab && hab.descricao) || ""}`);
 
 /* O VETO, testado ANTES da tabela: a palavra "escudo" aparece dos DOIS
@@ -219,7 +224,15 @@ export function aplicacaoDoBuff(hab) {
    `aplica`, efeito do canal do Mestre com nome de atributo e o efeito de
    milagre com `aplica: "todos"` inclusive. Uma lista de permissão viraria
    regressão silenciosa no dia em que alguém inventasse um rótulo novo. */
-export const APLICA_FORA_DO_GOLPE = ["protecao"];
+/* v9.275 (H3): "cura" entrou ao lado de "protecao", e pelo mesmo motivo que
+   ela entrou. O efeito de regeneração nasce com `bonus: 0`, então hoje não
+   somaria número nenhum de qualquer maneira — mas a lei desta lista é sobre
+   o RÓTULO, não sobre o número de hoje: o dia em que uma regeneração nascer
+   com bônus (uma cura que também inspirasse, por exemplo) ela somaria ao
+   golpe em silêncio, e ninguém procuraria aqui. O rótulo declara a intenção;
+   deixá-lo de fora seria guardar a mesma bomba que a v9.232 desarmou para o
+   abrigo. */
+export const APLICA_FORA_DO_GOLPE = ["protecao", "cura"];
 
 export function efeitoNoGolpe(ef) {
   const ap = String(!ef || ef.aplica == null ? "" : ef.aplica).toLowerCase();

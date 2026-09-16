@@ -791,7 +791,21 @@ sec("9. o dono medido das 13 (v9.266 H2 · v9.274 F1)");
      `teste-ligacao` (todo export precisa de ≥2 leitores) — e a régua
      de uma prova é da prova, não do jogo.
      ============================================================ */
-  const SEM_DONO_HOJE = 6;
+  /* 6 → 4 EM 16/09/2026 (v9.275 · H3), E O MOTIVO DA MUDANÇA FICA AQUI,
+     como a lei da casa manda para toda asserção movida. H3 construiu a
+     CURA POR TURNO — régua em `REGENERACAO_DO_BUFF` (efeitos.js), a chave
+     `curaTurno` a nascer em `efeitoDeBuff`, o ramo no relógio que já
+     existia (`tickEfeitos`) e o pouso em PV por `pousarCura`, com a arena
+     a pagá-lo de verdade — e as duas linhas que a citavam como "sem dono
+     nenhum" ganharam endereço medido: "Círculo Sagrado" e "Renovação",
+     as duas com `src/regras-jogo.js · tickEfeitos`.
+     AS DUAS FICARAM EM AGUARDAM, com a dívida TROCADA e escrita (a zona
+     presa ao lugar numa, o ramo do grupo na outra, a fiação do App nas
+     duas) — é o precedente de "Corpo de Ferro" em F1, e é por isso que
+     `TETO_DE_AGUARDAM` não se mexeu: ter dono não quita dívida.
+     O número desce porque a conta desceu, e é este o commit que a paga —
+     que é exactamente o movimento para o qual o `<=` foi escrito. */
+  const SEM_DONO_HOJE = 4;
   console.log(`  ··  sem dono nenhum hoje: ${semDono.length} — ${semDono.join(", ")}`);
   t(`a conta dos sem-dono não subiu (${semDono.length} ≤ ${SEM_DONO_HOJE})`,
     semDono.length <= SEM_DONO_HOJE,

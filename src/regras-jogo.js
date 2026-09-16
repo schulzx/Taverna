@@ -365,16 +365,98 @@ export function atributoEfetivo(pers, attrId) {
   return Math.min(MOD_MAX_ROLAGEM, total);
 }
 
-/* Reduz a duração dos efeitos em 1 turno; remove os que expiram. Retorna {efeitos, msgs}. */
+/* Reduz a duração dos efeitos em 1 turno; remove os que expiram. Retorna
+   `{efeitos, msgs, cura, fontes}`.
+
+   v9.275 (H3) · O ESPELHO DE `danoTurno`, E ELE É ADITIVO. Até aqui este
+   relógio só sabia descontar prazo e dissipar; o irmão gémeo
+   (`tickCondicoes`, condicoes.js) cobra `danoTurno` desde sempre e devolve
+   `{condicoes, expiradas, dano, fontes}`. A forma da resposta é a dele,
+   campo por campo, para que os dois relógios se leiam iguais: `cura` é
+   quanto o turno devolve, `fontes` são os nomes que o devolvem.
+
+   E ELE NÃO POUSA NADA. Quem soma PV é `pousarCura`, logo abaixo, e a
+   separação é a mesma que o irmão já tinha: o relógio DIZ o número, o
+   chamador decide o corpo em que ele cai. Um relógio que escrevesse vida
+   sozinho curaria o herói e o grupo pela mesma função, e a guarda dos
+   mortos ficaria repetida em cada chamador.
+
+   A CURA É COBRADA ANTES DO DECREMENTO, e é a ordem do irmão: lá o
+   `danoTurno` entra antes de `turnos - 1`, de modo que o ÚLTIMO turno de
+   prazo ainda dói. Aqui o último turno ainda cura. Inverter isto seria
+   pagar um turno a menos do que a ficha promete — e só no efeito, não na
+   condição, que é a divergência silenciosa que esta etapa existe para não
+   criar.
+
+   `cura` e `fontes` vêm SEMPRE, mesmo em zero, e isso NÃO briga com a lei
+   da "chave que só nasce quando existe": aquela lei é sobre o efeito que
+   fica guardado na ficha (e lá `curaTurno` continua a só nascer quando
+   existe). Isto é a resposta de uma função, e a resposta de um relógio tem
+   forma fixa — `tickCondicoes` devolve `dano: 0` todos os turnos em que
+   ninguém está envenenado, e é por isso que ninguém precisa de `|| 0` para
+   o ler. */
 export function tickEfeitos(pers) {
   const msgs = [];
   const efeitos = [];
-  (pers.efeitos || []).forEach((e) => {
+  let cura = 0;
+  const fontes = [];
+  /* `pers` nulo chegava aqui e estourava; com um leitor novo fora do App
+     (a arena) o relógio passa a correr em mais sítios, e um relógio que
+     derruba a cena é o pecado que `calou(...)` existe para tapar. */
+  ((pers && pers.efeitos) || []).forEach((e) => {
+    const porTurno = Number(e && e.curaTurno);
+    if (Number.isFinite(porTurno) && porTurno > 0) { cura += porTurno; fontes.push((e && e.nome) || ""); }
     const t = e.turnos - 1;
     if (t <= 0) msgs.push(`✧ ${e.nome} se dissipou.`);
     else efeitos.push({ ...e, turnos: t });
   });
-  return { efeitos, msgs };
+  return { efeitos, msgs, cura, fontes };
+}
+
+/* ---------------- A CURA DO RELÓGIO POUSA EM PV (v9.275 · H3) ----------------
+   ONDE ELA ENTRA NA FILA, e é a pergunta que a etapa tinha de responder por
+   escrito. A fila do DANO no herói é `amortecerDano` (origem, e o abafo de
+   F1) → `repartirDano` (invocação) → `absorverDano`, que é abrigo → PV
+   temporário → PV real → a porta da queda. **A cura do relógio não entra
+   nessa fila em ponto nenhum.** Ela corre no FIM DO TURNO, depois de a fila
+   inteira já ter corrido, no mesmo momento em que o irmão cobra o veneno.
+
+   E a diferença não é de arrumação, é de jogo: uma regeneração que pousasse
+   ANTES da fila apagaria o golpe que devia matar — o herói a 3 PV levaria 12
+   e estaria vivo porque o relógio adiantou 3 —, e uma que pousasse NO MEIO
+   da fila (entre o abrigo e o PV) faria o abrigo comer o que já tinha sido
+   devolvido. O relógio é o depois de tudo: o turno acontece inteiro, com o
+   dano que ele teve, e só então o corpo fecha um pouco. Atravessando um
+   turno com números: 20 de PV máximo, 9 de vida, regeneração de 3 por turno,
+   um golpe de 6 no meio do turno → o golpe morde os 9 (fila inteira: 9 → 3),
+   e o relógio do fim devolve 3 (3 → 6). Se a cura tivesse corrido antes, os
+   mesmos números davam 12 → 6 e o herói teria comprado o mesmo golpe com
+   outra vida. Um dos dois tem de ser a regra, e é este.
+
+   O ESPELHO NÃO LEVANTA OS MORTOS, e a guarda é a mesma que o dano do turno
+   tem no App (`(pers.vida || 0) > 0` antes de cobrar `danoTurno`): quem caiu
+   não é curado pelo relógio. Levantar do chão é trabalho declarado de quem
+   reergue — `aplicarPoder` recusa curar caído com essas palavras, e a
+   Ressurreição Menor perderia a razão de existir se um efeito de 2 PM a
+   fizesse sozinho a cada turno. Se a casa quiser o contrário, é decisão da
+   pessoa (toca a porta da queda) e muda-se AQUI, num sítio só.
+
+   O TETO É `vidaMax`, LIDO DA FICHA. Sem `vidaMax` não há teto que se possa
+   inventar, e o recuo é não curar acima do que já existe — nunca um número
+   escrito à mão nesta função.
+
+   Devolve `{pers, curou, linha}` com ficha NOVA (imutabilidade: quem chamou
+   escreve de volta), `curou` zero quando nada aconteceu, e a `linha` na voz
+   do mundo: o jogador lê um corpo a fechar, nunca o nome do mecanismo. */
+export function pousarCura(pers, cura) {
+  const quanto = Math.round(Number(cura) || 0);
+  const vida = Number((pers || {}).vida || 0);
+  if (!pers || !(quanto > 0) || !(vida > 0)) return { pers, curou: 0, linha: "" };
+  const teto = Number(pers.vidaMax || 0) || vida;
+  const depois = Math.min(teto, vida + quanto);
+  const curou = depois - vida;
+  if (curou <= 0) return { pers, curou: 0, linha: "" };
+  return { pers: { ...pers, vida: depois }, curou, linha: `✚ a carne fecha sozinha (+${curou}) — ${depois}/${teto}.` };
 }
 
 /* Processa mudanças de combate. Recebe o estado atual (ou null) e as mudanças,

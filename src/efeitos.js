@@ -50,7 +50,7 @@
    distantes.
    ============================================================ */
 
-import { naturezaDaHabilidade, aplicacaoDoBuff } from "./combos.js";
+import { naturezaDaHabilidade, aplicacaoDoBuff, textoDaHabilidade } from "./combos.js";
 import { magiaPorNome, exigeConcentracao, CONCENTRACAO_DA_MAGIA } from "./grimorio.js";
 /* v9.269 (Fase V · V1): o poço que apanha DEPOIS do abrigo. A seta aponta num
    sentido só — `temporario.js` não importa nada de `src/`, e é por isso que o
@@ -197,6 +197,94 @@ function forcaDoAmortecimento(hab) {
   const custo = Number((hab || {}).custo);
   const pm = Number.isFinite(custo) && custo > 0 ? custo : AMORTECIMENTO_DO_BUFF.custoPadrao;
   return Math.min(AMORTECIMENTO_DO_BUFF.teto, Math.max(AMORTECIMENTO_DO_BUFF.minimo, Math.round(pm * AMORTECIMENTO_DO_BUFF.porPM)));
+}
+
+/* ---------------- A REGENERAÇÃO: QUANTO UM EFEITO DEVOLVE POR TURNO (v9.275 · H3)
+   A TERCEIRA TABELA DA MESMA FAMÍLIA DE DECISÕES, e a primeira que anda no
+   sentido contrário. As duas de cima compram dano que NÃO chega — `absorve`
+   de uma vez, `amortece` em proporção; esta compra PV que VOLTA. É o espelho
+   que o catálogo de condições tem há muitas versões e o de efeitos nunca
+   teve: `danoTurno` (condicoes.js) cobra a cada turno — veneno 2, sangue 3,
+   fogo 4 — e do outro lado não havia nada que devolvesse. Um sistema que só
+   sabe tirar vida com relógio tem meia regra.
+
+   A RÉGUA SAI DO CUSTO, como nas irmãs, e a MOEDA É O TOTAL: o PM compra o
+   que volta ao longo do prazo inteiro, não o que volta num turno. Dois PV
+   por PM é a paridade que F1 escreveu e mediu — `absorve` come 2 por PM de
+   uma vez, `amortece` a 5 pontos percentuais por PM abafa ~2 por PM no total
+   dos três golpes do prazo — e não há razão para o PV que volta valer mais
+   que o PV que não se perde: na conta do fim da luta os dois são o mesmo PV.
+
+   O NÚMERO POR TURNO NÃO É ESCRITO AQUI: É DIVIDIDO PELO PRAZO REAL, e o
+   prazo é o da própria ficha (`BUFF_DA_HABILIDADE.turnosPadrao` quando
+   ninguém diz outro). Escrever um segundo prazo nesta tabela seria ter duas
+   verdades sobre a mesma duração — uma regeneração de 5 turnos com o número
+   calculado para 3 pagaria 66% a mais sem ninguém ter decidido isso.
+     · Chamado da Chuva (3 PM, 3 turnos) → 2 por turno →  6 no total
+     · Círculo Sagrado  (5 PM, 3 turnos) → 3 por turno →  9 no total
+     · Renovação        (5 PM, 3 turnos) → 3 por turno →  9 no total
+
+   O TETO É 4, E O 4 NÃO É ESCOLHA: é o `danoTurno` de `queimando`, o maior
+   do catálogo de condições. A lei, numa frase — **o relógio da cura nunca
+   corre mais depressa que o relógio do dano**. No teto, quem regenera
+   EMPATA com quem arde; se passasse, fogo, veneno e sangramento viravam
+   decoração e três condições inteiras deixavam de decidir alguma coisa. A
+   suíte de H3 lê os dois catálogos e cobra o empate: o número está escrito
+   uma vez só, e a igualdade é provada, não repetida. No prazo padrão o teto
+   dá 12 no total, que é exatamente o teto de `ABSORCAO_DO_BUFF` — nenhuma
+   defensiva desta casa compra mais que isso, e agora nenhuma cura também.
+
+   O PISO É 1, pelo motivo que `poder-de-classe.js` já escreveu para a cura
+   de uma vez: cura que devolve zero é turno perdido com aparência de
+   milagre.
+
+   O `rx` MORA AQUI E NÃO EM `APLICACAO_DO_BUFF` (combos.js), e é decisão.
+   Aquela tabela responde "QUE PROTEÇÃO é esta?", e regeneração não é
+   proteção: pô-la lá faria todos os leitores dela — `ehBuff` do piloto, a
+   escolha do abrigo, `efeitoDeBuff` — passar a ler uma cura como abrigo. O
+   molde deste formato (`rx` + `conceito` + os números na mesma linha) é o de
+   `GUARDAS` (habilidades.js) e o de `PODERES_DE_CLASSE`, e as regex são
+   ANCORADAS pelo motivo escrito lá: um `/cura/` solto faria metade do acervo
+   regenerar. MEDIDO no acervo inteiro — 593 entradas (classes, subclasses,
+   especializações e o grimório) — casam TRÊS, e são as três da etapa; a
+   varredura é da suíte de H3, e é ela que fica vermelha se nascer uma
+   quarta sem ninguém reparar. A quarta que fala hoje de
+   cura e de tempo, "Balada do Herói: o grupo cura e ganha vantagem por 3
+   turnos", NÃO casa, e é o controle vivo desta linha: lá o prazo é da
+   vantagem e a cura é de uma vez. */
+export const REGENERACAO_DO_BUFF = {
+  rx: /cura[m]? por turno|cura[m]? (leve )?continua|por \d+ turnos seguidos|regenera/,
+  conceito: "o corpo fecha sozinho, um pouco a cada respiração",
+  aplica: "cura",
+  porPM: 2, custoPadrao: 2, minimo: 1, teto: 4,
+};
+
+/* O leitor da tabela, e é PÚBLICO ao contrário das duas contas de força:
+   quem precisa dele mora noutro módulo (a arena pergunta se a habilidade
+   que o piloto acabou de usar deixa prazo). Devolve a tabela ou `null`,
+   no molde de `aplicacaoDoBuff` e de `guardaDe` — `null` é o caminho do
+   padrão, não um erro. */
+export const regeneracaoDaHabilidade = (hab) =>
+  (REGENERACAO_DO_BUFF.rx.test(textoDaHabilidade(hab)) ? REGENERACAO_DO_BUFF : null);
+
+/* Privada pelo motivo exato de `forcaDaAbsorcao` e `forcaDoAmortecimento`:
+   quem precisa do número recebe o efeito já com ele dentro, por
+   `efeitoDeBuff`. Quem GASTA o número é `tickEfeitos` (regras-jogo.js), e
+   ele lê a chave do efeito, nunca esta conta.
+
+   O PRAZO ENTRA COMO ARGUMENTO porque é ele que divide: o total é a moeda,
+   e um prazo diferente reparte o mesmo total em parcelas diferentes. Prazo
+   torto (ausente, zero, texto) cai no padrão da tabela do buff — o mesmo
+   recuo que `firmarEfeito` faz com o teto da concentração. */
+function forcaDaRegeneracao(hab, prazo) {
+  const custo = Number((hab || {}).custo);
+  const pm = Number.isFinite(custo) && custo > 0 ? custo : REGENERACAO_DO_BUFF.custoPadrao;
+  const t = Number(prazo);
+  const turnos = Number.isFinite(t) && t > 0 ? t : BUFF_DA_HABILIDADE.turnosPadrao;
+  return Math.min(
+    REGENERACAO_DO_BUFF.teto,
+    Math.max(REGENERACAO_DO_BUFF.minimo, Math.round((pm * REGENERACAO_DO_BUFF.porPM) / turnos)),
+  );
 }
 
 /* ---------------- O EFEITO DE UM MILAGRE ----------------
@@ -385,6 +473,35 @@ export function efeitoDeBuff(hab, pers, turnos) {
   );
   const escopo = naturezaDaHabilidade(h, pers);
   const prazo = turnos || BUFF_DA_HABILIDADE.turnosPadrao;
+  /* v9.275 (H3) · A CURA É PERGUNTADA ANTES DA PROTEÇÃO, E A ORDEM É A
+     DECISÃO DA ETAPA. "Círculo Sagrado" diz "área PROTEGIDA onde aliados
+     curam por turno" e casa com as duas tabelas: `aplicacaoDoBuff` devolve
+     a família `protege`, que não compra nada desde que P2 a mediu (força
+     zero), e esta devolve um número. Perguntar primeiro à que PAGA é dar à
+     ficha o que ela promete; perguntar primeiro à outra era continuar a
+     entregar um efeito vazio com rótulo bonito.
+
+     E A ORDEM NÃO TIRA NADA DAS DUAS FAMÍLIAS QUE JÁ COMPRAM: medido no
+     acervo inteiro, nenhuma habilidade que casa aqui casa com `absorve` ou
+     `amortece`. A suíte de H3 tranca a medição — no dia em que uma casar
+     com as duas, a asserção fica vermelha ANTES de um abrigo virar
+     curativo em silêncio.
+
+     A CHAVE SÓ NASCE QUANDO EXISTE, pela régua de `absorve` e `amortece`:
+     quem não regenera sai daqui exatamente como saía, sem `curaTurno: 0`
+     e sem `curaTurno: false` — ausente. */
+  if (regeneracaoDaHabilidade(h)) {
+    const curaTurno = forcaDaRegeneracao(h, prazo);
+    const efeito = {
+      nome: h.nome, bonus: 0, turnos: prazo,
+      aplica: REGENERACAO_DO_BUFF.aplica, escopo, curaTurno,
+    };
+    if (segura) efeito.concentracao = true;
+    return {
+      efeito,
+      extraEscopo: ` · ${REGENERACAO_DO_BUFF.conceito} — devolve ${curaTurno} por turno`,
+    };
+  }
   const protecao = aplicacaoDoBuff(h);
   if (protecao) {
     const base = { nome: h.nome, bonus: 0, turnos: prazo, aplica: protecao.aplica, escopo };

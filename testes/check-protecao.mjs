@@ -31,7 +31,7 @@ import { SUBCLASSES } from "../src/subclasses.js";
 import { ESPECIALIZACOES } from "../src/especializacoes.js";
 import { MAGIAS } from "../src/grimorio.js";
 import { APLICACAO_DO_BUFF, APLICA_FORA_DO_GOLPE, aplicacaoDoBuff, efeitoNoGolpe } from "../src/combos.js";
-import { BUFF_DA_HABILIDADE, ABSORCAO_DO_BUFF, AMORTECIMENTO_DO_BUFF, efeitoDeBuff } from "../src/efeitos.js";
+import { BUFF_DA_HABILIDADE, ABSORCAO_DO_BUFF, AMORTECIMENTO_DO_BUFF, REGENERACAO_DO_BUFF, regeneracaoDaHabilidade, efeitoDeBuff } from "../src/efeitos.js";
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -68,6 +68,18 @@ const MEDIDA_DO_ACERVO = {
      medição, não o tamanho da família, que cresce quando alguém escreve
      uma defensiva nova. */
   pisoDeAbafos: 5,
+  /* v9.275 (H3) · A FAMÍLIA QUE DEVOLVE PV, e é a primeira que tem TETO
+     além de piso. Medidas hoje 3 no acervo inteiro — Círculo Sagrado,
+     Chamado da Chuva e Renovação. O piso é 3 (a família inteira, não uma
+     fração dela) porque aqui a lista pequena é o desenho, não uma amostra:
+     se ela esvaziar, o regex parou de casar e a etapa morreu em silêncio.
+     E o TETO existe pelo motivo oposto, que é o perigo próprio desta
+     família: o classificador lê PALAVRA de cura, e um regex frouxo
+     transformaria meio acervo em regeneração. 6 é o dobro do medido —
+     cabe uma habilidade nova em cada uma das três classes que já têm
+     alguma, e não cabe um acidente de regex. */
+  pisoDeRegeneracoes: 3,
+  tetoDeRegeneracoes: 6,
 };
 
 /* ---------------- O ACERVO ---------------- */
@@ -100,11 +112,32 @@ const abrigos = [], abrigosForaDaFaixa = [], absorveForaDaFamilia = [], abrigosS
 /* v9.274 (F1): a terceira metade, e ela entra no MESMO passe pelo argumento
    escrito acima — o acervo já está aberto e `efeitoDeBuff` já foi chamado. */
 const abafos = [], abafosForaDaFaixa = [], amorteceForaDaFamilia = [], abafosSemNumero = [];
+/* v9.275 (H3): a QUARTA metade, e ela entra no mesmo passe pelo argumento de
+   F1 — o acervo já está aberto e `efeitoDeBuff` já foi chamado. É a primeira
+   família que não é defensiva: ela não impede o dano, devolve o PV. */
+const regeneracoes = [], regenForaDaFaixa = [], curaForaDaFamilia = [], regenSemNumero = [];
 
 for (const { hab, fonte } of acervo) {
   const linha = aplicacaoDoBuff(hab);
+  const regen = regeneracaoDaHabilidade(hab);
   const { efeito, extraEscopo } = efeitoDeBuff(hab, HEROI, undefined);
   const onde = `${hab.nome} (${fonte})`;
+  /* O CAMPO `curaTurno` É EXCLUSIVO DA FAMÍLIA, pelo mesmo dente de
+     `absorve` e `amortece`: ninguém fora dela pode carregá-lo. */
+  if (!regen && efeito.curaTurno !== undefined) {
+    curaForaDaFamilia.push(`${onde} → curaTurno ${efeito.curaTurno} (não casa com a régua da regeneração)`);
+  }
+  if (regen) {
+    const n = efeito.curaTurno;
+    regeneracoes.push({ onde, n, custo: Number(hab.custo) });
+    if (!(Number.isInteger(n) && n > 0)) regenSemNumero.push(`${onde} → ${n}`);
+    else if (n < REGENERACAO_DO_BUFF.minimo || n > REGENERACAO_DO_BUFF.teto) regenForaDaFaixa.push(`${onde} → ${n}`);
+    /* a mesma metade de gameplay da lei iv: o mecanismo fica calado, o
+       número que o jogador comprou com PM, não */
+    if (Number.isInteger(n) && !extraEscopo.includes(String(n))) {
+      regenSemNumero.push(`${onde} → frase muda: "${extraEscopo.trim()}"`);
+    }
+  }
   /* O CAMPO `absorve` É EXCLUSIVO DA FAMÍLIA. Fora dela ninguém pode tê-lo:
      nem ofensiva, nem as outras quatro promessas defensivas — cada uma
      delas é a sua própria etapa, e o dia em que uma ganhar número é o dia
@@ -151,6 +184,13 @@ for (const { hab, fonte } of acervo) {
     if (Number(efeito.bonus) !== 0) mentemNoNumero.push(`${onde} nasce com bônus ${efeito.bonus}`);
     /* A FRASE: nada de "+N de dano" na linha de quem prometeu abrigo. */
     if (RX_NUMERO_DE_DANO.test(extraEscopo) || / de dano /.test(extraEscopo)) mentemNaFrase.push(`${onde} diz "${extraEscopo.trim()}"`);
+  } else if (regen) {
+    /* v9.275 (H3): quem regenera não é defensiva NEM ofensiva — é a
+       terceira resposta, e ela não existia quando este laço foi escrito.
+       Sem este ramo as duas Druidas caíam no `else` e eram acusadas de
+       "nascer mudas", que é o avesso do que lhes aconteceu: elas passaram
+       a comprar uma coisa que ninguém lhes dava. A prova delas é a seção
+       8, com a régua da família própria. */
   } else {
     ofensivas.push(onde);
     /* O INVERSO: o padrão não pode ter mudado para quem não prometeu
@@ -339,6 +379,56 @@ sec("7. o abafo abafa — a família que ganhou número em F1, no acervo inteiro
   /* e a régua não pode ter virado constante disfarçada: alguém abaixo do teto */
   t("e o teto não achatou a família inteira — a régua ainda separa barato de caro",
     new Set(ns).size > 1, `todos iguais a ${ns[0]}`);
+}
+
+/* ============================================================
+   8. A CURA TEM RELÓGIO — a família que devolve, no acervo inteiro
+   (v9.275 · H3)
+
+   A quarta passada, pelo mesmo motivo das três de cima: `teste-cura-turno`
+   prova a régua com custos escolhidos à mão, e um exemplo bom não prova
+   acervo. O que só se vê aqui é o dia em que alguém escrever uma
+   habilidade nova cuja descrição diga "cura por turno" — ela nasce nesta
+   família sem ninguém decidir isso, e é esta passada que a mede.
+
+   E A FAMÍLIA É PEQUENA DE PROPÓSITO: três. O piso é 3 e não 8 como o do
+   abafo porque o regex é ANCORADO — um `/cura/` solto transformaria
+   metade do acervo em regeneração, e esta seção guarda os dois lados:
+   que a família não esvaziou (o regex parou de casar) e que não inchou.
+   ============================================================ */
+sec("8. a cura tem relógio — a família que devolve PV por turno (H3)");
+{
+  const ns = regeneracoes.map((r) => r.n);
+  console.log(`  ··  ${regeneracoes.length} habilidades regeneram: ${regeneracoes.map((r) => r.onde).join(", ")}`);
+  console.log(`  ··  faixa medida: ${Math.min(...ns)}–${Math.max(...ns)} por turno (tabela: ${REGENERACAO_DO_BUFF.minimo}–${REGENERACAO_DO_BUFF.teto})`);
+
+  t(`a amostra da família não é vazia (pelo menos ${MEDIDA_DO_ACERVO.pisoDeRegeneracoes})`,
+    regeneracoes.length >= MEDIDA_DO_ACERVO.pisoDeRegeneracoes, `achou ${regeneracoes.length}`);
+  t(`e ela não inchou (no máximo ${MEDIDA_DO_ACERVO.tetoDeRegeneracoes} — o regex é ancorado)`,
+    regeneracoes.length <= MEDIDA_DO_ACERVO.tetoDeRegeneracoes,
+    `${regeneracoes.length}: ${regeneracoes.map((r) => r.onde).join(", ")}`);
+  t("toda habilidade da família nasce com cura de verdade (nenhuma com zero)",
+    regenSemNumero.length === 0, regenSemNumero.slice(0, 6).join(" | "));
+  t("e nenhuma escapa da faixa da tabela — o teto morde o acervo inteiro",
+    regenForaDaFaixa.length === 0, regenForaDaFaixa.slice(0, 6).join(" | "));
+  t("e ninguém fora da família carrega o campo `curaTurno`",
+    curaForaDaFamilia.length === 0, curaForaDaFamilia.slice(0, 6).join(" | "));
+
+  /* O TETO É O DENTE CENTRAL DESTA FAMÍLIA, e o número dele mora no
+     catálogo das condições: o relógio da cura nunca corre mais depressa
+     que o relógio do dano. Aqui ele é cobrado contra o acervo, não contra
+     um exemplo — se alguém escrever uma cura de 12 PM, o teto tem de a
+     morder na passada, não na suíte. */
+  const maisCara = regeneracoes.reduce((a, b) => ((b.custo || 0) > (a.custo || 0) ? b : a), regeneracoes[0]);
+  const semTeto = Math.round(((maisCara.custo || REGENERACAO_DO_BUFF.custoPadrao) * REGENERACAO_DO_BUFF.porPM) / BUFF_DA_HABILIDADE.turnosPadrao);
+  console.log(`  ··  a mais cara da família é ${maisCara.onde}, ${maisCara.custo} PM — ${semTeto} por turno sem teto, ${maisCara.n} com teto`);
+  t(`nenhuma delas corre mais depressa que o pior dano por turno do catálogo (${REGENERACAO_DO_BUFF.teto})`,
+    ns.every((n) => n <= REGENERACAO_DO_BUFF.teto), `a maior é ${Math.max(...ns)}`);
+  /* e o rótulo delas está fora do golpe, como o das defensivas: o efeito
+     que devolve PV não pode somar ao dano que sai */
+  t("e o rótulo da família está declarado fora do golpe",
+    APLICA_FORA_DO_GOLPE.includes(REGENERACAO_DO_BUFF.aplica)
+    && !efeitoNoGolpe({ aplica: REGENERACAO_DO_BUFF.aplica, bonus: 0 }));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

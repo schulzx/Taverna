@@ -55,6 +55,11 @@
    - o PRAZO por `tickEfeitos` (regras-jogo.js) e `expirarGuardas`
      (habilidades.js), uma vez por rodada — buff que não vence é buff
      eterno, e buff eterno é regra nova pela porta dos fundos.
+   - a CURA POR TURNO por `pousarCura` (regras-jogo.js, v9.275 · H3), no
+     mesmo bloco e logo depois do prazo. É o espelho do `danoTurno` das
+     condições, e a arena é o primeiro sítio do projeto onde ele pousa em
+     PV: quem tem um efeito com `curaTurno` fecha um pouco do corpo no fim
+     da rodada, depois de o turno inteiro já ter acontecido.
    - a ABSORÇÃO por `absorverDano` (efeitos.js, v9.233), no instante em que
      o dano vira PV. Até a v9.232 a família defensiva era a única que a
      arena firmava e não cumpria: o abrigo entrava na ficha com força zero,
@@ -71,9 +76,9 @@
    ============================================================ */
 
 import { turnoDosCompanheiros, defesaDe, testeConcentracao } from "./combate.js";
-import { firmarEfeito, efeitoDeBuff, absorverDano, efeitoEmConcentracao, quebrarConcentracao } from "./efeitos.js";
+import { firmarEfeito, efeitoDeBuff, absorverDano, efeitoEmConcentracao, quebrarConcentracao, regeneracaoDaHabilidade } from "./efeitos.js";
 import { guardaDe, erguerGuarda, expirarGuardas } from "./habilidades.js";
-import { tickEfeitos, atributoEfetivo } from "./regras-jogo.js";
+import { tickEfeitos, pousarCura, atributoEfetivo } from "./regras-jogo.js";
 import { usarConsumivel } from "./pocoes.js";
 import { montarPronto, PRONTOS } from "./prontos.js";
 
@@ -140,6 +145,21 @@ function projecaoDe(f) {
   };
 }
 
+/* FIRMAR É UM SÓ, E DESDE A v9.275 (H3) TEM DOIS CHAMADORES. O buff e a
+   regeneração entram na ficha pela MESMA porta — `efeitoDeBuff` decide o que
+   o efeito é, `firmarEfeito` decide se alguma coisa cede o lugar, e a frase
+   é a que o módulo devolveu, com o dono na frente. Copiar estas cinco linhas
+   no ramo da cura era o começo de duas portas com regras que divergem: uma
+   com o teto da concentração e outra sem, e ninguém a reparar durante três
+   versões. */
+function firmarNaArena(eu, hab, linhas) {
+  const { efeito, extraEscopo } = efeitoDeBuff(hab, eu, undefined);
+  const fe = firmarEfeito(eu, efeito);
+  eu.efeitos = fe.pers.efeitos;
+  linhas.push(`${eu.nome} firma ${hab.nome}${extraEscopo}`);
+  if (fe.linha) linhas.push(`${eu.nome} — ${secar(fe.linha)}`);
+}
+
 /* aplica as ações que turnoDosCompanheiros devolveu: dano no outro lado,
    cura, guarda, buff e custo no próprio. Devolve linhas do que houve (o
    duelo seco). `rodada` entra porque a guarda vence por rodada, não por
@@ -151,6 +171,24 @@ function aplicarAcoes(acoes, eu, outro, rodada) {
       eu.mana = Math.max(0, (eu.mana || 0) - (a.custo || 0));
       eu.vida = Math.min(eu.vidaMax, eu.vida + (a.valor || 0));
       linhas.push(`${eu.nome} se recompõe (+${a.valor || 0})`);
+      /* E A QUE PROMETE PRAZO DEIXA PRAZO (v9.275 · H3). Três habilidades do
+         acervo dizem na ficha que a cura CONTINUA — "curam por turno", "cura
+         leve contínua", "cura o grupo por 3 turnos seguidos" — e até aqui as
+         três pagavam UMA parcela e calavam-se: a promessa do prazo não existia
+         em sítio nenhum do projeto. Agora a habilidade deixa um efeito com
+         `curaTurno`, e o relógio do fim da rodada cobra-o em PV.
+
+         A PARCELA DE AGORA FICA COMO ESTÁ, e é decisão. O piloto só escolhe
+         uma cura quando alguém está em 35% ou menos (`decidirAcaoCompanheiro`),
+         e uma emergência que não devolvesse nada NESTE turno seria um turno
+         gasto a apostar na duração exactamente no momento em que não há
+         duração. O que a etapa paga é o que ninguém pagava: os turnos
+         seguintes. Medido, o preço na mesa dos oito é ZERO — nenhum dos
+         prontos carrega uma das três (a única disponível no nível 3 é o
+         Chamado da Chuva, de Druida, e não há Druida entre os oito), e a
+         suíte de H3 tranca essa medição para que a catraca do equilíbrio não
+         se mexa às escondidas no dia em que o roster mudar. */
+      if (a.habilidade && regeneracaoDaHabilidade(a.habilidade)) firmarNaArena(eu, a.habilidade, linhas);
       continue;
     }
     if (a.tipo === "pocao") {
@@ -210,11 +248,7 @@ function aplicarAcoes(acoes, eu, outro, rodada) {
          arena não escreve uma sílaba, e por isso a troca soa igual aqui e na
          mesa da campanha. Quem não concentra passa por aqui exatamente como
          passava: `linha` vem vazia e nada é empurrado. */
-      const { efeito, extraEscopo } = efeitoDeBuff(hab, eu, undefined);
-      const fe = firmarEfeito(eu, efeito);
-      eu.efeitos = fe.pers.efeitos;
-      linhas.push(`${eu.nome} firma ${hab.nome}${extraEscopo}`);
-      if (fe.linha) linhas.push(`${eu.nome} — ${secar(fe.linha)}`);
+      firmarNaArena(eu, hab, linhas);
       continue;
     }
     const r = a.r;
@@ -360,6 +394,24 @@ export function simularQueda(fichaA, fichaB, { semente = "queda", terreno = null
           const tk = tickEfeitos(quem);
           quem.efeitos = tk.efeitos;
           for (const msg of tk.msgs) linhas.push(`${quem.nome} — ${secar(msg)}`);
+          /* A CURA DO RELÓGIO POUSA AQUI (v9.275 · H3), e este é o único
+             ponto da arena em que efeito vira PV. Vem DEPOIS das duas
+             meias-rodadas, pelo mesmo motivo que o prazo corre aqui: o turno
+             acontece inteiro — os golpes, o abrigo, a queda da concentração —
+             e só então o corpo fecha um pouco. Curar antes do golpe apagaria
+             a batida que devia matar; a ordem inteira está escrita em
+             `pousarCura` (regras-jogo.js), que é quem guarda o teto de
+             `vidaMax` e a lei de que o relógio não levanta quem caiu.
+
+             ESCREVER `quem.vida` DE VOLTA é o que faz a cura acontecer — o
+             módulo devolve ficha nova, e sem esta linha ele devolveria o
+             mesmo número todos os turnos sem ninguém o receber. É o mesmo
+             cuidado que a mordida do abrigo já pedia em `aplicarAcoes`. */
+          const pc = pousarCura(quem, tk.cura);
+          if (pc.curou > 0) {
+            quem.vida = pc.pers.vida;
+            linhas.push(`${quem.nome} — ${secar(pc.linha)}`);
+          }
           const eg = expirarGuardas(quem, rodada);
           if (eg.linhas.length) {
             quem.guardas = eg.pers.guardas || [];
