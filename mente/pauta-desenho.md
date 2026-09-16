@@ -34,7 +34,7 @@ o jogo se joga**, e cada uma pede uma coisa ao motor que ele hoje não faz.
 opostas — uma porque **dá ao jogador informação que este jogo nunca lhe deu**, a
 outra porque **paleta é identidade**.
 
-- [ ] **a resposta dele sobre como quer ser perguntado morre no fim da luta** ·
+- [x] **a resposta dele sobre como quer ser perguntado morre no fim da luta** · **APROVADA 15/09, com uma correção de lugar.** A pessoa: *"se concordar comigo, pode mexer no save; se não, apresente sua proposta."* **Claude discordou do lugar, não da correção:** preferência é **da pessoa, não do personagem**. No save ela nasce presa àquela campanha — mundo novo esquece de novo (o mesmo defeito, menor), importar save de outra pessoa importa as preferências dela, e **cada modo tem o seu espaço de save** (`modos.js`), logo Uma Vida, Uma Noite e o Duelo perguntariam três vezes. **Onde fica:** um espaço de preferências do jogador, fora do save, válido em todos os modos e campanhas — uma vez na vida em vez de uma por campanha. **Cuidados:** o espaço não viaja no `exportarSave` (senão volta o problema por outra porta); quem não tem preferência guardada joga exatamente como hoje; e a preferência é **do jogador sobre como ser perguntado**, nunca estado de jogo — nada que mude número entra ali. ·
   *(K1b)* · **pesado** · de: jogo + regente · 15/09
   **O número, e foi achado a medir outra coisa.** A escada do silêncio é a
   generosidade automática da Fase K: duas janelas expiradas e o jogo **cala-se
