@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 16/09 06:20 · v9.264 · W2 · o texto ganha um segundo emprego · commit `<hash>`
+## 16/09 06:20 · v9.264 · W2 · o texto ganha um segundo emprego · commit `cf91c7a`
 
 *O escrito dos dois seniores fica em `mente/w2-jogo.md` (com a `§8 · adenda`) e
 `mente/w2-desenho.md`; a forma, no bloco final de `mente/formas.md`.*

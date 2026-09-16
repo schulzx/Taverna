@@ -1,17 +1,12 @@
 [
   {
-    "agente": "regente",
-    "o_que": "rege o ciclo W2 — o texto muda de emprego: de 'o que você faz' para 'diga alguma coisa'",
-    "desde": "2026-09-16T00:30:00Z"
+    "agente": "orquestrador",
+    "o_que": "H1 · a porta das habilidades de classe — desfez o que o ciclo morto deixou e recomeça limpo",
+    "desde": "2026-09-16T05:43:58.079Z"
   },
   {
-    "agente": "jogo",
-    "o_que": "W2 · o que sobra para a fala quando a ação sai da caixa",
-    "desde": "2026-09-16T00:30:00Z"
-  },
-  {
-    "agente": "desenho",
-    "o_que": "W2 · a forma do campo que deixou de perguntar e passou a convidar",
-    "desde": "2026-09-16T00:30:00Z"
+    "agente": "backend",
+    "o_que": "H1 · src/poder-de-classe.js — a tabela e o resolvedor puro das 54",
+    "desde": "2026-09-16T05:43:58.079Z"
   }
 ]
