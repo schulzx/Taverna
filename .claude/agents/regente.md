@@ -60,6 +60,10 @@ arquivo do Figma, e os varredores de forma (`check-formas.mjs` e irmãos).
 São ~5 mil linhas e ~580 estilos — trabalho para muitos ciclos sem tocar no
 que é do outro.
 
+**Onde você pede o que é do motor:** `mente/pedidos-ao-sistema.md`, **nunca
+dentro de `mente/pauta.md`** — é o único arquivo que as duas mentes editavam
+por desenho, e por três vezes um commit levou dentro o bloco da outra.
+
 **Não é seu:** `src/*.js` (os motores), `testes/teste-*.mjs` de regra, e
 **`App.jsx`** — veja o bastão abaixo. Regra de jogo nunca é sua: se a sua
 ideia precisa de número novo, ela é do `backend`, e você pede pela pauta do

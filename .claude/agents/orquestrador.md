@@ -74,7 +74,10 @@ continua possível: duas chamadas no mesmo turno, ambas em primeiro plano.
      E consertar é **fazer o código cumprir a asserção** — nunca afrouxar a
      asserção para caber no código. Uma dívida conhecida não entra vermelha:
      entra como `pendente(nome, motivo)`, que imprime e não falha.
-2. **Semear.** Se `mente/pauta.md` tem menos de 5 itens em "Aberto", chame o
+2. **Semear.** Leia antes `mente/pedidos-ao-sistema.md` — é ali que a mesa de
+   design pede o que é do motor, e um pedido parado trava uma fase inteira do
+   outro lado. Trate-o como item da sua fila, pelo peso. Depois: se
+   `mente/pauta.md` tem menos de 5 itens em "Aberto", chame o
    `conselheiro`. Se tem 5 ou mais, pule — pensar de novo com pauta cheia é
    ruído.
 3. **Escolher.** **A seção "Aprovado pela pessoa" vem sempre antes de
