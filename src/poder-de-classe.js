@@ -350,9 +350,14 @@ export function aplicarPoder(pers, hab, ctx) {
      "sequência devastadora" não têm nenhuma, então a habilidade é
      descartada ANTES de qualquer conta — o mesmo poço da Colheita
      Final na v9.48, agora medido e não consertado;
-   — "força zero": a família existe e está classificada (`amortece`,
-     `nao_cai`, `intocado`), e nenhuma delas compra coisa alguma
-     ainda — é o recorte que P2 mediu e deixou escrito.
+   — "força zero": a família existe e está classificada, e nenhuma
+     delas compra coisa alguma ainda — é o recorte que P2 mediu e
+     deixou escrito. **F1 (v9.274) tirou `amortece` desta lista**: ela
+     tem tabela (`AMORTECIMENTO_DO_BUFF`, efeitos.js) e um leitor que a
+     cobra na fila do dano (`amortecerDano`, tracos.js), e as duas
+     entradas que a citavam pelo nome — "Corpo de Ferro" e "Postura
+     Defensiva" — saíram de `AGUARDAM` com o teto a descer junto.
+     Ficam `nao_cai` e `intocado`.
    ============================================================ */
 export const AGUARDAM = [
   /* ---- pedem mecânica que não existe (H2 mediu: `dono` é o endereço, v9.266) ---- */
@@ -382,8 +387,7 @@ export const AGUARDAM = [
   { nome: "Defesa Fluida", classe: "Monge", promete: "desvia do próximo ataque automaticamente", motivo: "família `intocado` — força zero", desde: "16/09" },
   { nome: "Intervenção", classe: "Clérigo", promete: "anula completamente um golpe fatal", motivo: "família `nao_cai` — força zero", desde: "16/09" },
   { nome: "Escudo do Pacto", classe: "Bruxo", promete: "o patrono intervém e anula um golpe fatal", motivo: "família `nao_cai`; hoje só vira a condição `protegido`, que não anula golpe nenhum", desde: "16/09" },
-  { nome: "Corpo de Ferro", classe: "Monge", promete: "reduz todo dano pela metade por 2 turnos", motivo: "família `amortece`: `amortecerDano` existe e lê o traço RACIAL; abri-lo à habilidade é mudar dano recebido, que é mecânica nova", desde: "16/09" },
-  { nome: "Postura Defensiva", classe: "Guerreiro", promete: "reduz o dano recebido no próximo turno", motivo: "a mesma família `amortece` — hoje vira só a condição `protegido`", desde: "16/09" },
+  { nome: "Corpo de Ferro", classe: "Monge", promete: "reduz todo dano pela metade por 2 turnos", dono: "src/tracos.js · amortecerDano", motivo: "MUDOU DE DÍVIDA em F1 (v9.274), e a nova é menor e medida: a família `amortece` já tem número (`AMORTECIMENTO_DO_BUFF`) e leitor que o cobra na fila do dano. O que falta é a PORTA — `aflicaoDe` não casa com 'reduz todo dano pela metade por 2 turnos', então `aplicarBuffDeHabilidade` (App.jsx:8136) sai antes de `efeitoDeBuff` e o efeito nunca nasce na ficha. Das 8 da família, só 2 passam por essa porta hoje. Fica também a distância entre a ficção ('metade') e o que a tabela paga (15% a 3 PM), que é decisão de equilíbrio escrita no cabeçalho da tabela, não buraco — F1", desde: "16/09" },
   { nome: "Elixir de Combate", classe: "Engenheiro", promete: "ALIADO ganha força e vigor por 3 turnos", motivo: "é guarda desde a v9.53, mas a guarda sobe em QUEM USA: guarda em outro corpo não existe", desde: "16/09" },
   { nome: "Muralha", classe: "Guerreiro", promete: "protege um ALIADO adjacente por 2 turnos", motivo: "o mesmo: a condição `protegido` cai em quem usou, não no aliado", desde: "16/09" },
   { nome: "Escudo da Fé", classe: "Clérigo", promete: "protege um ALIADO de dano por 2 turnos", motivo: "o mesmo abrigo no corpo errado", desde: "16/09" },

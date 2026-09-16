@@ -496,7 +496,20 @@ sec("6. a catraca de AGUARDAM");
      teto folgado depois de pagar a dívida é guardar espaço para a
      próxima — e a próxima chega.
      ============================================================ */
-  const TETO_DE_AGUARDAM = 40;
+  /* 40 → 39 em 16/09/2026 (v9.274 · F1), e O MOTIVO DA MUDANÇA, porque
+     asserção que se move sem explicação perde a intenção: "Postura
+     Defensiva" SAIU da lista. A família `amortece` ganhou tabela
+     (`AMORTECIMENTO_DO_BUFF`, efeitos.js) e um leitor que a cobra na fila
+     do dano (`amortecerDano`, tracos.js), e a habilidade atravessa a porta
+     de produção inteira: `aflicaoDe` casa com ela, a condição sai `bom`,
+     `efeitoDeBuff` põe `amortece: 10` na ficha e o golpe seguinte chega
+     10% mais fraco. A promessa dela não anuncia número nenhum ("reduz o
+     dano recebido no próximo turno"), então não sobra metade por pagar.
+     "Corpo de Ferro" FICOU, com a dívida trocada e medida: a mecânica
+     existe e o que falta é a porta — `aflicaoDe` não a reconhece, e sem
+     condição boa o efeito nunca nasce. O teto desce UM, não dois, e é essa
+     a diferença entre pagar dívida e declarar que se pagou. */
+  const TETO_DE_AGUARDAM = 39;
   console.log(`  ··  AGUARDAM hoje: ${AGUARDAM.length} · teto ${TETO_DE_AGUARDAM} (16/09/2026)`);
   t(`a dívida declarada não passou do teto (${AGUARDAM.length} ≤ ${TETO_DE_AGUARDAM})`,
     AGUARDAM.length <= TETO_DE_AGUARDAM,
@@ -678,18 +691,28 @@ sec("8. temRegraPropria enxerga o poder de classe, e só ele");
    dívida procurar onde não há nada — e é exatamente o que um
    rename silencioso produz, sem ninguém ficar vermelho.
    ============================================================ */
-sec("9. o dono medido das 12 (v9.266, H2)");
+sec("9. o dono medido das 13 (v9.266 H2 · v9.274 F1)");
 {
   /* ============================================================
-     O BLOCO MEDIDO — 12, e o número é EXATO, não teto.
+     O BLOCO MEDIDO — 13, e o número é EXATO, não teto.
 
-     MEDIR É ETAPA. Uma décima terceira entrada com `dono` seria um
-     endereço que ninguém foi conferir ao disco — alegação a passar
-     por medição, que é a doença que a seção 6 já trata do outro
-     lado. Quem medir mais mede numa etapa própria e sobe este
-     número com a prova ao lado.
-     ============================================================ */
-  const ENTRADAS_MEDIDAS = 12;
+     MEDIR É ETAPA. Uma entrada com `dono` a mais seria um endereço
+     que ninguém foi conferir ao disco — alegação a passar por
+     medição, que é a doença que a seção 6 já trata do outro lado.
+     Quem medir mais mede numa etapa própria e sobe este número com
+     a prova ao lado.
+
+     12 → 13 EM 16/09/2026 (v9.274 · F1), e é o caso que o parágrafo
+     acima descreve a acontecer: F1 é etapa própria, mediu "Corpo de
+     Ferro" e trouxe a prova. O dono é `src/tracos.js · amortecerDano`
+     — a família `amortece` tem tabela e tem quem a cobre na fila do
+     dano desde F1 —, e a razão de a linha FICAR em AGUARDAM mudou de
+     "a mecânica não existe" para "a porta não abre": `aflicaoDe` não
+     casa com o texto da habilidade, então `aplicarBuffDeHabilidade`
+     sai antes de `efeitoDeBuff` e o efeito nunca chega à ficha. Dívida
+     menor, e medida — que é exatamente o que este campo existe para
+     registar. */
+  const ENTRADAS_MEDIDAS = 13;
   const temDono = (a) => Object.prototype.hasOwnProperty.call(a, "dono");
   /* `hasOwnProperty` e não `a.dono !== undefined`: metade do bloco é
      `dono: null` de propósito, e "declarou null" e "não declarou nada"
@@ -701,19 +724,21 @@ sec("9. o dono medido das 12 (v9.266, H2)");
     medidas.length === ENTRADAS_MEDIDAS,
     `são ${medidas.length}: ${medidas.map((a) => a.nome).join(", ")}`);
 
-  /* AS 12, PELO NOME — a mesma concessão a nomes escritos à mão que a
+  /* AS 13, PELO NOME — a mesma concessão a nomes escritos à mão que a
      seção 2 faz com `NOMES_QUE_CUMPREM`, e pelo mesmo motivo: é esta
-     lista que a asserção tranca. As outras 28 entradas caem por outras
+     lista que a asserção tranca. As outras entradas caem por outras
      famílias (a régua do golpe, força zero, número que nenhuma tabela
-     cobra) e H2 NÃO as mediu; declarar dono numa delas seria alegar
-     mais do que se derrubou. */
+     cobra) e ninguém as mediu; declarar dono numa delas seria alegar
+     mais do que se derrubou. As 12 primeiras são o bloco de H2; a
+     última entrou em F1, com a medição descrita acima. */
   const O_BLOCO_MEDIDO = [
     "Julgamento", "Marca do Caçador", "Maldição do Patrono", "Círculo Sagrado",
     "Renovação", "Chamado da Chuva", "Coração Tempestuoso", "Contramágica",
     "Contra-Canção", "Foco Interior", "Mina Oculta", "Muralha de Gelo",
+    "Corpo de Ferro",
   ];
   const faltam = O_BLOCO_MEDIDO.filter((n) => !medidas.some((a) => a.nome === n));
-  t("…e são exatamente as 12 do bloco que H2 mediu", faltam.length === 0, `sem dono declarado: ${faltam.join(", ")}`);
+  t("…e são exatamente as 13 do bloco medido (12 de H2 + 1 de F1)", faltam.length === 0, `sem dono declarado: ${faltam.join(", ")}`);
   const intrusas = medidas.filter((a) => !O_BLOCO_MEDIDO.includes(a.nome)).map((a) => a.nome);
   t(`nenhuma das outras ${AGUARDAM.length - ENTRADAS_MEDIDAS} entradas de AGUARDAM declara dono`,
     intrusas.length === 0, `declararam sem etapa que medisse: ${intrusas.join(", ")}`);

@@ -31,7 +31,7 @@ import { SUBCLASSES } from "../src/subclasses.js";
 import { ESPECIALIZACOES } from "../src/especializacoes.js";
 import { MAGIAS } from "../src/grimorio.js";
 import { APLICACAO_DO_BUFF, APLICA_FORA_DO_GOLPE, aplicacaoDoBuff, efeitoNoGolpe } from "../src/combos.js";
-import { BUFF_DA_HABILIDADE, ABSORCAO_DO_BUFF, efeitoDeBuff } from "../src/efeitos.js";
+import { BUFF_DA_HABILIDADE, ABSORCAO_DO_BUFF, AMORTECIMENTO_DO_BUFF, efeitoDeBuff } from "../src/efeitos.js";
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -62,6 +62,12 @@ const MEDIDA_DO_ACERVO = {
      conservador pelo mesmo motivo dos outros: se a tabela parar de casar, a
      varredura passaria verde medindo lista vazia. */
   pisoDeAbrigos: 15,
+  /* v9.274 (F1) · O PISO DA SEGUNDA FAMÍLIA A COMPRAR ALGUMA COISA. Medidas
+     hoje 8 das 64 — a família `amortece` inteira. O piso é 5 pelo mesmo
+     motivo do de cima e pelo mesmo cuidado: ele guarda o ALCANCE da
+     medição, não o tamanho da família, que cresce quando alguém escreve
+     uma defensiva nova. */
+  pisoDeAbafos: 5,
 };
 
 /* ---------------- O ACERVO ---------------- */
@@ -91,6 +97,9 @@ const porLinha = Object.fromEntries(APLICACAO_DO_BUFF.map((a) => [a.id, 0]));
    passe — o acervo já está aberto e `efeitoDeBuff` já foi chamado; uma
    segunda varredura só criaria a chance de as duas discordarem. */
 const abrigos = [], abrigosForaDaFaixa = [], absorveForaDaFamilia = [], abrigosSemNumero = [];
+/* v9.274 (F1): a terceira metade, e ela entra no MESMO passe pelo argumento
+   escrito acima — o acervo já está aberto e `efeitoDeBuff` já foi chamado. */
+const abafos = [], abafosForaDaFaixa = [], amorteceForaDaFamilia = [], abafosSemNumero = [];
 
 for (const { hab, fonte } of acervo) {
   const linha = aplicacaoDoBuff(hab);
@@ -102,6 +111,12 @@ for (const { hab, fonte } of acervo) {
      em que esta linha fica vermelha e alguém tem de escrever o porquê. */
   if ((!linha || linha.id !== ABSORCAO_DO_BUFF.familia) && efeito.absorve !== undefined) {
     absorveForaDaFamilia.push(`${onde} → absorve ${efeito.absorve} (família "${linha ? linha.id : "nenhuma"}")`);
+  }
+  /* v9.274 (F1): e o mesmo dente para o campo da família nova. Foi por esta
+     linha que a etapa F1 fez este varredor ficar vermelho antes de o
+     consertar — era exatamente o que ela existia para fazer. */
+  if ((!linha || linha.id !== AMORTECIMENTO_DO_BUFF.familia) && efeito.amortece !== undefined) {
+    amorteceForaDaFamilia.push(`${onde} → amortece ${efeito.amortece} (família "${linha ? linha.id : "nenhuma"}")`);
   }
   if (linha) {
     defensivas.push(onde);
@@ -116,6 +131,17 @@ for (const { hab, fonte } of acervo) {
          efeito que o jogador sente, não. */
       if (Number.isInteger(n) && !extraEscopo.includes(String(n))) {
         abrigosSemNumero.push(`${onde} → frase muda: "${extraEscopo.trim()}"`);
+      }
+    }
+    if (linha.id === AMORTECIMENTO_DO_BUFF.familia) {
+      const n = efeito.amortece;
+      abafos.push({ onde, n, custo: Number(hab.custo) });
+      if (!(Number.isInteger(n) && n > 0)) abafosSemNumero.push(`${onde} → ${n}`);
+      else if (n < AMORTECIMENTO_DO_BUFF.minimo || n > AMORTECIMENTO_DO_BUFF.teto) abafosForaDaFaixa.push(`${onde} → ${n}`);
+      /* a mesma metade de gameplay da lei iv: o mecanismo fica calado, o
+         número que o jogador comprou com PM, não */
+      if (Number.isInteger(n) && !extraEscopo.includes(String(n))) {
+        abafosSemNumero.push(`${onde} → frase muda: "${extraEscopo.trim()}"`);
       }
     }
     if (hab.tipo === "ataque") ataquesVirados.push(`${onde} → ${linha.id}`);
@@ -246,9 +272,11 @@ sec("6. a proteção protege — a família que ganhou número, no acervo inteir
     abrigosSemNumero.length === 0, abrigosSemNumero.slice(0, 6).join(" | "));
   t("e nenhuma escapa da faixa da tabela — o teto morde o acervo inteiro",
     abrigosForaDaFaixa.length === 0, abrigosForaDaFaixa.slice(0, 6).join(" | "));
-  /* O DENTE INVERSO, o que impede o exagero: só UMA das cinco linhas ganhou
-     número. As outras quatro prometem outra coisa (meio golpe, um chão de
-     PV, um golpe que erra) e continuam sem campo — e a ofensiva também. */
+  /* O DENTE INVERSO, o que impede o exagero: o campo `absorve` é de UMA
+     linha só. As outras quatro — a irmã `amortece` inclusive, que desde F1
+     tem número PRÓPRIO e uma chave própria — não podem carregá-lo, nem a
+     ofensiva. Duas famílias com número é uma razão a mais para este dente,
+     não uma a menos: é aqui que se veria uma vazar para a chave da outra. */
   t("e ninguém fora da família carrega o campo (nem ofensiva, nem as outras quatro)",
     absorveForaDaFamilia.length === 0, absorveForaDaFamilia.slice(0, 6).join(" | "));
 
@@ -267,6 +295,49 @@ sec("6. a proteção protege — a família que ganhou número, no acervo inteir
   /* e o teto não é decorativo do outro lado: alguém tem de ficar ABAIXO
      dele, senão a régua toda virou uma constante disfarçada */
   t("mas o teto não achatou a família inteira — a régua ainda separa barato de caro",
+    new Set(ns).size > 1, `todos iguais a ${ns[0]}`);
+}
+
+/* ============================================================
+   7. O ABAFO ABAFA — a segunda família, no acervo inteiro (v9.274 · F1)
+
+   O molde é o da seção 6, e é de propósito: a etapa F1 prometeu
+   ESTABELECER O MOLDE das três famílias que ainda faltam, e um molde que
+   não se repete não é molde. Quem der número a `nao_cai`, a `intocado` ou
+   a `protege` copia esta seção e troca a tabela.
+
+   O QUE MUDA DA IRMÃ, e é a única coisa: a moeda. `absorve` compra pontos
+   e o teto é medido contra um golpe mediano; `amortece` compra PORCENTAGEM
+   e o teto é medido contra a DURAÇÃO — por isso o dente do teto aqui não
+   pergunta "apagaria uma batida?" e sim "a proporção cabe na faixa que a
+   tabela declara?".
+   ============================================================ */
+sec("7. o abafo abafa — a família que ganhou número em F1, no acervo inteiro");
+{
+  const ns = abafos.map((a) => a.n);
+  console.log(`  ··  ${abafos.length} habilidades da família "${AMORTECIMENTO_DO_BUFF.familia}" nascem com abafo`);
+  console.log(`  ··  faixa medida: ${Math.min(...ns)}%–${Math.max(...ns)}% (tabela: ${AMORTECIMENTO_DO_BUFF.minimo}%–${AMORTECIMENTO_DO_BUFF.teto}%) · ${ns.filter((n) => n === AMORTECIMENTO_DO_BUFF.teto).length} no teto · ${ns.filter((n) => n === AMORTECIMENTO_DO_BUFF.minimo).length} no piso`);
+
+  t(`a amostra da família não é vazia (pelo menos ${MEDIDA_DO_ACERVO.pisoDeAbafos})`,
+    abafos.length >= MEDIDA_DO_ACERVO.pisoDeAbafos, `achou ${abafos.length}`);
+  t("toda habilidade da família nasce com abafo de verdade (nenhuma com zero)",
+    abafosSemNumero.length === 0, abafosSemNumero.slice(0, 6).join(" | "));
+  t("e nenhuma escapa da faixa da tabela — o teto morde o acervo inteiro",
+    abafosForaDaFaixa.length === 0, abafosForaDaFaixa.slice(0, 6).join(" | "));
+  t("e ninguém fora da família carrega o campo (nem ofensiva, nem as outras quatro)",
+    amorteceForaDaFamilia.length === 0, amorteceForaDaFamilia.slice(0, 6).join(" | "));
+
+  /* O TETO É O DENTE CENTRAL DESTA FAMÍLIA, porque aqui ele é o que separa
+     a promessa da ficha ("reduz todo dano pela metade") do que o sistema
+     paga. Uma proporção que durasse turnos com 50% seria a Pele de Pedra —
+     um gasto de uma vez por luta — ligada a todo golpe da cena. */
+  const maisCara = abafos.reduce((a, b) => ((b.custo || 0) > (a.custo || 0) ? b : a), abafos[0]);
+  const semTeto = Math.round((maisCara.custo || AMORTECIMENTO_DO_BUFF.custoPadrao) * AMORTECIMENTO_DO_BUFF.porPM);
+  console.log(`  ··  a mais cara da família é ${maisCara.onde}, ${maisCara.custo} PM — ${semTeto}% sem teto, ${maisCara.n}% com teto`);
+  t("nenhuma delas chega à metade que a ficção promete — o teto é o que paga a duração",
+    ns.every((n) => n < 50), `a maior é ${Math.max(...ns)}%`);
+  /* e a régua não pode ter virado constante disfarçada: alguém abaixo do teto */
+  t("e o teto não achatou a família inteira — a régua ainda separa barato de caro",
     new Set(ns).size > 1, `todos iguais a ${ns[0]}`);
 }
 

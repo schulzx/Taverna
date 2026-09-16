@@ -151,6 +151,17 @@ export const ehGuarda = (h) => !!guardaDe(h);
    alguma coisa, e as 30 restantes ficam de fora até terem o que comprar.
    Cada uma delas é a sua própria etapa, e no dia dela esta linha cresce.
 
+   E A SEGUNDA JÁ CHEGOU — mas o recorte AQUI não se mexeu (v9.274 · F1).
+   `amortece` tem número (`AMORTECIMENTO_DO_BUFF`, efeitos.js) e um leitor que
+   o cobra (`amortecerDano`, tracos.js): as suas 8 habilidades passaram a
+   comprar alguma coisa, e sobram TRÊS famílias de força zero (nao_cai 5 ·
+   intocado 18 · protege 8, 31 habilidades). Ampliar `ehAbrigo` para a família
+   nova é a etapa SEGUINTE, não esta: a ordem que P2 pagou para descobrir é
+   "a família cumpre primeiro; procurá-la vem depois", e quem liga o piloto
+   tem de MEDIR a catraca no mesmo passo. Por isso esta linha continua a falar
+   de uma família só, e o dia em que crescer será o dia em que alguém trouxer
+   o número da medição junto.
+
    `sombra` é a prova de que o recorte está no lugar certo: quem o derrubou em
    P2 foi "Esquiva Ágil", e Esquiva Ágil é `intocado` — fora daqui. */
 export const ehAbrigo = (h) =>

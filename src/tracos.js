@@ -28,6 +28,15 @@
    ============================================================ */
 
 import { racaPorNome, RACAS, ORIGENS } from "./classes.js";
+/* v9.274 (F1): a família `amortece` entra na mesma porta do golpe que os
+   traços raciais, e por isso a tabela dela é lida AQUI. A seta aponta num
+   sentido só e não fecha ciclo: o fecho de `efeitos.js` é combos → classes →
+   subclasses/especializações/grimório, mais grimório e temporário, e nenhum
+   deles importa `tracos.js`. A tabela ficou em `efeitos.js`, colada à irmã
+   `ABSORCAO_DO_BUFF`, porque as duas respondem à MESMA pergunta (quanto vale
+   o PM gasto numa defensiva) e separá-las por arquivo seria o convite para
+   uma divergir da outra sem ninguém ver. */
+import { efeitosDe, AMORTECIMENTO_DO_BUFF } from "./efeitos.js";
 
 const NORM = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -156,8 +165,44 @@ export function abrirCombateTracos(pers) {
    Uma porta só para o dano que o herói recebe, na ordem que importa:
    primeiro a Pele de Pedra corta o golpe ao meio (é um gasto, e gastar
    sobre o número cheio rende mais), depois a resistência de origem corta
-   de novo, e por fim a redução fixa do Anão tira o que sobrou. Devolve a
-   ficha porque o gasto mora nela — quem chama tem de usar a que volta. */
+   de novo, depois o abafo comprado com PM (v9.274 · F1) e por fim a redução
+   fixa do Anão tira o que sobrou. Devolve a ficha porque o gasto mora nela —
+   quem chama tem de usar a que volta.
+
+   ---------------- ONDE A FAMÍLIA `amortece` ENTRA (v9.274 · F1) ----------
+
+   A FILA INTEIRA, E ESTA É A PRIMEIRA ESTAÇÃO DELA. No herói o dano passa
+   por `amortecerDano` (origem) → `repartirDano` (invocação) → `passarPeloAbrigo`,
+   e este último é abrigo → PV temporário → PV real → a porta da queda
+   (`absorverDano`, efeitos.js). A família entra AQUI, na primeira estação,
+   sobre o golpe cheio — antes do abrigo e antes do poço —, e é de propósito:
+   quem reduz por PROPORÇÃO tem de morder o número cheio, senão o mesmo buff
+   vale metade contra quem tem escudo e o dobro contra quem não tem; quem come
+   um valor FIXO (o abrigo, o poço) morde o que sobrou, porque para ele a ordem
+   não muda o total.
+
+   E DENTRO DAQUI, DEPOIS DAS DUAS METADES E ANTES DA REDUÇÃO FIXA. Três
+   razões, e as três são regressão se invertidas:
+     (i) a redução FIXA continua a ser a ÚLTIMA — é a regra que este cabeçalho
+         já escrevia antes de F1 existir, e proporção depois de subtração
+         devolveria menos do que a tabela do Anão promete;
+    (ii) a porta `d >= 4` da Pele de Pedra é avaliada sobre O MESMO NÚMERO QUE
+         ELA VÊ HOJE. Se o abafo cortasse antes, um Goliath com o buff deixaria
+         de gastar a Pele em golpes que hoje a gastam (um golpe de 4 viraria 3
+         e a porta fecharia) — mudança de traço racial por causa de uma
+         habilidade, e silenciosa;
+   (iii) a Pele é um GASTO e o abafo não. Gastar rende mais sobre o número
+         cheio; o que não se gasta pode esperar a sua vez sem perder nada.
+
+   UM POR GOLPE, O MAIOR — a mesma lei de `absorverDano`. Dois abafos não
+   somam: proporções que se multiplicam são o caminho curto para a defesa
+   apagar um golpe inteiro, que é o que o teto da tabela existe para impedir.
+
+   REGRESSÃO ZERO FORA DA FAMÍLIA. O único gatilho é um `amortece` numérico e
+   positivo num efeito da ficha. Save antigo, ficha sem `efeitos`, `null`,
+   `{}`, milagre, magia de duração e as outras quatro famílias defensivas não
+   o têm — para todos eles esta estação não existe: mesmo `dano`, o MESMO
+   objeto `pers` e `linhas` sem uma frase a mais. */
 export function amortecerDano(pers, dano, tipo = "fisico") {
   let d = Math.max(0, Math.round(Number(dano) || 0));
   if (!d || !pers) return { dano: d, pers, linhas: [] };
@@ -174,6 +219,27 @@ export function amortecerDano(pers, dano, tipo = "fisico") {
     const antes = d;
     d = Math.max(0, Math.floor(d / 2));
     linhas.push(`🜂 Resistência de origem a ${tipo} — ${antes} vira ${d}.`);
+  }
+  /* O ABAFO COMPRADO COM PM. `efeitosDe` é a leitura defensiva da casa —
+     ficha sem lista, nula ou com buraco no meio sai dela como lista vazia, e
+     o laço nem corre. A porcentagem vem do efeito (posta lá por `efeitoDeBuff`
+     a partir de `AMORTECIMENTO_DO_BUFF`); o PISO vem da tabela, nunca daqui,
+     porque "nada zera um golpe" é lei da casa e lei da casa não mora dentro
+     de um `Math.max` solto. E a frase só nasce quando o número MUDOU: sem
+     linha o chamador não escreve nada de volta (é `linhas.length` que manda
+     no App), e uma frase que diz "13 vira 13" é o sistema a narrar
+     contabilidade. */
+  let abafo = 0, doAbafo = null;
+  for (const ef of efeitosDe(p)) {
+    const n = Math.max(0, Math.round(Number(ef.amortece) || 0));
+    if (n > abafo) { abafo = n; doAbafo = ef; }
+  }
+  if (abafo > 0 && d > 0) {
+    const antes = d;
+    /* o `Math.min` no piso é o que garante que esta estação nunca AUMENTE um
+       golpe: um piso maior que o golpe que chegou não pode levantá-lo */
+    d = Math.max(Math.min(antes, AMORTECIMENTO_DO_BUFF.pisoDoGolpe), antes - Math.round((antes * abafo) / 100));
+    if (d !== antes) linhas.push(`🌫 ${doAbafo.nome || "o abafo"} abafa o que chega — ${antes} vira ${d}.`);
   }
   const red = reducaoDeTraco(p, tipo);
   if (red > 0 && d > 0) {

@@ -118,10 +118,12 @@ export const BUFF_DA_HABILIDADE = {
    relíquia, poção, grimório e o que o piloto escolhe chegam aqui sem custo
    nenhum, e sem ele a família inteira nasceria no piso. */
 export const ABSORCAO_DO_BUFF = {
-  /* só esta linha de `APLICACAO_DO_BUFF` ganha número. As outras quatro
-     (amortece, nao_cai, intocado, protege) prometem outra coisa — meio golpe,
-     um chão de PV, um golpe que erra — e cada uma é a sua própria etapa.
-     Enquanto não forem, elas saem daqui exatamente como saíam. */
+  /* v9.274 (F1): esta linha de `APLICACAO_DO_BUFF` foi a PRIMEIRA a ganhar
+     número, e desde F1 já não é a única — `amortece` tem a tabela irmã logo
+     abaixo. Ficam TRÊS sem número (`nao_cai`, `intocado`, `protege`): elas
+     prometem outra coisa — um chão de PV, um golpe que erra, o abrigo num
+     corpo alheio — e cada uma é a sua própria etapa. Enquanto não forem,
+     elas saem daqui exatamente como saíam. */
   familia: "absorve",
   porPM: 2, custoPadrao: 2, minimo: 2, teto: 12,
 };
@@ -133,6 +135,68 @@ function forcaDaAbsorcao(hab) {
   const custo = Number((hab || {}).custo);
   const pm = Number.isFinite(custo) && custo > 0 ? custo : ABSORCAO_DO_BUFF.custoPadrao;
   return Math.min(ABSORCAO_DO_BUFF.teto, Math.max(ABSORCAO_DO_BUFF.minimo, Math.round(pm * ABSORCAO_DO_BUFF.porPM)));
+}
+
+/* ---------------- O AMORTECIMENTO: QUANTO UM ABAFO TIRA DE CADA GOLPE (v9.274 · F1)
+   A segunda tabela da mesma família de decisões, e mora colada à primeira de
+   propósito: `ABSORCAO_DO_BUFF` e esta respondem à MESMA pergunta ("quanto
+   vale, em dano evitado, o PM que o jogador gastou numa defensiva?") por
+   caminhos opostos, e lidas lado a lado é impossível uma divergir da outra
+   sem que se veja.
+
+   A RÉGUA SAI DO CUSTO, pelo mesmo argumento das duas irmãs de cima: é o
+   custo em PM que separa um truque de uma promessa. O que muda é a MOEDA —
+   `absorve` compra PONTOS, esta compra PORCENTAGEM, e a diferença não é
+   estética: a família `amortece` não se gasta. O abrigo morre na primeira
+   batida que encontra; o abafo vale em TODO golpe que chegar enquanto o
+   prazo durar. Por isso a régua aqui é medida no TOTAL, não no golpe.
+
+   O NÚMERO SAIU DA PARIDADE, e a conta está escrita para poder ser refeita.
+   Um golpe da arena tem mediana 13 e o prazo padrão de um buff é 3 turnos
+   (`BUFF_DA_HABILIDADE.turnosPadrao`), ou seja ~3 golpes abafados. Com 5
+   pontos percentuais por PM:
+     · 2 PM → 10% → 1 por golpe → ~3 no total   (absorve a 2 PM come 4)
+     · 3 PM → 15% → 2 por golpe → ~6 no total   (absorve a 3 PM come 6)
+     · 4 PM → 20% → 3 por golpe → ~9 no total   (absorve a 4 PM come 8)
+     · 5 PM → 25% → 3 por golpe → ~9 no total   (absorve a 5 PM come 10)
+   As duas famílias compram a mesma coisa pelo mesmo preço, e é o que se
+   queria: quem paga 4 PM por proteção recebe proteção de 4 PM, venha ela
+   de uma vez ou repartida pelo prazo. O que distingue as duas passa a ser
+   a FORMA — o escudo é seguro (o número é o número), o abafo é uma aposta
+   na duração e cresce com o tamanho do golpe.
+
+   O TETO EM 25% É A PARTE QUE IMPORTA, e é o lugar onde esta tabela é MAIS
+   dura que a irmã. `ABSORCAO_DO_BUFF` pôde dar-se ao luxo de um teto perto
+   do golpe mediano porque o abrigo se gasta; uma proporção que durasse
+   turnos com 50% (a metade que a ficha das habilidades promete em palavras)
+   seria a Pele de Pedra do Goliath — um gasto de uma vez por luta — ligada
+   a todo golpe da cena, por 3 PM. É a mesma lei que `GUARDAS` e
+   `ABSORCAO_DO_BUFF` escreveram: nada que zere o golpe, porque defesa alta
+   é a estatística que mais rápido quebra um combate. A ficção continua a
+   dizer "metade"; o sistema paga um quarto, e paga em todo golpe.
+
+   `pisoDoGolpe` É A LEI DE "NADA ZERA", EM TABELA. Com teto de 25% ele nunca
+   morde (75% de 1 ainda é 1) — e existe exatamente por isso: no dia em que
+   alguém subir o teto, o piso já está escrito e já é lido. A Pele de Pedra
+   cumpre a mesma lei com `Math.max(1, ...)` desde a v9.44.
+
+   `custoPadrao` é o das duas irmãs, e pelo mesmo motivo: relíquia, poção,
+   grimório e o que o piloto escolhe chegam aqui sem custo nenhum, e sem ele
+   a família inteira nasceria no piso. */
+export const AMORTECIMENTO_DO_BUFF = {
+  familia: "amortece",
+  porPM: 5, custoPadrao: 2, minimo: 10, teto: 25, pisoDoGolpe: 1,
+};
+
+/* Privada pelo motivo exato de `forcaDaAbsorcao`: quem precisa do número
+   recebe o efeito já com ele dentro, por `efeitoDeBuff`. Um segundo caminho
+   para o mesmo número é a forma de as duas metades divergirem daqui a três
+   versões. Quem GASTA o número é `amortecerDano` (tracos.js), e ele lê a
+   tabela, nunca esta conta. */
+function forcaDoAmortecimento(hab) {
+  const custo = Number((hab || {}).custo);
+  const pm = Number.isFinite(custo) && custo > 0 ? custo : AMORTECIMENTO_DO_BUFF.custoPadrao;
+  return Math.min(AMORTECIMENTO_DO_BUFF.teto, Math.max(AMORTECIMENTO_DO_BUFF.minimo, Math.round(pm * AMORTECIMENTO_DO_BUFF.porPM)));
 }
 
 /* ---------------- O EFEITO DE UM MILAGRE ----------------
@@ -325,14 +389,26 @@ export function efeitoDeBuff(hab, pers, turnos) {
   if (protecao) {
     const base = { nome: h.nome, bonus: 0, turnos: prazo, aplica: protecao.aplica, escopo };
     if (segura) base.concentracao = true;
-    if (protecao.id !== ABSORCAO_DO_BUFF.familia) {
-      return { efeito: base, extraEscopo: ` · ${protecao.conceito}` };
+    if (protecao.id === ABSORCAO_DO_BUFF.familia) {
+      const absorve = forcaDaAbsorcao(h);
+      return {
+        efeito: { ...base, absorve },
+        extraEscopo: ` · ${protecao.conceito} — aguenta ${absorve} do próximo golpe`,
+      };
     }
-    const absorve = forcaDaAbsorcao(h);
-    return {
-      efeito: { ...base, absorve },
-      extraEscopo: ` · ${protecao.conceito} — aguenta ${absorve} do próximo golpe`,
-    };
+    /* v9.274 (F1): a segunda família a comprar alguma coisa. A chave é irmã
+       da de cima e obedece à mesma regra — só nasce quando existe, nunca
+       `false` nem `0` —, e a frase anuncia o que o jogador comprou pelo mesmo
+       motivo que a de `absorve` anuncia: ele pagou PM por aquele número. A
+       voz é de mundo; o nome do mecanismo não aparece em lado nenhum. */
+    if (protecao.id === AMORTECIMENTO_DO_BUFF.familia) {
+      const amortece = forcaDoAmortecimento(h);
+      return {
+        efeito: { ...base, amortece },
+        extraEscopo: ` · ${protecao.conceito} — abafa ${amortece}% de cada golpe`,
+      };
+    }
+    return { efeito: base, extraEscopo: ` · ${protecao.conceito}` };
   }
   const efeito = {
     nome: h.nome, bonus: forca, turnos: prazo,
