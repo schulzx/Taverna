@@ -39,7 +39,9 @@ import { PV_POR_NIVEL } from "../src/regras-jogo.js";
 /* os dois leitores de fora, para a porta ser provada onde ela CHEGA e não
    só onde ela nasce (lei "export morto mente": referência em teste conta) */
 import { dobraMovimento, ignoraTerrenoDificil } from "../src/dadivas.js";
-import { readFileSync } from "node:fs";
+/* `existsSync` entrou na v9.266 (H2): a seção 9 vai ao DISCO conferir que
+   cada endereço medido aponta para arquivo que existe de verdade. */
+import { readFileSync, existsSync } from "node:fs";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -654,6 +656,143 @@ sec("8. temRegraPropria enxerga o poder de classe, e só ele");
   const abrem = ACERVO.filter(({ hab }) => temRegraPropria({ habilidades: [hab] })).length;
   console.log(`  ··  ${abrem} das ${ACERVO.length} habilidades do acervo abrem a porta do bloco de regra própria`);
   t("a porta continua sendo exceção, não regra (menos de um terço do acervo)", abrem * 3 < ACERVO.length, `${abrem}/${ACERVO.length}`);
+}
+
+/* ============================================================
+   9. DE QUEM JÁ SÃO OS 12 — a catraca do dono (v9.266, H2)
+
+   O QUE H2 FEZ, e o que ela deliberadamente NÃO fez. Não foi
+   escrita uma linha de mecânica: a etapa pegou as 12 entradas de
+   `AGUARDAM` que diziam "pede mecânica que não existe" e foi ao
+   projeto perguntar, uma por uma, se alguém já fazia aquilo. O
+   resultado é o campo `dono` — `null` quando nenhuma peça do
+   projeto faz, e "src/arquivo.js · quem" quando faz (vivo ou
+   parcial; o `motivo` é que diz qual metade fica de fora).
+
+   O QUE ESTA SEÇÃO GUARDA, e é o mesmo dente da seção 6 apontado
+   para um campo novo: uma medição que ninguém confere é um
+   comentário. Aqui o endereço medido tem de EXISTIR no disco, tem
+   de estar escrito na forma que se consegue seguir, e a conta dos
+   sem-dono só pode descer. Endereço que aponta para arquivo
+   inexistente é pior que endereço nenhum — manda quem for pagar a
+   dívida procurar onde não há nada — e é exatamente o que um
+   rename silencioso produz, sem ninguém ficar vermelho.
+   ============================================================ */
+sec("9. o dono medido das 12 (v9.266, H2)");
+{
+  /* ============================================================
+     O BLOCO MEDIDO — 12, e o número é EXATO, não teto.
+
+     MEDIR É ETAPA. Uma décima terceira entrada com `dono` seria um
+     endereço que ninguém foi conferir ao disco — alegação a passar
+     por medição, que é a doença que a seção 6 já trata do outro
+     lado. Quem medir mais mede numa etapa própria e sobe este
+     número com a prova ao lado.
+     ============================================================ */
+  const ENTRADAS_MEDIDAS = 12;
+  const temDono = (a) => Object.prototype.hasOwnProperty.call(a, "dono");
+  /* `hasOwnProperty` e não `a.dono !== undefined`: metade do bloco é
+     `dono: null` de propósito, e "declarou null" e "não declarou nada"
+     são respostas DIFERENTES — a primeira é medição, a segunda é
+     silêncio. Confundi-las apagaria os 6 sem-dono da conta. */
+  const medidas = AGUARDAM.filter(temDono);
+  console.log(`  ··  ${medidas.length} das ${AGUARDAM.length} entradas de AGUARDAM carregam \`dono\``);
+  t(`exatamente ${ENTRADAS_MEDIDAS} entradas carregam o campo \`dono\``,
+    medidas.length === ENTRADAS_MEDIDAS,
+    `são ${medidas.length}: ${medidas.map((a) => a.nome).join(", ")}`);
+
+  /* AS 12, PELO NOME — a mesma concessão a nomes escritos à mão que a
+     seção 2 faz com `NOMES_QUE_CUMPREM`, e pelo mesmo motivo: é esta
+     lista que a asserção tranca. As outras 28 entradas caem por outras
+     famílias (a régua do golpe, força zero, número que nenhuma tabela
+     cobra) e H2 NÃO as mediu; declarar dono numa delas seria alegar
+     mais do que se derrubou. */
+  const O_BLOCO_MEDIDO = [
+    "Julgamento", "Marca do Caçador", "Maldição do Patrono", "Círculo Sagrado",
+    "Renovação", "Chamado da Chuva", "Coração Tempestuoso", "Contramágica",
+    "Contra-Canção", "Foco Interior", "Mina Oculta", "Muralha de Gelo",
+  ];
+  const faltam = O_BLOCO_MEDIDO.filter((n) => !medidas.some((a) => a.nome === n));
+  t("…e são exatamente as 12 do bloco que H2 mediu", faltam.length === 0, `sem dono declarado: ${faltam.join(", ")}`);
+  const intrusas = medidas.filter((a) => !O_BLOCO_MEDIDO.includes(a.nome)).map((a) => a.nome);
+  t(`nenhuma das outras ${AGUARDAM.length - ENTRADAS_MEDIDAS} entradas de AGUARDAM declara dono`,
+    intrusas.length === 0, `declararam sem etapa que medisse: ${intrusas.join(", ")}`);
+
+  /* ---- A FORMA DO ENDEREÇO, e o disco a confirmá-la ---- */
+  /* O separador é escrito pelo código (`·`) e não digitado aqui: um
+     ponto-do-meio que vire "?" numa reescrita mal-encodada faria esta
+     asserção passar a medir outra coisa em silêncio — e a casa já pagou
+     essa conta (PowerShell corrompe o UTF-8). */
+  const SEPARADOR = " · ";
+  const FORMA_DO_DONO = new RegExp(`^src/[A-Za-z0-9_.\\-]+\\.js${SEPARADOR}\\S`);
+  const semDono = [];
+  for (const a of medidas) {
+    if (a.dono === null) { semDono.push(a.nome); continue; }
+    const forma = typeof a.dono === "string" && a.dono.trim().length > 0
+      && a.dono.includes(SEPARADOR) && FORMA_DO_DONO.test(a.dono);
+    t(`[${a.nome}] dono na forma "src/arquivo.js · quem"`, forma, String(a.dono));
+    if (!forma) continue;
+    const arquivo = String(a.dono).split(SEPARADOR)[0];
+    /* resolvido pelo MÓDULO e não pelo diretório de trabalho: um endereço
+       que só exista quando a suíte é chamada da pasta certa não prova nada
+       sobre o repositório. */
+    t(`  …e ${arquivo} existe mesmo no disco`, existsSync(new URL("../" + arquivo, import.meta.url)),
+      "endereço medido a apontar para arquivo que não existe — é o que um rename silencioso produz");
+  }
+  /* nem null nem string é resposta nenhuma: `undefined`, número ou objeto
+     no campo escorregariam pelos dois ramos do laço acima sem uma linha
+     vermelha */
+  const tipoTorto = medidas.filter((a) => !(a.dono === null || (typeof a.dono === "string" && a.dono.trim().length > 0)));
+  t("`dono` é null ou string não-vazia, nunca outra coisa", tipoTorto.length === 0,
+    tipoTorto.map((a) => `${a.nome}:${typeof a.dono}`).join(", "));
+
+  /* ============================================================
+     A CONTA DOS SEM-DONO — 6, medida em 16/09/2026 (v9.266, H2).
+
+     E O SINAL É `<=`, NÃO `===`, E O MOTIVO TEM DE FICAR ESCRITO.
+
+     Esta conta anda para BAIXO quando a casa trabalha: no dia em que
+     alguém construir a marca (Julgamento, Marca do Caçador), a cura
+     por turno (Círculo Sagrado, Renovação) ou a zona persistente
+     (Mina Oculta), aquelas linhas ganham dono e a conta cai. Um
+     `===` ficaria vermelho exatamente no commit que PAGA a dívida —
+     ensinaria a quem paga que pagar custa uma suíte quebrada, que é
+     o avesso do que a catraca existe para fazer. Com `<=` a suíte
+     aplaude a descida e morde a subida, e subir só pode ser uma
+     coisa: alguém declarou dívida nova sem etapa que a medisse.
+
+     E ELE É LOCAL DESTA SUÍTE, não export de `src/`. Um número de
+     régua exportado para ter um leitor só morre na catraca
+     `teste-ligacao` (todo export precisa de ≥2 leitores) — e a régua
+     de uma prova é da prova, não do jogo.
+     ============================================================ */
+  const SEM_DONO_HOJE = 6;
+  console.log(`  ··  sem dono nenhum hoje: ${semDono.length} — ${semDono.join(", ")}`);
+  t(`a conta dos sem-dono não subiu (${semDono.length} ≤ ${SEM_DONO_HOJE})`,
+    semDono.length <= SEM_DONO_HOJE,
+    `subiu para ${semDono.length} — dívida nova sem etapa que a medisse; o remédio é medir, nunca subir o número`);
+
+  /* ---- TER DONO NÃO TIRA NINGUÉM DA LISTA, E ISSO É DE PROPÓSITO ---- */
+  /* O MOTIVO, escrito porque a leitura errada é a natural: "já existe
+     quem faça" soa como "então já cumpre". NÃO CUMPRE. `dono` é
+     ENDEREÇO, não fiação — ninguém ligou a habilidade ao motor, e a
+     saída de `AGUARDAM` exige a ligação FEITA e PROVADA, que é etapa
+     própria. A Contramágica é o caso extremo e por isso é a que esta
+     asserção nomeia: a reação existe, está viva, é concedida por nome
+     na ficha e a fiação corre — e a linha CONTINUA declarada, porque o
+     inimigo nunca conjura. Apagá-la hoje seria a casa a alegar em
+     contabilidade o que não entrega em mesa.
+
+     A seção 6 já tranca o NÚMERO (as 40 continuam 40); o que se tranca
+     aqui é a INTENÇÃO — que o campo novo não tenha virado uma porta
+     dos fundos para esvaziar a lista sem pagar nada. */
+  const comDono = medidas.filter((a) => a.dono !== null);
+  t(`as ${comDono.length} entradas com dono continuam declaradas em AGUARDAM`,
+    comDono.length === ENTRADAS_MEDIDAS - SEM_DONO_HOJE, `${comDono.length} com dono`);
+  const viva = AGUARDAM.find((a) => a.nome === "Contramágica");
+  t("…e a que já tem dono VIVO (Contramágica) não saiu da lista: dono é endereço, não fiação",
+    !!viva && typeof viva.dono === "string" && viva.dono.startsWith("src/"),
+    viva ? String(viva.dono) : "saiu de AGUARDAM sem a ligação provada");
 }
 
 console.log(`\npoder de classe v9.265: ${ok} passaram, ${mal} falharam`);

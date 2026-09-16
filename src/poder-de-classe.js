@@ -326,10 +326,25 @@ export function aplicarPoder(pers, hab, ctx) {
    não existe.
 
    `motivo` diz por que ainda não cumpre; `desde` é o dia em que a
-   linha nasceu. Três famílias se repetem, e vale dizê-las em voz alta:
-   — "H2": o assunto tem dono provável e a medição vem antes da
-     construção (marca, zona persistente, cura por turno, clima, aura
-     reativa, contra-conjuração, PM de volta);
+   linha nasceu. `dono` (v9.266, H2) é o endereço MEDIDO de quem já faz
+   aquilo: `null` quando nenhuma peça do projeto faz, e "arquivo ·
+   função" quando faz. Dono parcial conta como dono — o `motivo` é que
+   diz qual metade fica de fora. E `dono` NÃO autoriza ligar nada: é
+   endereço, não fiação; ligar é etapa própria, com prova.
+   Três famílias se repetem, e vale dizê-las em voz alta:
+   — "H2" (medido em v9.266): dos 12, 6 têm dono — 2 vivo (Contramágica
+     e Foco Interior) e 4 parcial — e 6 não têm nenhum. Dos SETE
+     assuntos que a família alegava, QUATRO caíram: clima tem motor
+     vivo (`rolarClima`) e o que falta é leitor de número, não
+     mecânica; contra-conjuração já acontece pela reação `contramagia`;
+     PM de volta tem dono vivo noutro arquivo (`sacrificarInvocacao`);
+     e a metade mental da Contra-Canção sai pela porta que já existe.
+     Ficam DE PÉ como mecânica a construir marca, cura por turno e
+     zona persistente, mais aura reativa, sozinha na sua família —
+     quatro assuntos, seis habilidades. O que a fase comprou com isto:
+     medir antes de construir encolheu a dívida de sete assuntos para
+     quatro, e nenhuma linha de mecânica foi escrita para descobrir
+     isso;
    — "a régua do golpe não a vê": `HAB_OFENSIVA_RX` mora no App e
      procura palavras de violência; "sopro elemental em cone" e
      "sequência devastadora" não têm nenhuma, então a habilidade é
@@ -340,19 +355,19 @@ export function aplicarPoder(pers, hab, ctx) {
      ainda — é o recorte que P2 mediu e deixou escrito.
    ============================================================ */
 export const AGUARDAM = [
-  /* ---- pedem mecânica que não existe (H2 mede antes de construir) ---- */
-  { nome: "Julgamento", classe: "Clérigo", promete: "marca um inimigo: sofre dano extra de todos", motivo: "marca é efeito preso a um ALVO, e `efeitos.js` só sabe prender efeito a quem o recebeu — H2", desde: "16/09" },
-  { nome: "Marca do Caçador", classe: "Caçador", promete: "alvo marcado sofre dano extra seu", motivo: "a mesma marca do Julgamento — H2", desde: "16/09" },
-  { nome: "Maldição do Patrono", classe: "Bruxo", promete: "marca um alvo: você causa dano extra a ele", motivo: "a mesma marca; hoje só aplica `enfraquecido` e o dano extra não sai — H2", desde: "16/09" },
-  { nome: "Círculo Sagrado", classe: "Clérigo", promete: "área protegida onde aliados curam por turno", motivo: "cura por turno E zona presa ao lugar: dois assuntos de H2 na mesma linha", desde: "16/09" },
-  { nome: "Renovação", classe: "Druida", promete: "cura o grupo por 3 turnos seguidos", motivo: "cura por turno — a cura desta porta acontece AGORA, e fingir que ela se repete seria mentir três vezes — H2", desde: "16/09" },
-  { nome: "Chamado da Chuva", classe: "Druida", promete: "altera o clima; cura leve contínua", motivo: "clima tem motor (`rolarClima`, encontros.js) e ninguém o chama por habilidade; a cura contínua é cura por turno — H2", desde: "16/09" },
-  { nome: "Coração Tempestuoso", classe: "Feiticeiro", promete: "raios orbitam você e punem quem se aproxima", motivo: "aura reativa: efeito com gatilho em quem chega perto — H2", desde: "16/09" },
-  { nome: "Contramágica", classe: "Mago", promete: "cancela a magia de um inimigo", motivo: "contra-conjuração: reagir ao ATO de conjurar, que encosta na Fase K — H2", desde: "16/09" },
-  { nome: "Contra-Canção", classe: "Bardo", promete: "anula efeitos mentais e sonoros no grupo", motivo: "metade é porta de saída (e caberia aqui), metade é contra-conjuração — a etapa que a partir em duas é H2", desde: "16/09" },
-  { nome: "Foco Interior", classe: "Monge", promete: "recupera PM meditando 1 turno", motivo: "PM de volta é recurso, e recurso tem dono (`novosRecursos`, `gastarRecurso`) — H2", desde: "16/09" },
-  { nome: "Mina Oculta", classe: "Engenheiro", promete: "arma uma armadilha explosiva no terreno", motivo: "zona persistente: efeito preso ao LUGAR, não à pessoa — H2", desde: "16/09" },
-  { nome: "Muralha de Gelo", classe: "Mago", promete: "ergue uma barreira gélida que bloqueia a passagem", motivo: "a mesma zona persistente, do lado do terreno — H2", desde: "16/09" },
+  /* ---- pedem mecânica que não existe (H2 mediu: `dono` é o endereço, v9.266) ---- */
+  { nome: "Julgamento", classe: "Clérigo", promete: "marca um inimigo: sofre dano extra de todos", dono: null, motivo: "marca sem dono: `resolverAtaque` já recebe `condAlvo`, mas combate.js:126-127 só lê `modAlvo.danoReduzido` — uma condição no alvo só sabe fazê-lo apanhar MENOS, nunca mais — H2", desde: "16/09" },
+  { nome: "Marca do Caçador", classe: "Caçador", promete: "alvo marcado sofre dano extra seu", dono: null, motivo: "a mesma marca do Julgamento: existe a magia homónima em grimorio.js:528, mas sem `funcao` — `resolvidaPeloSistema` devolve false — H2", desde: "16/09" },
+  { nome: "Maldição do Patrono", classe: "Bruxo", promete: "marca um alvo: você causa dano extra a ele", dono: "src/aflicoes.js · aflicaoDe (portador `drenagem`)", motivo: "dono vivo a fazer o AVESSO: aplica `enfraquecido`, que carrega `danoReduzido: 2` (condicoes.js:155), e combate.js:127 desconta isso do dano que o alvo RECEBE — amaldiçoar um inimigo hoje deixa-o mais duro. O dano extra continua sem sair — H2", desde: "16/09" },
+  { nome: "Círculo Sagrado", classe: "Clérigo", promete: "área protegida onde aliados curam por turno", dono: null, motivo: "duas metades, nenhuma com dono: cura por turno (`tickEfeitos`, regras-jogo.js:369-378, só desconta prazo — não cura nem dói) e zona presa ao lugar — H2", desde: "16/09" },
+  { nome: "Renovação", classe: "Druida", promete: "cura o grupo por 3 turnos seguidos", dono: null, motivo: "cura por turno sem dono: `tickCondicoes` (condicoes.js:314-328) cobra `danoTurno` e não tem espelho de cura em relógio nenhum — H2", desde: "16/09" },
+  { nome: "Chamado da Chuva", classe: "Druida", promete: "altera o clima; cura leve contínua", dono: "src/encontros.js · rolarClima", motivo: "dono vivo de escrita, sem leitor de número: `rolarClima`/`pesosDoClima` são puros e chamados de verdade, mas quem lê o clima só o narra (palco.js:138, geografo.js:132) — nenhuma rolagem decide nada por ele. A cura contínua é cura por turno, e essa não tem dono — H2", desde: "16/09" },
+  { nome: "Coração Tempestuoso", classe: "Feiticeiro", promete: "raios orbitam você e punem quem se aproxima", dono: null, motivo: "aura reativa sem dono: o efeito de efeitos.js não tem campo de gatilho, `GATILHOS` (gatilhos.js:36) só sabe ENCERRAR um efeito e nunca disparar, e `moverInimigos` (grid.js:614) não pergunta a ninguém quem chegou perto — H2", desde: "16/09" },
+  { nome: "Contramágica", classe: "Mago", promete: "cancela a magia de um inimigo", dono: "src/reacoes.js · escolherReacao", motivo: "JÁ CUMPRE, e esta linha estava errada: a reação `contramagia` (reacoes.js:35) tem `corta: 1` e `soMagia: true`, `reacoesDe` concede-a por nome na ficha, e a fiação está viva. O que não existe é o inimigo CONJURAR — e isso é decisão escrita em controle.js:26, não buraco. A saída desta linha de AGUARDAM é etapa própria, com prova; não acontece aqui — H2", desde: "16/09" },
+  { nome: "Contra-Canção", classe: "Bardo", promete: "anula efeitos mentais e sonoros no grupo", dono: "src/condicoes.js · removerPelaPorta", motivo: "metade viva: `portaDeSaida` (:756) + `removerPelaPorta` (:810) já removem `enfeiticado`, `amedrontado` e `atordoado`, e o motor `porta` de `aplicarPoder` corre. Falta o ramo alvo: \"grupo\" nesse motor (o motor `cura` já tem o dele, pronto para copiar). A outra metade, \"sonoros\", é a contra-conjuração da Contramágica — H2", desde: "16/09" },
+  { nome: "Foco Interior", classe: "Monge", promete: "recupera PM meditando 1 turno", dono: "src/invocacoes.js · sacrificarInvocacao", motivo: "a linha anterior apontava para um export morto: `gastarRecurso` (combate.js:745) é importada em App.jsx e NUNCA chamada (a suíte trava isso em teste-acoes-do-jogador.mjs:475). O dono vivo de \"PM de volta\" é outro — `sacrificarInvocacao` (invocacoes.js:197-205, `mana: Math.min(manaMax, mana + pm)`) e `aplicarCurto` (descanso.js:100-112) — e é o molde exacto do que a habilidade pede — H2", desde: "16/09" },
+  { nome: "Mina Oculta", classe: "Engenheiro", promete: "arma uma armadilha explosiva no terreno", dono: null, motivo: "zona persistente sem dono, com meio-dono no tabuleiro: grid.js guarda estado por casa (`paredes`, `estorvos`, chaves \"x,y\", :301/:311) e a grade viaja no save — mas nada escreve nesses conjuntos depois de `montarGrade`, e nenhuma casa sabe de quem é, quanto dura, nem o que dispara ao ser pisada — H2", desde: "16/09" },
+  { nome: "Muralha de Gelo", classe: "Mago", promete: "ergue uma barreira gélida que bloqueia a passagem", dono: "src/efeitos.js · efeitoDeBuff", motivo: "metade viva, e é a defensiva: sai `protegido` + família `absorve` com `absorve: 10` a 5 PM, gasto por `absorverDano` (efeitos.js:444). Falta \"bloqueia a passagem\" — a mesma zona persistente da Mina Oculta — H2", desde: "16/09" },
 
   /* ---- a régua do golpe não as vê (o poço da Colheita Final) ---- */
   { nome: "Tiro Preciso", classe: "Caçador", promete: "ataque à distância com bônus de acerto", motivo: "`HAB_OFENSIVA_RX` (App.jsx) não acha palavra de violência em 'ataque à distância', e o disparo não chega a acontecer; o bônus de acerto também não tem onde entrar", desde: "16/09" },
