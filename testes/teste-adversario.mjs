@@ -10,6 +10,20 @@ import {
   consultarAdversario, intencaoDaVez, alvoDoAdversario,
   linhaDaLuta, envelopeDaVirada, ADVERSARIO_PROMPT,
 } from "../src/adversario.js";
+/* N2: este arquivo ganhou um campo novo — `degrauMinimo` nas 46 intenções
+   —, e a lei da casa é que toda tabela seja lida de volta pela suíte. O
+   que fica aqui é só o que a MUDANÇA DESTE ARQUIVO obriga: que o campo
+   exista e aponte para um degrau que existe, que é a mesma família de
+   asserção das duas vizinhas (a prioridade que existe, o `vira` que
+   existe) e mede a integridade DESTE acervo.
+   MUDADAS DE CASA para `teste-degraus.mjs` (com o motivo, que é lei):
+   o chão que nunca fica sem intenção, a rede no chão, o topo, a
+   acumulatividade de `intencoesAte`, o degrau torto, a invariante do
+   `vira` ao alcance de quem vira e a seção inteira da ficha. Todas
+   medem a ESCADA, não este acervo — e provar a escada em dois arquivos
+   seria duas verdades a manter sincronizadas, que é como uma delas
+   começa a mentir. */
+import { degrauPorId } from "../src/degraus.js";
 
 let ok = 0, bad = 0;
 const t = (nome, cond, extra = "") => { if (cond) { ok++; } else { bad++; console.log("  FALHOU: " + nome + (extra ? " — " + extra : "")); } };
@@ -54,6 +68,15 @@ t("toda intenção tem as três coisas", INTENCOES.every((i) => i.quer && i.alvo
 t("toda prioridade é executável", PRIORIDADES.every((p) => typeof p.escolher === "function"));
 t("o acervo tem tamanho de acervo", INTENCOES.length >= 35, String(INTENCOES.length));
 console.log(`      ${INTENCOES.length} intenções · ${PRIORIDADES.length} prioridades de alvo`);
+
+console.log("\n== A ESCADA (N2): O DEGRAU MÍNIMO SE LÊ DE VOLTA ==");
+/* fica SÓ esta: é a integridade deste acervo, vizinha de "toda intenção
+   aponta para uma prioridade que existe". Tudo o mais que media a escada
+   mudou de casa para `teste-degraus.mjs` — inclusive a invariante do
+   `vira` ao alcance de quem vira, que é da escada e não do acervo. */
+t("as 46 declaram um degrau que existe",
+  INTENCOES.every((i) => !!degrauPorId(i.degrauMinimo)),
+  INTENCOES.filter((i) => !degrauPorId(i.degrauMinimo)).map((i) => i.id + "→" + i.degrauMinimo).join(", "));
 
 console.log("\n== NENHUMA PRIORIDADE É DECORATIVA ==");
 /* uma prioridade que nenhum alvo plausível satisfaz nunca escolheria

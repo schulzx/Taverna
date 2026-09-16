@@ -283,262 +283,335 @@ export function garantirLuta(s) {
    `peso` só desempata: entre duas que servem, ganha a mais específica.
    A REDE — as últimas da lista — existe pelo mesmo motivo que a do
    Intérprete e a do Vilão: uma situação sem leitura nenhuma é um agente
-   mudo, e a mudez não avisa. */
+   mudo, e a mudez não avisa.
+
+   ---------------- `degrauMinimo` (Fase N · N2) ----------------
+   O DEGRAU MÍNIMO QUE CONSEGUE TER ESTA INTENÇÃO. Não é quanto ela
+   custa nem quanto ela vale: é quanta cabeça é preciso ter para que
+   ela OCORRA a alguém. Quem está abaixo não a recusa — ela não lhe
+   passa pela cabeça.
+
+   N1 mediu por que isto precisava existir: `pensa` é sim/não, vale
+   para 18 das 27 criaturas, e o `peso` é um ranking GLOBAL — então
+   `calar_a_magia` (17) vence a rodada 1 de quase toda luta e 14 das 46
+   nunca são eleitas. Distribuir por degrau acorda o acervo morto e
+   derruba o tirano no mesmo gesto.
+
+   O PESO DEIXA DE SER GLOBAL E PASSA A DESEMPATAR DENTRO DO DEGRAU —
+   senão uma intenção pesada de degrau baixo volta a dominar tudo e
+   trocamos um tirano por outro. **Isso ainda não acontece aqui**:
+   `consultarAdversario` continua varrendo o acervo inteiro por peso,
+   e o campo abaixo não muda uma decisão sequer. Quem passa a filtrar
+   é N4.
+
+   Os ids são os de `DEGRAUS`, em `degraus.js`, e o seletor que os lê
+   é `intencoesAte`. A seta aponta num sentido só: `degraus.js` lê este
+   acervo, este acervo NÃO lê `degraus.js` — um círculo entre os dois
+   faria a ordem de avaliação decidir qual tabela nasce primeiro.
+
+   E há uma invariante que a suíte cobra: todo `vira` aponta para uma
+   intenção de degrau IGUAL OU MENOR. Uma quebra que jogasse o bicho
+   numa intenção que ele não enxerga o deixaria sem plano nenhum. */
 export const INTENCOES = [
-  /* ---- o bicho, que não faz plano ---- */
+  /* ---- o bicho, que não faz plano ----
+     Tudo no CHÃO (`animal`): é o que se decide pelo corpo, sem ler
+     nada além do alcance da mão. E o chão nunca pode ficar vazio —
+     um bicho sem intenção nenhuma perde o turno. ---- */
   {
-    id: "comer", peso: 9, quer: "matar para comer, e leva o primeiro que cair",
+    id: "comer", degrauMinimo: "animal", peso: 9, quer: "matar para comer, e leva o primeiro que cair",
     alvo: "o_mais_fraco", quando: (s) => s.ehBicho && !s.protejoAlgo,
     quebra: (s) => s.minhaVida < 0.4, vira: "fugir_ferido",
     porque: "é bicho: não pesa se vale a pena",
   },
   {
-    id: "territorio", peso: 10, quer: "expulsar do território, e para de bater em quem recua",
+    id: "territorio", degrauMinimo: "animal", peso: 10, quer: "expulsar do território, e para de bater em quem recua",
     alvo: "quem_esta_perto", quando: (s) => s.ehBicho && (s.emMasmorra || s.protejoAlgo),
     quebra: (s) => s.minhaVida < 0.35, vira: "fugir_ferido",
     porque: "o lugar é dele antes de ser cena",
   },
   {
-    id: "ninhada", peso: 12, quer: "manter todo mundo longe de uma coisa atrás dele",
+    id: "ninhada", degrauMinimo: "animal", peso: 12, quer: "manter todo mundo longe de uma coisa atrás dele",
     alvo: "quem_esta_perto", quando: (s) => s.ehBicho && !!s.protejoAlgo,
     quebra: (s) => s.protegidoQuebrou, vira: "vinganca",
     porque: "há o que defender e ele não sai de perto",
   },
-  /* ---- o morto e a coisa, que não temem ---- */
+  /* ---- o morto e a coisa, que não temem ----
+     `nao_para` é chão: avançar não exige plano. `guardar_o_fundo` sobe
+     um degrau porque exige saber que se está NUM POSTO — e o teto do
+     morto é `bruto`, então ele alcança as duas. ---- */
   {
-    id: "nao_para", peso: 11, quer: "avançar sem recuar nunca, até desmontar",
+    id: "nao_para", degrauMinimo: "animal", peso: 11, quer: "avançar sem recuar nunca, até desmontar",
     alvo: "quem_estiver", quando: (s) => s.ehMorto,
     quebra: () => false, vira: null,
     porque: "não teme morrer, logo não muda de ideia",
   },
   {
-    id: "guardar_o_fundo", peso: 13, quer: "não deixar ninguém passar para o fundo",
+    id: "guardar_o_fundo", degrauMinimo: "bruto", peso: 13, quer: "não deixar ninguém passar para o fundo",
     alvo: "quem_bloqueia", quando: (s) => s.ehMorto && (s.fundo || s.emMasmorra),
     quebra: () => false, vira: null,
     porque: "foi posto ali e ali fica",
   },
-  /* ---- capturar, que é a intenção mais útil do acervo ---- */
+  /* ---- capturar, que é a intenção mais útil do acervo ----
+     `treinado`: derrubar SEM MATAR é conter a própria força, e levar
+     alguém vivo exige contar com o bando para carregá-lo. `arrancar`
+     fica um degrau abaixo — machucar até alguém falar é oportunismo,
+     não plano. ---- */
   {
-    id: "capturar", peso: 16, quer: "derrubar sem matar e levar vivo",
+    id: "capturar", degrauMinimo: "treinado", peso: 16, quer: "derrubar sem matar e levar vivo",
     alvo: "o_ferido", quando: (s) => s.pensa && !s.ehBicho && !s.ehMorto && (s.heroiFamoso || s.doVilao) && s.quantos >= 2,
     quebra: (s) => s.quantos < Math.ceil(s.quantosEram / 2), vira: "sair_vivo",
     porque: "vale mais vivo, e eles são gente suficiente para carregar",
   },
   {
-    id: "capturar_um", peso: 15, quer: "levar UM deles e deixar o resto",
+    id: "capturar_um", degrauMinimo: "treinado", peso: 15, quer: "levar UM deles e deixar o resto",
     alvo: "quem_nao_e_o_heroi", quando: (s) => s.pensa && !s.ehBicho && s.doVilao && s.quantosDoOutroLado > 1,
     quebra: (s) => s.minhaVida < 0.4, vira: "sair_vivo",
     porque: "a ordem era trazer alguém, não todos",
   },
   {
-    id: "arrancar", peso: 14, quer: "machucar até alguém falar",
+    id: "arrancar", degrauMinimo: "astuto", peso: 14, quer: "machucar até alguém falar",
     alvo: "o_ferido", quando: (s) => s.pensa && !!s.querSaber,
     quebra: (s) => s.heroiCaido, vira: "sair_vivo",
     porque: "quem eles querem é quem sabe",
   },
-  /* ---- o lugar decide a intenção ---- */
+  /* ---- o lugar decide a intenção ----
+     `astuto` é o degrau que ENXERGA O LUGAR: a beira, a água, o escuro,
+     a porta única, o corredor. Todas gastam menos golpe do que brigar,
+     e nenhuma ocorre a quem só vê quem está na frente. `separar` é a
+     exceção e sobe para `treinado`: cortar o grupo em dois é ler o
+     outro lado como GRUPO, não como chão. ---- */
   {
-    id: "empurrar", peso: 15, quer: "empurrar para a beira e deixar a queda fazer o resto",
+    id: "empurrar", degrauMinimo: "astuto", peso: 15, quer: "empurrar para a beira e deixar a queda fazer o resto",
     alvo: "quem_esta_perto", quando: (s) => s.pensa && s.alto && !!s.ondeCai,
     quebra: (s) => s.minhaVida < 0.4, vira: "sair_vivo",
     porque: "há de onde cair e isso poupa golpe",
   },
   {
-    id: "afogar", peso: 14, quer: "prender debaixo d'água quem já estiver molhado",
+    id: "afogar", degrauMinimo: "astuto", peso: 14, quer: "prender debaixo d'água quem já estiver molhado",
     alvo: "o_ferido", quando: (s) => s.pensa && s.agua,
     quebra: (s) => s.minhaVida < 0.4, vira: "sair_vivo",
     porque: "a água mata mais barato que a lâmina",
   },
   {
-    id: "separar", peso: 13, quer: "cortar o grupo em dois e cercar a metade menor",
+    id: "separar", degrauMinimo: "treinado", peso: 13, quer: "cortar o grupo em dois e cercar a metade menor",
     alvo: "quem_nao_e_o_heroi", quando: (s) => s.pensa && s.aberto && s.quantos > s.quantosDoOutroLado,
     quebra: (s) => s.quantos <= s.quantosDoOutroLado, vira: null,
     porque: "são mais e há espaço para cercar",
   },
   {
-    id: "prender_no_corredor", peso: 13, quer: "segurar a passagem e obrigar a lutar um de cada vez",
+    id: "prender_no_corredor", degrauMinimo: "astuto", peso: 13, quer: "segurar a passagem e obrigar a lutar um de cada vez",
     alvo: "quem_bloqueia", quando: (s) => s.apertado && s.quantos < s.quantosDoOutroLado,
     quebra: (s) => s.quantos <= 1, vira: "sair_vivo",
     porque: "são menos, e o corredor iguala a conta",
   },
   {
-    id: "fechar_a_saida", peso: 14, quer: "tomar a única saída antes de brigar de verdade",
+    id: "fechar_a_saida", degrauMinimo: "astuto", peso: 14, quer: "tomar a única saída antes de brigar de verdade",
     alvo: "quem_bloqueia", quando: (s) => s.pensa && s.saidas <= 1 && !s.ehBicho,
     quebra: (s) => s.minhaVida < 0.4, vira: "sair_vivo",
     porque: "quem tem a porta decide quando acaba",
   },
   {
-    id: "apagar_a_luz", peso: 12, quer: "brigar no escuro, onde eles não enxergam e ele sim",
+    id: "apagar_a_luz", degrauMinimo: "astuto", peso: 12, quer: "brigar no escuro, onde eles não enxergam e ele sim",
     alvo: "o_conjurador", quando: (s) => s.pensa && s.escuro,
     quebra: (s) => !s.escuro, vira: null,
     porque: "o escuro é vantagem dele",
   },
-  /* ---- desmontar o outro lado ---- */
+  /* ---- desmontar o outro lado ----
+     AQUI MORA O TOPO, e só ele. `calar_a_magia` e `matar_o_remendo`
+     são `brilhante` porque exigem ver a FUNÇÃO de alguém antes de ela
+     ser usada — é o pensamento que, sendo de graça, ganhava toda
+     rodada 1 do jogo. O resto do bloco desce: `acabar_o_ferido` e
+     `provar` vão no que já está caindo e no que parece mais forte, e
+     isso mora embaixo; `tirar_a_coisa` e `humilhar` são `astuto`,
+     porque leem o que está em jogo e não quem faz o quê. ---- */
   {
-    id: "calar_a_magia", peso: 17, quer: "derrubar quem conjura antes de qualquer outra coisa",
+    id: "calar_a_magia", degrauMinimo: "brilhante", peso: 17, quer: "derrubar quem conjura antes de qualquer outra coisa",
     alvo: "o_conjurador", quando: (s) => s.pensa && s.temConjurador,
     quebra: (s) => !s.temConjurador, vira: null,
     porque: "sabe o que uma magia faz e não quer descobrir de novo",
   },
   {
-    id: "matar_o_remendo", peso: 16, quer: "derrubar quem cura, para o resto não voltar de pé",
+    id: "matar_o_remendo", degrauMinimo: "brilhante", peso: 16, quer: "derrubar quem cura, para o resto não voltar de pé",
     alvo: "o_curandeiro", quando: (s) => s.pensa && s.temCurandeiro && s.rodada >= 2,
     quebra: (s) => !s.temCurandeiro, vira: null,
     porque: "viu alguém ser remendado e aprendeu",
   },
   {
-    id: "acabar_o_ferido", peso: 14, quer: "terminar o que já está caindo antes de pegar outro",
+    id: "acabar_o_ferido", degrauMinimo: "bruto", peso: 14, quer: "terminar o que já está caindo antes de pegar outro",
     alvo: "o_ferido", quando: (s) => s.alguemFerido && s.rodada >= 2,
     quebra: (s) => !s.alguemFerido, vira: null,
     porque: "um a menos de pé vale mais que dois machucados",
   },
   {
-    id: "tirar_a_coisa", peso: 16, quer: "arrancar a coisa das mãos dele e sumir com ela",
+    id: "tirar_a_coisa", degrauMinimo: "astuto", peso: 16, quer: "arrancar a coisa das mãos dele e sumir com ela",
     alvo: "quem_carrega", quando: (s) => s.pensa && !!s.heroiCarrega,
     quebra: (s) => s.minhaVida < 0.35, vira: "fugir_ferido",
     porque: "vieram pela coisa, não pela briga",
   },
   {
-    id: "humilhar", peso: 12, quer: "vencer na frente de todo mundo, sem pressa",
+    id: "humilhar", degrauMinimo: "astuto", peso: 12, quer: "vencer na frente de todo mundo, sem pressa",
     alvo: "o_heroi", quando: (s) => s.pensa && s.publico && s.heroiFamoso,
     quebra: (s) => s.minhaVida < 0.5, vira: "sair_vivo",
     porque: "há plateia, e a plateia é metade do motivo",
   },
   {
-    id: "provar", peso: 13, quer: "medir-se com o mais forte e ignorar o resto",
+    id: "provar", degrauMinimo: "bruto", peso: 13, quer: "medir-se com o mais forte e ignorar o resto",
     alvo: "o_mais_forte", quando: (s) => s.pensa && (s.ehChefe || s.ameaca === "elite" || s.ameaca === "lendario") && s.quantos === 1,
     quebra: (s) => s.minhaVida < 0.35, vira: "sair_vivo",
     porque: "está sozinho e é bom o bastante para escolher com quem lutar",
   },
-  /* ---- atrasar, que quase nunca é combate ---- */
+  /* ---- atrasar, que quase nunca é combate ----
+     `treinado`: o objetivo não está na sala. Querer TEMPO em vez de
+     vitória exige saber que existe alguém atrás precisando dele. ---- */
   {
-    id: "atrasar", peso: 15, quer: "ganhar tempo, não vencer — alguém atrás precisa desse tempo",
+    id: "atrasar", degrauMinimo: "treinado", peso: 15, quer: "ganhar tempo, não vencer — alguém atrás precisa desse tempo",
     alvo: "quem_esta_perto", quando: (s) => s.pensa && s.doVilao && s.quantos < s.quantosDoOutroLado,
     quebra: (s) => s.rodada >= 4 || s.quantos <= 1, vira: "sair_vivo",
     porque: "não vieram para ganhar, vieram para segurar",
   },
   {
-    id: "atrasar_na_porta", peso: 14, quer: "segurar na entrada até o de dentro terminar o que faz",
+    id: "atrasar_na_porta", degrauMinimo: "treinado", peso: 14, quer: "segurar na entrada até o de dentro terminar o que faz",
     alvo: "quem_bloqueia", quando: (s) => s.emMasmorra && s.doVilao && s.rodada <= 3,
     quebra: (s) => s.rodada > 3, vira: "sair_vivo",
     porque: "há coisa acontecendo lá dentro",
   },
-  /* ---- proteger ---- */
+  /* ---- proteger ----
+     `proteger` é `bruto` (ficar entre eles e a coisa é ordem simples,
+     e o bicho tem a sua própria versão em `ninhada`); refém e escudo
+     humano são `astuto`, porque usam uma TERCEIRA pessoa como
+     argumento. ---- */
   {
-    id: "proteger", peso: 15, quer: "não sair de perto da coisa, e bater em quem chegar nela",
+    id: "proteger", degrauMinimo: "bruto", peso: 15, quer: "não sair de perto da coisa, e bater em quem chegar nela",
     alvo: "quem_bloqueia", quando: (s) => !!s.protejoAlgo && !s.ehBicho,
     quebra: (s) => s.protegidoQuebrou, vira: "vinganca",
     porque: "estar entre eles e aquilo é a ordem",
   },
   {
-    id: "usar_o_refem", peso: 18, quer: "manter a faca no refém e falar antes de brigar",
+    id: "usar_o_refem", degrauMinimo: "astuto", peso: 18, quer: "manter a faca no refém e falar antes de brigar",
     alvo: "quem_nao_e_o_heroi", quando: (s) => s.pensa && s.temRefem,
     quebra: (s) => s.rodada >= 3, vira: "matar_todos",
     porque: "com refém não se briga, se negocia",
   },
   {
-    id: "escudo_humano", peso: 16, quer: "pôr um civil na frente e brigar por trás dele",
+    id: "escudo_humano", degrauMinimo: "astuto", peso: 16, quer: "pôr um civil na frente e brigar por trás dele",
     alvo: "quem_esta_longe", quando: (s) => s.pensa && s.temCivil && s.quantos <= 2,
     quebra: (s) => !s.temCivil, vira: "sair_vivo",
     porque: "há gente inocente por perto e ele não tem escrúpulo",
   },
-  /* ---- a virada: o que a luta vira quando quebra ---- */
+  /* ---- a virada: o que a luta vira quando quebra ----
+     QUASE TUDO NO CHÃO, e por invariante: estas são o destino dos
+     `vira`, e um destino que o combatente não enxerga o deixaria sem
+     plano no pior momento da luta dele. Salvar a própria pele não
+     exige cabeça — exige medo. `matar_todos` e `vender_caro` sobem um
+     degrau: as duas são decisão sobre o que fazer com o tempo que
+     resta. ---- */
   {
-    id: "sair_vivo", peso: 20, quer: "sair inteiro daqui, e briga só com quem impedir",
+    id: "sair_vivo", degrauMinimo: "animal", peso: 20, quer: "sair inteiro daqui, e briga só com quem impedir",
     alvo: "quem_bloqueia", quando: (s) => s.minhaVida < 0.3 && s.pensa && s.saidas >= 1,
     quebra: (s) => s.saidas < 1, vira: "encurralado",
     porque: "já entendeu que perdeu",
   },
   {
-    id: "fugir_ferido", peso: 20, quer: "correr, e só morde quem estiver no caminho",
+    id: "fugir_ferido", degrauMinimo: "animal", peso: 20, quer: "correr, e só morde quem estiver no caminho",
     alvo: "quem_bloqueia", quando: (s) => s.minhaVida < 0.25 && s.ehBicho,
     quebra: (s) => s.saidas < 1, vira: "encurralado",
     porque: "bicho ferido não termina briga",
   },
   {
-    id: "encurralado", peso: 22, quer: "brigar como quem não tem para onde ir",
+    id: "encurralado", degrauMinimo: "animal", peso: 22, quer: "brigar como quem não tem para onde ir",
     alvo: "quem_esta_perto", quando: (s) => s.minhaVida < 0.3 && (s.saidas < 1 || s.fundo),
     quebra: () => false, vira: null,
     porque: "não há saída, e isso muda tudo",
   },
   {
-    id: "vinganca", peso: 21, quer: "fazer doer, sem cuidar mais da própria pele",
+    id: "vinganca", degrauMinimo: "animal", peso: 21, quer: "fazer doer, sem cuidar mais da própria pele",
     alvo: "quem_me_feriu", quando: (s) => s.protegidoQuebrou || (s.liderCaiu && s.temLider && s.minhaVida < 0.6),
     quebra: () => false, vira: null,
     porque: "quebraram o que ele guardava",
   },
   {
-    id: "matar_todos", peso: 19, quer: "não deixar ninguém de pé, e começa pelo que cai mais fácil",
+    id: "matar_todos", degrauMinimo: "bruto", peso: 19, quer: "não deixar ninguém de pé, e começa pelo que cai mais fácil",
     alvo: "o_mais_fraco", quando: (s) => s.pensa && s.temRefem && s.rodada >= 3,
     quebra: () => false, vira: null,
     porque: "a conversa acabou",
   },
   {
-    id: "debandar", peso: 19, quer: "cada um por si — a ordem morreu com quem mandava",
+    id: "debandar", degrauMinimo: "animal", peso: 19, quer: "cada um por si — a ordem morreu com quem mandava",
     alvo: "quem_estiver", quando: (s) => s.liderCaiu && s.ehTropa,
     quebra: () => false, vira: null,
     porque: "tropa sem chefe é gente com medo",
   },
   {
-    id: "vender_caro", peso: 18, quer: "morrer levando alguém junto",
+    id: "vender_caro", degrauMinimo: "bruto", peso: 18, quer: "morrer levando alguém junto",
     alvo: "o_ferido", quando: (s) => s.minhaVida < 0.2 && s.quantos === 1 && (s.ehChefe || s.ehMorto),
     quebra: () => false, vira: null,
     porque: "é o último e sabe disso",
   },
-  /* ---- a emboscada, dos dois lados ---- */
+  /* ---- a emboscada, dos dois lados ----
+     `bruto`: aproveitar o susto e reagrupar depois de apanhar são as
+     duas coisas que qualquer bando treinado a meias faz. ---- */
   {
-    id: "cair_em_cima", peso: 17, quer: "aproveitar o susto e derrubar um antes de reagirem",
+    id: "cair_em_cima", degrauMinimo: "bruto", peso: 17, quer: "aproveitar o susto e derrubar um antes de reagirem",
     alvo: "o_mais_fraco", quando: (s) => s.euEmbosquei && s.rodada <= 2,
     quebra: (s) => s.rodada > 2, vira: null,
     porque: "o primeiro golpe é de graça e só existe uma vez",
   },
   {
-    id: "recuperar_o_pe", peso: 14, quer: "reagrupar e parar de apanhar de surpresa",
+    id: "recuperar_o_pe", degrauMinimo: "bruto", peso: 14, quer: "reagrupar e parar de apanhar de surpresa",
     alvo: "quem_esta_perto", quando: (s) => s.fuiEmboscado && s.rodada <= 2,
     quebra: (s) => s.rodada > 2, vira: null,
     porque: "foi pego e ainda está atrás na conta",
   },
-  /* ---- a ordem de cima ---- */
+  /* ---- a ordem de cima ----
+     `bruto`: obedecer é o oposto de planejar. ---- */
   {
-    id: "cumprir_a_ordem", peso: 17, quer: "fazer o que mandaram, e o resto é problema depois",
+    id: "cumprir_a_ordem", degrauMinimo: "bruto", peso: 17, quer: "fazer o que mandaram, e o resto é problema depois",
     alvo: "o_heroi", quando: (s) => s.doVilao && !!s.ordemDoVilao,
     quebra: (s) => s.minhaVida < 0.3, vira: "sair_vivo",
     porque: "há ordem, e desobedecer custa mais que apanhar",
   },
-  /* ---- o herói caído ---- */
+  /* ---- o herói caído ----
+     As duas metades da mesma cena, em degraus opostos, e é a
+     diferença mais barata da fase: `confirmar` é chão (não sabe fazer
+     diferente) e `deixar_cair` é `treinado`. N1 mediu o preço da
+     ignorância: 13,4% do dano dos inimigos cai em quem já está no
+     chão. Parar de desperdiçar é conhecimento, e custa degrau. ---- */
   {
-    id: "confirmar", peso: 18, quer: "garantir que quem caiu não levante",
+    id: "confirmar", degrauMinimo: "animal", peso: 18, quer: "garantir que quem caiu não levante",
     alvo: "o_ferido", quando: (s) => s.heroiCaido && !s.pensa,
     quebra: () => false, vira: null,
     porque: "não sabe fazer diferente",
   },
   {
-    id: "deixar_cair", peso: 17, quer: "ignorar quem já caiu e limpar o resto",
+    id: "deixar_cair", degrauMinimo: "treinado", peso: 17, quer: "ignorar quem já caiu e limpar o resto",
     alvo: "quem_nao_e_o_heroi", quando: (s) => s.heroiCaido && s.pensa,
     quebra: (s) => !s.heroiCaido, vira: null,
     porque: "caído não é ameaça e há mais gente de pé",
   },
-  /* ---- o estado dos dois lados ---- */
+  /* ---- o estado dos dois lados ----
+     `terminar` e `perder_o_animo` leem NÚMERO (a vida dele, as baixas
+     dos meus) e são `bruto`; `cercar_o_sozinho` e `brincar` leem
+     POSIÇÃO e VAIDADE, e são `astuto`. ---- */
   {
-    id: "terminar", peso: 17, quer: "terminar o herói enquanto ele ainda não se recompôs",
+    id: "terminar", degrauMinimo: "bruto", peso: 17, quer: "terminar o herói enquanto ele ainda não se recompôs",
     alvo: "o_heroi", quando: (s) => s.heroiVida < 0.3 && !s.heroiCaido,
     quebra: (s) => s.heroiVida >= 0.5, vira: null,
     porque: "ele está por um fio e isso é a luta inteira",
   },
   {
-    id: "cercar_o_sozinho", peso: 15, quer: "cercar por todos os lados quem está sem ninguém",
+    id: "cercar_o_sozinho", degrauMinimo: "astuto", peso: 15, quer: "cercar por todos os lados quem está sem ninguém",
     alvo: "o_heroi", quando: (s) => s.heroiSozinho && s.quantos >= 3 && !s.apertado,
     quebra: (s) => !s.heroiSozinho || s.quantos < 3, vira: null,
     porque: "está sozinho e eles são muitos: cercar é de graça",
   },
   {
-    id: "perder_o_animo", peso: 18, quer: "brigar mal, olhando para trás — o bando está se desfazendo",
+    id: "perder_o_animo", degrauMinimo: "bruto", peso: 18, quer: "brigar mal, olhando para trás — o bando está se desfazendo",
     alvo: "quem_esta_perto", quando: (s) => s.vidaDosMeus < 0.4 && s.pensa && s.quantos < s.quantosEram,
     quebra: (s) => s.quantos <= 1, vira: "sair_vivo",
     porque: "metade dos companheiros já caiu e isso se vê na cara deles",
   },
   {
-    id: "brincar", peso: 13, quer: "brincar com a presa em vez de acabar logo",
+    id: "brincar", degrauMinimo: "astuto", peso: 13, quer: "brincar com a presa em vez de acabar logo",
     alvo: "quem_nao_e_o_heroi", quando: (s) => s.pensa && (s.faixa === "trivial" || s.faixa === "facil") && s.minhaVida > 0.8,
     quebra: (s) => s.minhaVida < 0.7, vira: null,
     porque: "a briga é fácil demais para ser levada a sério",
@@ -546,35 +619,42 @@ export const INTENCOES = [
 
   /* ---- O VIES DA POSTURA (v9.206): duas leituras que so acendem quando o
      mundo pende para um lado. Peso 6: vencem a rede generica, perdem para
-     toda intencao tatica. Aditivas — leem so posturaMoral, e nada mais. ---- */
+     toda intencao tatica. Aditivas — leem so posturaMoral, e nada mais.
+     N2: as duas se separam por degrau porque nao sao a mesma leitura —
+     `receoso` e `astuto` (medir a vantagem antes de avancar exige ler a
+     sala), `aproveitador` e `bruto` (ir no que ja esta ferido e o
+     instinto mais barato que existe). ---- */
   {
-    id: "receoso", peso: 6, quer: "so avançar com vantagem clara, e recuar ao menor sinal",
+    id: "receoso", degrauMinimo: "astuto", peso: 6, quer: "so avançar com vantagem clara, e recuar ao menor sinal",
     alvo: "quem_bloqueia", quando: (s) => s.posturaMoral <= -2 && s.pensa && s.minhaVida < 0.75 && !s.euEmbosquei,
     quebra: (s) => s.minhaVida < 0.25, vira: "fugir_ferido",
     porque: "o mundo trata este herói como lenda, e lenda mete medo",
   },
   {
-    id: "aproveitador", peso: 6, quer: "avançar no que já está ferido, sem dar trégua",
+    id: "aproveitador", degrauMinimo: "bruto", peso: 6, quer: "avançar no que já está ferido, sem dar trégua",
     alvo: "o_ferido", quando: (s) => s.posturaMoral >= 2 && s.pensa && (s.heroiVida < 0.6 || s.alguemFerido),
     quebra: () => false, vira: null,
     porque: "o mundo cheira sangue neste herói, e ninguém recua de presa fácil",
   },
 
-  /* ---- a REDE: sem isto o adversário fica mudo na cena mais comum ---- */
+  /* ---- a REDE: sem isto o adversário fica mudo na cena mais comum ----
+     TODA ELA NO CHÃO, e isto é catraca, não escolha: `animal` nunca
+     pode ficar sem intenção nenhuma. Se a rede subisse um degrau, um
+     bicho perderia o turno — e a mudez não avisa. ---- */
   {
-    id: "sobrepujar", peso: 5, quer: "usar o número e cercar",
+    id: "sobrepujar", degrauMinimo: "animal", peso: 5, quer: "usar o número e cercar",
     alvo: "quem_estiver", quando: (s) => s.quantos > s.quantosDoOutroLado,
     quebra: (s) => s.quantos <= s.quantosDoOutroLado, vira: null,
     porque: "são mais",
   },
   {
-    id: "aguentar", peso: 5, quer: "aguentar e bater em quem estiver mais perto",
+    id: "aguentar", degrauMinimo: "animal", peso: 5, quer: "aguentar e bater em quem estiver mais perto",
     alvo: "quem_esta_perto", quando: (s) => s.quantos < s.quantosDoOutroLado,
     quebra: (s) => s.minhaVida < 0.3, vira: "sair_vivo",
     porque: "são menos e não têm plano melhor",
   },
   {
-    id: "brigar", peso: 3, quer: "brigar até um dos dois lados parar",
+    id: "brigar", degrauMinimo: "animal", peso: 3, quer: "brigar até um dos dois lados parar",
     alvo: "quem_estiver", quando: () => true,
     quebra: (s) => s.minhaVida < 0.25, vira: "sair_vivo",
     porque: "é uma briga, e ninguém pensou muito nela",

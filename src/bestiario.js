@@ -6,13 +6,20 @@
    ============================================================ */
 import { pvEsperadoInimigo, bonusDeAmeaca } from "./combate.js";
 import { pvNaJanela } from "./juiz.js";
+import { degrauDaCriatura } from "./degraus.js";
 
 /* ---------------- CRIATURAS (fantasia) ---------------- */
 /* v9.152: `des` é a destreza de verdade, e `agil` passa a ser o que ele
    sempre foi na prática — "esta criatura é rápida?". Derivar em vez de
    guardar os dois evita a única coisa pior do que um booleano grosseiro:
    um booleano que discorda do número ao lado dele. */
-const C = (nome, ameaca, nivelRef, des, desc, perfil = null) => ({ nome, ameaca, nivelRef, des: Number(des) || 0, agil: (Number(des) || 0) >= 2, desc, ...(perfil ? { perfil } : {}) });
+/* v9.259 (Fase N · N2): `degrau` é o SÉTIMO campo e é OPCIONAL — quem não
+   declara herda o padrão de `degrauDaCriatura` (ameaça + tipo de mente).
+   Declarar é a exceção, e cada declaração abaixo tem um motivo escrito no
+   bloco. A regra que obriga o campo a existir: **`brilhante` não se herda,
+   declara-se** — herdar o topo é como todo nome inventado pelo Narrador
+   nascia com a mente mais afiada da mesa. */
+const C = (nome, ameaca, nivelRef, des, desc, perfil = null, degrau = "") => ({ nome, ameaca, nivelRef, des: Number(des) || 0, agil: (Number(des) || 0) >= 2, desc, ...(perfil ? { perfil } : {}), ...(degrau ? { degrau } : {}) });
 export const CRIATURAS_FANTASIA = [
   C("Slime", "fraco", 1, -2, "gosma lenta e previsível"),
   C("Rato Gigante", "fraco", 1, 3, "praga de esgoto"),
@@ -23,27 +30,55 @@ export const CRIATURAS_FANTASIA = [
   C("Zumbi", "comum", 2, -2, "lento, incansável"),
   C("Lobo Atroz", "comum", 3, 2, "alfa de presas longas"),
   C("Cultista", "comum", 3, 0, "fanático com magia menor"),
-  C("Ogro", "competente", 4, -1, "força bruta e pouco cérebro"),
+  /* O DESC DIZ E A MESA NÃO OUVE: "força bruta e pouco cérebro" nunca
+     chega à luta, porque `completarInimigo` não copia o `desc`. Sem a
+     declaração, o Ogro herdaria `astuto` por ser `competente`. */
+  C("Ogro", "competente", 4, -1, "força bruta e pouco cérebro", null, "bruto"),
   C("Troll", "competente", 5, 0, "regenera se não queimar", { ataque: "fisico", fraqueza: ["fogo"], resist: [] }),
-  C("Elemental Menor", "competente", 5, 1, "fúria de um elemento", { ataque: "fogo", resist: ["fogo"], fraqueza: ["gelo"] }),
+  /* Nenhum regex reconhece um elemental, então ele cairia no padrão
+     `pensa` e herdaria `astuto`. Fúria de um elemento não faz plano. */
+  C("Elemental Menor", "competente", 5, 1, "fúria de um elemento", { ataque: "fogo", resist: ["fogo"], fraqueza: ["gelo"] }, "bruto"),
   C("Golem de Pedra", "elite", 7, -2, "imune a medo, lento e esmagador"),
-  C("Quimera", "elite", 8, 2, "três cabeças, três mortes", { ataque: "fogo", resist: ["fogo"], fraqueza: [] }),
-  C("Gigante", "elite", 9, -1, "cada golpe derruba muralhas", { ataque: "fisico", resist: ["fisico"], fraqueza: [] }),
+  /* "Quimera" não casa com o regex de bicho: sem declaração, três cabeças
+     de animal herdariam o degrau de um oficial. */
+  C("Quimera", "elite", 8, 2, "três cabeças, três mortes", { ataque: "fogo", resist: ["fogo"], fraqueza: [] }, "bruto"),
+  C("Gigante", "elite", 9, -1, "cada golpe derruba muralhas", { ataque: "fisico", resist: ["fisico"], fraqueza: [] }, "bruto"),
   C("Dragão Jovem", "lendario", 10, 2, "sopro devastador, orgulho maior ainda"),
-  C("Lich", "lendario", 12, 1, "arquimago morto-vivo com filactério"),
-  C("Dragão Ancião", "lendario", 16, 3, "uma calamidade com asas"),
+  /* O TOPO SE DECLARA. O Lich é morto-vivo e o teto do morto é `bruto` —
+     seria o arquimago do jogo com a cabeça de um esqueleto de guarda. */
+  C("Lich", "lendario", 12, 1, "arquimago morto-vivo com filactério", null, "brilhante"),
+  C("Dragão Ancião", "lendario", 16, 3, "uma calamidade com asas", null, "brilhante"),
 ];
 
 /* Arquétipos genéricos — servem a qualquer gênero (sci-fi, cyberpunk, etc.) */
 export const ARQUETIPOS = [
   C("Capanga", "fraco", 1, 0, "músculo descartável"),
   C("Batedor", "fraco", 2, 4, "rápido, frágil"),
-  C("Soldado", "comum", 3, 1, "treinado e disciplinado"),
+  /* "treinado e disciplinado" está escrito no desc e não chega à mesa;
+     por `ameaca` ele herdaria `bruto`, o degrau do capanga. */
+  C("Soldado", "comum", 3, 1, "treinado e disciplinado", null, "astuto"),
   C("Atirador", "comum", 3, 3, "perigoso à distância"),
-  C("Brutamontes", "competente", 5, -1, "aguenta e devolve"),
-  C("Sentinela Blindada", "elite", 7, -2, "muralha ambulante", { ataque: "fisico", resist: ["fisico"], fraqueza: ["raio"] }),
+  C("Brutamontes", "competente", 5, -1, "aguenta e devolve", null, "bruto"),
+  /* A PROVA DE QUE `ameaca` SOZINHA NÃO BASTA: Comandante ("perigoso e
+     tático") e Sentinela Blindada ("muralha ambulante") são as duas
+     `elite` e herdariam o MESMO degrau. A muralha declara; o oficial
+     herda `treinado`, que é o que ele é. */
+  C("Sentinela Blindada", "elite", 7, -2, "muralha ambulante", { ataque: "fisico", resist: ["fisico"], fraqueza: ["raio"] }, "bruto"),
   C("Comandante", "elite", 8, 2, "perigoso e tático"),
-  C("Colosso", "lendario", 11, -2, "máquina/besta de cerco", { ataque: "fisico", resist: ["fisico", "veneno"], fraqueza: ["raio"] }),
+  /* O COLOSSO É DUAS CRIATURAS DIFERENTES, DEPENDENDO DE QUEM O LÊ — e o
+     motivo da declaração é o caminho real, não o acidente de palavra.
+     COM o `desc`, `RX_BICHO` casa "besta" dentro de "máquina/besta de
+     cerco" e ele vira bicho: é o retrato de N1, **18 das 27 em `pensa`**.
+     SEM o `desc` — que é o que a mesa vê, porque `completarInimigo` não o
+     copia e `degrauDaCriatura` roda com nome + ameaça — ele cai no padrão
+     `pensa`, e são **19 das 27**. O Colosso é a ÚNICA diferença entre os
+     dois retratos.
+     Ou seja: sem declaração ele não herdaria `animal`, herdaria
+     `treinado`, por ser `lendario` e "pensar" por omissão. Uma máquina de
+     cerco com o degrau de um oficial é pior que uma com o de um bicho.
+     A declaração fixa o que ele é nos dois caminhos, e não mexe no regex
+     (que é comportamento vivo, e conserto de outra etapa). */
+  C("Colosso", "lendario", 11, -2, "máquina/besta de cerco", { ataque: "fisico", resist: ["fisico", "veneno"], fraqueza: ["raio"] }, "bruto"),
   C("Horror", "lendario", 13, 3, "o que não deveria existir", { ataque: "sombrio", resist: ["sombrio", "veneno"], fraqueza: ["sagrado"] }),
 ];
 
@@ -83,6 +118,18 @@ export function completarInimigo(e, nivelJogador) {
     ...(e.perfil || (base && base.perfil) ? { perfil: e.perfil || base.perfil } : {}),
     des: e.des ?? (base ? base.des : 0),
     agil: e.agil ?? (base ? base.agil : false),
+    /* v9.259 (Fase N · N2): O DEGRAU VIAJA JUNTO, pela mesma razão que o
+       `perfil` passou a viajar — uma tabela certa que a mesa não vê é uma
+       tabela que não existe. `degrauDaCriatura` é o único sítio que
+       computa isto: a declaração da base (ou do que a IA mandou) ganha; o
+       resto herda de `ameaca` + tipo de mente, com o topo fora do alcance
+       do herdado.
+       NÃO MUDA COMPORTAMENTO: é campo a mais no objeto, e ninguém o lê
+       ainda — quem passa a decidir por ele é N4.
+       E ele resolve com NOME + AMEAÇA apenas, de propósito: o `desc` da
+       base continua não sendo copiado (dívida conhecida, de outro dono),
+       então o degrau nasce do mesmo que o resto da luta enxerga. */
+    degrau: degrauDaCriatura({ nome, ameaca, degrau: e.degrau || (base ? base.degrau : "") }),
   };
 }
 

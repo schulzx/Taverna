@@ -18,13 +18,19 @@ export const SLOGAN = "toda lenda começa aqui";
    do App — que é exatamente onde um número vai para ser esquecido.
    Aqui ela fica ao lado do resto do que a casa sabe sobre si mesma, e um
    varredor confere que o App não voltou a escrevê-la à mão. */
-export const VERSAO = "v9.258";
+export const VERSAO = "v9.259";
 export const LEVA = "o turno guardado";
 
 export const XP_POR_NIVEL = (nivel) => xpDoProximoNivel(nivel) ?? XP_POR_DADIVA;
 export const MOEDAS_INICIAIS = 15;
 export const PONTOS_TOTAIS = 6;
 export const ATRIBUTO_MAX_CRIACAO = 3;
+/* v9.259: `ATRIBUTO_MAX` GANHOU O PRIMEIRO LEITOR DE VERDADE. Ele existia
+   desde sempre, era importado no `App.jsx` e nunca usado — o teto do jogo
+   sem ninguém que o consultasse. Quem o lê agora é `degraus.js`: a escada
+   do combate mapeia o domínio inteiro `0..ATRIBUTO_MAX` em degraus, e por
+   isso o teto mudar move a escada junto, em vez de deixar um literal 5
+   para trás. */
 export const ATRIBUTO_MAX = 5;
 export const MAX_COMPANHEIROS = 4;
 
