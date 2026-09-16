@@ -2909,3 +2909,169 @@ durante.)*
    sem erro. Ali não renderiza, logo não pode medir mal — mas quem ler a
    propriedade de volta vai encontrar uma mentira que não é uma.
 
+
+---
+
+# O endereço na borda — a régua, a marca e a leitura (E2, `desenho` · 15/09)
+
+Fecha o que E1 abriu e o que `e2-jogo.md` pediu. **Regra da fase: não nasce
+tabela de letras nova.** `LETRAS_DA_GRADE` (`coordenadas.js:151`) é a única
+gramática, para o mundo e para o tabuleiro.
+
+## A régua tem TRÊS graus, não dois
+
+`A regua` · `30:11` · **6 variantes** — *Eixo* (Coluna · Linha) × *Estado*
+(Repouso · **Procurada** · Realçada).
+
+| grau | a letra | o filete de 2 px | quando |
+|---|---|---|---|
+| **Repouso** | `inkDim` · 6,62:1 | nenhum | sempre |
+| **Procurada** | `ink` · 15,31:1 | **`lineStrong`** · 3,74:1 | ele escreveu `K` e ainda não há número |
+| **Realçada** | `amberSoft` · 12,40:1 | `amber` · 9,00:1 | o endereço está inteiro e aponta para uma casa |
+
+- **Por que existe o grau do meio.** Sem ele a régua diz a mesma coisa quando o
+  jogador escreveu `K` e quando escreveu `K14` — e são estados diferentes: no
+  primeiro **nada é accionável**, no segundo há destino e preço.
+- **O canal que não é cor:** de *Repouso* para *Procurada* muda a **existência**
+  do filete, não a cor dele. De *Procurada* para *Realçada* o terceiro canal está
+  **fora da régua**: só o endereço completo acende a casa no campo.
+- **`Procurada` é `ink` e não um âmbar fraco**, de propósito: a diferença fica
+  em **luminância**, não em saturação — e saturação é o que morre primeiro num
+  telefone ao sol.
+- **`lineStrong` é legal sobre `bg` (3,74), `panel` (3,51) e `panelSoft`
+  (3,27); é ILEGAL sobre `line` (2,71:1).** A régua vive sobre `bg`, logo passa.
+- **Movimento:** 90 ms por degrau, o mesmo número da casa, porque é o mesmo
+  evento. Sob `prefers-reduced-motion`, `animation: none` — pousa no estado
+  final nos dois degraus. **Não nasce classe nova.**
+- **O canto da régua (22×22) é `bg` e não leva rótulo.** `A1` não se escreve
+  duas vezes.
+
+## O custo da régua no telefone é ZERO — medido dos dois lados
+
+375 de largura · casa 48 · respiro 16 · régua 22 · campo de 616 px (E1).
+
+| | útil | colunas × linhas | casas inteiras | folga |
+|---|---|---|---|---|
+| sem a régua | 359 × 616 | 7 × 12 | **84** | 23 px · 40 px |
+| **com a régua** | 337 × 594 | 7 × 12 | **84** | 1 px · 18 px |
+
+**A prova não é a igualdade — é a folga.** Sem a régua sobravam 23 px e 40 px, e
+**uma casa pede 48**. Nenhuma daquelas folgas podia virar casa. *A régua é paga
+inteira de espaço que casa nenhuma podia ocupar.* Quadro `119:44`, página
+`A regua`.
+
+**A letra no telefone é 12 px, e 22 px de calha aguentam** — medido na peça: a
+linha do glifo mede **16 px** (3 px de folga em cima e embaixo) e dois dígitos
+medem **15 px** (3,5 px de cada lado). 12 e não 11 porque **um degrau acima do
+piso citado** (HIG 11 pt, Material 11 sp) é o que sobrevive ao jogador que já
+aumentou o texto do sistema.
+
+## A marca de borda aprende a falar de um LUGAR
+
+`A marca de borda` · `53:43` · **12 variantes** — *Quem* (Aliado · Inimigo ·
+**A casa**) × *Aresta* (Cima · Direita · Baixo · Esquerda).
+
+- **Quem=A casa** é a casa que a frase acendeu e que está fora da janela. A
+  câmara **não** vai atrás (`e2-jogo.md` §7.1); quem fala é a borda.
+- **Três formas, zero dependência de cor:** círculo = aliado, losango = inimigo,
+  **quadrado = a casa do tabuleiro**.
+- **`amber`** — 9,00:1 sobre `bg`, 8,45:1 sobre `panel`. O endereço em `ink`
+  sobre `panel` = 14,37:1.
+- **O corpo da marca é `panel` e está a 1,07:1 do tabuleiro.** Quem a separa do
+  campo é **a moldura** (9,79 · 5,67 · 9,00). *No dia em que alguém tirar a
+  moldura, a marca desaparece dentro do tabuleiro e nada avisa.*
+
+## O nome acessível da casa: `aria-label`, e o `<title>` SAI
+
+> **`endereço · quem está lá · o lugar · o veredito`**
+
+| caso | o nome |
+|---|---|
+| vazia, ao alcance | `K14 · no beco estreito · dá para chegar aqui — custa 4,5 m` |
+| o chão cobra | `K14 · no beco estreito, terreno difícil, cobertura +2 · dá para chegar aqui — custa 6,0 m` |
+| fora de alcance | `K14 · no beco estreito · K14 fica a 12 m — o seu passo chega a 9. Vá até K11.` |
+| ocupada | `K14 · Halvard, 12 de 18 PV · no beco estreito · Halvard está em K14 — dá para chegar a K13.` |
+| parede | `K14 · pedra · K14 é pedra — do lado de cá chega-se a K12.` |
+| você | `K14 · você · no beco estreito · você já está em K14.` |
+| em mira | `K14 · no beco estreito · dá para fazer Bola de Fogo cair aqui` |
+
+- **Por que `aria-label` e não `<title>`.** O `<title>` de SVG é **também o balão
+  do rato** — um canal que no telefone não existe, e um balão de ~340 px por cima
+  do campo, que é **exactamente o que esta folha já proíbe**: *quatro segundos de
+  balão tapam as casas para onde o jogador ia andar.* Duas strings para a mesma
+  casa seriam duas verdades; o `<title>` **sai, não se duplica**.
+- **Nada se perde:** o custo já está dentro da casa, o veredito na linha do
+  veredito, o nome da região escrito no chão (`grade-de-batalha.jsx:385`).
+- **Condição:** `aria-label` num `<rect>` sem `role` é ignorado. A grelha tem
+  de ser o `grid` do WAI-ARIA de E1 §6 — `role="gridcell"` em **todas** as casas,
+  alcançáveis **ou não**. Hoje a casa impedida não tem `role` nenhum
+  (`grade-de-batalha.jsx:515`), e é a que mais precisa de ser lida.
+- **LEI: o nome acessível não tem prosa própria.** O último campo é, palavra por
+  palavra, a `curta` de `RECUSAS_DO_PASSO`. O ouvido e o olho leem a mesma
+  frase, há um só sítio para a reescrever, e **a catraca dos 54 caracteres passa
+  a proteger os dois canais**.
+- **O campo do veredito nunca fica vazio.** Hoje o `<title>` da casa
+  inalcançável simplesmente acaba, e **silêncio lê-se como "nada a dizer", não
+  como "não dá"**.
+
+## Texto que muda por instância é PROPRIEDADE, nunca camada
+
+O `jogo` apanhou a doença numa peça; estava em três. Todas consertadas:
+
+| peça | propriedade nova | por que doía |
+|---|---|---|
+| `A casa` `18:31` | `o endereco#112:0` (7 variantes) | troca de variante **a cada toque** |
+| `A regua` `30:11` | `o rotulo#115:0` (6 variantes) | **18 instâncias por tabuleiro**, e o estado troca a cada tecla |
+| `A marca de borda` `53:43` | `o endereco#116:8` (12 variantes) | a peça cujo trabalho **inteiro** é carregar um endereço |
+
+**Provado em `A casa`:** instância real escrita com `K14`, trocada para *Mira*,
+*Confirmando* e de volta a *Sob o dedo* — **`K14` nas quatro leituras.** Antes,
+cada troca devolvia `H12`.
+
+> **A regra: num componente cujo texto muda por instância, texto que não é
+> propriedade é um override à espera de se apagar.**
+
+## `Consequencia` ganha o eixo `Largura` — a razão deixa de poder ser cortada
+
+`Consequencia` · `11:35` · **16 variantes** — *Tom* (4) × *Forma* (2) ×
+**`Largura` (Cabe no conteudo · Ocupa a linha)**.
+
+- **A causa das cinco recusas transbordarem não eram as frases.** A peça era
+  **HUG nos dois eixos, `WIDTH_AND_HEIGHT`, sem `maxLines`**: ela **não sabia
+  ser estreita**, e crescia até onde a frase quisesse.
+- **`Cabe no conteudo` é o de hoje, byte a byte, e é o valor por omissão** —
+  *nenhuma instância existente muda*.
+- **`Ocupa a linha`** é largura fixa com a frase em `FILL` e
+  `textAutoResize: HEIGHT`: **quebra em vez de crescer**. O ponto da `marca`
+  vive numa calha da altura de uma linha, para ficar na **primeira** linha.
+- **Provado:** os 101 caracteres que pediam 606 px, numa instância a 344 → **duas
+  linhas, 30 px**. Quadro `a prova da quebra`, página `Consequencia`.
+- **É o achado B de E1 (`Botao` sem eixo de largura) a morder pela segunda vez**,
+  pago aqui porque aqui era pagável sem mexer em composição nenhuma.
+
+### O teto da linha do veredito — conferido, corrigido e ainda frágil
+
+- **O avanço são 6,0 px/caractere, e agora é medida:** doze amostras de `a frase`
+  em `109:2623`, todas com `largura / caracteres = 6,000`.
+- **O útil é `largura − 10`** (a `marca` de 4 px mais a goteira de 6), **nunca
+  `− 16`**: o enchimento da peça é zero. Lateral 344 → **334 úteis → 55**;
+  telefone 359 → **349 → 58**.
+- **A atribuição da tabela do `jogo` está ao contrário:** o telefone é o lado
+  **largo** (58); quem aperta é a **lateral de 1280** (55).
+- **O teto de 54 fica**, com 1 caractere de margem, e a catraca que falha acima
+  de 54 é boa.
+- **E ele parte-se a 115 % de texto do sistema** (WCAG 1.4.4): o avanço vai a
+  6,9 px e o teto a **48**. A 200 %, a **27**. **É o eixo `Largura` que segura
+  isto** — a razão quebra em vez de ser cortada. No telefone os 15 px saem da
+  tira *o que acabou de acontecer*, que é **consulta e não decisão**, e voltam
+  sozinhos quando a recusa some.
+
+## Duas armadilhas novas do Figma — a primeira apaga trabalho sem dar erro
+
+1. **`clone()` NÃO copia `componentPropertyReferences`.** As oito variantes
+   clonadas de `Consequencia` nasceram com a referência vazia, e
+   `setProperties` corria **sem erro e sem efeito**. *Depois de clonar uma
+   variante, releia `componentPropertyReferences` e religue.*
+2. **A leitura imediata a seguir a `setProperties` devolve o estado anterior.**
+   A mesma prova deu 15 px de altura na chamada em que foi escrita e 30 px na
+   seguinte. **Confira numa chamada nova, nunca na mesma.**

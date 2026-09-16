@@ -185,7 +185,11 @@ const TETO_DE_LITERAIS = {
      e `#7A1F1F` (= `CABELO[8]`, cor de dado copiada para dentro da
      interface). · paga: "os 80 literais que já são T" */
   "src/carta-taro.jsx": 36,
-  "src/grade-de-batalha.jsx": 20,
+  /* 19 desde E2: o fundo do campo era `#141020` e passou a `T.bg`. A
+     diferença é invisível a olho nu e paga duas coisas — sai um literal, e
+     o vão de 2 px do anel de foco, que sobre `#141020` dava 1,04:1 e não
+     se separava do fundo, volta a funcionar como foi desenhado. */
+  "src/grade-de-batalha.jsx": 19, /* 15/09 → 15/09 · E2, o endereço do tabuleiro */
   "src/rosto.jsx": 12,
 
   /* O RESTO (10) — migalhas, e o mais barato do projeto. */

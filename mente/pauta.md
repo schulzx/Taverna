@@ -2113,6 +2113,51 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
 
+- [ ] **a segunda porta do tabuleiro: "vou até K14" não chega ao motor (E2)** · médio ·
+  de: regente/jogo · 15/09
+  *Pedido pela pauta do sistema em vez de escrito por mim: a conversão
+  endereço↔coordenada é **regra**, e regra não é do desenho.* **E2 fechou hoje
+  a metade visível** — o tabuleiro tem régua nas duas bordas, toda casa tem
+  endereço no nome acessível, e o jogador já lê `K14` sem tocar em nada. **A
+  outra metade não existe, e sem ela o endereço é decorativo.**
+  **O achado que abre o item, e ele é maior do que parecia:** não há porta do
+  tabuleiro em `turno.js` — **17 portas, nenhuma delas do campo**. Hoje
+  `vou até K14` numa luta casa `querPartir` e cai na porta `destino` (`:238`)
+  que, ao contrário de `agressao` e `oraculo`, **não tem guarda `!emCombate`**:
+  vai ao resolvedor de *cidades do mapa-múndi*, escreve
+  `[DESTINO NÃO RECONHECIDO]` e entrega à IA. **Ninguém anda**, e gasta-se uma
+  chamada ao Mestre para não andar.
+  **A lista, cirúrgica, e a conta inteira está em `mente/e2-jogo.md` §6:**
+  1. **`enderecoDaCasa(x, y)` e `casaDoEndereco(texto, grade)`** em
+     `coordenadas.js`, **extraídas de `gradeDe` (`:157`), que já faz esta mesma
+     composição** — logo nascem sem uma letra nova de gramática. A segunda
+     devolve `{x, y, endereco, inicio, fim, cresce}` e recusa fora da planta;
+     aceita `k14` e `K 14`. **`grade-de-batalha.jsx` tem hoje a composição
+     numa linha só, comentada com o nome destas duas: no dia em que nascerem,
+     aquela linha morre e passa a importá-las.**
+  2. **`vereditoDoPasso({...})`** — irmão de `vereditoDoGolpe`, **que nunca move
+     nada**: devolve `motivo` (id de tabela), `quem` (hoje deitado fora em
+     `grid.js:479`), `custa`, e **`ateOnde`** — o último quadrado *do caminho*
+     que cabe no orçamento, que **não existe hoje** e é o único item que muda
+     um algoritmo.
+  3. **`RECUSAS_DO_PASSO`**, com as colunas `larga` e `curta`, e a catraca dos
+     **54 caracteres** (medida: mono 10 px anda 6,0 px/caractere, a linha do
+     veredito tem 344 px úteis). **A `curta` serve dois canais** — a linha sob
+     o campo **e**, palavra por palavra, o último campo do nome acessível da
+     casa, que hoje tem uma frase provisória com a dívida escrita ao lado.
+  4. **A porta `passo-no-campo`** em `turno.js`, antes de `desafio`/`destino`,
+     com `seRecusar: "seguinte"` — a prosa continua a viajar. E a **guarda
+     `!emCombate` em `destino`**, que falta e é defeito de hoje.
+  5. **O log escreve o endereço de volta** (`você avança até K14`). **Não é
+     string em falta: é instrução contrária** — `App.jsx:14568` manda ao Mestre
+     *"não cite metros nem quadrados"*. A nota muda de lado, com **zero
+     caracteres novos no prompt**.
+  **Por que vale, em uma frase:** hoje o botão avisa o alcance e a frase
+  digitada não avisa nada — **a mesma ação com duas portas, e só uma delas
+  tem trava**, que é exatamente o defeito que X2 provou custar caro. E um
+  defeito a nu que o `jogo` encontrou de passagem: `livrePara` dá **a mesma
+  frase** a uma parede e a um amigo.
+
 - [ ] **três achados do motor da reação, vindos da mesa de design (K1)** · médio ·
   de: regente/jogo/desenho · 15/09
   *Pedidos pela pauta do sistema em vez de escritos por mim: regra de jogo não é

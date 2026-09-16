@@ -33,8 +33,123 @@ import { Rosto } from "./rosto.jsx";
 import { sementeDe, estadoDe } from "./semente.js";
 import { fasesDoChefe, viradaPorId } from "./masmorras.js";
 import { IconeEscudoAlerta } from "./ui.jsx";
+/* E2 — A GRAMÁTICA DO ENDEREÇO NÃO É NOVA, E ISSO É LEI. `LETRAS_DA_GRADE`
+   (`coordenadas.js:151`) é a única tabela de letras do jogo: o pergaminho
+   escreve `H13` com ela desde a v9.118, e o tabuleiro escreve `K14` com a
+   MESMA. Uma segunda tabela de letras seria uma segunda verdade sobre o
+   mesmo chão — exatamente a doença que esta etapa existe para impedir, um
+   andar abaixo. As vinte letras cobrem tudo: a planta mais larga tem 18
+   colunas. */
+import { LETRAS_DA_GRADE } from "./coordenadas.js";
 
 const K = (x, y) => `${x},${y}`;
+
+/* ============================================================
+   E2 · O ENDEREÇO DA CASA — UM SÓ SÍTIO NESTE ARQUIVO
+
+   `LETRAS_DA_GRADE[x]` mais `y + 1` é a MESMA composição que `gradeDe`
+   já faz para o mundo (`coordenadas.js:157`). Mas a conversão
+   endereço↔coordenada é REGRA, e regra é do `backend`: no dia em que
+   `enderecoDaCasa(x, y)` e `casaDoEndereco(texto, grade)` nascerem em
+   `coordenadas.js` — extraídas de `gradeDe`, que já faz esta conta —,
+   esta linha MORRE e o arquivo passa a importá-las, com o mesmo nome.
+
+   Até lá, um sítio só. Ela é função e não está colada dentro de três
+   `aria-label` justamente porque três composições do mesmo endereço já
+   seriam as três verdades que a lei acima recusa.
+
+   E os dois espaços são diferentes de propósito: `gradeDe` recebe uma
+   coordenada do MUNDO e passa por `coordDaCelula`; esta recebe índices
+   de QUADRADO. Mesma tabela, dois espaços — nunca a mesma função.
+   ============================================================ */
+const enderecoDaCasa = (x, y) => `${LETRAS_DA_GRADE[x] || "?"}${y + 1}`;
+
+/* ============================================================
+   E2 · A RÉGUA NA BORDA — o topo e a esquerda, nunca as quatro
+
+   POR QUE SÓ DUAS BORDAS. A régua existe para o jogador dizer "vou até
+   K14" sem contar quadrados com o dedo. Uma letra em cima e um número à
+   esquerda acham qualquer casa; as outras duas bordas repetiriam a mesma
+   informação e cobrariam 22 px de campo cada uma — e no telefone o campo
+   não tem 22 px para dar duas vezes.
+
+   POR QUE FORA DO SVG. Dentro dele a letra disputaria com as fichas e
+   com os nomes de região já escritos no chão, e cairia de 6,62:1 para
+   6,37:1. Na calha, sobre `bg`, fica em 6,62:1 e não tapa nada.
+
+   O CANTO (22×22) É `bg` E NÃO LEVA RÓTULO: `A1` não se escreve duas
+   vezes.
+
+   E A RÉGUA É `aria-hidden`. Um leitor de tela a ler trinta e quatro
+   letras e números seguidos não lê nada — o endereço mora no nome
+   acessível de cada casa, que é onde ele significa alguma coisa.
+
+   O CUSTO NO TELEFONE É ZERO, e a prova não é a igualdade — é a folga:
+   sem a régua sobravam 23 px e 40 px, e uma casa pede 48. Nenhuma
+   daquelas folgas podia virar casa. A régua é paga inteira de espaço que
+   casa nenhuma podia ocupar.
+   ============================================================ */
+const CALHA_DA_REGUA = 22;   /* medido na peça: o glifo de 12 px mede 16 px de linha, e dois dígitos medem 15 px de largura */
+const CORPO_DA_REGUA = 12;   /* um degrau acima do piso citado (HIG 11 pt, Material 11 sp): sobrevive a quem já aumentou o texto do sistema */
+const MS_DA_REGUA = 90;      /* o mesmo número da casa, porque é o mesmo evento */
+/* N = ceil(30 / lado). Os 30 px são conta: a etiqueta mais larga são dois
+   dígitos de mono (13,2 px) e duas etiquetas não se lêem como duas com
+   menos de ~16 px de vão. 13,2 + 16 = 29,2 → 30. */
+const LADO_QUE_CABE_UM_ROTULO = 30;
+
+/* OS TRÊS GRAUS, e o canal que não é cor é a EXISTÊNCIA do filete: de
+   Repouso para Procurada muda o filete, não a cor dele. `procurada` é
+   `ink` e não um âmbar fraco de propósito — a diferença fica em
+   luminância, não em saturação, e saturação é o que morre primeiro num
+   telefone ao sol.
+
+   `procurada` NÃO TEM GATILHO HOJE, e está aqui de propósito: é o estado
+   de "ele escreveu K e ainda não há número", que pertence à frase
+   digitada — e a frase digitada precisa de `casaDoEndereco(texto, grade)`,
+   que é do `backend` e ainda não existe. Fica como VALOR possível do
+   mesmo `grau`, nunca como caminho separado: no dia em que o motor
+   nascer, quem a chama é ele, e nada aqui muda de forma. */
+const GRAUS_DA_REGUA = {
+  repouso:   { cor: T.inkDim,    filete: null },
+  procurada: { cor: T.ink,       filete: T.lineStrong },
+  realcada:  { cor: T.amberSoft, filete: T.amber },
+};
+
+/* Definido FORA do render de propósito: um componente declarado lá dentro
+   nasce outro a cada quadro e mata o foco de quem estiver focado — e aqui
+   o foco é justamente o que acende o rótulo. */
+function RotuloDaRegua({ texto, grau, coluna, parado }) {
+  const d = GRAUS_DA_REGUA[grau] || GRAUS_DA_REGUA.repouso;
+  /* Sob `prefers-reduced-motion` a troca pousa no ESTADO FINAL — a cor de
+     chegada, de uma vez. Nenhuma classe nova nasce por causa disto: a
+     transição é do elemento, e a saída é o próprio tempo a zero. */
+  const anda = `${parado ? 0 : MS_DA_REGUA}ms linear`;
+  return (
+    <div style={{ flex: 1, minWidth: 0, minHeight: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      {texto ? (
+        <span className="tv-mono" style={{ fontSize: CORPO_DA_REGUA, fontWeight: 700, lineHeight: 1, color: d.cor, transition: `color ${anda}` }}>{texto}</span>
+      ) : (
+        /* a que não é rotulada leva só um traço — é o que uma régua de
+           verdade faz quando não cabe uma etiqueta em cada risco */
+        <span style={{ background: d.cor, opacity: 0.55, width: coluna ? 1 : 5, height: coluna ? 5 : 1, transition: `background ${anda}` }} />
+      )}
+      <span style={{
+        position: "absolute", background: d.filete || "transparent", transition: `background ${anda}`,
+        ...(coluna ? { left: 0, right: 0, bottom: 0, height: 2 } : { top: 0, bottom: 0, right: 0, width: 2 }),
+      }} />
+    </div>
+  );
+}
+
+/* O movimento reduzido, perguntado uma vez por render e não uma vez por
+   rótulo — são dezoito rótulos por tabuleiro e dois tabuleiros nesta
+   componente. O padrão é o do `CampoDeBrasas` (`ui.jsx:589`), e o
+   try/catch é a lei da casa: um `matchMedia` que estoure não pode custar
+   o turno. */
+const movimentoParado = () => {
+  try { return !!(typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); }
+  catch { return false; }
+};
 
 /* O CONTORNO DA UNIÃO (v9.125): a borda de um conjunto de quadrados são as
    arestas que não têm vizinho dentro do conjunto. Desenhar isso em vez de
@@ -230,6 +345,12 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
   React.useEffect(() => { setModo(podeMirar ? "mirar" : "andar"); }, [podeMirar, alcanceMira && alcanceMira.nome]);
   const mirando = podeMirar && modo === "mirar";
   const [sobre, setSobre] = React.useState(null);
+  /* E2: a casa sob o FOCO DO TECLADO acende a régua pelo mesmo caminho da
+     casa sob o dedo — são o mesmo gesto em dois aparelhos, e uma régua que
+     só responde ao rato deixa sem endereço exatamente quem mais precisa
+     dele. O foco ganha do rato quando os dois apontam: quem está a tabular
+     não tirou a mão de onde estava. */
+  const [focada, setFocada] = React.useState(null);
   const [andando, setAndando] = React.useState(null);
 
   const grade = combate && combate.grade ? combate.grade : null;
@@ -328,7 +449,30 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
 
   const viaDoCaminho = (pontos) => pontos.map((p, i) => `${i ? "L" : "M"}${p.x + 0.5} ${p.y + 0.5}`).join(" ");
 
-  const tabuleiro = (grande) => (
+  /* E2: a casa apontada — pelo foco do teclado antes do rato, porque quem
+     tabula não tirou a mão de onde estava. É ela que acende a coluna e a
+     linha da régua, e é o único gatilho de `realcada` que existe hoje. */
+  const apontada = focada || sobre;
+
+  /* O LADO DA CASA, EM PIXELS — a mesma conta que o `maxWidth` abaixo faz
+     em CSS, refeita aqui em número porque `N = ceil(30 / lado)` precisa
+     dela. No compacto o teto é a altura (380 px de campo) com um chão de
+     40 px por casa; no ampliado é `min(94vw, 68·L/A vh)`, e o vw/vh saem
+     da janela.
+
+     É honesta em vez de medida, e o preço está escrito: não há ref nem
+     observador de tamanho, então virar o telefone só muda QUANTOS rótulos
+     aparecem até ao render seguinte — nunca o endereço de casa nenhuma. */
+  const ladoEmPx = (grande) => {
+    try {
+      if (!grande) return Math.min(40, 380 / g.altura);
+      const vw = (typeof window !== "undefined" && window.innerWidth) || 1280;
+      const vh = (typeof window !== "undefined" && window.innerHeight) || 860;
+      return Math.min(0.94 * vw, (Math.round((68 * g.largura) / g.altura) * vh) / 100) / g.largura;
+    } catch { return 40; }
+  };
+
+  const tabuleiro = (grande) => {
     /* O COMPACTO CONTINUA SENDO UM RELANCE (v9.125): a malha antiga travava o
        quadrado entre 9 e 18 px e ficava pequena demais para o dedo; deixar o
        SVG crescer à vontade cai no defeito oposto, que a v9.34 já tinha
@@ -338,7 +482,36 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     /* v9.161: o campo compacto cresceu de 320 para 380 px de teto — o
        combate é o momento mais tenso da mesa e era o painel mais espremido
        dela. `position: relative` é o chão da faixa do chefe. */
-    <div style={{ position: "relative", width: "100%", maxWidth: grande ? `min(94vw, ${Math.round((68 * g.largura) / g.altura)}vh)` : g.largura * Math.min(40, 380 / g.altura), aspectRatio: `${g.largura} / ${g.altura}`, margin: "0 auto" }}>
+    const larguraDoCampo = grande ? `min(94vw, ${Math.round((68 * g.largura) / g.altura)}vh)` : g.largura * Math.min(40, 380 / g.altura);
+    /* rotula uma a cada N; as outras levam só um traço. Na mesa (48 px)
+       N = 1; no aperto máximo que existe — 18 colunas em 375 px, 18,8 px
+       de lado — N = 2. A letra nunca precisa de sair. */
+    const passoDoRotulo = Math.max(1, Math.ceil(LADO_QUE_CABE_UM_ROTULO / Math.max(1, ladoEmPx(grande))));
+    const parado = movimentoParado();
+    const grauDaColuna = (x) => (apontada && apontada.x === x ? "realcada" : "repouso");
+    const grauDaLinha = (y) => (apontada && apontada.y === y ? "realcada" : "repouso");
+    return (
+    /* A CALHA: o canto, as letras em cima, os números à esquerda, e o campo
+       no quadrante que sobra. O `maxWidth` cresce os 22 px da calha para
+       que o tabuleiro fique do mesmo tamanho que tinha antes dela. */
+    <div style={{ display: "grid", gridTemplateColumns: `${CALHA_DA_REGUA}px 1fr`, gridTemplateRows: `${CALHA_DA_REGUA}px auto`, width: "100%", maxWidth: grande ? `calc(${larguraDoCampo} + ${CALHA_DA_REGUA}px)` : larguraDoCampo + CALHA_DA_REGUA, margin: "0 auto", background: T.bg }}>
+      {/* o canto é `bg` e não leva rótulo: `A1` não se escreve duas vezes */}
+      <div aria-hidden="true" />
+      <div aria-hidden="true" style={{ display: "flex", alignItems: "stretch" }}>
+        {Array.from({ length: g.largura }).map((_, x) => (
+          <RotuloDaRegua key={`rc${x}`} coluna parado={parado} grau={grauDaColuna(x)}
+            texto={x % passoDoRotulo === 0 ? (LETRAS_DA_GRADE[x] || "") : ""} />
+        ))}
+      </div>
+      <div aria-hidden="true" style={{ display: "flex", flexDirection: "column", alignItems: "stretch" }}>
+        {Array.from({ length: g.altura }).map((_, y) => (
+          <RotuloDaRegua key={`rn${y}`} coluna={false} parado={parado} grau={grauDaLinha(y)}
+            texto={y % passoDoRotulo === 0 ? String(y + 1) : ""} />
+        ))}
+      </div>
+      {/* e o campo, no quadrante que sobra. `position: relative` é o chão
+          da faixa do chefe, e continua a ser. */}
+      <div style={{ position: "relative", width: "100%", aspectRatio: `${g.largura} / ${g.altura}` }}>
       {faixa && (
         /* v9.172 (`mesa-combate-v2`): a faixa deixa de ser um letreiro
            centrado e vira o CABEÇALHO do chefe — nome em vermelho de perigo à
@@ -364,7 +537,12 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           </div>
         </div>
       )}
-      <svg viewBox={`0 0 ${g.largura} ${g.altura}`} style={{ width: "100%", height: "100%", display: "block", borderRadius: 10, background: "#141020", border: `1px solid ${T.line}` }}>
+      {/* E1/E2: o fundo do campo era `#141020`, um literal que não passou por
+          decisão de tema nenhuma. Em `T.bg` a diferença é invisível a olho nu
+          e paga duas coisas de uma vez: sai um literal da contagem, e o vão de
+          2 px do anel de foco — que sobre `#141020` dava 1,04:1 e simplesmente
+          não se separava do fundo — volta a funcionar como foi desenhado. */}
+      <svg viewBox={`0 0 ${g.largura} ${g.altura}`} style={{ width: "100%", height: "100%", display: "block", borderRadius: 10, background: T.bg, border: `1px solid ${T.line}` }}>
         <defs>
           <pattern id="tv-lama" width="0.5" height="0.5" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
             <line x1="0" y1="0" x2="0" y2="0.5" stroke="rgba(190,150,90,0.30)" strokeWidth="0.07" />
@@ -496,35 +674,100 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           </g>
         )}
 
-        {/* A CAMADA DO TOQUE, por último e por cima: cada quadrado continua
-            sendo um alvo com nome, inclusive os que não dão para clicar —
-            é o balão que conta que ali tem cobertura, ou lama, ou parede. */}
-        <g>
-          {Array.from({ length: g.altura }).flatMap((_, y) => Array.from({ length: g.largura }).map((__, x) => {
-            const k = K(x, y);
-            const oc = mapa.get(k);
-            const tiro = mirando && noAlcance.has(k);
-            const indo = podeIr.has(k);
-            const clicavel = mirando ? tiro : indo;
-            const titulo = oc
-              ? `${oc.ent.nome}${oc.ent.vidaMax ? ` — ${oc.ent.vida}/${oc.ent.vidaMax} PV` : ""}${ladoDe(oc.ent) > 1 ? ` · ${tamanhoDe(oc.ent).nome}` : ""} · ${nomeDoLugar(grade, x, y)}${tiro ? " — dá para acertar aqui" : ""}`
-              : `${nomeDoLugar(grade, x, y)}${setParedes.has(k) ? " (parede)" : ""}${terrenoDificil(grade, x, y) ? " · terreno difícil" : ""}${temCobertura(grade, x, y) ? " · cobertura +2" : ""}${indo ? " — dá para chegar aqui neste turno" : ""}${tiro ? ` — dá para fazer ${alcanceMira.nome} cair aqui` : ""}`;
-            const agir = () => { if (!clicavel) return; if (mirando) onMirar({ x, y }); else onMover && onMover({ x, y }); };
-            return (
-              <rect key={k} x={x} y={y} width="1" height="1" fill="transparent"
-                role={clicavel ? "button" : undefined} tabIndex={clicavel ? 0 : undefined}
-                onClick={agir}
-                onKeyDown={(ev) => { if (clicavel && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); agir(); } }}
-                onMouseEnter={() => setSobre({ x, y })} onMouseLeave={() => setSobre(null)}
-                style={{ cursor: clicavel ? "pointer" : "default", outline: "none" }}>
-                <title>{titulo}</title>
-              </rect>
-            );
-          }))}
+        {/* A CAMADA DO TOQUE, por último e por cima — e em E2 ela vira o
+            `grid` do WAI-ARIA: casca `role="grid"`, uma linha por `y`, e
+            `role="gridcell"` em TODAS as casas, alcançáveis ou não. Antes a
+            casa impedida não tinha `role` nenhum, e é precisamente ela que
+            mais precisa de ser lida: é a que explica por que não dá.
+
+            E O `<title>` SAIU, não foi duplicado. Ele fazia duas coisas ao
+            mesmo tempo, e a segunda é um defeito conhecido desta casa: era
+            nome acessível e era o BALÃO DO RATO — um canal que no telefone
+            não existe, e um balão de ~340 px a aparecer por cima do campo
+            depois de um segundo de paragem, tapando exatamente as casas
+            para onde o jogador ia andar. Duas strings sobre a mesma casa
+            seriam duas verdades; o nome mora no `aria-label`, e nada se
+            perde: o custo já está dentro da casa, o veredito na linha do
+            veredito, e o nome da região está escrito no chão logo acima. */}
+        <g role="grid" aria-label={g.cenario ? `o campo · ${g.cenario}` : "o campo"}>
+          {Array.from({ length: g.altura }).map((_, y) => (
+            <g key={`li${y}`} role="row">
+              {Array.from({ length: g.largura }).map((__, x) => {
+                const k = K(x, y);
+                const oc = mapa.get(k);
+                const tiro = mirando && noAlcance.has(k);
+                const indo = podeIr.has(k);
+                const clicavel = mirando ? tiro : indo;
+                const end = enderecoDaCasa(x, y);
+                const parede = setParedes.has(k);
+                const souEu = !!(oc && oc.tipo === "heroi");
+                /* O NOME ACESSÍVEL TEM QUATRO CAMPOS, nesta ordem:
+                   `endereço · quem está lá · o lugar · o veredito`.
+
+                   O endereço à frente porque quem tabula ouve oitenta e seis
+                   nomes de casa seguidos, e o endereço é o único campo que
+                   muda sempre — é a única ordem que deixa saltar. */
+
+                /* 2 · QUEM ESTÁ LÁ. A parede entra aqui e não no campo do
+                   lugar: ela não está NUM lugar, ela É o lugar. */
+                const quem = souEu ? "você"
+                  : oc ? `${oc.ent.nome}${ladoDe(oc.ent) > 1 ? `, ${tamanhoDe(oc.ent).nome.toLowerCase()}` : ""}${oc.ent.vidaMax ? `, ${oc.ent.vida} de ${oc.ent.vidaMax} PV` : ""}`
+                  : parede ? "pedra" : "";
+                /* 3 · O LUGAR, com o que o chão cobra. O nome vem do `grid.js`
+                   já com a preposição ("no beco estreito"): é o mesmo
+                   vocabulário que o Mestre vai usar de volta, e por isso não
+                   se remenda artigo nenhum aqui. */
+                const lugar = parede ? "" : [
+                  nomeDoLugar(grade, x, y),
+                  terrenoDificil(grade, x, y) ? "terreno difícil" : "",
+                  temCobertura(grade, x, y) ? "cobertura +2" : "",
+                ].filter(Boolean).join(", ");
+                /* 4 · O VEREDITO, E ELE NUNCA FICA VAZIO. Antes, quando a
+                   casa não dava, o `<title>` simplesmente acabava — e
+                   silêncio lê-se como "não há nada a dizer", nunca como
+                   "não dá". O campo diz sempre o que acontece se ele agir
+                   ali, inclusive quando a resposta é não.
+
+                   DÍVIDA DECLARADA: a lei de `formas.md` manda que este
+                   campo seja, palavra por palavra, a `curta` de
+                   `RECUSAS_DO_PASSO` — para o ouvido e o olho lerem a mesma
+                   frase e a catraca dos 54 caracteres proteger os dois
+                   canais. Essa tabela é do `backend` e ainda não existe, e
+                   inventá-la aqui seria a segunda verdade que ela veio
+                   matar. Então hoje está a frase mais curta e mais honesta
+                   que esta componente consegue dizer SOZINHA, e ela é
+                   substituída inteira quando `vereditoDoPasso` nascer — é
+                   de lá que vêm o custo em metros e o "vá até K11", que
+                   são conta de caminho e não são deste lado da mesa. */
+                const veredito = tiro ? `dá para fazer ${alcanceMira.nome} cair aqui`
+                  : mirando ? `${(alcanceMira && alcanceMira.nome) || "a habilidade"} não alcança ${end}`
+                  : souEu ? `você já está em ${end}`
+                  : parede ? `${end} é pedra`
+                  : oc ? `${oc.ent.nome} está em ${end}`
+                  : indo ? "dá para chegar aqui"
+                  : passoM <= 0 ? `o seu passo acabou — ${end} fica para o próximo turno`
+                  : podeMover ? `${end} fica fora do seu passo nesta rodada`
+                  : `não dá para andar até ${end} agora`;
+                const nomeDaCasa = [end, quem, lugar, veredito].filter(Boolean).join(" · ");
+                const agir = () => { if (!clicavel) return; if (mirando) onMirar({ x, y }); else onMover && onMover({ x, y }); };
+                return (
+                  <rect key={k} x={x} y={y} width="1" height="1" fill="transparent"
+                    role="gridcell" aria-label={nomeDaCasa} tabIndex={clicavel ? 0 : undefined}
+                    onClick={agir}
+                    onKeyDown={(ev) => { if (clicavel && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); agir(); } }}
+                    onFocus={() => setFocada({ x, y })} onBlur={() => setFocada(null)}
+                    onMouseEnter={() => setSobre({ x, y })} onMouseLeave={() => setSobre(null)}
+                    style={{ cursor: clicavel ? "pointer" : "default", outline: "none" }} />
+                );
+              })}
+            </g>
+          ))}
         </g>
       </svg>
+      </div>
     </div>
-  );
+    );
+  };
 
   const cabecalho = (
     <div className="flex items-center gap-2 mb-1.5 flex-wrap">

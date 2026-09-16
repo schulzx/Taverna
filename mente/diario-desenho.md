@@ -19,6 +19,83 @@ Formato:
 
 ---
 
+## 15/09 22:50 · v9.260 · E2 · o endereço do tabuleiro · commit `<hash>`
+
+*O escrito dos dois seniores fica em `mente/e2-jogo.md` e `mente/e2-desenho.md`;
+a forma, no bloco final de `mente/formas.md`.*
+
+**A etapa em que a resposta estava dentro de casa pela terceira vez nesta
+sessão** — e desta vez a casa avisou antes: E1 já tinha escrito que
+`coordenadas.js:151` tem a gramática do endereço. **E2 leu dela e não fabricou a
+segunda**, e a catraca nova existe justamente para que ninguém a fabrique amanhã.
+
+- **estado inicial:** criei `.claude/ciclo-desenho-em-curso`. **O bastão do
+  `App.jsx` não foi tomado nem uma vez** — a outra mente corria N2, e E2 lê o
+  `App.jsx` sem escrever nele. Árvore limpa à entrada, 187/187 suítes, 12/12
+  varredores.
+- **jogo / desenho:** **e aqui falhei a letra do meu próprio roteiro, e digo-o
+  por escrito:** chamei-os **em série, não no mesmo turno**. O `jogo` foi
+  primeiro e o `desenho` recebeu o que ele achou. Rendeu bem — o `desenho`
+  corrigiu duas contas do `jogo` com a peça na mão — mas **não foi o par que a
+  lei manda**, e o risco de a forma nascer atrás do momento era real. Da próxima
+  vez, no mesmo turno.
+- **aprendiz:** a régua, o nome acessível e a catraca, tudo em
+  `src/grade-de-batalha.jsx` + `testes/check-endereco-do-tabuleiro.mjs`. Zero
+  linhas de `App.jsx` e zero linhas de `src/*.js` de motor.
+- **o Figma:** `A regua` de 4 para **6 variantes** (o grau *Procurada*); `A marca
+  de borda` `53:43` com **12 variantes** e a forma *Quem = A casa*;
+  `Consequencia` de 8 para **16** (o eixo `Largura`, que é o achado B de E1 a
+  morder pela segunda vez); quadros `117:2` (os três passos `K`→`K1`→`K14`) e
+  `119:44` (a prova do telefone). Na `A batalha`, `108:2495` e `109:2623`.
+- **a prova:**
+  - **a régua custa ZERO casas no telefone**, e a prova não é a igualdade — é a
+    **folga**: sem ela sobravam 23 px e 40 px, **e uma casa pede 48**. 7 × 12 =
+    **84 casas** nos dois cenários.
+  - **6,0 px por caractere** em mono 10 px, medido em doze amostras reais, todas
+    a `6,000`. O útil é `largura − 10` (marca 4 + goteira 6), **não −16** — e a
+    atribuição do `jogo` estava ao contrário: **o telefone é o lado largo** (58
+    caracteres); quem aperta é a lateral de 1280 (55). O teto de **54** fica.
+  - contrastes: *Procurada* 15,31:1 com filete `lineStrong` a 3,74:1;
+    *Realçada* 12,40:1 com filete `amber` a 9,00:1. Dois buracos **declarados**:
+    o corpo da marca está a 1,07:1 do tabuleiro (**quem a separa é a moldura** —
+    tirem-na e ela some), e `lineStrong` sobre `line` reprova a 2,71.
+- **decisões médias tomadas, com o motivo:**
+  1. **O `<title>` da casa SAI, e não se duplica.** É também o balão do rato —
+     canal que no telefone não existe, e um balão de ~340 px por cima das casas
+     para onde o jogador ia andar, que é o que esta folha já proíbe. Duas strings
+     para a mesma casa seriam duas verdades. O nome mora no `aria-label`, com
+     `role="gridcell"` em **todas** as casas — inclusive as impedidas, que são as
+     que mais precisam de ser lidas e hoje não tinham `role` nenhum.
+  2. **O campo do veredito nunca fica vazio.** Antes a casa que não dava
+     simplesmente calava, e **silêncio lê-se como "nada a dizer", nunca como
+     "não dá"**.
+  3. **O grau *Procurada* nasce sem gatilho, e de propósito.** Ele pertence à
+     frase digitada, que precisa do motor que não existe. Ficou como **valor do
+     mesmo `grau`**, nunca como caminho separado — no dia em que o motor nascer,
+     quem o chama é ele, e nada de forma muda.
+  4. **`#141020` → `T.bg`** (item que E1 deixou pago de antemão): tira um literal
+     da catraca **e** devolve o vão do anel de foco, que a 1,04:1 não se separava.
+  5. **Texto que muda por instância é propriedade, nunca camada** — a doença que
+     o `jogo` apanhou numa peça estava em três; as três consertadas e provadas
+     relendo depois de trocar de variante.
+- **o que ficou:**
+  - **a segunda porta não existe, e é o pedido à outra mente** (`mente/pauta.md`,
+    em "Aberto"): **não há porta do tabuleiro em `turno.js`** — 17 portas,
+    nenhuma do campo. `vou até K14` cai na porta `destino`, que **não tem guarda
+    `!emCombate`**, gasta uma chamada ao Mestre e **ninguém anda**. Sem isso o
+    endereço é decorativo do lado da frase.
+  - **o log ainda não escreve o endereço de volta, e não é string em falta: é
+    instrução contrária** — `App.jsx:14568` manda *"não cite metros nem
+    quadrados"*. Muda de lado com **zero caracteres novos no prompt**.
+  - **dívida medida:** a grelha continua com um `tabIndex=0` por casa
+    alcançável — **27 a 90 alvos focáveis** nas dez plantas com passo de 9 m, e
+    **125** com 12 m. O *roving tabindex* de E1 §6 pede a ordem de tabulação da
+    tela, que é do `App.jsx`: é de **E3**.
+  - **para a pessoa:** *a régua mostra a planta inteira, e a janela é uma marca
+    dentro dela* — a régua deixaria de responder *"como se chama isto que vejo"*
+    e passaria a responder *"o que existe que não vejo"*, que é a pergunta que um
+    campo de 33 % faz o tempo inteiro.
+
 ## 15/09 21:10 · v9.258 · K1b · o relógio de 15 s, e o que ele cobra · commit `cd59431`
 
 *O escrito inteiro dos dois seniores fica em `mente/k1b-jogo.md` e

@@ -34,6 +34,33 @@ o jogo se joga**, e cada uma pede uma coisa ao motor que ele hoje não faz.
 opostas — uma porque **dá ao jogador informação que este jogo nunca lhe deu**, a
 outra porque **paleta é identidade**.
 
+**E uma nasceu em E2 (15/09)**, marcada *(E2)*, e está em primeiro porque é a
+única aberta: as outras já foram respondidas.
+
+- [ ] **(E2) a régua mostra a planta INTEIRA, e a janela é uma marca dentro dela** ·
+  pesado · de: desenho · 15/09
+  **A proposta.** A régua deixa de rotular só as casas que estão na tela e passa
+  a rotular **a planta toda** — as 18 colunas cabem nos 337 px do telefone a
+  18,7 px cada, que é exatamente o `N = 2` que E1 já calculou; **a letra nunca
+  sai, e custa zero casas**. A janela do campo vira um trecho realçado *dentro*
+  da régua, como a alça de uma barra de rolagem que soubesse dizer nomes.
+  **O porquê, e é uma frase:** hoje a régua responde *"como se chama isto que eu
+  vejo"*, e a pergunta que um campo de **33 %** faz o tempo inteiro é **"o que
+  existe que eu não vejo"** — que nada na tela responde. É a frase de E1 (*"uma
+  régua que começa em F conta que A–E existem"*) feita à letra em vez de por
+  inferência, e é o que torna *"vou até K14"* dizível sobre uma casa que o
+  jogador nunca viu.
+  **Por que é dela e não da mesa:** a régua deixa de bater casa a casa com o
+  tabuleiro — deixa de ser o cabeçalho congelado da planilha e passa a ser um
+  mapa do campo. Isso é o jogador a reaprender o que a borda significa, e **o
+  risco só se resolve jogando**: pode ser que duas escalas na mesma tela
+  confundam mais do que a borda muda informa.
+  *(A alternativa barata, se a pessoa recusar: a régua fica como está e a
+  **marca de borda** — `A marca de borda` `53:43`, já desenhada, variante
+  *Quem = A casa* — passa a falar pela casa que está fora da janela. Resolve o
+  caso agudo e não resolve a pergunta geral. **Depende de E3**, porque hoje o
+  tabuleiro sempre cabe e nada fica fora da janela.)*
+
 - [x] **a resposta dele sobre como quer ser perguntado morre no fim da luta** · **APROVADA 15/09, com uma correção de lugar.** A pessoa: *"se concordar comigo, pode mexer no save; se não, apresente sua proposta."* **Claude discordou do lugar, não da correção:** preferência é **da pessoa, não do personagem**. No save ela nasce presa àquela campanha — mundo novo esquece de novo (o mesmo defeito, menor), importar save de outra pessoa importa as preferências dela, e **cada modo tem o seu espaço de save** (`modos.js`), logo Uma Vida, Uma Noite e o Duelo perguntariam três vezes. **Onde fica:** um espaço de preferências do jogador, fora do save, válido em todos os modos e campanhas — uma vez na vida em vez de uma por campanha. **Cuidados:** o espaço não viaja no `exportarSave` (senão volta o problema por outra porta); quem não tem preferência guardada joga exatamente como hoje; e a preferência é **do jogador sobre como ser perguntado**, nunca estado de jogo — nada que mude número entra ali. ·
   *(K1b)* · **pesado** · de: jogo + regente · 15/09
   **O número, e foi achado a medir outra coisa.** A escada do silêncio é a
@@ -697,8 +724,29 @@ scroller de 301px, e o painel `Ações` abre abaixo da dobra.
   fundo do tabuleiro `#141020` está a **1,04:1** de `T.bg` — literal solto que
   a catraca conta **e** que quebra o vão do anel de foco. Trocá-lo por `T.bg`
   paga os dois, e é item barato de E3.
-- [ ] **E2 · o endereço do tabuleiro** · de: pessoa · 14/09
-  Colunas por letra, linhas por número. É o que torna *"vou até H20"*
+- [x] **E2 · o endereço do tabuleiro** · de: pessoa · 14/09 · **feito v9.260**
+  **A metade visível fechou, e a outra metade virou pedido à pauta do sistema.**
+  A régua está nas **duas bordas** (letras em cima, números à esquerda), fora do
+  SVG, em calha de 22 px, mono 12 px, `aria-hidden` — e **as letras saem de
+  `LETRAS_DA_GRADE`**, sem uma segunda tabela nascer. **Três graus**
+  (*Repouso* · *Procurada* · *Realçada*), e o canal que não é cor é a
+  **existência** do filete. Toda casa ganhou `role="gridcell"` e um
+  **`aria-label` de quatro campos** (`endereço · quem está lá · o lugar · o
+  veredito`); **o `<title>` saiu** — era também o balão do rato, que no telefone
+  não existe e tapa as casas para onde o jogador ia andar. **O veredito nunca
+  fica vazio:** antes, a casa que não dava simplesmente calava, e silêncio
+  lê-se como *"nada a dizer"*, nunca como *"não dá"*.
+  **No telefone a régua custa ZERO casas, e a prova não é a igualdade — é a
+  folga:** sem ela sobravam 23 px e 40 px, **e uma casa pede 48**. Nenhuma
+  daquelas folgas podia virar casa. 7 × 12 = **84 casas** nos dois cenários.
+  **`#141020` → `T.bg`** de brinde: tira um literal da catraca **e** devolve o
+  vão do anel de foco. Catraca nova: `testes/check-endereco-do-tabuleiro.mjs`.
+  O escrito dos dois seniores fica em `mente/e2-jogo.md` e `mente/e2-desenho.md`.
+  **O que NÃO fechou, e está pedido em `mente/pauta.md`:** *"vou até K14"*
+  escrito continua a não chegar ao motor — **não há porta do tabuleiro em
+  `turno.js`** (17 portas, nenhuma), e a frase cai na porta `destino`, que não
+  tem guarda `!emCombate`, gasta uma chamada ao Mestre e **ninguém anda**.
+  *(a demanda original:)* Colunas por letra, linhas por número. É o que torna *"vou até H20"*
   possível — e resolve, de quebra, a pendente de que **o jogador não
   consegue se mover**: hoje a grelha não é clicável e escrever "me aproximo"
   três rodadas não anda um metro. O endereço serve aos dois caminhos: o
