@@ -72,6 +72,22 @@ export function defesaDe(ent, ehInimigo = false) {
 /* Condições afetam as rolagens. A mecânica NÃO mora mais aqui: vem do
    catálogo único (condicoes.js), o mesmo que o Mestre, o HUD e o descanso
    leem. Antes, cada lugar adivinhava por substring e discordava do resto. */
+/* v9.278 (F2) · E `defesa` CONTINUA A NÃO ATRAVESSAR, DE PROPÓSITO E COM O
+   PREÇO MEDIDO. `mecanicaDe` soma `m.defesa` desde a v9.0; esta linha é onde
+   ele para, e `resolverAtaque` — o único sítio desta casa que decide se um
+   golpe acerta — nunca teve como o ver. A única condição do catálogo que
+   declara o campo é `protegido` (`condicoes.js`), e a descrição que o jogador
+   lê dela é, palavra por palavra, "+2 de defesa": promessa escrita nos dois
+   lados com o meio a faltar, a forma exacta do que H4 apanhou em
+   `danoRecebidoExtra`. F2 mediu o conserto (duas linhas: o campo aqui e a
+   soma em `ca`) e NÃO o ligou, porque o preço é balanceamento e balanceamento
+   é da pessoa: no molde histórico da régua de Uma Vida a vitória vai de 52,1%
+   para 54,7%, o PV do grupo de 25,88 para 27,57 e as quedas de 1,790 para
+   1,720 — e três asserções de `teste-regua.mjs` caem, entre elas a que
+   garante que o retrato de B1/B1b/B2/T1 continua alcançável. A arena não sente
+   nada (idêntica ao byte: ela nunca põe condição em duelista nenhum).
+   A medição está trancada em `testes/teste-protege.mjs` §5, e a asserção
+   ACENDE no dia em que alguém ligar o campo sem a decisão. */
 export function modificadoresDeCondicao(condicoes = []) {
   const m = mecanicaDe(condicoes);
   return { vantagem: m.vantagem, desvantagem: m.desvantagem, danoExtra: m.danoExtra, danoReduzido: m.danoReduzido, danoRecebidoExtra: m.danoRecebidoExtra, perdeAcao: m.perdeAcao };
@@ -117,6 +133,14 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
      equipamento e guarda. A COBERTURA continua somando de propósito: furar a
      couraça de alguém não faz o muro na frente dele desaparecer, e quem
      ignora cobertura tem a própria porta, logo acima, em `bonusDefesaAlvo`. */
+  /* v9.278 (F2) · E A CONDIÇÃO NÃO SOMA AQUI — É A OUTRA METADE DO QUE FICOU
+     ESCRITO EM `modificadoresDeCondicao`. O lugar dela seria este, FORA do
+     ternário e ao lado de `bonusDefesaAlvo`, pelo argumento da cobertura logo
+     acima: `protegido` é um abrigo que alguém pôs À VOLTA do corpo, não a
+     couraça que o corpo veste, e furar a armadura de alguém não faz
+     desaparecer a barreira que o Clérigo ergueu em cima dela. Está medido e
+     está por decidir; o preço inteiro está no comentário de
+     `modificadoresDeCondicao` e trancado em `teste-protege.mjs` §5. */
   const ca = (ignoraArmadura ? DEFESA_NUA : defesaDe(alvo, !ehAtacanteInimigo)) + (bonusDefesaAlvo || 0); // se o atacante é inimigo, o alvo é o jogador/aliado
   const critico = rolagem.valor >= Math.max(2, Math.min(20, criticoEm || 20));
   const desastre = rolagem.valor === 1;

@@ -377,6 +377,21 @@ export function aplicarPoder(pers, hab, ctx) {
      entradas que a citavam pelo nome — "Corpo de Ferro" e "Postura
      Defensiva" — saíram de `AGUARDAM` com o teto a descer junto.
      Ficam `nao_cai` e `intocado`.
+     **F2 (v9.278) NÃO tirou `protege` desta lista, e o motivo é o achado
+     da etapa.** A família prometia um corpo alheio, e esse corpo foi
+     entregue: o portador `amparo` (aflicoes.js) parte `guarda` ao meio
+     por frase inteira — verbo `proteg` MAIS um corpo declarado — e leva
+     `alvo: "aliados"`, que o App já lia em dois sítios. Seis das oito da
+     família, mais três de fora dela, deixaram de abrigar quem conjurou.
+     Só que o abrigo que viaja **não vale nada**: `protegido` é a única
+     condição do catálogo com `defesa`, e `mecanicaDe` soma esse campo
+     desde a v9.0 para NINGUÉM — `modificadoresDeCondicao` não o devolve e
+     `resolverAtaque` nunca o viu. O jogador lê "+2 de defesa" e recebe
+     zero, em todos os modos. MEDIDO: com o corpo corrigido e a moeda
+     morta, a régua de Uma Vida sai IDÊNTICA AO BYTE — a prova de que as
+     duas metades são um pagamento só. As quatro entradas desta leva ficam
+     com a dívida TROCADA e escrita, o teto não desce, e a moeda vai à
+     pessoa com o preço medido.
    ============================================================ */
 export const AGUARDAM = [
   /* ---- pedem mecânica que não existe (H2 mediu: `dono` é o endereço, v9.266) ---- */
@@ -415,10 +430,10 @@ export const AGUARDAM = [
   { nome: "Intervenção", classe: "Clérigo", promete: "anula completamente um golpe fatal", motivo: "família `nao_cai` — força zero", desde: "16/09" },
   { nome: "Escudo do Pacto", classe: "Bruxo", promete: "o patrono intervém e anula um golpe fatal", motivo: "família `nao_cai`; hoje só vira a condição `protegido`, que não anula golpe nenhum", desde: "16/09" },
   { nome: "Corpo de Ferro", classe: "Monge", promete: "reduz todo dano pela metade por 2 turnos", dono: "src/tracos.js · amortecerDano", motivo: "MUDOU DE DÍVIDA em F1 (v9.274), e a nova é menor e medida: a família `amortece` já tem número (`AMORTECIMENTO_DO_BUFF`) e leitor que o cobra na fila do dano. O que falta é a PORTA — `aflicaoDe` não casa com 'reduz todo dano pela metade por 2 turnos', então `aplicarBuffDeHabilidade` (App.jsx:8136) sai antes de `efeitoDeBuff` e o efeito nunca nasce na ficha. Das 8 da família, só 2 passam por essa porta hoje. Fica também a distância entre a ficção ('metade') e o que a tabela paga (15% a 3 PM), que é decisão de equilíbrio escrita no cabeçalho da tabela, não buraco — F1", desde: "16/09" },
-  { nome: "Elixir de Combate", classe: "Engenheiro", promete: "ALIADO ganha força e vigor por 3 turnos", motivo: "é guarda desde a v9.53, mas a guarda sobe em QUEM USA: guarda em outro corpo não existe", desde: "16/09" },
-  { nome: "Muralha", classe: "Guerreiro", promete: "protege um ALIADO adjacente por 2 turnos", motivo: "o mesmo: a condição `protegido` cai em quem usou, não no aliado", desde: "16/09" },
-  { nome: "Escudo da Fé", classe: "Clérigo", promete: "protege um ALIADO de dano por 2 turnos", motivo: "o mesmo abrigo no corpo errado", desde: "16/09" },
-  { nome: "Espírito Guardião", classe: "Invocador", promete: "um espírito protege um ALIADO por 2 turnos", motivo: "o espírito nasce (é invocação), mas ele não protege ninguém em particular", desde: "16/09" },
+  { nome: "Elixir de Combate", classe: "Engenheiro", promete: "ALIADO ganha força e vigor por 3 turnos", dono: null, motivo: "A LINHA ANTERIOR ESTAVA ERRADA, e F2 (v9.278) mediu-a: ela dizia \"é guarda desde a v9.53\" e não é — `aflicaoDe(\"Elixir de Combate Aliado ganha força e vigor por 3 turnos\")` devolve NULL, portador nenhum. `guarda` não a apanha (não há escudo, barreira nem \"proteg\"), `vigor` também não (o regex é /fortalec|força bruta|potenciali/, e \"força e vigor\" não casa nenhum), e por isso `aplicarBuffDeHabilidade` sai na primeira linha: nem a condição nasce. A dívida é maior do que a que estava escrita e é de OUTRA família — não é abrigo no corpo errado, é um buff de ATRIBUTO em outro corpo, e atributo emprestado não tem mecânica nesta casa (`fortalecido` sobe dano causado, não força nem vigor) — F2", desde: "16/09" },
+  { nome: "Muralha", classe: "Guerreiro", promete: "protege um ALIADO adjacente por 2 turnos", dono: "src/aflicoes.js · PORTADORES (`amparo`)", motivo: "MUDOU DE DÍVIDA em F2 (v9.278), e a metade paga é o CORPO: o portador `amparo` casa a frase por duas condições (o verbo `proteg` mais um corpo declarado) e leva `alvo: \"aliados\"`, que `aplicarBuffDeHabilidade` e `buffDeCompanheiro` já sabiam ler — o abrigo deixou de cair em quem usou. A metade que fica é a MOEDA, e F2 mediu que ela vale ZERO: `protegido` é a única condição do catálogo com `defesa`, `mecanicaDe` soma-o desde a v9.0 e NINGUÉM o lê — `modificadoresDeCondicao` não o devolve e `resolverAtaque` não o vê. O jogador lê \"+2 de defesa\" e recebe 0. O conserto são duas linhas em `combate.js`, está escrito nos dois comentários e trancado em `teste-protege.mjs` §5; não foi ligado porque o preço é balanceamento (Uma Vida 52,1% → 54,7% de vitória) e balanceamento é da pessoa — F2", desde: "16/09" },
+  { nome: "Escudo da Fé", classe: "Clérigo", promete: "protege um ALIADO de dano por 2 turnos", dono: "src/aflicoes.js · PORTADORES (`amparo`)", motivo: "MUDOU DE DÍVIDA em F2 (v9.278), e é a mais bem servida das quatro: o corpo foi corrigido pelo portador `amparo` (o abrigo vai ao grupo, não a quem conjurou) E ela é da família `absorve`, não da `protege` — o nome tem \"escudo\", então `efeitoDeBuff` já lhe dá `absorve: 6` a 3 PM, gasto por `absorverDano`. Ou seja: esta paga um número de verdade, e agora paga-o com a condição no corpo certo. O que fica é o efeito, que continua em quem conjurou por desenho declarado (App.jsx: \"o efeito fica em quem conjurou, mesmo quando a condição se espalha\") — somar um abrigo por conjurador no grupo inteiro seria o número a crescer sem teto — F2", desde: "16/09" },
+  { nome: "Espírito Guardião", classe: "Invocador", promete: "um espírito protege um ALIADO por 2 turnos", dono: "src/aflicoes.js · PORTADORES (`amparo`)", motivo: "MUDOU DE DÍVIDA em F2 (v9.278): a frase NÃO TINHA PORTADOR NENHUM até aqui, e o motivo é uma letra — `prote[çc]` casa \"proteção\" e \"protecao\" e não casa \"protege\", que é o verbo que a ficha usa (é a mesma armadilha que H1 apanhou em \"protetoras\"). Com `amparo` ela passa a abrir `protegido` no grupo. Ficam duas metades: a MOEDA morta que a linha da Muralha mede, e o espírito não proteger ninguém EM PARTICULAR — alvo único é mecânica que não existe, porque `alvo: \"aliados\"` é o grupo inteiro e um quarto valor de `alvo` pede leitor novo nos dois sítios de `App.jsx` (:7725 e :7825), que é onde esta casa não entra sem o bastão — F2", desde: "16/09" },
 
   /* ---- prometem número que nenhuma tabela sabe cobrar ---- */
   { nome: "Punhal Certeiro", classe: "Ladino", promete: "crítico automático em alvo distraído", motivo: "crítico forçado não existe: `criticoMinimo` abaixa a régua do d20, não a dispensa", desde: "16/09" },

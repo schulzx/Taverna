@@ -31,6 +31,7 @@ import { SUBCLASSES } from "../src/subclasses.js";
 import { ESPECIALIZACOES } from "../src/especializacoes.js";
 import { MAGIAS } from "../src/grimorio.js";
 import { APLICACAO_DO_BUFF, APLICA_FORA_DO_GOLPE, aplicacaoDoBuff, efeitoNoGolpe } from "../src/combos.js";
+import { aflicaoDe } from "../src/aflicoes.js";
 import { BUFF_DA_HABILIDADE, ABSORCAO_DO_BUFF, AMORTECIMENTO_DO_BUFF, REGENERACAO_DO_BUFF, regeneracaoDaHabilidade, efeitoDeBuff } from "../src/efeitos.js";
 
 let bons = 0, maus = 0;
@@ -80,6 +81,24 @@ const MEDIDA_DO_ACERVO = {
      alguma, e não cabe um acidente de regex. */
   pisoDeRegeneracoes: 3,
   tetoDeRegeneracoes: 6,
+  /* v9.278 (F2) · A FAMÍLIA QUE NÃO COMPRA NÚMERO, COMPRA CORPO. As três
+     linhas de cima medem QUANTO um abrigo paga; esta mede EM QUEM ele cai, e
+     é a única régua desta seção que não tem unidade de dano. Medidas hoje 9
+     no acervo inteiro — seis que dizem "aliado" e três que dizem "o grupo" /
+     "quem estiver perto".
+
+     TEM PISO E TETO PELO MESMO MOTIVO DA REGENERAÇÃO, e o perigo aqui é
+     maior: o recorte lê PALAVRA de proteção, e a palavra "escudo" aparece
+     dos dois lados da briga (veto escrito em `combos.js:161`). O piso guarda
+     o alcance — se o recorte parar de casar, a varredura passaria verde
+     medindo lista vazia. O teto guarda o contrário, e o número dele foi
+     medido, não escolhido: trocar o verbo `proteg` pelas palavras de abrigo
+     leva o recorte de 9 para 12, e as três que entrariam não prometem
+     proteger ninguém (arrastar um caído, transferir PV, crescer entre o
+     grupo e o perigo). 14 cabe uma habilidade nova em cada classe que já tem
+     alguma, e não cabe esse alargamento. */
+  pisoDeAmparos: 6,
+  tetoDeAmparos: 14,
 };
 
 /* ---------------- O ACERVO ---------------- */
@@ -429,6 +448,67 @@ sec("8. a cura tem relógio — a família que devolve PV por turno (H3)");
   t("e o rótulo da família está declarado fora do golpe",
     APLICA_FORA_DO_GOLPE.includes(REGENERACAO_DO_BUFF.aplica)
     && !efeitoNoGolpe({ aplica: REGENERACAO_DO_BUFF.aplica, bonus: 0 }));
+}
+
+/* ============================================================
+   9. O ABRIGO CAI NO CORPO CERTO — a família que compra CORPO (v9.278 · F2)
+
+   A quinta passada, e a primeira que não mede número nenhum. As quatro de
+   cima perguntam "quanto vale este abrigo?"; esta pergunta "em QUEM ele
+   cai?", porque é essa a promessa que separa a família `protege` das duas
+   irmãs — a ficha di-lo em maiúsculas: "protege um ALIADO".
+
+   POR QUE AQUI E NÃO SÓ EM `teste-protege`. Pelo motivo que este arquivo
+   inteiro existe: uma suíte prova com habilidades escolhidas à mão, e um
+   exemplo bom não prova acervo. O que só se vê nesta passada é o dia em que
+   alguém escrever uma habilidade nova cuja descrição diga "protege um
+   aliado" — ela entra nesta família sem ninguém decidir isso — ou o dia em
+   que alguém alargar o recorte e arrastar meia dúzia de frases junto.
+
+   E ESTA SEÇÃO NÃO MEDE SE A FAMÍLIA PAGA, porque F2 mediu que ela não
+   paga: `protegido` é a única condição com `defesa`, e o campo não chega a
+   `resolverAtaque`. Isso está trancado em `teste-protege.mjs` §5, com o
+   preço de o ligar. Aqui cobra-se só o corpo, que é o que F2 entregou.
+   ============================================================ */
+sec("9. o abrigo cai no corpo certo — a família que compra CORPO (F2)");
+{
+  const comPortador = acervo.map(({ hab, fonte }) => ({ hab, fonte, port: aflicaoDe(`${hab.nome || ""} ${hab.descricao || ""}`) }));
+  const amparos = comPortador.filter((x) => x.port && x.port.id === "amparo");
+  const nomes = amparos.map((x) => `${x.hab.nome} (${x.fonte})`);
+  console.log(`  ··  ${amparos.length} habilidades abrigam OUTRO corpo: ${amparos.map((x) => x.hab.nome).join(", ")}`);
+
+  t(`a amostra não é vazia (pelo menos ${MEDIDA_DO_ACERVO.pisoDeAmparos})`,
+    amparos.length >= MEDIDA_DO_ACERVO.pisoDeAmparos, `achou ${amparos.length}`);
+  t(`e ela não inchou (no máximo ${MEDIDA_DO_ACERVO.tetoDeAmparos} — o recorte é de frase inteira)`,
+    amparos.length <= MEDIDA_DO_ACERVO.tetoDeAmparos, `${amparos.length}: ${nomes.join(", ")}`);
+
+  /* AS DUAS CONDIÇÕES DO RECORTE, cobradas no acervo e não no regex: toda
+     frase que abriga outro corpo tem de DIZER que protege e tem de DIZER
+     de quem fala. Uma passada que só contasse ficaria verde no dia em que
+     alguém trocasse o recorte por outro do mesmo tamanho. */
+  const semVerbo = amparos.filter((x) => !/proteg/i.test(`${x.hab.nome} ${x.hab.descricao || ""}`)).map((x) => x.hab.nome);
+  const semCorpo = amparos.filter((x) => !/aliad|o grupo|quem estiver perto/i.test(`${x.hab.nome} ${x.hab.descricao || ""}`)).map((x) => x.hab.nome);
+  t("toda frase que abriga outro corpo DIZ que protege", semVerbo.length === 0, semVerbo.join(", "));
+  t("…e DIZ de que corpo fala — as duas condições, sempre", semCorpo.length === 0, semCorpo.join(", "));
+
+  /* O DENTE QUE ANDA NO OUTRO SENTIDO, e é o que impede o exagero: nenhuma
+     habilidade de ATAQUE virou abrigo de aliado. É a mesma lei da seção 1
+     deste arquivo, cobrada na família nova — um golpe que passe a abençoar
+     o grupo é o recorte a ter pegado longe demais. */
+  const ataquesAmparados = amparos.filter((x) => x.hab.tipo === "ataque").map((x) => x.hab.nome);
+  t("nenhuma habilidade de ATAQUE virou abrigo de aliado",
+    ataquesAmparados.length <= MEDIDA_DO_ACERVO.tetoDeAtaquesVirados, ataquesAmparados.join(", "));
+
+  /* E O CONTROLE VIVO: quem promete proteção e nomeia o PRÓPRIO corpo não
+     entra. "Armadura Sombria — trevas protetoras envolvem o corpo" é da
+     família `protege` e fica em `guarda`. Se ela aparecer aqui, o recorte
+     deixou de ler de quem a frase fala. */
+  t("`Armadura Sombria` promete o próprio corpo e NÃO está nesta lista",
+    !amparos.some((x) => x.hab.nome === "Armadura Sombria"));
+  /* e a família continua classificada: o corpo mudou, o rótulo não */
+  t("e a família `protege` continua a existir na classificação, com o rótulo de proteção",
+    porLinha.protege > 0 && (APLICACAO_DO_BUFF.find((a) => a.id === "protege") || {}).aplica === "protecao",
+    `porLinha.protege = ${porLinha.protege}`);
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

@@ -43,6 +43,53 @@ export const PORTADORES = [
   /* v9.265 (H1): "Armadura Sombria — trevas protetoras envolvem o corpo" tem
      a palavra "protetoras", que NÃO casa com `prote[çc]` (é "protet", não
      "protec"). Um nível 1 de Bruxo prometia abrigo e entregava a linha. */
+  /* v9.278 (F2) · O AMPARO, E É A LINHA QUE PARTE `guarda` AO MEIO.
+     O que distingue a família `protege` (`APLICACAO_DO_BUFF`, combos.js) das
+     duas irmãs que já compram não é QUANTO, é EM QUEM: `absorve` compra
+     pontos, `amortece` compra proporção, e esta promete um corpo que NÃO é o
+     de quem usou. A ficha di-lo com todas as letras em quatro entradas de
+     `AGUARDAM` — "protege um ALIADO adjacente", "protege um ALIADO de dano",
+     "um espírito protege um ALIADO" — e o sistema entregava o abrigo a quem
+     conjurava, porque `guarda` é `alvo: "proprio"` e apanhava a frase antes
+     de alguém perguntar de quem ela falava.
+
+     A MÁQUINA JÁ EXISTIA, E É POR ISSO QUE ESTA ETAPA NÃO TEM UMA LINHA DE
+     `App.jsx`: `alvo: "aliados"` tem dois leitores vivos na fiação do herói
+     (`aplicarBuffDeHabilidade`) e do companheiro (`buffDeCompanheiro`), mais
+     um terceiro na régua de Uma Vida. `bencao` e `inspiracao` já o usavam.
+     O caminho do abrigo até outro corpo estava aberto e ninguém o tomava.
+
+     O RECORTE É A FRASE INTEIRA, E FOI MEDIDO — é a lição de H1 e H4 cobrada
+     na família onde ela é mais perigosa, porque a palavra "escudo" aparece
+     dos dois lados da briga (há veto escrito sobre isso em `combos.js:161`).
+     Duas condições ao mesmo tempo, e as duas têm de estar na frase:
+       (1) o VERBO de proteger — `proteg`, e só ele. Não "escudo", não
+           "barreira", não "muralha". Medido no acervo de 593: com as palavras
+           de abrigo dentro, o recorte sobe de 9 para 12 e as três que entram
+           não prometem proteger ninguém — "Escudo do Aliado Caído" arrasta um
+           caído, "Vida Emprestada" transfere PV, "Cerca Viva" cresce entre o
+           grupo e o perigo. Era o regex a ser alargado até as habilidades
+           casarem, que é exatamente o que H4 proibiu por asserção.
+       (2) o CORPO declarado — `aliad`, "o grupo", "quem estiver perto".
+     Quem promete proteção e NÃO nomeia outro corpo fica onde estava: é o caso
+     de "Armadura Sombria — trevas protetoras envolvem O CORPO", que continua
+     em `guarda` (e continua a casar pela alternativa literal que H1 escreveu,
+     porque "protetoras" é "protet", não "proteg").
+
+     NOVE FRASES DO ACERVO INTEIRO MUDAM DE LADO, e nenhuma outra: seis diziam
+     "aliado" e três dizem "o grupo"/"quem estiver perto". As três últimas são
+     as mais bem servidas de todas — `aliados` entrega EXATAMENTE "você e o
+     grupo", que é o que elas prometem, com zero de sobra. Bestiário e itens
+     passam pelo mesmo `aflicaoDe` e foram medidos contra este recorte: zero.
+
+     `chance: 1` pelo motivo de `guarda`, `bencao` e `inspiracao` — amparar
+     não é o efeito colateral de um golpe, é o turno inteiro.
+
+     E VEM ANTES DE `guarda` porque a ordem desta tabela é do mais específico
+     para o mais genérico, e duas condições casadas são mais específicas que
+     uma palavra solta. Medido: nenhuma das nove casa qualquer portador que
+     venha antes desta linha, então a posição é a mínima que funciona. */
+  { id: "amparo",     re: /(?=[\s\S]*proteg)(?=[\s\S]*(aliad|o grupo|quem estiver perto))/i,                                   cond: "protegido", alvo: "aliados", chance: 1, dif: 0 },
   { id: "guarda",     re: /postura defensiv|defensiv|escudo|barreira|prote[çc]|trevas protetoras|muralha|couraça|couraca|égide|egide|aparar|bloquei|reduz o dano/i, cond: "protegido", alvo: "proprio", chance: 1, dif: 0 },
 
   /* v9.276 (H4) · A MARCA, E ELA ENTRA POR FRASE INTEIRA — nunca pela

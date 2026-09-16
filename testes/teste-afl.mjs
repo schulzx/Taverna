@@ -101,7 +101,17 @@ for (const p of doGrupo) {
   const c = CONDICOES[p.cond];
   console.log(`  ${p.id.padEnd(12)} alvo:${String(p.alvo).padEnd(9)} → ${c ? `${c.rotulo} (${c.tipo}${c.danoTurno ? `, ${c.danoTurno} PV/turno` : ""})` : "?? fora do catálogo"}`);
 }
-ok(doGrupo.length === 7, `sete portadores escrevem fora do alvo — em quem usou ou nos aliados (${doGrupo.length})`);
+/* 7 → 8 EM 16/09/2026 (v9.278 · F2), E O MOTIVO FICA AQUI, como a lei manda
+   para toda asserção movida. O portador que entrou é `amparo` — a linha que
+   parte `guarda` ao meio para que "protege um ALIADO" deixe de abrigar quem
+   conjurou. Ele é o SEGUNDO com `alvo: "aliados"` (o primeiro par é `bencao`
+   e `inspiracao`), e a fronteira que esta seção guarda continua intacta: ele
+   abre `protegido`, que é `tipo: "bom"` e não tem `danoTurno` — as duas
+   asserções logo abaixo cobram-no sem uma linha nova, porque leem o catálogo
+   em vez de uma lista à mão. É exatamente o caso para o qual elas foram
+   escritas: um portador novo de grupo nasceu, e o relógio do companheiro
+   continua sem ter o que cobrar. */
+ok(doGrupo.length === 8, `oito portadores escrevem fora do alvo — em quem usou ou nos aliados (${doGrupo.length})`);
 ok(doGrupo.every((p) => CONDICOES[p.cond]), "e todos apontam para condição que existe no catálogo");
 /* LIDO DE VOLTA DO CATÁLOGO, não copiado numa lista à mão aqui: se amanhã
    um portador de grupo apontar para uma condição RUIM, isso é mudança de

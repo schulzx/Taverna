@@ -740,7 +740,17 @@ sec("9. o dono medido das 12 (v9.266 H2 · v9.274 F1 · v9.276 H4)");
      de dono na instância. Dono parcial conta como dono, e o `motivo`
      diz qual metade fica de fora: é a mesma regra que "Muralha de
      Gelo" e "Contra-Canção" já cumpriam. */
-  const ENTRADAS_MEDIDAS = 12;
+  /* 12 → 16 EM 16/09/2026 (v9.278 · F2), E O MOTIVO FICA AQUI, como a lei
+     manda para toda asserção movida. F2 mediu a família `protege` inteira e
+     as QUATRO entradas dela que estavam em silêncio passaram a declarar
+     endereço: três ganharam dono vivo (`src/aflicoes.js · PORTADORES
+     (`amparo`)` — Muralha, Escudo da Fé, Espírito Guardião, as três que
+     agora abrigam outro corpo) e a quarta ganhou `dono: null`, que é
+     medição e não silêncio (Elixir de Combate — ver a conta dos sem-dono,
+     mais abaixo). ESTE NÚMERO SOBE QUANDO A CASA MEDE, e é o contrário do
+     de baixo: medir uma linha é pô-la neste bloco, e a lista que ele tranca
+     é `O_BLOCO_MEDIDO`, nome a nome. */
+  const ENTRADAS_MEDIDAS = 16;
   const temDono = (a) => Object.prototype.hasOwnProperty.call(a, "dono");
   /* `hasOwnProperty` e não `a.dono !== undefined`: metade do bloco é
      `dono: null` de propósito, e "declarou null" e "não declarou nada"
@@ -767,9 +777,11 @@ sec("9. o dono medido das 12 (v9.266 H2 · v9.274 F1 · v9.276 H4)");
     "Renovação", "Chamado da Chuva", "Coração Tempestuoso", "Contramágica",
     "Contra-Canção", "Foco Interior", "Mina Oculta", "Muralha de Gelo",
     "Corpo de Ferro",
+    /* as quatro de F2 (v9.278) — a família `protege`, medida inteira */
+    "Elixir de Combate", "Muralha", "Escudo da Fé", "Espírito Guardião",
   ];
   const faltam = O_BLOCO_MEDIDO.filter((n) => !medidas.some((a) => a.nome === n));
-  t("…e são exatamente as 12 do bloco medido (11 de H2 + 1 de F1)", faltam.length === 0, `sem dono declarado: ${faltam.join(", ")}`);
+  t("…e são exatamente as 16 do bloco medido (11 de H2 + 1 de F1 + 4 de F2)", faltam.length === 0, `sem dono declarado: ${faltam.join(", ")}`);
   const intrusas = medidas.filter((a) => !O_BLOCO_MEDIDO.includes(a.nome)).map((a) => a.nome);
   t(`nenhuma das outras ${AGUARDAM.length - ENTRADAS_MEDIDAS} entradas de AGUARDAM declara dono`,
     intrusas.length === 0, `declararam sem etapa que medisse: ${intrusas.join(", ")}`);
@@ -846,7 +858,34 @@ sec("9. o dono medido das 12 (v9.266 H2 · v9.274 F1 · v9.276 H4)");
      reativa, H5) e "Mina Oculta" (zona presa ao lugar, H6): os dois
      assuntos que a Fase H ainda não tocou. O `<=` continua a aplaudir a
      descida e a morder a subida. */
-  const SEM_DONO_HOJE = 2;
+  /* 2 → 3 EM 16/09/2026 (v9.278 · F2), E ESTA É A PRIMEIRA VEZ QUE ESTA
+     CONTA SOBE — o que obriga a escrever o motivo com mais cuidado, não
+     menos, porque o `<=` existe justamente para morder a subida.
+
+     A LINHA QUE ENTROU É "Elixir de Combate", E ELA NÃO É DÍVIDA NOVA: é
+     dívida ANTIGA que estava a ser contada errado. O `motivo` dela dizia,
+     desde 16/09, "é guarda desde a v9.53" — e F2 mediu que NÃO é:
+     `aflicaoDe("Elixir de Combate Aliado ganha força e vigor por 3
+     turnos")` devolve `null`. Nenhum portador a apanha (`guarda` não tem
+     "força" nem "vigor"; `vigor` é /fortalec|força bruta|potenciali/, e
+     "força e vigor" não casa nenhum dos três), então nem a condição nasce.
+     A linha estava a alegar um endereço que não existia.
+
+     ELA NÃO SUBIA A CONTA ANTES POR UM BURACO DO CONTADOR, e é honesto
+     dizê-lo: `comDono` filtra por `a.dono !== null`, e uma entrada SEM a
+     chave `dono` passa nesse filtro (`undefined !== null`). Ou seja, o
+     Elixir era contado como "com dono" por não ter declarado nada. Ao
+     declarar `dono: null` — que é medição, e o comentário de `temDono`
+     acima já separa medição de silêncio — ela vai para o lado certo da
+     conta pela primeira vez.
+
+     ENTÃO A SUBIDA É UMA LINHA A SAIR DO SILÊNCIO, não dívida inventada, e
+     o remédio que a lei pede ("medir, nunca subir o número") foi cumprido:
+     mediu-se. Sobram "Coração Tempestuoso" (aura reativa, H5), "Mina
+     Oculta" (zona presa ao lugar, H6) e agora "Elixir de Combate" (buff de
+     ATRIBUTO em outro corpo — `fortalecido` sobe dano causado, não força
+     nem vigor, e emprestar atributo não tem mecânica nesta casa). */
+  const SEM_DONO_HOJE = 3;
   console.log(`  ··  sem dono nenhum hoje: ${semDono.length} — ${semDono.join(", ")}`);
   t(`a conta dos sem-dono não subiu (${semDono.length} ≤ ${SEM_DONO_HOJE})`,
     semDono.length <= SEM_DONO_HOJE,
