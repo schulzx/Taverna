@@ -93,6 +93,15 @@ const importadosDe = (s) => {
   for (const m of s.matchAll(/import\s*\{([^}]+)\}\s*from/g)) m[1].split(",").forEach((x) => set.add(x.trim().split(/\s+as\s+/).pop().trim()));
   for (const m of s.matchAll(/import\s+([A-Za-z_$][\w$]*)\s*(?:,|from)/g)) set.add(m[1]);
   for (const m of s.matchAll(/import\s*\*\s*as\s+([A-Za-z_$][\w$]*)/g)) set.add(m[1]);
+  /* O REEXPORT TAMBÉM TRAZ O NOME (v9.273 · F1). `export { T, ALVOS } from
+     "./estilo.js"` não precisa de import nenhum — a linha é a própria ligação.
+     Sem isto o check acusava `constantes.js: usa "ALVOS" sem importar`, e o
+     que decidia quem levava a acusação era a ORDEM ALFABÉTICA dos arquivos:
+     `portao.js` reexporta `ocorrenciaDoNome` de `cena.js` e escapava só
+     porque vem depois no alfabeto e sobrescrevia o dono. Dois reexports no
+     projeto, um acusado e o outro não, pela letra do nome do arquivo — é a
+     forma de falso positivo que faz um varredor deixar de ser acreditado. */
+  for (const m of s.matchAll(/export\s*\{([^}]+)\}\s*from/g)) m[1].split(",").forEach((x) => set.add(x.trim().split(/\s+as\s+/).pop().trim()));
   return set;
 };
 
