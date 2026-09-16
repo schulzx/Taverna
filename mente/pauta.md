@@ -103,6 +103,30 @@ nasceram do fecho da Fase T (T4, 14/09): as duas metades da promessa que
   > de nível 3 põem a mesa de volta em 41,8–50,0%** (os três dentes verdes),
   > e 3 elites de nível 6 dão 36,4–42,0%. **Nada disso foi aplicado.**
 
+  > **A ESCADA JÁ TEM PREVISÃO, E ELA MUDA A PERGUNTA (N2, 15/09, v9.259).**
+  > A sua saída de 15/09 foi desenhada, tabelada e **medida antes de ser
+  > ligada** — a escada existe e ainda não decide nada. O número: no `justo`,
+  > distribuir as 46 intenções por degrau leva a vitória de **1,4–1,8% para
+  > 86,7–87,7%**, com o `duro` saindo de 0,0% para ~31% e o `brando` deixando
+  > de derrubar qualquer um. **A sua leitura estava certa e o remédio é forte
+  > demais na dose inteira:** tirar a cabeça de quem não devia tê-la de fato
+  > mata o tirano — e entrega a mesa ao grupo com mais folga do que o inimigo
+  > **não ter piloto nenhum** (51–54%). A régua continua saturada, agora pelo
+  > encosto de cima.
+  > **A causa é estreita e dá o que ajustar:** na rodada 1 do `justo` **só 2
+  > das 46 intenções disparam** — a do topo e a da rede, sem nada entre elas.
+  > Tirar o topo entrega a rodada à rede, que mira o primeiro da lista, que é o
+  > herói — o único que não morre ao cair. **Não é que o inimigo fique burro:
+  > é que ele passa a bater onde o dano se perde.**
+  > **Então a pergunta que ficou com você desde N1b — *quanto do alvo tático
+  > você quer manter?* — passa a ter três respostas com número:** manter o
+  > topo só para quem o **declara** (o que N2 já faz: o Dragão Ancião corta a
+  > magia, o Adversário genérico não) dá 87,7%; manter para toda `elite` dá o
+  > 1,4% de hoje; e o meio ainda não existe, porque **falta intenção de degrau
+  > médio que dispare na rodada 1**. Essa é uma decisão de mesa, não de código,
+  > e **N4 não anda sem ela** — a fase inteira se justifica nesse número, e
+  > ele agora está medido em vez de estimado.
+
 - [x] **a habilidade de classe não tem resolvedor — contar antes de decidir** · **RESPONDIDA 15/09 com o número na mão (66 de 148) — virou a Fase H**: uma porta só para as 54, e H2 mede de quem já são os 12 antes de construir qualquer coisa · pesado · de: pessoa · 14/09
   **A pessoa devolveu a pergunta (14/09):** *"quero sua opinião e a da mente
   para qual a melhor forma de resolver isso; se os dois concordarem na
@@ -883,7 +907,7 @@ Só depois disso se pergunta se os números precisam mudar.
   separadas. Catraca: os números velhos continuam reproduzíveis com a
   prioridade vazia, para que a história de B1/B2/T1 não passe a mentir.
 
-- [ ] **N2 · a escada, e de onde cada um tira o seu degrau** · de: pessoa · 14/09
+- [x] **N2 · a escada, e de onde cada um tira o seu degrau** · feito em v9.259 (`dab5caa`), 15/09 — **a escada existe e é inerte, como desenhada; e a previsão que ela obriga desmente a expectativa da fase: o `justo` não sai de 1,4% para "um pouco melhor", sai para 87,7%.** Cinco degraus, as 46 distribuídas, `brilhante` não se herda. **A régua continua saturada, agora pelo outro encosto, e três dentes da catraca ficam vermelhos pelo excesso — nenhum limiar foi tocado.** O que N4 herda está escrito abaixo · de: pessoa · 14/09
   Tabela nomeada: os degraus (animal, bruto, astuto, treinado, brilhante…),
   **o que cada degrau enxerga** e **o que decide**. Duas fontes, uma escada:
   o companheiro e o herói tiram o degrau do **`intelecto` da ficha**; a
@@ -919,6 +943,114 @@ Só depois disso se pergunta se os números precisam mudar.
   > classificador ou declara como os dois convivem; duas classificações de
   > cabeça em dois lugares é a doença que esta casa já conhece. Se a âncora
   > for textual, note que **`completarInimigo` não copia o `desc` da base**.
+
+  ### O QUE N2 CONSTRUIU (v9.259) — e o número que julga a fase inteira
+
+  **A escada:** `animal`(0) · `bruto`(1) · `astuto`(2) · `treinado`(3) ·
+  `brilhante`(4), em `src/degraus.js`, cada degrau com **o que enxerga** e
+  **o que decide** escritos. **As 46 intenções por degrau:** animal **13** ·
+  bruto **12** · astuto **13** · treinado **6** · **brilhante 2** — só
+  `calar_a_magia` e `matar_o_remendo` moram no topo, como a pessoa desenhou.
+  A rede (`brigar`, `sobrepujar`, `aguentar`) mora no chão, porque **um bicho
+  não pode perder o turno**. Invariante nova e provada: **todo `vira` aponta
+  para degrau igual ou menor** — a quebra não pode jogar o combatente numa
+  intenção que ele não enxerga (0 quebras em ~120 mil rodadas).
+
+  **A escala 0–3, resolvida por faixas e não por valor.** `FAIXAS_DO_INTELECTO`
+  cobre `0..ATRIBUTO_MAX`: `0→bruto`, `1–2→astuto`, `3–4→treinado`,
+  `5→brilhante`. **O chão da ficha é `bruto`, não `animal`: quem tem ficha é
+  gente** — e `animal` não fica morto porque a fonte da criatura o alcança.
+  Um degrau só é morto quando **fonte nenhuma** o alcança, e nenhum é.
+  **`ATRIBUTO_MAX` ganhou o primeiro leitor de verdade** (o item aberto que
+  previa isto está fechado). O **companheiro não ganhou campo novo** — ficha
+  viva e save de campanha seriam pesado: `RECUO_POR_ATRIBUTO_CHAVE` mapeia o
+  `atributoChave` da classe num `intelecto` presumido e passa pela **mesma**
+  tabela de faixas (12 classes: 1 bruto, 7 astuto, 4 treinado, e **nenhuma
+  chega ao topo pelo recuo**).
+
+  **A criatura, e a regra de princípio que decide a fase: `brilhante` não se
+  herda, declara-se.** `ameaca` mede **perigo**, não **cabeça** — o Golem de
+  Pedra é `elite` e não pensa. `DEGRAU_POR_AMEACA` (fraco/comum→bruto,
+  competente→astuto, elite/lendario→treinado) × `TETO_POR_MENTE`
+  (besta→animal, morto→bruto, pensa→treinado), com
+  **`TETO_DO_HERDADO = "treinado"`**. Herdar o topo é **exatamente** como
+  `calar_a_magia` passou a vencer 100% das rodadas 1: todo nome inventado pelo
+  Narrador nascia com a mente mais afiada da mesa. **10 das 27 declararam**
+  (Ogro, Elemental Menor, Quimera, Gigante, Brutamontes, Sentinela Blindada e
+  Colosso em `bruto`; Soldado em `astuto`; **Lich e Dragão Ancião em
+  `brilhante`**). Comandante herda `treinado` e a Sentinela declara `bruto`:
+  **as duas `elite` deixam de ser a mesma cabeça**, que era o buraco de N1.
+  `menteDaCriatura` **não foi tocada** — ela diz *que tipo* de mente, o degrau
+  diz *quanta*, e há **um único sítio** que computa degrau.
+
+  #### A PREVISÃO, com a régua de N1b (3 cenários × 4 famílias × 1000)
+
+  | `justo` | vitória | quedas /3 | PV grupo /132 | TPK | 1ª queda | golpes no herói |
+  |---|---|---|---|---|---|---|
+  | **hoje** (peso global) | **1,40–1,80%** | 2,978–2,986 | 0,41–0,64 | 98,2–98,6% | 1,05 | 36,5% |
+  | **por degrau** (o que N4 faria) | **86,70–87,70%** ±2,10pp | 0,982–1,012 | 72,8–73,7 | 12,3–13,3% | 3,47–3,62 | 77,2% |
+  | *[ref.] Adversário desligado* | *51,10–54,20%* | *1,74–1,79* | *25,9–28,1* | *45,8–48,9%* | — | *60,1%* |
+
+  **É boa demais, e por muito.** 87,7% fica **10,8 margens acima do teto de
+  65%**, e a escada é **mais generosa com o grupo do que não ter Adversário
+  nenhum**. Os três dentes da `CATRACA_DE_UMA_VIDA` ficam vermelhos, agora
+  todos pelo lado do excesso (vitória 87,7 contra teto 65 · PV 73,7 contra 35 ·
+  quedas 0,99 contra piso 1,2). **Nenhum limiar foi afrouxado.** `duro`
+  0,0% → **27,5–34,4%** (as 4 famílias **discordam** ali a n=1000 — esse número
+  ainda mede resorteio); `brando` continua 100%, e as **12 quedas em 4000** de
+  N1b viram **0 em 4000**. **A saturação continua:** era 0,0 · 1,6 · 100, passa
+  a 31 · 87 · 100 — o `justo` não volta a ter resolução nos dois sentidos,
+  **muda de encosto**. A ressalva de N1b segue de pé.
+
+  #### OS TRÊS ACHADOS QUE N4 HERDA — e o primeiro desmente a fase
+
+  **(1) "Distribuir por degrau acorda o acervo morto" está DESMENTIDO nesta
+  régua: o acervo ENCOLHE.** Intenções eleitas alguma vez no `justo`: **hoje 8
+  de 46 → por degrau 2 de 46** (`sair_vivo` 63,8% · `brigar` 36,2%). A causa
+  está aberta e medida: **na rodada 1 do `justo`, só 2 das 46 disparam** —
+  `calar_a_magia` (brilhante, peso 17) e `brigar` (animal, peso 3), e **não há
+  nada entre elas**. Tirar o topo entrega a rodada 1 ao chão da rede, 100% das
+  vezes, em qualquer degrau abaixo de `brilhante`. E `brigar` mira
+  `quem_estiver` = o primeiro da lista = **o herói**, que é o combatente que
+  não morre ao cair: o degrau faz a oposição **desperdiçar dano de propósito**.
+  Depois, `brigar` vira `sair_vivo`, que quebra em `saidas < 1` e a régua tem
+  `saidas: 2` — **`sair_vivo` nunca quebra: é terminal.**
+  **E a aderência é que tranca, não a escada:** medido o vencedor de cada
+  rodada *se a memória não segurasse*, por degrau dá **8 distintas**
+  (`acabar_o_ferido` 47,9% · `brigar` 17,5% · `perder_o_animo` 10,0% ·
+  `aguentar` 9,9% · `deixar_cair` 9,3% · `provar` 3,5% · `terminar` 1,9%).
+  `acabar_o_ferido` exige `rodada >= 2`, e na rodada 2 a memória já segura
+  `brigar`. **N4 precisa ou de intenção de degrau médio que dispare na rodada
+  1, ou de uma quebra que devolva a decisão** — a escada sozinha não distribui.
+
+  **(2) O limite escrito de N2: `pensa` é binário e vence a declaração do
+  bestiário.** Medido: o **Lich**, com `brilhante` **declarado**, **não corta a
+  magia** — `menteDaCriatura("Lich")` devolve `morto` (RX_MORTO casa "lich"),
+  logo `pensa: false`, e `calar_a_magia.quando` exige `s.pensa`.
+  `enxerga("brilhante","brilhante")` é `true`: **a escada deixa passar, quem
+  barra é a porta antiga.** Ele elege `nao_para` (peso 11, `animal`) e é **o
+  inimigo mais fácil da régua inteira: 97,3–98,1% de vitória do grupo**,
+  idêntico antes e depois. Enquanto `pensa` for binário, **nenhum morto-vivo
+  declarado no topo alcança as duas intenções do topo.** Quem resolve é N4, que
+  troca o portão `pensa` pelo degrau; N2 não o fez de propósito — é mudança de
+  comportamento vivo e pede medição própria.
+
+  **(3) A escada está certa no topo, e não é artefato do nome inventado.**
+  Variante com criaturas **nomeadas**, mudando só o outro lado da mesa:
+  Dragão Ancião (`brilhante` declarado) corta a magia primeiro **combate a
+  combate idêntico** nos dois modos — o filtro não toca em quem declara o topo;
+  Comandante (nome real, `treinado`) 0,2–0,8% → **66,5–69,3%**; Sentinela
+  Blindada (`bruto`) reproduz o "Adversário". **E duas métricas da régua morrem
+  no modo por degrau:** `absorvido` e `abrigos` vão a 0,000 no `justo` e no
+  `duro` — o abrigo da Clériga é firmado nela, e com 77% dos golpes indo ao
+  herói ele nunca morde.
+
+  Reprodutível no scratchpad: `preparar-regua.cjs` (cópia instrumentada por
+  âncora, importando as tabelas de verdade de `src/` — nenhuma reescrita à
+  mão), `n2-validar.mjs`, `n2-diagnostico.mjs`, `n2-medir.mjs`, `n2-porque.mjs`.
+  O instrumento foi validado: no modo de hoje é **idêntico à régua do projeto
+  combate a combate** (600 combates, 0 divergências) e reproduz o 52,1%
+  histórico de B1/B2/T1 com o Adversário desligado.
 
 - [ ] **N3 · ler a mesa: o papel de cada um** · de: pessoa · 14/09
   Para mirar o curandeiro é preciso **saber que ele é curandeiro** — e saber
@@ -2145,7 +2277,7 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   de `alvoDoAdversario` é `teste-adversario.mjs`: passa na catraca do
   `teste-ligacao` pelos dois leitores e **não decide nada na mesa**. Ou ganha
   o leitor que o cabeçalho promete, ou o cabeçalho passa a dizer a verdade.
-- [ ] **`ATRIBUTO_MAX = 5` é importado e nunca lido** · leve · de: backend (achado de N1) · 14/09
+- [x] **`ATRIBUTO_MAX = 5` é importado e nunca lido** · **RESOLVIDO em N2 (v9.259)** — `FAIXAS_DO_INTELECTO` (`src/degraus.js`) o importa como teto da última faixa, e a suíte o lê de volta. **Com uma ressalva escrita no código:** ele **não é o teto real do jogo** — `tetoAtributo(nivel)` (`atributos.js:66-73`) chega a **6 no nível 10, 7 no 15 e 8 no 20**. A última faixa satura de propósito, então nada quebra; o que mudou é que o comentário deixou de afirmar um teto que a progressão passa · leve · de: backend (achado de N1) · 14/09
   `constantes.js:28` exporta, `App.jsx:43` importa, e **nenhum sítio do
   projeto o consulta** — a suíte só confere `ATRIBUTO_MAX_CRIACAO`. É export
   vivo pela letra da catraca e morto no efeito. Importa agora porque N2 vai
@@ -2160,6 +2292,25 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
   Capanga e o Dragão Ancião no mesmo balde) e o **Colosso** (*máquina de
   cerco*) em `besta`, porque `RX_BICHO` casa a palavra "besta". Hoje decide
   pouco; no dia em que N2 nascer, decide muito.
+  **N2 nasceu (v9.259) e mediu o tamanho exato do buraco, sem o consertar** (é
+  item de outro dono): **com `desc` são 18 das 27 em `pensa`, o retrato de N1;
+  sem `desc` — o que a mesa de fato vê — são 19.** O **Colosso** é a única
+  diferença, e por isso ele **declarou** o degrau no bestiário em vez de o
+  herdar: `degrauDaCriatura` roda com nome + ameaça, e a suíte trava a
+  independência do `desc` nos dois sentidos. **Consertar o `desc` mexe em 1 das
+  27 classificações**, e agora está medido em vez de estimado.
+
+- [ ] **`resist: ["fisico"]` está declarado em quatro criaturas e a mesa nunca o vê** · médio · de: backend (achado ao medir N2) · 15/09
+  `multiplicadorDano` (`src/danos.js:73`) curto-circuita em `tipo === "fisico"`
+  e devolve multiplicador 1 **antes** de olhar `resist`. Medido na régua:
+  Sentinela Blindada (resistência física declarada) e "Adversário" (sem perfil
+  nenhum) dão **0 de 300 combates diferentes**, nos dois modos — não há um
+  único ponto de dano de diferença. **É o mesmo padrão do Troll da v9.152**, que
+  ganhou fraqueza a fogo em `bestiario.js` e continuou imune em combate: a
+  tabela certa e a mesa cega. Quatro entradas do bestiário declaram essa
+  resistência. **Não foi consertado de carona:** ligar a resistência física
+  endurece o combate, e a Fase N está exatamente a medir dureza — entra sozinho,
+  com o antes e o depois na régua, ou some dentro de outro número.
 
 - [ ] **a ofensiva do companheiro quase nunca nasce** · pesado · de: medição de B2 · 14/09
   B2 fechou a simetria e o preço medido foi **zero** — e o motivo é este, medido em

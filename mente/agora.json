@@ -1,7 +1,17 @@
 [
-  { "agente": "orquestrador", "o_que": "rege o ciclo N2 — a escada da inteligência, e de onde cada um tira o degrau", "desde": "2026-09-15T12:00:00Z" },
-  { "agente": "backend", "o_que": "N2 · a tabela de intenções por nível, e o degrau do bestiário", "desde": "2026-09-15T12:00:00Z" },
-  { "agente": "regente", "o_que": "rege o ciclo E2 — o endereço do tabuleiro (letras e números)", "desde": "2026-09-15T12:00:00Z" },
-  { "agente": "desenho", "o_que": "E2 · a régua de bordas e a forma do endereço", "desde": "2026-09-15T12:00:00Z" },
-  { "agente": "jogo", "o_que": "E2 · dizer 'vou até K14' e clicar na casa: os dois caminhos", "desde": "2026-09-15T12:00:00Z" }
+  {
+    "agente": "regente",
+    "o_que": "rege o ciclo E2 — o endereço do tabuleiro (letras e números)",
+    "desde": "2026-09-15T12:00:00Z"
+  },
+  {
+    "agente": "desenho",
+    "o_que": "E2 · a régua de bordas e a forma do endereço",
+    "desde": "2026-09-15T12:00:00Z"
+  },
+  {
+    "agente": "jogo",
+    "o_que": "E2 · dizer 'vou até K14' e clicar na casa: os dois caminhos",
+    "desde": "2026-09-15T12:00:00Z"
+  }
 ]

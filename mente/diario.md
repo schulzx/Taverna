@@ -16,6 +16,121 @@ Formato:
 
 ---
 
+## 15/09 22:16 · v9.259 · N2 · a escada da inteligência · commit `dab5caa`
+
+- **estado inicial:** HEAD `25cd20f`, VERSÃO **v9.258** lida do arquivo;
+  `npm test` verde, build limpo, **árvore limpa**. **Sem trava — pus a minha.**
+  **Não tomei o bastão do `App.jsx`:** N2 não liga nada, e a etapa inteira
+  coube em `src/*.js` e `testes/`. A outra mente rodou **E2** (o endereço do
+  tabuleiro) na mesma árvore o ciclo inteiro, em `grade-de-batalha.jsx`,
+  `formas.md` e `check-formas.mjs` — **nenhum vermelho de lado nenhum**, e o
+  commit levou só os meus seis caminhos.
+- **conselheiro:** **não chamado** — fase aprovada pela pessoa, etapa escrita.
+- **backend:** `src/degraus.js` (a escada, as seis tabelas, `degrauDaFicha`,
+  `degrauDaCriatura`, `intencoesAte`, `enxerga`), `degrauMinimo` nas 46
+  intenções, campo novo no bestiário com transporte em `completarInimigo`.
+  Provou a inércia contra `git show HEAD:` em **42.093 casos, 0 divergências**.
+- **testes:** `testes/teste-degraus.mjs` (**113 asserções**), três sabotagens
+  que mordem, e a absorção do que o backend deixara provisoriamente em
+  `teste-adversario.mjs` — com o motivo escrito no arquivo, como manda a lei.
+- **medição:** a previsão com a régua de N1b, 3 cenários × 4 famílias × 1000,
+  pelo caminho que o App usa. Instrumento validado contra a régua do projeto
+  (600 combates, 0 divergências).
+
+### O que N2 é, e o que N2 deliberadamente não é
+
+A escada **existe e não decide nada**. Quem passa a decidir por ela é N4, e
+isso não é timidez: ligar a escada é mudar o combate de campanha viva, e a
+pessoa pediu a tabela antes do motor. A suíte prova a inércia **como
+propriedade**, não como sorte — **832 situações em que filtrar por degrau daria
+outra resposta, e não deu**.
+
+O desenho é da pessoa (15/09) e foi cumprido letra a letra: `pensa` virou
+degrau, cada intenção declara o nível mínimo, e **o peso deixou de ser ranking
+global** (está escrito no comentário da tabela; a troca em `consultarAdversario`
+é de N4). Cinco degraus, as 46 em **13 / 12 / 13 / 6 / 2**, e no topo só as
+duas que a pessoa nomeou.
+
+### Decisões médias, com o motivo
+
+- **A escala 0–3 resolveu-se por FAIXAS, não por um degrau por valor.** N1 mediu
+  que os oito prontos ocupam 0, 1 e 3, com o 2 vazio — um degrau por valor
+  nasceria com metade da escada inalcançável. A definição que ficou escrita no
+  código: **um degrau só é morto quando fonte nenhuma o alcança**, e a fonte da
+  criatura alcança os cinco. `ATRIBUTO_MAX` ganhou com isso o **primeiro leitor
+  de verdade** que tem desde que existe — o item aberto que previa exatamente
+  isto está fechado.
+- **O companheiro não ganhou campo novo, e isso foi escolha de peso.** Ele não
+  tem `atributos` nenhum; criá-los é campo em ficha viva e em todo save, que é
+  **pesado** e não cabia numa etapa de tabela. Ele recua pelo `atributoChave` da
+  classe — que já separa Mago de Guerreiro sem campo novo —, por tabela
+  nomeada, e pelas **mesmas** faixas. Nenhuma das 12 classes chega ao topo pelo
+  recuo, o que é a leitura honesta: cabeça de companheiro não é cabeça de chefe.
+- **`brilhante` não se herda, declara-se** — e esta é de princípio, não de
+  número. `ameaca` mede **perigo**, não **cabeça**: o Golem de Pedra é `elite` e
+  não pensa. Herdar o topo é **exatamente** como `calar_a_magia` virou tirano:
+  todo nome que o Narrador inventa nascia com a mente mais afiada da mesa.
+  Dez das 27 declararam; o Comandante herda `treinado` e a Sentinela declara
+  `bruto`, e **as duas `elite` deixam de ser a mesma cabeça** — o buraco que N1
+  apontou nominalmente.
+- **`menteDaCriatura` não foi substituída, e a convivência ficou escrita.** Ela
+  responde **que tipo** de mente (besta · morto · pensa, que alimenta
+  `ehBicho`/`ehMorto`); o degrau responde **quanta**; e existe **um único
+  sítio** que computa degrau. Duas classificações de cabeça em dois lugares é a
+  doença que esta casa já conhece, e a saída não foi apagar uma — foi dar a
+  cada uma a sua pergunta.
+- **Três comentários voltaram ao backend porque descreviam um mecanismo que a
+  medição mostrou ser outro** (peso leve, zero lógica): o do Colosso em
+  `bestiario.js`, que explicava a declaração por um caminho que só existe **com
+  o `desc`** — e `degrauDaCriatura` roda com nome + ameaça; o teto da ficha, que
+  dizia "custa 5" quando `tetoAtributo` chega a **8 no nível 20**; e o da
+  convivência, que agora carrega o limite medido. **Comentário que mente é pior
+  que comentário que falta** — quem o lê decide com ele.
+
+### O número que julga a fase, e ele não é o que a fase esperava
+
+**No `justo`, a vitória iria de 1,40–1,80% para 86,70–87,70%.** É **boa demais**:
+10,8 margens acima do teto de 65%, e **mais generosa com o grupo do que o
+inimigo não ter piloto nenhum** (51–54%). Os três dentes da
+`CATRACA_DE_UMA_VIDA` ficam vermelhos, agora todos pelo lado do excesso — e
+**nenhum limiar foi afrouxado**. `duro` 0,0% → ~31% (as famílias **discordam**
+ali a n=1000: esse número ainda mede resorteio); `brando` continua 100%, e as
+12 quedas em 4000 de N1b viram 0. **A saturação continua** — era 0,0 · 1,6 ·
+100, passa a 31 · 87 · 100: o `justo` não volta a ter resolução nos dois
+sentidos, **muda de encosto**. A ressalva de N1b segue de pé.
+
+**E a promessa de que distribuir por degrau "acorda o acervo morto" está
+desmentida nesta régua: o acervo encolhe** — de 8 intenções eleitas para **2**.
+A causa é estreita e está medida: **na rodada 1 do `justo` só 2 das 46 disparam**
+— a do topo e a da rede, sem nada entre elas. Tirar o topo entrega a rodada ao
+chão, que mira o primeiro da lista, que é o herói — o único que não morre ao
+cair. Não é que o inimigo fique burro: **ele passa a bater onde o dano se
+perde.** E quem tranca o acervo é a **aderência**, não a escada: sem a memória,
+a eleição por degrau daria **8 distintas**.
+
+**Medir antes de ligar era o ponto.** Se N2 tivesse entregado a tabela e
+seguido, N4 nasceria acreditando que tirar o tirano resolve — e a régua só
+diria o contrário depois de o combate de campanha já ter mudado.
+
+### O que ficou
+
+- **Para a pessoa:** a pergunta de N1b — *quanto do alvo tático você quer
+  manter?* — passa a ter número nas três saídas, e está escrita em "Para a
+  pessoa decidir". **N4 não anda sem ela.**
+- **Aberto, novo:** `resist: ["fisico"]` está declarado em quatro criaturas e a
+  mesa **nunca o vê** (`danos.js:73` curto-circuita antes de olhar `resist`) —
+  0 de 300 combates de diferença. É o padrão do Troll da v9.152. **Não foi
+  consertado de carona:** ligar resistência física endurece o combate, e a Fase
+  N está exatamente a medir dureza — entra sozinho ou some dentro de outro
+  número.
+- **Aberto, atualizado:** o `desc` que `completarInimigo` não copia deixou de
+  ser estimativa — **com `desc` são 18/27 em `pensa`; sem, são 19**, e o
+  Colosso é a única diferença.
+- **Herdado por N4, escrito no código:** `pensa` é binário e **vence a
+  declaração do bestiário** — o Lich, `brilhante` declarado, não corta a magia e
+  é o inimigo mais fácil da régua inteira (97–98% de vitória do grupo). A
+  escada deixa passar; quem barra é a porta antiga.
+
 ## 15/09 17:03 · v9.257 · X3 · o turno guardado · commit `e430a12` (ver a nota do fim)
 
 - **estado inicial:** HEAD `0a5972f`, VERSÃO **v9.255**; `npm test` verde,
