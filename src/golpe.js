@@ -51,6 +51,7 @@ import {
   METROS_POR_QUADRADO,
   TAMANHOS,
 } from "./grid.js";
+import { podeDisputar, destinoDoEmpurrao } from "./disputa.js";
 
 /* ============================================================
    A TABELA DOS ALCANCES
@@ -202,19 +203,69 @@ export function vereditoDoGolpe(args) {
 }
 
 /* ============================================================
+   O VEREDITO DO EMPURRÃO (Fase Y · Y1) — ver a parede antes de gastar
+
+   A LEI É A MESMA QUE ABRE ESTE ARQUIVO: o veredito antes do clique.
+   Empurrar é a única ação de combate cujo resultado pode ser anulado
+   pelo CHÃO — ganhar a disputa e não ter para onde mandar o corpo é o
+   caso normal num corredor de masmorra, e descobrir isso depois de
+   gastar a ação seria punir o jogador por não conhecer a planta.
+
+   E É SÓ DELEGAÇÃO, como tudo neste arquivo. O portão de tamanho é
+   `podeDisputar` e a geometria é `destinoDoEmpurrao`, os dois de
+   `disputa.js` — e é a MESMA função que `empurrar` chama por dentro, e
+   tem de ser: se o veredito compusesse a conta por conta própria, o
+   preço mostrado deixaria de ser o preço cobrado no dia em que uma das
+   duas mudasse. Aqui não se rola dado, não se decide regra e não se
+   reimplementa nada.
+
+   `porque` é texto de veredito, em voz de mundo: o jogador ouve que as
+   costas do inimigo batem na parede, nunca o nome do mecanismo.
+   ============================================================ */
+export function vereditoDoEmpurrao(args) {
+  const a = args == null ? {} : args;
+  const quem = a.quem == null ? null : a.quem;
+  const alvo = a.alvo == null ? null : a.alvo;
+
+  const portao = podeDisputar(quem, alvo);
+  if (!portao.ok) return { pode: false, para: null, metros: 0, bloqueio: null, porque: portao.motivo };
+
+  const d = destinoDoEmpurrao({ grade: a.grade, quem, alvo, entidades: a.entidades });
+  /* pode tentar e o chão não deixa: a disputa ainda vale a pena rolar
+     (derrubar usa a mesma), mas o jogador vê que ninguém vai andar */
+  if (!d.ok) return { pode: true, para: null, metros: 0, bloqueio: d.bloqueio, porque: d.motivo };
+
+  return { pode: true, para: d.para, metros: d.metros, bloqueio: null, porque: "" };
+}
+
+/* ============================================================
    OS SEIS VERBOS DA TELA DE BATALHA
 
    Esta tabela DECLARA A VERDADE MEDIDA em X1, e não inventa mecânica
-   para quem não tem. Três dos seis botões de hoje não chegam a motor
-   nenhum: a frase que eles escrevem na caixa não casa o detector de
-   ataque do App, não casa `ehDeclaracaoDeAtaque` (agressao.js) e não
-   casa desafio nenhum do catálogo. Ela vai para a IA como ficção pura,
-   e o que acontece depende do humor da cena.
+   para quem não tem. Quando ela nasceu, TRÊS dos seis botões não
+   chegavam a motor nenhum: a frase que eles escrevem na caixa não casa o
+   detector de ataque do App, não casa `ehDeclaracaoDeAtaque`
+   (agressao.js) e não casa desafio nenhum do catálogo. Ia para a IA como
+   ficção pura, e o que acontecia dependia do humor da cena.
 
-   Escrever isso aqui, em vez de "consertar" na surdina, é de propósito:
-   dar mecânica a Esquivar, Empurrar e Derrubar é decisão PESADA — muda
-   o que o jogador vive — e está reservada à pessoa. O que a tabela faz
-   é impedir que a próxima pessoa descubra o buraco jogando.
+   Escrever isso aqui, em vez de "consertar" na surdina, foi de propósito,
+   e a razão continua a valer: dar mecânica a um verbo de combate é
+   decisão PESADA — muda o que o jogador vive — e é da pessoa, não de
+   quem passa por aqui. O que a tabela faz é impedir que a próxima pessoa
+   descubra o buraco jogando.
+
+   HOJE FALTA UM SÓ. A pessoa aprovou (15/09) dar mecânica a Empurrar e
+   Derrubar primeiro, e por um motivo concreto: têm alvo, distância e
+   resultado óbvios, e o tabuleiro já modela posição, tamanho e terreno.
+   Y1 escreveu o motor — `disputa.js`, um teste oposto com dois desfechos
+   —, e as duas linhas abaixo deixaram de mentir. ESQUIVAR continua sem
+   motor, com o motivo dele intacto: a condição `protegido` existe e nada
+   a concede a partir de uma declaração do jogador, e resolver isso é
+   outra decisão, noutra etapa.
+
+   A MEMÓRIA DE POR QUE A FASE EXISTIU FICA: o buraco era de três, foi
+   medido, foi escrito, e só depois foi tapado — nesta ordem, que é a
+   única que impede um conserto de virar mecânica inventada.
 
    `frase` é o texto que o botão de hoje injeta na caixa (App.jsx,
    ACOES_PRONTAS), aparado. `motor` é a função que resolve a ação, ou
@@ -239,13 +290,13 @@ export const VERBOS_DE_COMBATE = [
   },
   {
     id: "empurrar", rotulo: "Empurrar", frase: "Empurro com força",
-    motor: null,
-    porqueSemMotor: "empurrar é disputa de força, e o motor não tem disputa entre duas fichas. A regex `derrubada` de aflicoes.js lê o texto da ARMA ou da HABILIDADE, nunca a frase do jogador",
+    motor: "disputa.js empurrar — teste oposto de Força/Atletismo; o corpo anda uma casa por grid.js deslocarForcado. O veredito antes do clique é golpe.js vereditoDoEmpurrao",
+    porqueSemMotor: "",
   },
   {
     id: "derrubar", rotulo: "Derrubar", frase: "Tento derrubar no chão",
-    motor: null,
-    porqueSemMotor: "mesma falta de empurrar: sem disputa no motor, `caido` só chega ao alvo pela aflição de uma arma ou habilidade, nunca por declaração",
+    motor: "disputa.js derrubar — a mesma disputa de empurrar, com o outro desfecho: aplica o `caido` de condicoes.js, agora por declaração do jogador e não só pela aflição de uma arma",
+    porqueSemMotor: "",
   },
   {
     id: "saltar", rotulo: "Saltar", frase: "Salto sobre",

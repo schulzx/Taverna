@@ -543,6 +543,165 @@ export function alcancaveisDe(grade, ent, { ocupados = new Set(), deslocamentoM 
   return new Set(custo.keys());
 }
 
+/* ============================================================
+   O DESLOCAMENTO FORÇADO (Fase Y · Y1) — andar sem ter escolhido
+
+   O QUE FALTAVA AQUI NÃO ERA REGRA: ERA VERBO. `caminhar` é o passo de
+   quem DECIDE andar — tem orçamento em metros, paga o dobro no matagal,
+   e procura em largura o caminho que contorna a pedra. Empurrar não é
+   nada disso: o empurrado não escolhe, não contorna e não gasta
+   deslocamento nenhum. Ele vai NA DIREÇÃO em que foi empurrado e para
+   no primeiro obstáculo. Reaproveitar `caminhar` teria dado a quem
+   apanha o direito de dar a volta à parede — que é exatamente o
+   contrário de ser empurrado.
+
+   E MORA NESTE ARQUIVO, e não no módulo da disputa, porque quem é dono
+   da posição é o grid. Um segundo motor de movimento noutro sítio seria
+   a mesma regra escrita em dois lugares, que é como esta base já sabe
+   que nasce bug — está escrito no cabeçalho de `golpe.js`, palavra por
+   palavra, e vale igual aqui.
+
+   NADA É MUTADO: devolve-se a casa nova e quem fia é que aplica.
+
+   REGRA DE OURO, a deste arquivo: sem grade, `dentro` diz que sim e
+   `ehParede` diz que não — logo o empurrão sem terreno só esbarra em
+   quem estiver em `ocupados`. É o comportamento de antes, intacto.
+   ============================================================ */
+export const EMPURRAO_NO_TABULEIRO = {
+  /* UMA casa, que são 1,5 m. O número é UM e não dois porque é o que a
+     mesa do 5e faz num empurrão de ação — e porque uma casa é o passo
+     que o tabuleiro desta casa consegue mostrar: `METROS_POR_QUADRADO`
+     já diz que 1,5 m é a menor distância que existe aqui. Quem quiser um
+     arremesso de três casas escreve OUTRA regra, com o nome dela. */
+  casas: 1,
+
+  /* O QUE PARA O EMPURRÃO, na ordem exata em que a classificação
+     pergunta — e a ordem não é gosto: a borda vem primeiro porque fora
+     do campo não há parede nem ocupante a que culpar; a parede vem antes
+     do ocupante porque quem está encostado à pedra não se mexe mesmo que
+     o vizinho saia do caminho. */
+  bloqueios: ["borda", "parede", "ocupado"],
+
+  /* O ESTORVO NÃO PARA, e isto é coerência, não esquecimento: o barril e
+     a mesa nunca pararam ninguém neste arquivo — `livrePara` não olha
+     `ehEstorvo`, e `caminhar` atravessa-os desde a v9.34. Eles valem
+     COBERTURA (`temCobertura`), que é outra coisa. Fazê-los bloquear só
+     no empurrão daria ao tabuleiro duas verdades sobre o mesmo barril. */
+  estorvoPara: false,
+};
+
+/* A DIREÇÃO, aparada a -1|0|1 por eixo — Chebyshev, que é a distância
+   que este arquivo já usa: a diagonal vale o mesmo que a reta, então o
+   empurrão na diagonal anda uma casa como qualquer outro.
+
+   E ELA SAI DAS CAIXAS, não dos cantos: é a MESMA separação por eixo que
+   `distanciaQuadrados` faz cinquenta linhas acima — se as duas caixas se
+   sobrepõem naquele eixo, o eixo é ZERO; senão, é o sinal do vão. Sem
+   isto, um Grande (2x2) em (4,4) empurrado por quem está encostado ao
+   lado direito, em (6,4), sairia na DIAGONAL: o canto dele é (4,4), o
+   corpo vai até (5,5), e comparar cantos inventa um desnível que não
+   existe. Para quem ocupa um quadrado só, caixa e canto são a mesma
+   coisa e nada muda.
+
+   Devolve `{x,y}` e não `{dx,dy}` porque é UM LUGAR RELATIVO, e todo
+   lugar neste arquivo se escreve `{x,y}`: o vetor entra em
+   `deslocarForcado` ao lado de posições, e duas grafias para a mesma
+   ideia é como se importa um bug de tradução. */
+export function direcaoDe(de, para) {
+  const a = de == null ? null : de;
+  const b = para == null ? null : para;
+  if (!a || !b || a.x == null || a.y == null || b.x == null || b.y == null) return { x: 0, y: 0 };
+  const ax = Number(a.x), ay = Number(a.y), bx = Number(b.x), by = Number(b.y);
+  if (![ax, ay, bx, by].every((n) => Number.isFinite(n))) return { x: 0, y: 0 };
+  const la = ladoDe(a), lb = ladoDe(b);
+  const eixo = (a0, a1, b0, b1) => (b0 > a1 ? 1 : b1 < a0 ? -1 : 0);
+  return {
+    x: eixo(ax, ax + la - 1, bx, bx + lb - 1),
+    y: eixo(ay, ay + la - 1, by, by + lb - 1),
+  };
+}
+
+/* Anda CASA A CASA e para no primeiro bloqueio, dizendo qual foi. Andar
+   uma de cada vez não é preciosismo: é a diferença entre "foi empurrado
+   duas casas e bateu na parede na segunda" e "não se mexeu" — e é essa
+   diferença que o jogador vê.
+
+   `ocupados` tem de EXCLUIR quem está a ser empurrado. Quem monta o Set
+   é `ocupacaoDe(entidades, alvo)`; sem isso, um bicho Grande (2x2) nunca
+   sairia do sítio, porque o destino dele sobrepõe o próprio corpo.
+
+   `= {}` NO DESTRUCTURING NÃO COBRE `null`, e por isso não há
+   destructuring nenhum nesta assinatura: `ent` sem `x`/`y` acontece de
+   verdade (um reforço que chega à luta sem posição) e não pode estourar
+   o turno de ninguém. Nesse caso volta parado, com `bloqueio` nulo —
+   porque não houve parede nenhuma a que culpar — e o porquê em `motivo`. */
+export function deslocarForcado(grade, ent, direcao, casas, opcoes) {
+  const o = opcoes == null ? {} : opcoes;
+  const ocupados = o.ocupados == null ? null : o.ocupados;
+  const e = ent == null ? null : ent;
+  const temLugar = !!e && e.x != null && e.y != null;
+  const parado = (motivo) => ({
+    ok: false,
+    x: temLugar ? e.x : null,
+    y: temLugar ? e.y : null,
+    casasAndadas: 0,
+    bloqueio: null,
+    motivo,
+  });
+  if (!temLugar) return parado("quem seria empurrado não está no tabuleiro");
+
+  const d = direcao == null ? {} : direcao;
+  /* aceita `{x,y}` (o que `direcaoDe` devolve) e também `{dx,dy}`, que é
+     como quem fia costuma escrever um vetor à mão — a mesma tolerância
+     que este arquivo já tem com `destino` em `caminhar` */
+  const dx = Math.sign(Number(d.x != null ? d.x : d.dx) || 0);
+  const dy = Math.sign(Number(d.y != null ? d.y : d.dy) || 0);
+  if (!dx && !dy) return parado("não há direção: empurrar precisa de um de e um para");
+
+  /* SEM `casas`, ANDA O DO EMPURRÃO. O empurrão é a razão de esta função
+     existir, e o número dele mora na tabela, nunca na linha. */
+  const pedidas = casas == null ? EMPURRAO_NO_TABULEIRO.casas : casas;
+  const n = Math.max(0, Math.floor(Number(pedidas) || 0));
+  if (!n) return parado("nenhuma casa a andar");
+
+  const lado = ladoDe(e);
+  /* QUAL DOS TRÊS FOI, na ORDEM QUE A TABELA DECLARA — e a ordem importa:
+     fora do campo não há parede nem ocupante a que culpar, e quem está
+     encostado à pedra não se mexe mesmo que o vizinho saia do caminho.
+
+     `livrePara` continua a ser o ÚNICO predicado de casa válida: isto só
+     corre DEPOIS de ele dizer não, e serve para dar nome ao não. Se os
+     dois discordassem, quem manda é o `livrePara` — o `||` de baixo é o
+     cinto disso. */
+  const barra = {
+    borda: (cx, cy) => !dentro(grade, cx, cy),
+    parede: (cx, cy) => ehParede(grade, cx, cy),
+    ocupado: (cx, cy) => !!ocupados && ocupados.has(chave(cx, cy)),
+  };
+  const quemBarrou = (x0, y0) => {
+    for (const qual of EMPURRAO_NO_TABULEIRO.bloqueios) {
+      const pergunta = barra[qual];
+      if (!pergunta) continue;
+      for (let ax = 0; ax < lado; ax++) for (let ay = 0; ay < lado; ay++) {
+        if (pergunta(x0 + ax, y0 + ay)) return qual;
+      }
+    }
+    return null;
+  };
+
+  let x = e.x, y = e.y, andadas = 0, bloqueio = null;
+  for (let i = 0; i < n; i++) {
+    const nx = x + dx, ny = y + dy;
+    if (livrePara(grade, nx, ny, lado, ocupados)) { x = nx; y = ny; andadas++; continue; }
+    bloqueio = quemBarrou(nx, ny) || EMPURRAO_NO_TABULEIRO.bloqueios[EMPURRAO_NO_TABULEIRO.bloqueios.length - 1];
+    break;
+  }
+  /* `ok` é "saiu do lugar", não "andou tudo": quem é empurrado três casas
+     e anda uma foi empurrado. Quanto andou está em `casasAndadas`, e o
+     que o travou em `bloqueio` — quem fia lê os dois. */
+  return { ok: andadas > 0, x, y, casasAndadas: andadas, bloqueio, motivo: "" };
+}
+
 /* ---------------- POSICIONAR ----------------
    Herói e grupo de um lado, inimigos do outro — a distância inicial é o
    que dá sentido ao primeiro turno. Bicho ágil começa no meio pelo mesmo

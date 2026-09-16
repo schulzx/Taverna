@@ -254,8 +254,60 @@ sec("5. OS SEIS VERBOS — a tabela declara a verdade MEDIDA");
     if (DES.lerAcao(v.frase, {})) mentem.push(v.id + " casa um desafio");
     if (DES.desafioPorId(v.id)) mentem.push(v.id + " já tem desafio no catálogo");
   }
-  t(`esquivar, empurrar e derrubar continuam sem motor${mentem.length ? " — " + mentem.join("; ") : ""}`, mentem.length === 0);
-  t("e são exatamente esses três", V.filter((x) => !x.motor).map((x) => x.id).join(",") === "esquivar,empurrar,derrubar");
+  /* ============================================================
+     POR QUE ESTA ASSERÇÃO MUDOU (v9.271 — Fase Y, etapa Y1)
+
+     Ela dizia `"esquivar,empurrar,derrubar"` e o texto da linha de cima
+     dizia "continuam sem motor". As duas ficaram MENTIRA no dia em que
+     Y1 escreveu `src/disputa.js`: `Empurrar` e `Derrubar` passaram a ter
+     motor de verdade — teste oposto, empurrão no tabuleiro, `caido` por
+     declaração —, provado em `testes/teste-disputa.mjs`.
+
+     ISTO NÃO É AFROUXAMENTO PARA CABER. É o contrário: X2 escreveu o
+     buraco em `golpe.js:204-255` em vez de o remendar, justamente para
+     que fechá-lo fosse decisão da pessoa e não obra de quem passasse
+     por ali. A pessoa aprovou a ordem — **Y1 `Empurrar`/`Derrubar`, Y2
+     `Esquivar`, Y3 `Ajudar`** (mente/pauta.md, Fase Y) —, e a tabela de
+     `VERBOS_DE_COMBATE` está a registar exatamente esse avanço. Quem
+     ler isto daqui a seis meses deve ler "a lista encolheu porque o
+     buraco foi fechado", nunca "a lista encolheu porque o teste
+     incomodava".
+
+     E ELA CONTINUA A MORDER, agora com um dente de cada lado:
+      · quem der motor a `esquivar` sem atualizar a tabela fica vermelho
+        aqui (é a mesma catraca de antes, com um só nome dentro);
+      · e quem escrever `motor` para os dois novos sem que o motor
+        exista fica vermelho na asserção seguinte, que vai buscar as
+        funções a `disputa.js` de verdade.
+
+     O DIA EM QUE Y2 FECHAR `esquivar`, esta lista fica VAZIA — e é aí
+     que a asserção deixa de ter trabalho e vira a sua contrária ("todo
+     verbo da tabela tem motor"). Até lá, o nome que sobra é um só.
+     ============================================================ */
+  t(`esquivar continua sem motor${mentem.length ? " — " + mentem.join("; ") : ""}`, mentem.length === 0);
+  t("e é exatamente ele — os outros cinco já têm motor",
+    V.filter((x) => !x.motor).map((x) => x.id).join(",") === "esquivar",
+    V.filter((x) => !x.motor).map((x) => x.id).join(","));
+
+  /* O OUTRO DENTE DA MESMA CATRACA: o motor que a tabela NOMEIA tem de
+     existir. Sem isto, fechar o buraco seria só escrever uma string no
+     campo `motor` — a tabela voltaria a ser uma afirmação que envelhece
+     sozinha, que é precisamente o defeito que ela existe para evitar. */
+  {
+    const DISP = await import("../src/disputa.js");
+    const empurrarV = V.find((v) => v.id === "empurrar");
+    const derrubarV = V.find((v) => v.id === "derrubar");
+    t("a tabela nomeia `disputa.js` como motor de empurrar e derrubar",
+      /disputa\.js/.test(String(empurrarV.motor)) && /disputa\.js/.test(String(derrubarV.motor)),
+      `${empurrarV.motor} | ${derrubarV.motor}`);
+    t("e as duas funções nomeadas existem mesmo no módulo",
+      typeof DISP.empurrar === "function" && typeof DISP.derrubar === "function");
+    /* e o `porqueSemMotor` dos dois foi APAGADO: um motivo de ausência
+       ao lado de um motor presente é a tabela a contradizer-se */
+    t("e o motivo da ausência saiu junto com a ausência",
+      !empurrarV.porqueSemMotor && !derrubarV.porqueSemMotor,
+      `${empurrarV.porqueSemMotor} | ${derrubarV.porqueSemMotor}`);
+  }
 
   /* e os que a tabela diz COM motor, têm */
   t("atacar chega ao motor do App", rxApp.test(N(GOLPE.fraseDoGolpe({ nome: "Bandido" }))));
@@ -273,6 +325,107 @@ sec("5. OS SEIS VERBOS — a tabela declara a verdade MEDIDA");
     if (b[1].trim() !== v.frase) divergem.push(`${v.rotulo}: App diz "${b[1].trim()}"`);
   }
   t(`toda frase da tabela é a do botão de hoje${divergem.length ? " — " + divergem.join("; ") : ""}`, divergem.length === 0);
+}
+
+sec("5b. O VEREDITO DO EMPURRÃO — ver a parede antes de gastar a ação");
+{
+  /* Y1 deu motor a Empurrar, e com ele nasceu `vereditoDoEmpurrao`: a
+     porta que mostra o preço ANTES do clique. Ela nasceu SEM LEITOR
+     nenhum — a catraca de `teste-ligacao` acusa-a —, e esta seção é o
+     segundo leitor dela. Uma porta de veredito sem prova é a pior
+     espécie de porta: ela existe para o jogador confiar no número que
+     ela mostra.
+
+     Empurrar é a ÚNICA ação de combate cujo resultado pode ser anulado
+     pelo chão — ganhar a disputa e não ter para onde mandar o corpo é o
+     caso normal num corredor de masmorra. O que esta seção guarda é que
+     o veredito e o empurrão dizem a MESMA coisa: se divergirem, o preço
+     mostrado deixa de ser o preço cobrado, e a lei que abre `golpe.js`
+     vira decoração. */
+  const DISP = await import(RAIZ + "disputa.js");
+  const forte = () => 0.95;
+  const ficha = (nome, x, y, forca) => ({
+    nome, tamanho: "medio", nivel: 3, vida: 20, vidaMax: 20, x, y,
+    atributos: { forca, destreza: 0, vigor: 0 },
+    pericias: { treinadas: [], especialistas: [] },
+  });
+  const tav = G.montarGrade({ local: "taverna" });
+
+  /* os três casos do chão, na planta real da taverna: o balcão é parede
+     em y=1, a primeira linha faz borda, e um corpo vivo faz o terceiro */
+  const casos = [
+    ["livre", ficha("Bram", 5, 6, 5), ficha("Alvo", 5, 5, 0), []],
+    ["parede", ficha("Bram", 5, 3, 5), ficha("Alvo", 5, 2, 0), []],
+    ["borda", ficha("Bram", 5, 1, 5), ficha("Alvo", 5, 0, 0), []],
+    ["ocupado", ficha("Bram", 5, 6, 5), ficha("Alvo", 5, 5, 0), [ficha("Capanga", 5, 4, 0)]],
+  ];
+  const divergem = [];
+  for (const [nome, quem, alvo, extras] of casos) {
+    const ents = [quem, alvo, ...extras];
+    const v = GOLPE.vereditoDoEmpurrao({ grade: tav, quem, alvo, entidades: ents });
+    const feito = DISP.empurrar({ grade: tav, quem, alvo, entidades: ents, sorte: forte });
+    if (v.bloqueio !== feito.bloqueio) divergem.push(nome + ": veredito " + v.bloqueio + " vs feito " + feito.bloqueio);
+    if (JSON.stringify(v.para) !== JSON.stringify(feito.para)) divergem.push(nome + ": destino " + JSON.stringify(v.para) + " vs " + JSON.stringify(feito.para));
+    if (v.metros !== feito.metros) divergem.push(nome + ": " + v.metros + " m vs " + feito.metros + " m");
+  }
+  t("o veredito diz o mesmo que o empurrão cobra, nos quatro casos do chão" + (divergem.length ? " — " + divergem.join("; ") : ""), divergem.length === 0);
+
+  /* e o CHÃO e o PORTÃO são duas recusas diferentes, e a tela precisa de
+     as distinguir: "não dá para tentar" manda o jogador fazer outra
+     coisa; "dá para tentar e ninguém vai andar" ainda vale a pena,
+     porque Derrubar usa a mesma disputa */
+  const naParede = GOLPE.vereditoDoEmpurrao({ grade: tav, quem: casos[1][1], alvo: casos[1][2], entidades: [] });
+  t("contra a parede: pode tentar, e o veredito já avisa que ninguém anda",
+    naParede.pode === true && naParede.para === null && naParede.bloqueio === "parede");
+  const grandeDemais = GOLPE.vereditoDoEmpurrao({ grade: tav, quem: casos[0][1], alvo: { ...casos[0][2], tamanho: "imenso" }, entidades: [] });
+  t("contra o que é grande demais: NÃO pode tentar, e não é o chão que barra",
+    grandeDemais.pode === false && grandeDemais.bloqueio === null);
+  t("e o porquê do portão é o mesmo que `podeDisputar` escreve — uma frase, uma fonte",
+    grandeDemais.porque === DISP.podeDisputar(casos[0][1], { ...casos[0][2], tamanho: "imenso" }).motivo);
+
+  /* VOZ DE MUNDO: o veredito vai para a tela, e o sistema não fala de si
+     mesmo. O jogador sente as costas do inimigo na parede; não lê
+     "bloqueio", nem "grade", nem "quadrado". */
+  const porques = [naParede.porque, grandeDemais.porque,
+    GOLPE.vereditoDoEmpurrao({ grade: tav, quem: casos[2][1], alvo: casos[2][2], entidades: [] }).porque];
+  t("todo porquê é frase de mundo, e nenhum recita o mecanismo",
+    porques.every((p) => typeof p === "string" && p.trim() && !/bloqueio|grade|quadrado|coordenada|disputa|degrau/i.test(p)));
+  t("e o caso livre não inventa um porquê — quem pode não precisa de explicação",
+    GOLPE.vereditoDoEmpurrao({ grade: tav, quem: casos[0][1], alvo: casos[0][2], entidades: [] }).porque === "");
+
+  /* NÃO ROLA NADA. Mostrar o preço não pode gastar o dado, senão ver
+     duas vezes daria dois preços — e o jogador deixaria de poder olhar. */
+  const olhar = () => JSON.stringify(GOLPE.vereditoDoEmpurrao({ grade: tav, quem: casos[0][1], alvo: casos[0][2], entidades: [] }));
+  t("olhar duas vezes dá o mesmo veredito — ele não rola dado nenhum", olhar() === olhar());
+  t("e a função não nomeia `sorte` nem `random`", !/sorte|random/i.test(String(GOLPE.vereditoDoEmpurrao)));
+  /* e é DELEGAÇÃO, como tudo neste arquivo: o portão é `podeDisputar` e
+     a geometria é `destinoDoEmpurrao`, os dois de `disputa.js`. Compor a
+     conta aqui seria a mesma regra em dois sítios. */
+  t("e ela delega — não reimplementa portão nem geometria",
+    /podeDisputar/.test(String(GOLPE.vereditoDoEmpurrao)) && /destinoDoEmpurrao/.test(String(GOLPE.vereditoDoEmpurrao))
+    && !/ESCADA|paredes|livrePara/.test(String(GOLPE.vereditoDoEmpurrao)));
+
+  /* LIXO: isto é chamado a cada repintura da tela de batalha, com o que
+     a mesa tiver montado. `= {}` no destructuring NÃO cobre `null`. */
+  let estourou = "";
+  for (const l of [undefined, null, {}, 0, "", [], 7, { quem: null, alvo: null },
+    { grade: null, quem: casos[0][1], alvo: casos[0][2], entidades: null },
+    { grade: tav, quem: casos[0][1], alvo: { nome: "sem lugar" }, entidades: [] }]) {
+    try {
+      const v = GOLPE.vereditoDoEmpurrao(l);
+      if (!v || typeof v.pode !== "boolean" || typeof v.porque !== "string") estourou += "forma torta em " + JSON.stringify(l) + " ";
+    } catch (e) { estourou += JSON.stringify(l) + ":" + e.message + " "; }
+  }
+  t("nenhum lixo derruba o veredito do empurrão" + (estourou ? " — " + estourou : ""), estourou === "");
+
+  /* e a SETA aponta num sentido só: `golpe.js` conhece `disputa.js`, e
+     `disputa.js` não conhece `golpe.js`. Um ciclo entre os dois deixaria
+     a ordem de avaliação decidir qual tabela nasce primeiro. */
+  const fonteGolpe = readFileSync(RAIZ + "golpe.js", "utf8");
+  const fonteDisputa = readFileSync(RAIZ + "disputa.js", "utf8");
+  t("`golpe.js` importa `disputa.js`", /from\s+["'].\/disputa\.js["']/.test(fonteGolpe));
+  t("e `disputa.js` não importa `golpe.js` — a seta aponta num sentido só",
+    !/from\s+["'].\/golpe\.js["']/.test(fonteDisputa));
 }
 
 sec("6. LIXO, IMUTABILIDADE E DETERMINISMO");
