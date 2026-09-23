@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 23/09 · v9.282 · **Fase R — a tela principal, e o sistema de decisões** · commit `<HASH>`
+## 23/09 · v9.282 · **Fase R — a tela principal, e o sistema de decisões** · commit `1e406fe`
 
 *O escrito das mãos fica em `mente/r1-jogo.md` e `mente/r1-desenho.md`; a forma,
 nas secções `R1`, `R1b` e `R4a` de `mente/formas.md`.*
