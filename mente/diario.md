@@ -15,6 +15,38 @@ Formato:
 ```
 
 ---
+## 23/09 · v9.281 · decisão de sequenciamento, sem ciclo, sem commit
+
+- **não é um ciclo — é uma pausa da automação, com o motivo escrito**, porque
+  a pessoa entregou o julgamento a quem regia e pediu que ficasse registrado.
+- **o que mudou:** a fila foi retomada mais cedo hoje (`.claude/fila-pausada`
+  removido, `taverna-ciclo` religado) e, minutos depois, a pessoa pediu foco
+  total em visual/gameplay e levantou um risco de sequenciamento: o ciclo
+  automático do sistema e o `regente` (redesign da tela principal) podem
+  decidir a mesma coisa de dois jeitos, sem um saber do outro.
+- **a decisão: `taverna-ciclo` volta a DESLIGADO** (só ele — `.claude/fila-pausada`
+  não foi recriado, e o `regente` segue rodando normal). Motivo: o risco não é
+  hipotético. Os dois alvos que a pessoa deu hoje ao redesign —
+  **a tela principal** e **o sistema de decisões** — moram exatamente no
+  território do ciclo automático (`src/turno.js`, o despachante de turno;
+  `src/cena.js`, a estrutura de cena; `src/*.js` em geral). Um ciclo
+  automático que pegasse um item de `mente/pauta.md` tocando decisão ou cena
+  — sem saber que o `regente` está a meio de decidir a forma e o fluxo dessas
+  mesmas telas — arriscava exatamente o retrabalho que a pessoa disse não
+  querer: a fila resolve de um jeito, o `regente` decide diferente dias
+  depois, e o primeiro trabalho vira lixo.
+- **o que não mudou:** `mente/pauta.md` continua como está — nada foi
+  arquivado, adiado item a item, nem marcado. Religar é rápido (só o
+  `enabled: true` da tarefa) e não perde nada; por isso não houve necessidade
+  de tocar na fila em si, só no gatilho automático dela.
+- **para retomar:** quando o `regente` entregar a primeira análise/plano da
+  tela principal (o que já está em andamento), reavaliar — provavelmente dá
+  para religar o ciclo automático restringido a itens que não tocam decisão
+  nem cena/tela, ou religar cheio se o plano do `regente` não encostar em
+  `turno.js`/`cena.js`. Quem religar, decida com o plano em mãos, não às
+  cegas.
+
+---
 ## 16/09 22:55 · v9.280 · F3 · a família `intocado` chega à escada · commit `f706cf2`
 
 - **estado inicial:** este ciclo **morreu uma vez** — o `backend` foi cortado a
