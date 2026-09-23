@@ -471,7 +471,12 @@ sec("4. a definição operacional de 'número que muda'");
      desceu com o resto. O endereço foi re-medido pelo mapa do diff (é o
      `check-acoes-do-jogador.mjs`, bloco 8, quem o re-deriva a cada rodada);
      a asserção não mudou de sentido nem de força. */
-  t("e aponta a linha que avança o relógio", !!relogio && /13207/.test(relogio.porque));
+  /* R13: 13207 -> 13673, pelo mesmo deslocamento das peças novas do topo do
+     módulo. O `check-acoes-do-jogador.mjs`, bloco 8, re-deriva este endereço
+     a cada rodada e confirma-o; a asserção não mudou de sentido nem de força
+     — continua a guardar que o porquê da exclusão vem com ENDEREÇO, para que
+     a próxima medição o possa conferir. */
+  t("e aponta a linha que avança o relógio", !!relogio && /13673/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -555,7 +560,7 @@ sec("6. as duas travas do ataque por texto");
 sec("7. os seis literais do painel que não casam leitor nenhum");
 {
   /* medido contra o catálogo real: `lerAcao` é o mesmo leitor que o
-     adjudicador usa (src/App.jsx:15796 → veredictoDaAcao) */
+     adjudicador usa (src/App.jsx:16262 → veredictoDaAcao) */
   const ctx = { personagem: { nivel: 3, atributos: {}, pericias: {} }, semente: "x1", lugar: "taverna",
     emCombate: false, tentativas: {}, dia: 1, pessoaDe: () => null, fama: 0,
     ehPessoaConhecida: () => false, achadoDe: () => null };
@@ -655,7 +660,7 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        mora depois de a janela da reacao entrar no arquivo. */
       /* E3: 12122 -> 11707. A voz da linha (`telegrama`) é o que esta
          asserção guarda, e ela não mudou. */
-      .linhas.find((l) => l.onde === "src/App.jsx:11830").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:12296").voz === "telegrama");
   t("a maior boca do funil é `resolverRevide`, com 29 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 29);
   t("toda função do funil declara anel, endereço e ao menos uma linha",
@@ -740,7 +745,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        da recusa (`alcance`) e o que se guarda aqui, e ela e a mesma. */
     /* E3: 12072 -> 11657, pelo mesmo deslocamento. A família da recusa
        (`alcance`) é o que se guarda aqui, e ela é a mesma. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:11780" && x.familia === "alcance"));
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12246" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -757,7 +762,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      O que esta asserção guarda nunca foi o número — é que o porquê do
      silêncio venha com ENDEREÇO, para que a próxima medição o possa
      conferir. O número mudou; a intenção, não. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /11846/.test(S.ondeSai));   /* E3: 12138 -> 11723 · R3: 11737 -> 11839 · R4b: 11839 -> 11846 — as sete linhas são a lápide dos doze verbos (oito linhas onde havia a tabela) menos a do estado da gaveta de `Ações`. O `enviar` não mudou de sítio dentro da função, só de linha no arquivo */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12312/.test(S.ondeSai));   /* E3: 12138 -> 11723 · R3: 11737 -> 11839 · R4b: 11839 -> 11846 · R13: 11846 -> 12312 (as peças de `A cinta` e de `O painel do tempo` nasceram ao nível do módulo — é a lei da casa, porque componente dentro do render mata o foco do input — e empurraram a região inteira; o `enviar` não mudou de sítio dentro da função) — as sete linhas são a lápide dos doze verbos (oito linhas onde havia a tabela) menos a do estado da gaveta de `Ações`. O `enviar` não mudou de sítio dentro da função, só de linha no arquivo */
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

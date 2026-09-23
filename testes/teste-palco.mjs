@@ -195,16 +195,44 @@ sec("O MEIO NÃO ANDA PARA OS LADOS (v9.196)");
     /aria-pressed=\{habAbertas\} aria-label="Habilidades"/.test(APP));
   t("e a fileira do combate continua quebrando a linha", /className="flex items-center gap-1.5 mb-2 flex-wrap"/.test(APP));
   /* O SELO DO HEROÍSMO SAIU da fileira de modos: ele é recurso do HERÓI, e
-     pendurado ali ficava órfão numa linha própria no telefone */
-  t("o heroísmo mora ao lado do herói", APP.indexOf("<SeloHeroismo pontos={garantirHeroismo(personagem)}") < APP.indexOf("estacaoDe(dia).nome"));
+     pendurado ali ficava órfão numa linha própria no telefone.
+
+     R13 LEVA-O MAIS UM DEGRAU, E COM O NÚMERO À FRENTE: em 20 turnos jogados
+     (`mente/r6-jogo.md`) o selo foi tocado **zero** vezes na tela principal.
+     A régua desta etapa é *fica sempre na tela o que o jogador usa ENQUANTO
+     decide*, e o heroísmo não é isso — é recurso que se gasta NUM INSTANTE
+     nomeado, e nesse instante ele continua a ser oferecido onde sempre foi,
+     dentro do véu do dado. Mora agora no pé da ficha, que é onde se lê o
+     herói. A asserção não afrouxa: passa a guardar que ele tem UMA casa e
+     que ela é a ficha — se voltar à moldura da cena, esta linha morde. */
+  t("o heroísmo mora na ficha, e só lá",
+    /<SeloHeroismo pontos=\{heroismoPontos\} aceso=\{heroAberto\} aoAbrir=\{aoAbrirHeroismo\} \/>/.test(APP)
+    && (APP.match(/<SeloHeroismo/g) || []).length === 1);
+  t("e o painel dele abre no mesmo sítio em que o selo vive",
+    APP.indexOf("<PainelHeroismo pontos={heroismoPontos}") > APP.indexOf("<SeloHeroismo pontos={heroismoPontos}")
+    && (APP.match(/<PainelHeroismo/g) || []).length === 1);
   t("e não sobrou selo pendurado na direita", !/<div className="ml-auto">s*<SeloHeroismo/.test(APP));
 
-  /* A BARRA DO HERÓI: toma a linha no telefone, e as duas medidas EMPILHAM.
-     Lado a lado em 375px cada uma fica com 94 — curta demais para se ler como
-     barra, e a vida do herói vira um traço ao lado do relógio. */
-  t("a barra do herói toma a linha no telefone", /rounded-xl px-2.5 py-2 min-w-0 w-full md:w-auto/.test(APP));
-  t("as duas medidas empilham no telefone", /className="flex flex-col md:flex-row gap-2 md:gap-4 flex-1 min-w-0"/.test(APP));
-  t("e cada uma volta aos 140 fixos no monitor", /flex flex-col gap-1 w-full min-w-0 md:w-\[140px\]/.test(APP));
+  /* A BARRA DO HERÓI: v9.197 fê-la tomar a linha no telefone e empilhar as
+     duas medidas, porque lado a lado em 375 px cada uma ficava com 94 —
+     curta demais para se ler como barra, e a vida do herói virava um traço
+     ao lado do relógio.
+
+     R13 RESOLVE O MESMO PROBLEMA POR CIMA, E O NÚMERO É OUTRO: a barra de PV
+     passa a ter **56 px fixos** dentro de `A cinta`, e as 94 de que a v9.197
+     se queixava deixaram de existir porque deixou de haver uma fileira a
+     dividir. O que pagou a conta foi o PM RECOLHER — em 20 turnos ele
+     decidiu zero vezes e volta sozinho a quem tem caderno de magias ou gasta
+     o primeiro ponto —, e com uma medida só não há nada que empilhar.
+
+     A asserção muda de forma e guarda a mesma lei, que é a de `formas.md`:
+     **a barra tem comprimento de barra e o comprimento é o canal primário.**
+     56 px saem da tabela (`CINTA_DESENHA.trilho`), e um número escrito à mão
+     no meio de um `style` volta a ser o defeito que esta linha caça. */
+  t("a barra do herói tem comprimento de barra, e ele sai da tabela",
+    /width: CINTA_DESENHA\.trilho, height: CINTA_DESENHA\.fio/.test(APP));
+  t("e o PM só aparece quando conta", /\{comPM && \(/.test(APP) && /function oPMConta\(pers\)/.test(APP));
+  t("a barra do PM não rouba a folga do telefone", /<BarraDeRecurso className="hidden md:inline-block"/.test(APP));
   t("não sobrou barra de largura fixa sem escape", !/flex flex-col gap-1 w-\[110px\] md:w-\[140px\]/.test(APP));
 }
 console.log(`\npalco v9.157: ${bons} passaram, ${maus} falharam`);

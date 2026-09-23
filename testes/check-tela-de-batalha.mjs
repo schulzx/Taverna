@@ -141,16 +141,37 @@ sec("3. o que some durante a luta — e o critério é duro");
   /* o trilho inteiro: oito portas para fora da luta, todas de uma vez */
   t("o trilho de abas inteiro é gateado por `!emBatalha`",
     /\{!emBatalha && <TrilhoAbas /.test(APP));
-  /* as duas que TERMINAM a luta, e uma delas já terminou */
-  t("o `⛺ acampar` é gateado por `!emBatalha`",
-    /!acampado && !emBatalha && <button onClick=\{acampar\}/.test(APP),
+  /* AS DUAS QUE TERMINAM A LUTA, e uma delas já terminou uma por engano
+     numa partida de verdade — é a razão mais cara desta lista.
+
+     R13 MUDA A ÂNCORA E APERTA A LEI. Os dois botões eram gateados por
+     `!emBatalha` dentro do cabeçalho; agora **não existem na moldura da
+     cena**, porque o cabeçalho morreu inteiro na tela principal (73 px, no
+     aparelho mais apertado, a escrever o nome do produto a quem já está
+     dentro dele — *o sistema não fala de si mesmo*). O `⛺` mudou-se para o
+     toque no relógio (`OPainelDoTempo`, que só se pinta fora da luta) e a
+     `📜` para a aba `Diário` (que o trilho de abas já esconde, e o trilho é
+     a primeira asserção deste bloco).
+
+     A ASSERÇÃO NOVA É MAIS DURA DO QUE A ANTIGA: antes bastava um gate ao
+     lado do botão, e um gate esquecido passava. Agora a régua mede a
+     AUSÊNCIA dos dois da moldura permanente — só podem viver atrás de uma
+     porta que a luta já fecha. Se algum voltar ao topo da cena, esta linha
+     morde mesmo que venha com `!emBatalha` colado. */
+  t("o `⛺ acampar` não tem botão na moldura da cena — vive no toque do relógio",
+    !/<button onClick=\{acampar\}/.test(APP)
+    && /aoAcampar=\{\(\) => \{ setTempoAberto\(false\); acampar\(\); \}\}/.test(APP)
+    && /\{fase === "jogo" && personagem && !emBatalha && \(/.test(APP),
     "ele ENCERROU uma luta por engano numa partida de verdade — é a razão mais cara da lista.");
-  t("a `📜 crônica` é gateada por `!emBatalha`",
-    /&& !emBatalha && <button onClick=\{gerarCronica\}/.test(APP));
-  /* e o cabeçalho inteiro, que era a única coisa da tela a dizer que a
-     tela era uma tela — e custava 48 px de altura ao campo */
-  t("e o cabeçalho inteiro sai: a marca e o `salvo` são moldura, não jogo",
-    /\{!emBatalha && \(\s*<header /.test(APP));
+  t("a `📜 crônica` não tem botão na moldura da cena — vive na aba Diário",
+    !/<button onClick=\{gerarCronica\}/.test(APP)
+    && /\{aba === "diario" && aoGerarCronica && \(/.test(APP));
+  /* e o cabeçalho inteiro, que era a única coisa da tela a dizer que a tela
+     era uma tela. R13: ele já não é gateado pela luta — **saiu da fase do
+     jogo inteira**, e as outras fases (menu, mundo, ficha, sala) continuam a
+     tê-lo, que é onde ele ainda diz onde se está. */
+  t("e o cabeçalho inteiro sai da tela do jogo: a marca e o `salvo` são moldura, não jogo",
+    /\{!emBatalha && fase !== "jogo" && \(\s*<header /.test(APP));
 
   /* Nenhum dos treze nomes da lista pode aparecer como CONTROLE dentro da
      tela da batalha. Mede-se o arquivo da tela, que é onde um controle
@@ -160,16 +181,23 @@ sec("3. o que some durante a luta — e o critério é duro");
   t(`nenhuma das ${proibidos.length} portas proibidas tem botão na tela da luta`,
     intrusos.length === 0, intrusos.join(" · "));
   /* R4b: `Examinar` e `Tempo` DEIXARAM DE SER ABAS do convés e passaram a
-     ser ofertas da soleira — `setExaminando(true)` e `setMostrarHoras(true)`
-     saem agora do `aoClicar` de uma `Oferta`, e não de um botão permanente
-     que alternava (`(v) => !v`). MOTIVO da asserção re-escrita: o que ela
+     ser ofertas da soleira. MOTIVO da asserção re-escrita então: o que ela
      guardava não era a FORMA do controle, era o LADO da fronteira — que
      estes dois vivem na tela da narrativa e nunca dentro da luta, porque a
-     batalha substitui o convés inteiro. Isso continua a ser medido, e com
-     a mesma força; só a âncora do lado de cá mudou de `!v` para a soleira. */
+     batalha substitui o convés inteiro.
+
+     R13: `Tempo` mudou de forma outra vez, e agora para a casa definitiva.
+     `setMostrarHoras` chamava-se assim porque o painel era só as horas; ele
+     virou `setTempoAberto` e o painel virou **O TEMPO** — acampar, esperar,
+     o calendário e todos os prazos no mesmo toque, o do relógio da cinta.
+     `Esperar` deixa a soleira, onde estava emprestado desde R4b com a dívida
+     escrita (*pela régua não é oferta; entrou porque lhe tiraram a aba e não
+     lhe deram casa*). **O lado da fronteira, que é o que esta linha mede,
+     não mudou:** os dois continuam do lado da narrativa, e a luta não os
+     herda. */
   t("`Examinar` e `Tempo` continuam do lado de cá, e a luta não os herda",
-    /aoClicar: \(\) => setExaminando\(true\)/.test(APP) && /aoClicar: \(\) => setMostrarHoras\(true\)/.test(APP)
-    && !/setExaminando|setMostrarHoras/.test(TEL));
+    /aoClicar: \(\) => setExaminando\(true\)/.test(APP) && /aoAbrirTempo=\{\(\) => setTempoAberto\(\(v\) => !v\)\}/.test(APP)
+    && !/setExaminando|setTempoAberto/.test(TEL));
 }
 
 sec("4. e nada nesta tela diz que ela é uma tela");

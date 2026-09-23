@@ -80,9 +80,9 @@ const ordemDe = (g, i) => (g && typeof g.ordem === "number" ? g.ordem : i);
    O MODELO DO MUNDO DE HOJE — a reimplementação literal
 
    ENDEREÇO CONFERIDO EM 16/09/2026, contra `VERSAO = "v9.266"` de
-   `src/constantes.js`: o laço da rodada está em `src/App.jsx:13979-13990`
+   `src/constantes.js`: o laço da rodada está em `src/App.jsx:14445-13990`
    (`for (const a of acoes)` … `if (rc && rc.danoFinal != null) a.r.dano =
-   rc.danoFinal;`), e `tentarReacaoNoGolpe` em `src/App.jsx:7671-7707`. O
+   rc.danoFinal;`), e `tentarReacaoNoGolpe` em `src/App.jsx:8137-7707`. O
    `k2-jogo.md` cita `:13972-13982`; o fecho do `if (a.alvoRef ===
    "jogador")` é a linha 13983, e é a única diferença.
 

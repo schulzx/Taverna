@@ -43,26 +43,53 @@ sec("2. O BLOCO SENTE — as três caras dele");
 {
   /* normal, clarão de dano, pulso de agonia — e o clarão ganha do pulso,
      porque o golpe é agora e a agonia continua lá depois */
+  /* R13: o bloco MUDOU DE CASA e não de natureza. Os 334 px de moldura da
+     tela principal viraram 48 (`A cinta`), e o bloco do herói passou a ser a
+     metade esquerda dela. As três caras vieram inteiras — o que mudou é onde
+     a régua as procura e como a borda se escreve: numa cinta de 48 px a
+     moldura permanente é `transparent` e só aparece quando há o que dizer,
+     porque uma borda de `line` à volta do alvo seria a moldura a voltar por
+     outra porta. A asserção continua a guardar a MESMA coisa: o clarão ganha
+     do pulso, e a borda acompanha os dois. */
   t("o clarão ganha da agonia", /feridaRecente \? "tv-dano" : grave \? "tv-agonia" : ""/.test(APP));
-  t("a borda acompanha", /border: `1px solid \$\{feridaRecente \|\| grave \? T\.danger : T\.line\}`/.test(APP));
+  t("a borda acompanha", /border: "1px solid " \+ \(feridaRecente \|\| grave \? T\.danger : "transparent"\)/.test(APP));
   t("agonia é um terço da vida", /personagem\.vida \/ personagem\.vidaMax <= 1 \/ 3/.test(APP));
   /* as animações moram no CSS da casa, e o clarão não repete */
   t("o clarão existe e não se repete", /\.tv-dano \{ animation: tvDano \.7s ease both; \}/.test(CSS));
   t("a agonia pulsa sem parar", /\.tv-agonia \{ animation: tvAgonia 1\.6s ease infinite; \}/.test(CSS));
   /* o retrato muda de cara junto: o estado entra pelo mesmo estadoDe */
-  const bloco = APP.slice(APP.indexOf("O BLOCO DO HERÓI"), APP.indexOf("O BLOCO DO HERÓI") + 3200);
-  t("o retrato reage pelo estado", /estado=\{estadoDe\(personagem\.vida, personagem\.vidaMax\)\}/.test(bloco));
+  /* R13: a âncora passa a ser `function ACinta`. `O BLOCO DO HERÓI` era o
+     comentário do bloco da barra de estado, e essa barra deixou de existir —
+     uma régua ancorada num comentário que morreu procuraria no arquivo
+     inteiro e daria tudo por verdadeiro. */
+  const bloco = APP.slice(APP.indexOf("function ACinta("), APP.indexOf("function ACinta(") + 4200);
+  t("o retrato reage pelo estado", /estado=\{estadoDe\(personagem\.vida, vidaMax\)\}/.test(bloco));
   t("o anel avermelha na agonia", /anel=\{grave \? T\.danger : T\.amber\}/.test(bloco));
   /* v9.170 (mesa-jogo-v2): a barra de vida passou a ser montada por tabela
      — as duas barras nascem do mesmo `map`, e a cor da agonia entra pelo
      campo `cor` de uma delas em vez de estar escrita no JSX. */
-  t("a barra de vida também avermelha", /cor: grave \? T\.danger : T\.amber/.test(bloco));
-  /* e o nível saiu do losango: virou ETIQUETA "NIV n" colada no canto do
-     retrato, que é o que o redesenho pede. O losango girado não sobreviveu
-     ao retrato de 44 — a 34 ele cabia no canto, a 44 ele briga com a
-     moldura. O que a lei protege continua sendo "o nível é visível sem
-     abrir nada". */
-  t("e o nível vira etiqueta no canto", /NIV \{personagem\.nivel\}/.test(bloco));
+  /* R13: a barra deixou de nascer de um `map` de duas (PV e PM juntas numa
+     tabela) porque o PM RECOLHEU — em 20 turnos jogados ele decidiu zero
+     vezes, e volta sozinho no instante em que o herói tem caderno de magias
+     ou gasta o primeiro ponto. Com uma barra só, a cor é prop e não campo de
+     objecto. O que a lei guarda não mudou: **o comprimento é o canal
+     primário e a cor é o segundo** — `amber` × `danger` mede 1,26:1 em visão
+     normal e 1,21:1 em deuteranopia, e um PV que só mudasse de cor no grave
+     não mudaria de nada para quem não vê vermelho. */
+  t("a barra de vida também avermelha", /cor=\{grave \? T\.danger : T\.amber\}/.test(bloco));
+  t("e o comprimento dela é o canal primário", /<BarraDeRecurso atual=\{personagem\.vida\} max=\{vidaMax\}/.test(bloco));
+  /* R13 APOSENTA ESTA ASSERÇÃO, E COM O NÚMERO À FRENTE. Ela guardava "o
+     nível é visível sem abrir nada" — primeiro como losango, depois como
+     etiqueta `NIV n` no canto do retrato. O censo de 20 turnos de
+     `mente/r6-jogo.md` mediu o nível a decidir **zero** turnos, e a régua
+     desta etapa é *fica sempre na tela o que o jogador usa ENQUANTO decide*.
+     O nível recolheu para a ficha, onde a régua de XP da `FichaVisual` já o
+     mostra — e mostrá-lo aqui era, além do mais, a segunda cópia dele.
+
+     O QUE FICA NO LUGAR não é nada: é a catraca invertida. A etiqueta NÃO
+     pode voltar à cinta sem alguém desfazer esta linha e escrever por quê —
+     que é exactamente o mesmo ónus que a asserção antiga impunha, virado. */
+  t("e o nível RECOLHEU — a cinta não o escreve", !/NIV \{personagem\.nivel\}/.test(bloco));
 }
 
 sec("3. UM RETRATO DO HERÓI POR TELA");
@@ -71,13 +98,24 @@ sec("3. UM RETRATO DO HERÓI POR TELA");
   const cabecalho = APP.slice(APP.indexOf("<header"), APP.indexOf("</header>"));
   t("o cabeçalho não tem mais retrato", !/<Retrato/.test(cabecalho));
   t("e diz para onde ele foi", /o retrato saiu do cabeçalho \(v9\.160\)/.test(APP));
-  t("o bloco abre a ficha", /<button onClick=\{\(\) => setAba\("gestao"\)\} title="Abrir ficha"/.test(APP));
+  /* R13: o alvo da ficha é o da cinta, e passou a ALTERNAR em vez de só
+     abrir — é um alvo permanente no topo, e um botão que só abre o que já
+     está aberto é um botão morto metade do tempo. E "abrir a ficha" volta a
+     ter UMA cara: o bloco do herói e a aba `GESTÃO` eram duas, na tela onde
+     se passam 90 % do jogo, e a aba é outra gramática (uma porta para um
+     painel) enquanto a cinta é o atalho. */
+  t("o alvo da cinta abre a ficha", /aoAbrirFicha=\{\(\) => setAba\(aba === "gestao" \? null : "gestao"\)\}/.test(APP));
+  t("e diz ao leitor de ecrã o que faz", /aria-label="Abrir a ficha" aria-expanded=\{!!fichaAberta\}/.test(APP));
   /* dentro de botão, o retrato não pode abrir carta — mesmo contrato do
      antigo atalho */
   /* v9.170: o retrato cresceu de 34 para 44 no redesenho. O que a lei
      protege é o `semCarta` — dentro de um botão, abrir a carta de tarô
      seria um clique dentro de outro. */
-  t("sem carta dentro do botão", /ente=\{personagem\} semCarta tamanho=\{44\}/.test(APP));
+  /* R13: o retrato desceu de 44 para 32 — é a medida da cinta, e sai da
+     tabela (`CINTA_DESENHA.rosto`), não de um literal. O que a lei protege
+     continua a ser o `semCarta`: dentro de um botão, abrir a carta de tarô
+     seria um clique dentro de outro. */
+  t("sem carta dentro do botão", /ente=\{personagem\} semCarta tamanho=\{CINTA_DESENHA\.rosto\}/.test(APP));
   /* as barrinhas anônimas de PV/PM DO HERÓI saíram — o bloco é a única
      casa delas. As BarraMini que ficaram são de outras pessoas: o
      companheiro no cartão dele e o inimigo no combate. */

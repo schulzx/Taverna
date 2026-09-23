@@ -727,12 +727,30 @@ local e no `origin`. *Ousadia é barata aqui; a timidez é que é o defeito.*
 - [ ] **R8 · os 81 emoji do SO saem; entram glifos desenhados** · de: desenho
   **204 usos, 81 distintos**, contra 33 ícones desenhados. *A identidade do jogo
   muda conforme o aparelho de quem joga.* ~21 faltam só para esta tela.
-- [ ] **R9 · os acentos colapsam sob daltonismo** · de: desenho
+- [ ] **R9 · os acentos colapsam sob daltonismo** · de: desenho ·
+  **NÃO HERDADO pelas peças de R13 (23/09), e a medida é que o impediu**
+  O `selo de prazo` ia nascer com três cores. Medido antes de construir:
+  `mundo`×`amber` = **1,26:1 em visão normal** e **1,12:1 em deuteranopia** —
+  **pior do que o próprio defeito que R9 acusa** (`ok`×`amber` = 1,37). A peça
+  passou a distinguir-se por **areia da ampulheta → palavra → enchimento →
+  cor**, por essa ordem. O mesmo se aplicou ao PV (`amber`×`danger` = 1,21 em
+  deuteranopia): os três canais que o salvam — comprimento da barra, o rosto em
+  *grave*, `tv-agonia` — **já existiam e nunca tinham sido escritos como
+  razão**. *O item continua aberto para a paleta; para as peças novas está
+  fechado.*
   Medido e **não corrigido por esta fase**: em deuteranopia `ok` e `amber` ficam
   a **1,02:1** — a mesma cor. *A cobertura é uma lei, não uma medida*, e a
   paleta nova não a paga: herdou o defeito do dia em que nasceu.
-- [ ] **R12 · o telefone paga a fase, e é onde eu olharia a seguir** · de:
-  regente · 23/09
+- [~] **R12 · o telefone paga a fase, e é onde eu olharia a seguir** · de:
+  regente · 23/09 · **RE-MIRADO E DESENHADO em R13 (23/09)** — a forma fechada
+  está em `mente/formas.md` §*R13 · a fabricação*, a composição em
+  `mente/r13-mesa.md`, o par 375×812 e as peças no Figma. **Falta construir.**
+  *R12 acusava a soleira (149 px) e falhou o réu maior:* a barra de estado (180)
+  mais a fita de prazos (81) são **261**, e nenhum dos dois tinha sido medido.
+  **E falhou um terceiro que ninguém tinha na conta: o cabeçalho, 73 px para
+  escrever o nome do produto a quem já está dentro dele.** As três morrem e
+  entra `A cinta`, 48 px: a página passa de **151 para 503** (3,33×) e para
+  **586** nos turnos sem oferta — quase metade deles.
   **Medido:** a prosa no telefone foi de **51,5 % para 37,3 %** com uma oferta na
   soleira. Na mesa voltou acima do ponto de partida (58,1 → 58,3 %); **no
   telefone não voltou.** A causa é geometria e não desleixo: **a peça cresce e o
@@ -745,8 +763,15 @@ local e no `origin`. *Ousadia é barata aqui; a timidez é que é o defeito.*
   o cartão curto voltar aos 54 px e só o longo crescer. **Não decido aqui** — é
   forma, é do `desenho` com o `jogo`, e quero a prova jogada de R6 antes.
 
-- [ ] **R11 · o terceiro acento existe e ainda não fez o trabalho por que foi
-  criado** · de: regente · 23/09 · **conferido por mim, não relatado**
+- [~] **R11 · o terceiro acento existe e ainda não fez o trabalho por que foi
+  criado** · de: regente · 23/09 · **CONVERTIDO EM R13, falta construir**
+  A conversão não foi feita significado a significado, como se supunha: foi
+  feita **de uma vez, por geometria.** A metade direita de `A cinta` é o alvo
+  do tempo, e **é toda `T.mundo`** — relógio, data, estação, lugar e a espera
+  passam a viver num sítio só, numa cor só. `T.onMundo` deixa de ter zero
+  leitores no dia em que a cinta for construída. *Uma cor nova que não tira
+  trabalho a nenhuma outra é só mais uma cor — e esta passa a tirar cinco de
+  uma vez porque lhe deram uma REGIÃO, não uma lista de usos.*
   `mundo` nasceu em R2 com uma justificação exata: *o âmbar carrega **24
   significados** e `mundo` tira-lhe **cinco** — relógio, data, estação, lugar, a
   espera — devolvendo-lhe uma função só.* Contei os leitores hoje: `T.mundo` é
@@ -765,6 +790,43 @@ local e no `origin`. *Ousadia é barata aqui; a timidez é que é o defeito.*
   desproporcionado. O `aprendiz` **compôs com peças que já são lei** em vez de
   inventar, e escreveu a dívida no código. *Vai reaparecer — abas, inventário,
   bolsa —, e na segunda vez já não é composição, é forma por nomear.*
+
+- [ ] **R14 · a página tem uma hora, e o livro escurece com o mundo** · de:
+  desenho · 23/09 · **a proposta ambiciosa de R13** · médio, com catraca
+  R13 constrói `LUZ_DA_CENA` — quatro receitas de luz (madrugada, dia,
+  entardecer, noite) — e gasta-as em **96 px**. A proposta é gastá-las na
+  **página inteira**.
+
+  Hoje `T.pagina` é **um castanho e sempre o mesmo**: a superfície onde a prosa
+  mora não sabe que horas são. O jogador lê uma cripta à meia-noite e uma praça
+  ao meio-dia **no mesmo papel**. Com a luz da cena a valer para a página, a
+  xilogravura e o texto deixam de ser *uma imagem colada por cima de uma
+  coluna* e passam a ser **um só objecto iluminado** — um livro lido à luz que
+  há na cena.
+
+  **Por que é agora e não antes:** a peça que faltava é a tabela, e ela nasce
+  nesta etapa. Sem `LUZ_DA_CENA` isto seria gosto; com ela é **uma
+  interpolação e um commit**.
+
+  **A catraca, escrita antes de começar, porque esta é a proposta que mais
+  facilmente estraga o jogo:** *a prosa é a protagonista, e legibilidade vem
+  antes de beleza.*
+  1. `ink` × `pagina` **≥ 10:1 em todas as horas** (hoje é 11,08:1) — e a
+     suíte lê a tabela de volta e falha se descer;
+  2. `paginaFio` × a mesa **≥ 3:1 em todas as horas** (WCAG 1.4.11);
+  3. a amplitude entre a hora mais clara e a mais escura **não passa de
+     1,6:1 de luminância na superfície** — o suficiente para se notar, pouco
+     para cansar quem lê uma sessão inteira;
+  4. **o `jogo` joga uma cena de noite e uma de dia** e diz se leu pior. *Se
+     leu pior, cai — e a medida não a salva.*
+
+  **O que se arrisca, dito antes de ser perguntado:** quem lê muito de noite
+  pode achar que a página escura "apagou". A defesa é o piso de 10:1 e a saída
+  de emergência: uma preferência que fixa a página na luz de dia. **Sem essa
+  saída, a proposta não entra.**
+
+  *Não vai a "Para a pessoa decidir" porque um commit revertido conserta isto
+  inteiro — é uma tabela. Pela régua de 23/09, é da mesa.*
 
 ### Fase J — a pergunta muda de golpe
 **Aprovada em 17/09**, com a saída que o `jogo` e o `desenho` acharam melhor.

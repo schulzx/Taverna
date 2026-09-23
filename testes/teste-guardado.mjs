@@ -19,7 +19,7 @@
 
    1. A QUEDA DO NARRADOR É ENCENÁVEL. Os erros são os REAIS deste
       projeto, medidos em `api/narrador.js` e `api/_portao.js`, montados
-      exatamente como `chamarModelo` (src/App.jsx:256) os monta. Zero
+      exatamente como `chamarModelo` (src/App.jsx:268) os monta. Zero
       rede, zero chave, zero `fetch` — e nenhum cai em `desconhecido`
       por acidente.
    2. O GUARDADO É O QUE ACONTECEU. O turno inteiro encenado com um
@@ -70,7 +70,7 @@ const sec = (s) => console.log("\n" + s);
 
    Não é um `fetch` com mock: é a LINHA QUE LANÇA, reproduzida. O que
    chega ao `catch` de `enviar` é sempre uma string, e ela nasce em
-   src/App.jsx:256:
+   src/App.jsx:268:
 
        throw new Error((data.erro || `HTTP ${response.status}`)
                        + (pistas ? ` (${pistas})` : ""));
@@ -117,7 +117,7 @@ function motorDeMentira(semente) {
 
 /* A PRIMEIRA BATIDA DO TURNO, encenada: o motor resolve ANTES de o
    Narrador entrar na história. O envelope que sai daqui é o mesmo molde
-   do App (src/App.jsx:11938) — cabeçalho `[COMBATE — RESOLVIDO PELO
+   do App (src/App.jsx:12404) — cabeçalho `[COMBATE — RESOLVIDO PELO
    SISTEMA]` e corpo que manda NARRAR, não recalcular.
 
    O envelope diz a vida do inimigo DEPOIS e a ação que sobrou. Não é

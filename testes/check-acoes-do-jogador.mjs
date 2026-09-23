@@ -309,10 +309,10 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      que deram o `Atacar` do painel por vivo durante um ciclo inteiro
      depois de E3 o ter tornado inalcançável. Trocar número por texto não
      basta; é preciso âncora que meça ALCANCE.) */
-  } else if (iPush + 1 !== 7258) {
-    falha(`pushMsgs saiu de src/App.jsx:7258 e agora está em :${iPush + 1}`,
+  } else if (iPush + 1 !== 7724) {
+    falha(`pushMsgs saiu de src/App.jsx:7724 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:7258, como o mapa de X3b diz");
+  } else ok("pushMsgs segue em src/App.jsx:7724, como o mapa de X3b diz");   /* R13: 7258 -> 7724 (sétima cobrança de deslocamento sem defeito — as peças novas nasceram ao nível do módulo, como a lei obriga, e empurraram tudo o que vem depois) */
 
   let divergiu = 0;
   for (const f of FUNIL_DO_COMBATE) {

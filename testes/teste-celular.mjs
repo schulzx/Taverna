@@ -120,7 +120,13 @@ sec("5. AS TELAS DE JOGO CARREGAM A CLASSE");
      vida, os modos e a caixa saíam da tela junto com a prosa numa cena
      comprida, e escrever exigia rolar até o fim. */
   t(`a reserva é usada em ${quantas} lugar(es)`, quantas >= 1 && quantas <= 3);
-  t(`e a margem em ${margens}`, margens >= 4);
+  /* R13: o piso desce de 4 para 3, e o motivo é que um painel mudou de ponta
+     da tela. O menu de `Esperar` era o quarto elemento com a margem; ele
+     passou a viver em `OPainelDoTempo`, que abre POR BAIXO DA CINTA, no topo
+     — e ali não há barra de abas para evitar. A asserção guarda que todo
+     painel que flutua SOBRE o trilho de abas reserve o espaço dele; um painel
+     que deixou de flutuar sobre o trilho sai da conta sem afrouxar nada. */
+  t(`e a margem em ${margens}`, margens >= 3);
   t("quem reserva é o convés", /className="tv-espaco-abas shrink-0 flex flex-col"/.test(APP));
   t("a área que rola NÃO reserva mais", /className="tv-scroll flex-1 overflow-y-auto overflow-x-hidden/.test(APP));
   t("e a linha de escrita também não", /className="px-4 md:px-8 shrink-0" style=\{\{ paddingBottom:/.test(APP));

@@ -195,6 +195,45 @@ export const MATERIAIS = {
 };
 
 /* ============================================================
+   A LUZ DA CENA (R13, etapa B) — `O rosto da cena`, as quatro receitas.
+
+   POR QUE AQUI E NÃO DENTRO DE `T`, e a distinção é a razão de a tabela
+   existir: `T` diz o que a cor SIGNIFICA (o perigo, a página, o mundo);
+   isto não diz o que a cor significa, diz QUE LUZ HÁ NA CENA. É irmã de
+   `MATERIAIS` — a paleta FÍSICA —, e mora ao lado dela pelo mesmo
+   motivo: uma madrugada não é "o fundo do painel", é uma hora do dia.
+
+   E É O QUE FAZ QUATRO DESENHOS SEREM UM DESENHO COM QUATRO LUZES.
+   `formas.md` (R13, `O rosto da cena`): *a hora não muda o desenho: muda
+   a luz.* A gravura sai da semente e não se mexe; o que desliza com o
+   relógio é esta tabela. No Figma é a colecção *Luz da cena*, cinco
+   variáveis × quatro modos, e cada variante do rosto fixa o seu modo.
+
+   A TINTA É UMA SÓ, e por isso é chave de topo e não de cada luz: três
+   tons de linha e uma xilogravura vira desenho digital — a lição que
+   `rosto.jsx` já tinha escrito, aplicada à paisagem. (O Figma guarda-a
+   nos quatro modos com o mesmo valor; aqui uma cópia por modo seria a
+   mesma cor escrita quatro vezes, que é a doença que esta casa varre.)
+
+   OS CONTRASTES, medidos pelo `desenho` nas quatro luzes: o pior par da
+   legenda é `ink` × chão de dia, **10,60:1** — AAA com 51 % de folga. E
+   `T.mundo`, que escreve a hora, nunca desce de **7,27:1**.
+
+   `astroAlfa` e `astroAlto` vão na receita e não no desenho porque são o
+   que distingue uma luz da outra: de madrugada e ao entardecer o astro é
+   BAIXO (roça o horizonte); de dia e de noite é ALTO. A cor dele sai de
+   `T`, nunca de um hex novo — é o único ponto da faixa onde um acento da
+   casa entra na paisagem.
+   ============================================================ */
+export const LUZ_DA_CENA = {
+  tinta: "#0F0B08",   /* a tinta da gravura — UMA, nas quatro luzes */
+  madrugada:  { ceuAlto: "#2A2219", ceuBaixo: "#4A3524", chao: "#241D16", astro: T.amberSoft, astroAlfa: 0.55, astroAlto: false },
+  dia:        { ceuAlto: "#54432F", ceuBaixo: "#6B563C", chao: "#3E3222", astro: T.amberSoft, astroAlfa: 0.40, astroAlto: true  },
+  entardecer: { ceuAlto: "#4A3524", ceuBaixo: "#7A4A28", chao: "#2E2418", astro: T.danger,    astroAlfa: 0.60, astroAlto: false },
+  noite:      { ceuAlto: "#221B14", ceuBaixo: "#2E2620", chao: "#1A1510", astro: T.mundoSoft, astroAlfa: 0.50, astroAlto: true  },
+};
+
+/* ============================================================
    O ALVO DE TOQUE — o piso da casa, em px.
 
    A doença que esta tabela cura tem endereço: `App.jsx:1998`. A fila de
@@ -218,6 +257,49 @@ export const MATERIAIS = {
 export const ALVOS = {
   piso: 48,     /* toda peça em que se toca */
   chamado: 56,  /* `O chamado`: mais alto por decisão de K1, fixado em K3 */
+};
+
+/* ============================================================
+   A CINTA (R13, etapa A) — o topo do telefone, em px.
+
+   Ela substitui TRÊS faixas (o cabeçalho, a barra de estado e a fita de
+   prazos): **334 px trocados por 48**. Os números não são gosto — são
+   uma conta que fecha, e é por fecharem que moram numa tabela onde a
+   suíte os pode somar de volta:
+
+       375 úteis − 24 de enchimento = 351
+       a ficha : rosto 32 + 10 + vitais 93 + 10 + bolsa 41 = 186
+       o tempo : hora 40 + 7 + selo 53 + 12 de enchimento  =  98
+       folga   : 351 − 186 − 98                            =  67
+
+   O ENCHIMENTO É 12 E NÃO 16, E A RAZÃO É ARITMÉTICA: a 375 px sobram
+   67 px de folga entre os dois alvos com 12, e 43 com 16. **É dessa
+   folga que `O sinal de guardado` vive** — e é por isso que ela é uma
+   entrada desta tabela e não uma sobra de leiaute. Um `SinalDeGuardado`
+   que se centrasse no PAI cairia sobre o saldo da bolsa; centrado na
+   FOLGA, não tapa tinta nenhuma, que é a promessa escrita da peça.
+
+   `alturaViva` É DE PROPÓSITO, e a regra é do `jogo`: *o que não cabe
+   numa linha calma é exactamente o que tem de interromper.* Um estado
+   vivo faz a cinta crescer para 72; os 24 px saem da página e voltam
+   quando o estado passa. Medido em R6: um estado vivo, num turno, em
+   vinte.
+   ============================================================ */
+export const CINTA = {
+  altura: 48,        /* Estado=Calma e Estado=Prazo a apertar */
+  alturaViva: 72,    /* Estado=Um estado vivo — a segunda fila dos chips */
+  enchimento: 12,    /* lateral, e não 16 — ver a conta acima */
+  ficha: 186,        /* o alvo da esquerda: rosto · PV · PM · bolsa */
+  tempo: 98,         /* o alvo da direita: a hora · O selo de prazo */
+  folgaMinima: 67,   /* 375 − 24 − 186 − 98 — a casa do sinal de guardado */
+  /* O ROTULO DO GUARDADO, MEDIDO NO NAVEGADOR E NÃO ESTIMADO: 74 px.
+     `✓ guardado` em JetBrains Mono a `TIPOS.maquina`, com a fonte
+     carregada (`document.fonts.check` verdadeiro) e lido por
+     `scrollWidth` — a conta à mão dava 72, e a régua dá 74. **Não cabe
+     nos 67 da folga**, e é por isso que este número vive aqui: é dele
+     que sai o limiar em que o rótulo se esconde (`.tv-guardado-rotulo`,
+     na folha), e um limiar afinado a olho mentiria no dia seguinte. */
+  rotuloDoGuardado: 74,
 };
 
 /* ============================================================
@@ -586,6 +668,34 @@ export const MOVIMENTO_CSS = `
    primeira tentativa. */
 .tv-escolha-troca { transition: border-color 120ms ease, box-shadow 120ms ease; }
 
+/* ---------------- A MARCA DA CHAPA QUE ACENDE (R13) ----------------
+   (Sem crase neste comentario, como os vizinhos: ele mora DENTRO da
+   template literal e uma crase aqui fecha a string e derruba o build.)
+
+   O SINAL DE GUARDADO custa ZERO px permanentes e ainda assim se ve. O
+   fio de 1 px do pe da cinta passa a T.ok e VARRE uma vez, da esquerda
+   para a direita — e e a propria borda do que guarda o estado do
+   jogador a dizer que o guardou. Nem desloca leiaute nem tapa tinta:
+   scaleX sobre uma barra que ja esta la.
+
+   OS 600 MS SAO DE formas.md, e coincidem com bonusToque do relogio da
+   reacao — coincidencia, nunca copia: esta varredura existe desde antes
+   de haver janela de reacao no pe da cinta e nao desenha nada que o
+   trilho meca. A coincidencia fica ESCRITA em check-formas.mjs
+   (COLISAO_DE_RELOGIO_ESCRITA), como a de .tv-dice, em vez de calada
+   por um regex mais frouxo.
+
+   O 70% NAO E ESTETICA: a varredura chega ao fim do fio em 420 ms e so
+   depois se apaga. Se o apagar comecasse junto com o andar, o fio nunca
+   chegaria a estar inteiro, e o que se leria era um risco a passar, nao
+   uma borda a acender. */
+@keyframes tvGuardadoVarre {
+  0%   { transform: scaleX(0); opacity: 1; }
+  70%  { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+.tv-guardado-varre { animation: tvGuardadoVarre 600ms ease-out both; transform-origin: left center; }
+
 /* A ORDEM É A REGRA (2/2): este @media tem de vir DEPOIS das tres
    classes acima. Uma media query nao soma especificidade nenhuma — ela
    so envolve. Quem decide o empate e a ordem, e so por estar embaixo
@@ -618,6 +728,14 @@ export const MOVIMENTO_CSS = `
      estado final (a lei que importa), mas a saída é obrigatória à
      nascença mesmo assim, e não fica por escrever "é só cosmético". */
   .tv-escolha-troca { transition: none; }
+  /* O SINAL DE GUARDADO (R13) — e a saida NAO e none.
+     formas.md escreve-a: "sem varredura — o fio fica T.ok 1,2 s e
+     desvanece". none sozinho, com o both da declaracao, congelaria o
+     fio em scaleX(0): invisivel, e o jogador ficaria sem o unico sinal
+     na tela de que a vida dele esta guardada. A saida pousa no estado
+     CHEIO (scaleX(1), opacity 1) e quem o apaga passa a ser o prop
+     visivel de SinalDeGuardado, que o pai segura 1,2 s. */
+  .tv-guardado-varre { animation: none; transform: scaleX(1); opacity: 1; }
 }
 `;
 
@@ -885,6 +1003,50 @@ export const SUPERFICIES_CSS = `
    existir. */
 .tv-escolha-troca.tv-anel-foco:focus-visible {
   box-shadow: 0 0 0 2px ${T.bg}, var(--tv-filete, inset 0 0 0 0 transparent);
+}
+
+/* ---------------- O ROSTO DA CENA, EM ALTO CONTRASTE (R13) ----------
+   forced-colors apaga a paleta por ESPECIFICACAO, e a degradacao desta
+   peca esta escrita em formas.md: a faixa perde as cores e fica a
+   silhueta a traco sobre o fundo do sistema, com a legenda a continuar
+   a dizer o lugar e a hora POR PALAVRAS — que e o que ali importa.
+
+   Nao se declara forced-color-adjust: none em lado nenhum: isso seria
+   dizer ao sistema operativo que a nossa paleta sabe melhor do que o
+   jogador que a desligou. Tira-se o que e so cor (o ceu, o chao, o
+   astro) e deixa-se o que e DESENHO. */
+@media (forced-colors: active) {
+  .tv-gravura-fundo { display: none; }
+  .tv-gravura-tinta { fill: CanvasText; stroke: CanvasText; }
+}
+
+/* O ROTULO do sinal de guardado vive na folga que o enchimento de 12 da
+   cinta deixa entre os dois alvos. Quando a folga nao chega para ele, o
+   rotulo NAO aparece e fica a varredura sozinha — a degradacao e escrita
+   em formas.md, nao acidental. O que nunca cai e o aria-live, que diz
+   guardado a quem nao ve nenhuma das duas, e por isso ele vive noutro
+   elemento: um aria-live com display: none nao anuncia nada.
+
+   O NUMERO E MEDIDO, E NAO E O QUE formas.md SUPOS. A peca diz "abaixo
+   de 67 px de folga o rotulo nao aparece", o que da a entender que aos
+   67 px do telefone de referencia ele aparece. Medido no navegador, com
+   a fonte carregada e lido por scrollWidth: o rotulo pede 74 px
+   (CINTA.rotuloDoGuardado). SETENTA E QUATRO NAO CABEM EM SESSENTA E
+   SETE — e a conta a mao, que dava 72, tambem se enganava por dois.
+
+   A conta do limiar, para quem a quiser refazer: folga = largura - 24
+   (enchimento) - 186 (a ficha) - 98 (o tempo), logo a folga chega aos
+   74 px a partir de 382 px. O limiar e 381, e e o unico numero desta
+   folha que nao veio de formas.md: veio de uma regua. Aos 375 do
+   telefone de referencia o jogador fica com a varredura e com o
+   aria-live, que sao duas das tres camadas.
+
+   O QUE ISTO PEDE A MESA, e vai escrito no relato em vez de resolvido a
+   sorrelfa: ou o rotulo encolhe (guardado sozinho cabe), ou o tempo cede
+   sete px, ou o telefone assume a varredura. Escolher por conta propria
+   qual das tres era inventar forma, e a forma tem dono. */
+@media (max-width: 381px) {
+  .tv-guardado-rotulo { display: none; }
 }
 `;
 

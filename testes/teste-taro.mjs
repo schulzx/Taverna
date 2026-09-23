@@ -149,7 +149,12 @@ sec("6. TODO RETRATO ABRE A CARTA, E NENHUM PAINEL PRECISOU SABER DISSO");
   /* v9.158: o atalho aponta para a GESTÃO (a ficha é sub-aba dela desde a
      fusão das abas — `setAba("ficha")` abria painel de título errado e
      corpo vazio), e o retrato veste o traje sem virar segundo botão */
-  t("o do cabeçalho continua sendo só o atalho da ficha", /<button onClick=\{\(\) => setAba\("gestao"\)\}[\s\S]{0,460}<Retrato semente=\{sementeDe\(personagem\)\} ente=\{personagem\} semCarta/.test(APP));
+  /* R13: o cabeçalho morreu na tela principal (73 px a escrever o nome do
+     produto a quem já está dentro dele), e o atalho da ficha é agora o alvo
+     esquerdo de `A cinta`. O contrato que esta linha guarda não mudou uma
+     vírgula — o retrato dentro de um botão NÃO abre a carta de tarô, porque
+     botão dentro de botão passa no teste e falha no dedo. */
+  t("o atalho da ficha continua sendo só o atalho da ficha", /aria-label="Abrir a ficha"[\s\S]{0,460}<Retrato semente=\{sementeDe\(personagem\)\} ente=\{personagem\} semCarta/.test(APP));
 }
 
 console.log(`\ntarô v9.126: ${bons} passaram, ${maus} falharam`);

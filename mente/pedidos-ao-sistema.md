@@ -378,6 +378,30 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
   K3 construiu sem a resposta porque `inimigo_cai` não abre janela — mas a
   pergunta não fica mais barata por ser adiada a quarta vez.
 
+- [ ] **o prazo tem de saber quantas noites FALTAM, em tempo de calendário** · de: R13 · 23/09
+  **É condição de uma peça, não melhoria dela.** `O selo de prazo` (R13,
+  `mente/formas.md`) substitui a fita de chips e **conta ao contrário**:
+  `5 noites` → `2 noites` → `esta noite`. Hoje o relógio de prazo conta
+  **passos dados** (`1/4`) e só anda quando se **dorme** — e o `jogo` mediu
+  jogando: **o chip ficou `1/4` enquanto o calendário andava de 1 para 14 de
+  Brumal, treze dias.** O jogador vê o relógio saltar duas semanas e o prazo
+  parado, e conclui, com razão, que o prazo não é a sério.
+  **O que o desenho precisa:** uma função pura que devolva, para um contrato
+  aceite, **quantas noites de calendário restam até ao vencimento** — não
+  quantas foram dormidas. Sem ela a peça diz "3 noites" durante duas semanas,
+  e aí **mente melhor do que a de hoje**, que é o pior resultado possível: a
+  forma nova a dar credibilidade a um número errado.
+  *A peça expõe o defeito em vez de o esconder — mas só se o motor souber a
+  resposta.*
+
+- [ ] **o botão `Início` não navega — é um controlo que não faz nada** · de: R13 · 23/09
+  Achado pelo `jogo` nos 20 turnos de R6: tentou uma vez, **e não aconteceu
+  nada**. Ele vive no cabeçalho de 73 px que R13 aposenta, e a etapa dá-lhe
+  morada nova (o pé da ficha) — **mas mudar de sítio um botão morto é mudar o
+  defeito de sítio.** Ou volta a navegar, ou sai.
+  *Vai aqui e não na pauta do desenho porque a fiação é do outro lado: a forma
+  do botão está certa, o que falta é o que ele faz.*
+
 ## Atendidos
 
 _(vazio)_

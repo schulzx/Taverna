@@ -173,7 +173,7 @@ const TETO_DE_LITERAIS = {
      o halo âmbar a 13%, o `#fff` do alvo escolhido) renasceram em `T` do
      outro lado. Por isso `painel-batalha.jsx` não tem entrada nesta tabela,
      e é assim que ela fica: arquivo novo nasce com teto zero. */
-  "src/App.jsx": 81, /* 23/09 · R3: o único literal que a narração ainda tinha — o `rgba(23,19,34,0.48)` do fundo do painel da prosa — virou `T.pagina`, que é a superfície quente que R2 fabricou. 82 → 81. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) */
+  "src/App.jsx": 79, /* 23/09 · R13: a barra de estado, a fila dos estados e a fita de prazos saíram da tela principal, e com elas dois literais. 81 → 79. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) · R3: o único literal que a narração ainda tinha — o `rgba(23,19,34,0.48)` do fundo do painel da prosa — virou `T.pagina`, que é a superfície quente que R2 fabricou. 82 → 81. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) */
   /* 16/09 · E4: os dois fundos de selo (#1f3320 e #33201f) viravam token okFundo/perigoFundo — eram CINCO copias no mesmo bloco do HUD, e a fila de quatro pilulas escritas a mao virou um map sobre a tabela dos campos da mecanica. 89 → 82 */
 
   /* O PERGAMINHO (71 = 41 + 30) — não é sujeira, é um SISTEMA: 10 hexes
@@ -251,7 +251,7 @@ const TETO_DE_COR_DE_T = {
      SEMPRE (esses hexes nunca vieram de `T`, sempre foram cópias soltas)
      ficando temporariamente invisível a este dente até alguém a
      converter para `T` de verdade — o que ela sempre devia ter sido. */
-  "src/App.jsx": 19, /* 15/09 → 23/09 · R2 */
+  "src/App.jsx": 17, /* 15/09 → 23/09 · R2 · R13: 19 → 17 — as duas cópias de T que saíram eram os leitos das barras de PV e PM do bloco do herói (`rgba(232,163,61,0.13)` e `rgba(176,165,236,0.13)`), escritos à mão dentro do `map` das duas barras. `A cinta` desenha o trilho com `T.panelSoft`. */
   "src/estilo.js": 5, /* 15/09 → 23/09 · R2 (a zona de `T` é isenta; o que sobra são as `rgba` que esperam o helper `alfa()`) */
   "src/carta-taro.jsx": 5, /* 15/09 → 23/09 · R2 */
   "src/painel-talentos.jsx": 2,
@@ -287,6 +287,22 @@ const TETO_DE_COR_DE_T = {
 const ZONAS_DE_TABELA = [
   { arquivo: "src/estilo.js", tabela: "T", d5a: "isenta", d5b: "isenta" },
   { arquivo: "src/estilo.js", tabela: "MATERIAIS", d5a: "isenta", d5b: "VARRE" },
+  /* 23/09 · R13 — `LUZ_DA_CENA`, as quatro luzes de `O rosto da cena`.
+     É uma ZONA e não um teto, e a distinção é a que já está escrita
+     acima: zona é onde a cor tem DIREITO de nascer, teto é dívida
+     registada. Uma tabela de luz que não pudesse ganhar a quinta luz —
+     ou a quinta variável de cada luz — seria sagrada, que é o oposto da
+     lei da casa; e treze hexes de madrugada, dia, entardecer e noite
+     dentro de `TETO_DE_LITERAIS` dariam a mensagem errada a quem lesse o
+     vermelho ("use T"), porque a luz de uma cena NÃO é um significado de
+     `T`: `T` diz o que a cor significa, isto diz que luz há na cena.
+
+     D5b VARRE, pelo MESMO argumento de `MATERIAIS` e não por simetria:
+     a luz PODE copiar `T`, e o dia em que `ceuBaixo` for `#E8A33D` é o
+     dia em que a paisagem virou um alias do âmbar com outro nome. Sem
+     esta metade a zona seria uma LAVANDARIA. (Mede 0 hoje: a cor do
+     astro entra por referência a `T`, nunca por hex.) */
+  { arquivo: "src/estilo.js", tabela: "LUZ_DA_CENA", d5a: "isenta", d5b: "VARRE" },
 ];
 
 /* D5c · AS ANIMAÇÕES SEM SAÍDA no `prefers-reduced-motion`. Hoje 13
@@ -398,6 +414,21 @@ const TETO_DE_CONTADOR_DE_QUADRO = {
      é dela, e não minha. */
 const COLISAO_DE_RELOGIO_ESCRITA = {
   ".tv-dice": 1000,  /* 16/09 · `tvGlow 1s`, o brilho do d20 — coincide com `aperto` e `bonusContagem` */
+  /* 23/09 · R13 — `tvGuardadoVarre 600ms`, a marca da chapa a acender no
+     pé da cinta quando o jogo grava. 600 é `bonusToque` da linha
+     `normal` de `RITMO_DA_REACAO`, e É COINCIDÊNCIA, NÃO CÓPIA, pelo
+     mesmo teste que absolveu `.tv-dice`: a duração sai de `formas.md`
+     (R13, `O sinal de guardado`), a varredura não desenha nada que o
+     trilho da reação meça, e no dia em que a janela de reação mudar de
+     número esta animação continua certa — que é exactamente o contrário
+     do que uma cópia faria.
+
+     O QUE ELA NÃO É: uma licença. Se um dia a marca da chapa passar a
+     desenhar tempo de reação, esta linha deixa de bastar — o número tem
+     de vir de `ritmoDaRodada`, como o trilho. E a regra anti-cemitério
+     vale aqui tal e qual: no dia em que `.tv-guardado-varre` deixar de
+     animar 600 ms, a entrada SAI. */
+  ".tv-guardado-varre": 600,
 };
 
 /* D5f · O ALVO DE TOQUE SAI DE TABELA, NUNCA DE ARITMÉTICA DE PADDING.

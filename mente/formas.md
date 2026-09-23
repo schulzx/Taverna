@@ -5557,3 +5557,601 @@ sobrou, que é como todas as gavetas começam.*
   da peça que se construiu para o matar** — uma marca que promete que há mais e
   não se toca. Régua: porta, 48 px, **e diz quantas** — um número é o único jeito
   de o jogador saber se vale a pena abrir.
+
+---
+
+## R13 · o orçamento do ecrã, e a moldura que devolve a página (`jogo`, 23/09)
+
+**O par visual está no Figma** — `e5wJUzInAssoebx5npssKc`, secção
+*R13 · O ORÇAMENTO DO ECRÃ*, cinco telas **1:1, em px reais**: telefone
+hoje → depois de A → depois de A+B, e mesa hoje → depois. Nenhuma faixa ali é
+estimativa: todas saíram do DOM ao vivo, no mesmo save, durante os 20 turnos de
+R6 (`mente/r6-jogo.md`).
+
+### a lei nova: o ecrã tem orçamento, e o orçamento é lei antes de ser medida
+
+Esta mesa desenhou nove etapas sem nunca ter escrito **quanto do ecrã cada
+peça pode comer**. Por isso R1 pôde orçamentar os seus 96 px contra uma página
+de 418 que já não existia, e por isso a soleira pôde nascer com 149 px sem
+ninguém somar. **Cor é número, logo é tabela** — e **altura também é número**.
+
+**O orçamento, medido (telefone 375×812, save real com 1 oferta viva e 2
+prazos aceites):**
+
+| faixa | hoje | depois de A | depois de A+B |
+|---|---|---|---|
+| cabeçalho | 73 | 73 | 73 |
+| **o rosto da cena** | — | — | **96** |
+| **A PÁGINA** | **151** | **503** (586 sem oferta) | **407** (490 sem oferta) |
+| a soleira | 149 | 96 · **0 quando não há oferta** | 96 · 0 |
+| a barra de estado | 180 | — | — |
+| a fita de prazos | 81 | — | — |
+| **a linha do herói** | — | **48** | **48** |
+| o campo + Agir | 102 | 102 | 102 |
+| as abas | 76 | 76 | 76 |
+| **a página, em %** | **18,6 %** | **61,9 %** (72,2 %) | **50,1 %** (60,3 %) |
+| **linhas de prosa** | **5,5** | **18,2** (21,2) | **14,7** (17,8) |
+| **palavras visíveis** | **~38** | ~128 (~149) | ~103 (~124) |
+
+**Cada coluna soma 812, e isso é catraca.** As duas primeiras versões deste
+orçamento — a do `jogo` e a do `desenho`, feitas em separado — **erraram pelo
+mesmo motivo: listaram a soleira a encolher e não somaram os px de volta à
+página.** *Uma tabela de orçamento que não fecha na altura do ecrã não é um
+orçamento; é uma lista de desejos.*
+
+**Mesa 1280×800:** página **396 → 588** só com A (**73,5 %**) e **492** com o
+rosto (**61,5 %**) — a soleira passa de duas ofertas empilhadas (123 px num
+contentor de 1 144 de largura) para uma linha (62), e cabeçalho (73) +
+estado+prazos (106) viram a cinta de 48.
+
+**O número que fecha o caso, e é o que ninguém tinha:** a prosa é **Spectral
+17 px / entrelinha 27,6 px**, coluna de 63ch na mesa e **40ch no telefone**.
+Logo hoje o telefone mostra **5,5 linhas ≈ 38 palavras**. Um parágrafo deste
+jogo tem 60–90. **O telefone não consegue mostrar um parágrafo inteiro.** Não é
+apertado: é incapaz.
+
+**E o defeito de fundo, que é de jogo e não de forma:** a moldura **cresce com
+o jogo**. Cada contrato aceite pela soleira acrescenta um chip de prazo de
+~40 px. **A tela pune o jogador por jogar** — a peça que a Fase R construiu
+para ele agir é a mesma que lhe encolhe a página a cada uso.
+
+### a régua de quem fica sempre na tela
+
+> **Fica sempre visível o que o jogador usa para decidir *enquanto* está a
+> decidir. O que só importa quando muda, chega quando muda, e depois recolhe.**
+> *Estar sempre visível não é a única forma de estar disponível — mas nada que
+> ele use para decidir pode desaparecer.*
+
+A régua não é opinião: sai do censo dos 20 turnos de R6, item a item.
+
+| item da barra | olhei para decidir? | destino |
+|---|---|---|
+| `PV` | **sim, 1×** (T6 → decidiu o acampamento de T12) | **fica** |
+| estado vivo (`Exausto`) | **sim, 1×, e foi ele que decidiu** | **fica, e nunca recolhe** |
+| relógio (data+hora) | **sim, 2×** (T12, T19) | **fica** |
+| prazo | **sim, 1×** (T13, antes de aceitar o 2.º contrato) | **fica, no relógio** |
+| a bolsa | **não existe na tela** | **ENTRA** |
+| lugar | 0× — soube sempre pela prosa | **sai: o rosto da cena di-lo melhor** |
+| `NIV` | 0× | recolhe para a ficha |
+| `PM` | 0× (guerreira; nunca gastei mana em 20 turnos) | recolhe — **volta sozinho** ao primeiro ponto gasto ou ao primeiro herói com magia |
+| `XP` | 0× | recolhe para a ficha |
+| clima · estação | 0× — a prosa disse "chuva" e "sol" melhor que o ícone | recolhe para o rosto da cena |
+| heroísmo | 0× como número (usei-o 1×, e no véu do dado) | recolhe |
+
+**A bolsa entra, e vale mais do que os dois que saem**, com número: em 20
+turnos a soleira ofereceu 205 e 115 moedas, o mercado mostrou 30 preços entre
+20 e 298, e **a tela nunca disse quanto eu tinha**. `XP 178/300` e `NIV 1` não
+decidem nada sozinhos; **a moeda é o denominador de todas as ofertas e de todo
+o mercado**. *Uma oferta com preço e sem saldo é meio veredito.*
+
+### `Esperar` sai da soleira e vai para o relógio — e isto fecha a trava de R1b
+
+`formas.md` §R1b já tinha julgado que **`Esperar` nunca devia ter entrado na
+soleira**, e deixou uma trava: *"ou o `+N` vira porta antes, ou o controlo de
+passar o tempo guarda o lugar que tinha"*. **R6 mediu o custo dessa dívida: em
+9 dos 20 turnos a soleira não tinha mais nada — 149 px de moldura em quase
+metade dos turnos para não oferecer nada.**
+
+**A saída não é esconder: é dar-lhe casa.** `Esperar` passa a ser **o toque no
+relógio da linha do herói**. Não é remoção, é mudança de morada — e é
+*uma ação, uma forma*: **o tempo mora onde o tempo se lê.** A trava está paga.
+
+**E de passagem fecha R11.** `T.mundo` nasceu em R2 com uma justificação
+exacta — tirar ao âmbar **cinco** significados: *relógio, data, estação, lugar
+e a espera*. R11 contou e disse a verdade: `T.onMundo` tinha **zero** leitores e
+os cinco continuavam âmbar. **A linha do herói é onde os cinco se juntam pela
+primeira vez, e `mundo` é a cor deles.** Um acento que não tira trabalho a
+nenhum outro é só mais uma cor; este passa a tirar.
+
+### a soleira deixa de existir quando não tem o que oferecer
+
+Não encolhe, não fica vazia a fingir: **ocupa 0 px**. Uma faixa vazia é uma
+promessa por cumprir em todos os turnos.
+
+**A divergência que eu abro contra mim mesmo, para não a descobrir depois:**
+uma soleira que aparece e desaparece **mexe a página debaixo dos olhos do
+jogador**, e isso é exactamente o defeito que esta casa persegue noutros
+sítios. Duas saídas, e a escolha é do `desenho` porque é de forma:
+**(a)** a página cresce e encolhe, e o movimento é a informação — *apareceu
+coisa nova*; **(b)** a página fica fixa no tamanho menor e a soleira entra por
+cima do rodapé. **Eu prefiro (a)** e digo porquê do meu lado: nos 20 turnos, a
+oferta apareceu **3 vezes** e nas 3 foi acontecimento — a página encolher *é*
+a notícia. **Fechada a favor dele**, com a razão que a casa já tinha
+escrita: a soleira vive no convés, colada ao campo — ao nascer empurra o campo
+para baixo e **a prosa não se move um pixel**. O salto de leiaute é **zero**.
+Eu propus escolher entre duas saídas quando existia uma terceira, melhor.
+
+### o momento do rosto da cena (etapa B) — o que é meu
+
+1. **Quando aparece:** sempre. É o topo do papel, não um acontecimento.
+2. **Quando muda:** **só quando o lugar muda.** Não muda por turno, não muda
+   por hora — a luz da faixa desliza com a hora, a gravura não. *Uma imagem que
+   muda a cada turno vira um pisca-pisca e deixa de informar.*
+3. **A transição entre lugares é onde ele ganha o ordenado:** a troca é o único
+   movimento da tela principal, e é ela que diz *saíste de um sítio e chegaste a
+   outro* — que é a coisa que o jogo hoje só diz numa linha de sistema.
+   **Regra minha, e não se negocia: a transição não bloqueia o campo.** Ela
+   corre por cima de um turno que já pode ser escrito, e respeita
+   `prefers-reduced-motion` com corte seco. *Nunca pode custar o turno.*
+4. **O que ele faz a prosa deixar de repetir — contado, não suposto.** Das 21
+   mensagens de prosa desta sessão, **10 abrem com descrição de lugar, hora ou
+   clima** (*"A praça cheira a cera e tinta…"* · *"O sal estala sob as botas…"*
+   · *"A estrada para Vila de Espinho se estende sob um céu pesado…"* ·
+   *"A chuva começa fina, depois grossa…"*), com **média de 14,3 palavras**.
+   Num ecrã que mostra 38, são **37 % do que o jogador vê**. E as 10 são quase
+   todas **chegadas a um lugar novo** — ou seja, o rosto devolve a frase de
+   abertura **exactamente nos turnos em que o jogador está mais perdido**.
+   *(Número corrigido contra mim: tinha dito 11 de 20 e ~25 palavras de cabeça,
+   fui contar e é menos. Fica o menor, que é o verdadeiro.)*
+5. **O veto que eu ponho e que é meu pôr:** **B não sobe antes de A.** Hoje a
+   página tem 151 px; tirar-lhe 96 deixa **55 px = 2 linhas**, e aí a
+   xilogravura não é um livro ilustrado, é uma legenda. **A ordem não é
+   preferência, é aritmética.**
+
+### os quatro defeitos de R6, e quais são de moldura
+
+| defeito medido em R6 | é de quê | onde se paga |
+|---|---|---|
+| a bolsa fora da tela, com todas as ofertas denominadas nela | **moldura** | **etapa A** — entra na linha do herói |
+| `Convidar Vero` traz escrito *"mais 5 dias antes de decidir"*, é clicável, gasta uma chamada ao Narrador e responde o que já estava escrito | **moldura** (é a soleira) | **etapa A** — oferta que não pode mudar nada **não é oferta**: vira estado, sem toque |
+| só o `ir` do mapa diz o custo em tempo; uma frase minha comeu **seis dias** contra um prazo de 4 noites | composição de cada controlo | **R13, spec para o `oficial`** — sem isto o relógio novo não significa nada |
+| `Descanso longo` cobra a noite do prazo, a comida e a água, e não escreve nenhuma | composição de um controlo | **R13, spec para o `oficial`** |
+
+**Os dois últimos ficam aqui e não numa pauta futura** por uma razão de jogo:
+a etapa A põe o relógio e o prazo no centro da tela. **Um relógio em destaque
+sobre ações que não dizem o que custam é uma promessa que a tela não cumpre** —
+seria dar ao jogador o mostrador e esconder-lhe o preço.
+
+### o selo de prazo conta o que FALTA, não o que passou
+
+Medido jogando: o chip diz `1/4`, que é **passos gastos**, quando a pergunta do
+jogador é *"dá para ir ao posto e ainda voltar a tempo?"*. E há o defeito que só
+o uso pega: **passaram-se seis dias de calendário e o chip continuou `1/4`**,
+porque só conta noites dormidas. O jogador vê o relógio saltar uma semana e o
+prazo parado, e conclui, com razão, **que o prazo não é a sério**.
+
+> **Régua:** o prazo diz **quanto falta** (`Alba: 3 noites`), nunca quanto
+> passou; e **o nome do contrato não ocupa a linha** — o nome é a parte que o
+> jogador já sabe.
+
+### as peças pedidas ao `desenho` (eu componho, ele fabrica)
+
+1. **`A linha do herói`** — 48 px, e **a linha inteira é o alvo** que abre a
+   ficha (um alvo, não seis). Carga: `PV` · `PM` (condicional) · a bolsa ·
+   relógio+prazo · os estados vivos. Eixos do momento, que são meus:
+   *Calma · Um estado vivo · Prazo a apertar*.
+2. **`O selo de prazo`** — cabe na linha, conta o que falta, vira `danger` na
+   última noite.
+3. **`O relógio`** — peça **tocável**, porque é para lá que vai o `Esperar`.
+4. **`O rosto da cena`** — 96 px, xilogravura por semente, a luz pela hora.
+5. **`A soleira` ausente** — a forma de não estar lá.
+
+*Assinatura do `desenho` pendente nesta secção; onde ele divergir, o lado dele
+entra por baixo de cada item, nunca em dois códigos.*
+
+### R13 · o que o `jogo` e o `desenho` fecharam entre si (23/09)
+
+**As duas medições bateram ao pixel, sem terem visto uma a outra:** 180 · 81 ·
+102, bloco do herói 87, heroísmo 48, três spans de 15. *Duas medições
+independentes no mesmo número é a melhor prova que este ciclo tem*, e fica
+escrito assim.
+
+**Correcções ao que eu (`jogo`) escrevi acima, e todas contra mim:**
+
+1. **`A linha do herói` passa a chamar-se `A cinta`** — recusa dele, por lei, e
+   aceite sem reserva. Duas razões, e as duas são melhores do que o meu nome:
+   `A linha` **já existe** em `formas.md` (a peça de 72 px do campo do turno,
+   D4), e **a peça não é só do herói** — metade dela é do mundo, e é essa metade
+   que paga R11.
+2. **O cabeçalho (73 px) também morre, e eu não o tinha na conta.** Ele
+   dissecou-o: `[Início 48] "Taverna" (Cormorant 28) [⛺ 48] [🎲 48] [📜 48]` —
+   **setenta e três pixels, no telefone, para escrever o nome do produto a quem
+   já está dentro dele.** *O sistema não fala de si mesmo*, e aqui ele diz o
+   próprio nome. Foi o melhor achado da etapa e não é meu.
+3. **"Abrir a ficha" tem hoje DUAS caras** — o bloco do herói é
+   `onClick={() => setAba("gestao")}` **e** existe a aba `GESTÃO`. A lei-mãe
+   desta mesa quebrada na tela onde se passam os 90 %.
+4. **O orçamento sobe, por causa de 2 — e as duas primeiras contas estavam
+   erradas, as duas pelo mesmo motivo.** `jogo` publicou 417/321; `desenho`
+   publicou 437/341; **nenhuma somava 812**, porque ambos listaram a soleira a
+   encolher e não somaram os 66 px de volta à página. O `desenho` apanhou-o ao
+   somar as faixas, que é o que qualquer um de nós devia ter feito antes de
+   publicar. **Os números certos: 503 px com oferta, 586 sem oferta, 407 com o
+   rosto, 490 com o rosto e sem oferta** — 3,33× a página de hoje. **E o erro da
+   mesa (481/385) era meu, cometido em separado, e ninguém o apanhou: são
+   588/492.** *Fica escrito com o erro à frente, porque um orçamento é a coisa
+   desta etapa que mais gente vai copiar sem reconferir.*
+5. **A minha divergência contra mim (a soleira que some mexe a página) está
+   fechada a favor dele, e a razão já cá estava:** a soleira vive no convés,
+   colada ao campo; **ao nascer empurra o campo para baixo e a prosa não se move
+   um pixel.** O salto de leiaute é **zero**. Eu tinha proposto uma escolha
+   entre duas saídas quando a casa já tinha a terceira escrita.
+6. **O selo de prazo não distingue por cor, distingue por forma.** Ele mediu
+   antes de construir e o selo de três cores **reprovava em visão normal**:
+   1,26:1 entre "calmo" e "a apertar" — **pior do que o defeito que R9 acusou**
+   (1,37). A última noite **enche** (chip cheio, 6,37:1 de luminância), e as
+   outras duas diferenças são um número que se lê. *Bom que se meça antes de
+   construir e não depois.*
+
+**O que ficou meu, e ele assinou:** a régua de quem fica sempre na tela, a
+carga da cinta item a item pelo censo dos 20 turnos, a bolsa como obrigatória,
+o `Esperar` a mudar-se para o relógio, o prazo a contar ao contrário, e a ordem
+**A antes de B** — *aritmética, não preferência*.
+
+**O que eu acrescentei depois de ele fechar as peças, e é composição:**
+
+- **Os quatro botões do cabeçalho que morre não se perdem**, e a morada de cada
+  um sai do que eu usei em 20 turnos: `⛺` (1 uso, decisivo) **vai para o toque
+  no relógio**, ao lado do `Esperar` — *acampar é passar o tempo*; `🎲 rolagens`
+  (0 usos) é **preferência de exibição** e sai da tela principal; `📜 crónica`
+  (0 usos) **vai para o `Diário`**, que é onde a crónica mora; `Início` (1
+  tentativa, **e não fez nada** — é defeito) vai para o pé da ficha.
+- **E a troca do acampamento é estritamente melhor, não só mais barata:**
+  quando existe um estado que o descanso cura, **`Montar acampamento` sobe à
+  soleira como oferta**. Medido em T12: o `😵 Exausto` apareceu na barra e **a
+  cura não foi oferecida em lado nenhum** — eu tive de me lembrar do emoji no
+  canto. O turno em que eu realmente acampei passa a **um** toque, não dois.
+- **`✓ SALVO` sobrevive ao cabeçalho que o alojava.** Num jogo cujo save mora só
+  no `localStorage` do jogador, **é a única coisa que lhe diz que a vida dele
+  está segura**. Passa a transitório na cinta: aparece ao gravar, some sozinho,
+  **0 px permanentes e zero deslocamento de leiaute**.
+- **A gravura não anima na chegada** — concordo com ele, e a razão é de jogo:
+  uma imagem que transiciona a cada cena é **um piscar por turno**, e *nunca
+  pode custar o turno*. **Mas a chegada tem de se notar, e não inventa peça:**
+  o **nome do lugar** chega com o eixo **`Chegada`** que `A oferta` já tem —
+  *decai por turno, nunca por tempo*, que é a lei que ele ganhou em R1. Uma
+  ação, uma forma; a marca de "isto é novo" já existe nesta casa.
+
+**A dívida do Figma, declarada pelos dois em R1, está paga nesta sessão.** O
+`jogo` pôs a secção *R13 · O ORÇAMENTO DO ECRÃ* (cinco telas 1:1 com as faixas
+em px reais — o diagrama do orçamento, que é composição); o `desenho` põe as
+variáveis, as peças com eixos e o par renderizado a 375×812. *São coisas
+diferentes e não se duplicam: uma diz quanto cada faixa pesa, a outra diz com
+que cara.*
+
+**A especificação de construção está em `mente/r13-mesa.md`**, detalhada ao
+ponto de o `oficial` a construir sem perguntar.
+
+---
+
+## R13 · a fabricação — a forma fechada de cada peça (`desenho`, 23/09)
+
+O `jogo` compôs o momento (`mente/r13-mesa.md`); aqui fica **de que cada peça é
+feita**. Tudo o que está em `T.` sai de `src/estilo.js` — **nenhum literal de
+cor nasce nesta etapa**, e é isso que faz a mudança desfazer-se num commit.
+
+**O que todas as peças herdam, e não se repete em cada uma:**
+o alvo é `ALVOS.piso` (48); a letra sai de `TIPOS` e **nada desce de 12**; o
+anel de foco é `tv-anel-foco` com a lei de E4 (nunca só `box-shadow`); todo
+movimento tem saída e respeita `prefers-reduced-motion`.
+
+---
+
+### `A cinta` — o topo do telefone, 48 px, e substitui três faixas
+
+**Medidas.** Altura **48** (`Estado=Calma` e `Estado=Prazo a apertar`) e **72**
+(`Estado=Um estado vivo`). Largura 100 %. Enchimento lateral **12** — não 16,
+e a razão é aritmética: a 375 px sobram **67 px de folga** entre os dois alvos
+com 12, e **43** com 16; é dessa folga que `O sinal de guardado` vive.
+
+```
+375 úteis − 24 de enchimento = 351
+a ficha   : rosto 32 + 10 + vitais 93 + 10 + bolsa 41 = 186
+o tempo   : hora 40 + 7 + selo 53 + 12 de enchimento  =  98
+folga     : 351 − 186 − 98                            =  67
+```
+
+**Superfície e fio.** Fundo `T.panel`. **Fio só em baixo, 1 px, `T.lineStrong`.**
+Medido, e é por isto e não por gosto:
+
+| par | medido | veredito |
+|---|---|---|
+| `panel` × `bg` | **1,08:1** | a cinta **não se separa** do fundo |
+| `panel` × `pagina` | **1,33:1** | nem da página |
+| `line` × `panel` | 1,53:1 | um fio de `line` não seria fio nenhum |
+| **`lineStrong` × `panel`** | **3,84:1** | passa a 1.4.11 (pede 3:1) |
+
+*É também o segundo leitor estrutural de `lineStrong` na tela principal — R1
+mediu **um** em toda a tela, o trilho e os treze painéis.*
+
+**Dois alvos, e só dois.**
+
+| alvo | o que leva | largura | abre |
+|---|---|---|---|
+| **a ficha** | rosto 32 · PV · PM · bolsa | ~186, flexível | a aba `gestao` |
+| **o tempo** | a hora · `O selo de prazo` | ~98 | `O painel do tempo` |
+
+Os dois medem **48 de altura** — a banda inteira. Nada mais na cinta se toca.
+
+**A cor faz o corte, e o corte é semântico:** à esquerda são as cores do herói
+(`T.amber`, `T.violetSoft`, `T.amberSoft`); à direita é `T.mundo`, e só ali.
+*Quem olha sabe qual metade é sua sem ler uma palavra.*
+
+**Os pares, todos medidos sobre `T.panel`:**
+
+| o quê | token | contraste |
+|---|---|---|
+| o número de PV/PM/bolsa | `T.ink` | **14,71:1** AAA |
+| a bolsa, o glifo | `T.amberSoft` | **11,05:1** AAA |
+| a hora e o selo calmo | `T.mundo` | **10,09:1** AAA |
+| a barra de PV | `T.amber` | **8,02:1** AAA |
+| a barra de PM | `T.violetSoft` | **7,78:1** AAA |
+| PV grave · a última noite | `T.danger` | **6,37:1** AA |
+| o rótulo de máquina | `T.inkDim` | 6,44:1 AA |
+
+**Zero reprovam; nove de dez são AAA.** O pior par é `danger`, a 41 % acima do
+piso AA.
+
+**As barras de recurso.** Trilho 56×6, raio 3, `T.panelSoft`; o cheio no token
+do recurso. **O comprimento é o canal primário e a cor é o segundo** — e isto
+é lei, não observação: `amber` × `danger` mede **1,26:1 em visão normal** e
+**1,21:1 em deuteranopia**. Um PV que só mudasse de cor no grave não mudaria de
+nada para quem não vê vermelho. Os três canais do PV grave, e os três já
+existem — **só nunca tinham sido escritos como razão**:
+
+1. **o comprimento** da barra (≤ 1/3);
+2. **o rosto**, que `estadoDe()` põe em *grave* (`src/semente.js`);
+3. **`tv-agonia`**, o pulso do bloco.
+
+**A carga, e a régua que a decide.** Do censo dos 20 turnos de R6:
+
+> **Fica sempre na tela o que o jogador usa para decidir *enquanto* decide; o
+> que só importa quando muda, chega quando muda e depois recolhe.**
+
+| fica | recolhe para a ficha | muda de casa |
+|---|---|---|
+| PV · a hora · o prazo mais urgente · **a bolsa** · os estados vivos | `NIV` · `XP` · clima · estação · **PM cheio de quem não usa mana** | `📍 lugar` → `O rosto da cena` |
+
+**`PM` volta sozinho** no instante em que o herói tem magia ou gasta o primeiro
+ponto — não é uma preferência, é um estado. **Os estados vivos não recolhem
+nunca:** foi o único item da barra que mudou uma decisão em 20 turnos.
+
+**`Estado=Um estado vivo` cresce para 72, e é de propósito.** *O que não cabe
+numa linha calma é exactamente o que tem de interromper.* A segunda fila leva
+um chip por estado, com o **que ele faz ao dado escrito por palavras** (`− no
+dado`), nunca só a cor — a mesma lei do selo.
+
+---
+
+### `O selo de prazo` — conta o que falta, e distingue-se por **forma**
+
+Vive dentro do alvo do tempo. **Nunca mostra o nome do contrato**: era o que
+ocupava a linha na fita antiga, e é a parte que o jogador já sabe.
+
+**A medição que mudou o desenho antes de ele existir.** O primeiro esboço tinha
+três cores. Medido:
+
+| par | normal | protanopia | deuteranopia | tritanopia |
+|---|---|---|---|---|
+| calmo × a apertar (`mundo`×`amber`) | **1,26** | 1,51 | **1,12** | **1,27** |
+| a apertar × última (`amber`×`danger`) | **1,26** | 1,36 | **1,21** | **1,27** |
+| calmo × última (`mundo`×`danger`) | 1,59 | 2,04 | 1,36 | 1,62 |
+
+**O defeito que R9 acusou (`ok`×`amber`) é 1,37:1 em visão normal.** O selo de
+três cores seria **pior do que o defeito que esta etapa foi mandada não
+herdar.** *Mediu-se antes de construir, e é por isso que não foi construído.*
+
+**Os quatro canais, por ordem de força:**
+
+1. **A areia da ampulheta** desenha a fracção que falta. Geometria pura —
+   sobrevive aos três daltonismos, ao cinzento e ao tamanho. **É o canal
+   primário**, e nasceu de reparar que o glifo já era um medidor.
+2. **A palavra e o número**: `5 noites` · `2 noites` · **`esta noite`**.
+3. **A forma**: `Aperto=Esta noite` **enche** — chip `T.danger` com `T.onAccent`
+   dentro, raio 4, enchimento 8×4. A área muda de luminância em **6,37:1**, e
+   luminância não é cor.
+4. **A cor** — e é a **última** leitura, nunca a primeira.
+
+**Por que as outras duas não precisam de um canal forte:** `5 noites` e
+`2 noites` não são estados que se distinguem de relance — **são um número que
+se lê**. O único que tem de saltar aos olhos é a última noite, e esse enche.
+
+| `Aperto` | areia | palavra | forma | cor |
+|---|---|---|---|---|
+| **Folgado** (≥3) | cheia (0,85) | `N noites` | texto | `T.mundo` |
+| **A apertar** (2–1) | a terço (0,33) | `N noites` | texto | `T.amber` |
+| **Esta noite** (0) | um fio (0,08) | `esta noite` | **chip cheio** | `T.onAccent` sobre `T.danger` |
+
+**`Quantos` (Um · Um e mais N):** com mais de um prazo vivo, `+2` em
+`T.inkDim` mono 12 à direita do selo. O toque abre-os todos.
+
+**A condição, e sem ela a peça mente pior do que a de hoje:** o motor tem de
+saber **quantas noites restam em tempo de calendário**. Hoje o chip conta
+noites dormidas, e ficou `1/4` enquanto o calendário andava de 1 para 14 de
+Brumal — **treze dias**. Uma peça que conta ao contrário **expõe** esse defeito
+em vez de o esconder. Está em `mente/pedidos-ao-sistema.md`.
+
+---
+
+### Os quatro glifos, desenhados — e são 4 dos ~21 que R8 conta
+
+Quadro **12×12**, o mesmo de `IconeGota` e `IconeCheck`. Tinta única, como em
+`rosto.jsx`. Saem para `src/ui.jsx`.
+
+| peça | construção |
+|---|---|
+| `IconeVida` | `M 6 10.6 C 2 7.9 0.7 5.7 0.7 4 C 0.7 2.4 2 1.3 3.4 1.3 C 4.5 1.3 5.5 1.9 6 2.8 C 6.5 1.9 7.5 1.3 8.6 1.3 C 10 1.3 11.3 2.4 11.3 4 C 11.3 5.7 10 7.9 6 10.6 Z` — cheio |
+| `IconeMana` | losango `M 6 0.7 L 11.3 6 L 6 11.3 L 0.7 6 Z` a traço 1,1 + miolo `M 6 3.7 L 8.3 6 L 6 8.3 L 3.7 6 Z` cheio |
+| `IconeBolsa` | aro `r 5,5` a traço 1,1 + miolo `r 2,2` cheio, ambos em (6,6) |
+| `IconeAmpulheta` | `M 2.6 1 L 9.4 1 L 6 6 L 9.4 11 L 2.6 11 L 6 6 Z` a traço 1,05 + **a areia** |
+
+**A areia é uma função, não um desenho.** `h = 5 × max(0,08, min(1, fração))`,
+meia-base `0,68 × h`, e o triângulo é
+`M 6 11 L (6−meia) 11 L 6 (11−h) L (6+meia) 11 Z`. O piso de 0,08 existe para
+que "esta noite" ainda **tenha** areia — um triângulo de altura zero lê-se como
+um erro de desenho, não como urgência.
+
+---
+
+### `O sinal de guardado` — 0 px permanentes, e ainda assim se vê
+
+Ele vivia no cabeçalho que morre, e **num jogo cujo save mora só no
+`localStorage` é a única coisa na tela que diz ao jogador que a vida dele está
+segura**. Duas camadas, para não depender de uma só:
+
+1. **A marca da chapa acende.** O fio de 1 px do pé da cinta passa de
+   `T.lineStrong` a `T.ok` e **varre uma vez**, da esquerda para a direita,
+   **600 ms**. Zero px, zero deslocamento — *é a própria borda do que guarda o
+   seu estado a dizer que o guardou.*
+2. **`✓ guardado`**, mono `TIPOS.maquina` em `T.ok`, **na folga de 67 px**,
+   posicionado em absoluto. Não empurra nada e não tapa tinta nenhuma.
+
+**A degradação, escrita e não acidental:** abaixo de 67 px de folga (telefone
+estreito, letra de sistema aumentada) **o rótulo não aparece e fica a varredura
+sozinha**. `prefers-reduced-motion`: sem varredura — o fio fica `T.ok` 1,2 s e
+desvanece. E `aria-live="polite"` diz *guardado* a quem não vê nenhuma das duas.
+
+---
+
+### `O rosto da cena` — 96 px, e o motor já existe
+
+**Não nasce um segundo motor.** `hashSemente` + `rng` + `escolher`, de
+`src/semente.js` — as três funções puras que `rosto.jsx` já usa e que já se
+provam em Node. A semente é
+`hashSemente(semente_do_mundo + "|" + bioma + "|" + lugar)`. **Mesma semente,
+mesma cripta, em qualquer máquina** — a primeira lei da casa aplicada a uma
+imagem.
+
+**Por que é composta e não uma biblioteca de desenhos, e o número obriga:**
+são **30 biomas**, não 8. `src/moldes.js` tem quatro moldes — superfície, torre,
+mar, estelar — com 7 a 8 cada. *Trinta gravuras não são honestas num ciclo.*
+
+**Três bandas, e a gramática é curta de propósito:**
+
+| banda | px | de que é feita |
+|---|---|---|
+| **o céu** | 0–62 | gradiente da luz + o astro + hachura que adensa para o horizonte |
+| **o horizonte** | ~40–62 | **a silhueta do bioma** — uma massa de tinta, sem meio-tom |
+| **o chão** | 62–96 | a cor da luz + hachura diagonal + a linha do chão |
+
+**Sete gramáticas de silhueta** cobrem os 30 biomas: *duna* (deserto, gelo,
+costa, planície de sal) · *copa* (floresta, selva, jardim) · *crista* (colina,
+montanha, recife) · *coluna* (salão, biblioteca, santuário, oficina) · *vaga*
+(mar aberto, enseada, águas fundas) · *véu* (pântano, bruma, nebulosa) ·
+*arco* (orbital, estação, cinturão). **Cinco hachuras de chão**: seca ·
+molhada · pedra · lajeado · nenhuma (o vazio).
+
+**A hora não muda o desenho: muda a luz.** Quatro receitas × qualquer cena, e
+elas entram em `src/estilo.js` como `LUZ_DA_CENA` — *cor é número, logo é
+tabela*:
+
+| luz | céu (alto) | céu (horizonte) | chão | o astro |
+|---|---|---|---|---|
+| madrugada | `#2A2219` | `#4A3524` | `#241D16` | `T.amberSoft` a 0,55, baixo |
+| dia | `#54432F` | `#6B563C` | `#3E3222` | `T.amberSoft` a 0,40, alto |
+| entardecer | `#4A3524` | `#7A4A28` | `#2E2418` | `T.danger` a 0,60, baixo |
+| noite | `#221B14` | `#2E2620` | `#1A1510` | `T.mundoSoft` a 0,50, alto |
+
+A tinta da gravura é **uma só**, `#0F0B08` — três tons de linha e uma
+xilogravura vira desenho digital, que é a lição que `rosto.jsx` já tinha
+escrito.
+
+**A legenda** mora na banda do chão: o lugar em Spectral Medium `TIPOS.corpo`
+(15) em `T.ink`, e **a hora por palavra** em mono `TIPOS.maquina` em `T.mundo`.
+Medida nas quatro luzes — pior par **`ink` × chão de dia = 10,60:1**, AAA com
+51 % de folga. `T.mundo` nunca desce de 7,27:1.
+
+**A marca da chapa.** A faixa fecha-se em cima e em baixo com **1 px de
+`T.inkMeio`**, e o token não foi escolhido: foi o único que sobreviveu à
+medição.
+
+| candidato | × a cinta | × a página | pior dentro da faixa | veredito |
+|---|---|---|---|---|
+| `paginaFio` | 3,06 | 2,30 | **1,67** | reprova |
+| `lineStrong` | 3,84 | 2,89 | **2,10** | reprova |
+| a tinta da gravura | 1,13 | 1,50 | **1,08** | reprova |
+| **`inkMeio`** | 8,75 | 6,59 | **4,78** | **passa** |
+
+*E é o que um prelo deixa no papel: a marca da chapa.*
+
+**Não anima.** Uma imagem que transiciona a cada cena é **um piscar por turno**,
+e *nunca pode custar o turno*. A chegada a um lugar novo marca-se **no nome**,
+pelo eixo `Chegada` que `A oferta` já tem — *decai por turno, nunca por
+relógio*. **Zero movimento novo nesta etapa.**
+
+**Como se degrada, e nenhum destes casos dá buraco:**
+
+- **bioma desconhecido** → horizonte liso com hachura, que é uma gravura
+  legítima e não um erro;
+- **`prefers-reduced-motion`** → nada muda, porque nada se move;
+- **alto contraste (`forced-colors`)** → a faixa perde as cores por
+  especificação e fica a silhueta a traço sobre o fundo do sistema; **a legenda
+  continua a dizer o lugar e a hora por palavras**, que é o que ali importa;
+- **ecrã estreito** → a silhueta é desenhada em coordenadas de 0 a 100 e
+  escalada; a legenda trunca o lugar com reticências e **nunca a hora**.
+
+**A dívida desta peça, declarada:** a hachura do protótipo é **regular, e um
+buril não é**. O espaçamento e o ângulo de cada linha têm de sair do mesmo
+`rng` — uma gravura com hachura métrica lê-se como *padrão*, não como *talho*.
+Está especificado, não está desenhado.
+
+---
+
+### As duas leis que esta etapa acrescenta
+
+**1 · O que está sempre na tela é o que se usa *enquanto* se decide.**
+Tudo o resto chega quando muda e depois recolhe. É varrível: uma faixa
+permanente cujo conteúdo não mudou numa sessão inteira é mobília.
+*Origem: Nielsen Norman Group, «Progressive Disclosure» (Jakob Nielsen, 2006),
+<https://www.nngroup.com/articles/progressive-disclosure/> — e o censo dos 20
+turnos, que é a metade que nenhuma diretriz podia dar.*
+
+**2 · A tela não escreve o nome do produto.**
+Extensão directa de *o sistema não fala de si mesmo*. O jogador sabe em que
+jogo está. **73 px, no aparelho mais apertado, era o preço de lho repetir.**
+
+---
+
+### O Figma — a dívida de R1 paga, e o que se achou ao pagá-la
+
+Arquivo `e5wJUzInAssoebx5npssKc`.
+
+**O que se achou, e ninguém tinha reportado: a biblioteca estava a mostrar a
+paleta PRÉ-R2.** `bg` era `#0e0c15` quando o código diz `#131120`; `ink` era
+`#eae4d6`; `danger` era `#d86a5b` — **dez valores errados** — e **nove tokens
+não existiam** (`pagina`, `paginaAlta`, `paginaFio`, `inkMeio`, `mundo`,
+`mundoSoft`, `onMundo`, `okFundo`, `perigoFundo`). *A fonte da verdade visual
+estava a mostrar as cores que o código abandonou no próprio dia em que R2 as
+trocou* — quem abrisse a biblioteca desenhava no passado.
+
+- **Fundações:** 24 variáveis na *Paleta semântica (T)* — 10 corrigidas, 9
+  criadas —, todas com `scopes` explícitos e `codeSyntax` WEB igual ao caminho
+  JS (`T.mundo`).
+- **Uma colecção nova, e ela é a forma certa de `LUZ_DA_CENA`:**
+  *Luz da cena*, cinco variáveis (`ceuAlto`, `ceuBaixo`, `chao`, `astro`,
+  `tinta`) × **quatro modos** (Madrugada · Dia · Entardecer · Noite). Cada
+  variante do rosto **fixa o seu modo** — e é assim que quatro desenhos
+  passam a ser **um desenho com quatro luzes**. Em código vive em
+  `src/estilo.js` **ao lado de `MATERIAIS`, não dentro de `T`**: não diz o que
+  a cor *significa*, diz **que luz há na cena**.
+- **`R13 · a cinta`:** `A cinta` (3 estados) e `O selo de prazo` (3 apertos).
+- **`R13 · o rosto da cena`:** `O rosto da cena` nas quatro luzes.
+- **Auditado por máquina, e o número é o contrato desta mesa:**
+  **219 pinturas, 219 ligadas a variável, zero cor literal** — 78 na cinta e
+  no selo, 141 no rosto. *A primeira auditoria deu 34,8 % no rosto, e a causa
+  foi bem pequena e bem típica: 92 hachuras chamavam-se `Vector` e a ligação
+  procurava-as por nome. Passou a casar pela cor.* **Uma catraca que confia no
+  nome de uma camada não é uma catraca.**
+- **`R13 · o par, antes e depois`:** as duas telas **375×812**, a mesma cena e
+  o mesmo save. *A dívida que os dois declararam em R1 fica paga pelos dois no
+  mesmo dia* — o `jogo` com o orçamento em faixas, o `desenho` com as caras.

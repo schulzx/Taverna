@@ -37,7 +37,21 @@ t("Soleira é exportada", /export function Soleira\(/.test(src));
 t("Voz é exportada", /export function Voz\(/.test(src));
 
 console.log("\n== NENHUMA INVENTA NÚMERO: leem TIPOS/ALVOS/T da tabela ==");
-t("ui.jsx importa TIPOS e SOLEIRA de estilo.js", /import \{ TIPOS, SOLEIRA \} from "\.\/estilo\.js"/.test(bruto));
+/* 23/09 · R13 — A ASSERÇÃO ABRIU, E O MOTIVO FICA ESCRITO porque a lei
+   da casa o exige. Ela travava a LISTA INTEIRA (`{ TIPOS, SOLEIRA }`,
+   byte a byte), e o que ela existe para provar é outra coisa: que o
+   `ui.jsx` pede a escala de letra e o teto de ofertas À FOLHA, e não a
+   `constantes.js`. R13 trouxe `CINTA` — a geometria da cinta — pela
+   mesma porta e pela mesma razão, e a lista fechada reprovou uma linha
+   que a obedece. Uma catraca que proíbe a tabela de ganhar a entrada
+   seguinte não guarda a lei: guarda o dia em que foi escrita.
+   O que se guarda passa a ser o que importa: os dois nomes vêm de
+   `estilo.js`, e continuam a NÃO vir de `constantes.js`. */
+const importaDaFolha = /import \{([^}]*)\} from "\.\/estilo\.js"/.exec(bruto);
+t("ui.jsx importa TIPOS e SOLEIRA de estilo.js",
+  !!importaDaFolha && /\bTIPOS\b/.test(importaDaFolha[1]) && /\bSOLEIRA\b/.test(importaDaFolha[1]));
+t("e não os vai buscar a constantes.js, que é a outra mesa",
+  !/import \{[^}]*\b(?:TIPOS|SOLEIRA)\b[^}]*\} from "\.\/constantes\.js"/.test(bruto));
 /* recorte de cada peça, do export até o próximo `export function`/EOF —
    mesma técnica de fatiar por texto que o resto da casa usa quando não
    há módulo para medir */

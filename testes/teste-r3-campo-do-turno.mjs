@@ -205,22 +205,50 @@ t("o que já foi aceite sai da soleira, pelo MESMO teste que `pregarNoMural` usa
   /const jaNoDiario = new Set\(garantirMissoes\(missoes\)/.test(rSoleira)
   && /\["ativa", "oferecida", "concluida"\]\.includes\(q\.status\)/.test(rSoleira),
   "cliquei no cartaz já aceite e o jogo respondeu `já está no diário`: um botão morto na fila ensina a não olhar para a soleira");
-/* as três que SOBRAM, na ordem da perecibilidade — a ordem é a prioridade,
-   e medi-la pela posição no texto é medir a ordem da lista */
+/* AS QUE SOBRAM, na ordem da perecibilidade — a ordem é a prioridade, e
+   medi-la pela posição no texto é medir a ordem da lista.
+
+   R13 MUDOU OS DOIS EXTREMOS DESTA FILA, E OS DOIS COM NÚMERO À FRENTE.
+
+   SAIU `Esperar`, e com ele a dívida que R4b tinha assumido. Ele estava
+   aqui EMPRESTADO e com o motivo escrito: pela régua desta região não é
+   oferta — o jogador podia ter pensado em esperar sozinho —, e só entrou
+   porque R4b lhe tirou a aba `Tempo` e não lhe deu casa. Medido em R6: em
+   **9 dos 20 turnos** a soleira SÓ tinha `Esperar`, ou seja 149 px de
+   moldura em quase metade dos turnos para não oferecer nada. Ele mudou-se
+   para o toque no relógio (`OPainelDoTempo`), ao lado do acampamento, e a
+   trava que `formas.md` §R1b tinha deixado aberta fecha-se do lado certo:
+   *não se escondeu o controlo, deu-se-lhe casa*.
+
+   ENTROU `Montar acampamento`, e é a única entrada que não obedece à régua
+   da perecibilidade — obedece a uma mais forte, e por isso é a PRIMEIRA.
+   Medido em T12 de R6: o `😵 Exausto` apareceu na barra de estado e a cura
+   não foi oferecida em lado nenhum; o jogador teve de se lembrar sozinho do
+   emoji no canto do cabeçalho. Não há nada mais perecível do que um corpo
+   que precisa de descanso, e ele só entra QUANDO HÁ O QUE CURAR — fora
+   disso não é oferta nenhuma, é um verbo à mão, e vive no relógio. */
 {
+  const i0 = rSoleira.indexOf('id: "tempo|acampar"');
   const i1 = rSoleira.indexOf('id: `missao|');
   const i2 = rSoleira.indexOf('id: `convite|');
   const i3 = rSoleira.indexOf('id: "chao|aqui"');
   const i4 = rSoleira.indexOf('id: `cartaz|');
-  const i5 = rSoleira.indexOf('id: "tempo|esperar"');
-  t("as cinco entradas que restam existem", [i1, i2, i3, i4, i5].every((i) => i > 0));
-  t("e estão na ordem da perecibilidade: resposta · cena · chão · papel · esperar",
-    i1 < i2 && i2 < i3 && i3 < i4 && i4 < i5,
-    "a régua da lista é quanto tempo a oferta sobrevive, do mais curto ao mais longo");
+  t("as quatro entradas da régua existem, e o corpo à frente delas", [i0, i1, i2, i3, i4].every((i) => i > 0));
+  t("e estão na ordem da perecibilidade: corpo · resposta · cena · chão · papel",
+    i0 < i1 && i1 < i2 && i2 < i3 && i3 < i4,
+    "a régua da lista é quanto tempo a oferta sobrevive, do mais curto ao mais longo — e o corpo do herói vem antes de tudo");
+  t("`Esperar` deixou a soleira e o empréstimo de R4b está pago",
+    i0 > 0 && rSoleira.indexOf('id: "tempo|esperar"') < 0 && /E `ESPERAR` SAIU DAQUI EM R13/.test(APP),
+    "pela régua ele nunca foi oferta; agora tem casa própria no toque do relógio, e o porquê está dito onde se lê");
+  t("e o acampamento só sobe quando há o que curar",
+    /if \(curadas\.length \|\| vidaBaixa \|\| exausto\)/.test(rSoleira),
+    "uma oferta que aparece em todo turno é mobília — foi o que condenou a tábua da cidade em R5b");
+  t("e escreve o que cobra, pelas funções que o vão cobrar",
+    /limparPorDescanso\(personagem\.condicoes \|\| \[\], "longo"\)/.test(rSoleira)
+    && /consumoDiario\(bocas\)/.test(rSoleira)
+    && /\+1 noite em /.test(rSoleira),
+    "o veredito antes do clique, com os dois lados — e duas contas para o mesmo preço seriam duas verdades");
 }
-t("`Esperar` fica por último E o empréstimo está escrito no código",
-  /ESPERAR, E ESTÁ AQUI EMPRESTADO/.test(APP) && /porta de texto/i.test(APP),
-  "pela régua ele não é oferta; fica porque `passarTempo` não tem porta de texto, e isso tem de estar dito onde se lê");
 
 console.log(`\ncampo do turno R3: ${bons} passaram, ${maus} falharam`);
 if (maus) process.exit(1);

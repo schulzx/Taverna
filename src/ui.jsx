@@ -12,7 +12,7 @@ import { T, ALVOS } from "./constantes.js";
    etapa (o bump de `VERSAO` é a última edição antes do commit dele) —
    importar direto da folha é o mesmo dado, sem tocar num arquivo que
    não é meu agora. */
-import { TIPOS, SOLEIRA } from "./estilo.js";
+import { TIPOS, SOLEIRA, CINTA } from "./estilo.js";
 /* A semente é conta (`semente.js`) e o rosto é desenho (`rosto.jsx`). O
    `Retrato` daqui é uma das duas molduras que usam esse rosto — a outra é a
    carta de tarô. É por isso que o rosto saiu deste arquivo: sem um dono só,
@@ -22,6 +22,12 @@ import { tracos } from "./semente.js";
 import { CartaDeTaro } from "./carta-taro.jsx";
 /* A brasa e conta (`brasas.js`) e o campo e desenho — mesma divisao do rosto. */
 import { quantasBrasas, HALO, brasaEm, forcaDoHalo } from "./brasas.js";
+/* R13 · a gravura e o selo sao CONTA e moram em `gravura-da-cena.js`; o
+   rosto da cena e DESENHO e mora em `rosto-da-cena.jsx`. A mesma divisao
+   do rosto e da brasa, tres linhas acima. O re-export existe para o
+   `App.jsx` ter UM import de interface, e nao dois. */
+import { areiaDaAmpulheta, apertoDoPrazo, palavraDoPrazo } from "./gravura-da-cena.js";
+export { RostoDaCena } from "./rosto-da-cena.jsx";
 
 /* `corpo` (R2, NOVO — padrão false): o verbo de `A Oferta` é fala, não
    máquina — `formas.md` pede Spectral `TIPOS.corpo` (15) para ele, e o
@@ -202,7 +208,20 @@ export function IconeEspada({ tamanho = 24, cor = T.violetSoft }) {
   );
 }
 
-export function IconeBolsa({ tamanho = 24, cor = T.violetSoft }) {
+/* A MOCHILA — o glifo de 24x24 que era `IconeBolsa` ate R13.
+
+   NAO E UM RENOMEAR COSMETICO: `formas.md` (R13, os quatro glifos) da o
+   nome `IconeBolsa` a MOEDA — aro r 5,5 a traco 1,1 com miolo r 2,2
+   cheio, no quadro 12x12 da cinta —, e este desenho aqui e uma mochila
+   de 24x24. Dois glifos com o mesmo nome era impossivel; apagar o antigo
+   era tirar a tela ao unico leitor que ele tem (a aba `inv`, em
+   `App.jsx`), calado. Fica com o nome que sempre foi o dele.
+
+   QUEM CHAMAVA `IconeBolsa` PARA A ABA DO INVENTARIO CONTINUA A
+   COMPILAR, e e por isso que esta linha vai no relato: a aba passa a
+   mostrar a MOEDA ate alguem trocar o nome do lado do `App.jsx`. O
+   conserto e uma palavra, e nao e meu — o arquivo tem dono. */
+export function IconeMochila({ tamanho = 24, cor = T.violetSoft }) {
   return (
     <svg width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none">
       <path d="M21 16V20C21 20.2652 20.8946 20.5196 20.7071 20.7071C20.5196 20.8946 20.2652 21 20 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H18C18.2652 3 18.5196 3.10536 18.7071 3.29289C18.8946 3.48043 19 3.73478 19 4V7M3 5C3 5.53043 3.21071 6.03914 3.58579 6.41421C3.96086 6.78929 4.46957 7 5 7H20C20.2652 7 20.5196 7.10536 20.7071 7.29289C20.8946 7.48043 21 7.73478 21 8V12M21 12H18C17.4696 12 16.9609 12.2107 16.5858 12.5858C16.2107 12.9609 16 13.4696 16 14C16 14.5304 16.2107 15.0391 16.5858 15.4142C16.9609 15.7893 17.4696 16 18 16H21M21 12C21.2652 12 21.5196 12.1054 21.7071 12.2929C21.8946 12.4804 22 12.7348 22 13V15C22 15.2652 21.8946 15.5196 21.7071 15.7071C21.5196 15.8946 21.2652 16 21 16" stroke={cor} strokeWidth="2" strokeLinecap="round" />
@@ -222,6 +241,73 @@ export function IconeGota({ tamanho = 12, cor = T.danger }) {
   return (
     <svg width={tamanho} height={tamanho} viewBox="0 0 12 12" fill="none">
       <path d="M8.47516 9.97523C7.8187 10.6316 6.92836 11.0004 6 11.0004C5.07164 11.0004 4.1813 10.6316 3.52484 9.97523C2.86839 9.31883 2.4996 8.42855 2.4996 7.50025C2.4996 6.50021 2.99966 5.55017 3.99977 4.75014C4.99989 3.9501 5.74997 2.75005 6 1.5C6.25003 2.75005 7.00011 3.9501 8.00023 4.75014C9.00034 5.55017 9.5004 6.50021 9.5004 7.50025C9.5004 8.42855 9.13161 9.31883 8.47516 9.97523Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/* ============================================================
+   OS QUATRO GLIFOS DA CINTA (R13) — quadro 12x12, tinta unica
+
+   O mesmo quadro de `IconeGota` e `IconeCheck`, e tinta unica como em
+   `rosto.jsx`: cada um recebe UMA cor e nao decide nenhuma. Sao 4 dos
+   ~21 glifos que R8 conta, e os caminhos sao os de `formas.md` (R13),
+   byte a byte — um glifo redesenhado a mao neste arquivo seria a mesma
+   acao com duas caras, que e o defeito que a mesa existe para evitar.
+
+   `cor` NAO TEM OMISSAO DE PROPOSITO, ao contrario dos glifos antigos
+   deste arquivo: na cinta a cor CARREGA SENTIDO (o corte semantico e
+   `formas.md`, R13 — a esquerda sao as cores do heroi, a direita e
+   `T.mundo`, e so ali). Um default aqui seria a peca a escolher um lado
+   do corte por quem a chama.
+   ============================================================ */
+
+/* O CORACAO, cheio. PV. */
+export function IconeVida({ tamanho = 12, cor }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path d="M 6 10.6 C 2 7.9 0.7 5.7 0.7 4 C 0.7 2.4 2 1.3 3.4 1.3 C 4.5 1.3 5.5 1.9 6 2.8 C 6.5 1.9 7.5 1.3 8.6 1.3 C 10 1.3 11.3 2.4 11.3 4 C 11.3 5.7 10 7.9 6 10.6 Z" fill={cor} />
+    </svg>
+  );
+}
+
+/* O LOSANGO com miolo. PM — e e irmao de `IconeLosango` (24x24) sem ser
+   o mesmo desenho: aquele e so contorno, este tem nucleo, e e o nucleo
+   que o faz ler como "mana" e nao como "escolha" a 12 px. */
+export function IconeMana({ tamanho = 12, cor }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path d="M 6 0.7 L 11.3 6 L 6 11.3 L 0.7 6 Z" stroke={cor} strokeWidth="1.1" fill="none" strokeLinejoin="round" />
+      <path d="M 6 3.7 L 8.3 6 L 6 8.3 L 3.7 6 Z" fill={cor} />
+    </svg>
+  );
+}
+
+/* A MOEDA — o saldo. `formas.md` chama-lhe `IconeBolsa` porque na cinta
+   ele e a BOLSA do heroi; o desenho e uma moeda de canto, que e o que se
+   le a 12 px (uma mochila a 12 px e uma mancha).
+
+   E A BOLSA E OBRIGATORIA, com o numero do `jogo`: a soleira ofereceu
+   205 e 115, o mercado mostrou 30 precos, e a tela NUNCA disse quanto o
+   jogador tinha. Uma oferta com preco e sem saldo e meio veredito. */
+export function IconeBolsa({ tamanho = 12, cor }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <circle cx="6" cy="6" r="5" stroke={cor} strokeWidth="1.1" fill="none" />
+      <circle cx="6" cy="6" r="2.2" fill={cor} />
+    </svg>
+  );
+}
+
+/* A AMPULHETA, e a areia dela e uma FUNCAO — `areiaDaAmpulheta`, que se
+   prova em Node. Ela desenha a fraccao que FALTA e e o canal PRIMARIO
+   do selo de prazo: geometria pura, sobrevive aos tres daltonismos, ao
+   cinzento e ao tamanho. Nasceu de reparar que o glifo ja era um
+   medidor. */
+export function IconeAmpulheta({ tamanho = 12, cor, fracao = 1 }) {
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path d="M 2.6 1 L 9.4 1 L 6 6 L 9.4 11 L 2.6 11 L 6 6 Z" stroke={cor} strokeWidth="1.05" fill="none" strokeLinejoin="round" />
+      <path d={areiaDaAmpulheta(fracao)} fill={cor} />
     </svg>
   );
 }
@@ -1168,5 +1254,132 @@ export function Voz({ quem = "mestre", voz = "muda", resposta, aoOuvir, glifoDeO
       <div className={`h-0.5 rounded-full w-full ${espera && !parado ? "tv-respira" : ""}`}
         style={{ background: espera ? T.amber : T.lineStrong }} aria-hidden="true" />
     </div>
+  );
+}
+
+/* ============================================================
+   O SELO DE PRAZO (R13) — conta o que falta, e distingue-se por FORMA
+
+   Vive dentro do alvo do tempo, a direita da cinta. NUNCA mostra o nome
+   do contrato: era o que ocupava a linha na fita antiga, e e a parte que
+   o jogador ja sabe. E nunca escreve `1/4` — conta ao contrario,
+   `3 noites` → `2 noites` → `esta noite`.
+
+   A MEDICAO QUE MUDOU O DESENHO ANTES DE ELE EXISTIR. O primeiro esboco
+   tinha TRES CORES. Medido pelo `desenho`: calmo x a apertar
+   (`mundo` x `amber`) da 1,26:1 em visao normal e 1,12:1 em
+   deuteranopia — pior do que o defeito que R9 acusou (`ok` x `amber`,
+   1,37:1) e que esta etapa foi mandada nao herdar. Mediu-se antes de
+   construir, e e por isso que nao foi construido assim.
+
+   OS QUATRO CANAIS, POR ORDEM DE FORCA, e a ordem e o desenho:
+
+     1. A AREIA desenha a fraccao que falta. Geometria pura — sobrevive
+        aos tres daltonismos, ao cinzento e ao tamanho. E o PRIMARIO.
+     2. A PALAVRA e o numero.
+     3. A FORMA: a ultima noite ENCHE. A area muda de luminancia em
+        6,37:1, e luminancia nao e cor.
+     4. A COR — e e a ULTIMA leitura, nunca a primeira.
+
+   POR QUE AS OUTRAS DUAS NAO PRECISAM DE UM CANAL FORTE: `5 noites` e
+   `2 noites` nao sao estados que se distinguem de relance — sao um
+   numero que se le. O unico que tem de saltar aos olhos e a ultima
+   noite, e esse enche.
+
+   NAO E UM ALVO: o alvo de 48 e o do TEMPO inteiro, que o embrulha
+   (`mente/r13-mesa.md`, §2.6). Dois alvos encaixados seriam duas
+   portas para a mesma sala — a mesma accao com duas caras. */
+export function SeloDePrazo({ noites, quantos = 1, urgente = false }) {
+  const aperto = apertoDoPrazo(noites, urgente);
+  const palavra = palavraDoPrazo(noites, urgente);
+  const cheio = aperto.cheio;
+  /* A COR SAI DA TABELA POR NOME, nunca por valor: `APERTOS` diz
+     `token`, e quem o traduz em tinta e esta linha, uma vez. */
+  const tinta = T[aperto.token] || T.mundo;
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex items-center gap-1" style={cheio ? {
+        background: T.danger, color: T.onAccent, borderRadius: 4, padding: "4px 8px",
+      } : { color: tinta }}>
+        <IconeAmpulheta tamanho={12} cor={cheio ? T.onAccent : tinta} fracao={aperto.areia} />
+        <span className="tv-mono" style={{ fontSize: TIPOS.maquina, letterSpacing: "0.02em" }}>{palavra}</span>
+      </span>
+      {/* `Quantos = Um e mais N`: o toque abre-os todos, e quem abre e o
+          alvo do tempo. O `+N` e um NUMERO, nao um botao — dar-lhe alvo
+          proprio dentro de outro alvo era a segunda porta de novo. */}
+      {quantos > 1 && (
+        <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.inkDim }}
+          aria-label={`mais ${quantos - 1} prazo${quantos - 1 > 1 ? "s" : ""}`}>
+          +{quantos - 1}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/* ============================================================
+   O SINAL DE GUARDADO (R13) — 0 px permanentes, e ainda assim se ve
+
+   Ele vivia no cabecalho que morre, e NUM JOGO CUJO SAVE MORA SO NO
+   `localStorage` E A UNICA COISA NA TELA QUE DIZ AO JOGADOR QUE A VIDA
+   DELE ESTA SEGURA. Por isso nao cai, e por isso nao paga px: a fita de
+   sempre custava uma linha permanente para dizer, de vez em quando, uma
+   coisa que dura dois segundos.
+
+   DUAS CAMADAS, PARA NAO DEPENDER DE UMA SO:
+
+     1. A MARCA DA CHAPA ACENDE. O fio de 1 px do pe da cinta passa de
+        `T.lineStrong` a `T.ok` e VARRE uma vez, da esquerda para a
+        direita, 600 ms (`.tv-guardado-varre`). Zero px, zero
+        deslocamento — e a propria borda do que guarda o seu estado a
+        dizer que o guardou.
+     2. `✓ guardado`, mono `TIPOS.maquina` em `T.ok`, NA FOLGA de
+        `CINTA.folgaMinima`, em absoluto. Nao empurra nada e nao tapa
+        tinta nenhuma — e e por isso que a posicao sai de `CINTA` e nao
+        de um "centrado no pai": centrado no pai, a 375 px, ele cairia em
+        cima do saldo da bolsa.
+
+   A DEGRADACAO, ESCRITA E NAO ACIDENTAL: abaixo de 67 px de folga
+   (telefone estreito, letra de sistema aumentada) o rotulo nao aparece e
+   fica a varredura sozinha — a regra e da folha, `.tv-guardado-rotulo`.
+   `prefers-reduced-motion`: sem varredura; o fio fica `T.ok` e
+   desvanece quando `visivel` cai. E A TERCEIRA CAMADA NUNCA CAI: uma
+   regiao `aria-live="polite"` fora do alcance da vista diz *guardado* a
+   quem nao ve nenhuma das duas. Ela e SEPARADA do rotulo de propriamente
+   — um `aria-live` com `display: none` nao anuncia nada, e a media
+   query acima apaga o rotulo no telefone estreito, que e exactamente o
+   aparelho onde esta linha mais importa.
+
+   O QUE ELE PEDE A QUEM O MONTA: um pai `position: relative` — a
+   cinta. Nada mais. */
+export function SinalDeGuardado({ visivel }) {
+  /* A CASA DO ROTULO E A FOLGA, E ELE NAO SAI DELA. Ancorado pelos DOIS
+     lados — do fim da ficha ao inicio do tempo — ele nao pode pintar por
+     cima de nenhum dos dois alvos, aconteca o que acontecer a largura.
+     Ancorado so pela direita (a primeira versao) ele entrava 5 px no
+     saldo da bolsa a 375, e so se via desenhado. */
+  const daEsquerda = CINTA.enchimento + CINTA.ficha;
+  const daDireita = CINTA.enchimento + CINTA.tempo;
+  return (
+    <>
+      {/* 1 · a marca da chapa */}
+      <span aria-hidden="true" className={visivel ? "tv-guardado-varre" : ""}
+        style={{
+          position: "absolute", left: 0, right: 0, bottom: 0, height: 1,
+          background: T.ok, pointerEvents: "none", opacity: visivel ? 1 : 0,
+        }} />
+      {/* 2 · o rotulo, na folga */}
+      <span aria-hidden="true" className="tv-mono tv-guardado-rotulo"
+        style={{
+          position: "absolute", left: daEsquerda, right: daDireita, top: "50%",
+          transform: "translateY(-50%)", textAlign: "center", overflow: "hidden",
+          fontSize: TIPOS.maquina, color: T.ok, whiteSpace: "nowrap",
+          pointerEvents: "none", opacity: visivel ? 1 : 0,
+        }}>
+        ✓ guardado
+      </span>
+      {/* 3 · a camada que nunca cai */}
+      <span className="sr-only" aria-live="polite">{visivel ? "guardado" : ""}</span>
+    </>
   );
 }
