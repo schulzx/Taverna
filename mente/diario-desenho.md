@@ -174,6 +174,13 @@ sistema de decisões"*.
   **`flex-wrap` já decidia isto sozinho** — um item entra na linha pelo seu
   tamanho natural e só desce quando não cabe. Tirou-se a largura forçada e o
   verbo curto voltou a partilhar a linha, com o longo a continuar com teto.
+  **Medido depois do conserto, no telefone: cartão curto 58 px, cartão longo
+  85 px (era 142), e o teto segura a 106 px para qualquer título; na mesa os
+  dois voltaram aos 54 px, `flex-wrap` computado `nowrap` — bit a bit a peça de
+  R4a.** *E o conserto não introduziu número nenhum:* o `aprendiz` recusou o
+  `min-width` que eu sugeri, por achar que o algoritmo de quebra já resolvia
+  pelo tamanho natural — **e tinha razão**. *Uma correção que não deixa atrás de
+  si um número por justificar é a melhor espécie de correção.*
   **O que o telefone recebe em troca, e é o aparelho que mais recebia nada:**
   - **o preço das 8 ações rápidas estava em `title`, e `title` no telefone
     simplesmente não existe.** O jogador de telemóvel **nunca** viu o preço de
@@ -210,10 +217,21 @@ sistema de decisões"*.
      "provavelmente" no controlo principal da tela principal.** Ganhou
      `aria-label` explícito e asserção de suíte. *Esta casa passou cinco ciclos
      a pagar esta mesma classe de defeito com o anel de foco, e a lição é que o
-     ónus fica de quem constrói.* **E de lambuja: as reticências do corte também
-     não existiam** — a classe `line-clamp-2` da CDN gerava `display: flow-root`
-     em vez de `-webkit-box`, e o corte era seco. *Um comentário que promete um
-     `…` que não aparece é pior que nenhum comentário.*
+     ónus fica de quem constrói.* **E de lambuja: as reticências do corte
+     também não apareciam** — o teto funcionava por `overflow:hidden` e o `…`
+     não existia. *Um comentário que promete um `…` que não aparece é pior que
+     nenhum comentário.* Passou a `style` inline, e o pixel confirma-o (um
+     título de 239 caracteres corta com `…` visível).
+     > **E aqui a fase aprendeu uma coisa sobre a própria ferramenta de medir.**
+     > O diagnóstico inicial culpou `getComputedStyle`, que reportava
+     > `display: flow-root` em vez de `-webkit-box` — e concluiu-se que a classe
+     > da CDN nascia errada. **Medido outra vez depois do conserto, o valor
+     > continua `flow-root`**: é apenas como o Chrome de hoje *nomeia* o
+     > `display` resolvido de um bloco com `-webkit-line-clamp`, cuja
+     > implementação nativa deixou de precisar do truque de flexbox por baixo.
+     > *O valor computado era inocente; quem provou o defeito e o conserto foi o
+     > pixel.* **A casa já tinha uma armadilha escrita sobre confiar na foto em
+     > vez da árvore — esta é a irmã dela pelo lado oposto, e fica registada.**
   1. **`Atacar` na tela principal estava morto desde E3** e a suíte dizia que não.
      `vereditoDoGolpeAgora()` abre com `if (!comb) return null`; o painel só se
      pinta sob `!emBatalha`; logo `vdGolpe` era **sempre `null` ali**. O varredor

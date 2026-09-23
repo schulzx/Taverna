@@ -896,20 +896,29 @@ export function Oferta({ verbo, preco, retorno, quem, onde, tom = "convite", est
 
      E O VERBO GANHA UM TETO DE DUAS LINHAS, NÃO SEIS — E AS RETICÊNCIAS
      SÃO GARANTIDAS, NÃO TORCIDAS DE UMA CLASSE DO TAILWIND: a classe
-     utilitária `line-clamp-2` (CDN) mediu `display: flow-root` ao vivo
-     em vez de `-webkit-box` — o corte funcionava (via `overflow:hidden`)
-     mas sem reticência nenhuma, e um comentário que promete "…" que não
-     aparece é pior que nenhum comentário. A saída (R5d) é o mesmo CSS,
-     mas por `style` inline, que nunca perde para a folha gerada por
-     especificidade: `display:"-webkit-box"`, `WebkitBoxOrient:
-     "vertical"`, `WebkitLineClamp: 2`, `overflow:"hidden"` — sem depender
-     de a CDN gerar a classe do jeito certo. Uma oferta que precisa de
-     mais que duas linhas para dizer o que é já não é um verbo, é um
-     parágrafo — cortar com reticências é honesto (diferente de esconder
-     o preço em `title`): o verbo CONTINUA por inteiro no DOM (leitor de
-     tela lê tudo, e agora também o nome acessível do botão — ver
-     `ariaLabel` em `Botao`, acima), só a TINTA é que para em duas linhas
-     com "…" no fim. */
+     utilitária `line-clamp-2` (CDN) mediu `display: flow-root` ao vivo,
+     e o corte funcionava (via `overflow:hidden`) mas sem reticência
+     nenhuma — e um comentário que promete "…" que não aparece é pior que
+     nenhum comentário. A saída (R5d) foi trocar a classe por `style`
+     inline com as MESMAS quatro declarações (`display:"-webkit-box"`,
+     `WebkitBoxOrient:"vertical"`, `WebkitLineClamp:2`,
+     `overflow:"hidden"`), que nunca perde para a folha gerada por
+     especificidade. MEDIDO DE NOVO AO VIVO (375px, título de 239
+     caracteres): `getComputedStyle` AINDA reporta `display: flow-root` —
+     é assim que o Chrome hoje serializa o `display` resolvido de um
+     bloco com `-webkit-line-clamp` (a implementação nativa moderna do
+     corte deixou de precisar do hack do flexbox por baixo; o valor
+     computado é só como o motor NOMEIA o resultado, não o resultado em
+     si) — MAS a reticência aparece na tela: `scrollHeight` 135 contra
+     `clientHeight` 45 (corta) e o pixel mostra "…engolir Forte…" no fim
+     da segunda linha, confirmado por captura de tela, não calculado.
+     `flow-root` deixa de ser sintoma de bug: é só o nome que o motor deu
+     ao próprio corte. Uma oferta que precisa de mais que duas linhas
+     para dizer o que é já não é um verbo, é um parágrafo — cortar com
+     reticências é honesto (diferente de esconder o preço em `title`): o
+     verbo CONTINUA por inteiro no DOM (leitor de tela lê tudo, e agora
+     também o nome acessível do botão — ver `ariaLabel` em `Botao`,
+     acima), só a TINTA é que para em duas linhas com "…" no fim. */
   return (
     <div className={`rounded-xl flex flex-wrap md:flex-nowrap items-center gap-2 md:gap-3 px-3 py-1 md:py-0.5 ${chegada === "agora" ? "tv-slide" : ""}`}
       style={{
