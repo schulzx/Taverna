@@ -97,7 +97,7 @@
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { T, MATERIAIS, MOVIMENTO_CSS, ALVOS } from "../src/estilo.js";
+import { T, MATERIAIS, MOVIMENTO_CSS, ALVOS, TIPOS } from "../src/estilo.js";
 /* D5e lê a tabela do relógio DE VOLTA, que é a lei da casa: os números
    não são transcritos aqui, são importados. No dia em que a janela deixar
    de ser 15 000 ms, o dente muda de alvo sozinho — e é isso que separa
@@ -173,7 +173,8 @@ const TETO_DE_LITERAIS = {
      o halo âmbar a 13%, o `#fff` do alvo escolhido) renasceram em `T` do
      outro lado. Por isso `painel-batalha.jsx` não tem entrada nesta tabela,
      e é assim que ela fica: arquivo novo nasce com teto zero. */
-  "src/App.jsx": 82, /* 16/09 · E4: os dois fundos de selo (#1f3320 e #33201f) viravam token okFundo/perigoFundo — eram CINCO copias no mesmo bloco do HUD, e a fila de quatro pilulas escritas a mao virou um map sobre a tabela dos campos da mecanica. 89 → 82 */
+  "src/App.jsx": 81, /* 23/09 · R3: o único literal que a narração ainda tinha — o `rgba(23,19,34,0.48)` do fundo do painel da prosa — virou `T.pagina`, que é a superfície quente que R2 fabricou. 82 → 81. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) */
+  /* 16/09 · E4: os dois fundos de selo (#1f3320 e #33201f) viravam token okFundo/perigoFundo — eram CINCO copias no mesmo bloco do HUD, e a fila de quatro pilulas escritas a mao virou um map sobre a tabela dos campos da mecanica. 89 → 82 */
 
   /* O PERGAMINHO (71 = 41 + 30) — não é sujeira, é um SISTEMA: 10 hexes
      aparecem nos DOIS arquivos, escritos separadamente, e cobrem 52 dos
@@ -241,15 +242,27 @@ const TETO_DE_LITERAIS = {
    A soma tem de dar 80 — e 80 é exatamente o item da pauta que a zera.
    Se der 99, os cinco módulos de dado vazaram para dentro do dente. */
 const TETO_DE_COR_DE_T = {
-  "src/App.jsx": 41, /* 15/09 → 16/09 · E3: três cópias de `T` saíram com a tela da batalha e com as gavetas, e as três voltaram como `T` */
-  "src/estilo.js": 13,
-  "src/carta-taro.jsx": 11,
-  "src/grade-de-batalha.jsx": 5,
+  /* 23/09 · R2: a paleta de `T` trocou de valores ("A página iluminada")
+     — `bg`/`panel`/`panelSoft`/`line`/`lineStrong`/`ink`/`inkDim`/
+     `violet`/`danger`/`ok`/`okFundo`/`perigoFundo` todos mudaram de hex.
+     Os literais QUE JÁ EXISTIAM nestes arquivos não mudaram — ninguém os
+     tocou —, mas deixaram de ser BYTE A BYTE iguais à nova `T`, e é
+     exatamente isso que D5b mede. Não é dívida nova: é a dívida de
+     SEMPRE (esses hexes nunca vieram de `T`, sempre foram cópias soltas)
+     ficando temporariamente invisível a este dente até alguém a
+     converter para `T` de verdade — o que ela sempre devia ter sido. */
+  "src/App.jsx": 19, /* 15/09 → 23/09 · R2 */
+  "src/estilo.js": 5, /* 15/09 → 23/09 · R2 (a zona de `T` é isenta; o que sobra são as `rgba` que esperam o helper `alfa()`) */
+  "src/carta-taro.jsx": 5, /* 15/09 → 23/09 · R2 */
   "src/painel-talentos.jsx": 2,
-  "src/rosto.jsx": 2,
-  "src/painel-ascensao.jsx": 1,
   "src/ui.jsx": 1,
-  "index.html": 1,
+  /* SAÍRAM (ENTRADA MORTA seria pior que ausência): `src/grade-de-batalha.jsx`
+     (era 5), `src/painel-ascensao.jsx` (era 1, `#7BC98F` = ok antigo),
+     `src/rosto.jsx` (era 2, `#EAE4D6`×2 = ink antigo) e `index.html`
+     (era 1, `#0E0C15` = bg antigo) mediram ZERO depois de R2 — os literais
+     continuam lá, byte a byte iguais a ONTEM, mas ontem não é mais uma cor
+     de `T`. A regra anti-cemitério tira a linha em vez de deixá-la dizer
+     "0". */
 };
 
 /* AS ZONAS DE TABELA — o recorte de `src/estilo.js`.
@@ -436,7 +449,7 @@ const TETO_DE_PILULA_A_MAO = {
      nasceu `rounded-lg` — a fileira dos verbos e as duas gavetas são
      retângulos de canto macio, não pílulas, e o alvo sai de
      `TELA_DE_BATALHA.verbos` em vez de aritmética de padding. */
-  "src/App.jsx": 11,              /* 16/09 → 16/09 · E3, a bolsa de combate e a gaveta das habilidades mudam de casa (era 13) */
+  "src/App.jsx": 8,               /* 23/09 · R4b: 11 → 8. Saíram os vinte botões do painel de `Ações` e as quatro abas do momento; as três pílulas que iam com eles vão junto. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) · 16/09 · E3, a bolsa de combate e a gaveta das habilidades mudam de casa (era 13) */
   /* A DÍVIDA MUDOU DE ARQUIVO, NÃO NASCEU: a pílula da gaveta das
      habilidades veio inteira do `App.jsx` na etapa E3, byte a byte, e o
      teto do App desce 1 no mesmo commit em que este sobe 1 — a soma do
@@ -943,6 +956,64 @@ const falhasF2 = conferirTetos(pilulaAMao, TETO_DE_PILULA_A_MAO,
   "use PilulaDeEscolha (src/ui.jsx), ou escreva por que a peça não serve.");
 t("D5f.2 · nenhum arquivo ganhou uma pílula cheia à mão — e nenhum perdeu uma sem descer o teto (folga zero)",
   falhasF2.length === 0, falhasF2.join("\n      "));
+
+/* ============================================================
+   7. D5g — A LETRA ABAIXO DO PISO NÃO CRESCE (R2)
+
+   `TIPOS` (`estilo.js`) nasceu em R2 com um piso escrito: 12 px, um
+   degrau acima do que a Apple HIG (11 pt) e o Material (11 sp) toleram.
+   A dívida que já existe é grande — R1 mediu 363 de 575 tamanhos de
+   letra do projeto abaixo de 12 px, 76% só na tela principal — e ela
+   NÃO se converte numa etapa só: seria trocar 651 lugares de uma vez,
+   sem um único olho de `desenho` a conferir cada tela depois.
+
+   O QUE ESTE DENTE FAZ, e é deliberadamente menos do que D5a/D5b: ele
+   NÃO exige que a dívida encolha (a conversão é trabalho de várias
+   etapas futuras) — só que ela PARE DE CRESCER enquanto isso não
+   acontece. Por isso não é a regra anti-cemitério de folga zero dos
+   outros dentes (que cobra IGUALDADE, nos dois sentidos): aqui um
+   `medido < teto` também passa — descer é sempre permitido, e nem
+   precisa de comentário, porque descer é o objetivo final. Só SUBIR
+   falha.
+
+   O QUE ELE CONTA: toda ocorrência de `text-[8px]`, `text-[9px]`,
+   `text-[10px]` ou `text-[11px]` em `src/` — os quatro tamanhos abaixo
+   de `TIPOS.piso`. `text-[12px]` para cima não conta: já cumpre o piso.
+   Usa a mesma máscara de comentário dos outros dentes, para não contar
+   um `text-[9px]` citado dentro de uma explicação como se fosse código. */
+sec("7. D5g — a letra abaixo do piso não cresce");
+
+/* O PISO PRIMEIRO, sempre — o mesmo argumento de D5f.3: um dente que
+   mede uma tabela renomeada ou vazia passa VERDE por vazio, e catraca
+   verde por vazio é pior que catraca nenhuma. */
+t("D5g · TIPOS tem os sete degraus", Object.keys(TIPOS).length >= 7,
+  Object.keys(TIPOS).length === 0 ? "A TABELA DESAPARECEU — renomearam TIPOS, e o dente abaixo mede o vazio." : `tem ${Object.keys(TIPOS).length}`);
+t("D5g · TIPOS.piso === 12 — nada abaixo disto tem letra", TIPOS.piso === 12, `piso é ${TIPOS.piso}`);
+
+const RX_LETRA_ABAIXO_DO_PISO = /text-\[(?:8|9|10|11)px\]/g;
+const porTamanhoAbaixoDoPiso = { 8: 0, 9: 0, 10: 0, 11: 0 };
+let letraAbaixoDoPiso = 0;
+for (const arq of arquivos) {
+  if (!arq.startsWith("src/")) continue;
+  const ext = "." + arq.split(".").pop();
+  const texto = mascararComentarios(readFileSync(join(RAIZ, arq), "utf8"), ext);
+  RX_LETRA_ABAIXO_DO_PISO.lastIndex = 0;
+  let m;
+  while ((m = RX_LETRA_ABAIXO_DO_PISO.exec(texto)) !== null) {
+    letraAbaixoDoPiso++;
+    porTamanhoAbaixoDoPiso[Number(m[0].slice(6, -3))]++;
+  }
+}
+/* O RETRATO DE HOJE (23/09/2026, R2), a única vez que este número pode
+   ser escrito de memória — daqui em diante ele só desce, e quem o
+   baixar troca o comentário pela data do dia. */
+const TETO_DE_LETRA_ABAIXO_DO_PISO = 653; /* 8px:12 · 9px:223 · 10px:311 · 11px:107, em src/ inteiro */
+console.log(`  ··  ${letraAbaixoDoPiso} usos de text-[Npx] abaixo do piso (8px:${porTamanhoAbaixoDoPiso[8]} · 9px:${porTamanhoAbaixoDoPiso[9]} · 10px:${porTamanhoAbaixoDoPiso[10]} · 11px:${porTamanhoAbaixoDoPiso[11]})`);
+t(`D5g · a letra abaixo do piso não sobe do retrato de hoje (${TETO_DE_LETRA_ABAIXO_DO_PISO})`,
+  letraAbaixoDoPiso <= TETO_DE_LETRA_ABAIXO_DO_PISO,
+  letraAbaixoDoPiso > TETO_DE_LETRA_ABAIXO_DO_PISO
+    ? `SUBIU: ${letraAbaixoDoPiso} contra o teto de ${TETO_DE_LETRA_ABAIXO_DO_PISO}. Nasceu letra nova abaixo de TIPOS.piso — use TIPOS.rotulo (13) ou maior.`
+    : `desceu para ${letraAbaixoDoPiso} — pode baixar o teto para ${letraAbaixoDoPiso}, com a data de hoje no comentário.`);
 
 console.log(`\n${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

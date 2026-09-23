@@ -6,6 +6,13 @@
    ============================================================ */
 import React from "react";
 import { T, ALVOS } from "./constantes.js";
+/* `TIPOS` (a escala de letra) e `SOLEIRA` (o teto de ofertas) nascem em
+   R2 e moram em `estilo.js`, como `T`/`ALVOS`. Não vêm de
+   `constantes.js` porque esse arquivo é território do `oficial` nesta
+   etapa (o bump de `VERSAO` é a última edição antes do commit dele) —
+   importar direto da folha é o mesmo dado, sem tocar num arquivo que
+   não é meu agora. */
+import { TIPOS, SOLEIRA } from "./estilo.js";
 /* A semente é conta (`semente.js`) e o rosto é desenho (`rosto.jsx`). O
    `Retrato` daqui é uma das duas molduras que usam esse rosto — a outra é a
    carta de tarô. É por isso que o rosto saiu deste arquivo: sem um dono só,
@@ -16,10 +23,32 @@ import { CartaDeTaro } from "./carta-taro.jsx";
 /* A brasa e conta (`brasas.js`) e o campo e desenho — mesma divisao do rosto. */
 import { quantasBrasas, HALO, brasaEm, forcaDoHalo } from "./brasas.js";
 
-export function Botao({ children, onClick, primario, desativado, pequeno, className = "" }) {
+/* `corpo` (R2, NOVO — padrão false): o verbo de `A Oferta` é fala, não
+   máquina — `formas.md` pede Spectral `TIPOS.corpo` (15) para ele, e o
+   `Botao` de sempre é sempre `tv-mono`, maiúsculo e rastreado, porque é
+   a voz do SISTEMA (rótulo de comando). Trocar a fonte por CSS puro não
+   dava: `tv-mono` vem DEPOIS de `tv-body` em `FONT_CSS`, e o último da
+   cascata ganha empate de especificidade — somar as duas classes deixava
+   o mono vencendo sempre. A saída é o `<button>` escolher UMA das duas,
+   nunca as duas. Com `corpo=false` (o padrão) nada muda para quem já
+   chama `Botao` hoje — é opt-in, e o resto da casa continua bit a bit
+   igual.
+
+   `ariaLabel` (R5d, NOVO — padrão undefined): existe porque o nome
+   acessível "a partir do conteúdo" de um `<button>` deveria alcançar
+   texto dentro de QUALQUER filho, por norma (accname é recursivo) — mas
+   `A Oferta` mediu ao vivo que, com o verbo dentro de um `<span>` (para
+   o `line-clamp-2` do R5c), o nome sumiu do botão inteiro, na mesa e no
+   telefone. `formas.md` ("O nome acessível da casa: aria-label") já é
+   lei nesta casa para exatamente este risco: um nome que depende de um
+   detalhe de estrutura é um nome que a próxima refatoração apaga em
+   silêncio. Com `ariaLabel`, o nome vira explícito e para de depender de
+   COMO os filhos estão organizados — undefined não muda nada para quem
+   já chama `Botao` sem o passar. */
+export function Botao({ children, onClick, primario, desativado, pequeno, corpo = false, className = "", ariaLabel }) {
   return (
-    <button onClick={onClick} disabled={desativado}
-      className={`tv-mono rounded-lg transition-all ${pequeno ? "px-3 py-1.5 text-xs" : "px-5 py-3 text-sm"} ${className}`}
+    <button onClick={onClick} disabled={desativado} aria-label={ariaLabel}
+      className={`${corpo ? "tv-body tv-anel-foco" : "tv-mono"} rounded-lg transition-all ${pequeno ? "px-3 py-1.5 text-xs" : corpo ? "px-5 py-3" : "px-5 py-3 text-sm"} ${className}`}
       style={{
         background: primario ? T.amber : "transparent",
         color: primario ? T.onAccent : T.inkDim,
@@ -27,7 +56,20 @@ export function Botao({ children, onClick, primario, desativado, pequeno, classN
            e 1.4.11 pede piso de 3:1 para elemento de interface. */
         border: primario ? "none" : `1px solid ${T.lineStrong}`,
         opacity: desativado ? 0.4 : 1, cursor: desativado ? "not-allowed" : "pointer",
-        fontWeight: 600, letterSpacing: "0.04em",
+        fontWeight: corpo ? 400 : 600, letterSpacing: corpo ? "normal" : "0.04em",
+        fontSize: corpo ? TIPOS.corpo : undefined,
+        /* R4a: a variante `corpo` media 47px — falhava `ALVOS.piso` por 1px,
+           porque a altura nascia do padding + entrelinha, um resto de conta
+           que ninguém escrevia (a mesma doença que `ALVOS.piso` existe para
+           curar). Ela é o verbo de `Agir →` (App.jsx:22275, o alvo mais
+           tocado da tela principal) e de toda `Oferta` da soleira — por
+           isso o piso lê a tabela em vez de confiar no padding. inline-flex
+           + alignItems centram o texto dentro do piso sem mudar um pixel
+           do padding que já existia (quem não é `corpo` não muda). */
+        minHeight: corpo ? ALVOS.piso : undefined,
+        display: corpo ? "inline-flex" : undefined,
+        alignItems: corpo ? "center" : undefined,
+        justifyContent: corpo ? "center" : undefined,
       }}>
       {children}
     </button>
@@ -737,4 +779,385 @@ export function CampoDeBrasas({ className = "" }) {
   }, []);
 
   return <canvas ref={telaRef} aria-hidden className={`absolute inset-0 w-full h-full pointer-events-none ${className}`} />;
+}
+
+/* ============================================================
+   AS PEÇAS DE R2 — "A página iluminada" (23/09/2026)
+
+   Três peças pedidas pelo `jogo` e fabricadas pelo `desenho` em R1,
+   fechadas por escrito em `mente/formas.md` (seção "R1 · o que o jogo e
+   o desenho fecharam entre si"). NENHUMA tem consumidor no `App.jsx`
+   ainda — é o `oficial` quem as liga, com o bastão, na etapa seguinte.
+   Nascem aqui fabricadas e providas; a suíte que segura a catraca de
+   export morto (`teste-ligacao`) mora em `testes/teste-r2-pecas.mjs`.
+   ============================================================ */
+
+/* ---------------- A OFERTA (R2) ----------------
+   O que o mundo abriu e você ainda não atravessou, tocável, com o preço
+   na tela. Nasce da medida de R1: "Aceito o trabalho do Yorick" esperou
+   14,3 s e não foi ouvido — o Narrador, sem saber que "aceitar" é verbo
+   de sistema, improvisou ◉80 contra os ◉60 da tabela. A aceitação
+   existe, funciona e está bonita: é o cartão de contrato de
+   `PainelMural` (`App.jsx:1546`, protótipo — leia, não edite). Falta
+   ela poder viver fora do painel.
+
+   TRÊS CAMPOS OBRIGATÓRIOS NA TELA, NENHUM EM `title`: o verbo, o
+   preço, o retorno. R1 mediu ZERO dos 20 controles de ação de hoje
+   dizendo o preço na tela, e OITO escondendo-o em `title` — balão de
+   rato que no telefone não existe. "O veredito antes do clique" é lei
+   da casa, e aqui ela se cumpre por um canal que todo aparelho tem.
+
+   A DÍVIDA DECLARADA, e é a única desta etapa: `formas.md` pede que o
+   preço monte uma instância de `Consequencia` (variante Longa). Varrido
+   `src/` inteiro: `Consequencia` NÃO EXISTE em código nenhum — zero
+   declarações — e `formas.md` marca "[ainda não existe]" em pelo menos
+   cinco entradas próprias sobre ela. A lei do `aprendiz` é não inventar
+   forma: "se não existirem como precisa, diga-me em vez de as
+   duplicar" está escrita na própria etapa que pediu esta peça. Desenhar
+   os 4 tons × 2 formas × larguras de `Consequencia` por conta própria
+   seria inventar um componente maior que esta peça inteira — por isso
+   o preço e o retorno saem em TEXTO PLANO (mono, `TIPOS.rotulo`, tingido
+   pelo `tom`) até `Consequencia` nascer de verdade. Quando nascer, é
+   só aqui que troca: o resto da peça — o verbo, a moldura, os três
+   eixos — não muda uma linha.
+
+   Eixos:
+   · `tom` — "convite" (`T.mundo`, o mundo abriu, não custa) · "preco"
+     (`T.amber`, custa, e o custo está escrito) · "semVolta"
+     (`T.danger`, não se desfaz).
+   · `estado` — "repouso" · "impedida" · "tomada": herda a gramática de
+     `Botao` (`desativado`). "foco" NÃO é um valor que se passa — é
+     automático via `:focus-visible` (o próprio `Botao` não tem prop de
+     foco), e inventar um aqui seria a segunda gramática que a lei da
+     casa proíbe.
+   · `chegada` — "assentada" · "agora": a marca de "novo neste turno".
+     DECAI NO TURNO SEGUINTE, NUNCA POR RELÓGIO — quem decide a troca é
+     o `App.jsx`; esta peça só lê a prop e reusa `tv-slide` (a entrada
+     lateral que a casa já tem) em vez de inventar uma animação nova.
+     Nem `O realce` nem `Selo Mudou=Agora` servem aqui — os dois foram
+     recusados por escrito em `formas.md`: `O realce` é o degrau 2 da
+     cerimônia (usá-lo tornaria cada contrato um acontecimento), e
+     `Selo` marca ESTADO de uma coisa — uma oferta não é um estado, é
+     uma porta. */
+export function Oferta({ verbo, preco, retorno, quem, onde, tom = "convite", estado = "repouso", chegada = "assentada", aoClicar }) {
+  const impedida = estado === "impedida";
+  const tomada = estado === "tomada";
+  const corDoTom = tom === "semVolta" ? T.danger : tom === "preco" ? T.amber : T.mundo;
+  const quemOnde = [quem, onde].filter(Boolean).join(" · ");
+  /* R4a — A CORREÇÃO DE ALTURA, com o número escrito: a peça media ~97px
+     contra o orçamento de 48–56 (`mente/r1-desenho.md` §5: "Teto de três
+     na mesa… 3 × 48 + 2 × 8 = 160 px"). O culpado não era um campo a
+     mais — era DUAS linhas empilhadas (o verbo + uma segunda fila de
+     quem/onde) dentro de um `p-3` que somava por cima do `minHeight` do
+     próprio `Botao`. A saída é composição, não corte, como o pedido
+     manda: os TRÊS campos obrigatórios (verbo, preço, retorno) continuam
+     todos na tela — na MESA, numa linha só; ver R5c abaixo para o
+     telefone, onde a linha única deixou de caber. `quem`/`onde` não é um
+     dos três campos obrigatórios (`formas.md` só marca verbo/preço/
+     retorno assim); ele cede o LUGAR — encolhe por `truncate` num
+     `flex-1 min-w-0` e pode chegar a zero de largura — quando o verbo e
+     o preço já tomaram o espaço. Com `Botao corpo` agora lendo
+     `ALVOS.piso` (a correção acima), o piso da peça na mesa é o do
+     próprio botão: 48 de conteúdo + a folga mínima do `py-0.5` (4px) +
+     a borda (2px) = 54px de repouso — dentro da janela 48–56 que o
+     pedido fixou.
+
+     R5c — O TELEFONE PRECISA DE UMA FORMA PRÓPRIA, E NÃO É ENCOLHER A
+     LETRA. Medido vivo pelo `oficial` a 375px: 142px, e o verbo (uma
+     frase inteira, não uma palavra — "Aceitar: Praga em as terras
+     baixas") quebrava em SEIS linhas dentro do espaço que sobrava ao
+     lado do preço e do retorno, porque a linha única da mesa não é a
+     forma certa quando o botão precisa dividir a largura com mais duas
+     coisas E o texto não cabe de jeito nenhum. `TIPOS.piso` (12) é o
+     piso da casa — reduzir a letra para caber estava fora de cogitação.
+     A primeira saída (still R5c) forçava o botão a `w-full` sempre
+     abaixo de `md:` — resolvia o verbo comprido, mas cobrava a MESMA
+     linha inteira de qualquer verbo, mesmo `Esperar` (sete letras), que
+     é o mais frequente de todos. R5d corrigiu isso (abaixo).
+
+     R5d — A LINHA SÓ QUEBRA QUANDO O VERBO PRECISA DELA, POR
+     `flex-wrap` PURO, SEM `w-full`. O `oficial` mediu que forçar
+     `w-full` sempre cobrava 3,8 pontos de prosa no turno TÍPICO
+     (`Esperar` a tomar a mesma linha que um contrato de 34 caracteres)
+     para ganhar 7,0 no turno raro — "ganhar o pior caso pagando o caso
+     comum é a troca errada". A correção não precisou de `min-width` nem
+     de estado nenhum: **`flex-wrap` já decide isso sozinho**, pela regra
+     de sempre do CSS — um item entra na linha corrente pelo seu tamanho
+     NATURAL (o conteúdo, sem forçar largura), e só desce para a linha
+     seguinte quando não cabe. O botão do verbo voltou a `w-auto`
+     (nenhuma classe de largura própria): `Esperar` é estreito, cabe ao
+     lado de `quem`/preço/retorno e a linha fica com os três, igual à
+     mesa; um contrato de 34+ caracteres já não cabe sozinho ao lado dos
+     outros dois, e a MESMA regra de `flex-wrap` empurra `quem`/preço/
+     retorno para a linha de baixo — sem o botão ter de saber que é
+     "comprido". `quemOnde` mantém a classe `flex-1` (`flex-basis: 0%`),
+     que já valia zero para efeito de "cabe nesta linha" — é por isso que
+     ela nunca é o item que decide a quebra.
+
+     E O VERBO GANHA UM TETO DE DUAS LINHAS, NÃO SEIS — E AS RETICÊNCIAS
+     SÃO GARANTIDAS, NÃO TORCIDAS DE UMA CLASSE DO TAILWIND: a classe
+     utilitária `line-clamp-2` (CDN) mediu `display: flow-root` ao vivo
+     em vez de `-webkit-box` — o corte funcionava (via `overflow:hidden`)
+     mas sem reticência nenhuma, e um comentário que promete "…" que não
+     aparece é pior que nenhum comentário. A saída (R5d) é o mesmo CSS,
+     mas por `style` inline, que nunca perde para a folha gerada por
+     especificidade: `display:"-webkit-box"`, `WebkitBoxOrient:
+     "vertical"`, `WebkitLineClamp: 2`, `overflow:"hidden"` — sem depender
+     de a CDN gerar a classe do jeito certo. Uma oferta que precisa de
+     mais que duas linhas para dizer o que é já não é um verbo, é um
+     parágrafo — cortar com reticências é honesto (diferente de esconder
+     o preço em `title`): o verbo CONTINUA por inteiro no DOM (leitor de
+     tela lê tudo, e agora também o nome acessível do botão — ver
+     `ariaLabel` em `Botao`, acima), só a TINTA é que para em duas linhas
+     com "…" no fim. */
+  return (
+    <div className={`rounded-xl flex flex-wrap md:flex-nowrap items-center gap-2 md:gap-3 px-3 py-1 md:py-0.5 ${chegada === "agora" ? "tv-slide" : ""}`}
+      style={{
+        minHeight: ALVOS.piso,
+        background: T.panel,
+        border: `1px solid ${tomada ? T.lineStrong : corDoTom}`,
+        opacity: impedida ? 0.55 : 1,
+      }}>
+      <Botao onClick={impedida || tomada ? undefined : aoClicar} desativado={impedida || tomada} corpo primario ariaLabel={verbo}>
+        {/* R5d — nome acessível explícito em `Botao` (`ariaLabel`),
+            porque o `<span>` abaixo (preciso para o teto de duas linhas)
+            apagava o nome-a-partir-do-conteúdo em pelo menos um
+            instrumento de leitura. Nem `w-full` nem `md:w-auto` aqui: o
+            `flex-wrap` do cartão decide sozinho, pelo tamanho natural do
+            texto, se este botão cabe ao lado de `quem`/preço/retorno ou
+            se precisa da linha para si — ver R5d acima. O `style` faz o
+            teto de duas linhas com reticências garantidas (não a classe
+            `line-clamp-2`, que a CDN gerou sem `-webkit-box`). */}
+        <span style={{ display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 2, overflow: "hidden" }}>
+          {verbo}
+        </span>
+      </Botao>
+      {quemOnde && (
+        <div className="tv-mono truncate flex-1 min-w-0" style={{ fontSize: TIPOS.rotulo, color: T.inkMeio }}>
+          {quemOnde}
+        </div>
+      )}
+      {/* A DÍVIDA DECLARADA no comentário grande acima: isto NÃO É
+          `Consequencia` — é o texto plano que a espera até ela nascer.
+          Mono/`TIPOS.rotulo` porque preço e retorno são fala DA
+          MÁQUINA, não da prosa; nunca abaixo de `TIPOS.piso`. */}
+      {(preco || retorno) && (
+        <div className="tv-mono flex items-baseline gap-2 shrink-0 md:ml-auto" style={{ fontSize: TIPOS.rotulo }}>
+          {preco && <span style={{ color: corDoTom, fontWeight: 600 }}>{preco}</span>}
+          {retorno && <span style={{ color: T.inkDim }}>{retorno}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- A SOLEIRA (R2) ----------------
+   Onde as ofertas moram: região fixa, fora do rolamento, entre a página
+   e o campo do turno. O nome é do `desenho`, por lei e não por gosto —
+   já existe `FaixaRelogios` na mesma tela e `tv-faixa` na folha, e um
+   segundo "A faixa" no mesmo ecrã seria "uma ação, uma forma" violada
+   um andar acima (`formas.md`, "R1 · A soleira").
+
+   VAZIA NÃO DEIXA BURACO: sem oferta nenhuma, `null` — zero altura,
+   zero margem, zero borda. Região que reserva espaço para nada é
+   mobília a mentir.
+
+   O TETO SAI DE TABELA (`SOLEIRA`, `estilo.js`), nunca de aritmética de
+   leiaute — e desde R5a é 2 na mesa, 1 no telefone (a conta do `jogo`
+   e do `regente` vive no comentário de `SOLEIRA`, não aqui: um número
+   só tem uma casa). "+N" abre o resto.
+
+   NO TELEFONE DESFAZ-SE, NÃO VIRA GAVETA — a lição de E4: uma tira
+   apertada não ganha um menu escondido, esvazia-se. As duas listas
+   abaixo (`hidden md:flex` / `flex md:hidden`) são CSS puro: nenhuma
+   media query em JS, nenhum estado de "aberto" para o telefone perder
+   ao girar a tela. O `aberto` que existe (R5a, abaixo) é outra coisa:
+   não decide QUAL lista aparece — isso é sempre CSS —, decide se ELA
+   mostra o teto ou o total, e as duas listas leem o mesmo estado.
+
+   R5a — O "+N" VIRA PORTA, NÃO FICA TEXTO. Media ao vivo pelo `oficial`:
+   no telefone, com teto 1, o `+3 ofertas` escondia `Aceitar`, `Negociar
+   aqui` e `Esperar` sem forma nenhuma de lá chegar. O `jogo` deu-lhe o
+   nome do próprio defeito que a soleira nasceu para matar: *"+N ofertas"
+   como texto é o `▸ Mural` a renascer dentro da peça que o matou — uma
+   marca que promete que há mais e não se toca.* A régua, dele: é porta,
+   48 px (`ALVOS.piso`), e diz quantas.
+
+   NÃO É UM "abrir e fechar um painel" (`formas.md`) — não é sobreposição:
+   não cobre a tela, não tem véu, não precisa de `Esc` nem de saída pelo
+   fundo, porque não sai do lugar onde já estava. É revelação no próprio
+   fluxo da lista — mais perto de "navegar entre abas" (uma escolha que
+   troca o que está visível na mesma região) do que de um véu. `formas.md`
+   ainda não nomeia essa forma; até o `desenho` decidir um nome para ela,
+   este botão usa só peças já fechadas noutro lugar — `ALVOS.piso`,
+   `tv-anel-foco`, `tv-mono`, `T.inkDim`/`T.lineStrong` (a borda de
+   controlo que `Voz`, acima, já usa) — e nenhuma cor, raio ou movimento
+   novo. Sem esta peça ter nome próprio, é a forma mais parecida que já
+   existe, não uma forma inventada.
+
+   R5c — A PORTA FICA NA SUA PRÓPRIA LINHA. O `oficial` mediu o custo —
+   56px = 7,3 pontos de prosa, a diferença entre 50,3% e 43,0% na mesa
+   no pior caso — e perguntou se ela não devia partilhar linha com a
+   última oferta em vez de abrir uma fileira só sua. Decisão: NÃO, por
+   três razões.
+   (1) Cada `Oferta` já ocupa 100% da largura da soleira (é um cartão de
+   `flex-col`, não uma coluna estreita); colar a porta a ela exigiria a
+   `Oferta` aceitar e desenhar um filho estranho ao seu próprio contrato
+   — a peça deixaria de ser "uma oferta" para virar "uma oferta, e às
+   vezes mais uma coisa que não é dela", só para a última da lista.
+   (2) A porta é do CONJUNTO, não do último item: colada ao cartão do
+   Yorick, por exemplo, um jogador podia ler "+1 oferta" como se fosse
+   PARTE do contrato do Yorick — a mesma ambiguidade que R1b já matou
+   (`▸ Mural`: uma marca que não se sabe do que é dona).
+   (3) O custo só existe no ramo raro: com teto 2 e a tábua fora da
+   soleira (R5b), o turno típico tem 0–1 oferta — a porta só aparece
+   quando o teto foi de fato atingido, e otimizar esse ramo às custas da
+   clareza do caso comum (que é a imensa maioria dos turnos) troca o
+   problema errado. E é justamente no turno mais carregado que a porta
+   precisa de ser a MAIS clara, não a mais espremida.
+   O piso de 48px (`ALVOS.piso`) já é o mínimo que a lei de acessibilidade
+   da casa aceita para "toda peça em que se toca" — não há gordura para
+   cortar sem violar essa régua primeiro. */
+export function Soleira({ ofertas = [] }) {
+  /* um estado só, partilhado pelas duas listas (mesa/telefone) — quem
+     decide qual delas está visível continua a ser o CSS acima, nunca
+     este estado. Abrir na mesa e depois encolher a janela para telefone
+     mantém a lista de telefone também aberta: é o MESMO "aberto", não
+     dois. */
+  const [aberto, setAberto] = React.useState(false);
+  const lista = (ofertas || []).filter(Boolean);
+  if (lista.length === 0) return null;
+
+  const foraDaMesa = Math.max(0, lista.length - SOLEIRA.tetoNaMesa);
+  const naMesa = aberto ? lista : lista.slice(0, SOLEIRA.tetoNaMesa);
+  const foraDoTelefone = Math.max(0, lista.length - SOLEIRA.tetoNoTelefone);
+  const noTelefone = aberto ? lista : lista.slice(0, SOLEIRA.tetoNoTelefone);
+
+  /* a porta: fechada, diz quantas ficam atrás dela (o número é o que
+     deixa o jogador decidir se vale abrir); aberta, dobra-se sobre si
+     mesma — nunca desaparece com a lista aberta, ou não haveria como
+     fechar. Nada mais no teto some: quem estava na mesa continua. */
+  const porta = (n) => (
+    <button type="button" onClick={() => setAberto((a) => !a)} aria-expanded={aberto}
+      className="tv-anel-foco tv-mono rounded-lg self-start"
+      style={{
+        minHeight: ALVOS.piso, padding: "0 14px", fontSize: TIPOS.rotulo,
+        color: T.inkDim, background: "transparent", border: `1px solid ${T.lineStrong}`,
+        cursor: "pointer",
+      }}>
+      {aberto ? "mostrar menos" : `+${n} ${n === 1 ? "oferta" : "ofertas"}`}
+    </button>
+  );
+
+  return (
+    <div className="w-full flex flex-col gap-2" role="region" aria-label="O que o mundo oferece agora">
+      <div className="hidden md:flex flex-col gap-2">
+        {naMesa}
+        {foraDaMesa > 0 && porta(foraDaMesa)}
+      </div>
+      <div className="flex md:hidden flex-col gap-2">
+        {noTelefone}
+        {foraDoTelefone > 0 && porta(foraDoTelefone)}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- A VOZ (R2) ----------------
+   O cabeçalho de quem fala dentro da página. Hoje o "Mestre" é um
+   `<div>` de 10 px mono com um botão de ouvir de 22×22 colado, escrito
+   à mão em dois sítios do `App.jsx`. Com a narração virando página, é
+   esta peça quem separa uma voz da seguinte — e é aqui que o botão de
+   ouvir ganha os seus 48 px em vez dos 22 de hoje.
+
+   Eixos: `quem` (mestre · voce · mundo) × `voz` (muda · lendo ·
+   preparando) — os únicos TRÊS valores que `App.jsx` de fato escreve
+   como autor de mensagem, contados em R1 (sistema 503 · jogador 43 ·
+   mestre 1). O NPC que fala não é uma quarta voz: numa mesa de verdade
+   o Mestre É a voz dos NPC, e Yorick/Quorin falam em travessão dentro
+   da prosa do Mestre e continuam lá.
+
+   O GLIFO DE OUVIR ENTRA POR PROP (`glifoDeOuvir`), NUNCA FIXO AQUI: os
+   81 emoji do sistema viram glifo desenhado numa etapa PRÓPRIA (R1,
+   item 6 da lista) — decidir o ícone aqui seria essa etapa por atalho.
+   Até lá, quem chama `Voz` passa o que já usa hoje (o 🔊).
+
+   O ALVO CRESCE PARA `ALVOS.piso` SEM CRESCER A TINTA: o `<button>`
+   mede 48×48 e o glifo lá dentro continua do tamanho que sempre foi.
+   É "o enchimento" que a etapa pediu como solução — não um `::after`
+   fantasma —, porque um botão sem fundo nem borda não paga custo de
+   leiaute nenhum por ser maior que o próprio desenho.
+
+   ---------------- R4a: O EIXO `Resposta` (formas.md:5406-5422) ----------------
+   Só vale em `Quem=Você`: a fala do jogador cai na página em espera do
+   Mestre, e durante os 14,3 s medidos em R1 ela é o ÚNICO sinal de que o
+   turno foi enviado — "uma espera muda de catorze segundos é o jogador
+   a perguntar se clicou". O FILETE (a barra sob o cabeçalho, que em toda
+   `Voz` já separa uma fala da seguinte) é quem carrega a resposta:
+   repouso `lineStrong` sempre — é a peça de controlo, não a tinta de
+   prosa —, e em `Resposta=Espera-se` vira `amber` (a cor do Mestre,
+   porque é ELE que ainda não respondeu) e respira.
+
+   POR QUE `lineStrong` E NÃO `bordaViva`: `formas.md`/`r1-desenho.md`
+   escrevem `bordaViva` — o nome que a PROPOSTA de paleta usava para "a
+   borda de controlo". A paleta que de fato foi ao ar (R2, `estilo.js`)
+   manteve o nome antigo para esse mesmo papel: `T.lineStrong` já É "o
+   degrau que falta entre `line` e `ink` para uma borda de CONTROLE"
+   (`estilo.js:75`). Ler a tabela existente em vez de inventar uma
+   entrada nova chamada `bordaViva` — se o nome tiver de mudar, é o
+   `desenho` quem decide, porque `T` tem quinze leitores fora daqui.
+
+   A SAÍDA É O ACONTECIMENTO, NUNCA O RELÓGIO: quando `resposta` deixa de
+   ser `"espera-se"`, a classe `tv-respira` some no mesmo render — nada
+   aqui usa `setTimeout`/`setInterval`. `prefers-reduced-motion`: o pulso
+   não acontece (regra em `estilo.js`, irmã de `.tv-pulse`) e a legenda
+   escreve a mesma informação em texto — a mesma troca que `CampoDeBrasas`
+   e `grade-de-batalha.jsx` já fazem, lida uma vez por render.
+
+   O `matchMedia` mora DENTRO da função, não num helper de módulo (ao
+   contrário de `grade-de-batalha.jsx`): um helper solto entre `Soleira`
+   e `Voz` cairia dentro do RECORTE DE TEXTO que `teste-r2-pecas.mjs` faz
+   de `Soleira` (do export dela até o próximo `export function`) e a
+   faria parecer dona de um `matchMedia` que não é seu — achado pela
+   própria suíte ao rodar esta correção. */
+export function Voz({ quem = "mestre", voz = "muda", resposta, aoOuvir, glifoDeOuvir }) {
+  const ROTULO_DE_QUEM = { mestre: "O Mestre", voce: "Você", mundo: "O mundo" };
+  const ROTULO_DA_VOZ = { lendo: "a ler…", preparando: "a preparar…" };
+  const corDoNome = quem === "mestre" ? T.amberSoft : quem === "mundo" ? T.mundoSoft : T.ink;
+  /* `resposta` só é lido em Quem=Você — nas outras vozes o eixo não existe. */
+  const espera = quem === "voce" && resposta === "espera-se";
+  let parado = false;
+  if (espera) {
+    try { parado = !!(typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); }
+    catch { parado = false; }
+  }
+  return (
+    <div className="flex flex-col gap-1 w-full">
+      <div className="flex items-baseline justify-between gap-2 w-full">
+        <div className="flex items-baseline gap-2 min-w-0">
+          <span className="tv-mono uppercase tracking-[1px] truncate" style={{ fontSize: TIPOS.rotulo, fontWeight: 600, color: corDoNome }}>
+            {ROTULO_DE_QUEM[quem] || quem}
+          </span>
+          {ROTULO_DA_VOZ[voz] && (
+            <span className="tv-mono truncate" style={{ fontSize: TIPOS.rotulo, color: T.inkDim }}>{ROTULO_DA_VOZ[voz]}</span>
+          )}
+          {parado && (
+            <span className="tv-mono truncate" style={{ fontSize: TIPOS.rotulo, color: T.amberSoft }}>o Mestre está a tecer</span>
+          )}
+        </div>
+        {aoOuvir && (
+          <button type="button" onClick={aoOuvir} aria-label={`Ouvir ${ROTULO_DE_QUEM[quem] || quem}`}
+            className="tv-anel-foco shrink-0 rounded-full flex items-center justify-center"
+            style={{ width: ALVOS.piso, height: ALVOS.piso, background: "transparent", border: "none", cursor: "pointer" }}>
+            {glifoDeOuvir}
+          </button>
+        )}
+      </div>
+      {/* O filete: sempre presente (separa uma voz da seguinte), sob
+          `Resposta=Espera-se` acende e respira — nunca no texto, que não
+          se move um pixel (formas.md:5414). */}
+      <div className={`h-0.5 rounded-full w-full ${espera && !parado ? "tv-respira" : ""}`}
+        style={{ background: espera ? T.amber : T.lineStrong }} aria-hidden="true" />
+    </div>
+  );
 }

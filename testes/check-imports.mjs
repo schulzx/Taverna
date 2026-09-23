@@ -181,6 +181,16 @@ for (const [f, s] of fonte) {
     const usos = [...corpo.matchAll(new RegExp("(^|[^\\w$.])" + nome + "\\b(\\s*:)?", "g"))]
       .filter((u) => {
         const depois = corpo.slice(u.index + u[0].length).trimStart();
+        /* R3: ATRIBUTO DE JSX NÃO É REFERÊNCIA. `<Soleira ofertas={…} />`
+           casava aqui porque o `=` entra na lista abaixo — e `ofertas` é
+           também um export de `missoes.js`. O checador acusava o `App.jsx`
+           de usar sem importar uma coisa que ele nunca usou: o nome ali é o
+           rótulo de uma PROP, e quem o define é o componente que a recebe.
+           É o mesmo erro que a v9.142 já tinha consertado para o texto da
+           tela, noutro disfarce — e a defesa é a mesma: um varredor que
+           grita por engano perde o único valor que tem, que é ser
+           acreditado. `nome={` sai; `nome =` e `nome ==` ficam. */
+        if (/^=\s*\{/.test(depois)) return false;
         return depois === "" || "(.,);=}])?&|<>+-*!".includes(depois[0]);
       });
     if (!usos.length || usos.every((u) => u[2])) continue;

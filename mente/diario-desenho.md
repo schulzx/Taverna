@@ -19,7 +19,287 @@ Formato:
 
 ---
 
-## 16/09 22:55 · v9.281 · E4 · mover é fazer · **e a mesa pausa aqui** · commit `70d9fe5`
+## 23/09 · v9.282 · **Fase R — a tela principal, e o sistema de decisões** · commit `<HASH>`
+
+*O escrito das mãos fica em `mente/r1-jogo.md` e `mente/r1-desenho.md`; a forma,
+nas secções `R1`, `R1b` e `R4a` de `mente/formas.md`.*
+
+**A fase que a pessoa abriu com uma frase, e que obrigou a mesa a admitir que
+estava a olhar para o lado errado há cinco ciclos.** A ordem de 23/09 está
+escrita inteira no topo de `mente/pauta-desenho.md`; o que a resume é isto: *"a
+tela principal, que é onde se passa 90% do jogo"* e *"vamos mudar também o
+sistema de decisões"*.
+
+> **As fases E, K e W — nove etapas — desenharam a tela da BATALHA.** A pauta
+> tinha 14 itens `pesado` à espera e quase todos eram do tabuleiro. **A pessoa
+> pediu a outra tela.** E a testemunha de acusação é a própria mesa: os mesmos
+> verbos medem **48 px no tabuleiro e 28 na tela principal**; o tabuleiro
+> escreve o preço dentro da casa e a tela principal esconde-o num `title`.
+> *A resposta já estava construída e a correr. Nunca tinha sido aplicada aos 90%.*
+
+- **estado inicial:** árvore limpa em `d6f1003`, VERSAO `v9.281`, trava e bastão
+  livres. **`.claude/fila-pausada` ainda estava no disco quando abri** — veja
+  *a reconciliação da pausa*, abaixo, porque isso mudou a meio e a mudança não
+  foi minha.
+
+- **o estudo (R1), e os dois seniores chegaram ao mesmo sítio sem se verem.**
+  Correram em paralelo, um a jogar e outro a medir. **Nenhuma discordância ficou
+  aberta**, e três resolveram-se por escrito: *A faixa* virou **`A soleira`**
+  (recusa do `desenho`, por lei — já existia `FaixaRelogios` na mesma tela); a
+  marca do novo virou o eixo `Chegada` **dentro** da peça, e não `O realce`
+  (*"uma marca que morre por tempo morre enquanto o jogador está a pensar"*); e
+  o caso do `Atacar` **não era discordância, eram dois botões com o mesmo
+  rótulo**. E houve uma coincidência que vale registar: **o `jogo` pediu um eixo
+  de três valores para `A oferta` sem saber que o `desenho` tinha acabado de
+  propor um terceiro acento por aritmética de cor — e os três batem um a um.**
+
+- **o achado que mandou na fase**, e é experiência jogada: o `jogo` escreveu
+  *"Aceito o trabalho do Yorick. Sessenta está bom."*, esperou **14,3 s**, e **o
+  contrato não foi aceite** — o Narrador, não sabendo que *aceitar* é verbo de
+  sistema, improvisou **◉80 contra os ◉60 da tabela**. E a aceitação existe,
+  funciona e está bonita: **a três toques, atrás de uma aba**, do outro lado da
+  tela do NPC que está parado à espera.
+  > **O defeito não era falta de sistema. Era que o momento e o controlo viviam
+  > em sítios diferentes.** 50 verbos de sistema atrás de 4 abas contra 17 portas
+  > que o texto livre abre — e nada na tela a dizer de que lado está o verbo.
+
+  E o irmão dele, mais curto: o Mestre escreve `▸ Mural — há um mural onde se
+  lê…`, com a seta que é o glifo universal de *"vá aqui"*. No DOM:
+  `{tag:"SPAN", clicavel:false, cursor:"auto"}`. **Nove afordâncias no primeiro
+  ecrã, zero tocáveis. O jogo desenhava a porta e não a punha.**
+
+- **o achado do `desenho`, e ele desarma a pergunta óbvia:** *o contraste não é o
+  problema* — 31 de 32 pares passam AA. **O problema é que a tela não tinha
+  figura e fundo.** As quatro superfícies cabiam dentro de **1,379:1** (a WCAG
+  1.4.11 pede 3:1) e viviam todas entre h253 e h256 — **três graus de matiz**. O
+  painel da narrativa contra o balão do Mestre media **1,039:1**.
+  > **O balão era uma borda arredondada à volta de nada. A tela parecia um
+  > terminal porque estruturalmente era um terminal — e o culpado não era o âmbar.**
+
+- **a prova, e ela corrigiu-nos duas vezes:** *(1)* a Baldur's Gate 3 **publica a
+  paleta do seu framework** — cinco degraus de um castanho quente, zero acento no
+  chassis —, e o `desenho` tinha chegado à mesma arquitetura por aritmética;
+  *(2)* ele tinha proposto **escurecer o fundo**, e o Material Design 2 mostrou
+  que o nosso já estava **abaixo** da régua de `#121212`: escurecê-lo era piorar
+  o defeito. **O fundo subiu.** *(3)* A prosa **desce** de contraste (14,37 →
+  11,08:1) e Spectral desce um peso, por halação e irradiação (NN/g, CSS-Tricks).
+  *(4)* **A tipografia não muda, e há prova:** Hades usa Spectral como face
+  principal e ganhou o BAFTA de arte; os cinco RPG de texto de referência usam a
+  mesma pilha que já temos. *O que muda é a hierarquia, não a fonte.*
+
+- **a régua que o `jogo` corrigiu contra si mesmo, e é o melhor momento da
+  fase.** A lei que ele escreveu para a soleira era *"só se oferece o que o
+  sistema sabe e o jogador não consegue adivinhar"*. Construída, ela enchia a
+  tela — porque o mural nunca fica vazio por desenho. Levei-lhe a pergunta e ele
+  não cedeu espaço: **corrigiu a lei.**
+  > *A minha régua estava escrita para OBJETOS e devia estar escrita para
+  > ESTADOS. A tábua é lugar e está sempre lá; um papel que alguém acabou de
+  > pregar, e por que ainda se espera resposta, é oferta — e deixa de o ser
+  > quando ninguém está à espera.* **A soleira é o que você perde se não agir
+  > agora. Mobília não se perde.**
+
+  **E a prova de que estava certo é que o código já o sabia e nenhum de nós
+  reparou:** `PainelMural` tem duas listas com títulos diferentes —
+  `CARTAZES DISPONÍVEIS` (o acervo do lugar) e `OFERECIDOS A VOCÊ` (alguém
+  espera resposta sua). **A soleira leva só a segunda.** *Fabricámos uma peça e
+  íamos deitar as duas listas lá dentro.*
+
+- **decisões médias tomadas, cada uma com o motivo:**
+  - **a paleta trocou de valores e NÃO de nomes.** `panel`/`line`/`ink` têm ~15
+    leitores; renomeá-los era arriscar a casa inteira por arrumação. Os valores
+    passaram à mesa fria e **nasceram tokens novos** (`pagina`, `paginaAlta`,
+    `paginaFio`, `inkMeio`, `mundo`) para a página quente. *Reversível num
+    commit, que é a condição que a pessoa pôs.*
+  - **o terceiro acento (`mundo`) entrou, e o trabalho dele NÃO está feito — e
+    esta linha é uma correcção minha ao que a fase ia dizer de si mesma.** A
+    justificação era que o âmbar carrega **24 significados** e que `mundo` lhe
+    tiraria **cinco** (relógio, data, estação, lugar, a espera). **Contei os
+    leitores antes de commitar:** `T.mundo` é lido **duas vezes**, ambas nas
+    peças novas, e `T.onMundo` **zero**. *Os cinco significados continuam
+    âmbar.* **Logo o âmbar não desceu de 24, e eu não deixo a fase dizer que
+    desceu.** Fica na pauta como R11, com a contagem. *Uma cor nova que não tira
+    trabalho a nenhuma outra é só mais uma cor.*
+  - **`Esperar` fica na soleira, emprestado, e está escrito no código que é
+    empréstimo.** Pela régua do `jogo` não é oferta; entrou só porque lhe
+    tirámos a aba `Tempo`. **Tirá-lo sem substituto removeria uma função que
+    mexe no relógio, no dia, na renda e no clima** — isso é `pesado`. Fica até
+    `passarTempo` ter porta de texto (pedido ao sistema registado).
+  - **o teto da soleira foi a 2 na mesa e 1 no telefone**, e o teto é *uma
+    promessa sobre a prosa, não sobre as ofertas*: o que não cabe **vai para a
+    porta**, não desaparece.
+  - **os renomes de menu não foram feitos**, apesar de autorizados — a fase já
+    tirou as quatro abas do momento e os 20 verbos no mesmo dia, e pedir também
+    nomes novos é fazer o jogador reaprender duas coisas de uma vez. *Ficou na
+    pauta com a razão escrita.*
+
+- **o bastão do `App.jsx`:** tomado e devolvido **três vezes** pelo `oficial`
+  (R3, R4b, R5b), cada uma com o arquivo apagado no fim. **Para quê:** a página,
+  a coluna, as portas do `▸`, o campo do turno, a soleira, a aposentadoria dos 20
+  verbos e a régua corrigida. O `aprendiz` **nunca lá entrou** — trabalhou em
+  `ui.jsx`/`estilo.js` em paralelo, com os arquivos ditos por escrito em cada
+  chamada. *Zero colisões em quatro etapas com duas mãos simultâneas.*
+
+- **a prova, medida viva na mesa (1024×768) e no telefone (375×812)**, por
+  `read_page` e `getBoundingClientRect` — nunca pela foto:
+
+  | | antes (R1) | depois |
+  |---|---|---|
+  | **aceitar o contrato do Yorick** | 1 toque + **14,3 s** → **não aceite**, narrador improvisa ◉80 | 1 toque + **76 ms** → aceite por **◉ 60, o combinado** |
+  | linhas `▸` tocáveis | **0 de 4** (`SPAN`, `cursor:auto`) | **4 de 4** (`BUTTON`, 48 px) |
+  | decisões vivas **enquanto o Mestre escreve** | **0** | **3** |
+  | `Agir →` | 69×28 = **1 946 px²** | 89×65 = **5 734 px²** (2,95×) |
+  | `Agir →` contra a aba `Bolsa` (5 184 px²) | **0,38×** | **1,11×** |
+  | alvos abaixo de 48 · telefone | **21 de 26** | **2 de 30**; abaixo de 44: 20 → **1** |
+  | alvos abaixo de 48 · mesa | 12 de 18 | **3 de 31** |
+  | caracteres por linha · mesa | **89–100** (teto WCAG 1.4.8 = 80) | **64** (Bringhurst 45–75) |
+  | a prosa | 15 px, peso 400 | **17 px** (`TIPOS.prosa`), peso 300 |
+  | superfícies, extremo a extremo | **1,379:1** | **4,13:1** (piso 1.4.11 = 3,0) |
+  | pares de cor reais que reprovam | 1 de 32 | **0 de 32** |
+  | famílias de matiz, de facto | 2 | **7** |
+  | o preço nas 8 ações rápidas | **8 em `title`** (que no telefone não existe) | **8 na tela** |
+  | **a prosa, mesa, turno típico** | **58,1 %** | **58,3 %** |
+
+  **O modelo previu e a tela confirmou à décima:** 0 ofertas → 66,3 %; 1 → 58,2 %
+  previsto contra **58,3 % medido**; 2 → 50,1 % contra **50,3 %**.
+
+- **o telefone paga, e eu escrevo a conta dos dois lados em vez de a arredondar.**
+  Na mesa a prosa voltou acima de onde estava. **No telefone não: 51,5 % → ~41 %**
+  com uma oferta na soleira. *É o número mais caro desta fase e não o escondo.*
+  **E ele só é ~41 e não 37,3 porque uma medição apanhou a peça a cobrar o pior
+  caso a toda a gente:** o cartão forçava a segunda linha **sempre**, e `Esperar`
+  — sete letras — passou a ocupar o mesmo que um contrato de 34. Media-se 37,3 %
+  contra os **41,1 %** que a geometria anterior dava, na mesma tela. *Ganhar o
+  pior caso pagando o caso comum é a troca errada*, e o caso comum é o mais
+  frequente que existe. A correção não precisou de peça nova nem de número novo:
+  **`flex-wrap` já decidia isto sozinho** — um item entra na linha pelo seu
+  tamanho natural e só desce quando não cabe. Tirou-se a largura forçada e o
+  verbo curto voltou a partilhar a linha, com o longo a continuar com teto.
+  **O que o telefone recebe em troca, e é o aparelho que mais recebia nada:**
+  - **o preço das 8 ações rápidas estava em `title`, e `title` no telefone
+    simplesmente não existe.** O jogador de telemóvel **nunca** viu o preço de
+    nada antes de clicar. *A lei da casa estava a ser cumprida por um canal que
+    metade dos aparelhos não tem.* Agora está na tela.
+  - **alvos abaixo do piso: 21 de 26 → 2 de 30**; abaixo dos 44 da WCAG 2.5.5,
+    de 20 para **1**. *Um toque falhado no meio de um turno não custa um toque —
+    custa a hesitação de perceber por que não aconteceu nada.*
+  - a prosa passou de **15 px a 17 px**, e o que sobra dela lê-se melhor.
+  - as ofertas do mundo **existem**: eram nove afordâncias por ecrã, zero
+    tocáveis.
+  **A medida honesta do custo não é a área, é a linha — e ela também piorou**,
+  porque a peça cresce e o ecrã não. *Fica na pauta como o primeiro item do
+  telefone, e é onde eu olharia a seguir se a pessoa perguntasse o que falta.*
+
+- **a regressão que a fase teve de pagar antes de subir, e fica escrita porque foi
+  real.** A R3 entregou a soleira e a prosa **caiu de 58,1 % para 27,3 %**. A
+  aritmética que justificara a peça comparava coisas diferentes: dizia que os
+  160 px da soleira sairiam *"dos 20 verbos que se aposentam"* — **mas o painel
+  dos 20 verbos era uma gaveta e custava 0 px permanentes**. O permanente eram os
+  56 px da fileira de abas. Foram precisas mais **três** etapas (R4a, R4b, R5) e
+  a correcção da lei pelo `jogo` para a prosa voltar ao lugar.
+  > **Eu mandei o `oficial` não aposentar os 20 verbos em R3, para medir a
+  > soleira primeiro. Foi erro meu**, e foi ele quem o mediu e o declarou em vez
+  > de o arredondar. A lição fica: *uma peça que se acrescenta antes de o que ela
+  > substitui sair não está a ser medida — está a ser somada.*
+
+- **três coisas que a construção achou e que ninguém procurava:**
+  0. **O botão da oferta perdeu o nome acessível ao ganhar o teto de duas
+     linhas** — o `read_page` passou a ler `button [ref]` onde lia
+     `button "Esperar"`, **na mesa e no telefone**, e o culpado era o `<span>`
+     que o teto obrigou a existir. *Provavelmente era cegueira do instrumento*
+     — nome-a-partir-do-conteúdo é recursivo por norma — **mas eu não subo
+     "provavelmente" no controlo principal da tela principal.** Ganhou
+     `aria-label` explícito e asserção de suíte. *Esta casa passou cinco ciclos
+     a pagar esta mesma classe de defeito com o anel de foco, e a lição é que o
+     ónus fica de quem constrói.* **E de lambuja: as reticências do corte também
+     não existiam** — a classe `line-clamp-2` da CDN gerava `display: flow-root`
+     em vez de `-webkit-box`, e o corte era seco. *Um comentário que promete um
+     `…` que não aparece é pior que nenhum comentário.*
+  1. **`Atacar` na tela principal estava morto desde E3** e a suíte dizia que não.
+     `vereditoDoGolpeAgora()` abre com `if (!comb) return null`; o painel só se
+     pinta sob `!emBatalha`; logo `vdGolpe` era **sempre `null` ali**. O varredor
+     media o **texto** do handler e nunca se ele chegava a correr — afirmou
+     *"o botão `Atacar` segue chamando `declararGolpe`"* durante um ciclo inteiro.
+     Saíram **20** botões, não 19. *(Pedido ao sistema registado.)*
+  2. **O cartaz já aceite continuava a ser oferecido** — atrás de duas abas era
+     uma verruga; na soleira era um botão morto na fila. **A régua corrigida do
+     `jogo` já o resolvia** sem decisão nova.
+  3. **O piso de 45 caracteres por linha é aritmeticamente inalcançável no
+     telefone** a 17 px: 45 caracteres pedem 387 px e o ecrã tem 375. O estudo
+     tratara os dois aparelhos como o mesmo defeito; **são dois**. Decidido e
+     escrito: *o piso não se aplica ao telefone, e a saída real é largura de
+     coluna, não letra.*
+
+- **a reconciliação da pausa, dita por escrito porque não pode ficar implícita —
+  e corrigida a meio, porque a realidade mudou enquanto a fase corria.** Eu abri
+  esta fase com `.claude/fila-pausada` **ainda no disco** (de 16/09), tratando a
+  ordem de hoje como a *segunda ordem* que o arquivo pedia, **mas só para esta
+  frente** — e decidido a não o apagar nem a religar a tarefa agendada, porque a
+  pessoa mandou tocar **este** trabalho, não mandou voltar à automação que acorda
+  sozinha de duas em duas horas.
+  **O que aconteceu de facto:** a mente do sistema retomou a fila mais cedo hoje
+  (apagou o arquivo e religou `taverna-ciclo`), e minutos depois **desligou
+  `taverna-ciclo` outra vez por sua própria decisão**, registada em
+  `mente/diario.md` (commit `9dfafa2`) — e a razão dela é boa e é sobre nós:
+  > *os dois alvos que a pessoa deu hoje ao redesign — **a tela principal** e **o
+  > sistema de decisões** — moram exatamente no território do ciclo automático
+  > (`turno.js`, `cena.js`). Um ciclo automático a pegar um item de decisão ou de
+  > cena, sem saber que o `regente` está a meio de decidir a forma e o fluxo
+  > dessas mesmas telas, arriscava o retrabalho que a pessoa disse não querer.*
+
+  **Logo: o arquivo já não existe, e não fui eu que o apaguei; a tarefa agendada
+  está desligada, e não fui eu que a desliguei.** As duas filas correram lado a
+  lado o dia inteiro sem colidir, e o único commit da outra mente nesta janela
+  (`9dfafa2`) tocou **um arquivo só** — `mente/diario.md` —, que não é meu. *Fica
+  escrito para quem ler isto daqui a um mês não concluir que a mesa de desenho
+  levantou a pausa por conta própria.*
+
+- **o Figma: NÃO foi alcançado, e isto é uma dívida, não um esquecimento.** As
+  ferramentas do arquivo `e5wJUzInAssoebx5npssKc` não estão carregadas nesta
+  sessão — **os dois seniores verificaram em separado** e ambos o declararam. A
+  lei da casa diz que *nenhuma decisão de design sai sem passar pelo Figma*, e
+  ela **não foi cumprida**. O par antes/depois existe **renderizado e navegável**
+  (as duas telas de 375 px lado a lado, a mesma cena, o mesmo estado), e a
+  condição de fecho está escrita em `formas.md`: as 24 variáveis entram como
+  variáveis com `codeSyntax` WEB, e os dois quadros do par entram como quadros.
+  *Fica dito que a fase subiu com prova renderizada e não desenhada.*
+
+- **o que ficou, e vai para a pauta com o número ao lado:**
+  - **R6 · a prova jogada do *depois*** — a catraca que o `jogo` escreveu
+    **contra si mesmo**: 20 turnos, contando quantos usaram o campo de texto.
+    *Perto de zero é regressão* — o jogo teria virado apontar-e-clicar e a prosa
+    deixado de ser respondida. **A fase sobe com duas das três provas, e isso
+    fica dito em vez de escondido.**
+  - **R7 · os 653 tamanhos abaixo do piso** — `TIPOS` nasceu e a catraca
+    **congelou a dívida e só a deixa descer**; a conversão é um painel por etapa.
+  - **R8 · os 81 emoji do sistema operativo** — 204 usos contra 33 ícones
+    desenhados: *a identidade do jogo muda conforme o aparelho de quem joga.*
+  - **R9 · os acentos colapsam sob daltonismo** — `ok` e `amber` a **1,02:1** em
+    deuteranopia. **Medido e não corrigido**: a paleta nova herdou o defeito.
+  - **R10 · a forma "revelar mais itens na própria lista" não tem nome** — o
+    `aprendiz` precisou dela para o `+N`, viu que a forma fechada (*Véu +
+    Fechar*) é para sobreposições, **compôs com peças que já são lei em vez de
+    inventar**, e escreveu a dívida no código. *Foi a decisão certa.*
+  - **para a pessoa:** *a cena ganha um rosto* (a proposta ambiciosa) e *os
+    renomes de menu* — este segundo autorizado por ela e **adiado por mim**, para
+    o jogador não reaprender duas coisas no mesmo dia.
+  - **a fronteira que esta fase atravessou, e fica declarada:** o commit toca
+    **oito suítes de regra** (`teste-golpe`, `teste-guardado`,
+    `teste-trava-da-reacao`, `check-guardado`, `check-tela-de-batalha` e as três
+    de `acoes-do-jogador`), que são território do **sistema**. Não é mudança de
+    regra: são **endereços `src/App.jsx:N` que o nosso próprio patch deslocou**,
+    re-mapeados pelos hunks do `git diff` — **146 de uma vez**, com o motivo
+    escrito em cada asserção movida, como a lei da casa manda. *A dívida que isto
+    revela é do sistema e já foi pedida: uma suíte que guarda uma lei por número
+    de linha vai partir-se sempre que a outra mente respirar.* **Três catracas
+    DESCERAM** nesta fase e nenhuma subiu: `TETO_SEM_MOTOR` 6→1, os leitores de
+    `recusaDoGolpe` 3→2, e a pílula de `check-formas` 11→8.
+
+  - **ao sistema** (`mente/pedidos-ao-sistema.md`): `src/soleira.js` como módulo
+    puro; o varredor que mede o **texto** de um handler em vez de o ver correr;
+    a porta de texto de `passarTempo`; e a contracção portuguesa que produz
+    *"Praga em as terras baixas"*.
+
+
 
 *O escrito das mãos fica em `mente/e4-jogo.md` e `mente/e4-desenho.md`; a forma,
 no bloco de E4 de `mente/formas.md` (557 linhas).*

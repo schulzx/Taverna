@@ -4970,3 +4970,590 @@ pode nascer é o denominador:** nada na tela deve escrever «4,5 dos seus 9»,
 
 > **Um preço unitário verdadeiro pode viver sem orçamento. Um orçamento falso não
 > pode viver de todo.**
+
+
+## R1 · o sistema de decisões da tela principal (`jogo` · 23/09)
+
+*Aberto pela ordem da pessoa de 23/09: "começando pela tela principal que é onde
+se passa 90% do jogo… Vamos mudar também o sistema de decisões." O documento
+longo, com o método para refazer as medidas, está em `mente/r1-jogo.md`.*
+
+### a oferta do mundo (forma NOVA, pedida ao `desenho`)
+
+- **quando** — todo turno fora de combate, sempre que o sistema torna alguma
+  coisa possível: um contrato disponível, um lugar alcançável, uma pessoa em
+  cena com verbo, um mercado aberto aqui, uma missão que pede resposta.
+- **forma** — **A oferta** (peça nova, do `desenho`). Carrega **verbo + preço +
+  o que dá**, aceso à nascença, **nunca em `title`**. Protótipo que já acerta o
+  conteúdo: o cartão de contrato de `PainelMural` (◉60 · +80 XP · +3 fama ·
+  quem assina · onde). Eixos pedidos: *Tom* (o que o mundo oferece · o que custa
+  · o que é irreversível) × *Estado* (Repouso · Foco · Impedida · Já tomada).
+  Alvo no piso de `ALVOS.piso` = 48.
+- **onde vive** — **A faixa** (peça nova, do `desenho`): região fixa entre a
+  narrativa e o campo, **fora do rolamento**. · Código: **[ainda não existe]**.
+- **a decisão de momento, e é do `jogo`: a faixa NÃO vive dentro da conversa.**
+  Considerada e recusada. A razão é jogada: a oferta do Yorick continuou válida
+  **quatro turnos**, e ao quarto a mensagem que a criou estava três ecrãs acima.
+  *A oferta persiste; a mensagem passa.* O momento recupera-se pela marca do
+  novo (`O realce` + `Selo` *Mudou=Agora*, já declarados — o `desenho` confirma
+  ou recusa por escrito).
+- **a regra que a governa, e é o que a impede de virar point-and-click** — **a
+  faixa só oferece o que o SISTEMA sabe e o jogador não consegue adivinhar.**
+  Atacar, persuadir, procurar, esconder-se são **invenção do jogador** e ficam no
+  campo. Aceitar um contrato por ◉60, viajar, comprar, convidar são **oferta do
+  mundo**, e o jogador não os inventa: não sabe que existem, nem o preço, nem as
+  palavras que a porta reconhece. *O teste, em caso de dúvida: o jogador podia ter
+  pensado nisto sozinho?*
+- **por quê** — experiência jogada + medida, 23/09, no DOM vivo a 1024×768:
+  - escrevi *"Aceito o trabalho do Yorick. Sessenta está bom."*, esperei
+    **14,3 s**, e **o contrato não foi aceite**. O Narrador improvisou **◉80**
+    contra os **◉60** da tabela. *O jogador disse sim e o jogo não ouviu — e a
+    IA inventou economia, porque a única porta para dizer sim era a prosa.*
+  - o Mestre escreve `▸ Mural — há um mural onde se lê o que a região precisa.`
+    e no DOM é `{tag:"SPAN", clicavel:false, cursor:"auto"}`. **O jogo desenha a
+    seta e não põe a porta.** Nove afordâncias no primeiro ecrã, **zero**
+    tocáveis.
+  - **50 verbos de sistema** atrás das quatro abas (`PainelLateral`,
+    `App.jsx:1882`) contra **17 portas** que o texto livre abre
+    (`PORTAS_DO_TURNO`, `turno.js`). **Nenhuma ponte**, e nada na tela diz de que
+    lado está o verbo que o jogador quer: *"compro uma corda"* resolve,
+    *"aceito o trabalho"* não.
+  - **0 de 20** controlos de ação da tela principal diz o preço na tela. Oito têm
+    `title`, e o que lá está é **descrição, não preço** — e `title` não existe no
+    telefone.
+  - `Agir →` = 69×28 = **1 946 px²**; a aba `Bolsa` = 72×72 = **5 184 px²**.
+    **2,7×** o botão que faz o turno acontecer.
+  - as quatro abas do momento medem **27 px**, `Agir →` **28**, as ações rápidas
+    **30**, os `🔊` **22** — contra `ALVOS.piso` = **48**.
+  - **defeito, e é leve:** o `↓` (46×46 = 2 116 px²) **sobrepõe-se** ao `Agir →`,
+    confirmado por interseção de retângulos. O atalho de rolamento é maior que a
+    chamada da tela e está por cima dela.
+  - espera do Mestre: **30 chamadas em 6 turnos**, mediana de turno **14,3 s**,
+    4 de 5 acima de 10 s (NN/g, Nielsen 1993). Durante ela, `bloqueado` apaga a
+    tela **inteira**: não há uma só decisão possível enquanto o Mestre escreve.
+  - **6 de 6 turnos** foram ler prosa → escrever frase → esperar → ler prosa.
+    Contra a lei da pessoa de 14/09 (*"não só lendo e escrevendo"*): **100 %
+    ler-e-escrever**.
+- **a testemunha de acusação** — no mesmo dia, o combate abriu-se sozinho e os
+  mesmos verbos mediam **48 px**, com `Esqueleto 1 a 19,5 m — faltam 18 m` na
+  tela. **As fases E, K e W ensinaram o tabuleiro a oferecer, a marcar preço e a
+  armar o verbo — e o tabuleiro é o desvio.** A resposta para a tela principal já
+  está construída e a correr em produção; nunca foi aplicada aos 90 %.
+- **o que NÃO pede ao `backend`** — nenhuma mecânica, tabela ou número novo. Os
+  50 verbos existem e têm suíte. O que se pede é **fiação**: que o turno saiba
+  dizer que ofertas estão vivas, a partir de estado que o App já tem em mãos.
+- **o que o jogador perde, dito sem maquilhar** — a página em branco. Ofertas
+  ancoram, e o risco real é a prosa deixar de ser respondida. A regra acima é a
+  defesa, e é uma defesa de desenho, não uma garantia. **A catraca, que o `jogo`
+  escreve contra si próprio:** depois de construída, 20 turnos e contar quantos
+  usaram o campo. Perto de zero = a proposta é **regressão**, e é o `jogo` quem
+  tem de o dizer.
+- **peso** — **pesado** (muda o que o jogador faz e em que ordem, e tira-lhe
+  controlos de que depende). As metades que **não** esperam: as linhas `▸`
+  passarem a abrir o que anunciam (médio), o `↓` deixar de tapar o `Agir →`
+  (leve), o piso de 48 nos controlos de ação (médio), a espera deixar de apagar
+  a tela inteira (médio), o preço sair do `title` (médio).
+- **dívida declarada** — **não passou pelo Figma**: não há ferramenta de Figma
+  nesta sessão (só `DesignSync`, que é outra coisa). Fica como dívida com motivo,
+  não como esquecimento; o par visual está pedido ao `desenho` por mensagem, com
+  todos estes números.
+
+
+---
+
+## R1 · a tela principal (23/09 · `desenho` × `jogo`)
+
+A pessoa mandou focar no visual e na experiência da tela onde se passa 90 % do
+jogo — a da narrativa, não a de batalha — e autorizou trocar paleta, tipografia,
+nomes e posições. O censo está em `mente/r1-desenho.md`; o do `jogo`, em
+`mente/r1-jogo.md`. Aqui fica só o que é **forma**.
+
+### a lei nova: o `▸` fica reservado ao que se toca
+
+O Mestre escreve `▸ Mural — há um mural onde se lê o que a região precisa.` e no
+DOM isso é um `<span>` com `cursor: auto`. **A seta é o glifo universal de "vá
+aqui".** O sistema desenha uma afordância e não a honra — e o jogador que a segue
+não encontra nada.
+
+**A regra:** o `▸` só aparece onde há toque. Ou o glifo sai, ou a coisa passa a
+tocar-se. Onde o que a seta anuncia é uma porta que o mundo abriu, a resposta
+certa é a segunda, e a peça chama-se `A oferta`.
+
+Achado pelo `jogo`, medido no DOM vivo; a lei é do `desenho`.
+
+### a lei nova: cor viva só em coisa com que se interage
+
+Copiada, com a fonte. No redesenho de Sunless Skies a Failbetter restringiu a
+paleta e **reservou as cores mais vivas à interação e aos pontos importantes**
+(<https://www.gamedeveloper.com/design/reading-by-gaslight-a-look-inside-sunless-skies-ui-redesign>),
+e o princípio de arte do estúdio é *"o Unterzee é escuro por defeito… a luz que
+há, trazes tu"*. Num fundo quase-preto, cada brilho compete com a prosa.
+
+**A regra:** `amber`, `violet` e `mundo` só em coisa com que o jogador interage
+ou que ele tem de notar. Tudo o resto vive nos neutros. **É varrível**, e por
+isso é lei e não gosto.
+
+O número que a obriga: **o âmbar carrega hoje 24 significados diferentes** na
+tela principal — a voz do Mestre, o "✓ salvo", o acampar, as rolagens, a crônica,
+o nível, a barra de PV, "Ações", "Tempo", a moldura do painel de ações, o
+veredito do golpe, a aba ativa, a moldura do acampamento, os dados de vida, o
+objeto sintonizado, a tocha, a chave, o "procurar nesta sala", a linha da raid, o
+lugar, a rolagem pendente, o botão de voltar ao fim, a próxima luta, a cerimônia.
+
+### a lei nova: nenhum acento carrega sentido sozinho
+
+Simulando os três daltonismos sobre a paleta **de hoje**, descobriu-se um defeito
+que existe e nunca tinha sido medido:
+
+| par | protanopia | deuteranopia | tritanopia |
+|---|---|---|---|
+| `ok` × `amber` | 1,29 | **1,02** | 1,10 |
+| `ok` × `danger` | 2,22 | **1,49** | 1,73 |
+
+O verde do "tudo bem" e o vermelho do "você está a morrer" ficam a 1,49:1 um do
+outro. A paleta proposta melhora isso em 1 % — **não resolve.**
+
+**A regra:** cada acento tem **glifo e posição fixos**, e a cor é a segunda
+leitura, nunca a primeira. Uma peça que distingue dois estados só por cor é
+defeito, mesmo que os dois tons passem a catraca.
+
+### `A oferta` — decidida, e o eixo é do `jogo`
+
+O que o mundo acabou de tornar possível, tocável no sítio onde o mundo o disse.
+Pedida pelo `jogo`; fabricada pelo `desenho`.
+
+| eixo | valores | o que decide |
+|---|---|---|
+| `Tom` | Convite · Preço · Sem volta | `mundo` · `amber` · `danger` |
+| `Estado` | Repouso · Foco · Impedida · Tomada | herda a gramática de `Botao` |
+| `Chegada` | Assentada · Agora | a marca de "novo neste turno" |
+
+- **Alvo: `ALVOS.piso` (48).** Não é número novo.
+- **Três campos obrigatórios na tela, nenhum em `title`: o verbo, o preço, o
+  retorno.** O `jogo` mediu que **zero** dos 20 controles de ação de hoje diz o
+  preço na tela, e que oito o escondem num `title` — balão de rato, que no
+  telefone não existe. *"O veredito antes do clique" é lei da casa e está a ser
+  cumprida por um canal que metade dos aparelhos não tem.*
+- **Composta, não redesenhada:** instância de `Botao` para o verbo, instância de
+  `Consequencia` *Largura=Longa* para o preço.
+- **Tipo:** verbo em Spectral 15 (é fala, não máquina); preço e retorno em mono
+  13; quem/onde em `inkMeio` 13. Nada abaixo de 12.
+
+**A coincidência que vale registar:** o `jogo` pediu um eixo de três valores sem
+saber que o `desenho`, por aritmética de cor, tinha acabado de propor um terceiro
+acento. Os três valores dele e os três acentos batem um a um. Não é sorte — é o
+mesmo problema visto dos dois lados.
+
+### `A soleira` — o nome, e a recusa do nome anterior
+
+Onde as ofertas moram: região fixa entre a página e o campo do turno, **fora do
+rolamento**.
+
+**O `jogo` chamou-lhe `A faixa` e disse que o nome era do `desenho`. O
+`desenho` recusa esse nome, e por lei:** já existe `FaixaRelogios` na mesma tela
+e `tv-faixa` na folha. Duas coisas com o mesmo nome no mesmo ecrã é a doença
+"uma ação, uma forma" um andar acima. **`A soleira`** — a pedra da porta, onde
+está o que o mundo abriu e você ainda não atravessou.
+
+- **Vazia não deixa buraco:** altura 0, sem margem, sem borda. Região que reserva
+  espaço para nada é mobília a mentir.
+- **Teto de 3 na mesa, 1 no telefone**, com "mais N" a abrir o resto. A conta:
+  3 × 48 + 2 × 8 = 160 px, dentro dos 319 px de mobília medidos no telefone,
+  **sem tocar na página**, porque saem dos 20 verbos que se aposentam.
+- **No telefone desfaz-se, não vira gaveta** — a lição de E4: *uma tira duplicada
+  não se esconde, esvazia-se.*
+- **A razão de existir é jogada, e é do `jogo`:** a oferta do Yorick continuou
+  válida por **quatro turnos**; colada à mensagem teria ficado três ecrãs acima.
+
+### `A voz` — o cabeçalho de quem fala dentro da página
+
+Não foi pedida por ninguém; a tela precisa dela. Hoje o "Mestre" é um `<div>` de
+10 px mono com um botão de ouvir de **22×22** colado, escrito à mão em dois
+sítios do mesmo ficheiro. Com a narração a virar página, é ele que separa uma voz
+da seguinte — e é onde esse botão ganha os seus 48 px.
+
+Eixos: `Quem` (Mestre · Você · O mundo) × `Voz` (Muda · A ler · A preparar).
+
+---
+
+## Discordâncias de R1, resolvidas por escrito
+
+### a marca de "novo neste turno" — FECHADA a favor do `desenho`
+
+**O `jogo`** pediu ao `desenho` que confirmasse que o `Selo` *Mudou=Agora* e
+`O realce` servem para marcar a oferta que nasce neste turno.
+
+**O `desenho` recusa os dois:**
+
+1. `O realce` é o **degrau 2 da cerimônia**, e está escrito assim nesta folha.
+   Usá-lo aqui transformaria cada contrato num acontecimento — e a régua da
+   aparição diz o contrário: *uma peça que aparece sempre deixa de ser
+   acontecimento.*
+2. `Selo` é um **estado** de uma coisa. Uma oferta não é um estado: é uma porta.
+   Um selo colado a ela diria "esta oferta está nova", que é uma frase sem
+   sentido.
+
+**O que fica em vez disso:** o eixo `Chegada` **dentro** de `A oferta`. Uma marca
+que se pode aplicar a qualquer coisa acaba aplicada a tudo; presa à peça, só pode
+significar o que a peça significa.
+
+**E ela decai no turno seguinte, não por relógio** — o jogo tem turnos, e uma
+marca que morre por tempo morre enquanto o jogador está a pensar.
+
+### os 20 verbos prontos — FECHADA com emenda
+
+**O `jogo`** propôs aposentar os 12 `ACOES_PRONTAS` e as 8 `ACOES_RAPIDAS`: 20
+botões iguais em todas as cenas do jogo para sempre, e nenhum fala desta cena.
+Nenhum diz Quorin, Yorick, terras baixas, mural. A linha que ele traça, e que o
+`desenho` adota inteira:
+
+> **a soleira só oferece o que o SISTEMA sabe e o jogador não consegue adivinhar
+> (contratos, lugares, pessoas, preços); os verbos que são invenção do jogador
+> — atacar, persuadir, procurar — ficam no campo, porque são dele.**
+
+**A emenda do `desenho`, aceite:** `Atacar` não é igual aos outros e o código
+prova-o — tem veredicto vivo (`vereditoDoGolpeAgora`), tem estado *Impedido*, e
+tem a linha de consequência que diz **onde** o golpe cai ou **porquê** não
+alcança. É peça provada, paga em W1 e W2. Aposentá-la com as outras 19 seria
+deitar fora a única que funciona.
+
+**`Atacar` não se aposenta: muda de casa.** Não é uma "ação pronta" — é o verbo
+do combate, e pertence onde o combate está.
+
+### o Figma, e a dívida declarada pelos dois
+
+**Nenhum dos dois seniores tinha ferramenta de Figma na sessão de R1.** Ambos
+procuraram, em separado, e ambos encontraram só `DesignSync`, que é outra coisa.
+
+A lei da casa diz que nenhuma decisão de design sai sem passar pelo Figma.
+**Portanto nada em R1 é decisão: é proposta.** O par antes/depois existe
+*renderizado* (<https://claude.ai/artifact/A5aShQ3P28ACTdbJmQAPL8>), não desenhado
+no arquivo `e5wJUzInAssoebx5npssKc`.
+
+**A condição de fecho, escrita para quem tiver as ferramentas:**
+
+1. as **24 variáveis** da paleta proposta entram como variáveis, com
+   `codeSyntax` WEB igual ao caminho real em JS (`T.pagina`, `T.mundo`…);
+2. os **dois quadros do par** (375×812, antes e depois) entram como quadros;
+3. `A oferta`, `A soleira` e `A voz` entram como conjuntos com os eixos acima —
+   e **`A oferta` monta instâncias** de `Botao` e `Consequencia`, não as
+   redesenha por dentro.
+
+Fica escrito como dívida com motivo, **não como esquecimento**.
+
+### R1 · o que o `jogo` e o `desenho` fecharam entre si (23/09)
+
+Trocado por mensagem no mesmo dia, cada um com a sua medição feita sem ver a do
+outro. **Nenhuma destas ficou por resolver — não há discordância aberta em R1.**
+
+1. **`A faixa` morreu; a peça chama-se `A soleira`.** Recusa do `desenho`, por
+   lei e não por gosto: já existe `FaixaRelogios` **na mesma tela** e `tv-faixa`
+   na folha, e dois nomes iguais no mesmo ecrã é *uma ação, uma forma* violada um
+   andar acima. O `jogo` aceitou sem reserva: *a pedra da porta, onde está o que
+   o mundo abriu e você ainda não atravessou* diz a peça inteira numa imagem.
+
+2. **A marca do novo é o eixo `Chegada` DENTRO de `A oferta`, e decai por TURNO.**
+   O `jogo` tinha pedido `O realce` + `Selo Mudou=Agora`; o `desenho` recusou os
+   dois — `O realce` é o degrau 2 da cerimônia e transformaria cada contrato num
+   acontecimento (contra a régua da aparição), e um `Selo` diz o *estado* de uma
+   coisa, mas uma oferta não é um estado, é uma porta. **O `jogo` aceitou e
+   registou que o argumento decisivo era do ofício dele e veio do outro lado:**
+   *"uma marca que morre por tempo morre enquanto o jogador está a pensar"* — e a
+   medida sustenta-o, com mediana de **14,3 s** de espera e prosa longa para ler
+   antes de decidir.
+
+3. **`Atacar`: não havia discordância, havia dois botões com o mesmo rótulo.**
+   O `desenho` emendou que `Atacar` não se aposenta com os outros 19 porque tem
+   veredicto vivo, *Impedido* e linha de consequência. **Verdade — e essa peça
+   está DENTRO do combate, e não nesta tela:** `App.jsx:20844` lê
+   `emBatalha && combate ? vereditoDoGolpeAgora() : null`. O `Atacar` da tela
+   principal não tem nada disso: escreve `"Ataco "` na caixa
+   (`ACOES_PRONTAS`, `App.jsx:1108`) e devolve o cursor. **Esse morre com os
+   outros 19, pela regra, sem exceção** — "Ataco o bandido" é invenção do
+   jogador, e o campo é a casa dele. A peça do tabuleiro fica intocada.
+
+4. **O terceiro caso do `Atacar` foi TRAVADO pelo `jogo`, contra o próprio
+   `jogo`.** Ia propor-se que, havendo hostil na cena, atacar virasse oferta com
+   alvo e alcance — seria a primeira vez que o veredicto antes do clique aparecia
+   fora do combate. **Não se propõe: o sistema não sabe.** O veredicto está
+   fechado atrás de `emBatalha && combate`, e fora da luta ninguém mede distância.
+   Pedir a peça seria pedir forma para um número que não existe — *o `jogo` a
+   inventar mecânica, que é a única coisa que este ofício não pode fazer.* Fica
+   como **pedido ao sistema**, escrito como pedido: *o veredicto do golpe sabe
+   responder fora do combate?* Se sim, a oferta nasce; se não, a soleira não fica
+   pior.
+
+5. **`A voz` tem TRÊS valores em `Quem`, não quatro — contado, não achado.**
+   Autores de mensagem no `App.jsx`: `sistema` (503), `jogador` (43),
+   `mestre` (1). **Não há quarto**, nem na sala de dois — o que o outro jogador
+   faz chega como `sistema`. E a decisão de momento, que é do `jogo`: **o NPC que
+   fala não é uma quarta voz.** Yorick e Quorin falam em travessão dentro da prosa
+   do Mestre e continuam lá — *numa mesa de verdade o Mestre É a voz dos NPC*.
+   Separá-los daria a um RPG a cara de uma aplicação de conversa, e obrigaria o
+   narrador a devolver fala estruturada, que ele não devolve.
+
+6. **Requisito de momento sobre a narração virar página (do `jogo` ao `desenho`).**
+   A mudança está certa e o `1,039:1` prova que o balão do Mestre é uma borda à
+   volta de nada. Mas **o balão do JOGADOR não é decoração:** durante os 14,3 s de
+   espera, com `bloqueado` a apagar a tela inteira, a frase que ele acabou de
+   escrever é **o único sinal de que o turno foi enviado**. *Uma espera muda de
+   catorze segundos é o jogador a perguntar se clicou.* A forma é do `desenho`;
+   o requisito é do `jogo`: **o que acabei de mandar distingue-se do que o mundo
+   respondeu, e fica visível enquanto espero.**
+
+7. **Reparo do `jogo` ao `mundo` (#79D6C6), aceite como reparo e não como
+   recusa.** A aritmética do `desenho` é irrespondível — o âmbar carrega **24
+   significados** na tela principal, e o terceiro acento tem de existir. Mas o
+   verde-água lê-se, em jogos, como *seguro* e *cura*, e a oferta mais comum da
+   sessão foi *"ir para as terras baixas"* — que não custa nada para aceitar e
+   pode matar o herói. **`Tom=Convite` quer dizer *o mundo abriu isto*, nunca
+   *isto é seguro*.** Onde há perigo conhecido, quem fala é o campo do **retorno**,
+   que é obrigatório na peça e é texto. *Uma cor que mente uma vez deixa de ser
+   lida para sempre.*
+
+8. **A dívida do Figma é dos DOIS, com o mesmo motivo.** Nenhum dos dois tem as
+   ferramentas do arquivo nesta sessão (existe `DesignSync`, que é outra coisa).
+   Declarada, com a condição de fecho no `r1-desenho.md` §7.
+
+9. **A terceira prova está por pagar, e o `jogo` escreveu o número contra si.**
+   Quando os três baratos fecharem (piso da letra, piso do alvo, coluna de 65ch),
+   joga-se o antes e o depois: turnos até ao primeiro contrato aceite · toques por
+   decisão · segundos por turno · **e quantos dos 20 turnos usaram o campo de
+   texto**. *Perto de zero = a soleira virou point-and-click, a prosa deixou de ser
+   respondida, e o `jogo` declara regressão.*
+
+### R1 · as duas correções do `desenho`, e a resposta ao requisito 6 (23/09)
+
+Escritas depois de o `jogo` responder. **Nas duas, quem tinha razão era ele** —
+e numa delas por um motivo mais duro do que o que ele deu.
+
+#### 1 · O `Atacar`: o `desenho` defendeu o botão errado
+
+A emenda do `desenho` foi: *"`Atacar` tem veredicto vivo, estado Impedido e linha
+de consequência; é peça provada em W1/W2, não se aposenta"*. **O raciocínio estava
+certo e o alvo estava errado.** Verificado no código, depois do reparo:
+
+- `App.jsx:1108` — o `Atacar` de `ACOES_PRONTAS`, que é o da tela principal:
+  `{ icone: "⚔", glifo: IconeEspada, rotulo: "Atacar", texto: "Ataco " }`.
+  **Escreve sete caracteres na caixa e devolve o cursor.** É um atalho de teclado.
+- `App.jsx:11753` — `vereditoDoGolpeAgora` abre com `const comb = combateRef.current;
+  if (!comb) return null;`. **Fora de combate não há veredicto**, logo não há
+  *Impedido*, não há alvo, não há alcance.
+- E o próprio comentário do ficheiro já o dizia, em `App.jsx:21101`: *"com a luta
+  aberta, `Atacar` ATACA… FORA de combate ele continua enchendo a caixa"*.
+
+**O `desenho` leu um comentário sobre um botão e atribuiu-o a outro com o mesmo
+rótulo.** A peça que ele defendia é real, é boa e vive no tabuleiro — e ninguém
+lhe estava a tocar. O `Atacar` da tela principal **morre com os outros 19**.
+
+*A lição, e ela já estava escrita nesta folha por outras mãos: uma peça corrigida
+com o motivo escrito vale mais que uma peça que nunca errou. O mesmo vale para
+uma emenda.*
+
+#### 2 · O acento `mundo` é RETIRADO — e o número é pior que o argumento
+
+O `jogo` reparou que um verde-água *promete seguro e cura*, e que
+`Tom=Convite` não pode prometer segurança: a oferta mais comum da sessão dele foi
+*"ir para as terras baixas"*, que não custa nada e pode matar o herói. **Ele tinha
+razão, e a medição mostra que o problema não é cultural — é ótico:**
+
+| par | distância de matiz | razão de luz | protanopia | deuteranopia | tritanopia |
+|---|---|---|---|---|---|
+| `mundo` #79D6C6 × `ok` #8FE0A2 | **36°** | **1,09:1** | 1,07 | 1,10 | 1,08 |
+
+**A 36 graus e 1,09:1, o "o mundo abriu isto" e o "está tudo bem" são a mesma cor
+para o olho** — e ficam a 1,07–1,10 sob os três daltonismos. Não é uma associação
+a desfazer com disciplina: é uma colisão.
+
+Procurou-se a substituição, e ela não existe: `#7FC5E0` (azul-gelo) afasta-se do
+`ok` (63° / 1,22) mas fica a **1,00:1 do âmbar em deuteranopia**; `#8FB8DC`
+(azul-aço) dá 1,03:1 contra o âmbar. **Cinco acentos saturados não cabem na faixa
+de luz desta paleta.** Qualquer quinto colide com um dos quatro.
+
+**A decisão, e ela é melhor do que a cor que substitui:**
+
+1. **O mundo ambiente — relógio, data, estação, lugar, a espera — vai para os
+   neutros** (`inkDim` sobre `chao`). É a lei que o próprio `desenho` acabara de
+   escrever três secções acima: *cor viva só em coisa com que se interage ou que
+   se tem de notar*. Um relógio não é nenhuma das duas. **A lei nova apanhou o
+   token novo, e o token novo é que cai.**
+2. **`Tom` em `A oferta` deixa de ser três cores e passa a ser a rampa que o
+   `Botao` já tem** — a mesma que D4 fixou quando corrigiu o *Impedido*:
+   - `Convite` — **sem preenchimento**, borda `bordaViva`, tinta cheia.
+   - `Preço` — borda `amber`, e o preço escrito em `amber`.
+   - `Sem volta` — borda `danger`, e o preço escrito em `danger`.
+
+**E isto mata a armadilha que o `jogo` viu, em vez de a gerir:** `Convite` deixa
+de dizer *isto é seguro* porque deixa de dizer seja o que for. É a **ausência de
+um aviso**, não a promessa de uma segurança. Quem fala de risco é o campo do
+**retorno**, que é obrigatório na peça e é texto — como o `jogo` pediu.
+
+**O que continua verdade sem o acento novo:** o âmbar tinha 24 significados, e a
+lei *cor viva só em coisa com que se interage* tira-lhe os do chassis (o "✓ salvo",
+os botões de cabeçalho, o "Tempo", as molduras dos painéis) e os do mundo ambiente.
+O que lhe sobra é **conteúdo e ação primária** — que é exatamente a arquitetura que
+a Baldur's Gate 3 publica. **A paleta desce de 24 para 21 tons e de 7 para 5
+famílias de matiz, e fica melhor.**
+
+#### 3 · A resposta ao requisito 6: o que eu mandei, enquanto espero
+
+O `jogo` pediu, e o requisito é justo: com a narração a virar página, a fala do
+jogador não pode ser engolida, porque durante os 14,3 s de espera — com
+`bloqueado` a apagar a tela — ela é **o único sinal de que o turno foi enviado**.
+
+**A forma, e ela não é peça nova: é um eixo em `A voz`.**
+
+`A voz` ganha `Resposta` (**Veio · Espera-se**), válido só em `Quem=Você`:
+
+- **A distinção, que vale sempre:** a fala do jogador fica na página — um livro
+  também regista o que você disse — mas em **itálico, recuada, em `inkMeio`
+  (a tinta quente mais fraca) e com filete próprio**. Nunca tem a cor nem o peso
+  da prosa do Mestre. É a mesma página, outra mão.
+- **`Resposta=Espera-se`:** o filete passa de `bordaViva` a **`amber`** — a cor
+  do Mestre, porque é ele que ainda não respondeu — e **respira**: pulso lento de
+  1,6 s **no filete, nunca no texto**. A prosa não se move um pixel, e por isso
+  isto não pode custar a leitura nem o turno.
+- **A saída é o acontecimento, não o relógio:** quando a resposta chega, o filete
+  assenta em `bordaViva` e o pulso para. Nada expira sozinho.
+- **`prefers-reduced-motion`:** o pulso não acontece; o filete fica `amber` fixo e
+  a legenda diz *"o Mestre está a tecer"* — a mesma informação, sem movimento.
+- **A página ancora-se na fala pendente:** durante a espera, a última coisa
+  visível é o que você acabou de mandar. Se a única coisa viva no ecrã é a prova
+  de que o jogo o ouviu, essa prova tem de estar à vista.
+
+*Uma espera muda de catorze segundos é o jogador a perguntar se clicou — e a
+resposta a isso não é uma roda a girar, é a sua própria frase, viva, à espera.*
+
+---
+
+### R4a · o piso de 45 caracteres não vale para telefone, e fica escrito por quê (23/09 · `aprendiz`)
+
+O `oficial` mediu a coluna já ligada (`TIPOS.prosa` = 17px + `.tv-coluna`) no
+telefone: **35 caracteres por linha**, e fez a conta — 45 caracteres a 17px
+pedem **387px de texto**, e o ecrã do telefone (375×812) tem **375px
+inteiros**, sem descontar margem nenhuma. *O piso de 45 é aritmeticamente
+inalcançável nesse corpo, em qualquer largura de coluna que caiba no
+aparelho.*
+
+**A decisão: o piso de 45 caracteres não se aplica ao telefone.** `TIPOS.prosa`
+continua um degrau só — 17px, nos dois aparelhos. Não nasce um oitavo degrau
+para encolher a prosa exatamente na tela onde ela mais precisa de ser lida.
+
+**A conta que fecha a decisão, e é só aritmética (Medida, não Estudo — a
+largura de coluna do telefone não foi remedida ao vivo nesta etapa; o número
+sai do que o `oficial` já mediu, e essa é a dívida declarada abaixo).** A
+largura de caracteres é fixa para uma dada largura de coluna: o glifo médio
+de uma fonte escala com o corpo, então caracteres-por-linha é
+inversamente proporcional ao tamanho da letra, para a MESMA coluna. Se 17px
+dá 35 caracteres, atingir 45 pede um corpo de **17 × 35 ÷ 45 ≈ 13,2px** —
+abaixo de `TIPOS.corpo` (15, a fala) e quase no chão de `TIPOS.rotulo` (13, a
+voz DA MÁQUINA). Encolher a protagonista da tela até quase o tamanho do
+rótulo que a acompanha reabriria, na peça que existe para curar a doença, a
+doença que R1 mediu: **363 de 575 tamanhos do projeto abaixo de 12px, a pior
+região sendo exatamente esta.** Um piso de linha que só se cumpre desfazendo
+o piso da letra não é piso — é troca, e a casa já decidiu qual das duas
+guardar quando as duas não cabem juntas.
+
+**Por que o número de Bringhurst não é lei aqui, e a WCAG não obriga nada.** A
+1.4.8 (AAA) fixa só o TETO — "largura não maior que 80 caracteres" — e não
+escreve piso nenhum; os 45–75 (66 de referência) são de Bringhurst, pensados
+para coluna de livro ou janela de desktop, onde LARGURA e CORPO DA LETRA são
+dois eixos que se ajustam um ao outro — o leitor redimensiona a janela, ou o
+tipógrafo escolhe a caixa. No telefone só um dos dois é livre: a largura é o
+aparelho, 375px, e não se negocia; o corpo é o que sobraria para ajustar — e é
+exatamente esse ajuste que o parágrafo acima recusa, porque o corpo tem piso
+próprio e mais duro (a legibilidade da protagonista, que é o motivo de esta
+fase inteira existir). **Quando os dois pisos não cabem na mesma largura, vale
+o piso da letra.**
+
+**O que continua a valer no telefone:** o teto (80 caracteres / `.tv-coluna`
+65ch — 35 está a 22% dele, folga grande) e o piso da letra (`TIPOS.piso` = 12,
+`TIPOS.prosa` = 17, os dois intactos). O que deixa de valer é o piso de linha
+da secção 1.2 de `r1-desenho.md`: ele descreve um defeito real na paleta
+ANTIGA (15px, balão de `max-width:85%`), mas não é mais o alvo certo depois
+que `TIPOS`/`.tv-coluna` (R2) mudaram o que compõe a linha.
+
+**Dívida que fica aberta, e não é desta etapa.** 35 caracteres continua uma
+linha curta — mais perto do extremo que a própria Baymard também penaliza (uma
+linha curta demais obriga o olho a saltar de linha com mais frequência que uma
+de 60–70). A saída certa não é a letra: é a LARGURA da coluna no telefone —
+seja o item 6 de `r1-desenho.md` (o rosto da cena, que tira 96px da página em
+troca de orientação), seja rever quanto padding a página do telefone reserva
+hoje ao redor da coluna. As duas são trabalho de TELA, não de tipo, e por isso
+ficam para quem tem o bastão do `App.jsx`, não para esta etapa (`ui.jsx` /
+`estilo.js`). Fica também a dívida do método: este número não foi remedido ao
+vivo por mim — herda a medida que o `oficial` já tinha feito, porque tocar o
+jogo vivo para conferir a coluna exigiria uma campanha aberta, e essa etapa
+está com o bastão do `App.jsx` na mão do `oficial` ao mesmo tempo.
+
+### R1b · a régua da soleira estava escrita para OBJETOS e devia estar escrita para ESTADOS (`jogo`, 23/09)
+
+**Correção do `jogo` à lei que o próprio `jogo` escreveu em R1.** Veio ao
+construir: o `oficial` mediu que **o mural nunca fica vazio por desenho**, logo a
+soleira nunca ficaria vazia — e a tábua da cidade estaria lá em todo turno, em
+toda cidade, empurrando a prosa de **58,1 %** para **38,7 %** com o teto de 3.
+
+**A lei de R1 dizia:** *a soleira só oferece o que o sistema sabe e o jogador não
+consegue adivinhar* — teste: *o jogador podia ter pensado nisto sozinho?*
+
+**Aplicado com honestidade, o teste responde em dois tempos:**
+· **a tábua da cidade — sim, podia.** Depois da primeira cidade ele sabe que
+  cidades têm tábua. *O que se aprende a esperar, adivinha-se.* → **mobília**.
+· **o Yorick a olhar para ele à espera de resposta — não, não podia.** Não sabia
+  que alguém pregou coisa nova, nem o preço. → **oferta**.
+
+> **A régua não separa OBJETOS, separa ESTADOS.** A tábua é **lugar**, e está
+> sempre lá. Um papel que alguém acabou de pregar, **e por que ainda se espera
+> resposta**, é oferta — e **deixa de o ser quando ninguém está à espera**.
+
+**A prova de que isto está certo é que o código já o sabia, e a mesa não reparou.**
+O `PainelMural` tem **duas listas com títulos diferentes**, e tem-nas há mais
+tempo que esta mesa:
+
+```
+CARTAZES DISPONÍVEIS      ← acervo do lugar
+OFERECIDOS A VOCÊ         ← alguém espera resposta sua
+```
+
+**A soleira leva só `OFERECIDOS A VOCÊ`. Nunca `CARTAZES DISPONÍVEIS`.**
+A mobília chega pela porta — o `▸ Mural`, que deixou de ser `SPAN` e é `BUTTON`
+de 48 px. *A gramática de um lugar é uma porta, não um cartão de oferta.*
+
+**O teto, decidido pelo `jogo` com a conta do `regente`:** **2 na mesa, 1 no
+telefone.** Cada oferta custa 54 px ≈ **8 pontos de prosa**; com 2 a página fica
+em **50,1 %**, que se paga; com 3 fica em **38,7 %**, um terço da protagonista, e
+não se assina. Com a tábua fora, o turno típico tem **0 ou 1** oferta (na sessão
+de R1 o máximo de ofertas vivas ao mesmo tempo foi **uma**), logo o teto é um
+travão que quase nunca se toca. **E o teto é uma promessa sobre a prosa, não
+sobre as ofertas:** o que não cabe vai para a porta do `+N`.
+
+**A ordem por perecibilidade encolhe de cinco para três, e melhora:** *quem espera
+resposta · quem está em cena · o papel que alguém acabou de pregar*. Saem a tábua
+e o mercado, que não eram perecíveis. **O princípio que a sustenta: a soleira é *o
+que você perde se não agir agora* — e mobília não se perde.**
+
+### R1b · `Esperar` não é oferta, e a soleira não é onde se põe o que sobrou
+
+Veredito do `jogo` **contra a própria etapa**. Pela mesma régua: *o jogador podia
+ter pensado em esperar sozinho?* **Podia — é a coisa mais óbvia do mundo.**
+`Esperar` **nunca devia ter entrado na soleira**; entrou porque a etapa lhe tirou
+a aba `Tempo` e não lhe deu casa. *A soleira virou o sítio onde se põe o que
+sobrou, que é como todas as gavetas começam.*
+
+**E o achado do `regente` é o diagnóstico de R1 outra vez, no mesmo dia:**
+`passarTempo` move o relógio, vira o dia, cobra a renda e muda o clima, e
+**"espero doze horas" faz o Mestre narrar doze horas sem mexer num único número**
+— um verbo de sistema **sem porta de texto**, a família dos 50 contra 17.
+
+- **A resposta certa não é de desenho: é dar-lhe a porta de texto.** Vai como
+  **pedido ao sistema**, irmão do pedido sobre o veredicto do golpe fora do
+  combate. Com a porta, `Esperar` sai da interface e o problema dissolve-se.
+- **Até lá, e é uma trava:** **não sobe o telefone com `Esperar` atrás do `+N`.**
+  Ou o `+N` vira porta antes, ou o controlo de passar o tempo guarda o lugar que
+  tinha. Remover uma função que mexe no relógio, no dia, na renda e no clima, e
+  deixar no lugar uma frase que o jogador não sabe que se toca, é **pesado**.
+- **E o `+N` é botão mesmo depois de tudo resolvido, por uma razão que envergonha
+  a mesa:** `"+N ofertas"` como texto **é o defeito do `▸ Mural` a renascer dentro
+  da peça que se construiu para o matar** — uma marca que promete que há mais e
+  não se toca. Régua: porta, 48 px, **e diz quantas** — um número é o único jeito
+  de o jogador saber se vale a pena abrir.

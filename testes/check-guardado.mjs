@@ -247,21 +247,37 @@ console.log("\n3. o guardado morre no sucesso");
 
 console.log("\n4. as portas da declaração perguntam à trava");
 {
-  /* TODA PORTA QUE CHEGA AO MOTOR PERGUNTA À TRAVA — e são três.
-     Uma porta esquecida não é meia proteção: é proteção nenhuma, porque
-     o jogador que quer re-rolar vai usar justamente a que abriu.
+  /* TODA PORTA QUE CHEGA AO MOTOR PERGUNTA À TRAVA — e eram três, e
+     desde R4b são DUAS. Uma porta esquecida não é meia proteção: é
+     proteção nenhuma, porque o jogador que quer re-rolar vai usar
+     justamente a que abriu.
 
-       · `declararGolpe`    — o botão Atacar do painel de combate
+       · `declararGolpe`    — o botão Atacar da tela da batalha
        · `agirInterno`      — a frase digitada, e o despachante inteiro
-       · `declararAcaoRapida` — o painel de Ações, que chama
-                                `adjudicarAcao` DIRETO, sem passar por
-                                `agirInterno`; é o desvio que faz dela
-                                uma terceira porta e não um atalho */
+
+     A TERCEIRA CAIU, e o motivo fica escrito porque baixar o número de
+     portas vigiadas nunca pode ser silencioso: `declararAcaoRapida` era
+     a porta dos oito botões do painel de `Ações`, e a sua razão de ser
+     porta própria era o desvio — ela chamava `adjudicarAcao` DIRETO, sem
+     passar por `agirInterno`. R4b aposentou os vinte botões do painel
+     (a medida é do `jogo`: zero dos vinte dizia o preço na tela), e com
+     eles o único chamador dela. O desvio deixou de existir: as oito
+     ações entram agora pelo texto, que é `agirInterno` →
+     `executar("desafio")` → `adjudicarAcao`, já vigiado aqui em cima.
+
+     A cerca não afrouxou — ela deixou de ter o que vigiar naquele ponto.
+     Se um dia renascer um clique que chame `adjudicarAcao` sem passar
+     por `agirInterno`, ele volta para esta lista com o nome dele. */
   const PORTAS = [
-    { nome: "declararGolpe", oQue: "o botão Atacar do painel de combate" },
+    { nome: "declararGolpe", oQue: "o botão Atacar da tela da batalha" },
     { nome: "agirInterno", oQue: "a frase digitada e todo o despachante do turno" },
-    { nome: "declararAcaoRapida", oQue: "o painel de Ações, que chama `adjudicarAcao` direto" },
   ];
+  /* e o dente virado de frente: nenhum chamador NOVO de `adjudicarAcao`
+     fora de `agirInterno` — é essa a forma que a terceira porta tinha */
+  if ((APP.match(/adjudicarAcao\(/g) || []).length !== 1) {
+    falha("nasceu (ou morreu) um chamador de `adjudicarAcao` em src/App.jsx",
+      "é UM: a porta `desafio` de `executar`, dentro de `agirInterno`. Um segundo é uma porta nova ao motor, e ela TEM de perguntar a `travaODeclarar` antes de resolver — acrescente-a às PORTAS deste bloco, com o motivo escrito");
+  } else ok("e nenhum clique chama `adjudicarAcao` por fora do despachante");
   for (const p of PORTAS) {
     const i = APP.indexOf(`const ${p.nome} = (`);
     if (i < 0) {

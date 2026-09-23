@@ -32,31 +32,116 @@
    arquivos pedem `T`, e nenhum deles precisa saber de que tom de roxo
    `panel` é feito hoje.
 
-   `lineStrong`: as quatro superfícies da casa cabem dentro de 1,3:1 umas
-   das outras (`line`/`panel` = 1,295:1, `panelSoft`/`panel` = 1,073:1) —
-   para a WCAG 1.4.11 são uma superfície só, e por isso um controlo desta
-   casa ou se enche de `amber` (8,45:1) e grita, ou desaparece. `lineStrong`
-   é o degrau que faltava: `panel` 3,512:1 · `bg` 3,741:1 · `panelSoft`
-   3,272:1 — os três acima do piso de 3:1 para não-texto. E não é "o degrau
-   mais baixo que passa" (`#6B6387` passa a 3,040) — é o mais baixo que
-   passa com folga: 9,1% acima do piso contra 1,3%. Escopo é só borda de
-   controlo (`STROKE_COLOR`): sobre `ink` dá 4,09:1, que reprova texto — não
-   é cor de letra. */
+   ============================================================
+   R2 · "A PÁGINA ILUMINADA" (23/09/2026) — o `jogo` e o `desenho`
+   mediram a tela principal e acharam a mesma doença por dois caminhos.
+
+   O DIAGNÓSTICO, e não é o que se esperava: 31 de 32 pares de texto reais
+   desta paleta JÁ passavam AA antes desta troca — contraste nunca foi o
+   problema. O problema é que a tela não tinha FIGURA E FUNDO: as quatro
+   superfícies (`bg`/`panel`/`panelSoft`/`line`) cabiam dentro de 1,379:1
+   umas das outras (a 1.4.11 pede 3:1 para não-texto) e viviam todas entre
+   h253 e h256 — três graus de matiz. O painel da narração contra o balão
+   do Mestre media 1,039:1: eram a MESMA superfície, e o balão era uma
+   borda arredondada à volta de nada.
+
+   A DIREÇÃO: duas famílias de superfície com trabalhos opostos. A MESA
+   (`bg`/`panel`/`panelSoft`/`line`/`lineStrong`) continua fria (h≈250) e
+   RECUA — cabeçalho, trilho, HUD, bastidor. A PÁGINA é nova
+   (`pagina`/`paginaAlta`/`paginaFio`), fica quente (h≈30), e é o que
+   fica ACESO: só onde a prosa mora. 143° de matiz separam as duas
+   famílias — mais do que qualquer par de `T` separava antes.
+
+   A CATRACA, 32 pares medidos, 0 reprovam (antes: 1 de 32 — `danger`
+   sobre `perigoFundo` a 4,49:1, um centésimo abaixo do piso; os dois
+   novos valores resolvem-no de caminho):
+   · as superfícies, extremo a extremo — 1,379:1 → 4,13:1 (piso 3,0)
+   · a narração contra o fundo dela — 1,039:1 → 1,43:1 + 143° de matiz
+   · o contorno da página contra a mesa (`paginaFio`) — não existia →
+     3,29:1 (piso 3,0 — é ELE que carrega o 1.4.11 da página)
+   · a prosa sobre a página — 14,37:1 → 11,08:1 (−23%, DE PROPÓSITO: a
+     WCAG só põe PISO, nunca teto, e texto claro sobre escuro IRRADIA —
+     um peso 400 lê como 500 quando claro sobre escuro, css-tricks.com/
+     dark-mode-and-variable-fonts — por isso a prosa também desce de
+     Spectral 400 para 300, em `FOLHA`)
+   · `bg` contra a régua do Material Design 2 (`#121212`, L 0,60) — L 0,41,
+     ABAIXO da régua → L 0,64, ACIMA. A escada vem da PÁGINA SUBIR, não
+     da mesa descer: o Material recomenda `#121212` e nunca preto puro
+     porque preto puro maximiza o contraste com os componentes e aumenta
+     a fadiga (m2.material.io/design/color/dark-theme.html) — o `bg`
+     desta casa já estava mais escuro que isso, e a troca não o escurece
+     mais, sobe-o.
+
+   `lineStrong` continua o degrau que falta entre `line` e `ink` para uma
+   borda de CONTROLE (1.4.11, piso 3:1 para não-texto). Com os valores
+   novos o par mais apertado da paleta inteira é `lineStrong` ×
+   `panelSoft`, a 3,47:1 — 16% de folga sobre o piso, contra 1,3% do
+   `#6B6387` que K1 tinha testado e descartado. Escopo é só borda de
+   controlo (`STROKE_COLOR`): sobre `ink` dá texto reprovado — não é cor
+   de letra.
+
+   A RAMPA DA PÁGINA NÃO É INVENÇÃO: a Baldur's Gate 3 publica a paleta
+   do seu framework de interface (docs.baldursgate3.game/index.php?
+   title=UI) — `#584537 · #7d604a · #af8768 · #cbac95 · #E6DBC2` — cinco
+   degraus de um castanho quente e ZERO cor de acento no chassis. Os
+   degraus 4–5 batem quase exatamente com `inkMeio`/`ink` (`#cbac95`
+   L 44,4 contra `#C3B7A3` L 48,1; `#E6DBC2` L 71,4 contra `#F2ECE0`
+   L 84,2) — chegou-se à mesma arquitetura por aritmética de contraste E
+   por uma referência publicada, sem que uma tivesse visto a outra.
+
+   `mundo` É NOVO, E NÃO É APETITE POR COR: contado no código, `amber`
+   carregava 24 significados diferentes na tela principal — a voz do
+   Mestre, o "✓ salvo", o acampar, o nível, a barra de PV, o verbo
+   "Ações"... `mundo` tira-lhe cinco (relógio, data, estação, lugar, a
+   espera) e devolve-lhe uma função só. A LEI QUE VEM DA FAILBETTER E É
+   VARRÍVEL (o redesenho de Sunless Skies, "reading by gaslight",
+   gamedeveloper.com/design/reading-by-gaslight-a-look-inside-sunless-
+   skies-ui-redesign): `amber`, `violet` e `mundo` só em coisa com que se
+   interage ou que se tem de notar. E `mundo` NÃO significa "seguro" —
+   só "o mundo abriu isto": ir às terras baixas não custa nada e pode
+   matar o herói.
+
+   O QUE AINDA NÃO SE RESOLVE, escrito em vez de escondido: simulando os
+   três daltonismos, `amber`×`mundo` mede 1,12:1 em deuteranopia e
+   `ok`×`danger` mede 1,50:1 — a separação de 1,43:1 + 143° de matiz é
+   sobretudo luminância e matiz juntos, e quem não vê cor fica só com a
+   luminância. A defesa não é a paleta: é a lei escrita acima — nenhum
+   acento carrega sentido sozinho, cada um tem glifo e posição fixos, e
+   isso não é medida, é regra.
+   ============================================================ */
 export const T = {
-  bg: "#0E0C15", panel: "#171322", panelSoft: "#1E1930", line: "#2E2745",
-  lineStrong: "#70688C",
-  ink: "#EAE4D6", inkDim: "#9B93AC",
-  amber: "#E8A33D", amberSoft: "#F5C878", onAccent: "#1A1408",
-  violet: "#8B7BD8", violetSoft: "#B0A5EC", onSecond: "#14101F",
-  danger: "#D86A5B", ok: "#7BC98F",
+  /* A MESA — fria (h≈250). Recua: cabeçalho, trilho, HUD, bastidor. */
+  bg:         "#131120",   /* era #0E0C15 — SOBE (ver a nota grande acima) */
+  panel:      "#1B182C",   /* era #171322 */
+  panelSoft:  "#252038",   /* era #1E1930 */
+  line:       "#3D3559",   /* era #2E2745 */
+  lineStrong: "#7A719A",   /* era #70688C — a borda de CONTROLE */
+
+  /* A PÁGINA — quente (h≈30). É o que está aceso: só onde a prosa mora. */
+  pagina:     "#3A2F23",   /* NOVO */
+  paginaAlta: "#48392B",   /* NOVO */
+  paginaFio:  "#7A6349",   /* NOVO — o contorno, e é ele que carrega os 3:1 (3,29:1) */
+
+  /* A TINTA */
+  ink:        "#F2ECE0",   /* era #EAE4D6 — a prosa */
+  inkMeio:    "#C3B7A3",   /* NOVO — a segunda voz DA PÁGINA, quente */
+  inkDim:     "#A29AB4",   /* era #9B93AC — o rótulo DA MÁQUINA, frio */
+
+  /* OS TRÊS ACENTOS, cada um com UM trabalho */
+  amber:      "#E8A33D", amberSoft: "#F5C878", onAccent: "#1A1408",   /* a luz */
+  violet:     "#9B8DE4", violetSoft: "#B0A5EC", onSecond: "#14101F",  /* era violet #8B7BD8 — o arcano */
+  mundo:      "#79D6C6", mundoSoft: "#A8E7DC", onMundo:   "#04140F",  /* NOVO — o mundo (relógio, data, estação, lugar, a espera) */
+
+  danger:     "#EE7C6A",   /* era #D86A5B */
+  ok:         "#8FE0A2",   /* era #7BC98F */
   /* O CHÃO DE UM SELO DE ESTADO — o verde e o vermelho muito escuros
      por baixo de `ok` e de `danger`. Estavam escritos à mão CINCO vezes no
      mesmo bloco do HUD (as condições, os efeitos, a rolagem, a ação
      perdida, o dano por turno) e em lado nenhum mais — cinco cópias de
      dois números que ninguém podia mudar num sítio só. A primeira lei
      desta casa vale para o visual: cor é número, logo é tabela. */
-  okFundo:             "#1f3320",
-  perigoFundo:         "#33201f",
+  okFundo:             "#17301C",   /* era #1f3320 */
+  perigoFundo:         "#331A16",   /* era #33201f */
 };
 
 /* O PRETO E O BRANCO DE SEMPRE. Sombra e brilho não são cor do tema:
@@ -133,6 +218,87 @@ export const MATERIAIS = {
 export const ALVOS = {
   piso: 48,     /* toda peça em que se toca */
   chamado: 56,  /* `O chamado`: mais alto por decisão de K1, fixado em K3 */
+};
+
+/* ============================================================
+   TIPOS — a letra ganha piso e tabela (R2).
+
+   A DOENÇA, medida em R1: 363 de 575 tamanhos de letra do projeto estão
+   abaixo de 12 px — 63,1%. Isolada à tela principal (`fase === "jogo" &&
+   !emBatalha`, onde se passa 90% do jogo) a proporção sobe para 68 de
+   90 — 76%, a pior região medida da casa, pior que qualquer painel. Há
+   11 tamanhos distintos em uso: não é uma escala, é um histórico — cada
+   `text-[Npx]` é o resto de um ajuste de ocasião que ninguém revisitou.
+
+   A PROVA. WCAG 1.4.4 (*Resize text*) exige que a 200% de zoom de texto
+   de sistema nada se perca — nem conteúdo, nem função — e o que quebra
+   primeiro é sempre o que já nasceu pequeno demais para ter folga. A
+   Apple HIG cita 11 pt como piso legível em iOS; o Material Design cita
+   11 sp. `piso: 12` fica UM DEGRAU ACIMA das duas réguas, e é decisão,
+   não arredondamento: 11 pt/sp é o que essas plataformas ainda toleram
+   mostrar — não o que sobra depois que o jogador JÁ aumentou a letra do
+   sistema porque a dele, à parte, também lhe é pequena. Um piso igual à
+   régua não dá folga nenhuma a esse jogador; um degrau acima dá.
+
+   OS SETE DEGRAUS, cada um com um trabalho, nenhum ao acaso:
+   - `maquina` (12, mono) — rótulo, contador, endereço, saldo: é a MENOR
+     letra que esta casa desenha, e por isso é ela quem mora no piso.
+   - `rotulo` (13) — a segunda voz: quem fala, onde, o preço escrito.
+   - `corpo` (15) — a fala e o verbo, texto que se lê em prosa curta.
+   - `prosa` (17) — a narração: a protagonista da tela principal.
+   - `titulo` (20) — o cabeçalho de uma região.
+   - `display` (28) — a cerimônia, e só ela: subida de nível, abertura.
+
+   O QUE ELE RECUSA: um `text-[Npx]` novo com N < 12 em qualquer tela. A
+   catraca (`testes/check-formas.mjs`, D5g) congela a contagem de HOJE
+   dos quatro tamanhos abaixo do piso (`text-[8px]` a `text-[11px]`) e
+   falha se ela subir — esta etapa NÃO converte a dívida de uma vez (é
+   trabalho de várias etapas, tela por tela); só impede que ela cresça
+   enquanto a conversão não chega.
+   ============================================================ */
+export const TIPOS = {
+  piso: 12,      /* nada abaixo disto tem letra neste jogo */
+  maquina: 12,   /* mono: rótulo, contador, endereço, saldo */
+  rotulo: 13,    /* a segunda voz: quem, onde, o preço escrito */
+  corpo: 15,     /* a fala e o verbo */
+  prosa: 17,     /* a narração — a protagonista */
+  titulo: 20,    /* o cabeçalho de uma região */
+  display: 28,   /* a cerimônia, e só ela */
+};
+
+/* ============================================================
+   A SOLEIRA (R2 → R5a) — o teto de ofertas visíveis, em tabela e não em
+   aritmética de leiaute.
+
+   O NÚMERO É R5a, do `jogo`, com a conta do `regente`: 2 na mesa, 1 no
+   telefone — não mais o 3 de R2. Cada oferta custa 54 px ≈ 8 pontos
+   percentuais da área da prosa; com teto 3 a página caía a 38,7 % do
+   ecrã, um terço da protagonista, e a mesa não assinou. Com teto 2,
+   50,1 % — e com a tábua da cidade fora da soleira (R5b) o turno típico
+   tem 0 ou 1 oferta: na sessão inteira de R1 o máximo de ofertas vivas
+   ao mesmo tempo foi UMA. Um teto de 2 é, por isso, um travão que quase
+   nunca se toca, não um estado normal — e é exatamente por não se tocar
+   quase nunca que pode ser baixo: *"uma lista ordenada que nunca tem de
+   escolher não está ordenada, está só escrita."*
+
+   O TETO NÃO É SOBRE AS OFERTAS, É SOBRE A PROSA: é a promessa de
+   quanto da página a soleira pode tomar, não uma opinião sobre quantas
+   ofertas merecem mesa. O que não cabe não desaparece — vai para a
+   porta do "+N" (`Soleira`, `ui.jsx`, R5a), que abre e mostra o resto.
+
+   A CONTA ORIGINAL DE R2, para o rasto: 3 cartas na mesa × 48 px
+   (`ALVOS.piso`) + 2 folgas de 8 px entre elas = 160 px, dentro dos
+   319 px de mobília que W1 mediu no telefone. No telefone o teto já
+   nascia em 1 e continua: a lição de E4 é que uma tira apertada não
+   ganha mais itens, ganha um "+N".
+
+   NÃO CONTA ALTURA FIXA NENHUMA: `Soleira` empilha por `flex` e deixa a
+   altura de cada `Oferta` decidir a régua — os px acima são o ORÇAMENTO
+   que a conta prova cabe, não um número que o componente escreve na
+   tela. */
+export const SOLEIRA = {
+  tetoNaMesa: 2,
+  tetoNoTelefone: 1,
 };
 
 /* ============================================================
@@ -284,6 +450,27 @@ export const MOVIMENTO_CSS = `
 @keyframes tvSlide { from { transform: translateX(24px); opacity: 0;} to { transform: none; opacity: 1;} }
 .tv-slide { animation: tvSlide .25s ease both; }
 
+/* ---------------- O FILETE QUE RESPIRA (R4a) ----------------
+   (Sem crase neste comentário de propósito: ele mora DENTRO da template
+   literal de MOVIMENTO_CSS, e uma crase aqui fecha a string e derruba o
+   build — a mesma armadilha que o aviso de .tv-escolha-troca, ali em
+   cima, já descreve. Tropecei nela ao escrever este parágrafo.)
+
+   A voz, eixo Resposta=Espera-se (formas.md:5412-5419): o filete sob o
+   cabeçalho passa a amber e pulsa devagar enquanto o Mestre não
+   respondeu — "no filete, nunca no texto". É IRMÃ de .tv-pulse (mesmo
+   1,6s, mesma ideia — atenção sem interromper), mas não pode ser a
+   MESMA classe: .tv-pulse anima box-shadow num cartão inteiro (o halo
+   de "pronto para rolar"); o filete é uma barra de 2px, e um halo de
+   sombra em volta de uma barra dessas não pinta nada que se veja. A
+   opacidade é o canal certo para uma faixa fina.
+
+   SÓ NO FILETE, NUNCA NO TEXTO: a prosa ao lado não pode se mover — é a
+   lei que formas.md escreve para esta peça, e por isso a animação entra
+   numa classe própria, nunca em tv-mono/tv-body. */
+@keyframes tvRespira { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+.tv-respira { animation: tvRespira 1.6s ease infinite; }
+
 /* ---------------- O CORPO SENTE (v9.160) ----------------
    O clarao de dano e o pulso de agonia do bloco do heroi. Um golpe que
    so muda um numero e um golpe que o jogador nao sente: o clarao dura
@@ -408,6 +595,13 @@ export const MOVIMENTO_CSS = `
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
   .tv-chamado-entra, .tv-leque-abre, .tv-trilho-entra, .tv-resolve { animation: none; }
+  /* O FILETE QUE RESPIRA (R4a) — sem crase, mesma razão de cima: sem
+     pulso, amber fixo — Voz já troca a legenda por texto ("o Mestre
+     está a tecer") no mesmo estado, lido uma vez por render (o padrão
+     de CampoDeBrasas/grade-de-batalha). opacity: 1 e não o .45 do meio
+     do ciclo — parado, a cor tem de ficar no seu valor CHEIO, nunca a
+     meio de um pulso que não vai mais acontecer. */
+  .tv-respira { animation: none; opacity: 1; }
   /* estas duas terminam em opacity: 0, e e a animacao que as faz
      sumir: none sozinho deixaria o cartao aceso na tela. A saida pousa
      no estado FINAL. */
@@ -442,6 +636,42 @@ export const MOVIMENTO_CSS = `
 export const SUPERFICIES_CSS = `
 .tv-scroll::-webkit-scrollbar { width: 8px; }
 .tv-scroll::-webkit-scrollbar-thumb { background: ${T.line}; border-radius: 4px; }
+
+/* ---------------- A COLUNA DA PROSA (R2) ----------------
+   A prosa é a protagonista, e hoje ela é mal composta nos dois
+   aparelhos, em direções opostas: medida no DOM vivo, o balão do Mestre
+   dá 89 caracteres por linha na mesa e o texto de sistema chega a 100 —
+   25% acima do teto de 80 que a WCAG 1.4.8 (AAA) marca, e a régua de
+   Baymard (baymard.com/blog/line-length-readability) mediu que uma
+   linha acima de 80 caracteres é SALTADA 41% mais vezes que uma de
+   60–70. No telefone o balão faz o oposto: 37 caracteres, abaixo do
+   piso de 45 que Bringhurst dá (referência em 66). Uma coluna de medida
+   FIXA resolve os dois ao mesmo tempo — não é aritmética de padding,
+   é largura em caracteres, que é a unidade que a legibilidade mede.
+
+   max-width: 65ch fica dentro da faixa 60–70 de Bringhurst e do teto
+   de 80 da WCAG, com folga dos dois lados. margin-inline: auto centra
+   a coluna dentro do painel — a Failbetter perdeu uma versão inteira de
+   Sunless Skies por um painel de leitura descentrado
+   (gamedeveloper.com/design/reading-by-gaslight-a-look-inside-sunless-
+   skies-ui-redesign) antes de a alargar e centrar.
+
+   font-weight: 300 MORA AQUI, e não é acaso estar na mesma classe da
+   largura: as duas regras servem SÓ onde a prosa mora, nunca o resto da
+   letra do jogo. Texto claro sobre fundo escuro IRRADIA — um peso 400
+   lê como 500 (css-tricks.com/dark-mode-and-variable-fonts) — e é por
+   isso que a prosa também desce de contraste (14,37:1 para 11,08:1
+   sobre T.pagina, ver a nota grande sobre T acima): as duas decisões
+   nascem da mesma causa óptica, e por isso vivem na mesma caixa. O
+   @import de FONT_CSS já carrega o peso 300 do Spectral — a classe
+   só usa o que já chega.
+
+   QUEM APLICA .tv-coluna AO TEXTO DA NARRAÇÃO É O oficial, no
+   App.jsx — esta etapa é território do aprendiz (estilo.js e
+   ui.jsx), e o App.jsx está fora dela por lei do bastão. Esta classe
+   nasce fabricada e sem consumidor ainda; ganha o leitor na etapa
+   seguinte. */
+.tv-coluna { max-width: 65ch; margin-inline: auto; font-weight: 300; }
 
 /* ---------------- O ESPAÇO DO TRILHO (v9.156) ----------------
    O trilho de abas é lateral no monitor e barra inferior no telefone, e

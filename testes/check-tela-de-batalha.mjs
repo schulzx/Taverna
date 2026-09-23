@@ -159,10 +159,16 @@ sec("3. o que some durante a luta — e o critério é duro");
   const intrusos = proibidos.filter((id) => new RegExp(`onClick=\\{[^}]*${id}`, "i").test(TEL));
   t(`nenhuma das ${proibidos.length} portas proibidas tem botão na tela da luta`,
     intrusos.length === 0, intrusos.join(" · "));
-  /* `Examinar` e `Tempo` vivem no convés, que a batalha substitui — a
-     prova é que eles continuam lá e o convés continua dentro do `main` */
-  t("`Examinar` e `Tempo` continuam no convés, que a luta substitui",
-    /setExaminando\(\(v\) => !v\)/.test(APP) && /setMostrarHoras\(\(v\) => !v\)/.test(APP)
+  /* R4b: `Examinar` e `Tempo` DEIXARAM DE SER ABAS do convés e passaram a
+     ser ofertas da soleira — `setExaminando(true)` e `setMostrarHoras(true)`
+     saem agora do `aoClicar` de uma `Oferta`, e não de um botão permanente
+     que alternava (`(v) => !v`). MOTIVO da asserção re-escrita: o que ela
+     guardava não era a FORMA do controle, era o LADO da fronteira — que
+     estes dois vivem na tela da narrativa e nunca dentro da luta, porque a
+     batalha substitui o convés inteiro. Isso continua a ser medido, e com
+     a mesma força; só a âncora do lado de cá mudou de `!v` para a soleira. */
+  t("`Examinar` e `Tempo` continuam do lado de cá, e a luta não os herda",
+    /aoClicar: \(\) => setExaminando\(true\)/.test(APP) && /aoClicar: \(\) => setMostrarHoras\(true\)/.test(APP)
     && !/setExaminando|setMostrarHoras/.test(TEL));
 }
 

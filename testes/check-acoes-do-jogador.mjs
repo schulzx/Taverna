@@ -28,78 +28,75 @@ let maus = 0;
 const falha = (o, oQueFazer) => { maus++; console.log(`  XX  ${o}\n      → ${oQueFazer}`); };
 const ok = (o) => console.log("  ok  " + o);
 
-console.log("\n1. as 12 ACOES_PRONTAS e o handler único");
+/* ============================================================
+   BLOCO 1 — O DENTE VIRADO DE FRENTE PELA SEGUNDA VEZ (R4b)
+
+   X1 escreveu aqui um dente que vigiava a PARTIDA (o handler dos vinte
+   botões ainda ser só a caixa de texto). X2 virou-o para vigiar a CHEGADA
+   (o `Atacar` ainda chamar o motor). R4b vira-o outra vez, e agora ele
+   vigia a AUSÊNCIA — que o painel não volte.
+
+   POR QUE ELE PODE VIRAR SEM AFROUXAR. A regressão que a Fase X existia
+   para impedir era o `Atacar` COM motor voltar para dentro de uma caixa
+   de texto. Essa continua impedida, e num sítio melhor: o `Atacar` com
+   motor é o `aoAtacar` da tela da batalha, e `teste-acoes-do-jogador.mjs`
+   (bloco 1-B, elos 1 a 6) mede a cadeia inteira dele, com sonda a correr
+   em Node.
+
+   E FICA ESCRITO O QUE ESTE VARREDOR NÃO VIU DURANTE UM CICLO INTEIRO,
+   porque é a lição mais cara desta etapa: ele afirmou "o botão `Atacar`
+   segue chamando `declararGolpe`" enquanto o desvio já não podia correr.
+   O painel só se pinta sob `!emBatalha`; `vereditoDoGolpeAgora()` devolve
+   `null` sem `combateRef.current`; havendo luta quem se pinta é
+   `TelaDeBatalha`. E3 matou a fiação, e a régua não reparou porque ela
+   lia o TEXTO do handler e nunca o alcance dele. *Um varredor que mede
+   que o código está escrito não mede que ele corre* — e, onde a diferença
+   importa, é preciso uma segunda âncora do lado de fora, que é o que os
+   dois dentes abaixo passam a ser.
+   ============================================================ */
+console.log("\n1. os 12 verbos prontos, aposentados em R4b");
 {
-  /* o bloco literal, como ele está hoje em src/App.jsx:1073-1084 */
-  const bloco = APP.match(/const ACOES_PRONTAS = \[([\s\S]*?)\n\];/);
-  if (!bloco) {
-    falha("não achei `const ACOES_PRONTAS = [...]` em src/App.jsx",
-      "se o painel de Ações foi renomeado ou movido, atualize a âncora deste varredor E o campo `onde` das 12 entradas de ACOES_DO_JOGADOR em testes/acoes-do-jogador.mjs");
-  } else {
-    const rotulos = [...bloco[1].matchAll(/rotulo:\s*"([^"]+)"/g)].map((m) => m[1]);
-    const naTabela = ACOES_DO_JOGADOR.filter((a) => a.fonte === "ACOES_PRONTAS").map((a) => a.rotulo);
-    if (rotulos.length !== 12) {
-      falha(`src/App.jsx declara ${rotulos.length} ações prontas, a tabela espera 12`,
-        "o painel mudou de tamanho: acrescente ou remova a entrada correspondente em ACOES_DO_JOGADOR e reveja o TETO_SEM_MOTOR em teste-acoes-do-jogador.mjs");
-    } else ok("são 12 no código, como a tabela diz");
+  if (/const ACOES_PRONTAS = \[/.test(APP)) {
+    falha("a tabela `ACOES_PRONTAS` voltou a src/App.jsx",
+      "R4b aposentou os vinte botões do painel de `Ações` — zero deles dizia o preço na tela e nenhum nomeava a cena. Se voltaram DE PROPÓSITO, re-meça o eixo do clique das 12 entradas de ACOES_DO_JOGADOR (elas estão em `cliqueChega: \"aposentado\"`), reveja o TETO_SEM_MOTOR em teste-acoes-do-jogador.mjs e escreva o motivo — a catraca não sobe em silêncio");
+  } else ok("`ACOES_PRONTAS` não voltou ao App");
 
-    const faltando = rotulos.filter((r) => !naTabela.includes(r));
-    if (faltando.length) {
-      falha(`ação pronta sem entrada na tabela: ${faltando.join(", ")}`,
-        "acrescente uma entrada em ACOES_DO_JOGADOR com id, combate, caminho e `onde` — e meça o caminho dela antes de declarar");
-    } else ok("toda ação pronta do código tem entrada na tabela");
+  if ([...ACOES_DO_JOGADOR.filter((a) => a.fonte === "ACOES_PRONTAS")].length !== 12) {
+    falha("a tabela deixou de descrever os 12 verbos prontos",
+      "as entradas FICAM mesmo aposentadas: elas medem o caminho do TEXTO, que é o que sobrou e sempre resolveu. Se um verbo deixou de existir para o jogador, tire-o com o motivo escrito");
+  } else ok("e a tabela segue descrevendo os 12, pelo caminho do texto");
 
-    /* os textos precisam bater: é o texto, não o rótulo, que decide a porta */
-    for (const a of ACOES_DO_JOGADOR.filter((x) => x.fonte === "ACOES_PRONTAS")) {
-      if (a.texto && !bloco[1].includes(`"${a.texto}"`)) {
-        falha(`o texto de "${a.rotulo}" mudou no código`,
-          `a tabela declara ${JSON.stringify(a.texto)}; re-meça o caminho dessa ação (o texto é o que casa desafio/agressão) e atualize o campo \`texto\` e o \`emCombate\``);
-      }
-    }
-  }
+  /* o dente do lado de fora: nenhum controle desta casa escreve na caixa
+     do jogador. Era o handler único dos vinte, e é o que não pode nascer
+     outra vez — sob qualquer nome. */
+  if (/setEntrada\(a\.texto\)/.test(APP)) {
+    falha("nasceu de novo um controle que escreve na caixa do jogador",
+      "`setEntrada(a.texto)` era o handler dos vinte botões. Um botão que escreve a frase do jogador é um verbo DO JOGADOR vestido de oferta DO MUNDO — a régua da soleira separa os dois. Se for de propósito, re-meça o eixo do clique da tabela inteira e escreva o motivo");
+  } else ok("e nenhum controle escreve a frase do jogador na caixa");
 
-  /* ---------------- O DENTE QUE DISPAROU, REAPONTADO (X2) ----------------
-     X1 escreveu aqui um dente que só podia morder no dia em que X2
-     chegasse: "o handler das ACOES_PRONTAS não é mais `setEntrada(a.texto)`
-     puro". Ele mordeu, e a mordida era a prova de que a fase funcionou.
+  if (/if \(golpeVivo\) \{ declararGolpe\(/.test(APP)) {
+    falha("o desvio condicional do `Atacar` voltou ao App",
+      "ele era o clique que a tela principal nunca chegava a correr (só existe sob `!emBatalha`, e o veredito é `null` sem combate). Se voltou, meça-o VIVO antes de o declarar, e escreva `cliqueChegaFora` na entrada de pronta_atacar");
+  } else ok("e o desvio condicional que nunca corria não voltou");
 
-     Ele NÃO foi apagado — foi VIRADO DE FRENTE. Antes vigiava a partida
-     (o handler ainda ser só a caixa); agora vigia a chegada (o handler
-     ainda chamar o motor). É a mesma cerca no mesmo lugar, olhando para
-     o outro lado: se alguém devolver o botão `Atacar` para dentro da
-     caixa de texto, este dente morde de novo — e é essa regressão que a
-     Fase X existe para impedir.
-
-     São TRÊS metades e as três precisam estar de pé, porque o desenho de
-     X2 é condicional: o desvio para o motor, o `setEntrada` que sobrou
-     para as outras onze e para o fora-de-combate, e o impedimento que
-     apaga o botão quando ninguém está ao alcance. */
-  const desvioAoMotor = /if \(golpeVivo\) \{ declararGolpe\(alvoDoGolpe && alvoDoGolpe\.nome\); return; \}/.test(APP);
-  if (!desvioAoMotor) {
-    falha("o botão `Atacar` não chama mais `declararGolpe` no onClick das ACOES_PRONTAS",
-      "isto é REGRESSÃO de X2: o clique voltou para dentro da caixa de texto. Se foi de propósito, DEVOLVA `pronta_atacar` a SEM_MOTOR_HOJE e SUBA o TETO_SEM_MOTOR em teste-acoes-do-jogador.mjs, com o motivo escrito — e ponha `cliqueChega: \"caixa\"` de volta em testes/acoes-do-jogador.mjs. A catraca não sobe em silêncio");
-  } else ok("o botão `Atacar` segue chamando `declararGolpe`");
-
-  const aindaEnche = /setEntrada\(a\.texto\);/.test(APP);
-  if (!aindaEnche) {
-    falha("o handler das ACOES_PRONTAS perdeu o `setEntrada(a.texto)`",
-      "as outras onze ações e o `Atacar` FORA de combate dependem dele — é pela frase que a briga começa (a porta `agressao` só abre fora da luta). Se o painel mudou de desenho, re-meça `cliqueChegaFora` das 12 prontas em testes/acoes-do-jogador.mjs");
-  } else ok("e as outras onze seguem caindo no `setEntrada`");
-
-  const impede = /const impedido = golpeVivo && !vdGolpe\.algumAoAlcance;/.test(APP) && /disabled=\{impedido\}/.test(APP);
+  /* O IMPEDIMENTO MUDOU DE ARQUIVO, e a lei que ele serve não mudou:
+     o veredito antes do clique, e o clique impedido em vez de gasto. */
+  const TELA = readFileSync("../src/painel-batalha.jsx", "utf8");
+  const impede = /algumAoAlcance: vd \? !!vd\.algumAoAlcance : true/.test(TELA)
+    && /aria-disabled=\{impedido \|\| undefined\}/.test(TELA);
   if (!impede) {
-    falha("o clique de `Atacar` deixou de ser IMPEDIDO quando ninguém está ao alcance",
-      "sem isso o jogador volta a gastar cliques para ouvir \"ninguém está ao alcance\" — a abertura recusa em 10 de 10 plantas. Se a trava mudou de forma, atualize o campo `alcanca` de pronta_atacar em testes/acoes-do-jogador.mjs e o elo 6 do bloco 1-B de teste-acoes-do-jogador.mjs");
-  } else ok("e o clique segue impedido quando o veredito recusa");
+    falha("o verbo `Atacar` deixou de ser IMPEDIDO quando ninguém está ao alcance",
+      "sem isso o jogador volta a gastar cliques para ouvir \"ninguém está ao alcance\" — a abertura recusa em 10 de 10 plantas. A trava vive em src/painel-batalha.jsx desde E3; se mudou de forma, atualize o campo `alcanca` de pronta_atacar em testes/acoes-do-jogador.mjs e o elo 6 do bloco 1-B de teste-acoes-do-jogador.mjs");
+  } else ok("e o verbo da luta segue impedido quando o veredito recusa");
 
-  /* a exceção do eixo condicional tem de ficar ESCRITA: a tabela declara
-     quem se comporta de dois jeitos, e aqui se confere que ela declara
-     exatamente quem o código trata de dois jeitos */
+  /* o eixo condicional esvaziou-se com os botões, e continua vigiado:
+     uma lista vazia é o melhor momento para a vigiar, é quando o primeiro
+     membro entra sem ninguém reparar */
   const condicionais = acoesComCliqueCondicional().map((a) => a.rotulo);
-  if (condicionais.join() !== "Atacar") {
-    falha(`a tabela declara clique condicional em: ${condicionais.join(", ") || "ninguém"}`,
-      "o código trata de dois jeitos UM botão só — `Atacar`, por `golpeVivo` (src/App.jsx:20300). Se nasceu um segundo, escreva `cliqueChegaFora` na entrada dele em testes/acoes-do-jogador.mjs; se `Atacar` deixou de ser condicional, tire o campo e diga por quê");
-  } else ok("o eixo condicional tem exatamente um membro, e é `Atacar`");
+  if (condicionais.length !== 0) {
+    falha(`a tabela declara clique condicional em: ${condicionais.join(", ")}`,
+      "desde R4b nenhum controle se comporta de dois jeitos, porque nenhum dos vinte botões existe. Se nasceu um, meça-o VIVO nos dois contextos antes de escrever `cliqueChegaFora` — foi medir só o texto que deu `Atacar` por vivo durante um ciclo");
+  } else ok("e o eixo condicional está vazio, como a aposentadoria manda");
 }
 
 console.log("\n2. as 8 ACOES_RAPIDAS e o despachante");
@@ -121,11 +118,19 @@ console.log("\n2. as 8 ACOES_RAPIDAS e o despachante");
         "acrescente a entrada em ACOES_DO_JOGADOR — e confira se ela é de combate, porque é isso que a catraca de X2 vigia");
     } else ok("toda ação rápida do código tem entrada na tabela");
   }
-  /* o caminho que faz delas as únicas do painel que entram no motor */
-  if (!/declararAcaoRapida\(a\.id, m\)/.test(APP)) {
-    falha("o despachante das ações rápidas mudou",
-      "a tabela afirma `onClick → declararAcaoRapida → adjudicarAcao`; re-meça e atualize o campo `handler` das 8 entradas rápidas");
-  } else ok("o despachante segue `declararAcaoRapida`");
+  /* R4b: o despachante saiu com os botões. A âncora vira-se para a porta
+     que sobrou — e que é a mesma porta onde o atalho desembocava, o que é
+     precisamente o que tornou a aposentadoria possível sem perder jogo:
+     `declararAcaoRapida` chamava `adjudicarAcao`, e a frase digitada
+     chama `adjudicarAcao` pela porta `desafio` de `executar`. */
+  if (/const declararAcaoRapida = /.test(APP)) {
+    falha("`declararAcaoRapida` voltou ao App",
+      "era a TERCEIRA porta ao motor — a que saltava `agirInterno` — e com ela volta a obrigação de perguntar a `travaODeclarar` antes de resolver (check-guardado.mjs, bloco 4). Se voltou de propósito, devolva-a à lista de PORTAS de lá e re-meça o `handler` das 8 entradas rápidas");
+  } else ok("o despachante saiu com os botões, e não voltou");
+  if (!/if \(faz === "desafio"\) return adjudicarAcao\(acao\);/.test(APP)) {
+    falha("a porta `desafio` do despachante do turno mudou de forma",
+      "é por ela que as 8 ações rápidas entram no motor DESDE R4b, escritas à mão no campo. Se ela mudou, re-meça `textoFora`/`textoLuta` das 8 entradas rápidas — é a única coluna que lhes sobrou");
+  } else ok("e as 8 entram pela porta `desafio` do texto, como a tabela diz");
 }
 
 console.log("\n3. o semAlcance que recusa de graça");
@@ -274,7 +279,16 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      intacta. (E a segunda vez em dois ciclos que esta catraca cobra o
      deslocamento; o item da pauta que propoe trocar numero por ancora de
      texto ja leva as duas cobrancas escritas.) */
-  /* E4: 7135 -> 7149. As treze linhas são o comentário da chave
+  /* R3: 7149 -> 7251. As 102 linhas são o que a tela principal ganhou no
+     redesenho (A soleira, A voz, o gesto do campo, a porta das linhas de
+     sistema) — e 95 delas entram ACIMA desta função, entre a importação e
+     o corpo do componente. O funil não se moveu por vontade própria nem
+     mudou de forma: endereço re-medido, asserção intacta.
+     (É a QUINTA vez em cinco ciclos que esta catraca cobra um deslocamento
+     que não é defeito nenhum. O item da pauta que propõe trocar número por
+     âncora de texto leva agora a quinta cobrança.)
+
+     E4: 7135 -> 7149. As treze linhas são o comentário da chave
      `economia` que passou a nascer em `equiparCombate` (:4929) — a luta
      nascia sem orçamento e a rodada 1 inteira era de graça. Nada se
      moveu por vontade própria: tudo o que está abaixo de :4929 andou
@@ -284,10 +298,21 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      App.jsx (-450 linhas) e o funil andou junto, sem mudar de forma. É a
      QUARTA vez em quatro ciclos que esta catraca cobra um deslocamento que
      não é defeito nenhum. */
-  } else if (iPush + 1 !== 7149) {
-    falha(`pushMsgs saiu de src/App.jsx:7149 e agora está em :${iPush + 1}`,
+  /* R4b: 7251 → 7258. As sete linhas são o saldo desta região — a lápide
+     dos doze verbos é oito linhas mais longa que a tabela que substituiu,
+     e o estado da gaveta de `Ações` levou uma. O funil não se moveu por
+     vontade própria nem mudou de forma: endereço re-medido, asserção
+     intacta. (É a SEXTA vez em seis ciclos que esta catraca cobra um
+     deslocamento que não é defeito nenhum. O item da pauta que propõe
+     trocar número por âncora de texto leva agora a sexta cobrança — com
+     um agravante desta etapa: foram âncoras de TEXTO, no bloco 1 acima,
+     que deram o `Atacar` do painel por vivo durante um ciclo inteiro
+     depois de E3 o ter tornado inalcançável. Trocar número por texto não
+     basta; é preciso âncora que meça ALCANCE.) */
+  } else if (iPush + 1 !== 7258) {
+    falha(`pushMsgs saiu de src/App.jsx:7258 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:7149, como o mapa de X3b diz");
+  } else ok("pushMsgs segue em src/App.jsx:7258, como o mapa de X3b diz");
 
   let divergiu = 0;
   for (const f of FUNIL_DO_COMBATE) {

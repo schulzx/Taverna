@@ -49,7 +49,7 @@ import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, 
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FOLHA } from "./estilo.js";
+import { FOLHA, TIPOS, ALVOS } from "./estilo.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
 import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, efeitoNoGolpe, escopoDoEfeito, naturezaDaHabilidade, tipoDeDanoDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
 import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, envelopeDoTeste } from "./testes.js";
@@ -137,7 +137,7 @@ import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaP
 import { garantirForma, travaDaPartida, chaveDaMorte, guardiaoPorNome, leiParaPauta, envelopeDaPassagem, envelopeDaTrava, falaDaTrava } from "./lei-da-forma.js";
 import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, comA, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
-import { lerAcao, ACOES_RAPIDAS, fraseDaAcaoRapida, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
+import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, chefesDoMundo, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, BASE_PROMPT } from "./mundo-base.js";
 import { dificuldadeDaMasmorra, envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
@@ -164,7 +164,7 @@ import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resu
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
 import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo } from "./arquivo.js";
-import { abrir as abrirAbas, estaAberta, subsAbertas, novidades, falaDaNovidade, TODAS_AS_PORTAS } from "./abas.js";
+import { abrir as abrirAbas, estaAberta, subsAbertas, novidades, falaDaNovidade, TODAS_AS_PORTAS, SUBS_GESTAO } from "./abas.js";
 import { cabecalhoDaCena, TONS, TOM_PADRAO } from "./palco.js";
 import { janelaAncorada } from "./janela.js";
 import { houveIntervalo, recapitular, textoDoRecap, envelopeDaRetomada, ehHoraDeParar, falaDoFim } from "./sessoes.js";
@@ -175,7 +175,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, PilulaDeEscolha, LinhaDoCartao, duasColunas } from "./ui.jsx";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz } from "./ui.jsx";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -1097,27 +1097,35 @@ function FaixaDeChegada({ chegada, limpar }) {
 /* MODOS DE CENA — o APP escolhe (rotação), não o Mestre. Isso quebra o vício
    de sempre cair em "alguém irrompe com urgência": a variedade vira mecânica,
    não pedido. Só 1 em 7 modos permite tensão/interrupção. */
-/* AÇÕES PRONTAS (estilo BG3): um toque preenche a ação no campo — o jogador
-   completa o alvo/detalhe e envia. Zero tokens para "inventar" a ação. */
-/* v9.172 (`mesa-combate-v2`): as quatro ações que o desenho ilustra ganham
-   o TRAÇO no lugar do emoji — o emoji muda de desenho em cada sistema
-   operacional, e numa fileira de dez botões isso vira dez estilos. As
-   outras seis seguem com emoji até haver glifo para elas: meia fileira
-   traçada e meia de emoji seria pior que uma fileira inteira de emoji. */
-const ACOES_PRONTAS = [
-  { icone: "⚔", glifo: IconeEspada, rotulo: "Atacar", texto: "Ataco " },
-  { icone: "🛡", glifo: IconeEscudo, rotulo: "Esquivar", texto: "Fico em postura defensiva, esquivando e me protegendo neste turno" },
-  { icone: "✋", rotulo: "Empurrar", texto: "Empurro com força " },
-  { icone: "🦵", rotulo: "Derrubar", texto: "Tento derrubar no chão " },
-  { icone: "🏃", glifo: IconeSetaEsq, rotulo: "Correr", texto: "Corro em disparada para " },
-  { icone: "🤸", rotulo: "Saltar", texto: "Salto sobre " },
-  { icone: "🫥", rotulo: "Esconder", texto: "Me escondo nas sombras, buscando cobertura" },
-  { icone: "🔍", glifo: IconeOlho, rotulo: "Procurar", texto: "Examino o lugar com atenção, procurando " },
-  { icone: "🤝", rotulo: "Ajudar", texto: "Ajudo " },
-  { icone: "😤", rotulo: "Intimidar", texto: "Intimido com olhar e presença " },
-  { icone: "🗣", rotulo: "Persuadir", texto: "Tento persuadir " },
-  { icone: "🎭", rotulo: "Enganar", texto: "Tento enganar " },
-];
+/* ---------------- OS VINTE VERBOS APOSENTAM-SE (R4b) ----------------
+   Aqui viviam as doze `ACOES_PRONTAS`. Com as oito `ACOES_RAPIDAS` de
+   `desafios.js` eram os vinte botões do painel `Ações`, e a medida do
+   `jogo` é o que os mata: ZERO DOS VINTE dizia o preço na tela, oito
+   escondiam-no em `title` — que no telefone não existe —, e nenhum
+   nomeava a cena. Eram verbos DO JOGADOR vestidos de oferta DO MUNDO.
+
+   A RÉGUA, que é a mesma que governa a soleira: *a soleira só oferece o
+   que o SISTEMA sabe e o jogador não consegue adivinhar; o que é invenção
+   do jogador fica no campo, porque é dele.* Atacar, esquivar, empurrar,
+   derrubar, correr, saltar, esconder-se, procurar, ajudar, intimidar,
+   persuadir, enganar — o jogador podia ter pensado nos doze sozinho. São
+   do campo, e o campo resolve-os: o texto livre entra pela MESMA porta
+   (`executar("desafio")` → `adjudicarAcao`) que os oito botões rápidos
+   usavam, e pela porta `agressao` que a frase de ataque já abria.
+
+   E `ATACAR` NÃO PERDE NADA, ao contrário do que a emenda inicial do
+   `desenho` supôs. Ele defendeu-o por ter veredicto vivo, estado
+   *Impedido* e linha de consequência — tudo verdade, e tudo INALCANÇÁVEL
+   daqui: este painel só se pinta quando `!emBatalha`, e
+   `vereditoDoGolpeAgora()` devolve `null` sem `combateRef.current`.
+   Havendo luta, `emBatalha` é verdadeiro e quem se pinta é
+   `TelaDeBatalha`. A fiação de X2 morreu aqui no dia em que E3 levou a
+   batalha para o arquivo dela, e ninguém reparou porque a suíte media o
+   TEXTO do handler, nunca se ele chegava a correr.
+
+   O `Atacar` de verdade já mudou de casa, e há muito: é o `aoAtacar` de
+   `TelaDeBatalha` (`declararGolpe(null)`), pago em W1 e W2, com o
+   veredicto, o bico e a linha. O daqui só escrevia "Ataco " na caixa. */
 
 /* ---------------- O VEREDITO DO GOLPE MUDOU DE CASA (v9.266, W2 §3) ----------------
    As três funções que viviam aqui — `maisPertoAoAlcance`, `recusaDoGolpe` e
@@ -1879,13 +1887,19 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null }) {
+function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, subPedida = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
   const [confirmarRemover, setConfirmarRemover] = React.useState(null);
   const [subEscolhida, setSubGestao] = React.useState("ficha");    // sub-aba dentro de Gestão
+  /* R3: o pedido que vem da linha do sistema. Depende do SELO e não do
+     nome — pedir "mural" duas vezes seguidas são dois pedidos, e um efeito
+     que dependesse do nome só atenderia o primeiro. */
+  React.useEffect(() => {
+    if (subPedida && subPedida.sub) setSubGestao(subPedida.sub);
+  }, [subPedida && subPedida.selo]); // eslint-disable-line
   const abertasAqui = subsAbertas(abasAbertas, estadoDasAbas);
   /* O NOME CONTINUA `subGestao` de propósito: há uma dezena de
      comparações `subGestao === "..."` painel abaixo, e renomeá-las para
@@ -3051,12 +3065,78 @@ function PainelBancada({ bancada = [], despensa = [], onForjar, bloqueado }) {
   );
 }
 
+/* ---------------- O SINAL DE SETA FICA RESERVADO AO QUE SE TOCA (R3) ----------------
+   O defeito mais curto do estudo de R1, e o mais difícil de defender: o
+   Mestre fecha o turno escrevendo uma linha de sistema com o sinal de
+   seta — o glifo universal de "vá aqui" — e o que chega ao DOM é
+   `{tag:"SPAN", clicavel:false, cursor:"auto"}`. Nove afordâncias no
+   primeiro ecrã, zero tocáveis. O jogo desenha a porta e não põe a
+   maçaneta, e o que está do outro lado existe, funciona e é bom.
+
+   A LEI NOVA, escrita pelo `desenho` em R1 e aplicada aqui: o sinal de
+   seta fica reservado ao que se toca. Onde ele não puder abrir nada, ELE
+   SAI — não fica um glifo a mentir. As duas metades vivem juntas de
+   propósito: quem um dia acrescentar uma linha nova com seta ou lhe dá
+   destino, ou vê a seta desaparecer sozinha na tela.
+
+   O ROTULO SAI DA MESMA TABELA QUE ESCREVEU A LINHA. `falaDaNovidade`
+   monta o texto a partir de `SUBS_GESTAO`; ler o rótulo de volta da
+   MESMA lista é o que impede as duas pontas de divergirem. Uma lista de
+   nomes escrita à mão aqui envelheceria no dia em que uma aba mudasse de
+   nome — e envelheceria calada, porque a linha continuaria a aparecer,
+   só que morta outra vez.
+
+   (O Códex é o único que não está em `SUBS_GESTAO`: ele é aba de cima,
+   mora em `ABAS_COM_PORTA`, e lá o rótulo não é campo da tabela. É a
+   única cópia, e está aqui declarada em vez de escondida.) */
+/* ---------------- O GESTO DO CAMPO (R3) ----------------
+   `Enter` manda e `Shift+Enter` quebra a linha. É o gesto mais repetido
+   do jogo, e num `<input>` de uma linha ele era de graça: `Enter` era a
+   única coisa que a tecla podia fazer. Passando a `<textarea>`, quebrar
+   a linha passa a ser o comportamento NATIVO — e mandar o turno passa a
+   ter de ser escrito. Trocá-lo em silêncio é o defeito que passa no
+   build, passa na suíte de regra, e só o uso pega.
+
+   ESTÁ AQUI FORA, com nome, em vez de embutido no `onKeyDown`, por uma
+   razão só: uma expressão dentro de um JSX de vinte e um mil linhas não
+   se prova. Assim `testes/teste-r3-campo-do-turno.mjs` lê ESTA função do
+   arquivo e corre os três casos contra ela — não contra uma cópia.
+
+   O TERCEIRO CASO é o que quase se esquece: com o teclado a compor um
+   acento (o `^` de "você", o `~` de "não"), o `Enter` que fecha a
+   composição NÃO é um pedido de turno. `isComposing` (e o 229 dos
+   navegadores que ainda não o dizem) é o que separa os dois, e num jogo
+   escrito em português isso não é um caso de canto. */
+function gestoDoCampo(e) {
+  if (!e || e.key !== "Enter") return "nada";
+  if (e.isComposing || e.keyCode === 229) return "nada";
+  if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return "quebrar";
+  return "mandar";
+}
+
+const SETA_DA_PORTA = "\u25B8 ";
+const PORTAS_DO_SISTEMA = [
+  ...SUBS_GESTAO.map((sub) => ({ rotulo: sub.rotulo, aba: "gestao", sub: sub.id })),
+  { rotulo: "C\u00F3dex", aba: "codex", sub: null },
+];
+function portaDaLinhaDeSistema(texto) {
+  const linha = String(texto == null ? "" : texto);
+  if (!linha.startsWith(SETA_DA_PORTA)) return null;
+  const nome = linha.slice(SETA_DA_PORTA.length).split("\u2014")[0].trim();
+  if (!nome) return null;
+  return PORTAS_DO_SISTEMA.find((p) => p.rotulo.toLowerCase() === nome.toLowerCase()) || null;
+}
+function semSetaQueMente(texto) {
+  const linha = String(texto == null ? "" : texto);
+  return linha.startsWith(SETA_DA_PORTA) ? linha.slice(SETA_DA_PORTA.length) : linha;
+}
+
 /* ---------------- UMA CORRIDA DE LINHAS DO SISTEMA (v9.32) ----------------
    O que não se dobra fica em cima, como sempre foi. O que é contabilidade
    pura desce para uma linha só de saldo, que abre com um toque. A dobra
    nasce FECHADA de propósito: quem quer conferir a conta clica; quem quer
    ler a cena não precisa fazer nada. */
-function BlocoSistema({ visiveis = [], dobradas = [], saldo = "" }) {
+function BlocoSistema({ visiveis = [], dobradas = [], saldo = "", aoAbrir }) {
   const [aberto, setAberto] = useState(false);
   /* ---------------- A FORMA SEGUE O CONTEÚDO (v9.149) ----------------
      A pílula centralizada foi feita para o aviso de uma linha ("⛔ item
@@ -3069,26 +3149,48 @@ function BlocoSistema({ visiveis = [], dobradas = [], saldo = "" }) {
      o que vier depois: texto com quebra de linha é bloco, texto sem
      quebra é pílula. Quem escreve a mensagem decide a forma sem precisar
      saber que esta função existe. */
-  const pilula = (txt, i) => (String(txt).includes("\n") ? (
-    <div key={i} className="tv-fade flex justify-center">
-      <div className="tv-mono text-xs px-4 py-3 rounded-xl whitespace-pre-line max-w-xl w-full"
-        style={{ background: T.panelSoft, color: T.violetSoft, border: `1px solid ${T.line}` }}>{txt}</div>
-    </div>
-  ) : (
-    <div key={i} className="tv-fade flex justify-center">
-      <span className="tv-mono text-xs px-3 py-1.5 rounded-full text-center" style={{ background: T.panelSoft, color: T.violetSoft }}>{txt}</span>
-    </div>
-  ));
+  /* R3: as três cores saíram da MESA e vieram para a PÁGINA
+     (`paginaAlta`/`inkMeio`/`paginaFio`). A linha do sistema mora dentro
+     da narração, e uma pílula em tom frio dentro do papel quente era a
+     costura a aparecer. O corpo passa a `TIPOS.maquina` (12) — o mesmo
+     número que `text-xs` já dava, agora lido da tabela.
+
+     E o alvo: quem abre uma porta cumpre `ALVOS.piso`. O enchimento cresce,
+     a tinta não — 48 px de alvo com a mesma letra de sempre. */
+  const pilula = (txt, i) => {
+    const bruto = String(txt);
+    const porta = aoAbrir ? portaDaLinhaDeSistema(bruto) : null;
+    if (porta) return (
+      <div key={i} className="tv-fade flex justify-center">
+        <button type="button" onClick={() => aoAbrir(porta)}
+          className="tv-anel-foco tv-mono px-4 py-1.5 rounded-full text-center flex items-center justify-center max-w-xl"
+          style={{ fontSize: TIPOS.maquina, minHeight: ALVOS.piso, background: T.paginaAlta, color: T.amberSoft, border: `1px solid ${T.paginaFio}`, cursor: "pointer" }}>
+          {bruto}
+        </button>
+      </div>
+    );
+    const limpo = semSetaQueMente(bruto);
+    return limpo.includes("\n") ? (
+      <div key={i} className="tv-fade flex justify-center">
+        <div className="tv-mono px-4 py-3 rounded-xl whitespace-pre-line max-w-xl w-full"
+          style={{ fontSize: TIPOS.maquina, background: T.paginaAlta, color: T.inkMeio, border: `1px solid ${T.paginaFio}` }}>{limpo}</div>
+      </div>
+    ) : (
+      <div key={i} className="tv-fade flex justify-center">
+        <span className="tv-mono px-3 py-1.5 rounded-full text-center" style={{ fontSize: TIPOS.maquina, background: T.paginaAlta, color: T.inkMeio }}>{limpo}</span>
+      </div>
+    );
+  };
   return (
-    <div className="space-y-2">
+    <div className="tv-coluna space-y-2">
       {visiveis.map(pilula)}
       {dobradas.length > 0 && (
         <div className="tv-fade flex flex-col items-center gap-1.5">
           <button onClick={() => setAberto((v) => !v)}
             title={aberto ? "Esconder as rolagens e os golpes" : "Ver rolagem por rolagem, golpe por golpe"}
             className="tv-mono text-xs px-3 py-1.5 rounded-full flex items-center gap-2"
-            style={{ background: T.panelSoft, color: T.inkDim, border: `1px solid ${T.line}` }}>
-            <span style={{ color: T.violetSoft }}>{saldo}</span>
+            style={{ fontSize: TIPOS.maquina, minHeight: ALVOS.piso, background: T.paginaAlta, color: T.inkMeio, border: `1px solid ${T.paginaFio}` }}>
+            <span style={{ color: T.amberSoft }}>{saldo}</span>
             <span style={{ opacity: 0.7 }}>{aberto ? "▴ esconder" : `▾ ${dobradas.length} linhas`}</span>
           </button>
           {aberto && (
@@ -4525,8 +4627,15 @@ export default function Taverna() {
      nelas o relógio dos buffs e das condições fica parado. */
   const [entrada, setEntrada] = useState("");
   const [aba, setAba] = useState(null);
+  /* R3 · A SETA QUE ABRE. A sub-aba escolhida é estado DE DENTRO do
+     `PainelLateral` (e está certo que seja: é ele quem sabe que abas têm
+     porta hoje). Para uma linha do sistema poder pedir "abre-me o Mural",
+     o App passa um PEDIDO, não o estado — com um selo de tempo, para que
+     pedir a MESMA sub-aba duas vezes seguidas continue a funcionar. Levar
+     o estado inteiro para cá seria mover uma decisão de painel para o
+     arquivo grande, que é o caminho oposto ao desta fase. */
+  const [subPedida, setSubPedida] = useState(null);
   const [habAbertas, setHabAbertas] = useState(false);
-  const [acoesAbertas, setAcoesAbertas] = useState(false);
   /* v9.16: o painel de heroísmo e a memória do último golpe recebido —
      é ela que dá janela ao gasto "Aguentar". Vive num ref porque não
      precisa redesenhar nada: só existe para ser consultada no clique. */
@@ -5710,7 +5819,7 @@ export default function Taverna() {
         /* o número, e não o adjetivo: "faltam 11 rações" se resolve;
            "mal abastecido" se ignora */
         const oQue = [falta.faltamRacoes ? `${falta.faltamRacoes} ração(ões)` : "", falta.faltamAguas ? `${falta.faltamAguas} água(s)` : ""].filter(Boolean).join(" e ");
-        pushMsgs([{ autor: "sistema", texto: `🥖 ${falta.diz}${oQue ? ` Faltam ${oQue}.` : ""}${(balcaoAqui() || []).length ? " Há mantimentos à venda aqui — Gestão ▸ Mercado." : ""}` }]);
+        pushMsgs([{ autor: "sistema", texto: `🥖 ${falta.diz}${oQue ? ` Faltam ${oQue}.` : ""}${(balcaoAqui() || []).length ? " Há mantimentos à venda aqui — Gestão › Mercado." : ""}` }]);
       }
     } catch (e) { calou("avisoDeComida", e); }
     setAba(null);
@@ -11766,11 +11875,11 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
     } catch (e) { calou("veredito do golpe", e); return null; }
   };
 
-  /* O botão do painel não é um caminho paralelo: ele escreve a frase que o
-     jogador escreveria e manda pela mesma porta — o molde de
-     `declararAcaoRapida`, palavra por palavra. A frase sai de
-     `fraseDoGolpe` e nunca de uma string montada aqui, porque é a frase do
-     módulo que a suíte prova casar o mesmo detector que o teclado casa. */
+  /* O verbo `Atacar` da batalha não é um caminho paralelo: ele escreve a
+     frase que o jogador escreveria e manda pela mesma porta. (O molde
+     citado aqui era o de `declararAcaoRapida`, que saiu em R4b com os oito
+     botões rápidos; o molde é agora o desta função.) A frase sai de
+     `fraseDoGolpe`, do módulo que a suíte prova casar o detector do teclado. */
   const declararGolpe = (alvoPedido) => {
     try {
       /* A TRAVA (v9.256, Fase X - X3). Enquanto houver turno que o motor JA
@@ -16247,31 +16356,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     return true;
   };
 
-  /* O botão do painel não é um caminho paralelo: ele escreve a frase que o
-     jogador escreveria e manda pela mesma porta. Se a ação não pede dado, ou
-     se já foi tentada aqui, o botão ouve a mesma resposta que o teclado. */
-  const declararAcaoRapida = (id, motivo) => {
-    /* A TRAVA (v9.256, Fase X - X3) - a TERCEIRA porta, e ela precisa da
-       mesma guarda que as irmas: daqui `adjudicarAcao` rola o dado, e com um
-       turno preso esperando narracao isso seria a segunda chance que a queda
-       de rede nao pode dar. No TOPO, antes de montar a frase e antes de
-       qualquer resolucao.
-
-       E o texto do jogador VOLTA A CAIXA de proposito: ao contrario das
-       outras duas portas, o painel de Acoes ja fez `setEntrada("")` antes de
-       chamar, entao nao limpar nao basta - aqui o alvo escrito precisa ser
-       devolvido a mao, ou ele se perde. */
-    if (travaODeclarar(guardadoRef.current)) {
-      try { if (motivo) setEntrada(motivo); } catch (e) { calou("devolver o alvo a caixa", e); }
-      aMesaEspera();
-      return;
-    }
-    const frase = fraseDaAcaoRapida(id, motivo);
-    if (!frase) return;
-    if (adjudicarAcao(frase)) return;
-    /* sem obstáculo reconhecido, vira ação normal — o Mestre narra */
-    enviar(frase, fichaViva() || personagem);
-  };
+  /* `declararAcaoRapida` saiu em R4b, com os oito botões que eram o seu
+     único chamador. A porta não fechou: ela era um ATALHO para a porta que
+     o teclado já usa — `executar("desafio")` → `adjudicarAcao` (mais
+     acima) —, e os oito verbos continuam a entrar por ela escritos à mão,
+     que é de onde nunca deviam ter saído. As frases canônicas continuam em
+     `ACOES_RAPIDAS`/`fraseDaAcaoRapida` (`desafios.js`), lidas pela suíte
+     de desafios e pela sonda do turno estéril. */
 
   /* O teste que o veredicto mandou rolar. A dificuldade JÁ VEIO PRONTA — é
      do obstáculo, não do herói —, e por isso esta função não calcula nada:
@@ -20768,6 +20859,312 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      a guarda dentro de `agir`, que deixa o `/comando` passar. */
   const bloqueado = carregando || !!rolagem;
 
+  /* ============================================================
+     A SOLEIRA (R3) — o que o mundo oferece passa a ser tocável no
+     sítio onde o mundo o ofereceu.
+
+     POR QUE ELA EXISTE, medido jogando (R1, o `jogo`): ele escreveu
+     "Aceito o trabalho do Yorick. Sessenta está bom.", esperou 14,3 s, e
+     o contrato NÃO foi aceite — o Narrador, não sabendo que "aceitar" é
+     verbo de sistema, improvisou 80 moedas contra as 60 da tabela. A
+     aceitação existe, funciona e está bonita, a TRÊS toques, atrás de uma
+     aba chamada Gestão. O defeito não é falta de sistema: é que o momento
+     e o controlo vivem em sítios diferentes. São 50 verbos de sistema
+     atrás de 4 abas contra 17 portas que o texto livre abre, e nada na
+     tela diz de que lado está o verbo que o jogador quer.
+
+     A REGRA QUE A GOVERNA, e é o que a impede de virar point-and-click:
+     A SOLEIRA SÓ OFERECE O QUE O SISTEMA SABE E O JOGADOR NÃO CONSEGUE
+     ADIVINHAR — e, desde R5b, SÓ O QUE SE PERDE SE NÃO SE AGIR AGORA.
+     Entra: uma missão que pede resposta, uma pessoa em cena que tem verbo,
+     o que o chão guarda aqui, o papel que alguém acabou de pregar. NUNCA
+     entra: atacar, persuadir, procurar, escalar, esconder-se, mentir,
+     escutar — esses são invenção do jogador e o sítio deles é o campo, e
+     sempre foi. E NUNCA ENTRA MOBÍLIA: a tábua da cidade e o mercado são
+     LUGARES, estão sempre lá, e a gramática de um lugar é uma porta. O
+     teste, na dúvida, tem duas metades: o jogador podia ter pensado nisto
+     sozinho? (se sim, é do campo) — e perde-o se não agir agora? (se não,
+     é mobília, e o sítio dela é a aba).
+
+     O QUE ISTO NÃO PEDE AO SISTEMA: nenhuma mecânica, tabela ou número
+     novo. Os 50 verbos já existem, já têm suíte, já correm em Node.
+     `aceitarContrato` já calcula as moedas, o XP e a fama. O que se pede
+     é FIAÇÃO — e é a razão de esta região poder ser grande sem ser cara:
+     ela não constrói jogo novo, entrega o jogo que já está construído.
+
+     `bloqueado` NÃO DESLIGA A SOLEIRA, e essa é a metade que mais rende.
+     Hoje os 14,3 s de mediana apagam a tela inteira e o jogador não pode
+     tomar UMA decisão enquanto o Mestre escreve. Aceitar um contrato pela
+     soleira é uma chamada a uma função que resolve em memória, no
+     instante: 1 toque, ~0 ms, e o estado muda. Só a oferta que PRECISA do
+     narrador (convidar alguém, que manda um turno) fica impedida durante a
+     espera — e fica impedida à vista, com o motivo, em vez de sumir. A
+     espera deixa de ser parede e passa a ser intervalo.
+
+     EM `try/catch` PELO `calou`, e a lista vazia é a falha segura: uma
+     soleira que estoura devolve zero ofertas e a tela continua de pé.
+     Nunca pode custar o turno.
+     ============================================================ */
+  /* A ORDEM DA LISTA É A PRIORIDADE, E A PRIORIDADE É A PERECIBILIDADE.
+
+     CINCO VIRARAM TRÊS (R5b), e quem o corrigiu foi o `jogo` contra a lei
+     que o próprio `jogo` escreveu em R1: *a régua não separa OBJETOS,
+     separa ESTADOS.* A tábua da cidade é um LUGAR e está sempre lá — depois
+     da primeira cidade o jogador sabe que cidades têm tábua, e o que se
+     aprende a esperar, adivinha-se: mobília. O papel que alguém acabou de
+     pregar, e por que ainda se espera resposta, é oferta — e deixa de o ser
+     quando ninguém está à espera.
+
+     O PRINCÍPIO, numa linha: a soleira é O QUE SE PERDE SE NÃO SE AGIR
+     AGORA. Mobília não se perde.
+
+     E A PROVA DE QUE ISTO ESTAVA CERTO É QUE O CÓDIGO JÁ O SABIA, e a mesa
+     é que não reparou: `PainelMural` tem duas pilhas com títulos diferentes
+     desde a v9.119, muito antes desta fase existir — *Cartazes disponíveis*
+     é o acervo do lugar, *Oferecidos a você* é alguém à espera de resposta
+     sua. A soleira leva só a segunda. A primeira chega pela PORTA (o
+     `▸ Mural`, que R3 tornou botão de 48 px), e o mercado pela sua. Nada se
+     perde; muda de gramática.
+
+     A MEDIDA QUE CONDENOU A TÁBUA, e é a mesma que eu tinha usado para a
+     pôr à frente: o mural nunca fica vazio POR DESENHO — `PainelMural`
+     prega outro cartaz no instante em que um é aceito. Logo a tábua estaria
+     na soleira em TODO turno de TODA cidade, empurrando a prosa de 58,1 %
+     para 38,7 %, e uma soleira sempre cheia da mesma coisa é mobília —
+     exatamente o que os 20 botões genéricos já eram. Sem ela o turno típico
+     tem 0 ou 1 oferta.
+
+     SOBRAM TRÊS, do que morre mais depressa ao que morre mais devagar: quem
+     espera resposta · quem está em cena (e o que o chão guarda, que perece
+     com o passo) · o papel que alguém acabou de pregar. Tirar os dois que
+     não pereciam não enfraquece a régua — tira-lhe o ruído.
+
+     O TETO SAI DA TABELA `SOLEIRA` (`estilo.js`) e de mais lado nenhum: com
+     a tábua fora não há pilha que precise de teto próprio aqui, e o teto que
+     resta é uma promessa sobre a PROSA, não sobre as ofertas — o que não
+     cabe vai para a porta do `+N`, que diz quantas ficaram. */
+
+  const ofertasDaSoleira = () => {
+    try {
+      const lista = [];
+
+      /* 1 · A MISSÃO QUE PEDE RESPOSTA. Alguém propôs cara a cara e está à
+         espera: é a oferta mais perecível que o jogo tem. */
+      for (const m of (missoes || [])) {
+        if (!m || m.status !== "oferecida") continue;
+        lista.push({
+          id: `missao|${m.id}`,
+          verbo: `Aceitar: ${m.titulo}`,
+          preco: m.prazo > 0 ? `prazo ${m.prazo} noites` : "",
+          retorno: textoDaPaga(m),
+          quem: m.dador ? `pedido por ${m.dador}` : "",
+          tom: m.prazo > 0 ? "preco" : "convite",
+          precisaDoNarrador: false,
+          aoClicar: () => responderMissao(m.id, true),
+        });
+      }
+
+      /* 2 · A PESSOA EM CENA QUE TEM VERBO. "Em cena" é a marca que o
+         próprio registo já guarda: `ultimaVez` é o número da última vez em
+         que o Mestre anotou gente, e quem tem a marca DE AGORA está na
+         cena de agora. Depois de carregar um save o contador volta a zero e
+         ninguém entra — e esse é o lado seguro do erro: a soleira cala-se
+         até o mundo voltar a falar, em vez de oferecer o convite de alguém
+         que ficou três cidades atrás.
+
+         O VEREDITO ANTES DO CLIQUE vem de `pesarConvite`, que já existe e
+         já é determinístico: quem aceitaria entra dizendo que aceitaria,
+         quem tem preço entra com o preço escrito. QUEM RECUSARIA NÃO ENTRA
+         — uma soleira que oferece o que vai ser recusado ensina a não olhar
+         para ela. (Decisão minha, e declarada: a regra de R1 manda oferecer
+         o que tem verbo, e não diz o que fazer com o verbo que já se sabe
+         morto.) */
+      const marcaDeAgora = npcTurnoRef.current || 0;
+      const noGrupo = new Set(((personagem && personagem.grupo) || []).map((g) => String(g.nome || "").toLowerCase()));
+      const grupoCheio = ((personagem && personagem.grupo) || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS;
+      if (marcaDeAgora > 0 && !grupoCheio) {
+        for (const n of Object.values(npcs || {})) {
+          if (!n || !n.nome) continue;
+          if ((n.ultimaVez || 0) < marcaDeAgora) continue;
+          if (noGrupo.has(String(n.nome).toLowerCase())) continue;
+          if (String(n.relacao || "").toLowerCase() === "inimigo") continue;
+          if (String(n.status || "").toLowerCase().includes("morto")) continue;
+          const v = vereditoDoConvite(n.nome);
+          if (!v || v.resposta === "recusa") continue;
+          lista.push({
+            id: `convite|${n.nome}`,
+            verbo: `Convidar ${n.nome}`,
+            preco: v.resposta === "exige" ? String((v.exigencia && v.exigencia.o) || "") : "",
+            retorno: v.resposta === "aceita" ? "aceitaria" : "tem preço",
+            quem: n.papel || "",
+            tom: v.resposta === "exige" ? "preco" : "convite",
+            precisaDoNarrador: true,
+            aoClicar: () => convidarNpc(n.nome),
+          });
+        }
+      }
+
+      /* 2b · O QUE O CHÃO GUARDA, AQUI. Era a aba `Examinar`, permanente, e
+         o seu próprio `title` a confessava: *"Nada caído por perto"*. Quando
+         há coisa, é uma oferta; quando não há, não é nada — e nada não ocupa
+         tela.
+
+         ENTRA ANTES DO CARTAZ PORQUE PERECE COM O PASSO: `pertoDaqui` mede a
+         partir de onde o herói está, e quem anda perde o que ficou para
+         trás; a tábua da cidade continua pregada amanhã. É a mesma régua de
+         perecibilidade que ordena a lista inteira.
+
+         E O NÚMERO VAI NO RETORNO, não num balão de rato: QUANTAS coisas
+         estão ao alcance é exactamente o que o sistema sabe e o jogador não
+         adivinha — e `title` não existe no telefone. */
+      const noChao = (chaoPerto || []).length;
+      if (noChao) {
+        lista.push({
+          id: "chao|aqui",
+          verbo: "Examinar o chão",
+          retorno: `${noChao} coisa${noChao === 1 ? "" : "s"} ao alcance`,
+          tom: "convite",
+          precisaDoNarrador: false,
+          aoClicar: () => setExaminando(true),
+        });
+      }
+
+      /* 3 · O PAPEL QUE ALGUÉM ACABOU DE PREGAR, E SÓ ELE. `oferecido` é a
+         marca que o próprio mural já usa para separar as duas pilhas: é
+         verdade no cartaz que alguém pregou depois de falar com o herói
+         (*Oferecidos a você*) e falsa no acervo que a cidade pregou sozinha
+         (*Cartazes disponíveis*), que é mobília e fica na tábua.
+
+         O QUE EU DECIDI E NÃO ESTAVA DECIDIDO, e fica escrito para quem
+         vier: o `jogo` diz *oferta no turno em que nasce, acervo depois*, e
+         a leitura literal disso seria tirar o cartaz da soleira no turno
+         seguinte ao da pregada. NÃO É O QUE ESTÁ AQUI, e o motivo é uma
+         medida da própria fase: a oferta do Yorick que abriu R1 continuou
+         válida QUATRO turnos, e um cartaz que se apaga ao segundo devolve
+         exatamente o defeito que a soleira nasceu para curar — o jogador
+         quer dizer sim e não tem por onde. O "depois" já está dito na peça,
+         e sem apagar nada: `chegada` marca o que nasceu neste turno e
+         assenta no seguinte. Nasce oferta, assenta acervo, continua tocável.
+
+         O PREÇO E O RETORNO SAEM DA MESMA CONTA QUE O ACEITE VAI APLICAR:
+         `recompensaDe` é função pura de tipo, nível e etapas, e é a mesma
+         que `PainelMural` lê. Duas contas para o mesmo número seriam duas
+         verdades, e o jogador tem direito à que o sistema vai pagar.
+
+         E O QUE JÁ FOI ACEITE SAI DA SOLEIRA — achado jogando, nesta mesma
+         etapa, e é um defeito que R5b CRIOU ao expor esta pilha: os
+         oferecidos ATRAVESSAM a renovação do mural de propósito
+         (`garantirMural`: apagá-los num descanso seria o mundo esquecer um
+         pedido que ele mesmo fez), e o `evitar` que exclui o que está no
+         diário só vale para a pilha DO MUNDO. Atrás de duas abas isso era
+         uma verruga; na soleira era um botão morto a ocupar a fila — cliquei
+         no cartaz do Yorick já aceite e o jogo respondeu *"esse mesmo
+         trabalho já está no diário"*. A R3 escreveu a lei contra isto ao pé
+         do convite: *uma soleira que oferece o que vai ser recusado ensina a
+         não olhar para ela.*
+
+         E a régua do `jogo` já o dizia sem eu precisar de decidir nada: o
+         papel é oferta *por que ainda se espera resposta*, e DEIXA DE O SER
+         QUANDO NINGUÉM ESTÁ À ESPERA. Aceite o contrato, ninguém espera.
+
+         O TESTE É O MESMO QUE `pregarNoMural` JÁ USA, e de propósito: duas
+         leituras de "isto já está no diário" seriam duas verdades, e já
+         custaram caro nesta casa. */
+      const jaNoDiario = new Set(garantirMissoes(missoes)
+        .filter((q) => ["ativa", "oferecida", "concluida"].includes(q.status))
+        .map((q) => semNome(q.titulo)));
+      for (const c of (mural || []).filter((c) => c && c.oferecido && !jaNoDiario.has(semNome(c.titulo)))) {
+        const rec = recompensaDe({ tipo: c.tipo || "contrato", nivel: c.nivel || (personagem && personagem.nivel) || 1, etapas: (c.etapas || []).length || 3, moedasPrometidas: c.paga });
+        const paga = [c.paga ? `◉ ${c.paga}` : "", rec.xp ? `+${rec.xp} XP` : "", rec.fama ? `+${rec.fama} fama` : ""].filter(Boolean).join(" · ");
+        lista.push({
+          id: `cartaz|${c.id}`,
+          verbo: `Aceitar: ${c.titulo}`,
+          preco: c.prazo > 0 ? `prazo ${c.prazo} noites` : "",
+          retorno: paga,
+          quem: c.dador ? `assina ${c.dador}` : "",
+          onde: c.cidade || "",
+          tom: c.prazo > 0 ? "preco" : "convite",
+          precisaDoNarrador: false,
+          aoClicar: () => aceitarContrato(c),
+        });
+      }
+
+      /* O MERCADO SAIU DAQUI (R5b), pela mesma régua que levou a tábua: que
+         há comércio numa cidade o jogador adivinha, e o mercado não se perde
+         por não se agir agora — está aberto amanhã, e depois. Era a quarta
+         entrada da lista e estava a fingir urgência que não tinha. Chega
+         pela porta da aba, como todo lugar. O número de bancas era o melhor
+         argumento a favor dela, e não basta: um número interessante sobre
+         mobília continua a ser mobília.
+
+         4 · ESPERAR, E ESTÁ AQUI EMPRESTADO — este parágrafo é o motivo, e
+         fica escrito porque é a única entrada da soleira que NÃO obedece à
+         régua das outras.
+
+         PELA RÉGUA, `Esperar` NÃO É OFERTA: o jogador podia ter pensado em
+         esperar sozinho, e isso põe o verbo no campo, que é dele. Entrou em
+         R4b porque a etapa lhe tirou a aba `Tempo` e não lhe deu casa — e
+         uma soleira que recebe o que sobrou é uma gaveta a começar. Quem o
+         diz é o `jogo`, contra a própria etapa.
+
+         POR QUE FICA MESMO ASSIM: `passarTempo` é o único destes verbos que
+         o campo NÃO resolve. Escrever "espero doze horas" faz o Mestre
+         narrar doze horas e não move o relógio, não vira o dia, não cobra a
+         renda nem muda o clima. Tirá-lo sem substituto removeria isso tudo
+         da tela, e remover o que existe é `pesado`. Fica em último, que é
+         onde a régua da perecibilidade põe o que nunca morre.
+
+         E SAI DAQUI NO DIA EM QUE TIVER PORTA DE TEXTO. É o diagnóstico de
+         R1 aplicado a si mesmo — 50 verbos de sistema contra 17 portas que o
+         texto livre abre —, e o conserto é do SISTEMA, não do desenho: uma
+         porta em `turno.js` que reconheça "espero doze horas" e chame
+         `passarTempo`. Enquanto ela não existir, este empréstimo fica, e
+         este comentário é a dívida à vista.
+
+         `precisaDoNarrador` é verdade e fica dito: escolhida a hora,
+         `passarTempo` chama o Mestre. Durante a espera a oferta aparece
+         impedida, com o motivo, em vez de sumir. */
+      if (!acampado && !combate) {
+        lista.push({
+          id: "tempo|esperar",
+          verbo: "Esperar",
+          retorno: `agora ${horaTxt(minuto)}`,
+          tom: "convite",
+          precisaDoNarrador: true,
+          aoClicar: () => setMostrarHoras(true),
+        });
+      }
+
+      return lista;
+    } catch (e) { calou("montar a soleira", e); return []; }
+  };
+
+  /* A CHEGADA DECAI NO TURNO SEGUINTE, NUNCA POR RELÓGIO — o argumento é
+     do `desenho` e é do ofício do `jogo`: uma marca que morre por tempo
+     morre enquanto o jogador está a pensar. O turno começa quando
+     `carregando` passa a verdadeiro; nesse instante tudo o que está na
+     soleira é VELHO, e fica registado. O que aparecer depois disso é novo
+     até o turno seguinte começar. */
+  const soleiraAntesRef = useRef(null);
+  useEffect(() => {
+    try {
+      if (soleiraAntesRef.current && !carregando) return;
+      soleiraAntesRef.current = new Set(ofertasDaSoleira().map((o) => o.id));
+    } catch (e) { calou("marcar o que a soleira ja tinha", e); }
+  }, [carregando]); // eslint-disable-line
+
+  /* ---------------- A SETA ABRE O QUE ANUNCIA (R3) ----------------
+     Em `try/catch` porque nunca pode custar o turno: uma linha do sistema
+     com um rótulo que já não existe devolve `null` bem antes daqui, e o
+     que sobra é a fiação — que, estourando, não pode derrubar a cena. */
+  const abrirPortaDoSistema = (porta) => {
+    try {
+      if (!porta || !porta.aba) return;
+      if (porta.sub) setSubPedida({ sub: porta.sub, selo: Date.now() });
+      setAba(porta.aba);
+    } catch (e) { calou("abrir a porta que a linha do sistema anuncia", e); }
+  };
+
   /* A APRESENTAÇÃO DOS RETRATOS (v9.158) é decisão do mundo, tomada uma
      vez na criação — e os retratos são desenhados em dezenas de painéis.
      Entra por contexto porque passar a escolha de mão em mão por sete
@@ -20915,7 +21312,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       acaoBonus={temAcaoBonus(personagem)}
       pocoes={pocoesNaBolsa} bolsa={bolsaDeCombate} aoUsarConsumivel={usarConsumivelUI}
       gavetaAberta={habAbertas}
-      aoAbrirGaveta={() => { setHabAbertas((v) => !v); setAcoesAbertas(false); }}
+      aoAbrirGaveta={() => { setHabAbertas((v) => !v); }}
       gaveta={gavetaDaBatalha}
       reacao={reacaoDaBatalha}
       dado={dadoDaBatalha}
@@ -20942,22 +21339,27 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       <header className="flex items-center justify-between px-4 md:px-5 py-3 shrink-0 sticky top-0 z-30" style={{ borderBottom: `1px solid ${T.line}`, background: T.panel }}>
         <div className="flex items-center gap-2 min-w-0">
           {fase !== "menu" && (
-            <button onClick={irMenu} className="rounded-lg p-1.5 shrink-0" style={{ border: `1px solid ${T.line}` }} title="Início">
+            <button onClick={irMenu} className="tv-anel-foco rounded-lg shrink-0 flex items-center justify-center" style={{ width: ALVOS.piso, height: ALVOS.piso, border: `1px solid ${T.line}` }} title="Início">
               <IconeCaneca tamanho={18} cor={T.amberSoft} />
             </button>
           )}
           <span className="tv-display text-xl tracking-wide ml-1 shrink-0" style={{ color: T.ink }}>{BRAND}</span>
           {fase === "jogo" && nomeCampanha && <span className="tv-mono text-[10px] uppercase tracking-widest truncate hidden sm:inline" style={{ color: T.inkDim }}>· {nomeCampanha}</span>}
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        {/* R3: os quatro botões do cabeçalho mediam 31–34 × 38 (o início,
+            32 × 32) contra `ALVOS.piso` 48. Sobem ao piso, e o grupo ganha
+            `flex-wrap` porque quatro alvos de 48 mais o selo de salvamento
+            não cabem em 375 px numa linha só — e uma segunda linha no
+            cabeçalho é melhor do que um alvo que a WCAG 2.5.5 reprova. */}
+        <div className="flex items-center justify-end gap-2 flex-wrap shrink-0">
           {/* o retrato saiu do cabeçalho (v9.160): o atalho da ficha agora é
               o bloco do herói na barra de status — dois retratos do mesmo
               herói na mesma tela eram duas verdades visuais, e a de baixo é
               a que reage a dano. */}
           {fase === "jogo" && statusSave && <span className="tv-mono text-[10px] uppercase tracking-wider" style={{ color: statusSave === "erro" ? T.danger : T.inkDim }}>{statusSave === "salvando" ? "salvando…" : statusSave === "erro" ? "⚠ FALHA AO SALVAR" : "✓ salvo"}</span>}
-          {fase === "jogo" && !acampado && !emBatalha && <button onClick={acampar} disabled={bloqueado} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Montar acampamento"><span style={{ color: T.amberSoft, fontSize: 15 }}>⛺</span></button>}
-          {fase === "jogo" && <button onClick={() => setMostrarRolagens((v) => !v)} className="rounded-lg p-1.5" style={{ border: `1px solid ${mostrarRolagens ? T.amber : T.line}` }} title={mostrarRolagens ? "Rolagens de combate: visíveis" : "Rolagens de combate: ocultas"}><span style={{ color: mostrarRolagens ? T.amberSoft : T.inkDim, fontSize: 13 }}>🎲</span></button>}
-          {fase === "jogo" && !emBatalha && <button onClick={gerarCronica} className="rounded-lg p-1.5" style={{ border: `1px solid ${T.line}` }} title="Gerar crônica"><span style={{ color: T.amberSoft, fontSize: 15 }}>📜</span></button>}
+          {fase === "jogo" && !acampado && !emBatalha && <button onClick={acampar} disabled={bloqueado} className="tv-anel-foco rounded-lg flex items-center justify-center" style={{ width: ALVOS.piso, height: ALVOS.piso, border: `1px solid ${T.line}` }} title="Montar acampamento"><span style={{ color: T.amberSoft, fontSize: 15 }}>⛺</span></button>}
+          {fase === "jogo" && <button onClick={() => setMostrarRolagens((v) => !v)} className="tv-anel-foco rounded-lg flex items-center justify-center" style={{ width: ALVOS.piso, height: ALVOS.piso, border: `1px solid ${mostrarRolagens ? T.amber : T.line}` }} title={mostrarRolagens ? "Rolagens de combate: visíveis" : "Rolagens de combate: ocultas"}><span style={{ color: mostrarRolagens ? T.amberSoft : T.inkDim, fontSize: 13 }}>🎲</span></button>}
+          {fase === "jogo" && !emBatalha && <button onClick={gerarCronica} className="tv-anel-foco rounded-lg flex items-center justify-center" style={{ width: ALVOS.piso, height: ALVOS.piso, border: `1px solid ${T.line}` }} title="Gerar crônica"><span style={{ color: T.amberSoft, fontSize: 15 }}>📜</span></button>}
         </div>
       </header>
       )}
@@ -21001,12 +21403,43 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 próximo filho largo demais apareça como texto cortado — que se
                 vê e se conserta — em vez de virar deriva lateral, que ninguém
                 associa à causa. */}
-            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll flex-1 overflow-y-auto overflow-x-hidden mx-4 md:mx-8 mt-3 md:mt-4 px-5 md:px-8 py-6 space-y-4 rounded-2xl"
-              style={{ background: "rgba(23,19,34,0.48)", border: `1px solid ${T.line}` }} >
+            {/* O ATALHO DE ROLAMENTO PASSA A VIVER DENTRO DA PÁGINA (R3).
+                Ele media 46 × 46 = 2 116 px² e estava POR CIMA do `Agir →`,
+                que media 1 946 — confirmado por interseção de retângulos, não
+                a olho. O atalho de rolamento era maior que a chamada da tela
+                e tapava-a: quem falhasse o alvo por dez pixels rolava a
+                conversa em vez de agir.
+
+                O conserto não é afastá-lo alguns pixels — é dar-lhe o
+                invólucro certo. Ele pertence à REGIÃO QUE ROLA, e agora está
+                ancorado nela: o convés fica de fora por construção, e nenhum
+                ajuste futuro de altura do campo os volta a cruzar. */}
+            <div className="relative flex-1 min-h-0 flex flex-col">
+            {/* ---------------- A PÁGINA ILUMINADA (R3) ----------------
+                O painel da narrativa media 1,039:1 contra o balão do Mestre
+                que vivia dentro dele — a mesma superfície. As quatro
+                superfícies da casa cabiam todas dentro de 1,379:1, e a WCAG
+                1.4.11 pede 3:1 para não-texto. O balão era uma borda
+                arredondada à volta de nada.
+
+                Agora a narração é a única coisa QUENTE da tela (h≈30) e tudo
+                o resto recua para a mesa fria (h≈250). A separação tem três
+                canais e os três estão aqui: 1,43:1 de luz, 143° de matiz, e
+                o contorno `paginaFio` a 3,29:1. O contorno não é enfeite —
+                é o canal que sobrevive a quem não vê cor, e é o único dos
+                três que a 1.4.11 de facto cobra. */}
+            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll flex-1 overflow-y-auto overflow-x-hidden min-h-0 mx-4 md:mx-8 mt-3 md:mt-4 px-5 md:px-8 py-6 space-y-4 rounded-2xl"
+              style={{ background: T.pagina, border: `1px solid ${T.paginaFio}` }} >
               <VinhetaDaCena bioma={biomaDaqui()} />
-              <div className="flex items-center gap-2">
+              {/* A VOZ (R2), primeiro dos DOIS sítios onde o cabeçalho do
+                  Mestre estava escrito à mão neste arquivo. Aqui ela é o
+                  timbre da página, e leva a espera: `a preparar…` durante os
+                  14,3 s de mediana que o Mestre leva a responder. O ponto vivo
+                  fica — ele é o sinal de que a casa está acordada, e a peça
+                  não o tem. */}
+              <div className="tv-coluna flex items-center gap-2">
                 <PontoMestre tamanho={16} />
-                <span className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.amberSoft }}>Mestre ativo</span>
+                <div className="flex-1 min-w-0"><Voz quem="mestre" voz={carregando ? "preparando" : "muda"} /></div>
               </div>
               <CabecalhoDaCena cena={cenaDoPalco()} />
               {agruparMensagens(mensagens).map((item, k) => {
@@ -21016,37 +21449,69 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                    ler, sumia no meio. Agora o que muda uma decisão continua na
                    tela e a contabilidade vira uma linha de saldo, com o
                    detalhe a um toque. */
-                if (item.tipo === "bloco") return <BlocoSistema key={`b${item.inicio}`} {...item} />;
+                if (item.tipo === "bloco") return <BlocoSistema key={`b${item.inicio}`} {...item} aoAbrir={abrirPortaDoSistema} />;
                 const i = item.i, m = item.m;
-                if (m.autor === "jogador") return <div key={i} className="tv-fade flex justify-end"><div className="max-w-[85%] md:max-w-[70%] rounded-2xl rounded-br-sm px-4 py-3 tv-body text-[15px]" style={{ background: T.panelSoft, color: T.ink, border: `1px solid ${T.line}` }}>{m.texto}</div></div>;
-                return (
-                  <div key={i} className="tv-fade max-w-[95%] md:max-w-[82%]">
-                    <div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5 flex items-center gap-1.5" style={{ color: T.amber }}>
-                      <IconeD20 tamanho={13} /> Mestre
-                      <button
-                        onClick={() => ouvirMestre(i, m.texto)}
-                        title={voz && voz.i === i ? (voz.status === "gerando" ? "Preparando a voz… (toque para cancelar)" : "Parar a leitura") : "Ouvir o Mestre narrar esta mensagem"}
-                        className="ml-1 normal-case tracking-normal rounded-full flex items-center justify-center"
-                        style={{
-                          width: 22, height: 22, fontSize: 12, lineHeight: 1,
-                          color: voz && voz.i === i ? T.onAccent : T.inkDim,
-                          background: voz && voz.i === i ? T.amber : "transparent",
-                          border: `1px solid ${voz && voz.i === i ? T.amber : T.line}`,
-                          opacity: 0.9,
-                        }}
-                      >
-                        {voz && voz.i === i ? (voz.status === "gerando" ? "…" : "⏸") : "🔊"}
-                      </button>
+                if (m.autor === "jogador") {
+                  /* R3: a fala do jogador FICA na página — um livro também
+                     regista o que você disse —, mas em itálico, recuada, em
+                     `inkMeio` e com filete próprio. Nunca tem a cor nem o peso
+                     da prosa do Mestre. Sai o balão alinhado à direita, que era
+                     a gramática do Messenger num RPG de texto.
+
+                     E o FILETE ÂMBAR enquanto se espera: o `jogo` mediu que,
+                     durante os 14,3 s com a tela apagada, a frase que o jogador
+                     acabou de escrever é o ÚNICO sinal de que o turno foi
+                     enviado. Uma espera muda de catorze segundos é o jogador a
+                     perguntar se clicou. A saída é o acontecimento, não o
+                     relógio: chegando a resposta, o filete assenta sozinho.
+
+                     O que FALTA, e fica dito em vez de improvisado: `formas.md`
+                     pede que este filete RESPIRE (pulso lento de 1,6 s, no
+                     filete e nunca no texto) e que `A voz` tenha um eixo
+                     `Resposta`. R2 não fabricou nem um nem outro — a peça só
+                     tem `quem` e `voz`. Pedido ao `desenho`, não inventado
+                     aqui. */
+                  const esperaResposta = carregando && i === mensagens.length - 1;
+                  return (
+                    <div key={i} className="tv-fade tv-coluna">
+                      <Voz quem="voce" voz="muda" />
+                      <div className="tv-body whitespace-pre-wrap mt-1 pl-4 pr-3 py-2 rounded-r-lg"
+                        style={{ fontSize: TIPOS.corpo, fontStyle: "italic", color: T.inkMeio, background: T.paginaAlta, borderLeft: `2px solid ${esperaResposta ? T.amber : T.paginaFio}` }}>{m.texto}</div>
                     </div>
-                    <div className="tv-body text-[15px] leading-relaxed whitespace-pre-wrap rounded-2xl rounded-tl-sm px-5 py-4" style={{ background: T.panel, color: T.ink, borderLeft: `2px solid ${T.amber}` }}>{m.texto}</div>
+                  );
+                }
+                /* A VOZ (R2), SEGUNDO sítio — e é aqui que o botão de ouvir
+                   ganha os seus 48 px em vez dos 22 de hoje (`ALVOS.piso`,
+                   fechado em K3 e nunca lido por esta tela). O alvo cresce, a
+                   tinta não: o glifo continua do tamanho que sempre foi, e um
+                   botão sem fundo nem borda não paga um pixel de leiaute por
+                   ser maior que o próprio desenho.
+
+                   A PROSA PERDE O BALÃO. Ela é a página — fundo nenhum, canto
+                   nenhum, filete nenhum. O que separa uma voz da seguinte é `A
+                   voz`, que é o trabalho dela.
+
+                   E GANHA MEDIDA: `.tv-coluna` (65ch, centrada, peso 300).
+                   Os `max-w-[95%] md:max-w-[82%]` de antes eram exatamente o
+                   que partia os dois aparelhos em direções opostas — 89–100
+                   caracteres por linha na mesa (teto WCAG 1.4.8 = 80) e 28–37
+                   no telefone (piso 45). Uma medida em `ch` conserta os dois,
+                   e por isso SUBSTITUI as percentagens em vez de as acompanhar. */
+                return (
+                  <div key={i} className="tv-fade tv-coluna">
+                    <Voz quem="mestre"
+                      voz={voz && voz.i === i ? (voz.status === "gerando" ? "preparando" : "lendo") : "muda"}
+                      aoOuvir={() => ouvirMestre(i, m.texto)}
+                      glifoDeOuvir={<span style={{ fontSize: TIPOS.maquina, lineHeight: 1, color: voz && voz.i === i ? T.amber : T.inkMeio }}>{voz && voz.i === i ? (voz.status === "gerando" ? "…" : "⏸") : "🔊"}</span>} />
+                    <div className="tv-body leading-relaxed whitespace-pre-wrap" style={{ fontSize: TIPOS.prosa, color: T.ink }}>{m.texto}</div>
                   </div>
                 );
               })}
-              {carregando && <div className="tv-fade tv-mono text-xs flex items-center gap-2" style={{ color: T.inkDim }}><span className="tv-dice inline-flex"><IconeD20 tamanho={16} cor={T.inkDim} /></span> O Mestre tece o destino…</div>}
+              {carregando && <div className="tv-fade tv-mono tv-coluna flex items-center gap-2" style={{ fontSize: TIPOS.maquina, color: T.inkMeio }}><span className="tv-dice inline-flex"><IconeD20 tamanho={16} cor={T.inkMeio} /></span> O Mestre tece o destino…</div>}
               {falha && !carregando && (
                 <div className="tv-fade flex flex-col items-center gap-1.5">
-                  <div className="flex items-center gap-3 rounded-full pl-4 pr-2 py-2" style={{ background: T.panel, border: `1px solid ${T.danger}` }}>
-                    <span className="tv-mono text-xs" style={{ color: T.danger }}>{falha.casa || lerOSilencio(null).casa}</span>
+                  <div className="flex items-center gap-3 rounded-full pl-4 pr-2 py-2" style={{ background: T.paginaAlta, border: `1px solid ${T.danger}` }}>
+                    <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.danger }}>{falha.casa || lerOSilencio(null).casa}</span>
                     {falha.podeTentar !== false && <Botao primario pequeno onClick={retentar}>Tentar de novo</Botao>}
                   </div>
                   {/* v9.256 (Fase X - X3): o motivo tecnico SAIU daqui. Ele nao some -
@@ -21075,109 +21540,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   fechar={() => setHabAbertas(false)} />
               );
             })()}
-            {acoesAbertas && (() => {
-              /* v9.255 (Fase X, X2): o veredito do golpe é medido UMA vez
-                 por renderização deste painel e serve aos dois — o estado do
-                 botão `Atacar` e a linha que diz se o golpe alcança. Medir
-                 duas vezes seria abrir espaço para duas verdades, e o número
-                 que o botão usa tem de ser o número que o jogador leu. */
-              const vdGolpe = vereditoDoGolpeAgora();
-              const alvoDoGolpe = maisPertoAoAlcance(vdGolpe);
-              return (
-              <div className="px-4 md:px-8 pb-2 shrink-0" >
-                <div className="rounded-2xl p-3" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.amberSoft }}>Ações — toque para preencher e complete o alvo</span>
-                    <button onClick={() => setAcoesAbertas(false)} className="tv-mono text-[10px] px-2" style={{ color: T.inkDim }}>✕</button>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {ACOES_PRONTAS.map((a) => {
-                      /* v9.172: a geometria do botão vem de `mesa-combate-v2` —
-                         px-16/py-10, canto de 8, ícone e rótulo lado a lado.
-                         Atacar recebe o destaque âmbar que o desenho dá a ele:
-                         é a ação que o jogador procura primeiro. */
-                      const primeira = a.rotulo === "Atacar";
-                      const Glifo = a.glifo;
-                      /* v9.255 (Fase X, X2): com a luta aberta, `Atacar` ATACA
-                         — declara o golpe pela frase canônica e entra pela
-                         porta única. FORA de combate ele continua enchendo a
-                         caixa, e isso não é descuido: é pela frase que a briga
-                         COMEÇA (a porta `agressao` de turno.js só abre fora da
-                         luta), e trocá-la seria tirar do jogador o começo da
-                         briga. */
-                      const golpeVivo = primeira && !!vdGolpe;
-                      /* "não pode agora": o clique é IMPEDIDO em vez de
-                         acontecer e ser recusado — é esta metade que evita o
-                         "longe demais" dez vezes seguidas na abertura de toda
-                         luta. Sai o preenchimento, fica a borda, a tinta
-                         continua cheia, e a razão vive na linha logo abaixo:
-                         o botão não escreve preço nem motivo. */
-                      const impedido = golpeVivo && !vdGolpe.algumAoAlcance;
-                      const aceso = primeira && !impedido;
-                      return (
-                        <button key={a.rotulo} disabled={impedido}
-                          onClick={() => {
-                            if (impedido) return;
-                            setAcoesAbertas(false);
-                            if (golpeVivo) { declararGolpe(alvoDoGolpe && alvoDoGolpe.nome); return; }
-                            setEntrada(a.texto);
-                          }}
-                          className="tv-mono text-[11px] px-4 py-2.5 rounded-lg flex items-center gap-2"
-                          style={{
-                            minHeight: 44,
-                            background: aceso ? T.line : T.panel,
-                            color: aceso ? T.amberSoft : T.ink,
-                            border: `1px solid ${aceso ? T.amberSoft : T.line}`,
-                          }}>
-                          {Glifo ? <Glifo tamanho={14} cor={aceso ? T.amberSoft : T.ink} /> : <span>{a.icone}</span>}
-                          {a.rotulo}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {/* ---------------- O VEREDITO ANTES DO CLIQUE (v9.222) ----------------
-                      A Consequência do golpe é sempre LINHA, nunca balão:
-                      sobre o tabuleiro, quatro segundos de balão tapam
-                      exatamente as casas para onde o jogador ia andar. Ela
-                      vive sempre na árvore enquanto há luta — quem alcança lê
-                      ONDE o golpe cai, quem não alcança lê POR QUÊ, e as duas
-                      recusas são coisas diferentes: andar resolve a distância
-                      e não resolve a parede. */}
-                  {vdGolpe && (
-                    <div className="tv-mono text-[10px] mt-2 flex items-center" style={{ minHeight: 24, color: alvoDoGolpe ? T.amberSoft : T.inkDim }}>
-                      {alvoDoGolpe ? linhaDoGolpe(vdGolpe) : recusaDoGolpe(vdGolpe)}
-                    </div>
-                  )}
-                  {/* ---------------- A PORTA DOS FUNDOS (v9.59.1) ----------------
-                      Estes botões diziam "Pedir um teste" e chamavam a rolagem
-                      DIRETO — dificuldade velha, sem livro de tentativas. Toda a
-                      arquitetura nova tinha um atalho que a contornava, e por
-                      ele dava para farmar testes infinitos como antes.
-
-                      Achado jogando. Agora cada botão DECLARA a ação, com a
-                      frase que um jogador escreveria, e entra pela mesma porta
-                      de tudo — inclusive para ouvir "você já tentou isso aqui". */}
-                  <div className="mt-3 pt-3" style={{ borderTop: `1px dashed ${T.line}` }}>
-                    <div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.violetSoft }}>
-                      O que você faz {entrada.trim() ? "— usa o que você escreveu como alvo" : "— escreva o alvo antes, se quiser"}
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {ACOES_RAPIDAS.map((a) => (
-                        <button key={a.id} title={a.desc}
-                          onClick={() => { const m = entrada.trim(); setEntrada(""); setAcoesAbertas(false); declararAcaoRapida(a.id, m); }}
-                          className="tv-mono text-[11px] px-2.5 py-1.5 rounded-lg" style={{ background: T.panelSoft, color: T.ink, border: `1px solid ${T.violet}` }}>
-                          {a.icone} {a.rotulo}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="tv-body text-[10px] mt-1.5" style={{ color: T.inkDim }}>
-                      O sistema decide se pede dado — e se já pediu por isto aqui, diz que já.
-                    </div>
-                  </div>
-                </div>
-              </div>
-              );
-            })()}
+            {/* O PAINEL DE `Ações` SAIU INTEIRO (R4b). Os vinte botões, a
+                linha do veredicto morta e a porta dos fundos das oito
+                rápidas viviam aqui. O motivo está na lápide da tabela, lá
+                em cima; o que ficou no lugar é a soleira (o que o SISTEMA
+                sabe) e o campo (o que o JOGADOR inventa). */}
 
             {milagreSel && !rolagem && (
               <div className="tv-fade px-4 md:px-8 pb-1.5" >
@@ -21506,6 +21873,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
               <div ref={fimRef} style={{ height: 8 }} />
             </div>
+            {longeDoFim && (
+              <button onClick={irParaOFim} className="tv-anel-foco tv-fade absolute rounded-full flex items-center justify-center"
+                style={{ right: "84px", bottom: "18px", width: ALVOS.piso, height: ALVOS.piso, background: T.paginaAlta, border: `1px solid ${T.paginaFio}`, color: T.amberSoft, fontSize: 21, zIndex: 25, boxShadow: "0 4px 14px rgba(0,0,0,.45)" }}
+                title="Ir para a última mensagem">↓</button>
+            )}
+            </div>
 
             {/* ---------------- O CONVÉS (v9.197) ----------------
                 Desenhado em `mesa-jogo-mobile`, o primeiro desenho de telefone
@@ -21519,6 +21892,31 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 convés fica. É a mesma ideia da barra de abas embaixo, que já
                 estava certa: o que se toca todo turno não se procura. */}
             <div className="tv-espaco-abas shrink-0 flex flex-col">
+            {/* A SOLEIRA, e é aqui e não dentro da conversa. Considerou-se
+                colá-la à mensagem que a criou — é o que o MOMENTO pede —, e
+                recusou-se por uma razão jogada: a oferta do Yorick continuou
+                válida QUATRO turnos, e ao quarto a mensagem que a criou estava
+                três ecrãs acima. A oferta persiste; a mensagem passa. E
+                persistência pede lugar fixo, fora do rolamento.
+
+                O momento recupera-se pela `chegada`, que é propriedade da
+                peça: o que nasce neste turno chega marcado e assenta depois. */}
+            {(() => {
+              const vivas = ofertasDaSoleira();
+              if (!vivas.length) return null;
+              const jaTinha = soleiraAntesRef.current;
+              return (
+                <div className="px-4 md:px-8 pb-2">
+                  <Soleira ofertas={vivas.map((o) => (
+                    <Oferta key={o.id} verbo={o.verbo} preco={o.preco} retorno={o.retorno}
+                      quem={o.quem} onde={o.onde} tom={o.tom}
+                      estado={o.precisaDoNarrador && bloqueado ? "impedida" : "repouso"}
+                      chegada={jaTinha && jaTinha.has(o.id) ? "assentada" : "agora"}
+                      aoClicar={o.aoClicar} />
+                  ))} />
+                </div>
+              );
+            })()}
             <div className="px-4 md:px-8 flex items-center gap-3 md:gap-4 pb-1.5 flex-wrap" >
               {/* ---------------- O BLOCO DO HERÓI (v9.160) ----------------
                   PV e PM eram duas barrinhas anônimas ao lado da data, como
@@ -21691,44 +22089,26 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
                   A fileira irmã, a do combate, já quebrava a linha desde sempre.
                   Esta era a única que não. */}
-              <div className="grid grid-cols-4 gap-1.5 mb-2 md:flex md:items-center md:flex-wrap">
-                <button onClick={() => { setAcoesAbertas((v) => !v); setHabAbertas(false); }} disabled={bloqueado} className="flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 tv-mono text-[9px] md:text-[11px] rounded-xl md:rounded-full px-1 md:px-3 py-1.5 leading-tight text-center"
-                  style={{ background: acoesAbertas ? T.amber : "transparent", color: acoesAbertas ? T.onAccent : T.amberSoft, border: `1px solid ${T.amber}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
-                  <span className="text-[13px] md:text-[11px] leading-none">⚔</span><span>Ações</span>
-                </button>
-                <button onClick={() => { setHabAbertas((v) => !v); setAcoesAbertas(false); }} disabled={bloqueado} className="flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 tv-mono text-[9px] md:text-[11px] rounded-xl md:rounded-full px-1 md:px-3 py-1.5 leading-tight text-center"
-                  style={{ background: habAbertas ? T.violet : "transparent", color: habAbertas ? T.onSecond : T.violetSoft, border: `1px solid ${T.violet}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
-                  <span className="text-[13px] md:text-[11px] leading-none">✦</span><span>Habilidades</span>
-                </button>
-                {/* EXAMINAR (v9.41): o "segurar a tecla" do Baldur's Gate. Mostra
-                    tudo o que dá para catar por perto e deixa o jogador escolher.
-                    Fica sempre visível, aceso ou apagado, pelo mesmo motivo do
-                    selo de heroísmo: recurso que só aparece quando serve é
-                    recurso que ninguém aprende a usar. */}
-                <button onClick={() => setExaminando((v) => !v)} disabled={bloqueado}
-                  title={chaoPerto.length ? `${chaoPerto.length} coisa(s) caída(s) por perto` : "Nada caído por perto"}
-                  className="flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 tv-mono text-[9px] md:text-[11px] rounded-xl md:rounded-full px-1 md:px-3 py-1.5 leading-tight text-center"
-                  style={{ background: examinando ? T.ok : "transparent", color: examinando ? T.onAccent : chaoPerto.length ? T.ok : T.inkDim, border: `1px solid ${chaoPerto.length ? T.ok : T.line}`, fontWeight: 600, opacity: bloqueado ? 0.4 : 1 }}>
-                  <span className="text-[13px] md:text-[11px] leading-none">🔍</span><span>Examinar</span>
-                  {chaoPerto.length > 0 && (
-                    <span className="tv-mono text-[9px] px-1.5 rounded-full" style={{ background: examinando ? T.onAccent : T.ok, color: examinando ? T.ok : T.onAccent }}>{chaoPerto.length}</span>
-                  )}
-                </button>
-                <button onClick={() => setMostrarHoras((v) => !v)} disabled={bloqueado || acampado} title="Passar o tempo" className="flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1.5 tv-mono text-[9px] md:text-[11px] rounded-xl md:rounded-full px-1 md:px-3 py-1.5 leading-tight text-center"
-                  style={{ background: mostrarHoras ? T.amber : "transparent", color: mostrarHoras ? T.onAccent : T.amberSoft, border: `1px solid ${T.line}`, fontWeight: 600, opacity: (bloqueado || acampado) ? 0.4 : 1 }}>
-                  <span className="text-[13px] md:text-[11px] leading-none">🕐</span><span>Tempo</span>
-                </button>
-                {/* v9.31: os botões "Viajar" e "Masmorra" saíram. Desde o
-                    rastro, os dois módulos abrem sozinhos quando o herói põe o
-                    pé na estrada ou desce num covil — e um botão que faz o que
-                    a própria ação já faz é uma segunda maneira de dizer a
-                    mesma coisa, com o agravante de sugerir que sem ele não
-                    acontece. A tela fica mais limpa e a regra, mais simples:
-                    escreva o que você faz. */}
-                {/* v9.16: o selo fica SEMPRE visível, aceso ou apagado. Recurso
-                    que o jogador precisa abrir um painel para lembrar que tem
-                    é recurso que ele não gasta — e que portanto não existe. */}
-              </div>
+              {/* ---------------- AS QUATRO ABAS DO MOMENTO SAÍRAM (R4b) ----------------
+                  `Ações` · `Habilidades` · `Examinar` · `Tempo`, quatro tijolos
+                  de 48 px mais a margem: 56 px de convés todo turno, em TODA
+                  cena, respondidos ou por algo melhor ou por nada.
+
+                  `Ações` morreu com o painel dela.
+
+                  `Examinar` e `Tempo` eram OFERTAS A FINGIR DE ABA — a prova
+                  estava escrita no próprio botão: o `title` do Examinar dizia
+                  *"Nada caído por perto"*. Uma aba que na maior parte do jogo
+                  anuncia que não serve para nada é mobília. Foram para a
+                  soleira, que é onde mora o que o mundo abriu: aparecem quando
+                  há chão para vasculhar e quando esperar é o que resta, e não
+                  ocupam um pixel quando não há.
+
+                  `Habilidades` ficou, e desceu para DENTRO da linha do turno —
+                  a gaveta `✦`, a mesma forma que W1 fechou no tabuleiro
+                  (`painel-batalha.jsx`, "AS DUAS GAVETAS — abrem lista, logo
+                  não são verbos"). Ali ela custa largura e ZERO altura, porque
+                  a linha do turno já é alta por `ALVOS.piso`. */}
               {examinando && (
                 <PainelExame itens={chaoPerto} raio={combate ? RAIO_EXAME : 0}
                   aoPegar={recolherDoChao} aoFechar={() => setExaminando(false)} />
@@ -21830,12 +22210,52 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     </LimiteErro>
                   </div>
                 )}
-              <div className="flex items-center gap-3 rounded-lg p-2 min-w-0" style={{ background: T.bg, border: `1.5px solid ${milagreSel ? T.amber : habsSel.length ? T.violet : T.line}` }}>
-                <span className="shrink-0 pl-2"><IconeBalao tamanho={16} /></span>
-                <input value={entrada} onChange={(e) => setEntrada(e.target.value)} onKeyDown={(e) => e.key === "Enter" && agir(entrada)}
+              {/* ---------------- A LINHA (R3) ----------------
+                  O campo media 208 × 35 px contra `ALVOS.piso` 48 (−27 %), e
+                  `Agir →` media 69 × 28 — 1 946 px² contra os 5 184 px² da aba
+                  `Bolsa`. O botão que faz o turno acontecer era 2,7× menor que
+                  o botão que abre a mochila, na tela onde se passam 90 % do
+                  jogo. A tela de batalha honra o piso; esta não o lia uma
+                  única vez.
+
+                  Agora é `<textarea>`: multi-linha, prosa (`TIPOS.corpo`), e
+                  a chamada dentro, esticada ao piso do alvo. A ALTURA NÃO É
+                  UM NÚMERO INVENTADO — `rows={2}` deixa o conteúdo decidir e
+                  `ALVOS.piso` põe o chão. Um 72 escrito à mão aqui seria a
+                  quinta régua de altura desta casa, e sem tabela que a
+                  sustente.
+
+                  `items-stretch` no invólucro do botão: o `Botao` cresce até
+                  ao piso sozinho, sem que o número apareça dentro do JSX. */}
+              <div className="flex items-stretch gap-3 rounded-lg p-2 min-w-0" style={{ background: T.bg, border: `1.5px solid ${milagreSel ? T.amber : habsSel.length ? T.violet : T.line}` }}>
+                <span className="shrink-0 pl-2 pt-2"><IconeBalao tamanho={16} /></span>
+                <textarea value={entrada} onChange={(e) => setEntrada(e.target.value)} rows={2}
+                  onKeyDown={(e) => { if (gestoDoCampo(e) === "mandar") { e.preventDefault(); agir(entrada); } }}
                   placeholder={rolagem ? "Role o dado abaixo…" : milagreSel ? `Como você manifesta ${milagreSel.nome}?` : habsSel.length ? `Como você usa ${habsSel.map((h) => h.nome).join(" e ")}?` : "O que você faz? Fale, aja, explore…"}
-                  disabled={bloqueado} className="flex-1 bg-transparent outline-none tv-body text-[15px] px-3 py-1.5 min-w-0" style={{ color: T.ink }} />
-                <Botao primario pequeno desativado={bloqueado || !entrada.trim()} onClick={() => agir(entrada)}>Agir →</Botao>
+                  disabled={bloqueado} className="tv-anel-foco-no-campo flex-1 bg-transparent outline-none tv-body resize-none leading-relaxed px-3 py-2 min-w-0"
+                  style={{ color: T.ink, fontSize: TIPOS.corpo, minHeight: ALVOS.piso }} />
+                {/* A GAVETA DAS HABILIDADES (R4b) — a forma é a de W1 no
+                    tabuleiro, e é de propósito que não se inventa uma
+                    segunda: `aria-pressed`, violeta, glifo só, alvo pelo
+                    piso da tabela. O que está ARMADO já se lê nas fichas
+                    logo abaixo do campo e na borda dele, que muda de cor;
+                    o número aqui é só quantas, para não ser preciso abrir
+                    a gaveta para saber que há algo armado. */}
+                <div className="flex shrink-0 items-stretch" style={{ minHeight: ALVOS.piso }}>
+                  <button onClick={() => setHabAbertas((v) => !v)} disabled={bloqueado}
+                    aria-pressed={habAbertas} aria-label="Habilidades" title="Habilidades"
+                    className="tv-anel-foco tv-mono rounded-lg px-3 flex items-center justify-center"
+                    style={{
+                      minWidth: ALVOS.piso, fontSize: TIPOS.maquina,
+                      background: habAbertas ? T.violet : T.panel,
+                      color: habAbertas ? T.onSecond : T.violetSoft,
+                      border: `1px solid ${T.violet}`,
+                      opacity: bloqueado ? 0.4 : 1,
+                    }}>✦{habsSel.length > 0 ? ` ${habsSel.length}` : ""}</button>
+                </div>
+                <div className="flex shrink-0 items-stretch" style={{ minHeight: ALVOS.piso }}>
+                  <Botao primario corpo desativado={bloqueado || !entrada.trim()} onClick={() => agir(entrada)}>Agir →</Botao>
+                </div>
               </div>
               </div>
             </div>
@@ -21852,18 +22272,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
             </div>
 
-            {/* botão flutuante: volta para a última mensagem / área de ação */}
-            {longeDoFim && (
-              <button onClick={irParaOFim} className="tv-fade absolute rounded-full flex items-center justify-center"
-                style={{ right: "84px", bottom: "28px", width: 46, height: 46, background: T.panel, border: `1px solid ${T.amber}`, color: T.amberSoft, fontSize: 21, zIndex: 25, boxShadow: "0 4px 14px rgba(0,0,0,.45)" }}
-                title="Ir para a última mensagem">↓</button>
-            )}
 
           </main>
           )}
 
           {!emBatalha && <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />}
-          <LimiteErro><PainelLateral abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} /></LimiteErro>
+          <LimiteErro><PainelLateral subPedida={subPedida} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal === "pedindo" && (
           <CerimoniaDaRecalibragem passos={PASSOS_DO_SAVE} atual={0} lendo="O arquivista relê o livro da campanha e os seus feitos…" />

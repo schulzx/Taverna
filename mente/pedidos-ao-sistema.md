@@ -25,6 +25,64 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
 
 ## Abertos
 
+- [ ] **`src/soleira.js` — a régua da soleira é módulo puro e está presa no `App.jsx`** · de: R3/R4 · 23/09
+  A Fase R construiu a **soleira**: a região fixa entre a página e o campo do
+  turno onde vive **o que o mundo ofereceu e o jogador ainda não atravessou**.
+  A lei que a governa é do `jogo` e é de decisão, não de pintura: *só se oferece
+  o que o SISTEMA sabe e o jogador não consegue adivinhar* — e a ordem é por
+  **perecibilidade** (quem espera resposta · quem está em cena · o papel que
+  alguém pregou · a tábua da cidade · o mercado), régua que o `oficial` corrigiu
+  **jogando**, ao ver que o mural prega outro cartaz no instante em que um é
+  aceito e que por isso uma pessoa recém-entrada em cena nunca aparecia.
+  **O que se pede:** `ofertasDaSoleira(mural, missoes, npcs, mercadoAqui, personagem, veredito)`
+  → lista de descritores, em `src/soleira.js`, provável em Node. Hoje ela vive
+  dentro do `App.jsx` porque `src/*.js` é território do sistema e o `oficial`
+  **acertou em não a escrever lá**. Está nomeada e legível, para sair inteira.
+  **Para quê:** quais ofertas nascem, em que ordem e com que preço é **decisão de
+  jogo** — e decisão de jogo se prova em Node, não se olha na tela. Sem isto, a
+  única catraca da peça é o olho de quem a montou.
+
+- [ ] **`check-acoes-do-jogador.mjs` mede o TEXTO do handler e não se ele corre** · de: R4 · 23/09
+  Achado ao aposentar os 20 verbos: o varredor afirmou durante um ciclo inteiro
+  que *"o botão `Atacar` segue chamando `declararGolpe`"* — e o botão estava
+  **morto desde E3**. `vereditoDoGolpeAgora()` abre com `if (!comb) return null`
+  sobre `combateRef.current`; o painel só se pinta sob `!emBatalha`; logo `vdGolpe`
+  era **sempre `null` ali**. A fiação de X2 morreu no dia em que E3 levou a
+  batalha para `src/painel-batalha.jsx`, e nada avisou.
+  **Para quê:** um varredor que lê o texto de um handler prova que alguém o
+  escreveu, não que ele acontece. É a mesma classe de defeito que a casa já
+  pagou cinco vezes com o anel de foco — **o ónus está do lado errado**.
+  *(E dois endereços já estavam podres no HEAD antes desta fase: `:16109` e
+  `:15858` apontam funções erradas. Ficam escritos.)*
+
+- [ ] **`passarTempo` não tem porta de texto, e é por isso que `Esperar` está na soleira emprestado** · de: R5 · 23/09
+  `passarTempo` **move o relógio, vira o dia, cobra a renda e muda o clima**. E
+  escrever *"espero doze horas"* faz o Mestre **narrar** doze horas **sem mexer
+  num único número** — confirmado ao vivo. É a família inteira do diagnóstico de
+  R1: **50 verbos de sistema atrás de abas contra 17 portas que o texto abre.**
+  **Para quê:** o `jogo` mediu, pela régua que ele próprio escreveu, que
+  `Esperar` **não é oferta** — *o jogador podia ter pensado em esperar sozinho*.
+  Ele só está na soleira porque a Fase R lhe tirou a aba `Tempo` e tirá-lo sem
+  substituto removeria uma função. **Com a porta de texto, ele sai da interface e
+  o problema dissolve-se.** Irmão do pedido sobre o veredicto do golpe fora do
+  combate.
+
+- [ ] **o título de um contrato sai "Praga em as terras baixas"** · de: R5 · 23/09
+  A contracção portuguesa (`em` + `as` → `nas`) não é feita na geração. Passou
+  despercebida enquanto o título vivia atrás de duas abas; **na soleira ele está
+  na tela principal, em tamanho de leitura, no primeiro ecrã.** É `src/ofertas.js`.
+  **Para quê:** a prosa é a protagonista deste jogo, e a mesa de design não pode
+  consertar uma frase que o motor escreve.
+
+- [ ] **`teste-palco.mjs` mede uma folga de caracteres onde queria medir uma ordem** · de: R3 · 23/09
+  O proxy `iCab − iArea < 900` subiu para **1100** nesta fase, e é a **segunda
+  vez** que sobe por causa de comentário (400→900 na v9.170). A lei real que ele
+  quer guardar é *"o cabeçalho vem antes da primeira mensagem"*, e isso mede-se
+  contra `agruparMensagens`, não contra uma distância de bytes. O `oficial` deixou
+  escrito e **não mudou a asserção de outra mesa por conta própria** — correto.
+  **Para quê:** um número que sobe sempre que alguém escreve um comentário não é
+  catraca, é imposto.
+
 - [x] **`turnoDosInimigos` mede a distância e deita-a fora** · **ATENDIDO 16/09 · v9.279 · commit `e112017`** · de: E4 · 16/09
   **A resposta:** a ação passa a levar **três** campos — **`onde`** (a casa de
   quem agiu), **`alvoOnde`** (a casa de quem apanhou) e **`metros`** (a

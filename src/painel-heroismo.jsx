@@ -15,15 +15,22 @@
    ============================================================ */
 
 import React, { useState } from "react";
-import { T } from "./constantes.js";
+import { T, ALVOS } from "./constantes.js";
 import { GASTOS, HEROISMO_MAX, validarDeclaracao } from "./heroismo.js";
 
-/* Os losangos. Cheio = ponto na mão; vazio = espaço que cabe. */
+/* Os losangos. Cheio = ponto na mão; vazio = espaço que cabe.
+
+   R4a: a régua media 53×19 — o único alvo abaixo de 44 que sobrou no
+   telefone (`ALVOS.piso` = 48; WCAG 2.5.5 AAA = 44). `minHeight` sobe ao
+   piso SEM crescer a tinta: os losangos continuam 9×9, é só o
+   ENCHIMENTO ao redor deles que cresce (a mesma solução que `A voz`
+   já usa para o botão de ouvir) — nenhum pixel de leiaute a mais do
+   que o alvo pede. */
 export function SeloHeroismo({ pontos, aoAbrir, aceso }) {
   return (
     <button onClick={aoAbrir} title={`Pontos de heroísmo: ${pontos}/${HEROISMO_MAX}`}
       className="flex items-center gap-1 rounded-full px-2 py-1"
-      style={{ background: aceso ? T.panel : "transparent", border: `1px solid ${pontos ? T.violet : T.line}` }}>
+      style={{ minHeight: ALVOS.piso, background: aceso ? T.panel : "transparent", border: `1px solid ${pontos ? T.violet : T.line}` }}>
       {Array.from({ length: HEROISMO_MAX }).map((_, i) => (
         <span key={i} style={{
           width: 9, height: 9, display: "inline-block", transform: "rotate(45deg)",

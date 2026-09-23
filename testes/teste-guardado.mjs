@@ -117,7 +117,7 @@ function motorDeMentira(semente) {
 
 /* A PRIMEIRA BATIDA DO TURNO, encenada: o motor resolve ANTES de o
    Narrador entrar na história. O envelope que sai daqui é o mesmo molde
-   do App (src/App.jsx:11931) — cabeçalho `[COMBATE — RESOLVIDO PELO
+   do App (src/App.jsx:11938) — cabeçalho `[COMBATE — RESOLVIDO PELO
    SISTEMA]` e corpo que manda NARRAR, não recalcular.
 
    O envelope diz a vida do inimigo DEPOIS e a ação que sobrou. Não é

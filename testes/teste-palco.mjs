@@ -139,7 +139,19 @@ sec("5. A COSTURA — no topo, e sem inventar");
      sobe de 400 para 900 caracteres para caber o selo — o que a lei
      protege é que o lugar venha antes da primeira palavra do Narrador, e
      isso continua valendo. */
-  t("e vem antes da primeira palavra do Narrador", iCab - iArea < 900);
+  /* R3: 900 -> 1100. `A voz` (R2) entrou no lugar do selo escrito à mão, e
+     trouxe o comentário que explica por que a peça leva a espera do Mestre.
+     A ORDEM NÃO MUDOU: vinheta, timbre da página, cabeçalho da cena, e só
+     depois a primeira mensagem. O que cresceu foi o texto ENTRE eles.
+
+     E fica dito o que isto expõe, porque é a SEGUNDA vez que este número
+     sobe por causa de comentário (400 -> 900 na v9.170, 900 -> 1100 agora):
+     contar CARACTERES é um procurador fraco de "vem antes". O que a lei
+     protege é que o cabeçalho da cena venha antes da PRIMEIRA MENSAGEM, e
+     isso mede-se contra `agruparMensagens(mensagens)`, não contra uma
+     folga de texto. Deixo a observação para o `testes` em vez de mudar a
+     asserção de outra mesa por minha conta. */
+  t("e vem antes da primeira palavra do Narrador", iCab - iArea < 1100);
   /* o tom entra como VÉU sobre o painel da casa, e não como fundo próprio */
   t("a cor é um véu, não um fundo", /linear-gradient\(100deg, \$\{tom\.cor\}\$\{veu/.test(APP));
   t("com a barra do bioma na borda", /borderLeft: `3px solid \$\{tom\.cor\}`/.test(APP));
@@ -161,12 +173,26 @@ sec("O MEIO NÃO ANDA PARA OS LADOS (v9.196)");
      convés, que é quem encosta na barra. A trava do eixo lateral fica. */
   t("o painel da narrativa tranca o eixo lateral", /tv-scroll flex-1 overflow-y-auto overflow-x-hidden/.test(APP));
 
-  /* v9.197: A FILEIRA DE MODO VIROU GRADE. Quebrar a linha resolvia o
-     estouro mas deixava a tela torta — duas pílulas em cima, uma embaixo e o
-     selo de heroísmo pendurado sozinho na direita. Agora são quatro tijolos
-     iguais, glifo em cima e rótulo embaixo, na mesma língua da barra de abas
-     do rodapé; no monitor voltam a ser pílulas em fileira. */
-  t("no telefone os modos são quatro tijolos iguais", /className="grid grid-cols-4 gap-1.5 mb-2 md:flex md:items-center md:flex-wrap"/.test(APP));
+  /* ---------------- A FILEIRA DE MODO NÃO EXISTE MAIS (R4b) ----------------
+     MOTIVO DA ASSERÇÃO INVERTIDA, e ele é de medida. A v9.197 tinha razão
+     no problema que resolvia (a fileira estourava 375 px e fazia a prosa
+     derivar de lado) e a grade de quatro tijolos foi o conserto certo
+     PARA A FILEIRA QUE HAVIA. R4b tirou a fileira: `Ações` morreu com o
+     painel dela, `Examinar` e `Tempo` foram para a soleira — eram ofertas
+     a fingir de aba, e o `title` do primeiro confessava-o ("Nada caído por
+     perto") — e `Habilidades` desceu para dentro da linha do turno, como
+     a gaveta `✦` que W1 já fechou no tabuleiro.
+
+     São 56 px de convés (48 do tijolo + 8 de margem) devolvidos à prosa em
+     TODA cena, e é esse o pagamento que R4b devia: R3 entrou a soleira
+     como adição pura e a página caiu de 58,1 % para 27,3 % do ecrã na mesa.
+
+     A asserção continua a guardar a mesma coisa — que a tela do telefone
+     não volte a ter uma fileira de modos a estourar a largura —, só que
+     agora pelo lado de fora: se a grade renascer, esta linha morde. */
+  t("a fileira de quatro modos não voltou ao convés", !/className="grid grid-cols-4 gap-1\.5 mb-2 md:flex md:items-center md:flex-wrap"/.test(APP));
+  t("e a gaveta das habilidades vive na linha do turno, com a forma de W1",
+    /aria-pressed=\{habAbertas\} aria-label="Habilidades"/.test(APP));
   t("e a fileira do combate continua quebrando a linha", /className="flex items-center gap-1.5 mb-2 flex-wrap"/.test(APP));
   /* O SELO DO HEROÍSMO SAIU da fileira de modos: ele é recurso do HERÓI, e
      pendurado ali ficava órfão numa linha própria no telefone */

@@ -90,6 +90,44 @@ que se pode contar: **cinco maneiras silenciosas de apagar um anel de foco, e
 218 sítios onde cada uma delas pode acontecer.** Não é uma peça a corrigir —
 é a pergunta de quem tem o ónus, o controlo ou a casa.
 
+- [ ] **(R1) a cena ganha um rosto, e o jogo nunca lho deu** · pesado · de:
+  desenho · 23/09 · **a proposta ambiciosa da Fase R**
+
+  **O diagnóstico, e é uma frase:** este é um RPG de texto em que **nada na tela
+  mostra onde você está**. O bioma existe no motor — há `VinhetaDaCena`, há
+  `biomaDaqui()` — e o que ele produz é uma mudança de tom que **a medição não
+  distingue do fundo**. O jogo descreve uma taverna, uma estrada, uma cripta, e o
+  ecrã é sempre o mesmo retângulo.
+
+  **A proposta.** A página ganha um **cabeçalho de cena** — uma faixa de 96 px no
+  topo do papel, com uma **xilogravura gerada pela mesma semente do mundo**, o
+  nome do lugar, e a hora do dia a mudar a luz da faixa. **Não é ilustração
+  comprada: é o gerador de retrato que a casa já tem, apontado para o lugar em
+  vez de para a cara.** *Determinismo por semente continua a valer* — a mesma
+  semente dá a mesma cripta, em qualquer máquina, que é a primeira lei do
+  `CLAUDE.md` aplicada a uma imagem.
+
+  **O custo, escrito antes de ser perguntado, para poder ser recusado:** 96 px
+  saem dos 418 da página no telefone, que passa a 322 — de 51,5 % para 39,6 % do
+  ecrã. Com a coluna de 65ch e 17 px, ainda dá **11 linhas de prosa contra as 13
+  de hoje**. **Duas linhas é o preço.**
+
+  **Por que é dela:** acrescenta ao ecrã uma coisa de que o jogador passa a
+  depender para saber onde está, e **muda o que o produto é** — de *"um log com
+  uma barra de vida"* para *"um livro ilustrado que responde"*. Isso não é uma
+  tela mais bonita; é outro produto, e a régua desta casa manda trazer isso à
+  pessoa mesmo com o número do nosso lado.
+
+- [ ] **(R1) renomear os verbos e as abas** · pesado · de: desenho · 23/09
+  `Habilidades` → `Perícias`; `Examinar` → `Olhar`; `Tempo` → `Esperar`;
+  `Gestão` → `Herói`; `Diário` → `Crônica`. **A pessoa autorizou por escrito**
+  (*"nomes de menus e posições etc"*), e mesmo assim fica aqui e não foi feito na
+  Fase R — por uma razão de ordem, não de permissão: **a fase já tirou ao jogador
+  as quatro abas do momento e os 20 verbos no mesmo dia.** Trocar também o nome
+  do que sobrou é pedir-lhe que reaprenda duas coisas de uma vez, e a régua do
+  `pesado` é o custo da memória de quem joga. *Fica para o ciclo a seguir à prova
+  jogada de R6 — se o jogador se perder, quero saber se foi da forma ou do nome.*
+
 - [ ] **(E4) o foco deixa de ser opção e passa a ser o padrão da casa — e a
   classe passa a existir só para DESLIGAR** · pesado · de: desenho · 16/09
 
@@ -675,6 +713,97 @@ consultada sobre o que muda o jogo dela. Perguntar demais é uma forma de
 timidez, e a timidez já é o defeito.
 
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
+
+### Fase R — a tela principal, e o sistema de decisões
+
+**A ordem da pessoa, em 23/09/2026, na íntegra:**
+
+> *"vamos focar agora nossas energias no visual e na experiência de jogo, a
+> gameplay tem que ser interativa e interessante pra prender o jogador, e o
+> design e visual precisam ser estimulantes e chamativos como um bom jogo, use
+> a mente, nossos designers Figma e os agentes de programação pra fazer todo o
+> estudo da estrutura visual e interativa, **começando pela tela principal que é
+> onde se passa 90% do jogo**, a tela inicial de gameplay, contemplando todos os
+> detalhes como menus e telas ligadas, caso seja necessário **podemos mudar a
+> palheta de cores/fontes, nomes de menus e posições** etc, não me importo em
+> alterar desde que a nova versão for superior, seja pela qualidade visual ou
+> pela experiência que ela trará. **Vamos mudar também o sistema de decisões**,
+> não se acanhe em fazer o que for melhor e ter boas ideias, não espere pelo meu
+> comando para fazer, precisamos de eficiência e velocidade."*
+
+**A fase existe porque a pauta inteira estava a olhar para o lado errado.** As
+fases E, K e W — nove etapas, cinco ciclos — desenharam **a tela da batalha**. A
+pessoa pediu **a tela da narrativa** (`fase === "jogo" && !emBatalha`), que é
+onde se passam os 90%. E a testemunha de acusação é a própria mesa: *os mesmos
+verbos medem 48 px no tabuleiro e 28 na tela principal; o tabuleiro escreve o
+preço dentro da casa e a tela principal esconde-o num `title`.* **A resposta já
+estava construída e a correr — nunca tinha sido aplicada aos 90%.**
+
+**Ponto de restauração** (feito pela pessoa antes de abrir a fase): branch
+`backup-pre-redesign` e tag `backup-pre-redesign-2026-09-23`, em `d6f1003`,
+local e no `origin`. *Ousadia é barata aqui; a timidez é que é o defeito.*
+
+- [x] **R1 · o estudo** · feito 23/09 · texto em `mente/r1-jogo.md` e
+  `mente/r1-desenho.md`
+- [x] **R2 · a folha nova** — `TIPOS` (o piso da letra) + a paleta *A página
+  iluminada* + as peças `Oferta`/`Soleira`/`Voz` · feito 23/09
+- [x] **R3 · a tela veste a folha** — a página, a coluna de 65ch, as setas `▸`
+  viram portas, o campo do turno cresce, os alvos sobem a 48 · feito 23/09
+- [x] **R4 · os 20 verbos aposentam-se** e as peças cabem no orçamento · feito
+  23/09
+- [x] **R5 · a régua corrigida** — a soleira leva só o que perece; o `+N` vira
+  porta · feito 23/09
+- [ ] **R6 · a prova jogada do *depois*** · de: jogo · 23/09
+  **A catraca que o `jogo` escreveu contra si mesmo** e que esta fase ainda não
+  pagou: 20 turnos, **contando quantos usaram o campo de texto**. Perto de zero
+  é **regressão** — o jogo teria virado *point-and-click* e a prosa deixado de
+  ser respondida —, e é ele quem tem de o dizer. *A proposta tem duas das três
+  provas; falta a terceira, e falta por não existir ainda o depois para jogar.*
+- [ ] **R7 · os 653 tamanhos abaixo do piso, um painel por etapa** · de: desenho
+  R2 pôs `TIPOS` e a catraca que **congela a dívida em 653 e só a deixa
+  descer**. A conversão é um painel por etapa, medindo. *A tela principal é a
+  pior região do projeto: **68 de 90 · 76 %**.*
+- [ ] **R8 · os 81 emoji do SO saem; entram glifos desenhados** · de: desenho
+  **204 usos, 81 distintos**, contra 33 ícones desenhados. *A identidade do jogo
+  muda conforme o aparelho de quem joga.* ~21 faltam só para esta tela.
+- [ ] **R9 · os acentos colapsam sob daltonismo** · de: desenho
+  Medido e **não corrigido por esta fase**: em deuteranopia `ok` e `amber` ficam
+  a **1,02:1** — a mesma cor. *A cobertura é uma lei, não uma medida*, e a
+  paleta nova não a paga: herdou o defeito do dia em que nasceu.
+- [ ] **R12 · o telefone paga a fase, e é onde eu olharia a seguir** · de:
+  regente · 23/09
+  **Medido:** a prosa no telefone foi de **51,5 % para 37,3 %** com uma oferta na
+  soleira. Na mesa voltou acima do ponto de partida (58,1 → 58,3 %); **no
+  telefone não voltou.** A causa é geometria e não desleixo: **a peça cresce e o
+  ecrã não** — a 375 px um cartão que na mesa partilha uma linha precisa de duas.
+  *E o telefone é o aparelho que mais recebeu desta fase* (o preço estava em
+  `title`, que lá não existe; 21 de 26 alvos estavam abaixo do piso) — **o que
+  não torna o custo menor, torna-o pago.**
+  **O que eu experimentaria, por ordem:** a soleira no telefone virar **uma linha
+  de altura de uma oferta só, com o resto atrás da porta** em vez de empilhar; ou
+  o cartão curto voltar aos 54 px e só o longo crescer. **Não decido aqui** — é
+  forma, é do `desenho` com o `jogo`, e quero a prova jogada de R6 antes.
+
+- [ ] **R11 · o terceiro acento existe e ainda não fez o trabalho por que foi
+  criado** · de: regente · 23/09 · **conferido por mim, não relatado**
+  `mundo` nasceu em R2 com uma justificação exata: *o âmbar carrega **24
+  significados** e `mundo` tira-lhe **cinco** — relógio, data, estação, lugar, a
+  espera — devolvendo-lhe uma função só.* Contei os leitores hoje: `T.mundo` é
+  lido **duas vezes**, ambas nas peças novas (`Oferta` *tom=convite* e `Voz`
+  *quem=mundo*), e **`T.onMundo` tem zero**. *Os cinco significados continuam
+  âmbar.* **Logo o âmbar não desceu de 24, e esta fase não pode dizer que
+  desceu.** O acento está certo e a conversão é que falta — relógio, data,
+  estação, lugar e a espera, um de cada vez, medindo. *Uma cor nova que não tira
+  trabalho a nenhuma outra é só mais uma cor.*
+
+- [ ] **R10 · a forma "revelar mais itens na própria lista" não tem nome** ·
+  de: aprendiz · 23/09
+  O `+N` da soleira precisava dela e `formas.md` não a tem — a forma fechada de
+  *abrir e fechar um painel* é **Véu + Fechar**, desenhada para as 15
+  sobreposições, e um véu de tela inteira para mostrar uma oferta a mais é
+  desproporcionado. O `aprendiz` **compôs com peças que já são lei** em vez de
+  inventar, e escreveu a dívida no código. *Vai reaparecer — abas, inventário,
+  bolsa —, e na segunda vez já não é composição, é forma por nomear.*
 
 ### Fase J — a pergunta muda de golpe
 **Aprovada em 17/09**, com a saída que o `jogo` e o `desenho` acharam melhor.

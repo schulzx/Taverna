@@ -20,6 +20,9 @@ const D = await import(RAIZ + "desafios.js");
 const T = await import(RAIZ + "turno.js");
 const { readFileSync } = await import("node:fs");
 const APP = readFileSync("../src/App.jsx", "utf8");
+/* R4b: a tela da luta é um arquivo próprio desde E3, e o veredito antes do
+   clique mora lá. Ler só o App passou a ser ler meio jogo. */
+const TELA_DA_LUTA = readFileSync("../src/painel-batalha.jsx", "utf8");
 
 import {
   ACOES_DO_JOGADOR, MOTOR_SEM_CHAMADOR, TURNO_ESTERIL, ABERTURA_FORA_DE_ALCANCE,
@@ -66,19 +69,34 @@ const sec = (s) => console.log("\n" + s);
    combate perdeu o caminho ao motor, ou que nasceu um botão de combate
    que só escreve texto.
    ============================================================ */
-const TETO_SEM_MOTOR = 6;   // era 7 até X1; `pronta_atacar` saiu em X2
+/* ---------------- O TETO DESCEU EM R4b: 6 → 1, E NÃO É CONQUISTA ----------------
+   ESTE É O CASO QUE A REGRA ACIMA MANDA ESCREVER, e escrevo-o inteiro
+   porque ele desce por um motivo que a regra não previa.
+
+   Os cinco `pronta_*` saem da lista SEM TEREM GANHO MOTOR NENHUM: saíram
+   os botões. R4b aposentou os vinte controles do painel de `Ações` — a
+   medida é do `jogo`: zero dos vinte dizia o preço na tela, oito
+   escondiam-no em `title`, que no telefone não existe. A conta que esta
+   catraca faz é *ação de combate cujo CLIQUE não chega ao motor*; sem
+   botão não há clique, e uma linha sem clique deixa de ter opinião neste
+   eixo — não passa a ter uma boa.
+
+   SE ISTO FOSSE "regressão disfarçada de conquista", seria por se ter
+   apagado a dívida em vez de a pagar. NÃO FOI APAGADA, e é por isso que
+   esta lista pode encolher com a cabeça erguida: que Esquivar, Empurrar,
+   Derrubar, Correr e Ajudar continuam sem motor está escrito, um a um e
+   com o porquê, em `VERBOS_DE_COMBATE` (`src/golpe.js` — campo
+   `porqueSemMotor`), que roda em Node e é lido por `teste-golpe.mjs`.
+   Saiu de uma lista de perdão numa suíte e foi para uma tabela do motor,
+   que é onde devia estar desde sempre. Dar-lhes mecânica continua a ser
+   decisão pesada, e continua a ser da pessoa.
+
+   O que sobra aqui é `texto_ataque`, que é o único destes que NÃO depende
+   de botão nenhum: é a frase digitada, ela chega ao motor e morre no
+   alcance. O `<=` continua `<=`. */
+const TETO_SEM_MOTOR = 1;   // 7 até X1 · 6 em X2 · 1 em R4b (os botões saíram)
 const SEM_MOTOR_HOJE = [
-  "pronta_esquivar",   // não casa leitor nenhum
-  "pronta_empurrar",   // não casa leitor nenhum
-  "pronta_derrubar",   // não casa leitor nenhum
-  "pronta_correr",     // não casa leitor nenhum (e o grid tem deslocamento)
-  "pronta_ajudar",     // a Ajuda do 5e não existe em código
   "texto_ataque",      // chega ao motor e morre no alcance
-  /* os cinco de cima seguem sem motor DE PROPÓSITO: dar mecânica a
-     Esquivar, Empurrar, Derrubar, Correr e Ajudar muda o que o jogador
-     vive, é decisão pesada, e está reservada à pessoa. `golpe.js`
-     (VERBOS_DE_COMBATE) escreve o motivo de cada um, um por um, para que
-     a próxima pessoa não descubra o buraco jogando. */
 ];
 
 sec("1. a catraca — as ações de combate cujo CLIQUE não chega ao motor");
@@ -101,20 +119,42 @@ sec("1. a catraca — as ações de combate cujo CLIQUE não chega ao motor");
      Invertidas na ETAPA X2, e é este o motivo. Se elas voltarem a
      falhar, alguém devolveu o botão para dentro da caixa de texto — que
      é exatamente a regressão que a Fase X existe para impedir. */
+  /* ---------------- E VIRARAM OUTRA VEZ, EM R4b ----------------
+     MOTIVO, e é o achado desta etapa. X2 escreveu aqui que o clique de
+     `Atacar` chegava ao motor, e a régua deu-o por verdadeiro um ciclo
+     inteiro. O desvio (`if (golpeVivo) declararGolpe(...)`) só corria com
+     `vereditoDoGolpeAgora()` não-nulo, isto é, com `combateRef.current`
+     — e havendo combate quem se pinta é `TelaDeBatalha`, não este painel,
+     que só existe sob `!emBatalha`. A fiação morreu no dia em que E3
+     levou a batalha para o arquivo dela. A régua media o TEXTO do handler
+     e nunca se ele chegava a correr: é a limitação que o bloco 1-B
+     declara, e aqui ela custou uma afirmação falsa.
+
+     Isto NÃO é a regressão que a Fase X existe para impedir — essa seria
+     o `Atacar` COM motor voltar para dentro de uma caixa de texto. O
+     `Atacar` com motor é o `aoAtacar` da tela da batalha, chama
+     `declararGolpe(null)`, e continua intacto (elo 1, bloco 1-B). */
   const atacar = ACOES_DO_JOGADOR.find((a) => a.id === "pronta_atacar");
-  t("o clique de `Atacar` CHEGA ao motor (invertida em X2)", atacar.cliqueChega === "motor");
-  t("e não está mais na lista dos sem motor", !SEM_MOTOR_HOJE.includes("pronta_atacar") && !ids.includes("pronta_atacar"));
-  t("e o handler confirma: passa por declararGolpe", /declararGolpe/.test(atacar.handler));
+  t("o botão `Atacar` do painel de Ações foi aposentado (R4b)", atacar.cliqueChega === "aposentado");
+  t("e o painel não voltou ao App", !/if \(golpeVivo\) \{ declararGolpe\(/.test(APP));
+  t("e o `Atacar` com motor continua a ser o da tela da batalha",
+    /aoAtacar=\{\(\) => \{ try \{ declararGolpe\(null\); \}/.test(APP));
 
   /* A METADE QUE NÃO VIROU, e que a régua tem de continuar dizendo: fora
      da luta o mesmo botão segue enchendo a caixa. Não é conserto pela
      metade — é pela FRASE que a briga começa (a porta `agressao` só abre
      fora do combate), e trocar isso tiraria do jogador o começo da
      briga. Esta linha guarda que a exceção fica ESCRITA. */
-  t("fora da luta ele continua enchendo a caixa", atacar.cliqueChegaFora === "caixa");
-  const condicionais = acoesComCliqueCondicional();
-  t("e é a única ação com clique condicional", condicionais.length === 1 && condicionais[0].id === "pronta_atacar",
-    condicionais.map((a) => a.id).join());
+  /* R4b: a exceção do eixo condicional deixa de existir com o botão que a
+     tinha. `cliqueChegaFora` descrevia um botão que se comportava de dois
+     jeitos — motor na luta, caixa fora dela —, e sem botão não há dois
+     jeitos. A lista fica VAZIA e continua vigiada, que é o que importa:
+     o dia em que nascer um segundo controle com duas caras, esta linha
+     morde antes de ele passar despercebido. */
+  t("nenhuma ação tem clique condicional, porque nenhuma tem dois botões",
+    acoesComCliqueCondicional().length === 0,
+    acoesComCliqueCondicional().map((a) => a.id).join());
+  t("e `Atacar` não guarda mais uma segunda coluna de clique", atacar.cliqueChegaFora == null);
 }
 
 /* ============================================================
@@ -227,8 +267,13 @@ sec("1-B. do clique ao número — o que roda (sonda) e o que se lê (texto)");
     contar(/\bdeclararGolpe\s*\(/g) === 2, String(contar(/\bdeclararGolpe\s*\(/g)));
   t("e o segundo é o verbo `Atacar` da tela da batalha",
     /aoAtacar=\{\(\) => \{ try \{ declararGolpe\(null\); \}/.test(APP));
-  t("o primeiro é o onClick das ACOES_PRONTAS",
-    /if \(golpeVivo\) \{ declararGolpe\(alvoDoGolpe && alvoDoGolpe\.nome\); return; \}/.test(APP));
+  /* R4b: o "primeiro" chamador era o `onClick` das ACOES_PRONTAS, e
+     aposentou-se com o painel. O que esta linha media — que nenhum botão
+     monte a frase por conta própria — continua medido pelo elo 3, que
+     conta os chamadores de `aplicarGolpeDoJogador`. Aqui fica a cerca do
+     outro lado: o desvio não pode renascer. */
+  t("e o painel de Ações não trouxe de volta um terceiro caminho",
+    !/if \(golpeVivo\) \{ declararGolpe\(/.test(APP));
   /* elo 2: a frase vem do módulo, não de uma string montada na tela */
   t("`fraseDoGolpe` é chamada UMA vez, e é dentro de `declararGolpe`",
     contar(/\bfraseDoGolpe\s*\(/g) === 1 && /fraseDoGolpe\(/.test(corpoDeclarar));
@@ -254,8 +299,18 @@ sec("1-B. do clique ao número — o que roda (sonda) e o que se lê (texto)");
 
   /* elo 6: o veredito antes do clique — a lei da casa manda mostrar o
      preço ANTES da ação irreversível, e aqui ele vira estado do botão */
-  t("o clique é IMPEDIDO quando ninguém está ao alcance",
-    /const impedido = golpeVivo && !vdGolpe\.algumAoAlcance;/.test(APP) && /disabled=\{impedido\}/.test(APP));
+  /* R4b: a âncora mudou de arquivo, e o motivo é o da etapa inteira. A
+     trava que X2 escreveu (`const impedido = golpeVivo && ...` +
+     `disabled={impedido}`) vivia no painel de `Ações` do App, que foi
+     aposentado — e que, desde E3, já não se pintava durante a luta. A lei
+     que esta linha guarda não mudou uma vírgula: *o veredito antes do
+     clique*, e o clique impedido em vez de gasto. Ela vive agora onde o
+     combate vive, e com uma forma melhor que a de X2 — `aria-disabled` e
+     não `disabled`, para o verbo não sair da ordem de tabulação de quem
+     ouve a tela, com a razão escrita ao lado em vez de um botão mudo. */
+  t("o clique é IMPEDIDO quando ninguém está ao alcance, e é na tela da luta",
+    /algumAoAlcance: vd \? !!vd\.algumAoAlcance : true/.test(TELA_DA_LUTA)
+    && /aria-disabled=\{impedido \|\| undefined\}/.test(TELA_DA_LUTA));
   /* A ASSERÇÃO AFROUXOU EM K2 (16/09) E O MOTIVO FICA: ela fixava a linha de
      import inteira, letra por letra, e portanto proibia que o App importasse
      UMA QUARTA COISA de `golpe.js` — o que é o contrário do que ela quer
@@ -274,24 +329,29 @@ sec("1-B. do clique ao número — o que roda (sonda) e o que se lê (texto)");
 
 sec("2. os dois eixos — o clique e a frase contam histórias diferentes");
 {
-  /* EIXO DO CLIQUE — era daqui que saía a manchete de X1, e é aqui que
-     ela mudou. As três asserções abaixo estavam em 11 / 12 / zero; viram
-     12 / 11 / uma NA ETAPA X2, e por um motivo só: `Atacar`, na mesa de
-     combate, entrou no motor. Os 30 registros são os mesmos e nenhum
-     outro mudou de coluna — foi UMA ação que atravessou, e é isso que os
-     três números, lidos juntos, afirmam. */
+  /* ---------------- O EIXO DO CLIQUE ESVAZIOU-SE (R4b) ----------------
+     Era daqui que saía a manchete de X1 (11 no motor, 12 na caixa), e ela
+     virou em X2 (12/11). Em R4b o eixo inteiro muda de tamanho: os VINTE
+     botões do painel de `Ações` foram aposentados, e com eles vinte
+     cliques. Sobram TRÊS — mover no grid, beber da bolsa e gastar
+     heroísmo —, que são os cliques que nunca passaram por caixa de texto
+     nenhuma e são exactamente os que o sistema sabe e o jogador não
+     escreve. É a mesma régua da soleira, medida por outro instrumento.
+
+     E `caixa` cai a ZERO, que é a frase mais curta desta etapa: não há
+     mais nenhum controle nesta casa cujo trabalho seja escrever texto na
+     caixa do jogador. O que se escreve na caixa, escreve-o o jogador. */
   const clique = contarPorClique();
-  t("12 cliques chegam ao motor (8 rápidas + mover + bolsa + heroísmo + Atacar na luta)",
-    clique.motor === 12, JSON.stringify(clique));
-  t("e 11 das prontas seguem só enchendo a caixa", clique.caixa === 11, JSON.stringify(clique));
+  t("3 cliques chegam ao motor (mover + bolsa + heroísmo)", clique.motor === 3, JSON.stringify(clique));
+  t("e nenhum controle escreve na caixa do jogador", clique.caixa === 0, JSON.stringify(clique));
+  t("os 20 botões do painel estão marcados como aposentados", clique.aposentado === 20, JSON.stringify(clique));
   const prontasNoMotor = ACOES_DO_JOGADOR.filter((a) => a.fonte === "ACOES_PRONTAS" && a.cliqueChega === "motor");
-  t("UMA das 12 prontas dispara o motor pelo clique, e é Atacar (invertida em X2)",
-    prontasNoMotor.length === 1 && prontasNoMotor[0].id === "pronta_atacar",
-    prontasNoMotor.map((a) => a.id).join());
-  /* e a conta do MUNDO DE FORA continua a de X1 — a régua não perdeu o
-     número velho, ela ganhou o recorte que faltava */
+  t("nenhuma das 12 prontas dispara o motor pelo clique, porque nenhuma tem clique",
+    prontasNoMotor.length === 0, prontasNoMotor.map((a) => a.id).join());
+  /* o recorte do MUNDO DE FORA vale a mesma coisa que o de dentro agora:
+     sem botão, não há dois mundos de clique */
   const foraMotor = ACOES_DO_JOGADOR.filter((a) => (a.cliqueChegaFora || a.cliqueChega) === "motor").length;
-  t("fora da luta seguem 11 cliques no motor, como em X1", foraMotor === 11, String(foraMotor));
+  t("e fora da luta são os mesmos 3, porque o clique deixou de ter dois mundos", foraMotor === 3, String(foraMotor));
 
   /* EIXO DO TEXTO — a frase vai mais longe que o clique, e isso é
      verdade ao mesmo tempo: 5 das prontas casam desafio quando enviadas */
@@ -305,25 +365,43 @@ sec("2. os dois eixos — o clique e a frase contam histórias diferentes");
   /* O RECORTE QUE IMPORTA: o combate, nos dois eixos */
   const c = contarCombate();
   t("são 10 ações de combate", c.total === 10, JSON.stringify(c));
-  t("e 4 delas têm clique que chega ao motor", c.clique.motor === 4, JSON.stringify(c.clique));
-  /* ---------------- A LINHA QUE RESUMIA A FASE X, E QUE VIROU ----------------
-     Até X1 esta asserção dizia "e NENHUMA das 3 é um golpe" — mover,
-     beber e heroísmo, e nenhum jeito de bater. Era o resumo da fase
-     inteira numa linha. Ela vira aqui, na ETAPA X2, e o que ela passa a
-     afirmar é o oposto exato, sem afrouxar nada: a lista continua sendo
-     conferida id a id (trocar um pelo outro em silêncio continua
-     vermelho), e ganhou `pronta_atacar`. */
+  t("e 3 delas têm clique que chega ao motor", c.clique.motor === 3, JSON.stringify(c.clique));
+  /* ---------------- A LINHA QUE RESUMIA A FASE X, E QUE VIROU DUAS VEZES ----------------
+     X1: "NENHUMA das 3 é um golpe" — mover, beber e heroísmo, e nenhum
+     jeito de bater. X2: "uma das 4 é um golpe", e era `pronta_atacar`.
+
+     R4b desfaz a segunda volta, e é preciso ser exacto sobre o que isso
+     quer dizer, porque parece uma derrota e não é: `pronta_atacar` sai da
+     lista porque o BOTÃO saiu, não porque o golpe perdeu o caminho. O
+     golpe pelo clique continua a existir e está medido logo acima (elo 1
+     e elo 6), na tela da batalha, que é onde a luta se pinta desde E3 —
+     e onde o clique de `Atacar` é o único que sempre pôde correr.
+
+     A lista fica com os três que esta tabela sempre soube contar, e
+     continua conferida id a id: trocar um pelo outro em silêncio continua
+     vermelho. */
   const motorNaLuta = ACOES_DO_JOGADOR.filter((a) => a.combate && a.cliqueChega === "motor").map((a) => a.id).sort();
-  t("e uma das 4 é um golpe (invertida em X2)",
-    motorNaLuta.join() === ["bolsa_consumivel", "grid_mover", "heroismo_gasto", "pronta_atacar"].join(),
+  t("e os 3 são os cliques que nunca passaram pela caixa de texto",
+    motorNaLuta.join() === ["bolsa_consumivel", "grid_mover", "heroismo_gasto"].join(),
     motorNaLuta.join());
   t("nenhuma frase de combate chega ao motor dentro da luta",
     c.texto.motor === 0, JSON.stringify(c.texto));
 
   t("a tabela cobre as 12 prontas", ACOES_DO_JOGADOR.filter((a) => a.fonte === "ACOES_PRONTAS").length === 12);
   t("a tabela cobre as 8 rápidas", ACOES_DO_JOGADOR.filter((a) => a.fonte === "ACOES_RAPIDAS").length === 8);
-  t("e as 8 rápidas chegam ao motor pelo clique",
-    ACOES_DO_JOGADOR.filter((a) => a.fonte === "ACOES_RAPIDAS" && a.cliqueChega === "motor").length === 8);
+  /* R4b: as 8 rápidas eram as ÚNICAS do painel que entravam no motor pelo
+     clique, e é por isso que aposentá-las custou a decidir. O que
+     desempatou: o atalho e o teclado terminavam no MESMO sítio —
+     `declararAcaoRapida` chamava `adjudicarAcao`, e a frase digitada
+     chama `adjudicarAcao` pela porta `desafio` de `executar`. O botão
+     poupava digitação, não mecânica. A asserção passa a guardar
+     exactamente isso, que é o que torna a perda aceitável: as oito
+     continuam a chegar ao motor PELO TEXTO, nos dois contextos. */
+  t("e as 8 rápidas continuam a chegar ao motor pelo texto, dentro e fora da luta",
+    ACOES_DO_JOGADOR.filter((a) => a.fonte === "ACOES_RAPIDAS"
+      && a.textoFora === "motor" && a.textoLuta === "motor").length === 8);
+  t("e nenhuma delas tem clique, porque o botão saiu",
+    ACOES_DO_JOGADOR.filter((a) => a.fonte === "ACOES_RAPIDAS" && a.cliqueChega === "aposentado").length === 8);
   t("e nenhuma delas é de combate",
     ACOES_DO_JOGADOR.filter((a) => a.fonte === "ACOES_RAPIDAS" && a.combate).length === 0);
 }
@@ -381,9 +459,19 @@ sec("4. a definição operacional de 'número que muda'");
      continua palavra por palavra o mesmo. Endereco re-medido, assercao intacta. */
   /* E3: 13499 -> 13084. O turno fora de combate continua a avançar
      MINUTOS_POR_TURNO faça o jogador o que fizer; só o endereço andou. */
+  /* R3: 13098 -> 13200, pelas 102 linhas do redesenho da tela principal
+     (A soleira, A voz, o gesto do campo, a porta das linhas de sistema),
+     das quais 95 entram acima do corpo do componente. O turno fora de
+     combate continua a avançar MINUTOS_POR_TURNO faça o jogador o que
+     fizer: mesma asserção, mesmo relógio, endereço re-medido. */
   /* E4: 13084 -> 13098, pelas treze linhas da chave `economia` em
      :4929. Mesma asserção, mesmo relógio, endereço re-medido. */
-  t("e aponta a linha que avança o relógio", !!relogio && /13098/.test(relogio.porque));
+  /* R4b: 13200 → 13207. Motivo: a tabela dos doze verbos e o despachante
+     das oito ações rápidas saíram do App acima desta linha, e o relógio
+     desceu com o resto. O endereço foi re-medido pelo mapa do diff (é o
+     `check-acoes-do-jogador.mjs`, bloco 8, quem o re-deriva a cada rodada);
+     a asserção não mudou de sentido nem de força. */
+  t("e aponta a linha que avança o relógio", !!relogio && /13207/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -467,7 +555,7 @@ sec("6. as duas travas do ataque por texto");
 sec("7. os seis literais do painel que não casam leitor nenhum");
 {
   /* medido contra o catálogo real: `lerAcao` é o mesmo leitor que o
-     adjudicador usa (src/App.jsx:15687 → veredictoDaAcao) */
+     adjudicador usa (src/App.jsx:15796 → veredictoDaAcao) */
   const ctx = { personagem: { nivel: 3, atributos: {}, pericias: {} }, semente: "x1", lugar: "taverna",
     emCombate: false, tentativas: {}, dia: 1, pessoaDe: () => null, fama: 0,
     ehPessoaConhecida: () => false, achadoDe: () => null };
@@ -567,7 +655,7 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        mora depois de a janela da reacao entrar no arquivo. */
       /* E3: 12122 -> 11707. A voz da linha (`telegrama`) é o que esta
          asserção guarda, e ela não mudou. */
-      .linhas.find((l) => l.onde === "src/App.jsx:11721").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:11830").voz === "telegrama");
   t("a maior boca do funil é `resolverRevide`, com 29 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 29);
   t("toda função do funil declara anel, endereço e ao menos uma linha",
@@ -652,7 +740,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        da recusa (`alcance`) e o que se guarda aqui, e ela e a mesma. */
     /* E3: 12072 -> 11657, pelo mesmo deslocamento. A família da recusa
        (`alcance`) é o que se guarda aqui, e ela é a mesma. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:11671" && x.familia === "alcance"));
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:11780" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -669,7 +757,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      O que esta asserção guarda nunca foi o número — é que o porquê do
      silêncio venha com ENDEREÇO, para que a próxima medição o possa
      conferir. O número mudou; a intenção, não. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /11737/.test(S.ondeSai));   /* E3: 12138 -> 11723 */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /11846/.test(S.ondeSai));   /* E3: 12138 -> 11723 · R3: 11737 -> 11839 · R4b: 11839 -> 11846 — as sete linhas são a lápide dos doze verbos (oito linhas onde havia a tabela) menos a do estado da gaveta de `Ações`. O `enviar` não mudou de sítio dentro da função, só de linha no arquivo */
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

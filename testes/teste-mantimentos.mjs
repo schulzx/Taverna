@@ -142,7 +142,14 @@ sec("5. O AVISO DE PARTIR SEM COMIDA");
      impede o jogador de escolher errado também o impede de escolher */
   const bloco = APP.slice(APP.indexOf("ANTES DE PÔR O PÉ NA ESTRADA"), APP.indexOf("ANTES DE PÔR O PÉ NA ESTRADA") + 1600);
   t("o aviso não interrompe a viagem", !/return;/.test(bloco));
-  t("e aponta onde resolver", /Gestão ▸ Mercado/.test(APP));
+  /* R3: o sinal de seta virou `›`. `mente/formas.md` fechou nesta etapa uma
+     lei nova — O SINAL DE SETA FICA RESERVADO AO QUE SE TOCA — porque o
+     Mestre escrevia linhas com ele e o DOM entregava um `<span>` morto. Aqui
+     ele nunca foi afordança nenhuma: é um caminho de menu dentro de uma
+     frase, "Gestão, e lá dentro Mercado". A ASSERÇÃO NÃO MUDOU DE INTENÇÃO
+     — continua a cobrar que o aviso diga ONDE resolver —, mudou o glifo
+     que separa os dois degraus do caminho. */
+  t("e aponta onde resolver", /Gestão › Mercado/.test(APP));
 }
 
 sec("6. O GESTO COBRA O PREÇO DE AGORA");

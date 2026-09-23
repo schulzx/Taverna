@@ -215,11 +215,22 @@ sec("4. A FRASE DO BOTÃO CASA O MESMO DETECTOR QUE A DIGITADA");
   t("sem alvo, é a frase de hoje", GOLPE.fraseDoGolpe() === "Ataco");
   t("e null não estoura", GOLPE.fraseDoGolpe(null) === "Ataco");
 
-  /* o botão de hoje injeta "Ataco " na caixa; a frase do módulo é a mesma
-     palavra, aparada. Se o botão mudar de texto, esta linha pega. */
-  const botao = APP.match(/rotulo: "Atacar", texto: "([^"]*)"/);
-  t("o botão Atacar de hoje escreve \"Ataco \"", !!botao && botao[1] === "Ataco ");
-  t("e a frase do módulo é exatamente esse texto aparado", !!botao && GOLPE.fraseDoGolpe() === botao[1].trim());
+  /* ---------------- O DENTE VIRADO DE FRENTE (R4b) ----------------
+     MOTIVO DA MUDANÇA, porque a asserção mudou de lado e não pode mudar
+     em silêncio: estas duas linhas mediam o botão `Atacar` do painel de
+     `Ações` (`rotulo: "Atacar", texto: "Ataco "`), e o painel inteiro —
+     os vinte botões — foi aposentado em R4b. Ele injetava sete caracteres
+     na caixa e devolvia o cursor; o `Atacar` COM motor é o `aoAtacar` da
+     tela da batalha, que chama `declararGolpe` e não escreve texto nenhum.
+
+     Antes esta linha vigiava que o botão escrevesse a frase do módulo.
+     Agora vigia que o botão NÃO VOLTE: uma tabela de ações prontas
+     ressuscitando no App é a regressão exata que R4b existe para
+     impedir, e a frase canônica continua provada nas linhas abaixo —
+     `fraseDoGolpe()` casa o detector do App e `ehDeclaracaoDeAtaque`,
+     que é o caminho pelo qual o jogador ataca escrevendo. */
+  t("o painel de ações prontas não voltou ao App", !/rotulo: "Atacar", texto: "/.test(APP));
+  t("e a frase canônica do módulo continua a ser \"Ataco\"", GOLPE.fraseDoGolpe() === "Ataco");
 
   for (const f of [GOLPE.fraseDoGolpe(), GOLPE.fraseDoGolpe({ nome: "Bandido" }), GOLPE.fraseDoGolpe({ nome: "Capitão da Guarda" })]) {
     t(`"${f}" casa o detector de ataque do App`, rxApp.test(N(f)));
@@ -316,15 +327,25 @@ sec("5. OS SEIS VERBOS — a tabela declara a verdade MEDIDA");
   t("e o desafio existe mesmo no catálogo", !!DES.desafioPorId("saltar"));
   t("mover não tem frase: ele é o clique no tabuleiro", V.find((v) => v.id === "mover").frase === "");
 
-  /* a tabela espelha os botões de HOJE, palavra por palavra */
-  const divergem = [];
-  for (const v of V) {
-    if (!v.frase) continue;
-    const b = APP.match(new RegExp(`rotulo: "${v.rotulo}", texto: "([^"]*)"`));
-    if (!b) { divergem.push(v.rotulo + " não tem botão no App"); continue; }
-    if (b[1].trim() !== v.frase) divergem.push(`${v.rotulo}: App diz "${b[1].trim()}"`);
-  }
-  t(`toda frase da tabela é a do botão de hoje${divergem.length ? " — " + divergem.join("; ") : ""}`, divergem.length === 0);
+  /* ---------------- A MESMA CERCA, DO OUTRO LADO (R4b) ----------------
+     MOTIVO, porque a asserção mudou de sentido: ela media que a frase da
+     tabela era, palavra por palavra, a do botão do painel de `Ações`. Os
+     vinte botões foram aposentados em R4b — cinco destes seis verbos
+     tinham lá o seu (Atacar, Esquivar, Empurrar, Derrubar, Saltar) —,
+     porque eram verbos DO JOGADOR vestidos de oferta DO MUNDO e nenhum
+     deles dizia o preço na tela.
+
+     O que a cerca guardava continua a valer, e é o que ela guarda agora:
+     a frase é do MÓDULO e de mais lado nenhum. Antes o risco era o botão
+     divergir da tabela; agora é a tabela ser copiada de volta para dentro
+     do App — uma segunda cópia da frase é a mesma doença com outra cara,
+     e é exactamente o que faria os vinte botões voltarem. */
+  const copiadas = V.filter((v) => v.frase && APP.includes(`texto: "${v.frase}`));
+  t(`nenhuma frase da tabela foi copiada de volta para um botão do App${copiadas.length ? " — " + copiadas.map((v) => v.rotulo).join("; ") : ""}`,
+    copiadas.length === 0);
+  /* e as frases continuam inteiras na tabela, que é quem as guarda */
+  t("os cinco verbos com frase continuam a tê-la no módulo",
+    V.filter((v) => v.frase).length === 5);
 }
 
 sec("5b. O VEREDITO DO EMPURRÃO — ver a parede antes de gastar a ação");
@@ -584,11 +605,22 @@ sec("7. AS QUATRO FRASES — o teto de 54 caracteres, e o aparo que mora na tabe
      lê onde o golpe cai, quem não alcança lê por quê" passou a valer
      também fora daquele painel; o que a asserção continua a guardar é que
      NINGUÉM reescreveu as frases — todos os leitores chamam `golpe.js`. */
-  t("e o App continua com os seus três leitores da recusa, e dois da linha",
-    (APP.match(/recusaDoGolpe\(/g) || []).length === 3
-    && (APP.match(/linhaDoGolpe\(/g) || []).length === 2);
-  t("e `maisPertoAoAlcance` continua com as suas duas fiações no App",
-    (APP.match(/maisPertoAoAlcance\(/g) || []).length === 2);
+  /* R4b: 3 → 2 leitores da recusa, 2 → 1 da linha, 2 → 1 de
+     `maisPertoAoAlcance`. MOTIVO, e ele é o achado desta etapa: o leitor
+     que caiu era, nos três casos, o do painel de `Ações` — e ele já não
+     podia correr desde E3. O painel só se pinta com `!emBatalha`, e
+     `vereditoDoGolpeAgora()` devolve `null` sem `combateRef.current`:
+     havendo luta é `TelaDeBatalha` quem se pinta. A fiação de X2 estava
+     na árvore, medida por esta contagem, e morta no uso — o que a
+     contagem provava era o TEXTO existir, nunca ele ser alcançado.
+     O que sobra é o que sempre esteve vivo: a recusa que o motor empurra
+     (:11898), o alvo que o golpe escolhe (:11907) e as duas frases que a
+     tela da batalha recebe montadas (:21252-21253). */
+  t("e o App continua com os seus dois leitores da recusa, e um da linha",
+    (APP.match(/recusaDoGolpe\(/g) || []).length === 2
+    && (APP.match(/linhaDoGolpe\(/g) || []).length === 1);
+  t("e `maisPertoAoAlcance` continua com a sua fiação única no App",
+    (APP.match(/maisPertoAoAlcance\(/g) || []).length === 1);
 
   /* o veredito real, de ponta a ponta: a abertura da taverna recusa por
      distância, e a frase que o jogador lê cabe */
