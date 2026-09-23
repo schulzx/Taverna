@@ -16,79 +16,81 @@ A forma de cada coisa mora em `mente/formas.md`; o feito, em
 
 ## Para a pessoa decidir (pesado)
 
-Todos nasceram da medição de D1 (14/09). Nenhum é gosto: cada um tem o número
-que o sustenta, e cada um mexe **no fluxo do jogo ou no que o jogador já usa**
-— por isso espera.
+**Esta seção esvaziou-se em 23/09, e não por terem sido respondidos um a um.**
+A pessoa mudou o regime: no tema do visual e da experiência de jogo, **a mesa
+decide e faz** — paleta, tipografia, nomes, posições, fluxo, tela que nasce e
+tela que se aposenta. Os 12 que esperavam aqui foram para *Aprovado*, com a
+ordem citada. A lei inteira está no `CLAUDE.md`, em *"A ordem de 23/09"*.
 
-**Os dois primeiros são de D4, e são a resposta ao pedido da pessoa de 14/09**
-(*"não precisam ficar tímidos e trabalhar apenas o que já existe"*). Pela
-régua nova, `pesado` é uma pergunta só — **o jogador teria de reaprender?** —
-e nos dois a resposta é sim, com o que ele reaprende dito por escrito.
+**O que ainda chega aqui, e só isto:** o que **um commit revertido não
+conserta**, porque é esse o limite do modelo de reversão que ela própria deu.
 
-**E três nasceram em E1 (15/09), ao desenhar a tela de batalha** — estão logo
-a seguir aos de D4, marcadas *(E1)*. As três são da mesma família e é honesto
-dizê-lo: as três tratam do que acontece quando **o tabuleiro passa a ser onde
-o jogo se joga**, e cada uma pede uma coisa ao motor que ele hoje não faz.
+- **o formato do save** — desfazer o commit não devolve a ficha que o save já
+  reescreveu na máquina de quem joga;
+- **o que custa dinheiro ou toca infra** (Vercel, Redis, chaves);
+- **apagar dado de jogador**, em qualquer forma.
 
-**E duas nasceram em K1 (15/09)**, marcadas *(K1)*. Vêm à pessoa por razões
-opostas — uma porque **dá ao jogador informação que este jogo nunca lhe deu**, a
-outra porque **paleta é identidade**.
+*A pergunta deixou de ser "isto é pesado?" e passou a ser "um commit revertido
+conserta isto?". Se conserta, faz-se — e diz-se no relato.*
 
-**E uma nasceu em E2 (15/09)**, marcada *(E2)*, e está em primeiro porque é a
-única aberta: as outras já foram respondidas.
+## A lei que a pessoa deu à mesa (14/09)
 
-**E três nasceram em W1 (16/09)**, marcadas *(W1)*, e vêm à frente da de E2 por
-uma razão que não é de importância: **as três têm número corrido hoje, em Node,
-sobre o código de hoje** — e duas delas foram medidas pelos dois seniores em
-separado, com resultados que batem.
+> *"Nós estamos criando um jogo. Apesar de seu coração ser em leitura,
+> devemos fazer o máximo para ter a experiência de um jogo e que ele
+> realmente está fazendo coisas — não só lendo e escrevendo."*
 
-**E duas nasceram em W2 (16/09)**, marcadas *(W2)*, e estão **no topo** porque
-são as duas metades da mesma coisa e **cada senior trouxe uma sem ver a do
-outro**: o `jogo` deu à fala uma **consequência**, o `desenho` deu-lhe uma
-**forma**. Separadas, cada uma é meia proposta — a do `jogo` sem a do `desenho`
-é um efeito que o jogador não vê chegar; a do `desenho` sem a do `jogo` é um
-traço bonito sobre uma fala que não muda nada. **Juntas, são a rodada da
-caminhada a virar uma pergunta.**
+Isto não é um item: é a régua de toda proposta desta fila. Sempre que o
+`jogo` e o `desenho` escolherem entre uma forma que **conta** o que
+aconteceu e uma forma que **deixa o jogador fazer**, a segunda ganha — e o
+que não puder ser feito deve ao menos ser **visto acontecendo**, não
+recebido pronto em prosa. A prosa continua sendo a protagonista; o que se
+recusa é que ela seja a **única** coisa que o jogador toca.
 
-**E duas nasceram em K2 (16/09)**, marcadas *(K2)*, e estão **no topo** por uma
-razão que não é de gosto: **as duas acusam a própria casa de ter escrito uma lei
-e não a ter posto em tabela.** A do `jogo` é a primeira lei do `CLAUDE.md`
-(*determinismo por semente*) a valer só metade do jogo; a do `desenho` é um
-número de acessibilidade que ele próprio citou num parágrafo em vez de o pôr numa
-tabela. *Se é número, é tabela* — e as duas são a mesma lei a cobrar-se de quem a
-escreveu.
+## A terceira lei da mesa (15/09)
 
-**E duas nasceram em K3 (16/09)**, marcadas *(K3)*, e estão **no topo** porque
-as duas são a mesma acusação vista de dois lados: **a Fase K construiu uma peça
-excelente e mediu, no mesmo dia, que ela pergunta a coisa errada metade das
-vezes.** A do `jogo` tem o número que dói; a do `desenho` é a única da pauta que
-ficou **mais barata** por a etapa ter passado — a peça que ela precisava nasceu
-hoje, e o que falta é alcance.
+A pessoa, ao aprovar O Pergaminho: *"gostei muito de que essa sugestão já veio
+com uma proposta e inclusive muito bem fundamentada. Gostaria que todas
+viessem assim se possível — não precisa ter uma explicação gigante nem nada
+do tipo, mas vir com uma proposta e dizendo o porquê é muito bacana."*
 
-**E três nasceram em K4 (16/09)**, marcadas *(K4)*, e estão **no topo** porque a
-etapa que as gerou é a que **mediu a fase inteira e não a defendeu**. A primeira é
-a saída para o beco em que K3 ficou preso — e ela **não bate na trava de K2**, o
-que muda tudo. A segunda é a que devolve ao jogador o relógio que a escada lhe
-cobra. A terceira é do `desenho`, e é a única em toda a pauta que acusa **o painel**
-em vez da peça.
+Então **toda proposta traz as duas coisas, e em poucas linhas**: o que fazer,
+e por quê. Nunca só o diagnóstico — *"a escala de texto está errada"* não é
+proposta; *"18 degraus viram 6, o piso sobe para 13px, porque metade do texto
+hoje é 9–10px e a prosa é a protagonista"* é. E nunca uma parede de texto: o
+porquê cabe numa frase se a proposta for boa. Quem não sabe dizer por que,
+ainda não terminou de pensar.
 
-**E duas nasceram em E3 (16/09)**, marcadas *(E3)*, e estão **no topo** por uma
-razão que não é de importância: **as duas atacam o mesmo piso, por lados opostos, e
-cada senior trouxe a sua sem ver a do outro.** A do `desenho` diz que o piso da
-letra **não existe** e devia; a do `jogo` diz que o piso do alvo **existe, está
-certo, e está a ser aplicado a uma coisa que não é alvo.** *O primeiro pesado desta
-mesa em que a dupla discorda sobre a mesma lei — e as duas discordâncias são
-medidas.*
+Vale para as duas mentes: o `conselheiro` e o `regente` cobram isto de quem
+propõe.
 
-A do `desenho` está **no topo** porque é a
-irmã por nascer de `ALVOS`: **o alvo de toque já saiu para tabela em K4, e o
-tamanho da letra — que é o outro número que o corpo humano impõe — continua
-escrito 652 vezes à mão.** É a mesma lei da casa a cobrar-se no outro eixo.
+## A segunda lei da mesa (14/09)
 
-**E uma nasceu em E4 (16/09)**, marcada *(E4)*, e está **no topo** por uma razão
-que se pode contar: **cinco maneiras silenciosas de apagar um anel de foco, e
-218 sítios onde cada uma delas pode acontecer.** Não é uma peça a corrigir —
-é a pergunta de quem tem o ónus, o controlo ou a casa.
+> *"Faça da forma que um experiente designer de UI e game designer fariam."*
+
+Quer dizer: **decida.** Onde um profissional experiente decidiria sozinho —
+o tempo de uma barra, o tamanho de um alvo de toque, a ordem de um leque, o
+que não perguntar ao jogador — **decida e escreva o porquê**, em vez de
+devolver a escolha. A pessoa não quer ser consultada sobre ofício; quer ser
+consultada sobre o que muda o jogo dela. Perguntar demais é uma forma de
+timidez, e a timidez já é o defeito.
+
+## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
+
+### Liberados pela ordem de 23/09 — a mesa sequencia e faz
+
+**Os 12 abaixo esperavam a pessoa e não esperam mais.** Ela escreveu: *"não me
+importo em alterar desde que a nova versão for superior... não espere pelo meu
+comando... você tem total liberdade pra trabalhar e ser criativo."* Todos são
+do tema (visual e experiência), todos têm número, e **todos são reversíveis
+num commit** — que é o limite que ela própria pôs.
+
+**O que isto NÃO afrouxa:** *superior* continua a demonstrar-se pelos três
+caminhos (medida, estudo citado, experiência jogada), e a prova entra escrita.
+A mesa deixou de pedir licença; não deixou de provar.
+
+**A ordem entre eles é da mesa**, e a régua de desempate é a dela: *o melhor
+RPG de mesa do mundo*. Quem rege escolhe pelo que muda mais o que o jogador
+vive — não pelo que é mais barato de fazer.
 
 - [ ] **(R1) a cena ganha um rosto, e o jogo nunca lho deu** · pesado · de:
   desenho · 23/09 · **a proposta ambiciosa da Fase R**
@@ -671,48 +673,7 @@ que se pode contar: **cinco maneiras silenciosas de apagar um anel de foco, e
 - [x] **A escala de texto vira tabela** · feita · texto em `mente/arquivo/pauta-desenho-feitas.md`
 - [x] **O nó entre o Figma e o código custa um plano** · feita · texto em `mente/arquivo/pauta-desenho-feitas.md`
 - [x] **A ação principal tem a mesma cara nos três modos** · feita · texto em `mente/arquivo/pauta-desenho-feitas.md`
-## A lei que a pessoa deu à mesa (14/09)
 
-> *"Nós estamos criando um jogo. Apesar de seu coração ser em leitura,
-> devemos fazer o máximo para ter a experiência de um jogo e que ele
-> realmente está fazendo coisas — não só lendo e escrevendo."*
-
-Isto não é um item: é a régua de toda proposta desta fila. Sempre que o
-`jogo` e o `desenho` escolherem entre uma forma que **conta** o que
-aconteceu e uma forma que **deixa o jogador fazer**, a segunda ganha — e o
-que não puder ser feito deve ao menos ser **visto acontecendo**, não
-recebido pronto em prosa. A prosa continua sendo a protagonista; o que se
-recusa é que ela seja a **única** coisa que o jogador toca.
-
-## A terceira lei da mesa (15/09)
-
-A pessoa, ao aprovar O Pergaminho: *"gostei muito de que essa sugestão já veio
-com uma proposta e inclusive muito bem fundamentada. Gostaria que todas
-viessem assim se possível — não precisa ter uma explicação gigante nem nada
-do tipo, mas vir com uma proposta e dizendo o porquê é muito bacana."*
-
-Então **toda proposta traz as duas coisas, e em poucas linhas**: o que fazer,
-e por quê. Nunca só o diagnóstico — *"a escala de texto está errada"* não é
-proposta; *"18 degraus viram 6, o piso sobe para 13px, porque metade do texto
-hoje é 9–10px e a prosa é a protagonista"* é. E nunca uma parede de texto: o
-porquê cabe numa frase se a proposta for boa. Quem não sabe dizer por que,
-ainda não terminou de pensar.
-
-Vale para as duas mentes: o `conselheiro` e o `regente` cobram isto de quem
-propõe.
-
-## A segunda lei da mesa (14/09)
-
-> *"Faça da forma que um experiente designer de UI e game designer fariam."*
-
-Quer dizer: **decida.** Onde um profissional experiente decidiria sozinho —
-o tempo de uma barra, o tamanho de um alvo de toque, a ordem de um leque, o
-que não perguntar ao jogador — **decida e escreva o porquê**, em vez de
-devolver a escolha. A pessoa não quer ser consultada sobre ofício; quer ser
-consultada sobre o que muda o jogo dela. Perguntar demais é uma forma de
-timidez, e a timidez já é o defeito.
-
-## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
 
 ### Fase R — a tela principal, e o sistema de decisões
 

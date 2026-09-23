@@ -150,6 +150,66 @@ do ciclo está em `.claude/agents/orquestrador.md`; `/ciclo` roda um.
 
 ---
 
+## A ordem de 23/09 — o foco, a liberdade e o backup
+
+A pessoa mudou o regime de trabalho desta casa, e a mudança tem três partes.
+Está aqui e não na cabeça de ninguém, porque é ela que decide o que um ciclo
+faz sem perguntar.
+
+**1. O foco.** *"Vamos focar agora nossas energias no visual e na experiência
+de jogo, a gameplay tem que ser interativa e interessante pra prender o
+jogador, e o design e visual precisam ser estimulantes e chamativos como um
+bom jogo... começando pela tela principal que é onde se passa 90% do jogo...
+contemplando todos os detalhes como menus e telas ligadas. Vamos mudar também
+o sistema de decisões."*
+
+Enquanto esta ordem valer, **a fila do desenho é a única que anda**. A fila do
+sistema (`mente/pauta.md`) fica **parada**, com uma exceção escrita: um item
+do sistema anda **quando o desenho precisa dele** — aí é pedido, entra por
+`mente/pedidos-ao-sistema.md`, e é do tema. Regra de bolso: *se o jogador não
+vê nem sente, não é a vez disto.*
+
+**2. A liberdade, e ela é maior do que a tabela de pesos.** *"Não me importo em
+alterar desde que a nova versão for superior... não se acanhe em fazer o que
+for melhor e ter boas ideias, não espere pelo meu comando... você tem total
+liberdade pra trabalhar e ser criativo, assim como os grandes designers e
+programadores... não tenha medo de se arriscar."*
+
+Então, **no tema desta ordem, `pesado` de design deixa de esperar a pessoa.**
+Paleta, tipografia, nomes de menu, posições, fluxo, telas que nascem e telas
+que se aposentam: **a mesa decide e faz.** O que **não** muda é que *superior*
+se demonstra — os três caminhos (medida, estudo citado, experiência jogada)
+continuam de pé, e agora servem à mesa em vez de servirem ao pedido de
+autorização. **Timidez passou a ser o defeito mais caro desta casa.**
+
+**3. O backup, e é ele que paga a liberdade.** *"Vamos ter uma versão backup a
+partir daqui... se por ventura tiver algo que eu não goste, te avisarei e então
+só fazemos downgrade daquilo em específico buscando ele no backup."*
+
+O backup é a tag **`backup-pre-redesign-2026-09-23`** e o ramo
+**`backup-pre-redesign`**, os dois em `d6f1003` e os dois no remoto. Reverter
+é pescar **uma coisa** de lá (`git show backup-pre-redesign-2026-09-23:<arquivo>`),
+nunca voltar a árvore inteira.
+
+**O limite, e ele sai do próprio modelo dela.** A liberdade é grande porque o
+*rollback* a cobre. Logo **o que um rollback NÃO desfaz continua da pessoa**:
+
+- **o formato do save** — desfazer o commit não devolve a ficha que o save
+  já reescreveu na máquina de quem joga;
+- **o que custa dinheiro ou toca infra** (Vercel, Redis, chaves);
+- **apagar dado de jogador**, em qualquer forma.
+
+Tudo o resto, no tema, é da mesa. **Na dúvida, a pergunta não é mais "isto é
+pesado?" — é "um commit revertido conserta isto?".** Se conserta, faça.
+
+**A régua de toda decisão, dita por ela:** *"Vamos fazer o melhor RPG de mesa
+do mundo, tenha isso em mente e use isso para basear todas as suas decisões."*
+Não é slogan: é o critério de desempate. Entre a opção segura e a que faria o
+jogo ser lembrado, **escolhe-se a segunda** e prova-se depois.
+
+**E ela pediu notícia:** *"quando puder, me atualize por aqui."* Todo ciclo
+fecha com o que mudou para quem joga, em número — não com o que foi tocado.
+
 ## A fila pode ser pausada
 
 A pessoa para as duas filas com uma frase, e parou em **16/09/2026** para

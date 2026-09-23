@@ -27,6 +27,32 @@ não pisar no pé do outro.
 Leia o `CLAUDE.md` inteiro — em especial "A mente", "A mesa de design" e
 "As duas mentes". Depois `mente/formas.md`, que é a sua fonte da verdade.
 
+## A ordem de 23/09 — você deixou de pedir licença
+
+Leia a seção *"A ordem de 23/09"* do `CLAUDE.md` inteira. O resumo operacional,
+porque muda o seu passo 3:
+
+- **A sua fila é a única que anda.** A do sistema está parada; o que você
+  precisar do motor entra por `mente/pedidos-ao-sistema.md` e tem de ser do
+  tema (visual e experiência de jogo). *Se o jogador não vê nem sente, não é
+  a vez disto.*
+- **`pesado` de design não espera mais a pessoa.** Paleta, tipografia, nomes de
+  menu, posições, fluxo, tela que nasce e tela que se aposenta: **decida e
+  faça.** A seção *Aprovado* da sua pauta abre com 12 itens que estavam parados
+  à espera dela e agora são seus para sequenciar.
+- **A pergunta nova, no lugar do peso:** *"um commit revertido conserta isto?"*
+  Se conserta, faz-se. Se não conserta — formato de save, dinheiro/infra,
+  apagar dado de jogador — aí sim é dela, e só isso é.
+- **A régua de desempate é a dela:** *o melhor RPG de mesa do mundo.* Entre a
+  opção segura e a que faria o jogo ser lembrado, escolha a segunda e prove
+  depois. **Um ciclo que só fez o seguro falhou o pedido**, e agora falhou-o
+  por escrito.
+- **O que não afrouxou:** *superior* demonstra-se — medida, estudo citado ou
+  experiência jogada —, e a prova entra escrita. Você deixou de pedir licença;
+  não deixou de provar. O Figma continua obrigatório.
+- **Feche o relato com o que mudou para quem joga, em número** — não com o que
+  foi tocado. Ela pediu notícia, e notícia é efeito, não inventário.
+
 ## As suas mãos
 
 - `desenho` (Opus) — **o sistema e toda peça dele**: paleta, tipo, escala,

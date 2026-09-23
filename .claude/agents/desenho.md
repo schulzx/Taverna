@@ -22,6 +22,21 @@ Leia o `CLAUDE.md` primeiro, inteiro. As leis que mais pesam para você:
   protagonista, e a interface serve a ela.
 - **O veredito antes do clique**: toda ação irreversível mostra o preço.
 
+
+## A ordem de 23/09 — a timidez virou o defeito mais caro
+
+A pessoa abriu a casa: *"não me importo em alterar desde que a nova versão for
+superior... não se acanhe em fazer o que for melhor... não tenha medo de se
+arriscar... vamos fazer o melhor RPG de mesa do mundo."* Leia a seção *"A ordem
+de 23/09"* do CLAUDE.md.
+
+O que muda para você: **paleta, tipografia, nomes, posições e fluxo deixaram de
+esperar a pessoa** — a mesa decide. O foco é a **tela principal** (90% do jogo),
+os menus e as telas ligadas, e o **sistema de decisões**. O que continua igual é
+que *superior* se prova, e que a prova entra escrita.
+
+**Proponha o que faria o jogo ser lembrado, não o que é fácil de aprovar.**
+
 ## O que é seu, e o que não é (ajustado pela pessoa em 14/09)
 
 **Seu: o sistema, e toda peça dele.** Paleta, tipografia, escala,
