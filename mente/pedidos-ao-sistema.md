@@ -538,6 +538,35 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
   estado `pronta` e um gesto `entregar`, com quem recebe e onde. **Aí a soleira
   ganha o seu quinto verbo, e é o mais satisfatório de todos.**
 
+- [ ] **a viagem pausada existe no motor e é inalcançável da tela** · de: R15 · 23/09
+  Achado construindo `Seguir viagem`, e medido, não suposto: `viagem.js` tem
+  três estados (`em_curso` · `pausada` · `concluida`) e duas funções para o do
+  meio — `pausarViagem` e `retomarViagem`. **`jornadaRef.current` nunca é posto
+  a `pausada`.** O único `pausarViagem` do `App.jsx` (`:11321`) monta uma
+  **cópia para o prompt** e deita-a fora; a jornada de verdade nunca muda de
+  estado. Consequências medidas:
+  - **`retomarViagem` estava importado e nunca chamado** — 1 ocorrência no
+    arquivo, a do `import`. *Export morto mente, e um import morto é a mesma
+    mentira do outro lado.* **R15 tirou-o**; se o pedido for atendido, volta.
+  - **O ramo `PAUSADA` de `linhaDaViagem` (`viagem.js:217`) não pode
+    renderizar.** Há uma frase escrita para o jogador que nenhum jogador pode
+    ver.
+  - A emboscada que "PARA a viagem" — o comentário de `pausarViagem` di-lo com
+    todas as letras — **não para coisa nenhuma**: o combate impede o avanço
+    porque `viajar()` recusa em combate, não porque a jornada esteja pausada.
+  **Para quê:** hoje não dá buraco, e é por isso que ninguém reparou em
+  versões. Dá no dia em que alguém quiser distinguir *parei de propósito* de
+  *não posso andar agora* — que é exactamente o que a emboscada da prova de R15
+  era (18 → 3 PV a caminho de Vila de Espinho) e o que um `Fugir` precisaria.
+  **O que se pede:** ou o motor passa a pausar a jornada de verdade (e então há
+  um `Retomar viagem` para a soleira, que é fila B e já tem forma), **ou os
+  três — o estado, as duas funções e o ramo da linha — saem**, e a viagem
+  assume que só tem dois estados. *O que não pode continuar é ter estado vivo
+  que a tela não alcança: é uma promessa que o código faz e não cumpre.*
+  **R15 deixou a guarda de pé** (`p.estado !== ESTADOS_VIAGEM.pausada` na
+  oferta da estrada) mesmo sabendo-a hoje inalcançável — no dia em que o motor
+  pausar, uma oferta que continuasse a andar seria um bug calado.
+
 
 ## Atendidos
 

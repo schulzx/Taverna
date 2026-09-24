@@ -314,14 +314,22 @@ const ZONAS_DE_TABELA = [
    estritamente PIOR que a animação.
 
    (`.tv-agonia` é INOCENTE, ao contrário do que a pauta suspeitava:
-   quando `grave`, `App.jsx:21797`/`:21799` já põe borda estática de
+   quando `grave`, `App.jsx:1502`/`:1504` já põe borda estática de
    `T.danger`, o anel do retrato, o rosto e a barra de PV rotulada com o
    número (esta última em `:21812`). Quatro afirmações paradas de "você
    está morrendo"; o pulso é a quinta. Parado, o jogador ainda sabe.
 
-   Endereços conferidos em 16/09/K4 — a citação original dizia
-   `:20971-20972`, um bloco que hoje fala de recalibragem de save e não
-   de `grave` nenhum. Achados pelo texto que descrevem, não por conta de
+   Endereços reconferidos em 23/09/R15 pelo método que este próprio
+   parágrafo manda usar — o TEXTO que descrevem, não a conta de linha. A
+   citação de K4 (`:21797`/`:21799`) tinha voltado a apodrecer e apontava
+   para `setSubPedida` e para um `catch`, que não são borda nem anel
+   nenhum; as duas peças vivem hoje em `:1502` e `:1504`, dentro de `A
+   cinta`, e estão ACIMA de tudo o que R15 deslocou — ou seja, a drift
+   não é de R15, é anterior e passou duas correcções sem ser apanhada.
+   *Um endereço em prosa não tem catraca, e por isso apodrece calado: é o
+   argumento para o dia em que alguém quiser um varredor de citações.*
+   (a citação original, de antes de K4, dizia `:20971-20972`.)
+   Achados pelo texto que descrevem, não por conta de
    linha: a borda em `style={{ background: T.panel, border: "1px solid "
    + (feridaRecente || grave ? T.danger : T.line) }}` e o anel em
    `<Retrato ... anel={grave ? T.danger : T.amber} .../>`.) */

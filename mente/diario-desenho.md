@@ -19,6 +19,260 @@ Formato:
 
 ---
 
+## 23/09 · v9.287 · **R15 — a soleira aprende a ouvir, e as dívidas de R13 pagam-se** · commits `d5ec4fe` (as dividas) · `f8709ba` (o save) · `HASHV` (os verbos)
+
+*O escrito das mãos fica em `mente/r15-mesa.md`; a forma, na secção `R15` de
+`mente/formas.md`.*
+
+**O ciclo que nasceu de uma frase de relatório.** R13 fechou com uma linha
+minha que o coordenador leu e devolveu como item: *"a soleira só aprendeu dois
+verbos, e em 2 dos 20 turnos ofereceu o que o jogador ia mesmo fazer — o ganho
+está provado (990 ms contra 10,7 s por frase) e quase todo por gastar."*
+**Um ganho de 10× que só dispara em 10 % dos turnos.**
+
+- **estado inicial:** árvore limpa em `dcf324b`, `v9.284`, travas livres,
+  **206/206 e 15/15 verdes**.
+
+- **o censo ao contrário, e o diagnóstico é o oposto do que a etapa esperava.**
+  O `jogo` voltou aos seus 20 turnos e perguntou o contrário: *havia ali algo
+  que eu perdia se não agisse agora, e que a soleira não me ofereceu?*
+
+  | | turnos |
+  |---|---|
+  | oferta legítima por nascer, **com o motor de hoje** | **5** (uma já paga por R13) |
+  | oferta legítima que **o motor não sabe ver** | **4** |
+  | sem oferta por nascer, e corretamente | 9 |
+
+  > **A soleira não tem um problema de vocabulário — tem um problema de
+  > alcance.** Os quatro que o motor não vê são todos a mesma coisa: *alguém
+  > pediu cara a cara e o sistema nunca soube que um pedido tinha sido feito.*
+
+  **A etapa é pequena; a fase que a segue é do motor.** Foram quatro pedidos
+  para `mente/pedidos-ao-sistema.md`, e o mais caro é que **`Fugir` não
+  existe**: o `jogo` escreveu *"recuo depressa pela estrada e fujo dos
+  javalis"*, o sistema não fugiu, deu-lhes a rodada — **18 → 3 PV**. Seis
+  verbos no tabuleiro e nenhum é `Fugir`.
+
+- **o `jogo` reverteu-se a si mesmo por escrito**, o que é a segunda vez neste
+  par de ciclos e é o que eu quero ver: `r6-jogo.md` §5.4 era dele e pedia `ir`
+  na soleira. *Todo lugar que o mapa conhece é a tábua da cidade de sapatos
+  novos — está lá em todo turno de toda cidade e **cresce com o mapa**.* A casa
+  do `ir` é o `▸`, na linha em que o mundo nomeou o lugar. **A soleira é onde o
+  mundo oferece; o `▸` é onde o mundo abre.**
+
+- **a régua mudou de moeda, e não no sentido que se temia.** Jogando o depois
+  de R13, a soleira passou de **50 % para 14 %** do que divide com a página — e
+  o argumento que matara `Esperar` (*"custa página demais"*) **morreu com o
+  número**. Se a régua fosse pixels, o teto teria de abrir. Não abre:
+
+  > **Pixels devolvem-se encolhendo; atenção só se devolve acertando.** O que
+  > defende a soleira é a **taxa de acerto** — 2 certos em 11 turnos com
+  > oferta, **18 %**. A 18 % o jogador aprende a não olhar, e uma região onde
+  > não se olha **não devolve 10× por mais barata que seja.**
+
+  Daí o teto ficar em **1 no telefone e 2 na mesa** com razão melhor do que a
+  de R13: um segundo lugar seria, *por construção*, ocupado pelo item que o
+  jogador queria **menos** — baixa a média e ensina a desconfiar.
+
+- **as duas filas:** **A = o que FECHA** ganha sempre; **B = o que COBRA** só
+  ocupa lugar quando A está vazia. *O que cobra está lá no turno seguinte; o
+  que fecha, não.* Nos 20 turnos de R6 as duas **nunca teriam competido**.
+
+- **e metade do trabalho foi dizer não:** `Esperar`, `ir`, mercado, tábua,
+  trabalhos da guilda, poção fora do combate, forragear, subir de nível,
+  entregar missão, portal, caçada, masmorra. *O diagnóstico de R1 contava 50
+  verbos de sistema atrás de abas — a maioria é mobília e continua lá.*
+
+- **as duas dívidas do céu tinham a mesma doença, e não era o valor: era a
+  lei.** O `aprendiz` eliminara opacidade e geometria, e **as duas eliminações
+  estavam certas** — por isso a saída não estava lá. *"O céu é a fonte de luz"
+  é verdade do **horizonte**, não do céu:* o alto é escuro nas quatro luzes, e
+  erguê-lo exigiria um cinzento médio — **a noite deixaria de ser noite para
+  que a textura dela se visse.** A lei nova é mais curta: **a marca é o
+  contrário do campo que a recebe.**
+
+- **e apareceu o que nenhuma medida de par podia dizer:** a hachura adensa para
+  o horizonte, o gradiente clareia para o horizonte — com marca escura **as
+  duas puxavam em sentidos contrários**. A textura **apagava 16–19 % da
+  profundidade que o gradiente declarava**; passa a acrescentar 12–29 %.
+  *Era por isto que o céu se lia chato mesmo onde o piso passava.*
+
+- **o piso do astro foi escrito recusando escrever um número:** **3:1, o que a
+  tabela já tinha** (WCAG 1.4.11) — dar-lhe piso próprio seria uma segunda
+  tabela. E o entardecer provou que não era afinação: com `T.danger` **nenhum
+  alfa chega a 2,0**, *o sol do entardecer era mais escuro do que o céu que ele
+  acende*. `T.ink` é o único dos 24 tokens que passa nas quatro luzes.
+
+- **a prova (as dívidas), medida:**
+
+  | | antes | depois |
+  |---|---|---|
+  | textura do céu, pior ponto | **1,09** (27 % abaixo do piso) | **2,14** (43 % acima) |
+  | o astro, pior luz | **1,42**, sem piso escrito | **3,41**, contra piso 3:1 |
+  | profundidade do céu | a hachura **apagava** 16–19 % | **acrescenta** 12–29 % |
+  | pisos por luz | 5 fechados + 1 isento | **7 fechados, zero isentos** |
+  | a 1.ª linha da prosa | cortada a navalha | **esbatida em 24 px, a 0 px de custo** |
+  | acentos da casa na paisagem | 1 (o astro) | **0** — a exceção de R13 fecha |
+
+- **duas honestidades que valem mais do que os números que as rodeiam:**
+  - **o recorte do astro rendeu 2,50 → 2,54, não os 2,56 esperados.** O
+    `aprendiz` foi ver porquê: *o talho que atravessava o disco media 1,08:1
+    contra o próprio disco* — as duas marcas claras nascem da mesma receita e o
+    disco já era praticamente sólido. **O ganho real é de acessibilidade:** em
+    `forced-colors` o astro **desaparecia**, e agora existe.
+  - **o retorno não trunca, e ele recusou-se a fingir que sim.** `truncate`
+    dentro de um `shrink-0` é uma classe que *promete reticências e nunca as
+    desenha* — que é literalmente o defeito que o comentário de R5d existe para
+    não repetir. **Está dito no código e não remendado.**
+
+- **a biblioteca do Figma derivou outra vez, no mesmo dia.** O `desenho`
+  corrigira-a em R13 (mostrava a paleta pré-R2); encontrou-a agora a mostrar a
+  receita **pré-correção-do-buril** — **9 dos 12 valores de céu e chão errados,
+  `talhoDoCeu` inexistente**. **Duas de duas vezes que alguém foi lá ver, ela
+  mentia.** Corrigiu 21 valores e propôs `check-figma.mjs`: *corrigir à mão não
+  é conserto, é adiamento.* **Isto merece ser lido duas vezes** — a lei da casa
+  é que nenhuma decisão de design sai sem passar pelo Figma, e o Figma esteve
+  errado nas duas únicas vezes em que foi auditado.
+
+- **e o Figma apanhou um defeito que o orçamento não apanhara:** a fila do verbo
+  saiu a **44 px**, abaixo de `ALVOS.piso`. *Segunda etapa seguida em que o
+  número orçado mentiu e o medido salvou.*
+
+- **decisões médias tomadas, cada uma com o motivo:**
+  - **confirmei `este turno`** — a única palavra que o `aprendiz` inventou,
+    completando o padrão de `esta noite` na conta de turnos. É a forma que a
+    casa já usa para a última unidade; inventar outra seria duas gramáticas.
+  - **o piso do campo de texto desce de 15/20 para 10/20, e o `jogo` assumiu-o
+    contra a catraca que ele próprio escrevera em R13.** Aceito, e a razão é
+    dele: *T10 e T19 foram frases que o jogo ignorou e T16 um turno gasto num
+    botão morto. **Mover um turno que falhou não é perder prosa — é parar de
+    mentir.*** O piso novo volta a ser medido a jogar.
+
+- **e a meio do ciclo a pessoa autorizou o conserto do save** (*"pode corrigir o
+  bug do save também"*), que entrou **à frente e com commit próprio**
+  (`f8709ba`) por ser **o único defeito desta casa que apaga trabalho de
+  jogador**. O pedido que eu próprio arquivara **culpava o sítio errado** —
+  `largarASala()` não toca no nome. A causa são dois lados que ninguém tinha
+  ligado:
+  - **a escrita.** Dos quatro campos que `salvar` grava do estado e não do ref,
+    `nomeCampanha` é **o único que nenhum chamador nunca passa fresco**:
+    `salvar({ personagem })` aparece **50** vezes, `mundo` **1**, `historico`
+    **1**, `nomeCampanha` **zero**. Os outros têm o mesmo guarda **e uma rede**;
+    este tem o guarda e nenhuma. *Não é uma corrida rara: é o estado normal
+    deste campo* — e foi isso que matou a saída (b), porque desarmar os
+    caminhos de saída deixaria o buraco aberto a qualquer caminho futuro.
+  - **a leitura, e era ela que inventava.** **Quatro** sítios escreviam
+    `sv.nomeCampanha || "Aventura"` — e o pior era `resumoDoSave`, que alimenta
+    a tela de importar **e o nome do ficheiro**: exportar um save mudo produzia
+    `taverna-aventura-halda-dia14-....json`. **A corrupção chegava ao nome do
+    backup no disco de quem joga.**
+
+  A regra nova **não inventa**: o gravado manda; faltando, o nome sai do herói,
+  *porque um save mudo ainda sabe de quem é*; só sem nada resta a palavra
+  genérica. **E cura o que já está no disco** — a metade que eu não deixei
+  cair, porque impedir a próxima corrupção não desfaz a de ninguém.
+
+- **a armadilha que o conserto óbvio era:** trocar a escrita pelo ref parecia a
+  cura e **criava uma corrupção nova** — `largarASala()` não limpa o ref, logo
+  em `irNovo` ele ainda carrega o nome da campanha anterior, e o save nasceria
+  com o nome **errado**, que é pior do que sem nome. *Guarda, não substituição.*
+  A guarda é o que já está no disco no mesmo espaço, **e há um dente que prende
+  a armadilha**: quem "simplificar" para o ref põe a suíte vermelha e ela diz
+  porquê.
+
+- **e o conserto descobriu uma asserção que passava por não achar nada:**
+  `indexOf` devolvia **-1** com a classe nova e `> -1` ficava **verde por
+  acidente**. *Uma asserção verde por não encontrar nada é pior do que uma
+  vermelha* — e é a terceira catraca falsa que este par de ciclos desmonta,
+  depois da que guardava uma estimativa e da que perguntava "varia?" em vez de
+  "varia quanto?".
+
+- **o `oficial` recusou-se a montar a campanha da pessoa para ver o
+  esbatimento**, e registo a decisão porque foi a melhor do turno: *verificar
+  uma máscara não vale arriscar o save de um jogador **no commit cujo motivo é
+  parar de estragar saves***. Verificou a peça em isolamento, com o jogo
+  desmontado.
+
+- **o que fica com a pessoa e com ninguém mais:** o save dela está **são quanto
+  ao nome**, é o único espaço que existe, e nada estragado sobrou. Mas lê
+  `vida: 0/18` com `combate: true` (o `jogo` deixara-a a 3/18) e `nivel: 1` ao
+  dia 14. **Não se lhe tocou e não se lhe toca** — reescrever dado de jogador é
+  dela, mesmo sob o regime de 23/09, e sobretudo neste commit.
+
+- **duas dívidas de save declaradas e não consertadas, de propósito:**
+  `historico` **não tem ref de todo** — e o comentário da v9.12 ali ao lado
+  regista que isso já custou uma vez *"o Mestre esqueceu o que acabou de
+  acontecer"* —, e `mundo` tem ref sem chamadores. **Um commit que conserta o
+  bug autorizado é revertível; um que arruma quatro campos de save de uma vez
+  já não é a mesma coisa**, e formato de save continua a ser da pessoa.
+
+- **os quatro verbos, e o número com que o ciclo fecha:**
+
+  | verbo | turnos dos 20 em que teria disparado |
+  |---|---|
+  | `Seguir para {destino}` | **2** (T10 · T19) |
+  | `Pagar o que {nome} pede` | **1** (T16 — era o botão morto) |
+  | `Convidar` (alcance, não construção) | **1** (T9) |
+  | `Aceitar o que {quem} pede` | **0** |
+  | | **4 novos + 2 que já acertavam = 6 de 20** |
+
+  **A taxa de acerto vai de 2/20 para 6/20 — de 10 % para 30 %.** E a petição
+  dá **zero nesta amostra**, o que o `oficial` fez questão de dizer sem
+  arredondar: *é a oferta mais perecível do jogo e a mais rara, e nos 20 turnos
+  não havia nenhuma pendente.* **A etapa promete 6 e entrega 6, mas 4 dos 6 vêm
+  de três verbos, não de quatro.**
+
+- **a prova viva apanhou o que nenhuma suíte apanharia, e era da peça mais
+  nova.** O `oficial` montou `Soleira` + `Oferta` com os seus valores, sem
+  montar a campanha da pessoa, e o primeiro render devolveu:
+
+  > `Aceitar o que a Coroa pede` · **`de a Coroa`** · `− ◉ 120 · 10 min`
+
+  **`de a Coroa`** — a praga da preposição por contrair, **o defeito #10 do
+  próprio R6**, plantado na peça mais recente da fase por quem o tinha medido
+  nesse mesmo dia. O conserto não foi gramática: **foi tirar o campo `quem`**,
+  porque *o verbo já diz de quem é*. **O melhor conserto de uma linha que
+  precisa de gramática é não precisar dela.**
+
+- **e o contrato de assinatura que eu ditei pagou-se na tela:**
+  `{ quanto: 3, conta: "noites" }` desenhou `3 noites`; o `{ noites: 3 }` que o
+  `oficial` ia passar teria ficado **inerte em silêncio** — build limpo, suíte
+  verde, e uma janela que nunca aparecia.
+
+- **o achado de processo, e é maior do que a etapa:** ao re-endereçar (desta vez
+  **zero correções necessárias** — mas ele foi procurar em vez de confiar no
+  verde), apareceram **quatro citações a viver em comentários que nenhum
+  varredor lê**. Duas delas, em `check-formas.mjs`, **já estavam podres antes
+  deste ciclo** e **sobreviveram a duas correções anteriores**, porque apontavam
+  para o sítio errado sem nada que as contradissesse.
+
+  > **Um endereço em prosa não tem catraca, e por isso apodrece calado.**
+
+  É o argumento para um varredor de citações, e fica escrito. *É a quarta
+  catraca falsa que este par de ciclos desmonta.*
+
+- **uma medição do `desenho` sobre peças do `desenho` que não bate, e que o
+  `oficial` não consertou por não ser da sua mesa:** `check-formas.mjs` afirma
+  *"`transition` fora do `estilo.js`: 18"* e cita uma string
+  (`transition-all duration-500`) que **não existe no `App.jsx`, nem em HEAD**;
+  `transition` aparece hoje **7** vezes. Item para o ciclo seguinte.
+
+- **e o `oficial` deixou de pé uma guarda que sabe hoje inalcançável**
+  (`p.estado !== ESTADOS_VIAGEM.pausada`), com a razão escrita: *no dia em que o
+  motor pausar a sério, uma oferta que continuasse a andar seria um bug calado.*
+  A viagem pausada existe em `viagem.js` e **é inalcançável da tela** — há uma
+  frase escrita para o jogador que nenhum jogador pode ver. Foi para os pedidos.
+
+- **o que ficou feio, e é dito:** o `preco` da petição pode correr longo e o
+  retorno trunca no telefone — está pela regra (*o retorno é prosa, e prosa
+  trunca*), mas foi **orçado e não visto truncar**; `Aceitar o que X pede` e
+  `Aceitar: {título}` são **duas gramáticas de `Aceitar` na mesma fila**; e
+  **nenhuma das quatro ofertas foi provada a sair do motor real** — só a peça
+  com valores postos à mão, porque sair do motor exigia montar a campanha da
+  pessoa, e isso não se fez.
+
+---
+
 ## 23/09 · v9.283 · **R13 — a moldura devolve a página, e a página ganha um rosto** · commits `fc3efb1` (A) · HASH_B (B)
 
 *O escrito das mãos fica em `mente/r6-jogo.md` (a prova jogada) e

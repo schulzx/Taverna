@@ -162,10 +162,18 @@ t("a montagem da lista tem nome e está em `try/catch`",
 t("e `bloqueado` NÃO a desliga — só impede a oferta que precisa do narrador",
   /estado=\{o\.precisaDoNarrador && bloqueado \? "impedida" : "repouso"\}/.test(APP),
   "se a soleira sumir durante os 14,3 s, o ganho principal da etapa some com ela");
+/* R15: a expressão ganhou uma cláusula e a asserção acompanha-a. O que ela
+   guardava — a marca decai por TURNO e não por relógio — não mudou; o que
+   entrou foi uma segunda lei, do `jogo`: a fila B (o que COBRA) nunca
+   CHEGA, porque ela ESTÁ. Uma marca de "novo neste turno" que dura enquanto
+   o estado durar deixa de significar novo e passa a significar ruído. */
 t("a chegada decai por TURNO, e não por relógio",
-  /chegada=\{jaTinha && jaTinha\.has\(o\.id\) \? "assentada" : "agora"\}/.test(APP)
+  /chegada=\{o\.fila === "B" \|\| \(jaTinha && jaTinha\.has\(o\.id\)\) \? "assentada" : "agora"\}/.test(APP)
   && /\}, \[carregando\]\); \/\/ eslint-disable-line/.test(APP),
   "uma marca que morre por tempo morre enquanto o jogador está a pensar");
+t("e a fila B nunca chega — ela está",
+  /o\.fila === "B" \|\| /.test(APP),
+  "a fila A chega; a fila B está. Uma marca de novidade que dura cinco turnos é ruído");
 
 sec("6. O atalho de rolamento não pode voltar a tapar a chamada do turno");
 t("ele vive dentro do invólucro da página, e não do `main`",
@@ -234,9 +242,47 @@ t("o que já foi aceite sai da soleira, pelo MESMO teste que `pregarNoMural` usa
   const i3 = rSoleira.indexOf('id: "chao|aqui"');
   const i4 = rSoleira.indexOf('id: `cartaz|');
   t("as quatro entradas da régua existem, e o corpo à frente delas", [i0, i1, i2, i3, i4].every((i) => i > 0));
-  t("e estão na ordem da perecibilidade: corpo · resposta · cena · chão · papel",
-    i0 < i1 && i1 < i2 && i2 < i3 && i3 < i4,
-    "a régua da lista é quanto tempo a oferta sobrevive, do mais curto ao mais longo — e o corpo do herói vem antes de tudo");
+  /* ============================================================
+     R15 REESCREVE ESTA ASSERÇÃO, E O MÉTODO DELA — NÃO SÓ OS VALORES.
+
+     Ela media a ordem da lista pela POSIÇÃO NO TEXTO, e isso era verdade
+     enquanto havia uma fila só. Agora há duas (`lista` = o que FECHA,
+     `filaB` = o que COBRA) e a ordem final é COMPOSTA no `return`:
+
+         [A0, B0, ...resto de A]
+
+     Logo a posição no texto já não é a ordem da lista para a fila B — o
+     acampamento e a estrada são escritos no topo da função e entregues no
+     SEGUNDO lugar. Deixar a asserção medir texto seria deixá-la medir uma
+     coisa que deixou de ser a coisa. Passa a medir as duas separadamente,
+     mais a linha que as compõe.
+
+     E DENTRO DA FILA A A ORDEM MUDOU NUM PONTO: o chão passou para DEPOIS
+     do cartaz, por `formas.md` §R15. A razão antiga — *o chão perece com o
+     passo, a tábua continua pregada amanhã* — não foi apagada: está inteira
+     no comentário do código, dita como o que é, uma leitura que perdeu e
+     que um censo futuro pode reabrir. As duas são perecibilidade e
+     discordam só sobre qual perece mais depressa, e isso mede-se jogando.
+     ============================================================ */
+  const iViagem = rSoleira.indexOf('id: "viagem|seguir"');
+  const iPeticao = rSoleira.indexOf('id: `peticao|');
+  t("a fila A está na ordem da perecibilidade: petição · resposta · cena · papel · chão",
+    iPeticao > 0 && iPeticao < i1 && i1 < i2 && i2 < i4 && i4 < i3,
+    "a régua da fila A é quanto tempo a oferta sobrevive, do mais curto ao mais longo — e a petição expira sozinha, sem ninguém agir");
+  t("a fila B tem os dois estados que cobram, e a estrada à frente do corpo",
+    iViagem > 0 && iViagem < i0,
+    "com jornada aberta E o corpo a pedir, a estrada ganha: dois botões para `o teu estado cobra` seria a doença, não a cura");
+  t("e os dois da fila B entram por `filaB`, não pela fila A",
+    /filaB\.push\(\{\s*\n\s*id: "viagem\|seguir"/.test(rSoleira)
+    && /filaB\.push\(\{\s*\n\s*id: "tempo\|acampar"/.test(rSoleira));
+  t("a composição dá o primeiro lugar à fila A e o segundo à B",
+    /return lista\.length \? \[lista\[0\], \.\.\.B, \.\.\.lista\.slice\(1\)\] : B;/.test(rSoleira + APP),
+    "no telefone (teto 1) vê-se A0; na mesa (teto 2) A0 e B0 — a fila B só ocupa lugar quando não tira nada a ninguém");
+  t("e a fila B é capada a UMA",
+    /const B = filaB\.slice\(0, 1\);/.test(APP));
+  t("o chão passou para depois do cartaz, e a razão antiga não se perdeu no diff",
+    i4 < i3 && /PERECE COM O PASSO/.test(rSoleira) && /perdeu, nao morreu/i.test(rSoleira),
+    "`formas.md` manda, mas uma razão que desaparece no diff deixa de poder ser reaberta — e esta pode ser reaberta por um censo futuro");
   t("`Esperar` deixou a soleira e o empréstimo de R4b está pago",
     i0 > 0 && rSoleira.indexOf('id: "tempo|esperar"') < 0 && /E `ESPERAR` SAIU DAQUI EM R13/.test(APP),
     "pela régua ele nunca foi oferta; agora tem casa própria no toque do relógio, e o porquê está dito onde se lê");

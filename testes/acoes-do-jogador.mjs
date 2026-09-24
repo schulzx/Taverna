@@ -212,7 +212,7 @@ export const ACOES_DO_JOGADOR = [
      apontar a mesma linha que apontavam no HEAD, e essa linha continua a
      não ser a função nomeada ao lado. Re-medi-los é do `testes`, não desta
      etapa — fica escrito em vez de arrumado por fora.
-     `onClick` (`src/App.jsx:22238`) → `declararAcaoRapida` (`:16211`)
+     `onClick` (`src/App.jsx:22464`) → `declararAcaoRapida` (`:16211`)
      → `adjudicarAcao` (`:15960`) → dado.
      Nenhuma é de combate — é o achado que pôs a Fase X na frente. */
   { id: "rapida_buscar", rotulo: "Vasculhar", fonte: "ACOES_RAPIDAS", combate: false,

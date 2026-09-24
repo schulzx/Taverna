@@ -130,7 +130,7 @@ import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as 
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { resumoArredoresPrompt, arredoresDaCidade, arredorPorTexto } from "./arredores.js";
-import { abrirViagem, andar, pausarViagem, retomarViagem, progressoDaViagem, comTrechos, trechoAtual, minutosPorAvanco, relogioDoAvanco, resumoViagemPrompt, linhaDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
+import { abrirViagem, andar, pausarViagem, progressoDaViagem, comTrechos, trechoAtual, minutosPorAvanco, relogioDoAvanco, resumoViagemPrompt, linhaDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
 /* v9.165: a LEI DA FORMA — o porteiro do molde. A trava antes da partida,
    a chave na morte do guardião, a cena criada pelo sistema quando abre. */
@@ -21559,7 +21559,88 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
   const ofertasDaSoleira = () => {
     try {
-      const lista = [];
+      /* DUAS FILAS, E O DESEMPATE DECIDIDO ANTES DO CANSACO (R15 §5).
+
+         A peneira de R1b — *a soleira e o que o jogador PERDE se nao agir
+         agora; mobilia nao se perde* — tinha um buraco, e foi R13 que o
+         tapou sem lhe dar nome: `Montar acampamento` NAO perece (o
+         acampamento esta la amanha) e entrou na soleira, e esta certo que
+         tenha entrado. A emenda de R15 da-lhe duas portas, e uma basta:
+
+           FILA A — o que FECHA: a porta some se ele nao agir.
+           FILA B — o que COBRA: o estado nao some, mas corre um preco
+             enquanto durar (a estrada come uma racao e uma agua por boca
+             e uma noite de cada prazo; o corpo cansado da desvantagem em
+             todo o dado). *Nao e a oferta que perece: e o jogador que
+             sangra enquanto nao a toma.*
+
+         E CONTINUA A VALER O SEGUNDO TESTE, O DE R1: se a frase e invencao
+         do jogador — atacar, persuadir, procurar, perguntar —, a casa dela
+         e o campo, mesmo passando nas duas portas. `Esperar` falha as tres,
+         saiu em R13 e nao volta.
+
+         A PORTA 2 ABRE PARA EXACTAMENTE DOIS ESTADOS, os dois nomeados
+         aqui e os dois com handler no motor. Nao e licenca: e lista
+         fechada, e crescer nela e materia de outra etapa, com outro censo.
+
+         O DESEMPATE: ganha a fila A; a fila B so ocupa lugar quando a A
+         esta vazia. A razao e jogada: *o que cobra esta la no turno
+         seguinte tambem — a estrada nao foge, o cansaco nao passa sozinho.
+         O que fecha, nao.* Na MESA (2 lugares) a fila B tem o segundo
+         garantido, porque la nao tira nada a ninguem. Nos 20 turnos de R6
+         as duas filas nunca teriam competido: na estrada nao ha mural, nem
+         mercado, nem quem pregue cartazes, e o correio chega em cidade. A
+         regua existe para o dia em que competirem. */
+      const lista = [];   /* fila A — o que FECHA */
+      const filaB = [];   /* fila B — o que COBRA, no maximo UMA */
+
+      /* 0a · A ESTRADA (fila B) — E O MAIOR ITEM DESTA ETAPA.
+
+         `viajar()` existe, e deterministico, tem o custo calculado — e nao
+         tem UM botao em lado nenhum: so la chega quem acerta na frase, por
+         `detectarSeguirViagem` -> porta `seguir` -> `viajar(destino)`. E a
+         doenca de R1 (50 verbos de sistema contra 17 portas de texto) na
+         forma mais pura: **um verbo com ZERO portas de toque.**
+
+         E A PROVA E UMA FRASE DO PROPRIO JOGO: a tela imprime ao jogador,
+         no primeiro avanco, `· escreva que segue viagem para avancar`. *O
+         jogo pede a senha.* Medido em R6: duas viagens escritas no campo
+         que nao moveram o heroi um metro, uma delas a custar seis dias de
+         calendario contra um prazo de quatro noites.
+
+         PELA PENEIRA ELA NAO FECHA — a estrada nao foge —, MAS COBRA, e e
+         o unico estado do jogo em que o jogador nao tem outra coisa para
+         fazer. E a porta 2, e a fila B existe por ela.
+
+         O PRECO E O RETORNO SAEM DAS FUNCOES QUE O AVANCO VAI USAR:
+         `minutosPorAvanco` e o que `andar()` consome, e a gramatica do que
+         falta e a de `linhaDaViagem`. Duas contas para o mesmo numero
+         seriam duas verdades, e o jogador tem direito a que o sistema vai
+         mesmo cobrar. **Nenhum numero novo: isto e surfacing.**
+
+         A JORNADA PAUSADA NAO ENTRA, e o guarda fica mesmo sabendo-se hoje
+         inalcancavel: `jornadaRef.current` nunca e posto a `pausada` (so o
+         prompt monta uma copia pausada), logo o ramo nao dispara. Fica
+         porque retomar e explicito por desenho, e no dia em que o motor
+         pausar de verdade uma oferta que continua a andar seria um bug
+         calado. Esta medicao esta em `mente/pedidos-ao-sistema.md`. */
+      if (jornada && jornada.para && !acampado && !combate) {
+        const p = progressoDaViagem(jornada);
+        if (p && !p.chegou && p.estado !== ESTADOS_VIAGEM.pausada) {
+          filaB.push({
+            id: "viagem|seguir",
+            fila: "B",
+            verbo: `Seguir para ${jornada.para}`,
+            preco: emTempo(minutosPorAvanco(jornada)),
+            retorno: `faltam ${p.turnosRestantes} ${p.turnosRestantes === 1 ? "avanco" : "avancos"}`,
+            tom: "preco",
+            precisaDoNarrador: true,
+            /* do ref e nao do estado: entre montar a lista e o dedo cair
+               pode ter passado um turno, e quem anda e o destino de agora */
+            aoClicar: () => viajar((jornadaRef.current || {}).para || ""),
+          });
+        }
+      }
 
       /* 0 · O CORPO, QUANDO ELE PEDE. O acampamento perdeu o botão do
          cabeçalho e ganhou duas casas: o toque no relógio (sempre) e ESTA
@@ -21590,8 +21671,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
              prazo tem uma segunda voz a 48 px daqui: o selo da cinta, que diz
              `3 noites` sem ninguém lhe tocar. */
           const oQueCura = curadas.length ? curadas[0] : (exausto ? "cansaço" : "");
-          lista.push({
+          filaB.push({
             id: "tempo|acampar",
+            fila: "B",
             verbo: "Montar acampamento",
             preco: "uma noite",
             retorno: oQueCura ? "PV, PM e o " + oQueCura : "PV e PM cheios",
@@ -21600,6 +21682,83 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             aoClicar: () => acampar(),
           });
         }
+      }
+
+      /* 1a · A PETICAO QUE EXPIRA — A OFERTA MAIS PERECIVEL DO JOGO.
+
+         `correio.recebidas` nasce com `prazo: dia + 3` e MORRE SOZINHA em
+         `processarDiaCorreio`: ninguem precisa de agir para a perder. Por
+         isso abre a fila A, que se ordena pelo que fecha mais cedo.
+
+         O VEREDITO JA ESTAVA ESCRITO E FALAVA PARA UMA PORTA FECHADA:
+         `leituraDaPeticao` existe desde a v9.191 com o unico proposito de
+         dizer o preco antes do clique — e dizia-o dentro de Gestao ›
+         Correio, numa aba que so abre se ja houver cartas. *Ha uma funcao
+         nesta casa cujo unico proposito e cumprir a lei do veredito, e ela
+         falava para quem nunca a ia ouvir.*
+
+         SO O `aceitar` SOBE, e e decisao do `jogo` fixada em `formas.md`: a
+         soleira e onde o mundo oferece, nao um formulario com duas caixas,
+         e deixar expirar ja e recusar. A recusa explicita fica onde sempre
+         esteve, atras do `▸ Correio`. O `desenho` confirmou por forma: uma
+         oferta com dois verbos deixa de ser PORTA e passa a PERGUNTA, e a
+         peca da pergunta ja existe e chama-se `O chamado`.
+
+         O QUE NAO SE PODE PAGAR NAO ENTRA — a mesma lei do convite `exige`
+         logo abaixo. Quem decide e `resolverPeticao(p, true)`, a MESMA
+         funcao que o clique vai correr: o ramo do aceite e puro, e so o da
+         recusa tem sorte dentro. Duas contas para o mesmo numero seriam
+         duas verdades.
+
+         A DIVISAO DO VEREDITO EM PRECO E RETORNO e a linha mais fragil
+         desta regiao, e fica anunciada: `leituraDaPeticao` JUNTA as partes
+         com " · " para exibicao, e aqui separam-se pelo mesmo separador.
+         E legitimo (e uma string construida para ser lida), mas fragil — e
+         por isso `teste-soleira-verbos` prende a forma das seis entradas de
+         `EFEITO_DA_PETICAO`: se a juncao mudar, a suite fica vermelha antes
+         de a tela mostrar meio veredito. Duas das seis nao tem segunda
+         parte (tributo e ameaca nao compram nada), e o retorno vazio ali e
+         a verdade: paga-se para que nada aconteca.
+
+         O CUSTO EM TEMPO VAI ESCRITO mesmo nao estando na maquete da mesa:
+         `responderPeticao` chama `enviar`, logo custa o turno, e *toda
+         oferta escreve o que custa em tempo* (R13 §4.1) e lei. A gramatica
+         e a que o `Convidar` ja escreve vinte linhas abaixo. */
+      {
+        const daPeticao = [];
+        for (const p of (((correio || {}).recebidas) || [])) {
+          if (!p || !p.id || p.status !== "pendente") continue;
+          const ef = resolverPeticao(p, true);
+          const bolso = (personagem && personagem.moedas) || 0;
+          const cofre = (guilda && guilda.cofre) || 0;
+          if (ef.moedas < 0 && bolso + cofre < -ef.moedas) continue;
+          const leitura = leituraDaPeticao(p);
+          const partes = String(leitura.aceitar || "").split(" · ");
+          const noites = Math.max(0, (Number(p.prazo) || 0) - dia);
+          daPeticao.push({
+            fecha: noites,
+            id: `peticao|${p.id}`,
+            verbo: `Aceitar o que ${p.de} pede`,
+            preco: [partes[0], emTempo(MINUTOS_POR_TURNO)].filter(Boolean).join(" · "),
+            retorno: partes.slice(1).join(" · "),
+            /* a janela NAO e texto: e `O selo de prazo` com o eixo `Conta`,
+               e o motor conta as noites por nos (`prazo - dia`) */
+            janela: { quanto: noites, conta: "noites" },
+            /* SEM `quem`, E FOI A PROVA VIVA QUE O MOSTROU: `de ${p.de}` saiu
+               na tela como **"de a Coroa"** — a praga da preposicao por
+               contrair, que e o defeito #10 de R6 e que o `jogo` voltou a ver
+               hoje em `Praga em o posto da estrada`. E o verbo ja diz de quem
+               e ("Aceitar o que a Coroa pede"), logo o campo era ao mesmo
+               tempo redundante e errado. *O melhor conserto de uma linha que
+               precisa de gramatica e nao precisar dela.* */
+            tom: ef.moedas < 0 ? "preco" : "convite",
+            precisaDoNarrador: true,
+            aoClicar: () => responderPeticao(p.id, true),
+          });
+        }
+        /* o que fecha mais cedo primeiro — e o motor e que conta os dias */
+        daPeticao.sort((a, b) => a.fecha - b.fecha);
+        for (const o of daPeticao) lista.push(o);
       }
 
       /* 1 · A MISSÃO QUE PEDE RESPOSTA. Alguém propôs cara a cara e está à
@@ -21645,46 +21804,62 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           if (String(n.status || "").toLowerCase().includes("morto")) continue;
           const v = vereditoDoConvite(n.nome);
           if (!v || v.resposta === "recusa") continue;
+          /* A LEI DE R13 QUE NUNCA CHEGOU AO CODIGO, e o `jogo`
+             reencontrou-a jogando: aqui filtrava-se `recusa` e deixava-se
+             entrar `exige`, e `Convidar Vero do Braseiro · tem preço` era um
+             botao morto que gastou um turno inteiro (T16 de R6). *Uma lei
+             sem catraca e uma intencao.*
+
+             E A CORRECCAO DE R13 TAMBEM ESTAVA ERRADA, e a prova e uma
+             funcao que ja existe. R13 escreveu: *oferta cuja pre-condicao o
+             sistema ja sabe que falha vira estado, o toque sai*. Nao era
+             uma oferta que nao podia mudar nada — **era a oferta certa com
+             o verbo errado**, e `bancarOConvite` paga a exigencia e resolve
+             desde sempre, duas gavetas abaixo, em Gestao › Pessoas.
+
+             A REGUA, ENTAO: `aceita` -> `Convidar`, como hoje. `exige` COM
+             saldo -> `Pagar o que ele pede`, com o preco e a bolsa na cara.
+             `exige` SEM saldo -> nada. `recusa` -> nada, como hoje.
+             *Melhor uma soleira calada do que um botao morto.*
+
+             O QUE SE EXIGE E QUE NAO SEJA DINHEIRO tambem nao entra: a
+             exigencia de mais dias de estrada e tempo, e tempo nao se
+             compra — `bancarOConvite` recusa-a em voz alta, e oferecer o
+             que vai ser recusado ensina a nao olhar para a soleira.
+
+             E E A CINTA DE R13 QUE TORNA ISTO LEGIVEL: sem a bolsa na tela
+             — que R13 la pos porque em 20 turnos a soleira ofereceu 205 e
+             115 moedas e a tela nunca disse quanto se tinha — este preco
+             seria outro `tem preço`. *Uma etapa a pagar a seguinte.* */
+          if (v.resposta === "exige") {
+            const ex = (v.exigencia || {});
+            const bolsa = (personagem && personagem.moedas) || 0;
+            if (ex.tipo !== "paga" || bolsa < (Number(ex.moedas) || 0)) continue;
+            lista.push({
+              id: `bancar|${n.nome}`,
+              verbo: `Pagar o que ${n.nome} pede`,
+              preco: [`◉ ${ex.moedas} · de ${bolsa}`, emTempo(MINUTOS_POR_TURNO)].filter(Boolean).join(" · "),
+              retorno: `${String(n.nome).split(" ")[0]} vem com você`,
+              quem: n.papel || "",
+              tom: "preco",
+              precisaDoNarrador: true,
+              aoClicar: () => bancarOConvite(n.nome),
+            });
+            continue;
+          }
           lista.push({
             id: `convite|${n.nome}`,
             verbo: `Convidar ${n.nome}`,
-            preco: [
-              v.resposta === "exige" ? String((v.exigencia && v.exigencia.o) || "") : "",
-              emTempo(MINUTOS_POR_TURNO),
-            ].filter(Boolean).join(" · "),
-            retorno: v.resposta === "aceita" ? "aceitaria" : "tem preço",
+            preco: emTempo(MINUTOS_POR_TURNO),
+            retorno: "aceitaria",
             quem: n.papel || "",
-            tom: v.resposta === "exige" ? "preco" : "convite",
+            tom: "convite",
             precisaDoNarrador: true,
             aoClicar: () => convidarNpc(n.nome),
           });
         }
       }
 
-      /* 2b · O QUE O CHÃO GUARDA, AQUI. Era a aba `Examinar`, permanente, e
-         o seu próprio `title` a confessava: *"Nada caído por perto"*. Quando
-         há coisa, é uma oferta; quando não há, não é nada — e nada não ocupa
-         tela.
-
-         ENTRA ANTES DO CARTAZ PORQUE PERECE COM O PASSO: `pertoDaqui` mede a
-         partir de onde o herói está, e quem anda perde o que ficou para
-         trás; a tábua da cidade continua pregada amanhã. É a mesma régua de
-         perecibilidade que ordena a lista inteira.
-
-         E O NÚMERO VAI NO RETORNO, não num balão de rato: QUANTAS coisas
-         estão ao alcance é exactamente o que o sistema sabe e o jogador não
-         adivinha — e `title` não existe no telefone. */
-      const noChao = (chaoPerto || []).length;
-      if (noChao) {
-        lista.push({
-          id: "chao|aqui",
-          verbo: "Examinar o chão",
-          retorno: `${noChao} coisa${noChao === 1 ? "" : "s"} ao alcance`,
-          tom: "convite",
-          precisaDoNarrador: false,
-          aoClicar: () => setExaminando(true),
-        });
-      }
 
       /* 3 · O PAPEL QUE ALGUÉM ACABOU DE PREGAR, E SÓ ELE. `oferecido` é a
          marca que o próprio mural já usa para separar as duas pilhas: é
@@ -21746,6 +21921,39 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         });
       }
 
+      /* 4 · O QUE O CHAO GUARDA, AQUI — e ele MUDOU DE LUGAR em R15.
+
+         `formas.md` §R15 fixa a fila A assim: *peticao › quem esta em cena ›
+         o papel acabado de pregar › o que o chao guarda*. O chao vinha ANTES
+         do cartaz, e a razao estava escrita e era boa — fica aqui inteira,
+         porque uma razao que desaparece no diff deixa de poder ser reaberta:
+
+           *ENTRAVA ANTES DO CARTAZ PORQUE PERECE COM O PASSO: `pertoDaqui`
+           mede a partir de onde o heroi esta, e quem anda perde o que ficou
+           para tras; a tabua da cidade continua pregada amanha.*
+
+         AS DUAS LEITURAS SAO PERECIBILIDADE e discordam so sobre qual perece
+         mais depressa — e isso mede-se jogando, nao discutindo. `formas.md`
+         manda, e manda com o censo dos 20 turnos de R6 a favor. **A leitura
+         antiga perdeu, nao morreu:** um censo futuro que conte quantas vezes
+         se perdeu coisa do chao por ter andado pode reabri-la, e entao esta
+         nota e o que lhe da o argumento de volta.
+
+         E O NUMERO VAI NO RETORNO, nao num balao de rato: QUANTAS coisas
+         estao ao alcance e exactamente o que o sistema sabe e o jogador nao
+         adivinha — e `title` nao existe no telefone. */
+      const noChao = (chaoPerto || []).length;
+      if (noChao) {
+        lista.push({
+          id: "chao|aqui",
+          verbo: "Examinar o chão",
+          retorno: `${noChao} coisa${noChao === 1 ? "" : "s"} ao alcance`,
+          tom: "convite",
+          precisaDoNarrador: false,
+          aoClicar: () => setExaminando(true),
+        });
+      }
+
       /* O MERCADO SAIU DAQUI (R5b), pela mesma régua que levou a tábua: que
          há comércio numa cidade o jogador adivinha, e o mercado não se perde
          por não se agir agora — está aberto amanhã, e depois. Era a quarta
@@ -21769,7 +21977,31 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
          nasceu: *"vazia não deixa buraco: região que reserva espaço para nada
          é mobília a mentir"*. */
 
-      return lista;
+      /* A COMPOSICAO, E ELA SERVE OS DOIS TETOS COM UMA LISTA SO.
+
+         `Soleira` corta por `slice(0, teto)` — 1 no telefone, 2 na mesa —,
+         logo a ORDEM daqui E a prioridade, e o teto nao se escreve aqui.
+
+           [A0, B0, ...resto de A]
+
+         No telefone ve-se A0: a fila A ganha, e so quando ela esta vazia e
+         que a B aparece. Na mesa veem-se A0 e B0: o segundo lugar da fila B,
+         garantido, porque la nao tira nada a ninguem. O resto vai para `A
+         dobra`, que a propria `Soleira` instancia.
+
+         O TETO NAO SOBE, e a razao mudou de moeda em R15: a soleira acerta
+         hoje em 2 dos 11 turnos em que apareceu — 18 %. A 18 % o jogador
+         aprende a nao olhar, e uma regiao onde nao se olha nao devolve 10x
+         por mais barata que seja. *Pixels devolvem-se encolhendo a peca;
+         atencao so se devolve acertando.* Subir para 2 no telefone seria,
+         por construcao, dar o segundo lugar ao item que ele queria MENOS —
+         nao acrescenta um acerto: baixa a media e ensina a desconfiar.
+
+         A FILA B E CAPADA A UMA: com jornada aberta E o corpo a pedir, a
+         estrada ganha. Dois botoes para o mesmo "o teu estado cobra" seria
+         a doenca, nao a cura. */
+      const B = filaB.slice(0, 1);
+      return lista.length ? [lista[0], ...B, ...lista.slice(1)] : B;
     } catch (e) { calou("montar a soleira", e); return []; }
   };
 
@@ -22662,9 +22894,15 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 <div className="px-4 md:px-8 pb-2">
                   <Soleira ofertas={vivas.map((o) => (
                     <Oferta key={o.id} verbo={o.verbo} preco={o.preco} retorno={o.retorno}
-                      quem={o.quem} onde={o.onde} tom={o.tom}
+                      quem={o.quem} onde={o.onde} tom={o.tom} janela={o.janela}
                       estado={o.precisaDoNarrador && bloqueado ? "impedida" : "repouso"}
-                      chegada={jaTinha && jaTinha.has(o.id) ? "assentada" : "agora"}
+                      /* A FILA B NUNCA CHEGA — ela ESTA. A marca de "novo
+                         neste turno" dura enquanto o estado durar, e uma
+                         marca de novidade que dura cinco turnos deixa de
+                         significar novo e passa a significar ruido. *A fila
+                         A chega; a fila B esta.* (decisao do `jogo`,
+                         `formas.md` §R15) */
+                      chegada={o.fila === "B" || (jaTinha && jaTinha.has(o.id)) ? "assentada" : "agora"}
                       aoClicar={o.aoClicar} />
                   ))} />
                 </div>
