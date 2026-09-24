@@ -92,8 +92,13 @@ A mesa deixou de pedir licença; não deixou de provar.
 RPG de mesa do mundo*. Quem rege escolhe pelo que muda mais o que o jogador
 vive — não pelo que é mais barato de fazer.
 
-- [ ] **(R1) a cena ganha um rosto, e o jogo nunca lho deu** · pesado · de:
-  desenho · 23/09 · **a proposta ambiciosa da Fase R**
+- [x] **(R1) a cena ganha um rosto, e o jogo nunca lho deu** · **FEITO em
+  R13-B, `643294a`, v9.284.** A xilogravura por semente esta na tela: 96 px,
+  sete gramaticas de silhueta sobre 30 biomas, quatro luzes pela hora, **32
+  pares medidos e zero reprovas**. O custo que esta proposta orcava em duas
+  linhas de prosa **nao se pagou**: a etapa A devolvera 334 px antes, e a
+  pagina ficou em 490 px contra os 151 de origem. *A condicao de R1 era R12, e
+  ninguem o sabia ate R6 medir o telefone.* · de: desenho · 23/09
 
   **O diagnóstico, e é uma frase:** este é um RPG de texto em que **nada na tela
   mostra onde você está**. O bioma existe no motor — há `VinhetaDaCena`, há
@@ -747,8 +752,11 @@ local e no `origin`. *Ousadia é barata aqui; a timidez é que é o defeito.*
   Medido e **não corrigido por esta fase**: em deuteranopia `ok` e `amber` ficam
   a **1,02:1** — a mesma cor. *A cobertura é uma lei, não uma medida*, e a
   paleta nova não a paga: herdou o defeito do dia em que nasceu.
-- [~] **R12 · o telefone paga a fase, e é onde eu olharia a seguir** · de:
-  regente · 23/09 · **RE-MIRADO E DESENHADO em R13 (23/09)** — a forma fechada
+- [x] **R12 · o telefone paga a fase, e é onde eu olharia a seguir** · de:
+  regente · 23/09 · **RE-MIRADO, DESENHADO E CONSTRUIDO em R13-A (`fc3efb1`)**
+  — a pagina do telefone foi de 151 para **586 px sem oferta**, e a moldura
+  deixou de crescer a cada contrato. *O item original acusava a soleira e
+  falhava os 334 px de cabecalho, barra e prazos.* — a forma fechada
   está em `mente/formas.md` §*R13 · a fabricação*, a composição em
   `mente/r13-mesa.md`, o par 375×812 e as peças no Figma. **Falta construir.**
   *R12 acusava a soleira (149 px) e falhou o réu maior:* a barra de estado (180)
@@ -769,8 +777,11 @@ local e no `origin`. *Ousadia é barata aqui; a timidez é que é o defeito.*
   o cartão curto voltar aos 54 px e só o longo crescer. **Não decido aqui** — é
   forma, é do `desenho` com o `jogo`, e quero a prova jogada de R6 antes.
 
-- [~] **R11 · o terceiro acento existe e ainda não fez o trabalho por que foi
-  criado** · de: regente · 23/09 · **CONVERTIDO EM R13, falta construir**
+- [x] **R11 · o terceiro acento existe e ainda não fez o trabalho por que foi
+  criado** · de: regente · 23/09 · **CONVERTIDO E CONSTRUIDO em R13-A
+  (`fc3efb1`)** — `T.mundo` ganhou uma *regiao* (a metade direita da cinta:
+  hora, prazo, o tempo) em vez de uma lista de usos, e passou de **zero
+  leitores** aos cinco significados que R2 lhe prometera tirar ao ambar.
   A conversão não foi feita significado a significado, como se supunha: foi
   feita **de uma vez, por geometria.** A metade direita de `A cinta` é o alvo
   do tempo, e **é toda `T.mundo`** — relógio, data, estação, lugar e a espera
