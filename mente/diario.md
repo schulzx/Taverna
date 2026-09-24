@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 24/09 19:08 · v9.291 · a fuga, segunda volta: o que a prova jogada de R21 achou · commit `HASH-A-SEGUIR`
+## 24/09 19:08 · v9.291 · a fuga, segunda volta: o que a prova jogada de R21 achou · commit `9d82ed8`
 
 - **por que andou:** ainda é o item da pessoa (*"Pode arrumar o sistema de
   fugir"*). O desenho jogou a fuga de `7a2b00b` no R21 (`a28e8eb`) e escreveu
